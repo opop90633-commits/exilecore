@@ -1,0 +1,23 @@
+# ExileCore 設定檔（階段 0）
+# 改完存檔後，在遊戲內或主控台輸入 /ec reload 重新載入。
+
+storage:
+  # h2      = 單機檔案資料庫，開發期預設，不用另外安裝任何東西
+  # mariadb = 正式環境；先在專案資料夾執行 docker compose up -d 啟動 MariaDB
+  type: h2
+
+  h2:
+    # 相對於 plugins/ExileCore/ 的檔名，會產生 exilecore.mv.db
+    file: exilecore
+
+  mariadb:
+    host: 127.0.0.1
+    port: 3306
+    database: exilecore
+    user: exilecore
+    password: exilecore
+    pool-size: 8
+
+messages:
+  # 所有訊息前面的字樣（MiniMessage 格式）
+  prefix: "<gradient:#f5b942:#e07a1f>ExileCore</gradient> <dark_gray>»</dark_gray> "

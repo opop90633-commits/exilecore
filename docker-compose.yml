@@ -1,0 +1,28 @@
+# 正式環境用的 MariaDB。開發期預設用 H2，不需要啟動這個。
+#
+#   啟動：docker compose up -d
+#   停止：docker compose down          （資料保留在 mariadb-data 卷）
+#   連線：config.yml 的 storage.type 改成 mariadb，其餘預設值就對得上這裡
+services:
+  mariadb:
+    image: mariadb:lts
+    container_name: exilecore-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: exilecore-root
+      MARIADB_DATABASE: exilecore
+      MARIADB_USER: exilecore
+      MARIADB_PASSWORD: exilecore
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mariadb-data:
