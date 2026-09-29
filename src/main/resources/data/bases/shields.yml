@@ -1,0 +1,50 @@
+# 盾牌基底（副手）。block 是格擋率（%），不隨等級縮放。
+
+tower_shield:
+  name: 塔盾
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 18, dex: 0, int: 0 }
+  armour: 40
+  block: 28
+  sockets: 3
+
+buckler:
+  name: 圓盾
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 18, int: 0 }
+  evasion: 40
+  block: 24
+  sockets: 3
+
+spirit_shield:
+  name: 靈盾
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 18 }
+  es: 14
+  block: 20
+  sockets: 3
+
+kite_shield:
+  name: 鳶盾
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 11, dex: 11, int: 0 }
+  armour: 22
+  evasion: 22
+  block: 26
+  sockets: 3

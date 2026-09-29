@@ -1,5 +1,5 @@
-# ExileCore 設定檔（階段 0）
-# 改完存檔後，在遊戲內或主控台輸入 /ec reload 重新載入。
+# ExileCore 設定檔
+# 改完存檔後，在遊戲內或主控台輸入 /ec reload 重新載入（資料檔 data/ 也會一起重載）。
 
 storage:
   # h2      = 單機檔案資料庫，開發期預設，不用另外安裝任何東西
@@ -21,3 +21,20 @@ storage:
 messages:
   # 所有訊息前面的字樣（MiniMessage 格式）
   prefix: "<gradient:#f5b942:#e07a1f>ExileCore</gradient> <dark_gray>»</dark_gray> "
+
+resource-pack:
+  # true 時物品會寫入 item_model（資料檔裡的 model 欄位）；沒有對應資源包的客戶端會看到紫黑方塊，
+  # 所以資源包做好並發送給玩家之前請保持 false。
+  enabled: false
+
+combat:
+  # 原版環境傷害 → 我們的傷害類型。
+  # 實際傷害 = 原版數字 × multiplier × 最大生命 ÷ 40（原版 20 點 = 滿血）。
+  # periodic: true 的原因（火、岩漿）最多每 0.5 秒套用一次；ignore_mitigation: true 不吃護甲／抗性。
+  environment:
+    FALL:      { type: physical, multiplier: 0.5, ignore_mitigation: true }
+    FIRE:      { type: fire, multiplier: 0.4, periodic: true }
+    FIRE_TICK: { type: fire, multiplier: 0.25, periodic: true }
+    LAVA:      { type: fire, multiplier: 1.0, periodic: true }
+    DROWNING:  { type: physical, multiplier: 0.5, periodic: true, ignore_mitigation: true }
+    VOID:      { type: chaos, multiplier: 100, ignore_mitigation: true }

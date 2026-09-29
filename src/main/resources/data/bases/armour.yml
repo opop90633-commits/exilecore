@@ -1,0 +1,181 @@
+# 防具基底：每個欄位四種（護甲／閃避／能量護盾／混合）。數值是物品等級 1 的值。
+
+plate_helmet:
+  name: 鐵頭盔
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 16, dex: 0, int: 0 }
+  armour: 24
+  sockets: 4
+
+leather_helmet:
+  name: 皮頭盔
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 16, int: 0 }
+  evasion: 24
+  sockets: 4
+
+silk_helmet:
+  name: 絲頭盔
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 16 }
+  es: 8
+  sockets: 4
+
+scale_helmet:
+  name: 鱗頭盔
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 10, int: 0 }
+  armour: 13
+  evasion: 13
+  sockets: 4
+
+plate_body:
+  name: 鐵胸甲
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 16, dex: 0, int: 0 }
+  armour: 40
+  sockets: 6
+
+leather_body:
+  name: 皮胸甲
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 16, int: 0 }
+  evasion: 40
+  sockets: 6
+
+silk_body:
+  name: 絲胸甲
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 16 }
+  es: 14
+  sockets: 6
+
+scale_body:
+  name: 鱗胸甲
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 10, int: 0 }
+  armour: 22
+  evasion: 22
+  sockets: 6
+
+plate_leggings:
+  name: 鐵護腿
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 16, dex: 0, int: 0 }
+  armour: 30
+  sockets: 4
+
+leather_leggings:
+  name: 皮護腿
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 16, int: 0 }
+  evasion: 30
+  sockets: 4
+
+silk_leggings:
+  name: 絲護腿
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 16 }
+  es: 10
+  sockets: 4
+
+scale_leggings:
+  name: 鱗護腿
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 10, int: 0 }
+  armour: 16
+  evasion: 16
+  sockets: 4
+
+plate_boots:
+  name: 鐵靴子
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 16, dex: 0, int: 0 }
+  armour: 18
+  sockets: 4
+
+leather_boots:
+  name: 皮靴子
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 16, int: 0 }
+  evasion: 18
+  sockets: 4
+
+silk_boots:
+  name: 絲靴子
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 16 }
+  es: 6
+  sockets: 4
+
+scale_boots:
+  name: 鱗靴子
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 10, int: 0 }
+  armour: 10
+  evasion: 10
+  sockets: 4

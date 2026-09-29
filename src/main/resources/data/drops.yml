@@ -1,0 +1,21 @@
+# 掉落表。
+# drops_per_rarity：各稀有度怪物的平均掉落件數（小數部分用機率），再乘（1 + 數量加成）。
+drops_per_rarity:
+  normal: 0.35
+  magic: 1.5
+  rare: 3.0
+  unique: 6.0
+
+# 每一件先抽分類
+category_weights:
+  currency: 65
+  equipment: 35
+
+# 裝備的稀有度權重；魔法與稀有會再乘（1 + 稀有度加成）
+rarity_weights:
+  normal: 70
+  magic: 25
+  rare: 5
+
+# 魔法與稀有裝備掉落時是否未鑑定
+unidentified: true

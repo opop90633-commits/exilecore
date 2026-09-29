@@ -1,0 +1,132 @@
+# 怪物設定（階段 1：原版敵對生物）。
+# level：自然生成的等級 = min + 每 ring_size 格加 per_ring 級，夾在 min 與 max 之間（階段 2 改成區域）。
+level:
+  min: 1
+  max: 60
+  ring_size: 64
+  per_ring: 2
+
+# 等級 → 生命（線性內插）。這是平衡的第一個調整點。
+life:
+  1: 20
+  10: 70
+  20: 200
+  30: 480
+  40: 1000
+  50: 2000
+  60: 3600
+  70: 6500
+  80: 11000
+
+# 等級 → 每次攻擊的物理傷害範圍
+damage:
+  1: [2, 4]
+  10: [6, 11]
+  20: [14, 24]
+  30: [26, 42]
+  40: [45, 70]
+  50: [70, 110]
+  60: [105, 160]
+  70: [150, 230]
+  80: [210, 320]
+
+defence:
+  accuracy_base: 10
+  accuracy_per_level: 8
+  evasion_base: 40
+  evasion_per_level: 6
+  armour_per_level: 8
+  crit_chance: 5
+
+# 稀有度：weight 出現權重、life/damage 倍率、mods 詞綴數、quantity/rarity 掉落加成（小數）
+rarity:
+  normal: { weight: 85, life: 1.0, damage: 1.0, mods: [0, 0], quantity: 0.0, rarity: 0.0 }
+  magic:  { weight: 12, life: 1.8, damage: 1.2, mods: [1, 1], quantity: 0.5, rarity: 0.3 }
+  rare:   { weight: 3,  life: 3.5, damage: 1.5, mods: [2, 4], quantity: 1.5, rarity: 1.0 }
+  unique: { weight: 0,  life: 8.0, damage: 2.0, mods: [0, 0], quantity: 3.0, rarity: 2.0 }
+
+# 原版生物：中文名與倍率。沒列的用 default。
+types:
+  default: { life: 1.0, damage: 1.0 }
+  ZOMBIE: { name: 殭屍, life: 1.0, damage: 1.0 }
+  ZOMBIE_VILLAGER: { name: 殭屍村民, life: 1.0, damage: 1.0 }
+  HUSK: { name: 屍殼, life: 1.1, damage: 1.0 }
+  DROWNED: { name: 沉屍, life: 1.0, damage: 1.0 }
+  SKELETON: { name: 骷髏, life: 0.8, damage: 0.8 }
+  STRAY: { name: 流髑, life: 0.8, damage: 0.8 }
+  BOGGED: { name: 沼骸, life: 0.8, damage: 0.8 }
+  WITHER_SKELETON: { name: 凋零骷髏, life: 1.4, damage: 1.3 }
+  SPIDER: { name: 蜘蛛, life: 0.9, damage: 0.9 }
+  CAVE_SPIDER: { name: 洞穴蜘蛛, life: 0.6, damage: 0.7 }
+  CREEPER: { name: 苦力怕, life: 0.8, damage: 2.5 }
+  ENDERMAN: { name: 終界使者, life: 1.6, damage: 1.4 }
+  WITCH: { name: 女巫, life: 1.2, damage: 1.0 }
+  SLIME: { name: 史萊姆, life: 0.7, damage: 0.6 }
+  MAGMA_CUBE: { name: 熔岩史萊姆, life: 0.8, damage: 0.8 }
+  PHANTOM: { name: 夜魅, life: 0.7, damage: 0.8 }
+  SILVERFISH: { name: 蠹魚, life: 0.3, damage: 0.4 }
+  ENDERMITE: { name: 終界蟎, life: 0.3, damage: 0.4 }
+  PILLAGER: { name: 掠奪者, life: 1.0, damage: 1.0 }
+  VINDICATOR: { name: 衛道士, life: 1.3, damage: 1.4 }
+  EVOKER: { name: 喚魔者, life: 1.2, damage: 1.2 }
+  RAVAGER: { name: 劫掠獸, life: 4.0, damage: 1.8 }
+  BLAZE: { name: 烈焰使者, life: 0.9, damage: 1.0 }
+  GHAST: { name: 幽靈, life: 0.8, damage: 1.5 }
+  HOGLIN: { name: 豬布獸, life: 1.5, damage: 1.2 }
+  ZOGLIN: { name: 殭屍豬布獸, life: 1.5, damage: 1.2 }
+  PIGLIN: { name: 豬布林, life: 0.9, damage: 0.9 }
+  PIGLIN_BRUTE: { name: 豬布林蠻兵, life: 1.6, damage: 1.5 }
+  ZOMBIFIED_PIGLIN: { name: 殭屍豬布林, life: 1.0, damage: 1.0 }
+  GUARDIAN: { name: 深海守衛, life: 1.2, damage: 1.0 }
+  ELDER_GUARDIAN: { name: 遠古深海守衛, life: 4.0, damage: 1.5 }
+  SHULKER: { name: 界伏蚌, life: 1.2, damage: 0.8 }
+  VEX: { name: 惱鬼, life: 0.4, damage: 0.7 }
+  WARDEN: { name: 伏守者, life: 10.0, damage: 3.0 }
+  BREEZE: { name: 旋風使者, life: 0.9, damage: 0.8 }
+  CREAKING: { name: 嘎枝, life: 1.5, damage: 1.0 }
+
+# 怪物詞綴：magic 怪 1 個、rare 怪 2 到 4 個。stats 是修飾器（INCREASED/MORE 的 value 是百分比）；
+# added 是把物理傷害的多少比例額外加成元素傷害；vanilla_speed 是原版移動速度加成（小數）。
+mods:
+  swift:
+    name: 極速的
+    vanilla_speed: 0.35
+    stats: []
+  sturdy:
+    name: 壯碩的
+    stats:
+      - { stat: life.max, type: MORE, value: 50 }
+  armoured:
+    name: 鐵甲的
+    stats:
+      - { stat: armour, type: INCREASED, value: 300 }
+  fiery:
+    name: 燃焰的
+    added: { fire: 0.4 }
+    stats:
+      - { stat: resist.fire, type: FLAT, value: 50 }
+  frosty:
+    name: 霜寒的
+    added: { cold: 0.4 }
+    stats:
+      - { stat: resist.cold, type: FLAT, value: 50 }
+  shocking:
+    name: 帶電的
+    added: { lightning: 0.4 }
+    stats:
+      - { stat: resist.lightning, type: FLAT, value: 50 }
+  resistant:
+    name: 抗性的
+    stats:
+      - { stat: resist.fire, type: FLAT, value: 40 }
+      - { stat: resist.cold, type: FLAT, value: 40 }
+      - { stat: resist.lightning, type: FLAT, value: 40 }
+  deadly:
+    name: 致命的
+    stats:
+      - { stat: crit.chance, type: INCREASED, value: 200 }
+      - { stat: crit.multi, type: FLAT, value: 50 }
+  evasive:
+    name: 飄忽的
+    stats:
+      - { stat: evasion, type: INCREASED, value: 200 }

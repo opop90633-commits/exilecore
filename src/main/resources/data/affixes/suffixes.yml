@@ -1,0 +1,273 @@
+# 後綴詞綴。names 依階級 1（最強）→ N；tiers 的 ilvl 是需要的最低物品等級，weight 是權重。
+# text 裡的 {value} / {min} / {max} 是 tiers 裡的變數；mods 的 value 用同名變數。
+
+resist_fire:
+  type: suffix
+  group: resist_fire
+  spawn_tags: [armour, shield, jewellery]
+  names: [之炎神, 之火龍, 之烈焰, 之火焰, 之火花, 之餘燼]
+  text: "+{value}% 火焰抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 150, value: [42, 48] }
+    - { tier: 2, ilvl: 48, weight: 300, value: [35, 41] }
+    - { tier: 3, ilvl: 36, weight: 600, value: [28, 33] }
+    - { tier: 4, ilvl: 24, weight: 900, value: [20, 26] }
+    - { tier: 5, ilvl: 12, weight: 1000, value: [13, 18] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [6, 11] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+
+resist_cold:
+  type: suffix
+  group: resist_cold
+  spawn_tags: [armour, shield, jewellery]
+  names: [之冰神, 之冰龍, 之冰川, 之寒霜, 之冰晶, 之霜]
+  text: "+{value}% 冰冷抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 150, value: [42, 48] }
+    - { tier: 2, ilvl: 48, weight: 300, value: [35, 41] }
+    - { tier: 3, ilvl: 36, weight: 600, value: [28, 33] }
+    - { tier: 4, ilvl: 24, weight: 900, value: [20, 26] }
+    - { tier: 5, ilvl: 12, weight: 1000, value: [13, 18] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [6, 11] }
+  mods:
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+resist_lightning:
+  type: suffix
+  group: resist_lightning
+  spawn_tags: [armour, shield, jewellery]
+  names: [之雷神, 之雷龍, 之雷暴, 之閃電, 之電弧, 之靜電]
+  text: "+{value}% 閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 150, value: [42, 48] }
+    - { tier: 2, ilvl: 48, weight: 300, value: [35, 41] }
+    - { tier: 3, ilvl: 36, weight: 600, value: [28, 33] }
+    - { tier: 4, ilvl: 24, weight: 900, value: [20, 26] }
+    - { tier: 5, ilvl: 12, weight: 1000, value: [13, 18] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [6, 11] }
+  mods:
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+resist_chaos:
+  type: suffix
+  group: resist_chaos
+  spawn_tags: [armour, shield, jewellery]
+  names: [之淨化, 之驅邪, 之抗毒, 之解毒]
+  text: "+{value}% 混沌抗性"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 250, value: [26, 35] }
+    - { tier: 2, ilvl: 32, weight: 500, value: [19, 27] }
+    - { tier: 3, ilvl: 16, weight: 800, value: [12, 18] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+resist_all:
+  type: suffix
+  group: resist_all
+  spawn_tags: [armour, shield, jewellery]
+  names: [之彩虹, 之稜鏡, 之光譜, 之水晶]
+  text: "+{value}% 全部元素抗性"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 250, value: [15, 18] }
+    - { tier: 2, ilvl: 32, weight: 500, value: [11, 14] }
+    - { tier: 3, ilvl: 16, weight: 800, value: [7, 9] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+str_flat:
+  type: suffix
+  group: attr_str
+  spawn_tags: [armour, shield, jewellery, weapon]
+  names: [之泰坦, 之巨人, 之猛獸, 之熊, 之公牛, 之野豬]
+  text: "+{value} 力量"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 150, value: [43, 50] }
+    - { tier: 2, ilvl: 48, weight: 300, value: [36, 42] }
+    - { tier: 3, ilvl: 36, weight: 600, value: [29, 35] }
+    - { tier: 4, ilvl: 24, weight: 900, value: [22, 27] }
+    - { tier: 5, ilvl: 12, weight: 1000, value: [15, 20] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+
+dex_flat:
+  type: suffix
+  group: attr_dex
+  spawn_tags: [armour, shield, jewellery, weapon]
+  names: [之疾風, 之獵豹, 之獵鷹, 之狐狸, 之山貓, 之羚羊]
+  text: "+{value} 敏捷"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 150, value: [43, 50] }
+    - { tier: 2, ilvl: 48, weight: 300, value: [36, 42] }
+    - { tier: 3, ilvl: 36, weight: 600, value: [29, 35] }
+    - { tier: 4, ilvl: 24, weight: 900, value: [22, 27] }
+    - { tier: 5, ilvl: 12, weight: 1000, value: [15, 20] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+
+int_flat:
+  type: suffix
+  group: attr_int
+  spawn_tags: [armour, shield, jewellery, weapon]
+  names: [之賢者, 之先知, 之學者, 之智者, 之學生, 之貓頭鷹]
+  text: "+{value} 智慧"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 150, value: [43, 50] }
+    - { tier: 2, ilvl: 48, weight: 300, value: [36, 42] }
+    - { tier: 3, ilvl: 36, weight: 600, value: [29, 35] }
+    - { tier: 4, ilvl: 24, weight: 900, value: [22, 27] }
+    - { tier: 5, ilvl: 12, weight: 1000, value: [15, 20] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+all_attr:
+  type: suffix
+  group: attr_all
+  spawn_tags: [jewellery, body]
+  names: [之眾神, 之英雄, 之戰士, 之新兵]
+  text: "+{value} 全部屬性"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 250, value: [16, 20] }
+    - { tier: 2, ilvl: 32, weight: 500, value: [12, 15] }
+    - { tier: 3, ilvl: 16, weight: 800, value: [8, 11] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [4, 6] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+attack_speed:
+  type: suffix
+  group: attack_speed
+  spawn_tags: [weapon, ring]
+  names: [之神速, 之疾速, 之迅捷, 之敏捷, 之技巧]
+  text: "增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, value: [23, 26] }
+    - { tier: 2, ilvl: 40, weight: 400, value: [18, 21] }
+    - { tier: 3, ilvl: 28, weight: 700, value: [14, 16] }
+    - { tier: 4, ilvl: 14, weight: 1000, value: [10, 12] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [5, 7] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}" }
+
+cast_speed:
+  type: suffix
+  group: cast_speed
+  spawn_tags: [wand, staff, sceptre, amulet, int_armour]
+  names: [之神念, 之靈念, 之專注, 之冥想, 之凝神]
+  text: "增加 {value}% 施法速度"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, value: [18, 20] }
+    - { tier: 2, ilvl: 40, weight: 400, value: [14, 17] }
+    - { tier: 3, ilvl: 28, weight: 700, value: [11, 14] }
+    - { tier: 4, ilvl: 14, weight: 1000, value: [8, 10] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [4, 7] }
+  mods:
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+crit_chance:
+  type: suffix
+  group: crit_chance
+  spawn_tags: [weapon, amulet]
+  names: [之致命, 之穿刺, 之銳眼, 之精準, 之瞄準]
+  text: "增加 {value}% 暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, value: [35, 38] }
+    - { tier: 2, ilvl: 40, weight: 400, value: [29, 32] }
+    - { tier: 3, ilvl: 28, weight: 700, value: [22, 26] }
+    - { tier: 4, ilvl: 14, weight: 1000, value: [16, 20] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}" }
+
+crit_multi:
+  type: suffix
+  group: crit_multi
+  spawn_tags: [weapon, amulet]
+  names: [之毀滅, 之破壞, 之殘酷, 之兇殘]
+  text: "+{value}% 暴擊傷害"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 250, value: [30, 34] }
+    - { tier: 2, ilvl: 32, weight: 500, value: [23, 27] }
+    - { tier: 3, ilvl: 16, weight: 800, value: [15, 19] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: crit.multi, type: FLAT, value: "{value}" }
+
+accuracy:
+  type: suffix
+  group: accuracy
+  spawn_tags: [weapon, ring, helmet]
+  names: [之鷹眼, 之獵人, 之射手, 之弓手, 之瞄準]
+  text: "+{value} 命中"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, value: [250, 320] }
+    - { tier: 2, ilvl: 40, weight: 400, value: [192, 250] }
+    - { tier: 3, ilvl: 28, weight: 700, value: [135, 180] }
+    - { tier: 4, ilvl: 14, weight: 1000, value: [78, 110] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [20, 40] }
+  mods:
+    - { stat: accuracy, type: FLAT, value: "{value}" }
+
+life_regen:
+  type: suffix
+  group: life_regen
+  spawn_tags: [armour, shield, jewellery]
+  names: [之鳳凰, 之不死, 之再生, 之癒合, 之恢復]
+  text: "每秒回復 {value} 生命"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, value: [12, 16] }
+    - { tier: 2, ilvl: 40, weight: 400, value: [9, 12] }
+    - { tier: 3, ilvl: 28, weight: 700, value: [6, 9] }
+    - { tier: 4, ilvl: 14, weight: 1000, value: [4, 6] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: life.regen, type: FLAT, value: "{value}" }
+
+mana_regen:
+  type: suffix
+  group: mana_regen
+  spawn_tags: [armour, shield, jewellery, wand, staff]
+  names: [之泉源, 之湧泉, 之溪流, 之細流]
+  text: "增加 {value}% 魔力回復速度"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 250, value: [50, 59] }
+    - { tier: 2, ilvl: 32, weight: 500, value: [38, 47] }
+    - { tier: 3, ilvl: 16, weight: 800, value: [27, 36] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [15, 24] }
+  mods:
+    - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+movement_speed:
+  type: suffix
+  group: movement_speed
+  spawn_tags: [boots]
+  names: [之奔雷, 之疾走, 之飛毛腿]
+  text: "增加 {value}% 移動速度"
+  tiers:
+    - { tier: 1, ilvl: 32, weight: 500, value: [25, 30] }
+    - { tier: 2, ilvl: 16, weight: 800, value: [18, 22] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: movement.speed, type: INCREASED, value: "{value}" }
+
+block_chance:
+  type: suffix
+  group: block
+  spawn_tags: [shield]
+  names: [之壁壘, 之守護, 之屏障]
+  text: "+{value}% 格擋率"
+  tiers:
+    - { tier: 1, ilvl: 32, weight: 500, value: [6, 8] }
+    - { tier: 2, ilvl: 16, weight: 800, value: [4, 6] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: block.chance, type: FLAT, value: "{value}" }

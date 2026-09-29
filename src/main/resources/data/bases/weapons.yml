@@ -1,0 +1,178 @@
+# 武器基底。數值是物品等級 1 的值，依物品等級縮放（items.yml scaling）。
+# tags：weapon 加上 one_hand/two_hand 與武器種類；melee 是近戰。弓與法杖在階段 3 才有遠程攻擊，現在先當近戰武器測試。
+
+short_sword:
+  name: 短劍
+  material: IRON_SWORD
+  model: exilecore:weapon/short_sword
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sword, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 8, dex: 8, int: 0 }
+  damage: { physical: [6, 14] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 3
+
+hand_axe:
+  name: 手斧
+  material: IRON_AXE
+  model: exilecore:weapon/hand_axe
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, axe, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 12, dex: 6, int: 0 }
+  damage: { physical: [8, 16] }
+  aps: 1.3
+  crit: 5.0
+  sockets: 3
+
+war_hammer:
+  name: 戰錘
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 16, dex: 0, int: 0 }
+  damage: { physical: [10, 18] }
+  aps: 1.15
+  crit: 5.0
+  sockets: 3
+
+dagger:
+  name: 匕首
+  material: GOLDEN_SWORD
+  model: exilecore:weapon/dagger
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, dagger, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 10, int: 6 }
+  damage: { physical: [4, 12] }
+  aps: 1.6
+  crit: 7.5
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 暴擊率"
+    value: [20, 30]
+    mods:
+      - { stat: crit.chance, type: INCREASED, value: "{value}" }
+
+claw:
+  name: 爪
+  material: IRON_HOE
+  model: exilecore:weapon/claw
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, claw, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 9, int: 7 }
+  damage: { physical: [5, 13] }
+  aps: 1.5
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 攻擊速度"
+    value: [8, 12]
+    mods:
+      - { stat: attack.speed, type: INCREASED, value: "{value}" }
+
+wand:
+  name: 法杖
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 14 }
+  damage: { physical: [3, 8] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+great_sword:
+  name: 巨劍
+  material: DIAMOND_SWORD
+  model: exilecore:weapon/great_sword
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, sword, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 14, dex: 12, int: 0 }
+  damage: { physical: [10, 24] }
+  aps: 1.3
+  crit: 5.0
+  sockets: 6
+
+great_axe:
+  name: 巨斧
+  material: DIAMOND_AXE
+  model: exilecore:weapon/great_axe
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, axe, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 20, dex: 8, int: 0 }
+  damage: { physical: [14, 28] }
+  aps: 1.15
+  crit: 5.0
+  sockets: 6
+
+great_hammer:
+  name: 巨錘
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 24, dex: 0, int: 0 }
+  damage: { physical: [18, 32] }
+  aps: 1.05
+  crit: 5.0
+  sockets: 6
+
+staff:
+  name: 長杖
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 12, dex: 0, int: 12 }
+  damage: { physical: [9, 21] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "+{value}% 格擋率"
+    value: [12, 12]
+    mods:
+      - { stat: block.chance, type: FLAT, value: "{value}" }
+
+bow:
+  name: 弓
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 16, int: 0 }
+  damage: { physical: [6, 16] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 6
+
+sceptre:
+  name: 權杖
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 0, int: 10 }
+  damage: { physical: [8, 15] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3

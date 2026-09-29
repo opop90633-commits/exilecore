@@ -1,0 +1,12 @@
+# 第一次啟動時複製到 plugins/ExileCore/data/ 的預設資料檔（已存在的不覆蓋）
+data/items.yml
+data/names.yml
+data/currencies.yml
+data/monsters.yml
+data/drops.yml
+data/bases/weapons.yml
+data/bases/armour.yml
+data/bases/shields.yml
+data/bases/jewellery.yml
+data/affixes/prefixes.yml
+data/affixes/suffixes.yml

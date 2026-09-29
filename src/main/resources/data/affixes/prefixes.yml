@@ -1,0 +1,272 @@
+# 前綴詞綴。names 依階級 1（最強）→ N；tiers 的 ilvl 是需要的最低物品等級，weight 是權重。
+# text 裡的 {value} / {min} / {max} 是 tiers 裡的變數；mods 的 value 用同名變數。
+
+life_flat:
+  type: prefix
+  group: life
+  spawn_tags: [armour, shield, jewellery, belt]
+  names: [神軀的, 不朽的, 雄壯的, 壯碩的, 強健的, 健康的]
+  text: "+{value} 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 150, value: [80, 99] }
+    - { tier: 2, ilvl: 48, weight: 300, value: [66, 83] }
+    - { tier: 3, ilvl: 36, weight: 600, value: [52, 67] }
+    - { tier: 4, ilvl: 24, weight: 900, value: [38, 51] }
+    - { tier: 5, ilvl: 12, weight: 1000, value: [24, 35] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [10, 19] }
+  mods:
+    - { stat: life.max, type: FLAT, value: "{value}" }
+
+mana_flat:
+  type: prefix
+  group: mana
+  spawn_tags: [armour, shield, jewellery]
+  names: [天啟的, 通靈的, 睿智的, 清明的, 聰慧的, 學徒的]
+  text: "+{value} 最大魔力"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 150, value: [60, 74] }
+    - { tier: 2, ilvl: 48, weight: 300, value: [50, 63] }
+    - { tier: 3, ilvl: 36, weight: 600, value: [40, 52] }
+    - { tier: 4, ilvl: 24, weight: 900, value: [30, 41] }
+    - { tier: 5, ilvl: 12, weight: 1000, value: [20, 30] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [10, 19] }
+  mods:
+    - { stat: mana.max, type: FLAT, value: "{value}" }
+
+es_flat:
+  type: prefix
+  group: es_flat
+  spawn_tags: [int_armour, shield, jewellery]
+  names: [聖靈的, 光耀的, 靈光的, 微光的, 幽光的]
+  text: "+{value} 最大能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, value: [40, 55] }
+    - { tier: 2, ilvl: 40, weight: 400, value: [32, 44] }
+    - { tier: 3, ilvl: 28, weight: 700, value: [23, 33] }
+    - { tier: 4, ilvl: 14, weight: 1000, value: [14, 22] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [6, 11] }
+  mods:
+    - { stat: es.max, type: FLAT, value: "{value}" }
+
+armour_inc:
+  type: prefix
+  group: defence_pct
+  spawn_tags: [str_armour, shield]
+  names: [巨牆的, 堡壘的, 厚實的, 結實的, 堅固的]
+  text: "增加 {value}% 護甲"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, value: [80, 100] }
+    - { tier: 2, ilvl: 40, weight: 400, value: [64, 82] }
+    - { tier: 3, ilvl: 28, weight: 700, value: [48, 63] }
+    - { tier: 4, ilvl: 14, weight: 1000, value: [31, 44] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [15, 26] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+
+evasion_inc:
+  type: prefix
+  group: defence_pct
+  spawn_tags: [dex_armour, shield]
+  names: [幻影的, 疾風的, 靈巧的, 輕盈的, 敏捷的]
+  text: "增加 {value}% 閃避"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, value: [80, 100] }
+    - { tier: 2, ilvl: 40, weight: 400, value: [64, 82] }
+    - { tier: 3, ilvl: 28, weight: 700, value: [48, 63] }
+    - { tier: 4, ilvl: 14, weight: 1000, value: [31, 44] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [15, 26] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+
+es_inc:
+  type: prefix
+  group: defence_pct
+  spawn_tags: [int_armour, shield]
+  names: [聖光的, 輝耀的, 澄澈的, 明亮的, 微亮的]
+  text: "增加 {value}% 能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, value: [80, 100] }
+    - { tier: 2, ilvl: 40, weight: 400, value: [64, 82] }
+    - { tier: 3, ilvl: 28, weight: 700, value: [48, 63] }
+    - { tier: 4, ilvl: 14, weight: 1000, value: [31, 44] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [15, 26] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+
+armour_flat:
+  type: prefix
+  group: defence_flat
+  spawn_tags: [str_armour, shield]
+  names: [鐵壁的, 護甲的, 包鐵的, 加固的]
+  text: "+{value} 護甲"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 250, value: [120, 180] }
+    - { tier: 2, ilvl: 32, weight: 500, value: [83, 128] }
+    - { tier: 3, ilvl: 16, weight: 800, value: [47, 77] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [10, 25] }
+  mods:
+    - { stat: armour, type: FLAT, value: "{value}" }
+
+evasion_flat:
+  type: prefix
+  group: defence_flat
+  spawn_tags: [dex_armour, shield]
+  names: [殘影的, 飄忽的, 靈動的, 閃避的]
+  text: "+{value} 閃避"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 250, value: [120, 180] }
+    - { tier: 2, ilvl: 32, weight: 500, value: [83, 128] }
+    - { tier: 3, ilvl: 16, weight: 800, value: [47, 77] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [10, 25] }
+  mods:
+    - { stat: evasion, type: FLAT, value: "{value}" }
+
+phys_inc:
+  type: prefix
+  group: phys_pct
+  spawn_tags: [weapon]
+  names: [滅絕的, 殘暴的, 兇猛的, 銳利的, 沉重的, 磨利的]
+  text: "增加 {value}% 物理傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 150, value: [120, 149] }
+    - { tier: 2, ilvl: 48, weight: 300, value: [99, 125] }
+    - { tier: 3, ilvl: 36, weight: 600, value: [78, 101] }
+    - { tier: 4, ilvl: 24, weight: 900, value: [57, 77] }
+    - { tier: 5, ilvl: 12, weight: 1000, value: [36, 53] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [15, 29] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+
+spell_inc:
+  type: prefix
+  group: spell_pct
+  spawn_tags: [wand, staff, sceptre, int_armour, amulet]
+  names: [奧法的, 祕術的, 咒術的, 巫術的, 學者的]
+  text: "增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, value: [60, 74] }
+    - { tier: 2, ilvl: 40, weight: 400, value: [48, 60] }
+    - { tier: 3, ilvl: 28, weight: 700, value: [35, 46] }
+    - { tier: 4, ilvl: 14, weight: 1000, value: [22, 33] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [10, 19] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+ele_inc:
+  type: prefix
+  group: ele_pct
+  spawn_tags: [weapon, jewellery]
+  names: [元素之王的, 元素領主的, 元素使者的, 元素學徒的]
+  text: "增加 {value}% 元素傷害"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 250, value: [30, 38] }
+    - { tier: 2, ilvl: 32, weight: 500, value: [23, 30] }
+    - { tier: 3, ilvl: 16, weight: 800, value: [15, 22] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [8, 14] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+quantity_inc:
+  type: prefix
+  group: quantity
+  spawn_tags: [armour, shield, jewellery]
+  names: [豐收的, 富饒的, 寬裕的]
+  text: "增加 {value}% 物品掉落數量"
+  tiers:
+    - { tier: 1, ilvl: 32, weight: 500, value: [12, 16] }
+    - { tier: 2, ilvl: 16, weight: 800, value: [8, 12] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [4, 7] }
+  mods:
+    - { stat: drop.quantity, type: INCREASED, value: "{value}" }
+
+rarity_inc:
+  type: prefix
+  group: rarity
+  spawn_tags: [armour, shield, jewellery]
+  names: [尋寶的, 幸運的, 好運的]
+  text: "增加 {value}% 物品掉落稀有度"
+  tiers:
+    - { tier: 1, ilvl: 32, weight: 500, value: [25, 34] }
+    - { tier: 2, ilvl: 16, weight: 800, value: [16, 24] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [8, 14] }
+  mods:
+    - { stat: drop.rarity, type: INCREASED, value: "{value}" }
+
+added_phys:
+  type: prefix
+  group: added_phys
+  spawn_tags: [weapon, ring]
+  names: [劍聖的, 刃舞的, 銳鋒的, 磨光的, 刻痕的]
+  text: "附加 {min} 到 {max} 物理傷害"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, min: [14, 20], max: [30, 40] }
+    - { tier: 2, ilvl: 40, weight: 400, min: [11, 16], max: [23, 31] }
+    - { tier: 3, ilvl: 28, weight: 700, min: [8, 11], max: [16, 22] }
+    - { tier: 4, ilvl: 14, weight: 1000, min: [4, 6], max: [10, 14] }
+    - { tier: 5, ilvl: 1, weight: 1000, min: [1, 2], max: [3, 5] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+
+added_fire:
+  type: prefix
+  group: added_fire
+  spawn_tags: [weapon, ring]
+  names: [烈焰的, 熾熱的, 燃燒的, 灼熱的, 溫熱的]
+  text: "附加 {min} 到 {max} 火焰傷害"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, min: [24, 32], max: [56, 70] }
+    - { tier: 2, ilvl: 40, weight: 400, min: [18, 25], max: [43, 54] }
+    - { tier: 3, ilvl: 28, weight: 700, min: [13, 18], max: [30, 39] }
+    - { tier: 4, ilvl: 14, weight: 1000, min: [8, 10], max: [18, 24] }
+    - { tier: 5, ilvl: 1, weight: 1000, min: [2, 3], max: [5, 8] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, fire] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, fire] }
+
+added_cold:
+  type: prefix
+  group: added_cold
+  spawn_tags: [weapon, ring]
+  names: [極寒的, 冰封的, 霜凍的, 冰冷的, 涼爽的]
+  text: "附加 {min} 到 {max} 冰冷傷害"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, min: [22, 28], max: [50, 62] }
+    - { tier: 2, ilvl: 40, weight: 400, min: [17, 22], max: [39, 48] }
+    - { tier: 3, ilvl: 28, weight: 700, min: [12, 16], max: [28, 34] }
+    - { tier: 4, ilvl: 14, weight: 1000, min: [7, 9], max: [16, 21] }
+    - { tier: 5, ilvl: 1, weight: 1000, min: [2, 3], max: [5, 7] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, cold] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, cold] }
+
+added_lightning:
+  type: prefix
+  group: added_lightning
+  spawn_tags: [weapon, ring]
+  names: [雷霆的, 電光的, 閃電的, 帶電的, 靜電的]
+  text: "附加 {min} 到 {max} 閃電傷害"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 200, min: [4, 8], max: [90, 120] }
+    - { tier: 2, ilvl: 40, weight: 400, min: [3, 6], max: [70, 94] }
+    - { tier: 3, ilvl: 28, weight: 700, min: [2, 4], max: [50, 68] }
+    - { tier: 4, ilvl: 14, weight: 1000, min: [2, 3], max: [30, 42] }
+    - { tier: 5, ilvl: 1, weight: 1000, min: [1, 1], max: [10, 16] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, lightning] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
+
+added_chaos:
+  type: prefix
+  group: added_chaos
+  spawn_tags: [weapon]
+  names: [虛空的, 腐蝕的, 毒性的, 污濁的]
+  text: "附加 {min} 到 {max} 混沌傷害"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 250, min: [16, 22], max: [36, 46] }
+    - { tier: 2, ilvl: 32, weight: 500, min: [11, 16], max: [26, 33] }
+    - { tier: 3, ilvl: 16, weight: 800, min: [7, 9], max: [15, 20] }
+    - { tier: 4, ilvl: 1, weight: 1000, min: [2, 3], max: [5, 7] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, chaos] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, chaos] }

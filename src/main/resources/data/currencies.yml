@@ -1,0 +1,132 @@
+# 通貨定義。operation 指到程式裡的操作（CurrencyOperation），applies_to.rarity 空白 = 不限稀有度。
+# drop_weight 是掉落權重（相對值），0 = 不掉落。
+
+identify_scroll:
+  name: 鑑定卷軸
+  material: PAPER
+  model: exilecore:currency/identify_scroll
+  stack: 40
+  operation: IDENTIFY
+  applies_to: { rarity: [MAGIC, RARE, UNIQUE] }
+  drop_weight: 10000
+  description: "鑑定一件未鑑定的物品，讓詞綴顯示並生效"
+
+glimmer_orb:
+  name: 微光石
+  material: GLOWSTONE_DUST
+  model: exilecore:currency/glimmer_orb
+  stack: 40
+  operation: UPGRADE_TO_MAGIC
+  applies_to: { rarity: [NORMAL] }
+  drop_weight: 3000
+  description: "把普通物品變成魔法物品（1 到 2 條詞綴）"
+
+lustre_orb:
+  name: 增輝石
+  material: PRISMARINE_CRYSTALS
+  model: exilecore:currency/lustre_orb
+  stack: 30
+  operation: ADD_AFFIX_MAGIC
+  applies_to: { rarity: [MAGIC] }
+  drop_weight: 2500
+  description: "為只有一條詞綴的魔法物品再加一條"
+
+flux_orb:
+  name: 流轉石
+  material: QUARTZ
+  model: exilecore:currency/flux_orb
+  stack: 20
+  operation: REROLL_MAGIC
+  applies_to: { rarity: [MAGIC] }
+  drop_weight: 2500
+  description: "重新隨機魔法物品的詞綴"
+
+bounty_orb:
+  name: 豐饒石
+  material: EMERALD
+  model: exilecore:currency/bounty_orb
+  stack: 20
+  operation: MAGIC_TO_RARE
+  applies_to: { rarity: [MAGIC] }
+  drop_weight: 400
+  description: "把魔法物品升級為稀有物品，並加一條詞綴"
+
+spark_orb:
+  name: 星火石
+  material: AMETHYST_SHARD
+  model: exilecore:currency/spark_orb
+  stack: 10
+  operation: UPGRADE_TO_RARE
+  applies_to: { rarity: [NORMAL] }
+  drop_weight: 500
+  description: "把普通物品直接變成稀有物品（4 到 6 條詞綴）"
+
+turmoil_orb:
+  name: 亂流石
+  material: ENDER_EYE
+  model: exilecore:currency/turmoil_orb
+  stack: 10
+  operation: REROLL_RARE
+  applies_to: { rarity: [RARE] }
+  drop_weight: 300
+  description: "重新隨機稀有物品的所有詞綴"
+
+zenith_orb:
+  name: 至臻石
+  material: NETHER_STAR
+  model: exilecore:currency/zenith_orb
+  stack: 10
+  operation: ADD_AFFIX_RARE
+  applies_to: { rarity: [RARE] }
+  drop_weight: 20
+  description: "為還有空位的稀有物品再加一條詞綴"
+
+blank_orb:
+  name: 淨白石
+  material: BONE_MEAL
+  model: exilecore:currency/blank_orb
+  stack: 30
+  operation: SCOUR
+  applies_to: { rarity: [MAGIC, RARE] }
+  drop_weight: 600
+  description: "移除所有詞綴，物品變回普通"
+
+oracle_orb:
+  name: 天啟石
+  material: ECHO_SHARD
+  model: exilecore:currency/oracle_orb
+  stack: 10
+  operation: REROLL_VALUES
+  applies_to: { rarity: [MAGIC, RARE, UNIQUE] }
+  drop_weight: 15
+  description: "重新隨機所有詞綴的數值，階級不變"
+
+blessing_orb:
+  name: 賜福石
+  material: GOLD_INGOT
+  model: exilecore:currency/blessing_orb
+  stack: 20
+  operation: REROLL_IMPLICIT
+  applies_to: { rarity: [] }
+  drop_weight: 100
+  description: "重新隨機固定詞綴的數值"
+
+whetstone:
+  name: 磨刀石
+  material: FLINT
+  model: exilecore:currency/whetstone
+  stack: 20
+  operation: QUALITY_WEAPON
+  applies_to: { rarity: [] }
+  drop_weight: 1500
+  description: "提升武器品質（普通 +5%、魔法 +2%、稀有 +1%，上限 20%）"
+
+armour_scrap:
+  name: 護甲碎片
+  material: IRON_NUGGET
+  model: exilecore:currency/armour_scrap
+  stack: 20
+  operation: QUALITY_ARMOUR
+  applies_to: { rarity: [] }
+  drop_weight: 1500
+  description: "提升防具品質（普通 +5%、魔法 +2%、稀有 +1%，上限 20%）"

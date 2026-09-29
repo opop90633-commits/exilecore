@@ -1,6 +1,7 @@
 plugins {
     java
     // 一個指令下載並啟動 Paper 測試伺服器：./gradlew runServer
+    // 3.1.0 起才支援 Gradle 9.7+；舊版在 Gradle 9 會因為屬性註解檢查而失敗
     id("xyz.jpenilla.run-paper") version "3.1.0"
 }
 
@@ -29,12 +30,19 @@ dependencies {
     // 程式碼直接 import 到的只有 HikariCP，所以它要宣告成 compileOnly（版本要和 ExileCoreLoader 一致）；
     // H2 與 MariaDB 驅動只用字串指定類別名稱，編譯時不需要。
     compileOnly("com.zaxxer:HikariCP:7.1.0")
+    // 物品資料存成 JSON；伺服器本身就有 Gson，所以 compileOnly
+    compileOnly("com.google.code.gson:gson:2.11.0")
+    // 資料檔用 SnakeYAML 直接讀（不經過 Bukkit），引擎才能在單元測試裡載入真實資料；伺服器本身就有
+    compileOnly("org.yaml:snakeyaml:2.6")
 
     // 引擎的單元測試（不需要伺服器就能跑）
     testImplementation(platform("org.junit:junit-bom:5.13.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.slf4j:slf4j-api:2.0.17")
+    testRuntimeOnly("org.slf4j:slf4j-simple:2.0.17")
+    testImplementation("com.google.code.gson:gson:2.11.0")
+    testImplementation("org.yaml:snakeyaml:2.6")
 }
 
 tasks {

@@ -1,0 +1,10 @@
+# 物品共用設定。
+scaling:
+  # 武器傷害與防具數值：物品等級每高 1 級 ×（1 + per_level）。等級 60 約為等級 1 的 3.1 倍。
+  damage_per_level: 0.035
+  defence_per_level: 0.035
+  # 屬性需求（力量／敏捷／智慧）隨物品等級放大
+  requirement_per_level: 0.02
+  # 品質每 1% 的加成
+  quality_weapon_percent: 1.0
+  quality_armour_percent: 1.0

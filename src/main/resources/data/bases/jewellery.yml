@@ -1,0 +1,115 @@
+# 飾品基底。戒指、項鍊、腰帶是階段 2 角色面板的虛擬欄位，現在只會掉落、可以改造，還不能裝備。
+
+iron_ring:
+  name: 鐵戒指
+  material: IRON_NUGGET
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "附加 {min} 到 {max} 物理傷害"
+    min: [1, 2]
+    max: [3, 5]
+    mods:
+      - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+      - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+
+coral_ring:
+  name: 珊瑚戒指
+  material: GOLD_NUGGET
+  model: exilecore:jewellery/coral_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 最大生命"
+    value: [20, 30]
+    mods:
+      - { stat: life.max, type: FLAT, value: "{value}" }
+
+sapphire_ring:
+  name: 藍寶石戒指
+  material: LAPIS_LAZULI
+  model: exilecore:jewellery/sapphire_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value}% 冰冷抗性"
+    value: [20, 30]
+    mods:
+      - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+ruby_ring:
+  name: 紅寶石戒指
+  material: REDSTONE
+  model: exilecore:jewellery/ruby_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value}% 火焰抗性"
+    value: [20, 30]
+    mods:
+      - { stat: resist.fire, type: FLAT, value: "{value}" }
+
+amber_amulet:
+  name: 琥珀護身符
+  material: AMETHYST_SHARD
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 力量"
+    value: [20, 30]
+    mods:
+      - { stat: attr.str, type: FLAT, value: "{value}" }
+
+jade_amulet:
+  name: 翠玉護身符
+  material: PRISMARINE_SHARD
+  model: exilecore:jewellery/jade_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 敏捷"
+    value: [20, 30]
+    mods:
+      - { stat: attr.dex, type: FLAT, value: "{value}" }
+
+leather_belt:
+  name: 皮腰帶
+  material: LEATHER
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 最大生命"
+    value: [25, 40]
+    mods:
+      - { stat: life.max, type: FLAT, value: "{value}" }
+
+chain_belt:
+  name: 鎖鏈腰帶
+  material: CHAIN
+  model: exilecore:jewellery/chain_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 最大能量護盾"
+    value: [9, 20]
+    mods:
+      - { stat: es.max, type: FLAT, value: "{value}" }
