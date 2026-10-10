@@ -2,7 +2,7 @@ name: ExileCore
 version: '${version}'
 main: tw.exilecore.ExileCore
 loader: tw.exilecore.bootstrap.ExileCoreLoader
-description: 類 PoE 的 Minecraft 伺服器核心插件
+description: 《星骸》伺服器核心插件（裝備、詞綴、天賦樹與終局地圖的 ARPG）
 api-version: '26.2'
 
 # 第三方插件都是「可選」：沒裝也能啟動，裝了就會在 ExileCore 之前載入。
@@ -16,3 +16,8 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: true
+    # 動作用玩家自己的皮膚演（2026-10）：有裝就用，沒裝照舊（全部用反射接，不用 join-classpath）
+    BetterModel:
+      load: BEFORE
+      required: false
+      join-classpath: false

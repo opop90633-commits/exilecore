@@ -1,0 +1,114 @@
+category	name_en	name_zh	level	str	dex	int	phys_min	phys_max	other_dmg	aps	crit	range	implicit
+bow	Crude Bow	粗製弓	1				6	9		1.2	5		
+bow	Shortbow	短弓	5		12		7	14		1.25	5		
+bow	Warden Bow	守護者之弓	11		23		12	20		1.15	5		有(25—35)%機率額外連鎖一次 | (25—35)% chance to Chain an additional time
+bow	Recurve Bow	反曲弓	16		31		15	31		1.1	5		
+bow	Composite Bow	合成弓	22		41		19	31		1.2	5		
+bow	Dualstring Bow	雙弦弓	28		52		19	35		1.15	5		+50%滿溢機率發射額外一枚箭矢 | +50% Surpassing chance to fire an additional Arrow
+bow	Cultist Bow	教徒之弓	33		60		22	36	chaos:7-19	1.2	5		隱藏詞綴：附加7至19混沌傷害 | hidden: added 7-19 chaos damage
+bow	Zealot Bow	狂熱者之弓	39		70		31	47		1.2	5		
+bow	Artillery Bow	砲火弓	45		80		39	72		1.1	5		減少50%投射物範圍 | 50% reduced Projectile Range
+bow	Snakewood Shortbow	蛇木短弓	45		80		29	54		1.25	5		
+bow	Protector Bow	保衛者之弓	48		86		35	53		1.15	5		有(25—35)%機率額外連鎖一次 | (25—35)% chance to Chain an additional time
+bow	Tribal Bow	部落弓	50		89		38	57		1.2	5		
+bow	Rider Bow	騎士之弓	51		91		36	61		1.2	5		
+bow	Greatbow	巨弓	52	92	92		40	82		1.15	6.5		
+bow	Twin Bow	雙生之弓	54		96		32	60		1.15	5		+50%滿溢機率發射額外一枚箭矢 | +50% Surpassing chance to fire an additional Arrow
+bow	Double Limb Bow	雙肢弓	56		99		42	63		1.2	5		
+bow	Adherent Bow	信徒之弓	59		104		35	59	chaos:14-32	1.2	5		隱藏詞綴：附加14至32混沌傷害 | hidden: added 14-32 chaos damage
+bow	Militant Bow	好戰者之弓	62		109		46	69		1.2	5		
+bow	Heavy Bow	重弓	65		114		45	75		1.2	5		
+bow	Ironwood Shortbow	鐵木短弓	67		134		41	76		1.25	5		
+bow	Heartwood Shortbow	赤木之弓	67		134		41	76		1.25	5		
+bow	Cavalry Bow	騎兵之弓	72		149		49	82		1.2	5		
+bow	Guardian Bow	防衛者之弓	77		163		53	88		1.15	5		有(25—35)%機率額外連鎖一次 | (25—35)% chance to Chain an additional time
+bow	Warmonger Bow	狂戰者之弓	77		163		56	84		1.2	5		
+bow	Gemini Bow	雙子之弓	78		163		39	72		1.15	5		+50%滿溢機率發射額外一枚箭矢 | +50% Surpassing chance to fire an additional Arrow
+bow	Obliterator Bow	毀滅者之弓	78		163		62	115		1.1	5		減少50%投射物範圍 | 50% reduced Projectile Range
+bow	Fanatic Bow	盲信之弓	79		163		47	79	chaos:28-64	1.2	5		隱藏詞綴：附加28至64混沌傷害 | hidden: added 28-64 chaos damage
+crossbow	Makeshift Crossbow	臨時十字弓	1				7	12		1.6	5		
+crossbow	Tense Crossbow	緊繃十字弓	4	8	8		8	15		1.6	5		增加(20—30)%弩箭速度 | (20—30)% increased Bolt Speed
+crossbow	Sturdy Crossbow	堅固十字弓	10	13	13		11	26		1.55	5		
+crossbow	Varnished Crossbow	亮漆十字弓	16	19	19		12	36		1.6	5		
+crossbow	Dyad Crossbow	雙生十字弓	20	22	22		9	37		1.6	5		裝填額外1發弩箭 | Loads an additional bolt
+crossbow	Alloy Crossbow	合金十字弓	26	28	28		12	50		1.7	5		
+crossbow	Bombard Crossbow	轟擊十字弓	33	34	34		14	56		1.65	5		擲彈技能發射額外1個投射物 | Grenade Skills Fire 1 additional Projectiles
+crossbow	Construct Crossbow	絕命十字弓	38	39	39		18	72		1.6	5		
+crossbow	Blackfire Crossbow	黑火十字弓	45	45	45		20	80		1.6	7		
+crossbow	Taut Crossbow	緊繃十字弓	45	45	45		20	79		1.6	5		增加(20—30)%弩箭速度 | (20—30)% increased Bolt Speed
+crossbow	Robust Crossbow	強健十字弓	48	48	48		22	89		1.55	5		
+crossbow	Piercing Crossbow	穿刺十字弓	50	49	49		21	84		1.65	5		有(20—30)%機率穿透一個敵人 | (20—30)% chance to Pierce an Enemy
+crossbow	Painted Crossbow	彩繪十字弓	51	50	50		23	92		1.6	5		
+crossbow	Cumbrous Crossbow	笨重十字弓	52	51	51		19	76		1.6	5		召喚砲塔圖騰最大數量+1 | +1 to maximum number of Summoned Ballista Totems
+crossbow	Twin Crossbow	成雙十字弓	54	53	53		20	82		1.6	5		裝填額外1發弩箭 | Loads an additional bolt
+crossbow	Dedalian Crossbow	精巧十字弓	56	55	55		25	99		1.55	7		
+crossbow	Cannonade Crossbow	砲擊十字弓	59	58	58		23	90		1.65	5		擲彈技能發射額外1個投射物 | Grenade Skills Fire 1 additional Projectiles
+crossbow	Bleak Crossbow	無情十字弓	62	60	60		27	109		1.6	5		
+crossbow	Esoteric Crossbow	秘傳十字弓	65	63	63		28	113		1.6	5		
+crossbow	Trarthan Cannon	特拉特斯巨砲	65	114	63		58	134		1.4	5		無法裝填或發射彈藥 | Cannot load or fire Ammunition
+crossbow	Stout Crossbow	牢固十字弓	67	74	74		30	119		1.55	5		
+crossbow	Engraved Crossbow	紋刻十字弓	72	82	82		31	124		1.6	5		
+crossbow	Flexed Crossbow	屈曲十字弓	77	89	89		32	127		1.6	5		增加(20—30)%弩箭速度 | (20—30)% increased Bolt Speed
+crossbow	Desolate Crossbow	蒼涼十字弓	77	89	89		33	132		1.6	5		
+crossbow	Gemini Crossbow	雙子十字弓	78	89	89		28	112		1.6	5		裝填額外1發弩箭 | Loads an additional bolt
+crossbow	Elegant Crossbow	優雅十字弓	78	89	89		31	123		1.65	5		有(20—30)%機率穿透一個敵人 | (20—30)% chance to Pierce an Enemy
+crossbow	Siege Crossbow	攻城十字弓	79	89	89		29	115		1.65	5		擲彈技能發射額外1個投射物 | Grenade Skills Fire 1 additional Projectiles
+wand	Withered Wand	凋零法杖	1										賦予技能: 混沌弩箭 | Grants Skill: Chaos Bolt
+wand	Bone Wand	骸骨法杖	2										賦予技能: 骨之爆破 | Grants Skill: Bone Blast
+wand	Attuned Wand	調和法杖	2										賦予技能: 魔力吸取 | Grants Skill: Mana Drain
+wand	Siphoning Wand	虹吸法杖	11			23							賦予技能: 力量抽取 | Grants Skill: Power Siphon
+wand	Volatile Wand	失衡法杖	16			31							賦予技能: 致命之息 | Grants Skill: Volatile Dead
+wand	Galvanic Wand	電能法杖	25			46							賦予技能: 電光領域 | Grants Skill: Galvanic Field
+wand	Acrid Wand	刺鼻法杖	33			60							賦予技能: 分解 | Grants Skill: Decompose
+wand	Offering Wand	奉獻法杖	38			68							賦予技能: 抽血 | Grants Skill: Exsanguinate
+wand	Frigid Wand	冰冷法杖	45			80							賦予技能: 混沌弩箭 | Grants Skill: Chaos Bolt
+wand	Torture Wand	暴虐法杖	49			87							賦予技能: 混沌弩箭 | Grants Skill: Chaos Bolt
+wand	Critical Wand	致命法杖	52			92							賦予技能: 混沌弩箭 | Grants Skill: Chaos Bolt
+wand	Primordial Wand	原始法杖	56			99							賦予技能: 死亡凋零 | Grants Skill: Wither
+wand	Dueling Wand	單挑法杖	65			114							賦予技能: 拋法者 | Grants Skill: Spellslinger
+wand	Twisted Wand	扭曲法杖	65			114							賦予技能: 寂纏彈 | Grants Skill: Coiling Bolts
+wand	Runic Fork	符文尖叉	65			114							
+staff	Ashen Staff	灰燼長杖	1										賦予技能: 火彈 | Grants Skill: Firebolt
+staff	Gelid Staff	極寒長杖	2										賦予技能: 冰凍裂片 | Grants Skill: Freezing Shards
+staff	Voltaic Staff	電流長杖	2										賦予技能: 雷彈 | Grants Skill: Lightning Bolt
+staff	Spriggan Staff	狡詐長杖	11			23							賦予技能: 火彈 | Grants Skill: Firebolt
+staff	Pyrophyte Staff	炎植長杖	16			31							賦予技能: 日耀球 | Grants Skill: Solar Orb
+staff	Chiming Staff	鳴響長杖	25			46							賦予技能: 咒符之力 | Grants Skill: Sigil of Power
+staff	Rending Staff	撕裂長杖	33			60							賦予技能: 靈體撕裂 | Grants Skill: Soulrend
+staff	Reaping Staff	死神長杖	38			68							賦予技能: 收割 | Grants Skill: Reap
+staff	Icicle Staff	冰錐長杖	45			80							賦予技能: 火彈 | Grants Skill: Firebolt
+staff	Roaring Staff	咆哮長杖	49			87							賦予技能: 釋放 | Grants Skill: Unleash
+staff	Paralysing Staff	麻木長杖	52			92							賦予技能: 超能新星 | Grants Skill: Enervating Nova
+staff	Sanctified Staff	神化長杖	56			99							賦予技能: 奉獻 | Grants Skill: Consecrate
+staff	Dark Staff	黑暗長杖	65			114							賦予技能: 暗夜血契 | Grants Skill: Dark Pact
+staff	Ravenous Staff	貪婪長杖	65			114							賦予技能: 血肉盛宴 | Grants Skill: Feast of Flesh
+staff	Perching Staff	棲羽長杖	65			114							賦予技能: 邪鴉旋纏 | Grants Skill: Spiraling Conspiracy
+staff	Reflecting Staff	映像長杖	70			114							賦予技能: 鏡面折射 | Grants Skill: Mirror of Refraction
+staff	Permafrost Staff	永凍長杖	75			114							賦予技能: 冰雪之心 | Grants Skill: Heart of Ice
+sceptre	Rattling Sceptre	雜響權杖	1										精魂 +100 | Spirit: 100; 賦予技能: 骷髏戰士 | Grants Skill: Skeletal Warrior
+sceptre	Stoic Sceptre	魔道權杖	6			12							精魂 +100 | Spirit: 100; 賦予技能: 紀律 | Grants Skill: Discipline
+sceptre	Lupine Sceptre	兇殘權杖	12			24							精魂 +100 | Spirit: 100; 賦予技能: 骷髏戰士 | Grants Skill: Skeletal Warrior
+sceptre	Omen Sceptre	徵兆權杖	16	12		25							精魂 +100 | Spirit: 100; 賦予技能: 絕滅恨惡 | Grants Skill: Malice
+sceptre	Ochre Sceptre	赤色權杖	21			40							精魂 +100 | Spirit: 100; 賦予技能: 骷髏戰士 | Grants Skill: Skeletal Warrior
+sceptre	Shrine Sceptre	神殿權杖	26	17		38							精魂 +100 | Spirit: 100; 賦予技能: 火焰淨化 | Grants Skill: Purity of Fire
+sceptre	Shrine Sceptre	神殿權杖	26	17		38							精魂 +100 | Spirit: 100; 賦予技能: 冰霜淨化 | Grants Skill: Purity of Ice
+sceptre	Shrine Sceptre	神殿權杖	26	17		38							精魂 +100 | Spirit: 100; 賦予技能: 閃電淨化 | Grants Skill: Purity of Lightning
+sceptre	Shrine Sceptre	神殿權杖	26	17		38							精魂 +100 | Spirit: 100; 賦予技能: 不淨 | Grants Skill: Impurity
+sceptre	Devouring Sceptre	吞噬權杖	33			60							精魂 +100 | Spirit: 100; 賦予技能: 骷髏戰士 | Grants Skill: Skeletal Warrior
+sceptre	Clasped Sceptre	握扣權杖	36			65							精魂 +100 | Spirit: 100; 賦予技能: 冰雪之心 | Grants Skill: Heart of Ice
+sceptre	Devotional Sceptre	虔誠權杖	45	26		63							精魂 +100 | Spirit: 100; 賦予技能: 骷髏戰士 | Grants Skill: Skeletal Warrior
+sceptre	Wrath Sceptre	暴怒權杖	49			87							精魂 +100 | Spirit: 100; 賦予技能: 劇烈爆發 | Grants Skill: Fulmination
+sceptre	Aromatic Sceptre	芳香權杖	52			92							精魂 +100 | Spirit: 100; 賦予技能: 骷髏戰士 | Grants Skill: Skeletal Warrior
+sceptre	Pious Sceptre	敬神權杖	58			102							精魂 +100 | Spirit: 100; 賦予技能: 骷髏戰士 | Grants Skill: Skeletal Warrior
+sceptre	Hallowed Sceptre	聖潔權杖	65			114							精魂 +100 | Spirit: 100; 賦予技能: 骷髏戰士 | Grants Skill: Skeletal Warrior
+quiver	Broadhead Quiver	寬頭箭袋	1										攻擊附加1至3物理傷害 | Adds 1 to 3 Physical Damage to Attacks
+quiver	Fire Quiver	火焰箭袋	8										攻擊附加3至5火焰傷害 | Adds 3 to 5 Fire damage to Attacks
+quiver	Sacral Quiver	聖禮箭袋	16										攻擊每擊中一名敵人，獲得(2—3)生命 | Gain (2—3) Life per Enemy Hit with Attacks
+quiver	Two-Point Quiver	雙尖箭袋	24										增加(20—30)%命中值 | (20—30)% increased Accuracy Rating
+quiver	Blunt Quiver	鈍箭袋	33										增加(25—40)%暈眩累積 | (25—40)% increased Stun Buildup
+quiver	Toxic Quiver	劇毒箭袋	39										攻擊有(20—30)%機率在擊中時造成中毒 | (20—30)% chance to Poison on Hit with Attacks
+quiver	Serrated Quiver	鋸齒箭袋	44										攻擊有(20—30)%機率造成流血 | Attacks have (20—30)% chance to cause Bleeding
+quiver	Primed Quiver	灌注箭袋	51										增加(7—10)%攻擊速度 | (7—10)% increased Attack Speed
+quiver	Penetrating Quiver	穿透箭袋	55										有100%機率穿透一個敵人 | 100% chance to Pierce an Enemy
+quiver	Volant Quiver	速射箭袋	61										增加(20—30)%箭矢速度 | (20—30)% increased Arrow Speed
+quiver	Visceral Quiver	內臟箭袋	65										增加(20—30)%攻擊暴擊率 | (20—30)% increased Critical Hit Chance for Attacks

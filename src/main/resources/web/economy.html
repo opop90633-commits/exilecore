@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星骸 市場報告</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0d1a'/%3E%3Cpolygon points='32,6 38,25 58,25 42,37 48,57 32,45 16,57 22,37 6,25 26,25' fill='%23f5b942'/%3E%3C/svg%3E">
+<style>
+  .viz-root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface-1: #fcfcfb;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --track: #cde2fb;
+    --good-text: #006300;
+    --bad-text: #d03b3b;
+    --warning: #fab219;
+    --wash: rgba(11, 11, 11, 0.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --page: #0d0d0d;
+      --surface-1: #1a1a19;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255, 255, 255, 0.10);
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --track: #184f95;
+      --good-text: #0ca30c;
+      --bad-text: #e66767;
+      --warning: #fab219;
+      --wash: rgba(255, 255, 255, 0.06);
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface-1: #1a1a19;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --track: #184f95;
+    --good-text: #0ca30c;
+    --bad-text: #e66767;
+    --warning: #fab219;
+    --wash: rgba(255, 255, 255, 0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: #f9f9f7; }
+  .viz-root {
+    min-height: 100vh; background: var(--page); color: var(--text-primary);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px; line-height: 1.5; padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header .sub { margin: 4px 0 0; color: var(--text-secondary); }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 20px; }
+  .filters button {
+    font: inherit; color: var(--text-primary); background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 12px; cursor: pointer;
+  }
+  .filters button:hover { background: var(--wash); }
+  .filters button[aria-pressed="true"] { font-weight: 600; border-color: var(--text-secondary); }
+  .filters button[aria-pressed="true"]::before { content: "✓ "; font-weight: 700; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .tile .label { color: var(--text-secondary); font-size: 13px; }
+  .tile .value { font-size: 28px; font-weight: 600; margin-top: 2px; }
+  .tile .delta { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .tile .delta .up { color: var(--good-text); }
+  .tile .delta .down { color: var(--bad-text); }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .card h2 { margin: 0; font-size: 16px; font-weight: 600; }
+  .card .note { margin: 4px 0 12px; color: var(--text-secondary); font-size: 13px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 4px; color: var(--text-secondary); font-size: 13px; }
+  .legend .key { display: inline-block; width: 16px; height: 2px; vertical-align: middle; margin-right: 6px; border-radius: 1px; }
+  .chart { position: relative; width: 100%; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart svg:focus { outline: 2px solid var(--series-1); outline-offset: 4px; border-radius: 4px; }
+  .axis text, .tick text { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .end-label { fill: var(--text-secondary); font-size: 12px; }
+  details { margin-top: 10px; }
+  summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-secondary); font-weight: 500; }
+  td { font-variant-numeric: tabular-nums; }
+  .scroll { overflow-x: auto; }
+  .meter { display: inline-block; width: 64px; height: 6px; border-radius: 3px; background: var(--track); vertical-align: middle; margin-right: 6px; position: relative; overflow: hidden; }
+  .meter > span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--series-1); border-radius: 3px; }
+  .flag { color: var(--text-secondary); font-size: 12px; margin-left: 4px; }
+  .flag .icon { color: var(--warning); }
+  .change-up { color: var(--good-text); }
+  .change-down { color: var(--bad-text); }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px 24px; }
+  .bars .row { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 8px; margin: 6px 0; }
+  .bars .row .name { color: var(--text-secondary); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bars .row svg { display: block; width: 100%; height: 22px; overflow: visible; }
+  .bars .row:focus-within .name { color: var(--text-primary); }
+  .empty { color: var(--text-muted); padding: 12px 0; }
+  .tooltip {
+    position: fixed; z-index: 10; pointer-events: none; background: var(--surface-1); color: var(--text-primary);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); min-width: 140px;
+  }
+  .tooltip .title { color: var(--text-secondary); margin-bottom: 4px; }
+  .tooltip .line { display: flex; align-items: center; gap: 8px; }
+  .tooltip .line .k { display: inline-block; width: 12px; height: 2px; border-radius: 1px; }
+  .tooltip .line .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tooltip .line .n { color: var(--text-secondary); }
+  footer { color: var(--text-muted); font-size: 12px; margin-top: 8px; }
+  .loading { opacity: 0.55; }
+</style>
+</head>
+<body>
+<main class="viz-root">
+  <div class="wrap" id="root">
+    <header>
+      <h1>市場報告</h1>
+      <p class="sub">《星骸》全服的通貨與金幣，每天從哪裡來、到哪裡去。只有加總，沒有個人資料。</p>
+    </header>
+    <div class="filters" role="group" aria-label="期間">
+      <button type="button" data-days="7" aria-pressed="true">最近 7 天</button>
+      <button type="button" data-days="30" aria-pressed="false">最近 30 天</button>
+    </div>
+    <section class="kpis" id="kpis" aria-label="重點數字"></section>
+    <section class="card">
+      <h2>通貨：每天的產出與消耗（折合金幣）</h2>
+      <p class="note">產出＝怪物掉落、拆解、NPC 給的；消耗＝做裝備與地圖、開技能孔、地圖裝置、垃圾桶。兩條線之間的差，就是全服通貨每天變多的量。</p>
+      <div class="legend" id="legend-currency"></div>
+      <div class="chart" id="chart-currency"></div>
+      <details><summary>看數字</summary><div class="scroll"><table id="table-currency"></table></div></details>
+    </section>
+    <section class="card">
+      <h2>每種通貨</h2>
+      <p class="note">消耗不到產出一半的標「累積中」：會越來越多、越來越不值錢。參考價值跟著交易所的成交價走，走勢以設定值＝100。</p>
+      <div class="scroll"><table id="currencies"></table></div>
+    </section>
+    <section class="card two">
+      <div><h2>通貨從哪裡來</h2><p class="note">這段期間，照現在的參考價值折合金幣</p><div class="bars" id="currency-sources"></div></div>
+      <div><h2>通貨到哪裡去</h2><p class="note">這段期間，照現在的參考價值折合金幣</p><div class="bars" id="currency-sinks"></div></div>
+    </section>
+    <section class="card">
+      <h2>金幣：每天的產出與消耗</h2>
+      <p class="note">金幣不能交易，刷再多也不會推高市集的價格；這裡看金幣有沒有地方花（賭博、商人、手續費、退點）。</p>
+      <div class="legend" id="legend-gold"></div>
+      <div class="chart" id="chart-gold"></div>
+      <details><summary>看數字</summary><div class="scroll"><table id="table-gold"></table></div></details>
+      <div class="two" style="margin-top:16px">
+        <div><h2>金幣從哪裡來</h2><div class="bars" id="gold-sources"></div></div>
+        <div><h2>金幣花在哪裡</h2><div class="bars" id="gold-sinks"></div></div>
+      </div>
+    </section>
+    <footer id="footer"></footer>
+  </div>
+  <div class="tooltip" id="tooltip" role="status" aria-live="polite" hidden></div>
+</main>
+<script>
+(() => {
+  'use strict';
+  const root = document.getElementById('root');
+  const tooltip = document.getElementById('tooltip');
+  const numberFormat = new Intl.NumberFormat('zh-TW');
+  const compactFormat = new Intl.NumberFormat('zh-TW', { notation: 'compact', maximumFractionDigits: 1 });
+  const fmt = (n) => numberFormat.format(Math.round(n));
+  const compact = (n) => Math.abs(n) < 10000 ? fmt(n) : compactFormat.format(n);
+  const dayLabel = (day) => { const p = day.split('-'); return (+p[1]) + '/' + (+p[2]); };
+  const css = (name) => getComputedStyle(root).getPropertyValue(name).trim();
+  const SVG = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, parent) => {
+    const node = document.createElementNS(SVG, tag);
+    for (const [k, v] of Object.entries(attrs || {})) node.setAttribute(k, v);
+    if (parent) parent.appendChild(node);
+    return node;
+  };
+  const html = (tag, text, cls) => {
+    const node = document.createElement(tag);
+    if (text !== undefined && text !== null) node.textContent = text;
+    if (cls) node.className = cls;
+    return node;
+  };
+
+  let data = null;
+  let days = 7;
+
+  // ---- 資料整理 ----
+
+  /** 每種通貨每一天的參考價值：沒有的那天用前一天的（最前面用第一個有的、再沒有用設定值）。 */
+  function valueSeries(currency) {
+    const out = new Array(data.days.length);
+    let last = null;
+    for (let i = 0; i < out.length; i++) {
+      if (currency.value[i] != null) last = currency.value[i];
+      out[i] = last;
+    }
+    const first = out.find((v) => v != null);
+    for (let i = 0; i < out.length; i++) {
+      if (out[i] == null) out[i] = first != null ? first : currency.configured;
+    }
+    return out;
+  }
+
+  function range() {
+    const n = data.days.length;
+    const from = Math.max(0, n - days);
+    return { from, to: n, prevFrom: Math.max(0, from - days), prevTo: from };
+  }
+
+  const sum = (arr, from, to) => { let s = 0; for (let i = from; i < to; i++) s += arr[i] || 0; return s; };
+
+  function currencyTotals(from, to) {
+    let produced = 0, consumed = 0;
+    const rows = [];
+    for (const c of data.currencies) {
+      const values = valueSeries(c);
+      let pv = 0, cv = 0;
+      for (let i = from; i < to; i++) {
+        pv += (c.produced[i] || 0) * values[i];
+        cv += (c.consumed[i] || 0) * values[i];
+      }
+      produced += pv;
+      consumed += cv;
+      rows.push({ c, values, pv, cv, p: sum(c.produced, from, to), q: sum(c.consumed, from, to) });
+    }
+    return { produced, consumed, rows };
+  }
+
+  function dailyCurrencyValue(kind) {
+    const out = new Array(data.days.length).fill(0);
+    for (const c of data.currencies) {
+      const values = valueSeries(c);
+      for (let i = 0; i < out.length; i++) out[i] += (c[kind][i] || 0) * values[i];
+    }
+    return out;
+  }
+
+  function stockValue(index) {
+    let total = 0, any = false;
+    for (const c of data.currencies) {
+      const s = c.stock[index];
+      if (s != null) { any = true; total += s * valueSeries(c)[index]; }
+    }
+    return any ? total : null;
+  }
+
+  // ---- 重點數字 ----
+
+  function tile(label, value, delta) {
+    const t = html('div', null, 'tile');
+    t.appendChild(html('div', label, 'label'));
+    t.appendChild(html('div', value, 'value'));
+    if (delta) t.appendChild(delta);
+    return t;
+  }
+
+  function deltaLine(diff, unit, goodWhenUp, period) {
+    const d = html('div', null, 'delta');
+    if (diff == null || !isFinite(diff)) { d.textContent = '　'; return d; }
+    const up = diff > 0;
+    const span = html('span', (up ? '▲ ' : diff < 0 ? '▼ ' : '') + (up ? '+' : '') + diff + unit,
+      diff === 0 ? '' : (up === goodWhenUp ? 'up' : 'down'));
+    d.appendChild(span);
+    d.appendChild(document.createTextNode(' 比' + period));
+    return d;
+  }
+
+  function renderKpis() {
+    const box = document.getElementById('kpis');
+    box.replaceChildren();
+    const r = range();
+    const now = currencyTotals(r.from, r.to);
+    const before = r.prevTo > r.prevFrom ? currencyTotals(r.prevFrom, r.prevTo) : null;
+    const ratio = now.produced > 0 ? Math.round(now.consumed * 100 / now.produced) : null;
+    const prevRatio = before && before.produced > 0 ? Math.round(before.consumed * 100 / before.produced) : null;
+    const period = '前 ' + days + ' 天';
+    box.appendChild(tile('通貨消耗佔產出', ratio == null ? '—' : ratio + '%',
+      deltaLine(ratio != null && prevRatio != null ? ratio - prevRatio : null, ' 個百分點', true, period)));
+    const gp = sum(data.gold.produced, r.from, r.to), gc = sum(data.gold.consumed, r.from, r.to);
+    const gpPrev = sum(data.gold.produced, r.prevFrom, r.prevTo), gcPrev = sum(data.gold.consumed, r.prevFrom, r.prevTo);
+    const goldRatio = gp > 0 ? Math.round(gc * 100 / gp) : null;
+    const goldPrev = gpPrev > 0 ? Math.round(gcPrev * 100 / gpPrev) : null;
+    box.appendChild(tile('金幣消耗佔產出', goldRatio == null ? '—' : goldRatio + '%',
+      deltaLine(goldRatio != null && goldPrev != null ? goldRatio - goldPrev : null, ' 個百分點', true, period)));
+    let lastStock = null, firstStock = null;
+    for (let i = r.to - 1; i >= r.from; i--) { const v = stockValue(i); if (v != null) { lastStock = v; break; } }
+    for (let i = r.from; i < r.to; i++) { const v = stockValue(i); if (v != null) { firstStock = v; break; } }
+    const growth = lastStock != null && firstStock ? Math.round((lastStock - firstStock) * 100 / firstStock) : null;
+    box.appendChild(tile('全服通貨存量（折合金幣）', lastStock == null ? '—' : compact(lastStock),
+      deltaLine(growth, '%', false, '這段期間第一天')));
+    const active = data.active.slice(r.from, r.to);
+    const playedDays = active.filter((v) => v > 0);
+    const avg = playedDays.length ? Math.round(playedDays.reduce((a, b) => a + b, 0) / playedDays.length) : 0;
+    box.appendChild(tile('每天有殺怪的帳號（平均）', fmt(avg), null));
+  }
+
+  // ---- 折線圖（產出、消耗） ----
+
+  function niceMax(max) {
+    if (max <= 0) return 1;
+    const pow = Math.pow(10, Math.floor(Math.log10(max)));
+    for (const step of [1, 2, 2.5, 5, 10]) {
+      if (step * pow >= max) return step * pow;
+    }
+    return 10 * pow;
+  }
+
+  function renderLines(container, legend, series, labels, unitNote) {
+    container.replaceChildren();
+    legend.replaceChildren();
+    for (const s of series) {
+      const item = html('span');
+      const key = html('span', null, 'key');
+      key.style.background = css(s.color);
+      item.appendChild(key);
+      item.appendChild(document.createTextNode(s.name));
+      legend.appendChild(item);
+    }
+    const width = Math.max(320, container.clientWidth || 640);
+    const plotH = 200, top = 12, bottom = 28, left = 56, right = 56;
+    const height = top + plotH + bottom;
+    const n = labels.length;
+    const max = niceMax(Math.max(1, ...series.flatMap((s) => s.values)));
+    const x = (i) => left + (n <= 1 ? 0 : i * (width - left - right) / (n - 1));
+    const y = (v) => top + plotH - (v / max) * plotH;
+    const svg = el('svg', { viewBox: `0 0 ${width} ${height}`, role: 'img', tabindex: '0',
+      'aria-label': series.map((s) => s.name).join('與') + '，每天' + (unitNote || '') + '；方向鍵逐日查看' }, container);
+    const grid = el('g', { class: 'tick' }, svg);
+    for (let t = 0; t <= 4; t++) {
+      const v = max * t / 4;
+      const yy = y(v);
+      el('line', { x1: left, x2: width - right, y1: yy, y2: yy, stroke: t === 0 ? css('--baseline') : css('--grid'), 'stroke-width': 1 }, grid);
+      const text = el('text', { x: left - 8, y: yy + 4, 'text-anchor': 'end' }, grid);
+      text.textContent = compact(v);
+    }
+    const axis = el('g', { class: 'axis' }, svg);
+    const every = Math.max(1, Math.ceil(n / 7));
+    for (let i = 0; i < n; i++) {
+      if ((n - 1 - i) % every !== 0) continue;
+      const text = el('text', { x: x(i), y: top + plotH + 18, 'text-anchor': 'middle' }, axis);
+      text.textContent = dayLabel(labels[i]);
+    }
+    const ends = [];
+    for (const s of series) {
+      const d = s.values.map((v, i) => (i === 0 ? 'M' : 'L') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+      el('path', { d, fill: 'none', stroke: css(s.color), 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
+      const last = s.values.length - 1;
+      el('circle', { cx: x(last), cy: y(s.values[last]), r: 4, fill: css(s.color), stroke: css('--surface-1'), 'stroke-width': 2 }, svg);
+      ends.push({ s, y: y(s.values[last]) });
+    }
+    // 線尾的名稱：兩條靠太近就不放（看圖例）
+    if (ends.length < 2 || Math.abs(ends[0].y - ends[1].y) >= 16) {
+      for (const end of ends) {
+        const text = el('text', { x: width - right + 8, y: end.y + 4, class: 'end-label' }, svg);
+        text.textContent = end.s.name;
+      }
+    }
+    const cross = el('line', { y1: top, y2: top + plotH, stroke: css('--text-muted'), 'stroke-width': 1, visibility: 'hidden' }, svg);
+    const hit = el('rect', { x: left, y: top, width: Math.max(1, width - left - right), height: plotH, fill: 'transparent' }, svg);
+    let index = n - 1;
+    const show = (i, clientX, clientY) => {
+      index = Math.max(0, Math.min(n - 1, i));
+      cross.setAttribute('x1', x(index));
+      cross.setAttribute('x2', x(index));
+      cross.setAttribute('visibility', 'visible');
+      tooltip.replaceChildren();
+      tooltip.appendChild(html('div', labels[index], 'title'));
+      for (const s of series) {
+        const line = html('div', null, 'line');
+        const k = html('span', null, 'k');
+        k.style.background = css(s.color);
+        line.appendChild(k);
+        line.appendChild(html('span', fmt(s.values[index]), 'v'));
+        line.appendChild(html('span', s.name, 'n'));
+        tooltip.appendChild(line);
+      }
+      if (series.length === 2) {
+        const net = series[0].values[index] - series[1].values[index];
+        const line = html('div', null, 'line');
+        line.appendChild(html('span', (net > 0 ? '+' : '') + fmt(net), 'v'));
+        line.appendChild(html('span', '淨增加', 'n'));
+        tooltip.appendChild(line);
+      }
+      tooltip.hidden = false;
+      const box = svg.getBoundingClientRect();
+      const px = clientX != null ? clientX : box.left + x(index) * box.width / width;
+      const py = clientY != null ? clientY : box.top + top * box.height / height;
+      const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+      let left2 = px + 14;
+      if (left2 + tw > window.innerWidth - 8) left2 = px - tw - 14;
+      tooltip.style.left = Math.max(8, left2) + 'px';
+      tooltip.style.top = Math.max(8, Math.min(window.innerHeight - th - 8, py - th / 2)) + 'px';
+    };
+    const hide = () => { cross.setAttribute('visibility', 'hidden'); tooltip.hidden = true; };
+    hit.addEventListener('pointermove', (event) => {
+      const box = svg.getBoundingClientRect();
+      const sx = (event.clientX - box.left) * width / box.width;
+      show(Math.round((sx - left) / ((width - left - right) / Math.max(1, n - 1))), event.clientX, event.clientY);
+    });
+    hit.addEventListener('pointerleave', hide);
+    svg.addEventListener('focus', () => show(index));
+    svg.addEventListener('blur', hide);
+    svg.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') { show(index - 1); event.preventDefault(); }
+      if (event.key === 'ArrowRight') { show(index + 1); event.preventDefault(); }
+      if (event.key === 'Escape') hide();
+    });
+  }
+
+  function renderDayTable(table, labels, series) {
+    table.replaceChildren();
+    const head = table.createTHead().insertRow();
+    head.appendChild(html('th', '日期'));
+    for (const s of series) head.appendChild(html('th', s.name));
+    if (series.length === 2) head.appendChild(html('th', '淨增加'));
+    const body = table.createTBody();
+    for (let i = labels.length - 1; i >= 0; i--) {
+      const row = body.insertRow();
+      row.appendChild(html('td', labels[i]));
+      for (const s of series) row.appendChild(html('td', fmt(s.values[i])));
+      if (series.length === 2) row.appendChild(html('td', fmt(series[0].values[i] - series[1].values[i])));
+    }
+  }
+
+  // ---- 橫條（來源、去處） ----
+
+  function renderBars(container, entries, color) {
+    container.replaceChildren();
+    const list = entries.filter((e) => e.value > 0).sort((a, b) => b.value - a.value);
+    if (!list.length) { container.appendChild(html('div', '這段期間沒有', 'empty')); return; }
+    const max = list[0].value;
+    const total = list.reduce((a, e) => a + e.value, 0);
+    for (const e of list) {
+      const row = html('div', null, 'row');
+      row.appendChild(html('div', e.label, 'name'));
+      const holder = html('div');
+      row.appendChild(holder);
+      container.appendChild(row);
+      // 照實際寬度畫（字不會被拉長）
+      const width = Math.max(120, holder.clientWidth || 300);
+      const svg = el('svg', { viewBox: `0 0 ${width} 22`, role: 'img', tabindex: '0', 'aria-label': e.label + ' ' + fmt(e.value) }, holder);
+      const valueWidth = 64;
+      const w = Math.max(4, (width - valueWidth) * e.value / max);
+      const h = 14, yTop = 4, r = Math.min(4, w / 2);
+      // 從左邊的基準長出來：左邊方的、右邊（資料端）圓角
+      el('path', { d: `M0 ${yTop} H${w - r} Q${w} ${yTop} ${w} ${yTop + r} V${yTop + h - r} Q${w} ${yTop + h} ${w - r} ${yTop + h} H0 Z`,
+        fill: css(color) }, svg);
+      const text = el('text', { x: w + 6, y: yTop + h - 3, class: 'end-label' }, svg);
+      text.textContent = compact(e.value);
+      const tip = (clientX, clientY) => {
+        tooltip.replaceChildren();
+        tooltip.appendChild(html('div', e.label, 'title'));
+        const line = html('div', null, 'line');
+        line.appendChild(html('span', fmt(e.value), 'v'));
+        line.appendChild(html('span', '佔 ' + Math.round(e.value * 100 / total) + '%', 'n'));
+        tooltip.appendChild(line);
+        tooltip.hidden = false;
+        const box = svg.getBoundingClientRect();
+        const px = clientX != null ? clientX : box.left + Math.min(w, box.width) / 2;
+        const py = clientY != null ? clientY : box.top;
+        tooltip.style.left = Math.max(8, Math.min(window.innerWidth - tooltip.offsetWidth - 8, px + 12)) + 'px';
+        tooltip.style.top = Math.max(8, py - tooltip.offsetHeight - 8) + 'px';
+      };
+      svg.addEventListener('pointermove', (event) => tip(event.clientX, event.clientY));
+      svg.addEventListener('pointerleave', () => { tooltip.hidden = true; });
+      svg.addEventListener('focus', () => tip());
+      svg.addEventListener('blur', () => { tooltip.hidden = true; });
+    }
+  }
+
+  // ---- 每種通貨的表格 ----
+
+  function sparkline(values, configured) {
+    const w = 84, h = 22;
+    const svg = el('svg', { width: w, height: h, viewBox: `0 0 ${w} ${h}`, 'aria-hidden': 'true' });
+    const index = values.map((v) => v * 100 / configured);
+    const lo = Math.min(90, ...index), hi = Math.max(110, ...index);
+    const x = (i) => 2 + i * (w - 6) / Math.max(1, index.length - 1);
+    const y = (v) => h - 3 - (v - lo) / (hi - lo) * (h - 6);
+    el('line', { x1: 2, x2: w - 2, y1: y(100), y2: y(100), stroke: css('--grid'), 'stroke-width': 1 }, svg);
+    el('path', { d: index.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' '),
+      fill: 'none', stroke: css('--text-muted'), 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, svg);
+    const last = index.length - 1;
+    el('circle', { cx: x(last), cy: y(index[last]), r: 2.5, fill: css('--series-1') }, svg);
+    return svg;
+  }
+
+  function renderCurrencyTable() {
+    const table = document.getElementById('currencies');
+    table.replaceChildren();
+    const r = range();
+    const totals = currencyTotals(r.from, r.to);
+    const head = table.createTHead().insertRow();
+    for (const name of ['通貨', '產出', '消耗', '消耗佔產出', '全服存量', '參考價值', '走勢（設定值＝100）']) head.appendChild(html('th', name));
+    const body = table.createTBody();
+    const rows = totals.rows.filter((row) => row.p > 0 || row.q > 0 || row.c.stock.some((s) => s != null && s > 0));
+    rows.sort((a, b) => b.pv - a.pv);
+    if (!rows.length) {
+      const row = body.insertRow();
+      const cell = html('td', '還沒有資料：有人殺怪、做裝備之後，每 10 分鐘更新一次', 'empty');
+      cell.colSpan = 7;
+      row.appendChild(cell);
+      return;
+    }
+    for (const row of rows) {
+      const tr = body.insertRow();
+      const name = html('td', row.c.name);
+      tr.appendChild(name);
+      tr.appendChild(html('td', fmt(row.p)));
+      tr.appendChild(html('td', fmt(row.q)));
+      const ratioCell = html('td');
+      if (row.p > 0) {
+        const ratio = row.q / row.p;
+        const meter = html('span', null, 'meter');
+        const fill = html('span');
+        fill.style.width = Math.min(100, Math.round(ratio * 100)) + '%';
+        meter.appendChild(fill);
+        ratioCell.appendChild(meter);
+        ratioCell.appendChild(document.createTextNode(Math.round(ratio * 100) + '%'));
+        if (ratio < 0.5) {
+          const flag = html('span', null, 'flag');
+          flag.appendChild(html('span', '▲ ', 'icon'));
+          flag.appendChild(document.createTextNode('累積中'));
+          ratioCell.appendChild(flag);
+        }
+      } else {
+        ratioCell.textContent = '—';
+      }
+      tr.appendChild(ratioCell);
+      let stock = null;
+      for (let i = r.to - 1; i >= 0; i--) { if (row.c.stock[i] != null) { stock = row.c.stock[i]; break; } }
+      tr.appendChild(html('td', stock == null ? '—' : fmt(stock)));
+      const now = row.values[r.to - 1], then = row.values[r.from];
+      const valueCell = html('td', fmt(now));
+      if (then && now !== then) {
+        const change = Math.round((now - then) * 100 / then);
+        if (change !== 0) {
+          valueCell.appendChild(html('span', ' ' + (change > 0 ? '▲ +' : '▼ ') + change + '%', change > 0 ? 'change-up' : 'change-down'));
+        }
+      }
+      tr.appendChild(valueCell);
+      const sparkCell = html('td');
+      sparkCell.appendChild(sparkline(row.values.slice(r.from, r.to), row.c.configured));
+      tr.appendChild(sparkCell);
+    }
+  }
+
+  // ---- 全部畫一次 ----
+
+  function sourceEntries(totalsByKind) {
+    const out = [];
+    for (const [source, value] of Object.entries(totalsByKind)) {
+      out.push({ label: (data.sourceNames && data.sourceNames[source]) || source, value });
+    }
+    return out;
+  }
+
+  function flowsInRange(kind, side) {
+    // 這段期間每個來源（去處）的量；通貨照現在的參考價值折合金幣
+    const key = String(days);
+    if (kind === 'gold') return Object.assign({}, (data.gold[side] || {})[key] || {});
+    const totals = {};
+    for (const c of data.currencies) {
+      const map = (c[side] || {})[key] || {};
+      const values = valueSeries(c);
+      const value = values[values.length - 1];
+      for (const [k, v] of Object.entries(map)) totals[k] = (totals[k] || 0) + v * value;
+    }
+    return totals;
+  }
+
+  function render() {
+    if (!data) return;
+    const r = range();
+    const labels = data.days.slice(r.from, r.to);
+    renderKpis();
+    const produced = dailyCurrencyValue('produced').slice(r.from, r.to);
+    const consumed = dailyCurrencyValue('consumed').slice(r.from, r.to);
+    const currencySeries = [
+      { name: '產出', values: produced, color: '--series-1' },
+      { name: '消耗', values: consumed, color: '--series-2' },
+    ];
+    renderLines(document.getElementById('chart-currency'), document.getElementById('legend-currency'), currencySeries, labels, '折合金幣');
+    renderDayTable(document.getElementById('table-currency'), labels, currencySeries);
+    renderCurrencyTable();
+    renderBars(document.getElementById('currency-sources'), sourceEntries(flowsInRange('currency', 'sources')), '--series-1');
+    renderBars(document.getElementById('currency-sinks'), sourceEntries(flowsInRange('currency', 'sinks')), '--series-2');
+    const goldSeries = [
+      { name: '產出', values: data.gold.produced.slice(r.from, r.to), color: '--series-1' },
+      { name: '消耗', values: data.gold.consumed.slice(r.from, r.to), color: '--series-2' },
+    ];
+    renderLines(document.getElementById('chart-gold'), document.getElementById('legend-gold'), goldSeries, labels, '金幣');
+    renderDayTable(document.getElementById('table-gold'), labels, goldSeries);
+    renderBars(document.getElementById('gold-sources'), sourceEntries(flowsInRange('gold', 'sources')), '--series-1');
+    renderBars(document.getElementById('gold-sinks'), sourceEntries(flowsInRange('gold', 'sinks')), '--series-2');
+    const anchor = data.currencies.find((c) => c.id === data.anchor);
+    document.getElementById('footer').textContent = '更新時間 ' + data.generated + '（每 10 分鐘）。'
+      + (data.follow && anchor ? '參考價值跟著交易所的成交價走，以「' + anchor.name + '＝' + fmt(anchor.configured) + ' 金幣」為基準。'
+        : '參考價值用伺服器設定的固定值。')
+      + '存量＝通貨袋＋倉庫通貨頁＋市集待領＋交易所掛單（背包格子裡的不算）。';
+  }
+
+  for (const button of document.querySelectorAll('.filters button')) {
+    button.addEventListener('click', () => {
+      days = +button.dataset.days;
+      for (const other of document.querySelectorAll('.filters button')) other.setAttribute('aria-pressed', String(other === button));
+      render();
+    });
+  }
+  let resizeTimer = 0;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150); });
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+  }
+
+  async function load() {
+    root.classList.add('loading');
+    try {
+      const response = await fetch(location.pathname.replace(/\/+$/, '') + '/data.json', { cache: 'no-store' });
+      const json = await response.json();
+      if (!json.days || !json.days.length) throw new Error('沒有資料');
+      data = json;
+      render();
+    } catch (error) {
+      document.getElementById('kpis').replaceChildren(html('div', '讀不到資料（' + error.message + '）：伺服器剛開的話等幾分鐘再重新整理', 'empty'));
+    } finally {
+      root.classList.remove('loading');
+    }
+  }
+  load();
+  setInterval(load, 10 * 60 * 1000);
+})();
+</script>
+</body>
+</html>

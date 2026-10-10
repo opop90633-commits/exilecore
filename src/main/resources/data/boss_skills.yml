@@ -1,0 +1,2027 @@
+# Boss 招式（地圖 Boss、試煉 Boss、區域 Boss）
+# 改完 /ec reload 即可（正在打的 Boss 下一招就用新的）。
+#
+# 每隻 Boss 有一組招式（kit）：maps.yml／zones.yml 的 boss 寫 skills: 就用寫的，沒寫就照 defaults 裡那種生物的，
+# 再沒有就用 defaults.default。寫法：
+#   skills: [slam, charge]                                  只寫代號
+#   skills:
+#     - slam
+#     - { id: meteor_storm, phase: 1 }                       phase: 第幾階段起才會用（地圖 Boss 的 phases；0 = 一開始就會）
+#     - { id: summon_drowned, cooldown: 15, damage: 2.0 }    這隻 Boss 用這招時的冷卻、傷害倍率（覆蓋下面的設定）
+#
+# 招式的欄位（沒寫的用預設）：
+#   kind      slam 延遲落下（地上先畫圈再炸）、nova 以 Boss 為中心一圈、cone 前方扇形、volley 齊射魔法彈、
+#             zone 留一塊會一直傷害的地面、charge 衝鋒、summon 召喚小怪、curse 詛咒（受到的傷害增加）、blink 閃現到目標背後
+#   damage    「這隻 Boss 普通一下的幾倍」（跟 Boss 的等級、稀有度、maps.yml 的 damage 倍率一起長）
+#   type      physical／fire／cold／lightning／chaos：物理轉成這個類型，吃玩家的對應抗性
+#   cooldown  冷卻（秒）   range 目標在幾格內才會用   telegraph 前搖（秒，Boss 站著蓄力、地上畫紅色警告；
+#             會直接打到身邊的招至少 0.8，撲擊 0.9，才不會一瞬間跳臉）
+#   slam：delay 前搖結束後幾秒落下、radius 半徑、count 幾顆、stagger 每顆間隔、scatter 落點隨機偏移、at self／target／random
+#   nova／cone：radius／angle＋length、count 幾波、stagger 每波間隔
+#   volley：count 幾發、spread 扇形張角、speed 每 tick 幾格、reach 最遠幾格、size 碰撞半徑、explode 打中時爆炸的半徑
+#   zone：radius、duration 留幾秒、interval 幾秒一波、count 幾塊、scatter、at
+#   charge：speed 每 tick 衝幾格、reach 最遠衝幾格、width 路線左右幾格內會被撞到
+#   summon：summon 原版生物、count 一次幾隻、summon_max 同時最多幾隻、duration 小怪活幾秒（0 = 不限）
+#   curse：radius、duration、taken 受到的傷害增加幾 %
+#   blink：前搖時目標腳下畫圈（圈跟著目標走）；damage > 0 就是「撲擊」：落地後 0.7 秒在腳下炸一圈（radius），落地那一下用走的躲
+#   ---- 特殊機制（2026-10；放的時候 Boss 站著不動，地上會標出危險或安全的地方）----
+#   beam      光束掃射：count 道光束從 Boss 射出（length 長、左右各 width 格；2 道 = 一前一後、4 道 = 十字），前搖指著目標，
+#             之後 duration 秒內一起轉 angle 度（往哪邊轉隨機），掃到的人每 interval 秒挨一下——繞著 Boss 跑、跟著光束轉的方向走
+#   ring      擴散環：從 Boss 腳下往外擴散的環（從 radius 長到 reach，每 tick 長 speed 格、厚 width 格），count 波、每波隔 stagger 秒；
+#             環上有 gaps 個缺口（每個 gap_angle 度，地上畫綠色）——站進綠色的缺口；gaps: 0 的環要跑到 reach 外面
+#   pull      引力漩渦：duration 秒內把 radius 格內的人往 Boss 吸（每 tick speed 格，最多 0.15：跑步逃得掉），時間到在 explode 格內爆炸
+#   orbs      追蹤光球：叫出 count 顆光球，各自慢慢追一個玩家（每 tick speed 格，最多 0.25：比跑步慢），
+#             碰到人（size）或 duration 秒到了就在 explode 格內爆炸——帶著跑，別讓它們碰到
+#   sanctuary 全場大招（翻滾躲不掉）：前搖很長（預設 2.5 秒），radius 格內的人全部挨打；地上出現 count 個綠色安全區（半徑 safe、離 Boss 大約 scatter 格）
+#             ——躲進綠色的圈就沒事（傷害通常很高，站在外面基本上是死）
+#   場地危害（maps.yml／ascendancy.yml 的 boss 底下寫 hazards:）只能用 slam、zone、orbs：每隔幾秒自己落在某個玩家附近
+#   Boss 一次只做一件事（2026-10）：場地危害等 Boss 手上這一招放完才落（放完後的 gap 空檔裡就會落），落下之前不出新的招；
+#   齊射還在飛、擴散環還在擴散、光球放出去不到 2 秒也算這一招還沒完（留在地上的區域不算）。放招時 Boss 原版的動作
+#   （近戰、射箭、伏守者的音波）暫停；掛了這些招式的伏守者整場不用原版音波（音爆請用招式）
+#   同一招打到同一個人不會疊在一起（2026-10）：齊射的好幾發、重疊的落點 0.5 秒內只算第一下，光球一次只會被一顆打到，
+#   好幾塊地面效果疊在腳下也只照一塊算——damage 寫的就是「被這招打到一次」有多痛
+#   新星的前搖要夠從 Boss 身邊跑出去：telegraph ≥ (radius − 2) ÷ 5.6 + 0.5 秒（跑步每秒大約 5.6 格），不然打中一下不能太痛
+#   （單元測試：終局 Boss 來不及躲的招，最後一個階段、身上有牠的詛咒時，一下打不死滿血的參考角色）
+#   slow      打中的玩家緩速幾秒   visual 外觀（boss_physical／boss_fire／boss_cold／boss_lightning／boss_chaos，沒寫照 type）
+#   shout     發動時 Boss 喊的話（附近玩家看得到）
+#   hint      怎麼應對（終局與試煉 Boss 放「特殊招式」時，畫面中間的大字下面那行與聊天室的說明；最多 32 個字）。
+#             沒寫照運作方式給一句；新星、擴散環、光球、光束、漩渦、全場大招、詛咒、召喚、衝鋒、閃現一定算特殊招式，
+#             其他的（落下的紅圈、地面效果、扇形、齊射）寫了 hint 才算。場地危害第一次落下時也會說明一次
+
+settings:
+  # 2026-10：Boss 出招快一點（照模擬：近身時地圖 Boss 一分鐘約 14 招 → 18 招、終局約 15 → 17 招；前搖都沒動）。
+  #   以前 Boss 跟一般怪物共用 gap、first_delay，現在 Boss 用下面的 boss_ 開頭那幾個，路上的怪不變。
+  gap: 1.5             # 一般怪物（詞綴、種類給的招式）兩招之間至少隔幾秒
+  first_delay: 2.0     # 一般怪物出現後幾秒才開始用招
+  boss_gap: 1.0        # Boss 兩招之間至少隔幾秒（Boss 之間普攻照常；場地危害可以落在這段空檔裡）。2026-10：1.5 → 1.0
+  boss_first_delay: 1.5  # Boss 出現、重置、一陣子沒人之後重新看到人，幾秒才開始用招。2026-10：2.0 → 1.5
+  boss_min_telegraph: 1.0  # 2026-10：Boss 招式的前搖至少幾秒（寫得比較短的招照這個；不要有來不及反應的招）
+  boss_cooldown: 0.8   # Boss 招式冷卻的倍率（下面寫的 cooldown 再乘這個；場地危害照 maps.yml 的 every，不吃這個）。2026-10：1 → 0.8
+  warn_range: 24       # 幾格內的玩家會聽到 Boss 的喊話
+  # 換階段（maps.yml 的 phases）：先停 phase_pause 秒不出新招（喊話、召喚、護盾先出來），
+  # 這個階段才會用的招（寫 phase: 的）換階段後 phase_unlock 秒才開始用，不會一換階段就接大招。2026-10：2 → 1.5、4 → 3
+  phase_pause: 1.5
+  phase_unlock: 3.0
+  # 追擊：目標在 chase_distance 格外、連續 chase_seconds 秒都打不到（站遠射箭）→ 用 gap_closer 這招跳過去（none = 不追）。
+  # 2026-10：12 格／2.5 秒 → 9 格／2 秒（地圖 Boss 的招多半 7 格內才用，以前站 8～12 格打幾乎沒有招）
+  gap_closer: pounce
+  chase_distance: 9
+  chase_seconds: 2.0
+
+skills:
+  # ---- 近戰、物理 ----
+  slam:
+    name: 猛擊
+    kind: slam
+    damage: 2.0
+    cooldown: 8
+    range: 7
+    telegraph: 0.7
+    delay: 0.6
+    radius: 3.5
+    at: target
+  quake:
+    name: 重踏
+    kind: nova
+    damage: 1.6
+    cooldown: 12
+    range: 7
+    telegraph: 1.0
+    radius: 6
+    slow: 2
+    shout: "「跪下！」"
+  charge:
+    name: 衝鋒
+    kind: charge
+    damage: 1.8
+    cooldown: 10
+    range: 18
+    telegraph: 0.9
+    speed: 1.1
+    reach: 16
+    width: 1.6
+    slow: 1
+  pounce:
+    name: 撲擊
+    kind: blink
+    damage: 1.2
+    cooldown: 6
+    range: 36
+    telegraph: 0.9
+    radius: 2.5
+  maul:
+    name: 撕咬
+    kind: cone
+    damage: 1.6
+    cooldown: 6
+    range: 6
+    telegraph: 0.8
+    angle: 90
+    length: 5
+    count: 2
+    stagger: 0.35
+  crossbow_volley:
+    name: 弩箭連射
+    kind: volley
+    damage: 1.1
+    cooldown: 7
+    range: 24
+    telegraph: 0.8
+    count: 3
+    spread: 18
+    speed: 1.8
+    reach: 28
+    size: 0.5
+  arrow_volley:
+    name: 箭雨齊射
+    kind: volley
+    damage: 1.0
+    cooldown: 6
+    range: 24
+    telegraph: 0.8
+    count: 7
+    spread: 50
+    speed: 1.6
+    reach: 28
+    size: 0.5
+  trident_volley:
+    name: 三叉戟齊射
+    kind: volley
+    damage: 1.2
+    cooldown: 7
+    range: 22
+    telegraph: 0.8
+    count: 5
+    spread: 40
+    speed: 1.4
+    reach: 26
+    size: 0.6
+  sonic_boom:
+    name: 音爆
+    kind: cone
+    damage: 2.2
+    cooldown: 10
+    range: 14
+    telegraph: 1.2
+    angle: 30
+    length: 14
+    shout: "「……」"
+  # ---- 火 ----
+  meteor:
+    name: 隕石
+    kind: slam
+    damage: 2.5
+    type: fire
+    cooldown: 10
+    range: 20
+    telegraph: 0.6
+    delay: 1.5
+    radius: 3
+    at: target
+  meteor_storm:
+    name: 隕石雨
+    kind: slam
+    damage: 1.6
+    type: fire
+    cooldown: 16
+    range: 22
+    telegraph: 0.6
+    delay: 1.2
+    radius: 2.5
+    count: 6
+    stagger: 0.25
+    scatter: 5
+    at: random
+    shout: "「天穹，墜落！」"
+  flame_breath:
+    name: 炎息
+    kind: cone
+    damage: 1.2
+    type: fire
+    cooldown: 9
+    range: 8
+    telegraph: 0.9
+    angle: 70
+    length: 9
+    count: 3
+    stagger: 0.3
+  fire_volley:
+    name: 火球齊射
+    kind: volley
+    damage: 1.3
+    type: fire
+    cooldown: 8
+    range: 20
+    telegraph: 0.8
+    count: 3
+    spread: 25
+    speed: 1.0
+    reach: 24
+    size: 0.7
+    explode: 2.5
+  # ---- 冰 ----
+  frost_breath:
+    name: 冰霜吐息
+    kind: cone
+    damage: 1.3
+    type: cold
+    cooldown: 9
+    range: 8
+    telegraph: 0.9
+    angle: 60
+    length: 9
+    slow: 3
+  tide_slam:
+    name: 潮湧
+    kind: nova
+    damage: 1.5
+    type: cold
+    cooldown: 12
+    range: 7
+    telegraph: 1.0
+    radius: 6
+    slow: 2
+    shout: "「潮水來了。」"
+  frost_arrows:
+    name: 寒霜箭雨
+    kind: volley
+    damage: 1.0
+    type: cold
+    cooldown: 6
+    range: 24
+    telegraph: 0.8
+    count: 5
+    spread: 40
+    speed: 1.6
+    reach: 28
+    size: 0.5
+    slow: 3
+  # ---- 雷 ----
+  lightning_storm:
+    name: 雷暴
+    kind: slam
+    damage: 1.3
+    type: lightning
+    cooldown: 12
+    range: 20
+    telegraph: 0.6
+    delay: 1.0
+    radius: 2.5
+    count: 5
+    stagger: 0.3
+    scatter: 4
+    at: random
+  # ---- 混沌 ----
+  web_volley:
+    name: 蛛網齊射
+    kind: volley
+    damage: 0.8
+    type: chaos
+    cooldown: 8
+    range: 18
+    telegraph: 0.8
+    count: 4
+    spread: 35
+    speed: 1.2
+    reach: 22
+    size: 0.6
+    slow: 3
+  venom_pool:
+    name: 毒沼
+    kind: zone
+    damage: 0.5
+    type: chaos
+    cooldown: 14
+    range: 14
+    telegraph: 0.8
+    radius: 3.5
+    duration: 7
+    interval: 0.5
+    at: target
+  void_zone:
+    name: 虛空裂隙
+    kind: zone
+    damage: 0.6
+    type: chaos
+    cooldown: 14
+    range: 18
+    telegraph: 0.8
+    radius: 3
+    duration: 8
+    interval: 0.5
+    count: 3
+    scatter: 3
+    at: random
+  curse_of_decay:
+    name: 衰敗詛咒
+    kind: curse
+    type: chaos
+    cooldown: 18
+    range: 14
+    telegraph: 0.8
+    radius: 8
+    duration: 8
+    taken: 25
+    shout: "「腐朽吧。」"
+  blink:
+    name: 閃現
+    kind: blink
+    cooldown: 9
+    range: 20
+    telegraph: 0.6
+  # ---- 召喚 ----
+  summon_drowned:
+    name: 喚起沉溺者
+    kind: summon
+    summon: DROWNED
+    count: 3
+    summon_max: 6
+    cooldown: 25
+    telegraph: 1.0
+    shout: "「水手們，起來幹活！」"
+  summon_spiders:
+    name: 孵化
+    kind: summon
+    summon: CAVE_SPIDER
+    count: 4
+    summon_max: 8
+    cooldown: 22
+    telegraph: 1.0
+  summon_zombies:
+    name: 喚起亡者
+    kind: summon
+    summon: ZOMBIE
+    count: 3
+    summon_max: 6
+    cooldown: 25
+    telegraph: 1.0
+  summon_husks:
+    name: 喚起焦屍
+    kind: summon
+    summon: HUSK
+    count: 3
+    summon_max: 6
+    cooldown: 25
+    telegraph: 1.0
+  summon_skeletons:
+    name: 召集骸骨
+    kind: summon
+    summon: SKELETON
+    count: 3
+    summon_max: 6
+    cooldown: 25
+    telegraph: 1.0
+  summon_wither_skeletons:
+    name: 召集陵衛
+    kind: summon
+    summon: WITHER_SKELETON
+    count: 2
+    summon_max: 4
+    cooldown: 30
+    telegraph: 1.0
+  summon_vex:
+    name: 召喚惱鬼
+    kind: summon
+    summon: VEX
+    count: 2
+    summon_max: 4
+    cooldown: 20
+    telegraph: 0.8
+    duration: 20
+  summon_blazes:
+    name: 分裂火靈
+    kind: summon
+    summon: BLAZE
+    count: 2
+    summon_max: 4
+    cooldown: 25
+    telegraph: 1.0
+
+  # ---- 終局 Boss（曜帝・星骸之軀，maps.yml 的 final.boss.skills 指定、分三階段）：範圍都大、前搖也長一點 ----
+  emperor_sonic_boom:
+    name: 曜帝音爆
+    hint: "朝目標射出一道直線音波：往旁邊閃"
+    kind: cone
+    damage: 1.5              # 2026-10：2.4 → 1.5（前搖只有 1.2 秒；第二階段加傷害、身上有曜帝的詛咒時，物理一下打穿滿血的參考角色）
+    cooldown: 9
+    range: 22
+    telegraph: 1.2
+    angle: 36
+    length: 22
+  emperor_quake:
+    name: 星骸重踏
+    kind: nova
+    damage: 1.6
+    cooldown: 12
+    range: 10
+    telegraph: 1.8           # 2026-10：1.2 → 1.8（兩波加緩速，從 Boss 身邊要 1.75 秒才跑得出 9 格）
+    radius: 9
+    count: 2
+    stagger: 0.6
+    slow: 2
+    shout: "「跪下，凡人。」"
+  star_shards:
+    name: 星骸碎片
+    kind: slam
+    damage: 1.5
+    type: fire
+    cooldown: 13
+    range: 36
+    telegraph: 0.7
+    delay: 1.3
+    radius: 3
+    count: 8
+    stagger: 0.2
+    scatter: 7
+    at: random
+  void_rifts:
+    name: 天穹裂隙
+    kind: zone
+    damage: 0.6
+    type: chaos
+    cooldown: 16
+    range: 36
+    telegraph: 0.8
+    radius: 4.5
+    duration: 10
+    interval: 0.5
+    count: 4
+    scatter: 5
+    at: random
+  sky_fall:
+    name: 天穹墜落
+    hint: "目標腳下的大紅圈（6 格）：馬上離開"
+    kind: slam
+    damage: 2.6
+    type: fire
+    cooldown: 15
+    range: 30
+    telegraph: 0.7
+    delay: 1.8
+    radius: 6
+    at: target
+    shout: "「接住這片天。」"
+  star_lance_volley:
+    name: 星槍齊射
+    kind: volley
+    damage: 1.3
+    type: lightning
+    cooldown: 10
+    range: 34
+    telegraph: 0.8
+    count: 9
+    spread: 70
+    speed: 1.5
+    reach: 36
+    size: 0.7
+    explode: 2
+  emperor_charge:
+    name: 曜帝衝鋒
+    kind: charge
+    damage: 1.5              # 2026-10：2.0 → 1.5（同上）
+    cooldown: 12
+    range: 26
+    telegraph: 1.1
+    speed: 1.3
+    reach: 24
+    width: 2.2
+    slow: 1.5
+  summon_star_fragments:
+    name: 星骸甦醒
+    kind: summon
+    summon: BLAZE
+    count: 3
+    summon_max: 6
+    cooldown: 25
+    telegraph: 1.0
+    duration: 40
+    shout: "「朕的碎片，回到朕身邊！」"
+  supernova:
+    name: 超新星
+    kind: nova
+    damage: 2.4
+    type: fire
+    cooldown: 20
+    range: 20
+    telegraph: 2.8
+    radius: 14
+    shout: "「那就再墜落一次吧！」"
+  meteor_apocalypse:
+    name: 天穹隕落
+    hint: "12 顆隕石落在大家附近：一直移動，避開紅圈"
+    kind: slam
+    damage: 1.7
+    type: fire
+    cooldown: 18
+    range: 36
+    telegraph: 0.7
+    delay: 1.2
+    radius: 3.5
+    count: 12
+    stagger: 0.2
+    scatter: 10
+    at: random
+  emperor_curse:
+    name: 星骸詛咒
+    kind: curse
+    type: chaos
+    cooldown: 20
+    range: 20
+    telegraph: 1.0
+    radius: 14
+    duration: 10
+    taken: 35
+    shout: "「朕賜你腐朽。」"
+  # 特殊機制：天穹環（擴散環，站進綠色缺口）、星骸光束（兩道光束掃大半圈）、星核引力（漩渦，往外跑）、天穹審判（全場大招，躲進安全區）
+  emperor_heaven_ring:
+    name: 天穹環
+    kind: ring
+    damage: 1.8
+    type: fire
+    cooldown: 16
+    range: 16
+    telegraph: 1.2       # 2026-10：1.8 → 1.2（有閃避翻滾了：翻滾可以穿過紅波，前搖不用那麼長）
+    radius: 1.5
+    reach: 18
+    speed: 0.4
+    width: 0.8
+    count: 3
+    stagger: 0.8
+    gaps: 2
+    gap_angle: 45
+    shout: "「天穹，展開。」"
+  emperor_star_beam:
+    name: 星骸光束
+    kind: beam
+    damage: 1.0
+    type: lightning
+    cooldown: 18
+    range: 14
+    telegraph: 1.3
+    count: 2
+    angle: 130           # 2026-10：200 → 130（轉慢一些）
+    length: 30           # 2026-10：40 → 30 格
+    width: 0.65         # 2026-10：1.2 → 0.65（左右各幾格；雷射太粗）
+    duration: 3.5
+    interval: 0.3
+    shout: "「看著朕的光。」"
+  emperor_gravity_well:
+    name: 星核引力
+    kind: pull
+    damage: 3.0
+    type: chaos
+    cooldown: 22
+    range: 12
+    telegraph: 1.2
+    radius: 14
+    speed: 0.1
+    duration: 3
+    explode: 5
+    shout: "「回到朕身邊。」"
+  emperor_judgement:
+    name: 天穹審判
+    kind: sanctuary
+    damage: 3.5
+    type: fire
+    cooldown: 38
+    range: 30
+    telegraph: 3.0
+    radius: 28
+    count: 2
+    safe: 2.5
+    scatter: 10
+    shout: "「天穹之下無處可逃——除了朕允許的地方。」"
+  # 極境才有的（maps.yml 的 final.uber.skills）
+  uber_emperor_cross_beams:
+    name: 十字星芒
+    kind: beam
+    damage: 1.1
+    type: lightning
+    cooldown: 22
+    range: 16
+    telegraph: 1.4
+    count: 4
+    angle: 90           # 2026-10：135 → 90（轉慢一些）
+    length: 30           # 2026-10：40 → 30 格
+    width: 0.65         # 2026-10：1.2 → 0.65（左右各幾格；雷射太粗）
+    duration: 4
+    interval: 0.3
+    shout: "「四方，皆是朕的天。」"
+  uber_emperor_collapse:
+    name: 天穹崩塌
+    kind: sanctuary
+    damage: 5.0
+    type: fire
+    cooldown: 45
+    range: 30
+    telegraph: 3.2
+    radius: 30
+    count: 1
+    safe: 3
+    scatter: 11
+    shout: "「整片天都塌下來吧，只留一個地方給你。」"
+
+  # ---- 終局 Boss：永凍女王（霜心）——冰冷：緩速、凍結，圈越大越冷 ----
+  queen_frost_nova:
+    name: 霜心冰環
+    kind: nova
+    damage: 1.7
+    type: cold
+    cooldown: 11
+    range: 10
+    telegraph: 1.2
+    radius: 9
+    slow: 3
+    shout: "「冷嗎？這只是開始。」"
+  queen_ice_lances:
+    name: 冰槍齊射
+    kind: volley
+    damage: 1.3
+    type: cold
+    cooldown: 9
+    range: 34
+    telegraph: 0.8
+    count: 7
+    spread: 60
+    speed: 1.4
+    reach: 34
+    size: 0.7
+    explode: 2
+    slow: 1.5
+  queen_blizzard:
+    name: 暴風雪
+    kind: zone
+    damage: 0.6
+    type: cold
+    cooldown: 16
+    range: 36
+    telegraph: 0.8
+    radius: 4.5
+    duration: 12
+    interval: 0.5
+    count: 5
+    scatter: 7
+    at: random
+    slow: 1
+  queen_glacial_spike:
+    name: 冰棱突刺
+    kind: slam
+    damage: 2.6
+    type: cold
+    cooldown: 14
+    range: 30
+    telegraph: 0.7
+    delay: 1.5
+    radius: 5
+    at: target
+    shout: "「站著別動。」"
+  queen_summon_wraiths:
+    name: 寒冬降臨
+    kind: summon
+    summon: STRAY
+    count: 3
+    summon_max: 6
+    cooldown: 25
+    telegraph: 1.0
+    duration: 40
+    shout: "「我的孩子們，去。」"
+  queen_avalanche:
+    name: 雪崩
+    hint: "冰塊從天而降：一直移動，避開紅圈"
+    kind: slam
+    damage: 1.5
+    type: cold
+    cooldown: 15
+    range: 36
+    telegraph: 0.7
+    delay: 1.3
+    radius: 3.5
+    count: 10
+    stagger: 0.2
+    scatter: 9
+    at: random
+  queen_blink:
+    name: 霜影
+    kind: blink
+    damage: 1.1
+    type: cold
+    cooldown: 10
+    range: 36
+    telegraph: 0.9
+    radius: 3
+    slow: 2
+  queen_frostbite:
+    name: 寒噬
+    kind: curse
+    type: cold
+    cooldown: 20
+    range: 20
+    telegraph: 1.0
+    radius: 14
+    duration: 10
+    taken: 30
+    shout: "「連血都要凍住了。」"
+  queen_absolute_zero:
+    name: 絕對零度
+    kind: nova
+    damage: 2.6
+    type: cold
+    cooldown: 22
+    range: 20
+    telegraph: 3.0
+    radius: 15
+    slow: 4
+    shout: "「全部，停下來。」"
+  queen_shatter:
+    name: 碎冰
+    hint: "朝目標射出一道冰錐：往旁邊閃"
+    kind: cone
+    damage: 2.2
+    type: cold
+    cooldown: 10
+    range: 20
+    telegraph: 1.1
+    angle: 50
+    length: 20
+  # 特殊機制：冰環擴散（三個缺口）、冰魄（追人的冰球）、霜光（三道光束）、白霧（全場大招，三個安全區）
+  queen_glacial_ring:
+    name: 冰環擴散
+    kind: ring
+    damage: 1.6
+    type: cold
+    cooldown: 15
+    range: 16
+    telegraph: 1.2       # 2026-10：1.8 → 1.2（有閃避翻滾了：翻滾可以穿過紅波，前搖不用那麼長）
+    radius: 1.5
+    reach: 18
+    speed: 0.35
+    width: 0.8
+    count: 2
+    stagger: 1.0
+    gaps: 3
+    gap_angle: 35
+    slow: 2
+    shout: "「別動。冰會替你決定往哪走。」"
+  queen_ice_orbs:
+    name: 冰魄
+    kind: orbs
+    damage: 1.6
+    type: cold
+    cooldown: 14
+    range: 30
+    telegraph: 0.8
+    count: 3
+    speed: 0.16
+    duration: 7
+    size: 0.8
+    explode: 2.5
+    slow: 2
+  queen_frost_beam:
+    name: 霜光
+    kind: beam
+    damage: 0.9
+    type: cold
+    cooldown: 18
+    range: 14
+    telegraph: 1.3
+    count: 3
+    angle: 80           # 2026-10：120 → 80（轉慢一些）
+    length: 30           # 2026-10：40 → 30 格
+    width: 0.65         # 2026-10：1.1 → 0.65（左右各幾格；雷射太粗）
+    duration: 3
+    interval: 0.3
+    slow: 1
+  queen_whiteout:
+    name: 白霧
+    kind: sanctuary
+    damage: 3.5
+    type: cold
+    cooldown: 38
+    range: 30
+    telegraph: 2.8
+    radius: 26
+    count: 3
+    safe: 2.2
+    scatter: 9
+    slow: 4
+    shout: "「看不見了嗎？那就躲進冰裡。」"
+  # 極境才有的
+  uber_queen_frozen_orbit:
+    name: 極寒軌道
+    kind: beam
+    damage: 1.0
+    type: cold
+    cooldown: 22
+    range: 16
+    telegraph: 1.4
+    count: 3
+    angle: 155           # 2026-10：240 → 155（轉慢一些）
+    length: 30           # 2026-10：40 → 30 格
+    width: 0.65         # 2026-10：1.2 → 0.65（左右各幾格；雷射太粗）
+    duration: 4.5
+    interval: 0.3
+    slow: 1.5
+    shout: "「繞著我轉吧，永遠。」"
+  uber_queen_permafrost:
+    name: 永凍
+    kind: sanctuary
+    damage: 5.0
+    type: cold
+    cooldown: 45
+    range: 30
+    telegraph: 3.0
+    radius: 28
+    count: 2
+    safe: 2.2
+    scatter: 11
+    slow: 5
+    shout: "「這裡的冬天，不會再結束。」"
+
+  # ---- 終局 Boss：蝕骨之王（冥河渡者）——物理與混沌：亡者、腐朽，貼身的割魂最痛 ----
+  # 倍率比永凍女王、餘燼將軍低（2026-10 調低）：冰、火會被 75% 的抗性擋掉四分之三，物理只吃護甲、混沌幾乎沒人有抗性，
+  # 同樣的倍率實際痛三、四倍（伺服器上死在終局的全部是牠）。
+  king_bone_volley:
+    name: 骨矢齊射
+    kind: volley
+    damage: 1.0
+    cooldown: 9
+    range: 34
+    telegraph: 0.8
+    count: 8
+    spread: 60
+    speed: 1.4
+    reach: 34
+    size: 0.6
+  king_plague_pool:
+    name: 瘟疫池
+    kind: zone
+    damage: 0.45
+    type: chaos
+    cooldown: 16
+    range: 36
+    telegraph: 0.8
+    radius: 4.5
+    duration: 12
+    interval: 0.5
+    count: 4
+    scatter: 6
+    at: random
+  king_grave_slam:
+    name: 墓碑猛擊
+    kind: slam
+    damage: 2.0
+    cooldown: 10
+    range: 9
+    telegraph: 0.9
+    delay: 0.7
+    radius: 4.5
+    at: target
+  king_summon_dead:
+    name: 亡者起身
+    kind: summon
+    summon: ZOMBIE
+    count: 4
+    summon_max: 8
+    cooldown: 22
+    telegraph: 1.0
+    duration: 45
+    shout: "「起來，再死一次。」"
+  king_decay_curse:
+    name: 蝕骨詛咒
+    kind: curse
+    type: chaos
+    cooldown: 18
+    range: 20
+    telegraph: 1.0
+    radius: 14
+    duration: 12
+    taken: 30
+    shout: "「你的骨頭，是我的了。」"
+  king_reap:
+    name: 割魂
+    hint: "前方大扇形：繞到 Boss 後面"
+    kind: cone
+    damage: 1.7
+    cooldown: 9
+    range: 8
+    telegraph: 1.3
+    angle: 120
+    length: 8
+    shout: "「收割的時候到了。」"
+  king_shadow_step:
+    name: 冥河渡步
+    kind: blink
+    damage: 1.0
+    type: chaos
+    cooldown: 9
+    range: 36
+    telegraph: 0.9
+    radius: 3
+  king_bone_storm:
+    name: 骨雨
+    hint: "骨頭從天而降：一直移動，避開紅圈"
+    kind: slam
+    damage: 1.2
+    cooldown: 15
+    range: 36
+    telegraph: 0.7
+    delay: 1.2
+    radius: 3.5
+    count: 12
+    stagger: 0.2
+    scatter: 10
+    at: random
+  king_soul_harvest:
+    name: 魂收
+    kind: nova
+    damage: 1.8
+    type: chaos
+    cooldown: 20
+    range: 20
+    telegraph: 2.8
+    radius: 14
+    shout: "「全都給我！」"
+  king_summon_wither:
+    name: 冥河倒灌
+    kind: summon
+    summon: WITHER_SKELETON
+    count: 3
+    summon_max: 5
+    cooldown: 28
+    telegraph: 1.0
+    duration: 45
+  # 特殊機制：骨潮（擴散環）、哭嚎亡魂（追人的魂）、冥河漩渦（往外跑）、最後的渡船（全場大招，兩艘渡船＝安全區）
+  king_bone_ring:
+    name: 骨潮
+    kind: ring
+    damage: 0.85
+    cooldown: 15
+    range: 16
+    telegraph: 1.2       # 2026-10：1.8 → 1.2（有閃避翻滾了：翻滾可以穿過紅波，前搖不用那麼長）
+    radius: 1.5
+    reach: 18
+    speed: 0.4
+    width: 0.9
+    count: 3
+    stagger: 0.7
+    gaps: 2
+    gap_angle: 45
+    shout: "「河水漲起來了。」"
+  king_wailing_souls:
+    name: 哭嚎亡魂
+    kind: orbs
+    damage: 1.0
+    type: chaos
+    cooldown: 14
+    range: 30
+    telegraph: 0.8
+    count: 4
+    speed: 0.17
+    duration: 7
+    size: 0.7
+    explode: 2.2
+  king_soul_vortex:
+    name: 冥河漩渦
+    kind: pull
+    damage: 2.2
+    type: chaos
+    cooldown: 20
+    range: 12
+    telegraph: 1.2
+    radius: 13
+    speed: 0.1
+    duration: 3
+    explode: 4.5
+    shout: "「過來。河在等你。」"
+  king_last_ferry:
+    name: 最後的渡船
+    kind: sanctuary
+    damage: 3.5
+    type: chaos
+    cooldown: 38
+    range: 30
+    telegraph: 3.0
+    radius: 28
+    count: 2
+    safe: 2.5
+    scatter: 10
+    shout: "「最後一班船。上不了船的，留在河底。」"
+  # 極境才有的
+  uber_king_abyss_vortex:
+    name: 深淵漩渦
+    kind: pull
+    damage: 2.8
+    type: chaos
+    cooldown: 22
+    range: 14
+    telegraph: 1.3
+    radius: 16
+    speed: 0.12
+    duration: 3.5
+    explode: 5.5
+    shout: "「沉下去。」"
+  uber_king_ferry_of_souls:
+    name: 萬魂渡河
+    kind: orbs
+    damage: 1.1
+    type: chaos
+    cooldown: 20
+    range: 30
+    telegraph: 1.0
+    count: 6
+    speed: 0.17
+    duration: 9
+    size: 0.8
+    explode: 2.5
+    shout: "「三百年份的魂，全都還給你。」"
+
+  # ---- 終局 Boss：餘燼將軍（焚天）——火焰：吐息、岩漿、隕石，衝鋒撞人 ----
+  general_flame_breath:
+    name: 餘燼吐息
+    hint: "前方兩波火焰：繞到 Boss 側面"
+    kind: cone
+    damage: 1.6              # 2026-10：2.0 → 1.6（兩波 0.5 秒內打完，加燃焰的附加火焰與戰吼）
+    type: fire
+    cooldown: 8
+    range: 14
+    telegraph: 1.0
+    angle: 60
+    length: 14
+    count: 2
+    stagger: 0.5
+  general_ember_rain:
+    name: 餘燼雨
+    kind: slam
+    damage: 1.4
+    type: fire
+    cooldown: 12
+    range: 36
+    telegraph: 0.7
+    delay: 1.2
+    radius: 3
+    count: 8
+    stagger: 0.2
+    scatter: 8
+    at: random
+  general_lava_trail:
+    name: 岩漿足跡
+    kind: zone
+    damage: 0.7
+    type: fire
+    cooldown: 14
+    range: 36
+    telegraph: 0.6
+    radius: 3.5
+    duration: 10
+    interval: 0.5
+    count: 3
+    scatter: 3
+    at: self
+  general_charge:
+    name: 焚天衝鋒
+    kind: charge
+    damage: 2.2
+    type: fire
+    cooldown: 11
+    range: 26
+    telegraph: 1.1
+    speed: 1.4
+    reach: 26
+    width: 2.4
+    slow: 1.5
+    shout: "「讓開！」"
+  general_summon_magma:
+    name: 餘燼復燃
+    kind: summon
+    summon: MAGMA_CUBE
+    count: 3
+    summon_max: 6
+    cooldown: 24
+    telegraph: 1.0
+    duration: 40
+  general_eruption:
+    name: 噴發
+    hint: "目標腳下的大紅圈（7 格）：馬上離開"
+    kind: slam
+    damage: 3.0
+    type: fire
+    cooldown: 16
+    range: 30
+    telegraph: 0.8
+    delay: 2.0
+    radius: 7
+    at: target
+    shout: "「燒。」"
+  general_fire_volley:
+    name: 烈焰齊射
+    kind: volley
+    damage: 1.3
+    type: fire
+    cooldown: 10
+    range: 34
+    telegraph: 0.8
+    count: 11
+    spread: 90
+    speed: 1.5
+    reach: 34
+    size: 0.7
+    explode: 2.5
+  general_warcry:
+    name: 燃燒的恐懼
+    kind: curse
+    type: fire
+    cooldown: 20
+    range: 20
+    telegraph: 1.0
+    radius: 14
+    duration: 10
+    taken: 30
+    shout: "「怕了嗎？」"
+  general_inferno:
+    name: 焚天
+    kind: nova
+    damage: 2.6
+    type: fire
+    cooldown: 22
+    range: 20
+    telegraph: 3.0
+    radius: 15
+    shout: "「天也燒給你看。」"
+  general_meteor_shower:
+    name: 隕石雨
+    hint: "14 顆隕石落在大家附近：一直移動，避開紅圈"
+    kind: slam
+    damage: 1.7
+    type: fire
+    cooldown: 18
+    range: 36
+    telegraph: 0.7
+    delay: 1.2
+    radius: 3.5
+    count: 14
+    stagger: 0.2
+    scatter: 11
+    at: random
+  # 特殊機制：火環（擴散環）、焚天橫掃（一道火焰掃四分之三圈）、餘燼火球（追人的火球）、燎原（全場大招）
+  general_fire_ring:
+    name: 火環
+    kind: ring
+    damage: 1.4
+    type: fire
+    cooldown: 15
+    range: 16
+    telegraph: 1.2       # 2026-10：1.8 → 1.2（有閃避翻滾了：翻滾可以穿過紅波，前搖不用那麼長）
+    radius: 1.5
+    reach: 18
+    speed: 0.45
+    width: 0.8
+    count: 2
+    stagger: 0.9
+    gaps: 2
+    gap_angle: 50
+    shout: "「火圈，起！」"
+  general_flame_sweep:
+    name: 焚天橫掃
+    kind: beam
+    damage: 1.2
+    type: fire
+    cooldown: 17
+    range: 14
+    telegraph: 1.2
+    count: 1
+    angle: 175           # 2026-10：270 → 175（轉慢一些）
+    length: 30           # 2026-10：40 → 30 格
+    width: 0.65         # 2026-10：1.4 → 0.65（左右各幾格；雷射太粗）
+    duration: 3.5
+    interval: 0.3
+    shout: "「掃乾淨。」"
+  general_ember_orbs:
+    name: 餘燼火球
+    kind: orbs
+    damage: 1.5
+    type: fire
+    cooldown: 14
+    range: 30
+    telegraph: 0.8
+    count: 3
+    speed: 0.2
+    duration: 6
+    size: 0.8
+    explode: 2.5
+  general_burning_sky:
+    name: 燎原
+    kind: sanctuary
+    damage: 3.5
+    type: fire
+    cooldown: 38
+    range: 30
+    telegraph: 2.8
+    radius: 28
+    count: 2
+    safe: 2.5
+    scatter: 10
+    shout: "「整片原野，都燒起來！」"
+  # 極境才有的
+  uber_general_twin_sweep:
+    name: 雙焰橫掃
+    kind: beam
+    damage: 1.2
+    type: fire
+    cooldown: 20
+    range: 16
+    telegraph: 1.3
+    count: 2
+    angle: 195           # 2026-10：300 → 195（轉慢一些）
+    length: 30           # 2026-10：40 → 30 格
+    width: 0.65         # 2026-10：1.3 → 0.65（左右各幾格；雷射太粗）
+    duration: 4
+    interval: 0.3
+    shout: "「左邊，右邊，都是火。」"
+  uber_general_firestorm:
+    name: 焚城
+    kind: sanctuary
+    damage: 5.0
+    type: fire
+    cooldown: 45
+    range: 30
+    telegraph: 3.0
+    radius: 30
+    count: 2
+    safe: 2.4
+    scatter: 11
+    shout: "「陛下的命令：曜京，再燒一次。」"
+
+  # ---- 爐監・殷燼（昇華試煉的守門人；四場試煉各一套，照那道門的元素）----
+  # 第一試煉・餘燼：火。錘子砸下去留餘燼、爐息、灰雨。
+  warden_ember_hammer:
+    name: 餘燼之錘
+    kind: slam
+    damage: 2.2
+    type: fire
+    cooldown: 8
+    range: 7
+    telegraph: 0.8
+    delay: 0.5
+    radius: 3.5
+    at: target
+  warden_cinder_trail:
+    name: 餘燼路
+    kind: zone
+    damage: 0.6
+    type: fire
+    cooldown: 13
+    range: 20
+    telegraph: 0.6
+    radius: 3
+    duration: 9
+    interval: 0.5
+    count: 3
+    scatter: 3
+    at: self
+    shout: "「踩過來。火會記得你的腳印。」"
+  warden_forge_breath:
+    name: 爐息
+    kind: cone
+    damage: 1.3
+    type: fire
+    cooldown: 10
+    range: 9
+    telegraph: 0.9
+    angle: 65
+    length: 10
+    count: 3
+    stagger: 0.3
+  warden_ash_rain:
+    name: 灰雨
+    kind: slam
+    damage: 1.5
+    type: fire
+    cooldown: 15
+    range: 24
+    telegraph: 0.7
+    delay: 1.2
+    radius: 2.5
+    count: 6
+    stagger: 0.25
+    scatter: 6
+    at: random
+    shout: "「曜京燒了三天三夜。你撐得過三十秒嗎？」"
+  # 第二試煉・沉毒：混沌。毒沼、孢雲、把你的抗性泡軟的詛咒。
+  warden_venom_hammer:
+    name: 沉毒之錘
+    kind: slam
+    damage: 2.0
+    type: chaos
+    cooldown: 8
+    range: 7
+    telegraph: 0.8
+    delay: 0.5
+    radius: 3.5
+    at: target
+  warden_bog_pools:
+    name: 沉毒
+    kind: zone
+    damage: 0.55
+    type: chaos
+    cooldown: 14
+    range: 18
+    telegraph: 0.8
+    radius: 3.5
+    duration: 9
+    interval: 0.5
+    count: 3
+    scatter: 4
+    at: target
+    shout: "「沼會吃掉軟弱的那一半。」"
+  warden_spore_cloud:
+    name: 孢雲
+    kind: volley
+    damage: 0.9
+    type: chaos
+    cooldown: 11
+    range: 18
+    telegraph: 0.8
+    count: 7
+    spread: 60
+    speed: 0.9
+    reach: 18
+    size: 0.6
+    explode: 2
+    slow: 1.5
+  warden_rot_curse:
+    name: 腐心
+    kind: curse
+    type: chaos
+    cooldown: 20
+    range: 14
+    telegraph: 0.9
+    radius: 9
+    duration: 9
+    taken: 30
+    shout: "「慢一點倒下。讓我看清楚你。」"
+  warden_plague_nova:
+    name: 瘟潮
+    kind: nova
+    damage: 1.4
+    type: chaos
+    cooldown: 14
+    range: 8
+    telegraph: 1.0
+    radius: 7
+    count: 2
+    stagger: 0.5
+    slow: 2
+  # 第三試煉・霜誓：冰。誓言的霜環把人凍慢、冰槍陣、冰崩，最後把自己的心凍成冰封的地。
+  warden_frost_hammer:
+    name: 霜誓之錘
+    kind: slam
+    damage: 2.2
+    type: cold
+    cooldown: 8
+    range: 7
+    telegraph: 0.8
+    delay: 0.5
+    radius: 3.5
+    at: target
+    slow: 2
+  warden_oath_ring:
+    name: 霜誓
+    kind: nova
+    damage: 1.5
+    type: cold
+    cooldown: 12
+    range: 8
+    telegraph: 1.0
+    radius: 7.5
+    slow: 3
+    shout: "「我在這裡發過誓。」"
+  warden_ice_lances:
+    name: 冰槍陣
+    kind: volley
+    damage: 1.3
+    type: cold
+    cooldown: 10
+    range: 20
+    telegraph: 0.8
+    count: 5
+    spread: 40
+    speed: 1.4
+    reach: 22
+    size: 0.5
+    slow: 1
+  warden_glacier_fall:
+    name: 冰崩
+    kind: slam
+    damage: 1.7
+    type: cold
+    cooldown: 16
+    range: 24
+    telegraph: 0.7
+    delay: 1.3
+    radius: 3
+    count: 6
+    stagger: 0.25
+    scatter: 6
+    at: random
+    slow: 2
+    shout: "「冷嗎？當年他們也這樣問我。」"
+  warden_frozen_heart:
+    name: 凝冰之核
+    hint: "Boss 腳下一大片冰域：離開 6 格外"
+    kind: zone
+    damage: 0.7
+    type: cold
+    cooldown: 18
+    range: 30
+    telegraph: 1.0
+    radius: 5.5
+    duration: 12
+    interval: 0.5
+    at: self
+    slow: 2
+    shout: "「我的心早就凍住了。所以我不會停。」"
+  # 第四試煉・星痕：星骸本身（物理與混沌）。星墜、裂開的天、十二門一波一波推過來、閃現追擊，最後的火。
+  warden_star_hammer:
+    name: 星痕之錘
+    kind: slam
+    damage: 2.4
+    cooldown: 8
+    range: 7
+    telegraph: 0.8
+    delay: 0.5
+    radius: 4
+    at: target
+  warden_star_fall:
+    name: 星墜
+    kind: slam
+    damage: 1.8
+    type: chaos
+    cooldown: 15
+    range: 26
+    telegraph: 0.7
+    delay: 1.3
+    radius: 2.8
+    count: 8
+    stagger: 0.2
+    scatter: 8
+    at: random
+    shout: "「看見了嗎？那一晚，天上裂開的樣子。」"
+  warden_sky_rift:
+    name: 裂天
+    kind: zone
+    damage: 0.7
+    type: chaos
+    cooldown: 14
+    range: 20
+    telegraph: 0.8
+    radius: 3
+    duration: 10
+    interval: 0.5
+    count: 3
+    scatter: 4
+    at: random
+  warden_twelve_gates:
+    name: 十二門
+    kind: nova
+    damage: 1.3
+    cooldown: 16
+    range: 9
+    telegraph: 1.0
+    radius: 8
+    count: 3
+    stagger: 0.45
+    slow: 1
+    shout: "「十二門的星衛，站起來！」"
+  warden_star_step:
+    name: 星痕閃現
+    kind: blink
+    damage: 1.4
+    cooldown: 9
+    range: 30
+    telegraph: 0.9
+    radius: 2.8
+  warden_last_fire:
+    name: 最後的火
+    hint: "Boss 腳下燒起一大片火：離開 7 格外"
+    kind: zone
+    damage: 0.9
+    type: fire
+    cooldown: 20
+    range: 30
+    telegraph: 1.0
+    radius: 6.5
+    duration: 14
+    interval: 0.5
+    at: self
+    shout: "「這是我最後的火。接好。」"
+  # 試煉的特殊機制（一場教一種）：第一試煉火環（缺口很大）、第二試煉毒沼漩渦與孢子球、第三試煉霜誓光束（加上護盾）、
+  # 第四試煉星痕環與星痕審判（全場大招）
+  warden_fire_ring:
+    name: 爐火環
+    kind: ring
+    damage: 1.4
+    type: fire
+    cooldown: 16
+    range: 14
+    telegraph: 1.2       # 2026-10：1.8 → 1.2（有閃避翻滾了：翻滾可以穿過紅波，前搖不用那麼長）
+    radius: 1.5
+    reach: 14
+    speed: 0.3
+    width: 0.8
+    count: 1
+    gaps: 2
+    gap_angle: 60
+    shout: "「火圈來了。看清楚缺口。」"
+  warden_bog_vortex:
+    name: 沼底漩渦
+    kind: pull
+    damage: 2.2
+    type: chaos
+    cooldown: 18
+    range: 10
+    telegraph: 1.4
+    radius: 10
+    speed: 0.08
+    duration: 2.5
+    explode: 3.5
+    shout: "「沼在吸你的腳。跑。」"
+  warden_spore_orbs:
+    name: 孢子球
+    kind: orbs
+    damage: 1.2
+    type: chaos
+    cooldown: 15
+    range: 24
+    telegraph: 0.8
+    count: 2
+    speed: 0.15
+    duration: 7
+    size: 0.7
+    explode: 2.2
+  warden_frost_beam:
+    name: 霜誓光束
+    kind: beam
+    damage: 0.9
+    type: cold
+    cooldown: 16
+    range: 12
+    telegraph: 1.4
+    count: 2
+    angle: 100           # 2026-10：150 → 100（轉慢一些）
+    length: 30           # 2026-10：40 → 30 格
+    width: 0.65         # 2026-10：1.1 → 0.65（左右各幾格；雷射太粗）
+    duration: 3
+    interval: 0.3
+    slow: 1
+    shout: "「繞著我走。我的誓言會追著你。」"
+  warden_star_ring:
+    name: 星痕環
+    kind: ring
+    damage: 1.5
+    type: chaos
+    cooldown: 15
+    range: 16
+    telegraph: 1.2       # 2026-10：1.8 → 1.2（有閃避翻滾了：翻滾可以穿過紅波，前搖不用那麼長）
+    radius: 1.5
+    reach: 16
+    speed: 0.35
+    width: 0.8
+    count: 2
+    stagger: 0.9
+    gaps: 3
+    gap_angle: 45
+  warden_star_judgement:
+    name: 星痕審判
+    kind: sanctuary
+    damage: 3.0
+    type: chaos
+    cooldown: 35
+    range: 24
+    telegraph: 3.0
+    radius: 22
+    count: 2
+    safe: 3
+    scatter: 8
+    shout: "「十二門的審判。站對地方的人，才走得過去。」"
+
+  # ---- 場地危害（maps.yml／ascendancy.yml 的 boss.hazards 用：每隔幾秒自己落在某個玩家附近；等 Boss 這一招放完才落）----
+  # 只能是 slam、zone、orbs；cooldown、range 用不到（照 hazards 的 every）。
+  hazard_star_meteor:
+    name: 墜星
+    kind: slam
+    damage: 1.6
+    type: fire
+    telegraph: 0.6
+    delay: 1.2
+    radius: 3.2
+    scatter: 1.5
+    at: target
+  hazard_star_orbs:
+    name: 星骸殘光
+    kind: orbs
+    damage: 1.4
+    type: lightning
+    count: 2
+    speed: 0.15
+    duration: 8
+    size: 0.7
+    explode: 2.5
+  hazard_frost_spike:
+    name: 冰柱
+    kind: slam
+    damage: 1.5
+    type: cold
+    telegraph: 0.6
+    delay: 1.1
+    radius: 2.5
+    count: 3
+    stagger: 0.3
+    scatter: 3
+    at: target
+    slow: 2
+  hazard_ice_orbs:
+    name: 寒魄
+    kind: orbs
+    damage: 1.4
+    type: cold
+    count: 2
+    speed: 0.15
+    duration: 8
+    size: 0.7
+    explode: 2.5
+    slow: 2
+  hazard_grave_hands:
+    name: 冥河之手
+    kind: zone
+    damage: 0.4
+    type: chaos
+    telegraph: 1.0
+    radius: 3
+    duration: 6
+    interval: 0.5
+    scatter: 1.5
+    at: target
+  hazard_ember_fall:
+    name: 落燼
+    kind: slam
+    damage: 1.6
+    type: fire
+    telegraph: 0.6
+    delay: 1.2
+    radius: 3
+    count: 2
+    stagger: 0.4
+    scatter: 3
+    at: target
+  hazard_ember_orbs:
+    name: 流火
+    kind: orbs
+    damage: 1.5
+    type: fire
+    count: 2
+    speed: 0.17
+    duration: 7
+    size: 0.8
+    explode: 2.5
+  hazard_warden_star:
+    name: 星痕殘片
+    kind: slam
+    damage: 1.3
+    type: chaos
+    telegraph: 0.6
+    delay: 1.2
+    radius: 2.8
+    scatter: 1.5
+    at: target
+
+
+  # ---- 劫盜終局「金庫之主」（2026-10，heist.yml 的 finale；難度照極境）----
+  # 特殊機制：警報光束（四道雷射掃一圈）、金庫鐵門（擴散環，站進缺口）、吸金漩渦（往外跑）、追蹤機關（光球，帶著跑）、
+  # 全面封鎖（全場大招，躲進安全區）、懸賞令（詛咒）。另外打的時候場上會出現「警報機關」（右鍵拆掉，沒拆就叫增援）。
+  vault_laser_grid:
+    name: 警報光束
+    hint: "四道雷射掃一圈：跟著光束轉的方向繞著跑"
+    kind: beam
+    damage: 1.2
+    type: lightning
+    cooldown: 16
+    range: 16
+    telegraph: 1.3
+    count: 4
+    angle: 120           # 2026-10：180 → 120（4 秒轉 120 度，每秒 30 度，轉得慢一些）
+    length: 30           # 2026-10：40 → 30 格
+    width: 0.65         # 2026-10：1.1 → 0.65（左右各幾格；雷射太粗）
+    duration: 4
+    interval: 0.3
+    shout: "「警報系統，啟動。」"
+  vault_door_ring:
+    name: 金庫鐵門
+    hint: "鐵門往外推：站進綠色的缺口"
+    kind: ring
+    damage: 2.0
+    cooldown: 15
+    range: 16
+    telegraph: 1.2       # 2026-10：1.8 → 1.2（有閃避翻滾了：翻滾可以穿過紅波，前搖不用那麼長）
+    radius: 1.5
+    reach: 19
+    speed: 0.3           # 2026-10：0.35 → 0.3
+    width: 0.9
+    count: 3
+    stagger: 1.1
+    gaps: 2
+    gap_angle: 32
+    shout: "「關門。」"
+  vault_coin_rain:
+    name: 金幣雨
+    hint: "金幣從天而降：一直移動，避開紅圈"
+    kind: slam
+    damage: 1.6
+    cooldown: 12
+    range: 30
+    telegraph: 0.8       # 2026-10：0.6 → 0.8
+    delay: 1.4           # 2026-10：1.1 → 1.4（十顆一起落，警告太短）
+    radius: 2.8
+    count: 10
+    stagger: 0.18
+    scatter: 9
+    at: random
+    shout: "「這些錢，夠買你的命。」"
+  vault_heist_volley:
+    name: 連弩齊射
+    kind: volley
+    damage: 1.1          # 2026-10：1.3 → 1.1
+    cooldown: 8
+    range: 26
+    telegraph: 1.0       # 2026-10：0.8 → 1.0（金庫之主太快）
+    count: 7
+    spread: 60
+    speed: 1.2           # 2026-10：1.9 → 1.5 → 1.2
+    reach: 30
+    size: 0.5
+  vault_magnet:
+    name: 吸金漩渦
+    hint: "被吸過去會爆炸：往外跑"
+    kind: pull
+    damage: 3.5          # 2026-10：3.5 → 2.4 → 3.5（改回；吸得慢、前搖 1.5 秒照舊）
+    type: chaos
+    cooldown: 22
+    range: 12
+    telegraph: 1.5       # 2026-10：1.2 → 1.5
+    radius: 15
+    speed: 0.09          # 2026-10：0.11 → 0.09（吸得慢一點，跑得掉）
+    duration: 3
+    explode: 5
+    shout: "「所有東西，最後都會回到金庫。」"
+  vault_drones:
+    name: 追蹤機關
+    hint: "機關會追著你：帶著跑，別讓它碰到"
+    kind: orbs
+    damage: 1.8
+    type: lightning
+    cooldown: 16
+    range: 30
+    telegraph: 0.8
+    count: 4
+    speed: 0.17
+    duration: 8
+    size: 0.8
+    explode: 2.8
+    slow: 1
+  vault_shadow_step:
+    name: 影步刺殺
+    kind: blink
+    damage: 1.6          # 2026-10：2.4 → 1.6（其他 Boss 的撲擊約 1.0–1.4）
+    cooldown: 14         # 2026-10：10 → 14（不要一直瞬移過來）
+    range: 30
+    telegraph: 1.1       # 2026-10：0.9 → 1.1
+    radius: 3
+  vault_bounty:
+    name: 懸賞令
+    kind: curse
+    type: physical
+    cooldown: 22
+    range: 20
+    telegraph: 1.2       # 2026-10：1.0 → 1.2
+    radius: 16           # 2026-10：16 → 8 → 16（改回整個房間）
+    duration: 6          # 2026-10：10 → 6
+    taken: 40            # 2026-10：40 → 20 → 40（改回）
+    shout: "「你的頭，值一整箱金子。」"
+  vault_smoke_bomb:
+    name: 煙霧彈
+    kind: zone
+    damage: 0.7
+    type: chaos
+    cooldown: 14
+    range: 20
+    telegraph: 0.8
+    radius: 3.5
+    duration: 7
+    interval: 0.5
+    count: 4
+    scatter: 5
+    at: random
+    slow: 2
+  vault_summon_rogues:
+    name: 叫手下
+    kind: summon
+    summon: PILLAGER
+    count: 3
+    summon_max: 6
+    cooldown: 25
+    telegraph: 1.0
+    shout: "「小子們，有人來偷東西了！」"
+  vault_lockdown:
+    name: 全面封鎖
+    hint: "整個金庫封鎖：躲進綠色的安全區"
+    kind: sanctuary
+    damage: 4.0          # 2026-10：4.0 → 2.6 → 4.0（改回：沒躲進安全區就很痛）
+    type: lightning
+    cooldown: 36
+    range: 30
+    telegraph: 3.5       # 2026-10：3.0 → 3.5
+    radius: 30
+    count: 2             # 一個人打時幾個安全區
+    count_per_player: 1  # 2026-10：看人數加安全區（範圍內每多一個人 +1，最多 10 個）
+    safe: 3.5            # 2026-10：2.5 → 3.5
+    scatter: 10
+    shout: "「封鎖。沒有人出得去。」"
+  hazard_vault_coins:
+    name: 掉落的金條
+    kind: slam
+    damage: 1.6
+    telegraph: 0.6
+    delay: 1.1
+    radius: 2.5
+    count: 3
+    stagger: 0.3
+    scatter: 3
+    at: target
+
+  # ---- 世界 Boss（2026-10，events.yml 的開服活動）：只有世界 Boss 會用；落點照圖形排（at: spiral／cross／line／cage） ----
+  world_star_spiral:
+    name: 星渦連爆
+    hint: "從腳下轉出去的連爆：往旋轉的反方向跑"
+    kind: slam
+    damage: 1.8
+    type: chaos
+    cooldown: 14
+    range: 20
+    telegraph: 1.2
+    delay: 0.9
+    radius: 2.6
+    count: 18
+    stagger: 0.09
+    reach: 16
+    at: spiral
+    shout: "「星辰，旋轉吧。」"
+  world_cross_rift:
+    name: 十字天裂
+    hint: "四個方向一路炸出去：站到斜角的空隙"
+    kind: slam
+    damage: 2.0
+    type: lightning
+    cooldown: 16
+    range: 20
+    telegraph: 1.3
+    delay: 0.8
+    radius: 2.8
+    count: 20
+    stagger: 0.1
+    reach: 20
+    at: cross
+    shout: "「天，裂開了。」"
+  world_ley_hunt:
+    name: 地脈追獵
+    hint: "一直線往你追過來：往旁邊閃"
+    kind: slam
+    damage: 1.9
+    type: physical
+    cooldown: 10
+    range: 24
+    telegraph: 1.0
+    delay: 0.6
+    radius: 3
+    count: 12
+    stagger: 0.08
+    reach: 22
+    at: line
+  world_star_cage:
+    name: 星牢
+    hint: "身邊圍了一圈：待在圈裡面別出去"
+    kind: slam
+    damage: 2.4
+    type: cold
+    cooldown: 18
+    range: 24
+    telegraph: 1.4
+    delay: 1.0
+    radius: 2.4
+    count: 12
+    stagger: 0.04
+    scatter: 6
+    at: cage
+    shout: "「哪裡都別去。」"
+  world_twin_rings:
+    name: 雙生星環
+    kind: ring
+    damage: 1.9
+    type: chaos
+    cooldown: 18
+    range: 18
+    telegraph: 1.2       # 2026-10：1.8 → 1.2（有閃避翻滾了）
+    radius: 1.5
+    reach: 20
+    speed: 0.38
+    width: 0.8
+    count: 2
+    stagger: 1.2
+    gaps: 1
+    gap_angle: 50
+    shout: "「兩道光，只留一條路。」"
+  # 2026-10：拿掉開天之日（要站安全區）跟噬星之眼之後補的兩招
+  world_sky_pillars:
+    name: 天柱旋光
+    hint: "三道光柱繞著轉：跟著光轉的方向繞著跑"
+    kind: beam
+    damage: 1.2
+    type: lightning
+    cooldown: 20
+    range: 18
+    telegraph: 1.5
+    count: 3
+    angle: 150
+    length: 26
+    width: 0.7
+    duration: 4.5
+    interval: 0.3
+    shout: "「天，撐開了。」"
+  world_core_gravity:
+    name: 星核引力
+    hint: "被吸過去會爆炸：一直往外跑"
+    kind: pull
+    damage: 2.8
+    type: chaos
+    cooldown: 24
+    range: 14
+    telegraph: 1.5
+    radius: 15
+    speed: 0.08
+    duration: 3
+    explode: 5
+    shout: "「回到我身邊。」"
+  world_hunter_orbs:
+    name: 噬星之眼
+    kind: orbs
+    damage: 1.8
+    type: chaos
+    cooldown: 20
+    range: 30
+    telegraph: 1.0
+    count: 5
+    speed: 0.15
+    duration: 8
+    size: 0.8
+    explode: 2.8
+  world_doomsday:
+    name: 開天之日
+    kind: sanctuary
+    damage: 3.6
+    type: chaos
+    cooldown: 40
+    range: 30
+    telegraph: 3.0
+    radius: 30
+    count: 2
+    safe: 2.5
+    scatter: 11
+    shout: "「這個世界剛開始——也可以馬上結束。」"
+
+# 各種生物預設的招式組（maps.yml／zones.yml 沒寫 skills 時）
+defaults:
+  default: [slam, charge]
+  ZOMBIE: [slam, charge, summon_zombies]
+  HUSK: [slam, quake, summon_husks]
+  DROWNED: [tide_slam, trident_volley, summon_drowned]
+  SKELETON: [arrow_volley, summon_skeletons, blink]
+  STRAY: [frost_arrows, tide_slam, summon_skeletons]
+  BOGGED: [arrow_volley, venom_pool, summon_skeletons]
+  WITHER_SKELETON: [slam, curse_of_decay, summon_wither_skeletons]
+  SPIDER: [web_volley, venom_pool, summon_spiders, pounce]
+  CAVE_SPIDER: [web_volley, venom_pool, summon_spiders, pounce]
+  WITCH: [venom_pool, lightning_storm, curse_of_decay]
+  VINDICATOR: [charge, slam, quake]
+  PILLAGER: [crossbow_volley, charge, summon_vex]
+  EVOKER: [lightning_storm, summon_vex, blink]
+  ILLUSIONER: [arrow_volley, blink, curse_of_decay]
+  RAVAGER: [charge, quake, curse_of_decay]
+  BLAZE: [fire_volley, meteor, flame_breath]
+  WARDEN: [sonic_boom, quake, void_zone]
+  ENDERMAN: [blink, void_zone, pounce]
+  IRON_GOLEM: [slam, quake, charge]
+  POLAR_BEAR: [maul, charge, frost_breath]
+  PIGLIN_BRUTE: [charge, slam, quake]
+  HOGLIN: [charge, maul]
+  ZOGLIN: [charge, maul]
+  WOLF: [pounce, maul]
+  CREAKING: [slam, void_zone, blink]
+  BREEZE: [arrow_volley, blink, quake]

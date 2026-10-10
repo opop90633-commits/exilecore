@@ -1,0 +1,168 @@
+# 區域（階段 2 批次 2）：名稱、等級、怪物、Boss、旁白。世界觀《星骸》見 world.yml 開頭。
+# 區域在世界裡的「位置」不寫在這裡：用 /ec zone 指令擺放（或 /ec zone autolayout 一鍵產生），
+# 存在 plugins/ExileCore/zone-layout.yml，所以更新插件時不會洗掉你擺好的版面。
+#
+# icon         傳送選單（/wp）裡的圖示（原版物品名稱）。
+# intro        每個角色第一次走進這個區域時，聊天欄出現的一句旁白（傳送選單的區域說明也會顯示）。
+# town: true   城鎮（營地）：安全區，不刷怪、玩家不會受傷，走進來生命、魔力、護盾自動回滿。
+# level        [最低, 最高]：入口是最低等級，越往 Boss 場地走越高。
+# monsters     刷怪清單與權重：原版生物寫類型（ZOMBIE），MythicMobs 怪物寫 "mythic:代號"。
+#              沒裝 MythicMobs（或找不到代號）時 mythic: 的項目自動跳過。
+# boss         區域 Boss：玩家走進 Boss 場地就出現；每個角色第一次打倒送天賦點（boss.first_kill_points）。
+#   mythic     MythicMobs 怪物代號（範例在 plugins/MythicMobs/Mobs/ExileCore.yml，會自動安裝）；
+#              沒裝 MythicMobs 或找不到代號時改用 type 的原版生物。
+#   life / damage  在傳奇稀有度之上再乘的生命／傷害倍率。scale 是體型倍率。
+#              life 是照 balance.yml 的 boss_seconds 算的：中等裝備的參考角色站著打，第一個 Boss 約 30 秒、
+#              最後一個約 75 秒（實際要閃技能，大約再久一半）。改了之後用 /ec balance 看每隻 Boss 要打多久。
+#   mods       怪物詞綴（monsters.yml 的 mods）。
+#   intro      Boss 登場時對場地附近的人說的話（「」開頭＝Boss 說的話，其他＝旁白）。
+#   defeat     Boss 倒下時的旁白。
+#   skills     招式組（data/boss_skills.yml 的代號；沒寫照生物種類的預設，例如 [tide_slam, trident_volley, summon_drowned]）。
+
+zones:
+  camp:
+    icon: CAMPFIRE
+    name: 流放者營地
+    town: true
+    intro: 帝國的押送船每十天靠岸一次，載走挖出來的星骸，丟下新的流放者。
+
+  coast:
+    icon: PRISMARINE_SHARD
+    name: 潮濕海岸
+    level: [1, 12]
+    intro: 海水泛著不自然的藍光。第一批星骸落在這片淺灘，把淹死在海裡的人都叫醒了。
+    monsters:
+      ZOMBIE: 40
+      DROWNED: 30
+      SKELETON: 20
+      SPIDER: 10
+      "mythic:ExileCore_Tidecaller": 8
+    boss:
+      name: 溺潮之母
+      intro: 「第一塊星骸落進海裡的時候，是我吞下了它。你們這些挖星的，一個也別想走。」
+      defeat: 溺潮之母沉回海底，淺灘的藍光暗了一些。
+      mythic: ExileCore_TideMother
+      type: DROWNED
+      life: 3.9          # 2026-10：4.8 → 3.9（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
+      damage: 1.3
+      scale: 1.8
+      mods: [sturdy, frosty]
+
+  forest:
+    icon: OAK_SAPLING
+    name: 幽語森林
+    level: [12, 24]
+    intro: 沒有風，樹卻一直在低語。越往深處走，蛛網上掛著的星骸碎屑就越亮。
+    monsters:
+      SPIDER: 30
+      SKELETON: 25
+      ZOMBIE: 20
+      CAVE_SPIDER: 15
+      WITCH: 10
+    boss:
+      name: 林影織母
+      intro: 「又一個迷路的流放者。孩子們，晚餐來了。」
+      defeat: 蛛網一條條斷開，森林裡的低語停了下來。
+      mythic: ExileCore_Broodmother
+      type: SPIDER
+      life: 4.8          # 2026-10：9.0 → 4.8（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
+      damage: 1.3
+      scale: 2.2
+      mods: [swift, deadly]
+
+  ruins:
+    icon: CRACKED_STONE_BRICKS
+    name: 焚城廢墟
+    level: [24, 36]
+    intro: 曜朝的首都曜京。皇帝想用星骸把自己煉成神，熔爐失控，這座城燒了七天七夜。
+    monsters:
+      HUSK: 30
+      SKELETON: 20
+      PILLAGER: 20
+      STRAY: 15
+      VINDICATOR: 15
+    boss:
+      name: 廢城督軍
+      intro: 「曜京還沒有淪陷！守住熔爐，一粒星骸都不許帶走！」
+      defeat: 督軍的鎧甲裂開，裡面只剩一把燒焦的星骸——他守了這座城三百年。
+      mythic: ExileCore_Warlord
+      type: VINDICATOR
+      life: 1.8          # 2026-10：4.5 → 1.8（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
+      damage: 1.4
+      scale: 1.5
+      mods: [armoured, fiery]
+
+  swamp:
+    icon: LILY_PAD
+    name: 腐沼
+    level: [36, 48]
+    intro: 星骸的毒滲進了地下水。這裡的東西都在慢慢腐爛，卻怎麼也死不透。
+    monsters:
+      BOGGED: 30
+      DROWNED: 20
+      ZOMBIE_VILLAGER: 20
+      WITCH: 15
+      CAVE_SPIDER: 15
+    boss:
+      name: 腐沼巫母
+      intro: 「沼澤裡的東西，都是我用星骸一口一口餵大的。你也會是其中之一。」
+      defeat: 巫母化成一灘黑水，沼氣散開了一點。
+      mythic: ExileCore_BogWitch
+      type: WITCH
+      life: 2.4          # 2026-10：6.6 → 2.4（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
+      damage: 1.5
+      scale: 1.6
+      mods: [resistant, shocking]
+
+  mountain:
+    icon: SNOWBALL
+    name: 霜頂山脈
+    level: [48, 60]
+    intro: 天穹之心最大的一塊就嵌在山頂，把整座山凍成了白色。之後的星痕都從這裡開始。
+    monsters:
+      STRAY: 30
+      SKELETON: 20
+      WITHER_SKELETON: 20
+      VINDICATOR: 15
+      BREEZE: 15
+    boss:
+      name: 霜角撼地獸
+      intro: 山頂傳來一聲低吼，腳下的冰層開始崩裂。
+      defeat: 撼地獸倒下，冰層底下透出天穹之心的光。
+      mythic: ExileCore_FrostRavager
+      type: RAVAGER
+      life: 0.6          # 2026-10：1.5 → 0.6（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）；劫掠獸本身在 monsters.yml 已經是 4 倍生命
+      damage: 1.3
+      scale: 1.3
+      mods: [frosty, sturdy]
+
+# 刷怪：區域裡不會有原版的自然生成，怪物一群一群出現在玩家附近（看不到的距離）。
+spawner:
+  interval_ticks: 40      # 每幾 tick 檢查一次（20 tick = 1 秒）
+  distance: [16, 28]      # 怪物群出現在離玩家多遠的地方
+  max_nearby: 14          # 玩家身邊 nearby_radius 格內已經有這麼多隻就先不刷
+  nearby_radius: 32
+  world_cap: 250          # 整個伺服器區域怪物的上限
+  packs:
+    normal: { weight: 70, size: [3, 5] }
+    magic:  { weight: 24, size: [2, 4] }    # 同一群共用同一組詞綴
+    rare:   { weight: 6, minions: [2, 3] }  # 1 隻稀有＋幾隻普通小弟
+
+boss:
+  radius: 20              # 玩家走到 Boss 場地中心這個距離內，Boss 出現
+  respawn_seconds: 90     # 被打倒後至少過多久才會再出現
+  reset_seconds: 60       # 場地附近沒有玩家這麼久，Boss 消失（下次重新出現、滿血）
+  first_kill_points: 1    # 每個角色第一次打倒區域 Boss 送的天賦點
+
+# 防刷（照 PoE：區域的怪打完就沒了；這裡的怪會一直刷，所以改成「同一個區域刷太久，掉落慢慢變少」）。
+# 只算角色等級已經到這個區域最高等級的人（還在這裡升級的人不受影響）；地圖不受影響；經驗照給。
+# 每殺一隻加 1 點疲勞（區域 Boss 算 boss_weight 點），疲勞每分鐘減 recover_per_minute 點（不殺也在減）。
+# 疲勞到 free 之前都是全額掉落，之後再 span 點從 100% 慢慢降到 floor（件數與金幣都乘這個倍率）。
+# 例：每分鐘殺 30 隻 → 前 33 分鐘全額，之後一小時左右降到 20%；離開 1~2 小時就回滿。同一個帳號的角色共用。
+fatigue:
+  enabled: true
+  free: 500
+  span: 1000
+  floor: 0.2
+  recover_per_minute: 15
+  boss_weight: 50

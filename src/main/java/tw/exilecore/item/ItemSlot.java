@@ -1,6 +1,6 @@
 package tw.exilecore.item;
 
-/** 裝備欄位。前六個對應原版欄位；戒指、項鍊、腰帶是階段 2 角色面板的虛擬欄位。 */
+/** 裝備欄位。前六個對應原版欄位；戒指、項鍊、腰帶是階段 2 角色面板的虛擬欄位；地圖不是裝備，只是借用同一套物品引擎。 */
 public enum ItemSlot {
     MAIN_HAND("主手"),
     OFF_HAND("副手"),
@@ -10,7 +10,11 @@ public enum ItemSlot {
     FEET("腳部"),
     RING("戒指"),
     AMULET("項鍊"),
-    BELT("腰帶");
+    BELT("腰帶"),
+    /** 地圖（星痕）：不能裝備，放進地圖裝置用。 */
+    MAP("地圖"),
+    /** 珠寶：不能裝備，放進天賦樹的珠寶孔（PoE2 做法）。 */
+    JEWEL("珠寶");
 
     private final String displayName;
 

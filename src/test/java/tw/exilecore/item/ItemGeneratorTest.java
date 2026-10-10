@@ -38,11 +38,75 @@ class ItemGeneratorTest {
         currencies.load(DATA);
     }
 
+    /**
+     * 通貨掉落率照 PoE2：蛻變、增幅最常見，稀有通貨裡崇高（至臻石）最常見，
+     * 接著富豪、點金、混沌，機會、神聖、剝離很少見；神聖大約比崇高少 60–75 倍。掉落等級照 poe2db。
+     * 2026-10：沒人用的微光石、添輝石、礪鋒石、甲冑殘片減半（品質通貨變得比至臻石少）。
+     * 2026-10 第二次：小伺服器沒有交易，至臻石 1000 → 400、豐饒石 570 → 300、小鑿星石 160 → 60
+     * （至臻石變得比品質通貨少；神聖大約比崇高少 27 倍）。
+     */
+    @Test
+    void currencyDropRatesFollowPoe2() {
+        assertEquals(1500, currencies.get("glimmer_orb").dropWeight());
+        assertEquals(1250, currencies.get("lustre_orb").dropWeight());
+        assertEquals(750, currencies.get("whetstone").dropWeight());
+        assertEquals(400, currencies.get("zenith_orb").dropWeight());
+        assertEquals(300, currencies.get("bounty_orb").dropWeight());
+        assertEquals(60, currencies.get("lesser_socket_orb").dropWeight());
+        final List<String> commonToRare = List.of("glimmer_orb", "lustre_orb", "whetstone", "zenith_orb", "bounty_orb",
+                "spark_orb", "turmoil_orb", "chance_orb", "oracle_orb", "annul_orb", "greater_socket_orb");
+        int previous = Integer.MAX_VALUE;
+        for (final String id : commonToRare) {
+            final int weight = currencies.get(id).dropWeight();
+            assertTrue(weight > 0 && weight < previous, id + " 的權重 " + weight + " 要比前一個（" + previous + "）小");
+            previous = weight;
+        }
+        assertEquals(currencies.get("whetstone").dropWeight(), currencies.get("armour_scrap").dropWeight());
+        final double exaltedPerDivine = (double) currencies.get("zenith_orb").dropWeight() / currencies.get("oracle_orb").dropWeight();
+        assertTrue(exaltedPerDivine > 20 && exaltedPerDivine < 35, "崇高：神聖 " + exaltedPerDivine);
+        // 掉落等級：蛻變、增幅 1；崇高、富豪、點金 5；混沌、機會 12；神聖、剝離 35
+        for (final String id : List.of("glimmer_orb", "lustre_orb")) {
+            assertEquals(1, currencies.get(id).dropLevel(), id);
+        }
+        for (final String id : List.of("zenith_orb", "bounty_orb", "spark_orb", "whetstone", "armour_scrap")) {
+            assertEquals(5, currencies.get(id).dropLevel(), id);
+        }
+        for (final String id : List.of("turmoil_orb", "chance_orb")) {
+            assertEquals(12, currencies.get(id).dropLevel(), id);
+        }
+        for (final String id : List.of("oracle_orb", "annul_orb")) {
+            assertEquals(35, currencies.get(id).dropLevel(), id);
+        }
+    }
+
     @Test
     void dataFilesLoad() {
-        assertEquals(40, repository.baseCount());
+        assertEquals(65, repository.baseCount(), "47 件裝備（含弩、長棍、矛與纏布防具）+ 14 張地圖 + 4 種珠寶");
         assertTrue(repository.affixCount() >= 30, "詞綴數 " + repository.affixCount());
-        assertEquals(13, currencies.size());
+        assertEquals(19 + 12 + 7 + 6 + 4 + 20 + 3, currencies.size(),
+                "12 種改造通貨 + 3 種鑿星石 + 星盤刻刀 + 天穹碎片 + 深淵星核 + 僥倖石，加上地圖機制的 12 星魄、7 催化劑、6 星籤、4 蒸餾情緒，"
+                        + "還有未切割寶石（技能 1–20 級、輔助 1–3 階，2026-10 算通貨）");
+        // 鑿星石：開技能的第 3、4、5 個輔助孔，不能用在裝備上，高階的要高等級的怪才掉
+        int previousLevel = 0;
+        for (final String id : java.util.List.of("lesser_socket_orb", "socket_orb", "greater_socket_orb")) {
+            final CurrencyType orb = currencies.get(id);
+            assertNotNull(orb, id);
+            assertTrue(orb.isSkillCurrency(), id);
+            assertTrue(orb.dropLevel() > previousLevel, id + " 的掉落等級要一個比一個高");
+            previousLevel = orb.dropLevel();
+        }
+        assertEquals(3, currencies.get("lesser_socket_orb").sockets());
+        assertEquals(5, currencies.get("greater_socket_orb").sockets());
+        assertTrue(currencies.get("greater_socket_orb").dropLevel() > 60, "大鑿星石只在地圖掉（劇情世界最高 60 級）");
+        assertFalse(CurrencyOperation.SKILL_SOCKET.canApply(generator.generate(repository.base("short_sword"),
+                tw.exilecore.item.Rarity.NORMAL, 1, new Random(1)), generator), "鑿星石不能用在裝備上");
+        // 鑑定卷軸只跟鑑定師領，不會掉
+        final CurrencyType scroll = currencies.firstWith(CurrencyOperation.IDENTIFY).orElseThrow();
+        assertEquals("identify_scroll", scroll.id());
+        assertEquals(0, scroll.dropWeight());
+        for (final CurrencyType type : currencies.all()) {
+            assertFalse(type.flavor().isBlank(), type.id() + " 沒有世界觀描述（flavor）");
+        }
         assertNotNull(repository.base("short_sword"));
         assertNotNull(repository.affix("life_flat"));
     }
@@ -60,14 +124,19 @@ class ItemGeneratorTest {
             checkInvariants(data, base);
             if (rarity == Rarity.RARE) {
                 rareCount++;
-                assertTrue(data.affixes().size() >= 4 || generator.eligible(data, AffixType.PREFIX).isEmpty() || generator.eligible(data, AffixType.SUFFIX).isEmpty(),
-                        "稀有物品至少 4 條詞綴：" + base.id() + " " + data.affixes().size());
+                assertTrue(data.affixes().size() >= (base.isJewel() ? 3 : 4) || generator.eligible(data, AffixType.PREFIX).isEmpty()
+                        || generator.eligible(data, AffixType.SUFFIX).isEmpty(),
+                        "稀有物品至少 4 條詞綴（珠寶 3 條）：" + base.id() + " " + data.affixes().size());
+                if (base.isJewel()) {
+                    assertTrue(data.affixes().size() <= 4, "稀有珠寶最多 4 條：" + data.affixes().size());
+                    assertTrue(generator.countOf(data, AffixType.PREFIX) <= 2 && generator.countOf(data, AffixType.SUFFIX) <= 2, "珠寶前後綴各最多 2 條");
+                }
                 assertNotNull(data.name());
-                assertFalse(data.identified());
+                assertTrue(data.identified(), "生成器做出來是已鑑定的；掉落表才會設成未鑑定");
             }
             if (rarity == Rarity.MAGIC) {
                 assertTrue(data.affixes().size() >= 1 && data.affixes().size() <= 2);
-                assertFalse(data.identified());
+                assertTrue(data.identified());
             }
             if (rarity == Rarity.NORMAL) {
                 assertTrue(data.affixes().isEmpty());
@@ -138,11 +207,12 @@ class ItemGeneratorTest {
         final ItemData data = generator.generate(base, Rarity.NORMAL, 40, random);
 
         assertTrue(CurrencyOperation.UPGRADE_TO_MAGIC.canApply(data, generator));
-        assertFalse(CurrencyOperation.REROLL_RARE.canApply(data, generator));
+        assertFalse(CurrencyOperation.REMOVE_AND_ADD.canApply(data, generator));
+        assertFalse(CurrencyOperation.REMOVE_AFFIX.canApply(data, generator));
         CurrencyOperation.UPGRADE_TO_MAGIC.apply(data, generator, random);
         assertEquals(Rarity.MAGIC, data.rarity());
         assertTrue(data.identified());
-        assertTrue(data.affixes().size() >= 1 && data.affixes().size() <= 2);
+        assertEquals(1, data.affixes().size(), "微光石固定 1 條（PoE2）");
 
         // 補到 2 條後不能再加
         while (data.affixes().size() < 2) {
@@ -163,6 +233,17 @@ class ItemGeneratorTest {
         assertTrue(data.affixes().size() <= 6);
         checkInvariants(data, base);
 
+        // 亂流石：移除一條再加一條，數量不變；湮滅石：少一條
+        final int beforeChaos = data.affixes().size();
+        assertTrue(CurrencyOperation.REMOVE_AND_ADD.canApply(data, generator));
+        CurrencyOperation.REMOVE_AND_ADD.apply(data, generator, random);
+        assertEquals(beforeChaos, data.affixes().size());
+        checkInvariants(data, base);
+        assertTrue(CurrencyOperation.REMOVE_AFFIX.canApply(data, generator));
+        CurrencyOperation.REMOVE_AFFIX.apply(data, generator, random);
+        assertEquals(beforeChaos - 1, data.affixes().size());
+        assertEquals(Rarity.RARE, data.rarity(), "湮滅石不改稀有度");
+
         final List<RolledAffix> before = data.affixes().stream().map(RolledAffix::copy).toList();
         CurrencyOperation.REROLL_VALUES.apply(data, generator, random);
         assertEquals(before.size(), data.affixes().size());
@@ -179,6 +260,19 @@ class ItemGeneratorTest {
         CurrencyOperation.QUALITY_WEAPON.apply(data, generator, random);
         assertEquals(5, data.quality());
         assertFalse(CurrencyOperation.QUALITY_ARMOUR.canApply(data, generator));
+
+        // 星火石固定 4 條（PoE2 的煉金石）
+        final ItemData alchemy = generator.generate(base, Rarity.NORMAL, 40, random);
+        CurrencyOperation.UPGRADE_TO_RARE.apply(alchemy, generator, random);
+        assertEquals(Rarity.RARE, alchemy.rarity());
+        assertEquals(4, alchemy.affixes().size());
+        // 品質不分稀有度每次 +5，上限 20
+        for (int i = 0; i < 6; i++) {
+            if (CurrencyOperation.QUALITY_WEAPON.canApply(alchemy, generator)) {
+                CurrencyOperation.QUALITY_WEAPON.apply(alchemy, generator, random);
+            }
+        }
+        assertEquals(20, alchemy.quality());
     }
 
     @Test
@@ -231,5 +325,33 @@ class ItemGeneratorTest {
         assertEquals(data.affixes().size(), back.affixes().size());
         assertEquals(data.affixes().get(0).vars(), back.affixes().get(0).vars());
         assertEquals(data.name(), back.name());
+    }
+
+    @Test
+    void chanceOrbOnlyWorksOnBasesWithChanceableUniques() {
+        final CurrencyType chance = currencies.get("chance_orb");
+        assertEquals(CurrencyOperation.CHANCE, chance.operation());
+        assertEquals(0.1, chance.success(), 1e-9);
+        final ItemData ring = generator.generate(repository.base("coral_ring"), Rarity.NORMAL, 60, new Random(3));
+        assertTrue(chance.canApply(ring, generator), "潮珊指環有能用僥倖石做出來的傳奇");
+        final ItemData lowRing = generator.generate(repository.base("coral_ring"), Rarity.NORMAL, 59, new Random(3));
+        assertFalse(chance.canApply(lowRing, generator), "物品等級不夠（傳奇 60 級才有）");
+        final ItemData amulet = generator.generate(repository.base("jade_amulet"), Rarity.NORMAL, 60, new Random(3));
+        assertFalse(chance.canApply(amulet, generator), "天穹之心是終局 Boss 專屬，做不出來");
+        final ItemData magic = generator.generate(repository.base("coral_ring"), Rarity.MAGIC, 60, new Random(3));
+        assertFalse(chance.canApply(magic, generator), "只能用在普通物品");
+        final ItemData starter = generator.generate(repository.base("coral_ring"), Rarity.NORMAL, 60, new Random(3));
+        starter.markStarter();
+        assertFalse(chance.canApply(starter, generator), "新手裝備不行");
+        // 成功：還是同一件物品（UUID、物品等級不變），變成傳奇、已鑑定
+        final String uuid = ring.uuid();
+        generator.makeUnique(ring, CurrencyOperation.chanceUniques(ring, generator).getFirst(), new Random(4));
+        assertEquals(Rarity.UNIQUE, ring.rarity());
+        assertEquals(uuid, ring.uuid());
+        assertEquals(60, ring.ilvl());
+        assertNotNull(ring.unique());
+        assertTrue(ring.identified());
+        assertFalse(ring.affixes().isEmpty());
+        assertTrue(ring.affixes().stream().allMatch(affix -> affix.id().startsWith(UniqueItem.AFFIX_PREFIX)));
     }
 }

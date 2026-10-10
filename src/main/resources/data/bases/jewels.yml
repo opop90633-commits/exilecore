@@ -1,0 +1,45 @@
+# 珠寶基底（PoE2 的珠寶）：不能穿戴，放進天賦樹的珠寶孔（/tree 裡配了孔位再點它），詞綴直接加在角色身上。
+# 顏色決定詞綴池（affixes/jewels.yml 的 spawn_tags）：赤星晶＝力量系（護甲、物理／火焰、近戰、範圍）、
+# 翠星晶＝敏捷系（閃避、冰冷、投射物、攻速、暴擊、命中）、蒼星晶＝智慧系（能量護盾、魔力、閃電／混沌、法術、召喚物、施法速度）；
+# 白星晶三種標籤都有，什麼都能出，比較少見。魔法珠寶 1–2 條、稀有 3–4 條（前綴、後綴各最多 2 條）；掉出來至少是魔法的。
+# drop_weight 是掉落時抽到這個基底的權重（一般裝備是 10）；商人不賣珠寶。
+
+ruby_jewel:
+  name: 赤星晶
+  material: REDSTONE
+  model: exilecore:jewel/ruby
+  slot: JEWEL
+  tags: [ruby]
+  drop_level: 20
+  drop_weight: 4
+  requirements: { level: 1 }
+
+emerald_jewel:
+  name: 翠星晶
+  material: EMERALD
+  model: exilecore:jewel/emerald
+  slot: JEWEL
+  tags: [emerald]
+  drop_level: 20
+  drop_weight: 4
+  requirements: { level: 1 }
+
+sapphire_jewel:
+  name: 蒼星晶
+  material: LAPIS_LAZULI
+  model: exilecore:jewel/sapphire
+  slot: JEWEL
+  tags: [sapphire]
+  drop_level: 20
+  drop_weight: 4
+  requirements: { level: 1 }
+
+diamond_jewel:
+  name: 白星晶
+  material: DIAMOND
+  model: exilecore:jewel/diamond
+  slot: JEWEL
+  tags: [ruby, emerald, sapphire]
+  drop_level: 45
+  drop_weight: 2
+  requirements: { level: 1 }

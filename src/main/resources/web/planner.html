@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>星骸 天賦規劃器</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0d1a'/%3E%3Cpolygon points='32,6 38,25 58,25 42,37 48,57 32,45 16,57 22,37 6,25 26,25' fill='%23f5b942'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0a0d1a;
+    --panel: #121628;
+    --panel-2: #1a1f36;
+    --line: #2b3150;
+    --text: #e6e6f0;
+    --quiet: #9a9cb4;
+    --gold: #f5c04a;
+    --gold-edge: #e6a82e;
+    --bright: #e8e8f2;
+    --lit: #9c9cb8;
+    --dim: #5e5e74;
+    --dim-edge: #33354a;
+    --blue: #6fa8ff;
+    --red: #ff6a6a;
+    --cyan: #55ffff;
+    --keystone: #ff77ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; font-size: 14px; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 16px;
+    background: var(--panel); border-bottom: 1px solid var(--line); }
+  header h1 { margin: 0; font-size: 17px; font-weight: 600; color: var(--gold); white-space: nowrap; }
+  .classes { display: flex; gap: 6px; }
+  .classes button { border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 5px 12px;
+    border-radius: 6px; cursor: pointer; font: inherit; }
+  .classes button.active { border-color: var(--c); box-shadow: inset 0 0 0 1px var(--c); color: var(--c); }
+  .points { color: var(--quiet); white-space: nowrap; }
+  .points b { color: var(--text); }
+  .points .over { color: var(--red); }
+  main { flex: 1; display: flex; min-height: 0; }
+  #canvas { flex: 1; position: relative; min-width: 0; touch-action: none; cursor: grab; }
+  #canvas.dragging { cursor: grabbing; }
+  svg { width: 100%; height: 100%; display: block; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  aside { width: 320px; max-width: 42vw; background: var(--panel); border-left: 1px solid var(--line); display: flex;
+    flex-direction: column; min-height: 0; }
+  aside section { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  aside h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--gold); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .actions button, .tools button { border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 7px 8px;
+    border-radius: 6px; cursor: pointer; font: inherit; }
+  .actions button:hover, .tools button:hover, .classes button:hover { border-color: var(--quiet); }
+  .actions button.primary { border-color: var(--gold); color: var(--gold); }
+  input[type=search] { width: 100%; padding: 7px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg);
+    color: var(--text); font: inherit; }
+  .hint { color: var(--quiet); font-size: 12px; margin-top: 6px; line-height: 1.5; }
+  #totals { flex: 1; overflow: auto; padding: 12px 14px; }
+  #totals ul { list-style: none; margin: 0; padding: 0; }
+  #totals li { padding: 3px 0; border-bottom: 1px dashed #1f2440; line-height: 1.45; }
+  #totals li.keystone { color: var(--keystone); }
+  #totals .empty { color: var(--dim); }
+  .tools { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 6px; }
+  #tip { position: fixed; pointer-events: none; max-width: 300px; background: rgba(14, 17, 32, 0.96); border: 1px solid var(--line);
+    border-radius: 8px; padding: 9px 11px; line-height: 1.5; font-size: 13px; display: none; z-index: 10;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); }
+  #tip .name { font-weight: 600; font-size: 14px; }
+  #tip .type { color: var(--quiet); font-size: 12px; }
+  #tip .line { color: var(--text); }
+  #tip .action { margin-top: 5px; font-size: 12px; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--panel-2); border: 1px solid var(--gold);
+    color: var(--text); padding: 9px 14px; border-radius: 8px; display: none; z-index: 20; }
+  #codebox { width: 100%; margin-top: 8px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; background: var(--bg);
+    color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px; display: none; resize: vertical; }
+  .label { font-size: 11px; fill: var(--quiet); pointer-events: none; paint-order: stroke; stroke: var(--bg); stroke-width: 3px;
+    stroke-linejoin: round; }
+  .zoomed-out .label { display: none; }
+  .node { cursor: pointer; }
+  /* 裝備（2026-10） */
+  .gear { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .gear button { position: relative; height: 46px; border: 1px solid var(--line); background: var(--bg); color: var(--quiet); border-radius: 6px;
+    cursor: pointer; font: inherit; font-size: 11px; padding: 2px; line-height: 1.2; overflow: hidden; }
+  .gear button:hover { border-color: var(--quiet); }
+  .gear button.normal { border-color: #8a8a8a; color: #e0e0e0; } .gear button.magic { border-color: #6f8fff; color: #9db4ff; }
+  .gear button.rare { border-color: #e8d34a; color: #ffff77; } .gear button.unique { border-color: #c96b2c; color: #e0884a; }
+  .gear button img { width: 24px; height: 24px; image-rendering: pixelated; display: block; margin: 0 auto 1px; }
+  dialog#itemDialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0;
+    width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 32px); }
+  dialog#itemDialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+  .dlg { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .dlg h3 { margin: 0; font-size: 15px; color: var(--gold); }
+  .dlg .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .dlg select, .dlg input { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px; }
+  .dlg select { max-width: 100%; }
+  .dlg .mod { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px dashed #1f2440; }
+  .dlg .mod input { width: 76px; }
+  .dlg .mod .t { flex: 1 1 200px; font-size: 13px; }
+  .dlg .seg button { border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 5px 12px; border-radius: 6px; cursor: pointer; font: inherit; }
+  .dlg .seg button.on { border-color: var(--gold); color: var(--gold); }
+  .dlg .btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+  .dlg .btns button, .dlg .small { border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 6px 12px; border-radius: 6px; cursor: pointer; font: inherit; }
+  .dlg .btns .primary { border-color: var(--gold); color: var(--gold); }
+  .itemcard { background: #100c18; border: 2px solid #3a2a5a; border-radius: 6px; padding: 8px 10px; font-size: 13px; line-height: 1.5; }
+  .itemcard .nm { font-weight: 600; font-size: 15px; }
+  .itemcard .sep { border-top: 1px solid #2c2440; margin: 4px 0; }
+  .itemcard .fl { color: #af6025; font-style: italic; }
+  #gearTotals li { color: #9db4ff; }
+  @media (max-width: 720px) {
+    main { flex-direction: column; }
+    aside { width: 100%; max-width: none; border-left: 0; border-top: 1px solid var(--line); max-height: 42vh; }
+    .points { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>星骸・天賦規劃器</h1>
+  <div class="classes" id="classes"></div>
+  <div class="points" id="points">載入中…</div>
+</header>
+<main>
+  <div id="canvas">
+    <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="glowGold"><stop offset="0" stop-color="#f5c04a" stop-opacity="0.55"/><stop offset="1" stop-color="#f5c04a" stop-opacity="0"/></radialGradient>
+        <radialGradient id="glowBlue"><stop offset="0" stop-color="#6fa8ff" stop-opacity="0.5"/><stop offset="1" stop-color="#6fa8ff" stop-opacity="0"/></radialGradient>
+        <radialGradient id="glowRed"><stop offset="0" stop-color="#ff6a6a" stop-opacity="0.5"/><stop offset="1" stop-color="#ff6a6a" stop-opacity="0"/></radialGradient>
+      </defs>
+      <g id="world">
+        <g id="stars"></g>
+        <g id="edges"></g>
+        <g id="glows"></g>
+        <g id="nodes"></g>
+        <g id="labels"></g>
+      </g>
+    </svg>
+    <div class="tools">
+      <button id="fit" title="整棵樹放進畫面">全部</button>
+      <button id="home" title="回到職業起點">起點</button>
+      <button id="zoomIn" title="放大">＋</button>
+      <button id="zoomOut" title="縮小">－</button>
+    </div>
+  </div>
+  <aside>
+    <section>
+      <h2>規劃</h2>
+      <div class="actions">
+        <button id="copyCode" class="primary">複製代碼</button>
+        <button id="copyLink">複製連結</button>
+        <button id="paste">貼上代碼</button>
+        <button id="reset">全部重來</button>
+      </div>
+      <textarea id="codebox" rows="2" readonly></textarea>
+      <div class="hint">點節點：配到那裡（自動走最短的路）。點已配的節點：退掉（連帶退掉因此斷線的）。<br>
+        <span style="color:#c77dff">六角形</span>是珠寶孔：配了之後在遊戲裡把珠寶放進去（這裡只能規劃孔位）。<br>
+        複製代碼後，遊戲裡打 <b>/tree import</b> 貼上，或在天賦總覽按「匯入規劃代碼」。</div>
+    </section>
+    <section>
+      <h2>搜尋</h2>
+      <input type="search" id="search" placeholder="例如：生命、暴擊、火焰">
+      <div class="hint" id="searchHint"></div>
+    </section>
+    <section>
+      <h2>裝備</h2>
+      <div class="gear" id="gear"></div>
+      <div class="hint">點格子挑基底、詞綴與數值（或選傳奇）。裝備存在「複製連結」的網址裡，一起分享；遊戲裡的 /tree import 只看天賦。</div>
+    </section>
+    <div id="totals"><h2 style="margin:0 0 8px;font-size:13px;color:var(--gold)">天賦加起來</h2><ul id="totalList"></ul>
+      <h2 style="margin:14px 0 8px;font-size:13px;color:var(--gold)">裝備加起來</h2><ul id="gearTotals"></ul></div>
+  </aside>
+</main>
+<dialog id="itemDialog"><div class="dlg" id="dlg"></div></dialog>
+<div id="tip"></div>
+<div id="toast"></div>
+<script>
+"use strict";
+(function () {
+  const SPACING = 56;
+  const svg = document.getElementById("svg");
+  const world = document.getElementById("world");
+  const layers = {
+    stars: document.getElementById("stars"), edges: document.getElementById("edges"), glows: document.getElementById("glows"),
+    nodes: document.getElementById("nodes"), labels: document.getElementById("labels")
+  };
+  const tip = document.getElementById("tip");
+  const toast = document.getElementById("toast");
+  const NS = "http://www.w3.org/2000/svg";
+
+  let data = null;
+  let byId = new Map();
+  let byPos = new Map();
+  let order = [];
+  let classId = null;
+  let start = null;
+  let allocated = new Set();
+  let hover = null;
+  let preview = { add: new Set(), remove: new Set() };
+  let search = new Set();
+  const view = { x: 0, y: 0, scale: 1 };
+
+  // ---- 資料 ----
+  fetch("tree/data.json", { cache: "no-cache" }).then(r => r.json()).then(json => {
+    if (json.error) { document.getElementById("points").textContent = json.error; return; }
+    data = json;
+    order = data.nodes;
+    for (const node of order) { byId.set(node.id, node); byPos.set(node.x + "," + node.y, node); }
+    buildClasses();
+    drawStars();
+    renderGear();
+    const fromHash = decodeCode(hashText());
+    if (fromHash) { load(fromHash); }
+    else { setClass(data.classes[0].id, false); }
+    render();
+    centerOn(start, 1);
+  }).catch(err => { document.getElementById("points").textContent = "讀不到天賦樹資料：" + err; });
+
+  // ---- 裝備（2026-10）----
+  const GEAR_SLOTS = [["ring", "戒指"], ["ring", "戒指"], ["amulet", "項鍊"], ["belt", "腰帶"], ["main_hand", "主手"],
+    ["off_hand", "副手"], ["head", "頭盔"], ["chest", "胸甲"], ["legs", "褲子"], ["feet", "鞋子"]];
+  const RARITY_NAME = { normal: "普通", magic: "魔法", rare: "稀有", unique: "傳奇" };
+  const RARITY_COLOR = { normal: "#e0e0e0", magic: "#8888ff", rare: "#ffff77", unique: "#af6025" };
+  const AFFIX_LIMIT = { normal: 0, magic: 1, rare: 3 };
+  let items = null;
+  let gear = new Array(GEAR_SLOTS.length).fill(null);
+  let pendingGear = null;
+  fetch("tree/items.json", { cache: "no-cache" }).then(r => r.json()).then(json => {
+    items = json;
+    items.baseById = new Map(json.bases.map(b => [b.id, b]));
+    items.affixById = new Map(json.affixes.map(a => [a.id, a]));
+    items.uniqueById = new Map(json.uniques.map(u => [u.id, u]));
+    const text = pendingGear !== null ? pendingGear : gearText(hashText());
+    pendingGear = null;
+    gear = decodeGear(text);
+    renderGear();
+    if (data) updatePanel();
+  }).catch(() => { /* 沒有裝備資料：只有天賦 */ });
+
+  function gearText(hash) {
+    const i = hash.indexOf("~");
+    return i < 0 ? "" : hash.slice(i + 1);
+  }
+  function b64urlEncode(str) {
+    const bytes = new TextEncoder().encode(str);
+    let binary = "";
+    for (const b of bytes) binary += String.fromCharCode(b);
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function b64urlDecode(text) {
+    const binary = atob(text.replace(/-/g, "+").replace(/_/g, "/"));
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+  /** 裝備存成 [基底, 稀有度, 傳奇, [[詞綴, 階, [值…]]…], [[傳奇第幾條的值…]…]]，JSON 之後 base64url。 */
+  function gearSuffix() {
+    if (!gear.some(Boolean)) return "";
+    const packed = gear.map(g => {
+      if (!g) return 0;
+      if (g.rarity === "unique") return [0, "u", g.unique, 0, g.uvals.map(v => v || [])];
+      return [g.base, g.rarity[0], 0, g.affixes.map(a => [a.id, a.tier, a.vals])];
+    });
+    return "~" + b64urlEncode(JSON.stringify(packed));
+  }
+  function decodeGear(text) {
+    const out = new Array(GEAR_SLOTS.length).fill(null);
+    if (!text || !items) return out;
+    let packed;
+    try { packed = JSON.parse(b64urlDecode(text)); } catch (e) { return out; }
+    if (!Array.isArray(packed)) return out;
+    packed.forEach((p, i) => {
+      if (!Array.isArray(p) || i >= out.length) return;
+      if (p[1] === "u") {
+        const u = items.uniqueById.get(p[2]);
+        if (!u || u.slot !== GEAR_SLOTS[i][0]) return;
+        out[i] = { rarity: "unique", unique: u.id, base: u.base, uvals: u.mods.map((m, k) => Array.isArray(p[4] && p[4][k]) ? p[4][k] : []) };
+        return;
+      }
+      const base = items.baseById.get(p[0]);
+      if (!base || base.slot !== GEAR_SLOTS[i][0]) return;
+      const rarity = { n: "normal", m: "magic", r: "rare" }[p[1]] || "normal";
+      const affixes = (Array.isArray(p[3]) ? p[3] : []).filter(a => Array.isArray(a) && items.affixById.has(a[0]))
+        .map(a => ({ id: a[0], tier: a[1], vals: Array.isArray(a[2]) ? a[2] : [] }));
+      out[i] = { rarity, base: base.id, affixes };
+    });
+    return out;
+  }
+  function varNames(vars) { return Object.keys(vars || {}); }
+  function fmtVar(raw, div) { return div > 1 ? format(raw / div) : String(raw); }
+  function fill(text, div, names, values) {
+    return text.replace(/\{([A-Za-z0-9_]+)(?:\/\d+)?\}/g, (m, name) => {
+      const i = names.indexOf(name);
+      const v = i >= 0 ? values[i] : undefined;
+      return v === undefined || v === null || v === "" ? "?" : fmtVar(Number(v), (div && div[name]) || 1);
+    });
+  }
+  function tierOf(affix, tier) { return affix.tiers.find(t => t.tier === tier) || affix.tiers[0]; }
+  /** 這件裝備的說明行（不含名稱）。 */
+  function itemLines(g) {
+    const lines = [];
+    const base = items.baseById.get(g.base);
+    if (base && base.implicit) {
+      const names = varNames(base.implicitVars);
+      lines.push({ text: fill(base.implicit, base.implicitDiv, names, names.map(n => base.implicitVars[n][1])), implicit: true });
+    }
+    if (g.rarity === "unique") {
+      const u = items.uniqueById.get(g.unique);
+      if (u) u.mods.forEach((m, k) => {
+        const names = varNames(m.vars);
+        const vals = names.map((n, j) => (g.uvals[k] && g.uvals[k][j] !== undefined && g.uvals[k][j] !== null) ? g.uvals[k][j] : m.vars[n][1]);
+        lines.push({ text: fill(m.text, m.div, names, vals) });
+      });
+    } else {
+      for (const a of g.affixes) {
+        const affix = items.affixById.get(a.id);
+        if (!affix) continue;
+        const t = tierOf(affix, a.tier);
+        const names = varNames(t.vars);
+        const vals = names.map((n, j) => a.vals[j] !== undefined && a.vals[j] !== null ? a.vals[j] : t.vars[n][1]);
+        lines.push({ text: fill(affix.text, affix.div, names, vals), type: affix.type });
+      }
+    }
+    return lines;
+  }
+  function itemName(g) {
+    const base = items.baseById.get(g.base);
+    if (g.rarity === "unique") { const u = items.uniqueById.get(g.unique); return u ? u.name : "?"; }
+    return (g.rarity === "normal" ? "" : RARITY_NAME[g.rarity] + " ") + (base ? base.name : "?");
+  }
+  function renderGear() {
+    const box = document.getElementById("gear");
+    box.replaceChildren();
+    GEAR_SLOTS.forEach(([slot, label], i) => {
+      const g = gear[i];
+      const b = document.createElement("button");
+      b.type = "button";
+      if (g && items) {
+        b.className = g.rarity;
+        if (g.rarity === "unique" && items.uniqueById.get(g.unique) && items.uniqueById.get(g.unique).icon) {
+          const img = document.createElement("img");
+          img.src = "builds/icon.png?id=" + encodeURIComponent(g.unique);
+          img.alt = "";
+          img.onerror = () => img.remove();
+          b.appendChild(img);
+        }
+        b.appendChild(document.createTextNode(itemName(g)));
+        b.title = itemName(g);
+      } else {
+        b.textContent = label;
+      }
+      b.setAttribute("aria-label", label + (g && items ? "：" + itemName(g) : "：空"));
+      b.addEventListener("click", () => openEditor(i));
+      if (g && items) {
+        b.addEventListener("mouseenter", e => showItemTip(g, e.clientX, e.clientY));
+        b.addEventListener("mousemove", e => showItemTip(g, e.clientX, e.clientY));
+        b.addEventListener("mouseleave", hideTip);
+      }
+      box.appendChild(b);
+    });
+  }
+  function itemCard(g) {
+    const card = document.createElement("div");
+    card.className = "itemcard";
+    const nm = document.createElement("div");
+    nm.className = "nm";
+    nm.style.color = RARITY_COLOR[g.rarity];
+    nm.textContent = itemName(g);
+    card.appendChild(nm);
+    const base = items.baseById.get(g.base);
+    if (g.rarity === "unique" && base) { const d = document.createElement("div"); d.style.color = "#c8c8c8"; d.textContent = base.name; card.appendChild(d); }
+    const lines = itemLines(g);
+    let sep = false;
+    for (const l of lines) {
+      if (!l.implicit && !sep) { const s = document.createElement("div"); s.className = "sep"; card.appendChild(s); sep = true; }
+      const d = document.createElement("div");
+      d.style.color = l.implicit ? "#c8c8c8" : "#8888ff";
+      d.textContent = l.text;
+      card.appendChild(d);
+    }
+    if (g.rarity === "unique") {
+      const u = items.uniqueById.get(g.unique);
+      if (u && u.flavour.length) {
+        const s = document.createElement("div"); s.className = "sep"; card.appendChild(s);
+        for (const f of u.flavour) { const d = document.createElement("div"); d.className = "fl"; d.textContent = f; card.appendChild(d); }
+      }
+    }
+    return card;
+  }
+  function showItemTip(g, x, y) {
+    tip.replaceChildren(itemCard(g));
+    tip.style.display = "block";
+    tip.style.padding = "0";
+    tip.style.border = "none";
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x - w - 12)) + "px";
+    tip.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, y + 12)) + "px";
+  }
+  function renderGearTotals() {
+    const list = document.getElementById("gearTotals");
+    if (!list) return;
+    list.replaceChildren();
+    const lines = [];
+    if (items) for (const g of gear) if (g) lines.push(...itemLines(g).map(l => l.text).filter(t => !t.includes("?")));
+    const sums = sumLines(lines);
+    if (!sums.length) { const li = document.createElement("li"); li.className = "empty"; li.textContent = "還沒有配裝備"; list.appendChild(li); }
+    for (const line of sums) { const li = document.createElement("li"); li.textContent = line; list.appendChild(li); }
+  }
+  function canSpawn(affix, base) {
+    if (base.tags.some(t => affix.exclude.includes(t))) return false;
+    return base.tags.some(t => affix.spawn.includes(t));
+  }
+
+  // ---- 編輯一格 ----
+  const dialog = document.getElementById("itemDialog");
+  const dlg = document.getElementById("dlg");
+  let editing = null;
+  function node(tag, attrs, ...children) {
+    const e = document.createElement(tag);
+    if (attrs) for (const [k, v] of Object.entries(attrs)) {
+      if (v === null || v === undefined || v === false) continue;
+      if (k === "text") e.textContent = v; else if (k === "cls") e.className = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+    }
+    for (const c of children) if (c !== null && c !== undefined && c !== false) e.append(c);
+    return e;
+  }
+  function openEditor(index) {
+    if (!items) { flash("裝備資料還沒載入"); return; }
+    const slot = GEAR_SLOTS[index][0];
+    const current = gear[index];
+    editing = { index, slot, g: current ? JSON.parse(JSON.stringify(current)) : null };
+    if (!editing.g) {
+      const first = items.bases.filter(b => b.slot === slot).sort((a, b) => a.level - b.level).pop();
+      editing.g = first ? { rarity: "rare", base: first.id, affixes: [] } : null;
+    }
+    if (!editing.g) { flash("這一格沒有可以穿的基底"); return; }
+    drawEditor();
+    if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "");
+  }
+  function closeEditor() {
+    if (typeof dialog.close === "function") dialog.close(); else dialog.removeAttribute("open");
+    editing = null;
+  }
+  dialog.addEventListener("cancel", () => { editing = null; });
+  function drawEditor() {
+    const { index, slot } = editing;
+    const g = editing.g;
+    const isUnique = g.rarity === "unique";
+    const seg = node("div", { cls: "row seg" },
+      node("button", { type: "button", cls: isUnique ? "" : "on", text: "一般裝備", onclick: () => {
+        if (!isUnique) return;
+        const first = items.bases.filter(b => b.slot === slot).sort((a, b) => a.level - b.level).pop();
+        editing.g = { rarity: "rare", base: first.id, affixes: [] }; drawEditor();
+      } }),
+      node("button", { type: "button", cls: isUnique ? "on" : "", text: "傳奇", onclick: () => {
+        if (isUnique) return;
+        const list = items.uniques.filter(u => u.slot === slot);
+        if (!list.length) { flash("這一格沒有傳奇"); return; }
+        const u = list[0];
+        editing.g = { rarity: "unique", unique: u.id, base: u.base, uvals: u.mods.map(() => []) }; drawEditor();
+      } }));
+    const body = node("div", { cls: "dlg-body" });
+    if (isUnique) {
+      const sel = node("select", { "aria-label": "傳奇" });
+      for (const u of items.uniques.filter(u => u.slot === slot).sort((a, b) => a.level - b.level || a.name.localeCompare(b.name))) {
+        const base = items.baseById.get(u.base);
+        sel.append(node("option", { value: u.id, text: u.name + "（" + (base ? base.name : "") + "，Lv." + u.level + "）" }));
+      }
+      sel.value = g.unique;
+      sel.addEventListener("change", () => {
+        const u = items.uniqueById.get(sel.value);
+        editing.g = { rarity: "unique", unique: u.id, base: u.base, uvals: u.mods.map(() => []) }; drawEditor();
+      });
+      body.append(node("div", { cls: "row" }, sel));
+      const u = items.uniqueById.get(g.unique);
+      u.mods.forEach((m, k) => {
+        const names = varNames(m.vars).filter(n => m.vars[n][0] !== m.vars[n][1]);
+        const row = node("div", { cls: "mod" }, node("span", { cls: "t", text: m.text.replace(/\{[^}]*\}/g, "#") }));
+        for (const n of varNames(m.vars)) {
+          const r = m.vars[n];
+          if (r[0] === r[1]) continue;
+          const j = varNames(m.vars).indexOf(n);
+          const div = (m.div && m.div[n]) || 1;
+          const input = node("input", { type: "number", step: div > 1 ? String(1 / div) : "1", min: String(r[0] / div), max: String(r[1] / div),
+            value: String(((g.uvals[k] && g.uvals[k][j] != null) ? g.uvals[k][j] : r[1]) / div), "aria-label": n, title: fmtVar(r[0], div) + "–" + fmtVar(r[1], div) });
+          input.addEventListener("input", () => {
+            g.uvals[k] = g.uvals[k] || [];
+            g.uvals[k][j] = clamp(Math.round(Number(input.value) * div), r[0], r[1]);
+            refreshPreview();
+          });
+          row.append(input, node("span", { cls: "hint", style: "margin:0", text: "(" + fmtVar(r[0], div) + "–" + fmtVar(r[1], div) + ")" }));
+        }
+        if (!names.length) row.append(node("span", { cls: "hint", style: "margin:0", text: "固定" }));
+        body.append(row);
+      });
+    } else {
+      const baseSel = node("select", { "aria-label": "基底" });
+      for (const b of items.bases.filter(b => b.slot === slot).sort((a, b) => a.level - b.level)) {
+        baseSel.append(node("option", { value: b.id, text: b.name + "（Lv." + b.level + "）" }));
+      }
+      baseSel.value = g.base;
+      baseSel.addEventListener("change", () => {
+        g.base = baseSel.value;
+        const base = items.baseById.get(g.base);
+        g.affixes = g.affixes.filter(a => canSpawn(items.affixById.get(a.id), base));
+        drawEditor();
+      });
+      const raritySel = node("select", { "aria-label": "稀有度" },
+        ...["normal", "magic", "rare"].map(r => node("option", { value: r, text: RARITY_NAME[r] })));
+      raritySel.value = g.rarity;
+      raritySel.addEventListener("change", () => { g.rarity = raritySel.value; trimAffixes(g); drawEditor(); });
+      body.append(node("div", { cls: "row" }, baseSel, raritySel));
+      const base = items.baseById.get(g.base);
+      const usedGroups = new Set(g.affixes.map(a => items.affixById.get(a.id).group));
+      const count = type => g.affixes.filter(a => items.affixById.get(a.id).type === type).length;
+      g.affixes.forEach((a, k) => {
+        const affix = items.affixById.get(a.id);
+        const choice = node("select", { "aria-label": "詞綴" });
+        for (const type of ["prefix", "suffix"]) {
+          const group = node("optgroup", { label: type === "prefix" ? "前綴" : "後綴" });
+          for (const x of items.affixes) {
+            if (x.type !== type || !canSpawn(x, base)) continue;
+            if (x.id !== a.id && usedGroups.has(x.group)) continue;
+            if (x.id !== a.id && x.type !== affix.type && count(x.type) >= AFFIX_LIMIT[g.rarity]) continue;
+            group.append(node("option", { value: x.id, text: x.text.replace(/\{[^}]*\}/g, "#") }));
+          }
+          if (group.children.length) choice.append(group);
+        }
+        choice.value = a.id;
+        choice.addEventListener("change", () => { const x = items.affixById.get(choice.value); a.id = x.id; a.tier = x.tiers[0].tier; a.vals = []; drawEditor(); });
+        const tierSel = node("select", { "aria-label": "階級" }, ...affix.tiers.map(t => node("option", { value: String(t.tier), text: "T" + t.rank + "（Lv." + t.ilvl + "）" })));
+        tierSel.value = String(a.tier);
+        tierSel.addEventListener("change", () => { a.tier = Number(tierSel.value); a.vals = []; drawEditor(); });
+        const row = node("div", { cls: "mod" }, choice, tierSel);
+        const t = tierOf(affix, a.tier);
+        varNames(t.vars).forEach((n, j) => {
+          const r = t.vars[n];
+          if (r[0] === r[1]) return;
+          const div = (affix.div && affix.div[n]) || 1;
+          const input = node("input", { type: "number", step: div > 1 ? String(1 / div) : "1", min: String(r[0] / div), max: String(r[1] / div),
+            value: String((a.vals[j] != null ? a.vals[j] : r[1]) / div), "aria-label": n, title: fmtVar(r[0], div) + "–" + fmtVar(r[1], div) });
+          input.addEventListener("input", () => { a.vals[j] = clamp(Math.round(Number(input.value) * div), r[0], r[1]); refreshPreview(); });
+          row.append(input, node("span", { cls: "hint", style: "margin:0", text: "(" + fmtVar(r[0], div) + "–" + fmtVar(r[1], div) + ")" }));
+        });
+        row.append(node("button", { type: "button", cls: "small", text: "拿掉", onclick: () => { g.affixes.splice(k, 1); drawEditor(); } }));
+        body.append(row);
+      });
+      const canAdd = ["prefix", "suffix"].some(type => count(type) < AFFIX_LIMIT[g.rarity]);
+      const hint = g.rarity === "normal" ? "普通裝備沒有詞綴（改成魔法或稀有）"
+        : "前綴 " + count("prefix") + "/" + AFFIX_LIMIT[g.rarity] + "、後綴 " + count("suffix") + "/" + AFFIX_LIMIT[g.rarity];
+      body.append(node("div", { cls: "row" }, canAdd ? node("button", { type: "button", cls: "small", text: "＋ 加一條詞綴", onclick: () => {
+        const next = items.affixes.find(x => canSpawn(x, base) && !usedGroups.has(x.group) && count(x.type) < AFFIX_LIMIT[g.rarity]);
+        if (!next) { flash("沒有能加的詞綴了"); return; }
+        g.affixes.push({ id: next.id, tier: next.tiers[0].tier, vals: [] });
+        drawEditor();
+      } }) : null, node("span", { cls: "hint", style: "margin:0", text: hint })));
+    }
+    const previewBox = node("div", { id: "itemPreview" });
+    const btns = node("div", { cls: "btns" },
+      node("button", { type: "button", text: "清掉這格", onclick: () => { gear[index] = null; closeEditor(); renderGear(); updatePanel(); } }),
+      node("button", { type: "button", text: "取消", onclick: closeEditor }),
+      node("button", { type: "button", cls: "primary", text: "完成", onclick: () => { gear[index] = editing.g; closeEditor(); renderGear(); updatePanel(); } }));
+    dlg.replaceChildren(node("h3", { text: GEAR_SLOTS[index][1] }), seg, body, previewBox, btns);
+    refreshPreview();
+  }
+  function refreshPreview() {
+    const box = document.getElementById("itemPreview");
+    if (box && editing) box.replaceChildren(itemCard(editing.g));
+  }
+  function trimAffixes(g) {
+    const keep = [];
+    const count = { prefix: 0, suffix: 0 };
+    for (const a of g.affixes) {
+      const type = items.affixById.get(a.id).type;
+      if (count[type] < AFFIX_LIMIT[g.rarity]) { keep.push(a); count[type]++; }
+    }
+    g.affixes = keep;
+  }
+  function clamp(v, lo, hi) { return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : hi; }
+
+  function hashText() {
+    const raw = location.hash.replace(/^#/, "");
+    try { return decodeURIComponent(raw); } catch (e) { return raw; }
+  }
+  function neighbours(node) {
+    const list = [];
+    // 順序跟遊戲一樣（右、左、下、上），自動配路挑的路線才會跟遊戲裡一樣
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const n = byPos.get((node.x + dx) + "," + (node.y + dy));
+      if (n) list.push(n);
+    }
+    return list;
+  }
+  const owned = node => node.id === start.id || allocated.has(node.id);
+  function canAllocate(node) {
+    if (node.type === "start" || allocated.has(node.id)) return false;
+    return neighbours(node).some(owned);
+  }
+  function reachable(set) {
+    const seen = new Set();
+    const queue = [start];
+    while (queue.length) {
+      const cur = queue.shift();
+      for (const n of neighbours(cur)) {
+        if (set.has(n.id) && !seen.has(n.id)) { seen.add(n.id); queue.push(n); }
+      }
+    }
+    return seen;
+  }
+  /** 跟遊戲一樣：從起點與已配置的節點出發，只走沒配的、不是起點的，找到目標的最短路徑（含目標）。 */
+  function pathTo(target) {
+    if (target.type === "start" || allocated.has(target.id)) return [];
+    const parent = new Map();
+    const seen = new Set([start.id, ...allocated]);
+    const queue = [start, ...[...allocated].map(id => byId.get(id))];
+    while (queue.length) {
+      const cur = queue.shift();
+      for (const n of neighbours(cur)) {
+        if (n.type === "start" || seen.has(n.id)) continue;
+        seen.add(n.id);
+        parent.set(n.id, cur);
+        if (n.id === target.id) {
+          const path = [];
+          let step = n;
+          while (step && !allocated.has(step.id) && step.type !== "start") { path.push(step); step = parent.get(step.id); }
+          return path.reverse();
+        }
+        queue.push(n);
+      }
+    }
+    return [];
+  }
+  /** 退掉一個節點：連帶退掉因此連不到起點的。 */
+  function removal(node) {
+    if (!allocated.has(node.id)) return new Set();
+    const rest = new Set(allocated);
+    rest.delete(node.id);
+    const keep = reachable(rest);
+    const removed = new Set([node.id]);
+    for (const id of rest) if (!keep.has(id)) removed.add(id);
+    return removed;
+  }
+
+  // ---- 代碼（跟遊戲的 TreeCode 一樣）----
+  function encodeCode() {
+    const bytes = new Uint8Array(Math.ceil(order.length / 8));
+    let length = 0;
+    order.forEach((node, i) => {
+      if (node.type !== "start" && allocated.has(node.id)) { bytes[i >> 3] |= 1 << (i & 7); length = (i >> 3) + 1; }
+    });
+    let binary = "";
+    for (let i = 0; i < length; i++) binary += String.fromCharCode(bytes[i]);
+    const b64 = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return data.code + "." + data.version + "." + classId + "." + b64;
+  }
+  function decodeCode(text) {
+    if (!text || !data) return null;
+    let body = text.includes("#") ? text.slice(text.lastIndexOf("#") + 1) : text.trim();
+    if (body.includes("~")) body = body.slice(0, body.indexOf("~")); // ~ 後面是裝備（只有網頁用）
+    const parts = body.split(".");
+    if (parts.length !== 4 || parts[0] !== data.code) return null;
+    if (Number(parts[1]) !== data.version) { flash("這是舊版天賦樹的代碼"); return null; }
+    if (!data.classes.some(c => c.id === parts[2])) return null;
+    let binary;
+    try { binary = atob(parts[3].replace(/-/g, "+").replace(/_/g, "/")); } catch (e) { return null; }
+    const nodes = new Set();
+    for (let i = 0; i < binary.length * 8; i++) {
+      if (binary.charCodeAt(i >> 3) & (1 << (i & 7))) {
+        if (i >= order.length) return null;
+        if (order[i].type !== "start") nodes.add(order[i].id);
+      }
+    }
+    return { classId: parts[2], nodes };
+  }
+  /** 套用解開的代碼：只留連得到起點的（被改過的代碼也不會畫出斷掉的樹）。 */
+  function load(decoded) {
+    setClass(decoded.classId, false);
+    allocated = reachable(decoded.nodes);
+  }
+
+  // ---- 加總（跟遊戲的 PassiveSummary 一樣）----
+  function summarize(nodes) {
+    let sockets = 0;
+    const lines = [];
+    for (const node of nodes) {
+      if (node.type === "socket") { sockets++; continue; } // 珠寶孔的說明不加總；最後列一行數量
+      lines.push(...node.lines);
+    }
+    const out = sumLines(lines);
+    if (sockets) out.push("珠寶孔 ×" + sockets + "（在遊戲裡放珠寶）");
+    return out;
+  }
+  /** 一樣的文字（數字以外）加在一起。 */
+  function sumLines(lines) {
+    const totals = new Map();
+    {
+      for (const line of lines) {
+        const numbers = [];
+        const key = line.replace(/\d+(?:\.\d+)?/g, m => { numbers.push(parseFloat(m)); return "\u0000"; });
+        if (!numbers.length) { if (!totals.has(key)) totals.set(key, null); continue; }
+        const sum = totals.get(key) || new Array(numbers.length).fill(0);
+        numbers.forEach((n, i) => { sum[i] += n; });
+        totals.set(key, sum);
+      }
+    }
+    const out = [];
+    for (const [key, sum] of totals) {
+      if (sum === null) { out.push(key); continue; }
+      let i = 0;
+      out.push(key.replace(/\u0000/g, () => format(sum[i++])));
+    }
+    return out;
+  }
+  function format(v) {
+    if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v));
+    return v.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+  }
+
+  // ---- 畫 ----
+  function el(name, attrs, parent) {
+    const e = document.createElementNS(NS, name);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function drawStars() {
+    let seed = 1234567;
+    const rand = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const n of order) { minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x); minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y); }
+    const w = (maxX - minX + 6) * SPACING, h = (maxY - minY + 6) * SPACING;
+    const x0 = (minX - 3) * SPACING, y0 = (minY - 3) * SPACING;
+    for (let i = 0; i < 420; i++) {
+      el("circle", { cx: x0 + rand() * w, cy: y0 + rand() * h, r: (rand() * 1.4 + 0.3).toFixed(2),
+        fill: rand() < 0.2 ? "#aac8ff" : rand() < 0.3 ? "#fff0b0" : "#ffffff", opacity: (0.15 + rand() * 0.6).toFixed(2) }, layers.stars);
+    }
+  }
+  function buildClasses() {
+    const box = document.getElementById("classes");
+    for (const c of data.classes) {
+      const b = document.createElement("button");
+      b.textContent = c.name;
+      b.style.setProperty("--c", c.color);
+      b.dataset.id = c.id;
+      b.addEventListener("click", () => {
+        if (c.id === classId) return;
+        if (allocated.size && !confirm("換職業會清掉目前的規劃，確定嗎？")) return;
+        setClass(c.id, true);
+      });
+      box.appendChild(b);
+    }
+  }
+  function setClass(id, recenter) {
+    classId = id;
+    const info = data.classes.find(c => c.id === id);
+    start = byId.get(info.start);
+    allocated = new Set();
+    for (const b of document.querySelectorAll("#classes button")) b.classList.toggle("active", b.dataset.id === id);
+    if (recenter) { render(); centerOn(start, view.scale); }
+  }
+
+  function nodeState(node) {
+    if (owned(node)) return preview.remove.has(node.id) ? "remove" : "owned";
+    if (preview.add.has(node.id)) return "path";
+    if (canAllocate(node)) return "available";
+    return "locked";
+  }
+  const NODE_FILL = { owned: "#f5c04a", path: "#6fa8ff", available: "#e8e8f2", locked: "#5e5e74", remove: "#ff6a6a" };
+  function edgeColor(a, b) {
+    const sa = nodeState(a), sb = nodeState(b);
+    if (sa === "remove" || sb === "remove") return (sa === "remove" || sa === "owned") && (sb === "remove" || sb === "owned") ? "#c04848" : "#33354a";
+    if (sa === "owned" && sb === "owned") return "#e6a82e";
+    const onA = sa === "owned" || sa === "path", onB = sb === "owned" || sb === "path";
+    if (onA && onB) return "#5a8ee8";
+    if ((sa === "owned" && sb === "available") || (sb === "owned" && sa === "available")) return "#9c9cb8";
+    return "#33354a";
+  }
+  function shape(node, parent, fill) {
+    const x = node.x * SPACING, y = node.y * SPACING;
+    if (node.type === "keystone") {
+      const pts = [];
+      for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; pts.push((x + Math.cos(a) * 21).toFixed(1) + "," + (y + Math.sin(a) * 21).toFixed(1)); }
+      el("polygon", { points: pts.join(" "), fill, stroke: "#101018", "stroke-width": 3 }, parent);
+      const inner = [];
+      for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; inner.push((x + Math.cos(a) * 13).toFixed(1) + "," + (y + Math.sin(a) * 13).toFixed(1)); }
+      el("polygon", { points: inner.join(" "), fill: "none", stroke: "rgba(16,16,24,0.55)", "stroke-width": 1.5 }, parent);
+    } else if (node.type === "start") {
+      const pts = [];
+      for (let i = 0; i < 16; i++) { const r = i % 2 === 0 ? 22 : 10; const a = -Math.PI / 2 + i * Math.PI / 8; pts.push((x + Math.cos(a) * r).toFixed(1) + "," + (y + Math.sin(a) * r).toFixed(1)); }
+      el("polygon", { points: pts.join(" "), fill, stroke: "#101018", "stroke-width": 2.5 }, parent);
+    } else if (node.type === "notable") {
+      el("circle", { cx: x, cy: y, r: 15, fill, stroke: "#101018", "stroke-width": 3 }, parent);
+      el("circle", { cx: x, cy: y, r: 9, fill: "none", stroke: "rgba(16,16,24,0.5)", "stroke-width": 1.5 }, parent);
+    } else if (node.type === "socket") {
+      // 珠寶孔：六角形的框，中間是空的（遊戲裡放了珠寶才會填上顏色）
+      const pts = [];
+      for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + i * Math.PI / 3; pts.push((x + Math.cos(a) * 15).toFixed(1) + "," + (y + Math.sin(a) * 15).toFixed(1)); }
+      el("polygon", { points: pts.join(" "), fill: "#0a0d1a", stroke: fill, "stroke-width": 4, "stroke-linejoin": "round" }, parent);
+      const inner = [];
+      for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + i * Math.PI / 3; inner.push((x + Math.cos(a) * 7).toFixed(1) + "," + (y + Math.sin(a) * 7).toFixed(1)); }
+      el("polygon", { points: inner.join(" "), fill: "none", stroke: fill, "stroke-width": 1.5, opacity: 0.6 }, parent);
+    } else {
+      el("circle", { cx: x, cy: y, r: 9, fill, stroke: "#101018", "stroke-width": 2.5 }, parent);
+    }
+  }
+
+  function render() {
+    if (!data) return;
+    for (const k of ["edges", "glows", "nodes", "labels"]) layers[k].replaceChildren();
+    for (const node of order) {
+      for (const n of neighbours(node)) {
+        if (n.x < node.x || (n.x === node.x && n.y < node.y)) continue; // 每條線只畫一次
+        el("line", { x1: node.x * SPACING, y1: node.y * SPACING, x2: n.x * SPACING, y2: n.y * SPACING,
+          stroke: edgeColor(node, n), "stroke-width": 5, "stroke-linecap": "round" }, layers.edges);
+      }
+    }
+    for (const node of order) {
+      const state = node.type === "start" && node.id !== start.id ? "locked" : nodeState(node);
+      if (state === "owned" || state === "path" || state === "remove") {
+        el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 20 : 30,
+          fill: state === "owned" ? "url(#glowGold)" : state === "path" ? "url(#glowBlue)" : "url(#glowRed)" }, layers.glows);
+      }
+      const g = el("g", { class: "node" }, layers.nodes);
+      g.dataset.id = node.id;
+      shape(node, g, NODE_FILL[state]);
+      if (search.has(node.id)) {
+        el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 15 : 26, fill: "none",
+          stroke: "#55ffff", "stroke-width": 2.5 }, g);
+      }
+      if (node.type === "notable" || node.type === "keystone" || node.type === "start" || node.type === "socket") {
+        const t = el("text", { x: node.x * SPACING, y: node.y * SPACING + (node.type === "small" ? 22 : 34), "text-anchor": "middle", class: "label" }, layers.labels);
+        t.textContent = node.name;
+        if (node.type === "keystone") t.setAttribute("style", "fill:#ff99ff");
+        if (node.type === "socket") t.setAttribute("style", "fill:#c77dff");
+      }
+    }
+    updatePanel();
+  }
+
+  function updatePanel() {
+    const used = allocated.size;
+    const ppl = data.pointsPerLevel || 1;
+    const maxPoints = (data.levelCap - 1) * ppl + data.bonusPoints;
+    const levelNoBonus = Math.ceil(used / ppl) + 1;
+    const levelBonus = Math.max(1, Math.ceil(Math.max(0, used - data.bonusPoints) / ppl) + 1);
+    const over = used > maxPoints;
+    document.getElementById("points").innerHTML =
+      "已用 <b" + (over ? " class=over" : "") + ">" + used + "</b> / " + maxPoints + " 點　" +
+      "需要 Lv." + Math.min(levelNoBonus, 999) + (data.bonusPoints ? "（算上 " + data.bonusPoints + " 點首殺獎勵 Lv." + levelBonus + "）" : "");
+    const list = document.getElementById("totalList");
+    list.replaceChildren();
+    const nodes = order.filter(n => allocated.has(n.id)); // 照樹的順序加總，跟遊戲裡的天賦總覽一樣
+    const lines = summarize(nodes);
+    if (!lines.length) {
+      const li = document.createElement("li"); li.className = "empty"; li.textContent = "還沒有配任何天賦"; list.appendChild(li);
+    }
+    const keystoneLines = new Set(nodes.filter(n => n.type === "keystone").flatMap(n => n.lines));
+    for (const line of lines) {
+      const li = document.createElement("li");
+      li.textContent = line;
+      if (keystoneLines.has(line)) li.className = "keystone";
+      list.appendChild(li);
+    }
+    renderGearTotals();
+    try { history.replaceState(null, "", "#" + encodeCode() + gearSuffix()); } catch (e) { /* file:// 之類的不能改 */ }
+  }
+
+  // ---- 視野：拖曳、縮放 ----
+  function applyView() {
+    world.setAttribute("transform", "translate(" + view.x.toFixed(1) + "," + view.y.toFixed(1) + ") scale(" + view.scale.toFixed(3) + ")");
+    svg.classList.toggle("zoomed-out", view.scale < 0.75);
+  }
+  function centerOn(node, scale) {
+    const rect = svg.getBoundingClientRect();
+    view.scale = scale;
+    view.x = rect.width / 2 - node.x * SPACING * scale;
+    view.y = rect.height / 2 - node.y * SPACING * scale;
+    applyView();
+  }
+  function fit() {
+    const rect = svg.getBoundingClientRect();
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const n of order) { minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x); minY = Math.min(minY, n.y); maxY = Math.max(maxY, n.y); }
+    const w = (maxX - minX + 2) * SPACING, h = (maxY - minY + 2) * SPACING;
+    view.scale = Math.min(rect.width / w, rect.height / h);
+    view.x = rect.width / 2 - (minX + maxX) / 2 * SPACING * view.scale;
+    view.y = rect.height / 2 - (minY + maxY) / 2 * SPACING * view.scale;
+    applyView();
+  }
+  function zoomAt(factor, cx, cy) {
+    const next = Math.max(0.25, Math.min(3, view.scale * factor));
+    const k = next / view.scale;
+    view.x = cx - (cx - view.x) * k;
+    view.y = cy - (cy - view.y) * k;
+    view.scale = next;
+    applyView();
+  }
+  svg.addEventListener("wheel", e => {
+    e.preventDefault();
+    const rect = svg.getBoundingClientRect();
+    zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - rect.left, e.clientY - rect.top);
+  }, { passive: false });
+
+  const pointers = new Map();
+  let drag = null;
+  let pinch = null;
+  svg.addEventListener("pointerdown", e => {
+    svg.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) {
+      drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false, target: e.target };
+    } else if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch = { dist: Math.hypot(a.x - b.x, a.y - b.y), scale: view.scale };
+      drag = null;
+    }
+  });
+  svg.addEventListener("pointermove", e => {
+    if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const rect = svg.getBoundingClientRect();
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      zoomAt((pinch.scale * dist / pinch.dist) / view.scale, (a.x + b.x) / 2 - rect.left, (a.y + b.y) / 2 - rect.top);
+      return;
+    }
+    if (drag) {
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) > 5) { drag.moved = true; document.getElementById("canvas").classList.add("dragging"); hideTip(); }
+      if (drag.moved) { view.x = drag.vx + dx; view.y = drag.vy + dy; applyView(); return; }
+    }
+    hoverAt(e);
+  });
+  function endPointer(e) {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = null;
+    if (drag && !drag.moved && pointers.size === 0) clickAt(e);
+    if (pointers.size === 0) { drag = null; document.getElementById("canvas").classList.remove("dragging"); }
+  }
+  svg.addEventListener("pointerup", endPointer);
+  svg.addEventListener("pointercancel", e => { pointers.delete(e.pointerId); drag = null; pinch = null; });
+  // 觸控放開手指也會「離開」：那時不要清掉剛畫好的路線
+  svg.addEventListener("pointerleave", e => { if (e.pointerType !== "touch" && !drag) { setHover(null); hideTip(); } });
+
+  function nodeAt(e) {
+    const hit = document.elementFromPoint(e.clientX, e.clientY);
+    const g = hit && hit.closest ? hit.closest(".node") : null;
+    return g ? byId.get(g.dataset.id) : null;
+  }
+  function hoverAt(e) {
+    const node = nodeAt(e);
+    setHover(node);
+    if (node) showTip(node, e.clientX, e.clientY); else hideTip();
+  }
+  function setHover(node) {
+    if (node === hover) return;
+    hover = node;
+    preview = { add: new Set(), remove: new Set() };
+    if (node && node.type !== "start") {
+      if (allocated.has(node.id)) preview.remove = removal(node);
+      else preview.add = new Set(pathTo(node).map(n => n.id));
+    }
+    render();
+  }
+  let armed = null;
+  function clickAt(e) {
+    const node = nodeAt(e);
+    if (!node || node.type === "start") {
+      armed = null;
+      if (e.pointerType === "touch") { setHover(node && node.type === "start" ? node : null); if (node) showTip(node, e.clientX, e.clientY); else hideTip(); }
+      return;
+    }
+    // 觸控沒有「滑過去先看」：會動到不只一點時，第一下先畫出路線，再點一下才配／退
+    if (e.pointerType !== "mouse" && armed !== node.id) {
+      const many = allocated.has(node.id) ? removal(node).size > 1 : pathTo(node).length > 1;
+      if (many) {
+        armed = node.id;
+        hover = null;
+        setHover(node);
+        showTip(node, e.clientX, e.clientY);
+        return;
+      }
+    }
+    armed = null;
+    if (allocated.has(node.id)) {
+      for (const id of removal(node)) allocated.delete(id);
+    } else {
+      const path = pathTo(node);
+      if (!path.length) { flash("走不到那裡"); return; }
+      for (const n of path) allocated.add(n.id);
+    }
+    hover = null;
+    setHover(node);
+    showTip(node, e.clientX, e.clientY);
+  }
+
+  function showTip(node, x, y) {
+    const typeName = { small: "小點", notable: "核心", keystone: "基石", start: "起點", socket: "珠寶孔" }[node.type] || node.type;
+    let action = "";
+    const verb = armed === node.id ? "再點一下" : "點一下";
+    if (node.type === "start") action = node.id === start.id ? "你的職業起點" : "別的職業的起點";
+    else if (allocated.has(node.id)) {
+      const n = preview.remove.size;
+      action = "<span style='color:var(--red)'>" + verb + "退掉" + (n > 1 ? "（連帶 " + (n - 1) + " 點斷線的）" : "") + "</span>";
+    } else {
+      const path = [...preview.add].map(id => byId.get(id));
+      action = path.length ? "<span style='color:var(--blue)'>" + verb + "配上（" + path.length + " 點）</span>"
+        : "<span style='color:var(--quiet)'>從起點連不過來</span>";
+      if (path.length > 1) {
+        action += "<div style='margin-top:4px;color:var(--quiet)'>整條路加起來：</div>" +
+          summarize(path).slice(0, 8).map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("");
+      }
+    }
+    const color = node.type === "keystone" ? "var(--keystone)" : node.type === "notable" ? "var(--gold)" : node.type === "socket" ? "#c77dff" : "var(--text)";
+    tip.style.padding = "";
+    tip.style.border = "";
+    tip.innerHTML = "<div class='name' style='color:" + color + "'>" + escapeHtml(node.name) + "</div>" +
+      "<div class='type'>" + typeName + "</div>" +
+      node.lines.map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("") +
+      "<div class='action'>" + action + "</div>";
+    tip.style.display = "block";
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.min(window.innerWidth - w - 8, x + 16) + "px";
+    tip.style.top = Math.min(window.innerHeight - h - 8, y + 16) + "px";
+  }
+  function hideTip() { tip.style.display = "none"; }
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+  function flash(text) {
+    toast.textContent = text;
+    toast.style.display = "block";
+    clearTimeout(flash.timer);
+    flash.timer = setTimeout(() => { toast.style.display = "none"; }, 2400);
+  }
+
+  // ---- 按鈕 ----
+  async function copy(text, what) {
+    const box = document.getElementById("codebox");
+    try {
+      await navigator.clipboard.writeText(text);
+      flash(what + "已複製");
+      box.style.display = "none";
+    } catch (e) {
+      // http 的網址沒辦法用剪貼簿 API：顯示出來讓玩家自己複製
+      box.value = text;
+      box.style.display = "block";
+      box.focus();
+      box.select();
+      try { document.execCommand("copy"); flash(what + "已複製"); } catch (ignored) { flash("請自己複製下面的文字"); }
+    }
+  }
+  document.getElementById("copyCode").addEventListener("click", () => copy(encodeCode(), "代碼"));
+  document.getElementById("copyLink").addEventListener("click", () => copy(location.href.split("#")[0] + "#" + encodeCode() + gearSuffix(), "連結（含裝備）"));
+  document.getElementById("paste").addEventListener("click", () => {
+    const text = prompt("貼上代碼（或整個網址）");
+    if (!text) return;
+    const decoded = decodeCode(text.trim());
+    if (!decoded) { flash("看不懂這個代碼"); return; }
+    load(decoded);
+    render();
+    centerOn(start, view.scale);
+  });
+  document.getElementById("reset").addEventListener("click", () => {
+    if (allocated.size && !confirm("清掉目前的規劃？")) return;
+    allocated = new Set();
+    render();
+  });
+  document.getElementById("fit").addEventListener("click", fit);
+  document.getElementById("home").addEventListener("click", () => centerOn(start, Math.max(view.scale, 0.9)));
+  document.getElementById("zoomIn").addEventListener("click", () => { const r = svg.getBoundingClientRect(); zoomAt(1.25, r.width / 2, r.height / 2); });
+  document.getElementById("zoomOut").addEventListener("click", () => { const r = svg.getBoundingClientRect(); zoomAt(0.8, r.width / 2, r.height / 2); });
+  document.getElementById("search").addEventListener("input", e => {
+    const q = e.target.value.trim().toLowerCase();
+    search = new Set();
+    if (q) for (const n of order) if (n.name.toLowerCase().includes(q) || n.lines.some(l => l.toLowerCase().includes(q))) search.add(n.id);
+    document.getElementById("searchHint").textContent = q ? "找到 " + search.size + " 個（青色圈起來的）" : "";
+    render();
+  });
+  window.addEventListener("hashchange", () => {
+    if (items) { const next = gearText(hashText()); if (next !== gearSuffix().slice(1)) { gear = decodeGear(next); renderGear(); renderGearTotals(); } }
+    const decoded = decodeCode(hashText());
+    if (decoded && (decoded.classId !== classId || decoded.nodes.size !== allocated.size || [...decoded.nodes].some(id => !allocated.has(id)))) {
+      load(decoded);
+      render();
+    }
+  });
+})();
+</script>
+</body>
+</html>

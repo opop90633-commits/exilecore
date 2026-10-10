@@ -1,0 +1,1972 @@
+# 揭露詞綴（2026-10 改版：照 PoE2 的「褻瀆詞綴」重做）：代號一定要用 unveiled_ 開頭——
+# 一般的掉落、通貨都擲不到，只能靠盜賊首領揭露隱匿詞綴（三選一），或用揭露石（只在劫盜掉）。
+# 第一階（物品等級 60）＝PoE2 褻瀆詞綴的數值；第二階（物品等級 1）低一點。PoE2 的手套詞綴放到護腿上。
+# 有條件的（「最近」「低血時」之類）拿掉條件時數值有往下調；引擎沒有的機制（灌注、執政官、同伴、餘燼……）不收。
+# 舊的 33 條（unveiled_life_mana 等）在檔案最後，spawn_tags 改成 [retired]：已經有的物品照常生效，不會再揭露出來。
+
+# ---- 前綴 ----
+
+unveiled_d_focus_curse:
+  type: prefix
+  group: unveiled_d_focus_curse
+  spawn_tags: [focus]
+  names: [咒淵的, 黯咒的]
+  text: "增加 {value}% 詛咒效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [12, 16] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 11] }
+  mods:
+    - { stat: curse.effect, type: INCREASED, value: "{value}", tags: [curse] }
+
+unveiled_d_focus_spell_area:
+  type: prefix
+  group: unveiled_d_focus_spell_area
+  spawn_tags: [focus]
+  names: [淵擴的, 黯漫的]
+  text: "增加 {value}% 法術範圍"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 14] }
+  mods:
+    - { stat: skill.area, type: INCREASED, value: "{value}", tags: [spell] }
+
+unveiled_d_crossbow_grenade:
+  type: prefix
+  group: unveiled_d_crossbow_grenade
+  spawn_tags: [crossbow]
+  names: [爆淵的, 裂匣的]
+  text: "增加 {value}% 榴彈傷害、增加 {dur}% 榴彈持續時間"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [101, 121], dur: [25, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [70, 100], dur: [20, 24] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [grenade] }
+    - { stat: skill.duration, type: INCREASED, value: "{dur}", tags: [grenade] }
+
+unveiled_d_close_projectile:
+  type: prefix
+  group: unveiled_d_close_projectile
+  spawn_tags: [crossbow, quiver]
+  names: [貼喉的, 抵心的]
+  text: "近身時增加 {value}% 投射物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [95, 109] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [85, 94] }
+  mods:
+    - { stat: damage.close, type: INCREASED, value: "{value}", tags: [projectile] }
+
+unveiled_d_quarterstaff_cold:
+  type: prefix
+  group: unveiled_d_quarterstaff_cold
+  spawn_tags: [quarterstaff]
+  names: [霜淵的, 凜蝕的]
+  text: "增加 {value}% 冰冷傷害、增加 {f}% 凍結累積"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [86, 99], f: [19, 23] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [60, 85], f: [14, 18] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
+    - { stat: freeze.buildup, type: INCREASED, value: "{f}" }
+
+unveiled_d_quarterstaff_fire:
+  type: prefix
+  group: unveiled_d_quarterstaff_fire
+  spawn_tags: [quarterstaff]
+  names: [焚淵的, 燼蝕的]
+  text: "增加 {value}% 火焰傷害、增加 {f}% 點燃傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [86, 99], f: [19, 23] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [60, 85], f: [14, 18] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
+    - { stat: ignite.magnitude, type: INCREASED, value: "{f}" }
+
+unveiled_d_quarterstaff_lightning:
+  type: prefix
+  group: unveiled_d_quarterstaff_lightning
+  spawn_tags: [quarterstaff]
+  names: [雷淵的, 霆蝕的]
+  text: "增加 {value}% 閃電傷害、增加 {f}% 感電效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [86, 99], f: [19, 23] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [60, 85], f: [14, 18] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
+    - { stat: shock.effect, type: INCREASED, value: "{f}" }
+
+unveiled_d_weapon_fire_pen:
+  type: prefix
+  group: unveiled_d_weapon_fire_pen
+  spawn_tags: [weapon]
+  names: [熾淵的, 焦蝕的]
+  text: "傷害穿透 {value}% 火焰抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [15, 19] }
+  mods:
+    - { stat: penetration, type: FLAT, value: "{value}", tags: [fire] }
+
+unveiled_d_weapon_cold_pen:
+  type: prefix
+  group: unveiled_d_weapon_cold_pen
+  spawn_tags: [weapon]
+  names: [寒淵的, 冽蝕的]
+  text: "傷害穿透 {value}% 冰冷抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [15, 19] }
+  mods:
+    - { stat: penetration, type: FLAT, value: "{value}", tags: [cold] }
+
+unveiled_d_weapon_lightning_pen:
+  type: prefix
+  group: unveiled_d_weapon_lightning_pen
+  spawn_tags: [weapon]
+  names: [殛淵的, 電蝕的]
+  text: "傷害穿透 {value}% 閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [15, 19] }
+  mods:
+    - { stat: penetration, type: FLAT, value: "{value}", tags: [lightning] }
+
+unveiled_d_mace_crush:
+  type: prefix
+  group: unveiled_d_mace_crush
+  spawn_tags: [mace]
+  exclude_tags: [sceptre]
+  names: [碾骨的, 沉淵的]
+  text: "增加 {value}% 物理傷害、減少 15% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [132, 154] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [110, 131] }
+  mods:
+    - { stat: local.physical, type: INCREASED, value: "{value}" }
+    - { stat: local.attack_speed, type: INCREASED, value: "-15" }
+
+unveiled_d_wand_elemental:
+  type: prefix
+  group: unveiled_d_wand_elemental
+  spawn_tags: [wand]
+  names: [異彩的, 淵輝的]
+  text: "增加 {value}% 元素傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [80, 89] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [74, 79] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+unveiled_d_wand_minion_spell:
+  type: prefix
+  group: unveiled_d_wand_minion_spell
+  spawn_tags: [wand]
+  names: [驅役的, 御淵的]
+  text: "增加 {value}% 召喚物傷害、增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [60, 64] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [55, 59] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+unveiled_d_wand_bleed:
+  type: prefix
+  group: unveiled_d_wand_bleed
+  spawn_tags: [wand]
+  names: [淌血的, 滲蝕的]
+  text: "增加 {value}% 流血傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [33, 38] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [27, 32] }
+  mods:
+    - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
+
+unveiled_d_staff_ailment:
+  type: prefix
+  group: unveiled_d_staff_ailment
+  spawn_tags: [staff]
+  names: [惡疾的, 淵瘴的]
+  text: "增加 {value}% 點燃、流血與中毒傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [52, 64] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [40, 51] }
+  mods:
+    - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
+
+unveiled_d_staff_spirit:
+  type: prefix
+  group: unveiled_d_staff_spirit
+  spawn_tags: [staff]
+  names: [魂淵的, 攝魄的]
+  text: "+{value} 最大精魂"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [43, 50] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [35, 42] }
+  mods:
+    - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+unveiled_d_amulet_defences:
+  type: prefix
+  group: unveiled_d_amulet_defences
+  spawn_tags: [amulet]
+  names: [淵甲的, 黯衛的]
+  text: "增加 {value}% 護甲、閃避值與最大能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [15, 19] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+
+unveiled_d_amulet_deflection:
+  type: prefix
+  group: unveiled_d_amulet_deflection
+  spawn_tags: [amulet]
+  names: [偏鋒的, 斜影的]
+  text: "增加 {value}% 偏斜值"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 14] }
+  mods:
+    - { stat: deflection, type: INCREASED, value: "{value}" }
+
+unveiled_d_attack_area:
+  type: prefix
+  group: unveiled_d_attack_area
+  spawn_tags: [bow, spear]
+  names: [廣掠的, 掃淵的]
+  text: "增加 {value}% 攻擊範圍"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [18, 23] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [12, 17] }
+  mods:
+    - { stat: skill.area, type: INCREASED, value: "{value}", tags: [attack] }
+
+unveiled_d_ring_ignite:
+  type: prefix
+  group: unveiled_d_ring_ignite
+  spawn_tags: [ring]
+  names: [燃誓的, 灼契的]
+  text: "增加 {value}% 點燃傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+  mods:
+    - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+
+unveiled_d_ring_freeze:
+  type: prefix
+  group: unveiled_d_ring_freeze
+  spawn_tags: [ring]
+  names: [凝誓的, 冰契的]
+  text: "增加 {value}% 凍結累積"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+  mods:
+    - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+
+unveiled_d_ring_shock:
+  type: prefix
+  group: unveiled_d_ring_shock
+  spawn_tags: [ring]
+  names: [震誓的, 雷契的]
+  text: "增加 {value}% 感電效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+  mods:
+    - { stat: shock.effect, type: INCREASED, value: "{value}" }
+
+unveiled_d_belt_regen:
+  type: prefix
+  group: unveiled_d_belt_regen
+  spawn_tags: [belt]
+  names: [淵息的, 續命的]
+  text: "增加 {value}% 生命回復速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+  mods:
+    - { stat: life.regen, type: INCREASED, value: "{value}" }
+
+unveiled_d_armour_attack:
+  type: prefix
+  group: unveiled_d_armour_attack
+  spawn_tags: [armour, shield]
+  names: [淵鋒的, 蝕刃的]
+  text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 攻擊傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20], dmg: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15], dmg: [8, 12] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{dmg}", tags: [attack] }
+
+unveiled_d_armour_spell:
+  type: prefix
+  group: unveiled_d_armour_spell
+  spawn_tags: [armour, shield]
+  names: [淵咒的, 蝕言的]
+  text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20], dmg: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15], dmg: [8, 12] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{dmg}", tags: [spell] }
+
+unveiled_d_armour_minion:
+  type: prefix
+  group: unveiled_d_armour_minion
+  spawn_tags: [armour, shield]
+  names: [淵僕的, 蝕役的]
+  text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 召喚物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20], dmg: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15], dmg: [8, 12] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{dmg}", tags: [minion] }
+
+unveiled_d_armour_thorns:
+  type: prefix
+  group: unveiled_d_armour_thorns
+  spawn_tags: [armour, shield]
+  names: [淵棘的, 蝕刺的]
+  text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 荊棘傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20], dmg: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15], dmg: [8, 12] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+    - { stat: thorns.damage, type: INCREASED, value: "{dmg}" }
+
+unveiled_d_far_projectile:
+  type: prefix
+  group: unveiled_d_far_projectile
+  spawn_tags: [bow, quiver, spear]
+  names: [遠襲的, 淵眺的]
+  text: "增加 {value}% 投射物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [44, 50] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [36, 43] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
+
+unveiled_d_minion_damage:
+  type: prefix
+  group: unveiled_d_minion_damage
+  spawn_tags: [amulet, ring, talisman]
+  names: [驅淵的, 役蝕的]
+  text: "增加 {value}% 召喚物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [36, 42] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [28, 35] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+
+unveiled_d_belt_thorns:
+  type: prefix
+  group: unveiled_d_belt_thorns
+  spawn_tags: [belt]
+  names: [棘淵的, 刺蝕的]
+  text: "增加 {value}% 荊棘傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [35, 40] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [28, 34] }
+  mods:
+    - { stat: thorns.damage, type: INCREASED, value: "{value}" }
+
+# ---- 後綴 ----
+
+unveiled_d_ranged_crit:
+  type: suffix
+  group: unveiled_d_ranged_crit
+  spawn_tags: [bow, quiver, spear]
+  names: [之遠準, 之淵瞄]
+  text: "增加 {value}% 攻擊暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [22, 26] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [17, 21] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
+
+unveiled_d_staff_cast:
+  type: suffix
+  group: unveiled_d_staff_cast
+  spawn_tags: [staff]
+  names: [之淵誦, 之急咒]
+  text: "增加 {value}% 施放速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [11, 13] }
+  mods:
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+unveiled_d_res_cold_chaos:
+  type: suffix
+  group: unveiled_d_res_cold_chaos
+  spawn_tags: [amulet, armour, belt, ring, shield]
+  names: [之凜淵, 之寒蝕]
+  text: "+{value}% 冰冷與混沌抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 17] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [13, 14] }
+  mods:
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+unveiled_d_res_fire_chaos:
+  type: suffix
+  group: unveiled_d_res_fire_chaos
+  spawn_tags: [amulet, armour, belt, ring, shield]
+  names: [之焚淵, 之焦蝕]
+  text: "+{value}% 火焰與混沌抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 17] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [13, 14] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+unveiled_d_res_lightning_chaos:
+  type: suffix
+  group: unveiled_d_res_lightning_chaos
+  spawn_tags: [amulet, armour, belt, ring, shield]
+  names: [之殛淵, 之霆蝕]
+  text: "+{value}% 閃電與混沌抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 17] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [13, 14] }
+  mods:
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+unveiled_d_attr_str_dex:
+  type: suffix
+  group: unveiled_d_attr_str_dex
+  spawn_tags: [amulet, armour, belt, ring, shield]
+  names: [之蠻影, 之鬥步]
+  text: "+{value} 力量與敏捷"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [12, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [9, 11] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+
+unveiled_d_attr_str_int:
+  type: suffix
+  group: unveiled_d_attr_str_int
+  spawn_tags: [amulet, armour, belt, ring, shield]
+  names: [之蠻識, 之鐵誦]
+  text: "+{value} 力量與智慧"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [12, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [9, 11] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+unveiled_d_attr_dex_int:
+  type: suffix
+  group: unveiled_d_attr_dex_int
+  spawn_tags: [amulet, armour, belt, ring, shield]
+  names: [之影識, 之疾誦]
+  text: "+{value} 敏捷與智慧"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [12, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [9, 11] }
+  mods:
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+unveiled_d_amulet_skill_level:
+  type: suffix
+  group: unveiled_d_amulet_skill_level
+  spawn_tags: [amulet]
+  names: [之淵冕]
+  text: "+{value} 全部技能等級"
+  tiers:
+    - { tier: 1, ilvl: 40, weight: 150, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}" }
+
+unveiled_d_amulet_aura:
+  type: suffix
+  group: unveiled_d_amulet_aura
+  spawn_tags: [amulet]
+  names: [之淵旗, 之黯號]
+  text: "增加 {value}% 光環效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [12, 16] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 11] }
+  mods:
+    - { stat: aura.effect, type: INCREASED, value: "{value}" }
+
+unveiled_d_amulet_herald:
+  type: suffix
+  group: unveiled_d_amulet_herald
+  spawn_tags: [amulet]
+  names: [之淵令, 之黯宣]
+  text: "捷光環的保留效率增加 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 14] }
+  mods:
+    - { stat: aura.reservation, type: INCREASED, value: "-{value}", tags: [herald] }
+
+unveiled_d_mana_shield:
+  type: suffix
+  group: unveiled_d_mana_shield
+  spawn_tags: [amulet, body]
+  names: [之淵幕, 之蝕障]
+  text: "受到的傷害有 {value}% 先從魔力扣除"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [12, 16] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 11] }
+  mods:
+    - { stat: damage.from_mana, type: FLAT, value: "{value}" }
+
+unveiled_d_skill_speed:
+  type: suffix
+  group: unveiled_d_skill_speed
+  spawn_tags: [amulet, ring]
+  names: [之疾淵, 之迅蝕]
+  text: "增加 {value}% 攻擊速度與施放速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 6] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+unveiled_d_cooldown:
+  type: suffix
+  group: unveiled_d_cooldown
+  spawn_tags: [amulet, ring]
+  names: [之速返, 之輪淵]
+  text: "冷卻時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [11, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 10] }
+  mods:
+    - { stat: skill.cooldown, type: INCREASED, value: "-{value}" }
+
+unveiled_d_duration:
+  type: suffix
+  group: unveiled_d_duration
+  spawn_tags: [amulet, ring]
+  names: [之久淵, 之長蝕]
+  text: "增加 {value}% 技能持續時間"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [11, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 10] }
+  mods:
+    - { stat: skill.duration, type: INCREASED, value: "{value}" }
+
+unveiled_d_life_kill:
+  type: suffix
+  group: unveiled_d_life_kill
+  spawn_tags: [amulet, ring]
+  names: [之噬生, 之淵飲]
+  text: "擊殺時回復 {value}% 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }
+  mods:
+    - { stat: life.on_kill, type: FLAT, value: "{value}" }
+
+unveiled_d_mana_kill:
+  type: suffix
+  group: unveiled_d_mana_kill
+  spawn_tags: [amulet, ring]
+  names: [之噬識, 之淵汲]
+  text: "擊殺時回復 {value}% 最大魔力"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }
+  mods:
+    - { stat: mana.on_kill, type: FLAT, value: "{value}" }
+
+unveiled_d_exposure:
+  type: suffix
+  group: unveiled_d_exposure
+  spawn_tags: [amulet, ring]
+  names: [之裸淵, 之剝蝕]
+  text: "增加 {value}% 曝露效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 12] }
+  mods:
+    - { stat: exposure.effect, type: INCREASED, value: "{value}" }
+
+unveiled_d_ring_leech:
+  type: suffix
+  group: unveiled_d_ring_leech
+  spawn_tags: [ring]
+  names: [之吮淵, 之蝕飲]
+  text: "增加 {value}% 生命偷取量"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [12, 15] }
+  mods:
+    - { stat: leech.effect, type: INCREASED, value: "{value}" }
+
+unveiled_d_focus_minion_level:
+  type: suffix
+  group: unveiled_d_focus_minion_level
+  spawn_tags: [focus]
+  names: [之役淵, 之僕冕]
+  text: "+{value} 召喚物技能等級"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [2, 2] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
+
+unveiled_d_cost:
+  type: suffix
+  group: unveiled_d_cost
+  spawn_tags: [focus, wand, helmet, leggings, quiver]
+  names: [之省淵, 之節蝕]
+  text: "技能的魔力消耗減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [9, 10] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 8] }
+  mods:
+    - { stat: skill.cost, type: INCREASED, value: "-{value}" }
+
+unveiled_d_wand_spell_area:
+  type: suffix
+  group: unveiled_d_wand_spell_area
+  spawn_tags: [wand]
+  names: [之漫淵, 之擴蝕]
+  text: "增加 {value}% 法術範圍"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 12] }
+  mods:
+    - { stat: skill.area, type: INCREASED, value: "{value}", tags: [spell] }
+
+unveiled_d_armour_break:
+  type: suffix
+  group: unveiled_d_armour_break
+  spawn_tags: [wand, mace]
+  exclude_tags: [sceptre]
+  names: [之碎甲, 之剖淵]
+  text: "增加 {value}% 破甲"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [35, 39] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [31, 34] }
+  mods:
+    - { stat: armour.break, type: INCREASED, value: "{value}" }
+
+unveiled_d_crossbow_reload:
+  type: suffix
+  group: unveiled_d_crossbow_reload
+  spawn_tags: [crossbow]
+  names: [之速匣, 之連膛]
+  text: "增加 {value}% 弩的裝填速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [21, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [17, 20] }
+  mods:
+    - { stat: crossbow.reload_speed, type: INCREASED, value: "{value}" }
+
+unveiled_d_crossbow_ammo:
+  type: suffix
+  group: unveiled_d_crossbow_ammo
+  spawn_tags: [crossbow]
+  names: [之省矢, 之餘膛]
+  text: "弩攻擊有 {value}% 機率不消耗弩箭"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [18, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [15, 17] }
+  mods:
+    - { stat: crossbow.ammo_save, type: FLAT, value: "{value}" }
+
+unveiled_d_crossbow_chain:
+  type: suffix
+  group: unveiled_d_crossbow_chain
+  spawn_tags: [crossbow]
+  names: [之環淵]
+  text: "攻擊多連鎖 {value} 次"
+  tiers:
+    - { tier: 1, ilvl: 40, weight: 150, value: [1, 1] }
+  mods:
+    - { stat: skill.chains, type: FLAT, value: "{value}", tags: [attack] }
+
+unveiled_d_quarterstaff_combo:
+  type: suffix
+  group: unveiled_d_quarterstaff_combo
+  spawn_tags: [quarterstaff]
+  names: [之連淵, 之疊蝕]
+  text: "打中累積連擊時有 {value}% 機率多累積一層"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [33, 40] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [25, 32] }
+  mods:
+    - { stat: combo.extra_chance, type: FLAT, value: "{value}" }
+
+unveiled_d_warcry_cooldown:
+  type: suffix
+  group: unveiled_d_warcry_cooldown
+  spawn_tags: [mace, talisman]
+  exclude_tags: [sceptre]
+  names: [之吼淵, 之嘯蝕]
+  text: "戰吼的冷卻時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [28, 31] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [25, 27] }
+  mods:
+    - { stat: skill.cooldown, type: INCREASED, value: "-{value}", tags: [warcry] }
+
+unveiled_d_talisman_rage:
+  type: suffix
+  group: unveiled_d_talisman_rage
+  spawn_tags: [talisman]
+  names: [之狂淵, 之怒蝕]
+  text: "近戰攻擊擊中時獲得 {value} 點怒氣"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }
+  mods:
+    - { stat: rage.on_hit, type: FLAT, value: "{value}", tags: [melee] }
+
+unveiled_d_attack_cost:
+  type: suffix
+  group: unveiled_d_attack_cost
+  spawn_tags: [weapon]
+  exclude_tags: [caster]
+  names: [之儉鋒, 之淵省]
+  text: "攻擊技能的魔力消耗減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [12, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 11] }
+  mods:
+    - { stat: skill.cost, type: INCREASED, value: "-{value}", tags: [attack] }
+
+unveiled_d_spirit_efficiency:
+  type: suffix
+  group: unveiled_d_spirit_efficiency
+  spawn_tags: [body, helmet, weapon]
+  names: [之魂契, 之淵寄]
+  text: "精魂的保留效率增加 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [8, 10] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [5, 7] }
+  mods:
+    - { stat: aura.reservation, type: INCREASED, value: "-{value}" }
+
+unveiled_d_curse_area:
+  type: suffix
+  group: unveiled_d_curse_area
+  spawn_tags: [leggings]
+  names: [之咒漫, 之蝕域]
+  text: "增加 {value}% 詛咒範圍"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [17, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [12, 16] }
+  mods:
+    - { stat: skill.area, type: INCREASED, value: "{value}", tags: [curse] }
+
+unveiled_d_bleed_chance:
+  type: suffix
+  group: unveiled_d_bleed_chance
+  spawn_tags: [leggings]
+  names: [之裂膚, 之淵創]
+  text: "攻擊擊中時 {value}% 機率造成流血"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 12] }
+  mods:
+    - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+unveiled_d_poison_chance:
+  type: suffix
+  group: unveiled_d_poison_chance
+  spawn_tags: [leggings]
+  names: [之淬毒, 之淵瘴]
+  text: "擊中時 {value}% 機率造成中毒"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 12] }
+  mods:
+    - { stat: poison.chance, type: FLAT, value: "{value}" }
+
+unveiled_d_ailment_effect:
+  type: suffix
+  group: unveiled_d_ailment_effect
+  spawn_tags: [leggings]
+  names: [之惡化, 之淵疾]
+  text: "增加 {value}% 異常狀態效果（點燃、流血、中毒、感電、冰緩）"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15] }
+  mods:
+    - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: shock.effect, type: INCREASED, value: "{value}" }
+    - { stat: chill.effect, type: INCREASED, value: "{value}" }
+
+unveiled_d_daze:
+  type: suffix
+  group: unveiled_d_daze
+  spawn_tags: [leggings]
+  names: [之眩淵, 之昏蝕]
+  text: "擊中時 {value}% 機率讓敵人眩暈"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15] }
+  mods:
+    - { stat: daze.chance, type: FLAT, value: "{value}" }
+
+unveiled_d_immobilise:
+  type: suffix
+  group: unveiled_d_immobilise
+  spawn_tags: [bow, spear, leggings]
+  names: [之縛淵, 之滯蝕]
+  text: "增加 {value}% 暈眩累積與凍結累積"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [30, 34] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [25, 29] }
+  mods:
+    - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+    - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+
+unveiled_d_helmet_crit:
+  type: suffix
+  group: unveiled_d_helmet_crit
+  spawn_tags: [helmet]
+  names: [之淵斷, 之蝕決]
+  text: "+{value}% 暴擊傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [17, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [13, 16] }
+  mods:
+    - { stat: crit.multi, type: FLAT, value: "{value}" }
+
+unveiled_d_shield_max_res:
+  type: suffix
+  group: unveiled_d_shield_max_res
+  spawn_tags: [shield]
+  names: [之淵壁]
+  text: "+{value}% 全部抗性上限"
+  tiers:
+    - { tier: 1, ilvl: 40, weight: 150, value: [1, 1] }
+  mods:
+    - { stat: resist.max.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.max.cold, type: FLAT, value: "{value}" }
+    - { stat: resist.max.lightning, type: FLAT, value: "{value}" }
+    - { stat: resist.max.chaos, type: FLAT, value: "{value}" }   # 2026-10：PoE2 是全部抗性上限（含混沌）
+
+unveiled_d_shield_max_block:
+  type: suffix
+  group: unveiled_d_shield_max_block
+  spawn_tags: [shield]
+  names: [之淵擋, 之蝕盾]
+  text: "+{value}% 格擋上限"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [2, 2] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+  mods:
+    - { stat: block.max, type: FLAT, value: "{value}" }
+
+unveiled_d_belt_mana_regen:
+  type: suffix
+  group: unveiled_d_belt_mana_regen
+  spawn_tags: [belt]
+  names: [之淵泉, 之蝕流]
+  text: "增加 {value}% 魔力回復速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [35, 40] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [30, 34] }
+  mods:
+    - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+unveiled_d_self_ignite:
+  type: suffix
+  group: unveiled_d_self_ignite
+  spawn_tags: [belt, boots]
+  names: [之抗焚, 之淵涼]
+  text: "你身上的點燃持續時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+  mods:
+    - { stat: ailment.self_duration.ignite, type: INCREASED, value: "-{value}" }
+
+unveiled_d_self_bleed:
+  type: suffix
+  group: unveiled_d_self_bleed
+  spawn_tags: [belt, boots]
+  names: [之凝淵, 之淵癒]
+  text: "你身上的流血持續時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+  mods:
+    - { stat: ailment.self_duration.bleed, type: INCREASED, value: "-{value}" }
+
+unveiled_d_self_poison:
+  type: suffix
+  group: unveiled_d_self_poison
+  spawn_tags: [belt, boots]
+  names: [之滌淵, 之淵淨]
+  text: "你身上的中毒持續時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+  mods:
+    - { stat: ailment.self_duration.poison, type: INCREASED, value: "-{value}" }
+
+unveiled_d_ranged_speed:
+  type: suffix
+  group: unveiled_d_ranged_speed
+  spawn_tags: [bow, spear]
+  names: [之掠淵, 之迅掠]
+  text: "增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [11, 13] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 10] }
+  mods:
+    - { stat: local.attack_speed, type: INCREASED, value: "{value}" }
+
+# ---- 2026-10：補 PoE2 的褻瀆詞綴（對照 RePoE poe2 mods.json）----
+
+# PoE2（Amanamu）：增加 35–50% 來自胸甲的護甲；引擎沒有「來自胸甲」，改成全部護甲、數值打六折
+unveiled_d_amulet_armour:
+  type: prefix
+  group: unveiled_d_amulet_armour
+  spawn_tags: [amulet]
+  names: [淵甲的, 黯甲的]
+  text: "增加 {value}% 護甲"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [20, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [14, 21] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+
+# PoE2（Ulaman）：增加 35–50% 來自胸甲的閃避；同上
+unveiled_d_amulet_evasion:
+  type: prefix
+  group: unveiled_d_amulet_evasion
+  spawn_tags: [amulet]
+  names: [淵影的, 黯影的]
+  text: "增加 {value}% 閃避"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [20, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [14, 21] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+
+# PoE2（Kurgal）：增加 35–50% 來自胸甲的能量護盾；同上
+unveiled_d_amulet_es:
+  type: prefix
+  group: unveiled_d_amulet_es
+  spawn_tags: [amulet]
+  names: [淵盾的, 黯盾的]
+  text: "增加 {value}% 最大能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [20, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [14, 21] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+
+# PoE2（Kurgal）：最近用投射物攻擊擊中過則增加 60–79% 近戰傷害；拿掉條件、數值六折
+unveiled_d_spear_melee:
+  type: prefix
+  group: unveiled_d_spear_melee
+  spawn_tags: [spear]
+  names: [淵刺的, 黯刺的]
+  text: "增加 {value}% 近戰傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [36, 47] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [25, 33] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [melee] }
+
+# PoE2（Amanamu）：長杖
+unveiled_d_staff_chaos:
+  type: prefix
+  group: unveiled_d_staff_chaos
+  spawn_tags: [staff]
+  names: [淵蝕的, 黯蝕的]
+  text: "獲得 {value}% 傷害為額外混沌傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [40, 50] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [28, 35] }
+  mods:
+    - { stat: damage.extra.chaos, type: FLAT, value: "{value}" }
+
+# PoE2（Amanamu）：長杖
+unveiled_d_staff_block:
+  type: suffix
+  group: unveiled_d_staff_block
+  spawn_tags: [staff]
+  names: [之淵擋, 之黯擋]
+  text: "+{value}% 格擋率"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [14, 18] }
+  mods:
+    - { stat: block.chance, type: FLAT, value: "{value}" }
+
+# PoE2（Amanamu）：單手錘 2–4%、雙手錘 4–7%
+unveiled_d_mace_armour_break:
+  type: suffix
+  group: unveiled_d_mace_armour_break
+  spawn_tags: [mace]
+  exclude_tags: [two_hand, sceptre]
+  names: [之淵碎, 之黯碎]
+  text: "造成的物理傷害有 {value}% 作為破甲"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [2, 4] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 3] }
+  mods:
+    - { stat: armour.break, type: FLAT, value: "{value}" }
+
+unveiled_d_mace2h_armour_break:
+  type: suffix
+  group: unveiled_d_mace_armour_break
+  spawn_tags: [mace]
+  exclude_tags: [one_hand]
+  names: [之淵碎, 之黯碎]
+  text: "造成的物理傷害有 {value}% 作為破甲"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [4, 7] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5] }
+  mods:
+    - { stat: armour.break, type: FLAT, value: "{value}" }
+
+# PoE2（Amanamu）：力量系頭盔與盾
+unveiled_d_recoup_str:
+  type: suffix
+  group: unveiled_d_recoup_str
+  spawn_tags: [str_only, str_dex_armour, str_int_armour]
+  exclude_tags: [body, boots, leggings]
+  names: [之淵癒, 之黯癒]
+  text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [10, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 14] }
+  mods:
+    - { stat: life.recoup, type: FLAT, value: "{value}" }
+
+# PoE2（Amanamu）：頭盔
+unveiled_d_helmet_presence:
+  type: suffix
+  group: unveiled_d_helmet_presence
+  spawn_tags: [helmet]
+  names: [之淵臨, 之黯臨]
+  text: "增加 {value}% 臨在範圍"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [25, 35] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [18, 24] }
+  mods:
+    - { stat: presence.area, type: INCREASED, value: "{value}" }
+
+# PoE2 珠寶的褻瀆詞綴
+unveiled_j_armour_thorns:
+  type: prefix
+  group: unveiled_j_armour_thorns
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵棘的, 黯棘的]
+  text: "增加 {value}% 護甲、增加 {b}% 荊棘傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: thorns.damage, type: INCREASED, value: "{b}" }
+
+unveiled_j_evasion_thorns:
+  type: prefix
+  group: unveiled_j_evasion_thorns
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵棘的, 黯棘的]
+  text: "增加 {value}% 閃避、增加 {b}% 荊棘傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: thorns.damage, type: INCREASED, value: "{b}" }
+
+unveiled_j_es_thorns:
+  type: prefix
+  group: unveiled_j_es_thorns
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵棘的, 黯棘的]
+  text: "增加 {value}% 最大能量護盾、增加 {b}% 荊棘傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+    - { stat: thorns.damage, type: INCREASED, value: "{b}" }
+
+unveiled_j_armour_totem:
+  type: prefix
+  group: unveiled_j_armour_totem
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵樁的, 黯樁的]
+  text: "增加 {value}% 護甲、增加 {b}% 圖騰傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [totem] }
+
+unveiled_j_evasion_totem:
+  type: prefix
+  group: unveiled_j_evasion_totem
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵樁的, 黯樁的]
+  text: "增加 {value}% 閃避、增加 {b}% 圖騰傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [totem] }
+
+unveiled_j_es_totem:
+  type: prefix
+  group: unveiled_j_es_totem
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵樁的, 黯樁的]
+  text: "增加 {value}% 最大能量護盾、增加 {b}% 圖騰傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [totem] }
+
+unveiled_j_elemental_ailment:
+  type: prefix
+  group: unveiled_j_elemental_ailment
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵元的, 黯元的]
+  text: "增加 {value}% 元素傷害、增加 {b}% 異常狀態效果（點燃、流血、中毒、感電、冰緩）"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [4, 8], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 6], b: [3, 6] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+    - { stat: ignite.magnitude, type: INCREASED, value: "{b}" }
+    - { stat: bleed.magnitude, type: INCREASED, value: "{b}" }
+    - { stat: poison.magnitude, type: INCREASED, value: "{b}" }
+    - { stat: shock.effect, type: INCREASED, value: "{b}" }
+    - { stat: chill.effect, type: INCREASED, value: "{b}" }
+
+unveiled_j_minion_area_life:
+  type: prefix
+  group: unveiled_j_minion_area_life
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵僕的, 黯僕的]
+  text: "增加 {value}% 召喚物範圍、增加 {b}% 召喚物最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [3, 6], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 4], b: [3, 6] }
+  mods:
+    - { stat: skill.area, type: INCREASED, value: "{value}", tags: [minion] }
+    - { stat: life.max, type: INCREASED, value: "{b}", tags: [minion] }
+
+# ======== 舊的揭露詞綴（停用，保留給已經有的物品） ========
+
+# ---- 舊前綴 ----
+
+unveiled_life_mana:
+  type: prefix
+  group: unveiled_life_mana
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [密盟的, 暗契的, 盜約的]
+  text: "+{life} 最大生命、+{mana} 最大魔力"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, life: [45, 60], mana: [35, 45] }
+    - { tier: 2, ilvl: 35, weight: 600, life: [30, 44], mana: [22, 34] }
+    - { tier: 3, ilvl: 1, weight: 800, life: [15, 29], mana: [10, 21] }
+  mods:
+    - { stat: life.max, type: FLAT, value: "{life}" }
+    - { stat: mana.max, type: FLAT, value: "{mana}" }
+
+unveiled_life_regen:
+  type: prefix
+  group: unveiled_life_regen
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [不眠者的, 守夜人的, 巡更人的]
+  text: "增加 {value}% 最大生命、每秒回復 {regen/10}% 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [7, 9], regen: [5, 6] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [5, 6], regen: [3, 4] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [3, 4], regen: [2, 2] }
+  mods:
+    - { stat: life.max, type: INCREASED, value: "{value}" }
+    - { stat: life.regen_percent, type: FLAT, value: "{regen/10}" }
+
+unveiled_phys_crit:
+  type: prefix
+  group: unveiled_phys_crit
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [刺客首領的, 割喉者的, 扒手的]
+  text: "增加 {value}% 物理傷害、增加 {crit}% 暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [60, 74], crit: [15, 20] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [40, 59], crit: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [20, 39], crit: [5, 9] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - { stat: crit.chance, type: INCREASED, value: "{crit}" }
+
+unveiled_spell_mana:
+  type: prefix
+  group: unveiled_spell_mana
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [禁書竊賊的, 符文盜的, 抄經人的]
+  text: "增加 {value}% 法術傷害、+{mana} 最大魔力"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [45, 54], mana: [35, 45] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [30, 44], mana: [22, 34] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [15, 29], mana: [10, 21] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+    - { stat: mana.max, type: FLAT, value: "{mana}" }
+
+unveiled_elemental_crit:
+  type: prefix
+  group: unveiled_elemental_crit
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [銷贓人的, 黑市的, 走私者的]
+  text: "增加 {value}% 元素傷害、+{multi}% 暴擊傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [25, 30], multi: [15, 20] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [17, 24], multi: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [9, 16], multi: [5, 9] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+    - { stat: crit.multi, type: FLAT, value: "{multi}" }
+
+unveiled_defences:
+  type: prefix
+  group: unveiled_defences
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [金庫守衛的, 鐵門的, 門閂的]
+  text: "增加 {value}% 護甲、增加 {value}% 閃避、增加 {value}% 能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [30, 38] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [20, 29] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [10, 19] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+
+# ---- 舊後綴 ----
+
+unveiled_str_dex:
+  type: suffix
+  group: unveiled_attributes
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之劫掠, 之強取, 之順手]
+  text: "+{value} 力量、+{value} 敏捷"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
+    - { tier: 2, ilvl: 35, weight: 600, value: [13, 19] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [6, 12] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+
+unveiled_str_int:
+  type: suffix
+  group: unveiled_attributes
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之破門, 之撬鎖, 之試探]
+  text: "+{value} 力量、+{value} 智慧"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
+    - { tier: 2, ilvl: 35, weight: 600, value: [13, 19] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [6, 12] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+unveiled_dex_int:
+  type: suffix
+  group: unveiled_attributes
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之潛行, 之暗影, 之躡足]
+  text: "+{value} 敏捷、+{value} 智慧"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
+    - { tier: 2, ilvl: 35, weight: 600, value: [13, 19] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [6, 12] }
+  mods:
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+unveiled_fire_cold:
+  type: suffix
+  group: unveiled_resists
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之冰火賊, 之霜焰, 之溫差]
+  text: "+{value}% 火焰抗性、+{value}% 冰冷抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 18] }
+    - { tier: 2, ilvl: 35, weight: 600, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [6, 9] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+unveiled_fire_lightning:
+  type: suffix
+  group: unveiled_resists
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之雷火賊, 之焰電, 之燎原]
+  text: "+{value}% 火焰抗性、+{value}% 閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 18] }
+    - { tier: 2, ilvl: 35, weight: 600, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [6, 9] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+unveiled_cold_lightning:
+  type: suffix
+  group: unveiled_resists
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之霜雷賊, 之凍電, 之寒風]
+  text: "+{value}% 冰冷抗性、+{value}% 閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 18] }
+    - { tier: 2, ilvl: 35, weight: 600, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [6, 9] }
+  mods:
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+unveiled_speed:
+  type: suffix
+  group: unveiled_speed
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之飛賊, 之快手, 之扒竊]
+  text: "增加 {value}% 攻擊速度、增加 {value}% 施法速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [7, 9] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [5, 6] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [3, 4] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+unveiled_escape:
+  type: suffix
+  group: unveiled_escape
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之脫逃, 之溜走, 之跑路]
+  text: "增加 {value}% 移動速度、+{res}% 混沌抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [10, 12], res: [13, 17] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [7, 9], res: [9, 12] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [4, 6], res: [5, 8] }
+  mods:
+    - { stat: movement.speed, type: INCREASED, value: "{value}" }
+    - { stat: resist.chaos, type: FLAT, value: "{res}" }
+
+unveiled_loot:
+  type: suffix
+  group: unveiled_loot
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之贓物, 之橫財, 之順手牽羊]
+  text: "增加 {value}% 物品稀有度、增加 {quantity}% 物品數量"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [10, 14], quantity: [3, 4] }
+    - { tier: 2, ilvl: 35, weight: 300, value: [6, 9], quantity: [2, 2] }
+    - { tier: 3, ilvl: 1, weight: 500, value: [3, 5], quantity: [1, 1] }
+  mods:
+    - { stat: drop.rarity, type: INCREASED, value: "{value}" }
+    - { stat: drop.quantity, type: INCREASED, value: "{quantity}" }
+
+unveiled_strike:
+  type: suffix
+  group: unveiled_strike
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之群毆, 之混戰, 之亂鬥]
+  text: "打擊技能多打 {value} 個附近的敵人、增加 {speed}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [1, 1], speed: [6, 8] }
+    - { tier: 2, ilvl: 1, weight: 300, value: [1, 1], speed: [3, 5] }
+  mods:
+    - { stat: skill.strike_targets, type: FLAT, value: "{value}" }
+    - { stat: attack.speed, type: INCREASED, value: "{speed}" }
+
+# ---- 2026-10 擴充（照 PoE 的隱匿詞綴：被選召的／教團之那一類的混合詞綴）----
+
+unveiled_phys_bleed:
+  type: prefix
+  group: unveiled_phys_bleed
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [被選召的, 割肉者的, 放血人的]
+  text: "增加 {value}% 物理傷害、攻擊擊中時 {bleed}% 機率造成流血"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [60, 74], bleed: [20, 25] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [40, 59], bleed: [14, 19] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [20, 39], bleed: [8, 13] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - { stat: bleed.chance, type: FLAT, value: "{bleed}", tags: [attack] }
+
+unveiled_phys_poison:
+  type: prefix
+  group: unveiled_phys_poison
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [被選召的, 毒牙的, 藥師的]
+  text: "增加 {value}% 物理傷害、擊中時 {poison}% 機率造成中毒"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [60, 74], poison: [20, 25] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [40, 59], poison: [14, 19] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [20, 39], poison: [8, 13] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - { stat: poison.chance, type: FLAT, value: "{poison}" }
+
+unveiled_ele_ailment:
+  type: prefix
+  group: unveiled_ele_ailment
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [被選召的, 祕術士的, 元素師的]
+  text: "增加 {value}% 元素傷害、增加 {duration}% 異常狀態持續時間"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [30, 38], duration: [20, 25] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [20, 29], duration: [14, 19] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [10, 19], duration: [8, 13] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+    - { stat: ailment.duration, type: INCREASED, value: "{duration}" }
+
+unveiled_minion:
+  type: prefix
+  group: unveiled_minion
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [被選召的, 牧屍人的, 驅靈者的]
+  text: "增加 {value}% 召喚物傷害、增加 {life}% 召喚物最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [35, 44], life: [20, 25] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [24, 34], life: [14, 19] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [12, 23], life: [8, 13] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+    - { stat: life.max, type: INCREASED, value: "{life}", tags: [minion] }
+
+unveiled_armour_stun:
+  type: prefix
+  group: unveiled_armour_stun
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [被選召的, 盾衛的, 鐵壁的]
+  text: "增加 {value}% 護甲、+{life} 最大生命、+{stun}% 機率避免暈眩"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [40, 50], life: [30, 40], stun: [20, 25] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [28, 39], life: [20, 29], stun: [14, 19] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [15, 27], life: [10, 19], stun: [8, 13] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: life.max, type: FLAT, value: "{life}" }
+    - { stat: avoid.stun, type: FLAT, value: "{stun}" }
+
+unveiled_evasion_move:
+  type: prefix
+  group: unveiled_evasion_move
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [被選召的, 影行者的, 夜行者的]
+  text: "增加 {value}% 閃避、+{life} 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [40, 50], life: [30, 40] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [28, 39], life: [20, 29] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [15, 27], life: [10, 19] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: life.max, type: FLAT, value: "{life}" }
+
+unveiled_es_recharge:
+  type: prefix
+  group: unveiled_es_recharge
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [被選召的, 咒縛者的, 秘儀師的]
+  text: "增加 {value}% 能量護盾、增加 {recharge}% 能量護盾回充速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [40, 50], recharge: [20, 25] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [28, 39], recharge: [14, 19] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [15, 27], recharge: [8, 13] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+    - { stat: es.recharge, type: INCREASED, value: "{recharge}" }
+
+unveiled_area_projectile:
+  type: prefix
+  group: unveiled_area_projectile
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [被選召的, 爆破手的, 神射手的]
+  text: "增加 {value}% 範圍傷害、增加 {value}% 投射物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [18, 22] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [12, 17] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [6, 11] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [area] }
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
+
+unveiled_quiver:
+  type: prefix
+  group: unveiled_quiver
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [被選召的, 箭匠的, 獵首者的]
+  text: "攻擊附加 {min} 到 {max} 物理傷害、增加 {speed}% 投射物速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, min: [8, 11], max: [16, 20], speed: [20, 25] }
+    - { tier: 2, ilvl: 35, weight: 500, min: [5, 7], max: [10, 15], speed: [14, 19] }
+    - { tier: 3, ilvl: 1, weight: 700, min: [2, 4], max: [5, 9], speed: [8, 13] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+    - { stat: skill.projectile_speed, type: INCREASED, value: "{speed}" }
+
+unveiled_attack_crit:
+  type: suffix
+  group: unveiled_attack_crit
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之教團, 之刺殺, 之奪命]
+  text: "增加 {value}% 攻擊速度、增加 {crit}% 暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [10, 12], crit: [20, 25] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [7, 9], crit: [14, 19] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [4, 6], crit: [8, 13] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - { stat: crit.chance, type: INCREASED, value: "{crit}" }
+
+unveiled_cast_crit:
+  type: suffix
+  group: unveiled_cast_crit
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之教團, 之密咒, 之禁語]
+  text: "增加 {value}% 施法速度、增加 {crit}% 法術暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [10, 12], crit: [30, 38] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [7, 9], crit: [20, 29] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [4, 6], crit: [10, 19] }
+  mods:
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - { stat: crit.chance, type: INCREASED, value: "{crit}", tags: [spell] }
+
+unveiled_double:
+  type: suffix
+  group: unveiled_double
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之教團, 之重擊, 之雙殺]
+  text: "擊中時 {value}% 機率造成雙倍傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [6, 8] }
+    - { tier: 2, ilvl: 35, weight: 300, value: [4, 5] }
+    - { tier: 3, ilvl: 1, weight: 500, value: [2, 3] }
+  mods:
+    - { stat: damage.double, type: FLAT, value: "{value}" }
+
+unveiled_attr_res:
+  type: suffix
+  group: unveiled_attr_res
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之教團, 之同盟, 之誓約]
+  text: "+{attr} 全部屬性、+{res}% 全部元素抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, attr: [10, 13], res: [10, 12] }
+    - { tier: 2, ilvl: 35, weight: 500, attr: [7, 9], res: [7, 9] }
+    - { tier: 3, ilvl: 1, weight: 700, attr: [4, 6], res: [4, 6] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{attr}" }
+    - { stat: attr.dex, type: FLAT, value: "{attr}" }
+    - { stat: attr.int, type: FLAT, value: "{attr}" }
+    - { stat: resist.fire, type: FLAT, value: "{res}" }
+    - { stat: resist.cold, type: FLAT, value: "{res}" }
+    - { stat: resist.lightning, type: FLAT, value: "{res}" }
+
+unveiled_chaos_regen:
+  type: suffix
+  group: unveiled_chaos_regen
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之教團, 之解毒, 之不朽]
+  text: "+{res}% 混沌抗性、每秒回復 {regen/10}% 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, res: [16, 20], regen: [5, 6] }
+    - { tier: 2, ilvl: 35, weight: 500, res: [11, 15], regen: [3, 4] }
+    - { tier: 3, ilvl: 1, weight: 700, res: [6, 10], regen: [2, 2] }
+  mods:
+    - { stat: resist.chaos, type: FLAT, value: "{res}" }
+    - { stat: life.regen_percent, type: FLAT, value: "{regen/10}" }
+
+unveiled_avoid_elemental:
+  type: suffix
+  group: unveiled_avoid_elemental
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之教團, 之定心, 之不動]
+  text: "+{value}% 機率避免被點燃、冰緩與凍結、感電"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [30, 35] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [20, 29] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [10, 19] }
+  mods:
+    - { stat: avoid.ignite, type: FLAT, value: "{value}" }
+    - { stat: avoid.freeze, type: FLAT, value: "{value}" }
+    - { stat: avoid.shock, type: FLAT, value: "{value}" }
+
+unveiled_cooldown_duration:
+  type: suffix
+  group: unveiled_cooldown_duration
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之教團, 之專注, 之冥想]
+  text: "冷卻時間減少 {value}%、增加 {duration}% 技能持續時間"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [10, 12], duration: [12, 15] }
+    - { tier: 2, ilvl: 35, weight: 500, value: [7, 9], duration: [8, 11] }
+    - { tier: 3, ilvl: 1, weight: 700, value: [4, 6], duration: [4, 7] }
+  mods:
+    - { stat: skill.cooldown, type: INCREASED, value: "-{value}" }
+    - { stat: skill.duration, type: INCREASED, value: "{duration}" }
+
+unveiled_frenzy:
+  type: suffix
+  group: unveiled_frenzy
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  names: [之教團, 之狂熱, 之殺意]
+  text: "+1 怒星上限、擊殺時 {value}% 機率獲得一顆怒星"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [15, 20] }
+    - { tier: 2, ilvl: 40, weight: 300, value: [8, 14] }
+  mods:
+    - { stat: charge.max.frenzy, type: FLAT, value: 1 }
+    - { stat: charge.chance.frenzy, type: FLAT, value: "{value}" }
+
+# ---- 2026-10：珠寶的揭露詞綴（照 PoE2 珠寶的褻瀆詞綴；只有隱匿傳奇珠寶「淵井之心」這類會帶隱匿詞綴）----
+
+unveiled_j_aura:
+  type: prefix
+  group: unveiled_j_aura
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵光的, 黯光的]
+  text: "增加 {value}% 光環效果、增加 {b}% 臨在範圍"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [2, 4], b: [8, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2], b: [5, 10] }
+  mods:
+    - { stat: aura.effect, type: INCREASED, value: "{value}" }
+    - { stat: presence.area, type: INCREASED, value: "{b}" }   # 2026-10：PoE2 這條還帶臨在範圍
+
+unveiled_j_bleed:
+  type: prefix
+  group: unveiled_j_bleed
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵血的, 黯血的]
+  text: "流血機率 +{value}%、增加 {b}% 流血強度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 15], b: [6, 10] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 10], b: [3, 5] }
+  mods:
+    - { stat: bleed.chance, type: FLAT, value: "{value}" }
+    - { stat: bleed.magnitude, type: INCREASED, value: "{b}" }
+
+unveiled_j_chaos:
+  type: prefix
+  group: unveiled_j_chaos
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵蝕的, 黯蝕的]
+  text: "增加 {value}% 混沌傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 5] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
+
+unveiled_j_cold:
+  type: prefix
+  group: unveiled_j_cold
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵霜的, 黯霜的]
+  text: "增加 {value}% 冰冷傷害、穿透 {b}% 冰冷抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 8], b: [3, 5] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [2, 2] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
+    - { stat: penetration, type: FLAT, value: "{b}", tags: [cold] }
+
+unveiled_j_fire:
+  type: prefix
+  group: unveiled_j_fire
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵焰的, 黯焰的]
+  text: "增加 {value}% 火焰傷害、穿透 {b}% 火焰抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 8], b: [3, 5] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [2, 2] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
+    - { stat: penetration, type: FLAT, value: "{b}", tags: [fire] }
+
+unveiled_j_lightning:
+  type: prefix
+  group: unveiled_j_lightning
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵霆的, 黯霆的]
+  text: "增加 {value}% 閃電傷害、穿透 {b}% 閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 8], b: [3, 5] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [2, 2] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
+    - { stat: penetration, type: FLAT, value: "{b}", tags: [lightning] }
+
+unveiled_j_elemental:
+  type: prefix
+  group: unveiled_j_elemental
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵素的, 黯素的]
+  text: "增加 {value}% 元素傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 5] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+unveiled_j_evasion_attack:
+  type: prefix
+  group: unveiled_j_evasion_attack
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵影的, 黯影的]
+  text: "增加 {value}% 閃避、增加 {b}% 攻擊傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [attack] }
+
+unveiled_j_evasion_spell:
+  type: prefix
+  group: unveiled_j_evasion_spell
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵幻的, 黯幻的]
+  text: "增加 {value}% 閃避、增加 {b}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [spell] }
+
+unveiled_j_evasion_minion:
+  type: prefix
+  group: unveiled_j_evasion_minion
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵伴的, 黯伴的]
+  text: "增加 {value}% 閃避、增加 {b}% 召喚物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [minion] }
+
+unveiled_j_es_attack:
+  type: prefix
+  group: unveiled_j_es_attack
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵壁的, 黯壁的]
+  text: "增加 {value}% 最大能量護盾、增加 {b}% 攻擊傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [attack] }
+
+unveiled_j_es_spell:
+  type: prefix
+  group: unveiled_j_es_spell
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵咒的, 黯咒的]
+  text: "增加 {value}% 最大能量護盾、增加 {b}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [spell] }
+
+unveiled_j_es_minion:
+  type: prefix
+  group: unveiled_j_es_minion
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵僕的, 黯僕的]
+  text: "增加 {value}% 最大能量護盾、增加 {b}% 召喚物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [minion] }
+
+unveiled_j_armour_attack:
+  type: prefix
+  group: unveiled_j_armour_attack
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵甲的, 黯甲的]
+  text: "增加 {value}% 護甲、增加 {b}% 攻擊傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [attack] }
+
+unveiled_j_armour_spell:
+  type: prefix
+  group: unveiled_j_armour_spell
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵堡的, 黯堡的]
+  text: "增加 {value}% 護甲、增加 {b}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [spell] }
+
+unveiled_j_armour_minion:
+  type: prefix
+  group: unveiled_j_armour_minion
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵衛的, 黯衛的]
+  text: "增加 {value}% 護甲、增加 {b}% 召喚物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [minion] }
+
+unveiled_j_physical:
+  type: prefix
+  group: unveiled_j_physical
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵裂的, 黯裂的]
+  text: "增加 {value}% 物理傷害、增加 {b}% 破甲"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 8], b: [5, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [3, 4] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - { stat: armour.break, type: INCREASED, value: "{b}" }
+
+unveiled_j_poison:
+  type: prefix
+  group: unveiled_j_poison
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵毒的, 黯毒的]
+  text: "中毒機率 +{value}%、增加 {b}% 中毒強度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 15], b: [6, 10] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 10], b: [3, 5] }
+  mods:
+    - { stat: poison.chance, type: FLAT, value: "{value}" }
+    - { stat: poison.magnitude, type: INCREASED, value: "{b}" }
+
+unveiled_j_minion_life:
+  type: prefix
+  group: unveiled_j_minion_life
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵骸的, 黯骸的]
+  text: "增加 {value}% 召喚物最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 5] }
+  mods:
+    - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
+
+unveiled_j_warcry:
+  type: prefix
+  group: unveiled_j_warcry
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵嘯的, 黯嘯的]
+  text: "增加 {value}% 戰吼效果、戰吼增加 {b}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [4, 8], b: [5, 10] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [3, 7] }
+  mods:
+    - { stat: warcry.effect, type: INCREASED, value: "{value}" }
+    - { stat: damage, type: INCREASED, value: "{b}", tags: [warcry] }   # 2026-10：PoE2 這條還帶戰吼傷害
+
+unveiled_j_exposure:
+  type: prefix
+  group: unveiled_j_exposure
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵曝的, 黯曝的]
+  text: "增加 {value}% 曝露效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [5, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4] }
+  mods:
+    - { stat: exposure.effect, type: INCREASED, value: "{value}" }
+
+unveiled_j_attr_str:
+  type: suffix
+  group: unveiled_j_attr_str
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵力之, 黯力之]
+  text: "增加 {value}% 力量"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [2, 3] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2] }
+  mods:
+    - { stat: attr.str, type: INCREASED, value: "{value}" }
+
+unveiled_j_attr_dex:
+  type: suffix
+  group: unveiled_j_attr_dex
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵捷之, 黯捷之]
+  text: "增加 {value}% 敏捷"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [2, 3] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2] }
+  mods:
+    - { stat: attr.dex, type: INCREASED, value: "{value}" }
+
+unveiled_j_attr_int:
+  type: suffix
+  group: unveiled_j_attr_int
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [淵智之, 黯智之]
+  text: "增加 {value}% 智慧"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [2, 3] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2] }
+  mods:
+    - { stat: attr.int, type: INCREASED, value: "{value}" }

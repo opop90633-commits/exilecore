@@ -79,6 +79,30 @@ public final class ModuleRegistry {
         }
     }
 
+    /**
+     * 只重新載入一個模組（管理網頁改了某個資料檔的設定）。
+     *
+     * @return false = 沒有這個模組或沒啟用（什麼都沒做）
+     * @throws Exception 重新載入失敗（模組自己決定要不要保留原本的設定）
+     */
+    public boolean reload(final String id) throws Exception {
+        for (final Module module : registered) {
+            if (module.id().equals(id)) {
+                if (!enabled.contains(id)) {
+                    return false;
+                }
+                module.reload();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 這個模組有沒有啟用成功。 */
+    public boolean isEnabled(final String id) {
+        return enabled.contains(id);
+    }
+
     /** 已啟用的模組代號，依啟用順序。 */
     public List<String> enabledIds() {
         return List.copyOf(enabled);

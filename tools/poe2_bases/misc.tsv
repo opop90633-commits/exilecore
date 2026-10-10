@@ -1,0 +1,168 @@
+category	attr	name_en	name_zh	level	str	dex	int	armour	evasion	es	block	implicit
+shield	str	Splintered Tower Shield	朽木塔盾	1				18			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Painted Tower Shield	彩繪塔盾	6	11			33			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Braced Tower Shield	加固塔盾	12	19			50			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Barricade Tower Shield	障壁塔盾	16	25			62			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Effigial Tower Shield	靈像塔盾	21	32			76			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Rampart Tower Shield	壁壘塔盾	28	42			96			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Heraldric Tower Shield	紋章塔盾	33	48			111			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Stone Tower Shield	岩石塔盾	36	52			119			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Crucible Tower Shield	磨煉塔盾	45	64			145			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Aged Tower Shield	陳舊塔盾	45	64			145			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Metalworked Tower Shield	金屬塔盾	48	69			154			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Ancestor Tower Shield	先祖塔盾	50	71			160			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Cultist Tower Shield	教徒塔盾	51	73			163			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Phalanx Tower Shield	方陣塔盾	52	74			166			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Bulwark Tower Shield	守護塔盾	54	77			171			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Defiant Tower Shield	忤逆塔盾	58	82			183			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Noble Tower Shield	高貴塔盾	59	83			186			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Goldworked Tower Shield	黃金塔盾	61	86			192			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Blacksteel Tower Shield	黑鋼塔盾	65	91			203			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Royal Tower Shield	皇族塔盾	65	91			203			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Fortress Tower Shield	要塞塔盾	70	99			223			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Glacial Fortress	冰川堡壘	70	99			223			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Vaal Tower Shield	瓦爾塔盾	75	107			244			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str	Tawhoan Tower Shield	塔赫亞塔盾	80	115			264			26	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Hardwood Targe	硬木圓盾	1				10	7		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Pelage Targe	毛皮圓盾	8	9	9		21	17		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Studded Targe	鑲釘圓盾	16	15	15		34	29		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Crescent Targe	新月圓盾	26	22	22		50	44		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Chiseled Targe	鑿刻圓盾	33	27	27		61	54		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Feathered Targe	羽毛圓盾	37	30	30		67	60		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Ironwood Targe	鐵木圓盾	45	36	36		80	72		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Stratified Targe	分層圓盾	46	37	37		82	74		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Fur-lined Targe	皮襯圓盾	48	38	38		85	76		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Carved Targe	雕刻圓盾	51	40	40		89	81		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Mercenary Targe	傭兵圓盾	51	40	40		89	81		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Mosaic Targe	鑲嵌圓盾	52	41	41		91	82		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Polished Targe	拋光圓盾	54	42	42		94	85		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Aureate Targe	鍍金圓盾	57	45	45		99	90		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Stone Targe	岩石圓盾	59	46	46		102	93		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Avian Targe	飛羽圓盾	62	48	48		107	97		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Venerable Defender	古老護衛盾	62	64	64		107	97		28	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Grand Targe	宏偉圓盾	65	50	50		112	102		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Mammoth Targe	猛獁圓盾	65	50	50		112	102		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Baroque Targe	巴洛克圓盾	70	54	54		123	112		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Soaring Targe	翱翔圓盾	75	59	59		134	122		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_dex	Golden Targe	耀金圓盾	80	63	63		145	132		25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Blazon Crest Shield	家徽紋章盾	1				10		6	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Sigil Crest Shield	符印紋章盾	7	8		8	20		9	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Emblem Crest Shield	徽印紋章盾	16	15		15	34		12	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Jingling Crest Shield	響聲紋章盾	28	23		23	53		17	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Sectarian Crest Shield	宗派紋章盾	33	27		27	61		19	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Omen Crest Shield	預兆紋章盾	36	30		30	66		20	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Wayward Crest Shield	剛愎紋章盾	45	36		36	80		23	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Painted Crest Shield	彩繪紋章盾	45	36		36	80		23	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Engraved Crest Shield	紋刻紋章盾	48	38		38	85		24	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Seer Crest Shield	先知紋章盾	50	39		39	88		25	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Descry Crest Shield	遠見紋章盾	51	40		40	89		26	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Stoic Crest Shield	堅忍紋章盾	52	41		41	91		26	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Dekharan Crest Shield	部下紋章盾	54	42		42	94		27	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Empyreal Crest Shield	蒼天紋章盾	57	45		45	99		28	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Quartered Crest Shield	四分紋章盾	59	46		46	102		29	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Glowering Crest Shield	怒視紋章盾	62	48		48	107		30	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Deified Crest Shield	神化紋章盾	65	50		50	112		31	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Intricate Crest Shield	錯綜紋章盾	65	50		50	112		31	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Sekheman Crest Shield	絲克瑪紋章盾	70	54		54	123		34	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Vaal Crest Shield	瓦爾紋章盾	75	59		59	134		37	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+shield	str_int	Blacksteel Crest Shield	烏鋼紋章盾	80	63		63	145		40	25	授予技能：展開護盾 / Grants Skill: Raise Shield
+buckler		Leather Buckler	皮革輕盾	1					10		20	授予技能：招架 / Grants Skill: Parry
+buckler		Wooden Buckler	木頭輕盾	5		10			18		20	授予技能：招架 / Grants Skill: Parry
+buckler		Plated Buckler	鋼板輕盾	11		18			31		20	授予技能：招架 / Grants Skill: Parry
+buckler		Iron Buckler	鍛鐵輕盾	16		25			42		20	授予技能：招架 / Grants Skill: Parry
+buckler		Ridged Buckler	脊狀輕盾	22		33			55		20	授予技能：招架 / Grants Skill: Parry
+buckler		Spiked Buckler	尖刺輕盾	26		38			64		20	授予技能：招架 / Grants Skill: Parry
+buckler		Ringed Buckler	環紋輕盾	33		48			79		20	授予技能：招架 / Grants Skill: Parry
+buckler		Edged Buckler	刃緣輕盾	39		56			92		20	授予技能：招架 / Grants Skill: Parry
+buckler		Laminate Buckler	層壓輕盾	45		64			105		20	授予技能：招架 / Grants Skill: Parry
+buckler		Oak Buckler	橡木輕盾	45		64			105		20	授予技能：招架 / Grants Skill: Parry
+buckler		Painted Buckler	彩繪輕盾	48		69			111		20	授予技能：招架 / Grants Skill: Parry
+buckler		Pearl Buckler	珍珠輕盾	50		71			116		20	授予技能：招架 / Grants Skill: Parry
+buckler		Coiled Buckler	盤繞輕盾	51		73			118		20	授予技能：招架 / Grants Skill: Parry
+buckler		Ornate Buckler	華麗輕盾	52		74			120		20	授予技能：招架 / Grants Skill: Parry
+buckler		Spikeward Buckler	尖衛輕盾	54		77			124		20	授予技能：招架 / Grants Skill: Parry
+buckler		Array Buckler	排列輕盾	55		78			126		20	授予技能：招架 / Grants Skill: Parry
+buckler		Jingling Buckler	響聲輕盾	59		83			135		20	授予技能：招架 / Grants Skill: Parry
+buckler		Bladeguard Buckler	刃衛輕盾	61		86			139		20	授予技能：招架 / Grants Skill: Parry
+buckler		Aegis Buckler	神禦輕盾	65		91			148		20	授予技能：招架 / Grants Skill: Parry
+buckler		Ornate Buckler	華麗輕盾	65		91			148		20	授予技能：招架 / Grants Skill: Parry
+buckler		Gutspike Buckler	挑腸輕盾	70		99			163		20	授予技能：招架 / Grants Skill: Parry
+buckler		Ancient Buckler	遠古輕盾	75		107			178		20	授予技能：招架 / Grants Skill: Parry
+buckler		Desert Buckler	沙漠輕盾	80		115			192		20	授予技能：招架 / Grants Skill: Parry
+focus		Twig Focus	枝條法器	1						12		
+focus		Woven Focus	編織法器	6			11			15		
+focus		Antler Focus	靈鹿法器	10			17			18		
+focus		Engraved Focus	紋刻法器	16			25			22		
+focus		Tonal Focus	音調法器	22			33			26		
+focus		Crystal Focus	水晶法器	26			38			29		
+focus		Voodoo Focus	巫毒法器	33			48			34		
+focus		Plumed Focus	羽飾法器	36			52			36		
+focus		Runed Focus	符文法器	45			64			42		
+focus		Wreath Focus	花環法器	45			64			42		
+focus		Staghorn Focus	鹿角法器	48			69			45		
+focus		Whorl Focus	螺旋法器	51			73			47		
+focus		Jingling Focus	響聲法器	51			73			47		
+focus		Elegant Focus	高雅法器	52			74			47		
+focus		Arrayed Focus	陣列法器	54			77			49		
+focus		Attuned Focus	調和法器	57			81			51		
+focus		Cultist Focus	教徒法器	59			83			52		
+focus		Hallowed Focus	聖潔法器	61			86			57		
+focus		Magus Focus	瑪格思法器	65			91			56		
+focus		Druidic Focus	德魯伊法器	65			91			62		
+focus		Leyline Focus	地脈法器	70			99			71		
+focus		Sacred Focus	神聖法器	75			107			81		
+focus		Tasalian Focus	塔薩里奧法器	80			115			91		
+ring		Iron Ring	鍛鐵戒指	1								攻擊附加1至4物理傷害 / Adds 1 to 4 Physical Damage to Attacks
+ring		Lazuli Ring	青金石戒指	1								+(20—30)最大魔力 / +(20—30) to maximum Mana
+ring		Ruby Ring	紅玉戒指	8								+(20—30)%火焰抗性 / +(20—30)% to Fire Resistance
+ring		Sapphire Ring	藍玉戒指	12								+(20—30)%冰冷抗性 / +(20—30)% to Cold Resistance
+ring		Topaz Ring	黃玉戒指	16								+(20—30)%閃電抗性 / +(20—30)% to Lightning Resistance
+ring		Amethyst Ring	紫晶戒指	20								+(7—13)%混沌抗性 / +(7—13)% to Chaos Resistance
+ring		Emerald Ring	綠寶石戒指	26								+(120—160)命中值 / +(120—160) to Accuracy Rating
+ring		Pearl Ring	珍珠戒指	32								增加(7—10)%施法速度 / (7—10)% increased Cast Speed
+ring		Prismatic Ring	三相戒指	35								+(7—10)%全元素抗性 / +(7—10)% to all Elemental Resistances
+ring		Two-Stone Ring	雙玉戒指	35								+(12—16)%火焰與冰冷抗性 / +(12—16)% to Fire and Cold Resistances
+ring		Two-Stone Ring	雙玉戒指	35								+(12—16)%火焰與閃電抗性 / +(12—16)% to Fire and Lightning Resistances
+ring		Two-Stone Ring	雙玉戒指	35								+(12—16)%冰冷與閃電抗性 / +(12—16)% to Cold and Lightning Resistances
+ring		Gold Ring	金光戒指	40								增加(6—15)%找到的物品稀有度 / (6—15)% increased Rarity of Items found
+ring		Abyssal Signet	深淵之記	40								擊中時造成深淵耗損 / Inflict Abyssal Wasting on Hit
+ring		Vitalic Ring	維生之戒	40								增加(4—6)%最大生命 / (4—6)% increased maximum Life
+ring		Mnemonic Ring	憶念之戒	40								增加(4—6)%最大魔力 / (4—6)% increased maximum Mana
+ring		Kinetic Ring	動力之戒	40								攻擊附加(6—9)至(11—15)物理傷害 / Adds (6—9) to (11—15) Physical Damage to Attacks
+ring		Grasping Ring	抓取之戒	40								此物品會被視為手套，自插槽中的物品獲得加成 / This item gains bonuses from Socketed Items as though it was Gloves
+ring		Breach Ring	裂痕戒指	40								+20%最大品質 / +20% to Maximum Quality
+ring		Refined Breach Ring	精製裂痕戒指	40								+25%最大品質 / +25% to Maximum Quality
+ring		Unset Ring	潛能之戒	44								賦予1個額外技能槽 / Grants 1 additional Skill Slots
+ring		Oneiric Ring	夢境之戒	47								增加(11—23)%混沌傷害 / (11—23)% increased Chaos Damage
+ring		Biostatic Ring	恆生之戒	52								+1%最大全部抗性 / +1% to all maximum Resistances
+amulet		Crimson Amulet	赤紅項鍊	1								(2—4)每秒生命回復 / (2—4) Life Regeneration per second
+amulet		Azure Amulet	蒼藍項鍊	1								增加(20—30)%魔力回復率 / (20—30)% increased Mana Regeneration Rate
+amulet		Amber Amulet	琥珀護身符	8								+(10—15)點力量 / +(10—15) to Strength
+amulet		Jade Amulet	翠玉護身符	8								+(10—15)點敏捷 / +(10—15) to Dexterity
+amulet		Lapis Amulet	海玉護身符	8								+(10—15)點智慧 / +(10—15) to Intelligence
+amulet		Pearlescent Amulet	珠光項鍊	8								+(7—10)%全元素抗性 / +(7—10)% to all Elemental Resistances
+amulet		Lunar Amulet	月神項鍊	14								+(20—30)最大能量護盾 / +(20—30) to maximum Energy Shield
+amulet		Bloodstone Amulet	血石項鍊	18								+(30—40)最大生命 / +(30—40) to maximum Life
+amulet		Stellar Amulet	恆星項鍊	25								+(5—7)點全部能力值 / +(5—7) to all Attributes
+amulet		Solar Amulet	日耀項鍊	30								+(10—15)精魂 / +(10—15) to Spirit
+amulet		Gold Amulet	帝金護身符	35								增加(12—20)%找到的物品稀有度 / (12—20)% increased Rarity of Items found
+amulet		Corona Amulet	日冕護身符	40								此物品會被視為頭盔，自插槽中的物品獲得加成 / This item gains bonuses from Socketed Items as though it was a Helmet
+amulet		Lament Amulet	悼亡護身符	42								授予技能（11級，36種隨機之一，如極地裝甲/灰燼之捷/戰爭之旗等）；-1前綴上限 / Grants Skill: Level 11 <one of 36 skills, e.g. Arctic Armour, Herald of Ash, War Banner>; -1 Prefix Modifier allowed
+amulet		Portent Amulet	惡兆護身符	42								授予技能（11級：召喚惡狼/閃現/元素祈願/元素匯流/獻祭/幻影射手/野性祈求 之一）；-1後綴上限 / Grants Skill: Level 11 <Wolf Pack/Blink/Elemental Invocation/Elemental Conflux/Sacrifice/Mirage Archer/Feral Invocation>; -1 Suffix Modifier allowed
+amulet		Absent Amulet	虛無護身符	50								授予技能（12級：元素異常狀態時施放/暴擊時施放/閃避時施放/恐喙鳥坐騎/大法師/三相/無盡怒火 之一）；-1前綴、-1後綴上限 / Grants Skill: Level 12 <Cast on Elemental Ailment/Cast on Critical/Cast on Dodge/Rhoa Mount/Archmage/Trinity/Eternal Rage>; -1 Prefix, -1 Suffix Modifier allowed
+amulet		Veridical Chain	幻象鎖鏈	52								+(30—40)最大符文保護 / +(30—40) to maximum Runic Ward
+belt		Rawhide Belt	生皮腰帶	1								增加(20—30)%藥劑的生命恢復 / (20—30)% increased Life Recovery from Flasks；有(1—3)個護符欄位 / Has (1—3) Charm Slots
+belt		Linen Belt	麻布腰帶	1								增加(20—30)%藥劑的魔力恢復 / (20—30)% increased Mana Recovery from Flasks；有(1—3)個護符欄位 / Has (1—3) Charm Slots
+belt		Wide Belt	寬大腰帶	14								增加(20—30)%藥劑充能獲取 / (20—30)% increased Flask Charges gained；有(1—3)個護符欄位 / Has (1—3) Charm Slots
+belt		Long Belt	長腰帶	20								增加(15—20)%護符效果持續時間 / (15—20)% increased Charm Effect Duration；有(1—3)個護符欄位 / Has (1—3) Charm Slots
+belt		Plate Belt	板甲腰帶	25								+(140—180)護甲值 / +(140—180) to Armour；有(1—3)個護符欄位 / Has (1—3) Charm Slots
+belt		Ornate Belt	華麗腰帶	31								減少(10—15)%護符充能使用 / (10—15)% reduced Charm Charges used；有(1—3)個護符欄位 / Has (1—3) Charm Slots
+belt		Invoking Belt	祈喚腰帶	32								增加(8—12)%施法速度 / (8—12)% increased Cast Speed；有1個護符欄位 / Has 1 Charm Slot
+belt		Sinew Belt	韌筋腰帶	32								+(15—20)點力量 / +(15—20) to Strength；有1個護符欄位 / Has 1 Charm Slot
+belt		Forking Belt	歧路腰帶	32								攻擊附加1至(20—30)閃電傷害 / Adds 1 to (20—30) Lightning damage to Attacks；有1個護符欄位 / Has 1 Charm Slot
+belt		Mail Belt	鎖甲腰帶	40								減少(10—15)%藥劑充能使用 / (10—15)% reduced Flask Charges used；有(1—3)個護符欄位 / Has (1—3) Charm Slots
+belt		Double Belt	雙層腰帶	44								增加(20—30)%護符充能獲取 / (20—30)% increased Charm Charges gained；有(1—3)個護符欄位 / Has (1—3) Charm Slots
+belt		Heavy Belt	重革腰帶	50								增加(20—30)%暈眩門檻 / (20—30)% increased Stun Threshold；有(1—3)個護符欄位 / Has (1—3) Charm Slots
+belt		Stalking Belt	獵跡腰帶	50								此物品會被視為長靴，自插槽中的物品獲得加成 / This item gains bonuses from Socketed Items as though it was Boots；有1個護符欄位 / Has 1 Charm Slot
+belt		Utility Belt	實用腰帶	55								20%的藥劑回復立即生效 / 20% of Flask Recovery applied Instantly；有(1—3)個護符欄位 / Has (1—3) Charm Slots
+belt		Fine Belt	精良腰帶	62								藥劑每秒獲得0.17充能 / Flasks gain 0.17 charges per Second；有(1—3)個護符欄位 / Has (1—3) Charm Slots

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星骸 排行榜</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0d1a'/%3E%3Cpolygon points='32,6 38,25 58,25 42,37 48,57 32,45 16,57 22,37 6,25 26,25' fill='%23f5b942'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface-1: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+    --grid: #e1e0d9; --border: rgba(11, 11, 11, 0.10); --wash: rgba(11, 11, 11, 0.04); --gold: #b8860b; --online: #0ca30c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --wash: rgba(255, 255, 255, 0.06); --gold: #f5b942; --online: #0ca30c;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --wash: rgba(255, 255, 255, 0.06); --gold: #f5b942; --online: #0ca30c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page); color: var(--text-primary);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px; line-height: 1.5; padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header .sub { margin: 4px 0 0; color: var(--text-secondary); }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .tabs button {
+    font: inherit; color: var(--text-primary); background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 14px; cursor: pointer;
+  }
+  .tabs button:hover { background: var(--wash); }
+  .tabs button[aria-pressed="true"] { font-weight: 600; border-color: var(--text-secondary); }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .card .note { margin: 0 0 12px; color: var(--text-secondary); font-size: 13px; }
+  .search { font: inherit; color: var(--text-primary); background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; width: 100%; max-width: 280px; margin-bottom: 12px; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  th:nth-child(2), td:nth-child(2) { text-align: left; }
+  th { color: var(--text-secondary); font-weight: 500; }
+  td { font-variant-numeric: tabular-nums; }
+  td.rank { color: var(--text-secondary); width: 48px; }
+  tr.top td.rank { color: var(--gold); font-weight: 700; }
+  .name { font-weight: 600; }
+  .cls { color: var(--text-secondary); font-size: 12px; margin-left: 6px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--online); margin-right: 6px; vertical-align: middle; }
+  .muted { color: var(--text-muted); }
+  .empty { color: var(--text-muted); padding: 16px 0; }
+  footer { color: var(--text-muted); font-size: 12px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>排行榜</h1>
+    <p class="sub">《星骸》全部角色，含離線的。每分鐘更新。</p>
+  </header>
+  <div class="tabs" role="tablist">
+    <button type="button" data-board="level" aria-pressed="true">等級</button>
+    <button type="button" data-board="maps" aria-pressed="false">地圖</button>
+    <button type="button" data-board="deathless" aria-pressed="false">不死</button>
+    <button type="button" data-board="gold" aria-pressed="false">金錢</button>
+  </div>
+  <section class="card">
+    <p class="note" id="note">等級高、經驗多的在前。</p>
+    <input class="search" id="search" type="search" placeholder="找角色或玩家…" aria-label="找角色或玩家">
+    <div class="scroll"><table id="table"><thead></thead><tbody></tbody></table></div>
+    <p class="empty" id="empty" hidden>還沒有人上榜。</p>
+  </section>
+  <footer id="footer">讀取中……</footer>
+</div>
+<script>
+(function () {
+  var data = null;
+  var board = 'level';
+  var query = '';
+  var notes = {
+    level: '等級高、經驗多的在前。',
+    maps: '完成過幾張不同的地圖、最高打到第幾階；完成一張就會上榜。',
+    deathless: '死得最少、等級最高的在前；要 {min} 級以上才上榜。',
+    gold: '帳號的金幣（同一個帳號的角色共用），名字是那個帳號等級最高的角色。'
+  };
+  var heads = {
+    level: ['#', '角色', '等級', '地圖', '最高階', '劇情 Boss', '死亡', '遊玩時間'],
+    maps: ['#', '角色', '地圖', '最高階', '等級', '劇情 Boss', '死亡', '遊玩時間'],
+    deathless: ['#', '角色', '死亡', '等級', '地圖', '最高階', '劇情 Boss', '遊玩時間'],
+    gold: ['#', '角色', '金幣', '等級']
+  };
+  function playtime(seconds) {
+    var h = Math.floor(seconds / 3600), m = Math.floor(seconds % 3600 / 60);
+    return h > 0 ? h + ' 小時 ' + m + ' 分' : m + ' 分';
+  }
+  function esc(text) {
+    return String(text).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+  }
+  function nameCell(row) {
+    return (row.online ? '<span class="dot" title="在線"></span>' : '') + '<span class="name" style="color:' + esc(row.classColor) + '">' + esc(row.name)
+      + '</span><span class="cls">' + esc(row['class']) + '　' + esc(row.account) + '</span>';
+  }
+  function cells(row) {
+    var tier = row.bestTier > 0 ? 'T' + row.bestTier : '<span class="muted">—</span>';
+    if (board === 'maps') { return [row.maps, tier, 'Lv.' + row.level, row.bosses, row.deaths, playtime(row.playtime)]; }
+    if (board === 'gold') { return [Number(row.gold).toLocaleString(), 'Lv.' + row.level]; }
+    if (board === 'deathless') { return [row.deaths, 'Lv.' + row.level, row.maps, tier, row.bosses, playtime(row.playtime)]; }
+    return ['Lv.' + row.level, row.maps, tier, row.bosses, row.deaths, playtime(row.playtime)];
+  }
+  function render() {
+    var table = document.getElementById('table');
+    var thead = table.querySelector('thead'), tbody = table.querySelector('tbody');
+    thead.innerHTML = '<tr>' + heads[board].map(function (h) { return '<th>' + h + '</th>'; }).join('') + '</tr>';
+    document.getElementById('note').textContent = notes[board].replace('{min}', data ? data.deathlessMinLevel : 30);
+    var rows = data ? (data[board] || []) : [];
+    var q = query.trim().toLowerCase();
+    if (q) { rows = rows.filter(function (r) { return r.name.toLowerCase().indexOf(q) >= 0 || r.account.toLowerCase().indexOf(q) >= 0; }); }
+    tbody.innerHTML = rows.map(function (r) {
+      return '<tr class="' + (r.rank <= 3 ? 'top' : '') + '"><td class="rank">' + r.rank + '</td><td>' + nameCell(r) + '</td>'
+        + cells(r).map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
+    }).join('');
+    document.getElementById('empty').hidden = rows.length > 0;
+    var footer = document.getElementById('footer');
+    footer.textContent = data && data.refreshed ? '資料時間 ' + new Date(data.refreshed).toLocaleString() + '　共 ' + (data[board] || []).length + ' 人' : '還在讀取…';
+  }
+  function load() {
+    fetch('ladder/data.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (json) { data = json; render(); })
+      .catch(function () { document.getElementById('footer').textContent = '讀不到資料，稍後再試'; });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (button) {
+    button.addEventListener('click', function () {
+      board = button.getAttribute('data-board');
+      Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) { b.setAttribute('aria-pressed', b === button ? 'true' : 'false'); });
+      render();
+    });
+  });
+  document.getElementById('search').addEventListener('input', function (e) { query = e.target.value; render(); });
+  load();
+  setInterval(load, 60000);
+})();
+</script>
+</body>
+</html>

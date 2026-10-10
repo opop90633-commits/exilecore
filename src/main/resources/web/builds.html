@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星骸 角色</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0d1a'/%3E%3Cpolygon points='32,6 38,25 58,25 42,37 48,57 32,45 16,57 22,37 6,25 26,25' fill='%23f5b942'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface-1: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+    --grid: #e1e0d9; --border: rgba(11, 11, 11, 0.10); --wash: rgba(11, 11, 11, 0.04); --gold: #b8860b;
+    --tip: #100c18; --tip-border: #3a2a5a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --wash: rgba(255, 255, 255, 0.06); --gold: #f5b942;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --wash: rgba(255, 255, 255, 0.06); --gold: #f5b942;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page); color: var(--text-primary);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px; line-height: 1.5; padding: 24px 16px 48px;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header nav a { color: var(--text-secondary); margin-left: 12px; font-size: 13px; }
+  .sub { margin: 4px 0 16px; color: var(--text-secondary); }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .controls input, .controls select {
+    font: inherit; color: var(--text-primary); background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px;
+  }
+  .controls input { flex: 1 1 200px; max-width: 320px; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  th { color: var(--text-secondary); font-weight: 500; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: var(--wash); }
+  .name { font-weight: 600; }
+  .muted { color: var(--text-muted); }
+  .empty { color: var(--text-muted); padding: 16px 0; }
+  .back { display: inline-block; margin-bottom: 12px; color: var(--text-secondary); cursor: pointer; text-decoration: underline; }
+  /* 角色頁 */
+  .hero { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 12px; }
+  .hero h2 { margin: 0; font-size: 24px; }
+  .hero .cls { font-weight: 600; }
+  .grid2 { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 820px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+  .card h3 { margin: 0 0 10px; font-size: 15px; }
+  .gear { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, 64px); gap: 8px; }
+  .slot {
+    border: 1px solid var(--border); border-radius: 8px; background: #15121c; position: relative; display: flex; align-items: center;
+    justify-content: center; cursor: default; overflow: hidden; outline: none;
+  }
+  .slot.empty { background: var(--wash); }
+  .slot .lbl { position: absolute; left: 4px; top: 2px; font-size: 10px; color: #9a96a8; }
+  .slot.empty .lbl { color: var(--text-muted); }
+  .slot img { width: 40px; height: 40px; image-rendering: pixelated; }
+  .slot svg { width: 36px; height: 36px; }
+  .slot.normal { border-color: #8a8a8a; } .slot.magic { border-color: #6f8fff; } .slot.rare { border-color: #e8d34a; } .slot.unique { border-color: #c96b2c; }
+  .slot:focus-visible { box-shadow: 0 0 0 2px var(--gold); }
+  .g-weapon { grid-column: 1; grid-row: 1 / span 2; } .g-head { grid-column: 2 / span 2; grid-row: 1; } .g-off { grid-column: 4; grid-row: 1 / span 2; }
+  .g-chest { grid-column: 2 / span 2; grid-row: 2; } .g-ring1 { grid-column: 1; grid-row: 3; } .g-amulet { grid-column: 4; grid-row: 3; }
+  .g-belt { grid-column: 2 / span 2; grid-row: 3; } .g-ring2 { grid-column: 1; grid-row: 4; } .g-legs { grid-column: 2; grid-row: 4; } .g-feet { grid-column: 3; grid-row: 4; }
+  .jewels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .jewels .slot { width: 56px; height: 56px; }
+  .skills { display: flex; flex-direction: column; gap: 6px; }
+  .skill { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--grid); }
+  .skill:last-child { border-bottom: none; }
+  .skill .s { font-weight: 600; }
+  .chip { font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-secondary); }
+  .stats .sec { margin-bottom: 12px; }
+  .stats .sec h4 { margin: 0 0 4px; font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+  .mc { background: #15121c; border-radius: 8px; padding: 8px 10px; font-size: 13px; line-height: 1.55; color: #e9e6f2; }
+  .mc div { min-height: 1em; }
+  .asc .n { margin-bottom: 6px; }
+  .asc .n b { display: block; }
+  .btn { display: inline-block; font: inherit; color: var(--text-primary); background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; text-decoration: none; }
+  .btn:hover { background: var(--wash); }
+  .stack { display: flex; flex-direction: column; gap: 16px; }
+  /* 物品說明（跟遊戲裡一樣深色） */
+  .tip {
+    position: fixed; z-index: 10; max-width: min(380px, calc(100vw - 32px)); background: var(--tip); border: 2px solid var(--tip-border);
+    border-radius: 6px; padding: 8px 10px; color: #e9e6f2; font-size: 13px; line-height: 1.5; pointer-events: none; display: none;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  }
+  .tip .t { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  footer { color: var(--text-muted); font-size: 12px; margin-top: 16px; }
+  /* 管理員統計（2026-10） */
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
+  .bar { position: relative; min-width: 120px; }
+  .bar i { position: absolute; left: 0; top: 3px; bottom: 3px; background: var(--gold); opacity: 0.25; border-radius: 3px; }
+  .bar span { position: relative; }
+  .meta tbody tr { cursor: default; }
+  .meta tbody tr.link { cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>星骸 角色</h1>
+    <nav><a href="tree">天賦規劃器</a><a href="ladder">排行榜</a></nav>
+  </header>
+  <p class="sub" id="sub">看大家的裝備、天賦與技能（玩家可以打 /char profile off 不公開）</p>
+  <main id="main"><div class="empty">讀取中…</div></main>
+  <footer>資料是角色最後一次在線時的樣子（在線時每 5 分鐘更新）</footer>
+</div>
+<div class="tip" id="tip" role="tooltip"></div>
+<script>
+(function () {
+  "use strict";
+  const main = document.getElementById("main");
+  const tip = document.getElementById("tip");
+  let list = null;
+  let filter = { q: "", cls: "" };
+
+  function el(tag, attrs, ...children) {
+    const node = document.createElement(tag);
+    if (attrs) {
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v === null || v === undefined || v === false) continue;
+        if (k === "text") node.textContent = v;
+        else if (k === "cls") node.className = v;
+        else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+        else node.setAttribute(k, v);
+      }
+    }
+    for (const c of children) if (c !== null && c !== undefined && c !== false) node.append(c);
+    return node;
+  }
+  function ago(ms) {
+    if (!ms) return "";
+    const m = Math.max(0, Math.round((Date.now() - ms) / 60000));
+    if (m < 1) return "剛剛";
+    if (m < 60) return m + " 分鐘前";
+    const h = Math.round(m / 60);
+    if (h < 48) return h + " 小時前";
+    return Math.round(h / 24) + " 天前";
+  }
+  /** [[文字, 顏色, 粗體?], …] → 一行 */
+  function spanLine(spans) {
+    const line = el("div");
+    for (const s of spans || []) {
+      const span = el("span", { text: s[0] });
+      if (s[1]) span.style.color = s[1];
+      if (s[2]) span.style.fontWeight = "700";
+      line.append(span);
+    }
+    return line;
+  }
+
+  // ---- 清單 ----
+  // 2026-10：登入了管理網頁（同一個瀏覽器）就用管理員檢視：不公開的角色也列出來、也打得開
+  let admin = false;
+  function loadList() {
+    return fetch("admin/api/builds/list", { cache: "no-cache", credentials: "same-origin" })
+      .then(r => { if (!r.ok) throw new Error("not admin"); return r.json(); })
+      .then(json => { admin = true; return json; })
+      .catch(() => fetch("builds/list.json", { cache: "no-cache" }).then(r => r.json()))
+      .then(json => {
+        list = json;
+        if (!location.hash) renderList();
+      }).catch(() => { main.replaceChildren(el("div", { cls: "empty", text: "讀不到角色清單，稍後再試" })); });
+  }
+  function className(id) {
+    const c = list && list.classes.find(x => x.id === id);
+    return c ? c.name : id;
+  }
+  function classColor(id) {
+    const c = list && list.classes.find(x => x.id === id);
+    return c ? c.color : "";
+  }
+  function renderList() {
+    document.title = "星骸 角色";
+    if (!list) { main.replaceChildren(el("div", { cls: "empty", text: "讀取中…" })); return; }
+    const search = el("input", { type: "search", placeholder: "找角色名稱…", value: filter.q, "aria-label": "找角色名稱" });
+    const select = el("select", { "aria-label": "職業" }, el("option", { value: "", text: "全部職業" }),
+      ...list.classes.map(c => el("option", { value: c.id, text: c.name })));
+    select.value = filter.cls;
+    const tbody = el("tbody");
+    const table = el("table", null, el("thead", null, el("tr", null, el("th", { text: "角色" }), el("th", { text: "職業" }),
+      el("th", { cls: "num", text: "等級" }), el("th", { text: "更新" }))), tbody);
+    const count = el("div", { cls: "muted" });
+    function fill() {
+      const q = filter.q.trim().toLowerCase();
+      const rows = list.characters.filter(c => (!q || c.name.toLowerCase().includes(q)) && (!filter.cls || c.classId === filter.cls));
+      tbody.replaceChildren(...rows.slice(0, 500).map(c => {
+        const cls = el("span", { text: c.ascendancy || className(c.classId) });
+        cls.style.color = classColor(c.classId);
+        return el("tr", { tabindex: "0", onclick: () => { location.hash = encodeURIComponent(c.name); },
+          onkeydown: e => { if (e.key === "Enter") location.hash = encodeURIComponent(c.name); } },
+          el("td", { cls: "name", text: c.name + (c.hidden ? "　🔒" : "") }), el("td", null, cls), el("td", { cls: "num", text: c.level }), el("td", { cls: "muted", text: ago(c.updated) }));
+      }));
+      count.textContent = (rows.length ? "共 " + rows.length + " 個角色" + (rows.length > 500 ? "（只列前 500 個，請用搜尋）" : "") : "沒有符合的角色")
+        + (admin ? "　（管理員檢視：🔒 = 不公開，只有管理員和本人看得到）" : "");
+    }
+    search.addEventListener("input", () => { filter.q = search.value; fill(); });
+    select.addEventListener("change", () => { filter.cls = select.value; fill(); });
+    fill();
+    const controls = el("div", { cls: "controls" }, search, select,
+      admin ? el("a", { cls: "btn", href: "#!meta", text: "📊 統計：DPS、技能、傳奇使用率（管理員）" }) : null);
+    main.replaceChildren(el("div", { cls: "card" }, controls, el("div", { cls: "scroll" }, table), count));
+  }
+
+  // ---- 管理員統計（2026-10）：估計 DPS 排行、技能／輔助／傳奇使用率、昇華分布 ----
+  let meta = null;
+  const metaFilter = { min: 1, cls: "" };
+  function renderMeta() {
+    document.title = "星骸 統計";
+    const back = el("span", { cls: "back", role: "link", tabindex: "0", text: "← 所有角色", onclick: () => { location.hash = ""; } });
+    if (!admin) { main.replaceChildren(back, el("div", { cls: "empty", text: "要先在同一個瀏覽器登入管理網頁（遊戲裡 /ec web）" })); return; }
+    if (!meta) {
+      main.replaceChildren(back, el("div", { cls: "empty", text: "讀取中…" }));
+      fetch("admin/api/builds/meta", { cache: "no-cache", credentials: "same-origin" }).then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(json => { meta = json; renderMeta(); })
+        .catch(() => main.replaceChildren(back, el("div", { cls: "empty", text: "讀不到統計資料（管理網頁登入過期了？）" })));
+      return;
+    }
+    const min = el("input", { type: "number", min: "1", max: "100", value: String(metaFilter.min), "aria-label": "最低等級", style: "max-width:110px" });
+    const select = el("select", { "aria-label": "職業" }, el("option", { value: "", text: "全部職業" }),
+      ...(list ? list.classes : []).map(c => el("option", { value: c.id, text: c.name })));
+    select.value = metaFilter.cls;
+    const body = el("div");
+    // 2026-10：召喚技能全部加總（召喚物是一起打的）；跟最高的單一技能比，取大的
+    function best(c) {
+      let top = null;
+      const summons = [];
+      for (const d of c.dps || []) {
+        if (String(d.name).includes("（召喚物")) summons.push(d);
+        if (!top || d.dps > top.dps) top = d;
+      }
+      if (top) top = { name: top.name, dps: top.dps, main: String(top.name).replace(/（召喚物.*$/, "") };
+      if (summons.length > 1) {
+        const sum = summons.reduce((a, d) => a + Number(d.dps), 0);
+        if (!top || sum > top.dps) {
+          const lead = summons.slice().sort((a, b) => b.dps - a.dps)[0];
+          top = { name: "召喚物合計（" + summons.length + " 種：" + summons.map(d => String(d.name).replace(/（召喚物.*$/, "")).join("、") + "）",
+            dps: sum, main: String(lead.name).replace(/（召喚物.*$/, "") };
+        }
+      }
+      return top;
+    }
+    function count(rows, keyFn) {
+      const map = new Map();
+      for (const c of rows) for (const k of new Set(keyFn(c))) map.set(k, (map.get(k) || 0) + 1);
+      return [...map.entries()].sort((a, b) => b[1] - a[1]);
+    }
+    function usage(title, entries, total, extra) {
+      const tbody = el("tbody");
+      const max = entries.length ? entries[0][1] : 1;
+      for (const [name, n] of entries.slice(0, 40)) {
+        const pct = total ? Math.round(n * 1000 / total) / 10 : 0;
+        const bar = el("td", { cls: "bar" }, el("i", { style: "width:" + Math.round(n * 100 / max) + "%" }), el("span", { text: name }));
+        tbody.append(el("tr", null, bar, el("td", { cls: "num", text: n }), el("td", { cls: "num", text: pct + "%" }),
+          extra ? el("td", { cls: "num", text: extra(name) }) : null));
+      }
+      if (!entries.length) tbody.append(el("tr", null, el("td", { cls: "muted", text: "沒有資料" })));
+      return el("div", { cls: "card meta" }, el("h3", { text: title }), el("div", { cls: "scroll" }, el("table", null,
+        el("thead", null, el("tr", null, el("th", { text: "名稱" }), el("th", { cls: "num", text: "人數" }), el("th", { cls: "num", text: "使用率" }),
+          extra ? el("th", { cls: "num", text: "主力", title: "DPS 最高的技能是這個的人數" }) : null)), tbody)));
+    }
+    function fill() {
+      const rows = meta.characters.filter(c => c.level >= metaFilter.min && (!metaFilter.cls || c.classId === metaFilter.cls));
+      const total = rows.length;
+      // DPS 排行
+      const ranked = rows.map(c => ({ c, b: best(c) })).filter(x => x.b).sort((a, b) => b.b.dps - a.b.dps);
+      const dpsBody = el("tbody");
+      ranked.slice(0, 100).forEach((x, i) => {
+        const tr = el("tr", { cls: "link", onclick: () => { location.hash = encodeURIComponent(x.c.name); } },
+          el("td", { cls: "num", text: i + 1 }), el("td", { cls: "name", text: x.c.name + (x.c.hidden ? "　🔒" : "") }),
+          el("td", { text: x.c.ascendancy || x.c.className }), el("td", { cls: "num", text: x.c.level }),
+          el("td", { text: x.b.name }), el("td", { cls: "num", text: Number(x.b.dps).toLocaleString() }));
+        tr.children[2].style.color = x.c.classColor || "";
+        dpsBody.append(tr);
+      });
+      if (!ranked.length) dpsBody.append(el("tr", null, el("td", { cls: "muted", text: "還沒有資料（角色在線時每 5 分鐘記一次）" })));
+      const dpsCard = el("div", { cls: "card meta" }, el("h3", { text: "估計每秒傷害排行（每個角色取 DPS 最高的技能；召喚技能加總）" }),
+        el("p", { cls: "muted", style: "margin:0 0 8px", text: "跟 /stats 的「✦ 技能 每秒」同一套算法：平均一下 × 暴擊期望 × 每秒次數 × 複擊；召喚技能算「一隻召喚物 × 同時最多幾隻」；沒算怪物的護甲抗性、持續傷害、打到幾隻。" }),
+        el("div", { cls: "scroll" }, el("table", null, el("thead", null, el("tr", null, el("th", { cls: "num", text: "#" }), el("th", { text: "角色" }),
+          el("th", { text: "職業" }), el("th", { cls: "num", text: "等級" }), el("th", { text: "技能" }), el("th", { cls: "num", text: "每秒傷害" }))), dpsBody)));
+      const mainSkill = new Map();
+      for (const x of ranked) mainSkill.set(x.b.main, (mainSkill.get(x.b.main) || 0) + 1);
+      body.replaceChildren(
+        el("p", { cls: "muted", text: "符合的角色 " + total + " 個（含不公開的；資料是角色最後一次在線時的樣子）" }),
+        dpsCard,
+        el("div", { cls: "meta-grid" },
+          usage("技能使用率", count(rows, c => (c.skills || []).map(s => s.name)), total, name => mainSkill.get(name) || 0),
+          usage("輔助寶石使用率", count(rows, c => (c.skills || []).flatMap(s => s.supports || [])), total),
+          usage("傳奇使用率（裝備＋天賦樹珠寶）", count(rows, c => c.uniques || []), total),
+          usage("昇華／職業分布", count(rows, c => [c.ascendancy || c.className + "（未昇華）"]), total)));
+    }
+    min.addEventListener("input", () => { metaFilter.min = Math.max(1, Number(min.value) || 1); fill(); });
+    select.addEventListener("change", () => { metaFilter.cls = select.value; fill(); });
+    const reload = el("button", { cls: "btn", type: "button", text: "重新讀取", onclick: () => { meta = null; renderMeta(); } });
+    main.replaceChildren(back, el("div", { cls: "card" }, el("div", { cls: "controls" }, el("label", { cls: "muted", text: "最低等級" }), min, select, reload)), body);
+    fill();
+  }
+
+  // ---- 物品 ----
+  const SLOT_SHAPES = {
+    ring: '<circle cx="18" cy="20" r="9" fill="none" stroke="C" stroke-width="3"/><path d="M14 10l4-5 4 5z" fill="C"/>',
+    amulet: '<path d="M8 6c3 10 17 10 20 0" fill="none" stroke="C" stroke-width="2"/><circle cx="18" cy="24" r="6" fill="C"/>',
+    belt: '<rect x="3" y="14" width="30" height="8" rx="2" fill="C"/><rect x="14" y="12" width="8" height="12" rx="1" fill="none" stroke="#15121c" stroke-width="2"/>',
+    main_hand: '<path d="M27 4l5 0 0 5-17 17-5-5z" fill="C"/><path d="M8 22l6 6-3 3-6-6z" fill="C"/><path d="M4 30l3 3-2 2-3-3z" fill="C"/>',
+    off_hand: '<path d="M18 4l12 4v10c0 8-6 13-12 15C12 31 6 26 6 18V8z" fill="C"/>',
+    head: '<path d="M6 22c0-9 5-15 12-15s12 6 12 15v4H6z" fill="C"/><rect x="10" y="20" width="16" height="3" fill="#15121c"/>',
+    chest: '<path d="M10 5l8 4 8-4 6 6-4 5v15H8V16l-4-5z" fill="C"/>',
+    legs: '<path d="M9 4h18v8l-3 21h-5l-1-15-1 15h-5L9 12z" fill="C"/>',
+    feet: '<path d="M8 6h7v18h12c3 0 4 3 4 6H6v-3z" fill="C"/>',
+    jewel: '<path d="M18 4l12 9-5 17H11L6 13z" fill="C"/>'
+  };
+  const RARITY_COLOR = { normal: "#c8c8c8", magic: "#8888ff", rare: "#ffff77", unique: "#af6025" };
+  function iconFor(item) {
+    if (item.icon && item.icon.startsWith("u:")) {
+      return el("img", { src: "builds/icon.png?id=" + encodeURIComponent(item.icon.slice(2)), alt: "" });
+    }
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 36 36");
+    svg.setAttribute("aria-hidden", "true");
+    svg.innerHTML = (SLOT_SHAPES[item.kind] || SLOT_SHAPES.jewel).replaceAll("C", RARITY_COLOR[item.rarity] || "#c8c8c8");
+    return svg;
+  }
+  function showTip(item, target) {
+    tip.replaceChildren();
+    const title = spanLine(item.name);
+    title.className = "t";
+    tip.append(title);
+    for (const line of item.lore) tip.append(spanLine(line));
+    tip.style.display = "block";
+    const r = target.getBoundingClientRect();
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    let x = r.right + 8, y = r.top;
+    if (x + w > window.innerWidth - 8) x = Math.max(8, r.left - w - 8);
+    if (x < 8) x = 8;
+    if (y + h > window.innerHeight - 8) y = Math.max(8, window.innerHeight - h - 8);
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+  }
+  function hideTip() { tip.style.display = "none"; }
+  function slotBox(label, item, cls) {
+    const box = el("div", { cls: "slot " + (cls || "") + (item ? " " + item.rarity : " empty"), tabindex: item ? "0" : null,
+      "aria-label": item ? label + "：" + item.name.map(s => s[0]).join("") : label + "：空" }, el("span", { cls: "lbl", text: label }));
+    if (item) {
+      box.append(iconFor(item));
+      box.addEventListener("mouseenter", () => showTip(item, box));
+      box.addEventListener("mouseleave", hideTip);
+      box.addEventListener("focus", () => showTip(item, box));
+      box.addEventListener("blur", hideTip);
+      box.addEventListener("click", () => tip.style.display === "block" ? hideTip() : showTip(item, box));
+    }
+    return box;
+  }
+
+  // ---- 角色頁 ----
+  function renderCharacter(name, key) {
+    main.replaceChildren(el("div", { cls: "empty", text: "讀取中…" }));
+    const url = admin ? "admin/api/builds/character?name=" + encodeURIComponent(name)
+      : "builds/character.json?name=" + encodeURIComponent(name) + (key ? "&key=" + encodeURIComponent(key) : "");
+    fetch(url, { cache: "no-cache", credentials: "same-origin" }).then(r => {
+      if (!r.ok) throw new Error(r.status === 404 || r.status === 400 ? "沒有這個角色（或沒有公開）" : "讀不到角色資料，稍後再試");
+      return r.json();
+    }).then(c => drawCharacter(c)).catch(err => {
+      main.replaceChildren(el("span", { cls: "back", text: "← 所有角色", onclick: () => { location.hash = ""; } }),
+        el("div", { cls: "empty", text: err.message }));
+    });
+  }
+  function drawCharacter(c) {
+    document.title = c.name + " — 星骸 角色";
+    const back = el("span", { cls: "back", role: "link", tabindex: "0", text: "← 所有角色", onclick: () => { location.hash = ""; },
+      onkeydown: e => { if (e.key === "Enter") location.hash = ""; } });
+    const cls = el("span", { cls: "cls", text: (c.ascendancy ? c.ascendancy.name + "（" + c.className + "）" : c.className) });
+    cls.style.color = c.ascendancy ? c.ascendancy.color : c.classColor;
+    const hero = el("div", { cls: "hero" }, el("h2", { text: c.name }), cls, el("span", { text: "Lv." + c.level }),
+      el("span", { cls: "muted", text: "更新：" + ago(c.updated) }),
+      c.private ? el("span", { cls: "chip", text: admin ? "🔒 不公開（管理員檢視）" : "🔒 不公開：只有你看得到", style: "color:#ffb15c" }) : null);
+    // 裝備
+    const gear = el("div", { cls: "gear" });
+    const place = { main_hand: "g-weapon", head: "g-head", off_hand: "g-off", chest: "g-chest", ring1: "g-ring1", amulet: "g-amulet",
+      belt: "g-belt", ring2: "g-ring2", legs: "g-legs", feet: "g-feet" };
+    for (const s of c.gear) gear.append(slotBox(s.label, s.item, place[s.slot] || ""));
+    const gearCard = el("div", { cls: "card" }, el("h3", { text: "裝備" }), gear);
+    if (c.jewels && c.jewels.length) {
+      const jewels = el("div", { cls: "jewels" });
+      for (const j of c.jewels) jewels.append(slotBox("珠寶", j, ""));
+      gearCard.append(el("h3", { text: "天賦樹珠寶", style: "margin-top:14px" }), jewels);
+    }
+    // 天賦
+    const treeCard = el("div", { cls: "card" }, el("h3", { text: "天賦" }),
+      el("p", { cls: "muted", style: "margin:0 0 10px", text: "配了 " + (c.passiveCount || 0) + " 點" }),
+      c.treeCode ? el("a", { cls: "btn", href: "tree#" + encodeURIComponent(c.treeCode), target: "_blank", rel: "noopener", text: "在天賦規劃器打開" }) : null);
+    if (c.ascendancy && c.ascendancy.nodes.length) {
+      const asc = el("div", { cls: "asc", style: "margin-top:12px" }, el("h3", { text: "昇華：" + c.ascendancy.name }));
+      for (const n of c.ascendancy.nodes) {
+        asc.append(el("div", { cls: "n" }, el("b", { text: n.name }), ...n.lines.map(l => el("div", { cls: "muted", text: l }))));
+      }
+      treeCard.append(asc);
+    }
+    // 技能
+    const skills = el("div", { cls: "skills" });
+    if (!c.skills.length) skills.append(el("div", { cls: "muted", text: "沒有技能" }));
+    for (const s of c.skills) {
+      skills.append(el("div", { cls: "skill" }, el("span", { cls: "s", text: s.name }), el("span", { cls: "muted", text: "Lv." + s.level }),
+        ...s.supports.map(x => el("span", { cls: "chip", text: x }))));
+    }
+    const skillCard = el("div", { cls: "card" }, el("h3", { text: "技能" }), skills);
+    // 屬性
+    const stats = el("div", { cls: "stats" });
+    for (const sec of c.stats) {
+      const box = el("div", { cls: "mc" });
+      for (const line of sec.lines) box.append(spanLine(line));
+      stats.append(el("div", { cls: "sec" }, el("h4", { text: sec.title }), box));
+    }
+    const statCard = el("div", { cls: "card" }, el("h3", { text: "屬性" }), stats);
+    main.replaceChildren(back, hero, el("div", { cls: "grid2" }, el("div", { cls: "stack" }, gearCard, treeCard, skillCard), statCard));
+    window.scrollTo(0, 0);
+  }
+
+  function route() {
+    hideTip();
+    // 2026-10：#名字~鑰匙 = 本人的連結（不公開也看得到）
+    const raw = location.hash.replace(/^#/, "");
+    if (raw === "!meta") { renderMeta(); return; }
+    const cut = raw.lastIndexOf("~");
+    const name = decodeURIComponent(cut >= 0 ? raw.slice(0, cut) : raw);
+    const key = cut >= 0 ? raw.slice(cut + 1) : "";
+    if (name) renderCharacter(name, key); else renderList();
+  }
+  window.addEventListener("hashchange", route);
+  window.addEventListener("scroll", hideTip, { passive: true });
+  // 先知道是不是管理員再打開網址裡的角色
+  loadList().finally(() => { if (location.hash) route(); });
+})();
+</script>
+</body>
+</html>

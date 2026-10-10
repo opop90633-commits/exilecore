@@ -1,0 +1,819 @@
+# 地圖（星痕）與終局（階段 4）。
+# 世界觀：大塊星骸記得它落下前照過的地方；放進營地的地圖裝置，就能走進那段記憶。
+#
+# 階級（PoE2 換界石的做法）：地圖物品上寫著「哪一張」和「第幾階」，14 張地圖每一張都能開 T1–T16，
+#   階級越高怪物等級越高（T1 = 61 … T16 = 84）、地圖本身多一點物品數量與稀有度、掉的地圖越常是魔法／稀有（詞綴越多）、
+#   掉的裝備物品等級越高（高階詞綴要物品等級 68、78）。終局也分階：開的時候選，最高到你完成過的最高階。
+#
+# 流程：地圖物品（bases/maps.yml，詞綴在 affixes/maps.yml）→ 營地的地圖裝置（NPC）右鍵，選一張地圖、按開啟
+#   → 地圖世界的一個空格子裡程式自動蓋出一張隨機的地圖（房間、走道、Boss 房）
+#   → 裝置後面的傳送門亮起來：每個人（隊伍）有自己的傳送門、互不佔位，只有開圖的人和他的隊友看得到、走得進去
+#     （每張圖一共 6 次，還能進幾次就亮幾道；開新的地圖，舊的那張的傳送門就關了）
+#   → 殺死地圖 Boss 算完成（星圖點亮、解鎖相鄰的地圖）→ 裡面沒人 15 分鐘或次數用完後清掉格子
+# 星圖（/atlas 或地圖裝置裡的按鈕）：地圖排成 5 圈，一開始只有第 1 圈三張能開，完成一張（哪一階都算）就解鎖跟它相連的；
+#   最外圈（第 5 圈）兩張都完成後解鎖終局「天穹熔爐」（要兩片第 5 圈地圖 Boss 掉的天穹碎片）。
+#   星圖每完成一張不同的地圖，掉落的地圖階級上限高一階（一開始 T4，完成 12 張不同的 = T16）。
+# 在地圖裡死亡扣 10% 經驗（character.yml 的 map_death_penalty），回到營地，要再走傳送門進去（會用掉一次）。
+
+settings:
+  # 每一階的怪物等級（T1 … T16）。照 PoE：越高階等級差越大，T16 = 84（怪物等級的上限，100 級的角色也是打 84 級的怪）
+  tiers: [61, 62, 63, 64, 65, 66, 68, 70, 71, 73, 75, 77, 78, 80, 82, 84]
+  tier_quantity: 2            # T2 起每高一階，地圖本身多幾 % 物品數量（T16 = +30%）
+  tier_rarity: 3              # T2 起每高一階，地圖本身多幾 % 物品稀有度（T16 = +45%）
+  instance_cap: 20            # 全伺服器同時最多幾個地圖實例（每個人或隊伍一次一張）
+  portals: 6                  # 每張地圖可以進入幾次（開圖的人和隊友走進去都算一次）
+  idle_minutes: 15            # 裡面沒人超過這麼久就關閉、清掉格子
+  empty_close_seconds: 60     # 進入次數用完、裡面也沒人：這麼久之後關閉
+  pack_radius: 36             # 玩家走到離怪物群多近時刷出來
+  boss_radius: 22             # 玩家走進 Boss 房多近時 Boss 出現
+  # 一般地圖 Boss（不是終局）的生命照階級再乘（2026-10）：這一階（含）以下 ×1，到 T16 ×max，中間每階等量增加。
+  #   伺服器紀錄：T14–T16 的地圖 Boss 中位數 22 秒就倒（T12–T13 約 40 秒），高階加厚一點、低階不動
+  # 2026-10：照人均單體 15 萬 DPS 重調：T16 一般地圖 Boss 約 20 秒（原 from 12、max 1.6）
+  boss_tier_life: { from: 10, max: 5.8 }      # 2026-10：改照人均單體 10 萬 DPS（15 萬時是 8.7）
+  packs:                      # 地圖的怪物群（跟區域一樣是 PoE 的群，但比較大群）
+    normal: { weight: 64, size: [4, 6] }
+    magic: { weight: 28, size: [3, 5] }
+    rare: { weight: 8, size: [2, 3] }      # 稀有怪＋幾隻普通小弟
+
+drops:
+  # 地圖裡的怪掉地圖的機率（再乘上物品數量加成：魔法怪本身 +50%、稀有怪 +150%，加上地圖的數量）；
+  # 掉的是這張圖的階級，有機率 +1 階（終局掉開的那一階）
+  # 掉哪一張：你已經解鎖的地圖（不會掉廢圖），解鎖了還沒完成的（星圖的前線）機率是 frontier_weight 倍
+  # 2026-10：以前（普通 1.2%、魔法 3%、稀有 10%、Boss 必掉 2 張）一張 T16 平均掉 5～6 張地圖、點了星圖續航約 9 張，
+  #   伺服器的紀錄裡每個人手上幾十張稀有 T16、沒有人洗地圖。改成約 1/5、Boss 必掉 1 張：
+  #   沒洗的 T16 約掉 1.7 張、洗成稀有約 1.9 張、再加 20% 品質約 2 張、點了星圖續航約 3.2 張——
+  #   想穩定刷高階就要洗地圖（星火石、至臻石、星盤刻刀）或點續航，PoE2 也是這樣用掉這些通貨。
+  map_chance: { normal: 0.0025, magic: 0.006, rare: 0.02 }
+  boss_maps: 1                   # 地圖 Boss 必掉幾張（含終局；星圖天賦「地圖續航」再多 1 張）
+  tier_up_chance: 0.15           # 階級 +1 的機率
+  tier_up_per_completed: 0.01    # 星圖每完成一張，再多 1%
+  tier_cap_base: 4               # 掉落的地圖最高幾階：一開始 T4
+  tier_cap_per_map: 1            # 星圖每完成一張不同的地圖，上限高一階（完成 12 張不同的 = T16）
+  frontier_weight: 2
+  rarity: { normal: 55, magic: 35, rare: 10 }       # T1 掉的地圖的稀有度權重
+  # T16 的（中間照階級內插）。2026-10：高階地圖少掉現成的稀有圖（以前 15／35／50）——想要詞綴多、掉得多的地圖，
+  # 用微光石 → 添輝石 → 豐饒石 → 至臻石自己洗（PoE2 也是靠洗換界石用掉這些通貨）
+  rarity_top: { normal: 40, magic: 45, rare: 15 }
+  # 傳奇的掉落機率（每個有份的人各擲一次）：地圖 Boss、具名 Boss 5%（2026-10 從 2% 調高）；地圖事件 1%（map_events.yml，2026-10 從 2% 調低）；終局另外算
+  boss_unique_chance: 0.05       # 地圖 Boss 掉傳奇（uniques.yml 的 map_boss）的機率
+  named_unique_chance: 0.05      # 具名 Boss 掉自己那件傳奇的機率
+  final_unique_chance: 0.05      # 終局 Boss（曜帝與其他終局）掉自己專屬那件傳奇的機率（不是必掉：每個有份的人各擲一次）
+  chase_chance: 0.00034          # 追逐級傳奇（uniques.yml 的 chase 池，四件任一件）：所有地圖 Boss（一般、具名、終局、極境）
+                                 # 每次擊殺、每個有份的人各擲一次；固定 0.034%，星圖天賦、物品數量、稀有度都不影響
+  chase_mob_chance: 0.000001     # 追逐級傳奇（2026-10）：一般怪物（不是 Boss）每隻、每個有份的人各擲一次（0.0001%，約 100 萬隻一件），
+                                 # 怪物等級 75 以上才會掉（T11 以上的地圖）。僥倖石用在追逐級的基底（物品等級 75 以上）每次也是這個機率
+                                 # （逐星者：鏈帶、曜帝的冠冕：絲綢頭冠、星骸之心：板甲、天穹裂痕：弓；沒中就照一般僥倖石）
+  final_common_chance: 0.10      # 終局 Boss（與極境）另外掉一件共通傳奇（map_boss 池）的機率（2026-10：25% → 10%）
+  final_support_chance: 0.01     # 2026-10：2% → 1%。終局 Boss 掉它自己專屬輔助寶石（supports.yml 寫 source: 這個終局的代號）的機率
+  fragment: sky_fragment         # 天穹碎片（currencies.yml）
+  fragment_maps: [starfall_tundra, observatory]   # 這些地圖的 Boss 必掉一片
+  fragment_cost: 2               # 開終局要幾片
+  campaign_boss_zone: mountain   # 劇情最後一個區域的 Boss（霜角撼地獸）掉 T1 地圖（照你的星圖）
+  campaign_boss_maps: 1
+  campaign_first_kill_maps: 3
+  campaign_boss_daily_maps: 3    # 首殺以後，每個角色每天只有前幾次打倒它會掉地圖（Boss 90 秒就重生，不然可以站著一直刷）
+
+first_kill:                      # 首殺獎勵（存在角色資料裡）：天賦點
+  map_points: 0
+  named_points: 1
+  final_points: 2
+
+# 每張地圖：
+#   base      bases/maps.yml 的基底（決定名稱與在星圖的第幾圈；舊的地圖物品沒寫階級時，當作圈數那一階）
+#   theme     主題（方塊與裝飾）：beach 海岸、forest 森林、ruins 廢墟、swamp 沼澤、snow 雪原、cave 礦洞、crypt 墓穴、star 星殿、
+#             desert 沙漠（紅沙、綠洲）、volcano 火山（玄武岩、岩漿池）、fungal 菌窟（蘑菇、菌光）
+#   layout    版面樣式（不寫是 halls）：halls 廳堂（房間與走道）、open 曠野（大片空地，岩石樹叢擋路，有小水池）、
+#             cavern 洞窟（不規則的洞室、S 形彎道、地下水池）、islands 群島（水上的島嶼，窄窄的堤道相連）、
+#             city 城區（方形廣場與直街，好幾條路繞得到）。水池與湖照主題是水或岩漿（火山），走不進去
+#   atlas     在星圖上的位置 [欄, 列]（9×5 的格子，欄 0–8、列 0–4）
+#   links     相連的地圖（完成其中一張就解鎖另一張）；start: true 是一開始就能開
+#   monsters  怪物（原版生物代號或 mythic:代號）與權重
+#   （life 的預設值是 /ec balance 算的：參考角色站著打圈數那一階（第 1 圈開 T1），約 60 秒、越外圈越久、
+#     具名 Boss 再久一些、終局（T5）約 2 分鐘；開更高階時 Boss 跟著怪物等級變硬，T16 大約再久兩成；
+#     地圖詞綴的 Boss 生命、怪物生命會再加上去）
+#   boss      Boss：type 原版生物、mythic 有裝 MythicMobs 就用它、life／damage 在傳奇稀有度上再乘（已經扣掉 monsters.yml
+#             裡那種生物本身的倍率，所以伏守者、劫掠獸這種本來就很硬的也照寫的倍率）、scale 體型、
+#             named: true 是具名 Boss（首殺多給天賦點、有自己的傳奇）、phases 血量門檻切換（summon 召喚小怪、
+#             stats 加屬性、speed 移動速度加成）、skills 招式組（data/boss_skills.yml 的代號，沒寫照生物種類的預設；
+#             可寫 { id: meteor_storm, phase: 1 } 表示進入第一個階段後才會用，cooldown／damage 可覆蓋）
+#   Boss 的特殊機制（2026-10，終局與試煉用）：
+#     phases 的某一個階段寫 shield: { count: 3, type: BLAZE, name: 星骸結晶, life: 4, duration: 25, heal: 25 }
+#             → 進入這個階段時 Boss 無敵，Boss 房裡出現 count 顆結晶（type 原版生物、不會動不會打人，生命是同等級普通怪的 life 倍），
+#               duration 秒內全部打掉護盾就破；來不及的話 Boss 回 heal% 最大生命、剩下的結晶消失
+#     enrage: { after: 360, damage: 100, speed: 0.3, message: "…" }
+#             → 開打 after 秒還沒打倒就狂暴：傷害更多 damage%、移動快 speed（一場一次；血條上有倒數）
+#     hazards: [ { skill: hazard_star_meteor, every: 10, phase: 1 } ]
+#             → 場地危害：每 every 秒在某個玩家附近落一次（boss_skills.yml 的 slam、zone、orbs），phase 幾起；
+#               Boss 正在放招時等那一招放完才落，落下之前 Boss 也不出新的招（一次只做一件事）
+maps:
+  wreck_bay:
+    base: map_wreck_bay
+    theme: beach
+    layout: islands
+    atlas: [0, 2]
+    start: true
+    links: [ash_street, moss_grove, mist_ferry]
+    lore: "押送船的前一艘，沒有靠岸。"
+    monsters: { DROWNED: 4, ZOMBIE: 2, SKELETON: 1 }
+    boss:
+      name: 潮骨船長
+      type: DROWNED
+      life: 5
+      damage: 1.4
+      scale: 1.5
+      mods: [sturdy]
+      intro: "「船還沒到港，誰也不准下船。」"
+
+  moss_grove:
+    base: map_moss_grove
+    theme: forest
+    layout: open
+    atlas: [0, 4]
+    start: true
+    links: [wreck_bay, frost_pines]
+    lore: "星光曾經落在這片苔蘚上，讓它長得太快。"
+    monsters: { SPIDER: 3, CAVE_SPIDER: 1, ZOMBIE: 2, BOGGED: 1 }
+    boss:
+      name: 苔母
+      type: SPIDER
+      life: 7.5
+      damage: 1.3
+      scale: 2.0
+      mods: [swift]
+      intro: "樹梢上的絲線全都繃緊了。"
+
+  ash_street:
+    base: map_ash_street
+    theme: ruins
+    layout: city
+    atlas: [0, 0]
+    start: true
+    links: [wreck_bay, outer_city]
+    lore: "曜京燒起來的第一條街。"
+    monsters: { HUSK: 3, SKELETON: 2, VINDICATOR: 1, CREEPER: 1 }
+    boss:
+      name: 焦骨巡守
+      type: HUSK
+      life: 6.5
+      damage: 1.4
+      scale: 1.5
+      mods: [fiery]
+      intro: "「宵禁時間，街上不准有人。」"
+
+  mist_ferry:
+    base: map_mist_ferry
+    theme: swamp
+    layout: islands
+    atlas: [2, 2]
+    links: [wreck_bay, royal_tomb, abyss_mine, glow_grotto]
+    lore: "渡船還在等最後一批乘客。"
+    monsters: { DROWNED: 2, WITCH: 1, BOGGED: 2, ZOMBIE: 2 }
+    boss:
+      name: 渡口老婦
+      type: WITCH
+      life: 7.5
+      damage: 1.4
+      scale: 1.4
+      mods: [resistant]
+      intro: "「船票呢？沒有船票就留下來陪我。」"
+
+  outer_city:
+    base: map_outer_city
+    theme: ruins
+    layout: city
+    atlas: [2, 0]
+    links: [ash_street, royal_tomb]
+    lore: "外城的叛軍在火裡守了七天。"
+    monsters: { VINDICATOR: 2, PILLAGER: 2, HUSK: 2 }
+    boss:
+      name: 叛軍隊長
+      type: VINDICATOR
+      life: 8.5
+      damage: 1.5
+      scale: 1.4
+      mods: [deadly]
+      intro: "「皇帝瘋了！城門給我守住！」"
+
+  frost_pines:
+    base: map_frost_pines
+    theme: snow
+    layout: open
+    atlas: [2, 4]
+    links: [moss_grove, abyss_mine]
+    lore: "星骸飛過山嶺的那一晚，松林一夜全白。"
+    monsters: { STRAY: 3, ZOMBIE: 1, SPIDER: 1, SKELETON: 1 }
+    boss:
+      name: 霜嚎者
+      type: STRAY
+      life: 8.5
+      damage: 1.5
+      scale: 1.5
+      mods: [frosty]
+      intro: "風裡有人在數你的腳步。"
+
+  abyss_mine:
+    base: map_abyss_mine
+    theme: cave
+    layout: cavern
+    atlas: [4, 4]
+    links: [mist_ferry, frost_pines, tide_temple, glow_grotto]
+    lore: "流放者挖得太深，挖到了星骸的根。"
+    monsters: { CAVE_SPIDER: 2, SKELETON: 2, SILVERFISH: 1, ZOMBIE: 2, CREEPER: 1 }
+    boss:
+      name: 礦坑工頭
+      type: ZOMBIE
+      life: 5
+      damage: 1.6
+      scale: 1.6
+      mods: [armoured, sturdy]
+      intro: "「今天的份量還沒挖完。」"
+
+  royal_tomb:
+    base: map_royal_tomb
+    theme: crypt
+    layout: halls
+    atlas: [4, 0]
+    links: [mist_ferry, outer_city, burning_field, glow_grotto]
+    lore: "曜帝為自己準備的陵墓，最後沒有用上。"
+    monsters: { WITHER_SKELETON: 2, SKELETON: 2, HUSK: 1, BOGGED: 1 }
+    boss:
+      name: 守陵將軍
+      type: WITHER_SKELETON
+      mythic: ExileCore_TombGeneral
+      named: true
+      life: 10
+      damage: 1.8
+      scale: 1.7
+      mods: [armoured]
+      intro: "「陵門不開，將軍不退。」"
+      defeat: "將軍的劍插進地裡，陵墓深處傳來一聲嘆息。"
+      phases:
+        - at: 0.6
+          name: 召集陵衛
+          message: "「陵衛，列陣！」"
+          summon: { type: SKELETON, count: 4 }
+        - at: 0.3
+          name: 死戰
+          message: "「退一步者，斬！」"
+          speed: 0.25
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+
+  glow_grotto:
+    base: map_glow_grotto
+    theme: fungal
+    layout: cavern
+    atlas: [4, 2]
+    links: [mist_ferry, royal_tomb, abyss_mine, red_sands]
+    lore: "星骸碎在地底，養出一整片會發光的菌。"
+    monsters: { BOGGED: 3, CAVE_SPIDER: 2, ZOMBIE: 2, WITCH: 1 }
+    boss:
+      name: 菌骨弓手
+      type: BOGGED
+      life: 8
+      damage: 1.6
+      scale: 1.6
+      mods: [venomous, swift]
+      intro: "「別踩到孢子……算了，你已經吸進去了。」"
+
+  burning_field:
+    base: map_burning_field
+    theme: volcano
+    layout: open
+    atlas: [6, 0]
+    links: [royal_tomb, observatory, red_sands]
+    lore: "曜京城外，最後一場仗打到兩邊都不剩人。"
+    monsters: { VINDICATOR: 2, PILLAGER: 1, BLAZE: 1, HUSK: 2 }
+    boss:
+      name: 燎原火靈
+      type: BLAZE
+      life: 7.5
+      damage: 1.6
+      scale: 1.8
+      mods: [fiery, deadly]
+      intro: "戰場上的火還記得每一個人的名字。"
+
+  tide_temple:
+    base: map_tide_temple
+    theme: beach
+    layout: halls
+    atlas: [6, 4]
+    links: [abyss_mine, starfall_tundra, red_sands]
+    lore: "潮汐退去時，神殿會露出來一個時辰。"
+    monsters: { DROWNED: 3, BOGGED: 1, WITCH: 1, SKELETON: 1 }
+    boss:
+      name: 潮汐祭司
+      type: DROWNED
+      life: 6.5
+      damage: 1.6
+      scale: 1.7
+      mods: [shocking, sturdy]
+      intro: "「潮水要回來了，你們得留下來當祭品。」"
+
+  red_sands:
+    base: map_red_sands
+    theme: desert
+    layout: open
+    atlas: [6, 2]
+    links: [glow_grotto, burning_field, tide_temple]
+    lore: "曜京往西的商道；星骸落下的那年，沙子燒成了紅色。"
+    monsters: { HUSK: 3, SKELETON: 2, PILLAGER: 1, SPIDER: 1, CREEPER: 1 }
+    boss:
+      name: 赤沙獠牙
+      type: ZOGLIN
+      life: 9
+      damage: 1.7
+      scale: 1.8
+      mods: [deadly, sturdy]
+      intro: "沙丘底下有什麼東西在翻身。"
+
+  starfall_tundra:
+    base: map_starfall_tundra
+    theme: snow
+    layout: islands
+    atlas: [8, 4]
+    links: [tide_temple]
+    lore: "天穹之心落地的那一刻，這裡是最後被照亮的地方。"
+    monsters: { STRAY: 3, BREEZE: 1, SKELETON: 1, SPIDER: 1 }
+    boss:
+      name: 霜牙
+      type: POLAR_BEAR
+      life: 10
+      damage: 1.8
+      scale: 2.2
+      mods: [frosty, swift]
+      intro: "冰原底下有什麼東西翻了個身。"
+
+  observatory:
+    base: map_observatory
+    theme: star
+    layout: halls
+    atlas: [8, 0]
+    links: [burning_field]
+    lore: "曜朝的觀星台，第一個看見那顆星往下掉的地方。"
+    monsters: { VINDICATOR: 2, EVOKER: 1, ENDERMAN: 1, ENDERMITE: 1, SKELETON: 1 }
+    boss:
+      name: 觀星祭司
+      type: EVOKER
+      mythic: ExileCore_StarPriest
+      named: true
+      life: 12.5
+      damage: 1.8
+      scale: 1.6
+      mods: [shocking]
+      intro: "「我算準了它墜落的時辰，卻沒算到自己的。」"
+      defeat: "星盤碎成一地，每一片都映著同一顆墜落的星。"
+      phases:
+        - at: 0.6
+          name: 星雨
+          message: "「看哪，星星在下雨。」"
+          summon: { type: ENDERMITE, count: 5 }
+        - at: 0.3
+          name: 天象逆轉
+          message: "「天穹啊，再亮一次！」"
+          speed: 0.2
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+            - { stat: crit.chance, type: INCREASED, value: 200 }
+
+# 終局：最外圈兩張都完成後，在地圖裝置用兩片天穹碎片打開。沒有詞綴；開的時候選階級（最高到你完成過的最高階），
+# 怪物等級 = 那一階 + level_bonus（T5 = 68 … T16 = 87），掉的地圖是那一階。
+final:
+  id: sky_crucible
+  name: 天穹熔爐
+  level_bonus: 3
+  # Boss 的生命照開的階級再乘（所有終局都照這個，極境開在最高階也吃）：from 階（含）以下 ×1，往上每階等量增加，最高階 ×max。
+  # 2026-10：伺服器的紀錄裡練好的角色 T16 終局 17～32 秒（多半 20 秒左右）、極境約 1 分鐘，跟最外圈的地圖 Boss 差不多快；
+  #   原本的生命是照中等裝備的參考角色約 2 分鐘算的，練好的人輸出是那個的 5～6 倍。改成 T5 以下不變、T16 ×2.5：
+  #   剛進終局的人照原本的時間打低階，練好的人 T16 大約 40～65 秒，中等裝備的人 T16 約 4.5～5 分鐘（狂暴在 6 分鐘）。
+  # 2026-10：照人均單體 15 萬 DPS 重調：T16 終局約 40 秒（原 max 2.5；劫盜、極境也吃這個）
+  tier_life: { from: 5, max: 7.8 }      # 2026-10：改照人均單體 10 萬 DPS（15 萬時是 11.7；劫盜終局、極境也吃這個）
+  theme: star
+  atlas: [8, 2]
+  links: [starfall_tundra, observatory]
+  lore: "三百年前，曜帝就是在這裡把自己丟進星骸的熔爐。"
+  monsters: { BLAZE: 2, WITHER_SKELETON: 2, ENDERMAN: 1 }
+  boss:
+    name: 曜帝・星骸之軀
+    type: WARDEN
+    mythic: ExileCore_StarEmperor
+    named: true
+    life: 12         # 2026-10：10.5 → 12（伺服器紀錄：中位數 60 秒）
+    damage: 2.2
+    scale: 1.3
+    mods: [armoured, resistant]
+    intro: "「朕等了三百年，終於有人來看朕成神。」"
+    defeat: "熔爐熄了。三百年來第一次，天穹之心安靜下來。"
+    # 招式分三階段加：一開始音爆、兩波重踏、八顆星骸碎片、四塊裂隙、天穹環（擴散環，站進綠色缺口）；
+    # 第一階段起多天穹墜落（大圈）、九發星槍、衝鋒、叫火靈、星骸光束（兩道光束掃大半圈），而且開始下墜星（場地危害）；
+    # 第二階段起多超新星（半徑 14，前搖 2.2 秒）、十二顆隕落、全場詛咒、星核引力（漩渦，往外跑）、天穹審判（全場大招，躲進綠色安全區）。
+    # 進入第一階段時張開護盾：25 秒內打掉三顆星骸結晶，不然回 25% 生命。開打 6 分鐘還沒打倒就狂暴
+    skills:
+      - emperor_sonic_boom
+      - emperor_quake
+      - star_shards
+      - void_rifts
+      - emperor_heaven_ring
+      - { id: sky_fall, phase: 1 }
+      - { id: star_lance_volley, phase: 1 }
+      - { id: emperor_charge, phase: 1 }
+      - { id: summon_star_fragments, phase: 1 }
+      - { id: emperor_star_beam, phase: 1 }
+      - { id: supernova, phase: 2 }
+      - { id: meteor_apocalypse, phase: 2 }
+      - { id: emperor_curse, phase: 2 }
+      - { id: emperor_gravity_well, phase: 2 }
+      - { id: emperor_judgement, phase: 2 }
+    phases:
+      - at: 0.66
+        name: 星骸甦醒
+        message: "「朕的碎片，回到朕身邊！」"
+        summon: { type: BLAZE, count: 4 }
+        shield: { count: 3, type: BLAZE, name: 星骸結晶, life: 4, duration: 25, heal: 25 }
+      - at: 0.33
+        name: 天穹墜落
+        message: "「那就再墜落一次吧！」"
+        speed: 0.3
+        stats:
+          - { stat: damage, type: MORE, value: 50 }
+        summon: { type: WITHER_SKELETON, count: 3 }
+    hazards:
+      - { skill: hazard_star_meteor, every: 10, phase: 1 }
+    enrage: { after: 360, damage: 100, speed: 0.3, message: "「夠了。朕不再陪你玩。」" }
+  # 極境（Uber）：終局 Boss 的最強版本。用一般終局 Boss 掉的深淵星核開（地圖裝置的「極境」），要先打贏過一般的版本；
+  # 固定開在最高階＋level_bonus 級，Boss 生命×life、傷害×damage，所有怪物的招式冷卻×cooldown；沒有路上的怪，直接打 Boss；
+  # 每個人只能走進去一次（死了或離開就不能再進）。寫法：
+  #   name／intro           極境 Boss 的名字與出場台詞（沒寫 = 原本的名字加「・極境」、原本的台詞）
+  #   life／damage          生命、傷害再乘幾倍（比 T16 的一般版本；一般版本已經吃 tier_life 的 ×2.5）；cooldown 招式冷卻倍率（0.25–1.5）；
+  #                         level_bonus 比終局最高階再高幾級
+  #                         2026-10：life 3 → 4。伺服器的紀錄裡極境約 1 分鐘就打倒（狂暴在 4.5 分鐘）；加上 tier_life，
+  #                         生命大約是以前的 3.3 倍，練好的人約 3 分鐘，差一點的會碰到狂暴
+  #   skills／hazards       加在原本的後面；phases 寫了就整組換掉（一樣可以寫 shield；原本招式寫的 phase 1、2 照新的階段算）；
+  #                         enrage 寫了就換掉；mods 多的怪物詞綴
+  #   monster／player       這張圖的怪物、玩家額外的屬性（寫法同 monsters.yml 的 stats）
+  #   key／key_cost         開門要哪種通貨幾個；key_chance、key_min_tier：一般版本開到第幾階以上，Boss 有多少機率掉一個（每個有份的人各擲）
+  #   drops                 maps 掉幾張最高階的地圖、unique_chance 掉這個終局自己的傳奇（追逐級照 drops.chase_chance，跟一般 Boss 一樣）、
+  #                         exclusive_chance 極境專屬傳奇（uniques.yml 的 sources 寫 uber_終局代號）、
+  #                         extra 額外掉落 [{ currency: 代號, amount: 幾個, chance: 機率 }、{ support: 輔助寶石代號, chance: 機率 }]
+  uber:
+    intro: "「又是你。這一次，朕不會留手。」"
+    life: 3.12        # 2026-10：照人均單體 15 萬 DPS 重調（極境約 2 分鐘；原 3.5）
+    damage: 1.5
+    cooldown: 0.75
+    level_bonus: 4
+    skills:
+      - uber_emperor_cross_beams
+      - { id: uber_emperor_collapse, phase: 3 }
+    phases:
+      - at: 0.75
+        name: 星骸甦醒
+        message: "「朕的碎片，回到朕身邊！」"
+        summon: { type: BLAZE, count: 5 }
+        shield: { count: 4, type: BLAZE, name: 星骸結晶, life: 5, duration: 30, heal: 30 }
+      - at: 0.5
+        name: 天穹墜落
+        message: "「那就再墜落一次吧！」"
+        speed: 0.3
+        stats:
+          - { stat: damage, type: MORE, value: 40 }
+        summon: { type: WITHER_SKELETON, count: 4 }
+      - at: 0.25
+        name: 熔爐崩塌
+        message: "「三百年的火，全部給你！」"
+        speed: 0.15
+        stats:
+          - { stat: damage, type: MORE, value: 30 }
+        shield: { count: 3, type: BLAZE, name: 熔爐之心, life: 6, duration: 25, heal: 40 }
+    hazards:
+      - { skill: hazard_star_orbs, every: 14, phase: 1 }
+    enrage: { after: 270, damage: 150, speed: 0.4, message: "「時間到了。熔爐要吞掉你。」" }
+    key: abyss_core
+    key_cost: 1
+    key_chance: 0.1
+    key_min_tier: 12
+    drops:
+      maps: 4
+      unique_chance: 0.05   # 2026-10：25% → 5%
+      exclusive_chance: 0.03   # 2026-10：5% → 3%        # 極境專屬傳奇（uniques.yml 的 uber_sky_crucible）
+      extra:
+        - { currency: sky_fragment, amount: 2, chance: 1 }
+        - { currency: zenith_orb, amount: 5, chance: 1 }
+        - { currency: oracle_orb, amount: 1, chance: 0.3 }
+        - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
+        - { support: starfall_resonance, chance: 0.02 }       # 這個終局的專屬輔助（一般版本 1%；2026-10：5% → 2%）
+        - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（各 1%；2026-10：2% → 1%）
+        - { support: myriad_stars, chance: 0.01 }
+
+# 其他終局 Boss（PoE2 有好幾個巔峰 Boss）：寫法跟 final 一樣，多了
+#   requires  要先打贏哪些終局（代號）才能開；沒寫 = 跟天穹熔爐一樣完成最外圈就能開
+#   points    首殺的天賦點（沒寫 = first_kill.final_points）
+# 開法一樣：地圖裝置的終局按鈕，選 Boss 與階級，花 fragment_cost 片天穹碎片。各自的傳奇寫在 uniques.yml（sources 寫這裡的代號）。
+finals:
+  frost_throne:
+    name: 永凍王座
+    requires: [sky_crucible]
+    points: 1
+    level_bonus: 3
+    theme: snow
+    atlas: [7, 1]
+    lore: "曜帝的妹妹沒有進熔爐。她往北走，走到連時間都凍住的地方。"
+    monsters: { STRAY: 3, SKELETON: 1, POLAR_BEAR: 1, ZOMBIE: 1 }
+    boss:
+      name: 永凍女王・霜心
+      type: STRAY
+      mythic: ExileCore_FrostQueen
+      named: true
+      life: 13         # 2026-10：9.5 → 13（伺服器紀錄：中位數 33 秒）
+      damage: 2.1
+      scale: 2.2
+      mods: [resistant, swift]
+      intro: "「哥哥選了火。我選了永恆。」"
+      defeat: "王座裂開了。三百年的冬天，開始融化。"
+      # 冰冷：圈越大越冷。一開始冰環、冰槍、暴風雪、冰棱突刺、叫冰鬼、冰環擴散（三個缺口）；第一階段起雪崩、霜影撲擊、寒噬詛咒、
+      # 冰魄（追人的冰球）、霜光（三道光束），而且開始掉冰柱（場地危害）；第二階段起絕對零度（半徑 15，前搖 2.4 秒）、碎冰、白霧（全場大招）。
+      # 進入第一階段時張開護盾：三座霜心冰像。開打 6 分鐘還沒打倒就狂暴
+      skills:
+        - queen_frost_nova
+        - queen_ice_lances
+        - queen_blizzard
+        - queen_glacial_spike
+        - queen_summon_wraiths
+        - queen_glacial_ring
+        - { id: queen_avalanche, phase: 1 }
+        - { id: queen_blink, phase: 1 }
+        - { id: queen_frostbite, phase: 1 }
+        - { id: queen_ice_orbs, phase: 1 }
+        - { id: queen_frost_beam, phase: 1 }
+        - { id: queen_absolute_zero, phase: 2 }
+        - { id: queen_shatter, phase: 2 }
+        - { id: queen_whiteout, phase: 2 }
+      phases:
+        - at: 0.66
+          name: 寒冬降臨
+          message: "「風雪，起。」"
+          speed: 0.15
+          summon: { type: STRAY, count: 4 }
+          shield: { count: 3, type: STRAY, name: 霜心冰像, life: 4, duration: 25, heal: 25 }
+        - at: 0.33
+          name: 絕對零度
+          message: "「全部，停下來。」"
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          summon: { type: POLAR_BEAR, count: 2 }
+      hazards:
+        - { skill: hazard_frost_spike, every: 8, phase: 1 }
+      enrage: { after: 360, damage: 100, speed: 0.3, message: "「我累了。讓冬天結束這一切。」" }
+    uber:
+      intro: "「你把冬天弄醒了。現在，它不會再睡。」"
+      life: 2.58        # 2026-10：照人均單體 15 萬 DPS 重調（極境約 2 分鐘；原 2.9）
+      damage: 1.5
+      cooldown: 0.75
+      level_bonus: 4
+      skills:
+        - uber_queen_frozen_orbit
+        - { id: uber_queen_permafrost, phase: 3 }
+      phases:
+        - at: 0.75
+          name: 寒冬降臨
+          message: "「風雪，起。」"
+          speed: 0.15
+          summon: { type: STRAY, count: 5 }
+          shield: { count: 4, type: STRAY, name: 霜心冰像, life: 5, duration: 30, heal: 30 }
+        - at: 0.5
+          name: 絕對零度
+          message: "「全部，停下來。」"
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          summon: { type: POLAR_BEAR, count: 3 }
+        - at: 0.25
+          name: 永凍
+          message: "「這裡的冬天，不會再結束。」"
+          speed: 0.15
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+          shield: { count: 3, type: STRAY, name: 永凍冰像, life: 6, duration: 25, heal: 40 }
+      hazards:
+        - { skill: hazard_ice_orbs, every: 12, phase: 1 }
+      enrage: { after: 270, damage: 150, speed: 0.4, message: "「時間到了。永遠留在這裡吧。」" }
+      key: abyss_core
+      key_cost: 1
+      key_chance: 0.1
+      key_min_tier: 12
+      drops:
+        maps: 4
+        unique_chance: 0.05   # 2026-10：25% → 5%
+        exclusive_chance: 0.03   # 2026-10：5% → 3%        # 極境專屬傳奇（uniques.yml 的 uber_frost_throne）
+        extra:
+          - { currency: sky_fragment, amount: 2, chance: 1 }
+          - { currency: zenith_orb, amount: 5, chance: 1 }
+          - { currency: oracle_orb, amount: 1, chance: 0.3 }
+          - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
+          - { support: permafrost_heart, chance: 0.02 }       # 這個終局的專屬輔助（一般版本 1%；2026-10：5% → 2%）
+          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（各 1%；2026-10：2% → 1%）
+          - { support: myriad_stars, chance: 0.01 }
+
+  bone_throne:
+    name: 冥河渡口
+    requires: [sky_crucible]
+    points: 1
+    level_bonus: 3
+    theme: crypt
+    atlas: [7, 2]
+    lore: "曜京所有的死人都從這裡過河。渡者收的不是錢，是骨頭。"
+    monsters: { WITHER_SKELETON: 3, ZOMBIE: 2, SKELETON: 1, HUSK: 1 }
+    boss:
+      name: 蝕骨之王・冥河渡者
+      type: WITHER_SKELETON
+      mythic: ExileCore_BoneKing
+      named: true
+      life: 16         # 2026-10：11 → 16（伺服器紀錄：中位數 27 秒）
+      damage: 2.0
+      scale: 2.4
+      mods: [armoured, venomous]
+      intro: "「過河的人，留下骨頭。」"
+      defeat: "渡船沉了。河面上浮起三百年份的骨頭，然後慢慢散開。"
+      # 物理與混沌：貼身的割魂最痛。一開始骨矢、瘟疫池、墓碑猛擊、叫亡者、蝕骨詛咒、骨潮（擴散環）、哭嚎亡魂（追人的魂）；
+      # 第一階段起割魂（扇形 120 度）、冥河渡步、骨雨、冥河漩渦（往外跑），而且地上開始冒冥河之手（場地危害）；
+      # 第二階段起魂收（半徑 14）、叫凋零骷髏、最後的渡船（全場大招）。進入第二階段時張開護盾：三盞渡魂骨燈。開打 6 分鐘還沒打倒就狂暴
+      skills:
+        - king_bone_volley
+        - king_plague_pool
+        - king_grave_slam
+        - king_summon_dead
+        - king_decay_curse
+        - king_bone_ring
+        - king_wailing_souls
+        - { id: king_reap, phase: 1 }
+        - { id: king_shadow_step, phase: 1 }
+        - { id: king_bone_storm, phase: 1 }
+        - { id: king_soul_vortex, phase: 1 }
+        - { id: king_soul_harvest, phase: 2 }
+        - { id: king_summon_wither, phase: 2 }
+        - { id: king_last_ferry, phase: 2 }
+      phases:
+        - at: 0.66
+          name: 亡者起身
+          message: "「起來，再死一次。」"
+          summon: { type: ZOMBIE, count: 5 }
+        - at: 0.33
+          name: 冥河倒灌
+          message: "「河水，淹過來！」"
+          speed: 0.25
+          stats:
+            - { stat: damage, type: MORE, value: 45 }
+          summon: { type: WITHER_SKELETON, count: 2 }
+          shield: { count: 3, type: SKELETON, name: 渡魂骨燈, life: 4, duration: 25, heal: 30 }
+      hazards:
+        - { skill: hazard_grave_hands, every: 9, phase: 1 }
+      enrage: { after: 360, damage: 100, speed: 0.3, message: "「渡船不等人。」" }
+    uber:
+      intro: "「你的骨頭我記得。這一次，全部留下。」"
+      life: 2.45        # 2026-10：照人均單體 15 萬 DPS 重調（極境約 2 分鐘；原 2.75）
+      damage: 1.5
+      cooldown: 0.75
+      level_bonus: 4
+      skills:
+        - uber_king_ferry_of_souls
+        - { id: uber_king_abyss_vortex, phase: 2 }
+      phases:
+        - at: 0.75
+          name: 亡者起身
+          message: "「起來，再死一次。」"
+          summon: { type: ZOMBIE, count: 6 }
+          shield: { count: 4, type: SKELETON, name: 渡魂骨燈, life: 5, duration: 30, heal: 30 }
+        - at: 0.5
+          name: 冥河倒灌
+          message: "「河水，淹過來！」"
+          speed: 0.25
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          summon: { type: WITHER_SKELETON, count: 3 }
+        - at: 0.25
+          name: 萬魂渡河
+          message: "「三百年份的魂，全都還給你。」"
+          speed: 0.15
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+          shield: { count: 3, type: SKELETON, name: 冥河骨燈, life: 6, duration: 25, heal: 40 }
+      hazards:
+        - { skill: hazard_grave_hands, every: 6, phase: 0 }
+      enrage: { after: 270, damage: 150, speed: 0.4, message: "「時間到了。河底很安靜。」" }
+      key: abyss_core
+      key_cost: 1
+      key_chance: 0.1
+      key_min_tier: 12
+      drops:
+        maps: 4
+        unique_chance: 0.05   # 2026-10：25% → 5%
+        exclusive_chance: 0.03   # 2026-10：5% → 3%        # 極境專屬傳奇（uniques.yml 的 uber_bone_throne）
+        extra:
+          - { currency: sky_fragment, amount: 2, chance: 1 }
+          - { currency: zenith_orb, amount: 5, chance: 1 }
+          - { currency: oracle_orb, amount: 1, chance: 0.3 }
+          - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
+          - { support: styx_ferry, chance: 0.02 }       # 這個終局的專屬輔助（一般版本 1%；2026-10：5% → 2%）
+          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（各 1%；2026-10：2% → 1%）
+          - { support: myriad_stars, chance: 0.01 }
+
+  ember_citadel:
+    name: 餘燼堡壘
+    requires: [sky_crucible]
+    points: 1
+    level_bonus: 3
+    theme: volcano
+    atlas: [7, 3]
+    lore: "曜帝的將軍守著熔爐的出口。三百年沒有等到命令，他決定自己下。"
+    monsters: { BLAZE: 2, MAGMA_CUBE: 2, HUSK: 2, ZOMBIE: 1 }
+    boss:
+      name: 餘燼將軍・焚天
+      type: RAVAGER
+      mythic: ExileCore_EmberGeneral
+      named: true
+      life: 10
+      damage: 2.3
+      scale: 1.4
+      mods: [armoured, fiery]
+      intro: "「陛下說過：誰來，就燒誰。」"
+      defeat: "鎧甲冷了下來。他終於可以不用再等命令。"
+      # 火焰：吐息、岩漿、隕石，衝鋒撞人。一開始吐息、餘燼雨、岩漿足跡、衝鋒、叫岩漿怪、火環（擴散環）；
+      # 第一階段起噴發（半徑 7，前搖 2 秒）、烈焰齊射、燃燒的恐懼、焚天橫掃（一道火焰掃四分之三圈）、餘燼火球（追人），而且開始落燼（場地危害）；
+      # 第二階段起焚天（半徑 15）、隕石雨、燎原（全場大招）。進入第二階段時張開護盾：三顆餘燼核心。開打 6 分鐘還沒打倒就狂暴
+      skills:
+        - general_flame_breath
+        - general_ember_rain
+        - general_lava_trail
+        - general_charge
+        - general_summon_magma
+        - general_fire_ring
+        - { id: general_eruption, phase: 1 }
+        - { id: general_fire_volley, phase: 1 }
+        - { id: general_warcry, phase: 1 }
+        - { id: general_flame_sweep, phase: 1 }
+        - { id: general_ember_orbs, phase: 1 }
+        - { id: general_inferno, phase: 2 }
+        - { id: general_meteor_shower, phase: 2 }
+        - { id: general_burning_sky, phase: 2 }
+      phases:
+        - at: 0.66
+          name: 餘燼復燃
+          message: "「燒起來！」"
+          summon: { type: MAGMA_CUBE, count: 4 }
+        - at: 0.33
+          name: 焚天
+          message: "「天也燒給你看。」"
+          speed: 0.3
+          stats:
+            - { stat: damage, type: MORE, value: 50 }
+          summon: { type: BLAZE, count: 3 }
+          shield: { count: 3, type: BLAZE, name: 餘燼核心, life: 4, duration: 25, heal: 30 }
+      hazards:
+        - { skill: hazard_ember_fall, every: 9, phase: 1 }
+      enrage: { after: 360, damage: 100, speed: 0.3, message: "「命令就是命令。全部燒掉。」" }
+    uber:
+      intro: "「陛下的命令到了：一個都不留。」"
+      life: 3.56        # 2026-10：照人均單體 15 萬 DPS 重調（極境約 2 分鐘；原 4）
+      damage: 1.5
+      cooldown: 0.75
+      level_bonus: 4
+      skills:
+        - uber_general_twin_sweep
+        - { id: uber_general_firestorm, phase: 3 }
+      phases:
+        - at: 0.75
+          name: 餘燼復燃
+          message: "「燒起來！」"
+          summon: { type: MAGMA_CUBE, count: 5 }
+          shield: { count: 4, type: BLAZE, name: 餘燼核心, life: 5, duration: 30, heal: 30 }
+        - at: 0.5
+          name: 焚天
+          message: "「天也燒給你看。」"
+          speed: 0.3
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          summon: { type: BLAZE, count: 4 }
+        - at: 0.25
+          name: 焚城
+          message: "「陛下的命令：曜京，再燒一次。」"
+          speed: 0.15
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+          shield: { count: 3, type: BLAZE, name: 焚城核心, life: 6, duration: 25, heal: 40 }
+      hazards:
+        - { skill: hazard_ember_orbs, every: 12, phase: 1 }
+      enrage: { after: 270, damage: 150, speed: 0.4, message: "「時間到了。命令就是命令。」" }
+      key: abyss_core
+      key_cost: 1
+      key_chance: 0.1
+      key_min_tier: 12
+      drops:
+        maps: 4
+        unique_chance: 0.05   # 2026-10：25% → 5%
+        exclusive_chance: 0.03   # 2026-10：5% → 3%        # 極境專屬傳奇（uniques.yml 的 uber_ember_citadel）
+        extra:
+          - { currency: sky_fragment, amount: 2, chance: 1 }
+          - { currency: zenith_orb, amount: 5, chance: 1 }
+          - { currency: oracle_orb, amount: 1, chance: 0.3 }
+          - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
+          - { support: skyburn_fury, chance: 0.02 }       # 這個終局的專屬輔助（一般版本 1%；2026-10：5% → 2%）
+          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（各 1%；2026-10：2% → 1%）
+          - { support: myriad_stars, chance: 0.01 }

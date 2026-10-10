@@ -1,0 +1,1372 @@
+# 原版物品在選單格子裡的模型（Minecraft 26.2 的物品定義整理出來的）：
+# 介面資源包畫「選取外框」時，外框裡面照這個模型畫原本的圖示。
+# 一行一個物品：只有名稱 = minecraft:item/<名稱>；b = minecraft:block/<名稱>；其他寫完整的模型路徑。
+# 物品定義比較複雜的（盔甲、箱子、旗幟、頭顱、藥水、弓…）不在這裡，照 UiPack 裡的規則畫；兩邊都沒有的不畫外框（只發光）。
+acacia_boat
+acacia_button minecraft:block/acacia_button_inventory
+acacia_chest_boat
+acacia_door
+acacia_fence minecraft:block/acacia_fence_inventory
+acacia_fence_gate b
+acacia_hanging_sign
+acacia_log b
+acacia_planks b
+acacia_pressure_plate b
+acacia_sapling
+acacia_shelf minecraft:block/acacia_shelf_inventory
+acacia_sign
+acacia_slab b
+acacia_stairs b
+acacia_trapdoor minecraft:block/acacia_trapdoor_bottom
+acacia_wood b
+activator_rail
+air
+allay_spawn_egg
+allium
+amethyst_block b
+amethyst_cluster
+amethyst_shard
+ancient_debris b
+andesite b
+andesite_slab b
+andesite_stairs b
+andesite_wall minecraft:block/andesite_wall_inventory
+angler_pottery_sherd
+anvil b
+apple
+archer_pottery_sherd
+armadillo_scute
+armadillo_spawn_egg
+armor_stand
+arms_up_pottery_sherd
+arrow
+axolotl_bucket
+axolotl_spawn_egg
+azalea b
+azalea_leaves b
+azure_bluet
+baked_potato
+bamboo
+bamboo_block b
+bamboo_button minecraft:block/bamboo_button_inventory
+bamboo_chest_raft
+bamboo_door
+bamboo_fence minecraft:block/bamboo_fence_inventory
+bamboo_fence_gate b
+bamboo_hanging_sign
+bamboo_mosaic b
+bamboo_mosaic_slab b
+bamboo_mosaic_stairs b
+bamboo_planks b
+bamboo_pressure_plate b
+bamboo_raft
+bamboo_shelf minecraft:block/bamboo_shelf_inventory
+bamboo_sign
+bamboo_slab b
+bamboo_stairs b
+bamboo_trapdoor minecraft:block/bamboo_trapdoor_bottom
+barrel b
+barrier
+basalt b
+bat_spawn_egg
+beacon b
+bedrock b
+bee_spawn_egg
+beef
+beetroot
+beetroot_seeds
+beetroot_soup
+bell
+big_dripleaf
+birch_boat
+birch_button minecraft:block/birch_button_inventory
+birch_chest_boat
+birch_door
+birch_fence minecraft:block/birch_fence_inventory
+birch_fence_gate b
+birch_hanging_sign
+birch_log b
+birch_planks b
+birch_pressure_plate b
+birch_sapling
+birch_shelf minecraft:block/birch_shelf_inventory
+birch_sign
+birch_slab b
+birch_stairs b
+birch_trapdoor minecraft:block/birch_trapdoor_bottom
+birch_wood b
+black_candle
+black_carpet b
+black_concrete b
+black_concrete_powder b
+black_dye
+black_glazed_terracotta b
+black_harness
+black_stained_glass b
+black_stained_glass_pane
+black_terracotta b
+black_wool b
+blackstone b
+blackstone_slab b
+blackstone_stairs b
+blackstone_wall minecraft:block/blackstone_wall_inventory
+blade_pottery_sherd
+blast_furnace b
+blaze_powder
+blaze_rod
+blaze_spawn_egg
+blue_candle
+blue_carpet b
+blue_concrete b
+blue_concrete_powder b
+blue_dye
+blue_egg
+blue_glazed_terracotta b
+blue_harness
+blue_ice b
+blue_orchid
+blue_stained_glass b
+blue_stained_glass_pane
+blue_terracotta b
+blue_wool b
+bogged_spawn_egg
+bolt_armor_trim_smithing_template
+bone
+bone_block b
+bone_meal
+book
+bookshelf b
+bordure_indented_banner_pattern
+bowl
+brain_coral
+brain_coral_block b
+brain_coral_fan
+bread
+breeze_rod
+breeze_spawn_egg
+brewer_pottery_sherd
+brewing_stand
+brick
+brick_slab b
+brick_stairs b
+brick_wall minecraft:block/brick_wall_inventory
+bricks b
+brown_candle
+brown_carpet b
+brown_concrete b
+brown_concrete_powder b
+brown_dye
+brown_egg
+brown_glazed_terracotta b
+brown_harness
+brown_mushroom
+brown_mushroom_block minecraft:block/brown_mushroom_block_inventory
+brown_stained_glass b
+brown_stained_glass_pane
+brown_terracotta b
+brown_wool b
+bubble_coral
+bubble_coral_block b
+bubble_coral_fan
+bucket
+budding_amethyst b
+burn_pottery_sherd
+cactus b
+cactus_flower
+cake
+calcite b
+calibrated_sculk_sensor minecraft:block/calibrated_sculk_sensor_inactive
+camel_husk_spawn_egg
+camel_spawn_egg
+campfire
+candle
+carrot
+carrot_on_a_stick
+cartography_table b
+carved_pumpkin b
+cat_spawn_egg
+cauldron
+cave_spider_spawn_egg
+chain_command_block b
+charcoal
+cherry_boat
+cherry_button minecraft:block/cherry_button_inventory
+cherry_chest_boat
+cherry_door
+cherry_fence minecraft:block/cherry_fence_inventory
+cherry_fence_gate b
+cherry_hanging_sign
+cherry_leaves b
+cherry_log b
+cherry_planks b
+cherry_pressure_plate b
+cherry_sapling
+cherry_shelf minecraft:block/cherry_shelf_inventory
+cherry_sign
+cherry_slab b
+cherry_stairs b
+cherry_trapdoor minecraft:block/cherry_trapdoor_bottom
+cherry_wood b
+chest_minecart
+chicken
+chicken_spawn_egg
+chipped_anvil b
+chiseled_bookshelf minecraft:block/chiseled_bookshelf_inventory
+chiseled_cinnabar b
+chiseled_copper b
+chiseled_deepslate b
+chiseled_nether_bricks b
+chiseled_polished_blackstone b
+chiseled_quartz_block b
+chiseled_red_sandstone b
+chiseled_resin_bricks b
+chiseled_sandstone b
+chiseled_stone_bricks b
+chiseled_sulfur b
+chiseled_tuff b
+chiseled_tuff_bricks b
+chorus_flower b
+chorus_fruit
+chorus_plant b
+cinnabar b
+cinnabar_brick_slab b
+cinnabar_brick_stairs b
+cinnabar_brick_wall minecraft:block/cinnabar_brick_wall_inventory
+cinnabar_bricks b
+cinnabar_slab b
+cinnabar_stairs b
+cinnabar_wall minecraft:block/cinnabar_wall_inventory
+clay b
+clay_ball
+closed_eyeblossom
+coal
+coal_block b
+coal_ore b
+coarse_dirt b
+coast_armor_trim_smithing_template
+cobbled_deepslate b
+cobbled_deepslate_slab b
+cobbled_deepslate_stairs b
+cobbled_deepslate_wall minecraft:block/cobbled_deepslate_wall_inventory
+cobblestone b
+cobblestone_slab b
+cobblestone_stairs b
+cobblestone_wall minecraft:block/cobblestone_wall_inventory
+cobweb
+cocoa_beans
+cod
+cod_bucket
+cod_spawn_egg
+command_block b
+command_block_minecart
+comparator
+composter b
+cooked_beef
+cooked_chicken
+cooked_cod
+cooked_mutton
+cooked_porkchop
+cooked_rabbit
+cooked_salmon
+cookie
+copper_axe
+copper_bars
+copper_block b
+copper_bulb b
+copper_chain
+copper_door
+copper_golem_spawn_egg
+copper_grate b
+copper_hoe
+copper_horse_armor
+copper_ingot
+copper_lantern
+copper_nautilus_armor
+copper_nugget
+copper_ore b
+copper_pickaxe
+copper_shovel
+copper_sword
+copper_torch
+copper_trapdoor minecraft:block/copper_trapdoor_bottom
+cornflower
+cow_spawn_egg
+cracked_deepslate_bricks b
+cracked_deepslate_tiles b
+cracked_nether_bricks b
+cracked_polished_blackstone_bricks b
+cracked_stone_bricks b
+crafter b
+crafting_table b
+creaking_heart b
+creaking_spawn_egg
+creeper_banner_pattern
+creeper_spawn_egg
+crimson_button minecraft:block/crimson_button_inventory
+crimson_door
+crimson_fence minecraft:block/crimson_fence_inventory
+crimson_fence_gate b
+crimson_fungus
+crimson_hanging_sign
+crimson_hyphae b
+crimson_nylium b
+crimson_planks b
+crimson_pressure_plate b
+crimson_roots
+crimson_shelf minecraft:block/crimson_shelf_inventory
+crimson_sign
+crimson_slab b
+crimson_stairs b
+crimson_stem b
+crimson_trapdoor minecraft:block/crimson_trapdoor_bottom
+crying_obsidian b
+cut_copper b
+cut_copper_slab b
+cut_copper_stairs b
+cut_red_sandstone b
+cut_red_sandstone_slab b
+cut_sandstone b
+cut_sandstone_slab b
+cyan_candle
+cyan_carpet b
+cyan_concrete b
+cyan_concrete_powder b
+cyan_dye
+cyan_glazed_terracotta b
+cyan_harness
+cyan_stained_glass b
+cyan_stained_glass_pane
+cyan_terracotta b
+cyan_wool b
+damaged_anvil b
+dandelion
+danger_pottery_sherd
+dark_oak_boat
+dark_oak_button minecraft:block/dark_oak_button_inventory
+dark_oak_chest_boat
+dark_oak_door
+dark_oak_fence minecraft:block/dark_oak_fence_inventory
+dark_oak_fence_gate b
+dark_oak_hanging_sign
+dark_oak_log b
+dark_oak_planks b
+dark_oak_pressure_plate b
+dark_oak_sapling
+dark_oak_shelf minecraft:block/dark_oak_shelf_inventory
+dark_oak_sign
+dark_oak_slab b
+dark_oak_stairs b
+dark_oak_trapdoor minecraft:block/dark_oak_trapdoor_bottom
+dark_oak_wood b
+dark_prismarine b
+dark_prismarine_slab b
+dark_prismarine_stairs b
+daylight_detector b
+dead_brain_coral
+dead_brain_coral_block b
+dead_brain_coral_fan
+dead_bubble_coral
+dead_bubble_coral_block b
+dead_bubble_coral_fan
+dead_bush
+dead_fire_coral
+dead_fire_coral_block b
+dead_fire_coral_fan
+dead_horn_coral
+dead_horn_coral_block b
+dead_horn_coral_fan
+dead_tube_coral
+dead_tube_coral_block b
+dead_tube_coral_fan
+debug_stick
+deepslate b
+deepslate_brick_slab b
+deepslate_brick_stairs b
+deepslate_brick_wall minecraft:block/deepslate_brick_wall_inventory
+deepslate_bricks b
+deepslate_coal_ore b
+deepslate_copper_ore b
+deepslate_diamond_ore b
+deepslate_emerald_ore b
+deepslate_gold_ore b
+deepslate_iron_ore b
+deepslate_lapis_ore b
+deepslate_redstone_ore b
+deepslate_tile_slab b
+deepslate_tile_stairs b
+deepslate_tile_wall minecraft:block/deepslate_tile_wall_inventory
+deepslate_tiles b
+detector_rail
+diamond
+diamond_axe
+diamond_block b
+diamond_hoe
+diamond_horse_armor
+diamond_nautilus_armor
+diamond_ore b
+diamond_pickaxe
+diamond_shovel
+diamond_sword
+diorite b
+diorite_slab b
+diorite_stairs b
+diorite_wall minecraft:block/diorite_wall_inventory
+dirt b
+dirt_path b
+disc_fragment_5
+dispenser b
+dolphin_spawn_egg
+donkey_spawn_egg
+dragon_breath
+dragon_egg b
+dried_ghast minecraft:block/dried_ghast_hydration_0
+dried_kelp
+dried_kelp_block b
+dripstone_block b
+dropper b
+drowned_spawn_egg
+dune_armor_trim_smithing_template
+echo_shard
+egg
+elder_guardian_spawn_egg
+emerald
+emerald_block b
+emerald_ore b
+enchanted_book
+enchanted_golden_apple
+enchanting_table b
+end_crystal
+end_portal_frame b
+end_rod b
+end_stone b
+end_stone_brick_slab b
+end_stone_brick_stairs b
+end_stone_brick_wall minecraft:block/end_stone_brick_wall_inventory
+end_stone_bricks b
+ender_dragon_spawn_egg
+ender_eye
+ender_pearl
+enderman_spawn_egg
+endermite_spawn_egg
+evoker_spawn_egg
+experience_bottle
+explorer_pottery_sherd
+exposed_chiseled_copper b
+exposed_copper b
+exposed_copper_bars
+exposed_copper_bulb b
+exposed_copper_chain
+exposed_copper_door
+exposed_copper_grate b
+exposed_copper_lantern
+exposed_copper_trapdoor minecraft:block/exposed_copper_trapdoor_bottom
+exposed_cut_copper b
+exposed_cut_copper_slab b
+exposed_cut_copper_stairs b
+exposed_lightning_rod b
+eye_armor_trim_smithing_template
+farmland b
+feather
+fermented_spider_eye
+field_masoned_banner_pattern
+fire_charge
+fire_coral
+fire_coral_block b
+fire_coral_fan
+firefly_bush
+firework_rocket
+fletching_table b
+flint
+flint_and_steel
+flow_armor_trim_smithing_template
+flow_banner_pattern
+flow_pottery_sherd
+flower_banner_pattern
+flower_pot
+flowering_azalea b
+flowering_azalea_leaves b
+fox_spawn_egg
+friend_pottery_sherd
+frog_spawn_egg
+frogspawn
+furnace b
+furnace_minecart
+ghast_spawn_egg
+ghast_tear
+gilded_blackstone b
+glass b
+glass_bottle
+glass_pane
+glistering_melon_slice
+globe_banner_pattern
+glow_berries
+glow_ink_sac
+glow_item_frame
+glow_lichen
+glow_squid_spawn_egg
+glowstone b
+glowstone_dust
+goat_spawn_egg
+gold_block b
+gold_ingot
+gold_nugget
+gold_ore b
+golden_apple
+golden_axe
+golden_carrot
+golden_dandelion
+golden_hoe
+golden_horse_armor
+golden_nautilus_armor
+golden_pickaxe
+golden_shovel
+golden_sword
+granite b
+granite_slab b
+granite_stairs b
+granite_wall minecraft:block/granite_wall_inventory
+gravel b
+gray_candle
+gray_carpet b
+gray_concrete b
+gray_concrete_powder b
+gray_dye
+gray_glazed_terracotta b
+gray_harness
+gray_stained_glass b
+gray_stained_glass_pane
+gray_terracotta b
+gray_wool b
+green_candle
+green_carpet b
+green_concrete b
+green_concrete_powder b
+green_dye
+green_glazed_terracotta b
+green_harness
+green_stained_glass b
+green_stained_glass_pane
+green_terracotta b
+green_wool b
+grindstone b
+guardian_spawn_egg
+gunpowder
+guster_banner_pattern
+guster_pottery_sherd
+hanging_roots
+happy_ghast_spawn_egg
+hay_block b
+heart_of_the_sea
+heart_pottery_sherd
+heartbreak_pottery_sherd
+heavy_core b
+heavy_weighted_pressure_plate b
+hoglin_spawn_egg
+honey_block b
+honey_bottle
+honeycomb
+honeycomb_block b
+hopper
+hopper_minecart
+horn_coral
+horn_coral_block b
+horn_coral_fan
+horse_spawn_egg
+host_armor_trim_smithing_template
+howl_pottery_sherd
+husk_spawn_egg
+ice b
+infested_chiseled_stone_bricks minecraft:block/chiseled_stone_bricks
+infested_cobblestone minecraft:block/cobblestone
+infested_cracked_stone_bricks minecraft:block/cracked_stone_bricks
+infested_deepslate minecraft:block/deepslate
+infested_mossy_stone_bricks minecraft:block/mossy_stone_bricks
+infested_stone minecraft:block/stone
+infested_stone_bricks minecraft:block/stone_bricks
+ink_sac
+iron_axe
+iron_bars
+iron_block b
+iron_chain
+iron_door
+iron_golem_spawn_egg
+iron_hoe
+iron_horse_armor
+iron_ingot
+iron_nautilus_armor
+iron_nugget
+iron_ore b
+iron_pickaxe
+iron_shovel
+iron_sword
+iron_trapdoor minecraft:block/iron_trapdoor_bottom
+item_frame
+jack_o_lantern b
+jigsaw b
+jukebox b
+jungle_boat
+jungle_button minecraft:block/jungle_button_inventory
+jungle_chest_boat
+jungle_door
+jungle_fence minecraft:block/jungle_fence_inventory
+jungle_fence_gate b
+jungle_hanging_sign
+jungle_log b
+jungle_planks b
+jungle_pressure_plate b
+jungle_sapling
+jungle_shelf minecraft:block/jungle_shelf_inventory
+jungle_sign
+jungle_slab b
+jungle_stairs b
+jungle_trapdoor minecraft:block/jungle_trapdoor_bottom
+jungle_wood b
+kelp
+knowledge_book
+ladder
+lantern
+lapis_block b
+lapis_lazuli
+lapis_ore b
+large_amethyst_bud
+lava_bucket
+lead
+leaf_litter
+leather
+lectern b
+lever
+light_blue_candle
+light_blue_carpet b
+light_blue_concrete b
+light_blue_concrete_powder b
+light_blue_dye
+light_blue_glazed_terracotta b
+light_blue_harness
+light_blue_stained_glass b
+light_blue_stained_glass_pane
+light_blue_terracotta b
+light_blue_wool b
+light_gray_candle
+light_gray_carpet b
+light_gray_concrete b
+light_gray_concrete_powder b
+light_gray_dye
+light_gray_glazed_terracotta b
+light_gray_harness
+light_gray_stained_glass b
+light_gray_stained_glass_pane
+light_gray_terracotta b
+light_gray_wool b
+light_weighted_pressure_plate b
+lightning_rod b
+lilac
+lily_of_the_valley
+lime_candle
+lime_carpet b
+lime_concrete b
+lime_concrete_powder b
+lime_dye
+lime_glazed_terracotta b
+lime_harness
+lime_stained_glass b
+lime_stained_glass_pane
+lime_terracotta b
+lime_wool b
+llama_spawn_egg
+lodestone b
+loom b
+mace
+magenta_candle
+magenta_carpet b
+magenta_concrete b
+magenta_concrete_powder b
+magenta_dye
+magenta_glazed_terracotta b
+magenta_harness
+magenta_stained_glass b
+magenta_stained_glass_pane
+magenta_terracotta b
+magenta_wool b
+magma_block b
+magma_cream
+magma_cube_spawn_egg
+mangrove_boat
+mangrove_button minecraft:block/mangrove_button_inventory
+mangrove_chest_boat
+mangrove_door
+mangrove_fence minecraft:block/mangrove_fence_inventory
+mangrove_fence_gate b
+mangrove_hanging_sign
+mangrove_log b
+mangrove_planks b
+mangrove_pressure_plate b
+mangrove_propagule
+mangrove_roots b
+mangrove_shelf minecraft:block/mangrove_shelf_inventory
+mangrove_sign
+mangrove_slab b
+mangrove_stairs b
+mangrove_trapdoor minecraft:block/mangrove_trapdoor_bottom
+mangrove_wood b
+map
+medium_amethyst_bud
+melon b
+melon_seeds
+melon_slice
+milk_bucket
+minecart
+miner_pottery_sherd
+mojang_banner_pattern
+mooshroom_spawn_egg
+moss_block b
+moss_carpet b
+mossy_cobblestone b
+mossy_cobblestone_slab b
+mossy_cobblestone_stairs b
+mossy_cobblestone_wall minecraft:block/mossy_cobblestone_wall_inventory
+mossy_stone_brick_slab b
+mossy_stone_brick_stairs b
+mossy_stone_brick_wall minecraft:block/mossy_stone_brick_wall_inventory
+mossy_stone_bricks b
+mourner_pottery_sherd
+mud b
+mud_brick_slab b
+mud_brick_stairs b
+mud_brick_wall minecraft:block/mud_brick_wall_inventory
+mud_bricks b
+muddy_mangrove_roots b
+mule_spawn_egg
+mushroom_stem minecraft:block/mushroom_stem_inventory
+mushroom_stew
+music_disc_11
+music_disc_13
+music_disc_5
+music_disc_blocks
+music_disc_bounce
+music_disc_cat
+music_disc_chirp
+music_disc_creator
+music_disc_creator_music_box
+music_disc_far
+music_disc_lava_chicken
+music_disc_mall
+music_disc_mellohi
+music_disc_otherside
+music_disc_pigstep
+music_disc_precipice
+music_disc_relic
+music_disc_stal
+music_disc_strad
+music_disc_tears
+music_disc_wait
+music_disc_ward
+mutton
+mycelium b
+name_tag
+nautilus_shell
+nautilus_spawn_egg
+nether_brick
+nether_brick_fence minecraft:block/nether_brick_fence_inventory
+nether_brick_slab b
+nether_brick_stairs b
+nether_brick_wall minecraft:block/nether_brick_wall_inventory
+nether_bricks b
+nether_gold_ore b
+nether_quartz_ore b
+nether_sprouts
+nether_star
+nether_wart
+nether_wart_block b
+netherite_axe
+netherite_block b
+netherite_hoe
+netherite_horse_armor
+netherite_ingot
+netherite_nautilus_armor
+netherite_pickaxe
+netherite_scrap
+netherite_shovel
+netherite_sword
+netherite_upgrade_smithing_template
+netherrack b
+note_block b
+oak_boat
+oak_button minecraft:block/oak_button_inventory
+oak_chest_boat
+oak_door
+oak_fence minecraft:block/oak_fence_inventory
+oak_fence_gate b
+oak_hanging_sign
+oak_log b
+oak_planks b
+oak_pressure_plate b
+oak_sapling
+oak_shelf minecraft:block/oak_shelf_inventory
+oak_sign
+oak_slab b
+oak_stairs b
+oak_trapdoor minecraft:block/oak_trapdoor_bottom
+oak_wood b
+observer b
+obsidian b
+ocelot_spawn_egg
+ochre_froglight b
+ominous_bottle
+ominous_trial_key
+open_eyeblossom
+orange_candle
+orange_carpet b
+orange_concrete b
+orange_concrete_powder b
+orange_dye
+orange_glazed_terracotta b
+orange_harness
+orange_stained_glass b
+orange_stained_glass_pane
+orange_terracotta b
+orange_tulip
+orange_wool b
+oxeye_daisy
+oxidized_chiseled_copper b
+oxidized_copper b
+oxidized_copper_bars
+oxidized_copper_bulb b
+oxidized_copper_chain
+oxidized_copper_door
+oxidized_copper_grate b
+oxidized_copper_lantern
+oxidized_copper_trapdoor minecraft:block/oxidized_copper_trapdoor_bottom
+oxidized_cut_copper b
+oxidized_cut_copper_slab b
+oxidized_cut_copper_stairs b
+oxidized_lightning_rod b
+packed_ice b
+packed_mud b
+painting
+pale_hanging_moss
+pale_moss_block b
+pale_moss_carpet b
+pale_oak_boat
+pale_oak_button minecraft:block/pale_oak_button_inventory
+pale_oak_chest_boat
+pale_oak_door
+pale_oak_fence minecraft:block/pale_oak_fence_inventory
+pale_oak_fence_gate b
+pale_oak_hanging_sign
+pale_oak_leaves b
+pale_oak_log b
+pale_oak_planks b
+pale_oak_pressure_plate b
+pale_oak_sapling
+pale_oak_shelf minecraft:block/pale_oak_shelf_inventory
+pale_oak_sign
+pale_oak_slab b
+pale_oak_stairs b
+pale_oak_trapdoor minecraft:block/pale_oak_trapdoor_bottom
+pale_oak_wood b
+panda_spawn_egg
+paper
+parched_spawn_egg
+parrot_spawn_egg
+pearlescent_froglight b
+peony
+petrified_oak_slab b
+phantom_membrane
+phantom_spawn_egg
+pig_spawn_egg
+piglin_banner_pattern
+piglin_brute_spawn_egg
+piglin_spawn_egg
+pillager_spawn_egg
+pink_candle
+pink_carpet b
+pink_concrete b
+pink_concrete_powder b
+pink_dye
+pink_glazed_terracotta b
+pink_harness
+pink_petals
+pink_stained_glass b
+pink_stained_glass_pane
+pink_terracotta b
+pink_tulip
+pink_wool b
+piston minecraft:block/piston_inventory
+pitcher_plant
+pitcher_pod
+plenty_pottery_sherd
+podzol b
+pointed_dripstone
+poisonous_potato
+polar_bear_spawn_egg
+polished_andesite b
+polished_andesite_slab b
+polished_andesite_stairs b
+polished_basalt b
+polished_blackstone b
+polished_blackstone_brick_slab b
+polished_blackstone_brick_stairs b
+polished_blackstone_brick_wall minecraft:block/polished_blackstone_brick_wall_inventory
+polished_blackstone_bricks b
+polished_blackstone_button minecraft:block/polished_blackstone_button_inventory
+polished_blackstone_pressure_plate b
+polished_blackstone_slab b
+polished_blackstone_stairs b
+polished_blackstone_wall minecraft:block/polished_blackstone_wall_inventory
+polished_cinnabar b
+polished_cinnabar_slab b
+polished_cinnabar_stairs b
+polished_cinnabar_wall minecraft:block/polished_cinnabar_wall_inventory
+polished_deepslate b
+polished_deepslate_slab b
+polished_deepslate_stairs b
+polished_deepslate_wall minecraft:block/polished_deepslate_wall_inventory
+polished_diorite b
+polished_diorite_slab b
+polished_diorite_stairs b
+polished_granite b
+polished_granite_slab b
+polished_granite_stairs b
+polished_sulfur b
+polished_sulfur_slab b
+polished_sulfur_stairs b
+polished_sulfur_wall minecraft:block/polished_sulfur_wall_inventory
+polished_tuff b
+polished_tuff_slab b
+polished_tuff_stairs b
+polished_tuff_wall minecraft:block/polished_tuff_wall_inventory
+popped_chorus_fruit
+poppy
+porkchop
+potato
+potent_sulfur b
+powder_snow_bucket
+powered_rail
+prismarine b
+prismarine_brick_slab b
+prismarine_brick_stairs b
+prismarine_bricks b
+prismarine_crystals
+prismarine_shard
+prismarine_slab b
+prismarine_stairs b
+prismarine_wall minecraft:block/prismarine_wall_inventory
+prize_pottery_sherd
+pufferfish
+pufferfish_bucket
+pufferfish_spawn_egg
+pumpkin b
+pumpkin_pie
+pumpkin_seeds
+purple_candle
+purple_carpet b
+purple_concrete b
+purple_concrete_powder b
+purple_dye
+purple_glazed_terracotta b
+purple_harness
+purple_stained_glass b
+purple_stained_glass_pane
+purple_terracotta b
+purple_wool b
+purpur_block b
+purpur_pillar b
+purpur_slab b
+purpur_stairs b
+quartz
+quartz_block b
+quartz_bricks b
+quartz_pillar b
+quartz_slab b
+quartz_stairs b
+rabbit
+rabbit_foot
+rabbit_hide
+rabbit_spawn_egg
+rabbit_stew
+rail
+raiser_armor_trim_smithing_template
+ravager_spawn_egg
+raw_copper
+raw_copper_block b
+raw_gold
+raw_gold_block b
+raw_iron
+raw_iron_block b
+red_candle
+red_carpet b
+red_concrete b
+red_concrete_powder b
+red_dye
+red_glazed_terracotta b
+red_harness
+red_mushroom
+red_mushroom_block minecraft:block/red_mushroom_block_inventory
+red_nether_brick_slab b
+red_nether_brick_stairs b
+red_nether_brick_wall minecraft:block/red_nether_brick_wall_inventory
+red_nether_bricks b
+red_sand b
+red_sandstone b
+red_sandstone_slab b
+red_sandstone_stairs b
+red_sandstone_wall minecraft:block/red_sandstone_wall_inventory
+red_stained_glass b
+red_stained_glass_pane
+red_terracotta b
+red_tulip
+red_wool b
+redstone
+redstone_block b
+redstone_lamp b
+redstone_ore b
+redstone_torch
+reinforced_deepslate b
+repeater
+repeating_command_block b
+resin_block b
+resin_brick
+resin_brick_slab b
+resin_brick_stairs b
+resin_brick_wall minecraft:block/resin_brick_wall_inventory
+resin_bricks b
+resin_clump
+respawn_anchor minecraft:block/respawn_anchor_0
+rib_armor_trim_smithing_template
+rooted_dirt b
+rose_bush
+rotten_flesh
+saddle
+salmon
+salmon_bucket
+salmon_spawn_egg
+sand b
+sandstone b
+sandstone_slab b
+sandstone_stairs b
+sandstone_wall minecraft:block/sandstone_wall_inventory
+scaffolding minecraft:block/scaffolding_stable
+scrape_pottery_sherd
+sculk b
+sculk_catalyst b
+sculk_sensor minecraft:block/sculk_sensor_inactive
+sculk_shrieker b
+sculk_vein
+sea_lantern b
+sea_pickle
+seagrass
+sentry_armor_trim_smithing_template
+shaper_armor_trim_smithing_template
+sheaf_pottery_sherd
+shears
+sheep_spawn_egg
+shelter_pottery_sherd
+short_dry_grass
+shroomlight b
+shulker_shell
+shulker_spawn_egg
+silence_armor_trim_smithing_template
+silverfish_spawn_egg
+skeleton_horse_spawn_egg
+skeleton_spawn_egg
+skull_banner_pattern
+skull_pottery_sherd
+slime_ball
+slime_block b
+slime_spawn_egg
+small_amethyst_bud
+small_dripleaf
+smithing_table b
+smoker b
+smooth_basalt b
+smooth_quartz b
+smooth_quartz_slab b
+smooth_quartz_stairs b
+smooth_red_sandstone b
+smooth_red_sandstone_slab b
+smooth_red_sandstone_stairs b
+smooth_sandstone b
+smooth_sandstone_slab b
+smooth_sandstone_stairs b
+smooth_stone b
+smooth_stone_slab b
+sniffer_egg
+sniffer_spawn_egg
+snort_pottery_sherd
+snout_armor_trim_smithing_template
+snow minecraft:block/snow_height2
+snow_block b
+snow_golem_spawn_egg
+snowball
+soul_campfire
+soul_lantern
+soul_sand b
+soul_soil b
+soul_torch
+spawner b
+spectral_arrow
+spider_eye
+spider_spawn_egg
+spire_armor_trim_smithing_template
+sponge b
+spore_blossom b
+spruce_boat
+spruce_button minecraft:block/spruce_button_inventory
+spruce_chest_boat
+spruce_door
+spruce_fence minecraft:block/spruce_fence_inventory
+spruce_fence_gate b
+spruce_hanging_sign
+spruce_log b
+spruce_planks b
+spruce_pressure_plate b
+spruce_sapling
+spruce_shelf minecraft:block/spruce_shelf_inventory
+spruce_sign
+spruce_slab b
+spruce_stairs b
+spruce_trapdoor minecraft:block/spruce_trapdoor_bottom
+spruce_wood b
+squid_spawn_egg
+stick
+sticky_piston minecraft:block/sticky_piston_inventory
+stone b
+stone_axe
+stone_brick_slab b
+stone_brick_stairs b
+stone_brick_wall minecraft:block/stone_brick_wall_inventory
+stone_bricks b
+stone_button minecraft:block/stone_button_inventory
+stone_hoe
+stone_pickaxe
+stone_pressure_plate b
+stone_shovel
+stone_slab b
+stone_stairs b
+stone_sword
+stonecutter b
+stray_spawn_egg
+strider_spawn_egg
+string
+stripped_acacia_log b
+stripped_acacia_wood b
+stripped_bamboo_block b
+stripped_birch_log b
+stripped_birch_wood b
+stripped_cherry_log b
+stripped_cherry_wood b
+stripped_crimson_hyphae b
+stripped_crimson_stem b
+stripped_dark_oak_log b
+stripped_dark_oak_wood b
+stripped_jungle_log b
+stripped_jungle_wood b
+stripped_mangrove_log b
+stripped_mangrove_wood b
+stripped_oak_log b
+stripped_oak_wood b
+stripped_pale_oak_log b
+stripped_pale_oak_wood b
+stripped_spruce_log b
+stripped_spruce_wood b
+stripped_warped_hyphae b
+stripped_warped_stem b
+structure_block b
+structure_void
+sugar
+sugar_cane
+sulfur b
+sulfur_brick_slab b
+sulfur_brick_stairs b
+sulfur_brick_wall minecraft:block/sulfur_brick_wall_inventory
+sulfur_bricks b
+sulfur_cube_bucket
+sulfur_cube_spawn_egg
+sulfur_slab b
+sulfur_spike
+sulfur_stairs b
+sulfur_wall minecraft:block/sulfur_wall_inventory
+sunflower
+suspicious_gravel minecraft:block/suspicious_gravel_0
+suspicious_sand minecraft:block/suspicious_sand_0
+suspicious_stew
+sweet_berries
+tadpole_bucket
+tadpole_spawn_egg
+tall_dry_grass
+target b
+terracotta b
+test_instance_block b
+tide_armor_trim_smithing_template
+tinted_glass b
+tnt b
+tnt_minecart
+torch
+torchflower
+torchflower_seeds
+totem_of_undying
+trader_llama_spawn_egg
+trial_key
+trial_spawner b
+tripwire_hook
+tropical_fish
+tropical_fish_bucket
+tropical_fish_spawn_egg
+tube_coral
+tube_coral_block b
+tube_coral_fan
+tuff b
+tuff_brick_slab b
+tuff_brick_stairs b
+tuff_brick_wall minecraft:block/tuff_brick_wall_inventory
+tuff_bricks b
+tuff_slab b
+tuff_stairs b
+tuff_wall minecraft:block/tuff_wall_inventory
+turtle_egg
+turtle_scute
+turtle_spawn_egg
+twisting_vines
+vault b
+verdant_froglight b
+vex_armor_trim_smithing_template
+vex_spawn_egg
+villager_spawn_egg
+vindicator_spawn_egg
+wandering_trader_spawn_egg
+ward_armor_trim_smithing_template
+warden_spawn_egg
+warped_button minecraft:block/warped_button_inventory
+warped_door
+warped_fence minecraft:block/warped_fence_inventory
+warped_fence_gate b
+warped_fungus
+warped_fungus_on_a_stick
+warped_hanging_sign
+warped_hyphae b
+warped_nylium b
+warped_planks b
+warped_pressure_plate b
+warped_roots
+warped_shelf minecraft:block/warped_shelf_inventory
+warped_sign
+warped_slab b
+warped_stairs b
+warped_stem b
+warped_trapdoor minecraft:block/warped_trapdoor_bottom
+warped_wart_block b
+water_bucket
+waxed_chiseled_copper minecraft:block/chiseled_copper
+waxed_copper_bars minecraft:item/copper_bars
+waxed_copper_block minecraft:block/copper_block
+waxed_copper_bulb minecraft:block/copper_bulb
+waxed_copper_chain minecraft:item/copper_chain
+waxed_copper_door minecraft:item/copper_door
+waxed_copper_grate minecraft:block/copper_grate
+waxed_copper_lantern minecraft:item/copper_lantern
+waxed_copper_trapdoor minecraft:block/copper_trapdoor_bottom
+waxed_cut_copper minecraft:block/cut_copper
+waxed_cut_copper_slab minecraft:block/cut_copper_slab
+waxed_cut_copper_stairs minecraft:block/cut_copper_stairs
+waxed_exposed_chiseled_copper minecraft:block/exposed_chiseled_copper
+waxed_exposed_copper minecraft:block/exposed_copper
+waxed_exposed_copper_bars minecraft:item/exposed_copper_bars
+waxed_exposed_copper_bulb minecraft:block/exposed_copper_bulb
+waxed_exposed_copper_chain minecraft:item/exposed_copper_chain
+waxed_exposed_copper_door minecraft:item/exposed_copper_door
+waxed_exposed_copper_grate minecraft:block/exposed_copper_grate
+waxed_exposed_copper_lantern minecraft:item/exposed_copper_lantern
+waxed_exposed_copper_trapdoor minecraft:block/exposed_copper_trapdoor_bottom
+waxed_exposed_cut_copper minecraft:block/exposed_cut_copper
+waxed_exposed_cut_copper_slab minecraft:block/exposed_cut_copper_slab
+waxed_exposed_cut_copper_stairs minecraft:block/exposed_cut_copper_stairs
+waxed_exposed_lightning_rod minecraft:block/exposed_lightning_rod
+waxed_lightning_rod minecraft:block/lightning_rod
+waxed_oxidized_chiseled_copper minecraft:block/oxidized_chiseled_copper
+waxed_oxidized_copper minecraft:block/oxidized_copper
+waxed_oxidized_copper_bars minecraft:item/oxidized_copper_bars
+waxed_oxidized_copper_bulb minecraft:block/oxidized_copper_bulb
+waxed_oxidized_copper_chain minecraft:item/oxidized_copper_chain
+waxed_oxidized_copper_door minecraft:item/oxidized_copper_door
+waxed_oxidized_copper_grate minecraft:block/oxidized_copper_grate
+waxed_oxidized_copper_lantern minecraft:item/oxidized_copper_lantern
+waxed_oxidized_copper_trapdoor minecraft:block/oxidized_copper_trapdoor_bottom
+waxed_oxidized_cut_copper minecraft:block/oxidized_cut_copper
+waxed_oxidized_cut_copper_slab minecraft:block/oxidized_cut_copper_slab
+waxed_oxidized_cut_copper_stairs minecraft:block/oxidized_cut_copper_stairs
+waxed_oxidized_lightning_rod minecraft:block/oxidized_lightning_rod
+waxed_weathered_chiseled_copper minecraft:block/weathered_chiseled_copper
+waxed_weathered_copper minecraft:block/weathered_copper
+waxed_weathered_copper_bars minecraft:item/weathered_copper_bars
+waxed_weathered_copper_bulb minecraft:block/weathered_copper_bulb
+waxed_weathered_copper_chain minecraft:item/weathered_copper_chain
+waxed_weathered_copper_door minecraft:item/weathered_copper_door
+waxed_weathered_copper_grate minecraft:block/weathered_copper_grate
+waxed_weathered_copper_lantern minecraft:item/weathered_copper_lantern
+waxed_weathered_copper_trapdoor minecraft:block/weathered_copper_trapdoor_bottom
+waxed_weathered_cut_copper minecraft:block/weathered_cut_copper
+waxed_weathered_cut_copper_slab minecraft:block/weathered_cut_copper_slab
+waxed_weathered_cut_copper_stairs minecraft:block/weathered_cut_copper_stairs
+waxed_weathered_lightning_rod minecraft:block/weathered_lightning_rod
+wayfinder_armor_trim_smithing_template
+weathered_chiseled_copper b
+weathered_copper b
+weathered_copper_bars
+weathered_copper_bulb b
+weathered_copper_chain
+weathered_copper_door
+weathered_copper_grate b
+weathered_copper_lantern
+weathered_copper_trapdoor minecraft:block/weathered_copper_trapdoor_bottom
+weathered_cut_copper b
+weathered_cut_copper_slab b
+weathered_cut_copper_stairs b
+weathered_lightning_rod b
+weeping_vines
+wet_sponge b
+wheat
+wheat_seeds
+white_candle
+white_carpet b
+white_concrete b
+white_concrete_powder b
+white_dye
+white_glazed_terracotta b
+white_harness
+white_stained_glass b
+white_stained_glass_pane
+white_terracotta b
+white_tulip
+white_wool b
+wild_armor_trim_smithing_template
+wildflowers
+wind_charge
+witch_spawn_egg
+wither_rose
+wither_skeleton_spawn_egg
+wither_spawn_egg
+wolf_spawn_egg
+wooden_axe
+wooden_hoe
+wooden_pickaxe
+wooden_shovel
+wooden_sword
+writable_book
+written_book
+yellow_candle
+yellow_carpet b
+yellow_concrete b
+yellow_concrete_powder b
+yellow_dye
+yellow_glazed_terracotta b
+yellow_harness
+yellow_stained_glass b
+yellow_stained_glass_pane
+yellow_terracotta b
+yellow_wool b
+zoglin_spawn_egg
+zombie_horse_spawn_egg
+zombie_nautilus_spawn_egg
+zombie_spawn_egg
+zombie_villager_spawn_egg
+zombified_piglin_spawn_egg

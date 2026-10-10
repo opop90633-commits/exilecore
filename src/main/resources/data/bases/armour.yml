@@ -1,181 +1,6663 @@
-# 防具基底：每個欄位四種（護甲／閃避／能量護盾／混合）。數值是物品等級 1 的值。
+# 防具基底：每個欄位五種（護甲／閃避／能量護盾／護甲＋閃避的鱗甲／閃避＋能量護盾的纏布）。數值是物品等級 1 的值。
+# 混合的兩種各是單一種的 55% 左右（能量護盾的數字小，進位）。
 
 plate_helmet:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 鐵頭盔
   material: IRON_HELMET
   model: exilecore:armour/plate_helmet
   slot: HEAD
-  tags: [armour, helmet, str_armour]
+  tags: [armour, helmet, str_armour, str_only]
   drop_level: 1
   requirements: { level: 1, str: 16, dex: 0, int: 0 }
   armour: 24
   sockets: 4
 
 leather_helmet:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 皮頭盔
   material: LEATHER_HELMET
   model: exilecore:armour/leather_helmet
   slot: HEAD
-  tags: [armour, helmet, dex_armour]
+  tags: [armour, helmet, dex_armour, dex_only]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 16, int: 0 }
   evasion: 24
   sockets: 4
 
 silk_helmet:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 絲頭盔
   material: CHAINMAIL_HELMET
   model: exilecore:armour/silk_helmet
   slot: HEAD
-  tags: [armour, helmet, int_armour]
+  tags: [armour, helmet, int_armour, int_only]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 0, int: 16 }
   es: 8
   sockets: 4
 
 scale_helmet:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 鱗頭盔
   material: GOLDEN_HELMET
   model: exilecore:armour/scale_helmet
   slot: HEAD
-  tags: [armour, helmet, str_armour, dex_armour]
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
   drop_level: 1
   requirements: { level: 1, str: 10, dex: 10, int: 0 }
   armour: 13
   evasion: 13
   sockets: 4
 
+wrap_helmet:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 纏布頭盔
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 10, int: 10 }
+  evasion: 13
+  es: 5
+  sockets: 4
+
 plate_body:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 鐵胸甲
   material: IRON_CHESTPLATE
   model: exilecore:armour/plate_body
   slot: CHEST
-  tags: [armour, body, str_armour]
+  tags: [armour, body, str_armour, str_only]
   drop_level: 1
   requirements: { level: 1, str: 16, dex: 0, int: 0 }
   armour: 40
   sockets: 6
 
 leather_body:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 皮胸甲
   material: LEATHER_CHESTPLATE
   model: exilecore:armour/leather_body
   slot: CHEST
-  tags: [armour, body, dex_armour]
+  tags: [armour, body, dex_armour, dex_only]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 16, int: 0 }
   evasion: 40
   sockets: 6
 
 silk_body:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 絲胸甲
   material: CHAINMAIL_CHESTPLATE
   model: exilecore:armour/silk_body
   slot: CHEST
-  tags: [armour, body, int_armour]
+  tags: [armour, body, int_armour, int_only]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 0, int: 16 }
   es: 14
   sockets: 6
 
 scale_body:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 鱗胸甲
   material: GOLDEN_CHESTPLATE
   model: exilecore:armour/scale_body
   slot: CHEST
-  tags: [armour, body, str_armour, dex_armour]
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
   drop_level: 1
   requirements: { level: 1, str: 10, dex: 10, int: 0 }
   armour: 22
   evasion: 22
   sockets: 6
 
+wrap_body:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 纏布胸甲
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 10, int: 10 }
+  evasion: 22
+  es: 8
+  sockets: 6
+
 plate_leggings:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 鐵護腿
   material: IRON_LEGGINGS
   model: exilecore:armour/plate_leggings
   slot: LEGS
-  tags: [armour, leggings, str_armour]
+  tags: [armour, leggings, str_armour, str_only]
   drop_level: 1
   requirements: { level: 1, str: 16, dex: 0, int: 0 }
   armour: 30
   sockets: 4
 
 leather_leggings:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 皮護腿
   material: LEATHER_LEGGINGS
   model: exilecore:armour/leather_leggings
   slot: LEGS
-  tags: [armour, leggings, dex_armour]
+  tags: [armour, leggings, dex_armour, dex_only]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 16, int: 0 }
   evasion: 30
   sockets: 4
 
 silk_leggings:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 絲護腿
   material: CHAINMAIL_LEGGINGS
   model: exilecore:armour/silk_leggings
   slot: LEGS
-  tags: [armour, leggings, int_armour]
+  tags: [armour, leggings, int_armour, int_only]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 0, int: 16 }
   es: 10
   sockets: 4
 
 scale_leggings:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 鱗護腿
   material: GOLDEN_LEGGINGS
   model: exilecore:armour/scale_leggings
   slot: LEGS
-  tags: [armour, leggings, str_armour, dex_armour]
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
   drop_level: 1
   requirements: { level: 1, str: 10, dex: 10, int: 0 }
   armour: 16
   evasion: 16
   sockets: 4
 
+wrap_leggings:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 纏布護腿
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 10, int: 10 }
+  evasion: 16
+  es: 6
+  sockets: 4
+
 plate_boots:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 鐵靴子
   material: IRON_BOOTS
   model: exilecore:armour/plate_boots
   slot: FEET
-  tags: [armour, boots, str_armour]
+  tags: [armour, boots, str_armour, str_only]
   drop_level: 1
   requirements: { level: 1, str: 16, dex: 0, int: 0 }
   armour: 18
   sockets: 4
 
 leather_boots:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 皮靴子
   material: LEATHER_BOOTS
   model: exilecore:armour/leather_boots
   slot: FEET
-  tags: [armour, boots, dex_armour]
+  tags: [armour, boots, dex_armour, dex_only]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 16, int: 0 }
   evasion: 18
   sockets: 4
 
 silk_boots:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 絲靴子
   material: CHAINMAIL_BOOTS
   model: exilecore:armour/silk_boots
   slot: FEET
-  tags: [armour, boots, int_armour]
+  tags: [armour, boots, int_armour, int_only]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 0, int: 16 }
   es: 6
   sockets: 4
 
 scale_boots:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 鱗靴子
   material: GOLDEN_BOOTS
   model: exilecore:armour/scale_boots
   slot: FEET
-  tags: [armour, boots, str_armour, dex_armour]
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
   drop_level: 1
   requirements: { level: 1, str: 10, dex: 10, int: 0 }
   armour: 10
   evasion: 10
   sockets: 4
+
+
+wrap_boots:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 纏布靴子
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 10, int: 10 }
+  evasion: 10
+  es: 4
+  sockets: 4
+
+# ---- PoE2 分階基底（tools/gen_poe2_bases.py 產生；重跑會整段換掉）----
+body_str_01:
+  name: 樸素胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 1
+  requirements: { level: 1, str: 16, dex: 0, int: 0 }
+  armour: 40
+
+body_str_02:
+  name: 舊木胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 4
+  requirements: { level: 4, str: 16, dex: 0, int: 0 }
+  armour: 43
+
+body_str_03:
+  name: 鐵箍胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 11
+  requirements: { level: 11, str: 20, dex: 0, int: 0 }
+  armour: 53
+
+body_str_04:
+  name: 淬鐵胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 16
+  requirements: { level: 16, str: 21, dex: 0, int: 0 }
+  armour: 60
+
+body_str_05:
+  name: 鍛紋胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 20
+  requirements: { level: 20, str: 22, dex: 0, int: 0 }
+  armour: 66
+
+body_str_06:
+  name: 精鐵胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 27
+  requirements: { level: 27, str: 25, dex: 0, int: 0 }
+  armour: 77
+
+body_str_07:
+  name: 鋼脊胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 33
+  requirements: { level: 33, str: 26, dex: 0, int: 0 }
+  armour: 85
+
+body_str_08:
+  name: 鑄紋胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 37
+  requirements: { level: 37, str: 27, dex: 0, int: 0 }
+  armour: 91
+
+body_str_09:
+  name: 戰痕胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 45
+  requirements: { level: 45, str: 30, dex: 0, int: 0 }
+  armour: 103
+
+body_str_10:
+  name: 銅鑲胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 45
+  requirements: { level: 45, str: 30, dex: 0, int: 0 }
+  armour: 103
+
+body_str_11:
+  name: 獵紋胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 48
+  requirements: { level: 48, str: 30, dex: 0, int: 0 }
+  armour: 108
+
+body_str_12:
+  name: 熔鋼胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 50
+  requirements: { level: 50, str: 31, dex: 0, int: 0 }
+  armour: 111
+
+body_str_13:
+  name: 寒鐵胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 51
+  requirements: { level: 51, str: 31, dex: 0, int: 0 }
+  armour: 112
+
+body_str_14:
+  name: 雷紋胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 52
+  requirements: { level: 52, str: 32, dex: 0, int: 0 }
+  armour: 114
+
+body_str_15:
+  name: 赤銅胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 54
+  requirements: { level: 54, str: 32, dex: 0, int: 0 }
+  armour: 117
+
+body_str_16:
+  name: 秘銀胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 58
+  requirements: { level: 58, str: 33, dex: 0, int: 0 }
+  armour: 123
+
+body_str_17:
+  name: 暗鋼胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 59
+  requirements: { level: 59, str: 33, dex: 0, int: 0 }
+  armour: 124
+
+body_str_18:
+  name: 星紋胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 62
+  requirements: { level: 62, str: 34, dex: 0, int: 0 }
+  armour: 129
+
+body_str_19:
+  name: 隕鐵胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 65
+  requirements: { level: 65, str: 41, dex: 0, int: 0 }
+  armour: 134
+
+body_str_20:
+  name: 曜石胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_25
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 65
+  requirements: { level: 65, str: 41, dex: 0, int: 0 }
+  armour: 153
+
+body_str_21:
+  name: 霜晶胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_24
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 68
+  requirements: { level: 68, str: 40, dex: 0, int: 0 }
+  armour: 132
+  implicit:
+    text: "增加 {value}% 暈眩門檻"
+    value: [30, 40]
+    mods:
+      - { stat: stun.threshold, type: INCREASED, value: "{value}" }
+
+body_str_22:
+  name: 炎晶胸鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_23
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 70
+  requirements: { level: 70, str: 40, dex: 0, int: 0 }
+  armour: 132
+  implicit:
+    text: "每秒回復 {value}% 最大生命"
+    value: [1.5, 2.5]
+    mods:
+      - { stat: life.regen_percent, type: FLAT, value: "{value}" }
+
+body_str_23:
+  name: 天鐵胸鎧
+  base_level: 73          # 數值是物品等級 73 的值，照物品等級縮放
+  implicit_level: 70
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 1
+  requirements: { level: 1, str: 39, dex: 0, int: 0 }
+  armour: 131
+  implicit:
+    text: "每秒回復 {value}% 最大生命"
+    value: [1.5, 2.5]
+    mods:
+      - { stat: life.regen_percent, type: FLAT, value: "{value}" }
+
+body_str_24:
+  name: 古王胸鎧
+  base_level: 75          # 數值是物品等級 75 的值，照物品等級縮放
+  implicit_level: 68
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 1
+  requirements: { level: 1, str: 38, dex: 0, int: 0 }
+  armour: 130
+  implicit:
+    text: "增加 {value}% 暈眩門檻"
+    value: [30, 40]
+    mods:
+      - { stat: stun.threshold, type: INCREASED, value: "{value}" }
+
+body_str_25:
+  name: 聖紋胸鎧
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: body_str
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, str_only]
+  drop_level: 1
+  requirements: { level: 1, str: 37, dex: 0, int: 0 }
+  armour: 129
+
+body_dex_01:
+  name: 樸素皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 16, int: 0 }
+  evasion: 36
+
+body_dex_02:
+  name: 舊木皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 4
+  requirements: { level: 4, str: 0, dex: 16, int: 0 }
+  evasion: 43
+
+body_dex_03:
+  name: 鐵箍皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 20, int: 0 }
+  evasion: 56
+
+body_dex_04:
+  name: 淬鐵皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 21, int: 0 }
+  evasion: 63
+
+body_dex_05:
+  name: 鍛紋皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 22
+  requirements: { level: 22, str: 0, dex: 23, int: 0 }
+  evasion: 72
+
+body_dex_06:
+  name: 精鐵皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 26
+  requirements: { level: 26, str: 0, dex: 24, int: 0 }
+  evasion: 78
+
+body_dex_07:
+  name: 鋼脊皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 26, int: 0 }
+  evasion: 88
+
+body_dex_08:
+  name: 鑄紋皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 36
+  requirements: { level: 36, str: 0, dex: 27, int: 0 }
+  evasion: 92
+
+body_dex_09:
+  name: 戰痕皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 30, int: 0 }
+  evasion: 105
+
+body_dex_10:
+  name: 銅鑲皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 30, int: 0 }
+  evasion: 105
+
+body_dex_11:
+  name: 獵紋皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 48
+  requirements: { level: 48, str: 0, dex: 30, int: 0 }
+  evasion: 109
+
+body_dex_12:
+  name: 熔鋼皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 31, int: 0 }
+  evasion: 113
+
+body_dex_13:
+  name: 寒鐵皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 31, int: 0 }
+  evasion: 113
+
+body_dex_14:
+  name: 雷紋皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 31, int: 0 }
+  evasion: 114
+
+body_dex_15:
+  name: 赤銅皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 32, int: 0 }
+  evasion: 117
+
+body_dex_16:
+  name: 秘銀皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 56
+  requirements: { level: 56, str: 0, dex: 33, int: 0 }
+  evasion: 120
+
+body_dex_17:
+  name: 暗鋼皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 33, int: 0 }
+  evasion: 124
+
+body_dex_18:
+  name: 星紋皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 62
+  requirements: { level: 62, str: 0, dex: 34, int: 0 }
+  evasion: 128
+
+body_dex_19:
+  name: 隕鐵皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 41, int: 0 }
+  evasion: 132
+
+body_dex_20:
+  name: 曜石皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 41, int: 0 }
+  evasion: 132
+
+body_dex_21:
+  name: 霜晶皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_22
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 68
+  requirements: { level: 68, str: 0, dex: 40, int: 0 }
+  evasion: 130
+
+body_dex_22:
+  name: 炎晶皮甲
+  base_level: 70          # 數值是物品等級 70 的值，照物品等級縮放
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 40, int: 0 }
+  evasion: 149
+
+body_dex_23:
+  name: 天鐵皮甲
+  fixed: true
+  retired: true
+  merged_into: body_dex_24
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 73
+  requirements: { level: 73, str: 0, dex: 39, int: 0 }
+  evasion: 128
+  implicit:
+    text: "增加 {value}% 元素異常門檻"
+    value: [30, 40]
+    mods:
+      - { stat: ailment.threshold, type: INCREASED, value: "{value}" }
+
+body_dex_24:
+  name: 古王皮甲
+  base_level: 75          # 數值是物品等級 75 的值，照物品等級縮放
+  implicit_level: 73
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 38, int: 0 }
+  evasion: 127
+  implicit:
+    text: "增加 {value}% 元素異常門檻"
+    value: [30, 40]
+    mods:
+      - { stat: ailment.threshold, type: INCREASED, value: "{value}" }
+
+body_dex_25:
+  name: 聖紋皮甲
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  implicit_level: 80
+  family: body_dex
+  material: LEATHER_CHESTPLATE
+  model: exilecore:armour/leather_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 37, int: 0 }
+  evasion: 125
+  implicit:
+    text: "增加 {value}% 移動速度"
+    value: [5, 5]
+    mods:
+      - { stat: movement.speed, type: INCREASED, value: "{value}" }
+
+body_int_01:
+  name: 樸素法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 16 }
+  es: 16
+
+body_int_02:
+  name: 舊木法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 5
+  requirements: { level: 5, str: 0, dex: 0, int: 16 }
+  es: 16
+
+body_int_03:
+  name: 鐵箍法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 0, int: 20 }
+  es: 18
+
+body_int_04:
+  name: 淬鐵法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 0, int: 21 }
+  es: 20
+
+body_int_05:
+  name: 鍛紋法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 22
+  requirements: { level: 22, str: 0, dex: 0, int: 23 }
+  es: 22
+
+body_int_06:
+  name: 精鐵法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 28
+  requirements: { level: 28, str: 0, dex: 0, int: 25 }
+  es: 25
+
+body_int_07:
+  name: 鋼脊法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 0, int: 26 }
+  es: 28
+
+body_int_08:
+  name: 鑄紋法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 40
+  requirements: { level: 40, str: 0, dex: 0, int: 28 }
+  es: 32
+
+body_int_09:
+  name: 戰痕法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 30 }
+  es: 34
+
+body_int_10:
+  name: 銅鑲法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 30 }
+  es: 34
+
+body_int_11:
+  name: 獵紋法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 48
+  requirements: { level: 48, str: 0, dex: 0, int: 31 }
+  es: 36
+
+body_int_12:
+  name: 熔鋼法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 49
+  requirements: { level: 49, str: 0, dex: 0, int: 31 }
+  es: 37
+
+body_int_13:
+  name: 寒鐵法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 0, int: 31 }
+  es: 38
+
+body_int_14:
+  name: 雷紋法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 0, int: 32 }
+  es: 38
+
+body_int_15:
+  name: 赤銅法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 0, int: 32 }
+  es: 40
+
+body_int_16:
+  name: 秘銀法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 58
+  requirements: { level: 58, str: 0, dex: 0, int: 33 }
+  es: 42
+
+body_int_17:
+  name: 暗鋼法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 0, int: 33 }
+  es: 43
+
+body_int_18:
+  name: 星紋法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 62
+  requirements: { level: 62, str: 0, dex: 0, int: 34 }
+  es: 44
+
+body_int_19:
+  name: 隕鐵法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_20
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 41 }
+  es: 47
+
+body_int_20:
+  name: 曜石法袍
+  base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 41 }
+  es: 58
+
+body_int_21:
+  name: 霜晶法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_22
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 68
+  requirements: { level: 68, str: 0, dex: 0, int: 40 }
+  es: 47
+  implicit:
+    text: "增加 {value}% 魔力回復速度"
+    value: [40, 50]
+    mods:
+      - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+body_int_22:
+  name: 炎晶法袍
+  base_level: 70          # 數值是物品等級 70 的值，照物品等級縮放
+  implicit_level: 68
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 40 }
+  es: 52
+  implicit:
+    text: "增加 {value}% 魔力回復速度"
+    value: [40, 50]
+    mods:
+      - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+body_int_23:
+  name: 天鐵法袍
+  fixed: true
+  retired: true
+  merged_into: body_int_24
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 73
+  requirements: { level: 73, str: 0, dex: 0, int: 39 }
+  es: 47
+  implicit:
+    text: "增加 {value}% 能量護盾回充速度"
+    value: [20, 25]
+    mods:
+      - { stat: es.recharge, type: INCREASED, value: "{value}" }
+
+body_int_24:
+  name: 古王法袍
+  base_level: 75          # 數值是物品等級 75 的值，照物品等級縮放
+  implicit_level: 73
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 38 }
+  es: 52
+  implicit:
+    text: "增加 {value}% 能量護盾回充速度"
+    value: [20, 25]
+    mods:
+      - { stat: es.recharge, type: INCREASED, value: "{value}" }
+
+body_int_25:
+  name: 聖紋法袍
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  implicit_level: 80
+  family: body_int
+  material: CHAINMAIL_CHESTPLATE
+  model: exilecore:armour/silk_body
+  slot: CHEST
+  tags: [armour, body, int_armour, int_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 37 }
+  es: 52
+  implicit:
+    text: "受到的傷害有 {value}% 先從魔力扣"
+    value: [5, 10]
+    mods:
+      - { stat: damage.from_mana, type: FLAT, value: "{value}" }
+
+body_str_dex_01:
+  name: 樸素鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 10, int: 0 }
+  armour: 22
+  evasion: 19
+
+body_str_dex_02:
+  name: 舊木鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 11
+  requirements: { level: 11, str: 13, dex: 13, int: 0 }
+  armour: 29
+  evasion: 31
+
+body_str_dex_03:
+  name: 鐵箍鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 13, dex: 13, int: 0 }
+  armour: 33
+  evasion: 35
+
+body_str_dex_04:
+  name: 淬鐵鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 26
+  requirements: { level: 26, str: 15, dex: 15, int: 0 }
+  armour: 41
+  evasion: 43
+
+body_str_dex_05:
+  name: 鍛紋鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 16, dex: 16, int: 0 }
+  armour: 47
+  evasion: 48
+
+body_str_dex_06:
+  name: 精鐵鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 37
+  requirements: { level: 37, str: 17, dex: 17, int: 0 }
+  armour: 50
+  evasion: 52
+
+body_str_dex_07:
+  name: 鋼脊鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 18, dex: 18, int: 0 }
+  armour: 57
+  evasion: 58
+
+body_str_dex_08:
+  name: 鑄紋鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 18, dex: 18, int: 0 }
+  armour: 57
+  evasion: 58
+
+body_str_dex_09:
+  name: 戰痕鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 48
+  requirements: { level: 48, str: 19, dex: 19, int: 0 }
+  armour: 59
+  evasion: 60
+
+body_str_dex_10:
+  name: 銅鑲鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 50
+  requirements: { level: 50, str: 19, dex: 19, int: 0 }
+  armour: 61
+  evasion: 62
+
+body_str_dex_11:
+  name: 獵紋鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 19, dex: 19, int: 0 }
+  armour: 62
+  evasion: 62
+
+body_str_dex_12:
+  name: 熔鋼鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 19, dex: 19, int: 0 }
+  armour: 62
+  evasion: 63
+
+body_str_dex_13:
+  name: 寒鐵鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 54
+  requirements: { level: 54, str: 20, dex: 20, int: 0 }
+  armour: 64
+  evasion: 64
+
+body_str_dex_14:
+  name: 雷紋鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 58
+  requirements: { level: 58, str: 20, dex: 20, int: 0 }
+  armour: 67
+  evasion: 68
+
+body_str_dex_15:
+  name: 赤銅鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 21, dex: 21, int: 0 }
+  armour: 68
+  evasion: 68
+
+body_str_dex_16:
+  name: 秘銀鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 62
+  requirements: { level: 62, str: 21, dex: 21, int: 0 }
+  armour: 71
+  evasion: 70
+
+body_str_dex_17:
+  name: 暗鋼鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_18
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 25, dex: 25, int: 0 }
+  armour: 73
+  evasion: 73
+  implicit:
+    text: "+{value} 最大生命"
+    value: [60, 80]
+    mods:
+      - { stat: life.max, type: FLAT, value: "{value}" }
+
+body_str_dex_18:
+  name: 星紋鱗甲
+  base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
+  implicit_level: 65
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 25, dex: 25, int: 0 }
+  armour: 82
+  evasion: 81
+  implicit:
+    text: "+{value} 最大生命"
+    value: [60, 80]
+    mods:
+      - { stat: life.max, type: FLAT, value: "{value}" }
+
+body_str_dex_19:
+  name: 隕鐵鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_22
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 68
+  requirements: { level: 68, str: 25, dex: 25, int: 0 }
+  armour: 73
+  evasion: 72
+  implicit:
+    text: "+{value}% 火焰抗性"
+    value: [20, 25]
+    mods:
+      - { stat: resist.fire, type: FLAT, value: "{value}" }
+
+body_str_dex_20:
+  name: 曜石鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_23
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 68
+  requirements: { level: 68, str: 25, dex: 25, int: 0 }
+  armour: 73
+  evasion: 72
+  implicit:
+    text: "+{value}% 冰冷抗性"
+    value: [20, 25]
+    mods:
+      - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+body_str_dex_21:
+  name: 霜晶鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_24
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 68
+  requirements: { level: 68, str: 25, dex: 25, int: 0 }
+  armour: 73
+  evasion: 72
+  implicit:
+    text: "+{value}% 閃電抗性"
+    value: [20, 25]
+    mods:
+      - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+body_str_dex_22:
+  name: 炎晶鱗甲
+  base_level: 70          # 數值是物品等級 70 的值，照物品等級縮放
+  implicit_level: 68
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 25, dex: 25, int: 0 }
+  armour: 72
+  evasion: 71
+  implicit:
+    text: "+{value}% 火焰抗性"
+    value: [20, 25]
+    mods:
+      - { stat: resist.fire, type: FLAT, value: "{value}" }
+
+body_str_dex_23:
+  name: 天鐵鱗甲
+  base_level: 70          # 數值是物品等級 70 的值，照物品等級縮放
+  implicit_level: 68
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 25, dex: 25, int: 0 }
+  armour: 72
+  evasion: 71
+  implicit:
+    text: "+{value}% 冰冷抗性"
+    value: [20, 25]
+    mods:
+      - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+body_str_dex_24:
+  name: 古王鱗甲
+  base_level: 70          # 數值是物品等級 70 的值，照物品等級縮放
+  implicit_level: 68
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 25, dex: 25, int: 0 }
+  armour: 72
+  evasion: 71
+  implicit:
+    text: "+{value}% 閃電抗性"
+    value: [20, 25]
+    mods:
+      - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+body_str_dex_25:
+  name: 聖紋鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 73
+  requirements: { level: 73, str: 24, dex: 24, int: 0 }
+  armour: 72
+  evasion: 70
+
+body_str_dex_26:
+  name: 龍骨鱗甲
+  fixed: true
+  retired: true
+  merged_into: body_str_dex_27
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 75
+  requirements: { level: 75, str: 24, dex: 24, int: 0 }
+  armour: 82
+  evasion: 80
+
+body_str_dex_27:
+  name: 淵鋼鱗甲
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: body_str_dex
+  material: GOLDEN_CHESTPLATE
+  model: exilecore:armour/scale_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, str_dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 23, dex: 23, int: 0 }
+  armour: 71
+  evasion: 69
+
+body_dex_int_01:
+  name: 樸素纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 10, int: 10 }
+  evasion: 20
+  es: 9
+
+body_dex_int_02:
+  name: 舊木纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 12, int: 12 }
+  evasion: 31
+  es: 10
+
+body_dex_int_03:
+  name: 鐵箍纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 13, int: 13 }
+  evasion: 35
+  es: 11
+
+body_dex_int_04:
+  name: 淬鐵纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 28
+  requirements: { level: 28, str: 0, dex: 15, int: 15 }
+  evasion: 44
+  es: 15
+
+body_dex_int_05:
+  name: 鍛紋纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 16, int: 16 }
+  evasion: 48
+  es: 16
+
+body_dex_int_06:
+  name: 精鐵纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 39
+  requirements: { level: 39, str: 0, dex: 17, int: 17 }
+  evasion: 53
+  es: 18
+
+body_dex_int_07:
+  name: 鋼脊纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 19, int: 19 }
+  evasion: 58
+  es: 20
+
+body_dex_int_08:
+  name: 鑄紋纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 19, int: 19 }
+  evasion: 58
+  es: 20
+
+body_dex_int_09:
+  name: 戰痕纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 48
+  requirements: { level: 48, str: 0, dex: 19, int: 19 }
+  evasion: 60
+  es: 21
+
+body_dex_int_10:
+  name: 銅鑲纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 19, int: 19 }
+  evasion: 62
+  es: 22
+
+body_dex_int_11:
+  name: 獵紋纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 19, int: 19 }
+  evasion: 62
+  es: 22
+
+body_dex_int_12:
+  name: 熔鋼纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 20, int: 20 }
+  evasion: 63
+  es: 22
+
+body_dex_int_13:
+  name: 寒鐵纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 20, int: 20 }
+  evasion: 64
+  es: 23
+
+body_dex_int_14:
+  name: 雷紋纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 56
+  requirements: { level: 56, str: 0, dex: 21, int: 21 }
+  evasion: 66
+  es: 24
+
+body_dex_int_15:
+  name: 赤銅纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 21, int: 21 }
+  evasion: 68
+  es: 25
+
+body_dex_int_16:
+  name: 秘銀纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 62
+  requirements: { level: 62, str: 0, dex: 21, int: 21 }
+  evasion: 70
+  es: 26
+
+body_dex_int_17:
+  name: 暗鋼纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_18
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 26, int: 26 }
+  evasion: 73
+  es: 27
+
+body_dex_int_18:
+  name: 星紋纏衣
+  base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 26, int: 26 }
+  evasion: 83
+  es: 31
+
+body_dex_int_19:
+  name: 隕鐵纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_20
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 68
+  requirements: { level: 68, str: 0, dex: 25, int: 25 }
+  evasion: 72
+  es: 27
+  implicit:
+    text: "+{value}% 混沌抗性"
+    value: [7, 13]
+    mods:
+      - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+body_dex_int_20:
+  name: 曜石纏衣
+  base_level: 70          # 數值是物品等級 70 的值，照物品等級縮放
+  implicit_level: 68
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 25, int: 25 }
+  evasion: 71
+  es: 27
+  implicit:
+    text: "+{value}% 混沌抗性"
+    value: [7, 13]
+    mods:
+      - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+body_dex_int_21:
+  name: 霜晶纏衣
+  fixed: true
+  retired: true
+  merged_into: body_dex_int_22
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 73
+  requirements: { level: 73, str: 0, dex: 25, int: 25 }
+  evasion: 70
+  es: 28
+  implicit:
+    text: "增加 {value}% 移動速度"
+    value: [5, 5]
+    mods:
+      - { stat: movement.speed, type: INCREASED, value: "{value}" }
+
+body_dex_int_22:
+  name: 炎晶纏衣
+  base_level: 75          # 數值是物品等級 75 的值，照物品等級縮放
+  implicit_level: 73
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 24, int: 24 }
+  evasion: 70
+  es: 28
+  implicit:
+    text: "增加 {value}% 移動速度"
+    value: [5, 5]
+    mods:
+      - { stat: movement.speed, type: INCREASED, value: "{value}" }
+
+body_dex_int_23:
+  name: 天鐵纏衣
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  implicit_level: 80
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 24, int: 24 }
+  evasion: 69
+  es: 28
+  implicit:
+    text: "你身上的元素異常持續時間減少 {value}%"
+    value: [10, 15]
+    mods:
+      - { stat: ailment.self_duration, type: INCREASED, value: "-{value}" }
+
+body_str_int_01:
+  name: 樸素聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 0, int: 10 }
+  armour: 22
+  es: 9
+
+body_str_int_02:
+  name: 舊木聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 10
+  requirements: { level: 10, str: 12, dex: 0, int: 12 }
+  armour: 28
+  es: 10
+
+body_str_int_03:
+  name: 鐵箍聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 13, dex: 0, int: 13 }
+  armour: 33
+  es: 11
+
+body_str_int_04:
+  name: 淬鐵聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 28
+  requirements: { level: 28, str: 15, dex: 0, int: 15 }
+  armour: 43
+  es: 15
+
+body_str_int_05:
+  name: 鍛紋聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 16, dex: 0, int: 16 }
+  armour: 47
+  es: 16
+
+body_str_int_06:
+  name: 精鐵聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 36
+  requirements: { level: 36, str: 17, dex: 0, int: 17 }
+  armour: 49
+  es: 17
+
+body_str_int_07:
+  name: 鋼脊聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 0, int: 19 }
+  armour: 57
+  es: 20
+
+body_str_int_08:
+  name: 鑄紋聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 0, int: 19 }
+  armour: 57
+  es: 20
+
+body_str_int_09:
+  name: 戰痕聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 48
+  requirements: { level: 48, str: 19, dex: 0, int: 19 }
+  armour: 59
+  es: 21
+
+body_str_int_10:
+  name: 銅鑲聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 19, dex: 0, int: 19 }
+  armour: 62
+  es: 22
+
+body_str_int_11:
+  name: 獵紋聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 19, dex: 0, int: 19 }
+  armour: 62
+  es: 22
+
+body_str_int_12:
+  name: 熔鋼聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 20, dex: 0, int: 20 }
+  armour: 63
+  es: 22
+
+body_str_int_13:
+  name: 寒鐵聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 54
+  requirements: { level: 54, str: 20, dex: 0, int: 20 }
+  armour: 64
+  es: 23
+
+body_str_int_14:
+  name: 雷紋聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 54
+  requirements: { level: 54, str: 20, dex: 0, int: 20 }
+  armour: 64
+  es: 23
+
+body_str_int_15:
+  name: 赤銅聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 21, dex: 0, int: 21 }
+  armour: 68
+  es: 25
+
+body_str_int_16:
+  name: 秘銀聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 62
+  requirements: { level: 62, str: 21, dex: 0, int: 21 }
+  armour: 71
+  es: 26
+
+body_str_int_17:
+  name: 暗鋼聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 26, dex: 0, int: 26 }
+  armour: 74
+  es: 27
+
+body_str_int_18:
+  name: 星紋聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 26, dex: 0, int: 26 }
+  armour: 84
+  es: 31
+
+body_str_int_19:
+  name: 隕鐵聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_20
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 68
+  requirements: { level: 68, str: 25, dex: 0, int: 25 }
+  armour: 73
+  es: 27
+  implicit:
+    text: "+{value} 最大精魂"
+    value: [20, 30]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+body_str_int_20:
+  name: 曜石聖鎧
+  base_level: 70          # 數值是物品等級 70 的值，照物品等級縮放
+  implicit_level: 68
+  family: body_str_int
+  material: DIAMOND_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 25, dex: 0, int: 25 }
+  armour: 73
+  es: 27
+  implicit:
+    text: "+{value} 最大精魂"
+    value: [20, 30]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+body_str_int_21:
+  name: 霜晶聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 73
+  requirements: { level: 73, str: 25, dex: 0, int: 25 }
+  armour: 72
+  es: 28
+
+body_str_int_22:
+  name: 炎晶聖鎧
+  fixed: true
+  retired: true
+  merged_into: body_str_int_23
+  family: body_str_int
+  material: IRON_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 75
+  requirements: { level: 75, str: 24, dex: 0, int: 24 }
+  armour: 72
+  es: 28
+
+body_str_int_23:
+  name: 天鐵聖鎧
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: body_str_int
+  material: DIAMOND_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, int_armour, str_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 24, dex: 0, int: 24 }
+  armour: 71
+  es: 28
+
+helm_str_01:
+  name: 樸素戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 1
+  requirements: { level: 1, str: 16, dex: 0, int: 0 }
+  armour: 24
+
+helm_str_02:
+  name: 舊木戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 12
+  requirements: { level: 12, str: 19, dex: 0, int: 0 }
+  armour: 33
+
+helm_str_03:
+  name: 鐵箍戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 16
+  requirements: { level: 16, str: 21, dex: 0, int: 0 }
+  armour: 37
+
+helm_str_04:
+  name: 淬鐵戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 27
+  requirements: { level: 27, str: 25, dex: 0, int: 0 }
+  armour: 46
+
+helm_str_05:
+  name: 鍛紋戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 33
+  requirements: { level: 33, str: 27, dex: 0, int: 0 }
+  armour: 51
+
+helm_str_06:
+  name: 精鐵戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 36
+  requirements: { level: 36, str: 27, dex: 0, int: 0 }
+  armour: 54
+
+helm_str_07:
+  name: 鋼脊戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 45
+  requirements: { level: 45, str: 30, dex: 0, int: 0 }
+  armour: 61
+
+helm_str_08:
+  name: 鑄紋戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 45
+  requirements: { level: 45, str: 30, dex: 0, int: 0 }
+  armour: 61
+
+helm_str_09:
+  name: 戰痕戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 48
+  requirements: { level: 48, str: 31, dex: 0, int: 0 }
+  armour: 64
+
+helm_str_10:
+  name: 銅鑲戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 51
+  requirements: { level: 51, str: 32, dex: 0, int: 0 }
+  armour: 66
+
+helm_str_11:
+  name: 獵紋戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 51
+  requirements: { level: 51, str: 32, dex: 0, int: 0 }
+  armour: 66
+
+helm_str_12:
+  name: 熔鋼戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 52
+  requirements: { level: 52, str: 32, dex: 0, int: 0 }
+  armour: 67
+
+helm_str_13:
+  name: 寒鐵戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 54
+  requirements: { level: 54, str: 33, dex: 0, int: 0 }
+  armour: 69
+
+helm_str_14:
+  name: 雷紋戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 57
+  requirements: { level: 57, str: 34, dex: 0, int: 0 }
+  armour: 72
+
+helm_str_15:
+  name: 赤銅戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 59
+  requirements: { level: 59, str: 34, dex: 0, int: 0 }
+  armour: 73
+
+helm_str_16:
+  name: 秘銀戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 65
+  requirements: { level: 65, str: 36, dex: 0, int: 0 }
+  armour: 79
+
+helm_str_17:
+  name: 暗鋼戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 65
+  requirements: { level: 65, str: 36, dex: 0, int: 0 }
+  armour: 79
+
+helm_str_18:
+  name: 星紋戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 70
+  requirements: { level: 70, str: 38, dex: 0, int: 0 }
+  armour: 81
+
+helm_str_19:
+  name: 隕鐵戰盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_20
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 75
+  requirements: { level: 75, str: 40, dex: 0, int: 0 }
+  armour: 84
+
+helm_str_20:
+  name: 曜石戰盔
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: helm_str
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, str_only]
+  drop_level: 1
+  requirements: { level: 1, str: 41, dex: 0, int: 0 }
+  armour: 87
+
+helm_dex_01:
+  name: 樸素皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 16, int: 0 }
+  evasion: 22
+
+helm_dex_02:
+  name: 舊木皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 10
+  requirements: { level: 10, str: 0, dex: 19, int: 0 }
+  evasion: 33
+
+helm_dex_03:
+  name: 鐵箍皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 21, int: 0 }
+  evasion: 38
+
+helm_dex_04:
+  name: 淬鐵皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 26
+  requirements: { level: 26, str: 0, dex: 24, int: 0 }
+  evasion: 47
+
+helm_dex_05:
+  name: 鍛紋皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 27, int: 0 }
+  evasion: 52
+
+helm_dex_06:
+  name: 精鐵皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 38
+  requirements: { level: 38, str: 0, dex: 28, int: 0 }
+  evasion: 56
+
+helm_dex_07:
+  name: 鋼脊皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 30, int: 0 }
+  evasion: 62
+
+helm_dex_08:
+  name: 鑄紋皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 30, int: 0 }
+  evasion: 62
+
+helm_dex_09:
+  name: 戰痕皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 48
+  requirements: { level: 48, str: 0, dex: 31, int: 0 }
+  evasion: 64
+
+helm_dex_10:
+  name: 銅鑲皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 50
+  requirements: { level: 50, str: 0, dex: 32, int: 0 }
+  evasion: 66
+
+helm_dex_11:
+  name: 獵紋皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 32, int: 0 }
+  evasion: 67
+
+helm_dex_12:
+  name: 熔鋼皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 32, int: 0 }
+  evasion: 67
+
+helm_dex_13:
+  name: 寒鐵皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 33, int: 0 }
+  evasion: 69
+
+helm_dex_14:
+  name: 雷紋皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 56
+  requirements: { level: 56, str: 0, dex: 33, int: 0 }
+  evasion: 71
+
+helm_dex_15:
+  name: 赤銅皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 34, int: 0 }
+  evasion: 73
+
+helm_dex_16:
+  name: 秘銀皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 36, int: 0 }
+  evasion: 77
+
+helm_dex_17:
+  name: 暗鋼皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 36, int: 0 }
+  evasion: 77
+
+helm_dex_18:
+  name: 星紋皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 38, int: 0 }
+  evasion: 80
+
+helm_dex_19:
+  name: 隕鐵皮帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_20
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 40, int: 0 }
+  evasion: 82
+
+helm_dex_20:
+  name: 曜石皮帽
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: helm_dex
+  material: LEATHER_HELMET
+  model: exilecore:armour/leather_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 42, int: 0 }
+  evasion: 84
+
+helm_int_01:
+  name: 樸素頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 16 }
+  es: 9
+
+helm_int_02:
+  name: 舊木頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 10
+  requirements: { level: 10, str: 0, dex: 0, int: 19 }
+  es: 10
+
+helm_int_03:
+  name: 鐵箍頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 0, int: 21 }
+  es: 11
+
+helm_int_04:
+  name: 淬鐵頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 26
+  requirements: { level: 26, str: 0, dex: 0, int: 24 }
+  es: 14
+
+helm_int_05:
+  name: 鍛紋頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 0, int: 27 }
+  es: 16
+
+helm_int_06:
+  name: 精鐵頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 40
+  requirements: { level: 40, str: 0, dex: 0, int: 29 }
+  es: 18
+
+helm_int_07:
+  name: 鋼脊頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 30 }
+  es: 20
+
+helm_int_08:
+  name: 鑄紋頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 30 }
+  es: 20
+
+helm_int_09:
+  name: 戰痕頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 48
+  requirements: { level: 48, str: 0, dex: 0, int: 31 }
+  es: 21
+
+helm_int_10:
+  name: 銅鑲頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 50
+  requirements: { level: 50, str: 0, dex: 0, int: 32 }
+  es: 21
+
+helm_int_11:
+  name: 獵紋頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 0, int: 32 }
+  es: 22
+
+helm_int_12:
+  name: 熔鋼頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 0, int: 32 }
+  es: 22
+
+helm_int_13:
+  name: 寒鐵頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 0, int: 33 }
+  es: 23
+
+helm_int_14:
+  name: 雷紋頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 58
+  requirements: { level: 58, str: 0, dex: 0, int: 34 }
+  es: 24
+
+helm_int_15:
+  name: 赤銅頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 0, int: 34 }
+  es: 25
+
+helm_int_16:
+  name: 秘銀頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 36 }
+  es: 27
+
+helm_int_17:
+  name: 暗鋼頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 36 }
+  es: 27
+
+helm_int_18:
+  name: 星紋頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 0, int: 38 }
+  es: 29
+
+helm_int_19:
+  name: 隕鐵頭冠
+  fixed: true
+  retired: true
+  merged_into: helm_int_20
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 0, int: 40 }
+  es: 31
+
+helm_int_20:
+  name: 曜石頭冠
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: helm_int
+  material: CHAINMAIL_HELMET
+  model: exilecore:armour/silk_helmet
+  slot: HEAD
+  tags: [armour, helmet, int_armour, int_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 42 }
+  es: 33
+
+helm_str_dex_01:
+  name: 樸素鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 5
+  requirements: { level: 5, str: 11, dex: 11, int: 0 }
+  armour: 15
+  evasion: 14
+
+helm_str_dex_02:
+  name: 舊木鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 11
+  requirements: { level: 11, str: 12, dex: 12, int: 0 }
+  armour: 18
+  evasion: 17
+
+helm_str_dex_03:
+  name: 鐵箍鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 13, dex: 13, int: 0 }
+  armour: 20
+  evasion: 20
+
+helm_str_dex_04:
+  name: 淬鐵鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 26
+  requirements: { level: 26, str: 15, dex: 15, int: 0 }
+  armour: 24
+  evasion: 25
+
+helm_str_dex_05:
+  name: 鍛紋鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 16, dex: 16, int: 0 }
+  armour: 27
+  evasion: 28
+
+helm_str_dex_06:
+  name: 精鐵鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 19, int: 0 }
+  armour: 33
+  evasion: 33
+
+helm_str_dex_07:
+  name: 鋼脊鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 19, int: 0 }
+  armour: 33
+  evasion: 33
+
+helm_str_dex_08:
+  name: 鑄紋鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 48
+  requirements: { level: 48, str: 19, dex: 19, int: 0 }
+  armour: 35
+  evasion: 35
+
+helm_str_dex_09:
+  name: 戰痕鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 20, dex: 20, int: 0 }
+  armour: 36
+  evasion: 36
+
+helm_str_dex_10:
+  name: 銅鑲鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 20, dex: 20, int: 0 }
+  armour: 37
+  evasion: 37
+
+helm_str_dex_11:
+  name: 獵紋鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 54
+  requirements: { level: 54, str: 20, dex: 20, int: 0 }
+  armour: 37
+  evasion: 38
+
+helm_str_dex_12:
+  name: 熔鋼鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 21, dex: 21, int: 0 }
+  armour: 40
+  evasion: 40
+
+helm_str_dex_13:
+  name: 寒鐵鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 22, int: 0 }
+  armour: 43
+  evasion: 42
+
+helm_str_dex_14:
+  name: 雷紋鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 26, dex: 26, int: 0 }
+  armour: 43
+  evasion: 42
+
+helm_str_dex_15:
+  name: 赤銅鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 22, int: 0 }
+  armour: 43
+  evasion: 42
+
+helm_str_dex_16:
+  name: 秘銀鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 70
+  requirements: { level: 70, str: 23, dex: 23, int: 0 }
+  armour: 44
+  evasion: 44
+
+helm_str_dex_17:
+  name: 暗鋼鱗盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_dex_18
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 75
+  requirements: { level: 75, str: 25, dex: 25, int: 0 }
+  armour: 46
+  evasion: 45
+
+helm_str_dex_18:
+  name: 星紋鱗盔
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: helm_str_dex
+  material: GOLDEN_HELMET
+  model: exilecore:armour/scale_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, dex_armour, str_dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 26, dex: 26, int: 0 }
+  armour: 47
+  evasion: 46
+
+helm_dex_int_01:
+  name: 樸素兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 5
+  requirements: { level: 5, str: 0, dex: 11, int: 11 }
+  evasion: 14
+  es: 6
+
+helm_dex_int_02:
+  name: 舊木兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 10
+  requirements: { level: 10, str: 0, dex: 11, int: 11 }
+  evasion: 17
+  es: 7
+
+helm_dex_int_03:
+  name: 鐵箍兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 13, int: 13 }
+  evasion: 20
+  es: 7
+
+helm_dex_int_04:
+  name: 淬鐵兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 28
+  requirements: { level: 28, str: 0, dex: 15, int: 15 }
+  evasion: 26
+  es: 9
+
+helm_dex_int_05:
+  name: 鍛紋兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 16, int: 16 }
+  evasion: 28
+  es: 10
+
+helm_dex_int_06:
+  name: 精鐵兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 19, int: 19 }
+  evasion: 33
+  es: 12
+
+helm_dex_int_07:
+  name: 鋼脊兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 19, int: 19 }
+  evasion: 33
+  es: 12
+
+helm_dex_int_08:
+  name: 鑄紋兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 48
+  requirements: { level: 48, str: 0, dex: 19, int: 19 }
+  evasion: 35
+  es: 13
+
+helm_dex_int_09:
+  name: 戰痕兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 20, int: 20 }
+  evasion: 36
+  es: 14
+
+helm_dex_int_10:
+  name: 銅鑲兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 20, int: 20 }
+  evasion: 37
+  es: 14
+
+helm_dex_int_11:
+  name: 獵紋兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 20, int: 20 }
+  evasion: 38
+  es: 14
+
+helm_dex_int_12:
+  name: 熔鋼兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 22, int: 22 }
+  evasion: 40
+  es: 15
+
+helm_dex_int_13:
+  name: 寒鐵兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 23, int: 23 }
+  evasion: 42
+  es: 17
+
+helm_dex_int_14:
+  name: 雷紋兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 23, int: 23 }
+  evasion: 42
+  es: 17
+
+helm_dex_int_15:
+  name: 赤銅兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 24, int: 24 }
+  evasion: 44
+  es: 17
+
+helm_dex_int_16:
+  name: 秘銀兜帽
+  fixed: true
+  retired: true
+  merged_into: helm_dex_int_17
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 25, int: 25 }
+  evasion: 45
+  es: 18
+
+helm_dex_int_17:
+  name: 暗鋼兜帽
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: helm_dex_int
+  material: COPPER_HELMET
+  model: exilecore:armour/wrap_helmet
+  slot: HEAD
+  tags: [armour, helmet, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 26, int: 26 }
+  evasion: 46
+  es: 19
+
+helm_str_int_01:
+  name: 樸素聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 5
+  requirements: { level: 5, str: 11, dex: 0, int: 11 }
+  armour: 15
+  es: 5
+
+helm_str_int_02:
+  name: 舊木聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 10
+  requirements: { level: 10, str: 11, dex: 0, int: 11 }
+  armour: 17
+  es: 5
+
+helm_str_int_03:
+  name: 鐵箍聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 13, dex: 0, int: 13 }
+  armour: 20
+  es: 6
+
+helm_str_int_04:
+  name: 淬鐵聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 28
+  requirements: { level: 28, str: 15, dex: 0, int: 15 }
+  armour: 25
+  es: 7
+
+helm_str_int_05:
+  name: 鍛紋聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 16, dex: 0, int: 16 }
+  armour: 28
+  es: 8
+
+helm_str_int_06:
+  name: 精鐵聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 0, int: 19 }
+  armour: 33
+  es: 10
+
+helm_str_int_07:
+  name: 鋼脊聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 0, int: 19 }
+  armour: 33
+  es: 10
+
+helm_str_int_08:
+  name: 鑄紋聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 48
+  requirements: { level: 48, str: 19, dex: 0, int: 19 }
+  armour: 35
+  es: 10
+
+helm_str_int_09:
+  name: 戰痕聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 20, dex: 0, int: 20 }
+  armour: 36
+  es: 11
+
+helm_str_int_10:
+  name: 銅鑲聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 20, dex: 0, int: 20 }
+  armour: 37
+  es: 11
+
+helm_str_int_11:
+  name: 獵紋聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 54
+  requirements: { level: 54, str: 20, dex: 0, int: 20 }
+  armour: 37
+  es: 11
+
+helm_str_int_12:
+  name: 熔鋼聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 21, dex: 0, int: 21 }
+  armour: 40
+  es: 12
+
+helm_str_int_13:
+  name: 寒鐵聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 0, int: 22 }
+  armour: 43
+  es: 13
+
+helm_str_int_14:
+  name: 雷紋聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 26, dex: 0, int: 26 }
+  armour: 43
+  es: 13
+
+helm_str_int_15:
+  name: 赤銅聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 0, int: 22 }
+  armour: 43
+  es: 13
+
+helm_str_int_16:
+  name: 秘銀聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 70
+  requirements: { level: 70, str: 23, dex: 0, int: 23 }
+  armour: 44
+  es: 14
+
+helm_str_int_17:
+  name: 暗鋼聖盔
+  fixed: true
+  retired: true
+  merged_into: helm_str_int_18
+  family: helm_str_int
+  material: IRON_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 75
+  requirements: { level: 75, str: 25, dex: 0, int: 25 }
+  armour: 46
+  es: 15
+
+helm_str_int_18:
+  name: 星紋聖盔
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: helm_str_int
+  material: DIAMOND_HELMET
+  model: exilecore:armour/plate_helmet
+  slot: HEAD
+  tags: [armour, helmet, str_armour, int_armour, str_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 26, dex: 0, int: 26 }
+  armour: 47
+  es: 15
+
+legs_str_01:
+  name: 樸素腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 1
+  requirements: { level: 1, str: 16, dex: 0, int: 0 }
+  armour: 30
+
+legs_str_02:
+  name: 舊木腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 11
+  requirements: { level: 11, str: 19, dex: 0, int: 0 }
+  armour: 40
+
+legs_str_03:
+  name: 鐵箍腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 16
+  requirements: { level: 16, str: 21, dex: 0, int: 0 }
+  armour: 45
+
+legs_str_04:
+  name: 淬鐵腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 27
+  requirements: { level: 27, str: 25, dex: 0, int: 0 }
+  armour: 57
+
+legs_str_05:
+  name: 鍛紋腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 33
+  requirements: { level: 33, str: 26, dex: 0, int: 0 }
+  armour: 64
+
+legs_str_06:
+  name: 精鐵腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 45
+  requirements: { level: 45, str: 30, dex: 0, int: 0 }
+  armour: 76
+
+legs_str_07:
+  name: 鋼脊腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 45
+  requirements: { level: 45, str: 30, dex: 0, int: 0 }
+  armour: 76
+
+legs_str_08:
+  name: 鑄紋腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 51
+  requirements: { level: 51, str: 32, dex: 0, int: 0 }
+  armour: 83
+
+legs_str_09:
+  name: 戰痕腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 52
+  requirements: { level: 52, str: 32, dex: 0, int: 0 }
+  armour: 84
+
+legs_str_10:
+  name: 銅鑲腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 54
+  requirements: { level: 54, str: 33, dex: 0, int: 0 }
+  armour: 86
+
+legs_str_11:
+  name: 獵紋腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 59
+  requirements: { level: 59, str: 34, dex: 0, int: 0 }
+  armour: 92
+
+legs_str_12:
+  name: 熔鋼腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 65
+  requirements: { level: 65, str: 36, dex: 0, int: 0 }
+  armour: 98
+
+legs_str_13:
+  name: 寒鐵腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 65
+  requirements: { level: 65, str: 36, dex: 0, int: 0 }
+  armour: 98
+
+legs_str_14:
+  name: 雷紋腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 70
+  requirements: { level: 70, str: 38, dex: 0, int: 0 }
+  armour: 102
+
+legs_str_15:
+  name: 赤銅腿鎧
+  fixed: true
+  retired: true
+  merged_into: legs_str_16
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 75
+  requirements: { level: 75, str: 40, dex: 0, int: 0 }
+  armour: 106
+
+legs_str_16:
+  name: 秘銀腿鎧
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: legs_str
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, str_only]
+  drop_level: 1
+  requirements: { level: 1, str: 42, dex: 0, int: 0 }
+  armour: 109
+
+legs_dex_01:
+  name: 樸素皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 16, int: 0 }
+  evasion: 28
+
+legs_dex_02:
+  name: 舊木皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 19, int: 0 }
+  evasion: 41
+
+legs_dex_03:
+  name: 鐵箍皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 21, int: 0 }
+  evasion: 47
+
+legs_dex_04:
+  name: 淬鐵皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 28
+  requirements: { level: 28, str: 0, dex: 25, int: 0 }
+  evasion: 60
+
+legs_dex_05:
+  name: 鍛紋皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 27, int: 0 }
+  evasion: 65
+
+legs_dex_06:
+  name: 精鐵皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 30, int: 0 }
+  evasion: 78
+
+legs_dex_07:
+  name: 鋼脊皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 30, int: 0 }
+  evasion: 78
+
+legs_dex_08:
+  name: 鑄紋皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 32, int: 0 }
+  evasion: 84
+
+legs_dex_09:
+  name: 戰痕皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 32, int: 0 }
+  evasion: 85
+
+legs_dex_10:
+  name: 銅鑲皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 33, int: 0 }
+  evasion: 86
+
+legs_dex_11:
+  name: 獵紋皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 34, int: 0 }
+  evasion: 91
+
+legs_dex_12:
+  name: 熔鋼皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 36, int: 0 }
+  evasion: 97
+
+legs_dex_13:
+  name: 寒鐵皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 36, int: 0 }
+  evasion: 97
+
+legs_dex_14:
+  name: 雷紋皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 38, int: 0 }
+  evasion: 100
+
+legs_dex_15:
+  name: 赤銅皮褲
+  fixed: true
+  retired: true
+  merged_into: legs_dex_16
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 40, int: 0 }
+  evasion: 103
+
+legs_dex_16:
+  name: 秘銀皮褲
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: legs_dex
+  material: LEATHER_LEGGINGS
+  model: exilecore:armour/leather_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 42, int: 0 }
+  evasion: 106
+
+legs_int_01:
+  name: 樸素絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 16 }
+  es: 11
+
+legs_int_02:
+  name: 舊木絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 12
+  requirements: { level: 12, str: 0, dex: 0, int: 19 }
+  es: 13
+
+legs_int_03:
+  name: 鐵箍絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 0, int: 21 }
+  es: 14
+
+legs_int_04:
+  name: 淬鐵絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 26
+  requirements: { level: 26, str: 0, dex: 0, int: 24 }
+  es: 17
+
+legs_int_05:
+  name: 鍛紋絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 0, int: 26 }
+  es: 20
+
+legs_int_06:
+  name: 精鐵絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 30 }
+  es: 25
+
+legs_int_07:
+  name: 鋼脊絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 30 }
+  es: 25
+
+legs_int_08:
+  name: 鑄紋絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 0, int: 32 }
+  es: 27
+
+legs_int_09:
+  name: 戰痕絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 0, int: 32 }
+  es: 28
+
+legs_int_10:
+  name: 銅鑲絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 0, int: 33 }
+  es: 28
+
+legs_int_11:
+  name: 獵紋絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 0, int: 34 }
+  es: 31
+
+legs_int_12:
+  name: 熔鋼絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 36 }
+  es: 33
+
+legs_int_13:
+  name: 寒鐵絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 36 }
+  es: 33
+
+legs_int_14:
+  name: 雷紋絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 0, int: 38 }
+  es: 35
+
+legs_int_15:
+  name: 赤銅絲褲
+  fixed: true
+  retired: true
+  merged_into: legs_int_16
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 0, int: 40 }
+  es: 38
+
+legs_int_16:
+  name: 秘銀絲褲
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: legs_int
+  material: CHAINMAIL_LEGGINGS
+  model: exilecore:armour/silk_leggings
+  slot: LEGS
+  tags: [armour, leggings, int_armour, int_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 42 }
+  es: 40
+
+legs_str_dex_01:
+  name: 樸素鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 6
+  requirements: { level: 6, str: 11, dex: 11, int: 0 }
+  armour: 18
+  evasion: 18
+
+legs_str_dex_02:
+  name: 舊木鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 14, dex: 14, int: 0 }
+  armour: 24
+  evasion: 25
+
+legs_str_dex_03:
+  name: 鐵箍鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 17, dex: 17, int: 0 }
+  armour: 34
+  evasion: 35
+
+legs_str_dex_04:
+  name: 淬鐵鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 19, int: 0 }
+  armour: 41
+  evasion: 42
+
+legs_str_dex_05:
+  name: 鍛紋鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 19, int: 0 }
+  armour: 41
+  evasion: 42
+
+legs_str_dex_06:
+  name: 精鐵鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 20, dex: 20, int: 0 }
+  armour: 45
+  evasion: 45
+
+legs_str_dex_07:
+  name: 鋼脊鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 20, dex: 20, int: 0 }
+  armour: 45
+  evasion: 46
+
+legs_str_dex_08:
+  name: 鑄紋鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 22, dex: 22, int: 0 }
+  armour: 49
+  evasion: 49
+
+legs_str_dex_09:
+  name: 戰痕鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 22, int: 0 }
+  armour: 53
+  evasion: 52
+
+legs_str_dex_10:
+  name: 銅鑲鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 22, int: 0 }
+  armour: 53
+  evasion: 52
+
+legs_str_dex_11:
+  name: 獵紋鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 70
+  requirements: { level: 70, str: 25, dex: 25, int: 0 }
+  armour: 52
+  evasion: 51
+
+legs_str_dex_12:
+  name: 熔鋼鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 70
+  requirements: { level: 70, str: 23, dex: 23, int: 0 }
+  armour: 55
+  evasion: 54
+
+legs_str_dex_13:
+  name: 寒鐵鱗護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_dex_14
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 75
+  requirements: { level: 75, str: 25, dex: 25, int: 0 }
+  armour: 56
+  evasion: 56
+
+legs_str_dex_14:
+  name: 雷紋鱗護腿
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: legs_str_dex
+  material: GOLDEN_LEGGINGS
+  model: exilecore:armour/scale_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, dex_armour, str_dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 25, dex: 25, int: 0 }
+  armour: 58
+  evasion: 58
+
+legs_dex_int_01:
+  name: 樸素纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 4
+  requirements: { level: 4, str: 0, dex: 11, int: 11 }
+  evasion: 17
+  es: 7
+
+legs_dex_int_02:
+  name: 舊木纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 13, int: 13 }
+  evasion: 25
+  es: 9
+
+legs_dex_int_03:
+  name: 鐵箍纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 16, int: 16 }
+  evasion: 34
+  es: 12
+
+legs_dex_int_04:
+  name: 淬鐵纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 19, int: 19 }
+  evasion: 41
+  es: 15
+
+legs_dex_int_05:
+  name: 鍛紋纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 19, int: 19 }
+  evasion: 41
+  es: 15
+
+legs_dex_int_06:
+  name: 精鐵纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 20, int: 20 }
+  evasion: 44
+  es: 16
+
+legs_dex_int_07:
+  name: 鋼脊纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 20, int: 20 }
+  evasion: 45
+  es: 16
+
+legs_dex_int_08:
+  name: 鑄紋纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 22, int: 22 }
+  evasion: 48
+  es: 18
+
+legs_dex_int_09:
+  name: 戰痕纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 23, int: 23 }
+  evasion: 51
+  es: 20
+
+legs_dex_int_10:
+  name: 銅鑲纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 23, int: 23 }
+  evasion: 60
+  es: 23
+
+legs_dex_int_11:
+  name: 獵紋纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 24, int: 24 }
+  evasion: 53
+  es: 20
+
+legs_dex_int_12:
+  name: 熔鋼纏腿
+  fixed: true
+  retired: true
+  merged_into: legs_dex_int_13
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 25, int: 25 }
+  evasion: 55
+  es: 21
+
+legs_dex_int_13:
+  name: 寒鐵纏腿
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: legs_dex_int
+  material: COPPER_LEGGINGS
+  model: exilecore:armour/wrap_leggings
+  slot: LEGS
+  tags: [armour, leggings, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 26, int: 26 }
+  evasion: 56
+  es: 23
+
+legs_str_int_01:
+  name: 樸素聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 5
+  requirements: { level: 5, str: 11, dex: 0, int: 11 }
+  armour: 18
+  es: 7
+
+legs_str_int_02:
+  name: 舊木聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 13, dex: 0, int: 13 }
+  armour: 24
+  es: 9
+
+legs_str_int_03:
+  name: 鐵箍聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 16, dex: 0, int: 16 }
+  armour: 34
+  es: 12
+
+legs_str_int_04:
+  name: 淬鐵聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 0, int: 19 }
+  armour: 41
+  es: 15
+
+legs_str_int_05:
+  name: 鍛紋聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 0, int: 19 }
+  armour: 41
+  es: 15
+
+legs_str_int_06:
+  name: 精鐵聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 19, dex: 0, int: 19 }
+  armour: 45
+  es: 17
+
+legs_str_int_07:
+  name: 鋼脊聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 20, dex: 0, int: 20 }
+  armour: 45
+  es: 17
+
+legs_str_int_08:
+  name: 鑄紋聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 21, dex: 0, int: 21 }
+  armour: 49
+  es: 18
+
+legs_str_int_09:
+  name: 戰痕聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 0, int: 22 }
+  armour: 53
+  es: 20
+
+legs_str_int_10:
+  name: 銅鑲聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 0, int: 22 }
+  armour: 53
+  es: 20
+
+legs_str_int_11:
+  name: 獵紋聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 27, dex: 0, int: 27 }
+  armour: 58
+  es: 21
+
+legs_str_int_12:
+  name: 熔鋼聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 70
+  requirements: { level: 70, str: 23, dex: 0, int: 23 }
+  armour: 52
+  es: 20
+
+legs_str_int_13:
+  name: 寒鐵聖護腿
+  fixed: true
+  retired: true
+  merged_into: legs_str_int_14
+  family: legs_str_int
+  material: IRON_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 75
+  requirements: { level: 75, str: 25, dex: 0, int: 25 }
+  armour: 54
+  es: 21
+
+legs_str_int_14:
+  name: 雷紋聖護腿
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: legs_str_int
+  material: DIAMOND_LEGGINGS
+  model: exilecore:armour/plate_leggings
+  slot: LEGS
+  tags: [armour, leggings, str_armour, int_armour, str_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 25, dex: 0, int: 25 }
+  armour: 56
+  es: 22
+
+boots_str_01:
+  name: 樸素戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 1
+  requirements: { level: 1, str: 16, dex: 0, int: 0 }
+  armour: 18
+
+boots_str_02:
+  name: 舊木戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 11
+  requirements: { level: 11, str: 19, dex: 0, int: 0 }
+  armour: 24
+
+boots_str_03:
+  name: 鐵箍戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 16
+  requirements: { level: 16, str: 21, dex: 0, int: 0 }
+  armour: 27
+
+boots_str_04:
+  name: 淬鐵戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 27
+  requirements: { level: 27, str: 25, dex: 0, int: 0 }
+  armour: 34
+
+boots_str_05:
+  name: 鍛紋戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 33
+  requirements: { level: 33, str: 27, dex: 0, int: 0 }
+  armour: 38
+
+boots_str_06:
+  name: 精鐵戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 45
+  requirements: { level: 45, str: 30, dex: 0, int: 0 }
+  armour: 46
+
+boots_str_07:
+  name: 鋼脊戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 45
+  requirements: { level: 45, str: 30, dex: 0, int: 0 }
+  armour: 46
+
+boots_str_08:
+  name: 鑄紋戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 51
+  requirements: { level: 51, str: 32, dex: 0, int: 0 }
+  armour: 50
+
+boots_str_09:
+  name: 戰痕戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 52
+  requirements: { level: 52, str: 32, dex: 0, int: 0 }
+  armour: 51
+
+boots_str_10:
+  name: 銅鑲戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 54
+  requirements: { level: 54, str: 33, dex: 0, int: 0 }
+  armour: 52
+
+boots_str_11:
+  name: 獵紋戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 59
+  requirements: { level: 59, str: 34, dex: 0, int: 0 }
+  armour: 55
+
+boots_str_12:
+  name: 熔鋼戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 65
+  requirements: { level: 65, str: 36, dex: 0, int: 0 }
+  armour: 59
+
+boots_str_13:
+  name: 寒鐵戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 65
+  requirements: { level: 65, str: 36, dex: 0, int: 0 }
+  armour: 59
+
+boots_str_14:
+  name: 雷紋戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 70
+  requirements: { level: 70, str: 38, dex: 0, int: 0 }
+  armour: 61
+
+boots_str_15:
+  name: 赤銅戰靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_16
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 75
+  requirements: { level: 75, str: 40, dex: 0, int: 0 }
+  armour: 63
+
+boots_str_16:
+  name: 秘銀戰靴
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: boots_str
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, str_only]
+  drop_level: 1
+  requirements: { level: 1, str: 42, dex: 0, int: 0 }
+  armour: 65
+
+boots_dex_01:
+  name: 樸素皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 16, int: 0 }
+  evasion: 17
+
+boots_dex_02:
+  name: 舊木皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 19, int: 0 }
+  evasion: 25
+
+boots_dex_03:
+  name: 鐵箍皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 21, int: 0 }
+  evasion: 28
+
+boots_dex_04:
+  name: 淬鐵皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 28
+  requirements: { level: 28, str: 0, dex: 25, int: 0 }
+  evasion: 36
+
+boots_dex_05:
+  name: 鍛紋皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 27, int: 0 }
+  evasion: 39
+
+boots_dex_06:
+  name: 精鐵皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 30, int: 0 }
+  evasion: 46
+
+boots_dex_07:
+  name: 鋼脊皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 30, int: 0 }
+  evasion: 46
+
+boots_dex_08:
+  name: 鑄紋皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 32, int: 0 }
+  evasion: 50
+
+boots_dex_09:
+  name: 戰痕皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 32, int: 0 }
+  evasion: 51
+
+boots_dex_10:
+  name: 銅鑲皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 33, int: 0 }
+  evasion: 52
+
+boots_dex_11:
+  name: 獵紋皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 34, int: 0 }
+  evasion: 55
+
+boots_dex_12:
+  name: 熔鋼皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 36, int: 0 }
+  evasion: 58
+
+boots_dex_13:
+  name: 寒鐵皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 36, int: 0 }
+  evasion: 58
+
+boots_dex_14:
+  name: 雷紋皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 38, int: 0 }
+  evasion: 60
+
+boots_dex_15:
+  name: 赤銅皮靴
+  fixed: true
+  retired: true
+  merged_into: boots_dex_16
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 40, int: 0 }
+  evasion: 62
+
+boots_dex_16:
+  name: 秘銀皮靴
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: boots_dex
+  material: LEATHER_BOOTS
+  model: exilecore:armour/leather_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 42, int: 0 }
+  evasion: 63
+
+boots_int_01:
+  name: 樸素絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 16 }
+  es: 7
+
+boots_int_02:
+  name: 舊木絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 0, int: 19 }
+  es: 7
+
+boots_int_03:
+  name: 鐵箍絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 0, int: 21 }
+  es: 9
+
+boots_int_04:
+  name: 淬鐵絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 27
+  requirements: { level: 27, str: 0, dex: 0, int: 25 }
+  es: 11
+
+boots_int_05:
+  name: 鍛紋絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 0, int: 27 }
+  es: 12
+
+boots_int_06:
+  name: 精鐵絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 30 }
+  es: 15
+
+boots_int_07:
+  name: 鋼脊絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 30 }
+  es: 15
+
+boots_int_08:
+  name: 鑄紋絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 0, int: 32 }
+  es: 16
+
+boots_int_09:
+  name: 戰痕絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 0, int: 32 }
+  es: 17
+
+boots_int_10:
+  name: 銅鑲絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 0, int: 33 }
+  es: 17
+
+boots_int_11:
+  name: 獵紋絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 0, int: 34 }
+  es: 18
+
+boots_int_12:
+  name: 熔鋼絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 36 }
+  es: 20
+
+boots_int_13:
+  name: 寒鐵絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 36 }
+  es: 20
+
+boots_int_14:
+  name: 雷紋絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 0, int: 38 }
+  es: 21
+
+boots_int_15:
+  name: 赤銅絲履
+  fixed: true
+  retired: true
+  merged_into: boots_int_16
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 0, int: 40 }
+  es: 23
+
+boots_int_16:
+  name: 秘銀絲履
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: boots_int
+  material: CHAINMAIL_BOOTS
+  model: exilecore:armour/silk_boots
+  slot: FEET
+  tags: [armour, boots, int_armour, int_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 42 }
+  es: 25
+
+boots_str_dex_01:
+  name: 樸素鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 6
+  requirements: { level: 6, str: 11, dex: 11, int: 0 }
+  armour: 12
+  evasion: 11
+
+boots_str_dex_02:
+  name: 舊木鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 13, dex: 13, int: 0 }
+  armour: 15
+  evasion: 15
+
+boots_str_dex_03:
+  name: 鐵箍鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 17, dex: 17, int: 0 }
+  armour: 21
+  evasion: 22
+
+boots_str_dex_04:
+  name: 淬鐵鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 19, int: 0 }
+  armour: 26
+  evasion: 26
+
+boots_str_dex_05:
+  name: 鍛紋鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 19, int: 0 }
+  armour: 26
+  evasion: 26
+
+boots_str_dex_06:
+  name: 精鐵鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 20, dex: 20, int: 0 }
+  armour: 28
+  evasion: 28
+
+boots_str_dex_07:
+  name: 鋼脊鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 20, dex: 20, int: 0 }
+  armour: 28
+  evasion: 28
+
+boots_str_dex_08:
+  name: 鑄紋鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 22, dex: 22, int: 0 }
+  armour: 31
+  evasion: 31
+
+boots_str_dex_09:
+  name: 戰痕鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 22, int: 0 }
+  armour: 33
+  evasion: 33
+
+boots_str_dex_10:
+  name: 銅鑲鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 22, int: 0 }
+  armour: 33
+  evasion: 33
+
+boots_str_dex_11:
+  name: 獵紋鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 70
+  requirements: { level: 70, str: 24, dex: 24, int: 0 }
+  armour: 34
+  evasion: 34
+
+boots_str_dex_12:
+  name: 熔鋼鱗靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_dex_13
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 75
+  requirements: { level: 75, str: 25, dex: 25, int: 0 }
+  armour: 35
+  evasion: 35
+
+boots_str_dex_13:
+  name: 寒鐵鱗靴
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: boots_str_dex
+  material: GOLDEN_BOOTS
+  model: exilecore:armour/scale_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, dex_armour, str_dex_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 26, dex: 26, int: 0 }
+  armour: 36
+  evasion: 36
+
+boots_dex_int_01:
+  name: 樸素纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 5
+  requirements: { level: 5, str: 0, dex: 11, int: 11 }
+  evasion: 11
+  es: 5
+
+boots_dex_int_02:
+  name: 舊木纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 13, int: 13 }
+  evasion: 16
+  es: 6
+
+boots_dex_int_03:
+  name: 鐵箍纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 16, int: 16 }
+  evasion: 22
+  es: 8
+
+boots_dex_int_04:
+  name: 淬鐵纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 19, int: 19 }
+  evasion: 26
+  es: 10
+
+boots_dex_int_05:
+  name: 鍛紋纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 19, int: 19 }
+  evasion: 26
+  es: 10
+
+boots_dex_int_06:
+  name: 精鐵纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 20, int: 20 }
+  evasion: 28
+  es: 11
+
+boots_dex_int_07:
+  name: 鋼脊纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 20, int: 20 }
+  evasion: 28
+  es: 11
+
+boots_dex_int_08:
+  name: 鑄紋纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 22, int: 22 }
+  evasion: 31
+  es: 12
+
+boots_dex_int_09:
+  name: 戰痕纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 22, int: 22 }
+  evasion: 33
+  es: 13
+
+boots_dex_int_10:
+  name: 銅鑲纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 22, int: 22 }
+  evasion: 33
+  es: 13
+
+boots_dex_int_11:
+  name: 獵紋纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 24, int: 24 }
+  evasion: 34
+  es: 14
+
+boots_dex_int_12:
+  name: 熔鋼纏履
+  fixed: true
+  retired: true
+  merged_into: boots_dex_int_13
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 26, int: 26 }
+  evasion: 35
+  es: 15
+
+boots_dex_int_13:
+  name: 寒鐵纏履
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: boots_dex_int
+  material: COPPER_BOOTS
+  model: exilecore:armour/wrap_boots
+  slot: FEET
+  tags: [armour, boots, dex_armour, int_armour, dex_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 26, int: 26 }
+  evasion: 36
+  es: 16
+
+boots_str_int_01:
+  name: 樸素聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 5
+  requirements: { level: 5, str: 11, dex: 0, int: 11 }
+  armour: 11
+  es: 4
+
+boots_str_int_02:
+  name: 舊木聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 16
+  requirements: { level: 16, str: 13, dex: 0, int: 13 }
+  armour: 15
+  es: 4
+
+boots_str_int_03:
+  name: 鐵箍聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 33
+  requirements: { level: 33, str: 16, dex: 0, int: 16 }
+  armour: 21
+  es: 6
+
+boots_str_int_04:
+  name: 淬鐵聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 0, int: 19 }
+  armour: 26
+  es: 8
+
+boots_str_int_05:
+  name: 鍛紋聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 45
+  requirements: { level: 45, str: 19, dex: 0, int: 19 }
+  armour: 26
+  es: 8
+
+boots_str_int_06:
+  name: 精鐵聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 51
+  requirements: { level: 51, str: 20, dex: 0, int: 20 }
+  armour: 28
+  es: 8
+
+boots_str_int_07:
+  name: 鋼脊聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 52
+  requirements: { level: 52, str: 20, dex: 0, int: 20 }
+  armour: 29
+  es: 8
+
+boots_str_int_08:
+  name: 鑄紋聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 59
+  requirements: { level: 59, str: 22, dex: 0, int: 22 }
+  armour: 32
+  es: 9
+
+boots_str_int_09:
+  name: 戰痕聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 0, int: 22 }
+  armour: 34
+  es: 10
+
+boots_str_int_10:
+  name: 銅鑲聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 26, dex: 0, int: 26 }
+  armour: 34
+  es: 10
+
+boots_str_int_11:
+  name: 獵紋聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 22, dex: 0, int: 22 }
+  armour: 34
+  es: 10
+
+boots_str_int_12:
+  name: 熔鋼聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 70
+  requirements: { level: 70, str: 23, dex: 0, int: 23 }
+  armour: 33
+  es: 10
+
+boots_str_int_13:
+  name: 寒鐵聖靴
+  fixed: true
+  retired: true
+  merged_into: boots_str_int_14
+  family: boots_str_int
+  material: IRON_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 75
+  requirements: { level: 75, str: 25, dex: 0, int: 25 }
+  armour: 33
+  es: 10
+
+boots_str_int_14:
+  name: 雷紋聖靴
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: boots_str_int
+  material: DIAMOND_BOOTS
+  model: exilecore:armour/plate_boots
+  slot: FEET
+  tags: [armour, boots, str_armour, int_armour, str_int_armour]
+  drop_level: 1
+  requirements: { level: 1, str: 26, dex: 0, int: 26 }
+  armour: 33
+  es: 10

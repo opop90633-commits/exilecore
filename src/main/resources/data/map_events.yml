@@ -1,0 +1,131 @@
+# 地圖事件（照 PoE 的 Shrine、Strongbox、Breach、Rogue Exile：神龕、寶箱、裂隙、流寇）：每張地圖開出來時隨機放幾個在普通房間的中央，走近才會現身。
+# 改完 /ec reload：之後開的地圖照新的（已經開著的不變）。終局、每週回響、昇華試煉這些特別的實例不放事件。
+#
+# 四種事件：
+#   shrine     神龕：地上一座發光的石柱，旁邊一群守衛。碰到它，附近 12 格內的人一起拿 duration 秒的增益（哪一種照石柱上寫的）。
+#   strongbox  寶箱：點開會跳出一群怪（照這張圖的魔法／稀有群比例），殺光才打開；radius 格內的每個人各拿自己那份。
+#   breach     裂隙：踩進去就打開，duration 秒內每 wave_seconds 秒從越來越大的邊緣湧出一波怪；裂隙的怪物品數量 +quantity_bonus%。
+#   exile      流寇：穿著整套裝備的稀有怪，招式像 Boss（mods 裡的招式詞綴），生命是同等稀有怪的 life 倍；殺了照稀有怪掉，另外多掉 drops 件稀有裝備。
+#
+# 機制的招牌通貨（照 PoE2，定義在 currencies.yml）：寶箱掉星魄（保證詞綴的改造）、裂隙的怪掉催化劑（飾品品質＝某一類詞綴的加成）、
+# 流寇掉星籤（改下一顆通貨的規則）；祭壇的獎勵也以星籤為主、幻霧掉蒸餾情緒（注入項鍊）。
+# 每種事件各有自己的專屬傳奇（uniques.yml 的 sources 寫 shrine、strongbox、breach、exile、ritual、delirium）：
+#   神龕、寶箱、裂隙、流寇照各自的 unique_chance（1%，每個有份的人各擲一次：碰到神龕的人、開箱時在旁邊的人、
+#   裂隙關上時在 30 格內的人、流寇有份的人）；祭壇與幻霧是獎勵裡的「傳奇」那一種（reward_weights 的 unique）。
+#   2026-10：2% → 1%、祭壇與幻霧的 unique 權重 2 → 1（星圖天賦的「+50%」也改 +25%）。伺服器的紀錄裡事件專屬佔了新傳奇的一半，
+#   點了寶箱天賦的人一天拿到 8 件千鎖；常見的傳奇重複得太快。
+#
+# 另外兩個 PoE2 的機制（最下面的 ritual、delirium）：跟上面的事件可以同時出現，各自照 chance 決定這張圖有沒有。
+
+settings:
+  per_map: [2, 3]                  # 每張地圖放幾個事件（最多一個房間一個，起點與 Boss 房不放）
+  weights: { shrine: 35, strongbox: 35, breach: 15, exile: 15 }
+  approach: 20                     # 玩家幾格內事件現身（守衛、流寇刷出來；寶箱、裂隙一直都在）
+
+shrine:
+  duration: 40                     # 增益幾秒
+  guards: [3, 5]                   # 守衛幾隻（照地圖的怪物種類，一隻魔法怪帶一群普通怪）
+  reach: 12                        # 啟動時幾格內的人一起拿
+  unique_chance: 0.01              # 拿到增益的人各擲一次：掉神龕的專屬傳奇
+  # 種類：name 顯示名稱、color 顏色、mods 增益（stat 屬性鍵、type FLAT／INCREASED／MORE、value 數值；INCREASED／MORE 是百分比）
+  kinds:
+    acceleration:
+      name: 疾速神龕
+      color: "#7fd4ff"
+      mods:
+        - { stat: movement.speed, type: INCREASED, value: 30 }
+        - { stat: attack.speed, type: INCREASED, value: 30 }
+        - { stat: cast.speed, type: INCREASED, value: 30 }
+    brutal:
+      name: 兇猛神龕
+      color: "#ff7070"
+      mods:
+        - { stat: damage, type: INCREASED, value: 40 }
+    diamond:
+      name: 金剛神龕
+      color: "#9fe8c8"
+      mods:
+        - { stat: armour, type: INCREASED, value: 80 }
+        - { stat: evasion, type: INCREASED, value: 80 }
+        - { stat: es.max, type: INCREASED, value: 30 }
+    regeneration:
+      name: 再生神龕
+      color: "#7fe07f"
+      mods:
+        - { stat: life.regen_percent, type: FLAT, value: 3 }
+    lucky:
+      name: 幸運神龕
+      color: "#f5b942"
+      mods:
+        - { stat: drop.rarity, type: INCREASED, value: 50 }
+        - { stat: drop.quantity, type: INCREASED, value: 25 }
+
+strongbox:
+  ambush: [6, 9]                   # 跳出幾隻
+  radius: 20                       # 打開時幾格內的人有份
+  unique_chance: 0.01              # 有份的人各擲一次：掉寶箱的專屬傳奇
+  # 種類：weight 出現權重；rolls 像殺幾隻稀有怪那樣擲掉落表（quantity_bonus／rarity_bonus 是百分比）；
+  # currency 另外掉幾個通貨（照掉落權重抽、等級夠的才會）；maps 另外掉幾張地圖（照開箱的人的星圖）；
+  # essences 掉幾顆星魄（currencies.yml 裡 operation: ESSENCE 的，隨機一種；星魄是寶箱的招牌）
+  kinds:
+    plain:        { name: 寶箱, weight: 60, rolls: 3, quantity_bonus: 50, rarity_bonus: 100, essences: [1, 1] }
+    # 2026-10：匠心寶箱多給的通貨 3–6 → 2–4 顆（低階通貨的權重減半，抽到好通貨的機會變高；這樣好通貨的數量跟以前差不多，低階的少一半）
+    artisan:      { name: 匠心寶箱, weight: 25, rolls: 1, quantity_bonus: 0, rarity_bonus: 50, currency: [2, 4], essences: [2, 3] }
+    cartographer: { name: 星圖寶箱, weight: 15, rolls: 1, quantity_bonus: 0, rarity_bonus: 50, maps: [1, 2], essences: [1, 1] }
+
+breach:
+  duration: 25                     # 開幾秒
+  wave_seconds: 2.5                # 幾秒一波
+  wave: [3, 4]                     # 一波幾隻（照地圖的魔法群比例，有時整波是魔法怪）
+  radius: [4, 14]                  # 邊緣從幾格長到幾格（怪從邊緣湧出）
+  quantity_bonus: 50               # 裂隙怪的物品數量 +%
+  catalyst_chance: 0.06            # 每隻裂隙怪死掉時掉一顆催化劑（currencies.yml 裡 operation: CATALYST 的，隨機一種）的機率
+  unique_chance: 0.01              # 裂隙關上時 30 格內的人各擲一次：掉裂隙的專屬傳奇
+
+exile:
+  life: 4.0                        # 生命是同等級稀有怪的幾倍
+  damage: 1.3                      # 傷害倍率
+  mods: [slammer, charger, swift]  # 詞綴（招式詞綴給招式；見 monsters.yml 的 mods）
+  drops: 2                         # 殺了另外掉幾件稀有裝備（物品等級 = 地圖等級）
+  omens: [1, 1]                    # 殺了掉幾個星籤（currencies.yml 裡 operation: OMEN 的，隨機一種；有份的人各拿）
+  unique_chance: 0.01              # 有份的人各擲一次：掉流寇的專屬傳奇
+  names: [伊薇特, 柯林, 瑞瓦, 托爾加, 安雅, 莫瑟, 迦南, 希爾達, 奧倫, 薇拉, 迪倫, 娜塔]
+
+# ---- 祭壇（PoE2 的 Ritual）----
+# 地圖裡放 altars 座祭壇（哭泣黑曜石＋紅蠟燭，各在不同房間）。右鍵一座開始儀式：地上一個 radius 格的圓，怪一波一波在圓裡出現
+# （照這張圖的怪物與魔法／稀有群比例），圓裡的人每殺一隻拿貢品（tribute；後面的祭壇多 altar_bonus）。
+# 全部做完後右鍵任何一座祭壇：用貢品換獎勵（每個人各自一組 rewards 件，價格照 prices），可以花貢品重擲一整組（reroll）。
+# 貢品只在這張圖有效（PoE 的做法）。
+ritual:
+  chance: 0.3
+  altars: 3
+  radius: 9
+  waves: [3, 4]
+  wave: [4, 6]
+  wave_seconds: 12                  # 一波最多幾秒（殺光就直接下一波）
+  timeout: 150                      # 一座祭壇最多幾秒（時間到剩下的怪消失、算完成）
+  tribute: { normal: 12, magic: 35, rare: 120, unique: 300 }
+  altar_bonus: 0.25                 # 第二座 +25%、第三座 +50%…
+  rewards: 7
+  reroll: { cost: 0.2, growth: 1.5 }   # 重擲花「總共拿到的貢品」的幾成，每次乘 growth
+  reward_weights: { omen: 30, currency: 25, rare: 15, essence: 10, jewel: 8, map: 6, catalyst: 4, unique: 1 }   # unique：祭壇的專屬傳奇（2026-10：2 → 1）
+  prices: { omen: [260, 420], currency: [40, 160], rare: [140, 260], essence: [110, 190], jewel: [180, 320], map: [150, 260], catalyst: [120, 200], unique: [520, 880] }
+
+# ---- 幻霧（PoE2 的 Delirium）----
+# 地圖裡放一面鏡子（染色玻璃）。走過去，霧就跟著這張圖裡的每個人 duration 秒：越久越難（之後刷出來的怪與幻霧怪的生命、傷害
+# 在 ramp_seconds 秒內升到 +max_difficulty%），每 spawn_seconds 秒在每個人附近刷 spawn 隻幻霧怪。殺怪累積獎勵進度（progress），
+# 時間到照進度掉獎勵：每個人 rewards 條獎勵（種類照 reward_weights 抽），進度過 thresholds 的第幾個就拿幾份。
+# emotions 是蒸餾情緒的通貨代號、照階級排（注入離天賦樹中心越遠的核心，要越後面的）；emotion_weights 是獎勵掉哪一階的權重。
+delirium:
+  chance: 0.3
+  duration: 30            # 2026-10：75 → 30 秒（常常 Boss 打完還在等霧結束）；刷怪改快、改多，總數跟以前差不多
+  ramp_seconds: 25        # 60 → 25：照比例縮短
+  max_difficulty: 60
+  spawn_seconds: 2        # 4 → 2
+  spawn: [3, 4]           # [2, 3] → [3, 4]
+  progress: { normal: 1, magic: 3, rare: 10, unique: 25 }
+  rewards: 2
+  thresholds: [20, 50, 100, 170]
+  reward_weights: { emotion: 40, currency: 25, essence: 10, jewel: 10, map: 10, catalyst: 5, unique: 1 }   # unique：幻霧的專屬傳奇（2026-10：2 → 1）
+  emotions: [distilled_ire, distilled_guilt, distilled_greed, distilled_paranoia]
+  emotion_weights: [50, 30, 15, 5]

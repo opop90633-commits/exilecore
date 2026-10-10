@@ -1,0 +1,104 @@
+# 地圖（星痕）的基底：基底 = 哪一張地圖（slot: MAP，標籤 map_t1 … map_t5 是在星圖的第幾圈）。
+# 地圖物品的階級（T1–T16）寫在物品上，不在基底：同一張地圖每一階都能掉、都能開（maps.yml 的 settings.tiers）。
+# drop_level 只是說明用（地圖不跟一般裝備一起掉）。
+# 地圖不是裝備：不能穿、不會跟一般裝備一起掉；地圖的內容（主題、怪物、Boss、星圖位置）寫在 data/maps.yml，
+# 用同一個代號對起來。詞綴池在 affixes/maps.yml（標籤 map），蛻變到點金一套通貨都能用。
+# 材質用旗幟圖案（右鍵沒有作用、不會被原版用掉）；越外圈圖案越兇。
+
+map_wreck_bay:
+  name: 沉船灣
+  material: GLOBE_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t1]
+  drop_level: 61
+
+map_moss_grove:
+  name: 苔石林
+  material: GLOBE_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t1]
+  drop_level: 61
+
+map_ash_street:
+  name: 灰燼街
+  material: GLOBE_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t1]
+  drop_level: 61
+
+map_mist_ferry:
+  name: 霧沼渡口
+  material: FLOW_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t2]
+  drop_level: 62
+
+map_outer_city:
+  name: 曜京外城
+  material: FLOW_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t2]
+  drop_level: 62
+
+map_frost_pines:
+  name: 寒松嶺
+  material: FLOW_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t2]
+  drop_level: 62
+
+map_abyss_mine:
+  name: 深淵礦坑
+  material: GUSTER_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t3]
+  drop_level: 63
+
+map_royal_tomb:
+  name: 王陵地宮
+  material: GUSTER_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t3]
+  drop_level: 63
+
+map_glow_grotto:
+  name: 菌光洞窟
+  material: GUSTER_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t3]
+  drop_level: 63
+
+map_burning_field:
+  name: 燎原古戰場
+  material: PIGLIN_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t4]
+  drop_level: 64
+
+map_tide_temple:
+  name: 潮汐神殿
+  material: PIGLIN_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t4]
+  drop_level: 64
+
+map_red_sands:
+  name: 赤沙古道
+  material: PIGLIN_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t4]
+  drop_level: 64
+
+map_starfall_tundra:
+  name: 星墜冰原
+  material: SKULL_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t5]
+  drop_level: 65
+
+map_observatory:
+  name: 天文台遺跡
+  material: SKULL_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t5]
+  drop_level: 65

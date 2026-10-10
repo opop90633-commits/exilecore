@@ -16,7 +16,18 @@ import java.util.Set;
  */
 public final class MonsterSheets {
 
+    /**
+     * 原版 MAX_HEALTH 屬性的上限。生命超過的怪物，原版血量只當比例顯示：
+     * 原版血 = 我們的生命 × {@link #healthScale}，玩家造成的傷害也乘同一個比例。
+     */
+    public static final double VANILLA_HEALTH_CAP = 1024.0;
+
     private MonsterSheets() {
+    }
+
+    /** 我們的生命值對原版血量的比例（生命 ≤ 1024 時為 1）。 */
+    public static double healthScale(final double life) {
+        return life <= VANILLA_HEALTH_CAP ? 1.0 : VANILLA_HEALTH_CAP / life;
     }
 
     public static StatSheet build(final MonsterConfig config, final MonsterData data, final String entityType) {
@@ -25,17 +36,17 @@ public final class MonsterSheets {
         final MonsterConfig.TypeSettings type = config.type(entityType);
         final int level = data.level();
 
-        sheet.setBase(StatKeys.LIFE_MAX, config.lifeAt(level) * type.lifeMultiplier() * rarity.lifeMultiplier());
+        sheet.setBase(StatKeys.LIFE_MAX, config.lifeAt(level) * type.lifeMultiplier() * rarity.lifeMultiplier() * data.lifeMultiplier());
         sheet.setBase(StatKeys.ACCURACY, config.accuracyAt(level));
         sheet.setBase(StatKeys.EVASION, config.evasionAt(level));
         sheet.setBase(StatKeys.ARMOUR, config.armourAt(level));
         sheet.setBase(StatKeys.RESIST_MAX, 75);
-        sheet.setBase(StatKeys.CRIT_MULTI, 150);
+        sheet.setBase(StatKeys.CRIT_MULTI, 130); // PoE2：怪物的暴擊傷害加成只有 +30%
         sheet.setBase(StatKeys.WEAPON_APS, 1.0);
         sheet.setBase(StatKeys.WEAPON_CRIT, config.critChance());
 
         final double[] damage = config.damageAt(level);
-        final double multiplier = type.damageMultiplier() * rarity.damageMultiplier();
+        final double multiplier = type.damageMultiplier() * rarity.damageMultiplier() * data.damageMultiplier();
         final double physMin = damage[0] * multiplier;
         final double physMax = damage[1] * multiplier;
         sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, physMin, Set.of(Tags.PHYSICAL), "怪物基礎"));

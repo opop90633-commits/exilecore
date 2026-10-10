@@ -1,0 +1,59 @@
+# 《星骸》地圖 Boss 的 MythicMobs 範例（ExileCore 連接 MythicMobs 時自動安裝；以前版本的範例沒改過會自動換成新版，
+# 你改過的不會被蓋掉，新版放在旁邊的 .new）。
+#
+# 搭配 ExileCore 的方式跟 ExileCore.yml 一樣：外觀、裝備照這裡；等級、生命、傷害、掉落、
+# 血量門檻的階段（喊話、召喚小怪、變強）照 plugins/ExileCore/data/maps.yml。
+# maps.yml 的 boss.mythic 寫這裡的代號就會用這隻；沒裝 MythicMobs 會改用 boss.type 的原版生物。
+#
+# Boss 的招式由 ExileCore 的 Boss 招式引擎負責（plugins/ExileCore/data/boss_skills.yml：地上有警告、一次只放一招），
+# 所以這裡的 Skills 只放外觀用的粒子。不要再寫會打人、推人、召喚的計時技能（throw、leap、pull、damage、summon…）：
+# 它們不管 Boss 正在放什麼都會自己發動，看起來就像同時放兩招。
+
+ExileCore_TombGeneral:
+  Type: WITHER_SKELETON
+  Display: '&6守陵將軍'
+  Health: 800
+  Damage: 14
+  Options:
+    MovementSpeed: 0.28
+    FollowRange: 40
+    KnockbackResistance: 1
+    PreventOtherDrops: true
+    PreventRandomEquipment: true
+    Despawn: false
+  Equipment:
+  - netherite_sword HAND
+  - netherite_helmet HEAD
+  - netherite_chestplate CHEST
+  Skills:
+  - effect:particles{p=soul;a=20;hs=0.6;vs=1;s=0.02;y=1} @self ~onTimer:40
+
+ExileCore_StarPriest:
+  Type: EVOKER
+  Display: '&5觀星祭司'
+  Health: 700
+  Damage: 12
+  Options:
+    MovementSpeed: 0.3
+    FollowRange: 40
+    KnockbackResistance: 0.6
+    PreventOtherDrops: true
+    PreventRandomEquipment: true
+    Despawn: false
+  Skills:
+  - effect:particles{p=end_rod;a=30;hs=1;vs=1.2;s=0.03;y=1.2} @self ~onTimer:30
+
+ExileCore_StarEmperor:
+  Type: WARDEN
+  Display: '&e曜帝・星骸之軀'
+  Health: 1000
+  Damage: 20
+  Options:
+    MovementSpeed: 0.3
+    FollowRange: 48
+    KnockbackResistance: 1
+    PreventOtherDrops: true
+    Despawn: false
+  Skills:
+  - effect:particles{p=flame;a=40;hs=1.2;vs=2;s=0.03;y=1.5} @self ~onTimer:30
+  - effect:particles{p=end_rod;a=20;hs=1.5;vs=2;s=0.05;y=2} @self ~onTimer:50

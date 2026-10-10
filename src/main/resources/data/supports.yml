@@ -1,0 +1,3296 @@
+# 輔助寶石（機制照 PoE2，名稱是自己的）。改完在遊戲內 /ec reload。
+#
+# 輔助寶石不插裝備：掛在技能面板上技能的輔助孔（每個技能先有 2 孔，用鑿星石開到最多 5 孔）。
+# 同一種輔助可以掛在不同技能上（每個技能各用一顆）；同一個技能不能掛兩顆一樣的。
+# 要照 PoE2「同一種輔助一個角色只能用一次」的話，把下面的 once_per_character 改成 true。
+# 輔助寶石是從未切割輔助寶石切出來的（右鍵選要哪一種）。
+#
+# tier            階級 1–3：未切割輔助寶石的階級要 ≥ 這個才切得出來
+# requires        技能要有其中一個標籤才能掛（attack 攻擊、spell 法術、melee 近戰、projectile 投射物、area 範圍、chain 連鎖、
+#                 duration 有持續時間的、cooldown 有冷卻時間的、movement 位移、travel 突進（衝刺、跳躍）、grenade 榴彈、minion 召喚、
+#                 aura 光環、warcry 戰吼；
+#                 見 skills.yml 的「標籤自動補上」）
+# excludes        技能有其中一個標籤就不能掛（可省略）
+# mana_multiplier 魔力消耗倍率（1.2 = 120%，好幾個輔助的倍率相乘）
+# modifiers       疊到被輔助的技能上的修飾器，寫法跟詞綴一樣：
+#                   INCREASED／MORE 的 value 是百分比（25 = 25%，負的是減少／更少）
+#                   FLAT 的 value 直接用（投射物 +2、偷取 5%）
+#                 能用的屬性：
+#                   damage                   傷害（tags 限定哪種：projectile、area、melee、physical、elemental、fire…）
+#                   attack.speed、cast.speed 攻擊／施法速度
+#                   skill.area               範圍效果（半徑 = √倍率）
+#                   skill.projectiles        額外的投射物
+#                   skill.projectile_speed   投射物速度
+#                   skill.pierce             投射物穿透幾個敵人
+#                   skill.chains             多連鎖幾次（投射物打中後跳到附近另一個敵人；鏈雷多跳幾次）
+#                   damage.gain.fire         物理傷害的 x% 額外附加為火焰（也有 cold、lightning、chaos）
+#                   leech.life               造成的物理傷害有 x% 偷取為生命（每秒最多回 10% 最大生命）
+#                   leech.life_elemental     造成的元素傷害有 x% 偷取為生命；leech.instant FLAT：偷取有 x% 立即生效（一下最多 6% 最大生命）
+#                   leech.rate INCREASED：最大偷取速度；leech.effect INCREASED：偷取的量
+#                   life.on_hit              每次擊中回復 x 生命
+#                   crit.chance、crit.multi  暴擊率（INCREASED）、暴擊傷害（FLAT 點數）
+#                   skill.duration           持續時間（地面效果、漩渦、印記…）
+#                   skill.cooldown           冷卻時間（負的 = 更短）
+#                   skill.fork               FLAT 1：投射物第一次打中時分裂成兩發
+#                   flag.returning           FLAT 1：投射物停下來之後飛回施放者身邊，路上再打一次
+#                   flag.echo                FLAT 1：法術施放後 0.25 秒自動再放一次（不花魔力；位移、印記不行）
+#                   skill.repeats            FLAT：近戰攻擊按一次之後自動再打幾下（複擊；照攻擊間隔一下一下打，魔力只扣一次，
+#                                            全部打完才能做別的；只有自己放的打擊、扇形、繞身一圈的攻擊與瞬影擊，最多 4 下；
+#                                            瞬影擊是再閃幾次，閃完才開始冷卻）
+#                   flag.spell_totem         FLAT 1：法術改由圖騰施放（8 秒、一根、12 格）
+#                   flag.trap                FLAT 1：法術改成丟出去的陷阱（16 秒、三個、2 格觸發）
+#                   skill.totems             FLAT：同時最多多幾根圖騰（只有圖騰技能）
+#                   skill.minions            FLAT：召喚技能同時最多多幾隻（魔像這種固定一尊的不吃）
+#                   aura.effect              INCREASED／MORE：光環的每一條效果都乘
+#                   aura.reservation         INCREASED：光環保留的魔力（負的 = 保留比較少）
+#                   flag.generosity          FLAT 1：光環不影響自己，隊友與召喚物得到 1.4 倍效果
+#                   warcry.exerts            FLAT：戰吼多強化幾次攻擊
+#                   召喚物（tags 要寫 [minion]，不然會變成主人的）：damage、attack.speed、movement.speed、life.max（MORE／INCREASED）、
+#                   life.regen_percent（FLAT：每秒回復最大生命的 x%）
+#                   元素異常（批次 3，見 ailments.yml）：
+#                   ignite.chance、shock.chance        FLAT：點燃／感電機率 +x%；INCREASED：增加 x% 機率
+#                   ignite.magnitude                   點燃傷害
+#                   chill.effect、shock.effect         冰緩、感電的效果
+#                   freeze.buildup                     凍結累積
+#                   ignite.duration、chill.duration、freeze.duration、shock.duration、ailment.duration（全部）  持續時間
+#                   bleed.chance、poison.chance        FLAT：流血（只有攻擊）／中毒機率 +x%；bleed.magnitude、poison.magnitude 傷害；
+#                   bleed.duration、poison.duration    持續時間（流血、中毒見 ailments.yml）
+#                   stun.buildup                       暈眩累積（INCREASED／MORE）；electrocute.chance FLAT：電擊機率 +x%（閃電傷害才有用）
+#                   electrocute.buildup、stun.duration、electrocute.duration
+#                   flag.no_elemental_ailments         FLAT 1：不能造成元素異常
+#                   charge.on_hit.frenzy               FLAT：擊中時 x% 機率獲得一顆怒星（power 銳星、endurance 磐星；見 charges.yml）
+# description     說明；寫 {charge:frenzy} 會換成「怒星（每顆：增加 4% 攻擊速度、…）」（照 charges.yml 的名字與 per_charge，
+#                 改了 charges.yml 說明跟著變；power 銳星、endurance 磐星）
+# notes           額外的說明行（可省略）
+# source          專屬的掉落來源（可省略）：寫了就不能從未切割輔助寶石切出來，只有那裡會掉。
+#                 終局代號（sky_crucible、frost_throne…）＝那個終局 Boss 有 maps.yml 的 drops.final_support_chance 的機率掉；
+#                 其他的（例如 uber）＝只有寫在 maps.yml 的極境 drops.extra 裡（{ support: 代號, chance: 機率 }）才會掉
+
+# 各階級的未切割輔助寶石從幾級的怪物開始掉
+tier_levels: { 1: 1, 2: 15, 3: 35 }
+
+# true = 同一種輔助一個角色只能用一次（PoE2）；false = 不同技能可以各掛一顆（預設）
+once_per_character: false
+
+# 2026-10 PoE2 改版拿掉的輔助寶石：代號: 階級。玩家身上、面板上的這些輔助會換成同階的未切割輔助寶石（登入時自動換）。
+retired:
+  multistrike: 3
+  multiple_totems: 3
+  melee_physical: 2
+  life_on_hit: 1
+  trinity: 3
+  aura_effect: 2
+  aura_expanse: 2
+  aura_resonance: 3
+  aura_efficiency: 2
+  generosity: 2
+  trap: 2
+  returning_projectiles: 3
+  greater_multiple_projectiles: 3
+  instant_leech: 2
+  elemental_damage_with_attacks: 2
+  melee_splash: 2
+  physical_to_lightning: 2
+  frenzy_on_hit: 2
+  power_on_hit: 2
+  endurance_on_hit: 2
+  aura_reach: 1          # 2026-10：自己做的光環輔助，PoE2 沒有，刪掉
+  aura_amplify: 2
+  aura_thrift: 2
+  aura_benevolence: 2
+  aura_sanctum: 3
+  efficiency: 1           # 2026-10：節流（魔力消耗）也刪掉
+
+supports:
+
+  # ---- 第 1 階 ----
+
+  increased_area:
+    name: 擴散
+    description: 被輔助的技能範圍變大。
+    icon: SLIME_BALL
+    tier: 1
+    requires: [area]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: skill.area, type: INCREASED, value: 40 }
+
+  faster_projectiles:
+    name: 疾矢
+    description: 投射物飛得更快，打得更痛。
+    icon: FEATHER
+    tier: 1
+    requires: [projectile]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: skill.projectile_speed, type: INCREASED, value: 50 }
+      - { stat: damage, type: MORE, value: 15, tags: [projectile] }
+
+  pierce:
+    name: 貫穿
+    description: 投射物穿過敵人繼續飛（會爆炸的在停下來時才爆炸）。
+    icon: TRIDENT
+    tier: 1
+    requires: [projectile]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: skill.pierce, type: FLAT, value: 2 }
+      - { stat: damage, type: MORE, value: 10, tags: [projectile] }
+
+  faster_attacks:
+    name: 迅擊
+    description: 被輔助的攻擊打得更快，每一下輕一點。
+    icon: SUGAR
+    tier: 1
+    requires: [attack]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: attack.speed, type: MORE, value: 25 }
+      - { stat: damage, type: MORE, value: -10 }
+
+  faster_casting:
+    name: 疾詠
+    description: 被輔助的法術施放得更快。
+    icon: CLOCK
+    tier: 1
+    requires: [spell]
+    excludes: [aura, herald]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: cast.speed, type: MORE, value: 20 }
+
+  added_fire:
+    name: 引火
+    description: 物理傷害的一部分額外化為火焰（焚羽箭、近戰都適用；純法術沒有物理傷害）。
+    icon: BLAZE_POWDER
+    tier: 1
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage.gain.fire, type: FLAT, value: 25 }
+
+  increased_duration:
+    name: 持久
+    description: 地面效果、漩渦、印記這些有持續時間的效果撐更久。
+    icon: CLOCK
+    tier: 1
+    requires: [duration]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: skill.duration, type: INCREASED, value: 45 }
+
+  critical_strikes:
+    name: 致命
+    description: 被輔助的技能更容易暴擊。
+    icon: SPIDER_EYE
+    tier: 1
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: crit.chance, type: INCREASED, value: 80 }
+
+  lingering:
+    name: 餘韻
+    description: 被輔助的技能造成的點燃、冰緩、凍結、感電持續更久。
+    icon: GLOW_INK_SAC
+    tier: 1
+    requires: [attack, spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: ailment.duration, type: INCREASED, value: 40 }
+
+  minion_damage:
+    name: 兇猛召喚
+    description: 被輔助的技能召出來的召喚物造成更多傷害。只有召喚技能能掛。
+    icon: WITHER_SKELETON_SKULL
+    tier: 1
+    requires: [minion]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: damage, type: MORE, value: 35, tags: [minion] }
+
+  # ---- 第 2 階 ----
+
+  concentrated_effect:
+    name: 凝聚
+    description: 範圍變小，範圍傷害變高。
+    icon: MAGMA_CREAM
+    tier: 2
+    requires: [area]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: skill.area, type: MORE, value: -30 }
+      - { stat: damage, type: MORE, value: 35, tags: [area] }
+
+  chain:
+    name: 連環
+    description: 投射物打中之後跳向附近另一個敵人；鏈雷多跳幾次。
+    icon: IRON_CHAIN
+    tier: 2
+    requires: [projectile, chain]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: skill.chains, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -10 }
+
+  life_leech:
+    name: 飲血
+    description: 打中敵人時偷取生命，慢慢補回來。
+    icon: FERMENTED_SPIDER_EYE
+    tier: 2
+    requires: [attack]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: leech.life, type: FLAT, value: 5 }
+
+  searing:
+    name: 燎原
+    description: 火焰傷害更容易點燃敵人，點燃燒得更痛。
+    icon: FIRE_CHARGE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 25 }
+      - { stat: ignite.magnitude, type: MORE, value: 40 }
+
+  lacerate:
+    name: 割裂
+    description: 攻擊更容易讓敵人流血，流血流得更痛（流血只有攻擊會造成；目標移動時加倍）。
+    icon: NETHERITE_SCRAP
+    tier: 2
+    requires: [attack]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 30, tags: [attack] }
+      - { stat: bleed.magnitude, type: MORE, value: 40 }
+
+  envenom:
+    name: 淬毒
+    description: 物理與混沌傷害擊中時更容易讓敵人中毒，中毒更痛（可以疊加）。
+    icon: SPIDER_EYE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 30 }
+      - { stat: poison.magnitude, type: MORE, value: 30 }
+
+  concussive:
+    name: 震懾
+    description: 打得更容易把敵人暈過去（暈眩累積更多；物理最會暈）。
+    icon: ANVIL
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 50 }
+
+  electrocute:
+    name: 電擊
+    description: 閃電傷害擊中時有機率累積電擊，累積滿了敵人會麻痺一段時間（跟感電另外算）。
+    icon: LIGHTNING_ROD
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: electrocute.chance, type: FLAT, value: 50 }
+      - { stat: electrocute.buildup, type: MORE, value: 30 }
+    notes:
+      - 沒有閃電傷害的技能掛了沒用
+
+  glacial:
+    name: 冰封
+    description: 冰冷傷害更快把敵人凍住，冰緩也更強。
+    icon: PACKED_ICE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: freeze.buildup, type: MORE, value: 60 }
+      - { stat: chill.effect, type: INCREASED, value: 30 }
+
+  static_charge:
+    name: 雷殛
+    description: 閃電傷害更容易感電敵人，感電的效果也更強。
+    icon: LIGHTNING_ROD
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 25 }
+      - { stat: shock.effect, type: INCREASED, value: 25 }
+
+  culling_strike:
+    name: 斷命            # 2026-10：撲殺 → 斷命（跟 PoE 同名）
+    description: 被輔助的技能擊中後，敵人的生命掉到一定比例以下就直接倒下——普通怪 30%、魔法 20%、稀有 10%、傳奇與 Boss 5%。
+    icon: NETHERITE_AXE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: flag.culling, type: FLAT, value: 1 }
+
+  cooldown_recovery:
+    name: 速冷
+    description: 被輔助的技能冷卻時間縮短三成。
+    icon: ICE
+    tier: 2
+    requires: [cooldown]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: skill.cooldown, type: INCREASED, value: -30 }
+
+  burst:
+    name: 爆發
+    description: 有冷卻時間的技能傷害更高，但冷卻更久。
+    icon: TNT
+    tier: 2
+    requires: [cooldown]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: damage, type: MORE, value: 35 }
+      - { stat: skill.cooldown, type: INCREASED, value: 30 }
+
+  fork:
+    name: 歧射
+    description: 投射物第一次打中敵人時分裂成兩發往左右飛出去。榴彈不會直接打中敵人，掛不上。
+    icon: PRISMARINE_SHARD
+    tier: 2
+    requires: [projectile]
+    excludes: [grenade]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: skill.fork, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -10, tags: [projectile] }
+
+  critical_damage:
+    name: 暴傷
+    description: 暴擊打得更痛。
+    icon: NETHERITE_SCRAP
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: crit.multi, type: FLAT, value: 40 }
+
+  added_chaos:
+    name: 蝕化
+    description: 物理傷害的一部分額外化為混沌（看混沌抗性，不看元素抗性）。
+    icon: ECHO_SHARD
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage.gain.chaos, type: FLAT, value: 20 }
+
+  spell_totem:
+    name: 圖騰施法
+    description: 被輔助的法術改由圖騰施放：放下圖騰（8 秒、一次一根），它每隔一段時間對 12 格內最近的敵人放一次；傷害少一些。位移、印記、骸爆、本來就是圖騰或陷阱的不行。
+    icon: TOTEM_OF_UNDYING
+    tier: 2
+    requires: [spell]
+    excludes: [movement, mark, corpse, totem, bell, trap, minion, aura, warcry, persistent]
+    mana_multiplier: 1.5
+    modifiers:
+      - { stat: flag.spell_totem, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -35 }
+
+  minion_life:
+    name: 堅韌召喚
+    description: 被輔助的技能召出來的召喚物更耐打，而且每秒回復一點生命。只有召喚技能能掛。
+    icon: ROTTEN_FLESH
+    tier: 2
+    requires: [minion]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: life.max, type: MORE, value: 40, tags: [minion] }
+      - { stat: life.regen_percent, type: FLAT, value: 1.5, tags: [minion] }
+
+  elemental_leech:
+    name: 元素汲取
+    description: 被輔助的技能造成的火焰、冰冷、閃電傷害有 2% 偷取為生命（照常慢慢回）。
+    icon: HEART_OF_THE_SEA
+    tier: 2
+    requires: [fire, cold, lightning]
+    excludes: [minion, aura]
+    modifiers:
+      - { stat: leech.life_elemental, type: FLAT, value: 2 }
+
+  warcry_power:
+    name: 強勢戰吼
+    description: 被輔助的戰吼多強化兩次攻擊，冷卻時間長一點。只有戰吼能掛。
+    icon: GOAT_HORN
+    tier: 2
+    requires: [warcry]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: warcry.exerts, type: FLAT, value: 2 }
+      - { stat: skill.cooldown, type: INCREASED, value: 20 }
+
+  minion_speed:
+    name: 迅捷召喚
+    description: 被輔助的技能召出來的召喚物打得更快、跑得更快。只有召喚技能能掛。
+    icon: SUGAR
+    tier: 2
+    requires: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: attack.speed, type: MORE, value: 25, tags: [minion] }
+      - { stat: movement.speed, type: INCREASED, value: 30, tags: [minion] }
+
+  # 2026-10：戰星的輔助（擊中時獲得；每打中一個敵人擲一次，召喚物打的不算）
+
+  # ---- 第 3 階 ----
+
+  spell_echo:
+    name: 雙詠
+    description: 被輔助的法術放完 0.25 秒後自動再放一次（不花魔力），每一下輕一點。位移、印記不行。
+    icon: AMETHYST_SHARD
+    tier: 3
+    requires: [spell]
+    excludes: [movement, mark, minion, aura, warcry, totem, bell, trap, persistent, herald]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: flag.echo, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -25 }
+
+  # 2026-10：近戰的「按一次打三下」（法術那邊是雙詠）。三下照攻擊間隔一下一下打，全部打完才能做別的（中途不能換招），
+  # 換來的是更快的攻擊速度與省魔力（三下只扣一次）。瞬影擊掛了是連閃三次（每次瞬移到敵人身邊打一下），閃完才進冷卻；
+  # 出手慢的猛擊、一路衝過去／跳過去的突進（旋刃、突刺衝鋒、跳躍重擊）、圖騰不行
+
+  multiple_projectiles:
+    name: 分光
+    description: 一次多射出兩發，每一發輕一點。
+    icon: PRISMARINE_CRYSTALS
+    tier: 3
+    requires: [projectile]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: skill.projectiles, type: FLAT, value: 2 }
+      - { stat: damage, type: MORE, value: -25 }
+
+  elemental_focus:
+    name: 純化
+    description: 元素傷害大幅提高，但不能造成點燃、冰緩、凍結、感電。
+    icon: NETHER_STAR
+    tier: 3
+    requires: [attack, spell]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: damage, type: MORE, value: 30, tags: [elemental] }
+      - { stat: flag.no_elemental_ailments, type: FLAT, value: 1 }
+
+  # ---- 2026-10：照 PoE 新增 ----
+
+  vengeful_embers:
+    name: 怨燼
+    description: 被輔助的圖騰被打（或你在圖騰 10 格內被打）時，往天上射一團火落在打的敵人身上炸開，傷害照圖騰的最大生命算（冷卻 1 秒）。
+    icon: FIRE_CHARGE
+    tier: 2
+    requires: [totem]
+    excludes: [bell]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: totem.vengeful, type: FLAT, value: 10 }
+      - { stat: totem.life, type: INCREASED, value: 20 }
+    notes: ["圖騰的生命 = 你最大生命的一半（再乘圖騰生命的加成）；怨燼的基礎傷害 = 圖騰最大生命的 10%，再吃你的火焰、法術、範圍、圖騰加成",
+            "圖騰平常不會被怪打：搭替身圖騰最好用，不然就是你在圖騰旁邊被打時反擊"]
+
+  # ---- 打擊（2026-10）：近戰打擊的範圍化 ----
+
+  additional_strike:
+    name: 掃擊
+    description: 被輔助的打擊技能一次多打 2 個附近的敵人（先找前方，不夠再找第一個目標旁邊的），每一下的傷害少一點。
+    icon: NETHERITE_SWORD
+    tier: 2
+    requires: [strike]
+    excludes: [totem]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: skill.strike_targets, type: FLAT, value: 2 }
+      - { stat: damage, type: MORE, value: -20 }
+    notes: ["打擊技能多打的目標也可以從武器的「之橫掃」詞綴、劫盜的揭露詞綴拿到（可以疊，最多多 6 個）"]
+
+  # ---- 2026-10 擴充：物理與弩 ----
+
+  brutality:
+    name: 兇殘            # 2026-10：殘暴 → 兇殘（跟 PoE 同名）
+    description: 攻擊的物理傷害大幅提高，但元素傷害大幅降低（純物理流派用）。
+    icon: IRON_INGOT
+    tier: 2
+    requires: [attack]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: damage, type: MORE, value: 35, tags: [physical] }
+      - { stat: damage, type: MORE, value: -50, tags: [elemental] }
+
+  heavy_bolt:
+    name: 重矢
+    description: 投射物更重：傷害更高、飛得更快，但攻擊比較慢。
+    icon: ANVIL
+    tier: 2
+    requires: [projectile]
+    excludes: [spell]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: damage, type: MORE, value: 30, tags: [projectile] }
+      - { stat: skill.projectile_speed, type: INCREASED, value: 30 }
+      - { stat: attack.speed, type: MORE, value: -10 }
+
+  rapid_reload:
+    name: 速裝機括
+    description: 攻擊的投射物裝填得更快，每一發輕一點。
+    icon: TRIPWIRE_HOOK
+    tier: 1
+    requires: [projectile]
+    excludes: [spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: attack.speed, type: MORE, value: 20 }
+      - { stat: damage, type: MORE, value: -5 }
+
+  shatter_armour:
+    name: 碎甲
+    description: 打中時破甲（物理傷害的 50%），打中更容易把敵人震暈。
+    icon: IRON_CHESTPLATE
+    tier: 1
+    requires: [attack]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: armour.break, value: 50 }
+      - { stat: stun.buildup, type: INCREASED, value: 40 }
+
+  hemorrhage:
+    name: 血崩
+    description: 流血的傷害大幅提高、持續更久（要配會讓敵人流血的攻擊）。
+    icon: REDSTONE
+    tier: 3
+    requires: [attack]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: bleed.magnitude, type: MORE, value: 50 }
+      - { stat: bleed.duration, type: INCREASED, value: 30 }
+      - { stat: bleed.chance, type: FLAT, value: 15, tags: [attack] }
+
+  # ---- 2026-10：曝露、定身、眩暈、怒氣、對強敵（效果照 PoE2，名稱是自己的）----
+
+  exposure:
+    name: 破元
+    description: 被輔助的技能擊中時有機率讓敵人曝露：這一下打出的火焰、冰冷、閃電，那幾種抗性 −20%，四秒。誰打都算。
+    icon: PRISMARINE_SHARD
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: exposure.chance, type: FLAT, value: 30 }
+
+  pinning:
+    name: 釘地
+    description: 被輔助的投射物攻擊擊中時有機率把敵人釘在原地（不能移動，照樣會打你）：普通 2 秒、稀有 1.5 秒、傳奇與 Boss 1 秒，之後 4 秒不會再被釘。
+    icon: TRIPWIRE_HOOK
+    tier: 2
+    requires: [projectile]
+    excludes: [spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: pin.chance, type: FLAT, value: 25 }
+
+  dazing:
+    name: 震眩
+    description: 被輔助的技能擊中時有機率讓敵人眩暈四秒：造成的傷害更少 15%、暈眩門檻減少 30%。
+    icon: GOLD_NUGGET
+    tier: 2
+    requires: [attack]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: daze.chance, type: FLAT, value: 25 }
+      - { stat: stun.buildup, type: INCREASED, value: 20 }
+
+  rage:
+    name: 怒火
+    description: 被輔助的近戰攻擊打中敵人時獲得 2 點怒氣（最多 30 點，每點增加 1% 攻擊傷害；兩秒沒拿到就慢慢掉）。
+    icon: BLAZE_POWDER
+    tier: 1
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: rage.on_hit, type: FLAT, value: 2 }
+
+  giant_slayer:
+    name: 屠巨
+    description: 被輔助的技能對稀有、傳奇怪物與 Boss 更痛。
+    icon: NETHERITE_SCRAP
+    tier: 3
+    requires: [attack, spell]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: damage.vs_rare, type: INCREASED, value: 40 }
+
+  # ---- 2026-10 PoE2 補齊：更多輔助（效果照 PoE2，名稱是自己的）----
+
+
+  martial_tempo:
+    name: 快刀
+    description: 被輔助的近戰攻擊打得更快，暈眩累積也更多。
+    icon: FEATHER
+    tier: 2
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: attack.speed, type: INCREASED, value: 20 }
+      - { stat: stun.buildup, type: INCREASED, value: 20 }
+
+  considered_casting:
+    name: 蓄詠
+    description: 被輔助的法術施放慢一點，但傷害更高。
+    icon: CLOCK
+    tier: 2
+    requires: [spell]
+    excludes: [aura, herald]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: cast.speed, type: INCREASED, value: -20 }
+      - { stat: damage, type: MORE, value: 30, tags: [spell] }
+
+  swift_affliction:
+    name: 急蝕
+    description: 被輔助的技能造成的點燃、流血、中毒時間變短，但每秒傷害更高。
+    icon: SPIDER_EYE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: ailment.duration, type: INCREASED, value: -25 }
+      - { stat: ignite.magnitude, type: MORE, value: 25 }
+      - { stat: bleed.magnitude, type: MORE, value: 25 }
+      - { stat: poison.magnitude, type: MORE, value: 25 }
+
+  overcharge:
+    name: 熾電
+    description: 被輔助的技能感電更強、更容易電擊。
+    icon: LIGHTNING_ROD
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: shock.effect, type: INCREASED, value: 40 }
+      - { stat: electrocute.buildup, type: INCREASED, value: 40 }
+
+  frostbite:
+    name: 徹寒
+    description: 被輔助的技能冰緩更強、凍結累積更多。
+    icon: PACKED_ICE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: chill.effect, type: INCREASED, value: 40 }
+      - { stat: freeze.buildup, type: INCREASED, value: 40 }
+
+  ignition:
+    name: 燃意
+    description: 被輔助的技能更容易點燃，點燃也更痛。
+    icon: FLINT_AND_STEEL
+    tier: 1
+    requires: [attack, spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+      - { stat: ignite.magnitude, type: INCREASED, value: 20 }
+
+  heavy_swing:
+    name: 沉錘
+    description: 被輔助的近戰攻擊慢一點，但每一下更重、更容易暈。
+    icon: ANVIL
+    tier: 2
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: attack.speed, type: INCREASED, value: -15 }
+      - { stat: damage, type: MORE, value: 30, tags: [melee] }
+      - { stat: stun.buildup, type: MORE, value: 30 }
+
+  scattershot:
+    name: 分矢
+    description: 被輔助的投射物多射一發，每一發輕一點，射得慢一點。
+    icon: ARROW
+    tier: 1
+    requires: [projectile]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: skill.projectiles, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -15, tags: [projectile] }
+      - { stat: attack.speed, type: INCREASED, value: -10 }
+      - { stat: cast.speed, type: INCREASED, value: -10 }
+
+  minion_haste:
+    name: 驅役
+    description: 被輔助的召喚物跑得快、打得快。
+    icon: SUGAR
+    tier: 1
+    requires: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: attack.speed, type: INCREASED, value: 20, tags: [minion] }
+      - { stat: movement.speed, type: INCREASED, value: 20, tags: [minion] }
+
+  prolonged_duration:
+    name: 長留
+    description: 被輔助的技能持續時間大幅延長，但效果輕一點。
+    icon: HONEY_BOTTLE
+    tier: 2
+    requires: [duration]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: skill.duration, type: INCREASED, value: 60 }
+      - { stat: damage, type: MORE, value: -10 }
+
+  impact_area:
+    name: 震域
+    description: 被輔助的技能範圍更大、更痛，但只能用在範圍技能。
+    icon: SLIME_BLOCK
+    tier: 3
+    requires: [area]
+    mana_multiplier: 1.35
+    modifiers:
+      - { stat: skill.area, type: INCREASED, value: 30 }
+      - { stat: damage, type: MORE, value: 20, tags: [area] }
+
+  close_quarters:
+    name: 貼身
+    description: 被輔助的攻擊打近身（3.5 格內）的敵人時更痛。
+    icon: IRON_BARS
+    tier: 2
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.close, type: MORE, value: 30 }
+
+  hex_exploit:
+    name: 趁咒
+    description: 被輔助的技能打身上有詛咒的敵人時更痛。
+    icon: FERMENTED_SPIDER_EYE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.vs_cursed, type: MORE, value: 30 }
+
+  # ---- 2026-10 PoE2 補齊（第二批輔助；效果照 PoE2，名稱是自己的）----
+
+  precision_aim:
+    name: 凝神
+    description: 被輔助的攻擊命中提高、暴擊率增加。
+    icon: SPYGLASS
+    tier: 1
+    requires: [attack]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: accuracy, type: INCREASED, value: 40 }
+      - { stat: crit.chance, type: INCREASED, value: 30 }
+
+  deep_cuts:
+    name: 深創
+    description: 被輔助的技能造成的流血更痛、更久。
+    icon: REDSTONE
+    tier: 2
+    requires: [attack]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: bleed.magnitude, type: MORE, value: 30 }
+      - { stat: bleed.duration, type: INCREASED, value: 20 }
+
+  virulence:
+    name: 劇毒
+    description: 被輔助的技能造成的中毒更痛、更久。
+    icon: SPIDER_EYE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: poison.magnitude, type: MORE, value: 30 }
+      - { stat: poison.duration, type: INCREASED, value: 20 }
+
+  conduction:
+    name: 導電
+    description: 被輔助的技能感電持續更久、更容易感電。
+    icon: COPPER_INGOT
+    tier: 1
+    requires: [attack, spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 15 }
+      - { stat: shock.duration, type: INCREASED, value: 40 }
+
+  unbound_ailments:
+    name: 縱蝕
+    description: 被輔助的技能造成的所有異常狀態都更強。
+    icon: FERMENTED_SPIDER_EYE
+    tier: 3
+    requires: [attack, spell]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: ignite.magnitude, type: INCREASED, value: 30 }
+      - { stat: bleed.magnitude, type: INCREASED, value: 30 }
+      - { stat: poison.magnitude, type: INCREASED, value: 30 }
+      - { stat: chill.effect, type: INCREASED, value: 30 }
+      - { stat: shock.effect, type: INCREASED, value: 30 }
+
+  point_blank:
+    name: 近矢
+    description: 被輔助的投射物打近身（3.5 格內）的敵人時更痛。
+    icon: ARROW
+    tier: 2
+    requires: [projectile]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.close, type: MORE, value: 35 }
+
+  totem_fury:
+    name: 樁怒
+    description: 被輔助的圖騰技能傷害更高。
+    icon: TOTEM_OF_UNDYING
+    tier: 2
+    requires: [totem]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage, type: MORE, value: 25, tags: [totem] }
+
+  elemental_army:
+    name: 元素軍團
+    description: 被輔助的召喚物元素抗性提高。
+    icon: PRISMARINE_CRYSTALS
+    tier: 1
+    requires: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: resist.fire, type: FLAT, value: 25, tags: [minion] }
+      - { stat: resist.cold, type: FLAT, value: 25, tags: [minion] }
+      - { stat: resist.lightning, type: FLAT, value: 25, tags: [minion] }
+
+  meat_shield:
+    name: 肉盾
+    description: 被輔助的召喚物更耐打、更容易擋下攻擊，但傷害少一點。
+    icon: SHIELD
+    tier: 2
+    requires: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: life.max, type: MORE, value: 40, tags: [minion] }
+      - { stat: damage, type: MORE, value: -15, tags: [minion] }
+
+  minion_frenzy:
+    name: 嗜殺召喚
+    description: 被輔助的召喚物傷害更高、攻擊更快。
+    icon: BLAZE_POWDER
+    tier: 3
+    requires: [minion]
+    mana_multiplier: 1.35
+    modifiers:
+      - { stat: damage, type: MORE, value: 30, tags: [minion] }
+      - { stat: attack.speed, type: INCREASED, value: 15, tags: [minion] }
+
+  lingering_hex:
+    name: 咒延
+    description: 被輔助的詛咒持續更久、範圍更大。
+    icon: FERMENTED_SPIDER_EYE
+    tier: 1
+    requires: [curse]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: skill.duration, type: INCREASED, value: 40 }
+      - { stat: skill.area, type: INCREASED, value: 25 }
+
+  mana_leech:
+    name: 汲魔
+    description: 被輔助的技能造成的物理傷害有一部分偷取為魔力。
+    icon: LAPIS_LAZULI
+    tier: 1
+    requires: [attack, spell]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: leech.mana, type: FLAT, value: 2 }
+
+  cluster_bombs:
+    name: 增彈
+    description: 被輔助的榴彈多丟一顆。
+    icon: TNT
+    tier: 2
+    requires: [grenade]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: skill.projectiles, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -10 }
+
+  chaos_penetration:
+    name: 蝕穿
+    description: 被輔助的技能穿透敵人的混沌抗性。
+    icon: ECHO_SHARD
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: penetration, type: FLAT, value: 20, tags: [chaos] }
+
+  cold_snap_support:
+    name: 凜冽
+    description: 被輔助的冰冷技能更痛，凍結累積更多。
+    icon: ICE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage, type: MORE, value: 15, tags: [cold] }
+      - { stat: freeze.buildup, type: INCREASED, value: 30 }
+
+  searing_heat:
+    name: 灼熾
+    description: 被輔助的火焰技能更痛，點燃機率提高。
+    icon: MAGMA_CREAM
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage, type: MORE, value: 15, tags: [fire] }
+      - { stat: ignite.chance, type: FLAT, value: 10 }
+
+  storm_surge:
+    name: 雷湧
+    description: 被輔助的閃電技能更痛，感電機率提高。
+    icon: LIGHTNING_ROD
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage, type: MORE, value: 15, tags: [lightning] }
+      - { stat: shock.chance, type: FLAT, value: 10 }
+
+  bludgeon:
+    name: 重擊
+    description: 被輔助的攻擊更容易破甲、暈眩。
+    icon: IRON_BLOCK
+    tier: 2
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: armour.break, type: FLAT, value: 40 }
+      - { stat: stun.buildup, type: INCREASED, value: 30 }
+
+  swift_cooldown:
+    name: 迅返
+    description: 被輔助的技能冷卻大幅縮短，但傷害少一點。
+    icon: CLOCK
+    tier: 3
+    requires: [cooldown]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: skill.cooldown, type: INCREASED, value: -35 }
+      - { stat: damage, type: MORE, value: -10 }
+
+  warcry_reach:
+    name: 遠嘯
+    description: 被輔助的戰吼範圍更大、持續更久。
+    icon: GOAT_HORN
+    tier: 1
+    requires: [warcry]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: skill.area, type: INCREASED, value: 40 }
+      - { stat: skill.duration, type: INCREASED, value: 30 }
+
+  execute:
+    name: 處刑
+    description: 被輔助的技能打生命低（35% 以下）的敵人時更痛。
+    icon: IRON_AXE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage.vs_low_life, type: FLAT, value: 50 }
+
+  hunter_focus:
+    name: 盯梢
+    description: 被輔助的技能打身上有詛咒的敵人時暴擊率更高、更痛。
+    icon: SPYGLASS
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.vs_cursed, type: INCREASED, value: 30 }
+      - { stat: crit.chance, type: INCREASED, value: 20 }
+
+  # ---- 2026-10：觸發、對異常狀態、擊殺增益、蓄力 ----
+
+  trigger_crit:
+    name: 暴擊觸發
+    description: 被輔助的法術在你攻擊暴擊時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。技能要綁在上方按鍵格（不用按）。
+    icon: GOLD_NUGGET
+    tier: 2
+    requires: [spell]
+    excludes: [minion, aura, warcry, movement, herald]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: trigger.crit, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -20 }
+
+  trigger_hit_taken:
+    name: 受擊觸發
+    description: 被輔助的法術在你被敵人擊中時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。
+    icon: SHIELD
+    tier: 2
+    requires: [spell]
+    excludes: [minion, aura, warcry, movement, herald]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: trigger.hit_taken, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -20 }
+
+  trigger_kill:
+    name: 擊殺觸發
+    description: 被輔助的法術在你擊殺敵人時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。
+    icon: SKELETON_SKULL
+    tier: 2
+    requires: [spell]
+    excludes: [minion, aura, warcry, movement, herald]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: trigger.kill, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -20 }
+
+  trigger_ailment:
+    name: 異常觸發
+    description: 被輔助的法術在你讓敵人點燃、冰緩、凍結或感電時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。
+    icon: FIRE_CHARGE
+    tier: 3
+    requires: [spell]
+    excludes: [minion, aura, warcry, movement, herald]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: trigger.ailment, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -25 }
+
+  vs_chilled:
+    name: 趁寒
+    description: 被輔助的技能打冰緩中、凍結中的敵人更痛。
+    icon: PACKED_ICE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.vs_chilled, type: MORE, value: 25 }
+      - { stat: damage.vs_frozen, type: MORE, value: 20 }
+
+  vs_ignited:
+    name: 趁焰
+    description: 被輔助的技能打點燃中的敵人更痛。
+    icon: MAGMA_CREAM
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.vs_ignited, type: MORE, value: 30 }
+
+  vs_shocked:
+    name: 趁雷
+    description: 被輔助的技能打感電中的敵人更痛。
+    icon: COPPER_INGOT
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.vs_shocked, type: MORE, value: 30 }
+
+  vs_poisoned:
+    name: 趁毒
+    description: 被輔助的技能打中毒的敵人更痛。
+    icon: SPIDER_EYE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.vs_poisoned, type: MORE, value: 30 }
+
+  vs_bleeding:
+    name: 趁血
+    description: 被輔助的技能打流血中的敵人更痛。
+    icon: REDSTONE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.vs_bleeding, type: MORE, value: 30 }
+
+  killing_spree:
+    name: 嗜殺
+    description: 被輔助的技能打死敵人後，4 秒內攻擊與施法速度增加。
+    icon: SUGAR
+    tier: 2
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: onkill.speed, type: FLAT, value: 20 }
+
+  momentum_kill:
+    name: 殺勢
+    description: 被輔助的技能打死敵人後，4 秒內傷害增加。
+    icon: BLAZE_POWDER
+    tier: 2
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: onkill.damage, type: FLAT, value: 30 }
+
+  # ---- 2026-10：元素灌注 ----
+  ember_infusion:
+    name: 焰蘊
+    description: 被輔助的法術放完獲得一層火焰灌注（身上每種最多 2 層，10 秒沒拿到就散掉）。
+    icon: BLAZE_POWDER
+    tier: 3
+    requires: [spell]
+    excludes: [minion, aura, herald]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: infusion.gain_fire, type: FLAT, value: 1 }
+
+  frost_infusion:
+    name: 霜蘊
+    description: 被輔助的法術放完獲得一層冰冷灌注（身上每種最多 2 層，10 秒沒拿到就散掉）。
+    icon: SNOWBALL
+    tier: 3
+    requires: [spell]
+    excludes: [minion, aura, herald]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: infusion.gain_cold, type: FLAT, value: 1 }
+
+  storm_infusion:
+    name: 雷蘊
+    description: 被輔助的法術放完獲得一層閃電灌注（身上每種最多 2 層，10 秒沒拿到就散掉）。
+    icon: GLOWSTONE_DUST
+    tier: 3
+    requires: [spell]
+    excludes: [minion, aura, herald]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: infusion.gain_lightning, type: FLAT, value: 1 }
+
+  infusion_release:
+    name: 灌元
+    description: 被輔助的法術放的時候用掉身上每種灌注各一層：每用掉一層更多 15% 傷害，用掉哪種就獲得 15% 傷害為額外的那種元素傷害。
+    icon: AMETHYST_SHARD
+    tier: 3
+    requires: [spell]
+    excludes: [minion, aura, herald]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: infusion.consume, type: FLAT, value: 1 }
+      - { stat: infusion.more, type: FLAT, value: 15 }
+      - { stat: infusion.extra, type: FLAT, value: 15 }
+
+  channel_focus:
+    name: 蓄勢
+    description: 被輔助的技能變成可以蓄力：連續放（按住）每放一次加一層，最多 4 層，每層更多 10% 傷害。本身就會蓄力的技能不能掛。
+    icon: CLOCK
+    tier: 3
+    requires: [attack, spell]
+    excludes: [minion, aura, warcry, movement, herald]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: channel.stages, type: FLAT, value: 4 }
+      - { stat: channel.more, type: FLAT, value: 10 }
+
+  # ---- 專屬（終局、極境掉落；未切割輔助寶石切不出來）----
+  # 四個終局 Boss 各一顆（maps.yml 的 drops.final_support_chance，4%；極境版本的機率更高，寫在 uber.drops.extra），
+  # 另外兩顆只有極境會掉（uber.drops.extra）。比一般的輔助強：好幾種效果疊在一起，魔力消耗也比較高。
+
+  # ---- 2026-10 PoE2 改版：新輔助（效果照 PoE2，名稱是自己的）----
+
+  heft:
+    name: 沉重
+    description: 物理傷害更多 25%，攻擊速度更少 5%。
+    icon: IRON_BLOCK
+    tier: 1
+    requires: [attack]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage, type: MORE, value: 25, tags: [physical] }
+      - { stat: attack.speed, type: MORE, value: -5 }
+
+  ruthless:
+    name: 無情
+    description: 近戰攻擊的傷害更多 15%，暈眩累積更多 50%。
+    icon: NETHERITE_SCRAP
+    tier: 2
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage, type: MORE, value: 15 }
+      - { stat: stun.buildup, type: MORE, value: 50 }
+
+  fire_penetration:
+    name: 熔破
+    description: 火焰傷害穿透敵人 30% 火焰抗性。
+    icon: BLAZE_POWDER
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: penetration, type: FLAT, value: 30, tags: [fire] }
+
+  cold_penetration:
+    name: 寒徹
+    description: 冰冷傷害穿透敵人 30% 冰冷抗性。
+    icon: PACKED_ICE
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: penetration, type: FLAT, value: 30, tags: [cold] }
+
+  lightning_penetration:
+    name: 雷透
+    description: 閃電傷害穿透敵人 30% 閃電抗性。
+    icon: LIGHTNING_ROD
+    tier: 2
+    requires: [attack, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: penetration, type: FLAT, value: 30, tags: [lightning] }
+
+  controlled_destruction:
+    name: 精控
+    description: 法術傷害更多 30%，但不會暴擊。
+    icon: AMETHYST_SHARD
+    tier: 2
+    requires: [spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage, type: MORE, value: 30 }
+      - { stat: crit.chance, type: MORE, value: -100 }
+
+  sturdy_totem:
+    name: 堅樁
+    description: 圖騰的生命增加 60%，被打也比較不會倒（要配圖騰技能）。
+    icon: OAK_LOG
+    tier: 1
+    requires: [totem]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: totem.life, type: INCREASED, value: 60 }
+
+  giant_minions:
+    name: 巨魄
+    description: 召喚物的生命更多 50%、傷害更多 25%，但移動速度減少 15%。
+    icon: GOLDEN_APPLE
+    tier: 2
+    requires: [minion]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: life.max, type: MORE, value: 50, tags: [minion] }
+      - { stat: damage, type: MORE, value: 25, tags: [minion] }
+      - { stat: movement.speed, type: INCREASED, value: -15, tags: [minion] }
+
+  starfall_resonance:
+    name: 星骸共鳴
+    description: 曜帝熔爐裡的回聲：什麼技能都能掛，傷害、範圍、暴擊傷害一起變強。
+    icon: END_CRYSTAL
+    tier: 3
+    source: sky_crucible
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: damage, type: MORE, value: 25 }
+      - { stat: skill.area, type: INCREASED, value: 20 }
+      - { stat: crit.multi, type: FLAT, value: 20 }
+    notes: ["曜帝・星骸之軀（天穹熔爐）掉落"]
+
+  permafrost_heart:
+    name: 永凍之心
+    description: 霜心女王的心跳：冰冷傷害更痛，敵人更容易被冰緩、凍結。
+    icon: BLUE_ICE
+    tier: 3
+    source: frost_throne
+    requires: [attack, spell]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: damage, type: MORE, value: 30, tags: [cold] }
+      - { stat: freeze.buildup, type: MORE, value: 60 }
+      - { stat: chill.effect, type: INCREASED, value: 40 }
+    notes: ["永凍女王・霜心（永凍王座）掉落"]
+
+  styx_ferry:
+    name: 冥河渡魂
+    description: 渡者收下的骨頭都還記得怎麼打架：召喚物更痛、更硬、更快。
+    icon: WITHER_SKELETON_SKULL
+    tier: 3
+    source: bone_throne
+    requires: [minion]
+    mana_multiplier: 1.35
+    modifiers:
+      - { stat: damage, type: MORE, value: 35, tags: [minion] }
+      - { stat: life.max, type: MORE, value: 35, tags: [minion] }
+      - { stat: attack.speed, type: MORE, value: 15, tags: [minion] }
+    notes: ["蝕骨之王・冥河渡者（冥河渡口）掉落"]
+
+  skyburn_fury:
+    name: 焚天之怒
+    description: 餘燼將軍等了三百年的火：火焰傷害更痛，而且一碰就燒。
+    icon: FIRE_CHARGE
+    tier: 3
+    source: ember_citadel
+    requires: [attack, spell]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: damage, type: MORE, value: 25, tags: [fire] }
+      - { stat: ignite.chance, type: FLAT, value: 30 }
+      - { stat: ignite.magnitude, type: MORE, value: 50 }
+    notes: ["餘燼將軍・焚天（餘燼堡壘）掉落"]
+
+  abyssal_touch:
+    name: 深淵之觸
+    description: 從星骸最深處帶上來的東西：物理傷害額外附加混沌，混沌傷害更痛，還會中毒。
+    icon: SCULK_CATALYST
+    tier: 3
+    source: uber
+    requires: [attack, spell]
+    mana_multiplier: 1.35
+    modifiers:
+      - { stat: damage.gain.chaos, type: FLAT, value: 30 }
+      - { stat: damage, type: MORE, value: 25, tags: [chaos] }
+      - { stat: poison.chance, type: FLAT, value: 25 }
+    notes: ["只有極境的終局 Boss 會掉"]
+
+  myriad_stars:
+    name: 星辰萬象
+    description: 一發變成滿天星：多射兩發、多連鎖一次，每一發不但不像分光那樣變輕，還更痛一點。
+    icon: AMETHYST_SHARD
+    tier: 3
+    source: uber
+    requires: [projectile]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: skill.projectiles, type: FLAT, value: 2 }
+      - { stat: skill.chains, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: 10, tags: [projectile] }
+    notes: ["只有極境的終局 Boss 會掉"]
+
+  # ---- 2026-10：PoE2 輔助補齊・第 1 批（30 個；機制照 PoE2，名稱是自己的。我們做不到的條件用近似值）----
+  fire_mastery:            # Fire Mastery
+    name: 燼髓
+    description: 被輔助的火焰技能等級 +1。
+    icon: BLAZE_POWDER
+    tier: 3
+    requires: [fire]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: skill.level, type: FLAT, value: 1, tags: [fire] }
+
+  cold_mastery:            # Cold Mastery
+    name: 霜髓
+    description: 被輔助的冰冷技能等級 +1。
+    icon: SNOWBALL
+    tier: 3
+    requires: [cold]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: skill.level, type: FLAT, value: 1, tags: [cold] }
+
+  lightning_mastery:       # Lightning Mastery
+    name: 霆髓
+    description: 被輔助的閃電技能等級 +1。
+    icon: GLOWSTONE_DUST
+    tier: 3
+    requires: [lightning]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: skill.level, type: FLAT, value: 1, tags: [lightning] }
+
+  chaos_mastery:           # Chaos Mastery
+    name: 淵髓
+    description: 被輔助的混沌技能等級 +1。
+    icon: FERMENTED_SPIDER_EYE
+    tier: 3
+    requires: [chaos]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: skill.level, type: FLAT, value: 1, tags: [chaos] }
+
+  physical_mastery:        # Physical Mastery
+    name: 鐵髓
+    description: 被輔助的物理技能等級 +1。
+    icon: IRON_INGOT
+    tier: 3
+    requires: [physical]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: skill.level, type: FLAT, value: 1, tags: [physical] }
+
+  deliberation:            # Deliberation（施放時移動變慢那段沒做）
+    name: 凝息
+    description: 被輔助的技能更痛。
+    icon: CLOCK
+    tier: 2
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage, type: MORE, value: 15 }   # 2026-10 平衡：沒有缺點，20 → 15
+
+  overreach:               # Overreach（近身命中降低用「命中更少」近似）
+    name: 闊勢
+    description: 被輔助的範圍攻擊範圍大很多，但命中變差。
+    icon: TARGET
+    tier: 2
+    requires: [area]
+    excludes: [spell, minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: skill.area, type: INCREASED, value: 40 }
+      - { stat: accuracy, type: MORE, value: -30 }
+
+  bloodlust:               # Bloodlust
+    name: 腥獵
+    description: 被輔助的近戰攻擊打流血中的敵人更痛，但自己不會造成流血。
+    icon: REDSTONE
+    tier: 2
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.vs_bleeding, type: MORE, value: 30 }
+      - { stat: bleed.chance, type: MORE, value: -100 }
+
+  first_blood:             # First Blood（「對滿血的敵人」改成一律加機率，數值調低）
+    name: 初裂
+    description: 被輔助的攻擊更容易造成流血。
+    icon: RED_DYE
+    tier: 1
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 20 }
+
+  deep_freeze:             # Deep Freeze
+    name: 封霜
+    description: 被輔助的技能凍結的時間更久。
+    icon: BLUE_ICE
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: freeze.duration, type: INCREASED, value: 50 }
+
+  lasting_shock:           # Lasting Shock
+    name: 綿雷
+    description: 被輔助的技能造成的感電持續兩倍久，但比較不容易感電。
+    icon: LIGHTNING_ROD
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: shock.duration, type: INCREASED, value: 100 }
+      - { stat: shock.chance, type: MORE, value: -30 }
+
+  escalating_poison:       # Escalating Poison（多疊一層毒用「毒更痛、持續更短」近似）
+    name: 層瘴
+    description: 被輔助的技能造成的中毒更痛，但持續時間更短。
+    icon: SPIDER_EYE
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: poison.magnitude, type: MORE, value: 20 }
+      - { stat: poison.duration, type: MORE, value: -20 }
+
+  intense_agony:           # Intense Agony（「對滿血的敵人」改成一律，數值調低）
+    name: 速蝕
+    description: 被輔助的持續傷害法術更痛，但持續時間更短。
+    icon: WITHER_ROSE
+    tier: 2
+    requires: [duration]
+    excludes: [attack, minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage, type: MORE, value: 35 }
+      - { stat: skill.duration, type: MORE, value: -25 }
+
+  immolate:                # Immolate
+    name: 炙獵
+    description: 被輔助的攻擊打燃燒中的敵人更痛、多附加火焰傷害，但自己不會點燃。
+    icon: FIRE_CHARGE
+    tier: 2
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage.gain.fire, type: FLAT, value: 10 }
+      - { stat: damage.vs_ignited, type: MORE, value: 25 }
+      - { stat: ignite.chance, type: MORE, value: -100 }
+
+  frostfire:               # Frostfire（「對凍結的敵人」改成一律，數值調低）
+    name: 寒焚
+    description: 被輔助的技能點燃更痛，但不會凍結敵人。
+    icon: MAGMA_CREAM
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: ignite.magnitude, type: MORE, value: 30 }
+      - { stat: freeze.buildup, type: MORE, value: -100 }
+
+  scouring_flame:          # Scouring Flame（PoE2 是另外付護盾，這裡改成魔力消耗更高）
+    name: 熾烙
+    description: 被輔助的技能點燃更痛很多，但魔力消耗更高。
+    icon: CAMPFIRE
+    tier: 3
+    excludes: [minion]
+    mana_multiplier: 1.35
+    modifiers:
+      - { stat: ignite.magnitude, type: MORE, value: 50 }
+
+  embitter:                # Embitter（「所有附加改成冰冷」用「物理傷害多附加冰冷」近似）
+    name: 凝霜刃
+    description: 被輔助的技能多附加冰冷傷害。
+    icon: PACKED_ICE
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.gain.cold, type: FLAT, value: 10 }
+
+  volt:                    # Volt（移動累積電荷用平均值近似）
+    name: 引雷
+    description: 被輔助的投射物攻擊多附加閃電傷害。
+    icon: COPPER_INGOT
+    tier: 2
+    requires: [projectile]
+    excludes: [spell, minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.gain.lightning, type: FLAT, value: 15 }
+
+  corrosion:               # Corrosion（中毒破甲用「破甲加強、加中毒機率」近似）
+    name: 鏽甲
+    description: 被輔助的技能破甲更強，還有機率造成中毒。
+    icon: SLIME_BALL
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: armour.break, type: INCREASED, value: 40 }
+      - { stat: poison.chance, type: FLAT, value: 10 }
+
+  brittle_armour:          # Brittle Armour
+    name: 霜裂甲
+    description: 被輔助的技能破甲更強，也更容易凍結。
+    icon: CHAINMAIL_CHESTPLATE
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: armour.break, type: INCREASED, value: 30 }
+      - { stat: freeze.buildup, type: INCREASED, value: 20 }
+
+  devastate:               # Devastate（重暈時完全破甲用「暈眩值、破甲加強」近似）
+    name: 崩勢
+    description: 被輔助的技能更容易暈眩敵人，破甲也更強。
+    icon: ANVIL
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: stun.buildup, type: INCREASED, value: 30 }
+      - { stat: armour.break, type: INCREASED, value: 30 }
+
+  excoriate:               # Excoriate
+    name: 剝元
+    description: 被輔助的近戰攻擊：敵人身上每有一種元素異常就更痛，但自己不會造成元素異常。
+    icon: SHEARS
+    tier: 2
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.vs_chilled, type: MORE, value: 10 }
+      - { stat: damage.vs_frozen, type: MORE, value: 10 }
+      - { stat: damage.vs_ignited, type: MORE, value: 10 }
+      - { stat: damage.vs_shocked, type: MORE, value: 10 }
+      - { stat: flag.no_elemental_ailments, type: FLAT, value: 1 }
+
+  see_red:                 # See Red（流血的怪跑更快那段沒做）
+    name: 血綿
+    description: 被輔助的攻擊造成的流血持續更久。
+    icon: NETHER_WART
+    tier: 1
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: bleed.duration, type: INCREASED, value: 50 }
+
+  flamepierce:             # Flamepierce（「穿透燃燒中的敵人」改成穿透一個）
+    name: 穿燼
+    description: 被輔助的投射物多穿透一個敵人，但不會點燃。
+    icon: BLAZE_ROD
+    tier: 1
+    requires: [projectile]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: skill.pierce, type: FLAT, value: 1 }
+      - { stat: ignite.chance, type: MORE, value: -100 }
+
+  freezefork:              # Freezefork（「從凍結的敵人分裂」改成一律分裂）
+    name: 霜岔
+    description: 被輔助的投射物第一次打中時分裂成兩發，但不會凍結。
+    icon: PRISMARINE_SHARD
+    tier: 2
+    requires: [projectile]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: skill.fork, type: FLAT, value: 1 }
+      - { stat: freeze.buildup, type: MORE, value: -100 }
+
+  stormchain:              # Stormchain（「從感電的敵人連鎖」改成一律連鎖）
+    name: 躍霆
+    description: 被輔助的投射物多連鎖一次，但不會感電。
+    icon: IRON_CHAIN
+    tier: 2
+    requires: [projectile]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: skill.chains, type: FLAT, value: 1 }
+      - { stat: shock.chance, type: MORE, value: -100 }
+
+  expanse:                 # Expanse
+    name: 蓄域
+    description: 被輔助的技能範圍大很多，但多了 8 秒冷卻。本來就有冷卻的技能不能掛。
+    icon: HEART_OF_THE_SEA
+    tier: 2
+    requires: [area]
+    excludes: [cooldown, minion]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: skill.area, type: MORE, value: 50 }
+      - { stat: skill.added_cooldown, type: FLAT, value: 8 }
+
+  excise:                  # Excise
+    name: 蓄鋒
+    description: 被輔助的技能暴擊率高很多，但多了 8 秒冷卻。本來就有冷卻的技能不能掛。
+    icon: ECHO_SHARD
+    tier: 2
+    excludes: [cooldown, minion]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: crit.chance, type: MORE, value: 40 }
+      - { stat: skill.added_cooldown, type: FLAT, value: 8 }
+
+  execrate:                # Execrate
+    name: 蓄疾
+    description: 被輔助的技能造成異常的機率加倍，但多了 8 秒冷卻。本來就有冷卻的技能不能掛。
+    icon: SUSPICIOUS_STEW
+    tier: 2
+    excludes: [cooldown, minion]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: ignite.chance, type: MORE, value: 100 }
+      - { stat: shock.chance, type: MORE, value: 100 }
+      - { stat: bleed.chance, type: MORE, value: 100 }
+      - { stat: poison.chance, type: MORE, value: 100 }
+      - { stat: freeze.buildup, type: MORE, value: 100 }
+      - { stat: skill.added_cooldown, type: FLAT, value: 8 }
+
+  hourglass:               # Hourglass
+    name: 蓄力
+    description: 被輔助的技能更痛，但多了 10 秒冷卻。本來就有冷卻的技能不能掛。
+    icon: CLOCK
+    tier: 3
+    excludes: [cooldown, minion]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: damage, type: MORE, value: 30 }
+      - { stat: skill.added_cooldown, type: FLAT, value: 10 }
+
+  # ---- 2026-10：PoE2 輔助補齊・第 2 批（詛咒、印記、戰吼、召喚、圖騰、條件、精魂輔助）----
+  heightened_curse:        # Heightened Curse
+    name: 厲咒
+    description: 被輔助的詛咒效果更強。
+    icon: WITHER_ROSE
+    tier: 2
+    requires: [curse]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: curse.effect, type: INCREASED, value: 25 }
+
+  focused_curse:           # Focused Curse（詛咒生效延遲 → 施放更快）
+    name: 捷咒
+    description: 被輔助的詛咒放得快很多。
+    icon: FEATHER
+    tier: 1
+    requires: [curse]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: cast.speed, type: MORE, value: 50 }
+
+  ritualistic_curse:       # Ritualistic Curse
+    name: 廣咒
+    description: 被輔助的詛咒範圍大很多，但放得比較慢。
+    icon: SOUL_LANTERN
+    tier: 1
+    requires: [curse]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: skill.area, type: INCREASED, value: 50 }
+      - { stat: cast.speed, type: MORE, value: -30 }
+
+  abiding_hex:             # Abiding Hex（PoE2 要消耗銳星，這裡改成魔力消耗更高）
+    name: 綿咒
+    description: 被輔助的詛咒持續時間長很多，但魔力消耗更高。
+    icon: CLOCK
+    tier: 2
+    requires: [curse]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: skill.duration, type: MORE, value: 80 }
+
+  eternal_mark:            # Eternal Mark（「第一次觸發不消耗」→ 持續時間加倍）
+    name: 久印
+    description: 被輔助的印記持續時間加倍。
+    icon: NAME_TAG
+    tier: 2
+    requires: [mark]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: skill.duration, type: MORE, value: 100 }
+
+  mark_for_death:          # Mark for Death（被標記的敵人更容易破甲 → 印記效果更強）
+    name: 烙印深
+    description: 被輔助的印記效果更強。
+    icon: SKELETON_SKULL
+    tier: 2
+    requires: [mark]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: curse.effect, type: MORE, value: 25 }
+
+  echoing_cry:             # Echoing Cry（回聲兩次 → 戰吼效果更強、範圍變小）
+    name: 震嘯
+    description: 被輔助的戰吼效果更強，但範圍變小。
+    icon: GOAT_HORN
+    tier: 2
+    requires: [warcry]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: warcry.effect, type: MORE, value: 30 }
+      - { stat: skill.area, type: MORE, value: -30 }
+
+  muster:                  # Muster（每種不同的召喚物 7%，用兩種的平均）
+    name: 群鋒
+    description: 被輔助的召喚物更痛。
+    icon: WHITE_BANNER
+    tier: 2
+    requires: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage, type: MORE, value: 14, tags: [minion] }
+
+  infernal_legion:         # Infernal Legion（召喚物身上著火燒周圍 → 召喚物多附加火焰、火抗）
+    name: 燃僕
+    description: 被輔助的召喚物多附加火焰傷害，火焰抗性更高。
+    icon: BLAZE_POWDER
+    tier: 2
+    requires: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage.gain.fire, type: FLAT, value: 20, tags: [minion] }
+      - { stat: resist.fire, type: FLAT, value: 20, tags: [minion] }
+
+  urgent_totems:           # Urgent Totems
+    name: 疾樁
+    description: 被輔助的圖騰攻擊與施法更快。
+    icon: CARVED_PUMPKIN
+    tier: 2
+    requires: [totem]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: attack.speed, type: INCREASED, value: 20 }
+      - { stat: cast.speed, type: INCREASED, value: 20 }
+
+  greatwood:               # Greatwood
+    name: 厚樁
+    description: 被輔助的圖騰生命更多。
+    icon: OAK_LOG
+    tier: 1
+    requires: [totem]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: totem.life, type: MORE, value: 30 }
+
+  ambush:                  # Ambush
+    name: 潛鋒
+    description: 被輔助的技能對滿血的敵人暴擊率加倍。
+    icon: SPYGLASS
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: crit.vs_full_life, type: MORE, value: 100 }
+
+  zenith:                  # Zenith
+    name: 盈魔
+    description: 魔力在 90% 以上時，被輔助的法術更痛。
+    icon: LAPIS_LAZULI
+    tier: 2
+    requires: [spell]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.high_mana, type: MORE, value: 30 }
+
+  clash:                   # Clash
+    name: 背水
+    description: 被輔助的近戰攻擊：你的生命百分比比敵人低時更痛，比敵人高時沒那麼痛。
+    icon: IRON_SWORD
+    tier: 1
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: damage.clash, type: FLAT, value: 40 }
+
+  elemental_armament:      # Elemental Armament
+    name: 元刃
+    description: 被輔助的攻擊造成的元素傷害更多。
+    icon: PRISMARINE_CRYSTALS
+    tier: 2
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage, type: MORE, value: 20, tags: [elemental] }
+
+  rising_tempest:          # Rising Tempest（每種近期用過的元素技能 12%，用一種算）
+    name: 元湧
+    description: 被輔助的技能造成的元素傷害更多。
+    icon: HEART_OF_THE_SEA
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: damage, type: MORE, value: 12, tags: [elemental] }
+
+  knockback:               # Knockback
+    name: 推擊
+    description: 被輔助的近戰攻擊把敵人擊退。
+    icon: PISTON
+    tier: 1
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: skill.knockback, type: FLAT, value: 1 }
+
+  arms_length:             # Arms Length
+    name: 重推
+    description: 被輔助的近戰攻擊擊退得更遠。
+    icon: STICKY_PISTON
+    tier: 2
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: skill.knockback, type: FLAT, value: 0.5 }
+      - { stat: skill.knockback, type: MORE, value: 40 }
+
+  persistent_ground:       # Persistent Ground
+    name: 久地
+    description: 被輔助的技能留在地上的效果持續更久。
+    icon: MOSS_BLOCK
+    tier: 1
+    requires: [duration]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: skill.duration, type: INCREASED, value: 50 }
+
+  cadence:                 # Cadence（連續使用疊攻速，用平均值；用太頻繁會停用那段沒做，改成魔力消耗更高）
+    name: 連拍
+    description: 被輔助的攻擊更快，但魔力消耗更高。
+    icon: NOTE_BLOCK
+    tier: 2
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: attack.speed, type: MORE, value: 20 }
+
+  hit_and_run:             # Hit and Run（要先移動一段距離那段沒做，改成魔力消耗更高）
+    name: 迅鋒
+    description: 被輔助的攻擊更快，但魔力消耗更高。
+    icon: RABBIT_FOOT
+    tier: 3
+    requires: [attack]
+    excludes: [minion, channel]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: attack.speed, type: MORE, value: 25 }
+
+  overextend:              # Overextend（暴擊時自己被眩暈那段沒做，改成魔力消耗更高）
+    name: 孤注
+    description: 被輔助的技能暴擊傷害更高，但魔力消耗更高。
+    icon: TNT
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: crit.bonus, type: MORE, value: 30 }
+
+  # 精魂輔助：掛在精魂技能（光環、增益）上，多保留一點精魂，技能開著時你自己得到效果（不給隊友與召喚物）
+  clarity:                 # Clarity
+    name: 泉魔
+    description: 掛在精魂技能上：技能開著時你的魔力回復更快。
+    icon: LIGHT_BLUE_DYE
+    tier: 1
+    requires: [aura, herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 15 }
+      - { stat: grant.mana.regen, type: INCREASED, value: 30 }
+
+  vitality:                # Vitality
+    name: 泉命
+    description: 掛在精魂技能上：技能開著時你每秒回復最大生命的 1%。
+    icon: GLISTERING_MELON_SLICE
+    tier: 1
+    requires: [aura, herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 20 }
+      - { stat: grant.life.regen_percent, type: FLAT, value: 1 }
+
+  cannibalism:             # Cannibalism
+    name: 食殺
+    description: 掛在精魂技能上：技能開著時你擊殺敵人回復最大生命的 2%。
+    icon: ROTTEN_FLESH
+    tier: 1
+    requires: [aura, herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 15 }
+      - { stat: grant.life.on_kill, type: FLAT, value: 2 }
+
+  thornskin:               # Thornskin
+    name: 刺甲
+    description: 掛在精魂技能上：技能開著時你的荊棘傷害更高。
+    icon: SWEET_BERRIES
+    tier: 2
+    requires: [aura, herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 15 }
+      - { stat: grant.thorns.damage, type: INCREASED, value: 40 }
+
+  cool_headed:             # Cool Headed
+    name: 避焚
+    description: 掛在精魂技能上：技能開著時你身上的點燃持續時間減半。
+    icon: SNOWBALL
+    tier: 1
+    requires: [aura, herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 10 }
+      - { stat: grant.ailment.self_duration.ignite, type: INCREASED, value: -50 }
+
+  strong_hearted:          # Strong Hearted
+    name: 避雷
+    description: 掛在精魂技能上：技能開著時你身上的感電持續時間減半。
+    icon: COPPER_INGOT
+    tier: 1
+    requires: [aura, herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 10 }
+      - { stat: grant.ailment.self_duration.shock, type: INCREASED, value: -50 }
+
+  warm_blooded:            # Warm Blooded
+    name: 避凍
+    description: 掛在精魂技能上：技能開著時你身上的凍結持續時間減半。
+    icon: MAGMA_CREAM
+    tier: 1
+    requires: [aura, herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 10 }
+      - { stat: grant.ailment.self_duration.freeze, type: INCREASED, value: -50 }
+
+  herbalism:               # Herbalism
+    name: 醇藥
+    description: 掛在精魂技能上：技能開著時你的生命藥劑回復更多。
+    icon: GLASS_BOTTLE
+    tier: 1
+    requires: [aura, herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 15 }
+      - { stat: grant.flask.life_recovery, type: INCREASED, value: 30 }
+
+  # ---- 2026-10：PoE2 輔助補齊・第 3 批（觸發、其他）----
+  cast_on_dodge:           # Cast on Dodge
+    name: 翻身詠
+    description: 被輔助的法術在你翻滾時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。技能要綁在上方按鍵格（不用按）。
+    icon: FEATHER
+    tier: 2
+    requires: [spell]
+    excludes: [minion, aura, warcry, movement, herald]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: trigger.dodge, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -20 }
+
+  cast_on_minion_death:    # Cast on Minion Death
+    name: 殞僕詠
+    description: 你的召喚物死掉時，被輔助的法術在牠倒下的地方自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。
+    icon: BONE
+    tier: 2
+    requires: [spell]
+    excludes: [minion, aura, warcry, movement, herald]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: trigger.minion_death, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -20 }
+
+  armour_demolisher:       # Armour Demolisher
+    name: 拆甲
+    description: 被輔助的技能破甲強很多。
+    icon: IRON_PICKAXE
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: armour.break, type: MORE, value: 50 }
+
+  eternal_flame:           # Eternal Flame
+    name: 長焰
+    description: 被輔助的技能造成的點燃持續兩倍久，但比較不容易點燃。
+    icon: SOUL_TORCH
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: ignite.duration, type: INCREASED, value: 100 }
+      - { stat: ignite.chance, type: MORE, value: -25 }
+
+  extraction:              # Extraction（PoE2 另外扣生命，這裡改成魔力消耗更高）
+    name: 血蝕
+    description: 被輔助的法術多附加大量混沌傷害，但魔力消耗更高。
+    icon: CRIMSON_FUNGUS
+    tier: 3
+    requires: [spell]
+    excludes: [minion]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: damage.gain.chaos, type: FLAT, value: 35 }
+
+  longshot:                # Longshot（離越遠越痛 → 近身更少、其他更多）
+    name: 遠穿
+    description: 被輔助的投射物攻擊打遠處的敵人更痛，打近身的敵人沒那麼痛。
+    icon: SPYGLASS
+    tier: 1
+    requires: [projectile]
+    excludes: [spell, minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: damage, type: MORE, value: 20, tags: [projectile] }
+      - { stat: damage.close, type: MORE, value: -25 }
+
+  projectile_deceleration: # Projectile Deceleration
+    name: 緩彈
+    description: 被輔助的投射物飛得比較慢（停在場上比較久）。
+    icon: SLIME_BALL
+    tier: 1
+    requires: [projectile]
+    excludes: [minion]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: skill.projectile_speed, type: MORE, value: -25 }
+
+  compressed_duration:     # Compressed Duration
+    name: 縮時
+    description: 被輔助的技能持續時間縮短（效果更快結束、更快再放）。
+    icon: CLOCK
+    tier: 1
+    requires: [duration]
+    excludes: [minion]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: skill.duration, type: MORE, value: -30 }
+
+  chance_to_freeze:        # Chance to Freeze
+    name: 凝凍
+    description: 被輔助的技能更容易凍結敵人。
+    icon: PACKED_ICE
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 50 }
+
+  arcane_surge:            # Arcane Surge（花夠魔力後的增益 → 平均起來的施法速度）
+    name: 湧詠
+    description: 被輔助的法術施放更快。
+    icon: AMETHYST_CLUSTER
+    tier: 1
+    requires: [spell]
+    excludes: [minion, aura, herald]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: cast.speed, type: MORE, value: 12 }
+
+  deadly_herald:           # Deadly Herald
+    name: 厲宣
+    description: 被輔助的捷光環擊殺效果更痛，但多保留一點精魂。
+    icon: SKELETON_SKULL
+    tier: 2
+    requires: [herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 15 }
+      - { stat: damage, type: MORE, value: 30 }
+
+  ice_bite:                # Ice Bite
+    name: 冰嚙
+    description: 被輔助的戰吼增益期間，你的攻擊多附加冰冷傷害。
+    icon: BLUE_ICE
+    tier: 2
+    requires: [warcry]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: grant.damage.gain.cold, type: FLAT, value: 25, tags: [attack] }
+
+  nova_projectiles:        # Nova Projectiles
+    name: 環射
+    description: 被輔助的投射物改成往四周一圈射出，但傷害少一點。
+    icon: FIREWORK_STAR
+    tier: 2
+    requires: [projectile]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: flag.projectile_nova, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -20 }
+
+  life_drain:              # Life Drain
+    name: 收命
+    description: 被輔助的技能用斷命打死敵人時回復 12% 最大生命（要另外有斷命）。
+    icon: GLISTERING_MELON_SLICE
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: life.on_cull, type: FLAT, value: 12 }
+
+  soul_drain:              # Soul Drain
+    name: 汲魂
+    description: 被輔助的技能用斷命打死敵人時回復 12% 最大魔力（要另外有斷命）。
+    icon: LAPIS_LAZULI
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: mana.on_cull, type: FLAT, value: 12 }
+
+  # ---- 2026-10：PoE2 輔助補齊・第 4 批（觸發專屬技能；技能是 skills.yml 的 proc_* 隱藏技能）----
+  fiery_death:             # Fiery Death
+    name: 焚屍
+    description: 被輔助的技能打死點燃中的敵人時，有機率讓屍體爆出一圈火焰。
+    icon: FIRE_CHARGE
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.kill_ignited, type: FLAT, value: 60, tags: [proc_fiery_death] }
+
+  frozen_spite:            # Frozen Spite
+    name: 碎寒
+    description: 被輔助的技能打死凍結中的敵人時，屍體往四周爆出冰片。
+    icon: PACKED_ICE
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.kill_frozen, type: FLAT, value: 100, tags: [proc_frozen_spite] }
+
+  bursting_plague:         # Bursting Plague
+    name: 瘟潰
+    description: 被輔助的技能打死中毒的敵人時，屍體爆出一圈毒，容易讓周圍的敵人中毒。
+    icon: SLIME_BALL
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.kill_poisoned, type: FLAT, value: 100, tags: [proc_bursting_plague] }
+
+  bone_shrapnel:           # Bone Shrapnel（打死被釘住的 → 打死暈眩中的）
+    name: 骨裂
+    description: 被輔助的技能打死暈眩中的敵人時，屍體炸出一圈碎骨。
+    icon: BONE
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.kill_stunned, type: FLAT, value: 100, tags: [proc_bone_burst] }
+
+  flame_pillar:            # Flame Pillar
+    name: 炎柱
+    description: 被輔助的技能擊中點燃中的敵人時，用掉點燃，在牠身上噴出一道火柱。
+    icon: BLAZE_ROD
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.hit_ignited, type: FLAT, value: 100, tags: [proc_flame_pillar] }
+
+  haemocrystals:           # Haemocrystals
+    name: 血晶
+    description: 被輔助的技能擊中流血中的敵人時，用掉流血，在牠身上長出血晶炸開。
+    icon: REDSTONE
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.hit_bleeding, type: FLAT, value: 100, tags: [proc_haemocrystal] }
+
+  electromagnetism:        # Electromagnetism
+    name: 磁暴
+    description: 被輔助的技能擊中感電中的敵人時，有機率用掉感電，在牠身上撕開一道雷隙。
+    icon: LIGHTNING_ROD
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.hit_shocked, type: FLAT, value: 40, tags: [proc_shock_rift] }
+
+  elemental_discharge:     # Elemental Discharge
+    name: 元崩
+    description: 被輔助的技能擊中身上有點燃、凍結或感電的敵人時，用掉一種，在牠身上炸出三種元素的爆發。
+    icon: PRISMARINE_CRYSTALS
+    tier: 3
+    excludes: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: proc.hit_elemental, type: FLAT, value: 100, tags: [proc_elemental_burst] }
+
+  concussive_runes:        # Concussive Runes
+    name: 震符印
+    description: 被輔助的攻擊擊中暈眩中的敵人時，在牠腳下炸開一道震符，很容易再把周圍的敵人震暈。
+    icon: CHISELED_STONE_BRICKS
+    tier: 2
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.heavy_stun, type: FLAT, value: 100, tags: [proc_concussive_rune] }
+
+  brambleslam:             # Brambleslam
+    name: 荊棘震
+    description: 被輔助的猛擊砸下時，在面前長出一片荊棘，一直刺傷裡面的敵人。
+    icon: SWEET_BERRIES
+    tier: 2
+    requires: [slam]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_bramble] }
+
+  crater:                  # Crater
+    name: 熔坑擊
+    description: 被輔助的猛擊砸下時，在面前燒出一個熔坑，一直燒裡面的敵人。
+    icon: MAGMA_BLOCK
+    tier: 2
+    requires: [slam]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_crater] }
+
+  corrupting_cry:          # Corrupting Cry
+    name: 腐蝕嘯
+    description: 被輔助的戰吼吼出時，震出一圈腐血，很容易讓周圍的敵人流血。
+    icon: CRIMSON_FUNGUS
+    tier: 2
+    requires: [warcry]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_corrupting_cry] }
+
+  battershout:             # Battershout
+    name: 碎甲吼
+    description: 被輔助的戰吼吼出時，震出一圈衝擊，大幅打破周圍敵人的護甲。
+    icon: ANVIL
+    tier: 2
+    requires: [warcry]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_battershout] }
+
+  caltrops:                # Caltrops（投射物飛到終點 → 擊中時有機率）
+    name: 撒蒺
+    description: 被輔助的投射物攻擊擊中時，有機率在敵人腳下撒一片鐵蒺。
+    icon: IRON_NUGGET
+    tier: 1
+    requires: [projectile]
+    excludes: [spell, minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: proc.hit, type: FLAT, value: 25, tags: [proc_caltrops] }
+
+  decaying_hex:            # Decaying Hex
+    name: 朽咒
+    description: 被輔助的詛咒放下時，詛咒的地方同時留下一片朽蝕，一直造成混沌傷害。
+    icon: WITHER_ROSE
+    tier: 2
+    requires: [curse]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_decaying_hex] }
+
+  coursing_current:        # Coursing Current
+    name: 竄電
+    description: 被輔助的技能打死感電中的敵人時，從屍體竄出一道會連鎖的電流。
+    icon: COPPER_INGOT
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.kill_shocked, type: FLAT, value: 100, tags: [proc_coursing_current] }
+
+  # ---- 2026-10：PoE2 輔助補齊・第 5 批（觸發專屬技能、減益）----
+  mana_flare:              # Mana Flare
+    name: 魔焰
+    description: 被輔助的技能暴擊時，在目標身上炸出一圈魔焰。
+    icon: BLAZE_POWDER
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.crit, type: FLAT, value: 100, tags: [proc_mana_flare] }
+
+  volcanic_eruption:       # Volcanic Eruption
+    name: 熔迸
+    description: 被輔助的近戰打擊打中點燃中的敵人時，從牠身上迸出一圈熔岩彈。
+    icon: MAGMA_CREAM
+    tier: 2
+    requires: [strike]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.vs_ignited, type: FLAT, value: 100, tags: [proc_volcanic_eruption] }
+
+  wind_wave:               # Wind Wave
+    name: 震風
+    description: 被輔助的技能擊中暈眩中的敵人時，震出一圈風浪把周圍的敵人推開。
+    icon: WIND_CHARGE
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: proc.vs_stunned, type: FLAT, value: 100, tags: [proc_wind_wave] }
+
+  static_shocks:           # Static Shocks
+    name: 靜電
+    description: 被輔助的技能擊中感電中的敵人時，在牠腳下留下一顆靜電球，一直電周圍的敵人。
+    icon: GLOWSTONE_DUST
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.vs_shocked, type: FLAT, value: 50, tags: [proc_static_orb] }
+
+  frozen_vortex:           # Frozen Vortex
+    name: 霜渦
+    description: 被輔助的技能打死凍結中的敵人時，屍體的地方捲起一道把敵人吸進去的霜渦。
+    icon: SNOW_BLOCK
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.kill_frozen, type: FLAT, value: 100, tags: [proc_frozen_vortex] }
+
+  charged_mark:            # Charged Mark
+    name: 電印地
+    description: 被輔助的印記標下去時，目標腳下留下一片帶電的地面。
+    icon: LIGHTNING_ROD
+    tier: 2
+    requires: [mark]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_charged_ground] }
+
+  poison_spores:           # Poison Spores
+    name: 孢爆
+    description: 被輔助的攻擊擊中時，有機率在敵人身上爆出毒孢，容易讓周圍的敵人中毒。
+    icon: SPORE_BLOSSOM
+    tier: 1
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: proc.hit, type: FLAT, value: 25, tags: [proc_poison_spore] }
+
+  aftershock:              # Aftershock
+    name: 回震
+    description: 被輔助的猛擊砸下時，有機率在面前再震一次（傷害是原本那一下的 60%，吃同樣的加成）。
+    icon: COBBLESTONE
+    tier: 1
+    requires: [slam]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 25, tags: [proc_aftershock] }
+
+  tremors:                 # Tremors
+    name: 連震
+    description: 被輔助的猛擊砸下時，有不小的機率再震出一圈更大但比較輕的餘震（原本那一下的 45%）。
+    icon: MOSSY_COBBLESTONE
+    tier: 2
+    requires: [slam]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 45, tags: [proc_tremor] }
+
+  maim:                    # Maim
+    name: 殘肢
+    description: 被輔助的攻擊擊中時讓敵人殘廢四秒：移動變慢、閃避變差。
+    icon: LEAD
+    tier: 1
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: proc.hit, type: FLAT, value: 100, tags: [proc_maim] }
+
+  blind:                   # Blind
+    name: 目眩
+    description: 被輔助的技能擊中時讓敵人目眩四秒：牠的命中變差（比較打不到你）。
+    icon: INK_SAC
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: proc.hit, type: FLAT, value: 100, tags: [proc_blind] }
+
+  hinder:                  # Hinder
+    name: 拖滯
+    description: 被輔助的法術擊中時讓敵人行動拖滯四秒：移動與攻擊變慢。
+    icon: COBWEB
+    tier: 1
+    requires: [spell]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: proc.hit, type: FLAT, value: 100, tags: [proc_hinder] }
+
+  exposing_cry:            # Exposing Cry
+    name: 曝嘯
+    description: 被輔助的戰吼吼出時，周圍的敵人元素抗性降低五秒。
+    icon: GOAT_HORN
+    tier: 2
+    requires: [warcry]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_exposure] }
+
+  # ---- 2026-10：弩的彈匣（照 PoE2 的彈藥輔助）----
+  ammo_conservation:       # Ammo Conservation
+    name: 省矢
+    description: 被輔助的弩攻擊有機率不消耗弩箭。
+    icon: ARROW
+    tier: 1
+    requires: [crossbow]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: crossbow.ammo_save, type: FLAT, value: 25 }
+
+  double_barrel:           # Double Barrel
+    name: 雙膛
+    description: 被輔助的弩技能彈匣多裝兩發，但裝填比較慢。
+    icon: CROSSBOW
+    tier: 2
+    requires: [crossbow]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: crossbow.clip, type: FLAT, value: 2 }
+      - { stat: crossbow.reload_speed, type: INCREASED, value: -25 }
+
+  streamlined_rounds:      # Streamlined Rounds
+    name: 連發膛
+    description: 被輔助的弩技能彈匣大很多、射得快很多，但每一發輕很多、裝填也慢。
+    icon: REPEATER
+    tier: 3
+    requires: [crossbow]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: crossbow.clip, type: FLAT, value: 5 }
+      - { stat: attack.speed, type: MORE, value: 50 }
+      - { stat: damage, type: MORE, value: -45 }
+      - { stat: crossbow.reload_speed, type: MORE, value: -50 }
+
+  auto_reload:             # Auto Reload
+    name: 震裝
+    description: 被輔助的弩攻擊擊中暈眩中的敵人時立刻把彈匣裝滿，也比較容易暈眩敵人。
+    icon: PISTON
+    tier: 2
+    requires: [crossbow]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: flag.reload_on_stun, type: FLAT, value: 1 }
+      - { stat: stun.buildup, type: INCREASED, value: 20 }
+
+  nimble_reload:           # Nimble Reload
+    name: 快膛
+    description: 被輔助的弩技能裝填快很多。
+    icon: TRIPWIRE_HOOK
+    tier: 1
+    requires: [crossbow]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: crossbow.reload_speed, type: INCREASED, value: 50 }
+
+  # ---- 2026-10：連擊與怒氣（照 PoE2）----
+  # 連擊：近戰打擊（strike 標籤）打中就累積一層（同一下打中好幾個只算一次），最多 10 層，4 秒沒累積就歸零；動作列會顯示
+  combo_finisher:          # Combo Finisher
+    name: 終式
+    description: 被輔助的近戰技能放的時候，有 3 層以上連擊就全部用掉，這一下更痛。
+    icon: NETHERITE_SWORD
+    tier: 2
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: combo.finisher, type: FLAT, value: 30 }
+
+  culmination:             # Culmination
+    name: 累勢
+    description: 被輔助的近戰技能每一層連擊都讓它更痛（最多 10 層）。
+    icon: GOLD_INGOT
+    tier: 2
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage.per_combo, type: FLAT, value: 3 }
+
+  practiced_combo:         # Practiced Combo
+    name: 熟招
+    description: 被輔助的打擊打中時，有機率多累積一層連擊。
+    icon: IRON_SWORD
+    tier: 1
+    requires: [strike]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: combo.extra_chance, type: FLAT, value: 40 }
+
+  flow:                    # Flow
+    name: 順勢
+    description: 被輔助的打擊累積的連擊維持得久很多。
+    icon: HEART_OF_THE_SEA
+    tier: 1
+    requires: [strike]
+    excludes: [minion]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: combo.duration, type: INCREASED, value: 150 }
+
+  rageforged:              # Rageforged
+    name: 怒鑄
+    description: 被輔助的近戰技能放的時候，有 10 點怒氣就用掉，這一下更痛。
+    icon: BLAZE_POWDER
+    tier: 2
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: rage.forged, type: FLAT, value: 35 }
+
+  # ---- 2026-10：冰晶（霜壁、凍壁矢、寒晶雷留下的冰晶；照 PoE2）----
+  glacier:                 # Glacier
+    name: 厚晶
+    description: 被輔助的技能留下的冰晶更硬，要多打幾下才碎。
+    icon: BLUE_ICE
+    tier: 1
+    requires: [crystal]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: crystal.hits, type: FLAT, value: 3 }
+
+  icicle:                  # Icicle
+    name: 脆晶
+    description: 被輔助的技能留下的冰晶很脆，打一下就碎。
+    icon: ICE
+    tier: 1
+    requires: [crystal]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: crystal.hits, type: FLAT, value: -2 }
+
+  hoarfrost:               # Hoarfrost
+    name: 霜蝕晶
+    description: 被輔助的技能留下的冰晶周圍一直結霜，冰傷周圍的敵人。
+    icon: SNOW_BLOCK
+    tier: 2
+    requires: [crystal]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: flag.hoarfrost, type: FLAT, value: 1 }
+
+  crystalline_shards:      # Crystalline Shards
+    name: 晶刺
+    description: 被輔助的技能留下的冰晶碎掉時，還會往四周噴出冰片。
+    icon: PRISMARINE_SHARD
+    tier: 2
+    requires: [crystal]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: flag.crystal_shards, type: FLAT, value: 1 }
+
+  verglas:                 # Verglas
+    name: 冰鍍
+    description: 打碎被輔助的技能留下的冰晶時，你 6 秒內多附加冰冷傷害。
+    icon: PACKED_ICE
+    tier: 2
+    requires: [crystal]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: flag.verglas, type: FLAT, value: 1 }
+
+  # ---- 2026-10：封印（照 PoE2：平常慢慢蓄，放的時候全部解開）----
+  unleash:                 # Unleash
+    name: 封詠
+    description: 被輔助的法術平常會蓄封印（最多兩個，每施法時間的兩倍蓄一個），放的時候全部解開，每個封印自動多放一次（傷害少一半）。
+    icon: ENCHANTED_BOOK
+    tier: 3
+    requires: [spell]
+    excludes: [minion, aura, warcry, movement, channel, herald]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: seal.max, type: FLAT, value: 2 }
+      - { stat: seal.repeat, type: FLAT, value: 1 }
+
+  expand:                  # Expand
+    name: 封擴
+    description: 被輔助的範圍法術平常會蓄封印（最多三個），放的時候全部解開，每個封印讓這一次範圍增加 30%。
+    icon: SLIME_BLOCK
+    tier: 2
+    requires: [area]
+    excludes: [attack, minion, aura, warcry, herald]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: seal.max, type: FLAT, value: 3 }
+      - { stat: seal.area, type: FLAT, value: 30 }
+
+  salvo:                   # Salvo
+    name: 封矢
+    description: 被輔助的投射物攻擊平常每秒蓄一個封印（最多六個），放的時候全部解開，每個封印多射一發。
+    icon: SPECTRAL_ARROW
+    tier: 2
+    requires: [projectile]
+    excludes: [spell, minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: seal.max, type: FLAT, value: 6 }
+      - { stat: seal.interval, type: FLAT, value: 1 }
+      - { stat: seal.projectiles, type: FLAT, value: 1 }
+
+  # ---- 2026-10：PoE2 輔助補齊・草稿 A（只用現有、遊戲裡真的有讀的屬性；要寫程式的見 sup_draft_A_notes.md）----
+  admixture:               # Admixture（「對流血的敵人中毒更強、對中毒的敵人流血更強」改成一律，數值調低）
+    name: 雙蝕
+    description: 被輔助的技能造成的中毒與流血都更痛。
+    icon: FERMENTED_SPIDER_EYE
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: poison.magnitude, type: MORE, value: 10 }
+      - { stat: bleed.magnitude, type: MORE, value: 10 }
+
+  burgeon:                 # Burgeon（每秒 10%、上限 40% → 每層蓄力多 5%，8 層的技能大約 35%）
+    name: 漸熾
+    description: 被輔助的蓄力技能（按住連續放的）每一層蓄力都更痛。本身不會蓄力的技能要另外掛蓄勢才有用。
+    icon: SUNFLOWER
+    tier: 2
+    requires: [attack, spell]
+    excludes: [minion, aura, warcry, herald]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: channel.more, type: FLAT, value: 5 }
+
+  cold_attunement:         # Cold Attunement
+    name: 附霜
+    description: 物理傷害的一部分額外化為冰冷（攻擊、有物理傷害的法術都適用；純元素法術沒有物理傷害）。
+    icon: SNOWBALL
+    tier: 1
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage.gain.cold, type: FLAT, value: 25 }
+
+  lightning_attunement:    # Lightning Attunement
+    name: 附雷
+    description: 物理傷害的一部分額外化為閃電（攻擊、有物理傷害的法術都適用；純元素法術沒有物理傷害）。
+    icon: LIGHTNING_ROD
+    tier: 1
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage.gain.lightning, type: FLAT, value: 25 }
+
+  danse_macabre:           # Danse Macabre（多吃一具骷髏 → 祭品效果更強、冷卻更久）
+    name: 骸舞
+    description: 被輔助的祭品給召喚物的增益強很多，但冷卻更久。只有祭品能掛。
+    icon: SKELETON_SKULL
+    tier: 2
+    requires: [minion]
+    excludes: [melee, projectile, spell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: warcry.effect, type: MORE, value: 30 }
+      - { stat: skill.cooldown, type: MORE, value: 30 }
+
+  dazing_cry:              # Dazing Cry
+    name: 眩嘯
+    description: 被輔助的戰吼吼出時震出一圈聲波，讓周圍的敵人眩暈四秒（造成的傷害更少、更容易被暈）。
+    icon: GOAT_HORN
+    tier: 2
+    requires: [warcry]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_dazing_cry] }
+
+  dazzle:                  # Dazzle（「用掉眩暈換必中」改成一律必中，傷害少一點）
+    name: 穩擊
+    description: 被輔助的攻擊必定命中，但每一下輕一點。
+    icon: GLOWSTONE_DUST
+    tier: 2
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: flag.always_hit, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -10 }
+
+  fan_the_flames:          # Fan The Flames
+    name: 播火
+    description: 被輔助的攻擊擊中點燃中的敵人時，在牠身上炸出一圈火焰，很容易把點燃傳給周圍的敵人。
+    icon: FIRE_CHARGE
+    tier: 2
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.vs_ignited, type: FLAT, value: 100, tags: [proc_fan_flames] }
+
+  frost_nexus:             # Frost Nexus
+    name: 凍地
+    description: 被輔助的技能讓敵人凍結時，在牠腳下留下一片冰霜地面，一直冰傷、冰緩周圍的敵人。
+    icon: ICE
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.freeze, type: FLAT, value: 100, tags: [proc_frost_nexus] }
+
+  impact_shockwave:        # Impact Shockwave
+    name: 震環
+    description: 被輔助的打擊打中時，在目標身上震出一圈衝擊，打到周圍的敵人。
+    icon: IRON_BLOCK
+    tier: 2
+    requires: [strike]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.hit, type: FLAT, value: 100, tags: [proc_impact_shockwave] }
+
+  impending_doom:          # Impending Doom（「詛咒結束時」改成「放下時」）
+    name: 咒爆
+    description: 被輔助的詛咒放下時，詛咒的地方炸出一圈混沌。
+    icon: WITHER_SKELETON_SKULL
+    tier: 2
+    requires: [curse]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_impending_doom] }
+
+  lockdown:                # Lockdown（「越遠釘住累積越多」改成一律加機率，數值調低）
+    name: 遠釘
+    description: 被輔助的投射物攻擊擊中時有機率把敵人釘在原地（可以跟釘地疊）。
+    icon: IRON_CHAIN
+    tier: 1
+    requires: [projectile]
+    excludes: [spell, minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: pin.chance, type: FLAT, value: 15 }
+
+  # ---- 2026-10：PoE2 輔助補齊・草稿 B（sup_yes_part01；機制照 PoE2，名稱是自己的。我們做不到的條件用近似值）----
+  minion_mastery:          # Minion Mastery
+    name: 僕髓
+    description: 被輔助的召喚技能等級 +1。
+    icon: WITHER_SKELETON_SKULL
+    tier: 3
+    requires: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: skill.level, type: FLAT, value: 1, tags: [minion] }
+
+  overabundance:           # Overabundance（PoE2 是所有有上限的技能；我們只有圖騰有上限）
+    name: 繁置
+    description: 被輔助的圖騰同時可以多放一根，但每根撐的時間只有一半。
+    icon: TOTEM_OF_UNDYING
+    tier: 3
+    requires: [totem]
+    excludes: [bell]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: skill.totems, type: FLAT, value: 1 }
+      - { stat: skill.duration, type: MORE, value: -50 }
+
+  pinpoint_critical:       # Pinpoint Critical
+    name: 銳點
+    description: 被輔助的技能暴擊率高很多，但暴擊傷害加成少一些。
+    icon: SPYGLASS
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: crit.chance, type: MORE, value: 40 }
+      - { stat: crit.bonus, type: MORE, value: -30 }
+
+  potent_exposure:         # Potent Exposure
+    name: 深曝
+    description: 被輔助的技能讓敵人曝露時，曝露降低的抗性更多（要這個技能本身會造成曝露，例如另外掛破元）。
+    icon: PRISMARINE_SHARD
+    tier: 2
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: exposure.effect, type: INCREASED, value: 50 }
+
+  reverberate:             # Reverberate（攻擊時間越長餘震機率越高 → 猛擊變慢、固定較高的餘震機率）
+    name: 沉響
+    description: 被輔助的猛擊砸得慢一點，但有一半的機率在面前再震一次（原本那一下的 60%）。
+    icon: BELL
+    tier: 2
+    requires: [slam]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 50, tags: [proc_aftershock] }
+      - { stat: attack.speed, type: MORE, value: -15 }
+
+  tectonic_slams:          # Tectonic Slams（兩側各一道餘震 → 面前一圈比較小、比較輕的側震）
+    name: 雙震
+    description: 被輔助的猛擊砸下時，一定會再震出一圈比較小、比較輕的側震（原本那一下的 35%）。
+    icon: CRACKED_STONE_BRICKS
+    tier: 2
+    requires: [slam]
+    excludes: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_side_aftershock] }
+
+  shocking_leap:           # Shocking Leap（PoE2 是落地的地方；觸發點在出發的地方）
+    name: 躍電
+    description: 被輔助的突進技能（衝刺、跳躍）出發時，在起跳的地方留下一片帶電的地面，容易讓踩在上面的敵人感電。
+    icon: LIGHTNING_ROD
+    tier: 2
+    requires: [travel]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_charged_ground] }
+
+  spreading_frost:         # Spreading Frost
+    name: 霜漫
+    description: 被輔助的技能讓敵人凍結時，從牠身上散出一圈寒氣，冰緩周圍的敵人。
+    icon: SNOW_BLOCK
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: proc.freeze, type: FLAT, value: 100, tags: [proc_frost_spread] }
+
+  withering_touch:         # Withering Touch（凋零用「受到的混沌傷害增加」的短印記做）
+    name: 枯觸
+    description: 被輔助的混沌技能擊中時讓敵人凋零四秒：受到的混沌傷害增加。
+    icon: WITHER_ROSE
+    tier: 2
+    requires: [chaos]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.hit, type: FLAT, value: 100, tags: [proc_wither] }
+
+  runeforged_blades:       # Runeforged Blades（用掉破甲才觸發 → 擊中時有機率；自己不能破甲照 PoE2）
+    name: 符刃
+    description: 被輔助的攻擊擊中時，有機率在敵人身上迸出一圈符文刀刃，但自己不會破甲。
+    icon: IRON_SWORD
+    tier: 2
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.hit, type: FLAT, value: 30, tags: [proc_rune_blades] }
+      - { stat: armour.break, type: MORE, value: -100 }
+
+  # 強化（PoE2 的 Empowered）：我們的戰吼強化只有傷害，條件改成「戰吼增益期間你得到」
+  murderous_intent:        # Murderous Intent（強化的攻擊有斷命 → 戰吼增益期間你的擊中有斷命）
+    name: 決嘯
+    description: 被輔助的戰吼增益期間，你的擊中有斷命：敵人生命掉到一定比例以下直接倒下（普通 30%、魔法 20%、稀有 10%、傳奇與 Boss 5%）。
+    icon: NETHERITE_AXE
+    tier: 2
+    requires: [warcry]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: grant.flag.culling, type: FLAT, value: 1 }
+
+  premeditation:           # Premeditation（強化的技能更多傷害 → 戰吼增益期間你的攻擊更多傷害）
+    name: 蓄嘯
+    description: 被輔助的戰吼增益期間，你的攻擊傷害更高。
+    icon: GOAT_HORN
+    tier: 2
+    requires: [warcry]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: grant.damage, type: MORE, value: 10, tags: [attack] }
+
+  unerring_power:          # Unerring Power（強化的技能命中更高；消耗更少那段沒做）
+    name: 嘯準
+    description: 被輔助的戰吼增益期間，你的攻擊命中更高。
+    icon: SPYGLASS
+    tier: 1
+    requires: [warcry]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: grant.accuracy, type: MORE, value: 30, tags: [attack] }
+
+  raging_cry:              # Raging Cry（依力量給怒氣 → 戰吼增益期間近戰擊中多拿怒氣）
+    name: 怒嘯
+    description: 被輔助的戰吼增益期間，你的近戰攻擊擊中時多獲得 3 點怒氣。
+    icon: BLAZE_POWDER
+    tier: 1
+    requires: [warcry]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: grant.rage.on_hit, type: FLAT, value: 3 }
+
+  sacrificial_offering:    # Sacrificial Offering（PoE2 另外扣 15% 生命，這裡改成魔力消耗更高；戰吼也吃得到）
+    name: 捐命
+    description: 被輔助的祭品（以及戰吼）效果更強，但魔力消耗高很多。
+    icon: CRIMSON_FUNGUS
+    tier: 2
+    requires: [warcry]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: warcry.effect, type: INCREASED, value: 30 }
+
+  # 精魂輔助：掛在精魂技能（光環、捷光環）上，多保留一點精魂，技能開著時你自己得到效果
+  precision:               # Precision
+    name: 凝準
+    description: 掛在精魂技能上：技能開著時你的命中更高。
+    icon: SPYGLASS
+    tier: 1
+    requires: [aura, herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 15 }
+      - { stat: grant.accuracy, type: INCREASED, value: 30 }
+
+  mysticism:               # Mysticism（能量護盾全滿時 → 一律，數值調低）
+    name: 盾詠
+    description: 掛在精魂技能上：技能開著時你的法術傷害更高。
+    icon: AMETHYST_SHARD
+    tier: 2
+    requires: [aura, herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 20 }
+      - { stat: grant.damage, type: INCREASED, value: 20, tags: [spell] }
+
+  upwelling:               # Upwelling（魔力沒滿時 → 一律，數值調低）
+    name: 湧僕
+    description: 掛在精魂技能上：技能開著時你的召喚物傷害更高。
+    icon: BONE
+    tier: 2
+    requires: [aura, herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 20 }
+      - { stat: grant.damage, type: INCREASED, value: 20, tags: [minion] }
+
+  # ---- 2026-10：PoE2 輔助補齊・第三批（新寫的程式：破甲／重暈／凍結／召喚物死亡觸發、隱藏戰吼、擊殺充能、引信、捷光環效果）----
+  adhesive_grenades:       # Adhesive Grenades
+    name: 黏彈
+    description: 被輔助的榴彈碰到地面就黏在原地不再彈跳，比較好瞄準，但傷害少一點。
+    icon: SLIME_BALL
+    tier: 1
+    requires: [grenade]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: flag.no_bounce, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -10 }
+
+  long_fuse:               # Long Fuse
+    name: 緩爆
+    description: 被輔助的榴彈引信長一半，但炸得更痛。
+    icon: STRING
+    tier: 2
+    requires: [grenade]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: grenade.fuse, type: MORE, value: 50 }
+      - { stat: damage, type: MORE, value: 30 }
+
+  short_fuse:              # Short Fuse
+    name: 急爆
+    description: 被輔助的榴彈引信短很多，很快就炸，但傷害少一點。
+    icon: GUNPOWDER
+    tier: 1
+    requires: [grenade]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: grenade.fuse, type: MORE, value: -40 }
+      - { stat: damage, type: MORE, value: -10 }
+
+  armour_explosion:        # Armour Explosion
+    name: 爆甲
+    description: 被輔助的技能把敵人的護甲完全打破時，在牠身上炸出一圈火焰。
+    icon: TNT
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.armour_broken, type: FLAT, value: 100, tags: [proc_armour_explosion] }
+
+  break_endurance:         # Break Endurance
+    name: 磐破
+    description: 被輔助的技能把敵人的護甲完全打破時，有機率給你一顆耐星。
+    icon: IRON_CHESTPLATE
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.armour_broken, type: FLAT, value: 40, tags: [proc_gain_endurance] }
+
+  break_posture:           # Break Posture
+    name: 破眩
+    description: 被輔助的攻擊把敵人的護甲完全打破時，讓牠和身旁的敵人眩暈（造成的傷害更少、更容易被暈）。
+    icon: CRACKED_DEEPSLATE_BRICKS
+    tier: 2
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.armour_broken, type: FLAT, value: 100, tags: [proc_break_daze] }
+
+  enduring_impact:         # Enduring Impact
+    name: 磐震
+    description: 被輔助的技能讓敵人重暈時，有機率給你一顆耐星。
+    icon: ANVIL
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.stun_applied, type: FLAT, value: 50, tags: [proc_gain_endurance] }
+
+  blazing_critical:        # Blazing Critical
+    name: 燼勢
+    description: 被輔助的攻擊暴擊時，你五秒內的攻擊獲得額外火焰傷害。
+    icon: BLAZE_POWDER
+    tier: 2
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.crit, type: FLAT, value: 100, tags: [proc_blazing_critical] }
+
+  enervation:              # Enervation
+    name: 吸電
+    description: 被輔助的技能擊中感電中的敵人時，你四秒內魔力回復變快。
+    icon: PRISMARINE_CRYSTALS
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: proc.vs_shocked, type: FLAT, value: 100, tags: [proc_enervation] }
+
+  innervate:               # Innervate
+    name: 霆勢
+    description: 被輔助的技能打死感電中的敵人時，你五秒內的攻擊獲得額外閃電傷害。
+    icon: LIGHTNING_ROD
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.kill_shocked, type: FLAT, value: 100, tags: [proc_innervate] }
+
+  bidding:                 # Bidding
+    name: 骸令
+    description: 被輔助的指令技能更痛、冷卻更快。
+    icon: BELL
+    tier: 2
+    requires: [command]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: damage, type: MORE, value: 20 }
+      - { stat: skill.cooldown, type: INCREASED, value: -17 }
+
+  essence_harvest:         # Essence Harvest
+    name: 魂收
+    description: 被輔助的召喚技能叫出來的召喚物死掉時，你回復一部分魔力。
+    icon: EXPERIENCE_BOTTLE
+    tier: 1
+    requires: [minion]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: mana.on_minion_death, type: FLAT, value: 8 }
+
+  deathmarch:              # Deathmarch
+    name: 骸恤
+    description: 被輔助的召喚技能叫出來的召喚物死掉時，旁邊你的其他召喚物回復生命並清掉異常。
+    icon: GOLDEN_APPLE
+    tier: 2
+    requires: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: minion.death_heal, type: FLAT, value: 25 }
+
+  last_rites:              # 召喚物倒下時炸開（PoE2 召喚物死亡觸發類）
+    name: 殞爆
+    description: 被輔助的召喚技能叫出來的召喚物死掉時，在牠倒下的地方炸出一圈混沌。
+    icon: WITHER_ROSE
+    tier: 2
+    requires: [minion]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: proc.minion_death, type: FLAT, value: 100, tags: [proc_last_rites] }
+
+  bounty:                  # Bounty
+    name: 獵賞
+    description: 被輔助的技能打死敵人時，生命藥劑、魔力藥劑與護符拿到的充能更多。
+    icon: GOLD_NUGGET
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: flask.charges_on_kill.life, type: FLAT, value: 50 }
+      - { stat: flask.charges_on_kill.mana, type: FLAT, value: 50 }
+      - { stat: charm.charges_on_kill, type: FLAT, value: 50 }
+
+  life_bounty:             # Life Bounty
+    name: 命賞
+    description: 被輔助的技能打死敵人時，生命藥劑拿到的充能變兩倍。
+    icon: RED_DYE
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: flask.charges_on_kill.life, type: FLAT, value: 100 }
+
+  mana_bounty:             # Mana Bounty
+    name: 魔賞
+    description: 被輔助的技能打死敵人時，魔力藥劑拿到的充能變兩倍。
+    icon: BLUE_DYE
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: flask.charges_on_kill.mana, type: FLAT, value: 100 }
+
+  charm_bounty:            # Charm Bounty
+    name: 護賞
+    description: 被輔助的技能打死敵人時，護符拿到的充能變兩倍。
+    icon: AMETHYST_CLUSTER
+    tier: 1
+    excludes: [minion]
+    mana_multiplier: 1.05
+    modifiers:
+      - { stat: charm.charges_on_kill, type: FLAT, value: 100 }
+
+  lifetap:                 # Lifetap
+    name: 血付
+    description: 被輔助的技能改扣生命，不扣魔力。
+    icon: REDSTONE
+    tier: 1
+    excludes: [aura, herald]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: flag.blood_magic, type: FLAT, value: 1 }
+
+  herald_infusion:         # Infusion（捷光環效果）
+    name: 灌宣
+    description: 掛在捷光環上：捷光環給的效果更強，但多保留一點精魂。
+    icon: GLOW_INK_SAC
+    tier: 2
+    requires: [herald]
+    modifiers:
+      - { stat: support.spirit, type: FLAT, value: 15 }
+      - { stat: herald.effect, type: MORE, value: 30 }
+
+  fluke:                   # Fluke
+    name: 骰運
+    description: 被輔助的技能每一下的傷害忽高忽低（平均起來稍微高一點）。
+    icon: RABBIT_FOOT
+    tier: 2
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: damage.random, type: FLAT, value: 40 }
+
+  supercritical:           # Supercritical
+    name: 爆極
+    description: 被輔助的技能暴擊時有機率變成超暴擊（暴擊傷害加成變兩倍），但暴擊率低一點。
+    icon: NETHER_STAR
+    tier: 3
+    excludes: [minion]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: crit.super_chance, type: FLAT, value: 20 }
+      - { stat: crit.chance, type: MORE, value: -20 }
+
+  # ---- 2026-10：戰星的輔助（照 PoE2：只對被輔助的技能，擊中時機率獲得一顆）----
+
+  charge_power:
+    name: 聚銳
+    description: 被輔助的技能擊中敵人時，有機率獲得一顆銳星（每顆增加 40% 暴擊率）。
+    icon: PRISMARINE_CRYSTALS
+    tier: 2
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: charge.on_hit.power, type: FLAT, value: 10 }
+
+  charge_frenzy:
+    name: 聚怒
+    description: 被輔助的技能擊中敵人時，有機率獲得一顆怒星（每顆攻速、施法速度與傷害都多一點）。
+    icon: SLIME_BALL
+    tier: 2
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: charge.on_hit.frenzy, type: FLAT, value: 10 }
+
+  charge_endurance:
+    name: 聚磐
+    description: 被輔助的技能擊中敵人時，有機率獲得一顆磐星（每顆加元素抗性與護甲）。
+    icon: IRON_INGOT
+    tier: 2
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: charge.on_hit.endurance, type: FLAT, value: 10 }

@@ -1,0 +1,2581 @@
+# 昇華（轉職）、試煉、分身獎勵。改完在遊戲內 /ec reload。
+#
+# 三百年前，曜朝的皇帝在熔爐前立了四道門，讓十二個星衛一道一道走過去，把星骸煉進身體——那叫「昇華」。
+# 熔爐失控之後，門還在星骸的記憶裡，爐監殷燼也還守著。營地地圖裝置旁的星衛明夷（quests.yml 的 ming_yi）替你打開它們。
+#
+# 流程：打倒焚城廢墟的 Boss → 在明夷那裡（或 /ascend）開第一試煉 → 地圖裝置後面的傳送門進去，打倒爐監
+#   → 第一次完成給昇華點，選一個昇華職業（每個職業兩個，選了不能換）→ 用昇華點配昇華天賦。
+# 每個試煉第一次完成給 points 昇華點（四個一共 8 點）。試煉不用地圖物品就能開，所以不能拿來刷：
+# 完成過的人不能再開（隊友開的可以跟著進去幫忙，不會再給點數），每個角色每週能開的次數也有上限。
+# 隊友一起打也算：Boss 倒下時在裡面、而且自己也解鎖了這個試煉的人，都算完成。
+# 試煉跟地圖一樣在地圖世界裡（在裡面死亡扣 10% 經驗），開新的試煉或地圖，舊的那張傳送門就關了。
+#
+# 存在角色進度裡：trial.試煉代號（完成時間）、asc（選的昇華職業）、asc.nodes（配的昇華天賦，照配的順序）、
+# asc.week（這週開了幾次試煉）。
+
+settings:
+  cooldown_seconds: 60        # 開了一個試煉之後多久才能再開（每個人）
+  weekly_opens: 8             # 每個角色每週最多開幾次試煉（打倒前全倒了可以重開，算次數；每週一 0 點重置；0 = 不限）
+
+# ---- 試煉 ----
+#   name        名稱
+#   requires    解鎖條件（都要符合；可以不寫）：
+#                 trial: 試煉代號    先完成另一個試煉
+#                 boss: 區域代號     這個角色打倒過那個區域的 Boss
+#                 maps: 張數         完成過幾張不同的地圖
+#                 level: 等級        角色等級
+#   level       怪物等級（固定，不看角色等級）
+#   points      第一次完成給幾個昇華點
+#   theme       版面主題（maps.yml 的主題：beach、forest、ruins、swamp、snow、cave、crypt、star）
+#   rooms       版面大約幾個房間（含起點與 Boss 房，5–12）
+#   quantity、rarity  Boss 的物品數量、稀有度加成（百分比；路上的怪照一般掉，試煉不掉地圖）
+#   monsters    路上的怪（原版生物代號或 mythic:代號 → 權重）
+#   boss        守門的 Boss（寫法同 maps.yml 的 boss：life／damage 是最後的倍率，已經扣掉生物本身的倍率；
+#               skills 是 boss_skills.yml 的招式組，每場試煉的爐監各有一套照那道門元素的招式，phase 幾起才會用；
+#               也可以寫 maps.yml 的特殊機制：phases 的 shield（護盾）、hazards（場地危害）、enrage（狂暴））
+trials:
+  ember:
+    name: 第一試煉・餘燼
+    requires: { boss: ruins }
+    level: 36
+    points: 2
+    theme: ruins
+    rooms: 7
+    quantity: 50
+    rarity: 30
+    lore: 熔爐點火的前一夜，十二個星衛走進第一道門。門後是燒不完的曜京。
+    monsters: { HUSK: 3, SKELETON: 3, ZOMBIE: 2, BLAZE: 1 }
+    boss:
+      name: 熾爐・殷燼                 # 2026-10：同一個守門人（爐監殷燼），四道門各一個稱號
+      type: VINDICATOR
+      named: true
+      life: 2.4          # 2026-10：7 → 2.4（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
+      damage: 1.4
+      scale: 1.3
+      mods: [armoured, fiery]
+      skills:                       # 餘燼：火錘、餘燼路（走過留火）、爐息；一半血起灰雨、爐火環（擴散環：站進綠色的缺口）
+        - warden_ember_hammer
+        - warden_cinder_trail
+        - warden_forge_breath
+        - { id: warden_ash_rain, phase: 1 }
+        - { id: warden_fire_ring, phase: 1 }
+      intro: "「又一個想進熔爐的。陛下說過，火會挑人。」"
+      defeat: "「……火挑中你了。第二道門在腐沼底下，別讓毒把你泡軟。」"
+      phases:
+        - at: 0.5
+          name: 爐火
+          message: "「熱起來了，對吧？」"
+          summon: { type: SKELETON, count: 3 }
+          speed: 0.1
+          stats:
+            - { stat: damage, type: INCREASED, value: 20 }
+
+  venom:
+    name: 第二試煉・沉毒
+    requires: { trial: ember, boss: swamp }
+    level: 48
+    points: 2
+    theme: swamp
+    rooms: 8
+    quantity: 60
+    rarity: 40
+    lore: 第二道門浸在毒裡。星骸會吃掉軟弱的那一半，剩下的才配往前走。
+    monsters: { BOGGED: 3, ZOMBIE: 2, CAVE_SPIDER: 2, WITCH: 1, SLIME: 1 }
+    boss:
+      name: 沉瘴・殷燼                 # 2026-10：同一個守門人（爐監殷燼），四道門各一個稱號
+      type: VINDICATOR
+      named: true
+      life: 2.4          # 2026-10：9 → 2.4（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
+      damage: 1.45
+      scale: 1.35
+      mods: [armoured, resistant]
+      skills:                       # 沉毒：毒錘、毒沼、孢雲；毒霧起瘟潮、沼底漩渦（往外跑）；腐心起受傷加深的詛咒、孢子球（追人的毒球）
+        - warden_venom_hammer
+        - warden_bog_pools
+        - warden_spore_cloud
+        - { id: warden_plague_nova, phase: 1 }
+        - { id: warden_bog_vortex, phase: 1 }
+        - { id: warden_rot_curse, phase: 2 }
+        - { id: warden_spore_orbs, phase: 2 }
+      intro: "「你身上有火的味道。好——讓毒試試，它是把火熄掉，還是讓它更旺。」"
+      defeat: "「第三道門在山頂的冰裡。我在那裡發過誓。」"
+      phases:
+        - at: 0.6
+          name: 毒霧
+          message: "「三百年了，這沼裡的東西還認得我。」"
+          summon: { type: BOGGED, count: 3 }
+        - at: 0.3
+          name: 腐心
+          message: "「慢一點倒下。讓我看清楚你。」"
+          speed: 0.15
+          stats:
+            - { stat: damage, type: INCREASED, value: 25 }
+
+  frost:
+    name: 第三試煉・霜誓
+    requires: { trial: venom, boss: mountain }
+    level: 60
+    points: 2
+    theme: snow
+    rooms: 9
+    quantity: 80
+    rarity: 50
+    lore: 第三道門在冰裡。走過去的人要先把自己凍住，忘掉怕。
+    monsters: { STRAY: 4, SKELETON: 2, ZOMBIE: 2 }
+    boss:
+      name: 凜誓・殷燼                 # 2026-10：同一個守門人（爐監殷燼），四道門各一個稱號
+      type: VINDICATOR
+      named: true
+      life: 3.0          # 2026-10：10 → 3.0（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
+      damage: 1.5
+      scale: 1.4
+      mods: [armoured, frosty]
+      skills:                       # 霜誓：霜錘、霜環（緩速）、冰槍陣；霜誓起冰崩、霜誓光束（兩道光束）；凝冰之核把腳下凍成冰地（還會張開護盾）
+        - warden_frost_hammer
+        - warden_oath_ring
+        - warden_ice_lances
+        - { id: warden_glacier_fall, phase: 1 }
+        - { id: warden_frost_beam, phase: 1 }
+        - { id: warden_frozen_heart, phase: 2 }
+      intro: "「我在這裡發過誓：再也不讓任何人走進熔爐。可是規矩就是規矩。」"
+      defeat: "「……最後一道門在星痕裡。我在那裡等你，最後一次。」"
+      phases:
+        - at: 0.6
+          name: 霜誓
+          message: "「冷嗎？當年他們也這樣問我。」"
+          summon: { type: STRAY, count: 4 }
+        - at: 0.3
+          name: 凝冰之核
+          message: "「我的心早就凍住了。所以我不會停。」"
+          speed: 0.15
+          stats:
+            - { stat: damage, type: INCREASED, value: 30 }
+          # 護盾：殷燼無敵，打掉兩座冰像才打得動（25 秒內沒打完，他回 20% 生命）
+          shield: { count: 2, type: STRAY, name: 霜誓冰像, life: 3, duration: 25, heal: 20 }
+
+  star:
+    name: 第四試煉・星痕
+    requires: { trial: frost, maps: 6 }
+    level: 65
+    points: 2
+    theme: star
+    rooms: 10
+    quantity: 100
+    rarity: 60
+    lore: 最後一道門不在世上，在星痕裡：天穹之心墜落的那一刻。走過去，你就跟他們一樣了。
+    monsters: { WITHER_SKELETON: 3, SKELETON: 3, ENDERMAN: 1, EVOKER: 1 }
+    boss:
+      name: 星蝕・殷燼                 # 2026-10：同一個守門人（爐監殷燼），四道門各一個稱號
+      type: VINDICATOR
+      named: true
+      life: 2.8          # 2026-10：14 → 2.8（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
+      damage: 1.6
+      scale: 1.5
+      mods: [armoured, deadly, resistant]
+      skills:                       # 星痕：星錘、星墜、閃現追擊；星痕起裂天、星痕環（三個缺口）；十二門起三波推進、星痕審判（全場大招：躲進綠色安全區）；最後的火
+        - warden_star_hammer
+        - warden_star_fall
+        - warden_star_step
+        - { id: warden_sky_rift, phase: 1 }
+        - { id: warden_star_ring, phase: 1 }
+        - { id: warden_twelve_gates, phase: 2 }
+        - { id: warden_star_judgement, phase: 2 }
+        - { id: warden_last_fire, phase: 3 }
+      hazards:                      # 星痕起，天上一直掉星痕殘片（每 10 秒落在某個人附近）
+        - { skill: hazard_warden_star, every: 10, phase: 1 }
+      intro: "「十二個走進去，四個走出來。陛下是第十三個——他出來的時候，已經不是人了。」"
+      defeat: "「去吧。如果你在熔爐裡見到他，告訴他：十二門的人，都到齊了。」"
+      phases:
+        - at: 0.7
+          name: 星痕
+          message: "「看見了嗎？那一晚，天上裂開的樣子。」"
+          summon: { type: SKELETON, count: 4 }
+        - at: 0.4
+          name: 十二門
+          message: "「十二門的星衛，站起來！」"
+          summon: { type: WITHER_SKELETON, count: 3 }
+        - at: 0.15
+          name: 最後的火
+          message: "「這是我最後的火。接好。」"
+          speed: 0.2
+          stats:
+            - { stat: damage, type: INCREASED, value: 40 }
+
+# ---- 昇華職業（2026-10 PoE2 改版）----
+# 照 PoE2 的昇華：每個昇華一棵小樹（四條分支、最多 16 個天賦），每個天賦都是 1 點，四個試煉一共 8 點：大約只能配一半，要選。名稱沿用原本的，效果照 PoE2
+# （每個昇華取 PoE2 那個昇華裡我們的系統做得出來的核心；要連段、榮耀、元素灌注、護符、寶石顏色、夥伴的先不做）。
+# 每條分支的第一個隨時能配，後面的要先配同一條前面那個（requires）。
+#   class    哪個職業的（marauder 戰士、mercenary 傭兵、huntress 女獵手、ranger 遊俠、monk 武僧、sorceress 女巫師、witch 女巫）
+#   nodes    代號 → { name, requires, cost（預設 1）, icon, stats, note }
+#            stats：{ stat, type: FLAT|INCREASED|MORE, value, tags }，INCREASED／MORE 的 value 是百分比；flag.* 這種寫死的效果說明在 stats/SignatureText。
+# 退掉昇華天賦要花金幣（跟天賦樹退點同一個價格 × 點數），要從分支的最後面退。
+ascendancies:
+  ironwarden:
+    class: marauder
+    name: 鐵衛
+    color: "#d4a24c"
+    icon: SHIELD
+    summary: 曜京十二道城門的守將：更多生命、胸甲護甲、放大天賦小點、粉碎打擊。
+    nodes:
+      t_armour:
+        name: 鐵壁
+        cost: 1
+        icon: IRON_CHESTPLATE
+        stats:
+          - { stat: armour, type: INCREASED, value: 20 }
+      t_stone_skin:
+        name: 岩膚
+        requires: t_armour
+        cost: 1
+        icon: STONE
+        stats:
+          - { stat: flag.stone_skin, value: 1 }
+      t_str:
+        name: 巨力
+        cost: 1
+        icon: IRON_INGOT
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 4 }
+      t_lineage:
+        name: 星脈
+        requires: t_str
+        cost: 1
+        icon: RED_DYE
+        stats:
+          - { stat: life.max, type: MORE, value: 15 }
+      t_stun:
+        name: 震撼
+        cost: 1
+        icon: ANVIL
+        stats:
+          - { stat: stun.buildup, type: INCREASED, value: 18 }
+      t_crushing:
+        name: 裂勁
+        requires: t_stun
+        cost: 1
+        icon: NETHERITE_INGOT
+        stats:
+          - { stat: flag.crush_primed, value: 1 }
+          - { stat: damage.vs_stunned, value: 25 }
+      t_str2:
+        name: 巨力 II
+        cost: 1
+        icon: IRON_INGOT
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 4 }
+      t_hulking:
+        name: 巨像化
+        requires: t_str2
+        cost: 1
+        icon: GOLDEN_APPLE
+        stats:
+          - { stat: flag.hulking_form, value: 1 }
+      t_armour2:
+        name: 厚甲
+        requires: t_stone_skin
+        cost: 1
+        icon: IRON_BLOCK
+        stats:
+          - { stat: armour, type: INCREASED, value: 20 }
+      t_mountain:
+        name: 山岳之軀
+        requires: t_armour2
+        cost: 1
+        icon: DEEPSLATE
+        stats:
+          - { stat: stun.threshold, type: INCREASED, value: 30 }
+          - { stat: life.max, type: INCREASED, value: 5 }
+      t_str3:
+        name: 巨力 III
+        requires: t_lineage
+        cost: 1
+        icon: IRON_INGOT
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 4 }
+      t_laststand:
+        name: 背水一戰
+        requires: t_str3
+        cost: 1
+        icon: TOTEM_OF_UNDYING
+        stats:
+          - { stat: sig.last_stand, type: FLAT, value: 1 }
+      t_quake:
+        name: 撼地
+        requires: t_crushing
+        cost: 1
+        icon: COBBLESTONE
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 15, tags: [slam] }
+      t_earthbreaker:
+        name: 崩地者
+        requires: t_quake
+        cost: 1
+        icon: MACE
+        stats:
+          - { stat: damage, type: MORE, value: 20, tags: [slam] }
+      t_regen:
+        name: 巨軀回春
+        requires: t_hulking
+        cost: 1
+        icon: RED_DYE
+        stats:
+          - { stat: life.regen, type: INCREASED, value: 25 }
+      t_colossal:
+        name: 巨像之軀
+        requires: t_regen
+        cost: 1
+        icon: IRON_CHESTPLATE
+        stats:
+          - { stat: life.max, type: INCREASED, value: 8 }
+          - { stat: armour, type: INCREASED, value: 20 }
+
+  berserker:
+    class: marauder
+    name: 狂嘯者
+    color: "#ff5544"
+    icon: NETHERITE_AXE
+    summary: 熔爐失控那一夜衝出火裡的禁衛：破甲、圖騰、戰吼、格擋。
+    nodes:
+      w_break:
+        name: 碎甲
+        cost: 1
+        icon: IRON_PICKAXE
+        stats:
+          - { stat: armour.break, type: INCREASED, value: 25 }
+      w_anvil:
+        name: 鐵砧之重
+        requires: w_break
+        cost: 1
+        icon: ANVIL
+        stats:
+          - { stat: armour.break, value: 10 }
+      w_imploding:
+        name: 碎甲之怒
+        requires: w_anvil
+        cost: 1
+        icon: TNT
+        stats:
+          - { stat: flag.imploding_impacts, value: 1 }
+      w_totem:
+        name: 圖騰之軀
+        cost: 1
+        icon: OAK_LOG
+        stats:
+          - { stat: totem.life, type: INCREASED, value: 20 }
+      w_answered:
+        name: 英靈應召
+        requires: w_totem
+        cost: 1
+        icon: TOTEM_OF_UNDYING
+        stats:
+          - { stat: skill.totems, value: 1 }
+      w_block:
+        name: 盾衛
+        cost: 1
+        icon: SHIELD
+        stats:
+          - { stat: block.chance, type: INCREASED, value: 6 }
+      w_renly:
+        name: 盾術精修
+        requires: w_block
+        cost: 1
+        icon: SHIELD
+        stats:
+          - { stat: flag.renly_training, value: 1 }
+      w_turtle:
+        name: 玄甲符
+        requires: w_renly
+        cost: 1
+        icon: TURTLE_HELMET
+        stats:
+          - { stat: block.max, value: 25 }
+          - { stat: block.taken, value: 20 }
+      w_bellow:
+        name: 戰吼咆哮
+        cost: 1
+        icon: GOAT_HORN
+        stats:
+          - { stat: skill.cooldown, type: MORE, value: -50, tags: [warcry] }
+      w_shatter:
+        name: 斷骨
+        requires: w_imploding
+        cost: 1
+        icon: BONE
+        stats:
+          - { stat: damage, type: MORE, value: 15, tags: [physical] }
+      w_totem2:
+        name: 英靈之力
+        requires: w_answered
+        cost: 1
+        icon: TOTEM_OF_UNDYING
+        stats:
+          - { stat: damage, type: INCREASED, value: 30, tags: [totem] }
+      w_ancestral:
+        name: 祖靈列陣
+        requires: w_totem2
+        cost: 1
+        icon: OAK_LOG
+        stats:
+          - { stat: skill.totems, type: FLAT, value: 1 }
+      w_bulwark:
+        name: 鐵幕
+        requires: w_turtle
+        cost: 1
+        icon: SHIELD
+        stats:
+          - { stat: armour, type: INCREASED, value: 30 }
+      w_cry:
+        name: 戰吼回響
+        requires: w_bellow
+        cost: 1
+        icon: GOAT_HORN
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 30, tags: [warcry] }
+          - { stat: skill.cooldown, type: INCREASED, value: -15, tags: [warcry] }
+      w_rage:
+        name: 血怒
+        requires: w_cry
+        cost: 1
+        icon: REDSTONE
+        stats:
+          - { stat: sig.blood_rage, type: FLAT, value: 1 }
+      w_god:
+        name: 弒神
+        requires: w_rage
+        cost: 1
+        icon: NETHERITE_SWORD
+        stats:
+          - { stat: sig.godslayer, type: FLAT, value: 1 }
+
+  forgesmith:
+    class: marauder
+    name: 鑄星匠
+    color: "#ff7a3a"
+    icon: ANVIL
+    summary: 熔爐旁長大的鐵匠：火焰抗性、護甲擋元素、鍛打之火。
+    nodes:
+      k_fire:
+        name: 耐火
+        cost: 1
+        icon: MAGMA_CREAM
+        stats:
+          - { stat: resist.fire, type: FLAT, value: 12 }
+      k_temper:
+        name: 淬火
+        requires: k_fire
+        cost: 1
+        icon: IRON_INGOT
+        stats:
+          - { stat: armour.elemental, type: FLAT, value: 15 }
+      k_maxfire:
+        name: 熔爐之膚
+        requires: k_temper
+        cost: 1
+        icon: MAGMA_BLOCK
+        stats:
+          - { stat: resist.max.fire, type: FLAT, value: 3 }
+      k_molten:
+        name: 熔火之軀
+        requires: k_maxfire
+        cost: 1
+        icon: LAVA_BUCKET
+        stats:
+          - { stat: avoid.ignite, type: FLAT, value: 100 }
+      k_armour:
+        name: 鍛甲
+        cost: 1
+        icon: IRON_CHESTPLATE
+        stats:
+          - { stat: armour, type: INCREASED, value: 25 }
+      k_master:
+        name: 傑作
+        requires: k_armour
+        cost: 1
+        icon: NETHERITE_INGOT
+        stats:
+          - { stat: physical.reduction, type: FLAT, value: 5 }
+      k_anvil:
+        name: 鐵砧
+        requires: k_master
+        cost: 1
+        icon: ANVIL
+        stats:
+          - { stat: stun.threshold, type: INCREASED, value: 30 }
+      k_heart:
+        name: 熔爐之心
+        requires: k_anvil
+        cost: 1
+        icon: BLAST_FURNACE
+        stats:
+          - { stat: life.max, type: MORE, value: 10 }
+      k_hammer:
+        name: 鍛錘
+        cost: 1
+        icon: MACE
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [mace] }
+      k_flame:
+        name: 鍛打之火
+        requires: k_hammer
+        cost: 1
+        icon: FIRE_CHARGE
+        stats:
+          - { stat: damage.gain.fire, type: FLAT, value: 10 }
+      k_ignite:
+        name: 火花
+        requires: k_flame
+        cost: 1
+        icon: BLAZE_POWDER
+        stats:
+          - { stat: ignite.chance, type: FLAT, value: 15 }
+      k_wildfire:
+        name: 燎原
+        requires: k_ignite
+        cost: 1
+        icon: CAMPFIRE
+        stats:
+          - { stat: sig.wildfire, type: FLAT, value: 1 }
+      k_regen:
+        name: 爐邊休息
+        cost: 1
+        icon: RED_DYE
+        stats:
+          - { stat: life.regen, type: INCREASED, value: 20 }
+      k_recoup:
+        name: 回火
+        requires: k_regen
+        cost: 1
+        icon: GLISTERING_MELON_SLICE
+        stats:
+          - { stat: life.recoup, type: FLAT, value: 8 }
+      k_last:
+        name: 背水一戰
+        requires: k_recoup
+        cost: 1
+        icon: TOTEM_OF_UNDYING
+        stats:
+          - { stat: sig.last_stand, type: FLAT, value: 1 }
+      k_sac:
+        name: 獻祭
+        requires: k_last
+        cost: 1
+        icon: NETHER_WART
+        stats:
+          - { stat: sig.sacrifice, type: FLAT, value: 1 }
+
+  witchhunter:
+    class: mercenary
+    name: 斷咒獵人
+    color: "#c0c0c0"
+    icon: CROSSBOW
+    summary: 專殺施法者的獵人：撲殺、爆屍、打殘血。
+    nodes:
+      h_area:
+        name: 審判之域
+        cost: 1
+        icon: TARGET
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 8 }
+      h_pitiless:
+        name: 冷刃
+        requires: h_area
+        cost: 1
+        icon: IRON_SWORD
+        stats:
+          - { stat: flag.culling, value: 1 }
+      h_cdr:
+        name: 迅速審判
+        cost: 1
+        icon: CLOCK
+        stats:
+          - { stat: skill.cooldown, type: INCREASED, value: -6 }
+      h_zealous:
+        name: 焚罪
+        requires: h_cdr
+        cost: 1
+        icon: TNT
+        stats:
+          - { stat: kill.explode_chance, value: 10 }
+      h_low:
+        name: 補刀
+        cost: 1
+        icon: IRON_AXE
+        stats:
+          - { stat: damage.vs_low_life, value: 35 }
+      h_low2:
+        name: 斬首
+        requires: h_low
+        cost: 1
+        icon: WITHER_SKELETON_SKULL
+        stats:
+          - { stat: damage.vs_low_life, value: 35 }
+      h_def:
+        name: 皮甲獵裝
+        cost: 1
+        icon: LEATHER_CHESTPLATE
+        stats:
+          - { stat: armour, type: INCREASED, value: 15 }
+          - { stat: evasion, type: INCREASED, value: 15 }
+      h_def2:
+        name: 獵人之甲
+        requires: h_def
+        cost: 1
+        icon: CHAINMAIL_CHESTPLATE
+        stats:
+          - { stat: armour, type: INCREASED, value: 15 }
+          - { stat: evasion, type: INCREASED, value: 15 }
+      h_area2:
+        name: 審判擴張
+        requires: h_pitiless
+        cost: 1
+        icon: SPYGLASS
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 12 }
+      h_god:
+        name: 弒神
+        requires: h_area2
+        cost: 1
+        icon: NETHERITE_SWORD
+        stats:
+          - { stat: sig.godslayer, type: FLAT, value: 1 }
+      h_cdr2:
+        name: 迅速審判 II
+        requires: h_zealous
+        cost: 1
+        icon: CLOCK
+        stats:
+          - { stat: skill.cooldown, type: INCREASED, value: -8 }
+      h_pyre:
+        name: 淨化之火
+        requires: h_cdr2
+        cost: 1
+        icon: BLAZE_POWDER
+        stats:
+          - { stat: kill.explode, type: FLAT, value: 5 }
+      h_crit:
+        name: 要害
+        requires: h_low2
+        cost: 1
+        icon: ARROW
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 25 }
+      h_verdict:
+        name: 斷罪
+        requires: h_crit
+        cost: 1
+        icon: IRON_SWORD
+        stats:
+          - { stat: sig.verdict, type: FLAT, value: 1 }
+      h_res:
+        name: 抗魔
+        requires: h_def2
+        cost: 1
+        icon: LAPIS_LAZULI
+        stats:
+          - { stat: resist.fire, type: FLAT, value: 8 }
+          - { stat: resist.cold, type: FLAT, value: 8 }
+          - { stat: resist.lightning, type: FLAT, value: 8 }
+      h_ward:
+        name: 純化之身
+        requires: h_res
+        cost: 1
+        icon: GLASS_BOTTLE
+        stats:
+          - { stat: ailment.self_duration, type: INCREASED, value: -40 }
+
+  legionnaire:
+    class: mercenary
+    name: 星紋弩衛
+    color: "#7fb3ff"
+    icon: CROSSBOW
+    summary: 帶兵的弩衛：圖騰、精魂效率、護甲換閃避。
+    nodes:
+      c_totem:
+        name: 砲台
+        cost: 1
+        icon: DISPENSER
+        stats:
+          - { stat: damage, type: INCREASED, value: 20, tags: [totem] }
+      c_cannons:
+        name: 列陣齊發
+        requires: c_totem
+        cost: 1
+        icon: DISPENSER
+        stats:
+          - { stat: skill.totems, value: 1 }
+          - { stat: attack.speed, type: MORE, value: 30, tags: [totem] }
+          - { stat: cast.speed, type: MORE, value: 30, tags: [totem] }
+      c_spirit:
+        name: 調度
+        cost: 1
+        icon: AMETHYST_SHARD
+        stats:
+          - { stat: spirit.max, type: FLAT, value: 15 }   # 2026-10：增加 8% → +15（全域 % 精魂太多）
+      c_plan:
+        name: 運籌
+        requires: c_spirit
+        cost: 1
+        icon: MAP
+        stats:
+          - { stat: aura.reservation, type: INCREASED, value: -30 }   # 2026-10：100% → 30%（100% 等於所有精魂技能保留減半，太強）
+      c_def:
+        name: 掩體
+        cost: 1
+        icon: IRON_CHESTPLATE
+        stats:
+          - { stat: armour, type: INCREASED, value: 15 }
+          - { stat: evasion, type: INCREASED, value: 15 }
+      c_cover:
+        name: 輕甲疾行
+        requires: c_def
+        cost: 1
+        icon: OAK_FENCE
+        stats:
+          - { stat: armour, type: MORE, value: 100 }
+          - { stat: flag.stay_light, value: 1 }
+      c_minion:
+        name: 指揮
+        cost: 1
+        icon: GOLDEN_HELMET
+        stats:
+          - { stat: damage, type: INCREASED, value: 20, tags: [minion] }
+      c_minion2:
+        name: 部隊
+        requires: c_minion
+        cost: 1
+        icon: GOLDEN_HELMET
+        stats:
+          - { stat: damage, type: INCREASED, value: 20, tags: [minion] }
+      c_totem2:
+        name: 堅固砲台
+        requires: c_cannons
+        cost: 1
+        icon: OAK_LOG
+        stats:
+          - { stat: totem.life, type: INCREASED, value: 30 }
+      c_barrage:
+        name: 齊射
+        requires: c_totem2
+        cost: 1
+        icon: CROSSBOW
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 10, tags: [totem] }
+      c_spirit2:
+        name: 調度 II
+        requires: c_plan
+        cost: 1
+        icon: AMETHYST_SHARD
+        stats:
+          - { stat: spirit.max, type: FLAT, value: 15 }   # 2026-10：增加 8% → +15（全域 % 精魂太多）
+      c_legion:
+        name: 軍陣
+        requires: c_spirit2
+        cost: 1
+        icon: WHITE_BANNER
+        stats:
+          - { stat: sig.legion, type: FLAT, value: 1 }
+      c_def2:
+        name: 伏擊
+        requires: c_cover
+        cost: 1
+        icon: LEATHER_BOOTS
+        stats:
+          - { stat: evasion, type: INCREASED, value: 20 }
+      c_voidstep:
+        name: 伺機
+        requires: c_def2
+        cost: 1
+        icon: ENDER_PEARL
+        stats:
+          - { stat: sig.void_step, type: FLAT, value: 1 }
+      c_minion3:
+        name: 部隊 II
+        requires: c_minion2
+        cost: 1
+        icon: IRON_HORSE_ARMOR
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 10, tags: [minion] }
+      c_command:
+        name: 號令
+        requires: c_minion3
+        cost: 1
+        icon: GOAT_HORN
+        stats:
+          - { stat: damage, type: MORE, value: 15, tags: [minion] }
+
+  gemling:
+    class: mercenary
+    name: 嵌晶戰團
+    color: "#7fe0c8"
+    icon: EMERALD
+    summary: 把星晶嵌進身體的士兵：屬性、技能等級、更省的技能。
+    nodes:
+      g_attr:
+        name: 嵌晶
+        cost: 1
+        icon: EMERALD
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 3 }
+          - { stat: attr.dex, type: INCREASED, value: 3 }
+          - { stat: attr.int, type: INCREASED, value: 3 }
+      g_attr2:
+        name: 嵌晶 II
+        requires: g_attr
+        cost: 1
+        icon: DIAMOND
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 3 }
+          - { stat: attr.dex, type: INCREASED, value: 3 }
+          - { stat: attr.int, type: INCREASED, value: 3 }
+      g_skill:
+        name: 晶化技藝
+        requires: g_attr2
+        cost: 1
+        icon: AMETHYST_CLUSTER
+        stats:
+          - { stat: skill.level, type: FLAT, value: 1 }
+      g_attr3:
+        name: 完美嵌晶
+        requires: g_skill
+        cost: 1
+        icon: NETHER_STAR
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 5 }
+          - { stat: attr.dex, type: INCREASED, value: 5 }
+          - { stat: attr.int, type: INCREASED, value: 5 }
+      g_cost:
+        name: 節能
+        cost: 1
+        icon: LAPIS_LAZULI
+        stats:
+          - { stat: skill.cost, type: INCREASED, value: -8 }
+      g_cost2:
+        name: 節能 II
+        requires: g_cost
+        cost: 1
+        icon: LAPIS_BLOCK
+        stats:
+          - { stat: skill.cost, type: INCREASED, value: -8 }
+      g_mana:
+        name: 晶能
+        requires: g_cost2
+        cost: 1
+        icon: PRISMARINE_CRYSTALS
+        stats:
+          - { stat: mana.max, type: INCREASED, value: 15 }
+      g_soul:
+        name: 雷魂
+        requires: g_mana
+        cost: 1
+        icon: LIGHTNING_ROD
+        stats:
+          - { stat: sig.thunder_soul, type: FLAT, value: 1 }
+      g_crit:
+        name: 精準
+        cost: 1
+        icon: ARROW
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 15 }
+      g_critb:
+        name: 致命
+        requires: g_crit
+        cost: 1
+        icon: IRON_SWORD
+        stats:
+          - { stat: crit.bonus, type: INCREASED, value: 20 }
+      g_aspd:
+        name: 操練
+        requires: g_critb
+        cost: 1
+        icon: CROSSBOW
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 8 }
+      g_legion:
+        name: 軍陣
+        requires: g_aspd
+        cost: 1
+        icon: WHITE_BANNER
+        stats:
+          - { stat: sig.legion, type: FLAT, value: 1 }
+      g_life:
+        name: 強身
+        cost: 1
+        icon: RED_DYE
+        stats:
+          - { stat: life.max, type: INCREASED, value: 4 }
+      g_res:
+        name: 晶膚
+        requires: g_life
+        cost: 1
+        icon: LAPIS_LAZULI
+        stats:
+          - { stat: resist.fire, type: FLAT, value: 8 }
+          - { stat: resist.cold, type: FLAT, value: 8 }
+          - { stat: resist.lightning, type: FLAT, value: 8 }
+      g_proj:
+        name: 分晶彈
+        requires: g_res
+        cost: 1
+        icon: SPECTRAL_ARROW
+        stats:
+          - { stat: skill.projectiles, type: FLAT, value: 1 }
+      g_pierce:
+        name: 穿晶
+        requires: g_proj
+        cost: 1
+        icon: TRIDENT
+        stats:
+          - { stat: skill.pierce, type: FLAT, value: 1 }
+
+  amazon:
+    class: huntress
+    name: 林嵐獵姬
+    color: "#8fd36b"
+    icon: TRIDENT
+    summary: 叢林的戰士：命中轉暴擊、元素偷取、輕裝閃避。
+    nodes:
+      a_acc:
+        name: 鷹睛
+        cost: 1
+        icon: SPYGLASS
+        stats:
+          - { stat: accuracy, type: INCREASED, value: 12 }
+      a_crit:
+        name: 穿心
+        requires: a_acc
+        cost: 1
+        icon: ARROW
+        stats:
+          - { stat: flag.amazon_crit, value: 1 }
+      a_leech:
+        name: 汲取
+        cost: 1
+        icon: GHAST_TEAR
+        stats:
+          - { stat: leech.effect, type: INCREASED, value: 12 }
+      a_harvest:
+        name: 元素汲收
+        requires: a_leech
+        cost: 1
+        icon: GLOW_BERRIES
+        stats:
+          - { stat: flag.leech_elemental_all, value: 1 }
+      a_ev:
+        name: 叢林步
+        cost: 1
+        icon: LEATHER_BOOTS
+        stats:
+          - { stat: evasion, type: INCREASED, value: 20 }
+      a_panther:
+        name: 林豹
+        requires: a_ev
+        cost: 1
+        icon: OCELOT_SPAWN_EGG
+        stats:
+          - { stat: flag.stalking_panther, value: 1 }
+      a_ele:
+        name: 元素之威
+        cost: 1
+        icon: PRISMARINE_CRYSTALS
+        stats:
+          - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
+      a_speed:
+        name: 迅捷
+        requires: a_ele
+        cost: 1
+        icon: FEATHER
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 4 }
+          - { stat: cast.speed, type: INCREASED, value: 4 }
+      a_acc2:
+        name: 銳眼 II
+        requires: a_crit
+        cost: 1
+        icon: SPYGLASS
+        stats:
+          - { stat: accuracy, type: INCREASED, value: 15 }
+      a_critb:
+        name: 致命要害
+        requires: a_acc2
+        cost: 1
+        icon: ARROW
+        stats:
+          - { stat: crit.bonus, type: INCREASED, value: 30 }
+      a_leech2:
+        name: 渴血
+        requires: a_harvest
+        cost: 1
+        icon: REDSTONE
+        stats:
+          - { stat: leech.rate, type: INCREASED, value: 30 }
+      a_vital:
+        name: 生機
+        requires: a_leech2
+        cost: 1
+        icon: GLISTERING_MELON_SLICE
+        stats:
+          - { stat: life.max, type: INCREASED, value: 8 }
+      a_ev2:
+        name: 叢林步 II
+        requires: a_panther
+        cost: 1
+        icon: LEATHER_BOOTS
+        stats:
+          - { stat: evasion, type: INCREASED, value: 20 }
+      a_windwalk:
+        name: 御風
+        requires: a_ev2
+        cost: 1
+        icon: FEATHER
+        stats:
+          - { stat: sig.windwalk, type: FLAT, value: 1 }
+      a_ele2:
+        name: 元素之力 II
+        requires: a_speed
+        cost: 1
+        icon: PRISMARINE_CRYSTALS
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [elemental] }
+      a_frost:
+        name: 霜之灌注
+        requires: a_ele2
+        cost: 1
+        icon: PACKED_ICE
+        stats:
+          - { stat: damage.extra.cold, type: FLAT, value: 10 }
+
+  ritualist:
+    class: huntress
+    name: 儀祭者
+    color: "#b34dff"
+    icon: BONE
+    summary: 與惡靈立約的獵手：飾品加成、殘血回復；代價是抗性與精魂。
+    nodes:
+      r_attr:
+        name: 祭品
+        cost: 1
+        icon: BONE_MEAL
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 3 }
+          - { stat: attr.dex, type: INCREASED, value: 3 }
+          - { stat: attr.int, type: INCREASED, value: 3 }
+      r_attune:
+        name: 祭器共鳴
+        requires: r_attr
+        cost: 1
+        icon: EMERALD
+        stats:
+          - { stat: flag.mystic_attunement, value: 1 }
+          - { stat: resist.fire, value: -20 }
+          - { stat: resist.cold, value: -20 }
+          - { stat: resist.lightning, value: -20 }
+      r_phys:
+        name: 血祭
+        cost: 1
+        icon: REDSTONE
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [physical] }
+      r_ms:
+        name: 疾行
+        cost: 1
+        icon: RABBIT_FOOT
+        stats:
+          - { stat: movement.speed, type: INCREASED, value: 3 }
+      r_regen:
+        name: 生生不息
+        cost: 1
+        icon: OAK_SAPLING
+        stats:
+          - { stat: life.regen, type: INCREASED, value: 10 }
+      r_wildwood:
+        name: 林息
+        requires: r_regen
+        cost: 1
+        icon: OAK_LEAVES
+        stats:
+          - { stat: life.recovery_per_missing, value: 10 }
+      r_ms2:
+        name: 疾行 II
+        requires: r_ms
+        cost: 1
+        icon: RABBIT_FOOT
+        stats:
+          - { stat: movement.speed, type: INCREASED, value: 3 }
+      r_charm:
+        name: 護身符咒
+        requires: r_attune
+        cost: 1
+        icon: RABBIT_FOOT
+        stats:
+          - { stat: flask.life_recovery, type: INCREASED, value: 20 }
+      r_sacrifice:
+        name: 獻祭
+        requires: r_charm
+        cost: 1
+        icon: NETHER_WART
+        stats:
+          - { stat: sig.sacrifice, type: FLAT, value: 1 }
+      r_phys2:
+        name: 血祭 II
+        requires: r_phys
+        cost: 1
+        icon: REDSTONE
+        stats:
+          - { stat: damage, type: INCREASED, value: 15 }
+      r_rage:
+        name: 血怒
+        requires: r_phys2
+        cost: 1
+        icon: RED_DYE
+        stats:
+          - { stat: sig.blood_rage, type: FLAT, value: 1 }
+      r_bleed:
+        name: 放血
+        requires: r_rage
+        cost: 1
+        icon: IRON_SWORD
+        stats:
+          - { stat: bleed.chance, type: FLAT, value: 15 }
+      r_ev:
+        name: 林間身法
+        requires: r_ms2
+        cost: 1
+        icon: LEATHER_BOOTS
+        stats:
+          - { stat: evasion, type: INCREASED, value: 20 }
+      r_recoup:
+        name: 回春
+        requires: r_wildwood
+        cost: 1
+        icon: GLISTERING_MELON_SLICE
+        stats:
+          - { stat: life.recoup, type: FLAT, value: 8 }
+
+  stararrow:
+    class: ranger
+    name: 星矢
+    color: "#9fd0ff"
+    icon: BOW
+    summary: 一箭穿星的神射手：多一支投射物、投射物強化。
+    nodes:
+      d_proj:
+        name: 準星
+        cost: 1
+        icon: ARROW
+        stats:
+          - { stat: damage, type: INCREASED, value: 12, tags: [projectile] }
+      d_munitions:
+        name: 分星矢
+        requires: d_proj
+        cost: 1
+        icon: SPECTRAL_ARROW
+        stats:
+          - { stat: skill.projectiles, value: 1 }
+      d_speed:
+        name: 疾矢
+        cost: 1
+        icon: FEATHER
+        stats:
+          - { stat: skill.projectile_speed, type: INCREASED, value: 10 }
+      d_speed2:
+        name: 流星
+        requires: d_speed
+        cost: 1
+        icon: FIREWORK_ROCKET
+        stats:
+          - { stat: skill.projectile_speed, type: INCREASED, value: 10 }
+          - { stat: damage, type: INCREASED, value: 12, tags: [projectile] }
+      d_skill:
+        name: 連射
+        cost: 1
+        icon: CLOCK
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 4 }
+          - { stat: cast.speed, type: INCREASED, value: 4 }
+      d_frenzy:
+        name: 狂怒
+        requires: d_skill
+        cost: 1
+        icon: BLAZE_POWDER
+        stats:
+          - { stat: charge.max.frenzy, value: 1 }
+      d_crit:
+        name: 要害
+        cost: 1
+        icon: TARGET
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 20, tags: [projectile] }
+      d_crit2:
+        name: 一擊必殺
+        requires: d_crit
+        cost: 1
+        icon: TARGET
+        stats:
+          - { stat: crit.bonus, type: INCREASED, value: 20, tags: [projectile] }
+      d_proj2:
+        name: 精準射擊 II
+        requires: d_munitions
+        cost: 1
+        icon: ARROW
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [projectile] }
+      d_far:
+        name: 遠星
+        requires: d_proj2
+        cost: 1
+        icon: SPYGLASS
+        stats:
+          - { stat: sig.far_shot, type: FLAT, value: 1 }
+      d_pierce:
+        name: 穿星
+        requires: d_speed2
+        cost: 1
+        icon: SPECTRAL_ARROW
+        stats:
+          - { stat: skill.pierce, type: FLAT, value: 1 }
+      d_chain:
+        name: 連星
+        requires: d_pierce
+        cost: 1
+        icon: LEAD
+        stats:
+          - { stat: skill.chains, type: FLAT, value: 1 }
+      d_skill2:
+        name: 連射 II
+        requires: d_frenzy
+        cost: 1
+        icon: BOW
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 6 }
+      d_windwalk:
+        name: 御風
+        requires: d_skill2
+        cost: 1
+        icon: FEATHER
+        stats:
+          - { stat: sig.windwalk, type: FLAT, value: 1 }
+      d_crit3:
+        name: 要害 II
+        requires: d_crit2
+        cost: 1
+        icon: ARROW
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 20 }
+      d_god:
+        name: 弒神
+        requires: d_crit3
+        cost: 1
+        icon: NETHERITE_SWORD
+        stats:
+          - { stat: sig.godslayer, type: FLAT, value: 1 }
+
+  windwalker:
+    class: ranger
+    name: 御風者
+    color: "#7de0c2"
+    icon: FEATHER
+    summary: 走遍荒野的旅人：閃避擋元素、不被減速、劇毒。
+    nodes:
+      p_ev:
+        name: 荒野之皮
+        cost: 1
+        icon: LEATHER_CHESTPLATE
+        stats:
+          - { stat: evasion, type: INCREASED, value: 20 }
+      p_sustain:
+        name: 風衣
+        requires: p_ev
+        cost: 1
+        icon: MOSS_BLOCK
+        stats:
+          - { stat: evasion.elemental, value: 50 }
+      p_speed:
+        name: 疾行
+        cost: 1
+        icon: FEATHER
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 4 }
+          - { stat: cast.speed, type: INCREASED, value: 4 }
+      p_pursuit:
+        name: 不滯
+        requires: p_speed
+        cost: 1
+        icon: RABBIT_FOOT
+        stats:
+          - { stat: flag.unslowable, value: 1 }
+      p_poison:
+        name: 毒草
+        cost: 1
+        icon: SPIDER_EYE
+        stats:
+          - { stat: poison.magnitude, type: INCREASED, value: 12 }
+      p_toxic:
+        name: 蝕骨劇毒
+        requires: p_poison
+        cost: 1
+        icon: FERMENTED_SPIDER_EYE
+        stats:
+          - { stat: flag.double_poison, value: 1 }
+          - { stat: poison.duration, type: MORE, value: -50 }
+      p_flask:
+        name: 藥草知識
+        cost: 1
+        icon: POTION
+        stats:
+          - { stat: flask.life_recovery, type: INCREASED, value: 20 }
+          - { stat: flask.mana_recovery, type: INCREASED, value: 20 }
+      p_flask2:
+        name: 長效藥劑
+        requires: p_flask
+        cost: 1
+        icon: POTION
+        stats:
+          - { stat: flask.life_recovery, type: INCREASED, value: 20 }
+      p_res:
+        name: 荒野抗性
+        requires: p_sustain
+        cost: 1
+        icon: LAPIS_LAZULI
+        stats:
+          - { stat: resist.fire, type: FLAT, value: 8 }
+          - { stat: resist.cold, type: FLAT, value: 8 }
+          - { stat: resist.lightning, type: FLAT, value: 8 }
+      p_windwalk:
+        name: 御風
+        requires: p_res
+        cost: 1
+        icon: FEATHER
+        stats:
+          - { stat: sig.windwalk, type: FLAT, value: 1 }
+      p_ms:
+        name: 疾行 II
+        requires: p_pursuit
+        cost: 1
+        icon: SUGAR
+        stats:
+          - { stat: movement.speed, type: INCREASED, value: 5 }
+      p_onslaught:
+        name: 趁勢
+        requires: p_ms
+        cost: 1
+        icon: RABBIT_FOOT
+        stats:
+          - { stat: onslaught.on_kill, type: FLAT, value: 20 }
+      p_poison2:
+        name: 毒草 II
+        requires: p_toxic
+        cost: 1
+        icon: SPIDER_EYE
+        stats:
+          - { stat: poison.chance, type: FLAT, value: 15 }
+      p_plague:
+        name: 瘟主
+        requires: p_poison2
+        cost: 1
+        icon: FERMENTED_SPIDER_EYE
+        stats:
+          - { stat: sig.plague_lord, type: FLAT, value: 1 }
+      p_flask3:
+        name: 藥草知識 II
+        requires: p_flask2
+        cost: 1
+        icon: POTION
+        stats:
+          - { stat: flask.mana_recovery, type: INCREASED, value: 20 }
+      p_herb:
+        name: 草藥之心
+        requires: p_flask3
+        cost: 1
+        icon: GLISTERING_MELON_SLICE
+        stats:
+          - { stat: life.recoup, type: FLAT, value: 8 }
+
+  invoker:
+    class: monk
+    name: 喚雷者
+    color: "#ffe066"
+    icon: LIGHTNING_ROD
+    summary: 以元素為信仰的武僧：額外雷冰、暴擊無視抗性、閃避化為護甲。
+    nodes:
+      i_ele:
+        name: 元素經
+        cost: 1
+        icon: PRISMARINE_CRYSTALS
+        stats:
+          - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
+      i_thunder:
+        name: 雷身
+        requires: i_ele
+        cost: 1
+        icon: LIGHTNING_ROD
+        stats:
+          - { stat: damage.extra.lightning, value: 10 }
+      i_blizzard:
+        name: 雪身
+        requires: i_thunder
+        cost: 1
+        icon: PACKED_ICE
+        stats:
+          - { stat: damage.extra.cold, value: 10 }
+      i_crit:
+        name: 洞察
+        cost: 1
+        icon: ENDER_EYE
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 12 }
+      i_sunder:
+        name: 破法拳
+        requires: i_crit
+        cost: 1
+        icon: NETHERITE_SWORD
+        stats:
+          - { stat: flag.sunder_enemies, value: 1 }
+      i_ev:
+        name: 身法
+        cost: 1
+        icon: LEATHER_CHESTPLATE
+        stats:
+          - { stat: evasion, type: INCREASED, value: 15 }
+          - { stat: es.max, type: INCREASED, value: 15 }
+      i_protect:
+        name: 護身罡氣
+        requires: i_ev
+        cost: 1
+        icon: SHIELD
+        stats:
+          - { stat: flag.protect_from_harm, value: 1 }
+          - { stat: evasion, type: MORE, value: -35 }
+      i_recharge:
+        name: 氣海
+        cost: 1
+        icon: HEART_OF_THE_SEA
+        stats:
+          - { stat: es.recharge, type: INCREASED, value: 20 }
+      i_ele2:
+        name: 元素之道 II
+        requires: i_blizzard
+        cost: 1
+        icon: PRISMARINE_CRYSTALS
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [elemental] }
+      i_crit2:
+        name: 洞察 II
+        requires: i_sunder
+        cost: 1
+        icon: AMETHYST_SHARD
+        stats:
+          - { stat: crit.bonus, type: INCREASED, value: 25 }
+      i_thundersoul:
+        name: 雷魂
+        requires: i_crit2
+        cost: 1
+        icon: LIGHTNING_ROD
+        stats:
+          - { stat: sig.thunder_soul, type: FLAT, value: 1 }
+      i_ev2:
+        name: 身法 II
+        requires: i_protect
+        cost: 1
+        icon: LEATHER_BOOTS
+        stats:
+          - { stat: evasion, type: INCREASED, value: 20 }
+      i_voidstep:
+        name: 虛步
+        requires: i_ev2
+        cost: 1
+        icon: ENDER_PEARL
+        stats:
+          - { stat: sig.void_step, type: FLAT, value: 1 }
+      i_es:
+        name: 氣海 II
+        requires: i_recharge
+        cost: 1
+        icon: LIGHT_BLUE_DYE
+        stats:
+          - { stat: es.max, type: INCREASED, value: 15 }
+      i_ward:
+        name: 靜心
+        requires: i_es
+        cost: 1
+        icon: GLASS_BOTTLE
+        stats:
+          - { stat: ailment.threshold, type: INCREASED, value: 30 }
+      i_mind:
+        name: 心如止水
+        requires: i_ward
+        cost: 1
+        icon: WHITE_DYE
+        stats:
+          - { stat: avoid.stun, type: FLAT, value: 30 }
+
+  voidwalker:
+    class: monk
+    name: 虛步者
+    color: "#8e44ad"
+    icon: ENDER_PEARL
+    summary: 追隨虛空的苦修者：混沌抗性加倍、混沌偷取。
+    nodes:
+      v_chaos:
+        name: 虛無之觸
+        cost: 1
+        icon: ENDER_PEARL
+        stats:
+          - { stat: damage, type: INCREASED, value: 11, tags: [chaos] }
+      v_extra:
+        name: 虛空湧流
+        requires: v_chaos
+        cost: 1
+        icon: DRAGON_BREATH
+        stats:
+          - { stat: damage.extra.chaos, value: 4 }
+      v_res:
+        name: 暗影之膚
+        cost: 1
+        icon: OBSIDIAN
+        stats:
+          - { stat: resist.chaos, value: 7 }
+      v_gift:
+        name: 虛空饋贈
+        requires: v_res
+        cost: 1
+        icon: CRYING_OBSIDIAN
+        stats:
+          - { stat: resist.max.chaos, value: 10 }
+          - { stat: flag.chaos_res_double, value: 1 }
+      v_leech:
+        name: 汲夢
+        cost: 1
+        icon: GHAST_TEAR
+        stats:
+          - { stat: leech.effect, type: INCREASED, value: 11 }
+      v_sap:
+        name: 夢魘汲
+        requires: v_leech
+        cost: 1
+        icon: FERMENTED_SPIDER_EYE
+        stats:
+          - { stat: flag.leech_chaos, value: 1 }
+      v_speed:
+        name: 迅捷
+        cost: 1
+        icon: FEATHER
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 4 }
+          - { stat: cast.speed, type: INCREASED, value: 4 }
+      v_chaos2:
+        name: 虛無之觸 II
+        requires: v_speed
+        cost: 1
+        icon: ENDER_PEARL
+        stats:
+          - { stat: damage, type: INCREASED, value: 11, tags: [chaos] }
+      v_chaos3:
+        name: 虛無之觸 III
+        requires: v_extra
+        cost: 1
+        icon: ECHO_SHARD
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [chaos] }
+      v_plague:
+        name: 瘟主
+        requires: v_chaos3
+        cost: 1
+        icon: FERMENTED_SPIDER_EYE
+        stats:
+          - { stat: sig.plague_lord, type: FLAT, value: 1 }
+      v_res2:
+        name: 暗影之膚 II
+        requires: v_gift
+        cost: 1
+        icon: OBSIDIAN
+        stats:
+          - { stat: resist.chaos, type: FLAT, value: 10 }
+      v_es:
+        name: 虛空護體
+        requires: v_res2
+        cost: 1
+        icon: LIGHT_BLUE_DYE
+        stats:
+          - { stat: es.max, type: INCREASED, value: 15 }
+      v_leech2:
+        name: 汲夢 II
+        requires: v_sap
+        cost: 1
+        icon: REDSTONE
+        stats:
+          - { stat: leech.rate, type: INCREASED, value: 30 }
+      v_void:
+        name: 虛步
+        requires: v_leech2
+        cost: 1
+        icon: ENDER_PEARL
+        stats:
+          - { stat: sig.void_step, type: FLAT, value: 1 }
+      v_ms:
+        name: 無影
+        requires: v_chaos2
+        cost: 1
+        icon: SUGAR
+        stats:
+          - { stat: movement.speed, type: INCREASED, value: 5 }
+      v_dark:
+        name: 闇心
+        requires: v_ms
+        cost: 1
+        icon: COAL
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 25 }
+
+  starfire:
+    class: sorceress
+    name: 星焰術士
+    color: "#ff9f43"
+    icon: BLAZE_ROD
+    summary: 操縱風暴的術士：所有傷害都能冰緩、感電，魔力扛傷。
+    nodes:
+      s_mana:
+        name: 法泉
+        cost: 1
+        icon: LAPIS_LAZULI
+        stats:
+          - { stat: mana.regen, type: INCREASED, value: 12 }
+      s_will:
+        name: 心力
+        requires: s_mana
+        cost: 1
+        icon: LAPIS_BLOCK
+        stats:
+          - { stat: damage.from_mana, value: 20 }
+      s_shock:
+        name: 雷落
+        cost: 1
+        icon: LIGHTNING_ROD
+        stats:
+          - { stat: shock.chance, type: INCREASED, value: 20 }
+      s_storms:
+        name: 御雷
+        requires: s_shock
+        cost: 1
+        icon: TRIDENT
+        stats:
+          - { stat: flag.all_damage_shocks, value: 1 }
+      s_chill:
+        name: 寒意
+        cost: 1
+        icon: SNOWBALL
+        stats:
+          - { stat: chill.duration, type: INCREASED, value: 25 }
+      s_winter:
+        name: 御寒
+        requires: s_chill
+        cost: 1
+        icon: PACKED_ICE
+        stats:
+          - { stat: flag.all_damage_chills, value: 1 }
+      s_crit:
+        name: 星火
+        cost: 1
+        icon: GLOWSTONE_DUST
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
+      s_crit2:
+        name: 星火 II
+        requires: s_crit
+        cost: 1
+        icon: GLOWSTONE_DUST
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
+      s_mana2:
+        name: 法泉 II
+        requires: s_will
+        cost: 1
+        icon: LAPIS_LAZULI
+        stats:
+          - { stat: mana.max, type: INCREASED, value: 10 }
+      s_thunder:
+        name: 雷魂
+        requires: s_mana2
+        cost: 1
+        icon: LIGHTNING_ROD
+        stats:
+          - { stat: sig.thunder_soul, type: FLAT, value: 1 }
+      s_shock2:
+        name: 雷擊 II
+        requires: s_storms
+        cost: 1
+        icon: GLOWSTONE_DUST
+        stats:
+          - { stat: shock.effect, type: INCREASED, value: 20 }
+      s_extra:
+        name: 我即雷霆
+        requires: s_shock2
+        cost: 1
+        icon: LIGHTNING_ROD
+        stats:
+          - { stat: damage.extra.lightning, type: FLAT, value: 10 }
+      s_chill2:
+        name: 寒意 II
+        requires: s_winter
+        cost: 1
+        icon: SNOWBALL
+        stats:
+          - { stat: freeze.buildup, type: INCREASED, value: 25 }
+      s_tomb:
+        name: 冬葬
+        requires: s_chill2
+        cost: 1
+        icon: PACKED_ICE
+        stats:
+          - { stat: sig.winter_tomb, type: FLAT, value: 1 }
+      s_crit3:
+        name: 星火 III
+        requires: s_crit2
+        cost: 1
+        icon: BLAZE_POWDER
+        stats:
+          - { stat: crit.bonus, type: INCREASED, value: 25 }
+      s_area:
+        name: 暴心
+        requires: s_crit3
+        cost: 1
+        icon: HEART_OF_THE_SEA
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 15, tags: [spell] }
+
+  voidrobe:
+    class: sorceress
+    name: 虛空法袍
+    color: "#6c5ce7"
+    icon: CLOCK
+    summary: 操縱時間的術士：傷害延後、冷卻縮短。
+    nodes:
+      c_cdr:
+        name: 時光流轉
+        cost: 1
+        icon: CLOCK
+        stats:
+          - { stat: skill.cooldown, type: INCREASED, value: -6 }
+      c_phased:
+        name: 相移
+        requires: c_cdr
+        cost: 1
+        icon: PHANTOM_MEMBRANE
+        stats:
+          - { stat: flag.phased_form, value: 1 }
+      c_area:
+        name: 時空擴張
+        cost: 1
+        icon: ENDER_EYE
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 8 }
+      c_area2:
+        name: 時空擴張 II
+        requires: c_area
+        cost: 1
+        icon: ENDER_EYE
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 6 }
+          - { stat: cast.speed, type: INCREASED, value: 4 }
+      c_cast:
+        name: 加速
+        cost: 1
+        icon: SUGAR
+        stats:
+          - { stat: cast.speed, type: INCREASED, value: 6 }
+      c_duration:
+        name: 延續
+        cost: 1
+        icon: HONEY_BOTTLE
+        stats:
+          - { stat: skill.duration, type: INCREASED, value: 10 }
+      c_cdr2:
+        name: 時光流轉 II
+        requires: c_phased
+        cost: 1
+        icon: CLOCK
+        stats:
+          - { stat: skill.cooldown, type: INCREASED, value: -6 }
+      c_duration2:
+        name: 延續 II
+        requires: c_duration
+        cost: 1
+        icon: HONEY_BOTTLE
+        stats:
+          - { stat: skill.duration, type: INCREASED, value: 10 }
+      c_rewind:
+        name: 回溯
+        requires: c_cdr2
+        cost: 1
+        icon: CLOCK
+        stats:
+          - { stat: life.recoup, type: FLAT, value: 10 }
+      c_area3:
+        name: 時空擴張 III
+        requires: c_area2
+        cost: 1
+        icon: ENDER_EYE
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [area] }
+      c_quick:
+        name: 加速時光
+        requires: c_area3
+        cost: 1
+        icon: SUGAR
+        stats:
+          - { stat: cast.speed, type: MORE, value: 10 }
+      c_cast2:
+        name: 加速 II
+        requires: c_cast
+        cost: 1
+        icon: FEATHER
+        stats:
+          - { stat: cast.speed, type: INCREASED, value: 6 }
+      c_mana:
+        name: 時之泉
+        requires: c_cast2
+        cost: 1
+        icon: LAPIS_LAZULI
+        stats:
+          - { stat: mana.regen, type: INCREASED, value: 25 }
+      c_void:
+        name: 虛步
+        requires: c_mana
+        cost: 1
+        icon: ENDER_PEARL
+        stats:
+          - { stat: sig.void_step, type: FLAT, value: 1 }
+      c_slow:
+        name: 遲滯
+        requires: c_duration2
+        cost: 1
+        icon: SNOWBALL
+        stats:
+          - { stat: chill.effect, type: INCREASED, value: 25 }
+      c_freeze:
+        name: 時間凍結
+        requires: c_slow
+        cost: 1
+        icon: PACKED_ICE
+        stats:
+          - { stat: freeze.duration, type: INCREASED, value: 30 }
+
+  sandsage:
+    class: sorceress
+    name: 沙靈使
+    color: "#e8c46a"
+    icon: SAND
+    summary: 與沙海精靈立約的術士：召喚物、法術範圍、精魂。
+    nodes:
+      n_minion:
+        name: 沙靈
+        cost: 1
+        icon: SAND
+        stats:
+          - { stat: damage, type: INCREASED, value: 20, tags: [minion] }
+      n_minion2:
+        name: 疾風沙靈
+        requires: n_minion
+        cost: 1
+        icon: SUGAR
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 10, tags: [minion] }
+      n_legion:
+        name: 軍陣
+        requires: n_minion2
+        cost: 1
+        icon: WHITE_BANNER
+        stats:
+          - { stat: sig.legion, type: FLAT, value: 1 }
+      n_command:
+        name: 精靈之王
+        requires: n_legion
+        cost: 1
+        icon: GOLDEN_HELMET
+        stats:
+          - { stat: damage, type: MORE, value: 20, tags: [minion] }
+      n_spell:
+        name: 沙暴
+        cost: 1
+        icon: SANDSTONE
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [spell] }
+      n_cast:
+        name: 疾詠
+        requires: n_spell
+        cost: 1
+        icon: FEATHER
+        stats:
+          - { stat: cast.speed, type: INCREASED, value: 6 }
+      n_area:
+        name: 漫天黃沙
+        requires: n_cast
+        cost: 1
+        icon: SAND
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 15, tags: [spell] }
+      n_frost:
+        name: 夜沙之寒
+        requires: n_area
+        cost: 1
+        icon: PACKED_ICE
+        stats:
+          - { stat: damage.extra.cold, type: FLAT, value: 10 }
+      n_es:
+        name: 沙之護
+        cost: 1
+        icon: LIGHT_BLUE_DYE
+        stats:
+          - { stat: es.max, type: INCREASED, value: 15 }
+      n_rech:
+        name: 流沙
+        requires: n_es
+        cost: 1
+        icon: HOPPER
+        stats:
+          - { stat: es.recharge, type: INCREASED, value: 25 }
+      n_ward:
+        name: 穩如沙丘
+        requires: n_rech
+        cost: 1
+        icon: SANDSTONE
+        stats:
+          - { stat: avoid.stun, type: FLAT, value: 30 }
+      n_void:
+        name: 虛步
+        requires: n_ward
+        cost: 1
+        icon: ENDER_PEARL
+        stats:
+          - { stat: sig.void_step, type: FLAT, value: 1 }
+      n_spirit:
+        name: 契約
+        cost: 1
+        icon: AMETHYST_SHARD
+        stats:
+          - { stat: spirit.max, type: FLAT, value: 15 }   # 2026-10：增加 8% → +15（全域 % 精魂太多）
+      n_spirit2:
+        name: 契約 II
+        requires: n_spirit
+        cost: 1
+        icon: AMETHYST_CLUSTER
+        stats:
+          - { stat: spirit.max, type: FLAT, value: 15 }   # 2026-10：增加 8% → +15（全域 % 精魂太多）
+      n_aura:
+        name: 精靈庇佑
+        requires: n_spirit2
+        cost: 1
+        icon: BEACON
+        stats:
+          - { stat: aura.effect, type: INCREASED, value: 15 }
+      n_dur:
+        name: 永續
+        requires: n_aura
+        cost: 1
+        icon: CLOCK
+        stats:
+          - { stat: skill.duration, type: INCREASED, value: 20 }
+
+  blightcaller:
+    class: witch
+    name: 疫喚者
+    color: "#e17055"
+    icon: BLAZE_POWDER
+    summary: 與惡魔立約的女巫：用生命換護盾、魔力、精魂，暴擊焚身。
+    nodes:
+      f_life:
+        name: 惡魔之血
+        cost: 1
+        icon: REDSTONE
+        stats:
+          - { stat: life.max, type: INCREASED, value: 3 }
+      f_hand:
+        name: 魔契之手
+        requires: f_life
+        cost: 1
+        icon: BLAZE_POWDER
+        stats:
+          - { stat: flag.beidat_hand, value: 1 }
+      f_mana:
+        name: 惡魔之心
+        cost: 1
+        icon: LAPIS_LAZULI
+        stats:
+          - { stat: mana.max, type: INCREASED, value: 3 }
+      f_gaze:
+        name: 魔契之眼
+        requires: f_mana
+        cost: 1
+        icon: ENDER_EYE
+        stats:
+          - { stat: flag.beidat_gaze, value: 1 }
+      f_will:
+        name: 魔契之志
+        requires: f_gaze
+        cost: 1
+        icon: AMETHYST_SHARD
+        stats:
+          - { stat: flag.beidat_will, value: 1 }
+      f_crit:
+        name: 炎眼
+        cost: 1
+        icon: MAGMA_CREAM
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 12 }
+      f_grin:
+        name: 狂焰焚身
+        requires: f_crit
+        cost: 1
+        icon: FIRE_CHARGE
+        stats:
+          - { stat: crit.bonus, type: MORE, value: 50 }
+          - { stat: self.ignite_on_crit, value: 15 }
+      f_flame:
+        name: 燃燒
+        cost: 1
+        icon: FLINT_AND_STEEL
+        stats:
+          - { stat: ignite.chance, type: INCREASED, value: 40 }
+      f_bringer:
+        name: 燎原者
+        requires: f_flame
+        cost: 1
+        icon: FIRE_CHARGE
+        stats:
+          - { stat: flag.all_damage_ignites, value: 1 }
+      f_life2:
+        name: 惡魔之血 II
+        requires: f_hand
+        cost: 1
+        icon: RED_DYE
+        stats:
+          - { stat: life.max, type: INCREASED, value: 4 }
+      f_feast:
+        name: 獻祭
+        requires: f_life2
+        cost: 1
+        icon: NETHER_WART
+        stats:
+          - { stat: sig.sacrifice, type: FLAT, value: 1 }
+      f_spirit:
+        name: 惡魔契約
+        requires: f_will
+        cost: 1
+        icon: AMETHYST_SHARD
+        stats:
+          - { stat: spirit.max, type: FLAT, value: 20 }   # 2026-10：增加 10% → +20（全域 % 精魂太多）
+      f_crit2:
+        name: 炎眼 II
+        requires: f_grin
+        cost: 1
+        icon: BLAZE_POWDER
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 15 }
+      f_wildfire:
+        name: 燎原
+        requires: f_crit2
+        cost: 1
+        icon: FIRE_CHARGE
+        stats:
+          - { stat: sig.wildfire, type: FLAT, value: 1 }
+      f_flame2:
+        name: 燃燒 II
+        requires: f_bringer
+        cost: 1
+        icon: MAGMA_CREAM
+        stats:
+          - { stat: ignite.magnitude, type: INCREASED, value: 25 }
+      f_pyre:
+        name: 火葬
+        requires: f_flame2
+        cost: 1
+        icon: BLAZE_ROD
+        stats:
+          - { stat: kill.explode, type: FLAT, value: 5 }
+
+  bloodmage:
+    class: witch
+    name: 血術士
+    color: "#c0392b"
+    icon: REDSTONE
+    summary: 以血為媒的術士：法術偷取、高基礎暴擊、以血換力。
+    nodes:
+      b_life:
+        name: 血脈
+        cost: 1
+        icon: REDSTONE
+        stats:
+          - { stat: life.max, type: INCREASED, value: 3 }
+      b_siphon:
+        name: 汲生
+        requires: b_life
+        cost: 1
+        icon: GHAST_TEAR
+        stats:
+          - { stat: leech.life_spell, value: 20 }
+      b_crit:
+        name: 血之洞察
+        cost: 1
+        icon: RED_DYE
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
+      b_sunder:
+        name: 剖血
+        requires: b_crit
+        cost: 1
+        icon: IRON_SWORD
+        stats:
+          - { stat: flag.spell_base_crit_15, value: 1 }
+      b_gore:
+        name: 血鋒
+        requires: b_sunder
+        cost: 1
+        icon: POINTED_DRIPSTONE
+        stats:
+          - { stat: crit.bonus_per_50_life, value: 1 }
+      b_life2:
+        name: 血脈 II
+        cost: 1
+        icon: REDSTONE
+        stats:
+          - { stat: life.max, type: INCREASED, value: 3 }
+      b_crimson:
+        name: 赤力
+        requires: b_life2
+        cost: 1
+        icon: RED_STAINED_GLASS
+        stats:
+          - { stat: flag.crimson_power, value: 1 }
+      b_grasp:
+        name: 纏傷
+        requires: b_crimson
+        cost: 1
+        icon: COBWEB
+        stats:
+          - { stat: flag.grasping_wounds, value: 1 }
+      b_feast:
+        name: 血宴
+        requires: b_siphon
+        cost: 1
+        icon: GLISTERING_MELON_SLICE
+        stats:
+          - { stat: sig.blood_feast, type: FLAT, value: 1 }
+      b_rage:
+        name: 血怒
+        requires: b_feast
+        cost: 1
+        icon: REDSTONE
+        stats:
+          - { stat: sig.blood_rage, type: FLAT, value: 1 }
+      b_crit2:
+        name: 血之洞察 II
+        requires: b_gore
+        cost: 1
+        icon: AMETHYST_SHARD
+        stats:
+          - { stat: crit.bonus, type: INCREASED, value: 25 }
+      b_regen:
+        name: 血肉再生
+        requires: b_grasp
+        cost: 1
+        icon: RED_DYE
+        stats:
+          - { stat: life.regen, type: INCREASED, value: 30 }
+      b_spell:
+        name: 血咒
+        cost: 1
+        icon: REDSTONE_BLOCK
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [spell] }
+      b_sang:
+        name: 以血代魔
+        requires: b_spell
+        cost: 1
+        icon: NETHER_WART
+        stats:
+          - { stat: flag.sanguimancy, type: FLAT, value: 1 }
+          - { stat: damage, type: MORE, value: 15, tags: [spell] }
+      b_vital:
+        name: 血脈 III
+        requires: b_sang
+        cost: 1
+        icon: RED_DYE
+        stats:
+          - { stat: life.max, type: INCREASED, value: 6 }
+      b_last:
+        name: 背水一戰
+        requires: b_vital
+        cost: 1
+        icon: TOTEM_OF_UNDYING
+        stats:
+          - { stat: sig.last_stand, type: FLAT, value: 1 }
+
+  lich:
+    class: witch
+    name: 永夜骸主
+    color: "#9a7bff"
+    icon: WITHER_SKELETON_SKULL
+    summary: 拋棄血肉的不死術士：能量護盾、混沌、以魔力代生命。
+    nodes:
+      l_es:
+        name: 骸殼
+        cost: 1
+        icon: LIGHT_BLUE_DYE
+        stats:
+          - { stat: es.max, type: INCREASED, value: 15 }
+      l_es2:
+        name: 亡者之殼 II
+        requires: l_es
+        cost: 1
+        icon: LIGHT_BLUE_STAINED_GLASS
+        stats:
+          - { stat: es.max, type: INCREASED, value: 15 }
+      l_rech:
+        name: 冥息
+        requires: l_es2
+        cost: 1
+        icon: SOUL_LANTERN
+        stats:
+          - { stat: es.recharge, type: INCREASED, value: 30 }
+      l_eternal:
+        name: 不朽
+        requires: l_rech
+        cost: 1
+        icon: TOTEM_OF_UNDYING
+        stats:
+          - { stat: flag.eternal_youth, type: FLAT, value: 1 }
+      l_chaos:
+        name: 凋零
+        cost: 1
+        icon: WITHER_ROSE
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [chaos] }
+      l_chaos2:
+        name: 凋零 II
+        requires: l_chaos
+        cost: 1
+        icon: WITHER_ROSE
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [chaos] }
+      l_extra:
+        name: 虛空湧流
+        requires: l_chaos2
+        cost: 1
+        icon: ECHO_SHARD
+        stats:
+          - { stat: damage.extra.chaos, type: FLAT, value: 4 }
+      l_plague:
+        name: 瘟主
+        requires: l_extra
+        cost: 1
+        icon: FERMENTED_SPIDER_EYE
+        stats:
+          - { stat: sig.plague_lord, type: FLAT, value: 1 }
+      l_mana:
+        name: 冥泉
+        cost: 1
+        icon: LAPIS_LAZULI
+        stats:
+          - { stat: mana.max, type: INCREASED, value: 10 }
+      l_battery:
+        name: 魂池逆流
+        requires: l_mana
+        cost: 1
+        icon: REDSTONE_BLOCK
+        stats:
+          - { stat: flag.eldritch_battery, type: FLAT, value: 1 }
+      l_will:
+        name: 意志之力
+        requires: l_battery
+        cost: 1
+        icon: ENDER_EYE
+        stats:
+          - { stat: damage.from_mana, type: FLAT, value: 15 }
+      l_crit:
+        name: 死亡凝視
+        requires: l_will
+        cost: 1
+        icon: AMETHYST_SHARD
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 20, tags: [spell] }
+      l_res:
+        name: 暗影之膚
+        cost: 1
+        icon: OBSIDIAN
+        stats:
+          - { stat: resist.chaos, type: FLAT, value: 10 }
+      l_ci:
+        name: 無血之軀
+        requires: l_res
+        cost: 1
+        icon: BONE
+        stats:
+          - { stat: flag.chaos_immune, type: FLAT, value: 1 }
+      l_eskill:
+        name: 收魂
+        requires: l_ci
+        cost: 1
+        icon: SOUL_TORCH
+        stats:
+          - { stat: es.on_kill, type: FLAT, value: 3 }
+      l_soul:
+        name: 魂火
+        requires: l_eskill
+        cost: 1
+        icon: SOUL_CAMPFIRE
+        stats:
+          - { stat: mana.on_kill, type: FLAT, value: 3 }
+
+
+  # 2026-10：德魯伊的兩個昇華（照 PoE2 的神諭者、薩滿，名稱是自己的）
+  starseer:
+    class: druid
+    name: 觀星祭
+    color: "#9fd6ff"
+    icon: SPYGLASS
+    summary: 讀星的德魯伊：暴擊與雙倍傷害、能量護盾、法術與飛龍形態。
+    nodes:
+      o_sight:
+        name: 觀辰
+        cost: 1
+        icon: SPYGLASS
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 20 }
+      o_fate:
+        name: 曜命
+        requires: o_sight
+        cost: 1
+        icon: CLOCK
+        stats:
+          - { stat: crit.bonus, type: INCREASED, value: 25 }
+      o_twin:
+        name: 雙曜
+        requires: o_fate
+        cost: 1
+        icon: AMETHYST_CLUSTER
+        stats:
+          - { stat: damage.double, type: FLAT, value: 8 }
+      o_int:
+        name: 辰慧
+        cost: 1
+        icon: LAPIS_LAZULI
+        stats:
+          - { stat: attr.int, type: INCREASED, value: 4 }
+      o_lineage:
+        name: 辰脈
+        requires: o_int
+        cost: 1
+        icon: LIGHT_BLUE_DYE
+        stats:
+          - { stat: es.max, type: INCREASED, value: 15 }
+      o_ward:
+        name: 曜盾
+        requires: o_lineage
+        cost: 1
+        icon: DIAMOND
+        stats:
+          - { stat: es.recharge, type: INCREASED, value: 30 }
+      o_evade:
+        name: 徵兆
+        requires: o_twin
+        cost: 1
+        icon: FEATHER
+        stats:
+          - { stat: evasion, type: INCREASED, value: 25 }
+      o_step:
+        name: 踏星
+        requires: o_ward
+        cost: 1
+        icon: RABBIT_FOOT
+        stats:
+          - { stat: movement.speed, type: INCREASED, value: 6 }
+          - { stat: evasion, type: INCREASED, value: 15 }
+      o_spell:
+        name: 曜咒
+        cost: 1
+        icon: ENCHANTED_BOOK
+        stats:
+          - { stat: damage, type: INCREASED, value: 20, tags: [spell] }
+      o_cast:
+        name: 速曜
+        requires: o_spell
+        cost: 1
+        icon: SUGAR
+        stats:
+          - { stat: cast.speed, type: INCREASED, value: 12 }
+      o_elem:
+        name: 三元眸
+        requires: o_cast
+        cost: 1
+        icon: ENDER_EYE
+        stats:
+          - { stat: damage, type: INCREASED, value: 20, tags: [elemental] }
+          - { stat: resist.fire, type: FLAT, value: 8 }
+          - { stat: resist.cold, type: FLAT, value: 8 }
+          - { stat: resist.lightning, type: FLAT, value: 8 }
+      o_nature:
+        name: 林語
+        requires: o_elem
+        cost: 1
+        icon: OAK_SAPLING
+        stats:
+          - { stat: damage, type: INCREASED, value: 25, tags: [shapeshift] }
+      o_wyvern:
+        name: 翼讖
+        requires: o_skill
+        cost: 1
+        icon: PHANTOM_MEMBRANE
+        stats:
+          - { stat: damage, type: MORE, value: 15, tags: [wyvern] }
+      o_spirit:
+        name: 曜魂
+        cost: 1
+        icon: AMETHYST_SHARD
+        stats:
+          - { stat: spirit.max, type: FLAT, value: 20 }
+      o_skill:
+        name: 辰嗣
+        requires: o_spirit
+        cost: 1
+        icon: NETHER_STAR
+        stats:
+          - { stat: skill.level, type: FLAT, value: 1, tags: [spell] }
+
+  wildshaman:
+    class: druid
+    name: 荒獸巫
+    color: "#8fc75a"
+    icon: OAK_SAPLING
+    summary: 跟萬靈立約的德魯伊：熊與狼人形態、元素之怒、變身技能等級。
+    nodes:
+      s_bear:
+        name: 熊祖
+        cost: 1
+        icon: BROWN_WOOL
+        stats:
+          - { stat: life.max, type: INCREASED, value: 8 }
+      s_bear2:
+        name: 厚皮
+        requires: s_bear
+        cost: 1
+        icon: IRON_CHESTPLATE
+        stats:
+          - { stat: damage, type: MORE, value: 15, tags: [bear] }
+          - { stat: armour, type: INCREASED, value: 25 }
+      s_wolf:
+        name: 狼祖
+        cost: 1
+        icon: BONE
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 8, tags: [werewolf] }
+      s_wolf2:
+        name: 嘯月
+        requires: s_wolf
+        cost: 1
+        icon: SHEARS
+        stats:
+          - { stat: damage, type: MORE, value: 15, tags: [werewolf] }
+      s_str:
+        name: 蠻勁
+        requires: s_bear2
+        cost: 1
+        icon: IRON_INGOT
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 4 }
+      s_regen:
+        name: 青苔
+        requires: s_str
+        cost: 1
+        icon: GLISTERING_MELON_SLICE
+        stats:
+          - { stat: life.regen, type: INCREASED, value: 30 }
+      s_storm:
+        name: 喚雷
+        cost: 1
+        icon: LIGHTNING_ROD
+        stats:
+          - { stat: damage, type: INCREASED, value: 25, tags: [lightning] }
+          - { stat: shock.chance, type: FLAT, value: 15 }
+      s_quake:
+        name: 裂土
+        requires: s_storm
+        cost: 1
+        icon: MAGMA_BLOCK
+        stats:
+          - { stat: damage, type: INCREASED, value: 25, tags: [fire] }
+          - { stat: ignite.chance, type: FLAT, value: 15 }
+      s_shape:
+        name: 化形
+        requires: s_wolf2
+        cost: 1
+        icon: OAK_SAPLING
+        stats:
+          - { stat: damage, type: INCREASED, value: 20, tags: [shapeshift] }
+      s_master:
+        name: 千形
+        requires: s_shape
+        cost: 1
+        icon: TOTEM_OF_UNDYING
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 10, tags: [shapeshift] }
+          - { stat: cast.speed, type: INCREASED, value: 10 }
+      s_stun:
+        name: 震野
+        cost: 1
+        icon: ANVIL
+        stats:
+          - { stat: stun.buildup, type: INCREASED, value: 25 }
+      s_feast:
+        name: 飽食
+        requires: s_stun
+        cost: 1
+        icon: COOKED_BEEF
+        stats:
+          - { stat: life.on_kill, type: FLAT, value: 15 }
+      s_spirit:
+        name: 群靈
+        requires: s_feast
+        cost: 1
+        icon: AMETHYST_SHARD
+        stats:
+          - { stat: spirit.max, type: FLAT, value: 20 }
+      s_primal:
+        name: 荒力
+        requires: s_spirit
+        cost: 1
+        icon: MOSSY_COBBLESTONE
+        stats:
+          - { stat: skill.level, type: FLAT, value: 1, tags: [shapeshift] }
+
+legacy:
+  marauder:
+    60: [ { stat: life.max, type: INCREASED, value: 2 } ]
+    75: [ { stat: life.max, type: INCREASED, value: 4 } ]
+    90: [ { stat: life.max, type: INCREASED, value: 6 } ]
+  mercenary:
+    60: [ { stat: armour, type: INCREASED, value: 4 } ]
+    75: [ { stat: armour, type: INCREASED, value: 8 } ]
+    90: [ { stat: armour, type: INCREASED, value: 12 } ]
+  huntress:
+    60: [ { stat: evasion, type: INCREASED, value: 4 } ]
+    75: [ { stat: evasion, type: INCREASED, value: 8 } ]
+    90: [ { stat: evasion, type: INCREASED, value: 12 } ]
+  ranger:
+    60: [ { stat: movement.speed, type: INCREASED, value: 2 } ]
+    75: [ { stat: movement.speed, type: INCREASED, value: 4 } ]
+    90: [ { stat: movement.speed, type: INCREASED, value: 6 } ]
+  monk:
+    60: [ { stat: es.max, type: INCREASED, value: 3 } ]
+    75: [ { stat: es.max, type: INCREASED, value: 6 } ]
+    90: [ { stat: es.max, type: INCREASED, value: 9 } ]
+  sorceress:
+    60: [ { stat: resist.fire, value: 2 }, { stat: resist.cold, value: 2 }, { stat: resist.lightning, value: 2 } ]
+    75: [ { stat: resist.fire, value: 4 }, { stat: resist.cold, value: 4 }, { stat: resist.lightning, value: 4 } ]
+    90: [ { stat: resist.fire, value: 6 }, { stat: resist.cold, value: 6 }, { stat: resist.lightning, value: 6 } ]
+  witch:
+    60: [ { stat: resist.chaos, value: 4 } ]
+    75: [ { stat: resist.chaos, value: 8 } ]
+    90: [ { stat: resist.chaos, value: 12 } ]
+  druid:
+    60: [ { stat: life.regen, type: INCREASED, value: 5 } ]
+    75: [ { stat: life.regen, type: INCREASED, value: 10 } ]
+    90: [ { stat: life.regen, type: INCREASED, value: 15 } ]

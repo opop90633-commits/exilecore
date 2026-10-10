@@ -19,15 +19,81 @@ storage:
     pool-size: 8
 
 messages:
-  # 所有訊息前面的字樣（MiniMessage 格式）
-  prefix: "<gradient:#f5b942:#e07a1f>ExileCore</gradient> <dark_gray>»</dark_gray> "
+  # 所有訊息前面的字樣（MiniMessage 格式）。伺服器列表的說明與世界觀文字在 data/world.yml。
+  prefix: "<gradient:#9fd3ff:#f5b942>星骸</gradient> <dark_gray>»</dark_gray> "
+
+backup:
+  # 每天幾點自動備份一次（伺服器時間，24 小時制）；空字串 "" = 不自動備份。/ec backup 隨時可以手動備份。
+  # 資料庫寫成 plugins/ExileCore/backups/db-時間.json.gz，劇情世界壓成 world-時間.zip。
+  # 舊的 config.yml 沒有這一段時就用這裡的預設值。
+  daily-time: "05:00"
+  # 保留幾天，超過的自動刪掉
+  keep-days: 14
+  # 要不要連劇情世界的資料夾一起備份（地圖世界每次都重新產生，不用備份）
+  worlds: true
+
+# TAB 列表最上面的伺服器名稱（MiniMessage 寫法，可以用顏色）；下面自動列出在線人數、PING、TPS
+tab:
+  title: "<#7fd4ff>《 <#f5b942><b>星骸</b> <#7fd4ff>》"
+
+# 選單的 Discord、贊助商城按鈕（也可以打 /discord、/store）。空字串 = 按鈕寫「即將開放」。改完 /ec reload
+links:
+  discord: "https://discord.gg/S6FZuGFR93"
+  store: ""
 
 resource-pack:
-  # true 時物品會寫入 item_model（資料檔裡的 model 欄位）；沒有對應資源包的客戶端會看到紫黑方塊，
-  # 所以資源包做好並發送給玩家之前請保持 false。
+  # 介面資源包（星盤式的天賦樹、傳奇裝備的專屬外觀）：插件自己產生、透過下面的 web 網頁伺服器提供下載，玩家登入時會被問要不要套用。
+  # 不套用的人看到一般的箱子介面，下次登入會再問一次。web 沒開時不會送。
+  send: true
+  # true = 不套用就不能進伺服器
+  required: false
+  # 資源包放在外部空間（2026-10：主機拿不到第二個埠、內建網頁伺服器開不了時用）：填直接下載的網址，例如
+  #   https://github.com/你的帳號/你的倉庫/releases/download/pack/exilecore-ui.zip
+  # 插件每次啟動會把資源包寫到 plugins/ExileCore/exilecore-ui.zip，把這個檔案上傳到上面的網址（覆蓋舊的）。
+  # 資源包有更新（換了新版插件）時主控台會提醒重新上傳；沒重傳的話玩家會下載失敗。空白 = 用下面 web 的網頁伺服器。
+  external-url: ""
+  # 資料檔裡自己指定的物品模型（基底、寶石、藥劑的 model 欄位）：這些美術還沒做，保持 false
+  # （true 時沒有對應資源包的客戶端會看到紫黑方塊）。
+  # 傳奇與通貨的專屬貼圖不用這個開關：照上面的資源包（send）套用就看得到，沒套用的人看到原本的物品。
   enabled: false
 
+web:
+  # 插件內建的小型網頁伺服器：提供介面資源包的下載與網頁天賦規劃器（/tree web 給連結）
+  enabled: true
+  # 聽哪個埠；在自己電腦測試不用改。正式開服要在防火牆／主機商的面板開放這個埠（TCP）
+  port: 25580
+  # 綁定的位址；空白 = 全部
+  bind: ""
+  # 玩家連得到的網址（資源包與規劃器的連結用），例如 http://你的網域或IP:25580
+  # 空白 = 只給在這台電腦上連線的玩家（http://localhost:埠），別台電腦的玩家不會被問要不要套用資源包、也看不到規劃器的連結；
+  #        server.properties 有填對外的 server-ip 時改用那個位址。
+  # 前面有 Velocity／BungeeCord 代理時一定要填（不然所有玩家看起來都是從本機連進來的）
+  public-url: ""
+  # 市場報告（網址/economy）：全服通貨與金幣每天的產出、消耗、存量、參考價值（只有加總，沒有個人資料；誰都看得到）。
+  # false = 不提供（管理員還是可以用 /ec economy 看）。舊的 config.yml 沒有這一行時用預設值（提供）。
+  economy-page: true
+  # 管理網頁（網址/admin）：發放物資、改全服加成與經濟設定、公告、維護模式。管理員在遊戲裡打 /ec web 拿一次性的登入連結
+  # （10 分鐘內有效、只能用一次）；沒有連結的人打開只會看到「請在遊戲裡打 /ec web」。
+  # 網頁伺服器是 http：從別台電腦連線時，登入後的 Cookie 在網路上看得到——放在 https 的反向代理後面（public-url 填 https://…）最安全。
+  # false = 不提供（網址 404、/ec web 不給連結）。舊的 config.yml 沒有這一行時用預設值（提供）。
+  admin-page: true
+
+items:
+  # 玩家能不能把東西丟在地上（Q 鍵、拖到視窗外面）。false = 不能：免得直接丟給別人、繞過面對面交易的手續費，也不會手滑丟掉；
+  # 不要的東西用選單（Shift＋F）的「垃圾桶」刪掉。管理員（exilecore.admin）在創造模式不受限制。
+  # 不管能不能丟，丟出去（或掉出來）的東西都只有丟的人看得到、撿得到，隊友也看不到。
+  # 背包滿了、伺服器放不回去的東西（例如關掉視窗時游標上拿著的）會收進隨身背包；隨身背包也滿了才掉在腳下。
+  # 舊的 config.yml 沒有這一段時用預設值（不能丟）。
+  allow-drop: false
+
 combat:
+  # 怪物打中玩家時要不要擊退（原版有、PoE 沒有）。false = 不擊退：近戰、箭、爆炸、怪物技能都一樣；玩家之間照原版。
+  monster-knockback: false
+  # 按住左鍵連續施放（左鍵綁的技能或普攻，跟右鍵一樣）。原版按住左鍵不會一直送封包，所以在戰鬥區域裡
+  # 把方塊互動距離拉到 64 格、挖方塊速度變 0，讓客戶端把按住左鍵當成一直在「挖」準星指著的方塊（挖不動、沒有裂痕）。
+  # 副作用：準星指著的遠處方塊有原版的黑色外框，按住時那裡冒一點碎屑（敲擊聲由介面資源包消掉）。
+  # false = 關掉，左鍵回到一下一下點。舊的 config.yml 沒有這一行時用預設值（開）。
+  hold-left-click: true
   # 原版環境傷害 → 我們的傷害類型。
   # 實際傷害 = 原版數字 × multiplier × 最大生命 ÷ 40（原版 20 點 = 滿血）。
   # periodic: true 的原因（火、岩漿）最多每 0.5 秒套用一次；ignore_mitigation: true 不吃護甲／抗性。
@@ -38,3 +104,69 @@ combat:
     LAVA:      { type: fire, multiplier: 1.0, periodic: true }
     DROWNING:  { type: physical, multiplier: 0.5, periodic: true, ignore_mitigation: true }
     VOID:      { type: chaos, multiplier: 100, ignore_mitigation: true }
+
+# 聊天與 Discord 同步（2026-10）。設定步驟：
+#   1. Discord 頻道設定 → 整合 → Webhook → 新 Webhook，複製網址貼到 webhook-url（遊戲 → Discord：名字是角色名稱、頭像是玩家的頭）。
+#   2. https://discord.com/developers/applications 建一個應用程式 → Bot：重設 Token 貼到 bot-token；
+#      同一頁打開「MESSAGE CONTENT INTENT」（不開讀不到訊息內容）。OAuth2 → URL Generator 勾 bot，權限勾
+#      View Channels、Send Messages、Read Message History、Embed Links、Attach Files、Manage Channels、Manage Roles
+#      （後兩個是客服單開頻道用），用產生的網址把機器人拉進你的 Discord 伺服器。
+#   3. Discord 設定 → 進階 → 打開開發者模式，在頻道上按右鍵「複製頻道 ID」貼到 channel-id。
+#   4. enabled 改成 true，/ec reload。
+# 只填 webhook-url = 只有遊戲 → Discord；bot-token＋channel-id 才會把 Discord 的訊息轉進遊戲。Token 不要給別人看。
+discord:
+  enabled: false
+  webhook-url: ""
+  bot-token: ""
+  channel-id: ""
+  # Discord 上公告（上下線、世界事件、成就、開關服）顯示的名字
+  server-name: "星骸"
+  # Discord 的訊息在遊戲裡的樣子（MiniMessage；{name} 是 Discord 名字、{message} 是內容）
+  in-game-format: "<#5865f2>[DC]</#5865f2> <white>{name}</white><gray>: </gray>{message}"
+  sync:
+    chat: true          # 雙向聊天
+    join-leave: true    # 上線、下線
+    world-events: true  # 開天者、星潮入侵的預告、開始、結束
+    achievements: true  # 昇華、極境 Boss／金庫之主打倒、追逐級傳奇、滿級、每月挑戰全部完成
+    server: true        # 伺服器開啟、關閉
+  # 客服單（2026-10，不用 Ticket Tool）：Discord 上按按鈕開單，遊戲裡 /ticket 內容 也能開（自動附上角色、位置、贊助狀況），
+  # 客服在單裡說的話會轉到遊戲給那個玩家。設定好之後在遊戲裡打 /ticket panel general 頻道ID 把面板發到 Discord 頻道。
+  # ID 都是在 Discord 開發者模式下按右鍵「複製 ID」：伺服器 ID、分類 ID、頻道 ID、身分組 ID（伺服器設定 → 身分組 → 右鍵）。
+  tickets:
+    enabled: false
+    guild-id: ""            # Discord 伺服器 ID
+    category-id: ""         # 客服單頻道開在哪個分類（空白 = 最外面）
+    log-channel-id: ""      # 關單時整段對話存成文字檔送到這個頻道（建議只有管理員看得到）
+    staff-role-ids: []      # 客服身分組（看得到全部客服單、能認領、關閉），例如 ["123456789012345678"]
+    max-open-per-user: 1    # 一個人同時最多開幾張
+    game-panel: general     # 遊戲裡 /ticket 開的單算哪一種
+    panels:
+      general:
+        title: "一般諮詢"
+        description: "遇到遊戲問題或發現 Bug 了嗎？請點擊下方按鈕開啟客服單。\n為了加快處理速度，請提供您的遊戲 ID 與問題描述。\n\n👇 點擊下方開啟客服單 👇"
+        button: "一般諮詢"
+        emoji: "🛠️"
+        style: primary      # primary 藍、success 綠、secondary 灰、danger 紅
+        color: "#5865F2"
+        name-prefix: "諮詢"  # 頻道名稱：諮詢-0001
+        staff-role-ids: []  # 空白 = 用上面的 staff-role-ids
+        welcome: "感謝你的回報！客服會盡快回覆你，有截圖可以直接貼在這裡。"
+        questions:          # 開單時的表單（最多 5 格；空的話直接開單）
+          - { label: "遊戲 ID", placeholder: "例如 Black_yyds", required: true }
+          - { label: "問題類型", placeholder: "Bug／帳號／其他", required: false }
+          - { label: "問題描述", placeholder: "發生了什麼？在哪裡？", paragraph: true, required: true }
+      sponsor:
+        title: "贊助諮詢"
+        description: "感謝您對伺服器的支持！\n關於贊助流程、進度查詢或獎勵領取，請點擊下方按鈕。\n\n👇 點擊下方開啟客服單 👇"
+        button: "贊助諮詢"
+        emoji: "💰"
+        style: success
+        color: "#3BA55C"
+        name-prefix: "贊助"
+        staff-role-ids: []
+        welcome: "感謝你的支持！我們確認後會盡快處理。"
+        questions:
+          - { label: "遊戲 ID", placeholder: "例如 Black_yyds", required: true }
+          - { label: "付款方式與金額", placeholder: "例如 轉帳 300 元", required: false }
+          - { label: "付款時間", placeholder: "例如 10/9 晚上 8 點", required: false }
+          - { label: "詢問內容", paragraph: true, required: true }

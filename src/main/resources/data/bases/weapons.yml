@@ -1,51 +1,74 @@
 # 武器基底。數值是物品等級 1 的值，依物品等級縮放（items.yml scaling）。
-# tags：weapon 加上 one_hand/two_hand 與武器種類；melee 是近戰。弓與法杖在階段 3 才有遠程攻擊，現在先當近戰武器測試。
+# tags：weapon 加上 one_hand/two_hand 與武器種類；melee 是近戰武器，ranged 是遠程武器（普攻是投射物：弓射箭，法杖與長杖射魔法彈）；
+#       caster 是施法武器（法杖、長杖）：不出攻擊用的詞綴（攻擊附加、增加物理傷害、攻擊速度、命中；詞綴的 exclude_tags）。
 
 short_sword:
   name: 短劍
+  drop_weight: 0
+  retired: true        # 2026-10 改版：拿掉這種武器（不掉落、不賣、不出現在圖鑑與新手武器；舊的照常能用）
   material: IRON_SWORD
   model: exilecore:weapon/short_sword
   slot: MAIN_HAND
-  tags: [weapon, one_hand, sword, melee]
+  tags: [weapon, one_hand, sword, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 8, dex: 8, int: 0 }
   damage: { physical: [6, 14] }
   aps: 1.55
   crit: 5.0
   sockets: 3
+  implicit:
+    text: "+{value} 命中值"
+    value: [40, 60]
+    mods:
+      - { stat: accuracy, type: FLAT, value: "{value}" }
 
 hand_axe:
   name: 手斧
+  drop_weight: 0
+  retired: true        # 2026-10 改版：拿掉這種武器（不掉落、不賣、不出現在圖鑑與新手武器；舊的照常能用）
   material: IRON_AXE
   model: exilecore:weapon/hand_axe
   slot: MAIN_HAND
-  tags: [weapon, one_hand, axe, melee]
+  tags: [weapon, one_hand, axe, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 12, dex: 6, int: 0 }
   damage: { physical: [8, 16] }
   aps: 1.3
   crit: 5.0
   sockets: 3
+  implicit:
+    text: "增加 {value}% 物理傷害"
+    value: [8, 12]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
 
 war_hammer:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 戰錘
   material: MACE
   model: exilecore:weapon/war_hammer
   slot: MAIN_HAND
-  tags: [weapon, one_hand, mace, melee]
+  tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 16, dex: 0, int: 0 }
   damage: { physical: [10, 18] }
   aps: 1.15
   crit: 5.0
   sockets: 3
+  implicit:
+    text: "+{value} 力量"
+    value: [8, 12]
+    mods:
+      - { stat: attr.str, type: FLAT, value: "{value}" }
 
 dagger:
   name: 匕首
+  drop_weight: 0
+  retired: true        # 2026-10 改版：拿掉這種武器（不掉落、不賣、不出現在圖鑑與新手武器；舊的照常能用）
   material: GOLDEN_SWORD
   model: exilecore:weapon/dagger
   slot: MAIN_HAND
-  tags: [weapon, one_hand, dagger, melee]
+  tags: [weapon, one_hand, dagger, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 10, int: 6 }
   damage: { physical: [4, 12] }
@@ -60,10 +83,12 @@ dagger:
 
 claw:
   name: 爪
+  drop_weight: 0
+  retired: true        # 2026-10 改版：拿掉這種武器（不掉落、不賣、不出現在圖鑑與新手武器；舊的照常能用）
   material: IRON_HOE
   model: exilecore:weapon/claw
   slot: MAIN_HAND
-  tags: [weapon, one_hand, claw, melee]
+  tags: [weapon, one_hand, claw, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 9, int: 7 }
   damage: { physical: [5, 13] }
@@ -77,11 +102,12 @@ claw:
       - { stat: attack.speed, type: INCREASED, value: "{value}" }
 
 wand:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 法杖
   material: BLAZE_ROD
   model: exilecore:weapon/wand
   slot: MAIN_HAND
-  tags: [weapon, one_hand, wand, melee]
+  tags: [weapon, one_hand, wand, ranged, caster]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 0, int: 14 }
   damage: { physical: [3, 8] }
@@ -96,62 +122,84 @@ wand:
 
 great_sword:
   name: 巨劍
+  drop_weight: 0
+  retired: true        # 2026-10 改版：拿掉這種武器（不掉落、不賣、不出現在圖鑑與新手武器；舊的照常能用）
   material: DIAMOND_SWORD
   model: exilecore:weapon/great_sword
   slot: MAIN_HAND
-  tags: [weapon, two_hand, sword, melee]
+  tags: [weapon, two_hand, sword, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 14, dex: 12, int: 0 }
   damage: { physical: [10, 24] }
   aps: 1.3
   crit: 5.0
   sockets: 6
+  implicit:
+    text: "+{value} 命中值"
+    value: [60, 90]
+    mods:
+      - { stat: accuracy, type: FLAT, value: "{value}" }
 
 great_axe:
   name: 巨斧
+  drop_weight: 0
+  retired: true        # 2026-10 改版：拿掉這種武器（不掉落、不賣、不出現在圖鑑與新手武器；舊的照常能用）
   material: DIAMOND_AXE
   model: exilecore:weapon/great_axe
   slot: MAIN_HAND
-  tags: [weapon, two_hand, axe, melee]
+  tags: [weapon, two_hand, axe, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 20, dex: 8, int: 0 }
   damage: { physical: [14, 28] }
   aps: 1.15
   crit: 5.0
   sockets: 6
+  implicit:
+    text: "增加 {value}% 物理傷害"
+    value: [10, 15]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
 
 great_hammer:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 巨錘
   material: NETHERITE_SHOVEL
   model: exilecore:weapon/great_hammer
   slot: MAIN_HAND
-  tags: [weapon, two_hand, mace, melee]
+  tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 24, dex: 0, int: 0 }
   damage: { physical: [18, 32] }
   aps: 1.05
   crit: 5.0
   sockets: 6
+  implicit:
+    text: "+{value} 力量"
+    value: [12, 18]
+    mods:
+      - { stat: attr.str, type: FLAT, value: "{value}" }
 
 staff:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 長杖
   material: BREEZE_ROD
   model: exilecore:weapon/staff
   slot: MAIN_HAND
-  tags: [weapon, two_hand, staff, melee]
+  tags: [weapon, two_hand, staff, ranged, caster]
   drop_level: 1
-  requirements: { level: 1, str: 12, dex: 0, int: 12 }
+  requirements: { level: 1, str: 0, dex: 0, int: 22 }
   damage: { physical: [9, 21] }
   aps: 1.25
   crit: 6.0
   sockets: 6
   implicit:
-    text: "+{value}% 格擋率"
-    value: [12, 12]
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
     mods:
-      - { stat: block.chance, type: FLAT, value: "{value}" }
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
 
 bow:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 弓
   material: BOW
   model: exilecore:weapon/bow
@@ -163,16 +211,4336 @@ bow:
   aps: 1.45
   crit: 5.0
   sockets: 6
+  implicit:
+    text: "增加 {value}% 投射物傷害"
+    value: [12, 20]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
 
 sceptre:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 權杖
   material: GOLDEN_HOE
   model: exilecore:weapon/sceptre
   slot: MAIN_HAND
-  tags: [weapon, one_hand, mace, melee]
+  tags: [weapon, one_hand, mace, sceptre, melee]
   drop_level: 1
   requirements: { level: 1, str: 10, dex: 0, int: 10 }
   damage: { physical: [8, 15] }
   aps: 1.2
   crit: 6.0
   sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+# ---- PoE2 的新武器（重弩手、棍僧、長矛獵手）----
+# 弩：雙手遠程，比弓慢、一發比較重；普攻射弩箭（原版箭矢）。
+crossbow:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 弩
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 12, int: 0 }
+  damage: { physical: [9, 21] }
+  aps: 1.25          # 2026-10：1.15 → 1.25（弩的技能出手太慢）
+  crit: 5.5
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 投射物速度"
+    value: [10, 20]
+    mods:
+      - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+
+# 長棍：雙手近戰，出手快、打得到兩個；固定詞綴是格擋。（外觀用原版的竹子；不叫 staff：長杖是施法武器）
+quarterstaff:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 長棍
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 12, int: 10 }
+  damage: { physical: [8, 18] }
+  aps: 1.6
+  crit: 6.5
+  sockets: 6
+  implicit:
+    text: "+{value}% 格擋率"
+    value: [6, 10]
+    mods:
+      - { stat: block.chance, type: FLAT, value: "{value}" }
+
+# 矛：單手近戰，刺得比較遠，也能投擲（投擲技能吃投射物傷害）。（外觀用原版的鐵矛，但不是原版的矛：沒有衝刺、長按這些動作）
+spear:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 矛
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 6, dex: 12, int: 0 }
+  damage: { physical: [6, 14] }
+  aps: 1.5
+  crit: 6.5
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 近戰與投射物傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [melee] }
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
+
+# 獸魂符（2026-10，照 PoE2 的 Talisman）：雙手，德魯伊的變身武器（熊、狼人、飛龍的攻擊技能都要拿獸魂符）。
+# 帶 melee_2h：雙手近戰武器的詞綴都擲得到。外觀用原版的骨頭。
+talisman:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 獸魂符
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 0, int: 10 }
+  damage: { physical: [10, 22] }
+  aps: 1.3
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 變身技能傷害"
+    value: [15, 25]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [shapeshift] }
+
+# ---- PoE2 分階基底（tools/gen_poe2_bases.py 產生；重跑會整段換掉）----
+mace1_01:
+  name: 樸素戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_23
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 1
+  requirements: { level: 1, str: 16, dex: 0, int: 0 }
+  damage: { physical: [8, 14] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+
+mace1_02:
+  name: 舊木戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_22
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 4
+  requirements: { level: 4, str: 17, dex: 0, int: 0 }
+  damage: { physical: [6, 10], fire: [6, 10] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+
+mace1_03:
+  name: 鐵箍戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_20
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 10
+  requirements: { level: 10, str: 20, dex: 0, int: 0 }
+  damage: { physical: [10, 15] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 3
+
+mace1_04:
+  name: 淬鐵戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_23
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 16
+  requirements: { level: 16, str: 22, dex: 0, int: 0 }
+  damage: { physical: [12, 19] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+
+mace1_05:
+  name: 鍛紋戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_24
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 22
+  requirements: { level: 22, str: 23, dex: 0, int: 0 }
+  damage: { physical: [13, 18] }
+  aps: 1.45
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "+{value}% 暴擊傷害加成"
+    value: [5, 10]
+    mods:
+      - { stat: crit.bonus, type: FLAT, value: "{value}" }
+
+mace1_06:
+  name: 精鐵戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_26
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 26
+  requirements: { level: 26, str: 24, dex: 0, int: 0 }
+  damage: { physical: [13, 27] }
+  aps: 1.4
+  crit: 5.0
+  sockets: 3
+
+mace1_07:
+  name: 鋼脊戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_23
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 33
+  requirements: { level: 33, str: 26, dex: 0, int: 0 }
+  damage: { physical: [19, 26] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+
+mace1_08:
+  name: 鑄紋戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_26
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 36
+  requirements: { level: 36, str: 27, dex: 0, int: 0 }
+  damage: { physical: [21, 26] }
+  aps: 1.4
+  crit: 5.0
+  sockets: 3
+
+mace1_09:
+  name: 戰痕戰錘
+  base_level: 45          # 數值是物品等級 45 的值，照物品等級縮放
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 1
+  requirements: { level: 1, str: 29, dex: 0, int: 0 }
+  damage: { physical: [22, 32] }
+  aps: 1.45
+  crit: 6.5
+  sockets: 3
+
+mace1_10:
+  name: 銅鑲戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_22
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 45
+  requirements: { level: 45, str: 29, dex: 0, int: 0 }
+  damage: { physical: [14, 24], fire: [14, 24] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+
+mace1_11:
+  name: 獵紋戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_20
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 48
+  requirements: { level: 48, str: 30, dex: 0, int: 0 }
+  damage: { physical: [21, 33] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 3
+
+mace1_12:
+  name: 熔鋼戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_25
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 49
+  requirements: { level: 49, str: 30, dex: 0, int: 0 }
+  damage: { physical: [20, 33] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+  implicit:
+    text: "攻擊必定命中"
+    mods:
+      - { stat: flag.always_hit, type: FLAT, value: 1 }
+
+mace1_13:
+  name: 寒鐵戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_24
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 51
+  requirements: { level: 51, str: 31, dex: 0, int: 0 }
+  damage: { physical: [23, 30] }
+  aps: 1.45
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "+{value}% 暴擊傷害加成"
+    value: [5, 10]
+    mods:
+      - { stat: crit.bonus, type: FLAT, value: "{value}" }
+
+mace1_14:
+  name: 雷紋戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_23
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 52
+  requirements: { level: 52, str: 31, dex: 0, int: 0 }
+  damage: { physical: [23, 39] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+
+mace1_15:
+  name: 赤銅戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_26
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 54
+  requirements: { level: 54, str: 31, dex: 0, int: 0 }
+  damage: { physical: [21, 44] }
+  aps: 1.4
+  crit: 5.0
+  sockets: 3
+
+mace1_16:
+  name: 秘銀戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_23
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 55
+  requirements: { level: 55, str: 31, dex: 0, int: 0 }
+  damage: { physical: [26, 39] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+
+mace1_17:
+  name: 暗鋼戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_23
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 59
+  requirements: { level: 59, str: 32, dex: 0, int: 0 }
+  damage: { physical: [29, 39] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+
+mace1_18:
+  name: 星紋戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_26
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 62
+  requirements: { level: 62, str: 33, dex: 0, int: 0 }
+  damage: { physical: [31, 38] }
+  aps: 1.4
+  crit: 5.0
+  sockets: 3
+
+mace1_19:
+  name: 隕鐵戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_23
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 65
+  requirements: { level: 65, str: 34, dex: 0, int: 0 }
+  damage: { physical: [28, 47] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+
+mace1_20:
+  name: 曜石戰錘
+  base_level: 67          # 數值是物品等級 67 的值，照物品等級縮放
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 1
+  requirements: { level: 1, str: 39, dex: 0, int: 0 }
+  damage: { physical: [29, 43] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 3
+
+mace1_21:
+  name: 霜晶戰錘
+  fixed: true
+  retired: true
+  merged_into: mace1_26
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 72
+  requirements: { level: 72, str: 42, dex: 0, int: 0 }
+  damage: { physical: [27, 57] }
+  aps: 1.4
+  crit: 5.0
+  sockets: 3
+
+mace1_22:
+  name: 炎晶戰錘
+  base_level: 77          # 數值是物品等級 77 的值，照物品等級縮放
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 1
+  requirements: { level: 1, str: 44, dex: 0, int: 0 }
+  damage: { physical: [23, 37], fire: [23, 37] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+
+mace1_23:
+  name: 天鐵戰錘
+  base_level: 77          # 數值是物品等級 77 的值，照物品等級縮放
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 1
+  requirements: { level: 1, str: 44, dex: 0, int: 0 }
+  damage: { physical: [32, 53] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+
+mace1_24:
+  name: 古王戰錘
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  implicit_level: 22
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 1
+  requirements: { level: 1, str: 44, dex: 0, int: 0 }
+  damage: { physical: [31, 42] }
+  aps: 1.45
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "+{value}% 暴擊傷害加成"
+    value: [5, 10]
+    mods:
+      - { stat: crit.bonus, type: FLAT, value: "{value}" }
+
+mace1_25:
+  name: 聖紋戰錘
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  implicit_level: 49
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 1
+  requirements: { level: 1, str: 44, dex: 0, int: 0 }
+  damage: { physical: [29, 48] }
+  aps: 1.45
+  crit: 5.0
+  sockets: 3
+  implicit:
+    text: "攻擊必定命中"
+    mods:
+      - { stat: flag.always_hit, type: FLAT, value: 1 }
+
+mace1_26:
+  name: 龍骨戰錘
+  base_level: 79          # 數值是物品等級 79 的值，照物品等級縮放
+  family: mace1
+  material: MACE
+  model: exilecore:weapon/war_hammer
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, melee, melee_1h]
+  drop_level: 1
+  requirements: { level: 1, str: 43, dex: 0, int: 0 }
+  damage: { physical: [38, 46] }
+  aps: 1.4
+  crit: 5.0
+  sockets: 3
+
+mace2_01:
+  name: 樸素巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_26
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 24, dex: 0, int: 0 }
+  damage: { physical: [22, 31] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+mace2_02:
+  name: 舊木巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_23
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 4
+  requirements: { level: 4, str: 26, dex: 0, int: 0 }
+  damage: { physical: [21, 40] }
+  aps: 1.0
+  crit: 5.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 暈眩累積"
+    value: [20, 40]
+    mods:
+      - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+
+mace2_03:
+  name: 鐵箍巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_25
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 11
+  requirements: { level: 11, str: 31, dex: 0, int: 0 }
+  damage: { physical: [26, 35] }
+  aps: 1.05
+  crit: 5.0
+  sockets: 6
+
+mace2_04:
+  name: 淬鐵巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_26
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 16
+  requirements: { level: 16, str: 32, dex: 0, int: 0 }
+  damage: { physical: [29, 43] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+mace2_05:
+  name: 鍛紋巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_25
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 22
+  requirements: { level: 22, str: 35, dex: 0, int: 0 }
+  damage: { physical: [30, 41] }
+  aps: 1.05
+  crit: 5.0
+  sockets: 6
+
+mace2_06:
+  name: 精鐵巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_22
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 28
+  requirements: { level: 28, str: 38, dex: 0, int: 0 }
+  damage: { physical: [28, 57] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+mace2_07:
+  name: 鋼脊巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_26
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 33
+  requirements: { level: 33, str: 39, dex: 0, int: 0 }
+  damage: { physical: [44, 60] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+mace2_08:
+  name: 鑄紋巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_27
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 38
+  requirements: { level: 38, str: 41, dex: 0, int: 0 }
+  damage: { physical: [46, 56] }
+  aps: 1.1
+  crit: 8.0
+  sockets: 6
+
+mace2_09:
+  name: 戰痕巨錘
+  base_level: 45          # 數值是物品等級 45 的值，照物品等級縮放
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 43, dex: 0, int: 0 }
+  damage: { physical: [49, 74] }
+  aps: 1.1
+  crit: 6.5
+  sockets: 6
+
+mace2_10:
+  name: 銅鑲巨錘
+  base_level: 45          # 數值是物品等級 45 的值，照物品等級縮放
+  implicit_level: 45
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 43, dex: 0, int: 0 }
+  damage: { physical: [45, 83] }
+  aps: 1.05
+  crit: 5.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 暈眩累積"
+    value: [20, 40]
+    mods:
+      - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+
+mace2_11:
+  name: 獵紋巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_25
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 48
+  requirements: { level: 48, str: 45, dex: 0, int: 0 }
+  damage: { physical: [54, 73] }
+  aps: 1.05
+  crit: 5.0
+  sockets: 6
+
+mace2_12:
+  name: 熔鋼巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_26
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 50
+  requirements: { level: 50, str: 45, dex: 0, int: 0 }
+  damage: { physical: [55, 75] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+mace2_13:
+  name: 寒鐵巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_25
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 51
+  requirements: { level: 51, str: 45, dex: 0, int: 0 }
+  damage: { physical: [50, 68] }
+  aps: 1.05
+  crit: 5.0
+  sockets: 6
+
+mace2_14:
+  name: 雷紋巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_26
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 52
+  requirements: { level: 52, str: 45, dex: 0, int: 0 }
+  damage: { physical: [53, 88] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+mace2_15:
+  name: 赤銅巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_26
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 54
+  requirements: { level: 54, str: 46, dex: 0, int: 0 }
+  damage: { physical: [62, 84] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+mace2_16:
+  name: 秘銀巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_22
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 54
+  requirements: { level: 54, str: 46, dex: 0, int: 0 }
+  damage: { physical: [42, 87] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+mace2_17:
+  name: 暗鋼巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_26
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 59
+  requirements: { level: 59, str: 48, dex: 0, int: 0 }
+  damage: { physical: [66, 89] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+mace2_18:
+  name: 星紋巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_27
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 62
+  requirements: { level: 62, str: 49, dex: 0, int: 0 }
+  damage: { physical: [64, 78] }
+  aps: 1.1
+  crit: 8.0
+  sockets: 6
+
+mace2_19:
+  name: 隕鐵巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_26
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 65
+  requirements: { level: 65, str: 50, dex: 0, int: 0 }
+  damage: { physical: [67, 100] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+mace2_20:
+  name: 曜石巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_25
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 67
+  requirements: { level: 67, str: 58, dex: 0, int: 0 }
+  damage: { physical: [70, 95] }
+  aps: 1.05
+  crit: 5.0
+  sockets: 6
+
+mace2_21:
+  name: 霜晶巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_22
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 70
+  requirements: { level: 70, str: 68, dex: 0, int: 0 }
+  damage: { physical: [51, 107] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+mace2_22:
+  name: 炎晶巨錘
+  base_level: 72          # 數值是物品等級 72 的值，照物品等級縮放
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 62, dex: 0, int: 0 }
+  damage: { physical: [53, 109] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+mace2_23:
+  name: 天鐵巨錘
+  base_level: 77          # 數值是物品等級 77 的值，照物品等級縮放
+  implicit_level: 77
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 65, dex: 0, int: 0 }
+  damage: { physical: [72, 135] }
+  aps: 1.0
+  crit: 5.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 暈眩累積"
+    value: [30, 50]
+    mods:
+      - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+
+mace2_24:
+  name: 古王巨錘
+  fixed: true
+  retired: true
+  merged_into: mace2_26
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 77
+  requirements: { level: 77, str: 65, dex: 0, int: 0 }
+  damage: { physical: [82, 111] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+mace2_25:
+  name: 聖紋巨錘
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 65, dex: 0, int: 0 }
+  damage: { physical: [70, 94] }
+  aps: 1.05
+  crit: 5.0
+  sockets: 6
+
+mace2_26:
+  name: 龍骨巨錘
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 65, dex: 0, int: 0 }
+  damage: { physical: [78, 105] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+mace2_27:
+  name: 淵鋼巨錘
+  base_level: 79          # 數值是物品等級 79 的值，照物品等級縮放
+  family: mace2
+  material: NETHERITE_SHOVEL
+  model: exilecore:weapon/great_hammer
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, mace, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 64, dex: 0, int: 0 }
+  damage: { physical: [72, 87] }
+  aps: 1.1
+  crit: 8.0
+  sockets: 6
+
+spear_01:
+  name: 樸素長矛
+  fixed: true
+  retired: true
+  merged_into: spear_26
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 6, dex: 12, int: 0 }
+  damage: { physical: [7, 13] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 3
+
+spear_02:
+  name: 舊木長矛
+  fixed: true
+  retired: true
+  merged_into: spear_26
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 5
+  requirements: { level: 5, str: 0, dex: 15, int: 0 }
+  damage: { physical: [10, 13] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 3
+
+spear_03:
+  name: 鐵箍長矛
+  fixed: true
+  retired: true
+  merged_into: spear_24
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 10
+  requirements: { level: 10, str: 9, dex: 17, int: 0 }
+  damage: { physical: [9, 15] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 3
+
+spear_04:
+  name: 淬鐵長矛
+  fixed: true
+  retired: true
+  merged_into: spear_21
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 16
+  requirements: { level: 16, str: 9, dex: 18, int: 0 }
+  damage: { physical: [9, 17] }
+  aps: 1.7
+  crit: 5.0
+  sockets: 3
+
+spear_05:
+  name: 鍛紋長矛
+  fixed: true
+  retired: true
+  merged_into: spear_26
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 21
+  requirements: { level: 21, str: 8, dex: 19, int: 0 }
+  damage: { physical: [11, 19] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 3
+
+spear_06:
+  name: 精鐵長矛
+  fixed: true
+  retired: true
+  merged_into: spear_24
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 26
+  requirements: { level: 26, str: 9, dex: 20, int: 0 }
+  damage: { physical: [9, 26] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 3
+
+spear_07:
+  name: 鋼脊長矛
+  fixed: true
+  retired: true
+  merged_into: spear_25
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 33
+  requirements: { level: 33, str: 9, dex: 21, int: 0 }
+  damage: { physical: [13, 25] }
+  aps: 1.5
+  crit: 6.0
+  sockets: 3
+
+spear_08:
+  name: 鑄紋長矛
+  fixed: true
+  retired: true
+  merged_into: spear_28
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 40
+  requirements: { level: 40, str: 10, dex: 21, int: 0 }
+  damage: { physical: [20, 30] }
+  aps: 1.4
+  crit: 5.0
+  sockets: 3
+
+spear_09:
+  name: 戰痕長矛
+  fixed: true
+  retired: true
+  merged_into: spear_26
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 45
+  requirements: { level: 45, str: 9, dex: 23, int: 0 }
+  damage: { physical: [15, 32] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 3
+
+spear_10:
+  name: 銅鑲長矛
+  fixed: true
+  retired: true
+  merged_into: spear_26
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 45
+  requirements: { level: 45, str: 9, dex: 23, int: 0 }
+  damage: { physical: [20, 27] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 3
+
+spear_11:
+  name: 獵紋長矛
+  fixed: true
+  retired: true
+  merged_into: spear_24
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 48
+  requirements: { level: 48, str: 9, dex: 23, int: 0 }
+  damage: { physical: [19, 32] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 3
+
+spear_12:
+  name: 熔鋼長矛
+  fixed: true
+  retired: true
+  merged_into: spear_27
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 51
+  requirements: { level: 51, str: 10, dex: 23, int: 17 }
+  damage: { physical: [18, 32] }
+  aps: 1.6
+  crit: 7.0
+  sockets: 3
+
+spear_13:
+  name: 寒鐵長矛
+  fixed: true
+  retired: true
+  merged_into: spear_26
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 51
+  requirements: { level: 51, str: 10, dex: 23, int: 0 }
+  damage: { physical: [19, 32] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 3
+
+spear_14:
+  name: 雷紋長矛
+  fixed: true
+  retired: true
+  merged_into: spear_26
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 52
+  requirements: { level: 52, str: 9, dex: 24, int: 0 }
+  damage: { physical: [18, 34] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 3
+
+spear_15:
+  name: 赤銅長矛
+  fixed: true
+  retired: true
+  merged_into: spear_24
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 54
+  requirements: { level: 54, str: 10, dex: 24, int: 0 }
+  damage: { physical: [14, 42] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 3
+
+spear_16:
+  name: 秘銀長矛
+  base_level: 55          # 數值是物品等級 55 的值，照物品等級縮放
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 24, int: 0 }
+  damage: { physical: [7, 27], lightning: [7, 27] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 3
+
+spear_17:
+  name: 暗鋼長矛
+  fixed: true
+  retired: true
+  merged_into: spear_25
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 59
+  requirements: { level: 59, str: 10, dex: 25, int: 0 }
+  damage: { physical: [20, 37] }
+  aps: 1.5
+  crit: 6.0
+  sockets: 3
+
+spear_18:
+  name: 星紋長矛
+  fixed: true
+  retired: true
+  merged_into: spear_28
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 62
+  requirements: { level: 62, str: 12, dex: 23, int: 0 }
+  damage: { physical: [27, 41] }
+  aps: 1.4
+  crit: 5.0
+  sockets: 3
+
+spear_19:
+  name: 隕鐵長矛
+  fixed: true
+  retired: true
+  merged_into: spear_26
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 65
+  requirements: { level: 65, str: 10, dex: 25, int: 0 }
+  damage: { physical: [22, 40] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 3
+
+spear_20:
+  name: 曜石長矛
+  fixed: true
+  retired: true
+  merged_into: spear_26
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 67
+  requirements: { level: 67, str: 12, dex: 29, int: 0 }
+  damage: { physical: [27, 37] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 3
+
+spear_21:
+  name: 霜晶長矛
+  base_level: 70          # 數值是物品等級 70 的值，照物品等級縮放
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 11, dex: 31, int: 0 }
+  damage: { physical: [21, 38] }
+  aps: 1.7
+  crit: 5.0
+  sockets: 3
+
+spear_22:
+  name: 炎晶長矛
+  fixed: true
+  retired: true
+  merged_into: spear_24
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 72
+  requirements: { level: 72, str: 12, dex: 31, int: 0 }
+  damage: { physical: [18, 52] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 3
+
+spear_23:
+  name: 天鐵長矛
+  fixed: true
+  retired: true
+  merged_into: spear_24
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 75
+  requirements: { level: 75, str: 13, dex: 33, int: 0 }
+  damage: { physical: [22, 46] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 3
+
+spear_24:
+  name: 古王長矛
+  base_level: 77          # 數值是物品等級 77 的值，照物品等級縮放
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 13, dex: 33, int: 0 }
+  damage: { physical: [28, 46] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 3
+
+spear_25:
+  name: 聖紋長矛
+  base_level: 77          # 數值是物品等級 77 的值，照物品等級縮放
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 13, dex: 33, int: 0 }
+  damage: { physical: [24, 45] }
+  aps: 1.5
+  crit: 6.0
+  sockets: 3
+
+spear_26:
+  name: 龍骨長矛
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 13, dex: 33, int: 0 }
+  damage: { physical: [27, 45] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 3
+
+spear_27:
+  name: 淵鋼長矛
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 13, dex: 33, int: 23 }
+  damage: { physical: [23, 42] }
+  aps: 1.6
+  crit: 7.0
+  sockets: 3
+
+spear_28:
+  name: 星骸長矛
+  base_level: 79          # 數值是物品等級 79 的值，照物品等級縮放
+  family: spear
+  material: STICK
+  model: minecraft:iron_spear
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, spear, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 17, dex: 28, int: 0 }
+  damage: { physical: [33, 49] }
+  aps: 1.4
+  crit: 5.0
+  sockets: 3
+
+qstaff_01:
+  name: 樸素長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_25
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 12, int: 10 }
+  damage: { physical: [11, 19] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_02:
+  name: 舊木長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_25
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 4
+  requirements: { level: 4, str: 0, dex: 19, int: 0 }
+  damage: { physical: [11, 22] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_03:
+  name: 鐵箍長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_21
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 21, int: 10 }
+  damage: { physical: [15, 24] }
+  aps: 1.4
+  crit: 12.0
+  sockets: 6
+
+qstaff_04:
+  name: 淬鐵長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_26
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 23, int: 11 }
+  damage: { physical: [4, 18], lightning: [1, 29] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_05:
+  name: 鍛紋長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_22
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 20
+  requirements: { level: 20, str: 0, dex: 23, int: 11 }
+  damage: { physical: [15, 30] }
+  aps: 1.5
+  crit: 10.0
+  sockets: 6
+
+qstaff_06:
+  name: 精鐵長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_25
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 28
+  requirements: { level: 28, str: 0, dex: 25, int: 11 }
+  damage: { physical: [20, 36] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_07:
+  name: 鋼脊長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_25
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 26, int: 11 }
+  damage: { physical: [20, 41] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_08:
+  name: 鑄紋長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_28
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 37
+  requirements: { level: 37, str: 0, dex: 26, int: 11 }
+  damage: { physical: [24, 39] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+  implicit:
+    text: "+{value}% 格擋率"
+    value: [12, 18]
+    mods:
+      - { stat: block.chance, type: FLAT, value: "{value}" }
+
+qstaff_09:
+  name: 戰痕長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_23
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 28, int: 12 }
+  damage: { physical: [26, 53] }
+  aps: 1.3
+  crit: 10.0
+  sockets: 6
+
+qstaff_10:
+  name: 銅鑲長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_25
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 28, int: 12 }
+  damage: { physical: [23, 47] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_11:
+  name: 獵紋長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_21
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 48
+  requirements: { level: 48, str: 0, dex: 29, int: 12 }
+  damage: { physical: [27, 46] }
+  aps: 1.4
+  crit: 12.0
+  sockets: 6
+
+qstaff_12:
+  name: 熔鋼長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_27
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 49
+  requirements: { level: 49, str: 0, dex: 29, int: 12 }
+  damage: { physical: [38, 51] }
+  aps: 1.5
+  crit: 6.5
+  sockets: 6
+
+qstaff_13:
+  name: 寒鐵長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_26
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 29, int: 12 }
+  damage: { physical: [9, 35], lightning: [1, 48] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_14:
+  name: 雷紋長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_25
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 30, int: 12 }
+  damage: { physical: [30, 51] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_15:
+  name: 赤銅長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_22
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 30, int: 12 }
+  damage: { physical: [25, 52] }
+  aps: 1.5
+  crit: 10.0
+  sockets: 6
+
+qstaff_16:
+  name: 秘銀長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_25
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 56
+  requirements: { level: 56, str: 0, dex: 30, int: 12 }
+  damage: { physical: [30, 55] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_17:
+  name: 暗鋼長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_25
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 31, int: 13 }
+  damage: { physical: [28, 59] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_18:
+  name: 星紋長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_28
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 62
+  requirements: { level: 62, str: 0, dex: 31, int: 13 }
+  damage: { physical: [33, 54] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+  implicit:
+    text: "+{value}% 格擋率"
+    value: [12, 18]
+    mods:
+      - { stat: block.chance, type: FLAT, value: "{value}" }
+
+qstaff_19:
+  name: 隕鐵長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_25
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 32, int: 13 }
+  damage: { physical: [36, 59] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_20:
+  name: 曜石長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_25
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 46, int: 18 }
+  damage: { physical: [32, 53] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_21:
+  name: 霜晶長棍
+  base_level: 67          # 數值是物品等級 67 的值，照物品等級縮放
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 37, int: 14 }
+  damage: { physical: [34, 57] }
+  aps: 1.4
+  crit: 12.0
+  sockets: 6
+
+qstaff_22:
+  name: 炎晶長棍
+  base_level: 72          # 數值是物品等級 72 的值，照物品等級縮放
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 39, int: 16 }
+  damage: { physical: [31, 64] }
+  aps: 1.5
+  crit: 10.0
+  sockets: 6
+
+qstaff_23:
+  name: 天鐵長棍
+  base_level: 75          # 數值是物品等級 75 的值，照物品等級縮放
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 42, int: 17 }
+  damage: { physical: [37, 76] }
+  aps: 1.3
+  crit: 10.0
+  sockets: 6
+
+qstaff_24:
+  name: 古王長棍
+  fixed: true
+  retired: true
+  merged_into: qstaff_25
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 77
+  requirements: { level: 77, str: 0, dex: 42, int: 16 }
+  damage: { physical: [33, 69] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_25:
+  name: 聖紋長棍
+  base_level: 77          # 數值是物品等級 77 的值，照物品等級縮放
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 42, int: 16 }
+  damage: { physical: [40, 67] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_26:
+  name: 龍骨長棍
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 41, int: 16 }
+  damage: { physical: [15, 60], lightning: [1, 62] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+
+qstaff_27:
+  name: 淵鋼長棍
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 41, int: 16 }
+  damage: { physical: [61, 82] }
+  aps: 1.5
+  crit: 6.5
+  sockets: 6
+
+qstaff_28:
+  name: 星骸長棍
+  base_level: 79          # 數值是物品等級 79 的值，照物品等級縮放
+  implicit_level: 37
+  family: qstaff
+  material: STICK
+  model: minecraft:bamboo
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, quarterstaff, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 41, int: 16 }
+  damage: { physical: [36, 60] }
+  aps: 1.4
+  crit: 10.0
+  sockets: 6
+  implicit:
+    text: "+{value}% 格擋率"
+    value: [12, 18]
+    mods:
+      - { stat: block.chance, type: FLAT, value: "{value}" }
+
+talis_01:
+  name: 樸素獸符
+  fixed: true
+  retired: true
+  merged_into: talis_18
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 0, int: 10 }
+  damage: { physical: [14, 23] }
+  aps: 1.25
+  crit: 8.0
+  sockets: 6
+
+talis_02:
+  name: 舊木獸符
+  fixed: true
+  retired: true
+  merged_into: talis_17
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 5
+  requirements: { level: 5, str: 12, dex: 0, int: 11 }
+  damage: { physical: [14, 23] }
+  aps: 1.25
+  crit: 11.0
+  sockets: 6
+
+talis_03:
+  name: 鐵箍獸符
+  fixed: true
+  retired: true
+  merged_into: talis_19
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 10
+  requirements: { level: 10, str: 14, dex: 0, int: 10 }
+  damage: { physical: [12, 24], fire: [5, 10] }
+  aps: 1.2
+  crit: 8.0
+  sockets: 6
+
+talis_04:
+  name: 淬鐵獸符
+  fixed: true
+  retired: true
+  merged_into: talis_21
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 16
+  requirements: { level: 16, str: 15, dex: 0, int: 11 }
+  damage: { physical: [17, 28] }
+  aps: 1.25
+  crit: 8.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 召喚物傷害"
+    value: [30, 50]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+
+talis_05:
+  name: 鍛紋獸符
+  fixed: true
+  retired: true
+  merged_into: talis_23
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 22
+  requirements: { level: 22, str: 17, dex: 0, int: 12 }
+  damage: { physical: [18, 29] }
+  aps: 1.4
+  crit: 8.0
+  sockets: 6
+
+talis_06:
+  name: 精鐵獸符
+  fixed: true
+  retired: true
+  merged_into: talis_20
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 28
+  requirements: { level: 28, str: 18, dex: 0, int: 13 }
+  damage: { physical: [23, 33] }
+  aps: 1.3
+  crit: 9.0
+  sockets: 6
+  implicit:
+    text: "+{value}% 格擋率"
+    value: [14, 18]
+    mods:
+      - { stat: block.chance, type: FLAT, value: "{value}" }
+
+talis_07:
+  name: 鋼脊獸符
+  fixed: true
+  retired: true
+  merged_into: talis_25
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 34
+  requirements: { level: 34, str: 19, dex: 0, int: 13 }
+  damage: { physical: [22, 41] }
+  aps: 1.25
+  crit: 8.0
+  sockets: 6
+  implicit:
+    text: "+{value} 怒氣上限"
+    value: [7, 10]
+    mods:
+      - { stat: rage.max, type: FLAT, value: "{value}" }
+
+talis_08:
+  name: 鑄紋獸符
+  fixed: true
+  retired: true
+  merged_into: talis_18
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 40
+  requirements: { level: 40, str: 20, dex: 0, int: 14 }
+  damage: { physical: [29, 49] }
+  aps: 1.25
+  crit: 8.0
+  sockets: 6
+
+talis_09:
+  name: 戰痕獸符
+  fixed: true
+  retired: true
+  merged_into: talis_22
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 46
+  requirements: { level: 46, str: 21, dex: 0, int: 15 }
+  damage: { physical: [11, 61], lightning: [5, 26] }
+  aps: 1.3
+  crit: 8.0
+  sockets: 6
+
+talis_10:
+  name: 銅鑲獸符
+  fixed: true
+  retired: true
+  merged_into: talis_24
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 52
+  requirements: { level: 52, str: 22, dex: 0, int: 16 }
+  damage: { physical: [47, 71] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+talis_11:
+  name: 獵紋獸符
+  fixed: true
+  retired: true
+  merged_into: talis_20
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 55
+  requirements: { level: 55, str: 23, dex: 0, int: 16 }
+  damage: { physical: [34, 51] }
+  aps: 1.3
+  crit: 9.0
+  sockets: 6
+  implicit:
+    text: "+{value}% 格擋率"
+    value: [14, 18]
+    mods:
+      - { stat: block.chance, type: FLAT, value: "{value}" }
+
+talis_12:
+  name: 熔鋼獸符
+  fixed: true
+  retired: true
+  merged_into: talis_25
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 58
+  requirements: { level: 58, str: 23, dex: 0, int: 17 }
+  damage: { physical: [37, 63] }
+  aps: 1.25
+  crit: 8.0
+  sockets: 6
+  implicit:
+    text: "+{value} 怒氣上限"
+    value: [7, 10]
+    mods:
+      - { stat: rage.max, type: FLAT, value: "{value}" }
+
+talis_13:
+  name: 寒鐵獸符
+  fixed: true
+  retired: true
+  merged_into: talis_25
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 59
+  requirements: { level: 59, str: 24, dex: 0, int: 17 }
+  damage: { physical: [32, 60] }
+  aps: 1.25
+  crit: 8.0
+  sockets: 6
+  implicit:
+    text: "+{value} 怒氣上限"
+    value: [7, 10]
+    mods:
+      - { stat: rage.max, type: FLAT, value: "{value}" }
+
+talis_14:
+  name: 雷紋獸符
+  fixed: true
+  retired: true
+  merged_into: talis_18
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 63
+  requirements: { level: 63, str: 25, dex: 0, int: 17 }
+  damage: { physical: [40, 67] }
+  aps: 1.25
+  crit: 8.0
+  sockets: 6
+
+talis_15:
+  name: 赤銅獸符
+  base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 25, dex: 0, int: 17 }
+  damage: { physical: [29, 54] }
+  aps: 1.45
+  crit: 7.0
+  sockets: 6
+
+talis_16:
+  name: 秘銀獸符
+  base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 25, dex: 0, int: 17 }
+  damage: { physical: [44, 73] }
+  aps: 1.25
+  crit: 9.0
+  sockets: 6
+
+talis_17:
+  name: 暗鋼獸符
+  base_level: 67          # 數值是物品等級 67 的值，照物品等級縮放
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 29, dex: 0, int: 22 }
+  damage: { physical: [39, 64] }
+  aps: 1.25
+  crit: 11.0
+  sockets: 6
+
+talis_18:
+  name: 星紋獸符
+  base_level: 70          # 數值是物品等級 70 的值，照物品等級縮放
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 32, dex: 0, int: 23 }
+  damage: { physical: [43, 72] }
+  aps: 1.25
+  crit: 8.0
+  sockets: 6
+
+talis_19:
+  name: 隕鐵獸符
+  base_level: 72          # 數值是物品等級 72 的值，照物品等級縮放
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 30, dex: 0, int: 22 }
+  damage: { physical: [33, 68], fire: [14, 29] }
+  aps: 1.2
+  crit: 8.0
+  sockets: 6
+
+talis_20:
+  name: 曜石獸符
+  base_level: 75          # 數值是物品等級 75 的值，照物品等級縮放
+  implicit_level: 28
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 31, dex: 0, int: 23 }
+  damage: { physical: [41, 61] }
+  aps: 1.3
+  crit: 9.0
+  sockets: 6
+  implicit:
+    text: "+{value}% 格擋率"
+    value: [14, 18]
+    mods:
+      - { stat: block.chance, type: FLAT, value: "{value}" }
+
+talis_21:
+  name: 霜晶獸符
+  base_level: 77          # 數值是物品等級 77 的值，照物品等級縮放
+  implicit_level: 16
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 28, dex: 0, int: 21 }
+  damage: { physical: [45, 75] }
+  aps: 1.25
+  crit: 8.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 召喚物傷害"
+    value: [30, 50]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+
+talis_22:
+  name: 炎晶獸符
+  base_level: 77          # 數值是物品等級 77 的值，照物品等級縮放
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 32, dex: 0, int: 23 }
+  damage: { physical: [15, 84], lightning: [6, 36] }
+  aps: 1.3
+  crit: 8.0
+  sockets: 6
+
+talis_23:
+  name: 天鐵獸符
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 30, dex: 0, int: 22 }
+  damage: { physical: [38, 63] }
+  aps: 1.4
+  crit: 8.0
+  sockets: 6
+
+talis_24:
+  name: 古王獸符
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 34, dex: 0, int: 20 }
+  damage: { physical: [65, 97] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+talis_25:
+  name: 聖紋獸符
+  base_level: 79          # 數值是物品等級 79 的值，照物品等級縮放
+  implicit_level: 34
+  family: talis
+  material: BONE
+  model: minecraft:bone
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, talisman, melee, melee_2h]
+  drop_level: 1
+  requirements: { level: 1, str: 31, dex: 0, int: 21 }
+  damage: { physical: [39, 73] }
+  aps: 1.25
+  crit: 8.0
+  sockets: 6
+  implicit:
+    text: "+{value} 怒氣上限"
+    value: [7, 10]
+    mods:
+      - { stat: rage.max, type: FLAT, value: "{value}" }
+
+bow_01:
+  name: 樸素弓
+  fixed: true
+  retired: true
+  merged_into: bow_23
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 16, int: 0 }
+  damage: { physical: [12, 18] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_02:
+  name: 舊木弓
+  fixed: true
+  retired: true
+  merged_into: bow_20
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 5
+  requirements: { level: 5, str: 0, dex: 17, int: 0 }
+  damage: { physical: [10, 20] }
+  aps: 1.25
+  crit: 5.0
+  sockets: 6
+
+bow_03:
+  name: 鐵箍弓
+  fixed: true
+  retired: true
+  merged_into: bow_24
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 20, int: 0 }
+  damage: { physical: [13, 22] }
+  aps: 1.15
+  crit: 5.0
+  sockets: 6
+
+bow_04:
+  name: 淬鐵弓
+  fixed: true
+  retired: true
+  merged_into: bow_25
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 21, int: 0 }
+  damage: { physical: [15, 30] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+bow_05:
+  name: 鍛紋弓
+  fixed: true
+  retired: true
+  merged_into: bow_23
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 22
+  requirements: { level: 22, str: 0, dex: 23, int: 0 }
+  damage: { physical: [17, 27] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_06:
+  name: 精鐵弓
+  fixed: true
+  retired: true
+  merged_into: bow_24
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 28
+  requirements: { level: 28, str: 0, dex: 25, int: 0 }
+  damage: { physical: [16, 29] }
+  aps: 1.15
+  crit: 5.0
+  sockets: 6
+
+bow_07:
+  name: 鋼脊弓
+  fixed: true
+  retired: true
+  merged_into: bow_26
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 26, int: 0 }
+  damage: { physical: [17, 29], chaos: [6, 15] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_08:
+  name: 鑄紋弓
+  fixed: true
+  retired: true
+  merged_into: bow_23
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 39
+  requirements: { level: 39, str: 0, dex: 27, int: 0 }
+  damage: { physical: [24, 36] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_09:
+  name: 戰痕弓
+  fixed: true
+  retired: true
+  merged_into: bow_25
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 28, int: 0 }
+  damage: { physical: [29, 53] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+bow_10:
+  name: 銅鑲弓
+  fixed: true
+  retired: true
+  merged_into: bow_20
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 28, int: 0 }
+  damage: { physical: [22, 40] }
+  aps: 1.25
+  crit: 5.0
+  sockets: 6
+
+bow_11:
+  name: 獵紋弓
+  fixed: true
+  retired: true
+  merged_into: bow_24
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 48
+  requirements: { level: 48, str: 0, dex: 29, int: 0 }
+  damage: { physical: [26, 39] }
+  aps: 1.15
+  crit: 5.0
+  sockets: 6
+
+bow_12:
+  name: 熔鋼弓
+  fixed: true
+  retired: true
+  merged_into: bow_23
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 50
+  requirements: { level: 50, str: 0, dex: 29, int: 0 }
+  damage: { physical: [28, 42] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_13:
+  name: 寒鐵弓
+  fixed: true
+  retired: true
+  merged_into: bow_23
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 30, int: 0 }
+  damage: { physical: [26, 44] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_14:
+  name: 雷紋弓
+  base_level: 52          # 數值是物品等級 52 的值，照物品等級縮放
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 30, dex: 30, int: 0 }
+  damage: { physical: [29, 59] }
+  aps: 1.15
+  crit: 6.5
+  sockets: 6
+
+bow_15:
+  name: 赤銅弓
+  fixed: true
+  retired: true
+  merged_into: bow_24
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 30, int: 0 }
+  damage: { physical: [23, 43] }
+  aps: 1.15
+  crit: 5.0
+  sockets: 6
+
+bow_16:
+  name: 秘銀弓
+  fixed: true
+  retired: true
+  merged_into: bow_23
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 56
+  requirements: { level: 56, str: 0, dex: 31, int: 0 }
+  damage: { physical: [30, 45] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_17:
+  name: 暗鋼弓
+  fixed: true
+  retired: true
+  merged_into: bow_26
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 31, int: 0 }
+  damage: { physical: [25, 42], chaos: [10, 23] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_18:
+  name: 星紋弓
+  fixed: true
+  retired: true
+  merged_into: bow_23
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 62
+  requirements: { level: 62, str: 0, dex: 32, int: 0 }
+  damage: { physical: [32, 49] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_19:
+  name: 隕鐵弓
+  fixed: true
+  retired: true
+  merged_into: bow_23
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 32, int: 0 }
+  damage: { physical: [32, 53] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_20:
+  name: 曜石弓
+  base_level: 67          # 數值是物品等級 67 的值，照物品等級縮放
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 38, int: 0 }
+  damage: { physical: [29, 53] }
+  aps: 1.25
+  crit: 5.0
+  sockets: 6
+
+bow_21:
+  name: 霜晶弓
+  fixed: true
+  retired: true
+  merged_into: bow_23
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 72
+  requirements: { level: 72, str: 0, dex: 40, int: 0 }
+  damage: { physical: [34, 57] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_22:
+  name: 炎晶弓
+  fixed: true
+  retired: true
+  merged_into: bow_24
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 77
+  requirements: { level: 77, str: 0, dex: 42, int: 0 }
+  damage: { physical: [36, 61] }
+  aps: 1.15
+  crit: 5.0
+  sockets: 6
+
+bow_23:
+  name: 天鐵弓
+  base_level: 77          # 數值是物品等級 77 的值，照物品等級縮放
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 42, int: 0 }
+  damage: { physical: [39, 58] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+bow_24:
+  name: 古王弓
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 42, int: 0 }
+  damage: { physical: [27, 49] }
+  aps: 1.15
+  crit: 5.0
+  sockets: 6
+
+bow_25:
+  name: 聖紋弓
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 42, int: 0 }
+  damage: { physical: [43, 79] }
+  aps: 1.1
+  crit: 5.0
+  sockets: 6
+
+bow_26:
+  name: 龍骨弓
+  base_level: 79          # 數值是物品等級 79 的值，照物品等級縮放
+  family: bow
+  material: BOW
+  model: exilecore:weapon/bow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, bow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 42, int: 0 }
+  damage: { physical: [32, 54], chaos: [19, 44] }
+  aps: 1.2
+  crit: 5.0
+  sockets: 6
+
+xbow_01:
+  name: 樸素弩
+  fixed: true
+  retired: true
+  merged_into: xbow_23
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 12, int: 0 }
+  damage: { physical: [10, 17] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+
+xbow_02:
+  name: 舊木弩
+  fixed: true
+  retired: true
+  merged_into: xbow_22
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 4
+  requirements: { level: 4, str: 13, dex: 13, int: 0 }
+  damage: { physical: [9, 17] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 投射物速度"
+    value: [20, 30]
+    mods:
+      - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+
+xbow_03:
+  name: 鐵箍弩
+  fixed: true
+  retired: true
+  merged_into: xbow_20
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 10
+  requirements: { level: 10, str: 13, dex: 13, int: 0 }
+  damage: { physical: [9, 22] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 6
+
+xbow_04:
+  name: 淬鐵弩
+  fixed: true
+  retired: true
+  merged_into: xbow_23
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 16
+  requirements: { level: 16, str: 15, dex: 15, int: 0 }
+  damage: { physical: [9, 27] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+
+xbow_05:
+  name: 鍛紋弩
+  fixed: true
+  retired: true
+  merged_into: xbow_24
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 20
+  requirements: { level: 20, str: 15, dex: 15, int: 0 }
+  damage: { physical: [6, 26] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+  implicit:
+    text: "彈匣多 {value} 發"
+    value: [1, 1]
+    mods:
+      - { stat: crossbow.clip, type: FLAT, value: "{value}" }
+
+xbow_06:
+  name: 精鐵弩
+  base_level: 26          # 數值是物品等級 26 的值，照物品等級縮放
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 16, dex: 16, int: 0 }
+  damage: { physical: [8, 33] }
+  aps: 1.7
+  crit: 5.0
+  sockets: 6
+
+xbow_07:
+  name: 鋼脊弩
+  fixed: true
+  retired: true
+  merged_into: xbow_26
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 33
+  requirements: { level: 33, str: 18, dex: 18, int: 0 }
+  damage: { physical: [9, 35] }
+  aps: 1.65
+  crit: 5.0
+  sockets: 6
+
+xbow_08:
+  name: 鑄紋弩
+  fixed: true
+  retired: true
+  merged_into: xbow_23
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 38
+  requirements: { level: 38, str: 19, dex: 19, int: 0 }
+  damage: { physical: [11, 44] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+
+xbow_09:
+  name: 戰痕弩
+  base_level: 45          # 數值是物品等級 45 的值，照物品等級縮放
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 20, dex: 20, int: 0 }
+  damage: { physical: [12, 48] }
+  aps: 1.6
+  crit: 7.0
+  sockets: 6
+
+xbow_10:
+  name: 銅鑲弩
+  fixed: true
+  retired: true
+  merged_into: xbow_22
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 45
+  requirements: { level: 45, str: 20, dex: 20, int: 0 }
+  damage: { physical: [12, 47] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 投射物速度"
+    value: [20, 30]
+    mods:
+      - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+
+xbow_11:
+  name: 獵紋弩
+  fixed: true
+  retired: true
+  merged_into: xbow_20
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 48
+  requirements: { level: 48, str: 20, dex: 20, int: 0 }
+  damage: { physical: [13, 53] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 6
+
+xbow_12:
+  name: 熔鋼弩
+  fixed: true
+  retired: true
+  merged_into: xbow_26
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 50
+  requirements: { level: 50, str: 20, dex: 20, int: 0 }
+  damage: { physical: [12, 50] }
+  aps: 1.65
+  crit: 5.0
+  sockets: 6
+
+xbow_13:
+  name: 寒鐵弩
+  fixed: true
+  retired: true
+  merged_into: xbow_23
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 51
+  requirements: { level: 51, str: 21, dex: 21, int: 0 }
+  damage: { physical: [14, 54] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+
+xbow_14:
+  name: 雷紋弩
+  fixed: true
+  retired: true
+  merged_into: xbow_23
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 52
+  requirements: { level: 52, str: 21, dex: 21, int: 0 }
+  damage: { physical: [11, 45] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+
+xbow_15:
+  name: 赤銅弩
+  fixed: true
+  retired: true
+  merged_into: xbow_24
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 54
+  requirements: { level: 54, str: 21, dex: 21, int: 0 }
+  damage: { physical: [12, 48] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+  implicit:
+    text: "彈匣多 {value} 發"
+    value: [1, 1]
+    mods:
+      - { stat: crossbow.clip, type: FLAT, value: "{value}" }
+
+xbow_16:
+  name: 秘銀弩
+  base_level: 56          # 數值是物品等級 56 的值，照物品等級縮放
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 22, dex: 22, int: 0 }
+  damage: { physical: [15, 58] }
+  aps: 1.55
+  crit: 7.0
+  sockets: 6
+
+xbow_17:
+  name: 暗鋼弩
+  fixed: true
+  retired: true
+  merged_into: xbow_26
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 59
+  requirements: { level: 59, str: 22, dex: 22, int: 0 }
+  damage: { physical: [13, 52] }
+  aps: 1.65
+  crit: 5.0
+  sockets: 6
+
+xbow_18:
+  name: 星紋弩
+  fixed: true
+  retired: true
+  merged_into: xbow_23
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 62
+  requirements: { level: 62, str: 23, dex: 23, int: 0 }
+  damage: { physical: [16, 63] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+
+xbow_19:
+  name: 隕鐵弩
+  fixed: true
+  retired: true
+  merged_into: xbow_23
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 65
+  requirements: { level: 65, str: 23, dex: 23, int: 0 }
+  damage: { physical: [16, 65] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+
+xbow_20:
+  name: 曜石弩
+  base_level: 67          # 數值是物品等級 67 的值，照物品等級縮放
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 27, dex: 27, int: 0 }
+  damage: { physical: [17, 68] }
+  aps: 1.55
+  crit: 5.0
+  sockets: 6
+
+xbow_21:
+  name: 霜晶弩
+  fixed: true
+  retired: true
+  merged_into: xbow_23
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 72
+  requirements: { level: 72, str: 29, dex: 29, int: 0 }
+  damage: { physical: [18, 71] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+
+xbow_22:
+  name: 炎晶弩
+  base_level: 77          # 數值是物品等級 77 的值，照物品等級縮放
+  implicit_level: 4
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 31, dex: 31, int: 0 }
+  damage: { physical: [18, 72] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 投射物速度"
+    value: [20, 30]
+    mods:
+      - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+
+xbow_23:
+  name: 天鐵弩
+  base_level: 77          # 數值是物品等級 77 的值，照物品等級縮放
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 31, dex: 31, int: 0 }
+  damage: { physical: [19, 75] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+
+xbow_24:
+  name: 古王弩
+  base_level: 78          # 數值是物品等級 78 的值，照物品等級縮放
+  implicit_level: 20
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 30, dex: 30, int: 0 }
+  damage: { physical: [16, 64] }
+  aps: 1.6
+  crit: 5.0
+  sockets: 6
+  implicit:
+    text: "彈匣多 {value} 發"
+    value: [1, 1]
+    mods:
+      - { stat: crossbow.clip, type: FLAT, value: "{value}" }
+
+xbow_25:
+  name: 聖紋弩
+  fixed: true
+  retired: true
+  merged_into: xbow_26
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 78
+  requirements: { level: 78, str: 30, dex: 30, int: 0 }
+  damage: { physical: [18, 70] }
+  aps: 1.65
+  crit: 5.0
+  sockets: 6
+
+xbow_26:
+  name: 龍骨弩
+  base_level: 79          # 數值是物品等級 79 的值，照物品等級縮放
+  family: xbow
+  material: CROSSBOW
+  model: exilecore:weapon/crossbow
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, crossbow, ranged]
+  drop_level: 1
+  requirements: { level: 1, str: 30, dex: 30, int: 0 }
+  damage: { physical: [16, 65] }
+  aps: 1.65
+  crit: 5.0
+  sockets: 6
+
+wand_01:
+  name: 樸素法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 14 }
+  damage: { physical: [3, 8] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_02:
+  name: 舊木法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 2
+  requirements: { level: 2, str: 0, dex: 0, int: 14 }
+  damage: { physical: [3, 8] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_03:
+  name: 鐵箍法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 2
+  requirements: { level: 2, str: 0, dex: 0, int: 14 }
+  damage: { physical: [3, 8] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_04:
+  name: 淬鐵法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 0, int: 17 }
+  damage: { physical: [4, 11] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_05:
+  name: 鍛紋法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 0, int: 18 }
+  damage: { physical: [5, 12] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_06:
+  name: 精鐵法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 25
+  requirements: { level: 25, str: 0, dex: 0, int: 21 }
+  damage: { physical: [6, 15] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_07:
+  name: 鋼脊法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 0, int: 23 }
+  damage: { physical: [6, 17] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_08:
+  name: 鑄紋法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 38
+  requirements: { level: 38, str: 0, dex: 0, int: 24 }
+  damage: { physical: [7, 18] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_09:
+  name: 戰痕法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 26 }
+  damage: { physical: [8, 20] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_10:
+  name: 銅鑲法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 49
+  requirements: { level: 49, str: 0, dex: 0, int: 28 }
+  damage: { physical: [8, 21] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_11:
+  name: 獵紋法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 0, int: 28 }
+  damage: { physical: [8, 22] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_12:
+  name: 熔鋼法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 56
+  requirements: { level: 56, str: 0, dex: 0, int: 29 }
+  damage: { physical: [9, 23] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_13:
+  name: 寒鐵法杖
+  fixed: true
+  retired: true
+  merged_into: wand_14
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 32 }
+  damage: { physical: [10, 26] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+wand_14:
+  name: 雷紋法杖
+  base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
+  implicit_level: 1
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 32 }
+  damage: { physical: [10, 26] }
+  aps: 1.4
+  crit: 7.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_01:
+  name: 樸素長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 22 }
+  damage: { physical: [9, 21] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_02:
+  name: 舊木長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 2
+  requirements: { level: 2, str: 0, dex: 0, int: 22 }
+  damage: { physical: [9, 22] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_03:
+  name: 鐵箍長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 2
+  requirements: { level: 2, str: 0, dex: 0, int: 22 }
+  damage: { physical: [9, 22] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_04:
+  name: 淬鐵長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 0, int: 26 }
+  damage: { physical: [12, 28] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_05:
+  name: 鍛紋長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 0, int: 28 }
+  damage: { physical: [14, 32] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_06:
+  name: 精鐵長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 25
+  requirements: { level: 25, str: 0, dex: 0, int: 33 }
+  damage: { physical: [17, 39] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_07:
+  name: 鋼脊長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 0, int: 37 }
+  damage: { physical: [19, 45] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_08:
+  name: 鑄紋長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 38
+  requirements: { level: 38, str: 0, dex: 0, int: 39 }
+  damage: { physical: [21, 48] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_09:
+  name: 戰痕長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 42 }
+  damage: { physical: [23, 53] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_10:
+  name: 銅鑲長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 49
+  requirements: { level: 49, str: 0, dex: 0, int: 44 }
+  damage: { physical: [24, 56] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_11:
+  name: 獵紋長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 0, int: 46 }
+  damage: { physical: [25, 58] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_12:
+  name: 熔鋼長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 56
+  requirements: { level: 56, str: 0, dex: 0, int: 47 }
+  damage: { physical: [26, 61] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_13:
+  name: 寒鐵長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 51 }
+  damage: { physical: [29, 68] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_14:
+  name: 雷紋長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 51 }
+  damage: { physical: [29, 68] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_15:
+  name: 赤銅長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 51 }
+  damage: { physical: [29, 68] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_16:
+  name: 秘銀長杖
+  fixed: true
+  retired: true
+  merged_into: staff_17
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 0, int: 50 }
+  damage: { physical: [31, 72] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+staff_17:
+  name: 暗鋼長杖
+  base_level: 75          # 數值是物品等級 75 的值，照物品等級縮放
+  implicit_level: 1
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 49 }
+  damage: { physical: [32, 75] }
+  aps: 1.25
+  crit: 6.0
+  sockets: 6
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [18, 28]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+sceptre_01:
+  name: 樸素權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 10, dex: 0, int: 10 }
+  damage: { physical: [8, 15] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_02:
+  name: 舊木權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 6
+  requirements: { level: 6, str: 0, dex: 0, int: 17 }
+  damage: { physical: [9, 18] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_03:
+  name: 鐵箍權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 12
+  requirements: { level: 12, str: 0, dex: 0, int: 24 }
+  damage: { physical: [11, 21] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_04:
+  name: 淬鐵權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 16
+  requirements: { level: 16, str: 10, dex: 0, int: 21 }
+  damage: { physical: [12, 23] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_05:
+  name: 鍛紋權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 21
+  requirements: { level: 21, str: 0, dex: 0, int: 28 }
+  damage: { physical: [14, 26] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_06:
+  name: 精鐵權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 26
+  requirements: { level: 26, str: 10, dex: 0, int: 23 }
+  damage: { physical: [15, 28] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_07:
+  name: 鋼脊權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 26
+  requirements: { level: 26, str: 10, dex: 0, int: 23 }
+  damage: { physical: [15, 28] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_08:
+  name: 鑄紋權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 26
+  requirements: { level: 26, str: 10, dex: 0, int: 23 }
+  damage: { physical: [15, 28] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_09:
+  name: 戰痕權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 26
+  requirements: { level: 26, str: 10, dex: 0, int: 23 }
+  damage: { physical: [15, 28] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_10:
+  name: 銅鑲權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 0, int: 32 }
+  damage: { physical: [17, 32] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_11:
+  name: 獵紋權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 36
+  requirements: { level: 36, str: 0, dex: 0, int: 33 }
+  damage: { physical: [18, 33] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_12:
+  name: 熔鋼權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 45
+  requirements: { level: 45, str: 12, dex: 0, int: 28 }
+  damage: { physical: [20, 38] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_13:
+  name: 寒鐵權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 49
+  requirements: { level: 49, str: 0, dex: 0, int: 37 }
+  damage: { physical: [21, 40] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_14:
+  name: 雷紋權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 0, int: 38 }
+  damage: { physical: [22, 42] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_15:
+  name: 赤銅權杖
+  fixed: true
+  retired: true
+  merged_into: sceptre_16
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 58
+  requirements: { level: 58, str: 0, dex: 0, int: 40 }
+  damage: { physical: [24, 45] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+sceptre_16:
+  name: 秘銀權杖
+  base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
+  implicit_level: 1
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, mace, sceptre, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 42 }
+  damage: { physical: [26, 49] }
+  aps: 1.2
+  crit: 6.0
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 元素傷害"
+    value: [10, 16]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }

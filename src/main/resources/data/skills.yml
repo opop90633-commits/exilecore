@@ -1,0 +1,5546 @@
+# 技能（階段 3）。改完在遊戲內 /ec reload。
+#
+# 技能等級 1–20。寫成 [等級 1 的值, 等級 20 的值] 的數值會線性內插（整數無條件捨去），只寫一個數字就是固定值。
+#
+# type       attack：攻擊，用武器傷害 × effectiveness（傷害效益），吃攻擊速度，會擲命中
+#            spell：法術，用自己的 damage（等級 1 的基礎傷害，再乘 spell_damage_growth），吃施法速度，必中；
+#                   裝備的「法術附加」乘 effectiveness 加上去（沒寫是 100%；一次打很多下的法術低一點，例如游雷 50%）
+#                   戰吼也寫 spell（吼的動作照施法時間、施法速度），但不算法術：不帶 spell 標籤，法術的輔助寶石掛不上去（2026-10）
+# tags       標籤：修飾器靠它決定吃不吃得到（「增加 x% 投射物傷害」要有 projectile）；攻擊另外會加上武器的標籤
+# weapons    需要的武器標籤（任一符合）：melee 近戰武器（含徒手）、bow 弓、crossbow 弩、wand 法杖、staff 長杖、
+#            quarterstaff 長棍、spear 矛；沒寫 = 什麼武器都能用
+# mechanic   運作方式，參數寫在同名的區塊：
+#              strike      近戰打擊：reach 距離、angle 扇形角度、targets 最多幾個（0 = 全部）、knockback 擊退、
+#                          execute: { below: 0.35, more: 150 } 處決（目標生命低於 35% 時更多 150% 傷害）
+#              projectile  投射物：count 數量、spread 扇形角度（360 = 平均分一整圈）、speed 每 tick 幾格、range 射程、size 碰撞半徑、
+#                          pierce 穿透、explode 爆炸半徑、wobble 亂竄角度、arrow 用原版箭矢（弓、弩）、
+#                          gravity 每 tick 往下掉幾格（拋物線）、fuse 幾秒後自己炸（榴彈：不直接打敵人、碰到方塊會彈）、
+#                          blink: true 停下來的地方施放者瞬移過去、
+#                          splash: { targets: 3, radius: 5, damage: 50 } 打中時再電到附近幾個敵人（各 50% 傷害）、
+#                          burst: { count: 4, interval: 2 } 一次施放分成幾波連續射出（每波間隔幾 tick）、
+#                          scatter: { count: 4, spread: 360, damage: 60, range: 10 } 停下時往四周散射幾支小的、
+#                          vortex: { duration, radius, interval, pull, damage } 停下時留下把敵人吸進去的漩渦、
+#                          ground: { duration, interval, radius, damage } 停下時留下地面效果（毒氣）
+#              nova        以自己為中心：radius 半徑；aftershock: { delay: 0.9, radius: 1.6, more: 60 } 餘震（過一下再炸一次更大圈）
+#              cone        前方扇形：length 長度、angle 角度
+#              leap        跳躍：range 最遠幾格、radius 落地範圍
+#              chain       連鎖：range 第一個目標最遠幾格、chains 連鎖次數、chain_range 每次連鎖最遠幾格
+#              dash        位移：往面向的方向瞬移 range 格（被牆擋住就停，可以爬 1 格、下 3 格）；
+#                          hit_width 順路打到離路線多近的敵人（0 = 不打）、knockback、start_radius／end_radius 起點與終點炸一圈、
+#                          ground: {...} 沿路留下地面效果（燃燒地面）
+#              impact      延遲落下：準心指的地方（最遠 range 格）delay 秒後落下，半徑 radius（萬箭齊落、隕星）
+#              zone        地面效果：range（0 = 自己腳下）、shape: circle 或 line（面前橫向一道，length 長）、radius、
+#                          duration 持續幾秒、interval 幾秒一波、damage 每波是技能傷害的幾 %、pull 每波往中心拉幾格、
+#                          max 同時最多幾個（同一個玩家的同一個技能；超過的話最舊的先消失；0 或不寫 = 不另外限制）
+#              mark        印記：range、duration 持續幾秒、taken 受到的傷害增加幾 %、self_only 只有你打它才增加（預設 true）
+#              corpse      骸爆：range 準心最遠、search 準心附近多遠內找屍體、radius 爆炸半徑、percent 屍體最大生命的幾 % 當火焰傷害
+#              desecrate   褻瀆：range 準心最遠、spread 屍體散開多遠、count 一次幾具、life 屍體大小（同等級一般怪最大生命的幾 %，照等級）
+#              summon      召喚物：參數寫在 summon 區塊（技能自己不造成傷害，不寫 damage）：
+#                          kind 原版生物（ZOMBIE、HUSK、SKELETON、STRAY、WITHER_SKELETON、VEX 會飛、IRON_GOLEM）、count 一次幾隻、
+#                          max 同時最多幾隻（可以隨等級 [3, 5]）、fixed_max: true 不吃「+x 召喚物數量」、duration 活幾秒（0 = 永久）、
+#                          life／damage 是「同等級普通怪」的幾倍（等級 = 技能等級的需求角色等級）、attack_speed 每秒幾下、
+#                          speed 移動速度倍率、reach 攻擊距離、radius 打中時連目標周圍幾格一起打、
+#                          corpse: true 要用附近（search 格內）一具屍體當材料、helmet／weapon 外觀、resists: { fire: 75 }、
+#                          taunt 每隔幾秒吼一聲把 taunt_radius 內的怪引過來打它、buff: [...] 有一隻在的時候加在主人身上的
+#                          ranged: 14 遠程（站在這麼多格內射擊，攻擊算投射物）、bolt 彈道外觀（arrow、fire、cold、lightning、chaos）
+#                          召喚物只吃主人身上帶 minion 標籤的修飾器（「增加 x% 召喚物傷害」）與掛在技能上的輔助寶石
+#              aura        光環：參數寫在 aura 區塊（技能自己不造成傷害、mana 寫 0）：綁在上方按鍵格就一直開著（2026-10，不用按）。
+#                          reserve 保留多少精魂（2026-10 改版：光環改吃精魂，不再保留魔力；全部光環加起來不能超過你的最大精魂）、
+#                          radius 隊友在幾格內有效、allies: false 只給自己（與召喚物）、
+#                          effects: [ { stat, type, value: [等級 1, 等級 20], tags } ] 效果（寫法跟輔助寶石一樣，value 可以隨等級）、
+#                          on_kill: { skill: 隱藏技能代號, chance: 100 } 使者：擊殺時從屍體的位置放那個隱藏技能（用使者的等級與輔助）。
+#                          開著的光環記在角色進度，重新登入會開回來；寶石拿出面板就關掉
+#              warcry      戰吼：參數寫在 warcry 區塊（要有 cooldown）：radius 範圍、duration 增益與減益持續幾秒、taunt 敵人轉過來打你、
+#                          heal: [8, 15] 立刻回復最大生命的 %、allies 隊友也拿到增益、buff: [...] 增益（隨等級）、
+#                          debuff: { taken: [12, 25] } 範圍內的敵人受到的傷害增加（誰打都算）、
+#                          exert: { count: 3, more: [30, 50] } 接下來幾次攻擊更多傷害、
+#                          charges: { frenzy: 1, power: 1 } 立刻獲得幾顆戰星（charges.yml 的代號；只給自己，滿了就把最舊的那顆換新）
+#              flicker     瞬影：瞬移到準心指的敵人身旁打一下（沒指到就找 range 格內最近、看得到的），
+#                          reach／angle／targets／knockback 跟 strike 一樣；只有玩家本人能放（圖騰、陷阱、雙詠不行）
+#            另外可以寫 totem／trap／bell 其中一個區塊，技能就不是自己放，而是放下一個東西讓它放上面的運作方式：
+#              totem: { duration: 8, interval: 1.0, range: 10, max: 1, head: TOTEM_OF_UNDYING, buff: [ {stat, type, value} ] }
+#                     圖騰站著，每 interval 秒對 range 內最近的敵人放一次；max 同時幾根；buff 是圖騰在的時候加在你身上的
+#              trap: { duration: 20, arm: 0.5, trigger: 2.0, max: 3, root: 0, head: TRIPWIRE_HOOK }
+#                     陷阱丟到準心指的地方，arm 秒後可以觸發，敵人靠到 trigger 格內就放一次然後消失；root 把踩到的敵人定住幾秒
+#              bell: { duration: 6, interval: 0.25, range: 4, rings: 8, head: BELL }
+#                     鐘放在面前；你用攻擊打中離鐘 range 內的敵人它就響一次（最多 rings 次），每響一次照上面的運作方式打一次
+# cooldown   冷卻時間（秒）：位移、榴彈、印記這類；放完要等，技能面板會顯示
+# cooldown_bypass  冷卻中按下去可以消耗一顆這種戰星（charges.yml 的代號）直接放，冷卻重新算（瞬影擊：frenzy 怒星）
+# attack_speed  攻擊技能的攻速倍率（1 = 跟武器一樣）
+# cast_time     法術的基礎施法時間（秒）；純位移、印記這種不造成傷害的法術可以不寫 damage
+# convert       物理傷害轉換成其他類型的比例，例如 { fire: 0.5 }
+# mana          魔力消耗
+# visual        外觀（粒子與音效）：slash heavy_strike cleave slam leap arrow burning_arrow wand_bolt staff_bolt
+#               fireball frost_nova spark arc crossbow_bolt explosive_bolt permafrost_bolt staff_sweep tempest
+#               ice_cone spear_thrust lightning_spear whirl chaos_bolt blight_nova
+#               dash whirling_blades flame_dash frostblink blink_arrow rain_of_arrows lightning_arrow tornado_shot ice_shot
+#               earthquake comet blizzard flame_wall explosive_grenade gas_grenade rapid_fire storm_wave killing_palm
+#               whirlwind_lance lunge hunters_mark void_rift
+#               puncture viper_strike boneshatter caustic_arrow（異常狀態的技能）
+#               ancestral_totem flame_totem shockwave_totem fire_trap lightning_trap bear_trap tempest_bell detonate_dead
+#               raise_zombie summon_skeletons raging_spirits flame_golem
+#               aura_cold aura_fire aura_lightning aura_armour aura_evasion aura_es aura_haste aura_purity aura_life aura_mana aura_precision
+#               herald_ash herald_thunder herald_ice enduring_cry rallying_cry intimidating_cry
+#               flicker star_cry（瞬影擊、聚星戰吼）
+# starter       職業預設的起始技能。新角色的起始技能跟著建角色時選的新手武器（character.yml 的 starter.skills），
+#               這裡只在沒有選武器時用。起始技能每個角色送一次，綁在右鍵
+# hidden        普攻用（玩家看不到、不能加進面板）
+# tier          技能階級：未切割技能寶石的等級要 ≥ 這個才雕得出來（PoE2；沒寫是 1）
+# modifiers     技能自己帶的修飾器（寫法跟輔助寶石一樣，只對這個技能有效），例如熾星彈的點燃機率：
+#               - { stat: ignite.chance, type: FLAT, value: 20 }   點燃機率 +20%（元素異常見 ailments.yml）
+#
+# 標籤自動補上：有 cooldown 的加 cooldown、dash／leap／flicker 加 movement（dash／leap 另外加 travel 突進）、有地面效果／漩渦／印記的加 duration、mark 加 mark、
+# 有引信的投射物加 grenade、圖騰／鐘加 totem、陷阱加 trap（都加 duration）、骸爆加 corpse、
+# 召喚加 minion 與 melee（召喚物用近戰打，近戰的輔助寶石可以掛；有持續時間的再加 duration）、
+# 光環加 aura 與 area、戰吼加 warcry、area 與 duration（戰吼會拿掉 spell：戰吼不算法術）
+# （輔助寶石的 requires 看這些：持久要 duration、速冷要 cooldown、兇猛召喚要 minion、強效光環要 aura、強勢戰吼要 warcry）。
+#
+# 技能是寶石（PoE2）：未切割技能寶石右鍵雕成技能寶石（等級 = 未切割寶石的等級），放進技能面板就學會；
+# 升級也用未切割技能寶石，一顆升一級（寶石等級要 ≥ 新的等級，角色等級也要夠）。
+# 寶石等級比角色能用的高時，照角色能用的最高等級施放。輔助寶石寫在 supports.yml。
+
+# 技能等級 → 需要的角色等級。19、20 級是地圖的目標（照 PoE2：最高等級的寶石在終局才拿得到）：
+# 19 級要 64 級（T4 地圖起掉），20 級要 80 級（T14 地圖起掉）；劇情打完（60 級）是 18 級。
+level_requirements: [1, 2, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 43, 46, 50, 64, 80]
+
+# 怪物掉的未切割技能寶石是幾級：最高等級（＝這個怪物等級的角色能用的最高技能等級）、低 1 級、低 2 級…的權重（最多 5 個）。
+# 2026-10：20/40/40（以前 60/30/10：T14 以上一張地圖就掉好幾顆 20 級，大家整疊丟垃圾桶）。
+uncut_level_weights: [20, 40, 40]
+
+# 法術的基礎傷害依「需求等級」放大的倍率（中間等比內插），讓法術跟得上武器與詞綴的成長。
+# 照 balance.yml 算的：參考法術角色（熾星彈，法杖上有一條法術附加）的單體輸出約是參考攻擊角色（碎岩擊）的 8 成
+# （熾星彈有範圍；每個寶石等級從拿到到下一級之前平均起來是 8 成）。/ec balance 會重算。錨點寫在寶石的需求等級上最準。
+# 2026-10：法術成長拉高（80 級 ×1.8，中間照比例），20 級時法術跟攻擊一樣大約是 PoE2 係數的四成到一半（以前法術只有一到兩成）
+spell_damage_growth: { 1: 1.05, 10: 1.13, 20: 2.29, 30: 3.13, 40: 3.42, 50: 4.6, 64: 7.01, 80: 9.23 }
+
+# 傳奇裝備的「+1 技能等級」可以讓技能超過 20 級（最高 40 級；照 PoE：21 級以上只有靠裝備）。
+# 超過 20 級每多一級，法術的基礎傷害多幾 %（PoE 的 20 → 21 級大約 10%）；攻擊的傷害效益、範圍這些照 1 → 20 級的趨勢往上加。
+extra_level_damage: 10
+# 召喚物超過 20 級每多一級，生命與傷害多幾 %（2026-10：召喚流的「+召喚物技能等級」很好疊，比法術低；+8 級 ×1.48）。
+minion_extra_level_damage: 5
+
+skills:
+
+  # ---- 普攻：沒綁技能的按鍵依手上的武器自動選（弓射箭、弩射弩箭、法杖與長杖射魔法彈、長棍橫掃、矛往前刺、其他近戰）----
+
+  default_melee:
+    name: 普攻
+    icon: WOODEN_SWORD
+    hidden: true
+    type: attack
+    tags: [attack, melee]
+    mechanic: strike
+    strike: { reach: 3.5, angle: 70, targets: 1 }
+    visual: slash
+
+  default_bow:
+    name: 普攻（射箭）
+    icon: BOW
+    hidden: true
+    type: attack
+    tags: [attack, projectile]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 2.8, range: 40 }
+    visual: arrow
+
+  default_wand:
+    name: 普攻（魔法彈）
+    icon: BLAZE_ROD
+    hidden: true
+    type: attack
+    tags: [attack, projectile]
+    mechanic: projectile
+    projectile: { speed: 1.8, range: 28, size: 0.3 }
+    visual: wand_bolt
+
+  default_staff:
+    name: 普攻（魔法彈）
+    icon: BREEZE_ROD
+    hidden: true
+    type: attack
+    tags: [attack, projectile]
+    mechanic: projectile
+    projectile: { speed: 1.6, range: 30, size: 0.45 }
+    visual: staff_bolt
+
+  default_crossbow:
+    name: 普攻（弩箭）
+    icon: CROSSBOW
+    hidden: true
+    type: attack
+    tags: [attack, projectile]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.2, range: 42 }
+    visual: crossbow_bolt
+
+  default_quarterstaff:
+    name: 普攻（橫掃）
+    icon: BAMBOO
+    hidden: true
+    type: attack
+    tags: [attack, melee]
+    mechanic: strike
+    strike: { reach: 4.0, angle: 100, targets: 2 }
+    visual: staff_sweep
+
+  default_spear:
+    name: 普攻（突刺）
+    icon: IRON_SPEAR
+    hidden: true
+    type: attack
+    tags: [attack, melee]
+    mechanic: strike
+    strike: { reach: 4.6, angle: 30, targets: 1 }
+    visual: spear_thrust
+
+  # ---- 近戰 ----
+
+  leap_slam:
+    name: 騰躍砸擊
+    description: 跳到準心指的地方砸下去，打傷落點周圍的敵人，暈眩累積更多 50%。
+    icon: RABBIT_FOOT
+    type: attack
+    tier: 5
+    tags: [attack, melee, area, slam, movement]
+    weapons: [melee]
+    mechanic: leap
+    leap: { range: 9, radius: [2.5, 3.2] }
+    attack_speed: 0.8
+    effectiveness: [1.76, 2.47]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [8, 14]
+    visual: leap
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 50 }
+  earthquake:
+    name: 地動
+    description: 往地上一砸，震傷周圍的敵人；過一下子同一個地方再炸一次更大、更痛的餘震。
+    icon: NETHERITE_PICKAXE
+    type: attack
+    tier: 5
+    tags: [attack, melee, area, slam]
+    weapons: [melee]
+    mechanic: nova
+    nova: { radius: [3.0, 3.6], aftershock: { delay: 0.9, radius: 1.6, more: 300 } }
+    attack_speed: 0.75
+    effectiveness: [0.49, 0.69]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [6, 12]
+    visual: earthquake
+
+
+  # ---- 異常狀態的技能（2026-10）：天生流血、中毒、暈眩；詳細的規則在 ailments.yml ----
+
+  boneshatter:
+    name: 碎脊擊
+    description: 用錘子往前砸一下。打中蓄勢待暈的敵人直接重暈；碎脊擊打中時會累積很多暈眩，適合把稀有怪砸暈。
+    icon: MACE
+    type: attack
+    tier: 3
+    tags: [attack, melee, strike, physical]
+    starter: marauder
+    weapons: [mace]
+    mechanic: strike
+    strike: { reach: 3.8, angle: 70, targets: 1, knockback: 0.5 }
+    attack_speed: 0.6
+    effectiveness: [1.23, 1.72]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [5, 11]
+    visual: boneshatter
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 100 }
+      - { stat: stun.duration, type: INCREASED, value: 30 }
+      - { stat: flag.crush_primed, value: 1 }
+  ancestral_totem:
+    name: 英靈圖騰
+    # 2026-10 PoE2（祖靈戰士圖騰式）：圖騰自己不打，叫出英靈用你技能面板上它後面那一格的錘子攻擊技能
+    description: 放下一根英靈圖騰（8 秒）。圖騰每隔一段時間在附近的敵人身邊叫出一個英靈，用你技能面板上排在它後面那一格的錘子攻擊技能打一次（照那個技能與它的輔助算；叫的間隔是那個技能攻擊時間的 1.5 倍）。那一格的技能不能有冷卻、不能蓄力。拿錘子才能用。
+    icon: TOTEM_OF_UNDYING
+    type: attack
+    tier: 3
+    tags: [attack, melee, strike]
+    weapons: [mace]
+    mechanic: strike
+    strike: { reach: 4.5, angle: 120, targets: 1 }
+    totem: { duration: 8, interval: 1.0, range: 10, max: 1, head: CARVED_PUMPKIN }
+    cooldown: 1
+    effectiveness: [1.0, 1.0]
+    mana: [8, 16]
+    visual: ancestral_totem
+    modifiers:
+      - { stat: flag.totem_linked_mace, type: FLAT, value: 1 }
+
+  # ---- 任何武器都能用 ----
+
+  # ---- 弓 ----
+
+  # 2026-10：照 PoE 新增
+
+  caustic_arrow:
+    name: 蝕毒箭
+    description: 射出一支毒箭，打中的地方冒出一團毒霧（六秒），裡面的敵人持續受到混沌傷害、很容易中毒；毒霧被你的火焰打到會整團炸開。
+    icon: SPIDER_EYE
+    type: attack
+    tier: 3
+    tags: [attack, projectile, area, chaos, duration]
+    weapons: [bow]
+    mechanic: projectile
+    # 2026-10 PoE2（毒氣箭式）
+    projectile: { arrow: true, speed: 3.0, range: 40, ground: { duration: 6, interval: 0.5, radius: [2.4, 3.0], damage: 15 } }
+    convert: { chaos: 0.6 }
+    effectiveness: [1.08, 1.51]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [5, 10]
+    visual: caustic_arrow
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 70 }
+      - { stat: poison.magnitude, type: INCREASED, value: 30 }
+  rain_of_arrows:
+    name: 萬箭齊落
+    description: 朝準心指的地方射出一大把箭，過一下子落在那一圈裡的所有敵人身上。
+    icon: SPECTRAL_ARROW
+    type: attack
+    tier: 3
+    tags: [attack, area]
+    weapons: [bow]
+    mechanic: impact
+    impact: { range: 20, delay: 0.7, radius: [3.0, 3.8] }
+    attack_speed: 0.8
+    effectiveness: [0.71, 1.0]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [5, 11]
+    visual: rain_of_arrows
+  lightning_arrow:
+    name: 雷鳴箭
+    description: 射出一支帶電的箭，打中時往附近最多 4 個敵人射出閃電，一半的物理傷害轉為閃電。
+    icon: LIGHTNING_ROD
+    type: attack
+    tier: 3
+    tags: [attack, projectile, lightning]
+    starter: ranger
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.0, range: 40, splash: { targets: 4, radius: 5, damage: 70 } }   # 2026-10：濺射 3 → 4 個、50% → 70%（清怪技卻幾乎只打一隻）
+    convert: { lightning: 0.5 }
+    attack_speed: 0.9
+    effectiveness: [0.99, 1.38]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [4, 9]
+    visual: lightning_arrow
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 15 }
+  # ---- 2026-10：可以直接放的動作技能 ----
+  escape_shot:
+    name: 躍退射
+    description: 往後一躍拉開距離，同時朝前方射出一支冰箭，打中的敵人容易冰緩。冷卻 2 秒。
+    icon: FEATHER
+    type: attack
+    tier: 1
+    tags: [attack, projectile, cold, movement]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 2.6, range: 30 }
+    convert: { cold: 0.4 }
+    attack_speed: 1.0
+    cooldown: 2
+    effectiveness: [1.0, 1.4]
+    mana: [4, 8]
+    visual: ice_shot
+    modifiers:
+      - { stat: skill.recoil, type: FLAT, value: 120 }
+      - { stat: chill.effect, type: INCREASED, value: 50 }
+  raise_guard:
+    name: 架盾
+    description: 把盾架在身前：一小段時間內格擋率大增、物理傷害減免提高、不容易被暈，但移動變慢。要在副手裝盾。冷卻 4 秒。
+    icon: SHIELD
+    type: spell
+    tier: 1
+    tags: [duration]
+    mechanic: guard
+    guard:
+      duration: 2.5
+      slow: 40
+      effects:
+        - { stat: block.chance, type: FLAT, value: [40, 60] }
+        - { stat: physical.reduction, type: FLAT, value: [10, 20] }
+        - { stat: stun.threshold, type: INCREASED, value: 50 }
+    cast_time: 0.2
+    cooldown: 4
+    mana: [3, 8]
+    visual: aura_armour
+  ice_shot:
+    name: 凝霜箭
+    description: 射出一支冰箭，打中時炸開一圈冰片，大部分傷害轉為冰冷。
+    icon: BLUE_ICE
+    type: attack
+    tier: 3
+    tags: [attack, projectile, area, cold]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 2.8, range: 38, explode: [1.8, 2.4] }
+    convert: { cold: 0.6 }
+    attack_speed: 0.9
+    effectiveness: [1.35, 1.89]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [4, 9]
+    visual: ice_shot
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 50 }
+  tornado_shot:
+    name: 裂空箭
+    description: 射出一支箭，到了終點炸開，往四周散射小箭。
+    icon: WIND_CHARGE
+    type: attack
+    tier: 5
+    tags: [attack, projectile]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 2.8, range: 30, scatter: { count: 5, spread: 360, damage: 70, range: 10 } }   # 2026-10：散射 4 → 5 發、60% → 70%
+    attack_speed: 1.2
+    effectiveness: [0.61, 0.86]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [5, 11]
+    visual: tornado_shot
+
+  # ---- 弩（重弩手）----
+
+  explosive_bolt:
+    name: 爆裂弩箭
+    description: 射出一支會爆炸的弩箭，打中敵人或牆壁時炸開，波及附近的敵人。一半的物理傷害轉換為火焰傷害。
+    icon: FIREWORK_STAR
+    type: attack
+    tier: 1
+    tags: [attack, projectile, area, fire]
+    weapons: [crossbow]
+    starter: mercenary
+    mechanic: projectile
+    # 2026-10 加強清群：爆炸範圍 1.8–2.4 → 2.6–3.4、攻擊速度 90% → 100%、傷害稍微提高、點燃 15% → 20%
+    projectile: { arrow: true, speed: 2.8, range: 38, explode: [2.6, 3.4] }
+    convert: { fire: 0.5 }
+    effectiveness: [1.2, 1.7]
+    mana: [5, 11]
+    visual: explosive_bolt
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+
+  permafrost_bolts:
+    name: 凍土連弩
+    description: 一次扇形射出一排貫穿的冰霜弩箭（每支穿過兩個敵人），大部分的物理傷害轉換為冰冷傷害，容易凍結敵人。
+    icon: PACKED_ICE
+    type: attack
+    tier: 3
+    tags: [attack, projectile, cold]
+    weapons: [crossbow]
+    mechanic: projectile
+    # 2026-10 加強清群：3–4 支 → 5–7 支、張角 14° → 32°、穿透 1 → 2、傷害稍微提高
+    projectile: { arrow: true, count: [5, 7], spread: 32, speed: 3.0, range: 36, pierce: 2 }
+    convert: { cold: 0.6 }
+    effectiveness: [0.95, 1.3]
+    mana: [5, 11]
+    visual: permafrost_bolt
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 80 }
+
+  rapid_fire:
+    name: 連射
+    description: 扣下扳機連射四波弩箭，每一波都照當下的準心，每支穿過兩個敵人。單發輕，整串下來很痛。
+    icon: ARROW
+    type: attack
+    tier: 1
+    tags: [attack, projectile]
+    weapons: [crossbow]
+    mechanic: projectile
+    # 2026-10：每支多穿過兩個敵人（成群的怪也打得到後面的）
+    projectile: { arrow: true, speed: 3.2, range: 40, pierce: 2, burst: { count: 4, interval: 2 } }
+    attack_speed: 0.85
+    effectiveness: [0.54, 0.75]
+    mana: [5, 11]
+    visual: rapid_fire
+
+  explosive_grenade:
+    name: 爆裂榴彈
+    description: 拋出一顆榴彈，落地會彈跳，不到一秒就炸開一大圈。不會直接打中敵人，丟在怪物腳邊。大部分物理轉換為火焰。
+    icon: FIRE_CHARGE
+    type: attack
+    tier: 3
+    tags: [attack, projectile, area, fire]
+    weapons: [crossbow]
+    mechanic: projectile
+    # 2026-10 加強：引信 1.4 → 0.9 秒、爆炸範圍 2.6–3.3 → 3.2–4.0、冷卻 2.5 → 1.5 秒、丟得快一點
+    projectile: { speed: 1.6, range: 40, size: 0.25, gravity: 0.06, fuse: 0.9, explode: [3.2, 4.0] }
+    convert: { fire: 0.6 }
+    cooldown: 1.5
+    attack_speed: 0.9
+    effectiveness: [1.9, 3.0]   # 2026-10：內部比例調高（PoE2 878%，大概是其他技能的一半水準）
+    mana: [6, 13]
+    visual: explosive_grenade
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+
+  gas_grenade:
+    name: 瘴氣榴彈
+    description: 拋出一顆榴彈，落地沒多久就裂開放出一大團毒氣，待在裡面的敵人持續受到混沌傷害；毒氣被你的火焰打到會整團炸開。大部分物理轉換為混沌。
+    icon: LINGERING_POTION
+    type: attack
+    tier: 5
+    tags: [attack, projectile, area, chaos]
+    weapons: [crossbow]
+    mechanic: projectile
+    # 2026-10 加強：引信 1.0 → 0.7 秒、毒氣範圍 2.8–3.4 → 3.4–4.2、每跳 25% → 30%、冷卻 4 → 2.5 秒
+    projectile: { speed: 1.5, range: 40, size: 0.25, gravity: 0.06, fuse: 0.7, ground: { duration: 5, interval: 0.5, radius: [3.4, 4.2], damage: 30 } }
+    convert: { chaos: 0.8 }
+    cooldown: 2.5
+    attack_speed: 0.9
+    effectiveness: [1.2, 1.6]
+    mana: [7, 14]
+    visual: gas_grenade
+
+  # ---- 長棍（棍僧）----
+
+  tempest_flurry:
+    name: 風暴連擊
+    description: 長棍的雷電連擊：快速連打前方的敵人，部分傷害轉為閃電，容易感電。
+    icon: FEATHER
+    type: attack
+    tier: 1
+    tags: [attack, melee, strike, lightning]
+    weapons: [quarterstaff]
+    starter: monk
+    mechanic: strike
+    strike: { reach: 4.0, angle: 90, targets: 2 }
+    convert: { lightning: 0.4 }
+    attack_speed: 1.4
+    effectiveness: [0.55, 0.77]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [3, 7]
+    visual: tempest
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 15 }
+  ice_strike:
+    name: 寒冰震波
+    description: 長棍的冰冷連擊：快速往前打，部分傷害轉為冰冷。
+    icon: BLUE_ICE
+    type: attack
+    tier: 3
+    tags: [attack, melee, area, cold]
+    weapons: [quarterstaff]
+    mechanic: cone
+    cone: { length: [4.5, 5.5], angle: 60 }
+    convert: { cold: 0.6 }
+    attack_speed: 1.4
+    effectiveness: [0.74, 1.03]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [5, 11]
+    visual: ice_cone
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 60 }
+  storm_wave:
+    name: 雷浪
+    description: 長棍往前一揮，打出一道往前推的雷浪，貫穿一路上的敵人。
+    icon: HEART_OF_THE_SEA
+    type: attack
+    tier: 3
+    tags: [attack, projectile, lightning]
+    weapons: [quarterstaff]
+    mechanic: projectile
+    projectile: { speed: 1.1, range: 12, size: 1.3, pierce: 20 }
+    convert: { lightning: 0.6 }
+    attack_speed: 0.75
+    effectiveness: [1.35, 1.89]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [5, 10]
+    visual: storm_wave
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 20 }
+  killing_palm:
+    name: 斷魂掌
+    description: 一掌打在一個敵人身上，生命低的敵人直接打死（處決）。
+    icon: BONE
+    type: attack
+    tier: 5
+    tags: [attack, melee, strike]
+    weapons: [quarterstaff]
+    mechanic: strike
+    strike: { reach: 3.5, angle: 60, targets: 1, execute: { below: 0.35, more: 150 } }
+    attack_speed: 0.75
+    effectiveness: [1.11, 1.55]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [4, 9]
+    visual: killing_palm
+  tempest_bell:
+    name: 驚雷之鐘
+    description: 在面前放一口鐘。你用攻擊打中鐘旁邊的敵人，鐘就響一次打周圍一圈（最多八次）。
+    icon: BELL
+    type: attack
+    tier: 5
+    tags: [attack, melee, area, lightning]
+    weapons: [quarterstaff]
+    mechanic: nova
+    nova: { radius: [3.5, 4.2] }
+    bell: { duration: 6, interval: 0.25, range: 4, rings: 8, head: BELL }
+    convert: { lightning: 0.5 }
+    cooldown: 6
+    attack_speed: 0.9
+    effectiveness: [0.55, 0.8]
+    mana: [7, 14]
+    visual: tempest_bell
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 10 }
+
+  # ---- 矛（長矛獵手）----
+
+  lightning_spear:
+    name: 擲雷槍
+    description: 擲出一支帶電的矛，打中時迸出閃電打附近的敵人，一半的物理傷害轉為閃電。
+    icon: TRIDENT
+    type: attack
+    tier: 1
+    tags: [attack, projectile, lightning]
+    weapons: [spear]
+    starter: huntress
+    mechanic: projectile
+    projectile: { speed: 2.0, range: 32, size: 0.4, pierce: 2, splash: { targets: 3, radius: 4, damage: 50 } }
+    convert: { lightning: 0.5 }
+    attack_speed: 0.6
+    effectiveness: [1.35, 1.89]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [5, 10]
+    visual: lightning_spear
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 15 }
+  whirling_slash:
+    name: 旋矛擊
+    description: 揮矛轉一圈，打傷周圍一圈的敵人。
+    icon: WIND_CHARGE
+    type: attack
+    tier: 3
+    tags: [attack, melee, area, nova]
+    weapons: [spear]
+    mechanic: nova
+    nova: { radius: [3.0, 3.8] }
+    attack_speed: 0.7
+    effectiveness: [0.86, 1.2]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [5, 10]
+    visual: whirl
+  whirlwind_lance:
+    name: 颶風槍
+    description: 擲出一支捲起旋風的矛，旋風把敵人吸進去一直打。
+    icon: TRIDENT
+    type: attack
+    tier: 5
+    tags: [attack, projectile, area]
+    weapons: [spear]
+    mechanic: projectile
+    projectile: { speed: 1.6, range: 14, size: 0.45, vortex: { duration: 2.5, radius: 3, interval: 0.5, pull: 0.25, damage: 35 } }
+    attack_speed: 0.6
+    effectiveness: [1.35, 1.89]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [6, 12]
+    visual: whirlwind_lance
+  lunge:
+    name: 突刺衝鋒
+    description: 往前突刺衝過去，打傷路上的敵人，終點再炸一圈。
+    icon: IRON_SPEAR
+    type: attack
+    tier: 3
+    tags: [attack, melee, strike, movement]
+    weapons: [spear]
+    mechanic: dash
+    dash: { range: 6, hit_width: 1.1, knockback: 0.6, end_radius: [1.8, 2.3] }
+    cooldown: 1.5
+    attack_speed: 0.4
+    effectiveness: [1.23, 1.72]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [5, 10]
+    visual: lunge
+  hunters_mark:
+    name: 獵殺印記
+    description: 標記準心指的一個敵人，八秒內你下一次對牠打出暴擊時，暴擊傷害加成大幅提高，印記用掉並給你一顆怒星。什麼武器都能放。
+    icon: TARGET
+    type: spell
+    tier: 3
+    tags: [spell]
+    mechanic: mark
+    # 2026-10 PoE2（狙擊印記式）
+    mark: { range: 22, duration: 8, self_only: true, effects: [ { stat: crit.bonus_taken, type: INCREASED, value: [30, 80] } ] }
+    cooldown: 4
+    cast_time: 0.4
+    mana: [4, 8]
+    visual: hunters_mark
+    modifiers:
+      - { stat: flag.mark_consume_crit, type: FLAT, value: 1 }
+
+  # ---- 法術（什麼武器都能放，傷害不看武器）----
+
+  fireball:
+    name: 熾星彈
+    description: 發射一顆熾星彈，擊中時爆炸，波及附近的敵人；施法比較慢，但一發很重。
+    icon: FIRE_CHARGE
+    type: spell
+    tier: 1
+    tags: [spell, projectile, area, fire]
+    starter: sorceress
+    mechanic: projectile
+    projectile: { speed: 0.55, range: 30, size: 0.4, explode: [1.7, 2.3] }   # 2026-10 PoE2
+    damage: [8, 12]
+    damage_types: { fire: 1.0 }
+    cast_time: 1.2
+    effectiveness: 1.4           # 法術附加乘這個
+    mana: [5, 14]
+    visual: fireball
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+
+  frost_nova:
+    name: 霜星爆
+    description: 以自己為中心爆出一圈寒氣，冰緩、凍結累積都大幅提高；你的霜鑽還在飛的時候，改從霜鑽的位置爆開。
+    icon: BLUE_ICE
+    type: spell
+    tier: 3
+    tags: [spell, area, cold, nova]
+    mechanic: nova
+    nova: { radius: [3.2, 3.6] }   # 2026-10 PoE2（冰新星式）
+    damage: [7, 10]
+    damage_types: { cold: 1.0 }
+    cast_time: 1.0
+    effectiveness: 0.85           # 法術附加乘這個
+    mana: [6, 16]
+    visual: frost_nova
+    modifiers:
+      - { stat: freeze.buildup, type: MORE, value: 100 }
+      - { stat: chill.effect, type: MORE, value: 100 }
+      - { stat: flag.nova_from_frostbolt, type: FLAT, value: 1 }
+
+  spark:
+    name: 游雷
+    description: 放出好幾顆亂竄的游雷，碰到敵人就放電消失。
+    icon: GLOWSTONE
+    type: spell
+    tier: 1
+    tags: [spell, projectile, lightning]
+    mechanic: projectile
+    projectile: { count: [4, 9], spread: 30, speed: 0.5, range: 20, size: 0.3, wobble: 25 }   # 2026-10 PoE2：4–9 顆、2 秒
+    damage: [1, 10]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.7
+    effectiveness: 0.68          # 法術附加乘這個
+    mana: [4, 12]
+    visual: spark
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 10 }
+
+  arc:
+    name: 鏈雷
+    description: 放出一道閃電打中前方的敵人，再連鎖跳到附近的其他敵人。
+    icon: LIGHTNING_ROD
+    type: spell
+    tier: 5
+    tags: [spell, lightning, chain]
+    mechanic: chain
+    chain: { range: 12, chains: [5, 9], chain_range: 7 }   # 2026-10 PoE2：連鎖 5–9 次
+    damage: [1, 13]
+    damage_types: { lightning: 1.0 }
+    cast_time: 1.1
+    effectiveness: 0.85           # 法術附加乘這個
+    mana: [6, 15]
+    visual: arc
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 15 }
+      - { stat: shock.effect, type: INCREASED, value: 50 }
+
+  comet:
+    name: 隕星
+    description: 召來一顆冰隕星砸在準心指的地方：施法要兩秒、落地前有一下子的預警圈，但砸下來的傷害是熾星彈的好幾倍。
+    icon: AMETHYST_SHARD
+    type: spell
+    tier: 5
+    tags: [spell, area, cold]
+    mechanic: impact
+    impact: { range: 22, delay: 0.55, radius: [2.8, 3.4] }   # 2026-10 PoE2
+    damage: [23, 35]
+    damage_types: { cold: 1.0 }
+    cast_time: 2.0
+    effectiveness: 1.6           # 法術附加乘這個（一下很重的法術）
+    mana: [9, 24]
+    visual: comet
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 60 }
+
+  flame_wall:
+    name: 焰幕
+    description: 在面前升起一道六秒的火牆，穿過或站在裡面的敵人每半秒受到一次火焰傷害、容易點燃。擋走廊用。同時最多兩道。
+    icon: CAMPFIRE
+    type: spell
+    tier: 3
+    tags: [spell, area, fire]
+    mechanic: zone
+    zone: { shape: line, length: [5, 6.9], radius: 1.0, duration: 4.5, interval: 0.5, damage: 100, max: 3 }   # 2026-10 PoE2：4.5 秒、最多 3 道
+    damage: [4, 7]               # 每一波
+    damage_types: { fire: 1.0 }
+    cast_time: 1.0
+    effectiveness: 0.35          # 法術附加乘這個
+    mana: [6, 16]
+    visual: flame_wall
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 30 }
+
+  # ---- 圖騰與陷阱（法術；什麼武器都能放）----
+
+  # 2026-10：照 PoE 新增的圖騰（圖騰的生命 = 你最大生命的一半；只有被替身圖騰引來的怪會打圖騰）
+
+  shockwave_totem:
+    name: 崩震圖騰
+    description: 放下一根石圖騰，8 秒內每 1.2 秒震一次地，打圖騰周圍一圈的敵人。
+    icon: ANVIL
+    type: spell
+    tier: 5
+    tags: [spell, area, physical]
+    mechanic: nova
+    nova: { radius: [3.5, 4.5] }
+    totem: { duration: 8, interval: 1.2, range: 3.5, max: 1, head: ANVIL }
+    damage: [12, 18]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.8
+    effectiveness: [0.55, 0.75]   # 2026-10：內部比例調低（圖騰自己一直砸）
+    mana: [8, 20]
+    visual: shockwave_totem
+
+  # ---- 混沌（混沌術士）----
+
+  detonate_dead:
+    name: 骸爆
+    description: 引爆準心附近最近的一具屍體（怪物死後十秒內都算），對周圍造成火焰傷害，再加上那具屍體最大生命一成的火焰傷害。屍體越大，炸得越痛。
+    icon: SKELETON_SKULL
+    type: spell
+    tier: 3
+    tags: [spell, area, fire]
+    mechanic: corpse
+    corpse: { range: 16, search: 6, radius: [2.6, 3.2], percent: [5, 10.7] }   # 2026-10 PoE2
+    damage: [8, 12]   # 2026-10：內部比例調低（法術成長拉高之後比 PoE2 還高；屍體生命那份照舊）
+    damage_types: { fire: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.9
+    mana: [6, 15]
+    visual: detonate_dead
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+
+  # ---- 召喚物（混沌術士）：召喚物有自己的數值（同等級怪物的倍數），只吃「召喚物…」的加成與掛在技能上的輔助 ----
+
+  raise_zombie:
+    name: 喚屍
+    # 2026-10 PoE2：殭屍 20 秒、最多 10 隻（暫時召喚，不用精魂）；沒屍體時吃一顆銳星叫強化殭屍
+    description: 把你附近一具屍體（怪物死後十秒內都算）喚成你的殭屍，從屍體的位置爬出來，二十秒後倒下。可以一直放，同時最多八到十隻。附近沒有屍體時改吃一顆銳星：從面前爬出一隻強化殭屍（發光，生命更多、傷害加倍、跑更快）再加兩隻一般的。
+    icon: ZOMBIE_HEAD
+    type: spell
+    tier: 1
+    tags: [minion, physical]
+    mechanic: summon
+    # 2026-10 平衡：群體召喚太強，damage 0.7 → 0.32
+    summon: { kind: ZOMBIE, count: 1, max: [8, 10], duration: 20, life: 1.6, damage: 0.32, attack_speed: 0.9, speed: 1.25, reach: 2.0,
+              corpse: true, search: 10, helmet: IRON_HELMET }
+    cast_time: 0.6
+    mana: [6, 18]
+    visual: raise_zombie
+    modifiers:
+      - { stat: flag.raise_with_power_charge, type: FLAT, value: 1 }
+
+  summon_skeletons:
+    name: 召喚骸骨兵
+    description: 精魂召喚：綁在上方按鍵格就一直跟著你，在身邊召出持劍的骷髏戰士，動作快、打得痛，但不耐打。同時最多六到八個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（前兩隻不用）（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
+    icon: BONE
+    type: spell
+    tier: 3
+    tags: [minion, physical]
+    mechanic: aura
+    aura: { reserve: 0, per_minion: [60, 20], free: 2, radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 60 → 20 級 20，前 2 隻不用），付得起幾隻叫幾隻
+    # 2026-10：持續 20 → 30 秒、生命 1.0 → 1.5（不用一直補）
+    # 2026-10 平衡：群體召喚太強，damage 0.45 → 0.27
+    summon: { kind: SKELETON, count: 2, max: [6, 8], duration: 0, life: 1.5, damage: 0.27, attack_speed: 1.3, speed: 1.3, reach: 2.0,
+              weapon: IRON_SWORD, helmet: CHAINMAIL_HELMET }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
+  raging_spirits:
+    name: 召喚焚魂
+    description: 精魂召喚：綁在上方按鍵格就開著，你自己放火焰法術時叫出燃燒的焚魂（範圍法術兩隻），飛向敵人撲上去咬，五秒後燒盡。同時最多八到十個。保留 30 精魂。
+    icon: BLAZE_POWDER
+    type: spell
+    tier: 3
+    tags: [minion, fire]
+    mechanic: aura
+    aura: { reserve: 30, radius: 8, allies: false }   # 2026-10：只活幾秒的召喚，照 PoE2 固定 30
+    # 2026-10 平衡：群體召喚太強，damage 0.4 → 0.22
+    summon: { kind: VEX, count: 1, max: [8, 10], duration: 5, life: 0.5, damage: 0.22, attack_speed: 1.4, speed: 1.0, reach: 1.6,
+              resists: { fire: 75 } }
+    convert: { fire: 0.7 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: raging_spirits
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 10 }
+      - { stat: flag.summon_on_fire_spell, type: FLAT, value: 1 }
+
+
+  # ---- 光環：綁在上方按鍵格就一直開著（照面板順序，精魂不夠的就開不起來）；開著的時候保留精魂，
+  #      效果加在你、範圍內的隊友與你的召喚物身上。保留全部加起來不能超過最大精魂 ----
+
+  # 焚心業火（2026-10，照 PoE 的正義之火）：開著的時候每半秒燒一下周圍的敵人（傷害是 damage，吃法術、火焰、範圍的加成，會暴擊、會點燃），
+  # 自己每秒也受到最大生命＋能量護盾 burn.self% 的火焰傷害（火焰抗性減免；在營地不燒）。只對自己有效（allies 預設 false）。
+
+  # ---- 捷光環（2026-10：拿掉 aura 標籤，自動加 herald；光環的輔助、光環效果不吃，保留效率的加成照吃）：擊殺時觸發效果的光環（效果是隱藏技能，用使者的等級與輔助）----
+
+  # 2026-10：夥伴（照 PoE2 的馴獸夥伴，名稱是自己的）：綁在上方按鍵格就開著，保留精魂，一直跟著你打；死了 8 秒後再出來，營地裡收起來
+  beast_companion:
+    name: 荒原狼伴
+    description: 夥伴：綁在上方按鍵格就有一隻狼一直跟著你，耐打、咬得痛，會把附近的怪引過去打牠。死了 8 秒後自己回來。保留 30 精魂。
+    icon: BONE
+    type: spell
+    tier: 5
+    tags: [spell, physical]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: movement.speed, type: INCREASED, value: [3, 6] }
+    summon: { kind: WOLF, count: 1, max: 1, fixed_max: true, duration: 0, life: 3.0, damage: 1.2, attack_speed: 1.2, speed: 1.2, reach: 1.8,
+              taunt: 6, taunt_radius: 8 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
+  herald_of_ash:
+    name: 燼使
+    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你殺死敵人時屍體炸開一圈火焰，很容易點燃附近的敵人。保留 30 精魂。
+    icon: MAGMA_CREAM
+    type: spell
+    tier: 3
+    tags: [spell, fire]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      on_kill: { skill: herald_ash_burst, chance: 100 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: herald_ash
+
+  herald_ash_burst:
+    name: 灰燼爆發
+    hidden: true
+    type: spell
+    tags: [spell, area, fire, herald]
+    mechanic: nova
+    nova: { radius: [2.5, 3.2] }
+    damage: [9, 15]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.2   # 2026-10 PoE2：使者只剩擊殺效果，效果加強
+    visual: herald_ash
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 30 }
+
+  herald_of_thunder:
+    name: 雷使
+    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你殺死敵人時屍體竄出一道閃電連鎖到附近的敵人（會感電）。保留 30 精魂。
+    icon: COPPER_INGOT
+    type: spell
+    tier: 3
+    tags: [spell, lightning]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      on_kill: { skill: herald_thunder_bolt, chance: 100 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: herald_thunder
+
+  herald_thunder_bolt:
+    name: 雷霆連鎖
+    hidden: true
+    type: spell
+    tags: [spell, lightning, chain, herald]
+    mechanic: chain
+    chain: { range: 8, chains: [2, 4], chain_range: 6 }
+    damage: [3, 21]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.2   # 2026-10 PoE2：使者只剩擊殺效果，效果加強
+    visual: herald_thunder
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 30 }
+
+  herald_of_ice:
+    name: 霜使
+    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你殺死敵人時屍體碎成一圈冰霜爆炸（會冰緩）。保留 30 精魂。
+    icon: BLUE_ICE
+    type: spell
+    tier: 3
+    tags: [spell, cold]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      on_kill: { skill: herald_ice_shatter, chance: 100 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: herald_ice
+
+  herald_ice_shatter:
+    name: 冰霜碎裂
+    hidden: true
+    type: spell
+    tags: [spell, area, cold, herald]
+    mechanic: nova
+    nova: { radius: [2.5, 3.2] }
+    damage: [9, 15]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.2   # 2026-10 PoE2：使者只剩擊殺效果，效果加強
+    visual: herald_ice
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 30 }
+
+  # ---- 戰吼：瞬間吼一聲，有冷卻時間 ----
+
+  # 2026-10：戰星的主動來源（不用裝備也拿得到）：吼一聲三種各一顆
+
+  # ---- 2026-10 擴充：弩與物理 ----
+
+  armour_piercing_bolt:
+    name: 破甲弩矢
+    description: 射出一支沉重的弩矢，筆直貫穿一整排敵人（穿過四個），很容易把敵人震暈，還會破甲（物理傷害的 40%）。
+    icon: ARROW
+    type: attack
+    tier: 1
+    tags: [attack, projectile, physical]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.4, range: 44, pierce: 4 }
+    attack_speed: 0.8
+    effectiveness: [1.8, 2.52]   # 2026-10：+20%
+    mana: [5, 11]
+    visual: crossbow_bolt
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 40 }
+      - { stat: armour.break, type: FLAT, value: 40 }   # 2026-10 PoE2 破甲
+
+
+
+  concussion_grenade:
+    name: 震盪榴彈
+    description: 拋出一顆榴彈，落地後炸開一大圈純物理的衝擊，暈眩累積大幅提高。
+    icon: FIREWORK_STAR
+    type: attack
+    tier: 5
+    tags: [attack, projectile, area, physical]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { speed: 1.6, range: 40, size: 0.25, gravity: 0.06, fuse: 0.8, explode: [3.0, 3.8] }
+    cooldown: 1.5
+    attack_speed: 0.9
+    effectiveness: [1.6, 2.2]
+    mana: [6, 13]
+    visual: explosive_grenade
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 80 }
+
+
+
+  fortifying_cry:
+    name: 堅壁戰吼
+    description: 戰吼：吼一聲立刻回復一部分生命，六秒內你和附近的隊友護甲增加、更不容易被暈，範圍內的敵人轉過來打你。
+    icon: SHIELD
+    type: spell
+    tier: 1
+    tags: [warcry]
+    mechanic: warcry
+    warcry:
+      radius: 8
+      duration: 6
+      taunt: true
+      heal: [8, 15]
+      allies: true
+      buff:
+        - { stat: armour, type: INCREASED, value: [30, 60] }
+        - { stat: stun.threshold, type: INCREASED, value: [20, 40] }
+    cast_time: 0.4
+    cooldown: 8
+    mana: [6, 14]
+    visual: enduring_cry
+
+  infernal_cry:
+    name: 焚獄戰吼
+    description: 戰吼：八秒內你和附近的隊友物理傷害的一部分額外附加為火焰，接下來三次攻擊傷害更多。
+    icon: BLAZE_POWDER
+    type: spell
+    tier: 3
+    tags: [warcry, fire]
+    mechanic: warcry
+    warcry:
+      radius: 8
+      duration: 8
+      taunt: false
+      allies: true
+      buff:
+        - { stat: damage.gain.fire, type: FLAT, value: [15, 30] }
+      exert: { count: 3, more: [25, 40] }
+    cast_time: 0.4
+    cooldown: 8
+    mana: [7, 16]
+    visual: rallying_cry
+
+  seismic_cry:
+    name: 震地戰吼
+    description: 戰吼：範圍內的敵人六秒內受到的傷害增加並轉過來打你；接下來兩次攻擊傷害大幅提高，暈眩累積增加。
+    icon: ANVIL
+    type: spell
+    tier: 5
+    tags: [warcry]
+    mechanic: warcry
+    warcry:
+      radius: 8
+      duration: 6
+      taunt: true
+      allies: false
+      buff:
+        - { stat: stun.buildup, type: INCREASED, value: [40, 80] }
+      debuff: { taken: [10, 20] }
+      exert: { count: 2, more: [60, 90] }
+    cast_time: 0.4
+    cooldown: 8
+    mana: [8, 18]
+    visual: intimidating_cry
+
+
+  # ---- 2026-10：詛咒（範圍印記：準心指的地方一圈的敵人受到的某種傷害增加，誰打都算）----
+
+  vulnerability_curse:
+    name: 創痕詛咒
+    description: 詛咒準心指的地方一圈的敵人，六秒內護甲大幅變少，物理傷害更打得進去。
+    icon: BONE
+    type: spell
+    tier: 3
+    tags: [spell]
+    mechanic: mark
+    mark: { range: 22, radius: 3.0, duration: 6, effects: [ { stat: armour, type: MORE, value: [-30, -50] } ] }   # 2026-10 PoE2：護甲變少
+    cast_time: 0.7
+    mana: [6, 16]
+    visual: hunters_mark
+
+
+
+
+  despair_curse:
+    name: 凋魂詛咒
+    description: 詛咒準心指的地方一圈的敵人，六秒內混沌抗性大幅降低。
+    icon: WITHER_ROSE
+    type: spell
+    tier: 5
+    tags: [spell, chaos]
+    mechanic: mark
+    mark: { range: 22, radius: 3.0, duration: 6, effects: [ { stat: resist.chaos, type: FLAT, value: [-35, -49] } ] }   # 2026-10 PoE2
+    cast_time: 0.7
+    mana: [7, 18]
+    visual: hunters_mark
+
+  elemental_weakness_curse:
+    name: 三元詛咒
+    description: 詛咒準心指的地方一圈的敵人，六秒內火焰、冰冷、閃電抗性都降低。
+    icon: PRISMARINE_CRYSTALS
+    type: spell
+    tier: 9
+    tags: [spell, fire, cold, lightning]
+    mechanic: mark
+    mark: { range: 22, radius: 3.0, duration: 6, effects: [ { stat: resist.fire, type: FLAT, value: [-18, -24] }, { stat: resist.cold, type: FLAT, value: [-18, -24] }, { stat: resist.lightning, type: FLAT, value: [-18, -24] } ] }   # 2026-10 PoE2
+    cast_time: 0.7
+    mana: [8, 20]
+    visual: hunters_mark
+
+  # 2026-10：削弱與遲滯（照 PoE2 的詛咒機制，名稱是自己的）
+  enfeeble_curse:
+    name: 萎力詛咒
+    description: 詛咒準心指的地方一圈的敵人，六秒內造成的傷害變少。Boss 一樣吃。
+    icon: FERMENTED_SPIDER_EYE
+    type: spell
+    tier: 5
+    tags: [spell]
+    mechanic: mark
+    mark:
+      range: 22
+      radius: 3.0
+      duration: 6
+      effects:
+        - { stat: damage, type: MORE, value: [-20, -29] }   # 2026-10 PoE2
+    cast_time: 0.7
+    mana: [7, 18]
+    visual: hunters_mark
+
+  temporal_curse:
+    name: 遲滯詛咒
+    description: 詛咒準心指的地方一圈的敵人，八秒內移動變慢、招式的冷卻變長。
+    icon: CLOCK
+    type: spell
+    tier: 7
+    tags: [spell]
+    mechanic: mark
+    mark:
+      range: 22
+      radius: 3.0
+      duration: 8
+      slow: [20, 30]
+      effects:
+        - { stat: skill.cooldown, type: INCREASED, value: [20, 35] }
+    cast_time: 0.5
+    mana: [8, 20]
+    visual: hunters_mark
+
+  # ---- 2026-10：祭品（照 PoE2 的祭品類技能，名稱是自己的；算戰吼類：吼一聲讓身邊自己的召喚物得到增益）----
+  blood_offering:
+    name: 嗜血祭
+    description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）在那裡立一根骨柱，十秒內柱子附近你的召喚物傷害更高、攻擊更快。同時只有一根。
+    icon: REDSTONE
+    type: spell
+    tier: 3
+    tags: [minion]
+    mechanic: warcry
+    warcry:
+      radius: 7
+      duration: 10
+      spike: true
+      taunt: false
+      allies: false
+      minion_buff:
+        - { stat: damage, type: MORE, value: [20, 35] }
+        - { stat: attack.speed, type: INCREASED, value: [10, 20] }
+    cast_time: 0.4
+    cooldown: 10
+    mana: [6, 16]
+    visual: rallying_cry
+
+  bone_offering:
+    name: 骸骨祭
+    description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）立一根骨柱，十秒內柱子附近你的召喚物更耐打（物理傷害減免、格擋）。同時只有一根。
+    icon: BONE_BLOCK
+    type: spell
+    tier: 5
+    tags: [minion]
+    mechanic: warcry
+    warcry:
+      radius: 7
+      duration: 10
+      spike: true
+      taunt: false
+      allies: false
+      minion_buff:
+        - { stat: physical.reduction, type: FLAT, value: [15, 25] }
+        - { stat: block.chance, type: FLAT, value: [15, 25] }
+    cast_time: 0.4
+    cooldown: 10
+    mana: [6, 16]
+    visual: intimidating_cry
+
+  soul_offering:
+    name: 魂火祭
+    description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）立一根骨柱，十秒內柱子附近你的召喚物每秒回復生命、攻擊與移動更快。同時只有一根。
+    icon: SOUL_LANTERN
+    type: spell
+    tier: 7
+    tags: [minion]
+    mechanic: warcry
+    warcry:
+      radius: 7
+      duration: 10
+      spike: true
+      taunt: false
+      allies: false
+      minion_buff:
+        - { stat: life.regen_percent, type: FLAT, value: [3, 5] }
+        - { stat: attack.speed, type: INCREASED, value: [15, 25] }
+        - { stat: movement.speed, type: INCREASED, value: [10, 20] }
+    cast_time: 0.4
+    cooldown: 10
+    mana: [7, 18]
+    visual: rallying_cry
+
+  # ==== 2026-10 PoE2 補齊：新技能（機制照 PoE2，名稱是自己的）====
+
+  # -- 錘 --
+  rolling_slam:
+    name: 震野雙錘
+    description: 錘子往前砸兩下：第一下砸出一道扇形震波，第二下更重、範圍更大。容易暈眩。
+    icon: IRON_BLOCK
+    type: attack
+    tier: 3
+    tags: [attack, melee, area, slam, physical]
+    weapons: [mace]
+    mechanic: cone
+    cone: { length: [5, 6], angle: 60, aftershock: { delay: 0.5, radius: 0.6, more: 60 } }
+    attack_speed: 0.7
+    effectiveness: [1.3, 1.82]
+    mana: [6, 12]
+    visual: slam
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 40 }
+
+  volcanic_fissure:
+    name: 炎脈裂地
+    description: 錘子往前砸出一道燃燒的地裂，裂縫上的敵人持續受到火焰傷害，容易點燃。
+    icon: MAGMA_BLOCK
+    type: attack
+    tier: 5
+    tags: [attack, melee, area, slam, fire]
+    weapons: [mace]
+    mechanic: zone
+    zone: { shape: line, length: [7, 9], radius: 1.2, duration: 4, interval: 0.5, damage: 60, max: 2 }
+    convert: { fire: 0.6 }
+    attack_speed: 0.8
+    effectiveness: [0.75, 1.05]
+    mana: [7, 14]
+    visual: flame_wall
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 25 }
+
+  armour_breaker:
+    name: 碎甲錘
+    description: 一記專打護甲的重擊：對單一敵人造成高傷害，大幅破甲。
+    icon: ANVIL
+    type: attack
+    tier: 3
+    tags: [attack, melee, strike, physical]
+    weapons: [mace]
+    mechanic: strike
+    strike: { reach: 3.8, angle: 60, targets: 1, knockback: 0.3 }
+    attack_speed: 0.75
+    effectiveness: [0.95, 1.3]   # 2026-10：內部比例調低（以前比 PoE2 還高）
+    mana: [5, 11]
+    visual: boneshatter
+    modifiers:
+      - { stat: armour.break, type: FLAT, value: 100 }
+
+  shield_rush:
+    name: 鐵壁衝撞
+    description: 往前衝一段距離，撞開路上的敵人，終點炸一圈。冷卻 2 秒。
+    icon: SHIELD
+    type: attack
+    tier: 5
+    tags: [attack, melee, movement, area]
+    weapons: [mace]
+    mechanic: dash
+    dash: { range: 8, hit_width: 1.2, knockback: 0.8, end_radius: [2.0, 2.6] }
+    cooldown: 2
+    attack_speed: 0.6
+    effectiveness: [1.15, 1.61]
+    mana: [6, 12]
+    visual: dash
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 60 }
+
+  # -- 長棍 --
+  gale_sweep:
+    name: 嵐棍橫掃
+    description: 長棍一掃，前方扇形颳起一陣強風，把敵人吹開。
+    icon: WIND_CHARGE
+    type: attack
+    tier: 3
+    tags: [attack, melee, area, cold]
+    weapons: [quarterstaff]
+    mechanic: cone
+    cone: { length: [5, 6], angle: 90 }
+    convert: { cold: 0.4 }
+    attack_speed: 0.9
+    effectiveness: [0.95, 1.33]
+    mana: [5, 10]
+    visual: staff_sweep
+
+  vault_strike:
+    name: 躍棍崩擊
+    description: 撐著長棍跳到準心指的地方，落地打一圈，暈眩累積更多。
+    icon: BAMBOO
+    type: attack
+    tier: 5
+    tags: [attack, melee, area, slam, movement]
+    weapons: [quarterstaff]
+    mechanic: leap
+    leap: { range: 9, radius: [2.6, 3.3] }
+    attack_speed: 0.8
+    effectiveness: [1.6, 2.24]
+    mana: [7, 13]
+    visual: leap
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 60 }
+
+  whirling_rush:
+    name: 迴旋棍步
+    description: 轉著長棍往前衝，打穿路上的敵人。
+    icon: BREEZE_ROD
+    type: attack
+    tier: 3
+    tags: [attack, melee, movement]
+    weapons: [quarterstaff]
+    mechanic: dash
+    dash: { range: 7, hit_width: 1.4, knockback: 0.3 }
+    cooldown: 1.5
+    attack_speed: 0.7
+    effectiveness: [1.0, 1.4]
+    mana: [5, 10]
+    visual: whirling_blades
+
+  siphon_strike:
+    name: 引雷棍
+    description: 長棍帶電打中一個敵人，周圍的敵人也一起被電到（受到一半傷害）。
+    icon: COPPER_INGOT
+    type: attack
+    tier: 5
+    tags: [attack, melee, strike, lightning]
+    weapons: [quarterstaff]
+    mechanic: strike
+    strike: { reach: 4.0, angle: 70, targets: 1 }
+    convert: { lightning: 0.6 }
+    attack_speed: 1.0
+    effectiveness: [1.15, 1.61]
+    mana: [5, 10]
+    visual: tempest
+    modifiers:
+      - { stat: skill.melee_splash, type: FLAT, value: 50 }
+      - { stat: shock.chance, type: FLAT, value: 20 }
+
+  # -- 弓 --
+  arrow_barrage:
+    name: 星屑連矢
+    description: 一口氣連射好幾支箭，射得快、每支輕一點。
+    icon: ARROW
+    type: attack
+    tier: 3
+    tags: [attack, projectile]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.2, range: 40, burst: { count: 4, interval: 2 } }
+    attack_speed: 0.8
+    effectiveness: [0.52, 0.73]
+    mana: [5, 11]
+    visual: arrow
+
+  miasma_arrow:
+    name: 腐霧矢
+    description: 射出一支會留下毒雲的箭，停下的地方冒出一片毒氣，敵人在裡面會中毒。
+    icon: TIPPED_ARROW
+    type: attack
+    tier: 5
+    tags: [attack, projectile, area, chaos, duration]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 2.8, range: 30, ground: { duration: 4, interval: 0.5, radius: 2.5, damage: 30 } }
+    convert: { chaos: 0.5 }
+    attack_speed: 0.85
+    effectiveness: [0.9, 1.26]
+    mana: [6, 13]
+    visual: caustic_arrow
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 40 }
+
+  thunder_arrow:
+    name: 召霆矢
+    description: 往準心指的地方射一支箭，過一下引來一道落雷，打傷一圈敵人，容易感電。
+    icon: LIGHTNING_ROD
+    type: attack
+    tier: 7
+    tags: [attack, area, lightning]
+    weapons: [bow]
+    mechanic: impact
+    impact: { range: 24, delay: 0.9, radius: [3.2, 4.0] }
+    convert: { lightning: 0.8 }
+    attack_speed: 0.7
+    effectiveness: [1.6, 2.24]
+    mana: [7, 15]
+    visual: lightning_arrow
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 30 }
+
+  frost_volley:
+    name: 凜霜扇矢
+    description: 一次射出一排扇形的冰箭，容易凍結。
+    icon: PACKED_ICE
+    type: attack
+    tier: 5
+    tags: [attack, projectile, cold]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, count: 5, spread: 40, speed: 3.0, range: 30 }
+    convert: { cold: 0.6 }
+    attack_speed: 0.8
+    effectiveness: [0.6, 0.84]
+    mana: [6, 13]
+    visual: ice_shot
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 50 }
+
+  # -- 弩 --
+  galvanic_bolts:
+    name: 雷屑散彈
+    description: 弩一次噴出一把扇形的帶電碎片，射程短，容易感電。
+    icon: GLOWSTONE_DUST
+    type: attack
+    tier: 3
+    tags: [attack, projectile, lightning]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { arrow: true, count: 6, spread: 35, speed: 2.6, range: 16 }
+    convert: { lightning: 0.7 }
+    attack_speed: 0.8
+    effectiveness: [0.5, 0.7]
+    mana: [5, 11]
+    visual: crossbow_bolt
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 20 }
+
+  siege_salvo:
+    name: 崩城落彈
+    description: 往準心指的地方發射一串重彈，過一下一起落下炸開。冷卻 3 秒。
+    icon: TNT
+    type: attack
+    tier: 7
+    tags: [attack, area, physical, fire]
+    weapons: [crossbow]
+    mechanic: impact
+    impact: { range: 26, delay: 1.0, radius: [3.6, 4.4] }
+    convert: { fire: 0.3 }
+    cooldown: 3
+    attack_speed: 0.7
+    effectiveness: [2.2, 3.08]
+    mana: [8, 16]
+    visual: rain_of_arrows
+
+  hail_rounds:
+    name: 凍雨彈
+    description: 往準心指的地方發射冰雹彈，落地炸開一圈冰冷傷害，容易凍結。
+    icon: SNOW_BLOCK
+    type: attack
+    tier: 5
+    tags: [attack, area, cold]
+    weapons: [crossbow]
+    mechanic: impact
+    impact: { range: 22, delay: 0.5, radius: [2.8, 3.5] }
+    convert: { cold: 0.7 }
+    attack_speed: 0.85
+    effectiveness: [1.1, 1.54]
+    mana: [6, 13]
+    visual: comet
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 60 }
+
+  # -- 矛 --
+  storm_javelin:
+    name: 霆落矛
+    description: 擲出一支標槍插在準心指的地方，過一下引爆一圈閃電。
+    icon: TRIDENT
+    type: attack
+    tier: 5
+    tags: [attack, area, lightning]
+    weapons: [spear]
+    mechanic: impact
+    impact: { range: 20, delay: 0.8, radius: [3.0, 3.8] }
+    convert: { lightning: 0.7 }
+    attack_speed: 0.75
+    effectiveness: [1.5, 2.1]
+    mana: [6, 13]
+    visual: lightning_spear
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 25 }
+
+  spear_thicket:
+    name: 矛陣
+    description: 在準心指的地方插下一片矛陣，矛陣裡的敵人一直被刺。
+    icon: POINTED_DRIPSTONE
+    type: attack
+    tier: 7
+    tags: [attack, area, physical, duration]
+    weapons: [spear]
+    mechanic: zone
+    zone: { range: 16, radius: [2.5, 3.2], duration: 5, interval: 0.5, damage: 45, max: 1 }
+    attack_speed: 0.8
+    effectiveness: [0.8, 1.12]
+    mana: [7, 14]
+    visual: spear_thrust
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 25 }
+
+  rapid_thrust:
+    name: 三連刺
+    description: 用矛往前快速連刺，按一次刺三下。
+    icon: IRON_SPEAR
+    type: attack
+    tier: 3
+    tags: [attack, melee, strike, physical]
+    weapons: [spear]
+    mechanic: strike
+    strike: { reach: 4.2, angle: 40, targets: 2 }
+    attack_speed: 1.3
+    effectiveness: [0.62, 0.87]
+    mana: [4, 9]
+    visual: spear_thrust
+    modifiers:
+      - { stat: skill.repeats, type: FLAT, value: 2 }
+
+  # -- 法術 --
+  firestorm:
+    name: 流焰天幕
+    description: 準心指的地方降下一陣火雨，範圍內的敵人一直挨燒。
+    icon: BLAZE_ROD
+    type: spell
+    tier: 5
+    tags: [spell, area, fire, duration]
+    mechanic: zone
+    zone: { range: 20, radius: [3.0, 3.8], duration: 4, interval: 0.4, damage: 60, max: 1 }
+    damage: [6, 10]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.5
+    mana: [8, 20]
+    visual: blizzard
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+
+  scorch_breath:
+    name: 焚息
+    description: 往前噴出一道扇形烈焰，近距離的敵人全部燒到。
+    icon: FIRE_CHARGE
+    type: spell
+    tier: 3
+    tags: [spell, area, fire]
+    mechanic: cone
+    cone: { length: [5, 6], angle: 60 }
+    damage: [7, 11]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.6
+    effectiveness: 0.8
+    mana: [5, 13]
+    visual: fireball
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 30 }
+
+  ember_volley:
+    name: 星火連珠
+    description: 連續射出好幾顆火星，一顆接一顆飛向前方。
+    icon: BLAZE_POWDER
+    type: spell
+    tier: 3
+    tags: [spell, projectile, fire]
+    mechanic: projectile
+    projectile: { speed: 1.4, range: 28, size: 0.3, burst: { count: 4, interval: 3 } }
+    damage: [4, 7]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.5
+    mana: [6, 15]
+    visual: fireball
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 10 }
+
+  frost_snap:
+    name: 霜綻
+    description: 準心指的地方瞬間結冰炸開，打傷一圈敵人，凍結累積很多。冷卻 2 秒。
+    icon: ICE
+    type: spell
+    tier: 5
+    tags: [spell, area, cold, cooldown]
+    mechanic: impact
+    impact: { range: 22, delay: 0.25, radius: [3.0, 3.8] }
+    damage: [14, 22]
+    damage_types: { cold: 1.0 }
+    cooldown: 2
+    cast_time: 0.6
+    effectiveness: 1.2
+    mana: [8, 18]
+    visual: frost_nova
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 120 }
+
+  frost_orb:
+    name: 凝霜星核
+    description: 放出一顆慢慢飄的寒冰珠，碰到的敵人都會被冰到，路上一直打。
+    icon: BLUE_ICE
+    type: spell
+    tier: 7
+    tags: [spell, projectile, cold]
+    mechanic: projectile
+    projectile: { speed: 0.3, range: 16, size: 1.4, pierce: 20, splash: { targets: 3, radius: 4, damage: 35 } }
+    damage: [4, 9]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.55
+    mana: [8, 20]
+    visual: staff_bolt
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 40 }
+
+  storm_orb:
+    name: 雷雲
+    description: 在準心指的地方放一團雷雲，一直電裡面的敵人，容易感電。
+    icon: LIGHTNING_ROD
+    type: spell
+    tier: 3
+    tags: [spell, area, lightning, duration]
+    mechanic: zone
+    zone: { range: 18, radius: [2.8, 3.5], duration: 6, interval: 0.6, damage: 55, max: 1 }
+    damage: [3, 12]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.6
+    effectiveness: 0.5
+    mana: [7, 18]
+    visual: arc
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 20 }
+
+  lightning_pillar:
+    name: 天柱雷
+    description: 準心指的地方劈下一道巨大的雷，被感電的敵人更痛。
+    icon: END_ROD
+    type: spell
+    tier: 9
+    tags: [spell, area, lightning]
+    mechanic: impact
+    impact: { range: 24, delay: 0.5, radius: [3.0, 3.8] }
+    damage: [6, 34]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.9
+    effectiveness: 1.5
+    mana: [10, 24]
+    visual: arc
+    modifiers:
+      - { stat: shock.effect, type: INCREASED, value: 50 }
+
+  hex_burst:
+    name: 蝕咒裂
+    description: 準心指的地方炸開一團混沌，打傷一圈敵人；身上有詛咒的敵人受到更多 50% 傷害。
+    icon: ENDER_EYE
+    type: spell
+    tier: 7
+    tags: [spell, area, chaos]
+    mechanic: impact
+    impact: { range: 20, delay: 0.3, radius: [2.8, 3.5] }
+    damage: [14, 22]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.75
+    effectiveness: 1.3
+    mana: [8, 20]
+    visual: void_rift
+    modifiers:
+      - { stat: damage.vs_cursed, type: MORE, value: 50 }
+
+  bone_storm:
+    name: 碎骨飛矢
+    description: 射出一串尖骨往前飛，穿透好幾個敵人，容易流血。
+    icon: BONE
+    type: spell
+    tier: 5
+    tags: [spell, projectile, physical]
+    mechanic: projectile
+    projectile: { speed: 1.8, range: 24, size: 0.3, pierce: 3, burst: { count: 3, interval: 3 } }
+    damage: [5, 9]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.6
+    mana: [6, 16]
+    visual: puncture
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 20 }
+
+  void_bolt:
+    name: 裂虛星
+    description: 法杖射出一團混沌，打中時散成幾顆小的飛向四周。
+    icon: ENDER_PEARL
+    type: spell
+    tier: 3
+    tags: [spell, projectile, chaos]
+    mechanic: projectile
+    projectile: { speed: 1.3, range: 28, size: 0.35, scatter: { count: 3, spread: 360, damage: 50, range: 8 } }
+    damage: [7, 11]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.75
+    effectiveness: 0.9
+    mana: [5, 14]
+    visual: chaos_bolt
+
+  # -- 召喚 --
+  skeletal_brute:
+    name: 召喚骸骨重卒
+    description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出高大的凋零骷髏，很耐打，打中時連周圍一起打，會把附近的怪引過來。同時最多兩個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
+    icon: WITHER_SKELETON_SKULL
+    type: spell
+    tier: 7
+    tags: [minion, physical]
+    mechanic: aura
+    aura: { reserve: 0, per_minion: [165, 48], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 165 → 20 級 48），付得起幾隻叫幾隻
+    summon: { kind: WITHER_SKELETON, count: 1, max: 2, duration: 0, life: 4.0, damage: 1.2, attack_speed: 0.8, speed: 0.9, reach: 2.4,
+              radius: 2.0, taunt: 5, taunt_radius: 8, weapon: STONE_AXE }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
+
+  # -- 遠程召喚（2026-10：召喚物站遠處射擊）--
+  skeletal_archers:
+    name: 召喚骸骨射手
+    description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出拿弓的骷髏，站在後面射箭，不會衝到敵人臉上。同時最多四到六個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
+    icon: BOW
+    type: spell
+    tier: 3
+    tags: [minion, physical]
+    mechanic: aura
+    aura: { reserve: 0, per_minion: [90, 30], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 90 → 20 級 30），付得起幾隻叫幾隻
+    summon: { kind: SKELETON, count: 2, max: [4, 6], duration: 0, life: 0.9, damage: 0.4, attack_speed: 1.0, speed: 1.1, reach: 2.0,
+              ranged: 14, bolt: arrow, weapon: BOW, helmet: LEATHER_HELMET }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
+  skeletal_pyromancer:
+    name: 召喚骸骨焰術士
+    description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出會放火的骷髏術士，站在遠處朝敵人噴火球，容易點燃。同時最多兩到三個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
+    icon: BLAZE_ROD
+    type: spell
+    tier: 5
+    tags: [minion, fire]
+    mechanic: aura
+    aura: { reserve: 0, per_minion: [90, 39], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 90 → 20 級 39），付得起幾隻叫幾隻
+    summon: { kind: SKELETON, count: 1, max: [2, 3], duration: 0, life: 0.8, damage: 0.7, attack_speed: 0.7, speed: 1.0, reach: 2.0,
+              ranged: 12, bolt: fire, radius: 1.5, weapon: BLAZE_ROD, helmet: GOLDEN_HELMET, resists: { fire: 75 } }
+    convert: { fire: 1.0 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
+  skeletal_stormcaller:
+    name: 召喚骸骨雷術士
+    description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出會放電的骷髏術士，站在遠處朝敵人打雷，容易感電。同時最多兩到三個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
+    icon: LIGHTNING_ROD
+    type: spell
+    tier: 7
+    tags: [minion, lightning]
+    mechanic: aura
+    aura: { reserve: 0, per_minion: [120, 39], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 120 → 20 級 39），付得起幾隻叫幾隻
+    summon: { kind: STRAY, count: 1, max: [2, 3], duration: 0, life: 0.8, damage: 0.75, attack_speed: 0.8, speed: 1.0, reach: 2.0,
+              ranged: 12, bolt: lightning, weapon: LIGHTNING_ROD, resists: { lightning: 75 } }
+    convert: { lightning: 1.0 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
+  # -- 戰旗 --
+  defiance_banner:
+    name: 磐石之旗
+    description: 插下守護的旗，八秒內你和附近的隊友護甲、閃避增加，移動更快。冷卻 12 秒。
+    icon: BLUE_BANNER
+    type: spell
+    tier: 3
+    tags: [warcry]
+    mechanic: warcry
+    warcry:
+      radius: 10
+      duration: 8
+      taunt: false
+      allies: true
+      buff:
+        - { stat: armour, type: INCREASED, value: [20, 40] }
+        - { stat: evasion, type: INCREASED, value: [20, 40] }
+        - { stat: movement.speed, type: INCREASED, value: [5, 10] }
+    cast_time: 0.3
+    cooldown: 12
+    mana: 0
+    visual: rallying_cry
+
+  # -- 常駐（精魂） --
+  frost_aegis:
+    name: 凜冬之殼
+    description: 常駐：身上結一層冰甲，護甲提高、受到的火焰傷害吃得少一點。範圍內的隊友也有效果。保留 25 精魂。
+    icon: PACKED_ICE
+    type: spell
+    tier: 5
+    tags: [spell, cold]
+    mechanic: aura
+    aura:
+      reserve: 25
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: armour, type: INCREASED, value: [20, 35] }
+        - { stat: resist.fire, type: FLAT, value: [8, 15] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_cold
+
+  # ==== 2026-10 PoE2 補齊（第二批）====
+
+  # -- 錘 --
+  shatter_spikes:
+    name: 地刺崩裂
+    description: 錘子砸地，前方一圈冒出石刺，過一下石刺一起碎開再打一次更大的範圍。
+    icon: POINTED_DRIPSTONE
+    type: attack
+    tier: 7
+    tags: [attack, melee, area, slam, physical]
+    weapons: [mace]
+    mechanic: nova
+    nova: { radius: [3.0, 3.6], aftershock: { delay: 1.0, radius: 1.5, more: 100 } }
+    attack_speed: 0.6
+    effectiveness: [1.3, 1.82]
+    mana: [8, 15]
+    visual: earthquake
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 40 }
+
+  magma_spray:
+    name: 熔漿噴濺
+    description: 錘子砸出一團熔漿往前噴，散成好幾團落在前方，打中的敵人容易點燃。
+    icon: MAGMA_CREAM
+    type: attack
+    tier: 5
+    tags: [attack, projectile, area, fire]
+    weapons: [mace]
+    mechanic: projectile
+    projectile: { count: 4, spread: 50, speed: 1.2, range: 10, size: 0.4, gravity: 0.05, explode: [1.6, 2.0] }
+    convert: { fire: 0.7 }
+    attack_speed: 0.8
+    effectiveness: [0.7, 0.98]
+    mana: [6, 13]
+    visual: fireball
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+
+  true_strike:
+    name: 蓄勁一擊
+    description: 蓄足力氣打出一記極重的單體攻擊，必定命中、暴擊傷害更高。冷卻 3 秒。
+    icon: NETHERITE_INGOT
+    type: attack
+    tier: 9
+    tags: [attack, melee, strike, physical]
+    weapons: [mace]
+    mechanic: strike
+    strike: { reach: 3.8, angle: 50, targets: 1, knockback: 0.6 }
+    cooldown: 3
+    attack_speed: 0.45
+    effectiveness: [3.4, 4.76]
+    mana: [8, 16]
+    visual: boneshatter
+    modifiers:
+      - { stat: flag.always_hit, type: FLAT, value: 1 }
+      - { stat: crit.multi, type: FLAT, value: 50 }
+
+  titan_slam:
+    name: 撼天重砸
+    description: 舉錘猛砸前方一大片扇形，傷害極高、暈眩累積極多。冷卻 4 秒。
+    icon: ANVIL
+    type: attack
+    tier: 13
+    tags: [attack, melee, area, slam, physical]
+    weapons: [mace]
+    mechanic: cone
+    cone: { length: [8, 10], angle: 80 }
+    cooldown: 4
+    attack_speed: 0.45
+    effectiveness: [3.6, 5.04]
+    mana: [10, 20]
+    visual: slam
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 150 }
+
+  stampede:
+    name: 奔雷踏
+    description: 往前一路重踏衝過去，沿路震傷敵人，終點再砸一圈。冷卻 3 秒。
+    icon: LEATHER_HORSE_ARMOR
+    type: attack
+    tier: 9
+    tags: [attack, melee, area, slam, movement]
+    weapons: [mace]
+    mechanic: dash
+    dash: { range: 10, hit_width: 1.5, knockback: 0.4, end_radius: [3.0, 3.6] }
+    cooldown: 3
+    attack_speed: 0.6
+    effectiveness: [1.6, 2.24]
+    mana: [8, 16]
+    visual: dash
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 50 }
+
+  forge_hammer:
+    name: 回旋鍛錘
+    description: 擲出一把燒紅的鍛錘，穿過敵人飛出去再飛回你手上，路上都會打到。
+    icon: IRON_INGOT
+    type: attack
+    tier: 7
+    tags: [attack, projectile, fire, physical]
+    weapons: [mace]
+    mechanic: projectile
+    projectile: { speed: 1.2, range: 14, size: 0.6, pierce: 10 }
+    convert: { fire: 0.4 }
+    attack_speed: 0.75
+    effectiveness: [1.3, 1.82]
+    mana: [7, 14]
+    visual: fireball
+    modifiers:
+      - { stat: flag.returning, type: FLAT, value: 1 }
+
+  # -- 長棍 --
+  reeling_palm:
+    name: 震脈掌
+    description: 一掌打在敵人身上，讓牠眩暈（傷害更少、更容易被暈）。
+    icon: SLIME_BALL
+    type: attack
+    tier: 3
+    tags: [attack, melee, strike, physical]
+    weapons: [quarterstaff]
+    mechanic: strike
+    strike: { reach: 4.0, angle: 60, targets: 1, knockback: 0.5 }
+    attack_speed: 1.1
+    effectiveness: [1.0, 1.4]
+    mana: [4, 9]
+    visual: killing_palm
+    modifiers:
+      - { stat: daze.chance, type: FLAT, value: 60 }
+      - { stat: stun.buildup, type: MORE, value: 30 }
+
+  frost_palm:
+    name: 寒魄掌
+    description: 往前推出一掌寒氣，扇形範圍內的敵人被冰到，容易凍結。
+    icon: SNOW_BLOCK
+    type: attack
+    tier: 5
+    tags: [attack, melee, area, cold]
+    weapons: [quarterstaff]
+    mechanic: cone
+    cone: { length: [5, 6], angle: 70 }
+    convert: { cold: 0.6 }
+    attack_speed: 0.9
+    effectiveness: [1.1, 1.54]
+    mana: [5, 11]
+    visual: ice_cone
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 80 }
+
+  frost_wave:
+    name: 霜浪
+    description: 長棍往前揮出一道貫穿的冰浪，打中整條路上的敵人。
+    icon: PACKED_ICE
+    type: attack
+    tier: 7
+    tags: [attack, projectile, cold]
+    weapons: [quarterstaff]
+    mechanic: projectile
+    projectile: { speed: 1.1, range: 14, size: 1.3, pierce: 20 }
+    convert: { cold: 0.7 }
+    attack_speed: 0.75
+    effectiveness: [1.4, 1.96]
+    mana: [6, 12]
+    visual: storm_wave
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 50 }
+
+  # -- 弓 --
+  shock_arrow:
+    name: 電殛矢
+    description: 射出一支帶電的箭，很容易讓敵人電擊（定住不能動）。
+    icon: SPECTRAL_ARROW
+    type: attack
+    tier: 5
+    tags: [attack, projectile, lightning]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.4, range: 40 }
+    convert: { lightning: 0.6 }
+    attack_speed: 0.85
+    effectiveness: [1.2, 1.68]
+    mana: [5, 11]
+    visual: lightning_arrow
+    modifiers:
+      - { stat: electrocute.buildup, type: MORE, value: 100 }
+
+  bramble_arrow:
+    name: 荊棘矢
+    description: 射出一支會生根的箭，落地長出一片荊棘，裡面的敵人一直受傷、容易中毒。
+    icon: SWEET_BERRIES
+    type: attack
+    tier: 3
+    tags: [attack, projectile, area, chaos, duration]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 2.6, range: 28, ground: { duration: 5, interval: 0.5, radius: 2.2, damage: 35 } }
+    convert: { chaos: 0.3 }
+    attack_speed: 0.9
+    effectiveness: [0.85, 1.19]
+    mana: [5, 12]
+    visual: caustic_arrow
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 25 }
+
+  venom_burst_arrow:
+    name: 爆毒矢
+    description: 射出一支毒箭，打中時炸開一圈毒，範圍內的敵人容易中毒。
+    icon: FERMENTED_SPIDER_EYE
+    type: attack
+    tier: 5
+    tags: [attack, projectile, area, chaos]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.0, range: 36, explode: [2.2, 2.8] }
+    convert: { chaos: 0.5 }
+    attack_speed: 0.85
+    effectiveness: [1.0, 1.4]
+    mana: [6, 12]
+    visual: caustic_arrow
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 50 }
+
+  spiral_volley:
+    name: 螺旋箭雨
+    description: 射出一圈繞著亂竄的箭，往四周散開打敵人。
+    icon: FIREWORK_ROCKET
+    type: attack
+    tier: 7
+    tags: [attack, projectile]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, count: 8, spread: 360, speed: 2.4, range: 20, wobble: 40 }
+    attack_speed: 0.7
+    effectiveness: [0.55, 0.77]
+    mana: [7, 14]
+    visual: tornado_shot
+
+  blast_arrow:
+    name: 爆焰矢
+    description: 射出一支會爆炸的火箭，打中時炸開一大圈火焰，容易點燃。
+    icon: FIRE_CHARGE
+    type: attack
+    tier: 9
+    tags: [attack, projectile, area, fire]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.0, range: 36, explode: [3.0, 3.8] }
+    convert: { fire: 0.7 }
+    attack_speed: 0.6
+    effectiveness: [1.8, 2.52]
+    mana: [7, 15]
+    visual: lightning_arrow
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 30 }
+
+  chain_arrow:
+    name: 跳電矢
+    description: 射出一支帶電的箭，打中後跳到附近的敵人身上好幾次。
+    icon: COPPER_INGOT
+    type: attack
+    tier: 7
+    tags: [attack, projectile, lightning, chain]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.2, range: 36 }
+    convert: { lightning: 0.5 }
+    attack_speed: 0.85
+    effectiveness: [1.1, 1.54]
+    mana: [6, 12]
+    visual: lightning_arrow
+    modifiers:
+      - { stat: skill.chains, type: FLAT, value: 3 }
+
+  # -- 弩 --
+  piercing_rounds:
+    name: 穿甲重彈
+    description: 射出一發極快的重彈，筆直穿過一整排的敵人。
+    icon: IRON_NUGGET
+    type: attack
+    tier: 5
+    tags: [attack, projectile, physical]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 4.0, range: 50, pierce: 15 }
+    attack_speed: 0.7
+    effectiveness: [1.7, 2.38]
+    mana: [6, 12]
+    visual: crossbow_bolt
+    modifiers:
+      - { stat: crit.chance, type: INCREASED, value: 40 }
+
+  incendiary_shot:
+    name: 燃焰散射
+    description: 弩噴出一把扇形的火焰碎片，射程短，容易點燃。
+    icon: BLAZE_POWDER
+    type: attack
+    tier: 3
+    tags: [attack, projectile, fire]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { arrow: true, count: 6, spread: 40, speed: 2.4, range: 14 }
+    convert: { fire: 0.8 }
+    attack_speed: 0.8
+    effectiveness: [0.5, 0.7]
+    mana: [5, 11]
+    visual: explosive_bolt
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 25 }
+
+  frost_bolt_round:
+    name: 寒凝彈
+    description: 射出一發冰彈，停下的地方結出一片冰地，踩在上面的敵人一直被冰到。
+    icon: BLUE_ICE
+    type: attack
+    tier: 5
+    tags: [attack, projectile, area, cold, duration]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.0, range: 30, ground: { duration: 4, interval: 0.5, radius: 2.4, damage: 30 } }
+    convert: { cold: 0.8 }
+    attack_speed: 0.8
+    effectiveness: [1.0, 1.4]
+    mana: [6, 12]
+    visual: permafrost_bolt
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 60 }
+
+  storm_bolts:
+    name: 雷暴弩矢
+    description: 一次射出三發帶電的弩矢，打中時電到附近的敵人。
+    icon: LIGHTNING_ROD
+    type: attack
+    tier: 7
+    tags: [attack, projectile, lightning]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { arrow: true, count: 3, spread: 20, speed: 3.2, range: 36, splash: { targets: 2, radius: 4, damage: 40 } }
+    convert: { lightning: 0.7 }
+    attack_speed: 0.8
+    effectiveness: [0.85, 1.19]
+    mana: [6, 13]
+    visual: crossbow_bolt
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 20 }
+
+  oil_grenade:
+    name: 火油榴彈
+    description: 丟出一顆火油彈，彈跳後炸開，留下一片燒著的地面。冷卻 2 秒。
+    icon: HONEY_BOTTLE
+    type: attack
+    tier: 5
+    tags: [attack, projectile, area, fire, duration]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { speed: 1.5, range: 36, size: 0.25, gravity: 0.06, fuse: 1.0, explode: [2.6, 3.2], ground: { duration: 4, interval: 0.5, radius: 2.8, damage: 30 } }
+    convert: { fire: 0.7 }
+    cooldown: 2
+    attack_speed: 0.9
+    effectiveness: [1.2, 1.68]
+    mana: [6, 13]
+    visual: explosive_grenade
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 30 }
+
+  voltaic_grenade:
+    name: 雷光榴彈
+    description: 丟出一顆雷光彈，炸開時電到一圈敵人，容易感電。冷卻 1.5 秒。
+    icon: GLOWSTONE
+    type: attack
+    tier: 3
+    tags: [attack, projectile, area, lightning]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { speed: 1.6, range: 36, size: 0.25, gravity: 0.06, fuse: 0.8, explode: [3.0, 3.6] }
+    convert: { lightning: 0.7 }
+    cooldown: 1.5
+    attack_speed: 0.9
+    effectiveness: [1.6, 2.24]
+    mana: [6, 13]
+    visual: explosive_grenade
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 30 }
+
+  cluster_grenade:
+    name: 子母榴彈
+    description: 丟出一顆大榴彈，炸開後再散出幾顆小的往四周炸。冷卻 3 秒。
+    icon: TNT_MINECART
+    type: attack
+    tier: 9
+    tags: [attack, projectile, area, fire, physical]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { speed: 1.5, range: 36, size: 0.3, gravity: 0.06, fuse: 1.0, explode: [2.8, 3.4], scatter: { count: 5, spread: 360, damage: 50, range: 6 } }
+    convert: { fire: 0.4 }
+    cooldown: 3
+    attack_speed: 0.8
+    effectiveness: [1.9, 2.66]
+    mana: [8, 16]
+    visual: explosive_grenade
+
+  # -- 矛 --
+  gale_spear:
+    name: 旋風矛
+    description: 擲出一團亂竄的旋風，往前一路打中敵人。
+    icon: WIND_CHARGE
+    type: attack
+    tier: 3
+    tags: [attack, projectile]
+    weapons: [spear]
+    mechanic: projectile
+    projectile: { speed: 0.9, range: 18, size: 0.9, pierce: 20, wobble: 35 }
+    attack_speed: 0.85
+    effectiveness: [0.85, 1.19]
+    mana: [5, 11]
+    visual: whirlwind_lance
+
+  sweeping_repel:
+    name: 掃退
+    description: 矛往身邊一掃，把周圍的敵人打退。冷卻 2 秒。
+    icon: STICK
+    type: attack
+    tier: 3
+    tags: [attack, melee, area, nova]
+    weapons: [spear]
+    mechanic: nova
+    nova: { radius: [3.2, 4.0] }
+    cooldown: 2
+    attack_speed: 0.9
+    effectiveness: [1.1, 1.54]
+    mana: [5, 10]
+    visual: whirl
+    modifiers:
+      - { stat: daze.chance, type: FLAT, value: 30 }
+
+  serpent_fury:
+    name: 蛇嵐突
+    description: 矛往前猛力一突，捲起一道長長的風刃，打中前方一長條的敵人。
+    icon: TRIDENT
+    type: attack
+    tier: 9
+    tags: [attack, melee, area]
+    weapons: [spear]
+    mechanic: cone
+    cone: { length: [9, 11], angle: 25 }
+    attack_speed: 0.6
+    effectiveness: [2.2, 3.08]
+    mana: [7, 15]
+    visual: spear_thrust
+
+  prism_rend:
+    name: 稜光裂
+    description: 矛插在準心指的地方，炸開一圈元素（每次隨機火、冰或雷）。
+    icon: PRISMARINE_SHARD
+    type: attack
+    tier: 7
+    tags: [attack, area, fire, cold, lightning]
+    weapons: [spear]
+    mechanic: impact
+    impact: { range: 18, delay: 0.5, radius: [3.0, 3.6] }
+    attack_speed: 0.75
+    effectiveness: [1.5, 2.1]
+    mana: [7, 14]
+    visual: lightning_spear
+    modifiers:
+      - { stat: flag.random_element, type: FLAT, value: 1 }
+
+  thunder_leap:
+    name: 雷躍
+    description: 撐矛跳到準心指的地方，落地炸開一圈閃電，容易感電。
+    icon: LIGHTNING_ROD
+    type: attack
+    tier: 5
+    tags: [attack, melee, area, lightning, movement]
+    weapons: [spear]
+    mechanic: leap
+    leap: { range: 9, radius: [2.6, 3.2] }
+    convert: { lightning: 0.6 }
+    attack_speed: 0.8
+    effectiveness: [1.5, 2.1]
+    mana: [7, 13]
+    visual: leap
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 25 }
+
+  blood_harvest:
+    name: 血獵
+    description: 矛刺向準心指的地方，炸開一圈血花，容易流血。
+    icon: REDSTONE
+    type: attack
+    tier: 5
+    tags: [attack, area, physical]
+    weapons: [spear]
+    mechanic: impact
+    impact: { range: 14, delay: 0.3, radius: [2.6, 3.2] }
+    attack_speed: 0.85
+    effectiveness: [1.3, 1.82]
+    mana: [6, 12]
+    visual: puncture
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 40 }
+
+  sunfire_spear:
+    name: 熾陽之矛
+    description: 擲出一支灼熱的光矛砸在準心指的地方，炸開一大圈火焰。冷卻 5 秒。
+    icon: BLAZE_ROD
+    type: attack
+    tier: 13
+    tags: [attack, area, fire]
+    weapons: [spear]
+    mechanic: impact
+    impact: { range: 24, delay: 0.9, radius: [4.0, 5.0] }
+    convert: { fire: 0.8 }
+    cooldown: 5
+    attack_speed: 0.5
+    effectiveness: [4.0, 5.6]
+    mana: [10, 20]
+    visual: comet
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 40 }
+
+  # -- 法術 --
+  frost_mine:
+    name: 寒晶雷
+    description: 準心指的地方放一顆冰晶，過一下炸開，炸到的敵人凍結累積很多。炸開的地方留下一顆冰晶。
+    icon: AMETHYST_CLUSTER
+    type: spell
+    tier: 5
+    tags: [spell, area, cold, crystal]
+    mechanic: impact
+    impact: { range: 20, delay: 1.6, radius: [3.2, 4.0] }
+    damage: [18, 28]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.6
+    effectiveness: 1.4
+    mana: [8, 20]
+    visual: comet
+    modifiers:
+      - { stat: crystal.count, type: FLAT, value: 1 }
+      - { stat: freeze.buildup, type: INCREASED, value: 100 }
+
+  ice_wall:
+    name: 霜壁
+    description: 在面前豎起一道冰牆，碰到的敵人一直被冰到。沿著冰牆留下四顆冰晶：擊中冰晶旁邊的敵人三下就碎，炸出一圈冰。
+    icon: ICE
+    type: spell
+    tier: 3
+    tags: [spell, area, cold, duration, crystal]
+    mechanic: zone
+    zone: { shape: line, length: [6, 8], radius: 1.0, duration: 6, interval: 0.5, damage: 45, max: 2 }
+    damage: [4, 7]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.6
+    effectiveness: 0.35
+    mana: [6, 16]
+    visual: blizzard
+    modifiers:
+      - { stat: crystal.count, type: FLAT, value: 4 }
+      - { stat: chill.effect, type: INCREASED, value: 50 }
+
+  storm_blink:
+    name: 雷遁
+    description: 化成一道閃電瞬移到前方，起點與終點都電一圈。冷卻 2 秒。
+    icon: LIGHTNING_ROD
+    type: spell
+    tier: 5
+    tags: [spell, lightning, movement, area]
+    mechanic: dash
+    dash: { range: 9, start_radius: [2.0, 2.4], end_radius: [2.0, 2.4] }
+    damage: [4, 16]
+    damage_types: { lightning: 1.0 }
+    cooldown: 2
+    cast_time: 0.4
+    effectiveness: 0.8
+    mana: [6, 14]
+    visual: dash
+
+
+
+  inferno_blast:
+    name: 炎核爆
+    description: 準心指的地方慢慢聚出一團火，過一下炸開一大圈，傷害極高。
+    icon: MAGMA_BLOCK
+    type: spell
+    tier: 9
+    tags: [spell, area, fire]
+    mechanic: impact
+    impact: { range: 22, delay: 2.0, radius: [3.6, 4.6] }
+    damage: [34, 52]
+    damage_types: { fire: 1.0 }
+    cast_time: 1.0
+    effectiveness: 2.0
+    mana: [10, 26]
+    visual: comet
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 30 }
+
+  sun_orb:
+    name: 烈陽珠
+    description: 在腳邊放下一顆小太陽，一直燒周圍的敵人。
+    icon: SHROOMLIGHT
+    type: spell
+    tier: 5
+    tags: [spell, area, fire, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [3.0, 3.6], duration: 6, interval: 0.5, damage: 55, max: 1 }
+    damage: [5, 9]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.6
+    effectiveness: 0.45
+    mana: [7, 18]
+    visual: flame_wall
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 15 }
+
+  ember_seed:
+    name: 燼種
+    description: 在準心指的敵人身上種下一顆火種，過一下爆開燒傷周圍的敵人。
+    icon: NETHER_WART
+    type: spell
+    tier: 3
+    tags: [spell, area, fire]
+    mechanic: impact
+    impact: { range: 20, delay: 1.2, radius: [2.6, 3.2] }
+    damage: [12, 18]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.1
+    mana: [6, 15]
+    visual: fireball
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 25 }
+
+  winter_eye:
+    name: 寒冬之眼
+    description: 射出一顆冰晶眼，飛行中一直往四周散出冰片。
+    icon: ENDER_EYE
+    type: spell
+    tier: 7
+    tags: [spell, projectile, cold]
+    mechanic: projectile
+    projectile: { speed: 0.8, range: 22, size: 0.5, pierce: 20, scatter: { count: 6, spread: 360, damage: 40, range: 8 } }
+    damage: [8, 13]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.8
+    mana: [8, 20]
+    visual: staff_bolt
+
+  static_field:
+    name: 雷域
+    description: 準心指的地方展開一片電場，一直電裡面的敵人，容易感電。
+    icon: LIGHTNING_ROD
+    type: spell
+    tier: 7
+    tags: [spell, area, lightning, duration]
+    mechanic: zone
+    zone: { range: 18, radius: [3.0, 3.8], duration: 5, interval: 0.4, damage: 50, max: 1 }
+    damage: [3, 13]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.6
+    effectiveness: 0.45
+    mana: [8, 20]
+    visual: arc
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 25 }
+
+  bone_spikes:
+    name: 骨棘陣
+    description: 準心指的地方地面竄出骨刺，刺傷一圈敵人，容易流血。
+    icon: BONE_BLOCK
+    type: spell
+    tier: 5
+    tags: [spell, area, physical]
+    mechanic: impact
+    impact: { range: 18, delay: 0.4, radius: [2.8, 3.4] }
+    damage: [12, 18]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.6
+    effectiveness: 1.1
+    mana: [7, 17]
+    visual: puncture
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 30 }
+
+  dark_idol:
+    name: 冥偶
+    description: 放下一個黑色的雕像，一段時間內一直對附近的敵人放混沌彈。
+    icon: WITHER_SKELETON_SKULL
+    type: spell
+    tier: 7
+    tags: [spell, projectile, chaos]
+    mechanic: projectile
+    projectile: { speed: 1.2, range: 14, size: 0.35 }
+    totem: { duration: 10, interval: 0.8, range: 14, max: 1, head: WITHER_SKELETON_SKULL }
+    damage: [7, 11]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.6
+    effectiveness: 0.75
+    mana: [9, 22]
+    visual: chaos_bolt
+
+  # -- 召喚 --
+  bone_raise:
+    name: 掘骸
+    description: 用附近一具屍體拼出一個骷髏戰士，二十秒後散掉。可以一直放。
+    icon: BONE
+    type: spell
+    tier: 3
+    tags: [minion, physical]
+    mechanic: summon
+    # 2026-10 平衡：群體召喚太強，damage 0.4 → 0.22
+    summon: { kind: SKELETON, count: 1, max: [6, 10], duration: 20, life: 0.8, damage: 0.22, attack_speed: 1.2, speed: 1.2, reach: 2.0,
+              corpse: true, search: 12, weapon: STONE_SWORD }
+    cast_time: 0.4
+    mana: [4, 10]
+    visual: raise_zombie
+
+  skeletal_reaver:
+    name: 召喚骸骨狂卒
+    description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出雙持的骷髏，動作極快、打得兇，但很脆。同時最多四到六個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
+    icon: IRON_SWORD
+    type: spell
+    tier: 5
+    tags: [minion, physical]
+    mechanic: aura
+    aura: { reserve: 0, per_minion: [90, 30], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 90 → 20 級 30），付得起幾隻叫幾隻
+    # 2026-10 平衡：群體召喚太強，damage 0.45 → 0.28
+    summon: { kind: WITHER_SKELETON, count: 2, max: [4, 6], duration: 0, life: 0.9, damage: 0.28, attack_speed: 1.8, speed: 1.4, reach: 2.0,
+              weapon: IRON_SWORD }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
+  skeletal_frostcaller:
+    name: 召喚骸骨霜術士
+    description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出會放冰的骷髏術士，站在遠處朝敵人射冰，容易冰緩、凍結。同時最多兩到三個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
+    icon: BLUE_ICE
+    type: spell
+    tier: 5
+    tags: [minion, cold]
+    mechanic: aura
+    aura: { reserve: 0, per_minion: [120, 39], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 120 → 20 級 39），付得起幾隻叫幾隻
+    summon: { kind: STRAY, count: 1, max: [2, 3], duration: 0, life: 0.8, damage: 0.7, attack_speed: 0.8, speed: 1.0, reach: 2.0,
+              ranged: 12, bolt: cold, weapon: PACKED_ICE, resists: { cold: 75 } }
+    convert: { cold: 1.0 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
+  # -- 常駐（精魂） --
+  battle_rage:
+    name: 狂戰之怒
+    description: 常駐：近戰打中時獲得怒氣，怒氣上限更高、效果更強；但受到的傷害稍微增加。保留 30 精魂。
+    icon: BLAZE_POWDER
+    type: spell
+    tier: 7
+    tags: [spell, physical]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: rage.on_hit, type: FLAT, value: [1, 2], percent: false, tags: [melee] }
+        - { stat: rage.max, type: FLAT, value: [10, 20], percent: false }
+        - { stat: rage.effect, type: INCREASED, value: [20, 50] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_haste
+
+  storm_staff:
+    name: 雷縛長棍
+    description: 常駐：攻擊的物理傷害一部分額外附加為閃電，容易感電。保留 30 精魂。
+    icon: LIGHTNING_ROD
+    type: spell
+    tier: 5
+    tags: [spell, lightning]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: damage.gain.lightning, type: FLAT, value: [12, 20], percent: false, tags: [attack] }
+        - { stat: shock.chance, type: FLAT, value: [5, 10], percent: false }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: herald_thunder
+
+  ruin_mantra:
+    name: 崩滅心咒
+    description: 常駐：你造成的傷害更高，暈眩累積更多。範圍內的隊友也有效果。保留 40 精魂。
+    icon: NETHER_STAR
+    type: spell
+    tier: 9
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 40
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: damage, type: MORE, value: [8, 15] }
+        - { stat: stun.buildup, type: INCREASED, value: [15, 30] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_purity
+
+  attrition:
+    name: 磨蝕之志
+    description: 常駐：對稀有、傳奇怪物與 Boss 造成的傷害增加。範圍內的隊友也有效果。保留 30 精魂。
+    icon: CLOCK
+    type: spell
+    tier: 7
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: damage.vs_rare, type: INCREASED, value: [15, 30] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_purity
+
+  mana_storm:
+    name: 魔湧
+    description: 常駐：法術傷害與施法速度增加，但魔力消耗也增加。保留 30 精魂。
+    icon: LAPIS_BLOCK
+    type: spell
+    tier: 7
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: damage, type: INCREASED, value: [20, 35], tags: [spell] }
+        - { stat: cast.speed, type: INCREASED, value: [5, 10] }
+        - { stat: skill.cost, type: INCREASED, value: 20 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_mana
+
+  # ==== 2026-10：持續引導、附身、治療召喚 ====
+  flame_stream:
+    name: 焚流
+    description: 持續施放：按住一直往前噴火，越噴越旺（每放一次加一層蓄力，最多 8 層，每層更多傷害）。
+    icon: BLAZE_POWDER
+    type: spell
+    tier: 3
+    tags: [spell, area, fire]
+    mechanic: cone
+    cone: { length: [5, 6], angle: 45 }
+    damage: [3, 5]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.25
+    effectiveness: 0.35
+    mana: [2, 5]
+    visual: fireball
+    modifiers:
+      - { stat: channel.stages, type: FLAT, value: 8 }
+      - { stat: channel.more, type: FLAT, value: 10 }
+      - { stat: ignite.chance, type: FLAT, value: 10 }
+
+  frost_stream:
+    name: 霜流
+    description: 持續施放：按住一直往前噴寒氣，越噴越冷（最多 8 層蓄力），凍結累積很多。
+    icon: SNOWBALL
+    type: spell
+    tier: 5
+    tags: [spell, area, cold]
+    mechanic: cone
+    cone: { length: [5, 6], angle: 45 }
+    damage: [3, 5]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.25
+    effectiveness: 0.35
+    mana: [2, 5]
+    visual: ice_cone
+    modifiers:
+      - { stat: channel.stages, type: FLAT, value: 8 }
+      - { stat: channel.more, type: FLAT, value: 10 }
+      - { stat: freeze.buildup, type: INCREASED, value: 60 }
+
+  storm_lash:
+    name: 雷鞭
+    description: 持續施放：按住一直放出跳躍的閃電，越放越強（最多 6 層蓄力）。
+    icon: LIGHTNING_ROD
+    type: spell
+    tier: 7
+    tags: [spell, lightning, chain]
+    mechanic: chain
+    chain: { range: 12, chains: [2, 3], chain_range: 6 }
+    damage: [1, 9]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.3
+    effectiveness: 0.4
+    mana: [2, 6]
+    visual: arc
+    modifiers:
+      - { stat: channel.stages, type: FLAT, value: 6 }
+      - { stat: channel.more, type: FLAT, value: 12 }
+
+  charged_shot:
+    name: 蓄力射擊
+    description: 持續施放：按住一直拉弓連射，越射越重（最多 5 層蓄力，每層更多 20% 傷害），最後幾箭穿透敵人。
+    icon: BOW
+    type: attack
+    tier: 5
+    tags: [attack, projectile]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.6, range: 44, pierce: 2 }
+    attack_speed: 1.5
+    effectiveness: [0.6, 0.84]
+    mana: [2, 5]
+    visual: arrow
+    modifiers:
+      - { stat: channel.stages, type: FLAT, value: 5 }
+      - { stat: channel.more, type: FLAT, value: 20 }
+
+  bound_spectre:
+    name: 附魂術
+    description: 用附近一具屍體召回那隻怪物當你的召喚物（屍體原本是什麼就是什麼；Boss 不行，奇怪的怪物會變成殭屍）。不會消失，同時最多兩到三隻。
+    icon: SOUL_LANTERN
+    type: spell
+    tier: 7
+    tags: [minion, chaos]
+    mechanic: summon
+    summon: { kind: ZOMBIE, count: 1, max: [2, 3], duration: 0, life: 2.0, damage: 1.0, attack_speed: 1.0, speed: 1.1, reach: 2.2,
+              corpse: true, spectre: true, search: 12 }
+    cast_time: 0.8
+    mana: [12, 26]
+    visual: raise_zombie
+
+  skeletal_cleric:
+    name: 召喚骸骨祭司
+    description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出骷髏祭司，每秒替你與附近自己的召喚物回復生命（最大生命的 2～3%），自己打得很輕。同時最多一到兩個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
+    icon: GOLDEN_HELMET
+    type: spell
+    tier: 5
+    tags: [minion]
+    mechanic: aura
+    aura: { reserve: 0, per_minion: [60, 20], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 60 → 20 級 20），付得起幾隻叫幾隻
+    summon: { kind: SKELETON, count: 1, max: [1, 2], duration: 0, life: 1.2, damage: 0.2, attack_speed: 0.8, speed: 1.1, reach: 2.0,
+              heal: 2.5, helmet: GOLDEN_HELMET, weapon: GOLDEN_SHOVEL }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
+  # ---- 2026-10：戰旗（插旗；算戰吼類）----
+
+  war_banner:
+    name: 征戰之旗
+    description: 插下戰旗，八秒內你和附近的隊友攻擊傷害增加、命中提高。
+    icon: RED_BANNER
+    type: spell
+    tier: 5
+    tags: [warcry]
+    mechanic: warcry
+    warcry:
+      radius: 10
+      duration: 8
+      taunt: false
+      allies: true
+      buff:
+        - { stat: damage, type: INCREASED, value: [15, 30], tags: [attack] }
+        - { stat: accuracy, type: INCREASED, value: [10, 25] }
+    cast_time: 0.3
+    cooldown: 12      # 2026-10：拿掉榮耀之後改成冷卻
+    mana: 0
+    visual: rallying_cry
+
+  dread_banner:
+    name: 懾敵之旗
+    description: 插下令人膽寒的旗，範圍內的敵人八秒內受到的傷害增加；你和附近的隊友更不容易被暈。
+    icon: BLACK_BANNER
+    type: spell
+    tier: 9
+    tags: [warcry]
+    mechanic: warcry
+    warcry:
+      radius: 10
+      duration: 8
+      taunt: false
+      allies: true
+      buff:
+        - { stat: stun.threshold, type: INCREASED, value: [20, 40] }
+      debuff: { taken: [8, 15] }
+    cast_time: 0.3
+    cooldown: 12      # 2026-10：拿掉榮耀之後改成冷卻
+    mana: 0
+    visual: intimidating_cry
+
+  # ---- 2026-10 PoE2 改版：新技能（機制照 PoE2，名稱是自己的）----
+
+  hammer_of_gods:
+    name: 天罰巨鎚
+    description: 召來一柄巨鎚砸在準心指的地方，打傷落點一大圈的敵人，暈眩累積更多 100%。
+    icon: ANVIL
+    type: attack
+    tier: 13
+    tags: [attack, melee, area, slam]
+    weapons: [mace]
+    mechanic: impact
+    impact: { range: 14, delay: 0.8, radius: [4.0, 5.0] }
+    attack_speed: 0.5
+    effectiveness: [4.32, 6.05]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [12, 24]
+    cooldown: 8       # 2026-10：拿掉榮耀之後改成冷卻
+    visual: comet
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 100 }
+
+  falling_thunder:
+    name: 驚雷劈
+    description: 長棍往前劈下一道雷，打傷前方一長條的敵人，大部分傷害轉為閃電。
+    icon: LIGHTNING_ROD
+    type: attack
+    tier: 5
+    tags: [attack, melee, area, slam, lightning]
+    weapons: [quarterstaff]
+    mechanic: cone
+    cone: { length: [6.0, 7.5], angle: 40 }
+    convert: { lightning: 0.6 }
+    attack_speed: 0.8
+    effectiveness: [1.05, 1.46]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [6, 12]
+    visual: tempest
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 20 }
+
+  glacial_cascade:
+    name: 冰脊裂
+    description: 長棍往地上一點，前方一路裂出一排冰稜，打傷整排的敵人，大部分傷害轉為冰冷。
+    icon: PACKED_ICE
+    type: attack
+    tier: 9
+    tags: [attack, melee, area, cold]
+    weapons: [quarterstaff]
+    mechanic: cone
+    cone: { length: [8.0, 10.0], angle: 20 }
+    convert: { cold: 0.6 }
+    attack_speed: 0.85
+    effectiveness: [0.88, 1.23]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [6, 13]
+    visual: ice_cone
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 80 }
+
+  explosive_spear:
+    name: 炎爆矛
+    description: 擲出一支灼熱的矛，打中敵人或牆壁時炸開，大部分傷害轉為火焰、容易點燃。
+    icon: BLAZE_ROD
+    type: attack
+    tier: 5
+    tags: [attack, projectile, area, fire]
+    weapons: [spear]
+    mechanic: projectile
+    projectile: { speed: 2.0, range: 28, size: 0.4, explode: [2.8, 3.6] }
+    convert: { fire: 0.6 }
+    attack_speed: 0.7
+    effectiveness: [1.18, 1.65]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [6, 12]
+    visual: explosive_bolt
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 25 }
+
+  fangs_of_frost:
+    name: 霜牙刺
+    description: 用矛往前方一刺，打中最多三個敵人，一半的物理傷害轉為冰冷。
+    icon: PRISMARINE_SHARD
+    type: attack
+    tier: 3
+    tags: [attack, melee, strike, cold]
+    weapons: [spear]
+    mechanic: strike
+    strike: { reach: 4.5, angle: 70, targets: 3 }
+    convert: { cold: 0.5 }
+    attack_speed: 1.0
+    effectiveness: [0.83, 1.16]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [4, 9]
+    visual: spear_thrust
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 60 }
+
+  snipe:
+    name: 穿雲箭
+    description: 拉滿弓射出一支很重的箭，飛得又快又遠，貫穿五個敵人；出手慢，一箭的傷害很高，暴擊率增加 50%。
+    icon: SPECTRAL_ARROW
+    type: attack
+    tier: 9
+    tags: [attack, projectile]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 4.0, range: 50, pierce: 5 }
+    attack_speed: 0.4
+    effectiveness: [2.36, 3.3]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    mana: [6, 14]
+    visual: arrow
+    modifiers:
+      - { stat: crit.chance, type: INCREASED, value: 50 }
+
+  frostbolt:
+    name: 霜鑽
+    description: 射出一顆很慢的冰鑽，一路貫穿所有碰到的敵人，冰緩更深；霜星爆可以從它的位置爆開。
+    icon: SNOWBALL
+    type: spell
+    tier: 1
+    tags: [spell, projectile, cold]
+    mechanic: projectile
+    projectile: { speed: 0.25, range: 22, size: 0.55, pierce: 20 }   # 2026-10 PoE2：很慢、貫穿全部
+    damage: [5, 8]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.9           # 法術附加乘這個
+    mana: [5, 13]
+    visual: staff_bolt
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 50 }
+      - { stat: chill.effect, type: MORE, value: 100 }
+
+  ball_lightning:
+    name: 滾雷珠
+    description: 放出一顆很慢的雷珠，一路貫穿敵人，打中時再電到附近三個敵人。
+    icon: GLOWSTONE_DUST
+    type: spell
+    tier: 5
+    tags: [spell, projectile, lightning]
+    mechanic: projectile
+    projectile: { speed: 0.2, range: 18, size: 1.2, pierce: 20, splash: { targets: 3, radius: 1.8, damage: 40 } }   # 2026-10 PoE2：很慢
+    damage: [1, 4]
+    damage_types: { lightning: 1.0 }
+    cast_time: 1.0
+    effectiveness: 0.6           # 法術附加乘這個
+    mana: [7, 18]
+    visual: spark
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 15 }
+      - { stat: shock.chance, type: INCREASED, value: 375 }
+
+  essence_drain:
+    name: 汲魂彈
+    description: 射出一顆混沌能量，打中造成混沌傷害（不吃元素抗性，看混沌抗性），停下的地方留下三秒的腐蝕地面。
+    icon: ECHO_SHARD
+    type: spell
+    tier: 1
+    tags: [spell, projectile, chaos]
+    starter: witch
+    mechanic: projectile
+    projectile: { speed: 0.56, range: 30, size: 0.35, ground: { duration: 4, interval: 0.5, radius: 1.6, damage: 30 } }   # 2026-10 PoE2
+    damage: [5, 9]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.8
+    effectiveness: 1.0           # 法術附加乘這個
+    mana: [5, 13]
+    visual: chaos_bolt
+
+  contagion:
+    name: 疫潮
+    description: 在準心指的地方爆出一團瘟疫，打中的敵人一定中毒，毒更強 30%。
+    icon: WITHER_ROSE
+    type: spell
+    tier: 5
+    tags: [spell, area, chaos]
+    mechanic: impact
+    impact: { range: 20, delay: 0.3, radius: [3.0, 3.8] }
+    damage: [6, 10]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.6
+    effectiveness: 0.7           # 法術附加乘這個
+    mana: [6, 16]
+    visual: blight_nova
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 100 }
+      - { stat: poison.magnitude, type: MORE, value: 30 }
+
+  # ==== 2026-10：德魯伊（照 PoE2，名稱是自己的）====
+  # 變身：放帶 bear／werewolf／wyvern 標籤的技能就變成那種形態 8 秒（換一種就換掉）：
+  #   熊形態：最大生命更多 15%、增加 50% 護甲、暈眩門檻增加 30%、移動慢 5%
+  #   狼人形態：增加 15% 攻擊速度、10% 移動速度、25% 暴擊率
+  #   飛龍形態：增加 20% 元素傷害、40% 閃避
+  # 熊、狼人的攻擊要拿獸魂符（talisman）；飛龍的是法術，什麼武器都能放。
+
+  # -- 熊 --
+  bear_maul:
+    name: 撼山爪
+    description: 化身巨熊，一掌重重拍下前方的敵人，暈眩累積很多。（熊形態）
+    icon: BROWN_WOOL
+    type: attack
+    tier: 1
+    tags: [attack, melee, strike, physical, shapeshift, bear]
+    weapons: [talisman]
+    mechanic: strike
+    strike: { reach: 3.8, angle: 80, targets: 3, knockback: 0.4 }
+    attack_speed: 0.9
+    effectiveness: [1.2, 1.68]   # 2026-10 平衡：-14%
+    mana: [4, 9]
+    visual: heavy_strike
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 40 }
+  bear_slam:
+    name: 震野踏
+    description: 熊身躍起往前猛踏，前方一大片扇形的敵人都被震到，容易暈眩。（熊形態）
+    icon: COARSE_DIRT
+    type: attack
+    tier: 3
+    tags: [attack, melee, area, slam, physical, shapeshift, bear]
+    weapons: [talisman]
+    mechanic: cone
+    cone: { length: [4.0, 5.0], angle: 90 }
+    attack_speed: 0.75
+    effectiveness: [1.1, 1.54]
+    mana: [6, 12]
+    visual: slam
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 60 }
+  mountain_fury:
+    name: 熔裂踏
+    description: 熊掌連捶地面，震出一圈衝擊，留下燃燒的裂地一直燒周圍的敵人。（熊形態）
+    icon: MAGMA_BLOCK
+    type: attack
+    tier: 5
+    tags: [attack, melee, area, slam, fire, duration, shapeshift, bear]
+    weapons: [talisman]
+    mechanic: nova
+    nova: { radius: [3.0, 3.6], ground: { duration: 4, interval: 0.5, radius: 3.0, damage: 30 } }
+    convert: { fire: 0.6 }
+    attack_speed: 0.8
+    effectiveness: [1.2, 1.68]
+    mana: [7, 14]
+    visual: earthquake
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 25 }
+  rampage:
+    name: 蠻衝
+    description: 熊身一路往前衝撞，撞飛路上的敵人，終點重踏一圈。冷卻 3 秒。（熊形態）
+    icon: LEATHER_HORSE_ARMOR
+    type: attack
+    tier: 9
+    tags: [attack, melee, area, slam, movement, physical, shapeshift, bear]
+    weapons: [talisman]
+    mechanic: dash
+    dash: { range: 10, hit_width: 1.5, knockback: 0.6, end_radius: [3.0, 3.6] }
+    cooldown: 3
+    attack_speed: 0.6
+    effectiveness: [1.6, 2.24]
+    mana: [8, 16]
+    visual: dash
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 50 }
+  walking_calamity:
+    name: 墜星熊吼
+    description: 熊身怒吼，召來一顆燃燒的隕石砸在準心指的地方，傷害極高。冷卻 6 秒。（熊形態）
+    icon: FIRE_CHARGE
+    type: attack
+    tier: 13
+    tags: [attack, area, fire, shapeshift, bear]
+    weapons: [talisman]
+    mechanic: impact
+    impact: { range: 22, delay: 0.9, radius: [4.0, 5.0] }
+    convert: { fire: 0.8 }
+    cooldown: 6
+    attack_speed: 0.5
+    effectiveness: [4.0, 5.6]
+    mana: [10, 20]
+    visual: comet
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 40 }
+
+  # -- 狼人 --
+  wolf_shred:
+    name: 疾爪
+    description: 化身狼人，雙爪快速撕抓前方的敵人，容易流血。（狼人形態）
+    icon: BONE
+    type: attack
+    tier: 1
+    tags: [attack, melee, strike, physical, shapeshift, werewolf]
+    weapons: [talisman]
+    mechanic: strike
+    strike: { reach: 3.2, angle: 70, targets: 2 }
+    attack_speed: 1.4
+    effectiveness: [0.7, 0.98]
+    mana: [3, 7]
+    visual: slash
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 20 }
+  wolf_rend:
+    name: 血牙
+    description: 狼人一口咬住敵人的喉嚨狠狠撕開，很容易流血，流血更痛。（狼人形態）
+    icon: REDSTONE
+    type: attack
+    tier: 5
+    tags: [attack, melee, strike, physical, shapeshift, werewolf]
+    weapons: [talisman]
+    mechanic: strike
+    strike: { reach: 3.2, angle: 50, targets: 1 }
+    attack_speed: 0.9
+    effectiveness: [1.15, 1.61]   # 2026-10 平衡：-12%
+    mana: [5, 10]
+    visual: puncture
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 60 }
+      - { stat: bleed.magnitude, type: INCREASED, value: 40 }
+  pounce:
+    name: 掠影撲
+    description: 狼人撲向準心指的地方，落地撕抓一圈的敵人。冷卻 2 秒。（狼人形態）
+    icon: RABBIT_FOOT
+    type: attack
+    tier: 3
+    tags: [attack, melee, area, movement, physical, shapeshift, werewolf]
+    weapons: [talisman]
+    mechanic: leap
+    leap: { range: 9, radius: [2.4, 3.0] }
+    cooldown: 2
+    attack_speed: 0.9
+    effectiveness: [1.3, 1.82]
+    mana: [5, 10]
+    visual: leap
+  cross_slash:
+    name: 交錯爪
+    description: 狼人雙爪交叉一劃，前方扇形的敵人都被撕開，暴擊傷害更高。（狼人形態）
+    icon: SHEARS
+    type: attack
+    tier: 7
+    tags: [attack, melee, area, physical, shapeshift, werewolf]
+    weapons: [talisman]
+    mechanic: cone
+    cone: { length: [3.5, 4.5], angle: 100 }
+    attack_speed: 0.85
+    effectiveness: [1.15, 1.61]   # 2026-10 平衡：-23%（扇形）
+    mana: [6, 12]
+    visual: cleave
+    modifiers:
+      - { stat: crit.bonus, type: FLAT, value: 30 }
+  arctic_howl:
+    name: 寒夜嗥
+    description: 戰吼：狼人仰天長嗥，八秒內你和附近的隊友攻擊附加冰冷傷害，接下來幾次攻擊更痛。（狼人形態）
+    icon: SNOWBALL
+    type: spell
+    tier: 5
+    tags: [warcry, cold, shapeshift, werewolf]
+    mechanic: warcry
+    warcry:
+      radius: 8
+      duration: 8
+      taunt: false
+      allies: true
+      buff:
+        - { stat: damage.gain.cold, type: FLAT, value: [15, 30] }
+      exert: { count: 3, more: [20, 35] }
+    cast_time: 0.4
+    cooldown: 8
+    mana: [7, 16]
+    visual: intimidating_cry
+  lunar_blessing:
+    name: 銀月庇
+    description: 精魂技能：月光一直灑在你身上，攻擊的物理傷害一部分額外附加為冰冷，暴擊率增加。範圍內的隊友也有效果。保留 30 精魂。
+    icon: END_CRYSTAL
+    type: spell
+    tier: 13
+    tags: [spell, cold]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: damage.gain.cold, type: FLAT, value: [10, 20], tags: [attack] }
+        - { stat: crit.chance, type: INCREASED, value: [20, 40] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_cold
+
+  # -- 飛龍（法術）--
+  wing_blast:
+    name: 鼓翼風
+    description: 化身飛龍猛搧雙翼，前方扇形的敵人被狂風打退、容易暈眩。（飛龍形態）
+    icon: PHANTOM_MEMBRANE
+    type: spell
+    tier: 3
+    tags: [spell, area, physical, shapeshift, wyvern]
+    mechanic: cone
+    cone: { length: [5, 6], angle: 80 }
+    damage: [6, 10]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.7
+    effectiveness: 0.8
+    mana: [5, 12]
+    visual: whirl
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 60 }
+  rolling_magma:
+    name: 熔球
+    description: 飛龍吐出一團熔岩，在地上彈跳著往前滾，最後炸開，容易點燃。（飛龍形態）
+    icon: MAGMA_CREAM
+    type: spell
+    tier: 3
+    tags: [spell, projectile, area, fire, shapeshift, wyvern]
+    mechanic: projectile
+    projectile: { speed: 0.9, range: 24, size: 0.5, gravity: 0.05, fuse: 1.6, explode: [2.2, 2.8] }
+    damage: [6, 9]   # 2026-10 平衡：-40%（原本是熾星彈的兩倍）
+    damage_types: { fire: 1.0 }
+    cast_time: 0.8
+    effectiveness: 1.0
+    mana: [6, 14]
+    visual: fireball
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 25 }
+  devour:
+    name: 噬咬
+    description: 飛龍一口咬住前方的敵人，造成傷害的一部分偷取為生命。（飛龍形態）
+    icon: COOKED_BEEF
+    type: spell
+    tier: 5
+    tags: [spell, area, physical, shapeshift, wyvern]
+    mechanic: cone
+    cone: { length: [3.0, 3.5], angle: 50 }
+    damage: [12, 18]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.8
+    cooldown: 2
+    effectiveness: 1.2
+    mana: [6, 13]
+    visual: heavy_strike
+    modifiers:
+      - { stat: leech.life, type: FLAT, value: 10 }
+  oil_barrage:
+    name: 黑油雨
+    description: 飛龍朝前方噴出一排油彈，落地留下一片會燒的油地，敵人在上面一直挨燒。（飛龍形態）
+    icon: HONEY_BOTTLE
+    type: spell
+    tier: 9
+    tags: [spell, projectile, area, fire, duration, shapeshift, wyvern]
+    mechanic: projectile
+    projectile: { count: [4, 6], spread: 35, speed: 1.0, range: 16, size: 0.4, gravity: 0.04, explode: [1.4, 1.8], ground: { duration: 3, interval: 0.5, radius: 1.8, damage: 25 } }
+    damage: [3, 4]   # 2026-10 平衡：六發各打一下，-45%
+    damage_types: { fire: 1.0 }
+    cast_time: 0.9
+    effectiveness: 0.55
+    mana: [8, 18]
+    visual: fireball
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+  flame_breath:
+    name: 熾息
+    description: 持續施放：飛龍按住一直往前噴火，越噴越旺（每放一次加一層，最多 8 層）。（飛龍形態）
+    icon: BLAZE_POWDER
+    type: spell
+    tier: 13
+    tags: [spell, area, fire, shapeshift, wyvern]
+    mechanic: cone
+    cone: { length: [6, 7], angle: 45 }
+    damage: [3, 4.5]   # 2026-10 平衡：-25%
+    damage_types: { fire: 1.0 }
+    cast_time: 0.25
+    effectiveness: 0.4
+    mana: [2, 5]
+    visual: fireball
+    modifiers:
+      - { stat: channel.stages, type: FLAT, value: 8 }
+      - { stat: channel.more, type: FLAT, value: 12 }
+      - { stat: ignite.chance, type: FLAT, value: 15 }
+
+  # -- 自然法術 --
+  thunderstorm:
+    name: 積雷雲
+    description: 準心指的地方降下一陣雷雨，範圍內的敵人一直被雷劈，容易感電。
+    icon: LIGHTNING_ROD
+    type: spell
+    tier: 5
+    tags: [spell, area, lightning, duration]
+    mechanic: zone
+    zone: { range: 20, radius: [3.0, 3.8], duration: 5, interval: 0.5, damage: 55, max: 1 }
+    damage: [5, 12]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.5
+    mana: [8, 20]
+    visual: blizzard
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 25 }
+  primal_tornado:
+    name: 野旋風
+    description: 準心指的地方捲起一道旋風，把附近的敵人吸進去一直絞。
+    icon: STRING
+    type: spell
+    tier: 11
+    tags: [spell, area, physical, duration]
+    mechanic: zone
+    zone: { range: 18, radius: [2.6, 3.2], duration: 4, interval: 0.4, damage: 45, pull: 0.25, max: 1 }
+    damage: [6, 10]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.5
+    mana: [9, 20]
+    visual: void_rift
+  thrashing_vines:
+    name: 抽荊
+    description: 準心指的地方猛然竄出粗藤狠狠抽下，打傷一圈敵人，容易流血。
+    icon: VINE
+    type: spell
+    tier: 9
+    tags: [spell, area, physical]
+    mechanic: impact
+    impact: { range: 20, delay: 0.4, radius: [2.6, 3.2] }
+    damage: [10, 16]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.7
+    effectiveness: 0.9
+    mana: [7, 16]
+    visual: earthquake
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 30 }
+  volcano:
+    name: 地火柱
+    description: 準心指的地方拱起一座小火山，一直噴出熔岩燒周圍的敵人。
+    icon: MAGMA_BLOCK
+    type: spell
+    tier: 7
+    tags: [spell, area, fire, duration]
+    mechanic: zone
+    zone: { range: 18, radius: [2.8, 3.4], duration: 6, interval: 0.6, damage: 60, max: 1 }
+    damage: [6, 10]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.9
+    effectiveness: 0.5
+    mana: [8, 18]
+    visual: flame_wall
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 25 }
+  entangle:
+    name: 縛根
+    description: 詛咒準心指的地方一圈的敵人：藤蔓纏住他們六秒，移動大幅變慢，受到的物理傷害增加。
+    icon: TWISTING_VINES
+    type: spell
+    tier: 3
+    tags: [spell, physical]
+    mechanic: mark
+    mark: { range: 22, radius: 3.0, duration: 6, taken: 15, tags: [physical], slow: [25, 40] }
+    cast_time: 0.7
+    mana: [6, 16]
+    visual: hunters_mark
+
+  # -- 精魂技能 --
+  barkskin:
+    name: 木甲
+    description: 精魂技能：皮膚變得像樹皮一樣硬，護甲增加、物理傷害減免提高。範圍內的隊友也有效果。保留 30 精魂。
+    icon: OAK_LOG
+    type: spell
+    tier: 3
+    tags: [spell, physical]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: armour, type: INCREASED, value: [30, 60] }
+        - { stat: physical.reduction, type: FLAT, value: [4, 8] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_armour
+  briarpatch:
+    name: 刺棘身
+    description: 精魂技能：身上長滿荊棘，近戰打你的敵人會被反彈物理傷害。保留 30 精魂。
+    icon: SWEET_BERRIES
+    type: spell
+    tier: 3
+    tags: [spell, physical]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: thorns.min, type: FLAT, value: [10, 60], percent: false }
+        - { stat: thorns.max, type: FLAT, value: [20, 110], percent: false }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_armour
+  savage_fury:
+    name: 獸血沸
+    description: 精魂技能：野性一直沸騰，攻擊速度與移動速度增加，但受到的傷害稍微增加。保留 30 精魂。
+    icon: BLAZE_POWDER
+    type: spell
+    tier: 7
+    tags: [spell, physical]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: attack.speed, type: INCREASED, value: [10, 20] }
+        - { stat: movement.speed, type: INCREASED, value: [5, 10] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_haste
+  wolf_pack:
+    name: 灰狼隨
+    description: 精魂召喚：綁在上方按鍵格就有三隻狼一直跟著你，跑得快、咬得兇。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
+    icon: BONE
+    type: spell
+    tier: 9
+    tags: [minion, physical]
+    mechanic: aura
+    aura: { reserve: 0, per_minion: [60, 25], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 60 → 20 級 25），付得起幾隻叫幾隻
+    summon: { kind: WOLF, count: 1, max: 3, fixed_max: true, duration: 0, life: 1.6, damage: 0.6, attack_speed: 1.4, speed: 1.4, reach: 1.8 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
+  # ---- 2026-10：PoE2 主動技能補齊・第 1 批（機制照 PoE2；裂地斬、瞬影擊沿用舊名，其他是自己取的名字）----
+  sunder:
+    name: 裂地斬
+    description: 用錘砸向地面，裂縫一段一段往前方延伸，打中沿路所有的敵人；對護甲被完全打破的敵人更痛。
+    icon: NETHERITE_AXE
+    type: attack
+    tier: 9
+    tags: [attack, melee, area, slam, physical]
+    weapons: [mace]
+    mechanic: cone
+    cone: { length: [9, 11], angle: 30, aftershock: { delay: 0.4, radius: 0.5, more: 40 } }
+    attack_speed: 0.75
+    effectiveness: [1.3, 1.82]
+    mana: [6, 12]
+    visual: slam
+    modifiers:
+      - { stat: armour.break, type: INCREASED, value: 50 }
+      - { stat: stun.buildup, type: INCREASED, value: 30 }
+
+  supercharged_slam:
+    name: 千鈞砸
+    description: 慢慢掄起一記超重的錘擊砸下，砸中的一圈傷害極高，過一下再震出更大的一圈餘震。
+    icon: ANVIL
+    type: attack
+    tier: 11
+    tags: [attack, melee, area, slam, physical]
+    weapons: [mace]
+    mechanic: nova
+    nova: { radius: [2.8, 3.4], aftershock: { delay: 0.6, radius: 2.0, more: 60 } }
+    attack_speed: 0.45
+    effectiveness: [3.0, 4.2]
+    mana: [9, 18]
+    visual: earthquake
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 50 }
+
+  resonating_shield:
+    name: 擂盾
+    description: 拿錘一直敲自己的盾，震出一圈一圈的衝擊波；被打中的敵人護甲被削弱。出手很快、每下比較輕。
+    icon: SHIELD
+    type: attack
+    tier: 5
+    tags: [attack, melee, area, physical]
+    weapons: [mace]
+    mechanic: nova
+    nova: { radius: [2.6, 3.2] }
+    attack_speed: 1.5
+    effectiveness: [0.5, 0.7]
+    mana: [3, 6]
+    visual: slam
+    modifiers:
+      - { stat: armour.break, type: INCREASED, value: 60 }
+
+  flicker_strike:
+    name: 瞬影擊
+    description: 瞬移到準心指著的敵人身旁打一下（連旁邊的一個敵人一起打）；沒指到就找 12 格內最近、看得到的敵人。冷卻中按下去會消耗一顆銳星直接施放。
+    icon: PHANTOM_MEMBRANE
+    type: attack
+    tier: 13
+    tags: [attack, melee, area, strike]
+    weapons: [quarterstaff]
+    mechanic: flicker
+    flicker: { range: 12, reach: 3.5, targets: 2 }
+    cooldown: 1.5
+    cooldown_bypass: power
+    effectiveness: [1.8, 2.6]
+    mana: [7, 13]
+    visual: flicker
+
+  gathering_storm:
+    name: 引霆突
+    description: 長棍帶著雷電往前一路突進，打中沿路的敵人，終點炸開一圈雷光。冷卻 2 秒。
+    icon: LIGHTNING_ROD
+    type: attack
+    tier: 13
+    tags: [attack, melee, area, lightning, movement]
+    weapons: [quarterstaff]
+    mechanic: dash
+    dash: { range: 10, hit_width: 1.5, end_radius: [2.6, 3.2] }
+    convert: { lightning: 0.6 }
+    cooldown: 2
+    attack_speed: 0.8
+    effectiveness: [1.6, 2.24]
+    mana: [7, 14]
+    visual: tempest
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 20 }
+
+  disengage:
+    name: 回槍躍
+    description: 往前方戳出一片槍尖，同時往後一躍拉開距離。冷卻 2 秒。
+    icon: TRIDENT
+    type: attack
+    tier: 1
+    tags: [attack, melee, area, strike, physical, movement]
+    weapons: [spear]
+    mechanic: cone
+    cone: { length: [3.5, 4.2], angle: 70 }
+    cooldown: 2
+    attack_speed: 1.0
+    effectiveness: [1.1, 1.54]
+    mana: [4, 8]
+    visual: spear_thrust
+    modifiers:
+      - { stat: skill.recoil, type: FLAT, value: 120 }
+
+  glacial_lance:
+    name: 寒錐投
+    description: 擲出一支貫穿的冰槍，一路穿過敵人，落點留下一片冰碎片冰緩周圍的敵人。
+    icon: PRISMARINE_SHARD
+    type: attack
+    tier: 7
+    tags: [attack, projectile, area, cold, duration]
+    weapons: [spear]
+    mechanic: projectile
+    projectile: { speed: 2.4, range: 30, size: 0.5, pierce: 10, ground: { duration: 4, interval: 0.5, radius: [2.2, 2.8], damage: 20 } }
+    convert: { cold: 0.8 }
+    attack_speed: 0.9
+    effectiveness: [1.3, 1.82]
+    mana: [5, 11]
+    visual: ice_shot
+    modifiers:
+      - { stat: chill.effect, type: INCREASED, value: 50 }
+
+  primal_strikes:
+    name: 驚雷刺
+    description: 用帶雷的矛往前快刺，最多刺中三個敵人，容易感電。
+    icon: END_ROD
+    type: attack
+    tier: 9
+    tags: [attack, melee, strike, lightning]
+    weapons: [spear]
+    mechanic: strike
+    strike: { reach: 4.2, angle: 40, targets: 3 }
+    convert: { lightning: 0.5 }
+    attack_speed: 1.15
+    effectiveness: [1.0, 1.4]   # 2026-10 平衡：-13%（打三個）
+    mana: [4, 9]
+    visual: lightning_spear
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 25 }
+
+  cull_the_weak:
+    name: 剔殘
+    description: 對準一個敵人狠刺一下；目標生命低於 35% 時傷害大很多。
+    icon: IRON_SPEAR
+    type: attack
+    tier: 5
+    tags: [attack, melee, strike, physical]
+    weapons: [spear]
+    mechanic: strike
+    strike: { reach: 4.0, angle: 40, targets: 1, execute: { below: 0.35, more: 120 } }
+    attack_speed: 0.9
+    effectiveness: [1.3, 1.82]   # 2026-10 平衡：-13%
+    mana: [4, 9]
+    visual: spear_thrust
+
+  toxic_growth:
+    name: 瘴苞雨
+    description: 往前方拋出一把毒苞，落地炸開並留下一灘毒氣，容易中毒。
+    icon: SPORE_BLOSSOM
+    type: attack
+    tier: 5
+    tags: [attack, projectile, area, chaos, duration]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { count: 5, spread: 50, speed: 1.6, range: 18, size: 0.4, gravity: 0.04, explode: [1.8, 2.3], ground: { duration: 3, interval: 0.5, radius: [1.6, 2.0], damage: 15 } }
+    convert: { chaos: 0.5 }
+    attack_speed: 0.85
+    effectiveness: [0.55, 0.77]
+    mana: [6, 12]
+    visual: caustic_arrow
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 30 }
+
+  magnetic_salvo:
+    name: 磁霆齊發
+    description: 朝前方一口氣射出一排帶電的能量彈，落地炸開。
+    icon: COPPER_BLOCK
+    type: attack
+    tier: 13
+    tags: [attack, projectile, area, lightning]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { count: 6, spread: 70, speed: 2.4, range: 26, explode: [1.8, 2.3] }
+    convert: { lightning: 0.6 }
+    attack_speed: 0.7
+    effectiveness: [0.8, 1.12]
+    mana: [8, 16]
+    visual: lightning_arrow
+
+  glacial_bolt:
+    name: 凍壁矢
+    description: 射出一支冰弩箭，落點炸開並留下一片冰面冰緩敵人。落點留下兩顆冰晶。
+    icon: BLUE_ICE
+    type: attack
+    tier: 7
+    tags: [attack, projectile, area, cold, duration, crystal]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 2.8, range: 34, explode: [2.0, 2.6], ground: { duration: 4, interval: 0.5, radius: [2.4, 3.0], damage: 15 } }
+    convert: { cold: 0.7 }
+    attack_speed: 0.9
+    effectiveness: [1.2, 1.68]
+    mana: [5, 11]
+    visual: permafrost_bolt
+    modifiers:
+      - { stat: crystal.count, type: FLAT, value: 2 }
+      - { stat: freeze.buildup, type: INCREASED, value: 40 }
+
+  plasma_blast:
+    name: 熾漿砲
+    description: 蓄力很久才發射的一發電漿彈，貫穿沿路所有的敵人，撞到東西時大爆炸。出手很慢、傷害極高。
+    icon: BEACON
+    type: attack
+    tier: 13
+    tags: [attack, projectile, area, lightning]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { speed: 2.2, range: 34, size: 0.6, pierce: 20, explode: [3.0, 3.8] }
+    convert: { lightning: 0.7 }
+    attack_speed: 0.4
+    effectiveness: [3.0, 4.2]   # 2026-10 平衡：-14%
+    mana: [10, 20]
+    visual: explosive_bolt
+
+  frost_darts:
+    name: 冰梭
+    description: 一次射出三支冰梭，打中冰緩或凍結中的敵人更痛。
+    icon: ICE
+    type: spell
+    tier: 3
+    tags: [spell, projectile, cold]
+    mechanic: projectile
+    projectile: { count: 3, spread: 20, speed: 1.8, range: 24, size: 0.4 }
+    damage: [3, 5]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.7
+    effectiveness: 0.6
+    mana: [5, 12]
+    visual: staff_bolt
+    modifiers:
+      - { stat: damage.vs_chilled, type: MORE, value: 30 }
+      - { stat: damage.vs_frozen, type: MORE, value: 30 }
+
+  profane_ritual:
+    name: 穢陣
+    description: 在準心指的地方畫下一個穢陣，陣裡的敵人一直受到混沌傷害。
+    icon: CRYING_OBSIDIAN
+    type: spell
+    tier: 7
+    tags: [spell, area, chaos, duration]
+    mechanic: zone
+    zone: { range: 18, radius: [2.6, 3.2], duration: 4, interval: 0.5, damage: 40, max: 2 }
+    damage: [4, 7]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.5
+    mana: [7, 16]
+    visual: blight_nova
+
+  herald_of_blood:
+    name: 血宣
+    description: 捷光環：開著的時候，你殺死敵人時屍體爆出一圈血，傷害附近的敵人並容易流血。保留 30 精魂。
+    icon: REDSTONE_BLOCK
+    type: spell
+    tier: 4
+    tags: [spell, physical]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      on_kill: { skill: herald_blood_burst, chance: 100 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: herald_ash
+
+  herald_blood_burst:
+    name: 血爆
+    hidden: true
+    type: spell
+    tags: [spell, area, physical, herald]
+    mechanic: nova
+    nova: { radius: [2.5, 3.2] }
+    damage: [9, 15]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.2
+    visual: herald_ash
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 30 }
+
+  berserk:
+    name: 赤怒
+    description: 精魂技能：怒氣的效果大幅提高。保留 30 精魂。
+    icon: NETHER_WART
+    type: spell
+    tier: 13
+    tags: [spell, physical]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: rage.effect, type: INCREASED, value: [30, 60] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_haste
+
+  overwhelming_presence:
+    name: 鎮懾
+    description: 精魂技能：你的擊中更容易暈眩敵人，也更容易造成點燃、凍結與感電。範圍內的隊友也有效果。保留 60 精魂。
+    icon: GOAT_HORN
+    type: spell
+    tier: 8
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 60
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: stun.buildup, type: INCREASED, value: [20, 40] }
+        - { stat: freeze.buildup, type: INCREASED, value: [15, 30] }
+        - { stat: ignite.chance, type: INCREASED, value: [15, 30] }
+        - { stat: shock.chance, type: INCREASED, value: [15, 30] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_precision
+
+  withering_presence:
+    name: 凋息
+    description: 精魂技能：你身邊的敵人一直凋零，受到的混沌傷害增加；待在範圍裡越久增加越多。保留 30 精魂。
+    icon: WITHER_ROSE
+    type: spell
+    tier: 4
+    tags: [spell, chaos]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      enemy: { taken: [6, 10], ramp_taken: [12, 20], ramp: 4, tag: chaos }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: blight_nova
+
+  # ---- 2026-10：PoE2 主動技能補齊・第 2 批（印記、精魂增益、武器增益）----
+  voltaic_mark:
+    name: 引雷印
+    description: 標記準心指的一個敵人，八秒內牠的閃電抗性降低、被你打時受到的傷害增加。
+    icon: LIGHTNING_ROD
+    type: spell
+    tier: 7
+    tags: [spell, lightning]
+    mechanic: mark
+    mark: { range: 22, duration: 8, self_only: true, taken: 10, effects: [ { stat: resist.lightning, type: FLAT, value: [-15, -30] } ] }
+    cooldown: 3
+    cast_time: 0.4
+    mana: [4, 8]
+    visual: hunters_mark
+
+  freezing_mark:
+    name: 霜縛印
+    description: 標記準心指的一個敵人，八秒內牠的冰冷抗性降低、更容易被凍結。
+    icon: PACKED_ICE
+    type: spell
+    tier: 7
+    tags: [spell, cold]
+    mechanic: mark
+    mark: { range: 22, duration: 8, self_only: true, taken: 10, effects: [ { stat: resist.cold, type: FLAT, value: [-15, -30] }, { stat: ailment.threshold, type: INCREASED, value: -30 } ] }
+    cooldown: 3
+    cast_time: 0.4
+    mana: [4, 8]
+    visual: hunters_mark
+
+  bloodhounds_mark:
+    name: 血嗅印
+    description: 標記準心指的一個敵人，八秒內牠的護甲大幅降低、被你打時受到的傷害增加。
+    icon: RED_DYE
+    type: spell
+    tier: 9
+    tags: [spell, physical]
+    mechanic: mark
+    mark: { range: 22, duration: 8, self_only: true, taken: 10, effects: [ { stat: armour, type: MORE, value: [-30, -50] } ] }
+    cooldown: 3
+    cast_time: 0.4
+    mana: [4, 8]
+    visual: hunters_mark
+
+  ice_tipped_arrows:
+    name: 霜鏃
+    description: 把箭頭凍上一層霜：六秒內你的攻擊多附加冰冷傷害、更容易冰緩。冷卻 8 秒。
+    icon: ICE
+    type: spell
+    tier: 5
+    tags: [duration, cold]
+    weapons: [bow]
+    mechanic: guard
+    guard:
+      duration: 6
+      slow: 0
+      effects:
+        - { stat: damage.gain.cold, type: FLAT, value: [20, 40], tags: [attack] }
+        - { stat: chill.effect, type: INCREASED, value: [20, 40] }
+    cast_time: 0.2
+    cooldown: 8
+    mana: [4, 9]
+    visual: ice_shot
+
+  emergency_reload:
+    name: 急裝
+    description: 一口氣把所有弩技能的彈匣裝滿，六秒內弩的攻擊速度與傷害增加。冷卻 10 秒。
+    icon: CROSSBOW
+    type: spell
+    tier: 11
+    tags: [duration]
+    weapons: [crossbow]
+    mechanic: guard
+    guard:
+      duration: 6
+      slow: 0
+      effects:
+        - { stat: attack.speed, type: INCREASED, value: [20, 35] }
+        - { stat: damage, type: INCREASED, value: [20, 40], tags: [attack] }
+    cast_time: 0.2
+    cooldown: 10
+    mana: [5, 10]
+    visual: rapid_fire
+    modifiers:
+      - { stat: flag.reload_all, type: FLAT, value: 1 }
+
+  toxic_domain:
+    name: 瘴域
+    description: 在自己腳下開出一片毒花，花裡的敵人一直受到混沌傷害、容易中毒。
+    icon: SPORE_BLOSSOM
+    type: attack
+    tier: 13
+    tags: [attack, area, chaos, duration]
+    weapons: [bow]
+    mechanic: zone
+    zone: { range: 0, radius: [3.5, 4.2], duration: 6, interval: 0.5, damage: 35, max: 1 }
+    convert: { chaos: 0.6 }
+    attack_speed: 0.8
+    cooldown: 6
+    effectiveness: [0.8, 1.12]
+    mana: [8, 16]
+    visual: blight_nova
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 25 }
+
+  blink:
+    name: 掠閃
+    description: 往面向的方向瞬間閃到 8 格外。冷卻 3 秒。
+    icon: ENDER_PEARL
+    type: spell
+    tier: 7
+    tags: [spell, movement]
+    mechanic: dash
+    dash: { range: 8, hit_width: 0 }
+    cooldown: 3
+    cast_time: 0.1
+    mana: [4, 8]
+    visual: frostblink
+
+  time_of_need:
+    name: 護時
+    description: 精魂技能：你持續回復生命，身上的異常狀態持續時間縮短。範圍內的隊友也有效果。保留 30 精魂。
+    icon: GOLDEN_APPLE
+    type: spell
+    tier: 8
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: life.regen_percent, type: FLAT, value: [0.5, 1.2] }
+        - { stat: ailment.self_duration, type: INCREASED, value: [-20, -40] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_life
+
+  ghost_dance:
+    name: 幻步
+    description: 精魂技能：身形飄忽，閃避值與能量護盾回充速度增加。範圍內的隊友也有效果。保留 30 精魂。
+    icon: PHANTOM_MEMBRANE
+    type: spell
+    tier: 4
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: evasion, type: INCREASED, value: [20, 40] }
+        - { stat: es.recharge, type: INCREASED, value: [20, 40] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_evasion
+
+  scavenged_plating:
+    name: 拾鱗
+    description: 精魂技能：從敵人身上剝下的甲片補強自己，護甲增加、破甲更強。保留 30 精魂。
+    icon: IRON_CHESTPLATE
+    type: spell
+    tier: 4
+    tags: [spell, physical]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: armour, type: INCREASED, value: [20, 40] }
+        - { stat: armour.break, type: INCREASED, value: [20, 40] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_armour
+
+  eternal_rage:
+    name: 不熄怒
+    description: 精魂技能：怒氣一直湧上來，擊中時多獲得怒氣，怒氣上限增加。保留 45 精魂。
+    icon: BLAZE_POWDER
+    type: spell
+    tier: 14
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 45
+      radius: 8
+      allies: false
+      effects:
+        - { stat: rage.on_hit, type: FLAT, value: [1, 2] }
+        - { stat: rage.max, type: FLAT, value: [5, 10] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_haste
+
+  mana_remnants:
+    name: 魔泉湧
+    description: 精魂技能：魔力回復更快，擊殺時回復一點魔力。範圍內的隊友也有效果。保留 30 精魂。
+    icon: LAPIS_LAZULI
+    type: spell
+    tier: 4
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: mana.regen, type: INCREASED, value: [20, 40] }
+        - { stat: mana.on_kill, type: FLAT, value: [1, 2] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_mana
+
+  alchemists_boon:
+    name: 調藥心得
+    description: 精魂技能：你的生命與魔力藥劑回復更多。範圍內的隊友也有效果。保留 30 精魂。
+    icon: BREWING_STAND
+    type: spell
+    tier: 14
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: flask.life_recovery, type: INCREASED, value: [20, 40] }
+        - { stat: flask.mana_recovery, type: INCREASED, value: [20, 40] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_life
+
+  ravenous_swarm:
+    name: 蟲噬群
+    description: 精魂召喚：一群蟲子一直跟著你，飛去咬附近的敵人並讓牠們中毒。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
+    icon: SPIDER_EYE
+    type: spell
+    tier: 4
+    tags: [minion, physical, chaos]
+    mechanic: aura
+    aura: { reserve: 0, per_minion: [60, 20], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 60 → 20 級 20），付得起幾隻叫幾隻
+    summon: { kind: VEX, count: 1, max: 4, fixed_max: true, duration: 0, life: 0.5, damage: 0.35, attack_speed: 1.6, speed: 1.4, reach: 1.6 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 30, tags: [minion] }
+
+  # ---- 2026-10：輔助觸發的專屬技能（隱藏；supports.yml 的 proc.* 輔助放出來的，用被輔助技能的寶石等級）----
+  proc_fiery_death:
+    name: 焚亡爆
+    hidden: true
+    type: spell
+    tags: [spell, area, fire]
+    mechanic: nova
+    nova: { radius: [2.5, 3.2] }
+    damage: [10, 16]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    visual: herald_ash
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+
+  proc_frozen_spite:
+    name: 寒殞片
+    hidden: true
+    type: spell
+    tags: [spell, projectile, cold]
+    mechanic: projectile
+    projectile: { count: 6, spread: 360, speed: 1.6, range: 10, size: 0.4 }
+    damage: [6, 10]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.6
+    visual: staff_bolt
+
+  proc_bursting_plague:
+    name: 瘟潰爆
+    hidden: true
+    type: spell
+    tags: [spell, area, chaos]
+    mechanic: nova
+    nova: { radius: [2.5, 3.2] }
+    damage: [10, 16]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    visual: blight_nova
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 40 }
+
+  proc_bone_burst:
+    name: 碎骨爆
+    hidden: true
+    type: spell
+    tags: [spell, area, physical]
+    mechanic: nova
+    nova: { radius: [2.5, 3.2] }
+    damage: [10, 16]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    visual: detonate_dead
+
+  proc_flame_pillar:
+    name: 噴炎柱
+    hidden: true
+    type: spell
+    tags: [spell, area, fire]
+    mechanic: nova
+    nova: { radius: [1.6, 2.0] }
+    damage: [7, 11]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    visual: fireball
+
+  proc_haemocrystal:
+    name: 凝血晶
+    hidden: true
+    type: spell
+    tags: [spell, area, physical]
+    mechanic: nova
+    nova: { radius: [2.0, 2.5] }
+    damage: [7, 11]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    visual: puncture
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 30 }
+
+  proc_shock_rift:
+    name: 磁裂
+    hidden: true
+    type: spell
+    tags: [spell, area, lightning]
+    mechanic: nova
+    nova: { radius: [2.5, 3.2] }
+    damage: [6, 10]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    visual: spark
+
+  proc_elemental_burst:
+    name: 元素崩裂
+    hidden: true
+    type: spell
+    tags: [spell, area, fire, cold, lightning]
+    mechanic: nova
+    nova: { radius: [2.6, 3.3] }
+    damage: [8, 12]
+    damage_types: { fire: 0.34, cold: 0.33, lightning: 0.33 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    visual: frost_nova
+
+  proc_concussive_rune:
+    name: 震符
+    hidden: true
+    type: spell
+    tags: [spell, area, physical]
+    mechanic: nova
+    nova: { radius: [2.4, 3.0] }
+    damage: [7, 11]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    visual: slam
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 50 }
+
+  proc_bramble:
+    name: 荊棘叢生
+    hidden: true
+    type: spell
+    tags: [spell, area, physical, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [2.2, 2.8], duration: 3, interval: 0.5, damage: 25, max: 3 }
+    damage: [5, 8]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.5
+    visual: spear_thrust
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 20 }
+
+  proc_crater:
+    name: 熔坑
+    hidden: true
+    type: spell
+    tags: [spell, area, fire, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [2.4, 3.0], duration: 4, interval: 0.5, damage: 25, max: 3 }
+    damage: [5, 8]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.5
+    visual: flame_wall
+
+  proc_corrupting_cry:
+    name: 腐血嘯
+    hidden: true
+    type: spell
+    tags: [spell, area, physical]
+    mechanic: nova
+    nova: { radius: [3.6, 4.4] }
+    damage: [6, 10]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.7
+    visual: blight_nova
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 60 }
+
+  proc_battershout:
+    name: 碎甲震
+    hidden: true
+    type: spell
+    tags: [spell, area, physical]
+    mechanic: nova
+    nova: { radius: [3.6, 4.4] }
+    damage: [8, 12]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.8
+    visual: slam
+    modifiers:
+      - { stat: armour.break, type: INCREASED, value: 100 }
+
+  proc_caltrops:
+    name: 鐵蒺地
+    hidden: true
+    type: spell
+    tags: [spell, area, physical, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [1.8, 2.2], duration: 4, interval: 0.5, damage: 35, max: 4 }
+    damage: [4, 6]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.4
+    visual: bear_trap
+
+  proc_phantom_decoy:
+    name: 殘影
+    hidden: true
+    type: spell
+    tags: [minion]
+    mechanic: summon
+    summon: { kind: ZOMBIE, count: 1, max: 1, fixed_max: true, duration: 4, life: 2.5, damage: 0.1, attack_speed: 0.3, speed: 0.5, reach: 1,
+              taunt: 1, taunt_radius: 10 }
+    cast_time: 0.5
+    cooldown: 3
+    visual: summon_skeletons
+
+  proc_decaying_hex:
+    name: 朽蝕
+    hidden: true
+    type: spell
+    tags: [spell, area, chaos, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [2.8, 3.4], duration: 4, interval: 0.5, damage: 30, max: 2 }
+    damage: [5, 8]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.5
+    visual: blight_nova
+
+  proc_coursing_current:
+    name: 竄流電
+    hidden: true
+    type: spell
+    tags: [spell, lightning]
+    mechanic: chain
+    chain: { range: 10, chains: [3, 5], chain_range: 6 }
+    damage: [6, 10]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.7
+    visual: arc
+
+  proc_mana_flare:
+    name: 魔焰爆
+    hidden: true
+    type: spell
+    tags: [spell, area, fire]
+    mechanic: nova
+    nova: { radius: [2.2, 2.8] }
+    damage: [6, 10]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    visual: fireball
+
+  proc_volcanic_eruption:
+    name: 熔岩迸
+    hidden: true
+    type: spell
+    tags: [spell, projectile, area, fire]
+    mechanic: projectile
+    projectile: { count: 5, spread: 360, speed: 1.2, range: 6, size: 0.4, gravity: 0.03, explode: [1.2, 1.6] }
+    damage: [6, 10]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.6
+    visual: fireball
+
+  proc_wind_wave:
+    name: 震風浪
+    hidden: true
+    type: spell
+    tags: [spell, area, physical]
+    mechanic: nova
+    nova: { radius: [3.0, 3.6] }
+    damage: [6, 10]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.7
+    visual: storm_wave
+    modifiers:
+      - { stat: skill.knockback, type: FLAT, value: 1.5 }
+
+  proc_static_orb:
+    name: 靜電球
+    hidden: true
+    type: spell
+    tags: [spell, area, lightning, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [1.8, 2.2], duration: 3, interval: 0.5, damage: 40, max: 3 }
+    damage: [5, 8]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.5
+    visual: spark
+
+  proc_frozen_vortex:
+    name: 霜渦捲
+    hidden: true
+    type: spell
+    tags: [spell, area, cold, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [2.6, 3.2], duration: 3, interval: 0.5, damage: 35, pull: 0.25, max: 2 }
+    damage: [5, 8]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.5
+    visual: blizzard
+
+  proc_charged_ground:
+    name: 帶電地
+    hidden: true
+    type: spell
+    tags: [spell, area, lightning, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [2.6, 3.2], duration: 4, interval: 0.5, damage: 35, max: 2 }
+    damage: [5, 8]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.5
+    visual: spark
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 30 }
+
+  proc_poison_spore:
+    name: 毒孢
+    hidden: true
+    type: spell
+    tags: [spell, area, chaos]
+    mechanic: nova
+    nova: { radius: [1.8, 2.3] }
+    damage: [6, 10]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.8
+    visual: caustic_arrow
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 50 }
+
+  proc_aftershock:
+    name: 餘震
+    hidden: true
+    type: attack
+    tags: [attack, melee, area, slam, physical]
+    mechanic: nova
+    parent_damage: 0.6   # 2026-10：照觸發它的猛擊出傷害（含輔助；照 PoE2 的餘震），餘震＝原本那一下的 60%
+    nova: { radius: [2.6, 3.2] }
+    attack_speed: 1.0
+    effectiveness: [0.8, 1.1]
+    visual: slam
+
+  proc_tremor:
+    name: 連震波
+    hidden: true
+    type: attack
+    tags: [attack, melee, area, slam, physical]
+    mechanic: nova
+    parent_damage: 0.45   # 2026-10：照觸發它的猛擊出傷害（含輔助；照 PoE2 的餘震），連震波＝原本那一下的 45%
+    nova: { radius: [3.2, 3.8] }
+    attack_speed: 1.0
+    effectiveness: [0.55, 0.75]
+    visual: earthquake
+
+  proc_maim:
+    name: 殘肢傷
+    hidden: true
+    type: spell
+    tags: [spell]
+    mechanic: mark
+    mark: { range: 30, radius: 0.6, duration: 4, taken: 0, slow: [20, 30], effects: [ { stat: evasion, type: MORE, value: -10 } ] }
+    cast_time: 0.1
+    visual: hunters_mark
+
+  proc_blind:
+    name: 眩光
+    hidden: true
+    type: spell
+    tags: [spell]
+    mechanic: mark
+    mark: { range: 30, radius: 0.6, duration: 4, taken: 0, effects: [ { stat: accuracy, type: MORE, value: [-20, -30] } ] }
+    cast_time: 0.1
+    visual: hunters_mark
+
+  proc_hinder:
+    name: 滯縛
+    hidden: true
+    type: spell
+    tags: [spell]
+    mechanic: mark
+    mark: { range: 30, radius: 0.6, duration: 4, taken: 0, slow: [20, 30], effects: [ { stat: attack.speed, type: MORE, value: -10 } ] }
+    cast_time: 0.1
+    visual: hunters_mark
+
+  proc_exposure:
+    name: 曝露
+    hidden: true
+    type: spell
+    tags: [spell]
+    mechanic: mark
+    mark: { range: 30, radius: 7, duration: 5, taken: 0, effects: [ { stat: resist.fire, type: FLAT, value: -15 }, { stat: resist.cold, type: FLAT, value: -15 }, { stat: resist.lightning, type: FLAT, value: -15 } ] }
+    cast_time: 0.1
+    visual: hunters_mark
+
+  # 冰晶（2026-10）：打碎時炸出來的、晶刺噴的冰片、霜蝕晶的結霜
+  proc_crystal_burst:
+    name: 冰晶迸裂
+    hidden: true
+    type: spell
+    tags: [spell, area, cold, crystal]
+    mechanic: nova
+    nova: { radius: [2.6, 3.2] }
+    damage: [9, 14]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    visual: frost_nova
+    modifiers:
+      - { stat: freeze.buildup, type: INCREASED, value: 50 }
+
+  proc_crystal_shards:
+    name: 晶刺片
+    hidden: true
+    type: spell
+    tags: [spell, projectile, cold, crystal]
+    mechanic: projectile
+    projectile: { count: 8, spread: 360, speed: 1.6, range: 9, size: 0.4 }
+    damage: [5, 8]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.5
+    visual: staff_bolt
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 20 }
+
+  proc_hoarfrost:
+    name: 結霜
+    hidden: true
+    type: spell
+    tags: [spell, area, cold, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [1.8, 2.2], duration: 8, interval: 0.5, damage: 15, max: 10 }
+    damage: [4, 6]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.4
+    visual: blizzard
+
+  # ---- 2026-10：PoE2 主動技能補齊・第 3 批 ----
+
+  # ---- 2026-10：PoE2 輔助補齊的隱藏技能 ----
+  proc_dazing_cry:
+    name: 眩嘯波
+    hidden: true
+    type: spell
+    tags: [spell, area, physical]
+    mechanic: nova
+    nova: { radius: [3.6, 4.4] }
+    damage: [3, 5]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.4
+    visual: storm_wave
+    modifiers:
+      - { stat: daze.chance, type: FLAT, value: 100 }
+
+  proc_fan_flames:
+    name: 播火爆
+    hidden: true
+    type: spell
+    tags: [spell, area, fire]
+    mechanic: nova
+    nova: { radius: [2.4, 3.0] }
+    damage: [6, 10]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.7
+    visual: herald_ash
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 50 }
+
+  proc_frost_nexus:
+    name: 凍霜地
+    hidden: true
+    type: spell
+    tags: [spell, area, cold, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [2.4, 3.0], duration: 4, interval: 0.5, damage: 25, max: 2 }
+    damage: [4, 7]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.5
+    visual: blizzard
+    modifiers:
+      - { stat: chill.effect, type: INCREASED, value: 30 }
+
+  proc_impact_shockwave:
+    name: 震環波
+    hidden: true
+    type: attack
+    tags: [attack, melee, area, physical]
+    mechanic: nova
+    nova: { radius: [2.0, 2.6] }
+    attack_speed: 1.0
+    effectiveness: [0.45, 0.65]
+    visual: slam
+
+  proc_impending_doom:
+    name: 咒殞爆
+    hidden: true
+    type: spell
+    tags: [spell, area, chaos]
+    mechanic: nova
+    nova: { radius: [2.8, 3.4] }
+    damage: [9, 14]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.9
+    visual: blight_nova
+
+  # 2026-10 草稿 B：輔助觸發的專屬技能（接在 proc_hoarfrost 後面）
+  proc_side_aftershock:
+    name: 側震
+    hidden: true
+    type: attack
+    tags: [attack, melee, area, slam, physical]
+    mechanic: nova
+    parent_damage: 0.35   # 2026-10：照觸發它的猛擊出傷害（含輔助；照 PoE2 的餘震），側震＝原本那一下的 35%
+    nova: { radius: [2.0, 2.5] }
+    attack_speed: 1.0
+    effectiveness: [0.4, 0.55]
+    visual: slam
+
+  proc_frost_spread:
+    name: 霜漫波
+    hidden: true
+    type: spell
+    tags: [spell, area, cold]
+    mechanic: nova
+    nova: { radius: [3.0, 3.6] }
+    damage: [3, 5]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.3
+    visual: frost_nova
+    modifiers:
+      - { stat: chill.effect, type: INCREASED, value: 50 }
+
+  proc_wither:
+    name: 枯蝕
+    hidden: true
+    type: spell
+    tags: [spell]
+    mechanic: mark
+    mark: { range: 30, radius: 0.6, duration: 4, taken: 10, tags: [chaos] }
+    cast_time: 0.1
+    visual: hunters_mark
+
+  proc_rune_blades:
+    name: 符刃環
+    hidden: true
+    type: attack
+    tags: [attack, area, physical]
+    mechanic: nova
+    nova: { radius: [2.0, 2.5] }
+    attack_speed: 1.0
+    effectiveness: [0.5, 0.7]
+    visual: whirl
+
+  # ---- 2026-10：第三批輔助的隱藏技能 ----
+  proc_armour_explosion:
+    name: 爆甲焰
+    hidden: true
+    type: spell
+    tags: [spell, area, fire]
+    mechanic: nova
+    nova: { radius: [2.6, 3.2] }
+    damage: [10, 16]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    visual: herald_ash
+
+  proc_break_daze:
+    name: 破眩震
+    hidden: true
+    type: spell
+    tags: [spell, area, physical]
+    mechanic: nova
+    nova: { radius: [1.8, 2.2] }
+    damage: [2, 3]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.2
+    visual: storm_wave
+    modifiers:
+      - { stat: daze.chance, type: FLAT, value: 100 }
+
+  proc_last_rites:
+    name: 殞骸爆
+    hidden: true
+    type: spell
+    tags: [spell, area, chaos]
+    mechanic: nova
+    nova: { radius: [2.6, 3.2] }
+    damage: [9, 14]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.8
+    visual: blight_nova
+
+  proc_gain_endurance:
+    name: 磐星
+    hidden: true
+    type: spell
+    tags: [warcry]
+    mechanic: warcry
+    warcry: { radius: 2, duration: 1, taunt: false, allies: false, charges: { endurance: 1 } }
+    cast_time: 0.1
+    cooldown: 1
+    mana: 0
+    visual: enduring_cry
+
+  proc_blazing_critical:
+    name: 燼勢焰
+    hidden: true
+    type: spell
+    tags: [warcry, fire]
+    mechanic: warcry
+    warcry:
+      radius: 2
+      duration: 5
+      taunt: false
+      allies: false
+      buff:
+        - { stat: damage.extra.fire, type: FLAT, value: [10, 20], tags: [attack] }
+    cast_time: 0.1
+    cooldown: 1
+    mana: 0
+    visual: enduring_cry
+
+  proc_enervation:
+    name: 吸電流
+    hidden: true
+    type: spell
+    tags: [warcry, lightning]
+    mechanic: warcry
+    warcry:
+      radius: 2
+      duration: 4
+      taunt: false
+      allies: false
+      buff:
+        - { stat: mana.regen, type: INCREASED, value: [30, 50] }
+    cast_time: 0.1
+    cooldown: 1
+    mana: 0
+    visual: enduring_cry
+
+  proc_innervate:
+    name: 霆勢雷
+    hidden: true
+    type: spell
+    tags: [warcry, lightning]
+    mechanic: warcry
+    warcry:
+      radius: 2
+      duration: 5
+      taunt: false
+      allies: false
+      buff:
+        - { stat: damage.extra.lightning, type: FLAT, value: [10, 20], tags: [attack] }
+    cast_time: 0.1
+    cooldown: 1
+    mana: 0
+    visual: enduring_cry
+
+  trail_of_caltrops:
+    name: 蒺藜步
+    description: 精魂技能：你翻滾時在腳下撒一片鐵蒺，一直刺傷踩在上面的敵人。保留 30 精魂。
+    icon: IRON_NUGGET
+    type: spell
+    tier: 8
+    tags: [spell, physical]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: flag.dodge_caltrops, type: FLAT, value: 1 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_evasion
+
+  # ---- 2026-10：坐騎（mount：叫出一匹真的坐騎騎上去，再放一次下馬；requires_mount：要騎著才能放）----
+  summon_mount:
+    name: 喚駒
+    description: 叫出一匹披甲戰馬騎上去，再放一次就下馬。騎著的時候移動快很多（吃你的移動速度加成）、攻擊更多 15% 傷害；放法術、按潛行鍵、被傳送或換世界都會下馬。坐騎不會受傷。
+    icon: SADDLE
+    type: spell
+    tier: 2
+    tags: [spell, movement]
+    mount: { kind: HORSE, speed: 1.3 }
+    mechanic: dash
+    dash: { range: 2 }
+    cast_time: 0.5
+    cooldown: 2
+    mana: 0
+    visual: slam
+
+  bone_steed:
+    name: 骨駒
+    description: 叫出一匹骷髏戰馬騎上去，再放一次就下馬。比戰馬更快；騎著的時候攻擊更多 15% 傷害。放法術、按潛行鍵、被傳送或換世界都會下馬。
+    icon: BONE
+    type: spell
+    tier: 8
+    tags: [spell, movement]
+    mount: { kind: SKELETON_HORSE, speed: 1.55 }
+    mechanic: dash
+    dash: { range: 2 }
+    cast_time: 0.5
+    cooldown: 2
+    mana: 0
+    visual: slam
+
+  hoof_trample:
+    name: 鐵蹄踐踏
+    description: 騎著坐騎才能放：坐騎往前一衝，前蹄重重踏下，震傷周圍的敵人並大幅累積暈眩。
+    icon: IRON_HORSE_ARMOR
+    type: attack
+    tier: 3
+    tags: [attack, area, slam, physical]
+    requires_mount: true
+    mechanic: nova
+    nova: { radius: [3.0, 3.6] }
+    attack_speed: 1.0
+    effectiveness: [1.2, 1.6]
+    cooldown: 3
+    mana: [5, 10]
+    visual: slam
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 60 }
+
+  # ---- 2026-10：指令型召喚物技能（command：哪些召喚物聽命；每一隻聽命的都從自己身上放一次，最多 8 隻、20 格內）----
+  command_skeleton_slam:
+    name: 骸兵震地
+    description: 指令：身邊的骸骨兵與骸骨狂卒一起往地上重重一砸，各自震傷周圍的敵人。至少要有一隻在 20 格內。傷害吃召喚物傷害的加成。
+    icon: BONE_BLOCK
+    type: spell
+    tier: 4
+    tags: [spell, area, physical, minion, command]
+    command: [summon_skeletons, skeletal_reaver]
+    mechanic: nova
+    nova: { radius: [2.2, 2.7] }
+    damage: [6, 10]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.4
+    cooldown: 5
+    effectiveness: 0.7
+    mana: [6, 14]
+    visual: slam
+
+  command_volley:
+    name: 骸弓齊射
+    description: 指令：身邊的骸骨射手一起朝準心的敵人（沒有就朝牠們自己的目標）射出一支重箭。傷害吃召喚物傷害的加成。
+    icon: SPECTRAL_ARROW
+    type: spell
+    tier: 4
+    tags: [spell, projectile, physical, minion, command]
+    command: [skeletal_archers]
+    mechanic: projectile
+    projectile: { speed: 1.2, range: 26, size: 0.3, pierce: 1 }
+    damage: [7, 11]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.4
+    cooldown: 4
+    effectiveness: 0.8
+    mana: [6, 14]
+    visual: puncture
+
+  command_elements:
+    name: 骸術共鳴
+    description: 指令：身邊的骸骨焰術士、霜術士、雷術士一起朝準心的敵人放出一發會爆開的元素彈（火、冰、電混合）。傷害吃召喚物傷害的加成。
+    icon: BLAZE_ROD
+    type: spell
+    tier: 7
+    tags: [spell, projectile, area, fire, cold, lightning, minion, command]
+    command: [skeletal_pyromancer, skeletal_frostcaller, skeletal_stormcaller]
+    mechanic: projectile
+    projectile: { speed: 0.8, range: 26, size: 0.4, explode: [1.6, 2.0] }
+    damage: [8, 13]
+    damage_types: { fire: 0.34, cold: 0.33, lightning: 0.33 }
+    cast_time: 0.5
+    cooldown: 6
+    effectiveness: 0.9
+    mana: [8, 18]
+    visual: fireball
+
+  command_beast_pounce:
+    name: 狼伴撲擊
+    description: 指令：你的荒原狼伴猛力撲咬，震傷牠周圍的敵人，並把附近的怪都引過去。傷害吃召喚物傷害的加成。
+    icon: BONE
+    type: spell
+    tier: 6
+    tags: [spell, area, physical, minion, command]
+    command: [beast_companion]
+    mechanic: nova
+    nova: { radius: [2.8, 3.4] }
+    damage: [14, 22]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.3
+    cooldown: 6
+    effectiveness: 1.4
+    mana: [6, 14]
+    visual: slam
+
+  # ---- 2026-10：元素灌注（直接疊在身上：火、冰、電各最多 2 層，10 秒沒拿到就散掉；動作列看得到）----
+  elemental_pulse:
+    name: 元素脈衝
+    description: 以自己為中心爆出一圈火、冰、電混在一起的脈衝，放完火焰、冰冷、閃電灌注各獲得一層。冷卻 4 秒。
+    icon: PRISMARINE_CRYSTALS
+    type: spell
+    tier: 4
+    tags: [spell, area, fire, cold, lightning, nova]
+    mechanic: nova
+    nova: { radius: [2.8, 3.4] }
+    damage: [4, 7]
+    damage_types: { fire: 0.34, cold: 0.33, lightning: 0.33 }
+    cast_time: 0.6
+    cooldown: 4
+    effectiveness: 0.6
+    mana: [5, 12]
+    visual: frost_nova
+    modifiers:
+      - { stat: infusion.gain, type: FLAT, value: 1 }
+
+  infusion_bolt:
+    name: 匯元衝擊
+    description: 射出一發元素彈，擊中時爆開。放的時候用掉身上每種灌注各一層：每用掉一層更多 25% 傷害，用掉哪種就獲得 20% 傷害為額外的那種元素傷害。
+    icon: HEART_OF_THE_SEA
+    type: spell
+    tier: 6
+    tags: [spell, projectile, area, fire, cold, lightning]
+    mechanic: projectile
+    projectile: { speed: 0.6, range: 30, size: 0.4, explode: [1.6, 2.1] }
+    damage: [8, 13]
+    damage_types: { fire: 0.34, cold: 0.33, lightning: 0.33 }
+    cast_time: 0.9
+    effectiveness: 1.2
+    mana: [6, 16]
+    visual: fireball
+    modifiers:
+      - { stat: infusion.consume, type: FLAT, value: 1 }
+      - { stat: infusion.more, type: FLAT, value: 25 }
+      - { stat: infusion.extra, type: FLAT, value: 20 }
+
+  phantom_step:
+    name: 幻身步
+    description: 精魂技能：你翻滾時在原地留下一個殘影，站著不動、把附近的怪都引過去打它，四秒後消失（被打爆也會消失）。同時只有一個，三秒最多留一次。保留 30 精魂。
+    icon: ARMOR_STAND
+    type: spell
+    tier: 6
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: flag.dodge_decoy, type: FLAT, value: 1 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_evasion
+
+  mirage_archer:
+    name: 幻弓影
+    description: 精魂技能：身旁跟著一個弓手幻影，你用弓攻擊時它過一下也射一次（傷害少 60%）。保留 45 精魂。
+    icon: SPECTRAL_ARROW
+    type: spell
+    tier: 11
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 45
+      radius: 8
+      allies: false
+      effects:
+        - { stat: flag.mirage, type: FLAT, value: 1 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_precision
+
+  plague_bearer:
+    name: 瘟囊爆
+    description: 把身上積的毒一口氣爆開，周圍一大圈的敵人受到混沌傷害、很容易中毒。冷卻 5 秒。
+    icon: SLIME_BALL
+    type: spell
+    tier: 4
+    tags: [spell, area, chaos]
+    mechanic: nova
+    nova: { radius: [3.6, 4.4] }
+    damage: [14, 22]
+    damage_types: { chaos: 1.0 }
+    cooldown: 5
+    cast_time: 0.4
+    effectiveness: 1.0
+    mana: [6, 14]
+    visual: blight_nova
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 60 }
+
+  iron_ward:
+    name: 鐵壁守
+    description: 用錘敲響身上的鐵甲，四秒內護甲大增、受到的物理傷害減少。冷卻 8 秒。
+    icon: IRON_CHESTPLATE
+    type: spell
+    tier: 4
+    tags: [duration, physical]
+    weapons: [mace]
+    mechanic: guard
+    guard:
+      duration: 4
+      slow: 0
+      effects:
+        - { stat: armour, type: INCREASED, value: [40, 80] }
+        - { stat: physical.reduction, type: FLAT, value: [8, 15] }
+    cast_time: 0.3
+    cooldown: 8
+    mana: [5, 10]
+    visual: aura_armour
+
+  shield_wall:
+    name: 土壁擊
+    description: 用錘把地面掀起一道土牆，牆一直震傷周圍的敵人，也容易暈眩牠們。冷卻 4 秒。
+    icon: DIRT
+    type: attack
+    tier: 7
+    tags: [attack, melee, area, physical, duration]
+    weapons: [mace]
+    mechanic: zone
+    zone: { shape: line, length: [6, 8], radius: 1.2, duration: 4, interval: 1.0, damage: 60, max: 1 }
+    cooldown: 4
+    attack_speed: 0.8
+    effectiveness: [1.0, 1.4]
+    mana: [6, 12]
+    visual: slam
+    modifiers:
+      - { stat: stun.buildup, type: INCREASED, value: 40 }
+
+  # ---- 精魂技能（2026-10 PoE2：取代舊的光環，只給自己）----
+
+  wind_dancer:
+    name: 風之舞步
+    description: 精魂技能：開著的時候閃避更多、移動速度增加。範圍內的隊友也有效果。保留 30 精魂。
+    icon: FEATHER
+    type: spell
+    tier: 3
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: evasion, type: MORE, value: [20, 35] }
+        - { stat: movement.speed, type: INCREASED, value: [3, 6] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_evasion
+
+  magma_barrier:
+    name: 熔殼
+    description: 精魂技能：開著的時候護甲增加、格擋機率提高。範圍內的隊友也有效果。保留 30 精魂。
+    icon: MAGMA_BLOCK
+    type: spell
+    tier: 3
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: armour, type: INCREASED, value: [20, 40] }
+        - { stat: block.chance, type: FLAT, value: [3, 8] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_armour
+
+  combat_frenzy:
+    name: 戰意昂揚
+    description: 精魂技能：開著的時候攻擊速度增加、攻擊傷害增加。範圍內的隊友也有效果。保留 60 精魂。
+    icon: SUGAR
+    type: spell
+    tier: 5
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 60
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: attack.speed, type: INCREASED, value: [8, 15] }
+        - { stat: damage, type: INCREASED, value: [10, 20], tags: [attack] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_haste
+
+  archmage:
+    name: 祕法之心
+    description: 精魂技能：開著的時候法術傷害增加，但技能的魔力消耗也增加 25%。保留 100 精魂。
+    icon: LAPIS_LAZULI
+    type: spell
+    tier: 5
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 100
+      radius: 8
+      allies: false
+      effects:
+        - { stat: damage, type: INCREASED, value: [20, 39], tags: [spell] }
+        - { stat: skill.cost, type: INCREASED, value: 25 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_mana
+
+  elemental_conflux:
+    name: 元素潮汐
+    description: 精魂技能：開著的時候元素傷害增加。範圍內的隊友也有效果。保留 60 精魂。
+    icon: PRISMARINE_CRYSTALS
+    type: spell
+    tier: 5
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 60
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: damage, type: INCREASED, value: [15, 30], tags: [elemental] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_purity
+
+  herald_of_plague:
+    name: 疫使
+    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候物理傷害的一部分額外獲得為混沌傷害；你殺死敵人時，屍體爆出一圈瘟疫（一定中毒）。保留 30 精魂。
+    icon: SPIDER_EYE
+    type: spell
+    tier: 3
+    tags: [spell, chaos]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: damage.gain.chaos, type: FLAT, value: [10, 15] }
+      on_kill: { skill: herald_plague_burst, chance: 100 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: herald_ash
+
+  herald_plague_burst:
+    name: 瘟疫爆發
+    hidden: true
+    type: spell
+    tags: [spell, area, chaos, herald]
+    mechanic: nova
+    nova: { radius: [2.5, 3.2] }
+    damage: [7, 12]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.6
+    visual: blight_nova
+    modifiers:
+      - { stat: poison.chance, type: FLAT, value: 100 }
+
+  # ==== 2026-10 PoE2 補齊（第三批：skills_draft）====
+  # 接在 skills.yml 的 skills: 底下（2 格縮排）。標 [需要程式] 的是資料先做近似版，完整版的規格寫在 skills_draft_notes.md。
+
+  # -- 錘 --
+  ancestral_cry:
+    name: 熔魂嘯
+    # PoE2 Ancestral Cry：榮耀已經拿掉（2026-10），改成一般的戰吼冷卻；火山步 [需要程式]
+    description: 戰吼：喚醒祖先的熔岩之魂附在身上，八秒內近戰打擊與猛擊的傷害、範圍增加，近戰擊中容易點燃；接下來四次攻擊傷害大幅提高。拿錘子才能用。冷卻 12 秒。
+    icon: MAGMA_CREAM
+    type: spell
+    tier: 13
+    tags: [warcry, fire]
+    weapons: [mace]
+    mechanic: warcry
+    warcry:
+      radius: 8
+      duration: 8
+      taunt: false
+      allies: false
+      buff:
+        - { stat: damage, type: INCREASED, value: [20, 40], tags: [melee] }
+        - { stat: skill.area, type: INCREASED, value: [15, 30], tags: [melee] }
+        - { stat: ignite.chance, type: FLAT, value: [10, 20], tags: [melee] }
+      exert: { count: 4, more: [40, 70] }
+    cast_time: 0.5
+    cooldown: 12
+    mana: [10, 22]
+    visual: rallying_cry
+
+  # -- 任何武器（法術）--
+  bone_cage:
+    name: 骸棘環
+    # PoE2 Bone Cage：定身（Pin）現在只有投射物攻擊有 [需要程式]，先用大量暈眩累積代替
+    description: 在身邊竄出一圈骨刺，三秒內一直刺傷圈裡的敵人，暈眩累積很多。再放一次會把舊的那圈拆掉。
+    icon: BONE_BLOCK
+    type: spell
+    tier: 3
+    tags: [spell, area, physical]
+    mechanic: zone
+    zone: { range: 0, radius: [3.0, 3.6], duration: 3, interval: 0.5, damage: 70, max: 1 }
+    damage: [5, 8]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.6
+    effectiveness: 0.4
+    mana: [6, 15]
+    visual: puncture
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 100 }
+
+  snap:
+    name: 噬異爆
+    # PoE2 Snap：「用掉異常、擴散到同樣異常的敵人、留下灌注殘骸」[需要程式]；先做成對異常敵人傷害很高的範圍爆炸
+    description: 準心指的地方炸開一團元素能量，打一圈敵人。對凍結、感電、點燃中的敵人傷害大幅提高（身上的異常越多越痛）。
+    icon: FIREWORK_STAR
+    type: spell
+    tier: 5
+    tags: [spell, area, fire, cold, lightning]
+    mechanic: impact
+    impact: { range: 20, delay: 0.15, radius: [2.6, 3.2] }
+    damage: [8, 13]
+    damage_types: { fire: 0.34, cold: 0.33, lightning: 0.33 }
+    cast_time: 0.6
+    effectiveness: 0.8
+    mana: [7, 17]
+    visual: frost_nova
+    modifiers:
+      - { stat: damage.vs_frozen, type: MORE, value: 50 }
+      - { stat: damage.vs_shocked, type: MORE, value: 50 }
+      - { stat: damage.vs_ignited, type: MORE, value: 50 }
+
+  # -- 精魂技能 --
+  charge_regulation:
+    name: 馭星訣
+    # PoE2 Charge Regulation：「照身上各種戰星給強力增益、定期消耗戰星」[需要程式]；先只做怒星的部分，戰星消散得更快當代價
+    description: 精魂技能：身上每顆怒星讓你的攻擊更多傷害與攻擊速度；但戰星消散得比較快。拿長棍或弩才有效。保留 60 精魂。
+    icon: NETHER_STAR
+    type: spell
+    tier: 14
+    tags: [spell]
+    weapons: [quarterstaff, crossbow]
+    mechanic: aura
+    aura:
+      reserve: 60
+      radius: 8
+      allies: false
+      effects:
+        - { stat: skill.per_frenzy, type: FLAT, value: [3, 5], tags: [attack] }
+        - { stat: charge.duration, type: INCREASED, value: -40 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_haste
+
+  convalescence:
+    name: 回盾術
+    # PoE2 Convalescence：給一個「按下去立刻開始回充能量護盾」的主動技能 [需要程式]；先做成常駐的回充加速
+    description: 精魂技能：能量護盾被打掉之後很快就開始回充，回充速度也增加。範圍內的隊友也有效果。保留 30 精魂。
+    icon: PRISMARINE_SHARD
+    type: spell
+    tier: 4
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      effects:
+        - { stat: es.delay, type: INCREASED, value: [-25, -45] }
+        - { stat: es.recharge, type: INCREASED, value: [10, 20] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_mana
+
+  grim_feast:
+    name: 骸餘饗
+    # PoE2 Grim Feast：召喚物死時留下殘骸、撿了回復 [需要程式]；先做成召喚物更耐打、你慢慢回血
+    description: 精魂技能：你的召喚物最大生命增加，你持續回復一點生命。保留 30 精魂。
+    icon: ROTTEN_FLESH
+    type: spell
+    tier: 4
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: life.max, type: INCREASED, value: [15, 30], tags: [minion] }
+        - { stat: life.regen_percent, type: FLAT, value: [0.2, 0.5] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_life
+
+  sacrifice:
+    name: 僕骸替
+    # PoE2 Sacrifice：召喚物可以當屍體用、復活變慢 [需要程式]；先做成「要屍體的技能」傷害增加
+    description: 精魂技能：要用屍體的技能（骸爆、喚屍…）傷害增加。保留 30 精魂。
+    icon: SKELETON_SKULL
+    type: spell
+    tier: 14
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: damage, type: INCREASED, value: [20, 40], tags: [corpse] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_armour
+
+  shard_scavenger:
+    name: 拾晶裝
+    # PoE2 Shard Scavenger：用掉凍結／感電／點燃／破甲時裝滿弩、榴彈回一次冷卻、短暫不耗弩箭 [需要程式]；先做成常駐的省彈、快裝
+    description: 精魂技能：弩的攻擊有機率不消耗弩箭，裝填速度增加。拿弩才有效。保留 30 精魂。
+    icon: AMETHYST_SHARD
+    type: spell
+    tier: 8
+    tags: [spell]
+    weapons: [crossbow]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: crossbow.ammo_save, type: FLAT, value: [10, 20], tags: [crossbow] }
+        - { stat: crossbow.reload_speed, type: INCREASED, value: [10, 25], tags: [crossbow] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_precision
+
+  siphon_elements:
+    name: 素痕湧
+    # PoE2 Siphon Elements：凍結／感電／點燃時機率留下灌注殘骸 [需要程式]；先做成放元素技能就得到同元素的灌注
+    description: 精魂技能：你放出火焰、冰冷、閃電技能後，獲得一層跟技能同元素的灌注（每種最多 2 層，10 秒沒拿到就散掉；匯元衝擊這類技能會用掉）。保留 30 精魂。
+    icon: LAPIS_LAZULI
+    type: spell
+    tier: 8
+    tags: [spell]
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: infusion.gain, type: FLAT, value: 1 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_purity
+
+  elemental_trinity:
+    name: 鼎元訣
+    # PoE2 Trinity：用以前三相輔助的元素共鳴（CombatListener 的 Trinity，flag.trinity 還在）做成精魂技能，資料就夠
+    description: 精魂技能：擊中時，打出最多的那種元素讓另外兩種元素的共鳴上升；三種共鳴越平均，元素傷害越高，三種都夠高時還會穿透元素抗性。保留 100 精魂。
+    icon: END_CRYSTAL
+    type: spell
+    tier: 14
+    tags: [spell, fire, cold, lightning]
+    mechanic: aura
+    aura:
+      reserve: 100
+      radius: 8
+      allies: false
+      effects:
+        - { stat: flag.trinity, type: FLAT, value: 1 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_purity
+
+  # -- 長棍 --
+  frozen_locus:
+    name: 退步凝晶
+    # PoE2 Frozen Locus：敵人打不碎冰晶（現在只有你打得到）；其他照原版
+    description: 長棍往地上一敲，冰到面前一小片的敵人，同時往後跳開；敲的地方留下一顆冰晶（擊中冰晶旁邊的敵人三下就碎，炸出一圈冰）。冷卻 3 秒。
+    icon: PACKED_ICE
+    type: attack
+    tier: 1
+    tags: [attack, melee, area, cold, crystal]
+    weapons: [quarterstaff]
+    mechanic: cone
+    cone: { length: [3.5, 4.2], angle: 100 }
+    convert: { cold: 0.6 }
+    cooldown: 3
+    attack_speed: 1.0
+    effectiveness: [0.7, 0.98]
+    mana: [4, 9]
+    visual: ice_cone
+    modifiers:
+      - { stat: skill.recoil, type: FLAT, value: 120 }
+      - { stat: crystal.count, type: FLAT, value: 1 }
+      - { stat: freeze.buildup, type: INCREASED, value: 50 }
+
+  # -- 矛 --
+  rake:
+    name: 裂血掠
+    description: 往前衝過去，在終點一記撕裂斬打周圍一圈的敵人，打中的全部流血。冷卻 1 秒。
+    icon: SHEARS
+    type: attack
+    tier: 3
+    tags: [attack, melee, strike, physical]
+    weapons: [spear]
+    mechanic: dash
+    dash: { range: 6, end_radius: [2.2, 2.8] }
+    cooldown: 1
+    attack_speed: 0.8
+    effectiveness: [1.1, 1.54]
+    mana: [5, 10]
+    visual: lunge
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 100 }
+
+  # -- 弓 --
+  lightning_rod:
+    name: 雷樁矢
+    # PoE2 Lightning Rod：箭插在地上、連鎖閃電會跳到箭上 [需要程式]；先做成落下的雷擊
+    description: 往準心指的地方射一支從天而降的箭，落地炸出一圈閃電，容易感電。
+    icon: LIGHTNING_ROD
+    type: attack
+    tier: 1
+    tags: [attack, area, lightning]
+    weapons: [bow]
+    mechanic: impact
+    impact: { range: 22, delay: 0.4, radius: [2.4, 3.0] }
+    convert: { lightning: 0.8 }
+    attack_speed: 0.9
+    effectiveness: [0.95, 1.33]
+    mana: [4, 9]
+    visual: lightning_arrow
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 20 }
+
+  # -- 弩 --
+  fragmentation_rounds:
+    name: 迸片彈
+    # PoE2 Fragmentation Rounds：打中凍結的敵人時用掉凍結、炸出更多碎片；打中冰晶讓它炸開 [需要程式]
+    description: 一次射出三發會碎裂的弩彈，各穿過三個敵人。對凍結的敵人傷害更高。
+    icon: FLINT
+    type: attack
+    tier: 1
+    tags: [attack, projectile, physical]
+    weapons: [crossbow]
+    mechanic: projectile
+    projectile: { arrow: true, count: 3, spread: 12, speed: 3.0, range: 30, pierce: 3 }
+    attack_speed: 0.9
+    effectiveness: [0.55, 0.77]
+    mana: [5, 10]
+    visual: crossbow_bolt
+    modifiers:
+      - { stat: damage.vs_frozen, type: MORE, value: 50 }
+
+  stormblast_bolts:
+    name: 伏霆彈
+    # PoE2 Stormblast Bolts：弩彈落地後要被引爆技能打到才炸 [需要程式]；先做成過一下自己炸
+    description: 往準心指的地方射出帶電的弩彈，落地後過一陣子才炸開一大圈閃電，容易感電。
+    icon: LIGHTNING_ROD
+    type: attack
+    tier: 9
+    tags: [attack, area, lightning]
+    weapons: [crossbow]
+    mechanic: impact
+    impact: { range: 24, delay: 1.5, radius: [2.8, 3.4] }
+    convert: { lightning: 0.8 }
+    attack_speed: 0.9
+    effectiveness: [1.5, 2.1]
+    mana: [6, 14]
+    visual: lightning_arrow
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 25 }
+
+  siege_ballista:
+    name: 衝霄弩台
+    description: 放下一座弩台（10 秒），每隔一段時間往天上射一發重彈，落在附近的敵人身上，過一下炸開一圈火焰。拿弩才能用。
+    icon: DISPENSER
+    type: attack
+    tier: 9
+    tags: [attack, area, fire]
+    weapons: [crossbow]
+    mechanic: impact
+    impact: { range: 20, delay: 1.0, radius: [2.6, 3.2] }
+    totem: { duration: 10, interval: 0.9, range: 18, max: 1, head: CROSSBOW }
+    convert: { fire: 0.5 }
+    cooldown: 1
+    effectiveness: [0.75, 1.05]
+    mana: [8, 18]
+    visual: rain_of_arrows
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 15 }
+
+  artillery_ballista:
+    name: 落釘弩台
+    # PoE2 Artillery Ballista：殘廢（Maim）[需要程式]；定身照投射物攻擊的規則（技能帶 projectile 標籤）
+    description: 放下一座弩台（10 秒），每隔一段時間朝附近的敵人降下一輪弩彈，打中的敵人有機率被定身。拿弩才能用。
+    icon: DISPENSER
+    type: attack
+    tier: 7
+    tags: [attack, area, projectile, physical]
+    weapons: [crossbow]
+    mechanic: impact
+    impact: { range: 20, delay: 0.6, radius: [3.0, 3.8] }
+    totem: { duration: 10, interval: 1.4, range: 18, max: 1, head: CROSSBOW }
+    cooldown: 1
+    effectiveness: [0.8, 1.12]
+    mana: [8, 18]
+    visual: rain_of_arrows
+    modifiers:
+      - { stat: pin.chance, type: FLAT, value: 30 }

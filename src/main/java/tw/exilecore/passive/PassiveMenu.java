@@ -1,0 +1,684 @@
+package tw.exilecore.passive;
+
+import org.bukkit.Color;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.components.CustomModelDataComponent;
+import tw.exilecore.ExileCore;
+import tw.exilecore.character.CharacterRecord;
+import tw.exilecore.character.PlayerState;
+import tw.exilecore.gui.Menu;
+import tw.exilecore.item.ItemRenderer;
+import tw.exilecore.web.UiPack;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+/**
+ * 天賦樹視窗：上面 5 列是 9×5 的視野，最下面一列是捲動與功能按鈕。
+ * <ul>
+ *   <li>左鍵：配點。點還沒連到的節點會先用藍色畫出最短路徑、列出整條路加起來的能力，再點一次目標就整條配上（PoE2 做法）。</li>
+ *   <li>右鍵：退點，花金幣（未滿 20 級免費；有免費退點次數先用）。</li>
+ *   <li>點空白的地方：把視野移過去。</li>
+ *   <li>縮小地圖：整棵樹分區看，點一區就跳過去。</li>
+ *   <li>有套用介面資源包的玩家看到星盤：星空背景、節點之間有連線，已配置的是金色（{@link UiPack}）。</li>
+ *   <li>珠寶孔（PoE2 的珠寶插槽）：配了之後左鍵選一顆背包裡的珠寶放進去（{@link JewelPickMenu}），再左鍵拿回來；
+ *       右鍵退點會連珠寶一起拿回（{@link JewelSockets}）。</li>
+ * </ul>
+ */
+public final class PassiveMenu extends Menu {
+
+    private static final int VIEW_WIDTH = 9;
+    private static final int VIEW_HEIGHT = 5;
+    private static final int SCROLL_STEP = 3;
+
+    /** 方向鍵照「← ↑ ↓ →」排（跟鍵盤的方向鍵一樣左右在兩邊）；套用資源包的人看到四個方向不同的箭頭圖示。 */
+    private static final int SLOT_LEFT = 45;
+    private static final int SLOT_UP = 46;
+    private static final int SLOT_DOWN = 47;
+    private static final int SLOT_RIGHT = 48;
+    private static final int SLOT_INFO = 49;
+    private static final int SLOT_HOME = 50;
+    private static final int SLOT_OVERVIEW = 51;
+    private static final int SLOT_SEARCH = 52;
+    private static final int SLOT_CLOSE = 53;
+
+    private static final NamespacedKey TREE_CELL = NamespacedKey.fromString(UiPack.TREE_CELL);
+    // 星盤的顏色
+    private static final Color GOLD = Color.fromRGB(0xF5C04A);
+    private static final Color EDGE_GOLD = Color.fromRGB(0xE6A82E);
+    private static final Color BRIGHT = Color.fromRGB(0xE8E8F2);
+    private static final Color EDGE_LIT = Color.fromRGB(0x9C9CB8);
+    private static final Color DIM = Color.fromRGB(0x5E5E74);
+    private static final Color EDGE_DIM = Color.fromRGB(0x33354A);
+    private static final Color BLUE = Color.fromRGB(0x6FA8FF);
+    private static final Color EDGE_BLUE = Color.fromRGB(0x5A8EE8);
+    private static final Color CYAN = Color.fromRGB(0x55FFFF);
+    private static final Color WHITE = Color.fromRGB(0xFFFFFF);
+    /** 珠寶孔的顏色（紫，跟昇華、星籤同一系）。 */
+    private static final String SOCKET_COLOR = "#c77dff";
+
+    private final PassiveTree tree;
+    private final PassiveState passive;
+    private final Set<String> highlights;
+    private int viewX;
+    private int viewY;
+    private boolean overview;
+    private boolean changed;
+    /** 路徑預覽：目標與要經過的節點（含目標）。 */
+    private PassiveNode previewTarget;
+    private List<PassiveNode> previewPath = List.of();
+    private final Set<String> previewIds = new HashSet<>();
+
+    public PassiveMenu(final ExileCore plugin, final Player player, final PassiveTree tree,
+                       final Set<String> highlights, final PassiveNode focus) {
+        super(plugin, player, 6, "<dark_gray>天賦樹");
+        this.tree = tree;
+        this.passive = new PassiveState(plugin, player, tree);
+        this.highlights = Set.copyOf(highlights);
+        if (focus != null) {
+            centerOn(focus.x(), focus.y());
+        } else {
+            home();
+        }
+    }
+
+    private void home() {
+        final PassiveNode start = passive.start();
+        if (start != null) {
+            centerOn(start.x(), start.y());
+        } else {
+            centerOn((tree.minX() + tree.maxX()) / 2, (tree.minY() + tree.maxY()) / 2);
+        }
+    }
+
+    private void centerOn(final int x, final int y) {
+        viewX = x - VIEW_WIDTH / 2;
+        viewY = y - VIEW_HEIGHT / 2;
+        clampView();
+    }
+
+    private void clampView() {
+        viewX = Math.max(tree.minX() - 1, Math.min(tree.maxX() + 2 - VIEW_WIDTH, viewX));
+        viewY = Math.max(tree.minY() - 1, Math.min(tree.maxY() + 2 - VIEW_HEIGHT, viewY));
+    }
+
+    private boolean pack() {
+        return plugin.web() != null && plugin.web().hasPack(player);
+    }
+
+    // ---- 畫 ----
+
+    @Override
+    protected void draw() {
+        final PlayerState state = plugin.players().get(player);
+        final TreeView view = new TreeView(tree, passive.start(), state.passives(), previewIds, highlights);
+        final boolean pack = pack();
+        if (overview) {
+            drawOverview(view, pack);
+        } else {
+            drawDetail(view, state, pack);
+        }
+        drawButtons(state);
+    }
+
+    private void drawDetail(final TreeView view, final PlayerState state, final boolean pack) {
+        final int points = plugin.players().availablePoints(state);
+        final CharacterRecord character = state.character();
+        final long gold = character == null ? 0 : state.gold();
+        final int freeRefunds = character == null ? 0 : character.refundPoints();
+        final long refundCost = passive.refundCost();
+        for (int row = 0; row < VIEW_HEIGHT; row++) {
+            for (int column = 0; column < VIEW_WIDTH; column++) {
+                final TreeView.Tile tile = view.tile(viewX + column, viewY + row);
+                final ItemStack stack;
+                if (tile.node() == null) {
+                    stack = pack ? cell(tile, null, List.of()) : null;
+                } else {
+                    final List<String> lore = lore(tile, view, points, gold, refundCost, freeRefunds);
+                    final String name = name(tile);
+                    stack = pack ? cell(tile, name, lore) : vanilla(tile, name, lore);
+                }
+                set(row * 9 + column, stack);
+            }
+        }
+    }
+
+    private String name(final TreeView.Tile tile) {
+        final PassiveNode node = tile.node();
+        final String color = switch (tile.state()) {
+            case OWNED -> node.isStart() ? "<#77ccff>" : "<green>";
+            case PATH -> "<#77aaff>";
+            case AVAILABLE -> "<yellow>";
+            case LOCKED -> "<dark_gray>";
+        };
+        final String shown = node.name().isEmpty() ? node.type().displayName() : node.name();
+        if (node.isSocket()) {
+            final ItemStack jewel = jewelIn(node);
+            if (jewel != null) {
+                final List<String> described = JewelSockets.describe(plugin, jewel);
+                if (!described.isEmpty()) {
+                    return (tile.highlight() ? "<#55ffff>★ " : "") + described.getFirst();
+                }
+            }
+            final String jewelColor = tile.state() == TreeView.NodeState.OWNED ? "<" + SOCKET_COLOR + ">" : color;
+            return (tile.highlight() ? "<#55ffff>★ " : "") + jewelColor + "◇ " + ItemRenderer.escape(shown) + (jewel == null && tile.state() == TreeView.NodeState.OWNED ? " <dark_gray>（空的）" : "");
+        }
+        return (tile.highlight() ? "<#55ffff>★ " : "") + color + ItemRenderer.escape(shown);
+    }
+
+    /** 這個珠寶孔裡的珠寶（沒有、不是珠寶孔為 null）。 */
+    private ItemStack jewelIn(final PassiveNode node) {
+        return node.isSocket() ? plugin.players().get(player).jewel(node.id()) : null;
+    }
+
+    private List<String> lore(final TreeView.Tile tile, final TreeView view, final int points, final long gold,
+                              final long refundCost, final int freeRefunds) {
+        final PassiveNode node = tile.node();
+        final PassiveNode start = passive.start();
+        final String typeColor = switch (node.type()) {
+            case NOTABLE -> "<#f5b942>";
+            case KEYSTONE -> "<#ff55ff>";
+            case SOCKET -> "<" + SOCKET_COLOR + ">";
+            default -> "<gray>";
+        };
+        final List<String> lore = new ArrayList<>();
+        lore.add(typeColor + node.type().displayName() + (tile.highlight() ? " <#55ffff>★ 搜尋結果" : ""));
+        final ItemStack jewel = jewelIn(node);
+        if (jewel != null) {
+            // 孔裡有珠寶：寫珠寶的詞綴，不寫孔的說明
+            final List<String> described = JewelSockets.describe(plugin, jewel);
+            for (int i = 1; i < described.size(); i++) {
+                lore.add(described.get(i));
+            }
+        } else {
+            for (final String line : node.description()) {
+                lore.add("<white>" + ItemRenderer.escape(line));
+            }
+        }
+        lore.add("");
+        final boolean own = start != null && node.id().equals(start.id());
+        if (node.isStart()) {
+            lore.add(own ? "<gray>你的職業起點，永遠已配置" : "<dark_gray>別的職業的起點");
+        } else if (tile.state() == TreeView.NodeState.OWNED) {
+            if (isAttributeChoice(node)) {
+                final PlayerState owner = plugin.players().get(player);
+                final String chosen = tw.exilecore.character.PlayerStateService.chosenAttribute(owner, owner.characterClass(), node.id());
+                lore.add("<#ffd96a>目前：" + attributeName(chosen) + " <yellow>（左鍵切換：力量 → 敏捷 → 智慧）");
+            }
+            if (node.isSocket()) {
+                lore.add(jewel == null ? "<yellow>左鍵：選一顆背包裡的珠寶放進去" : "<yellow>左鍵：把珠寶拿回背包");
+            }
+            final boolean refundable = tree.canRefund(plugin.players().get(player).passives(), start, node);
+            if (!refundable) {
+                lore.add("<green>已配置 <dark_gray>（退掉會切斷路徑）");
+            } else if (freeRefunds > 0) {
+                lore.add("<yellow>右鍵退點（免費退點次數 " + freeRefunds + "）");
+            } else if (refundCost <= 0) {
+                lore.add("<yellow>右鍵退點（免費）");
+            } else {
+                lore.add(String.format(Locale.ROOT, gold >= refundCost ? "<yellow>右鍵退點（%,d 金幣，你有 %,d）" : "<red>右鍵退點要 %,d 金幣，你有 %,d",
+                        refundCost, gold));
+            }
+        } else if (tile.state() == TreeView.NodeState.PATH && node.equals(previewTarget)) {
+            lore.add(points >= previewPath.size()
+                    ? "<#77aaff>再點一次：整條路配上（共 " + previewPath.size() + " 點，剩 " + points + "）"
+                    : "<red>這條路要 " + previewPath.size() + " 點，你只有 " + points + " 點");
+            final List<String> total = PassiveSummary.sum(previewPath);
+            if (previewPath.size() > 1 && !total.isEmpty()) {
+                lore.add("");
+                lore.add("<#77aaff>整條路加起來：");
+                for (int i = 0; i < Math.min(10, total.size()); i++) {
+                    lore.add("<white>　" + ItemRenderer.escape(total.get(i)));
+                }
+                if (total.size() > 10) {
+                    lore.add("<dark_gray>　…還有 " + (total.size() - 10) + " 項");
+                }
+            }
+        } else if (tile.state() == TreeView.NodeState.PATH) {
+            lore.add("<#77aaff>路徑上的第 " + (previewPath.indexOf(node) + 1) + " 點");
+        } else if (tile.state() == TreeView.NodeState.AVAILABLE) {
+            lore.add(points > 0 ? "<yellow>左鍵配置（剩 " + points + " 點）" : "<red>天賦點不夠");
+            if (node.isSocket()) {
+                lore.add("<dark_gray>配了之後才能放珠寶");
+            }
+        } else {
+            lore.add("<dark_gray>還沒連到：左鍵預覽最短路徑");
+        }
+        return lore;
+    }
+
+    /** 沒有資源包：用原版的玻璃片與節點的圖示。 */
+    private ItemStack vanilla(final TreeView.Tile tile, final String name, final List<String> lore) {
+        final PassiveNode node = tile.node();
+        final Material material;
+        final ItemStack jewel = jewelIn(node);
+        if (jewel != null) {
+            material = jewel.getType(); // 孔裡有珠寶：畫那顆珠寶
+        } else if (node.type() == PassiveNode.Type.SMALL) {
+            if (tile.state() == TreeView.NodeState.OWNED && isAttributeChoice(node)) {
+                // 2026-10：屬性點照選的屬性上色（力量紅、敏捷綠、智慧藍）
+                material = switch (chosen(node)) {
+                    case "dex" -> Material.LIME_STAINED_GLASS_PANE;
+                    case "int" -> Material.BLUE_STAINED_GLASS_PANE;
+                    default -> Material.RED_STAINED_GLASS_PANE;
+                };
+            } else if (tile.state() == TreeView.NodeState.OWNED) {
+                material = Material.LIME_STAINED_GLASS_PANE;
+            } else if (tile.highlight()) {
+                material = Material.CYAN_STAINED_GLASS_PANE;
+            } else if (tile.state() == TreeView.NodeState.PATH) {
+                material = Material.LIGHT_BLUE_STAINED_GLASS_PANE;
+            } else if (tile.state() == TreeView.NodeState.AVAILABLE) {
+                material = Material.YELLOW_STAINED_GLASS_PANE;
+            } else {
+                material = Material.GRAY_STAINED_GLASS_PANE;
+            }
+        } else {
+            material = material(node.icon(), Material.ENCHANTED_BOOK);
+        }
+        final ItemStack stack = icon(material, name, lore);
+        if (tile.state() == TreeView.NodeState.OWNED || tile.state() == TreeView.NodeState.PATH || tile.highlight()) {
+            glowing(stack);
+        }
+        return stack;
+    }
+
+    /** 有資源包：星盤的一格（背景、連線、節點、發光、搜尋標記）。name 為 null 時不顯示說明。 */
+    private ItemStack cell(final TreeView.Tile tile, final String name, final List<String> lore) {
+        final ItemStack stack = name == null ? new ItemStack(Material.PAPER) : icon(Material.PAPER, name, lore);
+        final PassiveNode node = tile.node();
+        stack.editMeta(meta -> {
+            meta.setItemModel(TREE_CELL);
+            if (name == null) {
+                meta.setHideTooltip(true);
+            }
+            final CustomModelDataComponent data = meta.getCustomModelDataComponent();
+            final List<String> strings = new ArrayList<>(List.of(Integer.toString(tile.background()), "", "", ""));
+            final List<Boolean> flags = new ArrayList<>(List.of(false, false, false, false));
+            final List<Color> colors = new ArrayList<>(List.of(EDGE_DIM, EDGE_DIM, EDGE_DIM, EDGE_DIM, WHITE, GOLD, CYAN));
+            for (int i = 0; i < 4; i++) {
+                final TreeView.EdgeState edge = tile.edges()[i];
+                if (edge != null) {
+                    flags.set(i, true);
+                    colors.set(i, switch (edge) {
+                        case OWNED -> EDGE_GOLD;
+                        case PATH -> EDGE_BLUE;
+                        case LIT -> EDGE_LIT;
+                        case DIM -> EDGE_DIM;
+                    });
+                }
+            }
+            if (node != null) {
+                final ItemStack jewel = jewelIn(node);
+                final String jewelHex = JewelSockets.color(plugin, jewel);
+                final Color jewelColor = jewelHex == null ? null : Color.fromRGB(Integer.parseInt(jewelHex.substring(1), 16));
+                strings.set(UiPack.Cell.STRING_NODE, switch (node.type()) {
+                    case SMALL -> "small";
+                    case NOTABLE -> "notable";
+                    case KEYSTONE -> "keystone";
+                    case START -> "start";
+                    case SOCKET -> jewel == null ? "socket" : "jewel";
+                });
+                final Color attrColor = tile.state() == TreeView.NodeState.OWNED && isAttributeChoice(node) ? attributeColor(chosen(node)) : null;
+                colors.set(UiPack.Cell.COLOR_NODE, jewelColor != null ? jewelColor : attrColor != null ? attrColor : switch (tile.state()) {
+                    case OWNED -> GOLD;
+                    case PATH -> BLUE;
+                    case AVAILABLE -> BRIGHT;
+                    case LOCKED -> DIM;
+                });
+                if (tile.state() == TreeView.NodeState.OWNED) {
+                    strings.set(UiPack.Cell.STRING_GLOW, "glow");
+                    colors.set(UiPack.Cell.COLOR_GLOW, jewelColor != null ? jewelColor : attrColor != null ? attrColor : GOLD);
+                } else if (tile.state() == TreeView.NodeState.PATH) {
+                    strings.set(UiPack.Cell.STRING_GLOW, "glow");
+                    colors.set(UiPack.Cell.COLOR_GLOW, BLUE);
+                }
+                if (tile.highlight()) {
+                    strings.set(UiPack.Cell.STRING_RING, "ring");
+                }
+            }
+            data.setStrings(strings);
+            data.setFlags(flags);
+            data.setColors(colors);
+            meta.setCustomModelDataComponent(data);
+        });
+        return stack;
+    }
+
+    // ---- 縮小地圖 ----
+
+    private void drawOverview(final TreeView view, final boolean pack) {
+        for (int slot = 0; slot < VIEW_WIDTH * VIEW_HEIGHT; slot++) {
+            set(slot, pack ? cell(new TreeView.Tile(0, 0, null, null, new TreeView.EdgeState[4], false, slot % UiPack.BACKGROUNDS),
+                    null, List.of()) : null);
+        }
+        final int centerX = viewX + VIEW_WIDTH / 2;
+        final int centerY = viewY + VIEW_HEIGHT / 2;
+        for (final TreeView.Region region : view.regions(VIEW_WIDTH, VIEW_HEIGHT)) {
+            if (region.nodes().isEmpty()) {
+                continue;
+            }
+            final boolean here = region.contains(centerX, centerY);
+            final List<String> lore = new ArrayList<>();
+            lore.add("<gray>已配置 <white>" + region.owned() + "</white> / " + region.nodes().size()
+                    + (region.available() > 0 ? "　<yellow>能配 " + region.available() : ""));
+            final List<String> named = new ArrayList<>();
+            for (final PassiveNode node : region.nodes()) {
+                if (node.type() == PassiveNode.Type.NOTABLE || node.type() == PassiveNode.Type.KEYSTONE || node.isStart() || node.isSocket()) {
+                    final boolean owned = view.owned(node);
+                    final String color = node.type() == PassiveNode.Type.KEYSTONE ? "<#ff55ff>" : node.isSocket() ? "<" + SOCKET_COLOR + ">" : "";
+                    named.add((owned ? "<green>✔ " : "<gray>・") + color
+                            + ItemRenderer.escape(node.name().isEmpty() ? node.type().displayName() : node.name())
+                            + (node.isSocket() && jewelIn(node) != null ? " <dark_gray>（有珠寶）" : ""));
+                }
+            }
+            if (!named.isEmpty()) {
+                lore.add("");
+                lore.addAll(named.subList(0, Math.min(8, named.size())));
+                if (named.size() > 8) {
+                    lore.add("<dark_gray>…還有 " + (named.size() - 8) + " 個");
+                }
+            }
+            lore.add("");
+            lore.add(here ? "<#77ccff>你現在看的地方" : "<yellow>左鍵：到這一區");
+            final PassiveNode landmark = region.landmark();
+            final String name = "<white>" + ItemRenderer.escape(landmark.name().isEmpty() ? landmark.type().displayName() : landmark.name())
+                    + " <dark_gray>附近";
+            final ItemStack stack;
+            if (pack) {
+                final TreeView.NodeState state = region.owned() > 0 ? TreeView.NodeState.OWNED
+                        : region.available() > 0 ? TreeView.NodeState.AVAILABLE : TreeView.NodeState.LOCKED;
+                stack = cell(new TreeView.Tile(region.centerX(), region.centerY(), landmark, state, new TreeView.EdgeState[4], here,
+                        (region.column() + region.row()) % UiPack.BACKGROUNDS), name, lore);
+            } else {
+                final Material material = landmark.type() == PassiveNode.Type.SMALL
+                        ? region.owned() > 0 ? Material.LIME_STAINED_GLASS_PANE
+                        : region.available() > 0 ? Material.YELLOW_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE
+                        : material(landmark.icon(), Material.ENCHANTED_BOOK);
+                stack = icon(material, name, lore);
+                if (here || region.owned() > 0) {
+                    glowing(stack);
+                }
+            }
+            stack.setAmount(Math.max(1, Math.min(64, region.owned())));
+            set(region.row() * 9 + region.column(), stack);
+        }
+    }
+
+    // ---- 下面一列 ----
+
+    private void drawButtons(final PlayerState state) {
+        final int points = plugin.players().availablePoints(state);
+        final CharacterRecord character = state.character();
+        final long gold = character == null ? 0 : state.gold();
+        final int freeRefunds = character == null ? 0 : character.refundPoints();
+        final long refundCost = passive.refundCost();
+        if (overview) {
+            for (final int slot : new int[] {SLOT_LEFT, SLOT_RIGHT, SLOT_UP, SLOT_DOWN, SLOT_HOME}) {
+                set(slot, filler());
+            }
+        } else {
+            set(SLOT_LEFT, uiIcon("arrow_left", Material.ARROW, "<white>← 往左看", "<gray>點一下：往左捲 " + SCROLL_STEP + " 格",
+                    "<gray>Shift＋點：往左捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡"));
+            set(SLOT_UP, uiIcon("arrow_up", Material.ARROW, "<white>↑ 往上看", "<gray>點一下：往上捲 " + SCROLL_STEP + " 格",
+                    "<gray>Shift＋點：往上捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡"));
+            set(SLOT_DOWN, uiIcon("arrow_down", Material.ARROW, "<white>↓ 往下看", "<gray>點一下：往下捲 " + SCROLL_STEP + " 格",
+                    "<gray>Shift＋點：往下捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡"));
+            set(SLOT_RIGHT, uiIcon("arrow_right", Material.ARROW, "<white>→ 往右看", "<gray>點一下：往右捲 " + SCROLL_STEP + " 格",
+                    "<gray>Shift＋點：往右捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡"));
+            set(SLOT_HOME, icon(Material.COMPASS, "<white>回到起點", "<gray>視野移回職業起點"));
+        }
+        final List<String> info = new ArrayList<>();
+        info.add("<gray>可用 <white>" + points + "</white>　已配置 <white>" + state.passives().size());
+        info.add(String.format(Locale.ROOT, "<gray>金幣 <#f5b942>%,d", gold));
+        if (freeRefunds > 0) {
+            info.add("<gray>免費退點次數 <white>" + freeRefunds);
+        } else if (refundCost <= 0) {
+            info.add("<gray>退點免費（未滿 " + plugin.players().config().respecFreeUntilLevel() + " 級）");
+        } else {
+            info.add(String.format(Locale.ROOT, "<gray>退一點 <#f5b942>%,d 金幣", refundCost));
+        }
+        info.add(character == null ? "<red>還沒有角色" : "<gray>" + character.characterClass().displayName() + " Lv." + character.level()
+                + "　<dark_gray>每升一級 +1 點");
+        int sockets = 0;
+        for (final String id : state.passives()) {
+            final PassiveNode node = tree.node(id);
+            if (node != null && node.isSocket()) {
+                sockets++;
+            }
+        }
+        if (sockets > 0 || !state.jewels().isEmpty()) {
+            info.add("<gray>珠寶孔 <white>" + sockets + "</white>　放了珠寶 <" + SOCKET_COLOR + ">" + state.jewels().size());
+        }
+        if (previewTarget != null) {
+            info.add("<#77aaff>路徑預覽：" + previewPath.size() + " 點 → " + ItemRenderer.escape(previewTarget.name()));
+        }
+        info.add("");
+        info.add("<gray>左鍵配點、右鍵退點；點遠處的節點先畫出路徑");
+        info.add("<yellow>左鍵：天賦總覽・網頁規劃器・匯入・說明");
+        set(SLOT_INFO, glowing(icon(Material.NETHER_STAR, "<#f5b942>天賦點", info)));
+        set(SLOT_OVERVIEW, overview
+                ? icon(Material.SPYGLASS, "<white>回到天賦樹", "<gray>回到剛才的位置")
+                : icon(Material.FILLED_MAP, "<white>縮小地圖", "<gray>整棵樹分區看，點一區就跳過去"));
+        set(SLOT_SEARCH, icon(Material.SPYGLASS, "<white>搜尋天賦",
+                "<gray>輸入關鍵字，符合的用<#55ffff>青色</#55ffff>標出",
+                "<dark_gray>也可以直接打 /tree find 生命",
+                highlights.isEmpty() ? "" : "<#55ffff>目前標出 " + highlights.size() + " 個結果"));
+        set(SLOT_CLOSE, closeButton());
+    }
+
+    // ---- 點擊 ----
+
+    @Override
+    protected void onClick(final int slot, final ClickType click, final InventoryClickEvent event) {
+        if (click == ClickType.DOUBLE_CLICK) {
+            return; // 雙擊多送的那一下不算（不然配一點會變兩點）
+        }
+        final boolean page = click.isShiftClick();
+        final int step = page ? (slot == SLOT_UP || slot == SLOT_DOWN ? VIEW_HEIGHT : VIEW_WIDTH) : SCROLL_STEP;
+        switch (slot) {
+            case SLOT_LEFT -> scroll(-step, 0);
+            case SLOT_RIGHT -> scroll(step, 0);
+            case SLOT_UP -> scroll(0, -step);
+            case SLOT_DOWN -> scroll(0, step);
+            case SLOT_HOME -> {
+                if (!overview) {
+                    home();
+                    redraw();
+                }
+            }
+            case SLOT_OVERVIEW -> {
+                overview = !overview;
+                redraw();
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, overview ? 1.2f : 1.5f);
+            }
+            case SLOT_INFO -> TreeActions.summary(plugin, player, tree, () -> {
+                // 回到剛才看的位置（匯入規劃後配點可能變了：路徑預覽作廢）
+                clearPreview();
+                open();
+            });
+            case SLOT_SEARCH -> plugin.characterMenus().promptTreeSearch(player);
+            case SLOT_CLOSE -> goBack();
+            default -> {
+                if (slot < VIEW_WIDTH * VIEW_HEIGHT) {
+                    if (overview) {
+                        clickRegion(slot);
+                    } else {
+                        clickCell(slot, click);
+                    }
+                }
+            }
+        }
+    }
+
+    private void clickRegion(final int slot) {
+        final TreeView view = new TreeView(tree, passive.start(), plugin.players().get(player).passives(), previewIds, highlights);
+        for (final TreeView.Region region : view.regions(VIEW_WIDTH, VIEW_HEIGHT)) {
+            if (region.row() * 9 + region.column() == slot && !region.nodes().isEmpty()) {
+                final PassiveNode landmark = region.landmark();
+                centerOn(landmark.x(), landmark.y());
+                overview = false;
+                redraw();
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.5f);
+                return;
+            }
+        }
+    }
+
+    private void clickCell(final int slot, final ClickType click) {
+        final int x = viewX + slot % 9;
+        final int y = viewY + slot / 9;
+        final PassiveNode node = tree.at(x, y);
+        if (node == null) {
+            // 空白的地方：把視野移過去
+            final int oldX = viewX;
+            final int oldY = viewY;
+            centerOn(x, y);
+            if (oldX != viewX || oldY != viewY) {
+                redraw();
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.3f, 1.6f);
+            }
+            return;
+        }
+        clickNode(node, click);
+    }
+
+    private void scroll(final int dx, final int dy) {
+        if (overview) {
+            return;
+        }
+        viewX += dx;
+        viewY += dy;
+        clampView();
+        redraw();
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.5f);
+    }
+
+    private void clickNode(final PassiveNode node, final ClickType click) {
+        final PlayerState state = plugin.players().get(player);
+        final PassiveNode start = passive.start();
+        PassiveState.Result result;
+        if (click.isRightClick()) {
+            clearPreview();
+            result = passive.refund(node);
+        } else if (isAttributeChoice(node) && state.passives().contains(node.id())) {
+            // 屬性點（2026-10 PoE2）：配了之後左鍵切換力量／敏捷／智慧，不花錢
+            clearPreview();
+            final String now = tw.exilecore.character.PlayerStateService.chosenAttribute(state, state.characterClass(), node.id());
+            final String next = switch (now) {
+                case "str" -> "dex";
+                case "dex" -> "int";
+                default -> "str";
+            };
+            plugin.characters().setProgress(player, "attr." + node.id(), next); // 2026-10：存進資料庫（以前只放在記憶體，重登會不見）
+            state.markDirty();
+            plugin.players().sheet(player);
+            player.sendActionBar(plugin.text().parse("<#ffd96a>這個屬性點改成 +" + attributeAmount(node) + " " + attributeName(next)));
+            result = PassiveState.Result.success();
+        } else if (node.isSocket() && state.passives().contains(node.id())) {
+            // 配了的珠寶孔：空的選珠寶放進去，有珠寶的拿回來
+            clearPreview();
+            if (state.jewel(node.id()) == null) {
+                new JewelPickMenu(plugin, player, tree, node, highlights).open();
+                return;
+            }
+            result = JewelSockets.unsocket(plugin, player, node);
+            if (result.ok()) {
+                player.sendActionBar(plugin.text().parse("<yellow>珠寶拿回背包了"));
+            }
+        } else if (start != null && !node.isStart() && !state.passives().contains(node.id())
+                && !tree.canAllocate(state.passives(), start, node)) {
+            // 還沒連到：第一次點畫路徑，第二次點同一個目標才配
+            if (node.equals(previewTarget)) {
+                result = passive.allocatePath(previewPath);
+                if (result.ok()) {
+                    clearPreview();
+                }
+            } else {
+                final List<PassiveNode> path = tree.pathTo(state.passives(), start, node);
+                if (path.isEmpty()) {
+                    clearPreview();
+                    result = PassiveState.Result.fail("走不到那裡");
+                } else {
+                    previewTarget = node;
+                    previewPath = path;
+                    previewIds.clear();
+                    for (final PassiveNode step : path) {
+                        previewIds.add(step.id());
+                    }
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
+                    player.sendActionBar(plugin.text().parse("<#77aaff>這條路要 " + path.size() + " 點，再點一次 "
+                            + ItemRenderer.escape(node.name()) + " 就整條配上"));
+                    redraw();
+                    return;
+                }
+            }
+        } else {
+            clearPreview();
+            result = passive.allocate(node);
+        }
+        if (result.ok()) {
+            changed = true;
+            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, click.isRightClick() ? 0.7f : 1.3f);
+        } else {
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+            player.sendActionBar(plugin.text().parse("<red>" + result.message()));
+        }
+        redraw();
+    }
+
+    /** 這個屬性點現在算哪個屬性。 */
+    private String chosen(final PassiveNode node) {
+        final PlayerState state = plugin.players().get(player);
+        return tw.exilecore.character.PlayerStateService.chosenAttribute(state, state.characterClass(), node.id());
+    }
+
+    /** 屬性點的顏色：力量紅、敏捷綠、智慧藍。 */
+    private static Color attributeColor(final String key) {
+        return switch (key) {
+            case "dex" -> Color.fromRGB(0x5BD65B);
+            case "int" -> Color.fromRGB(0x5A8CFF);
+            default -> Color.fromRGB(0xF0544F);
+        };
+    }
+
+    /** 天賦樹的屬性點（+x 任一屬性）。 */
+    static boolean isAttributeChoice(final PassiveNode node) {
+        return node.modifiers().stream().anyMatch(mod -> tw.exilecore.stats.StatKeys.ATTR_CHOICE.equals(mod.stat()));
+    }
+
+    private static int attributeAmount(final PassiveNode node) {
+        return (int) Math.round(node.modifiers().stream().filter(mod -> tw.exilecore.stats.StatKeys.ATTR_CHOICE.equals(mod.stat()))
+                .mapToDouble(tw.exilecore.stats.Modifier::value).sum());
+    }
+
+    private static String attributeName(final String key) {
+        return switch (key) {
+            case "dex" -> "敏捷";
+            case "int" -> "智慧";
+            default -> "力量";
+        };
+    }
+
+    private void clearPreview() {
+        previewTarget = null;
+        previewPath = List.of();
+        previewIds.clear();
+    }
+
+    @Override
+    protected void onClose() {
+        if (changed) {
+            plugin.characters().save(player);
+        }
+    }
+}

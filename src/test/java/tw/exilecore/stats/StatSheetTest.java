@@ -50,4 +50,23 @@ class StatSheetTest {
                 .add(Modifier.increased(StatKeys.ARMOUR, -1.5, "詛咒"));
         assertEquals(0, sheet.get(StatKeys.ARMOUR), 1e-9);
     }
+
+    @Test
+    void overlayAddsModifiersWithoutTouchingTheBaseSheet() {
+        final StatSheet sheet = new StatSheet().setBase(StatKeys.LIFE_MAX, 100)
+                .add(Modifier.increased(StatKeys.LIFE_MAX, 0.5, "天賦"))
+                .add(new Modifier(StatKeys.DAMAGE, ModType.MORE, 0.2, Set.of(Tags.FIRE), "詞綴"));
+        final StatSheet layer = sheet.overlay(java.util.List.of(
+                Modifier.increased(StatKeys.LIFE_MAX, 0.5, "輔助"),
+                new Modifier(StatKeys.DAMAGE, ModType.MORE, 0.5, Set.of(), "輔助")));
+        assertEquals(150, sheet.get(StatKeys.LIFE_MAX), 1e-9, "下面那張表不變");
+        assertEquals(200, layer.get(StatKeys.LIFE_MAX), 1e-9, "疊上去的增加跟原本的相加");
+        assertEquals(1.2 * 1.5, layer.more(StatKeys.DAMAGE, Set.of(Tags.FIRE)), 1e-9, "更多各自相乘");
+        assertEquals(1.5, layer.more(StatKeys.DAMAGE, Set.of(Tags.COLD)), 1e-9);
+        assertEquals(100, layer.base(StatKeys.LIFE_MAX), 1e-9);
+        // 下面那張表之後改了，疊出來的表也看得到（不快取）
+        sheet.add(Modifier.flat(StatKeys.LIFE_MAX, 100, "戒指"));
+        assertEquals(200 * 2, layer.get(StatKeys.LIFE_MAX), 1e-9);
+        assertEquals(5, layer.allModifiers().size(), "除錯清單含兩層的修飾器");
+    }
 }

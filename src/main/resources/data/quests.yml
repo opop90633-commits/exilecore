@@ -1,0 +1,584 @@
+# 劇情與任務：主線（一章一個區域）與支線。世界觀《星骸》見 world.yml 開頭。
+# 任務的進度存在角色進度裡（q.任務代號），改了這個檔用 /ec reload；進行中的任務停在原本那一步。
+#
+# npcs：劇情人物。
+#   name、title  名字、頭銜（顯示在頭上）
+#   hold         手上拿的東西（原版物品名稱，可以不寫）
+#   place        在劇情世界裡站的位置：zone 是 camp（相對於營地落點）或區域代號（相對於那個區域的檢查點：
+#                checkpoint 寫 entrance／midway／boss）；at 是 [往東幾格, 往南幾格]；yaw 是面向（0 南、90 西、180 北、-90 東）。
+#                區塊載入時自動補上、移回去；手動擺版面的伺服器用 /ec npc story <代號> 放在面前。
+#   idle         沒有任務的事時說的話（隨機一句）
+#   opens        右鍵時打開的功能（bounty＝委託板：每日委託、每週回響、功勳兌換；trial＝昇華與試煉）；有任務的事時先跳對話視窗，上面有按鈕
+#
+# quests：
+#   kind       main（主線）／side（支線）
+#   name       任務名稱；zone：所屬區域（任務日誌分組）；summary：任務日誌裡的一句話
+#   giver      誰給（劇情人物的代號，或營地 NPC：identifier、map_device、vendor、heist；stash、salvage、waypoint、market 只是擺設，不能給任務）
+#   requires   要先完成的任務；after：要先接過（或完成）的任務；level：最低等級
+#   auto       true＝符合條件就自動開始（主線一章接一章）；false＝去找 giver 接（offer 是那時說的話）
+#   stages     一步一步的目標，照順序。每一步一個目標：
+#                talk: NPC                          跟誰說話（lines 是說話時那個人說的話）
+#                checkpoint: [區域, 檢查點]          走到檢查點
+#                zone: 區域                         進入區域
+#                boss: 區域                         打倒區域 Boss
+#                kill: { zone, count, rarity }       在區域裡擊殺（rarity：any、magic＝魔法以上、rare＝稀有與傳奇）
+#                collect: { zone, count, item, chance }  從區域的怪物身上撿任務物品（不佔背包；普通怪照 chance，魔法 2 倍，稀有必掉）
+#                level: 等級                        到達等級
+#                maps: 張數                         完成過幾張不同的地圖
+#                trial: 試煉代號                    完成過那個試煉（ascendancy.yml）
+#              text 是畫面右邊任務追蹤的那一行（短一點）。打過的 Boss、發現過的檢查點、去過的區域、等級、
+#              完成過的地圖與試煉直接算，所以舊角色接了任務就能往前走。不是說話的那一步，lines 是完成時的旁白。
+#   rewards    永久獎勵：{ passive_points: 天賦點 }、{ stat, flat: 固定值 }、{ stat, increased: 百分比 }
+#              stat 可以用：life.max、mana.max、es.max、resist.fire、resist.cold、resist.lightning、resist.chaos、
+#              armour、evasion、ailment.threshold、life.regen、mana.regen、flask.life_recovery、flask.mana_recovery、movement.speed
+#   choose     幾選一：選項代號 → { label, rewards }；最後一步要是 talk（在對話視窗裡選，選了就不能換）
+
+npcs:
+  shen_du:
+    name: 沈渡
+    title: 營地主事
+    hold: WRITABLE_BOOK
+    place: { zone: camp, at: [3, -3], yaw: 45 }
+    idle:
+      - 押送船十天一班。在那之前，能挖多少星骸就挖多少——或者，弄清楚它們到底是什麼。
+      - 我以前在曜朝的史館抄書。抄到不該抄的那一頁，就被送來這裡了。
+      - 營火別讓它熄了。這片海岸的夜，比你想的冷。
+      - 你帶回來的每一件事，我都會寫下來。總要有人記得。
+
+  ji_heng:
+    # 2026-10：只是營地的擺設（沒寫 name：沒有名字、右鍵沒有反應）；委託與功勳兌換在選單（Shift＋F → 委託）
+    hold: PAPER
+    place: { zone: camp, at: [-4, -3], yaw: -45 }
+
+  ming_yi:
+    name: 明夷
+    title: 最後的星衛
+    hold: NETHER_STAR
+    opens: trial
+    place: { zone: camp, at: [-8, -23], yaw: -90 }
+    idle:
+      - 十二個星衛走進熔爐，出來四個。我是第五個——我沒有走進去。
+      - 試煉不是殺人的地方。是讓你看清楚，你想變成什麼。
+      - 殷燼還守著那四道門。他不是壞人，只是太守規矩。
+      - 地圖裝置照得出星骸記得的東西。熔爐的門，也是它記得的一部分。
+
+  lu_bo:
+    name: 魯伯
+    title: 老漁夫
+    hold: FISHING_ROD
+    place: { zone: coast, checkpoint: entrance, at: [3, -4], yaw: 0 }
+    idle:
+      - 二十年了，這片海一次比一次藍。藍得不像海。
+      - 淺灘上那些東西，以前也是人。別看它們的臉。
+      - 退潮的時候，沙洲上會露出一排腳印。沒有人走過去，卻有腳印走回來。
+
+  ling:
+    name: 綾
+    title: 斥候
+    hold: BOW
+    place: { zone: forest, checkpoint: entrance, at: [3, -4], yaw: 0 }
+    idle:
+      - 樹在說話，但不是對你說。別回答它們。
+      - 我負責替營地找路。這片林子每天的路都不一樣。
+      - 蛛網上那些亮亮的東西，是星骸的粉。別碰，碰了手會一直癢到骨頭裡。
+
+  wen_zhao:
+    name: 文昭
+    title: 史官的殘魂
+    hold: BOOK
+    place: { zone: ruins, checkpoint: entrance, at: [3, -4], yaw: 0 }
+    idle:
+      - 三百年了，我還在寫最後一頁。墨乾了，字還在燒。
+      - 曜京有十二道城門。每一道我都看著它燒塌。
+      - 史書是給活人看的。所以我寫得很慢——我在等活人來。
+
+  tai_gu:
+    name: 苔姑
+    title: 藥婆
+    hold: POTION
+    place: { zone: swamp, checkpoint: entrance, at: [3, -4], yaw: 0 }
+    idle:
+      - 沼裡什麼都會爛，就是星骸不會。所以它才那麼毒。
+      - 營地裡咳嗽的人越來越多了。你也離水遠一點。
+      - 這鍋藥再熬三個時辰。別掀蓋子，會跑。
+
+  yue:
+    name: 岳
+    title: 守山人
+    hold: IRON_AXE
+    place: { zone: mountain, checkpoint: entrance, at: [3, 3], yaw: 180 }
+    idle:
+      - 山頂那塊東西在發光的時候，整座山都在聽。
+      - 往上的路只有一條。下來的路，看運氣。
+      - 守山人不救人。守山人只記得誰上去了、誰沒下來。
+
+quests:
+  # ---------------- 主線 ----------------
+  prologue:
+    kind: main
+    name: 上岸
+    zone: camp
+    giver: shen_du
+    auto: true
+    summary: 你是今天剛被押送船丟上岸的流放者。營地主事沈渡會告訴你怎麼活下去。
+    stages:
+      - text: 跟營火旁的沈渡說話
+        talk: shen_du
+        lines:
+          - 又一個。押送船每十天丟下幾個，能撐過第一晚的不到一半。
+          - 我是沈渡，這個營地的主事——說好聽點是主事，其實就是第一個沒死的人。
+          - 先去找營地西邊帳篷的鑑定師。外面撿到的東西，不鑑定就只是廢鐵。
+      - text: 找營地西邊的鑑定師
+        talk: identifier
+        lines:
+          - 新來的？鑑定卷軸在我這裡拿，用完了再來，不收錢。
+          - 撿到的裝備拿回來，我一次幫你全部鑑定好。
+          - 往東走，出營地的東門就是潮濕海岸。路上有發光的箭頭，跟著走就對了。
+      - text: 出東門，走到潮濕海岸的入口
+        checkpoint: [coast, entrance]
+        lines:
+          - 腳下的祭壇亮了一下。檢查點記住了你——死了會從這裡站起來。
+    rewards:
+      - { stat: life.max, flat: 10 }
+
+  ch1_coast:
+    kind: main
+    name: 潮聲之下
+    zone: coast
+    giver: shen_du
+    requires: [prologue]
+    auto: true
+    summary: 淺灘的溺死者被星骸叫醒了。老漁夫魯伯知道是誰在叫它們。
+    stages:
+      - text: 找入口祭壇旁的老漁夫魯伯
+        talk: lu_bo
+        lines:
+          - 沈渡叫你來的？那個老書生又派新人來送死。
+          - 二十年前，一塊星骸掉進這片海，被一個東西吞了。我們叫牠溺潮之母。
+          - 是牠在叫醒淺灘上的溺死者——我兒子也在裡面。
+          - 往東走到底，牠就在沙洲上。替我……算了，替你自己活著回來。
+      - text: 打倒溺潮之母
+        boss: coast
+      - text: 回營地向沈渡報告
+        talk: shen_du
+        lines:
+          - 溺潮之母死了？……淺灘的光確實暗了一點。
+          - 你身上沾了海底的寒氣。留著吧，以後用得上。
+          - 斥候綾往東邊的林子探路，三天沒回來。去幽語森林找她。
+    rewards:
+      - { stat: resist.cold, flat: 10 }
+
+  ch2_forest:
+    kind: main
+    name: 林中低語
+    zone: forest
+    giver: shen_du
+    requires: [ch1_coast]
+    auto: true
+    summary: 斥候綾在幽語森林裡被困住了。樹在低語，蛛網上掛著星骸的碎屑。
+    stages:
+      - text: 找幽語森林入口的斥候綾
+        talk: ling
+        lines:
+          - 你是營地派來的？……沈渡還記得我，算他有良心。
+          - 我的路被蛛群封住了。牠們吃了星骸的粉，一隻比一隻大。
+          - 幫我清出一條路。牠們的母親就在林子最深的地方。
+      - text: 清掉森林裡的怪物
+        kill: { zone: forest, count: 40 }
+        lines:
+          - 林子裡的低語小了一點，路露出來了。
+      - text: 打倒林影織母
+        boss: forest
+      - text: 回營地向沈渡報告
+        talk: shen_du
+        lines:
+          - 綾回來了，帶著一張畫滿紅圈的地圖。你做得很好。
+          - 森林以東是焚城廢墟，三百年前的曜京。
+          - 那裡有個史官的魂一直沒走。他寫的東西我在史館讀過一半——另一半，你去幫我問。
+    rewards:
+      - { passive_points: 2 }
+
+  ch3_ruins:
+    kind: main
+    name: 曜京餘燼
+    zone: ruins
+    giver: shen_du
+    requires: [ch2_forest]
+    auto: true
+    summary: 曜京燒了七天七夜。史官文昭的殘魂還守著他沒寫完的那一卷。
+    stages:
+      - text: 找焚城廢墟入口的史官文昭
+        talk: wen_zhao
+        lines:
+          - 沈渡？那孩子……三百年了，還有人讀我的書。
+          - 我的最後一卷被火吹散了，五頁，散在廢墟裡。那幾頁寫著陛下在熔爐前說的話。
+          - 找回來。然後去熔爐那裡看看——督軍還守著它。
+      - text: 找回史官的殘卷
+        collect: { zone: ruins, count: 5, item: 殘卷, chance: 0.12 }
+      - text: 打倒廢城督軍
+        boss: ruins
+      - text: 回營地向沈渡報告
+        talk: shen_du
+        lines:
+          - <gray><i>（沈渡把五頁殘卷攤在營火邊，看了很久。）</i></gray>
+          - 「朕不會死，朕只是換一副身體。」——陛下跳進熔爐之前，是這樣說的。
+          - 史書上寫他燒死了。如果文昭寫的是真的……三百年來，帝國載走的星骸，到底送去了哪裡？
+          - 對了，地圖裝置旁邊來了一個怪人，說她在等從曜京回來的人。有空去見見她。
+          - 先別想了。腐沼的毒水滲進了營地的井，去找沼裡的藥婆苔姑。
+    rewards:
+      - { stat: resist.fire, flat: 10 }
+
+  ch4_swamp:
+    kind: main
+    name: 腐沼之毒
+    zone: swamp
+    giver: shen_du
+    requires: [ch3_ruins]
+    auto: true
+    summary: 腐沼的毒水滲進了營地的井。藥婆苔姑說，解藥要用巫母的心來熬。
+    stages:
+      - text: 找腐沼入口的藥婆苔姑
+        talk: tai_gu
+        lines:
+          - 營地的人在咳？咳出黑水了沒有？……那就還有救。
+          - 毒是巫母放的。她用星骸把沼裡的東西一口一口餵大，連水都被她餵壞了。
+          - 把她的心帶回來。只有她的心解得了她的毒。
+      - text: 打倒腐沼巫母
+        boss: swamp
+      - text: 把巫母的心交給苔姑
+        talk: tai_gu
+        lines:
+          - 還在跳呢。好，好心。
+          - 這鍋藥夠營地喝一個月。剩下的你帶著——被雷劈過的人喝了，手就不抖了。
+          - 山上的守山人岳託人帶話來，說山頂的光越來越亮。你該上山了。
+    rewards:
+      - { stat: resist.lightning, flat: 10 }
+
+  ch5_mountain:
+    kind: main
+    name: 天穹之心
+    zone: mountain
+    giver: shen_du
+    requires: [ch4_swamp]
+    auto: true
+    summary: 天穹之心最大的一塊嵌在霜頂山脈的山頂。守山人岳說，山在聽。
+    stages:
+      - text: 找霜頂山脈入口的守山人岳
+        talk: yue
+        lines:
+          - 你就是在山下鬧得很大的那個流放者。
+          - 撼地獸守著山頂。不是守著天穹之心——是守著不讓它被人碰。
+          - 但光越來越亮了。再不去，整座山都會醒。
+      - text: 打倒霜角撼地獸
+        boss: mountain
+      - text: 回營地向沈渡報告
+        talk: shen_du
+        lines:
+          - 冰層底下透出光，然後天上裂開了一道一道的痕——我在營地都看得到。
+          - 那是星痕，天穹之心墜落那一晚留下的記憶。地圖裝置打得開它們。
+          - 文昭的殘卷說，陛下在熔爐裡等。所有的星痕，最後都通往那座熔爐。
+          - 去吧。這兩樣東西你挑一樣帶著，路上用得到。
+    rewards:
+      - { passive_points: 2 }
+    choose:
+      life_flask:
+        label: 生命藥劑回復 +25%
+        rewards:
+          - { stat: flask.life_recovery, increased: 25 }
+      mana_flask:
+        label: 魔力藥劑回復 +25%
+        rewards:
+          - { stat: flask.mana_recovery, increased: 25 }
+
+  epilogue:
+    kind: main
+    name: 星痕
+    zone: camp
+    giver: shen_du
+    requires: [ch5_mountain]
+    auto: true
+    summary: 星痕是天穹之心墜落那一晚留下的記憶。走進去，再走出來。
+    stages:
+      - text: 用營地的地圖裝置完成一張地圖
+        maps: 1
+      - text: 回營地向沈渡報告
+        talk: shen_du
+        lines:
+          - 你從星痕裡走出來了。很多人走不出來。
+          - 每一道星痕都是那一晚的一個片段：沉船、燒起來的街、一夜變白的松林……
+          - 繼續往深處走。我會在營火旁邊，把你帶回來的東西一頁一頁寫下來。
+    rewards:
+      - { stat: life.max, increased: 5 }
+
+  # ---------------- 支線 ----------------
+  coast_charts:
+    kind: side
+    name: 漂流的航海圖
+    zone: coast
+    giver: lu_bo
+    after: ch1_coast
+    summary: 魯伯年輕時畫的航海圖被浪打散了。他說，總有一天要用它離開這裡。
+    offer:
+      - 我年輕時畫過一張航海圖，從這裡一直畫到帝國的港口。
+      - 那年的大浪把它打散了，碎片被淺灘上的東西撿走——牠們什麼都撿。
+      - 幫我拿回來。六片就拼得回去。
+    stages:
+      - text: 撿回航海圖的碎片
+        collect: { zone: coast, count: 6, item: 航海圖碎片, chance: 0.15 }
+      - text: 把航海圖交給魯伯
+        talk: lu_bo
+        lines:
+          - 六片……都在。墨還沒褪。
+          - 我大概這輩子都用不上了。但你不一樣。
+    rewards:
+      - { passive_points: 1 }
+
+  coast_lamp:
+    kind: side
+    name: 淺灘的燈
+    zone: coast
+    giver: lu_bo
+    after: ch1_coast
+    summary: 淺灘上的守燈被潮喚者澆熄了。魯伯想在死前再看它亮一次。
+    offer:
+      - 淺灘盡頭以前有一盞燈，給晚歸的漁船指路。
+      - 那些會叫潮水的東西把它澆熄了。稀有的那幾隻，你一看就知道。
+      - 打倒三隻。燈我來點。
+    stages:
+      - text: 打倒潮濕海岸的稀有怪
+        kill: { zone: coast, count: 3, rarity: rare }
+      - text: 回去找魯伯
+        talk: lu_bo
+        lines:
+          - 看——亮了。二十年沒亮過了。
+          - 這點手藝送你，看你喜歡哪一種。
+    choose:
+      armour:
+        label: 護甲 +12%
+        rewards:
+          - { stat: armour, increased: 12 }
+      evasion:
+        label: 閃避 +12%
+        rewards:
+          - { stat: evasion, increased: 12 }
+      energy_shield:
+        label: 能量護盾 +12%
+        rewards:
+          - { stat: es.max, increased: 12 }
+
+  forest_bow:
+    kind: side
+    name: 綾的弓
+    zone: forest
+    giver: ling
+    after: ch2_forest
+    summary: 綾的弓被蛛群扯斷了。她要用林子裡的東西自己做一把。
+    offer:
+      - 我的弓斷了。被拖進蛛網的時候，我拿它去撐。
+      - 蛛群的巢裡有我要的東西——硬的絲、直的骨。五樣就夠。
+    stages:
+      - text: 撿回做弓的材料
+        collect: { zone: forest, count: 5, item: 弓的材料, chance: 0.15 }
+      - text: 把材料交給綾
+        talk: ling
+        lines:
+          - 這根骨頭……很直。蜘蛛的骨頭居然這麼直。
+          - 新弓的第一箭替你射。以後林子裡有我盯著。
+    rewards:
+      - { passive_points: 1 }
+
+  forest_whispers:
+    kind: side
+    name: 低語的源頭
+    zone: forest
+    giver: ling
+    after: ch2_forest
+    summary: 樹的低語越來越大聲。綾說，殺得夠多，它們就會安靜。
+    offer:
+      - 你聽得到嗎？每殺一隻，低語就小一點。
+      - 我想知道它全部停下來是什麼聲音。幫我殺五十隻。
+    stages:
+      - text: 在幽語森林擊殺怪物
+        kill: { zone: forest, count: 50 }
+      - text: 回去找綾
+        talk: ling
+        lines:
+          - ……安靜了。原來安靜是這個聲音。
+          - 低語在你身上留了點東西。選一樣留下，另一樣就讓它散了吧。
+    choose:
+      threshold:
+        label: 元素異常門檻 +20%
+        rewards:
+          - { stat: ailment.threshold, increased: 20 }
+      mana_regen:
+        label: 魔力回復 +20%
+        rewards:
+          - { stat: mana.regen, increased: 20 }
+
+  ruins_key:
+    kind: side
+    name: 熔爐的鑰匙
+    zone: ruins
+    giver: wen_zhao
+    after: ch3_ruins
+    summary: 熔爐的鑰匙分給了三個親衛。三百年了，他們還在巡邏。
+    offer:
+      - 熔爐的門要三把鑰匙才打得開，陛下把它們分給了三個親衛。
+      - 他們還在廢墟裡巡邏，以為曜京沒有淪陷。
+      - 讓他們休息吧。
+    stages:
+      - text: 打倒焚城廢墟的稀有怪
+        kill: { zone: ruins, count: 3, rarity: rare }
+      - text: 回去找文昭
+        talk: wen_zhao
+        lines:
+          - 三把鑰匙……熔爐的門後面已經什麼都不剩了，我知道。
+          - 但他們終於可以停下來了。謝謝你。
+    rewards:
+      - { passive_points: 1 }
+
+  ruins_names:
+    kind: side
+    name: 無名的墓碑
+    zone: ruins
+    giver: wen_zhao
+    after: ch3_ruins
+    summary: 曜京燒死的人沒有墓碑。文昭想把他們的名牌找回來，記進史書。
+    offer:
+      - 城裡的每個人都掛著一塊名牌，燒剩的都還在廢墟裡。
+      - 史書只寫了陛下的名字。我想把他們的也寫進去。
+      - 帶六塊回來就好。剩下的，我會慢慢找。
+    stages:
+      - text: 撿回燒剩的名牌
+        collect: { zone: ruins, count: 6, item: 名牌, chance: 0.15 }
+      - text: 把名牌交給文昭
+        talk: wen_zhao
+        lines:
+          - 李阿九、陳氏、無名、無名、周小滿……
+          - 他們撐過了那七天裡的某幾個時辰。你也會撐過去的。
+    rewards:
+      - { stat: life.max, flat: 20 }
+
+  swamp_herbs:
+    kind: side
+    name: 苔姑的藥方
+    zone: swamp
+    giver: tai_gu
+    after: ch4_swamp
+    summary: 苔姑的藥方少了幾味藥草，只長在腐沼最髒的東西身上。
+    offer:
+      - 解藥熬好了，可是要撐過下一次毒水，還得再熬一鍋。
+      - 沼裡的東西身上會長一種藥草，從牠們身上採下來。六株。
+    stages:
+      - text: 採沼地藥草
+        collect: { zone: swamp, count: 6, item: 沼地藥草, chance: 0.15 }
+      - text: 把藥草交給苔姑
+        talk: tai_gu
+        lines:
+          - 這株長得好，吸了不少毒。
+          - 拿去。喝了以後，沼裡的毒就咬不太動你了。
+    rewards:
+      - { stat: resist.chaos, flat: 10 }
+
+  swamp_names:
+    kind: side
+    name: 沉在沼底的名字
+    zone: swamp
+    giver: tai_gu
+    after: ch4_swamp
+    summary: 沼底沉著很多被巫母餵大的東西。苔姑說，把牠們送走，水才會清。
+    offer:
+      - 巫母死了，她餵大的東西還在。
+      - 牠們以前都有名字，我記得幾個。送牠們走吧，六十隻。
+    stages:
+      - text: 在腐沼擊殺怪物
+        kill: { zone: swamp, count: 60 }
+      - text: 回去找苔姑
+        talk: tai_gu
+        lines:
+          - 水清了一點。你看，看得到底了。
+          - 好孩子。這是老太婆的一點心意。
+    rewards:
+      - { passive_points: 1 }
+
+  mountain_trial:
+    kind: side
+    name: 守山人的考驗
+    zone: mountain
+    giver: yue
+    after: ch5_mountain
+    summary: 守山人岳要看看，你能不能在山上活過一個晚上。
+    offer:
+      - 打倒撼地獸的人，我見過兩個。一個下山了，一個沒有。
+      - 山上有幾隻東西比撼地獸還難纏。打倒五隻，我就承認你。
+    stages:
+      - text: 打倒霜頂山脈的稀有怪
+        kill: { zone: mountain, count: 5, rarity: rare }
+      - text: 回去找岳
+        talk: yue
+        lines:
+          - 你還活著。那就是通過了。
+          - 守山人的規矩：通過考驗的人，山會記得。
+    rewards:
+      - { passive_points: 1 }
+
+  mountain_letters:
+    kind: side
+    name: 冰封的信
+    zone: mountain
+    giver: yue
+    after: ch5_mountain
+    summary: 沒能下山的人，在冰裡留下了寫給家人的信。
+    offer:
+      - 每年都有人凍死在路上，懷裡揣著寫給家人的信。
+      - 冰把信封住了，跟著屍體一起走。山上那些東西，有的身上還帶著。
+      - 帶五封回來。總有一天，押送船會把它們帶回去。
+    stages:
+      - text: 撿回冰封的信
+        collect: { zone: mountain, count: 5, item: 冰封的信, chance: 0.15 }
+      - text: 把信交給岳
+        talk: yue
+        lines:
+          - 這封的字我認得，是我師父的。
+          - 收下這個。選一種你最怕的東西，山會替你擋一點。
+    choose:
+      fire:
+        label: 火焰抗性 +10%
+        rewards:
+          - { stat: resist.fire, flat: 10 }
+      cold:
+        label: 冰冷抗性 +10%
+        rewards:
+          - { stat: resist.cold, flat: 10 }
+      lightning:
+        label: 閃電抗性 +10%
+        rewards:
+          - { stat: resist.lightning, flat: 10 }
+
+  # 營地：昇華（ascendancy.yml 的試煉）
+  trial_call:
+    kind: side
+    name: 熔爐的門
+    zone: camp
+    giver: ming_yi
+    requires: [ch3_ruins]
+    after: ch3_ruins
+    summary: 地圖裝置旁站著一個三百年前的星衛。她說，熔爐前的四道門還開著。
+    offer:
+      - 你從曜京回來了。身上有熔爐的灰——那種灰洗不掉。
+      - 想知道星衛是怎麼來的嗎？想知道，就聽我說完。
+    stages:
+      - text: 聽明夷說熔爐的門
+        talk: ming_yi
+        lines:
+          - 三百年前，陛下在熔爐前立了四道門，讓我們十二個星衛一道一道走過去，把星骸煉進身體。走出來的，就不再是凡人——我們叫它「昇華」。
+          - 爐監殷燼守著那四道門。熔爐炸了，門還在星骸的記憶裡，他也還在。
+          - 第一道門在曜京的餘燼裡。你打倒過那裡的督軍，門會為你開。跟我說一聲，我讓地圖裝置把它照出來。
+      - text: 完成第一試煉・餘燼
+        trial: ember
+      - text: 回營地找明夷
+        talk: ming_yi
+        lines:
+          - 你出來了，而且還是你自己。很好。
+          - 走過門的人，星骸會在身上留下兩道痕。你得先決定，讓它把你變成什麼——每種流放者都有兩條路。
+          - 選了，就不能回頭。跟我們一樣。

@@ -1,0 +1,57 @@
+# 平衡的參考角色與目標。遊戲內 /ec balance 用這裡的「參考角色」，照實際的傷害公式算每個等級：
+# 輸出、打死一隻同等級普通怪要幾秒（換算值與平均幾下）、被打一下掉幾 % 生命、每隻區域 Boss 要打多久，
+# 並給出建議值。monsters.yml 的 life、damage，skills.yml 的 spell_damage_growth，zones.yml 的 boss.life
+# 就是照這裡的目標算出來的。
+# 改完 /ec reload 再 /ec balance（完整報表寫在 plugins/ExileCore/balance-report.txt）。
+#
+# 參考角色 = 中等裝備：每個等級都穿著「那個物品等級能出的第 gear_tier 好的階級」的詞綴（數值取範圍中間），
+# 武器是那個物品等級的基底，技能寶石是角色能用的最高等級，輔助寶石照孔數與已經掉得到的階級、照順序掛，
+# 天賦用每級固定的加成估計。只算單體（範圍技能打一群時實際更快）。
+
+targets:
+  # 參考攻擊角色打死一隻同等級普通怪要幾秒（中間等比內插）：越後面越硬一點，裝備與配點的差別看得出來。
+  # 這是「生命 ÷ 每秒傷害」的換算值；實際一下打不死也要揮完整下，/ec balance 另外列出平均幾下打死
+  # （目前前期碎岩擊平均 1.2 下、約 0.75 秒，60 級約 2.5 下、約 1.5 秒）。
+  # 60 級以後是地圖（T1 = 61 … T16 = 84，終局最高 87）：中等裝備越來越吃力，好裝備的差別更明顯。
+  kill_seconds: { 1: 0.4, 60: 1.0, 84: 1.25, 100: 1.4 }
+  # 同等級普通怪打一下（減免前的平均），扣參考攻擊角色幾 % 最大生命
+  hit_percent: { 1: 5, 60: 8, 84: 9, 100: 10 }
+  # 參考法術角色的單體輸出是攻擊的幾倍（法術多半有範圍，單體低一點）
+  spell_vs_attack: 0.8
+  # 參考攻擊角色站著打區域 Boss 要幾秒（Boss 等級 = 區域最高等級；中間等比內插）。zones.yml 的 boss.life 照這個算
+  boss_seconds: { 12: 30, 60: 75, 84: 95, 100: 110 }
+
+reference:
+  gear_tier: 2                  # 1 = 那個物品等級能出的最好階級；2 = 第二好（中等裝備）
+  item_level_cap: 84            # 裝備的物品等級 = 角色等級，最高到這裡（T16 地圖的怪物等級：再高的角色也拿不到更好的裝備）
+  tree:
+    damage_per_level: 2         # 每級天賦給多少 % 增加傷害（只算跟技能有關的）
+    life_per_level: 1           # 每級天賦給多少 % 增加最大生命
+    attribute_per_level: 0.5    # 職業主屬性每級多多少（天賦＋裝備；2026-10 PoE2 天賦樹屬性點只有 +5）
+  life_affixes: { 1: 0, 5: 1, 15: 2, 30: 3 }        # 身上有幾條「+ 最大生命」詞綴（等級 → 條數）
+  support_sockets: { 1: 2, 15: 3, 30: 4, 45: 5 }    # 技能有幾個輔助孔（等級 → 孔數，鑿星石開的）
+
+  attack:
+    class: marauder
+    weapon: war_hammer
+    skill: boneshatter
+    gear:                       # 身上的傷害詞綴：from = 從幾級開始有
+      - { from: 1, affix: phys_inc }      # 武器（2026-10 PoE2 詞綴：本地的物理增加）
+      - { from: 1, affix: added_phys_local }    # 武器（本地的附加物理）
+      - { from: 5, affix: added_phys }    # 戒指
+      - { from: 10, affix: added_phys }   # 另一個戒指
+    supports: [added_fire, faster_attacks, heft, elemental_focus]
+
+  spell:
+    class: sorceress
+    weapon: wand
+    skill: fireball
+    gear:
+      - { from: 1, affix: spell_inc_weapon_wand }   # 魔杖（2026-10 PoE2：沒有「法術附加傷害」，改成增加與額外獲得）
+      - { from: 1, affix: fire_inc_weapon_wand }    # 魔杖
+      - { from: 5, affix: spell_inc }     # 項鍊
+      - { from: 5, affix: fire_inc }      # 戒指
+      - { from: 10, affix: extra_fire }   # 魔杖的後綴位（獲得傷害為額外火焰）
+      - { from: 5, affix: skill_level_spell }          # 魔杖：+法術技能等級（PoE2 法術主要靠這個）
+      - { from: 10, affix: skill_level_spell_amulet }  # 項鍊
+    supports: [faster_casting, faster_projectiles, concentrated_effect, elemental_focus, pierce]

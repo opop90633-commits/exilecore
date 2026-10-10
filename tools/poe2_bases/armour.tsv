@@ -1,0 +1,440 @@
+category	attr	name_en	name_zh	level	str	dex	int	armour	evasion	es	move_penalty	implicit
+body	str	Rusted Cuirass	生鏽胸甲					45			-0.05	
+body	str	Fur Plate	毛皮鎧甲	4	10			66			-0.05	
+body	str	Iron Cuirass	鍛鐵胸甲	11	21			115			-0.05	
+body	str	Raider Plate	俠客鎧甲	16	28			150			-0.05	
+body	str	Maraketh Cuirass	馬拉克斯胸甲	20	34			178			-0.05	
+body	str	Steel Plate	堅鋼鎧甲	27	45			228			-0.05	
+body	str	Full Plate	連身鎧甲	33	54			270			-0.05	
+body	str	Vaal Cuirass	瓦爾胸甲	37	60			298			-0.05	
+body	str	Juggernaut Plate	勇士鎧甲	45	72			355			-0.05	
+body	str	Barbarian Plate	野蠻人鎧甲	45	72			355			-0.05	
+body	str	Rugged Cuirass	堅實胸甲	48	77			376			-0.05	
+body	str	Chieftain Cuirass	酋長胸甲	50	80			390			-0.05	
+body	str	Sandsworn Cuirass	沙誓胸甲	51	82			397			-0.05	
+body	str	Colosseum Plate	決鬥之鎧	52	83			404			-0.05	
+body	str	Elegant Plate	優雅鎧甲	54	86			418			-0.05	
+body	str	Champion Cuirass	冠軍胸甲	58	92			446			-0.05	
+body	str	Heavy Plate	重型鎧甲	59	94			453			-0.05	
+body	str	Stone Cuirass	岩石胸甲	62	98			474			-0.05	
+body	str	Glorious Plate	榮耀戰鎧	65	121			496			-0.05	
+body	str	Soldier Cuirass	士兵胸甲	65	121			570			-0.05	
+body	str	Conqueror Plate	征服者鎧甲	68	121			496			-0.05	增加(30—40)%暈眩門檻
+body	str	Ornate Plate	華麗鎧甲	70	121			496			-0.05	每秒回復(1.5—2.5)%生命
+body	str	Abyssal Cuirass	深淵胸甲	73	121			496			-0.05	每秒回復(1.5—2.5)%生命
+body	str	Utzaal Cuirass	奧札爾胸甲	75	121			496			-0.05	增加(30—40)%暈眩門檻
+body	str	Warlord Cuirass	總督胸甲	80	121			496			-0.05	+(15—25)%的護甲值也會套用至元素傷害
+body	dex	Leather Vest	皮革背心						30		-0.03	
+body	dex	Quilted Vest	襯墊背心	4		10			49		-0.03	
+body	dex	Pathfinder Coat	追獵者外套	11		21			96		-0.03	
+body	dex	Shrouded Vest	籠罩背心	16		28			128		-0.03	
+body	dex	Rhoahide Coat	恐喙鳥皮外套	22		37			168		-0.03	
+body	dex	Studded Vest	鑲釘背心	26		43			194		-0.03	
+body	dex	Scout's Vest	斥侯背心	33		54			240		-0.03	
+body	dex	Serpentscale Coat	蛇鱗外套	36		59			260		-0.03	
+body	dex	Corsair Vest	海盜背心	45		72			320		-0.03	
+body	dex	Patchwork Vest	拼湊背心	45		72			320		-0.03	
+body	dex	Hunting Coat	狩獵外套	48		77			339		-0.03	
+body	dex	Smuggler Coat	走私者外套	51		82			359		-0.03	
+body	dex	Riding Coat	騎乘外套	51		82			359		-0.03	
+body	dex	Strider Vest	疾行者背心	52		83			366		-0.03	
+body	dex	Layered Vest	分層背心	54		86			379		-0.03	
+body	dex	Hardleather Coat	硬皮外套	56		89			392		-0.03	
+body	dex	Runner Vest	奔走者背心	59		94			412		-0.03	
+body	dex	Lizardscale Coat	蜥蜴鱗外套	62		98			432		-0.03	
+body	dex	Exquisite Vest	精美背心	65		121			451		-0.03	
+body	dex	Swiftstalker Coat	迅疾潛獵者外套	65		121			451		-0.03	減少(20—30)%你身上的減益效果緩速程度
+body	dex	Mail Coat	鎖甲外套	68		121			451		-0.03	減少(20—30)%你身上的減益效果緩速程度
+body	dex	Slipstrike Vest	快速打擊背心	70		121			519		-0.03	
+body	dex	Armoured Vest	裝甲背心	73		121			451		-0.03	增加(30—40)%元素異常狀態門檻
+body	dex	Wyrmscale Coat	龍鱗外套	75		121			451		-0.03	增加(30—40)%元素異常狀態門檻
+body	dex	Corsair Coat	海盜外套	80		121			451		-0.03	增加5%移動速度
+body	int	Tattered Robe	殘破長袍							28	-0.03	
+body	int	Feathered Robe	羽毛長袍	5			11			35	-0.03	
+body	int	Hexer's Robe	咒術師長袍	11			21			45	-0.03	
+body	int	Bone Raiment	骸骨之衣	16			28			54	-0.03	
+body	int	Silk Robe	絲質之袍	22			37			64	-0.03	
+body	int	Keth Raiment	凱斯之衣	28			47			74	-0.03	
+body	int	Votive Raiment	還願之衣	33			54			83	-0.03	
+body	int	Altar Robe	祭壇長袍	40			65			95	-0.03	
+body	int	Elementalist Robe	元素使長袍	45			72			103	-0.03	
+body	int	Avian Robe	飛羽長袍	45			72			103	-0.03	
+body	int	Cursespeaker's Robe	詛咒語者長袍	48			77			109	-0.03	
+body	int	Mystic Raiment	神秘之衣	49			78			110	-0.03	
+body	int	Luxurious Robe	奢華長袍	51			82			114	-0.03	
+body	int	Imperial Robe	帝國長袍	52			83			115	-0.03	
+body	int	River Raiment	河流之衣	54			86			119	-0.03	
+body	int	Plated Raiment	鎧甲之衣	58			92			126	-0.03	
+body	int	Adherent's Raiment	信徒之衣	59			94			127	-0.03	
+body	int	Ceremonial Robe	儀式長袍	62			98			132	-0.03	
+body	int	Havoc Raiment	禍害之衣	65			121			138	-0.03	
+body	int	Vile Robe	惡毒長袍	65			121			171	-0.03	
+body	int	Enlightened Robe	啟蒙長袍	68			121			138	-0.03	增加(40—50)%魔力回復率
+body	int	Flowing Raiment	奔流之衣	70			121			153	-0.03	增加(40—50)%魔力回復率
+body	int	Arcane Raiment	奧術之衣	73			121			138	-0.03	增加(20—25)%能量護盾充能率
+body	int	Sacramental Robe	聖禮長袍	75			121			153	-0.03	增加(20—25)%能量護盾充能率
+body	int	Feathered Raiment	羽絨之衣	80			121			153	-0.03	生命值所受的(5—10)%傷害由魔力扣除
+body	str_dex	Chain Mail	鎖鍊鎖甲					25	16		-0.04	
+body	str_dex	Rogue Armour	盜賊護甲	11	13	13		63	53		-0.04	
+body	str_dex	Vagabond Armour	流浪者護甲	16	17	17		83	71		-0.04	
+body	str_dex	Cloaked Mail	斗篷鎖甲	26	25	25		121	107		-0.04	
+body	str_dex	Explorer Armour	探索者護甲	33	31	31		149	132		-0.04	
+body	str_dex	Scale Mail	鱗片鎖甲	37	34	34		164	147		-0.04	
+body	str_dex	Knight Armour	騎士護甲	45	41	41		195	176		-0.04	
+body	str_dex	Ring Mail	鐵環鎖甲	45	41	41		195	176		-0.04	
+body	str_dex	Scoundrel Armour	惡棍護甲	48	43	43		207	187		-0.04	
+body	str_dex	Ancestral Mail	先祖鎖甲	50	44	44		214	194		-0.04	
+body	str_dex	Wanderer Armour	漫遊者護甲	51	45	45		218	197		-0.04	
+body	str_dex	Lamellar Mail	分層鎖甲	52	46	46		222	201		-0.04	
+body	str_dex	Mantled Mail	披風鎖甲	54	48	48		230	208		-0.04	
+body	str_dex	Gladiator Armour	衛士護甲	58	51	51		245	223		-0.04	
+body	str_dex	Trailblazer Armour	開拓者護甲	59	52	52		249	226		-0.04	
+body	str_dex	Golden Mail	耀金鎖甲	62	54	54		261	237		-0.04	
+body	str_dex	Heroic Armour	英雄護甲	65	67	67		273	248		-0.04	+(60—80)最大生命
+body	str_dex	Dastard Armour	惡徒護甲	65	67	67		303	276		-0.04	+(60—80)最大生命
+body	str_dex	Tournament Mail	競技鎖甲	68	67	67		273	248		-0.04	+(20—25)%火焰抗性
+body	str_dex	Tournament Mail	競技鎖甲	68	67	67		273	248		-0.04	+(20—25)%冰冷抗性
+body	str_dex	Tournament Mail	競技鎖甲	68	67	67		273	248		-0.04	+(20—25)%閃電抗性
+body	str_dex	Shrouded Mail	遮蔽鎖甲	70	67	67		273	248		-0.04	+(20—25)%火焰抗性
+body	str_dex	Shrouded Mail	遮蔽鎖甲	70	67	67		273	248		-0.04	+(20—25)%冰冷抗性
+body	str_dex	Shrouded Mail	遮蔽鎖甲	70	67	67		273	248		-0.04	+(20—25)%閃電抗性
+body	str_dex	Slayer Armour	處刑者護甲	73	67	67		273	248		-0.04	
+body	str_dex	Death Mail	死亡鎖甲	75	67	67		313	285		-0.04	
+body	str_dex	Thane Mail	領主鎖甲	80	67	67		273	248		-0.04	對你的擊中減少(15—25)%暴擊傷害加成
+body	str_int	Pilgrim Vestments	朝聖者法衣					25		16	-0.04	
+body	str_int	Pelt Mantle	堅皮披肩	10	12		12	59		24	-0.04	
+body	str_int	Mail Vestments	鎖甲法衣	16	17		17	83		30	-0.04	
+body	str_int	Shaman Mantle	薩滿披肩	28	26		26	129		41	-0.04	
+body	str_int	Ironclad Vestments	鐵甲法衣	33	31		31	149		46	-0.04	
+body	str_int	Sacrificial Mantle	獻祭披肩	36	33		33	160		48	-0.04	
+body	str_int	Cleric Vestments	教士法衣	45	41		41	195		57	-0.04	
+body	str_int	Templar Vestments	聖騎士法衣	45	41		41	195		57	-0.04	
+body	str_int	Bearskin Mantle	熊皮披肩	48	43		43	207		60	-0.04	
+body	str_int	Tideseer Mantle	潮汐先知披肩	51	45		45	218		63	-0.04	
+body	str_int	Chain Vestments	鎖鏈法衣	51	45		45	218		63	-0.04	
+body	str_int	Gilded Vestments	鍍金法衣	52	46		46	222		63	-0.04	
+body	str_int	Venerated Mantle	崇敬披肩	54	48		48	230		65	-0.04	
+body	str_int	Occultist Mantle	秘術披肩	54	48		48	230		65	-0.04	
+body	str_int	Plated Vestments	鎧甲法衣	59	52		52	249		70	-0.04	
+body	str_int	Heartcarver Mantle	雕心者披肩	62	54		54	261		73	-0.04	
+body	str_int	Revered Vestments	尊敬法衣	65	67		67	273		76	-0.04	+1%最大全元素抗性
+body	str_int	Wolfskin Mantle	狼皮披肩	65	67		67	313		87	-0.04	
+body	str_int	Corvus Mantle	烏鴉披肩	68	67		67	273		76	-0.04	+(20—30)精魂
+body	str_int	Conjurer Mantle	巫術師披肩	70	67		67	273		76	-0.04	+(20—30)精魂
+body	str_int	Zenith Vestments	極盛法衣	73	67		67	273		76	-0.04	
+body	str_int	Death Mantle	死亡披肩	75	67		67	273		76	-0.04	+1%最大全元素抗性
+body	str_int	Seastorm Mantle	海洋風暴披肩	80	67		67	273		76	-0.04	承受的(8—14)%傷害補償為生命
+body	dex_int	Hermit Garb	隱士裝束						16	16	-0.03	
+body	dex_int	Waxed Jacket	打蠟外衣	11		13	13		53	25	-0.03	
+body	dex_int	Marabout Garb	修士裝束	16		17	17		71	30	-0.03	
+body	dex_int	Wayfarer Jacket	旅人外衣	28		26	26		114	41	-0.03	
+body	dex_int	Anchorite Garb	隱者裝束	33		31	31		132	46	-0.03	
+body	dex_int	Scalper's Jacket	投機者外衣	39		35	35		154	51	-0.03	
+body	dex_int	Scoundrel Jacket	流氓外衣	45		41	41		176	57	-0.03	
+body	dex_int	Ascetic Garb	苦行者裝束	45		41	41		176	57	-0.03	
+body	dex_int	Oiled Jacket	上油外衣	48		43	43		187	60	-0.03	
+body	dex_int	Ascetic Garb	苦行者裝束	51		45	45		197	63	-0.03	
+body	dex_int	Evangelist Garb	傳道者裝束	51		45	45		197	63	-0.03	
+body	dex_int	Clandestine Jacket	隱蔽外衣	52		46	46		201	63	-0.03	
+body	dex_int	Itinerant Jacket	遊歷者外衣	54		48	48		208	65	-0.03	
+body	dex_int	Monastic Garb	僧侶裝束	56		50	50		216	67	-0.03	
+body	dex_int	Hatungo Garb	靈語者裝束	59		52	52		226	70	-0.03	
+body	dex_int	Hawker's Jacket	飼鷹者外衣	62		54	54		237	73	-0.03	
+body	dex_int	Torment Jacket	苦難外衣	65		67	67		248	76	-0.03	
+body	dex_int	Sleek Jacket	光滑外衣	65		67	67		285	87	-0.03	
+body	dex_int	Devout Garb	虔誠裝束	68		67	67		248	76	-0.03	+(7—13)%混沌抗性
+body	dex_int	Rambler Jacket	漫步者外衣	70		67	67		248	76	-0.03	+(7—13)%混沌抗性
+body	dex_int	Primal Markings	野性標記	70		67	67		268	82	-0.03	
+body	dex_int	Assassin Garb	刺客裝束	73		67	67		248	76	-0.03	增加5%移動速度
+body	dex_int	Falconer's Jacket	訓鷹者外衣	75		67	67		248	76	-0.03	增加5%移動速度
+body	dex_int	Austere Garb	樸素裝束	80		67	67		248	76	-0.03	減少(10—15)%身上元素異常狀態時間
+helmet	str	Rusted Greathelm	鏽蝕巨盔					29				
+helmet	str	Soldier Greathelm	士兵巨盔	12	19			80				
+helmet	str	Wrapped Greathelm	纏繞巨盔	16	25			99				
+helmet	str	Spired Greathelm	尖頂巨盔	27	40			149				
+helmet	str	Elite Greathelm	菁英巨盔	33	48			177				
+helmet	str	Warrior Greathelm	戰士巨盔	36	52			191				
+helmet	str	Commander Greathelm	指揮官巨盔	45	64			233				
+helmet	str	Corroded Greathelm	腐蝕巨盔	45	64			233				
+helmet	str	Mercenary Greathelm	傭兵巨盔	48	69			246				
+helmet	str	Fierce Greathelm	兇猛巨盔	51	73			260				
+helmet	str	Homeguard Greathelm	家園守衛巨盔	51	73			260				
+helmet	str	Sentinel Greathelm	守望巨盔	52	74			265				
+helmet	str	Elegant Greathelm	優雅巨盔	54	77			274				
+helmet	str	Goliath Greathelm	巨靈巨盔	57	81			288				
+helmet	str	Noble Greathelm	高貴巨盔	59	83			297				
+helmet	str	Guardian Greathelm	守護者巨盔	65	91			325				
+helmet	str	Warmonger Greathelm	狂戰者巨盔	65	91			325				
+helmet	str	Masked Greathelm	假面巨盔	70	99			341				
+helmet	str	Paragon Greathelm	楷模巨盔	75	107			357				
+helmet	str	Imperial Greathelm	帝國巨盔	80	115			374				
+helmet	dex	Shabby Hood	破舊兜帽						19			
+helmet	dex	Felt Cap	毛氈便帽	10		17			58			
+helmet	dex	Lace Hood	綁帶兜帽	16		25			84			
+helmet	dex	Swathed Cap	裹頭便帽	26		38			127			
+helmet	dex	Hunter Hood	獵者之兜	33		48			158			
+helmet	dex	Viper Cap	毒蛇便帽	38		54			179			
+helmet	dex	Corsair Cap	海盜便帽	45		64			210			
+helmet	dex	Rotted Hood	破爛兜帽	45		64			210			
+helmet	dex	Wool Cap	羊毛便帽	48		69			222			
+helmet	dex	Leatherbound Hood	皮革兜帽	50		71			231			
+helmet	dex	Narrow Hood	狹窄兜帽	51		73			235			
+helmet	dex	Velvet Cap	天鵝絨便帽	52		74			240			
+helmet	dex	Wrapped Cap	纏繞便帽	54		77			248			
+helmet	dex	Covert Hood	隱蔽兜帽	56		79			257			
+helmet	dex	Deerstalker Hood	獵鹿者之兜	59		83			270			
+helmet	dex	Armoured Cap	裝甲便帽	65		91			296			
+helmet	dex	Woven Cap	編織便帽	65		91			296			
+helmet	dex	Desert Cap	沙漠便帽	70		99			311			
+helmet	dex	Trapper Hood	捕獵者之兜	75		107			326			
+helmet	dex	Freebooter Cap	劫掠者便帽	80		115			340			
+helmet	int	Twig Circlet	嫩枝頭環							19		
+helmet	int	Wicker Tiara	枝條頭冠	10			17			29		
+helmet	int	Beaded Circlet	串珠頭環	16			25			35		
+helmet	int	Chain Tiara	鎖鍊頭冠	26			38			47		
+helmet	int	Feathered Tiara	羽毛頭冠	33			48			54		
+helmet	int	Gold Circlet	黃金頭環	40			58			62		
+helmet	int	Vermeil Circlet	鍍金頭環	45			64			68		
+helmet	int	Druidic Circlet	德魯伊頭環	45			64			68		
+helmet	int	Avian Tiara	飛羽頭冠	48			69			71		
+helmet	int	Jade Tiara	翠玉頭冠	50			71			73		
+helmet	int	Desert Circlet	沙漠頭環	51			73			75		
+helmet	int	Noble Circlet	貴族頭環	52			74			76		
+helmet	int	Sandsworn Tiara	沙誓頭冠	54			77			78		
+helmet	int	Twilight Tiara	暮光頭冠	58			82			82		
+helmet	int	Jungle Tiara	叢林頭冠	59			83			84		
+helmet	int	Magus Tiara	瑪格思頭冠	65			91			90		
+helmet	int	Skycrown Tiara	天冠頭冠	65			91			90		
+helmet	int	Sorcerous Tiara	巫術頭冠	70			99			97		
+helmet	int	Kamasan Tiara	卡瑪薩頭冠	75			107			103		
+helmet	int	Ancestral Tiara	先祖頭冠	80			115			109		
+helmet	str_dex	Brimmed Helm	邊緣之盔	5	7	7		26	20			
+helmet	str_dex	Guarded Helm	警惕之盔	11	11	11		42	34			
+helmet	str_dex	Visored Helm	假面之盔	16	15	15		54	46			
+helmet	str_dex	Cowled Helm	斗篷之盔	26	22	22		80	70			
+helmet	str_dex	Shielded Helm	庇護之盔	33	27	27		97	87			
+helmet	str_dex	Closed Helm	緊閉之盔	45	36	36		128	115			
+helmet	str_dex	Domed Helm	圓頂之盔	45	36	36		128	115			
+helmet	str_dex	Engraved Helm	紋刻之盔	48	38	38		136	122			
+helmet	str_dex	Soldier Helm	士兵之盔	51	40	40		143	129			
+helmet	str_dex	Decorated Helm	裝飾之盔	52	41	41		146	132			
+helmet	str_dex	Cabalist Helm	秘術師之盔	54	42	42		151	137			
+helmet	str_dex	Cassis Helm	卡賽斯之盔	59	46	46		163	149			
+helmet	str_dex	Gallant Helm	無畏之盔	65	50	50		179	163			
+helmet	str_dex	Ancient Visor	遠古護面盔	65	59	59		179	163			
+helmet	str_dex	Warded Helm	保衛之盔	65	50	50		179	163			
+helmet	str_dex	Cryptic Helm	隱秘之盔	70	54	54		188	171			
+helmet	str_dex	Champion Helm	勇士之盔	75	59	59		197	179			
+helmet	str_dex	Gladiatorial Helm	衛士之盔	80	63	63		206	187			
+helmet	str_int	Iron Crown	鍛鐵之冠	5	7		7	26		13		
+helmet	str_int	Horned Crown	犄角之冠	10	10		10	39		16		
+helmet	str_int	Cultist Crown	教徒之冠	16	15		15	54		19		
+helmet	str_int	Martyr Crown	殉難之冠	28	23		23	85		27		
+helmet	str_int	Heavy Crown	沉重之冠	33	27		27	97		30		
+helmet	str_int	Spiritbone Crown	魂骨之冠	45	36		36	128		37		
+helmet	str_int	Mailed Crown	鎖甲之冠	45	36		36	128		37		
+helmet	str_int	Forest Crown	森林之冠	48	38		38	136		39		
+helmet	str_int	Zealot Crown	狂熱之冠	51	40		40	143		41		
+helmet	str_int	Lavish Crown	奢華之冠	52	41		41	146		42		
+helmet	str_int	Hallowed Crown	聖潔之冠	54	42		42	151		43		
+helmet	str_int	Inquisitor Crown	判官之冠	59	46		46	163		46		
+helmet	str_int	Archon Crown	統治者之冠	65	50		50	179		50		
+helmet	str_int	Tenebrous Crown	幽暗寶冠	65	59		59	179		50		
+helmet	str_int	Druidic Crown	德魯伊之冠	65	50		50	179		50		
+helmet	str_int	Saintly Crown	聖徒之冠	70	54		54	188		52		
+helmet	str_int	Divine Crown	神聖之冠	75	59		59	197		55		
+helmet	str_int	Cryptic Crown	隱祕之冠	80	63		63	206		57		
+helmet	dex_int	Hewn Mask	粗製之面	5		7	7		20	13		
+helmet	dex_int	Face Mask	護臉之面	10		10	10		32	16		
+helmet	dex_int	Hooded Mask	風帽之面	16		15	15		46	19		
+helmet	dex_int	Veiled Mask	隱匿之面	28		23	23		75	27		
+helmet	dex_int	Tribal Mask	部落之面	33		27	27		87	30		
+helmet	dex_int	Solid Mask	堅固之面	45		36	36		115	37		
+helmet	dex_int	Oak Mask	橡木之面	45		36	36		115	37		
+helmet	dex_int	Bandit Mask	盜賊之面	48		38	38		122	39		
+helmet	dex_int	Skulking Mask	潛伏之面	51		40	40		129	41		
+helmet	dex_int	Shaded Mask	陰影之面	52		41	41		132	42		
+helmet	dex_int	Pariah Mask	輕蔑之面	54		42	42		137	43		
+helmet	dex_int	Avian Mask	飛羽之面	59		46	46		149	46		
+helmet	dex_int	Death Mask	死亡之面	65		50	50		163	50		
+helmet	dex_int	Brigand Mask	強盜之面	65		50	50		163	50		
+helmet	dex_int	Faridun Mask	法里登之面	70		54	54		171	52		
+helmet	dex_int	Soaring Mask	翱翔之面	75		59	59		179	55		
+helmet	dex_int	Grinning Mask	獰笑之面	80		63	63		187	57		
+gloves	str	Stocky Mitts	結實長手套					15				
+gloves	str	Riveted Mitts	鉚接長手套	11	16			38				
+gloves	str	Tempered Mitts	淬鍊長手套	16	22			49				
+gloves	str	Bolstered Mitts	加固長手套	27	35			75				
+gloves	str	Moulded Mitts	鑄模長手套	33	42			89				
+gloves	str	Detailed Mitts	精細長手套	45	56			116				
+gloves	str	Plated Mitts	鎧甲長手套	45	56			116				
+gloves	str	Elegant Mitts	優雅長手套	51	64			130				
+gloves	str	Titan Mitts	泰坦長手套	52	64			132				
+gloves	str	Ancient Mitts	遠古長手套	54	67			137				
+gloves	str	Feathered Mitts	羽毛長手套	59	73			149				
+gloves	str	Grand Mitts	宏偉長手套	65	80			162				
+gloves	str	Knightly Mitts	騎士長手套	65	80			162				
+gloves	str	Ornate Mitts	華麗長手套	70	87			171				
+gloves	str	Vaal Mitts	瓦爾長手套	75	94			179				
+gloves	str	Massive Mitts	巨型長手套	80	101			187				
+gloves	dex	Suede Bracers	麂皮護腕						10			
+gloves	dex	Firm Bracers	穩固護腕	11		16			31			
+gloves	dex	Bound Bracers	緊縛護腕	16		22			42			
+gloves	dex	Sectioned Bracers	分段護腕	28		36			68			
+gloves	dex	Spined Bracers	棘刺護腕	33		42			79			
+gloves	dex	Fine Bracers	精良護腕	45		56			105			
+gloves	dex	Hunting Bracers	狩獵護腕	45		56			105			
+gloves	dex	Swift Bracers	迅疾護腕	51		64			118			
+gloves	dex	Hardened Bracers	硬化護腕	52		64			120			
+gloves	dex	Refined Bracers	精製護腕	54		67			124			
+gloves	dex	Spiked Bracers	尖刺護腕	59		73			135			
+gloves	dex	Engraved Bracers	紋刻護腕	65		80			148			
+gloves	dex	Stalking Bracers	潛獵護腕	65		80			148			
+gloves	dex	Grand Bracers	宏偉護腕	70		87			155			
+gloves	dex	Barbed Bracers	鉤刺護腕	75		94			163			
+gloves	dex	Polished Bracers	亮澤護腕	80		101			170			
+gloves	int	Torn Gloves	撕裂手套							9		
+gloves	int	Sombre Gloves	暗淡手套	12			17			15		
+gloves	int	Stitched Gloves	縫合手套	16			22			18		
+gloves	int	Jewelled Gloves	寶石手套	26			34			23		
+gloves	int	Intricate Gloves	精妙手套	33			42			27		
+gloves	int	Pauascale Gloves	海靈鱗手套	45			56			34		
+gloves	int	Ominous Gloves	惡兆手套	45			56			34		
+gloves	int	Embellished Gloves	點綴手套	51			64			37		
+gloves	int	Embroidered Gloves	刺繡手套	52			64			38		
+gloves	int	Baroque Gloves	巴洛克手套	54			67			39		
+gloves	int	Gold Gloves	黃金手套	59			73			42		
+gloves	int	Adorned Gloves	奢華手套	65			80			45		
+gloves	int	Grim Gloves	冷酷手套	65			80			45		
+gloves	int	Opulent Gloves	奢靡手套	70			87			48		
+gloves	int	Vaal Gloves	瓦爾手套	75			94			51		
+gloves	int	Sirenscale Gloves	海妖鱗手套	80			101			54		
+gloves	str_dex	Ringmail Gauntlets	環鎖護手	6	6	6		14	11			
+gloves	str_dex	Layered Gauntlets	層板護手	16	13	13		27	23			
+gloves	str_dex	Doubled Gauntlets	雙層護手	33	24	24		49	43			
+gloves	str_dex	Plate Gauntlets	鎧甲護手	45	32	32		64	58			
+gloves	str_dex	Ironmail Gauntlets	鐵鎖護手	45	32	32		64	58			
+gloves	str_dex	Captain Gauntlets	隊長護手	51	35	35		72	65			
+gloves	str_dex	Burnished Gauntlets	拋光護手	52	36	36		73	66			
+gloves	str_dex	Zealot Gauntlets	狂熱護手	59	41	41		82	74			
+gloves	str_dex	Ornate Gauntlets	華麗護手	65	44	44		89	81			
+gloves	str_dex	Steelmail Gauntlets	鋼鎖護手	65	44	44		89	81			
+gloves	str_dex	Ancient Gauntlets	遠古護手	70	52	52		89	81			
+gloves	str_dex	Commander Gauntlets	指揮官護手	70	48	48		94	85			
+gloves	str_dex	Cultist Gauntlets	教徒護手	75	52	52		98	90			
+gloves	str_dex	Blacksteel Gauntlets	烏鐵護手	80	55	55		103	94			
+gloves	str_int	Rope Cuffs	繩索腕帶	5	6		6	13		6		
+gloves	str_int	Aged Cuffs	陳舊腕帶	16	13		13	27		10		
+gloves	str_int	Goldcast Cuffs	金鑄腕帶	33	24		24	49		15		
+gloves	str_int	Kalguuran Cuffs	卡爾葛腕帶	45	32		32	64		19		
+gloves	str_int	Braided Cuffs	編織腕帶	45	32		32	64		19		
+gloves	str_int	Heirloom Cuffs	家傳腕帶	51	35		35	72		21		
+gloves	str_int	Righteous Cuffs	正義腕帶	52	36		36	73		21		
+gloves	str_int	Ornate Cuffs	華麗腕帶	59	41		41	82		23		
+gloves	str_int	Signet Cuffs	徽印腕帶	65	44		44	89		25		
+gloves	str_int	Bound Cuffs	綑綁腕帶	65	44		44	89		25		
+gloves	str_int	Tethering Bands	解脫纏帶	65	55		55	98		27		
+gloves	str_int	Ancient Cuffs	遠古腕帶	70	48		48	89		25		
+gloves	str_int	Gleaming Cuffs	輝光腕帶	75	52		52	94		26		
+gloves	str_int	Adherent Cuffs	追隨者腕帶	80	55		55	98		27		
+gloves	dex_int	Gauze Wraps	紗布裹手	4		6	6		9	6		
+gloves	dex_int	Linen Wraps	麻布裹手	16		13	13		23	10		
+gloves	dex_int	Spiral Wraps	盤繞裹手	33		24	24		43	15		
+gloves	dex_int	Buckled Wraps	帶扣裹手	45		32	32		58	19		
+gloves	dex_int	Bandage Wraps	繃帶裹手	45		32	32		58	19		
+gloves	dex_int	Cambric Wraps	棉布裹手	51		35	35		65	21		
+gloves	dex_int	Furtive Wraps	隱秘裹手	52		36	36		66	21		
+gloves	dex_int	Adorned Wraps	裝飾裹手	59		41	41		74	23		
+gloves	dex_int	Utility Wraps	實用裹手	65		44	44		81	25		
+gloves	dex_int	War Wraps	戰爭裹手	65		44	44		94	29		
+gloves	dex_int	Elegant Wraps	優雅裹手	70		48	48		85	26		
+gloves	dex_int	Vaal Wraps	瓦爾裹手	75		52	52		90	27		
+gloves	dex_int	Secured Wraps	牢固裹手	80		55	55		94	29		
+boots	str	Rough Greaves	粗糙脛甲					22				
+boots	str	Iron Greaves	鐵鍛脛甲	11	17			57				
+boots	str	Bronze Greaves	青銅脛甲	16	23			74				
+boots	str	Trimmed Greaves	鑲邊脛甲	27	38			112				
+boots	str	Stone Greaves	岩石脛甲	33	45			133				
+boots	str	Reefsteel Greaves	礁鋼脛甲	45	60			174				
+boots	str	Plated Greaves	鎧甲脛甲	45	60			174				
+boots	str	Lionheart Greaves	獅心脛甲	51	68			195				
+boots	str	Monument Greaves	豐碑脛甲	52	69			199				
+boots	str	Elegant Greaves	優雅脛甲	54	72			206				
+boots	str	Carved Greaves	雕刻脛甲	59	78			223				
+boots	str	Totemic Greaves	圖騰脛甲	65	86			244				
+boots	str	Bulwark Greaves	壁壘脛甲	65	86			244				
+boots	str	Ornate Greaves	華麗脛甲	70	93			256				
+boots	str	Vaal Greaves	瓦爾脛甲	75	101			268				
+boots	str	Tasalian Greaves	塔薩里奧脛甲	80	108			280				
+boots	dex	Rawhide Boots	生皮長靴						15			
+boots	dex	Laced Boots	飾帶長靴	11		17			47			
+boots	dex	Embossed Boots	浮雕長靴	16		23			63			
+boots	dex	Steeltoe Boots	鐵趾長靴	28		39			102			
+boots	dex	Lizardscale Boots	蜥蜴鱗長靴	33		45			118			
+boots	dex	Flared Boots	閃耀長靴	45		60			157			
+boots	dex	Bound Boots	綑綁長靴	45		60			157			
+boots	dex	Sleek Boots	光滑長靴	51		68			177			
+boots	dex	Leatherplate Boots	皮甲長靴	52		69			180			
+boots	dex	Studded Boots	鑲釘長靴	54		72			186			
+boots	dex	Serpentscale Boots	蛇鱗長靴	59		78			203			
+boots	dex	Embroidered Boots	刺繡長靴	65		86			222			
+boots	dex	Cinched Boots	繫帶長靴	65		86			222			
+boots	dex	Cavalry Boots	騎兵長靴	70		93			233			
+boots	dex	Dragonscale Boots	龍鱗長靴	75		101			244			
+boots	dex	Drakeskin Boots	龍膚長靴	80		108			255			
+boots	int	Straw Sandals	乾草便鞋							14		
+boots	int	Wrapped Sandals	裹腳便鞋	11			17			22		
+boots	int	Lattice Sandals	格子便鞋	16			23			27		
+boots	int	Silk Slippers	絲綢便鞋	27			38			36		
+boots	int	Feathered Sandals	羽毛便鞋	33			45			41		
+boots	int	Flax Sandals	亞麻便鞋	45			60			51		
+boots	int	Laced Sandals	飾帶便鞋	45			60			51		
+boots	int	Bangled Sandals	鐲子便鞋	51			68			56		
+boots	int	Studded Sandals	鑲釘便鞋	52			69			57		
+boots	int	Elegant Slippers	優雅便鞋	54			72			58		
+boots	int	Dunerunner Sandals	沙丘行者便鞋	59			78			63		
+boots	int	Elaborate Sandals	精美便鞋	65			86			68		
+boots	int	Bound Sandals	綑綁便鞋	65			86			68		
+boots	int	Luxurious Slippers	奢華便鞋	70			93			73		
+boots	int	Sandsworn Sandals	沙誓便鞋	75			101			78		
+boots	int	Sekhema Sandals	絲克瑪便鞋	80			108			83		
+boots	str_dex	Mail Sabatons	鎖甲鎧靴	6	7	7		22	17			
+boots	str_dex	Braced Sabatons	加固鎧靴	16	14	14		41	35			
+boots	str_dex	Stacked Sabatons	疊層鎧靴	33	26	26		73	65			
+boots	str_dex	Covered Sabatons	遮蓋鎧靴	45	34	34		96	86			
+boots	str_dex	Soldiering Sabatons	軍旅鎧靴	45	34	34		96	86			
+boots	str_dex	Goldwork Sabatons	金刺繡鎧靴	51	38	38		107	97			
+boots	str_dex	Flexile Sabatons	易曲鎧靴	52	38	38		109	99			
+boots	str_dex	Bastion Sabatons	堅堡鎧靴	59	44	44		123	111			
+boots	str_dex	Bold Sabatons	醒目鎧靴	65	47	47		134	122			
+boots	str_dex	Veteran Sabatons	老兵鎧靴	65	47	47		134	122			
+boots	str_dex	Noble Sabatons	高貴鎧靴	70	51	51		141	128			
+boots	str_dex	Fortress Sabatons	要塞鎧靴	75	56	56		147	134			
+boots	str_dex	Blacksteel Sabatons	烏鋼鎧靴	80	59	59		154	140			
+boots	str_int	Padded Leggings	襯墊護腿	5	7		7	20		10		
+boots	str_int	Secured Leggings	牢固護腿	16	14		14	41		15		
+boots	str_int	Pelt Leggings	堅皮護腿	33	26		26	73		22		
+boots	str_int	Weaver Leggings	編織者護腿	45	34		34	96		28		
+boots	str_int	Adherent Leggings	信徒護腿	45	34		34	96		28		
+boots	str_int	Bound Leggings	綑綁護腿	51	38		38	107		31		
+boots	str_int	Gilt Leggings	鍍金護腿	52	38		38	109		31		
+boots	str_int	Shamanistic Leggings	薩滿護腿	59	44		44	123		34		
+boots	str_int	Pious Leggings	虔誠護腿	65	47		47	134		37		
+boots	str_int	Ancient Leggings	遠古護腿	65	56		56	134		37		
+boots	str_int	Faithful Leggings	信仰護腿	65	47		47	134		37		
+boots	str_int	Apostle Leggings	使徒護腿	70	51		51	134		37		
+boots	str_int	Warlock Leggings	術士護腿	75	56		56	134		37		
+boots	str_int	Cryptic Leggings	隱祕護腿	80	59		59	134		37		
+boots	dex_int	Frayed Shoes	磨損輕鞋	5		7	7		15	10		
+boots	dex_int	Threaded Shoes	縫紉輕鞋	16		14	14		35	15		
+boots	dex_int	Hunting Shoes	狩獵輕鞋	33		26	26		65	22		
+boots	dex_int	Steelpoint Shoes	鋼尖輕鞋	45		34	34		86	28		
+boots	dex_int	Wayfarer Shoes	旅行者輕鞋	45		34	34		86	28		
+boots	dex_int	Silverbuckled Shoes	銀扣輕鞋	51		38	38		97	31		
+boots	dex_int	Velour Shoes	絲絨輕鞋	52		38	38		99	31		
+boots	dex_int	Treerunner Shoes	樹行者輕鞋	59		44	44		111	34		
+boots	dex_int	Bladed Shoes	片狀輕鞋	65		47	47		122	37		
+boots	dex_int	Wanderer Shoes	漫遊者輕鞋	65		47	47		122	37		
+boots	dex_int	Charmed Shoes	護符輕鞋	70		51	51		128	39		
+boots	dex_int	Quickslip Shoes	速行輕鞋	75		56	56		134	41		
+boots	dex_int	Daggerfoot Shoes	捷足輕鞋	80		59	59		140	43		

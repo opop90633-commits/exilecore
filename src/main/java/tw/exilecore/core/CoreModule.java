@@ -23,15 +23,20 @@ public final class CoreModule implements Module {
         return "core";
     }
 
+    private tw.exilecore.core.config.Settings.Storage connected;
+
     @Override
     public void enable() throws Exception {
         database.connect(plugin.settings().storage());
+        connected = plugin.settings().storage();
     }
 
     @Override
-    public void reload() throws Exception {
-        // 設定可能改了資料庫種類或位址，重載時重新連線
-        database.connect(plugin.settings().storage());
+    public void reload() {
+        // 重載時不重新連線：記憶體裡的角色、倉庫、市集都是這個資料庫的，中途換資料庫會對不上（還在排隊的存檔也可能亂掉）
+        if (!plugin.settings().storage().equals(connected)) {
+            plugin.getSLF4JLogger().warn("config.yml 的 storage 改了：要重新啟動伺服器才會換資料庫（/ec reload 不會換）");
+        }
     }
 
     @Override

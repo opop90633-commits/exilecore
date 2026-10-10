@@ -1,0 +1,90 @@
+# 藥劑（階段 3 批次 2，機制照 PoE2：只有生命與魔力兩種，名稱是自己的）。改完在遊戲內 /ec reload。
+#
+# 藥劑放在快捷欄的「藥劑欄」：照 PoE2，一格生命藥劑（紅）、一格魔力藥劑（藍），按那個數字鍵就喝，手上拿的武器不會換掉。
+# 藥劑欄只能放對應的那種藥劑；空著的時候那格會出現一個空瓶提示，撿到或買到藥劑時那格是空的就自動放進去。
+# 喝一次用掉 per_use 點充能，在 duration 秒內慢慢回復 recovery；回滿了效果就結束（PoE 規則）。
+# 殺怪給藥劑欄裡的藥劑充能；回營地、碰到檢查點、死掉重生時補滿。充能畫在物品的耐久條上。
+
+settings:
+  # 藥劑欄：快捷欄的第幾格（1–8，至少留一格放武器），第一個是生命藥劑欄、第二個是魔力藥劑欄。
+  # 新角色的武器放在第一個不是藥劑欄的格子。
+  slots: [1, 2]
+  # 殺一隻怪，藥劑欄裡的每瓶藥劑充幾點
+  charges_per_kill: { normal: 1, magic: 2, rare: 5, unique: 10 }
+  # 站在同一個檢查點旁邊，多久才會再補滿一次（秒）
+  checkpoint_refill_seconds: 60
+  # 同一格按太快（例如用滾輪滾過藥劑欄）不會連喝（tick，20 = 1 秒）
+  use_cooldown_ticks: 8
+  # 新角色拿到的藥劑（依序放進藥劑欄）
+  starter: [crude_life_flask, crude_mana_flask]
+
+# 基底：kind life／mana、level 需求等級（也是從幾級的怪物開始掉）、recovery 回復量、duration 秒數、
+# charges 充能上限、per_use 每次用掉的充能。前九階照 PoE2 的九階藥劑；熔星（68 級，T7 地圖起）、
+# 星骸（80 級，T14 地圖起）兩階是等級上限改成 100 時加的。
+# 怪物掉落時，生命與魔力各半，從需求等級 ≤ 怪物等級的基底裡最高的三種挑一種。
+bases:
+  crude_life_flask:         { name: 粗製生命藥劑, kind: life, level: 1,  recovery: 50,  duration: 3.0, charges: 60, per_use: 10 }
+  life_flask:               { name: 生命藥劑,     kind: life, level: 4,  recovery: 90,  duration: 5.0, charges: 65, per_use: 10 }
+  fine_life_flask:          { name: 上等生命藥劑, kind: life, level: 10, recovery: 150, duration: 4.0, charges: 70, per_use: 10 }
+  refined_life_flask:       { name: 精煉生命藥劑, kind: life, level: 16, recovery: 260, duration: 5.0, charges: 75, per_use: 10 }
+  concentrated_life_flask:  { name: 濃縮生命藥劑, kind: life, level: 23, recovery: 340, duration: 4.0, charges: 75, per_use: 10 }
+  rich_life_flask:          { name: 醇厚生命藥劑, kind: life, level: 30, recovery: 450, duration: 4.0, charges: 75, per_use: 10 }
+  starlit_life_flask:       { name: 星輝生命藥劑, kind: life, level: 40, recovery: 710, duration: 5.0, charges: 75, per_use: 10 }
+  starcore_life_flask:      { name: 星髓生命藥劑, kind: life, level: 50, recovery: 840, duration: 4.0, charges: 75, per_use: 10 }
+  heavens_life_flask:       { name: 天穹生命藥劑, kind: life, level: 60, recovery: 920, duration: 3.0, charges: 75, per_use: 10 }
+  molten_life_flask:        { name: 熔星生命藥劑, kind: life, level: 68, recovery: 1100, duration: 3.0, charges: 75, per_use: 10 }
+  relic_life_flask:         { name: 星骸生命藥劑, kind: life, level: 80, recovery: 1300, duration: 3.0, charges: 75, per_use: 10 }
+
+  crude_mana_flask:         { name: 粗製魔力藥劑, kind: mana, level: 1,  recovery: 50,  duration: 2.0, charges: 60, per_use: 10 }
+  mana_flask:               { name: 魔力藥劑,     kind: mana, level: 4,  recovery: 70,  duration: 3.0, charges: 65, per_use: 10 }
+  fine_mana_flask:          { name: 上等魔力藥劑, kind: mana, level: 10, recovery: 90,  duration: 2.5, charges: 70, per_use: 10 }
+  refined_mana_flask:       { name: 精煉魔力藥劑, kind: mana, level: 16, recovery: 110, duration: 2.5, charges: 75, per_use: 10 }
+  concentrated_mana_flask:  { name: 濃縮魔力藥劑, kind: mana, level: 23, recovery: 165, duration: 3.5, charges: 75, per_use: 10 }
+  rich_mana_flask:          { name: 醇厚魔力藥劑, kind: mana, level: 30, recovery: 165, duration: 2.5, charges: 75, per_use: 10 }
+  starlit_mana_flask:       { name: 星輝魔力藥劑, kind: mana, level: 40, recovery: 185, duration: 2.0, charges: 75, per_use: 10 }
+  starcore_mana_flask:      { name: 星髓魔力藥劑, kind: mana, level: 50, recovery: 285, duration: 3.5, charges: 75, per_use: 10 }
+  heavens_mana_flask:       { name: 天穹魔力藥劑, kind: mana, level: 60, recovery: 310, duration: 3.0, charges: 75, per_use: 10 }
+  molten_mana_flask:        { name: 熔星魔力藥劑, kind: mana, level: 68, recovery: 365, duration: 3.0, charges: 75, per_use: 10 }
+  relic_mana_flask:         { name: 星骸魔力藥劑, kind: mana, level: 80, recovery: 430, duration: 3.0, charges: 75, per_use: 10 }
+
+# ---- 護符（2026-10，照 PoE2 的 Charm）----
+# 裝進角色面板的護符欄（/panel，腰帶下面那排；或拿在手上右鍵）就生效、不佔背包，條件成立時自動用掉 per_use 點充能觸發。
+# 護符欄有幾格：base_slots，加上裝備的「+x 護符欄位」（屬性 charm.slots，腰帶的後綴），最多 3 格。
+# 跟藥劑一樣殺怪充能、回營地與碰到檢查點補滿。怪物掉藥劑時有 drop_chance 的機率換成護符（需求等級 ≤ 怪物等級的隨機一種）。
+#   trigger  觸發條件：freeze 被凍結、ignite 被點燃、shock 感電、chill 被冰緩、bleed 流血、poison 中毒、stun 被重暈、electrocute 被電擊、
+#            hit_fire／hit_cold／hit_lightning／hit_chaos／hit_physical 受到那種傷害的擊中、hit_unique 被傳奇怪物或 Boss 擊中、
+#            kill_rare 擊殺稀有或傳奇怪物、low_life 被擊中後生命低於一半
+#   cure     true = 觸發時解除那個異常狀態（異常狀態的條件才有用）
+#   duration 效果持續幾秒；effects 效果（寫法跟詞綴一樣）
+charms:
+  base_slots: 2
+  drop_chance: 0.25
+  bases:
+    thawing_charm:     { name: 融冰護符, icon: PRISMARINE_CRYSTALS, trigger: freeze, cure: true, level: 8, duration: 4, charges: 40, per_use: 20,
+                         effects: [ { stat: flag.freeze_immune, type: FLAT, value: 1 }, { stat: avoid.chill, type: FLAT, value: 100 } ] }
+    dousing_charm:     { name: 澆熄護符, icon: NAUTILUS_SHELL, trigger: ignite, cure: true, level: 8, duration: 4, charges: 40, per_use: 20,
+                         effects: [ { stat: avoid.ignite, type: FLAT, value: 100 } ] }
+    grounding_charm:   { name: 避雷護符, icon: COPPER_INGOT, trigger: shock, cure: true, level: 8, duration: 4, charges: 40, per_use: 20,
+                         effects: [ { stat: avoid.shock, type: FLAT, value: 100 }, { stat: avoid.electrocute, type: FLAT, value: 100 } ] }
+    staunching_charm:  { name: 凝血護符, icon: RABBIT_HIDE, trigger: bleed, cure: true, level: 18, duration: 4, charges: 40, per_use: 20,
+                         effects: [ { stat: avoid.bleed, type: FLAT, value: 100 } ] }
+    antidote_charm:    { name: 祛毒護符, icon: SLIME_BALL, trigger: poison, cure: true, level: 18, duration: 4, charges: 40, per_use: 20,
+                         effects: [ { stat: avoid.poison, type: FLAT, value: 100 } ] }
+    stone_charm:       { name: 穩身護符, icon: FLINT, trigger: stun, cure: true, level: 24, duration: 4, charges: 40, per_use: 20,
+                         effects: [ { stat: avoid.stun, type: FLAT, value: 100 } ] }
+    ruby_charm:        { name: 焰鱗護符, icon: MAGMA_CREAM, trigger: hit_fire, level: 30, duration: 4, charges: 40, per_use: 10,
+                         effects: [ { stat: resist.fire, type: FLAT, value: 20 }, { stat: resist.max.fire, type: FLAT, value: 3 } ] }
+    sapphire_charm:    { name: 霜鱗護符, icon: LAPIS_LAZULI, trigger: hit_cold, level: 30, duration: 4, charges: 40, per_use: 10,
+                         effects: [ { stat: resist.cold, type: FLAT, value: 20 }, { stat: resist.max.cold, type: FLAT, value: 3 } ] }
+    topaz_charm:       { name: 雷鱗護符, icon: GLOWSTONE_DUST, trigger: hit_lightning, level: 30, duration: 4, charges: 40, per_use: 10,
+                         effects: [ { stat: resist.lightning, type: FLAT, value: 20 }, { stat: resist.max.lightning, type: FLAT, value: 3 } ] }
+    amethyst_charm:    { name: 蝕鱗護符, icon: AMETHYST_SHARD, trigger: hit_chaos, level: 40, duration: 4, charges: 40, per_use: 10,
+                         effects: [ { stat: resist.chaos, type: FLAT, value: 20 }, { stat: resist.max.chaos, type: FLAT, value: 3 } ] }
+    silver_charm:      { name: 迅影護符, icon: IRON_NUGGET, trigger: hit_unique, level: 45, duration: 6, charges: 60, per_use: 30,
+                         effects: [ { stat: attack.speed, type: INCREASED, value: 20 }, { stat: cast.speed, type: INCREASED, value: 20 },
+                                    { stat: movement.speed, type: INCREASED, value: 20 } ] }
+    golden_charm:      { name: 聚寶護符, icon: GOLD_NUGGET, trigger: kill_rare, level: 50, duration: 2, charges: 80, per_use: 80,
+                         description: "效果期間撿到的東西不受影響：掉落是在殺死的那一刻算的，要在下一隻稀有怪死之前觸發",
+                         effects: [ { stat: drop.rarity, type: INCREASED, value: 20 } ] }
+    heartwood_charm:   { name: 續命護符, icon: RABBIT_FOOT, trigger: low_life, level: 35, duration: 4, charges: 60, per_use: 30,
+                         effects: [ { stat: life.recoup, type: FLAT, value: 20 }, { stat: physical.reduction, type: FLAT, value: 10 } ] }

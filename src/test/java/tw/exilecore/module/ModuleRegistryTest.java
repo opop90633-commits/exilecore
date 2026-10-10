@@ -89,6 +89,44 @@ class ModuleRegistryTest {
     }
 
     @Test
+    void reloadOneModuleOnly() throws Exception {
+        final List<String> events = new ArrayList<>();
+        final ModuleRegistry registry = registry()
+                .register(new RecordingModule("core", false, events))
+                .register(new RecordingModule("broken", true, events))
+                .register(new RecordingModule("item", false, events));
+        registry.enableAll();
+        events.clear();
+
+        assertEquals(true, registry.reload("item"), "管理網頁改了設定：只重新載入那個模組");
+        assertEquals(false, registry.reload("broken"), "沒啟用的不重新載入");
+        assertEquals(false, registry.reload("nope"), "沒有這個模組");
+        assertEquals(List.of("reload:item"), events);
+
+        final ModuleRegistry failing = registry().register(new Module() {
+            @Override
+            public String id() {
+                return "bad";
+            }
+
+            @Override
+            public void enable() {
+            }
+
+            @Override
+            public void disable() {
+            }
+
+            @Override
+            public void reload() {
+                throw new IllegalStateException("資料檔寫錯了");
+            }
+        });
+        failing.enableAll();
+        assertThrows(IllegalStateException.class, () -> failing.reload("bad"), "載入失敗要讓呼叫的人知道（管理網頁會改回原本的值）");
+    }
+
+    @Test
     void duplicateIdsAreRejected() {
         final List<String> events = new ArrayList<>();
         final ModuleRegistry registry = registry().register(new RecordingModule("core", false, events));

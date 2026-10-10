@@ -10,6 +10,11 @@ import java.util.Locale;
  */
 public record Settings(Storage storage, String prefix) {
 
+    /** 訊息前綴的預設值（伺服器名稱《星骸》）。 */
+    public static final String DEFAULT_PREFIX = "<gradient:#9fd3ff:#f5b942>星骸</gradient> <dark_gray>»</dark_gray> ";
+    /** 舊版 config.yml 的預設前綴：沒改過的就換成新的預設值（config.yml 不會自動更新）。 */
+    private static final String LEGACY_PREFIX = "<gradient:#f5b942:#e07a1f>ExileCore</gradient> <dark_gray>»</dark_gray> ";
+
     /** 資料庫種類。 */
     public enum StorageType { H2, MARIADB }
 
@@ -45,8 +50,10 @@ public record Settings(Storage storage, String prefix) {
                 Math.max(1, config.getInt("storage.mariadb.pool-size", 8))
         );
 
-        final String prefix = config.getString("messages.prefix",
-                "<gradient:#f5b942:#e07a1f>ExileCore</gradient> <dark_gray>»</dark_gray> ");
+        String prefix = config.getString("messages.prefix", DEFAULT_PREFIX);
+        if (LEGACY_PREFIX.equals(prefix)) {
+            prefix = DEFAULT_PREFIX;
+        }
 
         return new Settings(storage, prefix);
     }

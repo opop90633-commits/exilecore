@@ -22,11 +22,14 @@ public final class ItemCodec {
     private final NamespacedKey dataKey;
     private final NamespacedKey baseKey;
     private final NamespacedKey rarityKey;
+    /** 傳奇：上次照 uniques.yml 檢查（補正）時的定義指紋（{@link ItemRepository#uniqueRevision()}）。 */
+    private final NamespacedKey uniqueRevisionKey;
 
     public ItemCodec(final Plugin plugin) {
         this.dataKey = new NamespacedKey(plugin, "data");
         this.baseKey = new NamespacedKey(plugin, "base");
         this.rarityKey = new NamespacedKey(plugin, "rarity");
+        this.uniqueRevisionKey = new NamespacedKey(plugin, "unique_rev");
     }
 
     /** 這個物品是不是 ExileCore 的裝備。 */
@@ -48,6 +51,23 @@ public final class ItemCodec {
         } catch (final JsonSyntaxException e) {
             return Optional.empty();
         }
+    }
+
+    /** 是不是傳奇（只看 PDC 的稀有度，不解 JSON）。 */
+    public boolean isUnique(final ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        return Rarity.UNIQUE.name().equals(stack.getPersistentDataContainer().get(rarityKey, PersistentDataType.STRING));
+    }
+
+    /** 上次檢查這件傳奇時的定義指紋（沒有 = null）。 */
+    public Integer uniqueRevision(final ItemStack stack) {
+        return stack == null || stack.isEmpty() ? null : stack.getPersistentDataContainer().get(uniqueRevisionKey, PersistentDataType.INTEGER);
+    }
+
+    public void stampUniqueRevision(final ItemStack stack, final int revision) {
+        stack.editPersistentDataContainer(container -> container.set(uniqueRevisionKey, PersistentDataType.INTEGER, revision));
     }
 
     public void write(final ItemStack stack, final ItemData data) {

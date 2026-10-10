@@ -1,0 +1,80 @@
+# 營地的訓練假人：打它看自己的傷害。
+# 打的時候畫面上方會出現一條：每秒傷害、總傷害、打了幾秒；停手幾秒後聊天框給一份總結
+# （總傷害、每秒傷害、命中、暴擊、未命中、格擋、最高一擊、點燃）。
+# 假人不會死、不會還手、不掉東西、不給經驗；被打的時候生命一直是滿的。
+# 站在假人附近（練習場）可以施放技能、按住左鍵連續施放；營地其他地方照樣是安全區（不能戰鬥），玩家在練習場裡也不會受傷。
+# 改完存檔後 /ec reload 就生效（假人會換成新的設定、移到新的位置）。不要假人的話寫 dummies: {}。
+
+settings:
+  # 練習場的範圍：所有假人的外框往外幾格
+  arena_margin: 6
+  # 停手幾秒算打完一段（聊天框給總結）
+  idle_seconds: 4
+
+# 每一隻假人：
+#   name     名字（頭上顯示「Lv.等級 名字」）
+#   note     名字下面的說明
+#   level    怪物等級：player = 跟打它的玩家同等級（每個人打都是自己的等級）；map = 最高階地圖的怪物等級（maps.yml 的 T16）；或 1～100
+#   boss     首領（傳奇稀有度）
+#   life     生命倍率（假人不會死；生命只影響冰緩、感電、點燃這些元素異常好不好上）
+#   armour   護甲：同等級一般怪物的幾倍（0 = 沒有護甲）
+#   evasion  閃避：同等級一般怪物的幾倍（0 = 沒有閃避，攻擊一定打中）
+#   resist   抗性（百分比；可以是負的）：fire 火焰、cold 冰冷、lightning 閃電、chaos 混沌
+#   offset   位置：相對營地落點（重生點）的 [x, z] 格數；高度自動找地面（2026-10：兩排、每隻隔 8 格，打範圍技能不會一次打到好幾隻）
+#   yaw      面向（180 = 北邊，營地中央的方向）
+#   scale    體型
+#   look     外觀：none、leather、chainmail、iron、golden、diamond、netherite（一整套原版盔甲，只是好看）
+dummies:
+  plain:
+    name: 訓練假人・無防禦
+    note: 沒有任何防禦：看你打出的原始傷害
+    level: player
+    armour: 0
+    evasion: 0
+    offset: [12, 10]
+    look: none
+  normal:
+    name: 訓練假人・一般
+    note: 跟同等級的一般怪物一樣
+    level: player
+    armour: 1
+    evasion: 1
+    offset: [20, 10]
+    look: leather
+  armoured:
+    name: 訓練假人・重甲
+    note: 護甲是一般怪物的 5 倍
+    level: player
+    armour: 5
+    evasion: 1
+    offset: [28, 10]
+    look: netherite
+  evasive:
+    name: 訓練假人・閃避
+    note: 閃避是一般怪物的 3 倍
+    level: player
+    armour: 1
+    evasion: 3
+    offset: [12, 20]
+    look: chainmail
+  resistant:
+    name: 訓練假人・抗性
+    note: 元素抗性 40%、混沌抗性 25%
+    level: player
+    armour: 1
+    evasion: 1
+    resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
+    offset: [20, 20]
+    look: golden
+  boss:
+    name: 訓練假人・首領
+    note: 像最高階地圖的首領：抗性 40%／25%
+    level: map
+    boss: true
+    life: 10
+    armour: 1
+    evasion: 1
+    resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
+    offset: [28, 20]
+    scale: 1.3
+    look: diamond

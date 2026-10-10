@@ -2,6 +2,8 @@ package tw.exilecore.item;
 
 import com.google.common.collect.HashMultimap;
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.AttackRange;
+import io.papermc.paper.datacomponent.item.CustomModelData;
 import io.papermc.paper.datacomponent.item.ItemAttributeModifiers;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -10,6 +12,8 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
+import tw.exilecore.map.MapStats;
 import tw.exilecore.stats.DamageType;
 
 import java.util.ArrayList;
@@ -25,12 +29,48 @@ public final class ItemRenderer {
 
     private static final MiniMessage MINI = MiniMessage.miniMessage();
 
+    /**
+     * 外觀的版本：畫法改了（描述的格式、武器的元件）就加一，舊的物品在角色載入、拿在手上時重畫（ItemService.refresh）。
+     * 2 = 詞綴顯示排名、地圖名稱帶階級、武器的攻擊距離元件（按住左鍵連續施放）。
+     * 3 = 詞綴的數值後面接著範圍（「+15(10–19) 最大生命」）。
+     * 4 = 附加傷害分成「攻擊附加」與「法術附加」。
+     * 5 = 傳奇的專屬外觀等後來的外觀調整。
+     * 6 = 武器本身的詞綴（本地加成）：武器數值改過的畫成藍色、暴擊率顯示兩位小數。
+     */
+    public static final int RENDER_VERSION = 21; // 21：暴擊率那一行漏了數字與「每秒攻擊」、傳奇武器的基底傷害照物品等級；20：催化劑品質只寫「攻擊詞綴」、固定詞綴有標籤；19：靈盾改名法器、不能格擋；18：基礎暴擊率改過也變色；17：權杖顯示精魂；16：符文孔；15：催化劑的說明改字；14：說明排版（分隔線、前後綴顏色）；13：鎖定的小鎖頭；8：武器上的物理增加與攻擊附加改成本地；9：魔法、稀有裝備的外框標記；10：傳奇也有外框；11：飾品品質（催化劑）加成後的數值；12：47 件傳奇補上專屬圖
+    /** 物品上記的外觀版本（PDC）。 */
+    public static final NamespacedKey RENDER_KEY = new NamespacedKey("exilecore", "render");
+
+    /**
+     * 武器的攻擊距離（原版元件）：最近 64 格，客戶端找準星目標時跳過 64 格內的實體，準星落在後面的方塊上，
+     * 按住左鍵就會一直「挖」（每 tick 揮手）＝按住左鍵連續施放（skill/HoldToCast）。創造模式照原版的距離（蓋東西用）。
+     * 原版的攻擊本來就全部取消（傷害由技能算），目標由伺服器沿視線找。
+     */
+    private static final class WeaponRange {
+        /** 第一次畫武器時才建（要伺服器在跑；ItemRenderer.escape 這種純文字的用法不會碰到）。 */
+        static final AttackRange VALUE = AttackRange.attackRange().minReach(64).maxReach(64)
+                .minCreativeReach(0).maxCreativeReach(5).hitboxMargin(0).mobFactor(1).build();
+
+        private WeaponRange() {
+        }
+    }
+
+    /** 追逐級傳奇在物品上的標記（極稀有：掉出來全服廣播）。 */
+    public static final String CHASE_LABEL = "<#ffb347>✦ 追逐級傳奇<dark_gray>（極稀有）";
+
     private final ItemRepository repository;
     private final boolean resourcePackEnabled;
+    /** 星籤的通貨定義（顯示名稱與說明）；通貨模組接上，沒有就只印代號。 */
+    private java.util.function.Function<String, tw.exilecore.currency.CurrencyType> omens;
 
     public ItemRenderer(final ItemRepository repository, final boolean resourcePackEnabled) {
         this.repository = repository;
         this.resourcePackEnabled = resourcePackEnabled;
+    }
+
+    /** 接上星籤的查詢（代號 → 通貨定義）。 */
+    public void setOmens(final java.util.function.Function<String, tw.exilecore.currency.CurrencyType> omens) {
+        this.omens = omens;
     }
 
     /** 建立一個全新的 ItemStack（不含 PDC，由 ItemService 補上）。 */
@@ -54,18 +94,46 @@ public final class ItemRenderer {
 
         // 原版屬性（劍的攻擊力、盔甲的護甲值）全部清空：傷害與防禦都由我們的引擎算
         stack.setData(DataComponentTypes.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.itemAttributes().build());
+        if (base.isWeapon()) {
+            stack.setData(DataComponentTypes.ATTACK_RANGE, WeaponRange.VALUE);
+        } else {
+            stack.unsetData(DataComponentTypes.ATTACK_RANGE);
+        }
+        if (base.isShield()) {
+            // 盾不能舉起來：格擋是被動機率（PoE），舉盾也會打斷按住右鍵的連續施放
+            stack.unsetData(DataComponentTypes.BLOCKS_ATTACKS);
+        }
+        // 2026-10：鎖定的裝備在格子裡右上角多一個小鎖頭（custom_model_data 的 flag 0；資源包的原版物品定義照這個畫）
+        final boolean lockFlag = data.locked();
+        if (data.unique() != null && UniqueArt.has(data.unique())) {
+            // 傳奇的專屬外觀：資源包用 custom_model_data 的字串選圖；沒套資源包的看到原本的物品，所以不用管 resource-pack.enabled
+            stack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelData.customModelData().addString(UniqueArt.modelKey(data.unique()))
+                    .addFlag(lockFlag).build());
+        } else if (data.rarity() == Rarity.MAGIC || data.rarity() == Rarity.RARE || data.rarity() == Rarity.UNIQUE) {
+            // 2026-10：魔法、稀有、傳奇裝備在格子裡有淺淺的同色漸層外框（資源包的原版物品定義照這個字串挑；沒套資源包的看到原本的樣子）。
+            // 有專屬外觀的傳奇走上面那條（unique:代號），外框畫在專屬外觀的挑選裡
+            stack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelData.customModelData()
+                    .addString(data.rarity() == Rarity.MAGIC ? "rarity:magic" : data.rarity() == Rarity.RARE ? "rarity:rare" : "rarity:unique")
+                    .addFlag(lockFlag).build());
+        } else if (lockFlag) {
+            stack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelData.customModelData().addFlag(true).build());
+        } else {
+            stack.unsetData(DataComponentTypes.CUSTOM_MODEL_DATA);
+        }
         stack.editMeta(meta -> {
             meta.displayName(name);
             meta.lore(lore);
+            meta.getPersistentDataContainer().set(RENDER_KEY, PersistentDataType.INTEGER, RENDER_VERSION);
             meta.setUnbreakable(true);
             meta.setMaxStackSize(1);
             meta.setAttributeModifiers(HashMultimap.create());
             meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ENCHANTS,
                     ItemFlag.HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_DYE, ItemFlag.HIDE_ARMOR_TRIM);
             meta.setEnchantmentGlintOverride(data.rarity() == Rarity.UNIQUE);
-            if (resourcePackEnabled && base.model() != null) {
+            if (base.model() != null) {
+                // 自己的模型要資源包；原版的模型（minecraft:，例如長棍用竹子、矛用鐵矛的樣子）客戶端本來就有
                 final NamespacedKey model = NamespacedKey.fromString(base.model());
-                if (model != null) {
+                if (model != null && (resourcePackEnabled || NamespacedKey.MINECRAFT.equals(model.getNamespace()))) {
                     meta.setItemModel(model);
                 }
             }
@@ -76,22 +144,45 @@ public final class ItemRenderer {
         final List<Component> lore = new ArrayList<>();
         final String color = data.rarity().color();
 
-        if (data.rarity() == Rarity.RARE || data.rarity() == Rarity.UNIQUE || !data.identified()) {
+        final UniqueItem uniqueDefinition = data.unique() == null ? null : repository.unique(data.unique());
+        if (uniqueDefinition != null && uniqueDefinition.chase()) {
+            lore.add(line(CHASE_LABEL + " <dark_gray>" + escape(base.name())));
+        } else if (data.rarity() == Rarity.RARE || data.rarity() == Rarity.UNIQUE || !data.identified()) {
             lore.add(line("<" + color + ">" + escape(base.name()) + " <dark_gray>" + data.rarity().displayName()));
         } else {
             lore.add(line("<dark_gray>" + data.rarity().displayName() + escape(slotSuffix(base))));
         }
         if (data.quality() > 0) {
-            lore.add(line("<gray>品質：<#8888ff>+" + data.quality() + "%"));
+            final Catalyst catalyst = base.isJewellery() ? Catalyst.parse(data.catalyst()) : null;
+            lore.add(line("<gray>品質：<#8888ff>+" + data.quality() + "%" + (base.isMap() ? " <dark_gray>(物品數量)"
+                    : catalyst != null ? " <dark_gray>(" + catalyst.description() + " +" + data.quality() + "%)" : "")));
+        }
+        if (base.isMap()) {
+            return buildMapLore(base, data, lore);
         }
 
         // 基底數值
         if (base.isWeapon()) {
+            // 武器本身的詞綴（本地加成）改過的數字畫成藍色（跟品質加成同一個藍）
+            final LocalMods local = snapshot.local();
             for (final Map.Entry<DamageType, double[]> entry : snapshot.damage().entrySet()) {
-                lore.add(line("<gray>" + entry.getKey().displayName() + "傷害：<white>"
+                final boolean boosted = local.hasAdded(entry.getKey()) || entry.getKey() == DamageType.PHYSICAL && local.physical() != 0;
+                lore.add(line("<gray>" + entry.getKey().displayName() + "傷害：" + (boosted ? AUGMENTED : "<white>")
                         + (int) entry.getValue()[0] + " - " + (int) entry.getValue()[1]));
             }
-            lore.add(line(String.format(Locale.ROOT, "<gray>暴擊率：<white>%.1f%%  <gray>每秒攻擊：<white>%.2f", snapshot.crit(), snapshot.aps())));
+            // 2026-10：「+x% 暴擊率」（基礎暴擊）也變色
+            lore.add(line("<gray>暴擊率：" + (local.crit() != 0 || Math.abs(snapshot.crit() - base.crit()) > 1e-6 ? AUGMENTED : "<white>")
+                    + decimals(snapshot.crit()) + "%  <gray>每秒攻擊："
+                    + (local.attackSpeed() != 0 ? AUGMENTED : "<white>") + String.format(Locale.ROOT, "%.2f", snapshot.aps())));
+            final double spirit = ItemStats.sceptreSpirit(base, ItemStats.modifiers(repository, data));
+            if (spirit > 0) {
+                // 2026-10：權杖給的精魂（基礎 100 ＋ 權杖自己的「增加 x% 精魂」）
+                lore.add(line("<gray>精魂：" + (spirit != ItemStats.SCEPTRE_SPIRIT ? AUGMENTED : "<white>") + (int) Math.round(spirit)));
+            }
+            final String hint = base.basicAttackHint();
+            if (hint != null) {
+                lore.add(line("<gray>" + hint));
+            }
         }
         if (snapshot.armour() > 0) {
             lore.add(line("<gray>護甲：<white>" + (int) snapshot.armour()));
@@ -106,47 +197,229 @@ public final class ItemRenderer {
             lore.add(line("<gray>格擋率：<white>" + (int) snapshot.block() + "%"));
         }
 
-        // 需求
-        final ItemBase.Requirements req = snapshot.requirements();
-        final StringBuilder requirement = new StringBuilder("<gray>需求：等級 <white>" + req.level());
-        if (req.str() > 0) {
-            requirement.append("<gray>，力量 <white>").append(req.str());
+        // 需求（珠寶沒有需求：放進天賦樹就生效）；前面有基底數值就隔一條線（2026-10 美化）
+        if (!base.isJewel()) {
+            if (base.isWeapon() || snapshot.armour() > 0 || snapshot.evasion() > 0 || snapshot.energyShield() > 0 || snapshot.block() > 0) {
+                lore.add(line(SEPARATOR));
+            }
+            final ItemBase.Requirements req = snapshot.requirements();
+            final StringBuilder requirement = new StringBuilder("<gray>需求：等級 <white>" + req.level());
+            if (req.str() > 0) {
+                requirement.append("<gray>，力量 <white>").append(req.str());
+            }
+            if (req.dex() > 0) {
+                requirement.append("<gray>，敏捷 <white>").append(req.dex());
+            }
+            if (req.intelligence() > 0) {
+                requirement.append("<gray>，智慧 <white>").append(req.intelligence());
+            }
+            lore.add(line(requirement.toString()));
         }
-        if (req.dex() > 0) {
-            requirement.append("<gray>，敏捷 <white>").append(req.dex());
-        }
-        if (req.intelligence() > 0) {
-            requirement.append("<gray>，智慧 <white>").append(req.intelligence());
-        }
-        lore.add(line(requirement.toString()));
 
-        if (data.sockets() > 0) {
-            lore.add(line("<gray>插槽：<white>" + "◯ ".repeat(data.sockets()).trim()));
-        }
+        // 插槽先不顯示：階段 3 走 PoE2 的做法，寶石不插裝備；插槽日後給符文用
 
         // 固定詞綴與詞綴
         final boolean hasImplicit = base.implicit() != null;
         final boolean hasAffixes = !data.affixes().isEmpty();
-        if (hasImplicit || hasAffixes) {
-            lore.add(line("<dark_gray>────────────"));
+        if (hasImplicit || hasAffixes || data.instilled() != null) {
+            lore.add(line(SEPARATOR));
         }
         if (hasImplicit) {
-            lore.add(line("<#a0a0ff>" + escape(base.implicit().render(data.implicitVars())) + " <dark_gray>(固定)"));
+            final Implicit implicit = ItemStats.implicit(repository, base, data);
+            lore.add(line("<#a0a0ff>" + implicit.renderWithRanges(data.implicitVars()) + " <dark_gray>(固定)"
+                    + AffixChips.miniMessage(AffixChips.of(implicit.mods())))); // 2026-10：固定詞綴也有標籤
         }
-        if (hasAffixes) {
-            if (hasImplicit) {
-                lore.add(line("<dark_gray>────────────"));
-            }
-            if (!data.identified()) {
-                lore.add(line("<#ff5555>未鑑定 <dark_gray>— 對它使用鑑定卷軸"));
+        if (data.instilled() != null) {
+            final ItemStats.Instil instil = ItemStats.instilOf(data);
+            if (instil == null) {
+                lore.add(line("<#c77dff>注入：<dark_gray>已失效（天賦樹改版，這個核心不在了）"));
             } else {
-                for (final ItemStats.AffixLine affixLine : ItemStats.affixLines(repository, data)) {
-                    lore.add(line("<" + color + ">" + escape(affixLine.text()) + " <dark_gray>(T" + affixLine.tier() + ")"));
+                lore.add(line("<#c77dff>注入：" + escape(instil.name()) + " <dark_gray>(蒸餾情緒)"));
+                for (final String text : instil.lines()) {
+                    lore.add(line("<#c77dff>　" + escape(text)));
                 }
             }
         }
-        lore.add(line("<dark_gray>物品等級 " + data.ilvl()));
+        if (hasAffixes) {
+            if (hasImplicit || data.instilled() != null) {
+                lore.add(line(SEPARATOR));
+            }
+            if (!data.identified()) {
+                lore.add(line("<#ff5555>未鑑定 <dark_gray>— 找鑑定師（NPC）或用鑑定卷軸"));
+            } else {
+                final boolean unique = data.rarity() == Rarity.UNIQUE;
+                final List<ItemStats.AffixLine> affixLines = new ArrayList<>(ItemStats.affixLines(repository, data));
+                // 2026-10：前綴排前面、後綴排後面（同一種排在一起比較好看）
+                affixLines.sort(java.util.Comparator.comparingInt(each -> each.type() == AffixType.PREFIX ? 0 : 1));
+                if (!unique) {
+                    // 前綴、後綴各用了幾個位子（改造時一看就知道還能加哪種）
+                    lore.add(line(affixSlots(data, affixLines)));
+                }
+                for (final ItemStats.AffixLine affixLine : affixLines) {
+                    // 被催化劑加強的詞綴：數值已經是加成後的，用亮藍色、後面標「催化」
+                    // 被「增加 x% 已揭露詞綴的幅度」加強的揭露詞綴（2026-10）：數值已經是加成後的，用紫色、後面標「揭露 +x%」
+                    final String catalysedMark = (affixLine.catalysed() ? " <#7fd4ff>✦催化" : "")
+                            + (affixLine.unveiled() ? " <#d69bff>✦揭露 +" + affixLine.unveiledBoost() + "%" : "");
+                    final String boostColor = affixLine.unveiled() ? "#d69bff" : affixLine.catalysed() ? "#7fd4ff" : null;
+                    final String chips = AffixChips.miniMessage(affixLine.chips()); // 2026-10：詞綴標籤（傷害、火焰、攻擊…）
+                    lore.add(line(unique ? "<" + (boostColor != null ? boostColor : "#8888ff") + ">" + affixLine.ranged() + catalysedMark + chips
+                            : affixTag(affixLine.type()) + "<" + (boostColor != null ? boostColor
+                                    : affixLine.type() == AffixType.PREFIX ? PREFIX_COLOR : SUFFIX_COLOR) + ">" + affixLine.ranged()
+                                    + " <dark_gray>(T" + affixLine.tier() + ")" + catalysedMark + chips));
+                }
+            }
+        }
+        // 符文孔（2026-10）：嵌著的符文與它給的加成，空孔
+        final int runeSlots = Runes.slots(repository, base, data);
+        if (runeSlots > 0 && (!data.runes().isEmpty() || data.identified())) {
+            lore.add(line(SEPARATOR));
+            for (final String id : data.runes()) {
+                final Runes.Rune rune = repository.rune(id);
+                if (rune == null) {
+                    continue;
+                }
+                for (final Runes.Line runeLine : rune.on(base)) {
+                    lore.add(line("<#7fe0c8>◈ " + escape(runeLine.text()) + " <dark_gray>(" + escape(rune.name()) + ")"));
+                }
+            }
+            final double runeEffect = repository.uniqueRuneEffect(data.unique());
+            if (runeEffect > 0) {
+                lore.add(line("<#7fe0c8>嵌在這件上的符文效果增加 " + Math.round(runeEffect * 100) + "%"));
+            }
+            final int empty = runeSlots - data.runes().size();
+            if (empty > 0) {
+                lore.add(line("<dark_gray>◇ 空的符文孔 ×" + empty + "（把符文用在這件上嵌進去）"));
+            }
+        }
+        final UniqueItem unique = repository.unique(data.unique());
+        if (unique != null && !unique.flavour().isEmpty()) {
+            lore.add(line(SEPARATOR));
+            for (final String flavour : unique.flavour()) {
+                lore.add(line("<#af6025><i>" + escape(flavour)));
+            }
+        }
+        if (data.omen() != null) {
+            final tw.exilecore.currency.CurrencyType omen = omens == null ? null : omens.apply(data.omen());
+            lore.add(line("<#c48bff>星籤：" + (omen == null ? escape(data.omen()) : escape(omen.name()) + " <dark_gray>— " + escape(omen.description()))));
+        }
+        if (base.isJewel()) {
+            lore.add(line(SEPARATOR));
+            lore.add(line("<gray>放進天賦樹的<" + base.jewelColor() + ">珠寶孔</" + base.jewelColor() + ">（/tree，配了孔位再點它）"));
+            if (!data.identified()) {
+                lore.add(line("<dark_gray>要先鑑定才能放"));
+            }
+        }
+        lore.add(line(SEPARATOR));
+        lore.add(line("<dark_gray>物品等級 " + data.ilvl() + (data.starter() ? "・新手裝備（拆解沒有東西）" : "")));
+        if (data.corrupted()) {
+            lore.add(line("<#d20000>已腐化 <dark_gray>（不能再用通貨改造）"));
+        }
+        if (data.locked()) {
+            lore.add(line("<#ffd27f>🔒 已鎖定 <dark_gray>（不會被拆解、上架、交易；/lock 解除）"));
+        }
         return lore;
+    }
+
+    /** 區塊之間的分隔線（2026-10 美化：粗一點、長度一樣）。 */
+    static final String SEPARATOR = "<dark_gray>━━━━━━━━━━━━━━";
+    /** 前綴、後綴的數值顏色（2026-10：一眼分得出哪條是前綴、哪條是後綴）。 */
+    static final String PREFIX_COLOR = "#b4bcff";
+    static final String SUFFIX_COLOR = "#ffd9a0";
+
+    /** 被武器本身詞綴（或品質）加成過的數字的顏色。 */
+    static final String AUGMENTED = "<#8888ff>";
+
+    /** 最多兩位小數、至少一位（5.0、6.5、6.75）。 */
+    static String decimals(final double value) {
+        final String text = String.format(Locale.ROOT, "%.2f", value);
+        return text.endsWith("0") ? text.substring(0, text.length() - 1) : text;
+    }
+
+    /** 每條詞綴前面的小標：前綴「前」、後綴「後」。 */
+    static String affixTag(final AffixType type) {
+        return type == AffixType.PREFIX ? "<#7f88d8>◆ " : "<#d0a06a>◇ ";
+    }
+
+    /** 「前綴 2/3・後綴 1/3」：各用了幾個位子（珠寶每種最多 2）。 */
+    private String affixSlots(final ItemData data, final List<ItemStats.AffixLine> affixLines) {
+        int prefixes = 0;
+        for (final ItemStats.AffixLine affixLine : affixLines) {
+            if (affixLine.type() == AffixType.PREFIX) {
+                prefixes++;
+            }
+        }
+        final ItemBase base = repository.base(data.base());
+        final boolean jewel = base != null && base.isJewel();
+        final int maxPrefixes = jewel ? Math.min(data.rarity().maxPrefixes(), ItemBase.JEWEL_AFFIXES_PER_TYPE) : data.rarity().maxPrefixes();
+        final int maxSuffixes = jewel ? Math.min(data.rarity().maxSuffixes(), ItemBase.JEWEL_AFFIXES_PER_TYPE) : data.rarity().maxSuffixes();
+        return "<#9a9ad0>前綴 " + prefixes + "/" + maxPrefixes + "<dark_gray>・<#d0a06a>後綴 " + (affixLines.size() - prefixes) + "/" + maxSuffixes;
+    }
+
+    /** 地圖：階級、怪物等級、物品數量與稀有度加成（含階級本身的）、詞綴（不分前後綴的階級）、怎麼用。 */
+    private List<Component> buildMapLore(final ItemBase base, final ItemData data, final List<Component> lore) {
+        final MapStats.Tiers tiers = MapStats.tiers();
+        final MapStats stats = MapStats.of(repository, data, tiers);
+        lore.add(line("<gray>地圖階級：<white>T" + stats.tier() + "<dark_gray>／T" + tiers.max() + "　<gray>怪物等級：<white>" + stats.monsterLevel()));
+        lore.add(line(String.format(Locale.ROOT, "<gray>物品數量 <white>+%d%%　<gray>物品稀有度 <white>+%d%%%s",
+                Math.round(stats.quantity()), Math.round(stats.rarity()),
+                stats.packSize() != 0 ? "　<gray>怪物群大小 <white>+" + Math.round(stats.packSize()) + "%" : "")));
+        if (stats.tier() > 1) {
+            lore.add(line(String.format(Locale.ROOT, "<dark_gray>（含階級加成：物品數量 +%d%%、稀有度 +%d%%）",
+                    Math.round(tiers.quantity(stats.tier())), Math.round(tiers.rarity(stats.tier())))));
+        }
+        if (!data.affixes().isEmpty()) {
+            lore.add(line(SEPARATOR));
+            final String color = data.rarity().color();
+            final List<ItemStats.AffixLine> affixLines = ItemStats.affixLines(repository, data);
+            lore.add(line(affixSlots(data, affixLines)));
+            for (final ItemStats.AffixLine affixLine : affixLines) {
+                lore.add(line(affixTag(affixLine.type()) + "<" + color + ">" + affixLine.ranged() + AffixChips.miniMessage(affixLine.chips())));
+            }
+        }
+        lore.add(line(SEPARATOR));
+        lore.add(line("<gray><i>大塊星骸記得它落下前照過的地方。"));
+        final String craft = mapCraftHint(data);
+        if (craft != null) {
+            lore.add(line(craft));
+        }
+        lore.add(line("<dark_gray>拿到營地的地圖裝置（NPC）右鍵，打開傳送門"));
+        return lore;
+    }
+
+    /**
+     * 地圖還能怎麼洗（PoE2：沒洗過的地圖等於白白少拿東西）：照稀有度說下一步用哪種通貨，
+     * 品質沒滿說星盤刻刀。全部洗滿回傳 null。
+     */
+    public String mapCraftHint(final ItemData data) {
+        int prefixes = 0;
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix affix = repository.affix(rolled.id());
+            if (affix != null && affix.type() == AffixType.PREFIX) {
+                prefixes++;
+            }
+        }
+        final int suffixes = data.affixes().size() - prefixes;
+        final Rarity rarity = data.rarity();
+        final boolean full = prefixes >= rarity.maxPrefixes() && suffixes >= rarity.maxSuffixes();
+        final List<String> steps = new ArrayList<>();
+        switch (rarity) {
+            case NORMAL -> steps.add("微光石→魔法（+1 詞綴）、星火石→稀有（4 條）");
+            case MAGIC -> steps.add(full ? "豐饒石→稀有（再 +1 詞綴）" : "添輝石再加 1 條、豐饒石→稀有");
+            case RARE -> {
+                if (!full) {
+                    steps.add("至臻石再加 1 條（還有 " + (rarity.maxPrefixes() - prefixes + rarity.maxSuffixes() - suffixes) + " 個空位）");
+                }
+            }
+            default -> {
+            }
+        }
+        if (data.quality() < 20) {
+            steps.add("星盤刻刀品質 +5（每 1% = +1% 物品數量，上限 20）");
+        }
+        if (steps.isEmpty()) {
+            return null;
+        }
+        return "<#f5b942>還能洗：<gray>" + String.join("；", steps);
     }
 
     private static String slotSuffix(final ItemBase base) {
@@ -161,5 +434,30 @@ public final class ItemRenderer {
     /** 把資料裡的文字放進 MiniMessage 前先跳脫標籤字元。 */
     public static String escape(final String text) {
         return text == null ? "" : text.replace("\\", "\\\\").replace("<", "\\<");
+    }
+
+    /**
+     * 兩個物品的名稱與描述看起來是不是一樣（只比文字，不比顏色、樣式的寫法：存檔讀回來的元件結構可能不一樣）。
+     * 通貨、寶石用它判斷要不要照現在的定義重畫（名稱或說明改過，例如 2026-10 兩次改名）。
+     */
+    public static boolean sameText(final org.bukkit.inventory.meta.ItemMeta a, final org.bukkit.inventory.meta.ItemMeta b) {
+        if (a == null || b == null) {
+            return a == b;
+        }
+        return plain(a.displayName()).equals(plain(b.displayName())) && plainLines(a.lore()).equals(plainLines(b.lore()));
+    }
+
+    private static String plain(final Component component) {
+        return component == null ? "" : net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(component);
+    }
+
+    private static List<String> plainLines(final List<Component> lines) {
+        final List<String> out = new ArrayList<>();
+        if (lines != null) {
+            for (final Component line : lines) {
+                out.add(plain(line));
+            }
+        }
+        return out;
     }
 }

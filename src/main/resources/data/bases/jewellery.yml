@@ -1,7 +1,8 @@
-# 飾品基底。戒指、項鍊、腰帶是階段 2 角色面板的虛擬欄位，現在只會掉落、可以改造，還不能裝備。
+# 飾品基底：戒指、項鍊、腰帶，戴在角色面板（/panel）的飾品欄位。
 
 iron_ring:
-  name: 鐵戒指
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 隕鐵指環
   material: IRON_NUGGET
   model: exilecore:jewellery/iron_ring
   slot: RING
@@ -9,7 +10,7 @@ iron_ring:
   drop_level: 1
   requirements: { level: 1 }
   implicit:
-    text: "附加 {min} 到 {max} 物理傷害"
+    text: "攻擊附加 {min} 到 {max} 物理傷害"
     min: [1, 2]
     max: [3, 5]
     mods:
@@ -17,7 +18,8 @@ iron_ring:
       - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
 
 coral_ring:
-  name: 珊瑚戒指
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 潮珊指環
   material: GOLD_NUGGET
   model: exilecore:jewellery/coral_ring
   slot: RING
@@ -31,7 +33,8 @@ coral_ring:
       - { stat: life.max, type: FLAT, value: "{value}" }
 
 sapphire_ring:
-  name: 藍寶石戒指
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 霜晶指環
   material: LAPIS_LAZULI
   model: exilecore:jewellery/sapphire_ring
   slot: RING
@@ -45,7 +48,8 @@ sapphire_ring:
       - { stat: resist.cold, type: FLAT, value: "{value}" }
 
 ruby_ring:
-  name: 紅寶石戒指
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 炎晶指環
   material: REDSTONE
   model: exilecore:jewellery/ruby_ring
   slot: RING
@@ -59,7 +63,8 @@ ruby_ring:
       - { stat: resist.fire, type: FLAT, value: "{value}" }
 
 amber_amulet:
-  name: 琥珀護身符
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 烈珀墜飾
   material: AMETHYST_SHARD
   model: exilecore:jewellery/amber_amulet
   slot: AMULET
@@ -73,7 +78,8 @@ amber_amulet:
       - { stat: attr.str, type: FLAT, value: "{value}" }
 
 jade_amulet:
-  name: 翠玉護身符
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 青翠墜飾
   material: PRISMARINE_SHARD
   model: exilecore:jewellery/jade_amulet
   slot: AMULET
@@ -87,7 +93,8 @@ jade_amulet:
       - { stat: attr.dex, type: FLAT, value: "{value}" }
 
 leather_belt:
-  name: 皮腰帶
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 鞣皮束帶
   material: LEATHER
   model: exilecore:jewellery/leather_belt
   slot: BELT
@@ -101,8 +108,9 @@ leather_belt:
       - { stat: life.max, type: FLAT, value: "{value}" }
 
 chain_belt:
-  name: 鎖鏈腰帶
-  material: CHAIN
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 鐵環束帶
+  material: IRON_CHAIN
   model: exilecore:jewellery/chain_belt
   slot: BELT
   tags: [jewellery, belt]
@@ -113,3 +121,650 @@ chain_belt:
     value: [9, 20]
     mods:
       - { stat: es.max, type: FLAT, value: "{value}" }
+
+# ---- PoE2 分階基底（tools/gen_poe2_bases.py 產生；重跑會整段換掉）----
+jring_01:
+  name: 鍛環指環
+  fixed: true
+  retired: true
+  merged_into: jring_16
+  family: jring
+  drop_weight: 40
+  material: IRON_NUGGET
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "攻擊附加 {min} 到 {max} 物理傷害"
+    min: [1, 1]
+    max: [4, 4]
+    mods:
+      - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+      - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+
+jring_02:
+  name: 青晶指環
+  base_level: 1          # 數值是物品等級 1 的值，照物品等級縮放
+  implicit_level: 1
+  family: jring
+  drop_weight: 40
+  material: NAUTILUS_SHELL
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 最大魔力"
+    value: [20, 30]
+    mods:
+      - { stat: mana.max, type: FLAT, value: "{value}" }
+
+jring_03:
+  name: 炎晶指環
+  base_level: 8          # 數值是物品等級 8 的值，照物品等級縮放
+  implicit_level: 8
+  family: jring
+  drop_weight: 40
+  material: RESIN_BRICK
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value}% 火焰抗性"
+    value: [20, 30]
+    mods:
+      - { stat: resist.fire, type: FLAT, value: "{value}" }
+
+jring_04:
+  name: 霜晶指環
+  base_level: 12          # 數值是物品等級 12 的值，照物品等級縮放
+  implicit_level: 12
+  family: jring
+  drop_weight: 40
+  material: DIAMOND
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value}% 冰冷抗性"
+    value: [20, 30]
+    mods:
+      - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+jring_05:
+  name: 雷晶指環
+  base_level: 16          # 數值是物品等級 16 的值，照物品等級縮放
+  implicit_level: 16
+  family: jring
+  drop_weight: 40
+  material: GOLD_NUGGET
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value}% 閃電抗性"
+    value: [20, 30]
+    mods:
+      - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+jring_06:
+  name: 紫蝕指環
+  base_level: 20          # 數值是物品等級 20 的值，照物品等級縮放
+  implicit_level: 20
+  family: jring
+  drop_weight: 40
+  material: SHULKER_SHELL
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value}% 混沌抗性"
+    value: [7, 13]
+    mods:
+      - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+jring_07:
+  name: 鷹眼指環
+  base_level: 26          # 數值是物品等級 26 的值，照物品等級縮放
+  implicit_level: 26
+  family: jring
+  drop_weight: 40
+  material: IRON_NUGGET
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 命中"
+    value: [120, 160]
+    mods:
+      - { stat: accuracy, type: FLAT, value: "{value}" }
+
+jring_08:
+  name: 詠珠指環
+  base_level: 32          # 數值是物品等級 32 的值，照物品等級縮放
+  implicit_level: 32
+  family: jring
+  drop_weight: 40
+  material: COPPER_NUGGET
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 施法速度"
+    value: [7, 10]
+    mods:
+      - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+jring_09:
+  name: 三晶指環
+  base_level: 35          # 數值是物品等級 35 的值，照物品等級縮放
+  implicit_level: 35
+  family: jring
+  drop_weight: 40
+  material: RAW_GOLD
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value}% 全部元素抗性"
+    value: [7, 10]
+    mods:
+      - { stat: resist.fire, type: FLAT, value: "{value}" }
+      - { stat: resist.cold, type: FLAT, value: "{value}" }
+      - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+jring_10:
+  name: 炎霜指環
+  base_level: 35          # 數值是物品等級 35 的值，照物品等級縮放
+  implicit_level: 35
+  family: jring
+  drop_weight: 40
+  material: RAW_COPPER
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value}% 火焰與冰冷抗性"
+    value: [12, 16]
+    mods:
+      - { stat: resist.fire, type: FLAT, value: "{value}" }
+      - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+jring_11:
+  name: 炎雷指環
+  base_level: 35          # 數值是物品等級 35 的值，照物品等級縮放
+  implicit_level: 35
+  family: jring
+  drop_weight: 40
+  material: BRICK
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value}% 火焰與閃電抗性"
+    value: [12, 16]
+    mods:
+      - { stat: resist.fire, type: FLAT, value: "{value}" }
+      - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+jring_12:
+  name: 霜雷指環
+  base_level: 35          # 數值是物品等級 35 的值，照物品等級縮放
+  implicit_level: 35
+  family: jring
+  drop_weight: 40
+  material: RAW_IRON
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value}% 冰冷與閃電抗性"
+    value: [12, 16]
+    mods:
+      - { stat: resist.cold, type: FLAT, value: "{value}" }
+      - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+jring_13:
+  name: 金耀指環
+  base_level: 40          # 數值是物品等級 40 的值，照物品等級縮放
+  implicit_level: 40
+  family: jring
+  drop_weight: 40
+  material: NETHERITE_INGOT
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 物品掉落稀有度"
+    value: [6, 15]
+    mods:
+      - { stat: drop.rarity, type: INCREASED, value: "{value}" }
+
+jring_14:
+  name: 生脈指環
+  base_level: 40          # 數值是物品等級 40 的值，照物品等級縮放
+  implicit_level: 40
+  family: jring
+  drop_weight: 40
+  material: NETHER_BRICK
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 最大生命"
+    value: [4, 6]
+    mods:
+      - { stat: life.max, type: INCREASED, value: "{value}" }
+
+jring_15:
+  name: 憶念指環
+  base_level: 40          # 數值是物品等級 40 的值，照物品等級縮放
+  implicit_level: 40
+  family: jring
+  drop_weight: 40
+  material: CLAY_BALL
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 最大魔力"
+    value: [4, 6]
+    mods:
+      - { stat: mana.max, type: INCREASED, value: "{value}" }
+
+jring_16:
+  name: 勁擊指環
+  base_level: 40          # 數值是物品等級 40 的值，照物品等級縮放
+  implicit_level: 40
+  family: jring
+  drop_weight: 40
+  material: IRON_INGOT
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "攻擊附加 {min} 到 {max} 物理傷害"
+    min: [6, 9]
+    max: [11, 15]
+    mods:
+      - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+      - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+
+jring_17:
+  name: 夢紋指環
+  base_level: 47          # 數值是物品等級 47 的值，照物品等級縮放
+  implicit_level: 47
+  family: jring
+  drop_weight: 40
+  material: POPPED_CHORUS_FRUIT
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 混沌傷害"
+    value: [11, 23]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
+
+jamulet_01:
+  name: 赤血墜飾
+  base_level: 1          # 數值是物品等級 1 的值，照物品等級縮放
+  implicit_level: 1
+  family: jamulet
+  drop_weight: 20
+  material: GLISTERING_MELON_SLICE
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "每秒回復 {value} 生命"
+    value: [2, 4]
+    mods:
+      - { stat: life.regen, type: FLAT, value: "{value}" }
+
+jamulet_02:
+  name: 蒼泉墜飾
+  base_level: 1          # 數值是物品等級 1 的值，照物品等級縮放
+  implicit_level: 1
+  family: jamulet
+  drop_weight: 20
+  material: ECHO_SHARD
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 魔力回復速度"
+    value: [20, 30]
+    mods:
+      - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+jamulet_03:
+  name: 烈珀墜飾
+  base_level: 8          # 數值是物品等級 8 的值，照物品等級縮放
+  implicit_level: 8
+  family: jamulet
+  drop_weight: 20
+  material: NETHERITE_SCRAP
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 力量"
+    value: [10, 15]
+    mods:
+      - { stat: attr.str, type: FLAT, value: "{value}" }
+
+jamulet_04:
+  name: 青翠墜飾
+  base_level: 8          # 數值是物品等級 8 的值，照物品等級縮放
+  implicit_level: 8
+  family: jamulet
+  drop_weight: 20
+  material: TURTLE_SCUTE
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 敏捷"
+    value: [10, 15]
+    mods:
+      - { stat: attr.dex, type: FLAT, value: "{value}" }
+
+jamulet_05:
+  name: 藍智墜飾
+  base_level: 8          # 數值是物品等級 8 的值，照物品等級縮放
+  implicit_level: 8
+  family: jamulet
+  drop_weight: 20
+  material: PRISMARINE_SHARD
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 智慧"
+    value: [10, 15]
+    mods:
+      - { stat: attr.int, type: FLAT, value: "{value}" }
+
+jamulet_06:
+  name: 珠光墜飾
+  base_level: 8          # 數值是物品等級 8 的值，照物品等級縮放
+  implicit_level: 8
+  family: jamulet
+  drop_weight: 20
+  material: PRISMARINE_CRYSTALS
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value}% 全部元素抗性"
+    value: [7, 10]
+    mods:
+      - { stat: resist.fire, type: FLAT, value: "{value}" }
+      - { stat: resist.cold, type: FLAT, value: "{value}" }
+      - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+jamulet_07:
+  name: 月盾墜飾
+  base_level: 14          # 數值是物品等級 14 的值，照物品等級縮放
+  implicit_level: 14
+  family: jamulet
+  drop_weight: 20
+  material: ARMADILLO_SCUTE
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 最大能量護盾"
+    value: [20, 30]
+    mods:
+      - { stat: es.max, type: FLAT, value: "{value}" }
+
+jamulet_08:
+  name: 血晶墜飾
+  base_level: 18          # 數值是物品等級 18 的值，照物品等級縮放
+  implicit_level: 18
+  family: jamulet
+  drop_weight: 20
+  material: RABBIT_FOOT
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 最大生命"
+    value: [30, 40]
+    mods:
+      - { stat: life.max, type: FLAT, value: "{value}" }
+
+jamulet_09:
+  name: 星輝墜飾
+  base_level: 25          # 數值是物品等級 25 的值，照物品等級縮放
+  implicit_level: 25
+  family: jamulet
+  drop_weight: 20
+  material: AMETHYST_SHARD
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 全部屬性"
+    value: [5, 7]
+    mods:
+      - { stat: attr.str, type: FLAT, value: "{value}" }
+      - { stat: attr.dex, type: FLAT, value: "{value}" }
+      - { stat: attr.int, type: FLAT, value: "{value}" }
+
+jamulet_10:
+  name: 日魄墜飾
+  base_level: 30          # 數值是物品等級 30 的值，照物品等級縮放
+  implicit_level: 30
+  family: jamulet
+  drop_weight: 20
+  material: SUGAR
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 最大精魂"
+    value: [10, 15]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+jamulet_11:
+  name: 金耀墜飾
+  base_level: 35          # 數值是物品等級 35 的值，照物品等級縮放
+  implicit_level: 35
+  family: jamulet
+  drop_weight: 20
+  material: GOLD_INGOT
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 物品掉落稀有度"
+    value: [12, 20]
+    mods:
+      - { stat: drop.rarity, type: INCREASED, value: "{value}" }
+
+jbelt_01:
+  name: 鞣皮束帶
+  base_level: 1          # 數值是物品等級 1 的值，照物品等級縮放
+  implicit_level: 1
+  family: jbelt
+  drop_weight: 20
+  material: LEATHER
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 藥劑的生命回復"
+    value: [20, 30]
+    mods:
+      - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
+
+jbelt_02:
+  name: 麻紋束帶
+  base_level: 1          # 數值是物品等級 1 的值，照物品等級縮放
+  implicit_level: 1
+  family: jbelt
+  drop_weight: 20
+  material: RABBIT_HIDE
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 藥劑的魔力回復"
+    value: [20, 30]
+    mods:
+      - { stat: flask.mana_recovery, type: INCREASED, value: "{value}" }
+
+jbelt_03:
+  name: 鐵片束帶
+  base_level: 25          # 數值是物品等級 25 的值，照物品等級縮放
+  implicit_level: 25
+  family: jbelt
+  drop_weight: 20
+  material: IRON_CHAIN
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 護甲"
+    value: [140, 180]
+    mods:
+      - { stat: armour, type: FLAT, value: "{value}" }
+
+jbelt_04:
+  name: 詠咒束帶
+  base_level: 32          # 數值是物品等級 32 的值，照物品等級縮放
+  implicit_level: 32
+  family: jbelt
+  drop_weight: 20
+  material: STRING
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 施法速度"
+    value: [8, 12]
+    mods:
+      - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+jbelt_05:
+  name: 筋索束帶
+  base_level: 32          # 數值是物品等級 32 的值，照物品等級縮放
+  implicit_level: 32
+  family: jbelt
+  drop_weight: 20
+  material: LEAD
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "+{value} 力量"
+    value: [15, 20]
+    mods:
+      - { stat: attr.str, type: FLAT, value: "{value}" }
+
+jbelt_06:
+  name: 岔雷束帶
+  base_level: 32          # 數值是物品等級 32 的值，照物品等級縮放
+  implicit_level: 32
+  family: jbelt
+  drop_weight: 20
+  material: COPPER_CHAIN
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "攻擊附加 {min} 到 {max} 閃電傷害"
+    min: [1, 1]
+    max: [20, 30]
+    mods:
+      - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, lightning] }
+      - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
+
+jbelt_07:
+  name: 重革束帶
+  base_level: 50          # 數值是物品等級 50 的值，照物品等級縮放
+  implicit_level: 50
+  family: jbelt
+  drop_weight: 20
+  material: OXIDIZED_COPPER_CHAIN
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 暈眩門檻"
+    value: [20, 30]
+    mods:
+      - { stat: stun.threshold, type: INCREASED, value: "{value}" }

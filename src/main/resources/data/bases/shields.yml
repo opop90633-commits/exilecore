@@ -1,50 +1,2010 @@
 # 盾牌基底（副手）。block 是格擋率（%），不隨等級縮放。
 
 tower_shield:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 塔盾
   material: SHIELD
   model: exilecore:shield/tower_shield
   slot: OFF_HAND
-  tags: [shield, str_armour]
+  tags: [shield, str_armour, str_only, str_shield]
   drop_level: 1
   requirements: { level: 1, str: 18, dex: 0, int: 0 }
   armour: 40
   block: 28
   sockets: 3
+  implicit:
+    text: "+{value} 最大生命"
+    value: [10, 20]
+    mods:
+      - { stat: life.max, type: FLAT, value: "{value}" }
 
 buckler:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 圓盾
   material: SHIELD
   model: exilecore:shield/buckler
   slot: OFF_HAND
-  tags: [shield, dex_armour]
+  tags: [shield, dex_armour, dex_only]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 18, int: 0 }
   evasion: 40
   block: 24
   sockets: 3
+  implicit:
+    text: "增加 {value}% 移動速度"
+    value: [3, 3]
+    mods:
+      - { stat: movement.speed, type: INCREASED, value: "{value}" }
 
 spirit_shield:
-  name: 靈盾
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 法器   # 2026-10：靈盾 → 法器（照 PoE2 的 Focus：能量護盾、不能格擋；代號不變）
   material: SHIELD
   model: exilecore:shield/spirit_shield
   slot: OFF_HAND
-  tags: [shield, int_armour]
+  tags: [shield, int_armour, int_only, focus]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 0, int: 18 }
   es: 14
-  block: 20
+  block: 0
   sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
 
 kite_shield:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
   name: 鳶盾
   material: SHIELD
   model: exilecore:shield/kite_shield
   slot: OFF_HAND
-  tags: [shield, str_armour, dex_armour]
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 1
   requirements: { level: 1, str: 11, dex: 11, int: 0 }
   armour: 22
   evasion: 22
   block: 26
   sockets: 3
+
+  implicit:
+    text: "+{value}% 所有元素抗性"
+    value: [4, 4]
+    mods:
+      - { stat: resist.fire, type: FLAT, value: "{value}" }
+      - { stat: resist.cold, type: FLAT, value: "{value}" }
+      - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+# ---- PoE2 分階基底（tools/gen_poe2_bases.py 產生；重跑會整段換掉）----
+tshield_01:
+  name: 樸素塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 1
+  requirements: { level: 1, str: 18, dex: 0, int: 0 }
+  armour: 41
+  block: 26.0
+  sockets: 3
+
+tshield_02:
+  name: 舊木塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 6
+  requirements: { level: 6, str: 18, dex: 0, int: 0 }
+  armour: 48
+  block: 26.0
+  sockets: 3
+
+tshield_03:
+  name: 鐵箍塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 12
+  requirements: { level: 12, str: 22, dex: 0, int: 0 }
+  armour: 55
+  block: 26.0
+  sockets: 3
+
+tshield_04:
+  name: 淬鐵塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 16
+  requirements: { level: 16, str: 24, dex: 0, int: 0 }
+  armour: 61
+  block: 26.0
+  sockets: 3
+
+tshield_05:
+  name: 鍛紋塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 21
+  requirements: { level: 21, str: 26, dex: 0, int: 0 }
+  armour: 68
+  block: 26.0
+  sockets: 3
+
+tshield_06:
+  name: 精鐵塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 28
+  requirements: { level: 28, str: 29, dex: 0, int: 0 }
+  armour: 77
+  block: 26.0
+  sockets: 3
+
+tshield_07:
+  name: 鋼脊塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 33
+  requirements: { level: 33, str: 30, dex: 0, int: 0 }
+  armour: 84
+  block: 26.0
+  sockets: 3
+
+tshield_08:
+  name: 鑄紋塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 36
+  requirements: { level: 36, str: 31, dex: 0, int: 0 }
+  armour: 88
+  block: 26.0
+  sockets: 3
+
+tshield_09:
+  name: 戰痕塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 45
+  requirements: { level: 45, str: 34, dex: 0, int: 0 }
+  armour: 100
+  block: 26.0
+  sockets: 3
+
+tshield_10:
+  name: 銅鑲塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 45
+  requirements: { level: 45, str: 34, dex: 0, int: 0 }
+  armour: 100
+  block: 26.0
+  sockets: 3
+
+tshield_11:
+  name: 獵紋塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 48
+  requirements: { level: 48, str: 35, dex: 0, int: 0 }
+  armour: 105
+  block: 26.0
+  sockets: 3
+
+tshield_12:
+  name: 熔鋼塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 50
+  requirements: { level: 50, str: 36, dex: 0, int: 0 }
+  armour: 108
+  block: 26.0
+  sockets: 3
+
+tshield_13:
+  name: 寒鐵塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 51
+  requirements: { level: 51, str: 36, dex: 0, int: 0 }
+  armour: 109
+  block: 26.0
+  sockets: 3
+
+tshield_14:
+  name: 雷紋塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 52
+  requirements: { level: 52, str: 36, dex: 0, int: 0 }
+  armour: 111
+  block: 26.0
+  sockets: 3
+
+tshield_15:
+  name: 赤銅塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 54
+  requirements: { level: 54, str: 37, dex: 0, int: 0 }
+  armour: 113
+  block: 26.0
+  sockets: 3
+
+tshield_16:
+  name: 秘銀塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 58
+  requirements: { level: 58, str: 38, dex: 0, int: 0 }
+  armour: 119
+  block: 26.0
+  sockets: 3
+
+tshield_17:
+  name: 暗鋼塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 59
+  requirements: { level: 59, str: 38, dex: 0, int: 0 }
+  armour: 120
+  block: 26.0
+  sockets: 3
+
+tshield_18:
+  name: 星紋塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 61
+  requirements: { level: 61, str: 39, dex: 0, int: 0 }
+  armour: 123
+  block: 26.0
+  sockets: 3
+
+tshield_19:
+  name: 隕鐵塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 65
+  requirements: { level: 65, str: 40, dex: 0, int: 0 }
+  armour: 128
+  block: 26.0
+  sockets: 3
+
+tshield_20:
+  name: 曜石塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 65
+  requirements: { level: 65, str: 40, dex: 0, int: 0 }
+  armour: 128
+  block: 26.0
+  sockets: 3
+
+tshield_21:
+  name: 霜晶塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 70
+  requirements: { level: 70, str: 42, dex: 0, int: 0 }
+  armour: 139
+  block: 26.0
+  sockets: 3
+
+tshield_22:
+  name: 炎晶塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 70
+  requirements: { level: 70, str: 42, dex: 0, int: 0 }
+  armour: 139
+  block: 26.0
+  sockets: 3
+
+tshield_23:
+  name: 天鐵塔盾
+  fixed: true
+  retired: true
+  merged_into: tshield_24
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 75
+  requirements: { level: 75, str: 44, dex: 0, int: 0 }
+  armour: 149
+  block: 26.0
+  sockets: 3
+
+tshield_24:
+  name: 古王塔盾
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: tshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, str_only, str_shield]
+  drop_level: 1
+  requirements: { level: 1, str: 46, dex: 0, int: 0 }
+  armour: 160
+  block: 26.0
+  sockets: 3
+
+kshield_01:
+  name: 樸素鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 1
+  requirements: { level: 1, str: 11, dex: 11, int: 0 }
+  armour: 23
+  evasion: 21
+  block: 25.0
+  sockets: 3
+
+kshield_02:
+  name: 舊木鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 8
+  requirements: { level: 8, str: 13, dex: 13, int: 0 }
+  armour: 27
+  evasion: 28
+  block: 25.0
+  sockets: 3
+
+kshield_03:
+  name: 鐵箍鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 16
+  requirements: { level: 16, str: 15, dex: 15, int: 0 }
+  armour: 34
+  evasion: 35
+  block: 25.0
+  sockets: 3
+
+kshield_04:
+  name: 淬鐵鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 26
+  requirements: { level: 26, str: 16, dex: 16, int: 0 }
+  armour: 41
+  evasion: 42
+  block: 25.0
+  sockets: 3
+
+kshield_05:
+  name: 鍛紋鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 33
+  requirements: { level: 33, str: 18, dex: 18, int: 0 }
+  armour: 46
+  evasion: 47
+  block: 25.0
+  sockets: 3
+
+kshield_06:
+  name: 精鐵鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 37
+  requirements: { level: 37, str: 19, dex: 19, int: 0 }
+  armour: 49
+  evasion: 50
+  block: 25.0
+  sockets: 3
+
+kshield_07:
+  name: 鋼脊鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 45
+  requirements: { level: 45, str: 20, dex: 20, int: 0 }
+  armour: 55
+  evasion: 56
+  block: 25.0
+  sockets: 3
+
+kshield_08:
+  name: 鑄紋鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 46
+  requirements: { level: 46, str: 21, dex: 21, int: 0 }
+  armour: 56
+  evasion: 57
+  block: 25.0
+  sockets: 3
+
+kshield_09:
+  name: 戰痕鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 48
+  requirements: { level: 48, str: 21, dex: 21, int: 0 }
+  armour: 58
+  evasion: 58
+  block: 25.0
+  sockets: 3
+
+kshield_10:
+  name: 銅鑲鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 51
+  requirements: { level: 51, str: 22, dex: 22, int: 0 }
+  armour: 60
+  evasion: 60
+  block: 25.0
+  sockets: 3
+
+kshield_11:
+  name: 獵紋鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 51
+  requirements: { level: 51, str: 22, dex: 22, int: 0 }
+  armour: 60
+  evasion: 60
+  block: 25.0
+  sockets: 3
+
+kshield_12:
+  name: 熔鋼鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 52
+  requirements: { level: 52, str: 22, dex: 22, int: 0 }
+  armour: 61
+  evasion: 61
+  block: 25.0
+  sockets: 3
+
+kshield_13:
+  name: 寒鐵鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 54
+  requirements: { level: 54, str: 22, dex: 22, int: 0 }
+  armour: 62
+  evasion: 62
+  block: 25.0
+  sockets: 3
+
+kshield_14:
+  name: 雷紋鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 57
+  requirements: { level: 57, str: 23, dex: 23, int: 0 }
+  armour: 65
+  evasion: 65
+  block: 25.0
+  sockets: 3
+
+kshield_15:
+  name: 赤銅鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 59
+  requirements: { level: 59, str: 23, dex: 23, int: 0 }
+  armour: 66
+  evasion: 66
+  block: 25.0
+  sockets: 3
+
+kshield_16:
+  name: 秘銀鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 62
+  requirements: { level: 62, str: 24, dex: 24, int: 0 }
+  armour: 68
+  evasion: 68
+  block: 25.0
+  sockets: 3
+
+kshield_17:
+  name: 暗鋼鳶盾
+  base_level: 62          # 數值是物品等級 62 的值，照物品等級縮放
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 1
+  requirements: { level: 1, str: 32, dex: 32, int: 0 }
+  armour: 68
+  evasion: 68
+  block: 28.0
+  sockets: 3
+
+kshield_18:
+  name: 星紋鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 65
+  requirements: { level: 65, str: 24, dex: 24, int: 0 }
+  armour: 71
+  evasion: 70
+  block: 25.0
+  sockets: 3
+
+kshield_19:
+  name: 隕鐵鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 65
+  requirements: { level: 65, str: 24, dex: 24, int: 0 }
+  armour: 71
+  evasion: 70
+  block: 25.0
+  sockets: 3
+
+kshield_20:
+  name: 曜石鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 70
+  requirements: { level: 70, str: 26, dex: 26, int: 0 }
+  armour: 77
+  evasion: 75
+  block: 25.0
+  sockets: 3
+
+kshield_21:
+  name: 霜晶鳶盾
+  fixed: true
+  retired: true
+  merged_into: kshield_22
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 75
+  requirements: { level: 75, str: 27, dex: 27, int: 0 }
+  armour: 82
+  evasion: 81
+  block: 25.0
+  sockets: 3
+
+kshield_22:
+  name: 炎晶鳶盾
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: kshield
+  material: SHIELD
+  model: exilecore:shield/kite_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
+  drop_level: 1
+  requirements: { level: 1, str: 28, dex: 28, int: 0 }
+  armour: 88
+  evasion: 86
+  block: 25.0
+  sockets: 3
+
+cshield_01:
+  name: 樸素聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 1
+  requirements: { level: 1, str: 11, dex: 0, int: 11 }
+  armour: 22
+  es: 9
+  block: 25.0
+  sockets: 3
+
+cshield_02:
+  name: 舊木聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 7
+  requirements: { level: 7, str: 12, dex: 0, int: 12 }
+  armour: 27
+  es: 10
+  block: 25.0
+  sockets: 3
+
+cshield_03:
+  name: 鐵箍聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 16
+  requirements: { level: 16, str: 15, dex: 0, int: 15 }
+  armour: 33
+  es: 11
+  block: 25.0
+  sockets: 3
+
+cshield_04:
+  name: 淬鐵聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 28
+  requirements: { level: 28, str: 17, dex: 0, int: 17 }
+  armour: 42
+  es: 15
+  block: 25.0
+  sockets: 3
+
+cshield_05:
+  name: 鍛紋聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 33
+  requirements: { level: 33, str: 18, dex: 0, int: 18 }
+  armour: 46
+  es: 16
+  block: 25.0
+  sockets: 3
+
+cshield_06:
+  name: 精鐵聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 36
+  requirements: { level: 36, str: 19, dex: 0, int: 19 }
+  armour: 49
+  es: 17
+  block: 25.0
+  sockets: 3
+
+cshield_07:
+  name: 鋼脊聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 45
+  requirements: { level: 45, str: 21, dex: 0, int: 21 }
+  armour: 55
+  es: 19
+  block: 25.0
+  sockets: 3
+
+cshield_08:
+  name: 鑄紋聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 45
+  requirements: { level: 45, str: 21, dex: 0, int: 21 }
+  armour: 55
+  es: 19
+  block: 25.0
+  sockets: 3
+
+cshield_09:
+  name: 戰痕聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 48
+  requirements: { level: 48, str: 21, dex: 0, int: 21 }
+  armour: 58
+  es: 20
+  block: 25.0
+  sockets: 3
+
+cshield_10:
+  name: 銅鑲聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 50
+  requirements: { level: 50, str: 22, dex: 0, int: 22 }
+  armour: 59
+  es: 21
+  block: 25.0
+  sockets: 3
+
+cshield_11:
+  name: 獵紋聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 51
+  requirements: { level: 51, str: 22, dex: 0, int: 22 }
+  armour: 60
+  es: 22
+  block: 25.0
+  sockets: 3
+
+cshield_12:
+  name: 熔鋼聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 52
+  requirements: { level: 52, str: 22, dex: 0, int: 22 }
+  armour: 61
+  es: 22
+  block: 25.0
+  sockets: 3
+
+cshield_13:
+  name: 寒鐵聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 54
+  requirements: { level: 54, str: 22, dex: 0, int: 22 }
+  armour: 62
+  es: 23
+  block: 25.0
+  sockets: 3
+
+cshield_14:
+  name: 雷紋聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 57
+  requirements: { level: 57, str: 23, dex: 0, int: 23 }
+  armour: 64
+  es: 24
+  block: 25.0
+  sockets: 3
+
+cshield_15:
+  name: 赤銅聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 59
+  requirements: { level: 59, str: 24, dex: 0, int: 24 }
+  armour: 66
+  es: 24
+  block: 25.0
+  sockets: 3
+
+cshield_16:
+  name: 秘銀聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 62
+  requirements: { level: 62, str: 24, dex: 0, int: 24 }
+  armour: 68
+  es: 25
+  block: 25.0
+  sockets: 3
+
+cshield_17:
+  name: 暗鋼聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 65
+  requirements: { level: 65, str: 25, dex: 0, int: 25 }
+  armour: 71
+  es: 26
+  block: 25.0
+  sockets: 3
+
+cshield_18:
+  name: 星紋聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 65
+  requirements: { level: 65, str: 25, dex: 0, int: 25 }
+  armour: 71
+  es: 26
+  block: 25.0
+  sockets: 3
+
+cshield_19:
+  name: 隕鐵聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 70
+  requirements: { level: 70, str: 26, dex: 0, int: 26 }
+  armour: 77
+  es: 29
+  block: 25.0
+  sockets: 3
+
+cshield_20:
+  name: 曜石聖徽盾
+  fixed: true
+  retired: true
+  merged_into: cshield_21
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 75
+  requirements: { level: 75, str: 28, dex: 0, int: 28 }
+  armour: 82
+  es: 32
+  block: 25.0
+  sockets: 3
+
+cshield_21:
+  name: 霜晶聖徽盾
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: cshield
+  material: SHIELD
+  model: exilecore:shield/tower_shield
+  slot: OFF_HAND
+  tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
+  drop_level: 1
+  requirements: { level: 1, str: 29, dex: 0, int: 29 }
+  armour: 88
+  es: 34
+  block: 25.0
+  sockets: 3
+
+buckler_01:
+  name: 樸素圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 18, int: 0 }
+  evasion: 38
+  block: 20.0
+  sockets: 3
+
+buckler_02:
+  name: 舊木圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 5
+  requirements: { level: 5, str: 0, dex: 18, int: 0 }
+  evasion: 45
+  block: 20.0
+  sockets: 3
+
+buckler_03:
+  name: 鐵箍圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 22, int: 0 }
+  evasion: 55
+  block: 20.0
+  sockets: 3
+
+buckler_04:
+  name: 淬鐵圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 24, int: 0 }
+  evasion: 63
+  block: 20.0
+  sockets: 3
+
+buckler_05:
+  name: 鍛紋圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 22
+  requirements: { level: 22, str: 0, dex: 26, int: 0 }
+  evasion: 71
+  block: 20.0
+  sockets: 3
+
+buckler_06:
+  name: 精鐵圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 26
+  requirements: { level: 26, str: 0, dex: 27, int: 0 }
+  evasion: 77
+  block: 20.0
+  sockets: 3
+
+buckler_07:
+  name: 鋼脊圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 30, int: 0 }
+  evasion: 86
+  block: 20.0
+  sockets: 3
+
+buckler_08:
+  name: 鑄紋圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 39
+  requirements: { level: 39, str: 0, dex: 32, int: 0 }
+  evasion: 94
+  block: 20.0
+  sockets: 3
+
+buckler_09:
+  name: 戰痕圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 34, int: 0 }
+  evasion: 102
+  block: 20.0
+  sockets: 3
+
+buckler_10:
+  name: 銅鑲圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 34, int: 0 }
+  evasion: 102
+  block: 20.0
+  sockets: 3
+
+buckler_11:
+  name: 獵紋圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 48
+  requirements: { level: 48, str: 0, dex: 35, int: 0 }
+  evasion: 105
+  block: 20.0
+  sockets: 3
+
+buckler_12:
+  name: 熔鋼圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 50
+  requirements: { level: 50, str: 0, dex: 36, int: 0 }
+  evasion: 108
+  block: 20.0
+  sockets: 3
+
+buckler_13:
+  name: 寒鐵圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 36, int: 0 }
+  evasion: 109
+  block: 20.0
+  sockets: 3
+
+buckler_14:
+  name: 雷紋圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 36, int: 0 }
+  evasion: 111
+  block: 20.0
+  sockets: 3
+
+buckler_15:
+  name: 赤銅圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 37, int: 0 }
+  evasion: 113
+  block: 20.0
+  sockets: 3
+
+buckler_16:
+  name: 秘銀圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 55
+  requirements: { level: 55, str: 0, dex: 37, int: 0 }
+  evasion: 114
+  block: 20.0
+  sockets: 3
+
+buckler_17:
+  name: 暗鋼圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 38, int: 0 }
+  evasion: 119
+  block: 20.0
+  sockets: 3
+
+buckler_18:
+  name: 星紋圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 61
+  requirements: { level: 61, str: 0, dex: 39, int: 0 }
+  evasion: 121
+  block: 20.0
+  sockets: 3
+
+buckler_19:
+  name: 隕鐵圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 40, int: 0 }
+  evasion: 127
+  block: 20.0
+  sockets: 3
+
+buckler_20:
+  name: 曜石圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 40, int: 0 }
+  evasion: 127
+  block: 20.0
+  sockets: 3
+
+buckler_21:
+  name: 霜晶圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 42, int: 0 }
+  evasion: 137
+  block: 20.0
+  sockets: 3
+
+buckler_22:
+  name: 炎晶圓盾
+  fixed: true
+  retired: true
+  merged_into: buckler_23
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 44, int: 0 }
+  evasion: 146
+  block: 20.0
+  sockets: 3
+
+buckler_23:
+  name: 天鐵圓盾
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  family: buckler
+  material: SHIELD
+  model: exilecore:shield/buckler
+  slot: OFF_HAND
+  tags: [shield, dex_armour, dex_only]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 46, int: 0 }
+  evasion: 155
+  block: 20.0
+  sockets: 3
+
+focus_01:
+  name: 樸素法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 18 }
+  es: 18
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_02:
+  name: 舊木法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 6
+  requirements: { level: 6, str: 0, dex: 0, int: 18 }
+  es: 17
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_03:
+  name: 鐵箍法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 10
+  requirements: { level: 10, str: 0, dex: 0, int: 22 }
+  es: 18
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_04:
+  name: 淬鐵法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 0, int: 24 }
+  es: 20
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_05:
+  name: 鍛紋法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 22
+  requirements: { level: 22, str: 0, dex: 0, int: 26 }
+  es: 22
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_06:
+  name: 精鐵法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 26
+  requirements: { level: 26, str: 0, dex: 0, int: 27 }
+  es: 24
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_07:
+  name: 鋼脊法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 0, int: 30 }
+  es: 27
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_08:
+  name: 鑄紋法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 36
+  requirements: { level: 36, str: 0, dex: 0, int: 31 }
+  es: 29
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_09:
+  name: 戰痕法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 34 }
+  es: 33
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_10:
+  name: 銅鑲法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 34 }
+  es: 33
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_11:
+  name: 獵紋法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 48
+  requirements: { level: 48, str: 0, dex: 0, int: 35 }
+  es: 35
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_12:
+  name: 熔鋼法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 0, int: 36 }
+  es: 37
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_13:
+  name: 寒鐵法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 51
+  requirements: { level: 51, str: 0, dex: 0, int: 36 }
+  es: 37
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_14:
+  name: 雷紋法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 0, int: 36 }
+  es: 37
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_15:
+  name: 赤銅法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 54
+  requirements: { level: 54, str: 0, dex: 0, int: 37 }
+  es: 38
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_16:
+  name: 秘銀法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 57
+  requirements: { level: 57, str: 0, dex: 0, int: 38 }
+  es: 40
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_17:
+  name: 暗鋼法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 59
+  requirements: { level: 59, str: 0, dex: 0, int: 38 }
+  es: 40
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_18:
+  name: 星紋法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 61
+  requirements: { level: 61, str: 0, dex: 0, int: 39 }
+  es: 44
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_19:
+  name: 隕鐵法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 40 }
+  es: 44
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_20:
+  name: 曜石法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 40 }
+  es: 48
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_21:
+  name: 霜晶法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 0, int: 42 }
+  es: 55
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_22:
+  name: 炎晶法器
+  fixed: true
+  retired: true
+  merged_into: focus_23
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 0, int: 44 }
+  es: 63
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+focus_23:
+  name: 天鐵法器
+  base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
+  implicit_level: 1
+  family: focus
+  material: SHIELD
+  model: exilecore:shield/spirit_shield
+  slot: OFF_HAND
+  tags: [shield, int_armour, int_only, focus]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 46 }
+  es: 71
+  sockets: 3
+  implicit:
+    text: "增加 {value}% 法術傷害"
+    value: [5, 10]
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }

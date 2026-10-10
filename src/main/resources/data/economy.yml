@@ -1,0 +1,183 @@
+# 經濟：面對面交易、市集（商店頁）、通貨交易所、商人、賭博。改完在遊戲內 /ec reload。
+# 玩家之間的交易一律用通貨當價格；金幣是帳號共用的（所有角色同一個餘額），不能交易，只用來付手續費（照 PoE2）。
+
+# 每種通貨的參考價值（以金幣計）。只在後台用：算手續費、市集照價格排序與價格上限（不同通貨互相比較）、
+# 通貨交易所的「參考價」、面對面交易的估價。遊戲裡看不到這些數字——價格一律顯示通貨，金幣只出現在手續費。
+# 只有寫在這裡、而且大於 0 的通貨能拿來標價、能在通貨交易所買賣（鑑定卷軸免費領，不列）。
+# 跟著市價走（下面的 reference）時，這裡是起始值與上下限的基準，實際的值每天照交易所的成交價重算。
+values:
+  # 2026-10 照兩天的實際掉落重排：至臻石（錨點）兩天掉 1339 顆，亂流 219、機會 23、湮滅 11、天啟 12、
+  # 鑿星石 34、大鑿星石 1；再用 PoE2 的行情（崇高＝1：富豪 1/3、混沌 3–10、湮滅 10、神聖 100+）折衷。
+  # 這些值只在後台用（手續費、市集排序、交易所參考價、交易估價），人少時交易所不會動，起始值就是大家看到的參考價。
+  glimmer_orb: 30
+  lustre_orb: 40
+  whetstone: 40
+  armour_scrap: 40
+  bounty_orb: 500
+  spark_orb: 500
+  lesser_socket_orb: 600
+  chisel: 400
+  turmoil_orb: 4500
+  chance_orb: 3000
+  blessing_orb: 3000
+  socket_orb: 3000
+  zenith_orb: 1500
+  annul_orb: 15000
+  sky_fragment: 15000
+  abyss_core: 150000              # 深淵星核：開極境的鑰匙（T12 以上的終局 Boss 才有機率掉）
+  oracle_orb: 150000
+  greater_socket_orb: 150000
+  # 地圖機制的特殊通貨（寶箱的星魄、裂隙的催化劑、流寇的星籤）
+  essence_body: 60
+  essence_mind: 50
+  essence_flame: 60
+  essence_frost: 60
+  essence_storm: 60
+  essence_ruin: 90
+  essence_battle: 80
+  essence_sorcery: 80
+  essence_haste: 110
+  essence_infinite: 70
+  essence_seeking: 90
+  essence_torment: 90
+  catalyst_resist: 108
+  catalyst_life: 108
+  catalyst_attack: 108
+  catalyst_caster: 108
+  catalyst_crit: 120
+  catalyst_elemental: 108
+  catalyst_phys_chaos: 96
+  catalyst_attribute: 84
+  catalyst_speed: 132
+  catalyst_defence: 84
+  omen_sinistral: 220
+  omen_dextral: 220
+  omen_abundance: 600
+  omen_whittling: 350
+  omen_sinistral_guard: 260
+  omen_dextral_guard: 260
+  distilled_ire: 40
+  distilled_guilt: 90
+  distilled_greed: 200
+  distilled_paranoia: 450
+  # 未切割寶石（2026-10 算通貨）：等級越高越值錢（大約每升一級 ×1.32，Lv.20 約三顆至臻石）；輔助寶石第 1／2／3 階
+  uncut_skill_1: 25
+  uncut_skill_2: 35
+  uncut_skill_3: 45
+  uncut_skill_4: 55
+  uncut_skill_5: 75
+  uncut_skill_6: 100
+  uncut_skill_7: 130
+  uncut_skill_8: 170
+  uncut_skill_9: 230
+  uncut_skill_10: 300
+  uncut_skill_11: 400
+  uncut_skill_12: 530
+  uncut_skill_13: 700
+  uncut_skill_14: 920
+  uncut_skill_15: 1200
+  uncut_skill_16: 1600
+  uncut_skill_17: 2100
+  uncut_skill_18: 2800
+  uncut_skill_19: 3700
+  uncut_skill_20: 4900
+  uncut_skill_21: 15000   # 2026-10：只有劫盜大金庫、金庫之主掉
+  uncut_support_1: 60
+  uncut_support_2: 300
+  uncut_support_3: 1500
+
+# 參考價值跟著市價走：每天換日後，用通貨交易所最近 days 天的成交重算上面這些價值（手續費、市集排序、交易估價都用新的）。
+# 金幣不能交易，市場只看得到「通貨之間」的比例，所以要一個基準：anchor 的價值固定（照上面），其他照成交比例換算。
+# 同樣兩個帳號之間的成交（不管幾次）合起來只算一票，取所有票的中位數：跟自己的分身對倒很多次也只有一票。
+# 少於 min_pairs 組不同的買賣雙方就不動；一天最多變 max_step（從前一天的值算起，同一天重算幾次都只走一步）；
+# 不會低於上面設定值的 min 倍、高於 max 倍。上面的數字是起始值與上下限的基準。/ec economy values 看現在的值。
+# 2026-10：小伺服器（同時 3–5 人）看 14 天、2 組買賣雙方就動——原本 7 天 5 組在人少的伺服器永遠湊不到，參考價值一直是起始值。
+# 兩組就動的風險（兩個人對倒拉價）由 max_step 跟 min/max 擋著：一天最多 20%、永遠在起始值的 0.25–4 倍之間。人多了再調回 5。
+reference:
+  follow_market: true
+  anchor: zenith_orb
+  days: 14
+  min_pairs: 2
+  max_step: 0.2
+  min: 0.25
+  max: 4
+
+# 面對面交易（/trade 玩家）
+# 手續費（跟市集的購買手續費一樣，免得大家改用面對面交易躲手續費）：兩邊各付自己的，
+# 每個人付「自己收到的東西」估成金幣的 percent%，至少 min；什麼都沒收到不用付。金幣不夠不能按確認。
+# 估價：通貨照上面的 values；裝備（含地圖）照下面商人的價格公式；寶石、藥劑等其他東西算 0（只收最低）。
+trade:
+  range: 16                   # 兩個人要在幾格內（同一個世界）
+  request_seconds: 30         # 邀請多久沒接受就作廢
+  confirm_delay_seconds: 2    # 對方改過內容之後幾秒內不能按確認（防止最後一刻換東西）
+  max_items: 16               # 每個人最多放幾格
+  fee: { percent: 3, min: 10 }
+
+# 市集（PoE2 的非同步交易）：裝備放進自己的商店頁、用通貨標價，別人在市集掌櫃那裡搜尋、直接買，
+# 賣家不用在線；賣掉的通貨到市集掌櫃那裡領。手續費（金幣）= 售價照上面的參考價值換算的 percent%，至少 min。
+market:
+  shop_slots: 5               # 每個帳號的商店頁能放幾件（2026-10：27 → 5；累積贊助的玩家照 sponsor.yml 的 listings）
+  listing_fee: { percent: 2, min: 10 }    # 上架（改價也算一次上架）時賣家付；2026-10：照上架的東西本身的估價（跟面對面交易一樣），不是標價
+  purchase_fee: { percent: 3, min: 10 }   # 購買時買家付
+  relist_minutes: 10          # 上架後幾分鐘內不能下架或改價（PoE2：防止操縱價格）
+  max_price: 5000             # 標價的數量上限
+
+# 通貨交易所：掛單「用 A 換 B」，價格合得來就自動成交（可以部分成交），成交的通貨到市集掌櫃那裡領。
+# 掛單時付手續費（金幣）= 掛出去的通貨照參考價值換算的 percent%，至少 min；取消不退手續費。
+exchange:
+  fee: { percent: 2, min: 5 }
+  max_orders: 10              # 每個帳號同時掛幾張單
+  max_amount: 5000            # 一張單的數量上限
+
+# 商人：賣你這個等級用得到的裝備（已鑑定），每 refresh_minutes 分鐘或升級時換一批；也可以花金幣馬上換。
+# 價格 = 物品等級的普通怪平均掉的金幣 × kills × 稀有度倍率（跟下面的補給一樣，drops.yml 的金幣改了，價格跟著變）：
+#   90 級：普通 3,240、魔法 9,720、稀有 32,400 金幣；30 級：普通 600、魔法 1,800、稀有 6,000。
+#   2026-10 從 (base + per_level × 物品等級) 改過來：舊的算法高等級太便宜（90 級的稀有裝才 3,800），
+#   kills 寫 0 才用 base／per_level（還有拿不到 drops.yml 的金幣表時）。
+# 馬上換一批 = 你的等級的普通怪平均掉的金幣 × refresh_kills（90 級 4,860）；refresh_kills 寫 0 改用每級 refresh_cost_per_level。
+# 賣東西給商人 = 拆解師（金幣＋品質通貨）。面對面交易也用這個價格估裝備的價值（商人不賣傳奇，unique 只用在這裡）。
+vendor:
+  stock: { normal: 10, magic: 6, rare: 2 }
+  refresh_minutes: 30
+  refresh_kills: 18
+  refresh_cost_per_level: 10
+  price:
+    kills: 12
+    base: 20
+    per_level: 4
+    rarity: { normal: 1.0, magic: 3.0, rare: 10.0, unique: 20.0 }
+
+# 賭博：花金幣買一件「未鑑定的某種基底」，買下來才知道是魔法、稀有還是傳奇（傳奇只有那個基底有能賭的傳奇時才會出現）。
+# 價格 = 你的等級的普通怪平均掉的金幣 × kills：90 級 24,300、100 級 28,800、60 級 13,050、30 級 4,500 金幣
+#   （2026-10 從 base + per_level × 等級改過來：舊的 90 級只要 2,350，地圖裡殺兩三隻怪就能賭一次；kills 寫 0 才用 base／per_level）。
+# rarity_weights：魔法、稀有、傳奇的權重；基底沒有能賭的傳奇時，unique 的權重算成稀有。
+#   unique       只能賭、劇情期間用的傳奇（流浪者、金邊）：2（一次 2%）
+#   boss_unique  地圖 Boss 也會掉的傳奇（uniques.yml 的 sources 有 map_boss）：照地圖 Boss 的 5% 校準——
+#                一張 T16 大約賺 9～11 萬金幣（含 Boss 與拆解；洗過的稀有圖更多），90～100 級大約夠賭 3.5～4.5 次；
+#                0.65 的權重一次 0.66%，一張圖的金幣全部拿去賭 ≈ 2.5% 一件，大約是打那隻 Boss（5%）的一半。
+#                （賭博可以挑基底，想要某一件特定的傳奇時還是比等 Boss 掉快：Boss 是 14 件裡隨機一件）
+gamble:
+  price:
+    kills: 90
+    base: 100
+    per_level: 25
+  rarity_weights: { magic: 55, rare: 43, unique: 2, boss_unique: 0.65 }
+
+# 補給（商人的「補給」分頁）：用金幣買藥劑與未切割寶石，價格固定、跟著劇情進度解鎖（PoE2 的商人也收金幣）。
+# 金幣不能交易，老玩家再有錢也抬不了這裡的價格；買到的東西跟掉落的一樣，可以交易。
+# 價格 = 同等級普通怪平均掉的金幣 × kills（大約是打幾隻同等級的怪會掉的金幣；drops.yml 的金幣改了，價格跟著變）。
+shop:
+  enabled: true
+  flask: { kills: 30 }                    # 生命、魔力藥劑：你的等級用得到的最好那一種（等級＝藥劑的需求等級）
+  uncut_skill: { kills: 80, max_level: 18 }   # 未切割技能寶石（等級＝寶石需要的角色等級）；19、20 級只有掉落
+  uncut_support:
+    kills: { 1: 100, 2: 200, 3: 400 }     # 未切割輔助寶石每一階（等級＝那一階開始掉的怪物等級）
+  # 解鎖：打倒哪個區域的 Boss 之後，技能寶石最高賣到幾級、輔助寶石最高賣到第幾階（start＝一開始）。
+  # 也不會超過你的角色等級用得到的等級。
+  unlock:
+    start:    { skill_level: 4,  support_tier: 0 }
+    coast:    { skill_level: 7,  support_tier: 1 }
+    forest:   { skill_level: 10, support_tier: 1 }
+    ruins:    { skill_level: 13, support_tier: 2 }
+    swamp:    { skill_level: 16, support_tier: 2 }
+    mountain: { skill_level: 18, support_tier: 3 }

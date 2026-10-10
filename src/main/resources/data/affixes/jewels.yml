@@ -1,0 +1,2287 @@
+# 珠寶詞綴（只出現在珠寶上）：小幅的百分比加成，照 PoE2 的珠寶。顏色決定能出什麼：
+#   spawn_tags: [ruby]      赤星晶（白星晶也會出）   spawn_tags: [emerald]  翠星晶   spawn_tags: [sapphire]  蒼星晶
+#   spawn_tags: [jewel]     每一種珠寶都會出
+# 三個階級：代號 2（物品等級 1 起）、代號 1（物品等級 50 起，比較少見）與代號 0（物品等級 75 起，最少見）。前綴、後綴各最多 2 條（引擎對珠寶的限制）。
+
+# ---- 前綴 ----
+
+jewel_life_inc:
+  type: prefix
+  group: jewel_life
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [星骸的, 不朽的, 健壯的]
+  text: "增加 {value}% 最大生命"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [8, 8] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [6, 7] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [4, 5] }
+  mods:
+    - { stat: life.max, type: INCREASED, value: "{value}" }
+
+jewel_armour_inc:
+  type: prefix
+  group: jewel_armour
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [不落的, 堡壘的, 堅固的]
+  text: "增加 {value}% 護甲"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [21, 25] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+
+jewel_phys_inc:
+  type: prefix
+  group: jewel_phys
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [屠戮的, 殘暴的, 銳利的]
+  text: "增加 {value}% 物理傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+
+jewel_fire_inc:
+  type: prefix
+  group: jewel_fire
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [煉獄的, 焚燒的, 灼熱的]
+  text: "增加 {value}% 火焰傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
+
+jewel_melee_inc:
+  type: prefix
+  group: jewel_melee
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [裂地的, 碎骨的, 揮砍的]
+  text: "增加 {value}% 近戰傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 19] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [melee] }
+
+jewel_area_inc:
+  type: prefix
+  group: jewel_area_damage
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [崩山的, 震地的, 轟擊的]
+  text: "增加 {value}% 範圍傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 19] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [area] }
+
+jewel_attack_inc:
+  type: prefix
+  group: jewel_attack
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [戰神的, 戰士的, 鬥士的]
+  text: "增加 {value}% 攻擊傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 19] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [attack] }
+
+jewel_evasion_inc:
+  type: prefix
+  group: jewel_evasion
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [無影的, 幻影的, 輕盈的]
+  text: "增加 {value}% 閃避"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [21, 25] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+
+jewel_cold_inc:
+  type: prefix
+  group: jewel_cold
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [永凍的, 凍結的, 冰霜的]
+  text: "增加 {value}% 冰冷傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
+
+jewel_proj_inc:
+  type: prefix
+  group: jewel_projectile
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [貫日的, 穿刺的, 飛射的]
+  text: "增加 {value}% 投射物傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 19] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
+
+jewel_es_inc:
+  type: prefix
+  group: jewel_es
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [星耀的, 星輝的, 微光的]
+  text: "增加 {value}% 最大能量護盾"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [11, 12] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [8, 10] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 7] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+
+jewel_mana_inc:
+  type: prefix
+  group: jewel_mana
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [星海的, 深泉的, 清明的]
+  text: "增加 {value}% 最大魔力"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [11, 12] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [8, 10] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 7] }
+  mods:
+    - { stat: mana.max, type: INCREASED, value: "{value}" }
+
+jewel_lightning_inc:
+  type: prefix
+  group: jewel_lightning
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [天雷的, 雷鳴的, 帶電的]
+  text: "增加 {value}% 閃電傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
+
+jewel_chaos_inc:
+  type: prefix
+  group: jewel_chaos
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [深淵的, 腐蝕的, 汙濁的]
+  text: "增加 {value}% 混沌傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
+
+jewel_spell_inc:
+  type: prefix
+  group: jewel_spell
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [大法師的, 奧法的, 咒術的]
+  text: "增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 19] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+jewel_minion_inc:
+  type: prefix
+  group: jewel_minion
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [亡者之主的, 役靈的, 喚靈的]
+  text: "增加 {value}% 召喚物傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+
+jewel_minion_life:
+  type: prefix
+  group: jewel_minion_life
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [不死軍團的, 守墓人的, 護靈的]
+  text: "增加 {value}% 召喚物最大生命"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
+
+# ---- 後綴 ----
+
+jewel_str:
+  type: suffix
+  group: jewel_attr_str
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之泰坦, 之巨人, 之公牛]
+  text: "+{value} 力量"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+
+jewel_dex:
+  type: suffix
+  group: jewel_attr_dex
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之疾風, 之獵豹, 之山貓]
+  text: "+{value} 敏捷"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+
+jewel_int:
+  type: suffix
+  group: jewel_attr_int
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之大賢, 之賢者, 之學徒]
+  text: "+{value} 智慧"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+jewel_all_attr:
+  type: suffix
+  group: jewel_attr_all
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之眾神, 之星辰, 之英雄]
+  text: "+{value} 全部屬性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 100, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 300, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 800, value: [4, 6] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+jewel_res_fire:
+  type: suffix
+  group: jewel_res_fire
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之火龍, 之火蜥, 之餘燼]
+  text: "+{value}% 火焰抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [16, 18] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+
+jewel_res_cold:
+  type: suffix
+  group: jewel_res_cold
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之冰龍, 之雪豹, 之冰雹]
+  text: "+{value}% 冰冷抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [16, 18] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+jewel_res_lightning:
+  type: suffix
+  group: jewel_res_lightning
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之雷龍, 之雷雲, 之靜電]
+  text: "+{value}% 閃電抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [16, 18] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+jewel_res_chaos:
+  type: suffix
+  group: jewel_res_chaos
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之驅邪, 之淨化, 之驅毒]
+  text: "+{value}% 混沌抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 100, value: [11, 13] }
+    - { tier: 1, ilvl: 50, weight: 300, value: [8, 10] }
+    - { tier: 2, ilvl: 1, weight: 800, value: [5, 7] }
+  mods:
+    - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+jewel_res_all:
+  type: suffix
+  group: jewel_res_all
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之光譜, 之稜鏡, 之彩虹]
+  text: "+{value}% 全部元素抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 100, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 300, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 800, value: [4, 6] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+jewel_attack_speed:
+  type: suffix
+  group: jewel_attack_speed
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之神速, 之疾速, 之敏捷]
+  text: "增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [7, 7] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [5, 6] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 4] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}" }
+
+jewel_cast_speed:
+  type: suffix
+  group: jewel_cast_speed
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之神念, 之急智, 之靈巧]
+  text: "增加 {value}% 施法速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [7, 7] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [5, 6] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 4] }
+  mods:
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+jewel_crit_chance:
+  type: suffix
+  group: jewel_crit_chance
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之穿刺, 之致命, 之精準]
+  text: "增加 {value}% 暴擊率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}" }
+
+jewel_crit_multi:
+  type: suffix
+  group: jewel_crit_multi
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之滅世, 之毀滅, 之殘酷]
+  text: "+{value}% 暴擊傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [16, 18] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: crit.multi, type: FLAT, value: "{value}" }
+
+jewel_accuracy:
+  type: suffix
+  group: jewel_accuracy
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之穿楊, 之鷹眼, 之神射]
+  text: "增加 {value}% 命中值"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: accuracy, type: INCREASED, value: "{value}" }
+
+jewel_proj_speed:
+  type: suffix
+  group: jewel_proj_speed
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之流星, 之飛矢, 之疾風]
+  text: "增加 {value}% 投射物速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [13, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 9] }
+  mods:
+    - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+
+jewel_life_regen:
+  type: suffix
+  group: jewel_life_regen
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之涅槃, 之不滅, 之再生]
+  text: "每秒回復 {value} 生命"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 11] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [6, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: life.regen, type: FLAT, value: "{value}" }
+
+jewel_block:
+  type: suffix
+  group: jewel_block
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之壁壘, 之盾牆, 之格擋]
+  text: "+{value}% 格擋率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 100, value: [4, 4] }
+    - { tier: 1, ilvl: 50, weight: 300, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 800, value: [1, 2] }
+  mods:
+    - { stat: block.chance, type: FLAT, value: "{value}" }
+
+jewel_mana_regen:
+  type: suffix
+  group: jewel_mana_regen
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之泉源, 之靜思, 之冥想]
+  text: "增加 {value}% 魔力回復"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [21, 25] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [16, 20] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 15] }
+  mods:
+    - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+jewel_skill_area:
+  type: suffix
+  group: jewel_skill_area
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之廣域, 之擴散, 之延展]
+  text: "增加 {value}% 範圍效果"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 100, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 300, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 800, value: [4, 6] }
+  mods:
+    - { stat: skill.area, type: INCREASED, value: "{value}" }
+
+# ---- 新增的家族：異常狀態、續戰、召喚物、光環、圖騰與陷阱、能量護盾（三個階級：代號 0 要物品等級 75）----
+jewel_ignite_mag:
+  type: prefix
+  group: jewel_ignite_mag
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [業火的, 焚身的, 悶燒的]
+  text: "增加 {value}% 點燃傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [20, 24] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [16, 19] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [10, 15] }
+  mods:
+    - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+
+jewel_bleed_mag:
+  type: prefix
+  group: jewel_bleed_mag
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [血河的, 放血的, 滲血的]
+  text: "增加 {value}% 流血傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [20, 24] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [16, 19] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [10, 15] }
+  mods:
+    - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
+
+jewel_poison_mag:
+  type: prefix
+  group: jewel_poison_mag
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [瘟毒的, 毒蝕的, 微毒的]
+  text: "增加 {value}% 中毒傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [20, 24] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [16, 19] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [10, 15] }
+  mods:
+    - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
+
+jewel_totem_inc:
+  type: prefix
+  group: jewel_totem
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [祖靈的, 立柱的, 刻紋的]
+  text: "增加 {value}% 圖騰傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [18, 21] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [15, 17] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [10, 14] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [totem] }
+
+jewel_trap_inc:
+  type: prefix
+  group: jewel_trap
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [詭雷的, 引信的, 機關的]
+  text: "增加 {value}% 陷阱與榴彈傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [18, 21] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [15, 17] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [10, 14] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [trap] }
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [grenade] }
+
+jewel_leech_life:
+  type: suffix
+  group: jewel_leech_life
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之飲血, 之噬血, 之汲取]
+  text: "攻擊造成的物理傷害有 {value/10}% 偷取為生命"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [5, 6] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [3, 4] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [2, 2] }
+  mods:
+    - { stat: leech.life, type: FLAT, value: "{value/10}", tags: [attack] }
+
+jewel_leech_mana:
+  type: suffix
+  group: jewel_leech_mana
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之汲魔, 之啜飲, 之吸取]
+  text: "攻擊造成的物理傷害有 {value/10}% 偷取為魔力"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [5, 6] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [3, 4] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [2, 2] }
+  mods:
+    - { stat: leech.mana, type: FLAT, value: "{value/10}", tags: [attack] }
+
+jewel_life_on_kill:
+  type: suffix
+  group: jewel_life_on_kill
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之收割, 之斬獲, 之拾荒]
+  text: "擊殺時回復 {value/10}% 最大生命"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [7, 8] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [5, 6] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [3, 4] }
+  mods:
+    - { stat: life.on_kill, type: FLAT, value: "{value/10}" }
+
+jewel_mana_on_kill:
+  type: suffix
+  group: jewel_mana_on_kill
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之吞噬, 之汲靈, 之回收]
+  text: "擊殺時回復 {value/10}% 最大魔力"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [6, 8] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [4, 5] }
+  mods:
+    - { stat: mana.on_kill, type: FLAT, value: "{value/10}" }
+
+jewel_life_on_hit:
+  type: suffix
+  group: jewel_life_on_hit
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之回春, 之生機, 之微補]
+  text: "攻擊每次擊中回復 {value} 生命"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [4, 5] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [1, 2] }
+  mods:
+    - { stat: life.on_hit, type: FLAT, value: "{value}", tags: [attack] }
+
+jewel_ignite_chance:
+  type: suffix
+  group: jewel_ignite_chance
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之燎原, 之火種, 之星火]
+  text: "增加 {value}% 點燃機率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [26, 30] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [12, 19] }
+  mods:
+    - { stat: ignite.chance, type: INCREASED, value: "{value}" }
+
+jewel_bleed_chance:
+  type: suffix
+  group: jewel_bleed_chance
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之血刃, 之裂創, 之割傷]
+  text: "攻擊擊中時 {value}% 機率造成流血"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [6, 7] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [4, 5] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [2, 3] }
+  mods:
+    - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+jewel_poison_chance:
+  type: suffix
+  group: jewel_poison_chance
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之毒牙, 之毒液, 之毒刺]
+  text: "擊中時 {value}% 機率造成中毒"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [6, 7] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [4, 5] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [2, 3] }
+  mods:
+    - { stat: poison.chance, type: FLAT, value: "{value}" }
+
+jewel_shock_chance:
+  type: suffix
+  group: jewel_shock_chance
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之電擊, 之電光, 之帶電]
+  text: "增加 {value}% 感電機率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [26, 30] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [12, 19] }
+  mods:
+    - { stat: shock.chance, type: INCREASED, value: "{value}" }
+
+jewel_freeze_buildup:
+  type: suffix
+  group: jewel_freeze_buildup
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之冰封, 之凝凍, 之霜凍]
+  text: "增加 {value}% 凍結累積"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [26, 30] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [12, 19] }
+  mods:
+    - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+
+jewel_chill_effect:
+  type: suffix
+  group: jewel_chill_effect
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之凝滯, 之遲緩, 之冷顫]
+  text: "增加 {value}% 冰緩效果"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+  mods:
+    - { stat: chill.effect, type: INCREASED, value: "{value}" }
+
+jewel_shock_effect:
+  type: suffix
+  group: jewel_shock_effect
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之麻痺, 之電殛, 之酥麻]
+  text: "增加 {value}% 感電效果"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+  mods:
+    - { stat: shock.effect, type: INCREASED, value: "{value}" }
+
+jewel_ailment_duration:
+  type: suffix
+  group: jewel_ailment_duration
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之綿延, 之持久, 之延續]
+  text: "增加 {value}% 異常狀態持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+  mods:
+    - { stat: ailment.duration, type: INCREASED, value: "{value}" }
+
+jewel_ailment_threshold:
+  type: suffix
+  group: jewel_ailment_threshold
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之鎮定, 之泰然, 之平靜]
+  text: "增加 {value}% 元素異常門檻"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [18, 22] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [13, 17] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [8, 12] }
+  mods:
+    - { stat: ailment.threshold, type: INCREASED, value: "{value}" }
+
+jewel_self_ailment:
+  type: suffix
+  group: jewel_self_ailment
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之淨身, 之袪病, 之康復]
+  text: "身上的異常狀態持續時間減少 {value}%"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+  mods:
+    - { stat: ailment.self_duration, type: INCREASED, value: "-{value}" }
+
+jewel_minion_speed:
+  type: suffix
+  group: jewel_minion_speed
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之鞭策, 之催動, 之號令]
+  text: "增加 {value}% 召喚物攻擊速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [7, 8] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [5, 6] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [3, 4] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
+
+jewel_minion_move:
+  type: suffix
+  group: jewel_minion_move
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之疾行, 之驅馳, 之跟隨]
+  text: "增加 {value}% 召喚物移動速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+  mods:
+    - { stat: movement.speed, type: INCREASED, value: "{value}", tags: [minion] }
+
+jewel_aura_effect:
+  type: suffix
+  group: jewel_aura_effect
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之號角, 之旗手, 之領袖]
+  text: "增加 {value}% 光環效果"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [5, 6] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [4, 4] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [2, 3] }
+  mods:
+    - { stat: aura.effect, type: INCREASED, value: "{value}" }
+
+jewel_aura_reservation:
+  type: suffix
+  group: jewel_aura_reservation
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之無私, 之慷慨, 之分享]
+  text: "光環的保留效率增加 {value}%"
+  # 2026-10 精魂改版：不再出現（權重 0），已經有的物品保留
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 0, value: [5, 6] }
+    - { tier: 1, ilvl: 50, weight: 0, value: [3, 4] }
+    - { tier: 2, ilvl: 1, weight: 0, value: [2, 2] }
+  mods:
+    - { stat: aura.reservation, type: INCREASED, value: "-{value}" }
+
+jewel_skill_duration:
+  type: suffix
+  group: jewel_skill_duration
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之悠長, 之延時, 之留痕]
+  text: "增加 {value}% 技能持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+  mods:
+    - { stat: skill.duration, type: INCREASED, value: "{value}" }
+
+jewel_es_recharge:
+  type: suffix
+  group: jewel_es_recharge
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之靈流, 之回能, 之蓄能]
+  text: "增加 {value}% 能量護盾回充速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 80, value: [12, 14] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 600, value: [6, 8] }
+  mods:
+    - { stat: es.recharge, type: INCREASED, value: "{value}" }
+
+# ---- 新增：法術暴擊（2026-10；蒼星晶）----
+jewel_spell_crit_chance:
+  type: suffix
+  group: jewel_spell_crit_chance
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之星眸, 之慧眼, 之靈視]
+  text: "增加 {value}% 法術暴擊率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [24, 28] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [18, 22] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [12, 16] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
+
+jewel_spell_crit_multi:
+  type: suffix
+  group: jewel_spell_crit_multi
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之星隕, 之碎星, 之咒鋒]
+  text: "+{value}% 法術暴擊傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [20, 23] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.multi, type: FLAT, value: "{value}", tags: [spell] }
+
+
+# ---- 新增：攻擊暴擊（2026-10；翠星晶，跟蒼星晶的法術暴擊對稱）----
+jewel_attack_crit_chance:
+  type: suffix
+  group: jewel_attack_crit_chance
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之隼眸, 之要害, 之見隙]
+  text: "增加 {value}% 攻擊暴擊率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [24, 28] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [18, 22] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [12, 16] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
+
+jewel_attack_crit_multi:
+  type: suffix
+  group: jewel_attack_crit_multi
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
+  names: [之斬首, 之穿心, 之見血]
+  text: "+{value}% 攻擊暴擊傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [20, 23] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.multi, type: FLAT, value: "{value}", tags: [attack] }
+
+# ===== 2026-10 改版：照 PoE2 的珠寶詞綴（紅＝力量系、綠＝敏捷系、藍＝智慧系；沒有生命、屬性、抗性這些平坦的）=====
+
+j2_area_of_effect:
+  type: prefix
+  group: j2_area_of_effect
+  spawn_tags: [ruby, sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 範圍效果"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [6, 6] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [5, 5] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [4, 4] }
+  mods:
+    - { stat: skill.area, type: INCREASED, value: "{value}" }
+
+j2_armour_break:
+  type: prefix
+  group: j2_armour_break
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 破甲"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: armour.break, type: INCREASED, value: "{value}" }
+
+j2_attack_critical_strike_chance:
+  type: suffix
+  group: j2_attack_critical_strike_chance
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 攻擊暴擊率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 9] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
+
+j2_attack_critical_strike_multiplier:
+  type: suffix
+  group: j2_attack_critical_strike_multiplier
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 攻擊暴擊傷害加成"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [attack] }
+
+j2_attack_damage:
+  type: prefix
+  group: j2_attack_damage
+  spawn_tags: [emerald, ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 攻擊傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [attack] }
+
+j2_base_chance_to_bleed:
+  type: prefix
+  group: j2_base_chance_to_bleed
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "攻擊擊中時 {value}% 機率造成流血"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [6, 7] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [5, 5] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 4] }
+  mods:
+    - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+j2_base_chance_to_poison:
+  type: suffix
+  group: j2_base_chance_to_poison
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "擊中時 {value}% 機率造成中毒"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: poison.chance, type: FLAT, value: "{value}" }
+
+j2_bleed_dot_multiplier:
+  type: prefix
+  group: j2_bleed_dot_multiplier
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 流血傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
+
+j2_bleed_duration:
+  type: suffix
+  group: j2_bleed_duration
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 流血持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: bleed.duration, type: INCREASED, value: "{value}" }
+
+j2_bow_attack_speed:
+  type: suffix
+  group: j2_bow_attack_speed
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "使用弓時增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [bow] }
+
+j2_cold_damage_percentage:
+  type: prefix
+  group: j2_cold_damage_percentage
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 冰冷傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
+
+j2_cold_resistance_penetration:
+  type: prefix
+  group: j2_cold_resistance_penetration
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "傷害穿透 {value}% 冰冷抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: penetration, type: FLAT, value: "{value}", tags: [cold] }
+
+j2_critical_strike_chance:
+  type: suffix
+  group: j2_critical_strike_chance
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 暴擊率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}" }
+
+j2_critical_strike_multiplier:
+  type: suffix
+  group: j2_critical_strike_multiplier
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}" }
+
+j2_crossbow_damage:
+  type: prefix
+  group: j2_crossbow_damage
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "使用弩時增加 {value}% 傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 9] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [crossbow] }
+
+j2_crossbow_speed:
+  type: suffix
+  group: j2_crossbow_speed
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "使用弩時增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [crossbow] }
+
+j2_damage_removed_from_mana_before_life:
+  type: suffix
+  group: j2_damage_removed_from_mana_before_life
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "受到的傷害有 {value}% 先從魔力扣除"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: damage.from_mana, type: FLAT, value: "{value}" }
+
+j2_damaging_ailment_duration:
+  type: suffix
+  group: j2_damaging_ailment_duration
+  spawn_tags: [retired]   # 2026-10：PoE2 的珠寶沒有這條，停用
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 異常狀態持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: ailment.duration, type: INCREASED, value: "{value}" }
+
+j2_elemental_damage_percent:
+  type: prefix
+  group: j2_elemental_damage_percent
+  spawn_tags: [emerald, ruby, sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 元素傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+j2_energy_shield_delay:
+  type: prefix
+  group: j2_energy_shield_delay
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "能量護盾開始回充的等待時間縮短 {value}%"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [14, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [12, 13] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 11] }
+  mods:
+    - { stat: es.delay, type: INCREASED, value: "-{value}" }
+
+j2_fire_damage_percentage:
+  type: prefix
+  group: j2_fire_damage_percentage
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 火焰傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
+
+j2_fire_resistance_penetration:
+  type: prefix
+  group: j2_fire_resistance_penetration
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "傷害穿透 {value}% 火焰抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: penetration, type: FLAT, value: "{value}", tags: [fire] }
+
+j2_flask_mana_recovery:
+  type: suffix
+  group: j2_flask_mana_recovery
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 魔力藥劑回復量"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: flask.mana_recovery, type: INCREASED, value: "{value}" }
+
+j2_freeze_damage_increase:
+  type: suffix
+  group: j2_freeze_damage_increase
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 凍結累積"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+
+j2_global_cooldown_recovery:
+  type: suffix
+  group: j2_global_cooldown_recovery
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "冷卻時間減少 {value}%"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [5, 5] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [4, 4] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 3] }
+  mods:
+    - { stat: skill.cooldown, type: INCREASED, value: "-{value}" }
+
+j2_global_energy_shield_percent:
+  type: prefix
+  group: j2_global_energy_shield_percent
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 最大能量護盾"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+
+j2_global_evasion_rating_percent:
+  type: prefix
+  group: j2_global_evasion_rating_percent
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 閃避"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+
+j2_global_flask_life_recovery:
+  type: suffix
+  group: j2_global_flask_life_recovery
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 生命藥劑回復量"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
+
+j2_global_physical_damage_reduction_rating_percent:
+  type: prefix
+  group: j2_global_physical_damage_reduction_rating_percent
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 護甲"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+
+j2_ignite_chance_increase:
+  type: suffix
+  group: j2_ignite_chance_increase
+  spawn_tags: [ruby, sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 點燃機率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: ignite.chance, type: INCREASED, value: "{value}" }
+
+j2_ignite_effect:
+  type: prefix
+  group: j2_ignite_effect
+  spawn_tags: [ruby, sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 點燃傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+
+j2_increased_accuracy_percent:
+  type: prefix
+  group: j2_increased_accuracy_percent
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 命中"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: accuracy, type: INCREASED, value: "{value}" }
+
+j2_increased_ailment_threshold:
+  type: suffix
+  group: j2_increased_ailment_threshold
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 元素異常門檻"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: ailment.threshold, type: INCREASED, value: "{value}" }
+
+j2_increased_attack_speed:
+  type: suffix
+  group: j2_increased_attack_speed
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}" }
+
+j2_increased_block_chance:
+  type: prefix
+  group: j2_increased_block_chance
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 格擋率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [6, 7] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [5, 5] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 4] }
+  mods:
+    - { stat: block.chance, type: INCREASED, value: "{value}" }
+
+j2_increased_bow_damage:
+  type: prefix
+  group: j2_increased_bow_damage
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "使用弓時增加 {value}% 傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 9] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [bow] }
+
+j2_increased_cast_speed:
+  type: suffix
+  group: j2_increased_cast_speed
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 施法速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+j2_increased_chaos_damage:
+  type: prefix
+  group: j2_increased_chaos_damage
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 混沌傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 13] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [7, 9] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
+
+j2_increased_chill_duration:
+  type: suffix
+  group: j2_increased_chill_duration
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 冰緩持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [15, 18] }
+  mods:
+    - { stat: chill.duration, type: INCREASED, value: "{value}" }
+
+j2_increased_mace_damage:
+  type: prefix
+  group: j2_increased_mace_damage
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "使用錘時增加 {value}% 傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 9] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [mace] }
+
+j2_increased_staff_damage:
+  type: prefix
+  group: j2_increased_staff_damage
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "使用長棍時增加 {value}% 傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 9] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [quarterstaff] }
+
+j2_increased_stun_threshold:
+  type: suffix
+  group: j2_increased_stun_threshold
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 暈眩門檻"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 9] }
+  mods:
+    - { stat: stun.threshold, type: INCREASED, value: "{value}" }
+
+j2_increased_totem_life:
+  type: prefix
+  group: j2_increased_totem_life
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 圖騰生命"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: totem.life, type: INCREASED, value: "{value}" }
+
+j2_life_leech_amount:
+  type: suffix
+  group: j2_life_leech_amount
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 生命偷取量"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: leech.effect, type: INCREASED, value: "{value}" }
+
+j2_life_recoup:
+  type: suffix
+  group: j2_life_recoup
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [3, 3] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [2, 3] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: life.recoup, type: FLAT, value: "{value}" }
+j2_life_regeneration_rate:
+  type: suffix
+  group: j2_life_regeneration_rate
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 生命回復速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: life.regen, type: INCREASED, value: "{value}" }
+
+j2_lightning_damage_percentage:
+  type: prefix
+  group: j2_lightning_damage_percentage
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 閃電傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
+
+j2_lightning_resistance_penetration:
+  type: prefix
+  group: j2_lightning_resistance_penetration
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "傷害穿透 {value}% 閃電抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: penetration, type: FLAT, value: "{value}", tags: [lightning] }
+
+j2_mana_gained_on_kill_percentage:
+  type: suffix
+  group: j2_mana_gained_on_kill_percentage
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "擊殺時回復 {value}% 最大魔力"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [2, 2] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [1, 2] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: mana.on_kill, type: FLAT, value: "{value}" }
+j2_mana_regeneration:
+  type: suffix
+  group: j2_mana_regeneration
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 魔力回復速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+j2_maximum_cold_resist:
+  type: suffix
+  group: j2_maximum_cold_resist
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "+{value}% 最大冰冷抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [1, 1] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: resist.max.cold, type: FLAT, value: "{value}" }
+j2_maximum_fire_resist:
+  type: suffix
+  group: j2_maximum_fire_resist
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "+{value}% 最大火焰抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [1, 1] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: resist.max.fire, type: FLAT, value: "{value}" }
+j2_maximum_lightning_resistance:
+  type: suffix
+  group: j2_maximum_lightning_resistance
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "+{value}% 最大閃電抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [1, 1] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: resist.max.lightning, type: FLAT, value: "{value}" }
+j2_maximum_life_on_kill_percent:
+  type: suffix
+  group: j2_maximum_life_on_kill_percent
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "擊殺時回復 {value}% 最大生命"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [2, 2] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [1, 2] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: life.on_kill, type: FLAT, value: "{value}" }
+j2_melee_damage:
+  type: prefix
+  group: j2_melee_damage
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 近戰傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [melee] }
+
+j2_minion_attack_speed_and_cast_speed:
+  type: suffix
+  group: j2_minion_attack_speed_and_cast_speed
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 召喚物攻擊與施法速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
+    - { stat: cast.speed, type: INCREASED, value: "{value}", tags: [minion] }
+
+j2_minion_critical_strike_chance_increase:
+  type: suffix
+  group: j2_minion_critical_strike_chance_increase
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 召喚物暴擊率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [minion] }
+
+j2_minion_critical_strike_multiplier:
+  type: suffix
+  group: j2_minion_critical_strike_multiplier
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 召喚物暴擊傷害加成"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [15, 18] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [minion] }
+
+j2_minion_damage:
+  type: prefix
+  group: j2_minion_damage
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 召喚物傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+
+j2_minion_life:
+  type: prefix
+  group: j2_minion_life
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 召喚物最大生命"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
+
+j2_movement_velocity:
+  type: suffix
+  group: j2_movement_velocity
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 移動速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [2, 2] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [1, 2] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: movement.speed, type: INCREASED, value: "{value}" }
+j2_physical_damage_percent:
+  type: prefix
+  group: j2_physical_damage_percent
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 物理傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+
+j2_poison_duration:
+  type: suffix
+  group: j2_poison_duration
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 中毒持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: poison.duration, type: INCREASED, value: "{value}" }
+
+j2_poison_effect:
+  type: prefix
+  group: j2_poison_effect
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 中毒傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
+
+j2_projectile_damage:
+  type: prefix
+  group: j2_projectile_damage
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 投射物傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
+
+j2_projectile_speed:
+  type: prefix
+  group: j2_projectile_speed
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 投射物速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [7, 8] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [6, 6] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [4, 5] }
+  mods:
+    - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+
+j2_shock_chance_increase:
+  type: suffix
+  group: j2_shock_chance_increase
+  spawn_tags: [emerald, sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 感電機率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: shock.chance, type: INCREASED, value: "{value}" }
+
+j2_shock_duration:
+  type: suffix
+  group: j2_shock_duration
+  spawn_tags: [emerald, sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 感電持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [15, 18] }
+  mods:
+    - { stat: shock.duration, type: INCREASED, value: "{value}" }
+
+j2_shock_effect:
+  type: prefix
+  group: j2_shock_effect
+  spawn_tags: [emerald, sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 感電效果"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [14, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [12, 13] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 11] }
+  mods:
+    - { stat: shock.effect, type: INCREASED, value: "{value}" }
+
+j2_skill_effect_duration:
+  type: suffix
+  group: j2_skill_effect_duration
+  spawn_tags: [ruby, sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 技能持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: skill.duration, type: INCREASED, value: "{value}" }
+
+j2_spear_attack_speed:
+  type: suffix
+  group: j2_spear_attack_speed
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "使用矛時增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [spear] }
+
+j2_spear_damage:
+  type: prefix
+  group: j2_spear_damage
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "使用矛時增加 {value}% 傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 9] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [spear] }
+
+j2_spell_crit_multiplier:
+  type: suffix
+  group: j2_spell_crit_multiplier
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 法術暴擊傷害加成"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
+
+j2_spell_critical_strike_chance:
+  type: suffix
+  group: j2_spell_critical_strike_chance
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 法術暴擊率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
+
+j2_staff_attack_speed:
+  type: suffix
+  group: j2_staff_attack_speed
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "使用長棍時增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [quarterstaff] }
+
+j2_stun_damage_increase:
+  type: suffix
+  group: j2_stun_damage_increase
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 暈眩累積"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+
+j2_totem_damage:
+  type: prefix
+  group: j2_totem_damage
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 圖騰傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [16, 18] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 12] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [totem] }
+
+j2_warcry_cooldown_speed:
+  type: suffix
+  group: j2_warcry_cooldown_speed
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "戰吼的冷卻時間減少 {value}%"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: skill.cooldown, type: INCREASED, value: "-{value}", tags: [warcry] }
+
+j2_weapon_spell_damage:
+  type: prefix
+  group: j2_weapon_spell_damage
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+# ---- 2026-10：對強敵、偏斜、怒氣、曝露 ----
+j2_damage_vs_rare:
+  type: prefix
+  group: j2_damage_vs_rare
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "對稀有與傳奇怪物增加 {value}% 傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: damage.vs_rare, type: INCREASED, value: "{value}" }
+j2_deflection_from_evasion:
+  type: suffix
+  group: j2_deflection_from_evasion
+  spawn_tags: [retired]   # 2026-10：PoE2 的珠寶沒有這條，停用
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "獲得閃避值 {value}% 的偏斜值"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [8, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [6, 7] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [4, 5] }
+  mods:
+    - { stat: deflection.from_evasion, type: FLAT, value: "{value}" }
+
+j2_rage_on_hit:
+  type: suffix
+  group: j2_rage_on_hit
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "近戰攻擊擊中時獲得 {value} 點怒氣"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [1, 1] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: rage.on_hit, type: FLAT, value: "{value}", tags: [melee] }
+j2_exposure_chance:
+  type: suffix
+  group: j2_exposure_chance
+  spawn_tags: [retired]   # 2026-10：PoE2 的珠寶沒有這條，停用
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "擊中時 {value}% 機率讓敵人曝露"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [8, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [6, 7] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [4, 5] }
+  mods:
+    - { stat: exposure.chance, type: FLAT, value: "{value}" }
+
+# ---- 2026-10：變身、詛咒、印記、捷光環、戰吼效果、弩裝填 ----
+j2_shapeshift_damage:
+  type: prefix
+  group: j2_shapeshift_damage
+  spawn_tags: [ruby, sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "變身技能增加 {value}% 傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [shapeshift] }
+j2_shapeshift_speed:
+  type: suffix
+  group: j2_shapeshift_speed
+  spawn_tags: [ruby, sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "變身技能增加 {value}% 攻擊與施放速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [shapeshift] }
+    - { stat: cast.speed, type: INCREASED, value: "{value}", tags: [shapeshift] }
+
+j2_curse_area:
+  type: prefix
+  group: j2_curse_area
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 詛咒範圍"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [11, 12] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 10] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 9] }
+  mods:
+    - { stat: skill.area, type: INCREASED, value: "{value}", tags: [curse] }
+j2_curse_duration:
+  type: suffix
+  group: j2_curse_duration
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 詛咒持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [15, 18] }
+  mods:
+    - { stat: skill.duration, type: INCREASED, value: "{value}", tags: [curse] }
+j2_mark_effect:
+  type: prefix
+  group: j2_mark_effect
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 印記效果"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [7, 8] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [6, 6] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [4, 5] }
+  mods:
+    - { stat: curse.effect, type: INCREASED, value: "{value}", tags: [mark] }
+j2_mark_duration:
+  type: suffix
+  group: j2_mark_duration
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 印記持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [28, 32] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [23, 27] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [18, 22] }
+  mods:
+    - { stat: skill.duration, type: INCREASED, value: "{value}", tags: [mark] }
+j2_herald_damage:
+  type: prefix
+  group: j2_herald_damage
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "捷光環增加 {value}% 傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [15, 18] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [herald] }
+j2_warcry_effect:
+  type: suffix
+  group: j2_warcry_effect
+  spawn_tags: [retired]   # 2026-10：PoE2 的珠寶沒有這條，停用
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 戰吼效果"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [7, 8] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [5, 6] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 4] }
+  mods:
+    - { stat: warcry.effect, type: INCREASED, value: "{value}" }
+
+j2_crossbow_reload:
+  type: suffix
+  group: j2_crossbow_reload
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 弩的裝填速度"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [14, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [12, 13] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 11] }
+  mods:
+    - { stat: crossbow.reload_speed, type: INCREASED, value: "{value}" }
+
+# ---- 2026-10：補 PoE2 珠寶詞綴（對照 RePoE poe2 mods.json，範圍切成三階）----
+
+j2_ailment_effect:
+  type: prefix
+  group: j2_ailment_effect
+  spawn_tags: [emerald, sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 異常狀態效果（點燃、流血、中毒、感電、冰緩）"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: shock.effect, type: INCREASED, value: "{value}" }
+    - { stat: chill.effect, type: INCREASED, value: "{value}" }
+
+j2_bow_accuracy_rating:
+  type: prefix
+  group: j2_bow_accuracy_rating
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "使用弓時增加 {value}% 命中"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: accuracy, type: INCREASED, value: "{value}", tags: [bow] }
+
+j2_curse_effect:
+  type: prefix
+  group: j2_curse_effect
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 詛咒效果"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: curse.effect, type: INCREASED, value: "{value}", tags: [curse] }
+
+j2_maximum_rage:
+  type: prefix
+  group: j2_maximum_rage
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "+{value} 最大怒氣"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [2, 2] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [1, 2] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: rage.max, type: FLAT, value: "{value}" }
+
+j2_minion_skill_area_of_effect:
+  type: prefix
+  group: j2_minion_skill_area_of_effect
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 召喚物範圍"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [8, 8] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 7] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: skill.area, type: INCREASED, value: "{value}", tags: [minion] }
+
+j2_presence_area:
+  type: prefix
+  group: j2_presence_area
+  spawn_tags: [ruby, sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 臨在範圍"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [15, 18] }
+  mods:
+    - { stat: presence.area, type: INCREASED, value: "{value}" }
+
+j2_thorns_damage:
+  type: prefix
+  group: j2_thorns_damage
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 荊棘傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: thorns.damage, type: INCREASED, value: "{value}" }
+
+j2_warcry_damage:
+  type: prefix
+  group: j2_warcry_damage
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "戰吼增加 {value}% 傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [warcry] }
+
+j2_ailment_chance:
+  type: suffix
+  group: j2_ailment_chance
+  spawn_tags: [emerald, sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 點燃、感電、流血與中毒機率"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: ignite.chance, type: INCREASED, value: "{value}" }
+    - { stat: shock.chance, type: INCREASED, value: "{value}" }
+    - { stat: bleed.chance, type: INCREASED, value: "{value}" }
+    - { stat: poison.chance, type: INCREASED, value: "{value}" }
+
+j2_chance_to_daze:
+  type: suffix
+  group: j2_chance_to_daze
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "擊中時 {value}% 機率讓敵人眩暈"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: daze.chance, type: FLAT, value: "{value}" }
+
+j2_damaging_ailment_duration:
+  type: suffix
+  group: j2_damaging_ailment_duration
+  spawn_tags: [emerald, sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 點燃、流血與中毒持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: ignite.duration, type: INCREASED, value: "{value}" }
+    - { stat: bleed.duration, type: INCREASED, value: "{value}" }
+    - { stat: poison.duration, type: INCREASED, value: "{value}" }
+
+j2_ignite_shock_chill_duration:
+  type: suffix
+  group: j2_ignite_shock_chill_duration
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 點燃、感電與冰緩持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: ignite.duration, type: INCREASED, value: "{value}" }
+    - { stat: shock.duration, type: INCREASED, value: "{value}" }
+    - { stat: chill.duration, type: INCREASED, value: "{value}" }
+
+j2_mace_hit_damage_stun_multiplier:
+  type: suffix
+  group: j2_mace_hit_damage_stun_multiplier
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "使用錘時增加 {value}% 暈眩累積"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [15, 18] }
+  mods:
+    - { stat: stun.buildup, type: INCREASED, value: "{value}", tags: [mace] }
+
+j2_minion_elemental_resistance:
+  type: suffix
+  group: j2_minion_elemental_resistance
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "召喚物 +{value}% 元素抗性"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}", tags: [minion] }
+    - { stat: resist.cold, type: FLAT, value: "{value}", tags: [minion] }
+    - { stat: resist.lightning, type: FLAT, value: "{value}", tags: [minion] }
+
+j2_quarterstaff_hit_damage_freeze_multiplier:
+  type: suffix
+  group: j2_quarterstaff_hit_damage_freeze_multiplier
+  spawn_tags: [emerald, sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "使用長棍時增加 {value}% 凍結累積"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: freeze.buildup, type: INCREASED, value: "{value}", tags: [quarterstaff] }
+
+j2_spear_critical_strike_multiplier:
+  type: suffix
+  group: j2_spear_critical_strike_multiplier
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "使用矛時增加 {value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spear] }
+

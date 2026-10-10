@@ -1,0 +1,223 @@
+# 角色與進程設定（階段 2；新手裝備在最下面）。改完 /ec reload。
+
+# 等級上限
+level_cap: 100
+# 每個帳號的角色格數（基本；軍需官的功勳兌換還能多換 bounties.yml 的 shop.character_slots 個，兩個加起來最多 18）
+character_slots: 5
+# 角色名稱長度（字元數）
+name_length: [2, 12]
+# 角色名稱的過濾（2026-10）：內建一份辱罵、色情、種族歧視、仇恨的字，與冒充管理員的開頭（admin、GM、管理員、官方…），這裡可以再加。
+# 比對時不分大小寫、全形半形、簡繁（常見字），也會拿掉底線、把數字代字母還原（f_u_c_k、sh1t 都抓得到）。
+#   blocked   名字裡出現就不行的字
+#   reserved  名字開頭是這些就不行
+#   allow     誤擋的名字：整個名字一樣就放行（例如 Dickens）
+# 只擋新取的名字與改名；已經存在的角色名字不受影響（要改用 /ec 的改名）。
+name_filter:
+  blocked: []
+  reserved: []
+  allow: []
+
+# 天賦點：從 2 級起每升一級 1 點；Boss 首殺等額外點數記在角色的 bonus_points
+passive_points_per_level: 1
+
+# 全服經驗加倍（常駐）：打怪（組隊分的也算）、委託拿到的經驗都再乘這個倍數；1 = 不加倍（0.1 到 10）。
+# 下面寫的「每一級要殺幾隻」是沒加倍的數字（×2 = 一半）。登入時、/stats、委託的獎勵、debug 的經驗都會寫「全服經驗 ×2」。
+experience_bonus: 2
+
+# 升到下一級需要的經驗（等級 → 經驗）：跟 PoE2 一樣的經驗表，1 到 100 級總共 4,250,334,444。
+# 每隻怪給的經驗在 monsters.yml（PoE 的怪物經驗表 × 2），所以每一級要殺的同等級普通怪（魔法怪算 3 隻、稀有怪算 12 隻）：
+#   1 級 13 隻、10 級 70 隻、30 級約 210 隻、60 級約 870 隻、80 級約 2,900 隻；
+#   85 級以後地圖的怪最高 84 級（T16），再加上下面的等級差懲罰：90 級約 6,600 隻、95 級約 3.6 萬隻、99 級約 20 萬隻。
+# 超過一半的總經驗在 90 級以後；純算打怪的時間，練到 90 級大約只佔練到 100 級的七分之一。
+experience:
+  1: 525
+  2: 1235
+  3: 2021
+  4: 3403
+  5: 5002
+  6: 7138
+  7: 10053
+  8: 13804
+  9: 18512
+  10: 24297
+  11: 31516
+  12: 39878
+  13: 50352
+  14: 62261
+  15: 76465
+  16: 92806
+  17: 112027
+  18: 133876
+  19: 158538
+  20: 187025
+  21: 218895
+  22: 255366
+  23: 295852
+  24: 341805
+  25: 392470
+  26: 449555
+  27: 512121
+  28: 583857
+  29: 662181
+  30: 747411
+  31: 844146
+  32: 949053
+  33: 1064952
+  34: 1192712
+  35: 1333241
+  36: 1487491
+  37: 1656447
+  38: 1841143
+  39: 2046202
+  40: 2265837
+  41: 2508528
+  42: 2776124
+  43: 3061734
+  44: 3379914
+  45: 3723676
+  46: 4099570
+  47: 4504444
+  48: 4951099
+  49: 5430907
+  50: 5957868
+  51: 6528910
+  52: 7153414
+  53: 7827968
+  54: 8555414
+  55: 9353933
+  56: 10212541
+  57: 11142646
+  58: 12157041
+  59: 13252160
+  60: 14441758
+  61: 15731508
+  62: 17127265
+  63: 18635053
+  64: 20271765
+  65: 22044909
+  66: 23950783
+  67: 26019833
+  68: 28261412
+  69: 30672515
+  70: 33287878
+  71: 36118904
+  72: 39163425
+  73: 42460810
+  74: 46024718
+  75: 49853964
+  76: 54008554
+  77: 58473753
+  78: 63314495
+  79: 68516464
+  80: 74132190
+  81: 80182477
+  82: 86725730
+  83: 93748717
+  84: 101352108
+  85: 109524907
+  86: 118335069
+  87: 127813148
+  88: 138033822
+  89: 149032391
+  90: 160890604
+  91: 173648795
+  92: 187372170
+  93: 202153736
+  94: 218041909
+  95: 235163399
+  96: 253547862
+  97: 273358532
+  98: 294631836
+  99: 317515914
+
+# 等級差懲罰（與 PoE 相同）：安全範圍 = safe_base + 玩家等級 ÷ safe_per_levels（取整），
+# 超出安全範圍的等級差 d 會讓經驗乘 ((等級+5) ÷ (等級+5+d^2.5))^1.5，最低 1%。
+# monster_level_cap：算等級差的時候，怪物等級最高算幾級（0 = 不限）。PoE2 的地圖最高 80 級，我們的地圖最高 84 級
+#   （終局 87、極境更高）；設 80 讓高等級打 T16 的懲罰跟 PoE2 一樣：90 級剩 92%、92 級剩 65%、94 級剩 38%。
+#   怪物給的經驗還是照牠自己的等級（T16 的怪比 T14 多給 4%），所以最高階的地圖還是最划算。
+# high_level：高等級另外再乘的倍率（等級 → 倍率；從寫的那一級起都乘，到下一個寫的等級為止；寫 {} = 不乘）。
+#   照 PoE：95 級 ×0.854、96 級 ×0.748、97 級 ×0.648、98 級 ×0.562、99 級 ×0.476。
+#   兩個加起來，打 T16：95 級剩 25%、97 級剩 14%、99 級剩 6%（地圖裝置選好地圖時會寫你的經驗剩多少）。
+level_penalty:
+  enabled: true
+  safe_base: 3
+  safe_per_levels: 16
+  monster_level_cap: 80
+  high_level:
+    95: 0.854
+    96: 0.748
+    97: 0.648
+    98: 0.562
+    99: 0.476
+
+# 死亡懲罰（2026-10 統一）：death_penalty_from_level 等以上，在哪裡死都扣「目前等級升級所需經驗」的 map_death_penalty
+# （劇情區域、地圖、劫盜、試煉、世界 Boss 都一樣；不會降級）；以下都不扣。PvP 競技場不扣。
+# death_penalty：舊的設定（照等級的比例），已經不用了，留著沒關係。
+death_penalty:
+  1: 0.0
+death_penalty_from_level: 60
+map_death_penalty: 0.10
+
+# 天賦退點（PoE2 做法）：花金幣，在天賦樹裡右鍵節點直接退。
+# free_until_level：未滿這個等級退點免費；gold_per_point：等級 → 每退一點的金幣（線性內插）。
+respec:
+  free_until_level: 20
+  gold_per_point:
+    20: 60
+    40: 400
+    60: 1500
+    80: 2800
+    100: 4500
+
+# 新手裝備（建角色時選完職業接著選武器，全部是普通物品、物品等級 1）
+# 能選的武器 = 物品等級 1 就能掉、需求等級 1、職業起始屬性（力量／敏捷／智慧）就夠用的所有武器（bases/weapons.yml）。
+# classes.<職業>.recommended：這個職業推薦的武器，照順序排在選單第一列、標 ★；其他能選的照 weapons.yml 的順序排在後面。
+# classes.<職業>.armour：一起送的防具，直接穿上。shield：選單手武器時送的盾，放副手。
+# skills：起始技能跟著武器走，由上往下找第一個武器標籤符合的（標籤見 weapons.yml 的 tags）；
+#         寫了 class 的只給那個職業（混沌術士拿法杖、長杖送汲魂彈，其他職業送熾星彈）。
+starter:
+  classes:
+    marauder:
+      recommended: [mace1_01, mace2_01]   # 2026-10 PoE2：拿掉斧、劍、匕首、爪
+      armour: [helm_str_01, body_str_01, legs_str_01, boots_str_01]
+      shield: tshield_01
+    mercenary:
+      recommended: [xbow_01]
+      armour: [helm_str_dex_01, body_str_dex_01, legs_str_dex_01, boots_str_dex_01]
+      shield: kshield_01
+    huntress:
+      recommended: [spear_01]
+      armour: [helm_dex_01, body_dex_01, legs_dex_01, boots_dex_01]
+      shield: buckler_01
+    ranger:
+      recommended: [bow_01]
+      armour: [helm_dex_01, body_dex_01, legs_dex_01, boots_dex_01]
+      shield: buckler_01
+    monk:
+      recommended: [qstaff_01]
+      armour: [helm_dex_int_01, body_dex_int_01, legs_dex_int_01, boots_dex_int_01]
+      shield: buckler_01
+    sorceress:
+      recommended: [staff_01, wand_01]
+      armour: [helm_int_01, body_int_01, legs_int_01, boots_int_01]
+      shield: focus_01
+    witch:
+      recommended: [wand_01, staff_01]
+      armour: [helm_int_01, body_int_01, legs_int_01, boots_int_01]
+      shield: focus_01
+    druid:                         # 2026-10：德魯伊（獸魂符，雙手：不送副手）
+      recommended: [talis_01]
+      armour: [helm_str_01, body_str_01, legs_str_01, boots_str_01]
+      shield: tshield_01
+  skills:
+    - { weapon: bow, skill: lightning_arrow }
+    - { weapon: crossbow, skill: explosive_bolt }
+    - { weapon: quarterstaff, skill: tempest_flurry }
+    - { weapon: spear, skill: lightning_spear }
+    - { weapon: wand, skill: essence_drain, class: witch }
+    - { weapon: staff, skill: essence_drain, class: witch }
+    - { weapon: wand, skill: fireball }
+    - { weapon: staff, skill: fireball }
+    - { weapon: talisman, skill: bear_maul }   # 2026-10：德魯伊
+    - { weapon: mace, skill: boneshatter }
+    - { weapon: melee, skill: earthquake }

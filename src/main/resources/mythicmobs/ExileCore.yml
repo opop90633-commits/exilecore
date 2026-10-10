@@ -1,0 +1,123 @@
+# 《星骸》的 MythicMobs 範例怪物（ExileCore 連接 MythicMobs 時自動安裝；以前版本的範例沒改過會自動換成新版，
+# 你改過的不會被蓋掉，新版放在旁邊的 .new）。
+#
+# 怎麼搭配 ExileCore：
+#   - 外觀、裝備、AI 照這裡的設定。
+#   - 等級、生命、傷害、稀有度、掉落照 ExileCore（data/monsters.yml、drops.yml）：
+#     這裡的 Health / Damage 會被蓋掉；技能造成的傷害一律算成一次怪物攻擊。
+#   - 區域 Boss 用哪一隻在 plugins/ExileCore/data/zones.yml 的 boss.mythic 設定；
+#     刷怪清單寫 "mythic:代號" 就會刷 MythicMobs 怪物。
+#   - Boss 的招式由 ExileCore 的 Boss 招式引擎負責（data/boss_skills.yml：地上有警告、一次只放一招），
+#     所以 Boss 的 Skills 只放外觀用的粒子。不要再寫會打人、推人、召喚的計時技能（throw、leap、pull、damage、summon…）：
+#     它們不管 Boss 正在放什麼都會自己發動，看起來就像同時放兩招。~onAttack（普攻打中時附加效果）沒關係。
+#   - Boss 的登場台詞與倒下旁白寫在 zones.yml（boss.intro / boss.defeat），沒裝 MythicMobs 也會出現，
+#     所以這裡不用 message 技能。
+#   - 改完這個檔案輸入 /mm reload。
+
+# ---------- 小怪 ----------
+
+ExileCore_Tidecaller:
+  Type: DROWNED
+  Display: '&3潮汐喚者'
+  Health: 30
+  Damage: 4
+  Options:
+    MovementSpeed: 0.24
+    FollowRange: 32
+    PreventOtherDrops: true
+    PreventRandomEquipment: true
+  Equipment:
+  - trident HAND
+  Skills:
+  - effect:particles{p=splash;a=12;hs=0.4;vs=0.8;y=1} @self ~onTimer:40
+  - potion{type=SLOWNESS;duration=40;level=0} @target ~onAttack 0.35
+
+ExileCore_Broodling:
+  Type: CAVE_SPIDER
+  Display: '&2織母幼蛛'
+  Health: 10
+  Damage: 2
+  Options:
+    MovementSpeed: 0.34
+    PreventOtherDrops: true
+
+# ---------- 區域 Boss ----------
+
+ExileCore_TideMother:
+  Type: DROWNED
+  Display: '&b溺潮之母'
+  Health: 400
+  Damage: 8
+  Options:
+    MovementSpeed: 0.26
+    FollowRange: 40
+    KnockbackResistance: 1
+    PreventOtherDrops: true
+    PreventRandomEquipment: true
+    Despawn: false
+  Equipment:
+  - trident HAND
+  - prismarine_crystals OFFHAND
+  Skills:
+  - effect:particles{p=splash;a=40;hs=1.2;vs=1.2;y=1} @self ~onTimer:30
+
+ExileCore_Broodmother:
+  Type: SPIDER
+  Display: '&2林影織母'
+  Health: 500
+  Damage: 10
+  Options:
+    MovementSpeed: 0.3
+    FollowRange: 40
+    KnockbackResistance: 1
+    PreventOtherDrops: true
+    Despawn: false
+  Skills:
+  - potion{type=POISON;duration=60;level=0} @target ~onAttack 0.4
+
+ExileCore_Warlord:
+  Type: VINDICATOR
+  Display: '&6廢城督軍'
+  Health: 600
+  Damage: 12
+  Options:
+    MovementSpeed: 0.3
+    FollowRange: 40
+    KnockbackResistance: 1
+    PreventOtherDrops: true
+    PreventRandomEquipment: true
+    Despawn: false
+  Equipment:
+  - netherite_axe HAND
+  - iron_helmet HEAD
+  - iron_chestplate CHEST
+  Skills:
+  - effect:particles{p=flame;a=30;hs=0.8;vs=1;s=0.02;y=1} @self ~onTimer:40
+
+ExileCore_BogWitch:
+  Type: WITCH
+  Display: '&5腐沼巫母'
+  Health: 600
+  Damage: 12
+  Options:
+    MovementSpeed: 0.28
+    FollowRange: 40
+    KnockbackResistance: 1
+    PreventOtherDrops: true
+    Despawn: false
+  Skills:
+  - effect:particles{p=witch;a=30;hs=1;vs=1;y=1} @self ~onTimer:40
+
+ExileCore_FrostRavager:
+  Type: RAVAGER
+  Display: '&b霜角撼地獸'
+  Health: 800
+  Damage: 15
+  Options:
+    MovementSpeed: 0.3
+    FollowRange: 40
+    KnockbackResistance: 1
+    PreventOtherDrops: true
+    Despawn: false
+  Skills:
+  - effect:particles{p=snowflake;a=40;hs=1.5;vs=1;y=1} @self ~onTimer:30

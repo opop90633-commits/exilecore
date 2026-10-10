@@ -1,0 +1,117 @@
+package tw.exilecore.salvage;
+
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import tw.exilecore.ExileCore;
+import tw.exilecore.gui.Menu;
+import tw.exilecore.item.ItemData;
+import tw.exilecore.item.Rarity;
+
+import java.util.Optional;
+
+/**
+ * 鎖定裝備（/lock）：上面 4 列是你的背包（前 3 列＝背包、第 4 列＝快捷列），第 5 列是身上穿的與副手，
+ * 點一件就鎖定或解除鎖定。鎖定的裝備拆解台、市集、交易、垃圾桶都不收，避免把要的裝備不小心拆掉；
+ * 鎖定記在物品上（放進倉庫、給別人都還鎖著）。
+ */
+public final class LockMenu extends Menu {
+
+    private static final int MIRROR_SLOTS = 36;
+    /** 第 5 列：頭盔、胸甲、護腿、鞋子、副手。 */
+    private static final int WORN_START = 36;
+    private static final int[] WORN_INVENTORY = {39, 38, 37, 36, 40};
+    private static final int SLOT_LOCK_UNIQUES = 46;
+    private static final int SLOT_LOCK_RARES = 47;
+    private static final int SLOT_UNLOCK_ALL = 48;
+    private static final int SLOT_CLOSE = 53;
+
+    public LockMenu(final ExileCore plugin, final Player player) {
+        super(plugin, player, 6, "<dark_gray>鎖定裝備");
+    }
+
+    /** 選單的格子 → 背包格（0–26 對背包 9–35，27–35 對快捷列 0–8，36–40 對身上穿的與副手）。 */
+    static int inventorySlot(final int menuSlot) {
+        if (menuSlot >= WORN_START) {
+            return WORN_INVENTORY[menuSlot - WORN_START];
+        }
+        return menuSlot < 27 ? menuSlot + 9 : menuSlot - 27;
+    }
+
+    @Override
+    protected void draw() {
+        final PlayerInventory inventory = player.getInventory();
+        for (int slot = 0; slot < WORN_START + WORN_INVENTORY.length; slot++) {
+            final ItemStack stack = inventory.getItem(inventorySlot(slot));
+            final Optional<ItemData> data = plugin.items().read(stack);
+            if (data.isEmpty()) {
+                set(slot, slot >= WORN_START ? icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>（身上沒穿東西）") : null);
+                continue;
+            }
+            final boolean locked = data.get().locked();
+            final ItemStack shown = appendLore(stack.clone(), "",
+                    locked ? "<#ffd27f>🔒 已鎖定：拆解台、市集、交易、垃圾桶都不收" : "<dark_gray>沒鎖定",
+                    locked ? "<yellow>點一下：解除鎖定" : "<yellow>點一下：鎖定");
+            set(slot, locked ? glowing(shown) : shown);
+        }
+        for (int slot = WORN_START + WORN_INVENTORY.length; slot < 54; slot++) {
+            set(slot, filler());
+        }
+        set(SLOT_LOCK_UNIQUES, icon(Material.ORANGE_DYE, "<#af6025>鎖定所有傳奇", "<gray>背包與身上的傳奇全部鎖起來", "", "<yellow>左鍵：鎖定"));
+        set(SLOT_LOCK_RARES, icon(Material.YELLOW_DYE, "<#ffff77>鎖定所有稀有", "<gray>背包與身上的稀有裝備全部鎖起來", "", "<yellow>左鍵：鎖定"));
+        set(SLOT_UNLOCK_ALL, icon(Material.GRAY_DYE, "<gray>全部解除鎖定", "<yellow>左鍵：解除"));
+        set(SLOT_CLOSE, closeButton());
+    }
+
+    @Override
+    protected void onClick(final int slot, final ClickType click, final InventoryClickEvent event) {
+        if (slot < WORN_START + WORN_INVENTORY.length) {
+            toggle(inventorySlot(slot));
+        } else if (slot == SLOT_LOCK_UNIQUES) {
+            lockAll(Rarity.UNIQUE, true);
+        } else if (slot == SLOT_LOCK_RARES) {
+            lockAll(Rarity.RARE, true);
+        } else if (slot == SLOT_UNLOCK_ALL) {
+            lockAll(null, false);
+        } else if (slot == SLOT_CLOSE) {
+            goBack();
+            return;
+        } else {
+            return;
+        }
+        redraw();
+    }
+
+    private void toggle(final int inventorySlot) {
+        final ItemStack stack = player.getInventory().getItem(inventorySlot);
+        final Optional<ItemData> data = plugin.items().read(stack);
+        if (data.isEmpty()) {
+            return;
+        }
+        final boolean locked = !data.get().locked();
+        data.get().setLocked(locked);
+        plugin.items().update(stack, data.get());
+        player.playSound(player.getLocation(), locked ? Sound.BLOCK_CHAIN_PLACE : Sound.BLOCK_CHAIN_BREAK, 0.6f, 1.2f);
+    }
+
+    /** 全部鎖定（某個稀有度）或全部解除。 */
+    private void lockAll(final Rarity rarity, final boolean locked) {
+        int changed = 0;
+        for (int slot = 0; slot < WORN_START + WORN_INVENTORY.length; slot++) {
+            final ItemStack stack = player.getInventory().getItem(inventorySlot(slot));
+            final Optional<ItemData> data = plugin.items().read(stack);
+            if (data.isEmpty() || (rarity != null && data.get().rarity() != rarity) || data.get().locked() == locked) {
+                continue;
+            }
+            data.get().setLocked(locked);
+            plugin.items().update(stack, data.get());
+            changed++;
+        }
+        player.sendActionBar(plugin.text().parse(locked ? "<#ffd27f>🔒 鎖定了 " + changed + " 件" : "<gray>解除了 " + changed + " 件的鎖定"));
+        player.playSound(player.getLocation(), locked ? Sound.BLOCK_CHAIN_PLACE : Sound.BLOCK_CHAIN_BREAK, 0.6f, 1.0f);
+    }
+}

@@ -1,0 +1,136 @@
+category	name_en	name_zh	level	str	dex	int	phys_min	phys_max	other_dmg	aps	crit	range	implicit
+mace1h	Wooden Club	木製棍棒					6	10		1.45	5	1.3	
+mace1h	Smithing Hammer	鍛造錘	4	11	0	0	5.5	9	fire:5.5-9	1.45	5	1.3	
+mace1h	Slim Mace	纖細之錘	10	21	0	0	11	17		1.55	5	1.3	
+mace1h	Spiked Club	鈍釘木棒	16	31	0	0	15	24		1.45	5	1.3	
+mace1h	Warpick	戰鎬	22	41	0	0	18	24		1.45	7	1.3	+(5—10)%的暴擊傷害加成
+mace1h	Plated Mace	華麗之錘	26	48	0	0	18	38		1.4	5	1.3	
+mace1h	Brigand Mace	強盜之錘	33	60	0	0	28	38		1.45	5	1.3	
+mace1h	Construct Hammer	建造錘	36	65	0	0	31	38		1.4	5	1.3	擊中時有40%機率造成目眩
+mace1h	Morning Star	晨星	45	80	0	0	33	49		1.45	6.5	1.3	
+mace1h	Calescent Hammer	升溫之錘	45	80	0	0	22	37	fire:22-37	1.45	5	1.3	
+mace1h	Kalguuran Forgehammer	卡爾葛鍛造錘	47	0	0	0	33	55		1.45	5	1.3	有3個插槽
+mace1h	Flared Mace	閃光之錘	48	86	0	0	33	50		1.55	5	1.3	
+mace1h	Jade Club	玉製棍棒	49	87	0	0	31	51		1.45	5	1.3	必定擊中
+mace1h	Battle Pick	戰鬥鎬	51	91	0	0	35	47		1.45	7	1.3	+(5—10)%的暴擊傷害加成
+mace1h	Lumen Mace	流明之錘	52	92	0	0	36	60		1.45	5	1.3	
+mace1h	Marching Mace	行軍之錘	54	96	0	0	33	69		1.4	5	1.3	
+mace1h	Execratus Hammer	詛咒之錘	55	97	0	0	40	60		1.45	5	1.3	
+mace1h	Bandit Mace	盜賊之錘	59	104	0	0	45	61		1.45	5	1.3	
+mace1h	Structured Hammer	建構之錘	62	109	0	0	49	60		1.4	5	1.3	擊中時有40%機率造成目眩
+mace1h	Torment Club	磨難棍棒	65	114	0	0	44	73		1.45	5	1.3	
+mace1h	Flanged Mace	輪緣之錘	67	134	0	0	45	67		1.55	5	1.3	
+mace1h	Crown Mace	皇冠之錘	72	149	0	0	43	89		1.4	5	1.3	
+mace1h	Molten Hammer	熔火之錘	77	163	0	0	35.5	59	fire:35.5-59	1.45	5	1.3	
+mace1h	Marauding Mace	劫掠之錘	77	163	0	0	51	84		1.45	5	1.3	
+mace1h	Strife Pick	鬥爭鎬	78	163	0	0	49	66		1.45	7	1.3	+(5—10)%的暴擊傷害加成
+mace1h	Akoyan Club	艾古亞棍棒	78	163	0	0	46	76		1.45	5	1.3	必定擊中
+mace1h	Fortified Hammer	強化之錘	79	163	0	0	60	73		1.4	5	1.3	擊中時有40%機率造成目眩
+mace2h	Felled Greatclub	墮落巨棍棒					13	18		1.1	5	1.5	
+mace2h	Oak Greathammer	橡木巨錘	4	11	0	0	16	30		1	5	1.5	增加(20—40)%暈眩累積
+mace2h	Forge Maul	鍛造重錘	11	23	0	0	26	35		1.05	5	1.5	擊中時壓碎敵人
+mace2h	Studded Greatclub	鑲釘巨棍棒	16	31	0	0	32	48		1.1	5	1.5	
+mace2h	Cultist Greathammer	教徒巨錘	22	41	0	0	36	49		1.05	5	1.5	打擊造成擴散傷害
+mace2h	Temple Maul	神殿重錘	28	52	0	0	35	72		1.2	5	1.5	
+mace2h	Leaden Greathammer	麻木巨錘	33	60	0	0	58	78		1.1	5	1.5	
+mace2h	Crumbling Maul	崩毀重錘	38	68	0	0	62	75		1.1	8	1.5	透過暴擊擊殺敵人時使其爆炸，造成等同於其10%生命的物理傷害
+mace2h	Pointed Maul	尖銳重錘	45	80	0	0	68	102		1.1	6.5	1.5	
+mace2h	Snakewood Greathammer	蛇木巨錘	45	80	0	0	62	115		1.05	5	1.5	增加(20—40)%暈眩累積
+mace2h	Blacksmith Maul	鐵匠重錘	48	86	0	0	75	102		1.05	5	1.5	擊中時壓碎敵人
+mace2h	Totemic Greatclub	圖騰巨棍棒	50	89	0	0	77	105		1.1	5	1.5	戰吼強化額外1次攻擊
+mace2h	Zealot Greathammer	狂熱巨錘	51	91	0	0	70	95		1.05	5	1.5	打擊造成擴散傷害
+mace2h	Greatmace	巨釘錘	52	92	0	0	74	124		1.1	5	1.5	
+mace2h	Precise Greathammer	精準巨錘	54	96	0	0	87	118		1.1	5	1.5	
+mace2h	Solemn Maul	莊嚴重錘	54	96	0	0	59	123		1.2	5	1.5	
+mace2h	Heavy Greathammer	重型巨錘	59	104	0	0	94	127		1.1	5	1.5	
+mace2h	Disintegrating Maul	崩解重錘	62	109	0	0	92	112		1.1	8	1.5	透過暴擊擊殺敵人時使其爆炸，造成等同於其10%生命的物理傷害
+mace2h	Giant Maul	巨型重錘	65	114	0	0	96	144		1.1	5	1.5	
+mace2h	Anvil Maul	鐵砧重錘	67	134	0	0	101	136		1.05	5	1.5	擊中時壓碎敵人
+mace2h	Aberrant Sledge	怪異攻城錘	70	163	0	0	74	154		1.2	5	1.5	
+mace2h	Sacred Maul	神聖重錘	72	149	0	0	76	158		1.2	5	1.5	
+mace2h	Ironwood Greathammer	鐵木巨錘	77	163	0	0	105	196		1	5	1.5	增加(30—50)%暈眩累積
+mace2h	Massive Greathammer	巨型巨錘	77	163	0	0	119	161		1.1	5	1.5	
+mace2h	Fanatic Greathammer	盲信巨錘	78	163	0	0	101	137		1.05	5	1.5	打擊造成擴散傷害
+mace2h	Tawhoan Greatclub	塔赫亞巨棍棒	78	163	0	0	113	153		1.1	5	1.5	戰吼強化額外1次攻擊
+mace2h	Ruination Maul	毀滅重錘	79	163	0	0	104	127		1.1	8	1.5	透過暴擊擊殺敵人時使其爆炸，造成等同於其10%生命的物理傷害
+spear	Hardwood Spear	硬木長矛					5	9		1.6	5	1.5	賦予技能: 長矛投擲
+spear	Ironhead Spear	鐵木長矛	5	0	10	0	9	12		1.6	5	1.5	賦予技能: 長矛投擲
+spear	Hunting Spear	狩獵長矛	10	9	17	0	10	17		1.55	5	1.5	賦予技能: 長矛投擲 / 擊中時有(15—25)%機率造成癱瘓
+spear	Winged Spear	羽翅長矛	16	12	25	0	12	22		1.7	5	1.5	賦予技能: 長矛投擲
+spear	War Spear	戰爭長矛	21	14	31	0	16	27		1.6	5	1.5	賦予技能: 長矛投擲 / 增加(25—35)%此武器的投射物速度
+spear	Forked Spear	叉狀長矛	26	17	38	0	13	38		1.55	5	1.5	賦予技能: 長矛投擲
+spear	Barbed Spear	鉤刺長矛	33	20	47	0	20	38		1.5	6	1.5	賦予技能: 長矛投擲 / 你造成的流血傷害加速(10—20)%
+spear	Broad Spear	闊刃長矛	40	26	55	0	32	48		1.4	5	1.5	賦予技能: 長矛投擲 / 此武器增加25%近戰打擊範圍
+spear	Crossblade Spear	十字刃長矛	45	26	63	0	25	52		1.6	5	1.5	賦予技能: 長矛投擲 / 抵禦偏斜擊中的+(3—7)%傷害
+spear	Steelhead Spear	鋼尖長矛	45	26	63	0	33	44		1.6	5	1.5	賦予技能: 長矛投擲
+spear	Coursing Spear	追獵長矛	48	27	67	0	31	52		1.55	5	1.5	賦予技能: 長矛投擲 / 擊中時有(15—25)%機率造成癱瘓
+spear	Seaglass Spear	海玻璃長矛	51	29	71	50	29	53		1.6	7	1.5	賦予技能: 長矛投擲
+spear	Swift Spear	迅疾長矛	51	29	71	0	32	53		1.6	5	1.5	賦予技能: 長矛投擲 / 增加(25—35)%此武器的投射物速度
+spear	Sword Spear	劍刃長矛	52	29	72	0	30	56		1.6	5	1.5	賦予技能: 長矛投擲
+spear	Branched Spear	分支長矛	54	30	75	0	23	69		1.55	5	1.5	賦予技能: 長矛投擲
+spear	Striking Spear	突擊長矛	55	31	76	0	11.5	45.5	lightning:11.5-45.5	1.6	5	1.5	賦予技能: 長矛投擲
+spear	Jagged Spear	鋸齒長矛	59	33	81	0	33	61		1.5	6	1.5	賦予技能: 長矛投擲 / 你造成的流血傷害加速(10—20)%
+spear	Massive Spear	巨型長矛	62	40	80	0	46	69		1.4	5	1.5	賦予技能: 長矛投擲 / 此武器增加25%近戰打擊範圍
+spear	Helix Spear	螺旋長矛	65	36	89	0	37	68		1.6	5	1.5	賦予技能: 長矛投擲
+spear	Orichalcum Spear	山銅長矛	67	41	104	0	46	62		1.6	5	1.5	賦予技能: 長矛投擲
+spear	Soaring Spear	展翼長矛	70	41	115	0	35	65		1.7	5	1.5	賦予技能: 長矛投擲
+spear	Pronged Spear	尖叉長矛	72	46	115	0	30	89		1.55	5	1.5	賦予技能: 長矛投擲
+spear	Guardian Spear	衛者長矛	75	50	127	0	38	79		1.55	5	1.5	賦予技能: 長矛投擲 / 抵禦偏斜擊中的+(3—7)%傷害
+spear	Stalking Spear	潛獵長矛	77	50	127	0	47	79		1.55	5	1.5	賦予技能: 長矛投擲 / 擊中時有(15—25)%機率造成癱瘓
+spear	Spiked Spear	尖刺長矛	77	50	127	0	41	76		1.5	6	1.5	賦予技能: 長矛投擲 / 你造成的流血傷害加速(10—20)%
+spear	Flying Spear	翱翔長矛	78	50	127	0	46	77		1.6	5	1.5	賦予技能: 長矛投擲 / 增加(25—35)%此武器的投射物速度
+spear	Akoyan Spear	艾古亞長矛	78	50	127	90	39	72		1.6	7	1.5	賦予技能: 長矛投擲
+spear	Grand Spear	宏偉長矛	79	68	109	0	56	84		1.4	5	1.5	賦予技能: 長矛投擲 / 此武器增加25%近戰打擊範圍
+quarterstaff	Wrapped Quarterstaff	纏繞細杖					7	12		1.4	10	1.4	
+quarterstaff	Long Quarterstaff	加長細杖	4	0	9	0	9	18		1.4	10	1.4	此武器增加16%近戰打擊範圍
+quarterstaff	Gothic Quarterstaff	歌德細杖	11	0	18	9	16	26		1.4	12	1.4	
+quarterstaff	Crackling Quarterstaff	裂紋細杖	16	0	25	12	5	22	lightning:1-35	1.4	10	1.4	
+quarterstaff	Crescent Quarterstaff	新月細杖	20	0	30	14	19	39		1.5	10	1.4	
+quarterstaff	Steelpoint Quarterstaff	鋼尖細杖	28	0	41	18	28	51		1.4	10	1.4	
+quarterstaff	Slicing Quarterstaff	斬割細杖	33	0	47	20	29	60		1.4	10	1.4	
+quarterstaff	Barrier Quarterstaff	屏障細杖	37	0	52	22	35	58		1.4	10	1.4	+(12—18)%至格擋率
+quarterstaff	Hefty Quarterstaff	堅固細杖	45	0	63	26	39	81		1.3	10	1.4	擊中時有(20—50)%機率造成目眩
+quarterstaff	Reaching Quarterstaff	延伸細杖	45	0	63	26	35	72		1.4	10	1.4	此武器增加16%近戰打擊範圍
+quarterstaff	Barbarous Quarterstaff	野蠻細杖	48	0	67	27	42	71		1.4	12	1.4	
+quarterstaff	Smooth Quarterstaff	平滑細杖	49	0	68	28	59	79		1.5	0	1.4	
+quarterstaff	Arcing Quarterstaff	電弧細杖	51	0	71	29	14	55	lightning:1-75	1.4	10	1.4	
+quarterstaff	Anima Quarterstaff	靈魂細杖	52	0	72	29	47	79		1.4	10	1.4	
+quarterstaff	Waxing Quarterstaff	白蠟細杖	54	0	75	30	39	82		1.5	10	1.4	
+quarterstaff	Graceful Quarterstaff	優雅細杖	56	0	77	31	47	87		1.4	10	1.4	
+quarterstaff	Bladed Quarterstaff	帶刃細杖	59	0	81	33	45	94		1.4	10	1.4	
+quarterstaff	Guardian Quarterstaff	守護細杖	62	0	85	34	52	86		1.4	10	1.4	+(12—18)%至格擋率
+quarterstaff	Wyrm Quarterstaff	蠕蟲細杖	65	0	89	36	57	94		1.4	10	1.4	
+quarterstaff	Warding Quarterstaff	庇護細杖	65	0	127	50	51	85		1.4	10	1.4	+(30—50)最大符文保護
+quarterstaff	Sinister Quarterstaff	邪惡細杖	67	0	104	41	55	91		1.4	12	1.4	
+quarterstaff	Lunar Quarterstaff	月神細杖	72	0	115	46	50	103		1.5	10	1.4	
+quarterstaff	Skullcrusher Quarterstaff	碎顱細杖	75	0	127	50	59	122		1.3	10	1.4	擊中時有(20—50)%機率造成目眩
+quarterstaff	Striking Quarterstaff	打擊細杖	77	0	127	50	53	111		1.4	10	1.4	此武器增加16%近戰打擊範圍
+quarterstaff	Razor Quarterstaff	剃刃細杖	77	0	127	50	65	108		1.4	10	1.4	
+quarterstaff	Bolting Quarterstaff	雷霆細杖	78	0	127	50	24	97	lightning:1-100	1.4	10	1.4	
+quarterstaff	Dreaming Quarterstaff	夢境細杖	78	0	127	50	99	133		1.5	0	1.4	
+quarterstaff	Aegis Quarterstaff	神禦細杖	79	0	127	50	58	97		1.4	10	1.4	+(12—18)%至格擋率
+talisman	Changeling Talisman	變形魔符					9	15		1.25	8	1.2	
+talisman	Nettle Talisman	蕁麻魔符	5	9	0	8	12	20		1.25	11	1.2	
+talisman	Cinderbark Talisman	灰樹皮魔符	10	15	0	11	12.6	25.2	fire:5.4-10.8	1.2	8	1.2	增加(50—80)%易燃幅度
+talisman	Familial Talisman	家族魔符	16	21	0	16	20	34		1.25	8	1.2	增加(30—50)%召喚物造成的傷害
+talisman	Frenzied Talisman	狂亂魔符	22	28	0	20	23	38		1.4	8	1.2	
+talisman	Primal Talisman	原始魔符	28	34	0	25	31	46		1.3	9	1.2	+(14—18)%至格擋率
+talisman	Rabid Talisman	狂暴魔符	34	40	0	29	31	58		1.25	8	1.2	+(7—10)層最大盛怒
+talisman	Vicious Talisman	惡毒魔符	40	47	0	34	43	71		1.25	8	1.2	
+talisman	Voltfang Talisman	伏特之牙魔符	46	53	0	38	16.1	91	lightning:6.9-39	1.3	8	1.2	增加(20—30)%你所施加之感電的幅度
+talisman	Lumbering Talisman	笨重魔符	52	60	0	43	71	107		1.1	5	1.2	
+talisman	Howling Talisman	狂嚎魔符	55	63	0	45	52	78		1.3	9	1.2	+(14—18)%至格擋率
+talisman	Roaring Talisman	咆哮魔符	58	66	0	47	57	96		1.25	8	1.2	+(7—10)層最大盛怒
+talisman	Fury Talisman	怒火魔符	59	67	0	48	49	91		1.25	8	1.2	+(7—10)層最大盛怒
+talisman	Cruel Talisman	殘酷魔符	63	72	0	51	62	103		1.25	8	1.2	
+talisman	Wingbeat Talisman	振翼魔符	65	74	0	52	45	83		1.45	7	1.2	
+talisman	Condemned Talisman	譴責魔符	65	74	0	52	68	113		1.25	9	1.2	增加(10—20)%你的印記技能效果
+talisman	Spiny Talisman	尖錐魔符	67	86	0	65	60	99		1.25	11	1.2	
+talisman	Wildwood Talisman	荒林魔符	70	98	0	72	67	112		1.25	8	1.2	
+talisman	Ashbark Talisman	燼木魔符	72	94	0	67	50.4	105	fire:21.6-45	1.2	8	1.2	增加(50—80)%易燃幅度
+talisman	Alpha Talisman	統領魔符	75	98	0	72	63	94		1.3	9	1.2	+(14—18)%至格擋率
+talisman	Fang Talisman	銳爪魔符	77	89	0	68	70	116		1.25	8	1.2	增加(30—50)%召喚物造成的傷害
+talisman	Thunder Talisman	天雷魔符	77	102	0	72	23.1	130.9	lightning:9.9-56.1	1.3	8	1.2	增加(20—30)%你所施加之感電的幅度
+talisman	Fungal Talisman	真菌魔符	78	96	0	70	59	98		1.4	8	1.2	
+talisman	Jade Talisman	翠玉魔符	78	109	0	65	101	151		1.1	5	1.2	
+talisman	Maji Talisman	聖賢魔符	79	100	0	67	61	114		1.25	8	1.2	+(7—10)層最大盛怒

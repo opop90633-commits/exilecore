@@ -1,0 +1,964 @@
+package tw.exilecore.map;
+
+import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.title.Title;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Warden;
+import tw.exilecore.ExileCore;
+import tw.exilecore.currency.CurrencyType;
+import tw.exilecore.item.AffixMod;
+import tw.exilecore.item.ItemData;
+import tw.exilecore.item.ItemRenderer;
+import tw.exilecore.monster.DropTable;
+import tw.exilecore.monster.MonsterConfig;
+import tw.exilecore.monster.MonsterRarity;
+import tw.exilecore.stats.Modifier;
+import tw.exilecore.zone.Zone;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+/**
+ * 地圖 Boss：玩家走進 Boss 房就出現（MythicMobs 有這隻就用它，不然用原版生物），頭上有血條；
+ * 血量掉到門檻時換階段（喊話、召喚小怪、加屬性、變快；一次一個，見 {@link PhaseStep}）。附近沒人 30 秒就回滿血、回到第一階段；
+ * 跑出 Boss 房太遠會被拉回來。死亡時：地圖完成（星圖）、必掉地圖（跟這張圖同一階）、機率掉傳奇、星圖最外圈的地圖掉天穹碎片、首殺獎勵；
+ * 終局開到夠高的階有機率掉開極境的鑰匙，極境有自己的掉落（{@link MapConfig.UberDrops}）。
+ * <p>
+ * 特殊機制：階段的護盾（Boss 無敵、限時打掉結晶，不然回血）、狂暴（開打太久傷害變高）；場地危害由招式引擎照 {@code hazards} 落下。
+ */
+final class MapBosses {
+
+    /** 附近沒人多久就重置（tick）。 */
+    private static final long RESET_TICKS = 30 * 20;
+    /** 離 Boss 房中心超過這麼遠、而且身邊沒有人在打它，就拉回來（有人在打就一路追，站遠射箭也會被追上）。 */
+    private static final double LEASH = 30;
+    /** Boss 身邊這麼近有玩家就算「有人在打」。 */
+    private static final double ENGAGED = 24;
+    /** Boss 的追蹤範圍（原版生物大多只有 16–35 格，站遠一點就不理人）。 */
+    private static final double FOLLOW_RANGE = 64;
+
+    private final ExileCore plugin;
+    private final MapService service;
+    private final NamespacedKey speedKey;
+    private final NamespacedKey enrageKey;
+    /** 護盾結晶離 Boss 房中心幾格。 */
+    private static final double CRYSTAL_RING = 7;
+
+    MapBosses(final ExileCore plugin, final MapService service) {
+        this.plugin = plugin;
+        this.service = service;
+        this.speedKey = new NamespacedKey(plugin, "map_boss_phase");
+        this.enrageKey = new NamespacedKey(plugin, "map_boss_enrage");
+    }
+
+    /** 每 10 tick。 */
+    void tick() {
+        final long now = plugin.getServer().getCurrentTick();
+        for (final MapInstance instance : service.instances()) {
+            if (instance.state() != MapInstance.State.OPEN || instance.bossKilled()) {
+                continue;
+            }
+            final Location center = center(instance);
+            final LivingEntity boss = instance.boss();
+            if (boss == null || !boss.isValid()) {
+                if (boss != null) {
+                    // 區塊卸載或被移除了（Paper 把移除的實體也當成死亡；真的被打死時 bossKilled 已經是 true）：下次有人走近再找回來或重生
+                    instance.setBoss(null);
+                    detachSkills(boss);
+                }
+                if (instance.boss() == null && !nearbyPlayers(instance, center, service.config().settings().bossRadius()).isEmpty()) {
+                    // 區塊重新載入時舊的 Boss 會跟著回來：先找找看，找不到才生新的
+                    final LivingEntity existing = findExisting(instance, center);
+                    if (existing != null) {
+                        final boolean stale = now - instance.bossLastSeenTick() > RESET_TICKS;
+                        instance.setBoss(existing);
+                        attachSkills(instance, existing);
+                        if (stale) {
+                            // 區塊卸載前大家都走了（全倒回營地）：跟附近沒人一樣重置（回滿血、第一階段、狂暴的計時重來、護盾收掉）
+                            reset(instance, existing, center);
+                        }
+                        instance.setBossLastSeenTick(now);
+                    } else {
+                        spawn(instance, center);
+                    }
+                }
+                continue;
+            }
+            // 「附近」以 Boss 現在的位置算：追著人跑出 Boss 房也不算沒人
+            final List<Player> near = nearbyPlayers(instance, boss.getLocation(), 48);
+            if (!near.isEmpty()) {
+                instance.setBossLastSeenTick(now);
+                if (instance.fightStartTick() < 0) {
+                    instance.setFightStartTick(now); // 狂暴從有人跟 Boss 打的那一刻開始算
+                }
+            } else if (now - instance.bossLastSeenTick() > RESET_TICKS) {
+                reset(instance, boss, center);
+                continue;
+            }
+            updateShield(instance, boss, now);
+            checkEnrage(instance, boss, now);
+            // 跑太遠又沒人在打才拉回 Boss 房；盯著最近的玩家（北極熊、伏守者這種不會主動打人的也會打）
+            if (boss.getLocation().distanceSquared(center) > LEASH * LEASH && nearbyPlayers(instance, boss.getLocation(), ENGAGED).isEmpty()) {
+                boss.teleport(center);
+            }
+            if (boss instanceof Mob mob && !near.isEmpty() && !(mob.getTarget() instanceof Player)) {
+                final Player target = nearest(boss.getLocation(), near);
+                // 16 格內一定盯；更遠的要看得到（隔壁房間探險的人不算，站遠射箭的算）
+                if (target.getLocation().distanceSquared(boss.getLocation()) <= 16 * 16 || boss.hasLineOfSight(target)) {
+                    mob.setTarget(target);
+                    if (boss instanceof Warden warden) {
+                        warden.setAnger(target, 150);
+                    }
+                }
+            }
+            plugin.monsters().ensureVanillaHealth(boss); // 別的插件改了原版血量上限就改回來
+            updateBar(instance, boss, near);
+            checkPhases(instance, boss);
+        }
+    }
+
+    private LivingEntity findExisting(final MapInstance instance, final Location center) {
+        for (final LivingEntity entity : center.getNearbyLivingEntities(LEASH + 64)) {
+            if (entity.isValid() && !entity.isDead() && entity.getPersistentDataContainer().has(service.bossKey())
+                    && service.instanceOf(entity) == instance) {
+                return entity;
+            }
+        }
+        return null;
+    }
+
+    private static Location center(final MapInstance instance) {
+        final MapLayout.Room room = instance.layout().boss();
+        return new Location(instance.world(), instance.originX() + room.cx() + 0.5, MapLayout.FLOOR_Y + 1, instance.originZ() + room.cz() + 0.5);
+    }
+
+    private List<Player> nearbyPlayers(final MapInstance instance, final Location center, final double radius) {
+        final List<Player> list = new ArrayList<>();
+        for (final UUID uuid : instance.inside()) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            // inside 每秒才更新：剛死掉、回營地的人可能還在名單裡（不同世界不能量距離）
+            if (player != null && !player.isDead() && player.getGameMode() != GameMode.SPECTATOR && !plugin.players().grace().isSafe(player)
+                    && instance.contains(player.getLocation()) && player.getLocation().distanceSquared(center) <= radius * radius) {
+                list.add(player);
+            }
+        }
+        return list;
+    }
+
+    private static Player nearest(final Location from, final List<Player> players) {
+        Player best = players.getFirst();
+        double bestDistance = Double.MAX_VALUE;
+        for (final Player player : players) {
+            final double distance = player.getLocation().distanceSquared(from);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = player;
+            }
+        }
+        return best;
+    }
+
+    private void spawn(final MapInstance instance, final Location center) {
+        final MapConfig.Boss definition = instance.bossDef();
+        LivingEntity entity = null;
+        String typeName = definition.type();
+        if (definition.mythic() != null && plugin.mythic().exists(definition.mythic())) {
+            entity = plugin.mythic().spawn(definition.mythic(), center, instance.level());
+            if (entity != null) {
+                service.tag(entity, instance, true);
+                typeName = entity.getType().name();
+            }
+        }
+        if (entity == null) {
+            entity = service.spawner().spawnVanilla(definition.type(), center, created -> service.tag(created, instance, true));
+        }
+        if (entity == null) {
+            plugin.getSLF4JLogger().warn("地圖 {} 的 Boss 生不出來（type: {}）", instance.map().id(), definition.type());
+            instance.setBossKilled(true); // 生不出來也不要卡住：直接算完成
+            if (instance.special() == null && !instance.isUber()) {
+                service.complete(instance);
+            } else {
+                // 回響、試煉、極境：生不出來不算打倒（不給每週的獎勵、不給昇華點、不算極境首殺；極境的鑰匙還給開的人）
+                broadcast(instance, "<red>" + ItemRenderer.escape(instance.label()) + " 的 Boss 沒有出現（設定有問題，請通知管理員），這次不算");
+                if (instance.isUber()) {
+                    service.refundUberKey(instance);
+                }
+            }
+            return;
+        }
+        // 新的 Boss：上一隻的戰鬥狀態（狂暴的計時、還在的護盾結晶）不帶過來
+        clearShield(instance, null);
+        instance.setFightStartTick(-1);
+        instance.setEnraged(false);
+        instance.setPhaseTick(PhaseStep.NEVER);
+        instance.setPhaseHold(false);
+        // 生命、傷害倍率扣掉 monsters.yml 裡這種生物本身的倍率（設定檔寫的是「比一般傳奇怪強幾倍」）
+        final MonsterConfig.TypeSettings type = plugin.monsters().config().type(typeName);
+        // 終局（含極境）的 Boss 照開的階級再乘（maps.yml 的 final.tier_life：T5 以下 ×1、T16 ×2.5）
+        // 劫盜終局（金庫之主）難度照極境：一樣照開的人打過的最高階再乘
+        final boolean heistFinale = instance.special() != null && "heist_finale".equals(instance.special().kind());
+        // 一般地圖 Boss（不是終局、不是劫盜這種特殊實例）：高階再乘一點（maps.yml 的 settings.boss_tier_life）
+        final double tierLife = instance.map().isFinal() && instance.special() == null || heistFinale
+                ? service.config().finalLifeMultiplier(instance.stats().tier())
+                : instance.special() == null && !instance.isUber() ? service.config().bossLifeMultiplier(instance.stats().tier()) : 1.0;
+        final double life = definition.life() * tierLife / Math.max(0.1, type.lifeMultiplier());
+        final double damage = definition.damage() / Math.max(0.1, type.damageMultiplier());
+        instance.setBossPhase(0);
+        plugin.monsters().decorateBoss(entity, instance.level(), definition.name(), definition.mods(), life, damage, definition.scale());
+        MapSpawner.prepare(entity);
+        final AttributeInstance follow = entity.getAttribute(Attribute.FOLLOW_RANGE);
+        if (follow != null && follow.getBaseValue() < FOLLOW_RANGE) {
+            follow.setBaseValue(FOLLOW_RANGE);
+        }
+        instance.setBoss(entity);
+        attachSkills(instance, entity);
+        if (instance.map().isFinal()) {
+            // 終局（含極境）：開打一分鐘的傷害寫進伺服器紀錄（查「一開場血掉一大截」，2026-10）
+            service.bossLog().track(entity, "地圖 #" + instance.id() + " " + instance.label(), definition.name(), instance.level());
+        }
+        instance.setBossLastSeenTick(plugin.getServer().getCurrentTick());
+        hideBar(instance);
+        final BossBar bar = BossBar.bossBar(title(instance, 0), 1f, definition.named() ? BossBar.Color.PURPLE : BossBar.Color.RED,
+                BossBar.Overlay.NOTCHED_12); // 2026-10：資源包把 12 格的刻度換成 75%、50%、25% 三條（換階段的位置）
+        instance.setBossBar(bar);
+        if (definition.intro() != null && !definition.intro().isBlank()) {
+            broadcast(instance, Zone.loreLine(definition.name(), definition.intro()));
+        }
+        if (alerts(instance)) {
+            // 終局與試煉 Boss：開打前先在聊天室說明機制（幾 % 血換階段、護盾、狂暴、場地危害）
+            final String overview = BossMechanicText.overview(definition, skillNames(definition.hazards().stream()
+                    .map(tw.exilecore.skill.BossHazard::skill).toList()));
+            if (overview != null) {
+                broadcast(instance, overview);
+            }
+        }
+        center.getWorld().playSound(center, definition.named() ? Sound.ENTITY_WITHER_SPAWN : Sound.ENTITY_EVOKER_PREPARE_WOLOLO, 0.8f, 0.8f);
+        center.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, center, 60, 1.5, 1.5, 1.5, 0.05);
+    }
+
+    private net.kyori.adventure.text.Component title(final MapInstance instance, final int phase) {
+        final MapConfig.Boss definition = instance.bossDef();
+        String text = "<#af6025>" + ItemRenderer.escape(definition.name()) + " <gray>Lv." + instance.level();
+        if (phase > 0 && phase <= definition.phases().size()) {
+            text += " <dark_gray>・<red>" + ItemRenderer.escape(definition.phases().get(phase - 1).name());
+        }
+        if (instance.enraged()) {
+            text += " <dark_gray>・<dark_red>狂暴";
+        } else if (definition.enrage() != null && instance.fightStartTick() >= 0) {
+            final long left = Math.max(0, Math.round(definition.enrage().after()) - (plugin.getServer().getCurrentTick() - instance.fightStartTick()) / 20);
+            text += String.format(java.util.Locale.ROOT, " <dark_gray>（狂暴 %d:%02d）", left / 60, left % 60);
+        }
+        return plugin.text().parse(text);
+    }
+
+    private void updateBar(final MapInstance instance, final LivingEntity boss, final List<Player> near) {
+        final BossBar bar = instance.bossBar();
+        if (bar == null) {
+            return;
+        }
+        final AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
+        final double fraction = max == null ? 1 : boss.getHealth() / Math.max(1, max.getValue());
+        bar.progress((float) Math.max(0, Math.min(1, fraction)));
+        if (instance.bossDef().enrage() != null && !instance.enraged() && instance.fightStartTick() >= 0) {
+            bar.name(title(instance, instance.bossPhase())); // 狂暴倒數
+        }
+        // 2026-10：血條常駐——在 Boss 附近（64 格）或 Boss 房裡就一直顯示，不管剛復活的保護時間、死掉觀戰、離開戰鬥範圍
+        final Location center = center(instance);
+        for (final UUID uuid : instance.inside()) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            if (player == null) {
+                continue;
+            }
+            final Location at = player.getLocation();
+            final boolean show = near.contains(player) || at.getWorld() == boss.getWorld()
+                    && (at.distanceSquared(boss.getLocation()) <= BAR_RADIUS * BAR_RADIUS || at.distanceSquared(center) <= BAR_RADIUS * BAR_RADIUS);
+            if (show) {
+                player.showBossBar(bar);
+            } else {
+                player.hideBossBar(bar);
+            }
+        }
+    }
+
+    /** 離 Boss（或 Boss 房中心）多近就一直看得到血條。 */
+    private static final double BAR_RADIUS = 64;
+
+    /**
+     * 血量到了門檻就換下一個階段——一次一個（{@link PhaseStep}）：一下打掉一大段血、跨過好幾個門檻時，
+     * 下一個階段隔 3 秒（有護盾的話等護盾破了）才換，召喚、護盾、加傷害不會在同一個瞬間全部疊上來；
+     * 等的這段時間 Boss 打不動（不會一口氣打過去，把下一個階段的護盾跳過）。
+     */
+    private void checkPhases(final MapInstance instance, final LivingEntity boss) {
+        final List<MapConfig.Phase> phases = instance.bossDef().phases();
+        final AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
+        if (max == null || instance.bossPhase() >= phases.size()) {
+            holdPhase(instance, boss, false);
+            return;
+        }
+        final double fraction = boss.getHealth() / Math.max(1, max.getValue());
+        final long now = plugin.getServer().getCurrentTick();
+        final MapConfig.Phase phase = phases.get(instance.bossPhase());
+        final PhaseStep.Step step = PhaseStep.step(phase.at(), fraction, now, instance.phaseTick(), instance.shielded());
+        holdPhase(instance, boss, step == PhaseStep.Step.WAIT);
+        if (step != PhaseStep.Step.ENTER) {
+            return;
+        }
+        instance.setBossPhase(instance.bossPhase() + 1);
+        instance.setPhaseTick(now);
+        service.bossLog().note(boss, "進入第 " + instance.bossPhase() + " 階段：" + phase.name());
+        enterPhase(instance, boss, phase);
+        if (!instance.shielded() && instance.bossPhase() < phases.size() && fraction <= phases.get(instance.bossPhase()).at()) {
+            holdPhase(instance, boss, true); // 血已經到下一個階段：馬上開始等（不用等到下一次檢查，中間 0.5 秒也打不動）
+        }
+        // 新階段的屬性：屬性表重算、原版速度同步（血量比例不變）
+        plugin.monsters().refreshVanilla(boss);
+        final AttributeInstance speed = boss.getAttribute(Attribute.MOVEMENT_SPEED);
+        if (speed != null) {
+            double bonus = 0;
+            for (int i = 0; i < instance.bossPhase(); i++) {
+                bonus += phases.get(i).speed();
+            }
+            speed.removeModifier(speedKey);
+            if (bonus != 0) {
+                speed.addModifier(new AttributeModifier(speedKey, bonus, AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+            }
+        }
+        if (instance.bossBar() != null) {
+            instance.bossBar().name(title(instance, instance.bossPhase()));
+            instance.bossBar().color(BossBar.Color.RED);
+        }
+    }
+
+    /**
+     * 換階段鎖血（2026-10）：還沒進下一個階段時，Boss 的原版血量最低只能被打到下一個門檻（不會一下打穿好幾個階段、直接打死）。
+     * 回傳原版血量的下限；不是這個實例的 Boss、沒有下一個階段回傳 0。
+     */
+    double phaseFloor(final MapInstance instance, final LivingEntity entity) {
+        // 照 UUID 比（區塊重載後是新的實體物件，instance.boss() 可能還沒換過來）
+        if (instance == null || instance.boss() == null || !entity.getUniqueId().equals(instance.boss().getUniqueId())) {
+            return 0;
+        }
+        final List<MapConfig.Phase> phases = instance.bossDef().phases();
+        if (instance.bossPhase() >= phases.size()) {
+            return 0;
+        }
+        final AttributeInstance max = entity.getAttribute(Attribute.MAX_HEALTH);
+        // 比門檻再低一點點（浮點誤差：剛好卡在門檻上時「血量 ≤ 門檻」要成立）
+        if (max == null) {
+            return 0;
+        }
+        final double floor = max.getValue() * phases.get(instance.bossPhase()).at() - 0.05;
+        return floor <= 0.5 ? 0 : floor; // 門檻太低（0 或接近 0）：不鎖，不然會打不死
+    }
+
+    /** 被鎖在門檻上了：馬上檢查換階段（不用等下一次檢查）。 */
+    void checkNow(final MapInstance instance, final LivingEntity boss) {
+        if (instance != null && instance.boss() != null && boss.getUniqueId().equals(instance.boss().getUniqueId())
+                && boss.isValid() && !boss.isDead()) {
+            checkPhases(instance, boss);
+        }
+    }
+
+    /**
+     * 等下一個階段的這段時間 Boss 打不動；等完（或不用等了）恢復——護盾還在的話照護盾。
+     * 每次檢查都對一次 Boss 身上的無敵（存在實體上：區塊卸載前留下來的、重新找回來的也會恢復正確）。
+     */
+    private void holdPhase(final MapInstance instance, final LivingEntity boss, final boolean hold) {
+        if (hold && !instance.phaseHold()) {
+            broadcastActionBar(instance, "<gray>" + ItemRenderer.escape(instance.bossDef().name()) + " 正在換階段，暫時打不動");
+        }
+        instance.setPhaseHold(hold);
+        final boolean invulnerable = hold || instance.shielded();
+        if (boss.isValid() && boss.isInvulnerable() != invulnerable) {
+            boss.setInvulnerable(invulnerable);
+        }
+    }
+
+    private void enterPhase(final MapInstance instance, final LivingEntity boss, final MapConfig.Phase phase) {
+        final Location at = boss.getLocation();
+        at.getWorld().playSound(at, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.7f, 1.2f);
+        at.getWorld().spawnParticle(Particle.EXPLOSION, at, 3, 1, 1, 1, 0);
+        if (phase.message() != null && !phase.message().isBlank()) {
+            broadcast(instance, Zone.loreLine(instance.bossDef().name(), phase.message()));
+        }
+        // 畫面中間大字「第 N 階段・名稱」＋最要緊的一件事（護盾優先），聊天室列出這個階段的全部變化
+        final int number = instance.bossPhase();
+        final List<String> notes = BossMechanicText.phaseNotes(phase, newSkills(boss, instance.bossDef(), number));
+        broadcastAlert(instance, new String[] {BossMechanicText.phaseTitle(number, phase), BossMechanicText.phaseSubtitle(notes)});
+        broadcast(instance, BossMechanicText.phaseChat(number, phase, notes));
+        if (phase.shield() != null && !instance.shielded()) {
+            startShield(instance, boss, phase.shield());
+        }
+        if (phase.summonType() != null && phase.summonCount() > 0) {
+            for (int i = 0; i < phase.summonCount(); i++) {
+                final double angle = Math.PI * 2 * i / phase.summonCount();
+                final Location spot = at.clone().add(Math.cos(angle) * 3, 0.2, Math.sin(angle) * 3);
+                if (!instance.layout().isFloor(spot.getBlockX() - instance.originX(), spot.getBlockZ() - instance.originZ())) {
+                    spot.setX(at.getX());
+                    spot.setZ(at.getZ());
+                }
+                final LivingEntity minion = service.spawner().spawnVanilla(phase.summonType(), spot, created -> {
+                    service.tag(created, instance, false);
+                    plugin.monsters().markSummoned(created);
+                });
+                if (minion != null) {
+                    plugin.monsters().decorate(minion, instance.level(), MonsterRarity.NORMAL, List.of());
+                    MapSpawner.prepare(minion);
+                    at.getWorld().spawnParticle(Particle.SOUL, spot, 10, 0.3, 0.6, 0.3, 0.02);
+                }
+            }
+        }
+    }
+
+    /** 目前階段的屬性（給屬性表）；狂暴了再加更多傷害。 */
+    List<Modifier> phaseModifiers(final MapInstance instance) {
+        final List<MapConfig.Phase> phases = instance.bossDef().phases();
+        final List<Modifier> list = new ArrayList<>();
+        for (int i = 0; i < Math.min(instance.bossPhase(), phases.size()); i++) {
+            for (final AffixMod stat : phases.get(i).stats()) {
+                list.add(stat.toModifier(Map.of(), "Boss 階段 " + phases.get(i).name()));
+            }
+        }
+        final MapConfig.Enrage enrage = instance.bossDef().enrage();
+        if (instance.enraged() && enrage != null && enrage.damage() > 0) {
+            list.add(new Modifier(tw.exilecore.stats.StatKeys.DAMAGE, tw.exilecore.stats.ModType.MORE, enrage.damage() / 100.0, Set.of(), "狂暴"));
+        }
+        return list;
+    }
+
+    // ---- 護盾 ----
+
+    /** 進入有護盾的階段：Boss 無敵，Boss 房裡出現幾顆結晶（不會動、不會打人），限時打掉。 */
+    private void startShield(final MapInstance instance, final LivingEntity boss, final MapConfig.Shield shield) {
+        final long now = plugin.getServer().getCurrentTick();
+        instance.startShield(shield, now + Math.round(shield.duration() * 20));
+        boss.setInvulnerable(true);
+        final Location center = center(instance);
+        final double offset = service.random().nextDouble() * Math.PI * 2;
+        for (int i = 0; i < shield.count(); i++) {
+            final double angle = offset + Math.PI * 2 * i / shield.count();
+            final Location spot = center.clone().add(Math.cos(angle) * CRYSTAL_RING, 0.3, Math.sin(angle) * CRYSTAL_RING);
+            if (!instance.layout().isFloor(spot.getBlockX() - instance.originX(), spot.getBlockZ() - instance.originZ())) {
+                spot.setX(center.getX() + Math.cos(angle) * 3);
+                spot.setZ(center.getZ() + Math.sin(angle) * 3);
+            }
+            final LivingEntity crystal = service.spawner().spawnVanilla(shield.type(), spot, created -> {
+                service.tag(created, instance, false);
+                plugin.monsters().markSummoned(created);
+            });
+            if (crystal == null) {
+                continue;
+            }
+            plugin.monsters().decorateData(crystal, new tw.exilecore.monster.MonsterData(instance.level(), MonsterRarity.MAGIC, List.of(),
+                    shield.name(), shield.life(), 0.1, false));
+            if (crystal instanceof Mob mob) {
+                mob.setAI(false);
+            }
+            crystal.setGravity(false);
+            crystal.setGlowing(true);
+            crystal.setSilent(true);
+            crystal.setPersistent(true);
+            crystal.setRemoveWhenFarAway(false);
+            final AttributeInstance knockback = crystal.getAttribute(Attribute.KNOCKBACK_RESISTANCE);
+            if (knockback != null) {
+                knockback.setBaseValue(1.0);
+            }
+            instance.shieldCrystals().add(crystal.getUniqueId());
+            spot.getWorld().spawnParticle(Particle.END_ROD, spot.clone().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.05);
+        }
+        if (instance.shieldCrystals().isEmpty()) {
+            // 結晶一顆都生不出來（type 寫錯）：不要讓 Boss 永遠無敵
+            plugin.getSLF4JLogger().warn("Boss {} 的護盾結晶生不出來（type: {}），護盾取消", instance.bossDef().name(), shield.type());
+            instance.endShield();
+            boss.setInvulnerable(false);
+            return;
+        }
+        broadcast(instance, "<#ffd27f>⛨ " + ItemRenderer.escape(instance.bossDef().name()) + " 張開了護盾：" + (int) shield.duration()
+                + " 秒內打掉 " + instance.shieldCrystals().size() + " 顆「" + ItemRenderer.escape(shield.name()) + "」，不然牠會回復 "
+                + Math.round(shield.heal()) + "% 生命");
+        boss.getWorld().playSound(boss.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 0.6f);
+    }
+
+    /** 每 10 tick：結晶都打掉了護盾就破；時間到 Boss 回血、剩下的結晶消失；中間提醒還剩幾顆幾秒。 */
+    private void updateShield(final MapInstance instance, final LivingEntity boss, final long now) {
+        if (!instance.shielded()) {
+            return;
+        }
+        instance.shieldCrystals().removeIf(uuid -> {
+            final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(uuid);
+            return entity == null || !entity.isValid() || entity.isDead();
+        });
+        final MapConfig.Shield shield = instance.shield();
+        if (instance.shieldCrystals().isEmpty()) {
+            endShield(instance, boss);
+            service.bossLog().note(boss, "護盾破了");
+            broadcast(instance, "<green>⛨ 護盾破了！" + ItemRenderer.escape(instance.bossDef().name()) + " 又打得動了");
+            broadcastAlert(instance, BossMechanicText.shieldBroken());
+            boss.getWorld().playSound(boss.getLocation(), Sound.BLOCK_GLASS_BREAK, 1.2f, 0.6f);
+            return;
+        }
+        if (now >= instance.shieldUntilTick()) {
+            final AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
+            if (max != null && shield.heal() > 0) {
+                boss.setHealth(Math.min(max.getValue(), boss.getHealth() + max.getValue() * shield.heal() / 100.0));
+            }
+            for (final UUID uuid : instance.shieldCrystals()) {
+                final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(uuid);
+                if (entity != null) {
+                    entity.getWorld().spawnParticle(Particle.HEART, entity.getLocation().add(0, 1, 0), 6, 0.3, 0.4, 0.3, 0);
+                    entity.remove();
+                }
+            }
+            endShield(instance, boss);
+            broadcast(instance, "<red>⛨ 來不及了：" + ItemRenderer.escape(instance.bossDef().name()) + " 吸收了結晶，回復 " + Math.round(shield.heal())
+                    + "% 生命");
+            broadcastAlert(instance, BossMechanicText.shieldFailed(shield));
+            boss.getWorld().playSound(boss.getLocation(), Sound.ENTITY_EVOKER_PREPARE_ATTACK, 1.0f, 0.6f);
+            return;
+        }
+        if ((now / 10) % 4 == 0) {
+            final long seconds = Math.max(0, (instance.shieldUntilTick() - now) / 20);
+            for (final UUID uuid : instance.inside()) {
+                final Player player = plugin.getServer().getPlayer(uuid);
+                if (player != null) {
+                    final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+                    state.notice("<#ffd27f>⛨ Boss 無敵中：打掉 " + instance.shieldCrystals().size() + " 顆「" + ItemRenderer.escape(shield.name())
+                            + "」（剩 " + seconds + " 秒）", now + 45);
+                    plugin.players().display(player, state);
+                }
+            }
+        }
+    }
+
+    private void endShield(final MapInstance instance, final LivingEntity boss) {
+        instance.endShield();
+        if (boss != null && boss.isValid()) {
+            boss.setInvulnerable(false);
+        }
+    }
+
+    /** 收掉還在的結晶（Boss 重置、死掉、實例關掉）。 */
+    private void clearShield(final MapInstance instance, final LivingEntity boss) {
+        for (final UUID uuid : instance.shieldCrystals()) {
+            final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(uuid);
+            if (entity != null) {
+                entity.remove();
+            }
+        }
+        endShield(instance, boss);
+    }
+
+    // ---- 狂暴 ----
+
+    /** 開打超過狂暴時間還沒打倒：Boss 更多傷害、變快（一場一次）。 */
+    private void checkEnrage(final MapInstance instance, final LivingEntity boss, final long now) {
+        final MapConfig.Enrage enrage = instance.bossDef().enrage();
+        if (enrage == null || instance.enraged() || instance.fightStartTick() < 0
+                || now - instance.fightStartTick() < Math.round(enrage.after() * 20)) {
+            return;
+        }
+        instance.setEnraged(true);
+        plugin.monsters().refreshVanilla(boss); // 屬性表重算（更多傷害）
+        final AttributeInstance speed = boss.getAttribute(Attribute.MOVEMENT_SPEED);
+        if (speed != null && enrage.speed() > 0) {
+            speed.removeModifier(enrageKey);
+            speed.addModifier(new AttributeModifier(enrageKey, enrage.speed(), AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+        }
+        if (enrage.message() != null && !enrage.message().isBlank()) {
+            broadcast(instance, Zone.loreLine(instance.bossDef().name(), enrage.message()));
+        }
+        broadcast(instance, "<red>☠ " + ItemRenderer.escape(instance.bossDef().name()) + " 狂暴了：傷害更多 " + Math.round(enrage.damage()) + "%");
+        broadcastAlert(instance, BossMechanicText.enraged(enrage));
+        boss.getWorld().playSound(boss.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1.0f, 0.5f);
+        if (instance.bossBar() != null) {
+            instance.bossBar().name(title(instance, instance.bossPhase()));
+        }
+    }
+
+    private void reset(final MapInstance instance, final LivingEntity boss, final Location center) {
+        instance.setBossPhase(0);
+        instance.setPhaseTick(PhaseStep.NEVER);
+        instance.setPhaseHold(false);
+        clearShield(instance, boss); // 也把無敵拿掉（護盾、換階段的等待）
+        instance.setFightStartTick(-1);
+        instance.setEnraged(false);
+        final AttributeInstance enrageSpeed = boss.getAttribute(Attribute.MOVEMENT_SPEED);
+        if (enrageSpeed != null) {
+            enrageSpeed.removeModifier(enrageKey);
+        }
+        if (plugin.skills() != null) {
+            plugin.skills().bossSkills().reset(boss.getUniqueId());
+        }
+        plugin.monsters().refreshVanilla(boss);
+        final AttributeInstance speed = boss.getAttribute(Attribute.MOVEMENT_SPEED);
+        if (speed != null) {
+            speed.removeModifier(speedKey);
+        }
+        final AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
+        if (max != null) {
+            boss.setHealth(max.getValue());
+        }
+        boss.teleport(center);
+        if (boss instanceof Mob mob) {
+            mob.setTarget(null);
+        }
+        if (instance.bossBar() != null) {
+            instance.bossBar().name(title(instance, 0));
+            instance.bossBar().progress(1f);
+        }
+        instance.setBossLastSeenTick(plugin.getServer().getCurrentTick());
+    }
+
+    /**
+     * 一個人的 Boss 掉落（傷害有到 5% 的每個人各擲一份）：地圖（照他的星圖）、傳奇、天穹碎片。
+     *
+     * @param player 拿這份的人；null = 沒有人有份（照任何地圖都可能掉）
+     */
+    void loot(final MapInstance instance, final Player player, final List<DropTable.Drop> drops) {
+        if (instance.isUber()) {
+            uberLoot(instance, player, drops);
+            return;
+        }
+        final MapConfig config = service.config();
+        final var generator = plugin.items().generator();
+        final var random = service.random();
+        final Set<String> completed = player == null ? null : service.completed(player);
+        // 地圖：跟這張圖同一階（終局是開的那一階），有機率高一階；星圖天賦可以多掉幾張、高一階的機率更高
+        final AtlasBonus atlas = instance.atlas();
+        final int tier = Math.max(1, instance.stats().tier());
+        for (int i = 0; i < config.drops().bossMaps() + atlas.bossMaps(); i++) {
+            final ItemData map = MapDrops.roll(config, generator, tier, completed, random, atlas.tierUp());
+            if (map != null) {
+                drops.add(DropTable.Drop.equipment(map));
+            }
+        }
+        // 傳奇：終局 Boss 有機率（final_unique_chance，預設 5%）掉自己的；具名 Boss 機率（named_unique_chance）掉自己的；所有 Boss 機率掉共通的；
+        // 追逐級另外擲（rollChase，固定機率）
+        final MapConfig.Boss definition = instance.bossDef();
+        final int itemLevel = instance.level();
+        if (instance.map().isFinal()) {
+            if (random.nextDouble() < config.drops().finalUniqueChance()) {
+                // 終局：先找寫著這個終局代號的傳奇（其他終局 Boss 各自的），沒有就用 final（天穹熔爐的）
+                ItemData unique = MapDrops.unique(generator, instance.map().id(), itemLevel, random);
+                if (unique == null) {
+                    unique = MapDrops.unique(generator, "final", itemLevel, random);
+                }
+                addUnique(drops, unique);
+            }
+        } else if (definition.named() && random.nextDouble() < config.drops().namedUniqueChance() * (1 + atlas.increased("atlas.boss_unique"))) {
+            addUnique(drops, MapDrops.unique(generator, instance.map().id(), itemLevel, random));
+        }
+        // 共通傳奇（map_boss 池）：一般地圖 Boss 照 boss_unique_chance（5%，星圖天賦可以增加），終局另外算（final_common_chance，不吃星圖天賦）
+        final double common = instance.map().isFinal() ? config.drops().finalCommonChance()
+                : config.drops().bossUniqueChance() * (1 + atlas.increased("atlas.boss_unique"));
+        if (random.nextDouble() < common) {
+            addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
+        }
+        rollChase(drops, itemLevel, random); // 追逐級傳奇：所有地圖 Boss 一樣的固定機率
+        if (instance.map().isFinal() && random.nextDouble() < config.drops().finalSupportChance()) {
+            // 終局 Boss 的專屬輔助寶石（supports.yml 的 source 寫這個終局的代號）
+            addSupport(drops, instance.map().id(), itemLevel);
+        }
+        // 天穹碎片
+        if (config.drops().fragmentMaps().contains(instance.map().id())) {
+            final CurrencyType fragment = plugin.currencies().repository().get(config.drops().fragment());
+            if (fragment != null) {
+                drops.add(DropTable.Drop.currency(fragment));
+            }
+        }
+        // 終局開到夠高的階：有機率掉開極境的鑰匙（深淵星核）
+        final MapConfig.Uber uber = instance.map().isFinal() ? config.uber(instance.map().id()) : null;
+        if (uber != null && instance.stats().tier() >= uber.keyMinTier()
+                && random.nextDouble() < uber.keyChance() * (1 + atlas.increased("atlas.uber_key"))) {
+            final CurrencyType key = plugin.currencies().repository().get(uber.key());
+            if (key != null) {
+                drops.add(DropTable.Drop.currency(key));
+            }
+        }
+    }
+
+    /**
+     * 追逐級傳奇（uniques.yml 的 chase 池）：所有地圖 Boss（一般、具名、終局、極境）每次擊殺、每個有份的人各擲一次
+     * maps.yml 的 drops.chase_chance（0.034%）。故意不吃任何加成（星圖天賦、物品數量、稀有度）；物品等級不到 75 時池子是空的。
+     */
+    private void rollChase(final List<DropTable.Drop> drops, final int itemLevel, final java.util.random.RandomGenerator random) {
+        if (random.nextDouble() < service.config().drops().chaseChance()) {
+            addUnique(drops, MapDrops.unique(plugin.items().generator(), "chase", itemLevel, random));
+        }
+    }
+
+    /**
+     * 極境 Boss 的掉落（每個有份的人各一份）：最高階的地圖好幾張、這個終局自己的傳奇（機率比一般版本高）、
+     * 極境專屬傳奇、追逐級傳奇（跟一般 Boss 一樣）、額外的通貨（maps.yml 的 uber.drops）。
+     */
+    private void uberLoot(final MapInstance instance, final Player player, final List<DropTable.Drop> drops) {
+        final MapConfig config = service.config();
+        final MapConfig.UberDrops uberDrops = instance.uber().drops();
+        final var generator = plugin.items().generator();
+        final var random = service.random();
+        final Set<String> completed = player == null ? null : service.completed(player);
+        for (int i = 0; i < uberDrops.maps(); i++) {
+            final ItemData map = MapDrops.roll(config, generator, config.tiers().max(), completed, random);
+            if (map != null) {
+                drops.add(DropTable.Drop.equipment(map));
+            }
+        }
+        final int itemLevel = instance.level();
+        if (random.nextDouble() < uberDrops.uniqueChance()) {
+            ItemData unique = MapDrops.unique(generator, instance.map().id(), itemLevel, random);
+            if (unique == null) {
+                unique = MapDrops.unique(generator, "final", itemLevel, random);
+            }
+            addUnique(drops, unique);
+        }
+        rollChase(drops, itemLevel, random); // 追逐級傳奇：跟一般 Boss 一樣的固定機率
+        if (random.nextDouble() < config.drops().finalCommonChance()) {
+            addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
+        }
+        if (random.nextDouble() < uberDrops.exclusiveChance()) {
+            // 極境專屬傳奇：先找這隻極境自己的（uber_終局代號），沒有就用全部極境共通的（uber）
+            ItemData exclusive = MapDrops.unique(generator, MapConfig.uberSource(instance.map().id()), itemLevel, random);
+            if (exclusive == null) {
+                exclusive = MapDrops.unique(generator, "uber", itemLevel, random);
+            }
+            addUnique(drops, exclusive);
+        }
+        for (final MapConfig.ExtraDrop extra : uberDrops.extra()) {
+            if (random.nextDouble() >= extra.chance()) {
+                continue;
+            }
+            if ("support".equals(extra.kind())) {
+                for (int i = 0; i < extra.amount(); i++) {
+                    addSupportId(drops, extra.id(), itemLevel);
+                }
+                continue;
+            }
+            final CurrencyType currency = plugin.currencies().repository().get(extra.id());
+            if (currency != null) {
+                for (int i = 0; i < extra.amount(); i++) {
+                    drops.add(DropTable.Drop.currency(currency));
+                }
+            }
+        }
+    }
+
+    /** 從某個來源的專屬輔助寶石裡抽一顆（supports.yml 的 source）；沒有就不掉。 */
+    private void addSupport(final List<DropTable.Drop> drops, final String source, final int level) {
+        if (plugin.skills() == null) {
+            return;
+        }
+        final List<tw.exilecore.skill.SupportDefinition> own = plugin.skills().config().supportsFrom(source);
+        if (!own.isEmpty()) {
+            drops.add(DropTable.Drop.support(own.get(service.random().nextInt(own.size())).id(), level));
+        }
+    }
+
+    /** 一顆指定的輔助寶石（supports.yml 沒有這個代號就不掉）。 */
+    private void addSupportId(final List<DropTable.Drop> drops, final String supportId, final int level) {
+        if (plugin.skills() != null && plugin.skills().config().support(supportId) != null) {
+            drops.add(DropTable.Drop.support(supportId, level));
+        }
+    }
+
+    /** Boss 倒下（一次）：台詞、收掉血條、完成地圖（星圖、首殺），每個人的那份掉落已經擲完了。 */
+    void killed(final MapInstance instance, final LivingEntity boss) {
+        if (instance.bossKilled()) {
+            return;
+        }
+        instance.setBossKilled(true);
+        clearShield(instance, boss);
+        detachSkills(boss);
+        final MapConfig.Boss definition = instance.bossDef();
+        if (definition.defeat() != null && !definition.defeat().isBlank()) {
+            broadcast(instance, Zone.loreLine(definition.name(), definition.defeat()));
+        }
+        end(instance);
+        final org.bukkit.Location at = boss.getLocation();
+        service.complete(instance, at);
+        boss.getWorld().playSound(boss.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
+        // 擊殺稱號（2026-10）：極境 Boss（照終局代號）與金庫之主，倒下時在 Boss 32 格內、活著、不是觀戰的人各記一次
+        final String killKey = instance.special() != null && "heist_finale".equals(instance.special().kind()) ? "heist_finale"
+                : instance.isUber() ? instance.map().id() : null;
+        if (killKey != null && plugin.bounties() != null) {
+            for (final java.util.UUID uuid : instance.inside()) {
+                final org.bukkit.entity.Player player = plugin.getServer().getPlayer(uuid);
+                if (player != null && instance.contains(player.getLocation()) && service.atBoss(player, at)) {
+                    plugin.bounties().recordBossKill(player, killKey);
+                }
+            }
+        }
+    }
+
+    private static void addUnique(final List<DropTable.Drop> drops, final ItemData unique) {
+        if (unique != null) {
+            drops.add(DropTable.Drop.equipment(unique));
+        }
+    }
+
+    /** 所有人的畫面上收掉這個實例的血條。 */
+    private void hideBar(final MapInstance instance) {
+        final BossBar bar = instance.bossBar();
+        if (bar != null) {
+            for (final Player player : plugin.getServer().getOnlinePlayers()) {
+                player.hideBossBar(bar);
+            }
+            instance.setBossBar(null);
+        }
+    }
+
+    /** 離開實例的玩家收掉血條。 */
+    void hideFor(final MapInstance instance, final Player player) {
+        final BossBar bar = instance.bossBar();
+        if (bar != null) {
+            player.hideBossBar(bar);
+        }
+    }
+
+    /** 收掉血條（與護盾結晶）。 */
+    void end(final MapInstance instance) {
+        hideBar(instance);
+        final LivingEntity boss = instance.boss();
+        clearShield(instance, boss);
+        if (boss != null && boss.isValid() && !boss.isDead() && instance.state() == MapInstance.State.CLOSING) {
+            boss.remove();
+        }
+        if (boss != null) {
+            detachSkills(boss);
+        }
+    }
+
+    /** 掛上招式（data/boss_skills.yml：maps.yml 寫的 skills，沒寫就照生物種類的預設）。小怪照這張地圖的規矩生。 */
+    private void attachSkills(final MapInstance instance, final LivingEntity boss) {
+        if (plugin.skills() == null) {
+            return;
+        }
+        final MapConfig.Boss definition = instance.bossDef();
+        plugin.skills().bossSkills().attach(boss, definition.skills(), new tw.exilecore.skill.BossSkills.Host() {
+            @Override
+            public String name() {
+                return definition.name();
+            }
+
+            @Override
+            public int phase() {
+                return instance.bossPhase();
+            }
+
+            @Override
+            public List<tw.exilecore.skill.BossHazard> hazards() {
+                return instance.bossDef().hazards();
+            }
+
+            @Override
+            public boolean alerts() {
+                return MapBosses.alerts(instance);
+            }
+
+            @Override
+            public LivingEntity summon(final String type, final Location at) {
+                Location spot = at;
+                if (!instance.layout().isFloor(spot.getBlockX() - instance.originX(), spot.getBlockZ() - instance.originZ())) {
+                    spot = boss.getLocation();
+                }
+                final LivingEntity minion = service.spawner().spawnVanilla(type, spot, created -> {
+                    service.tag(created, instance, false);
+                    plugin.monsters().markSummoned(created);
+                });
+                if (minion != null) {
+                    plugin.monsters().decorate(minion, instance.level(), MonsterRarity.NORMAL, List.of());
+                    MapSpawner.prepare(minion);
+                }
+                return minion;
+            }
+        });
+    }
+
+    /** 終局 Boss（含極境）與昇華試煉的 Boss：特殊招式、機制在畫面中間與聊天室說清楚。 */
+    static boolean alerts(final MapInstance instance) {
+        return instance.map().isFinal() || instance.map().id().startsWith("trial_");
+    }
+
+    /** 這個階段才開始用的招式名稱（招式組裡 phase 寫這個階段的）。 */
+    private List<String> newSkills(final LivingEntity boss, final MapConfig.Boss definition, final int phase) {
+        if (plugin.skills() == null) {
+            return List.of();
+        }
+        final List<String> names = new ArrayList<>();
+        for (final tw.exilecore.skill.BossSkillConfig.Entry entry
+                : plugin.skills().config().bossSkills().kitFor(boss.getType().name(), definition.skills())) {
+            if (entry.fromPhase() == phase && !names.contains(entry.skill().name())) {
+                names.add(entry.skill().name());
+            }
+        }
+        return names;
+    }
+
+    /** 招式代號 → 名稱（找不到的略過）。 */
+    private List<String> skillNames(final List<String> ids) {
+        if (plugin.skills() == null) {
+            return List.of();
+        }
+        final List<String> names = new ArrayList<>();
+        for (final String id : ids) {
+            final tw.exilecore.skill.BossSkill skill = plugin.skills().config().bossSkills().skill(id);
+            if (skill != null && !names.contains(skill.name())) {
+                names.add(skill.name());
+            }
+        }
+        return names;
+    }
+
+    private void detachSkills(final LivingEntity boss) {
+        if (plugin.skills() != null) {
+            plugin.skills().bossSkills().detach(boss.getUniqueId());
+        }
+    }
+
+    private void broadcast(final MapInstance instance, final String miniMessage) {
+        for (final UUID uuid : instance.inside()) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            if (player != null) {
+                player.sendMessage(plugin.text().parse(miniMessage));
+            }
+        }
+    }
+
+    /**
+     * 畫面中間的大字＋副標題（換階段、護盾、狂暴）。
+     *
+     * @param lines 大字、副標題（MiniMessage）
+     */
+    private void broadcastAlert(final MapInstance instance, final String[] lines) {
+        final Title title = Title.title(plugin.text().parse(lines[0]), plugin.text().parse(lines.length > 1 ? lines[1] : ""),
+                Title.Times.times(Duration.ofMillis(150), Duration.ofMillis(2600), Duration.ofMillis(400)));
+        for (final UUID uuid : instance.inside()) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            if (player != null) {
+                player.showTitle(title);
+            }
+        }
+    }
+
+    private void broadcastActionBar(final MapInstance instance, final String miniMessage) {
+        for (final UUID uuid : instance.inside()) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            if (player != null) {
+                player.sendActionBar(plugin.text().parse(miniMessage));
+            }
+        }
+    }
+}

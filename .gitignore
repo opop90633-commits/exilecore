@@ -18,3 +18,16 @@ bin/
 # OS
 .DS_Store
 Thumbs.db
+
+# Velocity 代理（proxy/）：下載的程式、轉發密鑰、紀錄不進版控（設定檔要進）
+proxy/velocity/*.jar
+proxy/velocity/plugins/*.jar
+proxy/velocity/forwarding.secret
+proxy/velocity/server-icon.png
+proxy/velocity/logs/
+proxy/velocity/lang/
+proxy/velocity/plugins/velocityfailover/*
+!proxy/velocity/plugins/velocityfailover/config.yml
+proxy/limbo/*.exe
+proxy/limbo/server-icon.png
+proxy/limbo/logs/

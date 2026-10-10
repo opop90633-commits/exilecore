@@ -43,6 +43,9 @@ dependencies {
     testRuntimeOnly("org.slf4j:slf4j-simple:2.0.17")
     testImplementation("com.google.code.gson:gson:2.11.0")
     testImplementation("org.yaml:snakeyaml:2.6")
+    // 資料庫的單元測試用記憶體 H2 跑真正的遷移與 SQL（版本與 ExileCoreLoader 一致）
+    testImplementation("com.zaxxer:HikariCP:7.1.0")
+    testRuntimeOnly("com.h2database:h2:2.4.240")
 }
 
 tasks {
@@ -81,7 +84,12 @@ tasks {
 
         // 第一個參數等於同意 Minecraft EULA（https://aka.ms/MinecraftEULA），
         // 這樣第一次啟動不用手動改 eula.txt。
-        jvmArgs("-Dcom.mojang.eula.agree=true", "-Xms2G", "-Xmx2G")
+        // 後面幾個讓伺服器的主控台輸出（與輸入）一律用 UTF-8：中文 Windows 預設是 Big5（MS950），
+        // Gradle 照 UTF-8 讀就會變成「嚙踝蕭」這種亂碼。終端機也要切到 UTF-8（run-server.bat 會做）。
+        jvmArgs(
+            "-Dcom.mojang.eula.agree=true", "-Xms2G", "-Xmx2G",
+            "-Dfile.encoding=UTF-8", "-Dstdout.encoding=UTF-8", "-Dstderr.encoding=UTF-8", "-Dstdin.encoding=UTF-8",
+        )
 
         downloadPlugins {
             // FastAsyncWorldEdit：階段 4 的地圖模板貼上會用到，先裝好確認相容

@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /** data/currencies.yml 的載入與查詢。 */
 public final class CurrencyRepository {
@@ -37,5 +38,15 @@ public final class CurrencyRepository {
 
     public int size() {
         return currencies.size();
+    }
+
+    /** 第一種做某個操作的通貨（例如鑑定卷軸 = IDENTIFY），讓程式不用寫死代號。 */
+    public Optional<CurrencyType> firstWith(final CurrencyOperation operation) {
+        for (final CurrencyType type : currencies.values()) {
+            if (type.operation() == operation) {
+                return Optional.of(type);
+            }
+        }
+        return Optional.empty();
     }
 }

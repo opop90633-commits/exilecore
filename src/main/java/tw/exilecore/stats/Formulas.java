@@ -14,10 +14,15 @@ public final class Formulas {
     public static final double MAX_ARMOUR_REDUCTION = 0.90;
     /** 抗性下限（負抗）。 */
     public static final double MIN_RESIST = -60;
+    /** PoE2 命中公式：命中 × 1.25 ÷ (命中 + 閃避 × 0.3)。 */
+    public static final double ACCURACY_FACTOR = 1.25;
+    public static final double EVASION_FACTOR = 0.3;
+    /** PoE2 護甲公式：護甲 ÷ (護甲 + 10 × 傷害)。 */
+    public static final double ARMOUR_DAMAGE_FACTOR = 10.0;
 
     /**
-     * 攻擊命中率：命中 ÷ (命中 + (閃避 ÷ 4)^0.8)，下限 5%，上限 100%。
-     * 法術不用擲命中。
+     * 攻擊命中率（2026-10 改成 PoE2）：命中 × 1.25 ÷ (命中 + 閃避 × 0.3)，下限 5%，上限 100%。
+     * 60 級怪物命中 490：閃避 1000 閃 23%、2000 閃 44%、4000 閃 64%。法術不用擲命中。
      */
     public static double hitChance(final double accuracy, final double evasion) {
         if (evasion <= 0) {
@@ -26,19 +31,19 @@ public final class Formulas {
         if (accuracy <= 0) {
             return MIN_HIT_CHANCE;
         }
-        final double chance = accuracy / (accuracy + Math.pow(evasion / 4.0, 0.8));
+        final double chance = accuracy * ACCURACY_FACTOR / (accuracy + evasion * EVASION_FACTOR);
         return clamp(chance, MIN_HIT_CHANCE, 1.0);
     }
 
     /**
-     * 護甲對單次物理傷害的減免比例：護甲 ÷ (護甲 + 5 × 傷害)，上限 90%。
+     * 護甲對單次物理傷害的減免比例（2026-10 改成 PoE2）：護甲 ÷ (護甲 + 10 × 傷害)，上限 90%。
      * 護甲對小傷害很有效、對大傷害幾乎沒用，這是 PoE 的特性。
      */
     public static double armourReduction(final double armour, final double physicalDamage) {
         if (armour <= 0 || physicalDamage <= 0) {
             return 0;
         }
-        return Math.min(MAX_ARMOUR_REDUCTION, armour / (armour + 5.0 * physicalDamage));
+        return Math.min(MAX_ARMOUR_REDUCTION, armour / (armour + ARMOUR_DAMAGE_FACTOR * physicalDamage));
     }
 
     /** 抗性減免比例：抗性（百分比點數）夾在 [下限, 上限] 之後除以 100。 */
@@ -54,32 +59,32 @@ public final class Formulas {
         return Math.max(1, (int) Math.round(20.0 / attacksPerSecond));
     }
 
-    /** 屬性帶來的基礎加成，與 PoE 相同：每點力量 +0.5 生命，每點智慧 +0.5 魔力，每點敏捷 +2 命中。 */
+    /** 屬性帶來的基礎加成（2026-10 改成 PoE2）：每點力量 +2 生命，每點智慧 +2 魔力，每點敏捷 +6 命中。 */
     public static double lifeFromStrength(final double strength) {
-        return strength * 0.5;
+        return strength * 2.0;
     }
 
     public static double manaFromIntelligence(final double intelligence) {
-        return intelligence * 0.5;
+        return intelligence * 2.0;
     }
 
     public static double accuracyFromDexterity(final double dexterity) {
-        return dexterity * 2.0;
+        return dexterity * 6.0;
     }
 
     /** 每 10 敏捷增加 2% 閃避；回傳小數。 */
     public static double evasionIncreaseFromDexterity(final double dexterity) {
-        return dexterity * 0.002;
+        return 0; // 2026-10 PoE2：敏捷不再給閃避（原本每 10 點 2%）
     }
 
     /** 每 10 智慧增加 2% 能量護盾；回傳小數。 */
     public static double esIncreaseFromIntelligence(final double intelligence) {
-        return intelligence * 0.002;
+        return 0; // 2026-10 PoE2：智慧不再給能量護盾
     }
 
     /** 每 10 力量增加 2% 近戰物理傷害；回傳小數。 */
     public static double meleePhysicalIncreaseFromStrength(final double strength) {
-        return strength * 0.002;
+        return 0; // 2026-10 PoE2：力量不再給近戰物理傷害
     }
 
     /** 角色基礎生命：38 + 12 × 等級。 */
@@ -100,6 +105,33 @@ public final class Formulas {
     /** 角色基礎命中：2 × 等級（敏捷另加）。 */
     public static double baseAccuracy(final int level) {
         return 2.0 * level;
+    }
+
+    /** 怪物招式冷卻倍率的下限：地圖詞綴再怎麼縮短，也不會比基礎快過四倍。 */
+    public static final double MIN_MONSTER_COOLDOWN = 0.25;
+
+    /** 怪物屬性表算出來的冷卻倍率（1 = 沒有加成；0.6 = 縮短四成）夾在下限以上。 */
+    public static double monsterCooldownFactor(final double multiplier) {
+        return Math.max(MIN_MONSTER_COOLDOWN, multiplier);
+    }
+
+    // ---- 能量護盾回充 ----
+
+    /** 被打之後多久才開始回充（tick；2026-10 改成 PoE2 的 4 秒）。 */
+    public static final long ES_RECHARGE_DELAY_TICKS = 80;
+    /** 基礎回充：延遲過後每秒回最大值的這個比例（PoE2：12.5%，從 0 回滿 8 秒）。 */
+    public static final double ES_RECHARGE_FRACTION = 0.125;
+    /** 延遲最短剩基礎的幾成（再縮短也沒用）。 */
+    public static final double ES_DELAY_FLOOR = 0.2;
+
+    /** 能量護盾每秒回充量：最大值的 12.5% × 回充速度倍率（增加、更多）。 */
+    public static double esRechargePerSecond(final double maxEnergyShield, final double speedMultiplier) {
+        return Math.max(0, maxEnergyShield) * ES_RECHARGE_FRACTION * Math.max(0, speedMultiplier);
+    }
+
+    /** 回充前的等待（tick）：基礎 80 tick × 延遲倍率（縮短最多剩兩成）。 */
+    public static long esRechargeDelayTicks(final double delayMultiplier) {
+        return Math.round(ES_RECHARGE_DELAY_TICKS * Math.max(ES_DELAY_FLOOR, delayMultiplier));
     }
 
     public static double clamp(final double value, final double min, final double max) {

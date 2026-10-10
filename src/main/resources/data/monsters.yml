@@ -1,81 +1,197 @@
-# 怪物設定（階段 1：原版敵對生物）。
-# level：自然生成的等級 = min + 每 ring_size 格加 per_ring 級，夾在 min 與 max 之間（階段 2 改成區域）。
+# 怪物設定（原版生物與 MythicMobs 怪物共用）。
+# level：區域外（野外）自然生成的等級 = min + 每 ring_size 格加 per_ring 級，夾在 min 與 max 之間。
+#        區域裡的等級由 zones.yml 決定（入口最低、Boss 場地最高）。
 level:
   min: 1
   max: 60
   ring_size: 64
   per_ring: 2
 
-# 等級 → 生命（線性內插）。這是平衡的第一個調整點。
+# 生命與傷害表的錨點之間是「等比內插」：每一級照固定的比例成長（線性內插會每 10 級一輪忽快忽慢）。
+#
+# 等級 → 普通怪的生命。這是平衡的第一個調整點。
+# 目前的數字是照 balance.yml 算的：中等裝備的參考攻擊角色打死一隻同等級普通怪，1 級 0.4 秒、60 級 1 秒、
+# 84 級（T16 地圖）1.25 秒（生命 ÷ 每秒傷害的換算值；實際一下打不死也要揮完整下，平均 1.2 下到 4 下）。
+# 60 級以後裝備最高到物品等級 84、寶石最高 20 級（80 級），所以 84 級以後怪物只比天賦的成長多硬一點點
+# （地圖的怪最高 84 級，終局 T16 是 87 級，每週回響也最高 84 級；90、100 級的錨點只是讓曲線完整）。
+# 改了裝備、技能、天賦之後，遊戲內 /ec balance 會重算擊殺時間與建議的錨點。
 life:
-  1: 20
-  10: 70
-  20: 200
-  30: 480
-  40: 1000
-  50: 2000
-  60: 3600
-  70: 6500
-  80: 11000
+  1: 17
+  10: 31
+  20: 107
+  30: 253
+  40: 552
+  50: 964
+  60: 1540
+  70: 2319
+  80: 3224
+  90: 3671
+  100: 4105
 
-# 等級 → 每次攻擊的物理傷害範圍
+# 等級 → 每次攻擊的物理傷害範圍。照 balance.yml：同等級普通怪打一下扣參考角色 5%（1 級）、8%（60 級）、9%（84 級）最大生命。
 damage:
-  1: [2, 4]
-  10: [6, 11]
-  20: [14, 24]
-  30: [26, 42]
-  40: [45, 70]
-  50: [70, 110]
-  60: [105, 160]
-  70: [150, 230]
-  80: [210, 320]
+  1: [2, 5]
+  10: [8, 15]
+  20: [18, 30]
+  30: [33, 53]
+  40: [52, 81]
+  50: [74, 116]
+  60: [103, 157]
+  70: [135, 207]
+  80: [171, 261]
+  90: [209, 318]
+  100: [255, 389]
+
+# 等級 → 擊殺一隻同等級普通怪的基礎經驗：PoE 的怪物經驗表（每一級都有寫；91 級以後不再增加）。
+# 實際經驗 = 這個表 × experience_multiplier × 稀有度的 experience 倍率 × 等級差懲罰（character.yml）。
+# 升級經驗（character.yml）是 PoE2 的表，所以每一級要殺的怪跟 PoE2 一樣越後面越多。
+# experience_multiplier：我們一張地圖的怪大約是 PoE2 的三分之一，乘 2 讓練等花的時間接近 PoE2
+#   （1 = 每隻怪跟 PoE 一樣，更難練；調大 = 比較好練）。改完 /ec reload，主控台會寫「60 級升一級要殺幾隻」。
+experience_multiplier: 2
+experience:
+  1: 20
+  2: 20
+  3: 25
+  4: 38
+  5: 51
+  6: 67
+  7: 88
+  8: 113
+  9: 141
+  10: 173
+  11: 211
+  12: 250
+  13: 297
+  14: 347
+  15: 402
+  16: 461
+  17: 526
+  18: 596
+  19: 668
+  20: 748
+  21: 831
+  22: 921
+  23: 1013
+  24: 1113
+  25: 1216
+  26: 1325
+  27: 1437
+  28: 1560
+  29: 1685
+  30: 1812
+  31: 1950
+  32: 2089
+  33: 2235
+  34: 2386
+  35: 2543
+  36: 2705
+  37: 2873
+  38: 3045
+  39: 3227
+  40: 3407
+  41: 3597
+  42: 3796
+  43: 3993
+  44: 4203
+  45: 4415
+  46: 4634
+  47: 4854
+  48: 5086
+  49: 5318
+  50: 5561
+  51: 5808
+  52: 6064
+  53: 6324
+  54: 6585
+  55: 6859
+  56: 7134
+  57: 7413
+  58: 7703
+  59: 7996
+  60: 8265
+  61: 8525
+  62: 8781
+  63: 9032
+  64: 9283
+  65: 9532
+  66: 9773
+  67: 10014
+  68: 10255
+  69: 10487
+  70: 10720
+  71: 10949
+  72: 11170
+  73: 11388
+  74: 11601
+  75: 11804
+  76: 12004
+  77: 12192
+  78: 12377
+  79: 12549
+  80: 12712
+  81: 12863
+  82: 13006
+  83: 13132
+  84: 13250
+  85: 13352
+  86: 13440
+  87: 13512
+  88: 13569
+  89: 13609
+  90: 13633
+  91: 13639
 
 defence:
   accuracy_base: 10
   accuracy_per_level: 8
-  evasion_base: 40
-  evasion_per_level: 6
+  # 怪物的閃避：命中公式是 PoE2 的「命中 × 1.25 ÷ (命中 + 閃避 × 0.3)」（2026-10），
+  # 參考角色打同等級普通怪幾乎都打得中（PoE2 也是），閃避詞綴的怪才閃得掉一些
+  evasion_base: 20
+  evasion_per_level: 3
   armour_per_level: 8
   crit_chance: 5
 
-# 稀有度：weight 出現權重、life/damage 倍率、mods 詞綴數、quantity/rarity 掉落加成（小數）
+# 稀有度：weight 出現權重、life/damage 倍率、mods 詞綴數、quantity/rarity 掉落加成（小數）、experience 經驗倍率
 rarity:
-  normal: { weight: 85, life: 1.0, damage: 1.0, mods: [0, 0], quantity: 0.0, rarity: 0.0 }
-  magic:  { weight: 12, life: 1.8, damage: 1.2, mods: [1, 1], quantity: 0.5, rarity: 0.3 }
-  rare:   { weight: 3,  life: 3.5, damage: 1.5, mods: [2, 4], quantity: 1.5, rarity: 1.0 }
-  unique: { weight: 0,  life: 8.0, damage: 2.0, mods: [0, 0], quantity: 3.0, rarity: 2.0 }
+  normal: { weight: 85, life: 1.0, damage: 1.0, mods: [0, 0], quantity: 0.0, rarity: 0.0, experience: 1.0 }
+  magic:  { weight: 12, life: 1.8, damage: 1.2, mods: [1, 1], quantity: 0.5, rarity: 0.3, experience: 3.0 }
+  rare:   { weight: 3,  life: 3.5, damage: 1.5, mods: [2, 4], quantity: 1.5, rarity: 1.0, experience: 12.0 }
+  unique: { weight: 0,  life: 8.0, damage: 2.0, mods: [0, 0], quantity: 3.0, rarity: 2.0, experience: 40.0 }
 
 # 原版生物：中文名與倍率。沒列的用 default。
+# skills：這種生物的招式（data/boss_skills.yml 的代號，可寫 { id, cooldown, damage } 覆蓋冷卻與傷害）；
+# skill_chance：一般怪有幾成會帶（預設 0.25；魔法怪兩倍、稀有怪一定帶）；hand：帶招式時手上拿的原版物品（手上本來有東西的不換）。
+# 一般怪的招式跟 Boss 一樣有地上的紅色警告，但不跳動作列、聲音小、不追擊；傷害是「這隻普通一下的幾倍」，所以小怪的招式自然比 Boss 輕。
 types:
   default: { life: 1.0, damage: 1.0 }
-  ZOMBIE: { name: 殭屍, life: 1.0, damage: 1.0 }
-  ZOMBIE_VILLAGER: { name: 殭屍村民, life: 1.0, damage: 1.0 }
-  HUSK: { name: 屍殼, life: 1.1, damage: 1.0 }
-  DROWNED: { name: 沉屍, life: 1.0, damage: 1.0 }
+  ZOMBIE: { name: 殭屍, life: 1.0, damage: 1.0, skills: [{ id: slam, cooldown: 14 }], skill_chance: 0.25 }
+  ZOMBIE_VILLAGER: { name: 殭屍村民, life: 1.0, damage: 1.0, skills: [{ id: slam, cooldown: 14 }], skill_chance: 0.2 }
+  HUSK: { name: 屍殼, life: 1.1, damage: 1.0, skills: [{ id: slam, cooldown: 14 }], skill_chance: 0.3 }
+  DROWNED: { name: 沉屍, life: 1.0, damage: 1.0, skills: [{ id: tide_slam, cooldown: 18 }], skill_chance: 0.25 }
   SKELETON: { name: 骷髏, life: 0.8, damage: 0.8 }
   STRAY: { name: 流髑, life: 0.8, damage: 0.8 }
-  BOGGED: { name: 沼骸, life: 0.8, damage: 0.8 }
-  WITHER_SKELETON: { name: 凋零骷髏, life: 1.4, damage: 1.3 }
-  SPIDER: { name: 蜘蛛, life: 0.9, damage: 0.9 }
-  CAVE_SPIDER: { name: 洞穴蜘蛛, life: 0.6, damage: 0.7 }
+  BOGGED: { name: 沼骸, life: 0.8, damage: 0.8, skills: [{ id: venom_pool, cooldown: 18 }], skill_chance: 0.25 }
+  WITHER_SKELETON: { name: 凋零骷髏, life: 1.4, damage: 1.3, skills: [{ id: slam, cooldown: 12 }], skill_chance: 0.35 }
+  SPIDER: { name: 蜘蛛, life: 0.9, damage: 0.9, skills: [{ id: pounce, cooldown: 12 }], skill_chance: 0.3 }
+  CAVE_SPIDER: { name: 洞穴蜘蛛, life: 0.6, damage: 0.7, skills: [{ id: venom_pool, cooldown: 16 }], skill_chance: 0.25 }
   CREEPER: { name: 苦力怕, life: 0.8, damage: 2.5 }
-  ENDERMAN: { name: 終界使者, life: 1.6, damage: 1.4 }
-  WITCH: { name: 女巫, life: 1.2, damage: 1.0 }
+  ENDERMAN: { name: 終界使者, life: 1.6, damage: 1.4, skills: [{ id: void_zone, cooldown: 18 }], skill_chance: 0.25 }
+  WITCH: { name: 女巫, life: 1.2, damage: 1.0, skills: [{ id: venom_pool, cooldown: 16 }], skill_chance: 0.35 }
   SLIME: { name: 史萊姆, life: 0.7, damage: 0.6 }
   MAGMA_CUBE: { name: 熔岩史萊姆, life: 0.8, damage: 0.8 }
   PHANTOM: { name: 夜魅, life: 0.7, damage: 0.8 }
   SILVERFISH: { name: 蠹魚, life: 0.3, damage: 0.4 }
   ENDERMITE: { name: 終界蟎, life: 0.3, damage: 0.4 }
   PILLAGER: { name: 掠奪者, life: 1.0, damage: 1.0 }
-  VINDICATOR: { name: 衛道士, life: 1.3, damage: 1.4 }
-  EVOKER: { name: 喚魔者, life: 1.2, damage: 1.2 }
-  RAVAGER: { name: 劫掠獸, life: 4.0, damage: 1.8 }
-  BLAZE: { name: 烈焰使者, life: 0.9, damage: 1.0 }
+  VINDICATOR: { name: 衛道士, life: 1.3, damage: 1.4, skills: [{ id: charge, cooldown: 14 }], skill_chance: 0.35 }
+  EVOKER: { name: 喚魔者, life: 1.2, damage: 1.2, skills: [{ id: lightning_storm, cooldown: 16 }], skill_chance: 0.5 }
+  RAVAGER: { name: 劫掠獸, life: 4.0, damage: 1.8, skills: [{ id: charge, cooldown: 12 }], skill_chance: 0.6 }
+  BLAZE: { name: 烈焰使者, life: 0.9, damage: 1.0, skills: [{ id: meteor, cooldown: 16 }], skill_chance: 0.2 }
   GHAST: { name: 幽靈, life: 0.8, damage: 1.5 }
-  HOGLIN: { name: 豬布獸, life: 1.5, damage: 1.2 }
-  ZOGLIN: { name: 殭屍豬布獸, life: 1.5, damage: 1.2 }
+  HOGLIN: { name: 豬布獸, life: 1.5, damage: 1.2, skills: [{ id: charge, cooldown: 14 }], skill_chance: 0.3 }
+  ZOGLIN: { name: 殭屍豬布獸, life: 1.5, damage: 1.2, skills: [{ id: charge, cooldown: 14 }], skill_chance: 0.3 }
   PIGLIN: { name: 豬布林, life: 0.9, damage: 0.9 }
-  PIGLIN_BRUTE: { name: 豬布林蠻兵, life: 1.6, damage: 1.5 }
+  PIGLIN_BRUTE: { name: 豬布林蠻兵, life: 1.6, damage: 1.5, skills: [{ id: slam, cooldown: 12 }], skill_chance: 0.4 }
   ZOMBIFIED_PIGLIN: { name: 殭屍豬布林, life: 1.0, damage: 1.0 }
   GUARDIAN: { name: 深海守衛, life: 1.2, damage: 1.0 }
   ELDER_GUARDIAN: { name: 遠古深海守衛, life: 4.0, damage: 1.5 }
@@ -83,10 +199,12 @@ types:
   VEX: { name: 惱鬼, life: 0.4, damage: 0.7 }
   WARDEN: { name: 伏守者, life: 10.0, damage: 3.0 }
   BREEZE: { name: 旋風使者, life: 0.9, damage: 0.8 }
-  CREAKING: { name: 嘎枝, life: 1.5, damage: 1.0 }
+  CREAKING: { name: 嘎枝, life: 1.5, damage: 1.0, skills: [{ id: blink, cooldown: 14 }], skill_chance: 0.3 }
 
-# 怪物詞綴：magic 怪 1 個、rare 怪 2 到 4 個。stats 是修飾器（INCREASED/MORE 的 value 是百分比）；
+# 怪物詞綴：magic 怪 1 個、rare 怪 2 到 4 個。stats 是修飾器（INCREASED/MORE 的 value 是百分比；
+# 燃焰、霜寒、帶電的另外比較容易點燃、凍結、感電玩家，見 ailments.yml）；
 # added 是把物理傷害的多少比例額外加成元素傷害；vanilla_speed 是原版移動速度加成（小數）。
+# skills 是招式（data/boss_skills.yml 的代號）、hand 是手上拿的原版物品；帶招式的詞綴一隻怪最多抽到兩條。
 mods:
   swift:
     name: 極速的
@@ -105,16 +223,19 @@ mods:
     added: { fire: 0.4 }
     stats:
       - { stat: resist.fire, type: FLAT, value: 50 }
+      - { stat: ignite.chance, type: FLAT, value: 10 }
   frosty:
     name: 霜寒的
     added: { cold: 0.4 }
     stats:
       - { stat: resist.cold, type: FLAT, value: 50 }
+      - { stat: freeze.buildup, type: INCREASED, value: 100 }
   shocking:
     name: 帶電的
     added: { lightning: 0.4 }
     stats:
       - { stat: resist.lightning, type: FLAT, value: 50 }
+      - { stat: shock.chance, type: FLAT, value: 10 }
   resistant:
     name: 抗性的
     stats:
@@ -130,3 +251,141 @@ mods:
     name: 飄忽的
     stats:
       - { stat: evasion, type: INCREASED, value: 200 }
+
+  # ---- 光環與召喚（min_level 以上的怪物才抽得到；地圖裡最常見） ----
+  # aura：半徑內的怪物（含自己）都得到 stats，腳下有一圈 color 顏色的粒子。
+  # summon：有目標玩家時每 interval 秒叫出 count 隻同種的普通怪，同時最多 max 隻；叫出來的不掉東西、不給經驗。
+  warlord_aura:
+    name: 督軍光環的
+    min_level: 30
+    stats: []
+    aura:
+      radius: 10
+      color: "e04040"
+      stats:
+        - { stat: damage, type: INCREASED, value: 25 }
+  anger_aura:
+    name: 熾焰光環的
+    min_level: 35
+    stats: []
+    aura:
+      radius: 10
+      color: "ff8020"
+      stats:
+        - { stat: damage.gain.fire, type: FLAT, value: 20 }
+  determination_aura:
+    name: 磐石光環的
+    min_level: 40
+    stats: []
+    aura:
+      radius: 10
+      color: "c0c0c0"
+      stats:
+        - { stat: armour, type: INCREASED, value: 100 }
+        - { stat: resist.fire, type: FLAT, value: 15 }
+        - { stat: resist.cold, type: FLAT, value: 15 }
+        - { stat: resist.lightning, type: FLAT, value: 15 }
+  summoner:
+    name: 召喚的
+    min_level: 25
+    stats: []
+    summon: { interval: 8, count: 2, max: 4 }
+
+  # ---- 招式（技能第三部分之後）：魔法怪名字看得出來（猛擊的殭屍），稀有怪看手上拿的 ----
+  slammer:
+    name: 猛擊的
+    min_level: 6
+    stats: []
+    skills: [{ id: slam, cooldown: 12 }]
+    hand: MACE
+  charger:
+    name: 衝鋒的
+    min_level: 10
+    stats: []
+    skills: [{ id: charge, cooldown: 14 }]
+    hand: IRON_SPEAR
+  volleyer:
+    name: 齊射的
+    min_level: 10
+    stats: []
+    skills: [{ id: arrow_volley, cooldown: 10 }]
+    hand: BOW
+  pouncer:
+    name: 撲擊的
+    min_level: 12
+    stats: []
+    skills: [{ id: pounce, cooldown: 10 }]
+  venomous:
+    name: 劇毒的
+    min_level: 14
+    stats:
+      - { stat: resist.chaos, type: FLAT, value: 40 }
+      - { stat: poison.chance, type: FLAT, value: 35 }      # 打中你有機率中毒（可以疊加，見 ailments.yml）
+    skills: [{ id: venom_pool, cooldown: 16 }]
+    hand: SPIDER_EYE
+  stunning:
+    name: 震懾的
+    min_level: 12
+    stats:
+      - { stat: stun.buildup, type: INCREASED, value: 100 }   # 打中你暈眩累積加倍（大招接連打到會暈）
+    hand: STONE_AXE
+  electrocuting:
+    name: 電擊的
+    min_level: 16
+    added: { lightning: 0.3 }
+    stats:
+      - { stat: resist.lightning, type: FLAT, value: 40 }
+      - { stat: electrocute.chance, type: FLAT, value: 35 }   # 閃電傷害打中你有機率累積電擊
+    hand: LIGHTNING_ROD
+  bleeder:
+    name: 撕裂的
+    min_level: 10
+    stats:
+      - { stat: bleed.chance, type: FLAT, value: 40, tags: [attack] }   # 近戰打中你有機率流血（移動時加倍：站著打）
+      - { stat: damage, type: INCREASED, value: 10, tags: [physical] }
+    hand: IRON_AXE
+  blinker:
+    name: 閃現的
+    min_level: 15
+    stats: []
+    skills: [{ id: blink, cooldown: 12 }]
+    hand: ENDER_PEARL
+  quaker:
+    name: 震地的
+    min_level: 18
+    stats: []
+    skills: [{ id: quake, cooldown: 16 }]
+    hand: MACE
+  fire_breather:
+    name: 吐火的
+    min_level: 20
+    stats:
+      - { stat: resist.fire, type: FLAT, value: 40 }
+    skills: [{ id: flame_breath, cooldown: 14 }]
+    hand: BLAZE_ROD
+  frost_breather:
+    name: 吐霜的
+    min_level: 20
+    stats:
+      - { stat: resist.cold, type: FLAT, value: 40 }
+    skills: [{ id: frost_breath, cooldown: 14 }]
+    hand: PACKED_ICE
+  cursing:
+    name: 詛咒的
+    min_level: 24
+    stats: []
+    skills: [{ id: curse_of_decay, cooldown: 20 }]
+    hand: WITHER_ROSE
+  meteor_caller:
+    name: 隕石的
+    min_level: 28
+    stats: []
+    skills: [{ id: meteor, cooldown: 15 }]
+    hand: FIRE_CHARGE
+  stormcaller:
+    name: 雷暴的
+    min_level: 32
+    stats:
+      - { stat: resist.lightning, type: FLAT, value: 40 }
+    skills: [{ id: lightning_storm, cooldown: 16 }]
+    hand: LIGHTNING_ROD

@@ -1,0 +1,95 @@
+# 異常狀態（機制照 PoE2）：點燃、冰緩、凍結、感電，加上流血、中毒、暈眩、電擊。改完在遊戲內 /ec reload。
+#
+# 異常門檻：怪物 = 最大生命 × threshold.monster（依稀有度）；玩家 = 最大生命 ＋ 最大能量護盾。
+# 打中時看這一擊造成的各元素傷害（抗性減免後）佔目標異常門檻的比例：
+#   點燃（火焰）：機率 = 比例 × chance_per_threshold ＋ 點燃機率；每秒造成那一擊火焰傷害的 damage_per_second%，
+#                 持續 duration 秒。同時只有傷害最高的那個在燒，它結束後下一個接著燒。燒死的怪物算點燃的玩家殺的。
+#   冰緩（冰冷）：冰冷傷害一定冰緩；效果 = 50% × 比例^0.4，最多 max%，小於 min% 不算。只有最強的冰緩有效。
+#                 怪物移動變慢；玩家移動、攻擊、施法都變慢。
+#   凍結（冰冷）：冰冷傷害累積凍結值 = 比例 × buildup%，累積到 100% 凍結 duration 秒：不能動、不能攻擊、不能施放。
+#                 decay_delay 秒沒再被冰冷傷害打到，每秒消退 decay_per_second%。凍結中不累積。
+#                 傳奇怪（區域 Boss）的累積只有 unique.buildup%，凍結結束後 unique.immunity 秒不能再累積；
+#                 玩家凍結結束後 player_immunity 秒不能再累積。
+#   感電（閃電）：機率 = 比例 × chance_per_threshold ＋ 感電機率；目標受到的所有傷害（含點燃）增加 effect%，最多 max_effect%。
+#                 只有最強的感電有效。
+#   流血（物理，只有攻擊）：機率 = 比例 × chance_per_threshold ＋ 流血機率（預設只靠「流血機率」：天賦、詞綴、輔助、怪物詞綴）；
+#                 每秒造成那一擊物理傷害的 damage_per_second%，目標移動時乘 moving_multiplier（PoE2：流血時別動），持續 duration 秒。
+#                 同時只有傷害最高的那個在流。
+#   中毒（物理＋混沌，攻擊與法術都行）：機率 = 比例 × chance_per_threshold ＋ 中毒機率；每秒造成那一擊物理＋混沌傷害的
+#                 damage_per_second%，持續 duration 秒；可以疊加，最多 max_stacks 個一起算（超過丟掉最弱的）。混沌傷害，不吃抗性。
+#   暈眩（任何傷害，PoE2 的重暈）：跟凍結一樣是累積條：每造成門檻 100% 的傷害累積 buildup%（物理算 100%，元素與混沌只算
+#                 elemental_multiplier），累積到 100% 暈眩 duration 秒：不能動、不能攻擊、不能施放。decay_delay 秒沒再被打到開始消退。
+#                 防禦方「增加暈眩門檻」會讓條變長（「增加元素異常門檻」不影響暈眩）；玩家與傳奇怪結束後一段時間免疫。
+#   電擊（閃電）：要有「電擊機率」的來源（輔助、詞綴、怪物詞綴）才會累積：每一擊照機率決定要不要累積，
+#                 累積 = 比例 × buildup%；滿了電擊 duration 秒（跟暈眩一樣動不了）。感電照樣另外算。
+# 技能、輔助寶石、裝備詞綴、怪物詞綴都可以加成，屬性名稱見 data/README.md。
+
+threshold:
+  # 異常門檻 = 最大生命 × 這個倍率（Boss 的生命很高，門檻打五折，異常才有機會生效）
+  monster: { normal: 1.0, magic: 1.0, rare: 1.0, unique: 0.5 }
+
+ignite:
+  chance_per_threshold: 25   # 每造成門檻 100% 的火焰傷害 = 25% 機率（PoE2：每 4% 門檻 1%）
+  damage_per_second: 20      # 每秒造成那一擊火焰傷害的 20%
+  duration: 4                # 秒
+
+chill:
+  max: 50                    # 最多慢 50%
+  min: 5                     # 小於 5% 不算
+  duration: { monster: 8, player: 2 }
+
+freeze:
+  buildup: 200               # 打出門檻 50% 的冰冷傷害就累積滿（可以分好幾下）
+  duration: { monster: 4, player: 1.5 }
+  decay_delay: 2
+  decay_per_second: 50
+  player_immunity: 3         # 玩家凍結結束後 3 秒不能再累積（不會被一群怪一直凍住）
+  unique: { buildup: 50, immunity: 6 }
+
+shock:
+  chance_per_threshold: 25
+  effect: 20                 # 受到的傷害增加 20%
+  max_effect: 50
+  duration: { monster: 8, player: 4 }
+
+bleed:
+  chance_per_threshold: 0    # 流血不靠傷害比例，靠「流血機率」（PoE2 的做法）
+  damage_per_second: 15      # 每秒造成那一擊物理傷害的 15%（PoE2：70%／5 秒 ≈ 14%）
+  moving_multiplier: 2.0     # 目標移動時流血傷害 ×2（怪物追你時更痛；玩家流血時站著不動就少痛）
+  duration: 5                # 秒
+
+poison:
+  chance_per_threshold: 0    # 中毒也靠「中毒機率」
+  damage_per_second: 20      # 每秒造成那一擊物理＋混沌傷害的 20%（PoE2：30%／2 秒 → 這裡 2 秒共 40%，疊加才是重點）
+  duration: 2                # 秒
+  max_stacks: 8              # 最多疊幾個（PoE2 預設 1 個，有天賦才能疊；這裡預設就能疊，疊得越多越痛）
+
+stun:
+  buildup: 100               # 每造成門檻 100% 的傷害累積 100%（2026-10 PoE2：玩家打出的物理 ×1.5、近戰再 ×1.5，怪物打的物理 ×2、近戰 ×1.33）
+  elemental_multiplier: 0.5  # 元素與混沌傷害的累積只算一半（物理最會暈人，PoE2）
+  duration: { monster: 1.5, player: 0.8 }
+  decay_delay: 1.5
+  decay_per_second: 40
+  player_immunity: 3         # 玩家暈眩結束後 3 秒不能再累積（不會被一群怪連續暈）
+  unique: { buildup: 40, immunity: 8 }
+  player_heavy: false        # 玩家會不會被重暈（PoE2：不會，只會輕暈）
+  # 輕暈（PoE2）：每一擊的機率 ≈ 這一擊（照上面的倍率）÷ 暈眩門檻，低於 min_chance% 算 0；打斷一下（不能動、不能攻擊）
+  light: { min_chance: 15, duration: { monster: 0.3, player: 0.2 } }
+  # 蓄勢待暈：暈眩條到這個 % 時怪物名字旁的「暈」變金色；帶「重擊」的技能（碎骨這類）打中就直接重暈
+  primed: { normal: 40, magic: 50, rare: 60, unique: 70 }
+
+# 破甲（2026-10 PoE2）：技能、輔助、詞綴的「破甲 x%」= 擊中時破掉「減免前物理傷害 × x%」的護甲。
+# 對普通怪 ×3、魔法 ×2；扣到 0 = 完全破甲 duration 秒：沒有護甲、物理擊中受到的傷害增加 fully_broken_taken%。
+# 部分破甲在最後一次破甲後 duration 秒恢復。怪物名字旁：「碎」= 護甲被破了一些，「破甲」= 完全破甲。
+armour_break:
+  multiplier: { normal: 3, magic: 2, rare: 1, unique: 1 }
+  duration: 12
+  fully_broken_taken: 20
+
+electrocute:
+  buildup: 150               # 有電擊機率的閃電傷害：每造成門檻 100% 累積 150%
+  duration: { monster: 3, player: 1.5 }
+  decay_delay: 2
+  decay_per_second: 50
+  player_immunity: 3
+  unique: { buildup: 50, immunity: 8 }

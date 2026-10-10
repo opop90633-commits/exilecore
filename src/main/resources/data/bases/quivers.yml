@@ -1,0 +1,268 @@
+# 箭袋基底（副手，2026-10）：只有主手拿弓的時候能裝（雙手武器不能拿盾，弓改配箭袋；弩不能裝箭袋，照 PoE2）。
+# 詞綴：affixes 裡 spawn_tags 寫 quiver 的那些（生命、抗性、敏捷、攻擊附加傷害、攻速、暴擊、命中、投射物…）。
+# 外觀用原版的皮革（箭、光靈箭會被原版的弓當成彈藥，不能用）。
+
+serrated_quiver:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 鋸齒箭袋
+  material: LEATHER
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 10, int: 0 }
+  implicit:
+    text: "攻擊附加 {min} 到 {max} 物理傷害"
+    min: [1, 2]
+    max: [3, 4]
+    mods:
+      - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+      - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+
+fire_quiver:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 火紋箭袋
+  material: LEATHER
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 15
+  requirements: { level: 15, str: 0, dex: 30, int: 0 }
+  implicit:
+    text: "攻擊附加 {min} 到 {max} 火焰傷害"
+    min: [3, 5]
+    max: [7, 10]
+    mods:
+      - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, fire] }
+      - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, fire] }
+
+piercing_quiver:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 穿甲箭袋
+  material: LEATHER
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 30
+  requirements: { level: 30, str: 0, dex: 55, int: 0 }
+  implicit:
+    text: "投射物多穿透 {value} 個敵人"
+    value: [1, 1]
+    mods:
+      - { stat: skill.pierce, type: FLAT, value: "{value}" }
+
+broadhead_quiver:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 寬刃箭袋
+  material: LEATHER
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 80, int: 0 }
+  implicit:
+    text: "增加 {value}% 暴擊率"
+    value: [20, 30]
+    mods:
+      - { stat: crit.chance, type: INCREASED, value: "{value}" }
+
+gale_quiver:
+  retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
+  name: 疾風箭袋
+  material: LEATHER
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 60
+  requirements: { level: 60, str: 0, dex: 110, int: 0 }
+  implicit:
+    text: "增加 {value}% 攻擊速度"
+    value: [7, 10]
+    mods:
+      - { stat: attack.speed, type: INCREASED, value: "{value}" }
+
+# ---- PoE2 分階基底（tools/gen_poe2_bases.py 產生；重跑會整段換掉）----
+quiver_01:
+  name: 寬鏃箭袋
+  base_level: 1          # 數值是物品等級 1 的值，照物品等級縮放
+  implicit_level: 1
+  family: quiver
+  drop_weight: 50
+  material: LEATHER
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "攻擊附加 {min} 到 {max} 物理傷害"
+    min: [1, 1]
+    max: [3, 3]
+    mods:
+      - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+      - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+
+quiver_02:
+  name: 焰羽箭袋
+  base_level: 8          # 數值是物品等級 8 的值，照物品等級縮放
+  implicit_level: 8
+  family: quiver
+  drop_weight: 50
+  material: BLAZE_POWDER
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "攻擊附加 {min} 到 {max} 火焰傷害"
+    min: [3, 3]
+    max: [5, 5]
+    mods:
+      - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, fire] }
+      - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, fire] }
+
+quiver_03:
+  name: 祀血箭袋
+  base_level: 16          # 數值是物品等級 16 的值，照物品等級縮放
+  implicit_level: 16
+  family: quiver
+  drop_weight: 50
+  material: GLISTERING_MELON_SLICE
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "攻擊每擊中一個敵人回復 {value} 生命"
+    value: [2, 3]
+    mods:
+      - { stat: life.on_hit, type: FLAT, value: "{value}", tags: [attack] }
+
+quiver_04:
+  name: 叉鏃箭袋
+  base_level: 24          # 數值是物品等級 24 的值，照物品等級縮放
+  implicit_level: 24
+  family: quiver
+  drop_weight: 50
+  material: SPYGLASS
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 命中"
+    value: [20, 30]
+    mods:
+      - { stat: accuracy, type: INCREASED, value: "{value}" }
+
+quiver_05:
+  name: 鈍鏃箭袋
+  base_level: 33          # 數值是物品等級 33 的值，照物品等級縮放
+  implicit_level: 33
+  family: quiver
+  drop_weight: 50
+  material: BRICK
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 暈眩累積"
+    value: [25, 40]
+    mods:
+      - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+
+quiver_06:
+  name: 毒羽箭袋
+  base_level: 39          # 數值是物品等級 39 的值，照物品等級縮放
+  implicit_level: 39
+  family: quiver
+  drop_weight: 50
+  material: FERMENTED_SPIDER_EYE
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "攻擊 +{value}% 中毒機率"
+    value: [20, 30]
+    mods:
+      - { stat: poison.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+quiver_07:
+  name: 鋸鏃箭袋
+  base_level: 44          # 數值是物品等級 44 的值，照物品等級縮放
+  implicit_level: 44
+  family: quiver
+  drop_weight: 50
+  material: RED_DYE
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "攻擊 +{value}% 流血機率"
+    value: [20, 30]
+    mods:
+      - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+quiver_08:
+  name: 疾裝箭袋
+  base_level: 51          # 數值是物品等級 51 的值，照物品等級縮放
+  implicit_level: 51
+  family: quiver
+  drop_weight: 50
+  material: FEATHER
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 攻擊速度"
+    value: [7, 10]
+    mods:
+      - { stat: attack.speed, type: INCREASED, value: "{value}" }
+
+quiver_09:
+  name: 貫甲箭袋
+  base_level: 55          # 數值是物品等級 55 的值，照物品等級縮放
+  implicit_level: 55
+  family: quiver
+  drop_weight: 50
+  material: FLINT
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "投射物多穿透 {value} 個敵人"
+    mods:
+      - { stat: skill.pierce, type: FLAT, value: 1 }
+
+quiver_10:
+  name: 飛羽箭袋
+  base_level: 61          # 數值是物品等級 61 的值，照物品等級縮放
+  implicit_level: 61
+  family: quiver
+  drop_weight: 50
+  material: PHANTOM_MEMBRANE
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 投射物速度"
+    value: [20, 30]
+    mods:
+      - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+
+quiver_11:
+  name: 刺心箭袋
+  base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
+  implicit_level: 65
+  family: quiver
+  drop_weight: 50
+  material: ECHO_SHARD
+  slot: OFF_HAND
+  tags: [quiver]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "增加 {value}% 攻擊暴擊率"
+    value: [20, 30]
+    mods:
+      - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [attack] }

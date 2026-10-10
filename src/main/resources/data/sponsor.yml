@@ -1,0 +1,291 @@
+# 贊助（2026-10）：星幣、累積贊助的稱號與名字顏色、角色欄位、月卡、全服加倍、外觀特效、抽獎箱、登入天數稱號。
+#
+# 星幣：1 星幣 = 1 元。管理網頁「發放」選「星幣」，或主控台 /ec sponsor give <玩家> <數量> [bonus]
+#   （贊助商城 Tebex 的指令也是這一行；bonus = 贈送的，不算進累積贊助）。離線的下次登入發。
+# 這裡賣的都不影響戰鬥：買的稱號沒有加成（只有免費的登入天數稱號有小加成）、特效只是好看；全服加倍是全服一起吃的（買的人只有公告署名）；
+# 累積贊助的額外功能是方便性（倉庫、背包、上架格、排隊、聊天顏色、營地飛行），不加戰鬥數值。
+# Minecraft 的商業使用規範（https://www.minecraft.net/usage-guidelines）不能賣影響遊戲的東西，新增東西時請注意。
+# 改完 /ec reload。
+#
+# 抽獎箱的機率會寫在選單上（台灣的「機率型商品」要公開機率）：weights 是相對權重，選單照比例換算成百分比。
+
+settings:
+  enabled: true
+  # 換日跟每日委託一樣（economy.yml 的時區）：月卡在換日的時候發
+  # 一天在線多久才算「登入一天」（分鐘）
+  login_minutes: 30
+
+# 角色欄位：每次 +1，沒有上限（max 只是防手滑）
+character_slot:
+  price: 100
+  max: 200
+
+# 用星幣加的格子（整個帳號；跟累積贊助送的疊加）：每次 +1；max = 最多買幾次，0 = 沒有上限
+stash_page: { price: 100, max: 0 }      # 倉庫頁（每頁 45 格）
+bag_page:   { price: 300, max: 0 }      # 隨身背包頁（每頁 45 格，帳號裡每個角色都有）
+# 2026-10：用星幣加大通貨袋（隨身背包的，每種通貨的上限 +step）與倉庫的地圖頁（+step 張）；max 是最多買幾次
+pouch_upgrade: { price: 150, step: 2500, max: 4 }
+map_upgrade: { price: 150, step: 500, max: 4 }
+stash_currency_upgrade: { price: 150, step: 5000, max: 4 }   # 倉庫通貨頁：每次每種通貨的上限 +step（帳號共用）
+listing:    { price: 50,  max: 0 }      # 市集商店頁的上架上限
+rename_card: { price: 50 }            # 改名卡（2026-10）：一張改一次角色名字（/char rename；管理員不用卡）
+
+# 月卡：買了之後每天（換日的時候，還沒上線的下次上線補發）發月卡幣、時裝幣到倉庫的「贊助頁」
+monthly_card:
+  price: 100
+  days: 30
+  daily_card_coins: 1
+  daily_fashion_coins: 1
+  # 2026-10 月卡福利（都不影響戰鬥）：
+  welcome_fashion_coins: 5     # 開卡禮：買下就送
+  welcome_card_coins: 10
+  renewal_bonus: { second: 5, third: 10 }   # 連續續卡（還沒過期或昨天才到期就算連續）：第 2 個月、第 3 個月起多送的月卡幣
+  daily_free_box: random       # 有月卡每天免費開一次的箱子（boxes 的代號；空字串 = 沒有）
+  # 另外：有月卡名字前面有 ☾、傳送點免費、5 組裝備、5 組天賦（含珠寶）切換、技能按鍵可以存多組、隨時更換昇華職業、天賦與昇華天賦退點免費（程式內建）
+
+# 全服加倍：一罐 15 分鐘，全服一起加倍，公告是誰贊助的；同一種再買一次會接著延長（最多 max_minutes）
+boosts:
+  price: 10
+  minutes: 15
+  max_minutes: 240
+  types:
+    experience: { name: 全服經驗加倍,   label: 經驗,   icon: EXPERIENCE_BOTTLE, experience: 2.0 }
+    quantity:   { name: 全服掉落數量加倍, label: 掉落數量, icon: CHEST,             quantity: 100 }
+    rarity:     { name: 全服掉落稀有度加倍, label: 稀有度,  icon: AMETHYST_SHARD,    rarity: 100 }
+    gold:       { name: 全服金幣加倍,   label: 金幣,   icon: GOLD_INGOT,        gold: 2.0 }
+
+# 累積贊助的稱號、名字顏色與額外功能（累積的星幣，花掉也算；贈送的不算）。用到過的最高一階（不是加起來）：
+#   name_color：名字顏色，"#rrggbb" 或 "gradient:#rrggbb:#rrggbb"（漸層）
+#   stash_pages：倉庫多幾頁　bag_pages：隨身背包多幾頁（每頁 45 格）　listings：市集商店頁最多上架幾件（一般玩家照 economy.yml 的 market.shop_slots）
+#   bypass_full：伺服器滿了也進得來　chat_color：聊天可以用 &a、&l、&#rrggbb 上色　custom_title：自訂稱號（/sponsor title）
+#   camp_fly：在營地可以飛（按兩下空白鍵）
+tiers:
+  - { amount: 1000,  id: patron_1, title: 星塵贊助者, color: "#9fd3ff", name_color: "#cfeaff",
+      stash_pages: 1,  bag_pages: 0, listings: 7,  bypass_full: true, chat_color: true }
+  - { amount: 3000,  id: patron_2, title: 星芒贊助者, color: "#7fe0c0", name_color: "#a8f5dc",
+      stash_pages: 2,  bag_pages: 0, listings: 9,  bypass_full: true, chat_color: true }
+  - { amount: 5000,  id: patron_3, title: 星輝贊助者, color: "#f5d76e", name_color: "#ffe58a",
+      stash_pages: 3,  bag_pages: 1, listings: 11, bypass_full: true, chat_color: true }
+  - { amount: 10000, id: patron_4, title: 星耀贊助者, color: "#ff9f5a", name_color: "#ffb98a",
+      stash_pages: 5,  bag_pages: 2, listings: 13, bypass_full: true, chat_color: true, custom_title: true }
+  - { amount: 15000, id: patron_5, title: 星曜守護者, color: "#d68cff", name_color: "gradient:#e3a8ff:#9fd3ff",
+      stash_pages: 7,  bag_pages: 3, listings: 15, bypass_full: true, chat_color: true, custom_title: true }
+  - { amount: 25000, id: patron_6, title: 星骸至尊,   color: "#ffd24a", name_color: "gradient:#ffe27a:#ff8fe0",
+      stash_pages: 10, bag_pages: 5, listings: 30, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true }
+
+# 登入天數的稱號（一天在線 settings.login_minutes 分鐘以上算一天；不用連續）。
+# stats：擁有就有的小加成（2026-10；免費拿的才可以有加成，用錢買的稱號不能有），全部疊起來大約 +30 生命、+3% 生命、+15 魔力、各元素抗性 +3%
+login_titles:
+  - { days: 7,   id: login_7,   name: 星途旅人, color: "#c8c8c8", stats: [ { stat: life.max, value: 5 } ] }
+  - { days: 14,  id: login_14,  name: 雙週行者, color: "#b5e3a1", stats: [ { stat: mana.max, value: 5 } ] }
+  - { days: 21,  id: login_21,  name: 三週常客, color: "#8fdc8f", stats: [ { stat: life.regen, value: 1 } ] }
+  - { days: 30,  id: login_30,  name: 月之常駐, color: "#7fd4ff", stats: [ { stat: life.max, value: 10 } ] }
+  - { days: 60,  id: login_60,  name: 雙月守望, color: "#6fb8ff", stats: [ { stat: resist.fire, value: 3 } ] }
+  - { days: 90,  id: login_90,  name: 季度老兵, color: "#8f9cff", stats: [ { stat: resist.cold, value: 3 } ] }
+  - { days: 120, id: login_120, name: 星骸常客, color: "#a98cff", stats: [ { stat: resist.lightning, value: 3 } ] }
+  - { days: 150, id: login_150, name: 五月星痕, color: "#c27dff", stats: [ { stat: flask.life_recovery, type: INCREASED, value: 5 } ] }
+  - { days: 180, id: login_180, name: 半載星火, color: "#e07dff", stats: [ { stat: mana.max, value: 10 } ] }
+  - { days: 210, id: login_210, name: 七月星河, color: "#ff7dd8", stats: [ { stat: accuracy, value: 30 } ] }
+  - { days: 240, id: login_240, name: 八月星輝, color: "#ff7da0", stats: [ { stat: life.max, value: 15 } ] }
+  - { days: 270, id: login_270, name: 九月星辰, color: "#ff9a6b", stats: [ { stat: drop.rarity, type: INCREASED, value: 2 } ] }
+  - { days: 300, id: login_300, name: 三百日誌, color: "#ffb84d", stats: [ { stat: movement.speed, type: INCREASED, value: 2 } ] }
+  - { days: 330, id: login_330, name: 星骸元老, color: "#ffd24a", stats: [ { stat: damage, type: INCREASED, value: 2 } ] }
+  - { days: 360, id: login_360, name: 星骸周年, color: "#fff07a", stats: [ { stat: life.max, type: INCREASED, value: 3 } ] }
+
+# 時裝（2026-10 全部換成 3D：tools/gen_models3d.py 自己堆的立體模型 → web/pack3d/；舊的粒子特效與平面幻化拿掉了）。
+# 只改看起來的樣子，數值不變；在「贊助 → 裝備幻化」套上去。rarity：common 普通、rare 稀有、epic 史詩、legendary 傳說。
+# slot：weapon 近戰武器、法杖；offhand 副手（盾、箭袋）；headgear 頭飾（套在「頭」，沒戴頭盔也看得到）；
+#       back 背飾（翅膀、光輪，跟在背後）；pet 寵物（飄在左後方）；bow 弓、crossbow 弩（拉弓、上弦都有動作）；
+#       armor 戰甲（頭、身、腿、腳一整套：頭盔是 3D，身、腿、腳是自己畫的戰甲貼圖）。art 是模型的代號（gen_models3d.py 裡的）。
+# fashion_price：時裝幣直接兌換的價格（0 = 不能直接換，只能抽或用月卡幣換）。
+cosmetics:
+  m3d_star_greatsword: { type: skin, slot: weapon, art: star_greatsword, name: 星輝巨劍, rarity: legendary, fashion_price: 40 }
+  m3d_void_scythe: { type: skin, slot: weapon, art: void_scythe, name: 虛空收割者, rarity: legendary, fashion_price: 0, description: "星曜時裝箱限定" }
+  m3d_inferno_axe: { type: skin, slot: weapon, art: inferno_axe, name: 熔心戰斧, rarity: epic, fashion_price: 20 }
+  m3d_frost_halberd: { type: skin, slot: weapon, art: frost_halberd, name: 霜晶長戟, rarity: epic, fashion_price: 20 }
+  m3d_blood_katana: { type: skin, slot: weapon, art: blood_katana, name: 血月太刀, rarity: epic, fashion_price: 20 }
+  m3d_verdant_staff: { type: skin, slot: weapon, art: verdant_staff, name: 森語古杖, rarity: rare, fashion_price: 12 }
+  m3d_star_aegis: { type: skin, slot: offhand, art: star_aegis, name: 星穹聖盾, rarity: epic, fashion_price: 20 }
+  m3d_void_tome: { type: skin, slot: offhand, art: void_tome, name: 虛空魔典, rarity: epic, fashion_price: 20 }
+  m3d_star_crown: { type: skin, slot: headgear, art: star_crown, name: 星冠, rarity: legendary, fashion_price: 40 }
+  m3d_inferno_horns: { type: skin, slot: headgear, art: inferno_horns, name: 炎魔之角, rarity: epic, fashion_price: 20 }
+  m3d_frost_halo: { type: skin, slot: headgear, art: frost_halo, name: 霜晶光環, rarity: epic, fashion_price: 0, description: "月卡幣兌換限定" }
+  m3d_void_mask: { type: skin, slot: headgear, art: void_mask, name: 虛空面具, rarity: epic, fashion_price: 20 }
+  m3d_verdant_wreath: { type: skin, slot: headgear, art: verdant_wreath, name: 花冠, rarity: rare, fashion_price: 12 }
+  m3d_seraph_wings: { type: skin, slot: back, art: seraph_wings, name: 熾天之翼, rarity: legendary, fashion_price: 40 }
+  m3d_demon_wings: { type: skin, slot: back, art: demon_wings, name: 魔龍之翼, rarity: legendary, fashion_price: 40 }
+  m3d_crystal_wings: { type: skin, slot: back, art: crystal_wings, name: 晶翼, rarity: legendary, fashion_price: 0, description: "星曜時裝箱限定" }
+  m3d_halo_back: { type: skin, slot: back, art: halo_back, name: 聖輪, rarity: epic, fashion_price: 20 }
+  m3d_pet_dragon: { type: skin, slot: pet, art: pet_dragon, name: 小炎龍, rarity: legendary, fashion_price: 40 }
+  m3d_pet_owl: { type: skin, slot: pet, art: pet_owl, name: 霜梟, rarity: epic, fashion_price: 20 }
+  m3d_pet_golem: { type: skin, slot: pet, art: pet_golem, name: 鐵衛小魔像, rarity: epic, fashion_price: 20 }
+  m3d_pet_tome: { type: skin, slot: pet, art: pet_tome, name: 漂浮魔典, rarity: epic, fashion_price: 20 }
+  m3d_pet_wisp: { type: skin, slot: pet, art: pet_wisp, name: 星靈, rarity: rare, fashion_price: 12 }
+  m3d_pet_fox: { type: skin, slot: pet, art: pet_fox, name: 靈狐, rarity: rare, fashion_price: 12 }
+  m3d_pet_slime: { type: skin, slot: pet, art: pet_slime, name: 翠凝, rarity: rare, fashion_price: 12 }
+  m3d_star_longbow: { type: skin, slot: bow, art: star_longbow, name: 星輝長弓, rarity: legendary, fashion_price: 40 }
+  m3d_blood_bow: { type: skin, slot: bow, art: blood_bow, name: 血月魔弓, rarity: epic, fashion_price: 20 }
+  m3d_verdant_bow: { type: skin, slot: bow, art: verdant_bow, name: 翠影獵弓, rarity: rare, fashion_price: 12 }
+  m3d_inferno_repeater: { type: skin, slot: crossbow, art: inferno_repeater, name: 熔心連弩, rarity: epic, fashion_price: 20 }
+  m3d_frost_arbalest: { type: skin, slot: crossbow, art: frost_arbalest, name: 霜晶重弩, rarity: epic, fashion_price: 20 }
+  m3d_iron_crossbow: { type: skin, slot: crossbow, art: iron_crossbow, name: 鐵衛勁弩, rarity: rare, fashion_price: 12 }
+  m3d_armor_starlight: { type: skin, slot: armor, art: armor3d_starlight, name: 星耀聖鎧, rarity: legendary, fashion_price: 40 }
+  m3d_armor_void: { type: skin, slot: armor, art: armor3d_void, name: 虛空魔鎧, rarity: legendary, fashion_price: 0, description: "星曜時裝箱限定" }
+  m3d_armor_inferno: { type: skin, slot: armor, art: armor3d_inferno, name: 熾焰戰鎧, rarity: epic, fashion_price: 20 }
+  m3d_armor_frost: { type: skin, slot: armor, art: armor3d_frost, name: 霜晶鎧, rarity: epic, fashion_price: 20 }
+  m3d_armor_ironguard: { type: skin, slot: armor, art: armor3d_ironguard, name: 鐵衛重鎧, rarity: rare, fashion_price: 12 }
+  # 2026-10 新增的戰甲（頭盔、肩甲是 3D；身、腿、腳是自己畫的貼圖。在「裝備幻化」可以頭、身、腿、腳分開套）
+  m3d_armor_solar: { type: skin, slot: armor, art: armor3d_solar, name: 烈陽金甲, rarity: legendary, fashion_price: 40 }
+  m3d_armor_bloodmoon: { type: skin, slot: armor, art: armor3d_bloodmoon, name: 血月魔甲, rarity: epic, fashion_price: 20 }
+  m3d_armor_sakura: { type: skin, slot: armor, art: armor3d_sakura, name: 櫻華羽衣, rarity: epic, fashion_price: 20 }
+  m3d_armor_storm: { type: skin, slot: armor, art: armor3d_storm, name: 雷霆戰甲, rarity: epic, fashion_price: 20 }
+  m3d_armor_verdant: { type: skin, slot: armor, art: armor3d_verdant, name: 翠影獵裝, rarity: rare, fashion_price: 12 }
+  m3d_armor_shadow: { type: skin, slot: armor, art: armor3d_shadow, name: 暗影夜行衣, rarity: rare, fashion_price: 12 }
+  # 2026-10 新增：月卡限定（月卡幣兌換）
+  m3d_moon_glaive: { type: skin, slot: weapon, art: moon_glaive, name: 月刃, rarity: epic, fashion_price: 0, description: "月卡幣兌換限定" }
+  m3d_moon_wings: { type: skin, slot: back, art: moon_wings, name: 月華之翼, rarity: legendary, fashion_price: 0, description: "月卡幣兌換限定" }
+  m3d_pet_moon_rabbit: { type: skin, slot: pet, art: pet_moon_rabbit, name: 月兔, rarity: epic, fashion_price: 0, description: "月卡幣兌換限定" }
+  # 2026-10 新增：抽獎箱
+  m3d_abyss_trident: { type: skin, slot: weapon, art: abyss_trident, name: 深淵三叉戟, rarity: legendary, fashion_price: 40 }
+  m3d_sun_bow: { type: skin, slot: bow, art: sun_bow, name: 烈陽長弓, rarity: legendary, fashion_price: 40 }
+  m3d_thunder_hammer: { type: skin, slot: weapon, art: thunder_hammer, name: 雷鳴戰鎚, rarity: epic, fashion_price: 20 }
+  m3d_shadow_crossbow: { type: skin, slot: crossbow, art: shadow_crossbow, name: 暗影弩, rarity: epic, fashion_price: 20 }
+  m3d_oni_mask: { type: skin, slot: headgear, art: oni_mask, name: 鬼面, rarity: epic, fashion_price: 20 }
+  m3d_butterfly_wings: { type: skin, slot: back, art: butterfly_wings, name: 幻蝶之翼, rarity: epic, fashion_price: 20 }
+  m3d_pet_jelly: { type: skin, slot: pet, art: pet_jelly, name: 星海水母, rarity: epic, fashion_price: 20 }
+  m3d_rune_shield: { type: skin, slot: offhand, art: rune_shield, name: 符文木盾, rarity: rare, fashion_price: 12 }
+  m3d_pet_bat: { type: skin, slot: pet, art: pet_bat, name: 小蝙蝠, rarity: rare, fashion_price: 12 }
+  # 2026-10 新增：動作（贊助 → 動作 裡設定按鍵；營地以外只有特效、不會移動）
+  emote_sidestep: { type: emote, emote: sidestep, name: 閃身步, rarity: rare, fashion_price: 10, description: "左跨一步、收回、右跨一步，留下殘影" }
+  emote_kick_ball: { type: emote, emote: kick_ball, name: 浪子踢球, rarity: epic, fashion_price: 15, description: "張開雙手，小跳往後勾腳、交叉步" }
+  emote_bear_shake: { type: emote, emote: bear_shake, name: 狗熊哆嗦毛, rarity: epic, fashion_price: 15, description: "蹲低亂甩手、扭身甩頭，像熊一樣抖毛" }
+  emote_head_bob: { type: emote, emote: head_bob, name: 搖頭晃腦, rarity: rare, fashion_price: 10, description: "馬步、一手伸出去，頭左右快速甩" }
+  emote_king_sit: { type: emote, emote: king_sit, name: 王之坐姿, rarity: epic, fashion_price: 15, description: "變出一張沙發，往後一靠、雙腳張開坐一陣子" }
+  emote_love_you: { type: emote, emote: love_you, name: 我真的特別愛你, rarity: rare, fashion_price: 10, description: "害羞地摀著嘴，身子左右搖、冒出愛心" }
+  emote_six_seven: { type: emote, emote: six_seven, name: "67", rarity: rare, fashion_price: 10, description: "兩手手心朝上放在身前，一上一下輪流掂，頭跟著歪" }
+
+# 抽到已經有的特效：退回時裝幣（照稀有度）
+duplicate_refund: { common: 1, rare: 2, epic: 4, legendary: 8 }
+
+# 抽獎箱：star_price 星幣、fashion_price 時裝幣（0 = 不能用這種買）。
+# pity：連續幾箱沒抽到傳說，下一箱一定是傳說（還沒有的優先）；0 = 沒有保底。
+boxes:
+  random:
+    name: 時裝抽獎箱
+    icon: CHEST
+    fashion_price: 7
+    star_price: 0
+    pity: 30
+    weights:
+      # 稀有（合計 48%，10 件）
+      m3d_verdant_staff: 4.8
+      m3d_verdant_wreath: 4.8
+      m3d_pet_wisp: 4.8
+      m3d_pet_fox: 4.8
+      m3d_pet_slime: 4.8
+      m3d_verdant_bow: 4.8
+      m3d_iron_crossbow: 4.8
+      m3d_armor_ironguard: 4.8
+      m3d_rune_shield: 4.8
+      m3d_pet_bat: 4.8
+      # 史詩（合計 45%，21 件）
+      m3d_inferno_axe: 2.1429
+      m3d_frost_halberd: 2.1429
+      m3d_blood_katana: 2.1429
+      m3d_star_aegis: 2.1429
+      m3d_void_tome: 2.1429
+      m3d_inferno_horns: 2.1429
+      m3d_void_mask: 2.1429
+      m3d_halo_back: 2.1429
+      m3d_pet_owl: 2.1429
+      m3d_pet_golem: 2.1429
+      m3d_pet_tome: 2.1429
+      m3d_blood_bow: 2.1429
+      m3d_inferno_repeater: 2.1429
+      m3d_frost_arbalest: 2.1429
+      m3d_armor_inferno: 2.1429
+      m3d_armor_frost: 2.1429
+      m3d_thunder_hammer: 2.1429
+      m3d_shadow_crossbow: 2.1429
+      m3d_oni_mask: 2.1429
+      m3d_butterfly_wings: 2.1429
+      m3d_pet_jelly: 2.1429
+      # 傳說（合計 7%，9 件）
+      m3d_star_greatsword: 0.7778
+      m3d_star_crown: 0.7778
+      m3d_seraph_wings: 0.7778
+      m3d_demon_wings: 0.7778
+      m3d_pet_dragon: 0.7778
+      m3d_star_longbow: 0.7778
+      m3d_armor_starlight: 0.7778
+      m3d_abyss_trident: 0.7778
+      m3d_sun_bow: 0.7778
+  starlight:
+    name: 星曜時裝箱
+    icon: ENDER_CHEST
+    star_price: 50
+    fashion_price: 0
+    pity: 15
+    description: "限定的虛空收割者、晶翼、虛空魔鎧只有這裡抽得到；傳說的機率高很多"
+    weights:
+      # 傳說（合計 25%：限定的各 4%）
+      m3d_void_scythe: 4
+      m3d_crystal_wings: 4
+      m3d_armor_void: 4
+      # 傳說（其他 9 件合計 13%）
+      m3d_star_greatsword: 1.4444
+      m3d_star_crown: 1.4444
+      m3d_seraph_wings: 1.4444
+      m3d_demon_wings: 1.4444
+      m3d_pet_dragon: 1.4444
+      m3d_star_longbow: 1.4444
+      m3d_armor_starlight: 1.4444
+      m3d_abyss_trident: 1.4444
+      m3d_sun_bow: 1.4444
+      # 史詩（合計 49.5%）
+      m3d_inferno_axe: 2.3571
+      m3d_frost_halberd: 2.3571
+      m3d_blood_katana: 2.3571
+      m3d_star_aegis: 2.3571
+      m3d_void_tome: 2.3571
+      m3d_inferno_horns: 2.3571
+      m3d_void_mask: 2.3571
+      m3d_halo_back: 2.3571
+      m3d_pet_owl: 2.3571
+      m3d_pet_golem: 2.3571
+      m3d_pet_tome: 2.3571
+      m3d_blood_bow: 2.3571
+      m3d_inferno_repeater: 2.3571
+      m3d_frost_arbalest: 2.3571
+      m3d_armor_inferno: 2.3571
+      m3d_armor_frost: 2.3571
+      m3d_thunder_hammer: 2.3571
+      m3d_shadow_crossbow: 2.3571
+      m3d_oni_mask: 2.3571
+      m3d_butterfly_wings: 2.3571
+      m3d_pet_jelly: 2.3571
+      # 稀有（合計 25.5%）
+      m3d_verdant_staff: 2.55
+      m3d_verdant_wreath: 2.55
+      m3d_pet_wisp: 2.55
+      m3d_pet_fox: 2.55
+      m3d_pet_slime: 2.55
+      m3d_verdant_bow: 2.55
+      m3d_iron_crossbow: 2.55
+      m3d_armor_ironguard: 2.55
+      m3d_rune_shield: 2.55
+      m3d_pet_bat: 2.55
+
+# 月卡幣兌換（只放不影響戰鬥的東西）。kind：title 稱號、cosmetic 外觀特效、fashion_coins 時裝幣、character_slot 角色欄位、
+#   rename_card 改名卡（amount 張）。hidden: true = 下架（商店不顯示，換過的人照樣擁有）。月卡一個月 30 月卡幣：一次性的東西要持續加（每 2～3 個月一件限定時裝、每季一個稱號）。
+card_shop:
+  - { id: card_title_1, kind: title, price: 10, name: 月光旅人, color: "#d8e6ff", hidden: true }   # 2026-10 下架（換過的人照樣擁有）
+  - { id: card_title_2, kind: title, price: 30, name: 新月守望, color: "#a8c8ff", hidden: true }
+  - { id: card_title_3, kind: title, price: 60, name: 滿月之誓, color: "#fff2b3", hidden: true }
+  - { id: card_frost_halo, kind: cosmetic, price: 45, cosmetic: m3d_frost_halo }
+  - { id: card_moon_glaive, kind: cosmetic, price: 40, cosmetic: m3d_moon_glaive }        # 2026-10 月卡限定
+  - { id: card_moon_rabbit, kind: cosmetic, price: 40, cosmetic: m3d_pet_moon_rabbit }
+  - { id: card_moon_wings, kind: cosmetic, price: 60, cosmetic: m3d_moon_wings }
+  - { id: card_fashion, kind: fashion_coins, price: 3, amount: 1 }   # 2026-10：4 → 3（月卡幣用不完時的出路）
+  - { id: card_slot, kind: character_slot, price: 25 }   # 2026-10：40 → 25（直接用星幣買是 100，月卡幣換不該比較貴）
+  - { id: card_rename, kind: rename_card, price: 15, amount: 1 }   # 2026-10

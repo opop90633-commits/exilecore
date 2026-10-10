@@ -1,0 +1,37 @@
+# 《星骸》的世界觀文字：伺服器列表上的說明（MOTD）與新角色登場的旁白（MiniMessage 格式）。
+# 區域的進場旁白與 Boss 台詞在 zones.yml，通貨的描述在 currencies.yml。
+#
+# 三百年前，天上最亮的星「天穹之心」墜落，碎成滿地星骸。曜朝的皇帝想用星骸把自己煉成神，
+# 熔爐失控，首都曜京燒了七天七夜；之後帝國把這片墜星之地改成流放地，罪人挖星骸抵罪。
+# 玩家是剛被押送船丟上岸的流放者。
+
+name: 星骸
+
+# 伺服器列表上的兩行說明
+motd:
+  - "<gradient:#9fd3ff:#f5b942><b>星骸</b></gradient> <dark_gray>|</dark_gray> <gray>裝備、詞綴、天賦樹與終局地圖的 ARPG 伺服器"
+  - "<dark_gray>天穹之心墜落三百年，流放者仍在海岸挖掘星骸"
+
+# 每個新角色登場（建立後到了營地）時的標題與旁白
+arrival:
+  title: "<gradient:#9fd3ff:#f5b942>星骸</gradient>"
+  subtitle: "<gray>天穹之心墜落後第三百年"
+  lines:
+    - "<gray><i>三百年前，天上最亮的星「天穹之心」墜落，碎成滿地星骸。</i>"
+    - "<gray><i>曜朝的皇帝想用星骸把自己煉成神，結果燒掉了整座首都；帝國從此把這片墜星之地當成流放地。</i>"
+    - "<gray><i>你是今天剛被押送船丟上岸的流放者。活下去，挖出星骸，然後往山頂走。</i>"
+    - "<dark_gray>/wp 傳送・/town 回營地・/panel 角色・/tree 天賦樹・/stash 倉庫"
+
+# 劇情世界：海邊的流放者營地＋一條路往東穿過五個區域（程式自動生成，地形每台伺服器都一樣）。
+# 世界存在 plugins 以外的世界資料夾裡（Paper 26 的維度資料夾，代號 exilecore:campaign）；整個世界受保護，只有創造模式的管理員能改方塊。
+campaign:
+  enabled: true
+  # 劇情世界剛產生時（世界資料夾裡還沒有 exilecore-campaign.txt），自動把區域版面（zone-layout.yml，舊的會先備份成
+  # zone-layout.backup-時間.yml）與營地 NPC 擺到新世界。已經存在的世界不會自動動版面；想重擺：/ec world setup
+  auto_setup: true
+  # 固定的時間（0 = 日出、6000 = 正午、12000 = 日落）；-1 = 照常日夜循環
+  time: 4000
+
+# 地圖世界（異界，代號 exilecore:maps）：地圖實例蓋在這裡的格子裡
+maps:
+  time: 6000

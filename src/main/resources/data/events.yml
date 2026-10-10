@@ -1,0 +1,221 @@
+# 每月活動（沒有賽季重置的替代：每個月換一個主題，地圖跟著變，加上一組每月挑戰與限定稱號）。改完 /ec reload。
+#
+# 主題照月份輪替：1 月用第 1 個、2 月用第 2 個…（不夠 12 個就循環）。settings.force 可以指定（測試用）。
+# 主題對地圖的影響（只在地圖世界；劇情區域、回響、試煉不變）：
+#   quantity、rarity  地圖裡的怪物多掉幾 % 物品數量、稀有度（加在地圖本身的加成上）
+#   rare_mod          地圖裡的稀有怪一定多一條這個詞綴（monsters.yml 的 mods；打倒這種怪算「主題擊殺」）
+#   event_boost       地圖事件的權重加成（shrine、strongbox、breach、exile；數字直接加在 map_events.yml 的 weights 上）
+#   ritual_chance、delirium_chance  這個月祭壇、幻霧出現的機率（不寫照 map_events.yml）
+# 每月挑戰（整個帳號共用，哪個角色做都算；每月 1 日 0 點換新的，上個月沒做完的就沒了）：
+#   kind   kill 擊殺、rare 擊殺稀有以上、boss 打倒 Boss（區域、地圖、回響、試煉都算）、maps 完成地圖、
+#          events 完成地圖事件（開寶箱、碰神龕、打完裂隙、殺流寇、做完祭壇、幻霧結束）、themed 打倒帶 rare_mod 的稀有怪
+#   count  要幾次；merits 完成給的功勳
+#          2026-10：次數 ×4（以前擊殺 3000、稀有 150、主題 40、Boss 30、地圖 40、事件 60）——伺服器的紀錄裡常玩的人
+#          進服兩天就全部做完；現在常玩的人大約一週、一般玩家兩三週。這個月已經做完的挑戰、拿到的稱號都不受影響
+#   只算怪物（地圖）等級 ≥ 角色等級 − bounties.yml 的 level_gap 的（不能回新手區刷；84 級以上的角色當作 84 級）。
+#   不算的時候會在聊天欄說明，/event 的「最近一次擊殺」也寫著；畫面右邊的任務追蹤有進度，標題最後的 Lv.74+ 是現在的下限
+# 全部挑戰完成：給 title（限定稱號，只有這個月拿得到，拿到就是永久的；在軍需官那裡換著戴）與 bonus_merits。
+#   title.stats：稱號的永久加成（擁有就有、不用戴，帳號裡每個角色都有；寫法跟 bounties.yml 的 shop.titles 一樣）
+
+settings:
+  enabled: true
+  force: ""                  # 指定主題代號（測試用；空的照月份）
+  announce: true             # 月初換主題時全服廣播；登入時提醒
+
+themes:
+  ember_month:
+    name: 餘燼之月
+    color: "#ff7a1a"
+    lore: 曜京燒了三天三夜，火還留在星骸裡。
+    quantity: 10
+    rarity: 0
+    rare_mod: fiery
+    event_boost: { strongbox: 20 }
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 12000, merits: 60 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 600, merits: 60 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻燃焰的稀有怪", count: 160, merits: 80 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
+    title: { name: 餘燼守望者, color: "#ff7a1a", stats: [ { stat: resist.fire, value: 6 } ] }
+    bonus_merits: 200
+  frost_month:
+    name: 霜誓之月
+    color: "#9fd6ff"
+    lore: 山頂的誓言凍在冰裡，每一塊星骸都記得那年的冷。
+    quantity: 10
+    rare_mod: frosty
+    event_boost: { shrine: 20 }
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 12000, merits: 60 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 600, merits: 60 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻霜寒的稀有怪", count: 160, merits: 80 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
+    title: { name: 霜誓之證, color: "#9fd6ff", stats: [ { stat: resist.cold, value: 6 } ] }
+    bonus_merits: 200
+  storm_month:
+    name: 雷鳴之月
+    color: "#ffe066"
+    lore: 天裂開的那一晚，雷打了一整夜。
+    quantity: 10
+    rare_mod: shocking
+    event_boost: { breach: 15 }
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 12000, merits: 60 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 600, merits: 60 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻帶電的稀有怪", count: 160, merits: 80 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
+    title: { name: 雷鳴行者, color: "#ffe066", stats: [ { stat: resist.lightning, value: 6 } ] }
+    bonus_merits: 200
+  venom_month:
+    name: 沉毒之月
+    color: "#7fd13b"
+    lore: 腐沼底下的東西三百年沒睡，這個月它們醒了。
+    quantity: 10
+    rare_mod: venomous
+    event_boost: { exile: 15 }
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 12000, merits: 60 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 600, merits: 60 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻劇毒的稀有怪", count: 160, merits: 80 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
+    title: { name: 沉毒倖存者, color: "#7fd13b", stats: [ { stat: resist.chaos, value: 5 } ] }
+    bonus_merits: 200
+  iron_month:
+    name: 鐵甲之月
+    color: "#c0c0c0"
+    lore: 曜朝的鐵匠把最後一爐鐵打成了怪物的皮。
+    quantity: 10
+    rare_mod: armoured
+    event_boost: { strongbox: 20 }
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 12000, merits: 60 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 600, merits: 60 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻鐵甲的稀有怪", count: 160, merits: 80 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
+    title: { name: 破甲者, color: "#c0c0c0", stats: [ { stat: damage, type: INCREASED, value: 4, tags: [physical] } ] }
+    bonus_merits: 200
+  blood_month:
+    name: 撕裂之月
+    color: "#ff4a4a"
+    lore: 星骸的邊緣比刀還利，這個月怪物都拿著它。
+    quantity: 10
+    rare_mod: bleeder
+    event_boost: { exile: 15 }
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 12000, merits: 60 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 600, merits: 60 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻撕裂的稀有怪", count: 160, merits: 80 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
+    title: { name: 止血者, color: "#ff4a4a", stats: [ { stat: avoid.bleed, value: 10 } ] }
+    bonus_merits: 200
+  quake_month:
+    name: 震懾之月
+    color: "#ffd27f"
+    lore: 地動的那個月，連星骸都站不穩。
+    quantity: 10
+    rare_mod: stunning
+    event_boost: { shrine: 20 }
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 12000, merits: 60 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 600, merits: 60 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻震懾的稀有怪", count: 160, merits: 80 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
+    title: { name: 不動如山, color: "#ffd27f", stats: [ { stat: stun.threshold, type: INCREASED, value: 10 } ] }
+    bonus_merits: 200
+  swift_month:
+    name: 疾風之月
+    color: "#9fe8c8"
+    lore: 風從星痕裡吹出來，怪物跑得比你快。
+    quantity: 10
+    rare_mod: swift
+    event_boost: { breach: 15 }
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 12000, merits: 60 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 600, merits: 60 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻極速的稀有怪", count: 160, merits: 80 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
+    title: { name: 追風者, color: "#9fe8c8", stats: [ { stat: movement.speed, type: INCREASED, value: 2 } ] }
+    bonus_merits: 200
+  warlord_month:
+    name: 督軍之月
+    color: "#e04040"
+    lore: 十二門的督軍帶著舊部回來了。
+    quantity: 10
+    rare_mod: warlord_aura
+    event_boost: { exile: 20 }
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 12000, merits: 60 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 600, merits: 60 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻督軍光環的稀有怪", count: 160, merits: 80 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
+    title: { name: 督軍剋星, color: "#e04040", stats: [ { stat: damage, type: INCREASED, value: 3 } ] }
+    bonus_merits: 200
+  deadly_month:
+    name: 致命之月
+    color: "#ff8a3d"
+    lore: 這個月的怪物下手特別重。
+    quantity: 15
+    rare_mod: deadly
+    event_boost: { strongbox: 15, shrine: 15 }
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 12000, merits: 60 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 600, merits: 60 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻致命的稀有怪", count: 160, merits: 80 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
+    title: { name: 險中求生, color: "#ff8a3d", stats: [ { stat: life.max, type: INCREASED, value: 2 } ] }
+    bonus_merits: 200
+  sturdy_month:
+    name: 壯碩之月
+    color: "#c48c4c"
+    lore: 星骸餵大的怪物，一隻抵兩隻。
+    quantity: 15
+    rare_mod: sturdy
+    event_boost: { breach: 20 }
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 12000, merits: 60 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 600, merits: 60 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻壯碩的稀有怪", count: 160, merits: 80 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
+    title: { name: 巨獸獵人, color: "#c48c4c", stats: [ { stat: crit.multi, value: 5 } ] }
+    bonus_merits: 200
+  star_month:
+    name: 星痕之月
+    color: "#c77dff"
+    lore: 天穹之心墜落的那個月；每一年的這時候，星骸都特別亮。
+    quantity: 20
+    rarity: 10
+    rare_mod: resistant
+    event_boost: { strongbox: 10, shrine: 10, breach: 10, exile: 10 }
+    ritual_chance: 0.45
+    delirium_chance: 0.45
+    challenges:
+      - { id: kill, kind: kill, text: "擊殺 {count} 隻怪物", count: 16000, merits: 80 }
+      - { id: rare, kind: rare, text: "擊殺 {count} 隻稀有怪物", count: 800, merits: 80 }
+      - { id: themed, kind: themed, text: "打倒 {count} 隻抗性的稀有怪", count: 200, merits: 100 }
+      - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 160, merits: 100 }
+      - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 200, merits: 120 }
+      - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 320, merits: 100 }
+    title: { name: 星痕見證者, color: "#c77dff", stats: [ { stat: attr.str, value: 5 }, { stat: attr.dex, value: 5 }, { stat: attr.int, value: 5 } ] }
+    bonus_merits: 300

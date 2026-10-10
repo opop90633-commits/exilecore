@@ -1,0 +1,47 @@
+# VelocityFailover 的設定（星骸版，2026-10）：星骸本體重開時把玩家送到等待室（limbo），開好了再一個一個送回來。
+# 插件：https://modrinth.com/project/zLB8BIPd（原始碼 https://github.com/blixy77/VelocityFailover）
+# 改完在 Velocity 的視窗輸入 failoverreload（或重開代理）。
+
+# 等待室的名字（要跟 velocity.toml 的 [servers] 一樣）
+limbo-server: "limbo"
+
+# 要照顧的伺服器（名字要跟 velocity.toml 的 [servers] 一樣）
+groups:
+  main:
+    servers:
+      - "xinghai"
+
+recovery:
+  # 本體關掉後，每幾毫秒 ping 一次看它開好了沒
+  ping-interval-ms: 2000
+  # 連續幾次 ping 成功才算開好
+  pings-to-ready: 2
+  # 開好之後再等幾毫秒才開始送人回去（讓 ExileCore 把資料、世界都載好）
+  grace-period-ms: 5000
+  # 送人回去的間隔（毫秒；一次一個人，免得一起擠進去）
+  transfer-interval-ms: 250
+  # 一次 ping 等多久（毫秒）
+  ping-timeout-ms: 2000
+
+# 被踢的原因裡有這些字，才算「伺服器關掉」（其他的踢人照常：封鎖、維修模式、AFK…）
+# 「Server closed」是 Paper 正常關機（輸入 stop）時的訊息（run/bukkit.yml 的 settings.shutdown-message）
+shutdown-keywords:
+  - "Server closed"
+  - "Server shutting down"
+  - "Server is restarting"
+
+messages:
+  sent-to-limbo: "<#f5b942>《星骸》正在重新啟動<gray>，先在等待室休息一下，開好了會自動把你送回去（不用重新登入）"
+  reconnecting: "<green>《星骸》開好了，送你回去…"
+  connection-blocked: "<red>《星骸》正在重新啟動，等一下再進來"
+  waiting-action-bar: "<#f5b942>等待《星骸》重新啟動 <gray>{spinner}"
+
+action-bar:
+  interval-ms: 400
+  spinner-frames:
+    - "·  "
+    - "·· "
+    - "···"
+    - " ··"
+    - "  ·"
+    - "   "

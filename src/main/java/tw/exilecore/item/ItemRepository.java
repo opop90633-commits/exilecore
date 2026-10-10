@@ -27,15 +27,52 @@ public final class ItemRepository {
     }
 
     private final Map<String, ItemBase> bases = new LinkedHashMap<>();
+    /** 隱匿傳奇：傳奇代號 → 帶的那條隱匿詞綴是前綴還是後綴（uniques.yml 的 veiled）。 */
+    private final Map<String, List<AffixType>> uniqueVeiled = new java.util.HashMap<>();
+    /** 傳奇自己的符文孔數、符文效果增加（小數）：uniques.yml 的 rune_sockets、rune_effect（2026-10）。 */
+    private final Map<String, Integer> uniqueRuneSockets = new java.util.HashMap<>();
+    /** 傳奇的基底數值照哪一個基底（uniques.yml 的 stat_base，2026-10：基底合併後傳奇保留原本那一階的數值）。 */
+    private final Map<String, String> uniqueStatBases = new java.util.HashMap<>();
+    private final Map<String, Double> uniqueRuneEffect = new java.util.HashMap<>();
     private final Map<String, Affix> affixes = new LinkedHashMap<>();
+    private final Map<String, UniqueItem> uniques = new LinkedHashMap<>();
+    /** 退役的傳奇（uniques.yml 的 retired: true，2026-10 PoE2 改版）：定義留著讓還沒換掉的舊物品照常生效，其他地方都看不到。 */
+    private final java.util.Set<String> retiredUniques = new java.util.HashSet<>();
+    /** 拿掉的基底（bases 的 retired: true）：定義留著讓舊物品照常生效；不掉落、不出現在圖鑑、商人、新手武器。 */
+    private final java.util.Set<String> retiredBases = new java.util.HashSet<>();
+    /** 載入時發現、但不擋啟動的問題（例如傳奇的基底被改名了）；物品模組啟動時印到主控台。 */
+    private final List<String> warnings = new ArrayList<>();
     private List<String> rareNamePrefixes = List.of();
     private Map<String, List<String>> rareNameSuffixes = Map.of();
     private Scaling scaling = new Scaling(0.035, 0.035, 0.02, 1.0, 1.0);
+    /** 傳奇定義的指紋（名字、詞綴、範圍）：uniques.yml 改了就變；物品上記著上次檢查時的指紋（{@link UniqueUpgrade}）。 */
+    private int uniqueRevision;
 
-    /** 從資料夾載入全部資料檔（bases/*.yml、affixes/*.yml、names.yml、items.yml）。 */
+    /** 從資料夾載入全部資料檔（bases/*.yml、affixes/*.yml、uniques.yml、names.yml、items.yml）。 */
+    /** 符文（2026-10）。 */
+    private final Map<String, Runes.Rune> runes = new java.util.LinkedHashMap<>();
+
+    public Runes.Rune rune(final String id) {
+        return id == null ? null : runes.get(id);
+    }
+
+    public java.util.Collection<Runes.Rune> runes() {
+        return java.util.Collections.unmodifiableCollection(runes.values());
+    }
+
     public void load(final Path dataFolder) throws IOException {
         bases.clear();
+        uniqueVeiled.clear();
+        uniqueRuneSockets.clear();
+        uniqueStatBases.clear();
+        uniqueRuneEffect.clear();
         affixes.clear();
+        uniques.clear();
+        retiredUniques.clear();
+        retiredBases.clear();
+        warnings.clear();
+        runes.clear();
+        runes.putAll(Runes.load(dataFolder)); // 2026-10 符文
 
         for (final Path file : yamlFiles(dataFolder.resolve("bases"))) {
             final YamlNode root = YamlNode.load(file);
@@ -44,6 +81,9 @@ public final class ItemRepository {
                     throw new IllegalArgumentException(file.getFileName() + "：基底代號重複 " + id);
                 }
                 bases.put(id, ItemBase.parse(id, root.node(id)));
+                if (root.node(id).bool("retired", false)) {
+                    retiredBases.add(id); // 拿掉的基底（2026-10：劍、斧、匕首、爪）：舊物品照常能用，其他地方都看不到
+                }
             }
         }
         for (final Path file : yamlFiles(dataFolder.resolve("affixes"))) {
@@ -55,6 +95,57 @@ public final class ItemRepository {
                 affixes.put(id, Affix.parse(id, root.node(id)));
             }
         }
+
+        final Path uniquesFile = dataFolder.resolve("uniques.yml");
+        if (Files.exists(uniquesFile)) {
+            final YamlNode root = YamlNode.load(uniquesFile);
+            for (final String id : root.keys()) {
+                final UniqueItem unique = UniqueItem.parse(id, root.node(id), affixes);
+                if (!bases.containsKey(unique.base())) {
+                    // 基底被改名或刪掉：這件傳奇先不用，不要讓整個物品模組起不來
+                    warnings.add("uniques.yml：" + id + " 的基底 " + unique.base() + " 不存在，這件傳奇先停用");
+                    for (final String affixId : unique.affixIds()) {
+                        affixes.remove(affixId);
+                    }
+                    continue;
+                }
+                uniques.put(id, unique);
+                // 2026-10：傳奇自己的符文孔數（rune_sockets，蓋過基底的）與符文效果增加（rune_effect，%）
+                if (root.node(id).has("rune_sockets")) {
+                    uniqueRuneSockets.put(id, Math.max(0, Math.min(6, root.node(id).integer("rune_sockets", 0))));
+                }
+                final String statBase = root.node(id).string("stat_base", null);
+                if (statBase != null) {
+                    if (bases.containsKey(statBase.trim())) {
+                        uniqueStatBases.put(id, statBase.trim());
+                    } else {
+                        warnings.add("uniques.yml：" + id + " 的 stat_base " + statBase + " 不存在，改照基底本身的數值");
+                    }
+                }
+                if (root.node(id).has("rune_effect")) {
+                    uniqueRuneEffect.put(id, root.node(id).decimal("rune_effect", 0) / 100.0);
+                }
+                if (root.node(id).bool("retired", false)) {
+                    retiredUniques.add(id);
+                }
+                final Object veiledRaw = root.node(id).raw("veiled");
+                if (veiledRaw != null) {
+                    // 隱匿傳奇（劫盜，2026-10）：掉出來就帶隱匿前綴／後綴（可以寫一個或一串），找盜賊首領揭露
+                    final List<Object> entries = veiledRaw instanceof List<?> list ? new java.util.ArrayList<>(list) : List.of(veiledRaw);
+                    final List<AffixType> types = new java.util.ArrayList<>();
+                    for (final Object entry : entries) {
+                        final String type = String.valueOf(entry).trim().toLowerCase(java.util.Locale.ROOT);
+                        if (!type.equals("prefix") && !type.equals("suffix")) {
+                            throw new IllegalArgumentException("uniques.yml：" + id + ".veiled 要寫 prefix、suffix（或 [prefix, suffix]）");
+                        }
+                        types.add(type.equals("prefix") ? AffixType.PREFIX : AffixType.SUFFIX);
+                    }
+                    uniqueVeiled.put(id, List.copyOf(types));
+                }
+            }
+        }
+
+        uniqueRevision = computeUniqueRevision();
 
         final Path namesFile = dataFolder.resolve("names.yml");
         if (Files.exists(namesFile)) {
@@ -91,20 +182,60 @@ public final class ItemRepository {
         }
     }
 
-    /** 交叉檢查：每條詞綴至少能出現在一個基底上，否則多半是標籤打錯。 */
+    /**
+     * 停用的詞綴：spawn_tags 寫 [retired]，不會再擲到任何物品上，定義留著只是讓已經擲到的舊物品照常生效、顯示。
+     */
+    public static final String RETIRED_TAG = "retired";
+
+    /**
+     * 交叉檢查：每條詞綴至少能出現在一個基底上，否則多半是標籤打錯；
+     * 本地詞綴（stat 以 local. 開頭，見 {@link LocalMods}）只能用認得的屬性、只能是 INCREASED、只能出在武器上（防具上不會生效）。
+     */
     private void validate() {
         for (final Affix affix : affixes.values()) {
+            final boolean local = checkLocal("詞綴 " + affix.id(), affix.mods());
+            if (affix.spawnTags().contains(UniqueItem.SPAWN_TAG) || affix.spawnTags().contains(RETIRED_TAG)) {
+                continue; // 傳奇詞綴只在那件傳奇上；停用的詞綴不會再擲出來（只留給舊物品）
+            }
             boolean anyBase = false;
             for (final ItemBase base : bases.values()) {
                 if (affix.canSpawnOn(base)) {
                     anyBase = true;
-                    break;
+                    if (local && !base.isWeapon()) {
+                        throw new IllegalArgumentException("詞綴 " + affix.id() + " 是武器本身的詞綴（local.），卻會出在非武器的基底 "
+                                + base.id() + " 上（加 exclude_tags 或改 spawn_tags）");
+                    }
                 }
             }
             if (!anyBase) {
                 throw new IllegalArgumentException("詞綴 " + affix.id() + " 的 spawn_tags " + affix.spawnTags() + " 對不到任何基底");
             }
         }
+        for (final ItemBase base : bases.values()) {
+            if (base.implicit() != null && checkLocal("基底 " + base.id() + " 的固定詞綴", base.implicit().mods()) && !base.isWeapon()) {
+                throw new IllegalArgumentException("基底 " + base.id() + " 不是武器，固定詞綴卻用了武器本身的屬性（local.）");
+            }
+        }
+    }
+
+    /** 檢查本地屬性（local.）寫得對不對；有本地屬性回傳 true。 */
+    private static boolean checkLocal(final String where, final List<AffixMod> mods) {
+        boolean any = false;
+        for (final AffixMod mod : mods) {
+            if (!mod.isLocal() || ItemStats.UNVEILED_MAGNITUDE.equals(mod.stat())) {
+                continue; // 「增加 x% 已揭露詞綴的幅度」：不是武器本身的數值，ItemStats／LocalMods 自己處理
+            }
+            any = true;
+            if (!LocalMods.KNOWN.contains(mod.stat())) {
+                throw new IllegalArgumentException(where + "：不認得的武器本身屬性 " + mod.stat() + "（只有 "
+                        + String.join("、", new java.util.TreeSet<>(LocalMods.KNOWN)) + "）");
+            }
+            final tw.exilecore.stats.ModType expected = LocalMods.CRIT_BASE.equals(mod.stat()) ? tw.exilecore.stats.ModType.FLAT : tw.exilecore.stats.ModType.INCREASED;
+            if (mod.type() != expected) {
+                throw new IllegalArgumentException(where + "：武器本身的屬性 " + mod.stat() + " 只能用 " + expected + "，卻是 " + mod.type());
+            }
+        }
+        return any;
     }
 
     public ItemBase base(final String id) {
@@ -119,8 +250,28 @@ public final class ItemRepository {
         return base;
     }
 
+    /** 這件傳奇帶的隱匿詞綴（前綴、後綴，可能好幾條）；不是隱匿傳奇回傳空的。 */
+    public List<AffixType> uniqueVeiled(final String uniqueId) {
+        return uniqueId == null ? List.of() : uniqueVeiled.getOrDefault(uniqueId, List.of());
+    }
+
+    /** 現役的基底（拿掉的不算）。 */
     public Collection<ItemBase> bases() {
-        return Collections.unmodifiableCollection(bases.values());
+        if (retiredBases.isEmpty()) {
+            return Collections.unmodifiableCollection(bases.values());
+        }
+        final List<ItemBase> list = new ArrayList<>();
+        for (final ItemBase base : bases.values()) {
+            if (!retiredBases.contains(base.id())) {
+                list.add(base);
+            }
+        }
+        return Collections.unmodifiableList(list);
+    }
+
+    /** 拿掉的基底嗎。 */
+    public boolean retiredBase(final String id) {
+        return id != null && retiredBases.contains(id);
     }
 
     public Affix affix(final String id) {
@@ -131,12 +282,183 @@ public final class ItemRepository {
         return Collections.unmodifiableCollection(affixes.values());
     }
 
-    /** 掉落等級 ≤ 給定等級的基底。 */
+    /** 掉落等級 ≤ 給定等級的裝備基底（地圖另外掉，不在這裡；含珠寶）。 */
     public List<ItemBase> basesDroppableAt(final int level) {
         final List<ItemBase> list = new ArrayList<>();
         for (final ItemBase base : bases.values()) {
-            if (base.dropLevel() <= level) {
+            if (base.dropLevel() <= level && !base.isMap() && base.dropWeight() > 0 && !retiredBases.contains(base.id())) {
                 list.add(base);
+            }
+        }
+        return list;
+    }
+
+    /** 商人賣的、能賭的基底：能穿戴的裝備（珠寶只掉落，照 PoE2 商人不賣）。 */
+    public List<ItemBase> basesSoldAt(final int level) {
+        final List<ItemBase> list = new ArrayList<>();
+        for (final ItemBase base : bases.values()) {
+            if (base.dropLevel() <= level && base.isWearable() && !retiredBases.contains(base.id())) {
+                list.add(base);
+            }
+        }
+        return list;
+    }
+
+    /** 依掉落權重（drop_weight，珠寶比較少見）從掉得出來的基底抽一個；沒有回傳 null。 */
+    public ItemBase pickDroppable(final int level, final java.util.random.RandomGenerator random) {
+        return pickDroppable(level, random, LootBias.NONE);
+    }
+
+    /** 同上，再照職業調整（{@link LootBias}：只在同一個部位裡重新分配）。 */
+    public ItemBase pickDroppable(final int level, final java.util.random.RandomGenerator random, final LootBias bias) {
+        return pickByFamily(basesDroppableAt(level), random, bias);
+    }
+
+    /** 商人、地圖獎勵這類「一件裝備」：從買得到的基底（不含珠寶、地圖）照分類抽，再照職業調整。 */
+    public ItemBase pickSold(final int level, final java.util.random.RandomGenerator random, final LootBias bias) {
+        return pickByFamily(basesSoldAt(level), random, bias);
+    }
+
+    /**
+     * 2026-10：分階的基底（family）先照權重抽一類、再從那一類平均抽一個。
+     * 有職業調整時先照原本的權重抽部位（頭、身、主手、副手……），再在那個部位裡照調過的權重抽一類，所以各部位的比例不變。
+     */
+    public static ItemBase pickByFamily(final List<ItemBase> bases, final java.util.random.RandomGenerator random, final LootBias bias) {
+        final java.util.Map<String, List<ItemBase>> families = new java.util.LinkedHashMap<>();
+        for (final ItemBase base : bases) {
+            families.computeIfAbsent(base.family(), key -> new ArrayList<>()).add(base);
+        }
+        final java.util.Map<ItemSlot, List<List<ItemBase>>> slots = new java.util.LinkedHashMap<>();
+        final java.util.Map<ItemSlot, Double> slotWeights = new java.util.LinkedHashMap<>();
+        double total = 0;
+        for (final List<ItemBase> members : families.values()) {
+            final double weight = Math.max(0, members.getFirst().dropWeight());
+            if (weight <= 0) {
+                continue;
+            }
+            final ItemSlot slot = members.getFirst().slot();
+            slots.computeIfAbsent(slot, key -> new ArrayList<>()).add(members);
+            slotWeights.merge(slot, weight, Double::sum);
+            total += weight;
+        }
+        if (total <= 0) {
+            return null;
+        }
+        double slotPick = random.nextDouble() * total;
+        ItemSlot chosen = null;
+        for (final var entry : slotWeights.entrySet()) {
+            chosen = entry.getKey();
+            slotPick -= entry.getValue();
+            if (slotPick < 0) {
+                break;
+            }
+        }
+        final List<List<ItemBase>> group = slots.get(chosen);
+        final LootBias effective = bias == null ? LootBias.NONE : bias;
+        double groupTotal = 0;
+        final double[] weights = new double[group.size()];
+        for (int i = 0; i < group.size(); i++) {
+            final ItemBase sample = group.get(i).getFirst();
+            weights[i] = sample.dropWeight() * (effective.none() ? 1 : effective.factor(sample));
+            groupTotal += weights[i];
+        }
+        List<ItemBase> members = group.getLast();
+        if (groupTotal > 0) {
+            double pick = random.nextDouble() * groupTotal;
+            for (int i = 0; i < group.size(); i++) {
+                pick -= weights[i];
+                if (pick < 0) {
+                    members = group.get(i);
+                    break;
+                }
+            }
+        }
+        return members.get(random.nextInt(members.size()));
+    }
+
+    /** 載入時的非致命問題。 */
+    public List<String> warnings() {
+        return List.copyOf(warnings);
+    }
+
+    /** 傳奇定義的指紋（uniques.yml 的名字、詞綴、範圍改了就變）。 */
+    public int uniqueRevision() {
+        return uniqueRevision;
+    }
+
+    private int computeUniqueRevision() {
+        int hash = 1;
+        for (final UniqueItem unique : uniques.values()) {
+            hash = 31 * hash + unique.id().hashCode();
+            hash = 31 * hash + unique.name().hashCode();
+            hash = 31 * hash + unique.version();
+            for (final String affixId : unique.affixIds()) {
+                hash = 31 * hash + affixId.hashCode();
+                final Affix affix = affixes.get(affixId);
+                if (affix == null) {
+                    continue;
+                }
+                final Map<String, int[]> vars = affix.tiers().getFirst().vars();
+                for (final String key : new java.util.TreeSet<>(vars.keySet())) { // 排好序：每次啟動算出來都一樣
+                    hash = 31 * hash + key.hashCode();
+                    hash = 31 * hash + java.util.Arrays.hashCode(vars.get(key));
+                }
+            }
+        }
+        return hash;
+    }
+
+    /** 這件傳奇自己寫的符文孔數；沒寫回傳 -1（照基底）。 */
+    /** 傳奇的基底數值照哪一個基底（沒寫 stat_base 回傳 null，照它的基底）。 */
+    public ItemBase uniqueStatBase(final String id) {
+        final String baseId = id == null ? null : uniqueStatBases.get(id);
+        return baseId == null ? null : bases.get(baseId);
+    }
+
+    /** 合併掉的基底（retired ＋ merged_into）現在算哪一個；其他照原本的代號。 */
+    public String canonicalBase(final String id) {
+        final ItemBase base = id == null ? null : bases.get(id);
+        return base != null && base.mergedInto() != null && bases.containsKey(base.mergedInto()) ? base.mergedInto() : id;
+    }
+
+    public int uniqueRuneSockets(final String id) {
+        return id == null ? -1 : uniqueRuneSockets.getOrDefault(id, -1);
+    }
+
+    /** 這件傳奇嵌的符文效果增加（小數；0 = 沒有）。 */
+    public double uniqueRuneEffect(final String id) {
+        return id == null ? 0 : uniqueRuneEffect.getOrDefault(id, 0.0);
+    }
+
+    public UniqueItem unique(final String id) {
+        return id == null ? null : uniques.get(id);
+    }
+
+    /** 現役的傳奇（退役的不算：掉落、圖鑑、兌換券、僥倖石都只看這些）。 */
+    public Collection<UniqueItem> uniques() {
+        if (retiredUniques.isEmpty()) {
+            return Collections.unmodifiableCollection(uniques.values());
+        }
+        final List<UniqueItem> list = new ArrayList<>();
+        for (final UniqueItem unique : uniques.values()) {
+            if (!retiredUniques.contains(unique.id())) {
+                list.add(unique);
+            }
+        }
+        return Collections.unmodifiableList(list);
+    }
+
+    /** 退役的傳奇（2026-10 PoE2 改版）：玩家手上的會換成傳奇兌換券。 */
+    public boolean retiredUnique(final String id) {
+        return id != null && retiredUniques.contains(id);
+    }
+
+    /** 這個來源（final、map_boss、地圖代號）會掉的傳奇，物品等級要夠。 */
+    public List<UniqueItem> uniquesFor(final String source, final int itemLevel) {
+        final List<UniqueItem> list = new ArrayList<>();
+        for (final UniqueItem unique : uniques.values()) {
+            if (unique.droppedBy(source) && unique.dropLevel() <= itemLevel && unique.weight() > 0) {
+                list.add(unique);
             }
         }
         return list;
@@ -148,7 +470,8 @@ public final class ItemRepository {
 
     /** 稀有名字的後綴，依基底分類（weapon／armour／jewellery）；沒有就退回 default。 */
     public List<String> rareNameSuffixes(final ItemBase base) {
-        final String category = base.isWeapon() ? "weapon" : base.isJewellery() ? "jewellery" : "armour";
+        final String category = base.isMap() ? "map" : base.isJewel() ? "jewel" : base.isWeapon() ? "weapon"
+                : base.isJewellery() ? "jewellery" : "armour";
         final List<String> list = rareNameSuffixes.get(category);
         if (list != null && !list.isEmpty()) {
             return list;

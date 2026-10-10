@@ -1,0 +1,138 @@
+# 每日委託、每週回響、功勳兌換。改完在遊戲內 /ec reload。
+#
+# 都是整個帳號共用的：同一個帳號的哪個角色做都算，完成時給「功勳」（帳號共用、不能交易）與經驗（給完成的那個角色）。
+# 不給通貨、不給金幣（不會增加市場上的東西）。功勳在營地的軍需官（quests.yml 的 ji_heng）換便利品。
+# 每天 0 點換一批每日委託、每週一 0 點換一週（伺服器的時區）。
+
+settings:
+  # 擊殺、撿東西、打 Boss、完成地圖只算「怪物等級 ≥ 角色等級 − 這個值」的（不能回新手區刷）
+  level_gap: 10
+  # 委託與回響給的經驗是「升到下一級所需經驗」的百分之幾；角色超過這個等級時，照這一級的升級經驗算
+  # （高等級的經驗主要靠打怪：99 級完成一個 15% 的委託，大約是打七張 T16 地圖的經驗）。0 = 不限。
+  experience_level_cap: 60
+
+# ---- 每日委託 ----
+# 每天從下面抽 count 個（不重複，照 weight 的權重）；要完成地圖的（maps）只有能跑地圖的角色抽得到
+# （打倒過霜頂山脈的 Boss，或完成過任何一張地圖）。抽好的那一批當天不會變。
+#   text        委託的說明（{count} 換成數量、{item} 換成東西的名字；任務追蹤一行最多 18 個字）
+#   目標（四選一）：
+#     kill      { count: 數量, rarity: any|magic|rare }   擊殺（magic = 魔法以上、rare = 稀有以上）
+#     collect   { count, item: 名字, chance: 普通怪的機率, rarity }   從怪物身上撿回東西（魔法怪 2 倍、稀有以上必掉，不佔背包）
+#     boss      { count }   打倒 Boss（區域 Boss、地圖 Boss、回響都算）
+#     maps      { count }   完成地圖（地圖 Boss 倒下時在地圖裡）
+#   merits      完成給的功勳
+#   experience  完成給的經驗：升到下一級所需經驗的百分之幾（超過 settings.experience_level_cap 級照那一級算；滿級沒有）
+daily:
+  count: 3
+  templates:
+    slayer:
+      text: 擊殺 {count} 隻怪物
+      kill: { count: 150 }
+      merits: 15
+      experience: 15
+      weight: 10
+    elites:
+      text: 擊殺 {count} 隻魔法以上的怪物
+      kill: { count: 30, rarity: magic }
+      merits: 15
+      experience: 15
+      weight: 8
+    hunter:
+      text: 擊殺 {count} 隻稀有怪物
+      kill: { count: 8, rarity: rare }
+      merits: 20
+      experience: 20
+      weight: 8
+    shards:
+      text: 撿回 {count} 片{item}
+      collect: { count: 12, item: 星骸碎屑, chance: 0.06 }
+      merits: 15
+      experience: 15
+      weight: 8
+    warden:
+      text: 打倒 {count} 個 Boss
+      boss: { count: 1 }
+      merits: 20
+      experience: 20
+      weight: 6
+    cartographer:
+      text: 完成 {count} 張地圖
+      maps: { count: 2 }
+      merits: 25
+      experience: 10
+      weight: 8
+
+# ---- 每週回響 ----
+# 星骸記得它吞下過的東西：打倒過的區域 Boss 會以「回響」回來，比原本強。
+# 在委託板選一隻你這個角色打倒過的 Boss，地圖裝置後面的傳送門就會打開一張只有它的短地圖（自己或隊伍）；
+# 打倒它，每個帳號每週一次拿 merits 功勳與經驗。開回響會關掉你目前那張地圖的傳送門（裡面的人可以打完再出來）。
+# 怪物等級 = 那個區域的最高等級與你的等級，取高的（升級中的角色也能打，滿級的人打起來一樣吃力）。
+weekly:
+  enabled: true
+  merits: 120
+  experience: 60            # 升到下一級所需經驗的百分之幾（跟委託一樣，超過 experience_level_cap 級照那一級算）
+  prefix: 回響・             # Boss 名字前面加的字
+  life: 10                  # 生命：區域 Boss 的幾倍（2026-10：改照人均單體 10 萬 DPS：約 30 秒；15 萬時 15）
+  damage: 1.25              # 傷害：區域 Boss 的幾倍
+  scale: 1.15               # 體型：區域 Boss 的幾倍
+  mods: [deadly]            # 多加的怪物詞綴（monsters.yml 的 mods）
+  quantity: 100             # 回響 Boss 的物品數量 +100%（路上的怪照一般掉；不掉地圖）
+  rarity: 50                # 回響 Boss 的物品稀有度 +50%
+  rooms: 5                  # 版面大約幾個房間（含起點與 Boss 房，5–12）
+  attempts: 3               # 每週最多開幾次（打倒前可以重開，例如全倒了；打倒就算這週完成）
+  cooldown_seconds: 60      # 開了一張之後多久才能再開
+  lore: 星骸記得它吞下過的東西，也記得是誰把它打倒的。
+  themes:                   # 每個區域的回響用哪種版面（maps.yml 的主題）
+    coast: beach
+    forest: forest
+    ruins: ruins
+    swamp: swamp
+    mountain: snow
+  phase:                    # 血量掉到一半：叫出那個區域的怪、變強、變快
+    at: 0.5
+    name: 共鳴
+    message: 星骸的光從牠身上湧出來，牠想起了被打倒的那一天。
+    summon: 3
+    speed: 0.15
+    stats:
+      - { stat: damage, type: INCREASED, value: 30 }
+
+# ---- 功勳兌換（營地的軍需官）----
+# 都是便利品：不賣通貨、不賣金幣。
+shop:
+  enabled: true
+  stash_pages: [200, 300, 400, 500]     # 多一頁倉庫（帳號共用）：第 1、2、3、4 頁的價格
+  character_slots: [300, 500, 800]      # 多一個角色格（帳號共用；基本格數在 character.yml）：第 1、2、3 個的價格
+  flask: 10                             # 這個等級最好的生命或魔力藥劑一瓶
+  fragment: { price: 150, weekly: 2 }   # 天穹碎片（開終局用），每週最多換 2 片
+  # 鑰匙類通貨（2026-10）：currency 通貨代號、price 一個多少功勳、weekly 每週最多換幾個、note 說明（選單上顯示）
+  keys:
+    - { currency: abyss_core,       price: 400, weekly: 1, note: "開極境用（地圖裝置選終局，放進去）" }
+    - { currency: heist_blueprint,  price: 200, weekly: 2, note: "營地的盜賊首領：開大劫盜（三處據點連著打）" }
+    - { currency: heist_finale_key, price: 600, weekly: 1, note: "營地的盜賊首領：開劫盜終局「金庫之主」" }
+  # 稱號：TAB 列表與聊天時名字前面（買過就是帳號的，隨時換）。
+  # stats：擁有就有的永久加成（像分身獎勵：帳號裡每個角色都有，不用戴；好幾個稱號的加成會疊）。
+  #   寫法跟 ascendancy.yml 的昇華天賦一樣（{ stat, type, value, tags }；能用的屬性見 data/README.md「昇華、分身獎勵與稱號的屬性」）。
+  titles:
+    exile:      { name: 流放者,   price: 50,   color: "#b0b0b0", stats: [ { stat: life.max, value: 10 } ] }
+    hand:       { name: 營地幫手, price: 120,  color: "#e8e8e8", stats: [ { stat: flask.life_recovery, type: INCREASED, value: 6 } ] }
+    hunter:     { name: 星痕獵人, price: 300,  color: "#7fd4ff", stats: [ { stat: drop.rarity, type: INCREASED, value: 3 } ] }
+    echo:       { name: 回響征服者, price: 600, color: "#c77dff",
+                  stats: [ { stat: resist.fire, value: 3 }, { stat: resist.cold, value: 3 }, { stat: resist.lightning, value: 3 } ] }
+    skywalker:  { name: 天穹行者, price: 1000, color: "#f5b942", stats: [ { stat: movement.speed, type: INCREASED, value: 3 } ] }
+    starlord:   { name: 星骸之主, price: 2000, color: "#ff8a3d", stats: [ { stat: damage, type: INCREASED, value: 4 } ] }
+
+# ---- 擊殺稱號（2026-10）----
+# 同一個帳號打倒這隻 Boss kills 次就發（倒下時在裡面的人各記一次，整個帳號一起算）；拿到就戴上，擁有就有 stats 的永久加成。
+# 鍵是 maps.yml 的終局代號（只算極境）；heist_finale 是劫盜終局的金庫之主。id 是稱號代號（不寫是 kill_鍵）。
+boss_titles:
+  sky_crucible:  { id: kill_emperor, boss_name: 極境・曜帝,     name: 弒帝者,     kills: 100, color: "#f5b942",
+                   stats: [ { stat: damage, type: INCREASED, value: 5 } ] }
+  frost_throne:  { id: kill_queen,   boss_name: 極境・永凍女王, name: 碎冰王冠,   kills: 100, color: "#9fe3ff",
+                   stats: [ { stat: resist.cold, value: 8 }, { stat: life.max, type: INCREASED, value: 3 } ] }
+  bone_throne:   { id: kill_ferry,   boss_name: 極境・冥河渡者, name: 渡魂之人,   kills: 100, color: "#b48cff",
+                   stats: [ { stat: life.max, type: INCREASED, value: 5 } ] }
+  ember_citadel: { id: kill_general, boss_name: 極境・焚天將軍, name: 熄滅焚天者, kills: 100, color: "#ff7a3d",
+                   stats: [ { stat: resist.fire, value: 8 }, { stat: damage, type: INCREASED, value: 3 } ] }
+  heist_finale:  { id: kill_vault,   boss_name: 金庫之主,       name: 萬鎖破除者, kills: 100, color: "#ffd24a",
+                   stats: [ { stat: drop.rarity, type: INCREASED, value: 5 } ] }

@@ -1,200 +1,1867 @@
-# 後綴詞綴。names 依階級 1（最強）→ N；tiers 的 ilvl 是需要的最低物品等級，weight 是權重。
-# text 裡的 {value} / {min} / {max} 是 tiers 裡的變數；mods 的 value 用同名變數。
+# 後綴詞綴。格式同 prefixes.yml。
+#
+# 2026-10 PoE2 改版：可以擲出的詞綴全部照 PoE2（0.5）的詞綴池、部位與數值；原本的改成 [retired]（舊物品照常生效）。
 
-resist_fire:
-  type: suffix
-  group: resist_fire
-  spawn_tags: [armour, shield, jewellery]
-  names: [之炎神, 之火龍, 之烈焰, 之火焰, 之火花, 之餘燼]
-  text: "+{value}% 火焰抗性"
-  tiers:
-    - { tier: 1, ilvl: 60, weight: 150, value: [42, 48] }
-    - { tier: 2, ilvl: 48, weight: 300, value: [35, 41] }
-    - { tier: 3, ilvl: 36, weight: 600, value: [28, 33] }
-    - { tier: 4, ilvl: 24, weight: 900, value: [20, 26] }
-    - { tier: 5, ilvl: 12, weight: 1000, value: [13, 18] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [6, 11] }
-  mods:
-    - { stat: resist.fire, type: FLAT, value: "{value}" }
-
-resist_cold:
-  type: suffix
-  group: resist_cold
-  spawn_tags: [armour, shield, jewellery]
-  names: [之冰神, 之冰龍, 之冰川, 之寒霜, 之冰晶, 之霜]
-  text: "+{value}% 冰冷抗性"
-  tiers:
-    - { tier: 1, ilvl: 60, weight: 150, value: [42, 48] }
-    - { tier: 2, ilvl: 48, weight: 300, value: [35, 41] }
-    - { tier: 3, ilvl: 36, weight: 600, value: [28, 33] }
-    - { tier: 4, ilvl: 24, weight: 900, value: [20, 26] }
-    - { tier: 5, ilvl: 12, weight: 1000, value: [13, 18] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [6, 11] }
-  mods:
-    - { stat: resist.cold, type: FLAT, value: "{value}" }
-
-resist_lightning:
-  type: suffix
-  group: resist_lightning
-  spawn_tags: [armour, shield, jewellery]
-  names: [之雷神, 之雷龍, 之雷暴, 之閃電, 之電弧, 之靜電]
-  text: "+{value}% 閃電抗性"
-  tiers:
-    - { tier: 1, ilvl: 60, weight: 150, value: [42, 48] }
-    - { tier: 2, ilvl: 48, weight: 300, value: [35, 41] }
-    - { tier: 3, ilvl: 36, weight: 600, value: [28, 33] }
-    - { tier: 4, ilvl: 24, weight: 900, value: [20, 26] }
-    - { tier: 5, ilvl: 12, weight: 1000, value: [13, 18] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [6, 11] }
-  mods:
-    - { stat: resist.lightning, type: FLAT, value: "{value}" }
-
-resist_chaos:
-  type: suffix
-  group: resist_chaos
-  spawn_tags: [armour, shield, jewellery]
-  names: [之淨化, 之驅邪, 之抗毒, 之解毒]
-  text: "+{value}% 混沌抗性"
-  tiers:
-    - { tier: 1, ilvl: 50, weight: 250, value: [26, 35] }
-    - { tier: 2, ilvl: 32, weight: 500, value: [19, 27] }
-    - { tier: 3, ilvl: 16, weight: 800, value: [12, 18] }
-    - { tier: 4, ilvl: 1, weight: 1000, value: [5, 10] }
-  mods:
-    - { stat: resist.chaos, type: FLAT, value: "{value}" }
-
-resist_all:
-  type: suffix
-  group: resist_all
-  spawn_tags: [armour, shield, jewellery]
-  names: [之彩虹, 之稜鏡, 之光譜, 之水晶]
-  text: "+{value}% 全部元素抗性"
-  tiers:
-    - { tier: 1, ilvl: 50, weight: 250, value: [15, 18] }
-    - { tier: 2, ilvl: 32, weight: 500, value: [11, 14] }
-    - { tier: 3, ilvl: 16, weight: 800, value: [7, 9] }
-    - { tier: 4, ilvl: 1, weight: 1000, value: [3, 5] }
-  mods:
-    - { stat: resist.fire, type: FLAT, value: "{value}" }
-    - { stat: resist.cold, type: FLAT, value: "{value}" }
-    - { stat: resist.lightning, type: FLAT, value: "{value}" }
-
-str_flat:
-  type: suffix
-  group: attr_str
-  spawn_tags: [armour, shield, jewellery, weapon]
-  names: [之泰坦, 之巨人, 之猛獸, 之熊, 之公牛, 之野豬]
-  text: "+{value} 力量"
-  tiers:
-    - { tier: 1, ilvl: 60, weight: 150, value: [43, 50] }
-    - { tier: 2, ilvl: 48, weight: 300, value: [36, 42] }
-    - { tier: 3, ilvl: 36, weight: 600, value: [29, 35] }
-    - { tier: 4, ilvl: 24, weight: 900, value: [22, 27] }
-    - { tier: 5, ilvl: 12, weight: 1000, value: [15, 20] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [8, 12] }
-  mods:
-    - { stat: attr.str, type: FLAT, value: "{value}" }
-
-dex_flat:
-  type: suffix
-  group: attr_dex
-  spawn_tags: [armour, shield, jewellery, weapon]
-  names: [之疾風, 之獵豹, 之獵鷹, 之狐狸, 之山貓, 之羚羊]
-  text: "+{value} 敏捷"
-  tiers:
-    - { tier: 1, ilvl: 60, weight: 150, value: [43, 50] }
-    - { tier: 2, ilvl: 48, weight: 300, value: [36, 42] }
-    - { tier: 3, ilvl: 36, weight: 600, value: [29, 35] }
-    - { tier: 4, ilvl: 24, weight: 900, value: [22, 27] }
-    - { tier: 5, ilvl: 12, weight: 1000, value: [15, 20] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [8, 12] }
-  mods:
-    - { stat: attr.dex, type: FLAT, value: "{value}" }
-
-int_flat:
-  type: suffix
-  group: attr_int
-  spawn_tags: [armour, shield, jewellery, weapon]
-  names: [之賢者, 之先知, 之學者, 之智者, 之學生, 之貓頭鷹]
-  text: "+{value} 智慧"
-  tiers:
-    - { tier: 1, ilvl: 60, weight: 150, value: [43, 50] }
-    - { tier: 2, ilvl: 48, weight: 300, value: [36, 42] }
-    - { tier: 3, ilvl: 36, weight: 600, value: [29, 35] }
-    - { tier: 4, ilvl: 24, weight: 900, value: [22, 27] }
-    - { tier: 5, ilvl: 12, weight: 1000, value: [15, 20] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [8, 12] }
-  mods:
-    - { stat: attr.int, type: FLAT, value: "{value}" }
+# ======== PoE2 詞綴 ========
 
 all_attr:
   type: suffix
-  group: attr_all
-  spawn_tags: [jewellery, body]
-  names: [之眾神, 之英雄, 之戰士, 之新兵]
+  group: all_attributes
+  spawn_tags: [amulet]
+  names: [之星骸, 之完美, 之全能, 之均衡, 之和諧, 之平衡, 之調和, 之初衡, 之平凡]
   text: "+{value} 全部屬性"
   tiers:
-    - { tier: 1, ilvl: 50, weight: 250, value: [16, 20] }
-    - { tier: 2, ilvl: 32, weight: 500, value: [12, 15] }
-    - { tier: 3, ilvl: 16, weight: 800, value: [8, 11] }
-    - { tier: 4, ilvl: 1, weight: 1000, value: [4, 6] }
+    - { tier: 1, ilvl: 82, weight: 168, value: [23, 24] }
+    - { tier: 2, ilvl: 75, weight: 210, value: [21, 22] }
+    - { tier: 3, ilvl: 66, weight: 262, value: [19, 20] }
+    - { tier: 4, ilvl: 55, weight: 328, value: [17, 18] }
+    - { tier: 5, ilvl: 44, weight: 410, value: [14, 16] }
+    - { tier: 6, ilvl: 33, weight: 512, value: [11, 13] }
+    - { tier: 7, ilvl: 22, weight: 640, value: [8, 10] }
+    - { tier: 8, ilvl: 11, weight: 800, value: [5, 7] }
+    - { tier: 9, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
     - { stat: attr.str, type: FLAT, value: "{value}" }
     - { stat: attr.dex, type: FLAT, value: "{value}" }
     - { stat: attr.int, type: FLAT, value: "{value}" }
 
+all_attr_ring:
+  type: suffix
+  group: all_attributes
+  spawn_tags: [ring]
+  names: [之星骸, 之完美, 之全能, 之均衡]
+  text: "+{value} 全部屬性"
+  tiers:
+    - { tier: 1, ilvl: 33, weight: 512, value: [11, 13] }
+    - { tier: 2, ilvl: 22, weight: 640, value: [8, 10] }
+    - { tier: 3, ilvl: 11, weight: 800, value: [5, 7] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [2, 4] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+resist_all:
+  type: suffix
+  group: all_resistances
+  spawn_tags: [amulet]
+  names: [之星骸, 之元素, 之三相, 之稜鏡, 之虹光, 之多彩]
+  text: "+{value}% 全部元素抗性"
+  tiers:
+    - { tier: 1, ilvl: 80, weight: 328, value: [17, 18] }
+    - { tier: 2, ilvl: 68, weight: 410, value: [15, 16] }
+    - { tier: 3, ilvl: 54, weight: 512, value: [12, 14] }
+    - { tier: 4, ilvl: 40, weight: 640, value: [9, 11] }
+    - { tier: 5, ilvl: 26, weight: 800, value: [6, 8] }
+    - { tier: 6, ilvl: 12, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+resist_all_ring:
+  type: suffix
+  group: all_resistances
+  spawn_tags: [ring]
+  names: [之星骸, 之元素, 之三相, 之稜鏡, 之虹光]
+  text: "+{value}% 全部元素抗性"
+  tiers:
+    - { tier: 1, ilvl: 68, weight: 410, value: [15, 16] }
+    - { tier: 2, ilvl: 54, weight: 512, value: [12, 14] }
+    - { tier: 3, ilvl: 40, weight: 640, value: [9, 11] }
+    - { tier: 4, ilvl: 26, weight: 800, value: [6, 8] }
+    - { tier: 5, ilvl: 12, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+minion_crit:
+  type: suffix
+  group: allies_in_presence_critical_strike_chance
+  spawn_tags: [sceptre]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "增加 {value}% 召喚物暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 76, weight: 328, value: [35, 38] }
+    - { tier: 2, ilvl: 59, weight: 410, value: [30, 34] }
+    - { tier: 3, ilvl: 41, weight: 512, value: [25, 29] }
+    - { tier: 4, ilvl: 28, weight: 640, value: [20, 24] }
+    - { tier: 5, ilvl: 21, weight: 800, value: [15, 19] }
+    - { tier: 6, ilvl: 11, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [minion] }
+
+minion_crit_bonus:
+  type: suffix
+  group: allies_in_presence_critical_strike_multiplier
+  spawn_tags: [sceptre]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "增加 {value}% 召喚物暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 73, weight: 328, value: [35, 39] }
+    - { tier: 2, ilvl: 59, weight: 410, value: [30, 34] }
+    - { tier: 3, ilvl: 44, weight: 512, value: [25, 29] }
+    - { tier: 4, ilvl: 30, weight: 640, value: [20, 24] }
+    - { tier: 5, ilvl: 21, weight: 800, value: [15, 19] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [minion] }
+
+minion_speed:
+  type: suffix
+  group: allies_in_presence_increased_attack_speed
+  spawn_tags: [sceptre]
+  names: [之星骸, 之神速, 之疾風, 之迅捷]
+  text: "增加 {value}% 召喚物攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 512, value: [14, 16] }
+    - { tier: 2, ilvl: 35, weight: 640, value: [11, 13] }
+    - { tier: 3, ilvl: 20, weight: 800, value: [8, 10] }
+    - { tier: 4, ilvl: 5, weight: 1000, value: [5, 7] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
+
+minion_cast_speed:
+  type: suffix
+  group: allies_in_presence_increased_cast_speed
+  spawn_tags: [sceptre]
+  names: [之星骸, 之神速, 之疾風, 之迅捷]
+  text: "增加 {value}% 召喚物施法速度"
+  tiers:
+    - { tier: 1, ilvl: 56, weight: 512, value: [17, 20] }
+    - { tier: 2, ilvl: 36, weight: 640, value: [13, 16] }
+    - { tier: 3, ilvl: 21, weight: 800, value: [9, 12] }
+    - { tier: 4, ilvl: 6, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: cast.speed, type: INCREASED, value: "{value}", tags: [minion] }
+
+armour_elemental:
+  type: suffix
+  group: armour_applies_to_elemental_damage
+  spawn_tags: [str_dex_armour, str_only, str_int_armour]
+  exclude_tags: [body, shield]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "護甲的 {value}% 也套用在元素傷害上"
+  tiers:
+    - { tier: 1, ilvl: 66, weight: 410, value: [38, 43] }
+    - { tier: 2, ilvl: 48, weight: 512, value: [32, 37] }
+    - { tier: 3, ilvl: 36, weight: 640, value: [26, 31] }
+    - { tier: 4, ilvl: 16, weight: 800, value: [20, 25] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [14, 19] }
+  mods:
+    - { stat: armour.elemental, type: FLAT, value: "{value}" }
+
+armour_elemental_body:
+  type: suffix
+  group: armour_applies_to_elemental_damage
+  spawn_tags: [str_dex_armour, str_only, str_int_armour]
+  exclude_tags: [boots, helmet, leggings]   # 2026-10：胸甲與盾（PoE2 的 81 級那一階只有這兩種有）
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良, 之優質]
+  text: "護甲的 {value}% 也套用在元素傷害上"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 328, value: [44, 50] }
+    - { tier: 2, ilvl: 66, weight: 410, value: [38, 43] }
+    - { tier: 3, ilvl: 48, weight: 512, value: [32, 37] }
+    - { tier: 4, ilvl: 36, weight: 640, value: [26, 31] }
+    - { tier: 5, ilvl: 16, weight: 800, value: [20, 25] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [14, 19] }
+  mods:
+    - { stat: armour.elemental, type: FLAT, value: "{value}" }
+
+attack_crit_chance:
+  type: suffix
+  group: attack_critical_strike_chance
+  spawn_tags: [quiver]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "增加 {value}% 攻擊暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 328, value: [35, 38] }
+    - { tier: 2, ilvl: 58, weight: 410, value: [30, 34] }
+    - { tier: 3, ilvl: 44, weight: 512, value: [25, 29] }
+    - { tier: 4, ilvl: 30, weight: 640, value: [20, 24] }
+    - { tier: 5, ilvl: 20, weight: 800, value: [15, 19] }
+    - { tier: 6, ilvl: 5, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
+
+attack_crit_bonus:
+  type: suffix
+  group: attack_critical_strike_multiplier
+  spawn_tags: [quiver]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "增加 {value}% 攻擊暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 74, weight: 328, value: [35, 39] }
+    - { tier: 2, ilvl: 59, weight: 410, value: [30, 34] }
+    - { tier: 3, ilvl: 45, weight: 512, value: [25, 29] }
+    - { tier: 4, ilvl: 31, weight: 640, value: [20, 24] }
+    - { tier: 5, ilvl: 21, weight: 800, value: [15, 19] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [attack] }
+
+resist_chaos:
+  type: suffix
+  group: chaos_resistance
+  spawn_tags: [amulet, belt, body, boots, helmet, leggings, ring, shield]
+  names: [之星蝕, 之淨化, 之抗蝕, 之解毒, 之清明, 之潔淨]
+  text: "+{value}% 混沌抗性"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 328, value: [24, 27] }
+    - { tier: 2, ilvl: 68, weight: 410, value: [20, 23] }
+    - { tier: 3, ilvl: 56, weight: 512, value: [16, 19] }
+    - { tier: 4, ilvl: 44, weight: 640, value: [12, 15] }
+    - { tier: 5, ilvl: 30, weight: 800, value: [8, 11] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [4, 7] }
+  mods:
+    - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+resist_cold:
+  type: suffix
+  group: cold_resistance
+  spawn_tags: [amulet, belt, body, boots, helmet, leggings, ring, shield]
+  names: [之星霜, 之冰心, 之霜盾, 之耐寒, 之冰紋, 之冬衣, 之雪痕, 之涼意]
+  text: "+{value}% 冰冷抗性"
+  tiers:
+    - { tier: 1, ilvl: 82, weight: 210, value: [41, 45] }
+    - { tier: 2, ilvl: 71, weight: 262, value: [36, 40] }
+    - { tier: 3, ilvl: 60, weight: 328, value: [31, 35] }
+    - { tier: 4, ilvl: 50, weight: 410, value: [26, 30] }
+    - { tier: 5, ilvl: 38, weight: 512, value: [21, 25] }
+    - { tier: 6, ilvl: 26, weight: 640, value: [16, 20] }
+    - { tier: 7, ilvl: 14, weight: 800, value: [11, 15] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [6, 10] }
+  mods:
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+crit_chance:
+  type: suffix
+  group: critical_strike_chance
+  spawn_tags: [helmet]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意]
+  text: "增加 {value}% 暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 58, weight: 410, value: [30, 34] }
+    - { tier: 2, ilvl: 44, weight: 512, value: [25, 29] }
+    - { tier: 3, ilvl: 30, weight: 640, value: [20, 24] }
+    - { tier: 4, ilvl: 20, weight: 800, value: [15, 19] }
+    - { tier: 5, ilvl: 5, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}" }
+
+crit_chance_amulet:
+  type: suffix
+  group: critical_strike_chance
+  spawn_tags: [amulet]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "增加 {value}% 暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 328, value: [35, 38] }
+    - { tier: 2, ilvl: 58, weight: 410, value: [30, 34] }
+    - { tier: 3, ilvl: 44, weight: 512, value: [25, 29] }
+    - { tier: 4, ilvl: 30, weight: 640, value: [20, 24] }
+    - { tier: 5, ilvl: 20, weight: 800, value: [15, 19] }
+    - { tier: 6, ilvl: 5, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}" }
+
+crit_bonus:
+  type: suffix
+  group: critical_strike_multiplier
+  spawn_tags: [leggings]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意]
+  text: "增加 {value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 59, weight: 410, value: [30, 34] }
+    - { tier: 2, ilvl: 45, weight: 512, value: [25, 29] }
+    - { tier: 3, ilvl: 31, weight: 640, value: [20, 24] }
+    - { tier: 4, ilvl: 21, weight: 800, value: [15, 19] }
+    - { tier: 5, ilvl: 8, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}" }
+
+crit_bonus_amulet:
+  type: suffix
+  group: critical_strike_multiplier
+  spawn_tags: [amulet]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "增加 {value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 74, weight: 328, value: [35, 39] }
+    - { tier: 2, ilvl: 59, weight: 410, value: [30, 34] }
+    - { tier: 3, ilvl: 45, weight: 512, value: [25, 29] }
+    - { tier: 4, ilvl: 31, weight: 640, value: [20, 24] }
+    - { tier: 5, ilvl: 21, weight: 800, value: [15, 19] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}" }
+
+life_recoup:
+  type: suffix
+  group: damage_taken_gained_as_life
+  spawn_tags: [amulet]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合]
+  text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
+  tiers:
+    - { tier: 1, ilvl: 79, weight: 410, value: [22, 24] }
+    - { tier: 2, ilvl: 68, weight: 512, value: [19, 21] }
+    - { tier: 3, ilvl: 56, weight: 640, value: [16, 18] }
+    - { tier: 4, ilvl: 44, weight: 800, value: [13, 15] }
+    - { tier: 5, ilvl: 30, weight: 1000, value: [10, 12] }
+  mods:
+    - { stat: life.recoup, type: FLAT, value: "{value}" }
+
+dex_flat:
+  type: suffix
+  group: dexterity
+  spawn_tags: [amulet, bow, claw, crossbow, dagger, dex_int_armour, dex_only, quarterstaff, quiver, ring, spear, str_dex_armour, sword]
+  exclude_tags: [leggings]
+  names: [之星骸飛鷹, 之風, 之獵豹, 之狐, 之猞猁, 之貓, 之鼠, 之兔]
+  text: "+{value} 敏捷"
+  tiers:
+    - { tier: 1, ilvl: 74, weight: 210, value: [31, 33] }
+    - { tier: 2, ilvl: 66, weight: 262, value: [28, 30] }
+    - { tier: 3, ilvl: 55, weight: 328, value: [25, 27] }
+    - { tier: 4, ilvl: 44, weight: 410, value: [21, 24] }
+    - { tier: 5, ilvl: 33, weight: 512, value: [17, 20] }
+    - { tier: 6, ilvl: 22, weight: 640, value: [13, 16] }
+    - { tier: 7, ilvl: 11, weight: 800, value: [9, 12] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+
+dex_flat_legs:
+  type: suffix
+  group: dexterity
+  spawn_tags: [leggings]
+  names: [之星骸飛鷹, 之風, 之獵豹, 之狐, 之猞猁, 之貓, 之鼠, 之兔, 之平凡]
+  text: "+{value} 敏捷"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 168, value: [34, 36] }
+    - { tier: 2, ilvl: 74, weight: 210, value: [31, 33] }
+    - { tier: 3, ilvl: 66, weight: 262, value: [28, 30] }
+    - { tier: 4, ilvl: 55, weight: 328, value: [25, 27] }
+    - { tier: 5, ilvl: 44, weight: 410, value: [21, 24] }
+    - { tier: 6, ilvl: 33, weight: 512, value: [17, 20] }
+    - { tier: 7, ilvl: 22, weight: 640, value: [13, 16] }
+    - { tier: 8, ilvl: 11, weight: 800, value: [9, 12] }
+    - { tier: 9, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+
+es_recharge:
+  type: suffix
+  group: energy_shield_regeneration
+  spawn_tags: [dex_int_armour, int_only, str_int_armour]
+  exclude_tags: [body, shield]
+  names: [之星骸]
+  text: "增加 {value}% 能量護盾回充速度"
+  tiers:
+    - { tier: 1, ilvl: 48, weight: 1000, value: [16, 19] }
+  mods:
+    - { stat: es.recharge, type: INCREASED, value: "{value}" }
+
+es_recharge_body:
+  type: suffix
+  group: energy_shield_regeneration
+  spawn_tags: [dex_int_armour, int_only, str_int_armour]
+  exclude_tags: [boots, helmet, leggings]
+  names: [之星骸, 之永生, 之再生]
+  text: "增加 {value}% 能量護盾回充速度"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 640, value: [24, 27] }
+    - { tier: 2, ilvl: 66, weight: 800, value: [20, 23] }
+    - { tier: 3, ilvl: 48, weight: 1000, value: [16, 19] }
+  mods:
+    - { stat: es.recharge, type: INCREASED, value: "{value}" }
+
+resist_fire:
+  type: suffix
+  group: fire_resistance
+  spawn_tags: [amulet, belt, body, boots, helmet, leggings, ring, shield]
+  names: [之星焰, 之熔心, 之焰盾, 之耐火, 之火紋, 之焦土, 之炭痕, 之暖意]
+  text: "+{value}% 火焰抗性"
+  tiers:
+    - { tier: 1, ilvl: 82, weight: 210, value: [41, 45] }
+    - { tier: 2, ilvl: 71, weight: 262, value: [36, 40] }
+    - { tier: 3, ilvl: 60, weight: 328, value: [31, 35] }
+    - { tier: 4, ilvl: 48, weight: 410, value: [26, 30] }
+    - { tier: 5, ilvl: 36, weight: 512, value: [21, 25] }
+    - { tier: 6, ilvl: 24, weight: 640, value: [16, 20] }
+    - { tier: 7, ilvl: 12, weight: 800, value: [11, 15] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [6, 10] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+
+freeze_buildup:
+  type: suffix
+  group: freeze_damage_increase
+  spawn_tags: [staff, wand]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "增加 {value}% 凍結累積"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 410, value: [71, 80] }
+    - { tier: 2, ilvl: 60, weight: 512, value: [61, 70] }
+    - { tier: 3, ilvl: 45, weight: 640, value: [51, 60] }
+    - { tier: 4, ilvl: 30, weight: 800, value: [41, 50] }
+    - { tier: 5, ilvl: 15, weight: 1000, value: [31, 40] }
+  mods:
+    - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+
+skill_level_chaos:
+  type: suffix
+  group: global_increase_chaos_spell_skill_gem_level_weapon
+  spawn_tags: [wand]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "+{value} 全部混沌法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 410, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 512, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 640, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, chaos] }
+
+skill_level_chaos_staff:
+  type: suffix
+  group: global_increase_chaos_spell_skill_gem_level_weapon
+  spawn_tags: [staff]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "+{value} 全部混沌法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 410, value: [7, 7] }
+    - { tier: 2, ilvl: 55, weight: 512, value: [5, 6] }
+    - { tier: 3, ilvl: 36, weight: 640, value: [3, 4] }
+    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, chaos] }
+
+skill_level_cold:
+  type: suffix
+  group: global_increase_cold_spell_skill_gem_level_weapon
+  spawn_tags: [wand]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "+{value} 全部冰冷法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 410, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 512, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 640, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, cold] }
+
+skill_level_cold_staff:
+  type: suffix
+  group: global_increase_cold_spell_skill_gem_level_weapon
+  spawn_tags: [staff]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "+{value} 全部冰冷法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 410, value: [7, 7] }
+    - { tier: 2, ilvl: 55, weight: 512, value: [5, 6] }
+    - { tier: 3, ilvl: 36, weight: 640, value: [3, 4] }
+    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, cold] }
+
+skill_level_fire:
+  type: suffix
+  group: global_increase_fire_spell_skill_gem_level_weapon
+  spawn_tags: [wand]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "+{value} 全部火焰法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 410, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 512, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 640, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, fire] }
+
+skill_level_fire_staff:
+  type: suffix
+  group: global_increase_fire_spell_skill_gem_level_weapon
+  spawn_tags: [staff]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "+{value} 全部火焰法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 410, value: [7, 7] }
+    - { tier: 2, ilvl: 55, weight: 512, value: [5, 6] }
+    - { tier: 3, ilvl: 36, weight: 640, value: [3, 4] }
+    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, fire] }
+
+skill_level_lightning:
+  type: suffix
+  group: global_increase_lightning_spell_skill_gem_level_weapon
+  spawn_tags: [wand]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "+{value} 全部閃電法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 410, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 512, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 640, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, lightning] }
+
+skill_level_lightning_staff:
+  type: suffix
+  group: global_increase_lightning_spell_skill_gem_level_weapon
+  spawn_tags: [staff]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "+{value} 全部閃電法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 410, value: [7, 7] }
+    - { tier: 2, ilvl: 55, weight: 512, value: [5, 6] }
+    - { tier: 3, ilvl: 36, weight: 640, value: [3, 4] }
+    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, lightning] }
+
+skill_level_melee_amulet:
+  type: suffix
+  group: global_increase_melee_skill_gem_level
+  spawn_tags: [leggings]
+  names: [之星骸, 之神匠]
+  text: "+{value} 全部近戰技能等級"
+  tiers:
+    - { tier: 1, ilvl: 41, weight: 800, value: [2, 2] }
+    - { tier: 2, ilvl: 5, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [attack, melee] }
+
+skill_level_melee_amulet_1h:
+  type: suffix
+  group: global_increase_melee_skill_gem_level
+  spawn_tags: [melee_1h, spear]
+  names: [之星骸, 之神匠, 之大師, 之名家]
+  text: "+{value} 全部近戰技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 512, value: [4, 4] }
+    - { tier: 2, ilvl: 55, weight: 640, value: [3, 3] }
+    - { tier: 3, ilvl: 36, weight: 800, value: [2, 2] }
+    - { tier: 4, ilvl: 18, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [attack, melee] }
+
+skill_level_melee_amulet_amulet:
+  type: suffix
+  group: global_increase_melee_skill_gem_level
+  spawn_tags: [amulet]
+  names: [之星骸, 之神匠, 之大師]
+  text: "+{value} 全部近戰技能等級"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 640, value: [3, 3] }
+    - { tier: 2, ilvl: 41, weight: 800, value: [2, 2] }
+    - { tier: 3, ilvl: 5, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [attack, melee] }
+
+skill_level_melee_2h:
+  type: suffix
+  group: global_increase_melee_skill_gem_level_weapon
+  spawn_tags: [melee_2h, quarterstaff]
+  names: [之星骸, 之神匠, 之大師, 之名家]
+  text: "+{value} 全部近戰技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 512, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 640, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 800, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [attack, melee] }
+
+skill_level_minion_amulet:
+  type: suffix
+  group: global_increase_minion_spell_skill_gem_level
+  spawn_tags: [helmet]
+  names: [之星骸, 之神匠]
+  text: "+{value} 全部召喚物技能等級"
+  tiers:
+    - { tier: 1, ilvl: 41, weight: 800, value: [2, 2] }
+    - { tier: 2, ilvl: 5, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
+
+skill_level_minion_amulet_amulet:
+  type: suffix
+  group: global_increase_minion_spell_skill_gem_level
+  spawn_tags: [amulet]
+  names: [之星骸, 之神匠, 之大師]
+  text: "+{value} 全部召喚物技能等級"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 640, value: [3, 3] }
+    - { tier: 2, ilvl: 41, weight: 800, value: [2, 2] }
+    - { tier: 3, ilvl: 5, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
+
+skill_level_minion:
+  type: suffix
+  group: global_increase_minion_spell_skill_gem_level_weapon
+  spawn_tags: [sceptre]
+  names: [之星骸, 之神匠, 之大師, 之名家]
+  text: "+{value} 全部召喚物技能等級"
+  tiers:
+    - { tier: 1, ilvl: 78, weight: 512, value: [4, 4] }
+    - { tier: 2, ilvl: 55, weight: 640, value: [3, 3] }
+    - { tier: 3, ilvl: 25, weight: 800, value: [2, 2] }
+    - { tier: 4, ilvl: 2, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
+
+level_physical_spell:
+  type: suffix
+  group: global_increase_physical_spell_skill_gem_level_weapon
+  spawn_tags: [wand]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "+{value} 全部物理法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 410, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 512, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 640, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, physical] }
+
+level_physical_spell_staff:
+  type: suffix
+  group: global_increase_physical_spell_skill_gem_level_weapon
+  spawn_tags: [staff]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "+{value} 全部物理法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 410, value: [7, 7] }
+    - { tier: 2, ilvl: 55, weight: 512, value: [5, 6] }
+    - { tier: 3, ilvl: 36, weight: 640, value: [3, 4] }
+    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, physical] }
+
+skill_level_projectile_amulet:
+  type: suffix
+  group: global_increase_projectile_skill_gem_level
+  spawn_tags: [amulet]
+  names: [之星骸, 之神匠, 之大師]
+  text: "+{value} 全部投射物技能等級"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 640, value: [3, 3] }
+    - { tier: 2, ilvl: 41, weight: 800, value: [2, 2] }
+    - { tier: 3, ilvl: 5, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [projectile] }
+
+skill_level_projectile_amulet_quiver:
+  type: suffix
+  group: global_increase_projectile_skill_gem_level
+  spawn_tags: [quiver]
+  names: [之星骸]
+  text: "+{value} 全部投射物技能等級"
+  tiers:
+    - { tier: 1, ilvl: 5, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [projectile] }
+
+skill_level_projectile:
+  type: suffix
+  group: global_increase_projectile_skill_gem_level_weapon
+  spawn_tags: [bow, spear]
+  names: [之星骸, 之神匠, 之大師, 之名家]
+  text: "+{value} 全部投射物技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 512, value: [4, 4] }
+    - { tier: 2, ilvl: 55, weight: 640, value: [3, 3] }
+    - { tier: 3, ilvl: 36, weight: 800, value: [2, 2] }
+    - { tier: 4, ilvl: 18, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [projectile] }
+
+skill_level_projectile_crossbow:
+  type: suffix
+  group: global_increase_projectile_skill_gem_level_weapon
+  spawn_tags: [crossbow]
+  names: [之星骸, 之神匠, 之大師, 之名家]
+  text: "+{value} 全部投射物技能等級"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 512, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 640, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 800, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [projectile] }
+
+skill_level_spell_amulet:
+  type: suffix
+  group: global_increase_spell_skill_gem_level
+  spawn_tags: [int_only]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星骸, 之神匠]
+  text: "+{value} 全部法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 41, weight: 800, value: [2, 2] }
+    - { tier: 2, ilvl: 10, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell] }
+
+skill_level_spell_amulet_amulet:
+  type: suffix
+  group: global_increase_spell_skill_gem_level
+  spawn_tags: [amulet]
+  names: [之星骸, 之神匠, 之大師]
+  text: "+{value} 全部法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 640, value: [3, 3] }
+    - { tier: 2, ilvl: 41, weight: 800, value: [2, 2] }
+    - { tier: 3, ilvl: 10, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell] }
+
+skill_level_spell:
+  type: suffix
+  group: global_increase_spell_skill_gem_level_weapon
+  spawn_tags: [wand]
+  names: [之星骸, 之神匠, 之大師, 之名家]
+  text: "+{value} 全部法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 78, weight: 512, value: [4, 4] }
+    - { tier: 2, ilvl: 55, weight: 640, value: [3, 3] }
+    - { tier: 3, ilvl: 25, weight: 800, value: [2, 2] }
+    - { tier: 4, ilvl: 5, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell] }
+
+skill_level_spell_staff:
+  type: suffix
+  group: global_increase_spell_skill_gem_level_weapon
+  spawn_tags: [staff]
+  names: [之星骸, 之神匠, 之大師, 之名家]
+  text: "+{value} 全部法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 78, weight: 512, value: [5, 6] }
+    - { tier: 2, ilvl: 55, weight: 640, value: [4, 4] }
+    - { tier: 3, ilvl: 25, weight: 800, value: [3, 3] }
+    - { tier: 4, ilvl: 5, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell] }
+
+ignite_chance:
+  type: suffix
+  group: ignite_chance_increase
+  spawn_tags: [staff, wand]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "增加 {value}% 點燃機率"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 410, value: [91, 100] }
+    - { tier: 2, ilvl: 60, weight: 512, value: [81, 90] }
+    - { tier: 3, ilvl: 45, weight: 640, value: [71, 80] }
+    - { tier: 4, ilvl: 30, weight: 800, value: [61, 70] }
+    - { tier: 5, ilvl: 15, weight: 1000, value: [51, 60] }
+  mods:
+    - { stat: ignite.chance, type: INCREASED, value: "{value}" }
+
 attack_speed:
   type: suffix
-  group: attack_speed
-  spawn_tags: [weapon, ring]
-  names: [之神速, 之疾速, 之迅捷, 之敏捷, 之技巧]
+  group: increased_attack_speed
+  spawn_tags: [leggings, quiver]
+  names: [之星骸, 之神速, 之疾風, 之迅捷]
   text: "增加 {value}% 攻擊速度"
   tiers:
-    - { tier: 1, ilvl: 55, weight: 200, value: [23, 26] }
-    - { tier: 2, ilvl: 40, weight: 400, value: [18, 21] }
-    - { tier: 3, ilvl: 28, weight: 700, value: [14, 16] }
-    - { tier: 4, ilvl: 14, weight: 1000, value: [10, 12] }
-    - { tier: 5, ilvl: 1, weight: 1000, value: [5, 7] }
+    - { tier: 1, ilvl: 60, weight: 512, value: [14, 16] }
+    - { tier: 2, ilvl: 37, weight: 640, value: [11, 13] }
+    - { tier: 3, ilvl: 22, weight: 800, value: [8, 10] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [5, 7] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}" }
 
 cast_speed:
   type: suffix
-  group: cast_speed
-  spawn_tags: [wand, staff, sceptre, amulet, int_armour]
-  names: [之神念, 之靈念, 之專注, 之冥想, 之凝神]
+  group: increased_cast_speed
+  spawn_tags: [int_only]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷, 之快手]
   text: "增加 {value}% 施法速度"
   tiers:
-    - { tier: 1, ilvl: 55, weight: 200, value: [18, 20] }
-    - { tier: 2, ilvl: 40, weight: 400, value: [14, 17] }
-    - { tier: 3, ilvl: 28, weight: 700, value: [11, 14] }
-    - { tier: 4, ilvl: 14, weight: 1000, value: [8, 10] }
-    - { tier: 5, ilvl: 1, weight: 1000, value: [4, 7] }
+    - { tier: 1, ilvl: 70, weight: 328, value: [29, 32] }
+    - { tier: 2, ilvl: 60, weight: 410, value: [25, 28] }
+    - { tier: 3, ilvl: 45, weight: 512, value: [21, 24] }
+    - { tier: 4, ilvl: 30, weight: 640, value: [17, 20] }
+    - { tier: 5, ilvl: 15, weight: 800, value: [13, 16] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [9, 12] }
   mods:
     - { stat: cast.speed, type: INCREASED, value: "{value}" }
 
-crit_chance:
+cast_speed_amulet:
   type: suffix
-  group: crit_chance
-  spawn_tags: [weapon, amulet]
-  names: [之致命, 之穿刺, 之銳眼, 之精準, 之瞄準]
-  text: "增加 {value}% 暴擊率"
+  group: increased_cast_speed
+  spawn_tags: [amulet]
+  names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷, 之快手]
+  text: "增加 {value}% 施法速度"
   tiers:
-    - { tier: 1, ilvl: 55, weight: 200, value: [35, 38] }
-    - { tier: 2, ilvl: 40, weight: 400, value: [29, 32] }
-    - { tier: 3, ilvl: 28, weight: 700, value: [22, 26] }
-    - { tier: 4, ilvl: 14, weight: 1000, value: [16, 20] }
-    - { tier: 5, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 1, ilvl: 66, weight: 328, value: [25, 28] }
+    - { tier: 2, ilvl: 60, weight: 410, value: [22, 24] }
+    - { tier: 3, ilvl: 51, weight: 512, value: [19, 21] }
+    - { tier: 4, ilvl: 35, weight: 640, value: [16, 18] }
+    - { tier: 5, ilvl: 18, weight: 800, value: [13, 15] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [9, 12] }
   mods:
-    - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+cast_speed_ring:
+  type: suffix
+  group: increased_cast_speed
+  spawn_tags: [ring]
+  names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷]
+  text: "增加 {value}% 施法速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 410, value: [22, 24] }
+    - { tier: 2, ilvl: 51, weight: 512, value: [19, 21] }
+    - { tier: 3, ilvl: 35, weight: 640, value: [16, 18] }
+    - { tier: 4, ilvl: 18, weight: 800, value: [13, 15] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [9, 12] }
+  mods:
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+cast_speed_wand:
+  type: suffix
+  group: increased_cast_speed
+  spawn_tags: [wand]
+  names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷, 之快手, 之靈巧]
+  text: "增加 {value}% 施法速度"
+  tiers:
+    - { tier: 1, ilvl: 80, weight: 262, value: [33, 35] }
+    - { tier: 2, ilvl: 70, weight: 328, value: [29, 32] }
+    - { tier: 3, ilvl: 60, weight: 410, value: [25, 28] }
+    - { tier: 4, ilvl: 45, weight: 512, value: [21, 24] }
+    - { tier: 5, ilvl: 30, weight: 640, value: [17, 20] }
+    - { tier: 6, ilvl: 15, weight: 800, value: [13, 16] }
+    - { tier: 7, ilvl: 1, weight: 1000, value: [9, 12] }
+  mods:
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+cast_speed_staff:
+  type: suffix
+  group: increased_cast_speed
+  spawn_tags: [staff]
+  names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷, 之快手, 之靈巧]
+  text: "增加 {value}% 施法速度"
+  tiers:
+    - { tier: 1, ilvl: 80, weight: 262, value: [50, 52] }
+    - { tier: 2, ilvl: 70, weight: 328, value: [44, 49] }
+    - { tier: 3, ilvl: 60, weight: 410, value: [38, 43] }
+    - { tier: 4, ilvl: 45, weight: 512, value: [32, 37] }
+    - { tier: 5, ilvl: 30, weight: 640, value: [26, 31] }
+    - { tier: 6, ilvl: 15, weight: 800, value: [20, 25] }
+    - { tier: 7, ilvl: 1, weight: 1000, value: [14, 19] }
+  mods:
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+int_flat:
+  type: suffix
+  group: intelligence
+  spawn_tags: [amulet, dagger, dex_int_armour, int_only, quarterstaff, ring, sceptre, staff, talisman, wand, str_int_armour]
+  exclude_tags: [helmet]
+  names: [之星骸賢者, 之天才, 之博學, 之智者, 之學者, 之書生, 之學徒, 之初學]
+  text: "+{value} 智慧"
+  tiers:
+    - { tier: 1, ilvl: 74, weight: 210, value: [31, 33] }
+    - { tier: 2, ilvl: 66, weight: 262, value: [28, 30] }
+    - { tier: 3, ilvl: 55, weight: 328, value: [25, 27] }
+    - { tier: 4, ilvl: 44, weight: 410, value: [21, 24] }
+    - { tier: 5, ilvl: 33, weight: 512, value: [17, 20] }
+    - { tier: 6, ilvl: 22, weight: 640, value: [13, 16] }
+    - { tier: 7, ilvl: 11, weight: 800, value: [9, 12] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+int_flat_helmet:
+  type: suffix
+  group: intelligence
+  spawn_tags: [helmet]
+  names: [之星骸賢者, 之天才, 之博學, 之智者, 之學者, 之書生, 之學徒, 之初學, 之平凡]
+  text: "+{value} 智慧"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 168, value: [34, 36] }
+    - { tier: 2, ilvl: 74, weight: 210, value: [31, 33] }
+    - { tier: 3, ilvl: 66, weight: 262, value: [28, 30] }
+    - { tier: 4, ilvl: 55, weight: 328, value: [25, 27] }
+    - { tier: 5, ilvl: 44, weight: 410, value: [21, 24] }
+    - { tier: 6, ilvl: 33, weight: 512, value: [17, 20] }
+    - { tier: 7, ilvl: 22, weight: 640, value: [13, 16] }
+    - { tier: 8, ilvl: 11, weight: 800, value: [9, 12] }
+    - { tier: 9, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+rarity_suffix:
+  type: suffix
+  group: item_found_rarity_increase
+  spawn_tags: [amulet, boots, helmet, leggings, ring]
+  names: [之星骸, 之神匠, 之大師]
+  text: "增加 {value}% 物品掉落稀有度"
+  tiers:
+    - { tier: 1, ilvl: 40, weight: 640, value: [15, 18] }
+    - { tier: 2, ilvl: 24, weight: 800, value: [11, 14] }
+    - { tier: 3, ilvl: 3, weight: 1000, value: [6, 10] }
+  mods:
+    - { stat: drop.rarity, type: INCREASED, value: "{value}" }
+
+life_on_hit:
+  type: suffix
+  group: life_gain_per_target
+  spawn_tags: [leggings]
+  names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
+  text: "攻擊每擊中一個敵人回復 {value} 生命"
+  tiers:
+    - { tier: 1, ilvl: 40, weight: 512, value: [5, 5] }
+    - { tier: 2, ilvl: 30, weight: 640, value: [4, 4] }
+    - { tier: 3, ilvl: 20, weight: 800, value: [3, 3] }
+    - { tier: 4, ilvl: 8, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: life.on_hit, type: FLAT, value: "{value}", tags: [attack] }
+
+life_on_hit_local:
+  type: suffix
+  group: life_gain_per_target_local
+  spawn_tags: [bow, crossbow, melee_1h, melee_2h, quarterstaff, spear]
+  names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
+  text: "每擊中一個敵人回復 {value} 生命"
+  tiers:
+    - { tier: 1, ilvl: 40, weight: 512, value: [5, 5] }
+    - { tier: 2, ilvl: 30, weight: 640, value: [4, 4] }
+    - { tier: 3, ilvl: 20, weight: 800, value: [3, 3] }
+    - { tier: 4, ilvl: 8, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: life.on_hit, type: FLAT, value: "{value}", tags: [attack] }
+
+life_per_kill:
+  type: suffix
+  group: life_gained_from_enemy_death
+  spawn_tags: [bow, crossbow, leggings, melee_1h, melee_2h, quarterstaff, spear, staff, wand]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息]
+  text: "每擊殺一個敵人回復 {value} 生命"
+  tiers:
+    - { tier: 1, ilvl: 77, weight: 210, value: [69, 84] }
+    - { tier: 2, ilvl: 66, weight: 262, value: [54, 68] }
+    - { tier: 3, ilvl: 55, weight: 328, value: [41, 53] }
+    - { tier: 4, ilvl: 44, weight: 410, value: [29, 40] }
+    - { tier: 5, ilvl: 33, weight: 512, value: [19, 28] }
+    - { tier: 6, ilvl: 22, weight: 640, value: [10, 18] }
+    - { tier: 7, ilvl: 11, weight: 800, value: [7, 9] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [4, 6] }
+  mods:
+    - { stat: life.per_kill, type: FLAT, value: "{value}" }
+
+life_per_kill_quiver:
+  type: suffix
+  group: life_gained_from_enemy_death
+  spawn_tags: [quiver, ring]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復]
+  text: "每擊殺一個敵人回復 {value} 生命"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 328, value: [41, 53] }
+    - { tier: 2, ilvl: 44, weight: 410, value: [29, 40] }
+    - { tier: 3, ilvl: 33, weight: 512, value: [19, 28] }
+    - { tier: 4, ilvl: 22, weight: 640, value: [10, 18] }
+    - { tier: 5, ilvl: 11, weight: 800, value: [7, 9] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [4, 6] }
+  mods:
+    - { stat: life.per_kill, type: FLAT, value: "{value}" }
+
+leech_life_local:
+  type: suffix
+  group: life_leech_local_permyriad
+  spawn_tags: [bow, crossbow, melee_1h, melee_2h, quarterstaff, spear]
+  names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
+  text: "造成的物理傷害有 {value/100}% 偷取為生命"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 512, value: [900, 990] }
+    - { tier: 2, ilvl: 54, weight: 640, value: [800, 890] }
+    - { tier: 3, ilvl: 38, weight: 800, value: [700, 790] }
+    - { tier: 4, ilvl: 21, weight: 1000, value: [600, 690] }
+  mods:
+    - { stat: leech.life, type: FLAT, value: "{value/100}", tags: [attack] }
+
+leech_life:
+  type: suffix
+  group: life_leech_permyriad
+  spawn_tags: [leggings]
+  names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
+  text: "攻擊造成的物理傷害有 {value/100}% 偷取為生命"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 512, value: [900, 990] }
+    - { tier: 2, ilvl: 54, weight: 640, value: [800, 890] }
+    - { tier: 3, ilvl: 38, weight: 800, value: [700, 790] }
+    - { tier: 4, ilvl: 21, weight: 1000, value: [600, 690] }
+  mods:
+    - { stat: leech.life, type: FLAT, value: "{value/100}", tags: [attack] }
+
+leech_life_ring:
+  type: suffix
+  group: life_leech_permyriad
+  spawn_tags: [ring]
+  names: [之星骸, 之吸血鬼]
+  text: "攻擊造成的物理傷害有 {value/100}% 偷取為生命"
+  tiers:
+    - { tier: 1, ilvl: 38, weight: 800, value: [700, 790] }
+    - { tier: 2, ilvl: 21, weight: 1000, value: [600, 690] }
+  mods:
+    - { stat: leech.life, type: FLAT, value: "{value/100}", tags: [attack] }
+
+life_regen2:
+  type: suffix
+  group: life_regeneration
+  spawn_tags: [boots, helmet]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息]
+  text: "每秒回復 {value/10} 生命"
+  tiers:
+    - { tier: 1, ilvl: 58, weight: 210, value: [181, 230] }
+    - { tier: 2, ilvl: 47, weight: 262, value: [131, 180] }
+    - { tier: 3, ilvl: 35, weight: 328, value: [91, 130] }
+    - { tier: 4, ilvl: 26, weight: 410, value: [61, 90] }
+    - { tier: 5, ilvl: 17, weight: 512, value: [41, 60] }
+    - { tier: 6, ilvl: 11, weight: 640, value: [31, 40] }
+    - { tier: 7, ilvl: 5, weight: 800, value: [21, 30] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: life.regen, type: FLAT, value: "{value/10}" }
+
+life_regen2_body:
+  type: suffix
+  group: life_regeneration
+  spawn_tags: [body]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息, 之喘息, 之平凡, 之粗糙]
+  text: "每秒回復 {value/10} 生命"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 107, value: [331, 360] }
+    - { tier: 2, ilvl: 75, weight: 134, value: [291, 330] }
+    - { tier: 3, ilvl: 68, weight: 168, value: [231, 290] }
+    - { tier: 4, ilvl: 58, weight: 210, value: [181, 230] }
+    - { tier: 5, ilvl: 47, weight: 262, value: [131, 180] }
+    - { tier: 6, ilvl: 35, weight: 328, value: [91, 130] }
+    - { tier: 7, ilvl: 26, weight: 410, value: [61, 90] }
+    - { tier: 8, ilvl: 17, weight: 512, value: [41, 60] }
+    - { tier: 9, ilvl: 11, weight: 640, value: [31, 40] }
+    - { tier: 10, ilvl: 5, weight: 800, value: [21, 30] }
+    - { tier: 11, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: life.regen, type: FLAT, value: "{value/10}" }
+
+life_regen2_amulet:
+  type: suffix
+  group: life_regeneration
+  spawn_tags: [amulet]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息, 之喘息, 之平凡]
+  text: "每秒回復 {value/10} 生命"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 134, value: [291, 330] }
+    - { tier: 2, ilvl: 68, weight: 168, value: [231, 290] }
+    - { tier: 3, ilvl: 58, weight: 210, value: [181, 230] }
+    - { tier: 4, ilvl: 47, weight: 262, value: [131, 180] }
+    - { tier: 5, ilvl: 35, weight: 328, value: [91, 130] }
+    - { tier: 6, ilvl: 26, weight: 410, value: [61, 90] }
+    - { tier: 7, ilvl: 17, weight: 512, value: [41, 60] }
+    - { tier: 8, ilvl: 11, weight: 640, value: [31, 40] }
+    - { tier: 9, ilvl: 5, weight: 800, value: [21, 30] }
+    - { tier: 10, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: life.regen, type: FLAT, value: "{value/10}" }
+
+life_regen2_ring:
+  type: suffix
+  group: life_regeneration
+  spawn_tags: [ring]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養]
+  text: "每秒回復 {value/10} 生命"
+  tiers:
+    - { tier: 1, ilvl: 47, weight: 262, value: [131, 180] }
+    - { tier: 2, ilvl: 35, weight: 328, value: [91, 130] }
+    - { tier: 3, ilvl: 26, weight: 410, value: [61, 90] }
+    - { tier: 4, ilvl: 17, weight: 512, value: [41, 60] }
+    - { tier: 5, ilvl: 11, weight: 640, value: [31, 40] }
+    - { tier: 6, ilvl: 5, weight: 800, value: [21, 30] }
+    - { tier: 7, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: life.regen, type: FLAT, value: "{value/10}" }
+
+life_regen2_belt:
+  type: suffix
+  group: life_regeneration
+  spawn_tags: [belt]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息, 之喘息]
+  text: "每秒回復 {value/10} 生命"
+  tiers:
+    - { tier: 1, ilvl: 68, weight: 168, value: [231, 290] }
+    - { tier: 2, ilvl: 58, weight: 210, value: [181, 230] }
+    - { tier: 3, ilvl: 47, weight: 262, value: [131, 180] }
+    - { tier: 4, ilvl: 35, weight: 328, value: [91, 130] }
+    - { tier: 5, ilvl: 26, weight: 410, value: [61, 90] }
+    - { tier: 6, ilvl: 17, weight: 512, value: [41, 60] }
+    - { tier: 7, ilvl: 11, weight: 640, value: [31, 40] }
+    - { tier: 8, ilvl: 5, weight: 800, value: [21, 30] }
+    - { tier: 9, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: life.regen, type: FLAT, value: "{value/10}" }
+
+accuracy_light:
+  type: suffix
+  group: light_radius_and_accuracy
+  spawn_tags: [helmet]
+  names: [之星骸, 之神匠, 之大師]
+  text: "+{value} 命中"
+  tiers:
+    - { tier: 1, ilvl: 30, weight: 640, value: [41, 60] }
+    - { tier: 2, ilvl: 15, weight: 800, value: [21, 40] }
+    - { tier: 3, ilvl: 8, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: accuracy, type: FLAT, value: "{value}" }
+
+mana_regen_light:
+  type: suffix
+  group: light_radius_and_mana_regeneration
+  spawn_tags: [ring, sceptre, staff, wand]
+  names: [之星骸, 之永生, 之再生]
+  text: "增加 {value}% 魔力回復速度"
+  tiers:
+    - { tier: 1, ilvl: 30, weight: 640, value: [18, 22] }
+    - { tier: 2, ilvl: 15, weight: 800, value: [13, 17] }
+    - { tier: 3, ilvl: 8, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+resist_lightning:
+  type: suffix
+  group: lightning_resistance
+  spawn_tags: [amulet, belt, body, boots, helmet, leggings, ring, shield]
+  names: [之星雷, 之雷心, 之雷盾, 之絕緣, 之電紋, 之避雷, 之靜電, 之微麻]
+  text: "+{value}% 閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 82, weight: 210, value: [41, 45] }
+    - { tier: 2, ilvl: 71, weight: 262, value: [36, 40] }
+    - { tier: 3, ilvl: 60, weight: 328, value: [31, 35] }
+    - { tier: 4, ilvl: 49, weight: 410, value: [26, 30] }
+    - { tier: 5, ilvl: 37, weight: 512, value: [21, 25] }
+    - { tier: 6, ilvl: 25, weight: 640, value: [16, 20] }
+    - { tier: 7, ilvl: 13, weight: 800, value: [11, 15] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [6, 10] }
+  mods:
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+local_crit_base:
+  type: suffix
+  group: local_base_critical_strike_chance
+  spawn_tags: [bow, crossbow, melee_1h, melee_2h, quarterstaff, spear]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "+{value/100}% 暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 73, weight: 328, value: [441, 500] }
+    - { tier: 2, ilvl: 59, weight: 410, value: [381, 440] }
+    - { tier: 3, ilvl: 44, weight: 512, value: [311, 380] }
+    - { tier: 4, ilvl: 30, weight: 640, value: [211, 270] }
+    - { tier: 5, ilvl: 20, weight: 800, value: [151, 210] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [101, 150] }
+  mods:
+    - { stat: local.crit_base, type: FLAT, value: "{value/100}" }
+
+local_crit_bonus:
+  type: suffix
+  group: local_critical_strike_multiplier
+  spawn_tags: [bow, crossbow, melee_1h, melee_2h, quarterstaff, spear]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "+{value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 73, weight: 328, value: [23, 25] }
+    - { tier: 2, ilvl: 59, weight: 410, value: [20, 22] }
+    - { tier: 3, ilvl: 44, weight: 512, value: [17, 19] }
+    - { tier: 4, ilvl: 30, weight: 640, value: [14, 16] }
+    - { tier: 5, ilvl: 21, weight: 800, value: [12, 13] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [10, 11] }
+  mods:
+    - { stat: crit.multi, type: FLAT, value: "{value}" }
+
+local_attack_speed:
+  type: suffix
+  group: local_increased_attack_speed
+  spawn_tags: [melee_1h, melee_2h, quarterstaff, spear]
+  names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷, 之快手, 之靈巧, 之加速]
+  text: "增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 77, weight: 210, value: [26, 28] }
+    - { tier: 2, ilvl: 60, weight: 262, value: [23, 25] }
+    - { tier: 3, ilvl: 45, weight: 328, value: [20, 22] }
+    - { tier: 4, ilvl: 37, weight: 410, value: [17, 19] }
+    - { tier: 5, ilvl: 30, weight: 512, value: [14, 16] }
+    - { tier: 6, ilvl: 22, weight: 640, value: [11, 13] }
+    - { tier: 7, ilvl: 11, weight: 800, value: [8, 10] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [5, 7] }
+  mods:
+    - { stat: local.attack_speed, type: INCREASED, value: "{value}" }
+
+local_attack_speed_bow:
+  type: suffix
+  group: local_increased_attack_speed
+  spawn_tags: [bow, crossbow]
+  names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷]
+  text: "增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 37, weight: 410, value: [17, 19] }
+    - { tier: 2, ilvl: 30, weight: 512, value: [14, 16] }
+    - { tier: 3, ilvl: 22, weight: 640, value: [11, 13] }
+    - { tier: 4, ilvl: 11, weight: 800, value: [8, 10] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [5, 7] }
+  mods:
+    - { stat: local.attack_speed, type: INCREASED, value: "{value}" }
+
+accuracy_light_weapon:
+  type: suffix
+  group: local_light_radius_and_accuracy
+  spawn_tags: [bow, crossbow, melee_1h, melee_2h, quarterstaff, spear]
+  names: [之星骸, 之神匠, 之大師]
+  text: "+{value} 命中"
+  tiers:
+    - { tier: 1, ilvl: 30, weight: 640, value: [41, 60] }
+    - { tier: 2, ilvl: 15, weight: 800, value: [21, 40] }
+    - { tier: 3, ilvl: 8, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: accuracy, type: FLAT, value: "{value}" }
+
+stun_buildup:
+  type: suffix
+  group: local_stun_damage_increase
+  spawn_tags: [melee_1h, melee_2h, quarterstaff, spear]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良, 之優質]
+  text: "增加 {value}% 暈眩累積"
+  tiers:
+    - { tier: 1, ilvl: 74, weight: 328, value: [71, 80] }
+    - { tier: 2, ilvl: 58, weight: 410, value: [61, 70] }
+    - { tier: 3, ilvl: 44, weight: 512, value: [51, 60] }
+    - { tier: 4, ilvl: 30, weight: 640, value: [41, 50] }
+    - { tier: 5, ilvl: 20, weight: 800, value: [31, 40] }
+    - { tier: 6, ilvl: 5, weight: 1000, value: [21, 30] }
+  mods:
+    - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+
+stun_duration:
+  type: suffix
+  group: local_stun_duration
+  spawn_tags: [melee_1h, melee_2h, quarterstaff, spear]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良, 之優質]
+  text: "增加 {value}% 暈眩持續時間"
+  tiers:
+    - { tier: 1, ilvl: 71, weight: 328, value: [27, 30] }
+    - { tier: 2, ilvl: 58, weight: 410, value: [23, 26] }
+    - { tier: 3, ilvl: 44, weight: 512, value: [20, 22] }
+    - { tier: 4, ilvl: 30, weight: 640, value: [17, 19] }
+    - { tier: 5, ilvl: 18, weight: 800, value: [14, 16] }
+    - { tier: 6, ilvl: 5, weight: 1000, value: [11, 13] }
+  mods:
+    - { stat: stun.duration, type: INCREASED, value: "{value}" }
+
+mana_per_kill:
+  type: suffix
+  group: mana_gained_from_enemy_death
+  spawn_tags: [bow, crossbow, leggings, melee_1h, melee_2h, quarterstaff, spear, staff, wand]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息]
+  text: "每擊殺一個敵人回復 {value} 魔力"
+  tiers:
+    - { tier: 1, ilvl: 78, weight: 210, value: [36, 45] }
+    - { tier: 2, ilvl: 67, weight: 262, value: [28, 35] }
+    - { tier: 3, ilvl: 56, weight: 328, value: [21, 27] }
+    - { tier: 4, ilvl: 45, weight: 410, value: [15, 20] }
+    - { tier: 5, ilvl: 34, weight: 512, value: [10, 14] }
+    - { tier: 6, ilvl: 23, weight: 640, value: [6, 9] }
+    - { tier: 7, ilvl: 12, weight: 800, value: [4, 5] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: mana.per_kill, type: FLAT, value: "{value}" }
+
+mana_per_kill_quiver:
+  type: suffix
+  group: mana_gained_from_enemy_death
+  spawn_tags: [quiver, ring]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復]
+  text: "每擊殺一個敵人回復 {value} 魔力"
+  tiers:
+    - { tier: 1, ilvl: 56, weight: 328, value: [21, 27] }
+    - { tier: 2, ilvl: 45, weight: 410, value: [15, 20] }
+    - { tier: 3, ilvl: 34, weight: 512, value: [10, 14] }
+    - { tier: 4, ilvl: 23, weight: 640, value: [6, 9] }
+    - { tier: 5, ilvl: 12, weight: 800, value: [4, 5] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: mana.per_kill, type: FLAT, value: "{value}" }
+
+leech_mana_local:
+  type: suffix
+  group: mana_leech_local_permyriad
+  spawn_tags: [bow, crossbow, melee_1h, melee_2h, quarterstaff, spear]
+  names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
+  text: "造成的物理傷害有 {value/100}% 偷取為魔力"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 512, value: [800, 890] }
+    - { tier: 2, ilvl: 54, weight: 640, value: [700, 790] }
+    - { tier: 3, ilvl: 38, weight: 800, value: [600, 690] }
+    - { tier: 4, ilvl: 21, weight: 1000, value: [500, 590] }
+  mods:
+    - { stat: leech.mana, type: FLAT, value: "{value/100}", tags: [attack] }
+
+leech_mana:
+  type: suffix
+  group: mana_leech_permyriad
+  spawn_tags: [leggings]
+  names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
+  text: "攻擊造成的物理傷害有 {value/100}% 偷取為魔力"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 512, value: [800, 890] }
+    - { tier: 2, ilvl: 54, weight: 640, value: [700, 790] }
+    - { tier: 3, ilvl: 38, weight: 800, value: [600, 690] }
+    - { tier: 4, ilvl: 21, weight: 1000, value: [500, 590] }
+  mods:
+    - { stat: leech.mana, type: FLAT, value: "{value/100}", tags: [attack] }
+
+leech_mana_ring:
+  type: suffix
+  group: mana_leech_permyriad
+  spawn_tags: [ring]
+  names: [之星骸, 之吸血鬼]
+  text: "攻擊造成的物理傷害有 {value/100}% 偷取為魔力"
+  tiers:
+    - { tier: 1, ilvl: 38, weight: 800, value: [600, 690] }
+    - { tier: 2, ilvl: 21, weight: 1000, value: [500, 590] }
+  mods:
+    - { stat: leech.mana, type: FLAT, value: "{value/100}", tags: [attack] }
+
+mana_regen:
+  type: suffix
+  group: mana_regeneration
+  spawn_tags: [amulet, int_only, ring, sceptre, wand]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復]
+  text: "增加 {value}% 魔力回復速度"
+  tiers:
+    - { tier: 1, ilvl: 79, weight: 328, value: [60, 69] }
+    - { tier: 2, ilvl: 55, weight: 410, value: [50, 59] }
+    - { tier: 3, ilvl: 42, weight: 512, value: [40, 49] }
+    - { tier: 4, ilvl: 29, weight: 640, value: [30, 39] }
+    - { tier: 5, ilvl: 18, weight: 800, value: [20, 29] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [10, 19] }
+  mods:
+    - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+mana_regen_staff:
+  type: suffix
+  group: mana_regeneration
+  spawn_tags: [staff]
+  names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復]
+  text: "增加 {value}% 魔力回復速度"
+  tiers:
+    - { tier: 1, ilvl: 79, weight: 328, value: [90, 104] }
+    - { tier: 2, ilvl: 55, weight: 410, value: [75, 89] }
+    - { tier: 3, ilvl: 42, weight: 512, value: [60, 74] }
+    - { tier: 4, ilvl: 29, weight: 640, value: [45, 59] }
+    - { tier: 5, ilvl: 18, weight: 800, value: [30, 44] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [15, 29] }
+  mods:
+    - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+max_resist_chaos:
+  type: suffix
+  group: maximum_chaos_resistance
+  spawn_tags: [dex_only, str_dex_armour, str_only, str_int_armour]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星蝕, 之淨化, 之抗蝕]
+  text: "+{value}% 最大混沌抗性"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 640, value: [3, 3] }
+    - { tier: 2, ilvl: 75, weight: 800, value: [2, 2] }
+    - { tier: 3, ilvl: 68, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: resist.max.chaos, type: FLAT, value: "{value}" }
+
+max_resist_cold:
+  type: suffix
+  group: maximum_cold_resist
+  spawn_tags: [dex_only, str_dex_armour, str_only, str_int_armour]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星霜, 之冰心, 之霜盾]
+  text: "+{value}% 最大冰冷抗性"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 640, value: [3, 3] }
+    - { tier: 2, ilvl: 75, weight: 800, value: [2, 2] }
+    - { tier: 3, ilvl: 68, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: resist.max.cold, type: FLAT, value: "{value}" }
+
+max_resist_all:
+  type: suffix
+  group: maximum_elemental_resistance
+  spawn_tags: [dex_only, str_dex_armour, str_only, str_int_armour]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星骸, 之元素]
+  text: "+{value}% 全部最大元素抗性"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 800, value: [2, 2] }
+    - { tier: 2, ilvl: 75, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: resist.max.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.max.cold, type: FLAT, value: "{value}" }
+    - { stat: resist.max.lightning, type: FLAT, value: "{value}" }
+
+max_resist_fire:
+  type: suffix
+  group: maximum_fire_resist
+  spawn_tags: [dex_only, str_dex_armour, str_only, str_int_armour]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星焰, 之熔心, 之焰盾]
+  text: "+{value}% 最大火焰抗性"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 640, value: [3, 3] }
+    - { tier: 2, ilvl: 75, weight: 800, value: [2, 2] }
+    - { tier: 3, ilvl: 68, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: resist.max.fire, type: FLAT, value: "{value}" }
+
+max_resist_lightning:
+  type: suffix
+  group: maximum_lightning_resistance
+  spawn_tags: [dex_only, str_dex_armour, str_only, str_int_armour]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星雷, 之雷心, 之雷盾]
+  text: "+{value}% 最大閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 640, value: [3, 3] }
+    - { tier: 2, ilvl: 75, weight: 800, value: [2, 2] }
+    - { tier: 3, ilvl: 68, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: resist.max.lightning, type: FLAT, value: "{value}" }
+
+minion_life:
+  type: suffix
+  group: minion_life
+  spawn_tags: [sceptre]
+  names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的]
+  text: "增加 {value}% 召喚物最大生命"
+  tiers:
+    - { tier: 1, ilvl: 80, weight: 328, value: [46, 50] }
+    - { tier: 2, ilvl: 64, weight: 410, value: [41, 45] }
+    - { tier: 3, ilvl: 48, weight: 512, value: [36, 40] }
+    - { tier: 4, ilvl: 32, weight: 640, value: [31, 35] }
+    - { tier: 5, ilvl: 16, weight: 800, value: [26, 30] }
+    - { tier: 6, ilvl: 2, weight: 1000, value: [21, 25] }
+  mods:
+    - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
+
+self_bleed:
+  type: suffix
+  group: reduced_bleed_duration
+  spawn_tags: [body]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "你身上的流血持續時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 76, weight: 410, value: [56, 60] }
+    - { tier: 2, ilvl: 64, weight: 512, value: [51, 55] }
+    - { tier: 3, ilvl: 50, weight: 640, value: [46, 50] }
+    - { tier: 4, ilvl: 37, weight: 800, value: [41, 45] }
+    - { tier: 5, ilvl: 21, weight: 1000, value: [36, 40] }
+  mods:
+    - { stat: ailment.self_duration.bleed, type: INCREASED, value: "-{value}" }
+
+self_ignite:
+  type: suffix
+  group: reduced_burn_duration
+  spawn_tags: [body]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "你身上的點燃持續時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 76, weight: 410, value: [56, 60] }
+    - { tier: 2, ilvl: 64, weight: 512, value: [51, 55] }
+    - { tier: 3, ilvl: 50, weight: 640, value: [46, 50] }
+    - { tier: 4, ilvl: 37, weight: 800, value: [41, 45] }
+    - { tier: 5, ilvl: 21, weight: 1000, value: [36, 40] }
+  mods:
+    - { stat: ailment.self_duration.ignite, type: INCREASED, value: "-{value}" }
+
+self_chill:
+  type: suffix
+  group: reduced_chill_duration
+  spawn_tags: [boots]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "你身上的冰緩持續時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 410, value: [56, 60] }
+    - { tier: 2, ilvl: 63, weight: 512, value: [51, 55] }
+    - { tier: 3, ilvl: 49, weight: 640, value: [46, 50] }
+    - { tier: 4, ilvl: 36, weight: 800, value: [41, 45] }
+    - { tier: 5, ilvl: 20, weight: 1000, value: [36, 40] }
+  mods:
+    - { stat: ailment.self_duration.chill, type: INCREASED, value: "-{value}" }
+
+crit_taken:
+  type: suffix
+  group: reduced_extra_damage_from_crits
+  spawn_tags: [str_dex_armour]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "擊中你的暴擊傷害加成減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 410, value: [48, 54] }
+    - { tier: 2, ilvl: 69, weight: 512, value: [42, 47] }
+    - { tier: 3, ilvl: 58, weight: 640, value: [35, 41] }
+    - { tier: 4, ilvl: 45, weight: 800, value: [28, 34] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [21, 27] }
+  mods:
+    - { stat: crit.bonus_taken, type: INCREASED, value: "-{value}" }
+
+self_freeze:
+  type: suffix
+  group: reduced_freeze_duration
+  spawn_tags: [boots]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "你身上的凍結持續時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 410, value: [56, 60] }
+    - { tier: 2, ilvl: 63, weight: 512, value: [51, 55] }
+    - { tier: 3, ilvl: 49, weight: 640, value: [46, 50] }
+    - { tier: 4, ilvl: 36, weight: 800, value: [41, 45] }
+    - { tier: 5, ilvl: 20, weight: 1000, value: [36, 40] }
+  mods:
+    - { stat: ailment.self_duration.freeze, type: INCREASED, value: "-{value}" }
+
+phys_reduction:
+  type: suffix
+  group: reduced_physical_damage_taken
+  spawn_tags: [str_only]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "{value}% 額外物理傷害減免"
+  tiers:
+    - { tier: 1, ilvl: 77, weight: 410, value: [8, 8] }
+    - { tier: 2, ilvl: 66, weight: 512, value: [7, 7] }
+    - { tier: 3, ilvl: 53, weight: 640, value: [6, 6] }
+    - { tier: 4, ilvl: 41, weight: 800, value: [5, 5] }
+    - { tier: 5, ilvl: 32, weight: 1000, value: [4, 4] }
+  mods:
+    - { stat: physical.reduction, type: FLAT, value: "{value}" }
+
+self_poison:
+  type: suffix
+  group: reduced_poison_duration
+  spawn_tags: [body]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "你身上的中毒持續時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 76, weight: 410, value: [56, 60] }
+    - { tier: 2, ilvl: 64, weight: 512, value: [51, 55] }
+    - { tier: 3, ilvl: 50, weight: 640, value: [46, 50] }
+    - { tier: 4, ilvl: 37, weight: 800, value: [41, 45] }
+    - { tier: 5, ilvl: 21, weight: 1000, value: [36, 40] }
+  mods:
+    - { stat: ailment.self_duration.poison, type: INCREASED, value: "-{value}" }
+
+self_shock:
+  type: suffix
+  group: reduced_shock_duration
+  spawn_tags: [boots]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "你身上的感電持續時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 410, value: [56, 60] }
+    - { tier: 2, ilvl: 63, weight: 512, value: [51, 55] }
+    - { tier: 3, ilvl: 49, weight: 640, value: [46, 50] }
+    - { tier: 4, ilvl: 36, weight: 800, value: [41, 45] }
+    - { tier: 5, ilvl: 20, weight: 1000, value: [36, 40] }
+  mods:
+    - { stat: ailment.self_duration.shock, type: INCREASED, value: "-{value}" }
+
+shock_chance:
+  type: suffix
+  group: shock_chance_increase
+  spawn_tags: [staff, wand]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
+  text: "增加 {value}% 感電機率"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 410, value: [91, 100] }
+    - { tier: 2, ilvl: 60, weight: 512, value: [81, 90] }
+    - { tier: 3, ilvl: 45, weight: 640, value: [71, 80] }
+    - { tier: 4, ilvl: 30, weight: 800, value: [61, 70] }
+    - { tier: 5, ilvl: 15, weight: 1000, value: [51, 60] }
+  mods:
+    - { stat: shock.chance, type: INCREASED, value: "{value}" }
+
+spell_crit_chance:
+  type: suffix
+  group: spell_critical_strike_chance
+  spawn_tags: [int_only]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意]
+  text: "增加 {value}% 法術暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 59, weight: 410, value: [54, 59] }
+    - { tier: 2, ilvl: 41, weight: 512, value: [47, 53] }
+    - { tier: 3, ilvl: 28, weight: 640, value: [40, 46] }
+    - { tier: 4, ilvl: 21, weight: 800, value: [34, 39] }
+    - { tier: 5, ilvl: 11, weight: 1000, value: [27, 33] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
+
+spell_crit_chance_wand:
+  type: suffix
+  group: spell_critical_strike_chance
+  spawn_tags: [wand]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "增加 {value}% 法術暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 76, weight: 328, value: [60, 73] }
+    - { tier: 2, ilvl: 59, weight: 410, value: [54, 59] }
+    - { tier: 3, ilvl: 41, weight: 512, value: [47, 53] }
+    - { tier: 4, ilvl: 28, weight: 640, value: [40, 46] }
+    - { tier: 5, ilvl: 21, weight: 800, value: [34, 39] }
+    - { tier: 6, ilvl: 11, weight: 1000, value: [27, 33] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
+
+spell_crit_chance_staff:
+  type: suffix
+  group: spell_critical_strike_chance
+  spawn_tags: [staff]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "增加 {value}% 法術暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 76, weight: 328, value: [90, 109] }
+    - { tier: 2, ilvl: 59, weight: 410, value: [80, 89] }
+    - { tier: 3, ilvl: 41, weight: 512, value: [70, 79] }
+    - { tier: 4, ilvl: 28, weight: 640, value: [60, 69] }
+    - { tier: 5, ilvl: 21, weight: 800, value: [50, 59] }
+    - { tier: 6, ilvl: 11, weight: 1000, value: [40, 49] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
+
+spell_crit_bonus:
+  type: suffix
+  group: spell_critical_strike_multiplier
+  spawn_tags: [int_only]
+  exclude_tags: [body, boots, helmet, leggings]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意]
+  text: "增加 {value}% 法術暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 59, weight: 410, value: [30, 34] }
+    - { tier: 2, ilvl: 44, weight: 512, value: [25, 29] }
+    - { tier: 3, ilvl: 30, weight: 640, value: [20, 24] }
+    - { tier: 4, ilvl: 21, weight: 800, value: [15, 19] }
+    - { tier: 5, ilvl: 8, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
+
+spell_crit_bonus_wand:
+  type: suffix
+  group: spell_critical_strike_multiplier
+  spawn_tags: [wand]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "增加 {value}% 法術暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 73, weight: 328, value: [35, 39] }
+    - { tier: 2, ilvl: 59, weight: 410, value: [30, 34] }
+    - { tier: 3, ilvl: 44, weight: 512, value: [25, 29] }
+    - { tier: 4, ilvl: 30, weight: 640, value: [20, 24] }
+    - { tier: 5, ilvl: 21, weight: 800, value: [15, 19] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [10, 14] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
+
+spell_crit_bonus_staff:
+  type: suffix
+  group: spell_critical_strike_multiplier
+  spawn_tags: [staff]
+  names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
+  text: "增加 {value}% 法術暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 73, weight: 328, value: [53, 59] }
+    - { tier: 2, ilvl: 59, weight: 410, value: [45, 51] }
+    - { tier: 3, ilvl: 44, weight: 512, value: [38, 44] }
+    - { tier: 4, ilvl: 30, weight: 640, value: [30, 36] }
+    - { tier: 5, ilvl: 21, weight: 800, value: [23, 29] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [15, 21] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
+
+str_flat:
+  type: suffix
+  group: strength
+  spawn_tags: [amulet, axe, crossbow, mace, melee_2h, ring, sceptre, spear, str_dex_armour, str_only, str_int_armour, sword, talisman]   # 2026-10：匕首、爪不出力量（PoE2）
+  names: [之星骸巨人, 之泰坦, 之巨人, 之熊, 之野牛, 之摔角手, 之勇士, 之新兵]
+  text: "+{value} 力量"
+  tiers:
+    - { tier: 1, ilvl: 74, weight: 210, value: [31, 33] }
+    - { tier: 2, ilvl: 66, weight: 262, value: [28, 30] }
+    - { tier: 3, ilvl: 55, weight: 328, value: [25, 27] }
+    - { tier: 4, ilvl: 44, weight: 410, value: [21, 24] }
+    - { tier: 5, ilvl: 33, weight: 512, value: [17, 20] }
+    - { tier: 6, ilvl: 22, weight: 640, value: [13, 16] }
+    - { tier: 7, ilvl: 11, weight: 800, value: [9, 12] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+
+str_flat_belt:
+  type: suffix
+  group: strength
+  spawn_tags: [belt]
+  names: [之星骸巨人, 之泰坦, 之巨人, 之熊, 之野牛, 之摔角手, 之勇士, 之新兵, 之平凡]
+  text: "+{value} 力量"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 168, value: [34, 36] }
+    - { tier: 2, ilvl: 74, weight: 210, value: [31, 33] }
+    - { tier: 3, ilvl: 66, weight: 262, value: [28, 30] }
+    - { tier: 4, ilvl: 55, weight: 328, value: [25, 27] }
+    - { tier: 5, ilvl: 44, weight: 410, value: [21, 24] }
+    - { tier: 6, ilvl: 33, weight: 512, value: [17, 20] }
+    - { tier: 7, ilvl: 22, weight: 640, value: [13, 16] }
+    - { tier: 8, ilvl: 11, weight: 800, value: [9, 12] }
+    - { tier: 9, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+
+stun_threshold_flat:
+  type: suffix
+  group: stun_threshold
+  spawn_tags: [belt, body, dex_only, str_dex_armour, str_only, str_int_armour]
+  exclude_tags: [boots, helmet, leggings]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良, 之優質, 之普通, 之簡單, 之樸素, 之初製]
+  text: "+{value} 暈眩門檻"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 134, value: [254, 304] }
+    - { tier: 2, ilvl: 63, weight: 168, value: [207, 253] }
+    - { tier: 3, ilvl: 54, weight: 210, value: [164, 206] }
+    - { tier: 4, ilvl: 45, weight: 262, value: [125, 163] }
+    - { tier: 5, ilvl: 36, weight: 328, value: [98, 124] }
+    - { tier: 6, ilvl: 29, weight: 410, value: [73, 97] }
+    - { tier: 7, ilvl: 22, weight: 512, value: [50, 72] }
+    - { tier: 8, ilvl: 15, weight: 640, value: [30, 49] }
+    - { tier: 9, ilvl: 8, weight: 800, value: [12, 29] }
+    - { tier: 10, ilvl: 1, weight: 1000, value: [6, 11] }
+  mods:
+    - { stat: stun.threshold, type: FLAT, value: "{value}" }
+
+stun_threshold_flat_boots:
+  type: suffix
+  group: stun_threshold
+  spawn_tags: [boots]
+  names: [之星骸, 之神匠, 之大師, 之名家, 之精良, 之優質, 之普通, 之簡單, 之樸素, 之初製, 之粗糙]
+  text: "+{value} 暈眩門檻"
+  tiers:
+    - { tier: 1, ilvl: 80, weight: 107, value: [305, 352] }
+    - { tier: 2, ilvl: 72, weight: 134, value: [254, 304] }
+    - { tier: 3, ilvl: 63, weight: 168, value: [207, 253] }
+    - { tier: 4, ilvl: 54, weight: 210, value: [164, 206] }
+    - { tier: 5, ilvl: 45, weight: 262, value: [125, 163] }
+    - { tier: 6, ilvl: 36, weight: 328, value: [98, 124] }
+    - { tier: 7, ilvl: 29, weight: 410, value: [73, 97] }
+    - { tier: 8, ilvl: 22, weight: 512, value: [50, 72] }
+    - { tier: 9, ilvl: 15, weight: 640, value: [30, 49] }
+    - { tier: 10, ilvl: 8, weight: 800, value: [12, 29] }
+    - { tier: 11, ilvl: 1, weight: 1000, value: [6, 11] }
+  mods:
+    - { stat: stun.threshold, type: FLAT, value: "{value}" }
+
+
+# 2026-10 PoE2：力智盾也有全部元素抗性
+resist_all_shield:
+  type: suffix
+  group: all_resistances
+  spawn_tags: [str_int_shield]
+  names: [之星骸, 之彩虹, 之斑斕, 之萬花, 之稜鏡, 之水晶]
+  text: "+{value}% 全部元素抗性"
+  tiers:
+    - { tier: 1, ilvl: 80, weight: 328, value: [17, 18] }
+    - { tier: 2, ilvl: 68, weight: 410, value: [15, 16] }
+    - { tier: 3, ilvl: 54, weight: 512, value: [12, 14] }
+    - { tier: 4, ilvl: 40, weight: 640, value: [9, 11] }
+    - { tier: 5, ilvl: 26, weight: 800, value: [6, 8] }
+    - { tier: 6, ilvl: 12, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+# 2026-10 PoE2：權杖的召喚物全元素抗性
+minion_resist_all:
+  type: suffix
+  group: allies_in_presence_resist_all_elements
+  spawn_tags: [sceptre]
+  names: [之星骸, 之蛻變, 之演進, 之進化, 之適應, 之調適]
+  text: "召喚物 +{value}% 全部元素抗性"
+  tiers:
+    - { tier: 1, ilvl: 80, weight: 328, value: [17, 18] }
+    - { tier: 2, ilvl: 68, weight: 410, value: [15, 16] }
+    - { tier: 3, ilvl: 54, weight: 512, value: [12, 14] }
+    - { tier: 4, ilvl: 40, weight: 640, value: [9, 11] }
+    - { tier: 5, ilvl: 26, weight: 800, value: [6, 8] }
+    - { tier: 6, ilvl: 12, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}", tags: [minion] }
+    - { stat: resist.cold, type: FLAT, value: "{value}", tags: [minion] }
+    - { stat: resist.lightning, type: FLAT, value: "{value}", tags: [minion] }
+
+# 2026-10 PoE2：權杖的召喚物生命回復（PoE2 每分鐘的值 ÷ 6 ＝ 每秒 ×10）
+minion_regen:
+  type: suffix
+  group: allies_in_presence_life_regeneration
+  spawn_tags: [sceptre]
+  names: [之星骸, 之不死, 之復甦, 之康復, 之療養, 之巨魔, 之九頭蛇, 之海星, 之渦蟲, 之蜥蜴]
+  text: "召喚物每秒回復 {value/10} 生命"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 134, value: [291, 330] }
+    - { tier: 2, ilvl: 68, weight: 168, value: [231, 290] }
+    - { tier: 3, ilvl: 58, weight: 210, value: [181, 230] }
+    - { tier: 4, ilvl: 47, weight: 262, value: [131, 180] }
+    - { tier: 5, ilvl: 35, weight: 328, value: [91, 130] }
+    - { tier: 6, ilvl: 26, weight: 410, value: [61, 90] }
+    - { tier: 7, ilvl: 17, weight: 512, value: [41, 60] }
+    - { tier: 8, ilvl: 11, weight: 640, value: [31, 40] }
+    - { tier: 9, ilvl: 5, weight: 800, value: [21, 30] }
+    - { tier: 10, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: life.regen, type: FLAT, value: "{value/10}", tags: [minion] }
+
+# 2026-10 PoE2：權杖的臨在範圍
+presence_area:
+  type: suffix
+  group: presence_area
+  spawn_tags: [sceptre]
+  names: [之星骸, 之感召, 之引領, 之外延]
+  text: "增加 {value}% 臨在範圍"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 512, value: [66, 80] }
+    - { tier: 2, ilvl: 56, weight: 640, value: [56, 65] }
+    - { tier: 3, ilvl: 40, weight: 800, value: [46, 55] }
+    - { tier: 4, ilvl: 23, weight: 1000, value: [36, 45] }
+  mods:
+    - { stat: presence.area, type: INCREASED, value: "{value}" }
+
+# ======== 停用的舊詞綴（不再擲出，舊物品照常生效）========
 
 crit_multi:
   type: suffix
   group: crit_multi
-  spawn_tags: [weapon, amulet]
-  names: [之毀滅, 之破壞, 之殘酷, 之兇殘]
+  spawn_tags: [retired]
+  names: [之滅世, 之殲滅, 之毀滅, 之破壞, 之殘酷, 之兇殘]
   text: "+{value}% 暴擊傷害"
   tiers:
+    - { tier: -1, ilvl: 78, weight: 80, value: [39, 42] }
+    - { tier: 0, ilvl: 68, weight: 150, value: [35, 38] }
     - { tier: 1, ilvl: 50, weight: 250, value: [30, 34] }
     - { tier: 2, ilvl: 32, weight: 500, value: [23, 27] }
     - { tier: 3, ilvl: 16, weight: 800, value: [15, 19] }
@@ -202,28 +1869,15 @@ crit_multi:
   mods:
     - { stat: crit.multi, type: FLAT, value: "{value}" }
 
-accuracy:
-  type: suffix
-  group: accuracy
-  spawn_tags: [weapon, ring, helmet]
-  names: [之鷹眼, 之獵人, 之射手, 之弓手, 之瞄準]
-  text: "+{value} 命中"
-  tiers:
-    - { tier: 1, ilvl: 55, weight: 200, value: [250, 320] }
-    - { tier: 2, ilvl: 40, weight: 400, value: [192, 250] }
-    - { tier: 3, ilvl: 28, weight: 700, value: [135, 180] }
-    - { tier: 4, ilvl: 14, weight: 1000, value: [78, 110] }
-    - { tier: 5, ilvl: 1, weight: 1000, value: [20, 40] }
-  mods:
-    - { stat: accuracy, type: FLAT, value: "{value}" }
-
 life_regen:
   type: suffix
   group: life_regen
-  spawn_tags: [armour, shield, jewellery]
-  names: [之鳳凰, 之不死, 之再生, 之癒合, 之恢復]
+  spawn_tags: [retired]
+  names: [之永生, 之涅槃, 之鳳凰, 之不死, 之再生, 之癒合, 之恢復]
   text: "每秒回復 {value} 生命"
   tiers:
+    - { tier: -1, ilvl: 78, weight: 70, value: [22, 26] }
+    - { tier: 0, ilvl: 68, weight: 120, value: [17, 21] }
     - { tier: 1, ilvl: 55, weight: 200, value: [12, 16] }
     - { tier: 2, ilvl: 40, weight: 400, value: [9, 12] }
     - { tier: 3, ilvl: 28, weight: 700, value: [6, 9] }
@@ -232,42 +1886,986 @@ life_regen:
   mods:
     - { stat: life.regen, type: FLAT, value: "{value}" }
 
-mana_regen:
-  type: suffix
-  group: mana_regen
-  spawn_tags: [armour, shield, jewellery, wand, staff]
-  names: [之泉源, 之湧泉, 之溪流, 之細流]
-  text: "增加 {value}% 魔力回復速度"
-  tiers:
-    - { tier: 1, ilvl: 50, weight: 250, value: [50, 59] }
-    - { tier: 2, ilvl: 32, weight: 500, value: [38, 47] }
-    - { tier: 3, ilvl: 16, weight: 800, value: [27, 36] }
-    - { tier: 4, ilvl: 1, weight: 1000, value: [15, 24] }
-  mods:
-    - { stat: mana.regen, type: INCREASED, value: "{value}" }
-
-movement_speed:
-  type: suffix
-  group: movement_speed
-  spawn_tags: [boots]
-  names: [之奔雷, 之疾走, 之飛毛腿]
-  text: "增加 {value}% 移動速度"
-  tiers:
-    - { tier: 1, ilvl: 32, weight: 500, value: [25, 30] }
-    - { tier: 2, ilvl: 16, weight: 800, value: [18, 22] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 14] }
-  mods:
-    - { stat: movement.speed, type: INCREASED, value: "{value}" }
-
 block_chance:
   type: suffix
   group: block
-  spawn_tags: [shield]
-  names: [之壁壘, 之守護, 之屏障]
+  spawn_tags: [retired]
+  names: [之不破, 之銅牆, 之壁壘, 之守護, 之屏障]
   text: "+{value}% 格擋率"
   tiers:
+    - { tier: -1, ilvl: 75, weight: 100, value: [11, 12] }
+    - { tier: 0, ilvl: 55, weight: 250, value: [9, 10] }
     - { tier: 1, ilvl: 32, weight: 500, value: [6, 8] }
     - { tier: 2, ilvl: 16, weight: 800, value: [4, 6] }
     - { tier: 3, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
     - { stat: block.chance, type: FLAT, value: "{value}" }
+
+bleed_chance:
+  type: suffix
+  group: bleed_chance
+  spawn_tags: [retired]
+  names: [之撕裂, 之血刃, 之裂創, 之割傷]
+  text: "攻擊擊中時 {value}% 機率造成流血"
+  tiers:
+    - { tier: 1, ilvl: 45, weight: 250, value: [20, 25] }
+    - { tier: 2, ilvl: 30, weight: 450, value: [15, 19] }
+    - { tier: 3, ilvl: 15, weight: 650, value: [10, 14] }
+    - { tier: 4, ilvl: 1, weight: 800, value: [5, 9] }
+  mods:
+    - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+poison_chance:
+  type: suffix
+  group: poison_chance
+  spawn_tags: [retired]
+  names: [之劇毒, 之蛇毒, 之毒牙, 之毒液]
+  text: "擊中時 {value}% 機率造成中毒"
+  tiers:
+    - { tier: 1, ilvl: 45, weight: 250, value: [20, 25] }
+    - { tier: 2, ilvl: 30, weight: 450, value: [15, 19] }
+    - { tier: 3, ilvl: 15, weight: 650, value: [10, 14] }
+    - { tier: 4, ilvl: 1, weight: 800, value: [5, 9] }
+  mods:
+    - { stat: poison.chance, type: FLAT, value: "{value}" }
+
+electrocute_chance:
+  type: suffix
+  group: electrocute_chance
+  spawn_tags: [retired]
+  names: [之麻痺, 之電網, 之雷縛, 之觸電]
+  text: "閃電傷害擊中時 {value}% 機率累積電擊"
+  tiers:
+    - { tier: 1, ilvl: 45, weight: 250, value: [16, 20] }
+    - { tier: 2, ilvl: 30, weight: 450, value: [12, 15] }
+    - { tier: 3, ilvl: 15, weight: 650, value: [8, 11] }
+    - { tier: 4, ilvl: 1, weight: 800, value: [4, 7] }
+  mods:
+    - { stat: electrocute.chance, type: FLAT, value: "{value}" }
+
+ailment_duration:
+  type: suffix
+  group: ailment_duration
+  spawn_tags: [retired]
+  names: [之永續, 之綿延, 之持久, 之延續]
+  text: "增加 {value}% 異常狀態持續時間"
+  tiers:
+    - { tier: 0, ilvl: 60, weight: 150, value: [31, 36] }
+    - { tier: 1, ilvl: 40, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 20, weight: 600, value: [18, 25] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [10, 17] }
+  mods:
+    - { stat: ailment.duration, type: INCREASED, value: "{value}" }
+
+avoid_ignite:
+  type: suffix
+  group: avoid_ignite
+  spawn_tags: [retired]
+  names: [之不燃, 之耐火, 之防火, 之阻燃, 之隔熱]
+  text: "+{value}% 機率避免被點燃"
+  tiers:
+    - { tier: -1, ilvl: 72, weight: 80, value: [57, 62] }
+    - { tier: 0, ilvl: 55, weight: 200, value: [51, 56] }
+    - { tier: 1, ilvl: 40, weight: 300, value: [41, 50] }
+    - { tier: 2, ilvl: 20, weight: 600, value: [26, 40] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [15, 25] }
+  mods:
+    - { stat: avoid.ignite, type: FLAT, value: "{value}" }
+
+avoid_freeze:
+  type: suffix
+  group: avoid_freeze
+  spawn_tags: [retired]
+  names: [之不凍, 之耐寒, 之禦寒, 之保溫, 之暖身]
+  text: "+{value}% 機率避免被冰緩與凍結"
+  tiers:
+    - { tier: -1, ilvl: 72, weight: 80, value: [57, 62] }
+    - { tier: 0, ilvl: 55, weight: 200, value: [51, 56] }
+    - { tier: 1, ilvl: 40, weight: 300, value: [41, 50] }
+    - { tier: 2, ilvl: 20, weight: 600, value: [26, 40] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [15, 25] }
+  mods:
+    - { stat: avoid.chill, type: FLAT, value: "{value}" }
+    - { stat: avoid.freeze, type: FLAT, value: "{value}" }
+
+avoid_shock:
+  type: suffix
+  group: avoid_shock
+  spawn_tags: [retired]
+  names: [之不導, 之耐電, 之絕緣, 之接地, 之避雷]
+  text: "+{value}% 機率避免被感電"
+  tiers:
+    - { tier: -1, ilvl: 72, weight: 80, value: [57, 62] }
+    - { tier: 0, ilvl: 55, weight: 200, value: [51, 56] }
+    - { tier: 1, ilvl: 40, weight: 300, value: [41, 50] }
+    - { tier: 2, ilvl: 20, weight: 600, value: [26, 40] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [15, 25] }
+  mods:
+    - { stat: avoid.shock, type: FLAT, value: "{value}" }
+
+avoid_bleed:
+  type: suffix
+  group: avoid_bleed
+  spawn_tags: [retired]
+  names: [之凝血, 之止創, 之止血, 之癒合, 之繃帶]
+  text: "+{value}% 機率避免流血"
+  tiers:
+    - { tier: -1, ilvl: 72, weight: 80, value: [57, 62] }
+    - { tier: 0, ilvl: 55, weight: 200, value: [51, 56] }
+    - { tier: 1, ilvl: 40, weight: 300, value: [41, 50] }
+    - { tier: 2, ilvl: 20, weight: 600, value: [26, 40] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [15, 25] }
+  mods:
+    - { stat: avoid.bleed, type: FLAT, value: "{value}" }
+
+avoid_stun:
+  type: suffix
+  group: avoid_stun
+  spawn_tags: [retired]
+  names: [之泰山, 之千鈞, 之站穩, 之磐石, 之不動]
+  text: "+{value}% 機率避免暈眩"
+  tiers:
+    - { tier: -1, ilvl: 72, weight: 80, value: [57, 62] }
+    - { tier: 0, ilvl: 55, weight: 200, value: [51, 56] }
+    - { tier: 1, ilvl: 40, weight: 300, value: [41, 50] }
+    - { tier: 2, ilvl: 20, weight: 600, value: [26, 40] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [15, 25] }
+  mods:
+    - { stat: avoid.stun, type: FLAT, value: "{value}" }
+
+stun_threshold:
+  type: suffix
+  group: stun_threshold
+  spawn_tags: [retired]
+  names: [之不倒, 之穩如山, 之鐵壁, 之沉穩, 之厚實]
+  text: "增加 {value}% 暈眩門檻"
+  tiers:
+    - { tier: -1, ilvl: 72, weight: 80, value: [76, 90] }
+    - { tier: 0, ilvl: 55, weight: 200, value: [61, 75] }
+    - { tier: 1, ilvl: 40, weight: 300, value: [41, 60] }
+    - { tier: 2, ilvl: 20, weight: 600, value: [26, 40] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [10, 25] }
+  mods:
+    - { stat: stun.threshold, type: INCREASED, value: "{value}" }
+
+avoid_electrocute:
+  type: suffix
+  group: avoid_electrocute
+  spawn_tags: [retired]
+  names: [之避雷針, 之耐壓, 之絕緣體, 之橡膠, 之避電]
+  text: "+{value}% 機率避免電擊"
+  tiers:
+    - { tier: -1, ilvl: 72, weight: 80, value: [57, 62] }
+    - { tier: 0, ilvl: 55, weight: 200, value: [51, 56] }
+    - { tier: 1, ilvl: 40, weight: 300, value: [41, 50] }
+    - { tier: 2, ilvl: 20, weight: 600, value: [26, 40] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [15, 25] }
+  mods:
+    - { stat: avoid.electrocute, type: FLAT, value: "{value}" }
+
+avoid_poison:
+  type: suffix
+  group: avoid_poison
+  spawn_tags: [retired]
+  names: [之百毒不侵, 之清血, 之解毒, 之抗毒, 之淨血]
+  text: "+{value}% 機率避免中毒"
+  tiers:
+    - { tier: -1, ilvl: 72, weight: 80, value: [57, 62] }
+    - { tier: 0, ilvl: 55, weight: 200, value: [51, 56] }
+    - { tier: 1, ilvl: 40, weight: 300, value: [41, 50] }
+    - { tier: 2, ilvl: 20, weight: 600, value: [26, 40] }
+    - { tier: 3, ilvl: 1, weight: 800, value: [15, 25] }
+  mods:
+    - { stat: avoid.poison, type: FLAT, value: "{value}" }
+
+minion_count:
+  type: suffix
+  group: minion_count
+  spawn_tags: [retired]
+  names: [之不死軍團, 之亡者大軍]
+  text: "同時最多多 {value} 隻召喚物"
+  tiers:
+    - { tier: 0, ilvl: 82, weight: 8, value: [2, 2] }
+    - { tier: 1, ilvl: 60, weight: 40, value: [1, 1] }
+  mods:
+    - { stat: skill.minions, type: FLAT, value: "{value}", tags: [minion] }
+
+aura_effect:
+  type: suffix
+  group: aura_effect
+  spawn_tags: [retired]
+  names: [之領袖, 之號角, 之旗手, 之統帥]
+  text: "增加 {value}% 光環效果"
+  tiers:
+    - { tier: 1, ilvl: 68, weight: 60, value: [9, 10] }
+    - { tier: 2, ilvl: 50, weight: 150, value: [7, 8] }
+    - { tier: 3, ilvl: 30, weight: 300, value: [5, 6] }
+    - { tier: 4, ilvl: 1, weight: 400, value: [3, 4] }
+  mods:
+    - { stat: aura.effect, type: INCREASED, value: "{value}" }
+
+warcry_cooldown:
+  type: suffix
+  group: warcry_cooldown
+  spawn_tags: [retired]
+  names: [之戰吼, 之怒吼, 之咆哮, 之號令]
+  text: "戰吼冷卻時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [23, 28] }
+    - { tier: 2, ilvl: 40, weight: 250, value: [18, 22] }
+    - { tier: 3, ilvl: 20, weight: 500, value: [13, 17] }
+    - { tier: 4, ilvl: 1, weight: 500, value: [8, 12] }
+  mods:
+    - { stat: skill.cooldown, type: INCREASED, value: "-{value}", tags: [warcry] }
+
+cooldown_recovery:
+  type: suffix
+  group: cooldown_recovery
+  spawn_tags: [retired]
+  names: [之迅捷, 之敏捷, 之從容, 之喘息]
+  text: "冷卻時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 70, weight: 60, value: [13, 15] }
+    - { tier: 2, ilvl: 50, weight: 150, value: [9, 12] }
+    - { tier: 3, ilvl: 25, weight: 300, value: [6, 8] }
+    - { tier: 4, ilvl: 1, weight: 400, value: [3, 5] }
+  mods:
+    - { stat: skill.cooldown, type: INCREASED, value: "-{value}" }
+
+# 偷取：先存起來再慢慢回（每秒最多回 10% 最大生命）。{value/10} 是小數：擲出 12 顯示 1.2%
+
+leech_instant:
+  type: suffix
+  group: leech_instant
+  spawn_tags: [retired]
+  names: [之渴血, 之狂飲, 之暴食, 之貪噬]
+  text: "偷取有 {value}% 立即生效"
+  tiers:
+    - { tier: 1, ilvl: 68, weight: 60, value: [26, 30] }
+    - { tier: 2, ilvl: 50, weight: 150, value: [19, 25] }
+    - { tier: 3, ilvl: 30, weight: 300, value: [12, 18] }
+    - { tier: 4, ilvl: 12, weight: 500, value: [6, 11] }
+  mods:
+    - { stat: leech.instant, type: FLAT, value: "{value}" }
+
+leech_rate:
+  type: suffix
+  group: leech_rate
+  spawn_tags: [retired]
+  names: [之血流, 之奔湧, 之狂潮, 之血海]
+  text: "最大偷取速度增加 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 68, weight: 80, value: [41, 50] }
+    - { tier: 2, ilvl: 45, weight: 200, value: [31, 40] }
+    - { tier: 3, ilvl: 25, weight: 400, value: [21, 30] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [10, 20] }
+  mods:
+    - { stat: leech.rate, type: INCREASED, value: "{value}" }
+
+leech_elemental:
+  type: suffix
+  group: leech_elemental
+  spawn_tags: [retired]
+  names: [之汲元, 之吞焰, 之噬霜, 之飲雷]
+  text: "造成的元素傷害有 {value/10}% 偷取為生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 80, value: [9, 10] }
+    - { tier: 2, ilvl: 40, weight: 200, value: [6, 8] }
+    - { tier: 3, ilvl: 20, weight: 400, value: [4, 5] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [2, 3] }
+  mods:
+    - { stat: leech.life_elemental, type: FLAT, value: "{value/10}" }
+
+life_on_kill:
+  type: suffix
+  group: life_on_kill
+  spawn_tags: [retired]
+  names: [之收割, 之斬獲, 之掠奪, 之戰利, 之拾荒]
+  text: "擊殺時回復 {value/10}% 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [16, 20] }
+    - { tier: 2, ilvl: 45, weight: 220, value: [12, 15] }
+    - { tier: 3, ilvl: 30, weight: 400, value: [9, 11] }
+    - { tier: 4, ilvl: 15, weight: 600, value: [6, 8] }
+    - { tier: 5, ilvl: 1, weight: 800, value: [3, 5] }
+  mods:
+    - { stat: life.on_kill, type: FLAT, value: "{value/10}" }
+
+mana_on_kill:
+  type: suffix
+  group: mana_on_kill
+  spawn_tags: [retired]
+  names: [之吞噬, 之汲靈, 之吸納, 之回收, 之撿拾]
+  text: "擊殺時回復 {value/10}% 最大魔力"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [20, 25] }
+    - { tier: 2, ilvl: 45, weight: 220, value: [15, 19] }
+    - { tier: 3, ilvl: 30, weight: 400, value: [11, 14] }
+    - { tier: 4, ilvl: 15, weight: 600, value: [8, 10] }
+    - { tier: 5, ilvl: 1, weight: 800, value: [4, 6] }
+  mods:
+    - { stat: mana.on_kill, type: FLAT, value: "{value/10}" }
+
+es_on_kill:
+  type: suffix
+  group: es_on_kill
+  spawn_tags: [retired]
+  names: [之吸星, 之汲光, 之聚能, 之補能, 之微能]
+  text: "擊殺時回復 {value/10}% 最大能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [12, 15] }
+    - { tier: 2, ilvl: 45, weight: 220, value: [9, 11] }
+    - { tier: 3, ilvl: 30, weight: 400, value: [7, 8] }
+    - { tier: 4, ilvl: 15, weight: 600, value: [5, 6] }
+    - { tier: 5, ilvl: 1, weight: 800, value: [3, 4] }
+  mods:
+    - { stat: es.on_kill, type: FLAT, value: "{value/10}" }
+
+life_regen_pct:
+  type: suffix
+  group: life_regen_pct
+  spawn_tags: [retired]
+  names: [之不老, 之再生泉, 之復甦, 之生生不息]
+  text: "每秒回復 {value/10}% 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 68, weight: 60, value: [8, 10] }
+    - { tier: 2, ilvl: 50, weight: 150, value: [6, 7] }
+    - { tier: 3, ilvl: 30, weight: 300, value: [4, 5] }
+    - { tier: 4, ilvl: 10, weight: 500, value: [2, 3] }
+  mods:
+    - { stat: life.regen_percent, type: FLAT, value: "{value/10}" }
+
+es_delay:
+  type: suffix
+  group: es_delay
+  spawn_tags: [retired]
+  names: [之迅復, 之速醒, 之不息, 之緩氣]
+  text: "能量護盾開始回充的等待時間縮短 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 100, value: [27, 32] }
+    - { tier: 2, ilvl: 40, weight: 220, value: [21, 26] }
+    - { tier: 3, ilvl: 25, weight: 400, value: [15, 20] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [9, 14] }
+  mods:
+    - { stat: es.delay, type: INCREASED, value: "-{value}" }
+
+skill_area:
+  type: suffix
+  group: skill_area
+  spawn_tags: [retired]
+  names: [之廣域, 之擴張, 之延伸, 之擴散]
+  text: "增加 {value}% 範圍效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [16, 20] }
+    - { tier: 2, ilvl: 40, weight: 220, value: [12, 15] }
+    - { tier: 3, ilvl: 20, weight: 400, value: [8, 11] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [4, 7] }
+  mods:
+    - { stat: skill.area, type: INCREASED, value: "{value}" }
+
+projectile_pierce:
+  type: suffix
+  group: projectile_pierce
+  spawn_tags: [retired]
+  names: [之貫日, 之穿心]
+  text: "投射物多穿透 {value} 個敵人"
+  tiers:
+    - { tier: 1, ilvl: 70, weight: 40, value: [2, 2] }
+    - { tier: 2, ilvl: 40, weight: 120, value: [1, 1] }
+  mods:
+    - { stat: skill.pierce, type: FLAT, value: "{value}", tags: [projectile] }
+
+chain_count:
+  type: suffix
+  group: chain_count
+  spawn_tags: [retired]
+  names: [之連環, 之連鎖]
+  text: "技能多連鎖 {value} 次"
+  tiers:
+    - { tier: 1, ilvl: 78, weight: 15, value: [2, 2] }
+    - { tier: 2, ilvl: 55, weight: 60, value: [1, 1] }
+  mods:
+    - { stat: skill.chains, type: FLAT, value: "{value}" }
+
+skill_duration:
+  type: suffix
+  group: skill_duration
+  spawn_tags: [retired]
+  names: [之悠長, 之久遠, 之延時, 之留痕]
+  text: "增加 {value}% 技能持續時間"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 100, value: [24, 28] }
+    - { tier: 2, ilvl: 35, weight: 250, value: [18, 23] }
+    - { tier: 3, ilvl: 15, weight: 450, value: [12, 17] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [6, 11] }
+  mods:
+    - { stat: skill.duration, type: INCREASED, value: "{value}" }
+
+skill_cost:
+  type: suffix
+  group: skill_cost
+  spawn_tags: [retired]
+  names: [之節制, 之簡約, 之省力, 之從簡]
+  text: "技能的魔力消耗減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [11, 14] }
+    - { tier: 2, ilvl: 40, weight: 220, value: [8, 10] }
+    - { tier: 3, ilvl: 20, weight: 400, value: [5, 7] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [3, 4] }
+  mods:
+    - { stat: skill.cost, type: INCREASED, value: "-{value}" }
+
+aura_reservation:
+  type: suffix
+  group: aura_reservation
+  spawn_tags: [retired]
+  names: [之寬宏, 之無私, 之慷慨, 之分享]
+  text: "光環的保留效率增加 {value}%"
+  # 2026-10 精魂改版：不再出現（權重 0），已經有的物品保留
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 0, value: [12, 14] }
+    - { tier: 2, ilvl: 40, weight: 0, value: [9, 11] }
+    - { tier: 3, ilvl: 20, weight: 0, value: [6, 8] }
+    - { tier: 4, ilvl: 1, weight: 0, value: [3, 5] }
+  mods:
+    - { stat: aura.reservation, type: INCREASED, value: "-{value}" }
+
+warcry_exerts:
+  type: suffix
+  group: warcry_exerts
+  spawn_tags: [retired]
+  names: [之連聲, 之迴響]
+  text: "戰吼多強化 {value} 次攻擊"
+  tiers:
+    - { tier: 1, ilvl: 68, weight: 50, value: [2, 2] }
+    - { tier: 2, ilvl: 30, weight: 150, value: [1, 1] }
+  mods:
+    - { stat: warcry.exerts, type: FLAT, value: "{value}", tags: [warcry] }
+
+totem_count:
+  type: suffix
+  group: totem_count
+  spawn_tags: [retired]
+  names: [之圖騰林]
+  text: "同時最多多 {value} 個圖騰"
+  tiers:
+    - { tier: 1, ilvl: 70, weight: 25, value: [1, 1] }
+  mods:
+    - { stat: skill.totems, type: FLAT, value: "{value}" }
+
+ignite_magnitude:
+  type: suffix
+  group: ignite_magnitude
+  spawn_tags: [retired]
+  names: [之業火, 之焚身, 之灼燒, 之悶燒]
+  text: "增加 {value}% 點燃傷害"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 100, value: [26, 32] }
+    - { tier: 2, ilvl: 40, weight: 220, value: [20, 25] }
+    - { tier: 3, ilvl: 25, weight: 400, value: [14, 19] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [8, 13] }
+  mods:
+    - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+
+bleed_magnitude:
+  type: suffix
+  group: bleed_magnitude
+  spawn_tags: [retired]
+  names: [之血河, 之血湧, 之放血, 之滲血]
+  text: "增加 {value}% 流血傷害"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 100, value: [26, 32] }
+    - { tier: 2, ilvl: 40, weight: 220, value: [20, 25] }
+    - { tier: 3, ilvl: 25, weight: 400, value: [14, 19] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [8, 13] }
+  mods:
+    - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
+
+poison_magnitude:
+  type: suffix
+  group: poison_magnitude
+  spawn_tags: [retired]
+  names: [之瘟毒, 之劇痛, 之毒蝕, 之微毒]
+  text: "增加 {value}% 中毒傷害"
+  tiers:
+    - { tier: 1, ilvl: 55, weight: 100, value: [26, 32] }
+    - { tier: 2, ilvl: 40, weight: 220, value: [20, 25] }
+    - { tier: 3, ilvl: 25, weight: 400, value: [14, 19] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [8, 13] }
+  mods:
+    - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
+
+chill_effect:
+  type: suffix
+  group: chill_effect
+  spawn_tags: [retired]
+  names: [之寒獄, 之凝滯, 之遲緩, 之冷顫]
+  text: "增加 {value}% 冰緩效果"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 100, value: [21, 25] }
+    - { tier: 2, ilvl: 30, weight: 250, value: [16, 20] }
+    - { tier: 3, ilvl: 15, weight: 450, value: [11, 15] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [6, 10] }
+  mods:
+    - { stat: chill.effect, type: INCREASED, value: "{value}" }
+
+shock_effect:
+  type: suffix
+  group: shock_effect
+  spawn_tags: [retired]
+  names: [之雷獄, 之麻痺網, 之電殛, 之酥麻]
+  text: "增加 {value}% 感電效果"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 100, value: [21, 25] }
+    - { tier: 2, ilvl: 30, weight: 250, value: [16, 20] }
+    - { tier: 3, ilvl: 15, weight: 450, value: [11, 15] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [6, 10] }
+  mods:
+    - { stat: shock.effect, type: INCREASED, value: "{value}" }
+
+ignite_duration:
+  type: suffix
+  group: ignite_duration
+  spawn_tags: [retired]
+  names: [之長燃, 之餘火, 之焦痕]
+  text: "增加 {value}% 點燃持續時間"
+  tiers:
+    - { tier: 1, ilvl: 45, weight: 80, value: [26, 30] }
+    - { tier: 2, ilvl: 25, weight: 150, value: [19, 25] }
+    - { tier: 3, ilvl: 1, weight: 220, value: [12, 18] }
+  mods:
+    - { stat: ignite.duration, type: INCREASED, value: "{value}" }
+
+chill_duration:
+  type: suffix
+  group: chill_duration
+  spawn_tags: [retired]
+  names: [之長冬, 之霜痕, 之寒露]
+  text: "增加 {value}% 冰緩持續時間"
+  tiers:
+    - { tier: 1, ilvl: 45, weight: 80, value: [26, 30] }
+    - { tier: 2, ilvl: 25, weight: 150, value: [19, 25] }
+    - { tier: 3, ilvl: 1, weight: 220, value: [12, 18] }
+  mods:
+    - { stat: chill.duration, type: INCREASED, value: "{value}" }
+
+freeze_duration:
+  type: suffix
+  group: freeze_duration
+  spawn_tags: [retired]
+  names: [之冰棺, 之凍土, 之結霜]
+  text: "增加 {value}% 凍結持續時間"
+  tiers:
+    - { tier: 1, ilvl: 45, weight: 80, value: [26, 30] }
+    - { tier: 2, ilvl: 25, weight: 150, value: [19, 25] }
+    - { tier: 3, ilvl: 1, weight: 220, value: [12, 18] }
+  mods:
+    - { stat: freeze.duration, type: INCREASED, value: "{value}" }
+
+shock_duration:
+  type: suffix
+  group: shock_duration
+  spawn_tags: [retired]
+  names: [之餘雷, 之電痕, 之靜電場]
+  text: "增加 {value}% 感電持續時間"
+  tiers:
+    - { tier: 1, ilvl: 45, weight: 80, value: [26, 30] }
+    - { tier: 2, ilvl: 25, weight: 150, value: [19, 25] }
+    - { tier: 3, ilvl: 1, weight: 220, value: [12, 18] }
+  mods:
+    - { stat: shock.duration, type: INCREASED, value: "{value}" }
+
+bleed_duration:
+  type: suffix
+  group: bleed_duration
+  spawn_tags: [retired]
+  names: [之血痕, 之不癒, 之裂口]
+  text: "增加 {value}% 流血持續時間"
+  tiers:
+    - { tier: 1, ilvl: 45, weight: 80, value: [26, 30] }
+    - { tier: 2, ilvl: 25, weight: 150, value: [19, 25] }
+    - { tier: 3, ilvl: 1, weight: 220, value: [12, 18] }
+  mods:
+    - { stat: bleed.duration, type: INCREASED, value: "{value}" }
+
+poison_duration:
+  type: suffix
+  group: poison_duration
+  spawn_tags: [retired]
+  names: [之毒沼, 之毒痕, 之殘毒]
+  text: "增加 {value}% 中毒持續時間"
+  tiers:
+    - { tier: 1, ilvl: 45, weight: 80, value: [26, 30] }
+    - { tier: 2, ilvl: 25, weight: 150, value: [19, 25] }
+    - { tier: 3, ilvl: 1, weight: 220, value: [12, 18] }
+  mods:
+    - { stat: poison.duration, type: INCREASED, value: "{value}" }
+
+ailment_threshold:
+  type: suffix
+  group: ailment_threshold
+  spawn_tags: [retired]
+  names: [之堅毅, 之鎮定, 之泰然, 之平靜, 之淡定]
+  text: "增加 {value}% 元素異常門檻"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [41, 50] }
+    - { tier: 2, ilvl: 45, weight: 220, value: [31, 40] }
+    - { tier: 3, ilvl: 30, weight: 400, value: [21, 30] }
+    - { tier: 4, ilvl: 15, weight: 600, value: [13, 20] }
+    - { tier: 5, ilvl: 1, weight: 800, value: [6, 12] }
+  mods:
+    - { stat: ailment.threshold, type: INCREASED, value: "{value}" }
+
+self_ailment_duration:
+  type: suffix
+  group: self_ailment_duration
+  spawn_tags: [retired]
+  names: [之淨身, 之袪病, 之康復, 之痊癒]
+  text: "身上的異常狀態持續時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [26, 30] }
+    - { tier: 2, ilvl: 40, weight: 220, value: [20, 25] }
+    - { tier: 3, ilvl: 20, weight: 400, value: [14, 19] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [8, 13] }
+  mods:
+    - { stat: ailment.self_duration, type: INCREASED, value: "-{value}" }
+
+power_charge_on_crit:
+  type: suffix
+  group: power_charge_chance
+  spawn_tags: [retired]
+  names: [之星芒, 之洞察, 之靈光, 之火花]
+  text: "暴擊時 {value}% 機率獲得一顆銳星"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 60, value: [14, 16] }
+    - { tier: 2, ilvl: 40, weight: 150, value: [10, 12] }
+    - { tier: 3, ilvl: 20, weight: 300, value: [6, 8] }
+    - { tier: 4, ilvl: 1, weight: 400, value: [3, 5] }
+  mods:
+    - { stat: charge.chance.power, type: FLAT, value: "{value}" }
+
+frenzy_charge_on_kill:
+  type: suffix
+  group: frenzy_charge_chance
+  spawn_tags: [retired]
+  names: [之狂熱, 之亢奮, 之激昂, 之振奮]
+  text: "擊殺時 {value}% 機率獲得一顆怒星"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 60, value: [20, 25] }
+    - { tier: 2, ilvl: 40, weight: 150, value: [15, 19] }
+    - { tier: 3, ilvl: 20, weight: 300, value: [10, 14] }
+    - { tier: 4, ilvl: 1, weight: 400, value: [5, 9] }
+  mods:
+    - { stat: charge.chance.frenzy, type: FLAT, value: "{value}" }
+
+endurance_charge_on_hit:
+  type: suffix
+  group: endurance_charge_chance
+  spawn_tags: [retired]
+  names: [之不撓, 之堅忍, 之耐受, 之忍耐]
+  text: "被敵人擊中時 {value}% 機率獲得一顆磐星"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 60, value: [14, 16] }
+    - { tier: 2, ilvl: 40, weight: 150, value: [10, 12] }
+    - { tier: 3, ilvl: 20, weight: 300, value: [6, 8] }
+    - { tier: 4, ilvl: 1, weight: 400, value: [3, 5] }
+  mods:
+    - { stat: charge.chance.endurance, type: FLAT, value: "{value}" }
+
+# 2026-10：擊中時獲得戰星（每打中一個敵人擲一次；Boss 戰沒有擊殺也拿得到）。
+# 跟上面「擊殺時、暴擊時、被敵人擊中時」是不同的組，同一件裝備兩種都能有
+
+frenzy_charge_when_hitting:
+  type: suffix
+  group: frenzy_charge_hit
+  spawn_tags: [retired]
+  names: [之怒潮, 之怒湧, 之怒火, 之怒意]
+  text: "擊中時 {value}% 機率獲得一顆怒星"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 60, value: [8, 10] }
+    - { tier: 2, ilvl: 40, weight: 150, value: [6, 7] }
+    - { tier: 3, ilvl: 20, weight: 300, value: [4, 5] }
+    - { tier: 4, ilvl: 1, weight: 400, value: [2, 3] }
+  mods:
+    - { stat: charge.on_hit.frenzy, type: FLAT, value: "{value}" }
+
+power_charge_when_hitting:
+  type: suffix
+  group: power_charge_hit
+  spawn_tags: [retired]
+  names: [之銳芒, 之銳光, 之銳意, 之銳念]
+  text: "擊中時 {value}% 機率獲得一顆銳星"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 60, value: [6, 8] }
+    - { tier: 2, ilvl: 40, weight: 150, value: [4, 5] }
+    - { tier: 3, ilvl: 20, weight: 300, value: [3, 3] }
+    - { tier: 4, ilvl: 1, weight: 400, value: [1, 2] }
+  mods:
+    - { stat: charge.on_hit.power, type: FLAT, value: "{value}" }
+
+endurance_charge_when_hitting:
+  type: suffix
+  group: endurance_charge_hit
+  spawn_tags: [retired]
+  names: [之磐心, 之磐骨, 之磐身, 之磐志]
+  text: "擊中時 {value}% 機率獲得一顆磐星"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 60, value: [8, 10] }
+    - { tier: 2, ilvl: 40, weight: 150, value: [6, 7] }
+    - { tier: 3, ilvl: 20, weight: 300, value: [4, 5] }
+    - { tier: 4, ilvl: 1, weight: 400, value: [2, 3] }
+  mods:
+    - { stat: charge.on_hit.endurance, type: FLAT, value: "{value}" }
+
+power_charge_max:
+  type: suffix
+  group: power_charge_max
+  spawn_tags: [retired]
+  names: [之星辰之心]
+  text: "+{value} 銳星上限"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 30, value: [1, 1] }
+  mods:
+    - { stat: charge.max.power, type: FLAT, value: "{value}" }
+
+frenzy_charge_max:
+  type: suffix
+  group: frenzy_charge_max
+  spawn_tags: [retired]
+  names: [之狂戰之心]
+  text: "+{value} 怒星上限"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 30, value: [1, 1] }
+  mods:
+    - { stat: charge.max.frenzy, type: FLAT, value: "{value}" }
+
+endurance_charge_max:
+  type: suffix
+  group: endurance_charge_max
+  spawn_tags: [retired]
+  names: [之不屈之心]
+  text: "+{value} 磐星上限"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 30, value: [1, 1] }
+  mods:
+    - { stat: charge.max.endurance, type: FLAT, value: "{value}" }
+
+charge_duration:
+  type: suffix
+  group: charge_duration
+  spawn_tags: [retired]
+  names: [之恆心, 之持之以恆, 之延長]
+  text: "增加 {value}% 戰星的持續時間"
+  tiers:
+    - { tier: 1, ilvl: 50, weight: 100, value: [31, 40] }
+    - { tier: 2, ilvl: 30, weight: 220, value: [21, 30] }
+    - { tier: 3, ilvl: 1, weight: 400, value: [10, 20] }
+  mods:
+    - { stat: charge.duration, type: INCREASED, value: "{value}" }
+
+# 這兩條跟它們重複，不再擲出來（spawn_tags: [retired]）；定義留著給已經有這條的舊武器 ----
+
+local_crit:
+  type: suffix
+  group: crit_chance
+  spawn_tags: [retired]
+  names: [之鷹隼, 之銳眼光, 之致殘, 之精確, 之準星]
+  text: "增加 {value}% 暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 100, value: [26, 30] }
+    - { tier: 2, ilvl: 45, weight: 200, value: [21, 25] }
+    - { tier: 3, ilvl: 30, weight: 400, value: [16, 20] }
+    - { tier: 4, ilvl: 15, weight: 600, value: [11, 15] }
+    - { tier: 5, ilvl: 1, weight: 700, value: [6, 10] }
+  mods:
+    - { stat: local.crit, type: INCREASED, value: "{value}" }
+
+# 通用的暴擊率、暴擊傷害（上面的 crit_chance、crit_multi）法術也吃得到；這兩條只對法術有效，數值比較高。
+# 出在施法武器：法杖、權杖（一手）、長杖（雙手，數值約 1.5 倍）；跟通用的是不同群組，同一件可以兩種都有。
+
+spell_crit_chance_2h:
+  type: suffix
+  group: spell_crit_chance
+  spawn_tags: [retired]
+  names: [之星眸, 之天眼, 之慧眼, 之洞察, 之明察, 之靈視]
+  text: "增加 {value}% 法術暴擊率"
+  tiers:
+    - { tier: -1, ilvl: 78, weight: 80, value: [98, 108] }
+    - { tier: 0, ilvl: 68, weight: 150, value: [84, 94] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [68, 78] }
+    - { tier: 2, ilvl: 32, weight: 500, value: [51, 60] }
+    - { tier: 3, ilvl: 16, weight: 800, value: [33, 42] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [18, 25] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
+
+spell_crit_multi:
+  type: suffix
+  group: spell_crit_multi
+  spawn_tags: [retired]
+  names: [之星隕, 之天崩, 之裂空, 之碎星, 之破法, 之咒鋒]
+  text: "+{value}% 法術暴擊傷害"
+  tiers:
+    - { tier: -1, ilvl: 78, weight: 80, value: [45, 50] }
+    - { tier: 0, ilvl: 68, weight: 150, value: [39, 44] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [32, 38] }
+    - { tier: 2, ilvl: 32, weight: 500, value: [25, 31] }
+    - { tier: 3, ilvl: 16, weight: 800, value: [17, 23] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [9, 14] }
+  mods:
+    - { stat: crit.multi, type: FLAT, value: "{value}", tags: [spell] }
+
+spell_crit_multi_2h:
+  type: suffix
+  group: spell_crit_multi
+  spawn_tags: [retired]
+  names: [之星隕, 之天崩, 之裂空, 之碎星, 之破法, 之咒鋒]
+  text: "+{value}% 法術暴擊傷害"
+  tiers:
+    - { tier: -1, ilvl: 78, weight: 80, value: [68, 75] }
+    - { tier: 0, ilvl: 68, weight: 150, value: [59, 66] }
+    - { tier: 1, ilvl: 50, weight: 250, value: [48, 57] }
+    - { tier: 2, ilvl: 32, weight: 500, value: [38, 46] }
+    - { tier: 3, ilvl: 16, weight: 800, value: [26, 34] }
+    - { tier: 4, ilvl: 1, weight: 1000, value: [14, 21] }
+  mods:
+    - { stat: crit.multi, type: FLAT, value: "{value}", tags: [spell] }
+
+
+# 原本：項鍊的攻擊／法術暴擊（2026-10）
+# 項鍊原本只有通用的暴擊率、暴擊傷害（攻擊和法術都吃）；這四條只對其中一種有效，數值比通用的高、比施法武器的低。
+# 法術的跟法杖那兩條同一個群組；攻擊的是新的群組。跟通用的不同群組，同一條項鍊可以都有。
+
+amulet_spell_crit_chance:
+  type: suffix
+  group: spell_crit_chance
+  spawn_tags: [retired]
+  names: [之星眸, 之天眼, 之慧眼, 之洞察, 之明察, 之靈視]
+  text: "增加 {value}% 法術暴擊率"
+  tiers:
+    - { tier: -1, ilvl: 78, weight: 40, value: [49, 53] }
+    - { tier: 0, ilvl: 68, weight: 80, value: [44, 48] }
+    - { tier: 1, ilvl: 50, weight: 150, value: [37, 42] }
+    - { tier: 2, ilvl: 32, weight: 300, value: [28, 33] }
+    - { tier: 3, ilvl: 16, weight: 500, value: [20, 25] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [12, 17] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
+
+amulet_spell_crit_multi:
+  type: suffix
+  group: spell_crit_multi
+  spawn_tags: [retired]
+  names: [之星隕, 之天崩, 之裂空, 之碎星, 之破法, 之咒鋒]
+  text: "+{value}% 法術暴擊傷害"
+  tiers:
+    - { tier: -1, ilvl: 78, weight: 40, value: [43, 46] }
+    - { tier: 0, ilvl: 68, weight: 80, value: [39, 42] }
+    - { tier: 1, ilvl: 50, weight: 150, value: [34, 37] }
+    - { tier: 2, ilvl: 32, weight: 300, value: [26, 30] }
+    - { tier: 3, ilvl: 16, weight: 500, value: [17, 21] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [9, 13] }
+  mods:
+    - { stat: crit.multi, type: FLAT, value: "{value}", tags: [spell] }
+
+amulet_attack_crit_chance:
+  type: suffix
+  group: attack_crit_chance
+  spawn_tags: [retired]
+  names: [之隼眸, 之鷹視, 之要害, 之弱點, 之見隙, 之窺伺]
+  text: "增加 {value}% 攻擊暴擊率"
+  tiers:
+    - { tier: -1, ilvl: 78, weight: 40, value: [49, 53] }
+    - { tier: 0, ilvl: 68, weight: 80, value: [44, 48] }
+    - { tier: 1, ilvl: 50, weight: 150, value: [37, 42] }
+    - { tier: 2, ilvl: 32, weight: 300, value: [28, 33] }
+    - { tier: 3, ilvl: 16, weight: 500, value: [20, 25] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [12, 17] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
+
+amulet_attack_crit_multi:
+  type: suffix
+  group: attack_crit_multi
+  spawn_tags: [retired]
+  names: [之斬首, 之碎顱, 之穿心, 之斷骨, 之裂甲, 之見血]
+  text: "+{value}% 攻擊暴擊傷害"
+  tiers:
+    - { tier: -1, ilvl: 78, weight: 40, value: [43, 46] }
+    - { tier: 0, ilvl: 68, weight: 80, value: [39, 42] }
+    - { tier: 1, ilvl: 50, weight: 150, value: [34, 37] }
+    - { tier: 2, ilvl: 32, weight: 300, value: [26, 30] }
+    - { tier: 3, ilvl: 16, weight: 500, value: [17, 21] }
+    - { tier: 4, ilvl: 1, weight: 600, value: [9, 13] }
+  mods:
+    - { stat: crit.multi, type: FLAT, value: "{value}", tags: [attack] }
+
+strike_targets:
+  type: suffix
+  group: strike_targets
+  spawn_tags: [retired]
+  names: [之橫掃, 之掃蕩]
+  text: "打擊技能多打 {value} 個附近的敵人"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 60, value: [2, 2] }
+    - { tier: 2, ilvl: 55, weight: 150, value: [1, 1] }
+  mods:
+    - { stat: skill.strike_targets, type: FLAT, value: "{value}" }
+
+# 2026-10：護符欄位（PoE2 的腰帶「+1 護符欄位」）
+charm_slot_belt:
+  type: suffix
+  group: charm_slots
+  spawn_tags: [retired]   # 2026-10：PoE2 0.5 的腰帶沒有「+1 護符欄位」詞綴，停用（原本 [belt]）
+  names: [之護符, 之符袋]
+  text: "+{value} 護符欄位"
+  tiers:
+    - { tier: 1, ilvl: 20, weight: 400, value: [1, 1] }
+  mods:
+    - { stat: charm.slots, type: FLAT, value: "{value}" }
+
+# 2026-10：偏斜（PoE2）：沒被閃掉的擊中再擲一次，偏斜的傷害更少 40%
+deflection_flat:
+  type: suffix
+  group: deflection_flat
+  spawn_tags: [retired]   # 2026-10：PoE2 的偏斜是「閃避值的 x% 作為偏斜值」，改成下面的 deflection_evasion，停用（原本 [dex_only, str_dex_armour, dex_int_armour]）
+  names: [之卸勁, 之斜擋, 之流轉]
+  text: "+{value} 偏斜值"
+  tiers:
+    - { tier: 1, ilvl: 70, weight: 300, value: [151, 200] }
+    - { tier: 2, ilvl: 50, weight: 500, value: [101, 150] }
+    - { tier: 3, ilvl: 30, weight: 700, value: [61, 100] }
+    - { tier: 4, ilvl: 12, weight: 900, value: [31, 60] }
+    - { tier: 5, ilvl: 1, weight: 1000, value: [12, 30] }
+  mods:
+    - { stat: deflection, type: FLAT, value: "{value}" }
+
+# 2026-10：偏斜照 PoE2 0.5（EvasionGrantsDeflection）：閃避值的 x% 作為偏斜值，敏捷系防具
+deflection_evasion:
+  type: suffix
+  group: evasion_grants_deflection
+  spawn_tags: [dex_only, str_dex_armour, dex_int_armour]
+  names: [之星骸, 之流轉, 之卸勁, 之斜擋, 之偏轉, 之側身]
+  text: "獲得閃避值 {value}% 的偏斜值"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 328, value: [24, 26] }
+    - { tier: 2, ilvl: 66, weight: 410, value: [21, 23] }
+    - { tier: 3, ilvl: 48, weight: 512, value: [18, 20] }
+    - { tier: 4, ilvl: 36, weight: 640, value: [15, 17] }
+    - { tier: 5, ilvl: 16, weight: 800, value: [12, 14] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [8, 11] }
+  mods:
+    - { stat: deflection.from_evasion, type: FLAT, value: "{value}" }
+
+# ---- 2026-10：弩多裝填弩箭（PoE2 的「多裝 1／2 發弩箭」） ----
+crossbow_bolts:
+  type: suffix
+  group: crossbow_bolts
+  spawn_tags: [crossbow]
+  names: [之滿匣, 之添矢]
+  text: "+{value} 弩的彈匣容量"
+  tiers:
+    - { tier: 1, ilvl: 82, weight: 400, value: [2, 2] }
+    - { tier: 2, ilvl: 55, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: crossbow.clip, type: FLAT, value: "{value}" }

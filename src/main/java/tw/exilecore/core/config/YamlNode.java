@@ -34,10 +34,120 @@ public final class YamlNode {
         this.map = normalized;
     }
 
+    /**
+     * 讀資料檔時要蓋上去的值（管理網頁的設定覆蓋，見 {@code AdminOverrides}）：檔案 → 點分隔的鍵 → 值。
+     * 只影響 {@link #load(Path)}；資料檔本身不動。
+     */
+    @FunctionalInterface
+    public interface Overlay {
+        /** 這個檔案要蓋上去的值；沒有回傳空的。 */
+        Map<String, Object> values(Path file);
+    }
+
+    private static volatile Overlay overlay;
+
+    /** 換掉（null = 拿掉）讀資料檔時的覆蓋。 */
+    public static void overlay(final Overlay value) {
+        overlay = value;
+    }
+
+    /** 讀一個資料檔，再蓋上管理網頁改過的值（{@link #overlay}）。 */
     public static YamlNode load(final Path file) throws IOException {
+        final YamlNode node = loadRaw(file);
+        final Overlay current = overlay;
+        if (current == null) {
+            return node;
+        }
+        final Map<String, Object> values = current.values(file);
+        return values == null || values.isEmpty() ? node : node.withValues(values);
+    }
+
+    /** 讀檔，不蓋管理網頁的值（網頁上顯示「檔案裡寫的」用）。 */
+    public static YamlNode loadRaw(final Path file) throws IOException {
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             return load(file.getFileName().toString(), reader);
         }
+    }
+
+    /**
+     * 同一份資料，把這些值蓋上去（鍵用點分隔，例如 {@code trade.fee.percent}；中間沒有的層會補上）。
+     * 原本的資料不動（路上經過的每一層都複製一份）。
+     */
+    public YamlNode withValues(final Map<String, Object> values) {
+        final Map<Object, Object> root = new LinkedHashMap<>(map);
+        for (final Map.Entry<String, Object> entry : values.entrySet()) {
+            final String[] parts = entry.getKey().split("\\.");
+            Map<Object, Object> current = root;
+            for (int i = 0; i < parts.length - 1; i++) {
+                final Object key = keyFor(current, parts[i]);
+                final Map<Object, Object> copy = new LinkedHashMap<>();
+                if (current.get(key) instanceof Map<?, ?> existing) {
+                    copy.putAll(existing);
+                }
+                current.put(key, copy);
+                current = copy;
+            }
+            current.put(keyFor(current, parts[parts.length - 1]), entry.getValue());
+        }
+        return new YamlNode(path, root);
+    }
+
+    /**
+     * 這份資料蓋上 overlay（overlay 的值優先；兩邊都是鍵值對就往下合併，清單整個換掉），skip 裡的鍵不從這份帶過去。
+     * 技能的變體（skills.yml 的 variant_of）用：照原本的技能寫，只改寫到的地方。
+     */
+    public YamlNode mergedWith(final YamlNode overlay, final java.util.Set<String> skip) {
+        final Map<String, Object> base = new LinkedHashMap<>(map);
+        for (final String key : skip) {
+            base.remove(key);
+        }
+        return new YamlNode(overlay.path, deepMerge(base, overlay.map));
+    }
+
+    private static Map<String, Object> deepMerge(final Map<String, Object> base, final Map<String, Object> over) {
+        final Map<String, Object> out = new LinkedHashMap<>(base);
+        for (final Map.Entry<String, Object> entry : over.entrySet()) {
+            final Object previous = out.get(entry.getKey());
+            if (previous instanceof Map<?, ?> left && entry.getValue() instanceof Map<?, ?> right) {
+                out.put(entry.getKey(), deepMerge(normalize(left), normalize(right)));
+            } else {
+                out.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return out;
+    }
+
+    private static Map<String, Object> normalize(final Map<?, ?> raw) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        for (final Map.Entry<?, ?> entry : raw.entrySet()) {
+            out.put(String.valueOf(entry.getKey()), entry.getValue());
+        }
+        return out;
+    }
+
+    /** 點分隔的鍵在這份資料裡的值（沒有是 null；中間不是鍵值對也是 null）。 */
+    public Object lookup(final String dotted) {
+        Object current = map;
+        for (final String part : dotted.split("\\.")) {
+            if (!(current instanceof Map<?, ?> level)) {
+                return null;
+            }
+            current = level.get(keyFor(level, part));
+        }
+        return current;
+    }
+
+    /** YAML 會把 {@code 1:} 讀成整數鍵：用字串找的時候也找得到。 */
+    private static Object keyFor(final Map<?, ?> map, final String key) {
+        if (map.containsKey(key)) {
+            return key;
+        }
+        for (final Object existing : map.keySet()) {
+            if (existing != null && String.valueOf(existing).equals(key)) {
+                return existing;
+            }
+        }
+        return key;
     }
 
     public static YamlNode load(final String name, final Reader reader) {

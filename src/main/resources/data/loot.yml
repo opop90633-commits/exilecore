@@ -1,0 +1,76 @@
+# 掉落（階段 3 批次 3）：過濾器、自動撿取、隨身背包。改完在遊戲內 /ec reload。
+#
+# 玩家殺的怪物掉的東西：
+#   1. 先過濾：過濾器隱藏的東西不會掉，直接換成金幣（像拿去賣掉）。
+#   2. 顯示的東西直接進背包：通貨進隨身背包的通貨袋（不佔格子），其他東西先放背包的主要格子
+#      （快捷列不動），滿了放隨身背包，都滿了才掉在地上（5 秒內只有你撿得到）。
+#   3. 怪物掉的金幣直接加進角色。
+# 每個角色有自己的過濾器（/filter 或 /menu 裡設定），還沒設定過的角色用 filter.default。
+# 隨身背包每個角色 2 頁共 90 格，另外有通貨袋（每種通貨最多 5000 個）。
+
+# false = 不自動撿：顯示的東西照樣掉在地上（被過濾的還是換成金幣，跟怪物的金幣一起掉一堆）
+auto_pickup: true
+
+filter:
+  # 還沒設定過過濾器的角色用哪一組
+  default: standard
+  # 預設組合（選單上的按鈕，照這裡的順序）：
+  #   hide_equipment     要隱藏的裝備稀有度：normal 普通、magic 魔法、rare 稀有（傳奇永遠顯示）
+  #   hide_currencies    要隱藏的通貨代號（currencies.yml）
+  #   hide_skill_gems    隱藏未切割技能寶石
+  #   hide_support_gems  隱藏未切割輔助寶石
+  #   flasks             all 全部顯示、better 只顯示比藥劑欄裡同一種藥劑好的、none 全部隱藏
+  #   進階規則（都可以不寫）：
+  #   weapons_like_mine    true = 只撿跟手上同類的武器（拿弓只撿弓；雙手武器不撿盾；沒拿武器不管）
+  #   armour_like_mine     true = 只撿跟身上同系（力量／敏捷／智慧系）的防具與盾（沒穿不管）
+  #   level_gap            物品等級比角色低超過這麼多級的裝備隱藏（0 = 關；傳奇、珠寶、地圖不管）
+  #   min_skill_gem_level  未切割技能寶石低於這個等級隱藏（0 = 關）
+  #   min_support_tier     未切割輔助寶石低於這一階隱藏（0 = 關）
+  #   hide_maps            地圖依稀有度隱藏：none 全部顯示（地圖本來永遠顯示）、normal 隱藏普通（白）地圖、
+  #                        magic 普通與魔法（藍）都隱藏，只撿稀有（黃）
+  #   keep_affix_tier      保留有 T 幾以上詞綴的裝備（0 = 關，1～5）：身上有一條詞綴是 T1～T這個數字，
+  #                        就算稀有度、等級差、不同類被藏起來也照樣撿（未鑑定的也算）
+  # 選了預設組合的角色會跟著這裡的設定走；在選單上自己改過的角色（自訂）不受影響。
+  presets:
+    loose:
+      name: 寬鬆
+      description: 全部顯示，什麼都撿
+      hide_equipment: []
+      hide_currencies: []
+      flasks: all
+    standard:
+      name: 標準
+      description: 隱藏普通裝備、比你低 20 級以上的裝備、礪鋒石與甲冑殘片；藥劑只撿比身上好的
+      hide_equipment: [normal]
+      hide_currencies: [whetstone, armour_scrap]
+      flasks: better
+      level_gap: 20
+    strict:
+      name: 嚴格
+      description: 只撿稀有以上、跟手上同類的裝備，低階寶石與低價通貨不撿
+      hide_equipment: [normal, magic]
+      hide_currencies: [whetstone, armour_scrap, glimmer_orb, lustre_orb]
+      flasks: better
+      weapons_like_mine: true
+      level_gap: 10
+      min_skill_gem_level: 10
+      min_support_tier: 2
+
+# 地圖與珠寶永遠不會被過濾（就算隱藏了普通、魔法裝備）。
+# 被過濾掉的東西換成多少金幣：同等級怪物平均掉的金幣（drops.yml 的 gold.amount）× 倍率，至少 1
+gold_value:
+  equipment: { normal: 0.15, magic: 0.3, rare: 0.8, unique: 3.0 }
+  # 通貨的倍率 = currency ÷ 通貨的掉落權重（越少見越值錢），夾在 0.05 到 5 之間
+  currency: 300
+  skill_gem: 0.6
+  support_gem: 0.6
+  flask: 0.3
+
+# 自動撿到這些東西時列在畫面右邊側欄的「最近撿到」（8 秒後收起來，不洗聊天欄）並播音效
+notable:
+  equipment: [rare, unique]
+  # 掉落權重 ≤ 這個的通貨（至臻石、豐饒石、星火石、亂流石…）
+  currency_weight: 1000
+  # 這些通貨不提示（掉落權重再低也一樣）
+  quiet_currencies: [glimmer_orb, lustre_orb, whetstone, armour_scrap]
+  gems: true

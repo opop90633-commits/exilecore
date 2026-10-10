@@ -1,0 +1,204 @@
+# 星圖天賦（地圖天賦樹，PoE2 的 Atlas Passive Tree）：完成地圖拿天賦點，點了之後「自己開的地圖」更好。
+# 玩家用 /atlas tree（或星圖、地圖裝置上的「星圖天賦」）打開：左鍵點、右鍵退（免費，同一條下面點了的一起退）。
+# 改完 /ec reload：之後開的地圖照新的（已經開著的不變）。
+#
+# 天賦點（points）：每個角色自己的，跟星圖一樣算
+#   per_map           每完成一張不同的地圖（不含終局）幾點
+#   per_final         每打贏一個終局幾點
+#   per_uber          每打贏一個極境幾點
+#   tier_milestones   最高完成階級到這幾階，各 +1 點
+#   出貨的設定：14 張地圖 + 4 個終局 + 4 個極境 + 5 個階級 = 最多 27 點；全部天賦點滿要 45 點，所以要挑。
+#
+# 效果算「開地圖的那個人」點的：整張地圖、整個隊伍都吃。終局吃得到地圖本身與 Boss 的效果（傳奇機率除外）；
+# 極境、每週回響、昇華試煉這些特別的實例不吃星圖天賦。
+#
+# 分支（branches）：最多 9 條（介面上一條一欄），每條最多 4 個節點，要從上往下點。
+#   name／description／icon（原版物品）／color（#rrggbb）：介面上分支的樣子
+#   nodes：
+#     id       代號（存在角色進度裡；改了代號，點過的人要重點）。點了的代號用逗號串起來存在一格（最多 255 字），代號盡量短
+#     name     名稱
+#     notable  大天賦（介面上用自己的 icon；預設 2 點）
+#     cost     要幾點（沒寫：一般 1 點、大天賦 2 點；1–5）
+#     mods     效果 [{ stat: 效果鍵, value: 數值 }]，同一種可以疊
+#
+# 效果鍵（百分比都是百分比點數：20 = 20%）：
+#   map.quantity / map.rarity                 地圖的物品數量、物品稀有度 +x%（跟地圖詞綴加在一起）
+#   map.pack_size                             怪物群大小 +x%
+#   map.magic_packs / map.rare_packs          魔法、稀有怪物群增加 x%
+#   atlas.experience                          地圖裡的怪給的經驗 +x%
+#   atlas.map_drop                            地圖怪掉地圖的機率增加 x%
+#   atlas.tier_up                             掉落的地圖高一階的機率 +x%（加在 maps.yml 的 tier_up_chance 上）
+#   atlas.boss_maps                           地圖 Boss（含終局）多掉幾張地圖
+#   atlas.boss_quantity / atlas.boss_rarity   地圖 Boss 的物品數量、稀有度 +x%
+#   atlas.boss_unique                         地圖 Boss 掉傳奇的機率增加 x%（一般地圖的 Boss 與具名 Boss；終局照 maps.yml 不變；
+#                                             追逐級傳奇是另外的固定機率，不受影響）
+#   atlas.uber_key                            終局 Boss 掉極境鑰匙的機率增加 x%
+#   atlas.<事件>.weight                       神龕／寶箱／裂隙／流寇（shrine／strongbox／breach／exile）出現的機會增加 x%
+#   atlas.<事件>.extra                        每張地圖保證多幾個這種事件（有空房間的話）
+#   atlas.<事件>.unique                       這種事件掉專屬傳奇的機率增加 x%（1% → 增加 25% 是 1.25%）
+#   atlas.shrine.duration                     神龕增益的持續時間 +x%
+#   atlas.strongbox.quantity                  寶箱的物品數量 +x%
+#   atlas.breach.duration                     裂隙開著的時間 +x%（怪多幾波）
+#   atlas.exile.drops                         流寇多掉幾件稀有裝備
+#   atlas.ritual.chance / atlas.ritual.tribute         祭壇出現的機率增加 x%、貢品 +x%
+#   atlas.delirium.chance / atlas.delirium.progress    幻霧出現的機率增加 x%、獎勵進度 +x%
+
+points:
+  per_map: 1
+  per_final: 1
+  per_uber: 1
+  tier_milestones: [4, 7, 10, 13, 16]
+
+branches:
+  sustain:
+    name: 地圖續航
+    description: 地圖掉得更多、階級更高
+    icon: FILLED_MAP
+    color: "#9fd3ff"
+    nodes:
+      - { id: sustain_1, name: 尋路, mods: [{ stat: atlas.map_drop, value: 20 }] }
+      - { id: sustain_2, name: 星階, mods: [{ stat: atlas.tier_up, value: 10 }] }
+      - { id: sustain_3, name: 拓荒, mods: [{ stat: atlas.map_drop, value: 20 }] }
+      - id: sustain_4
+        name: 星圖之主
+        notable: true
+        icon: COMPASS
+        mods:
+          - { stat: atlas.boss_maps, value: 1 }
+          - { stat: atlas.tier_up, value: 10 }
+
+  wealth:
+    name: 豐饒
+    description: 地圖的物品數量與稀有度
+    icon: GOLD_INGOT
+    color: "#f5b942"
+    nodes:
+      - { id: wealth_1, name: 拾荒, mods: [{ stat: map.quantity, value: 3 }] }
+      - { id: wealth_2, name: 鑑寶, mods: [{ stat: map.rarity, value: 6 }] }
+      - { id: wealth_3, name: 豐收, mods: [{ stat: map.quantity, value: 3 }] }
+      - id: wealth_4
+        name: 星骸的饋贈
+        notable: true
+        icon: GOLD_BLOCK
+        mods:
+          - { stat: map.quantity, value: 4 }
+          - { stat: map.rarity, value: 8 }
+
+  packs:
+    name: 群聚
+    description: 更多、更強的怪物群（掉落與經驗跟著變多）
+    icon: ZOMBIE_HEAD
+    color: "#ff8c69"
+    nodes:
+      - { id: packs_1, name: 蜂擁, mods: [{ stat: map.pack_size, value: 5 }] }
+      - { id: packs_2, name: 魔染, mods: [{ stat: map.magic_packs, value: 15 }] }
+      - { id: packs_3, name: 梟雄, mods: [{ stat: map.rare_packs, value: 15 }] }
+      - id: packs_4
+        name: 萬物歸巢
+        notable: true
+        icon: WITHER_SKELETON_SKULL
+        mods:
+          - { stat: map.pack_size, value: 8 }
+          - { stat: atlas.experience, value: 5 }
+
+  bosses:
+    name: 首領
+    description: 地圖 Boss 掉得更好
+    icon: DRAGON_HEAD
+    color: "#af6025"
+    nodes:
+      - { id: bosses_1, name: 討伐, mods: [{ stat: atlas.boss_quantity, value: 20 }] }
+      - { id: bosses_2, name: 戰利品, mods: [{ stat: atlas.boss_unique, value: 25 }] }
+      - { id: bosses_3, name: 深淵回響, mods: [{ stat: atlas.uber_key, value: 50 }] }
+      - id: bosses_4
+        name: 弒王者
+        notable: true
+        icon: NETHERITE_SWORD
+        mods:
+          - { stat: atlas.boss_rarity, value: 30 }
+          - { stat: atlas.boss_unique, value: 25 }
+
+  shrine:
+    name: 神龕
+    description: 更多神龕、增益更久
+    icon: SEA_LANTERN
+    color: "#9fe8c8"
+    nodes:
+      - { id: shrine_1, name: 虔誠, mods: [{ stat: atlas.shrine.weight, value: 50 }] }
+      - { id: shrine_2, name: 長明, mods: [{ stat: atlas.shrine.duration, value: 25 }] }
+      - { id: shrine_3, name: 天機, mods: [{ stat: atlas.shrine.unique, value: 25 }] }      # 2026-10：50 → 25（事件的專屬傳奇 2% → 1%）
+      - id: shrine_4
+        name: 眾神垂憐
+        notable: true
+        icon: BEACON
+        mods:
+          - { stat: atlas.shrine.extra, value: 1 }
+          - { stat: atlas.shrine.duration, value: 25 }
+
+  strongbox:
+    name: 寶箱
+    description: 更多寶箱、箱子裡更多東西
+    icon: CHEST
+    color: "#e0b050"
+    nodes:
+      - { id: strongbox_1, name: 藏寶圖, mods: [{ stat: atlas.strongbox.weight, value: 50 }] }
+      - { id: strongbox_2, name: 滿載, mods: [{ stat: atlas.strongbox.quantity, value: 25 }] }
+      - { id: strongbox_3, name: 秘藏, mods: [{ stat: atlas.strongbox.unique, value: 25 }] }   # 2026-10：50 → 25
+      - id: strongbox_4
+        name: 寶庫之鑰
+        notable: true
+        icon: ENDER_CHEST
+        mods:
+          - { stat: atlas.strongbox.extra, value: 1 }
+          - { stat: atlas.strongbox.quantity, value: 25 }
+
+  breach:
+    name: 裂隙
+    description: 更多裂隙、開得更久
+    icon: CRYING_OBSIDIAN
+    color: "#c48bff"
+    nodes:
+      - { id: breach_1, name: 裂縫, mods: [{ stat: atlas.breach.weight, value: 50 }] }
+      - { id: breach_2, name: 延宕, mods: [{ stat: atlas.breach.duration, value: 20 }] }
+      - { id: breach_3, name: 虛空之觸, mods: [{ stat: atlas.breach.unique, value: 25 }] }   # 2026-10：50 → 25
+      - id: breach_4
+        name: 裂界洪流
+        notable: true
+        icon: END_PORTAL_FRAME
+        mods:
+          - { stat: atlas.breach.extra, value: 1 }
+          - { stat: atlas.breach.duration, value: 20 }
+
+  exile:
+    name: 流寇
+    description: 更多流寇、掉更多裝備
+    icon: IRON_HELMET
+    color: "#ffff77"
+    nodes:
+      - { id: exile_1, name: 通緝令, mods: [{ stat: atlas.exile.weight, value: 50 }] }
+      - { id: exile_2, name: 搜刮, mods: [{ stat: atlas.exile.drops, value: 1 }] }
+      - { id: exile_3, name: 懸賞, mods: [{ stat: atlas.exile.unique, value: 25 }] }       # 2026-10：50 → 25
+      - id: exile_4
+        name: 流寇之王
+        notable: true
+        icon: NETHERITE_HELMET
+        mods:
+          - { stat: atlas.exile.extra, value: 1 }
+          - { stat: atlas.exile.drops, value: 1 }
+
+  rites:
+    name: 祭儀與迷霧
+    description: 祭壇與幻霧更常出現、獎勵更多
+    icon: RED_CANDLE
+    color: "#ff5c6a"
+    nodes:
+      - { id: rites_1, name: 血燭, mods: [{ stat: atlas.ritual.chance, value: 50 }] }
+      - { id: rites_2, name: 奉牲, mods: [{ stat: atlas.ritual.tribute, value: 25 }] }
+      - { id: rites_3, name: 霧鏡, mods: [{ stat: atlas.delirium.chance, value: 50 }] }
+      - id: rites_4
+        name: 瘋狂之宴
+        notable: true
+        icon: TINTED_GLASS
+        mods:
+          - { stat: atlas.delirium.progress, value: 25 }
+          - { stat: atlas.ritual.tribute, value: 25 }

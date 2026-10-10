@@ -1,0 +1,52 @@
+# 拆解台（拆解師 NPC）：把不要的裝備拆成金幣與品質通貨（PoE2 的回收台）。
+#
+# 金幣（2026-10）：跟掉落過濾掉換的金幣一樣（loot.yml 的 gold_value：物品等級的怪物平均掉的金幣 × 稀有度倍率）。
+# 下面的 gold 只在掉落模組沒啟用時用：(base + per_ilvl × 物品等級) × 稀有度倍率（四捨五入）
+gold:
+  base: 4
+  per_ilvl: 1.5
+  rarity: { normal: 1.0, magic: 2.0, rare: 4.0, unique: 10.0 }
+
+# 品質通貨：武器拆出 weapon，防具與盾拆出 armour（飾品沒有），地圖拆出 map（星盤刻刀）。
+# 數量 = 品質 ÷ quality_step（無條件捨去）＋ 依稀有度的機率再多 1 個。
+# 例：品質 20% 的稀有武器 = 2 個礪鋒石，另外 50% 機率再 1 個；品質 20% 的地圖 = 2 個星盤刻刀（打了 4 個上去）。
+quality_currency:
+  weapon: whetstone
+  armour: armour_scrap
+  map: chisel
+  quality_step: 10
+  chance: { normal: 0.1, magic: 0.25, rare: 0.5, unique: 1.0 }
+
+# 地圖也能拆：金幣跟同物品等級的裝備一樣算（地圖的物品等級 = 那一階的怪物等級，T1 61 … T16 84），再乘這個倍率；
+# 拆解台的「選擇所有 × 裝備」不會選到地圖，要一張一張點（免得連好圖一起拆掉）。
+maps:
+  gold_multiplier: 1.0
+
+# 寶石與藥劑也能拆（只給金幣）。2026-10：跟掉落過濾換的金幣一樣（loot.yml 的 gold_value：skill_gem、support_gem、flask × 角色等級的怪物平均金幣）；
+# 下面的數字只在掉落模組沒啟用時用：
+#   技能寶石、未切割技能寶石 = base + per_level × 寶石等級；輔助寶石、未切割輔助寶石 = support_base + support_per_tier × 階級
+gems:
+  base: 8
+  per_level: 6
+  support_base: 15
+  support_per_tier: 25
+#   藥劑 = base + per_level × 基底的需求等級
+flasks:
+  base: 3
+  per_level: 1.0
+
+# 通貨也能拆（2026-10，只給金幣）：一個 = economy.yml 的參考價值（跟著市價走的話是現在的值）× percent%，至少 1 金幣。
+#   拆解台裡一疊一疊點（快速選擇、反選不會選到通貨）
+currency:
+  percent: 10
+
+# 傳奇三換一（拆解台的「傳奇三換一」按鈕）：放 inputs 件傳奇，換一件隨機的傳奇（2026-10：重複的傳奇有用途）。
+#   能放：已鑑定、沒鎖定的傳奇；追逐級、極境專屬不能放（換掉太可惜）。
+#   sources：換出來的池子（uniques.yml 的 sources）。預設地圖 Boss 池（14 件）、六種地圖事件的專屬、兩個具名 Boss 的（共 22 件）；
+#     終局自己的、只能賭的兩件（流浪者、金邊）不在池子裡；追逐級、極境專屬寫了也不會換到。
+#   物品等級 = 放進去最高的那件（傳奇的 drop_level 要到）；exclude_inputs：不會換到放進去的那幾種（池子只剩那幾種時例外）。
+unique_recipe:
+  enabled: true
+  inputs: 3
+  sources: [map_boss, shrine, strongbox, breach, exile, ritual, delirium, royal_tomb, observatory]
+  exclude_inputs: true

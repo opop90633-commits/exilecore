@@ -1,0 +1,81 @@
+# 《星骸》重開時的等待室（PicoLimbo，2026-10）。玩家不會直接連這裡：本體關掉時 Velocity 把人送進來，
+# 本體開好了 VelocityFailover 再把人送回去。只聽 127.0.0.1，外面連不到。
+# 文件：https://github.com/Quozul/PicoLimbo（docs/config/）
+# 轉發密鑰從環境變數 FORWARDING_SECRET 讀（start-all 會從 proxy/velocity/forwarding.secret 讀出來設好），這個檔案裡沒有密碼。
+
+bind = "127.0.0.1:25567"
+welcome_message = ""
+action_bar = ""
+default_game_mode = "spectator"
+hardcore = false
+fetch_player_skins = false
+reduced_debug_info = true
+accept_transfers = false
+
+[connection]
+keep_alive_interval_seconds = 15
+allow_unsupported_versions = false
+
+[fly]
+allow_flight = false
+flying = false
+flying_speed = 0.05
+
+[forwarding]
+method = "MODERN"
+secret = "${FORWARDING_SECRET}"
+
+[world]
+spawn_position = [0.0, 320.0, 0.0]
+spawn_rotation = [0.0, 0.0]
+# 一片漆黑的終界天空，看起來像在星海裡等
+dimension = "end"
+time = "midnight"
+
+[world.experimental]
+view_distance = 2
+schematic_file = ""
+lock_time = true
+
+[world.boundaries]
+enabled = true
+min_y = -64
+teleport_message = ""
+
+[server_list]
+reply_to_status = true
+max_players = 20
+message_of_the_day = "《星骸》等待室"
+show_online_player_count = true
+server_icon = "server-icon.png"
+
+[compression]
+threshold = -1
+level = 6
+
+[tab_list]
+enabled = true
+header = "<gradient:#f5b942:#e07a1f><bold>《星骸》</bold></gradient>\n<gray>伺服器正在重新啟動"
+footer = "<dark_gray>開好了會自動送你回去"
+player_listed = true
+
+[boss_bar]
+enabled = true
+title = "<#f5b942>《星骸》重新啟動中…"
+health = 1.0
+color = "yellow"
+division = 0
+
+[title]
+enabled = true
+title = "<#f5b942>重新啟動中"
+subtitle = "<gray>開好了會自動送你回去"
+fade_in = 10
+stay = 100
+fade_out = 20
+
+[commands]
+spawn = ""
+fly = ""
+fly_speed = ""
+transfer = ""

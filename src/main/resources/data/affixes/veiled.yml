@@ -1,0 +1,25 @@
+# 隱匿詞綴（2026-10，照 PoE 的劫盜 Veiled）：劫盜（合約、藍圖）掉的魔法／稀有裝備有機率帶一條。
+# 佔一個前綴或後綴的位子、沒有效果；帶回營地找「盜賊首領」揭露：三個揭露詞綴（affixes/unveiled.yml）選一個換上去。
+# spawn_tags 寫 unique_only：一般的掉落、通貨都擲不到，只有劫盜會加。代號不要改（物品上存的是代號）。
+
+veiled_prefix:
+  type: prefix
+  group: veiled_prefix
+  spawn_tags: [unique_only]
+  names: [隱匿的]
+  text: "隱匿前綴（帶去營地找盜賊首領揭露）"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1, value: [0, 0] }
+  mods:
+    - { stat: life.max, type: FLAT, value: "{value}" }
+
+veiled_suffix:
+  type: suffix
+  group: veiled_suffix
+  spawn_tags: [unique_only]
+  names: [之隱匿]
+  text: "隱匿後綴（帶去營地找盜賊首領揭露）"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1, value: [0, 0] }
+  mods:
+    - { stat: life.max, type: FLAT, value: "{value}" }

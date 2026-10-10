@@ -1,0 +1,194 @@
+# 劫盜（2026-10，照 PoE 的 Heist；沒有夥伴）。營地的「盜賊首領」那裡用：
+#   劫盜合約（只有星圖裡的怪物會掉，見 settings.contract_chance；劫盜、試煉這些特別的地方不掉）：潛入一處據點（下面的 sites 隨機一個），一路開金庫箱，最裡面的守衛倒下時打開大金庫。
+#   劫盜藍圖（劫盜的大金庫掉，金庫箱也有小機率）：大劫盜——三處據點連著打（打完一處直接送進下一處），只有最後一處有大金庫，獎勵更多。
+# 警戒值：殺怪、開金庫箱、時間都會讓警戒上升，滿 100 就封鎖——增援一直來，大金庫的獎勵減半。手腳要快。
+# 劫盜裡掉的魔法／稀有裝備有 veiled_chance 的機率帶一條隱匿詞綴（affixes/veiled.yml），帶回營地找盜賊首領揭露（三選一）。
+# 揭露石（currencies.yml 的 unveil_stone）只在劫盜掉：在有空位的裝備上加一條隱匿詞綴，再找盜賊首領揭露（三選一）。
+# 一件裝備同時只能有一條隱匿或揭露詞綴。
+# 等級：開的人打過地圖的話照他打過的最高階（怪物等級跟那一階的地圖一樣）；沒打過地圖照角色等級（最高 60）。
+
+settings:
+  rooms: 7                 # 每一處據點的房間數（大劫盜每一處都一樣）
+  quantity: 40             # 物品數量（%）：據點裡的怪物與金庫箱
+  rarity: 30               # 物品稀有度（%）
+  min_level: 30            # 角色要幾級才能開劫盜
+  alarm:
+    normal: 0.05           # 殺一隻普通怪，警戒 +0.05（2026-10 再調低：殺一群二十隻才 +1）
+    magic: 0.15
+    rare: 0.5
+    chest: 8               # 開一個金庫箱 +8
+    per_second: 0.25       # 每秒 +0.25（什麼都不做，400 秒也會封鎖）
+  lockdown:
+    reinforce_seconds: 20  # 封鎖後每幾秒來一波增援
+    reinforce_count: 3     # 每波幾隻（魔法怪）
+    reward_multiplier: 0.5 # 封鎖後大金庫的獎勵乘這個（件數、機率都是）
+  chests: [3, 5]           # 每一處據點放幾個金庫箱（房間不夠就少放）
+  chest_rolls: 2           # 每個金庫箱、每個人擲幾次掉落表（稀有怪的掉落表）
+  chest_currency: [1, 3]   # 每個金庫箱、每個人另外幾個通貨
+  veiled_chance: 0.30      # 劫盜裡掉的魔法／稀有裝備帶隱匿詞綴的機率
+  unveil_stone_chance: 0.05   # 每個金庫箱、每個人掉一顆揭露石的機率
+  chest_blueprint_chance: 0.01 # 每個金庫箱、每個人掉一張劫盜藍圖的機率（2026-10；大劫盜裡不掉）
+  contract_chance:         # 星圖（一般的地圖）裡的怪物掉劫盜合約的機率（吃物品數量）
+    normal: 0.002
+    magic: 0.006
+    rare: 0.025
+    boss: 0.25             # 地圖 Boss（每個有份的人各擲一次）
+  vault:                   # 大金庫（最後的守衛倒下時，在裡面的每個人各一份）
+    rolls: 6               # 擲幾次掉落表（大劫盜 ×grand_multiplier）
+    currency: [4, 7]
+    unveil_stones: [0, 1]
+    unique_chance: 0.02    # 劫盜專屬傳奇（uniques.yml 的 sources 寫 heist）的機率；大劫盜 ×grand_multiplier
+    blueprint_chance: 0.10 # 掉一張劫盜藍圖（只有合約的大金庫掉；大劫盜不掉）
+    grand_multiplier: 3
+    finale_key_chance: 0.10 # 大劫盜的大金庫：掉一個金庫之主的鑰印（劫盜終局）；封鎖了減半
+    gem_chance: 0.02       # 2026-10：掉一顆 Lv.21 的未切割技能寶石的機率（以前是異質技能寶石，另類品質刪掉了）；大劫盜 ×grand_multiplier
+    finale_gem_chance: 0.10 # 金庫之主倒下時，每個人掉一顆 Lv.21 未切割技能寶石的機率
+
+# 據點：寫法跟試煉（ascendancy.yml 的 trials）一樣（theme、layout、monsters、boss）。
+sites:
+  smuggler_cellar:
+    name: 走私者的地窖
+    theme: cave
+    layout: cavern
+    lore: 碼頭底下挖空的酒窖，走私的星骸一箱一箱堆到天花板。
+    monsters: { PILLAGER: 3, VINDICATOR: 2, ZOMBIE: 2, SPIDER: 1 }
+    boss:
+      name: 地窖看守・獨眼葛雷
+      type: VINDICATOR
+      life: 51    # 2026-10：改照人均單體 10 萬 DPS：據點 Boss 約 20 秒（15 萬時 77；據點 Boss 不吃階級倍率）
+      damage: 1.35
+      scale: 1.3
+      mods: [armoured, swift]
+      intro: "「誰准你們下來的？這些箱子是有主的。」"
+      defeat: "「……拿去吧，反正……也不是我的……」"
+
+  bone_vault:
+    name: 骸骨銀行
+    theme: crypt
+    layout: halls
+    lore: 舊王朝的地下銀行，存款的人都死了，看守的還沒。
+    monsters: { SKELETON: 3, STRAY: 2, ZOMBIE: 2, WITCH: 1 }
+    boss:
+      name: 帳房・枯指老爺
+      type: WITHER_SKELETON
+      life: 57    # 2026-10：改照人均單體 10 萬 DPS：據點 Boss 約 20 秒（15 萬時 85；據點 Boss 不吃階級倍率）
+      damage: 1.4
+      scale: 1.3
+      mods: [resistant, deadly]
+      intro: "「每一枚星骸都記在帳上。包括你們的命。」"
+      defeat: "「帳……對不上了……」"
+
+  merchant_manor:
+    name: 富商的莊園
+    theme: ruins
+    layout: city
+    lore: 曜京城外最大的莊園，主人雇了一整隊傭兵看家。
+    monsters: { PILLAGER: 3, VINDICATOR: 2, EVOKER: 1, HUSK: 2 }
+    boss:
+      name: 傭兵隊長・鐵靴瑟拉
+      type: VINDICATOR
+      life: 51    # 2026-10：改照人均單體 10 萬 DPS：據點 Boss 約 20 秒（15 萬時 77；據點 Boss 不吃階級倍率）
+      damage: 1.4
+      scale: 1.35
+      mods: [armoured, charger]
+      intro: "「老闆付我錢，不是讓我放你們進金庫的。」"
+      defeat: "「……錢不夠……不值得死在這……」"
+
+  frozen_storehouse:
+    name: 冰封倉庫
+    theme: snow
+    layout: open
+    lore: 雪原上的補給倉庫，冰裡封著一整個商隊的貨。
+    monsters: { STRAY: 3, SKELETON: 2, PILLAGER: 2, VINDICATOR: 1 }
+    boss:
+      name: 倉庫守衛・霜鬚
+      type: STRAY
+      life: 57    # 2026-10：改照人均單體 10 萬 DPS：據點 Boss 約 20 秒（15 萬時 85；據點 Boss 不吃階級倍率）
+      damage: 1.35
+      scale: 1.4
+      mods: [frosty, sturdy]
+      intro: "「冰裡的東西，凍著才是最安全的。」"
+      defeat: "「冰……化了……」"
+
+  sunken_treasury:
+    name: 沉沒的寶庫
+    theme: swamp
+    layout: islands
+    lore: 沼澤吞掉的稅務所，寶庫的門還鎖著，鑰匙在沼底。
+    monsters: { DROWNED: 3, BOGGED: 2, WITCH: 1, SLIME: 1 }
+    boss:
+      name: 沼底稅吏・溺魂
+      type: DROWNED
+      life: 51    # 2026-10：改照人均單體 10 萬 DPS：據點 Boss 約 20 秒（15 萬時 77；據點 Boss 不吃階級倍率）
+      damage: 1.4
+      scale: 1.35
+      mods: [venomous, resistant]
+      intro: "「欠的稅，連本帶利。」"
+      defeat: "「……稅……收不完……」"
+
+# 劫盜終局「金庫之主」（2026-10）：大劫盜的大金庫有 vault.finale_key_chance 的機率掉鑰印（currencies.yml 的 heist_finale_key），
+# 找盜賊首領開。難度照極境（生命、傷害、階段、狂暴都比照極境終局）：怪物等級＝開的人打過的最高階＋level_bonus，
+# Boss 生命跟終局、極境一樣照那一階再乘（maps.yml 的 final.tier_life：T5 以下 ×1、T16 ×2.5）。打倒之後 Boss 房中間放 choices 個寶箱，
+# 上面寫著裡面是哪一件（劫盜的隱匿傳奇與異質技能寶石隨機挑），每個人只能開一個。
+# 打的時候每 alarm_every 秒場上出現 alarm_count 個「警報機關」（紅石燈），alarm_time 秒內沒全部拆掉（右鍵）就叫 alarm_packs 群增援
+# （每群 alarm_pack 的稀有、魔法、普通各幾隻）。警報機關跟王的招式各跑各的，王不會因為它停下來。
+finale:
+  name: 金庫之主的寶庫
+  theme: crypt
+  layout: halls
+  lore: 劫盜的終點：所有被偷走的東西，最後都進了這座金庫。
+  choices: 5
+  level_bonus: 7
+  alarm_every: 35
+  alarm_count: 4           # 一個人打的時候幾個
+  alarm_per_player: 2      # 打王的人每多一個，多幾個（2 人 6 個、4 人 10 個；最多 16 個）
+  alarm_time: 10
+  alarm_packs: 5           # 一個人打的時候沒拆完叫幾群
+  alarm_packs_per_player: 2 # 打王的人每多一個，多叫幾群（2 人 7 群、4 人 11 群；最多 15 群）
+  alarm_pack: { rare: 1, magic: 5, normal: 10 }
+  monsters: { VINDICATOR: 3, PILLAGER: 3, WITCH: 1 }
+  boss:
+    name: 金庫之主・萬鎖
+    type: VINDICATOR
+    named: true
+    life: 13.5           # 2026-10：改照人均單體 10 萬 DPS：T16 約 45 秒（會再乘 maps.yml 的 final.tier_life，T16 現在 ×7.8，所以這裡不用改）
+    damage: 3.1          # 2026-10：3.1 → 2.4 → 3.1（改回）
+    scale: 2.2
+    mods: [armoured, resistant]   # 2026-10：拿掉迅捷
+    intro: "「你們偷的每一樣東西，原本都是我的。」"
+    defeat: "萬把鎖同時打開。金庫之主的收藏，攤在你面前。"
+    skills:
+      - vault_heist_volley
+      - vault_coin_rain
+      - vault_shadow_step
+      - vault_door_ring
+      - vault_laser_grid
+      - vault_smoke_bomb
+      - { id: vault_drones, phase: 1 }
+      - { id: vault_magnet, phase: 1 }
+      - { id: vault_bounty, phase: 1 }
+      - { id: vault_summon_rogues, phase: 1 }
+      - { id: vault_lockdown, phase: 2 }
+    phases:
+      - at: 0.75
+        name: 警報大作
+        message: "「全員，就位。」"
+        speed: 0.05            # 2026-10：0.15 → 0.05（不要那麼衝）
+        summon: { type: PILLAGER, count: 5 }
+        shield: { count: 4, type: VINDICATOR, name: 金庫守衛, life: 5, duration: 30, heal: 30 }
+      - at: 0.5
+        name: 金庫封鎖
+        message: "「這裡的門，只進不出。」"
+        stats:
+          - { stat: damage, type: MORE, value: 40 }   # 2026-10：40 → 25 → 40
+        summon: { type: VINDICATOR, count: 3 }
+      - at: 0.25
+        name: 萬鎖齊開
+        message: "「既然要搶，就搶個痛快。」"
+        speed: 0.05            # 2026-10：0.2 → 0.05（不要那麼衝）
+        stats:
+          - { stat: damage, type: MORE, value: 30 }   # 2026-10：30 → 20 → 30
+        shield: { count: 3, type: PILLAGER, name: 鎖匠, life: 6, duration: 25, heal: 30 }   # 2026-10：heal 40 → 30
+    hazards:
+      - { skill: hazard_vault_coins, every: 12, phase: 1 }   # 2026-10：9 → 12 → 15 → 12
+    enrage: { after: 270, damage: 150, speed: 0.4, message: "「時間到了。你們永遠是這座金庫的一部分。」" }

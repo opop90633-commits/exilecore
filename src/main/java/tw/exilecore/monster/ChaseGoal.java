@@ -1,0 +1,127 @@
+package tw.exilecore.monster;
+
+import com.destroystokyo.paper.entity.ai.Goal;
+import com.destroystokyo.paper.entity.ai.GoalKey;
+import com.destroystokyo.paper.entity.ai.GoalType;
+import org.bukkit.GameMode;
+import org.bukkit.NamespacedKey;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+
+import java.util.EnumSet;
+import java.util.Set;
+
+/**
+ * 白天不打人的怪物（原版的溺屍白天在陸地上不追、蜘蛛在亮處不主動攻擊、終界使者不被看就不理人）也要照 PoE 的規矩：
+ * 看到玩家就追上去近戰。劇情世界與地圖世界的時間是固定的白天，沒有這個它們會一直發呆。
+ * 只加在我們的怪物身上（等級化時與區塊重新載入時），優先權最高，有目標時才啟用。
+ */
+final class ChaseGoal implements Goal<Mob> {
+
+    /** 需要這個目標的原版生物。 */
+    static final Set<EntityType> TYPES = EnumSet.of(EntityType.DROWNED, EntityType.SPIDER, EntityType.CAVE_SPIDER, EntityType.ENDERMAN);
+    private static final double SIGHT = 24;
+    private static final double GIVE_UP = 48;
+
+    private final GoalKey<Mob> key;
+    private final Plugin plugin;
+    private final Mob mob;
+    private int cooldown;
+    private int repath;
+
+    ChaseGoal(final Plugin plugin, final Mob mob) {
+        this.key = GoalKey.of(Mob.class, new NamespacedKey(plugin, "chase"));
+        this.plugin = plugin;
+        this.mob = mob;
+    }
+
+    static GoalKey<Mob> key(final Plugin plugin) {
+        return GoalKey.of(Mob.class, new NamespacedKey(plugin, "chase"));
+    }
+
+    @Override
+    public boolean shouldActivate() {
+        LivingEntity target = mob.getTarget();
+        if (!valid(target, GIVE_UP)) {
+            target = null;
+            double best = SIGHT * SIGHT;
+            for (final Player player : mob.getWorld().getPlayers()) {
+                if (!valid(player, SIGHT)) {
+                    continue;
+                }
+                final double distance = player.getLocation().distanceSquared(mob.getLocation());
+                if (distance < best && mob.hasLineOfSight(player)) {
+                    best = distance;
+                    target = player;
+                }
+            }
+            if (target == null) {
+                return false;
+            }
+            mob.setTarget(target);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean shouldStayActive() {
+        return valid(mob.getTarget(), GIVE_UP);
+    }
+
+    private boolean valid(final LivingEntity target, final double range) {
+        if (target == null || !target.isValid() || target.isDead() || !target.getWorld().equals(mob.getWorld())) {
+            return false;
+        }
+        if (target instanceof Player player && (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR
+                || (plugin instanceof tw.exilecore.ExileCore core && core.players().grace().isSafe(player)))) {
+            return false; // 入場保護中的人不追
+        }
+        return target.getLocation().distanceSquared(mob.getLocation()) <= range * range;
+    }
+
+    @Override
+    public void start() {
+        repath = 0;
+    }
+
+    @Override
+    public void stop() {
+        mob.getPathfinder().stopPathfinding();
+    }
+
+    @Override
+    public void tick() {
+        final LivingEntity target = mob.getTarget();
+        if (target == null) {
+            return;
+        }
+        mob.lookAt(target);
+        if (--repath <= 0) {
+            repath = 10;
+            mob.getPathfinder().moveTo(target, 1.2);
+        }
+        if (cooldown > 0) {
+            cooldown--;
+            return;
+        }
+        final double reach = mob.getWidth() * 2 + target.getWidth();
+        if (target.getLocation().distanceSquared(mob.getLocation()) <= reach * reach + 1 && mob.hasLineOfSight(target)) {
+            mob.swingMainHand();
+            mob.attack(target);
+            cooldown = 20;
+        }
+    }
+
+    @Override
+    public GoalKey<Mob> getKey() {
+        return key;
+    }
+
+    @Override
+    public EnumSet<GoalType> getTypes() {
+        return EnumSet.of(GoalType.MOVE, GoalType.LOOK);
+    }
+}

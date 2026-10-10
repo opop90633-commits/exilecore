@@ -1,5 +1,33 @@
-# 通貨定義。operation 指到程式裡的操作（CurrencyOperation），applies_to.rarity 空白 = 不限稀有度。
-# drop_weight 是掉落權重（相對值），0 = 不掉落。
+# 通貨定義（機制照 PoE2，名稱是自己的）。世界觀裡每一種通貨都是不同純度的星骸，flavor 是物品說明裡那句斜體字。
+# operation 指到程式裡的操作（CurrencyOperation），
+# applies_to.rarity 空白 = 不限稀有度。drop_weight 是掉落權重（相對值），0 = 不掉落。
+# 掉落的魔法／稀有裝備未鑑定：帶回城找鑑定師（NPC）右鍵免費鑑定，或跟鑑定師免費領鑑定卷軸帶去野外用
+# （補滿到一疊；drop_weight 0 = 怪物不掉）。沒有「重骰魔法」與「洗白」——改造是一步一步往上疊：
+#   微光石（普→魔法 1 條）→ 添輝石（+1 條）→ 豐饒石（魔法→稀有 +1 條）→ 至臻石（稀有 +1 條）
+#   星火石（普→稀有 4 條）、亂流石（稀有：移除 1 條再加 1 條）、湮滅石（移除 1 條）
+#   天啟石（重骰數值）、恩澤石（重骰固定詞綴）、礪鋒石／甲冑殘片（品質 +5，上限 20）
+# 鑿星石（PoE2 的珠寶匠寶珠）不是用在裝備上：打開技能面板（/skills），拿著它點技能，開一個輔助孔。
+#   技能先有 2 孔：小鑿星石開第 3 孔、鑿星石開第 4 孔、大鑿星石開第 5 孔（sockets 寫開到第幾孔）。
+# drop_level：幾級以上的怪物才會掉（沒寫是 1）。
+# 掉落率照 PoE2（2026-10 查的）：PoE2 的通貨掉落權重不公開，相對多寡用社群在 0.2 版地圖實測的計數
+#   （以崇高石＝100：富豪 57、點金 19–33、混沌 14–21、次級珠寶匠 16、機會 2.2、神聖 1.3–1.6、剝離 0.7–1.9、
+#    完美珠寶匠約 90 張圖 1 顆），沒有計數的照公開的稀有度分級；掉落等級照 poe2db 的 DropLevel。
+#   這裡以至臻石（＝崇高石）＝1000：微光石 3000、添輝石 2500（蛻變、增幅：非常常見）、礪鋒石／甲冑殘片各 1500（常見）、
+#   豐饒石 570、星火石 260、亂流石 170、小鑿星石 160、鑿星石 30、僥倖石 22、天啟石 15、湮滅石 13、大鑿星石 1。
+#   PoE2 沒有的：恩澤石照工匠石那一級（55）、星盤刻刀照舊（160，50 級起）。
+#   2026-10：微光石、添輝石、礪鋒石、甲冑殘片減半（1500、1250、750、750）——伺服器的紀錄裡幾乎沒人用、整疊丟掉；
+#   drops.yml 的件數與分類權重一起調過，其他通貨的掉率不變。
+#   2026-10（第二次）：至臻石 1000 → 400、豐饒石 570 → 300、小鑿星石 160 → 60。伺服器四天的紀錄：至臻石掉 5,537 顆只用掉 240、
+#   豐饒石 3,140 顆用掉 4、小鑿星石 844 顆用掉 32（每個技能只要一顆）——人少沒有交易，通貨只剩自己做裝備、洗地圖。
+#   洗過的 T16 每張從約 10 顆至臻石變約 4 顆（洗一張圖用 2 顆）。drops.yml 的件數與分類權重又一起調過：
+#   裝備、寶石、藥劑與其他通貨的掉率不變（只有 1～4 級的微光石、添輝石少約 15%，那時候還沒有至臻石可以扣）。
+#   掉落等級：崇高、富豪、點金、礪鋒、甲冑 5 級起；混沌、僥倖、恩澤 12；小鑿星石 25；天啟、湮滅 35；鑿星石 45；
+#   大鑿星石只在地圖（61 級起；PoE2 的完美珠寶匠是 65 級＝地圖）。
+# 地圖：蛻變到點金這一套通貨都能用在地圖上（詞綴池在 affixes/maps.yml）；星盤刻刀加地圖品質（每 1% = 1% 物品數量）。
+# 僥倖石（operation: CHANCE）：普通物品有機率變成那個基底的傳奇，不然就碎掉。2026-10：機率跟商人賭博賭到傳奇一樣
+#   （economy.yml 的 gamble.rarity_weights：一般 2%，那個基底的傳奇有地圖 Boss 也會掉的約 0.66%）；success 只在經濟模組沒啟用時用。
+#   只能用在有「能用僥倖石做出來的傳奇」的基底（uniques.yml 的 sources 寫 chance，物品等級也要夠），新手裝備不行。
+# 天穹碎片（operation: NONE）不改物品：星圖最外圈的地圖（星墜冰原、天文台遺跡，哪一階都會掉）Boss 掉，兩片在地圖裝置打開終局「天穹熔爐」。
 
 identify_scroll:
   name: 鑑定卷軸
@@ -8,8 +36,9 @@ identify_scroll:
   stack: 40
   operation: IDENTIFY
   applies_to: { rarity: [MAGIC, RARE, UNIQUE] }
-  drop_weight: 10000
-  description: "鑑定一件未鑑定的物品，讓詞綴顯示並生效"
+  drop_weight: 0
+  description: "鑑定一件未鑑定的物品（跟鑑定師免費領）"
+  flavor: "鑑定師用星輝墨水寫的卷軸，能讓星骸說出它記得的東西。"
 
 glimmer_orb:
   name: 微光石
@@ -18,28 +47,22 @@ glimmer_orb:
   stack: 40
   operation: UPGRADE_TO_MAGIC
   applies_to: { rarity: [NORMAL] }
-  drop_weight: 3000
-  description: "把普通物品變成魔法物品（1 到 2 條詞綴）"
+  drop_weight: 1500
+  drop_level: 1
+  description: "把普通物品變成魔法物品（1 條詞綴）；地圖也能用，詞綴越多掉越多"
+  flavor: "最細的星骸碎屑，還留著一點微光。"
 
 lustre_orb:
-  name: 增輝石
+  name: 添輝石
   material: PRISMARINE_CRYSTALS
   model: exilecore:currency/lustre_orb
   stack: 30
   operation: ADD_AFFIX_MAGIC
   applies_to: { rarity: [MAGIC] }
-  drop_weight: 2500
-  description: "為只有一條詞綴的魔法物品再加一條"
-
-flux_orb:
-  name: 流轉石
-  material: QUARTZ
-  model: exilecore:currency/flux_orb
-  stack: 20
-  operation: REROLL_MAGIC
-  applies_to: { rarity: [MAGIC] }
-  drop_weight: 2500
-  description: "重新隨機魔法物品的詞綴"
+  drop_weight: 1250
+  drop_level: 1
+  description: "為只有一條詞綴的魔法物品再加一條（裝備或地圖）"
+  flavor: "兩片碎屑熔在一起，光亮了一倍。"
 
 bounty_orb:
   name: 豐饒石
@@ -48,8 +71,10 @@ bounty_orb:
   stack: 20
   operation: MAGIC_TO_RARE
   applies_to: { rarity: [MAGIC] }
-  drop_weight: 400
-  description: "把魔法物品升級為稀有物品，並加一條詞綴"
+  drop_weight: 300
+  drop_level: 5
+  description: "把魔法物品升級為稀有物品，並加一條詞綴（裝備或地圖）"
+  flavor: "泛著綠光的星骸，碰過的東西都會多長出一點什麼。"
 
 spark_orb:
   name: 星火石
@@ -58,18 +83,34 @@ spark_orb:
   stack: 10
   operation: UPGRADE_TO_RARE
   applies_to: { rarity: [NORMAL] }
-  drop_weight: 500
-  description: "把普通物品直接變成稀有物品（4 到 6 條詞綴）"
+  drop_weight: 260
+  drop_level: 5
+  description: "把普通物品直接變成稀有物品（4 條詞綴；裝備或地圖）"
+  flavor: "還在燃燒的星骸，一碰就把平凡的東西點亮。"
 
 turmoil_orb:
   name: 亂流石
   material: ENDER_EYE
   model: exilecore:currency/turmoil_orb
   stack: 10
-  operation: REROLL_RARE
+  operation: REMOVE_AND_ADD
   applies_to: { rarity: [RARE] }
-  drop_weight: 300
-  description: "重新隨機稀有物品的所有詞綴"
+  drop_weight: 55    # 2026-10：170 → 55（照 100 人伺服器調：高價通貨少掉一點）
+  drop_level: 12
+  description: "稀有物品隨機移除一條詞綴，再加一條新的"
+  flavor: "光在裡面亂竄，抹掉一條，又寫上一條。"
+
+annul_orb:
+  name: 湮滅石
+  material: ENDER_PEARL
+  model: exilecore:currency/annul_orb
+  stack: 10
+  operation: REMOVE_AFFIX
+  applies_to: { rarity: [MAGIC, RARE] }
+  drop_weight: 4    # 2026-10：13 → 4（照 100 人伺服器調：高價通貨少掉一點）
+  drop_level: 35
+  description: "隨機移除一條詞綴（稀有度不變）"
+  flavor: "黑色的星骸，會把光吞掉。"
 
 zenith_orb:
   name: 至臻石
@@ -78,18 +119,10 @@ zenith_orb:
   stack: 10
   operation: ADD_AFFIX_RARE
   applies_to: { rarity: [RARE] }
-  drop_weight: 20
-  description: "為還有空位的稀有物品再加一條詞綴"
-
-blank_orb:
-  name: 淨白石
-  material: BONE_MEAL
-  model: exilecore:currency/blank_orb
-  stack: 30
-  operation: SCOUR
-  applies_to: { rarity: [MAGIC, RARE] }
-  drop_weight: 600
-  description: "移除所有詞綴，物品變回普通"
+  drop_weight: 80    # 2026-10：250 → 80（照 100 人伺服器調：高價通貨少掉一點）
+  drop_level: 5
+  description: "為還有空位的稀有物品再加一條詞綴（裝備或地圖）"
+  flavor: "幾乎沒有雜質的星骸，挖一整年也未必見得到一顆。"
 
 oracle_orb:
   name: 天啟石
@@ -98,35 +131,798 @@ oracle_orb:
   stack: 10
   operation: REROLL_VALUES
   applies_to: { rarity: [MAGIC, RARE, UNIQUE] }
-  drop_weight: 15
+  drop_weight: 2    # 2026-10：10 → 2（照 100 人伺服器調：高價通貨少掉一點）
+  drop_level: 35
   description: "重新隨機所有詞綴的數值，階級不變"
+  flavor: "盯著它看，會看見同一件東西的另一種樣子。"
 
 blessing_orb:
-  name: 賜福石
+  name: 恩澤石
   material: GOLD_INGOT
   model: exilecore:currency/blessing_orb
   stack: 20
   operation: REROLL_IMPLICIT
   applies_to: { rarity: [] }
-  drop_weight: 100
+  drop_weight: 25    # 2026-10：55 → 25（照 100 人伺服器調：高價通貨少掉一點）
+  drop_level: 12
   description: "重新隨機固定詞綴的數值"
+  flavor: "曜朝祭司祝福過的星骸，只改變物品與生俱來的那一部分。"
 
 whetstone:
-  name: 磨刀石
+  name: 礪鋒石
   material: FLINT
   model: exilecore:currency/whetstone
   stack: 20
   operation: QUALITY_WEAPON
   applies_to: { rarity: [] }
-  drop_weight: 1500
-  description: "提升武器品質（普通 +5%、魔法 +2%、稀有 +1%，上限 20%）"
+  drop_weight: 750
+  drop_level: 5
+  description: "武器品質 +5%（上限 20%）"
+  flavor: "混著星砂的礪鋒石。"
 
 armour_scrap:
-  name: 護甲碎片
+  name: 甲冑殘片
   material: IRON_NUGGET
   model: exilecore:currency/armour_scrap
   stack: 20
   operation: QUALITY_ARMOUR
   applies_to: { rarity: [] }
-  drop_weight: 1500
-  description: "提升防具品質（普通 +5%、魔法 +2%、稀有 +1%，上限 20%）"
+  drop_weight: 750
+  drop_level: 5
+  description: "防具品質 +5%（上限 20%）"
+  flavor: "從曜朝士兵的鎧甲上敲下來的碎片。"
+
+lesser_socket_orb:
+  name: 小鑿星石
+  material: COPPER_INGOT
+  model: exilecore:currency/lesser_socket_orb
+  stack: 20
+  operation: SKILL_SOCKET
+  sockets: 3
+  applies_to: { rarity: [] }
+  drop_weight: 24    # 2026-10：60 → 24（照 100 人伺服器調：高價通貨少掉一點）
+  drop_level: 25
+  description: "幫技能開第 3 個輔助孔（在技能面板上用）"
+  flavor: "星骸磨成的小鑿子，只夠在寶石上鑿出一道淺淺的孔。"
+
+socket_orb:
+  name: 鑿星石
+  material: LAPIS_LAZULI
+  model: exilecore:currency/socket_orb
+  stack: 20
+  operation: SKILL_SOCKET
+  sockets: 4
+  applies_to: { rarity: [] }
+  drop_weight: 9    # 2026-10：30 → 9（照 100 人伺服器調：高價通貨少掉一點）
+  drop_level: 45
+  description: "幫技能開第 4 個輔助孔（在技能面板上用）"
+  flavor: "藍得發亮的星骸，鑿下去的孔會自己長出紋路。"
+
+greater_socket_orb:
+  name: 大鑿星石
+  material: DIAMOND
+  model: exilecore:currency/greater_socket_orb
+  stack: 10
+  operation: SKILL_SOCKET
+  sockets: 5
+  applies_to: { rarity: [] }
+  drop_weight: 1
+  drop_level: 61
+  description: "幫技能開第 5 個輔助孔（在技能面板上用）"
+  flavor: "據說是天穹之心掉下來時最先碎開的那一角。"
+
+chance_orb:
+  name: 僥倖石
+  material: HEART_OF_THE_SEA
+  model: exilecore:currency/chance_orb
+  stack: 20
+  operation: CHANCE
+  success: 0.1
+  applies_to: { rarity: [NORMAL] }
+  drop_weight: 9    # 2026-10：22 → 9（照 100 人伺服器調：高價通貨少掉一點）
+  drop_level: 12
+  description: "普通物品有機會變成這個基底的傳奇（機率跟商人賭博賭到傳奇一樣），不然就碎掉"
+  flavor: "一半是星骸、一半是賭徒的運氣；握在手裡會微微發熱。"
+
+# 2026-10：腐化（照 PoE2 的瓦爾寶珠，名稱是自己的）。用了就變成「已腐化」，之後不能再用任何通貨改造；
+#   另外隨機一種結果：40% 沒變化、30% 重骰全部詞綴的數值、30% 品質變成 21～25（超過一般的上限 20）。
+# 2026-10：先不開放（之後要開把下面整段的 # 拿掉）
+# corrupt_orb:
+#   name: 蝕變石
+#   material: FERMENTED_SPIDER_EYE
+#   stack: 20
+#   operation: CORRUPT
+#   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+#   drop_weight: 20
+#   drop_level: 20
+#   description: "腐化一件物品：可能沒變化、重骰全部數值，或品質超過上限；腐化後不能再改造"
+#   flavor: "被深淵浸過的星骸，碰到的東西都回不去了。"
+
+# ---- 2026-10：符文（嵌進武器、防具的符文孔；效果寫在 runes.yml）----
+rune_iron:
+  name: 鐵骨符文
+  material: IRON_NUGGET
+  stack: 20
+  operation: RUNE
+  rune: iron
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 25
+  drop_level: 8
+  description: "嵌進一個空的符文孔：武器 增加 15% 物理攻擊傷害；防具、副手 +25 最大生命。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+
+rune_ember:
+  name: 焰紋符文
+  material: BLAZE_POWDER
+  stack: 20
+  operation: RUNE
+  rune: ember
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 25
+  drop_level: 8
+  description: "嵌進一個空的符文孔：武器 物理傷害的 10% 額外附加為火焰；防具、副手 +12% 火焰抗性。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+
+rune_frost:
+  name: 霜紋符文
+  material: PRISMARINE_CRYSTALS
+  stack: 20
+  operation: RUNE
+  rune: frost
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 25
+  drop_level: 8
+  description: "嵌進一個空的符文孔：武器 物理傷害的 10% 額外附加為冰冷；防具、副手 +12% 冰冷抗性。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+
+rune_storm:
+  name: 雷紋符文
+  material: GLOWSTONE_DUST
+  stack: 20
+  operation: RUNE
+  rune: storm
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 25
+  drop_level: 8
+  description: "嵌進一個空的符文孔：武器 物理傷害的 10% 額外附加為閃電；防具、副手 +12% 閃電抗性。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+
+rune_mind:
+  name: 慧光符文
+  material: LAPIS_LAZULI
+  stack: 20
+  operation: RUNE
+  rune: mind
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 25
+  drop_level: 8
+  description: "嵌進一個空的符文孔：武器 增加 15% 法術傷害；防具、副手 +20 最大魔力。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+
+rune_swift:
+  name: 疾風符文
+  material: FEATHER
+  stack: 20
+  operation: RUNE
+  rune: swift
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 25
+  drop_level: 8
+  description: "嵌進一個空的符文孔：武器 增加 6% 攻擊速度；防具、副手 +10 敏捷。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+
+chisel:
+  name: 星盤刻刀
+  material: QUARTZ
+  model: exilecore:currency/chisel
+  stack: 20
+  operation: QUALITY_MAP
+  drop_weight: 160
+  drop_level: 50
+  description: "地圖品質 +5%（上限 20%）；每 1% 品質讓地圖多 1% 物品數量"
+  flavor: "刻過星圖的石英釘，能把星骸的記憶釘得更牢。"
+
+sky_fragment:
+  name: 天穹碎片
+  material: DISC_FRAGMENT_5
+  model: exilecore:currency/sky_fragment
+  stack: 10
+  operation: NONE
+  drop_weight: 0
+  description: "星墜冰原、天文台遺跡的地圖 Boss 掉落；兩片在地圖裝置打開通往「天穹熔爐」的傳送門"
+  flavor: "天穹之心最核心的一片，摸起來還在發燙。"
+
+# ---- 開服活動（2026-10，events.yml 的 world_events）：不定時事件的素材，拿去「不定時活動」的兌換商店換東西 ----
+event_swarm_shard:
+  name: 潮湧殘片
+  material: PRISMARINE_CRYSTALS
+  model: exilecore:currency/event_swarm_shard
+  stack: 100
+  operation: NONE
+  drop_weight: 0
+  description: "入侵怪潮的怪物掉落、完成怪潮另外給；在選單的「不定時活動」兌換"
+  flavor: "怪潮退去之後留在地上的碎片，還帶著遠方星海的鹹味。"
+
+event_titan_core:
+  name: 開天星核
+  material: NETHER_STAR
+  model: exilecore:currency/event_titan_core
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "打倒世界 Boss「開天者」時，每個有份的人都拿得到；在選單的「不定時活動」兌換"
+  flavor: "開天者胸口的那顆星，碎了還在發光。"
+
+# ---- 傳奇兌換券（2026-10 PoE2 改版）：舊的傳奇全部退役，玩家手上的登入時換成這個；拿在主手右鍵，選一件新的傳奇 ----
+unique_voucher:
+  name: 傳奇兌換券
+  material: PAPER
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "拿在主手右鍵：從全部的傳奇（追逐級以外）選一件換（數值隨機擲）；可以交易"
+  flavor: "舊時代的傳奇留下來的憑證，蓋著星骸工會的火漆印。"
+
+# ---- 劫盜（2026-10，照 PoE 的 Heist；heist.yml）：拿到營地的盜賊首領那裡用 ----
+heist_contract:
+  name: 劫盜合約
+  material: PAPER
+  stack: 20
+  operation: NONE
+  drop_weight: 0           # 不在一般的掉落表：只有星圖裡的怪物掉（heist.yml 的 contract_chance）
+  drop_level: 45
+  description: "只在星圖裡掉。營地的盜賊首領：潛入一處據點，開金庫箱、打倒守衛、打開大金庫（裡面掉的裝備可能帶隱匿詞綴）"
+  flavor: "上面畫著一張平面圖，還有一個被圈起來的金庫。"
+
+heist_finale_key:
+  name: 金庫之主的鑰印
+  material: TRIAL_KEY
+  stack: 20
+  operation: NONE
+  drop_weight: 0           # 只有大劫盜的大金庫掉（heist.yml 的 vault.finale_key_chance）
+  description: "營地的盜賊首領：開劫盜終局「金庫之主」（難度照極境）；打倒他，收藏裡挑一件"
+  flavor: "鑰印上刻著一萬道鎖的紋路。"
+
+heist_blueprint:
+  name: 劫盜藍圖
+  material: MAP
+  stack: 10
+  operation: NONE
+  drop_weight: 0
+  description: "營地的盜賊首領：大劫盜——三處據點連著打，最後的大金庫獎勵三倍（只在劫盜的大金庫掉）"
+  flavor: "三棟建築、一條地道、一個不能出錯的晚上。"
+
+unveil_stone:
+  name: 揭露石
+  material: AMETHYST_SHARD
+  stack: 20
+  operation: UNVEIL
+  applies_to: { rarity: [MAGIC, RARE] }
+  drop_weight: 0
+  description: "加一條隱匿詞綴（要有空位；一件裝備只能有一條隱匿或揭露詞綴），再找盜賊首領揭露；只在劫盜掉"
+  flavor: "握在手裡，石頭裡的霧會慢慢散開。"
+
+abyss_core:
+  name: 深淵星核
+  material: ECHO_SHARD
+  model: exilecore:currency/abyss_core
+  stack: 10
+  operation: NONE
+  drop_weight: 0
+  description: "終局開到 T12 以上，Boss 有機率掉；在地圖裝置的「極境」打開終局 Boss 的極境版本（每個人只能進一次）"
+  flavor: "從星骸最深的地方挖出來的核心，還在一下一下地跳。"
+
+# ---- 地圖機制掉的特殊通貨（照 PoE2：星魄、催化劑、星籤；怪物不掉，drop_weight 0） ----
+# 星魄（寶箱掉）：普通物品變魔法、魔法變稀有，而且一定帶這顆星魄的那條詞綴（affix；同群組的舊詞綴換掉，階級照物品等級抽、不會是最差的）。
+#   只能用在那條詞綴能出現的基底上（例如攻速星魄只能用在武器、戒指）。
+essence_body:
+  name: 生命星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: life_flat
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  description: "普通→魔法、魔法→稀有，一定帶「+最大生命」（防具、盾、飾品）"
+  flavor: "凝在星骸裡的一口氣，還在跳。"
+essence_mind:
+  name: 魔力星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: mana_flat
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  description: "普通→魔法、魔法→稀有，一定帶「+最大魔力」（防具、盾、飾品）"
+  flavor: "想得太久的念頭，變成了石頭。"
+essence_flame:
+  name: 火抗星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: resist_fire
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  description: "普通→魔法、魔法→稀有，一定帶「火焰抗性」（防具、盾、飾品）"
+  flavor: "燒了很久，還沒燒完。"
+essence_frost:
+  name: 冰抗星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: resist_cold
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  description: "普通→魔法、魔法→稀有，一定帶「冰冷抗性」（防具、盾、飾品）"
+  flavor: "星光冷下來之後剩下的東西。"
+essence_storm:
+  name: 電抗星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: resist_lightning
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  description: "普通→魔法、魔法→稀有，一定帶「閃電抗性」（防具、盾、飾品）"
+  flavor: "一道閃電被折起來放好了。"
+essence_ruin:
+  name: 混抗星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: resist_chaos
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  drop_level: 12
+  description: "普通→魔法、魔法→稀有，一定帶「混沌抗性」（防具、盾、飾品）"
+  flavor: "從裂隙那一邊漏過來的。"
+essence_battle:
+  name: 攻速星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: attack_speed, local_attack_speed, local_attack_speed_bow
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  description: "普通→魔法、魔法→稀有，一定帶「攻擊速度」（武器、褲子、箭袋）"
+  flavor: "把一場打鬥的最後一秒封起來。"
+essence_sorcery:
+  name: 法傷星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: spell_inc, spell_inc_weapon, spell_inc_weapon_wand, spell_inc_weapon_staff
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  description: "普通→魔法、魔法→稀有，一定帶「法術傷害」（法杖、長杖、權杖、項鍊）"
+  flavor: "星骸記得一句沒念完的咒。"
+essence_haste:
+  name: 移速星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: movement_speed
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  description: "普通→魔法、魔法→稀有，一定帶「移動速度」（鞋子）"
+  flavor: "它落下來的時候比光慢一點點。"
+essence_infinite:
+  name: 屬性星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: all_attr
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  description: "普通→魔法、魔法→稀有，一定帶「全屬性」（戒指、項鍊）"
+  flavor: "數不完的星，數不完的名字。"
+essence_seeking:
+  name: 暴擊星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: crit_chance, crit_chance_amulet, local_crit_base, attack_crit_chance
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  drop_level: 20
+  description: "普通→魔法、魔法→稀有，一定帶「暴擊率」（武器、頭盔、項鍊、箭袋）"
+  flavor: "總是落在最痛的地方。"
+essence_torment:
+  name: 物傷星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: added_phys, added_phys_local, added_phys_local_crossbow
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  drop_level: 10
+  description: "普通→魔法、魔法→稀有，一定帶「附加物理傷害」（武器、戒指、褲子、箭袋）"
+  flavor: "星骸最重的那一塊。"
+
+# 催化劑（裂隙的怪掉）：只能打在戒指、項鍊、腰帶上，品質 +5（上限 20），品質變成那一類詞綴的數值加成（例如抗性催化劑 20%：抗性詞綴 ×1.2）。
+#   打不同種類的催化劑會換掉原本的，品質從 5 重新開始。catalyst：resist、life、attack、caster、crit、elemental、phys_chaos、attribute、speed、defence。
+catalyst_resist:
+  name: 抗性催化劑
+  material: BLAZE_POWDER
+  stack: 20
+  operation: CATALYST
+  catalyst: resist
+  drop_weight: 0
+  description: "飾品品質 +5%：抗性詞綴的數值 +品質%"
+  flavor: "磨成粉的裂隙邊緣。"
+catalyst_life:
+  name: 生命催化劑
+  material: BLAZE_POWDER
+  stack: 20
+  operation: CATALYST
+  catalyst: life
+  drop_weight: 0
+  description: "飾品品質 +5%：生命與魔力詞綴的數值 +品質%"
+  flavor: "磨成粉的裂隙邊緣。"
+catalyst_attack:
+  name: 攻擊催化劑
+  material: BLAZE_POWDER
+  stack: 20
+  operation: CATALYST
+  catalyst: attack
+  drop_weight: 0
+  description: "飾品品質 +5%：攻擊詞綴的數值 +品質%"
+  flavor: "磨成粉的裂隙邊緣。"
+catalyst_caster:
+  name: 法術催化劑
+  material: BLAZE_POWDER
+  stack: 20
+  operation: CATALYST
+  catalyst: caster
+  drop_weight: 0
+  description: "飾品品質 +5%：法術詞綴的數值 +品質%"
+  flavor: "磨成粉的裂隙邊緣。"
+catalyst_crit:
+  name: 暴擊催化劑
+  material: BLAZE_POWDER
+  stack: 20
+  operation: CATALYST
+  catalyst: crit
+  drop_weight: 0
+  description: "飾品品質 +5%：暴擊詞綴的數值 +品質%"
+  flavor: "磨成粉的裂隙邊緣。"
+catalyst_elemental:
+  name: 元素催化劑
+  material: BLAZE_POWDER
+  stack: 20
+  operation: CATALYST
+  catalyst: elemental
+  drop_weight: 0
+  description: "飾品品質 +5%：元素詞綴的數值 +品質%"
+  flavor: "磨成粉的裂隙邊緣。"
+catalyst_phys_chaos:
+  name: 物理與混沌催化劑
+  material: BLAZE_POWDER
+  stack: 20
+  operation: CATALYST
+  catalyst: phys_chaos
+  drop_weight: 0
+  description: "飾品品質 +5%：物理與混沌詞綴的數值 +品質%"
+  flavor: "磨成粉的裂隙邊緣。"
+catalyst_attribute:
+  name: 屬性催化劑
+  material: BLAZE_POWDER
+  stack: 20
+  operation: CATALYST
+  catalyst: attribute
+  drop_weight: 0
+  description: "飾品品質 +5%：屬性詞綴的數值 +品質%"
+  flavor: "磨成粉的裂隙邊緣。"
+catalyst_speed:
+  name: 速度催化劑
+  material: BLAZE_POWDER
+  stack: 20
+  operation: CATALYST
+  catalyst: speed
+  drop_weight: 0
+  description: "飾品品質 +5%：速度詞綴的數值 +品質%"
+  flavor: "磨成粉的裂隙邊緣。"
+catalyst_defence:
+  name: 防禦催化劑
+  material: BLAZE_POWDER
+  stack: 20
+  operation: CATALYST
+  catalyst: defence
+  drop_weight: 0
+  description: "飾品品質 +5%：防禦詞綴的數值 +品質%"
+  flavor: "磨成粉的裂隙邊緣。"
+
+# 星籤（流寇掉）：拿它點一件魔法／稀有物品掛上去，下一顆對應的通貨照星籤的規則用，用完星籤就消失（換一個星籤會蓋掉舊的）。
+#   omen.triggers：哪些操作會觸發；omen.effect：FORCE_PREFIX 只加前綴、FORCE_SUFFIX 只加後綴、DOUBLE_ADD 加兩條、
+#   REMOVE_LOWEST 移除階級最差的、KEEP_PREFIXES 移除時不動前綴、KEEP_SUFFIXES 移除時不動後綴。
+omen_sinistral:
+  name: 加前綴籤
+  material: BOOK
+  stack: 10
+  operation: OMEN
+  omen: { triggers: [ADD_AFFIX_MAGIC, MAGIC_TO_RARE, ADD_AFFIX_RARE, REMOVE_AND_ADD], effect: FORCE_PREFIX }
+  applies_to: { rarity: [MAGIC, RARE] }
+  drop_weight: 0
+  description: "下一顆加詞綴的通貨（添輝、豐饒、至臻、亂流）加的一定是前綴"
+  flavor: "流寇留下的筆記，字都往左歪。"
+omen_dextral:
+  name: 加後綴籤
+  material: BOOK
+  stack: 10
+  operation: OMEN
+  omen: { triggers: [ADD_AFFIX_MAGIC, MAGIC_TO_RARE, ADD_AFFIX_RARE, REMOVE_AND_ADD], effect: FORCE_SUFFIX }
+  applies_to: { rarity: [MAGIC, RARE] }
+  drop_weight: 0
+  description: "下一顆加詞綴的通貨（添輝、豐饒、至臻、亂流）加的一定是後綴"
+  flavor: "流寇留下的筆記，字都往右歪。"
+omen_abundance:
+  name: 雙詞綴籤
+  material: BOOK
+  stack: 10
+  operation: OMEN
+  omen: { triggers: [ADD_AFFIX_RARE], effect: DOUBLE_ADD }
+  applies_to: { rarity: [RARE] }
+  drop_weight: 0
+  description: "下一顆至臻石加兩條詞綴（有空位的話）"
+  flavor: "寫了兩遍的願望。"
+omen_whittling:
+  name: 去劣籤
+  material: BOOK
+  stack: 10
+  operation: OMEN
+  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: REMOVE_LOWEST }
+  applies_to: { rarity: [MAGIC, RARE] }
+  drop_weight: 0
+  description: "下一顆湮滅石／亂流石移除的是階級最差的那條"
+  flavor: "把最不喜歡的那一行劃掉。"
+omen_sinistral_guard:
+  name: 保前綴籤
+  material: BOOK
+  stack: 10
+  operation: OMEN
+  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_PREFIXES }
+  applies_to: { rarity: [MAGIC, RARE] }
+  drop_weight: 0
+  description: "下一顆湮滅石／亂流石不動前綴（只拿後綴）"
+  flavor: "用手蓋住左半邊。"
+omen_dextral_guard:
+  name: 保後綴籤
+  material: BOOK
+  stack: 10
+  operation: OMEN
+  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_SUFFIXES }
+  applies_to: { rarity: [MAGIC, RARE] }
+  drop_weight: 0
+  description: "下一顆湮滅石／亂流石不動後綴（只拿前綴）"
+  flavor: "用手蓋住右半邊。"
+
+# ---- 蒸餾情緒（PoE2 的 Delirium 獎勵；怪物不掉，幻霧的獎勵掉）----
+# 拿著它點一條項鍊會打開「注入」的選單：選一個天賦樹的核心，花 3 顆同一種情緒把那個核心的效果注入項鍊（一條項鍊一個，再注入就換掉）。
+# 哪一種情緒看核心離天賦樹中心多遠：≤7 格怒火、≤11 愧疚、≤15 貪婪、更遠妄想（越外圍的核心越強、情緒越稀有）。順序在 map_events.yml 的 delirium.emotions。
+distilled_ire:
+  name: 蒸餾怒火
+  material: GLASS_BOTTLE
+  model: exilecore:currency/distilled_ire
+  stack: 20
+  operation: INSTIL
+  drop_weight: 0
+  description: "注入項鍊：選一個靠近天賦樹中心（7 格內）的核心，3 顆注入；注入後核心的效果加在項鍊上"
+  flavor: "瓶子裡的東西還在發抖。"
+distilled_guilt:
+  name: 蒸餾愧疚
+  material: GLASS_BOTTLE
+  model: exilecore:currency/distilled_guilt
+  stack: 20
+  operation: INSTIL
+  drop_weight: 0
+  description: "注入項鍊：選一個離天賦樹中心 8–11 格的核心，3 顆注入"
+  flavor: "打開的時候會聽見有人道歉。"
+distilled_greed:
+  name: 蒸餾貪婪
+  material: GLASS_BOTTLE
+  model: exilecore:currency/distilled_greed
+  stack: 20
+  operation: INSTIL
+  drop_weight: 0
+  description: "注入項鍊：選一個離天賦樹中心 12–15 格的核心，3 顆注入"
+  flavor: "怎麼倒都倒不完。"
+distilled_paranoia:
+  name: 蒸餾妄想
+  material: GLASS_BOTTLE
+  model: exilecore:currency/distilled_paranoia
+  stack: 20
+  operation: INSTIL
+  drop_weight: 0
+  description: "注入項鍊：選一個天賦樹最外圍（16 格以上）的核心，3 顆注入"
+  flavor: "它在看你。"
+
+# ---- 未切割寶石（2026-10 算通貨：照 PoE2，可以收進通貨袋、倉庫的通貨頁，在通貨交易所買賣）----
+# 每一個等級（技能寶石 1–20 級、輔助寶石第 1–3 階）各是一種通貨；代號固定是 uncut_skill_等級、uncut_support_階級，不能改。
+# 物品本身還是寶石（右鍵雕琢、切割、拿著點技能升級照舊），物品的名稱與說明照寶石的樣子；這裡的名稱是通貨袋、交易所上顯示的。
+# 怪物照舊照 drops.yml 的寶石分類掉（drop_weight 0：不從通貨的掉落表抽），撿到時自動收進通貨袋。
+uncut_skill_1:
+  name: 未切割技能寶石 Lv.1
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.1 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.1）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_2:
+  name: 未切割技能寶石 Lv.2
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.2 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.2）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_3:
+  name: 未切割技能寶石 Lv.3
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.3 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.3）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_4:
+  name: 未切割技能寶石 Lv.4
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.4 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.4）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_5:
+  name: 未切割技能寶石 Lv.5
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.5 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.5）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_6:
+  name: 未切割技能寶石 Lv.6
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.6 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.6）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_7:
+  name: 未切割技能寶石 Lv.7
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.7 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.7）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_8:
+  name: 未切割技能寶石 Lv.8
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.8 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.8）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_9:
+  name: 未切割技能寶石 Lv.9
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.9 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.9）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_10:
+  name: 未切割技能寶石 Lv.10
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.10 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.10）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_11:
+  name: 未切割技能寶石 Lv.11
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.11 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.11）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_12:
+  name: 未切割技能寶石 Lv.12
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.12 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.12）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_13:
+  name: 未切割技能寶石 Lv.13
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.13 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.13）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_14:
+  name: 未切割技能寶石 Lv.14
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.14 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.14）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_15:
+  name: 未切割技能寶石 Lv.15
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.15 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.15）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_16:
+  name: 未切割技能寶石 Lv.16
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.16 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.16）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_17:
+  name: 未切割技能寶石 Lv.17
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.17 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.17）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_18:
+  name: 未切割技能寶石 Lv.18
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.18 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.18）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_19:
+  name: 未切割技能寶石 Lv.19
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.19 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.19）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_20:
+  name: 未切割技能寶石 Lv.20
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.20 的技能寶石，或把技能面板上的技能升一級（最高到 Lv.20）"
+  flavor: "還沒刻上紋路的星骸，記得的東西還很模糊。"
+uncut_skill_21:
+  name: 未切割技能寶石 Lv.21
+  material: PRISMARINE_SHARD
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：做成 Lv.21 的技能寶石，或把技能面板上的技能升一級（Lv.20 的技能只能用這顆升到 Lv.21）"
+  flavor: "從大金庫深處翻出來的星骸，比任何一顆都記得更多。"
+uncut_support_1:
+  name: 未切割輔助寶石 第 1 階
+  material: QUARTZ
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：切成一個第 1 階以下的輔助寶石"
+  flavor: "一小塊碎星，只夠刻一道紋。"
+uncut_support_2:
+  name: 未切割輔助寶石 第 2 階
+  material: QUARTZ
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：切成一個第 2 階以下的輔助寶石"
+  flavor: "一小塊碎星，只夠刻一道紋。"
+uncut_support_3:
+  name: 未切割輔助寶石 第 3 階
+  material: QUARTZ
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "右鍵：切成一個第 3 階以下的輔助寶石"
+  flavor: "一小塊碎星，只夠刻一道紋。"

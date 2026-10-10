@@ -1,0 +1,1238 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>星骸 管理網頁</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0d1a'/%3E%3Cpolygon points='32,6 38,25 58,25 42,37 48,57 32,45 16,57 22,37 6,25 26,25' fill='%23f5b942'/%3E%3C/svg%3E">
+<style nonce="__NONCE__">
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface-1: #fcfcfb; --surface-2: #f2f1ed; --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+    --grid: #e1e0d9; --border: rgba(11, 11, 11, 0.12); --wash: rgba(11, 11, 11, 0.04); --gold: #9a6f00; --gold-fill: #b8860b;
+    --good: #0b7a0b; --bad: #b42318; --warn-bg: #fff4d6; --warn-text: #6b4a00; --bad-bg: #fde8e6; --good-bg: #e5f4e3;
+    --focus: #2b6cb0; --switch-off: #c9c8c2; --knob: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #232321; --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.12); --wash: rgba(255, 255, 255, 0.06); --gold: #f5b942; --gold-fill: #f5b942;
+      --good: #5cc85c; --bad: #ff7b72; --warn-bg: #3a2f12; --warn-text: #ffd27f; --bad-bg: #3b1714; --good-bg: #16301a;
+      --focus: #7ab4ff; --switch-off: #4a4a46; --knob: #f2f1ed;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #232321; --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.12); --wash: rgba(255, 255, 255, 0.06); --gold: #f5b942; --gold-fill: #f5b942;
+    --good: #5cc85c; --bad: #ff7b72; --warn-bg: #3a2f12; --warn-text: #ffd27f; --bad-bg: #3b1714; --good-bg: #16301a;
+    --focus: #7ab4ff; --switch-off: #4a4a46; --knob: #f2f1ed;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page); color: var(--text-primary);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px; line-height: 1.5; padding: 24px 16px 64px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  [hidden] { display: none !important; }
+  h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  h2 { margin: 0 0 12px; font-size: 16px; font-weight: 600; }
+  h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .sub { margin: 4px 0 0; color: var(--text-secondary); }
+  .top-actions { display: flex; gap: 8px; }
+  button, input, select, textarea { font: inherit; color: var(--text-primary); }
+  button {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; cursor: pointer;
+  }
+  button:hover { background: var(--wash); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button.primary { background: var(--gold-fill); border-color: var(--gold-fill); color: #1a1200; font-weight: 600; }
+  button.primary:hover { filter: brightness(1.05); }
+  button.danger { color: var(--bad); }
+  button.small { padding: 3px 10px; font-size: 13px; }
+  button.link { border: none; background: none; padding: 0; color: var(--focus); cursor: pointer; text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  input, select, textarea {
+    background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; min-width: 0;
+  }
+  textarea { width: 100%; min-height: 72px; resize: vertical; }
+  input[type="number"] { width: 110px; font-variant-numeric: tabular-nums; }
+  input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: var(--gold-fill); }
+  label.field { display: flex; flex-direction: column; gap: 4px; color: var(--text-secondary); font-size: 13px; margin-top: 12px; }
+  label.field input, label.field textarea { color: var(--text-primary); font-size: 14px; }
+  .banner { margin: 12px 0 0; padding: 10px 14px; border-radius: 10px; background: var(--warn-bg); color: var(--warn-text); }
+  .banner.bad { background: var(--bad-bg); color: var(--bad); }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .tabs button[aria-selected="true"] { font-weight: 600; border-color: var(--text-secondary); background: var(--surface-2); }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .note { margin: 0 0 12px; color: var(--text-secondary); font-size: 13px; }
+  .muted { color: var(--text-muted); }
+  .seg { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .seg button[aria-pressed="true"] { font-weight: 600; border-color: var(--gold-fill); background: var(--surface-2); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .pick-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-top: 10px; }
+  .pick { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; background: var(--page); }
+  .pick:hover { background: var(--wash); }
+  .pick.on { border-color: var(--gold-fill); }
+  .pick .who { display: flex; flex-direction: column; min-width: 0; }
+  .pick .who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pick .meta { color: var(--text-muted); font-size: 12px; }
+  .results { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .result { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; }
+  .result .meta { color: var(--text-muted); font-size: 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 4px 2px 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); font-size: 13px; }
+  .chip button { border: none; background: none; padding: 0 6px; cursor: pointer; color: var(--text-muted); }
+  .item-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; padding: 10px 0; border-bottom: 1px solid var(--grid); }
+  .item-row:first-child { padding-top: 0; }
+  .item-row label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--text-secondary); }
+  .item-row label > * { font-size: 14px; color: var(--text-primary); }
+  .item-row select.wide { max-width: 300px; }
+  .item-row input.filter { width: 120px; }
+  .item-row .remove { margin-left: auto; }
+  .item-row label.check { flex-direction: row; align-items: center; align-self: center; }
+  .affix-box { flex-basis: 100%; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px dashed var(--border); border-radius: 8px; }
+  .affix-box .affix-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-end; }
+  .affix-box .affix-line select.affix { max-width: 360px; }
+  .affix-box input.var { width: 90px; }
+  .affix-box input.var.out { outline: 2px solid var(--bad); }
+  .affix-box .affix-text { font-size: 13px; color: var(--text-primary); min-width: 200px; }
+  .affix-box .hint { font-size: 12px; color: var(--text-muted); }
+  .add-row { margin-top: 12px; }
+  .summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .summary p { margin: 0; color: var(--text-secondary); max-width: 760px; }
+  .summary strong { color: var(--text-primary); }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  th { color: var(--text-secondary); font-weight: 500; white-space: nowrap; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.time { white-space: nowrap; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .status { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; white-space: nowrap; }
+  .status.pending { background: var(--warn-bg); color: var(--warn-text); }
+  .status.claimed { background: var(--good-bg); color: var(--good); }
+  .status.cancelled { background: var(--surface-2); color: var(--text-muted); }
+  .badge { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; background: var(--warn-bg); color: var(--warn-text); margin-left: 6px; vertical-align: 1px; font-weight: 500; }
+  .badge.admin { background: var(--surface-2); color: var(--text-secondary); }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+  .settings-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  .setting { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--grid); flex-wrap: wrap; }
+  .setting:last-child { border-bottom: none; padding-bottom: 0; }
+  .setting:first-of-type { padding-top: 0; }
+  .setting-text { flex: 1 1 340px; min-width: 0; }
+  .setting-label { font-weight: 600; }
+  .setting-help { color: var(--text-secondary); font-size: 13px; margin-top: 2px; }
+  .setting-file { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+  .setting-control { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .unit { color: var(--text-secondary); font-size: 13px; }
+  .switch { position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+  .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .switch .track { width: 40px; height: 22px; border-radius: 999px; background: var(--switch-off); border: 1px solid var(--border); position: relative; transition: background 0.15s; }
+  .switch .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--knob); box-shadow: 0 1px 2px rgba(0,0,0,0.3); transition: transform 0.15s; }
+  .switch input:checked + .track { background: var(--gold-fill); }
+  .switch input:checked + .track::after { transform: translateX(18px); }
+  .switch input:focus-visible + .track { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .sub-block { margin-top: 4px; padding-top: 12px; }
+  .sub-block .row input[type="text"] { flex: 1 1 320px; }
+  td.actions { white-space: nowrap; }
+  td.actions button + button { margin-left: 8px; }
+  .check { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .empty { color: var(--text-muted); padding: 12px 0; }
+  .login { max-width: 560px; margin: 64px auto; }
+  .login code { background: var(--surface-2); padding: 1px 6px; border-radius: 6px; }
+  dialog { border: 1px solid var(--border); border-radius: 12px; background: var(--surface-1); color: var(--text-primary); padding: 20px; max-width: min(520px, calc(100vw - 32px)); width: 100%; }
+  dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+  dialog p { margin: 0 0 8px; }
+  dialog ul { margin: 8px 0 12px; padding-left: 20px; }
+  dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  .toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 10; max-width: calc(100vw - 32px); }
+  .toast { background: var(--surface-1); border: 1px solid var(--border); border-left: 4px solid var(--good); border-radius: 10px; padding: 10px 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); max-width: 420px; }
+  .toast.bad { border-left-color: var(--bad); }
+  footer { color: var(--text-muted); font-size: 12px; margin-top: 8px; }
+  @media (max-width: 640px) {
+    body { padding: 16px 16px 64px; }
+    .item-row select.wide { max-width: 100%; width: 100%; }
+    .item-row .remove { margin-left: 0; }
+    .setting-control { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div>
+      <h1>星骸 管理網頁</h1>
+      <p class="sub" id="status">讀取中……</p>
+    </div>
+    <div class="top-actions">
+      <button type="button" id="refresh">重新整理</button>
+      <button type="button" id="logout">登出</button>
+    </div>
+  </header>
+  <div class="banner" id="maintenance-banner" hidden>維護模式開著：現在只有管理員進得來。到「遊戲設定 → 伺服器開關」關掉。</div>
+  <div class="banner bad" id="overrides-problem" hidden></div>
+  <nav class="tabs" role="tablist" aria-label="功能">
+    <button type="button" role="tab" data-tab="give" aria-selected="true">發放物資</button>
+    <button type="button" role="tab" data-tab="records" aria-selected="false">發放紀錄</button>
+    <button type="button" role="tab" data-tab="settings" aria-selected="false">遊戲設定</button>
+    <button type="button" role="tab" data-tab="players" aria-selected="false">線上玩家</button>
+    <button type="button" role="tab" data-tab="log" aria-selected="false">操作紀錄</button>
+  </nav>
+
+  <section id="tab-give" role="tabpanel">
+    <div class="card">
+      <h2>1. 發給誰</h2>
+      <div class="seg" id="target-mode">
+        <button type="button" data-mode="players" aria-pressed="true">選線上的人</button>
+        <button type="button" data-mode="names" aria-pressed="false">輸入名字（離線也可以）</button>
+        <button type="button" data-mode="online" aria-pressed="false">線上所有人</button>
+        <button type="button" data-mode="all" aria-pressed="false">所有帳號</button>
+      </div>
+      <div id="mode-players">
+        <div class="row">
+          <button type="button" class="small" id="pick-all">全選</button>
+          <button type="button" class="small" id="pick-none">全不選</button>
+          <span class="muted" id="pick-count"></span>
+        </div>
+        <div class="pick-list" id="pick-list"></div>
+        <p class="empty" id="pick-empty" hidden>現在沒有人在線。要發給離線的玩家，選「輸入名字」。</p>
+      </div>
+      <div id="mode-names" hidden>
+        <p class="note">帳號名稱（玩家 ID）或角色名稱都可以，不分大小寫。離線的人下次登入、選好角色後收到。</p>
+        <div class="row">
+          <input type="search" id="search" placeholder="找玩家（含離線的）…" aria-label="找玩家" autocomplete="off">
+        </div>
+        <div class="results" id="search-results"></div>
+        <div class="chips" id="name-chips"></div>
+        <label class="field">或直接貼上名字（一行一個，或用逗號、空白隔開）
+          <textarea id="names" placeholder="Steve&#10;阿明的劍士"></textarea>
+        </label>
+      </div>
+      <div id="mode-online" hidden><p class="note" id="online-note"></p></div>
+      <div id="mode-all" hidden><p class="note" id="all-note"></p></div>
+    </div>
+
+    <div class="card">
+      <h2>2. 發什麼</h2>
+      <p class="note">東西在玩家領的那一刻才做出來（裝備的詞綴那時候才擲；物品等級填 0 = 照領的角色的等級）。放不下的部分留著，玩家整理後打 /claim 再領。</p>
+      <div id="items"></div>
+      <div class="add-row"><button type="button" id="add-item">＋ 再加一樣</button></div>
+      <label class="field">給玩家看的備註（選填，最多 100 字）
+        <input type="text" id="note" maxlength="100" placeholder="例如：維修補償、活動獎勵">
+      </label>
+    </div>
+
+    <div class="card summary">
+      <p id="summary">還沒選。</p>
+      <button type="button" class="primary" id="send">發放</button>
+    </div>
+  </section>
+
+  <section id="tab-records" role="tabpanel" hidden>
+    <div class="card">
+      <div class="filters">
+        <select id="record-status" aria-label="狀態">
+          <option value="pending">還沒領</option>
+          <option value="claimed">領完了</option>
+          <option value="cancelled">取消了</option>
+          <option value="all">全部</option>
+        </select>
+        <input type="search" id="record-q" placeholder="玩家名稱或批次代號" aria-label="篩選">
+        <button type="button" id="record-refresh">重新整理</button>
+      </div>
+      <div class="banner" id="batch-bar" hidden>
+        <span id="batch-text"></span>
+        <button type="button" class="small danger" id="batch-cancel">取消這一批還沒領的</button>
+        <button type="button" class="small" id="batch-clear">看全部</button>
+      </div>
+      <p class="note">「剩下」是還沒領的數量（背包放不下的部分）。還沒領完的可以取消；正在發給玩家的那一刻不能取消。</p>
+      <div class="scroll"><table id="record-table">
+        <thead><tr><th>時間</th><th>玩家</th><th>東西</th><th>剩下</th><th>備註</th><th>發放人</th><th>狀態</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty" id="record-empty" hidden>沒有紀錄。</p>
+    </div>
+  </section>
+
+  <section id="tab-settings" role="tabpanel" hidden>
+    <p class="note">改的值存在伺服器的 <span id="overrides-file">admin-overrides.yml</span>（蓋過資料檔的同一個鍵，資料檔不動），按「套用」馬上生效。「恢復」= 回到資料檔裡寫的值。</p>
+    <div class="settings-grid" id="settings"></div>
+  </section>
+
+  <section id="tab-players" role="tabpanel" hidden>
+    <div class="card">
+      <div class="scroll"><table id="player-table">
+        <thead><tr><th>玩家</th><th>角色</th><th>職業</th><th>等級</th><th>在哪裡</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty" id="player-empty" hidden>現在沒有人在線。</p>
+    </div>
+  </section>
+
+  <section id="tab-log" role="tabpanel" hidden>
+    <div class="card">
+      <div class="filters"><button type="button" id="log-refresh">重新整理</button></div>
+      <div class="scroll"><table id="log-table">
+        <thead><tr><th>時間</th><th>管理員</th><th>動作</th><th>內容</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty" id="log-empty" hidden>還沒有紀錄。</p>
+    </div>
+  </section>
+  <footer id="footer"></footer>
+</div>
+
+<div class="login" id="login" hidden>
+  <div class="card">
+    <h2>需要登入</h2>
+    <p>在遊戲裡打 <code>/ec web</code>（要有管理權限），點聊天欄的「打開管理網頁」。連結 10 分鐘內有效、只能用一次；登入後 12 小時內有效。</p>
+    <p class="muted" id="login-detail"></p>
+  </div>
+</div>
+
+<dialog id="confirm">
+  <h2 id="confirm-title">確定嗎？</h2>
+  <div id="confirm-body"></div>
+  <div class="actions">
+    <button type="button" id="confirm-no">取消</button>
+    <button type="button" class="primary" id="confirm-yes">確定</button>
+  </div>
+</dialog>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script nonce="__NONCE__">
+(function () {
+  'use strict';
+  var state = null;
+  var csrf = '';
+  var mode = 'players';
+  var picked = {};
+  var nameChips = [];
+  var items = [];
+  var nextItemId = 1;
+  var recordBatch = '';
+
+  var KINDS = [
+    ['currency', '通貨'], ['gold', '金幣'], ['merits', '功勳'], ['sponsor', '星幣／月卡幣／時裝幣'], ['item', '裝備'], ['unique', '傳奇'],
+    ['gem', '寶石'], ['flask', '藥劑'], ['map', '地圖'], ['refund', '免費退點'],
+    ['take_sponsor', '⛔ 收回：累積贊助／星幣／買的格子'], ['take_currency', '⛔ 收回：通貨'], ['take_gold', '⛔ 收回：金幣'], ['take_item', '⛔ 收回：物品']
+  ];
+  var GEM_TYPES = [['uncut_skill', '未切割技能寶石'], ['uncut_support', '未切割輔助寶石'], ['skill', '技能寶石'], ['support', '輔助寶石']];
+
+  // ---- 小工具 ----
+  function $(id) { return document.getElementById(id); }
+  function h(tag, attrs) {
+    var el = document.createElement(tag);
+    if (attrs) {
+      Object.keys(attrs).forEach(function (key) {
+        var value = attrs[key];
+        if (value === null || value === undefined || value === false) { return; }
+        if (key === 'text') { el.textContent = value; }
+        else if (key === 'cls') { el.className = value; }
+        else if (key.indexOf('on') === 0) { el.addEventListener(key.substring(2), value); }
+        else if (value === true) { el.setAttribute(key, ''); }
+        else { el.setAttribute(key, value); }
+      });
+    }
+    for (var i = 2; i < arguments.length; i++) {
+      var child = arguments[i];
+      if (child === null || child === undefined || child === false) { continue; }
+      el.appendChild(typeof child === 'string' || typeof child === 'number' ? document.createTextNode(String(child)) : child);
+    }
+    return el;
+  }
+  function clear(el) { while (el.firstChild) { el.removeChild(el.firstChild); } return el; }
+  function num(n) { return Number(n).toLocaleString('zh-TW'); }
+  function time(ms) {
+    if (!ms) { return ''; }
+    var d = new Date(ms);
+    function p(x) { return (x < 10 ? '0' : '') + x; }
+    return p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function toast(message, bad) {
+    var el = h('div', { cls: 'toast' + (bad ? ' bad' : ''), role: bad ? 'alert' : 'status', text: message });
+    $('toasts').appendChild(el);
+    setTimeout(function () { if (el.parentNode) { el.parentNode.removeChild(el); } }, bad ? 9000 : 5000);
+  }
+  function api(method, path, body) {
+    var options = { method: method, credentials: 'same-origin', cache: 'no-store', headers: {} };
+    if (body !== undefined) { options.headers['Content-Type'] = 'application/json'; options.body = JSON.stringify(body); }
+    if (method !== 'GET') { options.headers['X-EC-CSRF'] = csrf; }
+    return fetch(path, options).then(function (response) {
+      return response.json().catch(function () { return { error: '伺服器的回應看不懂（' + response.status + '）' }; }).then(function (json) {
+        if (response.status === 401) {
+          showLogin(json.error);
+          var loginError = new Error(json.error || '沒有登入');
+          loginError.login = true;
+          loginError.status = 401;
+          throw loginError;
+        }
+        if (!response.ok) {
+          var failure = new Error(json.error || '出錯了（' + response.status + '）');
+          failure.status = response.status;
+          throw failure;
+        }
+        return json;
+      });
+    });
+  }
+  /** 失敗：跳出錯誤（沒登入的已經換成登入畫面，不再跳）。 */
+  function fail(error) {
+    if (!error || !error.login) { toast(error && error.message ? error.message : String(error), true); }
+  }
+  function confirmBox(title, lines, yesText) {
+    return new Promise(function (resolve) {
+      var dialog = $('confirm');
+      $('confirm-title').textContent = title;
+      var body = clear($('confirm-body'));
+      lines.forEach(function (line) {
+        if (Array.isArray(line)) {
+          var ul = h('ul');
+          line.forEach(function (li) { ul.appendChild(h('li', { text: li })); });
+          body.appendChild(ul);
+        } else {
+          body.appendChild(h('p', { text: line }));
+        }
+      });
+      $('confirm-yes').textContent = yesText || '確定';
+      function done(answer) {
+        $('confirm-yes').removeEventListener('click', yes);
+        $('confirm-no').removeEventListener('click', no);
+        dialog.removeEventListener('cancel', no);
+        if (dialog.open) { dialog.close(); }
+        resolve(answer);
+      }
+      function yes() { done(true); }
+      function no(event) { if (event) { event.preventDefault(); } done(false); }
+      $('confirm-yes').addEventListener('click', yes);
+      $('confirm-no').addEventListener('click', no);
+      dialog.addEventListener('cancel', no);
+      dialog.showModal();
+      $('confirm-no').focus();
+    });
+  }
+  function showLogin(detail) {
+    $('app').hidden = true;
+    $('login').hidden = false;
+    $('login-detail').textContent = detail || '';
+  }
+
+  // ---- 狀態 ----
+  /**
+   * 讀狀態。settingsMode：'force' 重畫設定（剛改過）、'safe' 沒在改的時候才重畫、其他不重畫（定時更新：不要蓋掉正在填的值）。
+   */
+  function load(silent, settingsMode) {
+    return api('GET', 'admin/api/state').then(function (json) {
+      var first = state === null;
+      var oldCatalog = state ? catalogSignature(state.catalog) : '';
+      state = json;
+      csrf = json.csrf;
+      $('login').hidden = true;
+      $('app').hidden = false;
+      renderHeader();
+      renderPick();
+      renderPlayers();
+      renderTargets();
+      if (first) {
+        if (items.length === 0) { addItem('currency'); }
+        renderSettings();
+      } else {
+        if (catalogSignature(json.catalog) !== oldCatalog && !$('items').contains(document.activeElement)) { renderItems(); }
+        if (settingsMode === 'force' || settingsMode === 'safe' && !$('settings').contains(document.activeElement)) { renderSettings(); }
+      }
+      renderSummary();
+    }).catch(function (error) { if (!silent) { fail(error); } });
+  }
+  function catalogSignature(c) {
+    return [c.currencies.length, c.bases.length, c.uniques.length, c.skills.length, c.supports.length, c.flasks.length, c.maps.length,
+      c.maxMapTier, c.hasMerits, c.hasSponsor].join(',');
+  }
+
+  function renderHeader() {
+    var s = state.server;
+    $('status').textContent = '登入：' + state.me + '　線上 ' + s.online + ' / ' + s.max + '　TPS ' + s.tps
+      + (s.currentTheme ? '　本月主題：' + s.currentTheme : '') + '　帳號 ' + num(state.accounts) + ' 個';
+    $('maintenance-banner').hidden = !s.maintenance.enabled;
+    $('overrides-problem').hidden = !state.overridesProblem;
+    $('overrides-problem').textContent = state.overridesProblem || '';
+    $('overrides-file').textContent = state.overridesFile || 'admin-overrides.yml';
+    $('footer').textContent = 'ExileCore ' + s.version + '　登入到 ' + new Date(state.expires).toLocaleString('zh-TW');
+  }
+
+  // ---- 發給誰 ----
+  function setMode(next) {
+    mode = next;
+    Array.prototype.forEach.call(document.querySelectorAll('#target-mode button'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-mode') === mode ? 'true' : 'false');
+    });
+    ['players', 'names', 'online', 'all'].forEach(function (m) { $('mode-' + m).hidden = m !== mode; });
+    renderSummary();
+  }
+  function renderTargets() {
+    $('online-note').textContent = '現在在線的 ' + state.players.length + ' 個人（按下發放那一刻在線的人）。';
+    $('all-note').textContent = '資料庫裡所有 ' + num(state.accounts) + ' 個帳號（含離線的；還沒建角色的帳號建好角色後領）。新加入的玩家不會收到。';
+  }
+  function renderPick() {
+    var list = clear($('pick-list'));
+    var online = {};
+    state.players.forEach(function (p) {
+      online[p.uuid] = true;
+      var box = h('input', { type: 'checkbox', 'aria-label': p.name });
+      box.checked = !!picked[p.uuid];
+      var label = h('label', { cls: 'pick' + (box.checked ? ' on' : '') }, box,
+        h('span', { cls: 'who' },
+          h('span', { text: p.character ? p.character + '（' + p.name + '）' : p.name }),
+          h('span', { cls: 'meta', text: p.character ? p['class'] + ' Lv.' + p.level + '　' + p.where : '還沒選角色　' + p.where })));
+      box.addEventListener('change', function () {
+        if (box.checked) { picked[p.uuid] = p.name; } else { delete picked[p.uuid]; }
+        label.className = 'pick' + (box.checked ? ' on' : '');
+        updatePickCount();
+        renderSummary();
+      });
+      list.appendChild(label);
+    });
+    Object.keys(picked).forEach(function (uuid) { if (!online[uuid]) { delete picked[uuid]; } });
+    $('pick-empty').hidden = state.players.length > 0;
+    updatePickCount();
+    renderSummary();
+  }
+  function updatePickCount() {
+    $('pick-count').textContent = pickCount() ? '選了 ' + pickCount() + ' 個人' : '';
+  }
+  function pickCount() { return Object.keys(picked).length; }
+  function namesList() {
+    var seen = new Set();
+    var out = [];
+    nameChips.concat($('names').value.split(/[\n,，、\s]+/)).forEach(function (n) {
+      n = n.trim();
+      if (n && !seen.has(n.toLowerCase())) { seen.add(n.toLowerCase()); out.push(n); }
+    });
+    return out;
+  }
+  function renderChips() {
+    var box = clear($('name-chips'));
+    nameChips.forEach(function (name, index) {
+      box.appendChild(h('span', { cls: 'chip' }, name, h('button', { type: 'button', 'aria-label': '拿掉 ' + name, text: '✕', onclick: function () {
+        nameChips.splice(index, 1); renderChips(); renderSummary();
+      } })));
+    });
+  }
+  var searchTimer = null;
+  function search() {
+    var q = $('search').value.trim();
+    var box = clear($('search-results'));
+    if (!q) { return; }
+    api('GET', 'admin/api/search?q=' + encodeURIComponent(q)).then(function (json) {
+      clear(box);
+      if (json.rows.length === 0) { box.appendChild(h('p', { cls: 'empty', text: '找不到「' + q + '」。' })); return; }
+      json.rows.forEach(function (row) {
+        var chars = row.characters.length ? row.characters.join('、') : '還沒有角色';
+        box.appendChild(h('div', { cls: 'result' },
+          h('div', null, h('div', { text: row.name }), h('div', { cls: 'meta', text: chars + '　最後上線 ' + time(row.lastSeen) })),
+          h('button', { type: 'button', cls: 'small', text: '加入', onclick: function () {
+            if (nameChips.map(function (n) { return n.toLowerCase(); }).indexOf(row.name.toLowerCase()) < 0) { nameChips.push(row.name); }
+            renderChips(); renderSummary();
+          } })));
+      });
+    }).catch(fail);
+  }
+
+  // ---- 發什麼 ----
+  function catalog() { return state.catalog; }
+  function addItem(kind) {
+    items.push({ id: nextItemId++, kind: kind || 'currency', ref: '', rarity: 'rare', level: 0, amount: 1, gemType: 'uncut_skill', filter: '' });
+    renderItems();
+  }
+  function option(value, text, selected) {
+    var o = h('option', { value: value, text: text });
+    if (selected) { o.selected = true; }
+    return o;
+  }
+  function select(cls, label, entries, value, onchange, groupBy) {
+    var el = h('select', { cls: cls, 'aria-label': label });
+    if (groupBy) {
+      var groups = {};
+      var order = [];
+      entries.forEach(function (e) {
+        var g = e[groupBy] || '其他';
+        if (!groups[g]) { groups[g] = h('optgroup', { label: g }); order.push(g); }
+        groups[g].appendChild(option(e.id, e.text, e.id === value));
+      });
+      order.forEach(function (g) { el.appendChild(groups[g]); });
+    } else {
+      entries.forEach(function (e) { el.appendChild(option(e.id, e.text, e.id === value)); });
+    }
+    if (!entries.some(function (e) { return e.id === value; }) && entries.length) { el.value = entries[0].id; }
+    el.addEventListener('change', function () { onchange(el.value); });
+    return el;
+  }
+  function numberInput(label, value, min, max, onchange, hint) {
+    var input = h('input', { type: 'number', min: min, max: max, step: 1, value: value, 'aria-label': label, inputmode: 'numeric' });
+    input.addEventListener('input', function () { onchange(input.value === '' ? 0 : Number(input.value)); });
+    return h('label', null, hint ? label + '（' + hint + '）' : label, input);
+  }
+  function entriesFor(item) {
+    var c = catalog();
+    var f = (item.filter || '').trim().toLowerCase();
+    function match(e) { return !f || e.name.toLowerCase().indexOf(f) >= 0 || (e.slot || '').toLowerCase().indexOf(f) >= 0 || e.id.toLowerCase().indexOf(f) >= 0; }
+    switch (item.kind) {
+      case 'currency': return c.currencies.map(function (e) { return { id: e.id, text: e.name }; });
+      case 'item': return c.bases.filter(match).map(function (e) { return { id: e.id, text: e.name + '（Lv.' + e.level + '）', slot: e.slot }; });
+      case 'unique': return c.uniques.filter(match).map(function (e) { return { id: e.id, text: e.name + '（' + e.base + (e.chase ? '，追逐級' : '') + '）', slot: e.slot }; });
+      case 'flask': return c.flasks.map(function (e) { return { id: e.id, text: e.name + '（Lv.' + e.level + '）' }; });
+      case 'map': return c.maps.map(function (e) { return { id: e.id, text: e.name }; });
+      case 'take_sponsor': return [{ id: 'total', text: '累積贊助（稱號、倉庫頁、背包頁、上架格跟著降）' }, { id: 'coins', text: '星幣' },
+        { id: 'card', text: '月卡幣' }, { id: 'fashion', text: '時裝幣' }, { id: 'bought_stash', text: '星幣買的倉庫頁' },
+        { id: 'bought_bag', text: '星幣買的隨身背包頁' }, { id: 'bought_listing', text: '星幣買的上架格' },
+        { id: 'card_days', text: '月卡天數（扣到 0 = 拔掉月卡；數量填大一點就全拔）' }];
+      case 'take_currency': return c.currencies.map(function (e) { return { id: e.id, text: e.name }; });
+      case 'sponsor': return [{ id: 'paid', text: '星幣・儲值（算進累積贊助）' }, { id: 'bonus', text: '星幣・贈送（不算累積贊助）' }, { id: 'card', text: '月卡幣' }, { id: 'fashion', text: '時裝幣' }, { id: 'card_days', text: '月卡天數（直接開月卡，不扣星幣、不送開卡禮）' }];
+      default: return [];
+    }
+  }
+  function renderItems() {
+    var box = clear($('items'));
+    items.forEach(function (item) { box.appendChild(itemRow(item)); });
+    renderSummary();
+  }
+  function itemRow(item) {
+    var c = catalog();
+    var row = h('div', { cls: 'item-row' });
+    row.appendChild(h('label', null, '種類', select('', '種類', KINDS.filter(function (k) { return (k[0] !== 'merits' || c.hasMerits) && (k[0] !== 'sponsor' || c.hasSponsor) && (k[0] !== 'take_sponsor' || c.hasSponsor); })
+      .map(function (k) { return { id: k[0], text: k[1] }; }), item.kind, function (v) {
+        item.kind = v; item.ref = ''; item.level = 0; item.amount = 1; item.filter = ''; item.rarity = v === 'map' ? 'normal' : 'rare';
+        renderItems();
+      })));
+    var refLabel = { currency: '通貨', item: '基底', unique: '傳奇', flask: '藥劑', map: '地圖', sponsor: '幣別', take_sponsor: '收回什麼', take_currency: '通貨' }[item.kind];
+    if (item.kind === 'item' || item.kind === 'unique') {
+      var filter = h('input', { type: 'search', cls: 'filter', placeholder: '篩選…', value: item.filter, 'aria-label': '篩選' });
+      filter.addEventListener('input', function () {
+        item.filter = filter.value;
+        var entries = entriesFor(item);
+        var sel = row.querySelector('select.ref');
+        var fresh = select('wide ref', refLabel, entries, item.ref, function (v) { changeRef(item, v); }, 'slot');
+        sel.parentNode.replaceChild(fresh, sel);
+        var before = item.ref;
+        item.ref = entries.length ? fresh.value : '';
+        if (item.ref !== before && item.useAffix) { changeRef(item, item.ref); } else { renderSummary(); }
+      });
+      row.appendChild(h('label', null, '篩選', filter));
+    }
+    if (refLabel) {
+      var entries = entriesFor(item);
+      var sel = select('wide ref', refLabel, entries, item.ref, function (v) {
+          if (item.kind === 'item' || item.kind === 'unique') { changeRef(item, v); } else { item.ref = v; renderSummary(); }
+        },
+        item.kind === 'item' || item.kind === 'unique' ? 'slot' : null);
+      item.ref = entries.length ? sel.value : '';
+      row.appendChild(h('label', null, refLabel, sel));
+    }
+    if (item.kind === 'take_item') {
+      var keyword = h('input', { type: 'text', cls: 'wide', placeholder: '物品編號（UUID）或名稱關鍵字', value: item.ref || '', 'aria-label': '物品編號或名稱' });
+      keyword.addEventListener('input', function () { item.ref = keyword.value; renderSummary(); });
+      row.appendChild(h('label', null, '物品編號或名稱', keyword));
+    }
+    if (item.kind && item.kind.indexOf('take_') === 0) {
+      row.appendChild(h('span', { cls: 'hint', text: '有多少拿多少；找的是領的那個角色的背包、隨身背包與帳號倉庫' }));
+    }
+    if (item.kind === 'item' || item.kind === 'map') {
+      row.appendChild(h('label', null, '稀有度', select('', '稀有度', c.rarities.map(function (r) { return { id: r.id, text: r.name }; }),
+        item.rarity, function (v) { item.rarity = v; renderSummary(); })));
+    }
+    if (item.kind === 'item' || item.kind === 'unique') {
+      row.appendChild(numberInput('物品等級', item.level, 0, 100, function (v) { item.level = v; renderSummary(); }, '0 = 角色等級'));
+      var useAffix = h('input', { type: 'checkbox', 'aria-label': '指定詞綴' });
+      useAffix.checked = !!item.useAffix;
+      useAffix.addEventListener('change', function () { item.useAffix = useAffix.checked; renderItems(); });
+      row.appendChild(h('label', { cls: 'check' }, useAffix, item.kind === 'unique' ? '指定數值' : '指定詞綴'));
+    }
+    if (item.kind === 'map') {
+      if (!item.level) { item.level = 1; }
+      row.appendChild(numberInput('階級', item.level, 1, c.maxMapTier, function (v) { item.level = v; renderSummary(); }, 'T1–T' + c.maxMapTier));
+    }
+    if (item.kind === 'gem') {
+      row.appendChild(h('label', null, '寶石', select('', '寶石的種類', GEM_TYPES.map(function (g) { return { id: g[0], text: g[1] }; }),
+        item.gemType, function (v) { item.gemType = v; item.ref = ''; item.level = v === 'uncut_support' ? 1 : 0; renderItems(); })));
+      if (item.gemType === 'skill' || item.gemType === 'support') {
+        var list = item.gemType === 'skill' ? c.skills : c.supports;
+        var gemSel = select('wide ref', '哪一個', list.map(function (e) { return { id: e.id, text: e.name + (e.tier ? '（第 ' + e.tier + ' 階）' : '') }; }),
+          item.ref, function (v) { item.ref = v; renderSummary(); });
+        item.ref = list.length ? gemSel.value : '';
+        row.appendChild(h('label', null, item.gemType === 'skill' ? '技能' : '輔助', gemSel));
+      }
+      if (item.gemType === 'uncut_support') {
+        if (!item.level) { item.level = 1; }
+        row.appendChild(numberInput('階', item.level, 1, c.maxSupportTier, function (v) { item.level = v; renderSummary(); }, '1–' + c.maxSupportTier));
+      } else if (item.gemType !== 'support') {
+        row.appendChild(numberInput('等級', item.level, 0, c.maxGemLevel, function (v) { item.level = v; renderSummary(); }, '0 = 角色等級'));
+      }
+    }
+    var max = c.limits[item.kind] || 1;
+    var amountLabel = item.kind === 'gold' ? '金幣' : item.kind === 'merits' ? '功勳' : item.kind === 'sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'card' ? '月卡幣' : item.ref === 'fashion' ? '時裝幣' : '星幣') : item.kind === 'refund' ? '次數' : item.kind === 'take_gold' ? '金幣' : item.kind === 'take_item' ? '最多幾件' : item.kind === 'take_sponsor' ? (item.ref === 'card_days' ? '天數' : '數量（星幣、頁、格）') : '數量';
+    row.appendChild(numberInput(amountLabel, item.amount, 1, max, function (v) { item.amount = v; renderSummary(); }, '最多 ' + num(max)));
+    row.appendChild(h('button', { type: 'button', cls: 'small remove', text: '移除', 'aria-label': '移除這一樣', onclick: function () {
+      items = items.filter(function (x) { return x !== item; });
+      if (items.length === 0) { addItem('currency'); } else { renderItems(); }
+    } }));
+    if ((item.kind === 'item' || item.kind === 'unique') && item.useAffix && item.ref) { row.appendChild(affixBox(item)); }
+    return row;
+  }
+  // ---- 指定詞綴（裝備）／指定數值（傳奇） ----
+  var affixCache = {};
+  function changeRef(item, v) {
+    item.ref = v;
+    item.affixList = [];
+    if (item.useAffix) { renderItems(); } else { renderSummary(); }
+  }
+  function affixKey(item) { return item.kind + ':' + item.ref; }
+  function affixInfo(item) { return affixCache[affixKey(item)]; }
+  function findAffix(info, id) { for (var i = 0; i < info.affixes.length; i++) { if (info.affixes[i].id === id) { return info.affixes[i]; } } return null; }
+  function tierOf(affix, tier) {
+    for (var i = 0; i < affix.tiers.length; i++) { if (affix.tiers[i].tier === tier) { return affix.tiers[i]; } }
+    return affix.tiers[0];
+  }
+  function shown(raw, div) { return div > 1 ? String(raw / div) : String(raw); }
+  function rangeText(range, div) {
+    var lo = Math.min(range[0], range[1]), hi = Math.max(range[0], range[1]);
+    return lo === hi ? shown(lo, div) : shown(lo, div) + '–' + shown(hi, div);
+  }
+  /** 數值的輸入格（空的 = 隨機）；超出這一階的範圍標紅。 */
+  function varInputs(entry, affix, tier, onchange) {
+    var box = h('span', { cls: 'affix-line' });
+    Object.keys(tier.vars).forEach(function (name) {
+      var range = tier.vars[name];
+      var div = (affix.div && affix.div[name]) || 1;
+      var fixed = range[0] === range[1];
+      var input = h('input', { type: 'number', cls: 'var', step: div > 1 ? 1 / div : 1, inputmode: 'decimal', placeholder: rangeText(range, div),
+        value: entry.vals[name] !== undefined ? entry.vals[name] : '', 'aria-label': name });
+      function mark() {
+        var v = input.value === '' ? null : Math.round(Number(input.value) * div);
+        input.className = 'var' + (v !== null && (v < Math.min(range[0], range[1]) || v > Math.max(range[0], range[1])) ? ' out' : '');
+      }
+      input.addEventListener('input', function () {
+        if (input.value === '') { delete entry.vals[name]; } else { entry.vals[name] = input.value; }
+        mark();
+        onchange();
+      });
+      mark();
+      box.appendChild(h('label', null, name + (fixed ? '' : '（' + rangeText(range, div) + '）'), input));
+    });
+    return box;
+  }
+  function affixBox(item) {
+    var box = h('div', { cls: 'affix-box' });
+    var info = affixInfo(item);
+    if (!info) {
+      box.appendChild(h('span', { cls: 'hint', text: '讀取詞綴…' }));
+      var key = affixKey(item);
+      api('GET', 'admin/api/affixes?' + (item.kind === 'unique' ? 'unique=' : 'base=') + encodeURIComponent(item.ref)).then(function (json) {
+        affixCache[key] = json;
+        renderItems();
+      }).catch(fail);
+      return box;
+    }
+    if (!item.affixList) { item.affixList = []; }
+    if (item.kind === 'unique') {
+      box.appendChild(h('span', { cls: 'hint', text: '填了的數值照填的發，空的照常隨機（灰字是範圍；可以超出範圍，紅框提醒）' }));
+      info.affixes.forEach(function (affix) {
+        var entry = null;
+        item.affixList.forEach(function (e) { if (e.id === affix.id) { entry = e; } });
+        if (!entry) { entry = { id: affix.id, tier: null, vals: {} }; item.affixList.push(entry); }
+        var line = h('div', { cls: 'affix-line' }, h('span', { cls: 'affix-text', text: affix.text }));
+        line.appendChild(varInputs(entry, affix, affix.tiers[0], renderSummary));
+        box.appendChild(line);
+      });
+      return box;
+    }
+    box.appendChild(h('span', { cls: 'hint', text: '照填的詞綴做（不再隨機擲別的）；稀有度放不下會自動往上升。數值空的在那一階的範圍裡隨機，可以超出範圍（紅框提醒）'
+      + (info.jewel ? '。珠寶前綴、後綴各最多 2 條' : '。稀有最多 3 前綴 3 後綴') }));
+    var choices = info.affixes.map(function (a) { return { id: a.id, text: (a.type === 'prefix' ? '前綴　' : '後綴　') + a.text, slot: a.type === 'prefix' ? '前綴' : '後綴' }; });
+    item.affixList.forEach(function (entry, index) {
+      var affix = findAffix(info, entry.id);
+      if (!affix) { return; }
+      var line = h('div', { cls: 'affix-line' });
+      line.appendChild(h('label', null, '詞綴', select('affix', '詞綴', choices, entry.id, function (v) {
+        entry.id = v; entry.tier = null; entry.vals = {}; renderItems();
+      }, 'slot')));
+      if (entry.tier === null || entry.tier === undefined) { entry.tier = affix.tiers[0].tier; }
+      line.appendChild(h('label', null, '階級', select('', '階級', affix.tiers.map(function (t) { return { id: String(t.tier), text: 'T' + t.rank + '（物品等級 ' + t.ilvl + '+）' }; }),
+        String(entry.tier), function (v) { entry.tier = Number(v); entry.vals = {}; renderItems(); })));
+      line.appendChild(varInputs(entry, affix, tierOf(affix, entry.tier), renderSummary));
+      line.appendChild(h('button', { type: 'button', cls: 'small', text: '拿掉', onclick: function () { item.affixList.splice(index, 1); renderItems(); } }));
+      box.appendChild(line);
+    });
+    if (item.affixList.length < 12 && info.affixes.length) {
+      box.appendChild(h('div', null, h('button', { type: 'button', cls: 'small', text: '＋ 加一條詞綴', onclick: function () {
+        var used = {};
+        item.affixList.forEach(function (e) { var a = findAffix(info, e.id); if (a) { used[a.group] = true; } });
+        var next = info.affixes.filter(function (a) { return !used[a.group]; })[0] || info.affixes[0];
+        item.affixList.push({ id: next.id, tier: next.tiers[0].tier, vals: {} });
+        renderItems();
+      } })));
+    }
+    if (!info.affixes.length) { box.appendChild(h('span', { cls: 'hint', text: '這個基底沒有能出的詞綴' })); }
+    return box;
+  }
+  /** 送給伺服器的寫法：代號[@階級][:變數=值,…]，分號隔開（值換成物品上存的整數）。 */
+  function affixSpec(item) {
+    var info = affixInfo(item);
+    if (!item.useAffix || !info || !item.affixList) { return null; }
+    var parts = [];
+    item.affixList.forEach(function (entry) {
+      var affix = findAffix(info, entry.id);
+      if (!affix) { return; }
+      var vars = Object.keys(entry.vals).filter(function (name) { return entry.vals[name] !== '' && isFinite(Number(entry.vals[name])); }).map(function (name) {
+        var div = (affix.div && affix.div[name]) || 1;
+        return name + '=' + Math.round(Number(entry.vals[name]) * div);
+      });
+      if (item.kind === 'unique' && !vars.length) { return; }
+      parts.push(entry.id + (item.kind === 'item' && entry.tier !== null && entry.tier !== undefined ? '@' + entry.tier : '') + (vars.length ? ':' + vars.join(',') : ''));
+    });
+    return parts.length ? parts.join(';') : null;
+  }
+  function affixSummary(item) {
+    var info = affixInfo(item);
+    if (!item.useAffix || !info || !item.affixList) { return ''; }
+    var texts = [];
+    item.affixList.forEach(function (entry) {
+      var affix = findAffix(info, entry.id);
+      if (!affix || (item.kind === 'unique' && !Object.keys(entry.vals).length)) { return; }
+      var tier = item.kind === 'item' ? tierOf(affix, entry.tier) : affix.tiers[0];
+      var text = affix.text.replace(/\{([A-Za-z0-9_]+)(?:\/\d+)?\}/g, function (m, name) { return entry.vals[name] !== undefined ? entry.vals[name] : '?'; });
+      texts.push((item.kind === 'item' ? 'T' + tier.rank + ' ' : '') + text);
+    });
+    return texts.length ? '［' + texts.join('、') + '］' : '';
+  }
+  function specOf(item) {
+    var spec = { kind: item.kind, ref: item.ref || null, rarity: null, level: Number(item.level) || 0, amount: Number(item.amount) || 0 };
+    if (item.kind === 'item' || item.kind === 'map') { spec.rarity = item.rarity; }
+    if (item.kind === 'gem') {
+      spec.ref = item.gemType === 'skill' ? 'skill:' + item.ref : item.gemType === 'support' ? 'support:' + item.ref : item.gemType;
+      if (item.gemType === 'support') { spec.level = 0; }
+    }
+    if (item.kind === 'gold' || item.kind === 'merits' || item.kind === 'refund' || item.kind === 'take_gold') { spec.ref = null; spec.level = 0; }
+    if (item.kind === 'take_item') { spec.ref = (item.ref || '').trim(); }
+    if (item.kind === 'item' || item.kind === 'unique') { spec.affixes = affixSpec(item); }
+    return spec;
+  }
+  function itemText(item) {
+    var c = catalog();
+    function nameOf(list, id) { for (var i = 0; i < list.length; i++) { if (list[i].id === id) { return list[i].name; } } return id; }
+    function rarityName(id) { return nameOf(c.rarities, id); }
+    var n = Number(item.amount) || 0;
+    var count = n > 1 ? ' ×' + num(n) : '';
+    switch (item.kind) {
+      case 'currency': return nameOf(c.currencies, item.ref) + ' ×' + num(n);
+      case 'gold': return '金幣 ' + num(n);
+      case 'merits': return '功勳 ' + num(n);
+      case 'sponsor': return item.ref === 'card_days' ? '月卡 ' + num(n) + ' 天' : item.ref === 'card' ? '月卡幣 ' + num(n) : item.ref === 'fashion' ? '時裝幣 ' + num(n) : '星幣 ' + num(n) + (item.ref === 'bonus' ? '（贈送）' : '（儲值）');
+      case 'refund': return '免費退點 ×' + n;
+      case 'take_sponsor': var what = { total: '累積贊助', coins: '星幣', card: '月卡幣', fashion: '時裝幣', bought_stash: '買的倉庫頁', bought_bag: '買的背包頁', bought_listing: '買的上架格', card_days: '月卡天數' }[item.ref] || item.ref;
+        return '⛔ 收回 ' + what + ' ' + num(n);
+      case 'take_currency': return '⛔ 收回 ' + nameOf(c.currencies, item.ref) + ' ×' + num(n);
+      case 'take_gold': return '⛔ 收回 金幣 ' + num(n);
+      case 'take_item': return '⛔ 收回 物品「' + (item.ref || '') + '」最多 ' + num(n) + ' 件';
+      case 'item': return rarityName(item.rarity) + ' ' + nameOf(c.bases, item.ref) + (item.level ? '（物品等級 ' + item.level + '）' : '') + count + affixSummary(item);
+      case 'unique': return '傳奇 ' + nameOf(c.uniques, item.ref) + (item.level ? '（物品等級 ' + item.level + '）' : '') + count + affixSummary(item);
+      case 'flask': return nameOf(c.flasks, item.ref) + count;
+      case 'map': return '地圖 ' + nameOf(c.maps, item.ref) + ' T' + item.level + '（' + rarityName(item.rarity) + '）' + count;
+      case 'gem':
+        if (item.gemType === 'uncut_skill') { return '未切割技能寶石' + (item.level ? ' Lv.' + item.level : '') + count; }
+        if (item.gemType === 'uncut_support') { return '未切割輔助寶石 第 ' + item.level + ' 階' + count; }
+        if (item.gemType === 'skill') { return '技能寶石 ' + nameOf(c.skills, item.ref) + (item.level ? ' Lv.' + item.level : '') + count; }
+        return '輔助寶石 ' + nameOf(c.supports, item.ref) + count;
+      default: return item.kind;
+    }
+  }
+  function targetText() {
+    switch (mode) {
+      case 'players': return pickCount() ? '選的 ' + pickCount() + ' 個人' : '';
+      case 'names': var list = namesList(); return list.length ? list.length + ' 個名字（' + list.slice(0, 5).join('、') + (list.length > 5 ? '…' : '') + '）' : '';
+      case 'online': return state.players.length ? '線上所有人（現在 ' + state.players.length + ' 人）' : '';
+      case 'all': return '所有帳號（' + num(state.accounts) + ' 個）';
+      default: return '';
+    }
+  }
+  function renderSummary() {
+    if (!state) { return; }
+    var who = targetText();
+    var p = clear($('summary'));
+    if (failedSend) {
+      // 上一次沒有確認成功：先處理那一次（重送或放棄），按鈕一定能按
+      p.appendChild(h('strong', { text: '上一次的發放沒有確認成功' }));
+      p.appendChild(document.createTextNode('：按「發放」選擇重送（不會重複發）或放棄。'));
+      $('send').disabled = false;
+      return;
+    }
+    if (!who) { p.appendChild(document.createTextNode(mode === 'online' ? '現在沒有人在線。' : '還沒選要發給誰。')); $('send').disabled = true; return; }
+    p.appendChild(document.createTextNode('發給 '));
+    p.appendChild(h('strong', { text: who }));
+    p.appendChild(document.createTextNode('：' + items.map(itemText).join('、')));
+    $('send').disabled = items.length === 0;
+  }
+  /** 一個隨機的 UUID（http 的網頁沒有 crypto.randomUUID，用 getRandomValues 自己組）。 */
+  function uuid() {
+    var b = new Uint8Array(16);
+    crypto.getRandomValues(b);
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    var hex = Array.prototype.map.call(b, function (x) { return (x < 16 ? '0' : '') + x.toString(16); }).join('');
+    return hex.substring(0, 8) + '-' + hex.substring(8, 12) + '-' + hex.substring(12, 16) + '-' + hex.substring(16, 20) + '-' + hex.substring(20);
+  }
+  /**
+   * 沒有確認成功的那一次發放（伺服器逾時、斷線）：原封不動留著（含代號），重送時伺服器認得出來，不會發兩次。
+   * 存在這個分頁的 sessionStorage：重新整理頁面也還在。
+   */
+  var failedSend = null;
+  try { failedSend = JSON.parse(sessionStorage.getItem('ec-admin-failed-send') || 'null'); } catch (e) { failedSend = null; }
+  function rememberFailed(value) {
+    failedSend = value;
+    try {
+      if (value) { sessionStorage.setItem('ec-admin-failed-send', JSON.stringify(value)); } else { sessionStorage.removeItem('ec-admin-failed-send'); }
+    } catch (e) { /* 存不了就只留在記憶體 */ }
+  }
+  function post(payload, lines, resend) {
+    $('send').disabled = true;
+    return api('POST', 'admin/api/deliver', payload).then(function (json) {
+      rememberFailed(null);
+      toast((json.repeated ? '這一批剛才已經發出去了（沒有重複發）：' : '已發放給 ') + json.accounts + ' 個帳號'
+        + (json.online ? '（其中 ' + json.online + ' 個在線，馬上收到）' : '（離線的下次登入收到）') + '　批次 ' + json.batch.substring(0, 8));
+      $('note').value = '';
+    }).catch(function (error) {
+      // 第一次送：伺服器沒有回應（逾時、斷線、出錯）可能已經發出去了，留著原本的請求；其他錯誤（資料不對、沒登入）什麼都沒發。
+      // 重送：不管什麼錯誤都留著（只有成功或按「放棄」才拿掉），因為第一次那一下可能已經寫進去了
+      if (resend || !error.status || error.status >= 500) {
+        rememberFailed({ payload: payload, lines: lines });
+      } else {
+        rememberFailed(null);
+      }
+      fail(error);
+    }).then(function () { $('send').disabled = false; renderSummary(); });
+  }
+  function send() {
+    if (failedSend) {
+      confirmBox('上一次的發放沒有確認成功', ['伺服器沒有回應，上一次的發放可能已經發出去了：'].concat(failedSend.lines).concat([
+        '「重送上一次」用同一個請求再送一次：已經發出去的話不會重複發。',
+        '「取消」放棄上一次（先到「發放紀錄」確認有沒有發出去），之後再按「發放」就是新的一次。'
+      ]), '重送上一次').then(function (ok) {
+        if (ok) { post(failedSend.payload, failedSend.lines, true); } else { rememberFailed(null); renderSummary(); }
+      });
+      return;
+    }
+    var who = targetText();
+    if (!who) { toast('還沒選要發給誰', true); return; }
+    var target = { mode: mode };
+    if (mode === 'players') { target.uuids = Object.keys(picked); }
+    if (mode === 'names') { target.names = namesList(); }
+    var specs = items.map(specOf);
+    var lines = ['發給 ' + who + '：', items.map(itemText)];
+    if ($('note').value.trim()) { lines.push('備註：' + $('note').value.trim()); }
+    if (mode === 'all') { lines.push('所有帳號都會收到一份，發了之後只能在「發放紀錄」取消還沒領的。'); }
+    confirmBox('確定發放？', lines, '發放').then(function (ok) {
+      if (!ok) { return; }
+      post({ target: target, items: specs, note: $('note').value.trim(), requestId: uuid() }, lines, false);
+    });
+  }
+
+  // ---- 發放紀錄 ----
+  function loadRecords() {
+    var status = $('record-status').value;
+    var q = recordBatch || $('record-q').value.trim();
+    $('batch-bar').hidden = !recordBatch;
+    $('batch-text').textContent = recordBatch ? '只看批次 ' + recordBatch.substring(0, 8) + '　' : '';
+    return api('GET', 'admin/api/deliveries?status=' + encodeURIComponent(status) + '&q=' + encodeURIComponent(q)).then(function (json) {
+      var body = clear($('record-table').querySelector('tbody'));
+      json.rows.forEach(function (row) {
+        var statusText = { pending: row.amount < row.original ? '領了一部分' : '還沒領', claimed: '領完了', cancelled: '取消了' }[row.status];
+        var detail = row.status === 'claimed' ? time(row.claimedAt) + ' ' + (row.claimedBy || '') : row.status === 'cancelled' ? time(row.cancelledAt) + ' ' + (row.cancelledBy || '') : '';
+        var actions = h('td', { cls: 'actions' });
+        if (row.status === 'pending') {
+          actions.appendChild(h('button', { type: 'button', cls: 'small danger', text: '取消', onclick: function () { cancelIds([row.id], row.player + ' 的 ' + row.label); } }));
+        }
+        actions.appendChild(h('button', { type: 'button', cls: 'link', text: '同一批', title: '只看這一批', onclick: function () {
+          recordBatch = row.batch; loadRecords();
+        } }));
+        body.appendChild(h('tr', null,
+          h('td', { cls: 'time', text: time(row.at) }),
+          h('td', { text: row.player }),
+          h('td', { text: row.label }),
+          h('td', { cls: 'num', text: row.status === 'pending' ? num(row.amount) + ' / ' + num(row.original) : row.status === 'claimed' ? '0' : num(row.amount) }),
+          h('td', { text: row.note || '' }),
+          h('td', { text: row.by }),
+          h('td', null, h('span', { cls: 'status ' + row.status, text: statusText }), detail ? h('div', { cls: 'muted', text: detail }) : null),
+          actions));
+      });
+      $('record-empty').hidden = json.rows.length > 0;
+    }).catch(fail);
+  }
+  function cancelIds(ids, what) {
+    confirmBox('取消發放？', ['取消 ' + what + '（還沒領的部分）。已經領走的不會收回。'], '取消發放').then(function (ok) {
+      if (!ok) { return; }
+      api('POST', 'admin/api/cancel', { ids: ids }).then(cancelled).catch(fail);
+    });
+  }
+  function cancelled(json) {
+    var parts = ['取消了 ' + json.cancelled + ' 筆'];
+    if (json.busy) { parts.push(json.busy + ' 筆正在發給玩家，不能取消'); }
+    if (json.skipped) { parts.push(json.skipped + ' 筆已經領完'); }
+    toast(parts.join('，'), json.cancelled === 0);
+    loadRecords();
+  }
+
+  // ---- 設定 ----
+  function settingControl(s) {
+    var control = h('div', { cls: 'setting-control' });
+    var input;
+    if (s.kind === 'BOOLEAN') {
+      input = h('input', { type: 'checkbox', role: 'switch', 'aria-label': s.label });
+      input.checked = s.value === true;
+      var sw = h('label', { cls: 'switch' }, input, h('span', { cls: 'track' }), h('span', { cls: 'unit', text: input.checked ? '開' : '關' }));
+      input.addEventListener('change', function () {
+        sw.lastChild.textContent = input.checked ? '開' : '關';
+        applySetting(s, input.checked);
+      });
+      control.appendChild(sw);
+    } else if (s.kind === 'CHOICE') {
+      input = select('', s.label, (s.choices || []).map(function (c) { return { id: c.id, text: c.name }; }), s.value, function () {});
+      control.appendChild(input);
+      control.appendChild(h('button', { type: 'button', cls: 'small primary', text: '套用', onclick: function () { applySetting(s, input.value); } }));
+    } else {
+      input = h('input', { type: 'number', min: s.min, max: s.max, step: s.step || 'any', value: s.value, 'aria-label': s.label, inputmode: 'decimal' });
+      control.appendChild(input);
+      if (s.unit) { control.appendChild(h('span', { cls: 'unit', text: s.unit })); }
+      control.appendChild(h('button', { type: 'button', cls: 'small primary', text: '套用', onclick: function () {
+        if (input.value === '') { toast(s.label + '：要填數字', true); return; }
+        applySetting(s, Number(input.value));
+      } }));
+      input.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter') { return; }
+        if (input.value === '' || !isFinite(Number(input.value))) { toast(s.label + '：要填數字', true); return; }
+        applySetting(s, Number(input.value));
+      });
+    }
+    if (s.override !== null && s.override !== undefined) {
+      control.appendChild(h('button', { type: 'button', cls: 'small', text: '恢復', title: '回到資料檔裡寫的值', onclick: function () { resetSetting(s); } }));
+    }
+    return control;
+  }
+  function display(s, value) {
+    if (value === null || value === undefined) { return '沒寫'; }
+    if (s.kind === 'BOOLEAN') { return value ? '開' : '關'; }
+    if (s.kind === 'CHOICE') {
+      var found = (s.choices || []).filter(function (c) { return c.id === value; });
+      return found.length ? found[0].name : value === '' ? '照月份輪替' : value;
+    }
+    return num(value) + (s.unit ? ' ' + s.unit : '');
+  }
+  function settingRow(s) {
+    var label = h('div', { cls: 'setting-label' }, s.label);
+    if (s.override !== null && s.override !== undefined) { label.appendChild(h('span', { cls: 'badge', text: '網頁改過' })); }
+    var file = '資料檔（' + s.file + ' 的 ' + s.key + '）：' + display(s, s.fileValue === null ? s['default'] : s.fileValue)
+      + (s.fileValue === null ? '（沒寫，程式預設）' : '');
+    return h('div', { cls: 'setting', 'data-setting': s.id },
+      h('div', { cls: 'setting-text' }, label, h('div', { cls: 'setting-help', text: s.help }), h('div', { cls: 'setting-file', text: file })),
+      settingControl(s));
+  }
+  function groupCard(group, title) {
+    var card = h('div', { cls: 'card' }, h('h2', { text: title }));
+    state.settings.filter(function (s) { return s.group === group; }).forEach(function (s) { card.appendChild(settingRow(s)); });
+    return card;
+  }
+  function renderSettings() {
+    var box = clear($('settings'));
+    box.appendChild(groupCard('BONUS', '全服加成'));
+    var event = groupCard('EVENT', '活動與公告');
+    event.appendChild(broadcastBlock());
+    box.appendChild(event);
+    box.appendChild(groupCard('ECONOMY', '經濟與掉率'));
+    var server = groupCard('SERVER', '伺服器開關');
+    server.insertBefore(maintenanceBlock(), server.children[1] || null);
+    server.appendChild(restartBlock());
+    box.appendChild(server);
+  }
+  function applySetting(s, value) {
+    api('POST', 'admin/api/setting', { id: s.id, value: value }).then(function (json) {
+      toast(s.label + '：' + json.change + (json.warning ? '。' + json.warning : ''));
+      return load(true, 'force');
+    }).catch(function (error) { fail(error); load(true, 'force'); });
+  }
+  function resetSetting(s) {
+    api('POST', 'admin/api/setting', { id: s.id, reset: true }).then(function (json) {
+      toast(s.label + '：' + json.change);
+      return load(true, 'force');
+    }).catch(fail);
+  }
+  function broadcastBlock() {
+    var text = h('input', { type: 'text', maxlength: 200, placeholder: '例如：今晚 10 點維修 30 分鐘', 'aria-label': '公告內容' });
+    var chat = h('input', { type: 'checkbox' });
+    chat.checked = true;
+    var title = h('input', { type: 'checkbox' });
+    var button = h('button', { type: 'button', cls: 'primary small', text: '發公告', onclick: function () {
+      var message = text.value.trim();
+      if (!message) { toast('公告不能是空的', true); return; }
+      if (!chat.checked && !title.checked) { toast('聊天欄、畫面中間至少選一個', true); return; }
+      confirmBox('發全服公告？', ['給現在在線的 ' + state.players.length + ' 個人（' + (chat.checked && title.checked ? '聊天欄＋畫面中間' : chat.checked ? '聊天欄' : '畫面中間') + '）：', message], '發公告')
+        .then(function (ok) {
+          if (!ok) { return; }
+          api('POST', 'admin/api/broadcast', { message: message, chat: chat.checked, title: title.checked }).then(function (json) {
+            toast('公告送出了（' + json.sent + ' 人）');
+            text.value = '';
+          }).catch(fail);
+        });
+    } });
+    return h('div', { cls: 'sub-block' },
+      h('h3', { text: '全服公告' }),
+      h('p', { cls: 'note', text: '只給現在在線的人。畫面中間：16 個字以內直接當大標題，超過的話大標題寫「公告」、內容放在下面一行。' }),
+      h('div', { cls: 'row' }, text, h('label', { cls: 'check' }, chat, '聊天欄'), h('label', { cls: 'check' }, title, '畫面中間'), button));
+  }
+  function maintenanceBlock() {
+    var m = state.server.maintenance;
+    var toggle = h('input', { type: 'checkbox', role: 'switch', 'aria-label': '維護模式' });
+    toggle.checked = m.enabled;
+    var message = h('input', { type: 'text', maxlength: 200, value: m.message, 'aria-label': '給玩家看的說明', placeholder: '伺服器維護中，請稍後再來' });
+    var kick = h('input', { type: 'checkbox' });
+    kick.checked = true;
+    var kickLabel = h('label', { cls: 'check' }, kick, '同時請線上的一般玩家離開（會先存檔）');
+    var save = h('button', { type: 'button', cls: 'primary small', text: '套用', onclick: function () {
+      var enabled = toggle.checked;
+      var lines = enabled ? ['開啟維護模式：沒有管理權限的人進不來（伺服器列表顯示維護中）。', '說明：' + (message.value.trim() || '伺服器維護中，請稍後再來')]
+        : ['關閉維護模式：大家都可以進來了。'];
+      if (enabled && kick.checked) { lines.push('線上的一般玩家會被請出去（角色照常存檔）。'); }
+      confirmBox(enabled ? '開啟維護模式？' : '關閉維護模式？', lines, enabled ? '開啟' : '關閉').then(function (ok) {
+        if (!ok) { toggle.checked = m.enabled; return; }
+        api('POST', 'admin/api/maintenance', { enabled: enabled, message: message.value.trim(), kick: enabled && kick.checked }).then(function (json) {
+          toast((json.enabled ? '維護模式開了' : '維護模式關了') + (json.kicked ? '，請出 ' + json.kicked + ' 個玩家' : ''));
+          load(true, 'force');
+        }).catch(fail);
+      });
+    } });
+    var sw = h('label', { cls: 'switch' }, toggle, h('span', { cls: 'track' }), h('span', { cls: 'unit', text: m.enabled ? '開' : '關' }));
+    toggle.addEventListener('change', function () { sw.lastChild.textContent = toggle.checked ? '開' : '關'; kickLabel.hidden = !toggle.checked || m.enabled; });
+    kickLabel.hidden = true;
+    var label = h('div', { cls: 'setting-label' }, '維護模式');
+    if (m.enabled) { label.appendChild(h('span', { cls: 'badge', text: '開著' })); }
+    return h('div', { cls: 'setting' },
+      h('div', { cls: 'setting-text' }, label,
+        h('div', { cls: 'setting-help', text: '開著的時候只有管理員（exilecore.admin）進得來，其他人登入時會看到下面的說明。' }),
+        h('label', { cls: 'field' }, '給玩家看的說明', message), kickLabel),
+      h('div', { cls: 'setting-control' }, sw, save));
+  }
+
+  function restartBlock() {
+    var r = state.server.restart;
+    var minutes = h('input', { type: 'number', min: 0, max: 1440, step: 1, value: 10, 'aria-label': '幾分鐘後', inputmode: 'numeric' });
+    var reason = h('input', { type: 'text', maxlength: 100, placeholder: '原因（可以不寫，例如：更新）', 'aria-label': '原因' });
+    var go = h('button', { type: 'button', cls: 'primary small', text: '排定', onclick: function () {
+      var m = parseInt(minutes.value, 10);
+      if (isNaN(m) || m < 0 || m > 1440) { toast('分鐘要在 0–1440 之間', true); return; }
+      confirmBox('排定重新啟動？', [m === 0 ? '馬上重新啟動（1 秒後存檔關服）。' : m + ' 分鐘後重新啟動，全服會倒數提醒（最後 5 分鐘畫面上方有倒數條）。',
+        '用 start-all.bat 開的伺服器會自動重新建置、開回來；線上的人在等待室等，開好自動送回來。'], '排定').then(function (ok) {
+        if (!ok) { return; }
+        api('POST', 'admin/api/restart', { action: 'schedule', minutes: m, reason: reason.value.trim() }).then(function (json) {
+          toast(json.change);
+          load(true, 'force');
+        }).catch(fail);
+      });
+    } });
+    var status = r.at
+      ? h('div', { cls: 'setting-help' }, '已排定：' + time(r.at) + ' 重新啟動' + (r.reason ? '（' + r.reason + '）' : '') + '・' + r.by + ' 排的　',
+          h('button', { type: 'button', cls: 'small', text: '取消', onclick: function () {
+            api('POST', 'admin/api/restart', { action: 'cancel' }).then(function (json) { toast(json.change); load(true, 'force'); }).catch(fail);
+          } }))
+      : h('div', { cls: 'setting-help', text: '現在沒有排重新啟動。' });
+    var daily = h('input', { type: 'text', value: r.daily.join(', '), placeholder: '例如 05:30, 17:30（空的 = 不定時重啟）', 'aria-label': '每天定時重新啟動的時間' });
+    var saveDaily = h('button', { type: 'button', cls: 'small', text: '儲存', onclick: function () {
+      var times = daily.value.split(/[,，、\s]+/).map(function (t) { return t.trim(); }).filter(function (t) { return t; });
+      api('POST', 'admin/api/restart', { action: 'daily', times: times }).then(function (json) { toast(json.change); load(true, 'force'); }).catch(fail);
+    } });
+    return h('div', { cls: 'sub-block' },
+      h('h3', { text: '重新啟動' }),
+      h('p', { cls: 'note', text: '時間到存檔關服。要用 start-all.bat 開伺服器才會自動開回來（直接用 run-server.bat 開的只會關掉）。也可以在遊戲裡打 /ec restart 分鐘、/ec restart cancel。' }),
+      status,
+      h('div', { cls: 'row' }, minutes, h('span', { text: '分鐘後' }), reason, go),
+      h('h3', { text: '每天定時重新啟動' }),
+      h('p', { cls: 'note', text: '每天的這些時間自動重啟（伺服器的時間、24 小時制，最多 6 個，用逗號分開）；時間到之前 ' + r.warning + ' 分鐘開始全服倒數。' + (r.daily.length ? '' : '現在沒有設定。') }),
+      h('div', { cls: 'row' }, daily, saveDaily));
+  }
+
+  // ---- 線上玩家、操作紀錄 ----
+  function renderPlayers() {
+    var body = clear($('player-table').querySelector('tbody'));
+    state.players.forEach(function (p) {
+      var name = h('td', null, p.name, p.admin ? h('span', { cls: 'badge admin', text: '管理員' }) : null);
+      body.appendChild(h('tr', null, name, h('td', { text: p.character || '還沒選角色' }), h('td', { text: p['class'] || '' }),
+        h('td', { cls: 'num', text: p.level ? 'Lv.' + p.level : '' }), h('td', { text: p.where }),
+        h('td', null, h('button', { type: 'button', cls: 'small', text: '發東西給他', onclick: function () {
+          picked = {};
+          picked[p.uuid] = p.name;
+          setMode('players');
+          renderPick();
+          showTab('give');
+        } }))));
+    });
+    $('player-empty').hidden = state.players.length > 0;
+  }
+  function loadLog() {
+    return api('GET', 'admin/api/log').then(function (json) {
+      var body = clear($('log-table').querySelector('tbody'));
+      json.rows.forEach(function (row) {
+        body.appendChild(h('tr', null, h('td', { cls: 'time', text: time(row.at) }), h('td', { text: row.admin }),
+          h('td', { text: row.action }), h('td', { text: row.detail })));
+      });
+      $('log-empty').hidden = json.rows.length > 0;
+    }).catch(fail);
+  }
+
+  // ---- 分頁 ----
+  function showTab(tab) {
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
+      b.setAttribute('aria-selected', b.getAttribute('data-tab') === tab ? 'true' : 'false');
+    });
+    ['give', 'records', 'settings', 'players', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    if (tab === 'records') { loadRecords(); }
+    if (tab === 'log') { loadLog(); }
+    if (tab === 'players' || tab === 'settings') { load(true, 'safe'); }
+  }
+
+  // ---- 事件 ----
+  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
+    b.addEventListener('click', function () { showTab(b.getAttribute('data-tab')); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#target-mode button'), function (b) {
+    b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); });
+  });
+  $('pick-all').addEventListener('click', function () { state.players.forEach(function (p) { picked[p.uuid] = p.name; }); renderPick(); });
+  $('pick-none').addEventListener('click', function () { picked = {}; renderPick(); });
+  $('search').addEventListener('input', function () { clearTimeout(searchTimer); searchTimer = setTimeout(search, 300); });
+  $('names').addEventListener('input', renderSummary);
+  $('add-item').addEventListener('click', function () { addItem(items.length ? items[items.length - 1].kind : 'currency'); });
+  $('send').addEventListener('click', send);
+  $('record-status').addEventListener('change', loadRecords);
+  var recordTimer = null;
+  $('record-q').addEventListener('input', function () { recordBatch = ''; clearTimeout(recordTimer); recordTimer = setTimeout(loadRecords, 300); });
+  $('record-refresh').addEventListener('click', loadRecords);
+  $('batch-clear').addEventListener('click', function () { recordBatch = ''; loadRecords(); });
+  $('batch-cancel').addEventListener('click', function () {
+    var batch = recordBatch;
+    confirmBox('取消這一批？', ['批次 ' + batch.substring(0, 8) + ' 裡還沒領的全部取消。已經領走的不會收回。'], '取消這一批').then(function (ok) {
+      if (!ok) { return; }
+      api('POST', 'admin/api/cancel', { batch: batch }).then(cancelled).catch(fail);
+    });
+  });
+  $('log-refresh').addEventListener('click', loadLog);
+  $('refresh').addEventListener('click', function () { load(false, 'safe'); var tab = document.querySelector('.tabs button[aria-selected="true"]').getAttribute('data-tab'); if (tab === 'records') { loadRecords(); } if (tab === 'log') { loadLog(); } });
+  $('logout').addEventListener('click', function () {
+    rememberFailed(null); // 登出：沒確認的發放也不留給下一個在這個分頁登入的人
+    api('POST', 'admin/logout', {}).catch(function () {}).then(function () { showLogin('已登出。'); });
+  });
+  setInterval(function () { if (!$('app').hidden && document.visibilityState === 'visible') { load(true); } }, 30000);
+  load();
+})();
+</script>
+</body>
+</html>
