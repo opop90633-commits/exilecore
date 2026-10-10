@@ -18,7 +18,10 @@ import tw.exilecore.ExileCore;
 import tw.exilecore.ailment.AilmentType;
 import tw.exilecore.character.PlayerState;
 import tw.exilecore.core.config.YamlNode;
+import tw.exilecore.item.ItemBase;
+import tw.exilecore.item.ItemData;
 import tw.exilecore.item.ItemRenderer;
+import tw.exilecore.item.Rarity;
 import tw.exilecore.monster.MonsterRarity;
 import tw.exilecore.stats.DamageType;
 import tw.exilecore.stats.HitEvent;
@@ -159,43 +162,146 @@ public final class CharmService implements Listener {
     }
 
     ItemStack create(final CharmBase base, final int charges) {
-        final ItemStack stack = ItemStack.of(base.material());
-        render(stack, base, charges);
+        return create(base, charges, Rarity.NORMAL, base.level());
+    }
+
+    /** 做一顆護符（2026-10：護符是物品引擎的基底，魔法的帶一前綴一後綴的 PoE2 護符詞綴）。 */
+    ItemStack create(final CharmBase base, final int charges, final Rarity rarity, final int itemLevel) {
+        final ItemBase itemBase = plugin.items() == null ? null : plugin.items().repository().base(base.id());
+        if (itemBase == null || !itemBase.isCharm()) {
+            final ItemStack stack = ItemStack.of(base.material());
+            renderLegacy(stack, base, charges);
+            return stack;
+        }
+        final Rarity effective = rarity == Rarity.RARE || rarity == Rarity.UNIQUE ? Rarity.MAGIC : rarity;
+        final ItemData data = plugin.items().generator().generate(itemBase, effective, Math.max(base.level(), itemLevel), plugin.items().random());
+        final ItemStack stack = plugin.items().toStack(data);
+        writeCharges(stack, base, charges);
+        plugin.items().rerender(stack, data);
         return stack;
     }
 
+    /** 這顆護符的物品資料（詞綴）；舊版沒有資料的第一次碰到時補上普通的資料。沒有物品引擎回傳 null。 */
+    private ItemData itemData(final ItemStack stack, final CharmBase base) {
+        if (plugin.items() == null) {
+            return null;
+        }
+        final Optional<ItemData> data = plugin.items().read(stack);
+        if (data.isPresent()) {
+            return data.get();
+        }
+        final ItemBase itemBase = plugin.items().repository().base(base.id());
+        if (itemBase == null || !itemBase.isCharm()) {
+            return null;
+        }
+        final ItemData fresh = plugin.items().generator().generate(itemBase, Rarity.NORMAL, base.level(), plugin.items().random());
+        plugin.items().update(stack, fresh);
+        return fresh;
+    }
+
+    /** 這顆護符詞綴算出來的數值（沒有詞綴、沒有物品引擎都是 {@link FlaskMods#NONE}）。 */
+    FlaskMods mods(final ItemStack stack, final CharmBase base) {
+        final ItemData data = itemData(stack, base);
+        return data == null ? FlaskMods.NONE : FlaskMods.of(plugin.items().repository(), data);
+    }
+
+    private int maxCharges(final ItemStack stack, final CharmBase base) {
+        return mods(stack, base).maxCharges(base.charges());
+    }
+
+    private void writeCharges(final ItemStack stack, final CharmBase base, final int charges) {
+        stack.editMeta(meta -> meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, base.id() + ";" + Math.max(0, charges)));
+    }
+
     private void render(final ItemStack stack, final CharmBase base, final int charges) {
+        final ItemData data = itemData(stack, base);
+        if (data == null) {
+            renderLegacy(stack, base, charges);
+            return;
+        }
+        final int clamped = Math.max(0, Math.min(FlaskMods.of(plugin.items().repository(), data).maxCharges(base.charges()), charges));
+        writeCharges(stack, base, clamped);
+        plugin.items().rerender(stack, data);
+    }
+
+    /** 物品引擎畫完詞綴之後的補畫：護符的說明放在詞綴前面、充能條。 */
+    void decorate(final ItemStack stack, final ItemData data) {
+        final CharmBase base = bases.get(data.base());
+        if (base == null) {
+            return;
+        }
+        final FlaskMods mods = FlaskMods.of(plugin.items().repository(), data);
+        final int max = mods.maxCharges(base.charges());
+        final int charges = Math.max(0, Math.min(max, read(stack).map(CharmData::charges).orElse(max)));
+        stack.editMeta(meta -> {
+            final List<Component> lore = new ArrayList<>();
+            for (final String line : lore(base, mods, charges)) {
+                lore.add(ItemRenderer.line(line));
+            }
+            final List<Component> affixLines = meta.lore();
+            if (affixLines != null) {
+                lore.addAll(affixLines);
+            }
+            meta.lore(lore);
+            meta.setMaxStackSize(1);
+            meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, base.id() + ";" + charges);
+        });
+        chargeBar(stack, max, charges);
+    }
+
+    private static void chargeBar(final ItemStack stack, final int max, final int charges) {
+        stack.setData(DataComponentTypes.MAX_DAMAGE, Math.max(1, max));
+        stack.setData(DataComponentTypes.DAMAGE, Math.max(0, Math.min(max, max - charges)));
+        // 原版的耐久度、屬性那幾行（英文）不要顯示
+        stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
+                .addHiddenComponents(DataComponentTypes.DAMAGE, DataComponentTypes.MAX_DAMAGE, DataComponentTypes.ATTRIBUTE_MODIFIERS,
+                        DataComponentTypes.UNBREAKABLE).build());
+    }
+
+    /** 沒有物品引擎（測試、模組沒啟用）時的畫法。 */
+    private void renderLegacy(final ItemStack stack, final CharmBase base, final int charges) {
         final int clamped = Math.max(0, Math.min(base.charges(), charges));
         stack.editMeta(meta -> {
             meta.displayName(ItemRenderer.line("<#c9a0ff>" + ItemRenderer.escape(base.name())));
             final List<Component> lore = new ArrayList<>();
-            for (final String line : lore(base, clamped)) {
+            for (final String line : lore(base, FlaskMods.NONE, clamped)) {
                 lore.add(ItemRenderer.line(line));
             }
             meta.lore(lore);
             meta.setMaxStackSize(1);
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, base.id() + ";" + clamped);
         });
-        stack.setData(DataComponentTypes.MAX_DAMAGE, base.charges());
-        stack.setData(DataComponentTypes.DAMAGE, base.charges() - clamped);
-        // 原版的耐久度、屬性那幾行（英文）不要顯示
-        stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
-                .addHiddenComponents(DataComponentTypes.DAMAGE, DataComponentTypes.MAX_DAMAGE, DataComponentTypes.ATTRIBUTE_MODIFIERS).build());
+        chargeBar(stack, base.charges(), clamped);
     }
 
-    private List<String> lore(final CharmBase base, final int charges) {
+    private List<String> lore(final CharmBase base, final FlaskMods mods, final int charges) {
         final List<String> lines = new ArrayList<>();
         lines.add("<gray>" + triggerText(base.trigger()) + "：自動觸發" + (base.cure() ? "，解除那個異常狀態" : ""));
+        final double seconds = base.duration() * mods.duration();
+        final String number = mods.duration() != 1 ? "<#8888ff>" : "<white>";
         if (!base.effects().isEmpty()) {
-            lines.add(String.format(Locale.ROOT, "<gray>之後 <white>%s</white> 秒內：", trim(base.duration())));
+            lines.add(String.format(Locale.ROOT, "<gray>之後 %s%s</%s> 秒內：", number, trim(seconds), mods.duration() != 1 ? "#8888ff" : "white"));
             for (final String effect : tw.exilecore.skill.ModifierText.describeAll(base.effects())) {
                 lines.add("<#8fd3ff>　" + effect);
             }
         }
+        if (mods.guard() > 0) {
+            lines.add(String.format(Locale.ROOT, "<gray>觸發時獲得 <#8888ff>%d</#8888ff> 點守護（%s 秒內先替你吃掉傷害）", Math.round(mods.guard()), trim(seconds)));
+        }
+        if (mods.lifeOnUse() > 0) {
+            lines.add(String.format(Locale.ROOT, "<gray>觸發時回復 <#8888ff>%d</#8888ff> 生命", Math.round(mods.lifeOnUse())));
+        }
+        if (mods.manaOnUse() > 0) {
+            lines.add(String.format(Locale.ROOT, "<gray>觸發時回復 <#8888ff>%d</#8888ff> 魔力", Math.round(mods.manaOnUse())));
+        }
         if (!base.description().isBlank()) {
             lines.add("<gray>" + ItemRenderer.escape(base.description()));
         }
-        lines.add("<gray>充能 <white>" + charges + "</white>／" + base.charges() + "，每次用 <white>" + base.perUse() + "</white>");
+        final int max = mods.maxCharges(base.charges());
+        final int perUse = mods.perUse(base.perUse());
+        lines.add("<gray>充能 <white>" + charges + "</white>／" + (mods.maxCharges() != 1 ? "<#8888ff>" : "<white>") + max
+                + (mods.maxCharges() != 1 ? "</#8888ff>" : "</white>") + "，每次用 " + (mods.chargesUsed() != 1 ? "<#8888ff>" : "<white>") + perUse
+                + (mods.chargesUsed() != 1 ? "</#8888ff>" : "</white>"));
         lines.add("<gray>需求：等級 <white>" + base.level());
         lines.add("");
         lines.add("<gray>裝進角色面板的護符欄才會生效（不佔背包）：基本 " + baseSlots + " 格，");
@@ -399,10 +505,16 @@ public final class CharmService implements Listener {
         final int open = activeCount(player);
         final Set<String> fired = new HashSet<>();
         for (int index = 0; index < open; index++) {
-            final CharmData data = read(charmAt(state, index)).orElse(null);
+            final ItemStack charm = charmAt(state, index);
+            final CharmData data = read(charm).orElse(null);
             final CharmBase base = data == null ? null : bases.get(data.base());
-            if (base == null || !base.trigger().equals(trigger) || data.charges() < base.perUse() || base.level() > level
-                    || fired.contains(base.id())) {
+            if (base == null || !base.trigger().equals(trigger) || base.level() > level || fired.contains(base.id())) {
+                continue;
+            }
+            final FlaskMods mods = mods(charm, base);
+            final double usedGlobal = plugin.players().sheet(player).increased(tw.exilecore.stats.StatKeys.CHARM_CHARGES_USED, java.util.Set.of());
+            final int perUse = Math.max(1, (int) Math.round(mods.perUse(base.perUse()) * Math.max(0, 1 + usedGlobal)));
+            if (data.charges() < perUse) {
                 continue;
             }
             if (!base.cure() && !base.effects().isEmpty() && plugin.skills() != null && plugin.skills().buffActive(player, "charm." + base.id())) {
@@ -410,17 +522,35 @@ public final class CharmService implements Listener {
                 continue;
             }
             fired.add(base.id());
-            setCharges(state, index, base, data.charges() - base.perUse());
+            final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+            final double free = Math.max(0, Math.min(1, sheet.get(tw.exilecore.stats.StatKeys.CHARM_FREE_CHANCE) / 100.0));
+            if (free <= 0 || plugin.items().random().nextDouble() >= free) {
+                setCharges(state, index, base, data.charges() - perUse);
+            }
             if (base.cure() && plugin.ailments() != null) {
                 final AilmentType type = ailmentOf(trigger);
                 if (type != null) {
                     plugin.ailments().cure(player, type);
                 }
             }
-            if (!base.effects().isEmpty() && plugin.skills() != null) {
-                plugin.skills().buff(player, "charm." + base.id(), base.name(), (int) Math.round(base.duration() * 20), base.effects());
-            }
             final long now = plugin.getServer().getCurrentTick();
+            state.markRecent(tw.exilecore.stats.Recently.CHARM, now); // 「最近用過護符」
+            // 持續時間：護符自己的詞綴 × 全域的「護符效果持續時間」
+            final int ticks = (int) Math.round(base.duration() * mods.duration()
+                    * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.CHARM_DURATION, java.util.Set.of())) * 20);
+            if (!base.effects().isEmpty() && plugin.skills() != null) {
+                plugin.skills().buff(player, "charm." + base.id(), base.name(), ticks, base.effects());
+            }
+            // 護符詞綴：守護、回復生命／魔力
+            if (mods.guard() > 0) {
+                state.addGuard(mods.guard(), now + ticks);
+            }
+            if (mods.lifeOnUse() > 0) {
+                state.setLife(Math.min(state.maxLife(), state.life() + mods.lifeOnUse()));
+            }
+            if (mods.manaOnUse() > 0) {
+                state.setMana(Math.min(state.maxMana(), state.mana() + mods.manaOnUse()));
+            }
             state.notice("<#c9a0ff>" + ItemRenderer.escape(base.name()) + "觸發", now + 40);
             plugin.players().display(player, state);
             player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, SoundCategory.PLAYERS, 0.8f, 1.4f);
@@ -532,11 +662,48 @@ public final class CharmService implements Listener {
         }
         final PlayerState state = plugin.players().get(player);
         final int open = activeCount(player);
+        final double global = plugin.players().sheet(player).increased(tw.exilecore.stats.StatKeys.CHARM_CHARGES_GAINED, java.util.Set.of());
         for (int index = 0; index < open; index++) {
-            final CharmData data = read(charmAt(state, index)).orElse(null);
+            final ItemStack charm = charmAt(state, index);
+            final CharmData data = read(charm).orElse(null);
             final CharmBase base = data == null ? null : bases.get(data.base());
-            if (base != null && data.charges() < base.charges()) {
-                setCharges(state, index, base, Math.min(base.charges(), data.charges() + amount));
+            if (base == null) {
+                continue;
+            }
+            final FlaskMods mods = mods(charm, base);
+            final int max = mods.maxCharges(base.charges());
+            if (data.charges() < max) {
+                int gained = Math.max(1, (int) Math.round(mods.gained(amount) * Math.max(0, 1 + global)));
+                if (mods.chargeOnKill() > 0 && plugin.items().random().nextDouble() < mods.chargeOnKill()) {
+                    gained++;
+                }
+                setCharges(state, index, base, Math.min(max, data.charges() + gained));
+            }
+        }
+    }
+
+    /** 每分鐘：護符欄裡有「每分鐘獲得 x 點充能」的護符（或裝備的全域詞綴）自動充能。 */
+    void tickPerMinute() {
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            if (!eligible(player)) {
+                continue;
+            }
+            final PlayerState state = plugin.players().get(player);
+            final double global = plugin.players().sheet(player).get(tw.exilecore.stats.StatKeys.CHARM_CHARGES_PER_MINUTE);
+            final int open = activeCount(player);
+            for (int index = 0; index < open; index++) {
+                final ItemStack charm = charmAt(state, index);
+                final CharmData data = read(charm).orElse(null);
+                final CharmBase base = data == null ? null : bases.get(data.base());
+                if (base == null) {
+                    continue;
+                }
+                final FlaskMods mods = mods(charm, base);
+                final double perMinute = mods.perMinute() + global;
+                final int max = mods.maxCharges(base.charges());
+                if (perMinute > 0 && data.charges() < max) {
+                    setCharges(state, index, base, Math.min(max, data.charges() + (int) Math.round(perMinute)));
+                }
             }
         }
     }
@@ -547,18 +714,28 @@ public final class CharmService implements Listener {
         int filled = 0;
         final PlayerState state = plugin.players().get(player);
         for (int index = 0; index < PlayerState.CHARM_SLOTS; index++) {
-            final CharmData data = read(charmAt(state, index)).orElse(null);
+            final ItemStack charm = charmAt(state, index);
+            final CharmData data = read(charm).orElse(null);
             final CharmBase base = data == null ? null : bases.get(data.base());
-            if (base != null && data.charges() < base.charges()) {
-                setCharges(state, index, base, base.charges());
+            if (base == null) {
+                continue;
+            }
+            final int max = maxCharges(charm, base);
+            if (data.charges() < max) {
+                setCharges(state, index, base, max);
                 filled++;
             }
         }
         for (int slot = 0; slot < inventory.getSize(); slot++) {
-            final CharmData data = read(inventory.getItem(slot)).orElse(null);
+            final ItemStack charm = inventory.getItem(slot);
+            final CharmData data = read(charm).orElse(null);
             final CharmBase base = data == null ? null : bases.get(data.base());
-            if (base != null && data.charges() < base.charges()) {
-                setCharges(inventory, slot, base, base.charges());
+            if (base == null) {
+                continue;
+            }
+            final int max = maxCharges(charm, base);
+            if (data.charges() < max) {
+                setCharges(inventory, slot, base, max);
                 filled++;
             }
         }
@@ -582,7 +759,16 @@ public final class CharmService implements Listener {
             return null;
         }
         final CharmBase base = list.get(random.nextInt(list.size()));
-        return create(base, base.charges());
+        // 2026-10：照 PoE2，掉落的護符有機會是魔法的（帶一前綴一後綴，未鑑定）
+        final Rarity rarity = random.nextDouble() < FlaskService.DROP_MAGIC_CHANCE ? Rarity.MAGIC : Rarity.NORMAL;
+        final ItemStack stack = create(base, Integer.MAX_VALUE, rarity, monsterLevel);
+        if (rarity == Rarity.MAGIC && plugin.items() != null) {
+            plugin.items().read(stack).ifPresent(data -> {
+                data.setIdentified(false);
+                plugin.items().update(stack, data);
+            });
+        }
+        return stack;
     }
 
     /** 指令用：做一個（找不到回傳 null）。 */

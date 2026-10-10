@@ -9,24 +9,31 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.util.Vector;
 import tw.exilecore.ExileCore;
+import tw.exilecore.ailment.AilmentType;
 import tw.exilecore.character.PlayerState;
+import tw.exilecore.stats.HitEvent;
 import tw.exilecore.stats.Modifier;
 import tw.exilecore.stats.StatKeys;
+import tw.exilecore.stats.Tags;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
  * 光環（含捷）：綁在上方按鍵格就開著（2026-10；以前是放一次開、再放一次關）。開著的時候：
  * <ul>
  *   <li>保留一部分最大魔力（全部光環加總，寫進屬性表的 {@code mana.reserved}；魔力池變小、回復速度不變）；</li>
- *   <li>效果加在自己身上（慷慨輔助除外）、範圍內的隊友身上（每半秒看一次誰在範圍內）、自己的召喚物身上（{@link #effectsFor}）；</li>
- *   <li>捷：擊殺時從屍體的位置放一個隱藏技能（用捷的等級與輔助）。</li>
+ *   <li>效果加在自己身上（慷慨輔助除外）、範圍內的隊友身上（每半秒看一次誰在範圍內）、自己的召喚物身上（{@link #effectsFor}；只給自己的增益不給召喚物）；</li>
+ *   <li>捷：擊殺時從屍體的位置放一個隱藏技能（用捷的等級與輔助）；2026-10 照 PoE2 加上觸發條件
+ *       （{@link AuraSpec.KillCondition}：要用攻擊打死、屍體身上要有哪種異常、要過量擊殺）。</li>
+ *   <li>2026-10 代價與獸性：{@link AuraSpec.LifeCost}（赤怒：每秒失去生命）、{@link AuraSpec.Fury}（獸血沸：攻擊累積，滿了爆發成狂暴）。</li>
  * </ul>
  * 開著的光環記在角色進度（換角色、重新登入會自動開回來）；寶石拿出面板、保留超過 100% 就自動關掉。
  * 數值每 2 秒照目前的屬性表重算（換裝、升級寶石馬上跟上）。
@@ -84,6 +91,44 @@ final class AuraService implements Listener {
     private final Map<UUID, List<Modifier>> received = new HashMap<>();
     private final Map<UUID, String> receivedKey = new HashMap<>();
 
+    // ---- 2026-10（照 PoE2）：捷的觸發條件、開著的代價、獸性 ----
+
+    /** {@link #tick} 多久跑一次（秒）：每秒失去的生命照這個比例扣。 */
+    static final double TICK_SECONDS = 0.5;
+    /** 最後一擊的紀錄留多久（tick）；怪物死的時候只認同一個 tick 打的。 */
+    private static final long LAST_HIT_KEEP = 100;
+    /** 獸性：同一次技能打中好幾個只算 1 點（跟怒氣一樣隔 4 tick）。 */
+    private static final long FURY_GAIN_TICKS = 4;
+    /** 狂暴的增益代號（後面接技能代號）。 */
+    private static final String FURY_BUFF = "fury.";
+
+    /**
+     * 怪物最近挨的一下（捷的觸發條件用）。
+     *
+     * @param ownAttack 是這個玩家自己的攻擊擊中，而且不是捷的效果打的（法術、召喚物、反彈、屍體爆炸都不算）
+     * @param overkill  這一下多打出來的傷害是牠最大生命的幾 %（沒打死 = 0）
+     */
+    private record LastHit(long tick, UUID player, boolean ownAttack, double overkill) {
+    }
+
+    private final Map<UUID, LastHit> lastHits = new HashMap<>();
+    /** 怪物死的那一刻身上的異常（死亡事件一開始先記下來：異常模組等一下就清掉了）。 */
+    private final Map<UUID, Set<AilmentType>> deathAilments = new HashMap<>();
+
+    /** 一個玩家的獸性。 */
+    private static final class FuryState {
+        int points;
+        long lastGain = -FURY_GAIN_TICKS;
+        /** 狂暴到哪個 tick（0 = 沒有在狂暴）。 */
+        long frenzyUntil;
+        /** 狂暴是哪個技能開的（增益代號用）。 */
+        String skillId;
+        /** 上次提示「要變身才會爆發」是哪個 tick。 */
+        long formNotice = -1000;
+    }
+
+    private final Map<UUID, FuryState> furies = new HashMap<>();
+
     AuraService(final ExileCore plugin, final SkillConfig config, final SkillService service, final SkillTargets targets,
                 final SkillVisuals visuals, final SkillExecutor executor, final tw.exilecore.combat.SkillDamage damage) {
         this.plugin = plugin;
@@ -118,6 +163,20 @@ final class AuraService implements Listener {
             names.add(aura.name());
         }
         return names;
+    }
+
+    /** 動作列上的一小段（跟怒氣、連擊排在一起）：「獸性 12/20」或「狂暴 6s」；沒有回傳空字串。 */
+    String furyHud(final UUID player) {
+        final FuryState state = furies.get(player);
+        final Active aura = state == null ? null : furyAura(active.get(player));
+        if (aura == null) {
+            return "";
+        }
+        final long now = now();
+        if (now < state.frenzyUntil) {
+            return String.format(Locale.ROOT, "<#ff7a3a>狂暴 %.0fs", Math.ceil((state.frenzyUntil - now) / 20.0));
+        }
+        return state.points > 0 ? "<#ff7a3a>獸性 " + state.points + "/" + aura.build.definition().aura().fury().max() : "";
     }
 
     String hudText(final UUID player) {
@@ -372,6 +431,14 @@ final class AuraService implements Listener {
     }
 
     /**
+     * 這個光環現在開不開得起來：要綁在按鍵格；寫了 weapons 的還要拿著那種武器（2026-10：雷縛長棍、崩滅心咒要長棍、銀月庇要獸魂符、
+     * 拾晶裝要弩、馭星訣要長棍或弩。以前光環不看武器，說明寫著「需要長棍」卻什麼武器都開著）。換掉武器就關，換回來自己開。
+     */
+    static boolean wearable(final PlayerState state, final SkillDefinition definition) {
+        return boundToKey(state, definition.id()) && definition.usableWith(state.weaponTags());
+    }
+
+    /**
      * 2026-10：光環、精魂召喚要放在上方的綁鍵格（滑鼠四格＋快捷列六格）才生效（常駐開著，不用按）；
      * 只放在技能面板、沒綁鍵的不開。綁鍵格只有 10 格，所以主動技能加光環最多 10 個（照 PoE2 的技能數量限制）。
      */
@@ -403,7 +470,7 @@ final class AuraService implements Listener {
         for (final String id : saved.split(",")) {
             final SkillDefinition definition = config.skill(id.trim());
             final int position = state.skills().find(id.trim());
-            if (definition == null || definition.aura() == null || position < 0 || !boundToKey(state, definition.id())) {
+            if (definition == null || definition.aura() == null || position < 0 || !wearable(state, definition)) {
                 continue;
             }
             final SkillBuild build = service.build(state, sheet, definition, state.skills().skill(position));
@@ -450,14 +517,17 @@ final class AuraService implements Listener {
         return list;
     }
 
-    /** 這個玩家的召喚物也吃到的光環效果：自己開的（慷慨的也算）加上隊友給的。 */
+    /**
+     * 這個玩家的召喚物也吃到的光環效果：自己開的「給隊友的」光環（慷慨的也算）加上隊友給的。
+     * 2026-10：只給自己的常駐增益（allies: false）不再給召喚物，見 {@link SkillBuild#minionAuraModifiers}。
+     */
     List<Modifier> effectsFor(final UUID owner) {
         final List<Modifier> list = new ArrayList<>();
         final Map<String, Active> mine = active.get(owner);
         if (mine != null) {
             for (final Active aura : mine.values()) {
                 if (!aura.paused) {
-                    list.addAll(aura.build.auraModifiers());
+                    list.addAll(aura.build.minionAuraModifiers());
                 }
             }
         }
@@ -495,7 +565,7 @@ final class AuraService implements Listener {
         if (state.isLoaded() && state.hasCharacter() && !player.isDead()) {
             for (final tw.exilecore.character.SkillLoadout.Entry entry : state.skills().entries()) {
                 final SkillDefinition definition = config.skill(entry.skillId());
-                if (definition != null && definition.aura() != null && !definition.hidden() && boundToKey(state, entry.skillId())) {
+                if (definition != null && definition.aura() != null && !definition.hidden() && wearable(state, definition)) {
                     desired.add(entry.skillId() + "@" + entry.level() + ":" + entry.encodeSupports());
                 }
             }
@@ -518,7 +588,7 @@ final class AuraService implements Listener {
             for (final tw.exilecore.character.SkillLoadout.Entry entry : state.skills().entries()) {
                 final SkillDefinition definition = config.skill(entry.skillId());
                 if (definition == null || definition.aura() == null || definition.hidden() || next.containsKey(definition.id())
-                        || !boundToKey(state, entry.skillId())) {
+                        || !wearable(state, definition)) {
                     continue;
                 }
                 final SkillBuild build = service.build(state, sheet, definition, entry);
@@ -599,6 +669,15 @@ final class AuraService implements Listener {
         }
         refreshAllies();
         companions(now);
+        // 2026-10：捷的最後一擊紀錄過期的清掉；開著的代價（赤怒）、獸性（獸血沸）
+        lastHits.values().removeIf(hit -> now - hit.tick() > LAST_HIT_KEEP);
+        deathAilments.clear();
+        try {
+            lifeCosts(now);
+            furyTick(now);
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().error("光環的代價／獸性出錯", e);
+        }
         // 焚燒光環（焚心業火）：每半秒燒周圍的敵人，自己也燒
         for (final Map.Entry<UUID, LinkedHashMap<String, Active>> entry : new ArrayList<>(active.entrySet())) {
             final Player player = plugin.getServer().getPlayer(entry.getKey());
@@ -784,7 +863,7 @@ final class AuraService implements Listener {
         for (final Active aura : new ArrayList<>(mine.values())) {
             final int position = state.skills().find(aura.skillId);
             final SkillDefinition definition = config.skill(aura.skillId);
-            if (position < 0 || definition == null || definition.aura() == null || !boundToKey(state, aura.skillId)) {
+            if (position < 0 || definition == null || definition.aura() == null || !wearable(state, definition)) {
                 mine.remove(aura.skillId);
                 closed.add(aura.name());
                 changed = true;
@@ -887,11 +966,279 @@ final class AuraService implements Listener {
         }
     }
 
+    // ---- 2026-10：開著的代價（赤怒）----
+
+    /** 營地不扣（練習場算戰鬥區域，照扣）——跟焚心業火燒自己的規則一樣。 */
+    private boolean safeZone(final Location at) {
+        return plugin.zones() != null && plugin.zones().inTown(at) && (plugin.training() == null || !plugin.training().inArena(at));
+    }
+
+    /** 失去最大生命 percent% 之後剩多少：直接扣生命（不經過能量護盾與抗性），扣不死，最低留 1 點（本來就不到 1 點的不動）。 */
+    static double lifeAfterLoss(final double life, final double maxLife, final double percent) {
+        return Math.max(Math.min(1, life), life - Math.max(0, maxLife) * Math.max(0, percent) / 100.0);
+    }
+
+    /** 扣生命；回傳是不是已經扣到底（只剩 1 點）。 */
+    private boolean loseLife(final Player player, final PlayerState state, final double percent) {
+        final double next = lifeAfterLoss(state.life(), state.maxLife(), percent);
+        if (next != state.life()) {
+            state.setLife(next);
+            plugin.players().display(player, state);
+        }
+        return next <= 1 + 1e-6;
+    }
+
+    /** 暫停、恢復之後屬性表重算（效果拿掉／加回來）。 */
+    private void recalc(final Player player, final PlayerState state) {
+        plugin.players().markDirty(player);
+        plugin.players().sheet(player);
+        plugin.players().display(player, state);
+    }
+
+    /**
+     * 開著的代價（{@link AuraSpec.LifeCost}）：每半秒扣一次生命。怒氣的那一份只在怒氣沒有在消退的時候扣（照 PoE2 的 Berserk）。
+     * 扣到只剩 1 點就暫停（效果不算），生命回到最大生命的 {@value AuraSpec.LifeCost#RESUME_PERCENT}% 以上自己繼續。
+     */
+    private void lifeCosts(final long now) {
+        for (final Map.Entry<UUID, LinkedHashMap<String, Active>> entry : new ArrayList<>(active.entrySet())) {
+            final Player player = plugin.getServer().getPlayer(entry.getKey());
+            if (player == null || player.isDead()) {
+                continue;
+            }
+            final PlayerState state = plugin.players().get(player);
+            if (!state.hasCharacter() || state.isDead()) {
+                continue;
+            }
+            for (final Active aura : new ArrayList<>(entry.getValue().values())) {
+                final AuraSpec.LifeCost cost = aura.build.definition().aura().lifeCost();
+                if (cost == null) {
+                    continue;
+                }
+                if (aura.paused) {
+                    if (state.life() >= state.maxLife() * AuraSpec.LifeCost.RESUME_PERCENT / 100.0) {
+                        aura.paused = false;
+                        recalc(player, state);
+                    }
+                    continue;
+                }
+                if (safeZone(player.getLocation())) {
+                    continue;
+                }
+                final SkillResources resources = service.resources();
+                final double percent = cost.percentPerSecond(resources == null ? 0 : resources.rage(player),
+                        resources != null && resources.rageDecaying(player));
+                if (percent <= 0 || !loseLife(player, state, percent * TICK_SECONDS)) {
+                    continue;
+                }
+                aura.paused = true;
+                recalc(player, state);
+                if (now - aura.pauseNotice >= 200) {
+                    aura.pauseNotice = now;
+                    player.sendActionBar(plugin.text().parse(String.format(Locale.ROOT, "<gray>%s 暫停：生命只剩 1 點，回到 %.0f%% 以上自動繼續",
+                            tw.exilecore.item.ItemRenderer.escape(aura.name()), AuraSpec.LifeCost.RESUME_PERCENT)));
+                }
+            }
+        }
+    }
+
+    // ---- 2026-10：獸性（獸血沸）----
+
+    /** 這個玩家開著的獸性光環（沒有回傳 null）。 */
+    private static Active furyAura(final Map<String, Active> mine) {
+        if (mine != null) {
+            for (final Active aura : mine.values()) {
+                if (aura.build.definition().aura().fury() != null) {
+                    return aura;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** 自己的攻擊擊中敵人：累積 1 點獸性（同一次技能只算一次；狂暴中不累積）。 */
+    private void gainFury(final Player player, final Map<String, Active> mine) {
+        final Active aura = furyAura(mine);
+        if (aura == null) {
+            return;
+        }
+        final FuryState state = furies.computeIfAbsent(player.getUniqueId(), uuid -> new FuryState());
+        final long now = now();
+        if (now < state.frenzyUntil || now - state.lastGain < FURY_GAIN_TICKS) {
+            return;
+        }
+        state.lastGain = now;
+        state.points = Math.min(aura.build.definition().aura().fury().max(), state.points + 1);
+    }
+
+    /** 現在是不是獸形；是的話變身的增益至少撐到 until（狂暴中一直維持獸形）。 */
+    private boolean holdForm(final Player player, final long until) {
+        final long now = now();
+        for (final SkillBuffs.Buff buff : service.buffs().active(player.getUniqueId())) {
+            if (buff.id().equals(SkillService.FORM_BUFF)) {
+                if (buff.untilTick() < until) {
+                    service.buff(player, SkillService.FORM_BUFF, buff.name(), (int) (until - now), buff.modifiers());
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 每半秒：獸性滿了（而且在獸形）就爆發；狂暴中扣生命、維持獸形；光環關了就收掉。 */
+    private void furyTick(final long now) {
+        for (final UUID uuid : new ArrayList<>(furies.keySet())) {
+            final FuryState state = furies.get(uuid);
+            final Player player = plugin.getServer().getPlayer(uuid);
+            final Active aura = furyAura(active.get(uuid));
+            if (player == null || aura == null) {
+                if (player != null) {
+                    endFrenzy(player, state, null);
+                }
+                furies.remove(uuid);
+                continue;
+            }
+            final PlayerState playerState = plugin.players().get(player);
+            if (player.isDead() || !playerState.hasCharacter() || playerState.isDead()) {
+                endFrenzy(player, state, null);
+                state.points = 0;
+                continue;
+            }
+            final AuraSpec.Fury fury = aura.build.definition().aura().fury();
+            if (state.frenzyUntil > 0 && now >= state.frenzyUntil) {
+                endFrenzy(player, state, "<gray>" + tw.exilecore.item.ItemRenderer.escape(aura.name()) + "：狂暴結束");
+            }
+            if (now < state.frenzyUntil) {
+                if (fury.form() && !holdForm(player, state.frenzyUntil)) {
+                    endFrenzy(player, state, "<gray>" + tw.exilecore.item.ItemRenderer.escape(aura.name()) + "：回到人形，狂暴結束");
+                } else if (fury.lifeLoss() > 0 && !safeZone(player.getLocation())
+                        && loseLife(player, playerState, fury.lifeLoss() * TICK_SECONDS)) {
+                    endFrenzy(player, state, "<gray>" + tw.exilecore.item.ItemRenderer.escape(aura.name()) + "：生命只剩 1 點，狂暴結束");
+                }
+                continue;
+            }
+            if (state.points < fury.max()) {
+                continue;
+            }
+            if (fury.form() && !holdForm(player, now)) {
+                if (now - state.formNotice >= 200) {
+                    state.formNotice = now;
+                    player.sendActionBar(plugin.text().parse("<gray>" + tw.exilecore.item.ItemRenderer.escape(aura.name())
+                            + "：獸性滿了，變成獸形（熊、狼人、飛龍）就會爆發"));
+                }
+                continue;
+            }
+            startFrenzy(player, aura, fury, state, now);
+        }
+    }
+
+    private void startFrenzy(final Player player, final Active aura, final AuraSpec.Fury fury, final FuryState state, final long now) {
+        final int ticks = fury.ticks(state.points);
+        state.points = 0;
+        if (ticks <= 0) {
+            return;
+        }
+        final String name = aura.name();
+        final List<Modifier> mods = new ArrayList<>();
+        for (final ScaledMod mod : fury.effects()) {
+            mods.add(mod.toModifier(aura.build.level(), aura.build.auraEffect(), name));
+        }
+        if (fury.onslaught()) {
+            final double speed = tw.exilecore.combat.KillEffects.ONSLAUGHT_SPEED;
+            mods.add(Modifier.increased(StatKeys.ATTACK_SPEED, speed, "疾速"));
+            mods.add(Modifier.increased(StatKeys.CAST_SPEED, speed, "疾速"));
+            mods.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, speed, "疾速"));
+        }
+        state.frenzyUntil = now + ticks;
+        state.skillId = aura.skillId;
+        service.buff(player, FURY_BUFF + aura.skillId, name, ticks, mods);
+        if (fury.form()) {
+            holdForm(player, state.frenzyUntil);
+        }
+        player.sendActionBar(plugin.text().parse(String.format(Locale.ROOT, "<#ff7a3a>✦ %s：狂暴 %.0f 秒",
+                tw.exilecore.item.ItemRenderer.escape(name), ticks / 20.0)));
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_RAVAGER_ROAR, org.bukkit.SoundCategory.PLAYERS, 0.5f, 1.3f);
+    }
+
+    /** 狂暴結束（時間到、回到人形、生命見底、光環關了）：增益拿掉。 */
+    private void endFrenzy(final Player player, final FuryState state, final String message) {
+        if (state.frenzyUntil <= 0) {
+            return;
+        }
+        state.frenzyUntil = 0;
+        if (state.skillId != null) {
+            service.buffs().remove(player, FURY_BUFF + state.skillId);
+        }
+        if (message != null) {
+            player.sendActionBar(plugin.text().parse(message));
+        }
+    }
+
     // ---- 捷：擊殺時觸發 ----
 
-    /** 怪物死了：算誰殺的（最後一擊的玩家，不然是傷害最多的），他開著的捷從屍體的位置放效果。 */
+    /** 最後一擊多打出來的傷害是最大生命的幾 %（沒打死 = 0）。 */
+    static double overkillPercent(final double damage, final double lifeLeft, final double maxLife) {
+        return maxLife <= 0 ? 0 : Math.max(0, damage - Math.max(0, lifeLeft)) / maxLife * 100.0;
+    }
+
+    private double overkill(final LivingEntity defender, final double damage) {
+        final tw.exilecore.monster.MonsterData data = plugin.monsters() == null ? null : plugin.monsters().data(defender).orElse(null);
+        final org.bukkit.attribute.AttributeInstance max = defender.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        if (data == null || max == null) {
+            return 0;
+        }
+        final double scale = plugin.monsters().healthScale(defender, data); // 原版血量 ÷ scale = 我們的生命
+        return scale <= 0 ? 0 : overkillPercent(damage, defender.getHealth() / scale, max.getValue() / scale);
+    }
+
+    /**
+     * 打中怪物（傷害還沒寫進去）：記下這一下是誰、用什麼打的、過量多少——怪物這一下死了的話，捷的觸發條件照這個看；
+     * 自己的攻擊擊中順便累積獸性。召喚物打的算主人的擊中，但不是「自己的攻擊」。
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onHit(final HitEvent event) {
+        final Player credit = event.credit();
+        if (credit == null || active.isEmpty() || event.skill() == null || !event.result().hit() || event.result().blocked()) {
+            return;
+        }
+        final Map<String, Active> mine = active.get(credit.getUniqueId());
+        final LivingEntity defender = event.defender();
+        if (mine == null || mine.isEmpty() || defender instanceof Player) {
+            return;
+        }
+        final boolean ownAttack = event.attacker() instanceof Player attacker && attacker.getUniqueId().equals(credit.getUniqueId())
+                && event.skill().isAttack() && !event.skill().tags().contains(Tags.HERALD);
+        lastHits.put(defender.getUniqueId(), new LastHit(now(), credit.getUniqueId(), ownAttack,
+                ownAttack ? overkill(defender, event.result().total()) : 0));
+        if (ownAttack) {
+            gainFury(credit, mine);
+        }
+    }
+
+    /** 怪物死了，其他模組還沒收拾之前：先記下牠身上的異常（捷的觸發條件用）。 */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onDeathEarly(final EntityDeathEvent event) {
+        if (active.isEmpty() || plugin.ailments() == null || event.getEntity() instanceof Player) {
+            return;
+        }
+        final EnumSet<AilmentType> ailments = EnumSet.noneOf(AilmentType.class);
+        for (final AilmentType type : AilmentType.values()) {
+            if (plugin.ailments().has(event.getEntity(), type)) {
+                ailments.add(type);
+            }
+        }
+        if (!ailments.isEmpty()) {
+            deathAilments.put(event.getEntity().getUniqueId(), ailments);
+        }
+    }
+
+    /**
+     * 怪物死了：算誰殺的（最後一擊的玩家，不然是傷害最多的），他開著的捷從屍體的位置放效果。
+     * 2026-10（照 PoE2）：捷有觸發條件的要符合才放（{@link AuraSpec.KillCondition}）。
+     */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(final EntityDeathEvent event) {
+        final Set<AilmentType> ailed = deathAilments.remove(event.getEntity().getUniqueId());
+        final LastHit last = lastHits.remove(event.getEntity().getUniqueId());
         if (active.isEmpty()) {
             return;
         }
@@ -921,7 +1268,17 @@ final class AuraService implements Listener {
         final Location at = entity.getLocation().add(0, 0.2, 0);
         for (final Active aura : new ArrayList<>(mine.values())) {
             final AuraSpec spec = aura.build.definition().aura();
-            if (!spec.herald() || plugin.random().nextDouble() * 100 >= spec.onKillChance()) {
+            if (!spec.herald()) {
+                continue;
+            }
+            if (!spec.condition().always()) {
+                // 最後一擊：同一個 tick、同一個玩家打的才認（持續傷害燒死、毒死的沒有「最後一擊」）
+                final boolean struck = last != null && last.player().equals(credit.getUniqueId()) && now() - last.tick() <= 1;
+                if (!spec.condition().met(struck && last.ownAttack(), ailed == null ? Set.of() : ailed, struck ? last.overkill() : 0)) {
+                    continue;
+                }
+            }
+            if (plugin.random().nextDouble() * 100 >= spec.onKillChance()) {
                 continue;
             }
             final SkillDefinition sub = config.skill(spec.onKill());
@@ -952,6 +1309,7 @@ final class AuraService implements Listener {
     /** 登出、換角色（進度裡的紀錄留著，下次載入會開回來）。 */
     void forget(final UUID player) {
         active.remove(player);
+        furies.remove(player);
         dropDecals(player);
         signature.remove(player);
         lastSkipped.remove(player);
@@ -970,6 +1328,9 @@ final class AuraService implements Listener {
 
     void clear() {
         active.clear();
+        furies.clear();
+        lastHits.clear();
+        deathAilments.clear();
         decalSignature.clear();
         received.clear();
         receivedKey.clear();

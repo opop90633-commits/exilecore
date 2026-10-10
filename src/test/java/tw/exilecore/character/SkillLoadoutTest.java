@@ -24,7 +24,7 @@ class SkillLoadoutTest {
         assertEquals(7, loadout.skill(fireball).level());
         assertEquals(2, loadout.size());
         assertEquals(-1, loadout.find("spark"));
-        assertEquals(20, new SkillLoadout.Entry("x", 99).level(), "等級夾在 1–20");
+        assertEquals(SkillLoadout.GEM_CAP, new SkillLoadout.Entry("x", 99).level(), "等級夾在 1–21（Lv.21 的未切割寶石）");
         assertEquals(1, new SkillLoadout.Entry("x", 0).level());
         assertThrows(IllegalArgumentException.class, () -> new SkillLoadout.Entry(" ", 1));
 
@@ -39,14 +39,14 @@ class SkillLoadoutTest {
         final SkillLoadout loadout = new SkillLoadout();
         final int fireball = loadout.put("fireball", 1);
         final int arc = loadout.put("arc", 1);
-        final int rightA = SkillLoadout.slot(0, SkillLoadout.KEY_RIGHT);
-        final int sneakLeftB = SkillLoadout.slot(1, SkillLoadout.KEY_SNEAK_LEFT);
+        final int rightA = (0 * SkillLoadout.KEYS + SkillLoadout.KEY_RIGHT);
+        final int sneakLeftB = (1 * SkillLoadout.KEYS + SkillLoadout.KEY_SNEAK_LEFT);
         assertEquals(1, rightA);
         assertEquals(6, sneakLeftB);
         assertEquals(-1, loadout.bound(rightA), "沒綁的按鍵是普攻");
         assertTrue(loadout.bind(rightA, fireball));
         assertTrue(loadout.bind(sneakLeftB, fireball));
-        assertTrue(loadout.bind(SkillLoadout.slot(0, SkillLoadout.KEY_LEFT), arc));
+        assertTrue(loadout.bind((0 * SkillLoadout.KEYS + SkillLoadout.KEY_LEFT), arc));
         assertFalse(loadout.bind(rightA, 5), "空的位置不能綁");
         assertFalse(loadout.bind(99, fireball));
         assertEquals("fireball", loadout.boundSkill(sneakLeftB).skillId());
@@ -54,22 +54,22 @@ class SkillLoadoutTest {
         assertTrue(loadout.remove(fireball));
         assertEquals(-1, loadout.bound(rightA), "移除技能後按鍵回到普攻");
         assertEquals(-1, loadout.bound(sneakLeftB));
-        assertEquals(arc, loadout.bound(SkillLoadout.slot(0, SkillLoadout.KEY_LEFT)));
+        assertEquals(arc, loadout.bound((0 * SkillLoadout.KEYS + SkillLoadout.KEY_LEFT)));
         assertFalse(loadout.remove(fireball));
-        assertTrue(loadout.bind(SkillLoadout.slot(0, SkillLoadout.KEY_LEFT), -1));
-        assertNull(loadout.boundSkill(SkillLoadout.slot(0, SkillLoadout.KEY_LEFT)));
+        assertTrue(loadout.bind((0 * SkillLoadout.KEYS + SkillLoadout.KEY_LEFT), -1));
+        assertNull(loadout.boundSkill((0 * SkillLoadout.KEYS + SkillLoadout.KEY_LEFT)));
     }
 
     @Test
     void copyIsIndependent() {
         final SkillLoadout loadout = new SkillLoadout();
         final int arc = loadout.put("arc", 2);
-        loadout.bind(SkillLoadout.slot(0, SkillLoadout.KEY_RIGHT), arc);
+        loadout.bind((0 * SkillLoadout.KEYS + SkillLoadout.KEY_RIGHT), arc);
         final SkillLoadout copy = loadout.copy();
         loadout.put("arc", 9);
-        loadout.bind(SkillLoadout.slot(0, SkillLoadout.KEY_RIGHT), -1);
+        loadout.bind((0 * SkillLoadout.KEYS + SkillLoadout.KEY_RIGHT), -1);
         assertEquals(2, copy.skill(arc).level());
-        assertEquals(arc, copy.bound(SkillLoadout.slot(0, SkillLoadout.KEY_RIGHT)));
+        assertEquals(arc, copy.bound((0 * SkillLoadout.KEYS + SkillLoadout.KEY_RIGHT)));
         loadout.clear();
         assertTrue(loadout.isEmpty());
         assertEquals(1, copy.size());

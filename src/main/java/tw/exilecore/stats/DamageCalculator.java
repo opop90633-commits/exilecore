@@ -286,6 +286,18 @@ public final class DamageCalculator {
      * 轉換與額外獲得出來的部分同時吃原本類型與新類型的修飾器（PoE 規則），例如焚羽箭的火焰部分也吃「增加物理傷害」。
      * 額外獲得（引火：物理傷害的 25% 額外附加為火焰）用轉換前的物理傷害算，物理本身不會變少。
      */
+    /**
+     * 2026-10（照 PoE2 的 Archmage）：每 100 點最大魔力，獲得 x% 傷害為額外的某類型（{@link StatKeys#damageExtraPerMana}）。
+     * 回傳現在的最大魔力換出來的百分比；引導技能（有 channel.stages）不算。
+     */
+    public static double extraPerMana(final StatSheet attacker, final DamageType extra, final Set<String> context) {
+        final double per = attacker.flat(StatKeys.damageExtraPerMana(extra), context);
+        if (per <= 0 || attacker.flat(StatKeys.CHANNEL_STAGES, context) > 0) {
+            return 0;
+        }
+        return per * Math.max(0, attacker.get(StatKeys.MANA_MAX)) / 100.0;
+    }
+
     private static DamagePacket outgoing(final StatSheet attacker, final SkillProfile skill, final Roller roller) {
         final DamagePacket packet = new DamagePacket();
         for (final DamageType type : DamageType.values()) {
@@ -310,7 +322,7 @@ public final class DamageCalculator {
                 if (extra == type) {
                     continue;
                 }
-                final double percent = attacker.flat(StatKeys.damageExtra(extra), context);
+                final double percent = attacker.flat(StatKeys.damageExtra(extra), context) + extraPerMana(attacker, extra, context);
                 if (percent > 0) {
                     final Set<String> both = new HashSet<>(context);
                     both.addAll(extra.tags());

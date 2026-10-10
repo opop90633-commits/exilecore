@@ -120,7 +120,7 @@ public final class PlannerItems {
     }
 
     private static boolean wearable(final ItemSlot slot) {
-        return slot != null && slot != ItemSlot.MAP && slot != ItemSlot.JEWEL;
+        return slot != null && slot != ItemSlot.MAP && slot != ItemSlot.JEWEL && slot != ItemSlot.FLASK && slot != ItemSlot.CHARM;
     }
 
     private static JsonObject ranges(final Map<String, int[]> vars) {

@@ -81,6 +81,19 @@ public final class SkillResources implements Listener {
         return (int) s.rage;
     }
 
+    /**
+     * 怒氣現在是不是在消退（有怒氣，而且已經 {@value #RAGE_DECAY_DELAY} tick 沒拿到）。
+     * 2026-10：赤怒的代價只在「沒有在消退」的時候扣生命（照 PoE2 的 Berserk）。
+     */
+    public boolean rageDecaying(final Player player) {
+        final State s = states.get(player.getUniqueId());
+        return s != null && rageDecaying(s.rage, s.rageTick, now());
+    }
+
+    static boolean rageDecaying(final double rage, final long rageTick, final long now) {
+        return rage > 0 && now - rageTick >= RAGE_DECAY_DELAY;
+    }
+
     /** 怒氣上限。 */
     public int rageMax(final StatSheet sheet) {
         return (int) Math.max(0, RAGE_BASE_MAX + sheet.flat(StatKeys.RAGE_MAX, Set.of()));
@@ -283,6 +296,11 @@ public final class SkillResources implements Listener {
         }
         if (inf.length() > 0) {
             parts.add("<gray>灌注 " + inf);
+        }
+        // 2026-10：獸血沸的獸性／狂暴
+        final String fury = plugin.skills() == null || plugin.skills().auras() == null ? "" : plugin.skills().auras().furyHud(player.getUniqueId());
+        if (!fury.isEmpty()) {
+            parts.add(fury);
         }
         return String.join(" ", parts);
     }

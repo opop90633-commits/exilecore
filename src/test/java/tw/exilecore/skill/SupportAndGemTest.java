@@ -147,7 +147,7 @@ class SupportAndGemTest {
                 support("pierce"), support("increased_area"), support("faster_projectiles"), support("melee_physical")), Set.of(), sheet);
         assertEquals(4, supported.supports().size(), "蠻力不能輔助法術，掛了也不算");
         assertEquals(3, supported.projectiles());
-        assertEquals(24, supported.spread(), 1e-9, "本來一發的技能多了投射物：排成扇形");
+        assertEquals(0, supported.spread(), 1e-9, "本來一發的技能多了投射物：不張成扇形，沿同一條線前後連發（2026-10）");
         assertEquals(2, supported.pierce());
         assertEquals(Math.sqrt(1.4), supported.areaScale(), 1e-9, "增加 40% 範圍 → 半徑 ×√1.4");
         assertEquals(plain.explode() * Math.sqrt(1.4), supported.explode(), 1e-9);

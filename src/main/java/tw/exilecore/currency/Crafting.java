@@ -43,6 +43,16 @@ public final class Crafting {
         if (base == null) {
             return "不認得的基底";
         }
+        if (base.isFlaskLike()) {
+            // 2026-10：藥劑、護符最多魔法（PoE2）：只有鑑定、蛻變、增幅、改造、機會→不行、抹除、神聖、祝福這幾種能用
+            switch (type.operation()) {
+                case IDENTIFY, UPGRADE_TO_MAGIC, ADD_AFFIX_MAGIC, REROLL_MAGIC, REMOVE_AFFIX, SCOUR, REROLL_VALUES -> {
+                }
+                default -> {
+                    return (base.isFlask() ? "藥劑" : "護符") + "最多魔法，不能用" + type.name();
+                }
+            }
+        }
         switch (type.operation()) {
             case ESSENCE -> {
                 if (base.isMap()) {

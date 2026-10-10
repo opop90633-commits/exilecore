@@ -36,6 +36,9 @@ public final class FlaskModule implements Module {
         final FlaskService created = new FlaskService(plugin, config);
         charms.load(plugin.dataFolder().resolve("data"));
         created.setCharms(charms);
+        if (plugin.items() != null) {
+            plugin.items().renderer().setFlaskDecorator(created::decorate); // 2026-10：藥劑、護符是物品引擎的基底，畫完詞綴由這裡補說明
+        }
         plugin.getServer().getPluginManager().registerEvents(new FlaskListener(plugin, created), plugin);
         plugin.getServer().getPluginManager().registerEvents(charms, plugin);
         charmTask = plugin.repeat("charm", charms::tick, 4, 4);

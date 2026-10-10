@@ -43,3 +43,46 @@ diamond_jewel:
   drop_level: 45
   drop_weight: 2
   requirements: { level: 1 }
+
+# 2026-10：遺時珠寶（PoE2 的 Time-Lost Ruby／Emerald／Sapphire／Diamond，半徑珠寶）。
+# 詞綴是「範圍內的小天賦也各給 x」：放進珠寶孔後，孔位周圍半徑內（基本 2 格，「更大」+1、「巨大」+2）已配置的每一個小天賦都多給那條數值；
+# 「範圍內的小天賦／核心效果增加 x%」把範圍內已配置的小天賦／核心的數值放大。詞綴池在 affixes/jewels_radius.yml（spawn_tags：radius、r_ruby、r_emerald、r_sapphire）。
+time_lost_ruby:
+  name: 遺時赤星晶
+  material: REDSTONE
+  model: exilecore:jewel/ruby
+  slot: JEWEL
+  tags: [radius, r_ruby]
+  drop_level: 60
+  drop_weight: 1
+  requirements: { level: 1 }
+
+time_lost_emerald:
+  name: 遺時翠星晶
+  material: EMERALD
+  model: exilecore:jewel/emerald
+  slot: JEWEL
+  tags: [radius, r_emerald]
+  drop_level: 60
+  drop_weight: 1
+  requirements: { level: 1 }
+
+time_lost_sapphire:
+  name: 遺時蒼星晶
+  material: LAPIS_LAZULI
+  model: exilecore:jewel/sapphire
+  slot: JEWEL
+  tags: [radius, r_sapphire]
+  drop_level: 60
+  drop_weight: 1
+  requirements: { level: 1 }
+
+time_lost_diamond:
+  name: 遺時白星晶
+  material: DIAMOND
+  model: exilecore:jewel/diamond
+  slot: JEWEL
+  tags: [radius, r_ruby, r_emerald, r_sapphire]
+  drop_level: 70
+  drop_weight: 1
+  requirements: { level: 1 }

@@ -379,6 +379,9 @@ public final class AilmentService {
                         entry.state.stun().trigger(now, ticks(seconds), immunity);
                         refreshAt(defender, entry, entry.state.stun().activeUntil() - now);
                         feedback(defender, AilmentType.STUN);
+                        if (defender instanceof Player stunned) {
+                            plugin.players().get(stunned).markRecent(tw.exilecore.stats.Recently.STUN, now); // 「最近被重暈過」
+                        }
                         if (attacker instanceof Player stunner && plugin.skills() != null) {
                             plugin.skills().procEvent(stunner, skill.id(), "stun_applied", null, defender); // 輔助：重暈時（2026-10）
                         }

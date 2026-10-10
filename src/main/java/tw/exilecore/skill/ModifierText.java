@@ -105,6 +105,13 @@ public final class ModifierText {
             };
             return "你身上的" + kind + "持續時間" + (value < 0 ? "減少 " : "增加 ") + percent + "%";
         }
+        if (stat.startsWith(StatKeys.DAMAGE_EXTRA_PER_MANA) && modifier.type() == tw.exilecore.stats.ModType.FLAT) { // 2026-10：祕法之心
+            return "每 100 點最大魔力，" + tagPrefix(modifier) + "獲得 " + number(value) + "% 傷害為額外的"
+                    + tagName(stat.substring(StatKeys.DAMAGE_EXTRA_PER_MANA.length())) + "傷害";
+        }
+        if (stat.equals(StatKeys.SKILL_COST_MAX_MANA) && modifier.type() == tw.exilecore.stats.ModType.FLAT) { // 2026-10：祕法之心
+            return tagPrefix(modifier) + "魔力消耗多最大魔力的 " + number(value) + "%";
+        }
         if (stat.startsWith("damage.extra.") && modifier.type() == tw.exilecore.stats.ModType.FLAT) { // 2026-10
             return "獲得 " + number(value) + "% 傷害為額外的" + tagName(stat.substring("damage.extra.".length())) + "傷害";
         }

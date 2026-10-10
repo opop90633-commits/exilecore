@@ -131,6 +131,16 @@ final class ProjectileEngine implements Listener {
     private final Map<UUID, Long> arrows = new HashMap<>();
     private final Map<UUID, Integer> counts = new HashMap<>();
     private final List<Volley> volleys = new ArrayList<>();
+
+    /**
+     * 還沒射出的後面幾支（2026-10）：本來只射一支的技能多了投射物，沿同一條線前後連發。
+     * 起點、方向是施放那一刻的（人走開了也還是同一條線）；hit 跟第一支共用。
+     */
+    private record Follow(UUID owner, SkillBuild build, World world, Vector start, Vector direction, Set<UUID> hit, String visual,
+                          long atTick, int remaining, int interval) {
+    }
+
+    private final List<Follow> follows = new ArrayList<>();
     private SkillZones zones;
     private long nextId = 1;
 
@@ -147,7 +157,12 @@ final class ProjectileEngine implements Listener {
         this.zones = zones;
     }
 
-    /** 發射：依數量排成水平扇形。連射的技能排後面幾波。 */
+    /**
+     * 發射。連射的技能排後面幾波。好幾支的時候：技能自己寫了 spread 的（本來就是一排、一把的）排成水平扇形；
+     * 本來只射一支的技能多了投射物（2026-10，照 PoE2）沿同一條線前後連發：第一支馬上射出，後面的每隔
+     * {@link SkillMath#sequenceInterval} tick 從同一個起點、往同一個方向跟著出去（{@link Follow}）。
+     * 同一次施放的每一支共用一份「打過誰」：一個敵人只會被其中一支打到，後面的會穿過牠打更後面的。
+     */
     void launch(final Origin origin, final SkillBuild build) {
         launchVolley(origin, build);
         final SkillParams.Burst burst = build.params().burst();
@@ -161,13 +176,36 @@ final class ProjectileEngine implements Listener {
         final Location eye = origin.eye();
         // 整圈散開的（雷網陷阱）用水平的方向，不然朝下看時整圈都射進地裡
         final Vector look = build.spread() >= 360 - 1e-9 ? origin.facing() : origin.direction();
-        final List<double[]> directions = SkillMath.fan(look.getX(), look.getY(), look.getZ(), build.projectiles(), build.spread());
+        int count = build.projectiles();
+        if (build.definition().isAttack() && count < SkillBuild.MAX_PROJECTILES) {
+            // 2026-10：「x% 機率多射一發」（PoE2 弓、箭袋）：超過 100% 的部分必定多射，剩下的擲機率
+            final tw.exilecore.stats.StatSheet effective = build.profile().effective(plugin.players().sheet(owner));
+            final double chance = effective.flat(tw.exilecore.stats.StatKeys.PROJECTILE_CHANCE, build.profile().tags()) / 100.0;
+            if (chance > 0) {
+                int extra = (int) Math.floor(chance);
+                if (random.nextDouble() < chance - extra) {
+                    extra++;
+                }
+                count = Math.min(SkillBuild.MAX_PROJECTILES, count + extra);
+            }
+        }
         final Set<UUID> volley = new HashSet<>();
         final String visual = build.definition().visual();
-        for (final double[] d : directions) {
-            final Vector direction = new Vector(d[0], d[1], d[2]);
+        if (count > 1 && build.spread() < 1) {
+            // 前後連發：第一支現在射，後面的排進 follows，沿同一條線一支一支跟著出去
+            final double[] aim = SkillMath.fan(look.getX(), look.getY(), look.getZ(), 1, 0).get(0);
+            final Vector direction = new Vector(aim[0], aim[1], aim[2]);
             final Vector start = eye.toVector().add(direction.clone().multiply(0.4)).add(new Vector(0, -0.15, 0));
-            spawn(owner, build, build.profile(), origin.world(), start, direction, build.speed(), build.range(), volley, false, visual);
+            spawn(owner, build, build.profile(), origin.world(), start.clone(), direction.clone(), build.speed(), build.range(), volley, false, visual);
+            final int interval = SkillMath.sequenceInterval(count);
+            follows.add(new Follow(owner.getUniqueId(), build, origin.world(), start, direction, volley, visual,
+                    plugin.getServer().getCurrentTick() + interval, count - 1, interval));
+        } else {
+            for (final double[] d : SkillMath.fan(look.getX(), look.getY(), look.getZ(), count, build.spread())) {
+                final Vector direction = new Vector(d[0], d[1], d[2]);
+                final Vector start = eye.toVector().add(direction.clone().multiply(0.4)).add(new Vector(0, -0.15, 0));
+                spawn(owner, build, build.profile(), origin.world(), start, direction, build.speed(), build.range(), volley, false, visual);
+            }
         }
         visuals.cast(visual, eye);
     }
@@ -233,6 +271,29 @@ final class ProjectileEngine implements Listener {
                 launchVolley(Origin.of(owner), volley.build());
                 if (volley.remaining() > 1) {
                     volleys.add(new Volley(volley.owner(), volley.build(), now + volley.build().params().burst().interval(), volley.remaining() - 1));
+                }
+            }
+        }
+        if (!follows.isEmpty()) {
+            // 前後連發的下一支（2026-10）
+            final List<Follow> due = new ArrayList<>();
+            follows.removeIf(follow -> {
+                if (now >= follow.atTick()) {
+                    due.add(follow);
+                    return true;
+                }
+                return false;
+            });
+            for (final Follow follow : due) {
+                final Player owner = plugin.getServer().getPlayer(follow.owner());
+                if (owner == null || !owner.isValid() || owner.isDead() || !owner.getWorld().equals(follow.world())) {
+                    continue;
+                }
+                spawn(owner, follow.build(), follow.build().profile(), follow.world(), follow.start().clone(), follow.direction().clone(),
+                        follow.build().speed(), follow.build().range(), follow.hit(), false, follow.visual());
+                if (follow.remaining() > 1) {
+                    follows.add(new Follow(follow.owner(), follow.build(), follow.world(), follow.start(), follow.direction(), follow.hit(),
+                            follow.visual(), now + follow.interval(), follow.remaining() - 1, follow.interval()));
                 }
             }
         }
@@ -696,6 +757,7 @@ final class ProjectileEngine implements Listener {
             }
         }
         volleys.removeIf(volley -> volley.owner().equals(owner));
+        follows.removeIf(follow -> follow.owner().equals(owner));
     }
 
     /** 全部移除（插件停用）。 */
@@ -704,6 +766,7 @@ final class ProjectileEngine implements Listener {
             remove(shot);
         }
         volleys.clear();
+        follows.clear();
     }
 
     /** 這個玩家某個技能最新的一發還在飛的投射物的位置（離 near 不超過 range 格）；沒有回傳 null。 */

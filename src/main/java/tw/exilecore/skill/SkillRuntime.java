@@ -58,6 +58,8 @@ final class SkillRuntime {
     Repeat repeat;
     /** 戰吼的強化：接下來幾次攻擊更痛（null = 沒有）。 */
     Exert exert;
+    /** 連珠（2026-10）：下一次弓／矛的投射物攻擊會重複（null = 沒有）。 */
+    Barrage barrage;
 
     /** 雙詠要重複的一次施放。 */
     record Echo(long atTick, SkillBuild build, UUID target) {
@@ -76,6 +78,17 @@ final class SkillRuntime {
         /** 全部打完、可以做別的事的 tick：最後一下之後再隔一次攻擊間隔。 */
         double doneAt() {
             return atTick + gapTicks * left;
+        }
+    }
+
+    /**
+     * 連珠備好的那一次：哪個技能放的、重複幾次、每次重複的傷害倍率、隔幾 tick、到哪個 tick 失效；
+     * 用掉之後技能的冷卻是幾秒＋被強化那一招攻擊時間的幾 %（{@link BarrageSpec#usedCooldownTicks}）、冷卻的倍率。
+     */
+    record Barrage(String skillId, String name, BarrageSpec spec, int repeats, long untilTick, double baseCooldown,
+                   double cooldownPercent, double cooldownScale) {
+        boolean active(final long now) {
+            return repeats > 0 && now < untilTick;
         }
     }
 
@@ -127,5 +140,6 @@ final class SkillRuntime {
         echo = null;
         repeat = null;
         exert = null;
+        barrage = null;
     }
 }

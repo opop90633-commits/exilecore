@@ -289,6 +289,16 @@ public final class StatKeys {
     public static String damageExtra(final tw.exilecore.stats.DamageType type) {
         return "damage.extra." + type.tag();
     }
+    /**
+     * FLAT：每 100 點最大魔力，把「全部」傷害的 x% 額外獲得為這個類型（2026-10，照 PoE2 的 Archmage：祕法之心）。
+     * 算法跟 {@link #damageExtra} 一樣，只是百分比 = x × 最大魔力 ÷ 100；引導技能不算。
+     */
+    public static String damageExtraPerMana(final tw.exilecore.stats.DamageType type) {
+        return DAMAGE_EXTRA_PER_MANA + type.tag();
+    }
+    public static final String DAMAGE_EXTRA_PER_MANA = "damage.extra_per_mana.";
+    /** FLAT：技能的魔力消耗多「最大魔力的 x%」（2026-10，祕法之心；加在基礎消耗上，再乘魔力消耗倍率；本來不用魔力的、引導技能不算）。 */
+    public static final String SKILL_COST_MAX_MANA = "skill.cost_max_mana";
     /** 旗標：擊中蓄勢待暈的敵人時直接重暈（PoE2 的碎骨這類）。 */
     public static final String FLAG_CRUSH_PRIMED = "flag.crush_primed";
     // ---- 2026-10 PoE2 基石 ----
@@ -567,6 +577,64 @@ public final class StatKeys {
     public static final String IF_NOT_HIT = "@nohit";
     /** 「最近」＝幾 tick（PoE 的 4 秒）。 */
     public static final long RECENTLY_TICKS = 80;
+
+    // ---- 藥劑、護符本身的詞綴（2026-10，PoE2 的藥劑詞綴；只在那一瓶上生效，角色屬性表不讀） ----
+    /** INCREASED：這瓶的回復量。 */
+    public static final String FLASK_LOCAL_RECOVERY = "flask.local.recovery";
+    /** INCREASED：生命（魔力）低於 35% 時喝，這瓶的回復量另外再增加。 */
+    public static final String FLASK_LOCAL_RECOVERY_LOW = "flask.local.recovery_low";
+    /** INCREASED：這瓶的回復速度（同樣的量在更短的時間內回完）。 */
+    public static final String FLASK_LOCAL_SPEED = "flask.local.speed";
+    /** FLAT：回復量的 x% 立即回復，剩下的照常慢慢回。 */
+    public static final String FLASK_LOCAL_INSTANT = "flask.local.instant";
+    /** FLAT：你的召喚物也回復這瓶回復量的 x%（照牠們的最大生命比例）。 */
+    public static final String FLASK_LOCAL_MINION_HEAL = "flask.local.minion_heal";
+    /** INCREASED：這瓶拿到的充能（殺怪、每分鐘）。 */
+    public static final String FLASK_LOCAL_CHARGES_GAINED = "flask.local.charges_gained";
+    /** INCREASED：這瓶每次用掉的充能（負的 = 用得少）。 */
+    public static final String FLASK_LOCAL_CHARGES_USED = "flask.local.charges_used";
+    /** INCREASED：這瓶的充能上限。 */
+    public static final String FLASK_LOCAL_MAX_CHARGES = "flask.local.max_charges";
+    /** FLAT：殺怪時 x% 機率多拿一點充能。 */
+    public static final String FLASK_LOCAL_CHARGE_ON_KILL = "flask.local.charge_on_kill";
+    /** FLAT：每分鐘自動拿到 x 點充能。 */
+    public static final String FLASK_LOCAL_CHARGES_PER_MINUTE = "flask.local.charges_per_minute";
+    /** FLAT：喝的時候另一種資源（生命藥劑扣魔力、魔力藥劑扣生命）扣掉回復量的 x%。 */
+    public static final String FLASK_LOCAL_COST_OTHER = "flask.local.cost_other";
+    /** INCREASED：這顆護符的效果持續時間。 */
+    public static final String CHARM_LOCAL_DURATION = "charm.local.duration";
+    /** FLAT：這顆護符觸發時回復 x 生命／魔力。 */
+    public static final String CHARM_LOCAL_LIFE = "charm.local.life_on_use";
+    public static final String CHARM_LOCAL_MANA = "charm.local.mana_on_use";
+    /** FLAT：這顆護符觸發時獲得 x 點守護（效果期間先替你吃掉傷害，效果結束就消失）。 */
+    public static final String CHARM_LOCAL_GUARD = "charm.local.guard";
+    /** 全域（裝備、珠寶）：藥劑拿到的充能 INCREASED、用掉的充能 INCREASED、藥劑效果持續時間 INCREASED、x% 機率不消耗充能 FLAT。 */
+    public static final String FLASK_CHARGES_GAINED = "flask.charges_gained";
+    public static final String FLASK_CHARGES_USED = "flask.charges_used";
+    public static final String FLASK_DURATION = "flask.duration";
+    public static final String FLASK_FREE_CHANCE = "flask.free_chance";
+    /** 全域：生命／魔力藥劑每分鐘自動拿到 x 點充能（FLAT）。 */
+    public static final String FLASK_CHARGES_PER_MINUTE_LIFE = "flask.charges_per_minute.life";
+    public static final String FLASK_CHARGES_PER_MINUTE_MANA = "flask.charges_per_minute.mana";
+    /** 全域：只有生命／魔力藥劑拿到的充能 INCREASED（珠寶）。 */
+    public static final String FLASK_CHARGES_GAINED_LIFE = "flask.charges_gained.life";
+    public static final String FLASK_CHARGES_GAINED_MANA = "flask.charges_gained.mana";
+    /** 全域：護符拿到的充能 INCREASED、用掉的充能 INCREASED、效果持續時間 INCREASED、x% 機率不消耗充能 FLAT、每分鐘自動充能 FLAT。 */
+    public static final String CHARM_CHARGES_GAINED = "charm.charges_gained";
+    public static final String CHARM_CHARGES_USED = "charm.charges_used";
+    public static final String CHARM_DURATION = "charm.duration";
+    public static final String CHARM_FREE_CHANCE = "charm.free_chance";
+    public static final String CHARM_CHARGES_PER_MINUTE = "charm.charges_per_minute";
+    /** INCREASED：翻滾的距離（2026-10 PoE2 的鞋子褻瀆詞綴）。 */
+    public static final String DODGE_DISTANCE = "dodge.distance";
+    /** 半徑珠寶自己的數值（2026-10）：FLAT 半徑多幾格；INCREASED 範圍內小天賦／核心的效果。珠寶本身的，不進角色屬性表。 */
+    public static final String JEWEL_LOCAL_RADIUS = "jewel.local.radius";
+    public static final String JEWEL_LOCAL_SMALL_EFFECT = "jewel.local.small_effect";
+    public static final String JEWEL_LOCAL_NOTABLE_EFFECT = "jewel.local.notable_effect";
+    /** 半徑珠寶詞綴的屬性前綴：{@code radius:damage} = 範圍內每個已配置的小天賦都多給這條。 */
+    public static final String RADIUS_PREFIX = "radius:";
+    /** FLAT：弓攻擊 x% 機率多射一發（超過 100% 的部分是必定多一發再擲剩下的；PoE2 0.5）。 */
+    public static final String PROJECTILE_CHANCE = "skill.projectile_chance";
 
     public static boolean flag(final StatSheet sheet, final String flag) {
         return sheet.get(flag) > 0;

@@ -46,6 +46,14 @@ final class SkillBuffs {
         plugin.players().markDirty(player);
     }
 
+    /** 提早拿掉一個增益（2026-10：獸血沸的狂暴提早結束）。 */
+    void remove(final Player player, final String id) {
+        final Map<String, Buff> mine = buffs.get(player.getUniqueId());
+        if (mine != null && mine.remove(id) != null) {
+            plugin.players().markDirty(player);
+        }
+    }
+
     /** 屬性表的來源：還有效的增益。 */
     List<Modifier> modifiers(final Player player) {
         final Map<String, Buff> mine = buffs.get(player.getUniqueId());

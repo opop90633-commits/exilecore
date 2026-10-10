@@ -83,6 +83,8 @@ public final class SkillConfig {
     private Map<String, Double> parentDamage = Map.of();
     /** 坐騎技能（2026-10）：技能代號 → 坐騎；要騎著才能放的技能。 */
     private Map<String, Mounts.Spec> mountSpecs = Map.of();
+    /** 連珠（2026-10）：技能代號 → 「下一次弓／矛的投射物攻擊重複」的設定（skills.yml 的 barrage 區塊）。 */
+    private Map<String, BarrageSpec> barrages = Map.of();
     private Set<String> mountOnly = Set.of();
     /** 異質技能（variant_of）→ 原本的技能（2026-10：同一系列的技能面板上只能放一個）。 */
     private Map<String, String> variants = Map.of();
@@ -121,6 +123,7 @@ public final class SkillConfig {
         final Map<String, java.util.List<String>> parsedCommands = new HashMap<>(); // 2026-10：指令型召喚物技能
         final Map<String, Double> parsedParent = new HashMap<>();
         final Map<String, Mounts.Spec> parsedMounts = new HashMap<>();
+        final Map<String, BarrageSpec> parsedBarrages = new HashMap<>();
         final Set<String> parsedMountOnly = new java.util.HashSet<>();
         final YamlNode section = root.node("skills");
         final Map<String, String> starters = new HashMap<>();
@@ -158,6 +161,13 @@ public final class SkillConfig {
             }
             if (node.bool("requires_mount", false)) {
                 parsedMountOnly.add(id);
+            }
+            final BarrageSpec barrage = BarrageSpec.parse(node);
+            if (barrage != null) {
+                if (definition.mechanic() != Mechanic.GUARD) {
+                    throw new IllegalArgumentException(node.path() + ".barrage：只有增益技能（mechanic: guard）能寫");
+                }
+                parsedBarrages.put(id, barrage);
             }
             if (node.has("parent_damage")) {
                 final double share = node.decimal("parent_damage", 0);
@@ -251,6 +261,7 @@ public final class SkillConfig {
         this.commands = Map.copyOf(parsedCommands);
         this.parentDamage = Map.copyOf(parsedParent);
         this.mountSpecs = Map.copyOf(parsedMounts);
+        this.barrages = Map.copyOf(parsedBarrages);
         this.mountOnly = Set.copyOf(parsedMountOnly);
         this.variants = Map.copyOf(variantMap);
         this.missingDefaults = List.copyOf(missing);
@@ -411,6 +422,11 @@ public final class SkillConfig {
     /** 坐騎技能叫出的坐騎（不是回傳 null）。 */
     public Mounts.Spec mount(final String id) {
         return id == null ? null : mountSpecs.get(id);
+    }
+
+    /** 連珠（2026-10）：這個增益技能讓下一次弓／矛的投射物攻擊重複的設定（不是回傳 null）。 */
+    public BarrageSpec barrage(final String id) {
+        return id == null ? null : barrages.get(id);
     }
 
     /** 要騎在坐騎上才能放的技能。 */

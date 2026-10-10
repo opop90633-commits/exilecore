@@ -69,6 +69,13 @@ public final class ItemRenderer {
     }
 
     /** 接上星籤的查詢（代號 → 通貨定義）。 */
+    /** 藥劑、護符畫完詞綴之後的補畫（FlaskModule 接上：名稱前面的藥劑說明、充能條、藥水顏色）。 */
+    private java.util.function.BiConsumer<ItemStack, ItemData> flaskDecorator;
+
+    public void setFlaskDecorator(final java.util.function.BiConsumer<ItemStack, ItemData> decorator) {
+        this.flaskDecorator = decorator;
+    }
+
     public void setOmens(final java.util.function.Function<String, tw.exilecore.currency.CurrencyType> omens) {
         this.omens = omens;
     }
@@ -124,7 +131,9 @@ public final class ItemRenderer {
             meta.displayName(name);
             meta.lore(lore);
             meta.getPersistentDataContainer().set(RENDER_KEY, PersistentDataType.INTEGER, RENDER_VERSION);
-            meta.setUnbreakable(true);
+            if (!base.isFlaskLike()) {
+                meta.setUnbreakable(true); // 藥劑、護符的充能畫在耐久條上
+            }
             meta.setMaxStackSize(1);
             meta.setAttributeModifiers(HashMultimap.create());
             meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ENCHANTS,
@@ -138,9 +147,34 @@ public final class ItemRenderer {
                 }
             }
         });
+        if (base.isFlaskLike() && flaskDecorator != null) {
+            flaskDecorator.accept(stack, data); // 2026-10：藥劑、護符自己的說明、充能、顏色
+        }
+    }
+
+    /** 藥劑、護符：只畫詞綴那一段（前面的說明由 FlaskService 補）。 */
+    private List<Component> buildFlaskLore(final ItemData data) {
+        final List<Component> lore = new ArrayList<>();
+        if (!data.identified()) {
+            lore.add(line("<#9a9ad0>未鑑定"));
+            return lore;
+        }
+        if (!data.affixes().isEmpty()) {
+            lore.add(line(SEPARATOR));
+            final List<ItemStats.AffixLine> affixLines = ItemStats.affixLines(repository, data);
+            lore.add(line(affixSlots(data, affixLines)));
+            for (final ItemStats.AffixLine affixLine : affixLines) {
+                lore.add(line(affixTag(affixLine.type()) + "<" + (affixLine.type() == AffixType.PREFIX ? PREFIX_COLOR : SUFFIX_COLOR) + ">"
+                        + affixLine.ranged() + AffixChips.miniMessage(affixLine.chips())));
+            }
+        }
+        return lore;
     }
 
     private List<Component> buildLore(final ItemBase base, final ItemData data, final ItemStats.Snapshot snapshot) {
+        if (base.isFlaskLike()) {
+            return buildFlaskLore(data);
+        }
         final List<Component> lore = new ArrayList<>();
         final String color = data.rarity().color();
 
@@ -305,6 +339,11 @@ public final class ItemRenderer {
         if (base.isJewel()) {
             lore.add(line(SEPARATOR));
             lore.add(line("<gray>放進天賦樹的<" + base.jewelColor() + ">珠寶孔</" + base.jewelColor() + ">（/tree，配了孔位再點它）"));
+            if (base.isRadiusJewel()) {
+                // 2026-10：遺時珠寶：詞綴作用在珠寶孔周圍已配置的天賦上
+                lore.add(line("<#ffd27f>遺時珠寶<gray>：珠寶孔周圍 <white>" + (int) tw.exilecore.passive.JewelSockets.radiusOf(ItemStats.modifiers(repository, data))
+                        + "</white> 格內已配置的每個小天賦都多給「範圍內的小天賦也各給」那幾條"));
+            }
             if (!data.identified()) {
                 lore.add(line("<dark_gray>要先鑑定才能放"));
             }

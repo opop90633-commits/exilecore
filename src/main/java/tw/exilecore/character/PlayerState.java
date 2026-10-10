@@ -80,6 +80,9 @@ public final class PlayerState {
     private long sessionStartMillis = System.currentTimeMillis();
     private String notice;
     private long noticeExpiresTick;
+    /** 守護（2026-10，PoE2）：護符觸發時拿到的一層額外血，效果期間先替你吃掉傷害，到期就消失。 */
+    private double guard;
+    private long guardExpiresTick;
     /** 入場保護的落點（傳送進地圖、傳送到檢查點之後還沒移動）；null 表示沒有保護。見 {@link EntryGrace}。 */
     private Location safeSpot;
 
@@ -447,31 +450,46 @@ public final class PlayerState {
         return life <= 0;
     }
 
-    /** 2026-10：上一次被擊中的 tick（「最近被擊中」的裝備條件）。 */
-    private long lastHitTick = -1_000_000L;
-    /** 屬性表裡有沒有「最近被擊中」條件的詞綴；上一次算屬性表時「最近被擊中」是不是成立。 */
-    private boolean hitConditions;
-    private boolean hitRecentlyEvaluated;
+    /**
+     * 2026-10：「最近…」的事件（PoE2 的 recently = 4 秒內）：事件名 → 上一次發生的 tick。
+     * 裝備、珠寶的條件詞綴（屬性代號後面接 {@code @事件} 或 {@code @no事件}，例如 {@code evasion@nohit}、{@code damage@projhit}）看這個。
+     * 事件名見 {@link tw.exilecore.stats.Recently}。
+     */
+    private final Map<String, Long> recent = new HashMap<>();
+    /** 上一次算屬性表時各條件的結果（條件 → 成立與否）；空的表示屬性表裡沒有條件詞綴。 */
+    private Map<String, Boolean> conditionsEvaluated = Map.of();
 
+    /** 記下事件剛發生（「最近…」的條件）。 */
+    public void markRecent(final String event, final long tick) {
+        recent.put(event, tick);
+    }
+
+    /** 這個事件最近（4 秒內）發生過嗎。 */
+    public boolean recently(final String event, final long currentTick) {
+        final Long tick = recent.get(event);
+        return tick != null && currentTick - tick <= tw.exilecore.stats.StatKeys.RECENTLY_TICKS;
+    }
+
+    /** 上一次被擊中的 tick（舊介面：等同事件 hit）。 */
     public long lastHitTick() {
-        return lastHitTick;
+        return recent.getOrDefault(tw.exilecore.stats.Recently.HIT, -1_000_000L);
     }
 
     public void setLastHitTick(final long tick) {
-        this.lastHitTick = tick;
+        markRecent(tw.exilecore.stats.Recently.HIT, tick);
     }
 
+    /** 屬性表裡有沒有條件詞綴。 */
     public boolean hitConditions() {
-        return hitConditions;
+        return !conditionsEvaluated.isEmpty();
     }
 
-    public void setHitConditions(final boolean conditions, final boolean evaluated) {
-        this.hitConditions = conditions;
-        this.hitRecentlyEvaluated = evaluated;
+    public Map<String, Boolean> conditionsEvaluated() {
+        return conditionsEvaluated;
     }
 
-    public boolean hitRecentlyEvaluated() {
-        return hitRecentlyEvaluated;
+    public void setConditionsEvaluated(final Map<String, Boolean> evaluated) {
+        this.conditionsEvaluated = evaluated.isEmpty() ? Map.of() : Map.copyOf(evaluated);
     }
 
     public long lastDamageTick() {
@@ -527,6 +545,34 @@ public final class PlayerState {
             notice = null;
         }
         return notice;
+    }
+
+    /** 給一層守護：amount 點、到 expiresTick 為止（已經有的話取比較多的那個、比較晚的到期）。 */
+    public void addGuard(final double amount, final long expiresTick) {
+        if (amount <= 0) {
+            return;
+        }
+        this.guard = Math.max(guard(expiresTick - 1), amount);
+        this.guardExpiresTick = Math.max(guardExpiresTick, expiresTick);
+    }
+
+    /** 現在還剩多少守護（到期是 0）。 */
+    public double guard(final long currentTick) {
+        if (guard > 0 && currentTick > guardExpiresTick) {
+            guard = 0;
+        }
+        return guard;
+    }
+
+    /** 守護吃掉傷害：回傳吃掉多少。 */
+    public double absorbGuard(final double damage, final long currentTick) {
+        final double available = guard(currentTick);
+        if (available <= 0 || damage <= 0) {
+            return 0;
+        }
+        final double absorbed = Math.min(available, damage);
+        guard = available - absorbed;
+        return absorbed;
     }
 
     /** 入場保護中：傳送進來還沒移動，不會受傷、怪物不會盯上。 */

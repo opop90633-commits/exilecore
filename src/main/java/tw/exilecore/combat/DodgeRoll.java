@@ -98,11 +98,14 @@ public final class DodgeRoll implements Listener {
         if (direction.lengthSquared() < 1e-6) {
             return;
         }
-        direction.normalize().multiply(player.isOnGround() ? SPEED : SPEED * 0.6);
+        // 2026-10：翻滾距離（PoE2 鞋子的褻瀆詞綴）：衝刺的速度照比例放大，最多兩倍
+        final double distance = Math.max(0.5, Math.min(2, 1 + plugin.players().sheet(player).increased(tw.exilecore.stats.StatKeys.DODGE_DISTANCE, java.util.Set.of())));
+        direction.normalize().multiply((player.isOnGround() ? SPEED : SPEED * 0.6) * distance);
         direction.setY(player.isOnGround() ? 0.12 : Math.max(-0.2, player.getVelocity().getY()));
         player.setVelocity(direction);
         player.setSprinting(false);
         rolledAt.put(player.getUniqueId(), now);
+        plugin.players().get(player).markRecent(tw.exilecore.stats.Recently.DODGE, now); // 「最近翻滾過」
         final Location at = player.getLocation().add(0, 0.3, 0);
         player.getWorld().spawnParticle(Particle.CLOUD, at, 8, 0.3, 0.1, 0.3, 0.02);
         player.getWorld().playSound(at, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5f, 1.6f);

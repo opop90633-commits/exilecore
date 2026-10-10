@@ -12,7 +12,7 @@
 # mechanic   運作方式，參數寫在同名的區塊：
 #              strike      近戰打擊：reach 距離、angle 扇形角度、targets 最多幾個（0 = 全部）、knockback 擊退、
 #                          execute: { below: 0.35, more: 150 } 處決（目標生命低於 35% 時更多 150% 傷害）
-#              projectile  投射物：count 數量、spread 扇形角度（360 = 平均分一整圈）、speed 每 tick 幾格、range 射程、size 碰撞半徑、
+#              projectile  投射物：count 數量、spread 扇形角度（360 = 平均分一整圈；沒寫 spread 的單發技能多了投射物時不張成扇形，沿同一條線前後連發）、speed 每 tick 幾格、range 射程、size 碰撞半徑、
 #                          pierce 穿透、explode 爆炸半徑、wobble 亂竄角度、arrow 用原版箭矢（弓、弩）、
 #                          gravity 每 tick 往下掉幾格（拋物線）、fuse 幾秒後自己炸（榴彈：不直接打敵人、碰到方塊會彈）、
 #                          blink: true 停下來的地方施放者瞬移過去、
@@ -46,7 +46,7 @@
 #                          召喚物只吃主人身上帶 minion 標籤的修飾器（「增加 x% 召喚物傷害」）與掛在技能上的輔助寶石
 #              aura        光環：參數寫在 aura 區塊（技能自己不造成傷害、mana 寫 0）：綁在上方按鍵格就一直開著（2026-10，不用按）。
 #                          reserve 保留多少精魂（2026-10 改版：光環改吃精魂，不再保留魔力；全部光環加起來不能超過你的最大精魂）、
-#                          radius 隊友在幾格內有效、allies: false 只給自己（與召喚物）、
+#                          radius 隊友在幾格內有效、allies: false 只給自己（2026-10：召喚物也沒有；給隊友的光環才會給你的召喚物）、
 #                          effects: [ { stat, type, value: [等級 1, 等級 20], tags } ] 效果（寫法跟輔助寶石一樣，value 可以隨等級）、
 #                          on_kill: { skill: 隱藏技能代號, chance: 100 } 使者：擊殺時從屍體的位置放那個隱藏技能（用使者的等級與輔助）。
 #                          開著的光環記在角色進度，重新登入會開回來；寶石拿出面板就關掉
@@ -877,6 +877,11 @@ skills:
   # 自己每秒也受到最大生命＋能量護盾 burn.self% 的火焰傷害（火焰抗性減免；在營地不燒）。只對自己有效（allies 預設 false）。
 
   # ---- 捷光環（2026-10：拿掉 aura 標籤，自動加 herald；光環的輔助、光環效果不吃，保留效率的加成照吃）：擊殺時觸發效果的光環（效果是隱藏技能，用使者的等級與輔助）----
+  # 2026-10（照 PoE2）觸發條件，寫在 on_kill 裡（都不寫 = 殺死就觸發）：
+  #   attack: true     最後一擊要是你自己的攻擊擊中（法術、持續傷害、召喚物、捷自己的效果打死的不算）
+  #   ailment: shock   死的時候身上要有這種異常：ignite、chill、freeze、shock、bleed、poison、stun、electrocute
+  #   overkill: 20     過量擊殺：最後一擊多打出來的傷害至少是牠最大生命的 20%（一定要是你自己的攻擊擊中）
+  #   燼使 = 攻擊過量擊殺 20%；雷使 = 攻擊殺死感電中的；霜使 = 攻擊殺死凍結中的；血宣 = 殺死流血中的；疫使 = 殺死中毒中的
 
   # 2026-10：夥伴（照 PoE2 的馴獸夥伴，名稱是自己的）：綁在上方按鍵格就開著，保留精魂，一直跟著你打；死了 8 秒後再出來，營地裡收起來
   beast_companion:
@@ -902,7 +907,7 @@ skills:
 
   herald_of_ash:
     name: 燼使
-    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你殺死敵人時屍體炸開一圈火焰，很容易點燃附近的敵人。保留 30 精魂。
+    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你用攻擊「過量擊殺」敵人（最後一擊多打出牠最大生命 20% 以上的傷害）時，屍體炸開一圈火焰，很容易點燃附近的敵人。保留 30 精魂。
     icon: MAGMA_CREAM
     type: spell
     tier: 3
@@ -912,7 +917,7 @@ skills:
       reserve: 30
       radius: 8
       allies: false
-      on_kill: { skill: herald_ash_burst, chance: 100 }
+      on_kill: { skill: herald_ash_burst, chance: 100, attack: true, overkill: 20 }   # 2026-10：照 PoE2 的 Herald of Ash
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -935,7 +940,7 @@ skills:
 
   herald_of_thunder:
     name: 雷使
-    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你殺死敵人時屍體竄出一道閃電連鎖到附近的敵人（會感電）。保留 30 精魂。
+    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你用攻擊殺死「感電中」的敵人時，屍體竄出一道閃電連鎖到附近的敵人（會感電）。保留 30 精魂。
     icon: COPPER_INGOT
     type: spell
     tier: 3
@@ -945,7 +950,7 @@ skills:
       reserve: 30
       radius: 8
       allies: false
-      on_kill: { skill: herald_thunder_bolt, chance: 100 }
+      on_kill: { skill: herald_thunder_bolt, chance: 100, attack: true, ailment: shock }   # 2026-10：照 PoE2 的 Herald of Thunder
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -968,7 +973,7 @@ skills:
 
   herald_of_ice:
     name: 霜使
-    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你殺死敵人時屍體碎成一圈冰霜爆炸（會冰緩）。保留 30 精魂。
+    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你用攻擊殺死「凍結中」的敵人時，屍體碎成一圈冰霜爆炸（會冰緩）。保留 30 精魂。
     icon: BLUE_ICE
     type: spell
     tier: 3
@@ -978,7 +983,7 @@ skills:
       reserve: 30
       radius: 8
       allies: false
-      on_kill: { skill: herald_ice_shatter, chance: 100 }
+      on_kill: { skill: herald_ice_shatter, chance: 100, attack: true, ailment: freeze }   # 2026-10：照 PoE2 的 Herald of Ice
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -1855,14 +1860,14 @@ skills:
   # -- 常駐（精魂） --
   frost_aegis:
     name: 凜冬之殼
-    description: 常駐：身上結一層冰甲，護甲提高、受到的火焰傷害吃得少一點。範圍內的隊友也有效果。保留 25 精魂。
+    description: 常駐：身上結一層冰甲，護甲提高、受到的火焰傷害吃得少一點。範圍內的隊友也有效果。保留 30 精魂。
     icon: PACKED_ICE
     type: spell
     tier: 5
     tags: [spell, cold]
     mechanic: aura
     aura:
-      reserve: 25
+      reserve: 30          # 2026-10：25 → 30（照 PoE2 的 Arctic Armour）
       radius: 8
       allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
       effects:
@@ -2626,7 +2631,7 @@ skills:
   # -- 常駐（精魂） --
   battle_rage:
     name: 狂戰之怒
-    description: 常駐：近戰打中時獲得怒氣，怒氣上限更高、效果更強；但受到的傷害稍微增加。保留 30 精魂。
+    description: 常駐：近戰打中時獲得怒氣，怒氣上限更高、效果更強。保留 30 精魂。
     icon: BLAZE_POWDER
     type: spell
     tier: 7
@@ -2647,7 +2652,8 @@ skills:
 
   storm_staff:
     name: 雷縛長棍
-    description: 常駐：攻擊的物理傷害一部分額外附加為閃電，容易感電。保留 30 精魂。
+    description: 常駐（要拿長棍）：攻擊的物理傷害一部分額外附加為閃電，容易感電。保留 30 精魂。
+    weapons: [quarterstaff]      # 2026-10：PoE2 的原型（Charged Staff）是長棍技能；以前什麼武器都能開，召喚流、弓手順手就開
     icon: LIGHTNING_ROD
     type: spell
     tier: 5
@@ -2667,7 +2673,8 @@ skills:
 
   ruin_mantra:
     name: 崩滅心咒
-    description: 常駐：你造成的傷害更高，暈眩累積更多。範圍內的隊友也有效果。保留 40 精魂。
+    description: 常駐（要拿長棍）：你造成的傷害更高，暈眩累積更多。保留 40 精魂。
+    weapons: [quarterstaff]      # 2026-10：PoE2 的原型（Mantra of Destruction）是長棍技能；以前不限武器，是每個流派都拿的「更多傷害」
     icon: NETHER_STAR
     type: spell
     tier: 9
@@ -2676,7 +2683,7 @@ skills:
     aura:
       reserve: 40
       radius: 8
-      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      allies: false   # 2026-10：改回只給自己（PoE2 的常駐增益只作用在角色自己身上；分給隊友時每個隊友、每一隻召喚物都疊一份）
       effects:
         - { stat: damage, type: MORE, value: [8, 15] }
         - { stat: stun.buildup, type: INCREASED, value: [15, 30] }
@@ -2687,7 +2694,7 @@ skills:
 
   attrition:
     name: 磨蝕之志
-    description: 常駐：對稀有、傳奇怪物與 Boss 造成的傷害增加。範圍內的隊友也有效果。保留 30 精魂。
+    description: 常駐：對稀有、傳奇怪物與 Boss 造成的傷害增加。保留 30 精魂。
     icon: CLOCK
     type: spell
     tier: 7
@@ -2696,7 +2703,7 @@ skills:
     aura:
       reserve: 30
       radius: 8
-      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      allies: false   # 2026-10：改回只給自己（PoE2 的常駐增益只作用在角色自己身上；分給隊友時每個隊友、每一隻召喚物都疊一份）
       effects:
         - { stat: damage.vs_rare, type: INCREASED, value: [15, 30] }
     cast_time: 0.5
@@ -3240,7 +3247,8 @@ skills:
     visual: intimidating_cry
   lunar_blessing:
     name: 銀月庇
-    description: 精魂技能：月光一直灑在你身上，攻擊的物理傷害一部分額外附加為冰冷，暴擊率增加。範圍內的隊友也有效果。保留 30 精魂。
+    description: 精魂技能（要拿獸魂符）：月光一直灑在你身上，攻擊的物理傷害一部分額外附加為冰冷，暴擊率增加。保留 30 精魂。
+    weapons: [talisman]          # 2026-10：PoE2 的原型（Lunar Blessing）是獸魂符的技能；以前不限武器
     icon: END_CRYSTAL
     type: spell
     tier: 13
@@ -3249,7 +3257,7 @@ skills:
     aura:
       reserve: 30
       radius: 8
-      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      allies: false   # 2026-10：改回只給自己（PoE2 的常駐增益只作用在角色自己身上；分給隊友時每個隊友、每一隻召喚物都疊一份）
       effects:
         - { stat: damage.gain.cold, type: FLAT, value: [10, 20], tags: [attack] }
         - { stat: crit.chance, type: INCREASED, value: [20, 40] }
@@ -3469,7 +3477,7 @@ skills:
     visual: aura_armour
   savage_fury:
     name: 獸血沸
-    description: 精魂技能：野性一直沸騰，攻擊速度與移動速度增加，但受到的傷害稍微增加。保留 30 精魂。
+    description: 精魂技能：你的攻擊擊中敵人會累積獸性（最多 20 點）。滿了而且你在獸形（熊、狼人、飛龍）時自動爆發成 10 秒的狂暴：傷害更多、獲得疾速，但每秒失去 3% 最大生命，而且一直維持獸形。保留 30 精魂。
     icon: BLAZE_POWDER
     type: spell
     tier: 7
@@ -3479,9 +3487,18 @@ skills:
       reserve: 30
       radius: 8
       allies: false
-      effects:
-        - { stat: attack.speed, type: INCREASED, value: [10, 20] }
-        - { stat: movement.speed, type: INCREASED, value: [5, 10] }
+      # 2026-10：照 PoE2 的 Savage Fury（以前是一直有的攻擊速度 10～20%、移動速度 5～10%，沒有代價）。
+      # 攻擊擊中累積獸性（一次技能 1 點，最多 max 點），滿了而且在獸形就爆發：持續 max × seconds_per 秒，
+      # 得到 effects 與疾速（攻擊、施法、移動 +20%），每秒失去最大生命 life_loss%（扣不死：剩 1 點時狂暴結束；營地不扣）。
+      # form: true = 要在獸形才爆發，狂暴中一直維持獸形。PoE2 是按技能爆發，這裡的常駐技能沒有按鍵，所以滿了自動爆發。
+      fury:
+        max: 20
+        seconds_per: 0.5
+        life_loss: 3
+        onslaught: true
+        form: true
+        effects:
+          - { stat: damage, type: MORE, value: [20, 29] }
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -3764,7 +3781,7 @@ skills:
 
   herald_of_blood:
     name: 血宣
-    description: 捷光環：開著的時候，你殺死敵人時屍體爆出一圈血，傷害附近的敵人並容易流血。保留 30 精魂。
+    description: 捷光環：開著的時候，你殺死「流血中」的敵人時屍體爆出一圈血，傷害附近的敵人並容易流血。保留 30 精魂。
     icon: REDSTONE_BLOCK
     type: spell
     tier: 4
@@ -3774,7 +3791,7 @@ skills:
       reserve: 30
       radius: 8
       allies: false
-      on_kill: { skill: herald_blood_burst, chance: 100 }
+      on_kill: { skill: herald_blood_burst, chance: 100, ailment: bleed }   # 2026-10：照 PoE2 的 Herald of Blood（不用是攻擊）
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -3797,7 +3814,7 @@ skills:
 
   berserk:
     name: 赤怒
-    description: 精魂技能：怒氣的效果大幅提高。保留 30 精魂。
+    description: 精魂技能：怒氣的效果大幅提高；代價是怒氣沒有在消退的時候，每 1 點怒氣每秒讓你失去 0.1% 最大生命（30 點怒氣 = 每秒 3%）。保留 30 精魂。
     icon: NETHER_WART
     type: spell
     tier: 13
@@ -3808,7 +3825,10 @@ skills:
       radius: 8
       allies: false
       effects:
-        - { stat: rage.effect, type: INCREASED, value: [30, 60] }
+        - { stat: rage.effect, type: INCREASED, value: [40, 59] }   # 2026-10：30～60 → 40～59（照 PoE2 的 Berserk）
+      # 2026-10：照 PoE2 的 Berserk 加上代價：怒氣「沒有在消退」的時候，每 1 點怒氣每秒失去最大生命 per_rage%。
+      # 直接扣生命（不經過能量護盾）；扣不死，剩 1 點時效果暫停，回到 10% 以上繼續；營地不扣。percent 可以另外寫固定的每秒 %。
+      life_cost: { per_rage: 0.1 }
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -3816,14 +3836,14 @@ skills:
 
   overwhelming_presence:
     name: 鎮懾
-    description: 精魂技能：你的擊中更容易暈眩敵人，也更容易造成點燃、凍結與感電。範圍內的隊友也有效果。保留 60 精魂。
+    description: 精魂技能：你的擊中更容易暈眩敵人，也更容易造成點燃、凍結與感電。範圍內的隊友也有效果。保留 30 精魂。
     icon: GOAT_HORN
     type: spell
     tier: 8
     tags: [spell]
     mechanic: aura
     aura:
-      reserve: 60
+      reserve: 30          # 2026-10：60 → 30（照 PoE2 的 Overwhelming Presence）
       radius: 8
       allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
       effects:
@@ -3916,6 +3936,40 @@ skills:
     cooldown: 8
     mana: [4, 9]
     visual: ice_shot
+
+  # 2026-10：連珠（照 PoE2 的 Barrage，名稱是自己的）。增益型：放了之後下一次「弓或矛的投射物攻擊」自動重複。
+  #   barrage 區塊（只有 mechanic: guard 的技能能寫；增益撐幾秒寫在 guard.duration）：
+  #     repeats               重複幾次（不含原本那一次）
+  #     charge / per_charge   施放時用掉身上全部的這種戰星，每顆多重複幾次（最多總共 12 次）
+  #     less                  每次重複少幾 % 傷害
+  #     gap                   每次重複隔幾秒（重複的時候不能做別的）
+  #     cooldown_attack_time  增益用掉之後，冷卻 = cooldown ＋ 被強化那一招攻擊時間的這個 %（1 級 → 20 級），最多 max_cooldown 秒
+  #   每次重複都是重新射一次：不花魔力、可以再打到同一個敵人（跟「多一支投射物」不一樣）。
+  #   有冷卻的攻擊、引導技能、自己就會重複的技能不能被強化。魔力照伺服器的尺度（PoE2 是 11～51）。
+  linked_volley:
+    name: 連珠
+    description: 搭好連珠的架勢：五秒內你下一次弓或矛的投射物攻擊會自動重複兩次，每次重複少 50% 傷害，但都能再打到同一個敵人。施放時用掉身上全部的怒星，每顆多重複一次。用掉之後要冷卻一陣子（跟那一招的攻擊時間有關）。
+    icon: SPECTRAL_ARROW
+    type: spell
+    tier: 5
+    tags: [duration]
+    weapons: [bow, spear]
+    mechanic: guard
+    guard:
+      duration: 5
+      slow: 0
+    barrage:
+      repeats: 2
+      charge: frenzy
+      per_charge: 1
+      less: 50
+      gap: 0.2
+      cooldown_attack_time: [600, 410]
+      max_cooldown: 30
+    cast_time: 0.7
+    cooldown: 2
+    mana: [6, 14]
+    visual: rapid_fire
 
   emergency_reload:
     name: 急裝
@@ -4034,14 +4088,14 @@ skills:
 
   eternal_rage:
     name: 不熄怒
-    description: 精魂技能：怒氣一直湧上來，擊中時多獲得怒氣，怒氣上限增加。保留 45 精魂。
+    description: 精魂技能：怒氣一直湧上來，擊中時多獲得怒氣，怒氣上限增加。保留 100 精魂。
     icon: BLAZE_POWDER
     type: spell
     tier: 14
     tags: [spell]
     mechanic: aura
     aura:
-      reserve: 45
+      reserve: 100         # 2026-10：45 → 100（照 PoE2 的 Eternal Rage）
       radius: 8
       allies: false
       effects:
@@ -4980,14 +5034,14 @@ skills:
 
   mirage_archer:
     name: 幻弓影
-    description: 精魂技能：身旁跟著一個弓手幻影，你用弓攻擊時它過一下也射一次（傷害少 60%）。保留 45 精魂。
+    description: 精魂技能：身旁跟著一個弓手幻影，你用弓攻擊時它過一下也射一次（傷害少 60%）。保留 60 精魂。
     icon: SPECTRAL_ARROW
     type: spell
     tier: 11
     tags: [spell]
     mechanic: aura
     aura:
-      reserve: 45
+      reserve: 60          # 2026-10：45 → 60（照 PoE2 的 Mirage Archer）
       radius: 8
       allies: false
       effects:
@@ -5098,16 +5152,16 @@ skills:
 
   combat_frenzy:
     name: 戰意昂揚
-    description: 精魂技能：開著的時候攻擊速度增加、攻擊傷害增加。範圍內的隊友也有效果。保留 60 精魂。
+    description: 精魂技能：開著的時候攻擊速度增加、攻擊傷害增加。保留 30 精魂。
     icon: SUGAR
     type: spell
     tier: 5
     tags: [spell]
     mechanic: aura
     aura:
-      reserve: 60
+      reserve: 30          # 2026-10：60 → 30（照 PoE2 的 Combat Frenzy）
       radius: 8
-      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      allies: false   # 2026-10：改回只給自己（PoE2 的常駐增益只作用在角色自己身上；分給隊友時每個隊友、每一隻召喚物都疊一份）
       effects:
         - { stat: attack.speed, type: INCREASED, value: [8, 15] }
         - { stat: damage, type: INCREASED, value: [10, 20], tags: [attack] }
@@ -5118,7 +5172,7 @@ skills:
 
   archmage:
     name: 祕法之心
-    description: 精魂技能：開著的時候法術傷害增加，但技能的魔力消耗也增加 25%。保留 100 精魂。
+    description: 精魂技能：開著的時候，你每有 100 點最大魔力，法術就獲得 2% 傷害為額外的閃電傷害；代價是每次施放法術多花最大魔力的 8%（技能 20 級時 6.1%）。引導技能不算。保留 100 精魂。
     icon: LAPIS_LAZULI
     type: spell
     tier: 5
@@ -5128,9 +5182,14 @@ skills:
       reserve: 100
       radius: 8
       allies: false
+      # 2026-10：照 PoE2 的 Archmage 重做（以前是增加 20～39% 法術傷害、魔力消耗增加 25%）。
+      #   damage.extra_per_mana.lightning：每 100 點最大魔力，獲得 x% 傷害為額外的閃電傷害。PoE2 是 4%，這裡砍半成 2%——
+      #     伺服器堆魔力的角色有 3,900 魔力，照 4% 會是額外 156%；2% 是 78%，一般法師（800～1,400）是 16～28%。
+      #   skill.cost_max_mana：每次施放多花最大魔力的 x%（1 級 8% → 20 級 6.1%，跟 PoE2 一樣；加在基礎消耗上，再乘輔助的魔力消耗倍率）。
+      #   兩條都只算法術；引導技能、本來不用魔力的技能不算。覺得代價太重就調 skill.cost_max_mana 的數字。
       effects:
-        - { stat: damage, type: INCREASED, value: [20, 39], tags: [spell] }
-        - { stat: skill.cost, type: INCREASED, value: 25 }
+        - { stat: damage.extra_per_mana.lightning, type: FLAT, value: 2, percent: false, tags: [spell] }
+        - { stat: skill.cost_max_mana, type: FLAT, value: [8, 6.1], percent: false, tags: [spell] }
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -5138,7 +5197,7 @@ skills:
 
   elemental_conflux:
     name: 元素潮汐
-    description: 精魂技能：開著的時候元素傷害增加。範圍內的隊友也有效果。保留 60 精魂。
+    description: 精魂技能：開著的時候元素傷害增加。保留 60 精魂。
     icon: PRISMARINE_CRYSTALS
     type: spell
     tier: 5
@@ -5147,7 +5206,7 @@ skills:
     aura:
       reserve: 60
       radius: 8
-      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      allies: false   # 2026-10：改回只給自己（PoE2 的常駐增益只作用在角色自己身上；分給隊友時每個隊友、每一隻召喚物都疊一份）
       effects:
         - { stat: damage, type: INCREASED, value: [15, 30], tags: [elemental] }
     cast_time: 0.5
@@ -5157,7 +5216,7 @@ skills:
 
   herald_of_plague:
     name: 疫使
-    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候物理傷害的一部分額外獲得為混沌傷害；你殺死敵人時，屍體爆出一圈瘟疫（一定中毒）。保留 30 精魂。
+    description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你殺死「中毒中」的敵人時屍體爆出一圈瘟疫，把毒傳給附近的敵人（一定中毒）。保留 30 精魂。
     icon: SPIDER_EYE
     type: spell
     tier: 3
@@ -5167,9 +5226,8 @@ skills:
       reserve: 30
       radius: 8
       allies: false
-      effects:
-        - { stat: damage.gain.chaos, type: FLAT, value: [10, 15] }
-      on_kill: { skill: herald_plague_burst, chance: 100 }
+      # 2026-10：拿掉「物理傷害的 10～15% 額外獲得為混沌」——PoE2 的 Herald of Plague 沒有這條，其他四個捷光環也都只有擊殺效果
+      on_kill: { skill: herald_plague_burst, chance: 100, ailment: poison }   # 2026-10：照 PoE2 的 Herald of Plague（不用是攻擊）
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -5264,7 +5322,7 @@ skills:
   charge_regulation:
     name: 馭星訣
     # PoE2 Charge Regulation：「照身上各種戰星給強力增益、定期消耗戰星」[需要程式]；先只做怒星的部分，戰星消散得更快當代價
-    description: 精魂技能：身上每顆怒星讓你的攻擊更多傷害與攻擊速度；但戰星消散得比較快。拿長棍或弩才有效。保留 60 精魂。
+    description: 精魂技能：身上每顆怒星讓你的攻擊更多傷害與攻擊速度；但戰星消散得比較快。拿長棍或弩才有效。保留 30 精魂。
     icon: NETHER_STAR
     type: spell
     tier: 14
@@ -5272,7 +5330,7 @@ skills:
     weapons: [quarterstaff, crossbow]
     mechanic: aura
     aura:
-      reserve: 60
+      reserve: 30          # 2026-10：60 → 30（照 PoE2 的 Charge Regulation）
       radius: 8
       allies: false
       effects:
@@ -5328,14 +5386,14 @@ skills:
   sacrifice:
     name: 僕骸替
     # PoE2 Sacrifice：召喚物可以當屍體用、復活變慢 [需要程式]；先做成「要屍體的技能」傷害增加
-    description: 精魂技能：要用屍體的技能（骸爆、喚屍…）傷害增加。保留 30 精魂。
+    description: 精魂技能：要用屍體的技能（骸爆、喚屍…）傷害增加。保留 60 精魂。
     icon: SKELETON_SKULL
     type: spell
     tier: 14
     tags: [spell]
     mechanic: aura
     aura:
-      reserve: 30
+      reserve: 60          # 2026-10：30 → 60（照 PoE2 的 Sacrifice）
       radius: 8
       allies: false
       effects:

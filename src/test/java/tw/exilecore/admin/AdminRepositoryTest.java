@@ -56,7 +56,7 @@ class AdminRepositoryTest {
 
     private static AdminRepository.NewDelivery row(final UUID account, final String name, final String kind, final long amount) {
         return new AdminRepository.NewDelivery(account, name, kind, kind.equals("currency") ? "zenith_orb" : null, null, 0, amount,
-                kind + " ×" + amount);
+                kind + " ×" + amount, null);
     }
 
     @Test
@@ -182,7 +182,7 @@ class AdminRepositoryTest {
         final String longLabel = "很長".repeat(200);
         final String emoji = "a".repeat(AdminRepository.NOTE_MAX - 1) + "😀";
         final List<Long> ids = database.sync(c -> repository.insert(c, "batch-long", List.of(new AdminRepository.NewDelivery(uuid,
-                "LongName", "item", "short_sword", "rare", 80, 1, longLabel)), emoji, "x".repeat(60)));
+                "LongName", "item", "short_sword", "rare", 80, 1, longLabel, null)), emoji, "x".repeat(60)));
         final AdminRepository.Delivery stored = database.sync(c -> repository.pending(c, uuid, 10)).get(0);
         assertEquals(ids.get(0), stored.id());
         assertEquals(AdminRepository.LABEL_MAX, stored.label().length(), "超過的切掉，不會寫不進去");

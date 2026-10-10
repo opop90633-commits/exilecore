@@ -217,6 +217,9 @@ public final class MapConfig {
     /** 一般地圖 Boss 的生命照階級再乘（maps.yml 的 settings.boss_tier_life；2026-10）：這一階（含）以下 ×1、最高階 ×max。 */
     private int bossTierLifeFrom = 16;
     private double bossTierLifeMax = 1.0;
+    /** 護盾結晶吃幾成的階級倍率（maps.yml 的 settings.shield_tier_share；2026-10）。 */
+    public static final double DEFAULT_SHIELD_TIER_SHARE = 0.5;
+    private double shieldTierShare = DEFAULT_SHIELD_TIER_SHARE;
     /** 其他終局 Boss（maps.yml 的 finals），依設定檔順序。 */
     private final Map<String, MapDef> extraFinals = new LinkedHashMap<>();
     /** 每個終局（含主要的那個）的額外設定。 */
@@ -338,6 +341,7 @@ public final class MapConfig {
         finalLevelBonus = DEFAULT_FINAL_LEVEL_BONUS;
         finalTierLifeFrom = DEFAULT_FINAL_TIER_LIFE_FROM;
         finalTierLifeMax = DEFAULT_FINAL_TIER_LIFE_MAX;
+        shieldTierShare = DEFAULT_SHIELD_TIER_SHARE;
         extraFinals.clear();
         finalInfos.clear();
         notes.clear();
@@ -354,6 +358,7 @@ public final class MapConfig {
         final YamlNode bossTierLife = s.node("boss_tier_life");
         bossTierLifeFrom = Math.max(1, bossTierLife.integer("from", 16));
         bossTierLifeMax = Math.max(1, Math.min(10, bossTierLife.decimal("max", 1.0)));
+        shieldTierShare = Math.max(0, Math.min(1, s.decimal("shield_tier_share", DEFAULT_SHIELD_TIER_SHARE)));
         final YamlNode packs = s.node("packs");
         settings = new Settings(parseTiers(s), Math.max(1, s.integer("instance_cap", 20)),
                 Math.max(1, s.integer("portals", 6)), Math.max(1, s.integer("idle_minutes", 15)),
@@ -823,6 +828,20 @@ public final class MapConfig {
     /** 一般地圖 Boss（不是終局）的生命照階級再乘幾倍（maps.yml 的 settings.boss_tier_life）。 */
     public double bossLifeMultiplier(final int tier) {
         return finalLifeMultiplier(tier, bossTierLifeFrom, bossTierLifeMax, tiers().max());
+    }
+
+    /**
+     * 護盾結晶的生命照階級再乘幾倍（2026-10）：Boss 的階級倍率 {@code bossMultiplier} 多出來的部分，結晶只吃
+     * settings.shield_tier_share 成（0 = 不跟著變硬、1 = 跟 Boss 一樣；預設 0.5：Boss ×7.8 時結晶 ×4.4）。
+     * 完全不吃的話高階的護盾兩三秒就破、限時與回血沒有作用；全吃又會變成輸出不夠的人一定打不破。
+     */
+    public double shieldLifeMultiplier(final double bossMultiplier) {
+        return shieldLifeMultiplier(bossMultiplier, shieldTierShare);
+    }
+
+    /** 同上的純計算（測試用）。 */
+    public static double shieldLifeMultiplier(final double bossMultiplier, final double share) {
+        return 1.0 + Math.max(0, bossMultiplier - 1.0) * Math.max(0, Math.min(1, share));
     }
 
     /** 同上的純計算（測試用）。 */

@@ -987,18 +987,18 @@ unveiled_d_amulet_es:
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
 
-# PoE2（Kurgal）：最近用投射物攻擊擊中過則增加 60–79% 近戰傷害；拿掉條件、數值六折
+# PoE2（Kurgal）：最近用投射物攻擊擊中過則增加 60–79% 近戰傷害（2026-10：條件系統做好了，照 PoE2 原值）
 unveiled_d_spear_melee:
   type: prefix
   group: unveiled_d_spear_melee
   spawn_tags: [spear]
   names: [淵刺的, 黯刺的]
-  text: "增加 {value}% 近戰傷害"
+  text: "最近用投射物攻擊擊中過敵人，則增加 {value}% 近戰傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [36, 47] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [25, 33] }
+    - { tier: 1, ilvl: 60, weight: 300, value: [70, 79] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [60, 69] }
   mods:
-    - { stat: damage, type: INCREASED, value: "{value}", tags: [melee] }
+    - { stat: damage@projhit, type: INCREASED, value: "{value}", tags: [melee] }
 
 # PoE2（Amanamu）：長杖
 unveiled_d_staff_chaos:
@@ -1970,3 +1970,187 @@ unveiled_j_attr_int:
     - { tier: 2, ilvl: 1, weight: 700, value: [1, 2] }
   mods:
     - { stat: attr.int, type: INCREASED, value: "{value}" }
+
+# 2026-10：PoE2 0.5 的褻瀆腰帶、鞋子詞綴（藥劑／護符充能、翻滾）→ 隱匿（RePoE AbyssModBelt*、AbyssModBoots*）。
+unveiled_d_belt_life_flask_minute:
+  type: prefix
+  group: unveiled_d_belt_life_flask_minute
+  spawn_tags: [belt]
+  names: [淵泉的, 黯泉的]
+  text: "生命藥劑每分鐘自動拿到 {value} 點充能"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 9] }
+  mods:
+    - { stat: flask.charges_per_minute.life, type: FLAT, value: "{value}" }
+
+unveiled_d_belt_mana_flask_minute:
+  type: prefix
+  group: unveiled_d_belt_mana_flask_minute
+  spawn_tags: [belt]
+  names: [淵湧的, 黯湧的]
+  text: "魔力藥劑每分鐘自動拿到 {value} 點充能"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 9] }
+  mods:
+    - { stat: flask.charges_per_minute.mana, type: FLAT, value: "{value}" }
+
+unveiled_d_belt_charm_minute:
+  type: prefix
+  group: unveiled_d_belt_charm_minute
+  spawn_tags: [belt]
+  names: [淵符的, 黯符的]
+  text: "護符每分鐘自動拿到 {value} 點充能"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 9] }
+  mods:
+    - { stat: charm.charges_per_minute, type: FLAT, value: "{value}" }
+
+unveiled_d_belt_flask_free:
+  type: prefix
+  group: unveiled_d_belt_flask_free
+  spawn_tags: [belt]
+  names: [淵酌的, 黯酌的]
+  text: "藥劑 {value}% 機率不消耗充能"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 14] }
+  mods:
+    - { stat: flask.free_chance, type: FLAT, value: "{value}" }
+
+unveiled_d_belt_charm_free:
+  type: prefix
+  group: unveiled_d_belt_charm_free
+  spawn_tags: [belt]
+  names: [淵佑的, 黯佑的]
+  text: "護符 {value}% 機率不消耗充能"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 14] }
+  mods:
+    - { stat: charm.free_chance, type: FLAT, value: "{value}" }
+
+# PoE2 是「翻滾的基礎距離 +1–2 公尺」；這裡翻滾是一段衝刺，換成距離增加 25–50%
+unveiled_d_boots_dodge:
+  type: suffix
+  group: unveiled_d_boots_dodge
+  spawn_tags: [boots]
+  names: [淵躍之, 黯躍之]
+  text: "增加 {value}% 翻滾距離"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [40, 50] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [25, 39] }
+  mods:
+    - { stat: dodge.distance, type: INCREASED, value: "{value}" }
+
+# ---- 2026-10：「最近…」條件的褻瀆詞綴（條件系統 Recently；RePoE AbyssMod*Recently） ----
+unveiled_d_shield_recharge_block:
+  type: suffix
+  group: unveiled_d_shield_recharge_block
+  spawn_tags: [shield]
+  names: [淵壁之, 黯壁之]
+  text: "最近格擋過，則增加 {value}% 能量護盾回充速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [46, 50] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [40, 45] }
+  mods:
+    - { stat: es.recharge@block, type: INCREASED, value: "{value}" }
+
+unveiled_d_ring_freeze_power:
+  type: prefix
+  group: unveiled_d_ring_freeze_power
+  spawn_tags: [ring]
+  names: [淵霜的, 黯霜的]
+  text: "最近消耗過暴擊球，則增加 {value}% 凍結累積"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+  mods:
+    - { stat: freeze.buildup@power, type: INCREASED, value: "{value}" }
+
+unveiled_d_ring_ignite_endurance:
+  type: prefix
+  group: unveiled_d_ring_ignite_endurance
+  spawn_tags: [ring]
+  names: [淵焰的, 黯焰的]
+  text: "最近消耗過耐力球，則增加 {value}% 點燃效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+  mods:
+    - { stat: ignite.magnitude@endurance, type: INCREASED, value: "{value}" }
+
+unveiled_d_ring_shock_frenzy:
+  type: prefix
+  group: unveiled_d_ring_shock_frenzy
+  spawn_tags: [ring]
+  names: [淵雷的, 黯雷的]
+  text: "最近消耗過狂怒球，則增加 {value}% 感電效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+  mods:
+    - { stat: shock.effect@frenzy, type: INCREASED, value: "{value}" }
+
+unveiled_d_belt_regen_flask:
+  type: prefix
+  group: unveiled_d_belt_regen_flask
+  spawn_tags: [belt]
+  names: [淵癒的, 黯癒的]
+  text: "生命藥劑效果中，增加 {value}% 生命回復速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+  mods:
+    - { stat: life.regen@lifeflask, type: INCREASED, value: "{value}" }
+
+unveiled_d_boots_cost_dodge:
+  type: suffix
+  group: unveiled_d_boots_cost_dodge
+  spawn_tags: [boots]
+  names: [淵步之, 黯步之]
+  text: "最近翻滾過，則減少 {value}% 技能魔力消耗"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [11, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 10] }
+  mods:
+    - { stat: skill.cost@dodge, type: INCREASED, value: "-{value}" }
+
+unveiled_d_jewellery_minion_hit:
+  type: prefix
+  group: unveiled_d_jewellery_minion_hit
+  spawn_tags: [ring, amulet]
+  names: [淵僕的, 黯僕的]
+  text: "最近擊中過敵人，則增加 {value}% 召喚物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [21, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [15, 20] }
+  mods:
+    - { stat: damage@enemyhit, type: INCREASED, value: "{value}", tags: [minion] }
+
+unveiled_d_talisman_minion_hit:
+  type: prefix
+  group: unveiled_d_talisman_minion_hit
+  spawn_tags: [talisman]
+  names: [淵僕的, 黯僕的]
+  text: "最近擊中過敵人，則增加 {value}% 召喚物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [70, 79] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [60, 69] }
+  mods:
+    - { stat: damage@enemyhit, type: INCREASED, value: "{value}", tags: [minion] }
+
+unveiled_d_gloves_speed_frenzy:
+  type: suffix
+  group: unveiled_d_gloves_speed_frenzy
+  spawn_tags: [leggings]
+  names: [淵疾之, 黯疾之]
+  text: "最近消耗過狂怒球，則增加 {value}% 攻擊速度與施放速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [11, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 10] }
+  mods:
+    - { stat: attack.speed@frenzy, type: INCREASED, value: "{value}" }
+    - { stat: cast.speed@frenzy, type: INCREASED, value: "{value}" }

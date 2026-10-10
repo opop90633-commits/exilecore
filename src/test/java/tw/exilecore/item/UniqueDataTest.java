@@ -98,7 +98,10 @@ class UniqueDataTest {
                 final Affix affix = repository.affix(affixId);
                 assertNotNull(affix, affixId);
                 for (final AffixMod mod : affix.mods()) {
-                    assertTrue(stats.contains(mod.stat()), affixId + "：不認得的屬性 " + mod.stat());
+                    if (tw.exilecore.stats.Recently.hasCondition(mod.stat())) {
+                        assertNotNull(tw.exilecore.stats.Recently.condition(mod.stat()), affixId + "：不認得的條件 " + mod.stat());
+                    }
+                    assertTrue(stats.contains(tw.exilecore.stats.Recently.stat(mod.stat())), affixId + "：不認得的屬性 " + mod.stat());
                     for (final String tag : mod.tags()) {
                         assertTrue(tags.contains(tag), affixId + "：不認得的標籤 " + tag);
                     }

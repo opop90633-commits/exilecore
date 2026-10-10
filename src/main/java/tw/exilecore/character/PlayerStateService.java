@@ -163,7 +163,17 @@ public final class PlayerStateService {
         final List<Modifier> passiveModifiers = attributeChoices(state, characterClass,
                 tree == null ? List.of() : tree.modifiers(state.passives()), tree);
         passiveModifiers.addAll(tw.exilecore.passive.JewelSockets.modifiers(plugin, state, tree));
-        sheet.addAll(passiveModifiers);
+        // 2026-10：「最近…」的條件詞綴（珠寶、裝備）：條件成立才算；記下算過哪些條件，變了就重算（tick）
+        final Map<String, Boolean> conditions = new java.util.HashMap<>();
+        final long now = plugin.getServer().getCurrentTick();
+        final List<Modifier> passiveResolved = new ArrayList<>();
+        for (final Modifier modifier : passiveModifiers) {
+            final Modifier resolved = resolveCondition(player, state, modifier, now, conditions);
+            if (resolved != null) {
+                passiveResolved.add(resolved);
+            }
+        }
+        sheet.addAll(passiveResolved);
         // 其他來源（地圖詞綴、任務獎勵、昇華天賦、分身獎勵）：給的屬性點也算進裝備需求，所以兩輪都加
         final List<Modifier> extra = new ArrayList<>();
         for (final Function<Player, List<Modifier>> source : modifierSources) {
@@ -185,10 +195,8 @@ public final class PlayerStateService {
 
         // 第二輪：剔除需求不符的裝備
         sheet.clearModifiers();
-        sheet.addAll(passiveModifiers);
+        sheet.addAll(passiveResolved);
         boolean hasWeapon = false;
-        boolean hitConditions = false;
-        final boolean hitRecently = plugin.getServer().getCurrentTick() - state.lastHitTick() <= StatKeys.RECENTLY_TICKS;
         state.setWeaponTags(Set.of());
         final List<String> inactive = new ArrayList<>();
         final List<EquippedItem> active = new ArrayList<>();
@@ -202,17 +210,11 @@ public final class PlayerStateService {
             active.add(item);
             final boolean sceptre = item.base().tags().contains("sceptre");
             double localSpirit = 0;
-            for (Modifier modifier : item.modifiers()) {
-                // 2026-10：有條件的詞綴（evasion@nohit 這種）：條件成立才算，代號拿掉條件
-                final int at = modifier.stat().indexOf('@');
-                if (at > 0) {
-                    final String condition = modifier.stat().substring(at);
-                    hitConditions = true;
-                    final boolean ok = StatKeys.IF_HIT.equals(condition) ? hitRecently : !StatKeys.IF_NOT_HIT.equals(condition) || !hitRecently;
-                    if (!ok) {
-                        continue;
-                    }
-                    modifier = new Modifier(modifier.stat().substring(0, at), modifier.type(), modifier.value(), modifier.tags(), modifier.source());
+            for (final Modifier raw : item.modifiers()) {
+                // 2026-10：有條件的詞綴（evasion@nohit、damage@projhit 這種）：條件成立才算，代號拿掉條件
+                final Modifier modifier = resolveCondition(player, state, raw, now, conditions);
+                if (modifier == null) {
+                    continue;
                 }
                 if (sceptre && StatKeys.SPIRIT_MAX.equals(modifier.stat()) && modifier.type() == ModType.INCREASED) {
                     localSpirit += modifier.value(); // 2026-10：權杖的「增加 x% 精魂」是本地的，只放大權杖自己的 100（PoE2）
@@ -229,7 +231,7 @@ public final class PlayerStateService {
             }
         }
         sheet.addAll(extra);
-        state.setHitConditions(hitConditions, hitRecently);
+        state.setConditionsEvaluated(conditions);
         ascendancyEquipment(sheet, state, active, tree);
         // 與死共舞（2026-10 PoE2 基石）：主手單手武器（魔杖、權杖除外）、副手空著：技能速度更多 25%
         if (StatKeys.flag(sheet, StatKeys.FLAG_DANCE_WITH_DEATH) && state.weaponTags().contains("one_hand")
@@ -359,6 +361,47 @@ public final class PlayerStateService {
                 player.sendMessage(plugin.text().prefixed("<red>" + escape(line) + "，這件裝備不生效"));
             }
         }
+    }
+
+    /**
+     * 條件詞綴：條件成立回傳拿掉條件的修飾器，不成立回傳 null；沒有條件原樣回傳。不認得的條件當成不成立（詞綴寫錯不會偷偷生效）。
+     * 算過的條件記進 conditions（tick 用來看有沒有變）。
+     */
+    private Modifier resolveCondition(final Player player, final PlayerState state, final Modifier modifier, final long now,
+                                      final Map<String, Boolean> conditions) {
+        if (!tw.exilecore.stats.Recently.hasCondition(modifier.stat())) {
+            return modifier;
+        }
+        final tw.exilecore.stats.Recently.Condition condition = tw.exilecore.stats.Recently.condition(modifier.stat());
+        if (condition == null) {
+            return null;
+        }
+        final boolean ok = conditions.computeIfAbsent(condition.key(), key -> evaluate(player, state, condition, now));
+        if (!ok) {
+            return null;
+        }
+        return new Modifier(tw.exilecore.stats.Recently.stat(modifier.stat()), modifier.type(), modifier.value(), modifier.tags(), modifier.source());
+    }
+
+    /** 這個條件現在成不成立。 */
+    private boolean evaluate(final Player player, final PlayerState state, final tw.exilecore.stats.Recently.Condition condition, final long now) {
+        final boolean happened = switch (condition.event()) {
+            case tw.exilecore.stats.Recently.LIFE_FLASK -> plugin.flasks() != null && plugin.flasks().recovering(player, tw.exilecore.flask.FlaskKind.LIFE);
+            case tw.exilecore.stats.Recently.MANA_FLASK -> plugin.flasks() != null && plugin.flasks().recovering(player, tw.exilecore.flask.FlaskKind.MANA);
+            default -> state.recently(condition.event(), now);
+        };
+        return condition.negated() != happened;
+    }
+
+    /** 上一次算屬性表時的條件結果，現在有沒有哪個變了。 */
+    private boolean conditionsChanged(final Player player, final PlayerState state, final long now) {
+        for (final Map.Entry<String, Boolean> entry : state.conditionsEvaluated().entrySet()) {
+            final tw.exilecore.stats.Recently.Condition condition = tw.exilecore.stats.Recently.condition("x" + entry.getKey());
+            if (condition != null && evaluate(player, state, condition, now) != entry.getValue()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 我們有算的裝備欄位：全部在角色面板上（武器、副手、四件防具、戒指×2、項鍊、腰帶），手上拿的、身上穿的只是顯示。 */
@@ -731,8 +774,8 @@ public final class PlayerStateService {
 
     /** 每秒回復與護盾回充；由排程每 10 tick 呼叫一次。 */
     public void tick(final Player player, final PlayerState state, final long currentTick, final int ticksSinceLast) {
-        // 2026-10：「最近被擊中」的條件變了（剛被打、或 4 秒沒被打）：重算屬性表
-        if (state.hitConditions() && (currentTick - state.lastHitTick() <= StatKeys.RECENTLY_TICKS) != state.hitRecentlyEvaluated()) {
+        // 2026-10：「最近…」的條件變了（剛被打、剛翻滾、4 秒過了……）：重算屬性表
+        if (state.hitConditions() && conditionsChanged(player, state, currentTick)) {
             state.markDirty();
         }
         if (state.isDirty()) {

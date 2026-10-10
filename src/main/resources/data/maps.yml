@@ -30,6 +30,10 @@ settings:
   #   伺服器紀錄：T14–T16 的地圖 Boss 中位數 22 秒就倒（T12–T13 約 40 秒），高階加厚一點、低階不動
   # 2026-10：照人均單體 15 萬 DPS 重調：T16 一般地圖 Boss 約 20 秒（原 from 12、max 1.6）
   boss_tier_life: { from: 10, max: 5.8 }      # 2026-10：改照人均單體 10 萬 DPS（15 萬時是 8.7）
+  # 護盾結晶（終局、極境、劫盜終局的護盾階段）跟著階級變硬的程度（2026-10）：Boss 的階級倍率多出來的部分，結晶吃幾成。
+  #   0 = 不變硬（T16 跟 T5 一樣，兩三秒就破）、1 = 跟 Boss 一樣（T16 終局大約要 2.4 萬 DPS 才來得及）、
+  #   0.5 = 一半（T16 的 Boss ×7.8、結晶 ×4.4：終局大約要 1.3 萬 DPS、極境大約 2 萬）
+  shield_tier_share: 0.5
   packs:                      # 地圖的怪物群（跟區域一樣是 PoE 的群，但比較大群）
     normal: { weight: 64, size: [4, 6] }
     magic: { weight: 28, size: [3, 5] }
@@ -98,7 +102,8 @@ first_kill:                      # 首殺獎勵（存在角色資料裡）：天
 #             可寫 { id: meteor_storm, phase: 1 } 表示進入第一個階段後才會用，cooldown／damage 可覆蓋）
 #   Boss 的特殊機制（2026-10，終局與試煉用）：
 #     phases 的某一個階段寫 shield: { count: 3, type: BLAZE, name: 星骸結晶, life: 4, duration: 25, heal: 25 }
-#             → 進入這個階段時 Boss 無敵，Boss 房裡出現 count 顆結晶（type 原版生物、不會動不會打人，生命是同等級普通怪的 life 倍），
+#             → 進入這個階段時 Boss 無敵，Boss 房裡出現 count 顆結晶（type 原版生物、不會動不會打人，生命是同等級普通怪的 life 倍，
+#               2026-10：再乘一部分的階級倍率——見 settings.shield_tier_share），
 #               duration 秒內全部打掉護盾就破；來不及的話 Boss 回 heal% 最大生命、剩下的結晶消失
 #     enrage: { after: 360, damage: 100, speed: 0.3, message: "…" }
 #             → 開打 after 秒還沒打倒就狂暴：傷害更多 damage%、移動快 speed（一場一次；血條上有倒數）

@@ -1220,6 +1220,18 @@ public final class MinionService implements Listener, MinionHooks {
         return minion == null ? 1.0 : minion.healthScale;
     }
 
+    /** owner 的召喚物（殘影不算）每隻回復 amount（2026-10：藥劑的「召喚物也回復」詞綴）。 */
+    public void healOwned(final Player owner, final double amount) {
+        if (amount <= 0) {
+            return;
+        }
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid()) {
+                heal(minion.mob, amount);
+            }
+        }
+    }
+
     @Override
     public void heal(final LivingEntity entity, final double amount) {
         final Minion minion = byEntity.get(entity.getUniqueId());

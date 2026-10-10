@@ -180,7 +180,93 @@ public final class JewelSockets {
                 }
                 uniqueSeen = true;
             }
-            list.addAll(plugin.items().modifiers(entry.getValue()));
+            final List<Modifier> mods = plugin.items().modifiers(entry.getValue());
+            final ItemBase base = plugin.items().read(entry.getValue()).map(data -> plugin.items().repository().base(data.base())).orElse(null);
+            if (base != null && base.isRadiusJewel()) {
+                list.addAll(radiusModifiers(tree, node, state.passives(), mods));
+            } else {
+                list.addAll(mods);
+            }
+        }
+        return list;
+    }
+
+    /** 半徑珠寶的基本半徑（格）。 */
+    public static final double BASE_RADIUS = 2;
+
+    /** 珠寶孔周圍半徑內（含對角）的節點。 */
+    public static List<PassiveNode> nodesInRadius(final PassiveTree tree, final PassiveNode socket, final double radius) {
+        final List<PassiveNode> list = new ArrayList<>();
+        final double limit = (radius + 0.5) * (radius + 0.5);
+        for (final PassiveNode node : tree.nodes()) {
+            if (node == socket) {
+                continue;
+            }
+            final double dx = node.x() - socket.x();
+            final double dy = node.y() - socket.y();
+            if (dx * dx + dy * dy <= limit) {
+                list.add(node);
+            }
+        }
+        return list;
+    }
+
+    /** 這顆半徑珠寶的半徑（基本 + 「更大」「巨大」）。 */
+    public static double radiusOf(final List<Modifier> mods) {
+        double radius = BASE_RADIUS;
+        for (final Modifier mod : mods) {
+            if (tw.exilecore.stats.StatKeys.JEWEL_LOCAL_RADIUS.equals(mod.stat())) {
+                radius += mod.value();
+            }
+        }
+        return radius;
+    }
+
+    /**
+     * 半徑珠寶（2026-10，PoE2 的遺時珠寶）：{@code radius:屬性} 的詞綴，範圍內每個已配置的小天賦都多給一次；
+     * 「範圍內小天賦／核心效果增加 x%」把範圍內已配置的小天賦／核心的修飾器再加 x%。其他詞綴照一般珠寶。
+     */
+    public static List<Modifier> radiusModifiers(final PassiveTree tree, final PassiveNode socket, final java.util.Set<String> allocated,
+                                                 final List<Modifier> mods) {
+        final List<Modifier> list = new ArrayList<>();
+        double smallEffect = 0;
+        double notableEffect = 0;
+        for (final Modifier mod : mods) {
+            if (tw.exilecore.stats.StatKeys.JEWEL_LOCAL_SMALL_EFFECT.equals(mod.stat())) {
+                smallEffect += mod.value();
+            } else if (tw.exilecore.stats.StatKeys.JEWEL_LOCAL_NOTABLE_EFFECT.equals(mod.stat())) {
+                notableEffect += mod.value();
+            }
+        }
+        int smalls = 0;
+        final List<PassiveNode> nearby = new ArrayList<>();
+        for (final PassiveNode node : nodesInRadius(tree, socket, radiusOf(mods))) {
+            if (!allocated.contains(node.id())) {
+                continue;
+            }
+            if (node.type() == PassiveNode.Type.SMALL) {
+                smalls++;
+            }
+            nearby.add(node);
+        }
+        for (final Modifier mod : mods) {
+            if (mod.stat().startsWith(tw.exilecore.stats.StatKeys.RADIUS_PREFIX)) {
+                if (smalls > 0) {
+                    list.add(new Modifier(mod.stat().substring(tw.exilecore.stats.StatKeys.RADIUS_PREFIX.length()), mod.type(),
+                            mod.value() * smalls, mod.tags(), mod.source()));
+                }
+            } else if (!mod.stat().startsWith("jewel.local.")) {
+                list.add(mod);
+            }
+        }
+        for (final PassiveNode node : nearby) {
+            final double scale = node.type() == PassiveNode.Type.SMALL ? smallEffect : node.type() == PassiveNode.Type.NOTABLE ? notableEffect : 0;
+            if (scale <= 0) {
+                continue;
+            }
+            for (final Modifier mod : node.modifiers()) {
+                list.add(new Modifier(mod.stat(), mod.type(), mod.value() * scale, mod.tags(), "半徑珠寶：" + node.name()));
+            }
         }
         return list;
     }

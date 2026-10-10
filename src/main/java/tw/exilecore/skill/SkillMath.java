@@ -105,6 +105,23 @@ public final class SkillMath {
         return list;
     }
 
+    /** 前後連發的投射物相鄰兩支隔幾 tick。 */
+    public static final int SEQUENCE_TICKS = 2;
+    /** 前後連發整串大約拖幾 tick（支數多的時候射快一點，最快每 tick 一支）。 */
+    public static final int SEQUENCE_MAX_TICKS = 10;
+
+    /**
+     * 前後連發的間隔（2026-10，照 PoE2）：本來只射一支的技能多了投射物時，每一支都沿同一條線直直飛，
+     * 第一支馬上射出，後面的每隔這麼多 tick 跟著出去（以前是張成扇形，越遠散得越開）。
+     * 平常隔 {@value #SEQUENCE_TICKS} tick；支數多到整串會超過 {@value #SEQUENCE_MAX_TICKS} tick 就改成每 tick 一支。只有一支回傳 0。
+     */
+    public static int sequenceInterval(final int count) {
+        if (count <= 1) {
+            return 0;
+        }
+        return Math.max(1, Math.min(SEQUENCE_TICKS, SEQUENCE_MAX_TICKS / (count - 1)));
+    }
+
     /** 回歸的投射物這一 tick 會不會經過施放者身邊：距離不到一步多一點（至少 1 格）就算到了，不會一直在旁邊打轉。 */
     public static boolean returnArrived(final double distance, final double speed) {
         return distance <= Math.max(1.0, speed * 0.75);

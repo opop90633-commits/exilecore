@@ -180,9 +180,42 @@ public record ItemBase(String id, String name, String material, String model, It
         return slot == ItemSlot.JEWEL;
     }
 
-    /** 能穿戴、能裝在角色身上的裝備（武器、防具、盾、飾品）；地圖與珠寶不是。 */
+    /** 藥劑（2026-10：放藥劑欄，詞綴照 PoE2 的藥劑詞綴）。 */
+    public boolean isFlask() {
+        return slot == ItemSlot.FLASK;
+    }
+
+    /** 護符（2026-10：裝護符欄）。 */
+    public boolean isCharm() {
+        return slot == ItemSlot.CHARM;
+    }
+
+    /** 半徑珠寶（2026-10，PoE2 的遺時珠寶）：詞綴作用在珠寶孔周圍已配置的天賦上。 */
+    public boolean isRadiusJewel() {
+        return isJewel() && tags.contains(RADIUS_JEWEL_TAG);
+    }
+
+    /** 半徑珠寶的標籤。 */
+    public static final String RADIUS_JEWEL_TAG = "radius";
+
+    /** 藥劑或護符：最多魔法（一前綴一後綴），只有魔法類的通貨能用。 */
+    public boolean isFlaskLike() {
+        return isFlask() || isCharm();
+    }
+
+    /** 能穿戴、能裝在角色身上的裝備（武器、防具、盾、飾品）；地圖、珠寶、藥劑、護符不是。 */
     public boolean isWearable() {
-        return !isMap() && !isJewel();
+        return !isMap() && !isJewel() && !isFlaskLike();
+    }
+
+    /**
+     * 藥劑、護符的基底（2026-10）：從 flasks.yml 合成，不寫在 bases/ 裡。material 是圖示；
+     * tags：flask + life_flask／mana_flask，或 charm（詞綴的 spawn_tags 看這些）。
+     */
+    public static ItemBase flaskLike(final String id, final String name, final String material, final ItemSlot slot,
+                                     final Set<String> tags, final int level) {
+        return new ItemBase(id, name, material, null, slot, tags, Math.max(1, level), new Requirements(Math.max(1, level), 0, 0, 0),
+                Map.of(), 0, 0, 0, 0, 0, 0, 0, null, 0, false, id, Math.max(1, level), 0, null);
     }
 
     /** 珠寶的顏色（#rrggbb，介面用）：赤星晶紅、翠星晶綠、蒼星晶藍、其他（白星晶）白；不是珠寶回傳 null。 */
@@ -190,9 +223,9 @@ public record ItemBase(String id, String name, String material, String model, It
         if (!isJewel()) {
             return null;
         }
-        final boolean ruby = tags.contains("ruby");
-        final boolean emerald = tags.contains("emerald");
-        final boolean sapphire = tags.contains("sapphire");
+        final boolean ruby = tags.contains("ruby") || tags.contains("r_ruby");
+        final boolean emerald = tags.contains("emerald") || tags.contains("r_emerald");
+        final boolean sapphire = tags.contains("sapphire") || tags.contains("r_sapphire");
         if (ruby && !emerald && !sapphire) {
             return "#ff5c6a";
         }

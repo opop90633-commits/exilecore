@@ -66,7 +66,7 @@ class BossSkillTest {
         assertEquals(1.0, settings.cooldownFor(false), 1e-9, "一般怪物照招式寫的冷卻");
         assertEquals(BossSkillConfig.Settings.DEFAULT, new BossSkillConfig.Settings(settings.gap(), settings.firstDelay(), settings.warnRange(), null,
                 settings.chaseDistance(), settings.chaseSeconds(), settings.phasePause(), settings.phaseUnlock(), settings.bossGap(),
-                settings.bossFirstDelay(), settings.bossCooldown()), "程式的預設值跟出貨的 boss_skills.yml 一樣（追擊的招另外寫）");
+                settings.bossFirstDelay(), settings.bossCooldown(), settings.bossMinTelegraph()), "程式的預設值跟出貨的 boss_skills.yml 一樣（追擊的招另外寫）");
         final BossSkill pounce = bosses.gapCloser();
         assertNotNull(pounce);
         assertEquals(BossSkill.Kind.BLINK, pounce.kind());

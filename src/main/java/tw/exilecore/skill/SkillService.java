@@ -398,6 +398,10 @@ public final class SkillService {
             lines.add(String.format(Locale.ROOT, "<#f5b942>戰吼強化<gray>：接下來 <white>%d</white> 次攻擊更多 <white>%d%%</white> 傷害",
                     runtime.exert.left(), Math.round(runtime.exert.more())));
         }
+        if (runtime != null && runtime.barrage != null && runtime.barrage.active(now)) {
+            lines.add(String.format(Locale.ROOT, "<#ffd27f>%s<gray>：下一次弓／矛的投射物攻擊重複 <white>%d</white> 次（剩 %.1f 秒）",
+                    ItemRenderer.escape(runtime.barrage.name()), runtime.barrage.repeats(), (runtime.barrage.untilTick() - now) / 20.0));
+        }
         return lines;
     }
 
@@ -942,6 +946,11 @@ public final class SkillService {
             plugin.players().display(player, state);
             return;
         }
+        if (definition.mechanic() == Mechanic.GUARD && config.barrage(definition.id()) != null) {
+            // 連珠（2026-10）：備好，下一次弓／矛的投射物攻擊重複
+            readyBarrage(player, runtime, state, build, config.barrage(definition.id()), now);
+            return;
+        }
         if (definition.mechanic() == Mechanic.GUARD) {
             if (SkillExecutor.hasFlag(definition, StatKeys.FLAG_RELOAD_ALL)) {
                 reloadNow(player, null); // 急裝：弩全部裝滿（2026-10）
@@ -960,6 +969,9 @@ public final class SkillService {
                 plugin.players().display(player, state);
             }
             return;
+        }
+        if (runtime.barrage != null && !runtime.barrage.active(now)) {
+            runtime.barrage = null; // 連珠過期了
         }
         // 戰吼的強化：接下來幾次攻擊更痛
         if (runtime.exert != null) {
@@ -1103,7 +1115,47 @@ public final class SkillService {
             runtime.repeat = new SkillRuntime.Repeat(Math.max(runtime.readyAt, now + 6), 6, sealRepeats,
                     build.withProfile(build.profile().scaled(0.5, "解封")), preferred == null ? null : preferred.getUniqueId());
             runtime.readyAt = runtime.repeat.doneAt();
+        } else if (runtime.barrage != null && maxStages <= 0 && commanded == null && mountSpec == null
+                && BarrageSpec.empowers(definition, state.weaponTags(), build.repeats())) {
+            // 連珠（2026-10）：這一下是弓／矛的投射物攻擊——用掉備好的連珠，接下來很快再射幾次（每次少一截傷害、不花魔力，
+            // 每次都是重新射：可以再打到同一個敵人），射完才能做別的。連珠技能從現在開始冷卻（基礎＋這一招攻擊時間的幾 %）。
+            final SkillRuntime.Barrage barrage = runtime.barrage;
+            runtime.barrage = null;
+            final int gap = barrage.spec().gapTicks();
+            runtime.repeat = new SkillRuntime.Repeat(now + gap, gap, barrage.repeats(),
+                    build.withProfile(build.profile().scaled(barrage.spec().damageScale(), barrage.name())),
+                    preferred == null ? null : preferred.getUniqueId());
+            runtime.readyAt = Math.max(runtime.readyAt, runtime.repeat.doneAt());
+            runtime.cooldowns.put(barrage.skillId(), now + barrage.spec().usedCooldownTicks(barrage.baseCooldown(), build.intervalTicks(sheet),
+                    barrage.cooldownPercent(), barrage.cooldownScale()));
+            state.notice(String.format(Locale.ROOT, "<#ffd27f>➶ %s：重複 %d 次", ItemRenderer.escape(barrage.name()), barrage.repeats()), now + 30);
+            plugin.players().display(player, state);
         }
+    }
+
+    /**
+     * 連珠（2026-10）：備好「下一次弓／矛的投射物攻擊重複」。施放時用掉身上全部的那種戰星，每顆多重複幾次；
+     * 增益撐 guard.duration 秒（吃技能持續時間），沒用掉就過期（只算技能自己的基礎冷卻）。
+     */
+    private void readyBarrage(final Player player, final SkillRuntime runtime, final PlayerState state, final SkillBuild build,
+                              final BarrageSpec spec, final long now) {
+        final SkillDefinition definition = build.definition();
+        int consumed = 0;
+        if (spec.charge() != null && spec.perCharge() > 0 && plugin.combat() != null && plugin.combat().charges() != null) {
+            while (consumed < 20 && plugin.combat().charges().consume(player, spec.charge())) {
+                consumed++;
+            }
+        }
+        final int repeats = spec.repeatsWith(consumed);
+        final int ticks = (int) Math.max(1, Math.round(definition.params().mark().duration() * build.durationScale() * 20));
+        final double cooldownScale = definition.cooldown() > 0 ? build.cooldownTicks() / (definition.cooldown() * 20.0) : 1.0;
+        runtime.barrage = new SkillRuntime.Barrage(definition.id(), definition.name(), spec, repeats, now + ticks, definition.cooldown(),
+                spec.cooldownAttackTime().at(build.level()), cooldownScale);
+        visuals.cast(definition.visual(), player);
+        state.notice(String.format(Locale.ROOT, "<#ffd27f>➶ %s：下一次弓／矛的投射物攻擊重複 <white>%d</white> 次%s",
+                ItemRenderer.escape(definition.name()), repeats,
+                consumed > 0 ? "<gray>（用掉 " + consumed + " 顆" + ItemRenderer.escape(chargeName(spec.charge())) + "）" : ""), now + 50);
+        plugin.players().display(player, state);
     }
 
     /** 身上有幾顆這種戰星（沒有戰星系統、技能不能跳過冷卻：0）。 */
@@ -1206,6 +1258,8 @@ public final class SkillService {
 
     /** 變身的形態：放帶 bear／werewolf／wyvern 標籤的技能就變成那種形態 {@value #FORM_TICKS} tick（換一種就換掉）。 */
     static final int FORM_TICKS = 160;
+    /** 變身形態的增益代號（獸血沸的狂暴要看現在是不是獸形、把形態撐到狂暴結束）。 */
+    static final String FORM_BUFF = "shapeshift";
 
     private void shapeshift(final Player player, final SkillDefinition definition) {
         final java.util.Set<String> tags = definition.tags();
@@ -1230,7 +1284,7 @@ public final class SkillService {
         } else {
             return;
         }
-        buff(player, "shapeshift", name, FORM_TICKS, mods);
+        buff(player, FORM_BUFF, name, FORM_TICKS, mods);
     }
 
     /** 技能的 skill.recoil（FLAT，×0.01 = 每 tick 幾格）：放完往後跳。 */
@@ -1631,6 +1685,7 @@ public final class SkillService {
             lines.addAll(warcryLines(build));
         }
         mechanicLines(build, lines);
+        barrageLines(player, build, lines);
         if (ammoSkill(definition)) {
             lines.add(String.format(Locale.ROOT, "<gray>彈匣：<white>%d</white> 發，打完自動裝填 <white>%.1f</white> 秒",
                     clipSize(build, state.sheet()), reloadTicks(build, state.sheet()) / 20.0));
@@ -1739,6 +1794,29 @@ public final class SkillService {
             }
         }
         return lines;
+    }
+
+    /** 連珠（2026-10）的說明：重複幾次、少多少傷害、戰星、冷卻。 */
+    private void barrageLines(final Player player, final SkillBuild build, final List<String> lines) {
+        final BarrageSpec barrage = config.barrage(build.definition().id());
+        if (barrage == null || build.definition().params().mark() == null) {
+            return;
+        }
+        final SkillParams.Mark guard = build.definition().params().mark();
+        lines.add(String.format(Locale.ROOT, "<gray>放了之後 <white>%.1f</white> 秒內，你下一次<white>弓或矛的投射物攻擊</white>自動重複 <white>%d</white> 次",
+                guard.duration() * build.durationScale(), barrage.repeats()));
+        lines.add(String.format(Locale.ROOT, "<gray>　每次重複少 <white>%s%%</white> 傷害、隔 %s 秒、不花魔力；每次都是重新射，可以再打到同一個敵人",
+                ModifierText.number(barrage.less()), ModifierText.number(barrage.gap())));
+        if (barrage.charge() != null && barrage.perCharge() > 0) {
+            final String color = chargeColor(barrage.charge());
+            final int held = player == null ? 0 : chargesHeld(player, barrage.charge());
+            lines.add("<gray>　施放時用掉身上全部的<" + color + ">" + ItemRenderer.escape(chargeName(barrage.charge())) + "</" + color
+                    + ">，每顆多重複 <white>" + barrage.perCharge() + "</white> 次" + (held > 0 ? "（現在 <white>" + held + "</white> 顆）" : ""));
+        }
+        lines.add(String.format(Locale.ROOT, "<gray>　用掉之後的冷卻：%s 秒＋那一招攻擊時間的 <white>%s%%</white>（最多 %s 秒）",
+                ModifierText.number(build.definition().cooldown()), ModifierText.number(barrage.cooldownAttackTime().at(build.level())),
+                ModifierText.number(barrage.maxCooldown())));
+        lines.add("<dark_gray>　有冷卻的攻擊、引導技能不能被強化");
     }
 
     private static void mechanicLines(final SkillBuild build, final List<String> lines) {
@@ -1888,6 +1966,9 @@ public final class SkillService {
             }
             case GUARD -> {
                 final SkillParams.Mark guard = params.mark();
+                if (guard.effects().isEmpty() && guard.slow().at(build.level()) <= 0) {
+                    break; // 沒有增益的（連珠）：說明在 barrageLines
+                }
                 final List<String> parts = new ArrayList<>();
                 for (final ScaledMod effect : guard.effects()) {
                     parts.add("<white>" + effect.describe(build.level(), 1.0) + "</white>");
@@ -2053,13 +2134,24 @@ public final class SkillService {
         final List<Modifier> effects = build.auraModifiers();
         if (!effects.isEmpty()) {
             final String who = build.generosity() ? String.format(Locale.ROOT, "%.0f 格內的隊友（效果 ×%.1f）與你的召喚物", spec.radius() * build.areaScale(), AuraService.GENEROSITY_ALLY_BONUS)
-                    : spec.allies() ? String.format(Locale.ROOT, "你、%.0f 格內的隊友與你的召喚物", spec.radius() * build.areaScale()) : "你與你的召喚物";
+                    : spec.allies() ? String.format(Locale.ROOT, "你、%.0f 格內的隊友與你的召喚物", spec.radius() * build.areaScale()) : "你"; // 2026-10：只給自己的增益不再給召喚物
             lines.add("<gray>開著的時候" + who + "：");
             for (final String line : ModifierText.describeAll(effects)) {
                 lines.add("<#8fd3ff>　" + ItemRenderer.escape(line));
             }
             if (build.auraEffect() != 1.0) {
                 lines.add(String.format(Locale.ROOT, "<dark_gray>　（已含光環效果 ×%.2f）", build.auraEffect()));
+            }
+            // 2026-10（祕法之心）：照最大魔力算的效果，把現在的數字寫出來
+            final double maxMana = Math.max(0, plugin.players().sheet(player).get(StatKeys.MANA_MAX));
+            for (final Modifier effect : effects) {
+                if (effect.stat().startsWith(StatKeys.DAMAGE_EXTRA_PER_MANA)) {
+                    lines.add(String.format(Locale.ROOT, "<gray>　你現在最大魔力 <white>%.0f</white>：獲得 <white>%s%%</white> 傷害為額外傷害",
+                            maxMana, ModifierText.number(effect.value() * maxMana / 100.0)));
+                } else if (effect.stat().equals(StatKeys.SKILL_COST_MAX_MANA)) {
+                    lines.add(String.format(Locale.ROOT, "<red>　每次施放多花 <white>%.0f</white> 魔力<gray>（再乘上輔助寶石的魔力消耗倍率；引導技能、不用魔力的技能不算）",
+                            effect.value() * maxMana / 100.0));
+                }
             }
         }
         if (spec.enemy() != null) {
@@ -2092,15 +2184,54 @@ public final class SkillService {
         }
         if (spec.herald()) {
             final SkillDefinition sub = config.skill(spec.onKill());
-            lines.add(String.format(Locale.ROOT, "<gray>擊殺時%s從屍體的位置放出 <white>%s</white>（照這顆寶石的等級與輔助）",
+            // 2026-10（照 PoE2）：有觸發條件的寫出來（用攻擊擊中殺死感電中的敵人、過量擊殺…）
+            lines.add(String.format(Locale.ROOT, "<gray>%s時%s從屍體的位置放出 <white>%s</white>（照這顆寶石的等級與輔助）",
+                    spec.condition().always() ? "擊殺" : "<white>" + spec.condition().describe() + "</white>",
                     spec.onKillChance() < 100 ? String.format(Locale.ROOT, " %.0f%% 機率", spec.onKillChance()) : "",
                     sub == null ? spec.onKill() : ItemRenderer.escape(sub.name())));
+            if (spec.condition().needsOwnAttack()) {
+                lines.add("<dark_gray>　法術、持續傷害、召喚物與捷自己的效果打死的不算");
+            }
             if (sub != null && sub.damage() != null) {
                 final double[] range = SkillProfiles.spellDamage(config, sub, build.level());
                 lines.add(String.format(Locale.ROOT, "<gray>　基礎傷害 <white>%d – %d</white>%s", Math.round(range[0]), Math.round(range[1]),
                         sub.mechanic() == Mechanic.NOVA ? String.format(Locale.ROOT, "，半徑 %.1f 格", sub.params().radius().at(build.level()) * build.areaScale())
                                 : sub.mechanic() == Mechanic.CHAIN ? "，連鎖 " + sub.params().chains().intAt(build.level()) + " 次" : ""));
             }
+        }
+        if (spec.fury() != null) {
+            // 2026-10（照 PoE2 的 Savage Fury）：攻擊累積獸性，滿了爆發成狂暴
+            final AuraSpec.Fury fury = spec.fury();
+            lines.add(String.format(Locale.ROOT, "<gray>你的攻擊擊中敵人累積<white>獸性</white>（一次技能 1 點，最多 %d 點）；滿了%s就爆發成<white>狂暴 %s 秒</white>：",
+                    fury.max(), fury.form() ? "而且在獸形（熊、狼人、飛龍）" : "", ModifierText.number(fury.ticks(fury.max()) / 20.0)));
+            final List<Modifier> frenzy = new ArrayList<>();
+            for (final ScaledMod mod : fury.effects()) {
+                frenzy.add(mod.toModifier(build.level(), build.auraEffect(), build.definition().name()));
+            }
+            for (final String line : ModifierText.describeAll(frenzy)) {
+                lines.add("<#8fd3ff>　" + ItemRenderer.escape(line));
+            }
+            if (fury.onslaught()) {
+                lines.add(String.format(Locale.ROOT, "<#8fd3ff>　疾速（攻擊、施法、移動速度增加 %.0f%%）", tw.exilecore.combat.KillEffects.ONSLAUGHT_SPEED * 100));
+            }
+            if (fury.lifeLoss() > 0) {
+                lines.add(String.format(Locale.ROOT, "<red>　狂暴中每秒失去最大生命 %s%%<gray>（直接扣生命；扣不死，剩 1 點時狂暴結束；營地不扣）",
+                        ModifierText.number(fury.lifeLoss())));
+            }
+            lines.add(fury.form() ? "<gray>　狂暴中一直維持獸形；狂暴中不會再累積獸性" : "<gray>　狂暴中不會再累積獸性");
+        }
+        if (spec.lifeCost() != null) {
+            // 2026-10（照 PoE2 的 Berserk）：開著的代價
+            final AuraSpec.LifeCost cost = spec.lifeCost();
+            if (cost.percent() > 0) {
+                lines.add(String.format(Locale.ROOT, "<red>開著的時候每秒失去最大生命 %s%%", ModifierText.number(cost.percent())));
+            }
+            if (cost.perRage() > 0) {
+                lines.add(String.format(Locale.ROOT, "<red>怒氣沒有在消退的時候，每 1 點怒氣每秒失去最大生命 %s%%<gray>（30 點怒氣 = 每秒 %s%%）",
+                        ModifierText.number(cost.perRage()), ModifierText.number(cost.perRage() * 30)));
+            }
+            lines.add(String.format(Locale.ROOT, "<gray>　直接扣生命（不經過能量護盾）；扣不死，剩 1 點時效果暫停，回到 %.0f%% 以上繼續；營地不扣",
+                    AuraSpec.LifeCost.RESUME_PERCENT));
         }
         lines.add(AuraService.stateText(on, spec.persistent()));
         return lines;

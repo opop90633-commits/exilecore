@@ -787,6 +787,9 @@ final class SkillExecutor {
             return;
         }
         plugin.combat().corpses().remove(corpse);
+        if (origin.owner() != null) {
+            plugin.players().get(origin.owner()).markRecent(tw.exilecore.stats.Recently.CORPSE, plugin.getServer().getCurrentTick()); // 「最近消耗過屍體」
+        }
         final Location center = new Location(origin.world(), corpse.x(), corpse.y() + 0.3, corpse.z());
         final double radius = build.radius();
         // 技能自己的傷害 ＋ 屍體最大生命的 x% 當火焰傷害（照法術附加一樣，走增加／更多）

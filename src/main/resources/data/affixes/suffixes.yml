@@ -2869,3 +2869,97 @@ crossbow_bolts:
     - { tier: 2, ilvl: 55, weight: 1000, value: [1, 1] }
   mods:
     - { stat: crossbow.clip, type: FLAT, value: "{value}" }
+
+# 2026-10：PoE2 0.5 腰帶的藥劑／護符充能後綴（RePoE BeltIncreasedFlaskChargesGained、BeltReducedFlaskChargesUsed、
+# BeltIncreasedCharmChargesGained、BeltReducedCharmChargesUsed）。全域：角色屬性表讀，FlaskService／CharmService 算充能時乘上去。
+flask_charges_gained_belt:
+  type: suffix
+  group: belt_flask_charges_gained
+  spawn_tags: [belt]
+  names: [之星骸, 之滿溢, 之泉湧, 之傾注, 之補給, 之續杯]
+  text: "增加 {value}% 藥劑拿到的充能"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 328, value: [35, 40] }
+    - { tier: 2, ilvl: 70, weight: 410, value: [29, 34] }
+    - { tier: 3, ilvl: 48, weight: 512, value: [23, 28] }
+    - { tier: 4, ilvl: 32, weight: 640, value: [17, 22] }
+    - { tier: 5, ilvl: 16, weight: 800, value: [11, 16] }
+    - { tier: 6, ilvl: 2, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: flask.charges_gained, type: INCREASED, value: "{value}" }
+
+flask_charges_used_belt:
+  type: suffix
+  group: belt_flask_charges_used
+  spawn_tags: [belt]
+  names: [之星骸, 之細品, 之淺酌, 之回味, 之啜飲, 之小口]
+  text: "減少 {value}% 藥劑每次用掉的充能"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 328, value: [23, 25] }
+    - { tier: 2, ilvl: 72, weight: 410, value: [20, 22] }
+    - { tier: 3, ilvl: 50, weight: 512, value: [17, 19] }
+    - { tier: 4, ilvl: 33, weight: 640, value: [14, 16] }
+    - { tier: 5, ilvl: 18, weight: 800, value: [11, 13] }
+    - { tier: 6, ilvl: 3, weight: 1000, value: [8, 10] }
+  mods:
+    - { stat: flask.charges_used, type: INCREASED, value: "-{value}" }
+
+charm_charges_gained_belt:
+  type: suffix
+  group: belt_charm_charges_gained
+  spawn_tags: [belt]
+  names: [之星骸, 之豐饒, 之豐收, 之富足, 之盈餘, 之充裕]
+  text: "增加 {value}% 護符拿到的充能"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 328, value: [35, 40] }
+    - { tier: 2, ilvl: 70, weight: 410, value: [29, 34] }
+    - { tier: 3, ilvl: 48, weight: 512, value: [23, 28] }
+    - { tier: 4, ilvl: 32, weight: 640, value: [17, 22] }
+    - { tier: 5, ilvl: 16, weight: 800, value: [11, 16] }
+    - { tier: 6, ilvl: 2, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: charm.charges_gained, type: INCREASED, value: "{value}" }
+
+charm_charges_used_belt:
+  type: suffix
+  group: belt_charm_charges_used
+  spawn_tags: [belt]
+  names: [之星骸, 之儉省, 之節制, 之克制, 之節儉, 之樸素]
+  text: "減少 {value}% 護符每次用掉的充能"
+  tiers:
+    - { tier: 1, ilvl: 81, weight: 328, value: [23, 25] }
+    - { tier: 2, ilvl: 72, weight: 410, value: [20, 22] }
+    - { tier: 3, ilvl: 50, weight: 512, value: [17, 19] }
+    - { tier: 4, ilvl: 33, weight: 640, value: [14, 16] }
+    - { tier: 5, ilvl: 18, weight: 800, value: [11, 13] }
+    - { tier: 6, ilvl: 3, weight: 1000, value: [8, 10] }
+  mods:
+    - { stat: charm.charges_used, type: INCREASED, value: "-{value}" }
+
+# 2026-10：PoE2 0.5 弓、箭袋的「x% 機率多射一發」（RePoE AdditionalArrowChance、AdditionalArrowChanceQuiver）。
+# 超過 100% 的部分必定多一發，剩下的擲機率（ProjectileEngine）。只對用弓的攻擊技能生效（tags: attack、bow）。
+extra_arrow_chance_bow:
+  type: suffix
+  group: extra_arrow_chance
+  spawn_tags: [bow]
+  names: [之星骸, 之萬箭, 之碎片, 之裂矢]
+  text: "弓攻擊 {value}% 機率多射一支箭"
+  tiers:
+    - { tier: 1, ilvl: 82, weight: 150, value: [175, 200] }
+    - { tier: 2, ilvl: 66, weight: 300, value: [125, 150] }
+    - { tier: 3, ilvl: 55, weight: 500, value: [75, 100] }
+    - { tier: 4, ilvl: 46, weight: 800, value: [25, 50] }
+  mods:
+    - { stat: skill.projectile_chance, type: FLAT, value: "{value}", tags: [attack, bow] }
+
+extra_arrow_chance_quiver:
+  type: suffix
+  group: extra_arrow_chance
+  spawn_tags: [quiver]
+  names: [之星骸, 之碎片]
+  text: "弓攻擊 {value}% 機率多射一支箭"
+  tiers:
+    - { tier: 1, ilvl: 80, weight: 300, value: [41, 60] }
+    - { tier: 2, ilvl: 46, weight: 700, value: [25, 40] }
+  mods:
+    - { stat: skill.projectile_chance, type: FLAT, value: "{value}", tags: [attack, bow] }

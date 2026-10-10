@@ -3081,3 +3081,19 @@ armour_es_mana:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: mana.max, type: FLAT, value: "{mana}" }
 
+
+# 2026-10：PoE2 0.5 腰帶的護符持續時間前綴（RePoE BeltIncreasedCharmDuration）。全域：CharmService 觸發時乘上去。
+charm_duration_belt:
+  type: prefix
+  group: belt_charm_duration
+  spawn_tags: [belt]
+  names: [星骸的, 革新的, 創新的, 進取的, 蛻變的, 守成的]
+  text: "增加 {value}% 護符效果持續時間"
+  tiers:
+    - { tier: 1, ilvl: 75, weight: 400, value: [28, 33] }
+    - { tier: 2, ilvl: 60, weight: 500, value: [22, 27] }
+    - { tier: 3, ilvl: 46, weight: 640, value: [16, 21] }
+    - { tier: 4, ilvl: 33, weight: 800, value: [10, 15] }
+    - { tier: 5, ilvl: 8, weight: 1000, value: [4, 9] }
+  mods:
+    - { stat: charm.duration, type: INCREASED, value: "{value}" }

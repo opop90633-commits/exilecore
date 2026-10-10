@@ -119,6 +119,9 @@ public final class MonsterListener implements Listener {
             if (killer != null && plugin.combat().killEffects() != null) {
                 plugin.combat().killEffects().onKill(killer, entity, maxLife);
             }
+            if (killer != null) {
+                plugin.players().get(killer).markRecent(tw.exilecore.stats.Recently.KILL, plugin.getServer().getCurrentTick()); // 「最近擊殺過」
+            }
             // 屍體（骸爆用）：召喚出來的小怪也算
             final org.bukkit.Location at = entity.getLocation();
             plugin.combat().corpses().add(at.getWorld().getUID(), at.getX(), at.getY(), at.getZ(), maxLife, plugin.getServer().getCurrentTick(),

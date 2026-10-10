@@ -2,6 +2,9 @@ package tw.exilecore.skill;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import tw.exilecore.ailment.AilmentType;
+import tw.exilecore.stats.DamageCalculator;
+import tw.exilecore.stats.DamageType;
 import tw.exilecore.stats.ModType;
 import tw.exilecore.stats.Modifier;
 import tw.exilecore.stats.StatKeys;
@@ -68,6 +71,233 @@ class AuraWarcryTest {
         assertEquals(0, low.exerts());
         assertNull(low.deploy());
         assertFalse(low.echo());
+    }
+
+    @Test
+    void onlyAllyAurasReachTheOwnersMinions() {
+        // 2026-10：只給自己的常駐增益（allies: false）不再給召喚物；給隊友的光環照舊給完整效果
+        final StatSheet owner = new StatSheet();
+        // 攻擊型的五個（戰意昂揚、崩滅心咒、銀月庇、元素潮汐、磨蝕之志）2026-10 也改回只給自己
+        for (final String id : List.of("storm_staff", "battle_rage",
+                "combat_frenzy", "ruin_mantra", "lunar_blessing", "elemental_conflux", "attrition")) {
+            final SkillBuild self = build(id, 20, owner);
+            assertFalse(self.definition().aura().allies(), id);
+            assertFalse(self.auraModifiers().isEmpty(), id + "：自己還是有效果");
+            assertTrue(self.minionAuraModifiers().isEmpty(), id + "：只給自己的不給召喚物");
+        }
+        for (final String id : List.of("wind_dancer", "magma_barrier", "time_of_need")) {
+            final SkillBuild shared = build(id, 20, owner);
+            assertTrue(shared.definition().aura().allies(), id);
+            assertEquals(shared.auraModifiers(), shared.minionAuraModifiers(), id + "：給隊友的光環，召喚物吃到一樣的效果");
+            assertFalse(shared.minionAuraModifiers().isEmpty(), id);
+        }
+        // 帶 minion 標籤的效果（骸餘饗的召喚物生命）走主人的屬性表：主人身上有這條，MinionSheets.ownerModifiers 會帶過去
+        final SkillBuild feast = build("grim_feast", 20, owner);
+        assertTrue(feast.minionAuraModifiers().isEmpty());
+        final StatSheet withFeast = new StatSheet().addAll(feast.auraModifiers());
+        assertEquals(1, MinionSheets.ownerModifiers(withFeast).size(), "召喚物生命那一條");
+        assertEquals(StatKeys.LIFE_MAX, MinionSheets.ownerModifiers(withFeast).getFirst().stat());
+        // 不是光環的技能沒有
+        assertTrue(build("summon_skeletons", 20, owner).minionAuraModifiers().isEmpty());
+    }
+
+    @Test
+    void heraldsTriggerOnTheirPoe2Conditions() {
+        // 2026-10（照 PoE2）：捷不再是「殺死就觸發」
+        final Set<AilmentType> none = Set.of();
+        // 燼使：自己的攻擊擊中，過量擊殺 20% 以上
+        final AuraSpec.KillCondition ash = config.skill("herald_of_ash").aura().condition();
+        assertEquals(new AuraSpec.KillCondition(true, null, 20), ash);
+        assertTrue(ash.met(true, none, 20));
+        assertTrue(ash.met(true, none, 350));
+        assertFalse(ash.met(true, none, 19.9), "過量不到 20%");
+        assertFalse(ash.met(false, none, 80), "法術、召喚物、捷自己的效果打死的不算");
+        // 雷使：攻擊殺死感電中的；霜使：攻擊殺死凍結中的
+        final AuraSpec.KillCondition thunder = config.skill("herald_of_thunder").aura().condition();
+        assertEquals(new AuraSpec.KillCondition(true, AilmentType.SHOCK, 0), thunder);
+        assertTrue(thunder.met(true, Set.of(AilmentType.SHOCK, AilmentType.IGNITE), 0));
+        assertFalse(thunder.met(true, Set.of(AilmentType.IGNITE), 0), "沒感電");
+        assertFalse(thunder.met(false, Set.of(AilmentType.SHOCK), 0), "不是攻擊");
+        final AuraSpec.KillCondition ice = config.skill("herald_of_ice").aura().condition();
+        assertEquals(new AuraSpec.KillCondition(true, AilmentType.FREEZE, 0), ice);
+        assertFalse(ice.met(true, Set.of(AilmentType.CHILL), 0), "只有冰緩不算凍結");
+        assertTrue(ice.met(true, Set.of(AilmentType.CHILL, AilmentType.FREEZE), 0));
+        // 血宣、疫使：身上有流血／中毒就好，不用是攻擊（毒死、召喚物打死的也算）
+        final AuraSpec.KillCondition blood = config.skill("herald_of_blood").aura().condition();
+        assertEquals(new AuraSpec.KillCondition(false, AilmentType.BLEED, 0), blood);
+        assertTrue(blood.met(false, Set.of(AilmentType.BLEED), 0));
+        assertFalse(blood.met(true, none, 500));
+        final AuraSpec.KillCondition plague = config.skill("herald_of_plague").aura().condition();
+        assertEquals(new AuraSpec.KillCondition(false, AilmentType.POISON, 0), plague);
+        assertTrue(plague.met(false, Set.of(AilmentType.POISON), 0));
+        // 沒寫條件的照舊：殺死就觸發；說明文字
+        assertTrue(AuraSpec.KillCondition.ALWAYS.always());
+        assertTrue(AuraSpec.KillCondition.ALWAYS.met(false, none, 0));
+        assertEquals("用攻擊擊中殺死感電中的敵人", thunder.describe());
+        assertEquals("殺死中毒中的敵人", plague.describe());
+        assertTrue(ash.describe().contains("過量擊殺") && ash.describe().contains("20%"), ash.describe());
+        // 過量擊殺的算法：多打出來的傷害 ÷ 最大生命
+        assertEquals(0, AuraService.overkillPercent(500, 800, 1000), 1e-9, "沒打死");
+        assertEquals(20, AuraService.overkillPercent(300, 100, 1000), 1e-9);
+        assertEquals(250, AuraService.overkillPercent(3000, 500, 1000), 1e-9);
+        assertEquals(0, AuraService.overkillPercent(3000, 500, 0), 1e-9);
+    }
+
+    @Test
+    void berserkAndSavageFuryCarryTheirPoe2Costs() {
+        // 赤怒（Berserk）：怒氣效果 40～59%；怒氣沒有在消退時每點怒氣每秒失去 0.1% 最大生命
+        final SkillDefinition berserk = config.skill("berserk");
+        final AuraSpec.LifeCost cost = berserk.aura().lifeCost();
+        assertNotNull(cost);
+        assertEquals(0.1, cost.perRage(), 1e-9);
+        assertEquals(3.0, cost.percentPerSecond(30, false), 1e-9, "30 點怒氣 = 每秒 3%");
+        assertEquals(5.0, cost.percentPerSecond(50, false), 1e-9);
+        assertEquals(0, cost.percentPerSecond(50, true), 1e-9, "怒氣在消退：不扣");
+        assertEquals(0, cost.percentPerSecond(0, false), 1e-9);
+        assertEquals(0.40, build("berserk", 1, new StatSheet()).auraModifiers().getFirst().value(), 1e-9);
+        assertEquals(0.59, build("berserk", 20, new StatSheet()).auraModifiers().getFirst().value(), 1e-9);
+        // 怒氣消退：40 tick 沒拿到才開始
+        assertFalse(SkillResources.rageDecaying(20, 100, 100 + SkillResources.RAGE_DECAY_DELAY - 1));
+        assertTrue(SkillResources.rageDecaying(20, 100, 100 + SkillResources.RAGE_DECAY_DELAY));
+        assertFalse(SkillResources.rageDecaying(0, 100, 1000), "沒有怒氣");
+        // 扣生命：直接扣、扣不死（最低留 1 點）
+        assertEquals(970, AuraService.lifeAfterLoss(1000, 1000, 3), 1e-9);
+        assertEquals(985, AuraService.lifeAfterLoss(1000, 1000, 3 * AuraService.TICK_SECONDS), 1e-9, "半秒扣一次");
+        assertEquals(1, AuraService.lifeAfterLoss(20, 1000, 3), 1e-9);
+        assertEquals(0.5, AuraService.lifeAfterLoss(0.5, 1000, 3), 1e-9, "本來就不到 1 點的不動");
+
+        // 獸血沸（Savage Fury）：沒有一直有的效果了；攻擊累積 20 點 → 狂暴 10 秒，更多傷害 20～29%＋疾速，每秒失去 3% 生命，要獸形
+        final SkillDefinition savage = config.skill("savage_fury");
+        final AuraSpec.Fury fury = savage.aura().fury();
+        assertNotNull(fury);
+        assertTrue(savage.aura().effects().isEmpty());
+        assertEquals(20, fury.max());
+        assertEquals(200, fury.ticks(20), "20 點 × 0.5 秒");
+        assertEquals(100, fury.ticks(10));
+        assertEquals(200, fury.ticks(99), "超過上限照上限");
+        assertEquals(3, fury.lifeLoss(), 1e-9);
+        assertTrue(fury.onslaught());
+        assertTrue(fury.form());
+        final Modifier low = fury.effects().getFirst().toModifier(1, 1.0, "x");
+        final Modifier high = fury.effects().getFirst().toModifier(20, 1.0, "x");
+        assertEquals(StatKeys.DAMAGE, low.stat());
+        assertEquals(ModType.MORE, low.type());
+        assertEquals(0.20, low.value(), 1e-9);
+        assertEquals(0.29, high.value(), 1e-9);
+        assertFalse(savage.aura().allies());
+        assertTrue(build("savage_fury", 20, new StatSheet()).minionAuraModifiers().isEmpty(), "狂暴只給自己");
+        // 其他光環沒有代價、沒有獸性
+        assertNull(config.skill("wind_dancer").aura().lifeCost());
+        assertNull(config.skill("wind_dancer").aura().fury());
+        assertTrue(config.skill("wind_dancer").aura().condition().always());
+    }
+
+    @Test
+    void archmageScalesWithMaximumManaAndCostsAShareOfIt() {
+        // 2026-10：祕法之心照 PoE2 的 Archmage 重做，係數砍半：每 100 最大魔力 2% 額外閃電；每次施法多花最大魔力的 8% → 6.1%
+        final SkillDefinition archmage = config.skill("archmage");
+        assertEquals(100, archmage.aura().reserve(), 1e-9);
+        assertFalse(archmage.aura().allies());
+        final List<Modifier> low = build("archmage", 1, new StatSheet()).auraModifiers();
+        final List<Modifier> high = build("archmage", 20, new StatSheet()).auraModifiers();
+        assertEquals(2, low.size());
+        assertEquals(StatKeys.damageExtraPerMana(DamageType.LIGHTNING), low.get(0).stat());
+        assertEquals(2.0, low.get(0).value(), 1e-9);
+        assertEquals(2.0, high.get(0).value(), 1e-9, "傷害的係數不隨等級變");
+        assertEquals(StatKeys.SKILL_COST_MAX_MANA, low.get(1).stat());
+        assertEquals(8.0, low.get(1).value(), 1e-9);
+        assertEquals(6.1, high.get(1).value(), 1e-9);
+        assertEquals(Set.of(Tags.SPELL), low.get(0).tags());
+        assertEquals("每 100 點最大魔力，法術獲得 2% 傷害為額外的閃電傷害", ModifierText.describe(low.get(0)));
+        assertEquals("法術魔力消耗多最大魔力的 6.1%", ModifierText.describe(high.get(1)));
+
+        // 額外閃電：1,000 魔力 = 20%，3,900 魔力 = 78%；攻擊不算、引導技能不算、沒開光環是 0
+        final Set<String> spell = Set.of(Tags.SPELL, Tags.FIRE);
+        final StatSheet thousand = new StatSheet().setBase(StatKeys.MANA_MAX, 1000).addAll(high);
+        assertEquals(20, DamageCalculator.extraPerMana(thousand, DamageType.LIGHTNING, spell), 1e-9);
+        assertEquals(0, DamageCalculator.extraPerMana(thousand, DamageType.FIRE, spell), 1e-9);
+        assertEquals(0, DamageCalculator.extraPerMana(thousand, DamageType.LIGHTNING, Set.of(Tags.ATTACK, Tags.FIRE)), 1e-9);
+        final StatSheet stacker = new StatSheet().setBase(StatKeys.MANA_MAX, 3900).addAll(high);
+        assertEquals(78, DamageCalculator.extraPerMana(stacker, DamageType.LIGHTNING, spell), 1e-9);
+        assertEquals(0, DamageCalculator.extraPerMana(new StatSheet().setBase(StatKeys.MANA_MAX, 3900), DamageType.LIGHTNING, spell), 1e-9);
+        final StatSheet channelling = new StatSheet().setBase(StatKeys.MANA_MAX, 1000).addAll(high)
+                .add(Modifier.flat(StatKeys.CHANNEL_STAGES, 8, "引導"));
+        assertEquals(0, DamageCalculator.extraPerMana(channelling, DamageType.LIGHTNING, spell), 1e-9);
+
+        // 多花的魔力：最大魔力 × 6.1%；不用魔力的技能、攻擊、引導技能不算
+        assertEquals(61, SkillBuild.extraManaCost(20, thousand, spell), 1e-9);
+        assertEquals(237.9, SkillBuild.extraManaCost(20, stacker, spell), 1e-9);
+        assertEquals(0, SkillBuild.extraManaCost(0, thousand, spell), 1e-9);
+        assertEquals(0, SkillBuild.extraManaCost(20, thousand, Set.of(Tags.ATTACK)), 1e-9);
+        assertEquals(0, SkillBuild.extraManaCost(20, channelling, spell), 1e-9);
+        // 真的技能：火球的消耗 = （基礎 + 61）× 倍率；沒開祕法之心的照舊
+        final int plain = build("fireball", 20, new StatSheet().setBase(StatKeys.MANA_MAX, 1000)).manaCost();
+        final int taxed = build("fireball", 20, thousand).manaCost();
+        assertEquals(plain + 61, taxed);
+        // 光環自己不用魔力，不會被自己加價
+        assertEquals(0, build("archmage", 20, thousand).manaCost());
+    }
+
+    @Test
+    void linkedVolleyRepeatsTheNextBowOrSpearProjectileAttack() {
+        // 2026-10：連珠（照 PoE2 的 Barrage）：下一次弓／矛的投射物攻擊重複 +2 次、每次少 50%，每顆怒星再 +1 次
+        final SkillDefinition volley = config.skill("linked_volley");
+        assertEquals(Mechanic.GUARD, volley.mechanic());
+        assertEquals(Set.of("bow", "spear"), volley.weapons());
+        assertTrue(volley.usableWith(Set.of(Tags.BOW, Tags.TWO_HAND)));
+        assertFalse(volley.usableWith(Set.of(Tags.MACE)));
+        assertEquals(2, volley.cooldown(), 1e-9);
+        final BarrageSpec spec = config.barrage("linked_volley");
+        assertNotNull(spec);
+        assertNull(config.barrage("ice_tipped_arrows"), "別的增益技能沒有");
+        assertEquals(2, spec.repeats());
+        assertEquals("frenzy", spec.charge());
+        assertEquals(2, spec.repeatsWith(0));
+        assertEquals(5, spec.repeatsWith(3), "三顆怒星：再多三次");
+        assertEquals(BarrageSpec.MAX_REPEATS, spec.repeatsWith(99));
+        assertEquals(0.5, spec.damageScale(), 1e-9);
+        assertEquals(4, spec.gapTicks(), "0.2 秒");
+        assertEquals(600, spec.cooldownAttackTime().at(1), 1e-9);
+        assertEquals(410, spec.cooldownAttackTime().at(20), 1e-9);
+        // 用掉之後的冷卻：2 秒＋攻擊時間 × 600%（1 級）；攻擊時間 0.5 秒（10 tick）= 5 秒；最多 30 秒；冷卻回復照乘
+        assertEquals(100, spec.usedCooldownTicks(2, 10, 600, 1.0));
+        assertEquals(81, spec.usedCooldownTicks(2, 10, 410, 1.0), "20 級：2 ＋ 0.5 × 4.1 = 4.05 秒");
+        assertEquals(600, spec.usedCooldownTicks(2, 200, 600, 1.0), "最多 30 秒");
+        assertEquals(80, spec.usedCooldownTicks(2, 10, 600, 0.8));
+        // 能被強化的：弓、矛的投射物攻擊；近戰、法術、拿別的武器、有冷卻的、自己會重複的不行
+        final Set<String> bow = Set.of(Tags.BOW, Tags.TWO_HAND);
+        assertTrue(BarrageSpec.empowers(config.skill("ice_shot"), bow, 0));
+        assertTrue(BarrageSpec.empowers(config.skill("arrow_barrage"), bow, 0));
+        assertFalse(BarrageSpec.empowers(config.skill("ice_shot"), Set.of(Tags.CROSSBOW), 0), "手上不是弓或矛");
+        assertFalse(BarrageSpec.empowers(config.skill("ice_shot"), bow, 2), "自己就會重複的");
+        assertFalse(BarrageSpec.empowers(config.skill("fireball"), bow, 0), "法術");
+        assertFalse(BarrageSpec.empowers(config.skill("linked_volley"), bow, 0));
+        for (final SkillDefinition each : config.all()) {
+            if (BarrageSpec.empowers(each, bow, 0)) {
+                assertTrue(each.isAttack() && each.mechanic() == Mechanic.PROJECTILE && each.cooldown() <= 0, each.id());
+            }
+        }
+    }
+
+    @Test
+    void weaponBoundAurasNeedTheirWeapon() {
+        // 2026-10：寫了 weapons 的光環要拿著那種武器才開得起來（AuraService 照 usableWith 開關）
+        final SkillDefinition staff = config.skill("storm_staff");
+        assertEquals(List.of("quarterstaff"), List.copyOf(staff.weapons()));
+        assertTrue(staff.usableWith(Set.of(Tags.QUARTERSTAFF, Tags.TWO_HAND)));
+        assertFalse(staff.usableWith(Set.of(Tags.MACE)), "權杖、錘開不起來");
+        assertFalse(staff.usableWith(Set.of(Tags.BOW)));
+        assertTrue(config.skill("shard_scavenger").usableWith(Set.of(Tags.CROSSBOW)));
+        assertFalse(config.skill("shard_scavenger").usableWith(Set.of(Tags.BOW)));
+        assertTrue(config.skill("combat_frenzy").usableWith(Set.of(Tags.BOW)), "沒寫 weapons 的什麼武器都行");
+        // 崩滅心咒要長棍、銀月庇要獸魂符（PoE2 的原型都是那種武器的技能）
+        assertTrue(config.skill("ruin_mantra").usableWith(Set.of(Tags.QUARTERSTAFF)));
+        assertFalse(config.skill("ruin_mantra").usableWith(Set.of(Tags.MACE)));
+        assertTrue(config.skill("lunar_blessing").usableWith(Set.of(Tags.TALISMAN)));
+        assertFalse(config.skill("lunar_blessing").usableWith(Set.of(Tags.BOW)));
+        // 疫使跟其他捷光環一樣只有擊殺效果，沒有常駐的額外傷害
+        assertTrue(config.skill("herald_of_plague").aura().effects().isEmpty());
+        assertTrue(config.skill("herald_of_plague").aura().herald());
     }
 
     @Test
@@ -208,8 +438,12 @@ class AuraWarcryTest {
         final Path dir = Files.createTempDirectory("exilecore-aura");
         Files.copy(DATA.resolve("supports.yml"), dir.resolve("supports.yml"));
         final String original = Files.readString(DATA.resolve("skills.yml"));
-        assertRejected(dir, original.replace("on_kill: { skill: herald_ash_burst, chance: 100 }", "on_kill: { skill: nothing_here, chance: 100 }"), "on_kill");
-        assertRejected(dir, original.replace("on_kill: { skill: herald_ash_burst, chance: 100 }", "on_kill: { skill: fireball, chance: 100 }"), "hidden");
+        assertRejected(dir, original.replace("on_kill: { skill: herald_ash_burst,", "on_kill: { skill: nothing_here,"), "on_kill");
+        assertRejected(dir, original.replace("on_kill: { skill: herald_ash_burst,", "on_kill: { skill: fireball,"), "hidden");
+        // 2026-10：捷的觸發條件、代價、獸性寫錯也擋下來
+        assertRejected(dir, original.replace("attack: true, ailment: shock }", "attack: true, ailment: soggy }"), "ailment");
+        assertRejected(dir, original.replace("life_cost: { per_rage: 0.1 }", "life_cost: { per_rage: 0 }"), "per_rage");
+        assertRejected(dir, original.replace("        seconds_per: 0.5\n", "        seconds_per: 0\n"), "seconds_per");
         assertRejected(dir, original.replace("    cooldown: 10\n    mana: [7, 16]", "    mana: [7, 16]"), "cooldown");
         assertRejected(dir, original.replace("      reserve: 35\n      radius: 8\n      effects:\n        - { stat: damage.gain.cold",
                 "      reserve: 135\n      radius: 8\n      effects:\n        - { stat: damage.gain.cold"), "reserve");

@@ -2201,7 +2201,7 @@ j2_chance_to_daze:
   mods:
     - { stat: daze.chance, type: FLAT, value: "{value}" }
 
-j2_damaging_ailment_duration:
+j2_damaging_ailment_duration2:
   type: suffix
   group: j2_damaging_ailment_duration
   spawn_tags: [emerald, sapphire]
@@ -2285,3 +2285,149 @@ j2_spear_critical_strike_multiplier:
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spear] }
 
+
+# 2026-10：PoE2 0.5 翠星晶（敏捷）珠寶的藥劑、護符詞綴（RePoE JewelCharm*、JewelFlask*、JewelLifeFlask*、JewelManaFlask*）。
+j2_charm_duration:
+  type: suffix
+  group: j2_charm_duration
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 護符效果持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: charm.duration, type: INCREASED, value: "{value}" }
+
+j2_charm_charges_gained:
+  type: suffix
+  group: j2_charm_charges_gained
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 護符拿到的充能"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: charm.charges_gained, type: INCREASED, value: "{value}" }
+
+j2_flask_charges_gained:
+  type: suffix
+  group: j2_flask_charges_gained
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 藥劑拿到的充能"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: flask.charges_gained, type: INCREASED, value: "{value}" }
+
+j2_flask_duration:
+  type: suffix
+  group: j2_flask_duration
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 藥劑效果持續時間"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: flask.duration, type: INCREASED, value: "{value}" }
+
+j2_life_flask_charges_gained:
+  type: suffix
+  group: j2_life_flask_charges_gained
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 生命藥劑拿到的充能"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: flask.charges_gained.life, type: INCREASED, value: "{value}" }
+
+j2_mana_flask_charges_gained:
+  type: suffix
+  group: j2_mana_flask_charges_gained
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 魔力藥劑拿到的充能"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: flask.charges_gained.mana, type: INCREASED, value: "{value}" }
+
+# 2026-10：「最近…」條件的珠寶詞綴（RePoE JewelCorpses、JewelCharmDamageWhileUsing、JewelMeleeDamageIfProjectileHitRecently、
+# JewelProjectileDamageIfMeleeHitRecently、JewelStunThresholdIfNotStunnedRecently）。
+j2_damage_corpse:
+  type: prefix
+  group: j2_damage_corpse
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "最近消耗過屍體，則增加 {value}% 傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: damage@corpse, type: INCREASED, value: "{value}" }
+
+j2_damage_charm:
+  type: prefix
+  group: j2_damage_charm
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "最近用過護符，則增加 {value}% 傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: damage@charm, type: INCREASED, value: "{value}" }
+
+j2_melee_damage_projhit:
+  type: prefix
+  group: j2_melee_damage_projhit
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "最近用投射物攻擊擊中過敵人，則增加 {value}% 近戰傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: damage@projhit, type: INCREASED, value: "{value}", tags: [melee] }
+
+j2_projectile_damage_meleehit:
+  type: prefix
+  group: j2_projectile_damage_meleehit
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "最近近戰擊中過敵人，則增加 {value}% 投射物傷害"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: damage@meleehit, type: INCREASED, value: "{value}", tags: [projectile] }
+
+j2_stun_threshold_nostun:
+  type: suffix
+  group: j2_stun_threshold_nostun
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "最近沒被重暈過，則增加 {value}% 重暈門檻"
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [15, 18] }
+  mods:
+    - { stat: stun.threshold@nostun, type: INCREASED, value: "{value}" }

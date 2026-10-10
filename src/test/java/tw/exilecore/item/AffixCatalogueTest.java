@@ -99,6 +99,14 @@ class AffixCatalogueTest {
             final String where = affix.id();
             for (final AffixMod mod : affix.mods()) {
                 String stat = mod.stat();
+                if (stat.startsWith(StatKeys.RADIUS_PREFIX)) {
+                    stat = stat.substring(StatKeys.RADIUS_PREFIX.length()); // 2026-10：半徑珠寶「範圍內的小天賦也各給」
+                }
+                if (tw.exilecore.stats.Recently.hasCondition(stat)) {
+                    // 2026-10：「最近…」的條件詞綴（damage@projhit 這種）：條件要是引擎認得的
+                    assertNotNull(tw.exilecore.stats.Recently.condition(stat), where + "：不認得的條件 " + stat);
+                    stat = tw.exilecore.stats.Recently.stat(stat);
+                }
                 if (isMapAffix(affix)) {
                     if (MAP_STATS.contains(stat)) {
                         continue;

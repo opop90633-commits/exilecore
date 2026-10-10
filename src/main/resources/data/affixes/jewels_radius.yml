@@ -1,0 +1,1440 @@
+# 遺時珠寶（半徑珠寶）的詞綴（2026-10，照 PoE2 0.5 的 Time-Lost 珠寶；資料來源 RePoE poe2 mods.json）。
+# 基底：time_lost_ruby／emerald／sapphire／diamond（bases/jewels.yml），spawn_tags：radius（四種都出）、r_ruby、r_emerald、r_sapphire。
+# radius:屬性 = 「範圍內的小天賦也各給」：珠寶孔周圍半徑內（基本 2 格）每一個已配置的小天賦都多給一次（JewelSockets.radiusModifiers）。
+# jewel.local.radius：半徑多幾格；jewel.local.small_effect／notable_effect：範圍內已配置的小天賦／核心的數值再加 x%。
+# unveiled_jr_*：PoE2 的褻瀆半徑珠寶詞綴 → 隱匿（揭露）。
+
+jr_medium_size:
+  type: prefix
+  group: jr_medium_size
+  spawn_tags: [radius]
+  names: [遺時的]
+  text: "半徑更大（+{value} 格）"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: jewel.local.radius, type: FLAT, value: "{value}" }
+
+jr_large_size:
+  type: prefix
+  group: jr_medium_size
+  spawn_tags: [radius]
+  names: [遺時的]
+  text: "半徑巨大（+{value} 格）"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 2] }
+  mods:
+    - { stat: jewel.local.radius, type: FLAT, value: "{value}" }
+
+jr_small_node_effect:
+  type: suffix
+  group: jr_small_node_effect
+  spawn_tags: [radius]
+  names: [之遺時]
+  text: "範圍內已配置的小天賦效果增加 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [15, 25] }
+  mods:
+    - { stat: jewel.local.small_effect, type: INCREASED, value: "{value}" }
+
+jr_notable_effect_new:
+  type: suffix
+  group: jr_notable_effect_new
+  spawn_tags: [radius]
+  names: [之遺時]
+  text: "範圍內已配置的核心天賦效果增加 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [15, 25] }
+  mods:
+    - { stat: jewel.local.notable_effect, type: INCREASED, value: "{value}" }
+
+jr_accuracy:
+  type: prefix
+  group: jr_accuracy
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 命中"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:accuracy, type: INCREASED, value: "{value}" }
+
+jr_ailment_chance:
+  type: suffix
+  group: jr_ailment_chance
+  spawn_tags: [r_emerald, r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 點燃、感電、流血與中毒機率"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:ignite.chance, type: INCREASED, value: "{value}" }
+    - { stat: radius:shock.chance, type: INCREASED, value: "{value}" }
+    - { stat: radius:bleed.chance, type: INCREASED, value: "{value}" }
+    - { stat: radius:poison.chance, type: INCREASED, value: "{value}" }
+
+jr_ailment_effect:
+  type: prefix
+  group: jr_ailment_effect
+  spawn_tags: [r_emerald, r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 異常狀態效果（點燃、流血、中毒、感電、冰緩）"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:ignite.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: radius:bleed.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: radius:poison.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: radius:shock.effect, type: INCREASED, value: "{value}" }
+    - { stat: radius:chill.effect, type: INCREASED, value: "{value}" }
+
+jr_ailment_threshold:
+  type: suffix
+  group: jr_ailment_threshold
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 元素異常門檻"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:ailment.threshold, type: INCREASED, value: "{value}" }
+
+jr_areaof_effect:
+  type: prefix
+  group: jr_areaof_effect
+  spawn_tags: [r_ruby, r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 範圍效果"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:skill.area, type: INCREASED, value: "{value}" }
+
+jr_armour:
+  type: prefix
+  group: jr_armour
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 護甲"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:armour, type: INCREASED, value: "{value}" }
+
+jr_armour_break:
+  type: prefix
+  group: jr_armour_break
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 破甲"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:armour.break, type: INCREASED, value: "{value}" }
+
+jr_attack_critical_chance:
+  type: suffix
+  group: jr_attack_critical_chance
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 攻擊暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
+
+jr_attack_critical_damage:
+  type: suffix
+  group: jr_attack_critical_damage
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 攻擊暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius:crit.bonus, type: INCREASED, value: "{value}", tags: [attack] }
+
+jr_attack_damage:
+  type: prefix
+  group: jr_attack_damage
+  spawn_tags: [r_emerald, r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 攻擊傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [attack] }
+
+jr_attack_speed:
+  type: suffix
+  group: jr_attack_speed
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:attack.speed, type: INCREASED, value: "{value}" }
+
+jr_bleeding_chance:
+  type: prefix
+  group: jr_bleeding_chance
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：攻擊擊中時 {value}% 機率造成流血"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+jr_bleeding_duration:
+  type: suffix
+  group: jr_bleeding_duration
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 流血持續時間"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:bleed.duration, type: INCREASED, value: "{value}" }
+
+jr_block:
+  type: prefix
+  group: jr_block
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 格擋率"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 3] }
+  mods:
+    - { stat: radius:block.chance, type: INCREASED, value: "{value}" }
+
+jr_damage_vs_rare_or_unique:
+  type: prefix
+  group: jr_damage_vs_rare_or_unique
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：對稀有與傳奇怪物增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage.vs_rare, type: INCREASED, value: "{value}" }
+
+jr_bow_accuracy_rating:
+  type: prefix
+  group: jr_bow_accuracy_rating
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：使用弓時增加 {value}% 命中"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:accuracy, type: INCREASED, value: "{value}", tags: [bow] }
+
+jr_bow_damage:
+  type: prefix
+  group: jr_bow_damage
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：使用弓時增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [bow] }
+
+jr_bow_speed:
+  type: suffix
+  group: jr_bow_speed
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：使用弓時增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [bow] }
+
+jr_cast_speed:
+  type: suffix
+  group: jr_cast_speed
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 施法速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:cast.speed, type: INCREASED, value: "{value}" }
+
+jr_charm_duration:
+  type: suffix
+  group: jr_charm_duration
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 護符效果持續時間"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:charm.duration, type: INCREASED, value: "{value}" }
+
+jr_charm_charges_gained:
+  type: suffix
+  group: jr_charm_charges_gained
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 護符拿到的充能"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:charm.charges_gained, type: INCREASED, value: "{value}" }
+
+jr_charm_damage_while_using:
+  type: prefix
+  group: jr_charm_damage_while_using
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：最近用過護符則增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage@charm, type: INCREASED, value: "{value}" }
+
+jr_chaos_damage:
+  type: prefix
+  group: jr_chaos_damage
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 混沌傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [chaos] }
+
+jr_chill_duration:
+  type: suffix
+  group: jr_chill_duration
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 冰緩持續時間"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [6, 12] }
+  mods:
+    - { stat: radius:chill.duration, type: INCREASED, value: "{value}" }
+
+jr_cold_damage:
+  type: prefix
+  group: jr_cold_damage
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 冰冷傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [cold] }
+
+jr_cold_penetration:
+  type: prefix
+  group: jr_cold_penetration
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：傷害穿透 {value}% 冰冷抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:penetration, type: FLAT, value: "{value}", tags: [cold] }
+
+jr_cooldown_speed:
+  type: suffix
+  group: jr_cooldown_speed
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：冷卻時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 3] }
+  mods:
+    - { stat: radius:skill.cooldown, type: INCREASED, value: "-{value}" }
+
+jr_corpses:
+  type: prefix
+  group: jr_corpses
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：最近消耗過屍體則增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage@corpse, type: INCREASED, value: "{value}" }
+
+jr_critical_chance:
+  type: suffix
+  group: jr_critical_chance
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:crit.chance, type: INCREASED, value: "{value}" }
+
+jr_critical_damage:
+  type: suffix
+  group: jr_critical_damage
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius:crit.bonus, type: INCREASED, value: "{value}" }
+
+jr_spell_critical_damage:
+  type: suffix
+  group: jr_spell_critical_damage
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 法術暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius:crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
+
+jr_crossbow_damage:
+  type: prefix
+  group: jr_crossbow_damage
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：使用弩時增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [crossbow] }
+
+jr_crossbow_reload_speed:
+  type: suffix
+  group: jr_crossbow_reload_speed
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 弩的裝填速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 7] }
+  mods:
+    - { stat: radius:crossbow.reload_speed, type: INCREASED, value: "{value}" }
+
+jr_crossbow_speed:
+  type: suffix
+  group: jr_crossbow_speed
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：使用弩時增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [crossbow] }
+
+jr_curse_area:
+  type: prefix
+  group: jr_curse_area
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 詛咒範圍"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 6] }
+  mods:
+    - { stat: radius:skill.area, type: INCREASED, value: "{value}", tags: [curse] }
+
+jr_curse_duration:
+  type: suffix
+  group: jr_curse_duration
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 詛咒持續時間"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 4] }
+  mods:
+    - { stat: radius:skill.duration, type: INCREASED, value: "{value}", tags: [curse] }
+
+jr_curse_effect:
+  type: prefix
+  group: jr_curse_effect
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 詛咒效果"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:curse.effect, type: INCREASED, value: "{value}", tags: [curse] }
+
+jr_damagefrom_mana:
+  type: suffix
+  group: jr_damagefrom_mana
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：受到的傷害有 {value}% 先從魔力扣除"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:damage.from_mana, type: FLAT, value: "{value}" }
+
+jr_damaging_ailment_duration:
+  type: suffix
+  group: jr_damaging_ailment_duration
+  spawn_tags: [r_emerald, r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 點燃、流血與中毒持續時間"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: radius:ignite.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius:bleed.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius:poison.duration, type: INCREASED, value: "{value}" }
+
+jr_daze_buildup:
+  type: suffix
+  group: jr_daze_buildup
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：擊中時 {value}% 機率讓敵人眩暈"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:daze.chance, type: FLAT, value: "{value}" }
+
+jr_elemental_ailment_duration:
+  type: suffix
+  group: jr_elemental_ailment_duration
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 點燃、感電與冰緩持續時間"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: radius:ignite.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius:shock.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius:chill.duration, type: INCREASED, value: "{value}" }
+
+jr_elemental_damage:
+  type: prefix
+  group: jr_elemental_damage
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 元素傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [elemental] }
+
+jr_energy_shield:
+  type: prefix
+  group: jr_energy_shield
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 最大能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:es.max, type: INCREASED, value: "{value}" }
+
+jr_energy_shield_delay:
+  type: prefix
+  group: jr_energy_shield_delay
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：能量護盾開始回充的等待時間縮短 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 7] }
+  mods:
+    - { stat: radius:es.delay, type: INCREASED, value: "{value}" }
+
+jr_evasion:
+  type: prefix
+  group: jr_evasion
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 閃避"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:evasion, type: INCREASED, value: "{value}" }
+
+jr_fire_damage:
+  type: prefix
+  group: jr_fire_damage
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 火焰傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [fire] }
+
+jr_fire_penetration:
+  type: prefix
+  group: jr_fire_penetration
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：傷害穿透 {value}% 火焰抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:penetration, type: FLAT, value: "{value}", tags: [fire] }
+
+jr_flask_charges_gained:
+  type: suffix
+  group: jr_flask_charges_gained
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 藥劑拿到的充能"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: radius:flask.charges_gained, type: INCREASED, value: "{value}" }
+
+jr_flask_duration:
+  type: suffix
+  group: jr_flask_duration
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 藥劑效果持續時間"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:flask.duration, type: INCREASED, value: "{value}" }
+
+jr_freeze_amount:
+  type: suffix
+  group: jr_freeze_amount
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 凍結累積"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius:freeze.buildup, type: INCREASED, value: "{value}" }
+
+jr_herald_damage:
+  type: prefix
+  group: jr_herald_damage
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：捷光環增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 4] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [herald] }
+
+jr_ignite_chance:
+  type: suffix
+  group: jr_ignite_chance
+  spawn_tags: [r_ruby, r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 點燃機率"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:ignite.chance, type: INCREASED, value: "{value}" }
+
+jr_ignite_effect:
+  type: prefix
+  group: jr_ignite_effect
+  spawn_tags: [r_ruby, r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 點燃傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:ignite.magnitude, type: INCREASED, value: "{value}" }
+
+jr_increased_duration:
+  type: suffix
+  group: jr_increased_duration
+  spawn_tags: [r_ruby, r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 技能持續時間"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: radius:skill.duration, type: INCREASED, value: "{value}" }
+
+jr_knockback:
+  type: suffix
+  group: jr_knockback
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 擊退距離"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:skill.knockback, type: INCREASED, value: "{value}" }
+
+jr_life_flask_recovery:
+  type: suffix
+  group: jr_life_flask_recovery
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 生命藥劑回復量"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:flask.life_recovery, type: INCREASED, value: "{value}" }
+
+jr_life_flask_charge_gen:
+  type: suffix
+  group: jr_life_flask_charge_gen
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 生命藥劑拿到的充能"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius:flask.charges_gained.life, type: INCREASED, value: "{value}" }
+
+jr_life_leech:
+  type: suffix
+  group: jr_life_leech
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 生命偷取量"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:leech.effect, type: INCREASED, value: "{value}" }
+
+jr_lifeon_kill:
+  type: suffix
+  group: jr_lifeon_kill
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：擊殺時回復 {value}% 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:life.on_kill, type: FLAT, value: "{value}" }
+
+jr_life_recoup:
+  type: suffix
+  group: jr_life_recoup
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：受到的傷害有 {value}% 在 4 秒內回復為生命"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:life.recoup, type: FLAT, value: "{value}" }
+
+jr_life_regeneration:
+  type: suffix
+  group: jr_life_regeneration
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 生命回復速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: radius:life.regen, type: INCREASED, value: "{value}" }
+
+jr_lightning_damage:
+  type: prefix
+  group: jr_lightning_damage
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 閃電傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [lightning] }
+
+jr_lightning_penetration:
+  type: prefix
+  group: jr_lightning_penetration
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：傷害穿透 {value}% 閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:penetration, type: FLAT, value: "{value}", tags: [lightning] }
+
+jr_mace_damage:
+  type: prefix
+  group: jr_mace_damage
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：使用錘時增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [mace] }
+
+jr_mace_stun:
+  type: suffix
+  group: jr_mace_stun
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：使用錘時增加 {value}% 暈眩累積"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [6, 12] }
+  mods:
+    - { stat: radius:stun.buildup, type: INCREASED, value: "{value}", tags: [mace] }
+
+jr_mana_flask_recovery:
+  type: suffix
+  group: jr_mana_flask_recovery
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 魔力藥劑回復量"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:flask.mana_recovery, type: INCREASED, value: "{value}" }
+
+jr_mana_flask_charge_gen:
+  type: suffix
+  group: jr_mana_flask_charge_gen
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 魔力藥劑拿到的充能"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius:flask.charges_gained.mana, type: INCREASED, value: "{value}" }
+
+jr_manaon_kill:
+  type: suffix
+  group: jr_manaon_kill
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：擊殺時回復 {value}% 最大魔力"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:mana.on_kill, type: FLAT, value: "{value}" }
+
+jr_mana_regeneration:
+  type: suffix
+  group: jr_mana_regeneration
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 魔力回復速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:mana.regen, type: INCREASED, value: "{value}" }
+
+jr_mark_duration:
+  type: suffix
+  group: jr_mark_duration
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 印記持續時間"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 4] }
+  mods:
+    - { stat: radius:skill.duration, type: INCREASED, value: "{value}", tags: [mark] }
+
+jr_mark_effect:
+  type: prefix
+  group: jr_mark_effect
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 印記效果"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:curse.effect, type: INCREASED, value: "{value}", tags: [mark] }
+
+jr_maximum_rage:
+  type: prefix
+  group: jr_maximum_rage
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：+{value} 最大怒氣"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:rage.max, type: FLAT, value: "{value}" }
+
+jr_melee_damage:
+  type: prefix
+  group: jr_melee_damage
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 近戰傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [melee] }
+
+jr_minion_area:
+  type: prefix
+  group: jr_minion_area
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 召喚物範圍"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: radius:skill.area, type: INCREASED, value: "{value}", tags: [minion] }
+
+jr_minion_attackand_cast_speed:
+  type: suffix
+  group: jr_minion_attackand_cast_speed
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 召喚物攻擊與施法速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
+    - { stat: radius:cast.speed, type: INCREASED, value: "{value}", tags: [minion] }
+
+jr_minion_chaos_resistance:
+  type: suffix
+  group: jr_minion_chaos_resistance
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：召喚物 +{value}% 混沌抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:resist.chaos, type: FLAT, value: "{value}", tags: [minion] }
+
+jr_minion_critical_chance:
+  type: suffix
+  group: jr_minion_critical_chance
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 召喚物暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius:crit.chance, type: INCREASED, value: "{value}", tags: [minion] }
+
+jr_minion_critical_multiplier:
+  type: suffix
+  group: jr_minion_critical_multiplier
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 召喚物暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [6, 12] }
+  mods:
+    - { stat: radius:crit.bonus, type: INCREASED, value: "{value}", tags: [minion] }
+
+jr_minion_damage:
+  type: prefix
+  group: jr_minion_damage
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 召喚物傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [minion] }
+
+jr_minion_life:
+  type: prefix
+  group: jr_minion_life
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 召喚物最大生命"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:life.max, type: INCREASED, value: "{value}", tags: [minion] }
+
+jr_minion_resistances:
+  type: suffix
+  group: jr_minion_resistances
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：召喚物 +{value}% 元素抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:resist.fire, type: FLAT, value: "{value}", tags: [minion] }
+    - { stat: radius:resist.cold, type: FLAT, value: "{value}", tags: [minion] }
+    - { stat: radius:resist.lightning, type: FLAT, value: "{value}", tags: [minion] }
+
+jr_movement_speed:
+  type: suffix
+  group: jr_movement_speed
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 移動速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:movement.speed, type: INCREASED, value: "{value}" }
+
+jr_physical_damage:
+  type: prefix
+  group: jr_physical_damage
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 物理傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [physical] }
+
+jr_poison_chance:
+  type: suffix
+  group: jr_poison_chance
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：擊中時 {value}% 機率造成中毒"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:poison.chance, type: FLAT, value: "{value}" }
+
+jr_poison_damage:
+  type: prefix
+  group: jr_poison_damage
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 中毒傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:poison.magnitude, type: INCREASED, value: "{value}" }
+
+jr_poison_duration:
+  type: suffix
+  group: jr_poison_duration
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 中毒持續時間"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:poison.duration, type: INCREASED, value: "{value}" }
+
+jr_projectile_damage:
+  type: prefix
+  group: jr_projectile_damage
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 投射物傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [projectile] }
+
+jr_projectile_speed:
+  type: prefix
+  group: jr_projectile_speed
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 投射物速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:skill.projectile_speed, type: INCREASED, value: "{value}" }
+
+jr_quarterstaff_damage:
+  type: prefix
+  group: jr_quarterstaff_damage
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：使用長棍時增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [quarterstaff] }
+
+jr_quarterstaff_freeze_buildup:
+  type: suffix
+  group: jr_quarterstaff_freeze_buildup
+  spawn_tags: [r_emerald, r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：使用長棍時增加 {value}% 凍結累積"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius:freeze.buildup, type: INCREASED, value: "{value}", tags: [quarterstaff] }
+
+jr_quarterstaff_speed:
+  type: suffix
+  group: jr_quarterstaff_speed
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：使用長棍時增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [quarterstaff] }
+
+jr_rageon_hit:
+  type: suffix
+  group: jr_rageon_hit
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：近戰攻擊擊中時獲得 {value} 點怒氣"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:rage.on_hit, type: FLAT, value: "{value}", tags: [melee] }
+
+jr_shock_chance:
+  type: suffix
+  group: jr_shock_chance
+  spawn_tags: [r_emerald, r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 感電機率"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:shock.chance, type: INCREASED, value: "{value}" }
+
+jr_shock_duration:
+  type: suffix
+  group: jr_shock_duration
+  spawn_tags: [r_emerald, r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 感電持續時間"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:shock.duration, type: INCREASED, value: "{value}" }
+
+jr_shock_effect:
+  type: prefix
+  group: jr_shock_effect
+  spawn_tags: [r_emerald, r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 感電效果"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 7] }
+  mods:
+    - { stat: radius:shock.effect, type: INCREASED, value: "{value}" }
+
+jr_spear_attack_speed:
+  type: suffix
+  group: jr_spear_attack_speed
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：使用矛時增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [spear] }
+
+jr_spear_critical_damage:
+  type: suffix
+  group: jr_spear_critical_damage
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：使用矛時增加 {value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius:crit.bonus, type: INCREASED, value: "{value}", tags: [spear] }
+
+jr_spear_damage:
+  type: prefix
+  group: jr_spear_damage
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：使用矛時增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [spear] }
+
+jr_spell_critical_chance:
+  type: suffix
+  group: jr_spell_critical_chance
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 法術暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
+
+jr_spell_damage:
+  type: prefix
+  group: jr_spell_damage
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+jr_stun_buildup:
+  type: suffix
+  group: jr_stun_buildup
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 暈眩累積"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius:stun.buildup, type: INCREASED, value: "{value}" }
+
+jr_stun_threshold:
+  type: suffix
+  group: jr_stun_threshold
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 暈眩門檻"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:stun.threshold, type: INCREASED, value: "{value}" }
+
+jr_stun_threshold_if_not_stunned_recently:
+  type: suffix
+  group: jr_stun_threshold_if_not_stunned_recently
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：最近沒被重暈過則增加 {value}% 重暈門檻"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:stun.threshold@nostun, type: INCREASED, value: "{value}" }
+
+jr_bleeding_effect:
+  type: prefix
+  group: jr_bleeding_effect
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 流血傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:bleed.magnitude, type: INCREASED, value: "{value}" }
+
+jr_thorns:
+  type: prefix
+  group: jr_thorns
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 荊棘傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:thorns.damage, type: INCREASED, value: "{value}" }
+
+jr_totem_damage:
+  type: prefix
+  group: jr_totem_damage
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 圖騰傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [totem] }
+
+jr_totem_life:
+  type: prefix
+  group: jr_totem_life
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 圖騰生命"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:totem.life, type: INCREASED, value: "{value}" }
+
+jr_warcry_cooldown:
+  type: suffix
+  group: jr_warcry_cooldown
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：戰吼的冷卻時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: radius:skill.cooldown, type: INCREASED, value: "-{value}", tags: [warcry] }
+
+jr_warcry_damage:
+  type: prefix
+  group: jr_warcry_damage
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：戰吼增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [warcry] }
+
+jr_projectile_damage_if_melee_hit_recently:
+  type: prefix
+  group: jr_projectile_damage_if_melee_hit_recently
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：最近近戰擊中過則增加 {value}% 投射物傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage@meleehit, type: INCREASED, value: "{value}", tags: [projectile] }
+
+jr_melee_damage_if_projectile_hit_recently:
+  type: prefix
+  group: jr_melee_damage_if_projectile_hit_recently
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：最近用投射物攻擊擊中過則增加 {value}% 近戰傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage@projhit, type: INCREASED, value: "{value}", tags: [melee] }
+
+jr_presence_radius:
+  type: prefix
+  group: jr_presence_radius
+  spawn_tags: [r_ruby, r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 臨在範圍"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: radius:presence.area, type: INCREASED, value: "{value}" }
+
+unveiled_jr_damage_taken_recoup_life:
+  type: prefix
+  group: unveiled_jr_damage_taken_recoup_life
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕的, 黯痕的]
+  text: "範圍內的小天賦也各給：受到的傷害有 {value}% 在 4 秒內回復為生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+  mods:
+    - { stat: radius:life.recoup, type: FLAT, value: "{value}" }
+
+unveiled_jr_percent_maximum_mana:
+  type: prefix
+  group: unveiled_jr_percent_maximum_mana
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕的, 黯痕的]
+  text: "範圍內的小天賦也各給：增加 {value}% 最大魔力"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+  mods:
+    - { stat: radius:mana.max, type: INCREASED, value: "{value}" }
+
+unveiled_jr_percent_maximum_life:
+  type: prefix
+  group: unveiled_jr_percent_maximum_life
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕的, 黯痕的]
+  text: "範圍內的小天賦也各給：增加 {value}% 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+  mods:
+    - { stat: radius:life.max, type: INCREASED, value: "{value}" }
+
+unveiled_jr_global_defences:
+  type: prefix
+  group: unveiled_jr_global_defences
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕的, 黯痕的]
+  text: "範圍內的小天賦也各給：增加 {value}% 護甲、閃避值與最大能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }
+  mods:
+    - { stat: radius:armour, type: INCREASED, value: "{value}" }
+    - { stat: radius:evasion, type: INCREASED, value: "{value}" }
+    - { stat: radius:es.max, type: INCREASED, value: "{value}" }
+
+unveiled_jr_damage_taken_from_mana_before_life:
+  type: prefix
+  group: unveiled_jr_damage_taken_from_mana_before_life
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕的, 黯痕的]
+  text: "範圍內的小天賦也各給：受到的傷害有 {value}% 先從魔力扣除"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+  mods:
+    - { stat: radius:damage.from_mana, type: FLAT, value: "{value}" }
+
+unveiled_jr_regenerate_percent_life_per_second:
+  type: suffix
+  group: unveiled_jr_regenerate_percent_life_per_second
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕之, 黯痕之]
+  text: "範圍內的小天賦也各給：每秒回復 {value/10}% 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [0, 0] }
+  mods:
+    - { stat: radius:life.regen_percent, type: FLAT, value: "{value/10}" }
+
+unveiled_jr_mana_cost_efficiency:
+  type: suffix
+  group: unveiled_jr_mana_cost_efficiency
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕之, 黯痕之]
+  text: "範圍內的小天賦也各給：減少 {value}% 技能魔力消耗"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }
+  mods:
+    - { stat: radius:skill.cost, type: INCREASED, value: "-{value}" }
+
+unveiled_jr_mana_flask_charges_per_second:
+  type: suffix
+  group: unveiled_jr_mana_flask_charges_per_second
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕之, 黯痕之]
+  text: "範圍內的小天賦也各給：魔力藥劑每分鐘自動拿到 {value} 點充能"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 6] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 6] }
+  mods:
+    - { stat: radius:flask.charges_per_minute.mana, type: FLAT, value: "{value}" }
+
+unveiled_jr_life_flask_charges_per_second:
+  type: suffix
+  group: unveiled_jr_life_flask_charges_per_second
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕之, 黯痕之]
+  text: "範圍內的小天賦也各給：生命藥劑每分鐘自動拿到 {value} 點充能"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 6] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 6] }
+  mods:
+    - { stat: radius:flask.charges_per_minute.life, type: FLAT, value: "{value}" }
+
+unveiled_jr_charm_charges_per_second:
+  type: suffix
+  group: unveiled_jr_charm_charges_per_second
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕之, 黯痕之]
+  text: "範圍內的小天賦也各給：護符每分鐘自動拿到 {value} 點充能"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [6, 6] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 6] }
+  mods:
+    - { stat: radius:charm.charges_per_minute, type: FLAT, value: "{value}" }
+
+jr_shapeshift_speed:
+  type: suffix
+  group: jr_shapeshift_speed
+  spawn_tags: [r_ruby, r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：變身技能增加 {value}% 攻擊與施放速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [shapeshift] }
+    - { stat: radius:cast.speed, type: INCREASED, value: "{value}", tags: [shapeshift] }
+
+jr_shapeshift_damage:
+  type: prefix
+  group: jr_shapeshift_damage
+  spawn_tags: [r_ruby, r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：變身技能增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [shapeshift] }

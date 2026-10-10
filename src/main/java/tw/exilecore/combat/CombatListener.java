@@ -517,6 +517,21 @@ public final class CombatListener implements Listener {
                 ailments.igniteSelf((Player) attacker, (burner.maxLife() + burner.maxEnergyShield()) * selfBurn / 100.0, 4);
             }
         }
+        if (attackerIsPlayer && result.hit() && !result.blocked()) {
+            // 2026-10：「最近擊中過敵人」「最近近戰／投射物攻擊擊中過」「最近暴擊過」的條件
+            final PlayerState hitter = plugin.players().get((Player) attacker);
+            final long tick = plugin.getServer().getCurrentTick();
+            hitter.markRecent(tw.exilecore.stats.Recently.ENEMY_HIT, tick);
+            if (skill.tags().contains(tw.exilecore.stats.Tags.MELEE)) {
+                hitter.markRecent(tw.exilecore.stats.Recently.MELEE_HIT, tick);
+            }
+            if (skill.tags().contains(tw.exilecore.stats.Tags.ATTACK) && skill.tags().contains(tw.exilecore.stats.Tags.PROJECTILE)) {
+                hitter.markRecent(tw.exilecore.stats.Recently.PROJECTILE_HIT, tick);
+            }
+            if (result.crit()) {
+                hitter.markRecent(tw.exilecore.stats.Recently.CRIT, tick);
+            }
+        }
         if (attackerIsPlayer && defenderMonster != null && ailments != null && result.hit() && !result.blocked()) {
             final StatSheet breakSheet = skill.effective(attackerSheet);
             final java.util.Set<String> breakContext = skill.contextFor(DamageType.PHYSICAL);
@@ -541,6 +556,9 @@ public final class CombatListener implements Listener {
             }
             if (defenderIsPlayer && !hitEvent.isCancelled()) {
                 numbers.takenWord((Player) defender, result.blocked() ? "格擋" : "閃避"); // 自己閃掉、擋掉
+                if (result.blocked()) {
+                    plugin.players().get((Player) defender).markRecent(tw.exilecore.stats.Recently.BLOCK, plugin.getServer().getCurrentTick());
+                }
                 if (signatures != null) {
                     signatures.avoided((Player) defender, defenderSheet); // 虛步
                 }
@@ -864,6 +882,14 @@ public final class CombatListener implements Listener {
                 lifeTaken -= later;
                 delayedLoss(player, later, 10, 8, false);
             }
+        }
+        // 守護（2026-10，護符詞綴）：效果期間先替你吃掉傷害（先吃護盾那份、再吃生命那份）
+        if (esTaken + lifeTaken > 0 && state.guard(plugin.getServer().getCurrentTick()) > 0) {
+            final long now = plugin.getServer().getCurrentTick();
+            final double fromEs = state.absorbGuard(esTaken, now);
+            esTaken -= fromEs;
+            final double fromLife = state.absorbGuard(lifeTaken, now);
+            lifeTaken -= fromLife;
         }
         // 傳奇「受到的傷害先從魔力扣」與「受到的傷害有 x% 之後慢慢回成生命」
         final IncomingDamage split = IncomingDamage.split(esTaken, lifeTaken, state.mana(),

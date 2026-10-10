@@ -39,17 +39,18 @@ class SupportHitRulesTest {
     void hitOnlySupportsRefuseSkillsThatNeverHit() {
         final String reason = "不會造成傷害的技能不行";
         // 光環、詛咒、印記、護體、戰吼、純位移、召喚本身都不會打到敵人
-        for (final String id : new String[] {"frost_aegis", "vulnerability_curse", "hunters_mark", "raise_guard", "fortifying_cry", "blink", "raise_zombie"}) {
+        for (final String id : new String[] {"frost_aegis", "vulnerability_curse", "hunters_mark", "raise_guard", "blink"}) {
             assertEquals(reason, support("added_fire").refusal(skill(id)), id);
             assertEquals(reason, support("critical_strikes").refusal(skill(id)), id);
             assertEquals(reason, support("deep_freeze").refusal(skill(id)), id);
             assertEquals(reason, support("deliberation").refusal(skill(id)), id);
         }
-        assertEquals(reason, support("ruthless").refusal(skill("summon_skeletons")), "無情的傷害沒有 minion 標籤：召喚技能掛了只會落到主人身上");
+        assertEquals(reason, support("deep_freeze").refusal(skill("fortifying_cry")), "戰吼沒有 attack／spell 標籤：只有不看標籤的輔助會走到這條");
+        assertEquals("召喚物技能不行", support("ruthless").refusal(skill("summon_skeletons")), "無情的傷害沒有 minion 標籤：召喚技能掛了只會落到主人身上");
         assertEquals(reason, support("pinning").refusal(skill("skeletal_archers")), "遠程召喚物只是畫一道彈道，沒有真的投射物");
         // 真的會打到敵人的照舊
         assertNull(support("added_fire").refusal(skill("fireball")));
-        assertNull(support("added_fire").refusal(skill("heavy_strike")));
+        assertNull(support("added_fire").refusal(skill("rolling_slam")));
         assertNull(support("added_fire").refusal(skill("storm_blink")), "會打到敵人的位移");
         assertNull(support("added_fire").refusal(skill("herald_of_ash")), "捷的輔助會傳給擊殺效果");
     }
@@ -65,7 +66,8 @@ class SupportHitRulesTest {
         assertNull(support("trigger_hit_taken").refusal(skill("vulnerability_curse")), "受擊時放詛咒");
         assertNull(support("warcry_power").refusal(skill("fortifying_cry")));
         assertNull(support("burst").refusal(skill("hunters_mark")), "冷卻那半邊對印記有用");
-        assertEquals("不會造成傷害的技能不行", support("burst").refusal(skill("raise_zombie")), "喚屍沒有冷卻：傷害那半邊又用不到");
+        assertEquals("要冷卻技能", support("burst").refusal(skill("raise_zombie")), "喚屍沒有冷卻");
+        assertEquals("不會造成傷害的技能不行", support("deliberation").refusal(skill("raise_zombie")), "純傷害的輔助掛召喚沒效果");
     }
 
     @Test
@@ -75,7 +77,7 @@ class SupportHitRulesTest {
         assertEquals(reason, support("multiple_projectiles").refusal(skill("artillery_ballista")));
         assertEquals(reason, support("projectile_deceleration").refusal(skill("artillery_ballista")));
         assertNull(support("point_blank").refusal(skill("artillery_ballista")), "只吃投射物傷害的照舊");
-        assertNull(support("pierce").refusal(skill("split_arrow")));
+        assertNull(support("pierce").refusal(skill("fireball")));
         assertNull(support("chain").refusal(skill("arc")), "鏈雷多跳幾次");
         assertNull(support("multiple_projectiles").refusal(skill("command_volley")), "指令技能自己會射投射物");
     }

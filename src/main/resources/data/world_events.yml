@@ -80,7 +80,7 @@ invasion:
     # 2026-10：生命照在場（浮動）的高等級玩家人數，跟開天者一樣：count_level 等以上才算，每多一人多 life_per_player 倍的基礎，
     # 最多算 max_counted_players 人（0 = 沒有上限）；有人進來就變多、離開就變少，血量比例不變
     count_level: 80
-    life_per_player: 0.5
+    life_per_player: 1.0        # 2026-10：0.5 → 1.0（跟開天者一樣：每多一人多一份）
     max_counted_players: 0
     damage: 1.5
     skills: [world_ley_hunt, world_star_spiral]

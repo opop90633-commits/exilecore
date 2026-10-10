@@ -187,9 +187,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         double spread = params.spread();
         if (StatKeys.flag(effective, StatKeys.FLAG_PROJECTILE_NOVA) && definition.mechanic() == Mechanic.PROJECTILE && !params.blink()) {
             spread = 360; // 2026-10：環射（投射物往四周一圈射出）
-        } else if (projectiles > 1 && spread < 1) {
-            spread = Math.min(60, 12.0 * (projectiles - 1)); // 本來只有一發的技能多了投射物：排成扇形
         }
+        // 2026-10（照 PoE2）：本來只有一發的技能多了投射物，不再張成扇形（spread 留 0）：沿同一條線前後連發，
+        // 第一支馬上射、後面的隔幾 tick 跟著出去（ProjectileEngine、SkillMath.sequenceInterval）。技能自己寫了 spread 的照舊排成扇形。
         final double speed = Math.max(0.2, Math.min(6, params.speed()
                 * Math.max(0.1, effective.apply(StatKeys.SKILL_PROJECTILE_SPEED, 1.0, context))));
         final int pierce = clamp((int) Math.round(params.pierce() + effective.flat(StatKeys.SKILL_PIERCE, context)), 0, 20);
@@ -200,7 +200,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             default -> 0;
         };
         final double reach = definition.mechanic() == Mechanic.STRIKE && area ? params.reach() * areaScale : params.reach();
-        final int manaCost = (int) Math.round(definition.mana().at(level)
+        final int manaCost = (int) Math.round((definition.mana().at(level) + extraManaCost(definition.mana().at(level), effective, context))
                 * Math.max(0, effective.apply(StatKeys.SKILL_COST, 1.0, context)));
         final double baseCooldown = definition.cooldown() > 0 ? definition.cooldown()
                 : Math.max(0, effective.flat(StatKeys.SKILL_ADDED_COOLDOWN, context)); // 2026-10：輔助給的冷卻
@@ -257,7 +257,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     /** 2026-10：封印解開的這一次：範圍倍率、投射物數量換掉。 */
     public SkillBuild withAreaAndProjectiles(final double newAreaScale, final int newProjectiles) {
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
-                reach, angle, targets, knockback, newProjectiles, spread < 1 && newProjectiles > 1 ? Math.min(60, 12.0 * (newProjectiles - 1)) : spread,
+                reach, angle, targets, knockback, newProjectiles, spread,
                 speed, range, size, pierce, chains, explode * (newAreaScale / Math.max(1e-6, areaScale)), wobble, arrow,
                 radius * (newAreaScale / Math.max(1e-6, areaScale)), length, chainRange, manaCost, newAreaScale, bonusLevel, cooldownTicks,
                 durationScale, forks, returning, echo, deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
@@ -297,6 +297,18 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
     }
 
+    /**
+     * 2026-10（照 PoE2 的 Archmage：祕法之心）：魔力消耗多「最大魔力的 x%」（{@link StatKeys#SKILL_COST_MAX_MANA}，照技能的標籤查）。
+     * 加在基礎消耗上，之後一起乘魔力消耗倍率；本來不用魔力的技能（光環、普攻）與引導技能不算。
+     */
+    static double extraManaCost(final double baseCost, final StatSheet effective, final Set<String> context) {
+        if (baseCost <= 0 || effective == null || effective.flat(StatKeys.CHANNEL_STAGES, context) > 0) {
+            return 0;
+        }
+        final double percent = effective.flat(StatKeys.SKILL_COST_MAX_MANA, context);
+        return percent <= 0 ? 0 : Math.max(0, effective.get(StatKeys.MANA_MAX)) * percent / 100.0;
+    }
+
     /** 光環的效果（這個等級、含光環效果倍率）。 */
     public List<Modifier> auraModifiers() {
         final AuraSpec aura = definition.aura();
@@ -308,6 +320,17 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             list.add(mod.toModifier(level, auraEffect, "光環 " + definition.name()));
         }
         return list;
+    }
+
+    /**
+     * 這個光環給主人的召喚物的效果（2026-10）：給隊友的光環（allies: true）與掛了慷慨的才給，數值跟自己吃到的一樣；
+     * 只給自己的常駐增益（allies: false：雷縛長棍、獸血沸、疫使、狂戰之怒…）不給——PoE2 這類增益也只作用在角色自己身上。
+     * 以前不管哪一種都給完整效果：召喚流開十幾個自己用的增益，每一隻召喚物都吃到。
+     * 帶 minion 標籤的效果（骸餘饗的召喚物生命）走主人的屬性表（{@link MinionSheets#ownerModifiers}），不靠這裡。
+     */
+    public List<Modifier> minionAuraModifiers() {
+        final AuraSpec aura = definition.aura();
+        return aura != null && (aura.allies() || generosity) ? auraModifiers() : List.of();
     }
 
     /** 2026-10：精魂輔助給你自己的增益（「grant.」開頭的屬性；只給自己，不給隊友與召喚物）。 */

@@ -177,6 +177,21 @@ class UberTest {
     }
 
     @Test
+    void shieldCrystalsTakeAShareOfTheTierMultiplier() {
+        // 2026-10：護盾結晶照階級變硬，但只吃 Boss 倍率多出來的一部分（settings.shield_tier_share）
+        assertEquals(1.0, MapConfig.shieldLifeMultiplier(1.0, 0.5), 1e-9, "低階（Boss 沒乘）結晶也不變");
+        assertEquals(4.4, MapConfig.shieldLifeMultiplier(7.8, 0.5), 1e-9);
+        assertEquals(7.8, MapConfig.shieldLifeMultiplier(7.8, 1.0), 1e-9, "1 = 跟 Boss 一樣");
+        assertEquals(1.0, MapConfig.shieldLifeMultiplier(7.8, 0.0), 1e-9, "0 = 不變硬");
+        assertEquals(7.8, MapConfig.shieldLifeMultiplier(7.8, 3.0), 1e-9, "超過 1 當 1");
+        assertEquals(1.0, MapConfig.shieldLifeMultiplier(0.5, 0.5), 1e-9, "不會比原本的少");
+        // 出貨的設定：一半
+        final double top = config.finalLifeMultiplier(config.tiers().max());
+        assertEquals(1 + (top - 1) * 0.5, config.shieldLifeMultiplier(top), 1e-9);
+        assertTrue(config.shieldLifeMultiplier(top) > 1 && config.shieldLifeMultiplier(top) < top);
+    }
+
+    @Test
     void finalBossLifeGrowsWithTier() {
         // 純計算：from 階（含）以下 ×1，往上每階等量增加，最高階 ×max
         assertEquals(1.0, MapConfig.finalLifeMultiplier(1, 5, 2.5, 16), 1e-9);

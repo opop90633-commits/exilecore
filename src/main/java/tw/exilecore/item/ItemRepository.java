@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -86,6 +87,7 @@ public final class ItemRepository {
                 }
             }
         }
+        loadFlaskBases(dataFolder.resolve("flasks.yml"));
         for (final Path file : yamlFiles(dataFolder.resolve("affixes"))) {
             final YamlNode root = YamlNode.load(file);
             for (final String id : root.keys()) {
@@ -207,6 +209,9 @@ public final class ItemRepository {
                     }
                 }
             }
+            if (!anyBase && FLASK_TAGS.containsAll(affix.spawnTags()) && flaskLikeBases().isEmpty()) {
+                continue; // 藥劑、護符的詞綴，但這個資料夾沒有 flasks.yml（測試、只載入裝備）：沒有基底可對，略過
+            }
             if (!anyBase) {
                 throw new IllegalArgumentException("詞綴 " + affix.id() + " 的 spawn_tags " + affix.spawnTags() + " 對不到任何基底");
             }
@@ -238,6 +243,40 @@ public final class ItemRepository {
         return any;
     }
 
+    /**
+     * 2026-10：藥劑與護符也是物品引擎的基底（擲 PoE2 的藥劑詞綴、用魔法類的通貨），但定義寫在 flasks.yml，
+     * 這裡合成：bases 的每一種藥劑 → slot FLASK、tags [flask, life_flask／mana_flask]；charms.bases 的每一種護符 → slot CHARM、tags [charm]。
+     * 代號跟 flasks.yml 一樣（藥劑物品上的資料兩邊共用同一個代號）。
+     */
+    /** 藥劑、護符基底的標籤（affixes/flasks.yml 的 spawn_tags 用這些）。 */
+    static final Set<String> FLASK_TAGS = Set.of("flask", "life_flask", "mana_flask", "charm");
+
+    private void loadFlaskBases(final Path file) throws IOException {
+        if (!Files.exists(file)) {
+            return;
+        }
+        final YamlNode root = YamlNode.load(file);
+        final YamlNode flasks = root.node("bases");
+        for (final String id : flasks.keys()) {
+            final YamlNode node = flasks.node(id);
+            final String kind = node.string("kind", "life").trim().toLowerCase(java.util.Locale.ROOT);
+            if (bases.containsKey(id)) {
+                throw new IllegalArgumentException("flasks.yml：藥劑代號跟裝備基底重複 " + id);
+            }
+            bases.put(id, ItemBase.flaskLike(id, node.requireString("name"), "POTION", ItemSlot.FLASK,
+                    Set.of("flask", kind + "_flask"), node.integer("level", 1)));
+        }
+        final YamlNode charms = root.node("charms").node("bases");
+        for (final String id : charms.keys()) {
+            final YamlNode node = charms.node(id);
+            if (bases.containsKey(id)) {
+                throw new IllegalArgumentException("flasks.yml：護符代號跟裝備基底重複 " + id);
+            }
+            bases.put(id, ItemBase.flaskLike(id, node.requireString("name"), node.string("icon", "AMETHYST_SHARD").trim().toUpperCase(java.util.Locale.ROOT),
+                    ItemSlot.CHARM, Set.of("charm"), node.integer("level", 1)));
+        }
+    }
+
     public ItemBase base(final String id) {
         return bases.get(id);
     }
@@ -255,14 +294,22 @@ public final class ItemRepository {
         return uniqueId == null ? List.of() : uniqueVeiled.getOrDefault(uniqueId, List.of());
     }
 
-    /** 現役的基底（拿掉的不算）。 */
+    /** 現役的裝備基底（拿掉的不算；藥劑、護符的基底由藥劑模組管，不在這裡，用 {@link #base(String)} 還是找得到）。 */
     public Collection<ItemBase> bases() {
-        if (retiredBases.isEmpty()) {
-            return Collections.unmodifiableCollection(bases.values());
-        }
         final List<ItemBase> list = new ArrayList<>();
         for (final ItemBase base : bases.values()) {
-            if (!retiredBases.contains(base.id())) {
+            if (!retiredBases.contains(base.id()) && !base.isFlaskLike()) {
+                list.add(base);
+            }
+        }
+        return Collections.unmodifiableList(list);
+    }
+
+    /** 藥劑與護符的基底（flasks.yml 合成的）。 */
+    public List<ItemBase> flaskLikeBases() {
+        final List<ItemBase> list = new ArrayList<>();
+        for (final ItemBase base : bases.values()) {
+            if (base.isFlaskLike()) {
                 list.add(base);
             }
         }
@@ -286,7 +333,7 @@ public final class ItemRepository {
     public List<ItemBase> basesDroppableAt(final int level) {
         final List<ItemBase> list = new ArrayList<>();
         for (final ItemBase base : bases.values()) {
-            if (base.dropLevel() <= level && !base.isMap() && base.dropWeight() > 0 && !retiredBases.contains(base.id())) {
+            if (base.dropLevel() <= level && !base.isMap() && !base.isFlaskLike() && base.dropWeight() > 0 && !retiredBases.contains(base.id())) {
                 list.add(base);
             }
         }

@@ -43,7 +43,7 @@ class DatabaseTest {
     void migrationsAreIdempotent() throws SQLException {
         assertTrue(database.isConnected());
         assertEquals(0, Migrations.apply(database, LoggerFactory.getLogger("test")), "第二次不該再套用");
-        assertEquals(14, Migrations.currentVersion());
+        assertEquals(20, Migrations.currentVersion());
     }
 
     @Test
@@ -164,8 +164,8 @@ class DatabaseTest {
         final int arc = skills.put("arc", 3);
         // 輔助孔（鑿星石開到 4 孔）與掛的輔助寶石也要存
         skills.set(fireball, skills.skill(fireball).withSockets(4).withSupport(0, "pierce").withSupport(2, "chain"));
-        skills.bind(SkillLoadout.slot(0, SkillLoadout.KEY_RIGHT), fireball);
-        skills.bind(SkillLoadout.slot(1, SkillLoadout.KEY_SNEAK_LEFT), arc);
+        skills.bind((0 * SkillLoadout.KEYS + SkillLoadout.KEY_RIGHT), fireball);
+        skills.bind((1 * SkillLoadout.KEYS + SkillLoadout.KEY_SNEAK_LEFT), arc);
         database.sync(c -> {
             repository.saveCharacter(c, record, null, null, skills, null);
             return null;
@@ -175,8 +175,8 @@ class DatabaseTest {
         assertEquals(new SkillLoadout.Entry("fireball", 5, 4, List.of("pierce", "", "chain")), loadedSkills.skill(fireball));
         assertEquals(SkillLoadout.BASE_SOCKETS, loadedSkills.skill(arc).sockets());
         assertEquals(List.of("pierce", "chain"), loadedSkills.skill(fireball).supportIds());
-        assertEquals("arc", loadedSkills.boundSkill(SkillLoadout.slot(1, SkillLoadout.KEY_SNEAK_LEFT)).skillId());
-        assertEquals(-1, loadedSkills.bound(SkillLoadout.slot(0, SkillLoadout.KEY_LEFT)));
+        assertEquals("arc", loadedSkills.boundSkill((1 * SkillLoadout.KEYS + SkillLoadout.KEY_SNEAK_LEFT)).skillId());
+        assertEquals(-1, loadedSkills.bound((0 * SkillLoadout.KEYS + SkillLoadout.KEY_LEFT)));
         skills.remove(arc);
         database.sync(c -> {
             repository.saveCharacter(c, record, null, null, skills, null);
@@ -184,7 +184,7 @@ class DatabaseTest {
         });
         final SkillLoadout afterRemove = database.sync(c -> repository.loadSkills(c, record.id()));
         assertEquals(1, afterRemove.size());
-        assertEquals(-1, afterRemove.bound(SkillLoadout.slot(1, SkillLoadout.KEY_SNEAK_LEFT)), "移除的技能的按鍵也要清掉");
+        assertEquals(-1, afterRemove.bound((1 * SkillLoadout.KEYS + SkillLoadout.KEY_SNEAK_LEFT)), "移除的技能的按鍵也要清掉");
         assertTrue(database.sync(c -> repository.loadSkills(c, 999_999)).isEmpty(), "沒存過的角色是空的面板");
 
         // 清單、軟刪除

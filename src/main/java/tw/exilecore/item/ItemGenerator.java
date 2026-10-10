@@ -284,6 +284,9 @@ public final class ItemGenerator {
         final Rarity rarity = data.rarity();
         final int max = type == AffixType.PREFIX ? rarity.maxPrefixes() : rarity.maxSuffixes();
         final ItemBase base = repository.base(data.base());
+        if (base != null && base.isFlaskLike()) {
+            return Math.min(max, 1); // 藥劑、護符最多魔法：一前綴一後綴
+        }
         return base != null && base.isJewel() ? Math.min(max, ItemBase.JEWEL_AFFIXES_PER_TYPE) : max;
     }
 

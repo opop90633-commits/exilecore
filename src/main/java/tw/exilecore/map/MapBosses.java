@@ -208,13 +208,7 @@ final class MapBosses {
         instance.setPhaseHold(false);
         // 生命、傷害倍率扣掉 monsters.yml 裡這種生物本身的倍率（設定檔寫的是「比一般傳奇怪強幾倍」）
         final MonsterConfig.TypeSettings type = plugin.monsters().config().type(typeName);
-        // 終局（含極境）的 Boss 照開的階級再乘（maps.yml 的 final.tier_life：T5 以下 ×1、T16 ×2.5）
-        // 劫盜終局（金庫之主）難度照極境：一樣照開的人打過的最高階再乘
-        final boolean heistFinale = instance.special() != null && "heist_finale".equals(instance.special().kind());
-        // 一般地圖 Boss（不是終局、不是劫盜這種特殊實例）：高階再乘一點（maps.yml 的 settings.boss_tier_life）
-        final double tierLife = instance.map().isFinal() && instance.special() == null || heistFinale
-                ? service.config().finalLifeMultiplier(instance.stats().tier())
-                : instance.special() == null && !instance.isUber() ? service.config().bossLifeMultiplier(instance.stats().tier()) : 1.0;
+        final double tierLife = tierLife(instance);
         final double life = definition.life() * tierLife / Math.max(0.1, type.lifeMultiplier());
         final double damage = definition.damage() / Math.max(0.1, type.damageMultiplier());
         instance.setBossPhase(0);
@@ -442,6 +436,20 @@ final class MapBosses {
 
     // ---- 護盾 ----
 
+    /**
+     * Boss 的生命照開的階級再乘幾倍：
+     * 終局（含極境）照 maps.yml 的 final.tier_life（T5 以下 ×1，往上每階等量增加）；
+     * 劫盜終局（金庫之主）難度照極境，一樣照開的人打過的最高階再乘；
+     * 一般地圖 Boss（不是終局、不是劫盜這種特殊實例）照 settings.boss_tier_life；其他特殊實例（回響、試煉、據點）不乘。
+     * 護盾結晶照這個的一部分乘（2026-10，{@link MapConfig#shieldLifeMultiplier}）。
+     */
+    private double tierLife(final MapInstance instance) {
+        final boolean heistFinale = instance.special() != null && "heist_finale".equals(instance.special().kind());
+        return instance.map().isFinal() && instance.special() == null || heistFinale
+                ? service.config().finalLifeMultiplier(instance.stats().tier())
+                : instance.special() == null && !instance.isUber() ? service.config().bossLifeMultiplier(instance.stats().tier()) : 1.0;
+    }
+
     /** 進入有護盾的階段：Boss 無敵，Boss 房裡出現幾顆結晶（不會動、不會打人），限時打掉。 */
     private void startShield(final MapInstance instance, final LivingEntity boss, final MapConfig.Shield shield) {
         final long now = plugin.getServer().getCurrentTick();
@@ -449,6 +457,8 @@ final class MapBosses {
         boss.setInvulnerable(true);
         final Location center = center(instance);
         final double offset = service.random().nextDouble() * Math.PI * 2;
+        // 結晶只吃一部分的階級倍率（maps.yml 的 settings.shield_tier_share，預設一半）
+        final double tierLife = service.config().shieldLifeMultiplier(tierLife(instance));
         for (int i = 0; i < shield.count(); i++) {
             final double angle = offset + Math.PI * 2 * i / shield.count();
             final Location spot = center.clone().add(Math.cos(angle) * CRYSTAL_RING, 0.3, Math.sin(angle) * CRYSTAL_RING);
@@ -463,8 +473,10 @@ final class MapBosses {
             if (crystal == null) {
                 continue;
             }
+            // 2026-10：結晶的生命也照階級再乘（Boss 倍率多出來的部分吃 shield_tier_share 成）。以前 Boss 在 T16 乘了好幾倍、
+            // 結晶沒有，伺服器紀錄裡護盾 3～4 秒就破，限時與回血等於沒有作用；全吃又太硬（輸出不夠的人一定打不破）
             plugin.monsters().decorateData(crystal, new tw.exilecore.monster.MonsterData(instance.level(), MonsterRarity.MAGIC, List.of(),
-                    shield.name(), shield.life(), 0.1, false));
+                    shield.name(), shield.life() * tierLife, 0.1, false));
             if (crystal instanceof Mob mob) {
                 mob.setAI(false);
             }

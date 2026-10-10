@@ -80,6 +80,9 @@ public final class WorldEventService {
         int level;
         /** 世界 Boss 現在照幾人算生命。 */
         int bossPlayers = 1;
+        /** 世界 Boss、統帥現在的最大生命（照目前算的人數；寫伺服器紀錄用，2026-10）。 */
+        double bossLife;
+        double commanderLife;
         /** 入侵的統帥（出來了才有）與現在照幾人算生命（2026-10）。 */
         LivingEntity commander;
         int commanderPlayers = 1;
@@ -526,6 +529,12 @@ public final class WorldEventService {
             event.lastSeenMillis = now;
         }
         if (now >= event.endMillis) {
+            final LivingEntity left = event.kind == Kind.BOSS ? event.boss : event.commander;
+            final AttributeInstance leftMax = left == null || !left.isValid() ? null : left.getAttribute(Attribute.MAX_HEALTH);
+            plugin.getSLF4JLogger().info("[Boss 紀錄] 不定時活動：{} 時間到沒有完成：{}", event.kind.displayName(), leftMax == null || leftMax.getValue() <= 0
+                    ? "Boss 不在場" : String.format(Locale.ROOT, "還剩 %.1f%%（算 %d 人、生命 %s）", left.getHealth() / leftMax.getValue() * 100,
+                    event.kind == Kind.BOSS ? event.bossPlayers : event.commanderPlayers,
+                    number(event.kind == Kind.BOSS ? event.bossLife : event.commanderLife)));
             stop("時間到，" + event.kind.displayName() + "沒有完成，事件結束了");
             return;
         }
@@ -595,6 +604,22 @@ public final class WorldEventService {
         }
     }
 
+    // ---- 伺服器紀錄（2026-10）：世界 Boss、統帥的生命與打了多久，跟地圖終局一樣用「[Boss 紀錄]」開頭 ----
+
+    /** 這隻現在的最大生命（照目前的生命倍率）；讀不到回傳 0。 */
+    private double lifeOf(final LivingEntity mob) {
+        return plugin.monsters().data(mob).map(data -> plugin.monsters().sheet(mob, data).get(tw.exilecore.stats.StatKeys.LIFE_MAX)).orElse(0.0);
+    }
+
+    private static String number(final double value) {
+        return String.format(Locale.ROOT, "%,.0f", value);
+    }
+
+    /** 事件開始到現在幾秒（一位小數）。 */
+    private static String seconds(final Active event) {
+        return String.format(Locale.ROOT, "%.1f", (System.currentTimeMillis() - event.startMillis) / 1000.0);
+    }
+
     // ---- 世界 Boss ----
 
     private boolean spawnBoss(final Active event) {
@@ -614,6 +639,8 @@ public final class WorldEventService {
         }
         tag(boss, "boss");
         event.boss = boss;
+        event.bossLife = lifeOf(boss);
+        plugin.getSLF4JLogger().info("[Boss 紀錄] 不定時活動：{} Lv.{} 出現：生命 {}（算 1 人）", def.name(), def.level(), number(event.bossLife));
         event.mobs.add(boss.getUniqueId());
         final AttributeInstance follow = boss.getAttribute(Attribute.FOLLOW_RANGE);
         if (follow != null && follow.getBaseValue() < 48) {
@@ -647,6 +674,9 @@ public final class WorldEventService {
             final int before = event.bossPlayers;
             event.bossPlayers = players;
             if (plugin.monsters().setLifeMultiplier(boss, def.life() * (1 + def.lifePerPlayer() * (players - 1)))) {
+                event.bossLife = lifeOf(boss);
+                plugin.getSLF4JLogger().info("[Boss 紀錄] 不定時活動：{} 的生命照 {} 人重算：{}（開始後 {} 秒）", def.name(), players,
+                        number(event.bossLife), seconds(event));
                 for (final Player player : near) {
                     player.sendMessage(plugin.text().prefixed("<#ffd27f>" + ItemRenderer.escape(def.name()) + " 的生命照 " + players + " 位 "
                             + def.countLevel() + " 等以上的玩家重算" + (players > before ? "（變多）" : "（變少）") + "<gray>，血量比例不變"));
@@ -682,6 +712,9 @@ public final class WorldEventService {
             final int before = event.commanderPlayers;
             event.commanderPlayers = players;
             if (plugin.monsters().setLifeMultiplier(commander, def.life() * (1 + def.lifePerPlayer() * (players - 1)))) {
+                event.commanderLife = lifeOf(commander);
+                plugin.getSLF4JLogger().info("[Boss 紀錄] 不定時活動：{} 的生命照 {} 人重算：{}（開始後 {} 秒）", def.name(), players,
+                        number(event.commanderLife), seconds(event));
                 for (final Player player : near) {
                     player.sendMessage(plugin.text().prefixed("<#ff7a3d>" + ItemRenderer.escape(def.name()) + " 的生命照 " + players + " 位 "
                             + def.countLevel() + " 等以上的玩家重算" + (players > before ? "（變多）" : "（變少）") + "<gray>，血量比例不變"));
@@ -808,7 +841,10 @@ public final class WorldEventService {
         event.mobs.add(commander.getUniqueId());
         event.commander = commander;
         event.commanderPlayers = 1;
+        event.commanderLife = lifeOf(commander);
         tickCommander(event, nearPlayers(event, eventRadius() + 24)); // 一出來就照現在的人數
+        plugin.getSLF4JLogger().info("[Boss 紀錄] 不定時活動：{} Lv.{} 出現：生命 {}（算 {} 人，開始後 {} 秒）", def.name(), event.level,
+                number(event.commanderLife), event.commanderPlayers, seconds(event));
         attachSkills(commander, def.name(), def.skills(), event.level);
         for (final Player player : nearPlayers(event, eventRadius() + 24)) {
             player.showTitle(Title.title(plugin.text().parse("<#ff7a3d>" + ItemRenderer.escape(def.name())),
@@ -934,6 +970,14 @@ public final class WorldEventService {
             return;
         }
         final List<Player> players = rewardees(event);
+        // 2026-10：結果寫進伺服器紀錄（調血量用）：打了幾秒、照幾人算、生命多少、幾個人有份
+        if (event.kind == Kind.BOSS) {
+            plugin.getSLF4JLogger().info("[Boss 紀錄] 不定時活動：{} 倒下：{} 秒、算 {} 人、生命 {}、{} 人拿到獎勵", config.boss().name(),
+                    seconds(event), event.bossPlayers, number(event.bossLife), players.size());
+        } else {
+            plugin.getSLF4JLogger().info("[Boss 紀錄] 不定時活動：{} 完成：{} 秒、{} 算 {} 人、生命 {}、{} 人拿到獎勵", config.invasion().name(),
+                    seconds(event), config.invasion().commander().name(), event.commanderPlayers, number(event.commanderLife), players.size());
+        }
         if (event.kind == Kind.BOSS) {
             final WorldEventConfig.Boss def = config.boss();
             for (final Player player : players) {

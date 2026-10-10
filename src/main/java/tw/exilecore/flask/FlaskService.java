@@ -20,7 +20,10 @@ import org.bukkit.persistence.PersistentDataType;
 import tw.exilecore.ExileCore;
 import tw.exilecore.character.Bag;
 import tw.exilecore.character.PlayerState;
+import tw.exilecore.item.ItemBase;
+import tw.exilecore.item.ItemData;
 import tw.exilecore.item.ItemRenderer;
+import tw.exilecore.item.Rarity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,6 +52,8 @@ public final class FlaskService {
     public static final String PROGRESS_STARTER = "flask.starter";
     /** 回復多久結算一次（tick）。 */
     static final int TICK_INTERVAL = 2;
+    /** 掉落的藥劑是魔法的機率（PoE2 的藥劑掉落大多是普通或魔法）。 */
+    static final double DROP_MAGIC_CHANCE = 0.35;
 
     /** 物品上的資料：基底與目前的充能。 */
     public record FlaskData(String base, int charges) {
@@ -129,20 +134,146 @@ public final class FlaskService {
         return read(stack).isPresent();
     }
 
-    /** 做一瓶藥劑（充能 charges，超過上限會被夾住）。 */
+    /** 做一瓶普通的藥劑（充能 charges，超過上限會被夾住）。 */
     public ItemStack create(final FlaskBase base, final int charges) {
-        final ItemStack stack = ItemStack.of(Material.POTION);
-        render(stack, base, charges);
+        return create(base, charges, Rarity.NORMAL, base.level());
+    }
+
+    /**
+     * 做一瓶藥劑（2026-10：藥劑是物品引擎的基底，會擲 PoE2 的藥劑詞綴：普通沒有、魔法一前綴一後綴）。
+     * 物品資料（詞綴）存在物品引擎的資料裡，充能另外存在藥劑自己的標記（{@link FlaskData}）。
+     */
+    public ItemStack create(final FlaskBase base, final int charges, final Rarity rarity, final int itemLevel) {
+        final ItemBase itemBase = plugin.items() == null ? null : plugin.items().repository().base(base.id());
+        if (itemBase == null || !itemBase.isFlask()) {
+            final ItemStack stack = ItemStack.of(Material.POTION);
+            renderLegacy(stack, base, charges);
+            return stack;
+        }
+        final Rarity effective = rarity == Rarity.RARE || rarity == Rarity.UNIQUE ? Rarity.MAGIC : rarity;
+        final ItemData data = plugin.items().generator().generate(itemBase, effective, Math.max(base.level(), itemLevel), plugin.items().random());
+        final ItemStack stack = plugin.items().toStack(data);
+        writeCharges(stack, base, charges);
+        plugin.items().rerender(stack, data);
         return stack;
+    }
+
+    /** 這瓶藥劑的物品資料（詞綴）；舊版沒有資料的藥劑第一次碰到時補上普通的資料。沒有物品引擎回傳 null。 */
+    ItemData itemData(final ItemStack stack, final FlaskBase base) {
+        if (plugin.items() == null) {
+            return null;
+        }
+        final Optional<ItemData> data = plugin.items().read(stack);
+        if (data.isPresent()) {
+            return data.get();
+        }
+        final ItemBase itemBase = plugin.items().repository().base(base.id());
+        if (itemBase == null || !itemBase.isFlask()) {
+            return null;
+        }
+        final ItemData fresh = plugin.items().generator().generate(itemBase, Rarity.NORMAL, base.level(), plugin.items().random());
+        plugin.items().update(stack, fresh);
+        return fresh;
+    }
+
+    /** 這瓶藥劑詞綴算出來的數值（沒有詞綴、沒有物品引擎都是 {@link FlaskMods#NONE}）。 */
+    public FlaskMods mods(final ItemStack stack) {
+        final FlaskData data = read(stack).orElse(null);
+        final FlaskBase base = data == null ? null : config.base(data.base());
+        return base == null ? FlaskMods.NONE : mods(stack, base);
+    }
+
+    private FlaskMods mods(final ItemStack stack, final FlaskBase base) {
+        final ItemData data = itemData(stack, base);
+        return data == null ? FlaskMods.NONE : FlaskMods.of(plugin.items().repository(), data);
+    }
+
+    /** 這瓶每次用掉的充能：藥劑自己的詞綴 × 全域的「藥劑用掉的充能」（腰帶）。 */
+    private int perUse(final Player player, final FlaskBase base, final FlaskMods mods) {
+        final double global = plugin.players().sheet(player).increased(tw.exilecore.stats.StatKeys.FLASK_CHARGES_USED, java.util.Set.of());
+        return Math.max(1, (int) Math.round(mods.perUse(base.perUse()) * Math.max(0, 1 + global)));
+    }
+
+    /** 這瓶的充能上限（基底 × 詞綴）。 */
+    public int maxCharges(final ItemStack stack, final FlaskBase base) {
+        return mods(stack, base).maxCharges(base.charges());
+    }
+
+    /** 把充能寫進藥劑自己的標記（不重畫）。 */
+    private void writeCharges(final ItemStack stack, final FlaskBase base, final int charges) {
+        stack.editMeta(meta -> meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, base.id() + ";" + Math.max(0, charges)));
     }
 
     /** 依資料重畫：名稱、說明、充能條（耐久條）、顏色。 */
     private void render(final ItemStack stack, final FlaskBase base, final int charges) {
+        final ItemData data = itemData(stack, base);
+        if (data == null) {
+            renderLegacy(stack, base, charges);
+            return;
+        }
+        final int clamped = Math.max(0, Math.min(FlaskMods.of(plugin.items().repository(), data).maxCharges(base.charges()), charges));
+        writeCharges(stack, base, clamped);
+        plugin.items().rerender(stack, data); // 物品引擎畫詞綴，再呼叫 decorate 補藥劑的說明與充能條
+    }
+
+    /**
+     * 物品引擎畫完詞綴之後的補畫（{@link ItemRenderer#setFlaskDecorator}）：藥劑的說明放在詞綴前面、充能條、藥水顏色、
+     * 原版藥水的那幾行藏起來。護符交給護符服務。
+     */
+    void decorate(final ItemStack stack, final ItemData data) {
+        final FlaskBase base = config.base(data.base());
+        if (base == null) {
+            if (charms != null) {
+                charms.decorate(stack, data);
+            }
+            return;
+        }
+        final FlaskMods mods = FlaskMods.of(plugin.items().repository(), data);
+        final int max = mods.maxCharges(base.charges());
+        final int charges = Math.max(0, Math.min(max, read(stack).map(FlaskData::charges).orElse(max)));
+        stack.editMeta(meta -> {
+            final List<Component> lore = new ArrayList<>();
+            for (final String line : lore(base, mods, charges, data.identified())) {
+                lore.add(ItemRenderer.line(line));
+            }
+            final List<Component> affixLines = meta.lore();
+            if (affixLines != null) {
+                lore.addAll(affixLines);
+            }
+            meta.lore(lore);
+            meta.setMaxStackSize(1);
+            if (resourcePack && base.model() != null) {
+                final NamespacedKey model = NamespacedKey.fromString(base.model());
+                if (model != null) {
+                    meta.setItemModel(model);
+                }
+            }
+            meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, base.id() + ";" + charges);
+        });
+        potionLook(stack, base, max, charges);
+    }
+
+    /** 藥水顏色、充能條、藏起原版的那幾行（資料元件放在 editMeta 之後設定，才不會被 ItemMeta 寫回時蓋掉）。 */
+    private static void potionLook(final ItemStack stack, final FlaskBase base, final int max, final int charges) {
+        stack.setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents()
+                .customColor(base.kind() == FlaskKind.LIFE ? Color.fromRGB(0xD7263D) : Color.fromRGB(0x2F6BFF)).build());
+        stack.unsetData(DataComponentTypes.CONSUMABLE); // 原版的喝藥水不要：我們用數字鍵喝
+        // 充能畫成耐久條：滿的時候不顯示
+        stack.setData(DataComponentTypes.MAX_DAMAGE, Math.max(1, max));
+        stack.setData(DataComponentTypes.DAMAGE, Math.max(0, Math.min(max, max - charges)));
+        // 原版藥水的「無效果」那行不要顯示
+        stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay()
+                .addHiddenComponents(DataComponentTypes.POTION_CONTENTS, DataComponentTypes.ATTRIBUTE_MODIFIERS,
+                        DataComponentTypes.DAMAGE, DataComponentTypes.MAX_DAMAGE, DataComponentTypes.UNBREAKABLE).build());
+    }
+
+    /** 沒有物品引擎（測試、模組沒啟用）時的畫法：只有基底的說明。 */
+    private void renderLegacy(final ItemStack stack, final FlaskBase base, final int charges) {
         final int clamped = Math.max(0, Math.min(base.charges(), charges));
         stack.editMeta(meta -> {
             meta.displayName(ItemRenderer.line("<white>" + ItemRenderer.escape(base.name())));
             final List<Component> lore = new ArrayList<>();
-            for (final String line : lore(base, clamped)) {
+            for (final String line : lore(base, FlaskMods.NONE, clamped, true)) {
                 lore.add(ItemRenderer.line(line));
             }
             meta.lore(lore);
@@ -155,24 +286,33 @@ public final class FlaskService {
             }
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, base.id() + ";" + clamped);
         });
-        // 資料元件放在 editMeta 之後設定，才不會被 ItemMeta 寫回時蓋掉
-        stack.setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents()
-                .customColor(base.kind() == FlaskKind.LIFE ? Color.fromRGB(0xD7263D) : Color.fromRGB(0x2F6BFF)).build());
-        stack.unsetData(DataComponentTypes.CONSUMABLE); // 原版的喝藥水不要：我們用數字鍵喝
-        // 充能畫成耐久條：滿的時候不顯示
-        stack.setData(DataComponentTypes.MAX_DAMAGE, base.charges());
-        stack.setData(DataComponentTypes.DAMAGE, base.charges() - clamped);
-        // 原版藥水的「無效果」那行不要顯示
-        stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay()
-                .addHiddenComponents(DataComponentTypes.POTION_CONTENTS, DataComponentTypes.ATTRIBUTE_MODIFIERS).build());
+        potionLook(stack, base, base.charges(), clamped);
     }
 
-    private List<String> lore(final FlaskBase base, final int charges) {
+    private List<String> lore(final FlaskBase base, final FlaskMods mods, final int charges, final boolean identified) {
         final List<String> lines = new ArrayList<>();
-        lines.add(String.format(Locale.ROOT, "<gray>在 <white>%s</white> 秒內回復 <%s>%d</%s> %s",
-                trim(base.duration()), base.kind().color(), Math.round(base.recovery()), base.kind().color(), base.kind().displayName()));
-        lines.add("<gray>充能 <white>" + charges + "</white>／" + base.charges() + "，每次用 <white>" + base.perUse()
-                + "</white>（還能喝 <white>" + charges / base.perUse() + "</white> 次）");
+        final String color = base.kind().color();
+        final int max = mods.maxCharges(base.charges());
+        final int perUse = mods.perUse(base.perUse());
+        final double amount = mods.recoveryAmount(base.recovery(), false);
+        final double seconds = mods.recoveryTime(base.duration());
+        final boolean boosted = identified && !mods.isNone();
+        final String number = boosted ? "<#8888ff>" : "<white>";
+        if (mods.instant() >= 1) {
+            lines.add(String.format(Locale.ROOT, "<gray>立即回復 <%s>%d</%s> %s", color, Math.round(amount), color, base.kind().displayName()));
+        } else {
+            lines.add(String.format(Locale.ROOT, "<gray>在 %s%s</%s> 秒內回復 <%s>%d</%s> %s", number, trim(seconds),
+                    boosted ? "#8888ff" : "white", color, Math.round(amount), color, base.kind().displayName()));
+            if (mods.instant() > 0) {
+                lines.add(String.format(Locale.ROOT, "<gray>其中 <#8888ff>%d%%</#8888ff> 立即回復", Math.round(mods.instant() * 100)));
+            }
+        }
+        if (mods.recoveryLow() != 1) {
+            lines.add(String.format(Locale.ROOT, "<gray>%s低於 %d%% 時回復 <#8888ff>%d</#8888ff>", base.kind().displayName(),
+                    Math.round(FlaskMods.LOW_FRACTION * 100), Math.round(mods.recoveryAmount(base.recovery(), true))));
+        }
+        lines.add("<gray>充能 <white>" + charges + "</white>／" + number + max + "</" + (boosted ? "#8888ff" : "white") + ">，每次用 "
+                + number + perUse + "</" + (boosted ? "#8888ff" : "white") + ">（還能喝 <white>" + charges / perUse + "</white> 次）");
         lines.add("<gray>需求：等級 <white>" + base.level());
         lines.add("");
         final String key = slotKey(base.kind());
@@ -205,7 +345,7 @@ public final class FlaskService {
         if (base == null) {
             return -1;
         }
-        final int clamped = Math.max(0, Math.min(base.charges(), charges));
+        final int clamped = Math.max(0, Math.min(maxCharges(stack, base), charges));
         if (clamped != data.charges()) {
             render(stack, base, clamped);
             inventory.setItem(slot, stack);
@@ -264,28 +404,79 @@ public final class FlaskService {
             fail(player, state, base.name() + "需要等級 " + base.level());
             return true;
         }
-        if (data.charges() < base.perUse()) {
+        final FlaskMods mods = mods(item, base);
+        final int perUse = perUse(player, base, mods);
+        if (data.charges() < perUse) {
             fail(player, state, base.name() + "沒有充能了（殺怪充能，回營地或檢查點補滿）");
             return true;
         }
-        final boolean full = base.kind() == FlaskKind.LIFE ? state.life() >= state.maxLife() - 1e-6 : state.mana() >= state.maxMana() - 1e-6;
+        final boolean life = base.kind() == FlaskKind.LIFE;
+        final boolean full = life ? state.life() >= state.maxLife() - 1e-6 : state.mana() >= state.maxMana() - 1e-6;
         if (full) {
             fail(player, state, base.kind().displayName() + "已經是滿的");
             return true;
         }
         uses.put(hotbarSlot, now);
-        setCharges(inventory, hotbarSlot, data.charges() - base.perUse());
-        final int ticks = Math.max(1, (int) Math.round(base.duration() * 20));
-        // 回復量吃「藥劑回復」的加成（任務獎勵）
-        final String recoveryStat = base.kind() == FlaskKind.LIFE ? tw.exilecore.stats.StatKeys.FLASK_LIFE_RECOVERY
-                : tw.exilecore.stats.StatKeys.FLASK_MANA_RECOVERY;
-        final double recovery = base.recovery() * Math.max(0, 1 + plugin.players().sheet(player).increased(recoveryStat, java.util.Set.of()));
-        active.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayList<>())
-                .add(new Recovery(base.kind(), recovery / ticks, ticks));
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        // 「x% 機率不消耗充能」（裝備的全域詞綴）
+        final double free = Math.max(0, Math.min(1, sheet.get(tw.exilecore.stats.StatKeys.FLASK_FREE_CHANCE) / 100.0));
+        if (free <= 0 || plugin.items().random().nextDouble() >= free) {
+            setCharges(inventory, hotbarSlot, data.charges() - perUse);
+        }
+        // 回復量：藥劑自己的詞綴（低血時更多）× 「藥劑回復」的全域加成（任務獎勵、裝備）
+        final boolean low = life ? state.life() < state.maxLife() * FlaskMods.LOW_FRACTION : state.mana() < state.maxMana() * FlaskMods.LOW_FRACTION;
+        final String recoveryStat = life ? tw.exilecore.stats.StatKeys.FLASK_LIFE_RECOVERY : tw.exilecore.stats.StatKeys.FLASK_MANA_RECOVERY;
+        final double recovery = mods.recoveryAmount(base.recovery(), low) * Math.max(0, 1 + sheet.increased(recoveryStat, java.util.Set.of()));
+        // 回復時間：藥劑自己的「回復速度」× 全域的「藥劑效果持續時間」
+        final double seconds = mods.recoveryTime(base.duration()) * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.FLASK_DURATION, java.util.Set.of()));
+        final int ticks = Math.max(1, (int) Math.round(seconds * 20));
+        final double instant = recovery * mods.instant();
+        final double gradual = recovery - instant;
+        if (instant > 0) {
+            if (life) {
+                state.setLife(state.life() + instant);
+            } else {
+                state.setMana(state.mana() + instant);
+            }
+        }
+        if (gradual > 0) {
+            active.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayList<>())
+                    .add(new Recovery(base.kind(), gradual / ticks, ticks));
+        }
+        // 「生命藥劑的回復也消耗魔力」／「魔力藥劑的回復也消耗生命」：喝的時候一次扣另一種資源
+        if (mods.costOther() > 0) {
+            final double cost = recovery * mods.costOther();
+            if (life) {
+                state.setMana(Math.max(0, state.mana() - cost));
+            } else {
+                state.setLife(Math.max(1, state.life() - cost));
+            }
+        }
+        // 「召喚物也回復 x% 的回復量」
+        if (life && mods.minionHeal() > 0 && plugin.skills() != null && plugin.skills().minions() != null) {
+            plugin.skills().minions().healOwned(player, recovery * mods.minionHeal());
+        }
+        state.markRecent(tw.exilecore.stats.Recently.FLASK, now); // 「最近喝過藥劑」
+        state.markDirty(); // 藥劑效果中的條件（lifeflask／manaflask）
+        plugin.players().display(player, state);
         player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_DRINK, SoundCategory.PLAYERS, 0.7f, 1.2f);
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1.2, 0), 10, 0.3, 0.4, 0.3, 0,
                 new Particle.DustOptions(base.kind() == FlaskKind.LIFE ? Color.fromRGB(0xFF4D5E) : Color.fromRGB(0x5C8DFF), 1.1f));
         return true;
+    }
+
+    /** 這個玩家的某一種藥劑效果還在進行中嗎（「藥劑效果中」的條件詞綴）。 */
+    public boolean recovering(final Player player, final FlaskKind kind) {
+        final List<Recovery> list = active.get(player.getUniqueId());
+        if (list == null) {
+            return false;
+        }
+        for (final Recovery recovery : list) {
+            if (recovery.kind == kind && recovery.ticksLeft > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void fail(final Player player, final PlayerState state, final String message) {
@@ -300,6 +491,14 @@ public final class FlaskService {
         if (sweepTicks >= 40) {
             sweepTicks = 0;
             sweep();
+        }
+        minuteTicks += TICK_INTERVAL;
+        if (minuteTicks >= 1200) {
+            minuteTicks = 0;
+            tickPerMinute();
+            if (charms != null) {
+                charms.tickPerMinute();
+            }
         }
         final Iterator<Map.Entry<UUID, List<Recovery>>> iterator = active.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -348,23 +547,59 @@ public final class FlaskService {
         if (amount <= 0) {
             return;
         }
-        final PlayerInventory inventory = player.getInventory();
-        final int slot = config.slotFor(kind);
-        final FlaskData data = read(inventory.getItem(slot)).orElse(null);
-        if (data != null) {
-            setCharges(inventory, slot, data.charges() + amount);
-        }
+        addCharges(player, config.slotFor(kind), amount, true);
     }
 
+    /** 殺怪：藥劑欄裡的藥劑都充能（藥劑自己的「充能獲得」詞綴、殺怪多一點的機率，與裝備的全域加成都算進去）。 */
     public void addCharges(final Player player, final int amount) {
         if (amount <= 0) {
             return;
         }
-        final PlayerInventory inventory = player.getInventory();
         for (final int slot : config.slots()) {
-            final FlaskData data = read(inventory.getItem(slot)).orElse(null);
-            if (data != null) {
-                setCharges(inventory, slot, data.charges() + amount);
+            addCharges(player, slot, amount, true);
+        }
+    }
+
+    private void addCharges(final Player player, final int slot, final int amount, final boolean kill) {
+        final PlayerInventory inventory = player.getInventory();
+        final ItemStack stack = inventory.getItem(slot);
+        final FlaskData data = read(stack).orElse(null);
+        final FlaskBase base = data == null ? null : config.base(data.base());
+        if (base == null) {
+            return;
+        }
+        final FlaskMods mods = mods(stack, base);
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        final double global = sheet.increased(tw.exilecore.stats.StatKeys.FLASK_CHARGES_GAINED, java.util.Set.of())
+                + sheet.increased(base.kind() == FlaskKind.LIFE ? tw.exilecore.stats.StatKeys.FLASK_CHARGES_GAINED_LIFE
+                : tw.exilecore.stats.StatKeys.FLASK_CHARGES_GAINED_MANA, java.util.Set.of());
+        int gained = Math.max(1, (int) Math.round(mods.gained(amount) * Math.max(0, 1 + global)));
+        if (kill && mods.chargeOnKill() > 0 && plugin.items().random().nextDouble() < mods.chargeOnKill()) {
+            gained++;
+        }
+        setCharges(inventory, slot, data.charges() + gained);
+    }
+
+    /** 每分鐘：藥劑欄裡有「每分鐘獲得 x 點充能」的藥劑自動充能。 */
+    private void tickPerMinute() {
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            if (!eligible(player)) {
+                continue;
+            }
+            final PlayerInventory inventory = player.getInventory();
+            for (final int slot : config.slots()) {
+                final ItemStack stack = inventory.getItem(slot);
+                final FlaskData data = read(stack).orElse(null);
+                final FlaskBase base = data == null ? null : config.base(data.base());
+                if (base == null) {
+                    continue;
+                }
+                final double perMinute = mods(stack, base).perMinute()
+                        + plugin.players().sheet(player).get(base.kind() == FlaskKind.LIFE ? tw.exilecore.stats.StatKeys.FLASK_CHARGES_PER_MINUTE_LIFE
+                        : tw.exilecore.stats.StatKeys.FLASK_CHARGES_PER_MINUTE_MANA);
+                if (perMinute > 0) {
+                    setCharges(inventory, slot, data.charges() + (int) Math.round(perMinute));
+                }
             }
         }
     }
@@ -374,10 +609,15 @@ public final class FlaskService {
         final PlayerInventory inventory = player.getInventory();
         int filled = charms == null ? 0 : charms.refill(player);
         for (int slot = 0; slot < inventory.getSize(); slot++) {
-            final FlaskData data = read(inventory.getItem(slot)).orElse(null);
+            final ItemStack stack = inventory.getItem(slot);
+            final FlaskData data = read(stack).orElse(null);
             final FlaskBase base = data == null ? null : config.base(data.base());
-            if (base != null && data.charges() < base.charges()) {
-                setCharges(inventory, slot, base.charges());
+            if (base == null) {
+                continue;
+            }
+            final int max = maxCharges(stack, base);
+            if (data.charges() < max) {
+                setCharges(inventory, slot, max);
                 filled++;
             }
         }
@@ -575,6 +815,7 @@ public final class FlaskService {
 
     private final java.util.Set<UUID> ensureQueued = new java.util.HashSet<>();
     private int sweepTicks;
+    private int minuteTicks;
 
     /** 下一個 tick 把空瓶提示補好（同一個 tick 只排一次）。 */
     public void ensureSoon(final Player player) {
@@ -782,6 +1023,18 @@ public final class FlaskService {
             return charm;
         }
         final FlaskBase base = config.rollDrop(monsterLevel, random);
-        return base == null ? null : create(base, base.charges());
+        if (base == null) {
+            return null;
+        }
+        // 2026-10：照 PoE2，掉落的藥劑有機會是魔法的（帶一前綴一後綴，未鑑定）
+        final Rarity rarity = random.nextDouble() < DROP_MAGIC_CHANCE ? Rarity.MAGIC : Rarity.NORMAL;
+        final ItemStack stack = create(base, Integer.MAX_VALUE, rarity, monsterLevel);
+        if (rarity == Rarity.MAGIC && plugin.items() != null) {
+            plugin.items().read(stack).ifPresent(data -> {
+                data.setIdentified(false);
+                plugin.items().update(stack, data);
+            });
+        }
+        return stack;
     }
 }

@@ -63,7 +63,7 @@ public final class Gear {
             case CHEST -> CHEST;
             case LEGS -> LEGS;
             case FEET -> FEET;
-            case MAP, JEWEL -> -1;
+            case MAP, JEWEL, FLASK, CHARM -> -1;
         };
     }
 
