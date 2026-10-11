@@ -30,6 +30,7 @@ import java.util.Set;
  *   <li>點空白的地方：把視野移過去。</li>
  *   <li>縮小地圖：整棵樹分區看，點一區就跳過去。</li>
  *   <li>有套用介面資源包的玩家看到星盤：星空背景、節點之間有連線，已配置的是金色（{@link UiPack}）。</li>
+ *   <li>搜尋（2026-10）：有結果時搜尋鈕左鍵跳到下一個、右鍵上一個、Shift＋點重新搜尋、Q 清掉；方向鍵上寫著那個方向還有幾個結果。</li>
  *   <li>珠寶孔（PoE2 的珠寶插槽）：配了之後左鍵選一顆背包裡的珠寶放進去（{@link JewelPickMenu}），再左鍵拿回來；
  *       右鍵退點會連珠寶一起拿回（{@link JewelSockets}）。</li>
  * </ul>
@@ -68,7 +69,11 @@ public final class PassiveMenu extends Menu {
 
     private final PassiveTree tree;
     private final PassiveState passive;
-    private final Set<String> highlights;
+    private Set<String> highlights;
+    /** 搜尋結果照順序（核心、基石在前，同一種照離起點的遠近），搜尋鈕一個一個跳。 */
+    private List<PassiveNode> results = List.of();
+    /** 目前跳到第幾個搜尋結果（−1 = 還沒跳）。 */
+    private int resultIndex = -1;
     private int viewX;
     private int viewY;
     private boolean overview;
@@ -84,11 +89,94 @@ public final class PassiveMenu extends Menu {
         this.tree = tree;
         this.passive = new PassiveState(plugin, player, tree);
         this.highlights = Set.copyOf(highlights);
+        this.results = orderResults(this.highlights);
         if (focus != null) {
             centerOn(focus.x(), focus.y());
+            resultIndex = results.indexOf(focus);
         } else {
             home();
         }
+    }
+
+    private List<PassiveNode> orderResults(final Set<String> ids) {
+        final List<PassiveNode> list = new ArrayList<>();
+        for (final String id : ids) {
+            final PassiveNode node = tree.node(id);
+            if (node != null) {
+                list.add(node);
+            }
+        }
+        final PassiveNode start = passive.start();
+        final int sx = start == null ? 0 : start.x();
+        final int sy = start == null ? 0 : start.y();
+        list.sort(java.util.Comparator.<PassiveNode>comparingInt(node -> switch (node.type()) {
+                    case KEYSTONE -> 0;
+                    case NOTABLE -> 1;
+                    default -> 2;
+                })
+                .thenComparingLong(node -> (long) (node.x() - sx) * (node.x() - sx) + (long) (node.y() - sy) * (node.y() - sy))
+                .thenComparing(PassiveNode::id));
+        return List.copyOf(list);
+    }
+
+    /** 跳到下一個（step = 1）或上一個（−1）搜尋結果。 */
+    private void jumpResult(final int step) {
+        if (results.isEmpty()) {
+            return;
+        }
+        resultIndex = resultIndex < 0 ? (step > 0 ? 0 : results.size() - 1) : Math.floorMod(resultIndex + step, results.size());
+        final PassiveNode node = results.get(resultIndex);
+        overview = false;
+        centerOn(node.x(), node.y());
+        redraw();
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.7f);
+        player.sendActionBar(plugin.text().parse("<#55ffff>搜尋結果 " + (resultIndex + 1) + "/" + results.size() + "：<white>"
+                + ItemRenderer.escape(node.name().isEmpty() ? node.type().displayName() : node.name())
+                + (node.isSocket() && jewelIn(node) != null ? " <dark_gray>（有珠寶）" : "")));
+    }
+
+    /** 這一區有幾個搜尋結果。 */
+    private int resultsIn(final TreeView.Region region) {
+        if (results.isEmpty()) {
+            return 0;
+        }
+        int count = 0;
+        for (final PassiveNode node : region.nodes()) {
+            if (highlights.contains(node.id())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void clearSearch() {
+        highlights = Set.of();
+        results = List.of();
+        resultIndex = -1;
+        redraw();
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 0.9f);
+        player.sendActionBar(plugin.text().parse("<gray>搜尋標記清掉了"));
+    }
+
+    /** 視野外、這個方向（dx, dy 其中一個是 ±1）還有幾個搜尋結果。 */
+    private int resultsToward(final int dx, final int dy) {
+        int count = 0;
+        for (final PassiveNode node : results) {
+            final boolean inside = node.x() >= viewX && node.x() < viewX + VIEW_WIDTH && node.y() >= viewY && node.y() < viewY + VIEW_HEIGHT;
+            if (inside) {
+                continue;
+            }
+            if ((dx < 0 && node.x() < viewX) || (dx > 0 && node.x() >= viewX + VIEW_WIDTH)
+                    || (dy < 0 && node.y() < viewY) || (dy > 0 && node.y() >= viewY + VIEW_HEIGHT)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private String towardLine(final int dx, final int dy) {
+        final int count = results.isEmpty() ? 0 : resultsToward(dx, dy);
+        return count > 0 ? "<#55ffff>這個方向還有 " + count + " 個搜尋結果" : "";
     }
 
     private void home() {
@@ -141,7 +229,8 @@ public final class PassiveMenu extends Menu {
                 final TreeView.Tile tile = view.tile(viewX + column, viewY + row);
                 final ItemStack stack;
                 if (tile.node() == null) {
-                    stack = pack ? cell(tile, null, List.of()) : null;
+                    // 2026-10：沒資源包時空白的地方放黑色玻璃片（看得出樹的形狀：灰＝還沒連到的小節點、黑＝空的）
+                    stack = pack ? cell(tile, null, List.of()) : vanillaEmpty(tile, view);
                 } else {
                     final List<String> lore = lore(tile, view, points, gold, refundCost, freeRefunds);
                     final String name = name(tile);
@@ -253,7 +342,27 @@ public final class PassiveMenu extends Menu {
         } else {
             lore.add("<dark_gray>還沒連到：左鍵預覽最短路徑");
         }
+        if (previewTarget != null && tile.state() != TreeView.NodeState.OWNED) {
+            lore.add("<dark_gray>右鍵：取消路徑預覽");
+        }
         return lore;
+    }
+
+    /**
+     * 沒有資源包的空白格（2026-10）：黑色玻璃片、沒有說明；旁邊有路徑預覽的節點時用藍色，讓路線稍微看得出來。
+     */
+    private ItemStack vanillaEmpty(final TreeView.Tile tile, final TreeView view) {
+        boolean nearPath = false;
+        for (final int[] d : new int[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
+            final PassiveNode near = tree.at(tile.x() + d[0], tile.y() + d[1]);
+            if (near != null && previewIds.contains(near.id())) {
+                nearPath = true;
+            }
+        }
+        final Material material = nearPath ? Material.BLUE_STAINED_GLASS_PANE : Material.BLACK_STAINED_GLASS_PANE;
+        final ItemStack stack = new ItemStack(material);
+        stack.editMeta(meta -> meta.setHideTooltip(true));
+        return stack;
     }
 
     /** 沒有資源包：用原版的玻璃片與節點的圖示。 */
@@ -368,7 +477,11 @@ public final class PassiveMenu extends Menu {
                 continue;
             }
             final boolean here = region.contains(centerX, centerY);
+            final int found = resultsIn(region);
             final List<String> lore = new ArrayList<>();
+            if (found > 0) {
+                lore.add("<#55ffff>★ 這一區有 " + found + " 個搜尋結果");
+            }
             lore.add("<gray>已配置 <white>" + region.owned() + "</white> / " + region.nodes().size()
                     + (region.available() > 0 ? "　<yellow>能配 " + region.available() : ""));
             final List<String> named = new ArrayList<>();
@@ -390,26 +503,33 @@ public final class PassiveMenu extends Menu {
             }
             lore.add("");
             lore.add(here ? "<#77ccff>你現在看的地方" : "<yellow>左鍵：到這一區");
+            if (found > 0) {
+                lore.add("<#55ffff>（會跳到這一區的第一個搜尋結果）");
+            }
             final PassiveNode landmark = region.landmark();
-            final String name = "<white>" + ItemRenderer.escape(landmark.name().isEmpty() ? landmark.type().displayName() : landmark.name())
+            final String name = (found > 0 ? "<#55ffff>★ " : "") + "<white>" + ItemRenderer.escape(landmark.name().isEmpty() ? landmark.type().displayName() : landmark.name())
                     + " <dark_gray>附近";
             final ItemStack stack;
             if (pack) {
                 final TreeView.NodeState state = region.owned() > 0 ? TreeView.NodeState.OWNED
                         : region.available() > 0 ? TreeView.NodeState.AVAILABLE : TreeView.NodeState.LOCKED;
-                stack = cell(new TreeView.Tile(region.centerX(), region.centerY(), landmark, state, new TreeView.EdgeState[4], here,
+                // 有搜尋時：青色的圈標出有結果的區（沒搜尋時照舊標你現在看的地方）
+                final boolean ring = results.isEmpty() ? here : found > 0;
+                stack = cell(new TreeView.Tile(region.centerX(), region.centerY(), landmark, state, new TreeView.EdgeState[4], ring,
                         (region.column() + region.row()) % UiPack.BACKGROUNDS), name, lore);
             } else {
-                final Material material = landmark.type() == PassiveNode.Type.SMALL
+                final Material material = found > 0 ? Material.CYAN_STAINED_GLASS_PANE
+                        : landmark.type() == PassiveNode.Type.SMALL
                         ? region.owned() > 0 ? Material.LIME_STAINED_GLASS_PANE
                         : region.available() > 0 ? Material.YELLOW_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE
                         : material(landmark.icon(), Material.ENCHANTED_BOOK);
                 stack = icon(material, name, lore);
-                if (here || region.owned() > 0) {
+                if (here || region.owned() > 0 || found > 0) {
                     glowing(stack);
                 }
             }
-            stack.setAmount(Math.max(1, Math.min(64, region.owned())));
+            // 有搜尋時疊的數字是這一區的結果數，沒搜尋時是已配置的點數
+            stack.setAmount(Math.max(1, Math.min(64, found > 0 ? found : results.isEmpty() ? region.owned() : 1)));
             set(region.row() * 9 + region.column(), stack);
         }
     }
@@ -428,13 +548,13 @@ public final class PassiveMenu extends Menu {
             }
         } else {
             set(SLOT_LEFT, uiIcon("arrow_left", Material.ARROW, "<white>← 往左看", "<gray>點一下：往左捲 " + SCROLL_STEP + " 格",
-                    "<gray>Shift＋點：往左捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡"));
+                    "<gray>Shift＋點：往左捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡", towardLine(-1, 0)));
             set(SLOT_UP, uiIcon("arrow_up", Material.ARROW, "<white>↑ 往上看", "<gray>點一下：往上捲 " + SCROLL_STEP + " 格",
-                    "<gray>Shift＋點：往上捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡"));
+                    "<gray>Shift＋點：往上捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡", towardLine(0, -1)));
             set(SLOT_DOWN, uiIcon("arrow_down", Material.ARROW, "<white>↓ 往下看", "<gray>點一下：往下捲 " + SCROLL_STEP + " 格",
-                    "<gray>Shift＋點：往下捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡"));
+                    "<gray>Shift＋點：往下捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡", towardLine(0, 1)));
             set(SLOT_RIGHT, uiIcon("arrow_right", Material.ARROW, "<white>→ 往右看", "<gray>點一下：往右捲 " + SCROLL_STEP + " 格",
-                    "<gray>Shift＋點：往右捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡"));
+                    "<gray>Shift＋點：往右捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡", towardLine(1, 0)));
             set(SLOT_HOME, icon(Material.COMPASS, "<white>回到起點", "<gray>視野移回職業起點"));
         }
         final List<String> info = new ArrayList<>();
@@ -469,10 +589,21 @@ public final class PassiveMenu extends Menu {
         set(SLOT_OVERVIEW, overview
                 ? icon(Material.SPYGLASS, "<white>回到天賦樹", "<gray>回到剛才的位置")
                 : icon(Material.FILLED_MAP, "<white>縮小地圖", "<gray>整棵樹分區看，點一區就跳過去"));
-        set(SLOT_SEARCH, icon(Material.SPYGLASS, "<white>搜尋天賦",
-                "<gray>輸入關鍵字，符合的用<#55ffff>青色</#55ffff>標出",
-                "<dark_gray>也可以直接打 /tree find 生命",
-                highlights.isEmpty() ? "" : "<#55ffff>目前標出 " + highlights.size() + " 個結果"));
+        if (results.isEmpty()) {
+            set(SLOT_SEARCH, icon(Material.SPYGLASS, "<white>搜尋天賦",
+                    "<gray>輸入關鍵字，符合的用<#55ffff>青色</#55ffff>標出",
+                    "<dark_gray>例如「珠寶」、「生命」、「暴擊」",
+                    "<dark_gray>也可以直接打 /tree find 生命"));
+        } else {
+            final ItemStack search = glowing(icon(Material.SPYGLASS, "<#55ffff>搜尋結果 "
+                            + (resultIndex < 0 ? "共 " + results.size() + " 個" : (resultIndex + 1) + "/" + results.size()),
+                    "<yellow>左鍵：跳到下一個",
+                    "<yellow>右鍵：跳到上一個",
+                    "<gray>Shift＋點：重新搜尋",
+                    "<gray>Q：清掉搜尋標記"));
+            search.setAmount(Math.max(1, Math.min(64, results.size())));
+            set(SLOT_SEARCH, search);
+        }
         set(SLOT_CLOSE, closeButton());
     }
 
@@ -506,7 +637,15 @@ public final class PassiveMenu extends Menu {
                 clearPreview();
                 open();
             });
-            case SLOT_SEARCH -> plugin.characterMenus().promptTreeSearch(player);
+            case SLOT_SEARCH -> {
+                if (results.isEmpty() || click.isShiftClick()) {
+                    plugin.characterMenus().promptTreeSearch(player);
+                } else if (click == ClickType.DROP || click == ClickType.CONTROL_DROP) {
+                    clearSearch();
+                } else {
+                    jumpResult(click.isRightClick() ? -1 : 1);
+                }
+            }
             case SLOT_CLOSE -> goBack();
             default -> {
                 if (slot < VIEW_WIDTH * VIEW_HEIGHT) {
@@ -526,6 +665,16 @@ public final class PassiveMenu extends Menu {
             if (region.row() * 9 + region.column() == slot && !region.nodes().isEmpty()) {
                 final PassiveNode landmark = region.landmark();
                 centerOn(landmark.x(), landmark.y());
+                // 這一區有搜尋結果：跳到這一區的第一個（照結果的順序），搜尋鈕接著從這裡往下跳
+                for (int i = 0; i < results.size(); i++) {
+                    if (region.nodes().contains(results.get(i))) {
+                        resultIndex = i;
+                        centerOn(results.get(i).x(), results.get(i).y());
+                        player.sendActionBar(plugin.text().parse("<#55ffff>搜尋結果 " + (i + 1) + "/" + results.size() + "：<white>"
+                                + ItemRenderer.escape(results.get(i).name().isEmpty() ? results.get(i).type().displayName() : results.get(i).name())));
+                        break;
+                    }
+                }
                 overview = false;
                 redraw();
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.5f);
@@ -567,7 +716,13 @@ public final class PassiveMenu extends Menu {
         final PlayerState state = plugin.players().get(player);
         final PassiveNode start = passive.start();
         PassiveState.Result result;
-        if (click.isRightClick()) {
+        if (click.isRightClick() && previewTarget != null && !state.passives().contains(node.id())) {
+            // 右鍵還沒配的節點：取消路徑預覽（不是退點）
+            clearPreview();
+            redraw();
+            player.sendActionBar(plugin.text().parse("<gray>取消路徑預覽"));
+            return;
+        } else if (click.isRightClick()) {
             clearPreview();
             result = passive.refund(node);
         } else if (isAttributeChoice(node) && state.passives().contains(node.id())) {

@@ -127,6 +127,16 @@ public final class OpsModule implements Module, Listener {
         nodes.add(Commands.literal("trace")
                 .then(Commands.literal("player")
                         .then(Commands.argument("name", StringArgumentType.word())
+                                .suggests((context, builder) -> {
+                                    // 2026-10：按 TAB 補在線玩家的 ID（離線的照樣可以自己打）
+                                    final String remaining = builder.getRemainingLowerCase();
+                                    for (final org.bukkit.entity.Player online : plugin.getServer().getOnlinePlayers()) {
+                                        if (online.getName().toLowerCase(java.util.Locale.ROOT).startsWith(remaining)) {
+                                            builder.suggest(online.getName());
+                                        }
+                                    }
+                                    return builder.buildFuture();
+                                })
                                 .executes(context -> tracePlayer(plugin, context.getSource().getSender(),
                                         StringArgumentType.getString(context, "name")))))
                 .then(Commands.argument("uuid", StringArgumentType.word())
@@ -258,7 +268,8 @@ public final class OpsModule implements Module, Listener {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int traceItem(final ExileCore plugin, final CommandSender sender, final String uuid) {
+    /** 一件物品的交易與通貨紀錄（/ec trace；管理網頁也用）。結果過一下才送給 sender（要查資料庫）。 */
+    public static int traceItem(final ExileCore plugin, final CommandSender sender, final String uuid) {
         final TradeLogRepository log = plugin.economy().tradeLog();
         plugin.database().async(connection -> {
             final List<String> lines = new ArrayList<>();
@@ -292,7 +303,8 @@ public final class OpsModule implements Module, Listener {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static int tracePlayer(final ExileCore plugin, final CommandSender sender, final String name) {
+    /** 一個玩家最近的交易（/ec trace player；管理網頁也用）。 */
+    public static int tracePlayer(final ExileCore plugin, final CommandSender sender, final String name) {
         final TradeLogRepository log = plugin.economy().tradeLog();
         plugin.database().async(connection -> log.byName(connection, name, 30)).whenComplete((rows, error) ->
                 plugin.getServer().getScheduler().runTask(plugin, () -> {

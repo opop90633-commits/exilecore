@@ -37,7 +37,9 @@ public final class WebServer {
     public record Response(int status, String contentType, byte[] body, Map<String, String> headers) {
 
         public static Response of(final String contentType, final byte[] body) {
-            return new Response(200, contentType, body, Map.of());
+            // 2026-10：網頁本身每次都跟伺服器確認有沒有新版（更新之後瀏覽器、CDN 還拿舊的頁面配新的資料，功能會對不上）
+            return new Response(200, contentType, body,
+                    contentType != null && contentType.startsWith("text/html") ? Map.of("Cache-Control", "no-cache") : Map.of());
         }
 
         public static Response text(final int status, final String text) {

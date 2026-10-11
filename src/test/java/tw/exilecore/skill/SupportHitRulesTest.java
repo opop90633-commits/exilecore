@@ -39,12 +39,19 @@ class SupportHitRulesTest {
     void hitOnlySupportsRefuseSkillsThatNeverHit() {
         final String reason = "不會造成傷害的技能不行";
         // 光環、詛咒、印記、護體、戰吼、純位移、召喚本身都不會打到敵人
-        for (final String id : new String[] {"frost_aegis", "vulnerability_curse", "hunters_mark", "raise_guard", "blink"}) {
+        for (final String id : new String[] {"vulnerability_curse", "hunters_mark", "raise_guard", "blink"}) {
             assertEquals(reason, support("added_fire").refusal(skill(id)), id);
             assertEquals(reason, support("critical_strikes").refusal(skill(id)), id);
             assertEquals(reason, support("deep_freeze").refusal(skill(id)), id);
             assertEquals(reason, support("deliberation").refusal(skill(id)), id);
         }
+        // 2026-10：光環不算法術了（照 PoE2）——要攻擊或法術的輔助在標籤那一關就擋掉，不看標籤的照舊擋在「不會造成傷害」
+        for (final String supportId : new String[] {"added_fire", "critical_strikes", "deep_freeze", "deliberation"}) {
+            final String refusal = support(supportId).refusal(skill("frost_aegis"));
+            assertTrue(reason.equals(refusal) || "要攻擊技能或法術技能".equals(refusal), supportId + "：" + refusal);
+        }
+        assertFalse(skill("frost_aegis").tags().contains(tw.exilecore.stats.Tags.SPELL), "光環不算法術");
+        assertTrue(skill("herald_of_ash").tags().contains(tw.exilecore.stats.Tags.SPELL), "捷光環例外：輔助要傳給擊殺效果");
         assertEquals(reason, support("deep_freeze").refusal(skill("fortifying_cry")), "戰吼沒有 attack／spell 標籤：只有不看標籤的輔助會走到這條");
         assertEquals("召喚物技能不行", support("ruthless").refusal(skill("summon_skeletons")), "無情的傷害沒有 minion 標籤：召喚技能掛了只會落到主人身上");
         assertEquals(reason, support("pinning").refusal(skill("skeletal_archers")), "遠程召喚物只是畫一道彈道，沒有真的投射物");
@@ -65,7 +72,21 @@ class SupportHitRulesTest {
         assertNull(support("heightened_curse").refusal(skill("vulnerability_curse")));
         assertNull(support("trigger_hit_taken").refusal(skill("vulnerability_curse")), "受擊時放詛咒");
         assertNull(support("warcry_power").refusal(skill("fortifying_cry")));
-        assertNull(support("burst").refusal(skill("hunters_mark")), "冷卻那半邊對印記有用");
+        // 2026-10：好處是傷害、代價是範圍／冷卻／持續／施法速度的輔助，掛在不會造成傷害的技能上只剩代價：不行
+        final String reason = "不會造成傷害的技能不行";
+        assertEquals(reason, support("burst").refusal(skill("hunters_mark")), "爆發：傷害吃不到，只剩冷卻變久");
+        assertEquals(reason, support("concentrated_effect").refusal(skill("mana_storm")), "凝聚掛在魔湧上：只剩範圍變小");
+        assertEquals(reason, support("concentrated_effect").refusal(skill("frost_aegis")));
+        assertEquals(reason, support("intense_agony").refusal(skill("hunters_mark")));
+        assertEquals(reason, support("hourglass").refusal(skill("vulnerability_curse")));
+        assertEquals(reason, support("excise").refusal(skill("vulnerability_curse")));
+        assertEquals(reason, support("considered_casting").refusal(skill("vulnerability_curse")));
+        // 會造成傷害的技能照舊能掛；範圍變大的、只改冷卻／持續的也照舊
+        assertNull(support("concentrated_effect").refusal(skill("fireball")));
+        assertNull(support("burst").refusal(skill("storm_blink")));
+        assertNull(support("impact_area").refusal(skill("frost_aegis")), "範圍變大那半邊有用");
+        assertNull(support("swift_cooldown").refusal(skill("hunters_mark")), "冷卻變短有用");
+        assertNull(support("spell_echo").refusal(skill("vulnerability_curse")), "代價是傷害的不擋");
         assertEquals("要冷卻技能", support("burst").refusal(skill("raise_zombie")), "喚屍沒有冷卻");
         assertEquals("不會造成傷害的技能不行", support("deliberation").refusal(skill("raise_zombie")), "純傷害的輔助掛召喚沒效果");
     }

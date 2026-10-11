@@ -16,8 +16,15 @@ import java.util.TreeMap;
  */
 public final class EconomyReportJson {
 
-    /** 一種通貨的名稱與設定值（主執行緒先抓好，帶到資料庫執行緒用）。 */
-    public record CurrencyMeta(String id, String name, long configured) {
+    /**
+     * 一種通貨的名稱與設定值（主執行緒先抓好，帶到資料庫執行緒用）。
+     *
+     * @param priced 有參考價值（economy.yml 的 values）；沒有的（映星鏡、地圖機制的通貨…，2026-10）只列數量，不折合金幣
+     */
+    public record CurrencyMeta(String id, String name, long configured, boolean priced) {
+        public CurrencyMeta(final String id, final String name, final long configured) {
+            this(id, name, configured, configured > 0);
+        }
     }
 
     /** 網頁上可以選的期間（來源、去處各算一份）。 */
@@ -76,6 +83,7 @@ public final class EconomyReportJson {
             object.addProperty("id", meta.id());
             object.addProperty("name", meta.name());
             object.addProperty("configured", meta.configured());
+            object.addProperty("priced", meta.priced());
             object.add("produced", longs(produced.get(meta.id()), days.size()));
             object.add("consumed", longs(consumed.get(meta.id()), days.size()));
             object.add("stock", nullableLongs(stockByKind.get(meta.id()), days.size()));

@@ -28,6 +28,7 @@ import java.util.function.Consumer;
  * /ec skill give &lt;技能&gt; [等級]        加到自己的技能面板（已經有就改等級；沒寫等級 = 角色能用的最高等級）
  * /ec skill remove &lt;技能&gt;             從自己的技能面板移除
  * /ec skill reset                     清空自己的技能面板（下次載入角色會再送起始技能）
+ * /ec skill fx                        過去 10 秒誰的技能特效送最多封包（人多時 PING 飆高時查）
  * /ec gem uncut &lt;等級&gt; [數量]           未切割技能寶石
  * /ec gem uncutsupport &lt;階級&gt; [數量]    未切割輔助寶石
  * /ec gem skill &lt;技能&gt; [等級]           技能寶石
@@ -62,6 +63,7 @@ public final class SkillCommands {
     public static LiteralArgumentBuilder<CommandSourceStack> adminNode(final ExileCore plugin) {
         return Commands.literal("skill")
                 .then(Commands.literal("list").executes(context -> list(plugin, context.getSource().getSender())))
+                .then(Commands.literal("fx").executes(context -> fx(plugin, context.getSource().getSender())))
                 .then(Commands.literal("give")
                         .then(skillArgument(plugin)
                                 .executes(context -> run(plugin, context, player -> give(plugin, player,
@@ -211,6 +213,33 @@ public final class SkillCommands {
         for (final SupportDefinition support : plugin.skills().config().supports()) {
             sender.sendMessage(plugin.text().parse(String.format(Locale.ROOT, "<gray>  <white>%s</white>　%s　第 %d 階　%s",
                     support.id(), ItemRenderer.escape(support.name()), support.tier(), support.supportsText(plugin.skills().config().all()))));
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** 過去一段時間（10 秒）誰的技能特效送最多封包（2026-10，人多時大家的 PING 一起飆高）。 */
+    private static int fx(final ExileCore plugin, final CommandSender sender) {
+        final List<FxStats.Entry> top = Fx.top(10);
+        final double seconds = Fx.lastSeconds();
+        if (top.isEmpty() || seconds <= 0) {
+            sender.sendMessage(plugin.text().prefixed("<gray>還沒有統計（每 10 秒結算一次，有人放技能後再看）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        sender.sendMessage(plugin.text().prefixed(String.format(Locale.ROOT,
+                "<gray>過去 %.0f 秒玩家技能特效送出的封包（算進每個看到的人）：共 <white>%.0f</white> 個／秒",
+                seconds, Fx.total() / seconds)));
+        int rank = 1;
+        for (final FxStats.Entry entry : top) {
+            final String name;
+            if (FxStats.OTHERS.equals(entry.source())) {
+                name = "（怪物、環境）";
+            } else {
+                final String known = plugin.getServer().getOfflinePlayer(entry.source()).getName();
+                name = known == null ? entry.source().toString() : known;
+            }
+            final String color = entry.perSecond() >= 5000 ? "<red>" : entry.perSecond() >= 1500 ? "<yellow>" : "<green>";
+            sender.sendMessage(plugin.text().parse(String.format(Locale.ROOT, "<gray>  %d. <white>%s</white>　%s%.0f</%s> 個／秒",
+                    rank++, ItemRenderer.escape(name), color, entry.perSecond(), color.substring(1, color.length() - 1))));
         }
         return Command.SINGLE_SUCCESS;
     }

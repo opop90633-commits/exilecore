@@ -102,10 +102,43 @@ public final class SponsorConfig {
      * art 是 web/skins/ 裡那一套美術的代號（tools/gen_skin_art.py 畫的）。
      */
     public record Cosmetic(String id, String name, Rarity rarity, Style style, String particle, String color, boolean rainbow,
-                           long fashionPrice, String description, boolean skin, String skinSlot, String art, String emote) {
+                           long fashionPrice, String description, boolean skin, String skinSlot, String art, String emote, String limited) {
+        public Cosmetic(final String id, final String name, final Rarity rarity, final Style style, final String particle, final String color,
+                        final boolean rainbow, final long fashionPrice, final String description, final boolean skin, final String skinSlot,
+                        final String art, final String emote) {
+            this(id, name, rarity, style, particle, color, rainbow, fashionPrice, description, skin, skinSlot, art, emote, null);
+        }
+
         /** 是不是動作（2026-10：按設定的按鍵做的動作，見 Emotes）。 */
         public boolean isEmote() {
             return emote != null;
+        }
+
+        /**
+         * 絕版、限定（2026-10）：limited 寫來源（例如「S1 贊助禮包」）。不能抽（抽獎箱不能放）、不能用時裝幣或月卡幣換，
+         * 只有管理網頁、/ec sponsor give … cosmetic 發得出來；選單上顯示「S1 贊助禮包限定」，沒有的人看不到。
+         */
+        public boolean isLimited() {
+            return limited != null && !limited.isEmpty();
+        }
+
+        /** 「S1 贊助禮包限定」這種字（沒有限定回傳空字串）。 */
+        public String limitedTag() {
+            return isLimited() ? limited + "限定" : "";
+        }
+    }
+
+    /** 限定稱號（2026-10，limited_titles）：只有管理網頁、指令發得出來（例如 S1 贊助禮包）；limited 是來源，選單上顯示「…限定」。 */
+    public record LimitedTitle(String id, String name, String color, String limited) {
+        public String limitedTag() {
+            return limited + "限定";
+        }
+    }
+
+    /** 一組時裝（2026-10，bundles）：管理網頁、指令可以一次發整組（例如 S1 贊助禮包的整套）；項目可以是時裝代號或 title:稱號代號。 */
+    public record Bundle(String id, String name, List<String> cosmetics) {
+        public Bundle {
+            cosmetics = List.copyOf(cosmetics);
         }
     }
 
@@ -163,6 +196,10 @@ public final class SponsorConfig {
     private long listingPrice = 150;
     /** 改名卡（2026-10）：一張改一次角色名字。 */
     private long renamePrice = 50;
+    /** 公會（2026-10）：公會改名卡、公會倉庫頁（頁是公會的，不是買的人的）。 */
+    private long guildRenamePrice = 300;
+    private long guildStashPrice = 300;
+    private int guildStashMax;
     private int listingMax = 15;
     private long cardPrice = 100;
     private int cardDays = 30;
@@ -181,6 +218,8 @@ public final class SponsorConfig {
     private List<Tier> tiers = List.of();
     private List<LoginTitle> loginTitles = List.of();
     private Map<String, Cosmetic> cosmetics = Map.of();
+    private Map<String, Bundle> bundles = Map.of();
+    private Map<String, LimitedTitle> limitedTitles = Map.of();
     private Map<Rarity, Integer> duplicateRefund = Map.of();
     private Map<String, Box> boxes = Map.of();
     private List<CardItem> cardShop = List.of();
@@ -230,6 +269,10 @@ public final class SponsorConfig {
         listingPrice = positive(listing, "price", 50);
         listingMax = Math.max(0, listing.integer("max", 0));
         renamePrice = positive(root.node("rename_card"), "price", 50);
+        guildRenamePrice = positive(root.node("guild_rename_card"), "price", 300);
+        final YamlNode guildStash = root.node("guild_stash_page");
+        guildStashPrice = positive(guildStash, "price", 300);
+        guildStashMax = Math.max(0, Math.min(tw.exilecore.guild.GuildStash.MAX_PAGES, guildStash.integer("max", 0)));
         final YamlNode card = root.node("monthly_card");
         cardPrice = positive(card, "price", 100);
         cardDays = Math.max(1, Math.min(366, card.integer("days", 30)));
@@ -334,11 +377,53 @@ public final class SponsorConfig {
                     throw new IllegalArgumentException(node.path() + ".art：要寫美術的代號（web/skins/ 裡的，例如 starlight）");
                 }
             }
+            final String limited = node.string("limited", "").trim();
+            if (!limited.isEmpty() && node.integer("fashion_price", 0) > 0) {
+                throw new IllegalArgumentException(node.path() + "：限定（limited）的時裝不能用時裝幣換，fashion_price 要是 0");
+            }
             cosmeticMap.put(id, new Cosmetic(id, node.requireString("name").trim(), Rarity.parse(node.string("rarity", "common"), node.path()),
                     Style.parse(node.string("style", "aura"), node.path()), particle, color, node.bool("rainbow", false),
-                    Math.max(0, node.integer("fashion_price", 0)), node.string("description", "").trim(), skin, skinSlot, art, emote));
+                    limited.isEmpty() ? Math.max(0, node.integer("fashion_price", 0)) : 0, node.string("description", "").trim(), skin, skinSlot, art, emote,
+                    limited.isEmpty() ? null : limited));
         }
         cosmetics = Collections.unmodifiableMap(cosmeticMap);
+
+        final Map<String, LimitedTitle> limitedMap = new LinkedHashMap<>();
+        final YamlNode limitedNode = root.node("limited_titles");
+        for (final String id : limitedNode.keys()) {
+            final YamlNode node = limitedNode.node(id);
+            checkId(id, node.path());
+            final String source = node.string("limited", "").trim();
+            if (source.isEmpty()) {
+                throw new IllegalArgumentException(node.path() + ".limited：要寫來源（例如「S1 贊助禮包」）");
+            }
+            limitedMap.put(id, new LimitedTitle(id, node.requireString("name").trim(), nameColor(node.string("color", "#ffffff").trim(), node.path() + ".color"), source));
+        }
+        limitedTitles = Collections.unmodifiableMap(limitedMap);
+
+        final Map<String, Bundle> bundleMap = new LinkedHashMap<>();
+        final YamlNode bundleNode = root.node("bundles");
+        for (final String id : bundleNode.keys()) {
+            final YamlNode node = bundleNode.node(id);
+            checkId(id, node.path());
+            final List<String> ids = new ArrayList<>();
+            for (final String raw : node.strings("cosmetics")) {
+                final String cosmetic = raw.trim();
+                if (cosmetic.startsWith("title:")) {
+                    if (!limitedMap.containsKey(cosmetic.substring("title:".length()))) {
+                        throw new IllegalArgumentException(node.path() + ".cosmetics：沒有「" + cosmetic + "」這個限定稱號（limited_titles）");
+                    }
+                } else if (!cosmeticMap.containsKey(cosmetic)) {
+                    throw new IllegalArgumentException(node.path() + ".cosmetics：沒有「" + cosmetic + "」這個時裝（cosmetics）");
+                }
+                ids.add(cosmetic);
+            }
+            if (ids.isEmpty()) {
+                throw new IllegalArgumentException(node.path() + ".cosmetics：沒有東西");
+            }
+            bundleMap.put(id, new Bundle(id, node.string("name", id).trim(), ids));
+        }
+        bundles = Collections.unmodifiableMap(bundleMap);
 
         final Map<Rarity, Integer> refund = new LinkedHashMap<>();
         final YamlNode refundNode = root.node("duplicate_refund");
@@ -357,6 +442,9 @@ public final class SponsorConfig {
             for (final String cosmetic : weightNode.keys()) {
                 if (!cosmeticMap.containsKey(cosmetic)) {
                     throw new IllegalArgumentException(weightNode.path() + "：沒有「" + cosmetic + "」這個外觀特效（cosmetics）");
+                }
+                if (cosmeticMap.get(cosmetic).isLimited()) {
+                    throw new IllegalArgumentException(weightNode.path() + "." + cosmetic + "：限定的時裝（" + cosmeticMap.get(cosmetic).limitedTag() + "）不能放進抽獎箱");
                 }
                 final double weight = weightNode.decimal(cosmetic, 0);
                 if (weight <= 0) {
@@ -401,6 +489,9 @@ public final class SponsorConfig {
                     if (!cosmeticMap.containsKey(cosmetic)) {
                         throw new IllegalArgumentException(node.path() + ".cosmetic：沒有「" + cosmetic + "」這個外觀特效");
                     }
+                    if (cosmeticMap.get(cosmetic).isLimited()) {
+                        throw new IllegalArgumentException(node.path() + ".cosmetic：限定的時裝（" + cosmeticMap.get(cosmetic).limitedTag() + "）不能用月卡幣換");
+                    }
                     name = name.isEmpty() ? cosmeticMap.get(cosmetic).name() : name;
                 }
                 case FASHION_COINS -> name = name.isEmpty() ? "時裝幣" : name;
@@ -426,6 +517,9 @@ public final class SponsorConfig {
             if (item.kind() == CardKind.TITLE) {
                 unique(titleIds, item.id(), "card_shop");
             }
+        }
+        for (final LimitedTitle title : limitedTitles.values()) {
+            unique(titleIds, title.id(), "limited_titles");
         }
     }
 
@@ -492,6 +586,9 @@ public final class SponsorConfig {
         bagMax = other.bagMax;
         listingPrice = other.listingPrice;
         renamePrice = other.renamePrice;
+        guildRenamePrice = other.guildRenamePrice;
+        guildStashPrice = other.guildStashPrice;
+        guildStashMax = other.guildStashMax;
         listingMax = other.listingMax;
         cardPrice = other.cardPrice;
         cardDays = other.cardDays;
@@ -509,6 +606,8 @@ public final class SponsorConfig {
         tiers = other.tiers;
         loginTitles = other.loginTitles;
         cosmetics = other.cosmetics;
+        bundles = other.bundles;
+        limitedTitles = other.limitedTitles;
         duplicateRefund = other.duplicateRefund;
         boxes = other.boxes;
         cardShop = other.cardShop;
@@ -545,6 +644,21 @@ public final class SponsorConfig {
 
     public long stashPrice() {
         return stashPrice;
+    }
+
+    /** 公會改名卡的價格（星幣）。 */
+    public long guildRenamePrice() {
+        return guildRenamePrice;
+    }
+
+    /** 公會倉庫頁的價格（星幣）。 */
+    public long guildStashPrice() {
+        return guildStashPrice;
+    }
+
+    /** 一個公會最多用星幣買幾頁（0 = 只看公會倉庫的總頁數上限）。 */
+    public int guildStashMax() {
+        return guildStashMax;
     }
 
     public int stashMax() {
@@ -643,6 +757,16 @@ public final class SponsorConfig {
 
     public List<CardItem> cardShop() {
         return cardShop;
+    }
+
+    /** 一組時裝（2026-10，bundles：管理網頁、指令一次發整組）。 */
+    public Map<String, Bundle> bundles() {
+        return bundles;
+    }
+
+    /** 限定稱號（2026-10，limited_titles：只有發放拿得到）。 */
+    public Map<String, LimitedTitle> limitedTitles() {
+        return limitedTitles;
     }
 
     /** 累積到 total 時最高的一階（還沒到 null）。 */

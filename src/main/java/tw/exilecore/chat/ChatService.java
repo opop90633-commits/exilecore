@@ -48,6 +48,8 @@ public final class ChatService {
 
     /** 聊天管理：禁言、洗頻、髒話、檢舉（2026-10）。 */
     private final ChatModeration moderation;
+    /** 頭上的名牌（2026-10；模組啟用時設）。 */
+    Nameplates nameplates;
     /** 剛送出的公開聊天貼的物品（Discord 同步拿去顯示；拿一次就清掉）。 */
     private final Map<UUID, List<ItemStack>> linked = new ConcurrentHashMap<>();
 
@@ -62,6 +64,13 @@ public final class ChatService {
 
     public ChatModeration moderation() {
         return moderation;
+    }
+
+    /** 頭上的名牌：名字、稱號、公會變了之後重畫。 */
+    public void refreshNameplate(final Player player) {
+        if (nameplates != null) {
+            nameplates.refresh(player);
+        }
     }
 
     // ---- 名字 ----

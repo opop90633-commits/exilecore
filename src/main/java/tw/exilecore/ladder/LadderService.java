@@ -24,6 +24,8 @@ public final class LadderService {
     public static final int REFRESH_SECONDS = 60;
     /** 最多排幾個（資料庫取前幾名）。 */
     static final int LIMIT = 200;
+    /** 金錢榜排幾個。 */
+    static final int GOLD_LIMIT = 100;
 
     private final ExileCore plugin;
     private volatile List<Entry> entries = List.of();
@@ -121,7 +123,8 @@ public final class LadderService {
                     FROM accounts a
                     WHERE a.gold > 0
                     ORDER BY a.gold DESC, a.name
-                    LIMIT 100""")) {
+                    LIMIT ?""")) {
+                statement.setInt(1, GOLD_LIMIT);
                 try (ResultSet rows = statement.executeQuery()) {
                     while (rows.next()) {
                         if (rows.getString("cname") == null) {
@@ -168,8 +171,44 @@ public final class LadderService {
                         : board == Board.MAPS ? "（完成一張地圖就會上）" : "（存檔後下一次更新就會出現）"));
             }
         }
-        lines.add("<dark_gray>  /ladder、/ladder maps、/ladder deathless；網頁版在 /ladder 頁");
+        lines.add("<dark_gray>  /ladder、/ladder maps、/ladder deathless、/ladder gold（金錢）、/ladder guild（公會）；網頁版在 /ladder 頁");
         return lines;
+    }
+
+    /** 給聊天欄（2026-10）：金錢榜的前 count 名，加上看的人自己的名次。帳號的金幣（帳號共用），名字是那個帳號等級最高的角色。 */
+    public List<String> goldLines(final int count, final Player viewer) {
+        final List<String> lines = new ArrayList<>();
+        final List<GoldEntry> list = gold;
+        lines.add("<#f5b942><bold>排行榜・金錢</bold> <dark_gray>帳號的金幣（同一個帳號的角色共用）　"
+                + (refreshedMillis == 0 ? "還在讀取" : "每 " + REFRESH_SECONDS + " 秒更新"));
+        if (list.isEmpty()) {
+            lines.add("<gray>  還沒有人上榜");
+        }
+        int mine = 0;
+        for (int i = 0; i < list.size(); i++) {
+            if (viewer != null && list.get(i).account().equals(viewer.getName())) {
+                mine = i + 1;
+            }
+        }
+        for (int i = 0; i < Math.min(count, list.size()); i++) {
+            lines.add(goldLine(i + 1, list.get(i), mine == i + 1));
+        }
+        if (mine > count) {
+            lines.add("<dark_gray>  …");
+            lines.add(goldLine(mine, list.get(mine - 1), true));
+        } else if (mine == 0 && viewer != null) {
+            lines.add("<dark_gray>  你還沒上這個榜（只排前 " + GOLD_LIMIT + " 名；存檔後下一次更新才會出現）");
+        }
+        lines.add("<dark_gray>  /ladder、/ladder maps、/ladder deathless、/ladder gold、/ladder guild；網頁版在 /ladder 頁");
+        return lines;
+    }
+
+    private static String goldLine(final int rank, final GoldEntry entry, final boolean mine) {
+        final String medal = rank == 1 ? "<#f5b942>①" : rank == 2 ? "<#c0c0c0>②" : rank == 3 ? "<#cd7f32>③" : "<gray>" + rank + ".";
+        final tw.exilecore.character.CharacterClass characterClass = tw.exilecore.character.CharacterClass.parse(entry.classId(), null);
+        return String.format(Locale.ROOT, "  %s %s%s%s <dark_gray>%s <#f5b942>%,d 金幣 <dark_gray>Lv.%d%s", medal, mine ? "<green>➜ " : "",
+                characterClass == null ? "<white>" : characterClass.color(), tw.exilecore.item.ItemRenderer.escape(entry.character()),
+                characterClass == null ? "" : characterClass.displayName(), entry.gold(), entry.level(), mine ? " <green>（你）" : "");
     }
 
     private String line(final int rank, final Entry entry, final Board board, final Player viewer) {
@@ -241,6 +280,39 @@ public final class LadderService {
             golds.add(object);
         }
         root.add("gold", golds);
+        // 公會榜（2026-10）：公會模組在主執行緒整理好的快照
+        final JsonArray guilds = new JsonArray();
+        final tw.exilecore.guild.GuildService guildService = plugin.guilds();
+        if (guildService != null) {
+            for (final tw.exilecore.guild.GuildService.LadderRow row : guildService.ladder()) {
+                final JsonObject object = new JsonObject();
+                object.addProperty("rank", row.rank());
+                object.addProperty("name", row.name());
+                object.addProperty("tag", row.tag());
+                object.addProperty("level", row.level());
+                object.addProperty("experience", row.experience());
+                object.addProperty("toNext", row.toNext());
+                object.addProperty("total", row.total());
+                object.addProperty("members", row.members());
+                object.addProperty("maxMembers", row.maxMembers());
+                object.addProperty("leader", row.leader());
+                object.addProperty("online", row.online());
+                // 2026-10：點公會看成員（階級、貢獻；公告是公會內部的，不放）
+                object.addProperty("created", row.created());
+                final JsonArray roster = new JsonArray();
+                for (final tw.exilecore.guild.GuildService.LadderMember member : row.roster()) {
+                    final JsonObject m = new JsonObject();
+                    m.addProperty("name", member.name());
+                    m.addProperty("rank", member.rank());
+                    m.addProperty("contribution", member.contribution());
+                    m.addProperty("online", member.online());
+                    roster.add(m);
+                }
+                object.add("roster", roster);
+                guilds.add(object);
+            }
+        }
+        root.add("guilds", guilds);
         return root.toString();
     }
 }

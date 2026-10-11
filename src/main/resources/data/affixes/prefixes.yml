@@ -145,6 +145,7 @@ flask_life_recovery:
   spawn_tags: [belt]
   names: [星骸的, 天賜的, 神軀的, 不朽的, 雄壯的, 壯碩的]
   text: "增加 {value}% 生命藥劑回復量"
+  chips: [life, flask]   # PoE2 的標籤（BeltFlaskLifeRecoveryRate）
   tiers:
     - { tier: 1, ilvl: 75, weight: 328, value: [35, 40] }
     - { tier: 2, ilvl: 60, weight: 410, value: [29, 34] }
@@ -161,6 +162,7 @@ flask_mana_recovery:
   spawn_tags: [belt]
   names: [星海的, 神諭的, 天啟的, 通靈的, 睿智的, 清明的]
   text: "增加 {value}% 魔力藥劑回復量"
+  chips: [mana, flask]   # PoE2 的標籤（BeltFlaskManaRecoveryRate）
   tiers:
     - { tier: 1, ilvl: 63, weight: 328, value: [35, 40] }
     - { tier: 2, ilvl: 54, weight: 410, value: [29, 34] }
@@ -415,6 +417,7 @@ bow_inc:
   spawn_tags: [quiver]
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的]
   text: "增加 {value}% 弓技能傷害"
+  chips: [damage]   # PoE2（DamageWithBows1–6）的標籤只有「傷害」；下面的 attack、bow 是讓它只對拿弓放的攻擊技能有效
   tiers:
     - { tier: 1, ilvl: 81, weight: 328, value: [51, 59] }
     - { tier: 2, ilvl: 60, weight: 410, value: [43, 50] }
@@ -423,7 +426,7 @@ bow_inc:
     - { tier: 5, ilvl: 16, weight: 800, value: [21, 30] }
     - { tier: 6, ilvl: 1, weight: 1000, value: [11, 20] }
   mods:
-    - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, projectile] }
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, bow] }
 
 es_flat:
   type: prefix
@@ -892,6 +895,7 @@ attack_ele_inc:
   spawn_tags: [bow, melee_1h, spear]
   names: [星芒的, 神匠的, 大師的, 名家的, 精良的, 優質的]
   text: "增加 {value}% 攻擊的元素傷害"
+  chips: [damage, elemental, fire, cold, lightning]   # PoE2 的標籤（IncreasedWeaponElementalDamagePercent）
   tiers:
     - { tier: 1, ilvl: 81, weight: 328, value: [87, 100] }
     - { tier: 2, ilvl: 60, weight: 410, value: [73, 86] }
@@ -908,6 +912,7 @@ attack_ele_inc_crossbow:
   spawn_tags: [crossbow, melee_2h, quarterstaff]
   names: [星芒的, 神匠的, 大師的, 名家的, 精良的, 優質的]
   text: "增加 {value}% 攻擊的元素傷害"
+  chips: [damage, elemental, fire, cold, lightning]   # PoE2 的標籤（IncreasedWeaponElementalDamagePercent）
   tiers:
     - { tier: 1, ilvl: 81, weight: 328, value: [120, 139] }
     - { tier: 2, ilvl: 60, weight: 410, value: [100, 119] }
@@ -1105,6 +1110,7 @@ armour_evasion_stun:
   exclude_tags: [body, helmet, leggings]
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 護甲與閃避、+{stun} 暈眩門檻"
+  chips: [armour, evasion]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
     - { tier: 1, ilvl: 74, weight: 328, value: [39, 42], stun: [95, 136] }
     - { tier: 2, ilvl: 63, weight: 410, value: [33, 38], stun: [64, 94] }
@@ -1124,6 +1130,7 @@ armour_stun:
   exclude_tags: [body, helmet, leggings]
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的]
   text: "增加 {value}% 護甲、+{stun} 暈眩門檻"
+  chips: [armour]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
     - { tier: 1, ilvl: 74, weight: 328, value: [39, 42], stun: [95, 136] }
     - { tier: 2, ilvl: 63, weight: 410, value: [33, 38], stun: [64, 94] }
@@ -1389,6 +1396,7 @@ es_stun:
   exclude_tags: [body, helmet, leggings, shield]
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的]
   text: "增加 {value}% 能量護盾、+{stun} 暈眩門檻"
+  chips: [energy_shield]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
     - { tier: 1, ilvl: 74, weight: 328, value: [39, 42], stun: [95, 136] }
     - { tier: 2, ilvl: 63, weight: 410, value: [33, 38], stun: [64, 94] }
@@ -1483,6 +1491,7 @@ evasion_es_stun:
   exclude_tags: [body, helmet, leggings, shield]
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 閃避與能量護盾、+{stun} 暈眩門檻"
+  chips: [evasion, energy_shield]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
     - { tier: 1, ilvl: 74, weight: 328, value: [39, 42], stun: [95, 136] }
     - { tier: 2, ilvl: 63, weight: 410, value: [33, 38], stun: [64, 94] }
@@ -1502,6 +1511,7 @@ evasion_stun:
   exclude_tags: [body, helmet, leggings]
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的]
   text: "增加 {value}% 閃避、+{stun} 暈眩門檻"
+  chips: [evasion]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
     - { tier: 1, ilvl: 74, weight: 328, value: [39, 42], stun: [95, 136] }
     - { tier: 2, ilvl: 63, weight: 410, value: [33, 38], stun: [64, 94] }
@@ -2325,6 +2335,7 @@ spell_phys_inc:
   exclude_tags: [body, boots, helmet, leggings]
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的]
   text: "增加 {value}% 法術物理傷害"
+  chips: [damage, physical]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）
   tiers:
     - { tier: 1, ilvl: 60, weight: 328, value: [75, 89] }
     - { tier: 2, ilvl: 46, weight: 410, value: [65, 74] }
@@ -2341,6 +2352,7 @@ spell_phys_inc_wand:
   spawn_tags: [wand]
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的, 鋒利的, 磨光的]
   text: "增加 {value}% 法術物理傷害"
+  chips: [damage, physical]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）
   tiers:
     - { tier: 1, ilvl: 81, weight: 210, value: [105, 119] }
     - { tier: 2, ilvl: 70, weight: 262, value: [90, 104] }
@@ -2359,6 +2371,7 @@ spell_phys_inc_staff:
   spawn_tags: [staff]
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的, 鋒利的, 磨光的]
   text: "增加 {value}% 法術物理傷害"
+  chips: [damage, physical]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）
   tiers:
     - { tier: 1, ilvl: 81, weight: 210, value: [209, 238] }
     - { tier: 2, ilvl: 70, weight: 262, value: [189, 208] }
@@ -2409,6 +2422,7 @@ thorns:
   exclude_tags: [boots, helmet, leggings]
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的, 鐵皮的]
   text: "荊棘：被近戰擊中時反彈 {min} 到 {max} 物理傷害"
+  chips: [damage, physical]   # PoE2 的標籤（ThornsPhysicalDamage）
   tiers:
     - { tier: 1, ilvl: 74, weight: 262, min: [101, 151], max: [152, 220] }
     - { tier: 2, ilvl: 63, weight: 328, min: [64, 97], max: [98, 145] }
@@ -2939,6 +2953,7 @@ armour_es_stun:
   exclude_tags: [body, helmet, leggings]
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 護甲與能量護盾、+{stun} 暈眩門檻"
+  chips: [armour, energy_shield]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
     - { tier: 1, ilvl: 74, weight: 328, value: [39, 42], stun: [95, 136] }
     - { tier: 2, ilvl: 63, weight: 410, value: [33, 38], stun: [64, 94] }

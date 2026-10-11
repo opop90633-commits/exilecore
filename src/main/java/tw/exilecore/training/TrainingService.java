@@ -448,17 +448,35 @@ public final class TrainingService {
             admin.sendMessage(plugin.text().prefixed("<#8fd3ff>〔打靶觀看〕<white>" + ItemRenderer.escape(who) + "<gray> 打 "
                     + ItemRenderer.escape(session.name) + String.format(Locale.ROOT, "：<white>%.1f<gray> 秒，總傷害 <white>", meter.seconds())
                     + number(meter.total()) + "<gray>，每秒 <#f5b942><b>" + number(meter.dps()) + "</b><gray>（命中 " + meter.hits()
-                    + "、暴擊 " + percent(meter.critRate()) + "、最高一擊 " + number(meter.highest()) + "）"));
+                    + "、暴擊 " + percent(meter.critRate()) + "、最高一擊 " + number(meter.highest())
+                    + (meter.dotTotal() > 0 ? "、持續傷害佔 " + percent(meter.dotTotal() / Math.max(1, meter.total())) : "") + "）"));
         }
         player.sendMessage(plugin.text().prefixed("<#f5b942>〔訓練〕" + ItemRenderer.escape(session.name) + "<gray>："
                 + String.format(Locale.ROOT, "<white>%.1f<gray> 秒，總傷害 <white>", meter.seconds()) + number(meter.total())
-                + (meter.dotTotal() > 0 ? "<gray>（點燃 " + number(meter.dotTotal()) + "）" : "")
+                + (meter.dotTotal() > 0 ? "<gray>（其中流血、點燃、中毒 " + number(meter.dotTotal()) + "，佔 "
+                        + percent(meter.dotTotal() / Math.max(1, meter.total())) + "）" : "")
                 + "<gray>，每秒 <#f5b942><b>" + number(meter.dps()) + "</b>"));
         player.sendMessage(plugin.text().parse("<gray>　命中 <white>" + meter.hits() + "<gray>・暴擊 <white>" + meter.crits()
                 + "<gray>（" + percent(meter.critRate()) + "）・未命中 <white>" + meter.misses() + "<gray>・格擋 <white>" + meter.blocks()
                 + "<gray>（命中率 " + percent(meter.hitRate()) + "）　最高一擊 <white>" + number(meter.highest())));
+        remember(player, session);
         if (!sessionsOn(session.dummy)) {
             plugin.monsters().ledger().forget(session.dummy);
+        }
+    }
+
+    /** 夠長的一段記成這個角色的實測（/stats 與網頁的統計頁拿來跟估計值並排）。 */
+    private void remember(final Player player, final Session session) {
+        final DpsMeter meter = session.meter;
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        if (plugin.characters() == null || state == null || !state.hasCharacter()
+                || !DummyRecord.qualifies(meter.seconds(), meter.hits() + meter.misses() + meter.blocks())) {
+            return;
+        }
+        final DummyRecord fresh = new DummyRecord(Math.round(meter.dps()), meter.seconds(), session.name,
+                (int) Math.round(meter.dotTotal() * 100 / Math.max(1, meter.total())), System.currentTimeMillis());
+        if (fresh.dps() > 0 && fresh.replaces(DummyRecord.decode(state.progress().get(DummyRecord.KEY)))) {
+            plugin.characters().setProgress(player, DummyRecord.KEY, fresh.encode());
         }
     }
 

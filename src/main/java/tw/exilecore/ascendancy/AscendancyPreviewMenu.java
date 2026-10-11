@@ -13,29 +13,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 昇華預覽（/ascend preview）：還沒選、甚至還沒解鎖之前，就能看每個昇華職業的完整天賦樹。
- * 排法跟昇華天賦一樣（每條分支一列，從左邊的徽記往右一個接一個），只能看、不能配點。
+ * 昇華預覽（/ascend preview）：還沒選、甚至還沒解鎖之前，就能看每個昇華職業的完整天賦樹。只能看、不能配點。
  * <p>
- * 下面一排：左右箭頭換上一個／下一個；「只看我的職業／全部職業」切換；中間的按鈕在可以昇華時直接選這條（會先問一次），
- * 看的是自己的昇華職業時打開昇華天賦。
+ * 2026-10 改版（以前要用箭頭一個一個翻、連線跟背景分不出來）：
+ * <ul>
+ *   <li>最上面一排是分頁：這個職業的每個昇華職業都排出來，點一下切換（看全部職業時一次 7 個，兩邊 ◀ ▶ 換一批）。</li>
+ *   <li>中間四排是四條分支：最左邊的標籤寫整條在做什麼，天賦之間用鏈子連起來（{@link AscendancyLayout}）。</li>
+ *   <li>下面一排：返回、只看我的職業／全部職業、昇華為這條（或打開我的昇華天賦）、怎麼看、關閉。</li>
+ * </ul>
  */
 final class AscendancyPreviewMenu extends Menu {
 
-    private static final int SLOT_HEADER = 4;
     private static final int SLOT_BACK = 45;
-    private static final int SLOT_PREVIOUS = 46;
-    private static final int SLOT_SCOPE = 48;
+    private static final int SLOT_SCOPE = 47;
     private static final int SLOT_ACTION = 49;
-    private static final int SLOT_LIST = 50;
-    private static final int SLOT_NEXT = 52;
+    private static final int SLOT_GUIDE = 51;
     private static final int SLOT_CLOSE = 53;
-    /** 分支裡第幾個天賦放在第幾欄（中間隔一格連線；跟昇華天賦一樣）。 */
-    private static final int[] NODE_COLUMNS = {2, 4, 6, 8};
+    /** 最上面一排的分頁：昇華職業太多（看全部職業）時一次放 7 個，兩邊 ◀ ▶ 換一批。 */
+    private static final int TABS_AT_ONCE = 7;
+    private static final int SLOT_TABS_PREVIOUS = 0;
+    private static final int SLOT_TABS_NEXT = 8;
 
     private final AscendancyService service;
     /** true = 看全部職業的昇華；false = 只看自己職業的選項。 */
     private boolean allClasses;
     private String currentId;
+    /** 建立角色時的預覽（2026-10）：看這個職業的昇華（還沒有角色）；null = 照玩家現在的角色。 */
+    private final String previewClass;
+    /** 建立角色時的預覽：「返回」回到哪裡（選職業的畫面）。 */
+    private final Runnable back;
 
     /**
      * @param startId    一打開先看哪一個（null = 自己的昇華職業，沒有就第一個）
@@ -47,11 +53,33 @@ final class AscendancyPreviewMenu extends Menu {
         this.service = service;
         this.allClasses = allClasses;
         this.currentId = startId;
+        this.previewClass = null;
+        this.back = null;
+    }
+
+    /**
+     * 建立角色時的預覽（2026-10）：還沒有角色，看某個職業能走的昇華（也可以切到全部職業）。
+     *
+     * @param classId 先看哪個職業的
+     * @param back    「返回」回到哪裡
+     */
+    AscendancyPreviewMenu(final ExileCore plugin, final Player player, final AscendancyService service, final String classId, final Runnable back) {
+        super(plugin, player, 6, "<dark_gray>昇華預覽：" + AscendancyService.className(classId));
+        this.service = service;
+        this.allClasses = false;
+        this.currentId = null;
+        this.previewClass = classId;
+        this.back = back;
+    }
+
+    /** 這個畫面看的昇華狀態：建立角色時是「這個職業、什麼都還沒做」，不然是玩家現在的角色。 */
+    private Ascension ascension() {
+        return previewClass != null ? new Ascension(service.config(), java.util.Map.of(), previewClass, 1) : service.ascension(player);
     }
 
     /** 這一頁可以翻的昇華職業：自己職業的選項（沒有選項的職業就看全部）。 */
     private List<AscendancyConfig.Ascendancy> list() {
-        final List<AscendancyConfig.Ascendancy> mine = service.ascension(player).options();
+        final List<AscendancyConfig.Ascendancy> mine = ascension().options();
         if (allClasses || mine.isEmpty()) {
             return new ArrayList<>(service.config().ascendancies());
         }
@@ -60,12 +88,12 @@ final class AscendancyPreviewMenu extends Menu {
 
     /** 自己的職業有沒有昇華職業（沒有的話「只看我的職業」沒有意義）。 */
     private boolean hasOwnOptions() {
-        return !service.ascension(player).options().isEmpty();
+        return !ascension().options().isEmpty();
     }
 
     private int index(final List<AscendancyConfig.Ascendancy> list) {
         if (currentId == null) {
-            final AscendancyConfig.Ascendancy chosen = service.ascension(player).chosen();
+            final AscendancyConfig.Ascendancy chosen = ascension().chosen();
             currentId = chosen != null ? chosen.id() : list.isEmpty() ? null : list.getFirst().id();
         }
         for (int i = 0; i < list.size(); i++) {
@@ -76,13 +104,21 @@ final class AscendancyPreviewMenu extends Menu {
         return 0;
     }
 
+    /** 看全部職業時，分頁目前從第幾個開始放。 */
+    private int tabStart = -1;
+    /** 分頁的格子 → 昇華職業的代號。 */
+    private final java.util.Map<Integer, String> tabIds = new java.util.HashMap<>();
+
     @Override
     protected void draw() {
         for (int i = 0; i < 54; i++) {
             set(i, filler());
         }
-        set(SLOT_BACK, icon(Material.ARROW, "<white>← 昇華與試煉"));
-        set(SLOT_CLOSE, closeButton());
+        tabIds.clear();
+        set(SLOT_BACK, previewClass != null ? icon(Material.ARROW, "<white>← 回去選職業", "<yellow>左鍵：返回") : backButton("昇華與試煉"));
+        if (previewClass == null) {
+            set(SLOT_CLOSE, closeButton());
+        }
         final List<AscendancyConfig.Ascendancy> list = list();
         if (list.isEmpty()) {
             set(22, icon(Material.GRAY_DYE, "<gray>還沒有任何昇華職業", "<dark_gray>ascendancy.yml 裡沒有設定"));
@@ -91,40 +127,36 @@ final class AscendancyPreviewMenu extends Menu {
         final int index = index(list);
         final AscendancyConfig.Ascendancy current = list.get(index);
         currentId = current.id();
-        final Ascension ascension = service.ascension(player);
+        final Ascension ascension = ascension();
         final AscendancyConfig.Ascendancy chosen = ascension.chosen();
         final boolean mine = chosen != null && chosen.id().equals(current.id());
 
-        set(SLOT_HEADER, glowing(icon(Menu.material(current.icon(), Material.NETHER_STAR), current.colored() + " <dark_gray>（預覽）",
-                header(current, ascension))));
+        drawTabs(list, index, ascension);
 
-        // 天賦樹（只能看）
+        // 天賦樹（只能看）：每條分支一排，最左邊是標籤，天賦之間用鏈子連
         final List<List<AscendancyConfig.Node>> branches = current.branches();
-        final int emblemRow = 1 + (Math.min(branches.size(), AscendancyConfig.MAX_BRANCHES) - 1) / 2;
-        set(emblemRow * 9, glowing(icon(Menu.material(current.icon(), Material.NETHER_STAR), current.colored(), "<dark_gray>分支從這裡往右長")));
         for (int b = 0; b < branches.size() && b < AscendancyConfig.MAX_BRANCHES; b++) {
-            final int row = 1 + b;
+            final int row = AscendancyLayout.FIRST_ROW + b;
             final List<AscendancyConfig.Node> branch = branches.get(b);
-            set(row * 9 + 1, link(mine && !branch.isEmpty() && ascension.isAllocated(branch.getFirst())));
-            for (int i = 0; i < branch.size() && i < NODE_COLUMNS.length; i++) {
+            int owned = 0;
+            for (final AscendancyConfig.Node node : branch) {
+                if (mine && ascension.isAllocated(node)) {
+                    owned++;
+                }
+            }
+            set(row * 9, AscendancyLayout.branchLabel(current, b, branch, owned));
+            set(row * 9 + 1, AscendancyLayout.link(mine && !branch.isEmpty() && ascension.isAllocated(branch.getFirst())));
+            for (int i = 0; i < branch.size() && i < AscendancyLayout.NODE_COLUMNS.length; i++) {
                 final AscendancyConfig.Node node = branch.get(i);
-                final int slot = row * 9 + NODE_COLUMNS[i];
-                set(slot, node(current, node, i == 0, mine && ascension.isAllocated(node)));
-                if (i + 1 < branch.size() && i + 1 < NODE_COLUMNS.length) {
-                    set(slot + 1, link(mine && ascension.isAllocated(branch.get(i + 1))));
+                final int slot = row * 9 + AscendancyLayout.NODE_COLUMNS[i];
+                set(slot, node(current, branch, i, mine && ascension.isAllocated(node)));
+                if (i + 1 < branch.size() && i + 1 < AscendancyLayout.NODE_COLUMNS.length) {
+                    set(slot + 1, AscendancyLayout.link(mine && ascension.isAllocated(branch.get(i + 1))));
                 }
             }
         }
 
         // 下面一排
-        if (list.size() > 1) {
-            final AscendancyConfig.Ascendancy previous = list.get((index - 1 + list.size()) % list.size());
-            final AscendancyConfig.Ascendancy next = list.get((index + 1) % list.size());
-            set(SLOT_PREVIOUS, icon(Material.SPECTRAL_ARROW, "<white>← 上一個", previous.colored() + " <dark_gray>（"
-                    + AscendancyService.className(previous.classId()) + "）"));
-            set(SLOT_NEXT, icon(Material.SPECTRAL_ARROW, "<white>下一個 →", next.colored() + " <dark_gray>（"
-                    + AscendancyService.className(next.classId()) + "）"));
-        }
         if (hasOwnOptions()) {
             set(SLOT_SCOPE, allClasses
                     ? icon(Material.COMPASS, "<white>只看我的職業", "<gray>現在：全部職業的昇華（" + list.size() + " 個）", "",
@@ -132,8 +164,46 @@ final class AscendancyPreviewMenu extends Menu {
                     : icon(Material.COMPASS, "<white>看全部職業的昇華", "<gray>現在：只看你的職業能選的（" + list.size() + " 個）",
                     "<dark_gray>想練分身、想知道別人的昇華在做什麼", "", "<yellow>左鍵：看全部"));
         }
-        set(SLOT_LIST, overview(list, index));
         set(SLOT_ACTION, action(current, ascension));
+        set(SLOT_GUIDE, helpButton(List.of(
+                "最上面一排：每個昇華職業一個分頁，點一下切換",
+                "中間四排：四條分支，最左邊的紙寫整條在做什麼",
+                "每條從左到右一個接一個配（鏈子連著的要先配左邊的）",
+                "滑到每個天賦上看效果；這裡只能看，配點在「昇華天賦」",
+                "昇華點最多 " + service.config().totalPoints() + " 點：完成試煉拿點數，四條分支不可能全部配滿，要挑")));
+    }
+
+    /** 最上面一排的分頁：放得下就全部排出來（置中），放不下一次 7 個、兩邊 ◀ ▶。 */
+    private void drawTabs(final List<AscendancyConfig.Ascendancy> list, final int index, final Ascension ascension) {
+        final int count = list.size();
+        if (count <= 9) {
+            final int[] slots = tabSlots(count);
+            for (int i = 0; i < count; i++) {
+                setTab(slots[i], list.get(i), i == index, ascension);
+            }
+            return;
+        }
+        if (tabStart < 0 || index < tabStart || index >= tabStart + TABS_AT_ONCE) {
+            tabStart = Math.max(0, Math.min(count - TABS_AT_ONCE, index - TABS_AT_ONCE / 2));
+        }
+        for (int i = 0; i < TABS_AT_ONCE && tabStart + i < count; i++) {
+            setTab(1 + i, list.get(tabStart + i), tabStart + i == index, ascension);
+        }
+        if (tabStart > 0) {
+            set(SLOT_TABS_PREVIOUS, icon(Material.SPECTRAL_ARROW, "<white>◀ 前面還有 " + tabStart + " 個", "<yellow>左鍵：往前看"));
+        }
+        final int after = count - tabStart - TABS_AT_ONCE;
+        if (after > 0) {
+            set(SLOT_TABS_NEXT, icon(Material.SPECTRAL_ARROW, "<white>後面還有 " + after + " 個 ▶", "<yellow>左鍵：往後看"));
+        }
+    }
+
+    private void setTab(final int slot, final AscendancyConfig.Ascendancy ascendancy, final boolean current, final Ascension ascension) {
+        final List<String> about = current ? header(ascendancy, ascension)
+                : List.of("<gray>" + AscendancyService.classColor(ascendancy.classId()) + AscendancyService.className(ascendancy.classId())
+                        + (ascendancy.summary().isBlank() ? "" : "<dark_gray>　" + AscendancyService.escape(ascendancy.summary())));
+        set(slot, tab(Menu.material(ascendancy.icon(), Material.NETHER_STAR), ascendancy.colored(), current, about));
+        tabIds.put(slot, ascendancy.id());
     }
 
     /** 標題的說明：職業、簡介、這條跟你有什麼關係、總共幾個天賦。 */
@@ -154,6 +224,8 @@ final class AscendancyPreviewMenu extends Menu {
             lore.add("<dark_gray>你已經昇華為" + chosen.colored() + "<dark_gray>：這條只能看");
         } else if (ascension.canChoose()) {
             lore.add("<#f5b942>你可以選這條：按下面的「昇華為" + AscendancyService.escape(current.name()) + "」");
+        } else if (previewClass != null) {
+            lore.add("<gray>選這個職業之後，完成第一試煉就能選（選一條，選了不能換）");
         } else {
             lore.add("<gray>完成第一試煉之後才能選（選一條，選了不能換）");
         }
@@ -162,15 +234,13 @@ final class AscendancyPreviewMenu extends Menu {
             cost += node.cost();
         }
         lore.add("<dark_gray>全部 " + current.nodes().size() + " 個天賦、" + cost + " 點；昇華點最多 " + service.config().totalPoints() + " 點");
-        lore.add("<dark_gray>每條分支要從第一個配起；滑到每個天賦上看效果");
+        lore.add("<dark_gray>下面四排是四條分支：每條從左到右一個接一個配");
         return lore;
     }
 
-    private static ItemStack link(final boolean lit) {
-        return icon(lit ? Material.LIME_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE, lit ? "<green>—" : "<dark_gray>—");
-    }
-
-    private ItemStack node(final AscendancyConfig.Ascendancy ascendancy, final AscendancyConfig.Node node, final boolean first, final boolean owned) {
+    private ItemStack node(final AscendancyConfig.Ascendancy ascendancy, final List<AscendancyConfig.Node> branch, final int i,
+                           final boolean owned) {
+        final AscendancyConfig.Node node = branch.get(i);
         final List<String> lore = new ArrayList<>();
         for (final String line : StatLines.describeAll(node.stats())) {
             lore.add("<white>" + AscendancyService.escape(line));
@@ -179,26 +249,13 @@ final class AscendancyPreviewMenu extends Menu {
             lore.add("<dark_gray><i>" + AscendancyService.escape(node.note()));
         }
         lore.add("");
-        lore.add("<gray>" + node.cost() + " 點<dark_gray>　" + (first ? "分支的第一個" : "接在前一個後面"));
+        lore.add("<gray>" + node.cost() + " 點<dark_gray>　" + AscendancyLayout.position(branch, i));
         if (owned) {
             lore.add("<green>✔ 你已經配了");
         }
         final ItemStack icon = icon(Menu.material(node.icon(), Material.AMETHYST_SHARD),
                 (owned ? "<green>✔ " : "") + "<" + ascendancy.color() + ">" + AscendancyService.escape(node.name()), lore);
         return owned ? glowing(icon) : icon;
-    }
-
-    /** 這一頁可以翻的清單（目前的打 ▶）。 */
-    private ItemStack overview(final List<AscendancyConfig.Ascendancy> list, final int index) {
-        final List<String> lore = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            final AscendancyConfig.Ascendancy ascendancy = list.get(i);
-            lore.add((i == index ? "<green>▶ " : "<dark_gray>　 ") + ascendancy.colored() + " <dark_gray>（"
-                    + AscendancyService.className(ascendancy.classId()) + "）");
-        }
-        lore.add("");
-        lore.add("<dark_gray>用左右箭頭翻");
-        return icon(Material.BOOK, "<white>昇華職業 " + (index + 1) + "/" + list.size(), lore);
     }
 
     /** 中間的按鈕：可以選就選這條；是自己的就打開昇華天賦；不然說明怎麼解鎖。 */
@@ -216,7 +273,7 @@ final class AscendancyPreviewMenu extends Menu {
         final List<String> lore = new ArrayList<>();
         lore.add("<gray>預覽只能看，不能配點");
         if (!ownClass) {
-            lore.add("<dark_gray>這是" + AscendancyService.className(current.classId()) + "的昇華：要用那個職業的角色才能選");
+            lore.add("<dark_gray>這是" + AscendancyService.className(current.classId()) + "的昇華：要" + (previewClass != null ? "選" : "用") + "那個職業的角色才能選");
         } else if (chosen != null) {
             lore.add("<dark_gray>你已經昇華為" + chosen.colored());
         } else {
@@ -232,23 +289,35 @@ final class AscendancyPreviewMenu extends Menu {
         }
         final List<AscendancyConfig.Ascendancy> list = list();
         switch (slot) {
-            case SLOT_BACK -> service.open(player);
-            case SLOT_CLOSE -> goBack();
-            case SLOT_PREVIOUS, SLOT_NEXT -> {
-                if (list.size() <= 1) {
-                    return;
+            case SLOT_BACK -> {
+                if (back != null) {
+                    back.run();
+                } else {
+                    service.open(player);
                 }
-                final int index = index(list);
-                final int step = slot == SLOT_NEXT ? 1 : -1;
-                currentId = list.get((index + step + list.size()) % list.size()).id();
-                player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.0f);
-                redraw();
+            }
+            case SLOT_CLOSE -> {
+                if (back == null) {
+                    goBack(); // 建立角色時這一格是空的（返回在左下角）
+                }
+            }
+            case SLOT_TABS_PREVIOUS, SLOT_TABS_NEXT -> {
+                if (tabIds.containsKey(slot)) {
+                    switchTo(tabIds.get(slot));
+                } else if (list.size() > 9) {
+                    // 換一批分頁（不換正在看的）
+                    tabStart = Math.max(0, Math.min(list.size() - TABS_AT_ONCE,
+                            tabStart + (slot == SLOT_TABS_NEXT ? TABS_AT_ONCE : -TABS_AT_ONCE)));
+                    player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.0f);
+                    redraw();
+                }
             }
             case SLOT_SCOPE -> {
                 if (!hasOwnOptions()) {
                     return;
                 }
                 allClasses = !allClasses;
+                tabStart = -1;
                 final List<AscendancyConfig.Ascendancy> next = list();
                 if (next.stream().noneMatch(ascendancy -> ascendancy.id().equals(currentId))) {
                     currentId = next.isEmpty() ? null : next.getFirst().id();
@@ -263,13 +332,29 @@ final class AscendancyPreviewMenu extends Menu {
                 act(list.get(index(list)));
             }
             default -> {
+                if (tabIds.containsKey(slot)) {
+                    switchTo(tabIds.get(slot));
+                }
                 // 天賦只能看
             }
         }
     }
 
+    /** 點分頁：換看這個昇華職業。 */
+    private void switchTo(final String id) {
+        if (id == null || id.equals(currentId)) {
+            return;
+        }
+        currentId = id;
+        player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.0f);
+        redraw();
+    }
+
     private void act(final AscendancyConfig.Ascendancy current) {
-        final Ascension ascension = service.ascension(player);
+        if (previewClass != null) {
+            return; // 建立角色時只能看
+        }
+        final Ascension ascension = ascension();
         final AscendancyConfig.Ascendancy chosen = ascension.chosen();
         if (chosen != null && chosen.id().equals(current.id())) {
             new AscendancyTreeMenu(plugin, player, service).open();

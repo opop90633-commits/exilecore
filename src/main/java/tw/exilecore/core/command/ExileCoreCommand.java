@@ -104,6 +104,7 @@ public final class ExileCoreCommand {
                                     return Command.SINGLE_SUCCESS;
                                 })))
                 .then(Commands.literal("ping").executes(context -> ping(plugin, context.getSource().getSender())))
+                .then(tw.exilecore.admin.MaintenanceCommand.node(plugin)) // 2026-10：維護模式（主控台也能用）
                 .then(Commands.literal("version").executes(context -> version(plugin, context.getSource().getSender())))
                 .then(Commands.literal("db").executes(context -> db(plugin, context.getSource().getSender())))
                 .then(Commands.literal("reload").executes(context -> reload(plugin, context.getSource().getSender())))
@@ -251,7 +252,8 @@ public final class ExileCoreCommand {
                 .then(tw.exilecore.pvp.PvpModule.adminNode(plugin))
                 .then(tw.exilecore.admin.AdminModule.node(plugin))
                 .then(tw.exilecore.admin.AdminModule.restartNode(plugin))
-                .then(tw.exilecore.sponsor.SponsorModule.adminNode(plugin));
+                .then(tw.exilecore.sponsor.SponsorModule.adminNode(plugin))
+                .then(tw.exilecore.anticheat.AntiCheatModule.adminNode(plugin));
         for (final com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> node : OpsModule.nodes(plugin)) {
             root.then(node); // perf、economy、dupes、trace、backup
         }

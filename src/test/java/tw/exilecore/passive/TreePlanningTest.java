@@ -65,6 +65,51 @@ class TreePlanningTest {
     }
 
     @Test
+    void attributeChoicesTravelInTheCode() throws Exception {
+        // 2026-10：屬性點（+5 任一屬性）選的力量／敏捷／智慧接在代碼後面一段；沒選的不佔位置
+        final Set<String> allocated = walk(witch, 40);
+        final java.util.List<String> attributeNodes = new java.util.ArrayList<>();
+        for (final PassiveNode node : tree.ordered()) {
+            if (allocated.contains(node.id()) && node.attributeChoice() > 0) {
+                attributeNodes.add(node.id());
+            }
+        }
+        assertTrue(attributeNodes.size() >= 6, "走 40 步至少經過幾個屬性點：" + attributeNodes.size());
+        assertEquals(5, tree.node(attributeNodes.getFirst()).attributeChoice());
+        // 都沒選：跟以前的代碼一模一樣（四段）
+        final String plain = TreeCode.encode(tree, "witch", allocated);
+        assertEquals(plain, TreeCode.encode(tree, "witch", allocated, java.util.Map.of()));
+        assertEquals(4, plain.split("\\.").length);
+        assertTrue(TreeCode.decode(tree, plain).attributes().isEmpty());
+        // 選了幾個：多一段，解回來一樣；沒選的不在裡面
+        final java.util.Map<String, String> chosen = new java.util.LinkedHashMap<>();
+        chosen.put(attributeNodes.get(0), "dex");
+        chosen.put(attributeNodes.get(2), "int");
+        chosen.put(attributeNodes.get(5), "str");
+        final String code = TreeCode.encode(tree, "witch", allocated, chosen);
+        assertTrue(code.startsWith(plain + "."), code);
+        final TreeCode.Decoded decoded = TreeCode.decode(tree, code);
+        assertEquals(allocated, decoded.nodes());
+        assertEquals(chosen, decoded.attributes());
+        assertEquals(chosen, TreeCode.decode(tree, "http://localhost:25580/tree#" + code).attributes(), "網址也能直接貼");
+        // 不是屬性點的、沒配的、亂寫的值：不算
+        final java.util.Map<String, String> noise = new java.util.LinkedHashMap<>(chosen);
+        noise.put("no_such_node", "dex");
+        noise.put(attributeNodes.get(1), "luck");
+        assertEquals(code, TreeCode.encode(tree, "witch", allocated, noise));
+        // 全部都選：每個屬性點都帶得回來
+        final java.util.Map<String, String> all = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < attributeNodes.size(); i++) {
+            all.put(attributeNodes.get(i), new String[] {"str", "dex", "int"}[i % 3]);
+        }
+        assertEquals(all, TreeCode.decode(tree, TreeCode.encode(tree, "witch", allocated, all)).attributes());
+        // 壞掉的屬性段
+        assertThrows(TreeCode.InvalidCode.class, () -> TreeCode.decode(tree, plain + ".$$$"), "壞掉的 base64");
+        assertThrows(TreeCode.InvalidCode.class, () -> TreeCode.decode(tree, plain + "." + "A".repeat(400)), "比屬性點還多");
+        assertThrows(TreeCode.InvalidCode.class, () -> TreeCode.decode(tree, code + ".AA"), "六段");
+    }
+
+    @Test
     void startNodesAreNeverInTheCode() throws Exception {
         final Set<String> withStart = new HashSet<>(walk(witch, 3));
         withStart.add(witch.id());

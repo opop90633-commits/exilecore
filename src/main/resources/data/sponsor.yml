@@ -29,6 +29,9 @@ map_upgrade: { price: 150, step: 500, max: 4 }
 stash_currency_upgrade: { price: 150, step: 5000, max: 4 }   # 倉庫通貨頁：每次每種通貨的上限 +step（帳號共用）
 listing:    { price: 50,  max: 0 }      # 市集商店頁的上架上限
 rename_card: { price: 50 }            # 改名卡（2026-10）：一張改一次角色名字（/char rename；管理員不用卡）
+# 公會（2026-10）
+guild_rename_card: { price: 300 }     # 公會改名卡：一張改一次公會的名稱與標籤（會長用 /guild rename；管理員不用卡）
+guild_stash_page: { price: 300, max: 0 }    # 公會倉庫頁：買給自己的公會（整個公會共用；頁是公會的，解散就沒了）。max = 一個公會最多買幾頁，0 = 沒有上限
 
 # 月卡：買了之後每天（換日的時候，還沒上線的下次上線補發）發月卡幣、時裝幣到倉庫的「贊助頁」
 monthly_card:
@@ -163,6 +166,38 @@ cosmetics:
   emote_king_sit: { type: emote, emote: king_sit, name: 王之坐姿, rarity: epic, fashion_price: 15, description: "變出一張沙發，往後一靠、雙腳張開坐一陣子" }
   emote_love_you: { type: emote, emote: love_you, name: 我真的特別愛你, rarity: rare, fashion_price: 10, description: "害羞地摀著嘴，身子左右搖、冒出愛心" }
   emote_six_seven: { type: emote, emote: six_seven, name: "67", rarity: rare, fashion_price: 10, description: "兩手手心朝上放在身前，一上一下輪流掂，頭跟著歪" }
+
+  # 2026-10 S1 贊助禮包限定「創世」系列（絕版）：limited 寫來源，選單上顯示「S1 贊助禮包限定」。
+  #   限定的時裝不能放進抽獎箱（boxes）、不能放進月卡幣兌換（card_shop）、fashion_price 要是 0（/ec reload 會擋）；
+  #   只有管理網頁「發放 → 時裝」或主控台 /ec sponsor give <玩家> cosmetic bundle:s1_genesis（整組）／cosmetic <代號>（單件）發得出來，
+  #   贊助商城（Tebex）的 S1 贊助禮包就寫這一行指令。沒有的人在商城、裝備幻化都看不到；拿到的人跟其他時裝一樣在「裝備幻化」套。
+  s1_genesis_armor: { type: skin, slot: armor, art: armor3d_genesis, name: 創世聖鎧, rarity: legendary, fashion_price: 0, limited: "S1 贊助禮包",
+                      description: "深宇宙藍與金的全套戰鎧：五芒冠、新月翼盔、三層金邊肩甲（頭、身、腿、腳可以分開套）" }
+  s1_genesis_blade: { type: skin, slot: weapon, art: genesis_blade, name: 創世裂空劍, rarity: legendary, fashion_price: 0, limited: "S1 贊助禮包",
+                      description: "極光血槽嵌著符文，劍身外浮著星砂" }
+  s1_genesis_staff: { type: skin, slot: weapon, art: genesis_staff, name: 創世星辰杖, rarity: legendary, fashion_price: 0, limited: "S1 贊助禮包",
+                      description: "午夜藍杖身纏金線，頂端一對新月金角托著極光核（近戰武器、法杖都能套）" }
+  s1_genesis_bow: { type: skin, slot: bow, art: genesis_bow, name: 創世流光弓, rarity: legendary, fashion_price: 0, limited: "S1 贊助禮包",
+                    description: "金飾弓臂、極光核握把，拉弓時弓臂會彎" }
+  s1_genesis_crossbow: { type: skin, slot: crossbow, art: genesis_crossbow, name: 創世星軌弩, rarity: legendary, fashion_price: 0, limited: "S1 贊助禮包",
+                         description: "金箍弩托、弩臂兩端的星砂，上弦有動作" }
+  s1_genesis_aegis: { type: skin, slot: offhand, art: genesis_aegis, name: 創世星盾, rarity: legendary, fashion_price: 0, limited: "S1 贊助禮包",
+                      description: "八芒星的極光核、四角符文槽的金框盾（盾、箭袋都能套）" }
+  s1_genesis_wings: { type: skin, slot: back, art: genesis_wings, name: 創世之翼, rarity: legendary, fashion_price: 0, limited: "S1 贊助禮包",
+                      description: "金色翼骨、三層青藍漸層的羽片，羽尖拖著星砂" }
+  s1_genesis_whale: { type: skin, slot: pet, art: pet_genesis_whale, name: 創世小星鯨, rarity: legendary, fashion_price: 0, limited: "S1 贊助禮包",
+                      description: "圓滾滾的星空小鯨，噴氣孔冒極光、尾巴拖著星砂" }
+
+# 限定稱號（2026-10）：只有管理網頁「發放 → 時裝」或 /ec sponsor give <玩家> cosmetic title:<代號> 發得出來（抽不到、換不到）；
+#   limited 寫來源，稱號選單上顯示「…限定」，沒有的人看不到。顏色可以是 "#rrggbb" 或 "gradient:#rrggbb:#rrggbb"（漸層）。沒有加成（用錢買的稱號不能有）。
+limited_titles:
+  s1_founder: { name: 創世拓荒者, color: "gradient:#39e7ff:#f2c14e", limited: "S1 贊助禮包" }
+
+# 一組時裝（2026-10）：管理網頁「發放 → 時裝」選【整組】、或 /ec sponsor give <玩家> cosmetic bundle:<代號> 一次發整組（已經有的不重複給）；
+#   項目可以是時裝代號或 title:稱號代號
+bundles:
+  s1_genesis: { name: S1 贊助禮包・創世系列, cosmetics: [s1_genesis_armor, s1_genesis_blade, s1_genesis_staff, s1_genesis_bow, s1_genesis_crossbow,
+                                                       s1_genesis_aegis, s1_genesis_wings, s1_genesis_whale, "title:s1_founder"] }
 
 # 抽到已經有的特效：退回時裝幣（照稀有度）
 duplicate_refund: { common: 1, rare: 2, epic: 4, legendary: 8 }

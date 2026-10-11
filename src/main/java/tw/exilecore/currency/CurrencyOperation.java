@@ -369,6 +369,25 @@ public enum CurrencyOperation {
         }
     },
 
+    /**
+     * 映星鏡（2026-10；PoE2 的卡蘭德的魔鏡）：複製一件裝備，原本那件不變，多出來的那件是「鏡像複製品」——
+     * 不能再改造（通貨、符文、注入、揭露都不行）、也不能再被複製。傳奇、地圖、藥劑與護符、新手裝備、已腐化、未鑑定的都不能複製。
+     * 會多出一件物品，所以不走 {@link #apply}：{@link CurrencyService#mirror} 做出複製品、{@link CurrencyListener} 確認後交給玩家。
+     */
+    MIRROR {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            final var base = generator.repository().base(data.base());
+            return base != null && !base.isMap() && !base.isFlaskLike() && data.identified() && data.rarity() != Rarity.UNIQUE
+                    && data.unique() == null && !data.starter() && !data.corrupted() && !data.mirrored();
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            throw new UnsupportedOperationException("映星鏡會多出一件物品（CurrencyService.mirror）");
+        }
+    },
+
     NONE {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {

@@ -235,6 +235,40 @@ public final class Profiles implements Listener {
             }
         }
         root.add("jewels", jewels);
+        // 2026-10：護符（開著的每一格，空的也列）與藥劑（快捷欄的生命、魔力藥劑欄）
+        final tw.exilecore.flask.FlaskService flaskService = plugin.flasks();
+        final JsonArray charms = new JsonArray();
+        final JsonArray flasks = new JsonArray();
+        if (flaskService != null) {
+            try {
+                if (flaskService.charms() != null) {
+                    final int open = flaskService.charms().activeCount(player);
+                    for (int i = 0; i < open; i++) {
+                        final JsonObject slot = new JsonObject();
+                        slot.addProperty("label", "護符 " + (i + 1));
+                        final ItemStack stack = tw.exilecore.flask.CharmService.charmAt(state, i);
+                        if (stack != null && !stack.isEmpty()) {
+                            slot.add("item", item(stack, null, "charm"));
+                        }
+                        charms.add(slot);
+                    }
+                }
+                for (final int hotbar : flaskService.config().slots()) {
+                    final JsonObject slot = new JsonObject();
+                    final tw.exilecore.flask.FlaskKind kind = flaskService.config().kindAt(hotbar);
+                    slot.addProperty("label", kind == null ? "藥劑" : kind.displayName() + "藥劑");
+                    final ItemStack stack = player.getInventory().getItem(hotbar);
+                    if (stack != null && !stack.isEmpty() && flaskService.kindOf(stack) != null) {
+                        slot.add("item", item(stack, null, "flask"));
+                    }
+                    flasks.add(slot);
+                }
+            } catch (final RuntimeException ignored) {
+                // 讀不到就不列（角色頁其他部分照常）
+            }
+        }
+        root.add("charms", charms);
+        root.add("flasks", flasks);
         // 技能
         final JsonArray skills = new JsonArray();
         final SkillLoadout loadout = state.skills();
@@ -259,11 +293,40 @@ public final class Profiles implements Listener {
                     }
                 }
                 skill.add("supports", supports);
+                // 2026-10：滑鼠移上去看得到說明（跟遊戲裡技能面板、寶石上寫的一樣）
+                try {
+                    final JsonArray lines = new JsonArray();
+                    for (final String line : plugin.skills().describe(player, definition, entry)) {
+                        final JsonArray spans = spans(plugin.text().parse(line));
+                        lines.add(spans);
+                    }
+                    skill.add("lines", lines);
+                    final JsonArray supportInfo = new JsonArray();
+                    for (final String supportId : entry.supportIds()) {
+                        final var support = plugin.skills().config().support(supportId);
+                        if (support == null) {
+                            continue;
+                        }
+                        final JsonObject info = new JsonObject();
+                        info.addProperty("name", support.name());
+                        final JsonArray supportLines = new JsonArray();
+                        supportLines.add(spans(plugin.text().parse("<gray>" + tw.exilecore.item.ItemRenderer.escape(support.descriptionText()))));
+                        // 2026-10：用技能那套說明（認得 flag.、proc. 這些輔助專用的屬性，不會秀出英文代號）
+                        for (final String line : tw.exilecore.skill.ModifierText.describeAll(support.allModifiers())) {
+                            supportLines.add(spans(plugin.text().parse("<#b4bcff>" + line)));
+                        }
+                        info.add("lines", supportLines);
+                        supportInfo.add(info);
+                    }
+                    skill.add("supportInfo", supportInfo);
+                } catch (final RuntimeException ignored) {
+                    // 說明算不出來就只列名字
+                }
                 skills.add(skill);
             }
         }
         root.add("skills", skills);
-        // 2026-10：每個技能估計的每秒傷害（管理員的統計頁用；跟 /stats 的「✦ 技能 每秒」一樣算法：沒算怪物減免與持續傷害）
+        // 2026-10：每個技能估計的每秒傷害（管理員的統計頁用；跟 /stats 的「✦ 技能 每秒」一樣算法：沒算怪物減免、持續傷害、戰吼與怒氣這些打起來才有的加成）
         final JsonArray dps = new JsonArray();
         if (plugin.skills() != null) {
             try {
@@ -278,6 +341,18 @@ public final class Profiles implements Listener {
             }
         }
         root.add("dps", dps);
+        // 2026-10：打訓練假人的實測（估計值沒算戰吼、怒氣、持續傷害，跟實際差很多）
+        final tw.exilecore.training.DummyRecord measured = tw.exilecore.training.DummyRecord.decode(
+                state.progress().get(tw.exilecore.training.DummyRecord.KEY));
+        if (measured != null) {
+            final JsonObject m = new JsonObject();
+            m.addProperty("dps", measured.dps());
+            m.addProperty("seconds", measured.seconds());
+            m.addProperty("dummy", measured.dummy());
+            m.addProperty("dot", measured.dotPercent());
+            m.addProperty("at", measured.at());
+            root.add("measured", m);
+        }
         // 屬性
         final JsonArray stats = new JsonArray();
         for (final Map.Entry<String, List<String>> section : StatsReport.sections(plugin, player).entrySet()) {
@@ -299,6 +374,11 @@ public final class Profiles implements Listener {
 
     /** 一件物品：名稱、說明文字（照遊戲裡的樣子，含顏色）、稀有度、圖示。 */
     private JsonObject item(final ItemStack stack, final ItemSlot slot) {
+        return item(stack, slot, "jewel");
+    }
+
+    /** @param other 不是裝備欄位的東西算哪一種（jewel 珠寶、charm 護符、flask 藥劑；決定網頁上的圖示） */
+    private JsonObject item(final ItemStack stack, final ItemSlot slot, final String other) {
         final JsonObject object = new JsonObject();
         final ItemMeta meta = stack.getItemMeta();
         final Component name = meta != null && meta.displayName() != null ? meta.displayName() : Component.translatable(stack.translationKey());
@@ -324,7 +404,7 @@ public final class Profiles implements Listener {
         if (slot != null) {
             object.addProperty("kind", slot.name().toLowerCase(Locale.ROOT));
         } else {
-            object.addProperty("kind", "jewel");
+            object.addProperty("kind", other);
         }
         return object;
     }
@@ -482,7 +562,7 @@ public final class Profiles implements Listener {
                         continue;
                     }
                     final JsonObject row = new JsonObject();
-                    for (final String key : new String[] {"name", "level", "classId", "className", "classColor", "dps"}) {
+                    for (final String key : new String[] {"name", "level", "classId", "className", "classColor", "dps", "measured"}) {
                         if (data.has(key)) {
                             row.add(key, data.get(key));
                         }

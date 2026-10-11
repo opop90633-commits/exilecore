@@ -57,7 +57,15 @@ import java.util.Locale;
  *   <li>orbs：叫出 count 顆光球，各自追一個玩家（每 tick speed 格、活 duration 秒），碰到人（size）或時間到就在 explode 格內爆炸</li>
  *   <li>sanctuary：長前搖的全場大招（radius 格內全部），地上會出現 count 個綠色安全區（半徑 safe、離 Boss scatter 格左右）：
  *       躲進去就沒事</li>
+ *   <li>mark（2026-10）：點名 count 個玩家，標記（半徑 explode 的紅圈）跟著那個人走，duration 秒後在他腳下爆炸，
+ *       圈裡的人都挨打：被點名的人要離開隊友</li>
+ *   <li>echoes（2026-10）：在 Boss 周圍 scatter 格的地方出現 count 個殘影，每隔 stagger 秒一個殘影朝某個玩家
+ *       標出一條長 reach、左右各 width 的紅線，delay 秒後射穿：看紅線往旁邊走</li>
+ *   <li>arena（2026-10）：場地收縮。以 Boss 現在的位置為中心，安全的圈從 reach 格在 duration 秒內縮到 radius 格，
+ *       之後一直維持到這場打完（重置才消失）；圈外的人每 interval 秒挨一下：逼人靠近 Boss</li>
  * </ul>
+ * 招式組（maps.yml、ascendancy.yml 的 skills）還可以寫 {@code with: [招式…]}：放這一招的同時，這些招一起落下
+ * （只能用不必 Boss 站著放的 slam、zone、orbs、mark；見 {@link BossSkillUse}）。
  */
 public record BossSkill(String id, String name, Kind kind, double damage, DamageType type, double cooldown, double range,
                         double telegraph, double delay, double radius, double angle, double length, int count, double stagger,
@@ -94,25 +102,34 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
         /** 追蹤光球：慢慢追著玩家的光球，碰到就爆炸。 */
         ORBS,
         /** 全場大招：除了地上的綠色安全區，範圍內全部挨打。 */
-        SANCTUARY;
+        SANCTUARY,
+        /** 點名標記（2026-10）：跟著被點名的人走的紅圈，時間到在他腳下爆炸。 */
+        MARK,
+        /** 殘影（2026-10）：Boss 周圍出現一圈殘影，一個接一個朝玩家射出長槍。 */
+        ECHOES,
+        /** 場地收縮（2026-10）：圈外的人一直挨打，圈慢慢縮小，直到這場打完。 */
+        ARENA;
 
         static Kind parse(final String where, final String text) {
             try {
                 return valueOf(text.trim().toUpperCase(Locale.ROOT));
             } catch (final IllegalArgumentException e) {
                 throw new IllegalArgumentException(where + ".kind：不認得「" + text
-                        + "」（slam、nova、cone、volley、zone、charge、summon、curse、blink、beam、ring、pull、orbs、sanctuary）");
+                        + "」（slam、nova、cone、volley、zone、charge、summon、curse、blink、beam、ring、pull、orbs、sanctuary、mark、echoes、arena）");
             }
         }
 
-        /** 放的時候 Boss 會站著不動、這一招結束前不會放下一招（光束、擴散環、漩渦、全場大招）。 */
+        /** 放的時候 Boss 會站著不動、這一招結束前不會放下一招（光束、擴散環、漩渦、全場大招、殘影）。 */
         public boolean channelled() {
-            return this == BEAM || this == RING || this == PULL || this == SANCTUARY;
+            return this == BEAM || this == RING || this == PULL || this == SANCTUARY || this == ECHOES;
         }
 
-        /** 可以當場地危害（hazards：照時間自己落下，等 Boss 手上這一招放完才落）的種類。 */
+        /**
+         * 可以當場地危害（hazards：照時間自己落下，等 Boss 手上這一招放完才落）的種類，
+         * 也是招式組 {@code with:} 能跟著一起放的種類（放出去之後自己跑，不用 Boss 站著）。
+         */
         public boolean hazardCapable() {
-            return this == SLAM || this == ZONE || this == ORBS;
+            return this == SLAM || this == ZONE || this == ORBS || this == MARK;
         }
     }
 
@@ -170,9 +187,9 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
      */
     public long hitGapTicks() {
         return switch (kind) {
-            case VOLLEY, SLAM -> SAME_SKILL_GAP_TICKS;
+            case VOLLEY, SLAM, MARK, ECHOES -> SAME_SKILL_GAP_TICKS; // 好幾個標記疊在一起、兩道殘影的槍交叉：只算一下
             case ORBS -> orbTicks();
-            case ZONE -> Math.max(2, Math.round(interval * 20)) - 1;
+            case ZONE, ARENA -> Math.max(2, Math.round(interval * 20)) - 1;
             default -> 0;
         };
     }
@@ -211,7 +228,7 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
         if (gaps * gapAngle > 300) {
             throw new IllegalArgumentException(where + "：缺口加起來太大（gaps × gap_angle 最多 300 度），環就沒有意義了");
         }
-        return new BossSkill(id, node.string("name", id), kind, damage, type,
+        final BossSkill parsed = new BossSkill(id, node.string("name", id), kind, damage, type,
                 check(where, "cooldown", node.decimal("cooldown", 10), 1, 300),
                 check(where, "range", node.decimal("range", 12), 1, 48),
                 check(where, "telegraph", node.decimal("telegraph", switch (kind) {
@@ -220,11 +237,16 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                     case BEAM, PULL -> 1.2;
                     default -> 0.8;
                 }), 0, 5),
-                check(where, "delay", node.decimal("delay", kind == Kind.SLAM ? 1.0 : 0), 0, 5),
+                check(where, "delay", node.decimal("delay", switch (kind) {
+                    case SLAM -> 1.0;
+                    case ECHOES -> 1.2;
+                    default -> 0;
+                }), 0, 5),
                 check(where, "radius", node.decimal("radius", switch (kind) {
                     case RING -> 1.5;
                     case PULL -> 12;
                     case SANCTUARY -> 18;
+                    case ARENA -> 7;
                     default -> 3.5;
                 }), 0.5, 32),
                 check(where, "angle", node.decimal("angle", kind == Kind.BEAM ? 180 : 70), 5, 360),
@@ -233,10 +255,18 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                     case VOLLEY -> 5;
                     case SUMMON, SANCTUARY -> 2;
                     case ORBS -> 3;
+                    case ECHOES -> 12;
                     default -> 1;
                 }), 1, 20),
-                check(where, "stagger", node.decimal("stagger", kind == Kind.RING ? 0.8 : 0.3), 0, 3),
-                check(where, "scatter", node.decimal("scatter", kind == Kind.SANCTUARY ? 9 : 0), 0, 16),
+                check(where, "stagger", node.decimal("stagger", switch (kind) {
+                    case RING -> 0.8;
+                    case ECHOES -> 0.5;
+                    default -> 0.3;
+                }), 0, 3),
+                check(where, "scatter", node.decimal("scatter", switch (kind) {
+                    case SANCTUARY, ECHOES -> 9;
+                    default -> 0;
+                }), 0, 16),
                 check(where, "spread", node.decimal("spread", 45), 0, 360),
                 speed(where, kind, node.decimal("speed", switch (kind) {
                     case CHARGE -> 1.0;
@@ -248,11 +278,12 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                 check(where, "reach", node.decimal("reach", switch (kind) {
                     case CHARGE -> 12;
                     case RING -> 16;
+                    case ARENA -> 18;
                     default -> 24;
                 }), 2, 48),
                 check(where, "size", node.decimal("size", kind == Kind.ORBS ? 0.8 : 0.6), 0.2, 2),
                 check(where, "explode", node.decimal("explode", switch (kind) {
-                    case PULL -> 4;
+                    case PULL, MARK -> 4;
                     case ORBS -> 2.5;
                     default -> 0;
                 }), 0, 8),
@@ -260,12 +291,14 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                     case ZONE -> 6;
                     case CURSE, ORBS -> 8;
                     case BEAM, PULL -> 3;
+                    case MARK -> 4;
+                    case ARENA -> 20;
                     default -> 0;
                 }), 0, 120),
                 check(where, "interval", node.decimal("interval", kind == Kind.BEAM ? 0.25 : 0.5), 0.1, 5),
                 check(where, "slow", node.decimal("slow", 0), 0, 10),
                 check(where, "width", node.decimal("width", switch (kind) {
-                    case BEAM -> 1.2;
+                    case BEAM, ECHOES -> 1.2;
                     case RING -> 0.8;
                     default -> 1.6;
                 }), 0.5, 4),
@@ -276,6 +309,48 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                 node.string("visual", visualFor(type)).trim(), node.string("shout", null),
                 gaps, gapAngle, check(where, "safe", node.decimal("safe", 2.5), 1, 6), parseHint(where, node.string("hint", null)),
                 (int) check(where, "count_per_player", node.integer("count_per_player", 0), 0, 5));
+        validateSpecial(where, parsed);
+        return parsed;
+    }
+
+    /** 標記至少要有這麼久才炸（秒）：被點名之後要來得及走離隊友。 */
+    public static final double MIN_MARK_FUSE = 2.5;
+    /** 殘影的長槍至少標這麼久才射穿（秒）：看到紅線、往旁邊走。 */
+    public static final double MIN_ECHO_WARNING = 0.8;
+
+    /** 2026-10 的三種新招式：要躲得掉、範圍要合理。 */
+    private static void validateSpecial(final String where, final BossSkill skill) {
+        switch (skill.kind) {
+            case MARK -> {
+                if (skill.explode <= 0) {
+                    throw new IllegalArgumentException(where + ".explode：標記要寫爆炸半徑");
+                }
+                if (skill.duration < MIN_MARK_FUSE) {
+                    throw new IllegalArgumentException(where + ".duration：標記至少 " + MIN_MARK_FUSE + " 秒才炸（要來得及走離隊友），卻是 " + skill.duration);
+                }
+            }
+            case ECHOES -> {
+                if (skill.delay < MIN_ECHO_WARNING) {
+                    throw new IllegalArgumentException(where + ".delay：殘影的長槍至少標 " + MIN_ECHO_WARNING + " 秒才射穿，卻是 " + skill.delay);
+                }
+                if (skill.scatter < 3) {
+                    throw new IllegalArgumentException(where + ".scatter：殘影離 Boss 至少 3 格");
+                }
+            }
+            case ARENA -> {
+                if (skill.radius >= skill.reach) {
+                    throw new IllegalArgumentException(where + "：場地收縮的 radius（最後的圈）要比 reach（一開始的圈）小");
+                }
+                if (skill.radius < 4) {
+                    throw new IllegalArgumentException(where + ".radius：最後的圈至少 4 格（不然站不下、躲不了別的招）");
+                }
+                if (skill.duration <= 0) {
+                    throw new IllegalArgumentException(where + ".duration：場地收縮要寫幾秒縮完");
+                }
+            }
+            default -> {
+            }
+        }
     }
 
     /** 提示最多幾個字（畫面中間的副標題一行放得下）。 */

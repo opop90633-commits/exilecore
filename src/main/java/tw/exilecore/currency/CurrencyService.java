@@ -255,6 +255,9 @@ public final class CurrencyService {
         if (data.corrupted() && type.operation() != CurrencyOperation.IDENTIFY) {
             return Result.NOT_APPLICABLE; // 已腐化：不能再改造（2026-10）
         }
+        if (type.operation() == CurrencyOperation.MIRROR) {
+            return Result.NOT_APPLICABLE; // 映星鏡會多出一件物品：走 mirror()（呼叫端要接住複製品），不能當成一般通貨用
+        }
         if (!type.canApply(data, items.generator())) {
             return Result.NOT_APPLICABLE;
         }
@@ -292,6 +295,32 @@ public final class CurrencyService {
         return Result.APPLIED;
     }
 
+    /** 複製裝備的通貨（operation: MIRROR，預設是映星鏡）；currencies.yml 沒有這種通貨回傳 null。 */
+    public CurrencyType mirrorType() {
+        return repository.firstWith(CurrencyOperation.MIRROR).orElse(null);
+    }
+
+    /**
+     * 映星鏡：做出 target 的鏡像複製品（新的物品，原本那件不動）。不能複製（不是裝備、傳奇、已腐化、已經是複製品…）回傳 null。
+     * 通貨的數量、把複製品交給玩家都由呼叫端處理；紀錄寫在複製品的代號底下（before = 原本那件，after = 複製品）。
+     */
+    public ItemStack mirror(final CurrencyType type, final ItemStack target, final String playerName, final Long characterId) {
+        if (type == null || type.operation() != CurrencyOperation.MIRROR) {
+            return null;
+        }
+        final ItemData data = items.read(target).orElse(null);
+        if (data == null || !type.canApply(data, items.generator())) {
+            return null;
+        }
+        final ItemData copy = Crafting.mirror(data);
+        final ItemStack made = target.clone();
+        made.setAmount(1);
+        items.update(made, copy);
+        usageLog.record(characterId, playerName, copy.uuid(), type.id(), items.toJson(data), items.toJson(copy));
+        log.info("[currency] {} 對 {} 使用 {}：複製品 {}", playerName, data.uuid(), type.id(), copy.uuid());
+        return made;
+    }
+
     /** 注入（選單選好核心之後）：寫紀錄（跟其他通貨一樣進 currency_log）。 */
     public void recordUse(final Long characterId, final String playerName, final String itemUuid, final String currencyId,
                           final String before, final String after) {
@@ -317,7 +346,7 @@ public final class CurrencyService {
             return null;
         }
         if (data.get().corrupted() && type.get().operation() != CurrencyOperation.IDENTIFY) {
-            return "已腐化的物品不能再改造";
+            return type.get().operation() == CurrencyOperation.MIRROR ? "已腐化的物品不能複製" : "已腐化的物品不能再改造";
         }
         final String problem = Crafting.problem(type.get(), data.get(), items.generator());
         if (problem != null) {

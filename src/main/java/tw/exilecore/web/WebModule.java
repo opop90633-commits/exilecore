@@ -59,6 +59,8 @@ public final class WebModule implements Module, Listener {
     private UiPack.Built ownPack;
     /** 別的插件產生、要併進來的資源包檔案（2026-10：BetterModel）。 */
     private final Map<String, Map<String, byte[]>> externalPacks = new java.util.TreeMap<>();
+    /** 這次啟動的代號（網頁與資料對版本用）。 */
+    private static final String BUILD = Long.toString(System.currentTimeMillis(), 36);
     private volatile byte[] plannerPage = new byte[0];
     private volatile byte[] buildsPage = new byte[0];
     /** 網頁角色頁（2026-10）。 */
@@ -66,9 +68,13 @@ public final class WebModule implements Module, Listener {
     private volatile byte[] plannerData = new byte[0];
     /** 規劃器的裝備資料（2026-10）。 */
     private volatile byte[] plannerItems = "{}".getBytes(StandardCharsets.UTF_8);
+    /** 首頁、圖鑑（2026-10）。 */
+    private volatile byte[] homePage = new byte[0];
+    private volatile byte[] codexPage = new byte[0];
+    private volatile byte[] codexData = "{}".getBytes(StandardCharsets.UTF_8);
     private volatile byte[] economyPage = new byte[0];
     private volatile byte[] ladderPage = new byte[0];
-    private boolean economyEnabled = true;
+    private boolean economyEnabled = false;
     /** 已經套用介面資源包的玩家（主執行緒）。 */
     private final Set<UUID> packLoaded = ConcurrentHashMap.newKeySet();
     /** 別的模組加的路由（管理網頁）：網頁伺服器每次啟動（含換埠重開）都裝一次。 */
@@ -104,10 +110,14 @@ public final class WebModule implements Module, Listener {
                 gemSkins(plugin.currencies() == null ? List.of() : UiPack.currencySkins(plugin.currencies().repository()), skillSkins()),
                 plugin.items() == null ? java.util.Set.of() : UiPack.gearItems(plugin.items().repository()));
         mergePacks();
-        plannerPage = loadResource("web/planner.html");
+        // 2026-10：頁面上寫這次啟動的代號，跟資料的代號對不上（分頁在更新前就開著）頁面會自己提醒重新整理
+        plannerPage = new String(loadResource("web/planner.html"), java.nio.charset.StandardCharsets.UTF_8)
+                .replace("__BUILD__", BUILD).getBytes(java.nio.charset.StandardCharsets.UTF_8);
         economyPage = loadResource("web/economy.html");
         ladderPage = loadResource("web/ladder.html");
         buildsPage = loadResource("web/builds.html");
+        homePage = loadResource("web/home.html");
+        codexPage = loadResource("web/codex.html");
         if (profiles == null) {
             profiles = new Profiles(plugin);
             profiles.start();
@@ -147,7 +157,7 @@ public final class WebModule implements Module, Listener {
         bind = web == null ? "" : web.getString("bind", "");
         port = web == null ? 25580 : web.getInt("port", 25580);
         configuredUrl = web == null ? "" : web.getString("public-url", "");
-        economyEnabled = web == null || web.getBoolean("economy-page", true);
+        economyEnabled = web != null && web.getBoolean("economy-page", false); // 2026-10：預設不公開
         send = plugin.getConfig().getBoolean("resource-pack.send", true);
         required = plugin.getConfig().getBoolean("resource-pack.required", false);
         externalUrl = plugin.getConfig().getString("resource-pack.external-url", "").trim();
@@ -169,13 +179,20 @@ public final class WebModule implements Module, Listener {
             server = null;
             return;
         }
-        server.route("/", path -> WebServer.Response.redirect("tree"));
+        // 2026-10：首頁（在線人數、各頁的入口、排行前幾名）與圖鑑（技能、輔助寶石、通貨、傳奇）；以前 / 直接跳到天賦規劃器
+        server.route("/", path -> WebServer.Response.of("text/html; charset=utf-8", homePage));
+        server.route("/home/status.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", statusJson(),
+                java.util.Map.of("Cache-Control", "no-cache")));
+        server.route("/codex", path -> WebServer.Response.of("text/html; charset=utf-8", codexPage));
+        server.route("/codex/", path -> WebServer.Response.redirect("../codex"));
+        server.route("/codex/data.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", codexData,
+                java.util.Map.of("Cache-Control", "no-cache")));
         server.route("/tree", path -> WebServer.Response.of("text/html; charset=utf-8", plannerPage));
         server.route("/tree/", path -> WebServer.Response.redirect("../tree"));
         server.route("/tree/items.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", plannerItems,
                 java.util.Map.of("Cache-Control", "no-cache")));
         server.route("/tree/data.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", plannerData,
-                java.util.Map.of("Cache-Control", "no-cache")));
+                java.util.Map.of("Cache-Control", "no-cache", "X-Build", BUILD)));
         // 市場報告：全服通貨與金幣的產出、消耗、存量、參考價值（只有加總，沒有個人資料）；關掉時整頁 404
         server.route("/economy", path -> economyEnabled ? WebServer.Response.of("text/html; charset=utf-8", economyPage) : null);
         server.route("/economy/", path -> economyEnabled ? WebServer.Response.redirect("../economy") : null);
@@ -253,6 +270,11 @@ public final class WebModule implements Module, Listener {
                 plugin.getSLF4JLogger().warn("規劃器的裝備資料做不出來：{}", e.toString());
             }
         }
+        try {
+            codexData = CodexData.json(plugin); // 2026-10：圖鑑（技能、輔助寶石、通貨）
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("圖鑑的資料做不出來：{}", e.toString());
+        }
         final PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
         if (tree == null) {
             plannerData = "{\"error\":\"天賦樹沒有載入\"}".getBytes(StandardCharsets.UTF_8);
@@ -262,8 +284,29 @@ public final class WebModule implements Module, Listener {
         for (final CharacterClass type : CharacterClass.values()) {
             classes.add(new PlannerData.ClassInfo(type.id(), type.displayName(), hexColor(type.color())));
         }
+        // 2026-10：昇華職業（規劃器的昇華預覽）
+        final List<PlannerData.AscendancyInfo> ascendancies = new ArrayList<>();
+        int ascendancyPoints = 0;
+        if (plugin.ascendancy() != null) {
+            final tw.exilecore.ascendancy.AscendancyConfig config = plugin.ascendancy().config();
+            ascendancyPoints = config.totalPoints();
+            for (final tw.exilecore.ascendancy.AscendancyConfig.Ascendancy ascendancy : config.ascendancies()) {
+                final List<List<PlannerData.AscendancyNode>> branches = new ArrayList<>();
+                for (final List<tw.exilecore.ascendancy.AscendancyConfig.Node> branch : ascendancy.branches()) {
+                    final List<PlannerData.AscendancyNode> nodes = new ArrayList<>();
+                    for (final tw.exilecore.ascendancy.AscendancyConfig.Node node : branch) {
+                        nodes.add(new PlannerData.AscendancyNode(node.name(), node.cost(),
+                                tw.exilecore.ascendancy.StatLines.describeAll(node.stats()), node.note()));
+                    }
+                    branches.add(nodes);
+                }
+                final String color = ascendancy.color() != null && ascendancy.color().startsWith("#") ? ascendancy.color() : "#f5c04a";
+                ascendancies.add(new PlannerData.AscendancyInfo(ascendancy.id(), ascendancy.classId(), ascendancy.name(), color,
+                        ascendancy.summary(), branches));
+            }
+        }
         plannerData = PlannerData.json(tree, classes, plugin.players().config().levelCap(),
-                plugin.players().config().pointsPerLevel(), bonusPoints());
+                plugin.players().config().pointsPerLevel(), bonusPoints(), ascendancies, ascendancyPoints);
     }
 
     /** 區域 Boss、地圖 Boss 首殺、任務最多送幾點。 */
@@ -341,6 +384,19 @@ public final class WebModule implements Module, Listener {
     }
 
     /** 玩家看到的網址（沒有結尾的 /）。 */
+    /** 首頁用的狀態：在線人數、有開哪些頁。任何執行緒都可以叫（只讀人數）。 */
+    private byte[] statusJson() {
+        final com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+        root.addProperty("online", plugin.getServer().getOnlinePlayers().size());
+        root.addProperty("max", plugin.getServer().getMaxPlayers());
+        final com.google.gson.JsonObject pages = new com.google.gson.JsonObject();
+        pages.addProperty("ladder", plugin.ladder() != null);
+        pages.addProperty("builds", profiles != null);
+        pages.addProperty("economy", economyEnabled && plugin.economy() != null);
+        root.add("pages", pages);
+        return root.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
     public String publicUrl() {
         String url = configuredUrl == null ? "" : configuredUrl.trim();
         if (url.isEmpty()) {
@@ -505,11 +561,16 @@ public final class WebModule implements Module, Listener {
 
     @EventHandler
     public void onStatus(final PlayerResourcePackStatusEvent event) {
+        // 2026-10：走 Velocity（LimboAPI）時代理可能把資源包的代號換掉；我們只送這一包，代號對不上也當成是它
         if (!PACK_ID.equals(event.getID())) {
-            return;
+            plugin.getSLF4JLogger().info("玩家 {} 的資源包狀態 {} 代號不是介面資源包的（{}），當成介面資源包處理",
+                    event.getPlayer().getName(), event.getStatus(), event.getID());
         }
         switch (event.getStatus()) {
-            case SUCCESSFULLY_LOADED -> packLoaded.add(event.getPlayer().getUniqueId());
+            case SUCCESSFULLY_LOADED -> {
+                packLoaded.add(event.getPlayer().getUniqueId());
+                plugin.getSLF4JLogger().info("玩家 {} 套用了介面資源包", event.getPlayer().getName());
+            }
             case FAILED_DOWNLOAD, INVALID_URL -> {
                 packLoaded.remove(event.getPlayer().getUniqueId());
                 if (externalUrl != null && !externalUrl.isEmpty() && !warnedStale) {

@@ -271,4 +271,60 @@ class CraftingTest {
         final List<RolledAffix> before = List.copyOf(ring.affixes());
         assertEquals(before, ring.affixes(), "沒動");
     }
+
+    @Test
+    void mirrorCopiesOnceAndTheCopyIsSealed() {
+        final CurrencyType mirror = currencies.firstWith(CurrencyOperation.MIRROR).orElseThrow();
+        assertEquals(0, mirror.dropWeight(), "映星鏡不走掉落表（另外擲，跟追逐級一樣的機率）");
+        final ItemData ring = new ItemData("iron_ring", Rarity.RARE, 60);
+        ring.setIdentified(true);
+        ring.setLocked(true);
+        ring.setOmen("omen_dextral");
+        ring.affixes().add(new RolledAffix("resist_fire", 2, Map.of("value", 40)));
+        assertTrue(mirror.canApply(ring, generator));
+        assertNull(Crafting.problem(mirror, ring, generator));
+
+        final ItemData copy = Crafting.mirror(ring);
+        assertNotEquals(ring.uuid(), copy.uuid(), "複製品是另一件物品（不會被 /ec dupes 當成複製）");
+        assertTrue(copy.mirrored());
+        assertFalse(ring.mirrored(), "原本那件不變");
+        assertFalse(copy.locked(), "鎖定不跟過去");
+        assertNull(copy.omen(), "掛著的星籤不跟過去");
+        assertEquals("omen_dextral", ring.omen());
+        assertEquals(1, copy.affixes().size());
+        assertEquals("resist_fire", copy.affixes().get(0).id());
+        assertEquals(ring.affixes().get(0).vars(), copy.affixes().get(0).vars());
+        assertTrue(copy.copy().mirrored(), "複製品的標記跟著物品走");
+
+        // 複製品：不能再複製、任何通貨都不能再用
+        assertFalse(mirror.canApply(copy, generator));
+        assertNotNull(Crafting.problem(mirror, copy, generator));
+        for (final CurrencyType type : currencies.all()) {
+            assertFalse(type.canApply(copy, generator), type.id() + " 不能用在鏡像複製品上");
+        }
+
+        // 不能複製的：傳奇、地圖、未鑑定、已腐化、新手裝備、藥劑
+        final ItemData unique = new ItemData("iron_ring", Rarity.UNIQUE, 60);
+        unique.setIdentified(true);
+        assertFalse(mirror.canApply(unique, generator));
+        final ItemData unidentified = new ItemData("iron_ring", Rarity.RARE, 60);
+        unidentified.setIdentified(false);
+        assertFalse(mirror.canApply(unidentified, generator));
+        assertNotNull(Crafting.problem(mirror, unidentified, generator));
+        final ItemData corrupted = new ItemData("iron_ring", Rarity.RARE, 60);
+        corrupted.setCorrupted(true);
+        assertFalse(mirror.canApply(corrupted, generator));
+        final ItemData starter = new ItemData("iron_ring", Rarity.NORMAL, 1);
+        starter.markStarter();
+        assertFalse(mirror.canApply(starter, generator));
+        for (final var base : items.bases()) {
+            if (base.isMap() || base.isFlaskLike()) {
+                final ItemData other = new ItemData(base.id(), Rarity.NORMAL, 60);
+                assertFalse(mirror.canApply(other, generator), base.id() + " 不能複製");
+                assertNotNull(Crafting.problem(mirror, other, generator));
+            }
+        }
+        // 普通、魔法的裝備跟珠寶可以
+        assertTrue(mirror.canApply(new ItemData("plate_body", Rarity.NORMAL, 60), generator));
+    }
 }

@@ -12,7 +12,7 @@
 # mechanic   運作方式，參數寫在同名的區塊：
 #              strike      近戰打擊：reach 距離、angle 扇形角度、targets 最多幾個（0 = 全部）、knockback 擊退、
 #                          execute: { below: 0.35, more: 150 } 處決（目標生命低於 35% 時更多 150% 傷害）
-#              projectile  投射物：count 數量、spread 扇形角度（360 = 平均分一整圈；沒寫 spread 的單發技能多了投射物時不張成扇形，沿同一條線前後連發）、speed 每 tick 幾格、range 射程、size 碰撞半徑、
+#              projectile  投射物：count 數量、spread 扇形角度（360 = 平均分一整圈）、speed 每 tick 幾格、range 射程、size 碰撞半徑、
 #                          pierce 穿透、explode 爆炸半徑、wobble 亂竄角度、arrow 用原版箭矢（弓、弩）、
 #                          gravity 每 tick 往下掉幾格（拋物線）、fuse 幾秒後自己炸（榴彈：不直接打敵人、碰到方塊會彈）、
 #                          blink: true 停下來的地方施放者瞬移過去、
@@ -106,6 +106,9 @@ level_requirements: [1, 2, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34, 37, 40, 43,
 # 怪物掉的未切割技能寶石是幾級：最高等級（＝這個怪物等級的角色能用的最高技能等級）、低 1 級、低 2 級…的權重（最多 5 個）。
 # 2026-10：20/40/40（以前 60/30/10：T14 以上一張地圖就掉好幾顆 20 級，大家整疊丟垃圾桶）。
 uncut_level_weights: [20, 40, 40]
+# 某些等級只留幾成（等級: 0～1）：擲到這個等級時照這個機率留下，沒留下就整顆不掉（不會變成低一級的），其他等級不受影響。
+# 2026-10：19、20 級降到三分之一（測試期一個終局玩家一天大約掉 30 顆 20 級，第一天打地圖就把所有技能補滿）
+uncut_level_scale: { 19: 0.33, 20: 0.33 }
 
 # 法術的基礎傷害依「需求等級」放大的倍率（中間等比內插），讓法術跟得上武器與詞綴的成長。
 # 照 balance.yml 算的：參考法術角色（熾星彈，法杖上有一條法術附加）的單體輸出約是參考攻擊角色（碎岩擊）的 8 成
@@ -311,7 +314,7 @@ skills:
     icon: LIGHTNING_ROD
     type: attack
     tier: 3
-    tags: [attack, projectile, lightning]
+    tags: [attack, projectile, lightning, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
     starter: ranger
     weapons: [bow]
     mechanic: projectile
@@ -445,7 +448,7 @@ skills:
     # 2026-10：每支多穿過兩個敵人（成群的怪也打得到後面的）
     projectile: { arrow: true, speed: 3.2, range: 40, pierce: 2, burst: { count: 4, interval: 2 } }
     attack_speed: 0.85
-    effectiveness: [0.54, 0.75]
+    effectiveness: [0.44, 0.62]      # 2026-10 統一平衡：[0.54, 0.75] → [0.44, 0.62]（四波全中是弩裡單體最高的；PoE2 Rapid Shot 有過熱停火，我們沒有）
     mana: [5, 11]
     visual: rapid_fire
 
@@ -583,7 +586,7 @@ skills:
     icon: TRIDENT
     type: attack
     tier: 1
-    tags: [attack, projectile, lightning]
+    tags: [attack, projectile, lightning, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
     weapons: [spear]
     starter: huntress
     mechanic: projectile
@@ -629,7 +632,7 @@ skills:
     icon: IRON_SPEAR
     type: attack
     tier: 3
-    tags: [attack, melee, strike, movement]
+    tags: [attack, melee, strike, movement, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
     weapons: [spear]
     mechanic: dash
     dash: { range: 6, hit_width: 1.1, knockback: 0.6, end_radius: [1.8, 2.3] }
@@ -735,16 +738,16 @@ skills:
 
   comet:
     name: 隕星
-    description: 召來一顆冰隕星砸在準心指的地方：施法要兩秒、落地前有一下子的預警圈，但砸下來的傷害是熾星彈的好幾倍。
+    description: 召來一顆冰隕星砸在準心指的地方：施法要一秒半、落地前有一下子的預警圈，但砸下來的傷害是熾星彈的好幾倍。
     icon: AMETHYST_SHARD
     type: spell
     tier: 5
     tags: [spell, area, cold]
     mechanic: impact
     impact: { range: 22, delay: 0.55, radius: [2.8, 3.4] }   # 2026-10 PoE2
-    damage: [23, 35]
+    damage: [38, 58]   # 2026-10：補到法術的標準（PoE2 20 級平均 984 的 0.45 倍）；原本 [23, 35] 只有 0.27
     damage_types: { cold: 1.0 }
-    cast_time: 2.0
+    cast_time: 1.5   # 2026-10：2.0 → 1.5 秒（PoE2 是 1 秒）
     effectiveness: 1.6           # 法術附加乘這個（一下很重的法術）
     mana: [9, 24]
     visual: comet
@@ -1306,7 +1309,7 @@ skills:
 
   armour_breaker:
     name: 碎甲錘
-    description: 一記專打護甲的重擊：對單一敵人造成高傷害，大幅破甲。
+    description: 一記專打護甲的重擊：打單一敵人，大幅破甲。
     icon: ANVIL
     type: attack
     tier: 3
@@ -1315,7 +1318,7 @@ skills:
     mechanic: strike
     strike: { reach: 3.8, angle: 60, targets: 1, knockback: 0.3 }
     attack_speed: 0.75
-    effectiveness: [0.95, 1.3]   # 2026-10：內部比例調低（以前比 PoE2 還高）
+    effectiveness: [0.76, 1.06]      # 2026-10 統一平衡：[0.95, 1.3] → [0.76, 1.06]（PoE2 Armour Breaker 181%、攻速 80% ×0.55，換成我們的攻速 0.75）
     mana: [5, 11]
     visual: boneshatter
     modifiers:
@@ -1420,7 +1423,7 @@ skills:
     mechanic: projectile
     projectile: { arrow: true, speed: 3.2, range: 40, burst: { count: 4, interval: 2 } }
     attack_speed: 0.8
-    effectiveness: [0.52, 0.73]
+    effectiveness: [0.45, 0.63]      # 2026-10 統一平衡：[0.52, 0.73] → [0.45, 0.63]（四波全中比弓的其他技能高四成，拉回到略高於凝霜箭）
     mana: [5, 11]
     visual: arrow
 
@@ -1579,7 +1582,7 @@ skills:
     mechanic: strike
     strike: { reach: 4.2, angle: 40, targets: 2 }
     attack_speed: 1.3
-    effectiveness: [0.62, 0.87]
+    effectiveness: [0.85, 1.19]      # 2026-10 統一平衡：[0.62, 0.87] → [0.85, 1.19]（PoE2 Rapid Assault 整串 702%、攻速 40% ×0.55，換成一下）
     mana: [4, 9]
     visual: spear_thrust
     modifiers:
@@ -1665,7 +1668,7 @@ skills:
     icon: BLUE_ICE
     type: spell
     tier: 7
-    tags: [spell, projectile, cold]
+    tags: [spell, projectile, cold, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
     mechanic: projectile
     projectile: { speed: 0.3, range: 16, size: 1.4, pierce: 20, splash: { targets: 3, radius: 4, damage: 35 } }
     damage: [4, 9]
@@ -2001,7 +2004,7 @@ skills:
     mechanic: strike
     strike: { reach: 4.0, angle: 60, targets: 1, knockback: 0.5 }
     attack_speed: 1.1
-    effectiveness: [1.0, 1.4]
+    effectiveness: [0.67, 0.94]      # 2026-10 統一平衡：[1.0, 1.4] → [0.67, 0.94]（PoE2 Staggering Palm 250%、攻速 75% ×0.55，換成我們的攻速 1.1）
     mana: [4, 9]
     visual: killing_palm
     modifiers:
@@ -2093,7 +2096,7 @@ skills:
     projectile: { arrow: true, speed: 3.0, range: 36, explode: [2.2, 2.8] }
     convert: { chaos: 0.5 }
     attack_speed: 0.85
-    effectiveness: [1.0, 1.4]
+    effectiveness: [1.08, 1.51]      # 2026-10 統一平衡：[1.0, 1.4] → [1.08, 1.51]（PoE2 Poisonburst Arrow 274% ×0.55）
     mana: [6, 12]
     visual: caustic_arrow
     modifiers:
@@ -2110,7 +2113,7 @@ skills:
     mechanic: projectile
     projectile: { arrow: true, count: 8, spread: 360, speed: 2.4, range: 20, wobble: 40 }
     attack_speed: 0.7
-    effectiveness: [0.55, 0.77]
+    effectiveness: [0.81, 1.13]      # 2026-10 統一平衡：[0.55, 0.77] → [0.81, 1.13]（PoE2 Spiral Volley 206% ×0.55（每個敵人只中一支））
     mana: [7, 14]
     visual: tornado_shot
 
@@ -2210,7 +2213,7 @@ skills:
     icon: LIGHTNING_ROD
     type: attack
     tier: 7
-    tags: [attack, projectile, lightning]
+    tags: [attack, projectile, lightning, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
     weapons: [crossbow]
     mechanic: projectile
     projectile: { arrow: true, count: 3, spread: 20, speed: 3.2, range: 36, splash: { targets: 2, radius: 4, damage: 40 } }
@@ -2355,7 +2358,7 @@ skills:
     leap: { range: 9, radius: [2.6, 3.2] }
     convert: { lightning: 0.6 }
     attack_speed: 0.8
-    effectiveness: [1.5, 2.1]
+    effectiveness: [1.76, 2.47]      # 2026-10 統一平衡：[1.5, 2.1] → [1.76, 2.47]（PoE2 Thunderous Leap 449% ×0.55（跟騰躍砸擊一樣））
     mana: [7, 13]
     visual: leap
     modifiers:
@@ -2897,7 +2900,7 @@ skills:
     mechanic: impact
     impact: { range: 14, delay: 0.8, radius: [4.0, 5.0] }
     attack_speed: 0.5
-    effectiveness: [4.32, 6.05]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [6.0, 8.4]   # 2026-10：補到標準（PoE2 1529% × 0.55）；原本 [4.32, 6.05] 只有標準的七成，還有 8 秒冷卻
     mana: [12, 24]
     cooldown: 8       # 2026-10：拿掉榮耀之後改成冷卻
     visual: comet
@@ -2916,7 +2919,7 @@ skills:
     cone: { length: [6.0, 7.5], angle: 40 }
     convert: { lightning: 0.6 }
     attack_speed: 0.8
-    effectiveness: [1.05, 1.46]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [1.29, 1.8]   # 2026-10：補到標準（PoE2 437%、攻速 60% × 0.55，換成我們的攻速 0.8）；原本 [1.05, 1.46] 只有標準的六成
     mana: [6, 12]
     visual: tempest
     modifiers:
@@ -2952,7 +2955,7 @@ skills:
     projectile: { speed: 2.0, range: 28, size: 0.4, explode: [2.8, 3.6] }
     convert: { fire: 0.6 }
     attack_speed: 0.7
-    effectiveness: [1.18, 1.65]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [1.5, 2.1]      # 2026-10 統一平衡：[1.18, 1.65] → [1.5, 2.1]（PoE2 Explosive Spear 矛 156%＋爆炸 489%）
     mana: [6, 12]
     visual: explosive_bolt
     modifiers:
@@ -2970,7 +2973,7 @@ skills:
     strike: { reach: 4.5, angle: 70, targets: 3 }
     convert: { cold: 0.5 }
     attack_speed: 1.0
-    effectiveness: [0.83, 1.16]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [0.99, 1.38]   # 2026-10：補到標準（PoE2 296%、攻速 85% × 0.55，換成我們的攻速 1.0）；原本 [0.83, 1.16] 只有標準的七成
     mana: [4, 9]
     visual: spear_thrust
     modifiers:
@@ -3018,7 +3021,7 @@ skills:
     icon: GLOWSTONE_DUST
     type: spell
     tier: 5
-    tags: [spell, projectile, lightning]
+    tags: [spell, projectile, lightning, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
     mechanic: projectile
     projectile: { speed: 0.2, range: 18, size: 1.2, pierce: 20, splash: { targets: 3, radius: 1.8, damage: 40 } }   # 2026-10 PoE2：很慢
     damage: [1, 4]
@@ -3037,7 +3040,7 @@ skills:
     icon: ECHO_SHARD
     type: spell
     tier: 1
-    tags: [spell, projectile, chaos]
+    tags: [spell, projectile, chaos, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
     starter: witch
     mechanic: projectile
     projectile: { speed: 0.56, range: 30, size: 0.35, ground: { duration: 4, interval: 0.5, radius: 1.6, damage: 30 } }   # 2026-10 PoE2
@@ -3232,6 +3235,7 @@ skills:
     type: spell
     tier: 5
     tags: [warcry, cold, shapeshift, werewolf]
+    weapons: [talisman]   # 2026-10：變形技能都要拿獸魂符（照 PoE2；以前只有熊、狼人的攻擊技能有寫）
     mechanic: warcry
     warcry:
       radius: 8
@@ -3267,88 +3271,92 @@ skills:
     visual: aura_cold
 
   # -- 飛龍（法術）--
+  # 2026-10：飛龍技能照 PoE2 改成「攻擊」——吃獸魂符的武器傷害、攻擊速度、命中與攻擊類的輔助（以前是自帶基礎傷害的法術，
+  #   拿獸魂符沒有法術詞綴可以撐）。火焰的三招物理全部轉換為火焰（PoE2 是 100%）。
+  #   倍率對照 poe2db 的 20 級數值（鼓翼風 265%、熔球 218%、噬咬 235%、黏油 281%、熾息 109%），照熊技能的換算比例
+  #   （PoE2 爪擊 290% ↔ 撼山爪 168%、狂暴重擊 254% ↔ 震野踏 154%，約 0.6 倍；1 級是 20 級 ÷ 1.4）：
+  #   鼓翼風直接照換；熔球我們只有最後炸一下（PoE2 每次彈跳都打），所以抓高一點；噬咬我們是有冷卻的一口咬（PoE2 是吃屍體拿球，用途不同）；
+  #   黑油雨、熾息 PoE2 有球／怒氣／10 秒冷卻限制，我們沒有，所以照「平均下來」的強度抓，不是直接乘 0.6。
   wing_blast:
     name: 鼓翼風
     description: 化身飛龍猛搧雙翼，前方扇形的敵人被狂風打退、容易暈眩。（飛龍形態）
     icon: PHANTOM_MEMBRANE
-    type: spell
+    type: attack
     tier: 3
-    tags: [spell, area, physical, shapeshift, wyvern]
+    tags: [attack, melee, area, physical, shapeshift, wyvern]
+    weapons: [talisman]
     mechanic: cone
     cone: { length: [5, 6], angle: 80 }
-    damage: [6, 10]
-    damage_types: { physical: 1.0 }
-    cast_time: 0.7
-    effectiveness: 0.8
+    attack_speed: 0.75           # PoE2：總攻擊時間 +0.3 秒
+    effectiveness: [1.14, 1.59]  # PoE2 265% × 0.6
     mana: [5, 12]
     visual: whirl
     modifiers:
       - { stat: stun.buildup, type: MORE, value: 60 }
   rolling_magma:
     name: 熔球
-    description: 飛龍吐出一團熔岩，在地上彈跳著往前滾，最後炸開，容易點燃。（飛龍形態）
+    description: 飛龍吐出一團熔岩，在地上彈跳著往前滾，最後炸開，容易點燃。物理全部轉換為火焰。（飛龍形態）
     icon: MAGMA_CREAM
-    type: spell
+    type: attack
     tier: 3
-    tags: [spell, projectile, area, fire, shapeshift, wyvern]
+    tags: [attack, projectile, area, fire, shapeshift, wyvern]
+    weapons: [talisman]
     mechanic: projectile
     projectile: { speed: 0.9, range: 24, size: 0.5, gravity: 0.05, fuse: 1.6, explode: [2.2, 2.8] }
-    damage: [6, 9]   # 2026-10 平衡：-40%（原本是熾星彈的兩倍）
-    damage_types: { fire: 1.0 }
-    cast_time: 0.8
-    effectiveness: 1.0
+    convert: { fire: 1.0 }
+    attack_speed: 0.85           # PoE2：攻擊速度 85%
+    effectiveness: [1.3, 1.82]   # PoE2 218% × 0.6 = 131%，每次彈跳都打；我們只炸最後一下，抓 1.4 倍
     mana: [6, 14]
     visual: fireball
     modifiers:
       - { stat: ignite.chance, type: FLAT, value: 25 }
   devour:
     name: 噬咬
-    description: 飛龍一口咬住前方的敵人，造成傷害的一部分偷取為生命。（飛龍形態）
+    description: 飛龍一口咬住前方的敵人，造成傷害的一部分偷取為生命。冷卻 2 秒。（飛龍形態）
     icon: COOKED_BEEF
-    type: spell
+    type: attack
     tier: 5
-    tags: [spell, area, physical, shapeshift, wyvern]
+    tags: [attack, melee, area, physical, shapeshift, wyvern]
+    weapons: [talisman]
     mechanic: cone
     cone: { length: [3.0, 3.5], angle: 50 }
-    damage: [12, 18]
-    damage_types: { physical: 1.0 }
-    cast_time: 0.8
     cooldown: 2
-    effectiveness: 1.2
+    attack_speed: 0.8
+    effectiveness: [2.0, 2.8]
     mana: [6, 13]
     visual: heavy_strike
     modifiers:
       - { stat: leech.life, type: FLAT, value: 10 }
   oil_barrage:
     name: 黑油雨
-    description: 飛龍朝前方噴出一排油彈，落地留下一片會燒的油地，敵人在上面一直挨燒。（飛龍形態）
+    description: 飛龍朝前方噴出一排油彈，落地留下一片會燒的油地，敵人在上面一直挨燒。物理全部轉換為火焰。（飛龍形態）
     icon: HONEY_BOTTLE
-    type: spell
+    type: attack
     tier: 9
-    tags: [spell, projectile, area, fire, duration, shapeshift, wyvern]
+    tags: [attack, projectile, area, fire, duration, shapeshift, wyvern]
+    weapons: [talisman]
     mechanic: projectile
     projectile: { count: [4, 6], spread: 35, speed: 1.0, range: 16, size: 0.4, gravity: 0.04, explode: [1.4, 1.8], ground: { duration: 3, interval: 0.5, radius: 1.8, damage: 25 } }
-    damage: [3, 4]   # 2026-10 平衡：六發各打一下，-45%
-    damage_types: { fire: 1.0 }
-    cast_time: 0.9
-    effectiveness: 0.55
+    convert: { fire: 1.0 }
+    attack_speed: 0.9
+    effectiveness: [0.5, 0.7]    # 每一發；六發各打一下（跟弩的燃焰散射同級）
     mana: [8, 18]
     visual: fireball
     modifiers:
       - { stat: ignite.chance, type: FLAT, value: 20 }
   flame_breath:
     name: 熾息
-    description: 持續施放：飛龍按住一直往前噴火，越噴越旺（每放一次加一層，最多 8 層）。（飛龍形態）
+    description: 持續施放：飛龍按住一直往前噴火，越噴越旺（每放一次加一層，最多 8 層）。物理全部轉換為火焰。（飛龍形態）
     icon: BLAZE_POWDER
-    type: spell
+    type: attack
     tier: 13
-    tags: [spell, area, fire, shapeshift, wyvern]
+    tags: [attack, area, fire, shapeshift, wyvern]
+    weapons: [talisman]
     mechanic: cone
     cone: { length: [6, 7], angle: 45 }
-    damage: [3, 4.5]   # 2026-10 平衡：-25%
-    damage_types: { fire: 1.0 }
-    cast_time: 0.25
-    effectiveness: 0.4
+    convert: { fire: 1.0 }
+    attack_speed: 2.8            # 噴得很快（獸魂符每秒約 1.25 下 → 每秒約 3.5 跳），每一跳的倍率低
+    effectiveness: [0.28, 0.39]  # PoE2 是 109%、8 倍速，但有 10 秒冷卻又吃怒氣；我們沒有冷卻，照平均下來的強度
     mana: [2, 5]
     visual: fireball
     modifiers:
@@ -3548,7 +3556,7 @@ skills:
     mechanic: nova
     nova: { radius: [2.8, 3.4], aftershock: { delay: 0.6, radius: 2.0, more: 60 } }
     attack_speed: 0.45
-    effectiveness: [3.0, 4.2]
+    effectiveness: [2.3, 3.2]      # 2026-10 統一平衡：[3.0, 4.2] → [2.3, 3.2]（PoE2 Supercharged Slam 三段 559%＋餘震；連餘震算每單位時間比標準高三成）
     mana: [9, 18]
     visual: earthquake
     modifiers:
@@ -3671,7 +3679,7 @@ skills:
     mechanic: strike
     strike: { reach: 4.0, angle: 40, targets: 1, execute: { below: 0.35, more: 120 } }
     attack_speed: 0.9
-    effectiveness: [1.3, 1.82]   # 2026-10 平衡：-13%
+    effectiveness: [0.92, 1.29]      # 2026-10 統一平衡：[1.3, 1.82] → [0.92, 1.29]（PoE2 Cull the Weak 281%、攻速 75% ×0.55，換成我們的攻速 0.9）
     mana: [4, 9]
     visual: spear_thrust
 
@@ -3687,7 +3695,7 @@ skills:
     projectile: { count: 5, spread: 50, speed: 1.6, range: 18, size: 0.4, gravity: 0.04, explode: [1.8, 2.3], ground: { duration: 3, interval: 0.5, radius: [1.6, 2.0], damage: 15 } }
     convert: { chaos: 0.5 }
     attack_speed: 0.85
-    effectiveness: [0.55, 0.77]
+    effectiveness: [0.20, 0.62]   # 2026-10：照 PoE2 的瘴苞（落地 20% → 62%；以前 55% → 77%，貼臉太強）
     mana: [6, 12]
     visual: caustic_arrow
     modifiers:
@@ -5495,7 +5503,7 @@ skills:
     icon: SHEARS
     type: attack
     tier: 3
-    tags: [attack, melee, strike, physical]
+    tags: [attack, melee, strike, physical, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
     weapons: [spear]
     mechanic: dash
     dash: { range: 6, end_radius: [2.2, 2.8] }
@@ -5540,7 +5548,7 @@ skills:
     mechanic: projectile
     projectile: { arrow: true, count: 3, spread: 12, speed: 3.0, range: 30, pierce: 3 }
     attack_speed: 0.9
-    effectiveness: [0.55, 0.77]
+    effectiveness: [0.71, 1.0]      # 2026-10 統一平衡：[0.55, 0.77] → [0.71, 1.0]（弩的基本技能裡偏低（同一波每個敵人只中一發））
     mana: [5, 10]
     visual: crossbow_bolt
     modifiers:

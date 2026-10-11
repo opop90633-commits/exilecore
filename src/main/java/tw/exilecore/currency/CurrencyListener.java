@@ -62,6 +62,11 @@ public final class CurrencyListener implements Listener {
             overwriteRune(player, event, clicked, target);
             return;
         }
+        if (clicked != null && clicked.operation() == CurrencyOperation.MIRROR) {
+            // 映星鏡：會多出一件複製品，先確認（裝備要在自己的背包裡、背包要有空位，確定了才扣）
+            mirror(player, event, clicked, target, why);
+            return;
+        }
         if (clicked != null && clicked.operation() == CurrencyOperation.INSTIL) {
             // 蒸餾情緒：不是直接用，打開「注入」選一個核心（項鍊要在自己的背包裡，選完才扣）
             instil(player, event, clicked, target, why);
@@ -117,7 +122,7 @@ public final class CurrencyListener implements Listener {
     /** 這件裝備有符文孔、已鑑定、沒腐化，而且孔都滿了。 */
     private boolean runesFull(final ItemStack target) {
         final tw.exilecore.item.ItemData data = plugin.items().read(target).orElse(null);
-        if (data == null || !data.identified() || data.corrupted()) {
+        if (data == null || !data.identified() || data.corrupted() || data.mirrored()) {
             return false;
         }
         final tw.exilecore.item.ItemBase base = plugin.items().repository().base(data.base());
@@ -189,6 +194,77 @@ public final class CurrencyListener implements Listener {
                     plugin.players().markDirty(player);
                     player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 0.6f, 1.4f);
                     player.sendActionBar(plugin.text().parse("<#7fe0c8>第 " + (index + 1) + " 孔換成了" + tw.exilecore.item.ItemRenderer.escape(rune.name())));
+                }, () -> { });
+    }
+
+    /** 映星鏡點裝備：確認之後多一件鏡像複製品（放進背包的空位）。 */
+    private void mirror(final Player player, final InventoryClickEvent event, final CurrencyType mirror, final ItemStack target, final String why) {
+        final tw.exilecore.item.ItemData data = plugin.items().read(target).orElse(null);
+        if (data == null) {
+            return;
+        }
+        if (why != null || !mirror.canApply(data, plugin.items().generator())) {
+            fail(player, mirror.name() + "：" + (why == null ? "不能複製這件" : why));
+            return;
+        }
+        if (event.getClickedInventory() != player.getInventory()) {
+            fail(player, "先把裝備拿到自己的背包，再拿" + mirror.name() + "點它");
+            return;
+        }
+        final int slot = event.getSlot();
+        final String uuid = data.uuid();
+        // 游標上的映星鏡先放回背包（對話框打開時背包會關掉；確定了才從背包、通貨袋扣一顆）
+        final ItemStack cursor = event.getView().getCursor();
+        event.getView().setCursor(ItemStack.empty());
+        if (cursor != null && !cursor.isEmpty()) {
+            for (final ItemStack left : player.getInventory().addItem(cursor).values()) {
+                player.getWorld().dropItemNaturally(player.getLocation(), left);
+            }
+        }
+        player.closeInventory();
+        final String itemName = net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(target.effectiveName());
+        plugin.dialogs().confirm(player, "<dark_gray>" + tw.exilecore.item.ItemRenderer.escape(mirror.name()),
+                List.of("<gray>要複製這件嗎？", itemName, "",
+                        "<gray>會多出一件一模一樣的<#9fd8ff>鏡像複製品</#9fd8ff>，原本那件不變。",
+                        "<gray>複製品<white>不能再改造、不能再複製</white>。",
+                        "<red>用掉一顆" + tw.exilecore.item.ItemRenderer.escape(mirror.name()) + "（拿不回來）"),
+                "複製", () -> {
+                    final ItemStack stack = player.getInventory().getItem(slot);
+                    final tw.exilecore.item.ItemData now = stack == null ? null : plugin.items().read(stack).orElse(null);
+                    if (now == null || !uuid.equals(now.uuid())) {
+                        fail(player, "裝備不在原來的格子了，重新拿" + mirror.name() + "點它");
+                        return;
+                    }
+                    if (player.getInventory().firstEmpty() < 0) {
+                        fail(player, "背包滿了：先空出一格放複製品");
+                        return;
+                    }
+                    if (!mirror.canApply(now, plugin.items().generator())) {
+                        fail(player, mirror.name() + "不能複製這件");
+                        return;
+                    }
+                    if (!takeOne(player, mirror)) {
+                        fail(player, "身上沒有" + mirror.name() + "了");
+                        return;
+                    }
+                    final PlayerState state = plugin.players().get(player);
+                    final ItemStack copy = currencies.mirror(mirror, stack, player.getName(), state.hasCharacter() ? state.character().id() : null);
+                    if (copy == null) {
+                        // 不會走到這裡（上面確認過了）；真的做不出來就把那顆還回去
+                        for (final ItemStack left : player.getInventory().addItem(currencies.create(mirror, 1)).values()) {
+                            player.getWorld().dropItemNaturally(player.getLocation(), left);
+                        }
+                        fail(player, mirror.name() + "不能複製這件");
+                        return;
+                    }
+                    for (final ItemStack left : player.getInventory().addItem(copy).values()) {
+                        tw.exilecore.monster.MonsterListener.dropOwned(plugin, player.getLocation(), left, player, true); // 剛確認過有空位，保險：真的放不下就掉在腳邊、只有他撿得到
+                    }
+                    plugin.players().markDirty(player);
+                    player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1.0f, 0.8f);
+                    player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.4f);
+                    player.sendMessage(plugin.text().prefixed("<#9fd8ff>" + tw.exilecore.item.ItemRenderer.escape(mirror.name())
+                            + "<gray>照出了一件鏡像複製品：").append(copy.effectiveName()));
                 }, () -> { });
     }
 

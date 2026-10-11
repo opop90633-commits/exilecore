@@ -107,6 +107,8 @@
   .bar span { position: relative; }
   .meta tbody tr { cursor: default; }
   .meta tbody tr.link { cursor: pointer; }
+  /* 技能那一欄很長（召喚物合計會列出每一種）：讓它換行，不要把後面的欄位擠出畫面 */
+  .meta td.wrap { white-space: normal; min-width: 160px; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
@@ -218,11 +220,11 @@
 
   // ---- 管理員統計（2026-10）：估計 DPS 排行、技能／輔助／傳奇使用率、昇華分布 ----
   let meta = null;
-  const metaFilter = { min: 1, cls: "" };
+  const metaFilter = { min: 1, cls: "", sort: "estimate" };
   function renderMeta() {
     document.title = "星骸 統計";
     const back = el("span", { cls: "back", role: "link", tabindex: "0", text: "← 所有角色", onclick: () => { location.hash = ""; } });
-    if (!admin) { main.replaceChildren(back, el("div", { cls: "empty", text: "要先在同一個瀏覽器登入管理網頁（遊戲裡 /ec web）" })); return; }
+    if (!admin) { main.replaceChildren(back, el("div", { cls: "empty", text: "這個網址（" + location.host + "）還沒登入管理網頁。在遊戲裡打 /ec web、用它給的連結登入之後，把網址列的 /admin 改成 /builds#!meta 就看得到（前面主機那段不要改：localhost 和 127.0.0.1 算不同的網站，登入不會互通）。" })); return; }
     if (!meta) {
       main.replaceChildren(back, el("div", { cls: "empty", text: "讀取中…" }));
       fetch("admin/api/builds/meta", { cache: "no-cache", credentials: "same-origin" }).then(r => { if (!r.ok) throw new Error(); return r.json(); })
@@ -235,24 +237,33 @@
       ...(list ? list.classes : []).map(c => el("option", { value: c.id, text: c.name })));
     select.value = metaFilter.cls;
     const body = el("div");
-    // 2026-10：召喚技能全部加總（召喚物是一起打的）；跟最高的單一技能比，取大的
+    // 2026-10：自己放的技能一次只能放一個，取最高的那個；召喚物是同時在打的，全部加總再加上去
+    //（把自己的技能全部加起來會重複算：每個數字都是「整秒都在放這一招」）
     function best(c) {
-      let top = null;
+      let own = null;
       const summons = [];
       for (const d of c.dps || []) {
         if (String(d.name).includes("（召喚物")) summons.push(d);
-        if (!top || d.dps > top.dps) top = d;
+        else if (!own || Number(d.dps) > Number(own.dps)) own = d;
       }
-      if (top) top = { name: top.name, dps: top.dps, main: String(top.name).replace(/（召喚物.*$/, "") };
-      if (summons.length > 1) {
-        const sum = summons.reduce((a, d) => a + Number(d.dps), 0);
-        if (!top || sum > top.dps) {
-          const lead = summons.slice().sort((a, b) => b.dps - a.dps)[0];
-          top = { name: "召喚物合計（" + summons.length + " 種：" + summons.map(d => String(d.name).replace(/（召喚物.*$/, "")).join("、") + "）",
-            dps: sum, main: String(lead.name).replace(/（召喚物.*$/, "") };
-        }
-      }
-      return top;
+      if (!own && !summons.length) return null;
+      const sum = summons.reduce((a, d) => a + Number(d.dps), 0);
+      const short = d => String(d.name).replace(/（召喚物.*$/, "");
+      const lead = summons.slice().sort((a, b) => b.dps - a.dps)[0];
+      const parts = [];
+      if (own) parts.push(summons.length ? own.name + " " + Number(own.dps).toLocaleString() : own.name);
+      if (summons.length === 1) parts.push(own ? lead.name + " " + sum.toLocaleString() : lead.name);
+      else if (summons.length > 1) parts.push("召喚物 " + summons.length + " 種 " + sum.toLocaleString() + "（" + summons.map(short).join("、") + "）");
+      return { name: parts.join(" ＋ "), dps: (own ? Number(own.dps) : 0) + sum, main: !own || (lead && sum > Number(own.dps)) ? short(lead) : own.name };
+    }
+    function measuredCell(c, estimate) {
+      const m = c.measured;
+      if (!m || !Number(m.dps)) return el("td", { cls: "num muted", text: "—", title: "還沒打過訓練假人（要打滿 8 秒才記）" });
+      const times = estimate > 0 ? Number(m.dps) / estimate : 0;
+      const td = el("td", { cls: "num", text: Number(m.dps).toLocaleString() + (times ? "　×" + (times >= 10 ? Math.round(times) : times.toFixed(1)) : "") });
+      td.title = m.dummy + "・" + Number(m.seconds).toFixed(1) + " 秒" + (Number(m.dot) > 0 ? "・持續傷害佔 " + m.dot + "%" : "")
+        + "・" + new Date(Number(m.at)).toLocaleString();
+      return td;
     }
     function count(rows, keyFn) {
       const map = new Map();
@@ -273,25 +284,35 @@
         el("thead", null, el("tr", null, el("th", { text: "名稱" }), el("th", { cls: "num", text: "人數" }), el("th", { cls: "num", text: "使用率" }),
           extra ? el("th", { cls: "num", text: "主力", title: "DPS 最高的技能是這個的人數" }) : null)), tbody)));
     }
+    function sortHead(text, key) {
+      const th = el("th", { cls: "num", text: text + (metaFilter.sort === key ? " ▼" : ""), title: "照這一欄排序" });
+      th.style.cursor = "pointer";
+      th.addEventListener("click", () => { metaFilter.sort = key; fill(); });
+      return th;
+    }
     function fill() {
       const rows = meta.characters.filter(c => c.level >= metaFilter.min && (!metaFilter.cls || c.classId === metaFilter.cls));
       const total = rows.length;
       // DPS 排行
-      const ranked = rows.map(c => ({ c, b: best(c) })).filter(x => x.b).sort((a, b) => b.b.dps - a.b.dps);
+      // 2026-10：假人實測（打訓練假人至少 8 秒、三天內最高的一段）跟估計值並排；點欄位標題換排序
+      const real = c => (c.measured && Number(c.measured.dps)) || 0;
+      const byReal = metaFilter.sort === "measured";
+      const ranked = rows.map(c => ({ c, b: best(c) || (real(c) ? { name: "", dps: 0, main: "" } : null) })).filter(x => x.b)
+        .sort((a, b) => byReal ? (real(b.c) - real(a.c)) || (b.b.dps - a.b.dps) : b.b.dps - a.b.dps);
       const dpsBody = el("tbody");
       ranked.slice(0, 100).forEach((x, i) => {
         const tr = el("tr", { cls: "link", onclick: () => { location.hash = encodeURIComponent(x.c.name); } },
           el("td", { cls: "num", text: i + 1 }), el("td", { cls: "name", text: x.c.name + (x.c.hidden ? "　🔒" : "") }),
           el("td", { text: x.c.ascendancy || x.c.className }), el("td", { cls: "num", text: x.c.level }),
-          el("td", { text: x.b.name }), el("td", { cls: "num", text: Number(x.b.dps).toLocaleString() }));
+          el("td", { cls: "num", text: Number(x.b.dps).toLocaleString() }), measuredCell(x.c, x.b.dps), el("td", { cls: "wrap", text: x.b.name }));
         tr.children[2].style.color = x.c.classColor || "";
         dpsBody.append(tr);
       });
       if (!ranked.length) dpsBody.append(el("tr", null, el("td", { cls: "muted", text: "還沒有資料（角色在線時每 5 分鐘記一次）" })));
-      const dpsCard = el("div", { cls: "card meta" }, el("h3", { text: "估計每秒傷害排行（每個角色取 DPS 最高的技能；召喚技能加總）" }),
-        el("p", { cls: "muted", style: "margin:0 0 8px", text: "跟 /stats 的「✦ 技能 每秒」同一套算法：平均一下 × 暴擊期望 × 每秒次數 × 複擊；召喚技能算「一隻召喚物 × 同時最多幾隻」；沒算怪物的護甲抗性、持續傷害、打到幾隻。" }),
+      const dpsCard = el("div", { cls: "card meta" }, el("h3", { text: "估計每秒傷害排行（自己放的技能取最高的一個＋召喚物全部加總）" }),
+        el("p", { cls: "muted", style: "margin:0 0 8px", text: "估計值跟 /stats 的「✦ 技能 每秒」同一套算法：平均一下 × 暴擊期望 × 每秒次數（含連射的每一波與餘震）；召喚技能算「一隻召喚物 × 同時最多幾隻」。自己放的技能一次只能放一個，所以只取最高的；召喚物是同時在打的，全部加上去。估計值沒算怪物的護甲抗性、流血點燃中毒、戰吼與怒氣這些打起來才有的加成，跟實際可以差到幾十倍——「假人實測」是這個角色三天內打訓練假人（至少 8 秒）最高的一段，後面的倍數是實測 ÷ 估計。點「每秒傷害」或「假人實測」換排序。" }),
         el("div", { cls: "scroll" }, el("table", null, el("thead", null, el("tr", null, el("th", { cls: "num", text: "#" }), el("th", { text: "角色" }),
-          el("th", { text: "職業" }), el("th", { cls: "num", text: "等級" }), el("th", { text: "技能" }), el("th", { cls: "num", text: "每秒傷害" }))), dpsBody)));
+          el("th", { text: "職業" }), el("th", { cls: "num", text: "等級" }), sortHead("每秒傷害", "estimate"), sortHead("假人實測", "measured"), el("th", { text: "技能" }))), dpsBody)));
       const mainSkill = new Map();
       for (const x of ranked) mainSkill.set(x.b.main, (mainSkill.get(x.b.main) || 0) + 1);
       body.replaceChildren(
@@ -321,7 +342,9 @@
     chest: '<path d="M10 5l8 4 8-4 6 6-4 5v15H8V16l-4-5z" fill="C"/>',
     legs: '<path d="M9 4h18v8l-3 21h-5l-1-15-1 15h-5L9 12z" fill="C"/>',
     feet: '<path d="M8 6h7v18h12c3 0 4 3 4 6H6v-3z" fill="C"/>',
-    jewel: '<path d="M18 4l12 9-5 17H11L6 13z" fill="C"/>'
+    jewel: '<path d="M18 4l12 9-5 17H11L6 13z" fill="C"/>',
+    charm: '<path d="M18 3c5 0 9 4 9 9 0 4-2 6-4 8v6l-5 7-5-7v-6c-2-2-4-4-4-8 0-5 4-9 9-9z" fill="C"/><circle cx="18" cy="12" r="3.5" fill="#15121c"/>',
+    flask: '<rect x="14" y="3" width="8" height="4" rx="1" fill="C"/><path d="M15 7h6v6l7 12c2 4 0 8-4 8H12c-4 0-6-4-4-8l7-12z" fill="C"/><path d="M11 24h14l1.500 2.500c1 2 0 3.500-2 3.500H11.500c-2 0-3-1.500-2-3.500z" fill="#15121c" opacity=".45"/>'
   };
   const RARITY_COLOR = { normal: "#c8c8c8", magic: "#8888ff", rare: "#ffff77", unique: "#af6025" };
   function iconFor(item) {
@@ -393,11 +416,18 @@
       belt: "g-belt", ring2: "g-ring2", legs: "g-legs", feet: "g-feet" };
     for (const s of c.gear) gear.append(slotBox(s.label, s.item, place[s.slot] || ""));
     const gearCard = el("div", { cls: "card" }, el("h3", { text: "裝備" }), gear);
-    if (c.jewels && c.jewels.length) {
-      const jewels = el("div", { cls: "jewels" });
-      for (const j of c.jewels) jewels.append(slotBox("珠寶", j, ""));
-      gearCard.append(el("h3", { text: "天賦樹珠寶", style: "margin-top:14px" }), jewels);
-    }
+    // 2026-10：護符、藥劑、天賦樹珠寶都固定列出來（沒有的寫「沒有」，不是整段不見）
+    const extra = (title, slots, empty) => {
+      gearCard.append(el("h3", { text: title, style: "margin-top:14px" }));
+      if (!slots.length) { gearCard.append(el("div", { cls: "muted", style: "font-size:13px", text: empty })); return; }
+      const row = el("div", { cls: "jewels" });
+      for (const s of slots) row.append(slotBox(s.label, s.item, ""));
+      gearCard.append(row);
+    };
+    if (c.charms) extra("護符（" + c.charms.filter(s => s.item).length + "／" + c.charms.length + " 格）", c.charms, "還沒有護符欄");
+    if (c.flasks) extra("藥劑", c.flasks, "沒有藥劑欄");
+    extra("天賦樹珠寶" + (c.jewels && c.jewels.length ? "（" + c.jewels.length + " 顆）" : ""),
+      (c.jewels || []).map(j => ({ label: "珠寶", item: j })), "天賦樹的珠寶孔裡沒有放珠寶");
     // 天賦
     const treeCard = el("div", { cls: "card" }, el("h3", { text: "天賦" }),
       el("p", { cls: "muted", style: "margin:0 0 10px", text: "配了 " + (c.passiveCount || 0) + " 點" }),
@@ -413,8 +443,24 @@
     const skills = el("div", { cls: "skills" });
     if (!c.skills.length) skills.append(el("div", { cls: "muted", text: "沒有技能" }));
     for (const s of c.skills) {
-      skills.append(el("div", { cls: "skill" }, el("span", { cls: "s", text: s.name }), el("span", { cls: "muted", text: "Lv." + s.level }),
-        ...s.supports.map(x => el("span", { cls: "chip", text: x }))));
+      // 2026-10：滑鼠移到技能、輔助寶石上看說明（跟遊戲裡寫的一樣；舊的快照沒有說明就只有名字）
+      const hoverTip = (node, title, color, lines) => {
+        if (!lines || !lines.length) return node;
+        const item = { name: [[title, color, true]], lore: lines };
+        node.tabIndex = 0;
+        node.style.cursor = "help";
+        node.addEventListener("mouseenter", () => showTip(item, node));
+        node.addEventListener("mouseleave", hideTip);
+        node.addEventListener("focus", () => showTip(item, node));
+        node.addEventListener("blur", hideTip);
+        node.addEventListener("click", () => tip.style.display === "block" ? hideTip() : showTip(item, node));
+        return node;
+      };
+      const info = new Map((s.supportInfo || []).map(x => [x.name, x.lines]));
+      skills.append(el("div", { cls: "skill" },
+        hoverTip(el("span", { cls: "s", text: s.name }), s.name + "　Lv." + s.level, "#ffd27f", s.lines),
+        el("span", { cls: "muted", text: "Lv." + s.level }),
+        ...s.supports.map(x => hoverTip(el("span", { cls: "chip", text: x }), x + "（輔助寶石）", "#9fd0ff", info.get(x)))));
     }
     const skillCard = el("div", { cls: "card" }, el("h3", { text: "技能" }), skills);
     // 屬性

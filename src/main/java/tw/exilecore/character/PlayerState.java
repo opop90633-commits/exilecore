@@ -305,15 +305,19 @@ public final class PlayerState {
     }
 
     public double maxLife() {
+        return maxLife(sheet);
+    }
+
+    /** 某張屬性表的最大生命（2026-10：角色面板拿「沒有增益」的表來比，看增益有沒有生效）。 */
+    public static double maxLife(final StatSheet sheet) {
         if (StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
             return 1;
         }
         // 煉獄使者的貝達特（PoE2）：每一個保留 25% 生命
         final int beidat = (StatKeys.flag(sheet, StatKeys.BEIDAT_HAND) ? 1 : 0) + (StatKeys.flag(sheet, StatKeys.BEIDAT_GAZE) ? 1 : 0)
                 + (StatKeys.flag(sheet, StatKeys.BEIDAT_WILL) ? 1 : 0);
-        final double life = Math.max(1, sheet.get(StatKeys.LIFE_MAX) * (1 - 0.25 * beidat));
-        // 2026-10：光環保留生命（元素的庇護）：最大生命照保留的比例縮小，跟魔力保留一樣沒有額外限制（最多保留 99%，至少留 1 點）
-        return life; // 2026-10：光環改保留精魂，生命不再被保留
+        // 2026-10：光環改保留精魂，生命不再被保留
+        return Math.max(1, sheet.get(StatKeys.LIFE_MAX) * (1 - 0.25 * beidat));
     }
 
     public double mana() {
@@ -322,6 +326,11 @@ public final class PlayerState {
 
     /** 最大魔力：屬性表的最大魔力扣掉光環保留的部分（保留只縮小魔力池，不影響回復速度：照 PoE2 的精神值精神，比較好用）。 */
     public double maxMana() {
+        return maxMana(sheet);
+    }
+
+    /** 某張屬性表的最大魔力。 */
+    public static double maxMana(final StatSheet sheet) {
         if (StatKeys.flag(sheet, StatKeys.FLAG_BLOOD_MAGIC)) {
             return 0; // 血魔法：沒有魔力
         }
@@ -350,6 +359,11 @@ public final class PlayerState {
     }
 
     public double maxEnergyShield() {
+        return maxEnergyShield(sheet);
+    }
+
+    /** 某張屬性表的最大能量護盾。 */
+    public static double maxEnergyShield(final StatSheet sheet) {
         if (StatKeys.flag(sheet, StatKeys.FLAG_ELDRITCH_BATTERY)) {
             return 0;
         }

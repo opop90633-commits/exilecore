@@ -53,6 +53,8 @@ public final class EconomySources {
     public static final String FEE_BUY = "fee_buy";
     /** 交易所掛單的手續費。 */
     public static final String FEE_EXCHANGE = "fee_exchange";
+    /** 公會：建立公會的費用、捐給公會換公會經驗。 */
+    public static final String GUILD = "guild";
 
     /** 來源給人看的名字。 */
     public static String sourceName(final String source) {
@@ -78,13 +80,14 @@ public final class EconomySources {
             case FEE_LIST -> "上架手續費";
             case FEE_BUY -> "購買手續費";
             case FEE_EXCHANGE -> "交易所手續費";
+            case GUILD -> "公會（建立、捐獻）";
             default -> source;
         };
     }
 
     /** 全部的來源（網頁的名稱表照這個順序）。 */
     public static final List<String> ALL = List.of(DROP, FILTER, SALVAGE, NPC, ADMIN, MERITS, CRAFT, SKILL, MAP_DEVICE, HEIST, TRASH, DELETE, VENDOR, VENDOR_REFRESH,
-            GAMBLE, SHOP, RESPEC, FEE_TRADE, FEE_LIST, FEE_BUY, FEE_EXCHANGE);
+            GAMBLE, SHOP, RESPEC, FEE_TRADE, FEE_LIST, FEE_BUY, FEE_EXCHANGE, GUILD);
 
     private EconomySources() {
     }

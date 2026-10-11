@@ -412,10 +412,16 @@ public final class GemService {
         return config().support(supportId) == null ? null : create(GemData.support(supportId), 1);
     }
 
-    /** 怪物掉落的一顆未切割寶石（等級或階級依怪物等級擲）。 */
+    /**
+     * 怪物掉落的一顆未切割寶石（等級或階級依怪物等級擲）。技能寶石擲到 skills.yml 的 uncut_level_scale 有寫的等級時照那個機率留下，
+     * 沒留下回傳 null（這一顆不掉；掉落那邊碰到 null 會跳過）。
+     */
     public ItemStack createDrop(final boolean skill, final int monsterLevel, final RandomGenerator random) {
-        return skill ? create(GemData.uncutSkill(config().rollUncutLevel(monsterLevel, random)), 1)
-                : create(GemData.uncutSupport(config().rollSupportTier(monsterLevel, random)), 1);
+        if (!skill) {
+            return create(GemData.uncutSupport(config().rollSupportTier(monsterLevel, random)), 1);
+        }
+        final int level = config().rollUncutLevel(monsterLevel, random);
+        return config().keepsUncut(level, random) ? create(GemData.uncutSkill(level), 1) : null;
     }
 
     // ---- 右鍵 ----

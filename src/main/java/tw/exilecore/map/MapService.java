@@ -1201,11 +1201,7 @@ public final class MapService {
             } else if (maps != null && location.getWorld().equals(maps)) {
                 final MapInstance instance = instanceAt(location);
                 if (instance != null && inExitPortal(instance, location)) {
-                    if (instance.singleEntry() && !player.isSneaking()) {
-                        // 極境、金庫之主離開就不能再回來：門就在入口後面，不要一不小心走進去
-                        player.sendActionBar(plugin.text().parse("<red>" + singleEntryName(instance) + "離開就不能再回來<gray>：真的要走，蹲下（Shift）再走進門"));
-                        continue;
-                    }
+                    // 2026-10：極境、金庫之主走進出口門就直接離開（不再要求蹲下確認）
                     sendToCamp(player);
                     player.sendMessage(plugin.text().prefixed(instance.singleEntry()
                             ? "<gray>離開了 " + ItemRenderer.escape(instance.label()) + "<dark_gray>（" + singleEntryName(instance) + "每個人只能進一次，不能再回去了）"

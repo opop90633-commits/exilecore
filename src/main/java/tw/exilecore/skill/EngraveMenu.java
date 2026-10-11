@@ -41,18 +41,47 @@ final class EngraveMenu extends Menu {
     /** 第五排的格子 → 技能面板的位置（面板有三頁 27 格，這裡只排有技能的，最多 9 個）。 */
     private final List<Integer> upgradePositions = new ArrayList<>();
     private int page;
-    /** 最上面一排的分類（2026-10）：格子 → {標籤們, 名稱, 圖示}；第 0 格「全部」。 */
+    /**
+     * 最上面一排的分類（2026-10）：格子 → {分類代號, 名稱, 圖示}；第 0 格「全部」。
+     * 2026-10 改準一點（{@link #inCategory}）：以前只看標籤，拿弓選「投射物」看不到萬箭齊落、召霆矢、雷樁矢、瘴域
+     * （落在地上的，沒有投射物標籤），選「攻擊」看不到霜鏃、連珠（弓的增益，算法術）。
+     */
     private static final int[] FILTER_SLOTS = {0, 1, 2, 3, 5, 6, 7, 8};
     private static final String[][] FILTERS = {
             {"", "全部", "NETHER_STAR"},
-            {tw.exilecore.stats.Tags.ATTACK, "攻擊", "IRON_SWORD"},
-            {tw.exilecore.stats.Tags.SPELL, "法術", "BLAZE_ROD"},
-            {tw.exilecore.stats.Tags.MELEE, "近戰", "IRON_AXE"},
-            {tw.exilecore.stats.Tags.PROJECTILE, "投射物", "ARROW"},
-            {tw.exilecore.stats.Tags.AREA, "範圍", "FIRE_CHARGE"},
-            {tw.exilecore.stats.Tags.MINION, "召喚", "ZOMBIE_HEAD"},
-            {tw.exilecore.stats.Tags.AURA + "," + tw.exilecore.stats.Tags.HERALD + "," + tw.exilecore.stats.Tags.WARCRY, "光環・戰吼", "BEACON"},
+            {"attack", "攻擊・武器技能", "IRON_SWORD"},
+            {"spell", "法術（不限武器）", "BLAZE_ROD"},
+            {"melee", "近戰", "IRON_AXE"},
+            {"ranged", "投射物・弓弩", "ARROW"},
+            {"area", "範圍", "FIRE_CHARGE"},
+            {"minion", "召喚", "ZOMBIE_HEAD"},
+            {"buff", "光環・戰吼・增益", "BEACON"},
     };
+    /** 遠程武器（弓、弩的技能都算「投射物・弓弩」）。 */
+    private static final java.util.Set<String> RANGED_WEAPONS = java.util.Set.of(tw.exilecore.stats.Tags.BOW, tw.exilecore.stats.Tags.CROSSBOW);
+    /** 近戰武器（錘、長棍、獸魂符、「近戰武器」的技能都算「近戰」；矛會投擲，照標籤）。 */
+    private static final java.util.Set<String> MELEE_WEAPONS = java.util.Set.of("mace", tw.exilecore.stats.Tags.QUARTERSTAFF, "talisman",
+            tw.exilecore.stats.Tags.MELEE);
+
+    /** 技能在不在這個分類裡（分類代號見 {@link #FILTERS}）。 */
+    static boolean inCategory(final String category, final SkillDefinition definition) {
+        final java.util.Set<String> tags = definition.tags();
+        final java.util.Set<String> weapons = definition.weapons();
+        return switch (category) {
+            case "" -> true;
+            // 有攻擊標籤的，加上要拿特定武器才能用的（弓的霜鏃、連珠這種增益）
+            case "attack" -> tags.contains(tw.exilecore.stats.Tags.ATTACK) || !weapons.isEmpty();
+            // 不限武器的法術（要拿武器的法術放在「攻擊・武器技能」）
+            case "spell" -> tags.contains(tw.exilecore.stats.Tags.SPELL) && weapons.isEmpty();
+            case "melee" -> tags.contains(tw.exilecore.stats.Tags.MELEE) || !java.util.Collections.disjoint(weapons, MELEE_WEAPONS);
+            case "ranged" -> tags.contains(tw.exilecore.stats.Tags.PROJECTILE) || !java.util.Collections.disjoint(weapons, RANGED_WEAPONS);
+            case "area" -> tags.contains(tw.exilecore.stats.Tags.AREA);
+            case "minion" -> tags.contains(tw.exilecore.stats.Tags.MINION);
+            case "buff" -> tags.contains(tw.exilecore.stats.Tags.AURA) || tags.contains(tw.exilecore.stats.Tags.HERALD)
+                    || tags.contains(tw.exilecore.stats.Tags.WARCRY) || definition.mechanic() == Mechanic.GUARD;
+            default -> tags.contains(category);
+        };
+    }
     /** 現在選的分類（FILTERS 的第幾個）。 */
     private int filter;
 
@@ -108,7 +137,7 @@ final class EngraveMenu extends Menu {
     private boolean matches(final SkillDefinition definition) {
         switch (WEAPONS[weapon][0]) {
             case "hand" -> {
-                if (!definition.usableWith(plugin.players().get(player).weaponTags())) {
+                if (!definition.usableWith(handTags)) {
                     return false;
                 }
             }
@@ -131,15 +160,30 @@ final class EngraveMenu extends Menu {
         if (!Menu.matches(query, tw.exilecore.gui.CodexMenu.skillSearchText(definition))) {
             return false;
         }
-        if (filter == 0) {
-            return true;
+        return inCategory(FILTERS[filter][0], definition);
+    }
+
+    /** 這次畫面用的手上武器標籤（{@link #handTags()}）。 */
+    private java.util.Set<String> handTags = java.util.Set.of();
+
+    /**
+     * 手上武器的標籤（「手上武器能用的」篩選用）。2026-10：以前只看角色生效中的武器——弓的需求（等級、敏捷）還不夠時
+     * 弓沒生效、標籤是空的，只剩共用跟近戰的技能，弓的技能全部不見。現在沒生效時照主手那把的種類篩。
+     */
+    private java.util.Set<String> handTags() {
+        final PlayerState state = plugin.players().get(player);
+        if (!state.weaponTags().isEmpty()) {
+            return state.weaponTags();
         }
-        for (final String tag : FILTERS[filter][0].split(",")) {
-            if (definition.tags().contains(tag)) {
-                return true;
-            }
-        }
-        return false;
+        final tw.exilecore.item.ItemBase base = mainHandBase();
+        return base != null && base.isWeapon() ? base.tags() : java.util.Set.of();
+    }
+
+    /** 主手那把的基底（沒拿、不是本服的物品回傳 null）。 */
+    private tw.exilecore.item.ItemBase mainHandBase() {
+        final ItemStack stack = tw.exilecore.character.Gear.mainHand(plugin.players().get(player));
+        return stack == null || stack.isEmpty() ? null
+                : plugin.items().read(stack).map(data -> plugin.items().repository().base(data.base())).orElse(null);
     }
 
     EngraveMenu(final ExileCore plugin, final Player player, final SkillService service, final GemService.UncutSource source, final int level) {
@@ -156,6 +200,7 @@ final class EngraveMenu extends Menu {
     @Override
     protected void draw() {
         frame();
+        handTags = handTags();
         all.clear();
         for (final SkillDefinition definition : service.config().visible()) {
             if (definition.engravable() && definition.tier() <= level && matches(definition)) {
@@ -220,6 +265,9 @@ final class EngraveMenu extends Menu {
         final java.util.Set<String> weaponTags = state.weaponTags();
         final List<String> weaponLore = new ArrayList<>();
         weaponLore.add("<gray>手上：<white>" + weaponName(weaponTags));
+        if (weaponTags.isEmpty() && !handTags.isEmpty()) {
+            weaponLore.add("<red>這把的需求還不夠，現在沒生效<gray>（照它的種類篩選）");
+        }
         weaponLore.add("");
         for (int w = 0; w < WEAPONS.length; w++) {
             weaponLore.add((w == weapon ? "<#f5b942>▶ " : "<gray>  ") + WEAPONS[w][1]);
@@ -270,7 +318,7 @@ final class EngraveMenu extends Menu {
 
     private ItemStack upgradeIcon(final PlayerState state, final SkillLoadout.Entry entry) {
         if (entry == null) {
-            return icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>技能面板的空格", "<dark_gray>（升級用：面板上的技能會列在這一排）");
+            return uiIcon("slot_skill", Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>技能面板的空格", "<dark_gray>（升級用：面板上的技能會列在這一排）");
         }
         final SkillDefinition definition = service.config().skill(entry.skillId());
         final String name = definition == null ? entry.skillId() : definition.name();
@@ -387,9 +435,7 @@ final class EngraveMenu extends Menu {
 
     /** 主手武器的名稱（角色裝備的那把）。 */
     private String weaponName(final java.util.Set<String> tags) {
-        final ItemStack stack = tw.exilecore.character.Gear.mainHand(plugin.players().get(player));
-        final tw.exilecore.item.ItemBase base = stack == null || stack.isEmpty() ? null
-                : plugin.items().read(stack).map(data -> plugin.items().repository().base(data.base())).orElse(null);
+        final tw.exilecore.item.ItemBase base = mainHandBase();
         return base == null ? (tags.isEmpty() ? "徒手" : "武器") : ItemRenderer.escape(base.name());
     }
 }

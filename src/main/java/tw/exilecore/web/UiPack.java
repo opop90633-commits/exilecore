@@ -70,7 +70,9 @@ public final class UiPack {
             java.util.stream.Stream.of("key_left", "key_right", "key_sneak_left", "key_sneak_right",
                     "arrow_up", "arrow_down", "arrow_left", "arrow_right", "nav_back", "nav_prev", "nav_next", "help", "community",
                     // 角色面板空著的裝備欄（2026-10）
-                    "slot_main", "slot_off", "slot_head", "slot_chest", "slot_legs", "slot_feet", "slot_ring", "slot_amulet", "slot_belt"),
+                    "slot_main", "slot_off", "slot_head", "slot_chest", "slot_legs", "slot_feet", "slot_ring", "slot_amulet", "slot_belt",
+                    // 2026-10：護符欄、技能面板的空格、輔助孔、空的角色格（_locked = 還沒開：暗一點、右下角一個鎖）
+                    "slot_charm", "slot_charm_locked", "slot_skill", "slot_support", "slot_support_locked", "slot_character"),
             // 倉庫地圖頁的階級頁籤（2026-10）：格子上直接寫 T1–T16
             java.util.stream.IntStream.rangeClosed(1, 16).mapToObj(tier -> "map_t" + tier)).toList();
     /** Minecraft 26.2 的資源包格式。 */
@@ -130,7 +132,12 @@ public final class UiPack {
      * 物品定義改成「custom_model_data 字串 0 是 unique:代號 就畫我們的圖，不然照原版」，原版的部分照抄客戶端的定義
      * （{@code web/vanilla_items/}），所以其他同種物品不受影響。
      */
-    public record UniqueSkin(String id, String vanillaItem, Kind kind) {
+    public record UniqueSkin(String id, String vanillaItem, Kind kind, boolean chase) {
+        /** 不是追逐級的（舊的呼叫法）。 */
+        public UniqueSkin(final String id, final String vanillaItem, final Kind kind) {
+            this(id, vanillaItem, kind, false);
+        }
+
         public enum Kind {
             /** 拿在手上斜握的武器（劍、錘、法杖…）。 */
             HANDHELD,
@@ -194,7 +201,7 @@ public final class UiPack {
                     : vanillaItem.equals("crossbow") ? UniqueSkin.Kind.CROSSBOW
                     : vanillaItem.endsWith("_spear") ? UniqueSkin.Kind.SPEAR
                     : base.isWeapon() ? UniqueSkin.Kind.HANDHELD : UniqueSkin.Kind.GENERATED;
-            skins.add(new UniqueSkin(unique.id(), vanillaItem, kind));
+            skins.add(new UniqueSkin(unique.id(), vanillaItem, kind, unique.chase()));
         }
         skins.sort(java.util.Comparator.comparing(UniqueSkin::id));
         return skins;
@@ -795,9 +802,10 @@ public final class UiPack {
                     yield spearModel(skin.id());
                 }
             };
-            // 2026-10：專屬外觀的傳奇在格子裡也有淺淺的同色外框（手上、地上照專屬外觀本身）
+            // 2026-10：專屬外觀的傳奇在格子裡也有淺淺的同色外框（手上、地上照專屬外觀本身）；追逐級的外框是淡淡的彩色漸層
             cases.computeIfAbsent(skin.vanillaItem(), key -> new JsonArray()).add(selectCase(UniqueArt.modelKey(skin.id()),
-                    framedInGui(UNIQUE_FRAME, plain(UNIQUE_TEX + skin.id()), model)));
+                    skin.chase() ? framedInGui(plain("exilecore:item/ui/chase_frame"), plain(UNIQUE_TEX + skin.id()), model)
+                            : framedInGui(UNIQUE_FRAME, plain(UNIQUE_TEX + skin.id()), model)));
             UNIQUE_ITEMS.add(skin.vanillaItem());
         }
     }
@@ -1112,6 +1120,14 @@ public final class UiPack {
         frameTextures.addProperty("t", "exilecore:item/ui/rarity_frame");
         frame.add("textures", frameTextures);
         files.put("assets/exilecore/models/item/ui/rarity_frame.json", json(frame));
+        // 追逐級傳奇的外框（2026-10）：貼圖本身就是彩色的，不著色
+        files.put("assets/exilecore/textures/item/ui/chase_frame.png", png(chaseFrame()));
+        final JsonObject chase = new JsonObject();
+        chase.addProperty("parent", "exilecore:item/ui/layer_frame");
+        final JsonObject chaseTextures = new JsonObject();
+        chaseTextures.addProperty("t", "exilecore:item/ui/chase_frame");
+        chase.add("textures", chaseTextures);
+        files.put("assets/exilecore/models/item/ui/chase_frame.json", json(chase));
     }
 
     /** 在格子裡（gui）：rgb 顏色的淺外框＋gui 的樣子；其他地方（手上、地上）照 other。 */
@@ -1125,8 +1141,13 @@ public final class UiPack {
         final JsonArray tints = new JsonArray();
         tints.add(tint);
         tinted.add("tints", tints);
+        return framedInGui(tinted, gui, other);
+    }
+
+    /** 在格子裡（gui）：frame 這個外框模型＋gui 的樣子；其他地方（手上、地上）照 other。 */
+    static JsonObject framedInGui(final JsonObject frame, final JsonObject gui, final JsonObject other) {
         final JsonArray layers = new JsonArray();
-        layers.add(tinted);
+        layers.add(frame);
         layers.add(gui.deepCopy());
         final JsonObject composite = new JsonObject();
         composite.addProperty("type", "minecraft:composite");
@@ -1178,6 +1199,36 @@ public final class UiPack {
                     default -> 0x06;      // 中間一點點底色
                 };
                 image.setRGB(x, y, alpha << 24 | 0xFFFFFF);
+            }
+        }
+        return image;
+    }
+
+    /**
+     * 追逐級傳奇的外框貼圖（2026-10）：淡淡的彩色漸層——顏色繞著外框轉一圈（紅→黃→綠→青→藍→紫→紅），飽和度壓低成粉彩；
+     * 濃淡跟一般的稀有度外框一樣（最外圈最亮，往裡面慢慢淡掉）。貼圖本身帶顏色，物品定義裡不著色。
+     */
+    static BufferedImage chaseFrame() {
+        final BufferedImage image = canvas();
+        final double centre = (SIZE - 1) / 2.0;
+        for (int y = 0; y < SIZE; y++) {
+            for (int x = 0; x < SIZE; x++) {
+                final int edge = Math.min(Math.min(x, y), Math.min(SIZE - 1 - x, SIZE - 1 - y));
+                final int alpha = switch (edge) {
+                    case 0 -> 0;          // 最外一圈留給格子本身的框線
+                    case 1 -> 0xA8;
+                    case 2 -> 0x7C;
+                    case 3 -> 0x54;
+                    case 4 -> 0x34;
+                    case 5 -> 0x1E;
+                    case 6 -> 0x0E;
+                    default -> 0x06;
+                };
+                // 從左上角開始順時針轉一圈
+                final double angle = Math.atan2(y - centre, x - centre);
+                final float hue = (float) ((angle + Math.PI * 0.75) / (2 * Math.PI));
+                final int rgb = java.awt.Color.HSBtoRGB(hue - (float) Math.floor(hue), 0.5f, 1.0f) & 0xFFFFFF;
+                image.setRGB(x, y, alpha << 24 | rgb);
             }
         }
         return image;
@@ -2460,16 +2511,106 @@ public final class UiPack {
                     "................",
                     "................",
                     "................",
+                    "................"}),
+            Map.entry("slot_charm", new String[] {
+                    ".......##.......",
+                    "......#..#......",
+                    "......#..#......",
+                    ".......##.......",
+                    ".....######.....",
+                    "....########....",
+                    "...##########...",
+                    "...###.##.###...",
+                    "...##.####.##...",
+                    "...###.##.###...",
+                    "....########....",
+                    ".....######.....",
+                    "......####......",
+                    ".......##.......",
+                    "................",
+                    "................"}),
+            Map.entry("slot_skill", new String[] {
+                    "................",
+                    "................",
+                    "....########....",
+                    "...##########...",
+                    "..############..",
+                    ".##############.",
+                    ".##############.",
+                    "..############..",
+                    "...##########...",
+                    "....########....",
+                    ".....######.....",
+                    "......####......",
+                    ".......##.......",
+                    "................",
+                    "................",
+                    "................"}),
+            Map.entry("slot_support", new String[] {
+                    "................",
+                    "................",
+                    "................",
+                    ".....######.....",
+                    "....########....",
+                    "...###....###...",
+                    "...##......##...",
+                    "...##..##..##...",
+                    "...##..##..##...",
+                    "...##......##...",
+                    "...###....###...",
+                    "....########....",
+                    ".....######.....",
+                    "................",
+                    "................",
+                    "................"}),
+            Map.entry("slot_character", new String[] {
+                    "................",
+                    "......####......",
+                    ".....######.....",
+                    ".....######.....",
+                    ".....######.....",
+                    "......####......",
+                    "................",
+                    "....########....",
+                    "...##########...",
+                    "..############..",
+                    "..############..",
+                    "..############..",
+                    "..############..",
+                    "..############..",
+                    "................",
                     "................"}));
 
+    /** 還沒開的欄位（_locked）右下角的鎖（6×7）。 */
+    private static final String[] LOCK_SHAPE = {
+            ".####.",
+            "#....#",
+            "#....#",
+            "######",
+            "##..##",
+            "######",
+            "######"};
+
     /** 空裝備欄的剪影：跟原版空防具欄一樣淡淡的灰色。 */
-    private static BufferedImage slotIcon(final String name) {
+    static BufferedImage slotIcon(final String name) {
         final BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-        final String[] rows = SLOT_SHAPES.get(name);
+        // 2026-10：「_locked」= 還沒開的欄位：同一個剪影畫暗一點，右下角加一個鎖
+        final boolean locked = name.endsWith("_locked");
+        final String[] rows = SLOT_SHAPES.get(locked ? name.substring(0, name.length() - "_locked".length()) : name);
+        final int color = locked ? 0xFF4E4E4E : 0xFF6E6E6E; // 物品貼圖半透明會被裁掉：用不透明、比格子底色（#8B8B8B）深一點的灰
         for (int y = 0; y < 16 && rows != null; y++) {
             for (int x = 0; x < 16; x++) {
                 if (rows[y].charAt(x) == '#') {
-                    image.setRGB(x, y, 0xFF6E6E6E); // 物品貼圖半透明會被裁掉：用不透明、比格子底色（#8B8B8B）深一點的灰
+                    image.setRGB(x, y, color);
+                }
+            }
+        }
+        if (locked) {
+            for (int y = 0; y < LOCK_SHAPE.length; y++) {
+                for (int x = 0; x < LOCK_SHAPE[y].length(); x++) {
+                    if (LOCK_SHAPE[y].charAt(x) == '#') {
+                        image.setRGB(10 + x, 9 + y, 0xFFC8C8C8);
+                    }
                 }
             }
         }

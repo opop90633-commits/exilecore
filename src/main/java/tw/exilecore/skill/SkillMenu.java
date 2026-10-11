@@ -317,7 +317,7 @@ public final class SkillMenu extends Menu {
                         ? new Drawn(targetHighlight(empty), null) // 空格本身就變綠了，不用另外指
                         : new Drawn(icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>空的技能格", "<red>" + ItemRenderer.escape(problem)), null);
             }
-            return new Drawn(icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>空的技能格",
+            return new Drawn(uiIcon("slot_skill", Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>空的技能格",
                     "<gray>拿技能寶石點這裡放進來",
                     "<gray>未切割技能寶石右鍵可以雕出技能寶石"), null);
         }
@@ -506,7 +506,7 @@ public final class SkillMenu extends Menu {
             set(SLOT_SOCKETS_LABEL, icon(Material.GRAY_DYE, "<gray>輔助孔", "<gray>先點上面的一個技能",
                     holding == Holding.SUPPORT_GEM ? "<gray>（輔助寶石也可以直接放到亮起來的技能上）" : ""));
             for (int i = 0; i < SkillLoadout.MAX_SOCKETS; i++) {
-                set(SUPPORT_START + i, icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>輔助孔", "<gray>先點上面的一個技能"));
+                set(SUPPORT_START + i, uiIcon("slot_support", Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>輔助孔", "<gray>先點上面的一個技能"));
             }
             return;
         }
@@ -544,7 +544,7 @@ public final class SkillMenu extends Menu {
                 return targetHighlight(icon(Material.LIME_STAINED_GLASS_PANE, "<green>▶ " + title,
                         "<green>放這裡：用" + ItemRenderer.escape(orb.name()) + "開這個孔"));
             }
-            return icon(Material.RED_STAINED_GLASS_PANE, "<gray>" + title,
+            return uiIcon("slot_support_locked", Material.RED_STAINED_GLASS_PANE, "<gray>" + title,
                     orb != null && index == entry.sockets() ? "<red>要用" + ItemRenderer.escape(orbName) + "開這個孔"
                             : index == entry.sockets() ? "<gray>拿" + ItemRenderer.escape(orbName) + "點這裡或點技能來開"
                             : "<gray>要先開第 " + index + " 個孔，再用" + ItemRenderer.escape(orbName) + "開這個");
@@ -561,7 +561,7 @@ public final class SkillMenu extends Menu {
                                 "<green>放這裡：掛上" + ItemRenderer.escape(held.name())))
                         : icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>空的輔助孔", "<red>" + ItemRenderer.escape(socketProblem));
             }
-            return icon(Material.WHITE_STAINED_GLASS_PANE, "<gray>空的輔助孔", "<gray>拿輔助寶石點這裡掛上去");
+            return uiIcon("slot_support", Material.WHITE_STAINED_GLASS_PANE, "<gray>空的輔助孔", "<gray>拿輔助寶石點這裡掛上去");
         }
         final SupportDefinition support = service.config().support(id);
         if (support == null) {

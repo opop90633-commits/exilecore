@@ -397,6 +397,8 @@ final class SponsorMenus {
         private static final int SLOT_LISTING = 16;
         private static final int SLOT_RENAME = 19;
         private static final int SLOT_BOXES = 20;
+        private static final int SLOT_GUILD_STASH = 22;
+        private static final int SLOT_GUILD_RENAME = 23;
         private static final int[] SLOT_BOOSTS = {28, 29, 30, 31};
         private static final int SLOT_BACK = 36;
         private static final int SLOT_CLOSE = 44;
@@ -422,6 +424,20 @@ final class SponsorMenus {
                     "<gray>一張改一次角色名字（/char rename 新名字）",
                     "<gray>你有 <white>" + service.renameCards(player) + "<gray> 張",
                     "<gray>價格：" + COIN + format(config.renamePrice()) + " 星幣", "", "<yellow>左鍵：購買")));
+            // 公會（2026-10）：倉庫頁是買給公會的，改名卡是會長用的
+            final tw.exilecore.guild.GuildService guilds = plugin.guilds();
+            final tw.exilecore.guild.Guild guild = guilds == null ? null : guilds.guildOf(player.getUniqueId());
+            final ItemStack guildStash = buyIcon(Material.BARREL, "公會倉庫頁 +1", guild == null ? 0 : guild.boughtPages(),
+                    config.guildStashMax(), config.guildStashPrice(), "<gray>你的公會的倉庫多一頁（45 格，整個公會共用）",
+                    guild == null ? "<red>你沒有公會" : "<gray>" + ItemRenderer.escape("[" + guild.tag() + "] " + guild.name()) + "：現在 <white>"
+                            + guilds.stashPages(guild) + "<gray> 頁");
+            appendLore(guildStash, "<dark_gray>頁是公會的：你退出不會帶走，公會解散就沒了（不退）");
+            set(SLOT_GUILD_STASH, confirmable(SLOT_GUILD_STASH, guildStash));
+            set(SLOT_GUILD_RENAME, confirmable(SLOT_GUILD_RENAME, icon(Material.OAK_SIGN, "<white>公會改名卡",
+                    "<gray>一張改一次公會的名稱與標籤",
+                    "<gray>會長用：/guild rename 新標籤 新名稱（或公會選單的「公會改名」）",
+                    "<gray>你有 <white>" + service.guildRenameCards(player) + "<gray> 張",
+                    "<gray>價格：" + COIN + format(config.guildRenamePrice()) + " 星幣", "", "<yellow>左鍵：購買")));
             set(SLOT_BOXES, icon(Material.ENDER_CHEST, FASHION_COLOR + "時裝抽獎箱", "<gray>隨機一個 3D 時裝；機率寫在裡面",
                     "<gray>重複的退回時裝幣；有保底", "", "<yellow>左鍵：打開"));
             boostSlots.clear();
@@ -532,6 +548,16 @@ final class SponsorMenus {
                 case SLOT_RENAME -> {
                     if (confirm(slot)) {
                         result(service.buyRenameCard(player));
+                    }
+                }
+                case SLOT_GUILD_STASH -> {
+                    if (confirm(slot)) {
+                        result(service.buyGuildStashPage(player));
+                    }
+                }
+                case SLOT_GUILD_RENAME -> {
+                    if (confirm(slot)) {
+                        result(service.buyGuildRenameCard(player));
                     }
                 }
                 case SLOT_BOXES -> new Boxes(plugin, player, service).open();
@@ -645,7 +671,8 @@ final class SponsorMenus {
                 }
             }
             for (final SponsorConfig.Cosmetic cosmetic : service.config().cosmetics().values()) {
-                if (!cosmetic.isEmote() && !service.ownsCosmetic(player, cosmetic.id())) {
+                // 2026-10：限定（絕版）的時裝沒有的人看不到（商城不放）
+                if (!cosmetic.isEmote() && !cosmetic.isLimited() && !service.ownsCosmetic(player, cosmetic.id())) {
                     ordered.add(cosmetic);
                 }
             }
@@ -673,6 +700,9 @@ final class SponsorMenus {
             final boolean owned = service.ownsCosmetic(player, cosmetic.id());
             final List<String> lore = new ArrayList<>();
             lore.add("<gray>" + cosmetic.rarity().displayName() + "・" + kindText(cosmetic));
+            if (cosmetic.isLimited()) {
+                lore.add("<#ffd24a>★ " + ItemRenderer.escape(cosmetic.limitedTag()) + " <dark_gray>絕版：抽不到、也不能兌換");
+            }
             if (!cosmetic.description().isEmpty()) {
                 lore.add("<gray>" + ItemRenderer.escape(cosmetic.description()));
             }
@@ -689,8 +719,13 @@ final class SponsorMenus {
                 lore.add("<gray>抽獎箱也抽得到");
                 lore.add("");
                 lore.add("<yellow>左鍵：兌換");
+                lore.add("<yellow>右鍵：試穿 " + SponsorService.TRY_ON_TICKS / 20 + " 秒");
             } else {
                 lore.add("<dark_gray>還沒有");
+                if (!cosmetic.isLimited()) {
+                    lore.add("");
+                    lore.add("<yellow>右鍵：試穿 " + SponsorService.TRY_ON_TICKS / 20 + " 秒");
+                }
             }
             final ItemStack stack = cosmetic.skin() ? skinStack(service, cosmetic, SponsorService.rarityTag(cosmetic), lore)
                     : icon(owned ? Material.BLAZE_POWDER : Material.GUNPOWDER, SponsorService.rarityTag(cosmetic), lore);
@@ -709,7 +744,8 @@ final class SponsorMenus {
             }
             if (slot == SLOT_PREV || slot == SLOT_NEXT) {
                 page += slot == SLOT_NEXT ? 1 : -1;
-                final int count = (int) service.config().cosmetics().values().stream().filter(c -> !c.isEmote()).count();
+                final int count = (int) service.config().cosmetics().values().stream()
+                        .filter(c -> !c.isEmote() && (!c.isLimited() || service.ownsCosmetic(player, c.id()))).count();
                 final int pages = Math.max(1, (count + PER_PAGE - 1) / PER_PAGE);
                 page = Math.floorMod(page, pages);
                 redraw();
@@ -726,12 +762,25 @@ final class SponsorMenus {
             if (cosmetic == null) {
                 return;
             }
+            if (!service.ownsCosmetic(player, cosmetic.id()) && click.isRightClick()) {
+                // 試穿（2026-10）：關掉選單才看得到自己（F5）
+                final String problem = service.tryOn(player, cosmetic.id());
+                if (problem != null) {
+                    result(problem);
+                    return;
+                }
+                player.closeInventory();
+                player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_GENERIC, 0.8f, 1.2f);
+                player.sendMessage(plugin.text().prefixed("<#ff9ad5>試穿 " + SponsorService.rarityTag(cosmetic) + "<gray> "
+                        + SponsorService.TRY_ON_TICKS / 20 + " 秒（" + SponsorService.tryOnHint(cosmetic) + "；按 F5 看自己）"));
+                return;
+            }
             if (service.ownsCosmetic(player, cosmetic.id()) && cosmetic.skin()) {
                 new Transmog(plugin, player, service).open();
             } else if (service.ownsCosmetic(player, cosmetic.id())) {
                 final SponsorConfig.Cosmetic worn = service.worn(player);
                 result(service.wear(player, worn != null && worn.id().equals(cosmetic.id()) ? null : cosmetic.id()));
-            } else if (cosmetic.fashionPrice() > 0 && confirm(slot)) {
+            } else if (cosmetic.fashionPrice() > 0 && click.isLeftClick() && confirm(slot)) {
                 result(service.buyCosmetic(player, cosmetic.id()));
             }
         }
@@ -911,6 +960,8 @@ final class SponsorMenus {
 
     static final class Transmog extends Base {
         private static final int FIRST = 10;
+        /** 箭袋的幻化要不要拿在手上的開關（最下面一排中間）。 */
+        private static final int SLOT_QUIVER = 31;
 
         /** 第 i 個外觀的格子：裝備 8 格一排，背飾、寵物在下一排中間。 */
         private static int slotOf(final int i) {
@@ -977,6 +1028,14 @@ final class SponsorMenus {
                 }
                 set(at, icon);
             }
+            // 2026-10：箭袋平常不拿在手上；副手套了幻化的可以選要不要顯示
+            final boolean quiverShown = service.quiverSkinEnabled(player);
+            set(SLOT_QUIVER, icon(Material.ARROW, FASHION_COLOR + "箭袋的幻化：" + (quiverShown ? "<green>顯示在手上" : "<red>不顯示"),
+                    "<gray>箭袋裝在副手時平常不會拿在手上。",
+                    "<gray>副手套了幻化的話，可以選要不要把幻化的樣子拿在左手上",
+                    "<gray>（沒套幻化的箭袋一律不顯示；盾、法器不受影響）",
+                    "",
+                    "<yellow>左鍵：" + (quiverShown ? "改成不顯示" : "改成顯示")));
             set(27, backButton("贊助"));
             set(35, closeButton());
         }
@@ -989,6 +1048,13 @@ final class SponsorMenus {
             }
             if (slot == 35) {
                 goBack();
+                return;
+            }
+            if (slot == SLOT_QUIVER) {
+                if (acceptAction(click)) {
+                    service.toggleQuiverSkin(player);
+                    redraw();
+                }
                 return;
             }
             for (int i = 0; i < SponsorService.Look.values().length; i++) {
@@ -1023,6 +1089,9 @@ final class SponsorMenus {
             final List<SponsorConfig.Cosmetic> list = new ArrayList<>();
             for (final boolean owned : new boolean[] {true, false}) {
                 for (final SponsorConfig.Cosmetic cosmetic : service.config().cosmetics().values()) {
+                    if (!owned && cosmetic.isLimited()) {
+                        continue; // 2026-10：限定（絕版）的沒有就不列
+                    }
                     if (SponsorService.fits(cosmetic, look) && service.ownsCosmetic(player, cosmetic.id()) == owned) {
                         list.add(cosmetic);
                     }
@@ -1038,6 +1107,9 @@ final class SponsorMenus {
                 final boolean on = current != null && current.id().equals(cosmetic.id());
                 final List<String> lore = new ArrayList<>();
                 lore.add("<gray>" + cosmetic.rarity().displayName() + "・" + kindText(cosmetic));
+                if (cosmetic.isLimited()) {
+                    lore.add("<#ffd24a>★ " + ItemRenderer.escape(cosmetic.limitedTag()) + " <dark_gray>絕版");
+                }
                 if (!cosmetic.description().isEmpty()) {
                     lore.add("<gray>" + ItemRenderer.escape(cosmetic.description()));
                 }

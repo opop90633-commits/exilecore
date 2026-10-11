@@ -27,6 +27,8 @@ public final class CombatHud {
     private final Map<UUID, CombatMeter> meters = new HashMap<>();
     /** 側欄上正顯示著戰鬥數據的人。 */
     private final Set<UUID> shown = new HashSet<>();
+    /** 上一段戰鬥的統計（/dps；停手之後還查得到，下線清掉）。 */
+    private final Map<UUID, CombatMeter.Fight> lastFights = new HashMap<>();
 
     public CombatHud(final ExileCore plugin) {
         this.plugin = plugin;
@@ -43,6 +45,47 @@ public final class CombatHud {
     /** 自己（或自己的召喚物、圖騰、陷阱）打中一下：各類型多少。 */
     public void dealt(final Player player, final Map<DamageType, Double> parts) {
         meter(player.getUniqueId()).dealt(now(), parts);
+    }
+
+    /** 同上，記在 skill 這個技能底下（技能的名字；2026-10 技能明細）。 */
+    public void dealt(final Player player, final String skill, final Map<DamageType, Double> parts) {
+        meter(player.getUniqueId()).dealt(now(), skill, parts);
+    }
+
+    /** /dps：正在打的這一段（沒在打就是上一段）每個技能打了多少；都沒有回傳 null。 */
+    public CombatMeter.Fight fight(final Player player) {
+        final CombatMeter meter = meters.get(player.getUniqueId());
+        if (meter != null && meter.fight().total() > 0) {
+            return meter.fight();
+        }
+        return lastFights.get(player.getUniqueId());
+    }
+
+    /** /dps */
+    public static com.mojang.brigadier.tree.LiteralCommandNode<io.papermc.paper.command.brigadier.CommandSourceStack> command(final ExileCore plugin) {
+        return io.papermc.paper.command.brigadier.Commands.literal("dps")
+                .executes(context -> {
+                    final org.bukkit.command.CommandSender sender = context.getSource().getSender();
+                    if (!(sender instanceof Player player)) {
+                        sender.sendMessage(plugin.text().prefixed("<red>只有玩家能用"));
+                        return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+                    }
+                    final CombatHud hud = plugin.combat() == null ? null : plugin.combat().hud();
+                    final CombatMeter.Fight fight = hud == null ? null : hud.fight(player);
+                    final List<String> lines = fight == null ? List.of() : CombatMeter.report(fight);
+                    if (lines.isEmpty()) {
+                        player.sendMessage(plugin.text().prefixed("<gray>還沒有戰鬥紀錄：去打一下怪再來看（停手 5 秒算一段結束）"));
+                        return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+                    }
+                    for (final String line : lines) {
+                        player.sendMessage(plugin.text().parse(line));
+                    }
+                    if (!PlayerSettings.on(plugin.players().get(player), PlayerSettings.COMBAT_SKILLS)) {
+                        player.sendMessage(plugin.text().parse("<dark_gray>想在打的時候即時看：選單 → 設定 → 戰鬥數據：技能明細"));
+                    }
+                    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+                })
+                .build();
     }
 
     /** 自己造成的一跳持續傷害（點燃、流血、中毒）：算進那種傷害類型，側欄另外列在「持續」。 */
@@ -76,10 +119,15 @@ public final class CombatHud {
             if (player == null || !player.isOnline()) {
                 it.remove();
                 shown.remove(uuid);
+                lastFights.remove(uuid);
                 continue;
             }
             final boolean active = entry.getValue().active(now);
             if (!active) {
+                final CombatMeter.Fight ended = entry.getValue().fight();
+                if (ended.total() > 0) {
+                    lastFights.put(uuid, ended); // 這一段結束了：留著給 /dps 查
+                }
                 it.remove();
             }
             if (!active || !PlayerSettings.enabled(plugin.players().get(player), PlayerSettings.COMBAT_METER)) {
@@ -89,7 +137,8 @@ public final class CombatHud {
                 continue;
             }
             if (sidebar != null) {
-                sidebar.combat(player, CombatMeter.lines(entry.getValue().snapshot(now)));
+                sidebar.combat(player, CombatMeter.lines(entry.getValue().snapshot(now),
+                        PlayerSettings.on(plugin.players().get(player), PlayerSettings.COMBAT_SKILLS)));
                 shown.add(uuid);
             }
         }
@@ -117,5 +166,6 @@ public final class CombatHud {
         }
         shown.clear();
         meters.clear();
+        lastFights.clear();
     }
 }

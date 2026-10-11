@@ -147,7 +147,8 @@ public final class InspectMenu extends Menu {
             final int at = i < 9 ? 18 + i : 31; // 第 10 個（鞋子）放在下一排中間
             final ItemStack stack = items[i];
             if (stack == null || stack.isEmpty()) {
-                set(at, icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>" + PlayerState.JEWELLERY_SLOTS[i].displayName() + "：空"));
+                set(at, uiIcon(tw.exilecore.character.menu.CharacterPanelMenu.slotShape(PlayerState.JEWELLERY_SLOTS[i]),
+                        Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>" + PlayerState.JEWELLERY_SLOTS[i].displayName() + "：空"));
             } else {
                 show(at, stack, null);
             }

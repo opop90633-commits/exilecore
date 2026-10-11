@@ -113,7 +113,19 @@ public final class AilmentState {
      * @param endTick 結束的 tick
      * @param source  造成的玩家（死時算他殺的；怪物造成的是 null）
      */
-    public record Ignite(double dps, long endTick, UUID source) {
+    public record Ignite(double dps, long endTick, UUID source, boolean aggravated) {
+
+        public Ignite(final double dps, final long endTick, final UUID source) {
+            this(dps, endTick, source, false);
+        }
+    }
+
+    /**
+     * 流血這一跳要乘幾倍：目標在移動就乘 movingMultiplier（PoE2）。加劇的流血（猩紅突襲）造成的時候已經照
+     * 「當作在移動」算進每秒傷害了，這裡不能再乘一次（2026-10 以前對移動中的怪物會乘兩次）。
+     */
+    public static double bleedFactor(final Ignite bleed, final boolean moving, final double movingMultiplier) {
+        return moving && !bleed.aggravated() ? movingMultiplier : 1.0;
     }
 
     private final List<Ignite> ignites = new ArrayList<>();
@@ -154,10 +166,15 @@ public final class AilmentState {
     // ---- 流血 ----
 
     public void addBleed(final double dps, final long endTick, final UUID source) {
+        addBleed(dps, endTick, source, false);
+    }
+
+    /** @param aggravated 加劇的流血：每秒傷害已經含「當作在移動」的倍率 */
+    public void addBleed(final double dps, final long endTick, final UUID source, final boolean aggravated) {
         if (dps <= 0) {
             return;
         }
-        bleeds.add(new Ignite(dps, endTick, source));
+        bleeds.add(new Ignite(dps, endTick, source, aggravated));
         if (bleeds.size() > MAX_BLEEDS) {
             bleeds.remove(bleeds.stream().min(Comparator.comparingDouble(Ignite::dps)).orElseThrow());
         }

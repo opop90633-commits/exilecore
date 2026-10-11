@@ -97,7 +97,7 @@ public final class StarterKits {
                                         final CharacterClass characterClass) {
         final List<ItemBase> list = new ArrayList<>();
         for (final String id : config.starter(characterClass).armour()) {
-            final ItemBase base = repository.base(id);
+            final ItemBase base = repository.base(repository.canonicalBase(id)); // 2026-10：合併掉的分階換成合併後的
             if (base != null && base.isArmour() && !base.isShield() && base.slot().isVanilla()
                     && usable(repository, base, characterClass)) {
                 list.add(base);
@@ -142,7 +142,7 @@ public final class StarterKits {
             final CharacterConfig.StarterClass starter = config.starter(characterClass);
             final String where = "character.yml starter.classes." + characterClass.id();
             for (final String id : starter.recommended()) {
-                final ItemBase base = repository.base(id);
+                final ItemBase base = repository.base(repository.canonicalBase(id)); // 2026-10：合併掉的分階換成合併後的
                 if (base == null || !isWeapon(base)) {
                     problems.add(where + ".recommended：" + id + " 不是武器基底，略過");
                 } else if (!usable(repository, base, characterClass)) {
@@ -150,7 +150,7 @@ public final class StarterKits {
                 }
             }
             for (final String id : starter.armour()) {
-                final ItemBase base = repository.base(id);
+                final ItemBase base = repository.base(repository.canonicalBase(id));
                 if (base == null || !base.isArmour() || base.isShield() || !base.slot().isVanilla()) {
                     problems.add(where + ".armour：" + id + " 不是防具基底（頭、身體、腿、腳），略過");
                 } else if (!usable(repository, base, characterClass)) {

@@ -95,8 +95,8 @@ public final class CombatModule implements Module {
         plugin.getServer().getPluginManager().registerEvents(charges, plugin);
         killEffects = new KillEffects(plugin, skillDamage, charges);
         plugin.getServer().getPluginManager().registerEvents(killEffects, plugin);
-        plugin.players().addModifierSource(killEffects::modifiers); // 疾速
-        plugin.players().addModifierSource(charges::modifiers); // 銳星、怒星、磐星
+        plugin.players().addBuffSource(killEffects::modifiers); // 疾速
+        plugin.players().addBuffSource(charges::modifiers); // 銳星、怒星、磐星
         chargeTask = plugin.repeat("charges", charges::tick, ChargeService.TICK_INTERVAL, ChargeService.TICK_INTERVAL);
         hitEffects = new HitEffects(plugin, debuffs);
         plugin.getServer().getPluginManager().registerEvents(hitEffects, plugin);

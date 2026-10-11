@@ -48,7 +48,8 @@ class AuraWarcryTest {
         assertEquals(35, hatred.aura().reserve(), 1e-9);
         assertTrue(hatred.aura().allies());
         assertFalse(hatred.aura().herald());
-        assertTrue(hatred.tags().containsAll(Set.of(Tags.AURA, Tags.AREA, Tags.SPELL)));
+        assertTrue(hatred.tags().containsAll(Set.of(Tags.AURA, Tags.AREA)));
+        assertFalse(hatred.tags().contains(Tags.SPELL), "光環不算法術（2026-10，照 PoE2）");
         assertFalse(hatred.dealsDamage());
         assertNull(hatred.damage());
         assertEquals(0, hatred.mana().last(), 1e-9, "光環用保留的");

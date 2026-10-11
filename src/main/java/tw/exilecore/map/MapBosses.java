@@ -711,6 +711,13 @@ final class MapBosses {
         if (random.nextDouble() < service.config().drops().chaseChance()) {
             addUnique(drops, MapDrops.unique(plugin.items().generator(), "chase", itemLevel, random));
         }
+        // 映星鏡（2026-10）：另外擲一次 maps.yml 的 drops.mirror_chance（追逐級的十分之一；不看物品等級；一般怪物的那一份在 MonsterListener.rollMirror）
+        if (plugin.currencies() != null && random.nextDouble() < service.config().mirrorChance()) {
+            final tw.exilecore.currency.CurrencyType mirror = plugin.currencies().mirrorType();
+            if (mirror != null) {
+                drops.add(DropTable.Drop.currency(mirror));
+            }
+        }
     }
 
     /**
@@ -881,6 +888,11 @@ final class MapBosses {
             }
 
             @Override
+            public String tempoKind() {
+                return MapBosses.tempoKind(instance);
+            }
+
+            @Override
             public LivingEntity summon(final String type, final Location at) {
                 Location spot = at;
                 if (!instance.layout().isFloor(spot.getBlockX() - instance.originX(), spot.getBlockZ() - instance.originZ())) {
@@ -897,6 +909,20 @@ final class MapBosses {
                 return minion;
             }
         });
+    }
+
+    /** 出招節奏的種類（boss_skills.yml 的 settings.tempo）：極境、金庫之主、昇華試煉、終局；一般地圖 Boss 回傳 null。 */
+    static String tempoKind(final MapInstance instance) {
+        if (instance.isUber()) {
+            return "uber";
+        }
+        if (instance.special() != null && "heist_finale".equals(instance.special().kind())) {
+            return "vault";
+        }
+        if (instance.map().id().startsWith("trial_")) {
+            return "trial";
+        }
+        return instance.map().isFinal() ? "final" : null;
     }
 
     /** 終局 Boss（含極境）與昇華試煉的 Boss：特殊招式、機制在畫面中間與聊天室說清楚。 */

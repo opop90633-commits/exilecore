@@ -78,11 +78,17 @@ public final class AdminAuth {
         if (link == null || !clock.instant().isBefore(link.expires())) {
             return null;
         }
+        return open(link.admin(), link.adminId());
+    }
+
+    /** 直接開一個工作階段（密碼登入通過時，2026-10）。 */
+    public synchronized Session open(final String admin, final UUID adminId) {
+        prune();
         while (sessions.size() >= MAX_SESSIONS) {
             sessions.entrySet().stream().min(Comparator.comparing(entry -> entry.getValue().expires()))
                     .ifPresent(oldest -> sessions.remove(oldest.getKey()));
         }
-        final Session session = new Session(token(), token(), link.admin(), link.adminId(), clock.instant().plus(SESSION_LIFETIME));
+        final Session session = new Session(token(), token(), admin, adminId, clock.instant().plus(SESSION_LIFETIME));
         sessions.put(hash(session.id()), session);
         return session;
     }

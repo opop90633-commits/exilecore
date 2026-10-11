@@ -90,6 +90,9 @@ public final class SkillService {
         // 2026-10：設定「別人的技能特效」關掉的人不送別人的技能粒子（Fx）
         Fx.hidesOthers(viewer -> !tw.exilecore.character.PlayerSettings.enabled(plugin.players().get(viewer),
                 tw.exilecore.character.PlayerSettings.OTHERS_FX));
+        // 2026-10：設定「技能音效」關掉的人，自己的技能也不出聲
+        Fx.mutesOwn(viewer -> !tw.exilecore.character.PlayerSettings.enabled(plugin.players().get(viewer),
+                tw.exilecore.character.PlayerSettings.SKILL_SOUNDS));
         this.minions = new MinionService(plugin, config, targets, visuals);
         this.buffs = new SkillBuffs(plugin);
         this.auras = new AuraService(plugin, config, this, targets, visuals, executor, damage);
@@ -626,7 +629,7 @@ public final class SkillService {
                 Fx.spawn(fx.getWorld(), org.bukkit.Particle.SMOKE, fx, 6, 0.3, 0.2, 0.3, 0.01);
             });
         }
-        player.getWorld().playSound(center, org.bukkit.Sound.BLOCK_SOUL_SOIL_BREAK, 0.9f, 0.6f);
+        Fx.as(player.getUniqueId(), () -> Fx.sound(center, org.bukkit.Sound.BLOCK_SOUL_SOIL_BREAK, org.bukkit.SoundCategory.PLAYERS, 0.9f, 0.6f));
         return make;
     }
 
@@ -806,10 +809,16 @@ public final class SkillService {
         final PlayerState state = plugin.players().get(player);
         final StatSheet sheet = plugin.players().sheet(player); // 剛換武器時先重算，普攻與標籤才會跟著新武器
         final LivingEntity preferred = target != null && target.getWorld().equals(player.getWorld()) ? target : null;
-        SkillBuild build = build(state, sheet, resolve(state, key)).rollElement(sheet, plugin.items().random());
+        final Resolved pressed = resolve(state, key);
+        SkillBuild build = build(state, sheet, pressed).rollElement(sheet, plugin.items().random());
         final SkillDefinition definition = build.definition();
         if (inTown(player) && definition.mechanic() != Mechanic.AURA) {
             fail(player, runtime, state, "營地裡不能戰鬥", now); // 光環在營地也能開關
+            return;
+        }
+        if (pressed.entry() != null && definition.type() == SkillType.SPELL && triggers().triggeredOnly(pressed.entry())) {
+            // 2026-10（照 PoE）：掛了觸發輔助的法術只會自動觸發，不能自己按
+            fail(player, runtime, state, definition.name() + "掛了觸發輔助：只會自動觸發，不能手動施放", now);
             return;
         }
         if (plugin.ailments() != null && plugin.ailments().isIncapacitated(player)) {
@@ -1341,6 +1350,24 @@ public final class SkillService {
      * 沒算怪物的減免、持續傷害）。召喚技能算召喚物：一隻的每秒傷害 × 同時最多幾隻（名字後面寫「召喚物 ×N」）。
      * 回傳「按鍵、名字、每秒傷害」，同一個技能綁在好幾個鍵只算一次。
      */
+    /**
+     * 一個技能每秒打幾下：一輪是「複擊的每一下各一次攻擊間隔」再加「最後一下的間隔與冷卻比較長的那個」。
+     */
+    static double hitsPerSecond(final double intervalTicks, final double cooldownTicks, final int repeats) {
+        final int extra = Math.max(0, repeats);
+        final double cycle = extra * intervalTicks + Math.max(intervalTicks, cooldownTicks);
+        return 20.0 * (extra + 1) / Math.max(1, cycle);
+    }
+
+    /**
+     * 放一次對同一個敵人打幾下的量（2026-10，面板以前只算第一下）：連射的每一波各算一下；
+     * 有餘震的再加一下「更多 more%」的。
+     */
+    static double castHits(final int burstCount, final boolean aftershock, final double aftershockMore) {
+        final double first = Math.max(1, burstCount);
+        return aftershock ? first + 1 + aftershockMore / 100.0 : first;
+    }
+
     public List<String[]> skillDps(final Player player) {
         final PlayerState state = plugin.players().get(player);
         final StatSheet sheet = plugin.players().sheet(player);
@@ -1374,9 +1401,13 @@ public final class SkillService {
             final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, build.profile());
             final double crit = DamageCalculator.critChance(sheet, build.profile());
             final double multi = build.profile().effective(sheet).get(StatKeys.CRIT_MULTI, build.profile().tags());
-            // 有冷卻的：一輪要等「施放間隔」和「冷卻」比較長的那個
-            final double perSecond = 20.0 / Math.max(1, Math.max(build.intervalTicks(sheet), build.cooldownTicks()));
-            final double dps = expected.total() * (1 + crit * (multi / 100.0 - 1)) * perSecond * (build.repeats() + 1);
+            // 有冷卻的：一輪要等「施放間隔」和「冷卻」比較長的那個。
+            // 2026-10：複擊的每一下都要花一次攻擊間隔（打完才能做別的），以前當成同一個間隔裡打完，面板高了好幾倍
+            final SkillParams params = build.params();
+            final double dps = expected.total() * (1 + crit * (multi / 100.0 - 1))
+                    * hitsPerSecond(build.intervalTicks(sheet), build.cooldownTicks(), build.repeats())
+                    * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
+                            params.aftershock() == null ? 0 : params.aftershock().more());
             rows.add(new String[] {SkillLoadout.shortKeyName(slot), definition.name(), String.valueOf(Math.round(dps))});
         }
         return rows;
@@ -1837,7 +1868,8 @@ public final class SkillService {
             }
             case PROJECTILE -> {
                 if (build.projectiles() > 1) {
-                    lines.add("<gray>一次射出 <white>" + build.projectiles() + "</white> 發");
+                    lines.add("<gray>一次射出 <white>" + build.projectiles() + "</white> 發"
+                            + (build.explode() > 0 ? "<dark_gray>（落在一起時，同一個敵人一次只算一發）" : ""));
                 }
                 if (params.burst() != null) {
                     lines.add("<gray>連續 <white>" + params.burst().count() + "</white> 波");
@@ -1868,9 +1900,16 @@ public final class SkillService {
                 if (params.vortex() != null) {
                     lines.add(String.format(Locale.ROOT, "<gray>停下時留下漩渦 <white>%.1f</white> 秒：把敵人往中心吸（玩家不會被吸）、每 %.1f 秒 <white>%d%%</white> 傷害",
                             params.vortex().duration() * build.durationScale(), params.vortex().interval(), Math.round(params.vortex().damage())));
+                    lines.add("<dark_gray>　同一招的漩渦疊在一起只算一個（不疊加）");
                 }
                 if (params.ground() != null) {
                     lines.add(zoneLine(build, params.ground(), "停下時留下"));
+                    if (build.projectiles() > 1) {
+                        lines.add("<dark_gray>　每發各留一灘，疊在一起只算一灘；同時最多 "
+                                + (params.ground().max() > 0 ? params.ground().max() : build.projectiles()) + " 灘");
+                    } else {
+                        lines.add("<dark_gray>　同一招的地面效果疊在一起只算一灘（不疊加）");
+                    }
                 }
                 if (params.blink()) {
                     lines.add("<gray>停下來的地方你會瞬移過去");
@@ -1883,6 +1922,7 @@ public final class SkillService {
                 lines.add(String.format(Locale.ROOT, "<gray>半徑 <white>%.1f</white> 格", build.radius()));
                 if (params.ground() != null) {
                     lines.add(zoneLine(build, params.ground(), "炸完留下"));
+                    lines.add("<dark_gray>　同一招的地面效果疊在一起只算一灘（不疊加）");
                 }
                 if (params.aftershock() != null) {
                     lines.add(String.format(Locale.ROOT, "<gray>餘震：<white>%.1f</white> 秒後再炸一次，半徑 ×%.1f、更多 <white>%d%%</white> 傷害",
@@ -1913,6 +1953,7 @@ public final class SkillService {
                 }
                 if (params.ground() != null) {
                     lines.add(zoneLine(build, params.ground(), "沿路留下"));
+                    lines.add("<dark_gray>　同一招的地面效果疊在一起只算一灘（不疊加）");
                 }
             }
             case IMPACT -> lines.add(String.format(Locale.ROOT, "<gray>準心指的地方（最遠 %.0f 格）<white>%.1f</white> 秒後落下，半徑 <white>%.1f</white> 格",
@@ -1924,6 +1965,9 @@ public final class SkillService {
                 lines.add(String.format(Locale.ROOT, "<gray>在%s區域留 <white>%.1f</white> 秒，每 %.1f 秒對裡面的敵人造成 <white>%d%%</white> 傷害%s",
                         where, zone.duration() * build.durationScale(), zone.interval(), Math.round(zone.damage()),
                         zone.pull() > 0 ? "，並把敵人往中心吸（玩家不會被吸）" : ""));
+                if (zone.max() != 1) {
+                    lines.add("<dark_gray>　" + (zone.max() > 1 ? "同時最多 " + zone.max() + " 個；" : "") + "疊在一起只算一個（不疊加）");
+                }
             }
             case MARK -> {
                 final SkillParams.Mark mark = params.mark();

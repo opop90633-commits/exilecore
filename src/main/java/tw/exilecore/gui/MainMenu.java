@@ -24,7 +24,7 @@ import java.util.Locale;
  * 第 2 排【角色】：角色面板、天賦樹、技能、稱號、切換角色（2026-10：屬性改成點第 1 排的角色；昇華在天賦樹的總覽、鎖定在拆解台）
  * 第 3 排【物品】：隨身背包、倉庫、掉落過濾、拆解
  * 第 4 排【冒險】：傳送、回營地、任務、委託、每月固定活動、競技場（星圖在地圖裝置）
- * 第 5 排【多人】：隊伍、市集、Discord、贊助商城（2026-10：交易、說明拿掉；交易改成蹲下右鍵對方或 /trade）
+ * 第 5 排【多人】：公會、隊伍、市集、Discord、贊助商城（2026-10：交易、說明拿掉；交易改成蹲下右鍵對方或 /trade）
  * 第 6 排：圖鑑、設定、關閉
  * </pre>
  */
@@ -50,6 +50,8 @@ public final class MainMenu extends Menu {
     private static final int SLOT_WORLD_EVENT = 34;
     private static final int SLOT_PVP = 33;
     private static final int SLOT_PARTY = 39;
+    /** 公會（2026-10）。 */
+    private static final int SLOT_GUILD = 38;
     private static final int SLOT_MARKET = 40;
     private static final int SLOT_DISCORD = 41;
     private static final int SLOT_STORE = 42;
@@ -68,7 +70,8 @@ public final class MainMenu extends Menu {
             java.util.Map.entry(SLOT_SKILLS, 3), java.util.Map.entry(SLOT_TITLES, 4), java.util.Map.entry(SLOT_CHARACTERS, 5),
             java.util.Map.entry(SLOT_CODEX, 7), java.util.Map.entry(SLOT_SETTINGS, 8),
             java.util.Map.entry(SLOT_BAG, 18), java.util.Map.entry(SLOT_STASH, 19), java.util.Map.entry(SLOT_FILTER, 20),
-            java.util.Map.entry(SLOT_TRASH, 21), java.util.Map.entry(SLOT_MARKET, 23), java.util.Map.entry(SLOT_PARTY, 24),
+            java.util.Map.entry(SLOT_TRASH, 21), java.util.Map.entry(SLOT_GUILD, 22), java.util.Map.entry(SLOT_MARKET, 23),
+            java.util.Map.entry(SLOT_PARTY, 24),
             java.util.Map.entry(SLOT_DISCORD, 25), java.util.Map.entry(SLOT_STORE, 26),
             java.util.Map.entry(SLOT_TOWN, 36), java.util.Map.entry(SLOT_WAYPOINTS, 37), java.util.Map.entry(SLOT_QUESTS, 38),
             java.util.Map.entry(SLOT_BOUNTY, 39), java.util.Map.entry(SLOT_EVENT, 40), java.util.Map.entry(SLOT_PVP, 41),
@@ -177,6 +180,11 @@ public final class MainMenu extends Menu {
         put(SLOT_PARTY, button(Material.PLAYER_HEAD, "隊伍", "/party",
                 party == null ? "邀請朋友組隊（最多 " + (plugin.party() == null ? 6 : plugin.party().config().maxSize()) + " 人）"
                         : "隊伍 " + party.size() + " 人；/p 訊息 隊伍聊天"));
+        final tw.exilecore.guild.Guild guild = plugin.guilds() == null ? null : plugin.guilds().guildOf(player.getUniqueId());
+        put(SLOT_GUILD, button(Material.WHITE_BANNER, "公會", "/guild",
+                guild == null ? "建立或加入公會：公會頻道、公會倉庫、公會等級與加成"
+                        : "[" + ItemRenderer.escape(guild.tag()) + "] " + ItemRenderer.escape(guild.name()) + "　Lv." + guild.level()
+                        + "，" + guild.size() + " 人；/g 訊息 公會頻道"));
         put(SLOT_MARKET, button(Material.EMERALD, "市集", "/market",
                 inTown ? "搜尋別人上架的東西、我的商店頁、通貨交易所" : "只能在營地打開"));
         // 最下面一排
@@ -311,6 +319,15 @@ public final class MainMenu extends Menu {
                     unavailable("隊伍");
                 } else {
                     new tw.exilecore.party.PartyMenu(plugin, player, plugin.party()).open();
+                }
+            }
+            case SLOT_GUILD -> {
+                if (plugin.guilds() == null) {
+                    unavailable("公會");
+                } else if (!ready) {
+                    needCharacter();
+                } else {
+                    plugin.guilds().openMenu(player);
                 }
             }
             case SLOT_CHARACTERS -> plugin.characterMenus().openSelect(player);

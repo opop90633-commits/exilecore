@@ -459,6 +459,10 @@ public final class HeistService implements Listener {
                 addCurrency(rolled, BLUEPRINT, 1);
             }
             veil(rolled);
+            // 2026-10：遺時珠寶只在劫盜掉（合約、藍圖的金庫箱都有小機率）
+            if (random().nextDouble() < settings.timeLostChance()) {
+                addTimeLostJewel(rolled, run.level);
+            }
             MapRewards.deliver(plugin, player, center, data, rolled, plugin.monsterModule().drops().rollGold(run.level, MonsterRarity.RARE,
                     quantity(player), random()) * Math.max(1, settings.chestRolls()));
             takers++;
@@ -493,6 +497,22 @@ public final class HeistService implements Listener {
             }
         }
         return rolled;
+    }
+
+    /**
+     * 加一顆遺時珠寶（半徑珠寶；2026-10：只在劫盜的金庫箱與大金庫掉，一般掉落、商人、賭博都拿不到）。
+     * 魔法或稀有（settings.time_lost_jewel_rare），跟其他掉落一樣要鑑定；這個等級還掉不出來（基底的 drop_level）就不加。
+     */
+    private boolean addTimeLostJewel(final List<DropTable.Drop> drops, final int level) {
+        final tw.exilecore.item.ItemBase base = plugin.items().repository().pickRadiusJewel(level, random());
+        if (base == null) {
+            return false;
+        }
+        final Rarity rarity = random().nextDouble() < config.settings().timeLostRare() ? Rarity.RARE : Rarity.MAGIC;
+        final ItemData item = plugin.items().generator().generate(base, rarity, level, random());
+        item.setIdentified(false);
+        drops.add(DropTable.Drop.equipment(item));
+        return true;
     }
 
     /** count × scale，小數的部分用機率（0.5 × 3 = 1 個，另外 50% 再一個）。 */
@@ -644,6 +664,9 @@ public final class HeistService implements Listener {
                 addCurrency(rolled, BLUEPRINT, 1);
             }
             veil(rolled);
+            // 2026-10：遺時珠寶（只在劫盜掉）：合約的大金庫 time_lost_jewel_chance，藍圖（大劫盜）×grand_multiplier；封鎖了減半
+            final boolean timeLost = random().nextDouble() < Math.min(1, vault.timeLostChance() * grand * lockdown)
+                    && addTimeLostJewel(rolled, run.level);
             final long gold = plugin.monsterModule().drops().rollGold(run.level, MonsterRarity.UNIQUE, quantity(player), random())
                     * Math.max(1, Math.round(vault.rolls() * grand * lockdown));
             MapRewards.deliver(plugin, player, player.getLocation(), data, rolled, gold);
@@ -656,6 +679,9 @@ public final class HeistService implements Listener {
             }
             if (gem) {
                 player.sendMessage(plugin.text().prefixed("<#d4a017>大金庫裡有一顆 Lv.21 未切割技能寶石！"));
+            }
+            if (timeLost) {
+                player.sendMessage(plugin.text().prefixed("<#7fd4ff>大金庫裡有一顆遺時星晶！"));
             }
             if (finaleKey) {
                 player.sendMessage(plugin.text().prefixed("<#8b0000>大金庫深處有一個鑰印……金庫之主在等你。<gray>（找盜賊首領）"));

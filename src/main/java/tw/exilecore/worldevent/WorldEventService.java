@@ -903,6 +903,11 @@ public final class WorldEventService {
             }
 
             @Override
+            public String tempoKind() {
+                return "world"; // 2026-10：出招節奏照 boss_skills.yml 的 settings.tempo.world
+            }
+
+            @Override
             public LivingEntity summon(final String type, final Location at) {
                 final LivingEntity minion = spawnMob(type.toUpperCase(Locale.ROOT), at);
                 if (minion == null) {

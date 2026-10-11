@@ -28,10 +28,11 @@ final class ChatListener implements Listener {
             event.getPlayer().sendMessage(chat.plugin().text().prefixed("<red>" + tw.exilecore.item.ItemRenderer.escape(verdict.reason())));
             return;
         }
-        // 2026-10：聊天的名字「【稱號】角色名稱: 訊息」，不要原版的 <>（等級、職業只在滑過名字的說明裡）
+        // 2026-10：聊天的名字「【稱號】角色名稱 » 訊息」，不要原版的 <>（等級、職業只在滑過名字的說明裡）；
+        // 分隔用暗灰色的 »（原本的「: 」跟名字、英文訊息黏在一起不好分）
         event.renderer((source, sourceDisplayName, message, viewer) -> net.kyori.adventure.text.Component.text()
                 .append(sourceDisplayName)
-                .append(net.kyori.adventure.text.Component.text(": ", net.kyori.adventure.text.format.NamedTextColor.GRAY))
+                .append(net.kyori.adventure.text.Component.text(" » ", net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY))
                 .append(message.colorIfAbsent(net.kyori.adventure.text.format.NamedTextColor.WHITE))
                 .build());
         final String text = verdict.text();

@@ -55,4 +55,18 @@ public record PassiveNode(String id, Type type, String name, int x, int y, Strin
     public boolean isSocket() {
         return type == Type.SOCKET;
     }
+
+    /**
+     * 屬性點（2026-10 PoE2）：「+x 任一屬性」，玩家自己選力量／敏捷／智慧。回傳 x；不是屬性點回傳 0。
+     * 網頁規劃器、規劃代碼（{@link TreeCode}）都靠這個認屬性點。
+     */
+    public int attributeChoice() {
+        double total = 0;
+        for (final Modifier modifier : modifiers) {
+            if (tw.exilecore.stats.StatKeys.ATTR_CHOICE.equals(modifier.stat())) {
+                total += modifier.value();
+            }
+        }
+        return (int) Math.round(total);
+    }
 }

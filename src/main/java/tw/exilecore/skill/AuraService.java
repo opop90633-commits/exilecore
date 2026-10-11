@@ -424,7 +424,7 @@ final class AuraService implements Listener {
             if (aura.build.definition().summon() != null
                     && SkillExecutor.hasFlag(aura.build.definition(), tw.exilecore.stats.StatKeys.FLAG_SUMMON_ON_FIRE)) {
                 for (int i = 0; i < count; i++) {
-                    minions.summon(player, aura.build);
+                    minions.summonOrRefresh(player, aura.build); // 2026-10：滿了補最舊那隻的時間，不刪一隻生一隻
                 }
             }
         }
@@ -665,10 +665,24 @@ final class AuraService implements Listener {
                 active.remove(uuid);
                 continue;
             }
-            validate(player, now, periodic);
+            try {
+                validate(player, now, periodic);
+            } catch (final RuntimeException e) {
+                // 2026-10：一個人的屬性表算不出來（例如身上有壞掉的物品）不能拖累全部的人——
+                // 以前這裡一丟錯，後面的隊友光環、夥伴／精魂召喚、焚燒、代價全都不跑，所有人都召喚不出來
+                plugin.getSLF4JLogger().error("{} 的光環檢查出錯", player.getName(), e);
+            }
         }
-        refreshAllies();
-        companions(now);
+        try {
+            refreshAllies();
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().error("隊友光環更新出錯", e);
+        }
+        try {
+            companions(now);
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().error("夥伴、精魂召喚更新出錯", e);
+        }
         // 2026-10：捷的最後一擊紀錄過期的清掉；開著的代價（赤怒）、獸性（獸血沸）
         lastHits.values().removeIf(hit -> now - hit.tick() > LAST_HIT_KEEP);
         deathAilments.clear();

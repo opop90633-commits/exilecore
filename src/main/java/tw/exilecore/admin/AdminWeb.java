@@ -54,6 +54,7 @@ import java.util.concurrent.TimeoutException;
  * <pre>
  * GET  /admin                  頁面（沒登入時頁面自己說怎麼登入）
  * GET  /admin/login?t=代碼      一次性連結換成登入（Cookie），轉回 /admin
+ * POST /admin/password-login   密碼登入（2026-10）：{ password }，成功給 Cookie；要帶 X-EC-Login 標頭，猜錯有次數限制
  * POST /admin/logout           登出
  * GET  /admin/api/state        登入的人、線上玩家、可以發的東西、設定、維護模式
  * GET  /admin/api/deliveries   發放紀錄（status=pending|claimed|cancelled|all，q=玩家或批次）
@@ -63,7 +64,8 @@ import java.util.concurrent.TimeoutException;
  * POST /admin/api/cancel       取消還沒領的（ids 或 batch）
  * POST /admin/api/setting      改設定、恢復
  * POST /admin/api/maintenance  維護模式
- * POST /admin/api/restart      重新啟動：{ action: schedule, minutes, reason }、{ action: cancel }、{ action: daily, times: ["05:30"] }
+ * POST /admin/api/restart      重新啟動：{ action: schedule, minutes, reason }、{ action: shutdown, minutes, reason }（倒數關服）、
+ *                              { action: cancel }、{ action: daily, times: ["05:30"] }
  * POST /admin/api/broadcast    全服公告
  * </pre>
  * 每個 API 都要登入；POST 另外要帶 X-EC-CSRF 標頭（登入時給的代碼）。回應一律不快取、不能被別的網站嵌入。
@@ -115,6 +117,7 @@ final class AdminWeb {
         server.endpoint("/admin", this::page, "GET");
         server.endpoint("/admin/", request -> module.pageEnabled() ? WebServer.Response.redirect("../admin") : null, "GET");
         server.endpoint("/admin/login", this::login, "GET");
+        server.endpoint("/admin/password-login", this::passwordLogin, "POST");
         server.endpoint("/admin/logout", this::logout, "POST");
         server.endpoint("/admin/api/state", request -> api(request, false, this::state), "GET");
         server.endpoint("/admin/api/deliveries", request -> api(request, false, session -> deliveries(request)), "GET");
@@ -131,6 +134,12 @@ final class AdminWeb {
         server.endpoint("/admin/api/maintenance", request -> api(request, true, session -> maintenance(session, body(request))), "POST");
         server.endpoint("/admin/api/broadcast", request -> api(request, true, session -> broadcast(session, body(request))), "POST");
         server.endpoint("/admin/api/restart", request -> api(request, true, session -> restart(session, body(request))), "POST");
+        // 2026-10：公會管理、玩家處置（禁言、踢出）、物品追查
+        server.endpoint("/admin/api/guilds", request -> api(request, false, session -> guilds()), "GET");
+        server.endpoint("/admin/api/guild", request -> api(request, false, session -> guildDetail(request)), "GET");
+        server.endpoint("/admin/api/guild/action", request -> api(request, true, session -> guildAction(session, body(request))), "POST");
+        server.endpoint("/admin/api/player", request -> api(request, true, session -> playerAction(session, body(request))), "POST");
+        server.endpoint("/admin/api/trace", request -> api(request, false, session -> trace(session, request)), "GET");
     }
 
     // ---- 頁面與登入 ----
@@ -164,6 +173,45 @@ final class AdminWeb {
         record(session.admin(), "登入", "IP " + request.remote());
         return WebServer.Response.redirect("../admin").with(merge(SECURITY, Map.of("Set-Cookie",
                 cookie(session.id(), (int) AdminAuth.SESSION_LIFETIME.toSeconds()))));
+    }
+
+    /** 密碼登入（2026-10）：密碼要先在主控台設（ec web password set）。 */
+    private WebServer.Response passwordLogin(final WebServer.Request request) {
+        if (!module.pageEnabled()) {
+            return null;
+        }
+        // 自訂標頭：別的網站的表單、跨站的 fetch 帶不出來（會先被瀏覽器的預檢擋下）
+        if (!"1".equals(request.header("x-ec-login")) || "cross-site".equalsIgnoreCase(request.header("sec-fetch-site"))) {
+            return json(403, Map.of("error", "不接受從別的網站送來的請求"));
+        }
+        final AdminPassword password = module.password();
+        if (password == null || !password.enabled()) {
+            return json(403, Map.of("error", "沒有設密碼：請在伺服器主控台打 ec web password set <密碼>，或在遊戲裡打 /ec web 拿登入連結"));
+        }
+        final String text;
+        try {
+            text = optionalString(body(request), "password");
+        } catch (final IllegalArgumentException e) {
+            return json(400, Map.of("error", e.getMessage()));
+        }
+        switch (password.attempt(request.remote(), text)) {
+            case OK -> {
+                final AdminAuth.Session session = module.auth().open("密碼登入", null);
+                plugin.getSLF4JLogger().info("[管理網頁] 密碼登入（{}）", request.remote());
+                record(session.admin(), "登入", "IP " + request.remote());
+                return json(200, Map.of("ok", true)).with(Map.of("Set-Cookie", cookie(session.id(), (int) AdminAuth.SESSION_LIFETIME.toSeconds())));
+            }
+            case LOCKED -> {
+                return json(429, Map.of("error", "密碼錯太多次，先鎖 " + AdminPassword.LOCK.toMinutes() + " 分鐘；稍後再試，或在遊戲裡打 /ec web 拿登入連結"));
+            }
+            case NOT_SET -> {
+                return json(403, Map.of("error", "沒有設密碼"));
+            }
+            default -> {
+                plugin.getSLF4JLogger().warn("[管理網頁] 密碼登入失敗（{}）", request.remote());
+                return json(401, Map.of("error", "密碼不對"));
+            }
+        }
     }
 
     private WebServer.Response logout(final WebServer.Request request) {
@@ -205,7 +253,9 @@ final class AdminWeb {
         }
         final AdminAuth.Session session = module.auth().session(request.cookie(COOKIE));
         if (session == null) {
-            return json(401, Map.of("error", "沒有登入或登入過期了：請在遊戲裡打 /ec web 拿一個新的登入連結", "login", true));
+            final boolean passwordOn = module.password() != null && module.password().enabled();
+            return json(401, Map.of("error", passwordOn ? "沒有登入或登入過期了：打密碼登入，或在遊戲裡打 /ec web 拿登入連結"
+                    : "沒有登入或登入過期了：請在遊戲裡打 /ec web 拿一個新的登入連結", "login", true, "password", passwordOn));
         }
         if (modify) {
             if (!AdminAuth.csrfMatches(session, request.header(CSRF_HEADER))) {
@@ -364,6 +414,7 @@ final class AdminWeb {
             row.put("level", ps.hasCharacter() ? ps.level() : 0);
             row.put("where", where(player));
             row.put("admin", player.hasPermission(ExileCore.PERMISSION_ADMIN));
+            row.put("muted", plugin.chat() != null && plugin.chat().moderation().muted(player.getUniqueId())); // 2026-10：網頁上可以禁言、解除
             players.add(row);
         }
         state.put("players", players);
@@ -382,6 +433,8 @@ final class AdminWeb {
         restart.put("at", pending == null ? null : pending.at());
         restart.put("reason", pending == null ? "" : pending.reason());
         restart.put("by", pending == null ? "" : pending.by());
+        restart.put("shutdown", pending != null && pending.shutdown());
+        restart.put("panel", restarts != null && restarts.panelConfigured());
         restart.put("daily", restarts == null ? List.of() : restarts.dailyTimes());
         restart.put("warning", RestartScheduler.DAILY_WARNING_MINUTES);
         server.put("restart", restart);
@@ -529,7 +582,7 @@ final class AdminWeb {
         }
         catalog.put("rarities", rarities);
         final Map<String, Object> limits = new LinkedHashMap<>();
-        for (final String kind : List.of(DeliveryService.CURRENCY, DeliveryService.GOLD, DeliveryService.MERITS, DeliveryService.SPONSOR, DeliveryService.REFUND,
+        for (final String kind : List.of(DeliveryService.CURRENCY, DeliveryService.GOLD, DeliveryService.MERITS, DeliveryService.SPONSOR, DeliveryService.COSMETIC, DeliveryService.REFUND,
                 DeliveryService.ITEM, DeliveryService.UNIQUE, DeliveryService.GEM, DeliveryService.FLASK, DeliveryService.MAP,
                 DeliveryService.TAKE_SPONSOR, DeliveryService.TAKE_CURRENCY, DeliveryService.TAKE_GOLD, DeliveryService.TAKE_ITEM)) {
             limits.put(kind, DeliveryService.maxAmount(kind));
@@ -537,6 +590,25 @@ final class AdminWeb {
         catalog.put("limits", limits);
         catalog.put("hasMerits", plugin.bounties() != null);
         catalog.put("hasSponsor", plugin.sponsors() != null);
+        // 2026-10：時裝（整組的排前面；限定的標出來源）
+        final List<Map<String, Object>> cosmetics = new ArrayList<>();
+        if (plugin.sponsors() != null) {
+            for (final tw.exilecore.sponsor.SponsorConfig.Bundle bundle : plugin.sponsors().config().bundles().values()) {
+                cosmetics.add(choice("bundle:" + bundle.id(), "【整組】" + bundle.name() + "（" + bundle.cosmetics().size() + " 件）"));
+            }
+            for (final tw.exilecore.sponsor.SponsorConfig.LimitedTitle title : plugin.sponsors().config().limitedTitles().values()) {
+                final Map<String, Object> row = choice("title:" + title.id(), "★ 稱號「" + title.name() + "」（" + title.limitedTag() + "）");
+                row.put("limited", true);
+                cosmetics.add(row);
+            }
+            for (final tw.exilecore.sponsor.SponsorConfig.Cosmetic cosmetic : plugin.sponsors().config().cosmetics().values()) {
+                final Map<String, Object> row = choice(cosmetic.id(), (cosmetic.isLimited() ? "★ " : "") + cosmetic.name()
+                        + "（" + cosmetic.rarity().displayName() + (cosmetic.isLimited() ? "・" + cosmetic.limitedTag() : "") + "）");
+                row.put("limited", cosmetic.isLimited());
+                cosmetics.add(row);
+            }
+        }
+        catalog.put("cosmetics", cosmetics);
         return catalog;
     }
 
@@ -946,7 +1018,7 @@ final class AdminWeb {
         final String action = optionalString(body, "action") == null ? "" : optionalString(body, "action");
         final String text;
         switch (action) {
-            case "schedule" -> {
+            case "schedule", "shutdown" -> {
                 final JsonElement element = body.get("minutes");
                 if (element == null || !element.isJsonPrimitive()) {
                     throw new IllegalArgumentException("要寫幾分鐘後");
@@ -959,15 +1031,20 @@ final class AdminWeb {
                 if (reason.length() > 100) {
                     throw new IllegalArgumentException("原因最多 100 個字");
                 }
+                final boolean shutdown = action.equals("shutdown");
                 onMain(() -> {
-                    restarts.schedule(minutes, reason, session.admin());
+                    if (shutdown) {
+                        restarts.scheduleShutdown(minutes, reason, session.admin());
+                    } else {
+                        restarts.schedule(minutes, reason, session.admin());
+                    }
                     return null;
                 });
-                text = minutes + " 分鐘後重新啟動" + (reason.isEmpty() ? "" : "（" + reason + "）");
+                text = minutes + " 分鐘後" + (shutdown ? "關服" : "重新啟動") + (reason.isEmpty() ? "" : "（" + reason + "）");
             }
             case "cancel" -> {
                 final boolean had = onMain(() -> restarts.cancel("管理員取消"));
-                text = had ? "取消重新啟動" : "（本來就沒有排）";
+                text = had ? "取消重新啟動／關服" : "（本來就沒有排）";
             }
             case "daily" -> {
                 final java.util.Set<java.time.LocalTime> times = new java.util.TreeSet<>();
@@ -987,7 +1064,7 @@ final class AdminWeb {
                 });
                 text = times.isEmpty() ? "關掉每天定時重新啟動" : "每天定時重新啟動：" + String.join("、", restarts.dailyTimes());
             }
-            default -> throw new IllegalArgumentException("action 要是 schedule、cancel、daily");
+            default -> throw new IllegalArgumentException("action 要是 schedule、shutdown、cancel、daily");
         }
         plugin.getSLF4JLogger().info("[管理網頁] {} {}", session.admin(), text);
         record(session.admin(), "重新啟動", text);
@@ -1014,6 +1091,238 @@ final class AdminWeb {
         plugin.getSLF4JLogger().info("[管理網頁] {} 公告（{}人）：{}", session.admin(), count, message);
         record(session.admin(), "公告", (chat && title ? "聊天欄＋畫面中間" : chat ? "聊天欄" : "畫面中間") + "：" + message);
         return Map.of("ok", true, "sent", count);
+    }
+
+    // ---- 公會、玩家處置、物品追查（2026-10） ----
+
+    /**
+     * 照遊戲裡管理員指令的做法跑一段、把它寫出來的訊息收回來（公會管理、物品追查都沿用指令那一套）。
+     *
+     * @param settle 有些指令的結果要查資料庫、過一下才寫出來：跑完之後最多再等這麼久（毫秒），連續 300 毫秒沒有新訊息就當寫完了；
+     *               0 = 當場就有結果，不等
+     */
+    private List<String> capture(final AdminAuth.Session session, final java.util.function.Consumer<org.bukkit.command.CommandSender> action,
+                                 final long settle) throws Exception {
+        final tw.exilecore.core.command.CapturedOutput output = new tw.exilecore.core.command.CapturedOutput(plugin.getServer(),
+                "網頁:" + session.admin());
+        onMain(() -> {
+            action.accept(output.sender());
+            return Boolean.TRUE;
+        });
+        if (settle > 0) {
+            final long deadline = System.currentTimeMillis() + settle;
+            while (System.currentTimeMillis() < deadline) {
+                Thread.sleep(60);
+                if (!output.lines().isEmpty() && System.currentTimeMillis() - output.lastAt() >= 300) {
+                    break;
+                }
+            }
+        }
+        return output.lines();
+    }
+
+    private tw.exilecore.guild.GuildService guildService() {
+        final tw.exilecore.guild.GuildService guilds = plugin.guilds();
+        if (guilds == null) {
+            throw new IllegalArgumentException("公會模組沒有啟用");
+        }
+        return guilds;
+    }
+
+    private Object guilds() throws Exception {
+        final tw.exilecore.guild.GuildService service = guildService();
+        return Map.of("guilds", onMain(service::adminGuildList));
+    }
+
+    private Object guildDetail(final WebServer.Request request) throws Exception {
+        final tw.exilecore.guild.GuildService service = guildService();
+        final long id;
+        try {
+            id = Long.parseLong(String.valueOf(request.param("id")));
+        } catch (final NumberFormatException e) {
+            throw new IllegalArgumentException("少了公會的編號");
+        }
+        final Map<String, Object> detail = onMain(() -> service.adminGuildDetail(id));
+        if (detail == null) {
+            throw new IllegalArgumentException("沒有這個公會（可能剛被解散）");
+        }
+        final List<Map<String, Object>> log = new ArrayList<>();
+        for (final tw.exilecore.guild.GuildRepository.LogRow row : onDatabase(connection -> service.adminLogRows(connection, id, 60))) {
+            final Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("at", row.at());
+            entry.put("actor", row.actor());
+            entry.put("action", row.action());
+            entry.put("detail", row.detail());
+            log.add(entry);
+        }
+        detail.put("log", log);
+        return detail;
+    }
+
+    /** 公會名稱、成員名字都不能有空白（指令是用空白切的）；有的話就是資料不對。 */
+    private static String token(final JsonObject body, final String key, final String what) {
+        final String value = optionalString(body, key) == null ? "" : optionalString(body, key).strip();
+        if (value.isEmpty()) {
+            throw new IllegalArgumentException("少了" + what);
+        }
+        return value;
+    }
+
+    private Object guildAction(final AdminAuth.Session session, final JsonObject body) throws Exception {
+        final tw.exilecore.guild.GuildService service = guildService();
+        final String action = string(body, "action");
+        final String guild = token(body, "guild", "公會");
+        if (guild.chars().anyMatch(Character::isWhitespace)) {
+            throw new IllegalArgumentException("公會名稱不對");
+        }
+        final List<String> lines;
+        final String what;
+        switch (action) {
+            case "leader", "promote", "demote", "kick" -> {
+                final String member = token(body, "member", "成員");
+                what = switch (action) {
+                    case "leader" -> "換會長";
+                    case "promote" -> "升幹部";
+                    case "demote" -> "降成員";
+                    default -> "請出";
+                } + "：" + member;
+                lines = capture(session, sender -> {
+                    switch (action) {
+                        case "leader" -> service.adminLeader(sender, member);
+                        case "promote" -> service.adminRank(sender, member, tw.exilecore.guild.GuildRank.OFFICER);
+                        case "demote" -> service.adminRank(sender, member, tw.exilecore.guild.GuildRank.MEMBER);
+                        default -> service.adminKick(sender, member);
+                    }
+                }, 0);
+            }
+            case "rename" -> {
+                final String tag = token(body, "tag", "新標籤");
+                final String name = token(body, "name", "新名稱");
+                if (tag.chars().anyMatch(Character::isWhitespace) || name.chars().anyMatch(Character::isWhitespace)) {
+                    throw new IllegalArgumentException("標籤與名稱不能有空白");
+                }
+                what = "改名：[" + tag + "] " + name;
+                lines = capture(session, sender -> service.adminRename(sender, guild + " " + tag + " " + name), 0);
+            }
+            case "motd" -> {
+                final String text = optionalString(body, "text") == null ? "" : optionalString(body, "text").replace('\n', ' ').strip();
+                what = text.isEmpty() ? "清掉公告" : "改公告：" + text;
+                lines = capture(session, sender -> service.adminMotd(sender, text.isEmpty() ? guild : guild + " " + text), 0);
+            }
+            case "xp" -> {
+                final long amount = number(body, "amount", 0);
+                if (amount <= 0) {
+                    throw new IllegalArgumentException("經驗要是正的數字");
+                }
+                what = "公會經驗 +" + amount;
+                lines = capture(session, sender -> service.adminExperience(sender, amount, guild), 0);
+            }
+            case "level" -> {
+                final int level = (int) number(body, "amount", 0);
+                what = "設等級 " + level;
+                lines = capture(session, sender -> service.adminLevel(sender, level, guild), 0);
+            }
+            case "pages" -> {
+                final int pages = (int) number(body, "amount", -1);
+                what = "星幣買的倉庫頁設成 " + pages;
+                lines = capture(session, sender -> service.adminPages(sender, pages, guild), 0);
+            }
+            case "disband", "forcedisband" -> {
+                final boolean force = action.equals("forcedisband");
+                what = force ? "解散（倉庫的東西一起刪）" : "解散";
+                lines = capture(session, sender -> service.adminDisband(sender, guild, force), 4000);
+            }
+            default -> throw new IllegalArgumentException("不認得的動作：" + action);
+        }
+        plugin.getSLF4JLogger().info("[管理網頁] {} 公會「{}」{}", session.admin(), guild, what);
+        record(session.admin(), "公會", "「" + guild + "」" + what + (lines.isEmpty() ? "" : " → " + String.join("／", lines)));
+        return Map.of("ok", true, "lines", lines);
+    }
+
+    /** 線上玩家：禁言、解除禁言、踢出。 */
+    private Object playerAction(final AdminAuth.Session session, final JsonObject body) throws Exception {
+        final String action = string(body, "action");
+        final UUID uuid;
+        try {
+            uuid = UUID.fromString(string(body, "uuid"));
+        } catch (final IllegalArgumentException e) {
+            throw new IllegalArgumentException("玩家的代號不對");
+        }
+        final String reason = optionalString(body, "reason") == null ? "" : optionalString(body, "reason").replace('\n', ' ').strip();
+        if (reason.length() > 100) {
+            throw new IllegalArgumentException("原因最多 100 個字");
+        }
+        final long minutes = Math.max(0, number(body, "minutes", 0));
+        final String by = "網頁:" + session.admin();
+        final String result = onMain(() -> {
+            final Player target = plugin.getServer().getPlayer(uuid);
+            final String name = target != null ? target.getName() : String.valueOf(plugin.getServer().getOfflinePlayer(uuid).getName());
+            switch (action) {
+                case "mute" -> {
+                    if (plugin.chat() == null) {
+                        throw new IllegalArgumentException("聊天模組沒有啟用");
+                    }
+                    plugin.chat().moderation().mute(uuid, minutes, reason, by);
+                    final String length = minutes <= 0 ? "永久" : minutes + " 分鐘";
+                    if (target != null) {
+                        target.sendMessage(plugin.text().prefixed("<red>你被禁言了（" + length + "）"
+                                + (reason.isBlank() ? "" : "：" + tw.exilecore.item.ItemRenderer.escape(reason))));
+                    }
+                    return "禁言 " + name + "（" + length + "）" + (reason.isBlank() ? "" : "：" + reason);
+                }
+                case "unmute" -> {
+                    if (plugin.chat() == null) {
+                        throw new IllegalArgumentException("聊天模組沒有啟用");
+                    }
+                    final boolean had = plugin.chat().moderation().unmute(uuid);
+                    if (had && target != null) {
+                        target.sendMessage(plugin.text().prefixed("<green>你的禁言解除了"));
+                    }
+                    return had ? "解除禁言 " + name : name + " 本來就沒有被禁言";
+                }
+                case "kick" -> {
+                    if (target == null) {
+                        throw new IllegalArgumentException("這個玩家已經不在線上了");
+                    }
+                    target.kick(plugin.text().parse("<red>你被管理員請出伺服器" + (reason.isBlank() ? "" : "<newline><gray>原因：<white>"
+                            + tw.exilecore.item.ItemRenderer.escape(reason))));
+                    return "踢出 " + name + (reason.isBlank() ? "" : "：" + reason);
+                }
+                default -> throw new IllegalArgumentException("不認得的動作：" + action);
+            }
+        });
+        plugin.getSLF4JLogger().info("[管理網頁] {} {}", session.admin(), result);
+        record(session.admin(), "玩家", result);
+        return Map.of("ok", true, "message", result);
+    }
+
+    /** 物品追查：一件物品（UUID）的交易與通貨紀錄，或一個玩家最近的交易。 */
+    private Object trace(final AdminAuth.Session session, final WebServer.Request request) throws Exception {
+        if (plugin.economy() == null) {
+            throw new IllegalArgumentException("經濟模組沒有啟用");
+        }
+        final String item = request.param("item") == null ? "" : request.param("item").strip();
+        final String player = request.param("player") == null ? "" : request.param("player").strip();
+        if (item.isEmpty() == player.isEmpty()) {
+            throw new IllegalArgumentException("物品的 UUID 或玩家的 ID 填一個");
+        }
+        if (!item.isEmpty() && !item.matches("[0-9a-fA-F-]{8,40}")) {
+            throw new IllegalArgumentException("物品的 UUID 格式不對（在物品上按 F3+H 看得到，或用遊戲裡的 /ec inspect）");
+        }
+        if (!player.isEmpty() && !player.matches("[A-Za-z0-9_.*]{1,32}")) {
+            throw new IllegalArgumentException("玩家要填 ID（英數字），不是角色名稱");
+        }
+        final List<String> lines = capture(session, sender -> {
+            if (!item.isEmpty()) {
+                tw.exilecore.ops.OpsModule.traceItem(plugin, sender, item);
+            } else {
+                tw.exilecore.ops.OpsModule.tracePlayer(plugin, sender, player);
+            }
+        }, 8000);
+        if (lines.isEmpty()) {
+            throw new TimeoutException("查詢還沒回來（資料庫忙碌中），稍後再試");
+        }
+        return Map.of("lines", lines);
     }
 
     // ---- JSON 小工具 ----

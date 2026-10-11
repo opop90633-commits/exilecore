@@ -468,7 +468,7 @@ public final class ItemStats {
             final Map<String, int[]> ranges = scale != 1 ? scaledRanges(affix.ranges(rolled.tier()), scale) : affix.ranges(rolled.tier());
             final AffixLine line = new AffixLine(affix.render(vars), affix.rank(rolled.tier()), affix.type(),
                     Affix.substituteWithRanges(affix.text(), vars, ranges), boosted, veiledBoost ? (int) Math.round(unveiled * 100) : 0,
-                    AffixChips.of(affix.mods())); // 2026-10：詞綴標籤
+                    repository.chipsOf(affix)); // 2026-10：詞綴標籤（資料檔寫了 chips 的照寫的）
             if (affix.type() == AffixType.PREFIX) {
                 prefixes.add(line);
             } else {

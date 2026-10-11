@@ -149,6 +149,8 @@ public final class NpcService {
     private static final String HEIST_SKIN = "Penguin0c0";
     /** 地圖裝置的皮膚（玩家名稱，2026-10）。 */
     private static final String MAP_DEVICE_SKIN = "SUISEI_HOSIMATI";
+    /** 商人的皮膚（玩家名稱，2026-10）。 */
+    private static final String VENDOR_SKIN = "ss9319622";
 
     /** 原版內建的 9 種預設皮膚（textures/entity/player/{wide,slim}/名字.png）。 */
     private static final String[] DEFAULT_SKINS = {"alex", "ari", "efe", "kai", "makena", "noor", "steve", "sunny", "zuri"};
@@ -162,9 +164,10 @@ public final class NpcService {
             return;
         }
         final io.papermc.paper.datacomponent.item.ResolvableProfile current = mannequin.getProfile();
-        // 2026-10：盜賊首領用玩家 Penguin0c0、地圖裝置用 SUISEI_HOSIMATI 的皮膚（照名字讓客戶端去抓；換成別的名字改這裡）
+        // 2026-10：盜賊首領用玩家 Penguin0c0、地圖裝置用 SUISEI_HOSIMATI、商人用 ss9319622 的皮膚（照名字讓客戶端去抓；換成別的名字改這裡）
         final NpcType npcType = type(entity).orElse(null);
-        final String named = npcType == NpcType.HEIST ? HEIST_SKIN : npcType == NpcType.MAP_DEVICE ? MAP_DEVICE_SKIN : null;
+        final String named = npcType == NpcType.HEIST ? HEIST_SKIN : npcType == NpcType.MAP_DEVICE ? MAP_DEVICE_SKIN
+                : npcType == NpcType.VENDOR ? VENDOR_SKIN : null;
         if (named != null) {
             if (current == null || !named.equals(current.name())) {
                 mannequin.setProfile(io.papermc.paper.datacomponent.item.ResolvableProfile.resolvableProfile().name(named).build());

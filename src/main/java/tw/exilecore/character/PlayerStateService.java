@@ -55,12 +55,23 @@ public final class PlayerStateService {
 
     /** 其他模組給的修飾器（地圖詞綴：在地圖裡的玩家）。 */
     private final List<Function<Player, List<Modifier>>> modifierSources = new ArrayList<>();
+    /** 其中哪些是暫時的增益（{@link #addBuffSource}）。 */
+    private final java.util.Set<Function<Player, List<Modifier>>> buffSources = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     private final List<java.util.function.BiFunction<Player, PlayerState, List<Modifier>>> stateModifierSources = new ArrayList<>();
     private final List<java.util.function.ToIntFunction<PlayerState>> pointSources = new ArrayList<>();
 
     /** 註冊一個額外修飾器的來源（重算屬性表時呼叫）。 */
     public void addModifierSource(final Function<Player, List<Modifier>> source) {
         modifierSources.add(source);
+    }
+
+    /**
+     * 註冊一個「暫時的增益」來源（光環、戰吼、球、疾速、圖騰、魔像、護符……）：跟 {@link #addModifierSource} 一樣進屬性表，
+     * 另外角色面板會拿「沒有這些增益」的表（{@link #baselineSheet}）來比，列出增益讓哪些數值變了（2026-10）。
+     */
+    public void addBuffSource(final Function<Player, List<Modifier>> source) {
+        modifierSources.add(source);
+        buffSources.add(source);
     }
 
     /**
@@ -145,7 +156,27 @@ public final class PlayerStateService {
     }
 
     public void rebuild(final Player player, final PlayerState state) {
-        final StatSheet sheet = state.sheet();
+        build(player, state, state.sheet(), true);
+    }
+
+    /**
+     * 沒有暫時增益的屬性表（2026-10，角色面板比對用）：不算 {@link #addBuffSource} 的來源，也不算有條件的詞綴
+     * （「最近被擊中」「藥劑效果中」這種，條件成立才有的也算增益）。每次呼叫都新算一張，不影響玩家身上的狀態。
+     */
+    public StatSheet baselineSheet(final Player player) {
+        final PlayerState state = get(player);
+        if (state.isDirty()) {
+            rebuild(player, state);
+        }
+        final StatSheet baseline = new StatSheet();
+        build(player, state, baseline, false);
+        return baseline;
+    }
+
+    /**
+     * @param live true＝玩家身上那張表（全部算、更新狀態）；false＝比對用的表（不算暫時增益、不改任何狀態）
+     */
+    private void build(final Player player, final PlayerState state, final StatSheet sheet, final boolean live) {
         sheet.clearModifiers();
         final int level = state.level();
         final CharacterClass characterClass = state.characterClass();
@@ -168,7 +199,7 @@ public final class PlayerStateService {
         final long now = plugin.getServer().getCurrentTick();
         final List<Modifier> passiveResolved = new ArrayList<>();
         for (final Modifier modifier : passiveModifiers) {
-            final Modifier resolved = resolveCondition(player, state, modifier, now, conditions);
+            final Modifier resolved = live ? resolveCondition(player, state, modifier, now, conditions) : withoutCondition(modifier);
             if (resolved != null) {
                 passiveResolved.add(resolved);
             }
@@ -177,7 +208,9 @@ public final class PlayerStateService {
         // 其他來源（地圖詞綴、任務獎勵、昇華天賦、分身獎勵）：給的屬性點也算進裝備需求，所以兩輪都加
         final List<Modifier> extra = new ArrayList<>();
         for (final Function<Player, List<Modifier>> source : modifierSources) {
-            extra.addAll(source.apply(player));
+            if (live || !buffSources.contains(source)) {
+                extra.addAll(source.apply(player));
+            }
         }
         for (final java.util.function.BiFunction<Player, PlayerState, List<Modifier>> source : stateModifierSources) {
             extra.addAll(source.apply(player, state));
@@ -197,7 +230,7 @@ public final class PlayerStateService {
         sheet.clearModifiers();
         sheet.addAll(passiveResolved);
         boolean hasWeapon = false;
-        state.setWeaponTags(Set.of());
+        Set<String> weaponTags = Set.of();
         final List<String> inactive = new ArrayList<>();
         final List<EquippedItem> active = new ArrayList<>();
         for (final EquippedItem item : equipped) {
@@ -212,7 +245,7 @@ public final class PlayerStateService {
             double localSpirit = 0;
             for (final Modifier raw : item.modifiers()) {
                 // 2026-10：有條件的詞綴（evasion@nohit、damage@projhit 這種）：條件成立才算，代號拿掉條件
-                final Modifier modifier = resolveCondition(player, state, raw, now, conditions);
+                final Modifier modifier = live ? resolveCondition(player, state, raw, now, conditions) : withoutCondition(raw);
                 if (modifier == null) {
                     continue;
                 }
@@ -227,15 +260,18 @@ public final class PlayerStateService {
             }
             if (item.base().isWeapon()) {
                 hasWeapon = true;
-                state.setWeaponTags(item.base().tags());
+                weaponTags = item.base().tags();
             }
         }
         sheet.addAll(extra);
-        state.setConditionsEvaluated(conditions);
+        if (live) {
+            state.setWeaponTags(weaponTags);
+            state.setConditionsEvaluated(conditions);
+        }
         ascendancyEquipment(sheet, state, active, tree);
         // 與死共舞（2026-10 PoE2 基石）：主手單手武器（魔杖、權杖除外）、副手空著：技能速度更多 25%
-        if (StatKeys.flag(sheet, StatKeys.FLAG_DANCE_WITH_DEATH) && state.weaponTags().contains("one_hand")
-                && !state.weaponTags().contains("wand") && !state.weaponTags().contains("sceptre")
+        if (StatKeys.flag(sheet, StatKeys.FLAG_DANCE_WITH_DEATH) && weaponTags.contains("one_hand")
+                && !weaponTags.contains("wand") && !weaponTags.contains("sceptre")
                 && equipped.stream().noneMatch(item -> item.base().slot() == tw.exilecore.item.ItemSlot.OFF_HAND)) {
             sheet.add(Modifier.more(StatKeys.ATTACK_SPEED, 0.25, "單刃疾舞"));
             sheet.add(Modifier.more(StatKeys.CAST_SPEED, 0.25, "單刃疾舞"));
@@ -291,6 +327,9 @@ public final class PlayerStateService {
             sheet.add(Modifier.flat(StatKeys.SPIRIT_MAX, Math.floor(lifeForBeidat / 25), "魔契之志"));
         }
 
+        if (!live) {
+            return; // 比對用的表：到這裡就算完了，下面都是更新玩家狀態
+        }
         state.clampToMax();
         state.markClean();
         syncVanillaAttributes(player, sheet);
@@ -347,6 +386,11 @@ public final class PlayerStateService {
             return "智慧不足（需要 " + req.intelligence() + "，你有 " + Math.round(intelligence) + "）";
         }
         return null;
+    }
+
+    /** 比對用的表：有條件的詞綴一律不算（條件成立才有的效果也當成增益）。 */
+    private static Modifier withoutCondition(final Modifier modifier) {
+        return tw.exilecore.stats.Recently.hasCondition(modifier.stat()) ? null : modifier;
     }
 
     /** 需求不符的裝備有變動時提醒玩家（只提醒新出現的那幾件）。 */
@@ -552,8 +596,13 @@ public final class PlayerStateService {
         refreshTabList();
         // 聊天的名字：【稱號】角色名稱（中間不空格；稱號沒有滑過去的說明，名字有）
         final net.kyori.adventure.text.Component nameText = nameComponent(player);
-        player.displayName(title.isEmpty() ? nameText : net.kyori.adventure.text.Component.text()
-                .append(plugin.text().parse(title)).append(nameText.colorIfAbsent(net.kyori.adventure.text.format.NamedTextColor.WHITE)).build());
+        // 2026-10：公會標籤放最前面「[標籤]【稱號】角色名稱」
+        final String guildTag = plugin.guilds() == null ? "" : plugin.guilds().tag(player);
+        player.displayName(title.isEmpty() && guildTag.isEmpty() ? nameText : net.kyori.adventure.text.Component.text()
+                .append(plugin.text().parse(guildTag + title)).append(nameText.colorIfAbsent(net.kyori.adventure.text.format.NamedTextColor.WHITE)).build());
+        if (plugin.chat() != null) {
+            plugin.chat().refreshNameplate(player); // 2026-10：頭上的名牌
+        }
     }
 
     /** TAB 上次設的內容（沒變就不重送）。 */
@@ -579,7 +628,10 @@ public final class PlayerStateService {
             }
             final String title = plugin.bounties() == null ? "" : plugin.bounties().titleTag(each);
             // 2026-10：「【稱號】名字」同一欄（【對齊），名字緊接在】後面；沒稱號的名字從同一欄開始
-            final String first = styledName(each, tw.exilecore.item.ItemRenderer.escape(character.name()));
+            // 2026-10：有公會的人名字後面接公會標籤（放後面：前面幾欄的對齊不用跟著動）
+            final String guildTag = plugin.guilds() == null ? "" : plugin.guilds().tag(each);
+            final String first = styledName(each, tw.exilecore.item.ItemRenderer.escape(character.name()))
+                    + (guildTag.isEmpty() ? "" : " " + guildTag);
             final String level = "Lv." + character.level();
             final String classText = classText(state, character);
             final double classWidth = tw.exilecore.web.HudFont.estimateVanilla(plain.serialize(plugin.text().parse(classText)));
@@ -588,9 +640,10 @@ public final class PlayerStateService {
             levelColumn = Math.max(levelColumn, levelWidth);
             rows.add(new String[] {first, level, classText, String.valueOf(classWidth), String.valueOf(levelWidth), title});
             owners.add(each);
-            final int order = character.level();
+            // 2026-10：管理員永遠置頂（管理員之間、玩家之間都照等級高的排前面）
+            final int order = (each.hasPermission("exilecore.admin") ? 100_000 : 0) + character.level();
             if (each.getPlayerListOrder() != order) {
-                each.setPlayerListOrder(order); // 等級高的排前面
+                each.setPlayerListOrder(order);
             }
         }
         for (int i = 0; i < rows.size(); i++) {
@@ -680,7 +733,8 @@ public final class PlayerStateService {
         final net.kyori.adventure.text.Component hover = plugin.text().parse("<white>" + name + "\n<#f5b942>Lv." + character.level()
                 + "</#f5b942> " + classText(state, character) + "\n<gray>玩家 ID：" + tw.exilecore.item.ItemRenderer.escape(player.getName())
                 + "\n<dark_gray>按一下私訊");
-        return plugin.text().parse(styledName(player, name))
+        // 2026-10：聊天、死亡訊息裡的名字一律粗體（沒有贊助顏色的白色名字混在白色的訊息裡看不出來；贊助的顏色照舊）
+        return plugin.text().parse("<b>" + styledName(player, name) + "</b>")
                 .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(hover))
                 .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand("/w " + character.name() + " "));
     }

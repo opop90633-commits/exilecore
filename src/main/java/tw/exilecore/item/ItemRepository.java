@@ -36,6 +36,8 @@ public final class ItemRepository {
     private final Map<String, String> uniqueStatBases = new java.util.HashMap<>();
     private final Map<String, Double> uniqueRuneEffect = new java.util.HashMap<>();
     private final Map<String, Affix> affixes = new LinkedHashMap<>();
+    /** 詞綴代號 → 資料檔指定的標籤（chips:）；沒指定的照修飾器判斷。 */
+    private final Map<String, java.util.Set<AffixChips.Chip>> affixChips = new java.util.HashMap<>();
     private final Map<String, UniqueItem> uniques = new LinkedHashMap<>();
     /** 退役的傳奇（uniques.yml 的 retired: true，2026-10 PoE2 改版）：定義留著讓還沒換掉的舊物品照常生效，其他地方都看不到。 */
     private final java.util.Set<String> retiredUniques = new java.util.HashSet<>();
@@ -68,6 +70,7 @@ public final class ItemRepository {
         uniqueStatBases.clear();
         uniqueRuneEffect.clear();
         affixes.clear();
+        affixChips.clear();
         uniques.clear();
         retiredUniques.clear();
         retiredBases.clear();
@@ -95,6 +98,21 @@ public final class ItemRepository {
                     throw new IllegalArgumentException(file.getFileName() + "：詞綴代號重複 " + id);
                 }
                 affixes.put(id, Affix.parse(id, root.node(id)));
+                // 2026-10：chips 直接指定這條詞綴顯示哪些標籤（照 PoE2 的標籤；例如箭袋的「弓技能傷害」只有「傷害」，
+                // 但修飾器要寫 attack、bow 才吃得對）。沒寫的照修飾器的屬性與標籤判斷。
+                // 寫 chips: [] 是「這條沒有標籤」（PoE2 的暈眩、破甲、印記那些就沒有）
+                final List<String> chipIds = root.node(id).strings("chips");
+                if (root.node(id).has("chips")) {
+                    final java.util.Set<AffixChips.Chip> chips = java.util.EnumSet.noneOf(AffixChips.Chip.class);
+                    for (final String chipId : chipIds) {
+                        final AffixChips.Chip chip = AffixChips.byId(chipId);
+                        if (chip == null) {
+                            throw new IllegalArgumentException(file.getFileName() + "：" + id + ".chips 不認得的標籤 " + chipId);
+                        }
+                        chips.add(chip);
+                    }
+                    affixChips.put(id, java.util.Collections.unmodifiableSet(chips));
+                }
             }
         }
 
@@ -329,15 +347,56 @@ public final class ItemRepository {
         return Collections.unmodifiableCollection(affixes.values());
     }
 
-    /** 掉落等級 ≤ 給定等級的裝備基底（地圖另外掉，不在這裡；含珠寶）。 */
+    /** 這條詞綴顯示的標籤：資料檔有寫 chips 的照寫的，不然照修飾器判斷。 */
+    public java.util.Set<AffixChips.Chip> chipsOf(final Affix affix) {
+        final java.util.Set<AffixChips.Chip> fixed = affixChips.get(affix.id());
+        return fixed != null ? fixed : AffixChips.of(affix.mods());
+    }
+
+    /**
+     * 掉落等級 ≤ 給定等級的裝備基底（地圖另外掉，不在這裡；含珠寶）。
+     * 遺時珠寶（半徑珠寶）不在這裡（2026-10）：只在劫盜的金庫箱與大金庫掉，見 {@link #pickRadiusJewel}。
+     */
     public List<ItemBase> basesDroppableAt(final int level) {
         final List<ItemBase> list = new ArrayList<>();
         for (final ItemBase base : bases.values()) {
-            if (base.dropLevel() <= level && !base.isMap() && !base.isFlaskLike() && base.dropWeight() > 0 && !retiredBases.contains(base.id())) {
+            if (base.dropLevel() <= level && !base.isMap() && !base.isFlaskLike() && !base.isRadiusJewel() && base.dropWeight() > 0
+                    && !retiredBases.contains(base.id())) {
                 list.add(base);
             }
         }
         return list;
+    }
+
+    /** 掉落等級 ≤ 給定等級的遺時珠寶（半徑珠寶）基底：只有劫盜會掉。 */
+    public List<ItemBase> radiusJewelsAt(final int level) {
+        final List<ItemBase> list = new ArrayList<>();
+        for (final ItemBase base : bases.values()) {
+            if (base.isRadiusJewel() && base.dropLevel() <= level && base.dropWeight() > 0 && !retiredBases.contains(base.id())) {
+                list.add(base);
+            }
+        }
+        return list;
+    }
+
+    /** 照掉落權重抽一個遺時珠寶的基底；這個等級還掉不出來回傳 null。 */
+    public ItemBase pickRadiusJewel(final int level, final java.util.random.RandomGenerator random) {
+        final List<ItemBase> pool = radiusJewelsAt(level);
+        double total = 0;
+        for (final ItemBase base : pool) {
+            total += base.dropWeight();
+        }
+        if (total <= 0) {
+            return null;
+        }
+        double pick = random.nextDouble() * total;
+        for (final ItemBase base : pool) {
+            pick -= base.dropWeight();
+            if (pick < 0) {
+                return base;
+            }
+        }
+        return pool.getLast();
     }
 
     /** 商人賣的、能賭的基底：能穿戴的裝備（珠寶只掉落，照 PoE2 商人不賣）。 */

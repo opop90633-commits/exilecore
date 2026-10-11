@@ -92,7 +92,7 @@ public final class CharacterSelectMenu extends Menu {
             }
             final Optional<CharacterRecord> record = characters.rosterEntry(player, slot);
             if (record.isEmpty()) {
-                set(slotPositions[i], icon(Material.GRAY_DYE, "<gray>空的角色格 " + slot, "<yellow>左鍵：建立新角色"));
+                set(slotPositions[i], uiIcon("slot_character", Material.GRAY_DYE, "<gray>空的角色格 " + slot, "<yellow>左鍵：建立新角色"));
             } else {
                 set(slotPositions[i], characterIcon(record.get(), record.get().id() == activeId));
             }

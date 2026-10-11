@@ -27,6 +27,8 @@ public final class CharacterModule implements Module {
     private final CharacterService characters;
     private final ChatPrompts chatPrompts;
     private BukkitTask tickTask;
+    /** 每人上次回復出錯記在哪個 tick（同一個人 10 秒只記一次，不洗版）。 */
+    private final Map<UUID, Long> tickErrors = new java.util.HashMap<>();
     private BukkitTask autosaveTask;
     private BukkitTask sidebarTask;
     private BukkitTask gearTask;
@@ -71,7 +73,17 @@ public final class CharacterModule implements Module {
             for (final Map.Entry<UUID, PlayerState> entry : states.all().entrySet()) {
                 final Player player = plugin.getServer().getPlayer(entry.getKey());
                 if (player != null && player.isOnline()) {
-                    states.tick(player, entry.getValue(), currentTick, TICK_PERIOD);
+                    try {
+                        states.tick(player, entry.getValue(), currentTick, TICK_PERIOD);
+                    } catch (final RuntimeException e) {
+                        // 2026-10：一個人的屬性表算不出來（例如身上有壞掉的物品）只跳過他——
+                        // 以前這裡一丟錯，排在他後面的人這一輪的生命、魔力、護盾回復全都不跑
+                        final Long last = tickErrors.get(entry.getKey());
+                        if (last == null || currentTick - last >= 200) {
+                            tickErrors.put(entry.getKey(), currentTick);
+                            plugin.getSLF4JLogger().error("{} 的回復與屬性更新出錯", player.getName(), e);
+                        }
+                    }
                 }
             }
         }, TICK_PERIOD, TICK_PERIOD);

@@ -29,7 +29,11 @@ public final class AtlasMenu extends Menu {
     private static final int SLOT_DEVICE = 45;
     private static final int SLOT_TREE = 47;
     private static final int SLOT_INFO = 49;
+    private static final int SLOT_NEXT = 51;
+    private static final int SLOT_HELP = 50;
     private static final int SLOT_CLOSE = 53;
+    /** 格子 → 地圖（點節點時用）。 */
+    private final Map<Integer, MapConfig.MapDef> shown = new java.util.HashMap<>();
 
     private final MapService service;
 
@@ -43,18 +47,49 @@ public final class AtlasMenu extends Menu {
         for (int i = 0; i < 54; i++) {
             set(i, filler());
         }
+        shown.clear();
         final MapConfig config = service.config();
         final Set<String> completed = service.completed(player);
+        // 2026-10：連線的顏色＝路的狀態——金色：兩頭都完成；綠色：一頭完成（可以往這邊走）；深灰：還沒走到
         for (final Atlas.Connector connector : Atlas.connectors(config)) {
             final boolean a = completed.contains(connector.from());
             final boolean b = completed.contains(connector.to());
-            final Material pane = a && b ? Material.YELLOW_STAINED_GLASS_PANE : a || b ? Material.WHITE_STAINED_GLASS_PANE
+            final Material pane = a && b ? Material.YELLOW_STAINED_GLASS_PANE : a || b ? Material.LIME_STAINED_GLASS_PANE
                     : Material.GRAY_STAINED_GLASS_PANE;
-            set(connector.row() * 9 + connector.col(), icon(pane, " "));
+            final ItemStack line = new ItemStack(pane);
+            line.editMeta(meta -> meta.setHideTooltip(true));
+            set(connector.row() * 9 + connector.col(), line);
         }
+        final List<String> next = new ArrayList<>();
         for (final MapConfig.MapDef map : config.all()) {
-            set(map.row() * 9 + map.col(), node(config, map, completed));
+            final int slot = map.row() * 9 + map.col();
+            shown.put(slot, map);
+            set(slot, node(config, map, completed));
+            if (!completed.contains(map.id()) && Atlas.unlocked(config, map, completed)) {
+                next.add((map.isFinal() ? "<#f5b942>" : "<green>") + ItemRenderer.escape(map.name()) + "<dark_gray>（" + (map.isFinal() ? "終局" : "第 " + map.ring() + " 圈") + "）");
+            }
         }
+        final List<String> nextLore = new ArrayList<>();
+        nextLore.add("<gray>已經解鎖、還沒完成的地圖（金框標出來的）：");
+        if (next.isEmpty()) {
+            nextLore.add("<dark_gray>　沒有——全部完成了");
+        } else {
+            for (int i = 0; i < Math.min(8, next.size()); i++) {
+                nextLore.add("<gray>　• " + next.get(i));
+            }
+            if (next.size() > 8) {
+                nextLore.add("<dark_gray>　…還有 " + (next.size() - 8) + " 張");
+            }
+        }
+        nextLore.add("");
+        nextLore.add("<gray>完成一張不同的地圖，相連的就會解鎖、掉落的地圖也會高一階");
+        set(SLOT_NEXT, next.isEmpty() ? icon(Material.FILLED_MAP, "<white>下一張", nextLore) : glowing(icon(Material.FILLED_MAP, "<green>下一張（" + next.size() + " 張可以開）", nextLore)));
+        set(SLOT_HELP, helpButton(List.of(
+                "<gray>每個格子是一張地圖，右下角的數字是第幾圈；連線是走法",
+                "<#f5b942>金色發光<gray>＝已完成　<green>金框<gray>＝已解鎖、可以開　<dark_gray>空白地圖＝還沒解鎖",
+                "<gray>連線：<#f5b942>金<gray>＝兩頭都完成　<green>綠<gray>＝可以往這邊走　<dark_gray>灰＝還沒走到",
+                "<gray>滑鼠移到地圖上看主題、Boss、相連的地圖；點一下在聊天欄列出來",
+                "<gray>地圖本身沒有階級：階級寫在地圖物品上（T1–T16），任何一張都能開")));
         set(SLOT_DEVICE, icon(Material.LODESTONE, "<#9fd3ff>地圖裝置", "<gray>在營地：地圖裝置 NPC 右鍵開地圖",
                 "<dark_gray>（/town 回營地）"));
         final int done = Atlas.completedMaps(config, completed);
@@ -132,14 +167,21 @@ public final class AtlasMenu extends Menu {
         if (map.isFinal()) {
             material = unlocked ? Material.NETHER_STAR : Material.FIREWORK_STAR;
         } else if (!unlocked) {
-            material = Material.GRAY_DYE;
+            material = Material.MAP; // 2026-10：還沒解鎖畫成空白地圖（原本的灰色染料看起來像一團雜物）
         } else {
             final var base = plugin.items().repository().base(map.base());
             material = done ? Material.FILLED_MAP : base == null ? Material.PAPER : material(base.material(), Material.PAPER);
         }
-        final String color = done ? "<#f5b942>" : unlocked ? "<white>" : "<gray>";
-        final ItemStack icon = icon(material, color + ItemRenderer.escape(map.name()) + (map.isFinal() ? " <dark_gray>終局" : ""), lore);
-        return done ? glowing(icon) : icon;
+        final String color = done ? "<#f5b942>" : unlocked ? "<green>" : "<gray>";
+        final String ring = map.isFinal() ? " <dark_gray>終局" : " <dark_gray>第 " + map.ring() + " 圈";
+        final ItemStack icon = icon(material, color + ItemRenderer.escape(map.name()) + ring, lore);
+        if (!map.isFinal()) {
+            icon.setAmount(Math.max(1, Math.min(64, map.ring()))); // 右下角的數字＝第幾圈
+        }
+        if (done) {
+            return glowing(icon);
+        }
+        return unlocked ? highlight(icon) : icon; // 2026-10：已解鎖、還沒完成的用金框標出來（沒資源包的人看到發光）
     }
 
     @Override
@@ -148,6 +190,25 @@ public final class AtlasMenu extends Menu {
             goBack();
         } else if (slot == SLOT_TREE) {
             new AtlasTreeMenu(plugin, player, service).open();
+        } else if (shown.containsKey(slot)) {
+            // 2026-10：點地圖：把狀態、相連的地圖列在聊天欄（滑鼠移開也看得到）
+            final MapConfig.MapDef map = shown.get(slot);
+            final Set<String> completed = service.completed(player);
+            final boolean done = completed.contains(map.id());
+            final boolean unlocked = Atlas.unlocked(service.config(), map, completed);
+            final List<String> links = new ArrayList<>();
+            for (final String link : map.links()) {
+                final MapConfig.MapDef other = service.config().find(link);
+                if (other != null) {
+                    links.add((completed.contains(other.id()) ? "<#f5b942>" : Atlas.unlocked(service.config(), other, completed) ? "<green>" : "<gray>")
+                            + ItemRenderer.escape(other.name()) + "</" + (completed.contains(other.id()) ? "#f5b942" : Atlas.unlocked(service.config(), other, completed) ? "green" : "gray") + ">");
+                }
+            }
+            player.sendMessage(plugin.text().prefixed("<white>" + ItemRenderer.escape(map.name()) + "<gray>（" + (map.isFinal() ? "終局" : "第 " + map.ring() + " 圈")
+                    + "・" + THEME_NAMES.getOrDefault(map.theme(), map.theme()) + "）"
+                    + (done ? "<#f5b942>已完成" : unlocked ? "<green>已解鎖，可以開" : "<gray>還沒解鎖")
+                    + (links.isEmpty() ? "" : "<gray>　相連：" + String.join("<gray>、", links))));
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.5f);
         }
     }
 }

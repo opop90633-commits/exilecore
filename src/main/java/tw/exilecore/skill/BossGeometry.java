@@ -114,4 +114,56 @@ public final class BossGeometry {
         final double step = Math.min(strength, distance - 0.6);
         return new double[] {dx / distance * step, dz / distance * step};
     }
+
+    /**
+     * 場地收縮（2026-10）：開始後 elapsed tick 時安全的圈的半徑——從 start 在 total tick 內線性縮到 end，之後維持 end。
+     */
+    public static double arenaRadius(final double start, final double end, final long elapsed, final long total) {
+        if (elapsed <= 0) {
+            return start;
+        }
+        if (total <= 0 || elapsed >= total) {
+            return end;
+        }
+        return start + (end - start) * elapsed / (double) total;
+    }
+
+    /** 在圈外（身體完全出去才算：中心離圈心超過半徑再加半個身體）。 */
+    public static boolean outsideArena(final double cx, final double cz, final double radius, final double px, final double pz,
+                                       final double halfBody) {
+        return Math.hypot(px - cx, pz - cz) > radius + halfBody;
+    }
+
+    /** 殘影（2026-10）的位置：count 個平均分在半徑 distance 的圈上（從 offset 弧度起），回傳相對圈心的 [dx, dz]。 */
+    public static List<double[]> echoOffsets(final int count, final double distance, final double offset) {
+        final List<double[]> list = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            final double angle = offset + Math.PI * 2 * i / count;
+            list.add(new double[] {Math.cos(angle) * distance, Math.sin(angle) * distance});
+        }
+        return list;
+    }
+
+    /**
+     * 殘影出手的順序：照圈上的位置隔一個跳一個（12 個是 0、5、10、3、8…，像時鐘上的星衛輪流出手），
+     * 連續兩道槍不會從隔壁射出來、疊在同一個地方。count 跟 step 互質才走得遍，不互質就照順序。
+     */
+    public static int[] echoOrder(final int count) {
+        final int[] order = new int[count];
+        int step = 1;
+        for (final int candidate : new int[] {5, 7, 3, 2}) {
+            if (candidate < count && gcd(candidate, count) == 1) {
+                step = candidate;
+                break;
+            }
+        }
+        for (int i = 0; i < count; i++) {
+            order[i] = (i * step) % count;
+        }
+        return order;
+    }
+
+    private static int gcd(final int a, final int b) {
+        return b == 0 ? a : gcd(b, a % b);
+    }
 }

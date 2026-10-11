@@ -73,8 +73,17 @@ public final class HeistMenu extends Menu {
                 "<gray>・大金庫有機率掉劫盜專屬的<#af6025>隱匿傳奇</#af6025>（" + plugin.items().repository().uniquesFor("heist", 100).size() + " 種）：",
                 "<gray>  帶一條隱匿詞綴，拿來這裡三選一揭露",
                 "<gray>・大金庫有 " + Math.round(settings.vault().gemChance() * 100) + "% 機率掉<#ff7a6a>Lv.21 未切割技能寶石</#ff7a6a>（技能升到 Lv.21 只能靠它）",
+                "<gray>・<#7fd4ff>遺時星晶</#7fd4ff>（範圍珠寶）只在劫盜掉：金庫箱 " + percent(settings.timeLostChance()) + "、",
+                "<gray>  合約的大金庫 " + percent(settings.vault().timeLostChance()) + "、藍圖的大金庫 "
+                        + percent(Math.min(1, settings.vault().timeLostChance() * settings.vault().grandMultiplier())) + "（怪物等級 60 以上）",
                 "<gray>・角色 " + settings.minLevel() + " 級起可以接劫盜"));
         set(SLOT_CLOSE, closeButton());
+    }
+
+    /** 機率：0.02 → 2%、0.005 → 0.5%。 */
+    private static String percent(final double chance) {
+        final double value = chance * 100;
+        return (value == Math.rint(value) ? String.valueOf((long) value) : String.format(java.util.Locale.ROOT, "%.1f", value)) + "%";
     }
 
     private org.bukkit.inventory.ItemStack keyIcon(final HeistService heists, final String id, final Material fallback, final String title,

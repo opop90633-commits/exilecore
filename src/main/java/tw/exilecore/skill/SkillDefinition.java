@@ -266,6 +266,12 @@ public record SkillDefinition(String id, String name, String description, String
                 tags.add(Tags.AURA);
             }
             tags.add(Tags.AREA); // 隊友在範圍內才有效：範圍效果的加成讓它更大
+            // 2026-10：光環、常駐技能不算法術（照 PoE2：它們是「增益、常駐」）——法術的輔助掛不上、
+            // 「+法術技能等級」與帶 spell 標籤的加成不吃。type 還是寫 spell：開光環的動作照施法時間算。
+            // 捷光環例外：它的輔助會傳給擊殺效果（隱藏的法術），拿掉的話傷害類的輔助全部掛不上去
+            if (!aura.herald()) {
+                tags.remove(Tags.SPELL);
+            }
         }
         if (warcry != null) {
             if (cooldown <= 0) {

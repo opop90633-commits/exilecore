@@ -104,6 +104,14 @@ public final class BossSkills implements Listener {
         default boolean alerts() {
             return false;
         }
+
+        /**
+         * 出招節奏的種類（2026-10；boss_skills.yml 的 settings.tempo：final 終局、uber 極境、trial 試煉、vault 金庫之主、world 世界 Boss）；
+         * null = 照一般的 Boss。只影響兩招之間的空檔與招式冷卻，前搖不變。
+         */
+        default String tempoKind() {
+            return null;
+        }
     }
 
     /** 目標最遠從幾格外找（Boss）。 */
@@ -169,6 +177,12 @@ public final class BossSkills implements Listener {
         final Map<String, Long> chatAt = new HashMap<>();
         /** 這一場已經說明過的場地危害（重置時清掉）。 */
         final Set<String> hazardsAnnounced = new HashSet<>();
+        /** 點名標記（2026-10）：跟著被點名的人走、時間到就炸。 */
+        final List<Marked> marks = new ArrayList<>();
+        /** 最近一次點名的 tick（剛點名也算這一招還沒完，跟光球一樣先讓人看清楚）。 */
+        long lastMark = BossPacing.NEVER;
+        /** 場地收縮（2026-10）：放過之後維持到這場打完，重置才消失。 */
+        Arena arena;
 
         Brain(final LivingEntity boss, final Host host, final List<BossSkillUse> configured) {
             this.boss = boss;
@@ -199,6 +213,9 @@ public final class BossSkills implements Listener {
             gate.clear();
             chatAt.clear();
             hazardsAnnounced.clear();
+            marks.clear();
+            lastMark = BossPacing.NEVER;
+            arena = null;
             phase = host.phase();
             farSince = -1;
             // 一般怪物：出場後的等待多一點隨機，一群怪才不會同時出招
@@ -239,6 +256,8 @@ public final class BossSkills implements Listener {
         Location anchor;
         /** 光束、擴散環、漩渦：結束的 tick。 */
         long channelEnd;
+        /** 殘影（2026-10）：每個殘影的那一槍，照出手的順序。 */
+        List<EchoLance> lances = List.of();
 
         Cast(final BossSkill skill, final long start, final long telegraphTicks, final LivingEntity target, final Vector facing,
              final List<Location> points) {
@@ -326,6 +345,71 @@ public final class BossSkills implements Listener {
         }
     }
 
+    /** 點名標記（2026-10）：跟著被點名的人走的紅圈，fireTick 時在他腳下爆炸。 */
+    private static final class Marked {
+        final BossSkill skill;
+        final UUID target;
+        /** 被點名的人最後的位置（下線、死掉、換世界就炸在這裡）。 */
+        Location last;
+        final long startTick;
+        final long fireTick;
+        final String mark;
+        /** 地上的圈現在標在哪（人走超過 REMARK_DISTANCE 才重標）。 */
+        Location shownAt;
+
+        Marked(final BossSkill skill, final UUID target, final Location last, final long startTick, final long fireTick, final String mark) {
+            this.skill = skill;
+            this.target = target;
+            this.last = last;
+            this.startTick = startTick;
+            this.fireTick = fireTick;
+            this.mark = mark;
+        }
+    }
+
+    /** 場地收縮（2026-10）：安全的圈從 reach 縮到 radius，圈外的人每 interval 秒挨一下。 */
+    private static final class Arena {
+        final BossSkill skill;
+        final Location center;
+        final long startTick;
+        final long shrinkTicks;
+        long nextPulse;
+        final String mark;
+        /** 地上的圈上次標的半徑（縮超過半格才重標）。 */
+        double shown = -1;
+
+        Arena(final BossSkill skill, final Location center, final long startTick, final String mark) {
+            this.skill = skill;
+            this.center = center;
+            this.startTick = startTick;
+            this.shrinkTicks = Math.max(1, Math.round(skill.duration() * 20));
+            this.nextPulse = startTick + Math.max(2, Math.round(skill.interval() * 20));
+            this.mark = mark;
+        }
+
+        double radius(final long now) {
+            return BossGeometry.arenaRadius(skill.reach(), skill.radius(), now - startTick, shrinkTicks);
+        }
+    }
+
+    /** 殘影的一槍（2026-10）：showTick 時朝某個玩家標出紅線，hitTick 時射穿。 */
+    private static final class EchoLance {
+        final Location from;
+        final long showTick;
+        final long hitTick;
+        final String mark;
+        Vector direction;
+        boolean shown;
+        boolean done;
+
+        EchoLance(final Location from, final long showTick, final long hitTick, final String mark) {
+            this.from = from;
+            this.showTick = showTick;
+            this.hitTick = hitTick;
+            this.mark = mark;
+        }
+    }
+
     /** 場地危害還沒落下的一顆（延遲落下）或一塊（地面效果）。 */
     private static final class Pending {
         final BossSkill skill;
@@ -372,6 +456,11 @@ public final class BossSkills implements Listener {
 
     private BossSkillConfig.Settings settings() {
         return config.bossSkills().settings();
+    }
+
+    /** 這隻 Boss 出招的節奏倍率（終局、極境、試煉、金庫、世界 Boss 比較緊；其他是 1）。 */
+    private double tempo(final Brain brain) {
+        return config.bossSkills().tempo(brain.host.tempoKind());
     }
 
     // ---- 給地圖、區域 ----
@@ -493,6 +582,8 @@ public final class BossSkills implements Listener {
                 brain.rings.clear();
                 brain.orbs.clear();
                 brain.pendings.clear();
+                brain.marks.clear();
+                brain.arena = null;
                 danger.hidePrefix(brain.boss.getUniqueId() + ":");
                 release(brain); // 放招時暫停的原版 AI 也恢復
                 if (now - brain.lastError >= 20 * 30) {
@@ -510,6 +601,8 @@ public final class BossSkills implements Listener {
         tickRings(brain, now);
         tickOrbs(brain, now);
         tickPendings(brain, now);
+        tickMarks(brain, now);
+        tickArena(brain, now);
         if (now % 20 == 0) {
             expireSummons(brain, now);
             brain.gate.prune(now);
@@ -523,7 +616,7 @@ public final class BossSkills implements Listener {
             // 2026-10：控住的時候空檔一直往後推：控制結束後一樣要等 boss_gap 才出下一招
             // （打斷招式之後不會因為少放了半招，控制一結束就馬上接下一招，反而變快）
             brain.globalReadyAt = Math.max(brain.globalReadyAt,
-                    now + Math.round(settings().gapFor(brain.host.boss()) * 20 * cooldownFactor(brain.boss)));
+                    now + Math.round(settings().gapFor(brain.host.boss()) * 20 * cooldownFactor(brain.boss) * tempo(brain)));
         }
         if (brain.cast != null) {
             if (incapacitated(brain.boss)) {
@@ -536,11 +629,11 @@ public final class BossSkills implements Listener {
         }
         // 一次只做一件事：上一件還沒完（齊射還在飛、光球剛放出去、場地危害還沒落下）什麼都不開始；
         // 放完一招後的空檔裡只有到時間的場地危害可以落
-        if (BossPacing.unsettled(brain.bolts.size(), brain.rings.size(), brain.pendings.size(), brain.lastOrb, now)) {
+        if (BossPacing.unsettled(brain.bolts.size(), brain.rings.size(), brain.pendings.size(), Math.max(brain.lastOrb, brain.lastMark), now)) {
             return;
         }
         final boolean hazards = !brain.host.hazards().isEmpty();
-        final BossPacing.Step step = BossPacing.step(now, brain.globalReadyAt, hazards ? Math.round(settings().gapFor(brain.host.boss()) * 20) : 0);
+        final BossPacing.Step step = BossPacing.step(now, brain.globalReadyAt, hazards ? Math.round(settings().gapFor(brain.host.boss()) * 20 * tempo(brain)) : 0);
         if (step == BossPacing.Step.WAIT) {
             return;
         }
@@ -590,7 +683,7 @@ public final class BossSkills implements Listener {
         } else {
             brain.farSince = -1;
         }
-        final List<BossSkill> candidates = new ArrayList<>();
+        final List<BossSkillConfig.Entry> candidates = new ArrayList<>();
         final int phase = brain.host.phase();
         for (final BossSkillConfig.Entry entry : brain.kit) {
             final BossSkill skill = entry.skill();
@@ -600,12 +693,42 @@ public final class BossSkills implements Listener {
             if (skill.kind() == BossSkill.Kind.SUMMON && aliveSummons(brain) >= skill.summonMax()) {
                 continue;
             }
-            candidates.add(skill);
+            if (skill.kind() == BossSkill.Kind.ARENA && brain.arena != null) {
+                continue; // 場地已經在收縮了（維持到這場打完）
+            }
+            candidates.add(entry);
         }
         if (candidates.isEmpty()) {
             return;
         }
-        start(brain, candidates.get(random.nextInt(candidates.size())), target, now);
+        BossSkillConfig.Entry chosen = candidates.get(random.nextInt(candidates.size()));
+        for (final BossSkillConfig.Entry entry : candidates) {
+            if (entry.skill().kind() == BossSkill.Kind.ARENA) {
+                chosen = entry; // 場地收縮能放就先放（換到那個階段一開始就收縮，不要打到一半才縮）
+                break;
+            }
+        }
+        start(brain, chosen.skill(), target, now);
+        if (!chosen.with().isEmpty()) {
+            combo(brain, chosen.with(), target, now);
+        }
+    }
+
+    /**
+     * 兩招同時放（2026-10，招式組的 {@code with:}）：Boss 放手上這一招的同時，這些招一起落下——
+     * 延遲落下、地面效果照場地危害的方式落（地上先標、時間到才炸），光球、點名標記直接放出去。
+     * 它們都不用 Boss 站著，所以 Boss 照樣把手上這一招放完；落下之前不出下一招（{@link BossPacing}）。
+     */
+    private void combo(final Brain brain, final List<BossSkill> with, final LivingEntity target, final long now) {
+        for (final BossSkill extra : with) {
+            switch (extra.kind()) {
+                case ORBS -> spawnOrbs(brain, extra, target, now);
+                case MARK -> spawnMarks(brain, extra, target, now);
+                case SLAM, ZONE -> dropPending(brain, extra, target, now, "combo");
+                default -> {
+                }
+            }
+        }
     }
 
     /**
@@ -859,7 +982,8 @@ public final class BossSkills implements Listener {
     private void start(final Brain brain, final BossSkill skill, final LivingEntity target, final long now) {
         final LivingEntity boss = brain.boss;
         // Boss 的招式冷卻再乘 boss_cooldown（2026-10：0.8，Boss 出招快一點；一般怪物照寫的）
-        brain.readyAt.put(skill.id(), now + Math.round(skill.cooldown() * 20 * cooldownFactor(boss) * settings().cooldownFor(brain.host.boss())));
+        brain.readyAt.put(skill.id(), now + Math.round(skill.cooldown() * 20 * cooldownFactor(boss) * settings().cooldownFor(brain.host.boss())
+                * tempo(brain)));
         final Vector facing = facing(boss, target);
         final List<Location> points = skill.kind() == BossSkill.Kind.SLAM || skill.kind() == BossSkill.Kind.ZONE
                 ? points(brain, skill, target) : List.of();
@@ -1132,6 +1256,7 @@ public final class BossSkills implements Listener {
                 }
             }
             case PULL -> pull(brain, cast, now);
+            case ECHOES -> echoes(brain, cast, now);
             default -> finish(brain, now);
         }
     }
@@ -1256,6 +1381,17 @@ public final class BossSkills implements Listener {
                 }
                 warnOutsideSafety(brain, cast, now);
             }
+            case ECHOES -> {
+                if (draw) {
+                    visuals.bossWarningRing(feet, skill.scatter(), progress); // 殘影會出現在這一圈上
+                }
+            }
+            case ARENA -> {
+                if (draw) {
+                    visuals.bossWarningRing(feet, skill.reach(), progress);
+                    visuals.bossWarningRing(feet, skill.radius(), progress); // 最後會縮到這麼小
+                }
+            }
             case BLINK -> {
                 if (here(brain.boss, cast.target)) {
                     // 要跳到你身邊：你腳下畫圈、地板變色，圈跟著你走（跑不掉的是「牠會來」，落地那一下才用走的躲）
@@ -1334,6 +1470,19 @@ public final class BossSkills implements Listener {
                 cataclysm(brain, cast);
                 finish(brain, now);
             }
+            case MARK -> {
+                spawnMarks(brain, skill, cast.target, now);
+                finish(brain, now);
+            }
+            case ARENA -> {
+                danger.hidePrefix(cast.mark);
+                startArena(brain, cast, now);
+                finish(brain, now);
+            }
+            case ECHOES -> {
+                cast.lances = lances(brain, cast, now);
+                cast.channelEnd = cast.lances.isEmpty() ? now : cast.lances.getLast().hitTick;
+            }
             case BLINK -> {
                 danger.hide(cast.mark);
                 final Location to = blink(brain, cast);
@@ -1355,7 +1504,7 @@ public final class BossSkills implements Listener {
         brain.cast = null;
         // 放完一招至少隔 gap 秒（Boss 是 boss_gap）；換階段的停頓（比較久）不會被放完的這一招蓋掉
         brain.globalReadyAt = Math.max(brain.globalReadyAt,
-                now + Math.round(settings().gapFor(brain.host.boss()) * 20 * cooldownFactor(brain.boss)));
+                now + Math.round(settings().gapFor(brain.host.boss()) * 20 * cooldownFactor(brain.boss) * tempo(brain)));
     }
 
     /**
@@ -1420,6 +1569,7 @@ public final class BossSkills implements Listener {
                 danger.show(cast.mark + "#o", feet, DangerZones.ring(feet, skill.radius()), color); // 平面標示：會被拉的範圍
                 danger.show(cast.mark, feet, DangerZones.disc(feet, Math.max(1, skill.explode())), color);
             }
+            case ARENA -> danger.show(cast.mark + "#o", feet, DangerZones.ring(feet, skill.reach()), color); // 一開始的圈
             case SANCTUARY -> {
                 danger.show(cast.mark + "#o", feet, DangerZones.ring(feet, skill.radius()), color); // 平面標示：整個範圍的邊界
                 for (int i = 0; i < cast.safeSpots.size(); i++) {
@@ -2116,12 +2266,24 @@ public final class BossSkills implements Listener {
             spawnOrbs(brain, skill, target, now);
             return true;
         }
+        if (skill.kind() == BossSkill.Kind.MARK) {
+            spawnMarks(brain, skill, target, now);
+            return true;
+        }
+        return dropPending(brain, skill, target, now, "hazard");
+    }
+
+    /**
+     * 延遲落下、地面效果「自己落下」（場地危害、兩招同時放的那一招）：地上先標，前搖（＋落下的延遲）之後才炸或留下地面效果。
+     * 回傳有沒有落點。
+     */
+    private boolean dropPending(final Brain brain, final BossSkill skill, final LivingEntity target, final long now, final String tag) {
         final List<Location> points = points(brain, skill, target);
         final long fire = now + settings().telegraphTicks(skill, brain.host.boss())
                 + (skill.kind() == BossSkill.Kind.SLAM ? Math.round(skill.delay() * 20) : 0);
         final Material color = DangerZones.colorFor(skill.type());
         for (int i = 0; i < points.size(); i++) {
-            final String mark = brain.boss.getUniqueId() + ":hazard:" + skill.id() + ":" + now + "#" + i;
+            final String mark = brain.boss.getUniqueId() + ":" + tag + ":" + skill.id() + ":" + now + "#" + i;
             final long land = fire + (skill.kind() == BossSkill.Kind.SLAM ? i * Math.max(1, Math.round(skill.stagger() * 20)) : 0);
             brain.pendings.add(new Pending(skill, points.get(i), now, land, mark));
             danger.show(mark, points.get(i), DangerZones.disc(points.get(i), skill.radius()), color);
@@ -2168,6 +2330,208 @@ public final class BossSkills implements Listener {
             }
             flash(pending.mark, skill, progress, now);
             warnInside(brain, skill, pending.mark, now);
+        }
+    }
+
+    // ---- 2026-10：點名標記、殘影、場地收縮 ----
+
+    /** 點名：附近隨機 count 個玩家（不重複；人不夠就全部），各掛一個跟著走的標記。 */
+    private void spawnMarks(final Brain brain, final BossSkill skill, final LivingEntity mainTarget, final long now) {
+        final List<Player> players = new ArrayList<>(playersNear(brain.boss.getLocation(), SEARCH));
+        if (players.isEmpty() && mainTarget instanceof Player player && validPlayer(player, brain.boss.getWorld())) {
+            players.add(player);
+        }
+        final long fuse = Math.max(20, Math.round(skill.duration() * 20));
+        final Title title = Title.title(plugin.text().parse("<#ff5555><bold>⚠ " + ItemRenderer.escape(skill.name())),
+                plugin.text().parse("<white>標記在你身上：離開隊友"),
+                Title.Times.times(Duration.ZERO, Duration.ofMillis(1500), Duration.ofMillis(250)));
+        for (int i = 0; i < skill.count() && !players.isEmpty(); i++) {
+            final Player chosen = players.remove(random.nextInt(players.size()));
+            final String mark = brain.boss.getUniqueId() + ":mark:" + skill.id() + ":" + now + "#" + i;
+            brain.marks.add(new Marked(skill, chosen.getUniqueId(), chosen.getLocation(), now, now + fuse, mark));
+            chosen.showTitle(title);
+            visuals.bossTether(brain.boss.getEyeLocation(), SkillTargets.center(chosen), chosen.getEyeLocation());
+        }
+        brain.lastMark = now;
+    }
+
+    /** 標記每 tick：跟著被點名的人走（地上的圈、粒子），時間到在他腳下爆炸，圈裡的人都挨打。 */
+    private void tickMarks(final Brain brain, final long now) {
+        if (brain.marks.isEmpty()) {
+            return;
+        }
+        final Iterator<Marked> iterator = brain.marks.iterator();
+        int index = 0;
+        while (iterator.hasNext()) {
+            final Marked marked = iterator.next();
+            final BossSkill skill = marked.skill;
+            final Player player = plugin.getServer().getPlayer(marked.target);
+            final boolean present = player != null && validPlayer(player, brain.boss.getWorld());
+            if (present) {
+                marked.last = player.getLocation();
+            }
+            final Location under = ground(marked.last);
+            if (now >= marked.fireTick || !under.getWorld().equals(brain.boss.getWorld())) {
+                danger.hide(marked.mark);
+                if (under.getWorld().equals(brain.boss.getWorld())) {
+                    visuals.blast(skill.visual(), under, skill.explode());
+                    for (final LivingEntity victim : victims(brain, under, skill.explode())) {
+                        hurt(brain, skill, victim, Tags.AREA);
+                    }
+                }
+                iterator.remove();
+                continue;
+            }
+            final double progress = (now - marked.startTick) / (double) Math.max(1, marked.fireTick - marked.startTick);
+            if (marked.shownAt == null || marked.shownAt.distanceSquared(under) > REMARK_DISTANCE * REMARK_DISTANCE) {
+                marked.shownAt = under.clone();
+                danger.show(marked.mark, under, DangerZones.disc(under, skill.explode()),
+                        progress >= 0.6 ? DangerZones.FLASH : DangerZones.colorFor(skill.type()));
+            }
+            flash(marked.mark, skill, progress, now);
+            if (drawTick(brain, now, index++)) {
+                visuals.bossWarningRing(under, skill.explode(), progress);
+            }
+            if (now % 5 == 0) {
+                final long seconds = Math.max(1, (marked.fireTick - now + 19) / 20);
+                for (final Player near : playersNear(under, skill.explode() + 2)) {
+                    if (near.getUniqueId().equals(marked.target)) {
+                        near.showTitle(Title.title(plugin.text().parse("<#ff5555><bold>⚠ " + ItemRenderer.escape(skill.name()) + " " + seconds),
+                                plugin.text().parse("<white>標記在你身上：離開隊友"),
+                                Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(150))));
+                    } else if (danger.inside(marked.mark, near)) {
+                        near.showTitle(Title.title(Component.empty(), plugin.text().parse("<red><bold>⚠ 離開隊友身上的標記"),
+                                Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(150))));
+                    }
+                }
+            }
+        }
+    }
+
+    /** 殘影出現：Boss 周圍一圈（照出手的順序排好每一槍的時間）。 */
+    private List<EchoLance> lances(final Brain brain, final Cast cast, final long now) {
+        final BossSkill skill = cast.skill;
+        final Location center = cast.anchor != null ? cast.anchor : brain.boss.getLocation();
+        final List<double[]> offsets = BossGeometry.echoOffsets(skill.count(), skill.scatter(), random.nextDouble() * Math.PI * 2);
+        final int[] order = BossGeometry.echoOrder(skill.count());
+        final long step = Math.max(1, Math.round(skill.stagger() * 20));
+        final long warning = Math.max(1, Math.round(skill.delay() * 20));
+        final List<EchoLance> lances = new ArrayList<>();
+        for (int k = 0; k < order.length; k++) {
+            final double[] offset = offsets.get(order[k]);
+            final Location from = ground(center.clone().add(offset[0], 0, offset[1]));
+            final long show = now + k * step;
+            lances.add(new EchoLance(from, show, show + warning, cast.mark + "#e" + k)); // 掛在這一招底下：被打斷時一起收掉
+            visuals.bossSummon(from);
+        }
+        return lances;
+    }
+
+    /** 殘影每 tick：輪到的殘影朝某個玩家標出紅線，時間到射穿；全部射完這一招才結束。 */
+    private void echoes(final Brain brain, final Cast cast, final long now) {
+        final BossSkill skill = cast.skill;
+        hold(brain, cast);
+        final Material color = DangerZones.colorFor(skill.type());
+        boolean pending = false;
+        for (int i = 0; i < cast.lances.size(); i++) {
+            final EchoLance lance = cast.lances.get(i);
+            if (lance.done) {
+                continue;
+            }
+            pending = true;
+            if (now < lance.showTick) {
+                if ((now + brain.offset + i) % 6 == 0) {
+                    visuals.bossOrb(skill.visual(), lance.from.clone().add(0, 1.2, 0)); // 還沒出手的殘影在原地閃著
+                }
+                continue;
+            }
+            if (!lance.shown) {
+                lance.shown = true;
+                lance.direction = aimEcho(brain, lance.from, cast.anchor != null ? cast.anchor : brain.boss.getLocation());
+                danger.show(lance.mark, lance.from, DangerZones.strip(lance.from, lance.direction, skill.reach(), skill.width()), color);
+                visuals.blink(lance.from, lance.from);
+            }
+            if (now < lance.hitTick) {
+                final double progress = (now - lance.showTick) / (double) Math.max(1, lance.hitTick - lance.showTick);
+                if (drawTick(brain, now, i)) {
+                    visuals.bossWarningLine(lance.from, lance.direction, skill.reach(), skill.width(), progress);
+                }
+                flash(lance.mark, skill, progress, now);
+                warnInside(brain, skill, lance.mark, now);
+                continue;
+            }
+            lance.done = true;
+            danger.hide(lance.mark);
+            visuals.bossBeam(skill.visual(), lance.from, lance.direction, skill.reach(), skill.width());
+            final double angle = Math.atan2(lance.direction.getZ(), lance.direction.getX());
+            final Location middle = lance.from.clone().add(lance.direction.clone().multiply(skill.reach() / 2));
+            for (final LivingEntity victim : victims(brain, middle, skill.reach() / 2 + skill.width() + 1)) {
+                final Location at = victim.getLocation();
+                if (BossGeometry.inBeam(lance.from.getX(), lance.from.getZ(), angle, skill.reach(), skill.width(),
+                        at.getX(), at.getZ(), victim.getWidth() / 2)) {
+                    hurt(brain, skill, victim, Tags.AREA);
+                }
+            }
+        }
+        if (!pending) {
+            finish(brain, now);
+        }
+    }
+
+    /** 殘影瞄準誰：附近隨機一個玩家（站在殘影腳下的不算，換一個）；沒人就朝中間射。回傳水平的單位向量。 */
+    private Vector aimEcho(final Brain brain, final Location from, final Location center) {
+        final List<Player> players = playersNear(brain.boss.getLocation(), SEARCH);
+        Location aim = center;
+        while (!players.isEmpty()) {
+            final Player player = players.remove(random.nextInt(players.size()));
+            if (player.getLocation().distanceSquared(from) > 2 * 2) {
+                aim = player.getLocation();
+                break;
+            }
+        }
+        final Vector direction = aim.toVector().subtract(from.toVector()).setY(0);
+        if (direction.lengthSquared() < 1e-6) {
+            direction.setX(center.getX() - from.getX()).setZ(center.getZ() - from.getZ());
+        }
+        return direction.lengthSquared() < 1e-6 ? new Vector(1, 0, 0) : direction.normalize();
+    }
+
+    /** 場地開始收縮：以 Boss 現在的位置為中心。 */
+    private void startArena(final Brain brain, final Cast cast, final long now) {
+        final Location center = ground(cast.anchor != null ? cast.anchor : brain.boss.getLocation());
+        brain.arena = new Arena(cast.skill, center, now, brain.boss.getUniqueId() + ":arena:" + now);
+    }
+
+    /** 場地收縮每 tick：圈慢慢縮小（地上的圈、粒子），圈外的人每 interval 秒挨一下、畫面中間提醒回到圈內。 */
+    private void tickArena(final Brain brain, final long now) {
+        final Arena arena = brain.arena;
+        if (arena == null) {
+            return;
+        }
+        final BossSkill skill = arena.skill;
+        final double radius = arena.radius(now);
+        if (arena.shown < 0 || arena.shown - radius >= 0.5) {
+            arena.shown = radius;
+            danger.show(arena.mark, arena.center, DangerZones.ring(arena.center, radius), DangerZones.FLASH);
+        }
+        if ((now + brain.offset) % 10 == 0) {
+            visuals.bossWarningRing(arena.center, radius, 1);
+        }
+        if (now < arena.nextPulse) {
+            return;
+        }
+        arena.nextPulse = now + Math.max(2, Math.round(skill.interval() * 20));
+        final Title title = Title.title(Component.empty(), plugin.text().parse("<red><bold>⚠ 回到圈內（靠近 Boss）"),
+                Title.Times.times(Duration.ZERO, Duration.ofMillis(600), Duration.ofMillis(150)));
+        for (final LivingEntity victim : victims(brain, arena.center, SEARCH)) {
+            final Location at = victim.getLocation();
+            if (!BossGeometry.outsideArena(arena.center.getX(), arena.center.getZ(), radius, at.getX(), at.getZ(), victim.getWidth() / 2)) {
+                continue;
+            }
+            hurt(brain, skill, victim, Tags.AREA);
+            if (victim instanceof Player player) {
+                player.showTitle(title);
+            }
         }
     }
 

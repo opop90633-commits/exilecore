@@ -84,7 +84,51 @@ public final class CombatListener implements Listener {
      * @param chargeChances 玩家自己打的這一下「擊中時獲得戰星」的機率（照技能，含輔助寶石；召喚物打的是空的）
      */
     private record PendingNumber(Player player, double amount, boolean crit, tw.exilecore.stats.DamagePacket dealt, boolean own,
-                                 java.util.Map<String, Double> chargeChances) {
+                                 java.util.Map<String, Double> chargeChances, String skillName) {
+    }
+
+    /** 技能代號 → 戰鬥數據上的名字（查過的記著）。 */
+    private final java.util.Map<String, String> meterNames = new java.util.HashMap<>();
+
+    /**
+     * 這一下在戰鬥數據的「技能明細」裡算哪個技能（2026-10）：技能的名字；地面效果、引爆、鐘響這些衍生的（代號後面多一段）算在原本的技能上，
+     * 召喚物的攻擊算在召喚技能上；不是技能的（普攻、擊殺爆炸、焚燒光環…）給一個固定的名字。
+     */
+    private String meterName(final SkillProfile skill) {
+        final String id = skill.id();
+        final String known = meterNames.get(id);
+        if (known != null) {
+            return known;
+        }
+        String name = null;
+        if (plugin.skills() != null) {
+            String probe = id;
+            while (name == null) {
+                final tw.exilecore.skill.SkillDefinition definition = plugin.skills().config().skill(probe);
+                if (definition != null) {
+                    name = definition.hidden() && definition.isAttack() ? "普攻" : definition.name();
+                    break;
+                }
+                final int dot = probe.lastIndexOf('.');
+                if (dot <= 0) {
+                    break;
+                }
+                probe = probe.substring(0, dot);
+            }
+        }
+        if (name == null) {
+            name = switch (id) {
+                case "default_attack" -> "普攻";
+                case KillEffects.EXPLOSION -> "擊殺爆炸";
+                case Presence.BURN_ID -> "焚燒";
+                default -> id.startsWith("thorns") ? "荊棘" : "其他";
+            };
+        }
+        if (meterNames.size() > 2000) {
+            meterNames.clear(); // 不會到這麼多；保險
+        }
+        meterNames.put(id, name);
+        return name;
     }
 
     /**
@@ -353,7 +397,12 @@ public final class CombatListener implements Listener {
         final double taken = ((ailments == null ? 1.0 : ailments.damageTakenMultiplier(defender)) + brokenTaken)
                 * debuffs.takenMultiplier(defender.getUniqueId(), attacker.getUniqueId(), plugin.getServer().getCurrentTick(), hitTags(skill));
         // PvP：傷害乘上專屬的 PvP 減傷（元素異常照縮小後的傷害算：pendingAilment 存的是沒乘減傷的 taken）
-        final double pvpScale = pvpAttacker != null && plugin.pvp() != null ? plugin.pvp().damageMultiplier() : 1.0;
+        // 2026-10：召喚物、圖騰、陷阱打的再乘 minion_damage；挨打的玩家拿近戰武器再少 melee_reduction %
+        final double pvpScale = pvpAttacker != null && plugin.pvp() != null
+                ? plugin.pvp().damageMultiplier(attackerIsMinion || skill.tags().contains(tw.exilecore.stats.Tags.MINION)
+                        || skill.tags().contains(tw.exilecore.stats.Tags.TOTEM) || skill.tags().contains(tw.exilecore.stats.Tags.TRAP),
+                        defenderIsPlayer ? (Player) defender : null)
+                : 1.0;
         // 昇華的招牌天賦（2026-10）：玩家自己打出去的、玩家挨打的倍率
         double signature = 1.0;
         if (signatures != null) {
@@ -633,7 +682,7 @@ public final class CombatListener implements Listener {
                 final double remaining = scale > 0 ? defender.getHealth() / scale : result.total();
                 pendingCredits.put(defender.getUniqueId(), new Credit(credit.getUniqueId(), Math.min(result.total(), remaining)));
                 pendingNumbers.put(defender.getUniqueId(), new PendingNumber(credit, result.total(), result.crit(), result.dealt(), attackerIsPlayer,
-                        chargeChances(attackerIsPlayer, skill, attackerSheet)));
+                        chargeChances(attackerIsPlayer, skill, attackerSheet), meterName(skill)));
             }
         }
         if (!defenderIsPlayer && !defenderIsMinion && plugin.maps() != null) {
@@ -793,7 +842,7 @@ public final class CombatListener implements Listener {
             return;
         }
         pendingNumbers.put(defender.getUniqueId(), new PendingNumber(credit, result.total(), result.crit(), result.dealt(), attackerIsPlayer,
-                chargeChances(attackerIsPlayer, skill, attackerSheet)));
+                chargeChances(attackerIsPlayer, skill, attackerSheet), meterName(skill)));
         if (!attackerIsPlayer) {
             return;
         }
@@ -868,6 +917,15 @@ public final class CombatListener implements Listener {
         final StatSheet sheet = plugin.players().sheet(player);
         double esTaken = esDamage;
         double lifeTaken = lifeDamage;
+        if (pvpAttacker != null && plugin.pvp() != null && esTaken + lifeTaken > 0) {
+            // PvP 保底（2026-10）：單一下、每秒最多打掉總血量的幾 %（pvp.yml）；超過的不算
+            final double total = esTaken + lifeTaken;
+            final double allowed = plugin.pvp().limit(player, total, true);
+            if (allowed < total) {
+                esTaken *= allowed / total;
+                lifeTaken *= allowed / total;
+            }
+        }
         if (byEnemy) {
             // 相位形態（時空術士）：受到的傷害更少 30%，4 秒後再受到那一擊 30% 的傷害
             if (StatKeys.flag(sheet, StatKeys.FLAG_PHASED_FORM) && esTaken + lifeTaken > 0) {
@@ -1013,7 +1071,7 @@ public final class CombatListener implements Listener {
         if (number != null && !event.isCancelled() && event.getEntity() instanceof LivingEntity target && number.player().isOnline()) {
             numbers.hit(number.player(), target, number.amount(), number.crit(), number.dealt());
             if (hud != null) {
-                hud.dealt(number.player(), number.dealt().asMap()); // 戰鬥數據：自己與召喚物打出的
+                hud.dealt(number.player(), number.skillName(), number.dealt().asMap()); // 戰鬥數據：自己與召喚物打出的（分技能）
             }
             if (number.own() && number.crit() && charges != null) {
                 charges.onCrit(number.player()); // 銳星（自己的暴擊；召喚物的不算）

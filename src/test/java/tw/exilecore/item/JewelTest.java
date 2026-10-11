@@ -161,4 +161,32 @@ class JewelTest {
         assertTrue(picked.getOrDefault("diamond_jewel", 0) < picked.getOrDefault("ruby_jewel", 0), "白星晶比赤星晶少見");
         assertTrue(picked.getOrDefault("ruby_jewel", 0) < picked.getOrDefault("short_sword", 0), "珠寶比一般裝備少見");
     }
+
+    /** 遺時珠寶（2026-10）：只在劫盜掉——一般掉落抽不到、商人不賣不能賭；劫盜用 pickRadiusJewel 抽。 */
+    @Test
+    void timeLostJewelsOnlyComeFromHeists() {
+        final SplittableRandom random = new SplittableRandom(11);
+        for (final ItemBase base : repository.basesDroppableAt(100)) {
+            assertFalse(base.isRadiusJewel(), "一般掉落不該有遺時珠寶：" + base.id());
+        }
+        for (final ItemBase base : repository.basesSoldAt(100)) {
+            assertFalse(base.isRadiusJewel(), "商人、賭博不該有遺時珠寶：" + base.id());
+        }
+        for (int i = 0; i < 20000; i++) {
+            assertFalse(repository.pickDroppable(100, random).isRadiusJewel());
+        }
+        assertNull(repository.pickRadiusJewel(59, random), "怪物等級 60 以前掉不出來");
+        final Set<String> seen = new HashSet<>();
+        for (int i = 0; i < 2000; i++) {
+            final ItemBase base = repository.pickRadiusJewel(80, random);
+            assertNotNull(base);
+            assertTrue(base.isRadiusJewel());
+            seen.add(base.id());
+        }
+        assertEquals(Set.of("time_lost_ruby", "time_lost_emerald", "time_lost_sapphire", "time_lost_diamond"), seen);
+        assertFalse(repository.radiusJewelsAt(65).stream().anyMatch(base -> base.id().equals("time_lost_diamond")), "白的要 70");
+        // 掉出來的是魔法或稀有、有詞綴
+        final ItemData jewel = generator.generate(repository.base("time_lost_ruby"), Rarity.RARE, 80, random);
+        assertFalse(jewel.affixes().isEmpty());
+    }
 }

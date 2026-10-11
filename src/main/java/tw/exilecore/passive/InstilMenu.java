@@ -230,6 +230,10 @@ public final class InstilMenu extends Menu {
             fail("要先鑑定");
             return;
         }
+        if (data.mirrored() || data.corrupted()) {
+            fail(data.mirrored() ? "鏡像複製品不能再改造" : "已腐化的物品不能再改造");
+            return;
+        }
         final CurrencyType emotion = emotionFor(node);
         if (emotion == null) {
             fail("設定裡沒有這一階的蒸餾情緒");

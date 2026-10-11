@@ -126,6 +126,10 @@ public final class UnveilMenu extends Menu {
                 set(slot++, appendLore(stack.clone(), "", "<red>要先鑑定"));
                 continue;
             }
+            if (data.mirrored()) {
+                set(slot++, appendLore(stack.clone(), "", "<red>鏡像複製品不能再改造")); // 2026-10：映星鏡照出來的
+                continue;
+            }
             set(slot, appendLore(stack.clone(), "", "<yellow>左鍵：揭露這件"));
             itemSlots.put(slot, i);
             slot++;
@@ -142,7 +146,7 @@ public final class UnveilMenu extends Menu {
         }
         final ItemStack stack = player.getInventory().getItem(inventorySlot);
         final ItemData data = stack == null ? null : plugin.items().read(stack).orElse(null);
-        if (data == null || !data.uuid().equals(itemUuid) || !data.identified() || Veiled.veiledOn(data).isEmpty()) {
+        if (data == null || !data.uuid().equals(itemUuid) || !data.identified() || data.mirrored() || Veiled.veiledOn(data).isEmpty()) {
             return null;
         }
         return data;

@@ -49,6 +49,11 @@ public final class ChatModule implements Module {
         final ChatService created = new ChatService(plugin);
         plugin.getServer().getPluginManager().registerEvents(new ChatListener(created), plugin);
         service = created;
+        // 2026-10：頭上的名牌（稱號、角色名稱、等級職業、公會）
+        final Nameplates plates = new Nameplates(plugin);
+        plugin.getServer().getPluginManager().registerEvents(plates, plugin);
+        created.nameplates = plates;
+        plates.start();
         // 插件重載：在線的人重新記名字（TAB 與聊天的名字一起更新）
         if (plugin.players() != null) {
             for (final Player player : plugin.getServer().getOnlinePlayers()) {
@@ -59,6 +64,9 @@ public final class ChatModule implements Module {
 
     @Override
     public void disable() {
+        if (service != null && service.nameplates != null) {
+            service.nameplates.stop();
+        }
         service = null;
     }
 

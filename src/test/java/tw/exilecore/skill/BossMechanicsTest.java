@@ -169,9 +169,10 @@ class BossMechanicsTest {
     void channelledAndHazardKinds() {
         for (final BossSkill.Kind kind : BossSkill.Kind.values()) {
             final boolean channelled = kind == BossSkill.Kind.BEAM || kind == BossSkill.Kind.RING || kind == BossSkill.Kind.PULL
-                    || kind == BossSkill.Kind.SANCTUARY;
+                    || kind == BossSkill.Kind.SANCTUARY || kind == BossSkill.Kind.ECHOES;
             assertEquals(channelled, kind.channelled(), kind + "：Boss 站著放");
-            final boolean hazard = kind == BossSkill.Kind.SLAM || kind == BossSkill.Kind.ZONE || kind == BossSkill.Kind.ORBS;
+            final boolean hazard = kind == BossSkill.Kind.SLAM || kind == BossSkill.Kind.ZONE || kind == BossSkill.Kind.ORBS
+                    || kind == BossSkill.Kind.MARK;
             assertEquals(hazard, kind.hazardCapable(), kind + "：能不能當場地危害");
         }
     }
@@ -189,6 +190,122 @@ class BossMechanicsTest {
         // 剛好在上限的可以
         assertEquals(BossSkill.MAX_PULL_SPEED, skill("kind: pull\nspeed: 0.15\n").speed(), 1e-9);
         assertEquals(6, skill("kind: ring\ngaps: 6\ngap_angle: 50\n").gaps());
+    }
+
+    // ---- 2026-10：點名標記、殘影、場地收縮、兩招同時放 ----
+
+    @Test
+    void newKindsParseWithSensibleDefaults() {
+        final BossSkill mark = skill("kind: mark\ntype: chaos\n");
+        assertEquals(1, mark.count(), "一次點一個人");
+        assertEquals(4, mark.duration(), 1e-9, "4 秒後爆炸");
+        assertEquals(4, mark.explode(), 1e-9);
+        assertTrue(mark.dealsDamage());
+        final BossSkill echoes = skill("kind: echoes\n");
+        assertEquals(12, echoes.count(), "十二個殘影");
+        assertEquals(9, echoes.scatter(), 1e-9);
+        assertEquals(0.5, echoes.stagger(), 1e-9);
+        assertEquals(1.2, echoes.delay(), 1e-9);
+        assertEquals(24, echoes.reach(), 1e-9);
+        assertEquals(1.2, echoes.width(), 1e-9);
+        final BossSkill arena = skill("kind: arena\ndamage: 0.3\n");
+        assertEquals(18, arena.reach(), 1e-9, "一開始的圈");
+        assertEquals(7, arena.radius(), 1e-9, "最後的圈");
+        assertEquals(20, arena.duration(), 1e-9);
+        assertEquals(0.5, arena.interval(), 1e-9);
+        // 疊在一起只算一下
+        assertEquals(BossSkill.SAME_SKILL_GAP_TICKS, mark.hitGapTicks());
+        assertEquals(BossSkill.SAME_SKILL_GAP_TICKS, echoes.hitGapTicks());
+        assertEquals(9, arena.hitGapTicks(), "圈外每 0.5 秒一下");
+        // 提示
+        for (final BossSkill special : List.of(mark, echoes, arena)) {
+            assertTrue(BossAlerts.special(special), special.kind() + " 要跳大字");
+            assertFalse(BossAlerts.hint(special).isBlank());
+        }
+        assertTrue(BossAlerts.hint(mark).contains("4 秒"), BossAlerts.hint(mark));
+        // 覆蓋冷卻與傷害時欄位留著
+        assertEquals(arena.radius(), arena.with(1, 5).radius(), 1e-9);
+    }
+
+    @Test
+    void newKindsMustBeEscapable() {
+        assertThrows(IllegalArgumentException.class, () -> skill("kind: mark\nduration: 1.5\n"), "標記太快炸，走不開");
+        assertThrows(IllegalArgumentException.class, () -> skill("kind: echoes\ndelay: 0.5\n"), "殘影的紅線太短");
+        assertThrows(IllegalArgumentException.class, () -> skill("kind: echoes\nscatter: 2\n"), "殘影貼著 Boss");
+        assertThrows(IllegalArgumentException.class, () -> skill("kind: arena\nreach: 10\nradius: 12\n"), "圈越縮越大");
+        assertThrows(IllegalArgumentException.class, () -> skill("kind: arena\nradius: 3\nreach: 10\n"), "最後的圈太小");
+        assertThrows(IllegalArgumentException.class, () -> skill("kind: arena\nduration: 0\n"), "要寫幾秒縮完");
+        assertEquals(BossSkill.MIN_MARK_FUSE, skill("kind: mark\nduration: 2.5\n").duration(), 1e-9, "剛好在下限的可以");
+    }
+
+    @Test
+    void arenaShrinksThenHolds() {
+        assertEquals(18, BossGeometry.arenaRadius(18, 7, 0, 200), 1e-9);
+        assertEquals(12.5, BossGeometry.arenaRadius(18, 7, 100, 200), 1e-9, "縮到一半");
+        assertEquals(7, BossGeometry.arenaRadius(18, 7, 200, 200), 1e-9);
+        assertEquals(7, BossGeometry.arenaRadius(18, 7, 5000, 200), 1e-9, "縮完之後維持");
+        assertFalse(BossGeometry.outsideArena(0, 0, 7, 7.2, 0, 0.3), "身體還有一半在圈裡不算");
+        assertTrue(BossGeometry.outsideArena(0, 0, 7, 7.4, 0, 0.3));
+    }
+
+    @Test
+    void echoesSurroundTheBossAndTakeTurnsAcrossTheCircle() {
+        final List<double[]> offsets = BossGeometry.echoOffsets(12, 10, 0);
+        assertEquals(12, offsets.size());
+        for (final double[] offset : offsets) {
+            assertEquals(10, Math.hypot(offset[0], offset[1]), 1e-9, "都在 10 格的圈上");
+        }
+        final int[] order = BossGeometry.echoOrder(12);
+        assertEquals(12, java.util.Arrays.stream(order).distinct().count(), "每個殘影都出手一次");
+        for (int i = 1; i < order.length; i++) {
+            final int apart = Math.floorMod(order[i] - order[i - 1], 12);
+            assertTrue(apart != 1 && apart != 11, "連續兩槍不從隔壁射出來：" + java.util.Arrays.toString(order));
+        }
+        assertArrayEquals(new int[] {0, 1}, BossGeometry.echoOrder(2), "太少就照順序");
+    }
+
+    @Test
+    void combosParseAndOnlyAllowDetachedSkills() {
+        final List<BossSkillUse> uses = BossSkillUse.parseList(yaml("""
+                skills:
+                  - { id: warden_star_well, with: [warden_star_rain] }
+                  - { id: warden_star_cross, with: hazard_star_orbs }
+                  - { id: warden_star_hammer, with: [warden_star_cross, nope] }
+                """), "skills");
+        assertEquals(List.of("warden_star_rain"), uses.get(0).with());
+        assertEquals(List.of("hazard_star_orbs"), uses.get(1).with(), "寫一個也可以");
+        assertEquals(new BossSkillUse("slam", -1, -1, 0), new BossSkillUse("slam", -1, -1, 0, null), "沒寫 with 是空的");
+        final BossSkillConfig bosses = config.bossSkills();
+        assertEquals(List.of("nope"), bosses.unknown(uses), "with 的招式也要存在");
+        final List<String> problems = bosses.comboProblems(uses);
+        assertEquals(1, problems.size(), problems.toString());
+        assertTrue(problems.getFirst().contains("warden_star_cross"), "光束要 Boss 站著放，不能跟著一起放");
+        final List<BossSkillConfig.Entry> kit = bosses.kitFor("VINDICATOR", uses);
+        assertEquals(List.of("warden_star_rain"), kit.get(0).with().stream().map(BossSkill::id).toList());
+        assertEquals(List.of(), kit.get(2).with(), "不能一起放的、不存在的略過");
+        assertThrows(IllegalArgumentException.class, () -> BossSkillUse.parseList(yaml(
+                "skills:\n  - { id: slam, with: [a, b, c, d] }\n"), "skills"), "最多同時再放 3 招");
+    }
+
+    @Test
+    void fourthTrialIsTheFinalExam() throws IOException {
+        final tw.exilecore.ascendancy.AscendancyConfig ascendancy = new tw.exilecore.ascendancy.AscendancyConfig();
+        ascendancy.load(DATA);
+        final tw.exilecore.ascendancy.AscendancyConfig.Trial star = ascendancy.trial("star");
+        assertEquals(75, star.level(), "照 PoE2：第四次昇華在終局 75 級");
+        final List<BossSkillConfig.Entry> kit = config.bossSkills().kitFor(star.boss().type(), star.boss().skills());
+        final java.util.Set<BossSkill.Kind> kinds = java.util.EnumSet.noneOf(BossSkill.Kind.class);
+        boolean combo = false;
+        for (final BossSkillConfig.Entry entry : kit) {
+            kinds.add(entry.skill().kind());
+            combo |= !entry.with().isEmpty();
+        }
+        assertTrue(kinds.containsAll(java.util.EnumSet.of(BossSkill.Kind.MARK, BossSkill.Kind.ECHOES, BossSkill.Kind.ARENA,
+                BossSkill.Kind.BEAM, BossSkill.Kind.PULL, BossSkill.Kind.ORBS, BossSkill.Kind.RING, BossSkill.Kind.SANCTUARY)), kinds.toString());
+        assertTrue(combo, "至少一招是兩招同時放");
+        final List<String> problems = new java.util.ArrayList<>();
+        tw.exilecore.map.MapConfig.bossProblems(problems, "star", star.boss(), config.bossSkills());
+        assertEquals(List.of(), problems);
     }
 
     // ---- 場地危害 ----
@@ -229,7 +346,12 @@ class BossMechanicsTest {
                     assertTrue(skill.telegraph() >= 2.5, skill.id() + "：全場大招的前搖至少 2.5 秒");
                     assertTrue(skill.scatter() / skill.telegraph() <= 5.5, skill.id() + "：安全區要跑得到（跑步每秒大約 5.6 格）");
                 }
-                case RING -> assertTrue(skill.gaps() > 0, skill.id() + "：出貨的擴散環都有缺口");
+                // 2026-10：沒有缺口的環（第四試煉的無缺星環）要夠薄、跑得慢，翻滾穿得過去，提示也要說清楚
+                case RING -> assertTrue(skill.gaps() > 0 || skill.width() <= 0.6 && skill.speed() <= 0.3 && skill.hint() != null,
+                        skill.id() + "：擴散環要有缺口，沒有缺口的要夠薄、夠慢、寫 hint");
+                case MARK -> assertTrue(skill.explode() <= 4, skill.id() + "：標記的爆炸不要太大（走得出隊友的圈）");
+                case ECHOES -> assertTrue(skill.delay() >= 1.0, skill.id() + "：殘影的紅線至少標 1 秒");
+                case ARENA -> assertTrue(skill.radius() >= 6 && skill.damage() <= 0.5, skill.id() + "：場地收縮最後的圈要站得下、圈外一下不要太痛");
                 case BEAM -> assertTrue(skill.interval() >= 0.25, skill.id() + "：光束不要每 tick 都打");
                 default -> {
                 }

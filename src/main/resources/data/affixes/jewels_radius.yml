@@ -79,6 +79,7 @@ jr_ailment_effect:
   spawn_tags: [r_emerald, r_sapphire]
   names: [遺時的]
   text: "範圍內的小天賦也各給：增加 {value}% 異常狀態效果（點燃、流血、中毒、感電、冰緩）"
+  chips: [damage, ailment]   # PoE2 的標籤（AilmentEffect）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
@@ -127,6 +128,7 @@ jr_armour_break:
   spawn_tags: [r_ruby]
   names: [遺時的]
   text: "範圍內的小天賦也各給：增加 {value}% 破甲"
+  chips: []   # PoE2 的標籤（ArmourBreak）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
@@ -182,6 +184,7 @@ jr_bleeding_chance:
   spawn_tags: [r_ruby]
   names: [遺時的]
   text: "範圍內的小天賦也各給：攻擊擊中時 {value}% 機率造成流血"
+  chips: [ailment]   # PoE2 的標籤（jewel BaseChanceToBleed）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
@@ -193,6 +196,7 @@ jr_bleeding_duration:
   spawn_tags: [r_ruby]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 流血持續時間"
+  chips: [physical, attack, ailment]   # PoE2 的標籤（BleedDuration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
@@ -237,6 +241,7 @@ jr_bow_damage:
   spawn_tags: [r_emerald]
   names: [遺時的]
   text: "範圍內的小天賦也各給：使用弓時增加 {value}% 傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
@@ -292,6 +297,7 @@ jr_charm_damage_while_using:
   spawn_tags: [r_emerald]
   names: [遺時的]
   text: "範圍內的小天賦也各給：最近用過護符則增加 {value}% 傷害"
+  chips: [damage, charm]   # PoE2 的標籤（CharmDamageWhileUsing）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
@@ -314,6 +320,7 @@ jr_chill_duration:
   spawn_tags: [r_sapphire]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 冰緩持續時間"
+  chips: [elemental, cold, ailment]   # PoE2 的標籤（IncreasedChillDuration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [6, 12] }
   mods:
@@ -336,6 +343,7 @@ jr_cold_penetration:
   spawn_tags: [r_sapphire]
   names: [遺時的]
   text: "範圍內的小天賦也各給：傷害穿透 {value}% 冰冷抗性"
+  chips: [damage, elemental, cold]   # PoE2 的標籤（ColdResistancePenetration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
@@ -380,6 +388,7 @@ jr_critical_damage:
   spawn_tags: [r_sapphire]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 暴擊傷害加成"
+  chips: [damage, critical]   # PoE2 的標籤（CriticalStrikeMultiplier）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
@@ -391,6 +400,7 @@ jr_spell_critical_damage:
   spawn_tags: [r_sapphire]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 法術暴擊傷害加成"
+  chips: [damage, caster, critical]   # PoE2 的標籤（SpellCritMultiplierForJewel）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
@@ -402,6 +412,7 @@ jr_crossbow_damage:
   spawn_tags: [r_emerald]
   names: [遺時的]
   text: "範圍內的小天賦也各給：使用弩時增加 {value}% 傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
@@ -413,6 +424,7 @@ jr_crossbow_reload_speed:
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 弩的裝填速度"
+  chips: [attack, speed]   # PoE2 的標籤（CrossbowReloadSpeed）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 7] }
   mods:
@@ -435,6 +447,7 @@ jr_curse_area:
   spawn_tags: [r_sapphire]
   names: [遺時的]
   text: "範圍內的小天賦也各給：增加 {value}% 詛咒範圍"
+  chips: [curse, caster]   # PoE2 的標籤（jewel Curse*）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 6] }
   mods:
@@ -446,6 +459,7 @@ jr_curse_duration:
   spawn_tags: [r_sapphire]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 詛咒持續時間"
+  chips: [curse, caster]   # PoE2 的標籤（jewel Curse*）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
@@ -457,6 +471,7 @@ jr_curse_effect:
   spawn_tags: [r_sapphire]
   names: [遺時的]
   text: "範圍內的小天賦也各給：增加 {value}% 詛咒效果"
+  chips: [curse, caster]   # PoE2 的標籤（jewel Curse*）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
@@ -492,6 +507,7 @@ jr_daze_buildup:
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的小天賦也各給：擊中時 {value}% 機率讓敵人眩暈"
+  chips: []   # PoE2 的標籤（DazeBuildup）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
@@ -503,6 +519,7 @@ jr_elemental_ailment_duration:
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 點燃、感電與冰緩持續時間"
+  chips: [elemental, fire, cold, lightning, ailment]   # PoE2 的標籤（ElementalAilmentDuration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
   mods:
@@ -516,6 +533,7 @@ jr_elemental_damage:
   spawn_tags: [r_emerald, r_ruby, r_sapphire]
   names: [遺時的]
   text: "範圍內的小天賦也各給：增加 {value}% 元素傷害"
+  chips: [damage, elemental, fire, cold, lightning]   # PoE2 的標籤（ElementalDamagePercent）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
@@ -571,6 +589,7 @@ jr_fire_penetration:
   spawn_tags: [r_ruby]
   names: [遺時的]
   text: "範圍內的小天賦也各給：傷害穿透 {value}% 火焰抗性"
+  chips: [damage, elemental, fire]   # PoE2 的標籤（FireResistancePenetration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
@@ -626,6 +645,7 @@ jr_ignite_chance:
   spawn_tags: [r_ruby, r_sapphire]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 點燃機率"
+  chips: [elemental, fire, ailment]   # PoE2 的標籤（IgniteChanceIncrease）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
@@ -637,6 +657,7 @@ jr_ignite_effect:
   spawn_tags: [r_ruby, r_sapphire]
   names: [遺時的]
   text: "範圍內的小天賦也各給：增加 {value}% 點燃傷害"
+  chips: [damage, elemental, fire, ailment]   # PoE2 的標籤（IgniteEffect）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
@@ -670,6 +691,7 @@ jr_life_flask_recovery:
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 生命藥劑回復量"
+  chips: [life, flask]   # PoE2 的標籤（GlobalFlaskLifeRecovery）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
@@ -681,6 +703,7 @@ jr_life_flask_charge_gen:
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 生命藥劑拿到的充能"
+  chips: [flask]   # PoE2 的標籤（LifeFlaskChargePercentGeneration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
@@ -747,6 +770,7 @@ jr_lightning_penetration:
   spawn_tags: [r_emerald]
   names: [遺時的]
   text: "範圍內的小天賦也各給：傷害穿透 {value}% 閃電抗性"
+  chips: [damage, elemental, lightning]   # PoE2 的標籤（LightningResistancePenetration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
@@ -758,6 +782,7 @@ jr_mace_damage:
   spawn_tags: [r_ruby]
   names: [遺時的]
   text: "範圍內的小天賦也各給：使用錘時增加 {value}% 傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
@@ -769,6 +794,7 @@ jr_mace_stun:
   spawn_tags: [r_ruby]
   names: [之遺時]
   text: "範圍內的小天賦也各給：使用錘時增加 {value}% 暈眩累積"
+  chips: [attack]   # PoE2 的標籤（MaceStun）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [6, 12] }
   mods:
@@ -780,6 +806,7 @@ jr_mana_flask_recovery:
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 魔力藥劑回復量"
+  chips: [mana, flask]   # PoE2 的標籤（FlaskManaRecovery）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
@@ -791,6 +818,7 @@ jr_mana_flask_charge_gen:
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 魔力藥劑拿到的充能"
+  chips: [flask]   # PoE2 的標籤（ManaFlaskChargePercentGeneration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
@@ -835,6 +863,7 @@ jr_mark_effect:
   spawn_tags: [r_emerald]
   names: [遺時的]
   text: "範圍內的小天賦也各給：增加 {value}% 印記效果"
+  chips: []   # PoE2 的標籤（MarkEffect）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
@@ -857,6 +886,7 @@ jr_melee_damage:
   spawn_tags: [r_ruby]
   names: [遺時的]
   text: "範圍內的小天賦也各給：增加 {value}% 近戰傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel MeleeDamage）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
@@ -913,6 +943,7 @@ jr_minion_critical_multiplier:
   spawn_tags: [r_sapphire]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 召喚物暴擊傷害加成"
+  chips: [damage, critical, minion]   # PoE2 的標籤（MinionCriticalStrikeMultiplier）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [6, 12] }
   mods:
@@ -1003,6 +1034,7 @@ jr_poison_duration:
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 中毒持續時間"
+  chips: [chaos, ailment]   # PoE2 的標籤（PoisonDuration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
@@ -1036,6 +1068,7 @@ jr_quarterstaff_damage:
   spawn_tags: [r_emerald]
   names: [遺時的]
   text: "範圍內的小天賦也各給：使用長棍時增加 {value}% 傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
@@ -1047,6 +1080,7 @@ jr_quarterstaff_freeze_buildup:
   spawn_tags: [r_emerald, r_sapphire]
   names: [之遺時]
   text: "範圍內的小天賦也各給：使用長棍時增加 {value}% 凍結累積"
+  chips: [elemental, cold, ailment]   # PoE2 的標籤（QuarterstaffFreezeBuildup）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
@@ -1069,6 +1103,7 @@ jr_rageon_hit:
   spawn_tags: [r_ruby]
   names: [之遺時]
   text: "範圍內的小天賦也各給：近戰攻擊擊中時獲得 {value} 點怒氣"
+  chips: [attack]   # PoE2 的標籤（RageOnHit）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
@@ -1080,6 +1115,7 @@ jr_shock_chance:
   spawn_tags: [r_emerald, r_sapphire]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 感電機率"
+  chips: [elemental, lightning, ailment]   # PoE2 的標籤（ShockChanceIncrease）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
@@ -1091,6 +1127,7 @@ jr_shock_duration:
   spawn_tags: [r_emerald, r_sapphire]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 感電持續時間"
+  chips: [elemental, lightning, ailment]   # PoE2 的標籤（ShockDuration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
@@ -1102,6 +1139,7 @@ jr_shock_effect:
   spawn_tags: [r_emerald, r_sapphire]
   names: [遺時的]
   text: "範圍內的小天賦也各給：增加 {value}% 感電效果"
+  chips: [elemental, lightning, ailment]   # PoE2 的標籤（ShockEffect）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 7] }
   mods:
@@ -1124,6 +1162,7 @@ jr_spear_critical_damage:
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的小天賦也各給：使用矛時增加 {value}% 暴擊傷害加成"
+  chips: [critical, attack]   # PoE2 的標籤（SpearCriticalDamage）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
@@ -1135,6 +1174,7 @@ jr_spear_damage:
   spawn_tags: [r_emerald]
   names: [遺時的]
   text: "範圍內的小天賦也各給：使用矛時增加 {value}% 傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
@@ -1168,6 +1208,7 @@ jr_stun_buildup:
   spawn_tags: [r_ruby]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 暈眩累積"
+  chips: []   # PoE2 的標籤（StunDamageIncrease）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
@@ -1179,6 +1220,7 @@ jr_stun_threshold:
   spawn_tags: [r_ruby]
   names: [之遺時]
   text: "範圍內的小天賦也各給：增加 {value}% 暈眩門檻"
+  chips: []   # PoE2 的標籤（IncreasedStunThreshold）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
@@ -1190,6 +1232,7 @@ jr_stun_threshold_if_not_stunned_recently:
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的小天賦也各給：最近沒被重暈過則增加 {value}% 重暈門檻"
+  chips: []   # PoE2 的標籤（IncreasedStunThresholdIfNoRecentStun）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
@@ -1201,6 +1244,7 @@ jr_bleeding_effect:
   spawn_tags: [r_ruby]
   names: [遺時的]
   text: "範圍內的小天賦也各給：增加 {value}% 流血傷害"
+  chips: [damage, physical, attack, ailment]   # PoE2 的標籤（BleedDotMultiplier）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
@@ -1267,6 +1311,7 @@ jr_projectile_damage_if_melee_hit_recently:
   spawn_tags: [r_emerald]
   names: [遺時的]
   text: "範圍內的小天賦也各給：最近近戰擊中過則增加 {value}% 投射物傷害"
+  chips: [damage, projectile, attack]   # PoE2 的標籤（Melee/ProjectileDamageIf...HitRecently）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
@@ -1278,6 +1323,7 @@ jr_melee_damage_if_projectile_hit_recently:
   spawn_tags: [r_emerald]
   names: [遺時的]
   text: "範圍內的小天賦也各給：最近用投射物攻擊擊中過則增加 {value}% 近戰傷害"
+  chips: [damage, attack]   # PoE2 的標籤（Melee/ProjectileDamageIf...HitRecently）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
@@ -1289,6 +1335,7 @@ jr_presence_radius:
   spawn_tags: [r_ruby, r_sapphire]
   names: [遺時的]
   text: "範圍內的小天賦也各給：增加 {value}% 臨在範圍"
+  chips: [aura]   # PoE2 的標籤（PresenceRadius）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [8, 12] }
   mods:
@@ -1422,6 +1469,7 @@ jr_shapeshift_speed:
   spawn_tags: [r_ruby, r_sapphire]
   names: [之遺時]
   text: "範圍內的小天賦也各給：變身技能增加 {value}% 攻擊與施放速度"
+  chips: [speed]   # PoE2 的標籤（ShapeshiftSkillSpeedForJewel）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:

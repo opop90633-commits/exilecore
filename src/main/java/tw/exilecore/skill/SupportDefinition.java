@@ -139,7 +139,13 @@ public record SupportDefinition(String id, String name, String description, Stri
 
     /** 這顆輔助有沒有任何一條不用擊中敵人也對這個技能有作用的修飾器（沒有 = 純傷害的輔助，不會造成傷害的技能掛了沒效果）。 */
     public boolean worksWithoutHits(final SkillDefinition skill) {
+        // 2026-10：「傷害變高，代價是範圍變小／冷卻變久／持續變短／施法變慢」的輔助（凝聚、爆發、劇痛、沙漏…）：
+        // 掛在不會造成傷害的技能上，好處吃不到、只剩代價（以前因為「有動到範圍」就能掛在光環上）——代價那幾條不算有作用
+        final boolean tradeoff = damageUpside();
         for (final Modifier modifier : modifiers) {
+            if (tradeoff && penalty(modifier)) {
+                continue;
+            }
             if ((modifier.tags().contains(Tags.MINION) && skill.tags().contains(Tags.MINION)) || UTILITY_STATS.contains(modifier.stat())) {
                 return true;
             }
@@ -154,6 +160,38 @@ public record SupportDefinition(String id, String name, String description, Stri
             }
         }
         return false;
+    }
+
+    /** 這條修飾器要擊中敵人才有作用（不是消耗、範圍、持續、冷卻、給予的增益這些）。 */
+    private static boolean hitOnly(final Modifier modifier) {
+        if (modifier.tags().contains(Tags.MINION) || UTILITY_STATS.contains(modifier.stat()) || TAGGED_UTILITY_STATS.containsKey(modifier.stat())) {
+            return false;
+        }
+        for (final String prefix : UTILITY_PREFIXES) {
+            if (modifier.stat().startsWith(prefix)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** 這顆輔助的好處是「打得更痛」（有一條要擊中才有作用、數值是正的修飾器：更多傷害、暴擊、異常機率…）。 */
+    private boolean damageUpside() {
+        for (final Modifier modifier : modifiers) {
+            if (modifier.value() > 0 && hitOnly(modifier)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 這條是代價：範圍變小、持續變短、冷卻變久（含多加幾秒冷卻）、施法變慢。 */
+    private static boolean penalty(final Modifier modifier) {
+        return switch (modifier.stat()) {
+            case StatKeys.SKILL_AREA, StatKeys.SKILL_DURATION, StatKeys.CAST_SPEED -> modifier.value() < 0;
+            case StatKeys.SKILL_COOLDOWN, StatKeys.SKILL_ADDED_COOLDOWN -> modifier.value() > 0;
+            default -> false;
+        };
     }
 
     /** 每一條修飾器都要擊中敵人才有作用（說明用）。 */

@@ -1225,6 +1225,20 @@ POE2_BATCH4 = {
 }
 SKILLS.update(POE2_BATCH4)
 
+
+# 2026-10：連珠（下一次弓／矛的投射物攻擊重複）：一支箭，後面跟著兩個箭頭的殘影（同一條線上一支接一支）
+def linked_volley():
+    i = S('war')
+    arrow(i, 2, 13, 12, 3)
+    for t, c in ((0.36, 2), (0.66, 1)):
+        x, y = 12 - 10 * t, 3 + 10 * t
+        i.line(x, y, x - 2.2, y - 0.2, c)
+        i.line(x, y, x + 0.2, y + 2.2, c)
+    return i
+
+
+SKILLS['linked_volley'] = linked_volley
+
 LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@$%^&*()_+-=[]{};:,<>/?~|'
 
 

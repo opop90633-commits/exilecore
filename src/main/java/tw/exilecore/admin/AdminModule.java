@@ -43,6 +43,8 @@ public final class AdminModule implements Module, Listener {
 
     private final ExileCore plugin;
     private AdminAuth auth;
+    /** 密碼登入（2026-10；沒設密碼就只能用 /ec web 的連結）。 */
+    private AdminPassword password;
     private AdminRepository repository;
     private DeliveryService deliveries;
     private AdminWeb web;
@@ -66,6 +68,12 @@ public final class AdminModule implements Module, Listener {
     @Override
     public void enable() throws Exception {
         auth = new AdminAuth(Clock.systemUTC());
+        password = new AdminPassword(plugin.dataFolder().resolve(AdminPassword.FILE), Clock.systemUTC());
+        try {
+            password.load();
+        } catch (final java.io.IOException e) {
+            plugin.getSLF4JLogger().warn("讀不到 {}（密碼登入先關著）：{}", AdminPassword.FILE, e.toString());
+        }
         repository = new AdminRepository();
         deliveries = new DeliveryService(plugin, repository);
         web = new AdminWeb(plugin, this);
@@ -121,6 +129,10 @@ public final class AdminModule implements Module, Listener {
 
     AdminAuth auth() {
         return auth;
+    }
+
+    AdminPassword password() {
+        return password;
     }
 
     AdminRepository repository() {
@@ -230,9 +242,18 @@ public final class AdminModule implements Module, Listener {
                 .then(Commands.literal("cancel").executes(context -> {
                     final AdminModule admin = plugin.admin();
                     final boolean had = admin != null && admin.restarts() != null && admin.restarts().cancel("管理員取消");
-                    context.getSource().getSender().sendMessage(plugin.text().prefixed(had ? "<green>取消了" : "<gray>現在沒有排重新啟動"));
+                    context.getSource().getSender().sendMessage(plugin.text().prefixed(had ? "<green>取消了" : "<gray>現在沒有排重新啟動或關服"));
                     return 1;
                 }))
+                // 2026-10：倒數關服（不開回來）：/ec restart shutdown 分鐘 [原因]
+                .then(Commands.literal("shutdown")
+                        .then(Commands.argument("minutes", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, RestartScheduler.MAX_MINUTES))
+                                .executes(context -> shutdownIn(plugin, context.getSource().getSender(),
+                                        com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "minutes"), ""))
+                                .then(Commands.argument("reason", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                                        .executes(context -> shutdownIn(plugin, context.getSource().getSender(),
+                                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "minutes"),
+                                                com.mojang.brigadier.arguments.StringArgumentType.getString(context, "reason"))))))
                 .then(Commands.argument("minutes", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, RestartScheduler.MAX_MINUTES))
                         .executes(context -> restartIn(plugin, context.getSource().getSender(),
                                 com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "minutes"), ""))
@@ -253,6 +274,18 @@ public final class AdminModule implements Module, Listener {
         return 1;
     }
 
+    private static int shutdownIn(final ExileCore plugin, final CommandSender sender, final int minutes, final String reason) {
+        final AdminModule admin = plugin.admin();
+        if (admin == null || admin.restarts() == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>管理模組沒有啟用"));
+            return 1;
+        }
+        admin.restarts().scheduleShutdown(minutes, reason, sender.getName());
+        sender.sendMessage(plugin.text().prefixed("<green>排好了：" + minutes + " 分鐘後關服<gray>（/ec restart cancel 取消）"
+                + (admin.restarts().panelConfigured() ? "" : "<yellow>　config.yml 沒填 panel，主機商可能會自動開回來")));
+        return 1;
+    }
+
     private static int restartStatus(final ExileCore plugin, final CommandSender sender) {
         final AdminModule admin = plugin.admin();
         if (admin == null || admin.restarts() == null) {
@@ -260,20 +293,91 @@ public final class AdminModule implements Module, Listener {
             return 1;
         }
         final RestartScheduler.Pending pending = admin.restarts().pending();
-        sender.sendMessage(plugin.text().prefixed(pending == null ? "<gray>現在沒有排重新啟動"
+        sender.sendMessage(plugin.text().prefixed(pending == null ? "<gray>現在沒有排重新啟動或關服"
                 : "<gray>將在 <white>" + RestartScheduler.describe(Math.max(0, (pending.at() - System.currentTimeMillis()) / 1000))
-                + "</white> 後重新啟動（" + ItemRenderer.escape(pending.by()) + "）"));
+                + "</white> 後" + pending.verb() + "（" + ItemRenderer.escape(pending.by()) + "）"));
         final List<String> daily = admin.restarts().dailyTimes();
         sender.sendMessage(plugin.text().parse("<gray>每天定時：<white>" + (daily.isEmpty() ? "沒有" : String.join("、", daily))
                 + "<gray>（管理網頁「遊戲設定 → 伺服器開關」改）"));
-        sender.sendMessage(plugin.text().parse("<dark_gray>/ec restart 分鐘 [原因]　/ec restart cancel"));
+        sender.sendMessage(plugin.text().parse("<dark_gray>/ec restart 分鐘 [原因]　/ec restart shutdown 分鐘 [原因]（關服）　/ec restart cancel"));
         return 1;
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> node(final ExileCore plugin) {
         return Commands.literal("web")
                 .executes(context -> link(plugin, context.getSource().getSender()))
-                .then(Commands.literal("logout").executes(context -> logout(plugin, context.getSource().getSender())));
+                .then(Commands.literal("logout").executes(context -> logout(plugin, context.getSource().getSender())))
+                // 2026-10：密碼登入（只能在主控台設：玩家打的指令會整行寫進 log）
+                .then(Commands.literal("password")
+                        .executes(context -> passwordStatus(plugin, context.getSource().getSender()))
+                        .then(Commands.literal("set")
+                                .then(Commands.argument("password", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                                        .executes(context -> passwordSet(plugin, context.getSource().getSender(),
+                                                com.mojang.brigadier.arguments.StringArgumentType.getString(context, "password")))))
+                        .then(Commands.literal("off").executes(context -> passwordOff(plugin, context.getSource().getSender()))));
+    }
+
+    private static int passwordStatus(final ExileCore plugin, final CommandSender sender) {
+        final AdminModule admin = plugin.admin();
+        if (admin == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>管理網頁沒有啟用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        sender.sendMessage(plugin.text().prefixed(admin.password().enabled()
+                ? "<green>密碼登入：開著</green><gray>（管理網頁的登入畫面打密碼就能進）"
+                : "<gray>密碼登入：關著（只能用 /ec web 的連結）"));
+        sender.sendMessage(plugin.text().prefixed("<dark_gray>主控台：ec web password set <密碼>（至少 " + AdminPassword.MIN_LENGTH
+                + " 個字）　ec web password off"));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int passwordSet(final ExileCore plugin, final CommandSender sender, final String text) {
+        final AdminModule admin = plugin.admin();
+        if (admin == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>管理網頁沒有啟用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        if (sender instanceof Player) {
+            // 玩家打的指令（含密碼）會整行寫進主控台與 logs：不能在遊戲裡設
+            sender.sendMessage(plugin.text().prefixed("<red>密碼只能在伺服器主控台設（遊戲裡打的指令會整行留在 log 裡）。"
+                    + "這個密碼沒有存，請到主控台另外設一個"));
+            plugin.getSLF4JLogger().warn("[管理網頁] {} 想在遊戲裡設密碼：沒有存（密碼已經出現在上面的指令紀錄，不要用這組）", sender.getName());
+            return Command.SINGLE_SUCCESS;
+        }
+        final String problem = AdminPassword.problem(text);
+        if (problem != null) {
+            sender.sendMessage(plugin.text().prefixed("<red>" + problem));
+            return Command.SINGLE_SUCCESS;
+        }
+        try {
+            admin.password().set(text);
+        } catch (final java.io.IOException e) {
+            sender.sendMessage(plugin.text().prefixed("<red>存不進 " + AdminPassword.FILE + "：" + ItemRenderer.escape(String.valueOf(e.getMessage()))));
+            return Command.SINGLE_SUCCESS;
+        }
+        final int count = admin.auth().revokeAll(); // 換密碼：之前登入的全部登出
+        sender.sendMessage(plugin.text().prefixed("<green>管理網頁的密碼設好了</green><gray>（存的是雜湊，不是密碼本身）。之前登入的 " + count
+                + " 個已登出；打開管理網頁的網址，在登入畫面打密碼"));
+        plugin.getSLF4JLogger().info("[管理網頁] {} 設了新的登入密碼", sender.getName());
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int passwordOff(final ExileCore plugin, final CommandSender sender) {
+        final AdminModule admin = plugin.admin();
+        if (admin == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>管理網頁沒有啟用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        try {
+            admin.password().clear();
+        } catch (final java.io.IOException e) {
+            sender.sendMessage(plugin.text().prefixed("<red>刪不掉 " + AdminPassword.FILE + "：" + ItemRenderer.escape(String.valueOf(e.getMessage()))));
+            return Command.SINGLE_SUCCESS;
+        }
+        final int count = admin.auth().revokeAll();
+        sender.sendMessage(plugin.text().prefixed("<gray>密碼登入關掉了，之前登入的 " + count + " 個已登出（之後只能用 /ec web 的連結）"));
+        plugin.getSLF4JLogger().info("[管理網頁] {} 關掉了密碼登入", sender.getName());
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int link(final ExileCore plugin, final CommandSender sender) {

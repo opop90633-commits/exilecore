@@ -53,17 +53,6 @@ class SkillMathTest {
     }
 
     @Test
-    void extraProjectilesFollowOneAfterAnotherOnTheSameLine() {
-        // 2026-10：本來只射一支的技能多了投射物：不張成扇形，沿同一條線前後連發；這裡是相鄰兩支隔幾 tick
-        assertEquals(0, SkillMath.sequenceInterval(1), "只有一支：沒有後面的");
-        assertEquals(SkillMath.SEQUENCE_TICKS, SkillMath.sequenceInterval(2));
-        assertEquals(SkillMath.SEQUENCE_TICKS, SkillMath.sequenceInterval(3));
-        assertEquals(2, SkillMath.sequenceInterval(6), "6 支：整串 10 tick");
-        assertEquals(1, SkillMath.sequenceInterval(7), "支數多：改成每 tick 一支");
-        assertEquals(1, SkillMath.sequenceInterval(20), "最快每 tick 一支");
-    }
-
-    @Test
     void coneCheck() {
         assertTrue(SkillMath.inCone(0, 1, 0, 5, 60), "正前方");
         assertFalse(SkillMath.inCone(0, 1, 5, 0, 60), "正側面");

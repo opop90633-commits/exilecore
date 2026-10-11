@@ -53,6 +53,10 @@ public final class SponsorService {
     static final String LISTING = "sp.listing";
     /** 改名卡（2026-10）：還有幾張。 */
     static final String RENAME = "sp.rename";
+    /** 公會改名卡（2026-10）：還有幾張。 */
+    static final String GUILD_RENAME = "sp.guild_rename";
+    /** 這個帳號幫公會買過幾頁倉庫（只是紀錄：頁在公會身上）。 */
+    static final String GUILD_STASH = "sp.guild_stash";
     /** 月卡：「開始那天|最後一天|發到哪一天」（epoch day）。 */
     static final String CARD = "sp.card";
     static final String CARD_COINS = "sp.mcoins";
@@ -60,6 +64,8 @@ public final class SponsorService {
     static final String COSMETIC = "sp.cos.";
     static final String WORN = "sp.worn";
     static final String CARD_TITLE = "sp.title.";
+    /** 限定稱號（2026-10，發放拿到的）：sp.ltitle.代號 = 1。 */
+    static final String LIMITED_TITLE = "sp.ltitle.";
     static final String PITY = "sp.pity.";
     /** 月卡連續買了幾個月（中間斷超過一天就重算）。 */
     static final String CARD_STREAK = "sp.cardstreak";
@@ -70,6 +76,8 @@ public final class SponsorService {
     /** 自己選的名字顏色（2026-10）：累積到的某一階的代號（用那一階的名字顏色）；沒選照最高那一階的。 */
     static final String NAME_COLOR = "sp.namecolor";
     static final String FLY_OFF = "sp.fly_off";
+    /** 箭袋的幻化不要顯示在手上（2026-10；沒寫 = 顯示）。 */
+    static final String QUIVER_SKIN_OFF = "sp.quiver_skin_off";
     static final String LOGIN_DAYS = "login.days";
     /** 今天在線幾分鐘：「epoch day|分鐘」。 */
     static final String LOGIN_TODAY = "login.day";
@@ -753,6 +761,53 @@ public final class SponsorService {
         }
     }
 
+    // ---- 公會：改名卡、倉庫頁（2026-10） ----
+
+    String buyGuildRenameCard(final Player player) {
+        final long have = number(player, GUILD_RENAME);
+        final String problem = spend(player, config.guildRenamePrice(), Map.of(GUILD_RENAME, String.valueOf(have + 1)), "公會改名卡");
+        if (problem == null) {
+            ok(player, "<green>買了一張公會改名卡（現在有 " + (have + 1) + " 張）<gray>：會長用 /guild rename 新標籤 新名稱");
+        }
+        return problem;
+    }
+
+    /** 還有幾張公會改名卡。 */
+    public long guildRenameCards(final Player player) {
+        return number(player, GUILD_RENAME);
+    }
+
+    /** 用掉一張公會改名卡（公會模組在確定可以改名之後才呼叫）；沒有回傳 false。 */
+    public boolean useGuildRenameCard(final Player player) {
+        if (!loaded(player)) {
+            return false;
+        }
+        final long have = number(player, GUILD_RENAME);
+        if (have <= 0) {
+            return false;
+        }
+        return accounts().commitAccount(player, Map.of(GUILD_RENAME, String.valueOf(have - 1)), "用掉公會改名卡");
+    }
+
+    /** 幫自己的公會買一頁倉庫：頁是公會的（退出不會帶走，公會解散就沒了）。 */
+    String buyGuildStashPage(final Player player) {
+        final tw.exilecore.guild.GuildService guilds = plugin.guilds();
+        if (guilds == null) {
+            return "公會模組沒有啟用";
+        }
+        final String blocked = guilds.boughtPageProblem(player, config.guildStashMax());
+        if (blocked != null) {
+            return blocked;
+        }
+        final String problem = spend(player, config.guildStashPrice(),
+                Map.of(GUILD_STASH, String.valueOf(number(player, GUILD_STASH) + 1)), "公會倉庫頁 +1");
+        if (problem == null) {
+            guilds.addBoughtPage(player);
+            ok(player, "<green>公會倉庫頁 +1（打開公會倉庫就看得到）");
+        }
+        return problem;
+    }
+
     // ---- 月卡 ----
 
     private ZoneId zone() {
@@ -1104,6 +1159,9 @@ public final class SponsorService {
                 titles.put(item.id(), new BountyConfig.Title(item.id(), item.name(), item.color(), 0));
             }
         }
+        for (final SponsorConfig.LimitedTitle title : config.limitedTitles().values()) {
+            titles.put(title.id(), new BountyConfig.Title(title.id(), title.name(), title.color(), 0));
+        }
         if (!titles.isEmpty()) {
             accounts.registerTitles(titles);
         }
@@ -1221,6 +1279,11 @@ public final class SponsorService {
                     owned.add(item.id());
                 }
             }
+            for (final SponsorConfig.LimitedTitle title : config.limitedTitles().values()) {
+                if (progress.containsKey(LIMITED_TITLE + title.id())) {
+                    owned.add(title.id());
+                }
+            }
             final String[] customTitle = customTitle(progress);
             if (custom && customTitle != null) {
                 owned.add(customTitle[0]);
@@ -1246,6 +1309,10 @@ public final class SponsorService {
                     return List.of("<gray>月卡幣兌換：" + CARD_COLOR + item.price() + " 月卡幣</#bcd4ff><gray>（你有 " + cardCoins(player) + "；/sponsor）");
                 }
             }
+            final SponsorConfig.LimitedTitle limited = config.limitedTitles().get(id);
+            if (limited != null) {
+                return List.of("<#ffd24a>★ " + ItemRenderer.escape(limited.limitedTag()) + "<gray>（絕版：沒有別的方法拿到）");
+            }
             if (id.startsWith("ct_")) {
                 return List.of("<gray>自訂稱號（/sponsor title 文字）");
             }
@@ -1256,6 +1323,9 @@ public final class SponsorService {
         public boolean listed(final Player player, final String id) {
             if (id.startsWith("ct_")) {
                 return false; // 別人的自訂稱號
+            }
+            if (config.limitedTitles().containsKey(id)) {
+                return false; // 2026-10：限定（絕版）稱號沒有的人不列
             }
             final long total = total(player);
             for (final SponsorConfig.Tier tier : config.tiers()) {
@@ -1290,6 +1360,10 @@ public final class SponsorService {
                     return "月卡幣兌換";
                 }
             }
+            final SponsorConfig.LimitedTitle limited = config.limitedTitles().get(id);
+            if (limited != null) {
+                return limited.limitedTag();
+            }
             return id.startsWith("ct_") ? "自訂稱號" : null;
         }
     }
@@ -1300,8 +1374,122 @@ public final class SponsorService {
         return value(player, COSMETIC + id) != null;
     }
 
+    /** 發得出去的一樣東西（2026-10）：時裝，或 title:代號 的限定稱號。 */
+    public record Grantable(String id, String name, boolean title, boolean limited, String limitedTag, SponsorConfig.Cosmetic cosmetic) {
+        String progressKey() {
+            return title ? LIMITED_TITLE + id : COSMETIC + id;
+        }
+    }
+
+    /** 發放的結果（2026-10）：given 這次給了哪幾件（已經有的不算）、work 寫進資料庫的工作（什麼都沒給是 null）。 */
+    public record Granted(List<Grantable> given, List<Grantable> alreadyOwned, CharacterRepository.ExtraWork work) {
+    }
+
+    /**
+     * 直接發時裝（2026-10，管理網頁、/ec sponsor give … cosmetic：S1 贊助禮包這種絕版、限定的東西只有這條路）：
+     * ref 是時裝代號，或「bundle:組代號」一次發整組（bundles）。記憶體改好，回傳寫進資料庫的工作（放進領取的交易）；
+     * 帳號還沒載入回傳 null；沒有這個代號丟 IllegalArgumentException。
+     */
+    public Granted grantCosmeticWork(final Player player, final String ref) {
+        final List<Grantable> wanted = resolveCosmetics(ref);
+        if (accounts() == null || !accounts().accountLoaded(player)) {
+            return null;
+        }
+        final List<Grantable> given = new ArrayList<>();
+        final List<Grantable> owned = new ArrayList<>();
+        final Map<String, String> values = new LinkedHashMap<>();
+        for (final Grantable item : wanted) {
+            if (value(player, item.progressKey()) != null) {
+                owned.add(item);
+                continue;
+            }
+            values.put(item.progressKey(), "1");
+            given.add(item);
+        }
+        if (given.isEmpty()) {
+            return new Granted(given, owned, null);
+        }
+        final CharacterRepository.ExtraWork work = accounts().accountWork(player, values);
+        if (work == null) {
+            return null;
+        }
+        final StringBuilder names = new StringBuilder();
+        for (final Grantable item : given) {
+            names.append(names.isEmpty() ? "" : "、").append(item.title() ? "稱號「" + item.name() + "」" : item.name());
+        }
+        plugin.getSLF4JLogger().info("[贊助] {} 收到 {}（{}）", player.getName(), names, ref);
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            final Grantable first = given.getFirst();
+            final String what = first.title() ? "<#ffd24a>稱號「" + ItemRenderer.escape(first.name()) + "」</#ffd24a>" : rarityTag(first.cosmetic());
+            final boolean onlyTitles = given.stream().allMatch(Grantable::title);
+            player.sendMessage(plugin.text().prefixed(FASHION_COLOR + "收到" + (first.title() ? "稱號" : "時裝") + "</#ff9ad5>：" + what
+                    + (given.size() > 1 ? "<gray> 等 " + given.size() + " 件" : "")
+                    + (first.limited() ? " <#ffd24a>★ " + ItemRenderer.escape(first.limitedTag()) : "")
+                    + (onlyTitles ? "<gray>　選單 → 稱號 換上" : "<gray>　贊助 → 裝備幻化 套上去" + (given.stream().anyMatch(Grantable::title) ? "；稱號在選單 → 稱號 換上" : ""))
+                    + "　<white><click:run_command:'/sponsor'>/sponsor</click>"));
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.2f);
+        });
+        return new Granted(given, owned, work);
+    }
+
+    /** 「時裝代號」「title:稱號代號」或「bundle:組代號」→ 要發的東西（沒有丟 IllegalArgumentException）。 */
+    public List<Grantable> resolveCosmetics(final String ref) {
+        final String id = ref == null ? "" : ref.trim();
+        if (id.startsWith("bundle:")) {
+            final SponsorConfig.Bundle bundle = config.bundles().get(id.substring("bundle:".length()));
+            if (bundle == null) {
+                throw new IllegalArgumentException("沒有這一組時裝：" + id + "（sponsor.yml 的 bundles）");
+            }
+            final List<Grantable> list = new ArrayList<>();
+            for (final String itemId : bundle.cosmetics()) {
+                final Grantable item = grantable(itemId);
+                if (item != null) {
+                    list.add(item);
+                }
+            }
+            if (list.isEmpty()) {
+                throw new IllegalArgumentException("這一組時裝是空的：" + id);
+            }
+            return list;
+        }
+        final Grantable item = grantable(id);
+        if (item == null) {
+            throw new IllegalArgumentException(id.startsWith("title:") ? "沒有這個限定稱號：" + id + "（sponsor.yml 的 limited_titles）"
+                    : "沒有這個時裝：" + id + "（sponsor.yml 的 cosmetics）");
+        }
+        return List.of(item);
+    }
+
+    /** 一個代號（時裝、title:稱號）→ 發得出去的東西；沒有 null。 */
+    private Grantable grantable(final String id) {
+        if (id.startsWith("title:")) {
+            final SponsorConfig.LimitedTitle title = config.limitedTitles().get(id.substring("title:".length()));
+            return title == null ? null : new Grantable(title.id(), title.name(), true, true, title.limitedTag(), null);
+        }
+        final SponsorConfig.Cosmetic cosmetic = config.cosmetics().get(id);
+        return cosmetic == null ? null : new Grantable(cosmetic.id(), cosmetic.name(), false, cosmetic.isLimited(), cosmetic.limitedTag(), cosmetic);
+    }
+
+    /** 給人看的名字：時裝或稱號的名字，或「整組 ×n 件」。 */
+    public String cosmeticLabel(final String ref) {
+        final String id = ref == null ? "" : ref.trim();
+        if (id.startsWith("bundle:")) {
+            final SponsorConfig.Bundle bundle = config.bundles().get(id.substring("bundle:".length()));
+            return bundle == null ? id : "時裝整組「" + bundle.name() + "」（" + bundle.cosmetics().size() + " 件）";
+        }
+        final Grantable item = grantable(id);
+        return item == null ? id : (item.title() ? "稱號 " : "時裝 ") + item.name() + (item.limited() ? "（" + item.limitedTag() + "）" : "");
+    }
+
     /** 戴著的特效（沒戴、已經沒有這個特效 null）。 */
     public SponsorConfig.Cosmetic worn(final Player player) {
+        final SponsorConfig.Cosmetic trying = tryingOn(player);
+        if (trying != null && !trying.skin() && !trying.isEmote()) {
+            return trying; // 試穿中的特效（2026-10）
+        }
         final String id = value(player, WORN);
         final SponsorConfig.Cosmetic cosmetic = id == null || !ownsCosmetic(player, id) ? null : config.cosmetics().get(id);
         return cosmetic == null || cosmetic.skin() || cosmetic.isEmote() ? null : cosmetic;
@@ -1481,6 +1669,10 @@ public final class SponsorService {
 
     /** 這個地方套的幻化（沒套、已經沒有這個外觀 null）。 */
     public SponsorConfig.Cosmetic transmog(final Player player, final Look look) {
+        final SponsorConfig.Cosmetic trying = tryingOn(player);
+        if (trying != null && fits(trying, look)) {
+            return trying; // 試穿中（2026-10）：蓋過這一格原本套的
+        }
         final String id = value(player, TRANSMOG + look.name());
         if (id == null || !ownsCosmetic(player, id)) {
             return null;
@@ -1528,6 +1720,84 @@ public final class SponsorService {
         return null;
     }
 
+    // ---- 試穿（2026-10）----
+
+    /** 試穿多久（tick）：30 秒。 */
+    static final long TRY_ON_TICKS = 20L * 30;
+
+    /** 試穿中的時裝：代號、到第幾 tick 為止。 */
+    private record TryOn(String id, long until) {
+    }
+
+    private final Map<UUID, TryOn> tryOns = new ConcurrentHashMap<>();
+
+    /**
+     * 試穿還沒有的時裝 {@value #TRY_ON_TICKS} tick：外觀（武器、副手、防具、頭飾、背飾、寵物）照幻化的方式蓋上去，特效照戴著的方式出現；
+     * 不存檔、時間到自動拿掉。別人也看得到（顯示用的裝備、3D 模型本來就是大家看得到的）。限定（絕版）、動作不能試穿。
+     *
+     * @return 問題（null = 開始試穿）
+     */
+    String tryOn(final Player player, final String id) {
+        if (!loaded(player)) {
+            return "帳號資料載入中，請稍等";
+        }
+        final SponsorConfig.Cosmetic cosmetic = config.cosmetics().get(id);
+        if (cosmetic == null) {
+            return "沒有這個時裝";
+        }
+        if (cosmetic.isEmote()) {
+            return "動作不能試穿";
+        }
+        if (cosmetic.isLimited() && !ownsCosmetic(player, id)) {
+            return "限定的時裝不能試穿";
+        }
+        if (cosmetic.skin() && !packSent()) {
+            return "伺服器沒有送介面資源包，3D 時裝畫不出來";
+        }
+        final long until = plugin.getServer().getCurrentTick() + TRY_ON_TICKS;
+        final TryOn entry = new TryOn(id, until);
+        tryOns.put(player.getUniqueId(), entry);
+        plugin.characters().gear().sync(player);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (tryOns.remove(player.getUniqueId(), entry) && player.isOnline()) {
+                plugin.characters().gear().sync(player);
+                player.sendMessage(plugin.text().prefixed("<gray>試穿結束：" + rarityTag(cosmetic)));
+            }
+        }, TRY_ON_TICKS + 1);
+        return null;
+    }
+
+    /** 試穿中的時裝（沒有、時間到了 null）。 */
+    public SponsorConfig.Cosmetic tryingOn(final Player player) {
+        final TryOn entry = tryOns.get(player.getUniqueId());
+        if (entry == null) {
+            return null;
+        }
+        if (plugin.getServer().getCurrentTick() > entry.until()) {
+            tryOns.remove(player.getUniqueId(), entry);
+            return null;
+        }
+        return config.cosmetics().get(entry.id());
+    }
+
+    /** 試穿的時候哪裡看得到（給玩家的提示）。 */
+    static String tryOnHint(final SponsorConfig.Cosmetic cosmetic) {
+        if (!cosmetic.skin()) {
+            return "特效在身上";
+        }
+        return switch (cosmetic.skinSlot()) {
+            case "weapon" -> "要拿著近戰武器或法杖才看得到";
+            case "bow" -> "要拿著弓才看得到";
+            case "crossbow" -> "要拿著弩才看得到";
+            case "offhand" -> "副手要有盾或箭袋才看得到";
+            case "armor" -> "穿著的防具會換成這套的樣子";
+            case "headgear" -> "戴在頭上";
+            case "back" -> "在背後";
+            case "pet" -> "跟在身邊";
+            default -> "";
+        };
+    }
+
     /** 介面資源包有沒有送（沒送的話自己的模型畫不出來，就不換）。 */
     boolean packSent() {
         return plugin.getConfig().getBoolean("resource-pack.send", true);
@@ -1549,6 +1819,27 @@ public final class SponsorService {
         if (skin != null) {
             applySkin(skin, look, display);
         }
+    }
+
+    /** 玩家選了要把箭袋的幻化顯示在手上（預設是；沒套幻化時箭袋本來就不顯示）。 */
+    boolean quiverSkinEnabled(final Player player) {
+        return value(player, QUIVER_SKIN_OFF) == null;
+    }
+
+    void toggleQuiverSkin(final Player player) {
+        if (!loaded(player)) {
+            return;
+        }
+        accounts().writeProgress(player, QUIVER_SKIN_OFF, quiverSkinEnabled(player) ? "1" : null);
+        plugin.characters().gear().sync(player);
+    }
+
+    /**
+     * 副手的箭袋要不要拿在手上（2026-10）：箭袋平常不顯示（{@code Gear}）；副手套了幻化、玩家沒關掉顯示、
+     * 而且資源包送出去了（幻化的樣子在資源包裡）才顯示。
+     */
+    public boolean showsQuiverSkin(final Player player) {
+        return config.enabled() && loaded(player) && packSent() && quiverSkinEnabled(player) && transmog(player, Look.OFFHAND) != null;
     }
 
     /** 這一套美術的物品模型代號（資源包的 items/skin/…）。 */

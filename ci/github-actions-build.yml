@@ -1,4 +1,8 @@
 # 每次 push 或 pull request 都自動建置並跑單元測試，產出的 jar 放在 Actions 的 Artifacts。
+# 2026-10：push 到 main、而且建置與測試都過了 → 自動把 jar 上傳到伺服器的 plugins/（不重開：下次重啟時生效，
+#   例如管理網頁設的每天定時重啟）。連線資訊放在 GitHub 的 Secrets（Settings → Secrets and variables → Actions）：
+#     DEPLOY_SFTP_HOST、DEPLOY_SFTP_PORT、DEPLOY_SFTP_USER、DEPLOY_SFTP_PASSWORD
+#   沒設 DEPLOY_SFTP_HOST 的話上傳那一步會跳過（照舊只建置）。
 name: build
 
 on:
@@ -30,3 +34,47 @@ jobs:
         with:
           name: ExileCore
           path: build/libs/*.jar
+
+  deploy:
+    # 只有 main 的 push（不含 pull request），而且上面的建置與測試都過了才上傳
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency: deploy   # 連續 push 時一次只上傳一個，照順序
+    env:
+      DEPLOY_SFTP_HOST: ${{ secrets.DEPLOY_SFTP_HOST }}
+      DEPLOY_SFTP_PORT: ${{ secrets.DEPLOY_SFTP_PORT }}
+      DEPLOY_SFTP_USER: ${{ secrets.DEPLOY_SFTP_USER }}
+      DEPLOY_SFTP_PASSWORD: ${{ secrets.DEPLOY_SFTP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 拿建置好的 jar
+        uses: actions/download-artifact@v4
+        with:
+          name: ExileCore
+          path: build/libs
+
+      - name: 上傳到伺服器（下次重啟生效）
+        if: env.DEPLOY_SFTP_HOST != ''
+        run: |
+          pip install --quiet paramiko
+          # deploy.py 讀 tools/deploy.local.json：用 Secrets 寫一份（不印出來、跑完就刪）
+          python3 - <<'PY'
+          import json, os
+          config = {
+              "sftp_host": os.environ["DEPLOY_SFTP_HOST"],
+              "sftp_port": int(os.environ.get("DEPLOY_SFTP_PORT") or 22),
+              "sftp_user": os.environ["DEPLOY_SFTP_USER"],
+              "sftp_password": os.environ["DEPLOY_SFTP_PASSWORD"],
+              "remote_plugins": "plugins",
+          }
+          with open("tools/deploy.local.json", "w", encoding="utf-8") as f:
+              json.dump(config, f)
+          PY
+          python3 tools/deploy.py --no-build --no-restart
+          rm -f tools/deploy.local.json
+
+      - name: 沒設 Secrets：跳過上傳
+        if: env.DEPLOY_SFTP_HOST == ''
+        run: echo "沒有設定 DEPLOY_SFTP_HOST，只建置、不上傳（見 build.yml 開頭的說明）"

@@ -71,10 +71,16 @@ public final class ItemService {
         return codec.isEquipment(stack);
     }
 
-    /** 讀物品資料；舊版的傳奇（uniques.yml 改過）照目前的定義補正（只改讀出來的資料，{@link #refresh} 才寫回物品）。 */
+    /**
+     * 讀物品資料；舊版的傳奇（uniques.yml 改過）照目前的定義補正，詞綴後來多出來的變數補上（{@link AffixUpgrade}）
+     * （只改讀出來的資料，{@link #refresh} 才寫回物品）。
+     */
     public Optional<ItemData> read(final ItemStack stack) {
         final Optional<ItemData> data = codec.read(stack);
-        data.ifPresent(value -> UniqueUpgrade.apply(repository, value));
+        data.ifPresent(value -> {
+            UniqueUpgrade.apply(repository, value);
+            AffixUpgrade.apply(repository, value);
+        });
         return data;
     }
 
@@ -162,7 +168,8 @@ public final class ItemService {
         if (data.isEmpty() || repository.base(data.get().base()) == null) {
             return false;
         }
-        final boolean upgraded = UniqueUpgrade.apply(repository, data.get());
+        // 2026-10：詞綴後來多出來的變數也補上（不補的話重畫時丟「缺少變數」，整個倉庫被當成資料損毀）
+        final boolean upgraded = UniqueUpgrade.apply(repository, data.get()) | AffixUpgrade.apply(repository, data.get());
         if (upgraded) {
             codec.write(stack, data.get());
         }

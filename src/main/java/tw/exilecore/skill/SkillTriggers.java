@@ -21,7 +21,7 @@ import java.util.UUID;
 /**
  * 觸發（2026-10，照 PoE2 的 Cast on X）：掛了觸發輔助的法術，條件成立時自動施放（不花魔力，每個技能有 {@value #COOLDOWN} tick 的內置冷卻）：
  * 攻擊暴擊（trigger.crit）、被敵人擊中（trigger.hit_taken）、擊殺（trigger.kill）、讓敵人點燃／冰緩／感電（trigger.ailment）。
- * 要綁在上方按鍵格的技能才會被觸發（2026-10；不用按）。
+ * 要綁在上方按鍵格的技能才會被觸發（2026-10；不用按）。掛了觸發輔助的法術不能手動施放（按了沒有用，{@link #triggeredOnly}）。
  */
 public final class SkillTriggers implements Listener {
 
@@ -138,6 +138,22 @@ public final class SkillTriggers implements Listener {
                 firing = false;
             }
         }
+    }
+
+    /** 全部的觸發條件（輔助寶石的 modifiers 寫其中一個）。 */
+    private static final java.util.Set<String> TRIGGERS = java.util.Set.of(StatKeys.TRIGGER_CRIT, StatKeys.TRIGGER_HIT_TAKEN,
+            StatKeys.TRIGGER_KILL, StatKeys.TRIGGER_AILMENT, StatKeys.TRIGGER_DODGE, StatKeys.TRIGGER_MINION_DEATH);
+
+    /** 這個技能掛了觸發輔助（2026-10，照 PoE）：只會自動觸發，不能手動施放。 */
+    boolean triggeredOnly(final SkillLoadout.Entry entry) {
+        for (final SupportDefinition support : service.supportsOf(entry)) {
+            for (final tw.exilecore.stats.Modifier modifier : support.modifiers()) {
+                if (modifier.value() > 0 && TRIGGERS.contains(modifier.stat())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean hasTrigger(final SkillLoadout.Entry entry, final String trigger) {

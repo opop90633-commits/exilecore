@@ -1030,7 +1030,7 @@ supports:
 
   trigger_crit:
     name: 暴擊觸發
-    description: 被輔助的法術在你攻擊暴擊時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。技能要綁在上方按鍵格（不用按）。
+    description: 被輔助的法術在你攻擊暴擊時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。技能要綁在上方按鍵格（不用按）。掛上之後這個法術只會自動觸發，不能手動施放。
     icon: GOLD_NUGGET
     tier: 2
     requires: [spell]
@@ -1042,7 +1042,7 @@ supports:
 
   trigger_hit_taken:
     name: 受擊觸發
-    description: 被輔助的法術在你被敵人擊中時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。
+    description: 被輔助的法術在你被敵人擊中時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。掛上之後這個法術只會自動觸發，不能手動施放。
     icon: SHIELD
     tier: 2
     requires: [spell]
@@ -1054,7 +1054,7 @@ supports:
 
   trigger_kill:
     name: 擊殺觸發
-    description: 被輔助的法術在你擊殺敵人時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。
+    description: 被輔助的法術在你擊殺敵人時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。掛上之後這個法術只會自動觸發，不能手動施放。
     icon: SKELETON_SKULL
     tier: 2
     requires: [spell]
@@ -1066,7 +1066,7 @@ supports:
 
   trigger_ailment:
     name: 異常觸發
-    description: 被輔助的法術在你讓敵人點燃、冰緩、凍結或感電時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。
+    description: 被輔助的法術在你讓敵人點燃、冰緩、凍結或感電時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。掛上之後這個法術只會自動觸發，不能手動施放。
     icon: FIRE_CHARGE
     tier: 3
     requires: [spell]
@@ -1449,7 +1449,7 @@ supports:
     icon: TARGET
     tier: 2
     requires: [area]
-    excludes: [spell, minion]
+    excludes: [spell, minion, aura, herald, persistent]   # 2026-10：光環不算法術之後，這裡要另外擋（它是給範圍攻擊用的）
     mana_multiplier: 1.2
     modifiers:
       - { stat: skill.area, type: INCREASED, value: 40 }
@@ -2039,7 +2039,7 @@ supports:
   # ---- 2026-10：PoE2 輔助補齊・第 3 批（觸發、其他）----
   cast_on_dodge:           # Cast on Dodge
     name: 翻身詠
-    description: 被輔助的法術在你翻滾時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。技能要綁在上方按鍵格（不用按）。
+    description: 被輔助的法術在你翻滾時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。技能要綁在上方按鍵格（不用按）。掛上之後這個法術只會自動觸發，不能手動施放。
     icon: FEATHER
     tier: 2
     requires: [spell]
@@ -2051,7 +2051,7 @@ supports:
 
   cast_on_minion_death:    # Cast on Minion Death
     name: 殞僕詠
-    description: 你的召喚物死掉時，被輔助的法術在牠倒下的地方自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。
+    description: 你的召喚物死掉時，被輔助的法術在牠倒下的地方自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。掛上之後這個法術只會自動觸發，不能手動施放。
     icon: BONE
     tier: 2
     requires: [spell]

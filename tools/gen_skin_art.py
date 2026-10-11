@@ -36,6 +36,8 @@ THEMES = {
     "solar":     ("烈陽", ("6a3a10", "d8902a", "ffe08a"), ("8a5a10", "e0b040", "fff0b0"), ("ffb000", "fff6d0"), "ff8a00", "star"),
     "storm":     ("雷霆", ("1a2440", "3a5a9a", "8ab0ff"), ("3a3f4a", "7a8494", "c8d0dc"), ("8fe8ff", "ffffff"), "6fdcff", "cross"),
     "shadow":    ("暗影", ("101014", "2a2a34", "4a4a5a"), ("24242c", "4a4a58", "8a8a9a"), ("9a6aff", "e0d0ff"), "b47aff", "eye"),
+    # 2026-10 S1 贊助禮包限定（絕版）：創世——深宇宙藍的衣料、金色滾邊、極光青的刺繡
+    "genesis":   ("創世", ("0b1230", "1b2a5c", "2a3a7a"), ("9a7420", "f2c14e", "ffe8a8"), ("39e7ff", "c8f6ff"), "ff5fd2", "star"),
 }
 
 
@@ -547,6 +549,7 @@ OUTFIT = {
     "solar":     dict(collar="high", front="trim", belt="sash", motif="star", hem="trim", legs="pleat", boot="cuff"),
     "storm":     dict(collar="high", front="trim", belt="belt", motif="bolt", hem="zigzag", legs="stripe", boot="lace"),
     "shadow":    dict(collar="cross", front="none", belt="obi", motif="none", hem="none", legs="wrap", boot="wrap"),
+    "genesis":   dict(collar="high", front="trim", belt="sash", motif="star", hem="trim", legs="stripe", boot="cuff"),
 }
 FUR = ((236, 232, 222, 255), (206, 198, 186, 255))
 

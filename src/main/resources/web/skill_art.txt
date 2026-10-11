@@ -14971,6 +14971,58 @@ item skill_artillery_ballista
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
+item skill_linked_volley
+  a=140a04
+  b=6d503b
+  c=261c14
+  d=4a280f
+  e=190e05
+  f=d6dcea
+  g=47260e
+  h=180d04
+  i=44240d
+  j=170c04
+  k=41230c
+  l=160c04
+  m=a8743a
+  n=3e210c
+  o=150b04
+  p=ffc86a
+  q=3b1f0b
+  r=140a03
+  s=381e0a
+  t=130a03
+  u=351c09
+  v=120903
+  w=e08a2a
+  x=321a09
+  y=110903
+  z=100802
+  A=2f1908
+  B=e8e0d0
+  C=0f0802
+  D=2c1707
+  E=0e0702
+  F=291506
+  G=261406
+  H=0d0702
+  .aaaaaaaaaaaaaa.
+  abbbbbbbbbbbbcba
+  adddddddddeeefea
+  agggggggghfffhga
+  aiiiiiiiiijffjia
+  akkkkkllklmlflka
+  annnnoppomononna
+  aqqqqqrrprqqqqqa
+  assttstmtptssssa
+  auvwwvmvvpvuuuua
+  axxyywyxxyxxxxxa
+  azzzmzwzAAAAAAAa
+  aBBmCCwCDDDDDDDa
+  aEmBEFEFFFFFFFFa
+  aGHBHGGGGGGGGGGa
+  .aaaaaaaaaaaaaa.
+
 item support_increased_area
   a=140a04
   b=6d503b

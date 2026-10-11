@@ -145,6 +145,11 @@
   .empty { color: var(--text-muted); padding: 12px 0; }
   .login { max-width: 560px; margin: 64px auto; }
   .login code { background: var(--surface-2); padding: 1px 6px; border-radius: 6px; }
+  .pw-form { margin: 0 0 16px; }
+  .pw-form label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .pw-row { display: flex; gap: 8px; }
+  .pw-row input { flex: 1; min-width: 0; }
+  .pw-error { color: var(--bad); margin: 6px 0 0; min-height: 1.2em; }
   dialog { border: 1px solid var(--border); border-radius: 12px; background: var(--surface-1); color: var(--text-primary); padding: 20px; max-width: min(520px, calc(100vw - 32px)); width: 100%; }
   dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
   dialog p { margin: 0 0 8px; }
@@ -181,6 +186,8 @@
     <button type="button" role="tab" data-tab="records" aria-selected="false">發放紀錄</button>
     <button type="button" role="tab" data-tab="settings" aria-selected="false">遊戲設定</button>
     <button type="button" role="tab" data-tab="players" aria-selected="false">線上玩家</button>
+    <button type="button" role="tab" data-tab="guilds" aria-selected="false">公會</button>
+    <button type="button" role="tab" data-tab="trace" aria-selected="false">物品追查</button>
     <button type="button" role="tab" data-tab="log" aria-selected="false">操作紀錄</button>
   </nav>
 
@@ -274,6 +281,47 @@
     </div>
   </section>
 
+  <section id="tab-guilds" role="tabpanel" hidden>
+    <div class="card">
+      <div class="filters"><button type="button" id="guild-refresh">重新整理</button></div>
+      <div class="scroll"><table id="guild-table">
+        <thead><tr><th>公會</th><th>等級</th><th>人數（在線）</th><th>會長</th><th>倉庫</th><th>成立</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty" id="guild-empty" hidden>還沒有公會。</p>
+    </div>
+    <div class="card" id="guild-detail" hidden>
+      <h2 id="guild-title"></h2>
+      <p class="note" id="guild-info"></p>
+      <p class="note" id="guild-motd"></p>
+      <div class="filters" id="guild-actions"></div>
+      <h3>成員</h3>
+      <div class="scroll"><table id="guild-members">
+        <thead><tr><th>階級</th><th>角色</th><th>玩家 ID</th><th>貢獻</th><th>加入</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <h3>最近的紀錄（加入、離開、倉庫存取、設定）</h3>
+      <div class="scroll"><table id="guild-log">
+        <thead><tr><th>時間</th><th>誰</th><th>動作</th><th>內容</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="note">要看倉庫裡有什麼：在遊戲裡打 /guild admin stash 公會（只能看）。</p>
+    </div>
+  </section>
+
+  <section id="tab-trace" role="tabpanel" hidden>
+    <div class="card">
+      <h2>物品追查</h2>
+      <p class="note">查一件物品被誰交易、上架、改造過，或一個玩家最近的交易（跟遊戲裡的 /ec trace 一樣）。物品的 UUID 在遊戲裡用 /ec inspect 看得到。</p>
+      <div class="filters"><input type="text" id="trace-item" placeholder="物品的 UUID" aria-label="物品的 UUID" size="40">
+        <button type="button" id="trace-item-go">查這件物品</button></div>
+      <div class="filters"><input type="text" id="trace-player" placeholder="玩家 ID（英數字）" aria-label="玩家 ID" size="24">
+        <button type="button" id="trace-player-go">查這個玩家最近的交易</button></div>
+      <div class="scroll"><table id="trace-table"><tbody></tbody></table></div>
+      <p class="empty" id="trace-empty" hidden></p>
+    </div>
+  </section>
+
   <section id="tab-log" role="tabpanel" hidden>
     <div class="card">
       <div class="filters"><button type="button" id="log-refresh">重新整理</button></div>
@@ -290,7 +338,16 @@
 <div class="login" id="login" hidden>
   <div class="card">
     <h2>需要登入</h2>
-    <p>在遊戲裡打 <code>/ec web</code>（要有管理權限），點聊天欄的「打開管理網頁」。連結 10 分鐘內有效、只能用一次；登入後 12 小時內有效。</p>
+    <form id="pw-form" class="pw-form" hidden autocomplete="on">
+      <label for="pw-input">管理密碼</label>
+      <div class="pw-row">
+        <input type="password" id="pw-input" name="password" autocomplete="current-password" required minlength="10" maxlength="128">
+        <button type="submit" class="primary" id="pw-submit">登入</button>
+      </div>
+      <p class="pw-error" id="pw-error" role="alert"></p>
+      <p class="muted" id="pw-http" hidden>這個網址是 http：密碼在網路上沒有加密，別在公共 Wi-Fi 用。</p>
+    </form>
+    <p>或在遊戲裡打 <code>/ec web</code>（要有管理權限），點聊天欄的「打開管理網頁」。連結 10 分鐘內有效、只能用一次；登入後 12 小時內有效。</p>
     <p class="muted" id="login-detail"></p>
   </div>
 </div>
@@ -318,7 +375,7 @@
   var recordBatch = '';
 
   var KINDS = [
-    ['currency', '通貨'], ['gold', '金幣'], ['merits', '功勳'], ['sponsor', '星幣／月卡幣／時裝幣'], ['item', '裝備'], ['unique', '傳奇'],
+    ['currency', '通貨'], ['gold', '金幣'], ['merits', '功勳'], ['sponsor', '星幣／月卡幣／時裝幣'], ['cosmetic', '時裝（限定、整組）'], ['item', '裝備'], ['unique', '傳奇'],
     ['gem', '寶石'], ['flask', '藥劑'], ['map', '地圖'], ['refund', '免費退點'],
     ['take_sponsor', '⛔ 收回：累積贊助／星幣／買的格子'], ['take_currency', '⛔ 收回：通貨'], ['take_gold', '⛔ 收回：金幣'], ['take_item', '⛔ 收回：物品']
   ];
@@ -366,7 +423,7 @@
     return fetch(path, options).then(function (response) {
       return response.json().catch(function () { return { error: '伺服器的回應看不懂（' + response.status + '）' }; }).then(function (json) {
         if (response.status === 401) {
-          showLogin(json.error);
+          showLogin(json.error, json.password);
           var loginError = new Error(json.error || '沒有登入');
           loginError.login = true;
           loginError.status = 401;
@@ -416,11 +473,33 @@
       $('confirm-no').focus();
     });
   }
-  function showLogin(detail) {
+  function showLogin(detail, passwordOn) {
     $('app').hidden = true;
     $('login').hidden = false;
     $('login-detail').textContent = detail || '';
+    if (passwordOn !== undefined) { $('pw-form').hidden = !passwordOn; }
+    $('pw-http').hidden = location.protocol === 'https:';
+    if (!$('pw-form').hidden) { $('pw-input').focus(); }
   }
+  // 密碼登入（2026-10）：主控台 ec web password set 設過才會出現
+  $('pw-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    var input = $('pw-input');
+    $('pw-error').textContent = '';
+    $('pw-submit').disabled = true;
+    fetch('admin/password-login', { method: 'POST', credentials: 'same-origin', cache: 'no-store',
+      headers: { 'Content-Type': 'application/json', 'X-EC-Login': '1' }, body: JSON.stringify({ password: input.value }) })
+      .then(function (response) {
+        return response.json().catch(function () { return { error: '伺服器的回應看不懂（' + response.status + '）' }; })
+          .then(function (json) {
+            if (!response.ok) { throw new Error(json.error || '登入失敗（' + response.status + '）'); }
+            input.value = '';
+            return load();
+          });
+      })
+      .catch(function (error) { $('pw-error').textContent = error && error.message ? error.message : String(error); input.select(); })
+      .then(function () { $('pw-submit').disabled = false; });
+  });
 
   // ---- 狀態 ----
   /**
@@ -591,6 +670,7 @@
         { id: 'bought_bag', text: '星幣買的隨身背包頁' }, { id: 'bought_listing', text: '星幣買的上架格' },
         { id: 'card_days', text: '月卡天數（扣到 0 = 拔掉月卡；數量填大一點就全拔）' }];
       case 'take_currency': return c.currencies.map(function (e) { return { id: e.id, text: e.name }; });
+      case 'cosmetic': return c.cosmetics.filter(match).map(function (e) { return { id: e.id, text: e.name }; });
       case 'sponsor': return [{ id: 'paid', text: '星幣・儲值（算進累積贊助）' }, { id: 'bonus', text: '星幣・贈送（不算累積贊助）' }, { id: 'card', text: '月卡幣' }, { id: 'fashion', text: '時裝幣' }, { id: 'card_days', text: '月卡天數（直接開月卡，不扣星幣、不送開卡禮）' }];
       default: return [];
     }
@@ -603,13 +683,13 @@
   function itemRow(item) {
     var c = catalog();
     var row = h('div', { cls: 'item-row' });
-    row.appendChild(h('label', null, '種類', select('', '種類', KINDS.filter(function (k) { return (k[0] !== 'merits' || c.hasMerits) && (k[0] !== 'sponsor' || c.hasSponsor) && (k[0] !== 'take_sponsor' || c.hasSponsor); })
+    row.appendChild(h('label', null, '種類', select('', '種類', KINDS.filter(function (k) { return (k[0] !== 'merits' || c.hasMerits) && (k[0] !== 'sponsor' || c.hasSponsor) && (k[0] !== 'cosmetic' || c.hasSponsor) && (k[0] !== 'take_sponsor' || c.hasSponsor); })
       .map(function (k) { return { id: k[0], text: k[1] }; }), item.kind, function (v) {
         item.kind = v; item.ref = ''; item.level = 0; item.amount = 1; item.filter = ''; item.rarity = v === 'map' ? 'normal' : 'rare';
         renderItems();
       })));
-    var refLabel = { currency: '通貨', item: '基底', unique: '傳奇', flask: '藥劑', map: '地圖', sponsor: '幣別', take_sponsor: '收回什麼', take_currency: '通貨' }[item.kind];
-    if (item.kind === 'item' || item.kind === 'unique') {
+    var refLabel = { currency: '通貨', item: '基底', unique: '傳奇', flask: '藥劑', map: '地圖', sponsor: '幣別', cosmetic: '時裝', take_sponsor: '收回什麼', take_currency: '通貨' }[item.kind];
+    if (item.kind === 'item' || item.kind === 'unique' || item.kind === 'cosmetic') {
       var filter = h('input', { type: 'search', cls: 'filter', placeholder: '篩選…', value: item.filter, 'aria-label': '篩選' });
       filter.addEventListener('input', function () {
         item.filter = filter.value;
@@ -830,6 +910,7 @@
       case 'currency': return nameOf(c.currencies, item.ref) + ' ×' + num(n);
       case 'gold': return '金幣 ' + num(n);
       case 'merits': return '功勳 ' + num(n);
+      case 'cosmetic': return nameOf(c.cosmetics, item.ref) + '（已經有的不重複給）';
       case 'sponsor': return item.ref === 'card_days' ? '月卡 ' + num(n) + ' 天' : item.ref === 'card' ? '月卡幣 ' + num(n) : item.ref === 'fashion' ? '時裝幣 ' + num(n) : '星幣 ' + num(n) + (item.ref === 'bonus' ? '（贈送）' : '（儲值）');
       case 'refund': return '免費退點 ×' + n;
       case 'take_sponsor': var what = { total: '累積贊助', coins: '星幣', card: '月卡幣', fashion: '時裝幣', bought_stash: '買的倉庫頁', bought_bag: '買的背包頁', bought_listing: '買的上架格', card_days: '月卡天數' }[item.ref] || item.ref;
@@ -1139,12 +1220,31 @@
         }).catch(fail);
       });
     } });
+    // 倒數關服（2026-10）：時間到請所有人離開、關服，不會自動開回來
+    var offMinutes = h('input', { type: 'number', min: 0, max: 1440, step: 1, value: 10, 'aria-label': '幾分鐘後關服', inputmode: 'numeric' });
+    var offReason = h('input', { type: 'text', maxlength: 100, placeholder: '原因（會顯示給玩家，例如：維護到晚上 8 點）', 'aria-label': '關服原因' });
+    var off = h('button', { type: 'button', cls: 'danger small', text: '排定關服', onclick: function () {
+      var m = parseInt(offMinutes.value, 10);
+      if (isNaN(m) || m < 0 || m > 1440) { toast('分鐘要在 0–1440 之間', true); return; }
+      var lines = [m === 0 ? '馬上關服：請所有人離開、存檔、關閉。' : m + ' 分鐘後關服，全服會倒數提醒（最後 5 分鐘畫面上方有倒數條）。',
+        '時間到會把線上的人請出去（畫面上寫原因），不會送去等待室，也不會自動開回來；要開服請到主機商的面板按「開始」。'];
+      if (!r.panel) {
+        lines.push('⚠ config.yml 還沒填 panel（面板網址、伺服器代號、API 金鑰）：主機商的面板可能會把關服當成當機自動開回來。');
+      }
+      confirmBox('排定關服？', lines, '排定關服').then(function (ok) {
+        if (!ok) { return; }
+        api('POST', 'admin/api/restart', { action: 'shutdown', minutes: m, reason: offReason.value.trim() }).then(function (json) {
+          toast(json.change);
+          load(true, 'force');
+        }).catch(fail);
+      });
+    } });
     var status = r.at
-      ? h('div', { cls: 'setting-help' }, '已排定：' + time(r.at) + ' 重新啟動' + (r.reason ? '（' + r.reason + '）' : '') + '・' + r.by + ' 排的　',
+      ? h('div', { cls: 'setting-help' }, '已排定：' + time(r.at) + (r.shutdown ? ' 關服' : ' 重新啟動') + (r.reason ? '（' + r.reason + '）' : '') + '・' + r.by + ' 排的　',
           h('button', { type: 'button', cls: 'small', text: '取消', onclick: function () {
             api('POST', 'admin/api/restart', { action: 'cancel' }).then(function (json) { toast(json.change); load(true, 'force'); }).catch(fail);
           } }))
-      : h('div', { cls: 'setting-help', text: '現在沒有排重新啟動。' });
+      : h('div', { cls: 'setting-help', text: '現在沒有排重新啟動或關服。' });
     var daily = h('input', { type: 'text', value: r.daily.join(', '), placeholder: '例如 05:30, 17:30（空的 = 不定時重啟）', 'aria-label': '每天定時重新啟動的時間' });
     var saveDaily = h('button', { type: 'button', cls: 'small', text: '儲存', onclick: function () {
       var times = daily.value.split(/[,，、\s]+/).map(function (t) { return t.trim(); }).filter(function (t) { return t; });
@@ -1155,6 +1255,10 @@
       h('p', { cls: 'note', text: '時間到存檔關服。要用 start-all.bat 開伺服器才會自動開回來（直接用 run-server.bat 開的只會關掉）。也可以在遊戲裡打 /ec restart 分鐘、/ec restart cancel。' }),
       status,
       h('div', { cls: 'row' }, minutes, h('span', { text: '分鐘後' }), reason, go),
+      h('h3', { text: '倒數關服' }),
+      h('p', { cls: 'note', text: '倒數跟重新啟動一樣；時間到把所有人請出去再關服，不會自動開回來（維護、停機用）。排了之後上面「已排定」可以取消。'
+        + (r.panel ? '' : '　config.yml 還沒填 panel，主機商可能會自動開回來。') + '也可以在遊戲裡打 /ec restart shutdown 分鐘 [原因]。' }),
+      h('div', { cls: 'row' }, offMinutes, h('span', { text: '分鐘後' }), offReason, off),
       h('h3', { text: '每天定時重新啟動' }),
       h('p', { cls: 'note', text: '每天的這些時間自動重啟（伺服器的時間、24 小時制，最多 6 個，用逗號分開）；時間到之前 ' + r.warning + ' 分鐘開始全服倒數。' + (r.daily.length ? '' : '現在沒有設定。') }),
       h('div', { cls: 'row' }, daily, saveDaily));
@@ -1164,7 +1268,8 @@
   function renderPlayers() {
     var body = clear($('player-table').querySelector('tbody'));
     state.players.forEach(function (p) {
-      var name = h('td', null, p.name, p.admin ? h('span', { cls: 'badge admin', text: '管理員' }) : null);
+      var name = h('td', null, p.name, p.admin ? h('span', { cls: 'badge admin', text: '管理員' }) : null,
+        p.muted ? h('span', { cls: 'badge', text: '禁言中' }) : null);
       body.appendChild(h('tr', null, name, h('td', { text: p.character || '還沒選角色' }), h('td', { text: p['class'] || '' }),
         h('td', { cls: 'num', text: p.level ? 'Lv.' + p.level : '' }), h('td', { text: p.where }),
         h('td', null, h('button', { type: 'button', cls: 'small', text: '發東西給他', onclick: function () {
@@ -1173,10 +1278,155 @@
           setMode('players');
           renderPick();
           showTab('give');
-        } }))));
+        } }), ' ',
+        p.muted ? h('button', { type: 'button', cls: 'small', text: '解除禁言', onclick: function () { playerDo(p, { action: 'unmute' }, '解除 ' + p.name + ' 的禁言？', []); } })
+          : h('button', { type: 'button', cls: 'small', text: '禁言', onclick: function () { mutePlayer(p); } }), ' ',
+        h('button', { type: 'button', cls: 'small danger', text: '踢出', onclick: function () { kickPlayer(p); } }))));
     });
     $('player-empty').hidden = state.players.length > 0;
   }
+  // ---- 玩家處置（2026-10）：禁言、解除、踢出 ----
+  function playerDo(p, payload, title, lines) {
+    return confirmBox(title, lines, '確定').then(function (yes) {
+      if (!yes) { return; }
+      payload.uuid = p.uuid;
+      return api('POST', 'admin/api/player', payload).then(function (json) {
+        toast(json.message || '好了');
+        return load(true, 'safe');
+      }).catch(fail);
+    });
+  }
+  function mutePlayer(p) {
+    var minutes = window.prompt('禁言 ' + p.name + ' 幾分鐘？（0 = 永久）', '60');
+    if (minutes === null) { return; }
+    minutes = parseInt(minutes, 10);
+    if (isNaN(minutes) || minutes < 0) { toast('分鐘要寫數字（0 = 永久）', true); return; }
+    var reason = window.prompt('原因（可以不寫，玩家看得到）', '');
+    if (reason === null) { return; }
+    playerDo(p, { action: 'mute', minutes: minutes, reason: reason },
+      '禁言 ' + p.name + '？', [minutes ? minutes + ' 分鐘' : '永久', reason ? '原因：' + reason : '沒有寫原因']);
+  }
+  function kickPlayer(p) {
+    var reason = window.prompt('把 ' + p.name + ' 踢出伺服器的原因（可以不寫，玩家看得到）', '');
+    if (reason === null) { return; }
+    playerDo(p, { action: 'kick', reason: reason }, '把 ' + p.name + ' 踢出伺服器？',
+      ['他可以馬上再連進來；要擋住請用伺服器的封鎖指令。', reason ? '原因：' + reason : '沒有寫原因']);
+  }
+
+  // ---- 公會（2026-10）：跟遊戲裡的 /guild admin 一樣的操作 ----
+  var guildOpenId = null;
+  function loadGuilds() {
+    return api('GET', 'admin/api/guilds').then(function (json) {
+      var body = clear($('guild-table').querySelector('tbody'));
+      json.guilds.forEach(function (g) {
+        body.appendChild(h('tr', null, h('td', { text: '[' + g.tag + '] ' + g.name }), h('td', { cls: 'num', text: 'Lv.' + g.level }),
+          h('td', { cls: 'num', text: g.members + ' / ' + g.maxMembers + '（' + g.online + '）' }), h('td', { text: g.leader }),
+          h('td', { cls: 'num', text: g.pages + ' 頁' }), h('td', { cls: 'time', text: time(g.created) }),
+          h('td', null, h('button', { type: 'button', cls: 'small', text: '管理', onclick: function () { openGuild(g.id); } }))));
+      });
+      $('guild-empty').hidden = json.guilds.length > 0;
+      if (guildOpenId !== null) {
+        var still = json.guilds.some(function (g) { return g.id === guildOpenId; });
+        if (!still) { guildOpenId = null; $('guild-detail').hidden = true; }
+      }
+    }).catch(fail);
+  }
+  function openGuild(id) {
+    return api('GET', 'admin/api/guild?id=' + encodeURIComponent(id)).then(function (g) {
+      guildOpenId = g.id;
+      $('guild-detail').hidden = false;
+      $('guild-title').textContent = '[' + g.tag + '] ' + g.name + '　Lv.' + g.level;
+      $('guild-info').textContent = '編號 #' + g.id + '　經驗 ' + (g.toNext > 0 ? num(g.experience) + ' / ' + num(g.toNext) : '滿級')
+        + '　倉庫 ' + g.pages + ' 頁（星幣買的 ' + g.boughtPages + ' 頁' + (g.stashItems >= 0 ? '，裡面 ' + g.stashItems + ' 件' : '') + '）'
+        + '　誰能拿：' + g.withdraw + '　成立 ' + time(g.created);
+      $('guild-motd').textContent = g.motd ? '公告：' + g.motd : '沒有公告';
+      var actions = clear($('guild-actions'));
+      function button(text, handler, danger) {
+        actions.appendChild(h('button', { type: 'button', cls: 'small' + (danger ? ' danger' : ''), text: text, onclick: handler }));
+      }
+      button('改名稱與標籤', function () {
+        var tag = window.prompt('新的標籤（不能有空白、符號）', g.tag);
+        if (tag === null) { return; }
+        var name = window.prompt('新的名稱（不能有空白、符號）', g.name);
+        if (name === null) { return; }
+        guildDo(g, { action: 'rename', tag: tag.trim(), name: name.trim() }, '把公會改名？', ['[' + g.tag + '] ' + g.name + ' → [' + tag.trim() + '] ' + name.trim()]);
+      });
+      button('改公告', function () {
+        var text = window.prompt('新的公告（清空 = 清掉公告）', g.motd || '');
+        if (text === null) { return; }
+        guildDo(g, { action: 'motd', text: text }, text.trim() ? '改公告？' : '清掉公告？', [text.trim() || '公告會被清掉']);
+      });
+      button('加公會經驗', function () {
+        var amount = parseInt(window.prompt('加多少公會經驗？', '1000'), 10);
+        if (isNaN(amount) || amount <= 0) { return; }
+        guildDo(g, { action: 'xp', amount: amount }, '加公會經驗？', ['+' + num(amount)]);
+      });
+      button('設等級', function () {
+        var level = parseInt(window.prompt('公會等級設成幾級？（1 到 ' + g.maxLevel + '；這一級的經驗歸零）', String(g.level)), 10);
+        if (isNaN(level)) { return; }
+        guildDo(g, { action: 'level', amount: level }, '直接設公會等級？', ['Lv.' + g.level + ' → Lv.' + level, level < g.level ? '降級：公會加成與倉庫頁會變少（多出來的頁只能拿不能放）' : '這一級的經驗歸零']);
+      });
+      button('補倉庫頁', function () {
+        var pages = parseInt(window.prompt('「星幣買的倉庫頁」設成幾頁？（現在 ' + g.boughtPages + ' 頁；補償用）', String(g.boughtPages)), 10);
+        if (isNaN(pages) || pages < 0) { return; }
+        guildDo(g, { action: 'pages', amount: pages }, '設定星幣買的倉庫頁？', [g.boughtPages + ' 頁 → ' + pages + ' 頁']);
+      });
+      button('解散', function () {
+        guildDo(g, { action: 'disband' }, '解散公會 [' + g.tag + '] ' + g.name + '？', ['等級、經驗、紀錄全部消失，救不回來。', '倉庫裡還有東西的話不會解散。'], true);
+      }, true);
+      button('強制解散（連倉庫一起刪）', function () {
+        guildDo(g, { action: 'forcedisband' }, '強制解散 [' + g.tag + '] ' + g.name + '？', ['等級、經驗、紀錄全部消失，救不回來。', '倉庫裡的東西會一起刪掉！'], true);
+      }, true);
+      var members = clear($('guild-members').querySelector('tbody'));
+      g.members.forEach(function (m) {
+        var ops = h('td');
+        function op(text, payload, title, lines, danger) {
+          ops.appendChild(h('button', { type: 'button', cls: 'small' + (danger ? ' danger' : ''), text: text, onclick: function () {
+            payload.member = m.name;
+            guildDo(g, payload, title, lines);
+          } }));
+          ops.appendChild(document.createTextNode(' '));
+        }
+        if (!m.leader) {
+          op('設為會長', { action: 'leader' }, '把會長換成 ' + m.name + '？', ['原本的會長會變成幹部。']);
+          if (m.officer) { op('降成成員', { action: 'demote' }, '把 ' + m.name + ' 降成成員？', []); }
+          else { op('升成幹部', { action: 'promote' }, '把 ' + m.name + ' 升成幹部？', []); }
+          op('請出', { action: 'kick' }, '把 ' + m.name + ' 請出公會？', ['他的貢獻紀錄會消失。'], true);
+        }
+        members.appendChild(h('tr', null, h('td', { text: m.rank }),
+          h('td', null, m.name, m.online ? h('span', { cls: 'badge', text: '在線' }) : null), h('td', { text: m.account }),
+          h('td', { cls: 'num', text: num(m.contribution) }), h('td', { cls: 'time', text: time(m.joined) }), ops));
+      });
+      var log = clear($('guild-log').querySelector('tbody'));
+      g.log.forEach(function (row) {
+        log.appendChild(h('tr', null, h('td', { cls: 'time', text: time(row.at) }), h('td', { text: row.actor }),
+          h('td', { text: row.action }), h('td', { text: row.detail })));
+      });
+    }).catch(fail);
+  }
+  function guildDo(g, payload, title, lines, closes) {
+    return confirmBox(title, lines, '確定').then(function (yes) {
+      if (!yes) { return; }
+      payload.guild = g.name;
+      return api('POST', 'admin/api/guild/action', payload).then(function (json) {
+        (json.lines && json.lines.length ? json.lines : ['好了']).forEach(function (line) { toast(line); });
+        return loadGuilds().then(function () { if (guildOpenId !== null) { return openGuild(guildOpenId); } });
+      }).catch(fail);
+    });
+  }
+
+  // ---- 物品追查（2026-10） ----
+  function runTrace(query) {
+    var body = clear($('trace-table').querySelector('tbody'));
+    $('trace-empty').hidden = false;
+    $('trace-empty').textContent = '查詢中…';
+    return api('GET', 'admin/api/trace?' + query).then(function (json) {
+      $('trace-empty').hidden = json.lines.length > 0;
+      $('trace-empty').textContent = '沒有紀錄。';
+      json.lines.forEach(function (line) { body.appendChild(h('tr', null, h('td', { text: line }))); });
+    }).catch(function (error) { $('trace-empty').textContent = ''; $('trace-empty').hidden = true; fail(error); });
+  }
+
   function loadLog() {
     return api('GET', 'admin/api/log').then(function (json) {
       var body = clear($('log-table').querySelector('tbody'));
@@ -1193,8 +1443,9 @@
     Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
       b.setAttribute('aria-selected', b.getAttribute('data-tab') === tab ? 'true' : 'false');
     });
-    ['give', 'records', 'settings', 'players', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    ['give', 'records', 'settings', 'players', 'guilds', 'trace', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
     if (tab === 'records') { loadRecords(); }
+    if (tab === 'guilds') { loadGuilds(); }
     if (tab === 'log') { loadLog(); }
     if (tab === 'players' || tab === 'settings') { load(true, 'safe'); }
   }
@@ -1225,6 +1476,15 @@
     });
   });
   $('log-refresh').addEventListener('click', loadLog);
+  $('guild-refresh').addEventListener('click', function () { loadGuilds().then(function () { if (guildOpenId !== null) { openGuild(guildOpenId); } }); });
+  $('trace-item-go').addEventListener('click', function () {
+    var id = $('trace-item').value.trim();
+    if (id) { runTrace('item=' + encodeURIComponent(id)); }
+  });
+  $('trace-player-go').addEventListener('click', function () {
+    var name = $('trace-player').value.trim();
+    if (name) { runTrace('player=' + encodeURIComponent(name)); }
+  });
   $('refresh').addEventListener('click', function () { load(false, 'safe'); var tab = document.querySelector('.tabs button[aria-selected="true"]').getAttribute('data-tab'); if (tab === 'records') { loadRecords(); } if (tab === 'log') { loadLog(); } });
   $('logout').addEventListener('click', function () {
     rememberFailed(null); // 登出：沒確認的發放也不留給下一個在這個分頁登入的人

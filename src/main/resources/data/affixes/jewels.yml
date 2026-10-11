@@ -63,6 +63,7 @@ jewel_melee_inc:
   spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
   names: [裂地的, 碎骨的, 揮砍的]
   text: "增加 {value}% 近戰傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel MeleeDamage）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 19] }
     - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
@@ -499,6 +500,7 @@ jewel_bleed_mag:
   spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
   names: [血河的, 放血的, 滲血的]
   text: "增加 {value}% 流血傷害"
+  chips: [ailment, attack]   # PoE2 的標籤（jewel BleedDotMultiplier/BleedDuration）
   tiers:
     - { tier: 0, ilvl: 75, weight: 80, value: [20, 24] }
     - { tier: 1, ilvl: 50, weight: 250, value: [16, 19] }
@@ -630,6 +632,7 @@ jewel_bleed_chance:
   spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
   names: [之血刃, 之裂創, 之割傷]
   text: "攻擊擊中時 {value}% 機率造成流血"
+  chips: [ailment]   # PoE2 的標籤（jewel BaseChanceToBleed）
   tiers:
     - { tier: 0, ilvl: 75, weight: 80, value: [6, 7] }
     - { tier: 1, ilvl: 50, weight: 250, value: [4, 5] }
@@ -896,6 +899,7 @@ j2_armour_break:
   spawn_tags: [ruby]
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 破甲"
+  chips: []   # PoE2 的標籤（ArmourBreak）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
     - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
@@ -922,6 +926,7 @@ j2_attack_critical_strike_multiplier:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 攻擊暴擊傷害加成"
+  chips: [damage, attack, critical]   # PoE2 的標籤（AttackCriticalStrikeMultiplier）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -948,6 +953,7 @@ j2_base_chance_to_bleed:
   spawn_tags: [ruby]
   names: [星骸的, 精煉的, 雕琢的]
   text: "攻擊擊中時 {value}% 機率造成流血"
+  chips: [physical, ailment]   # PoE2 的標籤（BaseChanceToBleed）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [6, 7] }
     - { tier: 1, ilvl: 50, weight: 400, value: [5, 5] }
@@ -974,6 +980,7 @@ j2_bleed_dot_multiplier:
   spawn_tags: [ruby]
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 流血傷害"
+  chips: [damage, physical, attack, ailment]   # PoE2 的標籤（BleedDotMultiplier）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
     - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
@@ -987,6 +994,7 @@ j2_bleed_duration:
   spawn_tags: [ruby]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 流血持續時間"
+  chips: [physical, attack, ailment]   # PoE2 的標籤（BleedDuration）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
     - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
@@ -1026,6 +1034,7 @@ j2_cold_resistance_penetration:
   spawn_tags: [sapphire]
   names: [星骸的, 精煉的, 雕琢的]
   text: "傷害穿透 {value}% 冰冷抗性"
+  chips: [damage, elemental, cold]   # PoE2 的標籤（ColdResistancePenetration）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
     - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
@@ -1052,6 +1061,7 @@ j2_critical_strike_multiplier:
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 暴擊傷害加成"
+  chips: [damage, critical]   # PoE2 的標籤（CriticalStrikeMultiplier）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -1065,6 +1075,7 @@ j2_crossbow_damage:
   spawn_tags: [emerald]
   names: [星骸的, 精煉的, 雕琢的]
   text: "使用弩時增加 {value}% 傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
     - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
@@ -1091,6 +1102,7 @@ j2_damage_removed_from_mana_before_life:
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "受到的傷害有 {value}% 先從魔力扣除"
+  chips: [life, mana]   # PoE2 的標籤（DamageRemovedFromManaBeforeLife）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
     - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
@@ -1117,6 +1129,7 @@ j2_elemental_damage_percent:
   spawn_tags: [emerald, ruby, sapphire]
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 元素傷害"
+  chips: [damage, elemental, fire, cold, lightning]   # PoE2 的標籤（ElementalDamagePercent）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
     - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
@@ -1156,6 +1169,7 @@ j2_fire_resistance_penetration:
   spawn_tags: [ruby]
   names: [星骸的, 精煉的, 雕琢的]
   text: "傷害穿透 {value}% 火焰抗性"
+  chips: [damage, elemental, fire]   # PoE2 的標籤（FireResistancePenetration）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
     - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
@@ -1169,6 +1183,7 @@ j2_flask_mana_recovery:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 魔力藥劑回復量"
+  chips: [mana, flask]   # PoE2 的標籤（FlaskManaRecovery）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
     - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
@@ -1182,6 +1197,7 @@ j2_freeze_damage_increase:
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 凍結累積"
+  chips: [elemental, cold, ailment]   # PoE2 的標籤（FreezeDamageIncrease）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -1234,6 +1250,7 @@ j2_global_flask_life_recovery:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 生命藥劑回復量"
+  chips: [life, flask]   # PoE2 的標籤（GlobalFlaskLifeRecovery）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
     - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
@@ -1260,6 +1277,7 @@ j2_ignite_chance_increase:
   spawn_tags: [ruby, sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 點燃機率"
+  chips: [elemental, fire, ailment]   # PoE2 的標籤（IgniteChanceIncrease）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -1273,6 +1291,7 @@ j2_ignite_effect:
   spawn_tags: [ruby, sapphire]
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 點燃傷害"
+  chips: [damage, elemental, fire, ailment]   # PoE2 的標籤（IgniteEffect）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
     - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
@@ -1338,6 +1357,7 @@ j2_increased_bow_damage:
   spawn_tags: [emerald]
   names: [星骸的, 精煉的, 雕琢的]
   text: "使用弓時增加 {value}% 傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
     - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
@@ -1377,6 +1397,7 @@ j2_increased_chill_duration:
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 冰緩持續時間"
+  chips: [elemental, cold, ailment]   # PoE2 的標籤（IncreasedChillDuration）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
     - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
@@ -1390,6 +1411,7 @@ j2_increased_mace_damage:
   spawn_tags: [ruby]
   names: [星骸的, 精煉的, 雕琢的]
   text: "使用錘時增加 {value}% 傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
     - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
@@ -1403,6 +1425,7 @@ j2_increased_staff_damage:
   spawn_tags: [emerald]
   names: [星骸的, 精煉的, 雕琢的]
   text: "使用長棍時增加 {value}% 傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
     - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
@@ -1416,6 +1439,7 @@ j2_increased_stun_threshold:
   spawn_tags: [ruby]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 暈眩門檻"
+  chips: []   # PoE2 的標籤（IncreasedStunThreshold）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
     - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
@@ -1493,6 +1517,7 @@ j2_lightning_resistance_penetration:
   spawn_tags: [emerald]
   names: [星骸的, 精煉的, 雕琢的]
   text: "傷害穿透 {value}% 閃電抗性"
+  chips: [damage, elemental, lightning]   # PoE2 的標籤（LightningResistancePenetration）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
     - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
@@ -1579,6 +1604,7 @@ j2_melee_damage:
   spawn_tags: [ruby]
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 近戰傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel MeleeDamage）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
     - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
@@ -1619,6 +1645,7 @@ j2_minion_critical_strike_multiplier:
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 召喚物暴擊傷害加成"
+  chips: [damage, critical, minion]   # PoE2 的標籤（MinionCriticalStrikeMultiplier）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
     - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
@@ -1683,6 +1710,7 @@ j2_poison_duration:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 中毒持續時間"
+  chips: [chaos, ailment]   # PoE2 的標籤（PoisonDuration）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
     - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
@@ -1696,6 +1724,7 @@ j2_poison_effect:
   spawn_tags: [emerald]
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 中毒傷害"
+  chips: [damage, ailment]   # PoE2 的標籤（PoisonEffect）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
     - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
@@ -1735,6 +1764,7 @@ j2_shock_chance_increase:
   spawn_tags: [emerald, sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 感電機率"
+  chips: [elemental, lightning, ailment]   # PoE2 的標籤（ShockChanceIncrease）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -1748,6 +1778,7 @@ j2_shock_duration:
   spawn_tags: [emerald, sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 感電持續時間"
+  chips: [elemental, lightning, ailment]   # PoE2 的標籤（ShockDuration）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
     - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
@@ -1761,6 +1792,7 @@ j2_shock_effect:
   spawn_tags: [emerald, sapphire]
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 感電效果"
+  chips: [elemental, lightning, ailment]   # PoE2 的標籤（ShockEffect）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [14, 15] }
     - { tier: 1, ilvl: 50, weight: 400, value: [12, 13] }
@@ -1800,6 +1832,7 @@ j2_spear_damage:
   spawn_tags: [emerald]
   names: [星骸的, 精煉的, 雕琢的]
   text: "使用矛時增加 {value}% 傷害"
+  chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
     - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
@@ -1813,6 +1846,7 @@ j2_spell_crit_multiplier:
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 法術暴擊傷害加成"
+  chips: [damage, caster, critical]   # PoE2 的標籤（SpellCritMultiplierForJewel）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -1852,6 +1886,7 @@ j2_stun_damage_increase:
   spawn_tags: [ruby]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 暈眩累積"
+  chips: []   # PoE2 的標籤（StunDamageIncrease）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -1930,6 +1965,7 @@ j2_rage_on_hit:
   spawn_tags: [ruby]
   names: [之星骸, 之精煉, 之雕琢]
   text: "近戰攻擊擊中時獲得 {value} 點怒氣"
+  chips: [attack]   # PoE2 的標籤（RageOnHit）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [1, 1] }
     - { tier: 1, ilvl: 50, weight: 400, value: [1, 1] }
@@ -1968,6 +2004,7 @@ j2_shapeshift_speed:
   spawn_tags: [ruby, sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "變身技能增加 {value}% 攻擊與施放速度"
+  chips: [speed]   # PoE2 的標籤（Skill Speed）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
     - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
@@ -1982,6 +2019,7 @@ j2_curse_area:
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 詛咒範圍"
+  chips: [curse, caster]   # PoE2 的標籤（jewel Curse*）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [11, 12] }
     - { tier: 1, ilvl: 50, weight: 400, value: [10, 10] }
@@ -1994,6 +2032,7 @@ j2_curse_duration:
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 詛咒持續時間"
+  chips: [curse, caster]   # PoE2 的標籤（jewel Curse*）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
     - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
@@ -2006,6 +2045,7 @@ j2_mark_effect:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 印記效果"
+  chips: []   # PoE2 的標籤（MarkEffect）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [7, 8] }
     - { tier: 1, ilvl: 50, weight: 400, value: [6, 6] }
@@ -2055,6 +2095,7 @@ j2_crossbow_reload:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 弩的裝填速度"
+  chips: [attack, speed]   # PoE2 的標籤（CrossbowReloadSpeed）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [14, 15] }
     - { tier: 1, ilvl: 50, weight: 400, value: [12, 13] }
@@ -2070,6 +2111,7 @@ j2_ailment_effect:
   spawn_tags: [emerald, sapphire]
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 異常狀態效果（點燃、流血、中毒、感電、冰緩）"
+  chips: [damage, ailment]   # PoE2 的標籤（AilmentEffect）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
     - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
@@ -2100,6 +2142,7 @@ j2_curse_effect:
   spawn_tags: [sapphire]
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 詛咒效果"
+  chips: [curse, caster]   # PoE2 的標籤（jewel Curse*）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
     - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
@@ -2139,6 +2182,7 @@ j2_presence_area:
   spawn_tags: [ruby, sapphire]
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 臨在範圍"
+  chips: [aura]   # PoE2 的標籤（PresenceRadius）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
     - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
@@ -2194,6 +2238,7 @@ j2_chance_to_daze:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "擊中時 {value}% 機率讓敵人眩暈"
+  chips: []   # PoE2 的標籤（DazeBuildup）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
     - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
@@ -2222,6 +2267,7 @@ j2_ignite_shock_chill_duration:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 點燃、感電與冰緩持續時間"
+  chips: [elemental, fire, cold, lightning, ailment]   # PoE2 的標籤（ElementalAilmentDuration）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
     - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
@@ -2237,6 +2283,7 @@ j2_mace_hit_damage_stun_multiplier:
   spawn_tags: [ruby]
   names: [之星骸, 之精煉, 之雕琢]
   text: "使用錘時增加 {value}% 暈眩累積"
+  chips: [attack]   # PoE2 的標籤（MaceStun）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
     - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }
@@ -2265,6 +2312,7 @@ j2_quarterstaff_hit_damage_freeze_multiplier:
   spawn_tags: [emerald, sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "使用長棍時增加 {value}% 凍結累積"
+  chips: [elemental, cold, ailment]   # PoE2 的標籤（QuarterstaffFreezeBuildup）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -2278,6 +2326,7 @@ j2_spear_critical_strike_multiplier:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "使用矛時增加 {value}% 暴擊傷害加成"
+  chips: [critical, attack]   # PoE2 的標籤（SpearCriticalDamage）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -2345,6 +2394,7 @@ j2_life_flask_charges_gained:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 生命藥劑拿到的充能"
+  chips: [flask]   # PoE2 的標籤（LifeFlaskChargePercentGeneration）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -2358,6 +2408,7 @@ j2_mana_flask_charges_gained:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 魔力藥劑拿到的充能"
+  chips: [flask]   # PoE2 的標籤（ManaFlaskChargePercentGeneration）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -2399,6 +2450,7 @@ j2_melee_damage_projhit:
   spawn_tags: [emerald]
   names: [星骸的, 精煉的, 雕琢的]
   text: "最近用投射物攻擊擊中過敵人，則增加 {value}% 近戰傷害"
+  chips: [damage, attack]   # PoE2 的標籤（Melee/ProjectileDamageIf...HitRecently）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -2412,6 +2464,7 @@ j2_projectile_damage_meleehit:
   spawn_tags: [emerald]
   names: [星骸的, 精煉的, 雕琢的]
   text: "最近近戰擊中過敵人，則增加 {value}% 投射物傷害"
+  chips: [damage, projectile, attack]   # PoE2 的標籤（Melee/ProjectileDamageIf...HitRecently）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
     - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
@@ -2425,6 +2478,7 @@ j2_stun_threshold_nostun:
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "最近沒被重暈過，則增加 {value}% 重暈門檻"
+  chips: []   # PoE2 的標籤（IncreasedStunThreshold）
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [22, 25] }
     - { tier: 1, ilvl: 50, weight: 400, value: [19, 21] }

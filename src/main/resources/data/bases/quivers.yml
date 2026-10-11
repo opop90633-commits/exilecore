@@ -229,7 +229,7 @@ quiver_09:
   drop_level: 1
   requirements: { level: 1 }
   implicit:
-    text: "投射物多穿透 {value} 個敵人"
+    text: "投射物多穿透 1 個敵人"     # 2026-10：固定 1 個（原本寫 {value} 卻沒有 value 範圍，物品上會直接顯示 {value}）
     mods:
       - { stat: skill.pierce, type: FLAT, value: 1 }
 

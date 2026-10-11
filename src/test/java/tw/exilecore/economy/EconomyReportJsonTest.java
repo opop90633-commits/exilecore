@@ -25,7 +25,8 @@ class EconomyReportJsonTest {
         }
         final List<EconomyReportJson.CurrencyMeta> currencies = List.of(
                 new EconomyReportJson.CurrencyMeta("glimmer_orb", "微光石", 10),
-                new EconomyReportJson.CurrencyMeta("zenith_orb", "至臻石", 1500));
+                new EconomyReportJson.CurrencyMeta("zenith_orb", "至臻石", 1500),
+                new EconomyReportJson.CurrencyMeta("star_mirror", "映星鏡", 0, false));
         final List<EconomyRepository.Flow> flows = List.of(
                 new EconomyRepository.Flow("2026-09-30", "glimmer_orb", EconomySources.DROP, 40),
                 new EconomyRepository.Flow("2026-09-30", "glimmer_orb", EconomySources.SALVAGE, 5),
@@ -34,7 +35,8 @@ class EconomyReportJsonTest {
                 new EconomyRepository.Flow("2026-08-31", "glimmer_orb", EconomySources.DROP, 999),
                 new EconomyRepository.Flow("2026-09-29", EconomyRepository.GOLD, EconomySources.DROP, 5000),
                 new EconomyRepository.Flow("2026-09-29", EconomyRepository.GOLD, EconomySources.GAMBLE, -1200),
-                new EconomyRepository.Flow("2026-09-29", "unknown_orb", EconomySources.DROP, 7));
+                new EconomyRepository.Flow("2026-09-29", "unknown_orb", EconomySources.DROP, 7),
+                new EconomyRepository.Flow("2026-09-30", "star_mirror", EconomySources.DROP, 1));
         final List<EconomyRepository.DayValue> stock = List.of(
                 new EconomyRepository.DayValue("2026-09-30", "glimmer_orb", 300),
                 new EconomyRepository.DayValue("2026-09-30", EconomyRepository.GOLD, 80_000));
@@ -49,7 +51,11 @@ class EconomyReportJsonTest {
         assertEquals("2026-09-01", root.getAsJsonArray("days").get(0).getAsString());
 
         final JsonArray currencyArray = root.getAsJsonArray("currencies");
-        assertEquals(2, currencyArray.size(), "只有設定檔裡的通貨（照設定檔的順序）");
+        assertEquals(3, currencyArray.size(), "只有傳進來的通貨（照傳進來的順序）");
+        final JsonObject mirror = currencyArray.get(2).getAsJsonObject();
+        assertFalse(mirror.get("priced").getAsBoolean(), "沒有參考價值的通貨也列（2026-10），標成沒標價");
+        assertEquals(1, mirror.getAsJsonArray("produced").get(29).getAsLong());
+        assertTrue(currencyArray.get(0).getAsJsonObject().get("priced").getAsBoolean());
         final JsonObject glimmer = currencyArray.get(0).getAsJsonObject();
         assertEquals("glimmer_orb", glimmer.get("id").getAsString());
         assertEquals("微光石", glimmer.get("name").getAsString());

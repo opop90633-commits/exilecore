@@ -79,7 +79,7 @@ import java.util.random.RandomGenerator;
  * ExileCore 插件主類別：載入設定、依序啟用模組、註冊指令。
  * 模組的註冊順序就是啟用順序：
  * core → item → currency → world → passive → character → economy → npc → monster → zone → stash → salvage → combat → skill → flask
- * → loot → ailment → map → party → trade → market → vendor → ops → web → admin。
+ * → loot → ailment → map → party → guild → trade → market → vendor → ops → web → admin。
  * 伺服器叫《星骸》；ExileCore 是插件的代號。
  */
 public final class ExileCore extends JavaPlugin {
@@ -117,6 +117,7 @@ public final class ExileCore extends JavaPlugin {
     private AilmentModule ailmentModule;
     private MapModule mapModule;
     private PartyModule partyModule;
+    private tw.exilecore.guild.GuildModule guildModule;
     private tw.exilecore.chat.ChatModule chatModule;
     private tw.exilecore.training.TrainingModule trainingModule;
     private tw.exilecore.ladder.LadderModule ladderModule;
@@ -124,6 +125,7 @@ public final class ExileCore extends JavaPlugin {
     private tw.exilecore.guide.GuideModule guideModule;
     private tw.exilecore.pvp.PvpModule pvpModule;
     private tw.exilecore.heist.HeistModule heistModule;
+    private tw.exilecore.anticheat.AntiCheatModule antiCheatModule;
     private TradeModule tradeModule;
     private MarketModule marketModule;
     private VendorModule vendorModule;
@@ -179,6 +181,7 @@ public final class ExileCore extends JavaPlugin {
             event.registrar().register(StashModule.command(this), "ExileCore 倉庫");
             event.registrar().register(tw.exilecore.salvage.SalvageModule.lockCommand(this), "ExileCore 鎖定裝備（防止誤拆）");
             event.registrar().register(tw.exilecore.combat.DeathRecap.command(this), "ExileCore 死亡回顧（上一次是被誰打死的）");
+            event.registrar().register(tw.exilecore.combat.CombatHud.command(this), "ExileCore 這一段戰鬥每個技能打了多少（分傷害類型）");
             event.registrar().register(tw.exilecore.ladder.LadderModule.command(this), "ExileCore 排行榜（等級、地圖、不死）");
             event.registrar().register(tw.exilecore.discord.DiscordModule.command(this), "ExileCore 客服單（Discord）");
             event.registrar().register(tw.exilecore.pvp.PvpModule.command(this), "ExileCore PvP 競技場");
@@ -197,6 +200,9 @@ public final class ExileCore extends JavaPlugin {
             event.registrar().register(tw.exilecore.map.MapSpectators.command(this), "ExileCore 離開觀戰（極境、金庫之主死掉後）");
             for (final LiteralCommandNode<CommandSourceStack> node : PartyModule.commands(this)) {
                 event.registrar().register(node, "ExileCore 隊伍");
+            }
+            for (final LiteralCommandNode<CommandSourceStack> node : tw.exilecore.guild.GuildModule.commands(this)) {
+                event.registrar().register(node, "ExileCore 公會（建立、邀請、公會頻道、公會倉庫、排行）");
             }
             for (final LiteralCommandNode<CommandSourceStack> node : TradeModule.commands(this)) {
                 event.registrar().register(node, "ExileCore 面對面交易");
@@ -265,6 +271,7 @@ public final class ExileCore extends JavaPlugin {
         this.ailmentModule = new AilmentModule(this);
         this.mapModule = new MapModule(this);
         this.partyModule = new PartyModule(this);
+        this.guildModule = new tw.exilecore.guild.GuildModule(this);
         this.tradeModule = new TradeModule(this);
         this.marketModule = new MarketModule(this);
         this.vendorModule = new VendorModule(this);
@@ -283,6 +290,7 @@ public final class ExileCore extends JavaPlugin {
         this.guideModule = new tw.exilecore.guide.GuideModule(this);
         this.pvpModule = new tw.exilecore.pvp.PvpModule(this);
         this.heistModule = new tw.exilecore.heist.HeistModule(this);
+        this.antiCheatModule = new tw.exilecore.anticheat.AntiCheatModule(this);
         this.adminModule = new tw.exilecore.admin.AdminModule(this);
 
         modules.register(new CoreModule(this, database));
@@ -305,6 +313,7 @@ public final class ExileCore extends JavaPlugin {
         modules.register(mapModule);                        // 地圖、地圖裝置、星圖、終局
         modules.register(trainingModule);                   // 營地的訓練假人與練習場（地圖模組之後：首領假人的等級跟最高階地圖）
         modules.register(partyModule);                      // 組隊：隊伍、掉落分份、經驗分享、人多時怪物變硬
+        modules.register(guildModule);                      // 公會：階級、公會頻道、等級與加成、公會倉庫、排行（角色、經濟、怪物之後）
         modules.register(tradeModule);                      // 面對面交易
         modules.register(marketModule);                     // 市集（商店頁）與通貨交易所
         modules.register(vendorModule);                     // 商人與賭博
@@ -319,6 +328,7 @@ public final class ExileCore extends JavaPlugin {
         modules.register(guideModule);                      // 新手引導（側欄最上面；要在任務、技能、藥劑之後）
         modules.register(pvpModule);                        // PvP 競技場（世界、角色、戰鬥、隊伍之後）
         modules.register(heistModule);                      // 劫盜：合約、大劫盜、隱匿詞綴的揭露（地圖、怪物、物品、通貨之後）
+        modules.register(antiCheatModule);                  // 防作弊：移動速度、飛行、懸空、瞬移（只管改遊戲數值那一類）
         modules.register(opsModule);                        // 維運：效能、備份、物品追查
         modules.register(webModule);                        // 內建網頁伺服器：介面資源包、網頁天賦規劃器
         modules.register(adminModule);                      // 管理網頁：發放物資、改遊戲設定、公告、維護模式（網頁伺服器之後）
@@ -603,12 +613,22 @@ public final class ExileCore extends JavaPlugin {
         return partyModule == null ? null : partyModule.service();
     }
 
+    /** 公會；模組沒啟用時為 null。 */
+    public tw.exilecore.guild.GuildService guilds() {
+        return guildModule == null ? null : guildModule.service();
+    }
+
     /** 劇情與任務；模組沒啟用時為 null。 */
     public tw.exilecore.quest.QuestService quests() {
         return questModule == null ? null : questModule.service();
     }
 
     /** 每日委託、每週回響、功勳兌換；模組沒啟用時為 null。 */
+    /** 防作弊（模組沒啟用時 null）。 */
+    public tw.exilecore.anticheat.AntiCheatService antiCheat() {
+        return antiCheatModule == null ? null : antiCheatModule.service();
+    }
+
     /** 贊助（模組沒啟用時 null）。 */
     public tw.exilecore.sponsor.SponsorService sponsors() {
         return sponsorModule == null ? null : sponsorModule.service();

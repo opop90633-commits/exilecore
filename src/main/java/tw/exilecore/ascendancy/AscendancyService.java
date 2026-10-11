@@ -501,6 +501,24 @@ public final class AscendancyService {
         new AscendancyPreviewMenu(plugin, player, this, startId, allClasses).open();
     }
 
+    /**
+     * 建立角色時的昇華預覽（2026-10）：還沒有角色也能看某個職業的昇華職業與完整的昇華天賦。
+     *
+     * @param back 「返回」回到哪裡（選職業的畫面）
+     */
+    public void openClassPreview(final Player player, final String classId, final Runnable back) {
+        new AscendancyPreviewMenu(plugin, player, this, classId, back).open();
+    }
+
+    /** 這個職業能走的昇華職業名稱（帶顏色的 MiniMessage；沒有是空的）。 */
+    public List<String> ascendancyNames(final String classId) {
+        final List<String> names = new ArrayList<>();
+        for (final AscendancyConfig.Ascendancy ascendancy : config.forClass(classId)) {
+            names.add(ascendancy.colored());
+        }
+        return names;
+    }
+
     /** 任務追蹤上的提醒：可以選昇華職業了、有昇華點還沒配。 */
     public List<String> trackerLines(final Player player) {
         if (!ready(player)) {

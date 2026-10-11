@@ -19,7 +19,7 @@ import java.util.UUID;
 /**
  * 閃避翻滾（2026-10，PoE2）：按 Ctrl（原版的「衝刺」鍵）往移動的方向翻滾約 3～4 格；沒按方向鍵就往面向翻。
  * 翻滾的前 {@value #INVULNERABLE_TICKS} tick 怪物的擊中打不到你（環境傷害、持續傷害照算）。
- * 沒有冷卻，但一次翻滾的動作要 {@value #ROLL_TICKS} tick，做完才能再翻。被凍結、暈眩時不能翻；營地裡不翻。
+ * 沒有冷卻，但一次翻滾的動作要 {@value #ROLL_TICKS} tick，做完才能再翻。被凍結、暈眩時不能翻；營地裡也能翻（2026-10）。
  */
 public final class DodgeRoll implements Listener {
 
@@ -71,9 +71,7 @@ public final class DodgeRoll implements Listener {
         if (player.getGameMode() == GameMode.SPECTATOR || player.isFlying() || player.isInsideVehicle() || player.isGliding()) {
             return;
         }
-        if (plugin.zones() != null && plugin.zones().inTown(player.getLocation())) {
-            return;
-        }
+        // 2026-10：營地裡也能翻（以前不行；營地不會受傷，翻滾只是移動用）
         if (plugin.ailments() != null && plugin.ailments().isIncapacitated(player)) {
             return;
         }

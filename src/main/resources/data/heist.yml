@@ -28,6 +28,10 @@ settings:
   veiled_chance: 0.30      # 劫盜裡掉的魔法／稀有裝備帶隱匿詞綴的機率
   unveil_stone_chance: 0.05   # 每個金庫箱、每個人掉一顆揭露石的機率
   chest_blueprint_chance: 0.01 # 每個金庫箱、每個人掉一張劫盜藍圖的機率（2026-10；大劫盜裡不掉）
+  # 2026-10：遺時珠寶（遺時赤／翠／蒼／白星晶，bases/jewels.yml 帶 radius 標籤的）只在劫盜掉——合約、藍圖的金庫箱與大金庫；
+  # 一般掉落、地圖獎勵、商人、賭博都拿不到。怪物等級要到基底的 drop_level（60；白的 70）才掉得出來。
+  time_lost_jewel_chance: 0.02 # 每個金庫箱、每個人掉一顆遺時珠寶的機率（合約與藍圖的金庫箱都算）
+  time_lost_jewel_rare: 0.30   # 掉出來是稀有的機率（不然是魔法）
   contract_chance:         # 星圖（一般的地圖）裡的怪物掉劫盜合約的機率（吃物品數量）
     normal: 0.002
     magic: 0.006
@@ -43,6 +47,7 @@ settings:
     finale_key_chance: 0.10 # 大劫盜的大金庫：掉一個金庫之主的鑰印（劫盜終局）；封鎖了減半
     gem_chance: 0.02       # 2026-10：掉一顆 Lv.21 的未切割技能寶石的機率（以前是異質技能寶石，另類品質刪掉了）；大劫盜 ×grand_multiplier
     finale_gem_chance: 0.10 # 金庫之主倒下時，每個人掉一顆 Lv.21 未切割技能寶石的機率
+    time_lost_jewel_chance: 0.20 # 2026-10：大金庫掉一顆遺時珠寶的機率；藍圖（大劫盜）×grand_multiplier（0.6），封鎖了減半
 
 # 據點：寫法跟試煉（ascendancy.yml 的 trials）一樣（theme、layout、monsters、boss）。
 sites:

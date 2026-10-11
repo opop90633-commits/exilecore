@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * 場地危害（maps.yml／ascendancy.yml 的 Boss 底下的 {@code hazards:}）：每隔 every 秒自己落下一次的招式
- * （隕石、冰柱、毒雨…），從第 fromPhase 階段起才開始。招式寫在 boss_skills.yml，只能用 slam、zone、orbs 這幾種
+ * （隕石、冰柱、毒雨…），從第 fromPhase 階段起才開始。招式寫在 boss_skills.yml，只能用 slam、zone、orbs、mark 這幾種
  * （不用 Boss 站著放的；擴散環也不行）。Boss 正在放招時等那一招放完才落，落下之前 Boss 也不出新的招
  * （一次只做一件事，見 BossPacing）。純資料。
  * <pre>
@@ -65,7 +65,7 @@ public record BossHazard(String skill, double every, int fromPhase) {
                 problems.add("沒有這個招式「" + hazard.skill() + "」");
             } else if (!skill.kind().hazardCapable()) {
                 problems.add("「" + hazard.skill() + "」是 " + skill.kind().name().toLowerCase(java.util.Locale.ROOT)
-                        + "，場地危害只能用 slam、zone、orbs");
+                        + "，場地危害只能用 slam、zone、orbs、mark");
             }
         }
         return problems;

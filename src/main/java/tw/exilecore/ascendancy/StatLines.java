@@ -354,6 +354,13 @@ public final class StatLines {
             return signature;
         }
         final Entry entry = STATS.get(stat);
+        if (entry == null && !knows(stat)) {
+            // 2026-10：不認得的屬性不要把英文代號秀給玩家看（網頁、選單都會經過這裡）
+            if (stat.startsWith("flag.")) {
+                return "特殊效果";
+            }
+            return "特殊效果（" + (modifier.type() == ModType.FLAT ? number(value) : number(value * 100) + "%") + "）";
+        }
         final String name = entry == null ? stat : entry.name();
         return switch (stat) {
             case StatKeys.LIFE_REGEN -> "每秒回復 " + number(value) + " 生命";

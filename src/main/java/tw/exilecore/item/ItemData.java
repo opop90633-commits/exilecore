@@ -47,6 +47,8 @@ public final class ItemData {
     private String instilled;
     /** 嵌著的符文（2026-10，runes.yml 的代號）；null = 沒有（不寫進 JSON）。 */
     private List<String> runes;
+    /** 映星鏡照出來的複製品（2026-10）：不能再改造、不能再複製；null = 不是（不寫進 JSON）。 */
+    private Boolean mirrored;
 
     public ItemData() {
     }
@@ -146,6 +148,15 @@ public final class ItemData {
 
     public boolean locked() {
         return Boolean.TRUE.equals(locked);
+    }
+
+    /** 映星鏡照出來的複製品：通貨、符文、注入、揭露都不能再用在它身上，也不能再被複製。 */
+    public boolean mirrored() {
+        return Boolean.TRUE.equals(mirrored);
+    }
+
+    public void setMirrored(final boolean mirrored) {
+        this.mirrored = mirrored ? Boolean.TRUE : null;
     }
 
     public void setLocked(final boolean locked) {
@@ -255,6 +266,7 @@ public final class ItemData {
         copy.omen = omen;
         copy.instilled = instilled;
         copy.runes = runes == null ? null : new ArrayList<>(runes);
+        copy.mirrored = mirrored;
         return copy;
     }
 }

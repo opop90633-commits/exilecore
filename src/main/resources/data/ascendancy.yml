@@ -24,7 +24,7 @@ settings:
 #                 boss: 區域代號     這個角色打倒過那個區域的 Boss
 #                 maps: 張數         完成過幾張不同的地圖
 #                 level: 等級        角色等級
-#   level       怪物等級（固定，不看角色等級）
+#   level       怪物等級（固定，不看角色等級）。2026-10 照 PoE2 的位置：36／48／60 跟著戰役，第四個 75 在終局
 #   points      第一次完成給幾個昇華點
 #   theme       版面主題（maps.yml 的主題：beach、forest、ruins、swamp、snow、cave、crypt、star）
 #   rooms       版面大約幾個房間（含起點與 Boss 房，5–12）
@@ -156,7 +156,7 @@ trials:
   star:
     name: 第四試煉・星痕
     requires: { trial: frost, maps: 6 }
-    level: 65
+    level: 75            # 2026-10：65 → 75（照 PoE2：第四次昇華在終局 75 級；生命倍率在 65、75 級時跟 /ec balance 的建議差不多，不用改）
     points: 2
     theme: star
     rooms: 10
@@ -172,15 +172,31 @@ trials:
       damage: 1.6
       scale: 1.5
       mods: [armoured, deadly, resistant]
-      skills:                       # 星痕：星錘、星墜、閃現追擊；星痕起裂天、星痕環（三個缺口）；十二門起三波推進、星痕審判（全場大招：躲進綠色安全區）；最後的火
+      # 2026-10：第四試煉是期末考（boss_skills.yml 的「期末考」那一段）：
+      #   一開始：星錘、星墜、閃現追擊、星痕烙印（點名：被點的人離開隊友）
+      #   星痕起：裂天、星痕環、星蝕十字（四道光束一起轉）、墜星引力（吸人的同時星墜落下：兩招同時放）、天穹之心碎片（追人）
+      #   十二門起：三波推進、星痕審判（全場大招）、十二星衛（殘影輪流射槍）、
+      #             四門回響——前三道門的火環（缺口更小）、沼底漩渦、霜誓光束（同時落下墜星雨）
+      #   最後的火：腳下的火、天穹收攏（場地收縮，一進這個階段就放，圈外一直扣血）、無缺星環（沒有缺口：跑出去或翻滾）
+      skills:
         - warden_star_hammer
         - warden_star_fall
         - warden_star_step
+        - warden_star_brand
         - { id: warden_sky_rift, phase: 1 }
         - { id: warden_star_ring, phase: 1 }
+        - { id: warden_star_cross, phase: 1 }
+        - { id: warden_star_well, phase: 1, with: [warden_star_rain] }
+        - { id: warden_heart_shards, phase: 1 }
         - { id: warden_twelve_gates, phase: 2 }
         - { id: warden_star_judgement, phase: 2 }
+        - { id: warden_twelve_echoes, phase: 2 }
+        - { id: warden_echo_fire_ring, phase: 2 }
+        - { id: warden_echo_bog_vortex, phase: 2 }
+        - { id: warden_echo_frost_beam, phase: 2, with: [warden_star_rain] }
         - { id: warden_last_fire, phase: 3 }
+        - { id: warden_closing_sky, phase: 3 }
+        - { id: warden_starless_ring, phase: 3 }
       hazards:                      # 星痕起，天上一直掉星痕殘片（每 10 秒落在某個人附近）
         - { skill: hazard_warden_star, every: 10, phase: 1 }
       intro: "「十二個走進去，四個走出來。陛下是第十三個——他出來的時候，已經不是人了。」"
@@ -196,7 +212,7 @@ trials:
           summon: { type: WITHER_SKELETON, count: 3 }
         - at: 0.15
           name: 最後的火
-          message: "「這是我最後的火。接好。」"
+          message: "「這是我最後的火。天穹要收攏了——到我身邊來。」"
           speed: 0.2
           stats:
             - { stat: damage, type: INCREASED, value: 40 }

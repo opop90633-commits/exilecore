@@ -170,6 +170,9 @@ public final class MonsterListener implements Listener {
                 if (plugin.events() != null) {
                     plugin.events().onKill(player, data); // 每月挑戰：擊殺、稀有、Boss、主題擊殺
                 }
+                if (plugin.guilds() != null) {
+                    plugin.guilds().onKill(player, data); // 公會經驗（2026-10）
+                }
             }
         }
         if (plugin.maps() != null) {
@@ -185,9 +188,11 @@ public final class MonsterListener implements Listener {
         final double server = drops.serverQuantity();
         double quantityBonus = baseQuantity + server;
         double goldBonus = baseQuantity;
+        double fatigue = 1.0;
         if (owner != null && plugin.zones() != null) {
             // 防刷：同一個區域刷太久（角色等級已經到這個區域的最高等級），件數與金幣慢慢變少；地圖裡不算
             final double factor = plugin.zones().lootFactor(owner, location, data.rarity() == MonsterRarity.UNIQUE);
+            fatigue = Math.max(0, Math.min(1, factor));
             if (factor < 1) {
                 quantityBonus = Math.max(0, 1 + baseQuantity + server) * factor - 1;
                 goldBonus = Math.max(0, 1 + baseQuantity) * factor - 1;
@@ -202,6 +207,7 @@ public final class MonsterListener implements Listener {
             // 地圖怪掉地圖（照這個人的星圖）、地圖 Boss 的地圖、傳奇、天穹碎片
             plugin.maps().rollLoot(entity, data, owner, quantityBonus, rolled);
         }
+        rollMirror(owner, rolled, fatigue);
         final long goldAmount = drops.rollGold(data.level(), data.rarity(), goldBonus, plugin.items().random());
         if (owner != null && plugin.loot() != null
                 && plugin.loot().handleKill(owner, location, data, rolled, goldAmount, this::toStack)) {
@@ -224,6 +230,24 @@ public final class MonsterListener implements Listener {
                         plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.DROP, stack.getAmount()));
             }
             dropOwned(plugin, location, stack, owner, highlight(drop));
+        }
+    }
+
+    /**
+     * 映星鏡（2026-10，複製裝備的通貨）：全域掉落——任何地方的任何怪物（不看等級、稀有度），每個有份的人各擲一次，
+     * 機率是 maps.yml 的 drops.mirror_mob_chance（2026-10：0.00001%，追逐級傳奇的十分之一）；不吃物品數量、稀有度、全服加成。
+     * 地圖 Boss 另外照 drops.mirror_chance 再擲一次（MapBosses.rollChase）。區域刷太久的衰減照算；沒有人有份的不擲。
+     */
+    private void rollMirror(final Player owner, final List<DropTable.Drop> rolled, final double fatigue) {
+        if (owner == null || plugin.currencies() == null) {
+            return;
+        }
+        if (plugin.items().random().nextDouble() >= tw.exilecore.item.ItemGenerator.mirrorChance() * fatigue) {
+            return;
+        }
+        final tw.exilecore.currency.CurrencyType mirror = plugin.currencies().mirrorType();
+        if (mirror != null) {
+            rolled.add(DropTable.Drop.currency(mirror));
         }
     }
 

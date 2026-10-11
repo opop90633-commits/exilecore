@@ -54,6 +54,15 @@ public final class CharacterPanelMenu extends Menu {
     /** 護符欄（2026-10）：腰帶下面那一排。 */
     private static final int[] CHARM_POSITIONS = {39, 40, 41};
     private static final int SLOT_HELP = 44;
+    /** 增益效果（2026-10）：身上的增益，與它們讓面板哪些數值變了。 */
+    private static final int SLOT_BUFFS = 18;
+    /** 開著的時候多久檢查一次要不要重畫（增益加上、過期、秒數倒數）。 */
+    private static final long REFRESH_TICKS = 10;
+
+    private org.bukkit.scheduler.BukkitTask refresher;
+    /** 上次畫的時候屬性表的樣子：變了就重畫。 */
+    private int drawnSignature;
+    private long lastDrawTick;
     private static final int SLOT_CLOSE = 49;
 
     public CharacterPanelMenu(final ExileCore plugin, final Player player) {
@@ -77,7 +86,11 @@ public final class CharacterPanelMenu extends Menu {
         set(SLOT_CHARACTER, glowing(icon(character == null ? Material.PLAYER_HEAD : material(character.characterClass().icon(), Material.IRON_SWORD),
                 character == null ? "<red>沒有角色" : character.characterClass().color() + ItemRenderer.escape(character.name()), characterLore)));
         set(SLOT_ATTRIBUTES, icon(Material.BOOK, "<#f5b942>屬性", StatsReport.attributes(plugin, player)));
-        set(SLOT_DEFENCE, icon(Material.SHIELD, "<#f5b942>防禦", StatsReport.defence(plugin, player)));
+        // 2026-10：增益（光環、戰吼、球、護符……）讓哪些數值變了：直接寫在防禦、攻擊的最下面，標題也標出來
+        final tw.exilecore.character.BuffImpact.Lines impact = StatsReport.impact(plugin, player);
+        final List<String> defenceLore = new ArrayList<>(StatsReport.defence(plugin, player));
+        addImpact(defenceLore, impact.defence());
+        set(SLOT_DEFENCE, icon(Material.SHIELD, "<#f5b942>防禦" + impactMark(impact.defence()), defenceLore));
         final List<String> offenceLore = new ArrayList<>(StatsReport.offence(plugin, player));
         final List<String> specials = StatsReport.specials(plugin, player);
         if (!specials.isEmpty()) {
@@ -85,19 +98,16 @@ public final class CharacterPanelMenu extends Menu {
             offenceLore.add("<gray>特殊效果：");
             offenceLore.addAll(specials);
         }
+        addImpact(offenceLore, impact.offence());
         final List<String> buffs = StatsReport.buffs(plugin, player);
-        if (!buffs.isEmpty()) {
-            offenceLore.add("");
-            offenceLore.add("<gray>光環與增益：");
-            offenceLore.addAll(buffs);
-        }
+        drawBuffs(buffs, impact);
         final List<String> minions = StatsReport.minions(plugin, player);
         if (!minions.isEmpty()) {
             offenceLore.add("");
             offenceLore.add("<gray>召喚物：");
             offenceLore.addAll(minions);
         }
-        set(SLOT_OFFENCE, icon(Material.IRON_SWORD, "<#f5b942>攻擊", offenceLore));
+        set(SLOT_OFFENCE, icon(Material.IRON_SWORD, "<#f5b942>攻擊" + impactMark(impact.offence()), offenceLore));
         final List<String> passiveLore = new ArrayList<>(StatsReport.passives(plugin, player));
         passiveLore.add("<yellow>左鍵：打開天賦樹（/tree）");
         set(SLOT_PASSIVES, icon(Material.NETHER_STAR, "<#f5b942>天賦樹", passiveLore));
@@ -142,7 +152,7 @@ public final class CharacterPanelMenu extends Menu {
             }
         }
         drawCharms(state);
-        set(SLOT_HELP, icon(Material.PAPER, "<white>裝備欄",
+        set(SLOT_HELP, uiIcon("help", Material.PAPER, "<white>裝備欄",
                 "<gray>武器、副手、防具、戒指 ×2、項鍊、腰帶都裝在這裡",
                 "<gray>裝上就生效：手上不用拿、身上不用穿",
                 "<gray>快捷列第 9 格、防具欄顯示的是裝在這裡的東西（只是外觀）",
@@ -150,6 +160,93 @@ public final class CharacterPanelMenu extends Menu {
                 "<gray>需求（等級、屬性）不符的裝備不會生效",
                 "<gray>腰帶下面那排是護符欄：護符裝在這裡就生效（不佔背包）"));
         set(SLOT_CLOSE, closeButton());
+        drawnSignature = signature();
+        lastDrawTick = plugin.getServer().getCurrentTick();
+    }
+
+    // ---- 增益（2026-10） ----
+
+    /** 標題後面的標記：這一區有數值被增益改到。 */
+    private static String impactMark(final List<String> changed) {
+        return changed.isEmpty() ? "" : " <green>▲ 含增益";
+    }
+
+    private static void addImpact(final List<String> lore, final List<String> changed) {
+        if (changed.isEmpty()) {
+            return;
+        }
+        lore.add("");
+        lore.add("<green>▲ 增益生效中<gray>（沒有增益時 → 現在）：");
+        for (final String line : changed) {
+            lore.add("<dark_gray>　" + line);
+        }
+    }
+
+    /** 增益效果那一格：身上有什麼增益、讓數值變了多少；沒有增益時告訴玩家這裡會顯示什麼。 */
+    private void drawBuffs(final List<String> buffs, final tw.exilecore.character.BuffImpact.Lines impact) {
+        final List<String> lore = new ArrayList<>();
+        if (buffs.isEmpty() && impact.isEmpty()) {
+            lore.add("<gray>現在身上沒有增益");
+            lore.add("<dark_gray>開光環、放戰吼、拿到球、用護符、喝藥劑時的條件詞綴……");
+            lore.add("<dark_gray>生效後會列在這裡，並寫出它讓面板哪些數值變了");
+            set(SLOT_BUFFS, icon(Material.GLASS_BOTTLE, "<gray>增益效果 <dark_gray>（沒有）", lore));
+            return;
+        }
+        if (!buffs.isEmpty()) {
+            lore.add("<gray>身上的增益：");
+            lore.addAll(buffs);
+        }
+        lore.add("");
+        if (impact.isEmpty()) {
+            lore.add("<gray>這些增益沒有改到面板上的數值");
+            lore.add("<dark_gray>（只在打中時才算的效果，例如戰吼強化，要看實際傷害）");
+        } else {
+            lore.add("<green>▲ 增益讓數值變成<gray>（沒有增益時 → 現在）：");
+            lore.addAll(impact.all());
+            lore.add("");
+            lore.add("<dark_gray>防禦、攻擊兩格的數字都已經含增益");
+        }
+        lore.add("<dark_gray>這個視窗開著時會自動更新");
+        set(SLOT_BUFFS, glowing(icon(Material.BEACON, "<#ffd27f>增益效果 <green>（生效中）", lore)));
+    }
+
+    /** 屬性表的樣子（含增益與怒氣）：拿來判斷要不要重畫。 */
+    private int signature() {
+        int hash = plugin.players().sheet(player).allModifiers().hashCode();
+        if (plugin.skills() != null) {
+            hash = 31 * hash + plugin.skills().resources().rage(player);
+        }
+        return hash;
+    }
+
+    @Override
+    protected void onOpen() {
+        if (refresher != null) {
+            refresher.cancel();
+        }
+        refresher = plugin.getServer().getScheduler().runTaskTimer(plugin, this::refresh, REFRESH_TICKS, REFRESH_TICKS);
+    }
+
+    @Override
+    protected void onClose() {
+        if (refresher != null) {
+            refresher.cancel();
+            refresher = null;
+        }
+    }
+
+    /** 開著時：增益加上、過期就重畫；身上有增益時每秒重畫一次（剩幾秒的倒數）。 */
+    private void refresh() {
+        if (!player.isConnected() || player.getOpenInventory().getTopInventory().getHolder() != this) {
+            onClose();
+            return;
+        }
+        final long now = plugin.getServer().getCurrentTick();
+        final boolean changed = signature() != drawnSignature;
+        final boolean countdown = now - lastDrawTick >= 20 && !StatsReport.buffs(plugin, player).isEmpty();
+        if (changed || countdown) {
+            redraw();
+        }
     }
 
     @Override
@@ -213,11 +310,11 @@ public final class CharacterPanelMenu extends Menu {
                 });
                 set(CHARM_POSITIONS[i], shown);
             } else if (i < open) {
-                set(CHARM_POSITIONS[i], icon(Material.PURPLE_STAINED_GLASS_PANE, "<#c9a0ff>護符欄",
+                set(CHARM_POSITIONS[i], uiIcon("slot_charm", Material.PURPLE_STAINED_GLASS_PANE, "<#c9a0ff>護符欄",
                         "<dark_gray>點下方自己背包裡的護符裝上", "<dark_gray>（或把護符拿在手上按右鍵）",
                         "<gray>裝在這裡就生效，不佔背包"));
             } else {
-                set(CHARM_POSITIONS[i], icon(Material.BLACK_STAINED_GLASS_PANE, "<dark_gray>護符欄（沒開）",
+                set(CHARM_POSITIONS[i], uiIcon("slot_charm_locked", Material.BLACK_STAINED_GLASS_PANE, "<dark_gray>護符欄（沒開）",
                         "<gray>現在開 " + open + " 格；腰帶的「+1 護符欄位」可以多開"));
             }
         }
@@ -233,7 +330,8 @@ public final class CharacterPanelMenu extends Menu {
         redraw();
     }
 
-    private static String slotShape(final ItemSlot slot) {
+    /** 空的裝備欄畫的剪影（UiPack.ICONS 的 slot_*；管理員看別人的裝備也用）。 */
+    public static String slotShape(final ItemSlot slot) {
         return switch (slot) {
             case RING -> "slot_ring";
             case AMULET -> "slot_amulet";

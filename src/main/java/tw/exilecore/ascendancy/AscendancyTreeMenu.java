@@ -28,8 +28,6 @@ final class AscendancyTreeMenu extends Menu {
     private static final int SLOT_CLOSE = 53;
     /** 月卡福利（2026-10）：隨時更換昇華職業（主選單拿掉「昇華」之後，這裡也要能換）。 */
     private static final int SLOT_RESPEC = 51;
-    /** 分支裡第幾個天賦放在第幾欄（中間隔一格連線）。 */
-    private static final int[] NODE_COLUMNS = {2, 4, 6, 8};
 
     private final AscendancyService service;
     private final Map<Integer, AscendancyConfig.Node> nodes = new HashMap<>();
@@ -47,7 +45,7 @@ final class AscendancyTreeMenu extends Menu {
         nodes.clear();
         final Ascension ascension = service.ascension(player);
         final AscendancyConfig.Ascendancy chosen = ascension.chosen();
-        set(SLOT_BACK, icon(Material.ARROW, "<white>← 昇華與試煉"));
+        set(SLOT_BACK, backButton("昇華與試煉"));
         set(SLOT_CLOSE, closeButton());
         if (chosen == null) {
             set(22, icon(Material.GRAY_DYE, "<gray>還沒有選昇華職業", "<dark_gray>完成第一試煉之後選擇"));
@@ -60,20 +58,26 @@ final class AscendancyTreeMenu extends Menu {
                         + "</white>，可配 <white>" + ascension.available(),
                 "<dark_gray>每個試煉第一次完成給昇華點")));
 
+        // 2026-10：每條分支最左邊是標籤（整條在做什麼），天賦之間用鏈子連（以前灰色玻璃跟背景分不出來）
         final List<List<AscendancyConfig.Node>> branches = chosen.branches();
-        final int emblemRow = 1 + (Math.min(branches.size(), AscendancyConfig.MAX_BRANCHES) - 1) / 2;
-        set(emblemRow * 9, glowing(icon(Menu.material(chosen.icon(), Material.NETHER_STAR), chosen.colored(), "<dark_gray>分支從這裡往右長")));
         for (int b = 0; b < branches.size() && b < AscendancyConfig.MAX_BRANCHES; b++) {
-            final int row = 1 + b;
+            final int row = AscendancyLayout.FIRST_ROW + b;
             final List<AscendancyConfig.Node> branch = branches.get(b);
-            set(row * 9 + 1, link(!branch.isEmpty() && ascension.isAllocated(branch.getFirst())));
-            for (int i = 0; i < branch.size() && i < NODE_COLUMNS.length; i++) {
+            int owned = 0;
+            for (final AscendancyConfig.Node node : branch) {
+                if (ascension.isAllocated(node)) {
+                    owned++;
+                }
+            }
+            set(row * 9, AscendancyLayout.branchLabel(chosen, b, branch, owned));
+            set(row * 9 + 1, AscendancyLayout.link(!branch.isEmpty() && ascension.isAllocated(branch.getFirst())));
+            for (int i = 0; i < branch.size() && i < AscendancyLayout.NODE_COLUMNS.length; i++) {
                 final AscendancyConfig.Node node = branch.get(i);
-                final int slot = row * 9 + NODE_COLUMNS[i];
+                final int slot = row * 9 + AscendancyLayout.NODE_COLUMNS[i];
                 nodes.put(slot, node);
-                set(slot, node(node, ascension));
-                if (i + 1 < branch.size() && i + 1 < NODE_COLUMNS.length) {
-                    set(slot + 1, link(ascension.isAllocated(branch.get(i + 1))));
+                set(slot, node(branch, i, ascension));
+                if (i + 1 < branch.size() && i + 1 < AscendancyLayout.NODE_COLUMNS.length) {
+                    set(slot + 1, AscendancyLayout.link(ascension.isAllocated(branch.get(i + 1))));
                 }
             }
         }
@@ -94,11 +98,8 @@ final class AscendancyTreeMenu extends Menu {
                 String.format(Locale.ROOT, "<gray>你有 <#f5b942>%,d<gray> 金幣", plugin.players().get(player).gold())));
     }
 
-    private static ItemStack link(final boolean lit) {
-        return icon(lit ? Material.LIME_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE, lit ? "<green>—" : "<dark_gray>—");
-    }
-
-    private ItemStack node(final AscendancyConfig.Node node, final Ascension ascension) {
+    private ItemStack node(final List<AscendancyConfig.Node> branch, final int i, final Ascension ascension) {
+        final AscendancyConfig.Node node = branch.get(i);
         final boolean owned = ascension.isAllocated(node);
         final String problem = owned ? null : ascension.allocateProblem(node);
         final List<String> lore = new ArrayList<>();
@@ -109,7 +110,7 @@ final class AscendancyTreeMenu extends Menu {
             lore.add("<dark_gray><i>" + AscendancyService.escape(node.note()));
         }
         lore.add("");
-        lore.add("<gray>" + node.cost() + " 點");
+        lore.add("<gray>" + node.cost() + " 點<dark_gray>　" + AscendancyLayout.position(branch, i));
         final Material material = Menu.material(node.icon(), Material.AMETHYST_SHARD);
         if (owned) {
             final String refund = ascension.refundProblem(node);

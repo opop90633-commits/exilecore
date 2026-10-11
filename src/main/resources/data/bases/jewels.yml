@@ -47,6 +47,8 @@ diamond_jewel:
 # 2026-10：遺時珠寶（PoE2 的 Time-Lost Ruby／Emerald／Sapphire／Diamond，半徑珠寶）。
 # 詞綴是「範圍內的小天賦也各給 x」：放進珠寶孔後，孔位周圍半徑內（基本 2 格，「更大」+1、「巨大」+2）已配置的每一個小天賦都多給那條數值；
 # 「範圍內的小天賦／核心效果增加 x%」把範圍內已配置的小天賦／核心的數值放大。詞綴池在 affixes/jewels_radius.yml（spawn_tags：radius、r_ruby、r_emerald、r_sapphire）。
+# 只在劫盜掉（合約、藍圖的金庫箱與大金庫，機率在 heist.yml 的 time_lost_jewel_chance）：一般掉落、地圖獎勵、商人、賭博都拿不到。
+# 這裡的 drop_weight 只決定劫盜掉的時候四種的比例（要大於 0）；drop_level 是怪物等級要多高才掉得出來。
 time_lost_ruby:
   name: 遺時赤星晶
   material: REDSTONE

@@ -122,7 +122,9 @@ public final class LootService {
             final boolean map = drop.isEquipment() && (isMap(drop.item()) || isJewel(drop.item()));
             final boolean charm = drop.kind() == DropTable.Kind.FLASK && plugin.flasks() != null && plugin.flasks().charms() != null
                     && plugin.flasks().charms().isCharm(stack);
-            if (charm ? filter.hidesCharms() : filter.hides(candidate(drop, stack, rarity, currency, upgrade), viewer)) {
+            // 映星鏡（2026-10）：永遠不會被過濾掉（就算自己把它勾成隱藏）
+            final boolean mirror = currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.MIRROR;
+            if (!mirror && (charm ? filter.hidesCharms() : filter.hides(candidate(drop, stack, rarity, currency, upgrade), viewer))) {
                 final long converted = config.goldValue(drop.kind(), rarity, weight, averageGold);
                 goldTotal += converted;
                 filterGold += converted;
@@ -138,6 +140,9 @@ public final class LootService {
                     currency == null ? null : currency.id());
             if (drop.isEquipment() && drop.item().unique() != null) {
                 broadcastChase(killer, drop.item());
+            }
+            if (mirror) {
+                broadcastMirror(killer, currency);
             }
             if (!config.autoPickup()) {
                 MonsterListener.dropOwned(plugin, location, stack, killer, MonsterListener.highlight(drop));
@@ -260,6 +265,21 @@ public final class LootService {
         plugin.getSLF4JLogger().info("追逐級傳奇：{} 掉出 {}（{}）", finder.getName(), unique.name(), unique.id());
         if (plugin.discord() != null) {
             plugin.discord().achievement(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了追逐級傳奇「" + tw.exilecore.item.ItemRenderer.escape(unique.name()) + "」！");
+        }
+    }
+
+    /** 映星鏡掉出來：跟追逐級傳奇一樣全服廣播。 */
+    public void broadcastMirror(final Player finder, final CurrencyType mirror) {
+        final String name = plugin.chat() == null ? finder.getName() : plugin.chat().display(finder);
+        final net.kyori.adventure.text.Component message = plugin.text().prefixed("<#9fd8ff>✦ " + tw.exilecore.item.ItemRenderer.escape(name)
+                + " <aqua>找到了 <#9fd8ff><bold>" + tw.exilecore.item.ItemRenderer.escape(mirror.name()) + "</bold><aqua>！");
+        for (final Player online : plugin.getServer().getOnlinePlayers()) {
+            online.sendMessage(message);
+            online.playSound(online.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, org.bukkit.SoundCategory.PLAYERS, 0.7f, 1.2f);
+        }
+        plugin.getSLF4JLogger().info("映星鏡：{} 掉出 {}（{}）", finder.getName(), mirror.name(), mirror.id());
+        if (plugin.discord() != null) {
+            plugin.discord().achievement(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了「" + tw.exilecore.item.ItemRenderer.escape(mirror.name()) + "」！");
         }
     }
 

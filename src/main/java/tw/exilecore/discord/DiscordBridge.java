@@ -350,14 +350,16 @@ public final class DiscordBridge {
             return; // 只要一般訊息與回覆
         }
         String content = message.has("content") && !message.get("content").isJsonNull() ? message.get("content").getAsString() : "";
-        if (message.has("attachments") && message.getAsJsonArray("attachments").size() > 0) {
-            content = (content + " [附件]").trim();
+        // 附件（2026-10）：聊天欄裡是可以點的「[圖片]」「[附件]」，點了在瀏覽器打開
+        final List<Attachment> attachments = attachments(message);
+        if (attachments.isEmpty() && message.has("attachments") && message.getAsJsonArray("attachments").size() > 0) {
+            content = (content + " [附件]").trim(); // 網址不認得（不是 Discord 的）：只寫字
         }
         if (message.has("sticker_items") && message.getAsJsonArray("sticker_items").size() > 0) {
             content = (content + " [貼圖]").trim();
         }
         content = content.replaceAll("<a?:(\\w+):\\d+>", ":$1:").replaceAll("\\s+", " ").trim();
-        if (content.isEmpty()) {
+        if (content.isEmpty() && attachments.isEmpty()) {
             return;
         }
         if (content.length() > 256) {
@@ -371,13 +373,86 @@ public final class DiscordBridge {
         final String finalName = name;
         final String finalContent = content;
         plugin.getServer().getScheduler().runTask(plugin, () -> {
-            final Component line = plugin.text().parse(inGameFormat.replace("{name}", ItemRenderer.escape(finalName))
+            Component line = plugin.text().parse(inGameFormat.replace("{name}", ItemRenderer.escape(finalName))
                     .replace("{message}", ItemRenderer.escape(finalContent)));
+            for (final Attachment attachment : attachments) {
+                line = line.append(Component.space()).append(attachment.link());
+            }
             for (final Player player : plugin.getServer().getOnlinePlayers()) {
                 player.sendMessage(line);
             }
-            plugin.getSLF4JLogger().info("[Discord] {}: {}", finalName, finalContent);
+            plugin.getSLF4JLogger().info("[Discord] {}: {}{}", finalName, finalContent, attachments.isEmpty() ? "" : " " + attachments);
         });
+    }
+
+    /** 一則訊息最多列幾個附件（再多的在 Discord 看）。 */
+    static final int MAX_ATTACHMENTS = 4;
+
+    /**
+     * Discord 訊息的一個附件。
+     *
+     * @param kind 圖片、影片、語音、附件
+     * @param name 檔名
+     * @param url  Discord 的下載網址（https，Discord 自己的網域）
+     */
+    record Attachment(String kind, String name, String url) {
+
+        /** 聊天欄裡可以點的「[圖片]」：滑鼠移上去看檔名，點了在瀏覽器打開（客戶端會先問要不要開）。 */
+        Component link() {
+            return Component.text("[" + kind + "]", net.kyori.adventure.text.format.TextColor.color(0x7FD4FF))
+                    .decorate(net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                    .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(name + "\n點一下在瀏覽器打開")))
+                    .clickEvent(net.kyori.adventure.text.event.ClickEvent.openUrl(url));
+        }
+
+        @Override
+        public String toString() {
+            return "[" + kind + " " + name + "]";
+        }
+    }
+
+    /** 訊息裡認得的附件（最多 {@value #MAX_ATTACHMENTS} 個；網址不是 Discord 的不要）。 */
+    static List<Attachment> attachments(final JsonObject message) {
+        final List<Attachment> list = new ArrayList<>();
+        if (!message.has("attachments") || !message.get("attachments").isJsonArray()) {
+            return list;
+        }
+        for (final JsonElement element : message.getAsJsonArray("attachments")) {
+            if (list.size() >= MAX_ATTACHMENTS || !element.isJsonObject()) {
+                continue;
+            }
+            final JsonObject object = element.getAsJsonObject();
+            final String url = text(object, "url");
+            if (!discordUrl(url)) {
+                continue;
+            }
+            final String type = text(object, "content_type").toLowerCase(Locale.ROOT);
+            String name = text(object, "filename");
+            if (name.length() > 48) {
+                name = name.substring(0, 48) + "…";
+            }
+            final String kind = type.startsWith("image/") ? "圖片" : type.startsWith("video/") ? "影片" : type.startsWith("audio/") ? "語音" : "附件";
+            list.add(new Attachment(kind, name.isEmpty() ? kind : name, url));
+        }
+        return list;
+    }
+
+    private static String text(final JsonObject object, final String key) {
+        return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsString() : "";
+    }
+
+    /** 只收 Discord 自己放附件的網址（https、cdn.discordapp.com 或 media.discordapp.net）：聊天欄不放別的站的連結。 */
+    static boolean discordUrl(final String url) {
+        if (url == null || url.length() > 1024) {
+            return false;
+        }
+        try {
+            final URI uri = URI.create(url);
+            final String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase(Locale.ROOT);
+            return "https".equalsIgnoreCase(uri.getScheme()) && (host.equals("cdn.discordapp.com") || host.equals("media.discordapp.net"));
+        } catch (final IllegalArgumentException e) {
+            return false;
+        }
     }
 
     // ---- 小工具 ----

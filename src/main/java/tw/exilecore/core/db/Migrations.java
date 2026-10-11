@@ -371,6 +371,65 @@ public final class Migrations {
             new Migration(20, "角色進度的欄位加長", List.of(
                     "ALTER TABLE progress MODIFY COLUMN progress_value VARCHAR(4096) NOT NULL",
                     "ALTER TABLE account_progress MODIFY COLUMN progress_value VARCHAR(4096) NOT NULL"
+            )),
+            // 2026-10：公會。代號由程式給（建立那一刻記憶體裡就要有），所以 guilds.id 不是自動編號
+            new Migration(21, "公會（公會、成員、公會倉庫、公會紀錄）", List.of(
+                    """
+                    CREATE TABLE IF NOT EXISTS guilds (
+                        id BIGINT NOT NULL PRIMARY KEY,
+                        name VARCHAR(32) NOT NULL,
+                        tag VARCHAR(16) NOT NULL,
+                        leader_uuid VARCHAR(36) NOT NULL,
+                        guild_level INT NOT NULL,
+                        experience BIGINT NOT NULL,
+                        motd VARCHAR(255) NOT NULL,
+                        withdraw_rank INT NOT NULL,
+                        created_at DATETIME NOT NULL
+                    )""",
+                    """
+                    CREATE TABLE IF NOT EXISTS guild_members (
+                        account_uuid VARCHAR(36) NOT NULL PRIMARY KEY,
+                        guild_id BIGINT NOT NULL,
+                        name VARCHAR(32) NOT NULL,
+                        guild_rank INT NOT NULL,
+                        contribution BIGINT NOT NULL,
+                        joined_at DATETIME NOT NULL
+                    )""",
+                    "CREATE INDEX IF NOT EXISTS idx_guild_members_guild ON guild_members (guild_id)",
+                    """
+                    CREATE TABLE IF NOT EXISTS guild_stash (
+                        guild_id BIGINT NOT NULL,
+                        page INT NOT NULL,
+                        contents LONGBLOB NULL,
+                        updated_at DATETIME NOT NULL,
+                        PRIMARY KEY (guild_id, page)
+                    )""",
+                    """
+                    CREATE TABLE IF NOT EXISTS guild_log (
+                        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                        guild_id BIGINT NOT NULL,
+                        created_at DATETIME NOT NULL,
+                        actor VARCHAR(32) NOT NULL,
+                        action VARCHAR(16) NOT NULL,
+                        detail VARCHAR(255) NOT NULL
+                    )""",
+                    "CREATE INDEX IF NOT EXISTS idx_guild_log_guild ON guild_log (guild_id, id)"
+            )),
+            new Migration(22, "公會：用星幣多買的倉庫頁", List.of(
+                    "ALTER TABLE guilds ADD COLUMN IF NOT EXISTS bought_pages INT NOT NULL DEFAULT 0"
+            )),
+            new Migration(23, "公會：入會申請", List.of(
+                    """
+                    CREATE TABLE IF NOT EXISTS guild_applications (
+                        guild_id BIGINT NOT NULL,
+                        account_uuid VARCHAR(36) NOT NULL,
+                        name VARCHAR(32) NOT NULL,
+                        char_level INT NOT NULL,
+                        message VARCHAR(100) NOT NULL,
+                        created_at DATETIME NOT NULL,
+                        PRIMARY KEY (guild_id, account_uuid)
+                    )""",
+                    "CREATE INDEX IF NOT EXISTS idx_guild_applications_account ON guild_applications (account_uuid)"
             ))
     );
 
@@ -380,7 +439,8 @@ public final class Migrations {
             "currency_log", "stash_pages", "stash_currency", "character_skills", "character_skill_binds",
             "trade_log", "market_listings", "market_proceeds", "exchange_orders", "exchange_fills", "stash_tabs",
             "economy_flow", "economy_stock", "economy_income", "exchange_trades", "currency_values", "account_progress",
-            "admin_deliveries", "admin_log", "star_vouchers", "character_profiles");
+            "admin_deliveries", "admin_log", "star_vouchers", "character_profiles",
+            "guilds", "guild_members", "guild_stash", "guild_log", "guild_applications");
 
     private Migrations() {
     }

@@ -241,12 +241,23 @@ public final class EconomyReports {
         });
     }
 
-    /** 能標價的通貨（照設定檔的順序）。 */
+    /**
+     * 報告列的通貨：能標價的（照設定檔的順序），再加上沒有參考價值的（2026-10：映星鏡、地圖機制的通貨…——
+     * 只列產出、消耗的數量，不折合金幣、不算進總價值；鑑定卷軸免費領，不列）。
+     */
     public List<EconomyReportJson.CurrencyMeta> currencyMeta() {
         final List<EconomyReportJson.CurrencyMeta> list = new ArrayList<>();
-        for (final Map.Entry<String, Long> entry : config().values().entrySet()) {
+        final Map<String, Long> values = config().values();
+        for (final Map.Entry<String, Long> entry : values.entrySet()) {
             final CurrencyType type = plugin.currencies().repository().get(entry.getKey());
-            list.add(new EconomyReportJson.CurrencyMeta(entry.getKey(), type == null ? entry.getKey() : type.name(), entry.getValue()));
+            list.add(new EconomyReportJson.CurrencyMeta(entry.getKey(), type == null ? entry.getKey() : type.name(), entry.getValue(), true));
+        }
+        for (final CurrencyType type : plugin.currencies().repository().all()) {
+            if (values.containsKey(type.id()) || type.operation() == tw.exilecore.currency.CurrencyOperation.IDENTIFY
+                    || type.name() == null || type.name().isBlank()) {
+                continue;
+            }
+            list.add(new EconomyReportJson.CurrencyMeta(type.id(), type.name(), 0, false));
         }
         return list;
     }

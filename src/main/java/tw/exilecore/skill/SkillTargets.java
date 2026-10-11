@@ -117,6 +117,47 @@ final class SkillTargets {
         return list;
     }
 
+    /**
+     * 好幾個圓（一道線、走過的路）蓋到的敵人，每隻只列一次（2026-10：以前每個圓各掃一次再去重複，一道 9 個圓的牆就掃 9 次）。
+     * 判定跟 {@link #around} 一樣：碰撞箱離任何一個圓心 radius 內、高度上下 HEIGHT 格內。順序不保證。
+     */
+    List<LivingEntity> aroundPoints(final List<Location> points, final double radius, final Player owner) {
+        if (points.size() == 1) {
+            return around(points.getFirst(), radius, owner);
+        }
+        double minX = Double.MAX_VALUE;
+        double minY = Double.MAX_VALUE;
+        double minZ = Double.MAX_VALUE;
+        double maxX = -Double.MAX_VALUE;
+        double maxY = -Double.MAX_VALUE;
+        double maxZ = -Double.MAX_VALUE;
+        for (final Location point : points) {
+            minX = Math.min(minX, point.getX());
+            minY = Math.min(minY, point.getY());
+            minZ = Math.min(minZ, point.getZ());
+            maxX = Math.max(maxX, point.getX());
+            maxY = Math.max(maxY, point.getY());
+            maxZ = Math.max(maxZ, point.getZ());
+        }
+        final Location first = points.getFirst();
+        final Location middle = new Location(first.getWorld(), (minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+        final double reach = radius + 3; // 大隻的怪中心比較遠
+        final List<LivingEntity> list = new ArrayList<>();
+        for (final Entity entity : first.getWorld().getNearbyEntities(middle, (maxX - minX) / 2 + reach, (maxY - minY) / 2 + HEIGHT + 3,
+                (maxZ - minZ) / 2 + reach, entity -> valid(entity, owner))) {
+            final LivingEntity living = (LivingEntity) entity;
+            final BoundingBox box = living.getBoundingBox();
+            for (final Location point : points) {
+                if (boxDistanceSquared(point, box) <= radius * radius
+                        && box.getMaxY() >= point.getY() - HEIGHT && box.getMinY() <= point.getY() + HEIGHT) {
+                    list.add(living);
+                    break;
+                }
+            }
+        }
+        return list;
+    }
+
     /** 水平面上，點到碰撞箱的距離平方（在箱子裡面是 0）。 */
     static double boxDistanceSquared(final Location point, final BoundingBox box) {
         final double dx = Math.max(0, Math.max(box.getMinX() - point.getX(), point.getX() - box.getMaxX()));

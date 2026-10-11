@@ -29,18 +29,20 @@ public final class HeistConfig {
 
     /**
      * 大金庫的獎勵（gemChance：掉一顆 Lv.21 未切割技能寶石的機率；finaleKeyChance：大劫盜的大金庫掉終局鑰印的機率；
-     * finaleGemChance：金庫之主的收藏裡出現 Lv.21 未切割技能寶石的機率）。
+     * finaleGemChance：金庫之主的收藏裡出現 Lv.21 未切割技能寶石的機率；timeLostChance：掉一顆遺時珠寶的機率，大劫盜 ×grandMultiplier）。
      */
     public record Vault(int rolls, int[] currency, int[] unveilStones, double uniqueChance, double blueprintChance, double grandMultiplier,
-                        double gemChance, double finaleKeyChance, double finaleGemChance) {
+                        double gemChance, double finaleKeyChance, double finaleGemChance, double timeLostChance) {
     }
 
     /**
      * @param contractChance 星圖（一般的地圖，不含劫盜、試煉這些特別的實例）裡的怪物掉劫盜合約的機率：普通、魔法、稀有、Boss
+     * @param timeLostChance 每個金庫箱、每個人掉一顆遺時珠寶的機率（2026-10：遺時珠寶只在劫盜掉）
+     * @param timeLostRare   掉出來的遺時珠寶是稀有的機率（不然是魔法）
      */
     public record Settings(int rooms, int quantity, int rarity, int minLevel, Alarm alarm, Lockdown lockdown, int[] chests, int chestRolls,
                            int[] chestCurrency, double veiledChance, double unveilStoneChance, double chestBlueprintChance, Vault vault,
-                           double[] contractChance) {
+                           double[] contractChance, double timeLostChance, double timeLostRare) {
     }
 
     /** 一處據點（寫法跟試煉一樣）。 */
@@ -103,8 +105,8 @@ public final class HeistConfig {
 
     public static Settings defaults() {
         return new Settings(7, 40, 30, 30, new Alarm(0.05, 0.15, 0.5, 8, 0.25), new Lockdown(20, 3, 0.5), new int[] {3, 5}, 2,
-                new int[] {1, 3}, 0.3, 0.05, 0.01, new Vault(6, new int[] {4, 7}, new int[] {0, 1}, 0.02, 0.10, 3, 0.02, 0.10, 0.10),
-                new double[] {0.002, 0.006, 0.025, 0.25});
+                new int[] {1, 3}, 0.3, 0.05, 0.01, new Vault(6, new int[] {4, 7}, new int[] {0, 1}, 0.02, 0.10, 3, 0.02, 0.10, 0.10, 0.20),
+                new double[] {0.002, 0.006, 0.025, 0.25}, 0.02, 0.30);
     }
 
     public Settings settings() {
@@ -147,9 +149,10 @@ public final class HeistConfig {
                 new Vault(Math.max(0, vault.integer("rolls", 6)), range(vault, "currency", 4, 7), range(vault, "unveil_stones", 0, 1),
                         chance(vault.decimal("unique_chance", 0.02)), chance(vault.decimal("blueprint_chance", 0.10)),
                         Math.max(1, vault.decimal("grand_multiplier", 3)), chance(vault.decimal("gem_chance", 0.02)), chance(vault.decimal("finale_key_chance", 0.10)),
-                        chance(vault.decimal("finale_gem_chance", 0.10))),
+                        chance(vault.decimal("finale_gem_chance", 0.10)), chance(vault.decimal("time_lost_jewel_chance", 0.20))),
                 new double[] {chance(s.node("contract_chance").decimal("normal", 0.002)), chance(s.node("contract_chance").decimal("magic", 0.006)),
-                        chance(s.node("contract_chance").decimal("rare", 0.025)), chance(s.node("contract_chance").decimal("boss", 0.25))});
+                        chance(s.node("contract_chance").decimal("rare", 0.025)), chance(s.node("contract_chance").decimal("boss", 0.25))},
+                chance(s.decimal("time_lost_jewel_chance", 0.02)), chance(s.decimal("time_lost_jewel_rare", 0.30)));
         final Map<String, Site> parsed = new LinkedHashMap<>();
         final YamlNode sitesNode = root.node("sites");
         for (final String id : sitesNode.keys()) {

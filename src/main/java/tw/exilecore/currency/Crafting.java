@@ -32,6 +32,42 @@ public final class Crafting {
     private Crafting() {
     }
 
+    /** 映星鏡不能複製這件的原因（可以回傳 null）。 */
+    private static String mirrorProblem(final ItemData data, final ItemBase base) {
+        if (base.isMap()) {
+            return "地圖不能複製";
+        }
+        if (base.isFlaskLike()) {
+            return (base.isFlask() ? "藥劑" : "護符") + "不能複製";
+        }
+        if (data.rarity() == Rarity.UNIQUE || data.unique() != null) {
+            return "傳奇不能複製";
+        }
+        if (data.starter()) {
+            return "新手裝備不能複製";
+        }
+        if (!data.identified()) {
+            return "要先鑑定";
+        }
+        if (data.corrupted()) {
+            return "已腐化的物品不能複製";
+        }
+        return null;
+    }
+
+    /**
+     * 映星鏡（2026-10）：做出這件的鏡像複製品——詞綴、數值、品質、符文、催化劑、注入全部一樣，換一個新的物品代號（不會被當成複製 bug），
+     * 標成複製品（之後不能再改造、不能再複製）。鎖定、掛著的星籤不跟過去。原本那件不動。先確認過 {@link #problem}。
+     */
+    public static ItemData mirror(final ItemData original) {
+        final ItemData copy = original.copy();
+        copy.regenerateUuid();
+        copy.setMirrored(true);
+        copy.setLocked(false);
+        copy.setOmen(null);
+        return copy;
+    }
+
     /** 符文（2026-10）：嵌進一個空孔（先確認過 {@link #problem}）。 */
     public static void applyRune(final CurrencyType type, final ItemData data) {
         data.addRune(type.affix());
@@ -42,6 +78,13 @@ public final class Crafting {
         final ItemBase base = generator.repository().base(data.base());
         if (base == null) {
             return "不認得的基底";
+        }
+        if (data.mirrored()) {
+            // 2026-10：映星鏡照出來的複製品不能再動（鑑定除外——複製品本來就鑑定過了）
+            return type.operation() == CurrencyOperation.MIRROR ? "這件已經是鏡像複製品，不能再複製" : "鏡像複製品不能再改造";
+        }
+        if (type.operation() == CurrencyOperation.MIRROR) {
+            return mirrorProblem(data, base);
         }
         if (base.isFlaskLike()) {
             // 2026-10：藥劑、護符最多魔法（PoE2）：只有鑑定、蛻變、增幅、改造、機會→不行、抹除、神聖、祝福這幾種能用

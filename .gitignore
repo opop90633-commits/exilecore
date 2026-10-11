@@ -31,3 +31,6 @@ proxy/velocity/plugins/velocityfailover/*
 proxy/limbo/*.exe
 proxy/limbo/server-icon.png
 proxy/limbo/logs/
+
+# 部署（tools/deploy.py）：主機商的 SFTP 與面板 API 資訊不進版控
+tools/deploy.local.json

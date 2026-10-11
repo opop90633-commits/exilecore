@@ -99,6 +99,17 @@ public final class ItemGenerator {
         chaseChance = Math.max(0, Math.min(1, chance));
     }
 
+    /** 映星鏡：一般怪物每隻的掉落機率（2026-10，maps.yml 的 drops.mirror_mob_chance；地圖模組載入時設定）。 */
+    private static volatile double mirrorChance = 0.0000001;
+
+    public static double mirrorChance() {
+        return mirrorChance;
+    }
+
+    public static void setMirrorChance(final double chance) {
+        mirrorChance = Math.max(0, Math.min(1, chance));
+    }
+
     /** 這個基底、這個物品等級能出的追逐級傳奇（uniques.yml 的 chase: true，drop_level 要夠）。 */
     public List<UniqueItem> chaseUniques(final String base, final int itemLevel) {
         final List<UniqueItem> list = new java.util.ArrayList<>();

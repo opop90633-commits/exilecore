@@ -187,9 +187,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         double spread = params.spread();
         if (StatKeys.flag(effective, StatKeys.FLAG_PROJECTILE_NOVA) && definition.mechanic() == Mechanic.PROJECTILE && !params.blink()) {
             spread = 360; // 2026-10：環射（投射物往四周一圈射出）
+        } else if (projectiles > 1 && spread < 1) {
+            spread = Math.min(60, 12.0 * (projectiles - 1)); // 本來只有一發的技能多了投射物：排成扇形
         }
-        // 2026-10（照 PoE2）：本來只有一發的技能多了投射物，不再張成扇形（spread 留 0）：沿同一條線前後連發，
-        // 第一支馬上射、後面的隔幾 tick 跟著出去（ProjectileEngine、SkillMath.sequenceInterval）。技能自己寫了 spread 的照舊排成扇形。
         final double speed = Math.max(0.2, Math.min(6, params.speed()
                 * Math.max(0.1, effective.apply(StatKeys.SKILL_PROJECTILE_SPEED, 1.0, context))));
         final int pierce = clamp((int) Math.round(params.pierce() + effective.flat(StatKeys.SKILL_PIERCE, context)), 0, 20);
@@ -257,7 +257,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     /** 2026-10：封印解開的這一次：範圍倍率、投射物數量換掉。 */
     public SkillBuild withAreaAndProjectiles(final double newAreaScale, final int newProjectiles) {
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
-                reach, angle, targets, knockback, newProjectiles, spread,
+                reach, angle, targets, knockback, newProjectiles, spread < 1 && newProjectiles > 1 ? Math.min(60, 12.0 * (newProjectiles - 1)) : spread,
                 speed, range, size, pierce, chains, explode * (newAreaScale / Math.max(1e-6, areaScale)), wobble, arrow,
                 radius * (newAreaScale / Math.max(1e-6, areaScale)), length, chainRange, manaCost, newAreaScale, bonusLevel, cooldownTicks,
                 durationScale, forks, returning, echo, deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);

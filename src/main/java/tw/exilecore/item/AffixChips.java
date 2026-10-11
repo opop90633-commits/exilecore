@@ -84,6 +84,9 @@ public final class AffixChips {
         if (lower.startsWith("player:")) {
             lower = lower.substring("player:".length());
         }
+        if (lower.startsWith("radius:")) {
+            lower = lower.substring("radius:".length()); // 2026-10：遺時珠寶「範圍內的小天賦也各給」——標籤照給的那條屬性判斷（以前整條沒標籤）
+        }
         if (lower.equals("local.physical")) {
             chips.addAll(List.of(Chip.DAMAGE, Chip.PHYSICAL, Chip.ATTACK));
             return;

@@ -5,6 +5,8 @@ import tw.exilecore.stats.DamageType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -17,6 +19,9 @@ import java.util.Map;
  * 自己打的、召喚物與圖騰打的、點燃流血中毒的每一跳都算「打出的」；扣掉的護盾、生命、魔力算「受到的」。
  * 持續傷害（流血、中毒、點燃）另外記一份，側欄多一行「持續」分開列（2026-10：以前併在物理、混沌、火焰裡看不出來）；
  * 持續傷害的一跳不算「最大一擊」。
+ * <p>
+ * 2026-10：打出的傷害另外照「哪個技能打的」記一份（技能的名字；地面效果、引爆這些算在原本的技能上，召喚物算在召喚技能上，
+ * 點燃、流血、中毒各算一項「××（持續）」），每一項都分傷害類型：側欄的「技能明細」與 /dps 的整場統計用。
  */
 public final class CombatMeter {
 
@@ -38,6 +43,10 @@ public final class CombatMeter {
     private final double[][] dotTaken = new double[BUCKETS][AILMENTS];
     private final double[] biggest = new double[BUCKETS];
     private final DamageType[] biggestType = new DamageType[BUCKETS];
+    /** 每個技能打出的：技能名 → [格][類型]（視窗裡沒有數字的在 {@link #snapshot} 清掉）。 */
+    private final Map<String, double[][]> skillDealt = new LinkedHashMap<>();
+    /** 這一段戰鬥到現在每個技能打出的總傷害：技能名 → [類型]（停手超過一個視窗、重新開打時清掉）。 */
+    private final Map<String, double[]> fight = new LinkedHashMap<>();
     /** 這一段戰鬥從哪個 tick 開始。 */
     private long started = Long.MIN_VALUE;
     /** 最後一次有動靜。 */
@@ -59,7 +68,13 @@ public final class CombatMeter {
      * @param dotTaken      受到的每秒持續傷害（同上；已經算在 taken 裡）
      */
     public record Snapshot(double seconds, double[] dealt, double[] taken, double biggest, DamageType biggestType,
-                           double[] dotDealt, double[] dotTaken) {
+                           double[] dotDealt, double[] dotTaken, List<SkillRow> skills) {
+
+        /** 沒有技能明細的（舊的呼叫法）。 */
+        public Snapshot(final double seconds, final double[] dealt, final double[] taken, final double biggest, final DamageType biggestType,
+                        final double[] dotDealt, final double[] dotTaken) {
+            this(seconds, dealt, taken, biggest, biggestType, dotDealt, dotTaken, List.of());
+        }
 
         public double dps() {
             return Arrays.stream(dealt).sum();
@@ -67,6 +82,31 @@ public final class CombatMeter {
 
         public double takenPerSecond() {
             return Arrays.stream(taken).sum();
+        }
+    }
+
+    /**
+     * 一個技能的數字（照 {@link DamageType} 的順序）：{@link Snapshot#skills()} 裡是每秒傷害，{@link Fight#skills()} 裡是總傷害。
+     */
+    public record SkillRow(String name, double[] amounts) {
+        public double total() {
+            return Arrays.stream(amounts).sum();
+        }
+    }
+
+    /**
+     * 一整段戰鬥的統計（/dps）。
+     *
+     * @param seconds 打了幾秒（第一下到最後一下，至少 1 秒）
+     * @param skills  每個技能打出的總傷害（多到少）
+     */
+    public record Fight(double seconds, List<SkillRow> skills) {
+        public double total() {
+            double sum = 0;
+            for (final SkillRow row : skills) {
+                sum += row.total();
+            }
+            return sum;
         }
     }
 
@@ -81,6 +121,9 @@ public final class CombatMeter {
             Arrays.fill(dotTaken[index], 0);
             biggest[index] = 0;
             biggestType[index] = null;
+            for (final double[][] rows : skillDealt.values()) {
+                Arrays.fill(rows[index], 0);
+            }
         }
         return index;
     }
@@ -88,12 +131,18 @@ public final class CombatMeter {
     private void touch(final long tick) {
         if (last == Long.MIN_VALUE || tick - last > WINDOW_TICKS) {
             started = tick; // 停手超過一個視窗：重新算
+            fight.clear();
         }
         last = Math.max(last, tick);
     }
 
     /** 打出一下（各類型多少；減免之後的）。 */
     public void dealt(final long tick, final Map<DamageType, Double> parts) {
+        dealt(tick, null, parts);
+    }
+
+    /** 打出一下，記在 skill 這個技能底下（null、空的 = 不分技能，只算總數）。 */
+    public void dealt(final long tick, final String skill, final Map<DamageType, Double> parts) {
         boolean any = false;
         for (final Map.Entry<DamageType, Double> part : parts.entrySet()) {
             if (part.getKey() != null && part.getValue() != null && part.getValue() > 0) {
@@ -101,9 +150,24 @@ public final class CombatMeter {
                     touch(tick);
                     any = true;
                 }
-                dealt[slot(tick)][part.getKey().ordinal()] += part.getValue();
+                final int index = slot(tick);
+                dealt[index][part.getKey().ordinal()] += part.getValue();
+                bySkill(skill, index, part.getKey(), part.getValue());
             }
         }
+    }
+
+    private void bySkill(final String skill, final int index, final DamageType type, final double amount) {
+        if (skill == null || skill.isBlank()) {
+            return;
+        }
+        skillDealt.computeIfAbsent(skill, key -> new double[BUCKETS][TYPES])[index][type.ordinal()] += amount;
+        fight.computeIfAbsent(skill, key -> new double[TYPES])[type.ordinal()] += amount;
+    }
+
+    /** 持續傷害在技能明細裡的名字：「流血（持續）」。 */
+    public static String dotName(final AilmentType kind) {
+        return kind.displayName() + "（持續）";
     }
 
     /** 打出的傷害（只有一種類型）。 */
@@ -124,6 +188,7 @@ public final class CombatMeter {
         final int index = slot(tick);
         dealt[index][type.ordinal()] += amount;
         dotDealt[index][kind.ordinal()] += amount;
+        bySkill(dotName(kind), index, type, amount);
     }
 
     /**
@@ -222,7 +287,43 @@ public final class CombatMeter {
             outDotDealt[a] /= seconds;
             outDotTaken[a] /= seconds;
         }
-        return new Snapshot(seconds, outDealt, outTaken, big, bigType, outDotDealt, outDotTaken);
+        // 每個技能：視窗裡的加起來 ÷ 秒數；視窗裡已經沒有數字的技能清掉（不會越積越多）
+        final List<SkillRow> skills = new ArrayList<>();
+        for (final Iterator<Map.Entry<String, double[][]>> it = skillDealt.entrySet().iterator(); it.hasNext(); ) {
+            final Map.Entry<String, double[][]> entry = it.next();
+            final double[] sum = new double[TYPES];
+            double total = 0;
+            for (int i = 0; i < BUCKETS; i++) {
+                if (ids[i] == Long.MIN_VALUE || ids[i] > current || current - ids[i] >= BUCKETS) {
+                    continue;
+                }
+                for (int t = 0; t < TYPES; t++) {
+                    sum[t] += entry.getValue()[i][t];
+                    total += entry.getValue()[i][t];
+                }
+            }
+            if (total <= 0) {
+                it.remove();
+                continue;
+            }
+            for (int t = 0; t < TYPES; t++) {
+                sum[t] /= seconds;
+            }
+            skills.add(new SkillRow(entry.getKey(), sum));
+        }
+        skills.sort((a, b) -> Double.compare(b.total(), a.total()));
+        return new Snapshot(seconds, outDealt, outTaken, big, bigType, outDotDealt, outDotTaken, List.copyOf(skills));
+    }
+
+    /** 這一段戰鬥（從第一下到最後一下）每個技能打出的總傷害；還沒打過是空的。 */
+    public Fight fight() {
+        final List<SkillRow> rows = new ArrayList<>();
+        for (final Map.Entry<String, double[]> entry : fight.entrySet()) {
+            rows.add(new SkillRow(entry.getKey(), entry.getValue().clone()));
+        }
+        rows.sort((a, b) -> Double.compare(b.total(), a.total()));
+        final double seconds = started == Long.MIN_VALUE || last == Long.MIN_VALUE ? 1.0 : Math.max(1.0, (last - started + 1) / 20.0);
+        return new Fight(seconds, List.copyOf(rows));
     }
 
     // ---- 側欄的字 ----
@@ -234,6 +335,100 @@ public final class CombatMeter {
      * 側欄的幾行（MiniMessage；第一行是標題）：輸出、輸出的類型、輸出的持續傷害、承受、承受的類型、承受的持續傷害、最大一擊。
      */
     public static List<String> lines(final Snapshot snapshot) {
+        return lines(snapshot, false);
+    }
+
+    /** 技能明細最多列幾個技能（一個技能兩行；側欄一共只有 15 行）。 */
+    public static final int SKILL_ROWS = 4;
+
+    /**
+     * 同上；bySkill = 「技能明細」（2026-10，設定裡開）：輸出那一段改成每個技能一項（名字、每秒傷害、佔幾成，下一行是傷害類型），
+     * 多到少最多 {@link #SKILL_ROWS} 個，其他的併成一行；承受縮成一行（每秒多少、最大一擊）。
+     */
+    public static List<String> lines(final Snapshot snapshot, final boolean bySkill) {
+        if (!bySkill || snapshot.skills().isEmpty()) {
+            return overview(snapshot);
+        }
+        final List<String> lines = new ArrayList<>();
+        lines.add(TITLE);
+        final double dps = snapshot.dps();
+        lines.add(" <gray>輸出 <white><b>" + number(dps) + "</b><gray>/秒");
+        double rest = 0;
+        int others = 0;
+        int shown = 0;
+        for (final SkillRow row : snapshot.skills()) {
+            if (row.total() < 0.5) {
+                continue;
+            }
+            if (shown >= SKILL_ROWS) {
+                rest += row.total();
+                others++;
+                continue;
+            }
+            shown++;
+            lines.add(" <white>" + escape(shorten(row.name())) + " <gray>" + number(row.total())
+                    + (dps > 0 ? " <dark_gray>" + Math.round(row.total() / dps * 100) + "%" : ""));
+            final String types = types(row.amounts());
+            if (!types.isEmpty()) {
+                lines.add("   " + types);
+            }
+        }
+        if (others > 0) {
+            lines.add(" <gray>其他 " + others + " 個 " + number(rest));
+        }
+        final double taken = snapshot.takenPerSecond();
+        final StringBuilder hurt = new StringBuilder(" <gray>承受 ")
+                .append(taken >= 0.5 ? "<#ff8080><b>" + number(taken) + "</b>" : "<white>0").append("<gray>/秒");
+        if (snapshot.biggest() >= 0.5 && snapshot.biggestType() != null) {
+            hurt.append(" <dark_gray>最大 <white>").append(number(snapshot.biggest())).append(" <").append(DamageColors.of(snapshot.biggestType()))
+                    .append('>').append(snapshot.biggestType().displayName());
+        }
+        lines.add(hurt.toString());
+        return lines;
+    }
+
+    /** 技能名太長的截短（側欄比較窄）。 */
+    static String shorten(final String name) {
+        return name.length() <= 8 ? name : name.substring(0, 7) + "…";
+    }
+
+    private static String escape(final String text) {
+        return text.replace("\\", "\\\\").replace("<", "\\<");
+    }
+
+    /**
+     * /dps 的整場統計（MiniMessage，一行一個）：總傷害、打了幾秒、平均每秒；每個技能的總傷害、佔幾成、平均每秒，下一行是各傷害類型。
+     * 沒打過回傳空的。
+     */
+    public static List<String> report(final Fight fight) {
+        final List<String> lines = new ArrayList<>();
+        final double total = fight.total();
+        if (total <= 0) {
+            return lines;
+        }
+        lines.add("<#ff6b6b><b>⚔ 這一段戰鬥</b> <gray>打了 <white>" + String.format(Locale.ROOT, "%.1f", fight.seconds()) + "</white> 秒，總傷害 <white>"
+                + number(total) + "</white>，平均 <white>" + number(total / fight.seconds()) + "</white>/秒");
+        for (final SkillRow row : fight.skills()) {
+            if (row.total() < 0.5) {
+                continue;
+            }
+            lines.add(" <white>" + escape(row.name()) + " <gray>" + number(row.total()) + " <dark_gray>（" + Math.round(row.total() / total * 100)
+                    + "%，" + number(row.total() / fight.seconds()) + "/秒）");
+            final StringBuilder types = new StringBuilder();
+            final List<DamageType> order = new ArrayList<>(List.of(DamageType.values()));
+            order.removeIf(type -> row.amounts()[type.ordinal()] < 0.5);
+            order.sort((a, b) -> Double.compare(row.amounts()[b.ordinal()], row.amounts()[a.ordinal()]));
+            for (final DamageType type : order) {
+                types.append(types.isEmpty() ? "" : " ").append('<').append(DamageColors.of(type)).append('>').append(type.displayName()).append(' ')
+                        .append(number(row.amounts()[type.ordinal()])).append(" <dark_gray>").append(Math.round(row.amounts()[type.ordinal()] / row.total() * 100))
+                        .append('%');
+            }
+            lines.add("   " + types);
+        }
+        return lines;
+    }
+
+    private static List<String> overview(final Snapshot snapshot) {
         final List<String> lines = new ArrayList<>();
         lines.add(TITLE);
         lines.add(" <gray>輸出 <white><b>" + number(snapshot.dps()) + "</b><gray>/秒");

@@ -105,6 +105,7 @@ public final class TradeModule implements Module, Listener {
                 .then(Commands.literal("decline")
                         .executes(context -> run(plugin, context, (service, player) -> service.decline(player, null)))
                         .then(Commands.argument("player", StringArgumentType.greedyString())
+                                .suggests(tw.exilecore.chat.ChatModule.targets(plugin)) // 2026-10：按 TAB 補在線的玩家
                                 .executes(context -> run(plugin, context, (service, player) ->
                                         service.decline(player, StringArgumentType.getString(context, "player"))))))
                 .then(Commands.argument("player", StringArgumentType.greedyString())

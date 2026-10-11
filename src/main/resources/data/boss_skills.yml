@@ -34,7 +34,15 @@
 #             碰到人（size）或 duration 秒到了就在 explode 格內爆炸——帶著跑，別讓它們碰到
 #   sanctuary 全場大招（翻滾躲不掉）：前搖很長（預設 2.5 秒），radius 格內的人全部挨打；地上出現 count 個綠色安全區（半徑 safe、離 Boss 大約 scatter 格）
 #             ——躲進綠色的圈就沒事（傷害通常很高，站在外面基本上是死）
-#   場地危害（maps.yml／ascendancy.yml 的 boss 底下寫 hazards:）只能用 slam、zone、orbs：每隔幾秒自己落在某個玩家附近
+#   mark      點名標記（2026-10）：點 count 個玩家，標記（半徑 explode 的紅圈）跟著那個人走，duration 秒後（至少 2.5）在他腳下爆炸，
+#             圈裡的人都挨打——被點名的人要離開隊友
+#   echoes    殘影（2026-10）：Boss 周圍 scatter 格的圈上出現 count 個殘影，每隔 stagger 秒一個殘影朝某個玩家標出一條紅線
+#             （長 reach、左右各 width），delay 秒後（至少 0.8）射穿——看紅線往旁邊走；Boss 站著放到最後一槍
+#   arena     場地收縮（2026-10）：以 Boss 為中心，安全的圈在 duration 秒內從 reach 格縮到 radius 格（至少 4），之後維持到這場打完
+#             （重置才消失）；圈外的人每 interval 秒挨一下。能放的時候優先放（換階段一開始就收縮）
+#   兩招同時放（2026-10）：maps.yml／ascendancy.yml 的 skills 寫 { id: 招式, with: [另一招] }，放這招時另一招一起落下；
+#             with 只能用 slam、zone、orbs、mark（放出去之後自己跑的），最多 3 招
+#   場地危害（maps.yml／ascendancy.yml 的 boss 底下寫 hazards:）只能用 slam、zone、orbs、mark：每隔幾秒自己落在某個玩家附近
 #   Boss 一次只做一件事（2026-10）：場地危害等 Boss 手上這一招放完才落（放完後的 gap 空檔裡就會落），落下之前不出新的招；
 #   齊射還在飛、擴散環還在擴散、光球放出去不到 2 秒也算這一招還沒完（留在地上的區域不算）。放招時 Boss 原版的動作
 #   （近戰、射箭、伏守者的音波）暫停；掛了這些招式的伏守者整場不用原版音波（音爆請用招式）
@@ -57,6 +65,15 @@ settings:
   boss_first_delay: 1.5  # Boss 出現、重置、一陣子沒人之後重新看到人，幾秒才開始用招。2026-10：2.0 → 1.5
   boss_min_telegraph: 1.0  # 2026-10：Boss 招式的前搖至少幾秒（寫得比較短的招照這個；不要有來不及反應的招）
   boss_cooldown: 0.8   # Boss 招式冷卻的倍率（下面寫的 cooldown 再乘這個；場地危害照 maps.yml 的 every，不吃這個）。2026-10：1 → 0.8
+  # 2026-10：有翻滾之後，這幾種 Boss 出招再緊一點——兩招之間的空檔（boss_gap）與招式冷卻再乘這個倍率（1 = 不變，越小越快；0.3～2）。
+  #   前搖（telegraph、boss_min_telegraph）、落下的延遲、彈道速度都沒動：每一招看得到、躲得掉的時間跟以前一樣，只是喘息變短。
+  #   一般地圖 Boss、劇情 Boss 不在這裡，照上面的 boss_gap／boss_cooldown。
+  tempo:
+    final: 0.7         # 終局 Boss
+    uber: 0.6          # 極境
+    trial: 0.7         # 昇華試煉的 Boss
+    vault: 0.7         # 金庫之主（大劫盜）
+    world: 0.7         # 世界 Boss（不定時活動）
   warn_range: 24       # 幾格內的玩家會聽到 Boss 的喊話
   # 換階段（maps.yml 的 phases）：先停 phase_pause 秒不出新招（喊話、召喚、護盾先出來），
   # 這個階段才會用的招（寫 phase: 的）換階段後 phase_unlock 秒才開始用，不會一換階段就接大招。2026-10：2 → 1.5、4 → 3
@@ -73,7 +90,7 @@ skills:
   slam:
     name: 猛擊
     kind: slam
-    damage: 2.0
+    damage: 1.6   # 2026-10：物理重擊 -20%（2 → 1.6；護甲擋不住大傷害，物理招比元素招痛太多）
     cooldown: 8
     range: 7
     telegraph: 0.7
@@ -93,7 +110,7 @@ skills:
   charge:
     name: 衝鋒
     kind: charge
-    damage: 1.8
+    damage: 1.44   # 2026-10：物理重擊 -20%（1.8 → 1.44；護甲擋不住大傷害，物理招比元素招痛太多）
     cooldown: 10
     range: 18
     telegraph: 0.9
@@ -159,7 +176,7 @@ skills:
   sonic_boom:
     name: 音爆
     kind: cone
-    damage: 2.2
+    damage: 1.76   # 2026-10：物理重擊 -20%（2.2 → 1.76；護甲擋不住大傷害，物理招比元素招痛太多）
     cooldown: 10
     range: 14
     telegraph: 1.2
@@ -559,7 +576,7 @@ skills:
     range: 14
     telegraph: 1.3
     count: 2
-    angle: 130           # 2026-10：200 → 130（轉慢一些）
+    angle: 150           # 2026-10：130 → 150（再轉快一些些，約 +15%；之前是從原本的值調慢到 130）
     length: 30           # 2026-10：40 → 30 格
     width: 0.65         # 2026-10：1.2 → 0.65（左右各幾格；雷射太粗）
     duration: 3.5
@@ -601,7 +618,7 @@ skills:
     range: 16
     telegraph: 1.4
     count: 4
-    angle: 90           # 2026-10：135 → 90（轉慢一些）
+    angle: 105           # 2026-10：90 → 105（再轉快一些些，約 +15%；之前是從原本的值調慢到 90）
     length: 30           # 2026-10：40 → 30 格
     width: 0.65         # 2026-10：1.2 → 0.65（左右各幾格；雷射太粗）
     duration: 4
@@ -785,7 +802,7 @@ skills:
     range: 14
     telegraph: 1.3
     count: 3
-    angle: 80           # 2026-10：120 → 80（轉慢一些）
+    angle: 90           # 2026-10：80 → 90（再轉快一些些，約 +15%；之前是從原本的值調慢到 80）
     length: 30           # 2026-10：40 → 30 格
     width: 0.65         # 2026-10：1.1 → 0.65（左右各幾格；雷射太粗）
     duration: 3
@@ -815,7 +832,7 @@ skills:
     range: 16
     telegraph: 1.4
     count: 3
-    angle: 155           # 2026-10：240 → 155（轉慢一些）
+    angle: 180           # 2026-10：155 → 180（再轉快一些些，約 +15%；之前是從原本的值調慢到 155）
     length: 30           # 2026-10：40 → 30 格
     width: 0.65         # 2026-10：1.2 → 0.65（左右各幾格；雷射太粗）
     duration: 4.5
@@ -869,7 +886,7 @@ skills:
   king_grave_slam:
     name: 墓碑猛擊
     kind: slam
-    damage: 2.0
+    damage: 1.6   # 2026-10：物理重擊 -20%（2 → 1.6；護甲擋不住大傷害，物理招比元素招痛太多）
     cooldown: 10
     range: 9
     telegraph: 0.9
@@ -1189,7 +1206,7 @@ skills:
     range: 14
     telegraph: 1.2
     count: 1
-    angle: 175           # 2026-10：270 → 175（轉慢一些）
+    angle: 200           # 2026-10：175 → 200（再轉快一些些，約 +15%；之前是從原本的值調慢到 175）
     length: 30           # 2026-10：40 → 30 格
     width: 0.65         # 2026-10：1.4 → 0.65（左右各幾格；雷射太粗）
     duration: 3.5
@@ -1231,7 +1248,7 @@ skills:
     range: 16
     telegraph: 1.3
     count: 2
-    angle: 195           # 2026-10：300 → 195（轉慢一些）
+    angle: 225           # 2026-10：195 → 225（再轉快一些些，約 +15%；之前是從原本的值調慢到 195）
     length: 30           # 2026-10：40 → 30 格
     width: 0.65         # 2026-10：1.3 → 0.65（左右各幾格；雷射太粗）
     duration: 4
@@ -1444,7 +1461,7 @@ skills:
   warden_star_hammer:
     name: 星痕之錘
     kind: slam
-    damage: 2.4
+    damage: 1.92   # 2026-10：物理重擊 -20%（2.4 → 1.92；護甲擋不住大傷害，物理招比元素招痛太多）
     cooldown: 8
     range: 7
     telegraph: 0.8
@@ -1515,7 +1532,7 @@ skills:
     at: self
     shout: "「這是我最後的火。接好。」"
   # 試煉的特殊機制（一場教一種）：第一試煉火環（缺口很大）、第二試煉毒沼漩渦與孢子球、第三試煉霜誓光束（加上護盾）、
-  # 第四試煉星痕環與星痕審判（全場大招）
+  # 第四試煉星痕環與星痕審判（全場大招），再加上下面「期末考」那一段（2026-10）
   warden_fire_ring:
     name: 爐火環
     kind: ring
@@ -1567,7 +1584,7 @@ skills:
     range: 12
     telegraph: 1.4
     count: 2
-    angle: 100           # 2026-10：150 → 100（轉慢一些）
+    angle: 115           # 2026-10：100 → 115（再轉快一些些，約 +15%；之前是從原本的值調慢到 100）
     length: 30           # 2026-10：40 → 30 格
     width: 0.65         # 2026-10：1.1 → 0.65（左右各幾格；雷射太粗）
     duration: 3
@@ -1604,8 +1621,172 @@ skills:
     scatter: 8
     shout: "「十二門的審判。站對地方的人，才走得過去。」"
 
+  # ---- 第四試煉的期末考（2026-10）：點名、十字光束、吸人加星墜、追人的碎片、十二星衛殘影、
+  #      前三道門的回響（缺口更小、更痛）、場地收縮、沒有缺口的環 ----
+  warden_star_brand:
+    name: 星痕烙印
+    hint: "被點名的人 4 秒後爆炸：離開隊友"
+    kind: mark
+    damage: 2.0
+    type: chaos
+    cooldown: 14
+    range: 30
+    telegraph: 0.8
+    count: 1
+    duration: 4
+    explode: 3.5
+    shout: "「星痕記得你。」"
+  warden_star_cross:
+    name: 星蝕十字
+    hint: "四道光束一起轉：繞著 Boss 跟著光束跑"
+    kind: beam
+    damage: 1.0
+    type: chaos
+    cooldown: 18
+    range: 14
+    telegraph: 1.4
+    count: 4
+    angle: 120
+    length: 26
+    width: 0.65
+    duration: 3.5
+    interval: 0.3
+    shout: "「天穹裂開的那一晚，光是這樣落下來的。」"
+  warden_star_well:
+    name: 墜星引力
+    hint: "往外跑，但別踩進正在落下的紅圈"
+    kind: pull
+    damage: 2.2
+    type: chaos
+    cooldown: 20
+    range: 12
+    telegraph: 1.4
+    radius: 11
+    speed: 0.08
+    duration: 2.6
+    explode: 3.5
+    shout: "「回來。星骸都是往下掉的。」"
+  warden_star_rain:          # 跟著別的招一起落（ascendancy.yml 的 with:），自己不單獨用
+    name: 墜星雨
+    kind: slam
+    damage: 1.5
+    type: chaos
+    cooldown: 20
+    telegraph: 0.6
+    delay: 1.3
+    radius: 2.6
+    count: 5
+    stagger: 0.25
+    scatter: 6
+    at: random
+  warden_heart_shards:
+    name: 天穹之心碎片
+    hint: "碎片追著人跑：大家分散，別擠在一起"
+    kind: orbs
+    damage: 1.3
+    type: chaos
+    cooldown: 18
+    range: 24
+    telegraph: 0.8
+    count: 3
+    speed: 0.14
+    duration: 8
+    size: 0.7
+    explode: 2.5
+  warden_twelve_echoes:
+    name: 十二星衛
+    kind: echoes
+    damage: 1.6
+    type: chaos
+    cooldown: 26
+    range: 20
+    telegraph: 1.5
+    count: 12
+    scatter: 10
+    stagger: 0.45
+    delay: 1.1
+    reach: 24
+    width: 1.1
+    shout: "「十二門的星衛，一個一個來。」"
+  warden_echo_fire_ring:
+    name: 回響・爐火環
+    hint: "第一道門的火環：缺口更小，看清楚綠色"
+    kind: ring
+    damage: 1.6
+    type: fire
+    cooldown: 18
+    range: 14
+    telegraph: 1.2
+    radius: 1.5
+    reach: 16
+    speed: 0.35
+    width: 0.8
+    count: 1
+    gaps: 2
+    gap_angle: 40
+    shout: "「前三道門教你的，還記得嗎？」"
+  warden_echo_bog_vortex:
+    name: 回響・沼底漩渦
+    kind: pull
+    damage: 2.4
+    type: chaos
+    cooldown: 20
+    range: 10
+    telegraph: 1.4
+    radius: 10
+    speed: 0.09
+    duration: 2.5
+    explode: 3.5
+    shout: "「第二道門的沼，你還走得出去嗎？」"
+  warden_echo_frost_beam:
+    name: 回響・霜誓光束
+    hint: "光束加上墜星：繞著跑，閃開紅圈"
+    kind: beam
+    damage: 0.9
+    type: cold
+    cooldown: 18
+    range: 12
+    telegraph: 1.4
+    count: 2
+    angle: 130
+    length: 30
+    width: 0.65
+    duration: 3
+    interval: 0.3
+    slow: 1
+    shout: "「第三道門的誓言，這次還有星星陪你。」"
+  warden_closing_sky:
+    name: 天穹收攏
+    kind: arena
+    damage: 0.35         # 圈外每 0.5 秒一下
+    type: chaos
+    cooldown: 300        # 放一次就維持到這場打完（第四階段一開始就放）
+    range: 30
+    telegraph: 1.5
+    reach: 18
+    radius: 7
+    duration: 12
+    interval: 0.5
+    shout: "「沒有地方可以躲了。到我身邊來。」"
+  warden_starless_ring:
+    name: 無缺星環
+    hint: "沒有缺口：跑出去，或在紅波碰到前翻滾"
+    kind: ring
+    damage: 1.4
+    type: chaos
+    cooldown: 16
+    range: 14
+    telegraph: 1.2
+    radius: 1.5
+    reach: 12
+    speed: 0.3
+    width: 0.6
+    count: 2
+    stagger: 1.2
+    gaps: 0
+
   # ---- 場地危害（maps.yml／ascendancy.yml 的 boss.hazards 用：每隔幾秒自己落在某個玩家附近；等 Boss 這一招放完才落）----
-  # 只能是 slam、zone、orbs；cooldown、range 用不到（照 hazards 的 every）。
+  # 只能是 slam、zone、orbs、mark；cooldown、range 用不到（照 hazards 的 every）。
   hazard_star_meteor:
     name: 墜星
     kind: slam
@@ -1708,7 +1889,7 @@ skills:
     range: 16
     telegraph: 1.3
     count: 4
-    angle: 120           # 2026-10：180 → 120（4 秒轉 120 度，每秒 30 度，轉得慢一些）
+    angle: 140           # 2026-10：120 → 140（再轉快一些些，約 +15%；之前是從原本的值調慢到 120）
     length: 30           # 2026-10：40 → 30 格
     width: 0.65         # 2026-10：1.1 → 0.65（左右各幾格；雷射太粗）
     duration: 4
@@ -1718,7 +1899,7 @@ skills:
     name: 金庫鐵門
     hint: "鐵門往外推：站進綠色的缺口"
     kind: ring
-    damage: 2.0
+    damage: 1.6   # 2026-10：物理重擊 -20%（2 → 1.6；護甲擋不住大傷害，物理招比元素招痛太多）
     cooldown: 15
     range: 16
     telegraph: 1.2       # 2026-10：1.8 → 1.2（有閃避翻滾了：翻滾可以穿過紅波，前搖不用那麼長）
@@ -1894,7 +2075,7 @@ skills:
     name: 地脈追獵
     hint: "一直線往你追過來：往旁邊閃"
     kind: slam
-    damage: 1.9
+    damage: 1.52   # 2026-10：物理重擊 -20%（1.9 → 1.52；護甲擋不住大傷害，物理招比元素招痛太多）
     type: physical
     cooldown: 10
     range: 24
@@ -1949,7 +2130,7 @@ skills:
     range: 18
     telegraph: 1.5
     count: 3
-    angle: 150
+    angle: 170           # 2026-10：150 → 170（再轉快一些些，約 +15%；之前是從原本的值調慢到 150）
     length: 26
     width: 0.7
     duration: 4.5

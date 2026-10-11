@@ -23,6 +23,10 @@
     --red: #ff6a6a;
     --cyan: #55ffff;
     --keystone: #ff77ff;
+    /* 屬性點（跟遊戲裡的天賦樹一樣）：力量紅、敏捷綠、智慧藍 */
+    --str: #f0544f;
+    --dex: #5bd65b;
+    --int: #5a8cff;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
@@ -42,8 +46,10 @@
   #canvas { flex: 1; position: relative; min-width: 0; touch-action: none; cursor: grab; }
   #canvas.dragging { cursor: grabbing; }
   svg { width: 100%; height: 100%; display: block; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  /* 2026-10：整個右側面板一起捲（以前只有最下面的「加起來」能捲，上面的區塊一長就被切掉、滾輪也捲不動） */
   aside { width: 320px; max-width: 42vw; background: var(--panel); border-left: 1px solid var(--line); display: flex;
-    flex-direction: column; min-height: 0; }
+    flex-direction: column; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  aside > section { flex: none; }
   aside section { padding: 12px 14px; border-bottom: 1px solid var(--line); }
   aside h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--gold); }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -54,7 +60,7 @@
   input[type=search] { width: 100%; padding: 7px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg);
     color: var(--text); font: inherit; }
   .hint { color: var(--quiet); font-size: 12px; margin-top: 6px; line-height: 1.5; }
-  #totals { flex: 1; overflow: auto; padding: 12px 14px; }
+  #totals { flex: 1 0 auto; padding: 12px 14px; }
   #totals ul { list-style: none; margin: 0; padding: 0; }
   #totals li { padding: 3px 0; border-bottom: 1px dashed #1f2440; line-height: 1.45; }
   #totals li.keystone { color: var(--keystone); }
@@ -74,6 +80,24 @@
   .label { font-size: 11px; fill: var(--quiet); pointer-events: none; paint-order: stroke; stroke: var(--bg); stroke-width: 3px;
     stroke-linejoin: round; }
   .zoomed-out .label { display: none; }
+  .attrmark { font-size: 10px; font-weight: 700; fill: #101018; pointer-events: none; }
+  .zoomed-out .attrmark { display: none; }
+  /* 屬性點的選單：力量／敏捷／智慧／退掉 */
+  #attrMenu { position: fixed; display: none; z-index: 15; background: rgba(14, 17, 32, 0.98); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); min-width: 168px; }
+  #attrMenu .ttl { font-size: 12px; color: var(--quiet); margin: 0 2px 6px; }
+  #attrMenu .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  #attrMenu button, .attrbulk button { border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 7px 8px;
+    border-radius: 6px; cursor: pointer; font: inherit; }
+  #attrMenu button[data-attr], .attrbulk button[data-attr] { border-color: var(--c); color: var(--c); }
+  #attrMenu button[data-attr].on { background: var(--c); color: #101018; font-weight: 700; }
+  #attrMenu button:hover, .attrbulk button:hover { filter: brightness(1.2); }
+  #attrMenu button:focus-visible, .attrbulk button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+  #attrMenu .drop { width: 100%; margin-top: 6px; border-color: var(--red); color: var(--red); }
+  .attrbulk { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+  .attrbulk button { padding: 5px 6px; font-size: 12px; }
+  #attrCount { margin-top: 6px; }
+  #attrCount b.str { color: var(--str); } #attrCount b.dex { color: var(--dex); } #attrCount b.int { color: var(--int); }
   .node { cursor: pointer; }
   /* 裝備（2026-10） */
   .gear { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
@@ -86,6 +110,35 @@
   dialog#itemDialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0;
     width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 32px); }
   dialog#itemDialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+  /* 昇華預覽（2026-10） */
+  .ascbtns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ascbtns button { border: 1px solid var(--c, var(--line)); background: var(--panel-2); color: var(--c, var(--text)); padding: 6px 10px;
+    border-radius: 6px; cursor: pointer; font: inherit; }
+  .ascbtns button:hover { filter: brightness(1.2); }
+  .ascbtns button.on { background: var(--c); color: #101018; font-weight: 700; }
+  .ascbtns button.other { border-color: var(--line); color: var(--quiet); }
+  dialog#ascDialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0;
+    width: min(880px, 96vw); max-height: 92vh; }
+  dialog#ascDialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+  .asc { padding: 14px 16px 16px; }
+  .asc h3 { margin: 0; font-size: 18px; }
+  .asc .sub { color: var(--quiet); font-size: 12px; margin: 2px 0 10px; }
+  .asc .summary { font-style: italic; color: var(--text); margin: 0 0 10px; }
+  .asc .pick { margin: 0 0 8px; }
+  .asc .pick .lbl { color: var(--quiet); font-size: 12px; margin: 0 0 4px; }
+  .asc .branch { display: flex; align-items: stretch; gap: 0; margin: 0 0 10px; overflow-x: auto; padding-bottom: 2px; }
+  .asc .link { flex: 0 0 18px; align-self: center; height: 2px; background: var(--line); }
+  .asc .card { flex: 1 1 0; min-width: 170px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+    font-size: 13px; line-height: 1.5; }
+  .asc .card .nm { font-weight: 600; }
+  .asc .card .cost { color: var(--quiet); font-size: 12px; }
+  .asc .card .ln { color: var(--text); }
+  .asc .card .note { color: var(--quiet); font-style: italic; font-size: 12px; margin-top: 2px; }
+  .asc .foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; color: var(--quiet); font-size: 12px; }
+  .asc .foot button { border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 6px 14px; border-radius: 6px;
+    cursor: pointer; font: inherit; }
+  select#ringMode { width: 100%; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+    padding: 6px 8px; margin-top: 6px; }
   .dlg { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
   .dlg h3 { margin: 0; font-size: 15px; color: var(--gold); }
   .dlg .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -124,11 +177,15 @@
         <radialGradient id="glowGold"><stop offset="0" stop-color="#f5c04a" stop-opacity="0.55"/><stop offset="1" stop-color="#f5c04a" stop-opacity="0"/></radialGradient>
         <radialGradient id="glowBlue"><stop offset="0" stop-color="#6fa8ff" stop-opacity="0.5"/><stop offset="1" stop-color="#6fa8ff" stop-opacity="0"/></radialGradient>
         <radialGradient id="glowRed"><stop offset="0" stop-color="#ff6a6a" stop-opacity="0.5"/><stop offset="1" stop-color="#ff6a6a" stop-opacity="0"/></radialGradient>
+        <radialGradient id="glowStr"><stop offset="0" stop-color="#f0544f" stop-opacity="0.55"/><stop offset="1" stop-color="#f0544f" stop-opacity="0"/></radialGradient>
+        <radialGradient id="glowDex"><stop offset="0" stop-color="#5bd65b" stop-opacity="0.5"/><stop offset="1" stop-color="#5bd65b" stop-opacity="0"/></radialGradient>
+        <radialGradient id="glowInt"><stop offset="0" stop-color="#5a8cff" stop-opacity="0.55"/><stop offset="1" stop-color="#5a8cff" stop-opacity="0"/></radialGradient>
       </defs>
       <g id="world">
         <g id="stars"></g>
         <g id="edges"></g>
         <g id="glows"></g>
+        <g id="rings"></g>
         <g id="nodes"></g>
         <g id="labels"></g>
       </g>
@@ -150,9 +207,33 @@
         <button id="reset">全部重來</button>
       </div>
       <textarea id="codebox" rows="2" readonly></textarea>
+      <div class="hint" id="attrCount"></div>
+      <div class="attrbulk" id="attrBulk" role="group" aria-label="把已配的屬性點全部改成同一種屬性">
+        <button type="button" data-attr="str" style="--c:var(--str)">全改力量</button>
+        <button type="button" data-attr="dex" style="--c:var(--dex)">全改敏捷</button>
+        <button type="button" data-attr="int" style="--c:var(--int)">全改智慧</button>
+      </div>
       <div class="hint">點節點：配到那裡（自動走最短的路）。點已配的節點：退掉（連帶退掉因此斷線的）。<br>
-        <span style="color:#c77dff">六角形</span>是珠寶孔：配了之後在遊戲裡把珠寶放進去（這裡只能規劃孔位）。<br>
+        <b>屬性點</b>（+5 任一屬性）配了之後有顏色：<span style="color:var(--str)">紅＝力量</span>、<span style="color:var(--dex)">綠＝敏捷</span>、<span style="color:var(--int)">藍＝智慧</span>；
+        點已配的屬性點可以改屬性或退掉。沒選的照職業的主屬性，選好的會跟著代碼帶進遊戲。<br>
+        <span style="color:#c77dff">六角形</span>是珠寶孔：配了之後在遊戲裡把珠寶放進去（這裡只能規劃孔位）。
+        滑到珠寶孔會畫出<b>遺時星晶的範圍</b>（基本 2 格、「更大」3 格、「巨大」4 格），並列出範圍裡有幾個小點、核心。<br>
         複製代碼後，遊戲裡打 <b>/tree import</b> 貼上，或在天賦總覽按「匯入規劃代碼」。</div>
+    </section>
+    <section>
+      <h2>珠寶孔的範圍</h2>
+      <select id="ringMode" aria-label="珠寶孔的範圍怎麼顯示">
+        <option value="0">滑到珠寶孔才顯示（三圈都畫）</option>
+        <option value="2">已配的珠寶孔一直顯示：基本 2 格</option>
+        <option value="3">已配的珠寶孔一直顯示：更大 3 格</option>
+        <option value="4">已配的珠寶孔一直顯示：巨大 4 格</option>
+      </select>
+      <div class="hint">遺時星晶放在珠寶孔裡，範圍內<b>已配置</b>的每個小點都多給一次它的詞綴。</div>
+    </section>
+    <section id="ascSection" hidden>
+      <h2>昇華預覽</h2>
+      <div class="ascbtns" id="ascButtons"></div>
+      <div class="hint">看這個職業能走的昇華職業與每個昇華天賦的效果（只能看；昇華在遊戲裡完成試煉後才選，不在規劃代碼裡）。</div>
     </section>
     <section>
       <h2>搜尋</h2>
@@ -169,7 +250,17 @@
   </aside>
 </main>
 <dialog id="itemDialog"><div class="dlg" id="dlg"></div></dialog>
+<dialog id="ascDialog" aria-label="昇華預覽"><div class="asc" id="asc"></div></dialog>
 <div id="tip"></div>
+<div id="attrMenu" role="dialog" aria-label="屬性點">
+  <div class="ttl" id="attrMenuTitle"></div>
+  <div class="row3">
+    <button type="button" data-attr="str" style="--c:var(--str)">力量</button>
+    <button type="button" data-attr="dex" style="--c:var(--dex)">敏捷</button>
+    <button type="button" data-attr="int" style="--c:var(--int)">智慧</button>
+  </div>
+  <button type="button" class="drop" id="attrDrop">退掉這一點</button>
+</div>
 <div id="toast"></div>
 <script>
 "use strict";
@@ -179,7 +270,7 @@
   const world = document.getElementById("world");
   const layers = {
     stars: document.getElementById("stars"), edges: document.getElementById("edges"), glows: document.getElementById("glows"),
-    nodes: document.getElementById("nodes"), labels: document.getElementById("labels")
+    rings: document.getElementById("rings"), nodes: document.getElementById("nodes"), labels: document.getElementById("labels")
   };
   const tip = document.getElementById("tip");
   const toast = document.getElementById("toast");
@@ -192,18 +283,45 @@
   let classId = null;
   let start = null;
   let allocated = new Set();
+  /** 屬性點選的屬性（2026-10）：節點代號 → "str"／"dex"／"int"；沒在裡面的照職業的主屬性。只留已配的。 */
+  let attrs = new Map();
+  const ATTR_KEYS = ["str", "dex", "int"];
+  const ATTR_NAME = { str: "力量", dex: "敏捷", int: "智慧" };
+  const ATTR_MARK = { str: "力", dex: "敏", int: "智" };
+  const ATTR_COLOR = { str: "#f0544f", dex: "#5bd65b", int: "#5a8cff" };
+  const ATTR_GLOW = { str: "url(#glowStr)", dex: "url(#glowDex)", int: "url(#glowInt)" };
   let hover = null;
   let preview = { add: new Set(), remove: new Set() };
   let search = new Set();
   const view = { x: 0, y: 0, scale: 1 };
 
   // ---- 資料 ----
-  fetch("tree/data.json", { cache: "no-cache" }).then(r => r.json()).then(json => {
+  // 2026-10：頁面是伺服器哪一次啟動送出來的（伺服器填進來）。跟資料的代號對不上＝這個分頁在伺服器更新前就開著，
+  // 舊的頁面程式配新的資料會有對不上的地方（屬性點認不出來之類），直接提醒重新整理。
+  const PAGE_BUILD = "__BUILD__";
+  function checkBuild(serverBuild) {
+    if (!serverBuild || PAGE_BUILD.indexOf("__") === 0 || serverBuild === PAGE_BUILD || document.getElementById("staleBar")) return;
+    const bar = document.createElement("div");
+    bar.id = "staleBar";
+    bar.setAttribute("role", "alert");
+    bar.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:1000;background:#5a3d00;color:#ffe9b0;padding:10px 16px;"
+      + "text-align:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.5)";
+    bar.append("伺服器更新過了，這個頁面還是舊的（有些功能會對不上）。 ");
+    const reload = document.createElement("button");
+    reload.type = "button";
+    reload.textContent = "重新整理";
+    reload.style.cssText = "margin-left:8px;padding:4px 12px;cursor:pointer";
+    reload.addEventListener("click", () => location.reload());
+    bar.append(reload);
+    document.body.append(bar);
+  }
+  fetch("tree/data.json", { cache: "no-cache" }).then(r => { checkBuild(r.headers.get("X-Build")); return r.json(); }).then(json => {
     if (json.error) { document.getElementById("points").textContent = json.error; return; }
     data = json;
     order = data.nodes;
     for (const node of order) { byId.set(node.id, node); byPos.set(node.x + "," + node.y, node); }
     buildClasses();
+    buildAscendancyButtons();
     drawStars();
     renderGear();
     const fromHash = decodeCode(hashText());
@@ -649,14 +767,29 @@
     let binary = "";
     for (let i = 0; i < length; i++) binary += String.fromCharCode(bytes[i]);
     const b64 = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-    return data.code + "." + data.version + "." + classId + "." + b64;
+    return data.code + "." + data.version + "." + classId + "." + b64 + attrSuffix();
+  }
+  /** 屬性點選的屬性：照節點順序，每個已配的屬性點 2 個位元（0 沒選、1 力量、2 敏捷、3 智慧）；都沒選就不接這一段。 */
+  function attrSuffix() {
+    const values = [];
+    for (const node of order) {
+      if (node.type === "start" || !allocated.has(node.id) || !node.attr) continue;
+      values.push(ATTR_KEYS.indexOf(attrs.get(node.id)) + 1);
+    }
+    let length = 0;
+    const bytes = new Uint8Array(Math.ceil(values.length / 4));
+    values.forEach((v, k) => { if (v) { bytes[k >> 2] |= v << ((k & 3) * 2); length = (k >> 2) + 1; } });
+    if (!length) return "";
+    let binary = "";
+    for (let i = 0; i < length; i++) binary += String.fromCharCode(bytes[i]);
+    return "." + btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
   function decodeCode(text) {
     if (!text || !data) return null;
     let body = text.includes("#") ? text.slice(text.lastIndexOf("#") + 1) : text.trim();
     if (body.includes("~")) body = body.slice(0, body.indexOf("~")); // ~ 後面是裝備（只有網頁用）
     const parts = body.split(".");
-    if (parts.length !== 4 || parts[0] !== data.code) return null;
+    if ((parts.length !== 4 && parts.length !== 5) || parts[0] !== data.code) return null;
     if (Number(parts[1]) !== data.version) { flash("這是舊版天賦樹的代碼"); return null; }
     if (!data.classes.some(c => c.id === parts[2])) return null;
     let binary;
@@ -668,12 +801,54 @@
         if (order[i].type !== "start") nodes.add(order[i].id);
       }
     }
-    return { classId: parts[2], nodes };
+    const picked = new Map();
+    if (parts.length === 5) {
+      let bits;
+      try { bits = atob(parts[4].replace(/-/g, "+").replace(/_/g, "/")); } catch (e) { return null; }
+      let k = 0;
+      for (const node of order) {
+        if (node.type === "start" || !nodes.has(node.id) || !node.attr) continue;
+        const v = (k >> 2) < bits.length ? (bits.charCodeAt(k >> 2) >> ((k & 3) * 2)) & 3 : 0;
+        if (v) picked.set(node.id, ATTR_KEYS[v - 1]);
+        k++;
+      }
+    }
+    return { classId: parts[2], nodes, attrs: picked };
   }
   /** 套用解開的代碼：只留連得到起點的（被改過的代碼也不會畫出斷掉的樹）。 */
   function load(decoded) {
     setClass(decoded.classId, false);
     allocated = reachable(decoded.nodes);
+    attrs = new Map([...(decoded.attrs || [])].filter(([id]) => allocated.has(id)));
+  }
+
+  // ---- 屬性點（2026-10）----
+  const classInfo = () => data.classes.find(c => c.id === classId);
+  /** 這個屬性點算哪個屬性：選過的照選的，沒選的照職業的主屬性（跟遊戲一樣）。 */
+  function attrOf(node) {
+    return attrs.get(node.id) || (classInfo() && classInfo().attr) || "str";
+  }
+  /** 節點的說明行：屬性點的「+5 任一屬性…」換成現在算的那個屬性。 */
+  function linesOf(node) {
+    if (!node.attr) return node.lines;
+    return node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " " + ATTR_NAME[attrOf(node)] : l);
+  }
+  /**
+   * 滑過去看到的說明（2026-10）：資料檔的說明是寫給遊戲裡看的（「左鍵切換」「把背包裡的珠寶放進去」），
+   * 網頁上做不到的換成這裡的講法。
+   */
+  function tipLines(node) {
+    if (node.type === "socket") {
+      return ["配了這一點，遊戲裡就能把珠寶放進這個孔，珠寶的詞綴直接加在角色身上。", "規劃器只規劃孔位：這裡不能放珠寶。"];
+    }
+    if (node.attr && !allocated.has(node.id)) {
+      return node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " 任一屬性（配了之後點它選力量／敏捷／智慧）" : l);
+    }
+    return linesOf(node);
+  }
+  /** 退掉的節點順便把選的屬性忘掉。 */
+  function pruneAttrs() {
+    for (const id of [...attrs.keys()]) if (!allocated.has(id)) attrs.delete(id);
   }
 
   // ---- 加總（跟遊戲的 PassiveSummary 一樣）----
@@ -682,7 +857,7 @@
     const lines = [];
     for (const node of nodes) {
       if (node.type === "socket") { sockets++; continue; } // 珠寶孔的說明不加總；最後列一行數量
-      lines.push(...node.lines);
+      lines.push(...linesOf(node)); // 屬性點照選的屬性加（+5 力量、+5 敏捷…）
     }
     const out = sumLines(lines);
     if (sockets) out.push("珠寶孔 ×" + sockets + "（在遊戲裡放珠寶）");
@@ -753,9 +928,118 @@
     const info = data.classes.find(c => c.id === id);
     start = byId.get(info.start);
     allocated = new Set();
+    attrs = new Map();
     for (const b of document.querySelectorAll("#classes button")) b.classList.toggle("active", b.dataset.id === id);
+    buildAscendancyButtons();
     if (recenter) { render(); centerOn(start, view.scale); }
   }
+
+  // ---- 昇華預覽（2026-10）：只看，不進代碼 ----
+  function ascendanciesOf(id) { return (data.ascendancies || []).filter(a => a["class"] === id); }
+  function className(id) { const c = data.classes.find(x => x.id === id); return c ? c.name : id; }
+  function buildAscendancyButtons() {
+    const section = document.getElementById("ascSection");
+    const box = document.getElementById("ascButtons");
+    if (!data || !(data.ascendancies || []).length) { section.hidden = true; return; }
+    section.hidden = false;
+    box.replaceChildren();
+    const mine = ascendanciesOf(classId);
+    for (const a of mine) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = a.name;
+      b.style.setProperty("--c", a.color);
+      b.addEventListener("click", () => openAscendancy(a.id));
+      box.appendChild(b);
+    }
+    const all = document.createElement("button");
+    all.type = "button";
+    all.className = "other";
+    all.textContent = mine.length ? "其他職業的…" : "看全部職業的昇華";
+    all.addEventListener("click", () => openAscendancy((mine[0] || data.ascendancies[0]).id));
+    box.appendChild(all);
+  }
+  const ascDialog = document.getElementById("ascDialog");
+  function openAscendancy(id) {
+    renderAscendancy(id);
+    if (!ascDialog.open) { if (typeof ascDialog.showModal === "function") ascDialog.showModal(); else ascDialog.setAttribute("open", ""); }
+  }
+  function closeAscendancy() { if (typeof ascDialog.close === "function") ascDialog.close(); else ascDialog.removeAttribute("open"); }
+  ascDialog.addEventListener("click", e => { if (e.target === ascDialog) closeAscendancy(); }); // 點外面關掉
+  function renderAscendancy(id) {
+    const a = data.ascendancies.find(x => x.id === id) || data.ascendancies[0];
+    const box = document.getElementById("asc");
+    let count = 0, cost = 0;
+    for (const branch of a.branches) for (const n of branch) { count++; cost += n.cost; }
+    const classes = data.classes.filter(c => ascendanciesOf(c.id).length);
+    let html = "<div class='pick'><div class='lbl'>職業</div><div class='ascbtns'>" + classes.map(c =>
+      "<button type='button' data-class='" + escapeHtml(c.id) + "' style='--c:" + escapeHtml(c.color) + "' class='" + (c.id === a["class"] ? "on" : "") + "'>"
+      + escapeHtml(c.name) + "</button>").join("") + "</div></div>";
+    html += "<div class='pick'><div class='lbl'>" + escapeHtml(className(a["class"])) + "的昇華職業</div><div class='ascbtns'>" + ascendanciesOf(a["class"]).map(x =>
+      "<button type='button' data-asc='" + escapeHtml(x.id) + "' style='--c:" + escapeHtml(x.color) + "' class='" + (x.id === a.id ? "on" : "") + "'>"
+      + escapeHtml(x.name) + "</button>").join("") + "</div></div>";
+    html += "<h3 style='color:" + escapeHtml(a.color) + "'>" + escapeHtml(a.name) + "</h3>";
+    html += "<div class='sub'>" + escapeHtml(className(a["class"])) + "　全部 " + count + " 個天賦、" + cost + " 點"
+      + (data.ascendancyPoints ? "；昇華點最多 " + data.ascendancyPoints + " 點" : "") + "　每條分支要從第一個配起</div>";
+    if (a.summary) html += "<p class='summary'>" + escapeHtml(a.summary) + "</p>";
+    for (const branch of a.branches) {
+      html += "<div class='branch'>" + branch.map((n, i) => (i ? "<div class='link'></div>" : "") + "<div class='card'><div class='nm' style='color:"
+        + escapeHtml(a.color) + "'>" + escapeHtml(n.name) + " <span class='cost'>" + n.cost + " 點</span></div>"
+        + n.lines.map(l => "<div class='ln'>" + escapeHtml(l) + "</div>").join("")
+        + (n.note ? "<div class='note'>" + escapeHtml(n.note) + "</div>" : "") + "</div>").join("") + "</div>";
+    }
+    html += "<div class='foot'><span>只能看：昇華在遊戲裡完成試煉後才選，選了不能換。</span><button type='button' id='ascClose'>關閉</button></div>";
+    box.innerHTML = html;
+    for (const b of box.querySelectorAll("button[data-class]")) b.addEventListener("click", () => renderAscendancy(ascendanciesOf(b.dataset["class"])[0].id));
+    for (const b of box.querySelectorAll("button[data-asc]")) b.addEventListener("click", () => renderAscendancy(b.dataset.asc));
+    document.getElementById("ascClose").addEventListener("click", closeAscendancy);
+    box.scrollTop = 0;
+  }
+
+  // ---- 珠寶孔的範圍（2026-10，遺時星晶）：跟遊戲一樣，距離 ≤ 半徑 + 0.5 格的節點算在範圍內 ----
+  const RING_COLOR = ["#c77dff", "#7fb3ff", "#7fe0c8"];
+  const RING_NAME = ["基本", "更大", "巨大"];
+  let ringMode = 0;
+  function jewelRadii() { return data && data.jewelRadii ? data.jewelRadii : [2, 3, 4]; }
+  function inRadius(socket, radius) {
+    const limit = (radius + 0.5) * (radius + 0.5);
+    const out = [];
+    for (const n of order) {
+      if (n === socket) continue;
+      const dx = n.x - socket.x, dy = n.y - socket.y;
+      if (dx * dx + dy * dy <= limit) out.push(n);
+    }
+    return out;
+  }
+  function ringCounts(socket, radius) {
+    const c = { small: 0, smallOwned: 0, notable: 0, notableOwned: 0 };
+    for (const n of inRadius(socket, radius)) {
+      if (n.type === "small") { c.small++; if (allocated.has(n.id)) c.smallOwned++; }
+      else if (n.type === "notable") { c.notable++; if (allocated.has(n.id)) c.notableOwned++; }
+    }
+    return c;
+  }
+  function drawRing(socket, index, labelled) {
+    const radius = jewelRadii()[index];
+    const r = (radius + 0.5) * SPACING, cx = socket.x * SPACING, cy = socket.y * SPACING;
+    el("circle", { cx, cy, r, fill: index === 0 ? "rgba(199,125,255,0.07)" : "none", stroke: RING_COLOR[index], "stroke-width": 2,
+      "stroke-dasharray": index === 0 ? "none" : "8 6", opacity: 0.85, "pointer-events": "none" }, layers.rings);
+    if (labelled) {
+      const t = el("text", { x: cx, y: cy - r - 6, "text-anchor": "middle", class: "label", "pointer-events": "none" }, layers.rings);
+      t.textContent = RING_NAME[index] + " " + radius + " 格";
+      t.setAttribute("style", "fill:" + RING_COLOR[index]);
+    }
+  }
+  function drawRings() {
+    layers.rings.replaceChildren();
+    if (!data) return;
+    if (ringMode > 0) {
+      const index = Math.max(0, jewelRadii().indexOf(ringMode));
+      for (const n of order) if (n.type === "socket" && allocated.has(n.id)) drawRing(n, index, false);
+    }
+    if (hover && hover.type === "socket") for (let i = jewelRadii().length - 1; i >= 0; i--) drawRing(hover, i, true);
+  }
+  document.getElementById("ringMode").addEventListener("change", e => { ringMode = Number(e.target.value) || 0; drawRings(); });
 
   function nodeState(node) {
     if (owned(node)) return preview.remove.has(node.id) ? "remove" : "owned";
@@ -814,13 +1098,19 @@
     }
     for (const node of order) {
       const state = node.type === "start" && node.id !== start.id ? "locked" : nodeState(node);
+      // 屬性點：配了的照選的屬性上色（力量紅、敏捷綠、智慧藍），中間寫一個字（放大才看得到）
+      const attr = node.attr && state === "owned" ? attrOf(node) : null;
       if (state === "owned" || state === "path" || state === "remove") {
         el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 20 : 30,
-          fill: state === "owned" ? "url(#glowGold)" : state === "path" ? "url(#glowBlue)" : "url(#glowRed)" }, layers.glows);
+          fill: attr ? ATTR_GLOW[attr] : state === "owned" ? "url(#glowGold)" : state === "path" ? "url(#glowBlue)" : "url(#glowRed)" }, layers.glows);
       }
       const g = el("g", { class: "node" }, layers.nodes);
       g.dataset.id = node.id;
-      shape(node, g, NODE_FILL[state]);
+      shape(node, g, attr ? ATTR_COLOR[attr] : NODE_FILL[state]);
+      if (attr) {
+        const mark = el("text", { x: node.x * SPACING, y: node.y * SPACING + 3.6, "text-anchor": "middle", class: "attrmark" }, g);
+        mark.textContent = ATTR_MARK[attr];
+      }
       if (search.has(node.id)) {
         el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 15 : 26, fill: "none",
           stroke: "#55ffff", "stroke-width": 2.5 }, g);
@@ -832,6 +1122,7 @@
         if (node.type === "socket") t.setAttribute("style", "fill:#c77dff");
       }
     }
+    drawRings();
     updatePanel();
   }
 
@@ -848,6 +1139,15 @@
     const list = document.getElementById("totalList");
     list.replaceChildren();
     const nodes = order.filter(n => allocated.has(n.id)); // 照樹的順序加總，跟遊戲裡的天賦總覽一樣
+    // 屬性點各配了幾個、加多少
+    const attrTotal = { str: 0, dex: 0, int: 0 };
+    const attrNodes = { str: 0, dex: 0, int: 0 };
+    for (const n of nodes) if (n.attr) { attrTotal[attrOf(n)] += n.attr; attrNodes[attrOf(n)]++; }
+    const anyAttr = attrNodes.str + attrNodes.dex + attrNodes.int > 0;
+    document.getElementById("attrCount").innerHTML = anyAttr
+      ? "屬性點：" + ATTR_KEYS.map(k => "<b class='" + k + "'>" + ATTR_NAME[k] + " +" + attrTotal[k] + "</b>（" + attrNodes[k] + " 個）").join("　")
+      : "還沒有配屬性點";
+    document.getElementById("attrBulk").style.display = anyAttr ? "" : "none";
     const lines = summarize(nodes);
     if (!lines.length) {
       const li = document.createElement("li"); li.className = "empty"; li.textContent = "還沒有配任何天賦"; list.appendChild(li);
@@ -924,7 +1224,7 @@
     }
     if (drag) {
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-      if (!drag.moved && Math.hypot(dx, dy) > 5) { drag.moved = true; document.getElementById("canvas").classList.add("dragging"); hideTip(); }
+      if (!drag.moved && Math.hypot(dx, dy) > 5) { drag.moved = true; document.getElementById("canvas").classList.add("dragging"); hideTip(); closeAttrMenu(); }
       if (drag.moved) { view.x = drag.vx + dx; view.y = drag.vy + dy; applyView(); return; }
     }
     hoverAt(e);
@@ -955,7 +1255,8 @@
     hover = node;
     preview = { add: new Set(), remove: new Set() };
     if (node && node.type !== "start") {
-      if (allocated.has(node.id)) preview.remove = removal(node);
+      // 已配的屬性點點下去是開選單（改屬性或退掉），滑過去不預覽「退掉」，顏色才看得到
+      if (allocated.has(node.id)) { if (!node.attr) preview.remove = removal(node); }
       else preview.add = new Set(pathTo(node).map(n => n.id));
     }
     render();
@@ -969,7 +1270,7 @@
       return;
     }
     // 觸控沒有「滑過去先看」：會動到不只一點時，第一下先畫出路線，再點一下才配／退
-    if (e.pointerType !== "mouse" && armed !== node.id) {
+    if (e.pointerType !== "mouse" && armed !== node.id && !(allocated.has(node.id) && node.attr)) {
       const many = allocated.has(node.id) ? removal(node).size > 1 : pathTo(node).length > 1;
       if (many) {
         armed = node.id;
@@ -980,8 +1281,14 @@
       }
     }
     armed = null;
+    if (allocated.has(node.id) && node.attr) {
+      // 已配的屬性點：跳出選單（力量／敏捷／智慧，或退掉）
+      openAttrMenu(node, e.clientX, e.clientY);
+      return;
+    }
     if (allocated.has(node.id)) {
       for (const id of removal(node)) allocated.delete(id);
+      pruneAttrs();
     } else {
       const path = pathTo(node);
       if (!path.length) { flash("走不到那裡"); return; }
@@ -992,12 +1299,80 @@
     showTip(node, e.clientX, e.clientY);
   }
 
+  // ---- 屬性點的選單 ----
+  const attrMenu = document.getElementById("attrMenu");
+  let attrMenuNode = null;
+  function openAttrMenu(node, x, y) {
+    attrMenuNode = node;
+    hideTip();
+    const current = attrOf(node);
+    const cascade = removal(node).size;
+    document.getElementById("attrMenuTitle").textContent = "屬性點 +" + node.attr + "：現在是" + ATTR_NAME[current]
+      + (attrs.has(node.id) ? "" : "（職業主屬性）");
+    for (const b of attrMenu.querySelectorAll("button[data-attr]")) {
+      const on = b.dataset.attr === current;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+    document.getElementById("attrDrop").textContent = cascade > 1 ? "退掉這一點（連帶 " + (cascade - 1) + " 點斷線的）" : "退掉這一點";
+    attrMenu.style.display = "block";
+    const w = attrMenu.offsetWidth, h = attrMenu.offsetHeight;
+    attrMenu.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x + 12)) + "px";
+    attrMenu.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, y + 12)) + "px";
+    const focus = attrMenu.querySelector("button.on") || attrMenu.querySelector("button");
+    if (focus) focus.focus({ preventScroll: true });
+  }
+  function closeAttrMenu() {
+    if (!attrMenuNode) return;
+    attrMenuNode = null;
+    attrMenu.style.display = "none";
+  }
+  for (const b of attrMenu.querySelectorAll("button[data-attr]")) {
+    b.addEventListener("click", () => {
+      const node = attrMenuNode;
+      if (!node || !allocated.has(node.id)) { closeAttrMenu(); return; }
+      attrs.set(node.id, b.dataset.attr);
+      closeAttrMenu();
+      hover = null;
+      preview = { add: new Set(), remove: new Set() };
+      render();
+      flash("這個屬性點改成 +" + node.attr + " " + ATTR_NAME[b.dataset.attr]);
+    });
+  }
+  document.getElementById("attrDrop").addEventListener("click", () => {
+    const node = attrMenuNode;
+    closeAttrMenu();
+    if (!node || !allocated.has(node.id)) return;
+    for (const id of removal(node)) allocated.delete(id);
+    pruneAttrs();
+    hover = null;
+    preview = { add: new Set(), remove: new Set() };
+    render();
+  });
+  // 點別的地方、按 Esc、拖動或縮放畫面：選單收起來
+  document.addEventListener("pointerdown", e => { if (attrMenuNode && !attrMenu.contains(e.target)) closeAttrMenu(); }, true);
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeAttrMenu(); });
+  svg.addEventListener("wheel", closeAttrMenu, { passive: true });
+  for (const b of document.querySelectorAll("#attrBulk button[data-attr]")) {
+    b.addEventListener("click", () => {
+      let count = 0;
+      for (const node of order) if (node.attr && allocated.has(node.id)) { attrs.set(node.id, b.dataset.attr); count++; }
+      if (!count) { flash("還沒有配屬性點"); return; }
+      closeAttrMenu();
+      render();
+      flash(count + " 個屬性點全部改成" + ATTR_NAME[b.dataset.attr]);
+    });
+  }
+
   function showTip(node, x, y) {
     const typeName = { small: "小點", notable: "核心", keystone: "基石", start: "起點", socket: "珠寶孔" }[node.type] || node.type;
     let action = "";
     const verb = armed === node.id ? "再點一下" : "點一下";
     if (node.type === "start") action = node.id === start.id ? "你的職業起點" : "別的職業的起點";
-    else if (allocated.has(node.id)) {
+    else if (allocated.has(node.id) && node.attr) {
+      action = "<span style='color:" + ATTR_COLOR[attrOf(node)] + "'>現在算" + ATTR_NAME[attrOf(node)] + "</span>"
+        + "<span style='color:var(--quiet)'>　點一下：改屬性或退掉</span>";
+    } else if (allocated.has(node.id)) {
       const n = preview.remove.size;
       action = "<span style='color:var(--red)'>" + verb + "退掉" + (n > 1 ? "（連帶 " + (n - 1) + " 點斷線的）" : "") + "</span>";
     } else {
@@ -1009,17 +1384,29 @@
           summarize(path).slice(0, 8).map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("");
       }
     }
-    const color = node.type === "keystone" ? "var(--keystone)" : node.type === "notable" ? "var(--gold)" : node.type === "socket" ? "#c77dff" : "var(--text)";
+    const color = node.type === "keystone" ? "var(--keystone)" : node.type === "notable" ? "var(--gold)" : node.type === "socket" ? "#c77dff"
+      : node.attr && allocated.has(node.id) ? ATTR_COLOR[attrOf(node)] : "var(--text)";
     tip.style.padding = "";
     tip.style.border = "";
     tip.innerHTML = "<div class='name' style='color:" + color + "'>" + escapeHtml(node.name) + "</div>" +
       "<div class='type'>" + typeName + "</div>" +
-      node.lines.map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("") +
+      tipLines(node).map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("") +
+      (node.type === "socket" ? socketRangeHtml(node) : "") +
       "<div class='action'>" + action + "</div>";
     tip.style.display = "block";
     const w = tip.offsetWidth, h = tip.offsetHeight;
     tip.style.left = Math.min(window.innerWidth - w - 8, x + 16) + "px";
     tip.style.top = Math.min(window.innerHeight - h - 8, y + 16) + "px";
+  }
+  /** 珠寶孔：遺時星晶三種範圍裡各有幾個小點、核心（括號裡是已經配了的）。 */
+  function socketRangeHtml(node) {
+    let html = "<div style='margin-top:6px;color:var(--quiet)'>遺時星晶的範圍（已配／全部）：</div>";
+    jewelRadii().forEach((radius, i) => {
+      const c = ringCounts(node, radius);
+      html += "<div class='line'><span style='color:" + RING_COLOR[i] + "'>" + RING_NAME[i] + " " + radius + " 格</span>　小點 "
+        + c.smallOwned + "／" + c.small + "　核心 " + c.notableOwned + "／" + c.notable + "</div>";
+    });
+    return html + "<div style='color:var(--quiet);font-size:12px'>範圍內已配的每個小點都多給一次珠寶的詞綴</div>";
   }
   function hideTip() { tip.style.display = "none"; }
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -1060,6 +1447,8 @@
   document.getElementById("reset").addEventListener("click", () => {
     if (allocated.size && !confirm("清掉目前的規劃？")) return;
     allocated = new Set();
+    attrs = new Map();
+    closeAttrMenu();
     render();
   });
   document.getElementById("fit").addEventListener("click", fit);
@@ -1076,7 +1465,9 @@
   window.addEventListener("hashchange", () => {
     if (items) { const next = gearText(hashText()); if (next !== gearSuffix().slice(1)) { gear = decodeGear(next); renderGear(); renderGearTotals(); } }
     const decoded = decodeCode(hashText());
-    if (decoded && (decoded.classId !== classId || decoded.nodes.size !== allocated.size || [...decoded.nodes].some(id => !allocated.has(id)))) {
+    const sameAttrs = decoded && decoded.attrs.size === attrs.size && [...decoded.attrs].every(([id, v]) => attrs.get(id) === v);
+    if (decoded && (decoded.classId !== classId || decoded.nodes.size !== allocated.size || [...decoded.nodes].some(id => !allocated.has(id)) || !sameAttrs)) {
+      closeAttrMenu();
       load(decoded);
       render();
     }

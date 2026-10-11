@@ -119,4 +119,57 @@ class CombatMeterTest {
         assertEquals(List.of(CombatMeter.TITLE, " 輸出", " 承受", "", "任務", " 第一步"), lines);
         assertEquals(quest, tw.exilecore.gui.SidebarLayout.compose(List.of(), List.of(), quest, List.of()), "沒在戰鬥：跟以前一樣");
     }
+
+    @org.junit.jupiter.api.Test
+    void dealtIsSplitBySkillAndDamageType() {
+        final CombatMeter meter = new CombatMeter();
+        // 兩秒內：瘴苞雨打兩下（物理＋火焰）、召喚骸骨兵打一下、點燃跳一次、一下沒有名字的
+        meter.dealt(0, "瘴苞雨", java.util.Map.of(tw.exilecore.stats.DamageType.PHYSICAL, 600.0, tw.exilecore.stats.DamageType.FIRE, 200.0));
+        meter.dealt(20, "瘴苞雨", java.util.Map.of(tw.exilecore.stats.DamageType.PHYSICAL, 600.0, tw.exilecore.stats.DamageType.FIRE, 200.0));
+        meter.dealt(25, "召喚骸骨兵", java.util.Map.of(tw.exilecore.stats.DamageType.PHYSICAL, 300.0));
+        meter.dealtDot(30, tw.exilecore.ailment.AilmentType.IGNITE, tw.exilecore.stats.DamageType.FIRE, 100.0);
+        meter.dealt(35, java.util.Map.of(tw.exilecore.stats.DamageType.COLD, 50.0));
+        final CombatMeter.Snapshot snapshot = meter.snapshot(39);
+        org.junit.jupiter.api.Assertions.assertEquals(2.0, snapshot.seconds(), 1e-9);
+        org.junit.jupiter.api.Assertions.assertEquals(2050 / 2.0, snapshot.dps(), 1e-9, "總數照舊：全部加起來");
+        org.junit.jupiter.api.Assertions.assertEquals(3, snapshot.skills().size(), "沒有名字的那一下不列");
+        org.junit.jupiter.api.Assertions.assertEquals("瘴苞雨", snapshot.skills().get(0).name());
+        org.junit.jupiter.api.Assertions.assertEquals(800.0, snapshot.skills().get(0).total(), 1e-9);
+        org.junit.jupiter.api.Assertions.assertEquals(600.0, snapshot.skills().get(0).amounts()[tw.exilecore.stats.DamageType.PHYSICAL.ordinal()], 1e-9);
+        org.junit.jupiter.api.Assertions.assertEquals(200.0, snapshot.skills().get(0).amounts()[tw.exilecore.stats.DamageType.FIRE.ordinal()], 1e-9);
+        org.junit.jupiter.api.Assertions.assertEquals("召喚骸骨兵", snapshot.skills().get(1).name());
+        org.junit.jupiter.api.Assertions.assertEquals(CombatMeter.dotName(tw.exilecore.ailment.AilmentType.IGNITE), snapshot.skills().get(2).name());
+
+        // 側欄：技能明細一個技能兩行（名字＋佔比、類型），沒開就是原本的樣子
+        final java.util.List<String> detail = CombatMeter.lines(snapshot, true);
+        org.junit.jupiter.api.Assertions.assertTrue(detail.get(2).contains("瘴苞雨") && detail.get(2).contains("800") && detail.get(2).contains("78%"), detail.get(2));
+        org.junit.jupiter.api.Assertions.assertTrue(detail.get(3).contains("物理 600") && detail.get(3).contains("火焰 200"), detail.get(3));
+        org.junit.jupiter.api.Assertions.assertTrue(detail.get(detail.size() - 1).contains("承受"));
+        org.junit.jupiter.api.Assertions.assertTrue(detail.size() <= tw.exilecore.gui.SidebarLayout.MAX_ROWS + 1);
+        org.junit.jupiter.api.Assertions.assertEquals(CombatMeter.lines(snapshot), CombatMeter.lines(snapshot, false));
+        org.junit.jupiter.api.Assertions.assertTrue(CombatMeter.lines(snapshot).stream().noneMatch(line -> line.contains("瘴苞雨")));
+
+        // 整場統計：總傷害（不是每秒）
+        final CombatMeter.Fight fight = meter.fight();
+        org.junit.jupiter.api.Assertions.assertEquals(2000.0, fight.total(), 1e-9, "有名字的加起來");
+        org.junit.jupiter.api.Assertions.assertEquals(1600.0, fight.skills().get(0).total(), 1e-9);
+        org.junit.jupiter.api.Assertions.assertEquals(36 / 20.0, fight.seconds(), 1e-9);
+        final java.util.List<String> report = CombatMeter.report(fight);
+        org.junit.jupiter.api.Assertions.assertTrue(report.get(1).contains("瘴苞雨") && report.get(1).contains("80%"), report.get(1));
+        org.junit.jupiter.api.Assertions.assertTrue(report.get(2).contains("物理 1,200") && report.get(2).contains("75%"), report.get(2));
+
+        // 很多技能：只列前幾個，其他併一行；視窗過了的技能清掉；停手之後重新開打整場歸零
+        final CombatMeter many = new CombatMeter();
+        for (int i = 0; i < 7; i++) {
+            many.dealt(0, "技能" + i, java.util.Map.of(tw.exilecore.stats.DamageType.PHYSICAL, 100.0 * (i + 1)));
+        }
+        final java.util.List<String> crowded = CombatMeter.lines(many.snapshot(10), true);
+        org.junit.jupiter.api.Assertions.assertTrue(crowded.stream().anyMatch(line -> line.contains("其他 3 個")), crowded.toString());
+        org.junit.jupiter.api.Assertions.assertTrue(crowded.size() <= tw.exilecore.gui.SidebarLayout.MAX_ROWS + 1, "側欄放得下");
+        org.junit.jupiter.api.Assertions.assertTrue(many.snapshot(CombatMeter.WINDOW_TICKS + 20).skills().isEmpty());
+        many.dealt(1000, "技能0", java.util.Map.of(tw.exilecore.stats.DamageType.PHYSICAL, 10.0));
+        org.junit.jupiter.api.Assertions.assertEquals(10.0, many.fight().total(), 1e-9);
+        org.junit.jupiter.api.Assertions.assertTrue(CombatMeter.report(new CombatMeter().fight()).isEmpty());
+        org.junit.jupiter.api.Assertions.assertEquals("很長很長的技能…", CombatMeter.shorten("很長很長的技能名字"));
+    }
 }

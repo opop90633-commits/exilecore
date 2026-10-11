@@ -89,14 +89,19 @@ public final class MinionService implements Listener, MinionHooks {
     /** 一隻召喚物。 */
     static final class Minion {
         final UUID owner;
-        final SkillBuild build;
+        /** 叫牠出來的技能（等級、輔助）；焚魂這類補時間時換成最新的。 */
+        SkillBuild build;
         final SummonSpec spec;
         final Mob mob;
         /** 頭上的名字（技能名與主人；血不滿時後面加百分比）。 */
         final String name;
         final long bornTick;
         /** 到哪個 tick 消失（0 = 永久）。 */
-        final long untilTick;
+        long untilTick;
+        /** 上一次重算屬性表用的材料（2026-10）：都沒變就不重算、不重送血量與速度。 */
+        SkillBuild builtFor;
+        MinionSheets.Base builtBase;
+        List<Modifier> builtModifiers;
         StatSheet sheet;
         /** 疊好輔助寶石的屬性表（打人、被打都用這張）。 */
         StatSheet effective;
@@ -280,7 +285,8 @@ public final class MinionService implements Listener, MinionHooks {
             }
             minion.mob.swingMainHand();
             final LivingEntity target = minion.target == null ? null : living(minion.target);
-            out.add(java.util.Map.entry(minion.mob.getLocation(), target));
+            // 2026-10：Map.entry 不收 null——召喚物沒有目標時整個指令技能丟 NullPointerException（魔力、冷卻扣了卻沒放出來）
+            out.add(new java.util.AbstractMap.SimpleImmutableEntry<>(minion.mob.getLocation(), target));
         }
         return out;
     }
@@ -419,6 +425,44 @@ public final class MinionService implements Listener, MinionHooks {
             return;
         }
         summon(player, build, spec.count(), spec.corpse(), List.of());
+    }
+
+    /**
+     * 一直在叫的召喚（焚魂：每放一次火焰法術叫一隻）：還沒滿就叫一隻；滿了就把最快消失的那隻補滿時間與生命，不重生（2026-10）。
+     * 以前滿了之後每一次都刪一隻、生一隻——引導型的火焰法術每秒 8～20 次生物的生成與移除。對戰鬥來說一樣：
+     * 都是「隻數維持在上限、最舊的那隻重新算時間」，差別只在那隻留在原地、不是從你面前重新出來。
+     */
+    void summonOrRefresh(final Player player, final SkillBuild build) {
+        final SummonSpec spec = build.definition().summon();
+        if (spec == null || spec.permanent() || spec.corpse()) {
+            summon(player, build);
+            return;
+        }
+        final int limit = Math.max(1, build.minions());
+        final UUID owner = player.getUniqueId();
+        final String skillId = build.definition().id();
+        int alive = 0;
+        Minion oldest = null;
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner) && !minion.decoy && minion.skillId().equals(skillId) && minion.mob.isValid() && !minion.mob.isDead()) {
+                alive++;
+                if (oldest == null || minion.untilTick < oldest.untilTick) {
+                    oldest = minion;
+                }
+            }
+        }
+        if (alive < limit || oldest == null || oldest.untilTick <= 0) {
+            summon(player, build);
+            return;
+        }
+        final long now = now();
+        oldest.untilTick = now + build.durationTicks(spec.duration());
+        if (oldest.build != build) {
+            oldest.build = build; // 技能升級、換輔助了：下一 tick 照新的重算
+            oldest.nextRebuild = 0;
+        }
+        healFraction(oldest.mob, 1.0);
+        syncName(oldest, now);
     }
 
     private void summon(final Player player, final SkillBuild build, final int count, final boolean useCorpse, final List<Modifier> first) {
@@ -738,6 +782,15 @@ public final class MinionService implements Listener, MinionHooks {
         if (offered) {
             ownerModifiers.addAll(minion.offering); // 祭品（2026-10）
         }
+        // 2026-10：每 2 秒看一次，主人的屬性、光環、技能都沒變就不用重算（以前每隻每 2 秒整個重算、重送血量與移動速度給附近的人）
+        if (!fresh && minion.sheet != null && minion.builtFor == minion.build && base.equals(minion.builtBase)
+                && ownerModifiers.equals(minion.builtModifiers)) {
+            minion.nextRebuild = offered ? Math.min(now() + 40, minion.offeringUntil + 1) : now() + 40;
+            return;
+        }
+        minion.builtFor = minion.build;
+        minion.builtBase = base;
+        minion.builtModifiers = ownerModifiers;
         minion.sheet = MinionSheets.build(minion.spec, base, ownerModifiers);
         minion.profile = MinionSheets.profile(minion.build);
         minion.effective = minion.profile.local().isEmpty() ? minion.sheet // 2026-10：輔助寶石給召喚物的也拿掉 minion 標籤（防禦類才讀得到）
@@ -779,8 +832,12 @@ public final class MinionService implements Listener, MinionHooks {
         if (minions.isEmpty()) {
             if (now % 200 == 0) {
                 focus.clear();
+                aggroCache.clear();
             }
             return;
+        }
+        if (now % 200 == 0) {
+            aggroCache.values().removeIf(aggro -> now - aggro.tick() > 200); // 下線、沒召喚物的人不留著
         }
         for (final Minion minion : new ArrayList<>(minions)) {
             if (!byEntity.containsKey(minion.mob.getUniqueId())) {
@@ -1077,9 +1134,9 @@ public final class MinionService implements Listener, MinionHooks {
         LivingEntity best = null;
         double bestDistance = Double.MAX_VALUE;
         final org.bukkit.Location at = minion.mob.getLocation();
-        for (final LivingEntity candidate : targets.around(owner.getLocation(), AGGRO, owner)) {
-            if (!candidate.getWorld().equals(at.getWorld())) {
-                continue;
+        for (final LivingEntity candidate : aggroAround(owner)) {
+            if (!candidate.isValid() || candidate.isDead() || !candidate.getWorld().equals(at.getWorld())) {
+                continue; // 清單是幾 tick 前掃的：這段時間死掉、傳走的不算
             }
             final double distance = candidate.getLocation().distanceSquared(at);
             if (distance < bestDistance) {
@@ -1088,6 +1145,30 @@ public final class MinionService implements Listener, MinionHooks {
             }
         }
         return best;
+    }
+
+    /** 主人身邊的怪多久重掃一次（tick）。 */
+    private static final long AGGRO_TTL = 5;
+
+    /** 掃過的「主人身邊的怪」。 */
+    private record Aggro(long tick, UUID world, List<LivingEntity> list) {
+    }
+
+    private final Map<UUID, Aggro> aggroCache = new HashMap<>();
+
+    /**
+     * 主人身邊 AGGRO 格內的怪（2026-10）：同一個主人的召喚物共用一份、{@value #AGGRO_TTL} tick 重掃一次。
+     * 以前每隻沒目標的召喚物各掃一次同一個範圍（40 隻就掃 40 次）；每隻本來就是 5 tick 才找一次目標，反應時間一樣。
+     */
+    private List<LivingEntity> aggroAround(final Player owner) {
+        final long now = now();
+        final Aggro cached = aggroCache.get(owner.getUniqueId());
+        if (cached != null && now - cached.tick() < AGGRO_TTL && cached.world().equals(owner.getWorld().getUID())) {
+            return cached.list();
+        }
+        final List<LivingEntity> list = targets.around(owner.getLocation(), AGGRO, owner);
+        aggroCache.put(owner.getUniqueId(), new Aggro(now, owner.getWorld().getUID(), list));
+        return list;
     }
 
     /** 把附近的怪引過來打這隻（all = false 只引還沒有目標的）。 */

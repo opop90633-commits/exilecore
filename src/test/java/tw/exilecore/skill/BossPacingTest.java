@@ -253,6 +253,8 @@ class BossPacingTest {
             case BLINK -> seconds += 0.7;
             case VOLLEY -> seconds += skill.reach() / Math.max(0.05, skill.speed()) / 20;
             case ORBS -> seconds += BossPacing.ORB_SETTLE_TICKS / 20.0;
+            case ECHOES -> seconds += Math.max(0, skill.count() - 1) * skill.stagger() + skill.delay();
+            case MARK -> seconds += BossPacing.ORB_SETTLE_TICKS / 20.0;
             default -> {
             }
         }

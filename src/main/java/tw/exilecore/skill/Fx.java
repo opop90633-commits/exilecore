@@ -1,10 +1,15 @@
 package tw.exilecore.skill;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
 
@@ -12,11 +17,33 @@ import java.util.function.Predicate;
  * 技能粒子的發送（2026-10，設定「隱藏其他玩家的技能特效」）：畫的時候記得是誰的技能（{@link #source}），
  * 關掉別人技能特效的玩家就不送給他；自己的技能、怪物與 Boss 的招式（警告圈）照常給每個人。
  * 外觀特效（贊助的粒子）不走這裡，照常顯示。只在主執行緒用。
+ *
+ * <p>技能的聲音也走這裡（{@link #sound}，2026-10）：自己的技能照原本的音量；別人的技能小聲
+ * （{@link #OTHERS_VOLUME}），關掉別人技能特效的人完全不送；設定「技能音效」關掉的人連自己的也不送。
+ * 怪物與 Boss 的招式照常給每個人。
+ *
+ * <p>封包量（2026-10，人多時大家的 PING 一起飆高）：玩家技能的粒子是一點一個封包、附近每個人各一份，
+ * 營地四十個人時一招就是幾十倍。所以送的距離跟原版一樣 32 格（以前 64 格，面積是 4 倍）；
+ * 附近別人超過 {@link #CROWD_FULL} 個時，別人那份照比例打薄（自己的技能照常全部送）；
+ * 每個人的技能送了多少封包記在 {@link FxStats}，{@code /ec skill fx} 看誰送最多。
  */
 public final class Fx {
 
-    /** 送給附近多遠的玩家（跟原版粒子的距離差不多）。 */
-    private static final double RANGE_SQUARED = 64 * 64;
+    /** 送給附近多遠的玩家（跟原版粒子一樣 32 格；2026-10 從 64 格改回來）。 */
+    private static final double RANGE_SQUARED = 32 * 32;
+
+    /** 附近別人超過幾個時，別人看到的技能特效開始打薄（{@link FxStats#stride}）。 */
+    static final int CROWD_FULL = 10;
+
+    /** 誰的技能送了多少封包。 */
+    private static final FxStats STATS = new FxStats();
+    /** 打薄時輪流送的計數。 */
+    private static int sequence;
+    /** 這一點要送的別人（重複使用，只在主執行緒）。 */
+    private static final List<Player> crowd = new ArrayList<>();
+
+    /** 別人的技能聲音是原本音量的幾倍（一百人同場時不會一片爆炸聲）。 */
+    static final float OTHERS_VOLUME = 0.35f;
 
     private static UUID source;
     /** 這個玩家關掉了別人的技能特效。 */
@@ -25,9 +52,58 @@ public final class Fx {
     private Fx() {
     }
 
+    /** 這個玩家關掉了技能音效（自己的技能也不出聲）。 */
+    private static Predicate<Player> mutesOwn = player -> false;
+
     /** 接上設定（角色模組啟用時）。 */
     public static void hidesOthers(final Predicate<Player> test) {
         hidesOthers = test == null ? player -> false : test;
+    }
+
+    /** 接上設定「技能音效」。 */
+    public static void mutesOwn(final Predicate<Player> test) {
+        mutesOwn = test == null ? player -> false : test;
+    }
+
+    /**
+     * 這個玩家聽到現在這個聲音的音量（0 = 不送）。
+     *
+     * @param mine   是他自己的技能
+     * @param muted  他關掉了技能音效
+     * @param hides  他關掉了別人的技能特效
+     */
+    static float heard(final float volume, final boolean mine, final boolean muted, final boolean hides) {
+        if (mine) {
+            return muted ? 0 : volume;
+        }
+        return hides ? 0 : volume * OTHERS_VOLUME;
+    }
+
+    /** 技能的聲音：不是玩家的技能照常播給附近每個人；玩家的技能照每個人的設定送。 */
+    public static void sound(final Location at, final Sound sound, final SoundCategory category, final float volume, final float pitch) {
+        final World world = at == null ? null : at.getWorld();
+        if (sound == null || world == null) {
+            return;
+        }
+        if (!filtered()) {
+            world.playSound(at, sound, category, volume, pitch);
+            return;
+        }
+        final double range = 16.0 * Math.max(1.0, volume); // 原版聽得到的距離
+        final double rangeSquared = range * range;
+        int sent = 0;
+        for (final Player viewer : world.getPlayers()) {
+            if (viewer.getLocation().distanceSquared(at) > rangeSquared) {
+                continue;
+            }
+            final boolean mine = viewer.getUniqueId().equals(source);
+            final float heard = heard(volume, mine, mine && mutesOwn.test(viewer), !mine && hidesOthers.test(viewer));
+            if (heard > 0) {
+                viewer.playSound(at, sound, category, heard, pitch);
+                sent++;
+            }
+        }
+        STATS.add(Bukkit.getCurrentTick(), source, sent);
     }
 
     /** 現在畫的是誰的技能（null = 不是玩家的：怪物、Boss、環境），回傳前一個（用完 {@link #restore} 放回去）。 */
@@ -71,15 +147,54 @@ public final class Fx {
     }
 
     private static void each(final World world, final double x, final double y, final double z, final Send send) {
+        Player owner = null;
+        crowd.clear();
         for (final Player viewer : world.getPlayers()) {
             final Location at = viewer.getLocation();
             final double dx = at.getX() - x;
             final double dy = at.getY() - y;
             final double dz = at.getZ() - z;
             if (dx * dx + dy * dy + dz * dz <= RANGE_SQUARED && sees(viewer)) {
-                send.to(viewer);
+                if (viewer.getUniqueId().equals(source)) {
+                    owner = viewer;
+                } else {
+                    crowd.add(viewer);
+                }
             }
         }
+        int sent = 0;
+        if (owner != null) {
+            send.to(owner); // 自己的技能照常全部送
+            sent++;
+        }
+        if (!crowd.isEmpty()) {
+            final int stride = FxStats.stride(crowd.size(), CROWD_FULL);
+            if (stride == 1 || Math.floorMod(sequence++, stride) == 0) {
+                for (final Player viewer : crowd) {
+                    send.to(viewer);
+                }
+                sent += crowd.size();
+            }
+            crowd.clear();
+        }
+        STATS.add(Bukkit.getCurrentTick(), source, sent);
+    }
+
+    // ---- 統計（/ec skill fx） ----
+
+    /** 上一段時間（10 秒）技能特效送最多封包的前 limit 名。 */
+    static List<FxStats.Entry> top(final int limit) {
+        return STATS.top(Bukkit.getCurrentTick(), limit);
+    }
+
+    /** 上一段時間所有玩家技能特效送出的封包總數。 */
+    static long total() {
+        return STATS.total(Bukkit.getCurrentTick());
+    }
+
+    /** 上一段時間多長（秒）。 */
+    static double lastSeconds() {
+        return STATS.lastSeconds();
     }
 
     public static void spawn(final World world, final Particle particle, final Location at, final int count) {

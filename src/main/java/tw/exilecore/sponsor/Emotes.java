@@ -57,6 +57,10 @@ public final class Emotes implements Listener {
     private final Set<UUID> busy = new HashSet<>();
     private final List<BukkitTask> running = new ArrayList<>();
     private final List<ItemDisplay> balls = new ArrayList<>();
+    /** 每個人擺著的沙發（2026-10：人走開沙發留在原地；一個人同時只有一張）。 */
+    private final Map<UUID, List<org.bukkit.entity.BlockDisplay>> sofas = new HashMap<>();
+    /** 沙發擺多久（刻）：人可以先走開，沙發留著。 */
+    private static final long SOFA_TICKS = 1200;
 
     /** 有裝 BetterModel 時用玩家自己的皮膚演（整個伺服器只接一次：/ec reload 重建這個類別也不重接）。 */
     private static BetterModelEmotes betterModel;
@@ -150,7 +154,7 @@ public final class Emotes implements Listener {
             case "kick_ball" -> kickBall(player);
             case "bear_shake" -> bearShake(player);
             case "head_bob" -> headBob(player);
-            case "king_sit" -> sofa(player, 214); // 沒有 BetterModel：只擺沙發
+            case "king_sit" -> sofa(player, SOFA_TICKS); // 沒有 BetterModel：只擺沙發
             case "love_you" -> loveYouVanilla(player);
             case "six_seven" -> sixSevenVanilla(player);
             default -> {
@@ -166,7 +170,7 @@ public final class Emotes implements Listener {
             case "bear_shake" -> 5050;
             case "head_bob" -> 4400;
             case "king_sit" -> 10700;
-            case "love_you" -> 4550;
+            case "love_you" -> 3900; // 2026-10（第三次）：快兩成（一邊 0.65 秒、兩個來回，共 3.85 秒）；左手一直揮
             case "six_seven" -> 3550;
             default -> COOLDOWN_MILLIS;
         };
@@ -259,16 +263,16 @@ public final class Emotes implements Listener {
                 }
             }
             case "love_you" -> {
-                // 害羞地摀嘴搖（gen_emotes.py 的 love_steps）：每搖一下冒一顆愛心，換兩手摀嘴時多冒幾顆
-                for (final long tick : new long[] {15, 26, 37, 47, 58, 69}) { // 每挪到一邊蹲一下冒一顆（gen_emotes.py 的 love_steps）
-                    final boolean big = tick == 69;
-                    later(player, tick, at -> world.spawnParticle(Particle.HEART, at.clone().add(0, 2.1, 0), big ? 4 : 1, 0.3, 0.15, 0.3, 0));
+                // 害羞地摀嘴、左右挪（gen_emotes.py 的 love_steps）。2026-10：不冒愛心了；每挪到一邊往下一沉時輕輕一聲
+                for (final long tick : new long[] {15, 28, 41, 54}) { // 沉下去的那一格（0.77、1.42、2.07、2.72 秒）
+                    later(player, tick, at -> world.playSound(at, Sound.BLOCK_WOOL_STEP, 0.35f, 1.5f));
                 }
                 later(player, 2, at -> world.playSound(at, Sound.ENTITY_CAT_PURREOW, 0.6f, 1.4f));
-                later(player, 47, at -> world.playSound(at, Sound.ENTITY_CAT_AMBIENT, 0.6f, 1.6f));
+                later(player, 41, at -> world.playSound(at, Sound.ENTITY_CAT_AMBIENT, 0.6f, 1.6f));
             }
             case "king_sit" -> {
-                sofa(player, 214);
+                sofa(player, SOFA_TICKS);
+                standUpWhenLeaving(player, 214);
                 world.playSound(player.getLocation(), Sound.BLOCK_WOOL_PLACE, 1f, 0.7f);
                 later(player, 7, at -> world.playSound(at, Sound.ENTITY_PLAYER_BIG_FALL, 0.4f, 1.4f)); // 坐下
             }
@@ -299,6 +303,8 @@ public final class Emotes implements Listener {
         at.setYaw(player.getBodyYaw());
         final World world = at.getWorld();
         final List<org.bukkit.entity.BlockDisplay> parts = new ArrayList<>();
+        removeSofa(player.getUniqueId()); // 同一個人再坐一次：舊的那張收掉
+        sofas.put(player.getUniqueId(), parts);
         // {材質, x, y, z, 寬, 高, 深}（顯示座標：+z 是玩家前面、+x 是玩家左邊；格）
         final Object[][] pieces = {
                 {Material.LIGHT_GRAY_WOOL, -0.8, 0.0, -0.62, 1.6, 0.33, 0.9},    // 座墊
@@ -318,16 +324,63 @@ public final class Emotes implements Listener {
             }));
         }
         world.spawnParticle(Particle.CLOUD, at.clone().add(0, 0.4, 0), 12, 0.5, 0.2, 0.5, 0.02);
+        final UUID owner = player.getUniqueId();
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            for (final org.bukkit.entity.BlockDisplay part : parts) {
-                if (part.isValid()) {
-                    part.remove();
-                }
+            if (sofas.get(owner) != parts) {
+                return; // 已經換了一張（或收掉了）
             }
+            removeSofa(owner);
             if (at.isWorldLoaded()) {
                 world.spawnParticle(Particle.CLOUD, at.clone().add(0, 0.4, 0), 10, 0.5, 0.2, 0.5, 0.02);
             }
         }, ticks);
+    }
+
+    private void removeSofa(final UUID owner) {
+        final List<org.bukkit.entity.BlockDisplay> parts = sofas.remove(owner);
+        if (parts == null) {
+            return;
+        }
+        for (final org.bukkit.entity.BlockDisplay part : parts) {
+            if (part.isValid()) {
+                part.remove();
+            }
+        }
+    }
+
+    /**
+     * 王之坐姿（2026-10）：坐著的時候一走動（離開座位約半格、跳起來、換世界）就站起來，可以直接走開；沙發留在原地。
+     * 站起來之後只算一般的 3 秒冷卻。
+     */
+    private void standUpWhenLeaving(final Player player, final int length) {
+        final Location seat = player.getLocation();
+        final UUID id = player.getUniqueId();
+        final int[] age = {0};
+        repeat(task -> {
+            final int tick = age[0]++;
+            if (tick > length || !player.isOnline() || player.isDead()) {
+                task.cancel();
+                return;
+            }
+            if (tick < 8) {
+                return; // 剛坐下的那一下不算
+            }
+            final Location now = player.getLocation();
+            final boolean left = !now.getWorld().equals(seat.getWorld())
+                    || square(now.getX() - seat.getX()) + square(now.getZ() - seat.getZ()) > 0.25
+                    || Math.abs(now.getY() - seat.getY()) > 0.5;
+            if (left) {
+                if (betterModel != null) {
+                    betterModel.stop(player);
+                }
+                lastUse.put(id, System.currentTimeMillis());
+                task.cancel();
+            }
+        });
+    }
+
+    private static double square(final double value) {
+        return value * value;
     }
 
     private boolean inTown(final Player player) {
@@ -664,7 +717,7 @@ public final class Emotes implements Listener {
         });
     }
 
-    /** 我真的特別愛你（沒有 BetterModel）：左右搖頭、揮手、冒愛心，大約 2.5 秒。 */
+    /** 我真的特別愛你（沒有 BetterModel）：慢慢左右搖頭、揮手，大約 3.2 秒（2026-10：不冒愛心、放慢）。 */
     private void loveYouVanilla(final Player player) {
         final UUID id = player.getUniqueId();
         busy.add(id);
@@ -674,7 +727,7 @@ public final class Emotes implements Listener {
         world.playSound(player.getLocation(), Sound.ENTITY_CAT_PURREOW, 0.6f, 1.4f);
         repeat(task -> {
             final int tick = age[0]++;
-            if (!player.isOnline() || player.isDead() || tick > 50) {
+            if (!player.isOnline() || player.isDead() || tick > 64) {
                 if (player.isOnline()) {
                     turnHead(player, -applied[0], 0);
                 }
@@ -682,12 +735,11 @@ public final class Emotes implements Listener {
                 task.cancel();
                 return;
             }
-            final float yaw = (float) (Math.sin(tick / 5.5 * Math.PI) * 14);
+            final float yaw = (float) (Math.sin(tick / 8.0 * Math.PI) * 14); // 一來一回 0.8 秒
             turnHead(player, yaw - applied[0], 0);
             applied[0] = yaw;
-            if (tick % 6 == 0) {
+            if (tick % 8 == 0) {
                 player.swingMainHand();
-                world.spawnParticle(Particle.HEART, player.getLocation().add(0, 2.1, 0), 1, 0.3, 0.15, 0.3, 0);
             }
         });
     }
@@ -736,6 +788,9 @@ public final class Emotes implements Listener {
             }
         }
         balls.clear();
+        for (final UUID owner : new ArrayList<>(sofas.keySet())) {
+            removeSofa(owner);
+        }
         busy.clear();
     }
 }

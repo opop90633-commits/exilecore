@@ -34,7 +34,7 @@ public final class LootFilterMenu extends Menu {
         OVERVIEW("總覽", Material.BOOK, "預設組合、目前會藏什麼、全部顯示"),
         EQUIPMENT("裝備", Material.IRON_CHESTPLATE, "依稀有度、等級差、同類武器、同系防具、詞綴階級、地圖"),
         GEMS("寶石與藥劑", Material.AMETHYST_SHARD, "未切割技能寶石、輔助寶石、藥劑"),
-        CURRENCY("通貨", Material.SUNFLOWER, "照價值分三排，每一種都可以單獨切換");
+        CURRENCY("通貨", Material.SUNFLOWER, "照價值分三組，每一種都可以單獨切換");
 
         private final String title;
         private final Material icon;
@@ -65,6 +65,9 @@ public final class LootFilterMenu extends Menu {
     private static final int SLOT_MAPS = slot(3, 1);
     /** 珠寶依稀有度（2026-10）。 */
     private static final int SLOT_JEWELS = slot(3, 3);
+    /** 遺時星晶（2026-10）：依稀有度一格，後面四格是四種撿不撿。 */
+    private static final int SLOT_TIME_LOST = slot(3, 4);
+    private static final int SLOT_TIME_LOST_KINDS = slot(3, 5);
     /** 只撿的基底（2026-10）。 */
     private static final int SLOT_KEEP_BASES = slot(4, 1);
     // ---- 寶石與藥劑 ----
@@ -75,9 +78,12 @@ public final class LootFilterMenu extends Menu {
     private static final int SLOT_FLASKS = slot(3, 1);
     /** 護符（2026-10）。 */
     private static final int SLOT_CHARMS = slot(3, 2);
-    // ---- 通貨：三排，標籤在最左邊（右鍵整排切換），後面 8 格是通貨 ----
-    private static final int[] GROUP_ROWS = {1, 2, 3};
+    // ---- 通貨：三組，標籤在最左邊（右鍵整組切換），後面 8 格是通貨；一組超過 8 種就往下多佔一排（2026-10） ----
+    private static final int GROUP_COUNT = 3;
     private static final int GROUP_SIZE = 8;
+    /** 通貨可以用的排（第 1～4 排；第 5 排是下面的按鈕）。 */
+    private static final int FIRST_GROUP_ROW = 1;
+    private static final int LAST_GROUP_ROW = 4;
     private static final String[] GROUP_NAMES = {"低價通貨", "中價通貨", "高價通貨"};
     private static final String[] GROUP_HINTS = {"微光石這一類，掉很多、不值錢", "改造會用到的", "少見、值錢的（通常都想撿）"};
     /** 參考價值低於這個是低價、低於這個是中價（照 economy.yml 的 values，金幣）。 */
@@ -87,8 +93,10 @@ public final class LootFilterMenu extends Menu {
     private final int[] tabSlots = tabSlots(Tab.values().length);
     private final Map<Integer, String> currencyAt = new HashMap<>();
     private final Map<Integer, String> presetAt = new HashMap<>();
-    /** 每一排的通貨代號（整排切換用）。 */
+    /** 每一組的通貨代號（整組切換用）。 */
     private final List<List<String>> groups = new ArrayList<>();
+    /** 每一組的標籤在第幾排（這次畫面算出來的）。 */
+    private final int[] groupRows = new int[GROUP_COUNT];
     /** 打開時的角色（換了角色就不能再改，免得把上一個角色的設定寫到新角色上）。 */
     private final long characterId;
     private LootFilter filter;
@@ -202,6 +210,16 @@ public final class LootFilterMenu extends Menu {
         final LootFilter.Rules rules = filter.rules();
         if (filter.jewelRarity() > 0) {
             lines.add("珠寶：" + LootFilter.jewelRarityName(filter.jewelRarity()));
+        }
+        if (filter.filtersTimeLost()) {
+            final List<String> kinds = new ArrayList<>();
+            for (final LootFilter.TimeLost kind : LootFilter.TimeLost.values()) {
+                if (filter.hidesTimeLost(kind)) {
+                    kinds.add(kind.displayName());
+                }
+            }
+            lines.add("遺時星晶：" + (filter.timeLostRarity() > 0 ? LootFilter.timeLostRarityName(filter.timeLostRarity()) : "")
+                    + (filter.timeLostRarity() > 0 && !kinds.isEmpty() ? "；" : "") + (kinds.isEmpty() ? "" : "不撿" + String.join("、", kinds)));
         }
         if (rules.levelGap() > 0) {
             lines.add("物品等級比你低 " + rules.levelGap() + " 級以上的裝備");
@@ -322,6 +340,7 @@ public final class LootFilterMenu extends Menu {
         final String weapon = weaponClassName();
         set(SLOT_WEAPONS_LIKE_MINE, option(Material.BOW, "只撿跟手上同類的武器", rules.weaponsLikeMine() ? "開" : "關", rules.weaponsLikeMine(),
                 List.of("<gray>拿弓就只撿弓、拿雙手劍就只撿雙手劍；雙手武器的人不撿盾",
+                        "<gray>箭袋只有拿弓的人撿（弩、獸魂符、其他武器都不撿）",
                         "<gray>傳奇、珠寶不管；換了武器會自動跟著換",
                         weapon == null ? "<dark_gray>你現在沒拿武器：這條先不會藏東西" : "<dark_gray>你手上：<white>" + weapon),
                 List.of("<yellow>左鍵：" + (rules.weaponsLikeMine() ? "關" : "開"))));
@@ -355,6 +374,26 @@ public final class LootFilterMenu extends Menu {
                 List.of("<gray>依珠寶的稀有度：<white>普通<gray>、<#8888ff>魔法<gray>、<#ffff77>稀有",
                         "<dark_gray>隱藏的珠寶一樣換成金幣；傳奇珠寶永遠會撿"),
                 options(LootFilter.JEWEL_RARITIES, jewels, LootFilter::jewelRarityName)));
+        // 2026-10：遺時星晶（範圍珠寶，只在劫盜掉）另外設定：依稀有度，再加四種各自撿不撿
+        final int timeLost = filter.timeLostRarity();
+        set(SLOT_TIME_LOST, option(Material.ECHO_SHARD, "遺時星晶", LootFilter.timeLostRarityName(timeLost), timeLost > 0,
+                List.of("<gray>遺時星晶（範圍珠寶，只在劫盜掉）依稀有度：<#8888ff>魔法<gray>、<#ffff77>稀有",
+                        "<gray>跟左邊「珠寶」分開算：珠寶全部不撿，遺時星晶照這裡",
+                        "<dark_gray>隱藏的一樣換成金幣；右邊四格可以挑哪幾種要撿"),
+                options(LootFilter.TIME_LOST_RARITIES, timeLost, LootFilter::timeLostRarityName)));
+        for (final LootFilter.TimeLost kind : LootFilter.TimeLost.values()) {
+            final boolean hidden = filter.hidesTimeLost(kind);
+            final Material material = switch (kind) {
+                case RUBY -> Material.REDSTONE;
+                case EMERALD -> Material.EMERALD;
+                case SAPPHIRE -> Material.LAPIS_LAZULI;
+                case DIAMOND -> Material.DIAMOND;
+            };
+            final ItemStack kindIcon = icon(material, (hidden ? "<red>✘ " : "<green>✔ ") + kind.displayName() + "：<white>" + (hidden ? "不撿" : "撿"),
+                    hidden ? "<gray>這一種掉了換成金幣" : "<gray>這一種照左邊「遺時星晶」的稀有度設定撿",
+                    "", "<yellow>左鍵：" + (hidden ? "改成撿" : "改成不撿"));
+            set(SLOT_TIME_LOST_KINDS + kind.ordinal(), hidden ? offMark(kindIcon) : kindIcon);
+        }
         set(slot(4, 0), rowLabel(Material.EMERALD, "只撿的基底", "有挑的話：裝備只撿這些基底", "稀有度照第一排；可以一直加"));
         final List<String> keptLore = new ArrayList<>();
         keptLore.add("<gray>挑了之後，普通、魔法、稀有裝備<white>只撿這些基底</white><gray>，");
@@ -428,7 +467,7 @@ public final class LootFilterMenu extends Menu {
         currencyAt.clear();
         groups.clear();
         final List<List<CurrencyType>> byGroup = new ArrayList<>();
-        for (int i = 0; i < GROUP_ROWS.length; i++) {
+        for (int i = 0; i < GROUP_COUNT; i++) {
             byGroup.add(new ArrayList<>());
             groups.add(new ArrayList<>());
         }
@@ -440,7 +479,15 @@ public final class LootFilterMenu extends Menu {
             final int group = value < GROUP_BOUNDS[0] ? 0 : value < GROUP_BOUNDS[1] ? 1 : 2;
             byGroup.get(group).add(type);
         }
-        for (int group = 0; group < GROUP_ROWS.length; group++) {
+        // 2026-10：低價通貨有 10 種（微光石、光澤石、磨刀石、護甲碎片＋六種符文），以前只排得下 8 格，最後兩種不見了。
+        // 每組照數量佔 1～2 排；排不下時後面的組至少留一排
+        final int[] rowsOf = rowsPerGroup(byGroup.stream().mapToInt(List::size).toArray());
+        int nextRow = FIRST_GROUP_ROW;
+        for (int group = 0; group < GROUP_COUNT; group++) {
+            groupRows[group] = nextRow;
+            nextRow += rowsOf[group];
+        }
+        for (int group = 0; group < GROUP_COUNT; group++) {
             final List<CurrencyType> types = byGroup.get(group);
             types.sort((a, b) -> Long.compare(value(a), value(b)));
             int shown = 0;
@@ -461,12 +508,15 @@ public final class LootFilterMenu extends Menu {
                     : GROUP_BOUNDS[1] + " 以上") + " 金幣）");
             lore.add(state);
             lore.add("");
-            lore.add("<yellow>右鍵：這一排" + (hidden == 0 ? "全部隱藏" : "全部改成會撿"));
-            set(slot(GROUP_ROWS[group], 0), icon(group == 0 ? Material.GLOWSTONE_DUST : group == 1 ? Material.GOLD_NUGGET : Material.NETHER_STAR,
+            if (types.size() > rowsOf[group] * GROUP_SIZE) {
+                lore.add("<red>還有 " + (types.size() - rowsOf[group] * GROUP_SIZE) + " 種排不下（整組切換照樣會切到）");
+            }
+            lore.add("<yellow>右鍵：這一組" + (hidden == 0 ? "全部隱藏" : "全部改成會撿"));
+            set(slot(groupRows[group], 0), icon(group == 0 ? Material.GLOWSTONE_DUST : group == 1 ? Material.GOLD_NUGGET : Material.NETHER_STAR,
                     "<#f5b942>【" + GROUP_NAMES[group] + "】", lore));
-            for (int i = 0; i < Math.min(GROUP_SIZE, types.size()); i++) {
+            for (int i = 0; i < Math.min(GROUP_SIZE * rowsOf[group], types.size()); i++) {
                 final CurrencyType type = types.get(i);
-                final int slot = slot(GROUP_ROWS[group], 1 + i);
+                final int slot = slot(groupRows[group] + i / GROUP_SIZE, 1 + i % GROUP_SIZE);
                 final boolean isHidden = filter.hidesCurrency(type.id());
                 final long gold = service.goldEstimate(player, DropTable.Kind.CURRENCY, null, type.dropWeight());
                 final ItemStack icon = icon(Menu.material(type.material(), Material.EMERALD),
@@ -482,6 +532,34 @@ public final class LootFilterMenu extends Menu {
                 currencyAt.put(slot, type.id());
             }
         }
+    }
+
+    /**
+     * 每組佔幾排：一排 8 種，最少 1 排；全部加起來不超過可以用的排數（第 1～4 排），
+     * 不夠時從數量多的組先少給一排（每組至少 1 排）。
+     */
+    static int[] rowsPerGroup(final int[] sizes) {
+        final int available = LAST_GROUP_ROW - FIRST_GROUP_ROW + 1;
+        final int[] rows = new int[sizes.length];
+        int total = 0;
+        for (int i = 0; i < sizes.length; i++) {
+            rows[i] = Math.max(1, (sizes[i] + GROUP_SIZE - 1) / GROUP_SIZE);
+            total += rows[i];
+        }
+        while (total > available) {
+            int widest = -1;
+            for (int i = 0; i < rows.length; i++) {
+                if (rows[i] > 1 && (widest < 0 || rows[i] > rows[widest])) {
+                    widest = i;
+                }
+            }
+            if (widest < 0) {
+                break; // 每組都只剩一排了
+            }
+            rows[widest]--;
+            total--;
+        }
+        return rows;
     }
 
     private long value(final CurrencyType type) {
@@ -624,6 +702,10 @@ public final class LootFilterMenu extends Menu {
                     next.cycleMapRarity(backwards);
                 } else if (slot == SLOT_JEWELS) {
                     next.cycleJewelRarity(backwards);
+                } else if (slot == SLOT_TIME_LOST) {
+                    next.cycleTimeLostRarity(backwards);
+                } else if (slot >= SLOT_TIME_LOST_KINDS && slot < SLOT_TIME_LOST_KINDS + LootFilter.TimeLost.values().length) {
+                    next.toggleTimeLost(LootFilter.TimeLost.values()[slot - SLOT_TIME_LOST_KINDS]);
                 } else if (slot == SLOT_KEEP_BASES) {
                     if (changed && !stale()) {
                         plugin.characters().save(player);
@@ -675,9 +757,9 @@ public final class LootFilterMenu extends Menu {
         apply(next);
     }
 
-    private static int groupOf(final int slot) {
-        for (int i = 0; i < GROUP_ROWS.length; i++) {
-            if (slot(GROUP_ROWS[i], 0) == slot) {
+    private int groupOf(final int slot) {
+        for (int i = 0; i < GROUP_COUNT; i++) {
+            if (slot(groupRows[i], 0) == slot) {
                 return i;
             }
         }

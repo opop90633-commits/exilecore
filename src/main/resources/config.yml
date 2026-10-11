@@ -69,9 +69,9 @@ web:
   #        server.properties 有填對外的 server-ip 時改用那個位址。
   # 前面有 Velocity／BungeeCord 代理時一定要填（不然所有玩家看起來都是從本機連進來的）
   public-url: ""
-  # 市場報告（網址/economy）：全服通貨與金幣每天的產出、消耗、存量、參考價值（只有加總，沒有個人資料；誰都看得到）。
-  # false = 不提供（管理員還是可以用 /ec economy 看）。舊的 config.yml 沒有這一行時用預設值（提供）。
-  economy-page: true
+  # 市場報告（網址/economy）：全服通貨與金幣每天的產出、消耗、存量、參考價值（只有加總，沒有個人資料；開了就誰都看得到）。
+  # 2026-10 預設不提供（首頁也不會列出來）；管理員用 /ec economy 看。想公開再改成 true。
+  economy-page: false
   # 管理網頁（網址/admin）：發放物資、改全服加成與經濟設定、公告、維護模式。管理員在遊戲裡打 /ec web 拿一次性的登入連結
   # （10 分鐘內有效、只能用一次）；沒有連結的人打開只會看到「請在遊戲裡打 /ec web」。
   # 網頁伺服器是 http：從別台電腦連線時，登入後的 Cookie 在網路上看得到——放在 https 的反向代理後面（public-url 填 https://…）最安全。
@@ -170,3 +170,12 @@ discord:
           - { label: "付款方式與金額", placeholder: "例如 轉帳 300 元", required: false }
           - { label: "付款時間", placeholder: "例如 10/9 晚上 8 點", required: false }
           - { label: "詢問內容", paragraph: true, required: true }
+
+# 主機商面板（Pterodactyl）的 Client API（2026-10）：管理網頁的「倒數關服」用它請面板停止伺服器
+# （伺服器自己關掉的話，面板會當成當機自動開回來）。留空 = 不用（關服就直接關，可能會被開回來）。
+#   url：面板網址（例如 https://panel.主機商.com）　server-id：面板網址 /server/ 後面那 8 碼
+#   api-key：面板右上角「帳號 → API 憑證」建立的金鑰（只給自己看，不要貼到別的地方）
+panel:
+  url: ""
+  server-id: ""
+  api-key: ""

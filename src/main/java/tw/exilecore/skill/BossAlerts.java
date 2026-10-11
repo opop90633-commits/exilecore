@@ -18,7 +18,7 @@ public final class BossAlerts {
     /** 一定算特殊招式的運作方式（落下的紅圈、地面效果、扇形、齊射要寫了 hint 才算）。 */
     private static final Set<BossSkill.Kind> SPECIAL = Set.of(BossSkill.Kind.NOVA, BossSkill.Kind.RING, BossSkill.Kind.ORBS,
             BossSkill.Kind.BEAM, BossSkill.Kind.PULL, BossSkill.Kind.SANCTUARY, BossSkill.Kind.CURSE, BossSkill.Kind.SUMMON,
-            BossSkill.Kind.CHARGE, BossSkill.Kind.BLINK);
+            BossSkill.Kind.CHARGE, BossSkill.Kind.BLINK, BossSkill.Kind.MARK, BossSkill.Kind.ECHOES, BossSkill.Kind.ARENA);
 
     private BossAlerts() {
     }
@@ -56,6 +56,9 @@ public final class BossAlerts {
             case ZONE -> "地上留下傷害區：別站在裡面";
             case CONE -> "前方扇形：繞到 Boss 側面或後面";
             case VOLLEY -> "一排魔法彈：往旁邊閃";
+            case MARK -> String.format(Locale.ROOT, "點名標記 %d 秒後爆炸：被點名的離開隊友", Math.round(skill.duration()));
+            case ECHOES -> "殘影一個接一個朝人射出長槍：看紅線往旁邊走";
+            case ARENA -> "場地在收縮：待在圈內、靠近 Boss";
         };
     }
 
@@ -64,6 +67,7 @@ public final class BossAlerts {
         final String base = skill.hint() != null && !skill.hint().isBlank() ? skill.hint().trim() : switch (skill.kind()) {
             case ZONE -> "地上會一直冒出傷害區：別站在裡面";
             case ORBS -> "光球會一直追著人：保持移動";
+            case MARK -> "會一直點名玩家：被點名的離開隊友";
             default -> "紅圈會一直落在玩家附近：看到紅圈就離開";
         };
         return everySeconds > 0 ? String.format(Locale.ROOT, "%s（大約每 %d 秒）", base, Math.round(everySeconds)) : base;

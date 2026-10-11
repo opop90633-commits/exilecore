@@ -192,6 +192,15 @@ public final class MapConfig {
     /** 追逐級傳奇：一般怪物（不是 Boss）每隻、以及僥倖石每次使用的機率（2026-10：0.0001%，約 100 萬隻一件）。 */
     public static final double DEFAULT_CHASE_MOB_CHANCE = 0.000001;
     private double chaseMobChance = DEFAULT_CHASE_MOB_CHANCE;
+    /** 映星鏡（2026-10）：地圖 Boss 每次擊殺、一般怪物每隻的機率（以前跟追逐級傳奇一樣；改成追逐級的十分之一）。 */
+    public static final double DEFAULT_MIRROR_CHANCE = 0.000034;
+    public static final double DEFAULT_MIRROR_MOB_CHANCE = 0.0000001;
+    private double mirrorChance = DEFAULT_MIRROR_CHANCE;
+
+    /** 映星鏡：地圖 Boss（一般、具名、終局、極境）每次擊殺、每個有份的人的機率（maps.yml 的 drops.mirror_chance）。 */
+    public double mirrorChance() {
+        return mirrorChance;
+    }
 
     /** 追逐級傳奇：一般怪物每隻的掉落機率＝僥倖石每次賭到的機率（maps.yml 的 drops.chase_mob_chance）。 */
     public double chaseMobChance() {
@@ -391,6 +400,8 @@ public final class MapConfig {
 
         chaseMobChance = clamp01(d.decimal("chase_mob_chance", DEFAULT_CHASE_MOB_CHANCE));
         tw.exilecore.item.ItemGenerator.setChaseChance(chaseMobChance); // 僥倖石賭追逐級也照這個機率
+        mirrorChance = clamp01(d.decimal("mirror_chance", DEFAULT_MIRROR_CHANCE));
+        tw.exilecore.item.ItemGenerator.setMirrorChance(clamp01(d.decimal("mirror_mob_chance", DEFAULT_MIRROR_MOB_CHANCE)));
 
         final YamlNode f = root.node("first_kill");
         firstKill = new FirstKill(Math.max(0, f.integer("map_points", 0)), Math.max(0, f.integer("named_points", 1)),
@@ -742,6 +753,9 @@ public final class MapConfig {
         }
         for (final String problem : BossHazard.problems(hazards, skills)) {
             problems.add(where + " 的場地危害：" + problem + "（會略過）");
+        }
+        for (final String problem : skills.comboProblems(uses)) {
+            problems.add(where + " 的招式：" + problem + "（會略過）");
         }
     }
 

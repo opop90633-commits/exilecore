@@ -17,6 +17,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -228,6 +229,50 @@ class LootTest {
                 "舊存檔沒有 kt：關");
     }
 
+    /** 遺時星晶（2026-10）：自己的過濾設定（種類、稀有度），跟一般珠寶分開；存檔讀得回來。 */
+    @Test
+    void timeLostJewelsHaveTheirOwnFilter() {
+        final LootFilter.Viewer viewer = new LootFilter.Viewer(80, Set.of(), Set.of());
+        final LootFilter.Candidate ruby = equipment(Rarity.MAGIC, 70, "jewel", "radius", "r_ruby");
+        final LootFilter.Candidate rareRuby = equipment(Rarity.RARE, 70, "jewel", "radius", "r_ruby");
+        final LootFilter.Candidate diamond = equipment(Rarity.RARE, 75, "jewel", "radius", "r_ruby", "r_emerald", "r_sapphire");
+        final LootFilter.Candidate plain = equipment(Rarity.MAGIC, 70, "jewel", "ruby");
+        assertEquals(LootFilter.TimeLost.RUBY, LootFilter.TimeLost.of(Set.of("jewel", "radius", "r_ruby")));
+        assertEquals(LootFilter.TimeLost.EMERALD, LootFilter.TimeLost.of(Set.of("jewel", "radius", "r_emerald")));
+        assertEquals(LootFilter.TimeLost.SAPPHIRE, LootFilter.TimeLost.of(Set.of("jewel", "radius", "r_sapphire")));
+        assertEquals(LootFilter.TimeLost.DIAMOND, LootFilter.TimeLost.of(Set.of("jewel", "radius", "r_ruby", "r_emerald", "r_sapphire")));
+        assertNull(LootFilter.TimeLost.of(Set.of("jewel", "ruby")));
+
+        final LootFilter filter = config.defaultFilter().copy();
+        assertFalse(filter.hides(ruby, viewer));
+        assertFalse(filter.hides(diamond, viewer));
+        // 一般珠寶全部不撿：遺時星晶不受影響
+        filter.withJewelRarity(3);
+        assertTrue(filter.hides(plain, viewer));
+        assertFalse(filter.hides(ruby, viewer), "遺時星晶不看一般珠寶的設定");
+        // 只撿稀有的
+        filter.cycleTimeLostRarity(false);
+        assertEquals(1, filter.timeLostRarity());
+        assertTrue(filter.hides(ruby, viewer));
+        assertFalse(filter.hides(rareRuby, viewer));
+        assertFalse(filter.hides(diamond, viewer));
+        // 不撿赤的：稀有的赤也不撿，白的照撿
+        filter.toggleTimeLost(LootFilter.TimeLost.RUBY);
+        assertTrue(filter.hides(rareRuby, viewer));
+        assertFalse(filter.hides(diamond, viewer));
+        assertFalse(filter.hides(equipment(Rarity.UNIQUE, 70, "jewel", "radius", "r_ruby"), viewer), "傳奇永遠撿");
+        // 存檔
+        final LootFilter back = LootFilter.decode(filter.encode(), config);
+        assertEquals(filter, back);
+        assertEquals(1, back.timeLostRarity());
+        assertTrue(back.hidesTimeLost(LootFilter.TimeLost.RUBY));
+        assertFalse(back.hidesTimeLost(LootFilter.TimeLost.DIAMOND));
+        // 全部不撿
+        filter.cycleTimeLostRarity(false);
+        assertTrue(filter.hides(diamond, viewer));
+        assertEquals(config.defaultFilter(), LootFilter.decode("p=standard", config), "沒設定的照舊");
+    }
+
     private static LootFilter.Candidate equipment(final Rarity rarity, final int itemLevel, final int bestRank, final String... tags) {
         return new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, rarity, null, false, itemLevel, Set.of(tags), 0, 0, bestRank);
     }
@@ -281,6 +326,18 @@ class LootTest {
         assertTrue(LootFilter.unlikeMine(Set.of("armour", "str_armour"), bowman, false, true), "力量系防具跟敏捷系不同系");
         assertFalse(LootFilter.unlikeMine(Set.of("armour", "dex_armour"), bowman, true, true));
         assertFalse(LootFilter.unlikeMine(Set.of("ring", "jewellery"), bowman, true, true), "飾品不分類");
+        // 箭袋只有拿弓的人能裝；獸魂符是自己一類的雙手武器
+        assertFalse(LootFilter.unlikeMine(Set.of("quiver"), bowman, true, true), "拿弓的人撿箭袋");
+        final LootFilter.Viewer druid = new LootFilter.Viewer(50, Set.of("weapon", "two_hand", "talisman", "melee", "melee_2h"), Set.of());
+        assertTrue(LootFilter.unlikeMine(Set.of("quiver"), druid, true, true), "沒拿弓的人不撿箭袋");
+        assertFalse(LootFilter.unlikeMine(Set.of("quiver"), druid, false, true), "沒開「同類的武器」就不管");
+        assertFalse(LootFilter.unlikeMine(Set.of("weapon", "two_hand", "talisman", "melee", "melee_2h"), druid, true, true), "獸魂符對獸魂符");
+        assertTrue(LootFilter.unlikeMine(Set.of("weapon", "two_hand", "mace", "melee", "melee_2h"), druid, true, true), "拿獸魂符的人不撿巨錘");
+        assertTrue(LootFilter.unlikeMine(Set.of("weapon", "two_hand", "talisman", "melee", "melee_2h"), bowman, true, true), "拿弓的人不撿獸魂符");
+        assertTrue(LootFilter.unlikeMine(Set.of("shield", "int_armour", "int_only", "focus"), druid, true, false), "雙手的獸魂符用不到法器");
+        final LootFilter.Viewer crossbow = new LootFilter.Viewer(50, Set.of("weapon", "two_hand", "crossbow", "ranged"), Set.of());
+        assertTrue(LootFilter.unlikeMine(Set.of("quiver"), crossbow, true, true), "弩不能裝箭袋");
+        assertFalse(LootFilter.unlikeMine(Set.of("quiver"), new LootFilter.Viewer(50, Set.of(), Set.of()), true, true), "沒拿武器：不管");
         assertFalse(LootFilter.unlikeMine(Set.of("weapon", "one_hand", "sword", "melee"), bowman, false, true), "不看武器就不藏");
         final LootFilter.Viewer bare = new LootFilter.Viewer(40, Set.of(), Set.of());
         assertFalse(LootFilter.unlikeMine(Set.of("weapon", "one_hand", "sword", "melee"), bare, true, true), "沒拿武器全列");

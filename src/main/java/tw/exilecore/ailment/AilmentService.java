@@ -310,7 +310,7 @@ public final class AilmentService {
                         attack.increased(StatKeys.BLEED_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
                         selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".bleed", Set.of()));
                 entry = entry == null ? track(defender) : entry;
-                entry.state.addBleed(dps, now + ticks(seconds), attacker instanceof Player ? attacker.getUniqueId() : null);
+                entry.state.addBleed(dps, now + ticks(seconds), attacker instanceof Player ? attacker.getUniqueId() : null, crimson);
                 feedback(defender, AilmentType.BLEED);
                 changed = true;
             }
@@ -542,7 +542,8 @@ public final class AilmentService {
         final AilmentState.Ignite bleed = entry.state.bleed(now);
         if (bleed != null) {
             // 流血：目標在移動就更痛（PoE2）
-            final double factor = moving(living) ? config.bleedMovingMultiplier() : 1.0;
+            // 2026-10：加劇的流血已經照移動算了，不再乘第二次
+            final double factor = AilmentState.bleedFactor(bleed, moving(living), config.bleedMovingMultiplier());
             damageOverTime(living, entry, bleed.dps() * factor, bleed.source(), AilmentType.BLEED, now);
             if (tracked.get(uuid) != entry || !living.isValid() || living.isDead()) {
                 return;
@@ -605,8 +606,16 @@ public final class AilmentService {
             return;
         }
         if (living instanceof Player player) {
-            if (burnPlayer(player, amount, type)) {
-                credit(source, living, type, amount); // 競技場裡打玩家的
+            double taken = amount;
+            if (source != null && !source.equals(player.getUniqueId()) && plugin.pvp() != null && plugin.pvp().inArena(player)) {
+                // PvP 保底（2026-10）：別的玩家造成的持續傷害也算進「每秒最多打掉總血量的幾 %」
+                taken = plugin.pvp().limit(player, amount, false);
+                if (taken <= 0) {
+                    return;
+                }
+            }
+            if (burnPlayer(player, taken, type)) {
+                credit(source, living, type, taken); // 競技場裡打玩家的
             }
             return;
         }

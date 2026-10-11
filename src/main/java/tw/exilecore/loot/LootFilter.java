@@ -87,7 +87,7 @@ public final class LootFilter {
     /**
      * 進階規則（預設組合與自訂都有）。
      *
-     * @param weaponsLikeMine  只撿跟手上同類的武器（手上拿弓就只撿弓；雙手武器的人不撿盾）；沒拿武器不管
+     * @param weaponsLikeMine  只撿跟手上同類的武器（手上拿弓就只撿弓；雙手武器的人不撿盾；沒拿弓的人不撿箭袋）；沒拿武器不管
      * @param armourLikeMine   只撿跟身上同系的防具與盾（力量系／敏捷系／智慧系，看身上穿的）；沒穿不管
      * @param levelGap         物品等級比角色低超過這麼多級的裝備隱藏（0 = 關；傳奇、珠寶、地圖不管）
      * @param minSkillGemLevel 未切割技能寶石低於這個等級隱藏（0 = 關）
@@ -179,6 +179,57 @@ public final class LootFilter {
         boolean jewel() {
             return tags.contains("jewel");
         }
+
+        /** 遺時星晶（半徑珠寶）是哪一種；不是遺時星晶回傳 null。 */
+        TimeLost timeLost() {
+            return TimeLost.of(tags);
+        }
+    }
+
+    /**
+     * 遺時星晶（半徑珠寶，2026-10）的四種：照基底的標籤分（bases/jewels.yml：radius ＋ r_ruby／r_emerald／r_sapphire，三種都有的是白的）。
+     */
+    public enum TimeLost {
+        RUBY("ruby", "遺時赤星晶"), EMERALD("emerald", "遺時翠星晶"), SAPPHIRE("sapphire", "遺時蒼星晶"), DIAMOND("diamond", "遺時白星晶");
+
+        private final String id;
+        private final String displayName;
+
+        TimeLost(final String id, final String displayName) {
+            this.id = id;
+            this.displayName = displayName;
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public String displayName() {
+            return displayName;
+        }
+
+        /** 基底的標籤是哪一種遺時星晶；不是遺時星晶（沒有 radius 標籤）回傳 null。 */
+        public static TimeLost of(final Set<String> tags) {
+            if (tags == null || !tags.contains("radius")) {
+                return null;
+            }
+            final boolean ruby = tags.contains("r_ruby");
+            final boolean emerald = tags.contains("r_emerald");
+            final boolean sapphire = tags.contains("r_sapphire");
+            if (ruby && emerald && sapphire) {
+                return DIAMOND;
+            }
+            return emerald ? EMERALD : sapphire ? SAPPHIRE : RUBY;
+        }
+
+        static TimeLost byId(final String id) {
+            for (final TimeLost each : values()) {
+                if (each.id.equalsIgnoreCase(id)) {
+                    return each;
+                }
+            }
+            return null;
+        }
     }
 
     /**
@@ -229,6 +280,67 @@ public final class LootFilter {
 
     public void cycleJewelRarity(final boolean backwards) {
         jewelRarity = next(JEWEL_RARITIES, jewelRarity, backwards);
+    }
+
+    /** 遺時星晶依稀有度（2026-10）：0 全部撿、1 只撿稀有、2 全部不撿。跟一般珠寶分開設定。 */
+    private int timeLostRarity;
+    /** 不撿的遺時星晶種類（2026-10）。 */
+    private final EnumSet<TimeLost> hiddenTimeLost = EnumSet.noneOf(TimeLost.class);
+    public static final int[] TIME_LOST_RARITIES = {0, 1, 2};
+
+    public static String timeLostRarityName(final int value) {
+        return switch (value) {
+            case 1 -> "只撿稀有的";
+            case 2 -> "全部不撿";
+            default -> "全部撿";
+        };
+    }
+
+    public int timeLostRarity() {
+        return timeLostRarity;
+    }
+
+    public void cycleTimeLostRarity(final boolean backwards) {
+        timeLostRarity = next(TIME_LOST_RARITIES, timeLostRarity, backwards);
+    }
+
+    /** 這一種遺時星晶撿不撿。 */
+    public boolean hidesTimeLost(final TimeLost kind) {
+        return hiddenTimeLost.contains(kind);
+    }
+
+    public void toggleTimeLost(final TimeLost kind) {
+        if (!hiddenTimeLost.remove(kind)) {
+            hiddenTimeLost.add(kind);
+        }
+    }
+
+    /** 遺時星晶有沒有設定過濾（給總覽的說明）。 */
+    public boolean filtersTimeLost() {
+        return timeLostRarity > 0 || !hiddenTimeLost.isEmpty();
+    }
+
+    /** 換預設組合時把遺時星晶的設定帶過去。 */
+    public LootFilter withTimeLost(final LootFilter from) {
+        timeLostRarity = from.timeLostRarity;
+        hiddenTimeLost.clear();
+        hiddenTimeLost.addAll(from.hiddenTimeLost);
+        return this;
+    }
+
+    /** 遺時星晶：先看種類、再看稀有度（傳奇永遠撿）；不看一般珠寶的設定。 */
+    private boolean hidesTimeLost(final TimeLost kind, final Rarity rarity) {
+        if (rarity == Rarity.UNIQUE) {
+            return false;
+        }
+        if (hiddenTimeLost.contains(kind)) {
+            return true;
+        }
+        return switch (timeLostRarity) {
+            case 1 -> rarity != Rarity.RARE;
+            case 2 -> true;
+            default -> false;
+        };
     }
 
     private boolean hidesJewel(final Rarity rarity) {
@@ -374,6 +486,10 @@ public final class LootFilter {
             return hidesMap(candidate.rarity());
         }
         if (candidate.jewel()) {
+            final TimeLost timeLost = candidate.timeLost();
+            if (timeLost != null) {
+                return hidesTimeLost(timeLost, candidate.rarity()); // 2026-10：遺時星晶有自己的設定（種類、稀有度）
+            }
             return hidesJewel(candidate.rarity()); // 2026-10：珠寶也能過濾（傳奇珠寶永遠撿）
         }
         if (candidate.rarity() == Rarity.UNIQUE) {
@@ -415,7 +531,7 @@ public final class LootFilter {
     }
 
     /**
-     * 這件裝備（基底標籤）是不是「跟我不同類」：手上拿弓就只有弓是同類（雙手武器的人盾也不同類）、
+     * 這件裝備（基底標籤）是不是「跟我不同類」：手上拿弓就只有弓是同類（雙手武器的人盾也不同類；沒拿弓的人箭袋也不同類）、
      * 身上穿力量系防具就只有力量系的防具與盾是同類。沒拿武器／沒穿防具時不管（都算同類）。
      * 掉落過濾器的「只撿跟我同類的」與商人賭博的「只看我這類」共用。
      *
@@ -432,6 +548,8 @@ public final class LootFilter {
                 }
             } else if (tags.contains("shield") && who.weaponTags().contains("two_hand")) {
                 return true; // 雙手武器用不到盾
+            } else if (tags.contains("quiver") && !who.weaponTags().contains("bow")) {
+                return true; // 2026-10：箭袋只有拿弓的人能裝（以前箭袋不算武器也不算盾，拿什麼都照撿）
             }
         }
         if (checkArmour && !who.armourFamilies().isEmpty() && (tags.contains("armour") || tags.contains("shield"))) {
@@ -635,7 +753,12 @@ public final class LootFilter {
      * 進階規則的地圖是 {@code mr}（稀有度）；舊版的 {@code mt}（地圖階級）已經不用，讀到就略過。
      */
     public String encode() {
-        final String kept = (keepBases.isEmpty() ? "" : ";kb=" + String.join(",", keepBases)) + (jewelRarity > 0 ? ";jr=" + jewelRarity : "");
+        final List<String> timeLostHidden = new ArrayList<>();
+        for (final TimeLost kind : hiddenTimeLost) {
+            timeLostHidden.add(kind.id());
+        }
+        final String kept = (keepBases.isEmpty() ? "" : ";kb=" + String.join(",", keepBases)) + (jewelRarity > 0 ? ";jr=" + jewelRarity : "")
+                + (timeLostRarity > 0 ? ";tr=" + timeLostRarity : "") + (timeLostHidden.isEmpty() ? "" : ";th=" + String.join(",", timeLostHidden));
         if (!CUSTOM.equals(preset)) {
             return "p=" + preset + kept;
         }
@@ -700,18 +823,27 @@ public final class LootFilter {
                 case "kt" -> filter.rules = filter.rules.withKeepAffixTier(integer(value));
                 case "kb" -> filter.keepBases.addAll(list(value));
                 case "jr" -> filter.jewelRarity = Math.max(0, Math.min(3, integer(value)));
+                case "tr" -> filter.timeLostRarity = Math.max(0, Math.min(2, integer(value)));
+                case "th" -> {
+                    for (final String name : list(value)) {
+                        final TimeLost kind = TimeLost.byId(name);
+                        if (kind != null) {
+                            filter.hiddenTimeLost.add(kind);
+                        }
+                    }
+                }
                 default -> {
                     // 之後版本加的欄位：略過
                 }
             }
         }
         if (presetId == null) {
-            return config.defaultFilter().copy().withKeepBases(filter.keepBases).withJewelRarity(filter.jewelRarity);
+            return config.defaultFilter().copy().withKeepBases(filter.keepBases).withJewelRarity(filter.jewelRarity).withTimeLost(filter);
         }
         if (!CUSTOM.equals(presetId)) {
             final LootConfig.Preset preset = config.preset(presetId);
             return (preset == null ? config.defaultFilter().copy() : of(preset)).withKeepBases(filter.keepBases)
-                    .withJewelRarity(filter.jewelRarity);
+                    .withJewelRarity(filter.jewelRarity).withTimeLost(filter);
         }
         filter.preset = CUSTOM;
         return filter;
@@ -749,6 +881,8 @@ public final class LootFilter {
         copy.preset = preset;
         copy.keepBases.addAll(keepBases);
         copy.jewelRarity = jewelRarity;
+        copy.timeLostRarity = timeLostRarity;
+        copy.hiddenTimeLost.addAll(hiddenTimeLost);
         return copy;
     }
 
@@ -759,12 +893,13 @@ public final class LootFilter {
         }
         return hiddenEquipment.equals(that.hiddenEquipment) && hiddenCurrencies.equals(that.hiddenCurrencies)
                 && hideSkillGems == that.hideSkillGems && hideSupportGems == that.hideSupportGems && hideCharms == that.hideCharms && keepAffixLikeMine == that.keepAffixLikeMine
-                && flasks == that.flasks && rules.equals(that.rules) && preset.equals(that.preset) && keepBases.equals(that.keepBases) && jewelRarity == that.jewelRarity;
+                && flasks == that.flasks && rules.equals(that.rules) && preset.equals(that.preset) && keepBases.equals(that.keepBases) && jewelRarity == that.jewelRarity
+                && timeLostRarity == that.timeLostRarity && hiddenTimeLost.equals(that.hiddenTimeLost);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hiddenEquipment, hiddenCurrencies, hideSkillGems, hideSupportGems, hideCharms, keepAffixLikeMine, flasks, rules, preset, keepBases, jewelRarity);
+        return Objects.hash(hiddenEquipment, hiddenCurrencies, hideSkillGems, hideSupportGems, hideCharms, keepAffixLikeMine, flasks, rules, preset, keepBases, jewelRarity, timeLostRarity, hiddenTimeLost);
     }
 
     @Override

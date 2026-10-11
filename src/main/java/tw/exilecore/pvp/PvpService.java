@@ -73,6 +73,8 @@ public final class PvpService implements Listener {
     private final ArenaLayout layout = ArenaLayout.standard();
     private final Map<UUID, Session> sessions = new HashMap<>();
     private final Map<UUID, Hit> lastHits = new HashMap<>();
+    /** 保底（2026-10）：每個人最近一秒被玩家打掉多少。 */
+    private final Map<UUID, PvpDamageCap> caps = new HashMap<>();
     /** 在競技場倒下、等著重生在場內的人。 */
     private final Set<UUID> fallen = new HashSet<>();
     /** 進場前的位置（劇情世界裡的才記；離開時回那裡）。 */
@@ -115,6 +117,53 @@ public final class PvpService implements Listener {
     /** 玩家打玩家的傷害乘上這個（1 − PvP 減傷）。 */
     public double damageMultiplier() {
         return config.multiplier();
+    }
+
+    /**
+     * 這一下 PvP 傷害乘多少（2026-10）：PvP 減傷，召喚物、圖騰、陷阱打的再乘 minion_damage，
+     * 挨打的人拿近戰武器再少 melee_reduction %（召喚物挨打不算：defender 傳 null）。
+     */
+    public double damageMultiplier(final boolean indirect, final Player defender) {
+        double scale = config.multiplier();
+        if (indirect) {
+            scale *= config.minionDamage();
+        }
+        if (defender != null && config.meleeReduction() > 0 && meleeWeapon(plugin.players().get(defender).weaponTags())) {
+            scale *= 1 - config.meleeReduction() / 100.0;
+        }
+        return scale;
+    }
+
+    /** 拿的是近戰武器（劍、斧、錘、矛、長棍、爪、匕首、獸魂符）；權杖是召喚、施法用的，不算。 */
+    static boolean meleeWeapon(final Set<String> weaponTags) {
+        return weaponTags != null && weaponTags.contains(tw.exilecore.stats.Tags.MELEE) && !weaponTags.contains("sceptre");
+    }
+
+    /**
+     * 保底（2026-10）：victim 這一次被玩家（或他的召喚物、持續傷害）打，實際扣多少。
+     * 單一下最多總血量的 max_hit_percent %、最近一秒最多 max_per_second_percent %；總血量 = 最大生命＋最大能量護盾，
+     * 「受到的傷害先從魔力扣」的人把那一份最大魔力也算進去（不然他們的上限會特別低）。
+     *
+     * @param amount 原本要扣的（護盾＋生命加起來）
+     * @param hit    是擊中（false = 點燃、流血、中毒的一跳：只看每秒的上限）
+     */
+    public double limit(final Player victim, final double amount, final boolean hit) {
+        if (amount <= 0 || (config.hitCap() <= 0 && config.secondCap() <= 0)) {
+            return amount;
+        }
+        final PlayerState state = plugin.players().get(victim);
+        if (!state.isLoaded() || !state.hasCharacter()) {
+            return amount;
+        }
+        final double fromMana = Math.max(0, Math.min(100, plugin.players().sheet(victim)
+                .flat(tw.exilecore.stats.StatKeys.DAMAGE_FROM_MANA, Set.of()))) / 100.0;
+        final double pool = state.maxLife() + state.maxEnergyShield() + state.maxMana() * fromMana;
+        if (pool <= 0) {
+            return amount;
+        }
+        final long tick = plugin.getServer().getCurrentTick();
+        return caps.computeIfAbsent(victim.getUniqueId(), uuid -> new PvpDamageCap())
+                .allow(amount, pool * config.hitCap() / 100.0, pool * config.secondCap() / 100.0, tick, hit);
     }
 
     /**
@@ -334,6 +383,7 @@ public final class PvpService implements Listener {
     private void entered(final Player player) {
         sessions.put(player.getUniqueId(), new Session());
         lastHits.remove(player.getUniqueId());
+        caps.remove(player.getUniqueId());
         final PlayerState state = plugin.players().get(player);
         if (!state.hasCharacter()) {
             return;
@@ -352,6 +402,12 @@ public final class PvpService implements Listener {
         player.playSound(player.getLocation(), Sound.EVENT_RAID_HORN, 0.4f, 1.2f);
         player.sendMessage(plugin.text().prefixed("<#ff6b6b>進入競技場<gray>：同一隊的人不會互打；玩家打玩家的傷害減少 <white>"
                 + Math.round(config.reduction()) + "%<gray>（專屬的 PvP 減傷）。倒下不扣經驗、不掉東西"));
+        if (config.secondCap() > 0 || config.hitCap() > 0) {
+            player.sendMessage(plugin.text().parse("<gray>  保底：" + (config.hitCap() > 0 ? "一下最多打掉總血量的 <white>" + Math.round(config.hitCap()) + "%</white>" : "")
+                    + (config.hitCap() > 0 && config.secondCap() > 0 ? "、" : "")
+                    + (config.secondCap() > 0 ? "每秒最多 <white>" + Math.round(config.secondCap()) + "%</white>" : "")
+                    + (config.meleeReduction() > 0 ? "；拿近戰武器受到的傷害再少 <white>" + Math.round(config.meleeReduction()) + "%</white>" : "")));
+        }
         player.sendMessage(plugin.text().parse("<gray>  掩體上有梯子可以爬上去；<white>/pvp leave</white> 或 <white>/town</white> 離開"));
         for (final Player other : players()) {
             if (!other.equals(player)) {
@@ -364,6 +420,7 @@ public final class PvpService implements Listener {
     private void left(final Player player) {
         final Session session = sessions.remove(player.getUniqueId());
         lastHits.remove(player.getUniqueId());
+        caps.remove(player.getUniqueId());
         fallen.remove(player.getUniqueId());
         if (plugin.ailments() != null) {
             plugin.ailments().clear(player);
@@ -387,6 +444,7 @@ public final class PvpService implements Listener {
         event.deathMessage(null);
         final long now = plugin.getServer().getCurrentTick();
         final Hit hit = lastHits.remove(victim.getUniqueId());
+        caps.remove(victim.getUniqueId()); // 重生之後重新算
         Player killer = hit != null && now - hit.tick() <= CREDIT_TICKS ? plugin.getServer().getPlayer(hit.attacker()) : null;
         if (killer == null && victim.getKiller() != null && !victim.getKiller().equals(victim)) {
             killer = victim.getKiller();
@@ -457,6 +515,7 @@ public final class PvpService implements Listener {
         final UUID uuid = event.getPlayer().getUniqueId();
         sessions.remove(uuid);
         lastHits.remove(uuid);
+        caps.remove(uuid);
         fallen.remove(uuid);
     }
 

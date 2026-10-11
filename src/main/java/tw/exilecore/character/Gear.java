@@ -178,7 +178,7 @@ public final class Gear {
             player.setItemOnCursor(null);
         }
         show(player, HAND_SLOT, state.jewellery(MAIN), true, ItemSlot.MAIN_HAND);
-        show(player, 40, state.jewellery(OFF), false, ItemSlot.OFF_HAND);
+        show(player, 40, hiddenInHand(player, state.jewellery(OFF)) ? null : state.jewellery(OFF), false, ItemSlot.OFF_HAND);
         show(player, 39, state.jewellery(HEAD), false, ItemSlot.HEAD);
         show(player, 38, state.jewellery(CHEST), false, ItemSlot.CHEST);
         show(player, 37, state.jewellery(LEGS), false, ItemSlot.LEGS);
@@ -187,6 +187,26 @@ public final class Gear {
             plugin.players().markDirty(player);
         }
         return changed;
+    }
+
+    /**
+     * 箭袋（2026-10）：裝在副手時不放顯示用的複本——不會拿在左手上，副手也就沒有東西可以右鍵
+     * （以前叉鏃箭袋的材質是望遠鏡，按住右鍵施放時鏡頭會一直拉近拉遠）。裝備本身還是在角色面板的副手欄，效果照算。
+     * 例外：副手套了幻化、而且玩家選了要顯示（贊助 → 裝備幻化的開關，預設顯示）——那就照幻化的樣子拿在手上。
+     */
+    private boolean hiddenInHand(final Player player, final ItemStack real) {
+        if (!quiver(real)) {
+            return false;
+        }
+        return plugin.sponsors() == null || !plugin.sponsors().showsQuiverSkin(player);
+    }
+
+    private boolean quiver(final ItemStack real) {
+        if (real == null || real.isEmpty()) {
+            return false;
+        }
+        final ItemBase base = baseOf(real);
+        return base != null && base.isQuiver();
     }
 
     private void show(final Player player, final int slot, final ItemStack real, final boolean hand, final ItemSlot itemSlot) {
@@ -201,6 +221,11 @@ public final class Gear {
         }
         if (real != null && plugin.sponsors() != null) {
             plugin.sponsors().applyTransmog(player, itemSlot, want); // 2026-10：裝備幻化（只改顯示用的複本）
+            if (itemSlot == ItemSlot.OFF_HAND && want.getType() != Material.LEATHER && quiver(real)) {
+                // 顯示幻化的箭袋：顯示用的複本一律換成皮革（樣子照幻化的物品模型，不看材質）——
+                // 有的箭袋材質右鍵有原版的動作（望遠鏡會拉近鏡頭），副手的東西不要有任何右鍵動作
+                want = want.withType(Material.LEATHER);
+            }
         }
         final ItemStack current = inventory.getItem(slot);
         if (want == null) {

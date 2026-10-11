@@ -167,6 +167,41 @@ public final class HudFont {
 
     private static volatile byte[] unifontTable;
 
+    /** web/unifont_hud.bin.gz 收的範圍（tools 產生：每個字 1 個寬度位元組＋寬度不是 0 時 32 位元組的 16×16 點陣）。 */
+    private static final int[][] UNIFONT_RANGES = {{0x20, 0xFF}, {0x2000, 0x2BFF}, {0x2E80, 0x9FFF}, {0xF900, 0xFAFF},
+            {0xFE30, 0xFE4F}, {0xFF00, 0xFFEF}};
+    private static volatile Map<Character, byte[]> unifontGlyphs;
+
+    /** 這個字的 Unifont 點陣：[寬度, 32 位元組]；沒有回傳 null。 */
+    static byte[] unifontGlyph(final char c) {
+        Map<Character, byte[]> map = unifontGlyphs;
+        if (map == null) {
+            map = new HashMap<>();
+            try (java.io.InputStream raw = HudFont.class.getResourceAsStream("/web/unifont_hud.bin.gz")) {
+                if (raw != null) {
+                    final byte[] data = new java.util.zip.GZIPInputStream(raw).readAllBytes();
+                    int at = 0;
+                    for (final int[] range : UNIFONT_RANGES) {
+                        for (int cp = range[0]; cp <= range[1] && at < data.length; cp++) {
+                            final int width = data[at++];
+                            if (width > 0 && at + 32 <= data.length) {
+                                final byte[] glyph = new byte[33];
+                                glyph[0] = (byte) width;
+                                System.arraycopy(data, at, glyph, 1, 32);
+                                map.put((char) cp, glyph);
+                                at += 32;
+                            }
+                        }
+                    }
+                }
+            } catch (final IOException e) {
+                // 讀不到就用系統字型
+            }
+            unifontGlyphs = map;
+        }
+        return map.get(c);
+    }
+
     private static byte[] unifont() {
         byte[] table = unifontTable;
         if (table == null) {
@@ -250,14 +285,29 @@ public final class HudFont {
             final int cellWidth = wide ? CELL : 10;
             final int x = (i % columns) * CELL;
             final int y = (i / columns) * CELL;
-            final Font use = font.canDisplay(c) ? font : new Font(Font.DIALOG, Font.PLAIN, font.getSize());
-            g.setFont(use);
-            final FontMetrics m = g.getFontMetrics(use);
-            final int w = m.charWidth(c);
-            final int baseline = y + (CELL - m.getHeight()) / 2 + m.getAscent();
-            g.setClip(x, y, cellWidth - 1, CELL);
-            g.drawString(String.valueOf(c), x + Math.max(0, (cellWidth - 1 - w) / 2), baseline);
-            g.setClip(null);
+            final byte[] uni = unifontGlyph(c);
+            if (uni != null) {
+                // 2026-10：用 GNU Unifont 的點陣（跟原版的中文同一套字）——主機商的 Linux 沒有中文字型，用系統字型會畫成方框
+                final int w = uni[0];
+                final int left = x + Math.max(0, (cellWidth - 1 - Math.min(w, cellWidth - 1)) / 2);
+                for (int gy = 0; gy < CELL; gy++) {
+                    final int bits = (uni[1 + gy * 2] & 0xFF) << 8 | uni[2 + gy * 2] & 0xFF;
+                    for (int gx = 0; gx < Math.min(w, cellWidth - 1); gx++) {
+                        if ((bits & 1 << (15 - gx)) != 0) {
+                            sheet.setRGB(left + gx, y + gy, 0xFFFFFFFF);
+                        }
+                    }
+                }
+            } else {
+                final Font use = font.canDisplay(c) ? font : new Font(Font.DIALOG, Font.PLAIN, font.getSize());
+                g.setFont(use);
+                final FontMetrics m = g.getFontMetrics(use);
+                final int w = m.charWidth(c);
+                final int baseline = y + (CELL - m.getHeight()) / 2 + m.getAscent();
+                g.setClip(x, y, cellWidth - 1, CELL);
+                g.drawString(String.valueOf(c), x + Math.max(0, (cellWidth - 1 - w) / 2), baseline);
+                g.setClip(null);
+            }
             // 最右邊一欄放一個幾乎透明的點：客戶端照最右邊不透明的那一欄算字寬，這樣每個字的寬度都是固定的
             sheet.setRGB(x + cellWidth - 1, y, 0x01FFFFFF);
             map.put(c, new Glyph(code, cellWidth / 2 + 1));
@@ -350,6 +400,7 @@ public final class HudFont {
             files.put("assets/exilecore/font/hud_r" + r + ".json", rowRoot.toString().getBytes(StandardCharsets.UTF_8));
         }
         glyphs = Map.copyOf(map);
+        unifontGlyphs = null; // 只有產生資源包時用：放掉（約 1 MB）
     }
 
     /** 要收進字型的字（技能名稱…）：產生資源包之前由 {@link WebModule} 給。 */

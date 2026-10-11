@@ -64,8 +64,19 @@ public final class BossSkillConfig {
         }
     }
 
-    /** 招式組裡解析好的一項。 */
-    public record Entry(BossSkill skill, int fromPhase) {
+    /**
+     * 招式組裡解析好的一項。
+     *
+     * @param with 放這一招的同時一起落下的招（2026-10；只留 slam、zone、orbs、mark，其他的略過）
+     */
+    public record Entry(BossSkill skill, int fromPhase, List<BossSkill> with) {
+        public Entry {
+            with = with == null ? List.of() : List.copyOf(with);
+        }
+
+        public Entry(final BossSkill skill, final int fromPhase) {
+            this(skill, fromPhase, List.of());
+        }
     }
 
     /**
@@ -85,6 +96,11 @@ public final class BossSkillConfig {
     private Settings settings = Settings.DEFAULT;
     private Map<String, BossSkill> skills = Map.of();
     private Map<String, List<BossSkillUse>> defaults = Map.of();
+    /** 哪幾種 Boss 出招的節奏倍率（2026-10）：種類 → 倍率（見 {@link #TEMPO_KINDS}）。 */
+    private Map<String, Double> tempo = Map.of();
+
+    /** 可以設節奏的 Boss 種類：終局、極境、昇華試煉、金庫之主、世界 Boss。 */
+    public static final Set<String> TEMPO_KINDS = Set.of("final", "uber", "trial", "vault", "world");
 
     public void load(final Path dataFolder) throws IOException {
         final Path file = dataFolder.resolve(FILE);
@@ -150,9 +166,24 @@ public final class BossSkillConfig {
             }
             parsedDefaults.put(key.equals(DEFAULT_KEY) ? DEFAULT_KEY : key.trim().toUpperCase(Locale.ROOT), uses);
         }
+        // 2026-10：這幾種 Boss 出招再緊一點（有翻滾之後）：兩招之間的空檔與招式冷卻乘這個倍率，前搖不動
+        final Map<String, Double> parsedTempo = new LinkedHashMap<>();
+        final YamlNode tempoNode = settingsNode.node("tempo");
+        for (final String kind : tempoNode.keys()) {
+            if (!TEMPO_KINDS.contains(kind)) {
+                throw new IllegalArgumentException(tempoNode.path() + "：不認得「" + kind + "」，可用：" + String.join("、", TEMPO_KINDS.stream().sorted().toList()));
+            }
+            parsedTempo.put(kind, range(tempoNode, kind, tempoNode.decimal(kind, 1.0), 0.3, 2));
+        }
         this.skills = parsedSkills;
         this.settings = parsedSettings;
         this.defaults = parsedDefaults;
+        this.tempo = Map.copyOf(parsedTempo);
+    }
+
+    /** 這種 Boss 出招的節奏倍率（乘在兩招之間的空檔與招式冷卻上；1 = 不變，越小越快；沒寫、不是這幾種就是 1）。 */
+    public double tempo(final String kind) {
+        return kind == null ? 1.0 : tempo.getOrDefault(kind, 1.0);
     }
 
     private static double range(final YamlNode node, final String key, final double value, final double min, final double max) {
@@ -196,7 +227,14 @@ public final class BossSkillConfig {
         for (final BossSkillUse use : uses) {
             final BossSkill skill = skills.get(use.id());
             if (skill != null) {
-                kit.add(new Entry(use.resolve(skill), use.fromPhase()));
+                final List<BossSkill> with = new ArrayList<>();
+                for (final String id : use.with()) {
+                    final BossSkill extra = skills.get(id);
+                    if (extra != null && extra.kind().hazardCapable()) {
+                        with.add(extra);
+                    }
+                }
+                kit.add(new Entry(use.resolve(skill), use.fromPhase(), with));
             }
         }
         return kit;
@@ -214,7 +252,27 @@ public final class BossSkillConfig {
             if (!skills.containsKey(use.id()) && !missing.contains(use.id())) {
                 missing.add(use.id());
             }
+            for (final String id : use.with()) {
+                if (!skills.containsKey(id) && !missing.contains(id)) {
+                    missing.add(id);
+                }
+            }
         }
         return missing;
+    }
+
+    /** {@code with:} 寫了要 Boss 站著放的招（只能用 slam、zone、orbs、mark）：回傳說明，沒問題是空的。 */
+    public List<String> comboProblems(final List<BossSkillUse> uses) {
+        final List<String> problems = new ArrayList<>();
+        for (final BossSkillUse use : uses) {
+            for (final String id : use.with()) {
+                final BossSkill extra = skills.get(id);
+                if (extra != null && !extra.kind().hazardCapable()) {
+                    problems.add(use.id() + " 的 with「" + id + "」是 " + extra.kind().name().toLowerCase(Locale.ROOT)
+                            + "，同時放只能用 slam、zone、orbs、mark");
+                }
+            }
+        }
+        return problems;
     }
 }

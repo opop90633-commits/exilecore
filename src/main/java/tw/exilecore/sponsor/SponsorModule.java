@@ -288,13 +288,16 @@ public final class SponsorModule implements Module, Listener {
      */
     public static LiteralArgumentBuilder<CommandSourceStack> adminNode(final ExileCore plugin) {
         return Commands.literal("sponsor")
-                .then(Commands.literal("give").then(Commands.argument("player", StringArgumentType.word())
+                .then(Commands.literal("give").then(Commands.argument("player", StringArgumentType.word()).suggests(onlineAccounts(plugin))
+                        // 2026-10：/ec sponsor give 玩家 cosmetic 時裝代號|bundle:組代號（絕版、限定時裝只有這條路；贊助商城的 S1 禮包也用這行）
+                        .then(Commands.literal("cosmetic").then(Commands.argument("id", StringArgumentType.word()).suggests(cosmeticIds(plugin))
+                                .executes(context -> giveCosmetic(plugin, context))))
                         .then(Commands.argument("amount", LongArgumentType.longArg(1, 1_000_000))
                                 .executes(context -> give(plugin, context, "paid"))
                                 .then(Commands.literal("bonus").executes(context -> give(plugin, context, "bonus")))
                                 .then(Commands.literal("card").executes(context -> give(plugin, context, "card")))
                                 .then(Commands.literal("fashion").executes(context -> give(plugin, context, "fashion"))))))
-                .then(Commands.literal("info").then(Commands.argument("player", StringArgumentType.word()).executes(context -> {
+                .then(Commands.literal("info").then(Commands.argument("player", StringArgumentType.word()).suggests(onlineAccounts(plugin)).executes(context -> {
                     final CommandSender sender = context.getSource().getSender();
                     final Player target = online(plugin, sender, StringArgumentType.getString(context, "player"));
                     if (target != null) {
@@ -305,7 +308,7 @@ public final class SponsorModule implements Module, Listener {
                     }
                     return Command.SINGLE_SUCCESS;
                 })))
-                .then(Commands.literal("take").then(Commands.argument("player", StringArgumentType.word())
+                .then(Commands.literal("take").then(Commands.argument("player", StringArgumentType.word()).suggests(onlineAccounts(plugin))
                         .then(Commands.argument("amount", LongArgumentType.longArg(1, 1_000_000))
                                 .executes(context -> take(plugin, context, false))
                                 .then(Commands.literal("refund").executes(context -> take(plugin, context, true))))));
@@ -359,5 +362,75 @@ public final class SponsorModule implements Module, Listener {
                     }
                 }));
         return Command.SINGLE_SUCCESS;
+    }
+
+    private static int giveCosmetic(final ExileCore plugin, final CommandContext<CommandSourceStack> context) {
+        final CommandSender sender = context.getSource().getSender();
+        final String name = StringArgumentType.getString(context, "player");
+        final String id = StringArgumentType.getString(context, "id");
+        if (plugin.sponsors() == null || plugin.admin() == null || plugin.admin().deliveries() == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>贊助或管理模組沒有啟用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final String label;
+        try {
+            plugin.sponsors().resolveCosmetics(id);
+            label = plugin.sponsors().cosmeticLabel(id);
+        } catch (final IllegalArgumentException e) {
+            sender.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(e.getMessage())));
+            return Command.SINGLE_SUCCESS;
+        }
+        final DeliveryService.Spec spec = new DeliveryService.Spec(DeliveryService.COSMETIC, id, null, 0, 1);
+        plugin.admin().deliveries().grant(name, List.of(spec), "贊助（" + label + "）", sender.getName()).whenComplete((created, error) ->
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    if (error != null) {
+                        sender.sendMessage(plugin.text().prefixed("<red>發不出去：" + ItemRenderer.escape(String.valueOf(error.getMessage()))));
+                        plugin.getSLF4JLogger().error("[贊助] 發時裝 {} 給 {} 失敗", id, name, error);
+                    } else if (!created.unknown().isEmpty()) {
+                        sender.sendMessage(plugin.text().prefixed("<red>找不到玩家「" + ItemRenderer.escape(name) + "」（要進過伺服器）"));
+                    } else {
+                        sender.sendMessage(plugin.text().prefixed("<green>發給 " + ItemRenderer.escape(name) + " " + ItemRenderer.escape(label)
+                                + "<gray>（離線的下次登入發；已經有的不重複給）"));
+                    }
+                }));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** 時裝代號與 bundle:組代號（按 TAB 補完；2026-10）。 */
+    private static com.mojang.brigadier.suggestion.SuggestionProvider<CommandSourceStack> cosmeticIds(final ExileCore plugin) {
+        return (context, builder) -> {
+            final String remaining = builder.getRemainingLowerCase();
+            if (plugin.sponsors() != null) {
+                for (final String id : plugin.sponsors().config().bundles().keySet()) {
+                    if (("bundle:" + id).startsWith(remaining)) {
+                        builder.suggest("bundle:" + id);
+                    }
+                }
+                for (final String id : plugin.sponsors().config().limitedTitles().keySet()) {
+                    if (("title:" + id).startsWith(remaining)) {
+                        builder.suggest("title:" + id);
+                    }
+                }
+                for (final String id : plugin.sponsors().config().cosmetics().keySet()) {
+                    if (id.startsWith(remaining)) {
+                        builder.suggest(id);
+                    }
+                }
+            }
+            return builder.buildFuture();
+        };
+    }
+
+    /** 在線玩家的 ID（按 TAB 補完；2026-10）。 */
+    private static com.mojang.brigadier.suggestion.SuggestionProvider<CommandSourceStack> onlineAccounts(final ExileCore plugin) {
+        return (context, builder) -> {
+            final String remaining = builder.getRemainingLowerCase();
+            for (final Player online : plugin.getServer().getOnlinePlayers()) {
+                if (online.getName().toLowerCase(java.util.Locale.ROOT).startsWith(remaining)) {
+                    builder.suggest(online.getName());
+                }
+            }
+            return builder.buildFuture();
+        };
     }
 }

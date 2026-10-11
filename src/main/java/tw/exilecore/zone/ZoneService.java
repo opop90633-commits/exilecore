@@ -58,8 +58,6 @@ public final class ZoneService {
     private final Map<UUID, String> current = new HashMap<>();
     /** /town 之前的位置（從營地傳回去用）。 */
     private final Map<UUID, Location> returnPoints = new HashMap<>();
-    /** 在極境裡打 /town 的時間（要再打一次確認）。 */
-    private final Map<UUID, Long> townConfirm = new HashMap<>();
     /** 檢查點標記：區域.檢查點 → 文字實體。 */
     private final Map<String, TextDisplay> markers = new HashMap<>();
     /** 管理員的選取範圍（pos1、pos2）。 */
@@ -395,32 +393,7 @@ public final class ZoneService {
             player.sendMessage(plugin.text().prefixed("<red>剛受到攻擊，3 秒內不能傳送到檢查點（回營地隨時可以：/town）"));
             return false;
         }
-        if (!confirmLeaveUber(player, "傳送出去", "傳送點")) {
-            return false;
-        }
         return move(player, target, label);
-    }
-
-    /**
-     * 在極境裡要離開（回營地、傳送到檢查點）：離開就不能再回去，所以 5 秒內要再做一次才算。
-     * 不在極境裡直接回傳 true。
-     *
-     * @param action 「回營地」「傳送出去」
-     * @param again  再做一次的提示（「/town」「傳送點」）
-     */
-    private boolean confirmLeaveUber(final Player player, final String action, final String again) {
-        if (plugin.maps() == null || !plugin.maps().inUber(player)) {
-            return true;
-        }
-        final long now = plugin.getServer().getCurrentTick();
-        final Long asked = townConfirm.get(player.getUniqueId());
-        if (asked == null || now - asked > 100) {
-            townConfirm.put(player.getUniqueId(), now);
-            player.sendMessage(plugin.text().prefixed("<red>你在極境裡：" + action + "就不能再回來了。<gray>5 秒內再按一次（或再用一次 " + again + "）確定"));
-            return false;
-        }
-        townConfirm.remove(player.getUniqueId());
-        return true;
     }
 
     /** 直接傳送（不看有沒有被打）。到了之後有入場保護（營地除外）：移動前不會受傷。 */
@@ -463,9 +436,7 @@ public final class ZoneService {
             return;
         }
         final boolean uber = plugin.maps() != null && plugin.maps().inUber(player);
-        if (!confirmLeaveUber(player, "回營地", "<white>/town</white>")) {
-            return;
-        }
+        // 2026-10：極境裡回營地不再要求確認（離開就不能再回去，訊息照樣提醒）
         final Location from = player.getLocation().clone();
         // 競技場：不記回程位置（回去要走 /pvp，進場的檢查才會照做）
         final boolean arena = plugin.pvp() != null && plugin.pvp().inArena(player);

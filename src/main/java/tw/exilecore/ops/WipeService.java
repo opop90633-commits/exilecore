@@ -50,7 +50,8 @@ public final class WipeService {
             "stash_pages", "stash_currency", "stash_tabs",
             "market_listings", "market_proceeds", "exchange_orders", "exchange_fills", "exchange_trades",
             "trade_log", "currency_log",
-            "economy_flow", "economy_stock", "economy_income", "currency_values");
+            "economy_flow", "economy_stock", "economy_income", "currency_values",
+            "guild_applications", "guild_stash", "guild_log", "guild_members", "guilds"); // 2026-10：公會（倉庫裡是物品、等級是進度）也清
     /** 全部清空時也留著的（資料表版本、管理員操作紀錄）。 */
     static final List<String> NEVER_WIPED = List.of("schema_version", "admin_log");
     private static final Pattern PLAYER_FILE = Pattern.compile(

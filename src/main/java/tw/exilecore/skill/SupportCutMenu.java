@@ -182,7 +182,7 @@ final class SupportCutMenu extends Menu {
             final SkillLoadout.Entry entry = loadout.skill(p);
             final SkillDefinition definition = entry == null ? null : service.config().skill(entry.skillId());
             if (definition == null) {
-                set(LIST_START + p, icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>技能面板的空格"));
+                set(LIST_START + p, uiIcon("slot_skill", Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>技能面板的空格"));
                 continue;
             }
             int fits = 0;

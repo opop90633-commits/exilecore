@@ -132,6 +132,27 @@ class UiPackTest {
     }
 
     @Test
+    void everySlotIconHasASilhouette() {
+        // 2026-10：每個空欄位的圖示都畫得出東西（剪影沒寫到、名字打錯會是一張透明的圖）；_locked 比較暗、右下角有鎖
+        for (final String icon : UiPack.ICONS) {
+            if (!icon.startsWith("slot_")) {
+                continue;
+            }
+            final BufferedImage image = UiPack.slotIcon(icon);
+            int painted = 0;
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    painted += (image.getRGB(x, y) >>> 24) > 0 ? 1 : 0;
+                }
+            }
+            assertTrue(painted >= 20, icon + " 幾乎是空的（" + painted + " 格）");
+            if (icon.endsWith("_locked")) {
+                assertEquals(0xFFC8C8C8, image.getRGB(11, 9), icon + " 右下角要有鎖");
+            }
+        }
+    }
+
+    @Test
     void iconsHaveOneCaseEach() {
         final JsonObject select = json("assets/exilecore/items/ui_icon.json").getAsJsonObject("model");
         assertEquals("minecraft:select", select.get("type").getAsString());

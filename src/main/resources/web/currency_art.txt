@@ -437,6 +437,32 @@ item sky_fragment
   ................
   ................
 
+item star_mirror
+  a=4a2f06
+  b=c8961e
+  c=f7dd7a
+  d=274a78
+  e=5fa8e0
+  f=bfe6ff
+  g=ffffff
+  h=c9a7ff
+  .....aaaaaa.....
+  ...aabccccbaa...
+  ..abcddddddcba..
+  .abcdfffeeeedca.
+  .acdfgfeeeeeeda.
+  .acdffeeeeeeeda.
+  .acdfeeeeeheeda.
+  .acdeeeeehgheda.
+  .acdeeeeeeheeda.
+  .abcdeeeeeeedca.
+  ..abcddddddcba..
+  ...aabccccbaa...
+  .....aabbaa.....
+  ......abca......
+  ......abca......
+  ......aaaa......
+
 item abyss_core
   a=120814
   b=3a0f2a

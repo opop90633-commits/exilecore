@@ -25,6 +25,10 @@ public final class SettingsMenu extends Menu {
     private static final int SLOT_COMBAT = 12;
     private static final int SLOT_TRACKER = 13;
     private static final int SLOT_OTHERS_FX = 14;
+    /** 戰鬥數據的技能明細（2026-10；預設關）。 */
+    private static final int SLOT_COMBAT_SKILLS = 15;
+    /** 自己的技能音效（2026-10）。 */
+    private static final int SLOT_SKILL_SOUNDS = 16;
     private static final int SLOT_TRADE = 19;
     /** 網頁角色頁公不公開（2026-10）。 */
     private static final int SLOT_PROFILE = 20;
@@ -48,7 +52,14 @@ public final class SettingsMenu extends Menu {
         set(SLOT_TRACKER, toggle(Material.WRITABLE_BOOK, "任務追蹤", PlayerSettings.enabled(state, PlayerSettings.QUEST_TRACKER),
                 "畫面右邊列出進行中的任務與現在這一步，還有每日委託、每月活動的進度"));
         set(SLOT_OTHERS_FX, toggle(Material.BLAZE_POWDER, "別人的技能特效", PlayerSettings.enabled(state, PlayerSettings.OTHERS_FX),
-                "看得到別的玩家放技能的粒子、圖騰與陷阱（人多時關掉比較不眼花、也比較不卡）；自己的技能、Boss 的警告圈、時裝照常顯示"));
+                "看得到別的玩家放技能的粒子、圖騰與陷阱，也聽得到他們技能的聲音（人多時關掉比較不眼花、不吵、也比較不卡）；"
+                        + "自己的技能、Boss 的警告圈、時裝照常"));
+        set(SLOT_SKILL_SOUNDS, toggle(Material.NOTE_BLOCK, "技能音效", PlayerSettings.enabled(state, PlayerSettings.SKILL_SOUNDS),
+                "自己放技能的聲音（施放、命中、爆炸）。關掉就完全靜音；別人的技能本來就只有三分之一的音量，"
+                        + "要完全不聽把「別人的技能特效」關掉。怪物與 Boss 的聲音不受影響"));
+        set(SLOT_COMBAT_SKILLS, toggle(Material.COMPARATOR, "戰鬥數據：技能明細", PlayerSettings.on(state, PlayerSettings.COMBAT_SKILLS),
+                "戰鬥數據改成列出每個技能：每秒打多少、佔幾成、各是什麼傷害類型（最多 4 個技能；召喚物算在召喚技能上，"
+                        + "點燃、流血、中毒各算一項）。整場的統計隨時可以打 /dps 看"));
         // 2026-10：介面資源包的開關拿掉了（登入時一律詢問，要不要套用由客戶端決定）
         set(slot(ROW_OTHER, 0), rowLabel(Material.EMERALD, "其他", "跟別的玩家有關的"));
         set(SLOT_TRADE, toggle(Material.EMERALD, "交易邀請", PlayerSettings.enabled(state, PlayerSettings.TRADE_REQUESTS),
@@ -84,6 +95,19 @@ public final class SettingsMenu extends Menu {
                 }
             }
             case SLOT_COMBAT -> flip(PlayerSettings.COMBAT_METER);
+            case SLOT_SKILL_SOUNDS -> flip(PlayerSettings.SKILL_SOUNDS);
+            case SLOT_COMBAT_SKILLS -> {
+                // 預設關的設定：沒設定過算關
+                final PlayerState state = plugin.players().get(player);
+                if (!state.hasCharacter()) {
+                    player.sendMessage(plugin.text().prefixed("<red>先選一個角色（/char）"));
+                } else {
+                    final boolean on = PlayerSettings.on(state, PlayerSettings.COMBAT_SKILLS);
+                    plugin.characters().setProgress(player, PlayerSettings.COMBAT_SKILLS, on ? "0" : "1");
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, on ? 0.8f : 1.4f);
+                    redraw();
+                }
+            }
             case SLOT_OTHERS_FX -> {
                 if (flip(PlayerSettings.OTHERS_FX) && plugin.skills() != null) {
                     plugin.skills().refreshDeployableVisibility(player); // 圖騰、陷阱馬上藏起來／顯示

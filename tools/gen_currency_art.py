@@ -352,6 +352,26 @@ OTHERS = {
         '................',
         '................',
     ]),
+    # 映星鏡（複製裝備的通貨，2026-10）：金框的橢圓手鏡，鏡面是冷藍色，左上一道反光、右下映著一顆星
+    'star_mirror': ({'a': '4a2f06', 'b': 'c8961e', 'c': 'f7dd7a', 'd': '274a78', 'e': '5fa8e0', 'f': 'bfe6ff',
+                     'g': 'ffffff', 'h': 'c9a7ff'}, [
+        '.....aaaaaa.....',
+        '...aabccccbaa...',
+        '..abcddddddcba..',
+        '.abcdfffeeeedca.',
+        '.acdfgfeeeeeeda.',
+        '.acdffeeeeeeeda.',
+        '.acdfeeeeeheeda.',
+        '.acdeeeeehgheda.',
+        '.acdeeeeeeheeda.',
+        '.abcdeeeeeeedca.',
+        '..abcddddddcba..',
+        '...aabccccbaa...',
+        '.....aabbaa.....',
+        '......abca......',
+        '......abca......',
+        '......aaaa......',
+    ]),
     # 深淵星核（開極境的鑰匙）：裂開的暗紅球，中間燒得發白
     'abyss_core': ({'a': '120814', 'b': '3a0f2a', 'c': '7a1a3a', 'd': 'd0304a', 'e': 'ff8a6a', 'f': 'fff0d0'}, [
         '................',

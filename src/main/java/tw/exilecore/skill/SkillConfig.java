@@ -100,6 +100,11 @@ public final class SkillConfig {
      */
     public static final double[] DEFAULT_UNCUT_LEVEL_WEIGHTS = {20, 40, 40};
     private double[] uncutLevelWeights = DEFAULT_UNCUT_LEVEL_WEIGHTS.clone();
+    /**
+     * 掉落的未切割技能寶石某些等級只留幾成（2026-10，skills.yml 的 uncut_level_scale：等級 → 0～1）。擲到這個等級時照這個機率留下，
+     * 沒留下就整顆不掉（不會變成低一級的）——所以那個等級真的變少，其他等級的掉率不受影響。沒寫的等級是 1。
+     */
+    private java.util.Map<Integer, Double> uncutLevelScale = java.util.Map.of();
     /** 同一種輔助一個角色只能用一次（PoE2 的規則；supports.yml 的 once_per_character，預設關：不同技能可以各掛一顆）。 */
     private boolean supportOncePerCharacter;
     /** data/boss_skills.yml：Boss 招式（檔案不存在時是空的）。 */
@@ -110,6 +115,7 @@ public final class SkillConfig {
         final int[] parsedRequirements = parseRequirements(root);
         final NavigableMap<Integer, Double> parsedGrowth = parseGrowth(root.node("spell_damage_growth"));
         final double[] parsedUncutWeights = parseUncutWeights(root);
+        final java.util.Map<Integer, Double> parsedUncutScale = parseUncutScale(root);
         final double extraLevelDamage = root.decimal("extra_level_damage", DEFAULT_EXTRA_LEVEL_DAMAGE);
         if (extraLevelDamage < 0 || extraLevelDamage > 100) {
             throw new IllegalArgumentException(FILE + ".extra_level_damage：要在 0 到 100 之間（百分比）");
@@ -246,6 +252,7 @@ public final class SkillConfig {
         bossSkills.load(dataFolder);
         this.requirements = parsedRequirements;
         this.uncutLevelWeights = parsedUncutWeights;
+        this.uncutLevelScale = parsedUncutScale;
         this.extraLevelGrowth = 1.0 + extraLevelDamage / 100.0;
         this.minionExtraLevelGrowth = 1.0 + minionExtraLevelDamage / 100.0;
         this.growth = parsedGrowth;
@@ -333,6 +340,41 @@ public final class SkillConfig {
             }
         }
         return levels;
+    }
+
+    /** uncut_level_scale：{ 等級: 0～1 }；沒寫是空的（每個等級都照 uncut_level_weights 掉）。 */
+    static java.util.Map<Integer, Double> parseUncutScale(final YamlNode root) {
+        if (!root.has("uncut_level_scale")) {
+            return java.util.Map.of();
+        }
+        final YamlNode node = root.node("uncut_level_scale");
+        final java.util.Map<Integer, Double> scale = new java.util.TreeMap<>();
+        for (final String key : node.keys()) {
+            final int level;
+            try {
+                level = Integer.parseInt(key.trim());
+            } catch (final NumberFormatException e) {
+                throw new IllegalArgumentException(FILE + ".uncut_level_scale：「" + key + "」要是寶石等級（1～20）");
+            }
+            final double value = node.decimal(key, 1.0);
+            if (level < 1 || level > SkillLoadout.MAX_LEVEL + 1 || value < 0 || value > 1) {
+                throw new IllegalArgumentException(FILE + ".uncut_level_scale." + key + "：等級 1～" + (SkillLoadout.MAX_LEVEL + 1)
+                        + "、值 0～1（留下幾成）");
+            }
+            scale.put(level, value);
+        }
+        return java.util.Map.copyOf(scale);
+    }
+
+    /** 擲到這個等級的未切割技能寶石要不要真的掉（uncut_level_scale）。 */
+    public boolean keepsUncut(final int level, final RandomGenerator random) {
+        final Double keep = uncutLevelScale.get(level);
+        return keep == null || keep >= 1 || random.nextDouble() < keep;
+    }
+
+    /** 這個等級的未切割技能寶石留下幾成（說明與測試用）。 */
+    public double uncutLevelKeep(final int level) {
+        return uncutLevelScale.getOrDefault(level, 1.0);
     }
 
     /** uncut_level_weights：1 到 5 個不是負數的權重（最高等級、低 1 級…），加起來要大於 0；沒寫用預設值。 */

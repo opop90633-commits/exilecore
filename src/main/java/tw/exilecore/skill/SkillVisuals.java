@@ -1486,6 +1486,6 @@ final class SkillVisuals {
         if (sound == null) {
             return; // 靜音的外觀（圖騰）
         }
-        at.getWorld().playSound(at, sound, SoundCategory.PLAYERS, volume, pitch);
+        Fx.sound(at, sound, SoundCategory.PLAYERS, volume, pitch); // 2026-10：別人的技能小聲、可以靜音
     }
 }

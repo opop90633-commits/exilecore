@@ -272,7 +272,8 @@ public final class CodexMenu extends Menu {
         }
         set(SLOT_HELP, helpButton(List.of(
                 "這裡只能看，東西拿不出來",
-                "傳奇：數值是隨機擲的一個例子，括號裡是範圍",
+                "傳奇：數值是隨機擲的一個例子，括號裡是範圍；",
+                "隱匿詞綴能揭露的清單先收著：右鍵（或對著它按 Q）展開、再按一次收起來",
                 "技能：有角色的話照你目前的屬性與武器算",
                 "詞綴：先點一種基底，再看它會出哪些詞綴；",
                 "T1 最強，物品等級夠高才擲得到高階",
@@ -393,7 +394,15 @@ public final class CodexMenu extends Menu {
         return texts.toArray(String[]::new);
     }
 
+    /** 傳奇的說明裡，隱匿詞綴能揭露的清單超過幾條就先收起來（2026-10：全列會長到超出畫面）；右鍵（或 Q）展開。 */
+    static final int VEILED_PREVIEW = 4;
+    /** 這一頁：格子 → 傳奇（右鍵展開／收起能揭露的詞綴）。 */
+    private final java.util.Map<Integer, UniqueItem> uniqueSlots = new java.util.HashMap<>();
+    /** 展開中的傳奇（代號）：說明換成能揭露的詞綴的完整清單；null = 都收著。 */
+    private String expandedUnique;
+
     private List<ItemStack> uniqueEntries() {
+        uniqueSlots.clear();
         final ItemRepository repository = plugin.items().repository();
         final ItemSlot filter = SLOT_FILTERS.get(slotFilter);
         final List<UniqueItem> list = new ArrayList<>();
@@ -424,9 +433,53 @@ public final class CodexMenu extends Menu {
         final int from = Math.max(0, page * PER_PAGE);
         for (int i = 0; i < list.size(); i++) {
             // 只做這一頁的（其他頁放一個空的位置，數量對就好）
-            stacks.add(i >= from && i < from + PER_PAGE ? uniqueStack(list.get(i)) : null);
+            final boolean shown = i >= from && i < from + PER_PAGE;
+            if (shown) {
+                uniqueSlots.put(CONTENT_START + i - from, list.get(i));
+            }
+            stacks.add(shown ? uniqueStack(list.get(i)) : null);
         }
         return stacks;
+    }
+
+    /** 這件傳奇的隱匿詞綴能揭露的清單有沒有長到要收起來。 */
+    private boolean veiledFolded(final UniqueItem unique) {
+        final ItemBase uniqueBase = plugin.items().repository().base(unique.base());
+        final List<AffixType> veiled = plugin.items().repository().uniqueVeiled(unique.id());
+        if (uniqueBase == null || veiled.isEmpty()) {
+            return false;
+        }
+        for (final AffixType type : new AffixType[] {AffixType.PREFIX, AffixType.SUFFIX}) {
+            if (veiled.contains(type) && unveiledPool(uniqueBase, type).size() > VEILED_PREVIEW) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 展開的樣子：只留名字，說明換成隱匿詞綴能揭露的完整清單（本來的詞綴先不顯示，才放得進畫面）。 */
+    private ItemStack expandedStack(final UniqueItem unique, final ItemStack stack) {
+        final ItemBase uniqueBase = plugin.items().repository().base(unique.base());
+        final List<AffixType> veiled = plugin.items().repository().uniqueVeiled(unique.id());
+        final List<String> lines = new ArrayList<>();
+        lines.add("<#f5b942>━━ 隱匿詞綴能揭露的 ━━");
+        lines.add("<gray>帶去營地找盜賊首領，每一條三選一");
+        for (final AffixType type : new AffixType[] {AffixType.PREFIX, AffixType.SUFFIX}) {
+            final long count = veiled.stream().filter(type::equals).count();
+            if (count == 0) {
+                continue;
+            }
+            final List<Affix> options = unveiledPool(uniqueBase, type);
+            lines.add("");
+            lines.add("<#c48bff>隱匿" + (type == AffixType.PREFIX ? "前綴" : "後綴") + (count > 1 ? " ×" + count : "") + "<gray>（" + options.size() + " 種）");
+            for (final Affix option : options) {
+                lines.add("<#c48bff>　· " + option.rangeText(option.tiers().getFirst().tier()));
+            }
+        }
+        lines.add("");
+        lines.add("<yellow>右鍵（或 Q）：收起來，看回這件傳奇");
+        stack.editMeta(meta -> meta.lore(List.of()));
+        return highlight(appendLore(stack, lines));
     }
 
     private ItemStack uniqueStack(final UniqueItem unique) {
@@ -439,6 +492,9 @@ public final class CodexMenu extends Menu {
         }
         data.setIdentified(true);
         final ItemStack stack = plugin.items().renderer().create(data); // 只畫外觀，不寫物品資料
+        if (unique.id().equals(expandedUnique) && veiledFolded(unique)) {
+            return expandedStack(unique, stack);
+        }
         final List<String> lines = new ArrayList<>();
         lines.add("");
         lines.add("<#f5b942>━━ 圖鑑 ━━");
@@ -474,8 +530,13 @@ public final class CodexMenu extends Menu {
             final List<Affix> options = uniqueBase == null ? List.of() : unveiledPool(uniqueBase, type);
             lines.add("<#c48bff>隱匿" + kind + (count > 1 ? " ×" + count : "") + "<gray>：帶去營地找盜賊首領，"
                     + (count > 1 ? "每一條各自" : "") + "從下面 " + options.size() + " 種裡三選一揭露");
-            for (final Affix option : options) {
-                lines.add("<#c48bff>　· " + option.rangeText(option.tiers().getFirst().tier()));
+            // 2026-10：清單長的先收起來（全列會長到超出畫面、上面的詞綴被擠出去）；右鍵（或 Q）展開
+            if (options.size() > VEILED_PREVIEW) {
+                lines.add("<yellow>　右鍵（或 Q）：展開這 " + options.size() + " 種");
+            } else {
+                for (final Affix option : options) {
+                    lines.add("<#c48bff>　· " + option.rangeText(option.tiers().getFirst().tier()));
+                }
             }
         }
         lines.add("<gray>物品等級 <white>" + level + "</white> 以上才會掉");
@@ -773,6 +834,7 @@ public final class CodexMenu extends Menu {
     /** 搜尋詞綴的結果：符合的詞綴（每一種一格，寫哪些基底擲得到），再來是詞綴裡有這段字的傳奇。 */
     private List<ItemStack> searchEntries() {
         final String key = search.toLowerCase(java.util.Locale.ROOT);
+        uniqueSlots.clear(); // 2026-10：搜尋結果裡的傳奇也能右鍵（或 Q）展開隱匿詞綴的清單
         final java.util.Map<String, Affix> matched = new java.util.LinkedHashMap<>();
         final java.util.Map<String, List<ItemBase>> where = new java.util.HashMap<>();
         for (final ItemBase each : bases()) {
@@ -819,7 +881,14 @@ public final class CodexMenu extends Menu {
         final net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer plain =
                 net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText();
         for (final UniqueItem unique : plugin.items().repository().uniques()) {
+            // 展開中的那一件：說明換成揭露清單了，要用收起來的樣子比對（不然一展開就從結果裡消失）
+            final boolean expanded = unique.id().equals(expandedUnique);
+            final String keep = expandedUnique;
+            if (expanded) {
+                expandedUnique = null;
+            }
             final ItemStack stack = uniqueStack(unique);
+            expandedUnique = keep;
             if (stack == null || stack.getItemMeta() == null || stack.getItemMeta().lore() == null) {
                 continue;
             }
@@ -835,7 +904,11 @@ public final class CodexMenu extends Menu {
                 }
             }
             if (hit) {
-                stacks.add(stack);
+                final int slot = CONTENT_START + stacks.size() - page * PER_PAGE;
+                if (slot >= CONTENT_START && slot < CONTENT_END) {
+                    uniqueSlots.put(slot, unique);
+                }
+                stacks.add(expanded ? uniqueStack(unique) : stack);
             }
         }
         return stacks;
@@ -927,6 +1000,18 @@ public final class CodexMenu extends Menu {
                 }
             }
             gemLevel = levels[(index + (click.isRightClick() ? levels.length - 1 : 1)) % levels.length];
+            redraw();
+        } else if ((tab == Tab.UNIQUES || tab == Tab.AFFIXES && search != null)
+                && (click.isRightClick() || click == ClickType.DROP || click == ClickType.CONTROL_DROP) && uniqueSlots.containsKey(slot)) {
+            // 2026-10：隱匿詞綴的清單預設收著，右鍵（或對著它按 Q）展開、再按一次收起來
+            final UniqueItem unique = uniqueSlots.get(slot);
+            if (unique.id().equals(expandedUnique)) {
+                expandedUnique = null;
+            } else if (veiledFolded(unique)) {
+                expandedUnique = unique.id();
+            } else {
+                return;
+            }
             redraw();
         } else if (tab == Tab.AFFIXES && base == null && targets.containsKey(slot)) {
             base = targets.get(slot);

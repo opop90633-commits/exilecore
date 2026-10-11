@@ -64,6 +64,8 @@ public final class DeliveryService {
     public static final String MAP = "map";
     /** 贊助的星幣（2026-10）：ref "paid" = 儲值（算進累積贊助）、"bonus" = 贈送。 */
     public static final String SPONSOR = "sponsor";
+    /** 時裝（2026-10）：ref 時裝代號或 bundle:組代號（sponsor.yml 的 bundles）；一次一份，已經有的不重複給。絕版、限定的時裝只有這條路。 */
+    public static final String COSMETIC = "cosmetic";
     /**
      * 收回（2026-10）：管理員從玩家身上拿走東西，跟發放走同一套（在線馬上、離線下次登入）。有多少拿多少，拿完這筆就結束。
      * take_sponsor：ref total（累積贊助：稱號、倉庫頁、背包頁、上架格跟著降）、coins（星幣）、card（月卡幣）、fashion（時裝幣）、
@@ -186,6 +188,7 @@ public final class DeliveryService {
             case TAKE_GOLD -> 1_000_000_000_000L;
             case TAKE_ITEM -> 10_000;
             case REFUND -> 100;
+            case COSMETIC -> 1;
             default -> 50;
         };
     }
@@ -221,6 +224,13 @@ public final class DeliveryService {
             }
             case REFUND -> {
                 return "免費退點 ×" + spec.amount();
+            }
+            case COSMETIC -> {
+                if (plugin.sponsors() == null) {
+                    throw new IllegalArgumentException("贊助模組沒有啟用，不能發時裝");
+                }
+                plugin.sponsors().resolveCosmetics(ref(spec)); // 沒有這個代號會丟 IllegalArgumentException
+                return plugin.sponsors().cosmeticLabel(ref(spec));
             }
             case SPONSOR -> {
                 if (plugin.sponsors() == null) {
@@ -874,6 +884,33 @@ public final class DeliveryService {
                 }
                 return new Given(amount, String.format(Locale.ROOT, "星幣 %,d", amount),
                         List.of(entry(opId, null, "星幣", (int) Math.min(Integer.MAX_VALUE, amount), admin, player)), work);
+            }
+            case COSMETIC -> {
+                if (plugin.sponsors() == null) {
+                    return Given.MISSING;
+                }
+                if (!plugin.sponsors().loaded(player)) {
+                    return Given.WAIT;
+                }
+                final tw.exilecore.sponsor.SponsorService.Granted granted;
+                try {
+                    granted = plugin.sponsors().grantCosmeticWork(player, row.ref());
+                } catch (final IllegalArgumentException e) {
+                    return Given.MISSING; // 資料檔裡已經沒有這個時裝
+                }
+                if (granted == null) {
+                    return Given.WAIT;
+                }
+                final String label = plugin.sponsors().cosmeticLabel(row.ref());
+                if (granted.given().isEmpty()) {
+                    return new Given(1, label + "（已經有了，沒有重複給）",
+                            List.of(entry(opId, null, label + "（已經有了）", 1, admin, player)), null);
+                }
+                final List<TradeLogRepository.Entry> log = new ArrayList<>();
+                for (final tw.exilecore.sponsor.SponsorService.Grantable item : granted.given()) {
+                    log.add(entry(opId, null, (item.title() ? "稱號 " : "時裝 ") + item.name(), 1, admin, player));
+                }
+                return new Given(1, label + (granted.alreadyOwned().isEmpty() ? "" : "（" + granted.alreadyOwned().size() + " 件已經有了）"), log, granted.work());
             }
             case TAKE_SPONSOR -> {
                 if (plugin.sponsors() == null) {

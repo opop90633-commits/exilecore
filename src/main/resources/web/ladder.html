@@ -62,6 +62,7 @@
 <body>
 <div class="wrap">
   <header>
+    <a href="./" style="color:var(--text-secondary);text-decoration:none;font-size:13px">← 首頁</a>
     <h1>排行榜</h1>
     <p class="sub">《星骸》全部角色，含離線的。每分鐘更新。</p>
   </header>
@@ -70,6 +71,7 @@
     <button type="button" data-board="maps" aria-pressed="false">地圖</button>
     <button type="button" data-board="deathless" aria-pressed="false">不死</button>
     <button type="button" data-board="gold" aria-pressed="false">金錢</button>
+    <button type="button" data-board="guilds" aria-pressed="false">公會</button>
   </div>
   <section class="card">
     <p class="note" id="note">等級高、經驗多的在前。</p>
@@ -88,13 +90,17 @@
     level: '等級高、經驗多的在前。',
     maps: '完成過幾張不同的地圖、最高打到第幾階；完成一張就會上榜。',
     deathless: '死得最少、等級最高的在前；要 {min} 級以上才上榜。',
-    gold: '帳號的金幣（同一個帳號的角色共用），名字是那個帳號等級最高的角色。'
+    gold: '帳號的金幣（同一個帳號的角色共用），名字是那個帳號等級最高的角色。',
+    guilds: '公會等級高、公會經驗多的在前。成員殺怪、捐金幣都會讓公會升級。點一個公會看成員。'
   };
+  /** 展開看成員的公會（名稱）。 */
+  var openGuild = '';
   var heads = {
     level: ['#', '角色', '等級', '地圖', '最高階', '劇情 Boss', '死亡', '遊玩時間'],
     maps: ['#', '角色', '地圖', '最高階', '等級', '劇情 Boss', '死亡', '遊玩時間'],
     deathless: ['#', '角色', '死亡', '等級', '地圖', '最高階', '劇情 Boss', '遊玩時間'],
-    gold: ['#', '角色', '金幣', '等級']
+    gold: ['#', '角色', '金幣', '等級'],
+    guilds: ['#', '公會', '等級', '公會經驗', '成員', '會長']
   };
   function playtime(seconds) {
     var h = Math.floor(seconds / 3600), m = Math.floor(seconds % 3600 / 60);
@@ -106,6 +112,27 @@
   function nameCell(row) {
     return (row.online ? '<span class="dot" title="在線"></span>' : '') + '<span class="name" style="color:' + esc(row.classColor) + '">' + esc(row.name)
       + '</span><span class="cls">' + esc(row['class']) + '　' + esc(row.account) + '</span>';
+  }
+  function guildCell(row) {
+    return (row.online > 0 ? '<span class="dot" title="有 ' + row.online + ' 個成員在線"></span>' : '') + '<span class="name">[' + esc(row.tag) + '] '
+      + esc(row.name) + '</span>';
+  }
+  function guildCells(row) {
+    var xp = row.toNext > 0 ? Number(row.experience).toLocaleString() + ' / ' + Number(row.toNext).toLocaleString()
+      : '滿級（累積 ' + Number(row.total).toLocaleString() + '）';
+    return ['Lv.' + row.level, xp, row.members + ' / ' + row.maxMembers, esc(row.leader)];
+  }
+  /** 公會的成員（2026-10）：階級高、貢獻多的在前。 */
+  function rosterHtml(row) {
+    var list = row.roster || [];
+    var made = row.created ? '成立於 ' + new Date(row.created).toLocaleDateString() + '　' : '';
+    if (!list.length) { return '<div class="muted">' + made + '成員名單還沒有資料</div>'; }
+    return '<div class="muted" style="margin:4px 0 6px">' + made + '成員 ' + list.length + ' 人（括號裡是貢獻的公會經驗）</div><div style="line-height:1.9">'
+      + list.map(function (m) {
+        return '<span style="display:inline-block;margin-right:14px;white-space:nowrap">' + (m.online ? '<span class="dot" title="在線"></span>' : '')
+          + (m.rank !== '成員' ? '<span class="muted">' + esc(m.rank) + '</span> ' : '') + '<span class="name">' + esc(m.name) + '</span>'
+          + ' <span class="muted">（' + Number(m.contribution).toLocaleString() + '）</span></span>';
+      }).join('') + '</div>';
   }
   function cells(row) {
     var tier = row.bestTier > 0 ? 'T' + row.bestTier : '<span class="muted">—</span>';
@@ -121,14 +148,33 @@
     document.getElementById('note').textContent = notes[board].replace('{min}', data ? data.deathlessMinLevel : 30);
     var rows = data ? (data[board] || []) : [];
     var q = query.trim().toLowerCase();
-    if (q) { rows = rows.filter(function (r) { return r.name.toLowerCase().indexOf(q) >= 0 || r.account.toLowerCase().indexOf(q) >= 0; }); }
+    var isGuilds = board === 'guilds';
+    if (q) {
+      rows = rows.filter(function (r) {
+        return isGuilds ? (r.name + ' ' + r.tag + ' ' + r.leader).toLowerCase().indexOf(q) >= 0
+          : r.name.toLowerCase().indexOf(q) >= 0 || r.account.toLowerCase().indexOf(q) >= 0;
+      });
+    }
     tbody.innerHTML = rows.map(function (r) {
-      return '<tr class="' + (r.rank <= 3 ? 'top' : '') + '"><td class="rank">' + r.rank + '</td><td>' + nameCell(r) + '</td>'
-        + cells(r).map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
+      var row = '<tr class="' + (r.rank <= 3 ? 'top' : '') + (isGuilds ? ' guildrow' : '') + '"' + (isGuilds ? ' data-guild="' + esc(r.name) + '" tabindex="0"' : '')
+        + '><td class="rank">' + r.rank + '</td><td>' + (isGuilds ? guildCell(r) : nameCell(r)) + '</td>'
+        + (isGuilds ? guildCells(r) : cells(r)).map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
+      if (isGuilds && r.name === openGuild) { row += '<tr><td></td><td colspan="' + (heads.guilds.length - 1) + '">' + rosterHtml(r) + '</td></tr>'; }
+      return row;
     }).join('');
+    if (isGuilds) {
+      Array.prototype.forEach.call(tbody.querySelectorAll('tr.guildrow'), function (tr) {
+        function toggle() { openGuild = openGuild === tr.getAttribute('data-guild') ? '' : tr.getAttribute('data-guild'); render(); }
+        tr.style.cursor = 'pointer';
+        tr.addEventListener('click', toggle);
+        tr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+      });
+    }
+    document.getElementById('search').placeholder = isGuilds ? '找公會、標籤或會長…' : '找角色或玩家…';
+    document.getElementById('empty').textContent = isGuilds ? '還沒有公會。' : '還沒有人上榜。';
     document.getElementById('empty').hidden = rows.length > 0;
     var footer = document.getElementById('footer');
-    footer.textContent = data && data.refreshed ? '資料時間 ' + new Date(data.refreshed).toLocaleString() + '　共 ' + (data[board] || []).length + ' 人' : '還在讀取…';
+    footer.textContent = data && data.refreshed ? '資料時間 ' + new Date(data.refreshed).toLocaleString() + '　共 ' + (data[board] || []).length + (isGuilds ? ' 個公會' : ' 人') : '還在讀取…';
   }
   function load() {
     fetch('ladder/data.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (json) { data = json; render(); })

@@ -546,6 +546,7 @@ unveiled_d_skill_speed:
   spawn_tags: [amulet, ring]
   names: [之疾淵, 之迅蝕]
   text: "增加 {value}% 攻擊速度與施放速度"
+  chips: [speed]   # PoE2 的標籤（Skill Speed）
   tiers:
     - { tier: 1, ilvl: 60, weight: 300, value: [5, 6] }
     - { tier: 2, ilvl: 1, weight: 700, value: [3, 4] }
@@ -704,6 +705,7 @@ unveiled_d_crossbow_chain:
   spawn_tags: [crossbow]
   names: [之環淵]
   text: "攻擊多連鎖 {value} 次"
+  chips: [projectile]   # PoE2 的標籤（AttacksChainAdditionalTimes）
   tiers:
     - { tier: 1, ilvl: 40, weight: 150, value: [1, 1] }
   mods:
@@ -2148,6 +2150,7 @@ unveiled_d_gloves_speed_frenzy:
   spawn_tags: [leggings]
   names: [淵疾之, 黯疾之]
   text: "最近消耗過狂怒球，則增加 {value}% 攻擊速度與施放速度"
+  chips: [speed]   # PoE2 的標籤（Skill Speed）
   tiers:
     - { tier: 1, ilvl: 60, weight: 300, value: [11, 12] }
     - { tier: 2, ilvl: 1, weight: 700, value: [8, 10] }

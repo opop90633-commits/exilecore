@@ -400,6 +400,7 @@ freeze_buildup:
   spawn_tags: [staff, wand]
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "增加 {value}% 凍結累積"
+  chips: [elemental, cold, ailment]   # PoE2 的標籤（FreezeDamageIncrease）
   tiers:
     - { tier: 1, ilvl: 75, weight: 410, value: [71, 80] }
     - { tier: 2, ilvl: 60, weight: 512, value: [61, 70] }
@@ -987,6 +988,7 @@ leech_life_local:
   spawn_tags: [bow, crossbow, melee_1h, melee_2h, quarterstaff, spear]
   names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
   text: "造成的物理傷害有 {value/100}% 偷取為生命"
+  chips: [physical, attack, life]   # PoE2 的標籤（LifeLeechPermyriad）
   tiers:
     - { tier: 1, ilvl: 65, weight: 512, value: [900, 990] }
     - { tier: 2, ilvl: 54, weight: 640, value: [800, 890] }
@@ -1001,6 +1003,7 @@ leech_life:
   spawn_tags: [leggings]
   names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
   text: "攻擊造成的物理傷害有 {value/100}% 偷取為生命"
+  chips: [physical, attack, life]   # PoE2 的標籤（LifeLeechPermyriad）
   tiers:
     - { tier: 1, ilvl: 65, weight: 512, value: [900, 990] }
     - { tier: 2, ilvl: 54, weight: 640, value: [800, 890] }
@@ -1182,6 +1185,7 @@ local_crit_bonus:
   spawn_tags: [bow, crossbow, melee_1h, melee_2h, quarterstaff, spear]
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "+{value}% 暴擊傷害加成"
+  chips: [damage, attack, critical]   # PoE2 的標籤（LocalCriticalStrikeMultiplier）
   tiers:
     - { tier: 1, ilvl: 73, weight: 328, value: [23, 25] }
     - { tier: 2, ilvl: 59, weight: 410, value: [20, 22] }
@@ -1244,6 +1248,7 @@ stun_buildup:
   spawn_tags: [melee_1h, melee_2h, quarterstaff, spear]
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良, 之優質]
   text: "增加 {value}% 暈眩累積"
+  chips: []   # PoE2 的標籤（LocalStunDamageIncrease）
   tiers:
     - { tier: 1, ilvl: 74, weight: 328, value: [71, 80] }
     - { tier: 2, ilvl: 58, weight: 410, value: [61, 70] }
@@ -1260,6 +1265,7 @@ stun_duration:
   spawn_tags: [melee_1h, melee_2h, quarterstaff, spear]
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良, 之優質]
   text: "增加 {value}% 暈眩持續時間"
+  chips: []   # PoE2 的標籤（LocalStunDuration）
   tiers:
     - { tier: 1, ilvl: 71, weight: 328, value: [27, 30] }
     - { tier: 2, ilvl: 58, weight: 410, value: [23, 26] }
@@ -1310,6 +1316,7 @@ leech_mana_local:
   spawn_tags: [bow, crossbow, melee_1h, melee_2h, quarterstaff, spear]
   names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
   text: "造成的物理傷害有 {value/100}% 偷取為魔力"
+  chips: [physical, attack, mana]   # PoE2 的標籤（ManaLeechPermyriad）
   tiers:
     - { tier: 1, ilvl: 65, weight: 512, value: [800, 890] }
     - { tier: 2, ilvl: 54, weight: 640, value: [700, 790] }
@@ -1324,6 +1331,7 @@ leech_mana:
   spawn_tags: [leggings]
   names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
   text: "攻擊造成的物理傷害有 {value/100}% 偷取為魔力"
+  chips: [physical, attack, mana]   # PoE2 的標籤（ManaLeechPermyriad）
   tiers:
     - { tier: 1, ilvl: 65, weight: 512, value: [800, 890] }
     - { tier: 2, ilvl: 54, weight: 640, value: [700, 790] }
@@ -1485,6 +1493,7 @@ self_ignite:
   spawn_tags: [body]
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "你身上的點燃持續時間減少 {value}%"
+  chips: [elemental, fire, ailment]   # PoE2 的標籤（ReducedBurnDuration）
   tiers:
     - { tier: 1, ilvl: 76, weight: 410, value: [56, 60] }
     - { tier: 2, ilvl: 64, weight: 512, value: [51, 55] }
@@ -1516,6 +1525,7 @@ crit_taken:
   exclude_tags: [body, boots, helmet, leggings]
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "擊中你的暴擊傷害加成減少 {value}%"
+  chips: [damage, critical]   # PoE2 的標籤（ReducedExtraDamageFromCrits）
   tiers:
     - { tier: 1, ilvl: 81, weight: 410, value: [48, 54] }
     - { tier: 2, ilvl: 69, weight: 512, value: [42, 47] }
@@ -1562,6 +1572,7 @@ self_poison:
   spawn_tags: [body]
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "你身上的中毒持續時間減少 {value}%"
+  chips: [chaos, ailment]   # PoE2 的標籤（ReducedPoisonDuration）
   tiers:
     - { tier: 1, ilvl: 76, weight: 410, value: [56, 60] }
     - { tier: 2, ilvl: 64, weight: 512, value: [51, 55] }
@@ -1741,6 +1752,7 @@ stun_threshold_flat:
   exclude_tags: [boots, helmet, leggings]
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良, 之優質, 之普通, 之簡單, 之樸素, 之初製]
   text: "+{value} 暈眩門檻"
+  chips: []   # PoE2 的標籤（StunThreshold）
   tiers:
     - { tier: 1, ilvl: 72, weight: 134, value: [254, 304] }
     - { tier: 2, ilvl: 63, weight: 168, value: [207, 253] }
@@ -1761,6 +1773,7 @@ stun_threshold_flat_boots:
   spawn_tags: [boots]
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良, 之優質, 之普通, 之簡單, 之樸素, 之初製, 之粗糙]
   text: "+{value} 暈眩門檻"
+  chips: []   # PoE2 的標籤（StunThreshold）
   tiers:
     - { tier: 1, ilvl: 80, weight: 107, value: [305, 352] }
     - { tier: 2, ilvl: 72, weight: 134, value: [254, 304] }
@@ -1843,6 +1856,7 @@ presence_area:
   spawn_tags: [sceptre]
   names: [之星骸, 之感召, 之引領, 之外延]
   text: "增加 {value}% 臨在範圍"
+  chips: [aura]   # PoE2 的標籤（PresenceRadius）
   tiers:
     - { tier: 1, ilvl: 72, weight: 512, value: [66, 80] }
     - { tier: 2, ilvl: 56, weight: 640, value: [56, 65] }
@@ -2864,6 +2878,7 @@ crossbow_bolts:
   spawn_tags: [crossbow]
   names: [之滿匣, 之添矢]
   text: "+{value} 弩的彈匣容量"
+  chips: [attack]   # PoE2 的標籤（AdditionalAmmo）
   tiers:
     - { tier: 1, ilvl: 82, weight: 400, value: [2, 2] }
     - { tier: 2, ilvl: 55, weight: 1000, value: [1, 1] }

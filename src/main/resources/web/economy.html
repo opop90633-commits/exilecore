@@ -513,7 +513,8 @@
     for (const name of ['通貨', '產出', '消耗', '消耗佔產出', '全服存量', '參考價值', '走勢（設定值＝100）']) head.appendChild(html('th', name));
     const body = table.createTBody();
     const rows = totals.rows.filter((row) => row.p > 0 || row.q > 0 || row.c.stock.some((s) => s != null && s > 0));
-    rows.sort((a, b) => b.pv - a.pv);
+    // 有標價的照價值排；沒標價的（映星鏡這類，2026-10）放後面、照數量排
+    rows.sort((a, b) => (b.c.priced !== false) - (a.c.priced !== false) || b.pv - a.pv || b.p - a.p);
     if (!rows.length) {
       const row = body.insertRow();
       const cell = html('td', '還沒有資料：有人殺怪、做裝備之後，每 10 分鐘更新一次', 'empty');
@@ -549,6 +550,11 @@
       let stock = null;
       for (let i = r.to - 1; i >= 0; i--) { if (row.c.stock[i] != null) { stock = row.c.stock[i]; break; } }
       tr.appendChild(html('td', stock == null ? '—' : fmt(stock)));
+      if (row.c.priced === false) {
+        tr.appendChild(html('td', '沒有標價'));
+        tr.appendChild(html('td', '—'));
+        continue;
+      }
       const now = row.values[r.to - 1], then = row.values[r.from];
       const valueCell = html('td', fmt(now));
       if (then && now !== then) {

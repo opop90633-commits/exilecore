@@ -59,13 +59,13 @@ public final class LadderModule implements Module {
         return service;
     }
 
-    /** /ladder [level|maps|deathless] */
+    /** /ladder [level|maps|deathless|gold|guild] */
     public static LiteralCommandNode<CommandSourceStack> command(final ExileCore plugin) {
         return Commands.literal("ladder")
                 .executes(context -> show(plugin, context.getSource().getSender(), null))
                 .then(Commands.argument("board", StringArgumentType.word())
                         .suggests((context, builder) -> {
-                            for (final String option : List.of("level", "maps", "deathless")) {
+                            for (final String option : List.of("level", "maps", "deathless", "gold", "guild")) {
                                 if (option.startsWith(builder.getRemainingLowerCase())) {
                                     builder.suggest(option);
                                 }
@@ -80,6 +80,22 @@ public final class LadderModule implements Module {
         final LadderService service = plugin.ladder();
         if (service == null) {
             sender.sendMessage(plugin.text().prefixed("<red>排行榜模組沒有啟用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final String wanted = board == null ? "" : board.toLowerCase(java.util.Locale.ROOT);
+        if (wanted.equals("gold") || wanted.equals("money")) {
+            // 2026-10：金錢榜（以前只有網頁有）
+            for (final String line : service.goldLines(CHAT_COUNT, sender instanceof Player player ? player : null)) {
+                sender.sendMessage(plugin.text().parse(line));
+            }
+            return Command.SINGLE_SUCCESS;
+        }
+        if (wanted.equals("guild") || wanted.equals("guilds")) {
+            if (plugin.guilds() == null) {
+                sender.sendMessage(plugin.text().prefixed("<red>公會模組沒有啟用"));
+            } else {
+                plugin.guilds().top(sender);
+            }
             return Command.SINGLE_SUCCESS;
         }
         for (final String line : service.lines(Ladder.Board.parse(board), CHAT_COUNT, sender instanceof Player player ? player : null)) {

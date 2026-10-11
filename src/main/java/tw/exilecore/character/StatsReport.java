@@ -287,7 +287,8 @@ public final class StatsReport {
 
     private static List<String> offence(final ExileCore plugin, final Player player, final boolean chat) {
         final PlayerState state = plugin.players().get(player);
-        final StatSheet sheet = plugin.players().sheet(player);
+        // 2026-10：含怒氣這種擊中時才算的加成，面板上的數字才看得出增益有沒有生效
+        final StatSheet sheet = BuffImpact.liveSheet(plugin, player);
         final SkillProfile attack = SkillProfile.defaultAttack(state.weaponTags());
         final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, attack);
         final double aps = DamageCalculator.attacksPerSecond(sheet, attack.tags());
@@ -321,9 +322,19 @@ public final class StatsReport {
             for (final String[] row : plugin.skills().skillDps(player)) {
                 final String text = String.format(Locale.ROOT, "<gray>✦ <dark_gray>[%s]</dark_gray> %s 每秒 <white>%,d", row[0],
                         escape(row[1]), Long.parseLong(row[2]));
-                lines.add(chat ? hover(text, "平均一下 × 暴擊期望 × 每秒次數（有冷卻照冷卻算）× 複擊<newline>"
+                lines.add(chat ? hover(text, "平均一下 × 暴擊期望 × 每秒次數（有冷卻照冷卻算；含連射的每一波與餘震）<newline>"
                         + "<dark_gray>召喚技能：一隻召喚物的每秒傷害 × 同時最多幾隻<newline>"
-                        + "<dark_gray>沒算怪物的減免、點燃之類的持續傷害、打到幾個敵人") : text);
+                        + "<dark_gray>沒算怪物的減免、流血點燃中毒、戰吼與怒氣這些打起來才有的加成、打到幾個敵人<newline>"
+                        + "<dark_gray>實際輸出去營地打訓練假人最準") : text);
+            }
+            // 2026-10：打訓練假人的實測（估計值跟實際可以差很多）
+            final tw.exilecore.training.DummyRecord measured = tw.exilecore.training.DummyRecord.decode(
+                    state.progress().get(tw.exilecore.training.DummyRecord.KEY));
+            if (measured != null) {
+                final String text = String.format(Locale.ROOT, "<gray>✦ 假人實測 每秒 <white>%,d <dark_gray>（%s・%.1f 秒%s）", measured.dps(),
+                        escape(measured.dummy()), measured.seconds(),
+                        measured.dotPercent() > 0 ? "・持續傷害佔 " + measured.dotPercent() + "%" : "");
+                lines.add(chat ? hover(text, "三天內打訓練假人最高的一段（至少 8 秒）<newline><dark_gray>戰吼、怒氣、流血點燃中毒都算在裡面") : text);
             }
         }
         // 2026-10：其他常用的數值
@@ -406,6 +417,32 @@ public final class StatsReport {
         }
         if (plugin.skills() != null) {
             lines.addAll(plugin.skills().statusLines(player));
+            // 2026-10：怒氣（打中時才算，但現在就看得出來給了多少）
+            final int rage = plugin.skills().resources().rage(player);
+            if (rage > 0) {
+                lines.add(String.format(Locale.ROOT, "<#ff6b4a>怒氣 <white>%d<dark_gray>/%d<gray>：攻擊傷害增加 <white>%d%%",
+                        rage, plugin.skills().resources().rageMax(plugin.players().sheet(player)),
+                        Math.round(BuffImpact.rageBonus(plugin, player) * 100)));
+            }
+        }
+        return lines;
+    }
+
+    /** 增益讓面板上哪些數值變了（2026-10）：跟沒有增益時比。 */
+    public static BuffImpact.Lines impact(final ExileCore plugin, final Player player) {
+        return BuffImpact.of(plugin, player);
+    }
+
+    /** 「效果」那一區的增益比較（聊天欄、網頁用）：有變的才列。 */
+    private static List<String> impactSection(final ExileCore plugin, final Player player) {
+        final BuffImpact.Lines impact = impact(plugin, player);
+        if (impact.isEmpty()) {
+            return List.of();
+        }
+        final List<String> lines = new ArrayList<>();
+        lines.add("<#ffd27f>▲ 增益讓數值變成<dark_gray>（上面的數字已經含增益）：");
+        for (final String line : impact.all()) {
+            lines.add("<dark_gray>　" + line);
         }
         return lines;
     }
@@ -479,6 +516,7 @@ public final class StatsReport {
         final List<String> effects = new ArrayList<>();
         effects.addAll(specials(plugin, player));
         effects.addAll(buffs(plugin, player));
+        effects.addAll(impactSection(plugin, player));
         effects.addAll(minions(plugin, player));
         if (!effects.isEmpty()) {
             map.put("效果", effects);
@@ -510,10 +548,12 @@ public final class StatsReport {
         final List<String> specials = specials(plugin, player);
         final List<String> buffs = buffs(plugin, player);
         final List<String> minions = minions(plugin, player);
-        if (!specials.isEmpty() || !buffs.isEmpty() || !minions.isEmpty()) {
+        final List<String> impact = impactSection(plugin, player);
+        if (!specials.isEmpty() || !buffs.isEmpty() || !minions.isEmpty() || !impact.isEmpty()) {
             lines.add(title("效果"));
             indent(lines, specials);
             indent(lines, buffs);
+            indent(lines, impact);
             indent(lines, minions);
         }
         final List<String> inactive = inactive(plugin, player);

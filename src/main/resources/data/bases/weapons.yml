@@ -1,6 +1,9 @@
 # 武器基底。數值是物品等級 1 的值，依物品等級縮放（items.yml scaling）。
 # tags：weapon 加上 one_hand/two_hand 與武器種類；melee 是近戰武器，ranged 是遠程武器（普攻是投射物：弓射箭，法杖與長杖射魔法彈）；
 #       caster 是施法武器（法杖、長杖）：不出攻擊用的詞綴（攻擊附加、增加物理傷害、攻擊速度、命中；詞綴的 exclude_tags）。
+# 2026-10：近戰武器的基礎傷害補到跟弓一樣的比例（對照 PoE2 的原值：弓、雙手錘約 0.69 倍，長矛原本只有 0.59、長棍 0.62、單手錘 0.63、獸魂符 0.64）：
+#   長矛 ×1.17、長棍 ×1.11、單手錘 ×1.09、獸魂符 ×1.07——這幾類的每一個基底（含退役的舊基底）都乘過了，所以用 tools/gen_poe2_bases.py 重跑也是這個強度。
+#   弩（原本 0.57）也補了：×1.21。權杖沒動。
 
 short_sword:
   name: 短劍
@@ -51,7 +54,7 @@ war_hammer:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 16, dex: 0, int: 0 }
-  damage: { physical: [10, 18] }
+  damage: { physical: [11, 20] }
   aps: 1.15
   crit: 5.0
   sockets: 3
@@ -247,7 +250,7 @@ crossbow:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
   requirements: { level: 1, str: 10, dex: 12, int: 0 }
-  damage: { physical: [9, 21] }
+  damage: { physical: [11, 25] }
   aps: 1.25          # 2026-10：1.15 → 1.25（弩的技能出手太慢）
   crit: 5.5
   sockets: 6
@@ -267,7 +270,7 @@ quarterstaff:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 12, int: 10 }
-  damage: { physical: [8, 18] }
+  damage: { physical: [9, 20] }
   aps: 1.6
   crit: 6.5
   sockets: 6
@@ -287,7 +290,7 @@ spear:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
   requirements: { level: 1, str: 6, dex: 12, int: 0 }
-  damage: { physical: [6, 14] }
+  damage: { physical: [7, 16] }
   aps: 1.5
   crit: 6.5
   sockets: 3
@@ -309,7 +312,7 @@ talisman:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 10, dex: 0, int: 10 }
-  damage: { physical: [10, 22] }
+  damage: { physical: [11, 24] }
   aps: 1.3
   crit: 6.0
   sockets: 6
@@ -332,7 +335,7 @@ mace1_01:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 16, dex: 0, int: 0 }
-  damage: { physical: [8, 14] }
+  damage: { physical: [9, 15] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -349,7 +352,7 @@ mace1_02:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 4
   requirements: { level: 4, str: 17, dex: 0, int: 0 }
-  damage: { physical: [6, 10], fire: [6, 10] }
+  damage: { physical: [7, 11], fire: [7, 11] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -366,7 +369,7 @@ mace1_03:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 10
   requirements: { level: 10, str: 20, dex: 0, int: 0 }
-  damage: { physical: [10, 15] }
+  damage: { physical: [11, 16] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -383,7 +386,7 @@ mace1_04:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 16
   requirements: { level: 16, str: 22, dex: 0, int: 0 }
-  damage: { physical: [12, 19] }
+  damage: { physical: [13, 21] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -400,7 +403,7 @@ mace1_05:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 22
   requirements: { level: 22, str: 23, dex: 0, int: 0 }
-  damage: { physical: [13, 18] }
+  damage: { physical: [14, 20] }
   aps: 1.45
   crit: 7.0
   sockets: 3
@@ -422,7 +425,7 @@ mace1_06:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 26
   requirements: { level: 26, str: 24, dex: 0, int: 0 }
-  damage: { physical: [13, 27] }
+  damage: { physical: [14, 29] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -439,7 +442,7 @@ mace1_07:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 33
   requirements: { level: 33, str: 26, dex: 0, int: 0 }
-  damage: { physical: [19, 26] }
+  damage: { physical: [21, 28] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -456,7 +459,7 @@ mace1_08:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 36
   requirements: { level: 36, str: 27, dex: 0, int: 0 }
-  damage: { physical: [21, 26] }
+  damage: { physical: [23, 28] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -471,7 +474,7 @@ mace1_09:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 29, dex: 0, int: 0 }
-  damage: { physical: [22, 32] }
+  damage: { physical: [24, 35] }
   aps: 1.45
   crit: 6.5
   sockets: 3
@@ -488,7 +491,7 @@ mace1_10:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 45
   requirements: { level: 45, str: 29, dex: 0, int: 0 }
-  damage: { physical: [14, 24], fire: [14, 24] }
+  damage: { physical: [15, 26], fire: [15, 26] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -505,7 +508,7 @@ mace1_11:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 48
   requirements: { level: 48, str: 30, dex: 0, int: 0 }
-  damage: { physical: [21, 33] }
+  damage: { physical: [23, 36] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -522,7 +525,7 @@ mace1_12:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 49
   requirements: { level: 49, str: 30, dex: 0, int: 0 }
-  damage: { physical: [20, 33] }
+  damage: { physical: [22, 36] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -543,7 +546,7 @@ mace1_13:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 51
   requirements: { level: 51, str: 31, dex: 0, int: 0 }
-  damage: { physical: [23, 30] }
+  damage: { physical: [25, 33] }
   aps: 1.45
   crit: 7.0
   sockets: 3
@@ -565,7 +568,7 @@ mace1_14:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 52
   requirements: { level: 52, str: 31, dex: 0, int: 0 }
-  damage: { physical: [23, 39] }
+  damage: { physical: [25, 43] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -582,7 +585,7 @@ mace1_15:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 54
   requirements: { level: 54, str: 31, dex: 0, int: 0 }
-  damage: { physical: [21, 44] }
+  damage: { physical: [23, 48] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -599,7 +602,7 @@ mace1_16:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 55
   requirements: { level: 55, str: 31, dex: 0, int: 0 }
-  damage: { physical: [26, 39] }
+  damage: { physical: [28, 43] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -616,7 +619,7 @@ mace1_17:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 59
   requirements: { level: 59, str: 32, dex: 0, int: 0 }
-  damage: { physical: [29, 39] }
+  damage: { physical: [32, 43] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -633,7 +636,7 @@ mace1_18:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 62
   requirements: { level: 62, str: 33, dex: 0, int: 0 }
-  damage: { physical: [31, 38] }
+  damage: { physical: [34, 41] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -650,7 +653,7 @@ mace1_19:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 65
   requirements: { level: 65, str: 34, dex: 0, int: 0 }
-  damage: { physical: [28, 47] }
+  damage: { physical: [31, 51] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -665,7 +668,7 @@ mace1_20:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 39, dex: 0, int: 0 }
-  damage: { physical: [29, 43] }
+  damage: { physical: [32, 47] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -682,7 +685,7 @@ mace1_21:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 72
   requirements: { level: 72, str: 42, dex: 0, int: 0 }
-  damage: { physical: [27, 57] }
+  damage: { physical: [29, 62] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -697,7 +700,7 @@ mace1_22:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 44, dex: 0, int: 0 }
-  damage: { physical: [23, 37], fire: [23, 37] }
+  damage: { physical: [25, 40], fire: [25, 40] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -712,7 +715,7 @@ mace1_23:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 44, dex: 0, int: 0 }
-  damage: { physical: [32, 53] }
+  damage: { physical: [35, 58] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -728,7 +731,7 @@ mace1_24:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 44, dex: 0, int: 0 }
-  damage: { physical: [31, 42] }
+  damage: { physical: [34, 46] }
   aps: 1.45
   crit: 7.0
   sockets: 3
@@ -749,7 +752,7 @@ mace1_25:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 44, dex: 0, int: 0 }
-  damage: { physical: [29, 48] }
+  damage: { physical: [32, 52] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -768,7 +771,7 @@ mace1_26:
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
   requirements: { level: 1, str: 43, dex: 0, int: 0 }
-  damage: { physical: [38, 46] }
+  damage: { physical: [41, 50] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -1247,7 +1250,7 @@ spear_01:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
   requirements: { level: 1, str: 6, dex: 12, int: 0 }
-  damage: { physical: [7, 13] }
+  damage: { physical: [8, 15] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1264,7 +1267,7 @@ spear_02:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 5
   requirements: { level: 5, str: 0, dex: 15, int: 0 }
-  damage: { physical: [10, 13] }
+  damage: { physical: [12, 15] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1281,7 +1284,7 @@ spear_03:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 10
   requirements: { level: 10, str: 9, dex: 17, int: 0 }
-  damage: { physical: [9, 15] }
+  damage: { physical: [11, 18] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1298,7 +1301,7 @@ spear_04:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 16
   requirements: { level: 16, str: 9, dex: 18, int: 0 }
-  damage: { physical: [9, 17] }
+  damage: { physical: [11, 20] }
   aps: 1.7
   crit: 5.0
   sockets: 3
@@ -1315,7 +1318,7 @@ spear_05:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 21
   requirements: { level: 21, str: 8, dex: 19, int: 0 }
-  damage: { physical: [11, 19] }
+  damage: { physical: [13, 22] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1332,7 +1335,7 @@ spear_06:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 26
   requirements: { level: 26, str: 9, dex: 20, int: 0 }
-  damage: { physical: [9, 26] }
+  damage: { physical: [11, 30] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1349,7 +1352,7 @@ spear_07:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 33
   requirements: { level: 33, str: 9, dex: 21, int: 0 }
-  damage: { physical: [13, 25] }
+  damage: { physical: [15, 29] }
   aps: 1.5
   crit: 6.0
   sockets: 3
@@ -1366,7 +1369,7 @@ spear_08:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 40
   requirements: { level: 40, str: 10, dex: 21, int: 0 }
-  damage: { physical: [20, 30] }
+  damage: { physical: [23, 35] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -1383,7 +1386,7 @@ spear_09:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 45
   requirements: { level: 45, str: 9, dex: 23, int: 0 }
-  damage: { physical: [15, 32] }
+  damage: { physical: [18, 37] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1400,7 +1403,7 @@ spear_10:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 45
   requirements: { level: 45, str: 9, dex: 23, int: 0 }
-  damage: { physical: [20, 27] }
+  damage: { physical: [23, 32] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1417,7 +1420,7 @@ spear_11:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 48
   requirements: { level: 48, str: 9, dex: 23, int: 0 }
-  damage: { physical: [19, 32] }
+  damage: { physical: [22, 37] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1434,7 +1437,7 @@ spear_12:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 51
   requirements: { level: 51, str: 10, dex: 23, int: 17 }
-  damage: { physical: [18, 32] }
+  damage: { physical: [21, 37] }
   aps: 1.6
   crit: 7.0
   sockets: 3
@@ -1451,7 +1454,7 @@ spear_13:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 51
   requirements: { level: 51, str: 10, dex: 23, int: 0 }
-  damage: { physical: [19, 32] }
+  damage: { physical: [22, 37] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1468,7 +1471,7 @@ spear_14:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 52
   requirements: { level: 52, str: 9, dex: 24, int: 0 }
-  damage: { physical: [18, 34] }
+  damage: { physical: [21, 40] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1485,7 +1488,7 @@ spear_15:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 54
   requirements: { level: 54, str: 10, dex: 24, int: 0 }
-  damage: { physical: [14, 42] }
+  damage: { physical: [16, 49] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1500,7 +1503,7 @@ spear_16:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
   requirements: { level: 1, str: 10, dex: 24, int: 0 }
-  damage: { physical: [7, 27], lightning: [7, 27] }
+  damage: { physical: [8, 32], lightning: [8, 32] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1517,7 +1520,7 @@ spear_17:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 59
   requirements: { level: 59, str: 10, dex: 25, int: 0 }
-  damage: { physical: [20, 37] }
+  damage: { physical: [23, 43] }
   aps: 1.5
   crit: 6.0
   sockets: 3
@@ -1534,7 +1537,7 @@ spear_18:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 62
   requirements: { level: 62, str: 12, dex: 23, int: 0 }
-  damage: { physical: [27, 41] }
+  damage: { physical: [32, 48] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -1551,7 +1554,7 @@ spear_19:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 65
   requirements: { level: 65, str: 10, dex: 25, int: 0 }
-  damage: { physical: [22, 40] }
+  damage: { physical: [26, 47] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1568,7 +1571,7 @@ spear_20:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 67
   requirements: { level: 67, str: 12, dex: 29, int: 0 }
-  damage: { physical: [27, 37] }
+  damage: { physical: [32, 43] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1583,7 +1586,7 @@ spear_21:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
   requirements: { level: 1, str: 11, dex: 31, int: 0 }
-  damage: { physical: [21, 38] }
+  damage: { physical: [25, 44] }
   aps: 1.7
   crit: 5.0
   sockets: 3
@@ -1600,7 +1603,7 @@ spear_22:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 72
   requirements: { level: 72, str: 12, dex: 31, int: 0 }
-  damage: { physical: [18, 52] }
+  damage: { physical: [21, 61] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1617,7 +1620,7 @@ spear_23:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 75
   requirements: { level: 75, str: 13, dex: 33, int: 0 }
-  damage: { physical: [22, 46] }
+  damage: { physical: [26, 54] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1632,7 +1635,7 @@ spear_24:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
   requirements: { level: 1, str: 13, dex: 33, int: 0 }
-  damage: { physical: [28, 46] }
+  damage: { physical: [33, 54] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1647,7 +1650,7 @@ spear_25:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
   requirements: { level: 1, str: 13, dex: 33, int: 0 }
-  damage: { physical: [24, 45] }
+  damage: { physical: [28, 53] }
   aps: 1.5
   crit: 6.0
   sockets: 3
@@ -1662,7 +1665,7 @@ spear_26:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
   requirements: { level: 1, str: 13, dex: 33, int: 0 }
-  damage: { physical: [27, 45] }
+  damage: { physical: [32, 53] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1677,7 +1680,7 @@ spear_27:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
   requirements: { level: 1, str: 13, dex: 33, int: 23 }
-  damage: { physical: [23, 42] }
+  damage: { physical: [27, 49] }
   aps: 1.6
   crit: 7.0
   sockets: 3
@@ -1692,7 +1695,7 @@ spear_28:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
   requirements: { level: 1, str: 17, dex: 28, int: 0 }
-  damage: { physical: [33, 49] }
+  damage: { physical: [39, 57] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -1709,7 +1712,7 @@ qstaff_01:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 12, int: 10 }
-  damage: { physical: [11, 19] }
+  damage: { physical: [12, 21] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1726,7 +1729,7 @@ qstaff_02:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 4
   requirements: { level: 4, str: 0, dex: 19, int: 0 }
-  damage: { physical: [11, 22] }
+  damage: { physical: [12, 24] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1743,7 +1746,7 @@ qstaff_03:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 11
   requirements: { level: 11, str: 0, dex: 21, int: 10 }
-  damage: { physical: [15, 24] }
+  damage: { physical: [17, 27] }
   aps: 1.4
   crit: 12.0
   sockets: 6
@@ -1760,7 +1763,7 @@ qstaff_04:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 16
   requirements: { level: 16, str: 0, dex: 23, int: 11 }
-  damage: { physical: [4, 18], lightning: [1, 29] }
+  damage: { physical: [4, 20], lightning: [1, 32] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1777,7 +1780,7 @@ qstaff_05:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 20
   requirements: { level: 20, str: 0, dex: 23, int: 11 }
-  damage: { physical: [15, 30] }
+  damage: { physical: [17, 33] }
   aps: 1.5
   crit: 10.0
   sockets: 6
@@ -1794,7 +1797,7 @@ qstaff_06:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 28
   requirements: { level: 28, str: 0, dex: 25, int: 11 }
-  damage: { physical: [20, 36] }
+  damage: { physical: [22, 40] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1811,7 +1814,7 @@ qstaff_07:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 33
   requirements: { level: 33, str: 0, dex: 26, int: 11 }
-  damage: { physical: [20, 41] }
+  damage: { physical: [22, 46] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1828,7 +1831,7 @@ qstaff_08:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 37
   requirements: { level: 37, str: 0, dex: 26, int: 11 }
-  damage: { physical: [24, 39] }
+  damage: { physical: [27, 43] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1850,7 +1853,7 @@ qstaff_09:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 45
   requirements: { level: 45, str: 0, dex: 28, int: 12 }
-  damage: { physical: [26, 53] }
+  damage: { physical: [29, 59] }
   aps: 1.3
   crit: 10.0
   sockets: 6
@@ -1867,7 +1870,7 @@ qstaff_10:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 45
   requirements: { level: 45, str: 0, dex: 28, int: 12 }
-  damage: { physical: [23, 47] }
+  damage: { physical: [26, 52] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1884,7 +1887,7 @@ qstaff_11:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 48
   requirements: { level: 48, str: 0, dex: 29, int: 12 }
-  damage: { physical: [27, 46] }
+  damage: { physical: [30, 51] }
   aps: 1.4
   crit: 12.0
   sockets: 6
@@ -1901,7 +1904,7 @@ qstaff_12:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 49
   requirements: { level: 49, str: 0, dex: 29, int: 12 }
-  damage: { physical: [38, 51] }
+  damage: { physical: [42, 57] }
   aps: 1.5
   crit: 6.5
   sockets: 6
@@ -1918,7 +1921,7 @@ qstaff_13:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 51
   requirements: { level: 51, str: 0, dex: 29, int: 12 }
-  damage: { physical: [9, 35], lightning: [1, 48] }
+  damage: { physical: [10, 39], lightning: [1, 53] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1935,7 +1938,7 @@ qstaff_14:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 52
   requirements: { level: 52, str: 0, dex: 30, int: 12 }
-  damage: { physical: [30, 51] }
+  damage: { physical: [33, 57] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1952,7 +1955,7 @@ qstaff_15:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 54
   requirements: { level: 54, str: 0, dex: 30, int: 12 }
-  damage: { physical: [25, 52] }
+  damage: { physical: [28, 58] }
   aps: 1.5
   crit: 10.0
   sockets: 6
@@ -1969,7 +1972,7 @@ qstaff_16:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 56
   requirements: { level: 56, str: 0, dex: 30, int: 12 }
-  damage: { physical: [30, 55] }
+  damage: { physical: [33, 61] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1986,7 +1989,7 @@ qstaff_17:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 59
   requirements: { level: 59, str: 0, dex: 31, int: 13 }
-  damage: { physical: [28, 59] }
+  damage: { physical: [31, 65] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2003,7 +2006,7 @@ qstaff_18:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 62
   requirements: { level: 62, str: 0, dex: 31, int: 13 }
-  damage: { physical: [33, 54] }
+  damage: { physical: [37, 60] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2025,7 +2028,7 @@ qstaff_19:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 65
   requirements: { level: 65, str: 0, dex: 32, int: 13 }
-  damage: { physical: [36, 59] }
+  damage: { physical: [40, 65] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2042,7 +2045,7 @@ qstaff_20:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 65
   requirements: { level: 65, str: 0, dex: 46, int: 18 }
-  damage: { physical: [32, 53] }
+  damage: { physical: [36, 59] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2057,7 +2060,7 @@ qstaff_21:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 37, int: 14 }
-  damage: { physical: [34, 57] }
+  damage: { physical: [38, 63] }
   aps: 1.4
   crit: 12.0
   sockets: 6
@@ -2072,7 +2075,7 @@ qstaff_22:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 39, int: 16 }
-  damage: { physical: [31, 64] }
+  damage: { physical: [34, 71] }
   aps: 1.5
   crit: 10.0
   sockets: 6
@@ -2087,7 +2090,7 @@ qstaff_23:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 42, int: 17 }
-  damage: { physical: [37, 76] }
+  damage: { physical: [41, 84] }
   aps: 1.3
   crit: 10.0
   sockets: 6
@@ -2104,7 +2107,7 @@ qstaff_24:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 77
   requirements: { level: 77, str: 0, dex: 42, int: 16 }
-  damage: { physical: [33, 69] }
+  damage: { physical: [37, 77] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2119,7 +2122,7 @@ qstaff_25:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 42, int: 16 }
-  damage: { physical: [40, 67] }
+  damage: { physical: [44, 74] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2134,7 +2137,7 @@ qstaff_26:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 41, int: 16 }
-  damage: { physical: [15, 60], lightning: [1, 62] }
+  damage: { physical: [17, 67], lightning: [1, 69] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2149,7 +2152,7 @@ qstaff_27:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 41, int: 16 }
-  damage: { physical: [61, 82] }
+  damage: { physical: [68, 91] }
   aps: 1.5
   crit: 6.5
   sockets: 6
@@ -2165,7 +2168,7 @@ qstaff_28:
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
   requirements: { level: 1, str: 0, dex: 41, int: 16 }
-  damage: { physical: [36, 60] }
+  damage: { physical: [40, 67] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2187,7 +2190,7 @@ talis_01:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 10, dex: 0, int: 10 }
-  damage: { physical: [14, 23] }
+  damage: { physical: [15, 25] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2204,7 +2207,7 @@ talis_02:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 5
   requirements: { level: 5, str: 12, dex: 0, int: 11 }
-  damage: { physical: [14, 23] }
+  damage: { physical: [15, 25] }
   aps: 1.25
   crit: 11.0
   sockets: 6
@@ -2221,7 +2224,7 @@ talis_03:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 10
   requirements: { level: 10, str: 14, dex: 0, int: 10 }
-  damage: { physical: [12, 24], fire: [5, 10] }
+  damage: { physical: [13, 26], fire: [5, 11] }
   aps: 1.2
   crit: 8.0
   sockets: 6
@@ -2238,7 +2241,7 @@ talis_04:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 16
   requirements: { level: 16, str: 15, dex: 0, int: 11 }
-  damage: { physical: [17, 28] }
+  damage: { physical: [18, 30] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2260,7 +2263,7 @@ talis_05:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 22
   requirements: { level: 22, str: 17, dex: 0, int: 12 }
-  damage: { physical: [18, 29] }
+  damage: { physical: [19, 31] }
   aps: 1.4
   crit: 8.0
   sockets: 6
@@ -2277,7 +2280,7 @@ talis_06:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 28
   requirements: { level: 28, str: 18, dex: 0, int: 13 }
-  damage: { physical: [23, 33] }
+  damage: { physical: [25, 35] }
   aps: 1.3
   crit: 9.0
   sockets: 6
@@ -2299,7 +2302,7 @@ talis_07:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 34
   requirements: { level: 34, str: 19, dex: 0, int: 13 }
-  damage: { physical: [22, 41] }
+  damage: { physical: [24, 44] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2321,7 +2324,7 @@ talis_08:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 40
   requirements: { level: 40, str: 20, dex: 0, int: 14 }
-  damage: { physical: [29, 49] }
+  damage: { physical: [31, 52] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2338,7 +2341,7 @@ talis_09:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 46
   requirements: { level: 46, str: 21, dex: 0, int: 15 }
-  damage: { physical: [11, 61], lightning: [5, 26] }
+  damage: { physical: [12, 65], lightning: [5, 28] }
   aps: 1.3
   crit: 8.0
   sockets: 6
@@ -2355,7 +2358,7 @@ talis_10:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 52
   requirements: { level: 52, str: 22, dex: 0, int: 16 }
-  damage: { physical: [47, 71] }
+  damage: { physical: [50, 76] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -2372,7 +2375,7 @@ talis_11:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 55
   requirements: { level: 55, str: 23, dex: 0, int: 16 }
-  damage: { physical: [34, 51] }
+  damage: { physical: [36, 55] }
   aps: 1.3
   crit: 9.0
   sockets: 6
@@ -2394,7 +2397,7 @@ talis_12:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 58
   requirements: { level: 58, str: 23, dex: 0, int: 17 }
-  damage: { physical: [37, 63] }
+  damage: { physical: [40, 67] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2416,7 +2419,7 @@ talis_13:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 59
   requirements: { level: 59, str: 24, dex: 0, int: 17 }
-  damage: { physical: [32, 60] }
+  damage: { physical: [34, 64] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2438,7 +2441,7 @@ talis_14:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 63
   requirements: { level: 63, str: 25, dex: 0, int: 17 }
-  damage: { physical: [40, 67] }
+  damage: { physical: [43, 72] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2453,7 +2456,7 @@ talis_15:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 25, dex: 0, int: 17 }
-  damage: { physical: [29, 54] }
+  damage: { physical: [31, 58] }
   aps: 1.45
   crit: 7.0
   sockets: 6
@@ -2468,7 +2471,7 @@ talis_16:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 25, dex: 0, int: 17 }
-  damage: { physical: [44, 73] }
+  damage: { physical: [47, 78] }
   aps: 1.25
   crit: 9.0
   sockets: 6
@@ -2483,7 +2486,7 @@ talis_17:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 29, dex: 0, int: 22 }
-  damage: { physical: [39, 64] }
+  damage: { physical: [42, 68] }
   aps: 1.25
   crit: 11.0
   sockets: 6
@@ -2498,7 +2501,7 @@ talis_18:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 32, dex: 0, int: 23 }
-  damage: { physical: [43, 72] }
+  damage: { physical: [46, 77] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2513,7 +2516,7 @@ talis_19:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 30, dex: 0, int: 22 }
-  damage: { physical: [33, 68], fire: [14, 29] }
+  damage: { physical: [35, 73], fire: [15, 31] }
   aps: 1.2
   crit: 8.0
   sockets: 6
@@ -2529,7 +2532,7 @@ talis_20:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 31, dex: 0, int: 23 }
-  damage: { physical: [41, 61] }
+  damage: { physical: [44, 65] }
   aps: 1.3
   crit: 9.0
   sockets: 6
@@ -2550,7 +2553,7 @@ talis_21:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 28, dex: 0, int: 21 }
-  damage: { physical: [45, 75] }
+  damage: { physical: [48, 80] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2570,7 +2573,7 @@ talis_22:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 32, dex: 0, int: 23 }
-  damage: { physical: [15, 84], lightning: [6, 36] }
+  damage: { physical: [16, 90], lightning: [6, 39] }
   aps: 1.3
   crit: 8.0
   sockets: 6
@@ -2585,7 +2588,7 @@ talis_23:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 30, dex: 0, int: 22 }
-  damage: { physical: [38, 63] }
+  damage: { physical: [41, 67] }
   aps: 1.4
   crit: 8.0
   sockets: 6
@@ -2600,7 +2603,7 @@ talis_24:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 34, dex: 0, int: 20 }
-  damage: { physical: [65, 97] }
+  damage: { physical: [70, 104] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -2616,7 +2619,7 @@ talis_25:
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
   requirements: { level: 1, str: 31, dex: 0, int: 21 }
-  damage: { physical: [39, 73] }
+  damage: { physical: [42, 78] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -3068,7 +3071,7 @@ xbow_01:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
   requirements: { level: 1, str: 10, dex: 12, int: 0 }
-  damage: { physical: [10, 17] }
+  damage: { physical: [12, 21] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3085,7 +3088,7 @@ xbow_02:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 4
   requirements: { level: 4, str: 13, dex: 13, int: 0 }
-  damage: { physical: [9, 17] }
+  damage: { physical: [11, 21] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3107,7 +3110,7 @@ xbow_03:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 10
   requirements: { level: 10, str: 13, dex: 13, int: 0 }
-  damage: { physical: [9, 22] }
+  damage: { physical: [11, 27] }
   aps: 1.55
   crit: 5.0
   sockets: 6
@@ -3124,7 +3127,7 @@ xbow_04:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 16
   requirements: { level: 16, str: 15, dex: 15, int: 0 }
-  damage: { physical: [9, 27] }
+  damage: { physical: [11, 33] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3141,7 +3144,7 @@ xbow_05:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 20
   requirements: { level: 20, str: 15, dex: 15, int: 0 }
-  damage: { physical: [6, 26] }
+  damage: { physical: [7, 31] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3161,7 +3164,7 @@ xbow_06:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
   requirements: { level: 1, str: 16, dex: 16, int: 0 }
-  damage: { physical: [8, 33] }
+  damage: { physical: [10, 40] }
   aps: 1.7
   crit: 5.0
   sockets: 6
@@ -3178,7 +3181,7 @@ xbow_07:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 33
   requirements: { level: 33, str: 18, dex: 18, int: 0 }
-  damage: { physical: [9, 35] }
+  damage: { physical: [11, 42] }
   aps: 1.65
   crit: 5.0
   sockets: 6
@@ -3195,7 +3198,7 @@ xbow_08:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 38
   requirements: { level: 38, str: 19, dex: 19, int: 0 }
-  damage: { physical: [11, 44] }
+  damage: { physical: [13, 53] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3210,7 +3213,7 @@ xbow_09:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
   requirements: { level: 1, str: 20, dex: 20, int: 0 }
-  damage: { physical: [12, 48] }
+  damage: { physical: [15, 58] }
   aps: 1.6
   crit: 7.0
   sockets: 6
@@ -3227,7 +3230,7 @@ xbow_10:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 45
   requirements: { level: 45, str: 20, dex: 20, int: 0 }
-  damage: { physical: [12, 47] }
+  damage: { physical: [15, 57] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3249,7 +3252,7 @@ xbow_11:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 48
   requirements: { level: 48, str: 20, dex: 20, int: 0 }
-  damage: { physical: [13, 53] }
+  damage: { physical: [16, 64] }
   aps: 1.55
   crit: 5.0
   sockets: 6
@@ -3266,7 +3269,7 @@ xbow_12:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 50
   requirements: { level: 50, str: 20, dex: 20, int: 0 }
-  damage: { physical: [12, 50] }
+  damage: { physical: [15, 60] }
   aps: 1.65
   crit: 5.0
   sockets: 6
@@ -3283,7 +3286,7 @@ xbow_13:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 51
   requirements: { level: 51, str: 21, dex: 21, int: 0 }
-  damage: { physical: [14, 54] }
+  damage: { physical: [17, 65] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3300,7 +3303,7 @@ xbow_14:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 52
   requirements: { level: 52, str: 21, dex: 21, int: 0 }
-  damage: { physical: [11, 45] }
+  damage: { physical: [13, 54] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3317,7 +3320,7 @@ xbow_15:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 54
   requirements: { level: 54, str: 21, dex: 21, int: 0 }
-  damage: { physical: [12, 48] }
+  damage: { physical: [15, 58] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3337,7 +3340,7 @@ xbow_16:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
   requirements: { level: 1, str: 22, dex: 22, int: 0 }
-  damage: { physical: [15, 58] }
+  damage: { physical: [18, 70] }
   aps: 1.55
   crit: 7.0
   sockets: 6
@@ -3354,7 +3357,7 @@ xbow_17:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 59
   requirements: { level: 59, str: 22, dex: 22, int: 0 }
-  damage: { physical: [13, 52] }
+  damage: { physical: [16, 63] }
   aps: 1.65
   crit: 5.0
   sockets: 6
@@ -3371,7 +3374,7 @@ xbow_18:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 62
   requirements: { level: 62, str: 23, dex: 23, int: 0 }
-  damage: { physical: [16, 63] }
+  damage: { physical: [19, 76] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3388,7 +3391,7 @@ xbow_19:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 65
   requirements: { level: 65, str: 23, dex: 23, int: 0 }
-  damage: { physical: [16, 65] }
+  damage: { physical: [19, 79] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3403,7 +3406,7 @@ xbow_20:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
   requirements: { level: 1, str: 27, dex: 27, int: 0 }
-  damage: { physical: [17, 68] }
+  damage: { physical: [21, 82] }
   aps: 1.55
   crit: 5.0
   sockets: 6
@@ -3420,7 +3423,7 @@ xbow_21:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 72
   requirements: { level: 72, str: 29, dex: 29, int: 0 }
-  damage: { physical: [18, 71] }
+  damage: { physical: [22, 86] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3436,7 +3439,7 @@ xbow_22:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
   requirements: { level: 1, str: 31, dex: 31, int: 0 }
-  damage: { physical: [18, 72] }
+  damage: { physical: [22, 87] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3456,7 +3459,7 @@ xbow_23:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
   requirements: { level: 1, str: 31, dex: 31, int: 0 }
-  damage: { physical: [19, 75] }
+  damage: { physical: [23, 91] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3472,7 +3475,7 @@ xbow_24:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
   requirements: { level: 1, str: 30, dex: 30, int: 0 }
-  damage: { physical: [16, 64] }
+  damage: { physical: [19, 77] }
   aps: 1.6
   crit: 5.0
   sockets: 6
@@ -3494,7 +3497,7 @@ xbow_25:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 78
   requirements: { level: 78, str: 30, dex: 30, int: 0 }
-  damage: { physical: [18, 70] }
+  damage: { physical: [22, 85] }
   aps: 1.65
   crit: 5.0
   sockets: 6
@@ -3509,7 +3512,7 @@ xbow_26:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
   requirements: { level: 1, str: 30, dex: 30, int: 0 }
-  damage: { physical: [16, 65] }
+  damage: { physical: [19, 79] }
   aps: 1.65
   crit: 5.0
   sockets: 6

@@ -18,8 +18,12 @@ public final class PlayerSettings {
     public static final String QUEST_TRACKER = "setting.quest_tracker";
     /** 打怪時畫面右邊的戰鬥數據（每秒輸出、每秒承受與類型、最大一擊）。預設開。 */
     public static final String COMBAT_METER = "setting.combat_meter";
+    /** 戰鬥數據改成「技能明細」：每個技能各打多少、各是什麼傷害類型（2026-10）。預設關（{@link #on}）。 */
+    public static final String COMBAT_SKILLS = "setting.combat_skills";
     /** 看得到別的玩家的技能特效與圖騰（2026-10；外觀特效、Boss 的警告照常）。預設開。 */
     public static final String OTHERS_FX = "setting.others_fx";
+    /** 自己放技能的聲音（2026-10；別人的技能本來就小聲，跟著「別人的技能特效」關）。預設開。 */
+    public static final String SKILL_SOUNDS = "setting.skill_sounds";
 
     private PlayerSettings() {
     }
@@ -27,5 +31,10 @@ public final class PlayerSettings {
     /** 這個設定是否開著（沒設定過算開）。 */
     public static boolean enabled(final PlayerState state, final String key) {
         return state == null || !"0".equals(state.progress().get(key));
+    }
+
+    /** 預設關的設定是否開著（沒設定過算關）。 */
+    public static boolean on(final PlayerState state, final String key) {
+        return state != null && "1".equals(state.progress().get(key));
     }
 }

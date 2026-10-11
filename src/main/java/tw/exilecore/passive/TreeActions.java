@@ -98,7 +98,52 @@ public final class TreeActions {
         if (character == null) {
             return plugin.web().publicUrl() + "/tree";
         }
-        return plugin.web().publicUrl() + "/tree#" + TreeCode.encode(tree, character.characterClass().id(), state.passives());
+        return plugin.web().publicUrl() + "/tree#" + TreeCode.encode(tree, character.characterClass().id(), state.passives(),
+                chosenAttributes(state, tree));
+    }
+
+    /** 已配的屬性點現在各是哪個屬性（2026-10：帶進規劃器的網址，規劃器照這個上色）。 */
+    static java.util.Map<String, String> chosenAttributes(final PlayerState state, final PassiveTree tree) {
+        final java.util.Map<String, String> chosen = new java.util.LinkedHashMap<>();
+        for (final String id : state.passives()) {
+            final PassiveNode node = tree.node(id);
+            if (node != null && node.attributeChoice() > 0) {
+                chosen.put(id, tw.exilecore.character.PlayerStateService.chosenAttribute(state, state.characterClass(), id));
+            }
+        }
+        return chosen;
+    }
+
+    /** 規劃裡指定了屬性、而且跟現在不一樣的屬性點（只看套用後有配的）。 */
+    static java.util.Map<String, String> attributeChanges(final PlayerState state, final PassiveTree tree, final Set<String> result,
+                                                          final java.util.Map<String, String> wanted) {
+        final java.util.Map<String, String> changes = new java.util.LinkedHashMap<>();
+        for (final java.util.Map.Entry<String, String> entry : wanted.entrySet()) {
+            final PassiveNode node = tree.node(entry.getKey());
+            if (node == null || node.attributeChoice() <= 0 || !result.contains(entry.getKey())) {
+                continue;
+            }
+            // 還沒配過的屬性點現在算職業的主屬性；規劃要的不一樣才算要改
+            if (!entry.getValue().equals(tw.exilecore.character.PlayerStateService.chosenAttribute(state, state.characterClass(), entry.getKey()))
+                    || !state.progress().containsKey("attr." + entry.getKey())) {
+                changes.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return changes;
+    }
+
+    /** 把屬性點改成規劃指定的屬性（存進角色進度），屬性表重算；回傳改了幾個。 */
+    private static int applyAttributes(final ExileCore plugin, final Player player, final java.util.Map<String, String> changes) {
+        if (changes.isEmpty() || plugin.characters() == null) {
+            return 0;
+        }
+        for (final java.util.Map.Entry<String, String> entry : changes.entrySet()) {
+            plugin.characters().setProgress(player, "attr." + entry.getKey(), entry.getValue());
+        }
+        final PlayerState state = plugin.players().get(player);
+        state.markDirty();
+        plugin.players().sheet(player);
+        return changes.size();
     }
 
     /** /tree web：聊天欄給一個連結。 */
@@ -133,8 +178,10 @@ public final class TreeActions {
             return;
         }
         final TreePlan.Plan plan;
+        final java.util.Map<String, String> wantedAttributes;
         try {
             final TreeCode.Decoded decoded = TreeCode.decode(tree, code);
+            wantedAttributes = decoded.attributes();
             if (!decoded.classId().equals(character.characterClass().id())) {
                 final String planClass = classNames(decoded.classId());
                 fail(plugin, player, "這是" + planClass + "的規劃，你的角色是" + character.characterClass().displayName(), back);
@@ -144,6 +191,17 @@ public final class TreeActions {
                     plugin.players().availablePoints(state));
         } catch (final TreeCode.InvalidCode | TreePlan.InvalidPlan e) {
             fail(plugin, player, e.getMessage(), back);
+            return;
+        }
+        // 2026-10：規劃裡選好的屬性點（力量／敏捷／智慧）
+        final java.util.Map<String, String> attributeChanges = attributeChanges(state, tree, plan.result(), wantedAttributes);
+        if (!plan.changes() && !attributeChanges.isEmpty()) {
+            // 配點一樣，只有屬性點選的屬性不一樣：直接改（切換屬性本來就不花錢）
+            final int changed = applyAttributes(plugin, player, attributeChanges);
+            plugin.characters().save(player);
+            player.sendMessage(plugin.text().prefixed("<green>配點跟規劃一樣；" + changed + " 個屬性點照規劃改好了（力量／敏捷／智慧）"
+                    + (plan.later().isEmpty() ? "" : "<gray>（還有 " + plan.later().size() + " 點等升級）")));
+            back.run();
             return;
         }
         if (!plan.changes()) {
@@ -163,6 +221,9 @@ public final class TreeActions {
         }
         if (!plan.later().isEmpty()) {
             body.add("<dark_gray>規劃還有 " + plan.later().size() + " 點這次點數不夠，升級後再匯入一次會接著配");
+        }
+        if (!attributeChanges.isEmpty()) {
+            body.add("<gray>屬性點：<white>" + attributeChanges.size() + "</white> 個照規劃選的屬性（力量／敏捷／智慧）");
         }
         int jewelsBack = 0;
         for (final PassiveNode node : plan.removed()) {
@@ -198,6 +259,7 @@ public final class TreeActions {
                 fail(plugin, player, result.message(), back);
                 return;
             }
+            applyAttributes(plugin, player, attributeChanges(plugin.players().get(player), tree, plan.result(), wantedAttributes));
             plugin.characters().save(player);
             player.sendMessage(plugin.text().prefixed("<green>天賦規劃已套用：新配 " + plan.added().size() + " 點"
                     + (plan.removed().isEmpty() ? "" : "、退掉 " + plan.removed().size() + " 點")

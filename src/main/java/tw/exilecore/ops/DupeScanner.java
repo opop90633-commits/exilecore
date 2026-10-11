@@ -129,6 +129,19 @@ final class DupeScanner {
                             result.getBytes("contents")));
                 }
             }
+            // 2026-10：公會倉庫也掃（頁碼 -1 是頁籤的設定，不是物品）。沒有公會的表（模組沒開過）就跳過
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "SELECT s.guild_id, s.page, s.contents, g.name AS guild_name FROM guild_stash s "
+                            + "LEFT JOIN guilds g ON g.id = s.guild_id WHERE s.page >= 0");
+                 ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    final String guild = result.getString("guild_name");
+                    rows.add(new Row("公會「" + (guild == null ? "#" + result.getLong("guild_id") : guild) + "」的倉庫第 "
+                            + (result.getInt("page") + 1) + " 頁", result.getBytes("contents")));
+                }
+            } catch (final java.sql.SQLException e) {
+                plugin.getSLF4JLogger().warn("找複製：公會倉庫讀不到（跳過）：{}", e.toString());
+            }
             return rows;
         }).whenComplete((rows, error) -> plugin.getServer().getScheduler().runTask(plugin, () -> {
             if (error != null) {

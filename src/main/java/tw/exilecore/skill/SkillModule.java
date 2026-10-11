@@ -47,10 +47,10 @@ public final class SkillModule implements Module {
         manager.registerEvents(created.warcries().taunts(), plugin); // 嘲諷：持續時間內只打嘲諷的人
         manager.registerEvents(created.bossSkills(), plugin); // 放招時暫停、沒來得及恢復的原版 AI：載入時恢復
         created.bossSkills().recoverLoaded();
-        plugin.players().addModifierSource(created.deployables()::modifiers); // 圖騰給施放者的增益
-        plugin.players().addModifierSource(created.minions()::modifiers); // 魔像給主人的增益
-        plugin.players().addModifierSource(created.auras()::modifiers); // 光環：自己的效果、保留、隊友給的
-        plugin.players().addModifierSource(created.buffs()::modifiers); // 戰吼的增益
+        plugin.players().addBuffSource(created.deployables()::modifiers); // 圖騰給施放者的增益
+        plugin.players().addBuffSource(created.minions()::modifiers); // 魔像給主人的增益
+        plugin.players().addBuffSource(created.auras()::modifiers); // 光環：自己的效果、保留、隊友給的
+        plugin.players().addBuffSource(created.buffs()::modifiers); // 戰吼、護符的增益
         plugin.combat().setMinions(created.minions()); // 召喚物走戰鬥模組的傷害管道
         created.deployables().sweep(); // 上次當機留下的圖騰、陷阱
         created.minions().sweep(); // 上次當機留下的召喚物

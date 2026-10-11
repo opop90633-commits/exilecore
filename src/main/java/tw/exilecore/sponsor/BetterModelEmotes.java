@@ -7,6 +7,8 @@ import tw.exilecore.ExileCore;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Consumer;
@@ -27,6 +29,8 @@ final class BetterModelEmotes {
 
     private final ExileCore plugin;
     private final ClassLoader loader;
+    /** 正在演的動畫怎麼收掉（2026-10：王之坐姿走開就站起來）。 */
+    private final Map<UUID, Runnable> closers = new ConcurrentHashMap<>();
 
     private BetterModelEmotes(final ExileCore plugin, final ClassLoader loader) {
         this.plugin = plugin;
@@ -141,13 +145,18 @@ final class BetterModelEmotes {
             final Class<?> modifier = type("kr.toxicity.model.api.animation.AnimationModifier");
             final Object once = modifier.getField("DEFAULT_WITH_PLAY_ONCE").get(null);
             final Method close = method(trackerType, "close");
+            final UUID id = player.getUniqueId();
+            final Runnable[] self = new Runnable[1];
             final Runnable done = () -> {
+                closers.remove(id, self[0]);
                 try {
                     close.invoke(tracker);
-                } catch (final ReflectiveOperationException ignored) {
+                } catch (final ReflectiveOperationException | RuntimeException ignored) {
                     // 已經關了
                 }
             };
+            self[0] = done;
+            closers.put(id, done);
             final boolean started = (Boolean) method(trackerType, "animate", String.class, modifier, Runnable.class)
                     .invoke(tracker, animation, once, done);
             if (!started) {
@@ -157,6 +166,14 @@ final class BetterModelEmotes {
         } catch (final ReflectiveOperationException | RuntimeException | LinkageError e) {
             plugin.getSLF4JLogger().warn("動作：BetterModel 演不出 {}：{}", animation, e.toString());
             return false;
+        }
+    }
+
+    /** 這個玩家正在演的動畫馬上收掉（回到原本的樣子）；沒在演就什麼都不做。 */
+    void stop(final Player player) {
+        final Runnable closer = closers.remove(player.getUniqueId());
+        if (closer != null) {
+            closer.run();
         }
     }
 }
