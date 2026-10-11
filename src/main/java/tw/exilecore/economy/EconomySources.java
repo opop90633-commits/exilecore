@@ -21,6 +21,8 @@ public final class EconomySources {
     public static final String ADMIN = "admin";
     /** 功勳兌換（天穹碎片）。 */
     public static final String MERITS = "merits";
+    /** 地圖事件與活動的獎勵（祭壇、幻霧自己挑的獎勵，不定時活動的素材；2026-10 以前沒有記）。 */
+    public static final String EVENT = "event";
 
     // ---- 消耗（負的）----
     /** 用在裝備、地圖上（僥倖石碎掉也算）。 */
@@ -65,6 +67,7 @@ public final class EconomySources {
             case NPC -> "NPC 給的";
             case ADMIN -> "管理員";
             case MERITS -> "功勳兌換";
+            case EVENT -> "地圖事件、活動獎勵";
             case CRAFT -> "做裝備、地圖";
             case SKILL -> "開技能孔";
             case MAP_DEVICE -> "地圖裝置";
@@ -86,7 +89,7 @@ public final class EconomySources {
     }
 
     /** 全部的來源（網頁的名稱表照這個順序）。 */
-    public static final List<String> ALL = List.of(DROP, FILTER, SALVAGE, NPC, ADMIN, MERITS, CRAFT, SKILL, MAP_DEVICE, HEIST, TRASH, DELETE, VENDOR, VENDOR_REFRESH,
+    public static final List<String> ALL = List.of(DROP, FILTER, SALVAGE, NPC, ADMIN, MERITS, EVENT, CRAFT, SKILL, MAP_DEVICE, HEIST, TRASH, DELETE, VENDOR, VENDOR_REFRESH,
             GAMBLE, SHOP, RESPEC, FEE_TRADE, FEE_LIST, FEE_BUY, FEE_EXCHANGE, GUILD);
 
     private EconomySources() {

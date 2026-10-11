@@ -30,6 +30,7 @@ public final class EconomyLedger {
     public static final String NPC = EconomySources.NPC;
     public static final String ADMIN = EconomySources.ADMIN;
     public static final String MERITS = EconomySources.MERITS;
+    public static final String EVENT = EconomySources.EVENT;
     public static final String CRAFT = EconomySources.CRAFT;
     public static final String SKILL = EconomySources.SKILL;
     public static final String MAP_DEVICE = EconomySources.MAP_DEVICE;

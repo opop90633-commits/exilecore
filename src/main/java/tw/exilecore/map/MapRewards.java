@@ -204,6 +204,11 @@ public final class MapRewards {
     static boolean give(final ExileCore plugin, final Player player, final List<ItemStack> items) {
         boolean dropped = false;
         for (final ItemStack item : items) {
+            // 流水帳（2026-10）：祭壇、幻霧挑的通貨也算產出（以前沒記，星籤這類主要從這裡來的就變成「消耗比產出多」）
+            if (plugin.economy() != null && plugin.currencies() != null) {
+                plugin.currencies().read(item).ifPresent(type -> plugin.economy().ledger().produced(type.id(),
+                        tw.exilecore.economy.EconomyLedger.EVENT, item.getAmount()));
+            }
             ItemStack rest = item;
             if (plugin.loot() != null) {
                 rest = plugin.loot().stow(player, plugin.players().get(player), item);

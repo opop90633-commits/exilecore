@@ -1026,6 +1026,9 @@ public final class WorldEventService {
         if (type == null) {
             return;
         }
+        if (plugin.economy() != null) {
+            plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, amount); // 2026-10：活動素材也算產出
+        }
         int left = amount;
         while (left > 0) {
             final int stack = Math.min(left, Math.max(1, type.stack()));

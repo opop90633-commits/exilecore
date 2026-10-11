@@ -512,7 +512,8 @@
     const head = table.createTHead().insertRow();
     for (const name of ['通貨', '產出', '消耗', '消耗佔產出', '全服存量', '參考價值', '走勢（設定值＝100）']) head.appendChild(html('th', name));
     const body = table.createTBody();
-    const rows = totals.rows.filter((row) => row.p > 0 || row.q > 0 || row.c.stock.some((s) => s != null && s > 0));
+    // 沒標價的（映星鏡這類，2026-10）就算還沒有人拿到也列出來，才看得出「還沒出現過」
+    const rows = totals.rows.filter((row) => row.c.priced === false || row.p > 0 || row.q > 0 || row.c.stock.some((s) => s != null && s > 0));
     // 有標價的照價值排；沒標價的（映星鏡這類，2026-10）放後面、照數量排
     rows.sort((a, b) => (b.c.priced !== false) - (a.c.priced !== false) || b.pv - a.pv || b.p - a.p);
     if (!rows.length) {

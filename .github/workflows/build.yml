@@ -36,10 +36,12 @@ jobs:
           path: build/libs/*.jar
 
   deploy:
-    # 只有 main 的 push（不含 pull request），而且上面的建置與測試都過了才上傳
+    # 只有 main 的 push（不含 pull request），而且上面的建置與測試都過了才上傳。
+    # 2026-10：主機商擋國外連線（GitHub 的機器在美國，SFTP 連不上），所以這一步改在站長自己的電腦上跑
+    #   （self-hosted runner：GitHub → Settings → Actions → Runners 加的那台）。電腦沒開時會排隊，開機後自動補上傳。
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     concurrency: deploy   # 連續 push 時一次只上傳一個，照順序
     env:
       DEPLOY_SFTP_HOST: ${{ secrets.DEPLOY_SFTP_HOST }}
@@ -55,12 +57,13 @@ jobs:
           name: ExileCore
           path: build/libs
 
-      - name: 上傳到伺服器（下次重啟生效）
+      - name: 準備 paramiko
+        run: python -m pip install --quiet paramiko
+
+      - name: 寫連線設定（用 Secrets，不印出來）
         if: env.DEPLOY_SFTP_HOST != ''
+        shell: python
         run: |
-          pip install --quiet paramiko
-          # deploy.py 讀 tools/deploy.local.json：用 Secrets 寫一份（不印出來、跑完就刪）
-          python3 - <<'PY'
           import json, os
           config = {
               "sftp_host": os.environ["DEPLOY_SFTP_HOST"],
@@ -69,11 +72,21 @@ jobs:
               "sftp_password": os.environ["DEPLOY_SFTP_PASSWORD"],
               "remote_plugins": "plugins",
           }
-          with open("tools/deploy.local.json", "w", encoding="utf-8") as f:
+          with open(os.path.join("tools", "deploy.local.json"), "w", encoding="utf-8") as f:
               json.dump(config, f)
-          PY
-          python3 tools/deploy.py --no-build --no-restart
-          rm -f tools/deploy.local.json
+
+      - name: 上傳到伺服器（下次重啟生效）
+        if: env.DEPLOY_SFTP_HOST != ''
+        run: python tools/deploy.py --no-build --no-restart
+
+      - name: 刪掉連線設定
+        if: always()
+        shell: python
+        run: |
+          import os
+          path = os.path.join("tools", "deploy.local.json")
+          if os.path.exists(path):
+              os.remove(path)
 
       - name: 沒設 Secrets：跳過上傳
         if: env.DEPLOY_SFTP_HOST == ''
