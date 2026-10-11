@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星骸 圖鑑</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0d1a'/%3E%3Cpolygon points='32,6 38,25 58,25 42,37 48,57 32,45 16,57 22,37 6,25 26,25' fill='%23f5b942'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface-1: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+    --grid: #e1e0d9; --border: rgba(11, 11, 11, 0.10); --wash: rgba(11, 11, 11, 0.04); --gold: #b8860b; --online: #0ca30c;
+    --unique: #a3541c; --blue: #2f5fd0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --wash: rgba(255, 255, 255, 0.06); --gold: #f5b942; --online: #0ca30c;
+      --unique: #e08a4a; --blue: #9fb8ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page); color: var(--text-primary);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px; line-height: 1.5; padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header .sub { margin: 4px 0 0; color: var(--text-secondary); }
+  a { color: inherit; }
+  .muted { color: var(--text-muted); }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  footer { margin-top: 16px; color: var(--text-muted); font-size: 12px; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .back { color: var(--text-secondary); text-decoration: none; font-size: 13px; }
+  .back:hover { text-decoration: underline; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .tabs button, .filters select, .filters input {
+    font: inherit; color: var(--text-primary); background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px;
+  }
+  .tabs button { cursor: pointer; }
+  .tabs button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); font-weight: 600; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+  .filters input { flex: 1; min-width: 180px; }
+  .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .entry { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .entry h3 { margin: 0 0 2px; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .entry h3 img { width: 28px; height: 28px; image-rendering: pixelated; }
+  .entry .meta { color: var(--text-muted); font-size: 12px; margin-bottom: 6px; }
+  .entry p { margin: 4px 0 0; color: var(--text-secondary); }
+  .entry .mod { color: var(--blue); margin: 2px 0 0; }
+  .entry .flavour { color: var(--unique); font-style: italic; margin-top: 6px; font-size: 13px; }
+  .entry.unique h3 { color: var(--unique); }
+  .badge { display: inline-block; padding: 0 7px; border: 1px solid var(--border); border-radius: 999px; font-size: 11px; color: var(--text-secondary); font-weight: 400; }
+  .empty { color: var(--text-muted); padding: 24px 0; text-align: center; }
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .tag { font: inherit; font-size: 11px; line-height: 18px; padding: 0 8px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--wash); color: var(--text-secondary); }
+  .tag:hover { border-color: var(--gold); color: var(--gold); }
+  .entry.clickable { cursor: pointer; transition: border-color .12s; }
+  .entry.clickable:hover { border-color: var(--gold); }
+  .entry .more { margin-top: 8px; font-size: 12px; color: var(--gold); }
+  dialog { border: 1px solid var(--border); border-radius: 14px; padding: 0; background: var(--surface-1); color: var(--text-primary);
+    width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
+  dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+  .dlg-head { position: sticky; top: 0; background: var(--surface-1); padding: 16px 18px 12px; border-bottom: 1px solid var(--border); }
+  .dlg-head h2 { margin: 0; font-size: 18px; font-weight: 600; padding-right: 36px; }
+  .dlg-head .meta { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+  .dlg-head p { margin: 8px 0 0; color: var(--text-secondary); }
+  .dlg-close { position: absolute; top: 12px; right: 12px; font: inherit; font-size: 18px; line-height: 1; width: 32px; height: 32px;
+    border-radius: 8px; border: 1px solid var(--border); background: var(--wash); color: var(--text-primary); cursor: pointer; }
+  .dlg-body { padding: 12px 18px 18px; }
+  .dlg-body h4 { margin: 14px 0 6px; font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+  .dlg-body h4:first-child { margin-top: 4px; }
+  .sup { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; }
+  .sup b { font-weight: 600; }
+  .sup p { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
+  .dlg-filter { width: 100%; margin-top: 10px; font: inherit; color: var(--text-primary); background: var(--page);
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="./">← 首頁</a>
+    <h1>圖鑑</h1>
+    <p class="sub">技能、輔助寶石、通貨與傳奇裝備的說明，跟遊戲裡寫的一樣。數值會跟著你的等級與裝備變，實際的以遊戲裡為準。</p>
+  </header>
+  <div class="tabs" role="tablist">
+    <button type="button" data-tab="skills" aria-pressed="true">技能</button>
+    <button type="button" data-tab="supports" aria-pressed="false">輔助寶石</button>
+    <button type="button" data-tab="currencies" aria-pressed="false">通貨</button>
+    <button type="button" data-tab="uniques" aria-pressed="false">傳奇裝備</button>
+  </div>
+  <div class="filters">
+    <input type="search" id="search" placeholder="找名稱或說明…" aria-label="搜尋">
+    <select id="filter" aria-label="篩選"></select>
+  </div>
+  <div class="list" id="list"></div>
+  <p class="empty" id="empty" hidden>沒有符合的。</p>
+  <footer id="footer">讀取中……</footer>
+</div>
+<dialog id="detail" aria-labelledby="dlg-title">
+  <div class="dlg-head">
+    <h2 id="dlg-title"></h2>
+    <div class="meta" id="dlg-meta"></div>
+    <div class="tags" id="dlg-tags"></div>
+    <p id="dlg-text"></p>
+    <input type="search" class="dlg-filter" id="dlg-search" placeholder="在能用的輔助寶石裡找…" aria-label="搜尋輔助寶石">
+    <button type="button" class="dlg-close" id="dlg-close" aria-label="關閉">×</button>
+  </div>
+  <div class="dlg-body" id="dlg-body"></div>
+</dialog>
+<script>
+(function () {
+  'use strict';
+  var WEAPON = { bow: '弓', crossbow: '弩', mace: '錘', spear: '矛', quarterstaff: '長棍', talisman: '護符（獸形）', wand: '法杖', staff: '長杖',
+    sceptre: '權杖', sword: '劍', axe: '斧', dagger: '匕首', claw: '爪', shield: '盾', flail: '連枷', focus: '法器', quiver: '箭袋',
+    melee: '近戰武器' };
+  var TYPE = { attack: '攻擊', spell: '法術' };
+  var KIND = { summon: '召喚', aura: '常駐', warcry: '戰吼' };
+  var SLOT = { ring: '戒指', amulet: '項鍊', belt: '腰帶', main_hand: '主手', off_hand: '副手', head: '頭部', chest: '身體', legs: '腿部', feet: '腳部' };
+  var data = null, items = null, tab = 'skills', query = '', pick = '';
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) { node.className = cls; }
+    if (text !== undefined && text !== null) { node.textContent = text; }
+    return node;
+  }
+  function weaponName(w) { return WEAPON[w] || w; }
+  /** 詞綴文字裡的 {變數} 換成數值範圍（傳奇的詞綴）。 */
+  function fill(mod) {
+    return String(mod.text).replace(/\{([A-Za-z0-9_]+)(?:\/\d+)?\}/g, function (m, name) {
+      var range = mod.vars && mod.vars[name];
+      if (!range) { return '?'; }
+      var div = (mod.div && mod.div[name]) || 1;
+      function fmt(v) { var n = v / div; return String(Math.round(n * 100) / 100); }
+      return range[0] === range[1] ? fmt(range[0]) : '(' + fmt(range[0]) + '–' + fmt(range[1]) + ')';
+    });
+  }
+  function rows() {
+    if (tab === 'uniques') { return items ? items.uniques : []; }
+    return data ? (data[tab] || []) : [];
+  }
+  function haystack(e) {
+    if (tab === 'uniques') { return (e.name + ' ' + (e.mods || []).map(fill).join(' ')).toLowerCase(); }
+    return (e.name + ' ' + (e.text || '') + ' ' + (e.requires || '') + ' ' + (e.flavor || '') + ' ' + (e.tags || []).map(tagName).join(' ')).toLowerCase();
+  }
+  function tagName(t) { return (data && data.tagNames && data.tagNames[t]) || t; }
+  /** 技能的標籤（小按鈕：點了就用這個標籤篩選）。 */
+  function tagRow(tags, onPick) {
+    var row = el('div', 'tags');
+    (tags || []).forEach(function (t) {
+      var b = el('button', 'tag', tagName(t));
+      b.type = 'button';
+      b.title = '只看「' + tagName(t) + '」技能';
+      b.addEventListener('click', function (ev) { ev.stopPropagation(); onPick(t); });
+      row.appendChild(b);
+    });
+    return row;
+  }
+  function pickTag(t) {
+    if (tab !== 'skills') { tab = 'skills'; }
+    pick = 'g:' + t;
+    show(tab);
+    $('filter').value = pick;
+  }
+  var supportById = null, fitsByTag = null;
+  /** 標籤 → 有這個標籤的技能掛得上的輔助寶石（{tag: {supportId: true}}）。 */
+  function supportFits() {
+    if (!fitsByTag) {
+      fitsByTag = {};
+      ((data && data.skills) || []).forEach(function (skill) {
+        (skill.tags || []).forEach(function (t) {
+          var set = fitsByTag[t] || (fitsByTag[t] = {});
+          (skill.supports || []).forEach(function (id) { set[id] = true; });
+        });
+      });
+    }
+    return fitsByTag;
+  }
+  /** 輔助寶石篩選用的標籤（有輔助寶石掛得上的），照中文名排。 */
+  function supportTagNames() {
+    var fits = supportFits();
+    return Object.keys(fits).filter(function (t) { return Object.keys(fits[t]).length > 0; })
+      .map(function (t) { return [t, tagName(t)]; })
+      .sort(function (a, b) { return a[1].localeCompare(b[1], 'zh-Hant'); });
+  }
+  function supportsOf(skill) {
+    if (!supportById) {
+      supportById = {};
+      ((data && data.supports) || []).forEach(function (s) { supportById[s.id] = s; });
+    }
+    return (skill.supports || []).map(function (id) { return supportById[id]; }).filter(Boolean);
+  }
+  function skillMeta(e) {
+    var bits = [];
+    if (TYPE[e.type]) { bits.push(TYPE[e.type]); }
+    if (KIND[e.kind]) { bits.push(KIND[e.kind]); }
+    if (e.weapons && e.weapons.length) { bits.push('要拿：' + e.weapons.map(weaponName).join('、')); }
+    if (e.tier) { bits.push('第 ' + e.tier + ' 階'); }
+    if (e.cooldown) { bits.push('冷卻 ' + e.cooldown + ' 秒'); }
+    return bits.join('　');
+  }
+  /** 點技能：列出能掛的輔助寶石（照階級分組）。 */
+  function openSkill(e) {
+    var dialog = $('detail');
+    $('dlg-title').textContent = e.name;
+    $('dlg-meta').textContent = skillMeta(e);
+    var tags = $('dlg-tags');
+    tags.replaceWith(tagRow(e.tags, function (t) { dialog.close(); pickTag(t); }));
+    tagRowFix();
+    $('dlg-text').textContent = e.text || '';
+    $('dlg-search').value = '';
+    var fits = supportsOf(e);
+    function list(q) {
+      var body = $('dlg-body');
+      body.textContent = '';
+      q = (q || '').trim().toLowerCase();
+      var shown = fits.filter(function (s) { return !q || (s.name + ' ' + s.text).toLowerCase().indexOf(q) >= 0; });
+      if (!fits.length) { body.appendChild(el('p', 'empty', '這個技能不能掛輔助寶石。')); return; }
+      if (!shown.length) { body.appendChild(el('p', 'empty', '沒有符合的。')); return; }
+      body.appendChild(el('div', 'muted', '能掛的輔助寶石：' + fits.length + ' 種' + (q ? '，符合 ' + shown.length + ' 種' : '')));
+      var tier = null;
+      shown.forEach(function (s) {
+        if (s.tier !== tier) { tier = s.tier; body.appendChild(el('h4', null, tier ? '第 ' + tier + ' 階' : '其他')); }
+        var box = el('div', 'sup');
+        box.appendChild(el('b', null, s.name));
+        box.appendChild(el('p', null, s.text));
+        body.appendChild(box);
+      });
+    }
+    $('dlg-search').oninput = function () { list($('dlg-search').value); };
+    list('');
+    $('dlg-body').scrollTop = 0;
+    if (typeof dialog.showModal === 'function') { dialog.showModal(); } else { dialog.setAttribute('open', ''); }
+  }
+  /** 換掉的標籤列補回 id（下次打開還找得到）。 */
+  function tagRowFix() {
+    var head = document.querySelector('.dlg-head .tags');
+    if (head) { head.id = 'dlg-tags'; }
+  }
+  function filterOptions() {
+    var select = $('filter'), options = [['', '全部']];
+    if (tab === 'skills') {
+      var seen = {};
+      rows().forEach(function (s) { (s.weapons || []).forEach(function (w) { seen[w] = true; }); });
+      Object.keys(seen).sort().forEach(function (w) { options.push(['w:' + w, '要拿：' + weaponName(w)]); });
+      options.push(['t:attack', '攻擊技能'], ['t:spell', '法術技能'], ['k:summon', '召喚'], ['k:aura', '常駐（保留精魂）'], ['k:warcry', '戰吼']);
+      var tagSeen = {};
+      rows().forEach(function (s) { (s.tags || []).forEach(function (t) { tagSeen[t] = true; }); });
+      Object.keys(tagSeen).map(function (t) { return [t, tagName(t)]; })
+        .sort(function (a, b) { return a[1].localeCompare(b[1], 'zh-Hant'); })
+        .forEach(function (t) { options.push(['g:' + t[0], '標籤：' + t[1]]); });
+    } else if (tab === 'supports') {
+      // 階級，以及「可以輔助哪種技能」（照技能那邊算好的能掛清單：有這個標籤的技能至少一個掛得上）
+      var tiers = {};
+      rows().forEach(function (s) { if (s.tier) { tiers[s.tier] = true; } });
+      Object.keys(tiers).sort().forEach(function (t) { options.push(['r:' + t, '第 ' + t + ' 階']); });
+      supportTagNames().forEach(function (t) { options.push(['f:' + t[0], '可以輔助：' + t[1] + '技能']); });
+    } else if (tab === 'currencies') {
+      var levels = {};
+      rows().forEach(function (c) { levels[c.level > 1 ? c.level : 1] = true; });
+      Object.keys(levels).map(Number).sort(function (a, b) { return a - b; }).forEach(function (l) {
+        options.push(['l:' + l, l > 1 ? l + ' 級以上的怪物才會掉' : '一開始就會掉']);
+      });
+    } else if (tab === 'uniques') {
+      Object.keys(SLOT).forEach(function (s) { options.push(['s:' + s, SLOT[s]]); });
+    }
+    select.textContent = '';
+    options.forEach(function (o) { var opt = el('option', null, o[1]); opt.value = o[0]; select.appendChild(opt); });
+    select.hidden = options.length < 2;
+    select.value = options.some(function (o) { return o[0] === pick; }) ? pick : '';
+    pick = select.value;
+  }
+  function passes(e) {
+    if (!pick) { return true; }
+    var kind = pick.charAt(0), value = pick.substring(2);
+    if (kind === 'w') { return (e.weapons || []).indexOf(value) >= 0; }
+    if (kind === 't') { return e.type === value; }
+    if (kind === 'k') { return e.kind === value; }
+    if (kind === 's') { return e.slot === value; }
+    if (kind === 'g') { return (e.tags || []).indexOf(value) >= 0; }
+    if (kind === 'r') { return String(e.tier) === value; }
+    if (kind === 'f') { return !!(supportFits()[value] || {})[e.id]; }
+    if (kind === 'l') { return String(e.level > 1 ? e.level : 1) === value; }
+    return true;
+  }
+  function card(e) {
+    var box = el('div', 'entry' + (tab === 'uniques' ? ' unique' : ''));
+    var title = el('h3');
+    if (tab === 'uniques' && e.icon) {
+      var img = el('img'); img.alt = ''; img.loading = 'lazy'; img.src = 'builds/icon.png?id=' + encodeURIComponent(e.id);
+      img.addEventListener('error', function () { img.remove(); });
+      title.appendChild(img);
+    }
+    title.appendChild(document.createTextNode(e.name));
+    box.appendChild(title);
+    if (tab === 'skills') {
+      box.appendChild(el('div', 'meta', skillMeta(e)));
+      box.appendChild(el('p', null, e.text));
+      if (e.tags && e.tags.length) { box.appendChild(tagRow(e.tags, pickTag)); }
+      var count = (e.supports || []).length;
+      box.appendChild(el('div', 'more', count ? '能掛 ' + count + ' 種輔助寶石 →' : '不能掛輔助寶石'));
+      box.className += ' clickable';
+      box.tabIndex = 0;
+      box.setAttribute('role', 'button');
+      box.setAttribute('aria-label', e.name + '：看能掛的輔助寶石');
+      box.addEventListener('click', function () { openSkill(e); });
+      box.addEventListener('keydown', function (ev) {
+        if (ev.target === box && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); openSkill(e); }
+      });
+    } else if (tab === 'supports') {
+      box.appendChild(el('div', 'meta', (e.tier ? '第 ' + e.tier + ' 階　' : '') + (e.requires || '')));
+      box.appendChild(el('p', null, e.text));
+    } else if (tab === 'currencies') {
+      if (e.level > 1) { box.appendChild(el('div', 'meta', e.level + ' 級以上的怪物才會掉')); }
+      box.appendChild(el('p', null, e.text));
+      if (e.flavor) { box.appendChild(el('div', 'flavour', e.flavor)); }
+    } else {
+      var base = items && items.baseById[e.base];
+      box.appendChild(el('div', 'meta', (base ? base.name + '　' : '') + (SLOT[e.slot] || e.slot) + (e.level > 1 ? '　' + e.level + ' 級以上掉落' : '')));
+      if (base && base.implicit) { box.appendChild(el('div', 'mod', fill({ text: base.implicit, vars: base.implicitVars, div: base.implicitDiv }))); }
+      (e.mods || []).forEach(function (m) { box.appendChild(el('div', 'mod', fill(m))); });
+      if (e.flavour && e.flavour.length) { box.appendChild(el('div', 'flavour', e.flavour.join(' '))); }
+    }
+    return box;
+  }
+  function render() {
+    var list = $('list'), q = query.trim().toLowerCase();
+    var all = rows();
+    var shown = all.filter(function (e) { return passes(e) && (!q || haystack(e).indexOf(q) >= 0); });
+    list.textContent = '';
+    shown.slice(0, 400).forEach(function (e) { list.appendChild(card(e)); });
+    $('empty').hidden = shown.length > 0;
+    $('footer').textContent = (data || items) ? '共 ' + all.length + ' 個，顯示 ' + Math.min(400, shown.length) + (shown.length > 400 ? '（太多了，請用搜尋縮小範圍）' : '') : '讀取中……';
+  }
+  function show(next) {
+    tab = next;
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-tab') === tab ? 'true' : 'false');
+    });
+    filterOptions();
+    render();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
+    b.addEventListener('click', function () { pick = ''; show(b.getAttribute('data-tab')); });
+  });
+  $('search').addEventListener('input', function () { query = $('search').value; render(); });
+  $('dlg-close').addEventListener('click', function () { $('detail').close(); });
+  $('detail').addEventListener('click', function (ev) { if (ev.target === $('detail')) { $('detail').close(); } });
+  $('filter').addEventListener('change', function () { pick = $('filter').value; render(); });
+  fetch('codex/data.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (json) { data = json; supportById = null; fitsByTag = null; show(tab); })
+    .catch(function () { $('footer').textContent = '讀不到圖鑑資料，稍後再試'; });
+  fetch('tree/items.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (json) {
+    items = json;
+    items.baseById = {};
+    (json.bases || []).forEach(function (b) { items.baseById[b.id] = b; });
+    items.uniques = (json.uniques || []).slice().sort(function (a, b) { return (a.level - b.level) || a.name.localeCompare(b.name); });
+    if (tab === 'uniques') { show(tab); }
+  }).catch(function () { items = { uniques: [], baseById: {} }; });
+}());
+</script>
+</body>
+</html>

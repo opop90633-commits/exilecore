@@ -535,7 +535,7 @@ skill_level_melee_amulet:
   group: global_increase_melee_skill_gem_level
   spawn_tags: [leggings]
   names: [之星骸, 之神匠]
-  text: "+{value} 全部近戰技能等級"
+  text: "+{value} 全部近戰攻擊技能等級"
   tiers:
     - { tier: 1, ilvl: 41, weight: 800, value: [2, 2] }
     - { tier: 2, ilvl: 5, weight: 1000, value: [1, 1] }
@@ -547,7 +547,7 @@ skill_level_melee_amulet_1h:
   group: global_increase_melee_skill_gem_level
   spawn_tags: [melee_1h, spear]
   names: [之星骸, 之神匠, 之大師, 之名家]
-  text: "+{value} 全部近戰技能等級"
+  text: "+{value} 全部近戰攻擊技能等級"
   tiers:
     - { tier: 1, ilvl: 81, weight: 512, value: [4, 4] }
     - { tier: 2, ilvl: 55, weight: 640, value: [3, 3] }
@@ -561,7 +561,7 @@ skill_level_melee_amulet_amulet:
   group: global_increase_melee_skill_gem_level
   spawn_tags: [amulet]
   names: [之星骸, 之神匠, 之大師]
-  text: "+{value} 全部近戰技能等級"
+  text: "+{value} 全部近戰攻擊技能等級"
   tiers:
     - { tier: 1, ilvl: 75, weight: 640, value: [3, 3] }
     - { tier: 2, ilvl: 41, weight: 800, value: [2, 2] }
@@ -574,7 +574,7 @@ skill_level_melee_2h:
   group: global_increase_melee_skill_gem_level_weapon
   spawn_tags: [melee_2h, quarterstaff]
   names: [之星骸, 之神匠, 之大師, 之名家]
-  text: "+{value} 全部近戰技能等級"
+  text: "+{value} 全部近戰攻擊技能等級"
   tiers:
     - { tier: 1, ilvl: 81, weight: 512, value: [5, 5] }
     - { tier: 2, ilvl: 55, weight: 640, value: [4, 4] }

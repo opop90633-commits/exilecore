@@ -98,6 +98,20 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     }
 
     /**
+     * 「+x 技能等級」看的標籤（2026-10）：召喚技能的近戰／投射物標籤只是說召喚物怎麼打（讓近戰、投射物的輔助寶石掛得上），
+     * 技能本身不是近戰或投射物技能，所以「全部近戰技能等級」「全部投射物技能等級」不給召喚技能；召喚物的等級看「召喚物技能等級」。
+     */
+    public static Set<String> levelTags(final SkillDefinition definition) {
+        if (definition.summon() == null) {
+            return definition.tags();
+        }
+        final Set<String> tags = new java.util.HashSet<>(definition.tags());
+        tags.remove(Tags.MELEE);
+        tags.remove(Tags.PROJECTILE);
+        return Set.copyOf(tags);
+    }
+
+    /**
      * 算出一次施放的數值。
      *
      * @param gemLevel       寶石等級（普攻給 1）
@@ -114,15 +128,16 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 ? Math.min(gemLevel, tw.exilecore.character.SkillLoadout.GEM_CAP) : config.maxLevelFor(characterLevel);
         final int baseLevel = isDefault ? 1 : Math.max(1, Math.min(gemLevel, usable));
         // 傳奇的「+1 技能等級」：照技能自己的標籤（法術、混沌…），可以超過 20 級；普攻不吃
+        final Set<String> levelTags = levelTags(definition);
         final int bonus = isDefault || sheet == null ? 0
-                : Math.max(0, (int) Math.round(sheet.flat(StatKeys.SKILL_LEVEL, definition.tags())));
+                : Math.max(0, (int) Math.round(sheet.flat(StatKeys.SKILL_LEVEL, levelTags)));
         // 2026-10：輔助寶石的「+1 被輔助技能等級」（元素專精這類）
         int supportLevels = 0;
         if (!isDefault) {
             for (final SupportDefinition support : supports) {
                 if (support != null && support.supports(definition)) {
                     for (final Modifier modifier : support.modifiers()) {
-                        if (modifier.stat().equals(StatKeys.SKILL_LEVEL) && modifier.appliesTo(definition.tags())) {
+                        if (modifier.stat().equals(StatKeys.SKILL_LEVEL) && modifier.appliesTo(levelTags)) {
                             supportLevels += (int) Math.round(modifier.value());
                         }
                     }

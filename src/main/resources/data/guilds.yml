@@ -1,0 +1,87 @@
+# 公會（/guild、/g）。改完用 /ec reload 重新讀取（公會資料本身在資料庫裡，不在這個檔）。
+#
+# 一個帳號只能在一個公會（同一個帳號的所有角色都算，跟金幣、倉庫一樣）。
+# 階級：會長（一個）＞幹部＞成員。幹部可以邀請、請出成員、改公告；會長另外可以升降幹部、交出會長、解散、設定誰能從倉庫拿東西。
+
+guild:
+  # 建立公會：角色要幾級、要付多少金幣（金幣是帳號共用的那個）
+  create_level: 30
+  create_cost: 50000
+  # 一個公會最多幾個人（2–200）
+  max_members: 30
+  # 名稱、標籤的長度 [最少, 最多]（個字；中文、英文、數字都可以，不能有空白與符號）
+  # 標籤會顯示在名字旁邊（TAB、聊天），例如 [星骸]
+  name_length: [2, 12]
+  tag_length: [2, 4]
+  # 邀請幾秒內有效
+  invite_seconds: 120
+  # 公告最多幾個字
+  motd_length: 60
+
+level:
+  # 公會最高幾級
+  max: 20
+  # 從 N 級升到 N+1 級要的公會經驗 = xp_base × N ^ xp_exponent
+  #   1→2：20,000　5→6：約 36 萬　10→11：約 126 萬　19→20：約 400 萬（全部加起來約 3,000 萬）
+  xp_base: 20000
+  xp_exponent: 1.8
+  # 成員殺怪給公會的經驗（照怪物的稀有度；掉落有份的每個成員各算一次）
+  xp_per_kill:
+    normal: 1
+    magic: 3
+    rare: 10
+    unique: 50
+  # 區域、地圖的 Boss（不看稀有度）
+  boss_xp: 200
+  # 怪物比自己低超過幾級就不給公會經驗（0 = 不限制；擋回低等區刷）
+  xp_level_gap: 10
+  # 捐獻：/guild donate 金幣。每 1 金幣換多少公會經驗、一次最少捐多少
+  donate_xp_per_gold: 0.01
+  donate_min: 1000
+
+# 公會加成：公會到那一級（含）以上，每個成員身上都有（屬性表的來源寫「公會加成」）。同一種加成會加起來。
+# stats 的寫法跟昇華、任務獎勵一樣：stat（屬性代號）、type（flat／increased／more）、value。
+#   increased／more 寫百分比的數字（2 = 2%）。
+bonuses:
+  - level: 2
+    stats:
+      - { stat: drop.rarity, type: increased, value: 2 }
+  - level: 4
+    stats:
+      - { stat: life.max, type: increased, value: 2 }
+  - level: 6
+    stats:
+      - { stat: drop.rarity, type: increased, value: 2 }
+  - level: 8
+    stats:
+      - { stat: damage, type: increased, value: 2 }
+  - level: 10
+    stats:
+      - { stat: movement.speed, type: increased, value: 2 }
+  - level: 12
+    stats:
+      - { stat: resist.fire, type: flat, value: 2 }
+      - { stat: resist.cold, type: flat, value: 2 }
+      - { stat: resist.lightning, type: flat, value: 2 }
+  - level: 14
+    stats:
+      - { stat: life.max, type: increased, value: 2 }
+  - level: 16
+    stats:
+      - { stat: damage, type: increased, value: 2 }
+  - level: 18
+    stats:
+      - { stat: attr.str, type: flat, value: 5 }
+      - { stat: attr.dex, type: flat, value: 5 }
+      - { stat: attr.int, type: flat, value: 5 }
+  - level: 20
+    stats:
+      - { stat: drop.rarity, type: increased, value: 3 }
+
+stash:
+  # 公會倉庫一開始幾頁（每頁 45 格）；公會到下面這些等級各多一頁
+  pages: 1
+  page_levels: [5, 10, 15, 20]
+  # 新公會預設誰能從倉庫「拿」東西：member（所有成員）、officer（幹部以上）、leader（只有會長）
+  # 放東西進去每個成員都可以；會長可以在公會選單裡改自己公會的設定
+  withdraw_rank: member

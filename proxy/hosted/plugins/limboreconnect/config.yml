@@ -1,0 +1,63 @@
+# LimboReconnect（星骸・主機商版，2026-10）：主伺服器重開時，玩家留在 Velocity 裡面的虛擬等待室，開好了自動送回去。
+# 取代本機版的 PicoLimbo + VelocityFailover（主機商只給 3 個 port，省掉等待室那一台）。
+# 需要 plugins/ 裡同時有 LimboAPI（dev-build 1.1.27-SNAPSHOT 以上，26.2 要這個）與 LimboReconnect（dev-build）。
+# 這個插件讀設定很挑：鍵要用小寫加連字號、每一層要換行縮排（不能用 { } 一行寫完）。改完在 Velocity 主控台輸入 limboreconnect reload。
+serializer: MINIMESSAGE
+# 被踢的原因符合這個正則才算「伺服器關掉」（Paper 輸入 stop、面板重啟的訊息是 Server closed；封鎖、維修、AFK 不會符合，照常踢）
+trigger-message: "((?i)^(server closed|server is restarting|server shutting down|multiplayer\\.disconnect\\.server_shutdown))+$"
+# 每幾毫秒 ping 一次主伺服器
+check-interval: 2000
+ping-timeout: 1000
+# 主伺服器開好之後再等幾毫秒才送人回去（讓 ExileCore 把資料、世界載好）
+join-delay: 6000
+# 用虛擬等待室（false 會停在原本的世界畫面，看起來像卡住）
+use-limbo: true
+require-permission: false
+world:
+  # 一片漆黑的終界夜空，跟本機版的等待室一樣
+  dimension: THE_END
+  load-world: false
+  world-file-path: world.schem
+  world-file-type: WORLDEDIT_SCHEM
+  world-light-level: 15
+  gamemode: SPECTATOR
+  world-coords:
+    x: 0
+    y: 100
+    z: 0
+  player-coords:
+    x: 0
+    y: 320
+    z: 0
+    pitch: 0
+    yaw: 0
+messages:
+  reload: "<green>LimboReconnect 重新讀取了"
+  titles:
+    show-delay: 20
+    titles:
+      - title: "<#f5b942>《星骸》重新啟動中"
+        subtitle: "<gray>開好了會自動送你回去（不用重新登入）"
+      - title: "<#f5b942>《星骸》重新啟動中·"
+        subtitle: "<gray>開好了會自動送你回去（不用重新登入）"
+      - title: "<#f5b942>《星骸》重新啟動中··"
+        subtitle: "<gray>開好了會自動送你回去（不用重新登入）"
+      - title: "<#f5b942>《星骸》重新啟動中···"
+        subtitle: "<gray>開好了會自動送你回去（不用重新登入）"
+    connecting-titles:
+      - title: "<green>《星骸》開好了"
+        subtitle: "<gray>送你回去…"
+      - title: "<green>《星骸》開好了"
+        subtitle: "<gray>送你回去……"
+      - title: "<green>《星骸》開好了"
+        subtitle: "<gray>送你回去………"
+sounds:
+  waiting:
+    name: block.note_block.chime
+    volume: 0.4
+    pitch: 0.8
+  connecting:
+    name: entity.player.levelup
+    volume: 0.6
+    pitch: 1.2
+debug: false

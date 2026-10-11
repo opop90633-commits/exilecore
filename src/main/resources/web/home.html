@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星骸</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0d1a'/%3E%3Cpolygon points='32,6 38,25 58,25 42,37 48,57 32,45 16,57 22,37 6,25 26,25' fill='%23f5b942'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface-1: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+    --grid: #e1e0d9; --border: rgba(11, 11, 11, 0.10); --wash: rgba(11, 11, 11, 0.04); --gold: #b8860b; --online: #0ca30c;
+    --unique: #a3541c; --blue: #2f5fd0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --wash: rgba(255, 255, 255, 0.06); --gold: #f5b942; --online: #0ca30c;
+      --unique: #e08a4a; --blue: #9fb8ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page); color: var(--text-primary);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px; line-height: 1.5; padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header .sub { margin: 4px 0 0; color: var(--text-secondary); }
+  a { color: inherit; }
+  .muted { color: var(--text-muted); }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  footer { margin-top: 16px; color: var(--text-muted); font-size: 12px; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .status { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+  .dot.on { background: var(--online); }
+  .links { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 20px 0; }
+  .links a { display: block; text-decoration: none; background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .links a:hover { background: var(--wash); border-color: var(--gold); }
+  .links b { display: block; font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+  .links span { color: var(--text-secondary); font-size: 13px; }
+  .tops { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .tops h2 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+  .tops ol { margin: 0; padding: 0; list-style: none; }
+  .tops li { display: flex; gap: 8px; padding: 5px 0; border-top: 1px solid var(--grid); }
+  .tops li:first-child { border-top: none; }
+  .tops .rank { width: 22px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .tops .who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .tops .val { color: var(--text-secondary); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>星骸</h1>
+    <p class="sub">刷寶、配裝、打王的伺服器。這裡看得到天賦規劃、大家的角色、排行榜與圖鑑。</p>
+    <div class="status" id="status" role="status"><span class="dot" id="dot"></span><span id="online">讀取中…</span></div>
+  </header>
+  <nav class="links" aria-label="頁面">
+    <a href="tree"><b>天賦規劃器</b><span>配天賦、挑裝備，代碼可以帶進遊戲</span></a>
+    <a href="builds" id="link-builds"><b>角色</b><span>看大家的裝備、天賦與技能</span></a>
+    <a href="ladder" id="link-ladder"><b>排行榜</b><span>等級、地圖、不死、金錢、公會</span></a>
+    <a href="codex"><b>圖鑑</b><span>技能、輔助寶石、通貨、傳奇裝備</span></a>
+    <a href="economy" id="link-economy"><b>市場報告</b><span>通貨與金幣每天的產出、消耗</span></a>
+  </nav>
+  <div class="tops" id="tops" hidden>
+    <section class="card"><h2>等級前五</h2><ol id="top-level"></ol></section>
+    <section class="card"><h2>公會前五</h2><ol id="top-guilds"></ol></section>
+  </div>
+  <footer id="footer"></footer>
+</div>
+<script>
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  function row(rank, who, value, color) {
+    var li = document.createElement('li');
+    var r = document.createElement('span'); r.className = 'rank'; r.textContent = rank;
+    var w = document.createElement('span'); w.className = 'who'; w.textContent = who; if (color) { w.style.color = color; }
+    var v = document.createElement('span'); v.className = 'val'; v.textContent = value;
+    li.appendChild(r); li.appendChild(w); li.appendChild(v);
+    return li;
+  }
+  function loadStatus() {
+    fetch('home/status.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (s) {
+      $('dot').className = 'dot on';
+      $('online').textContent = '伺服器開著　在線 ' + s.online + ' / ' + s.max + ' 人';
+      ['builds', 'ladder', 'economy'].forEach(function (page) { $('link-' + page).hidden = !(s.pages && s.pages[page]); });
+      if (s.pages && s.pages.ladder) { loadTops(); }
+    }).catch(function () {
+      $('dot').className = 'dot';
+      $('online').textContent = '現在連不上伺服器';
+    });
+  }
+  function loadTops() {
+    fetch('ladder/data.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (data) {
+      var level = $('top-level'), guilds = $('top-guilds');
+      level.textContent = ''; guilds.textContent = '';
+      (data.level || []).slice(0, 5).forEach(function (e) { level.appendChild(row(e.rank, e.name, 'Lv.' + e.level + '　' + e['class'], e.classColor)); });
+      (data.guilds || []).slice(0, 5).forEach(function (g) { guilds.appendChild(row(g.rank, '[' + g.tag + '] ' + g.name, 'Lv.' + g.level + '　' + g.members + ' 人')); });
+      if (!level.children.length) { level.appendChild(row('', '還沒有人上榜', '')); }
+      if (!guilds.children.length) { guilds.appendChild(row('', '還沒有公會', '')); }
+      $('tops').hidden = false;
+      $('footer').textContent = data.refreshed ? '排行資料時間 ' + new Date(data.refreshed).toLocaleString() : '';
+    }).catch(function () { $('tops').hidden = true; });
+  }
+  loadStatus();
+  setInterval(loadStatus, 60000);
+}());
+</script>
+</body>
+</html>
