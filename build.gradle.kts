@@ -38,6 +38,8 @@ dependencies {
     // 引擎的單元測試（不需要伺服器就能跑）
     testImplementation(platform("org.junit:junit-bom:5.13.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    // 有些測試會碰到 Bukkit／Adventure 的類別（例如 CapturedOutputTest、PvpService）：測試時也要有 Paper API
+    testImplementation("io.papermc.paper:paper-api:26.2.build.+")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.slf4j:slf4j-api:2.0.17")
     testRuntimeOnly("org.slf4j:slf4j-simple:2.0.17")
