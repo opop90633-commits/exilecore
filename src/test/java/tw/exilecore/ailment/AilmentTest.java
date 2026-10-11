@@ -250,7 +250,7 @@ class AilmentTest {
         final StatSheet sheet = new StatSheet();
         sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, 10, Set.of(tw.exilecore.stats.Tags.PHYSICAL), "武器"));
         sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, 20, Set.of(tw.exilecore.stats.Tags.PHYSICAL), "武器"));
-        final SkillBuild strike = SkillBuild.of(skills, skills.skill("heavy_strike"), 1, 1, false, List.of(skills.support("lacerate")), Set.of(), sheet);
+        final SkillBuild strike = SkillBuild.of(skills, skills.skill("earthquake"), 1, 1, false, List.of(skills.support("lacerate")), Set.of(), sheet);
         final StatSheet effective = strike.profile().effective(sheet);
         final Set<String> physical = strike.profile().contextFor(DamageType.PHYSICAL);
         assertEquals(30, effective.flat(StatKeys.BLEED_CHANCE, physical), 1e-9, "割裂：流血機率 +30%");
@@ -258,7 +258,7 @@ class AilmentTest {
         final List<String> lines = AilmentText.lines(effective, strike.profile(), DamageCalculator.expectedOutgoing(sheet, strike.profile()));
         assertTrue(lines.contains("<#ff4a4a>流血<gray> 機率 +30%、傷害 ×1.40"), String.join(" | ", lines));
 
-        final SkillBuild plain = SkillBuild.of(skills, skills.skill("heavy_strike"), 1, 1, false, List.of(), Set.of(), sheet);
+        final SkillBuild plain = SkillBuild.of(skills, skills.skill("earthquake"), 1, 1, false, List.of(), Set.of(), sheet);
         final List<String> none = AilmentText.lines(plain.profile().effective(sheet), plain.profile(), DamageCalculator.expectedOutgoing(sheet, plain.profile()));
         assertFalse(none.stream().anyMatch(line -> line.contains("流血") || line.contains("中毒")), "沒有機率來源就不列");
 
@@ -278,16 +278,16 @@ class AilmentTest {
     @Test
     void stunAndElectrocuteSettingsLoad() {
         final AilmentConfig.MeterSettings stun = config.stun();
-        assertEquals(120, stun.buildup(), 1e-9);
+        assertEquals(100, stun.buildup(), 1e-9, "2026-10 PoE2：120 → 100（物理、近戰的倍率另外算）");
         assertEquals(0.5, config.stunElementalMultiplier(), 1e-9);
         assertEquals(1.5, stun.duration(false), 1e-9);
         assertEquals(0.8, stun.duration(true), 1e-9);
         assertEquals(30, stun.decayDelayTicks());
         assertEquals(0.40 / 20, stun.decayPerTick(), 1e-12);
-        // 一擊打掉 30% 門檻 → 累積 36%；傳奇怪只有四成
-        assertEquals(0.36, stun.buildupFor(30, 100, 1.0, false), 1e-9);
-        assertEquals(0.36 * 0.4, stun.buildupFor(30, 100, 1.0, true), 1e-9);
-        assertEquals(0.36 * 1.5, stun.buildupFor(30, 100, 1.5, false), 1e-9, "震懾：50% 更多累積");
+        // 一擊打掉 30% 門檻 → 累積 30%；傳奇怪只有四成
+        assertEquals(0.30, stun.buildupFor(30, 100, 1.0, false), 1e-9);
+        assertEquals(0.30 * 0.4, stun.buildupFor(30, 100, 1.0, true), 1e-9);
+        assertEquals(0.30 * 1.5, stun.buildupFor(30, 100, 1.5, false), 1e-9, "震懾：50% 更多累積");
         assertEquals(0, stun.buildupFor(0, 100, 1.0, false), 1e-9);
         final AilmentConfig.MeterSettings electrocute = config.electrocute();
         assertEquals(150, electrocute.buildup(), 1e-9);
@@ -337,12 +337,12 @@ class AilmentTest {
         final StatSheet sheet = new StatSheet();
         sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, 10, Set.of(tw.exilecore.stats.Tags.PHYSICAL), "武器"));
         sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, 20, Set.of(tw.exilecore.stats.Tags.PHYSICAL), "武器"));
-        final SkillBuild strike = SkillBuild.of(skills, skills.skill("heavy_strike"), 1, 1, false, List.of(skills.support("concussive")), Set.of(), sheet);
+        final SkillBuild strike = SkillBuild.of(skills, skills.skill("earthquake"), 1, 1, false, List.of(skills.support("concussive")), Set.of(), sheet);
         final StatSheet effective = strike.profile().effective(sheet);
         assertEquals(1.5, effective.apply(StatKeys.STUN_BUILDUP, 1.0, strike.profile().contextFor(DamageType.PHYSICAL)), 1e-9, "震懾：50% 更多暈眩累積");
         final List<String> lines = AilmentText.lines(effective, strike.profile(), DamageCalculator.expectedOutgoing(sheet, strike.profile()));
         assertTrue(lines.contains("<#ffd27f>暈眩<gray> 累積 ×1.50"), String.join(" | ", lines));
-        final SkillBuild plain = SkillBuild.of(skills, skills.skill("heavy_strike"), 1, 1, false, List.of(), Set.of(), sheet);
+        final SkillBuild plain = SkillBuild.of(skills, skills.skill("earthquake"), 1, 1, false, List.of(), Set.of(), sheet);
         final List<String> none = AilmentText.lines(plain.profile().effective(sheet), plain.profile(), DamageCalculator.expectedOutgoing(sheet, plain.profile()));
         assertFalse(none.stream().anyMatch(line -> line.contains("暈眩") || line.contains("電擊")), "沒有加成就不列（暈眩本來就會累積）");
 

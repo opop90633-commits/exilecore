@@ -47,19 +47,26 @@ class SupportAndGemTest {
 
     @Test
     void fortySupportsInThreeTiers() {
+        // 2026-10 PoE2 改版：輔助寶石擴充到 288 顆（第 1 階 81、第 2 階 171、第 3 階 36，其中 6 顆專屬掉落）
+        final List<String> ids = config.supports().stream().map(SupportDefinition::id).toList();
+        assertEquals(288, ids.size());
         assertEquals(List.of("increased_area", "faster_projectiles", "pierce", "faster_attacks", "faster_casting", "added_fire",
-                        "increased_duration", "critical_strikes", "life_on_hit", "lingering", "minion_damage",
-                        "concentrated_effect", "chain", "melee_physical", "life_leech", "searing", "lacerate", "envenom", "concussive", "electrocute",
-                        "glacial", "static_charge",
-                        "cooldown_recovery", "burst", "fork", "elemental_damage_with_attacks", "critical_damage", "added_chaos",
-                        "spell_totem", "trap", "minion_life", "aura_effect", "generosity", "warcry_power", "minion_speed",
-                        "frenzy_on_hit", "power_on_hit", "endurance_on_hit",
-                        "multiple_totems", "spell_echo", "multistrike", "returning_projectiles", "multiple_projectiles", "elemental_focus",
-                        "starfall_resonance", "permafrost_heart", "styx_ferry", "skyburn_fury", "abyssal_touch", "myriad_stars"),
-                config.supports().stream().map(SupportDefinition::id).toList());
-        assertEquals(11, config.supportsUpTo(1).size());
-        assertEquals(38, config.supportsUpTo(2).size(), "第 2 階多了聚怒、聚銳、聚磐（2026-10）");
-        assertEquals(44, config.supportsUpTo(3).size(), "專屬掉落的 6 顆切不出來；第 3 階多了複擊（2026-10）");
+                "increased_duration", "critical_strikes", "lingering", "minion_damage"), ids.subList(0, 10), "照檔案裡的順序");
+        assertTrue(ids.containsAll(List.of("concentrated_effect", "chain", "life_leech", "searing", "lacerate", "envenom", "concussive",
+                "electrocute", "glacial", "static_charge", "cooldown_recovery", "burst", "fork", "critical_damage", "added_chaos",
+                "spell_totem", "minion_life", "warcry_power", "minion_speed", "charge_frenzy", "charge_power", "charge_endurance",
+                "spell_echo", "multiple_projectiles", "elemental_focus",
+                "starfall_resonance", "permafrost_heart", "styx_ferry", "skyburn_fury", "abyssal_touch", "myriad_stars")));
+        // 改版拿掉的輔助：不在清單裡，身上的換成同階的未切割輔助寶石
+        for (final String retired : List.of("multistrike", "multiple_totems", "melee_physical", "life_on_hit", "aura_effect", "generosity",
+                "trap", "returning_projectiles", "elemental_damage_with_attacks", "frenzy_on_hit", "power_on_hit", "endurance_on_hit")) {
+            assertNull(config.support(retired), retired);
+        }
+        assertEquals(3, config.retiredSupportTier("multistrike"));
+        assertEquals(2, config.retiredSupportTier("melee_physical"));
+        assertEquals(81, config.supportsUpTo(1).size());
+        assertEquals(252, config.supportsUpTo(2).size());
+        assertEquals(282, config.supportsUpTo(3).size(), "專屬掉落的 6 顆切不出來");
         for (final SupportDefinition support : config.supports()) {
             assertFalse(support.name().isBlank(), support.id());
             assertFalse(support.modifiers().isEmpty(), support.id());
@@ -70,20 +77,20 @@ class SupportAndGemTest {
     @Test
     void supportsOnlyFitMatchingSkills() {
         assertTrue(support("pierce").supports(skill("fireball")));
-        assertTrue(support("pierce").supports(skill("split_arrow")));
+        assertTrue(support("pierce").supports(skill("lightning_arrow")));
         assertFalse(support("pierce").supports(skill("frost_nova")), "霜星爆不是投射物");
         assertTrue(support("chain").supports(skill("arc")), "鏈雷是連鎖技能");
         assertTrue(support("chain").supports(skill("spark")));
-        assertFalse(support("chain").supports(skill("cleave")));
-        assertTrue(support("melee_physical").supports(skill("heavy_strike")));
-        assertFalse(support("melee_physical").supports(skill("split_arrow")));
+        assertFalse(support("chain").supports(skill("earthquake")));
+        assertTrue(support("rage").supports(skill("boneshatter")));
+        assertFalse(support("rage").supports(skill("lightning_arrow")));
         assertTrue(support("faster_casting").supports(skill("fireball")));
-        assertFalse(support("faster_casting").supports(skill("heavy_strike")));
-        assertTrue(support("increased_area").supports(skill("cleave")));
+        assertFalse(support("faster_casting").supports(skill("boneshatter")));
+        assertTrue(support("increased_area").supports(skill("earthquake")));
         assertTrue(support("increased_area").supports(skill("fireball")), "熾星彈的爆炸是範圍");
-        assertFalse(support("increased_area").supports(skill("heavy_strike")));
-        assertTrue(support("life_leech").supports(skill("burning_arrow")));
-        assertFalse(support("life_leech").supports(skill("frost_nova")));
+        assertFalse(support("increased_area").supports(skill("boneshatter")));
+        assertTrue(support("life_leech").supports(skill("lightning_arrow")));
+        assertFalse(support("life_leech").supports(skill("frost_nova")), "2026-10：生命偷取只輔助攻擊");
         for (final SupportDefinition support : config.supports()) {
             assertFalse(support.supports(skill(SkillConfig.DEFAULT_MELEE)), "普攻不能掛輔助：" + support.id());
             assertEquals("普攻不能掛輔助寶石", support.refusal(skill(SkillConfig.DEFAULT_MELEE)));
@@ -96,18 +103,24 @@ class SupportAndGemTest {
      */
     @Test
     void supportTextsListWhatIsExcluded() {
-        final SupportDefinition power = support("power_on_hit");
-        assertEquals("攻擊技能或法術技能（召喚物、光環除外）", power.supportsText(config.all()),
-                "戰吼不算法術了，排除裡的戰吼碰不到，不寫");
-        assertEquals(List.of("minion", "aura", "warcry"), power.relevantExcludes(null), "沒有技能清單：全部列");
-        assertEquals("攻擊技能或法術技能（召喚物、光環、戰吼除外）", power.supportsText(null));
+        final SupportDefinition surge = support("arcane_surge");
+        assertEquals("法術技能（召喚物、捷光環除外）", surge.supportsText(config.all()),
+                "光環不算法術了（2026-10），排除裡的光環碰不到，不寫");
+        assertEquals(List.of("minion", "aura", "herald"), surge.relevantExcludes(null), "沒有技能清單：全部列");
+        assertEquals("法術技能（召喚物、光環、捷光環除外）", surge.supportsText(null));
+        assertEquals("召喚物技能不行", surge.refusal(skill("raise_zombie")));
+        assertEquals("光環技能不行", surge.refusal(skill("frost_aegis")));
+        assertEquals("捷光環技能不行", surge.refusal(skill("herald_of_ash")));
+        assertEquals(null, surge.refusal(skill("fireball")));
+        assertEquals("要法術技能", surge.refusal(skill("boneshatter")));
+        final SupportDefinition power = support("charge_power");
+        assertEquals("攻擊技能或法術技能（召喚物、不會造成傷害的技能除外）", power.supportsText(config.all()));
         assertEquals("召喚物技能不行", power.refusal(skill("raise_zombie")));
-        assertEquals("光環技能不行", power.refusal(skill("hatred")));
         assertEquals(null, power.refusal(skill("fireball")));
-        assertEquals(null, power.refusal(skill("heavy_strike")));
-        assertEquals("要攻擊技能", support("frenzy_on_hit").refusal(skill("fireball")), "沒有排除的：照 requires 講");
-        assertEquals("攻擊技能", support("frenzy_on_hit").supportsText(config.all()));
-        assertEquals("近戰技能（召喚物除外）", support("endurance_on_hit").supportsText(config.all()),
+        assertEquals(null, power.refusal(skill("boneshatter")));
+        assertEquals("要攻擊技能", support("life_leech").refusal(skill("fireball")), "沒有排除的：照 requires 講");
+        assertEquals("攻擊技能", support("life_leech").supportsText(config.all()));
+        assertEquals("近戰技能（召喚物除外）", support("rage").supportsText(config.all()),
                 "召喚物用近戰打（melee 標籤）：真的會碰到");
         assertEquals("任何技能", support("starfall_resonance").supportsText(config.all()));
         // 說明裡寫的排除，都真的有玩家學得到的技能被它擋下來
@@ -144,8 +157,8 @@ class SupportAndGemTest {
         assertEquals(SkillProfiles.manaCost(fireball, 10), plain.manaCost());
 
         final SkillBuild supported = SkillBuild.of(config, fireball, 10, 60, false, List.of(support("multiple_projectiles"),
-                support("pierce"), support("increased_area"), support("faster_projectiles"), support("melee_physical")), Set.of(), sheet);
-        assertEquals(4, supported.supports().size(), "蠻力不能輔助法術，掛了也不算");
+                support("pierce"), support("increased_area"), support("faster_projectiles"), support("rage")), Set.of(), sheet);
+        assertEquals(4, supported.supports().size(), "怒火（要近戰）不能輔助法術，掛了也不算");
         assertEquals(3, supported.projectiles());
         assertEquals(24, supported.spread(), 1e-9, "本來一發的技能多了投射物：排成扇形");
         assertEquals(2, supported.pierce());
@@ -163,52 +176,38 @@ class SupportAndGemTest {
         assertEquals(1, spark.chains(), "投射物打中之後連鎖一次");
     }
 
-    /** 複擊（2026-10）：近戰攻擊按一次連打三下，照攻擊間隔一下一下打，魔力只扣一次，打完才能做別的。 */
+    /**
+     * 複擊（2026-10）：近戰攻擊按一次連打幾下，照攻擊間隔一下一下打，魔力只扣一次，打完才能做別的。
+     * 複擊這顆輔助寶石在 2026-10 PoE2 改版拿掉了（supports.yml 的 retired），引擎的 skill.repeats 還在，這裡直接用屬性測。
+     */
     @Test
     void multistrikeRepeatsMeleeAttacks() {
-        final SupportDefinition multistrike = support("multistrike");
-        assertEquals("複擊", multistrike.name());
-        assertEquals(3, multistrike.tier());
-        assertEquals("近戰技能（猛擊、突進、召喚物、圖騰除外）", multistrike.supportsText(config.all()));
+        assertNull(config.support("multistrike"), "複擊寶石改版拿掉了");
+        assertEquals(3, config.retiredSupportTier("multistrike"), "身上的換成第 3 階的未切割輔助寶石");
         assertEquals("近戰攻擊按一次自動再打 2 下（魔力只扣一次）",
                 ModifierText.describe(new Modifier(StatKeys.SKILL_REPEATS, ModType.FLAT, 2, Set.of(), "")));
-        final StatSheet sheet = new StatSheet();
-        for (final String id : List.of("heavy_strike", "cleave", "puncture", "boneshatter", "tempest_flurry", "killing_palm",
-                "ice_strike", "whirling_slash", "flicker_strike")) {
+        final StatSheet twice = new StatSheet().add(new Modifier(StatKeys.SKILL_REPEATS, ModType.FLAT, 2, Set.of(), "測試"));
+        for (final String id : List.of("boneshatter", "tempest_flurry", "killing_palm", "ice_strike", "whirling_slash", "flicker_strike")) {
             final SkillDefinition definition = skill(id);
-            assertTrue(multistrike.supports(definition), id);
-            final SkillBuild plain = SkillBuild.of(config, definition, 10, 60, false, List.of(), Set.of(), sheet);
-            final SkillBuild repeated = SkillBuild.of(config, definition, 10, 60, false, List.of(multistrike), Set.of(), sheet);
-            assertEquals(0, plain.repeats(), id);
-            assertEquals(2, repeated.repeats(), id + "：按一次再打兩下");
-            assertEquals(1.4, plain.intervalTicks(sheet) / repeated.intervalTicks(sheet), 1e-9, id + "：每一下快 40%");
-            assertEquals(Math.round(definition.mana().at(10) * 1.5), repeated.manaCost(), id + "：三下只扣一次 ×1.5 的魔力");
+            assertEquals(0, SkillBuild.of(config, definition, 10, 60, false, List.of(), Set.of(), new StatSheet()).repeats(), id);
+            assertEquals(2, SkillBuild.of(config, definition, 10, 60, false, List.of(), Set.of(), twice).repeats(), id + "：按一次再打兩下");
         }
-        assertEquals("猛擊技能不行", multistrike.refusal(skill("ground_slam")), "出手慢的猛擊一次要鎖好幾秒");
-        assertEquals("猛擊技能不行", multistrike.refusal(skill("earthquake")));
-        assertEquals("猛擊技能不行", multistrike.refusal(skill("leap_slam")));
-        assertEquals("突進技能不行", multistrike.refusal(skill("whirling_blades")), "一路衝過去的位移");
-        assertEquals("突進技能不行", multistrike.refusal(skill("lunge")));
-        assertNull(multistrike.refusal(skill("flicker_strike")), "瞬影擊是瞬移到敵人身邊：可以，連閃三次（2026-10）");
-        assertTrue(skill("flicker_strike").tags().contains(Tags.MOVEMENT) && !skill("flicker_strike").tags().contains(Tags.TRAVEL));
-        assertTrue(skill("whirling_blades").tags().contains(Tags.TRAVEL) && skill("leap_slam").tags().contains(Tags.TRAVEL));
-        assertEquals("圖騰技能不行", multistrike.refusal(skill("ancestral_totem")));
-        assertEquals("召喚物技能不行", multistrike.refusal(skill("raise_zombie")), "召喚物用近戰打，但不是自己揮");
-        assertEquals("要近戰技能", multistrike.refusal(skill("split_arrow")));
-        assertEquals("要近戰技能", multistrike.refusal(skill("fireball")));
-        assertFalse(multistrike.supports(skill(SkillConfig.DEFAULT_MELEE)), "普攻不能掛");
+        assertTrue(skill("flicker_strike").tags().contains(Tags.MOVEMENT) && !skill("flicker_strike").tags().contains(Tags.TRAVEL),
+                "瞬影擊是瞬移到敵人身邊，不算突進");
+        assertTrue(skill("lunge").tags().contains(Tags.TRAVEL) && skill("leap_slam").tags().contains(Tags.TRAVEL));
         // 就算別的地方給了 skill.repeats，也只有自己放的打擊、扇形、繞身一圈的攻擊會重複
         final StatSheet repeating = new StatSheet().add(new Modifier(StatKeys.SKILL_REPEATS, ModType.FLAT, 9, Set.of(), "測試"));
-        assertEquals(SkillBuild.MAX_REPEATS, SkillBuild.of(config, skill("heavy_strike"), 1, 60, false, List.of(), Set.of(), repeating).repeats(),
+        assertEquals(SkillBuild.MAX_REPEATS, SkillBuild.of(config, skill("boneshatter"), 1, 60, false, List.of(), Set.of(), repeating).repeats(),
                 "最多 4 下");
-        for (final String id : List.of("fireball", "split_arrow", "leap_slam", "whirling_blades", "lunge", "ancestral_totem", "rain_of_arrows")) {
+        for (final String id : List.of("fireball", "permafrost_bolts", "leap_slam", "lunge", "ancestral_totem", "rain_of_arrows",
+                "raise_zombie")) {
             assertEquals(0, SkillBuild.of(config, skill(id), 1, 60, false, List.of(), Set.of(), repeating).repeats(), id);
         }
         assertEquals(0, SkillBuild.of(config, skill(SkillConfig.DEFAULT_MELEE), 1, 60, true, List.of(), Set.of(), repeating).repeats(),
                 "普攻不重複");
 
         // 排程：第一下之後，每隔一次攻擊間隔再打一下；全部打完再隔一次間隔才能做別的
-        final SkillBuild build = SkillBuild.of(config, skill("heavy_strike"), 1, 60, false, List.of(multistrike), Set.of(), sheet);
+        final SkillBuild build = SkillBuild.of(config, skill("boneshatter"), 1, 60, false, List.of(), Set.of(), twice);
         SkillRuntime.Repeat repeat = new SkillRuntime.Repeat(112.5, 12.5, build.repeats(), build, null);
         assertEquals(137.5, repeat.doneAt(), 1e-9, "100 打第一下、112.5 與 125 再打，137.5 才能做別的（跟連按三下一樣）");
         repeat = repeat.next();
@@ -238,15 +237,15 @@ class SupportAndGemTest {
                 .add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, 10, Set.of(Tags.PHYSICAL), "斧"))
                 .add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, 10, Set.of(Tags.PHYSICAL), "斧"))
                 .add(Modifier.flat(StatKeys.WEAPON_APS, 1.0, "斧"));
-        final SkillDefinition heavy = skill("heavy_strike");
-        final SkillBuild base = SkillBuild.of(config, heavy, 1, 1, false, List.of(), Set.of(Tags.AXE), sheet);
+        final SkillDefinition heavy = skill("boneshatter");
+        final SkillBuild base = SkillBuild.of(config, heavy, 1, 1, false, List.of(), Set.of(Tags.MACE), sheet);
         final SkillBuild strong = SkillBuild.of(config, heavy, 1, 1, false,
-                List.of(support("melee_physical"), support("faster_attacks"), support("added_fire")), Set.of(Tags.AXE), sheet);
+                List.of(support("heft"), support("faster_attacks"), support("added_fire")), Set.of(Tags.MACE), sheet);
         final double basePhysical = DamageCalculator.expectedOutgoing(sheet, base.profile()).get(DamageType.PHYSICAL);
         final double strongPhysical = DamageCalculator.expectedOutgoing(sheet, strong.profile()).get(DamageType.PHYSICAL);
-        assertEquals(basePhysical * 1.4 * 0.9, strongPhysical, 1e-9, "40% 更多近戰物理 × 10% 更少（迅擊）");
+        assertEquals(basePhysical * 1.25 * 0.9, strongPhysical, 1e-9, "25% 更多物理（重擊）× 10% 更少（迅擊）");
         assertTrue(DamageCalculator.expectedOutgoing(sheet, strong.profile()).get(DamageType.FIRE) > 0, "引火：物理的 25% 額外附加為火焰");
-        assertEquals(base.intervalTicks(sheet) / 1.25, strong.intervalTicks(sheet), 1e-9, "25% 更多攻擊速度");
+        assertEquals(base.intervalTicks(sheet) / (1.25 * 0.95), strong.intervalTicks(sheet), 1e-9, "25% 更多攻擊速度（迅擊）× 5% 更少（重擊）");
         assertEquals(basePhysical, DamageCalculator.expectedOutgoing(sheet, base.profile()).get(DamageType.PHYSICAL), 1e-9);
     }
 
@@ -259,7 +258,7 @@ class SupportAndGemTest {
         assertEquals(Optional.of(GemData.uncutSkill(20)), GemData.decode(GemData.uncutSkill(20).encode()));
         assertEquals(Optional.of(GemData.uncutSupport(3)), GemData.decode(GemData.uncutSupport(3).encode()));
         assertEquals(Optional.of(GemData.support("pierce")), GemData.decode(GemData.support("pierce").encode()));
-        assertEquals(20, GemData.uncutSkill(99).level(), "等級夾在 1–20");
+        assertEquals(21, GemData.uncutSkill(99).level(), "等級夾在 1–21（2026-10：Lv.21 的未切割寶石只有劫盜大金庫掉）");
         assertEquals(1, GemData.uncutSupport(0).level(), "階級夾在 1–3");
         assertTrue(GemData.decode("nonsense").isEmpty());
         assertTrue(GemData.decode("skill;;5;").isEmpty(), "技能寶石一定要有技能");
@@ -299,10 +298,11 @@ class SupportAndGemTest {
             final int tier = config.rollSupportTier(40, random);
             assertTrue(tier >= 1 && tier <= 3);
         }
-        assertEquals(List.of("heavy_strike", "cleave", "dash", "split_arrow", "explosive_bolt", "rapid_fire", "tempest_flurry",
-                "lightning_spear", "fireball", "spark", "flame_dash", "bear_trap", "chaos_bolt", "raise_zombie",
-                "purity_of_elements", "vitality", "clarity", "precision", "enduring_cry"),
-                config.engravable(1).stream().map(SkillDefinition::id).toList(), "Lv.1 的未切割寶石能雕的技能（每個職業的起始技能都在）");
-        assertEquals(config.visible().size(), config.engravable(5).size(), "Lv.5 起全部都能雕");
+        assertEquals(List.of("escape_shot", "raise_guard", "explosive_bolt", "rapid_fire", "tempest_flurry", "lightning_spear", "fireball",
+                "spark", "raise_zombie", "armour_piercing_bolt", "fortifying_cry", "frostbolt", "essence_drain", "bear_maul", "wolf_shred",
+                "disengage", "frozen_locus", "lightning_rod", "fragmentation_rounds"),
+                config.engravable(1).stream().map(SkillDefinition::id).toList(), "Lv.1 的未切割寶石能雕的技能（第 1 階的技能）");
+        assertTrue(config.engravable(13).size() < config.visible().size());
+        assertEquals(config.visible().size(), config.engravable(14).size(), "Lv.14 起全部都能雕（2026-10：最高第 14 階）");
     }
 }

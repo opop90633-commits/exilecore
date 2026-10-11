@@ -21,6 +21,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -177,14 +178,21 @@ class ChargeTest {
                         found++;
                         onHit += prefix.equals(StatKeys.CHARGE_ON_HIT) ? 1 : 0;
                         assertTrue(types.containsKey(mod.stat().substring(prefix.length())), affix.id() + "：沒有這種球 " + mod.stat());
-                        // 詞綴寫的字跟天賦、輔助寶石、/stats 的說明（ChargeText）一樣
-                        assertEquals(affix.text().replace("{value}", "7"), ChargeText.describe(mod.stat(), 7, ""), affix.id() + " 的文字");
+                        // 詞綴寫的字跟天賦、輔助寶石、/stats 的說明（ChargeText）一樣；
+                        // 好幾條效果的詞綴（揭露的怒星：+1 上限、擊殺時機率）每一條都要寫在文字裡
+                        final double value = mod.variable() == null ? mod.constant() : 7;
+                        final String line = ChargeText.describe(mod.stat(), value, "");
+                        if (affix.mods().size() == 1) {
+                            assertEquals(affix.text().replace("{value}", "7"), line, affix.id() + " 的文字");
+                        } else {
+                            assertTrue(affix.text().replace("{value}", "7").contains(line), affix.id() + " 的文字要有「" + line + "」");
+                        }
                     }
                 }
             }
         }
         assertTrue(found >= 9, "三種球各有機率、擊中時、上限的詞綴");
-        assertEquals(3, onHit, "擊中時獲得（2026-10）：怒星（近戰武器）、銳星（法杖、長杖、權杖）、磐星（盾）");
+        assertEquals(5, onHit, "擊中時獲得（2026-10）：怒星、銳星、磐星三條詞綴，加上兩件傳奇的「擊中時獲得怒星」");
     }
 
     @Test
@@ -227,18 +235,30 @@ class ChargeTest {
         assertTrue(ChargeText.effect("endurance").contains("抗性") && ChargeText.effect("endurance").contains("護甲"), ChargeText.effect("endurance"));
         final tw.exilecore.skill.SkillConfig skills = new tw.exilecore.skill.SkillConfig();
         skills.load(DATA);
-        assertEquals("被輔助的攻擊或法術擊中敵人時有機會獲得一顆銳星（每顆：增加 40% 暴擊率）。",
-                skills.support("power_on_hit").descriptionText());
-        assertEquals("被輔助的攻擊擊中敵人時有機會獲得一顆怒星（每顆：" + ChargeText.effect("frenzy") + "）。",
-                skills.support("frenzy_on_hit").descriptionText());
-        assertEquals("被輔助的近戰技能擊中敵人時有機會獲得一顆磐星（每顆：" + ChargeText.effect("endurance") + "）。",
-                skills.support("endurance_on_hit").descriptionText());
+        // 2026-10 PoE2 改版：聚銳、聚怒、聚磐換成 charge_power、charge_frenzy、charge_endurance（說明直接寫，不用 {charge:…}）
+        assertNull(skills.support("power_on_hit"));
+        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆銳星（每顆" + ChargeText.effect("power") + "）。",
+                skills.support("charge_power").descriptionText(), "寫死的效果要跟 charges.yml 一樣");
+        assertTrue(skills.support("charge_frenzy").descriptionText().contains(ChargeText.name("frenzy")));
+        assertTrue(skills.support("charge_endurance").descriptionText().contains(ChargeText.name("endurance")));
         assertEquals("先 x 再 怒星（每顆：" + ChargeText.effect("frenzy") + "）", ChargeText.expand("先 {charge:x} 再 {charge:frenzy}"),
                 "不認得的代號換成代號本身");
         assertEquals("沒有預留位置", ChargeText.expand("沒有預留位置"));
         assertEquals(List.of("x", "frenzy"), ChargeText.placeholders("先 {charge:x} 再 {charge:frenzy}"));
         assertEquals(List.of(), skills.chargeProblems(types::containsKey));
-        assertEquals(1, skills.chargeProblems(id -> !id.equals("power")).stream().filter(line -> line.contains("說明寫了 {charge:power}")).count(),
+        // 現在的輔助都沒有用 {charge:…}：自己改一份說明來測打錯字會被抓出來
+        final Path dir = java.nio.file.Files.createTempDirectory("exilecore-charge");
+        java.nio.file.Files.copy(DATA.resolve("skills.yml"), dir.resolve("skills.yml"));
+        final String supports = java.nio.file.Files.readString(DATA.resolve("supports.yml"));
+        final String original = "有機率獲得一顆銳星（每顆增加 40% 暴擊率）。";
+        assertTrue(supports.contains(original));
+        java.nio.file.Files.writeString(dir.resolve("supports.yml"), supports.replace(original, "有機率獲得一顆{charge:power}。"));
+        final tw.exilecore.skill.SkillConfig placeholders = new tw.exilecore.skill.SkillConfig();
+        placeholders.load(dir);
+        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆銳星（每顆：" + ChargeText.effect("power") + "）。",
+                placeholders.support("charge_power").descriptionText());
+        assertEquals(List.of(), placeholders.chargeProblems(types::containsKey));
+        assertEquals(1, placeholders.chargeProblems(id -> !id.equals("power")).stream().filter(line -> line.contains("說明寫了 {charge:power}")).count(),
                 "說明裡打錯字也會被抓出來");
     }
 
@@ -261,11 +281,11 @@ class ChargeTest {
             }
         }
         assertEquals(List.of(), skills.chargeProblems(types::containsKey), "伺服器紀錄不會有警告");
-        assertEquals(1, skills.chargeProblems(id -> !id.equals("frenzy")).stream().filter(line -> line.contains("cooldown_bypass")).count(),
+        assertEquals(1, skills.chargeProblems(id -> !id.equals("power")).stream().filter(line -> line.contains("cooldown_bypass")).count(),
                 "打錯字會被抓出來");
-        assertEquals("frenzy", skills.skill("flicker_strike").cooldownBypass(), "瞬影擊冷卻中消耗怒星");
+        assertEquals("power", skills.skill("flicker_strike").cooldownBypass(), "瞬影擊冷卻中消耗銳星（2026-10）");
         assertEquals(1, bypass);
-        assertEquals(3, warcry, "聚星戰吼給三種");
+        assertEquals(1, warcry, "聚星戰吼拿掉了（2026-10），只剩隱藏的磐星給一種");
         for (final tw.exilecore.skill.SupportDefinition support : skills.supports()) {
             for (final Modifier modifier : support.modifiers()) {
                 final String charge = ChargeText.chargeOf(modifier.stat());

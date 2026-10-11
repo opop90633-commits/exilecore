@@ -75,7 +75,7 @@ class MeritShopTest {
         progress.put(MeritShop.TITLES, MeritShop.titlesValue(owned));
         assertEquals(owned, MeritShop.ownedTitles(progress));
         assertEquals("hunter", MeritShop.equipped(shop, progress).id());
-        assertEquals("<#7fd4ff>「星痕\\<獵人>」</#7fd4ff>", MeritShop.tag(MeritShop.equipped(shop, progress)), "名字裡的 < 跳脫掉");
+        assertEquals("<#7fd4ff>【星痕\\<獵人>】</#7fd4ff>", MeritShop.tag(MeritShop.equipped(shop, progress)), "名字裡的 < 跳脫掉");
         progress.put(MeritShop.TITLE, "removed");
         progress.put(MeritShop.TITLES, "exile,removed");
         assertNull(MeritShop.equipped(shop, progress), "設定檔已經拿掉的稱號不顯示");

@@ -4327,7 +4327,7 @@ insurgent_shield:
       value: [100, 150]
       stats:
         - { stat: stun.threshold, type: FLAT, value: "{value}" }
-    - text: "擊殺時 {value}% 機率獲得一顆磐星"
+    - text: "被敵人擊中時 {value}% 機率獲得一顆磐星"
       value: [15, 25]
       stats:
         - { stat: charge.chance.endurance, type: FLAT, value: "{value}" }

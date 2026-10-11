@@ -57,7 +57,7 @@ class EconomyTest {
         assertEquals(450, config.purchaseFee("zenith_orb", 10));
         assertEquals(5, config.exchangeFee("glimmer_orb", 2), "2 × 30 × 2% 不到最低 5");
         assertEquals(500, config.exchangeFee("bounty_orb", 50), "50 × 500 × 2%");
-        assertEquals(27, config.shopSlots());
+        assertEquals(5, config.shopSlots(), "2026-10：商店格 27 → 5（贊助者另照 sponsor.yml 加）");
         assertEquals(10 * 60_000L, config.relistMillis());
         // 商人：(20 + 4 × 物品等級) × 稀有度倍率
         assertEquals(60, config.vendorPrice(Rarity.NORMAL, 10));

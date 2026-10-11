@@ -53,7 +53,10 @@ class CraftingTest {
             switch (type.operation()) {
                 case ESSENCE -> {
                     essences++;
-                    assertNotNull(items.affix(type.affix()), type.id() + " 的詞綴要存在：" + type.affix());
+                    // 2026-10：affix 可以寫好幾個（逗號分開，照基底挑出得來的那個），每一個都要存在
+                    for (final String id : type.affix().split(",")) {
+                        assertNotNull(items.affix(id.trim()), type.id() + " 的詞綴要存在：" + id.trim());
+                    }
                 }
                 case CATALYST -> {
                     catalysts++;
@@ -83,8 +86,9 @@ class CraftingTest {
         Crafting.applyEssence(body, plain, generator, new SplittableRandom(2));
         assertEquals(Rarity.MAGIC, plain.rarity());
         assertEquals(1, plain.affixes().size());
-        assertEquals("life_flat", plain.affixes().getFirst().id());
-        final Affix affix = items.affix("life_flat");
+        // 2026-10 PoE2 改版：生命詞綴照部位拆開，胸甲上是同群組的 life_flat_body
+        assertEquals("life_flat_body", plain.affixes().getFirst().id());
+        final Affix affix = items.affix("life_flat_body");
         final int worst = affix.tiersFor(60).stream().mapToInt(tier -> tier.tier()).max().orElseThrow();
         assertNotEquals(worst, plain.affixes().getFirst().tier(), "不會是最差的那階");
 
@@ -135,7 +139,7 @@ class CraftingTest {
         Crafting.applyEssence(body, magic, generator, new SplittableRandom(5));
         assertEquals(Rarity.RARE, magic.rarity(), "變成稀有");
         assertEquals(3, magic.affixes().size(), "原本兩條留著，多一條星魄的");
-        assertTrue(magic.affixes().stream().anyMatch(a -> a.id().equals("life_flat")));
+        assertTrue(magic.affixes().stream().anyMatch(a -> items.affix(a.id()).group().equals(life.group())), "胸甲上是同群組的生命詞綴");
     }
 
     @Test

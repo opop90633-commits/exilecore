@@ -37,8 +37,8 @@ class ItemCompareTest {
         final ItemCompare.Summary summaryRare = ItemCompare.summarize(items, rare);
         assertEquals(60, summaryRare.life(), 1e-9);
         assertEquals(40, summaryRare.resistFire(), 1e-9);
-        // 基底 40 × (1 + 0.035 × 59) ≈ 123（四捨五入）× 1.7
-        assertEquals(Math.round(40 * (1 + 0.035 * 59)) * 1.7, summaryRare.armour(), 1e-6);
+        // 2026-10 PoE2：防具身上的「增加 x% 護甲」是本地的，先乘進這件的護甲再四捨五入：40 × (1 + 0.035 × 59) × 1.7 ≈ 208
+        assertEquals(Math.round(40 * (1 + 0.035 * 59) * 1.7), summaryRare.armour(), 1e-6);
     }
 
     @Test

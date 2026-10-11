@@ -2843,7 +2843,7 @@ deflection_flat:
   type: suffix
   group: deflection_flat
   spawn_tags: [retired]   # 2026-10：PoE2 的偏斜是「閃避值的 x% 作為偏斜值」，改成下面的 deflection_evasion，停用（原本 [dex_only, str_dex_armour, dex_int_armour]）
-  names: [之卸勁, 之斜擋, 之流轉]
+  names: [之卸勁, 之斜擋, 之流轉, 之拂袖, 之輕撥]
   text: "+{value} 偏斜值"
   tiers:
     - { tier: 1, ilvl: 70, weight: 300, value: [151, 200] }

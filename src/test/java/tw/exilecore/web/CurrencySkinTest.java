@@ -65,7 +65,7 @@ class CurrencySkinTest {
 
     /** 一個原版物品定義裡的挑選：when → 模型。 */
     static Map<String, String> cases(final String vanillaItem) {
-        final JsonObject select = json("assets/minecraft/items/" + vanillaItem + ".json").getAsJsonObject("model");
+        final JsonObject select = UiPackTest.vanillaSelect(json("assets/minecraft/items/" + vanillaItem + ".json"));
         assertEquals("minecraft:select", select.get("type").getAsString());
         assertEquals("minecraft:custom_model_data", select.get("property").getAsString());
         assertEquals(0, select.get("index").getAsInt(), "字串 0 決定畫哪一張");
@@ -93,9 +93,28 @@ class CurrencySkinTest {
             assertTrue(currencySkins.contains(new UiPack.CurrencySkin(art, material)),
                     type.id() + " 的圖要掛在 " + material + " 上");
         }
-        assertEquals(CurrencyArt.sprites().keySet(), arts, "每張通貨的圖都要有通貨在用");
+        // currency_art.txt 的每張圖都要有通貨在用；技能寶石、輔助寶石、星幣券的圖不是 currencies.yml 的通貨，WebModule 直接掛
+        final Set<String> currencyArt = new HashSet<>(currencyArtFile().keySet());
+        currencyArt.removeAll(Set.of("gem_skill", "gem_support", "star_voucher"));
+        assertEquals(currencyArt, arts, "每張通貨的圖都要有通貨在用");
+        // 2026-10：技能、輔助寶石的圖示（web/skill_art.txt）跟通貨同一套
+        for (final String id : CurrencyArt.sprites().keySet()) {
+            if (!currencyArtFile().containsKey(id)) {
+                assertTrue(id.startsWith("skill_") || id.startsWith("support_"), "不是通貨也不是技能的圖：" + id);
+            }
+        }
         assertEquals(currencySkins.size(), new HashSet<>(currencySkins).size());
-        assertTrue(currencySkins.size() >= 22, "目前有 22 種通貨有圖：" + currencySkins.size());
+        assertTrue(currencySkins.size() >= 89, "目前有 89 種通貨有圖：" + currencySkins.size());
+    }
+
+    /** 只有 web/currency_art.txt 的那些（不含技能的圖示）。 */
+    static Map<String, tw.exilecore.item.UniqueArt.Sprite> currencyArtFile() {
+        try (java.io.InputStream in = CurrencyArt.class.getResourceAsStream(CurrencyArt.RESOURCE)) {
+            assertNotNull(in, CurrencyArt.RESOURCE);
+            return tw.exilecore.item.UniqueArt.parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
+        } catch (final IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
     }
 
     @Test
@@ -123,7 +142,7 @@ class CurrencySkinTest {
             }
         }
         for (final UiPack.CurrencySkin skin : currencySkins) {
-            final JsonObject select = json("assets/minecraft/items/" + skin.vanillaItem() + ".json").getAsJsonObject("model");
+            final JsonObject select = UiPackTest.vanillaSelect(json("assets/minecraft/items/" + skin.vanillaItem() + ".json"));
             final JsonObject fallback = select.getAsJsonObject("fallback");
             final java.io.InputStream override = UiPack.class.getResourceAsStream("/web/vanilla_items/" + skin.vanillaItem() + ".json");
             if (override != null) {
@@ -147,7 +166,7 @@ class CurrencySkinTest {
             assertEquals("exilecore:item/currency/" + distilled, bottle.get(CurrencyArt.modelKey(distilled)), distilled);
         }
         assertEquals(6, bottle.size());
-        // 傳奇飾品跟通貨用同一個原版物品（火花＝紫水晶碎片、護甲片＝鐵粒）：兩邊都要有
+        // 傳奇飾品跟通貨用同一個原版物品（例如火花石跟傳奇護身符都是紫水晶碎片）：兩邊都要有
         final Set<String> shared = new HashSet<>();
         for (final UiPack.CurrencySkin currency : currencySkins) {
             for (final UiPack.UniqueSkin unique : uniqueSkins) {
@@ -193,14 +212,14 @@ class CurrencySkinTest {
         // 不給通貨掛載點（舊的呼叫方式）：還是有貼圖與模型，但沒有任何原版物品會用到、玻璃瓶還是只有兩個空瓶提示
         final Map<String, byte[]> bare = UiPackTest.unzip(UiPack.build(uniqueSkins).zip());
         final JsonObject bottle = JsonParser.parseString(new String(bare.get("assets/minecraft/items/glass_bottle.json"), StandardCharsets.UTF_8)).getAsJsonObject();
-        assertEquals(2, bottle.getAsJsonObject("model").getAsJsonArray("cases").size());
+        assertEquals(2, UiPackTest.vanillaSelect(bottle).getAsJsonArray("cases").size());
         assertFalse(bare.containsKey("assets/minecraft/items/paper.json"));
         assertTrue(bare.containsKey("assets/exilecore/models/item/currency/spark_orb.json"));
     }
 
     @Test
     void packStaysSmallAndDeterministic() throws IOException {
-        assertTrue(pack.zip().length < 512 * 1024, "資源包要小（2026-10 多了招式預警的地面範圍）：" + pack.zip().length);
+        assertTrue(pack.zip().length < UiPackTest.MAX_PACK_BYTES, "資源包要小（2026-10 多了招式預警的地面範圍、幻化、3D 時裝）：" + pack.zip().length);
         assertEquals(pack.sha1(), UiPack.build(uniqueSkins, UiPack.currencySkins(currencies)).sha1(), "每次產生都一樣，玩家才不用重新下載");
         assertFalse(pack.sha1().equals(UiPack.build(uniqueSkins).sha1()), "有掛通貨的包跟沒有的不一樣");
         final List<String> all = new ArrayList<>(files.keySet());
@@ -217,7 +236,8 @@ class CurrencySkinTest {
         assertEquals("annul_orb", CurrencyArt.artOf(type(spark, "exilecore:currency/annul_orb")), "model 指到哪張就是哪張");
         assertNull(CurrencyArt.artOf(type(spark, "myserver:custom/spark")), "伺服器自己的模型：不管（有它自己的資源包）");
         assertNull(CurrencyArt.artOf(type(spark, "exilecore:currency/no_such_art")), "指到沒有的圖：不掛（不要變成紫黑方塊）");
-        assertNull(CurrencyArt.artOf(type("essence_body", null)), "沒有圖的通貨：不掛");
+        // 2026-10：currencies.yml 的通貨現在都有圖（精髓也有了），用一個伺服器自己加的代號
+        assertNull(CurrencyArt.artOf(type("server_token", null)), "沒有圖的通貨：不掛");
         assertNull(CurrencyArt.artOf(null));
     }
 

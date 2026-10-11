@@ -29,7 +29,7 @@ class PassiveTreeTest {
     @Test
     void treeIsConnectedAndHasAllStarts() {
         assertTrue(tree.size() >= 650, "節點數 " + tree.size());
-        assertEquals(2, tree.version(), "七個職業的新樹是第 2 版（舊角色的配點全部退回）");
+        assertEquals(3, tree.version(), "加了德魯伊、八個職業的樹是第 3 版（舊角色的配點全部退回）");
         assertTrue(tree.isConnected());
         for (final tw.exilecore.character.CharacterClass type : tw.exilecore.character.CharacterClass.values()) {
             final String cls = type.id();
@@ -65,7 +65,9 @@ class PassiveTreeTest {
         final List<PassiveNode> ordered = tree.ordered();
         final int ailmentEnd = 734 + 16 * 5;
         final int critEnd = ailmentEnd + 4 * 5;
-        assertEquals(critEnd + 3, ordered.size(), "716 ＋ 18 珠寶孔 ＋ 16 個異常狀態的叉 ＋ 4 個暴擊的叉（各 5 個）＋ 3 個戰星的核心");
+        final int chargeEnd = critEnd + 3;
+        assertEquals(chargeEnd + 61, ordered.size(), "716 ＋ 18 珠寶孔 ＋ 16 個異常狀態的叉 ＋ 4 個暴擊的叉（各 5 個）＋ 3 個戰星的核心"
+                + " ＋ 61 個第 3 版新加的（德魯伊與 PoE2 機制的群組）");
         for (int i = 716; i < 734; i++) {
             assertTrue(ordered.get(i).isSocket(), "第 " + i + " 個節點應該是珠寶孔");
         }
@@ -74,19 +76,21 @@ class PassiveTreeTest {
             final PassiveNode node = ordered.get(i);
             assertFalse(node.isSocket() || node.isStart(), "第 " + i + " 個節點應該是異常狀態群組的");
             if (node.type() == PassiveNode.Type.NOTABLE) {
-                ailmentNotables++;
-                final String text = String.join("", node.description());
-                assertTrue(text.contains("流血") || text.contains("中毒") || text.contains("暈眩") || text.contains("電擊"),
-                        node.id() + " 的核心應該跟異常狀態有關：" + text);
+                ailmentNotables++; // 2026-10 第 3 版：這 16 個核心改成照 PoE2 的各種核心，不再限定異常狀態
             }
         }
-        assertEquals(16, ailmentNotables, "16 個異常狀態的核心");
-        // 暴擊的群組（2026-10）：法術暴擊（元素法師、混沌術士）、攻擊暴擊（弓箭手、長矛獵手）；只對法術／攻擊有效
+        assertEquals(16, ailmentNotables, "原本異常狀態群組的 16 個核心");
+        // 暴擊的群組（2026-10）：法術暴擊（元素法師、混沌術士）、攻擊暴擊（弓箭手、長矛獵手）；小點只對法術／攻擊有效
+        // （第 3 版：群組的核心改成照 PoE2 的一般核心，只看小點）
         int spellCrit = 0;
         int attackCrit = 0;
         for (int i = ailmentEnd; i < critEnd; i++) {
             final PassiveNode node = ordered.get(i);
             assertFalse(node.isSocket() || node.isStart(), "第 " + i + " 個節點應該是暴擊群組的");
+            assertTrue(Math.abs(node.x()) <= 21 && Math.abs(node.y()) <= 21, node.id() + "：不超出原本的範圍");
+            if (node.type() == PassiveNode.Type.NOTABLE) {
+                continue;
+            }
             for (final tw.exilecore.stats.Modifier modifier : node.modifiers()) {
                 assertTrue(modifier.stat().equals(tw.exilecore.stats.StatKeys.CRIT_CHANCE)
                         || modifier.stat().equals(tw.exilecore.stats.StatKeys.CRIT_MULTI), node.id() + "：暴擊群組只有暴擊");
@@ -97,22 +101,24 @@ class PassiveTreeTest {
                     attackCrit++;
                 }
             }
-            assertTrue(Math.abs(node.x()) <= 21 && Math.abs(node.y()) <= 21, node.id() + "：不超出原本的範圍");
         }
-        assertEquals(12, spellCrit, "兩組法術暴擊：8 個小點＋2 個核心（各兩條）");
-        assertEquals(12, attackCrit);
-        // 戰星的核心（2026-10）：怒星、銳星、磐星各一個，掛在旁邊的葉子（不會變成新的捷徑）
-        final java.util.Set<String> charges = new java.util.HashSet<>();
-        for (int i = critEnd; i < ordered.size(); i++) {
+        assertEquals(8, spellCrit, "兩組法術暴擊：8 個小點");
+        assertEquals(8, attackCrit);
+        // 原本戰星的三個核心（2026-10）：掛在旁邊的葉子（不會變成新的捷徑）。
+        // 第 3 版改成照 PoE2 的一般核心，戰星的機率移到別的核心（星馳、麻木、精算）上
+        for (int i = critEnd; i < chargeEnd; i++) {
             final PassiveNode node = ordered.get(i);
             assertEquals(PassiveNode.Type.NOTABLE, node.type(), node.id());
             assertEquals(1, tree.neighbours(node).size(), node.id() + " 是葉子");
             assertEquals(node.modifiers().size(), node.description().size(), node.id() + "：每條效果一行說明");
-            for (int j = 0; j < node.modifiers().size(); j++) {
-                final tw.exilecore.stats.Modifier modifier = node.modifiers().get(j);
-                assertTrue(tw.exilecore.charge.ChargeText.isChargeStat(modifier.stat()), node.id() + "：戰星的核心只有戰星");
-                assertEquals(tw.exilecore.ascendancy.StatLines.describe(modifier), node.description().get(j), node.id() + " 的說明跟效果對得上");
-                charges.add(tw.exilecore.charge.ChargeText.chargeOf(modifier.stat()));
+        }
+        // 怒星、銳星、磐星在樹上都拿得到
+        final java.util.Set<String> charges = new java.util.HashSet<>();
+        for (final PassiveNode node : tree.nodes()) {
+            for (final tw.exilecore.stats.Modifier modifier : node.modifiers()) {
+                if (tw.exilecore.charge.ChargeText.isChargeStat(modifier.stat())) {
+                    charges.add(tw.exilecore.charge.ChargeText.chargeOf(modifier.stat()));
+                }
             }
         }
         assertEquals(java.util.Set.of("power", "frenzy", "endurance"), charges);
@@ -229,27 +235,35 @@ class PassiveTreeTest {
 
     @Test
     void modifiersFeedTheStatSheet() {
+        // 2026-10：中心是「星幕」（增加 15% 格擋率）；力量、生命改看「崩山」（+15 力量）與「獸魂共鳴」（增加 5% 最大生命）
         final PassiveNode center = tree.at(0, 0);
+        final PassiveNode mountain = tree.at(-16, 17);
+        final PassiveNode beast = tree.at(-8, 0);
+        assertEquals("星幕", center.name());
+        assertEquals("崩山", mountain.name());
+        assertEquals("獸魂共鳴", beast.name());
         final StatSheet sheet = new StatSheet();
         sheet.setBase(StatKeys.STR, 20);
         sheet.setBase(StatKeys.LIFE_MAX, 100);
-        final List<Modifier> modifiers = tree.modifiers(Set.of(center.id()));
+        sheet.setBase(StatKeys.BLOCK_CHANCE, 20);
+        final List<Modifier> modifiers = tree.modifiers(Set.of(center.id(), mountain.id(), beast.id()));
         sheet.addAll(modifiers);
-        assertEquals(30, sheet.get(StatKeys.STR), 1e-9);
-        assertEquals(106, sheet.get(StatKeys.LIFE_MAX), 1e-9);
+        assertEquals(35, sheet.get(StatKeys.STR), 1e-9);
+        assertEquals(105, sheet.get(StatKeys.LIFE_MAX), 1e-9);
+        assertEquals(23, sheet.get(StatKeys.BLOCK_CHANCE), 1e-9);
 
-        // 基石是開關
+        // 基石是開關（2026-10：「必中」照 PoE2 改成「穩手無鋒」：命中加倍、無法暴擊，不再必中）
         PassiveNode keystone = null;
         for (final PassiveNode node : tree.nodes()) {
-            if (node.type() == PassiveNode.Type.KEYSTONE && node.name().equals("必中")) {
+            if (node.type() == PassiveNode.Type.KEYSTONE && node.name().equals("穩手無鋒")) {
                 keystone = node;
             }
         }
         assertNotNull(keystone);
         final StatSheet flags = new StatSheet();
         flags.addAll(keystone.modifiers());
-        assertTrue(StatKeys.flag(flags, StatKeys.FLAG_ALWAYS_HIT));
         assertTrue(StatKeys.flag(flags, StatKeys.FLAG_NO_CRIT));
+        assertFalse(StatKeys.flag(flags, StatKeys.FLAG_ALWAYS_HIT));
         assertFalse(StatKeys.flag(flags, StatKeys.FLAG_CHAOS_IMMUNE));
     }
 }

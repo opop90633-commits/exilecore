@@ -58,7 +58,10 @@ class GroundMarksTest {
         final double[] pointing = GroundMarks.pointing(strip.yaw());
         assertEquals(0, pointing[0], 1e-9);
         assertEquals(1, pointing[1], 1e-9);
-        assertEquals("ring", GroundMarks.ring(20).model());
+        // 2026-10：外框照大小分三種粗細（_b0 直徑 ≤ 10、_b1 ≤ 22、_b2 更大）
+        assertEquals("ring_b2", GroundMarks.ring(20).model());
+        assertEquals("ring_b0", GroundMarks.ring(4).model());
+        assertEquals("disc_b1", GroundMarks.disc(8, 0.5).model(), "粗細照整個範圍算，不是長到哪裡");
         assertEquals(40, GroundMarks.ring(20).scaleX(), 1e-9);
     }
 
@@ -72,7 +75,10 @@ class GroundMarksTest {
         assertEquals("disc", UiPack.markSector(720));
         for (int degrees = 5; degrees < 360; degrees += 5) {
             assertTrue(UiPack.markNames().contains(UiPack.markSector(degrees)), "每種角度都有圖：" + degrees);
+            for (int bucket = 0; bucket < UiPack.MARK_STROKES.length; bucket++) {
+                assertTrue(UiPack.markNames().contains(UiPack.markSector(degrees) + "_b" + bucket), "每種粗細都有圖：" + degrees);
+            }
         }
-        assertEquals(3 + 71, UiPack.markNames().size(), "圓、外框、長條、71 張扇形");
+        assertEquals((3 + 71) + (2 + 71) * 3, UiPack.markNames().size(), "圓、外框、長條、71 張扇形；圓、外框、扇形另外各三種外框粗細");
     }
 }

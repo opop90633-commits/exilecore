@@ -67,11 +67,12 @@ class AscensionTest {
         Ascension ascension = marauder(progress, 40);
         assertFalse(ascension.canChoose(), "還沒完成試煉");
         assertEquals("先完成一個試煉", ascension.chooseProblem(config.ascendancy("ironwarden")));
-        assertEquals("還沒有選昇華職業", ascension.allocateProblem(config.ascendancy("ironwarden").node("gate")));
+        assertEquals("還沒有選昇華職業", ascension.allocateProblem(config.ascendancy("ironwarden").node("t_armour")));
         progress.put(Ascension.trialKey("ember"), "100");
         ascension = marauder(progress, 40);
         assertTrue(ascension.canChoose());
-        assertEquals(List.of(config.ascendancy("ironwarden"), config.ascendancy("berserker")), ascension.options());
+        assertEquals(List.of(config.ascendancy("ironwarden"), config.ascendancy("berserker"), config.ascendancy("forgesmith")),
+                ascension.options(), "2026-10：重甲鬥士有三個昇華職業");
         assertEquals("這不是你的職業能選的昇華職業", ascension.chooseProblem(config.ascendancy("stararrow")));
         assertNull(ascension.chooseProblem(config.ascendancy("berserker")));
         progress.put(Ascension.CHOSEN, "ironwarden");
@@ -86,47 +87,53 @@ class AscensionTest {
 
     @Test
     void allocateAlongTheBranchesWithinThePoints() {
+        // 2026-10：每個昇華天賦 1 點，一個試煉 2 點
         final Map<String, String> progress = new HashMap<>();
         progress.put(Ascension.trialKey("ember"), "100");
         progress.put(Ascension.CHOSEN, "ironwarden");
         final AscendancyConfig.Ascendancy warden = config.ascendancy("ironwarden");
-        final AscendancyConfig.Node gate = warden.node("gate");
-        final AscendancyConfig.Node lastGate = warden.node("last_gate");
-        final AscendancyConfig.Node ram = warden.node("ram");
-        final AscendancyConfig.Node twelve = warden.node("twelve_gates");
+        final AscendancyConfig.Node armour = warden.node("t_armour");
+        final AscendancyConfig.Node stoneSkin = warden.node("t_stone_skin");
+        final AscendancyConfig.Node armour2 = warden.node("t_armour2");
+        final AscendancyConfig.Node str = warden.node("t_str");
+        final AscendancyConfig.Node lineage = warden.node("t_lineage");
         Ascension ascension = marauder(progress, 40);
         assertEquals(2, ascension.available());
         assertTrue(ascension.canAllocateAny());
-        assertEquals("先配「城門」", ascension.allocateProblem(lastGate));
-        assertNull(ascension.allocateProblem(gate));
-        progress.put(Ascension.NODES, ascension.withNode(gate));
-        assertEquals("gate", progress.get(Ascension.NODES));
+        assertEquals("先配「鐵壁」", ascension.allocateProblem(stoneSkin));
+        assertNull(ascension.allocateProblem(armour));
+        progress.put(Ascension.NODES, ascension.withNode(armour));
+        assertEquals("t_armour", progress.get(Ascension.NODES));
+        ascension = marauder(progress, 40);
+        assertEquals(1, ascension.available());
+        assertEquals("已經配過了", ascension.allocateProblem(armour));
+        assertNull(ascension.allocateProblem(stoneSkin));
+        progress.put(Ascension.NODES, ascension.withNode(stoneSkin));
         ascension = marauder(progress, 40);
         assertEquals(0, ascension.available());
         assertFalse(ascension.canAllocateAny());
-        assertEquals("已經配過了", ascension.allocateProblem(gate));
-        assertEquals("昇華點不夠：要 2 點，你有 0 點（第一次完成試煉會給）", ascension.allocateProblem(lastGate));
-        assertEquals("這不是鐵衛的昇華天賦", ascension.allocateProblem(config.ascendancy("berserker").node("rush")));
+        assertEquals("昇華點不夠：要 1 點，你有 0 點（第一次完成試煉會給）", ascension.allocateProblem(armour2));
+        assertEquals("這不是鐵衛的昇華天賦", ascension.allocateProblem(config.ascendancy("berserker").node("w_break")));
         // 第二個試煉：再 2 點
         progress.put(Ascension.trialKey("venom"), "200");
         ascension = marauder(progress, 50);
-        assertNull(ascension.allocateProblem(lastGate));
-        assertEquals("先配「破城槌」", ascension.allocateProblem(twelve));
-        progress.put(Ascension.NODES, ascension.withNode(lastGate));
+        assertNull(ascension.allocateProblem(armour2));
+        assertEquals("先配「巨力」", ascension.allocateProblem(lineage));
+        progress.put(Ascension.NODES, ascension.withNode(armour2));
         ascension = marauder(progress, 50);
-        assertEquals(List.of(gate, lastGate), ascension.allocated());
-        assertEquals(4, ascension.spent());
-        // 修飾器：兩個天賦的屬性
+        assertEquals(List.of(armour, stoneSkin, armour2), ascension.allocated());
+        assertEquals(3, ascension.spent());
+        // 修飾器：三個天賦的屬性
         final List<Modifier> modifiers = ascension.modifiers();
-        assertEquals(5, modifiers.size());
-        assertEquals(new Modifier(StatKeys.ARMOUR, ModType.INCREASED, 0.4, java.util.Set.of(), "昇華「城門」"), modifiers.getFirst());
+        assertEquals(3, modifiers.size());
+        assertEquals(new Modifier(StatKeys.ARMOUR, ModType.INCREASED, 0.2, java.util.Set.of(), "昇華「鐵壁」"), modifiers.getFirst());
         // 退點：要從外面退
-        assertEquals("先退後面的「最後一道門」", ascension.refundProblem(gate));
-        assertNull(ascension.refundProblem(lastGate));
-        assertEquals("這個昇華天賦沒有配", ascension.refundProblem(ram));
-        assertEquals("gate", ascension.withoutNode(lastGate));
-        progress.put(Ascension.NODES, "gate");
-        assertNull(marauder(progress, 50).withoutNode(gate), "最後一個退掉：刪掉這一筆");
+        assertEquals("先退後面的「岩膚」", ascension.refundProblem(armour));
+        assertNull(ascension.refundProblem(armour2));
+        assertEquals("這個昇華天賦沒有配", ascension.refundProblem(str));
+        assertEquals("t_armour,t_stone_skin", ascension.withoutNode(armour2));
+        progress.put(Ascension.NODES, "t_armour");
+        assertNull(marauder(progress, 50).withoutNode(armour), "最後一個退掉：刪掉這一筆");
     }
 
     @Test
@@ -152,15 +159,15 @@ class AscensionTest {
         progress.put(Ascension.CHOSEN, "ironwarden");
         final AscendancyConfig.Ascendancy warden = config.ascendancy("ironwarden");
         // 點數不夠（試煉的點數改少了）：照配的順序，放不下的略過
-        progress.put(Ascension.NODES, "gate,last_gate,iron_blood");
-        assertEquals(List.of(warden.node("gate")), marauder(progress, 40).allocated());
-        // 不認得的、重複的、前一個還沒配的略過
+        progress.put(Ascension.NODES, "t_armour,t_stone_skin,t_armour2");
+        assertEquals(List.of(warden.node("t_armour"), warden.node("t_stone_skin")), marauder(progress, 40).allocated());
+        // 不認得的、重複的、前一個還沒配的、別的昇華職業的略過
         progress.put(Ascension.trialKey("venom"), "200");
-        progress.put(Ascension.NODES, "removed,last_gate,gate,gate,rush");
+        progress.put(Ascension.NODES, "removed,t_stone_skin,t_armour,t_armour,w_break");
         final Ascension ascension = marauder(progress, 50);
-        assertEquals(List.of(warden.node("gate")), ascension.allocated());
-        assertEquals("gate", ascension.withNode(warden.node("iron_blood")).split(",")[0], "寫回去的是核對過的");
-        assertEquals("gate,iron_blood", ascension.withNode(warden.node("iron_blood")));
+        assertEquals(List.of(warden.node("t_armour")), ascension.allocated());
+        assertEquals("t_armour", ascension.withNode(warden.node("t_str")).split(",")[0], "寫回去的是核對過的");
+        assertEquals("t_armour,t_str", ascension.withNode(warden.node("t_str")));
         // 選的昇華職業已經從設定檔拿掉了：當作沒選（可以重選）
         progress.put(Ascension.CHOSEN, "removed");
         assertNull(marauder(progress, 50).chosen());

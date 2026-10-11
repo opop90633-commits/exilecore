@@ -18,6 +18,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -66,11 +67,14 @@ class QuestConfigTest {
         assertEquals(7, config.quests(QuestConfig.Kind.MAIN).size(), "序章、五章、終章");
         assertEquals(11, config.quests(QuestConfig.Kind.SIDE).size(), "五個區域各兩個＋營地的試煉");
         assertEquals(8, config.npcs().size(), "六個劇情人物＋營地軍需官＋星衛");
-        assertEquals("bounty", config.npc("ji_heng").opens(), "軍需官打開委託板");
+        // 2026-10：軍需官只是營地的擺設（沒有名字、右鍵沒反應），委託與功勳兌換改在選單
+        assertNull(config.npc("ji_heng").opens(), "軍需官不再打開委託板");
+        assertTrue(config.npc("ji_heng").name().isBlank(), "軍需官是擺設");
+        assertTrue(config.npc("ji_heng").idle().isEmpty());
         assertEquals("trial", config.npc("ming_yi").opens(), "星衛打開昇華與試煉");
         for (final QuestConfig.Npc npc : config.npcs().values()) {
             assertNotNull(npc.placement(), npc.id() + " 要擺在劇情世界");
-            assertFalse(npc.idle().isEmpty(), npc.id() + " 沒有閒聊");
+            assertTrue(npc.name().isBlank() || !npc.idle().isEmpty(), npc.id() + " 沒有閒聊");
         }
     }
 

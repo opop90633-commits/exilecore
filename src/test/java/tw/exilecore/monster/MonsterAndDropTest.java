@@ -139,6 +139,7 @@ class MonsterAndDropTest {
     void fewerGemsAndJunkButTheSameGearAndCurrency() {
         // 2026-10：未切割技能寶石 1/3、輔助寶石與藥劑一半、微光石等四種低階通貨一半；裝備與其他通貨的掉率不變。
         // 2026-10 第二次：至臻石 0.4 倍、豐饒石 300/570、小鑿星石 60/160（人少沒有交易，幾乎沒人用）；其他還是不變。
+        // 2026-10 第三、四次：至臻石 400 → 250 → 80、小鑿星石 60 → 24（照 100 人伺服器調高價通貨）；其他還是不變。
         // 以前：魔法怪 1.5 件，分類 60／30／6／4／3（合計 103），通貨權重合計 10,956（70 級都掉得到）
         final Random random = new Random(21);
         final int monsters = 40_000;
@@ -177,9 +178,9 @@ class MonsterAndDropTest {
         final double per = monsters;
         assertEquals(1.5 * 30 / 103, equipment / per, 0.015, "裝備的掉率不變");
         final double currencyBefore = 1.5 * 60 / 103 / 10956;
-        assertEquals(currencyBefore * 1000 * 0.4, zenith / per, 0.004, "至臻石是以前的 0.4 倍");
+        assertEquals(currencyBefore * 1000 * 0.08, zenith / per, 0.004, "至臻石是以前的 0.08 倍（1000 → 80）");
         assertEquals(currencyBefore * 570 * 300 / 570, bounty / per, 0.004, "豐饒石 570 → 300");
-        assertEquals(currencyBefore * 160 * 60 / 160, lesserSocket / per, 0.002, "小鑿星石 160 → 60");
+        assertEquals(currencyBefore * 160 * 24 / 160, lesserSocket / per, 0.002, "小鑿星石 160 → 24");
         assertEquals(currencyBefore * 260, spark / per, 0.003, "星火石的掉率不變");
         assertEquals(1.5 * 6 / 103 / 3, skill / per, 0.006, "未切割技能寶石是以前的 1/3");
         assertEquals(1.5 * 4 / 103 * 1.5 / 4, support / per, 0.005, "未切割輔助寶石是以前的 3/8（4 → 1.5）");

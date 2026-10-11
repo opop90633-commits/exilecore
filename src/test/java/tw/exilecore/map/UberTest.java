@@ -203,18 +203,21 @@ class UberTest {
         assertEquals(1.0, MapConfig.finalLifeMultiplier(16, 5, 1, 16), 1e-9, "max 寫 1：關掉");
         assertEquals(1.0, MapConfig.finalLifeMultiplier(16, 16, 2.5, 16), 1e-9, "from 寫到最高階：關掉（不會除以 0）");
 
-        // 出貨的 maps.yml：T5 以下 ×1、T16 ×2.5，中間一階比一階多
+        // 出貨的 maps.yml：T5 以下 ×1、T16 ×11.7（2026-10 照頂裝單體 15 萬 DPS 重調，原 ×2.5），中間一階比一階多
         final int max = config.tiers().max();
         assertEquals(1.0, config.finalLifeMultiplier(1), 1e-9);
         assertEquals(1.0, config.finalLifeMultiplier(5), 1e-9, "剛進終局的人照原本的時間打");
-        assertEquals(2.5, config.finalLifeMultiplier(max), 1e-9);
+        assertEquals(11.7, config.finalLifeMultiplier(max), 1e-9);
         for (int tier = 6; tier <= max; tier++) {
             assertTrue(config.finalLifeMultiplier(tier) > config.finalLifeMultiplier(tier - 1), "T" + tier + " 比前一階多");
         }
-        // 極境開在最高階（也吃 ×2.5），再乘自己的 ×4：比 T16 終局多 4 倍
+        // 極境開在最高階（也吃 ×11.7），再乘自己的倍率（2026-10 每個極境各自重調，原本都是 ×4）：比 T16 終局更硬
+        final java.util.Map<String, Double> uberLife = java.util.Map.of(
+                "sky_crucible", 3.12, "frost_throne", 2.58, "bone_throne", 2.45, "ember_citadel", 3.56);
         for (final MapConfig.MapDef map : config.finals()) {
             final MapConfig.Uber uber = config.uber(map.id());
-            assertEquals(4, uber.life(), 1e-9, map.id() + "：極境的生命 ×4");
+            assertEquals(uberLife.get(map.id()), uber.life(), 1e-9, map.id() + "：極境的生命倍率");
+            assertTrue(uber.life() > 1, map.id() + "：極境比 T16 終局硬");
             assertEquals(max, config.uberStats(map.id(), uber).tier(), map.id() + "：極境開在最高階");
         }
     }

@@ -39,6 +39,8 @@ class UniqueDataTest {
     static Set<String> tags;
     /** 地圖事件的來源（map_events.yml）。 */
     static final Set<String> EVENT_SOURCES = Set.of("shrine", "strongbox", "breach", "exile", "ritual", "delirium");
+    /** 其他專屬的來源（2026-10）：劫盜的大金庫、開服活動的世界 Boss（world_events.yml 直接列傳奇代號）。 */
+    static final Set<String> OTHER_SOURCES = Set.of("heist", "world_boss");
     /** 地圖代號（具名 Boss 的來源）。 */
     static Set<String> maps;
     /** 引擎用空的情境查的屬性（寫標籤也不會生效）。 */
@@ -58,9 +60,36 @@ class UniqueDataTest {
         for (final DamageType type : DamageType.values()) {
             if (type != DamageType.PHYSICAL) {
                 stats.add(StatKeys.damageGain(type));
+                stats.add(StatKeys.resistMax(type)); // 2026-10：某一種元素的抗性上限
+            }
+            stats.add(StatKeys.damageExtra(type)); // 2026-10：「獲得 x% 傷害為額外…傷害」
+        }
+        stats.addAll(LocalMods.KNOWN); // 2026-10：傳奇武器也可以有本地詞綴（裂穹的 local.crit_base）
+        // 2026-10：戰星（球）的上限、機率（charge.max.球…，照 charges.yml）
+        for (final String charge : tw.exilecore.charge.ChargeConfig.parse(YamlNode.load(DATA.resolve(tw.exilecore.charge.ChargeConfig.FILE))).keySet()) {
+            stats.add(StatKeys.chargeChance(charge));
+            stats.add(StatKeys.chargeOnHit(charge));
+            stats.add(StatKeys.chargeMax(charge));
+        }
+        // 2026-10 新的引擎屬性鍵（引擎照字串組出來讀的）：自己身上某種異常的持續時間（AilmentService）、傷害轉換、
+        // 臨在的抗性降低（Presence）、護符欄位（CharmService）、揭露詞綴的幅度（ItemStats）
+        for (final String ailment : List.of("ignite", "chill", "freeze", "shock", "bleed", "poison")) {
+            stats.add(StatKeys.SELF_AILMENT_DURATION + "." + ailment);
+        }
+        for (final DamageType type : DamageType.values()) {
+            stats.add(StatKeys.damageConvert(type));
+            if (type != DamageType.PHYSICAL) {
+                stats.add(StatKeys.PRESENCE_RESIST + type.tag());
             }
         }
+        stats.add(tw.exilecore.flask.CharmService.STAT_SLOTS);
+        stats.add(ItemStats.UNVEILED_MAGNITUDE);
+        // 2026-10：對身上有某種異常的敵人（damage.vs_chilled…，CombatListener.ailmentWord）
+        for (final String ailment : List.of("chilled", "frozen", "ignited", "shocked", "poisoned", "bleeding")) {
+            stats.add(StatKeys.DAMAGE_VS_AILMENT + ailment);
+        }
         tags = constants(Tags.class);
+        tags.add("curse"); // 2026-10：詛咒技能的標籤（SkillDefinition 給範圍印記加的，Tags 沒有常數）
         final YamlNode mapsYml = YamlNode.load(DATA.resolve("maps.yml"));
         maps = new HashSet<>(mapsYml.node("maps").keys());
         maps.addAll(mapsYml.node("finals").keys()); // 其他終局 Boss 各自的傳奇寫終局的代號
@@ -80,18 +109,21 @@ class UniqueDataTest {
     @Test
     void everyUniqueLoadsWithValidStatsTagsAndSources() {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
-        assertEquals(37, repository.uniques().size(), "20 件 + 三個新終局 Boss 各一件 + 四件追逐級 + 六件地圖事件 + 四件極境");
+        // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
+        assertEquals(88, repository.uniques().size(),
+                "終局 2 + 追逐級 4 + 其他終局 3 + 具名 Boss 2 + 共通 27 + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14");
         final Set<String> names = new HashSet<>();
         for (final UniqueItem unique : repository.uniques()) {
             final String where = unique.id();
             assertTrue(names.add(unique.name()), where + " 名字重複");
             assertNotNull(repository.base(unique.base()), where);
             assertFalse(unique.flavour().isEmpty(), where + " 要有世界觀文字");
-            assertTrue(unique.affixIds().size() >= 3, where + " 至少三條詞綴");
+            assertTrue(unique.affixIds().size() + repository.uniqueVeiled(where).size() >= 3, where + " 至少三條詞綴（隱匿傳奇的隱匿詞綴也算）");
             assertFalse(unique.sources().isEmpty(), where + " 要有掉落來源");
             for (final String source : unique.sources()) {
                 assertTrue(Set.of("final", "map_boss", "chance", "gamble", "chase").contains(source) || maps.contains(source)
-                                || EVENT_SOURCES.contains(source) || source.startsWith("uber_") && maps.contains(source.substring(5)),
+                                || EVENT_SOURCES.contains(source) || OTHER_SOURCES.contains(source)
+                                || source.startsWith("uber_") && maps.contains(source.substring(5)),
                         where + " 的來源 " + source + " 不存在");
             }
             for (final String affixId : unique.affixIds()) {
@@ -118,7 +150,9 @@ class UniqueDataTest {
                     }
                     if (mod.variable() != null) {
                         assertTrue(affix.tiers().getFirst().vars().containsKey(mod.variable()), affixId + " 缺少變數 " + mod.variable());
-                        assertTrue(affix.text().contains("{" + mod.variable() + "}"), affixId + " 的文字沒有 {" + mod.variable() + "}");
+                        // 小數擲骰寫 {value/100}（顯示跟效果一樣）
+                        assertTrue(affix.text().contains("{" + mod.variable() + "}") || affix.text().contains("{" + mod.variable() + "/"),
+                                affixId + " 的文字沒有 {" + mod.variable() + "}");
                     }
                 }
             }
@@ -127,32 +161,34 @@ class UniqueDataTest {
 
     @Test
     void sourcesSplitIntoBossOnlyAndFindableUniques() {
+        // 2026-10 PoE2 改版：天穹之心、星爐、守陵者的誓約、觀星者的星盤…退役，換成新的一批
         final Set<String> finals = ids(repository.uniquesFor("final", 84));
-        assertEquals(Set.of("sky_heart", "star_forge"), finals);
-        assertEquals(Set.of("tomb_oath"), ids(repository.uniquesFor("royal_tomb", 84)));
-        assertEquals(Set.of("star_chart"), ids(repository.uniquesFor("observatory", 84)));
+        assertEquals(Set.of("celestial_pivot", "meteor_anvil"), finals);
+        assertEquals(Set.of("gravewarden_maul"), ids(repository.uniquesFor("royal_tomb", 84)));
+        assertEquals(Set.of("astrolabe_wand"), ids(repository.uniquesFor("observatory", 84)));
         // 新武器（弩、長棍、矛）都有自己的傳奇，地圖 Boss 會掉、僥倖石做得出來
-        for (final String base : List.of("crossbow", "quarterstaff", "spear")) {
+        for (final String base : List.of("xbow_26", "qstaff_25", "spear_25")) {
             final ItemData normal = generator.generate(repository.base(base), Rarity.NORMAL, 70, new Random(1));
             assertFalse(CurrencyOperation.chanceUniques(normal, generator).isEmpty(), base + " 要有能用僥倖石做的傳奇");
         }
         // 物品等級 68 才有的：低一點的地圖 Boss 不會掉
-        assertFalse(ids(repository.uniquesFor("map_boss", 67)).contains("unyielding"));
-        assertTrue(ids(repository.uniquesFor("map_boss", 68)).contains("unyielding"));
+        assertFalse(ids(repository.uniquesFor("map_boss", 67)).contains("prism_wall"));
+        assertTrue(ids(repository.uniquesFor("map_boss", 68)).contains("prism_wall"));
         // 練功用的兩件：劇情就賭得到，地圖 Boss 不掉
-        assertTrue(ids(repository.uniquesFor("gamble", 5)).containsAll(Set.of("wanderer", "gilded_brim")));
-        assertFalse(ids(repository.uniquesFor("map_boss", 84)).contains("wanderer"));
-        // Boss 專屬、地圖事件專屬、極境專屬的做不出來、賭不到
+        assertTrue(ids(repository.uniquesFor("gamble", 5)).containsAll(Set.of("roamers_boots", "goldleaf_hood")));
+        assertFalse(ids(repository.uniquesFor("map_boss", 84)).contains("roamers_boots"));
+        // Boss 專屬、地圖事件專屬、極境專屬、劫盜、世界 Boss 的做不出來、賭不到
         for (final UniqueItem unique : repository.uniques()) {
             final boolean exclusive = unique.droppedBy("final") || unique.droppedBy("royal_tomb") || unique.droppedBy("observatory")
-                    || unique.sources().stream().anyMatch(source -> EVENT_SOURCES.contains(source) || source.startsWith("uber_"));
+                    || unique.sources().stream().anyMatch(source -> EVENT_SOURCES.contains(source) || OTHER_SOURCES.contains(source)
+                    || source.startsWith("uber_"));
             if (exclusive) {
                 assertFalse(unique.droppedBy("chance") || unique.droppedBy("gamble") || unique.droppedBy("map_boss"), unique.id());
             }
         }
-        // 每種地圖事件各一件；每個極境各一件，而且物品等級 80 起
+        // 每種地圖事件各五件（2026-10 擴充兩次，各多兩件）；每個極境各一件，而且物品等級 80 起
         for (final String event : EVENT_SOURCES) {
-            assertEquals(1, repository.uniquesFor(event, 84).size(), event + " 的專屬傳奇");
+            assertEquals(5, repository.uniquesFor(event, 84).size(), event + " 的專屬傳奇");
             assertTrue(repository.uniquesFor(event, 59).isEmpty(), event + "：物品等級 60 起");
         }
         for (final String finalId : List.of("sky_crucible", "frost_throne", "bone_throne", "ember_citadel")) {
@@ -358,7 +394,8 @@ class UniqueDataTest {
         int chase = 0;
         for (final UniqueItem unique : repository.uniques()) {
             if (!unique.chase()) {
-                assertTrue(unique.weight() >= 100, unique.id() + "：一般傳奇權重 100");
+                // 劫盜的隱匿傳奇（2026-10）有 70–90 的，其他 100
+                assertTrue(unique.weight() >= (unique.droppedBy("heist") ? 70 : 100), unique.id() + "：一般傳奇權重 100");
                 continue;
             }
             chase++;
@@ -369,7 +406,8 @@ class UniqueDataTest {
                 assertFalse(unique.droppedBy(other), unique.id() + "：追逐級只在 chase 池，不在 " + other + "（不然機率會被別的擲骰拉高）");
             }
             assertFalse(unique.droppedBy("chance") || unique.droppedBy("gamble"), unique.id() + "：追逐級不能做、不能賭");
-            assertTrue(unique.affixIds().size() >= 5, unique.id() + "：追逐級至少五條");
+            // 2026-10：照 PoE2 同部位的傳奇重做，巨像之心只剩三條（大量生命、沒有精魂）
+            assertTrue(unique.affixIds().size() >= 3, unique.id() + "：追逐級至少三條");
         }
         assertEquals(4, chase, "四件追逐級傳奇");
         // 共通池（map_boss）任何等級都沒有追逐級：追逐級只從 chase 池、照固定機率掉
@@ -380,9 +418,10 @@ class UniqueDataTest {
         }
         assertEquals(4, repository.uniquesFor("chase", 75).size());
         assertEquals(0, repository.uniquesFor("chase", 74).size());
-        // 逐星者的「偷詞綴」是 steal.mods（秒數）
+        // 逐星者的「偷詞綴」是 steal.mods（秒數）；2026-10 PoE2 改版退役了，定義留著讓舊物品照常生效
         final UniqueItem chaser = repository.unique("star_chaser");
-        assertTrue(chaser.chase());
+        assertTrue(repository.retiredUnique("star_chaser"));
+        assertFalse(chaser.chase(), "退役的不算追逐級（不會掉）");
         boolean steal = false;
         for (final String affixId : chaser.affixIds()) {
             for (final AffixMod mod : repository.affix(affixId).mods()) {

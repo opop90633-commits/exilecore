@@ -55,6 +55,24 @@ class UiPackTest {
         return JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8)).getAsJsonObject();
     }
 
+    /**
+     * 資源包大小的上限：2026-10 多了招式預警的地面範圍（256×256）、裝備幻化、3D 時裝（web/pack3d.zip），
+     * 已經不是 512 KB 以內了；還是一次下載、之後有快取，只是不能無限長大。
+     */
+    static final int MAX_PACK_BYTES = 8 * 1024 * 1024;
+
+    /**
+     * 改寫的原版物品定義（assets/minecraft/items/）最外層是鎖定的小鎖頭（2026-10）：custom_model_data 的 flag 0
+     * 是 true 才疊鎖頭，false 是原本的挑選（字串 0 選我們的圖，不然照原版）。回傳那個挑選。
+     */
+    static JsonObject vanillaSelect(final JsonObject root) {
+        final JsonObject lock = root.getAsJsonObject("model");
+        assertEquals("minecraft:condition", lock.get("type").getAsString(), "最外層是鎖頭的條件");
+        assertEquals("minecraft:custom_model_data", lock.get("property").getAsString());
+        assertEquals(0, lock.get("index").getAsInt(), "flag 0 是鎖定");
+        return lock.getAsJsonObject("on_false");
+    }
+
     @Test
     void sameContentSameHash() throws IOException {
         final UiPack.Built again = UiPack.build();
@@ -70,8 +88,8 @@ class UiPackTest {
         assertEquals(UiPack.PACK_FORMAT, meta.get("min_format").getAsInt());
         assertTrue(meta.get("max_format").getAsInt() >= UiPack.PACK_FORMAT);
         assertTrue(files.containsKey("pack.png"));
-        // 2026-10 多了招式預警的地面範圍（74 張 128×128 的圖）：還是一次下載、之後有快取
-        assertTrue(pack.zip().length < 512 * 1024, "資源包要小：" + pack.zip().length);
+        // 2026-10 多了招式預警的地面範圍（256×256 的圖）、裝備幻化、3D 時裝：還是一次下載、之後有快取
+        assertTrue(pack.zip().length < MAX_PACK_BYTES, "資源包要小：" + pack.zip().length);
     }
 
     @Test
@@ -95,6 +113,9 @@ class UiPackTest {
         assertTrue(models.size() >= 14 + UiPack.ICONS.size(), "背景 4＋連線 4＋發光＋節點 4＋標記＋圖示：" + models);
         final Set<String> seenTextures = new HashSet<>();
         final List<String> queue = new ArrayList<>(models);
+        // 稀有度、追逐級傳奇的外框（2026-10）：一定會產生，但要有裝備（gearItems）、傳奇的外觀才會被物品定義用到
+        queue.add("exilecore:item/ui/rarity_frame");
+        queue.add("exilecore:item/ui/chase_frame");
         final Set<String> visited = new HashSet<>();
         while (!queue.isEmpty()) {
             final String model = queue.removeLast();
@@ -115,6 +136,36 @@ class UiPackTest {
             }
             if (definition.has("parent")) {
                 queue.add(definition.get("parent").getAsString());
+            }
+        }
+        // 穿在身上的裝備幻化（2026-10，assets/*/equipment/）：每一層的 texture 指到 textures/entity/equipment/<層>/
+        for (final String path : files.keySet()) {
+            if (!path.matches("assets/[a-z_]+/equipment/.*\\.json")) {
+                continue;
+            }
+            for (final Map.Entry<String, JsonElement> layer : json(path).getAsJsonObject("layers").entrySet()) {
+                for (final JsonElement entry : layer.getValue().getAsJsonArray()) {
+                    final String[] id = entry.getAsJsonObject().get("texture").getAsString().split(":", 2);
+                    final String texturePath = "assets/" + id[0] + "/textures/entity/equipment/" + layer.getKey() + "/" + id[1] + ".png";
+                    assertTrue(files.containsKey(texturePath), path + " 的貼圖不見了：" + texturePath);
+                    seenTextures.add(texturePath);
+                }
+            }
+        }
+        // 字型（選單背景、掉落物圖示、快捷欄、詞綴標籤）：bitmap 的 file 指到 textures/
+        for (final String path : files.keySet()) {
+            if (!path.matches("assets/[a-z_]+/font/.*\\.json")) {
+                continue;
+            }
+            for (final JsonElement provider : json(path).getAsJsonArray("providers")) {
+                final JsonObject object = provider.getAsJsonObject();
+                if (!object.has("file")) {
+                    continue;
+                }
+                final String[] id = object.get("file").getAsString().split(":", 2);
+                final String texturePath = "assets/" + id[0] + "/textures/" + id[1];
+                assertTrue(files.containsKey(texturePath), path + " 的貼圖不見了：" + texturePath);
+                seenTextures.add(texturePath);
             }
         }
         for (final String path : files.keySet()) {
@@ -192,21 +243,70 @@ class UiPackTest {
     @Test
     void texturesAre32SquarePng() throws IOException {
         int count = 0;
+        int small = 0;
+        int armour = 0;
         for (final Map.Entry<String, byte[]> file : files.entrySet()) {
-            if (!file.getKey().startsWith("assets/") || !file.getKey().endsWith(".png")
-                    || file.getKey().startsWith("assets/minecraft/textures/gui/sprites/dialog/")
-                    || file.getKey().startsWith("assets/exilecore/textures/item/currency/")
-                    || file.getKey().startsWith("assets/exilecore/textures/item/mark/")) {
-                continue; // 通貨的圖示是 16×16、地上的範圍是 128×128，另外測
+            final String path = file.getKey();
+            if (!path.startsWith("assets/") || !path.endsWith(".png")
+                    || path.startsWith("assets/minecraft/textures/gui/sprites/")
+                    || path.startsWith("assets/exilecore/textures/item/currency/")
+                    || path.startsWith("assets/exilecore/textures/item/mark/")
+                    || path.startsWith("assets/exilecore/textures/item/skin3d/")
+                    || path.startsWith("assets/exilecore/textures/font/")) {
+                // 原版介面的圖照原版的大小、通貨的圖示是 16×16、地上的範圍另外測、
+                // 3D 時裝的貼圖照模型（web/pack3d.zip）、字型的圖照字的大小
+                continue;
             }
             final BufferedImage image = ImageIO.read(new ByteArrayInputStream(file.getValue()));
-            assertNotNull(image, file.getKey());
-            assertEquals(32, image.getWidth(), file.getKey());
-            assertEquals(32, image.getHeight(), file.getKey());
+            assertNotNull(image, path);
+            if (path.startsWith("assets/exilecore/textures/entity/equipment/")) {
+                // 穿在身上的裝備幻化：原版 64×32 的盔甲貼圖格式
+                assertEquals(64, image.getWidth(), path);
+                assertEquals(32, image.getHeight(), path);
+                armour++;
+                continue;
+            }
+            if (path.startsWith("assets/exilecore/textures/item/ui/icon/slot_") || path.equals("assets/exilecore/textures/item/ui/icon/community.png")
+                    || path.equals("assets/exilecore/textures/item/ui/lock.png")) {
+                // 空裝備欄的剪影、社群按鈕、鎖定的小鎖頭：一般物品的 16×16
+                assertEquals(16, image.getWidth(), path);
+                assertEquals(16, image.getHeight(), path);
+                small++;
+                continue;
+            }
+            assertEquals(32, image.getWidth(), path);
+            assertEquals(32, image.getHeight(), path);
             count++;
         }
-        assertEquals(UiPack.BACKGROUNDS + 4 + 1 + UiPack.Cell.NODES.size() + 1 + UiPack.ICONS.size() + 1 + UiPack.FLASK_SLOTS.size(), count,
-                "背景、四條線、發光、節點（含珠寶孔兩種）、標記、按鍵圖示、選取外框、藥劑欄的空瓶輪廓");
+        final int smallIcons = (int) UiPack.ICONS.stream().filter(icon -> icon.startsWith("slot_") || icon.equals("community")).count();
+        assertEquals(smallIcons + 1, small, "空裝備欄的剪影、社群按鈕、鎖頭");
+        assertEquals(2 * transmogArmourThemes(), armour, "每一套幻化：身上、腿上各一張");
+        assertEquals(UiPack.BACKGROUNDS + 4 + 1 + UiPack.Cell.NODES.size() + 1 + UiPack.ICONS.size() - smallIcons + 1 + UiPack.FLASK_SLOTS.size()
+                        + 2 + transmogItemTextures(), count,
+                "背景、四條線、發光、節點（含珠寶孔兩種）、標記、按鍵圖示、選取外框、藥劑欄的空瓶輪廓、稀有度與追逐級的外框、幻化的物品圖");
+    }
+
+    /** web/skins/index.txt 列的圖（tools/gen_skin_art.py 產生）。 */
+    private static List<String> transmogNames() throws IOException {
+        final List<String> names = new ArrayList<>();
+        try (java.io.InputStream in = UiPack.class.getResourceAsStream("/web/skins/index.txt")) {
+            assertNotNull(in, "web/skins/index.txt");
+            for (final String line : new String(in.readAllBytes(), StandardCharsets.UTF_8).split("\\R")) {
+                final String name = line.strip();
+                if (!name.isEmpty() && !name.startsWith("#") && name.endsWith(".png")) {
+                    names.add(name.substring(0, name.length() - 4));
+                }
+            }
+        }
+        return names;
+    }
+
+    private static int transmogArmourThemes() throws IOException {
+        return (int) transmogNames().stream().filter(name -> name.endsWith("_humanoid")).count();
+    }
+
+    private static int transmogItemTextures() throws IOException {
+        return (int) transmogNames().stream().filter(name -> !name.endsWith("_humanoid") && !name.endsWith("_humanoid_leggings")).count();
     }
 
     @Test
@@ -250,7 +350,7 @@ class UiPackTest {
 
     @Test
     void emptyFlaskSlotsAreColouredBottles() {
-        final JsonObject select = json("assets/minecraft/items/glass_bottle.json").getAsJsonObject("model");
+        final JsonObject select = vanillaSelect(json("assets/minecraft/items/glass_bottle.json"));
         assertEquals("minecraft:select", select.get("type").getAsString());
         assertEquals("minecraft:custom_model_data", select.get("property").getAsString());
         assertEquals(0, select.get("index").getAsInt(), "字串 0 是 life／mana");
@@ -380,23 +480,26 @@ class UiPackTest {
             assertEquals(0, tint.get("index").getAsInt(), "顏色 0 是招式的顏色");
             assertEquals("exilecore:item/mark/plane", json("assets/exilecore/models/item/mark/" + name + ".json").get("parent").getAsString());
             final BufferedImage image = ImageIO.read(new ByteArrayInputStream(files.get("assets/exilecore/textures/item/mark/" + name + ".png")));
-            assertEquals(128, image.getWidth(), name);
-            assertEquals(128, image.getHeight(), name);
+            assertEquals(UiPack.MARK_SIZE, image.getWidth(), name);
+            assertEquals(UiPack.MARK_SIZE, image.getHeight(), name);
         }
+        assertEquals(256, UiPack.MARK_SIZE, "2026-10：128 → 256（外框可以畫得更細）");
+        // 下面的座標照 128×128 的圖寫，乘上 k 換到現在的解析度
+        final int k = UiPack.MARK_SIZE / 128;
         final BufferedImage disc = UiPack.markImage("disc");
-        final int middle = disc.getRGB(64, 64) >>> 24;
+        final int middle = disc.getRGB(64 * k, 64 * k) >>> 24;
         assertTrue(middle > 30 && middle < 120, "圓：裡面半透明 " + middle);
-        assertTrue((disc.getRGB(64, 2) >>> 24) > 200, "圓：外框不透明");
+        assertTrue((disc.getRGB(64 * k, 2 * k) >>> 24) > 200, "圓：外框不透明");
         assertEquals(0, disc.getRGB(1, 1) >>> 24, "圓：角落透明");
-        assertEquals(0xFFFFFF, disc.getRGB(64, 64) & 0xFFFFFF, "白色（著色後才是招式的顏色）");
-        assertEquals(0, UiPack.markImage("ring").getRGB(64, 64) >>> 24, "外框圓：中間透明");
+        assertEquals(0xFFFFFF, disc.getRGB(64 * k, 64 * k) & 0xFFFFFF, "白色（著色後才是招式的顏色）");
+        assertEquals(0, UiPack.markImage("ring").getRGB(64 * k, 64 * k) >>> 24, "外框圓：中間透明");
         final BufferedImage sector = UiPack.markImage("sector_90");
-        assertTrue((sector.getRGB(64, 30) >>> 24) > 30, "扇形往圖的上方張開");
-        assertEquals(0, sector.getRGB(64, 100) >>> 24, "下方是空的");
-        assertEquals(0, sector.getRGB(15, 64) >>> 24, "左右（90 度的扇形以外）是空的");
+        assertTrue((sector.getRGB(64 * k, 30 * k) >>> 24) > 30, "扇形往圖的上方張開");
+        assertEquals(0, sector.getRGB(64 * k, 100 * k) >>> 24, "下方是空的");
+        assertEquals(0, sector.getRGB(15 * k, 64 * k) >>> 24, "左右（90 度的扇形以外）是空的");
         final BufferedImage rect = UiPack.markImage("rect");
-        assertTrue((rect.getRGB(2, 64) >>> 24) > 200, "長條：左右兩條邊");
-        assertTrue((rect.getRGB(64, 64) >>> 24) < 120, "長條：中間半透明");
+        assertTrue((rect.getRGB(2 * k, 64 * k) >>> 24) > 200, "長條：左右兩條邊");
+        assertTrue((rect.getRGB(64 * k, 64 * k) >>> 24) < 120, "長條：中間半透明");
     }
 
     @Test
@@ -422,7 +525,13 @@ class UiPackTest {
             assertEquals(16, image.getWidth(), id);
             assertEquals(16, image.getHeight(), id);
         }
-        assertEquals(tw.exilecore.currency.CurrencyArt.sprites().size(), modelled, "每張通貨的圖都要有通貨在用");
-        assertTrue(modelled >= 22);
+        assertTrue(modelled >= 22, "寫了 model 的通貨：" + modelled);
+        // 反過來：每張圖（通貨，2026-10 起還有技能、輔助寶石的圖示）都進了資源包。現在大部分通貨不寫 model、照代號找圖，
+        // 「每張通貨的圖都要有通貨在用」改在 CurrencySkinTest 測
+        for (final String id : tw.exilecore.currency.CurrencyArt.sprites().keySet()) {
+            assertTrue(files.containsKey("assets/exilecore/items/currency/" + id + ".json"), id + " 的物品定義");
+            assertTrue(files.containsKey("assets/exilecore/models/item/currency/" + id + ".json"), id + " 的模型");
+            assertTrue(files.containsKey("assets/exilecore/textures/item/currency/" + id + ".png"), id + " 的貼圖");
+        }
     }
 }

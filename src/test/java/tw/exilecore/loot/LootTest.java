@@ -364,6 +364,9 @@ class LootTest {
         final CurrencyPouch back = CurrencyPouch.decode(pouch.encode() + ",壞掉,x=abc,=5");
         assertEquals(pouch.all(), back.all(), "寫壞的項目略過");
         assertEquals(0, CurrencyPouch.decode(null).kinds());
-        assertEquals(CurrencyPouch.CAP, CurrencyPouch.decode("zenith_orb=999999").amount("zenith_orb"), "讀進來也夾在上限內");
+        // 2026-10：上限可以靠贊助加大，讀檔時不裁掉超過的，只是不能再存入
+        final CurrencyPouch big = CurrencyPouch.decode("zenith_orb=999999");
+        assertEquals(999_999, big.amount("zenith_orb"), "讀進來不裁掉");
+        assertEquals(0, big.deposit("zenith_orb", 1), "已經超過上限就不再收");
     }
 }

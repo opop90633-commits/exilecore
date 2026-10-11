@@ -26,6 +26,6 @@ class ConfigDefaultsTest {
         assertTrue(root.node("combat").bool("hold-left-click", false), "預設按住左鍵連續施放（HoldToCast.enabled 的預設值）");
         assertFalse(root.has("movement"), "常駐奔跑拿掉了（2026-10，改回原版：要按衝刺），config.yml 不再有 movement");
         assertTrue(root.node("web").has("economy-page"));
-        assertTrue(root.node("web").bool("economy-page", false), "預設提供市場報告網頁（WebModule 的預設值）");
+        assertFalse(root.node("web").bool("economy-page", true), "預設不公開市場報告網頁（2026-10，WebModule 的預設值）");
     }
 }

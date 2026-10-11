@@ -54,11 +54,19 @@ class JewelTest {
             assertNotNull(base.jewelColor());
             assertTrue(base.dropWeight() < ItemBase.DEFAULT_DROP_WEIGHT, "珠寶比一般裝備少見");
         }
-        assertNotNull(repository.base("short_sword"));
-        assertEquals(ItemBase.DEFAULT_DROP_WEIGHT, repository.base("short_sword").dropWeight());
-        assertNull(repository.base("short_sword").jewelColor());
+        // 2026-10 PoE2 改版：劍退役，拿單手錘當一般裝備
+        assertNotNull(repository.base("mace1_26"));
+        assertEquals(ItemBase.DEFAULT_DROP_WEIGHT, repository.base("mace1_26").dropWeight());
+        assertNull(repository.base("mace1_26").jewelColor());
         assertEquals("#e8f6ff", diamond.jewelColor(), "白星晶三色都有：白");
         assertTrue(Set.of(ruby.jewelColor(), emerald.jewelColor(), sapphire.jewelColor()).size() == 3, "三種顏色不一樣");
+    }
+
+    /** 珠寶詞綴池：spawn_tags 只有珠寶的顏色（2026-10 PoE2 改版：舊的 jewel_ 停用，換成 j2_）。 */
+    private static final Set<String> JEWEL_TAGS = Set.of("ruby", "emerald", "sapphire", "jewel");
+
+    private static boolean jewelAffix(final Affix affix) {
+        return !affix.spawnTags().isEmpty() && JEWEL_TAGS.containsAll(affix.spawnTags());
     }
 
     @Test
@@ -66,7 +74,7 @@ class JewelTest {
         final Set<String> rubyOnly = new HashSet<>();
         final Set<String> emeraldOnly = new HashSet<>();
         for (final Affix affix : repository.affixes()) {
-            if (!affix.id().startsWith("jewel_")) {
+            if (!jewelAffix(affix)) {
                 continue;
             }
             assertTrue(affix.canSpawnOn(repository.base("diamond_jewel")), "白星晶什麼珠寶詞綴都能出：" + affix.id());
@@ -82,10 +90,11 @@ class JewelTest {
                 emeraldOnly.add(affix.id());
             }
         }
-        assertTrue(rubyOnly.contains("jewel_life_inc") && emeraldOnly.contains("jewel_evasion_inc"));
+        // PoE2 的珠寶沒有平坦的生命：紅＝力量系（流血）、綠＝敏捷系（閃避）
+        assertTrue(rubyOnly.contains("j2_base_chance_to_bleed") && emeraldOnly.contains("j2_global_evasion_rating_percent"));
         // 一般裝備的詞綴不會出現在珠寶上
         for (final Affix affix : repository.affixes()) {
-            if (!affix.id().startsWith("jewel_") && !affix.spawnTags().contains(UniqueItem.SPAWN_TAG)) {
+            if (!jewelAffix(affix) && !affix.spawnTags().contains(UniqueItem.SPAWN_TAG)) {
                 assertFalse(affix.canSpawnOn(repository.base("diamond_jewel")), affix.id() + " 不該出現在珠寶上");
             }
         }
@@ -159,7 +168,11 @@ class JewelTest {
             picked.merge(repository.pickDroppable(80, random).id(), 1, Integer::sum);
         }
         assertTrue(picked.getOrDefault("diamond_jewel", 0) < picked.getOrDefault("ruby_jewel", 0), "白星晶比赤星晶少見");
-        assertTrue(picked.getOrDefault("ruby_jewel", 0) < picked.getOrDefault("short_sword", 0), "珠寶比一般裝備少見");
+        // 2026-10：分階的基底先照權重抽一類（family）再平均抽一階，所以跟整類單手錘比
+        final String maceFamily = repository.base("mace1_26").family();
+        final int maces = picked.entrySet().stream().filter(entry -> maceFamily.equals(repository.base(entry.getKey()).family()))
+                .mapToInt(Map.Entry::getValue).sum();
+        assertTrue(picked.getOrDefault("ruby_jewel", 0) < maces, "珠寶比一般裝備少見：" + picked.getOrDefault("ruby_jewel", 0) + "／" + maces);
     }
 
     /** 遺時珠寶（2026-10）：只在劫盜掉——一般掉落抽不到、商人不賣不能賭；劫盜用 pickRadiusJewel 抽。 */

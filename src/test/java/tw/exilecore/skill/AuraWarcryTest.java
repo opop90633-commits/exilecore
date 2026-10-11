@@ -42,32 +42,33 @@ class AuraWarcryTest {
 
     @Test
     void aurasParseWithReservationAndScaledEffects() {
-        final SkillDefinition hatred = config.skill("hatred");
-        assertEquals(Mechanic.AURA, hatred.mechanic());
-        assertNotNull(hatred.aura());
-        assertEquals(35, hatred.aura().reserve(), 1e-9);
-        assertTrue(hatred.aura().allies());
-        assertFalse(hatred.aura().herald());
-        assertTrue(hatred.tags().containsAll(Set.of(Tags.AURA, Tags.AREA)));
-        assertFalse(hatred.tags().contains(Tags.SPELL), "光環不算法術（2026-10，照 PoE2）");
-        assertFalse(hatred.dealsDamage());
-        assertNull(hatred.damage());
-        assertEquals(0, hatred.mana().last(), 1e-9, "光環用保留的");
-        assertEquals(2, hatred.aura().effects().size());
-        final ScaledMod gain = hatred.aura().effects().getFirst();
-        assertEquals(StatKeys.damageGain(tw.exilecore.stats.DamageType.COLD), gain.stat());
-        assertEquals(18, gain.value().at(1), 1e-9);
-        assertEquals(34, gain.value().at(20), 1e-9);
+        // 2026-10 PoE2 改版：舊的光環（憎恨…）拿掉了，用凜冬之殼（給隊友的精魂光環）
+        final SkillDefinition aegis = config.skill("frost_aegis");
+        assertEquals(Mechanic.AURA, aegis.mechanic());
+        assertNotNull(aegis.aura());
+        assertEquals(30, aegis.aura().reserve(), 1e-9);
+        assertTrue(aegis.aura().allies());
+        assertFalse(aegis.aura().herald());
+        assertTrue(aegis.tags().containsAll(Set.of(Tags.AURA, Tags.AREA)));
+        assertFalse(aegis.tags().contains(Tags.SPELL), "光環不算法術（2026-10，照 PoE2）");
+        assertFalse(aegis.dealsDamage());
+        assertNull(aegis.damage());
+        assertEquals(0, aegis.mana().last(), 1e-9, "光環用保留的");
+        assertEquals(2, aegis.aura().effects().size());
+        final ScaledMod armour = aegis.aura().effects().getFirst();
+        assertEquals(StatKeys.ARMOUR, armour.stat());
+        assertEquals(20, armour.value().at(1), 1e-9);
+        assertEquals(35, armour.value().at(20), 1e-9);
 
         final StatSheet owner = new StatSheet();
-        final SkillBuild low = build("hatred", 1, owner);
-        final SkillBuild high = build("hatred", 20, owner);
-        assertEquals(35, low.reserve(), 1e-9);
+        final SkillBuild low = build("frost_aegis", 1, owner);
+        final SkillBuild high = build("frost_aegis", 20, owner);
+        assertEquals(30, low.reserve(), 1e-9);
         assertEquals(1.0, low.auraEffect(), 1e-9);
-        assertEquals(18, low.auraModifiers().getFirst().value(), 1e-9);
-        assertEquals(34, high.auraModifiers().getFirst().value(), 1e-9);
-        assertEquals(0.16, high.auraModifiers().get(1).value(), 1e-9, "增加 16% 冰冷傷害（百分比換成小數）");
-        assertEquals(Set.of(Tags.COLD), high.auraModifiers().get(1).tags());
+        assertEquals(0.20, low.auraModifiers().getFirst().value(), 1e-9, "增加 20% 護甲（百分比換成小數）");
+        assertEquals(0.35, high.auraModifiers().getFirst().value(), 1e-9);
+        assertEquals(StatKeys.RESIST_FIRE, high.auraModifiers().get(1).stat());
+        assertEquals(15, high.auraModifiers().get(1).value(), 1e-9, "+15% 火焰抗性（FLAT 直接用）");
         assertFalse(low.generosity());
         assertEquals(0, low.exerts());
         assertNull(low.deploy());
@@ -306,22 +307,31 @@ class AuraWarcryTest {
         final StatSheet owner = new StatSheet();
         owner.add(new Modifier(StatKeys.AURA_EFFECT, ModType.INCREASED, 0.20, Set.of(), "領袖"));
         owner.add(new Modifier(StatKeys.AURA_RESERVATION, ModType.INCREASED, -0.10, Set.of(), "領袖"));
-        final SkillBuild hatred = build("hatred", 20, owner);
-        assertEquals(1.2, hatred.auraEffect(), 1e-9);
-        assertEquals(34 * 1.2, hatred.auraModifiers().getFirst().value(), 1e-9, "每一條效果都乘光環效果");
-        assertEquals(35 * 0.9, hatred.reserve(), 1e-9);
+        final SkillBuild aegis = build("frost_aegis", 20, owner);
+        assertEquals(1.2, aegis.auraEffect(), 1e-9);
+        assertEquals(0.35 * 1.2, aegis.auraModifiers().getFirst().value(), 1e-9, "每一條效果都乘光環效果");
+        assertEquals(30 / 1.1, aegis.reserve(), 1e-9, "2026-10 保留效率：減少 10% → 保留 ÷ 1.1");
 
-        final SkillBuild boosted = build("hatred", 20, owner, config.support("aura_effect"));
+        // 強效光環、慷慨這兩顆輔助寶石 2026-10 改版拿掉了（supports.yml 的 retired），引擎的 aura.effect、flag.generosity 還在：用自己做的輔助測
+        assertNull(config.support("aura_effect"));
+        assertNull(config.support("generosity"));
+        final SupportDefinition auraEffect = new SupportDefinition("aura_effect", "強效光環", "", "BEACON", 2, Set.of(Tags.AURA), Set.of(), 1.0,
+                List.of(new Modifier(StatKeys.AURA_EFFECT, ModType.INCREASED, 0.25, Set.of(), "強效光環"),
+                        new Modifier(StatKeys.AURA_RESERVATION, ModType.INCREASED, 0.20, Set.of(), "強效光環")), List.of());
+        final SkillBuild boosted = build("frost_aegis", 20, owner, auraEffect);
         assertEquals(1, boosted.supports().size());
         assertEquals(1.45, boosted.auraEffect(), 1e-9, "增加 20% + 25%（增加相加）");
-        assertEquals(35 * (1 - 0.10 + 0.20), boosted.reserve(), 1e-9, "保留 -10% + 20%");
+        assertEquals(30 * (1 - 0.10 + 0.20), boosted.reserve(), 1e-9, "保留 -10% + 20% = 增加 10%，照乘");
 
-        final SkillBuild generous = build("hatred", 20, owner, config.support("generosity"));
+        final SupportDefinition generosity = new SupportDefinition("generosity", "慷慨", "", "BEACON", 2, Set.of(Tags.AURA), Set.of(), 1.0,
+                List.of(Modifier.flat(StatKeys.FLAG_GENEROSITY, 1, "慷慨"),
+                        new Modifier(StatKeys.AURA_EFFECT, ModType.INCREASED, 0.4, Set.of(), "慷慨")), List.of());
+        final SkillBuild generous = build("frost_aegis", 20, owner, generosity);
         assertTrue(generous.generosity());
-        assertFalse(config.support("aura_effect").supports(config.skill("fireball")), "強效光環只能掛光環");
-        assertFalse(config.support("spell_echo").supports(config.skill("hatred")), "雙詠不能掛光環");
-        assertFalse(config.support("spell_totem").supports(config.skill("hatred")));
-        assertTrue(config.support("increased_area").supports(config.skill("hatred")), "擴散讓隊友的範圍更大");
+        assertFalse(auraEffect.supports(config.skill("fireball")), "強效光環只能掛光環");
+        assertFalse(config.support("spell_echo").supports(config.skill("frost_aegis")), "雙詠不能掛光環");
+        assertFalse(config.support("spell_totem").supports(config.skill("frost_aegis")));
+        assertTrue(config.support("increased_area").supports(config.skill("frost_aegis")), "擴散讓隊友的範圍更大");
     }
 
     @Test
@@ -341,7 +351,7 @@ class AuraWarcryTest {
         // 捷的輔助用在它的效果上：擴散（範圍）、純化（元素）都掛得上隱藏的爆發；強效光環掛不上
         assertTrue(config.support("increased_area").supports(burst));
         assertTrue(config.support("elemental_focus").supports(burst));
-        assertFalse(config.support("aura_effect").supports(burst));
+        assertFalse(config.support("faster_casting").supports(burst), "疾詠不能掛捷（捷的效果是擊殺時觸發）");
         assertFalse(config.support("increased_area").supports(config.skill("default_melee")), "普攻還是不能掛輔助");
         final StatSheet owner = new StatSheet();
         final SkillBuild sub = SkillBuild.of(config, burst, 20, 100, false, List.of(config.support("increased_area")), Set.of(), owner);
@@ -353,45 +363,46 @@ class AuraWarcryTest {
 
     @Test
     void warcriesParseWithBuffDebuffAndExerts() {
-        final SkillDefinition rally = config.skill("rallying_cry");
+        // 2026-10 PoE2 改版：戰吼換成堅壁、焚獄、震地
+        final SkillDefinition rally = config.skill("infernal_cry");
         assertEquals(Mechanic.WARCRY, rally.mechanic());
         assertNotNull(rally.warcry());
         assertTrue(rally.tags().containsAll(Set.of(Tags.WARCRY, Tags.DURATION, Tags.AREA, Tags.COOLDOWN)));
         assertFalse(rally.tags().contains(Tags.SPELL), "戰吼不算法術（2026-10）");
-        assertEquals(10, rally.cooldown(), 1e-9);
+        assertEquals(8, rally.cooldown(), 1e-9);
         assertEquals(3, rally.warcry().exerts());
-        assertEquals(30, rally.warcry().exertMore().at(1), 1e-9);
-        assertEquals(50, rally.warcry().exertMore().at(20), 1e-9);
+        assertEquals(25, rally.warcry().exertMore().at(1), 1e-9);
+        assertEquals(40, rally.warcry().exertMore().at(20), 1e-9);
         assertFalse(rally.warcry().taunt());
         assertEquals(0, rally.warcry().taken().last(), 1e-9);
 
         final StatSheet owner = new StatSheet();
-        final SkillBuild build = build("rallying_cry", 20, owner);
+        final SkillBuild build = build("infernal_cry", 20, owner);
         assertEquals(3, build.exerts());
         final List<Modifier> buff = build.warcryModifiers();
-        assertEquals(2, buff.size());
-        assertEquals(StatKeys.DAMAGE, buff.getFirst().stat());
-        assertEquals(0.30, buff.getFirst().value(), 1e-9);
+        assertEquals(1, buff.size());
+        assertEquals(StatKeys.damageGain(DamageType.FIRE), buff.getFirst().stat());
+        assertEquals(30, buff.getFirst().value(), 1e-9);
         assertEquals(8 * 20, build.durationTicks(rally.warcry().duration()));
 
-        final SkillBuild strong = build("rallying_cry", 20, owner, config.support("warcry_power"), config.support("increased_duration"));
+        final SkillBuild strong = build("infernal_cry", 20, owner, config.support("warcry_power"), config.support("increased_duration"));
         assertEquals(5, strong.exerts(), "強勢戰吼 +2 次");
         assertTrue(strong.cooldownTicks() > build.cooldownTicks(), "冷卻變長");
         assertTrue(strong.durationTicks(rally.warcry().duration()) > build.durationTicks(rally.warcry().duration()), "持久撐更久");
         owner.add(new Modifier(StatKeys.WARCRY_EXERTS, ModType.FLAT, 1, Set.of(Tags.WARCRY), "戰場號令"));
         owner.add(new Modifier(StatKeys.SKILL_COOLDOWN, ModType.INCREASED, -0.15, Set.of(Tags.WARCRY), "戰場號令"));
-        final SkillBuild tree = build("rallying_cry", 20, owner);
+        final SkillBuild tree = build("infernal_cry", 20, owner);
         assertEquals(4, tree.exerts());
-        assertEquals(Math.round(10 * 20 * 0.85), tree.cooldownTicks());
-        assertEquals(0, build("heavy_strike", 20, owner).cooldownTicks(), "戰吼的冷卻減少不影響別的技能");
+        assertEquals(Math.round(8 * 20 * 0.85), tree.cooldownTicks());
+        assertEquals(0, build("boneshatter", 20, owner).cooldownTicks(), "戰吼的冷卻減少不影響別的技能");
 
-        final SkillDefinition enduring = config.skill("enduring_cry");
+        final SkillDefinition enduring = config.skill("fortifying_cry");
         assertEquals(8, enduring.warcry().heal().at(1), 1e-9);
         assertEquals(15, enduring.warcry().heal().at(20), 1e-9);
         assertTrue(enduring.warcry().taunt());
-        final SkillDefinition intimidating = config.skill("intimidating_cry");
-        assertEquals(12, intimidating.warcry().taken().at(1), 1e-9);
-        assertEquals(25, intimidating.warcry().taken().at(20), 1e-9);
+        final SkillDefinition intimidating = config.skill("seismic_cry");
+        assertEquals(10, intimidating.warcry().taken().at(1), 1e-9);
+        assertEquals(20, intimidating.warcry().taken().at(20), 1e-9);
         assertEquals(2, intimidating.warcry().exerts());
         assertFalse(config.support("warcry_power").supports(config.skill("fireball")));
         assertTrue(config.support("cooldown_recovery").supports(rally));
@@ -399,14 +410,14 @@ class AuraWarcryTest {
         assertFalse(config.support("faster_casting").supports(rally), "疾詠要法術");
         assertEquals("要法術技能", config.support("faster_casting").refusal(rally));
         assertFalse(config.support("added_fire").supports(rally), "引火（攻擊或法術）也不行");
-        assertEquals("戰吼技能不行", config.support("power_on_hit").refusal(rally));
+        assertEquals("戰吼技能不行", config.support("spell_totem").refusal(rally));
         assertNull(config.support("warcry_power").refusal(rally));
     }
 
     @Test
     void exertedAttacksMultiplyTheProfileAndCountDown() {
         final StatSheet owner = new StatSheet();
-        final SkillBuild strike = build("heavy_strike", 20, owner);
+        final SkillBuild strike = build("boneshatter", 20, owner);
         SkillRuntime.Exert exert = new SkillRuntime.Exert(2, 50, 100);
         assertTrue(exert.active(10));
         assertFalse(exert.active(100), "時間到了就沒了");
@@ -428,7 +439,7 @@ class AuraWarcryTest {
                 new Modifier(StatKeys.DAMAGE_ADDED_MAX, ModType.FLAT, 22, Set.of(Tags.FIRE), ""),
                 new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 0.16, Set.of(Tags.COLD), ""))));
         assertEquals("增加 25% 光環效果", ModifierText.describe(new Modifier(StatKeys.AURA_EFFECT, ModType.INCREASED, 0.25, Set.of(), "")));
-        assertEquals("減少 10% 光環的魔力保留", ModifierText.describe(new Modifier(StatKeys.AURA_RESERVATION, ModType.INCREASED, -0.10, Set.of(), "")));
+        assertEquals("精魂技能的保留效率增加 10%", ModifierText.describe(new Modifier(StatKeys.AURA_RESERVATION, ModType.INCREASED, -0.10, Set.of(), "")));
         assertEquals("戰吼多強化 2 次攻擊", ModifierText.describe(new Modifier(StatKeys.WARCRY_EXERTS, ModType.FLAT, 2, Set.of(), "")));
         assertEquals("增加 45% 護甲", ModifierText.describe(new Modifier(StatKeys.ARMOUR, ModType.INCREASED, 0.45, Set.of(), "")));
         assertEquals("+16% 火焰抗性", ModifierText.describe(new Modifier(StatKeys.RESIST_FIRE, ModType.FLAT, 16, Set.of(), "")));
@@ -445,9 +456,9 @@ class AuraWarcryTest {
         assertRejected(dir, original.replace("attack: true, ailment: shock }", "attack: true, ailment: soggy }"), "ailment");
         assertRejected(dir, original.replace("life_cost: { per_rage: 0.1 }", "life_cost: { per_rage: 0 }"), "per_rage");
         assertRejected(dir, original.replace("        seconds_per: 0.5\n", "        seconds_per: 0\n"), "seconds_per");
-        assertRejected(dir, original.replace("    cooldown: 10\n    mana: [7, 16]", "    mana: [7, 16]"), "cooldown");
-        assertRejected(dir, original.replace("      reserve: 35\n      radius: 8\n      effects:\n        - { stat: damage.gain.cold",
-                "      reserve: 135\n      radius: 8\n      effects:\n        - { stat: damage.gain.cold"), "reserve");
+        assertRejected(dir, original.replace("    cooldown: 8\n    mana: [7, 16]", "    mana: [7, 16]"), "cooldown");
+        assertRejected(dir, original.replace("      reserve: 30          # 2026-10：25 → 30（照 PoE2 的 Arctic Armour）",
+                "      reserve: 130"), "reserve");
     }
 
     private static void assertRejected(final Path dir, final String content, final String mention) throws IOException {

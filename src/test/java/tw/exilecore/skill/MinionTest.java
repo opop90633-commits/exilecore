@@ -54,35 +54,47 @@ class MinionTest {
 
     @Test
     void summonSkillsParse() {
+        // 2026-10 PoE2：喚屍改成 20 秒的暫時召喚（最多 8–10 隻）；骸骨兵改成精魂召喚（永久）
         final SkillDefinition zombie = config.skill("raise_zombie");
         assertEquals(Mechanic.SUMMON, zombie.mechanic());
         assertNotNull(zombie.summon());
         assertEquals("ZOMBIE", zombie.summon().kind());
         assertTrue(zombie.summon().corpse(), "殭屍要屍體");
-        assertTrue(zombie.summon().permanent());
-        assertEquals(3, zombie.summon().max().intAt(1));
-        assertEquals(5, zombie.summon().max().intAt(20));
+        assertFalse(zombie.summon().permanent());
+        assertEquals(20, zombie.summon().duration(), 1e-9);
+        assertEquals(8, zombie.summon().max().intAt(1));
+        assertEquals(10, zombie.summon().max().intAt(20));
         assertTrue(zombie.tags().contains(Tags.MINION));
         assertTrue(zombie.tags().contains(Tags.MELEE), "召喚物用近戰打：近戰的輔助可以掛");
-        assertFalse(zombie.tags().contains(Tags.DURATION), "永久的沒有持續時間標籤");
+        assertTrue(zombie.tags().contains(Tags.DURATION), "有持續時間：持久輔助可以掛");
         assertFalse(zombie.dealsDamage(), "技能自己不造成傷害");
         assertNull(zombie.damage());
 
         final SkillDefinition skeletons = config.skill("summon_skeletons");
         assertEquals(2, skeletons.summon().count());
-        assertEquals(20, skeletons.summon().duration(), 1e-9);
-        assertTrue(skeletons.tags().contains(Tags.DURATION), "有持續時間：持久輔助可以掛");
+        assertTrue(skeletons.summon().permanent());
+        assertFalse(skeletons.tags().contains(Tags.DURATION), "永久的沒有持續時間標籤");
         assertEquals("IRON_SWORD", skeletons.summon().weapon());
 
         final SkillDefinition spirits = config.skill("raging_spirits");
         assertTrue(spirits.summon().flying());
-        assertEquals(1.0, spirits.conversion().get(DamageType.FIRE), 1e-9, "焚魂全轉火焰");
+        assertEquals(0.7, spirits.conversion().get(DamageType.FIRE), 1e-9, "焚魂七成轉火焰");
         assertEquals(75, spirits.summon().resists().get(DamageType.FIRE), 1e-9);
 
-        final SkillDefinition golem = config.skill("flame_golem");
-        assertTrue(golem.summon().fixedMax());
-        assertEquals(2.0, golem.summon().radius(), 1e-9);
-        assertEquals(4, golem.summon().taunt(), 1e-9);
+        // 魔像拿掉了（2026-10）：固定隻數、會嘲諷的換成狼伴，打中連周圍一起打的是骸骨重卒
+        final SkillDefinition wolf = config.skill("beast_companion");
+        assertTrue(wolf.summon().fixedMax());
+        assertEquals(6, wolf.summon().taunt(), 1e-9);
+        assertEquals("狼", wolf.summon().kindName());
+        assertEquals(2.0, config.skill("skeletal_brute").summon().radius(), 1e-9);
+        // 有一隻在的時候加在主人身上的 buff：現在的技能沒有用到，參數還在
+        final SkillDefinition golem = SkillDefinition.parse("test", tw.exilecore.core.config.YamlNode.load("測試", new java.io.StringReader("""
+                name: 測試
+                type: spell
+                mechanic: summon
+                summon: { kind: IRON_GOLEM, max: 1, fixed_max: true, buff: [ { stat: damage, type: INCREASED, value: 20 } ] }
+                visual: flame_golem
+                """)), SkillConfig.VISUALS);
         assertEquals(1, golem.summon().buff().size());
         assertEquals(StatKeys.DAMAGE, golem.summon().buff().getFirst().stat());
         assertEquals(0.2, golem.summon().buff().getFirst().value(), 1e-9);
@@ -139,21 +151,21 @@ class MinionTest {
         final SupportDefinition damage = config.support("minion_damage");
         final SupportDefinition life = config.support("minion_life");
         final SupportDefinition speed = config.support("minion_speed");
-        final SupportDefinition brutality = config.support("melee_physical");
+        final SupportDefinition rage = config.support("rage");
         final SupportDefinition echo = config.support("spell_echo");
         final SupportDefinition totem = config.support("spell_totem");
         final SupportDefinition duration = config.support("increased_duration");
         assertTrue(damage.supports(config.skill("raise_zombie")));
         assertFalse(damage.supports(config.skill("fireball")), "兇猛召喚只能掛召喚技能");
-        assertTrue(brutality.supports(config.skill("raise_zombie")), "蠻力（近戰物理）可以掛在殭屍上");
+        assertFalse(rage.supports(config.skill("raise_zombie")), "近戰的輔助排除召喚物的不行（蠻力 2026-10 拿掉了）");
         assertFalse(echo.supports(config.skill("raise_zombie")), "雙詠不能掛召喚");
         assertFalse(totem.supports(config.skill("raise_zombie")), "圖騰施法不能掛召喚");
-        assertFalse(duration.supports(config.skill("raise_zombie")), "永久的召喚物沒有持續時間");
-        assertTrue(duration.supports(config.skill("summon_skeletons")));
+        assertFalse(duration.supports(config.skill("summon_skeletons")), "永久的召喚物沒有持續時間");
+        assertTrue(duration.supports(config.skill("raise_zombie")));
 
-        final SkillBuild plain = build("summon_skeletons", 10, owner);
-        final SkillBuild boosted = build("summon_skeletons", 10, owner, damage, life, speed, brutality, totem, echo);
-        assertEquals(4, boosted.supports().size(), "圖騰施法、雙詠不算");
+        final SkillBuild plain = build("raise_zombie", 10, owner);
+        final SkillBuild boosted = build("raise_zombie", 10, owner, damage, life, speed, totem, echo);
+        assertEquals(3, boosted.supports().size(), "圖騰施法、雙詠不算");
         assertNull(boosted.deploy());
         assertFalse(boosted.echo());
         final SummonSpec spec = boosted.definition().summon();
@@ -164,7 +176,7 @@ class MinionTest {
         final StatSheet boostedSheet = MinionSheets.build(spec, base, List.of());
         final double plainDamage = DamageCalculator.expectedOutgoing(plainSheet, plainProfile).total();
         final double boostedDamage = DamageCalculator.expectedOutgoing(boostedSheet, boostedProfile).total();
-        assertEquals(plainDamage * 1.35 * 1.4, boostedDamage, 1e-6, "召喚物傷害 35% 更多 × 蠻力的近戰物理更多 40%");
+        assertEquals(plainDamage * 1.35, boostedDamage, 1e-6, "召喚物傷害 35% 更多");
         final StatSheet effective = boostedProfile.effective(boostedSheet);
         assertEquals(MinionSheets.life(plainProfile.effective(plainSheet)) * 1.4, MinionSheets.life(effective), 1e-6, "召喚物生命 40% 更多");
         assertEquals(1.5, MinionSheets.regenPercent(effective), 1e-9);
@@ -178,15 +190,15 @@ class MinionTest {
     @Test
     void minionCapAndDurationScale() {
         final StatSheet owner = new StatSheet();
-        assertEquals(3, build("raise_zombie", 1, owner).minions());
-        assertEquals(5, build("raise_zombie", 20, owner).minions());
-        assertEquals(20, build("raging_spirits", 20, owner).minions());
-        assertEquals(1, build("flame_golem", 20, owner).minions());
+        assertEquals(8, build("raise_zombie", 1, owner).minions());
+        assertEquals(10, build("raise_zombie", 20, owner).minions());
+        assertEquals(10, build("raging_spirits", 20, owner).minions());
+        assertEquals(1, build("beast_companion", 20, owner).minions());
         owner.add(new Modifier(StatKeys.SKILL_MINIONS, ModType.FLAT, 1, Set.of(Tags.MINION), "不死軍團"));
-        assertEquals(6, build("raise_zombie", 20, owner).minions(), "+1 召喚物數量");
-        assertEquals(1, build("flame_golem", 20, owner).minions(), "魔像固定一尊");
+        assertEquals(11, build("raise_zombie", 20, owner).minions(), "+1 召喚物數量");
+        assertEquals(1, build("beast_companion", 20, owner).minions(), "狼伴固定一隻");
         assertEquals(0, build("fireball", 20, owner).minions());
-        final SkillBuild skeletons = build("summon_skeletons", 20, owner, config.support("increased_duration"));
+        final SkillBuild skeletons = build("raise_zombie", 20, owner, config.support("increased_duration"));
         assertEquals(Math.round(20 * 20 * skeletons.durationScale()), skeletons.durationTicks(skeletons.definition().summon().duration()));
         assertTrue(skeletons.durationScale() > 1.0);
     }
@@ -236,8 +248,15 @@ class MinionTest {
                 dealt += result.total();
             }
         }
-        assertTrue(hits > 1500 && hits < 2000, "命中率大約八到九成：" + hits);
-        assertTrue(dealt / hits > monsters.damageAt(level)[0], "每下至少是同等級怪物的一下");
+        // 2026-10 PoE2 命中公式（命中 × 1.25 ÷ (命中 + 閃避 × 0.3)）：打同等級普通怪幾乎都打得中
+        final double chance = tw.exilecore.stats.Formulas.hitChance(sheet.get(StatKeys.ACCURACY), monster.get(StatKeys.EVASION));
+        assertTrue(chance > 0.95, "命中率：" + chance);
+        assertTrue(hits > 1900, "幾乎都打得中：" + hits);
+        // 2026-10 平衡：殭屍的傷害倍率 0.7 → 0.32，每下是同等級怪物一下的 0.32 倍再扣護甲
+        // （PoE2 的護甲公式：護甲 ÷ (護甲 + 10 × 傷害)，對小的一下很有效，同等級的怪大約擋掉一半）
+        final double scale = zombie.definition().summon().damage();
+        assertTrue(dealt / hits > monsters.damageAt(level)[0] * scale * 0.5 && dealt / hits < monsters.damageAt(level)[1] * scale,
+                "每下大約是同等級怪物一下的 " + scale + " 倍：" + dealt / hits + "／" + java.util.Arrays.toString(monsters.damageAt(level)));
     }
 
     @Test
@@ -246,8 +265,10 @@ class MinionTest {
         Files.copy(DATA.resolve("supports.yml"), dir.resolve("supports.yml"));
         final String original = Files.readString(DATA.resolve("skills.yml"));
         assertRejected(dir, original.replace("kind: ZOMBIE", "kind: CREEPER"), "kind");
-        assertRejected(dir, original.replace("mechanic: summon\n    summon: { kind: ZOMBIE", "mechanic: nova\n    summon: { kind: ZOMBIE"), "summon");
-        assertRejected(dir, original.replace("    cast_time: 0.85\n    mana: [8, 24]", "    damage: [1, 2]\n    damage_types: { physical: 1.0 }\n    cast_time: 0.85\n    mana: [8, 24]"), "damage");
+        assertRejected(dir, original.replace("mechanic: summon\n    # 2026-10 平衡：群體召喚太強，damage 0.7 → 0.32\n    summon: { kind: ZOMBIE",
+                "mechanic: nova\n    summon: { kind: ZOMBIE"), "summon");
+        assertRejected(dir, original.replace("    cast_time: 0.6\n    mana: [6, 18]\n    visual: raise_zombie",
+                "    damage: [1, 2]\n    damage_types: { physical: 1.0 }\n    cast_time: 0.6\n    mana: [6, 18]\n    visual: raise_zombie"), "damage");
     }
 
     private static void assertRejected(final Path dir, final String content, final String mention) throws IOException {

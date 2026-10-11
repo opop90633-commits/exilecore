@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** data/ascendancy.yml：讀得進來、四個試煉一共 8 點、每個職業兩個昇華職業、分支放得進選單；寫錯的檔會被擋下來。 */
+/** data/ascendancy.yml：讀得進來、四個試煉一共 8 點、每個職業兩三個昇華職業、分支放得進選單；寫錯的檔會被擋下來。 */
 class AscendancyConfigTest {
 
     static final Path DATA = Path.of("src/main/resources/data");
@@ -33,6 +33,7 @@ class AscendancyConfigTest {
     static List<String> bossZones;
     static List<String> mods;
     static int levelCap;
+    static MonsterConfig monsters;
 
     @BeforeAll
     static void load() throws IOException {
@@ -50,7 +51,7 @@ class AscendancyConfigTest {
                 bossZones.add(zone.id());
             }
         }
-        final MonsterConfig monsters = new MonsterConfig();
+        monsters = new MonsterConfig();
         monsters.load(DATA);
         mods = new ArrayList<>();
         for (final MonsterConfig.MonsterMod mod : monsters.mods()) {
@@ -91,22 +92,31 @@ class AscendancyConfigTest {
 
     @Test
     void everyClassHasTwoAscendanciesOfEightNotables() {
-        assertEquals(14, config.ascendancies().size(), "七個職業各兩個");
+        // 2026-10 PoE2 改版：每個昇華一棵小樹（四條分支、最多 16 個天賦），每個天賦 1 點；有的職業三個昇華
+        assertEquals(20, config.ascendancies().size(), "八個職業一共二十個");
         for (final String classId : classes) {
-            assertEquals(2, config.forClass(classId).size(), classId);
+            final int count = config.forClass(classId).size();
+            assertTrue(count == 2 || count == 3, classId + " 有 " + count + " 個");
         }
+        assertEquals(3, config.forClass("marauder").size());
+        assertEquals(2, config.forClass("druid").size());
         for (final AscendancyConfig.Ascendancy ascendancy : config.ascendancies()) {
-            assertEquals(8, ascendancy.nodes().size(), ascendancy.id());
+            assertTrue(ascendancy.nodes().size() <= 16, ascendancy.id());
             final List<List<AscendancyConfig.Node>> branches = ascendancy.branches();
-            assertEquals(4, branches.size(), ascendancy.id() + "：四條分支（第四條是異常狀態）");
+            assertEquals(AscendancyConfig.MAX_BRANCHES, branches.size(), ascendancy.id() + "：四條分支");
+            int placed = 0;
             for (final List<AscendancyConfig.Node> branch : branches) {
-                assertEquals(2, branch.size(), ascendancy.id() + "：每條兩個");
+                assertTrue(branch.size() >= 2 && branch.size() <= AscendancyConfig.MAX_DEPTH, ascendancy.id() + "：每條二到四個");
                 assertNull(branch.get(0).requires());
-                assertEquals(branch.get(0).id(), branch.get(1).requires());
+                for (int i = 1; i < branch.size(); i++) {
+                    assertEquals(branch.get(i - 1).id(), branch.get(i).requires());
+                }
+                placed += branch.size();
             }
+            assertEquals(ascendancy.nodes().size(), placed, ascendancy.id() + "：每個天賦都在一條分支上");
             int cost = 0;
             for (final AscendancyConfig.Node node : ascendancy.nodes()) {
-                assertEquals(2, node.cost(), node.id() + "：一個 2 點");
+                assertEquals(1, node.cost(), node.id() + "：一個 1 點");
                 cost += node.cost();
                 for (final Modifier modifier : node.stats()) {
                     assertNull(StatLines.problem(modifier), node.id());
@@ -115,15 +125,6 @@ class AscendancyConfigTest {
                 }
             }
             assertTrue(cost > config.totalPoints(), ascendancy.id() + "：8 點配不完（要選）");
-            boolean ailment = false;
-            for (final AscendancyConfig.Node node : branches.get(3)) {
-                for (final Modifier modifier : node.stats()) {
-                    final String stat = modifier.stat();
-                    ailment |= stat.startsWith("bleed.") || stat.startsWith("poison.") || stat.startsWith("stun.")
-                            || stat.startsWith("electrocute.") || stat.startsWith("avoid.") || stat.equals("ailment.duration");
-                }
-            }
-            assertTrue(ailment, ascendancy.id() + "：第四條分支要跟流血／中毒／暈眩／電擊有關");
             assertFalse(ascendancy.summary().isBlank());
         }
     }
@@ -138,18 +139,19 @@ class AscendancyConfigTest {
         assertEquals("ruins", map.theme());
         assertFalse(map.isFinal());
         assertEquals(ember.lore(), map.lore());
-        assertEquals("爐監・殷燼", map.boss().name());
+        assertEquals("熾爐・殷燼", map.boss().name(), "同一個爐監殷燼，四道門各一個稱號");
         assertTrue(map.boss().named());
         assertEquals(1, map.boss().phases().size());
         assertEquals("SKELETON", map.boss().phases().getFirst().summonType());
         assertEquals(3, map.boss().phases().getFirst().summonCount());
         assertTrue(map.monsters().stream().anyMatch(entry -> entry.id().equals("HUSK")));
-        // 一個比一個難
+        // 一個比一個難（2026-10：生命倍率照 /ec balance 調過，不一定變大；看怪物等級的生命乘上倍率）
         double life = 0;
         double damage = 0;
         for (final AscendancyConfig.Trial trial : config.trials()) {
-            assertTrue(trial.boss().life() > life && trial.boss().damage() > damage, trial.id());
-            life = trial.boss().life();
+            final double effectiveLife = monsters.lifeAt(trial.level()) * trial.boss().life();
+            assertTrue(effectiveLife > life && trial.boss().damage() > damage, trial.id());
+            life = effectiveLife;
             damage = trial.boss().damage();
         }
     }
@@ -169,9 +171,9 @@ class AscendancyConfigTest {
         assertEquals(List.of("+6% 所有元素抗性"), StatLines.describeAll(config.legacy().get("sorceress").getLast().stats()),
                 "元素法師接了原本混沌術士的元素抗性");
         assertEquals(List.of("+12% 混沌抗性"), StatLines.describeAll(config.legacy().get("witch").getLast().stats()));
-        // 原本混沌術士的兩個昇華職業跟著元素法術給了元素法師，混沌術士是新的兩個
-        assertEquals(List.of("starfire", "voidrobe"), config.forClass("sorceress").stream().map(AscendancyConfig.Ascendancy::id).toList());
-        assertEquals(List.of("blightcaller", "bloodmage"), config.forClass("witch").stream().map(AscendancyConfig.Ascendancy::id).toList());
+        // 原本混沌術士的兩個昇華職業跟著元素法術給了元素法師，混沌術士是新的；2026-10 兩邊各多一個
+        assertEquals(List.of("starfire", "voidrobe", "sandsage"), config.forClass("sorceress").stream().map(AscendancyConfig.Ascendancy::id).toList());
+        assertEquals(List.of("blightcaller", "bloodmage", "lich"), config.forClass("witch").stream().map(AscendancyConfig.Ascendancy::id).toList());
     }
 
     @Test

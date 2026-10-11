@@ -39,15 +39,17 @@ public final class BalanceConfig {
     private int itemLevelCap = 84;
     private double treeDamagePerLevel = 2;
     private double treeLifePerLevel = 1;
-    private double attributePerLevel = 0.8;
+    private double attributePerLevel = 0.5;
     private NavigableMap<Integer, Integer> lifeAffixes = new TreeMap<>(Map.of(1, 0, 5, 1, 15, 2, 30, 3));
     private NavigableMap<Integer, Integer> supportSockets = new TreeMap<>(Map.of(1, 2, 15, 3, 30, 4, 45, 5));
     private Build attack = new Build(CharacterClass.MARAUDER, "war_hammer", "boneshatter",
-            List.of(new GearAffix(1, "phys_inc"), new GearAffix(1, "added_phys"), new GearAffix(5, "added_phys"), new GearAffix(10, "added_phys")),
+            List.of(new GearAffix(1, "phys_inc"), new GearAffix(1, "added_phys_local"), new GearAffix(5, "added_phys"), new GearAffix(10, "added_phys")),
             List.of("added_fire", "faster_attacks", "heft", "elemental_focus"));
     private Build spell = new Build(CharacterClass.SORCERESS, "wand", "fireball",
-            List.of(new GearAffix(1, "spell_inc"), new GearAffix(1, "spell_added_fire"), new GearAffix(5, "spell_added_fire"),
-                    new GearAffix(5, "spell_inc"), new GearAffix(10, "spell_added_fire")),
+            // 跟出貨的 balance.yml 一樣（2026-10 PoE2 詞綴：沒有「法術附加傷害」，改成增加、額外獲得與 +技能等級）
+            List.of(new GearAffix(1, "spell_inc_weapon_wand"), new GearAffix(1, "fire_inc_weapon_wand"), new GearAffix(5, "spell_inc"),
+                    new GearAffix(5, "fire_inc"), new GearAffix(10, "extra_fire"), new GearAffix(5, "skill_level_spell"),
+                    new GearAffix(10, "skill_level_spell_amulet")),
             List.of("faster_casting", "faster_projectiles", "concentrated_effect", "elemental_focus", "pierce"));
 
     public void load(final Path dataFolder) throws IOException {

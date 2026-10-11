@@ -26,7 +26,7 @@ class DamageCalculatorTest {
         final StatSheet attacker = attackerWithSword()
                 .add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 1.0, Set.of(Tags.PHYSICAL), "天賦")); // 10 → 20
         final StatSheet defender = new StatSheet()
-                .setBase(StatKeys.ARMOUR, 100)   // 100 / (100 + 5×20) = 50% 減免
+                .setBase(StatKeys.ARMOUR, 200)   // 200 / (200 + 10×20) = 50% 減免
                 .setBase(StatKeys.RESIST_MAX, 75);
 
         final HitResult result = DamageCalculator.calculate(attacker, SkillProfile.defaultAttack(Set.of(Tags.SWORD)), defender, 4, new Random(1));
@@ -40,7 +40,7 @@ class DamageCalculatorTest {
     }
 
     @Test
-    void elementalDamageUsesResistanceAndChaosBypassesEnergyShield() {
+    void elementalDamageUsesResistanceAndChaosDealsDoubleToEnergyShield() {
         final StatSheet attacker = attackerWithSword()
                 .add(new Modifier(StatKeys.DAMAGE_ADDED_MIN, ModType.FLAT, 100, Set.of(Tags.ATTACK, Tags.FIRE), "戒指"))
                 .add(new Modifier(StatKeys.DAMAGE_ADDED_MAX, ModType.FLAT, 100, Set.of(Tags.ATTACK, Tags.FIRE), "戒指"))
@@ -56,8 +56,13 @@ class DamageCalculatorTest {
         assertEquals(25, result.dealt().get(DamageType.FIRE), 1e-9);      // 100 × (1 − 0.75)
         assertEquals(60, result.dealt().get(DamageType.CHAOS), 1e-9);     // 50 × (1 + 0.20)
         assertEquals(10, result.dealt().get(DamageType.PHYSICAL), 1e-9);  // 無護甲
-        assertEquals(35, result.esDamage(), 1e-9);                        // 火 + 物理進護盾
-        assertEquals(60, result.lifeDamage(), 1e-9);                      // 混沌直接扣生命
+        assertEquals(155, result.esDamage(), 1e-9);                       // 火 + 物理 + 混沌 × 2 進護盾（PoE2）
+        assertEquals(0, result.lifeDamage(), 1e-9);                       // 護盾夠厚，生命不扣
+
+        // 護盾不夠：混沌以兩倍扣護盾，剩下的照原值扣生命
+        final HitResult thin = DamageCalculator.calculate(attacker, SkillProfile.defaultAttack(Set.of()), defender, 55, new Random(2));
+        assertEquals(55, thin.esDamage(), 1e-9);                          // 火 25 + 物理 10 + 混沌 10 × 2
+        assertEquals(50, thin.lifeDamage(), 1e-9);                        // 混沌剩 50
     }
 
     @Test
@@ -76,7 +81,7 @@ class DamageCalculatorTest {
     }
 
     @Test
-    void blockChanceIsCappedAtSeventyFivePercent() {
+    void blockChanceIsCappedAtFiftyPercent() {
         final StatSheet attacker = attackerWithSword();
         final StatSheet defender = new StatSheet().setBase(StatKeys.BLOCK_CHANCE, 140).setBase(StatKeys.RESIST_MAX, 75);
         final Random random = new Random(5);
@@ -86,9 +91,9 @@ class DamageCalculatorTest {
                 blocked++;
             }
         }
-        // 堆到 140% 也只擋 75%：4000 次大約 3000 次
-        assertEquals(75, StatKeys.BLOCK_CAP, 1e-9);
-        assertTrue(blocked > 2850 && blocked < 3150, "擋下 " + blocked);
+        // 堆到 140% 也只擋 50%（PoE2）：4000 次大約 2000 次
+        assertEquals(50, StatKeys.BLOCK_CAP, 1e-9);
+        assertTrue(blocked > 1850 && blocked < 2150, "擋下 " + blocked);
     }
 
     @Test
@@ -109,7 +114,7 @@ class DamageCalculatorTest {
 
     @Test
     void formulas() {
-        assertEquals(0.5, Formulas.armourReduction(100, 20), 1e-9);
+        assertEquals(0.5, Formulas.armourReduction(200, 20), 1e-9);
         assertEquals(Formulas.MAX_ARMOUR_REDUCTION, Formulas.armourReduction(1_000_000, 1), 1e-9);
         assertEquals(1.0, Formulas.hitChance(100, 0), 1e-9);
         assertEquals(13, Formulas.attackIntervalTicks(1.55));

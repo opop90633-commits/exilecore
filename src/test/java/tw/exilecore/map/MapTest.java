@@ -367,11 +367,12 @@ class MapTest {
 
     @Test
     void uniquesLoadAndRoll() {
-        assertEquals(37, repository.uniques().size());
+        assertEquals(88, repository.uniques().size(), "2026-10 照 PoE2 重做、加了很多傳奇（退役的不算）");
         final ItemData dropped = MapDrops.unique(generator, "final", 68, new Random(5));
         assertNotNull(dropped);
         assertEquals(Rarity.UNIQUE, dropped.rarity());
-        assertTrue(java.util.Set.of("sky_heart", "star_forge").contains(dropped.unique()), "終局掉的是終局的傳奇");
+        assertTrue(java.util.Set.of("celestial_pivot", "meteor_anvil").contains(dropped.unique()), "終局掉的是終局的傳奇（2026-10：天穹之心、星鑄退役，換成新的兩件）");
+        assertTrue(repository.retiredUnique("sky_heart"), "退役的傳奇定義還留著，舊物品照常生效");
         final ItemData heart = generator.generateUnique(repository.unique("sky_heart"), 68, new Random(5));
         assertEquals("sky_heart", heart.unique());
         assertEquals("天穹之心", heart.name());
@@ -393,9 +394,9 @@ class MapTest {
         assertNotNull(MapDrops.unique(generator, "map_boss", 61, new Random(1)));
         assertNull(MapDrops.unique(generator, "nobody", 61, new Random(1)));
         // 其他終局 Boss 各自有自己的那件（掉不掉看 drops.final_unique_chance，不是必掉）
-        assertEquals("frost_crown", MapDrops.unique(generator, "frost_throne", 68, new Random(2)).unique());
-        assertEquals("ferryman_toll", MapDrops.unique(generator, "bone_throne", 68, new Random(2)).unique());
-        assertEquals("ember_bulwark", MapDrops.unique(generator, "ember_citadel", 68, new Random(2)).unique());
+        assertEquals("rime_halo", MapDrops.unique(generator, "frost_throne", 68, new Random(2)).unique());
+        assertEquals("bone_cinch", MapDrops.unique(generator, "bone_throne", 68, new Random(2)).unique());
+        assertEquals("molten_aegis", MapDrops.unique(generator, "ember_citadel", 68, new Random(2)).unique());
     }
 
     @Test
@@ -614,8 +615,8 @@ class MapTest {
         assertEquals(0.05, config.drops().namedUniqueChance(), 1e-9, "具名 Boss 自己那件也是 5%");
         assertEquals(MapConfig.DEFAULT_BOSS_UNIQUE_CHANCE, config.drops().bossUniqueChance(), 1e-12);
         assertEquals(0.01, MapConfig.DEFAULT_UNIQUE_CHANCE, 1e-12, "地圖事件 1%（2026-10 從 2% 調低）");
-        assertEquals(0.25, config.drops().finalCommonChance(), 1e-9, "終局另外算：共通傳奇照舊 25%");
-        assertEquals(0.02, config.drops().finalSupportChance(), 1e-9, "終局專屬輔助寶石 2%");
+        assertEquals(0.10, config.drops().finalCommonChance(), 1e-9, "終局另外算：共通傳奇 10%（2026-10 從 25% 調低）");
+        assertEquals(0.01, config.drops().finalSupportChance(), 1e-9, "終局專屬輔助寶石 1%（2026-10 從 2% 調低）");
         // 設定檔的字面值寫對了（0 = 永遠不掉、1 = 必掉都行，夾在 0–1）
         assertTrue(config.drops().finalUniqueChance() > 0 && config.drops().finalUniqueChance() < 1);
     }

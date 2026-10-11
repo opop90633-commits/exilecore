@@ -52,9 +52,10 @@ class SkillLevelBonusTest {
 
         assertEquals(22, build("fireball", 20, 100, levels(2, Tags.SPELL, Tags.FIRE)).level(), "+2 火焰法術技能等級");
         assertEquals(20, build("spark", 20, 100, levels(2, Tags.SPELL, Tags.FIRE)).level(), "火花是閃電，不吃火焰法術的等級");
-        assertEquals(21, build("heavy_strike", 20, 100, levels(1)).level(), "沒寫標籤 = 全部技能");
-        assertEquals(20, build("heavy_strike", 20, 100, levels(1, Tags.SPELL)).level(), "攻擊不吃法術技能等級");
-        assertEquals(SkillBuild.MAX_EFFECTIVE_LEVEL, build("fireball", 20, 100, levels(10)).level(), "最高 25 級");
+        assertEquals(21, build("boneshatter", 20, 100, levels(1)).level(), "沒寫標籤 = 全部技能");
+        assertEquals(20, build("boneshatter", 20, 100, levels(1, Tags.SPELL)).level(), "攻擊不吃法術技能等級");
+        assertEquals(30, build("fireball", 20, 100, levels(10)).level());
+        assertEquals(SkillBuild.MAX_EFFECTIVE_LEVEL, build("fireball", 20, 100, levels(30)).level(), "最高 40 級（2026-10）");
 
         // 普攻不吃
         final SkillBuild basic = SkillBuild.of(config, config.skill(SkillConfig.DEFAULT_WAND), 1, 100, true, List.of(), Set.of(Tags.WAND),
@@ -80,10 +81,10 @@ class SkillLevelBonusTest {
         assertEquals(1.0 + SkillConfig.DEFAULT_EXTRA_LEVEL_DAMAGE / 100.0, config.extraLevelGrowth(), 1e-9);
 
         // 攻擊的傷害效益照 1 → 20 級的趨勢往上加
-        final double effectiveness20 = build("heavy_strike", 20, 100, new StatSheet()).profile().effectiveness();
-        final double effectiveness21 = build("heavy_strike", 20, 100, levels(1)).profile().effectiveness();
+        final double effectiveness20 = build("boneshatter", 20, 100, new StatSheet()).profile().effectiveness();
+        final double effectiveness21 = build("boneshatter", 20, 100, levels(1)).profile().effectiveness();
         assertTrue(effectiveness21 > effectiveness20);
-        final Scaled scaled = config.skill("heavy_strike").effectiveness();
+        final Scaled scaled = config.skill("boneshatter").effectiveness();
         assertEquals(scaled.last() + (scaled.last() - scaled.first()) / 19.0, effectiveness21, 1e-9);
 
         // 往外推不會把正的數值推成負的

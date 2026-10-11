@@ -84,7 +84,7 @@ class OwnNamesTest {
         final Map<CharacterClass, String> hints = Map.of(
                 CharacterClass.MARAUDER, "甲", CharacterClass.MERCENARY, "弩", CharacterClass.HUNTRESS, "矛",
                 CharacterClass.RANGER, "弓", CharacterClass.MONK, "棍", CharacterClass.SORCERESS, "元素",
-                CharacterClass.WITCH, "混沌");
+                CharacterClass.WITCH, "混沌", CharacterClass.DRUID, "獸"); // 2026-10 德魯伊：獸魂符、變身成野獸
         for (final CharacterClass value : CharacterClass.values()) {
             final String hint = hints.get(value);
             assertTrue(hint != null && value.displayName().contains(hint), value.id() + " 的名字「" + value.displayName() + "」要看得出玩法（" + hint + "）");

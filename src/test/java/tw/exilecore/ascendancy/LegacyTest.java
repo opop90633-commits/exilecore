@@ -32,7 +32,7 @@ class LegacyTest {
         return type == null ? classId : type.displayName();
     }
 
-    /** 某個職業的那一筆（照 legacy 的順序：重甲鬥士、重弩手、長矛獵手、弓箭手、棍僧、元素法師、混沌術士）。 */
+    /** 某個職業的那一筆（照 legacy 的順序：重甲鬥士、重弩手、長矛獵手、弓箭手、棍僧、元素法師、混沌術士、德魯伊）。 */
     static Legacy.Bonus of(final List<Legacy.Bonus> bonuses, final String classId) {
         final List<String> order = List.copyOf(config.legacy().keySet());
         return bonuses.get(order.indexOf(classId));
@@ -45,7 +45,7 @@ class LegacyTest {
                 new Legacy.Member("marauder", "小蠻", 70),
                 new Legacy.Member("marauder", "大蠻", 92),
                 new Legacy.Member("witch", "小巫", 59)));
-        assertEquals(7, bonuses.size(), "七個職業各一筆");
+        assertEquals(8, bonuses.size(), "八個職業各一筆");
         final Legacy.Bonus marauder = of(bonuses, "marauder");
         assertEquals("大蠻", marauder.best().name(), "兩個重甲鬥士只算高的那個");
         assertEquals(90, marauder.tier().level());

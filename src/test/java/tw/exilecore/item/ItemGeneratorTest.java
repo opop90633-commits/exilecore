@@ -44,17 +44,19 @@ class ItemGeneratorTest {
      * 2026-10：沒人用的微光石、添輝石、礪鋒石、甲冑殘片減半（品質通貨變得比至臻石少）。
      * 2026-10 第二次：小伺服器沒有交易，至臻石 1000 → 400、豐饒石 570 → 300、小鑿星石 160 → 60
      * （至臻石變得比品質通貨少；神聖大約比崇高少 27 倍）。
+     * 2026-10 第三、四次（照 100 人伺服器調高價通貨）：至臻石 400 → 250 → 80、亂流石 170 → 55、湮滅石 13 → 4、神諭石 15 → 10 → 2、
+     * 恩澤石 55 → 25、小鑿星石 60 → 24、鑿星石 30 → 9、僥倖石 22 → 9（至臻石變得比豐饒石、星火石少，湮滅石比神諭石常見；神聖比崇高少 40 倍）。
      */
     @Test
     void currencyDropRatesFollowPoe2() {
         assertEquals(1500, currencies.get("glimmer_orb").dropWeight());
         assertEquals(1250, currencies.get("lustre_orb").dropWeight());
         assertEquals(750, currencies.get("whetstone").dropWeight());
-        assertEquals(400, currencies.get("zenith_orb").dropWeight());
+        assertEquals(80, currencies.get("zenith_orb").dropWeight());
         assertEquals(300, currencies.get("bounty_orb").dropWeight());
-        assertEquals(60, currencies.get("lesser_socket_orb").dropWeight());
-        final List<String> commonToRare = List.of("glimmer_orb", "lustre_orb", "whetstone", "zenith_orb", "bounty_orb",
-                "spark_orb", "turmoil_orb", "chance_orb", "oracle_orb", "annul_orb", "greater_socket_orb");
+        assertEquals(24, currencies.get("lesser_socket_orb").dropWeight());
+        final List<String> commonToRare = List.of("glimmer_orb", "lustre_orb", "whetstone", "bounty_orb", "spark_orb",
+                "zenith_orb", "turmoil_orb", "chance_orb", "annul_orb", "oracle_orb", "greater_socket_orb");
         int previous = Integer.MAX_VALUE;
         for (final String id : commonToRare) {
             final int weight = currencies.get(id).dropWeight();
@@ -63,7 +65,7 @@ class ItemGeneratorTest {
         }
         assertEquals(currencies.get("whetstone").dropWeight(), currencies.get("armour_scrap").dropWeight());
         final double exaltedPerDivine = (double) currencies.get("zenith_orb").dropWeight() / currencies.get("oracle_orb").dropWeight();
-        assertTrue(exaltedPerDivine > 20 && exaltedPerDivine < 35, "崇高：神聖 " + exaltedPerDivine);
+        assertTrue(exaltedPerDivine > 30 && exaltedPerDivine < 50, "崇高：神聖 " + exaltedPerDivine);
         // 掉落等級：蛻變、增幅 1；崇高、富豪、點金 5；混沌、機會 12；神聖、剝離 35
         for (final String id : List.of("glimmer_orb", "lustre_orb")) {
             assertEquals(1, currencies.get(id).dropLevel(), id);
@@ -81,11 +83,17 @@ class ItemGeneratorTest {
 
     @Test
     void dataFilesLoad() {
-        assertEquals(65, repository.baseCount(), "47 件裝備（含弩、長棍、矛與纏布防具）+ 14 張地圖 + 4 種珠寶");
+        // 2026-10 PoE2 改版：裝備換成照 PoE2 分階的基底，舊的（retired）留著讓舊物品照常能用；藥劑、護符的基底也算在裡面
+        assertEquals(940, repository.baseCount(), "現役 168 + 退役 737 + 藥劑與護符 35");
+        assertEquals(168, repository.bases().size(), "現役的裝備基底（含 14 張地圖、8 種珠寶）");
+        assertEquals(14, repository.bases().stream().filter(ItemBase::isMap).count());
+        assertEquals(8, repository.bases().stream().filter(ItemBase::isJewel).count(), "4 種珠寶 + 4 種半徑珠寶");
+        assertEquals(940 - 168 - 35, repository.baseCount() - repository.bases().size() - repository.flaskLikeBases().size());
         assertTrue(repository.affixCount() >= 30, "詞綴數 " + repository.affixCount());
-        assertEquals(19 + 12 + 7 + 6 + 4 + 20 + 3, currencies.size(),
-                "12 種改造通貨 + 3 種鑿星石 + 星盤刻刀 + 天穹碎片 + 深淵星核 + 僥倖石，加上地圖機制的 12 星魄、7 催化劑、6 星籤、4 蒸餾情緒，"
-                        + "還有未切割寶石（技能 1–20 級、輔助 1–3 階，2026-10 算通貨）");
+        assertEquals(33 + 12 + 10 + 6 + 4 + 21 + 3, currencies.size(),
+                "12 種改造通貨 + 3 種鑿星石 + 星盤刻刀 + 天穹碎片 + 僥倖石 + 6 種符文 + 2 種開服活動素材 + 傳奇兌換券 + 劫盜 6 種（含深淵星核），"
+                        + "加上地圖機制的 12 星魄、10 催化劑、6 星籤、4 蒸餾情緒，"
+                        + "還有未切割寶石（技能 1–21 級、輔助 1–3 階，2026-10 算通貨）");
         // 鑿星石：開技能的第 3、4、5 個輔助孔，不能用在裝備上，高階的要高等級的怪才掉
         int previousLevel = 0;
         for (final String id : java.util.List.of("lesser_socket_orb", "socket_orb", "greater_socket_orb")) {
@@ -98,17 +106,18 @@ class ItemGeneratorTest {
         assertEquals(3, currencies.get("lesser_socket_orb").sockets());
         assertEquals(5, currencies.get("greater_socket_orb").sockets());
         assertTrue(currencies.get("greater_socket_orb").dropLevel() > 60, "大鑿星石只在地圖掉（劇情世界最高 60 級）");
-        assertFalse(CurrencyOperation.SKILL_SOCKET.canApply(generator.generate(repository.base("short_sword"),
+        assertFalse(CurrencyOperation.SKILL_SOCKET.canApply(generator.generate(repository.base("mace1_26"),
                 tw.exilecore.item.Rarity.NORMAL, 1, new Random(1)), generator), "鑿星石不能用在裝備上");
         // 鑑定卷軸只跟鑑定師領，不會掉
         final CurrencyType scroll = currencies.firstWith(CurrencyOperation.IDENTIFY).orElseThrow();
         assertEquals("identify_scroll", scroll.id());
         assertEquals(0, scroll.dropWeight());
+        assertNotNull(repository.base("short_sword"), "退役的基底定義還在（舊物品照常能用）");
+        assertTrue(repository.retiredBase("short_sword"));
+        assertNotNull(repository.affix("life_flat"));
         for (final CurrencyType type : currencies.all()) {
             assertFalse(type.flavor().isBlank(), type.id() + " 沒有世界觀描述（flavor）");
         }
-        assertNotNull(repository.base("short_sword"));
-        assertNotNull(repository.affix("life_flat"));
     }
 
     @Test
@@ -183,7 +192,7 @@ class ItemGeneratorTest {
         for (int i = 0; i < 2000; i++) {
             final ItemData data = generator.generate(base, Rarity.RARE, 80, random);
             for (final RolledAffix rolled : data.affixes()) {
-                if (rolled.id().equals("life_flat")) {
+                if (rolled.id().equals("life_flat_body")) { // 2026-10 PoE2：胸甲的生命詞綴是 life_flat_body（13 階）
                     if (rolled.tier() == 1) {
                         t1++;
                     } else if (rolled.tier() == 6) {
@@ -332,15 +341,16 @@ class ItemGeneratorTest {
         final CurrencyType chance = currencies.get("chance_orb");
         assertEquals(CurrencyOperation.CHANCE, chance.operation());
         assertEquals(0.1, chance.success(), 1e-9);
-        final ItemData ring = generator.generate(repository.base("coral_ring"), Rarity.NORMAL, 60, new Random(3));
-        assertTrue(chance.canApply(ring, generator), "潮珊指環有能用僥倖石做出來的傳奇");
-        final ItemData lowRing = generator.generate(repository.base("coral_ring"), Rarity.NORMAL, 59, new Random(3));
+        // 2026-10 PoE2 改版：潮珊指環、天穹之心退役；勁擊指環有赤紋之戒（60 級，僥倖石做得出來）
+        final ItemData ring = generator.generate(repository.base("jring_16"), Rarity.NORMAL, 60, new Random(3));
+        assertTrue(chance.canApply(ring, generator), "勁擊指環有能用僥倖石做出來的傳奇");
+        final ItemData lowRing = generator.generate(repository.base("jring_16"), Rarity.NORMAL, 59, new Random(3));
         assertFalse(chance.canApply(lowRing, generator), "物品等級不夠（傳奇 60 級才有）");
-        final ItemData amulet = generator.generate(repository.base("jade_amulet"), Rarity.NORMAL, 60, new Random(3));
-        assertFalse(chance.canApply(amulet, generator), "天穹之心是終局 Boss 專屬，做不出來");
-        final ItemData magic = generator.generate(repository.base("coral_ring"), Rarity.MAGIC, 60, new Random(3));
+        final ItemData amulet = generator.generate(repository.base("jamulet_09"), Rarity.NORMAL, 60, new Random(3));
+        assertFalse(chance.canApply(amulet, generator), "天樞墜是終局 Boss 專屬，做不出來");
+        final ItemData magic = generator.generate(repository.base("jring_16"), Rarity.MAGIC, 60, new Random(3));
         assertFalse(chance.canApply(magic, generator), "只能用在普通物品");
-        final ItemData starter = generator.generate(repository.base("coral_ring"), Rarity.NORMAL, 60, new Random(3));
+        final ItemData starter = generator.generate(repository.base("jring_16"), Rarity.NORMAL, 60, new Random(3));
         starter.markStarter();
         assertFalse(chance.canApply(starter, generator), "新手裝備不行");
         // 成功：還是同一件物品（UUID、物品等級不變），變成傳奇、已鑑定

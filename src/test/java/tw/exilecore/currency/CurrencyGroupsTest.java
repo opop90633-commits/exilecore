@@ -31,10 +31,10 @@ class CurrencyGroupsTest {
         assertEquals(CurrencyGroups.Group.MECHANIC, CurrencyGroups.of(currencies.get("catalyst_resist")));
         assertEquals(CurrencyGroups.Group.MECHANIC, CurrencyGroups.of(currencies.get("omen_sinistral")));
         assertEquals(CurrencyGroups.Group.MECHANIC, CurrencyGroups.of(currencies.get("distilled_ire")));
-        // 未切割寶石（2026-10 算通貨）：技能寶石 1–20 級、輔助寶石 1–3 階各一種
+        // 未切割寶石（2026-10 算通貨）：技能寶石 1–21 級、輔助寶石 1–3 階各一種
         assertEquals(CurrencyGroups.Group.GEM, CurrencyGroups.of(currencies.get("uncut_skill_1")));
         assertEquals(CurrencyGroups.Group.GEM, CurrencyGroups.of(currencies.get("uncut_support_3")));
-        assertEquals(23, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.GEM).size());
+        assertEquals(24, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.GEM).size());
         // 一打開先看有東西的那組；都沒有看一般通貨
         final Map<String, Integer> held = Map.of("distilled_guilt", 3);
         assertEquals(CurrencyGroups.Group.MECHANIC, CurrencyGroups.first(currencies.all(), type -> held.getOrDefault(type.id(), 0)));

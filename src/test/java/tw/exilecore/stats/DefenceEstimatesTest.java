@@ -13,8 +13,8 @@ class DefenceEstimatesTest {
         // 怪物一下 80–120（平均 100）、命中 500、閃避 400；角色護甲 1000、閃避 2000、命中 600
         final DefenceEstimates e = DefenceEstimates.of(80, 120, 500, 400, 1000, 2000, 600);
         assertEquals(100, e.monsterHit(), 1e-9);
-        assertEquals(1000.0 / (1000 + 5 * 100), e.armourReduction(), 1e-9, "護甲 ÷ (護甲 + 5 × 傷害)");
-        assertEquals(1000.0 / (1000 + 5 * 300), e.armourReductionBigHit(), 1e-9);
+        assertEquals(1000.0 / (1000 + 10 * 100), e.armourReduction(), 1e-9, "護甲 ÷ (護甲 + 10 × 傷害)");
+        assertEquals(1000.0 / (1000 + 10 * 300), e.armourReductionBigHit(), 1e-9);
         assertTrue(e.armourReductionBigHit() < e.armourReduction(), "大的一下減得比較少");
         assertEquals(1 - Formulas.hitChance(500, 2000), e.evadeChance(), 1e-9);
         assertEquals(Formulas.hitChance(600, 400), e.hitChance(), 1e-9);

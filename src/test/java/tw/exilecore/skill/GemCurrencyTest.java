@@ -24,7 +24,7 @@ class GemCurrencyTest {
 
     @Test
     void currencyIdsRoundTrip() {
-        for (int level = 1; level <= SkillLoadout.MAX_LEVEL; level++) {
+        for (int level = 1; level <= SkillLoadout.GEM_CAP; level++) { // 2026-10：最高 Lv.21（劫盜大金庫）
             final GemData gem = GemData.uncutSkill(level);
             assertEquals("uncut_skill_" + level, gem.currencyId());
             assertEquals(Optional.of(gem), GemData.fromCurrencyId(gem.currencyId()));
@@ -35,7 +35,7 @@ class GemCurrencyTest {
             assertEquals(Optional.of(gem), GemData.fromCurrencyId(gem.currencyId()));
         }
         assertNull(GemData.support("fork").currencyId(), "切好的輔助寶石不是通貨");
-        for (final String bad : new String[] {"uncut_skill_0", "uncut_skill_21", "uncut_skill_05", "uncut_skill_x", "uncut_support_4",
+        for (final String bad : new String[] {"uncut_skill_0", "uncut_skill_22", "uncut_skill_05", "uncut_skill_x", "uncut_support_4",
                 "uncut_skill_", "glimmer_orb"}) {
             assertTrue(GemData.fromCurrencyId(bad).isEmpty(), bad);
         }
@@ -49,7 +49,7 @@ class GemCurrencyTest {
         final EconomyConfig economy = new EconomyConfig();
         economy.load(DATA);
         long previous = 0;
-        for (int level = 1; level <= SkillLoadout.MAX_LEVEL; level++) {
+        for (int level = 1; level <= SkillLoadout.GEM_CAP; level++) { // 2026-10：最高 Lv.21（劫盜大金庫）
             final GemData gem = GemData.uncutSkill(level);
             final CurrencyType type = currencies.get(gem.currencyId());
             assertNotNull(type, gem.currencyId());

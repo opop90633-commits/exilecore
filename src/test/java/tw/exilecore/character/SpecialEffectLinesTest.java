@@ -25,7 +25,7 @@ class SpecialEffectLinesTest {
                 .add(Modifier.flat(StatKeys.SKILL_LEVEL, 1, "天穹之心"))
                 .add(new Modifier(StatKeys.SKILL_LEVEL, ModType.FLAT, 2, Set.of(Tags.SPELL, Tags.FIRE), "焚城"))
                 .add(Modifier.flat(StatKeys.FLAG_CHAOS_IMMUNE, 1, "空殼"));
-        assertEquals(List.of("+1 全部技能等級", "+2 火焰法術技能等級", "擊殺時回復 5% 最大生命", "免疫混沌傷害（最大生命 1）"),
+        assertEquals(List.of("+1 全部技能等級", "+2 火焰法術技能等級", "擊殺時回復 5% 最大生命", "無垢之軀：免疫混沌傷害，最大生命變成 1"),
                 SpecialEffectLines.of(sheet));
     }
 

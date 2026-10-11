@@ -249,6 +249,7 @@ rune_iron:
   drop_weight: 25
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 增加 15% 物理攻擊傷害；防具、副手 +25 最大生命。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+  flavor: "刻在老兵盾牌背面的記號，摸起來還帶著鐵鏽味。"
 
 rune_ember:
   name: 焰紋符文
@@ -260,6 +261,7 @@ rune_ember:
   drop_weight: 25
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 物理傷害的 10% 額外附加為火焰；防具、副手 +12% 火焰抗性。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+  flavor: "紋路裡封著一小撮餘燼，夜裡會自己亮起來。"
 
 rune_frost:
   name: 霜紋符文
@@ -271,6 +273,7 @@ rune_frost:
   drop_weight: 25
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 物理傷害的 10% 額外附加為冰冷；防具、副手 +12% 冰冷抗性。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+  flavor: "放在掌心不會融，只會讓掌心慢慢結霜。"
 
 rune_storm:
   name: 雷紋符文
@@ -282,6 +285,7 @@ rune_storm:
   drop_weight: 25
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 物理傷害的 10% 額外附加為閃電；防具、副手 +12% 閃電抗性。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+  flavor: "靠近耳邊，聽得見很遠很遠的雷聲。"
 
 rune_mind:
   name: 慧光符文
@@ -293,6 +297,7 @@ rune_mind:
   drop_weight: 25
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 增加 15% 法術傷害；防具、副手 +20 最大魔力。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+  flavor: "星象師的筆跡，看久了會想起本來不知道的事。"
 
 rune_swift:
   name: 疾風符文
@@ -304,6 +309,7 @@ rune_swift:
   drop_weight: 25
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 增加 6% 攻擊速度；防具、副手 +10 敏捷。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+  flavor: "從風裡撿回來的羽紋，輕得像隨時會飛走。"
 
 chisel:
   name: 星盤刻刀

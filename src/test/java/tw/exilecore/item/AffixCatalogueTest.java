@@ -60,7 +60,9 @@ class AffixCatalogueTest {
         for (final DamageType type : DamageType.values()) {
             if (type != DamageType.PHYSICAL) {
                 stats.add(StatKeys.damageGain(type));
+                stats.add(StatKeys.resistMax(type)); // 2026-10：某一種元素的抗性上限（PoE2 珠寶、詞綴）
             }
+            stats.add(StatKeys.damageExtra(type)); // 2026-10：「獲得 x% 傷害為額外…傷害」
         }
         for (final String charge : ChargeConfig.parse(YamlNode.load(DATA.resolve(ChargeConfig.FILE))).keySet()) {
             stats.add(StatKeys.chargeChance(charge));
@@ -68,7 +70,25 @@ class AffixCatalogueTest {
             stats.add(StatKeys.chargeMax(charge));
         }
         stats.addAll(LocalMods.KNOWN);
+        // 2026-10 新的引擎屬性鍵（引擎照字串組出來讀的）：自己身上某種異常的持續時間（AilmentService）、傷害轉換、
+        // 臨在的抗性降低（Presence）、護符欄位（CharmService）、揭露詞綴的幅度（ItemStats）
+        for (final String ailment : List.of("ignite", "chill", "freeze", "shock", "bleed", "poison")) {
+            stats.add(StatKeys.SELF_AILMENT_DURATION + "." + ailment);
+        }
+        for (final DamageType type : DamageType.values()) {
+            stats.add(StatKeys.damageConvert(type));
+            if (type != DamageType.PHYSICAL) {
+                stats.add(StatKeys.PRESENCE_RESIST + type.tag());
+            }
+        }
+        stats.add(tw.exilecore.flask.CharmService.STAT_SLOTS);
+        stats.add(ItemStats.UNVEILED_MAGNITUDE);
+        // 2026-10：對身上有某種異常的敵人（damage.vs_chilled…，CombatListener.ailmentWord）
+        for (final String ailment : List.of("chilled", "frozen", "ignited", "shocked", "poisoned", "bleeding")) {
+            stats.add(StatKeys.DAMAGE_VS_AILMENT + ailment);
+        }
         tags = constants(Tags.class);
+        tags.add("curse"); // 2026-10：詛咒技能的標籤（SkillDefinition 給範圍印記加的，Tags 沒有常數）
     }
 
     private static Set<String> constants(final Class<?> type) throws IllegalAccessException {
@@ -86,7 +106,9 @@ class AffixCatalogueTest {
     }
 
     private static boolean isMapAffix(final Affix affix) {
-        return affix.spawnTags().contains("map");
+        // 停用的地圖詞綴（2026-10：換成 PoE2 的換界石詞綴池）spawn_tags 是 [retired]，看代號
+        return affix.spawnTags().contains("map")
+                || affix.spawnTags().contains(ItemRepository.RETIRED_TAG) && affix.id().startsWith("map_");
     }
 
     @Test
@@ -131,7 +153,9 @@ class AffixCatalogueTest {
                     assertTrue(mod.tags().isEmpty() || mod.tags().equals(Set.of(Tags.MINION)), where + "：" + stat + " 只認沒有標籤（自己）或 minion（召喚物）");
                 }
                 if (stat.startsWith(StatKeys.DAMAGE_GAIN) || stat.startsWith(StatKeys.CHARGE_CHANCE) || stat.startsWith(StatKeys.CHARGE_MAX)
-                        || stat.equals(StatKeys.SKILL_LEVEL) || stat.startsWith("leech.") || stat.startsWith("thorns.")) {
+                        || stat.equals(StatKeys.SKILL_LEVEL) || stat.startsWith("thorns.") && !stat.equals(StatKeys.THORNS_DAMAGE)
+                        // 荊棘傷害、偷取的量、最大偷取速度是 INCREASED（StatKeys.THORNS_DAMAGE／LEECH_EFFECT／LEECH_RATE），其他是百分比點數
+                        || stat.startsWith("leech.") && !stat.equals(StatKeys.LEECH_EFFECT) && !stat.equals(StatKeys.LEECH_RATE)) {
                     assertEquals(ModType.FLAT, mod.type(), where + "：" + stat + " 是百分比點數／固定值，要用 FLAT");
                 }
                 if (mod.variable() != null) {
@@ -146,8 +170,10 @@ class AffixCatalogueTest {
             assertFalse(affix.names().isEmpty(), where + " 沒有名稱");
             assertTrue(affix.names().size() >= affix.tiers().size(), where + "：每個階級都要有自己的名稱（" + affix.names().size() + " 個名稱、"
                     + affix.tiers().size() + " 階）");
+            final boolean retired = affix.spawnTags().contains(ItemRepository.RETIRED_TAG);
             for (final AffixTier tier : affix.tiers()) {
-                assertTrue(tier.weight() > 0, where + " 的權重");
+                // 停用的詞綴（spawn_tags: [retired]）不會再擲出，權重可以是 0
+                assertTrue(retired ? tier.weight() >= 0 : tier.weight() > 0, where + " 的權重");
                 for (final int[] range : tier.vars().values()) {
                     assertTrue(range[0] <= range[1], where + " T" + tier.tier() + " 的範圍下限大於上限");
                 }
@@ -179,178 +205,204 @@ class AffixCatalogueTest {
 
     @Test
     void newAffixesSpawnWhereTheyShould() {
-        final ItemBase sword = repository.base("short_sword");
-        final ItemBase wand = repository.base("wand");
-        final ItemBase staff = repository.base("staff");
-        final ItemBase bow = repository.base("bow");
+        // 2026-10 PoE2 改版：舊基底退役（劍拿掉、法杖 → wand_xx…），詞綴照 PoE2 的詞綴池與部位
+        final ItemBase mace = repository.base("mace1_26");
+        final ItemBase wand = repository.base("wand_14");
+        final ItemBase staff = repository.base("staff_17");
+        final ItemBase bow = repository.base("bow_26");
         final ItemBase plateBody = repository.base("plate_body");
         final ItemBase silkBody = repository.base("silk_body");
-        final ItemBase ring = repository.base("iron_ring");
-        final ItemBase amulet = repository.base("amber_amulet");
-        final ItemBase belt = repository.base("leather_belt");
-        final ItemBase towerShield = repository.base("tower_shield");
-        final ItemBase spiritShield = repository.base("spirit_shield");
-        final ItemBase boots = repository.base("leather_boots");
+        final ItemBase ring = repository.base("jring_16");
+        final ItemBase amulet = repository.base("jamulet_11");
+        final ItemBase belt = repository.base("jbelt_07");
+        final ItemBase towerShield = repository.base("tshield_24");
+        final ItemBase spiritShield = repository.base("focus_23");
+        final ItemBase leggings = repository.bases().stream().filter(base -> base.hasTag("leggings")).findFirst().orElseThrow();
 
         // 武器本身：攻擊武器才有，施法武器、防具不會有
-        for (final String id : List.of("local_phys", "local_phys_accuracy", "local_attack_speed", "local_crit")) {
-            assertTrue(repository.affix(id).canSpawnOn(sword), id);
+        for (final String id : List.of("phys_inc", "local_phys_accuracy", "added_phys_local", "local_crit_base", "local_crit_bonus")) {
+            assertTrue(repository.affix(id).canSpawnOn(mace), id);
             assertTrue(repository.affix(id).canSpawnOn(bow), id);
             assertFalse(repository.affix(id).canSpawnOn(wand), id + " 不出在法杖");
             assertFalse(repository.affix(id).canSpawnOn(plateBody), id + " 不出在防具");
         }
-        // 本地與全域同群組：一把武器只會有一種
-        assertEquals(repository.affix("attack_speed").group(), repository.affix("local_attack_speed").group());
-        assertEquals(repository.affix("crit_chance").group(), repository.affix("local_crit").group());
+        assertTrue(repository.affix("local_attack_speed").canSpawnOn(mace));
+        assertTrue(repository.affix("local_attack_speed_bow").canSpawnOn(bow));
+        assertEquals(repository.affix("local_attack_speed").group(), repository.affix("local_attack_speed_bow").group());
+        // 本地與全域的攻速、暴擊率出在不同部位：一件裝備只會有一種
+        for (final ItemBase base : repository.bases()) {
+            assertFalse(repository.affix("attack_speed").canSpawnOn(base) && repository.affix("local_attack_speed").canSpawnOn(base), base.id());
+            assertFalse(repository.affix("crit_chance").canSpawnOn(base) && repository.affix("local_crit_base").canSpawnOn(base), base.id());
+        }
         // 混合防禦與荊棘：防具前綴
         assertTrue(repository.affix("armour_life").canSpawnOn(plateBody));
         assertFalse(repository.affix("armour_life").canSpawnOn(silkBody));
         assertTrue(repository.affix("es_life").canSpawnOn(silkBody));
         assertTrue(repository.affix("thorns").canSpawnOn(towerShield));
         assertFalse(repository.affix("thorns").canSpawnOn(spiritShield), "荊棘是力量系的");
-        // 技能等級：法術的出在施法武器與項鍊，不出在劍
-        assertTrue(repository.affix("skill_level_spell").canSpawnOn(staff));
-        assertFalse(repository.affix("skill_level_spell").canSpawnOn(sword));
-        assertTrue(repository.affix("skill_level_spell_amulet").canSpawnOn(amulet));
-        assertTrue(repository.affix("skill_level_melee").canSpawnOn(sword));
+        // 技能等級：法術的出在施法武器與項鍊，不出在近戰武器
+        assertTrue(repository.affix("skill_level_spell").canSpawnOn(wand));
+        assertTrue(repository.affix("skill_level_spell_staff").canSpawnOn(staff));
+        assertFalse(repository.affix("skill_level_spell").canSpawnOn(mace));
+        assertFalse(repository.affix("skill_level_spell_staff").canSpawnOn(mace));
+        assertTrue(repository.affix("skill_level_spell_amulet_amulet").canSpawnOn(amulet));
+        assertTrue(repository.affix("skill_level_melee_amulet_1h").canSpawnOn(mace));
         assertTrue(repository.affix("skill_level_projectile").canSpawnOn(bow));
-        assertEquals(3, repository.affix("skill_level_spell").tiers().getFirst().vars().get("value")[1], "武器最多 +3");
-        assertEquals(2, repository.affix("skill_level_spell_amulet").tiers().getFirst().vars().get("value")[1], "項鍊最多 +2");
-        // 腰帶的藥劑、續戰、球
+        assertEquals(4, repository.affix("skill_level_spell").tiers().getFirst().vars().get("value")[1], "法杖最多 +4");
+        assertEquals(6, repository.affix("skill_level_spell_staff").tiers().getFirst().vars().get("value")[1], "長杖最多 +6");
+        assertEquals(3, repository.affix("skill_level_spell_amulet_amulet").tiers().getFirst().vars().get("value")[1], "項鍊最多 +3");
+        // 腰帶的藥劑；偷取出在戒指與褲子
         assertTrue(repository.affix("flask_life_recovery").canSpawnOn(belt));
         assertFalse(repository.affix("flask_life_recovery").canSpawnOn(ring));
-        assertTrue(repository.affix("leech_life").canSpawnOn(ring));
+        assertTrue(repository.affix("leech_life_ring").canSpawnOn(ring));
+        assertTrue(repository.affix("leech_life").canSpawnOn(leggings));
         assertFalse(repository.affix("leech_life").canSpawnOn(wand), "偷取看攻擊的物理傷害：施法武器不出");
-        assertTrue(repository.affix("frenzy_charge_max").canSpawnOn(boots));
-        assertTrue(repository.affix("gain_fire").canSpawnOn(amulet));
-        assertFalse(repository.affix("gain_fire").canSpawnOn(staff));
-        // 珠寶的新家族
-        assertTrue(repository.affix("jewel_bleed_mag").canSpawnOn(repository.base("ruby_jewel")));
-        assertTrue(repository.affix("jewel_ailment_threshold").canSpawnOn(repository.base("sapphire_jewel")), "jewel 標籤：每一種都出");
-        assertFalse(repository.affix("jewel_bleed_mag").canSpawnOn(sword));
+        assertFalse(repository.affix("leech_life_local").canSpawnOn(wand), "偷取看攻擊的物理傷害：施法武器不出");
+        // 「額外火焰傷害」：PoE2 只出在法杖、長杖
+        assertTrue(repository.affix("extra_fire").canSpawnOn(wand));
+        assertTrue(repository.affix("extra_fire_staff").canSpawnOn(staff));
+        assertFalse(repository.affix("extra_fire").canSpawnOn(amulet));
+        // 舊的（球上限、物理附加為元素）停用：哪裡都不出
+        for (final String retired : List.of("frenzy_charge_max", "gain_fire", "local_phys", "jewel_bleed_mag")) {
+            for (final ItemBase base : repository.bases()) {
+                assertFalse(repository.affix(retired).canSpawnOn(base), retired + " 停用了，卻出在 " + base.id());
+            }
+        }
+        // 珠寶：照 PoE2 的顏色（紅＝力量、綠＝敏捷、藍＝智慧）
+        assertTrue(repository.affix("j2_base_chance_to_bleed").canSpawnOn(repository.base("ruby_jewel")));
+        assertTrue(repository.affix("j2_base_chance_to_bleed").canSpawnOn(repository.base("diamond_jewel")), "白星晶每一種都出");
+        assertFalse(repository.affix("j2_base_chance_to_bleed").canSpawnOn(repository.base("sapphire_jewel")));
+        assertFalse(repository.affix("j2_base_chance_to_bleed").canSpawnOn(mace));
         // 地圖的詞綴（2026-10 照 PoE2 的換界石詞綴池；自己設計的停用）
         assertTrue(repository.affix("map_monster_armour_break").canSpawnOn(repository.base("map_wreck_bay")));
-        assertFalse(repository.affix("map_monster_armour_break").canSpawnOn(sword));
+        assertFalse(repository.affix("map_monster_armour_break").canSpawnOn(mace));
         assertFalse(repository.affix("map_monster_skill_speed").canSpawnOn(repository.base("map_wreck_bay")), "PoE2 沒有：停用");
     }
 
     @Test
     void spellCritAffixesOnlyHelpSpellsAndOnlyRollOnCasterWeapons() {
-        final ItemBase wand = repository.base("wand");
-        final ItemBase sceptre = repository.base("sceptre");
-        final ItemBase staff = repository.base("staff");
-        for (final String id : List.of("spell_crit_chance", "spell_crit_multi")) {
-            assertTrue(repository.affix(id).canSpawnOn(wand), id);
-            assertTrue(repository.affix(id).canSpawnOn(sceptre), id);
-            assertFalse(repository.affix(id).canSpawnOn(staff), id + "：長杖用雙手的版本");
-            assertTrue(repository.affix(id + "_2h").canSpawnOn(staff), id + "_2h");
-            for (final String other : List.of("short_sword", "bow", "quarterstaff", "iron_ring", "jade_amulet", "silk_body")) {
-                assertFalse(repository.affix(id).canSpawnOn(repository.base(other)), id + " 不出在 " + other);
-                assertFalse(repository.affix(id + "_2h").canSpawnOn(repository.base(other)), id + "_2h 不出在 " + other);
+        // 2026-10 PoE2 改版：法杖、長杖、法器各一條（同一個群組），暴擊傷害是「增加 x% 暴擊傷害加成」（crit.bonus）
+        final ItemBase wand = repository.base("wand_14");
+        final ItemBase staff = repository.base("staff_17");
+        final ItemBase focus = repository.base("focus_23");
+        for (final String id : List.of("spell_crit_chance", "spell_crit_bonus")) {
+            final Affix oneHand = repository.affix(id + "_wand");
+            final Affix twoHand = repository.affix(id + "_staff");
+            final Affix offHand = repository.affix(id);
+            assertTrue(oneHand.canSpawnOn(wand), oneHand.id());
+            assertFalse(oneHand.canSpawnOn(staff), oneHand.id() + "：長杖用雙手的版本");
+            assertTrue(twoHand.canSpawnOn(staff), twoHand.id());
+            assertFalse(twoHand.canSpawnOn(wand), twoHand.id());
+            assertTrue(offHand.canSpawnOn(focus), offHand.id() + "：法器");
+            for (final String other : List.of("mace1_26", "bow_26", "qstaff_28", "sceptre_16", "jring_16", "jamulet_11", "silk_body")) {
+                for (final Affix affix : List.of(oneHand, twoHand, offHand)) {
+                    assertFalse(affix.canSpawnOn(repository.base(other)), affix.id() + " 不出在 " + other);
+                }
             }
-            assertEquals(repository.affix(id).group(), repository.affix(id + "_2h").group(), "一手、雙手同一個群組");
-            final int oneHand = repository.affix(id).tiers().getFirst().vars().get("value")[1];
-            final int twoHand = repository.affix(id + "_2h").tiers().getFirst().vars().get("value")[1];
-            assertTrue(twoHand > oneHand, id + "：雙手的數值比較高");
-            assertEquals(78, repository.affix(id).tiers().getFirst().ilvl(), id + "：最高階要物品等級 78");
+            assertEquals(oneHand.group(), twoHand.group(), "一手、雙手同一個群組");
+            assertEquals(oneHand.group(), offHand.group());
+            assertTrue(twoHand.tiers().getFirst().vars().get("value")[1] > oneHand.tiers().getFirst().vars().get("value")[1],
+                    id + "：雙手的數值比較高");
         }
-        assertTrue(repository.affix("jewel_spell_crit_chance").canSpawnOn(repository.base("sapphire_jewel")));
-        assertFalse(repository.affix("jewel_spell_crit_chance").canSpawnOn(repository.base("emerald_jewel")));
+        assertTrue(repository.affix("j2_spell_critical_strike_chance").canSpawnOn(repository.base("sapphire_jewel")));
+        assertFalse(repository.affix("j2_spell_critical_strike_chance").canSpawnOn(repository.base("emerald_jewel")));
         // 法術專用的比通用的高
-        assertTrue(repository.affix("spell_crit_chance").tiers().getFirst().vars().get("value")[0]
+        assertTrue(repository.affix("spell_crit_chance_wand").tiers().getFirst().vars().get("value")[0]
                 > repository.affix("crit_chance").tiers().getFirst().vars().get("value")[1]);
-        assertTrue(repository.affix("spell_crit_multi").tiers().getFirst().vars().get("value")[0]
-                > repository.affix("crit_multi").tiers().getFirst().vars().get("value")[1]);
+        assertTrue(repository.affix("spell_crit_bonus_staff").tiers().getFirst().vars().get("value")[0]
+                > repository.affix("crit_bonus").tiers().getFirst().vars().get("value")[1]);
         // 只對法術有效：攻擊拿不到
         final Map<String, Integer> rolled = Map.of("value", 60);
         final StatSheet sheet = new StatSheet()
-                .add(repository.affix("spell_crit_chance").mods().getFirst().toModifier(rolled, "法杖"))
-                .add(repository.affix("spell_crit_multi").mods().getFirst().toModifier(Map.of("value", 40), "法杖"));
+                .add(repository.affix("spell_crit_chance_wand").mods().getFirst().toModifier(rolled, "法杖"))
+                .add(repository.affix("spell_crit_bonus_wand").mods().getFirst().toModifier(Map.of("value", 40), "法杖"));
         assertEquals(0.6, sheet.increased(StatKeys.CRIT_CHANCE, Set.of(Tags.SPELL, Tags.FIRE)), 1e-9);
         assertEquals(0, sheet.increased(StatKeys.CRIT_CHANCE, Set.of(Tags.ATTACK, Tags.MELEE)), 1e-9, "攻擊不吃法術暴擊率");
-        assertEquals(40, sheet.flat(StatKeys.CRIT_MULTI, Set.of(Tags.SPELL)), 1e-9);
-        assertEquals(0, sheet.flat(StatKeys.CRIT_MULTI, Set.of(Tags.ATTACK)), 1e-9);
-        assertEquals("增加 60% 法術暴擊率", repository.affix("spell_crit_chance").render(rolled));
+        assertEquals(0.4, sheet.increased(StatKeys.CRIT_BONUS, Set.of(Tags.SPELL)), 1e-9);
+        assertEquals(0, sheet.increased(StatKeys.CRIT_BONUS, Set.of(Tags.ATTACK)), 1e-9);
+        assertEquals("增加 60% 法術暴擊率", repository.affix("spell_crit_chance_wand").render(rolled));
+        // 舊的（一手、雙手、項鍊的法術暴擊）停用
+        for (final String retired : List.of("spell_crit_chance_2h", "spell_crit_multi", "spell_crit_multi_2h")) {
+            assertTrue(repository.affix(retired).spawnTags().contains(ItemRepository.RETIRED_TAG), retired);
+        }
     }
 
     @Test
     void amuletsAndJewelsSplitCritIntoAttackAndSpell() {
-        final ItemBase amulet = repository.base("jade_amulet");
-        final List<String> amuletOnly = List.of("amulet_spell_crit_chance", "amulet_spell_crit_multi",
-                "amulet_attack_crit_chance", "amulet_attack_crit_multi");
-        for (final String id : amuletOnly) {
+        // 2026-10 PoE2 改版：項鍊只出通用的暴擊（crit_chance_amulet、crit_bonus_amulet）；攻擊專用的出在箭袋、法術專用的出在施法武器；
+        // 舊的項鍊、珠寶攻擊／法術暴擊停用（舊物品照常生效）
+        final ItemBase amulet = repository.base("jamulet_11");
+        for (final String id : List.of("amulet_spell_crit_chance", "amulet_spell_crit_multi", "amulet_attack_crit_chance",
+                "amulet_attack_crit_multi", "jewel_attack_crit_chance", "jewel_attack_crit_multi", "jewel_spell_crit_chance",
+                "jewel_spell_crit_multi")) {
             final Affix affix = repository.affix(id);
             assertNotNull(affix, id);
-            assertTrue(affix.canSpawnOn(amulet), id + " 出在項鍊");
-            assertTrue(affix.canSpawnOn(repository.base("amber_amulet")), id);
-            for (final String other : List.of("iron_ring", "wand", "staff", "short_sword", "bow", "silk_body", "emerald_jewel", "sapphire_jewel")) {
+            for (final ItemBase base : repository.bases()) {
+                assertFalse(affix.canSpawnOn(base), id + " 停用了，卻出在 " + base.id());
+            }
+        }
+        assertTrue(repository.affix("crit_chance_amulet").canSpawnOn(amulet));
+        assertTrue(repository.affix("crit_bonus_amulet").canSpawnOn(amulet));
+        assertFalse(repository.affix("crit_chance_amulet").canSpawnOn(repository.base("jring_16")));
+        final ItemBase quiver = repository.bases().stream().filter(ItemBase::isQuiver).findFirst().orElseThrow();
+        for (final String id : List.of("attack_crit_chance", "attack_crit_bonus")) {
+            final Affix affix = repository.affix(id);
+            assertTrue(affix.canSpawnOn(quiver), id + " 出在箭袋");
+            for (final String other : List.of("jamulet_11", "jring_16", "wand_14", "staff_17", "silk_body", "emerald_jewel", "sapphire_jewel")) {
                 assertFalse(affix.canSpawnOn(repository.base(other)), id + " 不出在 " + other);
             }
             assertEquals(AffixType.SUFFIX, affix.type(), id);
-            assertEquals(78, affix.tiers().getFirst().ilvl(), id + "：最高階要物品等級 78");
+            assertTrue(affix.mods().getFirst().tags().contains(Tags.ATTACK), id);
         }
-        // 通用的照留；法術的跟法杖同一群組，攻擊的是新的群組；跟通用的不同群組（同一條可以都有）
-        assertTrue(repository.affix("crit_chance").canSpawnOn(amulet));
-        assertTrue(repository.affix("crit_multi").canSpawnOn(amulet));
-        assertEquals("spell_crit_chance", repository.affix("amulet_spell_crit_chance").group());
-        assertEquals("spell_crit_multi", repository.affix("amulet_spell_crit_multi").group());
-        assertEquals("attack_crit_chance", repository.affix("amulet_attack_crit_chance").group());
-        assertEquals("attack_crit_multi", repository.affix("amulet_attack_crit_multi").group());
-        // 數值：比通用的高、比法杖（一手施法武器）的低
-        final int general = repository.affix("crit_chance").tiers().getFirst().vars().get("value")[1];
-        final int wand = repository.affix("spell_crit_chance").tiers().getFirst().vars().get("value")[1];
-        for (final String id : List.of("amulet_spell_crit_chance", "amulet_attack_crit_chance")) {
-            final int[] top = repository.affix(id).tiers().getFirst().vars().get("value");
-            assertTrue(top[0] > general && top[1] < wand, id + "：" + top[0] + "–" + top[1]);
-        }
-        final int generalMulti = repository.affix("crit_multi").tiers().getFirst().vars().get("value")[1];
-        final int wandMulti = repository.affix("spell_crit_multi").tiers().getFirst().vars().get("value")[1];
-        for (final String id : List.of("amulet_spell_crit_multi", "amulet_attack_crit_multi")) {
-            final int[] top = repository.affix(id).tiers().getFirst().vars().get("value");
-            assertTrue(top[0] > generalMulti && top[1] < wandMulti, id + "：" + top[0] + "–" + top[1]);
-        }
+        // 跟通用的不同群組（同一件可以都有）
+        assertFalse(repository.affix("attack_crit_chance").group().equals(repository.affix("crit_chance_amulet").group()));
         // 攻擊的只給攻擊、法術的只給法術
         final StatSheet sheet = new StatSheet()
-                .add(repository.affix("amulet_attack_crit_chance").mods().getFirst().toModifier(Map.of("value", 50), "項鍊"))
-                .add(repository.affix("amulet_attack_crit_multi").mods().getFirst().toModifier(Map.of("value", 40), "項鍊"))
-                .add(repository.affix("amulet_spell_crit_chance").mods().getFirst().toModifier(Map.of("value", 30), "項鍊"))
-                .add(repository.affix("amulet_spell_crit_multi").mods().getFirst().toModifier(Map.of("value", 20), "項鍊"));
+                .add(repository.affix("attack_crit_chance").mods().getFirst().toModifier(Map.of("value", 50), "箭袋"))
+                .add(repository.affix("attack_crit_bonus").mods().getFirst().toModifier(Map.of("value", 40), "箭袋"))
+                .add(repository.affix("spell_crit_chance_wand").mods().getFirst().toModifier(Map.of("value", 30), "法杖"))
+                .add(repository.affix("spell_crit_bonus_wand").mods().getFirst().toModifier(Map.of("value", 20), "法杖"));
         assertEquals(0.5, sheet.increased(StatKeys.CRIT_CHANCE, Set.of(Tags.ATTACK, Tags.MELEE)), 1e-9);
         assertEquals(0.3, sheet.increased(StatKeys.CRIT_CHANCE, Set.of(Tags.SPELL, Tags.FIRE)), 1e-9);
-        assertEquals(40, sheet.flat(StatKeys.CRIT_MULTI, Set.of(Tags.ATTACK, Tags.PROJECTILE)), 1e-9);
-        assertEquals(20, sheet.flat(StatKeys.CRIT_MULTI, Set.of(Tags.SPELL)), 1e-9);
-        assertEquals("增加 50% 攻擊暴擊率", repository.affix("amulet_attack_crit_chance").render(Map.of("value", 50)));
-        assertEquals("+40% 攻擊暴擊傷害", repository.affix("amulet_attack_crit_multi").render(Map.of("value", 40)));
+        assertEquals(0.4, sheet.increased(StatKeys.CRIT_BONUS, Set.of(Tags.ATTACK, Tags.PROJECTILE)), 1e-9);
+        assertEquals(0.2, sheet.increased(StatKeys.CRIT_BONUS, Set.of(Tags.SPELL)), 1e-9);
+        assertEquals("增加 50% 攻擊暴擊率", repository.affix("attack_crit_chance").render(Map.of("value", 50)));
+        assertEquals("增加 40% 攻擊暴擊傷害加成", repository.affix("attack_crit_bonus").render(Map.of("value", 40)));
         // 珠寶：翠星晶有攻擊的、蒼星晶有法術的
-        for (final String id : List.of("jewel_attack_crit_chance", "jewel_attack_crit_multi")) {
+        for (final String id : List.of("j2_attack_critical_strike_chance", "j2_attack_critical_strike_multiplier")) {
             assertTrue(repository.affix(id).canSpawnOn(repository.base("emerald_jewel")), id);
             assertFalse(repository.affix(id).canSpawnOn(repository.base("sapphire_jewel")), id);
             assertFalse(repository.affix(id).canSpawnOn(amulet), id);
             assertTrue(repository.affix(id).mods().getFirst().tags().contains(Tags.ATTACK), id);
         }
-        // 催化劑：攻擊的加通用與攻擊的暴擊，法術的加法術的暴擊，不會兩邊都加
-        final Modifier spellCrit = repository.affix("amulet_spell_crit_chance").mods().getFirst().toModifier(Map.of("value", 30), "項鍊");
-        final Modifier attackCrit = repository.affix("amulet_attack_crit_chance").mods().getFirst().toModifier(Map.of("value", 30), "項鍊");
-        final Modifier anyCrit = repository.affix("crit_chance").mods().getFirst().toModifier(Map.of("value", 30), "項鍊");
-        assertFalse(Catalyst.ATTACK.matches(spellCrit), "攻擊催化劑不加法術暴擊");
-        assertTrue(Catalyst.CASTER.matches(spellCrit));
-        assertTrue(Catalyst.ATTACK.matches(attackCrit));
-        assertFalse(Catalyst.CASTER.matches(attackCrit));
-        assertTrue(Catalyst.ATTACK.matches(anyCrit), "通用的暴擊照舊算攻擊");
-        assertFalse(Catalyst.CASTER.matches(anyCrit));
+        for (final String id : List.of("j2_spell_critical_strike_chance", "j2_spell_crit_multiplier")) {
+            assertTrue(repository.affix(id).canSpawnOn(repository.base("sapphire_jewel")), id);
+            assertFalse(repository.affix(id).canSpawnOn(repository.base("emerald_jewel")), id);
+            assertTrue(repository.affix(id).mods().getFirst().tags().contains(Tags.SPELL), id);
+        }
+        // 催化劑（2026-10）：暴擊歸暴擊催化劑，攻擊、法術催化劑只加傷害
+        final Modifier spellCrit = repository.affix("spell_crit_chance_wand").mods().getFirst().toModifier(Map.of("value", 30), "法杖");
+        final Modifier attackCrit = repository.affix("attack_crit_chance").mods().getFirst().toModifier(Map.of("value", 30), "箭袋");
+        final Modifier anyCrit = repository.affix("crit_chance_amulet").mods().getFirst().toModifier(Map.of("value", 30), "項鍊");
+        for (final Modifier crit : List.of(spellCrit, attackCrit, anyCrit)) {
+            assertTrue(Catalyst.CRIT.matches(crit));
+            assertFalse(Catalyst.ATTACK.matches(crit), "攻擊催化劑不加暴擊");
+            assertFalse(Catalyst.CASTER.matches(crit), "法術催化劑不加暴擊");
+        }
     }
 
     @Test
     void fractionalRollsShowAsDecimalsAndFeedTheEngineTheSameNumber() {
+        // 2026-10 PoE2 改版：偷取照 PoE2 寫成萬分比（{value/100}）
         final Affix leech = repository.affix("leech_life");
-        final Map<String, Integer> rolled = Map.of("value", 12);
-        assertEquals("攻擊造成的物理傷害有 1.2% 偷取為生命", leech.render(rolled));
+        final Map<String, Integer> rolled = Map.of("value", 950);
+        assertEquals("攻擊造成的物理傷害有 9.5% 偷取為生命", leech.render(rolled));
         final Modifier modifier = leech.mods().getFirst().toModifier(rolled, "測試");
         assertEquals(StatKeys.LEECH_LIFE, modifier.stat());
-        assertEquals(1.2, modifier.value(), 1e-9);
+        assertEquals(9.5, modifier.value(), 1e-9);
         assertEquals(Set.of(Tags.ATTACK), modifier.tags());
         final String ranged = Affix.substituteWithRanges(leech.text(), rolled, leech.ranges(1));
-        assertTrue(ranged.contains("1.2") && ranged.contains("1.1") && ranged.contains("1.3"), ranged);
+        assertTrue(ranged.contains("9.5") && ranged.contains("(9–9.9)"), ranged);
         assertEquals("每秒回復 0.8% 最大生命", repository.affix("life_regen_pct").render(Map.of("value", 8)));
         assertEquals(0.8, repository.affix("life_regen_pct").mods().getFirst().toModifier(Map.of("value", 8), "測試").value(), 1e-9);
         assertEquals("擊殺時回復 2% 最大生命", repository.affix("life_on_kill").render(Map.of("value", 20)), "整數不留 .0");
@@ -466,13 +518,16 @@ class AffixCatalogueTest {
 
     @Test
     void deepenedAffixesKeepTheirOldTierCodesAndAddStrongerOnes() {
+        // 2026-10 PoE2 改版：移動速度換成 PoE2 的六階（代號 1–6，T1 35% 要物品等級 82）；舊物品身上的代號找不到時照存的數值顯示
         final Affix movement = repository.affix("movement_speed");
-        assertEquals(List.of(-1, 0, 1, 2, 3), movement.tiers().stream().map(AffixTier::tier).toList());
-        assertEquals(25, movement.tier(1).vars().get("value")[0], "舊的代號 1 範圍不變（舊物品照讀）");
-        assertEquals(30, movement.tier(1).vars().get("value")[1]);
-        assertEquals(3, movement.rank(1), "舊的 T1 現在排第 3");
-        assertEquals("之奔雷", movement.nameFor(1), "名稱跟著排名往後移，舊物品的名字不變");
-        for (final String id : List.of("block_chance", "quantity_inc", "rarity_inc", "avoid_ignite", "avoid_freeze", "avoid_shock",
+        assertEquals(List.of(1, 2, 3, 4, 5, 6), movement.tiers().stream().map(AffixTier::tier).toList());
+        assertEquals(35, movement.tier(1).vars().get("value")[0]);
+        assertEquals(82, movement.tier(1).ilvl());
+        assertTrue(movement.ranges(-1).isEmpty(), "舊的代號 -1 已經沒有：不接範圍");
+        assertEquals(1, movement.rank(-1), "找不到的代號至少排第 1");
+        // 停用的舊詞綴照舊保留補上去的階級（舊物品照讀）
+        // rarity_inc 換成 PoE2 的三階（不再是補階的那條）
+        for (final String id : List.of("block_chance", "quantity_inc", "avoid_ignite", "avoid_freeze", "avoid_shock",
                 "avoid_bleed", "avoid_stun", "avoid_electrocute", "avoid_poison", "stun_threshold")) {
             final Affix affix = repository.affix(id);
             assertEquals(5, affix.tiers().size(), id + " 補到 5 階");
@@ -480,6 +535,9 @@ class AffixCatalogueTest {
         }
         assertEquals(2, repository.affix("minion_count").tiers().size(), "召喚物數量多一階（+2，很少見）");
         for (final Affix affix : repository.affixes()) {
+            if (affix.id().startsWith("unveiled_")) {
+                continue; // 揭露詞綴（affixes/unveiled.yml）照 PoE2 的褻瀆詞綴只有兩階
+            }
             if (affix.spawnTags().contains("ruby") || affix.spawnTags().contains("emerald") || affix.spawnTags().contains("sapphire")
                     || affix.spawnTags().contains("jewel")) {
                 assertEquals(3, affix.tiers().size(), affix.id() + "：珠寶詞綴三階");
@@ -491,32 +549,34 @@ class AffixCatalogueTest {
 
     @Test
     void adminForcedAffixesReplaceTheirGroupUpgradeRarityAndRespectSlots() {
+        // 2026-10 PoE2 改版：劍退役，用單手錘；停用的詞綴（retired）不能再加
         final ItemGenerator generator = new ItemGenerator(repository);
         final Random random = new Random(3);
-        final ItemData sword = generator.generate(repository.base("short_sword"), Rarity.NORMAL, 84, random);
-        assertTrue(sword.affixes().isEmpty());
-        assertEquals(null, generator.forceAffix(sword, "local_phys", null, random));
-        assertEquals(Rarity.MAGIC, sword.rarity(), "普通的變魔法");
-        assertEquals(1, sword.affixes().getFirst().tier(), "沒寫階級 = 最強的一階");
-        assertEquals(null, generator.forceAffix(sword, "local_attack_speed", 3, random));
-        assertEquals(Rarity.MAGIC, sword.rarity(), "魔法還放得下一條後綴");
-        assertEquals(null, generator.forceAffix(sword, "added_phys", null, random));
-        assertEquals(Rarity.RARE, sword.rarity(), "第二條前綴：變稀有");
-        assertNotNull(sword.name(), "變稀有時取名字");
-        assertEquals(null, generator.forceAffix(sword, "local_phys_accuracy", null, random), "同群組（local_phys）的換掉");
-        assertEquals(3, sword.affixes().size());
-        assertTrue(sword.affixes().stream().noneMatch(rolled -> rolled.id().equals("local_phys")));
-        assertEquals(null, generator.forceAffix(sword, "gain_cold", null, random));
-        assertTrue(generator.forceAffix(sword, "phys_inc", null, random).contains("前綴已經滿了（3/3）"));
-        assertTrue(generator.forceAffix(sword, "skill_level_spell", null, random).contains("不會出在"), "劍不出法術技能等級");
-        assertTrue(generator.forceAffix(sword, "leech_life", 9, random).contains("沒有階級代號 9"));
-        assertTrue(generator.forceAffix(sword, "nope", null, random).contains("沒有這條詞綴"));
+        final ItemData mace = generator.generate(repository.base("mace1_26"), Rarity.NORMAL, 84, random);
+        assertTrue(mace.affixes().isEmpty());
+        assertEquals(null, generator.forceAffix(mace, "phys_inc", null, random));
+        assertEquals(Rarity.MAGIC, mace.rarity(), "普通的變魔法");
+        assertEquals(repository.affix("phys_inc").tiers().getFirst().tier(), mace.affixes().getFirst().tier(), "沒寫階級 = 最強的一階");
+        assertEquals(null, generator.forceAffix(mace, "local_attack_speed", 3, random));
+        assertEquals(Rarity.MAGIC, mace.rarity(), "魔法還放得下一條後綴");
+        assertEquals(null, generator.forceAffix(mace, "added_phys_local", null, random));
+        assertEquals(Rarity.RARE, mace.rarity(), "第二條前綴：變稀有");
+        assertNotNull(mace.name(), "變稀有時取名字");
+        assertEquals(null, generator.forceAffix(mace, "phys_inc", 2, random), "同群組（包括自己）的換掉");
+        assertEquals(3, mace.affixes().size());
+        assertEquals(2, mace.affixes().stream().filter(rolled -> rolled.id().equals("phys_inc")).findFirst().orElseThrow().tier());
+        assertEquals(null, generator.forceAffix(mace, "added_cold_local", null, random));
+        assertTrue(generator.forceAffix(mace, "added_fire_local", null, random).contains("前綴已經滿了（3/3）"));
+        assertTrue(generator.forceAffix(mace, "skill_level_spell", null, random).contains("不會出在"), "錘不出法術技能等級");
+        assertTrue(generator.forceAffix(mace, "local_phys", null, random).contains("retired"), "停用的詞綴不能加");
+        assertTrue(generator.forceAffix(mace, "leech_life_local", 9, random).contains("沒有階級代號 9"));
+        assertTrue(generator.forceAffix(mace, "nope", null, random).contains("沒有這條詞綴"));
         final ItemData jewel = generator.generate(repository.base("ruby_jewel"), Rarity.MAGIC, 84, random);
         jewel.affixes().clear();
-        assertEquals(null, generator.forceAffix(jewel, "jewel_life_inc", 0, random));
-        assertEquals(null, generator.forceAffix(jewel, "jewel_phys_inc", null, random));
-        assertTrue(generator.forceAffix(jewel, "jewel_fire_inc", null, random).contains("前綴已經滿了（2/2）"), "珠寶每種最多 2 條");
-        assertTrue(ItemStats.modifiers(repository, sword).stream().anyMatch(modifier -> modifier.stat().equals(StatKeys.damageGain(DamageType.COLD))));
+        assertEquals(null, generator.forceAffix(jewel, "j2_attack_damage", 0, random));
+        assertEquals(null, generator.forceAffix(jewel, "j2_fire_damage_percentage", null, random));
+        assertTrue(generator.forceAffix(jewel, "j2_elemental_damage_percent", null, random).contains("前綴已經滿了（2/2）"), "珠寶每種最多 2 條");
+        assertTrue(ItemStats.modifiers(repository, mace).stream().anyMatch(modifier -> modifier.tags().contains(Tags.COLD)), "附加冰冷傷害");
     }
 
     @Test
@@ -541,8 +601,9 @@ class AffixCatalogueTest {
             ItemStats.modifiers(repository, data); // 不丟例外（變數都在）
             ItemStats.snapshot(repository, base, data);
         }
-        for (final String id : List.of("leech_life", "life_on_kill", "thorns", "local_phys", "armour_life", "skill_area", "es_recharge",
-                "ailment_threshold", "ignite_magnitude", "flask_life_recovery")) {
+        // 2026-10 PoE2 改版：停用的換成 PoE2 的（life_on_kill → life_per_kill、local_phys → phys_inc…）
+        for (final String id : List.of("leech_life", "life_per_kill", "thorns", "phys_inc", "armour_life", "es_recharge",
+                "stun_threshold_flat", "ignite_chance", "flask_life_recovery")) {
             assertTrue(seen.contains(id), "3000 件稀有裡應該看得到 " + id);
         }
     }

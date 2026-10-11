@@ -231,10 +231,15 @@ class ArenaLayoutTest {
         // 出生點的地墊中間是燈
         final ArenaLayout.Spawn spawn = LAYOUT.spawns().getFirst();
         assertEquals(Palette.id("sea_lantern"), blocks.get(spawn.x() + "," + Y + "," + spawn.z()));
-        // 場外什麼都沒有
+        // 場外什麼都沒有（2026-10：南北兩邊圍牆外面的觀看席除外），全部在重蓋時清掉的範圍裡
         for (final String at : blocks.keySet()) {
             final String[] parts = at.split(",");
-            assertTrue(Math.abs(Integer.parseInt(parts[0])) <= wall && Math.abs(Integer.parseInt(parts[2])) <= wall, "跑出場外：" + at);
+            final int ax = Math.abs(Integer.parseInt(parts[0]));
+            final int az = Math.abs(Integer.parseInt(parts[2]));
+            final boolean arena = ax <= wall && az <= wall;
+            final boolean stands = ax <= ArenaLayout.STAND_HALF_WIDTH + 1 && az <= wall + ArenaLayout.STAND_DEPTH + 1;
+            assertTrue(arena || stands, "跑出場外：" + at);
+            assertTrue(ax <= ArenaLayout.CLEAR && az <= ArenaLayout.CLEAR, "重蓋時清不到：" + at);
             assertTrue(Integer.parseInt(parts[1]) >= ArenaLayout.CLEAR_MIN_Y && Integer.parseInt(parts[1]) <= ArenaLayout.BARRIER_TOP, at);
         }
     }

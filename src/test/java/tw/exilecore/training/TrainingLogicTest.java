@@ -53,11 +53,11 @@ class TrainingLogicTest {
     void badFilesNameTheField(@TempDir final Path dir) throws IOException {
         final String shipped = Files.readString(DATA.resolve(DummyConfig.FILE), StandardCharsets.UTF_8);
         assertRejected(dir, shipped.replace("look: netherite", "look: wood"), "look");
-        assertRejected(dir, shipped.replace("offset: [11, 10]", "offset: [11]"), "offset");
+        assertRejected(dir, shipped.replace("offset: [12, 10]", "offset: [12]"), "offset");
         assertRejected(dir, shipped.replace("level: map", "level: 120"), "level");
         assertRejected(dir, shipped.replace("arena_margin: 6", "arena_margin: 99"), "arena_margin");
-        assertRejected(dir, shipped.replace("fire: 40, cold: 40, lightning: 40, chaos: 25}\n    offset: [31, 10]",
-                "fire: 95, cold: 40, lightning: 40, chaos: 25}\n    offset: [31, 10]"), "fire");
+        assertRejected(dir, shipped.replace("fire: 40, cold: 40, lightning: 40, chaos: 25}\n    offset: [20, 20]",
+                "fire: 95, cold: 40, lightning: 40, chaos: 25}\n    offset: [20, 20]"), "fire");
     }
 
     @Test

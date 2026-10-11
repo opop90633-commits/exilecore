@@ -71,17 +71,17 @@ class ThornsTest {
 
     @Test
     void energyShieldRechargeSpeedAndDelayFormulas() {
-        assertEquals(100, Formulas.esRechargePerSecond(300, 1.0), 1e-9, "基礎：每秒最大值的三分之一");
-        assertEquals(140, Formulas.esRechargePerSecond(300, 1.4), 1e-9, "增加 40% 回充速度");
-        assertEquals(0, Formulas.esRechargePerSecond(300, -1), 1e-9);
-        assertEquals(40, Formulas.esRechargeDelayTicks(1.0), "基礎 2 秒");
-        assertEquals(28, Formulas.esRechargeDelayTicks(0.7), "縮短 30%");
-        assertEquals(8, Formulas.esRechargeDelayTicks(0.05), "最短剩兩成");
+        assertEquals(100, Formulas.esRechargePerSecond(800, 1.0), 1e-9, "基礎：每秒最大值的 12.5%");
+        assertEquals(140, Formulas.esRechargePerSecond(800, 1.4), 1e-9, "增加 40% 回充速度");
+        assertEquals(0, Formulas.esRechargePerSecond(800, -1), 1e-9);
+        assertEquals(80, Formulas.esRechargeDelayTicks(1.0), "基礎 4 秒");
+        assertEquals(56, Formulas.esRechargeDelayTicks(0.7), "縮短 30%");
+        assertEquals(16, Formulas.esRechargeDelayTicks(0.05), "最短剩兩成");
         final StatSheet sheet = new StatSheet()
                 .add(Modifier.increased(StatKeys.ES_RECHARGE, 0.4, "腰帶"))
                 .add(Modifier.increased(StatKeys.ES_DELAY, -0.3, "項鍊"));
         assertEquals(1.4, sheet.apply(StatKeys.ES_RECHARGE, 1.0, Set.of()), 1e-9);
-        assertEquals(28, Formulas.esRechargeDelayTicks(sheet.apply(StatKeys.ES_DELAY, 1.0, Set.of())));
+        assertEquals(56, Formulas.esRechargeDelayTicks(sheet.apply(StatKeys.ES_DELAY, 1.0, Set.of())));
     }
 
     @Test

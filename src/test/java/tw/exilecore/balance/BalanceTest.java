@@ -54,7 +54,7 @@ class BalanceTest {
     void referenceBuildsResolve() {
         assertEquals(List.of(), model.problems());
         assertEquals(CharacterClass.MARAUDER, config.attack().characterClass());
-        assertEquals("heavy_strike", config.attack().skill());
+        assertEquals("boneshatter", config.attack().skill());
         assertEquals("fireball", config.spell().skill());
         assertEquals(0.4, config.killSeconds(1), 1e-9);
         assertEquals(1.0, config.killSeconds(60), 1e-9);
@@ -195,18 +195,18 @@ class BalanceTest {
 
     @Test
     void gearValuesBlendBetweenTierUnlocks() {
-        // 附加物理：T5 1 級、T4 14 級、T3 28 級…；中等裝備（第二好）在 28 級是 T4 的中間值
+        // 附加物理（2026-10 PoE2 階級）：T9 1 級、T8 8 級、T7 16 級…；中等裝備（第二好）在 16 級是 T8 的中間值
         final var affix = items.affix("added_phys");
         assertEquals(1.5, BalanceModel.gearValues(affix, 1, 2).get("min"), 1e-9);
-        assertEquals(1.5, BalanceModel.gearValues(affix, 14, 2).get("min"), 1e-9, "14 級 T4 剛解鎖，第二好還是 T5");
-        assertEquals(5.0, BalanceModel.gearValues(affix, 28, 2).get("min"), 1e-9);
-        final double mid = BalanceModel.gearValues(affix, 21, 2).get("min");
-        assertEquals(1.5 * Math.sqrt(5.0 / 1.5), mid, 1e-9, "兩個解鎖等級中間等比過渡");
-        assertEquals(17.0, BalanceModel.gearValues(affix, 55, 1).get("min"), 1e-9, "55 級最好的階級（代號 1）");
-        assertEquals(17 * Math.pow(20 / 17.0, 5 / 13.0), BalanceModel.gearValues(affix, 60, 1).get("min"), 1e-9,
-                "55 到 68 級之間往下一個階級（代號 0）等比過渡");
-        assertEquals(23.0, BalanceModel.gearValues(affix, 84, 1).get("min"), 1e-9, "78 級起有代號 -1 的階級");
-        assertEquals(20.0, BalanceModel.gearValues(affix, 84, 2).get("min"), 1e-9, "84 級的中等裝備是代號 0");
+        assertEquals(1.5, BalanceModel.gearValues(affix, 8, 2).get("min"), 1e-9, "8 級 T8 剛解鎖，第二好還是 T9");
+        assertEquals(2.5, BalanceModel.gearValues(affix, 16, 2).get("min"), 1e-9);
+        final double mid = BalanceModel.gearValues(affix, 12, 2).get("min");
+        assertEquals(1.5 * Math.sqrt(2.5 / 1.5), mid, 1e-9, "兩個解鎖等級中間等比過渡");
+        assertEquals(8.0, BalanceModel.gearValues(affix, 54, 1).get("min"), 1e-9, "54 級最好的階級（T4）");
+        assertEquals(8 * Math.pow(9 / 8.0, 3 / 6.0), BalanceModel.gearValues(affix, 57, 1).get("min"), 1e-9,
+                "54 到 60 級之間往下一個階級（T3）等比過渡");
+        assertEquals(15.5, BalanceModel.gearValues(affix, 84, 1).get("min"), 1e-9, "75 級起有 T1");
+        assertEquals(12.5, BalanceModel.gearValues(affix, 84, 2).get("min"), 1e-9, "84 級的中等裝備是 T2");
         double previous = 0;
         for (int level = 1; level <= 100; level++) {
             final double value = BalanceModel.gearValues(affix, level, 2).get("max");
@@ -220,14 +220,14 @@ class BalanceTest {
     void problemsCatchSkillsThatDoNotFitTheBuild(@TempDir final Path dir) throws IOException {
         Files.writeString(dir.resolve("balance.yml"), """
                 reference:
-                  attack: { class: ranger, weapon: bow, skill: heavy_strike }
-                  spell: { class: witch, weapon: wand, skill: split_arrow }
+                  attack: { class: ranger, weapon: bow_23, skill: boneshatter }
+                  spell: { class: witch, weapon: wand_14, skill: lightning_arrow }
                 """);
         final BalanceConfig wrong = new BalanceConfig();
         wrong.load(dir);
         final List<String> problems = new BalanceModel(items, skills, monsters, wrong).problems();
-        assertTrue(problems.stream().anyMatch(p -> p.contains("heavy_strike") && p.contains("bow")), problems.toString());
-        assertTrue(problems.stream().anyMatch(p -> p.contains("split_arrow") && p.contains("不是法術")), problems.toString());
+        assertTrue(problems.stream().anyMatch(p -> p.contains("boneshatter") && p.contains("bow")), problems.toString());
+        assertTrue(problems.stream().anyMatch(p -> p.contains("lightning_arrow") && p.contains("不是法術")), problems.toString());
     }
 
     @Test
@@ -240,7 +240,7 @@ class BalanceTest {
         assertEquals(config.spell(), partial.spell());
         assertEquals(config.killSeconds(33), partial.killSeconds(33), 1e-9);
         assertEquals(config.bossSeconds(36), partial.bossSeconds(36), 1e-9);
-        Files.writeString(dir.resolve("balance.yml"), "reference:\n  attack: { class: paladin, weapon: hand_axe, skill: heavy_strike }\n");
+        Files.writeString(dir.resolve("balance.yml"), "reference:\n  attack: { class: paladin, weapon: war_hammer, skill: boneshatter }\n");
         final IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> partial.load(dir));
         assertTrue(error.getMessage().contains("paladin"));
         assertEquals(0.5, partial.spellVsAttack(), 1e-9, "寫錯時保留原本的設定");

@@ -56,15 +56,15 @@ public final class DummyConfig {
         dummies = defaults();
     }
 
-    /** 跟出貨的 dummies.yml 一樣：營地東南邊一排五隻，首領在後面。 */
+    /** 跟出貨的 dummies.yml 一樣：營地東南邊兩排、每隻隔 8 格（2026-10），首領在第二排最後。 */
     public static List<Dummy> defaults() {
         return List.of(
-                new Dummy("plain", "訓練假人・無防禦", "沒有任何防禦：看你打出的原始傷害", LEVEL_PLAYER, false, 1, 0, 0, 0, 0, 0, 0, 11, 10, 180f, 1, "none"),
-                new Dummy("normal", "訓練假人・一般", "跟同等級的一般怪物一樣", LEVEL_PLAYER, false, 1, 1, 1, 0, 0, 0, 0, 16, 10, 180f, 1, "leather"),
-                new Dummy("armoured", "訓練假人・重甲", "護甲是一般怪物的 5 倍", LEVEL_PLAYER, false, 1, 5, 1, 0, 0, 0, 0, 21, 10, 180f, 1, "netherite"),
-                new Dummy("evasive", "訓練假人・閃避", "閃避是一般怪物的 3 倍", LEVEL_PLAYER, false, 1, 1, 3, 0, 0, 0, 0, 26, 10, 180f, 1, "chainmail"),
-                new Dummy("resistant", "訓練假人・抗性", "元素抗性 40%、混沌抗性 25%", LEVEL_PLAYER, false, 1, 1, 1, 40, 40, 40, 25, 31, 10, 180f, 1, "golden"),
-                new Dummy("boss", "訓練假人・首領", "像最高階地圖的首領：抗性 40%／25%", LEVEL_MAP, true, 10, 1, 1, 40, 40, 40, 25, 21, 18, 180f, 1.3, "diamond"));
+                new Dummy("plain", "訓練假人・無防禦", "沒有任何防禦：看你打出的原始傷害", LEVEL_PLAYER, false, 1, 0, 0, 0, 0, 0, 0, 12, 10, 180f, 1, "none"),
+                new Dummy("normal", "訓練假人・一般", "跟同等級的一般怪物一樣", LEVEL_PLAYER, false, 1, 1, 1, 0, 0, 0, 0, 20, 10, 180f, 1, "leather"),
+                new Dummy("armoured", "訓練假人・重甲", "護甲是一般怪物的 5 倍", LEVEL_PLAYER, false, 1, 5, 1, 0, 0, 0, 0, 28, 10, 180f, 1, "netherite"),
+                new Dummy("evasive", "訓練假人・閃避", "閃避是一般怪物的 3 倍", LEVEL_PLAYER, false, 1, 1, 3, 0, 0, 0, 0, 12, 20, 180f, 1, "chainmail"),
+                new Dummy("resistant", "訓練假人・抗性", "元素抗性 40%、混沌抗性 25%", LEVEL_PLAYER, false, 1, 1, 1, 40, 40, 40, 25, 20, 20, 180f, 1, "golden"),
+                new Dummy("boss", "訓練假人・首領", "像最高階地圖的首領：抗性 40%／25%", LEVEL_MAP, true, 10, 1, 1, 40, 40, 40, 25, 28, 20, 180f, 1.3, "diamond"));
     }
 
     /** 讀 dummies.yml；先讀進一份新的，全部檢查過才換上去（寫錯時保留原本的設定）。 */

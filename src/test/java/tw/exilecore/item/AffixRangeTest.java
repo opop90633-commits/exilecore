@@ -48,57 +48,54 @@ class AffixRangeTest {
     }
 
     @Test
-    void spellAddedDamageRollsOnCasterWeaponsAndRings() {
-        final Affix oneHand = repository.affix("spell_added_fire");
-        final Affix twoHand = repository.affix("spell_added_fire_2h");
-        assertTrue(oneHand.canSpawnOn(repository.base("wand")), "法杖");
-        assertTrue(oneHand.canSpawnOn(repository.base("sceptre")), "權杖");
-        assertFalse(oneHand.canSpawnOn(repository.base("staff")), "長杖用雙手的那一條");
-        assertTrue(twoHand.canSpawnOn(repository.base("staff")));
-        assertFalse(oneHand.canSpawnOn(repository.base("short_sword")), "近戰武器沒有");
-        assertFalse(twoHand.canSpawnOn(repository.base("bow")));
-        // 戒指：跟攻擊附加一樣兩種都出（數值跟單手的一樣）；項鍊、腰帶沒有
-        for (final String element : java.util.List.of("fire", "cold", "lightning")) {
-            final Affix spell = repository.affix("spell_added_" + element);
-            assertTrue(spell.canSpawnOn(repository.base("iron_ring")), "戒指出法術附加" + element);
-            assertTrue(repository.affix("added_" + element).canSpawnOn(repository.base("iron_ring")), "戒指照出攻擊附加" + element);
+    void spellAddedDamageIsRetiredButOldItemsKeepIt() {
+        // 2026-10 PoE2 改版：法術附加（PoE2 沒有）全部停用：不再擲到任何基底上，定義留著讓舊物品照常生效、顯示
+        for (final String element : java.util.List.of("fire", "cold", "lightning", "chaos")) {
+            final Affix oneHand = repository.affix("spell_added_" + element);
+            final Affix twoHand = repository.affix("spell_added_" + element + "_2h");
+            assertTrue(oneHand.spawnTags().contains(ItemRepository.RETIRED_TAG), oneHand.id());
+            assertTrue(twoHand.spawnTags().contains(ItemRepository.RETIRED_TAG), twoHand.id());
             for (final ItemBase base : repository.bases()) {
-                if (base.tags().contains("amulet") || base.tags().contains("belt")) {
-                    assertFalse(spell.canSpawnOn(base), base.id() + " 不出法術附加");
-                }
+                assertFalse(oneHand.canSpawnOn(base), base.id() + " 不再出 " + oneHand.id());
+                assertFalse(twoHand.canSpawnOn(base), base.id() + " 不再出 " + twoHand.id());
             }
+            assertEquals(oneHand.group(), twoHand.group(), "同一組：一件裝備只會有一條法術附加");
+            // 舊的數值照舊：雙手（長杖 8 成）比單手（一半）多 6 成
+            assertEquals(oneHand.tiers().getFirst().vars().get("max")[1] * 1.6, twoHand.tiers().getFirst().vars().get("max")[1], 2.0);
         }
-        assertEquals(oneHand.group(), twoHand.group(), "同一組：一件裝備只會有一條法術附加火焰");
-        assertTrue(repository.affix("spell_inc").canSpawnOn(repository.base("sceptre")), "權杖也出「增加法術傷害」");
-        // 單手是攻擊附加的一半、雙手 8 成（最高階）
-        final AffixTier attackTop = repository.affix("added_fire").tiers().getFirst();
-        final AffixTier spellTop = oneHand.tiers().getFirst();
-        final AffixTier staffTop = twoHand.tiers().getFirst();
-        assertEquals(attackTop.vars().get("max")[1] * 0.5, spellTop.vars().get("max")[1], 1.0);
-        assertEquals(attackTop.vars().get("max")[1] * 0.8, staffTop.vars().get("max")[1], 1.0);
-        assertTrue(oneHand.text().startsWith("法術附加") && repository.affix("added_fire").text().startsWith("攻擊附加"),
+        // 攻擊附加照出在戒指；施法武器改出 PoE2 的「增加法術傷害」（法杖、長杖各自的數值）
+        assertTrue(repository.affix("added_fire").canSpawnOn(repository.base("jring_16")), "戒指照出攻擊附加");
+        assertTrue(repository.affix("spell_inc_weapon_wand").canSpawnOn(repository.base("wand_14")), "法杖");
+        assertTrue(repository.affix("spell_inc_weapon_staff").canSpawnOn(repository.base("staff_17")), "長杖");
+        assertFalse(repository.affix("spell_inc_weapon_wand").canSpawnOn(repository.base("staff_17")), "長杖用雙手的那一條");
+        assertEquals(repository.affix("spell_inc_weapon_wand").group(), repository.affix("spell_inc_weapon_staff").group());
+        assertTrue(repository.affix("spell_added_fire").text().startsWith("法術附加") && repository.affix("added_fire").text().startsWith("攻擊附加"),
                 "看得出來是攻擊還是法術");
     }
 
     @Test
     void casterWeaponsDoNotRollAttackOnlyAffixes() {
-        for (final String caster : java.util.List.of("wand", "staff")) {
+        // 2026-10 PoE2 改版：舊基底退役（法杖 → wand_xx、長杖 → staff_xx…）；武器的物理、附加、攻速、命中是本地的另一批詞綴
+        for (final String caster : java.util.List.of("wand_14", "staff_17")) {
             final ItemBase base = repository.base(caster);
             for (final String attackOnly : java.util.List.of("added_phys", "added_fire", "added_cold", "added_lightning", "added_chaos",
-                    "phys_inc", "attack_speed", "accuracy")) {
+                    "added_phys_local", "added_fire_local", "added_fire_local_crossbow", "phys_inc", "local_phys_accuracy",
+                    "attack_speed", "local_attack_speed", "local_attack_speed_bow", "accuracy", "accuracy_weapon")) {
                 assertFalse(repository.affix(attackOnly).canSpawnOn(base), caster + " 不該出 " + attackOnly);
             }
-            assertTrue(repository.affix("spell_inc").canSpawnOn(base), caster + "：法術的照出");
-            assertTrue(repository.affix("cast_speed").canSpawnOn(base));
-            assertTrue(repository.affix("crit_chance").canSpawnOn(base), "暴擊法術也吃");
+            final String kind = base.hasTag("wand") ? "wand" : "staff";
+            assertTrue(repository.affix("spell_inc_weapon_" + kind).canSpawnOn(base), caster + "：法術的照出");
+            assertTrue(repository.affix("cast_speed_" + kind).canSpawnOn(base));
+            assertTrue(repository.affix("spell_crit_chance_" + kind).canSpawnOn(base), "法術暴擊");
         }
-        final ItemBase sceptre = repository.base("sceptre");
-        assertTrue(repository.affix("added_fire").canSpawnOn(sceptre), "權杖是單手錘：攻擊附加照出");
-        assertTrue(repository.affix("spell_added_fire").canSpawnOn(sceptre), "也出法術附加");
-        final ItemBase sword = repository.base("short_sword");
-        assertTrue(repository.affix("added_fire").canSpawnOn(sword));
-        assertTrue(repository.affix("attack_speed").canSpawnOn(sword));
-        assertTrue(repository.affix("added_fire").canSpawnOn(repository.base("iron_ring")), "戒指照出攻擊附加");
+        // PoE2 的權杖是召喚與精魂的武器：不出攻擊的詞綴
+        final ItemBase sceptre = repository.base("sceptre_16");
+        assertFalse(repository.affix("added_fire_local").canSpawnOn(sceptre), "權杖不出攻擊附加");
+        assertTrue(repository.affix("minion_inc").canSpawnOn(sceptre), "權杖出召喚物的詞綴");
+        final ItemBase mace = repository.base("mace1_26");
+        assertTrue(repository.affix("added_fire_local").canSpawnOn(mace));
+        assertTrue(repository.affix("local_attack_speed").canSpawnOn(mace));
+        assertTrue(repository.affix("added_fire").canSpawnOn(repository.base("jring_16")), "戒指照出攻擊附加");
     }
 
     @Test

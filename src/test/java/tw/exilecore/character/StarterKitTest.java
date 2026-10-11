@@ -6,6 +6,7 @@ import org.junit.jupiter.api.io.TempDir;
 import tw.exilecore.item.ItemBase;
 import tw.exilecore.item.ItemRepository;
 import tw.exilecore.item.ItemSlot;
+import tw.exilecore.item.ItemStats;
 import tw.exilecore.skill.SkillConfig;
 import tw.exilecore.skill.SkillDefinition;
 
@@ -50,29 +51,29 @@ class StarterKitTest {
 
     @Test
     void everyWeaponTheStartingAttributesAllowIsOfferedRecommendedFirst() {
-        // 重甲鬥士 32/14/14：只有長杖（智慧 22）和弓（敏捷 16）拿不動
-        assertEquals(List.of("hand_axe*", "war_hammer*", "great_axe*", "great_hammer*",
-                "short_sword", "dagger", "claw", "wand", "great_sword", "sceptre", "crossbow", "quarterstaff", "spear"),
+        // 2026-10：劍、斧、匕首、爪拿掉了；推薦的分階換成合併後的基底；每一類只列一把（物品等級 1 的屬性需求）
+        // 重甲鬥士 32/14/14：單手錘、雙手錘推薦；長棍、弓、長杖、權杖拿不動
+        assertEquals(List.of("mace1_23*", "mace2_26*", "spear_16", "talis_15", "xbow_06", "wand_14"),
                 ids(CharacterClass.MARAUDER));
-        // 重弩手 23/23/14：弩推薦；長杖拿不動
-        assertEquals(List.of("crossbow*", "short_sword", "hand_axe", "war_hammer", "dagger", "claw", "wand", "great_sword",
-                "great_axe", "bow", "sceptre", "quarterstaff", "spear"), ids(CharacterClass.MERCENARY));
-        // 長矛獵手 18/28/14：矛推薦
-        assertEquals(List.of("spear*", "short_sword", "hand_axe", "war_hammer", "dagger", "claw", "wand", "great_sword", "bow",
-                "sceptre", "crossbow", "quarterstaff"), ids(CharacterClass.HUNTRESS));
-        // 弓箭手 14/32/14：戰錘、巨斧、巨錘（力量）和長杖拿不動
-        assertEquals(List.of("bow*", "dagger*", "claw*",
-                "short_sword", "hand_axe", "wand", "great_sword", "sceptre", "crossbow", "quarterstaff", "spear"), ids(CharacterClass.RANGER));
+        // 重弩手 23/23/14：弩推薦；長杖、權杖拿不動
+        assertEquals(List.of("xbow_23*", "mace1_09", "mace2_09", "spear_16", "qstaff_21", "talis_15", "bow_14", "wand_14"),
+                ids(CharacterClass.MERCENARY));
+        // 長矛獵手 18/28/14：矛推薦；雙手錘拿不動
+        assertEquals(List.of("spear_26*", "mace1_09", "qstaff_21", "talis_15", "bow_14", "xbow_06", "wand_14"),
+                ids(CharacterClass.HUNTRESS));
+        // 弓箭手 14/32/14：錘（力量）、長杖、權杖拿不動
+        assertEquals(List.of("bow_23*", "spear_16", "qstaff_21", "talis_15", "xbow_06", "wand_14"), ids(CharacterClass.RANGER));
         // 棍僧 14/23/23：長棍推薦
-        assertEquals(List.of("quarterstaff*", "short_sword", "hand_axe", "dagger", "claw", "wand", "great_sword", "staff", "bow",
-                "sceptre", "crossbow", "spear"), ids(CharacterClass.MONK));
+        assertEquals(List.of("qstaff_25*", "spear_16", "talis_15", "bow_20", "xbow_06", "wand_14", "staff_17", "sceptre_16"),
+                ids(CharacterClass.MONK));
         // 元素法師、混沌術士 14/14/32：推薦的順序不一樣
-        assertEquals(List.of("staff*", "wand*",
-                "short_sword", "hand_axe", "dagger", "claw", "great_sword", "sceptre", "crossbow", "quarterstaff", "spear"),
+        assertEquals(List.of("staff_17*", "wand_14*", "spear_16", "talis_15", "xbow_06", "sceptre_16"),
                 ids(CharacterClass.SORCERESS));
-        assertEquals(List.of("wand*", "staff*",
-                "short_sword", "hand_axe", "dagger", "claw", "great_sword", "sceptre", "crossbow", "quarterstaff", "spear"),
+        assertEquals(List.of("wand_14*", "staff_17*", "spear_16", "talis_15", "xbow_06", "sceptre_16"),
                 ids(CharacterClass.WITCH));
+        // 德魯伊 23/14/23：獸魂符推薦
+        assertEquals(List.of("talis_18*", "mace1_09", "mace2_09", "spear_16", "xbow_06", "wand_14", "staff_17", "sceptre_16"),
+                ids(CharacterClass.DRUID));
     }
 
     @Test
@@ -81,9 +82,11 @@ class StarterKitTest {
             for (final StarterKits.Option option : StarterKits.weapons(items, config, characterClass)) {
                 final ItemBase base = option.base();
                 assertTrue(base.isWeapon());
-                assertTrue(base.requirements().str() <= characterClass.strength()
-                        && base.requirements().dex() <= characterClass.dexterity()
-                        && base.requirements().intelligence() <= characterClass.intelligence(), characterClass + " " + base.id());
+                // 屬性需求照物品等級縮放：看新手武器那個物品等級的需求
+                final ItemBase.Requirements req = ItemStats.requirements(items, base, StarterKits.ITEM_LEVEL);
+                assertTrue(req.str() <= characterClass.strength()
+                        && req.dex() <= characterClass.dexterity()
+                        && req.intelligence() <= characterClass.intelligence(), characterClass + " " + base.id());
                 // 起始技能要存在、而且這把武器用得了
                 final String skillId = StarterKits.skill(config, characterClass, base);
                 assertNotNull(skillId, base.id() + " 沒有對到起始技能");
@@ -99,21 +102,24 @@ class StarterKitTest {
     @Test
     void starterSkillFollowsTheWeapon() {
         final CharacterClass marauder = CharacterClass.MARAUDER;
-        assertEquals("heavy_strike", StarterKits.skill(config, marauder, items.base("hand_axe")));
-        assertEquals("heavy_strike", StarterKits.skill(config, marauder, items.base("great_sword")));
-        assertEquals("heavy_strike", StarterKits.skill(config, marauder, items.base("sceptre")));
-        assertEquals("split_arrow", StarterKits.skill(config, CharacterClass.RANGER, items.base("bow")));
-        assertEquals("explosive_bolt", StarterKits.skill(config, CharacterClass.MERCENARY, items.base("crossbow")));
-        assertEquals("tempest_flurry", StarterKits.skill(config, CharacterClass.MONK, items.base("quarterstaff")));
-        assertEquals("lightning_spear", StarterKits.skill(config, CharacterClass.HUNTRESS, items.base("spear")));
-        // 法杖、長杖：混沌術士送混沌彈，其他職業送熾星彈
-        assertEquals("fireball", StarterKits.skill(config, CharacterClass.SORCERESS, items.base("wand")));
-        assertEquals("fireball", StarterKits.skill(config, CharacterClass.SORCERESS, items.base("staff")));
-        assertEquals("fireball", StarterKits.skill(config, marauder, items.base("wand")));
-        assertEquals("chaos_bolt", StarterKits.skill(config, CharacterClass.WITCH, items.base("wand")));
-        assertEquals("chaos_bolt", StarterKits.skill(config, CharacterClass.WITCH, items.base("staff")));
+        // 錘（含權杖）送碎骨擊；其他近戰武器（例如拿掉的斧）送地震
+        assertEquals("boneshatter", StarterKits.skill(config, marauder, items.base("mace1_23")));
+        assertEquals("boneshatter", StarterKits.skill(config, marauder, items.base("mace2_26")));
+        assertEquals("boneshatter", StarterKits.skill(config, marauder, items.base("sceptre_16")));
+        assertEquals("earthquake", StarterKits.skill(config, marauder, items.base("hand_axe")));
+        assertEquals("lightning_arrow", StarterKits.skill(config, CharacterClass.RANGER, items.base("bow_23")));
+        assertEquals("explosive_bolt", StarterKits.skill(config, CharacterClass.MERCENARY, items.base("xbow_23")));
+        assertEquals("tempest_flurry", StarterKits.skill(config, CharacterClass.MONK, items.base("qstaff_25")));
+        assertEquals("lightning_spear", StarterKits.skill(config, CharacterClass.HUNTRESS, items.base("spear_26")));
+        assertEquals("bear_maul", StarterKits.skill(config, CharacterClass.DRUID, items.base("talis_18")));
+        // 法杖、長杖：混沌術士送汲魂彈，其他職業送熾星彈
+        assertEquals("fireball", StarterKits.skill(config, CharacterClass.SORCERESS, items.base("wand_14")));
+        assertEquals("fireball", StarterKits.skill(config, CharacterClass.SORCERESS, items.base("staff_17")));
+        assertEquals("fireball", StarterKits.skill(config, marauder, items.base("wand_14")));
+        assertEquals("essence_drain", StarterKits.skill(config, CharacterClass.WITCH, items.base("wand_14")));
+        assertEquals("essence_drain", StarterKits.skill(config, CharacterClass.WITCH, items.base("staff_17")));
         // 不看職業的武器：誰拿都一樣
-        assertEquals("explosive_bolt", StarterKits.skill(config, CharacterClass.WITCH, items.base("crossbow")));
+        assertEquals("explosive_bolt", StarterKits.skill(config, CharacterClass.WITCH, items.base("xbow_23")));
         assertNull(StarterKits.skill(config, marauder, null));
     }
 
@@ -127,34 +133,37 @@ class StarterKitTest {
                 assertEquals(slots.get(i), armour.get(i).slot());
             }
             // 單手武器送盾、雙手武器不送
-            final ItemBase shield = StarterKits.shield(items, config, characterClass, items.base("dagger"));
+            final ItemBase shield = StarterKits.shield(items, config, characterClass, items.base("wand_14"));
             assertNotNull(shield, characterClass + " 拿單手武器要送盾");
             assertEquals(ItemSlot.OFF_HAND, shield.slot());
-            assertNull(StarterKits.shield(items, config, characterClass, items.base("great_sword")));
+            assertNull(StarterKits.shield(items, config, characterClass, items.base("mace2_26")));
         }
-        assertEquals("plate_body", StarterKits.armour(items, config, CharacterClass.MARAUDER).get(1).id());
-        assertEquals("scale_body", StarterKits.armour(items, config, CharacterClass.MERCENARY).get(1).id());
-        assertEquals("leather_body", StarterKits.armour(items, config, CharacterClass.HUNTRESS).get(1).id());
-        assertEquals("leather_body", StarterKits.armour(items, config, CharacterClass.RANGER).get(1).id());
-        assertEquals("wrap_body", StarterKits.armour(items, config, CharacterClass.MONK).get(1).id(), "棍僧：閃避＋能量護盾的纏布");
-        assertEquals("silk_body", StarterKits.armour(items, config, CharacterClass.SORCERESS).get(1).id());
-        assertEquals("silk_body", StarterKits.armour(items, config, CharacterClass.WITCH).get(1).id());
-        assertEquals("tower_shield", StarterKits.shield(items, config, CharacterClass.MARAUDER, items.base("hand_axe")).id());
-        assertEquals("kite_shield", StarterKits.shield(items, config, CharacterClass.MERCENARY, items.base("short_sword")).id());
-        assertEquals("buckler", StarterKits.shield(items, config, CharacterClass.HUNTRESS, items.base("spear")).id(), "矛配小盾");
-        assertEquals("buckler", StarterKits.shield(items, config, CharacterClass.RANGER, items.base("claw")).id());
-        assertEquals("buckler", StarterKits.shield(items, config, CharacterClass.MONK, items.base("dagger")).id());
-        assertEquals("spirit_shield", StarterKits.shield(items, config, CharacterClass.SORCERESS, items.base("wand")).id());
-        assertEquals("spirit_shield", StarterKits.shield(items, config, CharacterClass.WITCH, items.base("wand")).id());
-        assertNull(StarterKits.shield(items, config, CharacterClass.MONK, items.base("quarterstaff")), "長棍是雙手");
+        // 2026-10：設定寫的 *_01 分階換成合併後的基底
+        assertEquals("body_str_25", StarterKits.armour(items, config, CharacterClass.MARAUDER).get(1).id());
+        assertEquals("body_str_dex_27", StarterKits.armour(items, config, CharacterClass.MERCENARY).get(1).id());
+        assertEquals("body_dex_22", StarterKits.armour(items, config, CharacterClass.HUNTRESS).get(1).id());
+        assertEquals("body_dex_22", StarterKits.armour(items, config, CharacterClass.RANGER).get(1).id());
+        assertEquals("body_dex_int_18", StarterKits.armour(items, config, CharacterClass.MONK).get(1).id(), "棍僧：閃避＋能量護盾");
+        assertEquals("body_int_20", StarterKits.armour(items, config, CharacterClass.SORCERESS).get(1).id());
+        assertEquals("body_int_20", StarterKits.armour(items, config, CharacterClass.WITCH).get(1).id());
+        assertEquals("body_str_25", StarterKits.armour(items, config, CharacterClass.DRUID).get(1).id());
+        assertEquals("tshield_24", StarterKits.shield(items, config, CharacterClass.MARAUDER, items.base("mace1_23")).id());
+        assertEquals("kshield_22", StarterKits.shield(items, config, CharacterClass.MERCENARY, items.base("mace1_09")).id());
+        assertEquals("buckler_23", StarterKits.shield(items, config, CharacterClass.HUNTRESS, items.base("spear_26")).id(), "矛配小盾");
+        assertEquals("buckler_23", StarterKits.shield(items, config, CharacterClass.RANGER, items.base("spear_16")).id());
+        assertEquals("buckler_23", StarterKits.shield(items, config, CharacterClass.MONK, items.base("spear_16")).id());
+        assertEquals("focus_23", StarterKits.shield(items, config, CharacterClass.SORCERESS, items.base("wand_14")).id());
+        assertEquals("focus_23", StarterKits.shield(items, config, CharacterClass.WITCH, items.base("wand_14")).id());
+        assertNull(StarterKits.shield(items, config, CharacterClass.MONK, items.base("qstaff_25")), "長棍是雙手");
+        assertNull(StarterKits.shield(items, config, CharacterClass.DRUID, items.base("talis_18")), "獸魂符是雙手");
     }
 
     @Test
     void resolveFallsBackWhenTheChoiceIsNotAllowed() {
         // 選了拿不動的武器（例如設定重載後）：改送第一個能選的
-        assertEquals("hand_axe", StarterKits.resolveWeapon(items, config, CharacterClass.MARAUDER, "staff").id());
-        assertEquals("bow", StarterKits.resolveWeapon(items, config, CharacterClass.RANGER, "nope").id());
-        assertEquals("staff", StarterKits.resolveWeapon(items, config, CharacterClass.WITCH, "staff").id());
+        assertEquals("mace1_23", StarterKits.resolveWeapon(items, config, CharacterClass.MARAUDER, "staff_17").id());
+        assertEquals("bow_23", StarterKits.resolveWeapon(items, config, CharacterClass.RANGER, "nope").id());
+        assertEquals("staff_17", StarterKits.resolveWeapon(items, config, CharacterClass.WITCH, "staff_17").id());
     }
 
     @Test
@@ -171,23 +180,23 @@ class StarterKitTest {
         Files.writeString(dir.resolve("character.yml"), """
                 starter:
                   classes:
-                    witch: { recommended: [ sceptre ], shield: none }
+                    witch: { recommended: [ sceptre_16 ], shield: none }
                     ranger: { armour: [scale_helmet] }
                   skills:
                     - { weapon: mace, skill: cleave }
                 """);
         final CharacterConfig custom = new CharacterConfig();
         custom.load(dir);
-        assertEquals(List.of("sceptre"), custom.starter(CharacterClass.WITCH).recommended());
+        assertEquals(List.of("sceptre_16"), custom.starter(CharacterClass.WITCH).recommended());
         assertEquals(config.starter(CharacterClass.WITCH).armour(), custom.starter(CharacterClass.WITCH).armour(), "沒寫的項目用預設");
         assertNull(custom.starter(CharacterClass.WITCH).shield(), "none = 不送盾");
         assertEquals(List.of("scale_helmet"), custom.starter(CharacterClass.RANGER).armour());
-        assertEquals("buckler", custom.starter(CharacterClass.RANGER).shield());
-        assertEquals("tower_shield", custom.starter(CharacterClass.MARAUDER).shield(), "沒列的職業用預設");
+        assertEquals("buckler_01", custom.starter(CharacterClass.RANGER).shield());
+        assertEquals("tshield_01", custom.starter(CharacterClass.MARAUDER).shield(), "沒列的職業用預設");
         assertEquals("cleave", custom.starterSkill(CharacterClass.MARAUDER, Set.of("weapon", "one_hand", "mace", "melee")));
         assertNull(custom.starterSkill(CharacterClass.RANGER, Set.of("bow")));
-        assertEquals("sceptre", StarterKits.weapons(items, custom, CharacterClass.WITCH).get(0).base().id());
-        assertNull(StarterKits.shield(items, custom, CharacterClass.WITCH, items.base("wand")));
+        assertEquals("sceptre_16", StarterKits.weapons(items, custom, CharacterClass.WITCH).get(0).base().id());
+        assertNull(StarterKits.shield(items, custom, CharacterClass.WITCH, items.base("wand_14")));
 
         // 重載成沒有 starter 的檔案：回到預設，不留上一次的自訂
         Files.writeString(dir.resolve("character.yml"), "level_cap: 60\n");
@@ -208,19 +217,19 @@ class StarterKitTest {
         Files.writeString(dir.resolve("character.yml"), """
                 starter:
                   classes:
-                    marauder: { recommended: [staff, hand_axee], armour: [silk_body, buckler], shield: spirit_shield }
+                    marauder: { recommended: [staff_17, hand_axee], armour: [body_int_20, buckler_23], shield: focus_23 }
                 """);
         final CharacterConfig custom = new CharacterConfig();
         custom.load(dir);
         final List<String> problems = StarterKits.problems(items, custom);
         assertEquals(5, problems.size(), String.join("\n", problems));
-        assertTrue(problems.get(0).contains("staff") && problems.get(0).contains("拿不動"));
+        assertTrue(problems.get(0).contains("staff_17") && problems.get(0).contains("拿不動"));
         assertTrue(problems.get(1).contains("hand_axee"));
-        assertTrue(problems.get(2).contains("silk_body") && problems.get(2).contains("穿不上"));
-        assertTrue(problems.get(3).contains("buckler") && problems.get(3).contains("不是防具"));
-        assertTrue(problems.get(4).contains("spirit_shield"));
-        // 推薦的武器全部不能用時，照基底順序列出能用的
-        assertEquals("short_sword", StarterKits.weapons(items, custom, CharacterClass.MARAUDER).get(0).base().id());
+        assertTrue(problems.get(2).contains("body_int_20") && problems.get(2).contains("穿不上"));
+        assertTrue(problems.get(3).contains("buckler_23") && problems.get(3).contains("不是防具"));
+        assertTrue(problems.get(4).contains("focus_23"));
+        // 推薦的武器全部不能用時，照基底順序列出能用的（每一類第一把）
+        assertEquals("mace1_09", StarterKits.weapons(items, custom, CharacterClass.MARAUDER).get(0).base().id());
     }
 
     @Test
@@ -250,6 +259,6 @@ class StarterKitTest {
         final IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> broken.load(dir));
         assertTrue(error.getMessage().contains("paladin"));
         // 寫錯時保留原本的設定
-        assertEquals("tower_shield", broken.starter(CharacterClass.MARAUDER).shield());
+        assertEquals("tshield_01", broken.starter(CharacterClass.MARAUDER).shield());
     }
 }
