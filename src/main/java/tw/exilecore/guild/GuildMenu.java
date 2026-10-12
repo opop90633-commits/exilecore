@@ -268,7 +268,7 @@ public final class GuildMenu extends Menu {
             return 1;
         }
         final List<Guild.Member> members = new ArrayList<>(guild.members());
-        members.sort(Comparator.comparingInt((Guild.Member member) -> member.rank().code()).reversed()
+        members.sort(Comparator.comparingInt((Guild.Member member) -> member.rank().power()).reversed() // 2026-10：照權限排（副會長的存檔代號是 3，以前照代號排會排到會長前面）
                 .thenComparing(Comparator.comparingLong(Guild.Member::contribution).reversed())
                 .thenComparingLong(Guild.Member::joinedAt));
         final int pages = Math.max(1, (members.size() + PER_PAGE - 1) / PER_PAGE);
