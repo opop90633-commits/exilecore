@@ -57,6 +57,8 @@ public final class Emotes implements Listener {
     private final Set<UUID> busy = new HashSet<>();
     private final List<BukkitTask> running = new ArrayList<>();
     private final List<ItemDisplay> balls = new ArrayList<>();
+    /** 67 頭上那個「67」（2026-10）：關服、重讀時一起收掉。 */
+    private final List<org.bukkit.entity.TextDisplay> sixSevenLabels = new ArrayList<>();
     /** 每個人擺著的沙發（2026-10：人走開沙發留在原地；一個人同時只有一張）。 */
     private final Map<UUID, List<org.bukkit.entity.BlockDisplay>> sofas = new HashMap<>();
     /** 沙發擺多久（刻）：人可以先走開，沙發留著。 */
@@ -147,7 +149,13 @@ public final class Emotes implements Listener {
             // 冷卻算到動畫演完（分解動作比較長）
             lastUse.put(player.getUniqueId(), now + Math.max(0, modelLengthMillis(emote.emote()) - COOLDOWN_MILLIS));
             effects(player, emote.emote());
+            if ("six_seven".equals(emote.emote())) {
+                sixSevenLabel(player, modelLengthMillis("six_seven") / 50);
+            }
             return;
+        }
+        if ("six_seven".equals(emote.emote())) {
+            sixSevenLabel(player, 51); // 沒有 BetterModel 的版本大約 2.5 秒
         }
         switch (emote.emote()) {
             case "sidestep" -> sidestep(player);
@@ -776,6 +784,51 @@ public final class Emotes implements Listener {
         });
     }
 
+    /**
+     * 67 頭上的「67」（2026-10）：一個文字顯示騎在玩家頭上（跟著走、所有人都看得到），在名字上面；
+     * 跟著兩手掂的節奏一大一小地跳（0.3 秒起每 0.21 秒），演完收掉。
+     */
+    private void sixSevenLabel(final Player player, final long ticks) {
+        final org.bukkit.entity.TextDisplay label = player.getWorld().spawn(player.getLocation().add(0, 2.2, 0),
+                org.bukkit.entity.TextDisplay.class, display -> {
+                    display.text(plugin.text().parse("<b><gradient:#ffd23a:#ff6a3d>67</gradient></b>"));
+                    display.setBillboard(Display.Billboard.CENTER);
+                    display.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+                    display.setShadowed(true);
+                    display.setSeeThrough(false);
+                    display.setPersistent(false);
+                    display.setInterpolationDuration(3);
+                    display.setTransformation(sixSevenScale(1.6f));
+                });
+        if (!player.addPassenger(label)) {
+            label.remove();
+            return;
+        }
+        sixSevenLabels.add(label);
+        final int[] age = {0};
+        repeat(task -> {
+            final int tick = age[0]++;
+            if (!label.isValid() || !player.isOnline() || player.isDead() || tick >= ticks) {
+                if (label.isValid()) {
+                    label.remove();
+                }
+                sixSevenLabels.remove(label);
+                task.cancel();
+                return;
+            }
+            // 每 0.21 秒（約 4 tick）換一手：大小跟著跳一下
+            if (tick >= 6 && (tick - 6) % 4 == 0) {
+                label.setInterpolationDelay(0);
+                label.setTransformation(sixSevenScale((tick - 6) % 8 == 0 ? 2.0f : 1.6f));
+            }
+        });
+    }
+
+    /** 67 的文字大小（往上抬，在名字上面）。 */
+    private static Transformation sixSevenScale(final float scale) {
+        return new Transformation(new Vector3f(0, 0.7f, 0), new Quaternionf(), new Vector3f(scale, scale, scale), new Quaternionf());
+    }
+
     /** 關服、重讀：還在跑的動作停掉、球收掉。 */
     void stop() {
         for (final BukkitTask task : new ArrayList<>(running)) {
@@ -788,6 +841,12 @@ public final class Emotes implements Listener {
             }
         }
         balls.clear();
+        for (final org.bukkit.entity.TextDisplay label : new ArrayList<>(sixSevenLabels)) {
+            if (label.isValid()) {
+                label.remove();
+            }
+        }
+        sixSevenLabels.clear();
         for (final UUID owner : new ArrayList<>(sofas.keySet())) {
             removeSofa(owner);
         }

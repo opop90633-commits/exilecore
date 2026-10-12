@@ -52,7 +52,7 @@ npcs:
 
   ming_yi:
     name: 明夷
-    title: 最後的星衛
+    title: 昇華大師   # 2026-10：原本「最後的星衛」——改成一眼看得出是開昇華試煉的人
     hold: NETHER_STAR
     opens: trial
     place: { zone: camp, at: [-8, -23], yaw: -90 }

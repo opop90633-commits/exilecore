@@ -65,7 +65,9 @@ jobs:
           python-version: '3.12'
 
       - name: 準備 paramiko
-        run: python -m pip install --quiet paramiko
+        run: |
+          python --version
+          python -m pip install --quiet paramiko
 
       - name: 寫連線設定（用 Secrets，不印出來）
         if: env.DEPLOY_SFTP_HOST != ''
@@ -86,14 +88,16 @@ jobs:
         if: env.DEPLOY_SFTP_HOST != ''
         run: python tools/deploy.py --no-build --no-restart
 
-      - name: 刪掉連線設定
-        if: always()
-        shell: python
-        run: |
-          import os
-          path = os.path.join("tools", "deploy.local.json")
-          if os.path.exists(path):
-              os.remove(path)
+      # 2026-10：清掉連線設定不靠 Python（前面裝 Python 失敗時這一步也要能跑，不然只會看到「python: command not found」，看不到真正的錯）
+      - name: 刪掉連線設定（Windows）
+        if: always() && runner.os == 'Windows'
+        shell: powershell
+        run: Remove-Item -Force -ErrorAction SilentlyContinue tools\deploy.local.json
+
+      - name: 刪掉連線設定（Linux、macOS）
+        if: always() && runner.os != 'Windows'
+        shell: bash
+        run: rm -f tools/deploy.local.json
 
       - name: 沒設 Secrets：跳過上傳
         if: env.DEPLOY_SFTP_HOST == ''
