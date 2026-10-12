@@ -82,7 +82,9 @@ class StatLinesTest {
         assertNotNull(StatLines.problem(more(StatKeys.CRIT_CHANCE, 0.1)), "暴擊率只讀 increased");
         assertNotNull(StatLines.problem(flat(StatKeys.LIFE_REGEN, 5, Tags.FIRE)), "生命回復不能加標籤");
         assertNotNull(StatLines.problem(inc(StatKeys.DAMAGE, 0.1, "holy")), "不認得的標籤");
-        assertNotNull(StatLines.problem(inc(StatKeys.DROP_QUANTITY, 0.1)), "掉落不能給");
+        // 2026-10：掉落數量、稀有度可以給了（掉落、地圖事件、劫盜都讀角色身上的 increased），但只認 increased
+        assertNull(StatLines.problem(inc(StatKeys.DROP_QUANTITY, 0.1)));
+        assertNotNull(StatLines.problem(flat(StatKeys.DROP_QUANTITY, 10)), "掉落數量只讀 increased");
         assertNotNull(StatLines.problem(inc("damage.gain.fire", 0.1)), "額外附加是固定值");
         assertNotNull(StatLines.problem(flat(StatKeys.LIFE_MAX, 0)), "0 沒有意義");
         assertTrue(StatLines.stats().contains("damage.gain.cold"));
