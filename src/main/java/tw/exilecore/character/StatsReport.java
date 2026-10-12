@@ -334,7 +334,7 @@ public final class StatsReport {
                 final String text = String.format(Locale.ROOT, "<gray>✦ 假人實測 每秒 <white>%,d <dark_gray>（%s・%.1f 秒%s）", measured.dps(),
                         escape(measured.dummy()), measured.seconds(),
                         measured.dotPercent() > 0 ? "・持續傷害佔 " + measured.dotPercent() + "%" : "");
-                lines.add(chat ? hover(text, "三天內打訓練假人最高的一段（至少 8 秒）<newline><dark_gray>戰吼、怒氣、流血點燃中毒都算在裡面") : text);
+                lines.add(chat ? hover(text, "三天內打訓練假人最高的一段（至少 4 秒）<newline><dark_gray>戰吼、怒氣、流血點燃中毒都算在裡面") : text);
             }
         }
         // 2026-10：其他常用的數值
