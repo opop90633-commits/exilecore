@@ -15,6 +15,10 @@
 #   at 還可以寫 maze（count 圈同心的風暴牆、每圈 gaps 個 gap_angle 度的缺口、最外圈 reach 格）、walls（朝目標兩排平行的牆，左右各 scatter 格、長 reach 格）
 #   damage    「這隻 Boss 普通一下的幾倍」（跟 Boss 的等級、稀有度、maps.yml 的 damage 倍率一起長）
 #   type      physical／fire／cold／lightning／chaos：物理轉成這個類型，吃玩家的對應抗性
+#   convert   2026-10：物理只轉一部分（{ lightning: 0.3, fire: 0.3 }，總和最多 1，剩下的還是物理吃護甲；type 要是 physical）
+#   track     2026-10（只有 beam）：前搖時紅線跟著目標轉，放出來之後每秒最多再轉 angle 度、不掃——賽勒斯的「死」
+#   solid     2026-10（只有 zone）：這塊是牆，站進去的人每 tick 被往外推，穿不過（迷宮、走廊）
+#   ruin      2026-10：被打到的玩家幾秒內禁療（生命回復、偷取、護盾回充停掉；藥劑照喝）——賽勒斯的荒蕪（黑水）
 #   cooldown  冷卻（秒）   range 目標在幾格內才會用   telegraph 前搖（秒，Boss 站著蓄力、地上畫紅色警告；
 #             會直接打到身邊的招至少 0.8，撲擊 0.9，才不會一瞬間跳臉）
 #   slam：delay 前搖結束後幾秒落下、radius 半徑、count 幾顆、stagger 每顆間隔、scatter 落點隨機偏移、at self／target／random
@@ -640,40 +644,95 @@ skills:
     scatter: 11
     shout: "「整片天都塌下來吧，只留一個地方給你。」"
 
-  # ---- 巔峰 Boss：覺醒之主・虛星（2026-10，maps.yml 的 finals.awakener）——招式照 PoE 的萬界覺醒者 ----
+  # ---- 巔峰 Boss：覺醒之主・虛星（2026-10，maps.yml 的 finals.awakener）——招式照 PoE1 的喚世者・賽勒斯 ----
+  # 2026-10 第二輪（照 poedb 的 AtlasExile5）：傷害類型照祂的招——幾乎全部是「物理、一部分轉成元素」（convert），
+  #   所以護甲有用、抗性也有用；前搖照祂的施放時間（死 1.5 秒、走廊 7.5 秒、迷宮 1.5 秒、殞星 3 秒、分身 5.3 秒、瞬移 1 秒）、
+  #   冷卻也照祂的（再乘 settings 的 boss_cooldown 與 tempo.pinnacle）。
+  #   「死」是追著目標的光束（track）：紅線跟著你轉，放出來那一下幾乎不掃——要在它放出來那一刻往旁邊走；
+  #   迷宮與走廊的風暴牆是真的牆（solid）：站進去會被推出來，只能走缺口、走廊裡只能左右閃；
+  #   風暴落下的地方留下荒蕪（hazard，留很久；玩家叫它黑水）：持續掉血、踩到之後幾秒禁療（ruin），場上能站的地方越打越少。
   awakener_die_beam:
     name: 死亡光束
-    hint: "一道會轉的光束：繞著祂跑，跟著光束轉的方向走"
+    hint: "「死。」紅線會跟著你：它放出來那一刻往旁邊跑，別停"
     kind: beam
     damage: 1.3
-    type: lightning
-    cooldown: 14
-    range: 16
-    telegraph: 1.3
+    type: physical
+    convert: { lightning: 0.3, fire: 0.3 }   # poedb：物理 30% 轉閃電、30% 轉火
+    cooldown: 10
+    range: 20
+    telegraph: 1.5       # 施放時間 1.5 秒
+    track: true          # 前搖時跟著目標轉
     count: 1
-    angle: 140
+    angle: 50            # track 的光束：放出來之後每秒最多再轉幾度（追著你）
     length: 34
-    width: 0.7
-    duration: 3.5
+    width: 0.8
+    duration: 0.7        # 一瞬間
     interval: 0.3
     shout: "「死。」"
   awakener_storm_maze:
     name: 殞星迷宮
-    hint: "兩圈風暴牆圍著祂：找缺口穿過去，別直線跑"
+    hint: "風暴牆圍著祂、穿不過：找缺口繞出去，別直線跑"
     kind: zone
-    damage: 0.55
-    type: chaos
-    cooldown: 20
+    damage: 0.8
+    type: physical
+    convert: { lightning: 0.25, chaos: 0.25, fire: 0.25 }   # poedb：CircleMazeBlast
+    cooldown: 23
     range: 36
-    telegraph: 1.2
-    radius: 2.5
-    duration: 18
+    telegraph: 1.5       # 施放時間 1.5 秒
+    radius: 2.2
+    duration: 7          # poedb：圈留 2 秒＋1（我們的牆要讓人走得出來，留久一點）
     interval: 0.6
-    count: 2            # 2026-10（照 PoE1 賽勒斯的殞星迷宮）：at: maze 時 count 是幾圈牆
-    reach: 13           # 最外圈離祂幾格
-    gaps: 2             # 每圈幾個缺口（各圈錯開）
+    ruin: 3              # poedb：apply gauntlet ruin on hit
+    count: 2             # at: maze 時 count 是幾圈牆（PoE1 每個階段多一圈：1 → 5）
+    reach: 12            # 最外圈離祂幾格
+    gaps: 2              # 每圈幾個缺口（各圈錯開）
     gap_angle: 55
     at: maze
+    solid: true          # 是牆
+    slow: 1
+    shout: "「風暴，起。」"
+  awakener_storm_maze_3:
+    name: 殞星迷宮
+    hint: "三圈風暴牆、穿不過：一圈一圈找缺口繞出去"
+    kind: zone
+    damage: 0.8
+    type: physical
+    convert: { lightning: 0.25, chaos: 0.25, fire: 0.25 }
+    cooldown: 26
+    range: 36
+    telegraph: 1.5
+    radius: 1.8
+    duration: 9
+    interval: 0.6
+    ruin: 3              # poedb：apply gauntlet ruin on hit
+    count: 3
+    reach: 15
+    gaps: 2
+    gap_angle: 50
+    at: maze
+    solid: true
+    slow: 1
+    shout: "「風暴，起。」"
+  awakener_storm_maze_4:
+    name: 殞星迷宮
+    hint: "四圈風暴牆、穿不過：一圈一圈找缺口繞出去"
+    kind: zone
+    damage: 0.8
+    type: physical
+    convert: { lightning: 0.25, chaos: 0.25, fire: 0.25 }
+    cooldown: 32
+    range: 36
+    telegraph: 1.5
+    radius: 1.5
+    duration: 11
+    interval: 0.6
+    ruin: 3              # poedb：apply gauntlet ruin on hit
+    count: 4
+    reach: 16
+    gaps: 2
+    gap_angle: 45
+    at: maze
+    solid: true
     slow: 1
     shout: "「風暴，起。」"
   awakener_shift:
@@ -681,42 +740,60 @@ skills:
     kind: blink          # 2026-10：賽勒斯不走路——不帶傷害的瞬移，常常換位置、拉開距離
     damage: 0
     type: lightning
-    cooldown: 9
+    cooldown: 6          # poedb：TeleportOrion 冷卻 6 秒
     range: 40
     telegraph: 0.4
     radius: 1.5
   awakener_great_meteor:
     name: 滅世殞星
-    hint: "一顆很大的殞星：看到紅圈就往外跑"
+    hint: "一顆很大的殞星：看到紅圈就往外跑；落點會留下荒蕪，別再踩回去"
     kind: slam
-    damage: 3.6
-    type: fire
-    cooldown: 26
+    damage: 3.2
+    type: physical
+    convert: { chaos: 0.25, fire: 0.25 }   # poedb：BeamBomb 物理 25% 轉混沌、25% 轉火
+    cooldown: 29        # poedb：冷卻 29 秒
     range: 30
     telegraph: 1.0
-    delay: 2.2
+    delay: 2.0          # 施放時間 3 秒（前搖＋落下）
     radius: 6.5
     count: 1
     at: target
     shout: "「跪下。」"
+  awakener_desolation:
+    name: 荒蕪
+    kind: zone           # 跟滅世殞星一起放（maps.yml 的 with:）：落點留下 13 秒的荒蕪（poedb：BeamBomb 的持續 13 秒）
+    damage: 0.35
+    type: physical
+    convert: { chaos: 0.25, fire: 0.25, lightning: 0.25 }   # poedb：每秒混沌、火、物理、閃電各一份
+    telegraph: 3.0       # 跟殞星同時落（前搖＋落下 3 秒）
+    radius: 6.5
+    duration: 13
+    interval: 0.5
+    ruin: 4              # 黑水：踩到之後 4 秒禁療
+    count: 1
+    at: target
+    slow: 1
   awakener_corridor_walls:
     name: 風暴走廊
-    kind: zone           # 跟 awakener_corridor 一起放（maps.yml 的 with:）：走廊兩邊的風暴牆
+    kind: zone           # 跟 awakener_corridor 一起放（maps.yml 的 with:）：走廊兩邊的風暴牆（是牆，穿不過）
     damage: 0.55
-    type: chaos
-    telegraph: 1.4
-    radius: 1.8
-    duration: 7
+    type: physical
+    convert: { lightning: 0.25, chaos: 0.25, fire: 0.25 }   # poedb：CorridorBlast
+    telegraph: 1.5
+    radius: 2.2
+    duration: 8
     interval: 0.6
     reach: 30
     scatter: 4.5        # 走廊左右各幾格
     at: walls
+    solid: true
     slow: 1
   awakener_meteor:
     name: 殞星
     kind: slam
-    damage: 2.4
+    damage: 2.2
     type: physical
+    convert: { chaos: 0.25, fire: 0.25 }
     cooldown: 12
     range: 30
     telegraph: 0.8
@@ -727,24 +804,16 @@ skills:
     scatter: 5
     at: target
     shout: "「死亡……在等你。」"
-  awakener_blink_slash:
-    name: 瞬閃斬
-    kind: blink
-    damage: 1.3          # 瞬閃到背後落地炸一圈：前搖短，一下不能太痛（單元測試：第三階段也打不死滿血的參考角色）
-    type: physical
-    cooldown: 10
-    range: 36
-    telegraph: 1.0
-    radius: 3
   awakener_clones:
     name: 虛星分身
-    hint: "三個殘影各射一條線：看紅線往旁邊走"
+    hint: "三個分身各射一條線：看紅線往旁邊走"
     kind: echoes
     damage: 1.5
-    type: lightning
-    cooldown: 24
+    type: physical
+    convert: { lightning: 0.75 }   # poedb：CloneBeam 物理 75% 轉閃電
+    cooldown: 29        # poedb：冷卻 29 秒
     range: 20
-    telegraph: 1.4
+    telegraph: 1.4       # 施放時間 5.3 秒：前搖 1.4＋三個分身各隔 0.8＋射穿 1.0
     count: 3
     scatter: 9
     stagger: 0.8
@@ -755,8 +824,9 @@ skills:
   awakener_storm_chasers:
     name: 風暴追擊
     kind: orbs
-    damage: 1.0          # 混沌沒有抗性擋：一顆碰到不能太痛
-    type: chaos
+    damage: 1.0
+    type: physical
+    convert: { chaos: 0.25, fire: 0.25, lightning: 0.25 }   # 風暴：照荒蕪的類型
     cooldown: 22
     range: 26
     telegraph: 1.2
@@ -768,25 +838,27 @@ skills:
     shout: "「想要追逐的快感嗎？」"
   awakener_corridor:
     name: 風暴走廊
-    hint: "兩邊是風暴牆、光束在走廊裡掃：在走廊裡左右閃"
+    hint: "兩邊是風暴牆、穿不過；光束在走廊裡掃：在走廊裡左右閃"
     kind: beam           # 2026-10（照 PoE1 賽勒斯）：走廊牆（awakener_corridor_walls）一起落，一道光束在走廊裡來回掃
     damage: 1.4
-    type: lightning
-    cooldown: 22
+    type: physical
+    convert: { lightning: 0.25, chaos: 0.25, fire: 0.25 }   # poedb：CorridorBlast
+    cooldown: 20        # poedb：冷卻 20 秒
     range: 16
-    telegraph: 1.4
+    telegraph: 1.5
     count: 1
     angle: 40
     length: 32
     width: 1.0
-    duration: 3.5
+    duration: 6.0        # 施放時間 7.5 秒（前搖 1.5＋掃 6）
     interval: 0.3
     shout: "「無路可走。」"
   awakener_apocalypse:
     name: 末日
     kind: sanctuary
     damage: 4.5
-    type: chaos
+    type: physical
+    convert: { chaos: 0.25, fire: 0.25, lightning: 0.25 }
     cooldown: 40
     range: 30
     telegraph: 3.2
@@ -800,7 +872,8 @@ skills:
     hint: "風暴把場地吃掉：往中間靠，留在圈裡"
     kind: arena
     damage: 0.4
-    type: chaos
+    type: physical
+    convert: { chaos: 0.25, fire: 0.25, lightning: 0.25 }
     cooldown: 300
     range: 30
     telegraph: 1.5
@@ -814,8 +887,9 @@ skills:
     hint: "四道光束一起轉：待在兩道之間，跟著轉"
     kind: beam
     damage: 1.3
-    type: lightning
-    cooldown: 24
+    type: physical
+    convert: { lightning: 0.75 }   # poedb：SpammableBeamLightning 物理 75% 轉閃電
+    cooldown: 12        # poedb：MultiBeam2 冷卻 12 秒
     range: 16
     telegraph: 1.5
     count: 4
@@ -828,12 +902,14 @@ skills:
   hazard_awakener_storm:
     name: 風暴
     kind: zone
-    damage: 0.5
-    type: chaos
+    damage: 0.4
+    type: physical
+    convert: { chaos: 0.25, fire: 0.25, lightning: 0.25 }   # poedb：MeteorGroundEffect 每秒混沌、火、物理、閃電各一份
     telegraph: 0.8
     radius: 3
-    duration: 20
+    duration: 150        # 2026-10：20 → 150（賽勒斯的荒蕪留很久：場上能站的地方越打越少）
     interval: 0.7
+    ruin: 4              # 黑水：踩到之後 4 秒禁療（「泡黑水」就是在測這個）
     count: 1
     scatter: 4
     at: target

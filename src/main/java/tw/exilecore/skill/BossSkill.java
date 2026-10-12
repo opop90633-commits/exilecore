@@ -72,7 +72,36 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                         double scatter, double spread, double speed, double reach, double size, double explode,
                         double duration, double interval, double slow, double width, String summonType, int summonMax,
                         double taken, Target at, String visual, String shout, int gaps, double gapAngle, double safe, String hint,
-                        int countPerPlayer) {
+                        int countPerPlayer, java.util.Map<DamageType, Double> convert, boolean track, boolean solid, double ruin) {
+
+    public BossSkill {
+        convert = convert == null || convert.isEmpty() ? java.util.Map.of() : java.util.Map.copyOf(new java.util.EnumMap<>(convert));
+    }
+
+    /**
+     * 這招的物理傷害有多少轉成別的類型（2026-10，照 PoE1 賽勒斯的招：物理 30% 轉閃電、30% 轉火…）：
+     * 寫了 convert 就用它（剩下的還是物理），沒寫照 type（整招轉成那一種）。
+     */
+    public java.util.Map<DamageType, Double> conversion() {
+        if (!convert.isEmpty()) {
+            return convert;
+        }
+        return type == DamageType.PHYSICAL ? java.util.Map.of() : java.util.Map.of(type, 1.0);
+    }
+
+    /** 打中一下各類型佔的比例（物理是剩下的那份）：單元測試算「吃多少抗性」用。 */
+    public java.util.Map<DamageType, Double> typeShares() {
+        final java.util.Map<DamageType, Double> shares = new java.util.EnumMap<>(DamageType.class);
+        double rest = 1;
+        for (final java.util.Map.Entry<DamageType, Double> entry : conversion().entrySet()) {
+            shares.merge(entry.getKey(), entry.getValue(), Double::sum);
+            rest -= entry.getValue();
+        }
+        if (rest > 1e-9) {
+            shares.merge(DamageType.PHYSICAL, rest, Double::sum);
+        }
+        return shares;
+    }
 
     public enum Kind {
         /** 延遲落下：地上先畫圈，過一下炸一圈（猛擊、隕石、雷暴）。 */
@@ -172,7 +201,7 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
     public BossSkill with(final double newDamage, final double newCooldown) {
         return new BossSkill(id, name, kind, newDamage >= 0 ? newDamage : damage, type, newCooldown >= 0 ? newCooldown : cooldown, range,
                 telegraph, delay, radius, angle, length, count, stagger, scatter, spread, speed, reach, size, explode, duration, interval,
-                slow, width, summonType, summonMax, taken, at, visual, shout, gaps, gapAngle, safe, hint, countPerPlayer);
+                slow, width, summonType, summonMax, taken, at, visual, shout, gaps, gapAngle, safe, hint, countPerPlayer, convert, track, solid, ruin);
     }
 
     /** 閃現到目標旁邊之後落地震一下（撲擊）。 */
@@ -238,6 +267,42 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
         if (gaps * gapAngle > 300) {
             throw new IllegalArgumentException(where + "：缺口加起來太大（gaps × gap_angle 最多 300 度），環就沒有意義了");
         }
+        // 2026-10：convert（物理轉成好幾種：{ lightning: 0.3, fire: 0.3 }，總和最多 1；type 要是 physical）、
+        //   track（光束：前搖時紅線跟著目標轉，放出來的那一下幾乎不掃——賽勒斯的「死」）、
+        //   solid（地面效果：是牆——站進去的人被推出來，穿不過；迷宮、走廊用）
+        final java.util.Map<DamageType, Double> convert = new java.util.EnumMap<>(DamageType.class);
+        if (node.has("convert")) {
+            if (type != DamageType.PHYSICAL) {
+                throw new IllegalArgumentException(where + ".convert：有 convert 的招 type 要是 physical（剩下沒轉的部分是物理）");
+            }
+            final YamlNode convertNode = node.node("convert");
+            double total = 0;
+            for (final String key : convertNode.keys()) {
+                final DamageType to = DamageType.fromTag(key);
+                if (to == null || to == DamageType.PHYSICAL) {
+                    throw new IllegalArgumentException(where + ".convert：只能轉成 fire、cold、lightning、chaos，卻是「" + key + "」");
+                }
+                final double value = convertNode.decimal(key, 0);
+                if (value <= 0 || value > 1) {
+                    throw new IllegalArgumentException(where + ".convert." + key + "：要在 0 到 1 之間");
+                }
+                convert.put(to, value);
+                total += value;
+            }
+            if (total > 1 + 1e-9) {
+                throw new IllegalArgumentException(where + ".convert：加起來最多 1（現在 " + total + "）");
+            }
+        }
+        final boolean track = node.bool("track", false);
+        if (track && kind != Kind.BEAM) {
+            throw new IllegalArgumentException(where + ".track：只有光束（beam）可以追著目標");
+        }
+        final boolean solid = node.bool("solid", false);
+        if (solid && kind != Kind.ZONE) {
+            throw new IllegalArgumentException(where + ".solid：只有地面效果（zone）可以當牆");
+        }
+        // 2026-10：ruin（荒蕪、賽勒斯的「黑水」）：被這招打到的玩家幾秒內禁療（生命回復、偷取、護盾回充都停；藥劑照喝）
+        final double ruin = check(where, "ruin", node.decimal("ruin", 0), 0, 30);
         final BossSkill parsed = new BossSkill(id, node.string("name", id), kind, damage, type,
                 check(where, "cooldown", node.decimal("cooldown", 10), 1, 300),
                 check(where, "range", node.decimal("range", 12), 1, 48),
@@ -304,7 +369,7 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                     case MARK -> 4;
                     case ARENA -> 20;
                     default -> 0;
-                }), 0, 120),
+                }), 0, 600), // 2026-10：120 → 600（賽勒斯風暴留下的荒蕪地面要留很久）
                 check(where, "interval", node.decimal("interval", kind == Kind.BEAM ? 0.25 : 0.5), 0.1, 5),
                 check(where, "slow", node.decimal("slow", 0), 0, 10),
                 check(where, "width", node.decimal("width", switch (kind) {
@@ -318,7 +383,7 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                 Target.parse(where, node.string("at", kind == Kind.ZONE ? "target" : "self")),
                 node.string("visual", visualFor(type)).trim(), node.string("shout", null),
                 gaps, gapAngle, check(where, "safe", node.decimal("safe", 2.5), 1, 6), parseHint(where, node.string("hint", null)),
-                (int) check(where, "count_per_player", node.integer("count_per_player", 0), 0, 5));
+                (int) check(where, "count_per_player", node.integer("count_per_player", 0), 0, 5), convert, track, solid, ruin);
         validateSpecial(where, parsed);
         return parsed;
     }

@@ -283,11 +283,14 @@ class BossBurstTest {
                 if (escapable) {
                     continue;
                 }
-                final double taken = switch (skill.type()) {
-                    case PHYSICAL -> 0.75;
-                    case CHAOS -> 1.0;
-                    default -> 0.25;
-                };
+                double taken = 0; // 2026-10：convert 的招照各類型的比例加權
+                for (final Map.Entry<tw.exilecore.stats.DamageType, Double> share : skill.typeShares().entrySet()) {
+                    taken += share.getValue() * switch (share.getKey()) {
+                        case PHYSICAL -> 0.75;
+                        case CHAOS -> 1.0;
+                        default -> 0.25;
+                    };
+                }
                 // 新星、扇形、擴散環一秒內打完的幾波：算成一下（第一波打到還來不及走出去、走進缺口）
                 final boolean waves = skill.kind() == BossSkill.Kind.NOVA || skill.kind() == BossSkill.Kind.CONE
                         || skill.kind() == BossSkill.Kind.RING;

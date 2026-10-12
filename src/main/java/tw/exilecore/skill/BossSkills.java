@@ -270,6 +270,9 @@ public final class BossSkills implements Listener {
         }
     }
 
+    /** 牆（solid 的地面效果）每 tick 把人往外推幾格（跑步每 tick 約 0.28 格：推得比跑快，硬走穿不過）。 */
+    private static final double WALL_PUSH = 0.45;
+
     /** 留在地上的區域。 */
     private static final class ZoneArea {
         final BossSkill skill;
@@ -1142,7 +1145,7 @@ public final class BossSkills implements Listener {
             }
             case MAZE -> {
                 // 2026-10（賽勒斯的殞星迷宮）：count 圈同心的風暴牆，每圈 gaps 個缺口、各圈錯開；一塊接一塊照距離鋪
-                final int rings = Math.max(1, Math.min(4, count));
+                final int rings = Math.max(1, Math.min(5, count));
                 final double step = Math.max(1.5, skill.radius() * 1.7); // 相鄰兩塊的間距（稍微重疊，牆才連得起來）
                 final double gapAngle = Math.toRadians(skill.gapAngle());
                 final int gaps = Math.max(1, skill.gaps());
@@ -1394,6 +1397,18 @@ public final class BossSkills implements Listener {
                 }
             }
             case BEAM -> {
+                if (skill.track() && cast.target != null && cast.target.isValid() && cast.target.getWorld() == feet.getWorld()) {
+                    // 2026-10（賽勒斯的「死」）：前搖時紅線一直跟著目標轉——站著不動一定被打到，要在放出來那一刻往旁邊走
+                    final Vector to = facing(brain.boss, cast.target);
+                    cast.beamStart = Math.atan2(to.getZ(), to.getX());
+                    if ((now + brain.offset) % 4 == 0) {
+                        for (int i = 0; i < skill.count(); i++) {
+                            final double angle = BossGeometry.beamAngle(cast.beamStart, i, skill.count(), 0, cast.beamSign, 0);
+                            danger.show(cast.mark + "#b" + i, feet, DangerZones.strip(feet, new Vector(Math.cos(angle), 0, Math.sin(angle)),
+                                    skill.length(), skill.width()), DangerZones.colorFor(skill.type()));
+                        }
+                    }
+                }
                 if (draw) {
                     for (int i = 0; i < skill.count(); i++) {
                         final double angle = BossGeometry.beamAngle(cast.beamStart, i, skill.count(), 0, cast.beamSign, 0);
@@ -1803,6 +1818,18 @@ public final class BossSkills implements Listener {
             if (now % 2 == 0) {
                 visuals.zoneAmbient(zone.skill.visual(), List.of(zone.center), zone.skill.radius(), now);
             }
+            if (zone.skill.solid()) {
+                // 2026-10（賽勒斯的風暴牆）：這塊是牆——站進來的人每 tick 往外推（從中心往外），穿不過去，只能找缺口
+                for (final LivingEntity victim : victims(brain, zone.center, zone.skill.radius())) {
+                    final Vector out = victim.getLocation().toVector().subtract(zone.center.toVector()).setY(0);
+                    if (out.lengthSquared() < 1e-4) {
+                        out.setX(1);
+                    }
+                    final Vector push = out.normalize().multiply(WALL_PUSH);
+                    final Vector current = victim.getVelocity();
+                    victim.setVelocity(new Vector(push.getX(), Math.max(0, Math.min(0.1, current.getY())), push.getZ()));
+                }
+            }
             if (now >= zone.nextPulse) {
                 zone.nextPulse = now + Math.max(2, Math.round(zone.skill.interval() * 20));
                 final List<LivingEntity> victims = victims(brain, zone.center, zone.skill.radius());
@@ -1965,7 +1992,16 @@ public final class BossSkills implements Listener {
         hold(brain, cast);
         final Location feet = boss.getLocation();
         final double progress = (now - cast.telegraphEnd) / (double) Math.max(1, cast.channelEnd - cast.telegraphEnd);
-        final double sweep = Math.toRadians(skill.angle());
+        final double sweep = skill.track() ? 0 : Math.toRadians(skill.angle());
+        if (skill.track() && cast.target != null && cast.target.isValid() && cast.target.getWorld() == feet.getWorld()) {
+            // 2026-10：追著目標的光束放出來之後還會慢慢轉過去（每秒最多 angle 度）——要一直往旁邊跑，不能停
+            final Vector to = facing(boss, cast.target);
+            final double want = Math.atan2(to.getZ(), to.getX());
+            double diff = Math.atan2(Math.sin(want - cast.beamStart), Math.cos(want - cast.beamStart));
+            final double step = Math.toRadians(skill.angle()) / 20;
+            diff = Math.max(-step, Math.min(step, diff));
+            cast.beamStart += diff;
+        }
         final long gap = Math.max(1, Math.round(skill.interval() * 20));
         final Material color = DangerZones.colorFor(skill.type());
         final List<LivingEntity> near = victims(brain, feet, skill.length() + skill.width() + 1);
@@ -2619,6 +2655,9 @@ public final class BossSkills implements Listener {
             return; // 同一招剛打過這個人（齊射的另一發、另一顆光球、疊在一起的地面效果）：只算一下
         }
         damage.hitAs(brain.boss, victim, profile(skill, shapeTag), null);
+        if (skill.ruin() > 0 && victim instanceof Player player && player.isOnline()) {
+            plugin.players().get(player).ruin(now() + Math.round(skill.ruin() * 20)); // 2026-10：荒蕪（黑水）——禁療
+        }
         if (skill.slow() > 0 && victim.isValid()) {
             victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, (int) Math.round(skill.slow() * 20), 1, false, true, true));
         }
@@ -2626,14 +2665,16 @@ public final class BossSkills implements Listener {
 
     /** 招式的技能描述：攻擊、範圍或投射物、物理轉成招式的類型，倍率 = damage。 */
     private SkillProfile profile(final BossSkill skill, final String shapeTag) {
-        return profiles.computeIfAbsent(skill.id() + ":" + shapeTag + ":" + skill.damage() + ":" + skill.type(), key -> {
+        return profiles.computeIfAbsent(skill.id() + ":" + shapeTag + ":" + skill.damage() + ":" + skill.type() + ":" + skill.convert(), key -> {
             final Set<String> tags = new HashSet<>(Set.of(Tags.ATTACK, shapeTag));
             tags.add(skill.type().tag());
+            for (final DamageType to : skill.convert().keySet()) {
+                tags.add(to.tag()); // 2026-10：物理轉成好幾種（convert）：每一種都算這招的標籤
+            }
             if (skill.kind() == BossSkill.Kind.SANCTUARY) {
                 tags.add(tw.exilecore.combat.DodgeRoll.UNDODGEABLE_TAG); // 2026-10：全場大招翻滾躲不掉，要躲進安全區
             }
-            final Map<DamageType, Double> conversion = skill.type() == DamageType.PHYSICAL ? Map.of() : Map.of(skill.type(), 1.0);
-            return new SkillProfile("boss." + skill.id(), tags, skill.damage(), null, null, conversion, List.of());
+            return new SkillProfile("boss." + skill.id(), tags, skill.damage(), null, null, skill.conversion(), List.of());
         });
     }
 

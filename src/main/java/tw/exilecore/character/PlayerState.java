@@ -510,6 +510,26 @@ public final class PlayerState {
         return lastDamageTick;
     }
 
+    /** 荒蕪（2026-10，賽勒斯的「黑水」）：到這個 tick 之前生命回復、偷取、護盾回充全部停掉（藥劑照喝）。不存檔。 */
+    private long ruinUntilTick = -1;
+
+    public boolean ruined(final long currentTick) {
+        return currentTick < ruinUntilTick;
+    }
+
+    public long ruinUntilTick() {
+        return ruinUntilTick;
+    }
+
+    /** 踩到荒蕪：禁療到這個 tick（只會往後延，不會縮短）。 */
+    public void ruin(final long untilTick) {
+        this.ruinUntilTick = Math.max(this.ruinUntilTick, untilTick);
+    }
+
+    public void clearRuin() {
+        this.ruinUntilTick = -1;
+    }
+
     public void setLastDamageTick(final long tick) {
         this.lastDamageTick = tick;
     }

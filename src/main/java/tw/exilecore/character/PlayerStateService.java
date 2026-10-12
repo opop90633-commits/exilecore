@@ -876,7 +876,13 @@ public final class PlayerStateService {
         final double perMissing = sheet.flat(StatKeys.LIFE_RECOVERY_PER_MISSING, Set.of());
         final double missingFactor = perMissing <= 0 || state.maxLife() <= 0 ? 1.0
                 : 1 + perMissing / 100.0 * Math.floor((1 - state.life() / state.maxLife()) * 100 / 5);
-        final double regen = (sheet.get(StatKeys.LIFE_REGEN) + state.maxLife() * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0) * seconds * missingFactor;
+        // 2026-10：荒蕪（賽勒斯的黑水）——禁療：生命回復、偷取、護盾回充全部停掉；藥劑照喝（那是唯一的活路）
+        final boolean ruined = state.ruined(currentTick);
+        if (ruined) {
+            state.notice("<#b06cff>☠ 荒蕪：無法回復生命（離開黑色地面）", currentTick + 15);
+        }
+        final double regen = ruined ? 0
+                : (sheet.get(StatKeys.LIFE_REGEN) + state.maxLife() * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0) * seconds * missingFactor;
         final double overflow = Math.max(0, state.life() + regen - state.maxLife());
         state.setLife(state.life() + regen);
         final boolean zealot = StatKeys.flag(sheet, StatKeys.FLAG_ZEALOTS_OATH);
@@ -885,14 +891,16 @@ public final class PlayerStateService {
             state.setEnergyShield(state.energyShield() + Math.min(overflow, Math.max(0, regen))); // 狂熱誓言：溢出的生命回復變成護盾
         }
         final double leechRate = sheet.apply(StatKeys.LEECH_RATE, 1.0, java.util.Set.of()); // 最大偷取速度（2026-10）
-        state.recoverLeech(seconds, leechRate);
+        if (!ruined) {
+            state.recoverLeech(seconds, leechRate);
+        }
         state.setMana(state.mana() + sheet.get(StatKeys.MANA_REGEN) * seconds);
         state.recoverManaLeech(seconds, leechRate);
-        if (youth && currentTick - state.lastDamageTick() >= esRechargeDelay(sheet)) {
+        if (youth && !ruined && currentTick - state.lastDamageTick() >= esRechargeDelay(sheet)) {
             // 永恆青春：生命像護盾一樣回充（護盾不回充）
             state.setLife(state.life() + Formulas.esRechargePerSecond(state.maxLife(), esRechargeSpeed(sheet)) * seconds);
         }
-        if (!zealot && !youth && state.maxEnergyShield() > 0 && currentTick - state.lastDamageTick() >= esRechargeDelay(sheet)) {
+        if (!zealot && !youth && !ruined && state.maxEnergyShield() > 0 && currentTick - state.lastDamageTick() >= esRechargeDelay(sheet)) {
             // 延遲 4 秒過後每秒回充 12.5%（回充速度、延遲都吃詞綴）
             state.setEnergyShield(state.energyShield() + Formulas.esRechargePerSecond(state.maxEnergyShield(), esRechargeSpeed(sheet)) * seconds);
         }
