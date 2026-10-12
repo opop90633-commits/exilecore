@@ -72,7 +72,7 @@ class UniqueRecipeTest {
                 expected.add(unique.id());
             }
         }
-        assertEquals(25, expected.size(), "地圖 Boss 池 25 件");
+        assertEquals(29, expected.size(), "地圖 Boss 池 29 件（2026-10：＋德魯伊的獸魂符 4 件）");
         for (final String event : EVENTS) {
             final Set<String> eventUniques = new HashSet<>();
             for (final UniqueItem unique : items.uniques()) {
@@ -85,7 +85,7 @@ class UniqueRecipeTest {
         }
         expected.addAll(Set.of("gravewarden_maul", "astrolabe_wand"));
         assertEquals(expected, got, "地圖 Boss 池＋六種事件＋兩個具名 Boss");
-        assertEquals(57, pool.size());
+        assertEquals(61, pool.size());
         for (final String never : List.of("trophy_girdle", "hollow_diadem", "colossus_heart", "horizon_cleaver", "solar_sceptre",
                 "winterbound_ring", "styxguard", "ashwalker_boots", "celestial_pivot", "meteor_anvil", "rime_halo", "bone_cinch",
                 "molten_aegis", "roamers_boots", "goldleaf_hood", "genesis_crown", "worldsplitter", "abyss_maul")) {
@@ -108,7 +108,7 @@ class UniqueRecipeTest {
     void inputsAreExcludedUnlessNothingElseIsLeft() {
         final List<UniqueItem> pool = UniqueRecipe.outcomes(items.uniques(), config.recipe(),
                 List.of("keymasters_ring", "keymasters_ring", "undertow_band"), 100);
-        assertEquals(55, pool.size(), "放進去的兩種不會換到");
+        assertEquals(59, pool.size(), "放進去的兩種不會換到");
         assertFalse(ids(pool).contains("keymasters_ring"));
         assertFalse(ids(pool).contains("undertow_band"));
         // 池子只剩放進去的那種：照樣換（不然永遠換不了）
@@ -116,14 +116,14 @@ class UniqueRecipeTest {
         assertEquals(Set.of("astrolabe_wand"), ids(UniqueRecipe.outcomes(items.uniques(), onlyObservatory, List.of("astrolabe_wand"), 100)));
         // 不排除：放進去的也可能換到
         final UniqueRecipe.Settings keep = new UniqueRecipe.Settings(true, 3, UniqueRecipe.DEFAULT_SOURCES, false);
-        assertEquals(57, UniqueRecipe.outcomes(items.uniques(), keep, List.of("keymasters_ring"), 100).size());
+        assertEquals(61, UniqueRecipe.outcomes(items.uniques(), keep, List.of("keymasters_ring"), 100).size());
     }
 
     @Test
     void itemLevelIsTheHighestInputAndGatesDropLevel() {
         assertEquals(84, UniqueRecipe.itemLevel(List.of(unique("undertow_band", 62), unique("crimson_coil", 84), unique("skypierce", 70))));
         final List<UniqueItem> at60 = UniqueRecipe.outcomes(items.uniques(), config.recipe(), List.of(), 60);
-        assertEquals(53, at60.size(), "60 級：稜壁、火葬長杖、空殼護符、石衛鎧（68）還換不到");
+        assertEquals(57, at60.size(), "60 級（2026-10：獸魂符 4 件都 60 級以下）：稜壁、火葬長杖、空殼護符、石衛鎧（68）還換不到");
         for (final UniqueItem unique : at60) {
             assertTrue(unique.dropLevel() <= 60, unique.id());
         }

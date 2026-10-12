@@ -72,7 +72,7 @@ class CraftingTest {
             assertEquals(0, type.operation() == CurrencyOperation.ESSENCE || type.operation() == CurrencyOperation.CATALYST
                     || type.operation() == CurrencyOperation.OMEN ? type.dropWeight() : 0, "機制的通貨怪物不掉");
         }
-        assertEquals(12, essences);
+        assertEquals(13, essences); // 2026-10：＋能盾星魄
         assertEquals(Catalyst.values().length, catalysts, "每一種催化劑一顆");
         assertEquals(6, omens);
     }
