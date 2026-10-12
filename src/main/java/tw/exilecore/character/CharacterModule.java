@@ -32,6 +32,7 @@ public final class CharacterModule implements Module {
     private BukkitTask autosaveTask;
     private BukkitTask sidebarTask;
     private BukkitTask gearTask;
+    private BukkitTask cooldownTask;
 
     public CharacterModule(final ExileCore plugin, final CharacterConfig config, final PlayerStateService states,
                            final CharacterService characters, final ChatPrompts chatPrompts) {
@@ -95,6 +96,12 @@ public final class CharacterModule implements Module {
                 }
             }
         }, 20L, 20L);
+        // 2026-10：快捷列技能的冷卻倒數（圖示數量＝剩幾秒）
+        cooldownTask = plugin.repeat("skill_cooldowns", () -> {
+            for (final Player player : plugin.getServer().getOnlinePlayers()) {
+                characters.gear().cooldowns(player);
+            }
+        }, 4L, 4L);
         autosaveTask = plugin.getServer().getScheduler().runTaskTimer(plugin, characters::saveAll, AUTOSAVE_PERIOD, AUTOSAVE_PERIOD);
         // 插件重載時已經在線的玩家：像剛登入一樣載入
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
@@ -144,6 +151,10 @@ public final class CharacterModule implements Module {
         if (gearTask != null) {
             gearTask.cancel();
             gearTask = null;
+        }
+        if (cooldownTask != null) {
+            cooldownTask.cancel();
+            cooldownTask = null;
         }
         if (sidebarTask != null) {
             sidebarTask.cancel();

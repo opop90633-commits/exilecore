@@ -58,7 +58,7 @@ class OwnNamesTest {
             "bases/jewellery.yml", "bases/jewels.yml", "passives/tree.json");
 
     /** 這幾個是別的遊戲的機制名稱：玩家看得到的文字裡不能出現（說明、台詞也算）。 */
-    private static final Pattern LEAGUE_WORDS = Pattern.compile("譫妄|流亡者");
+    private static final Pattern LEAGUE_WORDS = Pattern.compile("譫妄|流亡者|暴擊球|狂怒球|耐力球"); // 2026-10：球的舊名（現在叫銳星、怒星、磐星）
 
     @Test
     void namesAreOurOwn() throws IOException {

@@ -2065,7 +2065,7 @@ unveiled_d_ring_freeze_power:
   group: unveiled_d_ring_freeze_power
   spawn_tags: [ring]
   names: [淵霜的, 黯霜的]
-  text: "最近消耗過暴擊球，則增加 {value}% 凍結累積"
+  text: "最近消耗過銳星，則增加 {value}% 凍結累積"
   tiers:
     - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
     - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
@@ -2077,7 +2077,7 @@ unveiled_d_ring_ignite_endurance:
   group: unveiled_d_ring_ignite_endurance
   spawn_tags: [ring]
   names: [淵焰的, 黯焰的]
-  text: "最近消耗過耐力球，則增加 {value}% 點燃效果"
+  text: "最近消耗過磐星，則增加 {value}% 點燃效果"
   tiers:
     - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
     - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
@@ -2089,7 +2089,7 @@ unveiled_d_ring_shock_frenzy:
   group: unveiled_d_ring_shock_frenzy
   spawn_tags: [ring]
   names: [淵雷的, 黯雷的]
-  text: "最近消耗過狂怒球，則增加 {value}% 感電效果"
+  text: "最近消耗過怒星，則增加 {value}% 感電效果"
   tiers:
     - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
     - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
@@ -2149,7 +2149,7 @@ unveiled_d_gloves_speed_frenzy:
   group: unveiled_d_gloves_speed_frenzy
   spawn_tags: [leggings]
   names: [淵疾之, 黯疾之]
-  text: "最近消耗過狂怒球，則增加 {value}% 攻擊速度與施放速度"
+  text: "最近消耗過怒星，則增加 {value}% 攻擊速度與施放速度"
   chips: [speed]   # PoE2 的標籤（Skill Speed）
   tiers:
     - { tier: 1, ilvl: 60, weight: 300, value: [11, 12] }

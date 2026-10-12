@@ -43,7 +43,7 @@ public final class Recently {
     public static final String STUN = "stun";
     /** 最近消耗過屍體（骸爆這類）。 */
     public static final String CORPSE = "corpse";
-    /** 最近消耗過暴擊球／狂怒球／耐力球。 */
+    /** 最近消耗過銳星／怒星／磐星。 */
     public static final String POWER = "power";
     public static final String FRENZY = "frenzy";
     public static final String ENDURANCE = "endurance";
@@ -105,9 +105,9 @@ public final class Recently {
             case KILL -> "擊殺";
             case STUN -> "被重暈";
             case CORPSE -> "消耗屍體";
-            case POWER -> "消耗暴擊球";
-            case FRENZY -> "消耗狂怒球";
-            case ENDURANCE -> "消耗耐力球";
+            case POWER -> "消耗銳星";
+            case FRENZY -> "消耗怒星";
+            case ENDURANCE -> "消耗磐星";
             default -> condition.event();
         };
         if (LIFE_FLASK.equals(condition.event()) || MANA_FLASK.equals(condition.event())) {

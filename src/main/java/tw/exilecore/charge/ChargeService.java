@@ -150,7 +150,7 @@ public final class ChargeService implements Listener {
             own.remove(chargeId);
         }
         if (tw.exilecore.stats.Recently.EVENTS.contains(chargeId)) {
-            plugin.players().get(player).markRecent(chargeId, plugin.getServer().getCurrentTick()); // 「最近消耗過暴擊球／狂怒球／耐力球」
+            plugin.players().get(player).markRecent(chargeId, plugin.getServer().getCurrentTick()); // 「最近消耗過銳星／怒星／磐星」
         }
         plugin.players().markDirty(player); // 屬性表重算：少了一顆的效果
         return true;

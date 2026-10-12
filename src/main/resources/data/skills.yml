@@ -67,7 +67,7 @@
 #              bell: { duration: 6, interval: 0.25, range: 4, rings: 8, head: BELL }
 #                     鐘放在面前；你用攻擊打中離鐘 range 內的敵人它就響一次（最多 rings 次），每響一次照上面的運作方式打一次
 # cooldown   冷卻時間（秒）：位移、榴彈、印記這類；放完要等，技能面板會顯示
-# cooldown_bypass  冷卻中按下去可以消耗一顆這種戰星（charges.yml 的代號）直接放，冷卻重新算（瞬影擊：frenzy 怒星）
+# cooldown_bypass  冷卻中按下去可以消耗一顆這種戰星（charges.yml 的代號）直接放，冷卻重新算（瞬影擊：power 銳星）
 # attack_speed  攻擊技能的攻速倍率（1 = 跟武器一樣）
 # cast_time     法術的基礎施法時間（秒）；純位移、印記這種不造成傷害的法術可以不寫 damage
 # convert       物理傷害轉換成其他類型的比例，例如 { fire: 0.5 }

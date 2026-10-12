@@ -749,6 +749,7 @@ public final class SkillService {
         }
         if (runtime.repeat == null) {
             runtime.startCooldown(definition.id(), now, build.cooldownTicks()); // 打完（或斷掉）才開始冷卻；沒有冷卻的不會記
+            showCooldown(player, definition.id(), build.cooldownTicks());
         }
     }
 
@@ -921,6 +922,7 @@ public final class SkillService {
             player.swingMainHand(); // 左鍵客戶端自己會揮手；右鍵、數字鍵要伺服器揮
         }
         runtime.startCooldown(definition.id(), now, build.cooldownTicks());
+        showCooldown(player, definition.id(), build.cooldownTicks());
         if (build.deploy() != null) {
             if (linked != null) {
                 deployables.place(player, build, linked, Math.round(linked.intervalTicks(sheet) * 1.5)); // 英靈：錘子技能的攻擊時間 ×1.5 叫一次
@@ -1137,6 +1139,7 @@ public final class SkillService {
             runtime.readyAt = Math.max(runtime.readyAt, runtime.repeat.doneAt());
             runtime.cooldowns.put(barrage.skillId(), now + barrage.spec().usedCooldownTicks(barrage.baseCooldown(), build.intervalTicks(sheet),
                     barrage.cooldownPercent(), barrage.cooldownScale()));
+            showCooldown(player, barrage.skillId(), runtime.cooldownLeft(barrage.skillId(), now));
             state.notice(String.format(Locale.ROOT, "<#ffd27f>➶ %s：重複 %d 次", ItemRenderer.escape(barrage.name()), barrage.repeats()), now + 30);
             plugin.players().display(player, state);
         }
@@ -1706,6 +1709,25 @@ public final class SkillService {
 
     // ---- 快捷列的技能圖示 ----
 
+    /** 快捷列冷卻（2026-10）：技能在原版的冷卻群組（exilecore:skill/代號）。 */
+    public static net.kyori.adventure.key.Key cooldownGroup(final String skillId) {
+        return net.kyori.adventure.key.Key.key("exilecore", "skill/" + skillId.toLowerCase(Locale.ROOT));
+    }
+
+    /** 這個技能還要冷卻幾 tick（0 = 好了）。 */
+    public long cooldownLeft(final Player player, final String skillId) {
+        final SkillRuntime runtime = runtimes.get(player.getUniqueId());
+        return runtime == null ? 0 : runtime.cooldownLeft(skillId, plugin.getServer().getCurrentTick());
+    }
+
+    /** 冷卻開始：快捷列上那個技能的圖示馬上蓋上原版的冷卻遮罩（倒數的數字由 Gear 每 4 tick 更新）。 */
+    private void showCooldown(final Player player, final String skillId, final long ticks) {
+        if (ticks > 0) {
+            player.setCooldown(cooldownGroup(skillId), (int) Math.min(Integer.MAX_VALUE, ticks));
+        }
+    }
+
+
     /**
      * 快捷列上顯示用的技能圖示（戰鬥區域裡第 3–8 格，見 {@link tw.exilecore.character.Gear}）：名字前面是按鍵，說明是技能的數值。
      * 回傳的是一般的物品，標成顯示用由 Gear 做。
@@ -1734,6 +1756,13 @@ public final class SkillService {
         final org.bukkit.inventory.ItemStack stack = org.bukkit.inventory.ItemStack.of(material);
         if (definition != null && !resolved.isDefault()) {
             SkillArt.decorate(stack, definition);
+            // 2026-10：快捷列冷卻倒數——每個技能自己的原版冷卻群組（圖示上有轉圈的灰色遮罩，同材質的技能不會互相影響），
+            // 數量 = 剩幾秒（Gear#cooldowns 每 4 tick 對一次），所以要能疊到 99
+            stack.setData(io.papermc.paper.datacomponent.DataComponentTypes.USE_COOLDOWN,
+                    io.papermc.paper.datacomponent.item.UseCooldown.useCooldown(0.05f).cooldownGroup(cooldownGroup(definition.id())).build());
+            if (material.getMaxDurability() == 0) {
+                stack.setData(io.papermc.paper.datacomponent.DataComponentTypes.MAX_STACK_SIZE, 99);
+            }
         }
         stack.editMeta(meta -> {
             meta.displayName(ItemRenderer.line(title));

@@ -437,6 +437,45 @@ public final class Gear {
         return (entry == null ? "-" : entry.skillId() + "@" + entry.level() + ":" + entry.encodeSupports()).intern();
     }
 
+    /**
+     * 快捷列技能的冷卻倒數（2026-10，每 4 tick）：圖示的數量 = 還剩幾秒（無條件進位，最多 99；剩不到 1 秒顯示 1 就看不到數字），
+     * 冷卻好了變回 1；原版的冷卻遮罩也一起對時（冷卻被重置、縮短，或某些地方沒馬上蓋到時補上）。
+     */
+    public void cooldowns(final Player player) {
+        if (plugin.skills() == null || !combat(player)) {
+            return;
+        }
+        final PlayerState state = plugin.players().get(player);
+        if (!state.isLoaded() || !state.hasCharacter()) {
+            return;
+        }
+        final PlayerInventory inventory = player.getInventory();
+        final SkillLoadout loadout = state.skills();
+        for (int slot = FIRST_SKILL_SLOT; slot <= LAST_SKILL_SLOT; slot++) {
+            final ItemStack current = inventory.getItem(slot);
+            if (!isDisplay(current)) {
+                continue;
+            }
+            final SkillLoadout.Entry entry = loadout.skill(loadout.bound(SkillLoadout.hotbarBind(slot + 1)));
+            long left = 0;
+            if (entry != null) {
+                left = plugin.skills().cooldownLeft(player, entry.skillId());
+                final net.kyori.adventure.key.Key group = tw.exilecore.skill.SkillService.cooldownGroup(entry.skillId());
+                final int shown = player.getCooldown(group);
+                if (left <= 0 && shown > 0) {
+                    player.setCooldown(group, 0);
+                } else if (left > 0 && Math.abs(shown - left) > 10) {
+                    player.setCooldown(group, (int) left);
+                }
+            }
+            final int amount = left <= 0 ? 1 : (int) Math.max(1, Math.min(current.getMaxStackSize(), (left + 19) / 20));
+            if (current.getAmount() != amount) {
+                current.setAmount(amount);
+                inventory.setItem(slot, current);
+            }
+        }
+    }
+
     /** 不在戰鬥區域：技能圖示拿掉，收起來的東西放回原本那一格（那一格被別的東西佔了就放回背包別的地方）。 */
     private void restoreHotbar(final Player player, final PlayerState state) {
         final PlayerInventory inventory = player.getInventory();
