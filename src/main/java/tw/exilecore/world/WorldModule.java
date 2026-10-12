@@ -91,7 +91,9 @@ public final class WorldModule implements Module, Listener {
     private void load() throws Exception {
         lore.load(plugin.dataFolder().resolve("data"));
         final List<String> lines = lore.motd();
-        motd = lines.isEmpty() ? null : plugin.text().parse(String.join("<newline>", lines));
+        // 2026-10：{version} 換成伺服器的 Minecraft 版本（例如 26.2），伺服器升級後不用改設定檔
+        motd = lines.isEmpty() ? null : plugin.text().parse(String.join("<newline>", lines)
+                .replace("{version}", plugin.getServer().getMinecraftVersion()));
     }
 
     public WorldLore lore() {

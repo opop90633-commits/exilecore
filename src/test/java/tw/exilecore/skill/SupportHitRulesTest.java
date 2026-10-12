@@ -54,7 +54,7 @@ class SupportHitRulesTest {
         assertTrue(skill("herald_of_ash").tags().contains(tw.exilecore.stats.Tags.SPELL), "捷光環例外：輔助要傳給擊殺效果");
         assertEquals(reason, support("deep_freeze").refusal(skill("fortifying_cry")), "戰吼沒有 attack／spell 標籤：只有不看標籤的輔助會走到這條");
         assertEquals("召喚物技能不行", support("ruthless").refusal(skill("summon_skeletons")), "無情的傷害沒有 minion 標籤：召喚技能掛了只會落到主人身上");
-        assertEquals(reason, support("pinning").refusal(skill("skeletal_archers")), "遠程召喚物只是畫一道彈道，沒有真的投射物");
+        assertEquals("要投射物技能", support("pinning").refusal(skill("skeletal_archers")), "遠程召喚物標「遠程」不標投射物（2026-10）：投射物的輔助在標籤那一關就擋掉");
         // 真的會打到敵人的照舊
         assertNull(support("added_fire").refusal(skill("fireball")));
         assertNull(support("added_fire").refusal(skill("rolling_slam")));

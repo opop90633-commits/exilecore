@@ -115,4 +115,12 @@ class SalvageConfigTest {
             }
         };
     }
+
+    @Test
+    void freeCurrenciesSalvageForNothing() {
+        // 2026-10：沒有參考價值的通貨（鑑定卷軸這種跟 NPC 免費領的）拆不出金幣（以前一個至少 1 金幣，一疊 40 個白賺 40）
+        assertEquals(0, config.goldForCurrency(0, 40));
+        assertEquals(4 * 40, config.goldForCurrency(40, 40), "參考價值 40 × 10% = 一個 4 金幣");
+        assertEquals(1, config.goldForCurrency(3, 1), "有價值的最少還是 1 金幣");
+    }
 }

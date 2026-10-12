@@ -69,12 +69,12 @@ class AtlasTreeTest {
         final int finals = maps.finals().size();
         final AtlasTree.Earned all = tree.earned(maps.maps().size(), finals, finals, maps.tiers().max());
         assertEquals(maps.maps().size() + finals + finals + 5, all.total());
-        assertEquals(27, all.total(), "14 張地圖 + 4 個終局 + 4 個極境 + 5 個階級");
+        assertEquals(29, all.total(), "14 張地圖 + 5 個終局（含巔峰萬界之巔）+ 5 個極境 + 5 個階級");
         assertTrue(all.total() < tree.totalCost(), "點不滿：要挑");
         assertTrue(all.total() * 2 > tree.totalCost(), "至少點得滿一半");
     }
 
-    /** 點了的代號存在一格（VARCHAR 255）：出貨的設定拿到全部天賦點時，最長的組合也存得下。 */
+    /** 點了的代號存在一格（progress_value，2026-10 第 20 版加長成 VARCHAR 4096）：出貨的設定拿到全部天賦點時，最長的組合也存得下。 */
     @Test
     void longestAffordableAllocationFitsTheDatabase() {
         final int finals = maps.finals().size();
@@ -91,7 +91,7 @@ class AtlasTreeTest {
         for (int i = 0; i < Math.min(budget, lengths.size()); i++) {
             bound += lengths.get(i);
         }
-        assertTrue(bound <= AtlasTree.MAX_STORED_LENGTH, "最長可能 " + bound + " 字，超過資料庫的 255");
+        assertTrue(bound <= AtlasTree.MAX_STORED_LENGTH, "最長可能 " + bound + " 字，超過資料庫的 " + AtlasTree.MAX_STORED_LENGTH);
     }
 
     @Test

@@ -38,8 +38,8 @@ public final class AtlasTree {
     public static final int MAX_NODES = 4;
     /** 一個節點最多要幾點。 */
     public static final int MAX_COST = 5;
-    /** 存點了哪些的那一格最多幾個字（資料庫的 progress_value 是 VARCHAR(255)）。 */
-    public static final int MAX_STORED_LENGTH = 255;
+    /** 存點了哪些的那一格最多幾個字（資料庫的 progress_value：第 20 版遷移加長成 VARCHAR(4096)；以前是 255）。 */
+    public static final int MAX_STORED_LENGTH = 4096;
 
     private static final Pattern COLOR = Pattern.compile("#[0-9a-fA-F]{6}");
 

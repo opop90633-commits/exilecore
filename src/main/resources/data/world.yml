@@ -7,10 +7,10 @@
 
 name: 星骸
 
-# 伺服器列表上的兩行說明
+# 伺服器列表上的兩行說明（{version} 會換成伺服器的 Minecraft 版本，例如 26.2）
 motd:
   - "<gradient:#9fd3ff:#f5b942><b>星骸</b></gradient> <dark_gray>|</dark_gray> <gray>裝備、詞綴、天賦樹與終局地圖的 ARPG 伺服器"
-  - "<dark_gray>天穹之心墜落三百年，流放者仍在海岸挖掘星骸"
+  - "<dark_gray>天穹之心墜落三百年，流放者仍在海岸挖掘星骸 <dark_gray>|</dark_gray> <#7fe0c0>版本 {version}"
 
 # 每個新角色登場（建立後到了營地）時的標題與旁白
 arrival:

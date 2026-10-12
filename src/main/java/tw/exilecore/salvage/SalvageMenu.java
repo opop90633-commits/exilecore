@@ -428,7 +428,7 @@ public final class SalvageMenu extends Menu {
                 return "charm:" + plugin.flasks().charms().name(stack) + ":" + stack.hashCode(); // 2026-10：護符可以拆
             }
         }
-        // 通貨（2026-10）：整疊拆成金幣
+        // 通貨（2026-10）：整疊拆成金幣。沒有參考價值的（鑑定卷軸這種跟 NPC 免費領的）照樣能拆，但是 0 金幣（SalvageConfig.goldForCurrency）
         final Optional<CurrencyType> currency = plugin.currencies().read(stack);
         if (currency.isPresent()) {
             return CURRENCY_ID + currency.get().id() + ":" + stack.getAmount();

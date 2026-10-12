@@ -3092,6 +3092,7 @@ skills:
     type: attack
     tier: 1
     tags: [attack, melee, strike, physical, shapeshift, bear]
+    starter: druid   # 2026-10：德魯伊的起始技能（沒選武器時也有技能可用）
     weapons: [talisman]
     mechanic: strike
     strike: { reach: 3.8, angle: 80, targets: 3, knockback: 0.4 }

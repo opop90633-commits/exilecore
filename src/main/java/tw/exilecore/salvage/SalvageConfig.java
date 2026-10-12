@@ -131,7 +131,10 @@ public final class SalvageConfig {
 
     /** 一疊通貨拆解可得的金幣（2026-10）：value = 一個的參考價值（金幣），拿它的 percent%，一個至少 1 金幣。 */
     public long goldForCurrency(final long value, final int amount) {
-        return Math.max(1, Math.round(Math.max(0, value) * currencyPercent / 100.0)) * Math.max(0, amount);
+        if (value <= 0) {
+            return 0; // 2026-10：沒有參考價值的通貨（鑑定卷軸這種免費領的）拆不出金幣
+        }
+        return Math.max(1, Math.round(value * currencyPercent / 100.0)) * Math.max(0, amount);
     }
 
     /** 一瓶藥劑拆解可得的金幣（照基底的需求等級）。 */
