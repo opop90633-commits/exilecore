@@ -132,7 +132,7 @@ skills:
 
   default_melee:
     name: 普攻
-    icon: WOODEN_SWORD
+    icon: STICK   # 2026-10：原本 WOODEN_SWORD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     hidden: true
     type: attack
     tags: [attack, melee]
@@ -142,7 +142,7 @@ skills:
 
   default_bow:
     name: 普攻（射箭）
-    icon: BOW
+    icon: FEATHER   # 2026-10：原本 BOW（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     hidden: true
     type: attack
     tags: [attack, projectile]
@@ -172,7 +172,7 @@ skills:
 
   default_crossbow:
     name: 普攻（弩箭）
-    icon: CROSSBOW
+    icon: FLINT   # 2026-10：原本 CROSSBOW（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     hidden: true
     type: attack
     tags: [attack, projectile]
@@ -182,7 +182,7 @@ skills:
 
   default_quarterstaff:
     name: 普攻（橫掃）
-    icon: BAMBOO
+    icon: STICK   # 2026-10：原本 BAMBOO（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     hidden: true
     type: attack
     tags: [attack, melee]
@@ -192,7 +192,7 @@ skills:
 
   default_spear:
     name: 普攻（突刺）
-    icon: IRON_SPEAR
+    icon: FLINT   # 2026-10：原本 IRON_SPEAR（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     hidden: true
     type: attack
     tags: [attack, melee]
@@ -221,7 +221,7 @@ skills:
   earthquake:
     name: 地動
     description: 往地上一砸，震傷周圍的敵人；過一下子同一個地方再炸一次更大、更痛的餘震。
-    icon: NETHERITE_PICKAXE
+    icon: NETHERITE_INGOT   # 2026-10：原本 NETHERITE_PICKAXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, area, slam]
@@ -239,7 +239,7 @@ skills:
   boneshatter:
     name: 碎脊擊
     description: 用錘子往前砸一下。打中蓄勢待暈的敵人直接重暈；碎脊擊打中時會累積很多暈眩，適合把稀有怪砸暈。
-    icon: MACE
+    icon: BONE   # 2026-10：原本 MACE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, melee, strike, physical]
@@ -259,7 +259,7 @@ skills:
     name: 英靈圖騰
     # 2026-10 PoE2（祖靈戰士圖騰式）：圖騰自己不打，叫出英靈用你技能面板上它後面那一格的錘子攻擊技能
     description: 放下一根英靈圖騰（8 秒）。圖騰每隔一段時間在附近的敵人身邊叫出一個英靈，用你技能面板上排在它後面那一格的錘子攻擊技能打一次（照那個技能與它的輔助算；叫的間隔是那個技能攻擊時間的 1.5 倍）。那一格的技能不能有冷卻、不能蓄力。拿錘子才能用。
-    icon: TOTEM_OF_UNDYING
+    icon: NAUTILUS_SHELL   # 2026-10：原本 TOTEM_OF_UNDYING（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, melee, strike]
@@ -283,7 +283,7 @@ skills:
   caustic_arrow:
     name: 蝕毒箭
     description: 射出一支毒箭，打中的地方冒出一團毒霧（六秒），裡面的敵人持續受到混沌傷害、很容易中毒；毒霧被你的火焰打到會整團炸開。
-    icon: SPIDER_EYE
+    icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, projectile, area, chaos, duration]
@@ -301,7 +301,7 @@ skills:
   rain_of_arrows:
     name: 萬箭齊落
     description: 朝準心指的地方射出一大把箭，過一下子落在那一圈裡的所有敵人身上。
-    icon: SPECTRAL_ARROW
+    icon: GLOWSTONE_DUST   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: attack
     tier: 3
     tags: [attack, area]
@@ -315,7 +315,7 @@ skills:
   lightning_arrow:
     name: 雷鳴箭
     description: 射出一支帶電的箭，打中時往附近最多 4 個敵人射出閃電，一半的物理傷害轉為閃電。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, projectile, lightning, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
@@ -353,7 +353,7 @@ skills:
   raise_guard:
     name: 架盾
     description: 把盾架在身前：一小段時間內格擋率大增、物理傷害減免提高、不容易被暈，但移動變慢。要在副手裝盾。冷卻 4 秒。
-    icon: SHIELD
+    icon: IRON_INGOT   # 2026-10：原本 SHIELD（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 1
     tags: [duration]
@@ -372,7 +372,7 @@ skills:
   ice_shot:
     name: 凝霜箭
     description: 射出一支冰箭，打中時炸開一圈冰片，大部分傷害轉為冰冷。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, projectile, area, cold]
@@ -389,7 +389,7 @@ skills:
   tornado_shot:
     name: 裂空箭
     description: 射出一支箭，到了終點炸開，往四周散射小箭。
-    icon: WIND_CHARGE
+    icon: BREEZE_ROD   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, projectile]
@@ -425,7 +425,7 @@ skills:
   permafrost_bolts:
     name: 凍土連弩
     description: 一次扇形射出一排貫穿的冰霜弩箭（每支穿過兩個敵人），大部分的物理傷害轉換為冰冷傷害，容易凍結敵人。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, projectile, cold]
@@ -443,7 +443,7 @@ skills:
   rapid_fire:
     name: 連射
     description: 扣下扳機連射四波弩箭，每一波都照當下的準心，每支穿過兩個敵人。單發輕，整串下來很痛。
-    icon: ARROW
+    icon: FEATHER   # 2026-10：原本 ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: attack
     tier: 1
     tags: [attack, projectile]
@@ -459,7 +459,7 @@ skills:
   explosive_grenade:
     name: 爆裂榴彈
     description: 拋出一顆榴彈，落地會彈跳，不到一秒就炸開一大圈。不會直接打中敵人，丟在怪物腳邊。大部分物理轉換為火焰。
-    icon: FIRE_CHARGE
+    icon: GUNPOWDER   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, projectile, area, fire]
@@ -479,7 +479,7 @@ skills:
   gas_grenade:
     name: 瘴氣榴彈
     description: 拋出一顆榴彈，落地沒多久就裂開放出一大團毒氣，待在裡面的敵人持續受到混沌傷害；毒氣被你的火焰打到會整團炸開。大部分物理轉換為混沌。
-    icon: LINGERING_POTION
+    icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 LINGERING_POTION（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, projectile, area, chaos]
@@ -517,7 +517,7 @@ skills:
   ice_strike:
     name: 寒冰震波
     description: 長棍的冰冷連擊：快速往前打，部分傷害轉為冰冷。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, melee, area, cold]
@@ -565,7 +565,7 @@ skills:
   tempest_bell:
     name: 驚雷之鐘
     description: 在面前放一口鐘。你用攻擊打中鐘旁邊的敵人，鐘就響一次打周圍一圈（最多八次）。
-    icon: BELL
+    icon: GOLD_INGOT   # 2026-10：原本 BELL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, area, lightning]
@@ -587,7 +587,7 @@ skills:
   lightning_spear:
     name: 擲雷槍
     description: 擲出一支帶電的矛，打中時迸出閃電打附近的敵人，一半的物理傷害轉為閃電。
-    icon: TRIDENT
+    icon: COPPER_INGOT   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 1
     tags: [attack, projectile, lightning, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
@@ -605,7 +605,7 @@ skills:
   whirling_slash:
     name: 旋矛擊
     description: 揮矛轉一圈，打傷周圍一圈的敵人。
-    icon: WIND_CHARGE
+    icon: BREEZE_ROD   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, melee, area, nova]
@@ -619,7 +619,7 @@ skills:
   whirlwind_lance:
     name: 颶風槍
     description: 擲出一支捲起旋風的矛，旋風把敵人吸進去一直打。
-    icon: TRIDENT
+    icon: PRISMARINE_SHARD   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, projectile, area]
@@ -633,7 +633,7 @@ skills:
   lunge:
     name: 突刺衝鋒
     description: 往前突刺衝過去，打傷路上的敵人，終點再炸一圈。
-    icon: IRON_SPEAR
+    icon: FLINT   # 2026-10：原本 IRON_SPEAR（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, melee, strike, movement, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
@@ -648,7 +648,7 @@ skills:
   hunters_mark:
     name: 獵殺印記
     description: 標記準心指的一個敵人，八秒內你下一次對牠打出暴擊時，暴擊傷害加成大幅提高，印記用掉並給你一顆怒星。什麼武器都能放。
-    icon: TARGET
+    icon: GOLD_NUGGET   # 2026-10：原本 TARGET（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell]
@@ -667,7 +667,7 @@ skills:
   fireball:
     name: 熾星彈
     description: 發射一顆熾星彈，擊中時爆炸，波及附近的敵人；施法比較慢，但一發很重。
-    icon: FIRE_CHARGE
+    icon: BLAZE_POWDER   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 1
     tags: [spell, projectile, area, fire]
@@ -686,7 +686,7 @@ skills:
   frost_nova:
     name: 霜星爆
     description: 以自己為中心爆出一圈寒氣，冰緩、凍結累積都大幅提高；你的霜鑽還在飛的時候，改從霜鑽的位置爆開。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, area, cold, nova]
@@ -706,7 +706,7 @@ skills:
   spark:
     name: 游雷
     description: 放出好幾顆亂竄的游雷，碰到敵人就放電消失。
-    icon: GLOWSTONE
+    icon: GLOWSTONE_DUST   # 2026-10：原本 GLOWSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 1
     tags: [spell, projectile, lightning]
@@ -724,7 +724,7 @@ skills:
   arc:
     name: 鏈雷
     description: 放出一道閃電打中前方的敵人，再連鎖跳到附近的其他敵人。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, lightning, chain]
@@ -761,7 +761,7 @@ skills:
   flame_wall:
     name: 焰幕
     description: 在面前升起一道六秒的火牆，穿過或站在裡面的敵人每半秒受到一次火焰傷害、容易點燃。擋走廊用。同時最多兩道。
-    icon: CAMPFIRE
+    icon: BLAZE_POWDER   # 2026-10：原本 CAMPFIRE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, area, fire]
@@ -783,7 +783,7 @@ skills:
   shockwave_totem:
     name: 崩震圖騰
     description: 放下一根石圖騰，8 秒內每 1.2 秒震一次地，打圖騰周圍一圈的敵人。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, area, physical]
@@ -802,7 +802,7 @@ skills:
   detonate_dead:
     name: 骸爆
     description: 引爆準心附近最近的一具屍體（怪物死後十秒內都算），對周圍造成火焰傷害，再加上那具屍體最大生命一成的火焰傷害。屍體越大，炸得越痛。
-    icon: SKELETON_SKULL
+    icon: BONE   # 2026-10：原本 SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, area, fire]
@@ -823,7 +823,7 @@ skills:
     name: 喚屍
     # 2026-10 PoE2：殭屍 20 秒、最多 10 隻（暫時召喚，不用精魂）；沒屍體時吃一顆銳星叫強化殭屍
     description: 把你附近一具屍體（怪物死後十秒內都算）喚成你的殭屍，從屍體的位置爬出來，二十秒後倒下。可以一直放，同時最多八到十隻。附近沒有屍體時改吃一顆銳星：從面前爬出一隻強化殭屍（發光，生命更多、傷害加倍、跑更快）再加兩隻一般的。
-    icon: ZOMBIE_HEAD
+    icon: RABBIT_HIDE   # 2026-10：原本 ZOMBIE_HEAD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 1
     tags: [minion, physical]
@@ -981,7 +981,7 @@ skills:
   herald_of_ice:
     name: 霜使
     description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你用攻擊殺死「凍結中」的敵人時，屍體碎成一圈冰霜爆炸（會冰緩）。保留 30 精魂。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, cold]
@@ -1020,7 +1020,7 @@ skills:
   armour_piercing_bolt:
     name: 破甲弩矢
     description: 射出一支沉重的弩矢，筆直貫穿一整排敵人（穿過四個），很容易把敵人震暈，還會破甲（物理傷害的 40%）。
-    icon: ARROW
+    icon: IRON_NUGGET   # 2026-10：原本 ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: attack
     tier: 1
     tags: [attack, projectile, physical]
@@ -1060,7 +1060,7 @@ skills:
   fortifying_cry:
     name: 堅壁戰吼
     description: 戰吼：吼一聲立刻回復一部分生命，六秒內你和附近的隊友護甲增加、更不容易被暈，範圍內的敵人轉過來打你。
-    icon: SHIELD
+    icon: TURTLE_SCUTE   # 2026-10：原本 SHIELD（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 1
     tags: [warcry]
@@ -1103,7 +1103,7 @@ skills:
   seismic_cry:
     name: 震地戰吼
     description: 戰吼：吼出一道震波，打範圍內的敵人一下物理傷害（戰吼傷害），並讓他們六秒內受到的傷害增加、轉過來打你；接下來兩次攻擊傷害大幅提高，暈眩累積增加。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [warcry]
@@ -1147,7 +1147,7 @@ skills:
   despair_curse:
     name: 凋魂詛咒
     description: 詛咒準心指的地方一圈的敵人，六秒內混沌抗性大幅降低。
-    icon: WITHER_ROSE
+    icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, chaos]
@@ -1212,7 +1212,7 @@ skills:
   blood_offering:
     name: 嗜血祭
     description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）在那裡立一根骨柱，十秒內柱子附近你的召喚物傷害更高、攻擊更快。同時只有一根。
-    icon: REDSTONE
+    icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [minion]
@@ -1234,7 +1234,7 @@ skills:
   bone_offering:
     name: 骸骨祭
     description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）立一根骨柱，十秒內柱子附近你的召喚物更耐打（物理傷害減免、格擋）。同時只有一根。
-    icon: BONE_BLOCK
+    icon: BONE   # 2026-10：原本 BONE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [minion]
@@ -1256,7 +1256,7 @@ skills:
   soul_offering:
     name: 魂火祭
     description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）立一根骨柱，十秒內柱子附近你的召喚物每秒回復生命、攻擊與移動更快。同時只有一根。
-    icon: SOUL_LANTERN
+    icon: ECHO_SHARD   # 2026-10：原本 SOUL_LANTERN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [minion]
@@ -1282,7 +1282,7 @@ skills:
   rolling_slam:
     name: 震野雙錘
     description: 錘子往前砸兩下：第一下砸出一道扇形震波，第二下更重、範圍更大。容易暈眩。
-    icon: IRON_BLOCK
+    icon: IRON_INGOT   # 2026-10：原本 IRON_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, melee, area, slam, physical]
@@ -1299,7 +1299,7 @@ skills:
   volcanic_fissure:
     name: 炎脈裂地
     description: 錘子往前砸出一道燃燒的地裂，裂縫上的敵人持續受到火焰傷害，容易點燃。
-    icon: MAGMA_BLOCK
+    icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, area, slam, fire]
@@ -1317,7 +1317,7 @@ skills:
   armour_breaker:
     name: 碎甲錘
     description: 一記專打護甲的重擊：打單一敵人，大幅破甲。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, melee, strike, physical]
@@ -1334,7 +1334,7 @@ skills:
   shield_rush:
     name: 鐵壁衝撞
     description: 往前衝一段距離，撞開路上的敵人，終點炸一圈。冷卻 2 秒。
-    icon: SHIELD
+    icon: ARMADILLO_SCUTE   # 2026-10：原本 SHIELD（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, movement, area]
@@ -1353,7 +1353,7 @@ skills:
   gale_sweep:
     name: 嵐棍橫掃
     description: 長棍一掃，前方扇形颳起一陣強風，把敵人吹開。
-    icon: WIND_CHARGE
+    icon: FEATHER   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, melee, area, cold]
@@ -1369,7 +1369,7 @@ skills:
   vault_strike:
     name: 躍棍崩擊
     description: 撐著長棍跳到準心指的地方，落地打一圈，暈眩累積更多。
-    icon: BAMBOO
+    icon: STICK   # 2026-10：原本 BAMBOO（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, area, slam, movement]
@@ -1422,7 +1422,7 @@ skills:
   arrow_barrage:
     name: 星屑連矢
     description: 一口氣連射好幾支箭，射得快、每支輕一點。
-    icon: ARROW
+    icon: FLINT   # 2026-10：原本 ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: attack
     tier: 3
     tags: [attack, projectile]
@@ -1437,7 +1437,7 @@ skills:
   miasma_arrow:
     name: 腐霧矢
     description: 射出一支會留下毒雲的箭，停下的地方冒出一片毒氣，敵人在裡面會中毒。
-    icon: TIPPED_ARROW
+    icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 TIPPED_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: attack
     tier: 5
     tags: [attack, projectile, area, chaos, duration]
@@ -1455,7 +1455,7 @@ skills:
   thunder_arrow:
     name: 召霆矢
     description: 往準心指的地方射一支箭，過一下引來一道落雷，打傷一圈敵人，容易感電。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 7
     tags: [attack, area, lightning]
@@ -1473,7 +1473,7 @@ skills:
   frost_volley:
     name: 凜霜扇矢
     description: 一次射出一排扇形的冰箭，容易凍結。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, projectile, cold]
@@ -1510,7 +1510,7 @@ skills:
   siege_salvo:
     name: 崩城落彈
     description: 往準心指的地方發射一串重彈，過一下一起落下炸開。冷卻 3 秒。
-    icon: TNT
+    icon: GUNPOWDER   # 2026-10：原本 TNT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 7
     tags: [attack, area, physical, fire]
@@ -1527,7 +1527,7 @@ skills:
   hail_rounds:
     name: 凍雨彈
     description: 往準心指的地方發射冰雹彈，落地炸開一圈冰冷傷害，容易凍結。
-    icon: SNOW_BLOCK
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 SNOW_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, area, cold]
@@ -1546,7 +1546,7 @@ skills:
   storm_javelin:
     name: 霆落矛
     description: 擲出一支標槍插在準心指的地方，過一下引爆一圈閃電。
-    icon: TRIDENT
+    icon: COPPER_INGOT   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, area, lightning]
@@ -1564,7 +1564,7 @@ skills:
   spear_thicket:
     name: 矛陣
     description: 在準心指的地方插下一片矛陣，矛陣裡的敵人一直被刺。
-    icon: POINTED_DRIPSTONE
+    icon: FLINT   # 2026-10：原本 POINTED_DRIPSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 7
     tags: [attack, area, physical, duration]
@@ -1581,7 +1581,7 @@ skills:
   rapid_thrust:
     name: 三連刺
     description: 用矛往前快速連刺，按一次刺三下。
-    icon: IRON_SPEAR
+    icon: IRON_NUGGET   # 2026-10：原本 IRON_SPEAR（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, melee, strike, physical]
@@ -1617,7 +1617,7 @@ skills:
   scorch_breath:
     name: 焚息
     description: 往前噴出一道扇形烈焰，近距離的敵人全部燒到。
-    icon: FIRE_CHARGE
+    icon: BLAZE_POWDER   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, area, fire]
@@ -1653,7 +1653,7 @@ skills:
   frost_snap:
     name: 霜綻
     description: 準心指的地方瞬間結冰炸開，打傷一圈敵人，凍結累積很多。冷卻 2 秒。
-    icon: ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, area, cold, cooldown]
@@ -1672,7 +1672,7 @@ skills:
   frost_orb:
     name: 凝霜星核
     description: 放出一顆慢慢飄的寒冰珠，碰到的敵人都會被冰到，路上一直打。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, projectile, cold, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
@@ -1690,7 +1690,7 @@ skills:
   storm_orb:
     name: 雷雲
     description: 在準心指的地方放一團雷雲，一直電裡面的敵人，容易感電。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, area, lightning, duration]
@@ -1708,7 +1708,7 @@ skills:
   lightning_pillar:
     name: 天柱雷
     description: 準心指的地方劈下一道巨大的雷，被感電的敵人更痛。
-    icon: END_ROD
+    icon: QUARTZ   # 2026-10：原本 END_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9
     tags: [spell, area, lightning]
@@ -1726,7 +1726,7 @@ skills:
   hex_burst:
     name: 蝕咒裂
     description: 準心指的地方炸開一團混沌，打傷一圈敵人；身上有詛咒的敵人受到更多 50% 傷害。
-    icon: ENDER_EYE
+    icon: POPPED_CHORUS_FRUIT   # 2026-10：原本 ENDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, area, chaos]
@@ -1762,7 +1762,7 @@ skills:
   void_bolt:
     name: 裂虛星
     description: 法杖射出一團混沌，打中時散成幾顆小的飛向四周。
-    icon: ENDER_PEARL
+    icon: ECHO_SHARD   # 2026-10：原本 ENDER_PEARL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, projectile, chaos]
@@ -1779,7 +1779,7 @@ skills:
   skeletal_brute:
     name: 召喚骸骨重卒
     description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出高大的凋零骷髏，很耐打，打中時連周圍一起打，會把附近的怪引過來。同時最多兩個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
-    icon: WITHER_SKELETON_SKULL
+    icon: COAL   # 2026-10：原本 WITHER_SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [minion, physical]
@@ -1797,7 +1797,7 @@ skills:
   skeletal_archers:
     name: 召喚骸骨射手
     description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出拿弓的骷髏，站在後面射箭，不會衝到敵人臉上。同時最多四到六個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
-    icon: BOW
+    icon: BONE   # 2026-10：原本 BOW（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 3
     tags: [minion, physical]
@@ -1830,7 +1830,7 @@ skills:
   skeletal_stormcaller:
     name: 召喚骸骨雷術士
     description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出會放電的骷髏術士，站在遠處朝敵人打雷，容易感電。同時最多兩到三個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [minion, lightning]
@@ -1848,7 +1848,7 @@ skills:
   defiance_banner:
     name: 磐石之旗
     description: 插下守護的旗，八秒內你和附近的隊友護甲、閃避增加，移動更快。冷卻 12 秒。
-    icon: BLUE_BANNER
+    icon: LAPIS_LAZULI   # 2026-10：原本 BLUE_BANNER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [warcry]
@@ -1871,7 +1871,7 @@ skills:
   frost_aegis:
     name: 凜冬之殼
     description: 常駐：身上結一層冰甲，護甲提高、受到的火焰傷害吃得少一點。範圍內的隊友也有效果。保留 30 精魂。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, cold]
@@ -1894,7 +1894,7 @@ skills:
   shatter_spikes:
     name: 地刺崩裂
     description: 錘子砸地，前方一圈冒出石刺，過一下石刺一起碎開再打一次更大的範圍。
-    icon: POINTED_DRIPSTONE
+    icon: FLINT   # 2026-10：原本 POINTED_DRIPSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 7
     tags: [attack, melee, area, slam, physical]
@@ -1948,7 +1948,7 @@ skills:
   titan_slam:
     name: 撼天重砸
     description: 舉錘猛砸前方一大片扇形，傷害極高、暈眩累積極多。冷卻 4 秒。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
     tags: [attack, melee, area, slam, physical]
@@ -1966,7 +1966,7 @@ skills:
   stampede:
     name: 奔雷踏
     description: 往前一路重踏衝過去，沿路震傷敵人，終點再砸一圈。冷卻 3 秒。
-    icon: LEATHER_HORSE_ARMOR
+    icon: LEATHER   # 2026-10：原本 LEATHER_HORSE_ARMOR（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 9
     tags: [attack, melee, area, slam, movement]
@@ -2021,7 +2021,7 @@ skills:
   frost_palm:
     name: 寒魄掌
     description: 往前推出一掌寒氣，扇形範圍內的敵人被冰到，容易凍結。
-    icon: SNOW_BLOCK
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 SNOW_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, area, cold]
@@ -2039,7 +2039,7 @@ skills:
   frost_wave:
     name: 霜浪
     description: 長棍往前揮出一道貫穿的冰浪，打中整條路上的敵人。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 7
     tags: [attack, projectile, cold]
@@ -2058,7 +2058,7 @@ skills:
   shock_arrow:
     name: 電殛矢
     description: 射出一支帶電的箭，很容易讓敵人電擊（定住不能動）。
-    icon: SPECTRAL_ARROW
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: attack
     tier: 5
     tags: [attack, projectile, lightning]
@@ -2076,7 +2076,7 @@ skills:
   bramble_arrow:
     name: 荊棘矢
     description: 射出一支會生根的箭，落地長出一片荊棘，裡面的敵人一直受傷、容易中毒。
-    icon: SWEET_BERRIES
+    icon: STICK   # 2026-10：原本 SWEET_BERRIES（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, projectile, area, chaos, duration]
@@ -2112,7 +2112,7 @@ skills:
   spiral_volley:
     name: 螺旋箭雨
     description: 射出一圈繞著亂竄的箭，往四周散開打敵人。
-    icon: FIREWORK_ROCKET
+    icon: GUNPOWDER   # 2026-10：原本 FIREWORK_ROCKET（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 7
     tags: [attack, projectile]
@@ -2127,7 +2127,7 @@ skills:
   blast_arrow:
     name: 爆焰矢
     description: 射出一支會爆炸的火箭，打中時炸開一大圈火焰，容易點燃。
-    icon: FIRE_CHARGE
+    icon: MAGMA_CREAM   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 9
     tags: [attack, projectile, area, fire]
@@ -2199,7 +2199,7 @@ skills:
   frost_bolt_round:
     name: 寒凝彈
     description: 射出一發冰彈，停下的地方結出一片冰地，踩在上面的敵人一直被冰到。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, projectile, area, cold, duration]
@@ -2217,7 +2217,7 @@ skills:
   storm_bolts:
     name: 雷暴弩矢
     description: 一次射出三發帶電的弩矢，打中時電到附近的敵人。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 7
     tags: [attack, projectile, lightning, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
@@ -2235,7 +2235,7 @@ skills:
   oil_grenade:
     name: 火油榴彈
     description: 丟出一顆火油彈，彈跳後炸開，留下一片燒著的地面。冷卻 2 秒。
-    icon: HONEY_BOTTLE
+    icon: COAL   # 2026-10：原本 HONEY_BOTTLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, projectile, area, fire, duration]
@@ -2254,7 +2254,7 @@ skills:
   voltaic_grenade:
     name: 雷光榴彈
     description: 丟出一顆雷光彈，炸開時電到一圈敵人，容易感電。冷卻 1.5 秒。
-    icon: GLOWSTONE
+    icon: GLOWSTONE_DUST   # 2026-10：原本 GLOWSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, projectile, area, lightning]
@@ -2273,7 +2273,7 @@ skills:
   cluster_grenade:
     name: 子母榴彈
     description: 丟出一顆大榴彈，炸開後再散出幾顆小的往四周炸。冷卻 3 秒。
-    icon: TNT_MINECART
+    icon: GUNPOWDER   # 2026-10：原本 TNT_MINECART（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 9
     tags: [attack, projectile, area, fire, physical]
@@ -2291,7 +2291,7 @@ skills:
   gale_spear:
     name: 旋風矛
     description: 擲出一團亂竄的旋風，往前一路打中敵人。
-    icon: WIND_CHARGE
+    icon: PHANTOM_MEMBRANE   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, projectile]
@@ -2324,7 +2324,7 @@ skills:
   serpent_fury:
     name: 蛇嵐突
     description: 矛往前猛力一突，捲起一道長長的風刃，打中前方一長條的敵人。
-    icon: TRIDENT
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 9
     tags: [attack, melee, area]
@@ -2356,7 +2356,7 @@ skills:
   thunder_leap:
     name: 雷躍
     description: 撐矛跳到準心指的地方，落地炸開一圈閃電，容易感電。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, area, lightning, movement]
@@ -2374,7 +2374,7 @@ skills:
   blood_harvest:
     name: 血獵
     description: 矛刺向準心指的地方，炸開一圈血花，容易流血。
-    icon: REDSTONE
+    icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, area, physical]
@@ -2411,7 +2411,7 @@ skills:
   frost_mine:
     name: 寒晶雷
     description: 準心指的地方放一顆冰晶，過一下炸開，炸到的敵人凍結累積很多。炸開的地方留下一顆冰晶。
-    icon: AMETHYST_CLUSTER
+    icon: AMETHYST_SHARD   # 2026-10：原本 AMETHYST_CLUSTER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, area, cold, crystal]
@@ -2430,7 +2430,7 @@ skills:
   ice_wall:
     name: 霜壁
     description: 在面前豎起一道冰牆，碰到的敵人一直被冰到。沿著冰牆留下四顆冰晶：擊中冰晶旁邊的敵人三下就碎，炸出一圈冰。
-    icon: ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, area, cold, duration, crystal]
@@ -2449,7 +2449,7 @@ skills:
   storm_blink:
     name: 雷遁
     description: 化成一道閃電瞬移到前方，起點與終點都電一圈。冷卻 2 秒。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, lightning, movement, area]
@@ -2468,7 +2468,7 @@ skills:
   inferno_blast:
     name: 炎核爆
     description: 準心指的地方慢慢聚出一團火，過一下炸開一大圈，傷害極高。
-    icon: MAGMA_BLOCK
+    icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9
     tags: [spell, area, fire]
@@ -2486,7 +2486,7 @@ skills:
   sun_orb:
     name: 烈陽珠
     description: 在腳邊放下一顆小太陽，一直燒周圍的敵人。
-    icon: SHROOMLIGHT
+    icon: GLOWSTONE_DUST   # 2026-10：原本 SHROOMLIGHT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, area, fire, duration]
@@ -2504,7 +2504,7 @@ skills:
   ember_seed:
     name: 燼種
     description: 在準心指的敵人身上種下一顆火種，過一下爆開燒傷周圍的敵人。
-    icon: NETHER_WART
+    icon: NETHER_BRICK   # 2026-10：原本 NETHER_WART（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, area, fire]
@@ -2522,7 +2522,7 @@ skills:
   winter_eye:
     name: 寒冬之眼
     description: 射出一顆冰晶眼，飛行中一直往四周散出冰片。
-    icon: ENDER_EYE
+    icon: GHAST_TEAR   # 2026-10：原本 ENDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, projectile, cold]
@@ -2538,7 +2538,7 @@ skills:
   static_field:
     name: 雷域
     description: 準心指的地方展開一片電場，一直電裡面的敵人，容易感電。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, area, lightning, duration]
@@ -2556,7 +2556,7 @@ skills:
   bone_spikes:
     name: 骨棘陣
     description: 準心指的地方地面竄出骨刺，刺傷一圈敵人，容易流血。
-    icon: BONE_BLOCK
+    icon: BONE   # 2026-10：原本 BONE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, area, physical]
@@ -2574,7 +2574,7 @@ skills:
   dark_idol:
     name: 冥偶
     description: 放下一個黑色的雕像，一段時間內一直對附近的敵人放混沌彈。
-    icon: WITHER_SKELETON_SKULL
+    icon: COAL   # 2026-10：原本 WITHER_SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, projectile, chaos]
@@ -2607,7 +2607,7 @@ skills:
   skeletal_reaver:
     name: 召喚骸骨狂卒
     description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出雙持的骷髏，動作極快、打得兇，但很脆。同時最多四到六個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
-    icon: IRON_SWORD
+    icon: IRON_NUGGET   # 2026-10：原本 IRON_SWORD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [minion, physical]
@@ -2624,7 +2624,7 @@ skills:
   skeletal_frostcaller:
     name: 召喚骸骨霜術士
     description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出會放冰的骷髏術士，站在遠處朝敵人射冰，容易冰緩、凍結。同時最多兩到三個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [minion, cold]
@@ -2664,7 +2664,7 @@ skills:
     name: 雷縛長棍
     description: 常駐（要拿長棍）：攻擊的物理傷害一部分額外附加為閃電，容易感電。保留 30 精魂。
     weapons: [quarterstaff]      # 2026-10：PoE2 的原型（Charged Staff）是長棍技能；以前什麼武器都能開，召喚流、弓手順手就開
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, lightning]
@@ -2724,7 +2724,7 @@ skills:
   mana_storm:
     name: 魔湧
     description: 常駐：法術傷害與施法速度增加，但魔力消耗也增加。保留 30 精魂。
-    icon: LAPIS_BLOCK
+    icon: LAPIS_LAZULI   # 2026-10：原本 LAPIS_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [spell]
@@ -2766,7 +2766,7 @@ skills:
   frost_stream:
     name: 霜流
     description: 持續施放：按住一直往前噴寒氣，越噴越冷（最多 8 層蓄力），凍結累積很多。
-    icon: SNOWBALL
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, area, cold]
@@ -2786,7 +2786,7 @@ skills:
   storm_lash:
     name: 雷鞭
     description: 持續施放：按住一直放出跳躍的閃電，越放越強（最多 6 層蓄力）。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, lightning, chain]
@@ -2805,7 +2805,7 @@ skills:
   charged_shot:
     name: 蓄力射擊
     description: 持續施放：按住一直拉弓連射，越射越重（最多 5 層蓄力，每層更多 20% 傷害），最後幾箭穿透敵人。
-    icon: BOW
+    icon: BLAZE_ROD   # 2026-10：原本 BOW（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, projectile]
@@ -2823,7 +2823,7 @@ skills:
   bound_spectre:
     name: 附魂術
     description: 用附近一具屍體召回那隻怪物當你的召喚物（屍體原本是什麼就是什麼；Boss 不行，奇怪的怪物會變成殭屍）。不會消失，同時最多兩到三隻。
-    icon: SOUL_LANTERN
+    icon: ECHO_SHARD   # 2026-10：原本 SOUL_LANTERN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [minion, chaos]
@@ -2837,7 +2837,7 @@ skills:
   skeletal_cleric:
     name: 召喚骸骨祭司
     description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出骷髏祭司，每秒替你與附近自己的召喚物回復生命（最大生命的 2～3%），自己打得很輕。同時最多一到兩個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
-    icon: GOLDEN_HELMET
+    icon: GOLD_NUGGET   # 2026-10：原本 GOLDEN_HELMET（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 5
     tags: [minion]
@@ -2855,7 +2855,7 @@ skills:
   war_banner:
     name: 征戰之旗
     description: 插下戰旗，八秒內你和附近的隊友攻擊傷害增加、命中提高。
-    icon: RED_BANNER
+    icon: NETHER_BRICK   # 2026-10：原本 RED_BANNER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [warcry]
@@ -2876,7 +2876,7 @@ skills:
   dread_banner:
     name: 懾敵之旗
     description: 插下令人膽寒的旗，範圍內的敵人八秒內受到的傷害增加；你和附近的隊友更不容易被暈。
-    icon: BLACK_BANNER
+    icon: COAL   # 2026-10：原本 BLACK_BANNER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9
     tags: [warcry]
@@ -2899,7 +2899,7 @@ skills:
   hammer_of_gods:
     name: 天罰巨鎚
     description: 召來一柄巨鎚砸在準心指的地方，打傷落點一大圈的敵人，暈眩累積更多 100%。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
     tags: [attack, melee, area, slam]
@@ -2917,7 +2917,7 @@ skills:
   falling_thunder:
     name: 驚雷劈
     description: 長棍往前劈下一道雷，打傷前方一長條的敵人，大部分傷害轉為閃電。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, area, slam, lightning]
@@ -2935,7 +2935,7 @@ skills:
   glacial_cascade:
     name: 冰脊裂
     description: 長棍往地上一點，前方一路裂出一排冰稜，打傷整排的敵人，大部分傷害轉為冰冷。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 9
     tags: [attack, melee, area, cold]
@@ -2989,7 +2989,7 @@ skills:
   snipe:
     name: 穿雲箭
     description: 拉滿弓射出一支很重的箭，飛得又快又遠，貫穿五個敵人；出手慢，一箭的傷害很高，暴擊率增加 50%。
-    icon: SPECTRAL_ARROW
+    icon: QUARTZ   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: attack
     tier: 9
     tags: [attack, projectile]
@@ -3006,7 +3006,7 @@ skills:
   frostbolt:
     name: 霜鑽
     description: 射出一顆很慢的冰鑽，一路貫穿所有碰到的敵人，冰緩更深；霜星爆可以從它的位置爆開。
-    icon: SNOWBALL
+    icon: GHAST_TEAR   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 1
     tags: [spell, projectile, cold]
@@ -3061,7 +3061,7 @@ skills:
   contagion:
     name: 疫潮
     description: 在準心指的地方爆出一團瘟疫，打中的敵人一定中毒，毒更強 30%。
-    icon: WITHER_ROSE
+    icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, area, chaos]
@@ -3088,7 +3088,7 @@ skills:
   bear_maul:
     name: 撼山爪
     description: 化身巨熊，一掌重重拍下前方的敵人，暈眩累積很多。（熊形態）
-    icon: BROWN_WOOL
+    icon: RABBIT_HIDE   # 2026-10：原本 BROWN_WOOL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 1
     tags: [attack, melee, strike, physical, shapeshift, bear]
@@ -3105,7 +3105,7 @@ skills:
   bear_slam:
     name: 震野踏
     description: 熊身躍起往前猛踏，前方一大片扇形的敵人都被震到，容易暈眩。（熊形態）
-    icon: COARSE_DIRT
+    icon: CLAY_BALL   # 2026-10：原本 COARSE_DIRT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, melee, area, slam, physical, shapeshift, bear]
@@ -3121,7 +3121,7 @@ skills:
   mountain_fury:
     name: 熔裂踏
     description: 熊掌連捶地面，震出一圈衝擊，留下燃燒的裂地一直燒周圍的敵人。（熊形態）
-    icon: MAGMA_BLOCK
+    icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, area, slam, fire, duration, shapeshift, bear]
@@ -3138,7 +3138,7 @@ skills:
   rampage:
     name: 蠻衝
     description: 熊身一路往前衝撞，撞飛路上的敵人，終點重踏一圈。冷卻 3 秒。（熊形態）
-    icon: LEATHER_HORSE_ARMOR
+    icon: LEATHER   # 2026-10：原本 LEATHER_HORSE_ARMOR（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 9
     tags: [attack, melee, area, slam, movement, physical, shapeshift, bear]
@@ -3155,7 +3155,7 @@ skills:
   walking_calamity:
     name: 墜星熊吼
     description: 熊身怒吼，召來一顆燃燒的隕石砸在準心指的地方，傷害極高。冷卻 6 秒。（熊形態）
-    icon: FIRE_CHARGE
+    icon: MAGMA_CREAM   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 13
     tags: [attack, area, fire, shapeshift, bear]
@@ -3191,7 +3191,7 @@ skills:
   wolf_rend:
     name: 血牙
     description: 狼人一口咬住敵人的喉嚨狠狠撕開，很容易流血，流血更痛。（狼人形態）
-    icon: REDSTONE
+    icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, strike, physical, shapeshift, werewolf]
@@ -3223,7 +3223,7 @@ skills:
   cross_slash:
     name: 交錯爪
     description: 狼人雙爪交叉一劃，前方扇形的敵人都被撕開，暴擊傷害更高。（狼人形態）
-    icon: SHEARS
+    icon: RABBIT_FOOT   # 2026-10：原本 SHEARS（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 7
     tags: [attack, melee, area, physical, shapeshift, werewolf]
@@ -3239,7 +3239,7 @@ skills:
   arctic_howl:
     name: 寒夜嗥
     description: 戰吼：狼人仰天長嗥，八秒內你和附近的隊友攻擊附加冰冷傷害，接下來幾次攻擊更痛。（狼人形態）
-    icon: SNOWBALL
+    icon: QUARTZ   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 5
     tags: [warcry, cold, shapeshift, werewolf]
@@ -3261,7 +3261,7 @@ skills:
     name: 銀月庇
     description: 精魂技能（要拿獸魂符）：月光一直灑在你身上，攻擊的物理傷害一部分額外附加為冰冷，暴擊率增加。保留 30 精魂。
     weapons: [talisman]          # 2026-10：PoE2 的原型（Lunar Blessing）是獸魂符的技能；以前不限武器
-    icon: END_CRYSTAL
+    icon: NETHER_STAR   # 2026-10：原本 END_CRYSTAL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 13
     tags: [spell, cold]
@@ -3321,7 +3321,7 @@ skills:
   devour:
     name: 噬咬
     description: 飛龍一口咬住前方的敵人，造成傷害的一部分偷取為生命。冷卻 2 秒。（飛龍形態）
-    icon: COOKED_BEEF
+    icon: LEATHER   # 2026-10：原本 COOKED_BEEF（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, area, physical, shapeshift, wyvern]
@@ -3338,7 +3338,7 @@ skills:
   oil_barrage:
     name: 黑油雨
     description: 飛龍朝前方噴出一排油彈，落地留下一片會燒的油地，敵人在上面一直挨燒。物理全部轉換為火焰。（飛龍形態）
-    icon: HONEY_BOTTLE
+    icon: COAL   # 2026-10：原本 HONEY_BOTTLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 9
     tags: [attack, projectile, area, fire, duration, shapeshift, wyvern]
@@ -3376,7 +3376,7 @@ skills:
   thunderstorm:
     name: 積雷雲
     description: 準心指的地方降下一陣雷雨，範圍內的敵人一直被雷劈，容易感電。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, area, lightning, duration]
@@ -3393,7 +3393,7 @@ skills:
   primal_tornado:
     name: 野旋風
     description: 準心指的地方捲起一道旋風，把附近的敵人吸進去一直絞。
-    icon: STRING
+    icon: RABBIT_HIDE   # 2026-10：原本 STRING（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 11
     tags: [spell, area, physical, duration]
@@ -3408,7 +3408,7 @@ skills:
   thrashing_vines:
     name: 抽荊
     description: 準心指的地方猛然竄出粗藤狠狠抽下，打傷一圈敵人，容易流血。
-    icon: VINE
+    icon: STICK   # 2026-10：原本 VINE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9
     tags: [spell, area, physical]
@@ -3425,7 +3425,7 @@ skills:
   volcano:
     name: 地火柱
     description: 準心指的地方拱起一座小火山，一直噴出熔岩燒周圍的敵人。
-    icon: MAGMA_BLOCK
+    icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, area, fire, duration]
@@ -3442,7 +3442,7 @@ skills:
   entangle:
     name: 縛根
     description: 詛咒準心指的地方一圈的敵人：藤蔓纏住他們六秒，移動大幅變慢，受到的物理傷害增加。
-    icon: TWISTING_VINES
+    icon: STICK   # 2026-10：原本 TWISTING_VINES（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, physical]
@@ -3456,7 +3456,7 @@ skills:
   barkskin:
     name: 木甲
     description: 精魂技能：皮膚變得像樹皮一樣硬，護甲增加、物理傷害減免提高。範圍內的隊友也有效果。保留 30 精魂。
-    icon: OAK_LOG
+    icon: STICK   # 2026-10：原本 OAK_LOG（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, physical]
@@ -3475,7 +3475,7 @@ skills:
   briarpatch:
     name: 刺棘身
     description: 精魂技能：身上長滿荊棘，近戰打你的敵人會被反彈物理傷害。保留 30 精魂。
-    icon: SWEET_BERRIES
+    icon: FLINT   # 2026-10：原本 SWEET_BERRIES（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, physical]
@@ -3538,7 +3538,7 @@ skills:
   sunder:
     name: 裂地斬
     description: 用錘砸向地面，裂縫一段一段往前方延伸，打中沿路所有的敵人；對護甲被完全打破的敵人更痛。
-    icon: NETHERITE_AXE
+    icon: NETHERITE_SCRAP   # 2026-10：原本 NETHERITE_AXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 9
     tags: [attack, melee, area, slam, physical]
@@ -3556,7 +3556,7 @@ skills:
   supercharged_slam:
     name: 千鈞砸
     description: 慢慢掄起一記超重的錘擊砸下，砸中的一圈傷害極高，過一下再震出更大的一圈餘震。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 11
     tags: [attack, melee, area, slam, physical]
@@ -3573,7 +3573,7 @@ skills:
   resonating_shield:
     name: 擂盾
     description: 拿錘一直敲自己的盾，震出一圈一圈的衝擊波；被打中的敵人護甲被削弱。出手很快、每下比較輕。
-    icon: SHIELD
+    icon: NETHERITE_SCRAP   # 2026-10：原本 SHIELD（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, area, physical]
@@ -3606,7 +3606,7 @@ skills:
   gathering_storm:
     name: 引霆突
     description: 長棍帶著雷電往前一路突進，打中沿路的敵人，終點炸開一圈雷光。冷卻 2 秒。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
     tags: [attack, melee, area, lightning, movement]
@@ -3625,7 +3625,7 @@ skills:
   disengage:
     name: 回槍躍
     description: 往前方戳出一片槍尖，同時往後一躍拉開距離。冷卻 2 秒。
-    icon: TRIDENT
+    icon: FEATHER   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 1
     tags: [attack, melee, area, strike, physical, movement]
@@ -3661,7 +3661,7 @@ skills:
   primal_strikes:
     name: 驚雷刺
     description: 用帶雷的矛往前快刺，最多刺中三個敵人，容易感電。
-    icon: END_ROD
+    icon: QUARTZ   # 2026-10：原本 END_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 9
     tags: [attack, melee, strike, lightning]
@@ -3679,7 +3679,7 @@ skills:
   cull_the_weak:
     name: 剔殘
     description: 對準一個敵人狠刺一下；目標生命低於 35% 時傷害大很多。
-    icon: IRON_SPEAR
+    icon: NETHERITE_SCRAP   # 2026-10：原本 IRON_SPEAR（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, strike, physical]
@@ -3694,7 +3694,7 @@ skills:
   toxic_growth:
     name: 瘴苞雨
     description: 往前方拋出一把毒苞，落地炸開並留下一灘毒氣，容易中毒。
-    icon: SPORE_BLOSSOM
+    icon: SLIME_BALL   # 2026-10：原本 SPORE_BLOSSOM（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, projectile, area, chaos, duration]
@@ -3712,7 +3712,7 @@ skills:
   magnetic_salvo:
     name: 磁霆齊發
     description: 朝前方一口氣射出一排帶電的能量彈，落地炸開。
-    icon: COPPER_BLOCK
+    icon: COPPER_INGOT   # 2026-10：原本 COPPER_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
     tags: [attack, projectile, area, lightning]
@@ -3728,7 +3728,7 @@ skills:
   glacial_bolt:
     name: 凍壁矢
     description: 射出一支冰弩箭，落點炸開並留下一片冰面冰緩敵人。落點留下兩顆冰晶。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 7
     tags: [attack, projectile, area, cold, duration, crystal]
@@ -3747,7 +3747,7 @@ skills:
   plasma_blast:
     name: 熾漿砲
     description: 蓄力很久才發射的一發電漿彈，貫穿沿路所有的敵人，撞到東西時大爆炸。出手很慢、傷害極高。
-    icon: BEACON
+    icon: NETHER_STAR   # 2026-10：原本 BEACON（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
     tags: [attack, projectile, area, lightning]
@@ -3763,7 +3763,7 @@ skills:
   frost_darts:
     name: 冰梭
     description: 一次射出三支冰梭，打中冰緩或凍結中的敵人更痛。
-    icon: ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, projectile, cold]
@@ -3782,7 +3782,7 @@ skills:
   profane_ritual:
     name: 穢陣
     description: 在準心指的地方畫下一個穢陣，陣裡的敵人一直受到混沌傷害。
-    icon: CRYING_OBSIDIAN
+    icon: ECHO_SHARD   # 2026-10：原本 CRYING_OBSIDIAN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, area, chaos, duration]
@@ -3798,7 +3798,7 @@ skills:
   herald_of_blood:
     name: 血宣
     description: 捷光環：開著的時候，你殺死「流血中」的敵人時屍體爆出一圈血，傷害附近的敵人並容易流血。保留 30 精魂。
-    icon: REDSTONE_BLOCK
+    icon: NETHER_BRICK   # 2026-10：原本 REDSTONE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4
     tags: [spell, physical]
@@ -3831,7 +3831,7 @@ skills:
   berserk:
     name: 赤怒
     description: 精魂技能：怒氣的效果大幅提高；代價是怒氣沒有在消退的時候，每 1 點怒氣每秒讓你失去 0.1% 最大生命（30 點怒氣 = 每秒 3%）。保留 30 精魂。
-    icon: NETHER_WART
+    icon: NETHER_BRICK   # 2026-10：原本 NETHER_WART（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 13
     tags: [spell, physical]
@@ -3853,7 +3853,7 @@ skills:
   overwhelming_presence:
     name: 鎮懾
     description: 精魂技能：你的擊中更容易暈眩敵人，也更容易造成點燃、凍結與感電。範圍內的隊友也有效果。保留 30 精魂。
-    icon: GOAT_HORN
+    icon: NAUTILUS_SHELL   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 8
     tags: [spell]
@@ -3875,7 +3875,7 @@ skills:
   withering_presence:
     name: 凋息
     description: 精魂技能：你身邊的敵人一直凋零，受到的混沌傷害增加；待在範圍裡越久增加越多。保留 30 精魂。
-    icon: WITHER_ROSE
+    icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4
     tags: [spell, chaos]
@@ -3894,7 +3894,7 @@ skills:
   voltaic_mark:
     name: 引雷印
     description: 標記準心指的一個敵人，八秒內牠的閃電抗性降低、被你打時受到的傷害增加。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, lightning]
@@ -3908,7 +3908,7 @@ skills:
   freezing_mark:
     name: 霜縛印
     description: 標記準心指的一個敵人，八秒內牠的冰冷抗性降低、更容易被凍結。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, cold]
@@ -3922,7 +3922,7 @@ skills:
   bloodhounds_mark:
     name: 血嗅印
     description: 標記準心指的一個敵人，八秒內牠的護甲大幅降低、被你打時受到的傷害增加。
-    icon: RED_DYE
+    icon: NETHER_BRICK   # 2026-10：原本 RED_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9
     tags: [spell, physical]
@@ -3936,7 +3936,7 @@ skills:
   ice_tipped_arrows:
     name: 霜鏃
     description: 把箭頭凍上一層霜（要拿弓）：六秒內你的攻擊獲得物理傷害的 20～40% 為額外冰冷傷害，冰緩效果增加 20～40%（隨技能等級）。冷卻 8 秒。不能掛觸發輔助。
-    icon: ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [duration, cold]
@@ -3965,7 +3965,7 @@ skills:
   linked_volley:
     name: 連珠
     description: 搭好連珠的架勢：五秒內你下一次弓或矛的投射物攻擊會自動重複兩次（不花魔力），每次重複少 50% 傷害，但都能再打到同一個敵人。施放時用掉身上全部的怒星，每顆多重複一次（最多 12 次）。有冷卻的攻擊、自己會複擊的攻擊不能強化。用掉之後冷卻＝2 秒＋那一招攻擊時間的 6 倍（20 級 4.1 倍），最多 30 秒。不能掛觸發輔助。
-    icon: SPECTRAL_ARROW
+    icon: RABBIT_HIDE   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: spell
     tier: 5
     tags: [duration]
@@ -3990,7 +3990,7 @@ skills:
   emergency_reload:
     name: 急裝
     description: 一口氣把所有弩技能的彈匣裝滿，六秒內弩的攻擊速度與傷害增加。冷卻 10 秒。
-    icon: CROSSBOW
+    icon: IRON_NUGGET   # 2026-10：原本 CROSSBOW（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 11
     tags: [duration]
@@ -4012,7 +4012,7 @@ skills:
   toxic_domain:
     name: 瘴域
     description: 在自己腳下開出一片毒花，花裡的敵人一直受到混沌傷害、容易中毒。
-    icon: SPORE_BLOSSOM
+    icon: SLIME_BALL   # 2026-10：原本 SPORE_BLOSSOM（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
     tags: [attack, area, chaos, duration]
@@ -4031,7 +4031,7 @@ skills:
   blink:
     name: 掠閃
     description: 往面向的方向瞬間閃到 8 格外。冷卻 3 秒。
-    icon: ENDER_PEARL
+    icon: ECHO_SHARD   # 2026-10：原本 ENDER_PEARL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, movement]
@@ -4045,7 +4045,7 @@ skills:
   time_of_need:
     name: 護時
     description: 精魂技能：你持續回復生命，身上的異常狀態持續時間縮短。範圍內的隊友也有效果。保留 30 精魂。
-    icon: GOLDEN_APPLE
+    icon: GOLD_INGOT   # 2026-10：原本 GOLDEN_APPLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 8
     tags: [spell]
@@ -4085,7 +4085,7 @@ skills:
   scavenged_plating:
     name: 拾鱗
     description: 精魂技能：從敵人身上剝下的甲片補強自己，護甲增加、破甲更強。保留 30 精魂。
-    icon: IRON_CHESTPLATE
+    icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 4
     tags: [spell, physical]
@@ -4145,7 +4145,7 @@ skills:
   alchemists_boon:
     name: 調藥心得
     description: 精魂技能：你的生命與魔力藥劑回復更多。範圍內的隊友也有效果。保留 30 精魂。
-    icon: BREWING_STAND
+    icon: BLAZE_ROD   # 2026-10：原本 BREWING_STAND（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 14
     tags: [spell]
@@ -4165,7 +4165,7 @@ skills:
   ravenous_swarm:
     name: 蟲噬群
     description: 精魂召喚：一群蟲子一直跟著你，飛去咬附近的敵人並讓牠們中毒。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
-    icon: SPIDER_EYE
+    icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 4
     tags: [minion, physical, chaos]
@@ -4871,7 +4871,7 @@ skills:
   summon_mount:
     name: 喚駒
     description: 叫出一匹披甲戰馬騎上去，再放一次就下馬。騎著的時候移動快很多（吃你的移動速度加成）、攻擊更多 15% 傷害；放法術、按潛行鍵、被傳送或換世界都會下馬。坐騎不會受傷。
-    icon: SADDLE
+    icon: LEATHER   # 2026-10：原本 SADDLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 2
     tags: [spell, movement]
@@ -4901,7 +4901,7 @@ skills:
   hoof_trample:
     name: 鐵蹄踐踏
     description: 騎著坐騎才能放：坐騎往前一衝，前蹄重重踏下，震傷周圍的敵人並大幅累積暈眩。
-    icon: IRON_HORSE_ARMOR
+    icon: IRON_INGOT   # 2026-10：原本 IRON_HORSE_ARMOR（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, area, slam, physical]
@@ -4920,7 +4920,7 @@ skills:
   command_skeleton_slam:
     name: 骸兵震地
     description: 指令：身邊的骸骨兵與骸骨狂卒一起往地上重重一砸，各自震傷周圍的敵人。至少要有一隻在 20 格內。傷害吃召喚物傷害的加成。
-    icon: BONE_BLOCK
+    icon: BONE   # 2026-10：原本 BONE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4
     tags: [spell, area, physical, minion, command]
@@ -4938,7 +4938,7 @@ skills:
   command_volley:
     name: 骸弓齊射
     description: 指令：身邊的骸骨射手一起朝準心的敵人（沒有就朝牠們自己的目標）射出一支重箭。傷害吃召喚物傷害的加成。
-    icon: SPECTRAL_ARROW
+    icon: BONE   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: spell
     tier: 4
     tags: [spell, projectile, physical, minion, command]
@@ -5032,7 +5032,7 @@ skills:
   phantom_step:
     name: 幻身步
     description: 精魂技能：你翻滾時在原地留下一個殘影，站著不動、把附近的怪都引過去打它，四秒後消失（被打爆也會消失）。同時只有一個，三秒最多留一次。保留 30 精魂。
-    icon: ARMOR_STAND
+    icon: STICK   # 2026-10：原本 ARMOR_STAND（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 6
     tags: [spell]
@@ -5051,7 +5051,7 @@ skills:
   mirage_archer:
     name: 幻弓影
     description: 精魂技能：身旁跟著一個弓手幻影，你用弓攻擊時它過一下也射一次（傷害少 60%）。保留 60 精魂。
-    icon: SPECTRAL_ARROW
+    icon: PHANTOM_MEMBRANE   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: spell
     tier: 11
     tags: [spell]
@@ -5089,7 +5089,7 @@ skills:
   iron_ward:
     name: 鐵壁守
     description: 用錘敲響身上的鐵甲，四秒內護甲大增、受到的物理傷害減少。冷卻 8 秒。
-    icon: IRON_CHESTPLATE
+    icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 4
     tags: [duration, physical]
@@ -5109,7 +5109,7 @@ skills:
   shield_wall:
     name: 土壁擊
     description: 用錘把地面掀起一道土牆，牆一直震傷周圍的敵人，也容易暈眩牠們。冷卻 4 秒。
-    icon: DIRT
+    icon: CLAY_BALL   # 2026-10：原本 DIRT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 7
     tags: [attack, melee, area, physical, duration]
@@ -5149,7 +5149,7 @@ skills:
   magma_barrier:
     name: 熔殼
     description: 精魂技能：開著的時候護甲增加、格擋機率提高。範圍內的隊友也有效果。保留 30 精魂。
-    icon: MAGMA_BLOCK
+    icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell]
@@ -5233,7 +5233,7 @@ skills:
   herald_of_plague:
     name: 疫使
     description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你殺死「中毒中」的敵人時屍體爆出一圈瘟疫，把毒傳給附近的敵人（一定中毒）。保留 30 精魂。
-    icon: SPIDER_EYE
+    icon: SLIME_BALL   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, chaos]
@@ -5298,7 +5298,7 @@ skills:
     name: 骸棘環
     # PoE2 Bone Cage：定身（Pin）現在只有投射物攻擊有 [需要程式]，先用大量暈眩累積代替
     description: 在身邊竄出一圈骨刺，三秒內一直刺傷圈裡的敵人，暈眩累積很多。再放一次會把舊的那圈拆掉。
-    icon: BONE_BLOCK
+    icon: BONE   # 2026-10：原本 BONE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
     tags: [spell, area, physical]
@@ -5382,7 +5382,7 @@ skills:
     name: 骸餘饗
     # PoE2 Grim Feast：召喚物死時留下殘骸、撿了回復 [需要程式]；先做成召喚物更耐打、你慢慢回血
     description: 精魂技能：你的召喚物最大生命增加，你持續回復一點生命。保留 30 精魂。
-    icon: ROTTEN_FLESH
+    icon: BONE   # 2026-10：原本 ROTTEN_FLESH（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 4
     tags: [spell]
@@ -5403,7 +5403,7 @@ skills:
     name: 僕骸替
     # PoE2 Sacrifice：召喚物可以當屍體用、復活變慢 [需要程式]；先做成「要屍體的技能」傷害增加
     description: 精魂技能：要用屍體的技能（骸爆、喚屍…）傷害增加。保留 60 精魂。
-    icon: SKELETON_SKULL
+    icon: BONE   # 2026-10：原本 SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 14
     tags: [spell]
@@ -5465,7 +5465,7 @@ skills:
     name: 鼎元訣
     # PoE2 Trinity：用以前三相輔助的元素共鳴（CombatListener 的 Trinity，flag.trinity 還在）做成精魂技能，資料就夠
     description: 精魂技能：擊中時，打出最多的那種元素讓另外兩種元素的共鳴上升；三種共鳴越平均，元素傷害越高，三種都夠高時還會穿透元素抗性。保留 100 精魂。
-    icon: END_CRYSTAL
+    icon: HEART_OF_THE_SEA   # 2026-10：原本 END_CRYSTAL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 14
     tags: [spell, fire, cold, lightning]
@@ -5486,7 +5486,7 @@ skills:
     name: 退步凝晶
     # PoE2 Frozen Locus：敵人打不碎冰晶（現在只有你打得到）；其他照原版
     description: 長棍往地上一敲，冰到面前一小片的敵人，同時往後跳開；敲的地方留下一顆冰晶（擊中冰晶旁邊的敵人三下就碎，炸出一圈冰）。冷卻 3 秒。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 1
     tags: [attack, melee, area, cold, crystal]
@@ -5508,7 +5508,7 @@ skills:
   rake:
     name: 裂血掠
     description: 往前衝過去，在終點一記撕裂斬打周圍一圈的敵人，打中的全部流血。冷卻 1 秒。
-    icon: SHEARS
+    icon: FLINT   # 2026-10：原本 SHEARS（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
     tags: [attack, melee, strike, physical, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
@@ -5528,7 +5528,7 @@ skills:
     name: 雷樁矢
     # PoE2 Lightning Rod：箭插在地上、連鎖閃電會跳到箭上 [需要程式]；先做成落下的雷擊
     description: 往準心指的地方射一支從天而降的箭，落地炸出一圈閃電，容易感電。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 1
     tags: [attack, area, lightning]
@@ -5566,7 +5566,7 @@ skills:
     name: 伏霆彈
     # PoE2 Stormblast Bolts：弩彈落地後要被引爆技能打到才炸 [需要程式]；先做成過一下自己炸
     description: 往準心指的地方射出帶電的弩彈，落地後過一陣子才炸開一大圈閃電，容易感電。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 9
     tags: [attack, area, lightning]
@@ -5584,7 +5584,7 @@ skills:
   siege_ballista:
     name: 衝霄弩台
     description: 放下一座弩台（10 秒），每隔一段時間往天上射一發重彈，落在附近的敵人身上，過一下炸開一圈火焰。拿弩才能用。
-    icon: DISPENSER
+    icon: GUNPOWDER   # 2026-10：原本 DISPENSER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 9
     tags: [attack, area, fire]
@@ -5604,7 +5604,7 @@ skills:
     name: 落釘弩台
     # PoE2 Artillery Ballista：殘廢（Maim）[需要程式]；定身照投射物攻擊的規則（技能帶 projectile 標籤）
     description: 放下一座弩台（10 秒），每隔一段時間朝附近的敵人降下一輪弩彈，打中的敵人有機率被定身。拿弩才能用。
-    icon: DISPENSER
+    icon: GUNPOWDER   # 2026-10：原本 DISPENSER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 7
     tags: [attack, area, projectile, physical]
@@ -5643,7 +5643,7 @@ skills:
   oblivion_ray:
     name: 寂滅死光
     description: 往前射出一道又長又細的混沌死光，直線上的敵人全部打穿；對感電的敵人更多 25% 傷害。虛星專屬。
-    icon: END_ROD
+    icon: QUARTZ   # 2026-10：原本 END_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 14
     source: awakener
@@ -5663,7 +5663,7 @@ skills:
   storm_labyrinth:
     name: 雷獄迷陣
     description: 在面前立起一道雷牆，五秒內穿過或站在裡面的敵人每半秒被電一次、很容易感電。同時最多三道，把走廊封成迷宮。虛星專屬。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 14
     source: awakener
@@ -5683,7 +5683,7 @@ skills:
   fourfold_ray:
     name: 四方死光
     description: 往四個方向同時放出一道貫穿的虛星光，一半閃電、一半混沌，站在中間清一整圈。虛星專屬。
-    icon: BEACON
+    icon: NETHER_STAR   # 2026-10：原本 BEACON（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 14
     source: awakener
@@ -5722,7 +5722,7 @@ skills:
   starfall_volley:
     name: 星墜箭
     description: 射出一支拖著星屑的箭，打中時往附近最多 5 個敵人落下星光；三成物理傷害轉為閃電、三成轉為混沌。虛星專屬。
-    icon: SPECTRAL_ARROW
+    icon: AMETHYST_SHARD   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: attack
     tier: 14
     source: awakener

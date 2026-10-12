@@ -86,6 +86,7 @@ public final class GemService {
      *
      * @return 有沒有改
      */
+    @SuppressWarnings("deprecation")
     public boolean refresh(final ItemStack stack) {
         final List<ItemStack> extra = migrateRemoved(stack);
         if (extra != null) {
@@ -103,8 +104,13 @@ public final class GemService {
         // 2026-10：未切割寶石有了專屬貼圖（每一級一張）：舊的沒有貼圖標記的也要重畫
         final boolean sameModel = java.util.Objects.equals(fresh.getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA),
                 stack.getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA));
-        if (fresh.getType() != stack.getType() || ItemRenderer.sameText(fresh.getItemMeta(), stack.getItemMeta()) && sameModel) {
+        final boolean sameType = fresh.getType() == stack.getType();
+        if (sameType && ItemRenderer.sameText(fresh.getItemMeta(), stack.getItemMeta()) && sameModel) {
             return false;
+        }
+        if (!sameType) {
+            // 2026-10：技能、輔助換了原版物品（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近）：舊的寶石換成新的物品
+            stack.setType(fresh.getType());
         }
         stack.setItemMeta(fresh.getItemMeta());
         final io.papermc.paper.datacomponent.item.CustomModelData model = fresh.getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA);

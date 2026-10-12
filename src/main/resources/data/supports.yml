@@ -129,7 +129,7 @@ supports:
   pierce:
     name: 貫穿
     description: 投射物穿過敵人繼續飛（會爆炸的在停下來時才爆炸）。
-    icon: TRIDENT
+    icon: PRISMARINE_SHARD   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [projectile]
     mana_multiplier: 1.2
@@ -182,7 +182,7 @@ supports:
   critical_strikes:
     name: 致命
     description: 被輔助的技能更容易暴擊。
-    icon: SPIDER_EYE
+    icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [attack, spell]
     mana_multiplier: 1.2
@@ -192,7 +192,7 @@ supports:
   lingering:
     name: 餘韻
     description: 被輔助的技能造成的點燃、冰緩、凍結、感電持續更久。
-    icon: GLOW_INK_SAC
+    icon: GLOWSTONE_DUST   # 2026-10：原本 GLOW_INK_SAC（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [attack, spell]
     mana_multiplier: 1.15
@@ -202,7 +202,7 @@ supports:
   minion_damage:
     name: 兇猛召喚
     description: 被輔助的技能召出來的召喚物造成更多傷害。只有召喚技能能掛。
-    icon: WITHER_SKELETON_SKULL
+    icon: COAL   # 2026-10：原本 WITHER_SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [minion]
     mana_multiplier: 1.3
@@ -225,7 +225,7 @@ supports:
   chain:
     name: 連環
     description: 投射物打中之後跳向附近另一個敵人；鏈雷多跳幾次。
-    icon: IRON_CHAIN
+    icon: IRON_NUGGET   # 2026-10：原本 IRON_CHAIN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [projectile, chain]
     mana_multiplier: 1.3
@@ -246,7 +246,7 @@ supports:
   searing:
     name: 燎原
     description: 火焰傷害更容易點燃敵人，點燃燒得更痛。
-    icon: FIRE_CHARGE
+    icon: BLAZE_POWDER   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.25
@@ -268,7 +268,7 @@ supports:
   envenom:
     name: 淬毒
     description: 物理與混沌傷害擊中時更容易讓敵人中毒，中毒更痛（可以疊加）。
-    icon: SPIDER_EYE
+    icon: SLIME_BALL   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.25
@@ -279,7 +279,7 @@ supports:
   concussive:
     name: 震懾
     description: 打得更容易把敵人暈過去（暈眩累積更多；物理最會暈）。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.2
@@ -289,7 +289,7 @@ supports:
   electrocute:
     name: 電擊
     description: 閃電傷害擊中時有機率累積電擊，累積滿了敵人會麻痺一段時間（跟感電另外算）。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.25
@@ -302,7 +302,7 @@ supports:
   glacial:
     name: 冰封
     description: 冰冷傷害更快把敵人凍住，冰緩也更強。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.25
@@ -313,7 +313,7 @@ supports:
   static_charge:
     name: 雷殛
     description: 閃電傷害更容易感電敵人，感電的效果也更強。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.25
@@ -324,7 +324,7 @@ supports:
   culling_strike:
     name: 斷命            # 2026-10：撲殺 → 斷命（跟 PoE 同名）
     description: 被輔助的技能擊中後，敵人的生命掉到一定比例以下就直接倒下——普通怪 30%、魔法 20%、稀有 10%、傳奇與 Boss 5%。
-    icon: NETHERITE_AXE
+    icon: NETHERITE_SCRAP   # 2026-10：原本 NETHERITE_AXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.15
@@ -334,7 +334,7 @@ supports:
   cooldown_recovery:
     name: 速冷
     description: 被輔助的技能冷卻時間縮短三成。
-    icon: ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [cooldown]
     mana_multiplier: 1.2
@@ -344,7 +344,7 @@ supports:
   burst:
     name: 爆發
     description: 有冷卻時間的技能傷害更高，但冷卻更久。
-    icon: TNT
+    icon: GUNPOWDER   # 2026-10：原本 TNT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [cooldown]
     mana_multiplier: 1.25
@@ -387,7 +387,7 @@ supports:
   spell_totem:
     name: 圖騰施法
     description: 被輔助的法術改由圖騰施放：放下圖騰（8 秒、一次一根），它每隔一段時間對 12 格內最近的敵人放一次；傷害少一些。位移、印記、骸爆、本來就是圖騰或陷阱的不行。
-    icon: TOTEM_OF_UNDYING
+    icon: NAUTILUS_SHELL   # 2026-10：原本 TOTEM_OF_UNDYING（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [spell]
     excludes: [movement, mark, corpse, totem, bell, trap, minion, aura, warcry, persistent]
@@ -399,7 +399,7 @@ supports:
   minion_life:
     name: 堅韌召喚
     description: 被輔助的技能召出來的召喚物更耐打，而且每秒回復一點生命。只有召喚技能能掛。
-    icon: ROTTEN_FLESH
+    icon: BONE   # 2026-10：原本 ROTTEN_FLESH（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [minion]
     mana_multiplier: 1.25
@@ -420,7 +420,7 @@ supports:
   warcry_power:
     name: 強勢戰吼
     description: 被輔助的戰吼多強化兩次攻擊，冷卻時間長一點。只有戰吼能掛。
-    icon: GOAT_HORN
+    icon: NAUTILUS_SHELL   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.2
@@ -486,7 +486,7 @@ supports:
   vengeful_embers:
     name: 怨燼
     description: 被輔助的圖騰被打（或你在圖騰 10 格內被打）時，往天上射一團火落在打的敵人身上炸開，傷害照圖騰的最大生命算（冷卻 1 秒）。
-    icon: FIRE_CHARGE
+    icon: MAGMA_CREAM   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [totem]
     excludes: [bell]
@@ -502,7 +502,7 @@ supports:
   additional_strike:
     name: 掃擊
     description: 被輔助的打擊技能一次多打 2 個附近的敵人（先找前方，不夠再找第一個目標旁邊的），每一下的傷害少一點。
-    icon: NETHERITE_SWORD
+    icon: NETHERITE_SCRAP   # 2026-10：原本 NETHERITE_SWORD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [strike]
     excludes: [totem]
@@ -528,7 +528,7 @@ supports:
   heavy_bolt:
     name: 重矢
     description: 投射物更重：傷害更高、飛得更快，但攻擊比較慢。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [projectile]
     excludes: [spell]
@@ -541,7 +541,7 @@ supports:
   rapid_reload:
     name: 速裝機括
     description: 攻擊的投射物裝填得更快，每一發輕一點。
-    icon: TRIPWIRE_HOOK
+    icon: IRON_NUGGET   # 2026-10：原本 TRIPWIRE_HOOK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [projectile]
     excludes: [spell]
@@ -553,7 +553,7 @@ supports:
   shatter_armour:
     name: 碎甲
     description: 打中時破甲（物理傷害的 50%），打中更容易把敵人震暈。
-    icon: IRON_CHESTPLATE
+    icon: NETHERITE_SCRAP   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [attack]
     mana_multiplier: 1.2
@@ -564,7 +564,7 @@ supports:
   hemorrhage:
     name: 血崩
     description: 流血的傷害大幅提高、持續更久（要配會讓敵人流血的攻擊）。
-    icon: REDSTONE
+    icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [attack]
     mana_multiplier: 1.3
@@ -588,7 +588,7 @@ supports:
   pinning:
     name: 釘地
     description: 被輔助的投射物攻擊擊中時有機率把敵人釘在原地（不能移動，照樣會打你）：普通 2 秒、稀有 1.5 秒、傳奇與 Boss 1 秒，之後 4 秒不會再被釘。
-    icon: TRIPWIRE_HOOK
+    icon: IRON_NUGGET   # 2026-10：原本 TRIPWIRE_HOOK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [projectile]
     excludes: [spell]
@@ -658,7 +658,7 @@ supports:
   swift_affliction:
     name: 急蝕
     description: 被輔助的技能造成的點燃、流血、中毒時間變短，但每秒傷害更高。
-    icon: SPIDER_EYE
+    icon: SUGAR   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.2
@@ -671,7 +671,7 @@ supports:
   overcharge:
     name: 熾電
     description: 被輔助的技能感電更強、更容易電擊。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.2
@@ -682,7 +682,7 @@ supports:
   frostbite:
     name: 徹寒
     description: 被輔助的技能冰緩更強、凍結累積更多。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.2
@@ -693,7 +693,7 @@ supports:
   ignition:
     name: 燃意
     description: 被輔助的技能更容易點燃，點燃也更痛。
-    icon: FLINT_AND_STEEL
+    icon: BLAZE_POWDER   # 2026-10：原本 FLINT_AND_STEEL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [attack, spell]
     mana_multiplier: 1.15
@@ -704,7 +704,7 @@ supports:
   heavy_swing:
     name: 沉錘
     description: 被輔助的近戰攻擊慢一點，但每一下更重、更容易暈。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [melee]
     excludes: [minion]
@@ -717,7 +717,7 @@ supports:
   scattershot:
     name: 分矢
     description: 被輔助的投射物多射一發，每一發輕一點，射得慢一點。
-    icon: ARROW
+    icon: FLINT   # 2026-10：原本 ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 1
     requires: [projectile]
     mana_multiplier: 1.2
@@ -741,7 +741,7 @@ supports:
   prolonged_duration:
     name: 長留
     description: 被輔助的技能持續時間大幅延長，但效果輕一點。
-    icon: HONEY_BOTTLE
+    icon: CLOCK   # 2026-10：原本 HONEY_BOTTLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [duration]
     mana_multiplier: 1.2
@@ -752,7 +752,7 @@ supports:
   impact_area:
     name: 震域
     description: 被輔助的技能範圍更大、更痛，但只能用在範圍技能。
-    icon: SLIME_BLOCK
+    icon: SLIME_BALL   # 2026-10：原本 SLIME_BLOCK（原版右鍵有動作：放方塊…會干擾施放）
     tier: 3
     requires: [area]
     mana_multiplier: 1.35
@@ -763,7 +763,7 @@ supports:
   close_quarters:
     name: 貼身
     description: 被輔助的攻擊打近身（3.5 格內）的敵人時更痛。
-    icon: IRON_BARS
+    icon: IRON_NUGGET   # 2026-10：原本 IRON_BARS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
     excludes: [minion]
@@ -786,7 +786,7 @@ supports:
   precision_aim:
     name: 凝神
     description: 被輔助的攻擊命中提高、暴擊率增加。
-    icon: SPYGLASS
+    icon: ECHO_SHARD   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 1
     requires: [attack]
     mana_multiplier: 1.15
@@ -797,7 +797,7 @@ supports:
   deep_cuts:
     name: 深創
     description: 被輔助的技能造成的流血更痛、更久。
-    icon: REDSTONE
+    icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
     mana_multiplier: 1.2
@@ -808,7 +808,7 @@ supports:
   virulence:
     name: 劇毒
     description: 被輔助的技能造成的中毒更痛、更久。
-    icon: SPIDER_EYE
+    icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.2
@@ -844,7 +844,7 @@ supports:
   point_blank:
     name: 近矢
     description: 被輔助的投射物打近身（3.5 格內）的敵人時更痛。
-    icon: ARROW
+    icon: IRON_NUGGET   # 2026-10：原本 ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 2
     requires: [projectile]
     excludes: [minion]
@@ -855,7 +855,7 @@ supports:
   totem_fury:
     name: 樁怒
     description: 被輔助的圖騰技能傷害更高。
-    icon: TOTEM_OF_UNDYING
+    icon: BLAZE_ROD   # 2026-10：原本 TOTEM_OF_UNDYING（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [totem]
     mana_multiplier: 1.2
@@ -877,7 +877,7 @@ supports:
   meat_shield:
     name: 肉盾
     description: 被輔助的召喚物更耐打、更容易擋下攻擊，但傷害少一點。
-    icon: SHIELD
+    icon: LEATHER   # 2026-10：原本 SHIELD（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [minion]
     mana_multiplier: 1.2
@@ -920,7 +920,7 @@ supports:
   cluster_bombs:
     name: 增彈
     description: 被輔助的榴彈多丟一顆。
-    icon: TNT
+    icon: GUNPOWDER   # 2026-10：原本 TNT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [grenade]
     mana_multiplier: 1.3
@@ -941,7 +941,7 @@ supports:
   cold_snap_support:
     name: 凜冽
     description: 被輔助的冰冷技能更痛，凍結累積更多。
-    icon: ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.2
@@ -963,7 +963,7 @@ supports:
   storm_surge:
     name: 雷湧
     description: 被輔助的閃電技能更痛，感電機率提高。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.2
@@ -974,7 +974,7 @@ supports:
   bludgeon:
     name: 重擊
     description: 被輔助的攻擊更容易破甲、暈眩。
-    icon: IRON_BLOCK
+    icon: IRON_INGOT   # 2026-10：原本 IRON_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [melee]
     excludes: [minion]
@@ -997,7 +997,7 @@ supports:
   warcry_reach:
     name: 遠嘯
     description: 被輔助的戰吼範圍更大、持續更久。
-    icon: GOAT_HORN
+    icon: FEATHER   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [warcry]
     mana_multiplier: 1.1
@@ -1008,7 +1008,7 @@ supports:
   execute:
     name: 處刑
     description: 被輔助的技能打生命低（35% 以下）的敵人時更痛。
-    icon: IRON_AXE
+    icon: FLINT   # 2026-10：原本 IRON_AXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.2
@@ -1018,7 +1018,7 @@ supports:
   hunter_focus:
     name: 盯梢
     description: 被輔助的技能打身上有詛咒的敵人時暴擊率更高、更痛。
-    icon: SPYGLASS
+    icon: AMETHYST_SHARD   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.15
@@ -1043,7 +1043,7 @@ supports:
   trigger_hit_taken:
     name: 受擊觸發
     description: 被輔助的法術在你被敵人擊中時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。掛上之後這個法術只會自動觸發，不能手動施放。
-    icon: SHIELD
+    icon: ARMADILLO_SCUTE   # 2026-10：原本 SHIELD（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [spell]
     excludes: [minion, aura, warcry, movement, herald]
@@ -1055,7 +1055,7 @@ supports:
   trigger_kill:
     name: 擊殺觸發
     description: 被輔助的法術在你擊殺敵人時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。掛上之後這個法術只會自動觸發，不能手動施放。
-    icon: SKELETON_SKULL
+    icon: BONE   # 2026-10：原本 SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [spell]
     excludes: [minion, aura, warcry, movement, herald]
@@ -1067,7 +1067,7 @@ supports:
   trigger_ailment:
     name: 異常觸發
     description: 被輔助的法術在你讓敵人點燃、冰緩、凍結或感電時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。掛上之後這個法術只會自動觸發，不能手動施放。
-    icon: FIRE_CHARGE
+    icon: BLAZE_POWDER   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
     requires: [spell]
     excludes: [minion, aura, warcry, movement, herald]
@@ -1079,7 +1079,7 @@ supports:
   vs_chilled:
     name: 趁寒
     description: 被輔助的技能打冰緩中、凍結中的敵人更痛。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.15
@@ -1110,7 +1110,7 @@ supports:
   vs_poisoned:
     name: 趁毒
     description: 被輔助的技能打中毒的敵人更痛。
-    icon: SPIDER_EYE
+    icon: SLIME_BALL   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.15
@@ -1120,7 +1120,7 @@ supports:
   vs_bleeding:
     name: 趁血
     description: 被輔助的技能打流血中的敵人更痛。
-    icon: REDSTONE
+    icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.15
@@ -1164,7 +1164,7 @@ supports:
   frost_infusion:
     name: 霜蘊
     description: 被輔助的法術放完獲得一層冰冷灌注（身上每種最多 2 層，10 秒沒拿到就散掉）。
-    icon: SNOWBALL
+    icon: GHAST_TEAR   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
     requires: [spell]
     excludes: [minion, aura, herald]
@@ -1217,7 +1217,7 @@ supports:
   heft:
     name: 沉重
     description: 物理傷害更多 25%，攻擊速度更少 5%。
-    icon: IRON_BLOCK
+    icon: IRON_INGOT   # 2026-10：原本 IRON_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [attack]
     mana_multiplier: 1.2
@@ -1250,7 +1250,7 @@ supports:
   cold_penetration:
     name: 寒徹
     description: 冰冷傷害穿透敵人 30% 冰冷抗性。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.2
@@ -1260,7 +1260,7 @@ supports:
   lightning_penetration:
     name: 雷透
     description: 閃電傷害穿透敵人 30% 閃電抗性。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     mana_multiplier: 1.2
@@ -1281,7 +1281,7 @@ supports:
   sturdy_totem:
     name: 堅樁
     description: 圖騰的生命增加 60%，被打也比較不會倒（要配圖騰技能）。
-    icon: OAK_LOG
+    icon: STICK   # 2026-10：原本 OAK_LOG（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [totem]
     mana_multiplier: 1.1
@@ -1291,7 +1291,7 @@ supports:
   giant_minions:
     name: 巨魄
     description: 召喚物的生命更多 50%、傷害更多 25%，但移動速度減少 15%。
-    icon: GOLDEN_APPLE
+    icon: GOLD_INGOT   # 2026-10：原本 GOLDEN_APPLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [minion]
     mana_multiplier: 1.3
@@ -1303,7 +1303,7 @@ supports:
   starfall_resonance:
     name: 星骸共鳴
     description: 曜帝熔爐裡的回聲：什麼技能都能掛，傷害、範圍、暴擊傷害一起變強。
-    icon: END_CRYSTAL
+    icon: NETHER_STAR   # 2026-10：原本 END_CRYSTAL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
     source: sky_crucible
     mana_multiplier: 1.4
@@ -1316,7 +1316,7 @@ supports:
   permafrost_heart:
     name: 永凍之心
     description: 霜心女王的心跳：冰冷傷害更痛，敵人更容易被冰緩、凍結。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     source: frost_throne
     requires: [attack, spell]
@@ -1330,7 +1330,7 @@ supports:
   styx_ferry:
     name: 冥河渡魂
     description: 渡者收下的骨頭都還記得怎麼打架：召喚物更痛、更硬、更快。
-    icon: WITHER_SKELETON_SKULL
+    icon: COAL   # 2026-10：原本 WITHER_SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     source: bone_throne
     requires: [minion]
@@ -1344,7 +1344,7 @@ supports:
   skyburn_fury:
     name: 焚天之怒
     description: 餘燼將軍等了三百年的火：火焰傷害更痛，而且一碰就燒。
-    icon: FIRE_CHARGE
+    icon: MAGMA_CREAM   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
     source: ember_citadel
     requires: [attack, spell]
@@ -1358,7 +1358,7 @@ supports:
   abyssal_touch:
     name: 深淵之觸
     description: 從星骸最深處帶上來的東西：物理傷害額外附加混沌，混沌傷害更痛，還會中毒。
-    icon: SCULK_CATALYST
+    icon: ECHO_SHARD   # 2026-10：原本 SCULK_CATALYST（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     source: uber
     requires: [attack, spell]
@@ -1387,7 +1387,7 @@ supports:
   oblivion_focus:
     name: 寂滅聚焦
     description: 虛星死光的聚焦法：法術更痛，閃電與混沌傷害穿透敵人的抗性。
-    icon: END_ROD
+    icon: QUARTZ   # 2026-10：原本 END_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     source: awakener
     requires: [spell]
@@ -1401,7 +1401,7 @@ supports:
   storm_maze_heart:
     name: 雷獄之心
     description: 風暴迷宮的核心：地面效果、漩渦這些持續的東西撐得更久，閃電傷害更痛、感電更重。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     source: awakener
     requires: [duration]
@@ -1444,7 +1444,7 @@ supports:
   phantom_double:
     name: 虛星分身
     description: 你的影子學著你施法：法術放完 0.25 秒後自動再放一次（不花魔力），而且不像一般的回響那樣變輕。
-    icon: ARMOR_STAND
+    icon: STICK   # 2026-10：原本 ARMOR_STAND（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     source: awakener
     requires: [spell]
@@ -1458,7 +1458,7 @@ supports:
   world_collapse:
     name: 萬界歸墟
     description: 虛星最後的那一招：什麼技能都能掛，傷害大增、暴擊又多又重，代價是魔力消耗翻倍。
-    icon: CRYING_OBSIDIAN
+    icon: ECHO_SHARD   # 2026-10：原本 CRYING_OBSIDIAN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     source: awakener
     mana_multiplier: 2.0
@@ -1471,7 +1471,7 @@ supports:
   void_legion:
     name: 虛星軍勢
     description: 虛星分身們的軍勢：召喚技能同時多一隻，召喚物更痛、更硬。
-    icon: WITHER_SKELETON_SKULL
+    icon: COAL   # 2026-10：原本 WITHER_SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     source: awakener
     requires: [minion]
@@ -1496,7 +1496,7 @@ supports:
   cold_mastery:            # Cold Mastery
     name: 霜髓
     description: 被輔助的冰冷技能等級 +1。
-    icon: SNOWBALL
+    icon: QUARTZ   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
     requires: [cold]
     mana_multiplier: 1.1
@@ -1545,7 +1545,7 @@ supports:
   overreach:               # Overreach（近身命中降低用「命中更少」近似）
     name: 闊勢
     description: 被輔助的範圍攻擊範圍大很多，但命中變差。
-    icon: TARGET
+    icon: GOLD_NUGGET   # 2026-10：原本 TARGET（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [area]
     excludes: [spell, minion, aura, herald, persistent]   # 2026-10：光環不算法術之後，這裡要另外擋（它是給範圍攻擊用的）
@@ -1557,7 +1557,7 @@ supports:
   bloodlust:               # Bloodlust
     name: 腥獵
     description: 被輔助的近戰攻擊打流血中的敵人更痛，但自己不會造成流血。
-    icon: REDSTONE
+    icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [melee]
     excludes: [minion]
@@ -1569,7 +1569,7 @@ supports:
   first_blood:             # First Blood（「對滿血的敵人」改成一律加機率，數值調低）
     name: 初裂
     description: 被輔助的攻擊更容易造成流血。
-    icon: RED_DYE
+    icon: NETHER_BRICK   # 2026-10：原本 RED_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [attack]
     excludes: [minion]
@@ -1580,7 +1580,7 @@ supports:
   deep_freeze:             # Deep Freeze
     name: 封霜
     description: 被輔助的技能凍結的時間更久。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.1
@@ -1590,7 +1590,7 @@ supports:
   lasting_shock:           # Lasting Shock
     name: 綿雷
     description: 被輔助的技能造成的感電持續兩倍久，但比較不容易感電。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.1
@@ -1601,7 +1601,7 @@ supports:
   escalating_poison:       # Escalating Poison（多疊一層毒用「毒更痛、持續更短」近似）
     name: 層瘴
     description: 被輔助的技能造成的中毒更痛，但持續時間更短。
-    icon: SPIDER_EYE
+    icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.2
@@ -1612,7 +1612,7 @@ supports:
   intense_agony:           # Intense Agony（「對滿血的敵人」改成一律，數值調低）
     name: 速蝕
     description: 被輔助的持續傷害法術更痛，但持續時間更短。
-    icon: WITHER_ROSE
+    icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [duration]
     excludes: [attack, minion]
@@ -1624,7 +1624,7 @@ supports:
   immolate:                # Immolate
     name: 炙獵
     description: 被輔助的攻擊打燃燒中的敵人更痛、多附加火焰傷害，但自己不會點燃。
-    icon: FIRE_CHARGE
+    icon: BLAZE_POWDER   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [attack]
     excludes: [minion]
@@ -1648,7 +1648,7 @@ supports:
   scouring_flame:          # Scouring Flame（PoE2 是另外付護盾，這裡改成魔力消耗更高）
     name: 熾烙
     description: 被輔助的技能點燃更痛很多，但魔力消耗更高。
-    icon: CAMPFIRE
+    icon: BLAZE_POWDER   # 2026-10：原本 CAMPFIRE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     excludes: [minion]
     mana_multiplier: 1.35
@@ -1658,7 +1658,7 @@ supports:
   embitter:                # Embitter（「所有附加改成冰冷」用「物理傷害多附加冰冷」近似）
     name: 凝霜刃
     description: 被輔助的技能多附加冰冷傷害。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.15
@@ -1690,7 +1690,7 @@ supports:
   brittle_armour:          # Brittle Armour
     name: 霜裂甲
     description: 被輔助的技能破甲更強，也更容易凍結。
-    icon: CHAINMAIL_CHESTPLATE
+    icon: IRON_NUGGET   # 2026-10：原本 CHAINMAIL_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -1701,7 +1701,7 @@ supports:
   devastate:               # Devastate（重暈時完全破甲用「暈眩值、破甲加強」近似）
     name: 崩勢
     description: 被輔助的技能更容易暈眩敵人，破甲也更強。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -1712,7 +1712,7 @@ supports:
   excoriate:               # Excoriate
     name: 剝元
     description: 被輔助的近戰攻擊：敵人身上每有一種元素異常就更痛，但自己不會造成元素異常。
-    icon: SHEARS
+    icon: FLINT   # 2026-10：原本 SHEARS（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [melee]
     excludes: [minion]
@@ -1727,7 +1727,7 @@ supports:
   see_red:                 # See Red（流血的怪跑更快那段沒做）
     name: 血綿
     description: 被輔助的攻擊造成的流血持續更久。
-    icon: NETHER_WART
+    icon: NETHER_BRICK   # 2026-10：原本 NETHER_WART（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [attack]
     excludes: [minion]
@@ -1762,7 +1762,7 @@ supports:
   stormchain:              # Stormchain（「從感電的敵人連鎖」改成一律連鎖）
     name: 躍霆
     description: 被輔助的投射物多連鎖一次，但不會感電。
-    icon: IRON_CHAIN
+    icon: IRON_NUGGET   # 2026-10：原本 IRON_CHAIN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [projectile]
     excludes: [minion]
@@ -1797,7 +1797,7 @@ supports:
   execrate:                # Execrate
     name: 蓄疾
     description: 被輔助的技能造成異常的機率加倍，但多了 8 秒冷卻。本來就有冷卻的技能不能掛。
-    icon: SUSPICIOUS_STEW
+    icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 SUSPICIOUS_STEW（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [cooldown, minion]
     mana_multiplier: 1.0
@@ -1824,7 +1824,7 @@ supports:
   heightened_curse:        # Heightened Curse
     name: 厲咒
     description: 被輔助的詛咒效果更強。
-    icon: WITHER_ROSE
+    icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [curse]
     mana_multiplier: 1.2
@@ -1844,7 +1844,7 @@ supports:
   ritualistic_curse:       # Ritualistic Curse
     name: 廣咒
     description: 被輔助的詛咒範圍大很多，但放得比較慢。
-    icon: SOUL_LANTERN
+    icon: ECHO_SHARD   # 2026-10：原本 SOUL_LANTERN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [curse]
     mana_multiplier: 1.1
@@ -1865,7 +1865,7 @@ supports:
   eternal_mark:            # Eternal Mark（「第一次觸發不消耗」→ 持續時間加倍）
     name: 久印
     description: 被輔助的印記持續時間加倍。
-    icon: NAME_TAG
+    icon: PAPER   # 2026-10：原本 NAME_TAG（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [mark]
     mana_multiplier: 1.2
@@ -1875,7 +1875,7 @@ supports:
   mark_for_death:          # Mark for Death（被標記的敵人更容易破甲 → 印記效果更強）
     name: 烙印深
     description: 被輔助的印記效果更強。
-    icon: SKELETON_SKULL
+    icon: BONE   # 2026-10：原本 SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [mark]
     mana_multiplier: 1.2
@@ -1885,7 +1885,7 @@ supports:
   echoing_cry:             # Echoing Cry（回聲兩次 → 戰吼效果更強、範圍變小）
     name: 震嘯
     description: 被輔助的戰吼效果更強，但範圍變小。
-    icon: GOAT_HORN
+    icon: ECHO_SHARD   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.2
@@ -1896,7 +1896,7 @@ supports:
   muster:                  # Muster（每種不同的召喚物 7%，用兩種的平均）
     name: 群鋒
     description: 被輔助的召喚物更痛。
-    icon: WHITE_BANNER
+    icon: PAPER   # 2026-10：原本 WHITE_BANNER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [minion]
     mana_multiplier: 1.15
@@ -1917,7 +1917,7 @@ supports:
   urgent_totems:           # Urgent Totems
     name: 疾樁
     description: 被輔助的圖騰攻擊與施法更快。
-    icon: CARVED_PUMPKIN
+    icon: GLOWSTONE_DUST   # 2026-10：原本 CARVED_PUMPKIN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [totem]
     mana_multiplier: 1.15
@@ -1928,7 +1928,7 @@ supports:
   greatwood:               # Greatwood
     name: 厚樁
     description: 被輔助的圖騰生命更多。
-    icon: OAK_LOG
+    icon: STICK   # 2026-10：原本 OAK_LOG（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [totem]
     mana_multiplier: 1.1
@@ -1938,7 +1938,7 @@ supports:
   ambush:                  # Ambush
     name: 潛鋒
     description: 被輔助的技能對滿血的敵人暴擊率加倍。
-    icon: SPYGLASS
+    icon: PHANTOM_MEMBRANE   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.1
@@ -1959,7 +1959,7 @@ supports:
   clash:                   # Clash
     name: 背水
     description: 被輔助的近戰攻擊：你的生命百分比比敵人低時更痛，比敵人高時沒那麼痛。
-    icon: IRON_SWORD
+    icon: IRON_NUGGET   # 2026-10：原本 IRON_SWORD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [melee]
     excludes: [minion]
@@ -1991,7 +1991,7 @@ supports:
   knockback:               # Knockback
     name: 推擊
     description: 被輔助的近戰攻擊把敵人擊退。
-    icon: PISTON
+    icon: IRON_INGOT   # 2026-10：原本 PISTON（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [melee]
     excludes: [minion]
@@ -2002,7 +2002,7 @@ supports:
   arms_length:             # Arms Length
     name: 重推
     description: 被輔助的近戰攻擊擊退得更遠。
-    icon: STICKY_PISTON
+    icon: SLIME_BALL   # 2026-10：原本 STICKY_PISTON（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [melee]
     excludes: [minion]
@@ -2014,7 +2014,7 @@ supports:
   persistent_ground:       # Persistent Ground
     name: 久地
     description: 被輔助的技能留在地上的效果持續更久。
-    icon: MOSS_BLOCK
+    icon: SLIME_BALL   # 2026-10：原本 MOSS_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [duration]
     excludes: [minion]
@@ -2025,7 +2025,7 @@ supports:
   cadence:                 # Cadence（連續使用疊攻速，用平均值；用太頻繁會停用那段沒做，改成魔力消耗更高）
     name: 連拍
     description: 被輔助的攻擊更快，但魔力消耗更高。
-    icon: NOTE_BLOCK
+    icon: GOLD_NUGGET   # 2026-10：原本 NOTE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
     excludes: [minion]
@@ -2047,7 +2047,7 @@ supports:
   overextend:              # Overextend（暴擊時自己被眩暈那段沒做，改成魔力消耗更高）
     name: 孤注
     description: 被輔助的技能暴擊傷害更高，但魔力消耗更高。
-    icon: TNT
+    icon: GUNPOWDER   # 2026-10：原本 TNT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.3
@@ -2058,7 +2058,7 @@ supports:
   clarity:                 # Clarity
     name: 泉魔
     description: 掛在精魂技能上：技能開著時你的魔力回復更快。
-    icon: LIGHT_BLUE_DYE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 LIGHT_BLUE_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [aura, herald]
     modifiers:
@@ -2078,7 +2078,7 @@ supports:
   cannibalism:             # Cannibalism
     name: 食殺
     description: 掛在精魂技能上：技能開著時你擊殺敵人回復最大生命的 2%。
-    icon: ROTTEN_FLESH
+    icon: BONE   # 2026-10：原本 ROTTEN_FLESH（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [aura, herald]
     modifiers:
@@ -2088,7 +2088,7 @@ supports:
   thornskin:               # Thornskin
     name: 刺甲
     description: 掛在精魂技能上：技能開著時你的荊棘傷害更高。
-    icon: SWEET_BERRIES
+    icon: STICK   # 2026-10：原本 SWEET_BERRIES（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [aura, herald]
     modifiers:
@@ -2098,7 +2098,7 @@ supports:
   cool_headed:             # Cool Headed
     name: 避焚
     description: 掛在精魂技能上：技能開著時你身上的點燃持續時間減半。
-    icon: SNOWBALL
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [aura, herald]
     modifiers:
@@ -2128,7 +2128,7 @@ supports:
   herbalism:               # Herbalism
     name: 醇藥
     description: 掛在精魂技能上：技能開著時你的生命藥劑回復更多。
-    icon: GLASS_BOTTLE
+    icon: GHAST_TEAR   # 2026-10：原本 GLASS_BOTTLE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [aura, herald]
     modifiers:
@@ -2163,7 +2163,7 @@ supports:
   armour_demolisher:       # Armour Demolisher
     name: 拆甲
     description: 被輔助的技能破甲強很多。
-    icon: IRON_PICKAXE
+    icon: IRON_NUGGET   # 2026-10：原本 IRON_PICKAXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -2173,7 +2173,7 @@ supports:
   eternal_flame:           # Eternal Flame
     name: 長焰
     description: 被輔助的技能造成的點燃持續兩倍久，但比較不容易點燃。
-    icon: SOUL_TORCH
+    icon: ECHO_SHARD   # 2026-10：原本 SOUL_TORCH（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.1
@@ -2184,7 +2184,7 @@ supports:
   extraction:              # Extraction（PoE2 另外扣生命，這裡改成魔力消耗更高）
     name: 血蝕
     description: 被輔助的法術多附加大量混沌傷害，但魔力消耗更高。
-    icon: CRIMSON_FUNGUS
+    icon: NETHER_BRICK   # 2026-10：原本 CRIMSON_FUNGUS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [spell]
     excludes: [minion]
@@ -2195,7 +2195,7 @@ supports:
   longshot:                # Longshot（離越遠越痛 → 近身更少、其他更多）
     name: 遠穿
     description: 被輔助的投射物攻擊打遠處的敵人更痛，打近身的敵人沒那麼痛。
-    icon: SPYGLASS
+    icon: FEATHER   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 1
     requires: [projectile]
     excludes: [spell, minion]
@@ -2229,7 +2229,7 @@ supports:
   chance_to_freeze:        # Chance to Freeze
     name: 凝凍
     description: 被輔助的技能更容易凍結敵人。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.1
@@ -2239,7 +2239,7 @@ supports:
   arcane_surge:            # Arcane Surge（花夠魔力後的增益 → 平均起來的施法速度）
     name: 湧詠
     description: 被輔助的法術施放更快。
-    icon: AMETHYST_CLUSTER
+    icon: AMETHYST_SHARD   # 2026-10：原本 AMETHYST_CLUSTER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [spell]
     excludes: [minion, aura, herald]
@@ -2250,7 +2250,7 @@ supports:
   deadly_herald:           # Deadly Herald
     name: 厲宣
     description: 被輔助的捷光環擊殺效果更痛，但多保留一點精魂。
-    icon: SKELETON_SKULL
+    icon: BONE   # 2026-10：原本 SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [herald]
     modifiers:
@@ -2260,7 +2260,7 @@ supports:
   ice_bite:                # Ice Bite
     name: 冰嚙
     description: 被輔助的戰吼增益期間，你的攻擊多附加冰冷傷害。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.15
@@ -2303,7 +2303,7 @@ supports:
   fiery_death:             # Fiery Death
     name: 焚屍
     description: 被輔助的技能打死點燃中的敵人時，有機率讓屍體爆出一圈火焰。
-    icon: FIRE_CHARGE
+    icon: MAGMA_CREAM   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -2313,7 +2313,7 @@ supports:
   frozen_spite:            # Frozen Spite
     name: 碎寒
     description: 被輔助的技能打死凍結中的敵人時，屍體往四周爆出冰片。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -2353,7 +2353,7 @@ supports:
   haemocrystals:           # Haemocrystals
     name: 血晶
     description: 被輔助的技能擊中流血中的敵人時，用掉流血，在牠身上長出血晶炸開。
-    icon: REDSTONE
+    icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -2363,7 +2363,7 @@ supports:
   electromagnetism:        # Electromagnetism
     name: 磁暴
     description: 被輔助的技能擊中感電中的敵人時，有機率用掉感電，在牠身上撕開一道雷隙。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -2383,7 +2383,7 @@ supports:
   concussive_runes:        # Concussive Runes
     name: 震符印
     description: 被輔助的攻擊擊中暈眩中的敵人時，在牠腳下炸開一道震符，很容易再把周圍的敵人震暈。
-    icon: CHISELED_STONE_BRICKS
+    icon: BRICK   # 2026-10：原本 CHISELED_STONE_BRICKS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
     excludes: [minion]
@@ -2394,7 +2394,7 @@ supports:
   brambleslam:             # Brambleslam
     name: 荊棘震
     description: 被輔助的猛擊砸下時，在面前長出一片荊棘，一直刺傷裡面的敵人。
-    icon: SWEET_BERRIES
+    icon: STICK   # 2026-10：原本 SWEET_BERRIES（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [slam]
     excludes: [minion]
@@ -2405,7 +2405,7 @@ supports:
   crater:                  # Crater
     name: 熔坑擊
     description: 被輔助的猛擊砸下時，在面前燒出一個熔坑，一直燒裡面的敵人。
-    icon: MAGMA_BLOCK
+    icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [slam]
     excludes: [minion]
@@ -2416,7 +2416,7 @@ supports:
   corrupting_cry:          # Corrupting Cry
     name: 腐蝕嘯
     description: 被輔助的戰吼吼出時，震出一圈腐血，很容易讓周圍的敵人流血。
-    icon: CRIMSON_FUNGUS
+    icon: NETHER_BRICK   # 2026-10：原本 CRIMSON_FUNGUS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.15
@@ -2426,7 +2426,7 @@ supports:
   battershout:             # Battershout
     name: 碎甲吼
     description: 被輔助的戰吼吼出時，震出一圈衝擊，大幅打破周圍敵人的護甲。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.15
@@ -2447,7 +2447,7 @@ supports:
   decaying_hex:            # Decaying Hex
     name: 朽咒
     description: 被輔助的詛咒放下時，詛咒的地方同時留下一片朽蝕，一直造成混沌傷害。
-    icon: WITHER_ROSE
+    icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [curse]
     mana_multiplier: 1.15
@@ -2489,7 +2489,7 @@ supports:
   wind_wave:               # Wind Wave
     name: 震風
     description: 被輔助的技能擊中暈眩中的敵人時，震出一圈風浪把周圍的敵人推開。
-    icon: WIND_CHARGE
+    icon: BREEZE_ROD   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.1
@@ -2509,7 +2509,7 @@ supports:
   frozen_vortex:           # Frozen Vortex
     name: 霜渦
     description: 被輔助的技能打死凍結中的敵人時，屍體的地方捲起一道把敵人吸進去的霜渦。
-    icon: SNOW_BLOCK
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 SNOW_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -2519,7 +2519,7 @@ supports:
   charged_mark:            # Charged Mark
     name: 電印地
     description: 被輔助的印記標下去時，目標腳下留下一片帶電的地面。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [mark]
     mana_multiplier: 1.15
@@ -2529,7 +2529,7 @@ supports:
   poison_spores:           # Poison Spores
     name: 孢爆
     description: 被輔助的攻擊擊中時，有機率在敵人身上爆出毒孢，容易讓周圍的敵人中毒。
-    icon: SPORE_BLOSSOM
+    icon: SLIME_BALL   # 2026-10：原本 SPORE_BLOSSOM（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [attack]
     excludes: [minion]
@@ -2540,7 +2540,7 @@ supports:
   aftershock:              # Aftershock
     name: 回震
     description: 被輔助的猛擊砸下時，有機率在面前再震一次（傷害是原本那一下的 60%，吃同樣的加成）。
-    icon: COBBLESTONE
+    icon: FLINT   # 2026-10：原本 COBBLESTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [slam]
     excludes: [minion]
@@ -2551,7 +2551,7 @@ supports:
   tremors:                 # Tremors
     name: 連震
     description: 被輔助的猛擊砸下時，有不小的機率再震出一圈更大但比較輕的餘震（原本那一下的 45%）。
-    icon: MOSSY_COBBLESTONE
+    icon: SLIME_BALL   # 2026-10：原本 MOSSY_COBBLESTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [slam]
     excludes: [minion]
@@ -2562,7 +2562,7 @@ supports:
   maim:                    # Maim
     name: 殘肢
     description: 被輔助的攻擊擊中時讓敵人殘廢四秒：移動變慢、閃避變差。
-    icon: LEAD
+    icon: RABBIT_HIDE   # 2026-10：原本 LEAD（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [attack]
     excludes: [minion]
@@ -2573,7 +2573,7 @@ supports:
   blind:                   # Blind
     name: 目眩
     description: 被輔助的技能擊中時讓敵人目眩四秒：牠的命中變差（比較打不到你）。
-    icon: INK_SAC
+    icon: COAL   # 2026-10：原本 INK_SAC（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.1
@@ -2583,7 +2583,7 @@ supports:
   hinder:                  # Hinder
     name: 拖滯
     description: 被輔助的法術擊中時讓敵人行動拖滯四秒：移動與攻擊變慢。
-    icon: COBWEB
+    icon: PHANTOM_MEMBRANE   # 2026-10：原本 COBWEB（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [spell]
     excludes: [minion]
@@ -2594,7 +2594,7 @@ supports:
   exposing_cry:            # Exposing Cry
     name: 曝嘯
     description: 被輔助的戰吼吼出時，周圍的敵人元素抗性降低五秒。
-    icon: GOAT_HORN
+    icon: GOLD_NUGGET   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.15
@@ -2605,7 +2605,7 @@ supports:
   ammo_conservation:       # Ammo Conservation
     name: 省矢
     description: 被輔助的弩攻擊有機率不消耗弩箭。
-    icon: ARROW
+    icon: RABBIT_HIDE   # 2026-10：原本 ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 1
     requires: [crossbow]
     mana_multiplier: 1.1
@@ -2615,7 +2615,7 @@ supports:
   double_barrel:           # Double Barrel
     name: 雙膛
     description: 被輔助的弩技能彈匣多裝兩發，但裝填比較慢。
-    icon: CROSSBOW
+    icon: GUNPOWDER   # 2026-10：原本 CROSSBOW（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [crossbow]
     mana_multiplier: 1.1
@@ -2626,7 +2626,7 @@ supports:
   streamlined_rounds:      # Streamlined Rounds
     name: 連發膛
     description: 被輔助的弩技能彈匣大很多、射得快很多，但每一發輕很多、裝填也慢。
-    icon: REPEATER
+    icon: QUARTZ   # 2026-10：原本 REPEATER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [crossbow]
     mana_multiplier: 1.0
@@ -2639,7 +2639,7 @@ supports:
   auto_reload:             # Auto Reload
     name: 震裝
     description: 被輔助的弩攻擊擊中暈眩中的敵人時立刻把彈匣裝滿，也比較容易暈眩敵人。
-    icon: PISTON
+    icon: IRON_INGOT   # 2026-10：原本 PISTON（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [crossbow]
     mana_multiplier: 1.1
@@ -2650,7 +2650,7 @@ supports:
   nimble_reload:           # Nimble Reload
     name: 快膛
     description: 被輔助的弩技能裝填快很多。
-    icon: TRIPWIRE_HOOK
+    icon: IRON_NUGGET   # 2026-10：原本 TRIPWIRE_HOOK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [crossbow]
     mana_multiplier: 1.05
@@ -2662,7 +2662,7 @@ supports:
   combo_finisher:          # Combo Finisher
     name: 終式
     description: 被輔助的近戰技能放的時候，有 3 層以上連擊就全部用掉，這一下更痛。
-    icon: NETHERITE_SWORD
+    icon: NETHERITE_SCRAP   # 2026-10：原本 NETHERITE_SWORD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [melee]
     excludes: [minion]
@@ -2684,7 +2684,7 @@ supports:
   practiced_combo:         # Practiced Combo
     name: 熟招
     description: 被輔助的打擊打中時，有機率多累積一層連擊。
-    icon: IRON_SWORD
+    icon: IRON_NUGGET   # 2026-10：原本 IRON_SWORD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [strike]
     excludes: [minion]
@@ -2718,7 +2718,7 @@ supports:
   glacier:                 # Glacier
     name: 厚晶
     description: 被輔助的技能留下的冰晶更硬，要多打幾下才碎。
-    icon: BLUE_ICE
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [crystal]
     mana_multiplier: 1.05
@@ -2728,7 +2728,7 @@ supports:
   icicle:                  # Icicle
     name: 脆晶
     description: 被輔助的技能留下的冰晶很脆，打一下就碎。
-    icon: ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [crystal]
     mana_multiplier: 1.05
@@ -2738,7 +2738,7 @@ supports:
   hoarfrost:               # Hoarfrost
     name: 霜蝕晶
     description: 被輔助的技能留下的冰晶周圍一直結霜，冰傷周圍的敵人。
-    icon: SNOW_BLOCK
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 SNOW_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [crystal]
     mana_multiplier: 1.15
@@ -2758,7 +2758,7 @@ supports:
   verglas:                 # Verglas
     name: 冰鍍
     description: 打碎被輔助的技能留下的冰晶時，你 6 秒內多附加冰冷傷害。
-    icon: PACKED_ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [crystal]
     mana_multiplier: 1.1
@@ -2781,7 +2781,7 @@ supports:
   expand:                  # Expand
     name: 封擴
     description: 被輔助的範圍法術平常會蓄封印（最多三個），放的時候全部解開，每個封印讓這一次範圍增加 30%。
-    icon: SLIME_BLOCK
+    icon: SLIME_BALL   # 2026-10：原本 SLIME_BLOCK（原版右鍵有動作：放方塊…會干擾施放）
     tier: 2
     requires: [area]
     excludes: [attack, minion, aura, warcry, herald]
@@ -2793,7 +2793,7 @@ supports:
   salvo:                   # Salvo
     name: 封矢
     description: 被輔助的投射物攻擊平常每秒蓄一個封印（最多六個），放的時候全部解開，每個封印多射一發。
-    icon: SPECTRAL_ARROW
+    icon: GLOWSTONE_DUST   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 2
     requires: [projectile]
     excludes: [spell, minion]
@@ -2818,7 +2818,7 @@ supports:
   burgeon:                 # Burgeon（每秒 10%、上限 40% → 每層蓄力多 5%，8 層的技能大約 35%）
     name: 漸熾
     description: 被輔助的蓄力技能（按住連續放的）每一層蓄力都更痛。本身不會蓄力的技能要另外掛蓄勢才有用。
-    icon: SUNFLOWER
+    icon: GOLD_NUGGET   # 2026-10：原本 SUNFLOWER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
     excludes: [minion, aura, warcry, herald]
@@ -2829,7 +2829,7 @@ supports:
   cold_attunement:         # Cold Attunement
     name: 附霜
     description: 物理傷害的一部分額外化為冰冷（攻擊、有物理傷害的法術都適用；純元素法術沒有物理傷害）。
-    icon: SNOWBALL
+    icon: GHAST_TEAR   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [attack, spell]
     excludes: [minion]
@@ -2840,7 +2840,7 @@ supports:
   lightning_attunement:    # Lightning Attunement
     name: 附雷
     description: 物理傷害的一部分額外化為閃電（攻擊、有物理傷害的法術都適用；純元素法術沒有物理傷害）。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [attack, spell]
     excludes: [minion]
@@ -2851,7 +2851,7 @@ supports:
   danse_macabre:           # Danse Macabre（多吃一具骷髏 → 祭品效果更強、冷卻更久）
     name: 骸舞
     description: 被輔助的祭品給召喚物的增益強很多，但冷卻更久。只有祭品能掛。
-    icon: SKELETON_SKULL
+    icon: BONE   # 2026-10：原本 SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [minion]
     excludes: [melee, projectile, spell]
@@ -2863,7 +2863,7 @@ supports:
   dazing_cry:              # Dazing Cry
     name: 眩嘯
     description: 被輔助的戰吼吼出時震出一圈聲波，讓周圍的敵人眩暈四秒（造成的傷害更少、更容易被暈）。
-    icon: GOAT_HORN
+    icon: RABBIT_HIDE   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.15
@@ -2885,7 +2885,7 @@ supports:
   fan_the_flames:          # Fan The Flames
     name: 播火
     description: 被輔助的攻擊擊中點燃中的敵人時，在牠身上炸出一圈火焰，很容易把點燃傳給周圍的敵人。
-    icon: FIRE_CHARGE
+    icon: BLAZE_ROD   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [attack]
     excludes: [minion]
@@ -2896,7 +2896,7 @@ supports:
   frost_nexus:             # Frost Nexus
     name: 凍地
     description: 被輔助的技能讓敵人凍結時，在牠腳下留下一片冰霜地面，一直冰傷、冰緩周圍的敵人。
-    icon: ICE
+    icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -2906,7 +2906,7 @@ supports:
   impact_shockwave:        # Impact Shockwave
     name: 震環
     description: 被輔助的打擊打中時，在目標身上震出一圈衝擊，打到周圍的敵人。
-    icon: IRON_BLOCK
+    icon: IRON_INGOT   # 2026-10：原本 IRON_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [strike]
     excludes: [minion]
@@ -2917,7 +2917,7 @@ supports:
   impending_doom:          # Impending Doom（「詛咒結束時」改成「放下時」）
     name: 咒爆
     description: 被輔助的詛咒放下時，詛咒的地方炸出一圈混沌。
-    icon: WITHER_SKELETON_SKULL
+    icon: COAL   # 2026-10：原本 WITHER_SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [curse]
     mana_multiplier: 1.15
@@ -2927,7 +2927,7 @@ supports:
   lockdown:                # Lockdown（「越遠釘住累積越多」改成一律加機率，數值調低）
     name: 遠釘
     description: 被輔助的投射物攻擊擊中時有機率把敵人釘在原地（可以跟釘地疊）。
-    icon: IRON_CHAIN
+    icon: IRON_NUGGET   # 2026-10：原本 IRON_CHAIN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [projectile]
     excludes: [spell, minion]
@@ -2939,7 +2939,7 @@ supports:
   minion_mastery:          # Minion Mastery
     name: 僕髓
     description: 被輔助的召喚技能等級 +1。
-    icon: WITHER_SKELETON_SKULL
+    icon: COAL   # 2026-10：原本 WITHER_SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [minion]
     mana_multiplier: 1.1
@@ -2949,7 +2949,7 @@ supports:
   overabundance:           # Overabundance（PoE2 是所有有上限的技能；我們只有圖騰有上限）
     name: 繁置
     description: 被輔助的圖騰同時可以多放一根，但每根撐的時間只有一半。
-    icon: TOTEM_OF_UNDYING
+    icon: NAUTILUS_SHELL   # 2026-10：原本 TOTEM_OF_UNDYING（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [totem]
     excludes: [bell]
@@ -2961,7 +2961,7 @@ supports:
   pinpoint_critical:       # Pinpoint Critical
     name: 銳點
     description: 被輔助的技能暴擊率高很多，但暴擊傷害加成少一些。
-    icon: SPYGLASS
+    icon: QUARTZ   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -2983,7 +2983,7 @@ supports:
   reverberate:             # Reverberate（攻擊時間越長餘震機率越高 → 猛擊變慢、固定較高的餘震機率）
     name: 沉響
     description: 被輔助的猛擊砸得慢一點，但有一半的機率在面前再震一次（原本那一下的 60%）。
-    icon: BELL
+    icon: GOLD_INGOT   # 2026-10：原本 BELL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [slam]
     excludes: [minion]
@@ -2995,7 +2995,7 @@ supports:
   tectonic_slams:          # Tectonic Slams（兩側各一道餘震 → 面前一圈比較小、比較輕的側震）
     name: 雙震
     description: 被輔助的猛擊砸下時，一定會再震出一圈比較小、比較輕的側震（原本那一下的 35%）。
-    icon: CRACKED_STONE_BRICKS
+    icon: BRICK   # 2026-10：原本 CRACKED_STONE_BRICKS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [slam]
     excludes: [minion]
@@ -3006,7 +3006,7 @@ supports:
   shocking_leap:           # Shocking Leap（PoE2 是落地的地方；觸發點在出發的地方）
     name: 躍電
     description: 被輔助的突進技能（衝刺、跳躍）出發時，在起跳的地方留下一片帶電的地面，容易讓踩在上面的敵人感電。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [travel]
     excludes: [minion]
@@ -3017,7 +3017,7 @@ supports:
   spreading_frost:         # Spreading Frost
     name: 霜漫
     description: 被輔助的技能讓敵人凍結時，從牠身上散出一圈寒氣，冰緩周圍的敵人。
-    icon: SNOW_BLOCK
+    icon: PRISMARINE_CRYSTALS   # 2026-10：原本 SNOW_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.1
@@ -3027,7 +3027,7 @@ supports:
   withering_touch:         # Withering Touch（凋零用「受到的混沌傷害增加」的短印記做）
     name: 枯觸
     description: 被輔助的混沌技能擊中時讓敵人凋零四秒：受到的混沌傷害增加。
-    icon: WITHER_ROSE
+    icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [chaos]
     excludes: [minion]
@@ -3038,7 +3038,7 @@ supports:
   runeforged_blades:       # Runeforged Blades（用掉破甲才觸發 → 擊中時有機率；自己不能破甲照 PoE2）
     name: 符刃
     description: 被輔助的攻擊擊中時，有機率在敵人身上迸出一圈符文刀刃，但自己不會破甲。
-    icon: IRON_SWORD
+    icon: IRON_NUGGET   # 2026-10：原本 IRON_SWORD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
     excludes: [minion]
@@ -3051,7 +3051,7 @@ supports:
   murderous_intent:        # Murderous Intent（強化的攻擊有斷命 → 戰吼增益期間你的擊中有斷命）
     name: 決嘯
     description: 被輔助的戰吼增益期間，你的擊中有斷命：敵人生命掉到一定比例以下直接倒下（普通 30%、魔法 20%、稀有 10%、傳奇與 Boss 5%）。
-    icon: NETHERITE_AXE
+    icon: NETHERITE_SCRAP   # 2026-10：原本 NETHERITE_AXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.15
@@ -3061,7 +3061,7 @@ supports:
   premeditation:           # Premeditation（強化的技能更多傷害 → 戰吼增益期間你的攻擊更多傷害）
     name: 蓄嘯
     description: 被輔助的戰吼增益期間，你的攻擊傷害更高。
-    icon: GOAT_HORN
+    icon: BOOK   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.15
@@ -3071,7 +3071,7 @@ supports:
   unerring_power:          # Unerring Power（強化的技能命中更高；消耗更少那段沒做）
     name: 嘯準
     description: 被輔助的戰吼增益期間，你的攻擊命中更高。
-    icon: SPYGLASS
+    icon: GOLD_NUGGET   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 1
     requires: [warcry]
     mana_multiplier: 1.05
@@ -3091,7 +3091,7 @@ supports:
   sacrificial_offering:    # Sacrificial Offering（PoE2 另外扣 15% 生命，這裡改成魔力消耗更高；戰吼也吃得到）
     name: 捐命
     description: 被輔助的祭品（以及戰吼）效果更強，但魔力消耗高很多。
-    icon: CRIMSON_FUNGUS
+    icon: NETHER_BRICK   # 2026-10：原本 CRIMSON_FUNGUS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.4
@@ -3102,7 +3102,7 @@ supports:
   precision:               # Precision
     name: 凝準
     description: 掛在精魂技能上：技能開著時你的命中更高。
-    icon: SPYGLASS
+    icon: PRISMARINE_SHARD   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 1
     requires: [aura, herald]
     modifiers:
@@ -3144,7 +3144,7 @@ supports:
   long_fuse:               # Long Fuse
     name: 緩爆
     description: 被輔助的榴彈引信長一半，但炸得更痛。
-    icon: STRING
+    icon: RABBIT_HIDE   # 2026-10：原本 STRING（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [grenade]
     mana_multiplier: 1.15
@@ -3166,7 +3166,7 @@ supports:
   armour_explosion:        # Armour Explosion
     name: 爆甲
     description: 被輔助的技能把敵人的護甲完全打破時，在牠身上炸出一圈火焰。
-    icon: TNT
+    icon: GUNPOWDER   # 2026-10：原本 TNT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -3176,7 +3176,7 @@ supports:
   break_endurance:         # Break Endurance
     name: 磐破
     description: 被輔助的技能把敵人的護甲完全打破時，有機率給你一顆耐星。
-    icon: IRON_CHESTPLATE
+    icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -3186,7 +3186,7 @@ supports:
   break_posture:           # Break Posture
     name: 破眩
     description: 被輔助的攻擊把敵人的護甲完全打破時，讓牠和身旁的敵人眩暈（造成的傷害更少、更容易被暈）。
-    icon: CRACKED_DEEPSLATE_BRICKS
+    icon: BRICK   # 2026-10：原本 CRACKED_DEEPSLATE_BRICKS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
     excludes: [minion]
@@ -3197,7 +3197,7 @@ supports:
   enduring_impact:         # Enduring Impact
     name: 磐震
     description: 被輔助的技能讓敵人重暈時，有機率給你一顆耐星。
-    icon: ANVIL
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -3228,7 +3228,7 @@ supports:
   innervate:               # Innervate
     name: 霆勢
     description: 被輔助的技能打死感電中的敵人時，你五秒內的攻擊獲得額外閃電傷害。
-    icon: LIGHTNING_ROD
+    icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.15
@@ -3238,7 +3238,7 @@ supports:
   bidding:                 # Bidding
     name: 骸令
     description: 被輔助的指令技能更痛、冷卻更快。
-    icon: BELL
+    icon: GOLD_INGOT   # 2026-10：原本 BELL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [command]
     mana_multiplier: 1.15
@@ -3249,7 +3249,7 @@ supports:
   essence_harvest:         # Essence Harvest
     name: 魂收
     description: 被輔助的召喚技能叫出來的召喚物死掉時，你回復一部分魔力。
-    icon: EXPERIENCE_BOTTLE
+    icon: EMERALD   # 2026-10：原本 EXPERIENCE_BOTTLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [minion]
     mana_multiplier: 1.05
@@ -3259,7 +3259,7 @@ supports:
   deathmarch:              # Deathmarch
     name: 骸恤
     description: 被輔助的召喚技能叫出來的召喚物死掉時，旁邊你的其他召喚物回復生命並清掉異常。
-    icon: GOLDEN_APPLE
+    icon: NETHERITE_SCRAP   # 2026-10：原本 GOLDEN_APPLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [minion]
     mana_multiplier: 1.15
@@ -3269,7 +3269,7 @@ supports:
   last_rites:              # 召喚物倒下時炸開（PoE2 召喚物死亡觸發類）
     name: 殞爆
     description: 被輔助的召喚技能叫出來的召喚物死掉時，在牠倒下的地方炸出一圈混沌。
-    icon: WITHER_ROSE
+    icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [minion]
     mana_multiplier: 1.15
@@ -3291,7 +3291,7 @@ supports:
   life_bounty:             # Life Bounty
     name: 命賞
     description: 被輔助的技能打死敵人時，生命藥劑拿到的充能變兩倍。
-    icon: RED_DYE
+    icon: NETHER_BRICK   # 2026-10：原本 RED_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.05
@@ -3301,7 +3301,7 @@ supports:
   mana_bounty:             # Mana Bounty
     name: 魔賞
     description: 被輔助的技能打死敵人時，魔力藥劑拿到的充能變兩倍。
-    icon: BLUE_DYE
+    icon: LAPIS_LAZULI   # 2026-10：原本 BLUE_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.05
@@ -3311,7 +3311,7 @@ supports:
   charm_bounty:            # Charm Bounty
     name: 護賞
     description: 被輔助的技能打死敵人時，護符拿到的充能變兩倍。
-    icon: AMETHYST_CLUSTER
+    icon: AMETHYST_SHARD   # 2026-10：原本 AMETHYST_CLUSTER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [minion]
     mana_multiplier: 1.05
@@ -3321,7 +3321,7 @@ supports:
   lifetap:                 # Lifetap
     name: 血付
     description: 被輔助的技能改扣生命，不扣魔力。
-    icon: REDSTONE
+    icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [aura, herald]
     mana_multiplier: 1.0
@@ -3331,7 +3331,7 @@ supports:
   herald_infusion:         # Infusion（捷光環效果）
     name: 灌宣
     description: 掛在捷光環上：捷光環擊殺時觸發的效果（灰燼爆發、雷霆連鎖…）傷害更高，但多保留一點精魂。
-    icon: GLOW_INK_SAC
+    icon: GLOWSTONE_DUST   # 2026-10：原本 GLOW_INK_SAC（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [herald]
     modifiers:
