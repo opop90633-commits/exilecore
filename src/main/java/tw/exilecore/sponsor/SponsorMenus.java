@@ -400,6 +400,9 @@ final class SponsorMenus {
         private static final int SLOT_GUILD_STASH = 22;
         private static final int SLOT_GUILD_RENAME = 23;
         private static final int[] SLOT_BOOSTS = {28, 29, 30, 31};
+        /** 2026-10 個人加倍藥。 */
+        private static final int[] SLOT_PERSONAL = {32, 33, 34, 35};
+        private final Map<Integer, String> personalSlots = new HashMap<>();
         private static final int SLOT_BACK = 36;
         private static final int SLOT_CLOSE = 44;
         private final Map<Integer, String> boostSlots = new HashMap<>();
@@ -458,6 +461,23 @@ final class SponsorMenus {
                                 seconds / 60, seconds % 60, ItemRenderer.escape(running.sponsor())),
                         "<gray>價格：" + COIN + format(config.boostPrice()) + " 星幣", "", "<yellow>左鍵：購買");
                 set(slot, confirmable(slot, running == null ? stack : glowing(stack)));
+            }
+            personalSlots.clear();
+            index = 0;
+            for (final SponsorConfig.BoostType type : config.boosts().values()) {
+                if (index >= SLOT_PERSONAL.length) {
+                    break;
+                }
+                final int slot = SLOT_PERSONAL[index++];
+                personalSlots.put(slot, type.id());
+                final long seconds = Math.max(0, (service.personalBoostUntil(player, type.id()) - System.currentTimeMillis()) / 1000);
+                final ItemStack stack = icon(material(type.icon(), Material.EXPERIENCE_BOTTLE), "<#9fe8ff>" + ItemRenderer.escape(SponsorService.personalName(type)),
+                        "<gray>" + config.personalBoostMinutes() + " 分鐘，<white>只有你自己<gray>：" + Main.boostText(type),
+                        "<gray>跟全服加倍加起來算（全服 2 倍＋個人 2 倍 = 3 倍）",
+                        "<gray>同一種再買接著延長（最多 " + config.personalBoostMaxMinutes() + " 分鐘；下線也在計時）",
+                        seconds <= 0 ? "<dark_gray>現在沒有" : String.format(java.util.Locale.ROOT, "<green>進行中：剩 %d:%02d", seconds / 60, seconds % 60),
+                        "<gray>價格：" + COIN + format(config.personalBoostPrice()) + " 星幣", "", "<yellow>左鍵：購買");
+                set(slot, confirmable(slot, seconds <= 0 ? stack : glowing(stack)));
             }
             set(SLOT_CHAR, confirmable(SLOT_CHAR, icon(Material.ARMOR_STAND, "<white>角色欄位 +1",
                     "<gray>現在 <white>" + plugin.characters().slotsFor(player) + "<gray> 格（贊助買了 " + service.extraCharacterSlots(player) + " 格）",
@@ -565,6 +585,10 @@ final class SponsorMenus {
                     final String boost = boostSlots.get(slot);
                     if (boost != null && confirm(slot)) {
                         result(service.buyBoost(player, boost));
+                    }
+                    final String personal = personalSlots.get(slot);
+                    if (personal != null && confirm(slot)) {
+                        result(service.buyPersonalBoost(player, personal));
                     }
                 }
             }

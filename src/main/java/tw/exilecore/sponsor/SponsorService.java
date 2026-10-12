@@ -101,6 +101,10 @@ public final class SponsorService {
     /** 贊助模組開的營地飛行。 */
     private final Set<UUID> flying = new HashSet<>();
     private final Map<String, Boosts.Active> boosts = new LinkedHashMap<>();
+    /** 2026-10 個人加倍藥：帳號進度的鍵（後面接加倍的代號），值是什麼時候結束（毫秒）。 */
+    static final String PERSONAL_BOOST = "sp.pboost.";
+    /** 線上玩家正在吃的個人加倍（玩家:代號）：結束的時候重算屬性表、通知。 */
+    private final Set<String> personalSeen = new HashSet<>();
     private long lastDay = -1;
 
     SponsorService(final ExileCore plugin, final SponsorConfig config) {
@@ -179,6 +183,131 @@ public final class SponsorService {
     /** 累積贊助給的金幣加成（0.05 = 多 5%）：到過的每一階加起來；沒有 0。 */
     public double goldBonus(final Player player) {
         return config.reachedGold(total(player)) / 100.0;
+    }
+
+    // ---- 個人加倍藥（2026-10）：跟全服加倍「加起來」，不是乘起來（全服 2 倍＋個人 2 倍 = 3 倍）----
+
+    /** 這種個人加倍什麼時候結束（毫秒；沒有 0）。 */
+    public long personalBoostUntil(final Player player, final String typeId) {
+        return number(player, PERSONAL_BOOST + typeId);
+    }
+
+    /** 正在吃的個人加倍。 */
+    public List<SponsorConfig.BoostType> personalBoosts(final Player player) {
+        final List<SponsorConfig.BoostType> list = new ArrayList<>();
+        if (!config.enabled() || !loaded(player)) {
+            return list;
+        }
+        final long now = System.currentTimeMillis();
+        for (final SponsorConfig.BoostType type : config.boosts().values()) {
+            if (personalBoostUntil(player, type.id()) > now) {
+                list.add(type);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 個人經驗加倍：加在「1 + 累積贊助的加成」裡的值。全服加倍是乘在外面的倍數，所以除掉它，
+     * 讓結果是「全服倍數 + 個人多的」（全服 ×2、個人 ×2 → ×3）。
+     */
+    public double personalExperience(final Player player) {
+        double extra = 0;
+        for (final SponsorConfig.BoostType type : personalBoosts(player)) {
+            extra += type.experience() - 1;
+        }
+        return extra <= 0 ? 0 : extra / Math.max(1, Boosts.experience());
+    }
+
+    /** 個人金幣加倍：同 {@link #personalExperience}（全服 ×2、個人 ×2 → ×3）。 */
+    public double personalGold(final Player player) {
+        double extra = 0;
+        for (final SponsorConfig.BoostType type : personalBoosts(player)) {
+            extra += type.gold() - 1;
+        }
+        return extra <= 0 ? 0 : extra / Math.max(1, Boosts.gold());
+    }
+
+    /** 個人掉落數量、稀有度加倍：進屬性表的物品數量、稀有度（跟全服的 +100% 本來就是加起來的）。 */
+    public List<tw.exilecore.stats.Modifier> personalModifiers(final Player player) {
+        double quantity = 0;
+        double rarity = 0;
+        for (final SponsorConfig.BoostType type : personalBoosts(player)) {
+            quantity += type.quantity();
+            rarity += type.rarity();
+        }
+        final List<tw.exilecore.stats.Modifier> list = new ArrayList<>();
+        if (quantity > 0) {
+            list.add(new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DROP_QUANTITY, tw.exilecore.stats.ModType.INCREASED,
+                    quantity, Set.of(), "個人加倍藥"));
+        }
+        if (rarity > 0) {
+            list.add(new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DROP_RARITY, tw.exilecore.stats.ModType.INCREASED,
+                    rarity, Set.of(), "個人加倍藥"));
+        }
+        return list;
+    }
+
+    private static String trimNumber(final double value) {
+        return value == Math.rint(value) ? String.valueOf((long) value) : String.valueOf(value);
+    }
+
+    /** 個人加倍的名字：「全服經驗加倍」→「個人經驗加倍」。 */
+    static String personalName(final SponsorConfig.BoostType type) {
+        return type.name().startsWith("全服") ? "個人" + type.name().substring(2) : "個人" + type.name();
+    }
+
+    String buyPersonalBoost(final Player player, final String typeId) {
+        final SponsorConfig.BoostType type = config.boosts().get(typeId);
+        if (type == null) {
+            return "沒有這種加倍";
+        }
+        final long now = System.currentTimeMillis();
+        final long current = personalBoostUntil(player, type.id());
+        final long start = Math.max(now, current);
+        final long until = start + config.personalBoostMinutes() * 60_000L;
+        if (until - now > config.personalBoostMaxMinutes() * 60_000L) {
+            return personalName(type) + "已經排到 " + config.personalBoostMaxMinutes() + " 分鐘了，等一下再買";
+        }
+        final String problem = spend(player, config.personalBoostPrice(), Map.of(PERSONAL_BOOST + type.id(), String.valueOf(until)),
+                personalName(type) + " " + config.personalBoostMinutes() + " 分鐘");
+        if (problem != null) {
+            return problem;
+        }
+        personalSeen.add(player.getUniqueId() + ":" + type.id());
+        plugin.players().markDirty(player); // 掉落數量、稀有度進屬性表
+        final long minutes = (until - now + 30_000) / 60_000;
+        player.sendMessage(plugin.text().prefixed("<#ffd27f>" + ItemRenderer.escape(personalName(type)) + "<gray>：" + (current > now ? "延長，" : "")
+                + "剩 <white>" + minutes + "</white> 分鐘<dark_gray>（只有你自己；跟全服加倍加起來算）"));
+        player.showTitle(Title.title(plugin.text().parse("<#ffd27f>" + ItemRenderer.escape(personalName(type))),
+                plugin.text().parse("<gray>" + minutes + " 分鐘"), Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1800), Duration.ofMillis(400))));
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.4f);
+        return null;
+    }
+
+    /** 每秒：個人加倍開始（登入時）、結束——重算屬性表，結束時通知。 */
+    private void personalTick() {
+        final long now = System.currentTimeMillis();
+        final Set<String> online = new HashSet<>();
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            if (!loaded(player)) {
+                continue;
+            }
+            for (final SponsorConfig.BoostType type : config.boosts().values()) {
+                final String key = player.getUniqueId() + ":" + type.id();
+                final boolean active = config.enabled() && personalBoostUntil(player, type.id()) > now;
+                if (active) {
+                    online.add(key);
+                    if (personalSeen.add(key)) {
+                        plugin.players().markDirty(player);
+                    }
+                } else if (personalSeen.remove(key)) {
+                    plugin.players().markDirty(player);
+                    player.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(personalName(type)) + "結束了"));
+                }
+            }
+        }
+        personalSeen.retainAll(online);
     }
 
     /** 死亡懲罰的比例：累積贊助那一階有寫 death_penalty 就用那個（不會比原本的重），沒有照原本的 base。 */
@@ -976,6 +1105,7 @@ public final class SponsorService {
             saveBoosts();
             recompute();
         }
+        personalTick();
         campFlight();
         final long today = today();
         if (lastDay >= 0 && today != lastDay) {
@@ -1313,8 +1443,19 @@ public final class SponsorService {
         public List<String> howTo(final Player player, final String id) {
             for (final SponsorConfig.Tier tier : config.tiers()) {
                 if (tier.id().equals(id)) {
-                    return List.of("<gray>累積贊助 " + COIN + format(tier.amount()) + " 星幣</#f5b942><gray>（你累積 " + format(total(player)) + "）",
-                            "<dark_gray>一起開啟的名字顏色與功能看 /sponsor");
+                    final List<String> lines = new ArrayList<>();
+                    lines.add("<gray>累積贊助 " + COIN + format(tier.amount()) + " 星幣</#f5b942><gray>（你累積 " + format(total(player)) + "）");
+                    // 2026-10：這一階的經驗、金幣（到這一階為止累加）與死亡懲罰
+                    final double experience = config.reachedExperience(tier.amount());
+                    final double gold = config.reachedGold(tier.amount());
+                    if (experience > 0 || gold > 0) {
+                        lines.add("<#7fe07f>到這一階：經驗 +" + trimNumber(experience) + "%、金幣 +" + trimNumber(gold) + "%<dark_gray>（每階累加）");
+                    }
+                    if (tier.deathPenalty() >= 0) {
+                        lines.add("<#7fe07f>死亡扣經驗 " + trimNumber(tier.deathPenalty()) + "%");
+                    }
+                    lines.add("<dark_gray>一起開啟的名字顏色與功能看 /sponsor");
+                    return lines;
                 }
             }
             for (final SponsorConfig.LoginTitle title : config.loginTitles()) {
@@ -1348,8 +1489,7 @@ public final class SponsorService {
             final long total = total(player);
             for (final SponsorConfig.Tier tier : config.tiers()) {
                 if (tier.id().equals(id)) {
-                    final SponsorConfig.Tier next = config.nextTier(total);
-                    return next != null && next.id().equals(id); // 只列下一階
+                    return true; // 2026-10：累積贊助的稱號每一階都列出來（以前只列下一階）
                 }
             }
             // 2026-10：登入天數的稱號全部列出來（預覽加成；以前只列下一個）；下架的月卡稱號沒有的人不列

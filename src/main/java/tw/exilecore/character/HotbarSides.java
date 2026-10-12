@@ -23,6 +23,36 @@ final class HotbarSides {
     private HotbarSides() {
     }
 
+    /**
+     * 撿到東西的角落提示（2026-10，{@link LootFeed}）：快捷欄右邊，從 startRow 那一排往上疊，最新的在最下面（MiniMessage，淨寬 0）。
+     *
+     * @param startRow  從第幾排開始（召喚物佔掉的排數）；放不下回傳空字串
+     * @param mainPlain 動作列主要那段的純文字（估寬度用）
+     */
+    static String renderLoot(final List<LootFeed.Entry> entries, final int startRow, final String mainPlain, final long now) {
+        if (entries.isEmpty() || !tw.exilecore.web.LootHud.ready()) {
+            return "";
+        }
+        final int rows = Math.min(entries.size(), tw.exilecore.web.LootHud.ROWS - startRow);
+        if (rows <= 0) {
+            return "";
+        }
+        final int half = (int) Math.round(HudFont.estimateVanilla(mainPlain) / 2.0);
+        final StringBuilder out = new StringBuilder("<reset>");
+        for (int i = 0; i < rows; i++) {
+            final LootFeed.Entry entry = entries.get(entries.size() - 1 - i); // 最新的在最下面
+            final String text = entry.name() + (entry.count() > 1 ? " ×" + entry.count() : "");
+            final boolean faded = entry.until() - now <= LootFeed.FADE_TICKS;
+            final int width = tw.exilecore.web.LootHud.cardWidth(text);
+            out.append("<font:").append(tw.exilecore.web.LootHud.font(startRow + i)).append(">")
+                    .append(tw.exilecore.web.LootHud.shift(RIGHT_START - half))
+                    .append(tw.exilecore.web.LootHud.card(entry.color(), entry.icon(), text, faded))
+                    .append(tw.exilecore.web.LootHud.shift(half - RIGHT_START - width))
+                    .append("</font>");
+        }
+        return out.toString();
+    }
+
     /** 沒套資源包：接在動作列後面的那段（MiniMessage）；都沒有是空字串。 */
     static String inline(final List<String> auras, final List<MinionService.HudCount> pets) {
         final StringBuilder text = new StringBuilder();

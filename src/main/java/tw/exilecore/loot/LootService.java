@@ -103,6 +103,7 @@ public final class LootService {
         long currencyValue = 0;
         int filtered = 0;
         int picked = 0;
+        boolean feedChanged = false;
         int onGround = 0;
         boolean special = false;
         final List<tw.exilecore.gui.SidebarLayout.Item> notable = new ArrayList<>();
@@ -156,6 +157,12 @@ public final class LootService {
             }
             if (rest == null || rest.getAmount() < stack.getAmount()) {
                 picked++;
+                // 2026-10：撿到東西的角落提示（快捷欄右邊）
+                final int got = stack.getAmount() - (rest == null ? 0 : rest.getAmount());
+                plugin.players().lootFeed().add(killer.getUniqueId(), net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                        .serialize(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(name.text())), got, name.icon(),
+                        name.color(), plugin.getServer().getCurrentTick());
+                feedChanged = true;
             }
             if (worthNoting) {
                 if (!(drop.isEquipment() && isMap(drop.item()))) {
@@ -182,6 +189,9 @@ public final class LootService {
             }
         }
         ledger.income(killer, 1, goldTotal, currencyValue);
+        if (feedChanged) {
+            plugin.players().display(killer, state); // 角落提示馬上出現
+        }
         final boolean intoBag = state.bag().freeSlots() < bagFreeBefore;
         announce(killer, state, picked, intoBag, onGround, filtered, config.autoPickup() ? goldTotal : 0, filterGold, new ArrayList<>(notable), special);
         return true;
@@ -307,7 +317,12 @@ public final class LootService {
             state.notice(text.toString(), plugin.getServer().getCurrentTick() + NOTICE_TICKS);
             plugin.players().display(player, state);
         }
-        plugin.sidebar().loot(player, notable);
+        // 2026-10：右邊側欄的「最近撿到」拿掉（改成快捷欄右邊的角落提示，LootFeed）；過濾換的金幣也放進角落提示
+        if (filtered > 0 && filterGold > 0) {
+            plugin.players().lootFeed().add(player.getUniqueId(), "過濾換成金幣", (int) Math.min(Integer.MAX_VALUE, filterGold),
+                    "c:" + FILTER_ICON, "#f5b942", plugin.getServer().getCurrentTick());
+            plugin.players().display(player, state);
+        }
         if (special) {
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.6f, 1.4f);
         } else if (hadNotable) {

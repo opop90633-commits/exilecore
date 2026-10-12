@@ -82,6 +82,7 @@ public final class CharacterPanelMenu extends Menu {
             characterLore.add(String.format(Locale.ROOT, "<gray>遊玩 <white>%d 小時 %d 分<gray>　死亡 <white>%d 次",
                     (character.playtimeSeconds() + state.sessionSeconds()) / 3600,
                     (character.playtimeSeconds() + state.sessionSeconds()) % 3600 / 60, character.deaths()));
+            characterLore.addAll(StatsReport.drops(plugin, player)); // 2026-10：物品掉落數量、稀有度
         }
         set(SLOT_CHARACTER, glowing(icon(character == null ? Material.PLAYER_HEAD : material(character.characterClass().icon(), Material.IRON_SWORD),
                 character == null ? "<red>沒有角色" : character.characterClass().color() + ItemRenderer.escape(character.name()), characterLore)));

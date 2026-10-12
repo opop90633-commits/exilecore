@@ -131,7 +131,9 @@ public final class KillCredit {
             final double exact = plugin.players().experienceForKillExact(state.level(), data.level(), data.rarity())
                     * factor * shares.getOrDefault(player.getUniqueId(), 0.0);
             // 2026-10：累積贊助的經驗加成（每個人自己的）
-            final double sponsor = plugin.sponsors() == null ? 0 : plugin.sponsors().experienceBonus(player);
+            // 個人經驗加倍藥：跟全服加倍加起來（全服 ×2、個人 ×2 → ×3）
+            final double sponsor = plugin.sponsors() == null ? 0
+                    : plugin.sponsors().experienceBonus(player) + plugin.sponsors().personalExperience(player);
             final long amount = Math.round(exact * (1 + sponsor));
             if (amount <= 0) {
                 continue;

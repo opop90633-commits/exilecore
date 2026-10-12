@@ -224,6 +224,10 @@ public final class SponsorConfig {
     private int boostMinutes = 15;
     private int boostMaxMinutes = 240;
     private Map<String, BoostType> boosts = Map.of();
+    /** 2026-10 個人加倍藥（boosts.personal）：價格、一罐幾分鐘、最多排幾分鐘。 */
+    private long personalBoostPrice = 10;
+    private int personalBoostMinutes = 20;
+    private int personalBoostMaxMinutes = 240;
     private List<Tier> tiers = List.of();
     private List<LoginTitle> loginTitles = List.of();
     private Map<String, Cosmetic> cosmetics = Map.of();
@@ -318,6 +322,10 @@ public final class SponsorConfig {
                     experience, quantity, rarity, gold));
         }
         boosts = Collections.unmodifiableMap(boostMap);
+        final YamlNode personalNode = boostNode.node("personal");
+        personalBoostPrice = positive(personalNode, "price", 10);
+        personalBoostMinutes = Math.max(1, Math.min(24 * 60, personalNode.integer("minutes", 20)));
+        personalBoostMaxMinutes = Math.max(personalBoostMinutes, Math.min(7 * 24 * 60, personalNode.integer("max_minutes", 240)));
 
         final List<Tier> tierList = new ArrayList<>();
         long previous = 0;
@@ -617,6 +625,9 @@ public final class SponsorConfig {
         boostMinutes = other.boostMinutes;
         boostMaxMinutes = other.boostMaxMinutes;
         boosts = other.boosts;
+        personalBoostPrice = other.personalBoostPrice;
+        personalBoostMinutes = other.personalBoostMinutes;
+        personalBoostMaxMinutes = other.personalBoostMaxMinutes;
         tiers = other.tiers;
         loginTitles = other.loginTitles;
         cosmetics = other.cosmetics;
@@ -743,6 +754,18 @@ public final class SponsorConfig {
 
     public int boostMaxMinutes() {
         return boostMaxMinutes;
+    }
+
+    public long personalBoostPrice() {
+        return personalBoostPrice;
+    }
+
+    public int personalBoostMinutes() {
+        return personalBoostMinutes;
+    }
+
+    public int personalBoostMaxMinutes() {
+        return personalBoostMaxMinutes;
     }
 
     public Map<String, BoostType> boosts() {

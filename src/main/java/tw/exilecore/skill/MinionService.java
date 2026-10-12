@@ -718,6 +718,7 @@ public final class MinionService implements Listener, MinionHooks {
                 return null; // 被其他插件取消了
             }
             tameGoals(mob);
+            MinionCollision.add(plugin, mob.getUniqueId()); // 2026-10：不推擠玩家（客戶端看隊伍的碰撞規則）
             return mob;
         } catch (final RuntimeException e) {
             plugin.getSLF4JLogger().warn("召不出{}（{}）", spec.kindName(), e.toString());
@@ -1218,6 +1219,7 @@ public final class MinionService implements Listener, MinionHooks {
     private void remove(final Minion minion, final Gone why) {
         minions.remove(minion);
         byEntity.remove(minion.mob.getUniqueId());
+        MinionCollision.remove(plugin, minion.mob.getUniqueId());
         final Location at = minion.mob.getLocation();
         if (minion.mob.isValid() && why != Gone.DIED) {
             minion.mob.remove();

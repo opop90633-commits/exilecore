@@ -52,6 +52,8 @@ public final class PlayerStateService {
     private final EntryGrace grace;
     /** 戰鬥資源血條（2026-10）：怒氣、連擊、戰星、灌注從動作列搬到畫面上方的一欄。 */
     private final ResourceBar resourceBar;
+    /** 撿到東西的角落提示（2026-10）。 */
+    private final LootFeed lootFeed = new LootFeed();
     /** 以前的常駐奔跑的移動速度加成（拿掉了；身上還有就清掉）。 */
     private final NamespacedKey oldRunKey;
 
@@ -123,6 +125,12 @@ public final class PlayerStateService {
     public void remove(final Player player) {
         states.remove(player.getUniqueId());
         resourceBar.hide(player);
+        lootFeed.clear(player.getUniqueId());
+    }
+
+    /** 撿到東西的角落提示（2026-10）：掉落模組加進來，動作列畫在快捷欄右邊。 */
+    public LootFeed lootFeed() {
+        return lootFeed;
     }
 
     /** 屬性表有變動（換裝、升級、配點）時呼叫；實際重算延後到下次需要時。 */
@@ -1079,13 +1087,23 @@ public final class PlayerStateService {
         if (notice != null) {
             text.append("  ").append(notice);
         }
+        final String mainPlain = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                .serialize(plugin.text().parse(text.toString()));
         if (sides) {
-            final String side = HotbarSides.render(auraNames, pets,
-                    net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(plugin.text().parse(text.toString())));
+            final String side = HotbarSides.render(auraNames, pets, mainPlain);
             if (side != null) {
                 text.append(side);
             } else {
                 text.append("  ").append(HotbarSides.inline(auraNames, pets)); // 有字沒收進字型（新加的技能名稱）：照舊
+            }
+        }
+        // 2026-10：撿到東西的角落提示（快捷欄右邊往上疊；有召喚物時疊在召喚物上面）
+        if (tw.exilecore.web.LootHud.ready() && plugin.web() != null && plugin.web().hasPack(player)) {
+            final long now = plugin.getServer().getCurrentTick();
+            final List<LootFeed.Entry> loot = lootFeed.active(player.getUniqueId(), now);
+            if (!loot.isEmpty()) {
+                final int start = sides && !pets.isEmpty() ? pets.size() : 0;
+                text.append(HotbarSides.renderLoot(loot, start, mainPlain, now));
             }
         }
         return plugin.text().parse(text.toString());

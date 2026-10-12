@@ -45,6 +45,24 @@ public final class StatsReport {
 
     // ---- 區塊（角色面板的物品說明；/stats 也用其中一部分） ----
 
+    /** 物品掉落數量、稀有度（2026-10）：裝備、稱號、個人加倍藥……加上全服加倍的總數。沒有角色是空的。 */
+    public static List<String> drops(final ExileCore plugin, final Player player) {
+        final List<String> lines = new ArrayList<>();
+        if (plugin.players().get(player).character() == null) {
+            return lines;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        // 2026-10：合併成一個總數（自己的＋全服加倍，實際就是加起來算），全服加倍開著時括號寫出含多少
+        final double ownQuantity = sheet.increased(StatKeys.DROP_QUANTITY, Set.of()) * 100;
+        final double ownRarity = sheet.increased(StatKeys.DROP_RARITY, Set.of()) * 100;
+        final double serverQuantity = tw.exilecore.sponsor.Boosts.quantity() * 100;
+        final double serverRarity = tw.exilecore.sponsor.Boosts.rarity() * 100;
+        lines.add(String.format(Locale.ROOT, "<gray>物品掉落數量 <white>%+.0f%%%s" + SEP + "<gray>物品稀有度 <white>%+.0f%%%s",
+                ownQuantity + serverQuantity, serverQuantity > 0 ? String.format(Locale.ROOT, " <#ffd27f>（含全服 %+.0f%%）", serverQuantity) : "",
+                ownRarity + serverRarity, serverRarity > 0 ? String.format(Locale.ROOT, " <#ffd27f>（含全服 %+.0f%%）", serverRarity) : ""));
+        return lines;
+    }
+
     public static List<String> header(final ExileCore plugin, final Player player) {
         return header(plugin, player, true);
     }
@@ -538,6 +556,7 @@ public final class StatsReport {
         final List<String> lines = new ArrayList<>();
         lines.add(title(self ? "角色" : escape(player.getName()) + " 的角色"));
         indent(lines, header(plugin, player, self));
+        indent(lines, drops(plugin, player)); // 2026-10：物品掉落數量、稀有度
         // 2026-10：聊天欄的屬性只列力量、敏捷、智慧各多少（不列各給了什麼；角色面板的「屬性」還看得到）
         lines.add(title("屬性"));
         indent(lines, attributes(plugin, player).subList(0, 1));

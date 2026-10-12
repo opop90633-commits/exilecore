@@ -309,6 +309,35 @@ public final class SkillLoadout {
         return true;
     }
 
+    /**
+     * 綁在按鍵格的技能，照按鍵的順序（2026-10）：數字鍵 3→8，再來左鍵、右鍵、潛行＋左鍵、潛行＋右鍵；
+     * 後面接沒綁鍵的（照面板位置）。光環、精魂召喚照這個順序開、分精魂（前面的先拿）。
+     */
+    public List<Entry> entriesInKeyOrder() {
+        final List<Entry> list = new ArrayList<>();
+        final java.util.Set<Integer> seen = new java.util.HashSet<>();
+        final int[] order = new int[BIND_SLOTS];
+        int n = 0;
+        for (int slot = KEYS; slot < BIND_SLOTS; slot++) {
+            order[n++] = slot;
+        }
+        for (int slot = 0; slot < KEYS; slot++) {
+            order[n++] = slot;
+        }
+        for (final int slot : order) {
+            final int position = binds[slot];
+            if (position >= 0 && position < MAX_SKILLS && skills[position] != null && seen.add(position)) {
+                list.add(skills[position]);
+            }
+        }
+        for (int position = 0; position < MAX_SKILLS; position++) {
+            if (skills[position] != null && seen.add(position)) {
+                list.add(skills[position]);
+            }
+        }
+        return list;
+    }
+
     /** 所有技能（依位置，沒有的略過）。 */
     public List<Entry> entries() {
         final List<Entry> list = new ArrayList<>();

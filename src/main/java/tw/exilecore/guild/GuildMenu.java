@@ -129,7 +129,8 @@ public final class GuildMenu extends Menu {
                 "<white>/guild approve｜reject 名字 <gray>批准、拒絕申請（會長、幹部）",
                 "<white>/guild leave <gray>離開",
                 "<white>/guild kick 名字 <gray>請出（會長、幹部）",
-                "<white>/guild promote｜demote 名字 <gray>升成幹部、降成成員（會長）",
+                "<white>/guild promote｜demote 名字 <gray>升成幹部、降成成員（會長、副會長）",
+                "<white>/guild vice 名字 <gray>升成副會長（會長；副會長可以審核申請、邀請、升降與請出幹部和成員、改倉庫權限）",
                 "<white>/guild leader 名字 <gray>交出會長",
                 "<white>/guild motd 文字 <gray>改公告（會長、幹部）",
                 "<white>/guild donate 金幣 <gray>捐金幣換公會經驗",
@@ -226,7 +227,7 @@ public final class GuildMenu extends Menu {
                 "<gray>誰能從公會倉庫拿東西：<white>" + GuildService.withdrawText(guild.withdrawRank()),
                 "<gray>放東西進去每個成員都可以",
                 "",
-                leader ? "<yellow>左鍵：換成下一種（所有成員 → 幹部以上 → 只有會長）" : "<dark_gray>只有會長能改"));
+                rank.atLeast(GuildRank.VICE) ? "<yellow>左鍵：換成下一種（所有成員 → 幹部以上 → 副會長以上 → 只有會長）" : "<dark_gray>只有會長、副會長能改"));
         final Guild.Member me = guild.member(player.getUniqueId());
         set(SLOT_MINE, icon(Material.EXPERIENCE_BOTTLE, "<white>我的階級：" + rankText(rank),
                 "<gray>貢獻的公會經驗：<white>" + GoldService.format(me.contribution()),
@@ -253,6 +254,7 @@ public final class GuildMenu extends Menu {
     private static String rankText(final GuildRank rank) {
         return switch (rank) {
             case LEADER -> "<#f5b942>★ 會長";
+            case VICE -> "<#c9a0ff>✦ 副會長";
             case OFFICER -> "<#7fd4ff>◆ 幹部";
             case MEMBER -> "<white>成員";
         };
@@ -294,14 +296,22 @@ public final class GuildMenu extends Menu {
         lore.add("<gray>加入：<white>" + GuildService.date(member.joinedAt()));
         if (!self && mine == GuildRank.LEADER) {
             lore.add("");
-            lore.add(member.rank() == GuildRank.OFFICER ? "<yellow>Shift＋左鍵：降成成員" : "<yellow>Shift＋左鍵：升成幹部");
+            // 2026-10：成員 → 幹部 → 副會長 → 成員（副會長能審核入會申請、邀請、請出幹部與成員）
+            lore.add(member.rank() == GuildRank.VICE ? "<yellow>Shift＋左鍵：降成成員"
+                    : member.rank() == GuildRank.OFFICER ? "<yellow>Shift＋左鍵：升成副會長" : "<yellow>Shift＋左鍵：升成幹部");
             lore.add("<red>Shift＋右鍵：請出公會");
             lore.add("<dark_gray>交出會長：/guild leader " + ItemRenderer.escape(member.name()));
-        } else if (!self && mine == GuildRank.OFFICER && member.rank() == GuildRank.MEMBER) {
+        } else if (!self && mine == GuildRank.VICE && mine.power() > member.rank().power()) {
+            // 2026-10：副會長：成員 ↔ 幹部、請出
+            lore.add("");
+            lore.add(member.rank() == GuildRank.OFFICER ? "<yellow>Shift＋左鍵：降成成員" : "<yellow>Shift＋左鍵：升成幹部");
+            lore.add("<red>Shift＋右鍵：請出公會");
+        } else if (!self && mine.atLeast(GuildRank.OFFICER) && mine.power() > member.rank().power()) {
             lore.add("");
             lore.add("<red>Shift＋右鍵：請出公會");
         }
-        final String mark = member.rank() == GuildRank.LEADER ? "<#f5b942>★ " : member.rank() == GuildRank.OFFICER ? "<#7fd4ff>◆ " : "<white>";
+        final String mark = member.rank() == GuildRank.LEADER ? "<#f5b942>★ " : member.rank() == GuildRank.VICE ? "<#c9a0ff>✦ "
+                : member.rank() == GuildRank.OFFICER ? "<#7fd4ff>◆ " : "<white>";
         final ItemStack head = icon(Material.PLAYER_HEAD, mark + ItemRenderer.escape(member.name()) + (self ? " <dark_gray>（你）" : ""), lore);
         head.editMeta(SkullMeta.class, meta -> meta.setOwningPlayer(plugin.getServer().getOfflinePlayer(member.uuid())));
         return online == null ? head : glowing(head);
@@ -336,7 +346,7 @@ public final class GuildMenu extends Menu {
             return 1;
         }
         if (!guild.rank(player.getUniqueId()).atLeast(GuildRank.OFFICER)) {
-            set(SLOT_INFO, icon(Material.BELL, "<gray>入會申請", "<gray>只有會長與幹部能審核",
+            set(SLOT_INFO, icon(Material.BELL, "<gray>入會申請", "<gray>只有會長、副會長與幹部能審核",
                     "<gray>想找人進來：請他打 <white>/guild apply " + ItemRenderer.escape(guild.name())));
             return 1;
         }
@@ -599,7 +609,7 @@ public final class GuildMenu extends Menu {
                             reopen();
                         }, this::reopen);
             }
-        } else if (slot == SLOT_WITHDRAW && rank == GuildRank.LEADER) {
+        } else if (slot == SLOT_WITHDRAW && rank.atLeast(GuildRank.VICE)) {
             if (acceptAction(click)) {
                 service.cycleWithdrawRank(player);
                 redraw();
@@ -647,8 +657,12 @@ public final class GuildMenu extends Menu {
         if (click == ClickType.SHIFT_RIGHT) {
             service.kick(player, member.name());
             redraw();
-        } else if (click == ClickType.SHIFT_LEFT && guild.rank(player.getUniqueId()) == GuildRank.LEADER) {
+        } else if (click == ClickType.SHIFT_LEFT && guild.rank(player.getUniqueId()) == GuildRank.VICE) {
             service.setRank(player, member.name(), member.rank() == GuildRank.OFFICER ? GuildRank.MEMBER : GuildRank.OFFICER);
+            redraw();
+        } else if (click == ClickType.SHIFT_LEFT && guild.rank(player.getUniqueId()) == GuildRank.LEADER) {
+            service.setRank(player, member.name(), member.rank() == GuildRank.VICE ? GuildRank.MEMBER
+                    : member.rank() == GuildRank.OFFICER ? GuildRank.VICE : GuildRank.OFFICER);
             redraw();
         }
     }

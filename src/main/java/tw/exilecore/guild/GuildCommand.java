@@ -33,7 +33,8 @@ import java.util.function.Function;
  * /guild approve｜reject &lt;名字&gt;   批准、拒絕申請（會長、幹部）
  * /guild leave                    離開
  * /guild kick &lt;名字&gt;             請出（會長、幹部）
- * /guild promote｜demote &lt;名字&gt;   升成幹部、降成成員（會長）
+ * /guild promote｜demote &lt;名字&gt;   升成幹部、降成成員（會長、副會長）
+ * /guild vice &lt;名字&gt;             升成副會長（會長；2026-10）
  * /guild leader &lt;名字&gt;           交出會長
  * /guild motd [文字]              改公告（不寫 = 清掉；會長、幹部）
  * /guild donate &lt;金幣&gt;           捐金幣換公會經驗
@@ -122,6 +123,10 @@ public final class GuildCommand {
                         .then(Commands.argument("player", StringArgumentType.greedyString()).suggests(members(plugin))
                                 .executes(context -> run(plugin, context, (service, player) ->
                                         service.setRank(player, StringArgumentType.getString(context, "player"), GuildRank.OFFICER)))))
+                .then(Commands.literal("vice") // 2026-10：副會長
+                        .then(Commands.argument("player", StringArgumentType.greedyString()).suggests(members(plugin))
+                                .executes(context -> run(plugin, context, (service, player) ->
+                                        service.setRank(player, StringArgumentType.getString(context, "player"), GuildRank.VICE)))))
                 .then(Commands.literal("demote")
                         .then(Commands.argument("player", StringArgumentType.greedyString()).suggests(members(plugin))
                                 .executes(context -> run(plugin, context, (service, player) ->

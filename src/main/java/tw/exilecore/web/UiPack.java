@@ -247,6 +247,8 @@ public final class UiPack {
     public static final Map<String, Integer> RARITY_KEYS = Map.of("rarity:magic", 0x8888FF, "rarity:rare", 0xFFFF77, "rarity:unique", 0xAF6025);
     /** 傳奇的外框顏色（跟傳奇名字的顏色一樣）。 */
     static final int UNIQUE_FRAME = 0xAF6025;
+    /** 2026-10：專屬寶石的外框（畫在圖的上面，比傳奇的底框亮：寶石的圖整格都是不透明的底色，底框會被蓋掉）。 */
+    static final int UNIQUE_OUTLINE = 0xFF9A3D;
 
     public static Built build(final List<UniqueSkin> skins, final List<CurrencySkin> currencySkins, final java.util.Set<String> gearItems)
             throws IOException {
@@ -355,6 +357,7 @@ public final class UiPack {
         currencies(files, currencySkins, cases);
         marks(files);
         HudFont.build(files, HudFont.texts()); // 2026-10：快捷欄兩側的光環、召喚物
+        LootHud.build(files); // 2026-10：撿到東西的角落提示（沿用 lootFont 的框與圖示）
         affixChips(files); // 2026-10：詞綴標籤的小方塊
         final java.util.Set<String> framed = rarityFrames(files, gearItems, cases);
         for (final Map.Entry<String, JsonArray> entry : cases.entrySet()) {
@@ -756,7 +759,7 @@ public final class UiPack {
             final JsonObject model = plain("exilecore:item/currency/" + skin.artId());
             // 2026-10：專屬的技能寶石、輔助寶石在格子裡有跟傳奇一樣的外框（手上、地上照原本的圖）
             cases.computeIfAbsent(skin.vanillaItem(), key -> new JsonArray())
-                    .add(selectCase(CurrencyArt.modelKey(skin.artId()), skin.unique() ? framedInGui(UNIQUE_FRAME, model, model) : model));
+                    .add(selectCase(CurrencyArt.modelKey(skin.artId()), skin.unique() ? outlinedInGui(UNIQUE_OUTLINE, model, model) : model));
         }
     }
 
@@ -1126,6 +1129,15 @@ public final class UiPack {
         frameTextures.addProperty("t", "exilecore:item/ui/rarity_frame");
         frame.add("textures", frameTextures);
         files.put("assets/exilecore/models/item/ui/rarity_frame.json", json(frame));
+        // 2026-10：畫在圖上面的實線外框（專屬寶石用：寶石的圖整格不透明，底下的外框看不到）
+        files.put("assets/exilecore/textures/item/ui/unique_outline.png", png(uniqueOutline()));
+        final JsonObject outline = new JsonObject();
+        files.put("assets/exilecore/models/item/ui/layer_outline.json", json(layerModel(16.0, true))); // 最前面、著色
+        outline.addProperty("parent", "exilecore:item/ui/layer_outline");
+        final JsonObject outlineTextures = new JsonObject();
+        outlineTextures.addProperty("t", "exilecore:item/ui/unique_outline");
+        outline.add("textures", outlineTextures);
+        files.put("assets/exilecore/models/item/ui/unique_outline.json", json(outline));
         // 追逐級傳奇的外框（2026-10）：貼圖本身就是彩色的，不著色
         files.put("assets/exilecore/textures/item/ui/chase_frame.png", png(chaseFrame()));
         final JsonObject chase = new JsonObject();
@@ -1148,6 +1160,58 @@ public final class UiPack {
         tints.add(tint);
         tinted.add("tints", tints);
         return framedInGui(tinted, gui, other);
+    }
+
+    /** 在格子裡（gui）：gui 的樣子上面再蓋一圈 rgb 顏色的實線外框（2026-10，專屬寶石）；其他地方照 other。 */
+    static JsonObject outlinedInGui(final int rgb, final JsonObject gui, final JsonObject other) {
+        final JsonObject tinted = new JsonObject();
+        tinted.addProperty("type", "minecraft:model");
+        tinted.addProperty("model", "exilecore:item/ui/unique_outline");
+        final JsonObject tint = new JsonObject();
+        tint.addProperty("type", "minecraft:constant");
+        tint.addProperty("value", rgb);
+        final JsonArray tints = new JsonArray();
+        tints.add(tint);
+        tinted.add("tints", tints);
+        final JsonArray layers = new JsonArray();
+        layers.add(gui.deepCopy());
+        layers.add(tinted); // 後畫的在上面
+        final JsonObject composite = new JsonObject();
+        composite.addProperty("type", "minecraft:composite");
+        composite.add("models", layers);
+        final JsonArray contexts = new JsonArray();
+        contexts.add("gui");
+        final JsonObject guiCase = new JsonObject();
+        guiCase.add("when", contexts);
+        guiCase.add("model", composite);
+        final JsonArray contextCases = new JsonArray();
+        contextCases.add(guiCase);
+        final JsonObject select = new JsonObject();
+        select.addProperty("type", "minecraft:select");
+        select.addProperty("property", "minecraft:display_context");
+        select.add("cases", contextCases);
+        select.add("fallback", other.deepCopy());
+        return select;
+    }
+
+    /** 實線外框（白色，著色後是 {@link #UNIQUE_OUTLINE}）：最外面 2 格（16 格的 1 格）實心，往裡淡一點，中間透明。 */
+    static BufferedImage uniqueOutline() {
+        final BufferedImage image = canvas();
+        for (int y = 0; y < SIZE; y++) {
+            for (int x = 0; x < SIZE; x++) {
+                final int edge = Math.min(Math.min(x, y), Math.min(SIZE - 1 - x, SIZE - 1 - y));
+                final int alpha = switch (edge) {
+                    case 0, 1 -> 0xFF;
+                    case 2 -> 0xC0;
+                    case 3 -> 0x60;
+                    default -> 0;
+                };
+                if (alpha > 0) {
+                    image.setRGB(x, y, alpha << 24 | 0xFFFFFF);
+                }
+            }
+        }
+        return image;
     }
 
     /** 在格子裡（gui）：frame 這個外框模型＋gui 的樣子；其他地方（手上、地上）照 other。 */

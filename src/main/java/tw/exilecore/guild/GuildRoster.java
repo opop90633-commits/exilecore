@@ -295,7 +295,7 @@ public final class GuildRoster {
         if (theirs == null) {
             return Result.NOT_MEMBER;
         }
-        if (!mine.atLeast(GuildRank.OFFICER) || mine.code() <= theirs.code()) {
+        if (!mine.atLeast(GuildRank.OFFICER) || mine.power() <= theirs.power()) {
             return Result.NO_PERMISSION;
         }
         guild.remove(target);
@@ -303,13 +303,16 @@ public final class GuildRoster {
         return Result.OK;
     }
 
-    /** 改階級（只有會長；只能在成員與幹部之間換，會長用 {@link #transfer}）。 */
+    /**
+     * 改階級（會長：成員、幹部、副會長之間；2026-10 副會長：比自己低的人在成員與幹部之間換）。會長用 {@link #transfer}。
+     */
     public Result setRank(final UUID actor, final UUID target, final GuildRank rank) {
         final Guild guild = guildOf(actor);
         if (guild == null) {
             return Result.NOT_IN_GUILD;
         }
-        if (!guild.leader().equals(actor) || rank == GuildRank.LEADER) {
+        final GuildRank mine = guild.rank(actor);
+        if (rank == GuildRank.LEADER || mine == null || !mine.atLeast(GuildRank.VICE)) {
             return Result.NO_PERMISSION;
         }
         if (actor.equals(target)) {
@@ -318,6 +321,9 @@ public final class GuildRoster {
         final Guild.Member member = guild.member(target);
         if (member == null) {
             return Result.NOT_MEMBER;
+        }
+        if (mine != GuildRank.LEADER && (member.rank().power() >= mine.power() || rank.power() >= mine.power())) {
+            return Result.NO_PERMISSION; // 副會長不能動其他副會長、也不能升別人當副會長
         }
         if (member.rank() == rank) {
             return Result.ALREADY_RANK;

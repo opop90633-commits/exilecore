@@ -556,14 +556,14 @@ final class AuraService implements Listener {
     private final Map<UUID, String> lastSkipped = new HashMap<>();
 
     /**
-     * 光環放在技能面板上、而且綁在按鍵格就開著（2026-10，不用按鍵開關）：照面板的順序（第一頁到第二頁）開，保留的魔力加起來不超過 100%，
+     * 光環放在技能面板上、而且綁在按鍵格就開著（2026-10，不用按鍵開關）：照按鍵的順序（數字鍵 3→8，再來左、右、蹲左、蹲右）開，保留的魔力加起來不超過 100%，
      * 放不下的那幾個不開；面板上拿掉的關掉。面板上的光環沒變就不做事（每半秒呼叫）。
      */
     void sync(final Player player) {
         final PlayerState state = plugin.players().get(player);
         final List<String> desired = new ArrayList<>();
         if (state.isLoaded() && state.hasCharacter() && !player.isDead()) {
-            for (final tw.exilecore.character.SkillLoadout.Entry entry : state.skills().entries()) {
+            for (final tw.exilecore.character.SkillLoadout.Entry entry : state.skills().entriesInKeyOrder()) {
                 final SkillDefinition definition = config.skill(entry.skillId());
                 if (definition != null && definition.aura() != null && !definition.hidden() && wearable(state, definition)) {
                     desired.add(entry.skillId() + "@" + entry.level() + ":" + entry.encodeSupports());
@@ -585,7 +585,8 @@ final class AuraService implements Listener {
         double total = 0;
         if (!desired.isEmpty()) {
             final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
-            for (final tw.exilecore.character.SkillLoadout.Entry entry : state.skills().entries()) {
+            // 2026-10：照按鍵順序開（數字鍵 3→8，再來左、右、蹲左、蹲右）：精魂不夠時前面的先召喚
+            for (final tw.exilecore.character.SkillLoadout.Entry entry : state.skills().entriesInKeyOrder()) {
                 final SkillDefinition definition = config.skill(entry.skillId());
                 if (definition == null || definition.aura() == null || definition.hidden() || next.containsKey(definition.id())
                         || !wearable(state, definition)) {
@@ -872,7 +873,7 @@ final class AuraService implements Listener {
         final PlayerState state = plugin.players().get(player);
         boolean changed = false;
         final List<String> closed = new ArrayList<>();
-        double running = 0; // 照面板順序，前面的先拿精魂（照隻數算的召喚要知道還剩多少）
+        double running = 0; // 照按鍵順序（3→8、左、右、蹲左、蹲右），前面的先拿精魂（照隻數算的召喚要知道還剩多少）
         final double capacityNow = capacity(plugin.players().sheet(player));
         for (final Active aura : new ArrayList<>(mine.values())) {
             final int position = state.skills().find(aura.skillId);
@@ -891,7 +892,7 @@ final class AuraService implements Listener {
                 final int capBefore = aura.minionCap;
                 Fit fit = fit(build, capacityNow - running);
                 if (fit == null) {
-                    // 精魂不夠了：照隻數算的召喚先留一隻的份（下面「超過 100%」會照面板順序把後面的關掉）
+                    // 精魂不夠了：照隻數算的召喚先留一隻的份（下面「超過 100%」會照按鍵順序把後面的關掉）
                     fit = new Fit(build.reserve() + Math.max(0, 1 - build.definition().aura().freeMinions()) * build.minionReserve(),
                             build.minionReserve() > 0 ? 1 : Integer.MAX_VALUE);
                 }
@@ -902,7 +903,7 @@ final class AuraService implements Listener {
             }
             running += aura.reserve;
         }
-        // 保留超過 100%（保留增加的裝備、天賦）：面板上排在最後的先關（照面板的順序開）
+        // 保留超過 100%（保留增加的裝備、天賦）：按鍵順序排在最後的先關（照按鍵的順序開）
         double total = totalReserve(player.getUniqueId());
         final double limit = capacity(plugin.players().sheet(player));
         while (total > limit + 1e-9 && !mine.isEmpty()) {

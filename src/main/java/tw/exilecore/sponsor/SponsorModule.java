@@ -50,6 +50,8 @@ public final class SponsorModule implements Module, Listener {
         return "sponsor";
     }
 
+    private static boolean personalSourceRegistered;
+
     @Override
     public void enable() throws Exception {
         if (plugin.bounties() == null) {
@@ -57,6 +59,11 @@ public final class SponsorModule implements Module, Listener {
         }
         load();
         service = new SponsorService(plugin, config);
+        if (!personalSourceRegistered) {
+            // 2026-10 個人加倍藥：掉落數量、稀有度進屬性表（只註冊一次；查的時候找現在的贊助模組）
+            personalSourceRegistered = true;
+            plugin.players().addModifierSource(player -> plugin.sponsors() == null ? java.util.List.of() : plugin.sponsors().personalModifiers(player));
+        }
         renderer = new CosmeticRenderer(plugin, service);
         service.registerTitles();
         for (final SponsorConfig.Cosmetic cosmetic : config.cosmetics().values()) {

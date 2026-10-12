@@ -300,7 +300,7 @@ public final class GuildService {
         for (final Guild guild : roster.top(config)) {
             final Guild.Member leader = guild.member(guild.leader());
             final List<Guild.Member> ordered = new ArrayList<>(guild.members());
-            ordered.sort(java.util.Comparator.comparingInt((Guild.Member member) -> member.rank().code()).reversed()
+            ordered.sort(java.util.Comparator.comparingInt((Guild.Member member) -> member.rank().power()).reversed()
                     .thenComparing(java.util.Comparator.comparingLong(Guild.Member::contribution).reversed()));
             final List<LadderMember> members = new ArrayList<>();
             for (final Guild.Member member : ordered) {
@@ -682,7 +682,7 @@ public final class GuildService {
             return null;
         }
         if (!guild.rank(actor.getUniqueId()).atLeast(GuildRank.OFFICER)) {
-            tell(actor, "<red>只有會長與幹部能審核入會申請");
+            tell(actor, "<red>只有會長、副會長與幹部能審核入會申請");
             return null;
         }
         return guild;
@@ -829,7 +829,7 @@ public final class GuildService {
         }
     }
 
-    /** 升成幹部、降成成員（只有會長）。 */
+    /** 升降階級：會長在成員、幹部、副會長之間；副會長在成員、幹部之間（2026-10）。 */
     public void setRank(final Player actor, final String targetName, final GuildRank rank) {
         final Guild guild = roster.guildOf(actor.getUniqueId());
         if (guild == null) {
@@ -841,16 +841,17 @@ public final class GuildService {
             tell(actor, "<red>公會裡沒有「" + ItemRenderer.escape(targetName.strip()) + "」");
             return;
         }
+        final GuildRank before = target.rank();
         final GuildRoster.Result result = roster.setRank(actor.getUniqueId(), target.uuid(), rank);
         switch (result) {
             case OK -> {
                 persist(guild);
-                final boolean up = rank.atLeast(GuildRank.OFFICER);
+                final boolean up = rank.power() > before.power();
                 log(guild.id(), plugin.displayName(actor), up ? "升階" : "降階", target.name() + " → " + rank.displayName());
                 broadcast(guild, "<white>" + ItemRenderer.escape(target.name()) + "<gray> " + (up ? "升為" : "降為") + " <white>" + rank.displayName());
                 closeStashIfNotAllowed(guild, target.uuid());
             }
-            case NO_PERMISSION -> tell(actor, "<red>只有會長能升降階級");
+            case NO_PERMISSION -> tell(actor, "<red>沒有權限：會長可以升降成員、幹部、副會長；副會長只能把成員、幹部升降（不能動副會長）");
             case SELF -> tell(actor, "<red>不能改自己的階級（交出會長用 /guild leader 名字）");
             case ALREADY_RANK -> tell(actor, "<gray>" + ItemRenderer.escape(target.name()) + " 已經是" + rank.displayName() + "了");
             default -> tell(actor, "<red>沒辦法改階級（" + result + "）");
@@ -1005,16 +1006,17 @@ public final class GuildService {
         broadcast(guild, motd.isEmpty() ? "<gray>" + shown(actor) + " 清掉了公告" : "<gray>" + shown(actor) + " 改了公告：<white>" + ItemRenderer.escape(motd));
     }
 
-    /** 誰能從倉庫拿東西：成員 → 幹部 → 會長 → 成員…（只有會長能改）。 */
+    /** 誰能從倉庫拿東西：成員 → 幹部 → 副會長 → 會長 → 成員…（會長、副會長能改）。 */
     public void cycleWithdrawRank(final Player actor) {
         final Guild guild = roster.guildOf(actor.getUniqueId());
-        if (guild == null || !guild.leader().equals(actor.getUniqueId())) {
-            tell(actor, "<red>只有會長能改倉庫的權限");
+        if (guild == null || !guild.rank(actor.getUniqueId()).atLeast(GuildRank.VICE)) {
+            tell(actor, "<red>只有會長、副會長能改倉庫的權限");
             return;
         }
         final GuildRank next = switch (guild.withdrawRank()) {
             case MEMBER -> GuildRank.OFFICER;
-            case OFFICER -> GuildRank.LEADER;
+            case OFFICER -> GuildRank.VICE;
+            case VICE -> GuildRank.LEADER;
             case LEADER -> GuildRank.MEMBER;
         };
         guild.setWithdrawRank(next);
@@ -1027,6 +1029,7 @@ public final class GuildService {
         return switch (rank) {
             case MEMBER -> "所有成員";
             case OFFICER -> "幹部以上";
+            case VICE -> "副會長以上";
             case LEADER -> "只有會長";
         };
     }
@@ -1157,7 +1160,8 @@ public final class GuildService {
         // 訊息裡的 [i] 換成手上的物品（聊天模組）
         final Component body = plugin.chat() == null ? Component.text(text) : plugin.chat().message(player, text);
         final GuildRank rank = guild.rank(player.getUniqueId());
-        final String mark = rank == GuildRank.LEADER ? "<#f5b942>★</#f5b942>" : rank == GuildRank.OFFICER ? "<#7fd4ff>◆</#7fd4ff>" : "";
+        final String mark = rank == GuildRank.LEADER ? "<#f5b942>★</#f5b942>" : rank == GuildRank.VICE ? "<#c9a0ff>✦</#c9a0ff>"
+                : rank == GuildRank.OFFICER ? "<#7fd4ff>◆</#7fd4ff>" : "";
         final Component line = Component.text()
                 .append(plugin.text().parse(COLOR + "[公會] " + COLOR_END + mark + "<white>" + shown(player) + "<gray>："))
                 .append(body.colorIfAbsent(NamedTextColor.GRAY))
@@ -2067,7 +2071,7 @@ public final class GuildService {
         sender.sendMessage(plugin.text().parse("<gray>編號 <white>#" + guild.id() + "<gray>　倉庫誰能拿：<white>" + withdrawText(guild.withdrawRank())
                 + "<gray>　星幣買的倉庫頁：<white>" + guild.boughtPages()));
         final List<Guild.Member> members = new ArrayList<>(guild.members());
-        members.sort(java.util.Comparator.comparingInt((Guild.Member member) -> member.rank().code()).reversed()
+        members.sort(java.util.Comparator.comparingInt((Guild.Member member) -> member.rank().power()).reversed()
                 .thenComparing(java.util.Comparator.comparingLong(Guild.Member::contribution).reversed()));
         for (final Guild.Member member : members) {
             final boolean here = plugin.getServer().getPlayer(member.uuid()) != null;
@@ -2394,7 +2398,7 @@ public final class GuildService {
         final GuildStash stash = stashes.get(guild.id());
         detail.put("stashItems", stash == null ? -1 : stash.itemCount());
         final List<Guild.Member> ordered = new ArrayList<>(guild.members());
-        ordered.sort(java.util.Comparator.comparingInt((Guild.Member member) -> member.rank().code()).reversed()
+        ordered.sort(java.util.Comparator.comparingInt((Guild.Member member) -> member.rank().power()).reversed()
                 .thenComparing(java.util.Comparator.comparingLong(Guild.Member::contribution).reversed()));
         final List<Map<String, Object>> members = new ArrayList<>();
         for (final Guild.Member member : ordered) {

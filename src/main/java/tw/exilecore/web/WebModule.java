@@ -106,6 +106,16 @@ public final class WebModule implements Module, Listener {
             }
             HudFont.useRowTexts(summons); // 召喚物直排（2026-10）
         }
+        // 2026-10：撿到東西的角落提示要用到的字：資料檔裡出現過的所有字（物品、通貨、傳奇、詞綴的名稱）
+        final java.util.List<String> lootTexts = new java.util.ArrayList<>();
+        try (java.util.stream.Stream<java.nio.file.Path> walk = java.nio.file.Files.walk(plugin.dataFolder().resolve("data"))) {
+            for (final java.nio.file.Path file : (Iterable<java.nio.file.Path>) walk.filter(p -> p.toString().endsWith(".yml"))::iterator) {
+                lootTexts.add(java.nio.file.Files.readString(file, java.nio.charset.StandardCharsets.UTF_8));
+            }
+        } catch (final java.io.IOException | java.io.UncheckedIOException e) {
+            plugin.getSLF4JLogger().warn("撿到東西的角落提示：讀不到資料檔的字（{}）", e.getMessage());
+        }
+        LootHud.useTexts(lootTexts);
         ownPack = UiPack.build(plugin.items() == null ? List.of() : UiPack.skins(plugin.items().repository()),
                 gemSkins(plugin.currencies() == null ? List.of() : UiPack.currencySkins(plugin.currencies().repository()), skillSkins()),
                 plugin.items() == null ? java.util.Set.of() : UiPack.gearItems(plugin.items().repository()));

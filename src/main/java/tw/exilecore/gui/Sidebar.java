@@ -177,6 +177,7 @@ public final class Sidebar implements Listener {
         }
         if (view.board == null) {
             view.board = plugin.getServer().getScoreboardManager().getNewScoreboard();
+            tw.exilecore.skill.MinionCollision.prepare(view.board); // 2026-10：召喚物不推擠玩家（每張計分板都要有那個隊伍）
         }
         // 換回這張計分板之前別的東西可能動過它：當作整張重畫
         final List<String> previous = player.getScoreboard() == view.board ? view.shown : List.of();
