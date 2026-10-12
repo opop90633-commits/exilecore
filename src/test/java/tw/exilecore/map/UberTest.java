@@ -349,11 +349,11 @@ class UberTest {
         assertEquals(150000, config.finalDpsCap(), 1e-9, "一般終局（2026-10：上限統一 15 萬）");
         assertEquals(List.of(new MapConfig.DpsTier(150000, 0.3), new MapConfig.DpsTier(300000, 0.1)), config.finalDpsOver());
         assertEquals(150000, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
-        // 打到上限剛好 3 分半：終局 31.8、極境再 ×1.9、巔峰 89.7（T16 的 ×11.7 與等級差另外算）
+        // 打白怪假人 5／10／15 萬（打 Boss ×0.6）剛好 3 分半：終局 19.1、極境再 ×1.9、巔峰 53.8（T16 的 ×11.7 與等級差另外算）
         for (final MapConfig.MapDef map : config.regularFinals()) {
-            assertEquals(31.8, map.boss().life(), 1e-9, map.id());
+            assertEquals(19.1, map.boss().life(), 1e-9, map.id());
         }
-        assertEquals(89.7, config.find("awakener").boss().life(), 1e-9);
+        assertEquals(53.8, config.find("awakener").boss().life(), 1e-9);
         final MapConfig.Uber bare = MapConfig.parseUber(YamlNode.load("test.yml", new java.io.StringReader("name: x\n")));
         assertEquals(0, bare.dpsCap(), 1e-9, "沒寫就不限");
     }

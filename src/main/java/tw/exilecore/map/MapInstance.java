@@ -393,9 +393,14 @@ public final class MapInstance {
         return isUber() || special != null && "heist_finale".equals(special.kind());
     }
 
-    /** 用「門」算的實例（2026-10）：終局、極境、巔峰（特別的實例除外）。 */
+    /** 用「門」算的實例（2026-10）：終局、極境、巔峰（特別的實例除外），還有金庫之主（劫盜終局）。 */
     public boolean usesAttempts() {
-        return map.isFinal() && special == null;
+        return map.isFinal() && special == null || isHeistFinale();
+    }
+
+    /** 金庫之主（劫盜終局）。 */
+    public boolean isHeistFinale() {
+        return special != null && "heist_finale".equals(special.kind());
     }
 
     /**

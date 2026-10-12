@@ -156,7 +156,7 @@ finale:
     name: 金庫之主・萬鎖
     type: VINDICATOR
     named: true
-    life: 13.5           # 2026-10：改照人均單體 10 萬 DPS：T16 約 45 秒（會再乘 maps.yml 的 final.tier_life，T16 現在 ×7.8，所以這裡不用改）
+    life: 36.3           # 2026-10：比照極境——照打白怪假人每秒 10 萬（打 Boss 6 萬）單人打 3 分半（T16 Lv.91 再乘 final.tier_life ×11.7 之後約 1,260 萬生命）
     damage: 3.1          # 2026-10：3.1 → 2.4 → 3.1（改回）
     scale: 2.2
     mods: [armoured, resistant]   # 2026-10：拿掉迅捷

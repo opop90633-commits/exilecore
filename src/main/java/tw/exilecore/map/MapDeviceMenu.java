@@ -472,7 +472,7 @@ public final class MapDeviceMenu extends Menu {
                     ? "<red>這一門你已經出來了：等裡面的人全部倒下（或出來）再走下一門"
                     : "<gray>一門一次挑戰：裡面的人全部倒下，下一門 Boss 回滿重來；打倒 Boss 門全部關掉");
         }
-        if (instance.singleEntry()) {
+        if (instance.singleEntry() && !instance.usesAttempts()) {
             lore.add(instance.uberEntered(player.getUniqueId()) ? "<red>每個人只能進一次：你已經進去過了"
                     : "<red>每個人只能進一次<dark_gray>（死了或離開就不能再進）");
         }

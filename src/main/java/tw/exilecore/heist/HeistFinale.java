@@ -76,6 +76,8 @@ final class HeistFinale implements Listener {
         final Map<Long, TextDisplay> alarms = new HashMap<>();
         final Map<Long, Block> alarmBlocks = new HashMap<>();
         int alarmDeadline = -1;
+        /** 2026-10：金庫之主改成 2 門：換門的時候警報機關、計時從頭來。 */
+        int attempt;
 
         Run(final MapInstance instance, final int level) {
             this.instance = instance;
@@ -301,6 +303,12 @@ final class HeistFinale implements Listener {
                     && player.getLocation().distanceSquared(instance.boss().getLocation()) < 40 * 40) {
                 inside.add(player);
             }
+        }
+        if (run.attempt != instance.attemptsUsed()) {
+            run.attempt = instance.attemptsUsed(); // 新的一門：機關、計時重來
+            clearAlarms(run);
+            run.fightSeconds = 0;
+            run.alarmDeadline = -1;
         }
         if (inside.isEmpty()) {
             return; // 沒人在打：不算時間

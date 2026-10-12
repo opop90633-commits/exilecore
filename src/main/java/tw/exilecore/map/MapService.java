@@ -349,11 +349,18 @@ public final class MapService {
      * @param source 打的玩家（召喚物、持續傷害算主人）
      */
     public double capBossDamage(final LivingEntity defender, final UUID source, final double amount) {
+        if (amount > 0 && source != null && plugin.worldEvents() != null && "boss".equals(plugin.worldEvents().role(defender))) {
+            // 2026-10：世界 Boss（開天者）比照極境：每秒傷害上限與分段遞減照 maps.yml 的 final_dps（15 萬）
+            final Player player = plugin.getServer().getPlayer(source);
+            final double record = player == null || plugin.training() == null ? 0 : plugin.training().bossDps(player);
+            return dpsCap.apply("world:" + source, amount, config.finalDpsCap(), config.finalDpsOver(),
+                    plugin.getServer().getCurrentTick(), record);
+        }
         if (amount <= 0 || source == null || !defender.getPersistentDataContainer().has(bossKey())) {
             return amount;
         }
         final MapInstance instance = instanceOf(defender);
-        // 2026-10：終局 5 萬、極境 10 萬、巔峰 15 萬（maps.yml 的 final_dps、各極境與巔峰的 dps_cap、dps_over；沒寫就不限）
+        // 2026-10：終局、極境、巔峰、金庫之主都是 15 萬（maps.yml 的 final_dps、各極境與巔峰的 dps_cap、dps_over；沒寫就不限）
         if (instance == null || !instance.usesAttempts()) {
             return amount;
         }
@@ -503,11 +510,11 @@ public final class MapService {
         if (!belongs(player, instance) || !canEnter(player, instance)) {
             return "那張地圖已經關閉了";
         }
-        if (instance.singleEntry()) {
-            return singleEntryName(instance) + "每個人只能進去一次，離開了就不能再回去";
-        }
         if (instance.usesAttempts()) {
             return "這一門你已經出來了：等裡面的人全部倒下（或出來），再走下一門";
+        }
+        if (instance.singleEntry()) {
+            return singleEntryName(instance) + "每個人只能進去一次，離開了就不能再回去";
         }
         return null;
     }
@@ -1064,7 +1071,8 @@ public final class MapService {
         // 星圖天賦：開圖的人點的（特別的實例、極境不吃）；地圖本身的部分加進數值，其他的存在實例上
         final AtlasBonus atlas = special != null || pendingUber.isPresent() || pendingPinnacle.isPresent() ? AtlasBonus.NONE : atlasBonus(owner);
         // 2026-10：終局、極境、巔峰用「門」算（一道門 = 一次挑戰，預設 2 道；巔峰照 maps.yml 的 attempts）
-        final int portals = map.isFinal() && special == null
+        final boolean heistFinale = special != null && "heist_finale".equals(special.kind()); // 金庫之主也是 2 門
+        final int portals = map.isFinal() && special == null || heistFinale
                 ? pendingPinnacle.map(MapConfig.Pinnacle::attempts).orElse(BOSS_ATTEMPTS) : config.settings().portals();
         final MapInstance instance = new MapInstance(nextId++, map, stats.plus(atlas), layout, world, cell, origin[0], origin[1],
                 owner.getUniqueId(), owner.getName(), portals, plugin.getServer().getCurrentTick());
