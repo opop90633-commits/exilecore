@@ -338,11 +338,16 @@ public final class StatsReport {
         // 2026-10：技能欄上每個技能的每秒傷害（大家打怪都是用技能，不是普攻）
         if (plugin.skills() != null) {
             for (final String[] row : plugin.skills().skillDps(player)) {
+                final long base = Long.parseLong(row[2]);
+                final long full = row.length > 3 ? Long.parseLong(row[3]) : base;
+                // 2026-10：戰吼、戰旗、詛咒、印記都開著的話（比平常多 5% 以上才顯示）
                 final String text = String.format(Locale.ROOT, "<gray>✦ <dark_gray>[%s]</dark_gray> %s 每秒 <white>%,d", row[0],
-                        escape(row[1]), Long.parseLong(row[2]));
+                        escape(row[1]), base) + (full > base * 1.05 ? String.format(Locale.ROOT, " <dark_gray>（全開 <white>%,d</white>）", full) : "");
                 lines.add(chat ? hover(text, "平均一下 × 暴擊期望 × 每秒次數（有冷卻照冷卻算；含連射的每一波與餘震）<newline>"
+                        + "＋點燃、流血、中毒的持續傷害，再乘感電的增傷（照同等級一般怪物的門檻算機率與覆蓋率）<newline>"
                         + "<dark_gray>召喚技能：一隻召喚物的每秒傷害 × 同時最多幾隻<newline>"
-                        + "<dark_gray>沒算怪物的減免、流血點燃中毒、戰吼與怒氣這些打起來才有的加成、打到幾個敵人<newline>"
+                        + "<dark_gray>全開：技能欄上的戰吼、戰旗的增益都開著、強化攻擊照冷卻平均，詛咒、印記都掛在敵人身上<newline>"
+                        + "<dark_gray>沒算怪物的減免、曝露、怒氣與蓄力這些打起來才有的加成、打到幾個敵人<newline>"
                         + "<dark_gray>實際輸出去營地打訓練假人最準") : text);
             }
             // 2026-10：打訓練假人的實測（估計值跟實際可以差很多）

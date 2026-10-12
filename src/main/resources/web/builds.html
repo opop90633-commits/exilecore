@@ -248,13 +248,17 @@
       }
       if (!own && !summons.length) return null;
       const sum = summons.reduce((a, d) => a + Number(d.dps), 0);
+      // 2026-10：全開（戰吼、戰旗、詛咒、印記都開著）；舊資料沒有 full 就跟平常一樣
+      const fullOf = d => Number(d.full || d.dps);
+      const fullSum = summons.reduce((a, d) => a + fullOf(d), 0);
+      const fullOwn = (c.dps || []).filter(d => !String(d.name).includes("（召喚物")).reduce((m, d) => Math.max(m, fullOf(d)), 0);
       const short = d => String(d.name).replace(/（召喚物.*$/, "");
       const lead = summons.slice().sort((a, b) => b.dps - a.dps)[0];
       const parts = [];
       if (own) parts.push(summons.length ? own.name + " " + Number(own.dps).toLocaleString() : own.name);
       if (summons.length === 1) parts.push(own ? lead.name + " " + sum.toLocaleString() : lead.name);
       else if (summons.length > 1) parts.push("召喚物 " + summons.length + " 種 " + sum.toLocaleString() + "（" + summons.map(short).join("、") + "）");
-      return { name: parts.join(" ＋ "), dps: (own ? Number(own.dps) : 0) + sum, main: !own || (lead && sum > Number(own.dps)) ? short(lead) : own.name };
+      return { name: parts.join(" ＋ "), dps: (own ? Number(own.dps) : 0) + sum, full: fullOwn + fullSum, main: !own || (lead && sum > Number(own.dps)) ? short(lead) : own.name };
     }
     function measuredCell(c, estimate) {
       const m = c.measured;
@@ -304,15 +308,17 @@
         const tr = el("tr", { cls: "link", onclick: () => { location.hash = encodeURIComponent(x.c.name); } },
           el("td", { cls: "num", text: i + 1 }), el("td", { cls: "name", text: x.c.name + (x.c.hidden ? "　🔒" : "") }),
           el("td", { text: x.c.ascendancy || x.c.className }), el("td", { cls: "num", text: x.c.level }),
-          el("td", { cls: "num", text: Number(x.b.dps).toLocaleString() }), measuredCell(x.c, x.b.dps), el("td", { cls: "wrap", text: x.b.name }));
+          el("td", { cls: "num", text: Number(x.b.dps).toLocaleString() }),
+          el("td", { cls: "num" + (Number(x.b.full || 0) > Number(x.b.dps) * 1.05 ? "" : " muted"), text: Number(x.b.full || x.b.dps).toLocaleString() }),
+          measuredCell(x.c, Number(x.b.full || x.b.dps)), el("td", { cls: "wrap", text: x.b.name }));
         tr.children[2].style.color = x.c.classColor || "";
         dpsBody.append(tr);
       });
       if (!ranked.length) dpsBody.append(el("tr", null, el("td", { cls: "muted", text: "還沒有資料（角色在線時每 5 分鐘記一次）" })));
       const dpsCard = el("div", { cls: "card meta" }, el("h3", { text: "估計每秒傷害排行（自己放的技能取最高的一個＋召喚物全部加總）" }),
-        el("p", { cls: "muted", style: "margin:0 0 8px", text: "估計值跟 /stats 的「✦ 技能 每秒」同一套算法：平均一下 × 暴擊期望 × 每秒次數（含連射的每一波與餘震）；召喚技能算「一隻召喚物 × 同時最多幾隻」。自己放的技能一次只能放一個，所以只取最高的；召喚物是同時在打的，全部加上去。估計值沒算怪物的護甲抗性、流血點燃中毒、戰吼與怒氣這些打起來才有的加成，跟實際可以差到幾十倍——「假人實測」是這個角色三天內打訓練假人（至少 8 秒）最高的一段，後面的倍數是實測 ÷ 估計。點「每秒傷害」或「假人實測」換排序。" }),
+        el("p", { cls: "muted", style: "margin:0 0 8px", text: "估計值跟 /stats 的「✦ 技能 每秒」同一套算法：平均一下 × 暴擊期望 × 每秒次數（含連射的每一波與餘震）；召喚技能算「一隻召喚物 × 同時最多幾隻」。自己放的技能一次只能放一個，所以只取最高的；召喚物是同時在打的，全部加上去。估計值含點燃、流血、中毒與感電（對同等級一般怪物）；「全開」再加上技能欄上的戰吼、戰旗、詛咒、印記都開著。沒算怪物的護甲抗性、曝露、怒氣與蓄力這些打起來才有的加成——「假人實測」是這個角色三天內打訓練假人（至少 8 秒）最高的一段，後面的倍數是實測 ÷ 全開。點「每秒傷害」或「假人實測」換排序。" }),
         el("div", { cls: "scroll" }, el("table", null, el("thead", null, el("tr", null, el("th", { cls: "num", text: "#" }), el("th", { text: "角色" }),
-          el("th", { text: "職業" }), el("th", { cls: "num", text: "等級" }), sortHead("每秒傷害", "estimate"), sortHead("假人實測", "measured"), el("th", { text: "技能" }))), dpsBody)));
+          el("th", { text: "職業" }), el("th", { cls: "num", text: "等級" }), sortHead("每秒傷害", "estimate"), el("th", { cls: "num", text: "全開", title: "技能欄上的戰吼、戰旗增益都開著、強化攻擊照冷卻平均，詛咒、印記都掛在敵人身上" }), sortHead("假人實測", "measured"), el("th", { text: "技能" }))), dpsBody)));
       const mainSkill = new Map();
       for (const x of ranked) mainSkill.set(x.b.main, (mainSkill.get(x.b.main) || 0) + 1);
       body.replaceChildren(

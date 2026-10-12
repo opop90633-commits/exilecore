@@ -114,6 +114,11 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (!matchesRequires(skill)) {
             return "要" + requiresText();
         }
+        // 2026-10：觸發輔助（暴擊、受擊、擊殺、異常、翻滾、召喚物死亡觸發）不能掛在增益型的技能上（連珠、霜鏃、舉盾…）：
+        // 照 PoE2 這些不是能被觸發的法術；以前掛得上去，觸發時卻略過，又因為掛了觸發不能手動放，整顆技能變廢
+        if (triggers() && skill.mechanic() == Mechanic.GUARD) {
+            return "增益型的技能（連珠、霜鏃、舉盾…）不能被觸發";
+        }
         // 2026-10：光環、詛咒、印記、護體、戰吼、純位移、召喚本身不會打到敵人：只有擊中才有用的輔助（引火、致命、各種穿透、趁 X…）
         // 以前掛得上去，一條都不生效還白付魔力倍率。捷的輔助會傳給擊殺效果（隱藏的法術），所以照算
         if (!skill.dealsDamage() && !skill.tags().contains(Tags.HERALD) && !worksWithoutHits(skill)) {
@@ -239,6 +244,16 @@ public record SupportDefinition(String id, String name, String description, Stri
         }
         for (final String tag : requires) {
             if (skill.tags().contains(tag) || skill.weapons().contains(tag)) { // 2026-10：也可以寫武器（crossbow：弩的技能）
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-10：這顆是不是觸發輔助（modifiers 有 trigger. 開頭、大於 0 的）。 */
+    public boolean triggers() {
+        for (final Modifier modifier : modifiers) {
+            if (modifier.stat().startsWith("trigger.") && modifier.value() > 0) {
                 return true;
             }
         }

@@ -110,8 +110,8 @@ class UniqueDataTest {
     void everyUniqueLoadsWithValidStatsTagsAndSources() {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
-        assertEquals(98, repository.uniques().size(),
-                "終局 2 + 追逐級 4 + 其他終局 3 + 具名 Boss 2 + 共通 27 + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 10");
+        assertEquals(102, repository.uniques().size(),
+                "終局 2 + 追逐級 4 + 其他終局 3 + 具名 Boss 2 + 共通 31（2026-10：＋德魯伊的獸魂符 4 件） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 10");
         final Set<String> names = new HashSet<>();
         for (final UniqueItem unique : repository.uniques()) {
             final String where = unique.id();

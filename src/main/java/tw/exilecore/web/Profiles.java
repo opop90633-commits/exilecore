@@ -334,6 +334,9 @@ public final class Profiles implements Listener {
                     final JsonObject d = new JsonObject();
                     d.addProperty("name", row[1]);
                     d.addProperty("dps", Long.parseLong(row[2]));
+                    if (row.length > 3 && Long.parseLong(row[3]) > Long.parseLong(row[2])) {
+                        d.addProperty("full", Long.parseLong(row[3])); // 2026-10：戰吼、戰旗、詛咒、印記全開
+                    }
                     dps.add(d);
                 }
             } catch (final RuntimeException ignored) {

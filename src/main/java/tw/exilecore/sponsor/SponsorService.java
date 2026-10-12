@@ -569,6 +569,28 @@ public final class SponsorService {
         return work;
     }
 
+    /** 管理員發免費抽獎箱（2026-10，月卡的那種；跟月卡每天送的累積在一起）。帳號還沒載入 null。 */
+    public CharacterRepository.ExtraWork grantFreeBoxesWork(final Player player, final long amount) {
+        if (accounts() == null || !accounts().accountLoaded(player) || amount <= 0) {
+            return null;
+        }
+        final long have = freeBoxes(player);
+        final Map<String, String> values = new LinkedHashMap<>();
+        values.put(FREE_BOXES, String.valueOf(have + amount));
+        final CharacterRepository.ExtraWork work = accounts().accountWork(player, values);
+        if (work == null) {
+            return null;
+        }
+        plugin.getSLF4JLogger().info("[贊助] {} 收到免費抽獎箱 {} 箱（原本 {}）", player.getName(), amount, have);
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (player.isOnline()) {
+                player.sendMessage(plugin.text().prefixed(CARD_COLOR + "收到 " + format(amount) + " 箱免費抽獎箱"
+                        + "<gray>　現在有 " + format(freeBoxes(player)) + " 箱　<white><click:run_command:'/sponsor'>/sponsor</click>"));
+            }
+        });
+        return work;
+    }
+
     /** 收回了多少，和寫進資料庫的工作。 */
     public record Revoked(long taken, CharacterRepository.ExtraWork work) {
     }
@@ -590,12 +612,13 @@ public final class SponsorService {
             case "bought_stash" -> STASH;
             case "bought_bag" -> BAG;
             case "bought_listing" -> LISTING;
+            case "free_box" -> FREE_BOXES;
             default -> null;
         };
         if (key == null) {
             return null;
         }
-        final long have = number(player, key);
+        final long have = FREE_BOXES.equals(key) ? freeBoxes(player) : number(player, key);
         final long taken = Math.max(0, Math.min(have, amount));
         final Map<String, String> values = new LinkedHashMap<>();
         values.put(key, String.valueOf(have - taken));

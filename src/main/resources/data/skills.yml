@@ -597,7 +597,7 @@ skills:
     projectile: { speed: 2.0, range: 32, size: 0.4, pierce: 2, splash: { targets: 3, radius: 4, damage: 50 } }
     convert: { lightning: 0.5 }
     attack_speed: 0.6
-    effectiveness: [1.35, 1.89]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [2.03, 2.83]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.35, 1.89]）
     mana: [5, 10]
     visual: lightning_spear
     modifiers:
@@ -613,7 +613,7 @@ skills:
     mechanic: nova
     nova: { radius: [3.0, 3.8] }
     attack_speed: 0.7
-    effectiveness: [0.86, 1.2]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [1.29, 1.8]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [0.86, 1.2]）
     mana: [5, 10]
     visual: whirl
   whirlwind_lance:
@@ -627,7 +627,7 @@ skills:
     mechanic: projectile
     projectile: { speed: 1.6, range: 14, size: 0.45, vortex: { duration: 2.5, radius: 3, interval: 0.5, pull: 0.25, damage: 35 } }
     attack_speed: 0.6
-    effectiveness: [1.35, 1.89]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [2.03, 2.83]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.35, 1.89]）
     mana: [6, 12]
     visual: whirlwind_lance
   lunge:
@@ -642,7 +642,7 @@ skills:
     dash: { range: 6, hit_width: 1.1, knockback: 0.6, end_radius: [1.8, 2.3] }
     cooldown: 1.5
     attack_speed: 0.4
-    effectiveness: [1.23, 1.72]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [1.84, 2.58]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.23, 1.72]）
     mana: [5, 10]
     visual: lunge
   hunters_mark:
@@ -1555,7 +1555,7 @@ skills:
     impact: { range: 20, delay: 0.8, radius: [3.0, 3.8] }
     convert: { lightning: 0.7 }
     attack_speed: 0.75
-    effectiveness: [1.5, 2.1]
+    effectiveness: [2.25, 3.15]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.5, 2.1]）
     mana: [6, 13]
     visual: lightning_spear
     modifiers:
@@ -1572,7 +1572,7 @@ skills:
     mechanic: zone
     zone: { range: 16, radius: [2.5, 3.2], duration: 5, interval: 0.5, damage: 45, max: 1 }
     attack_speed: 0.8
-    effectiveness: [0.8, 1.12]
+    effectiveness: [1.2, 1.68]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [0.8, 1.12]）
     mana: [7, 14]
     visual: spear_thrust
     modifiers:
@@ -1589,7 +1589,7 @@ skills:
     mechanic: strike
     strike: { reach: 4.2, angle: 40, targets: 2 }
     attack_speed: 1.3
-    effectiveness: [0.85, 1.19]      # 2026-10 統一平衡：[0.62, 0.87] → [0.85, 1.19]（PoE2 Rapid Assault 整串 702%、攻速 40% ×0.55，換成一下）
+    effectiveness: [1.27, 1.78]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [0.85, 1.19]）
     mana: [4, 9]
     visual: spear_thrust
     modifiers:
@@ -2299,7 +2299,7 @@ skills:
     mechanic: projectile
     projectile: { speed: 0.9, range: 18, size: 0.9, pierce: 20, wobble: 35 }
     attack_speed: 0.85
-    effectiveness: [0.85, 1.19]
+    effectiveness: [1.27, 1.78]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [0.85, 1.19]）
     mana: [5, 11]
     visual: whirlwind_lance
 
@@ -2315,7 +2315,7 @@ skills:
     nova: { radius: [3.2, 4.0] }
     cooldown: 2
     attack_speed: 0.9
-    effectiveness: [1.1, 1.54]
+    effectiveness: [1.65, 2.31]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.1, 1.54]）
     mana: [5, 10]
     visual: whirl
     modifiers:
@@ -2332,7 +2332,7 @@ skills:
     mechanic: cone
     cone: { length: [9, 11], angle: 25 }
     attack_speed: 0.6
-    effectiveness: [2.2, 3.08]
+    effectiveness: [3.3, 4.62]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [2.2, 3.08]）
     mana: [7, 15]
     visual: spear_thrust
 
@@ -2347,7 +2347,7 @@ skills:
     mechanic: impact
     impact: { range: 18, delay: 0.5, radius: [3.0, 3.6] }
     attack_speed: 0.75
-    effectiveness: [1.5, 2.1]
+    effectiveness: [2.25, 3.15]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.5, 2.1]）
     mana: [7, 14]
     visual: lightning_spear
     modifiers:
@@ -2365,7 +2365,7 @@ skills:
     leap: { range: 9, radius: [2.6, 3.2] }
     convert: { lightning: 0.6 }
     attack_speed: 0.8
-    effectiveness: [1.76, 2.47]      # 2026-10 統一平衡：[1.5, 2.1] → [1.76, 2.47]（PoE2 Thunderous Leap 449% ×0.55（跟騰躍砸擊一樣））
+    effectiveness: [2.64, 3.71]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.76, 2.47]）
     mana: [7, 13]
     visual: leap
     modifiers:
@@ -2382,7 +2382,7 @@ skills:
     mechanic: impact
     impact: { range: 14, delay: 0.3, radius: [2.6, 3.2] }
     attack_speed: 0.85
-    effectiveness: [1.3, 1.82]
+    effectiveness: [1.95, 2.73]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.3, 1.82]）
     mana: [6, 12]
     visual: puncture
     modifiers:
@@ -2401,7 +2401,7 @@ skills:
     convert: { fire: 0.8 }
     cooldown: 5
     attack_speed: 0.5
-    effectiveness: [4.0, 5.6]
+    effectiveness: [6.0, 8.4]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [4.0, 5.6]）
     mana: [10, 20]
     visual: comet
     modifiers:
@@ -2962,7 +2962,7 @@ skills:
     projectile: { speed: 2.0, range: 28, size: 0.4, explode: [2.8, 3.6] }
     convert: { fire: 0.6 }
     attack_speed: 0.7
-    effectiveness: [1.5, 2.1]      # 2026-10 統一平衡：[1.18, 1.65] → [1.5, 2.1]（PoE2 Explosive Spear 矛 156%＋爆炸 489%）
+    effectiveness: [2.25, 3.15]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.5, 2.1]）
     mana: [6, 12]
     visual: explosive_bolt
     modifiers:
@@ -2980,7 +2980,7 @@ skills:
     strike: { reach: 4.5, angle: 70, targets: 3 }
     convert: { cold: 0.5 }
     attack_speed: 1.0
-    effectiveness: [0.99, 1.38]   # 2026-10：補到標準（PoE2 296%、攻速 85% × 0.55，換成我們的攻速 1.0）；原本 [0.83, 1.16] 只有標準的七成
+    effectiveness: [1.48, 2.07]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [0.99, 1.38]）
     mana: [4, 9]
     visual: spear_thrust
     modifiers:
@@ -3634,7 +3634,7 @@ skills:
     cone: { length: [3.5, 4.2], angle: 70 }
     cooldown: 2
     attack_speed: 1.0
-    effectiveness: [1.1, 1.54]
+    effectiveness: [1.65, 2.31]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.1, 1.54]）
     mana: [4, 8]
     visual: spear_thrust
     modifiers:
@@ -3652,7 +3652,7 @@ skills:
     projectile: { speed: 2.4, range: 30, size: 0.5, pierce: 10, ground: { duration: 4, interval: 0.5, radius: [2.2, 2.8], damage: 20 } }
     convert: { cold: 0.8 }
     attack_speed: 0.9
-    effectiveness: [1.3, 1.82]
+    effectiveness: [1.95, 2.73]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.3, 1.82]）
     mana: [5, 11]
     visual: ice_shot
     modifiers:
@@ -3670,7 +3670,7 @@ skills:
     strike: { reach: 4.2, angle: 40, targets: 3 }
     convert: { lightning: 0.5 }
     attack_speed: 1.15
-    effectiveness: [1.0, 1.4]   # 2026-10 平衡：-13%（打三個）
+    effectiveness: [1.5, 2.1]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.0, 1.4]）
     mana: [4, 9]
     visual: lightning_spear
     modifiers:
@@ -3687,7 +3687,7 @@ skills:
     mechanic: strike
     strike: { reach: 4.0, angle: 40, targets: 1, execute: { below: 0.35, more: 120 } }
     attack_speed: 0.9
-    effectiveness: [0.92, 1.29]      # 2026-10 統一平衡：[1.3, 1.82] → [0.92, 1.29]（PoE2 Cull the Weak 281%、攻速 75% ×0.55，換成我們的攻速 0.9）
+    effectiveness: [1.38, 1.94]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [0.92, 1.29]）
     mana: [4, 9]
     visual: spear_thrust
 
@@ -5517,7 +5517,7 @@ skills:
     dash: { range: 6, end_radius: [2.2, 2.8] }
     cooldown: 1
     attack_speed: 0.8
-    effectiveness: [1.1, 1.54]
+    effectiveness: [1.65, 2.31]   # 2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.1, 1.54]）
     mana: [5, 10]
     visual: lunge
     modifiers:

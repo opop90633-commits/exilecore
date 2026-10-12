@@ -358,6 +358,11 @@ public final class StashMenu extends Menu {
             final int amount = stash.currency(type.id());
             final List<String> lore = new ArrayList<>();
             lore.add(String.format(Locale.ROOT, "<gray>存了 <white>%,d</white> / %,d", amount, stash.currencyCap()));
+            // 2026-10：撿到的通貨會先進通貨袋（/bag），不是倉庫；袋子裡有的話提醒一下，免得以為不見了
+            final int inPouch = plugin.players().get(player).bag().pouch().amount(type.id());
+            if (inPouch > 0) {
+                lore.add(String.format(Locale.ROOT, "<#f5b942>通貨袋（/bag）裡還有 <white>%,d</white> 個<gray>：按「存入通貨袋裡所有通貨」，或在 /bag 直接拿", inPouch));
+            }
             lore.add("<dark_gray>" + ItemRenderer.escape(type.description()));
             lore.add("");
             if (amount > 0) {

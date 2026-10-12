@@ -239,6 +239,12 @@ public final class DeliveryService {
                 if ("card".equals(spec.ref()) || "fashion".equals(spec.ref())) {
                     return String.format(Locale.ROOT, "%s %,d", "card".equals(spec.ref()) ? "月卡幣" : "時裝幣", spec.amount());
                 }
+                if ("free_box".equals(spec.ref())) {
+                    if (spec.amount() > 1000) {
+                        throw new IllegalArgumentException("免費抽獎箱一次最多發 1000 箱");
+                    }
+                    return String.format(Locale.ROOT, "免費抽獎箱 %,d 箱", spec.amount());
+                }
                 if ("card_days".equals(spec.ref())) {
                     if (spec.amount() > 3650) {
                         throw new IllegalArgumentException("月卡一次最多加 3650 天");
@@ -246,7 +252,7 @@ public final class DeliveryService {
                     return "月卡 " + spec.amount() + " 天";
                 }
                 if (!"paid".equals(spec.ref()) && !"bonus".equals(spec.ref())) {
-                    throw new IllegalArgumentException("星幣要選「儲值」「贈送」「月卡幣」或「時裝幣」");
+                    throw new IllegalArgumentException("星幣要選「儲值」「贈送」「月卡幣」「時裝幣」「月卡天數」或「免費抽獎箱」");
                 }
                 return String.format(Locale.ROOT, "星幣 %,d（%s）", spec.amount(), "bonus".equals(spec.ref()) ? "贈送" : "儲值");
             }
@@ -333,7 +339,7 @@ public final class DeliveryService {
                 }
                 final String what = takeSponsorName(ref(spec));
                 if (what == null) {
-                    throw new IllegalArgumentException("收回贊助要選：累積贊助、星幣、月卡幣、時裝幣、買的倉庫頁、買的背包頁、買的上架格");
+                    throw new IllegalArgumentException("收回贊助要選：累積贊助、星幣、月卡幣、時裝幣、買的倉庫頁、買的背包頁、買的上架格、月卡天數、免費抽獎箱");
                 }
                 return String.format(Locale.ROOT, "收回 %s %,d", what, spec.amount());
             }
@@ -369,6 +375,7 @@ public final class DeliveryService {
             case "bought_bag" -> "星幣買的隨身背包頁";
             case "bought_listing" -> "星幣買的上架格";
             case "card_days" -> "月卡天數";
+            case "free_box" -> "免費抽獎箱";
             default -> null;
         };
     }
@@ -867,6 +874,14 @@ public final class DeliveryService {
                     }
                     return new Given(amount, "月卡 " + amount + " 天",
                             List.of(entry(opId, null, "月卡天數", (int) Math.min(Integer.MAX_VALUE, amount), admin, player)), days.work());
+                }
+                if ("free_box".equals(row.ref())) {
+                    final CharacterRepository.ExtraWork boxes = plugin.sponsors().grantFreeBoxesWork(player, amount);
+                    if (boxes == null) {
+                        return Given.WAIT;
+                    }
+                    return new Given(amount, String.format(Locale.ROOT, "免費抽獎箱 %,d 箱", amount),
+                            List.of(entry(opId, null, "免費抽獎箱", (int) Math.min(Integer.MAX_VALUE, amount), admin, player)), boxes);
                 }
                 if ("card".equals(row.ref()) || "fashion".equals(row.ref())) {
                     final boolean fashion = "fashion".equals(row.ref());

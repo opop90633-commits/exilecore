@@ -317,7 +317,7 @@ public final class SkillService {
         if (mechanic == Mechanic.AURA || mechanic == Mechanic.SUMMON || mechanic == Mechanic.WARCRY || mechanic == Mechanic.DASH
                 || mechanic == Mechanic.LEAP || mechanic == Mechanic.FLICKER || mechanic == Mechanic.RALLY
                 || mechanic == Mechanic.GUARD) {
-            return;
+            return; // 2026-10：增益型（GUARD）不能掛觸發輔助（SupportDefinition.refusal），這裡只是保險
         }
         final PlayerState state = plugin.players().get(player);
         final StatSheet sheet = plugin.players().sheet(player);
@@ -1368,9 +1368,76 @@ public final class SkillService {
         return aftershock ? first + 1 + aftershockMore / 100.0 : first;
     }
 
+    /**
+     * 戰吼、戰旗、詛咒、印記「全開」時（2026-10，面板的第二個數字）：技能欄上這些技能給自己的增益、敵人受到的傷害增加、
+     * 抗性降低，與強化攻擊（每個 [次數, 更多%, 冷卻秒數]）。
+     */
+    private record FullOn(List<tw.exilecore.stats.Modifier> self, double taken, java.util.Map<tw.exilecore.stats.DamageType, Double> resist,
+                          List<double[]> exerts) {
+        boolean isEmpty() {
+            return self.isEmpty() && taken <= 0 && resist.isEmpty() && exerts.isEmpty();
+        }
+    }
+
+    private FullOn fullOn(final PlayerState state, final StatSheet sheet) {
+        final List<tw.exilecore.stats.Modifier> self = new ArrayList<>();
+        double taken = 0;
+        final java.util.Map<tw.exilecore.stats.DamageType, Double> resist = new java.util.EnumMap<>(tw.exilecore.stats.DamageType.class);
+        final List<double[]> exerts = new ArrayList<>();
+        final java.util.Set<String> seen = new java.util.HashSet<>();
+        for (int slot = 0; slot < SkillLoadout.BIND_SLOTS; slot++) {
+            final Resolved resolved = resolve(state, slot);
+            if (resolved.isDefault() || !seen.add(resolved.definition().id())) {
+                continue;
+            }
+            final SkillDefinition definition = resolved.definition();
+            if (definition.mechanic() == Mechanic.WARCRY && definition.warcry() != null) {
+                final SkillBuild build = build(state, sheet, resolved);
+                self.addAll(build.warcryModifiers());
+                taken += definition.warcry().taken().at(build.level()) * build.auraEffect() / 100.0;
+                if (build.exerts() > 0) {
+                    exerts.add(new double[] {build.exerts(), definition.warcry().exertMore().at(build.level()) * build.auraEffect(),
+                            Math.max(20, build.cooldownTicks()) / 20.0});
+                }
+            } else if (definition.mechanic() == Mechanic.MARK && definition.params().mark() != null) {
+                final SkillBuild build = build(state, sheet, resolved);
+                final SkillParams.Mark mark = definition.params().mark();
+                taken += mark.taken() / 100.0 * build.auraEffect();
+                for (final ScaledMod effect : mark.effects()) {
+                    final tw.exilecore.stats.Modifier mod = effect.toModifier(build.level(), build.auraEffect(), definition.name());
+                    if (mod.type() == tw.exilecore.stats.ModType.FLAT && mod.value() < 0 && mod.stat().startsWith("resist.")) {
+                        final tw.exilecore.stats.DamageType type = tw.exilecore.stats.DamageType.fromTag(mod.stat().substring("resist.".length()));
+                        if (type != null) {
+                            resist.merge(type, -mod.value(), Double::sum);
+                        }
+                    }
+                }
+            }
+        }
+        return new FullOn(self, taken, resist, exerts);
+    }
+
+    /** 敵人抗性降低後，這一下傷害多幾倍（對象原本 0 抗性；每降 1% 抗性多 1%）。 */
+    private static tw.exilecore.stats.DamagePacket afterResist(final tw.exilecore.stats.DamagePacket packet,
+                                                               final java.util.Map<tw.exilecore.stats.DamageType, Double> resist) {
+        if (resist.isEmpty()) {
+            return packet;
+        }
+        final tw.exilecore.stats.DamagePacket out = new tw.exilecore.stats.DamagePacket(packet);
+        for (final java.util.Map.Entry<tw.exilecore.stats.DamageType, Double> entry : resist.entrySet()) {
+            out.set(entry.getKey(), packet.get(entry.getKey()) * (1 + entry.getValue() / 100.0));
+        }
+        return out;
+    }
+
+    /**
+     * 每個技能的估計每秒傷害：{按鍵, 名稱, 每秒傷害, 全開的每秒傷害}（第四格：戰吼、戰旗、詛咒、印記都開著；沒有這些技能時跟第三格一樣）。
+     */
     public List<String[]> skillDps(final Player player) {
         final PlayerState state = plugin.players().get(player);
         final StatSheet sheet = plugin.players().sheet(player);
+        final FullOn full = fullOn(state, sheet);
+        final StatSheet fullSheet = full.self().isEmpty() ? sheet : sheet.overlay(full.self());
         final List<String[]> rows = new ArrayList<>();
         final java.util.Set<String> seen = new java.util.HashSet<>();
         for (int slot = 0; slot < SkillLoadout.BIND_SLOTS; slot++) {
@@ -1389,8 +1456,10 @@ public final class SkillService {
                 final int cap = auras.minionCap(player.getUniqueId(), definition.id()); // 2026-10：照隻數算精魂的，只算養得起的隻數
                 final int count = Math.max(1, cap > 0 ? Math.min(build.minions(), cap) : build.minions());
                 if (each > 0) {
+                    // 全開：召喚物吃不到你的戰吼增益（只吃「召喚物…」的加成），只算敵人受到的傷害增加
+                    final double fullEach = each * (1 + full.taken());
                     rows.add(new String[] {SkillLoadout.shortKeyName(slot), definition.name() + "（召喚物 ×" + count + "）",
-                            String.valueOf(Math.round(each * count))});
+                            String.valueOf(Math.round(each * count)), String.valueOf(Math.round(fullEach * count))});
                 }
                 continue;
             }
@@ -1404,11 +1473,45 @@ public final class SkillService {
             // 有冷卻的：一輪要等「施放間隔」和「冷卻」比較長的那個。
             // 2026-10：複擊的每一下都要花一次攻擊間隔（打完才能做別的），以前當成同一個間隔裡打完，面板高了好幾倍
             final SkillParams params = build.params();
-            final double dps = expected.total() * (1 + crit * (multi / 100.0 - 1))
-                    * hitsPerSecond(build.intervalTicks(sheet), build.cooldownTicks(), build.repeats())
+            final double critFactor = 1 + crit * (multi / 100.0 - 1);
+            final double hitRate = hitsPerSecond(build.intervalTicks(sheet), build.cooldownTicks(), build.repeats())
                     * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
                             params.aftershock() == null ? 0 : params.aftershock().more());
-            rows.add(new String[] {SkillLoadout.shortKeyName(slot), definition.name(), String.valueOf(Math.round(dps))});
+            double dps = expected.total() * critFactor * hitRate;
+            if (plugin.ailments() != null) {
+                // 2026-10：面板以前只算擊中；點燃、流血、中毒的持續傷害與感電的增傷也算進去（對同等級一般怪物、站著不動）
+                dps = plugin.ailments().estimateDps(sheet, build.profile(), expected, critFactor, hitRate, state.level(), dps);
+            }
+            double fullDps = dps;
+            if (!full.isEmpty()) {
+                // 全開：用疊上戰吼增益的屬性表重算一次（攻速、傷害都會變），再算敵人的抗性降低、受到的傷害增加、強化攻擊
+                final SkillBuild fullBuild = build(state, fullSheet, resolved);
+                final tw.exilecore.stats.DamagePacket fullExpected = afterResist(
+                        DamageCalculator.expectedOutgoing(fullSheet, fullBuild.profile()), full.resist());
+                final double fullCrit = DamageCalculator.critChance(fullSheet, fullBuild.profile());
+                final double fullMulti = fullBuild.profile().effective(fullSheet).get(StatKeys.CRIT_MULTI, fullBuild.profile().tags());
+                final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
+                final SkillParams fullParams = fullBuild.params();
+                final double casts = hitsPerSecond(fullBuild.intervalTicks(fullSheet), fullBuild.cooldownTicks(), fullBuild.repeats());
+                final double fullRate = casts * castHits(fullParams.burst() == null ? 1 : fullParams.burst().count(), fullParams.aftershock() != null,
+                        fullParams.aftershock() == null ? 0 : fullParams.aftershock().more());
+                double exert = 1.0;
+                if (fullBuild.profile().isAttack()) {
+                    // 強化：每次戰吼冷卻好就吼一次，接下來幾次攻擊更痛；攻擊比強化的次數多時照比例平均
+                    for (final double[] each : full.exerts()) {
+                        final double attacksPerCycle = Math.max(1e-6, casts * each[2]);
+                        exert *= 1 + each[1] / 100.0 * Math.min(1, each[0] / attacksPerCycle);
+                    }
+                }
+                fullDps = fullExpected.total() * fullCritFactor * fullRate * exert;
+                if (plugin.ailments() != null) {
+                    fullDps = plugin.ailments().estimateDps(fullSheet, fullBuild.profile(), new tw.exilecore.stats.DamagePacket(fullExpected).scale(exert), fullCritFactor, fullRate,
+                            state.level(), fullDps);
+                }
+                fullDps *= 1 + full.taken();
+            }
+            rows.add(new String[] {SkillLoadout.shortKeyName(slot), definition.name(), String.valueOf(Math.round(dps)),
+                    String.valueOf(Math.round(Math.max(dps, fullDps)))});
         }
         return rows;
     }

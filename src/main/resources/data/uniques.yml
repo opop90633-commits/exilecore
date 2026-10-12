@@ -6094,3 +6094,142 @@ awakening_cord:
     - text: "+3% 閃電抗性上限"
       stats:
         - { stat: resist.max.lightning, type: FLAT, value: 3 }
+
+# ---- 2026-10：德魯伊的獸魂符傳奇（參考 PoE2 0.4 德魯伊的魔符，名稱與數值是自己的）----
+# 熊、狼人、飛龍各一件，再加一件吃怒氣的；地圖 Boss 掉、可以用僥倖石做、商人賭得到。
+
+ember_king_talisman:
+  name: 焚王獸符
+  base: talis_19        # 隕鐵獸符（物理＋火焰）
+  drop_level: 60
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「熊王倒下的那一夜，牠的怒火沒有熄。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [120, 160]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "減少 {value}% 攻擊速度"
+      value: [15, 15]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "-{value}" }
+    - text: "熊形態技能的物理傷害有 {value}% 轉換為火焰傷害"
+      value: [80, 80]
+      stats:
+        - { stat: damage.convert.fire, type: FLAT, value: "{value}", tags: [bear] }
+    - text: "擊中時 {value}% 機率讓敵人曝露"
+      value: [20, 30]
+      stats:
+        - { stat: exposure.chance, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 戰吼效果"
+      value: [20, 30]
+      stats:
+        - { stat: warcry.effect, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 火焰抗性"
+      value: [25, 35]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+
+wrathroot_talisman:
+  name: 怒根獸符
+  base: talis_25        # 聖紋獸符（內建：+怒氣上限）
+  drop_level: 45
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「從地底挖出來的時候，它還在發抖。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [100, 140]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "近戰擊中時獲得 {value} 點怒氣"
+      value: [2, 3]
+      stats:
+        - { stat: rage.on_hit, type: FLAT, value: "{value}", tags: [melee] }
+    - text: "+{value} 怒氣上限"
+      value: [10, 15]
+      stats:
+        - { stat: rage.max, type: FLAT, value: "{value}" }
+    - text: "怒鑄：有 10 點怒氣時用掉，這一下更多 {value}% 傷害"
+      value: [30, 45]
+      stats:
+        - { stat: rage.forged, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 怒氣效果"
+      value: [20, 30]
+      stats:
+        - { stat: rage.effect, type: INCREASED, value: "{value}" }
+    - text: "擊殺時回復 {value} 生命"
+      value: [20, 30]
+      stats:
+        - { stat: life.per_kill, type: FLAT, value: "{value}" }
+
+moonhowl_talisman:
+  name: 月嗥獸牙
+  base: talis_23        # 天鐵獸符（攻速快）
+  drop_level: 55
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「月亮升起來之前，牠還記得自己是人。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [110, 150]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "狼人形態技能增加 {value}% 攻擊速度"
+      value: [12, 18]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [werewolf] }
+    - text: "+{value/100}% 暴擊率"
+      value: [200, 300]
+      stats:
+        - { stat: local.crit_base, type: FLAT, value: "{value}" }
+    - text: "擊中時 {value}% 機率造成流血"
+      value: [20, 30]
+      stats:
+        - { stat: bleed.chance, type: FLAT, value: "{value}" }
+    - text: "擊殺時 {value}% 機率獲得疾速"
+      value: [15, 25]
+      stats:
+        - { stat: onslaught.on_kill, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 移動速度"
+      value: [8, 12]
+      stats:
+        - { stat: movement.speed, type: INCREASED, value: "{value}" }
+
+cinderscale_talisman:
+  name: 燼鱗獸符
+  base: talis_22        # 炎晶獸符
+  drop_level: 60
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「龍死了很久，鱗片還是燙的。」"
+  mods:
+    - text: "增加 {value}% 飛龍形態技能傷害"
+      value: [50, 70]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [wyvern] }
+    - text: "獲得物理傷害的 {value}% 為額外火焰傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage.gain.fire, type: FLAT, value: "{value}" }
+    - text: "擊中時 {value}% 機率點燃"
+      value: [15, 25]
+      stats:
+        - { stat: ignite.chance, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 閃避值"
+      value: [40, 60]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 攻擊的範圍效果"
+      value: [10, 15]
+      stats:
+        - { stat: skill.area, type: INCREASED, value: "{value}", tags: [attack] }
+    - text: "+{value}% 火焰抗性"
+      value: [25, 35]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }

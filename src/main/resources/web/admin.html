@@ -375,7 +375,7 @@
   var recordBatch = '';
 
   var KINDS = [
-    ['currency', '通貨'], ['gold', '金幣'], ['merits', '功勳'], ['sponsor', '星幣／月卡幣／時裝幣'], ['cosmetic', '時裝（限定、整組）'], ['item', '裝備'], ['unique', '傳奇'],
+    ['currency', '通貨'], ['gold', '金幣'], ['merits', '功勳'], ['sponsor', '星幣／月卡幣／時裝幣／免費抽獎箱'], ['cosmetic', '時裝（限定、整組）'], ['item', '裝備'], ['unique', '傳奇'],
     ['gem', '寶石'], ['flask', '藥劑'], ['map', '地圖'], ['refund', '免費退點'],
     ['take_sponsor', '⛔ 收回：累積贊助／星幣／買的格子'], ['take_currency', '⛔ 收回：通貨'], ['take_gold', '⛔ 收回：金幣'], ['take_item', '⛔ 收回：物品']
   ];
@@ -668,10 +668,10 @@
       case 'take_sponsor': return [{ id: 'total', text: '累積贊助（稱號、倉庫頁、背包頁、上架格跟著降）' }, { id: 'coins', text: '星幣' },
         { id: 'card', text: '月卡幣' }, { id: 'fashion', text: '時裝幣' }, { id: 'bought_stash', text: '星幣買的倉庫頁' },
         { id: 'bought_bag', text: '星幣買的隨身背包頁' }, { id: 'bought_listing', text: '星幣買的上架格' },
-        { id: 'card_days', text: '月卡天數（扣到 0 = 拔掉月卡；數量填大一點就全拔）' }];
+        { id: 'card_days', text: '月卡天數（扣到 0 = 拔掉月卡；數量填大一點就全拔）' }, { id: 'free_box', text: '免費抽獎箱' }];
       case 'take_currency': return c.currencies.map(function (e) { return { id: e.id, text: e.name }; });
       case 'cosmetic': return c.cosmetics.filter(match).map(function (e) { return { id: e.id, text: e.name }; });
-      case 'sponsor': return [{ id: 'paid', text: '星幣・儲值（算進累積贊助）' }, { id: 'bonus', text: '星幣・贈送（不算累積贊助）' }, { id: 'card', text: '月卡幣' }, { id: 'fashion', text: '時裝幣' }, { id: 'card_days', text: '月卡天數（直接開月卡，不扣星幣、不送開卡禮）' }];
+      case 'sponsor': return [{ id: 'paid', text: '星幣・儲值（算進累積贊助）' }, { id: 'bonus', text: '星幣・贈送（不算累積贊助）' }, { id: 'card', text: '月卡幣' }, { id: 'fashion', text: '時裝幣' }, { id: 'card_days', text: '月卡天數（直接開月卡，不扣星幣、不送開卡禮）' }, { id: 'free_box', text: '免費抽獎箱（月卡的那種，會累積）' }];
       default: return [];
     }
   }
@@ -753,7 +753,7 @@
       }
     }
     var max = c.limits[item.kind] || 1;
-    var amountLabel = item.kind === 'gold' ? '金幣' : item.kind === 'merits' ? '功勳' : item.kind === 'sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'card' ? '月卡幣' : item.ref === 'fashion' ? '時裝幣' : '星幣') : item.kind === 'refund' ? '次數' : item.kind === 'take_gold' ? '金幣' : item.kind === 'take_item' ? '最多幾件' : item.kind === 'take_sponsor' ? (item.ref === 'card_days' ? '天數' : '數量（星幣、頁、格）') : '數量';
+    var amountLabel = item.kind === 'gold' ? '金幣' : item.kind === 'merits' ? '功勳' : item.kind === 'sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'free_box' ? '箱數' : item.ref === 'card' ? '月卡幣' : item.ref === 'fashion' ? '時裝幣' : '星幣') : item.kind === 'refund' ? '次數' : item.kind === 'take_gold' ? '金幣' : item.kind === 'take_item' ? '最多幾件' : item.kind === 'take_sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'free_box' ? '箱數' : '數量（星幣、頁、格）') : '數量';
     row.appendChild(numberInput(amountLabel, item.amount, 1, max, function (v) { item.amount = v; renderSummary(); }, '最多 ' + num(max)));
     row.appendChild(h('button', { type: 'button', cls: 'small remove', text: '移除', 'aria-label': '移除這一樣', onclick: function () {
       items = items.filter(function (x) { return x !== item; });
@@ -911,9 +911,9 @@
       case 'gold': return '金幣 ' + num(n);
       case 'merits': return '功勳 ' + num(n);
       case 'cosmetic': return nameOf(c.cosmetics, item.ref) + '（已經有的不重複給）';
-      case 'sponsor': return item.ref === 'card_days' ? '月卡 ' + num(n) + ' 天' : item.ref === 'card' ? '月卡幣 ' + num(n) : item.ref === 'fashion' ? '時裝幣 ' + num(n) : '星幣 ' + num(n) + (item.ref === 'bonus' ? '（贈送）' : '（儲值）');
+      case 'sponsor': return item.ref === 'card_days' ? '月卡 ' + num(n) + ' 天' : item.ref === 'free_box' ? '免費抽獎箱 ' + num(n) + ' 箱' : item.ref === 'card' ? '月卡幣 ' + num(n) : item.ref === 'fashion' ? '時裝幣 ' + num(n) : '星幣 ' + num(n) + (item.ref === 'bonus' ? '（贈送）' : '（儲值）');
       case 'refund': return '免費退點 ×' + n;
-      case 'take_sponsor': var what = { total: '累積贊助', coins: '星幣', card: '月卡幣', fashion: '時裝幣', bought_stash: '買的倉庫頁', bought_bag: '買的背包頁', bought_listing: '買的上架格', card_days: '月卡天數' }[item.ref] || item.ref;
+      case 'take_sponsor': var what = { total: '累積贊助', coins: '星幣', card: '月卡幣', fashion: '時裝幣', bought_stash: '買的倉庫頁', bought_bag: '買的背包頁', bought_listing: '買的上架格', card_days: '月卡天數', free_box: '免費抽獎箱' }[item.ref] || item.ref;
         return '⛔ 收回 ' + what + ' ' + num(n);
       case 'take_currency': return '⛔ 收回 ' + nameOf(c.currencies, item.ref) + ' ×' + num(n);
       case 'take_gold': return '⛔ 收回 金幣 ' + num(n);

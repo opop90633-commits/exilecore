@@ -434,6 +434,90 @@ public final class AilmentService {
      * 門檻的基礎：怪物 = 最大生命 × 稀有度倍率；玩家 = 最大生命 ＋ 最大護盾。
      * 元素異常再乘「增加元素異常門檻」，暈眩再乘「增加暈眩門檻」（兩個互不影響）。
      */
+    /**
+     * 面板估計（2026-10）：把點燃、流血、中毒的期望每秒傷害與感電的增傷加進技能的每秒傷害。
+     * 對象當成同等級的一般怪物（異常門檻 = 一般怪物的生命 × 門檻倍率）、站著不動；一秒打 hitsPerSecond 下，每下的傷害 = expected × critFactor。
+     * 點燃、流血只算最強的一個：覆蓋率 1 − e^(−機率 × 每秒次數 × 持續秒數)；中毒照平均疊幾層算（最多疊加上限）。
+     *
+     * @param hitDps 擊中的每秒傷害（不含異常）
+     * @return 擊中＋持續傷害，再乘上感電的期望增傷
+     */
+    public double estimateDps(final StatSheet attackerSheet, final tw.exilecore.stats.SkillProfile skill, final tw.exilecore.stats.DamagePacket expected,
+                              final double critFactor, final double hitsPerSecond, final int level, final double hitDps) {
+        if (hitsPerSecond <= 0 || expected == null || expected.isEmpty() || plugin.monsters() == null) {
+            return hitDps;
+        }
+        final double threshold = plugin.monsters().config().lifeAt(Math.max(1, level)) * config.monsterThreshold(MonsterRarity.NORMAL);
+        if (threshold <= 0) {
+            return hitDps;
+        }
+        final StatSheet attack = skill.effective(attackerSheet);
+        final boolean noElemental = StatKeys.flag(attack, StatKeys.FLAG_NO_AILMENTS);
+        final double fire = expected.get(DamageType.FIRE) * critFactor;
+        final double cold = expected.get(DamageType.COLD) * critFactor;
+        final double lightning = expected.get(DamageType.LIGHTNING) * critFactor;
+        final double physical = expected.get(DamageType.PHYSICAL) * critFactor;
+        final double chaos = expected.get(DamageType.CHAOS) * critFactor;
+        final double all = fire + cold + lightning + physical + chaos;
+        double dot = 0;
+        // 點燃
+        final double igniteBase = noElemental ? 0 : StatKeys.flag(attack, StatKeys.FLAG_ALL_IGNITE) ? all : fire;
+        if (igniteBase > 0) {
+            final Set<String> context = skill.contextFor(DamageType.FIRE);
+            final double chance = config.igniteChance(igniteBase, threshold, attack.flat(StatKeys.IGNITE_CHANCE, context),
+                    attack.increased(StatKeys.IGNITE_CHANCE, context)) * attack.more(StatKeys.IGNITE_CHANCE, context);
+            final double seconds = AilmentConfig.duration(config.igniteDuration(),
+                    attack.increased(StatKeys.IGNITE_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), 0);
+            dot += config.igniteDps(igniteBase, attack.increased(StatKeys.IGNITE_MAGNITUDE, context), attack.more(StatKeys.IGNITE_MAGNITUDE, context))
+                    * uptime(chance, hitsPerSecond, seconds);
+        }
+        // 流血（只有攻擊）
+        if (physical > 0 && skill.isAttack()) {
+            final Set<String> context = skill.contextFor(DamageType.PHYSICAL);
+            final double chance = config.bleedChance(physical, threshold, attack.flat(StatKeys.BLEED_CHANCE, context),
+                    attack.increased(StatKeys.BLEED_CHANCE, context)) * attack.more(StatKeys.BLEED_CHANCE, context);
+            final boolean crimson = StatKeys.flag(attack, StatKeys.FLAG_CRIMSON_ASSAULT);
+            final double seconds = AilmentConfig.duration(crimson ? 1.0 : config.bleedDuration(),
+                    attack.increased(StatKeys.BLEED_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), 0);
+            dot += config.bleedDps(physical, attack.increased(StatKeys.BLEED_MAGNITUDE, context), attack.more(StatKeys.BLEED_MAGNITUDE, context))
+                    * (crimson ? 1.5 * config.bleedMovingMultiplier() : 1.0) * uptime(chance, hitsPerSecond, seconds);
+        }
+        // 中毒（會疊）
+        if (physical + chaos > 0) {
+            final Set<String> context = skill.contextFor(DamageType.CHAOS);
+            final double chance = config.poisonChance(physical + chaos, threshold, attack.flat(StatKeys.POISON_CHANCE, context),
+                    attack.increased(StatKeys.POISON_CHANCE, context)) * attack.more(StatKeys.POISON_CHANCE, context);
+            final double seconds = AilmentConfig.duration(config.poisonDuration(),
+                    attack.increased(StatKeys.POISON_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), 0)
+                    * attack.more(StatKeys.POISON_DURATION, context);
+            final int maxStacks = config.poisonMaxStacks() * (StatKeys.flag(attack, StatKeys.FLAG_DOUBLE_POISON) ? 2 : 1);
+            final double stacks = Math.min(maxStacks, Math.max(0, Math.min(1, chance)) * hitsPerSecond * seconds);
+            dot += config.poisonDps(physical + chaos, attack.increased(StatKeys.POISON_MAGNITUDE, context), attack.more(StatKeys.POISON_MAGNITUDE, context))
+                    * stacks;
+        }
+        // 感電：受到的傷害增加（擊中與持續傷害都吃）
+        double shocked = 1.0;
+        final double shockBase = noElemental ? 0 : StatKeys.flag(attack, StatKeys.FLAG_ALL_SHOCK) ? all : lightning;
+        if (shockBase > 0) {
+            final Set<String> context = skill.contextFor(DamageType.LIGHTNING);
+            final double chance = config.shockChance(shockBase, threshold, attack.flat(StatKeys.SHOCK_CHANCE, context),
+                    attack.increased(StatKeys.SHOCK_CHANCE, context)) * attack.more(StatKeys.SHOCK_CHANCE, context);
+            final double seconds = AilmentConfig.duration(config.shockDuration(false),
+                    attack.increased(StatKeys.SHOCK_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), 0);
+            shocked += config.shockEffect(attack.increased(StatKeys.SHOCK_EFFECT, context)) * uptime(chance, hitsPerSecond, seconds);
+        }
+        return (hitDps + dot) * shocked;
+    }
+
+    /** 只算最強一個的異常（點燃、流血、感電）在身上的時間比例。 */
+    private static double uptime(final double chance, final double hitsPerSecond, final double seconds) {
+        final double p = Math.max(0, Math.min(1, chance));
+        if (p <= 0 || hitsPerSecond <= 0 || seconds <= 0) {
+            return 0;
+        }
+        return 1 - Math.exp(-p * hitsPerSecond * seconds);
+    }
+
     private double baseThreshold(final LivingEntity defender, final MonsterData monster, final StatSheet sheet) {
         if (defender instanceof Player player) {
             final PlayerState state = plugin.players().get(player);

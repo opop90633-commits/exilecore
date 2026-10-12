@@ -146,6 +146,9 @@ public final class SkillTriggers implements Listener {
 
     /** 這個技能掛了觸發輔助（2026-10，照 PoE）：只會自動觸發，不能手動施放。 */
     boolean triggeredOnly(final SkillLoadout.Entry entry) {
+        if (guardSkill(entry)) {
+            return false; // 2026-10：增益型的技能不能被觸發（舊的掛著也不算），照樣手動放
+        }
         for (final SupportDefinition support : service.supportsOf(entry)) {
             for (final tw.exilecore.stats.Modifier modifier : support.modifiers()) {
                 if (modifier.value() > 0 && TRIGGERS.contains(modifier.stat())) {
@@ -156,7 +159,16 @@ public final class SkillTriggers implements Listener {
         return false;
     }
 
+    /** 增益型的技能（連珠、霜鏃、舉盾…，mechanic: guard）：觸發輔助對它無效。 */
+    private boolean guardSkill(final SkillLoadout.Entry entry) {
+        final SkillDefinition definition = service.config().skill(entry.skillId());
+        return definition != null && definition.mechanic() == Mechanic.GUARD;
+    }
+
     private boolean hasTrigger(final SkillLoadout.Entry entry, final String trigger) {
+        if (guardSkill(entry)) {
+            return false;
+        }
         for (final SupportDefinition support : service.supportsOf(entry)) {
             for (final tw.exilecore.stats.Modifier modifier : support.modifiers()) {
                 if (modifier.stat().equals(trigger) && modifier.value() > 0) {
