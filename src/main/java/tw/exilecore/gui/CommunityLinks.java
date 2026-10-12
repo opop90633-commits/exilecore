@@ -44,8 +44,30 @@ public final class CommunityLinks {
 
     /** config.yml 的 links.discord／links.store／links.tutorial（沒填是空字串）。 */
     public static String url(final ExileCore plugin, final Link link) {
-        final String url = plugin.getConfig().getString("links." + link.key, "");
-        return url == null ? "" : url.trim();
+        final String path = "links." + link.key;
+        final String url = plugin.getConfig().getString(path, "");
+        final String trimmed = url == null ? "" : url.trim();
+        // 伺服器上舊的 config.yml 不會被新版 jar 覆蓋：沒填或還是退役的舊網址時，改用 jar 內建的預設值
+        if (trimmed.isEmpty() || retired(trimmed)) {
+            final org.bukkit.configuration.Configuration defaults = plugin.getConfig().getDefaults();
+            final String fallback = defaults == null ? null : defaults.getString(path);
+            if (fallback != null && !fallback.isBlank()) {
+                return fallback.trim();
+            }
+        }
+        return trimmed;
+    }
+
+    /** 換掉的舊網址（2026-10：新手教學改成新的 Google Drive 檔案）。 */
+    private static final List<String> RETIRED = List.of("1xOcljxPEcDzPjPnLUeOWBXpvxUdeeMCh");
+
+    static boolean retired(final String url) {
+        for (final String old : RETIRED) {
+            if (url.contains(old)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 只收 http(s) 的網址（設定檔打錯字的話當成沒填）。 */

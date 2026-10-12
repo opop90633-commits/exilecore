@@ -340,14 +340,14 @@ class UberTest {
 
     @Test
     void everyUberHasTheDpsReduction() {
-        // 2026-10：每秒傷害上限——終局 5 萬、極境 10 萬、巔峰 15 萬；超過的部分遞減（上限～2 倍算 30%、2 倍以上算 10%）
+        // 2026-10：每秒傷害上限統一 15 萬（血量照終局 5 萬、極境 10 萬、巔峰 15 萬打 3 分半）；超過的部分遞減（上限～2 倍算 30%、2 倍以上算 10%）
         for (final MapConfig.MapDef map : config.regularFinals()) {
             final MapConfig.Uber uber = config.uber(map.id());
-            assertEquals(100000, uber.dpsCap(), 1e-9, map.id());
-            assertEquals(List.of(new MapConfig.DpsTier(100000, 0.3), new MapConfig.DpsTier(200000, 0.1)), uber.dpsOver(), map.id());
+            assertEquals(150000, uber.dpsCap(), 1e-9, map.id());
+            assertEquals(List.of(new MapConfig.DpsTier(150000, 0.3), new MapConfig.DpsTier(300000, 0.1)), uber.dpsOver(), map.id());
         }
-        assertEquals(50000, config.finalDpsCap(), 1e-9, "一般終局");
-        assertEquals(List.of(new MapConfig.DpsTier(50000, 0.3), new MapConfig.DpsTier(100000, 0.1)), config.finalDpsOver());
+        assertEquals(150000, config.finalDpsCap(), 1e-9, "一般終局（2026-10：上限統一 15 萬）");
+        assertEquals(List.of(new MapConfig.DpsTier(150000, 0.3), new MapConfig.DpsTier(300000, 0.1)), config.finalDpsOver());
         assertEquals(150000, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
         // 打到上限剛好 3 分半：終局 31.8、極境再 ×1.9、巔峰 89.7（T16 的 ×11.7 與等級差另外算）
         for (final MapConfig.MapDef map : config.regularFinals()) {

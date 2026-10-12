@@ -1104,7 +1104,7 @@ public final class MapService {
                 member.sendMessage(plugin.text().prefixed("<green>傳送門開好了：<white>" + ItemRenderer.escape(instance.label())
                         + "<green>（" + ItemRenderer.escape(instance.ownerName()) + " 開的，" + (instance.usesAttempts()
                         ? "共 " + instance.portalsLeft() + " 門，一門一次挑戰" : instance.singleEntry()
-                        ? "每個人只能進入 1 次" : "可以進入 " + instance.portalsLeft() + " 次")
+                        ? "每個人只能進入 1 次" : "可以進入 " + instance.portalsLeft() + " 次，同一波進去的隊友只算 1 次")
                         + "）<gray>——地圖裝置後面的門亮了，只有你" + (plugin.party() != null && plugin.party().inParty(member) ? "和隊友" : "")
                         + "看得到"));
                 member.playSound(member.getLocation(), Sound.BLOCK_END_PORTAL_SPAWN, 0.6f, 1.2f);
@@ -1121,6 +1121,13 @@ public final class MapService {
         return instance.attemptActive()
                 ? "第 " + instance.attemptsUsed() + " 門挑戰中・之後還剩 " + Math.max(0, instance.portalsLeft() - 1) + " 門"
                 : "還剩 " + instance.portalsLeft() + " 門（一門一次挑戰）";
+    }
+
+    /** 照波次扣的實例（一般地圖）：還能進入幾次、這一波進行中的說明（訊息用）。 */
+    static String waveText(final MapInstance instance) {
+        return instance.attemptActive()
+                ? "這一波進行中・之後還能進入 " + Math.max(0, instance.portalsLeft() - 1) + " 次"
+                : "還能進入 " + instance.portalsLeft() + " 次（同一波進去的隊友只算 1 次）";
     }
 
     /** 只能進一次的實例叫什麼（訊息用）。 */
@@ -1211,6 +1218,19 @@ public final class MapService {
                 }
             }
             instance.markAttemptEntry(player.getUniqueId());
+        } else if (instance.usesWaves()) {
+            // 2026-10：一般地圖照波次扣：同一波第一次進去的隊友不扣；這一波的人全部倒下（或出來）才扣 1 次
+            if (!instance.attemptActive()) {
+                instance.startAttempt();
+            } else if (instance.enteredThisAttempt(player.getUniqueId())) {
+                if (instance.portalsLeft() < 2) {
+                    gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
+                    player.sendActionBar(plugin.text().parse("<red>次數只剩隊友正在打的這一波了<gray>：同一波死了或出來再進去要多扣 1 次"));
+                    return;
+                }
+                instance.usePortal(); // 同一波裡死了、回營地再進去：照舊扣 1 次
+            }
+            instance.markAttemptEntry(player.getUniqueId());
         } else if (instance.singleEntry() && instance.uberEntered(player.getUniqueId())) {
             // 極境、劫盜終局每個人只能進一次：死了或回營地就出局
             gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
@@ -1220,8 +1240,8 @@ public final class MapService {
         if (instance.singleEntry()) {
             instance.markUberEntry(player.getUniqueId());
         }
-        if (!instance.usesAttempts()) {
-            instance.usePortal(); // 用門算的在這一門結束的時候才扣
+        if (!instance.usesAttempts() && !instance.usesWaves()) {
+            instance.usePortal(); // 用門、波次算的在結束的時候才扣
         }
         instance.visitors().add(player.getUniqueId());
         remember(player, instance);
@@ -1233,7 +1253,7 @@ public final class MapService {
         player.showTitle(Title.title(plugin.text().parse("<#9fd3ff>" + ItemRenderer.escape(instance.label())),
                 plugin.text().parse("<gray>怪物等級 " + instance.level() + (instance.usesAttempts() ? "・<#f5b942>第 " + instance.attemptsUsed() + " 門"
                         : instance.singleEntry() ? "・<red>只能進來這一次"
-                        : "・還能進入 " + instance.portalsLeft() + " 次") + "<dark_gray>・移動前不會受傷"),
+                        : "・" + waveText(instance)) + "<dark_gray>・移動前不會受傷"),
                 Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
         if (!instance.map().lore().isBlank()) {
             player.sendMessage(plugin.text().parse(Zone.loreLine(null, instance.map().lore())));
@@ -1383,7 +1403,7 @@ public final class MapService {
                     if (gate >= Math.min(CampaignStructures.GATE_COUNT, instance.portalsLeft())) {
                         player.sendActionBar(plugin.text().parse("<gray>這道門沒有亮：" + ItemRenderer.escape(instance.label())
                                 + (instance.usesAttempts() ? " " + attemptText(instance) : instance.singleEntry() ? " 每個人只能進入 1 次"
-                                : " 還能進入 " + instance.portalsLeft() + " 次") + "，走進亮著的門"));
+                                : " " + waveText(instance)) + "，走進亮著的門"));
                         continue;
                     }
                     enter(player, instance);
@@ -1397,8 +1417,8 @@ public final class MapService {
                             ? "<gray>離開了 " + ItemRenderer.escape(instance.label()) + "<dark_gray>（這一門不能再回去；裡面的人全部倒下或出來之後可以走下一門）"
                             : instance.singleEntry()
                             ? "<gray>離開了 " + ItemRenderer.escape(instance.label()) + "<dark_gray>（" + singleEntryName(instance) + "每個人只能進一次，不能再回去了）"
-                            : "<gray>回到營地（傳送門次數沒有用掉；" + ItemRenderer.escape(instance.label())
-                            + " 還能進入 " + instance.portalsLeft() + " 次）"));
+                            : "<gray>回到營地<dark_gray>（" + ItemRenderer.escape(instance.label())
+                            + "：這一波的隊友全部出來或倒下才扣 1 次；同一波再進去會多扣 1 次）"));
                 }
             }
         }
@@ -1498,8 +1518,11 @@ public final class MapService {
             }
             if (instance.attemptActive() && !challengerAlive(instance)) {
                 // 2026-10：這一門的人全部倒下（或出來）：這一門結束，扣一道門；打倒了就全部關掉
+                // （一般地圖的「波次」也走這裡：這一波的人都出來了，扣 1 次，不用公告）
                 instance.endAttempt();
-                if (instance.bossKilled()) {
+                if (instance.usesWaves()) {
+                    // 一般地圖：只扣次數
+                } else if (instance.bossKilled()) {
                     instance.closePortals();
                 } else {
                     for (final Player member : groupOnline(instance)) {
@@ -1651,7 +1674,7 @@ public final class MapService {
         final String state = instance.state() == MapInstance.State.BUILDING ? "<yellow>成形中……"
                 : instance.usesAttempts() ? "<#f5b942>" + attemptText(instance)
                 : instance.singleEntry() ? "<red>每個人只能進入 1 次<gray>（死了或離開就不能再進）"
-                : "<green>還能進入 " + instance.portalsLeft() + " 次<gray>（亮著的門）";
+                : "<green>" + waveText(instance) + "<gray>（亮著的門）";
         return plugin.text().parse("<#9fd3ff>" + ItemRenderer.escape(instance.label()) + "<newline>" + state
                 + "<newline><dark_gray>" + ItemRenderer.escape(instance.ownerName()) + " 開的"
                 + (instance.bossKilled() ? "・<#f5b942>已完成" : ""));

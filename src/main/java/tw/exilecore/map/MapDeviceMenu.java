@@ -458,7 +458,7 @@ public final class MapDeviceMenu extends Menu {
         lore.add("<gray>" + ItemRenderer.escape(instance.ownerName()) + " 開的・怪物等級 " + instance.level());
         lore.add(instance.state() == MapInstance.State.BUILDING ? "<yellow>成形中……"
                 : (instance.usesAttempts() ? "<#f5b942>" + MapService.attemptText(instance) + "<gray>"
-                : instance.singleEntry() ? "<red>每個人只能進入 1 次<gray>" : "<gray>還能進入 <white>" + instance.portalsLeft() + "<gray> 次")
+                : instance.singleEntry() ? "<red>每個人只能進入 1 次<gray>" : "<gray>" + MapService.waveText(instance))
                         + "・裡面 " + instance.inside().size() + " 人");
         if (instance.bossKilled()) {
             lore.add("<#f5b942>已完成");

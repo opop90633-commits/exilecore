@@ -69,6 +69,7 @@ public final class StatLines {
         put(StatKeys.DEX, "敏捷", FLAT_OR_INCREASED, false);
         put(StatKeys.INT, "智慧", FLAT_OR_INCREASED, false);
         put(StatKeys.DROP_RARITY, "物品掉落稀有度", INCREASED, false);
+        put(StatKeys.DROP_QUANTITY, "物品掉落數量", INCREASED, false);
         put(StatKeys.FLASK_LIFE_RECOVERY, "生命藥劑回復", INCREASED, false);
         put(StatKeys.FLASK_MANA_RECOVERY, "魔力藥劑回復", INCREASED, false);
         put(StatKeys.SKILL_AREA, "範圍效果", SCALED, true);
