@@ -71,6 +71,8 @@ public final class SponsorService {
     static final String CARD_STREAK = "sp.cardstreak";
     /** 月卡每日免費箱：上次開的那天（epoch day）。 */
     static final String FREE_BOX = "sp.freebox";
+    /** 2026-10：還沒開的月卡免費抽獎箱（月卡每一天發一箱，沒開的累積下去）。 */
+    static final String FREE_BOXES = "sp.freeboxes";
     /** 自訂稱號：「代號|#顏色|文字」。 */
     static final String CUSTOM_TITLE = "sp.ctitle";
     /** 自己選的名字顏色（2026-10）：累積到的某一階的代號（用那一階的名字顏色）；沒選照最高那一階的。 */
@@ -1038,11 +1040,16 @@ public final class SponsorService {
         values.put(CARD, card[0] + "|" + card[1] + "|" + until);
         values.put(CARD_COINS, String.valueOf(cardCoins(player) + cardCoins));
         values.put(FASHION_COINS, String.valueOf(fashionCoins(player) + fashion));
+        final boolean boxes = !config.freeBox().isEmpty();
+        if (boxes) {
+            values.put(FREE_BOXES, String.valueOf(freeBoxes(player) + days)); // 2026-10：每一天一箱免費抽獎箱，沒開的累積
+        }
         if (!accounts().commitAccount(player, values, "月卡")) {
             return;
         }
         player.sendMessage(plugin.text().prefixed(CARD_COLOR + "月卡" + (days > 1 ? "（補發 " + days + " 天）" : "") + "<gray>：" + CARD_COLOR + "+"
                 + cardCoins + " 月卡幣</#bcd4ff><gray>、" + FASHION_COLOR + "+" + fashion + " 時裝幣</#ff9ad5><gray> 放進倉庫的贊助頁"
+                + (boxes ? "；免費抽獎箱 " + CARD_COLOR + "+" + days + "</#bcd4ff><gray>（現在 " + freeBoxes(player) + " 箱，/sponsor 打開）" : "")
                 + (card[1] - until <= 3 ? "<yellow>（月卡剩 " + Math.max(0, card[1] - today() + 1) + " 天）" : "")));
         if (!login) {
             player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.3f);
@@ -2074,7 +2081,21 @@ public final class SponsorService {
      */
     /** 有月卡的人今天還能不能免費開（2026-10 月卡福利）。 */
     boolean freeBoxReady(final Player player) {
-        return !config.freeBox().isEmpty() && cardDaysLeft(player) > 0 && number(player, FREE_BOX) != today();
+        return !config.freeBox().isEmpty() && freeBoxes(player) > 0;
+    }
+
+    /**
+     * 還能免費開幾箱（2026-10：月卡每一天發一箱，跟月卡幣一起發、沒上線的日子補發；沒開的累積到之後）。
+     * 舊帳號還沒有這個欄位：今天的月卡已經發過、今天還沒免費開過就算 1 箱（跟以前的規則一樣）。
+     */
+    public long freeBoxes(final Player player) {
+        final String raw = value(player, FREE_BOXES);
+        if (raw != null) {
+            return parse(raw);
+        }
+        final long[] card = card(player);
+        final long today = today();
+        return card != null && card[0] <= today && card[2] >= today && card[1] >= today && number(player, FREE_BOX) != today ? 1 : 0;
     }
 
     String openBox(final Player player, final String boxId, final boolean star) {
@@ -2090,11 +2111,8 @@ public final class SponsorService {
             if (!boxId.equals(config.freeBox())) {
                 return "這種箱子沒有每日免費";
             }
-            if (cardDaysLeft(player) <= 0) {
-                return "每日免費開箱是月卡的福利";
-            }
-            if (number(player, FREE_BOX) == today()) {
-                return "今天已經免費開過了，明天再來";
+            if (freeBoxes(player) <= 0) {
+                return cardDaysLeft(player) <= 0 ? "免費開箱是月卡的福利（月卡每天送一箱，沒開的會累積）" : "免費的箱子開完了，明天再送一箱";
             }
         }
         final long price = free ? 0 : star ? box.starPrice() : box.fashionPrice();
@@ -2128,6 +2146,7 @@ public final class SponsorService {
         values.put(PITY + boxId, String.valueOf(won.rarity() == SponsorConfig.Rarity.LEGENDARY ? 0 : pity + 1));
         if (free) {
             values.put(FREE_BOX, String.valueOf(today()));
+            values.put(FREE_BOXES, String.valueOf(Math.max(0, freeBoxes(player) - 1)));
         }
         if (!duplicate) {
             values.put(COSMETIC + won.id(), "1");

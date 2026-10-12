@@ -328,7 +328,13 @@ public final class CombatListener implements Listener {
             attackerBase = plugin.monsters().sheet(attacker, data.get());
             final SkillDamage.Context context = skills.contextFor(defender);
             // Boss 的招式（skill 模組）：傷害倍率、類型照招式；其他都是怪物的普攻
-            skill = context != null && context.attacker() == attacker ? context.profile() : SkillProfile.monsterAttack();
+            final boolean bySkill = context != null && context.attacker() == attacker;
+            if (!bySkill && plugin.maps() != null && plugin.maps().bossSkillsOnly(attacker)) {
+                // 2026-10：終局、極境、巔峰、金庫之主的 Boss 不普攻（只用招式；照 PoE1 的賽勒斯）
+                event.setCancelled(true);
+                return;
+            }
+            skill = bySkill ? context.profile() : SkillProfile.monsterAttack();
             credit = null;
         }
         if (credit != null) {

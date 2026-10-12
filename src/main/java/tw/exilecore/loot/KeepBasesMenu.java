@@ -106,8 +106,19 @@ final class KeepBasesMenu extends Menu {
             }
             list.add(base);
         }
-        list.sort(Comparator.comparing((ItemBase base) -> base.slot().ordinal()).thenComparingInt(ItemBase::dropLevel)
-                .thenComparing(ItemBase::name));
+        // 2026-10：跟商人賭博一樣的排序（VendorService.bases）：欄位 → 同一類（照資料檔的順序）排在一起 →
+        // 沒有固定詞綴的在前 → 傷害種類少的在前 → 暴擊、攻速 → 防禦
+        final java.util.Map<String, Integer> familyOrder = new java.util.HashMap<>();
+        for (final ItemBase base : plugin.items().repository().bases()) {
+            familyOrder.putIfAbsent(base.family(), familyOrder.size());
+        }
+        list.sort(Comparator.comparing((ItemBase base) -> base.slot().ordinal())
+                .thenComparingInt(base -> familyOrder.getOrDefault(base.family(), Integer.MAX_VALUE))
+                .thenComparing(base -> base.implicit() != null)
+                .thenComparingInt(base -> base.damage().size())
+                .thenComparingDouble(ItemBase::crit).thenComparingDouble(ItemBase::aps)
+                .thenComparingDouble(base -> base.armour() + base.evasion() + base.energyShield())
+                .thenComparing(ItemBase::id));
         return list;
     }
 

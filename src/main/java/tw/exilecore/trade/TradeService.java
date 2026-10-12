@@ -322,7 +322,16 @@ public final class TradeService {
         for (final TradeSession.Offer offer : session.other(side).offers) {
             received.add(appraise(offer));
         }
-        return TradeFee.quote(config(), received);
+        final TradeFee.Quote quote = TradeFee.quote(config(), received);
+        if (feeFree(side.player)) {
+            return new TradeFee.Quote(quote.count(), quote.value(), 0); // 2026-10 月卡福利：面對面交易不收手續費
+        }
+        return quote;
+    }
+
+    /** 有月卡：面對面交易不收手續費（2026-10；只免自己那一份，對方沒月卡照付）。 */
+    boolean feeFree(final org.bukkit.entity.Player player) {
+        return player != null && plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0;
     }
 
     private TradeFee.Received appraise(final TradeSession.Offer offer) {

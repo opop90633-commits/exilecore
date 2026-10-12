@@ -354,7 +354,8 @@ public final class LootFilterMenu extends Menu {
         set(SLOT_KEEP_AFFIX_TIER, option(Material.ENCHANTED_BOOK, "保留好詞綴的裝備", keep == 0 ? "關" : "有 T" + keep + " 以上就撿", keep > 0,
                 List.of("<gray>裝備身上只要有一條詞綴是 T1～T" + (keep == 0 ? "幾" : keep) + "（T1 最好），",
                         "<gray>就算被稀有度、等級差、不同類藏起來也照樣撿",
-                        "<dark_gray>未鑑定的也算（過濾器知道它的詞綴）；地圖、珠寶不管",
+                        "<dark_gray>未鑑定的也算；珠寶也算（被珠寶的稀有度藏起來的照樣撿）；地圖、遺時星晶不管",
+                        "<dark_gray>只有一兩階的詞綴（例如 +1 技能等級）不算",
                         keep == 0 ? "<dark_gray>例：開 T2、隱藏魔法裝備 → 有 T1、T2 詞綴的魔法裝備還是會撿" : ""),
                 options(LootFilter.AFFIX_TIERS, keep, value -> value == 0 ? "關" : "T" + value + " 以上")));
         final boolean keepLike = filter.keepAffixLikeMine();

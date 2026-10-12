@@ -68,8 +68,14 @@ public final class PartyCommand {
                                         service.chat(player, StringArgumentType.getString(context, "message"))))))
                 .build();
         final LiteralCommandNode<CommandSourceStack> chat = Commands.literal("p")
-                .executes(context -> run(plugin, context, (service, player) ->
-                        player.sendMessage(plugin.text().prefixed("<gray>用法：<white>/p 訊息<gray>（隊伍聊天）"))))
+                .executes(context -> run(plugin, context, (service, player) -> {
+                    // 2026-10：不帶訊息 = 切換固定的隊伍頻道（之後直接打字都送到隊伍）
+                    if (plugin.chat() != null) {
+                        plugin.chat().toggleChannel(player, tw.exilecore.chat.ChatService.Channel.PARTY);
+                    } else {
+                        player.sendMessage(plugin.text().prefixed("<gray>用法：<white>/p 訊息<gray>（隊伍聊天）"));
+                    }
+                }))
                 .then(Commands.argument("message", StringArgumentType.greedyString())
                         .executes(context -> run(plugin, context, (service, player) ->
                                 service.chat(player, StringArgumentType.getString(context, "message")))))

@@ -21,6 +21,41 @@ final class ChatListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onChat(final AsyncChatEvent event) {
         final String raw = PlainTextComponentSerializer.plainText().serialize(event.message());
+        // 2026-10：固定頻道（/p、/g 不帶訊息切換）：直接打字送到隊伍或公會，不進公開聊天
+        final ChatService.Channel channel = chat.channel(event.getPlayer().getUniqueId());
+        if (channel != ChatService.Channel.ALL) {
+            event.setCancelled(true);
+            final org.bukkit.entity.Player player = event.getPlayer();
+            chat.plugin().getServer().getScheduler().runTask(chat.plugin(), () -> {
+                if (!player.isOnline()) {
+                    return;
+                }
+                if (channel == ChatService.Channel.GUILD) {
+                    if (chat.plugin().guilds() == null || chat.plugin().guilds().guildOf(player.getUniqueId()) == null) {
+                        chat.setChannel(player, ChatService.Channel.ALL);
+                        player.sendMessage(chat.plugin().text().prefixed("<red>你不在公會裡，切回公開頻道了<gray>（剛剛那則沒送出）"));
+                        return;
+                    }
+                    chat.plugin().guilds().chat(player, raw); // 公會頻道自己會檢查髒話、洗頻
+                    return;
+                }
+                if (chat.plugin().party() == null || !chat.plugin().party().inParty(player)) {
+                    chat.setChannel(player, ChatService.Channel.ALL);
+                    player.sendMessage(chat.plugin().text().prefixed("<red>你不在隊伍裡，切回公開頻道了<gray>（剛剛那則沒送出）"));
+                    return;
+                }
+                final ChatModeration.Verdict check = chat.moderation().check(player, raw);
+                if (!check.allowed()) {
+                    player.sendMessage(chat.plugin().text().prefixed("<red>" + tw.exilecore.item.ItemRenderer.escape(check.reason())));
+                    return;
+                }
+                chat.plugin().party().chat(player, check.text());
+            });
+            return;
+        }
+        // 2026-10：不看公開聊天的人（/ch hide）收不到別人的公開聊天
+        event.viewers().removeIf(viewer -> viewer instanceof org.bukkit.entity.Player other
+                && !other.equals(event.getPlayer()) && chat.hidesPublic(other.getUniqueId()));
         // 聊天管理（2026-10）：禁言、洗頻、髒話（換成＊，拆開寫的不送出）
         final ChatModeration.Verdict verdict = chat.moderation().check(event.getPlayer(), raw);
         if (!verdict.allowed()) {

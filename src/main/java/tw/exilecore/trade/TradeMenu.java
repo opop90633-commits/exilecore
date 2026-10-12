@@ -130,12 +130,12 @@ final class TradeMenu extends Menu {
                 rule.percent() <= 0 && rule.min() <= 0 ? "<gray>不收手續費"
                         : String.format(Locale.ROOT, "<gray>手續費：各付自己收到的東西估價的 %s%%（至少 %,d 金幣）",
                         rule.percentText(), rule.min()),
-                "<dark_gray>通貨照市集的價值、裝備照商人的價格估；沒收到東西不用付",
+                "<dark_gray>通貨照市集的價值、裝備照商人的價格估；沒收到東西不用付；有月卡的人免付",
                 "<dark_gray>金幣、收納袋、界伏盒不能交易；離太遠或關掉視窗就取消"));
         set(SLOT_CANCEL, icon(Material.BARRIER, "<red>取消交易"));
         final TradeFee.Quote theirFee = service.fee(session, other);
         final String theirFeeLine = theirFee.nothing() ? "<gray>你沒放東西，對方不用付手續費"
-                : theirFee.fee() <= 0 ? "<gray>對方不用付手續費"
+                : theirFee.fee() <= 0 ? (service.feeFree(other.player) ? "<gray>對方有月卡，不用付手續費" : "<gray>對方不用付手續費")
                 : String.format(Locale.ROOT, "<gray>對方收下你放的東西要付 <#f5b942>%,d 金幣<gray> 手續費", theirFee.fee());
         set(SLOT_THEIRS, other.confirmed
                 ? glowing(icon(Material.LIME_CONCRETE, "<green>" + ItemRenderer.escape(plugin.displayName(other.player)) + " 已經確認", theirFeeLine))
@@ -148,7 +148,7 @@ final class TradeMenu extends Menu {
             return List.of("<gray>你沒有收到東西，不用付手續費");
         }
         if (fee.fee() <= 0) {
-            return List.of("<gray>不用付手續費");
+            return List.of(service.feeFree(player) ? "<#bcd4ff>月卡：<gray>不用付手續費" : "<gray>不用付手續費");
         }
         final EconomyConfig.Fee rule = plugin.economy().config().tradeFee();
         return List.of(

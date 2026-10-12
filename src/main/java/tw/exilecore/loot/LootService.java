@@ -795,12 +795,15 @@ public final class LootService {
     }
 
     /** 這件裝備最好的詞綴是 T 幾（1 = T1；沒有詞綴 0）：掉落過濾的「保留有 T 幾以上詞綴的裝備」看這個（未鑑定的也算）。 */
+    /** 詞綴至少要有幾階，「T 幾」才有意義（掉落過濾的保留好詞綴）。 */
+    static final int MIN_TIERS_FOR_RANK = 3;
+
     private int bestAffixRank(final tw.exilecore.item.ItemData item) {
         int best = 0;
         for (final tw.exilecore.item.RolledAffix rolled : item.affixes()) {
             final tw.exilecore.item.Affix affix = plugin.items().repository().affix(rolled.id());
-            if (affix == null) {
-                continue;
+            if (affix == null || affix.tiers().size() < MIN_TIERS_FOR_RANK) {
+                continue; // 2026-10：只有一兩階的詞綴（技能等級、遺時星晶…）擲到就一定是 T1，不算「好詞綴」，不然幾乎每件都被撿回來
             }
             final int rank = affix.rank(rolled.tier());
             if (best == 0 || rank < best) {

@@ -151,6 +151,32 @@ public final class NpcService {
     private static final String MAP_DEVICE_SKIN = "UTro_";
     /** 商人的皮膚（玩家名稱，2026-10）。 */
     private static final String VENDOR_SKIN = "ss9319622";
+    /** 2026-10：鑑定師的外觀。 */
+    private static final String IDENTIFIER_SKIN = "G22332004";
+    /**
+     * 這個 NPC 指定的皮膚（2026-10）：config.yml 的 npc_skins（功能 NPC 寫種類代號，劇情人物寫 quests.yml 的人物代號；
+     * 沒名字的擺設也可以），沒寫的照程式內建的；都沒有回傳 null（隨機一個原版皮膚）。
+     */
+    private String configuredSkin(final Entity entity, final NpcType type) {
+        final String key = type == NpcType.STORY ? storyId(entity) : type.id();
+        if (key != null) {
+            final String value = plugin.getConfig().getString("npc_skins." + key, "");
+            if (value != null && !value.isBlank()) {
+                return value.trim();
+            }
+        }
+        return switch (type) {
+            case HEIST -> HEIST_SKIN;
+            case MAP_DEVICE -> MAP_DEVICE_SKIN;
+            case VENDOR -> VENDOR_SKIN;
+            case IDENTIFIER -> IDENTIFIER_SKIN;
+            case STORY -> key == null ? null : STORY_SKINS.get(key);
+            default -> null;
+        };
+    }
+
+    /** 2026-10：劇情人物的外觀（quests.yml 的人物代號 → 玩家名稱）。 */
+    private static final java.util.Map<String, String> STORY_SKINS = java.util.Map.of("ming_yi", "Raincoat_OwO");
 
     /** 原版內建的 9 種預設皮膚（textures/entity/player/{wide,slim}/名字.png）。 */
     private static final String[] DEFAULT_SKINS = {"alex", "ari", "efe", "kai", "makena", "noor", "steve", "sunny", "zuri"};
@@ -166,8 +192,7 @@ public final class NpcService {
         final io.papermc.paper.datacomponent.item.ResolvableProfile current = mannequin.getProfile();
         // 2026-10：盜賊首領用玩家 Penguin0c0、地圖裝置用 UTro_、商人用 ss9319622 的皮膚（照名字讓客戶端去抓；換成別的名字改這裡）
         final NpcType npcType = type(entity).orElse(null);
-        final String named = npcType == NpcType.HEIST ? HEIST_SKIN : npcType == NpcType.MAP_DEVICE ? MAP_DEVICE_SKIN
-                : npcType == NpcType.VENDOR ? VENDOR_SKIN : null;
+        final String named = npcType == null ? null : configuredSkin(entity, npcType);
         if (named != null) {
             if (current == null || !named.equals(current.name())) {
                 mannequin.setProfile(io.papermc.paper.datacomponent.item.ResolvableProfile.resolvableProfile().name(named).build());

@@ -246,8 +246,14 @@ public final class GuildCommand {
                                                         LongArgumentType.getLong(context, "amount"), StringArgumentType.getString(context, "guild"))))))))
                 .build();
         final LiteralCommandNode<CommandSourceStack> chat = Commands.literal("g")
-                .executes(context -> run(plugin, context, (service, player) ->
-                        player.sendMessage(plugin.text().prefixed("<gray>用法：<white>/g 訊息<gray>（公會頻道）"))))
+                .executes(context -> run(plugin, context, (service, player) -> {
+                    // 2026-10：不帶訊息 = 切換固定的公會頻道（之後直接打字都送到公會）
+                    if (plugin.chat() != null) {
+                        plugin.chat().toggleChannel(player, tw.exilecore.chat.ChatService.Channel.GUILD);
+                    } else {
+                        player.sendMessage(plugin.text().prefixed("<gray>用法：<white>/g 訊息<gray>（公會頻道）"));
+                    }
+                }))
                 .then(Commands.argument("message", StringArgumentType.greedyString())
                         .executes(context -> run(plugin, context, (service, player) ->
                                 service.chat(player, StringArgumentType.getString(context, "message")))))

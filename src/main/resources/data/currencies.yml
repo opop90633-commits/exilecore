@@ -584,6 +584,17 @@ essence_seeking:
   drop_level: 20
   description: "普通→魔法、魔法→稀有，一定帶「暴擊率」（武器、頭盔、項鍊、箭袋）"
   flavor: "總是落在最痛的地方。"
+essence_ward:
+  name: 能盾星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: es_local, es_flat, armour_es_flat, evasion_es_flat   # 智力防具與法器是純能量護盾；護甲／閃避混能盾的防具給混合的那條；項鍊是全域的
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  drop_level: 10
+  description: "普通→魔法、魔法→稀有，一定帶「+最大能量護盾」（能量護盾類的防具、法器、項鍊）"
+  flavor: "一層還沒散掉的星光，剛好夠擋一下。"
 essence_torment:
   name: 物傷星魄
   material: GLOW_INK_SAC

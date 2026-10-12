@@ -142,13 +142,23 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
         /** 從 Boss 往目標一直線炸過去（地脈追獵）。 */
         LINE,
         /** 圍著目標一圈（星牢：待在圈裡面）。 */
-        CAGE;
+        CAGE,
+        /**
+         * 2026-10（巔峰 Boss，照 PoE 賽勒斯的殞星迷宮）：以 Boss 為中心，count 圈同心的風暴牆（最外圈 reach 格），
+         * 每圈留 gaps 個 gap_angle 度的缺口、各圈的缺口錯開——要從缺口穿過去，不能直線跑。
+         */
+        MAZE,
+        /**
+         * 2026-10（照賽勒斯的風暴走廊）：從 Boss 朝目標的方向，兩排平行的風暴牆（左右各 scatter 格、長 reach 格），
+         * 中間是走廊——跟 beam 一起放（with:），光束在走廊裡掃，只能在走廊裡左右閃。
+         */
+        WALLS;
 
         static Target parse(final String where, final String text) {
             try {
                 return valueOf(text.trim().toUpperCase(Locale.ROOT));
             } catch (final IllegalArgumentException e) {
-                throw new IllegalArgumentException(where + ".at：要寫 self、target、random、spiral、cross、line 或 cage");
+                throw new IllegalArgumentException(where + ".at：要寫 self、target、random、spiral、cross、line、cage、maze 或 walls");
             }
         }
     }

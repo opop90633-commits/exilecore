@@ -3330,7 +3330,7 @@ supports:
 
   herald_infusion:         # Infusion（捷光環效果）
     name: 灌宣
-    description: 掛在捷光環上：捷光環給的效果更強，但多保留一點精魂。
+    description: 掛在捷光環上：捷光環擊殺時觸發的效果（灰燼爆發、雷霆連鎖…）傷害更高，但多保留一點精魂。
     icon: GLOW_INK_SAC
     tier: 2
     requires: [herald]

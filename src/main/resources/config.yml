@@ -42,6 +42,20 @@ links:
   store: ""
   tutorial: "https://drive.google.com/file/d/1NhlPB1UTjmRL-8fXUdklSOpURGw2aJs2/view?usp=drivesdk"
 
+# NPC 的外觀（2026-10）：寫正版玩家名稱，NPC 就換成那個人的皮膚。改完 /ec reload（已經放好的 NPC 會跟著換）。
+# 功能 NPC 寫種類代號：identifier 鑑定師、stash 倉庫管理員、salvage 拆解師、waypoint 傳送師、map_device 地圖裝置、
+#   vendor 商人、market 市集掌櫃、heist 盜賊首領（沒名字的擺設也可以）
+# 劇情人物寫 quests.yml 的人物代號：ming_yi 明夷、ji_heng（沒名字的擺設）…
+# 沒寫的：上面四個用程式內建的，其他隨機一個原版皮膚
+npc_skins:
+  identifier: G22332004
+  map_device: UTro_
+  vendor: ss9319622
+  heist: Penguin0c0
+  ming_yi: Raincoat_OwO
+  stash: Truffle_26
+  ji_heng: winter_Re3
+
 resource-pack:
   # 介面資源包（星盤式的天賦樹、傳奇裝備的專屬外觀）：插件自己產生、透過下面的 web 網頁伺服器提供下載，玩家登入時會被問要不要套用。
   # 不套用的人看到一般的箱子介面，下次登入會再問一次。web 沒開時不會送。

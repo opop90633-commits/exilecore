@@ -116,6 +116,10 @@ public final class MinionService implements Listener, MinionHooks {
         long nextTaunt;
         long nextRebuild;
         boolean idleStopped;
+        /** 卡住偵測（2026-10）：上次檢查的位置、連續幾次該走卻沒動。 */
+        double lastX = Double.NaN;
+        double lastZ = Double.NaN;
+        int stillChecks;
         /** 祭品（2026-10）給的增益與到期的 tick。 */
         List<Modifier> offering = List.of();
         long offeringUntil;
@@ -931,6 +935,7 @@ public final class MinionService implements Listener, MinionHooks {
         }
         if (target == null) {
             idle(minion, owner, now);
+            watchStuck(minion, owner, mob.getLocation().distanceSquared(owner.getLocation()) > FOLLOW_START * FOLLOW_START, now);
             return;
         }
         minion.idleStopped = false;
@@ -945,17 +950,23 @@ public final class MinionService implements Listener, MinionHooks {
         final double reach = minion.spec.isRanged() ? minion.spec.ranged() : minion.spec.reach() + mob.getWidth() / 2;
         final double distance = Math.sqrt(SkillTargets.boxDistanceSquared(mob.getLocation(), target.getBoundingBox()));
         final boolean inReach = distance <= reach && (minion.spec.isRanged() || Math.abs(target.getLocation().getY() - mob.getLocation().getY()) <= 3);
+        final boolean seesTarget = !inReach || mob.hasLineOfSight(target); // 碰得到才看視線（同一 tick 原版有快取）
         if (minion.spec.flying()) {
             fly(mob, SkillTargets.center(target), inReach ? 0.4 : 1.0);
             ((Vex) mob).setCharging(distance <= reach + 3);
-        } else if (!inReach && now >= minion.nextPath) {
+        } else if (now >= minion.nextPath) {
             minion.nextPath = now + 10;
-            mob.getPathfinder().moveTo(target, 1.2);
-        } else if (inReach && now >= minion.nextPath) {
-            minion.nextPath = now + 10;
-            mob.getPathfinder().stopPathfinding();
+            // 碰得到但看不到（隔著柱子）：繼續走過去，不然會站在柱子後面發呆（2026-10）
+            if (!inReach || !seesTarget) {
+                mob.getPathfinder().moveTo(target, 1.2);
+            } else {
+                mob.getPathfinder().stopPathfinding();
+            }
         }
-        if (inReach && now >= minion.nextAttack && mob.hasLineOfSight(target)) {
+        if (!minion.spec.flying()) {
+            watchStuck(minion, owner, !inReach || !seesTarget, now);
+        }
+        if (inReach && now >= minion.nextAttack && seesTarget) {
             minion.nextAttack = now + minion.attackTicks;
             attack(minion, target);
         }
@@ -1093,6 +1104,36 @@ public final class MinionService implements Listener, MinionHooks {
         return Math.max(0.3, speed.getValue() / speed.getBaseValue());
     }
 
+    /**
+     * 召喚物卡住（2026-10）：該走路（離主人太遠、碰不到目標）卻 2 秒沒動——原版 AI 跑回來、跨世界後還沒接上、卡在柱子後面——
+     * 先把原版 AI 再拿掉一次、重新找路；連續 3 秒還是沒動就瞬移回主人身邊。每秒檢查一次。
+     */
+    private void watchStuck(final Minion minion, final Player owner, final boolean wantsToMove, final long now) {
+        if (now % 20 != minion.bornTick % 20 || minion.spec.flying()) {
+            return;
+        }
+        final Location at = minion.mob.getLocation();
+        final double moved = Double.isNaN(minion.lastX) ? Double.MAX_VALUE : Math.hypot(at.getX() - minion.lastX, at.getZ() - minion.lastZ);
+        minion.lastX = at.getX();
+        minion.lastZ = at.getZ();
+        if (!wantsToMove || moved >= 0.3) {
+            minion.stillChecks = 0;
+            return;
+        }
+        minion.stillChecks++;
+        if (minion.stillChecks == 2) {
+            tameGoals(minion.mob);
+            if (!minion.mob.hasAI()) {
+                minion.mob.setAI(true);
+            }
+            minion.idleStopped = false;
+            minion.nextPath = 0;
+        } else if (minion.stillChecks >= 3) {
+            minion.stillChecks = 0;
+            teleportToOwner(minion, owner);
+        }
+    }
+
     private void teleportToOwner(final Minion minion, final Player owner) {
         final Vector facing = SkillTargets.facing(owner);
         Location spot = ground(owner.getLocation().subtract(facing.multiply(1.5)));
@@ -1108,7 +1149,19 @@ public final class MinionService implements Listener, MinionHooks {
         minion.nextPath = 0;
         if (crossWorld) {
             tameGoals(minion.mob); // 跨世界是新的實體：原版 AI 要再拿掉
+            // 2026-10：剛進地圖時區塊還在載入，原版 AI 可能晚一點才接上（召喚物站在原地發呆）：半秒後再拿掉一次、重新找路
+            final Mob mob = minion.mob;
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (mob.isValid()) {
+                    tameGoals(mob);
+                    minion.idleStopped = false;
+                    minion.nextPath = 0;
+                    minion.stillChecks = 0;
+                }
+            }, 10L);
         }
+        minion.idleStopped = false;
+        minion.lastX = Double.NaN;
         visuals.minionBlink(spot);
     }
 

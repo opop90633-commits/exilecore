@@ -490,7 +490,8 @@ public final class LootFilter {
             if (timeLost != null) {
                 return hidesTimeLost(timeLost, candidate.rarity()); // 2026-10：遺時星晶有自己的設定（種類、稀有度）
             }
-            return hidesJewel(candidate.rarity()); // 2026-10：珠寶也能過濾（傳奇珠寶永遠撿）
+            // 2026-10：珠寶也能過濾（傳奇珠寶永遠撿）；被藏起來的珠寶有夠好的詞綴（保留好詞綴）照樣撿
+            return hidesJewel(candidate.rarity()) && !keptByAffixTier(candidate);
         }
         if (candidate.rarity() == Rarity.UNIQUE) {
             return false;

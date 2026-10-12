@@ -640,6 +640,7 @@ ESSENCES = {  # 代號: (外框, 暗, 中, 亮, 高光)
     'essence_infinite': ('2a2a2a', '6a6a7a', 'a8a8c0', 'e0e0f0', 'ffffff'),
     'essence_seeking':  ('2a0a2a', '7a1a6a', 'c83aa8', 'ff8ae0', 'ffe6f8'),
     'essence_torment':  ('100808', '3a1414', '6a2020', 'a04a4a', 'e08a8a'),
+    'essence_ward':     ('0a2030', '2a6a8a', '6ab8d8', 'b8f0ff', 'ffffff'),   # 2026-10 能盾星魄：淡青的護盾光
 }
 CATALYST = [  # 圓底燒瓶
     '................',
@@ -792,6 +793,11 @@ EXTRA = {
     # 開服活動的素材（2026-10）
     'event_swarm_shard': (ESSENCE, ('0a2a2a', '1a6a6a', '2ab0a0', '7ae8d8', 'e0fff8')),
     'event_titan_core':  (RUNE,    ('2a1a04', '7a4a10', 'd09020', 'ffd060', 'fff4c0', 'ffffff')),
+    # 巔峰（萬界之巔）的入場碎片（2026-10）：四塊碎星，顏色照掉落的終局 Boss
+    'fragment_crucible': (SHARD, ('3a1404', 'a8400a', 'f08a1a', 'ffd060', 'fff4c0')),   # 曜帝熔爐：金橘
+    'fragment_frost':    (SHARD, ('0a2a3a', '2a7aa0', '5fc8f0', 'b0ecff', 'f6fdff')),   # 永凍王座：冰藍
+    'fragment_bone':     (SHARD, ('1a1a14', '6a6450', 'b8b08a', 'e8e2c8', 'ffffff')),   # 冥河渡口：骨白
+    'fragment_ember':    (SHARD, ('2a0606', '7a1414', 'c8301a', 'ff7a3a', 'ffd0a0')),   # 餘燼堡壘：暗紅
 }
 
 

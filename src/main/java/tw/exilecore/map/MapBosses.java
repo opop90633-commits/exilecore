@@ -457,16 +457,23 @@ final class MapBosses {
         final long now = plugin.getServer().getCurrentTick();
         instance.startShield(shield, now + Math.round(shield.duration() * 20));
         boss.setInvulnerable(true);
-        final Location center = center(instance);
+        Location center = center(instance);
+        double ring = CRYSTAL_RING;
+        // 2026-10：場地正在收縮（巔峰的萬界崩解）：結晶放在收縮圈裡面（以圈的中心為準、離圈邊至少 1.5 格），不然打不到
+        final double[] arena = plugin.skills() == null ? null : plugin.skills().bossSkills().arenaBounds(boss.getUniqueId());
+        if (arena != null) {
+            center = new Location(boss.getWorld(), arena[0], center.getY(), arena[1]);
+            ring = Math.max(1.5, Math.min(CRYSTAL_RING, arena[2] - 1.5));
+        }
         final double offset = service.random().nextDouble() * Math.PI * 2;
         // 結晶只吃一部分的階級倍率（maps.yml 的 settings.shield_tier_share，預設一半）
         final double tierLife = service.config().shieldLifeMultiplier(tierLife(instance));
         for (int i = 0; i < shield.count(); i++) {
             final double angle = offset + Math.PI * 2 * i / shield.count();
-            final Location spot = center.clone().add(Math.cos(angle) * CRYSTAL_RING, 0.3, Math.sin(angle) * CRYSTAL_RING);
+            final Location spot = center.clone().add(Math.cos(angle) * ring, 0.3, Math.sin(angle) * ring);
             if (!instance.layout().isFloor(spot.getBlockX() - instance.originX(), spot.getBlockZ() - instance.originZ())) {
-                spot.setX(center.getX() + Math.cos(angle) * 3);
-                spot.setZ(center.getZ() + Math.sin(angle) * 3);
+                spot.setX(center.getX() + Math.cos(angle) * Math.min(3, ring));
+                spot.setZ(center.getZ() + Math.sin(angle) * Math.min(3, ring));
             }
             final LivingEntity crystal = service.spawner().spawnVanilla(shield.type(), spot, created -> {
                 service.tag(created, instance, false);

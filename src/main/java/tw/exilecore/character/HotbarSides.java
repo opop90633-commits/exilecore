@@ -16,6 +16,8 @@ final class HotbarSides {
     private static final int LEFT_EDGE = 124;
     /** 右邊那段的左緣：快捷欄右緣（91）再空一點（攻擊冷卻的指示在快捷欄旁邊時也不會疊到太多）。 */
     private static final int RIGHT_START = 97;
+    /** 撿到東西的角落提示的左緣（2026-10）：比召喚物那排再往右 10 格，不壓到快捷欄最右邊那格。 */
+    private static final int LOOT_START = RIGHT_START + 10;
     /** 光環最多寫幾個名字（其他的寫 +N）。 */
     private static final int MAX_AURAS = 4;
     private static final String COLOR = "#8fd3ff";
@@ -45,9 +47,9 @@ final class HotbarSides {
             final boolean faded = entry.until() - now <= LootFeed.FADE_TICKS;
             final int width = tw.exilecore.web.LootHud.cardWidth(text);
             out.append("<font:").append(tw.exilecore.web.LootHud.font(startRow + i)).append(">")
-                    .append(tw.exilecore.web.LootHud.shift(RIGHT_START - half))
+                    .append(tw.exilecore.web.LootHud.shift(LOOT_START - half))
                     .append(tw.exilecore.web.LootHud.card(entry.color(), entry.icon(), text, faded))
-                    .append(tw.exilecore.web.LootHud.shift(half - RIGHT_START - width))
+                    .append(tw.exilecore.web.LootHud.shift(half - LOOT_START - width))
                     .append("</font>");
         }
         return out.toString();

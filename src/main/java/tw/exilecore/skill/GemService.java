@@ -270,6 +270,7 @@ public final class GemService {
                     io.papermc.paper.datacomponent.item.CustomModelData.customModelData()
                             .addString(tw.exilecore.currency.CurrencyArt.modelKey(art)).build());
         }
+        ItemRenderer.nativeText(stack); // 2026-10 效能：說明存成原版的文字元件
         return stack;
     }
 

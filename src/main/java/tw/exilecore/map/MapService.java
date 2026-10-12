@@ -42,6 +42,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -375,6 +376,18 @@ public final class MapService {
         final Player player = plugin.getServer().getPlayer(source);
         final double record = player == null || plugin.training() == null ? 0 : plugin.training().bossDps(player);
         return dpsCap.apply(DpsCap.key(instance.id(), source), amount, cap, over, plugin.getServer().getCurrentTick(), record);
+    }
+
+    /**
+     * 這隻 Boss 不普攻（2026-10）：終局、極境、巔峰、金庫之主只用招式（照 PoE1 的賽勒斯——祂從不揮手，
+     * 全部靠光束、殞星、風暴）；原版的近戰、射箭整場都擋掉。護盾結晶、小怪不算。
+     */
+    public boolean bossSkillsOnly(final LivingEntity entity) {
+        if (!entity.getPersistentDataContainer().has(bossKey())) {
+            return false;
+        }
+        final MapInstance instance = instanceOf(entity);
+        return instance != null && instance.usesAttempts();
     }
 
     /** 正在打地圖 Boss（2026-10，掛機偵測用）：人在自己的地圖裡、Boss 還活著、離 Boss 48 格內。 */
@@ -1314,6 +1327,101 @@ public final class MapService {
         }
         if (ticks % 40 == 20) {
             guarded("跑出去的怪", this::recallEscaped);
+        }
+        if (ticks % 20 == 10) {
+            guarded("卡住的怪", this::unstick);
+        }
+    }
+
+    /** 卡住偵測（2026-10）：每隻追著玩家的地圖怪上次檢查時的位置與連續卡住的次數。 */
+    private final Map<UUID, double[]> stuck = new HashMap<>();
+
+    /**
+     * 卡在柱子、道具後面的怪（2026-10）：追著玩家、離玩家 3 格以上，1 秒內幾乎沒動，而且看不到玩家（或是近戰怪）——
+     * 第一次重新找路；連續第二次往側面挪一步（找得到地板的那一邊）再找路。Boss、護盾結晶、放招中、凍結中的不管。
+     */
+    private void unstick() {
+        final World maps = world();
+        if (maps == null || instances.isEmpty()) {
+            stuck.clear();
+            return;
+        }
+        final Set<UUID> seen = new HashSet<>();
+        for (final org.bukkit.entity.Mob mob : maps.getEntitiesByClass(org.bukkit.entity.Mob.class)) {
+            if (!mob.isValid() || mob.isDead() || !(mob.getTarget() instanceof Player target) || !target.getWorld().equals(maps)) {
+                continue;
+            }
+            if (mob.getPersistentDataContainer().has(bossKey()) || !mob.hasAI()) {
+                continue;
+            }
+            final MapInstance instance = instanceOf(mob);
+            if (instance == null || instance.shieldCrystals().contains(mob.getUniqueId())) {
+                continue;
+            }
+            if (plugin.skills() != null && plugin.skills().bossSkills().casting(mob.getUniqueId())) {
+                continue;
+            }
+            if (plugin.ailments() != null && plugin.ailments().isIncapacitated(mob)) {
+                continue;
+            }
+            final Location at = mob.getLocation();
+            final double distance = at.distance(target.getLocation());
+            if (distance <= 3 || distance > 40) {
+                continue;
+            }
+            seen.add(mob.getUniqueId());
+            final double[] last = stuck.get(mob.getUniqueId());
+            if (last == null) {
+                stuck.put(mob.getUniqueId(), new double[] {at.getX(), at.getZ(), 0});
+                continue;
+            }
+            final double moved = Math.hypot(at.getX() - last[0], at.getZ() - last[1]);
+            last[0] = at.getX();
+            last[1] = at.getZ();
+            final boolean blocked = !mob.hasLineOfSight(target) || !(mob instanceof com.destroystokyo.paper.entity.RangedEntity);
+            if (moved >= 0.4 || !blocked) {
+                last[2] = 0;
+                continue;
+            }
+            last[2]++;
+            if (last[2] >= 2) {
+                sidestep(instance, mob, target);
+                last[2] = 0;
+            }
+            mob.getPathfinder().moveTo(target, 1.2);
+        }
+        stuck.keySet().retainAll(seen);
+    }
+
+    /** 往側面（左右，找不到再往後）挪 1.5 格：要是地圖裡的地板、身體兩格是空的。 */
+    private void sidestep(final MapInstance instance, final org.bukkit.entity.Mob mob, final Player target) {
+        final Location at = mob.getLocation();
+        final org.bukkit.util.Vector toward = target.getLocation().toVector().subtract(at.toVector()).setY(0);
+        if (toward.lengthSquared() < 1e-6) {
+            return;
+        }
+        toward.normalize();
+        final org.bukkit.util.Vector side = new org.bukkit.util.Vector(-toward.getZ(), 0, toward.getX());
+        final boolean leftFirst = random().nextBoolean();
+        final org.bukkit.util.Vector[] tries = {
+                side.clone().multiply(leftFirst ? 1.5 : -1.5), side.clone().multiply(leftFirst ? -1.5 : 1.5),
+                side.clone().multiply(leftFirst ? 1.2 : -1.2).add(toward.clone().multiply(-1.0)),
+                side.clone().multiply(leftFirst ? -1.2 : 1.2).add(toward.clone().multiply(-1.0)),
+        };
+        for (final org.bukkit.util.Vector step : tries) {
+            final Location spot = at.clone().add(step);
+            spot.setY(MapLayout.FLOOR_Y + 1);
+            if (!instance.layout().isFloor(spot.getBlockX() - instance.originX(), spot.getBlockZ() - instance.originZ())) {
+                continue;
+            }
+            if (!spot.getBlock().isPassable() || !spot.clone().add(0, 1, 0).getBlock().isPassable()
+                    || spot.clone().add(0, -1, 0).getBlock().isPassable()) {
+                continue;
+            }
+            spot.setYaw(at.getYaw());
+            spot.setPitch(at.getPitch());
+            mob.teleport(spot);
+            return;
         }
     }
 

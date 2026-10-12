@@ -140,6 +140,7 @@ public final class CurrencyService {
             meta.getPersistentDataContainer().set(currencyKey, PersistentDataType.STRING, type.id());
         });
         tag(stack, type);
+        ItemRenderer.nativeText(stack); // 2026-10 效能：說明存成原版的文字元件
         return stack;
     }
 

@@ -91,6 +91,21 @@ public final class ChatModule implements Module {
                             .executes(context -> reply(plugin, context, StringArgumentType.getString(context, "訊息"))))
                     .build());
         }
+        // 2026-10：聊天頻道：/ch all｜party｜guild 固定頻道、/ch hide 不看公開聊天
+        for (final String label : List.of("ch", "channel")) {
+            nodes.add(Commands.literal(label)
+                    .executes(context -> channelInfo(plugin, context))
+                    .then(Commands.literal("all").executes(context -> channel(plugin, context, ChatService.Channel.ALL)))
+                    .then(Commands.literal("party").executes(context -> channel(plugin, context, ChatService.Channel.PARTY)))
+                    .then(Commands.literal("guild").executes(context -> channel(plugin, context, ChatService.Channel.GUILD)))
+                    .then(Commands.literal("hide").executes(context -> {
+                        if (context.getSource().getSender() instanceof org.bukkit.entity.Player player && plugin.chat() != null) {
+                            plugin.chat().toggleHidePublic(player);
+                        }
+                        return 1;
+                    }))
+                    .build());
+        }
         nodes.add(Commands.literal("report")
                 .executes(context -> usage(plugin, context, "<gray>用法：<white>/report 玩家 原因<gray>（例如：/report 某某 聊天辱罵）"))
                 .then(Commands.argument("玩家與原因", StringArgumentType.greedyString())
@@ -112,6 +127,26 @@ public final class ChatModule implements Module {
                         .executes(context -> unmute(plugin, context, StringArgumentType.getString(context, "玩家"))))
                 .build());
         return nodes;
+    }
+
+    private static int channel(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final ChatService.Channel channel) {
+        if (context.getSource().getSender() instanceof org.bukkit.entity.Player player && plugin.chat() != null) {
+            plugin.chat().setChannel(player, channel);
+        }
+        return 1;
+    }
+
+    private static int channelInfo(final ExileCore plugin, final CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getSender() instanceof org.bukkit.entity.Player player) || plugin.chat() == null) {
+            return 1;
+        }
+        final ChatService chat = plugin.chat();
+        player.sendMessage(plugin.text().prefixed("<gray>現在的聊天頻道：<white>" + chat.channel(player.getUniqueId()).displayName()
+                + (chat.hidesPublic(player.getUniqueId()) ? "<gray>（不看公開聊天）" : "")));
+        player.sendMessage(plugin.text().parse("<gray>  /ch all<dark_gray>｜</dark_gray>/ch party<dark_gray>｜</dark_gray>/ch guild<gray>：直接打字送到公開、隊伍、公會"));
+        player.sendMessage(plugin.text().parse("<gray>  /p<dark_gray>、</dark_gray>/g<gray> 不帶訊息也可以切換；/p 訊息、/g 訊息 只送這一則"));
+        player.sendMessage(plugin.text().parse("<gray>  /ch hide<gray>：不看公開聊天（只看隊伍、公會、私訊與系統訊息），再打一次恢復"));
+        return 1;
     }
 
     private static int usage(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final String text) {

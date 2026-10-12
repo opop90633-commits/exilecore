@@ -12,6 +12,7 @@
 # 招式的欄位（沒寫的用預設）：
 #   kind      slam 延遲落下（地上先畫圈再炸）、nova 以 Boss 為中心一圈、cone 前方扇形、volley 齊射魔法彈、
 #             zone 留一塊會一直傷害的地面、charge 衝鋒、summon 召喚小怪、curse 詛咒（受到的傷害增加）、blink 閃現到目標背後
+#   at 還可以寫 maze（count 圈同心的風暴牆、每圈 gaps 個 gap_angle 度的缺口、最外圈 reach 格）、walls（朝目標兩排平行的牆，左右各 scatter 格、長 reach 格）
 #   damage    「這隻 Boss 普通一下的幾倍」（跟 Boss 的等級、稀有度、maps.yml 的 damage 倍率一起長）
 #   type      physical／fire／cold／lightning／chaos：物理轉成這個類型，吃玩家的對應抗性
 #   cooldown  冷卻（秒）   range 目標在幾格內才會用   telegraph 前搖（秒，Boss 站著蓄力、地上畫紅色警告；
@@ -657,22 +658,60 @@ skills:
     interval: 0.3
     shout: "「死。」"
   awakener_storm_maze:
-    name: 風暴迷宮
-    hint: "場上會留一堆風暴：記住空位，別站進去"
+    name: 殞星迷宮
+    hint: "兩圈風暴牆圍著祂：找缺口穿過去，別直線跑"
     kind: zone
     damage: 0.55
     type: chaos
-    cooldown: 18
+    cooldown: 20
     range: 36
-    telegraph: 1.0
+    telegraph: 1.2
     radius: 2.5
     duration: 18
     interval: 0.6
-    count: 8
-    scatter: 13
-    at: random
+    count: 2            # 2026-10（照 PoE1 賽勒斯的殞星迷宮）：at: maze 時 count 是幾圈牆
+    reach: 13           # 最外圈離祂幾格
+    gaps: 2             # 每圈幾個缺口（各圈錯開）
+    gap_angle: 55
+    at: maze
     slow: 1
     shout: "「風暴，起。」"
+  awakener_shift:
+    name: 虛移
+    kind: blink          # 2026-10：賽勒斯不走路——不帶傷害的瞬移，常常換位置、拉開距離
+    damage: 0
+    type: lightning
+    cooldown: 9
+    range: 40
+    telegraph: 0.4
+    radius: 1.5
+  awakener_great_meteor:
+    name: 滅世殞星
+    hint: "一顆很大的殞星：看到紅圈就往外跑"
+    kind: slam
+    damage: 3.6
+    type: fire
+    cooldown: 26
+    range: 30
+    telegraph: 1.0
+    delay: 2.2
+    radius: 6.5
+    count: 1
+    at: target
+    shout: "「跪下。」"
+  awakener_corridor_walls:
+    name: 風暴走廊
+    kind: zone           # 跟 awakener_corridor 一起放（maps.yml 的 with:）：走廊兩邊的風暴牆
+    damage: 0.55
+    type: chaos
+    telegraph: 1.4
+    radius: 1.8
+    duration: 7
+    interval: 0.6
+    reach: 30
+    scatter: 4.5        # 走廊左右各幾格
+    at: walls
+    slow: 1
   awakener_meteor:
     name: 殞星
     kind: slam
@@ -687,7 +726,7 @@ skills:
     stagger: 0.5
     scatter: 5
     at: target
-    shout: "「接住。」"
+    shout: "「死亡……在等你。」"
   awakener_blink_slash:
     name: 瞬閃斬
     kind: blink
@@ -712,7 +751,7 @@ skills:
     delay: 1.0
     reach: 28
     width: 1.0
-    shout: "「哪一個才是我？」"
+    shout: "「只有一個……是真的。」"
   awakener_storm_chasers:
     name: 風暴追擊
     kind: orbs
@@ -726,21 +765,21 @@ skills:
     duration: 8
     size: 0.8
     explode: 2.5
-    shout: "「跑啊。」"
+    shout: "「想要追逐的快感嗎？」"
   awakener_corridor:
     name: 風暴走廊
-    hint: "前後兩道光束：站到祂的側面"
-    kind: beam
+    hint: "兩邊是風暴牆、光束在走廊裡掃：在走廊裡左右閃"
+    kind: beam           # 2026-10（照 PoE1 賽勒斯）：走廊牆（awakener_corridor_walls）一起落，一道光束在走廊裡來回掃
     damage: 1.4
     type: lightning
-    cooldown: 20
+    cooldown: 22
     range: 16
     telegraph: 1.4
-    count: 2
-    angle: 45
-    length: 36
+    count: 1
+    angle: 40
+    length: 32
     width: 1.0
-    duration: 3
+    duration: 3.5
     interval: 0.3
     shout: "「無路可走。」"
   awakener_apocalypse:
@@ -755,7 +794,7 @@ skills:
     count: 2
     safe: 2.5
     scatter: 12
-    shout: "「感受吧——死亡的戰慄。」"
+    shout: "「感受吧——虛空的戰慄。」"
   awakener_collapse:
     name: 萬界崩解
     hint: "風暴把場地吃掉：往中間靠，留在圈裡"
@@ -769,7 +808,7 @@ skills:
     radius: 8
     duration: 20
     interval: 0.5
-    shout: "「這個世界，正在碎。」"
+    shout: "「傲慢。」"
   awakener_quad_beam:
     name: 四方死光
     hint: "四道光束一起轉：待在兩道之間，跟著轉"

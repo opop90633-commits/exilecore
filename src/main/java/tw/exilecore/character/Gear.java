@@ -44,8 +44,19 @@ public final class Gear {
     public static final String PROGRESS_MIGRATED = "gear.panel";
 
     private static final NamespacedKey DISPLAY_KEY = Objects.requireNonNull(NamespacedKey.fromString("exilecore:gear_display"));
+    /** 2026-10 效能：顯示用複本的編號（格子裡的還是不是上次放的那個，看這個就好，不用整個比對說明文字）。 */
+    private static final NamespacedKey STAMP_KEY = Objects.requireNonNull(NamespacedKey.fromString("exilecore:gear_stamp"));
+    /** 同一件裝備、同一個技能，顯示用的複本最多多久重做一次（技能圖示的數值照這個頻率更新）。 */
+    private static final long REBUILD_TICKS = 100;
 
     private final ExileCore plugin;
+    /** 每個玩家每一格上次放的顯示用複本（2026-10 效能：以前每秒每格都重做說明、再整個比對，人多時很重）。 */
+    private final Map<java.util.UUID, Shown[]> shown = new java.util.HashMap<>();
+    private int nextStamp = 1;
+
+    /** 一格上次放的東西：來源（裝備本身或技能的簽名）、編號、複本、什麼時候做的。 */
+    private record Shown(Object source, int stamp, ItemStack want, long built) {
+    }
 
     Gear(final ExileCore plugin) {
         this.plugin = plugin;
@@ -69,10 +80,71 @@ public final class Gear {
 
     /** 是不是顯示用的複本。 */
     public static boolean isDisplay(final ItemStack stack) {
-        if (stack == null || stack.isEmpty() || !stack.hasItemMeta()) {
+        if (stack == null || stack.isEmpty()) {
             return false;
         }
-        return stack.getItemMeta().getPersistentDataContainer().has(DISPLAY_KEY, PersistentDataType.BYTE);
+        return stack.getPersistentDataContainer().has(DISPLAY_KEY, PersistentDataType.BYTE); // 2026-10：唯讀的檢視，不複製整個 meta
+    }
+
+    private static int stampOf(final ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return 0;
+        }
+        final Integer value = stack.getPersistentDataContainer().get(STAMP_KEY, PersistentDataType.INTEGER);
+        return value == null ? 0 : value;
+    }
+
+    private static ItemStack withStamp(final ItemStack stack, final int stamp) {
+        final ItemStack copy = stack.clone();
+        copy.editPersistentDataContainer(data -> data.set(STAMP_KEY, PersistentDataType.INTEGER, stamp));
+        return copy;
+    }
+
+    /** 下線、換角色：記的顯示用複本清掉。 */
+    public void forget(final java.util.UUID player) {
+        shown.remove(player);
+    }
+
+    /**
+     * 放顯示用的複本（2026-10 效能）：來源沒變、做好還不到 {@link #REBUILD_TICKS}：格子裡還是那個（編號一樣）就什麼都不做，
+     * 被換掉了就放回記著的那個；要重做的時候，做出來跟格子裡的一樣就沿用舊的編號（不重放，手上的東西不會閃一下）。
+     *
+     * @param build 做新的複本（null = 這格應該是空的）
+     */
+    private void place(final Player player, final int slot, final Object source, final java.util.function.Supplier<ItemStack> build) {
+        final PlayerInventory inventory = player.getInventory();
+        final Shown[] mine = shown.computeIfAbsent(player.getUniqueId(), key -> new Shown[41]);
+        final Shown last = mine[slot];
+        final long now = plugin.getServer().getCurrentTick();
+        final ItemStack current = inventory.getItem(slot);
+        if (last != null && last.source() == source && now - last.built() < REBUILD_TICKS) {
+            if (last.want() == null) {
+                if (current != null && !current.isEmpty()) {
+                    inventory.setItem(slot, null);
+                }
+            } else if (stampOf(current) != last.stamp()) {
+                inventory.setItem(slot, last.want());
+            }
+            return;
+        }
+        final ItemStack want = build.get();
+        if (want == null) {
+            mine[slot] = new Shown(source, 0, null, now);
+            if (current != null && !current.isEmpty()) {
+                inventory.setItem(slot, null);
+            }
+            return;
+        }
+        final int oldStamp = stampOf(current);
+        if (oldStamp != 0 && current.isSimilar(withStamp(want, oldStamp))) {
+            mine[slot] = new Shown(source, oldStamp, current.clone(), now); // 一樣：不重放
+            return;
+        }
+        final int stamp = nextStamp++;
+        final ItemStack stamped = withStamp(want, stamp);
+        ItemRenderer.nativeText(stamped); // 原版每 tick 比對這一格：存成原版的文字元件比對才便宜
+        mine[slot] = new Shown(source, stamp, stamped, now);
+        inventory.setItem(slot, stamped);
     }
 
     /** 主手的武器（裝備欄）；沒有是 null。 */
@@ -147,6 +219,9 @@ public final class Gear {
      * @return 裝備欄有沒有變（要重算屬性）
      */
     public boolean sync(final Player player) {
+        if (shown.size() > plugin.getServer().getOnlinePlayers().size() + 16) {
+            shown.keySet().removeIf(uuid -> plugin.getServer().getPlayer(uuid) == null); // 下線的人記的複本清掉
+        }
         final PlayerState state = plugin.players().get(player);
         if (!state.isLoaded() || !state.hasCharacter()) {
             return false;
@@ -210,7 +285,11 @@ public final class Gear {
     }
 
     private void show(final Player player, final int slot, final ItemStack real, final boolean hand, final ItemSlot itemSlot) {
-        final PlayerInventory inventory = player.getInventory();
+        place(player, slot, real, () -> buildShown(player, real, hand, itemSlot));
+    }
+
+    /** 這一格該放的顯示用複本（null = 空的）。 */
+    private ItemStack buildShown(final Player player, final ItemStack real, final boolean hand, final ItemSlot itemSlot) {
         ItemStack want = real == null ? (hand ? unarmed() : null) : display(real);
         if (real == null && itemSlot == ItemSlot.HEAD && plugin.sponsors() != null) {
             // 2026-10：頭飾（3D 幻化）沒戴頭盔也顯示
@@ -227,16 +306,7 @@ public final class Gear {
                 want = want.withType(Material.LEATHER);
             }
         }
-        final ItemStack current = inventory.getItem(slot);
-        if (want == null) {
-            if (current != null && !current.isEmpty()) {
-                inventory.setItem(slot, null);
-            }
-            return;
-        }
-        if (current == null || !current.isSimilar(want)) {
-            inventory.setItem(slot, want);
-        }
+        return want;
     }
 
     /**
@@ -342,10 +412,10 @@ public final class Gear {
     private void showSkills(final Player player, final PlayerState state) {
         final PlayerInventory inventory = player.getInventory();
         for (int slot = FIRST_SKILL_SLOT; slot <= LAST_SKILL_SLOT; slot++) {
-            final ItemStack want = icon(player, slot);
+            final int at = slot;
             final ItemStack current = inventory.getItem(slot);
             if (current != null && !current.isEmpty() && !isDisplay(current)) {
-                inventory.setItem(slot, want); // 先放圖示，放回背包時才不會又放回這一格
+                inventory.setItem(slot, icon(player, slot)); // 先放圖示，放回背包時才不會又放回這一格
                 final int stash = PlayerState.HOTBAR_STASH + slot - FIRST_SKILL_SLOT;
                 if (state.jewellery(stash) == null) {
                     state.setJewellery(stash, current);
@@ -355,10 +425,16 @@ public final class Gear {
                 plugin.players().markDirty(player);
                 continue;
             }
-            if (current == null || !current.isSimilar(want)) {
-                inventory.setItem(slot, want);
-            }
+            place(player, slot, skillSource(player, state, slot), () -> icon(player, at));
         }
+    }
+
+    /** 技能圖示的來源簽名：綁的是哪個技能、幾級、掛什麼輔助（變了就馬上重做；沒變的話每 5 秒更新一次數值）。 */
+    private static String skillSource(final Player player, final PlayerState state, final int slot) {
+        final SkillLoadout loadout = state.skills();
+        final int position = loadout.bound(SkillLoadout.hotbarBind(slot + 1));
+        final SkillLoadout.Entry entry = loadout.skill(position);
+        return (entry == null ? "-" : entry.skillId() + "@" + entry.level() + ":" + entry.encodeSupports()).intern();
     }
 
     /** 不在戰鬥區域：技能圖示拿掉，收起來的東西放回原本那一格（那一格被別的東西佔了就放回背包別的地方）。 */

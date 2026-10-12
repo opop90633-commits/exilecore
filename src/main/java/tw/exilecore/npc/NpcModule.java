@@ -30,6 +30,19 @@ public final class NpcModule implements Module {
         }
     }
 
+    /** /ec reload：照 config.yml 的 npc_skins 重新套皮膚（2026-10）。 */
+    @Override
+    public void reload() {
+        if (service == null) {
+            return;
+        }
+        for (final org.bukkit.World world : plugin.getServer().getWorlds()) {
+            for (final org.bukkit.entity.Mannequin mannequin : world.getEntitiesByClass(org.bukkit.entity.Mannequin.class)) {
+                service.ensureSkin(mannequin);
+            }
+        }
+    }
+
     @Override
     public void disable() {
     }

@@ -150,6 +150,27 @@ public final class ItemRenderer {
         if (base.isFlaskLike() && flaskDecorator != null) {
             flaskDecorator.accept(stack, data); // 2026-10：藥劑、護符自己的說明、充能、顏色
         }
+        nativeText(stack);
+    }
+
+    /**
+     * 2026-10 效能：名稱與說明換成原版自己的文字元件。
+     * <p>
+     * 用 API 設定的說明（meta.lore）存在物品上是「包著 Adventure 的元件」，原版每 tick 比對背包有沒有變的時候
+     * （AbstractContainerMenu.broadcastChanges → ItemLore.equals）每一行都要重新轉換一次，背包裡東西一多就很重
+     * （spark：佔伺服器主執行緒 8%）。存成位元組再讀回來就是原版的元件，比對很便宜；只在物品做好、重畫的時候做一次。
+     */
+    public static void nativeText(final ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        try {
+            final ItemStack decoded = ItemStack.deserializeBytes(stack.serializeAsBytes());
+            stack.copyDataFrom(decoded, type -> type == DataComponentTypes.LORE || type == DataComponentTypes.CUSTOM_NAME
+                    || type == DataComponentTypes.ITEM_NAME);
+        } catch (final RuntimeException | LinkageError ignored) {
+            // 轉不了就照舊（只是比較慢；單元測試沒有伺服器）
+        }
     }
 
     /** 藥劑、護符：只畫詞綴那一段（前面的說明由 FlaskService 補）。 */

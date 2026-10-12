@@ -53,6 +53,65 @@ public final class ChatService {
     /** 剛送出的公開聊天貼的物品（Discord 同步拿去顯示；拿一次就清掉）。 */
     private final Map<UUID, List<ItemStack>> linked = new ConcurrentHashMap<>();
 
+    // ---- 固定頻道與聊天分類（2026-10） ----
+
+    /** 直接打字（不打指令）時送到哪個頻道。 */
+    public enum Channel {
+        ALL("公開"), PARTY("隊伍"), GUILD("公會");
+
+        private final String displayName;
+
+        Channel(final String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String displayName() {
+            return displayName;
+        }
+    }
+
+    /** 固定頻道（沒有 = 公開）。聊天事件是非同步的，用 ConcurrentHashMap。 */
+    private final Map<UUID, Channel> sticky = new ConcurrentHashMap<>();
+    /** 不看公開聊天的人（只看隊伍、公會、私訊與系統訊息）。 */
+    private final Set<UUID> hidePublic = ConcurrentHashMap.newKeySet();
+
+    public Channel channel(final UUID player) {
+        return sticky.getOrDefault(player, Channel.ALL);
+    }
+
+    /** 設定固定頻道並告訴玩家。 */
+    public void setChannel(final Player player, final Channel channel) {
+        if (channel == Channel.ALL) {
+            sticky.remove(player.getUniqueId());
+        } else {
+            sticky.put(player.getUniqueId(), channel);
+        }
+        player.sendMessage(plugin.text().prefixed(channel == Channel.ALL
+                ? "<gray>聊天頻道：<white>公開</white>（直接打字大家都看得到）"
+                : "<#7fd4ff>聊天頻道：<white>" + channel.displayName() + "</white><gray>——之後直接打字都送到" + channel.displayName()
+                + "（/ch all 或再打一次 " + (channel == Channel.PARTY ? "/p" : "/g") + " 切回公開）"));
+    }
+
+    /** /p、/g 不帶訊息：切換固定頻道（已經是這個頻道就切回公開）。 */
+    public void toggleChannel(final Player player, final Channel channel) {
+        setChannel(player, channel(player.getUniqueId()) == channel ? Channel.ALL : channel);
+    }
+
+    public boolean hidesPublic(final UUID player) {
+        return hidePublic.contains(player);
+    }
+
+    /** 切換「不看公開聊天」。 */
+    public void toggleHidePublic(final Player player) {
+        final boolean hide = hidePublic.add(player.getUniqueId());
+        if (!hide) {
+            hidePublic.remove(player.getUniqueId());
+        }
+        player.sendMessage(plugin.text().prefixed(hide
+                ? "<#7fd4ff>不看公開聊天了<gray>：只看得到隊伍、公會、私訊與系統訊息（/ch hide 再打一次恢復）"
+                : "<gray>公開聊天恢復顯示"));
+    }
+
     public ChatService(final ExileCore plugin) {
         this.plugin = plugin;
         this.moderation = new ChatModeration(plugin);

@@ -527,6 +527,26 @@ public final class BossSkills implements Listener {
     }
 
     /** 這隻是不是由招式引擎帶的 Boss（地圖、試煉、區域 Boss；詞綴或種類給招式的一般怪物不算）。 */
+    /**
+     * 這隻 Boss 的場地收縮（2026-10）：{x, z, 最後會縮到的半徑}；沒有收縮回傳 null。
+     * 護盾結晶等「要玩家走過去」的東西放在這個圈裡（照最後的半徑，整段時間都不會被圈吃掉）。
+     */
+    public double[] arenaBounds(final UUID boss) {
+        final Brain brain = brains.get(boss);
+        if (brain == null || brain.arena == null) {
+            return null;
+        }
+        final Arena arena = brain.arena;
+        final double radius = Math.min(arena.radius(now()), Math.max(4, arena.skill.radius()));
+        return new double[] {arena.center.getX(), arena.center.getZ(), radius};
+    }
+
+    /** 這隻怪正在放招（2026-10；放招時本來就站著不動，卡住偵測要略過）。 */
+    public boolean casting(final UUID entity) {
+        final Brain brain = brains.get(entity);
+        return brain != null && brain.cast != null;
+    }
+
     public boolean drivesBoss(final UUID boss) {
         final Brain brain = brains.get(boss);
         return brain != null && brain.host.boss();
@@ -1048,7 +1068,7 @@ public final class BossSkills implements Listener {
     /** 延遲落下、地面效果的落點。 */
     private List<Location> points(final Brain brain, final BossSkill skill, final LivingEntity target) {
         switch (skill.at()) {
-            case SPIRAL, CROSS, LINE, CAGE -> {
+            case SPIRAL, CROSS, LINE, CAGE, MAZE, WALLS -> {
                 return patternPoints(brain, skill, target);
             }
             default -> {
@@ -1118,6 +1138,39 @@ public final class BossSkills implements Listener {
                 for (int i = 0; i < count; i++) {
                     final double angle = start + i * Math.PI * 2 / count;
                     points.add(ground(middle.clone().add(Math.cos(angle) * radius, 0, Math.sin(angle) * radius)));
+                }
+            }
+            case MAZE -> {
+                // 2026-10（賽勒斯的殞星迷宮）：count 圈同心的風暴牆，每圈 gaps 個缺口、各圈錯開；一塊接一塊照距離鋪
+                final int rings = Math.max(1, Math.min(4, count));
+                final double step = Math.max(1.5, skill.radius() * 1.7); // 相鄰兩塊的間距（稍微重疊，牆才連得起來）
+                final double gapAngle = Math.toRadians(skill.gapAngle());
+                final int gaps = Math.max(1, skill.gaps());
+                double offset = random.nextDouble() * Math.PI * 2;
+                for (int ring = 1; ring <= rings; ring++) {
+                    final double distance = reach * ring / rings;
+                    final double[] centers = BossGeometry.gapCenters(gaps, offset);
+                    final int slots = Math.max(6, (int) Math.round(Math.PI * 2 * distance / step));
+                    for (int i = 0; i < slots; i++) {
+                        final double angle = i * Math.PI * 2 / slots;
+                        if (BossGeometry.inGap(angle, centers, gapAngle)) {
+                            continue; // 缺口：留路
+                        }
+                        points.add(ground(center.clone().add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance)));
+                    }
+                    offset += Math.PI / gaps; // 下一圈的缺口錯開半格：要繞著走
+                }
+            }
+            case WALLS -> {
+                // 2026-10（賽勒斯的風暴走廊）：朝目標的方向，左右各 scatter 格兩排牆，從 2 格鋪到 reach 格
+                final Vector dir = facing(brain.boss, target);
+                final Vector side = new Vector(-dir.getZ(), 0, dir.getX());
+                final double half = skill.scatter() > 0 ? skill.scatter() : 4;
+                final double step = Math.max(1.5, skill.radius() * 1.7);
+                for (double distance = 2; distance <= reach; distance += step) {
+                    final Location along = center.clone().add(dir.clone().multiply(distance));
+                    points.add(ground(along.clone().add(side.clone().multiply(half))));
+                    points.add(ground(along.clone().add(side.clone().multiply(-half))));
                 }
             }
             default -> {
@@ -2114,14 +2167,34 @@ public final class BossSkills implements Listener {
             }
         }
         final int count = Math.min(10, skill.count() + skill.countPerPlayer() * Math.max(0, players - 1));
+        // 2026-10：場地正在收縮（arena）時，安全區一定整個在圈裡面——以收縮圈的中心為準，
+        // 距離不超過「大招落下那一刻的圈半徑 − 安全區半徑」（不然綠圈畫在圈外，躲進去也會被場地打）
+        final Arena arena = brain.arena;
+        final Location origin = arena != null ? arena.center.clone() : feet;
+        double scatter = skill.scatter();
+        double limit = Double.MAX_VALUE;
+        if (arena != null) {
+            final long landing = now() + settings().telegraphTicks(skill, brain.host.boss());
+            limit = Math.max(0, arena.radius(landing) - skill.safe() - 0.5);
+            scatter = Math.min(scatter, limit);
+        }
         for (int i = 0; i < count; i++) {
             Location found = null;
-            for (final double[] candidate : BossGeometry.safeSpotCandidates(i, count, skill.scatter(), skill.safe(), offset)) {
-                final Location spot = ground(feet.clone().add(candidate[0], 0.2, candidate[1]));
-                if (standable(spot) && Math.abs(spot.getY() - feet.getY()) <= 3 && clearPath(feet, spot)) {
+            for (final double[] candidate : BossGeometry.safeSpotCandidates(i, count, scatter, skill.safe(), offset)) {
+                if (Math.hypot(candidate[0], candidate[1]) > limit) {
+                    continue; // 會超出收縮圈
+                }
+                final Location spot = ground(origin.clone().add(candidate[0], 0.2, candidate[1]));
+                if (standable(spot) && Math.abs(spot.getY() - feet.getY()) <= 3 && clearPath(origin, spot)) {
                     found = spot;
                     break;
                 }
+            }
+            if (found == null && arena != null) {
+                // 圈太小、候選都超出：照角度平均放在圈裡（必要時疊在一起，總比畫在圈外好）
+                final double angle = offset + Math.PI * 2 * i / Math.max(1, count);
+                final double d = Math.min(limit, Math.max(0, scatter));
+                found = ground(origin.clone().add(Math.cos(angle) * d, 0.2, Math.sin(angle) * d));
             }
             spots.add(found != null ? found : ground(feet.clone()));
         }

@@ -178,6 +178,15 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             }
         }
         SkillProfile profile = SkillProfiles.build(config, definition, level, weaponTags, local);
+        if (definition.aura() == null && definition.tags().contains(Tags.HERALD)) {
+            // 2026-10：捷光環的擊殺效果（灰燼爆發這類隱藏技能）：「捷光環效果」（灌宣…）照比例加在爆發的傷害上
+            //（PoE2 的捷光環只剩擊殺效果，以前捷光環效果只放大光環本身的增益，現在沒有增益了等於沒作用）
+            final double heraldEffect = Math.max(0, profile.effective(sheet).apply(StatKeys.HERALD_EFFECT, 1.0, profile.tags()));
+            if (Math.abs(heraldEffect - 1) > 1e-9) {
+                local.add(Modifier.more(StatKeys.DAMAGE, heraldEffect - 1, "捷光環效果"));
+                profile = SkillProfiles.build(config, definition, level, weaponTags, local);
+            }
+        }
         final StatSheet effective = profile.effective(sheet);
         // 圖騰施法、陷阱施法輔助：技能從此算圖騰／陷阱技能（「增加 x% 圖騰傷害」、「陷阱持續時間」這些天賦與詞綴才吃得到）
         DeploySpec deploy = definition.deploy();

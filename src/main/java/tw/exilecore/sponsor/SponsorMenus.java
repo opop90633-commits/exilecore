@@ -117,6 +117,8 @@ final class SponsorMenus {
         private static final int SLOT_VOUCHER = 39;
 
         private static final int SLOT_CARD_SHOP = 33;
+        /** 月卡免費抽獎箱（2026-10：放在月卡旁邊，顯眼一點；沒開的累積）。 */
+        private static final int SLOT_FREE_BOX = 14;
         private static final int SLOT_STORE = 45;
         private static final int SLOT_CLOSE = 53;
 
@@ -127,7 +129,7 @@ final class SponsorMenus {
          */
         private static final Map<Integer, Integer> LABELLED = Map.ofEntries(
                 Map.entry(HEADER, 0), Map.entry(SLOT_CARD, 1), Map.entry(SLOT_CARD_SHOP, 2), Map.entry(SLOT_TIERS, 3),
-                Map.entry(SLOT_STORE, 4), Map.entry(SLOT_NAME_COLOR, 6), Map.entry(SLOT_TITLE, 7), Map.entry(SLOT_FLY, 8),
+                Map.entry(SLOT_STORE, 4), Map.entry(SLOT_FREE_BOX, 5), Map.entry(SLOT_NAME_COLOR, 6), Map.entry(SLOT_TITLE, 7), Map.entry(SLOT_FLY, 8),
                 Map.entry(SLOT_EXPAND, 18), Map.entry(SLOT_VOUCHER, 19),
                 Map.entry(SLOT_COSMETICS, 36), Map.entry(SLOT_TRANSMOG, 37), Map.entry(SLOT_EMOTES, 38));
         private static final Map<Integer, Integer> LABELLED_BACK = invert(LABELLED);
@@ -220,16 +222,30 @@ final class SponsorMenus {
                     "<gray>・開卡禮：" + FASHION_COLOR + config.welcomeFashionCoins() + " 時裝幣</#ff9ad5><gray>＋" + CARD_COLOR
                             + config.welcomeCardCoins() + " 月卡幣</#bcd4ff>",
                     "<gray>・連續續卡：第 2 個月多送 " + config.renewalBonus(2) + "、第 3 個月起多送 " + config.renewalBonus(3) + " 月卡幣",
-                    "<gray>・每天免費開一次時裝抽獎箱",
+                    "<gray>・每天送一箱免費的時裝抽獎箱（沒開的會累積）",
                     "<gray>・名字旁的月亮 " + CARD_COLOR + "☾",
                     "<gray>・傳送點免費",
-                    "<gray>・市集上架、改價、購買、交易所掛單免手續費",
+                    "<gray>・市集上架、改價、購買、交易所掛單、面對面交易免手續費",
                     "<gray>・裝備、天賦（含珠寶）、技能各 5 組隨時切換",
                     "<gray>・隨時更換昇華職業；天賦、昇華天賦退點免費",
                     "",
                     left > 0 ? "<green>月卡剩 " + left + " 天<gray>（到 " + LocalDate.ofEpochDay(service.today() + left - 1) + "；再買接著延長）"
                             : "<gray>現在沒有月卡",
                     "<gray>價格：" + COIN + format(config.cardPrice()) + " 星幣", "", "<yellow>左鍵：購買")));
+            final SponsorConfig.Box freeBox = config.boxes().get(config.freeBox());
+            if (freeBox != null) {
+                final long free = service.freeBoxes(player);
+                final List<String> freeLore = new ArrayList<>();
+                freeLore.add("<gray>月卡每天送一箱「" + ItemRenderer.escape(freeBox.name()) + "」，沒開的會累積到之後");
+                freeLore.add(free > 0 ? CARD_COLOR + "還有 " + free + " 箱可以免費開" : left > 0 ? "<dark_gray>開完了，明天再送一箱" : "<dark_gray>你沒有月卡");
+                freeLore.add("");
+                freeLore.add(free > 0 ? "<yellow>左鍵：免費開一箱" : left > 0 ? "<dark_gray>明天換日再來" : "<yellow>左鍵：看月卡");
+                final ItemStack freeIcon = icon(Material.ENDER_CHEST, CARD_COLOR + "月卡免費抽獎箱" + (free > 0 ? "<white>（" + free + "）" : ""), freeLore);
+                if (free > 0) {
+                    freeIcon.setAmount((int) Math.min(64, free));
+                }
+                set(SLOT_FREE_BOX, free > 0 ? glowing(freeIcon) : freeIcon);
+            }
             set(SLOT_TIERS, icon(Material.BEACON, "<#ffd27f>累積贊助的稱號與功能",
                     "<gray>累積到 1,000、3,000…星幣：稱號、名字顏色、",
                     "<gray>倉庫頁、隨身背包頁、上架格、滿人也能進、聊天上色、自訂稱號、營地飛行",
@@ -337,6 +353,13 @@ final class SponsorMenus {
                     }
                 }
                 case SLOT_TIERS -> new Tiers(plugin, player, service).open();
+                case SLOT_FREE_BOX -> {
+                    if (service.freeBoxReady(player)) {
+                        result(service.openBox(player, service.config().freeBox(), false, true)); // 不花錢：不用確認
+                    } else if (service.cardDaysLeft(player) <= 0) {
+                        player.sendMessage(plugin.text().prefixed(CARD_COLOR + "月卡<gray>每天送一箱免費的時裝抽獎箱，沒開的會累積（左上的月卡可以買）"));
+                    }
+                }
                 case SLOT_EXPAND -> new Expand(plugin, player, service).open();
                 case SLOT_VOUCHER -> {
                     if (service.vouchers == null) {
@@ -1258,9 +1281,10 @@ final class SponsorMenus {
             }
             if (box.id().equals(service.config().freeBox())) {
                 // 2026-10 月卡福利：每天免費開一次
-                lore.add(service.cardDaysLeft(player) <= 0 ? CARD_COLOR + "月卡：每天免費開一次<dark_gray>（你沒有月卡）"
-                        : service.freeBoxReady(player) ? CARD_COLOR + "Shift＋左鍵：月卡每日免費開一次（今天還沒開）"
-                        : "<dark_gray>月卡每日免費：今天開過了");
+                final long free = service.freeBoxes(player);
+                lore.add(free > 0 ? CARD_COLOR + "Shift＋左鍵：免費開一箱（還有 " + free + " 箱）"
+                        : service.cardDaysLeft(player) <= 0 ? CARD_COLOR + "月卡：每天送一箱免費的，沒開的會累積<dark_gray>（你沒有月卡）"
+                        : "<dark_gray>月卡免費箱：開完了，明天再送一箱");
             }
             return lore;
         }
