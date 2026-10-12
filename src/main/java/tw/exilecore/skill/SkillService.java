@@ -243,7 +243,7 @@ public final class SkillService {
     // ---- 弩的彈匣（2026-10，照 PoE2）：每發用掉一支，打完自動裝填 ----
 
     static final int BASE_CLIP = 5;
-    static final double BASE_RELOAD_SECONDS = 0.5;
+    static final double BASE_RELOAD_SECONDS = 0.35; // 2026-10 平衡：0.5 → 0.35（裝填縮短 3 成）
     /** 指令型召喚物技能一次最多幾隻聽命（2026-10）。 */
     static final int COMMAND_MAX = 8;
 

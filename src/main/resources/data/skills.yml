@@ -416,7 +416,7 @@ skills:
     # 2026-10 加強清群：爆炸範圍 1.8–2.4 → 2.6–3.4、攻擊速度 90% → 100%、傷害稍微提高、點燃 15% → 20%
     projectile: { arrow: true, speed: 2.8, range: 38, explode: [2.6, 3.4] }
     convert: { fire: 0.5 }
-    effectiveness: [1.2, 1.7]
+    effectiveness: [1.56, 2.21]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.2, 1.7]）
     mana: [5, 11]
     visual: explosive_bolt
     modifiers:
@@ -434,7 +434,7 @@ skills:
     # 2026-10 加強清群：3–4 支 → 5–7 支、張角 14° → 32°、穿透 1 → 2、傷害稍微提高
     projectile: { arrow: true, count: [5, 7], spread: 32, speed: 3.0, range: 36, pierce: 2 }
     convert: { cold: 0.6 }
-    effectiveness: [0.95, 1.3]
+    effectiveness: [1.23, 1.69]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [0.95, 1.3]）
     mana: [5, 11]
     visual: permafrost_bolt
     modifiers:
@@ -452,7 +452,7 @@ skills:
     # 2026-10：每支多穿過兩個敵人（成群的怪也打得到後面的）
     projectile: { arrow: true, speed: 3.2, range: 40, pierce: 2, burst: { count: 4, interval: 2 } }
     attack_speed: 0.85
-    effectiveness: [0.44, 0.62]      # 2026-10 統一平衡：[0.54, 0.75] → [0.44, 0.62]（四波全中是弩裡單體最高的；PoE2 Rapid Shot 有過熱停火，我們沒有）
+    effectiveness: [0.57, 0.81]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [0.44, 0.62]）
     mana: [5, 11]
     visual: rapid_fire
 
@@ -470,7 +470,7 @@ skills:
     convert: { fire: 0.6 }
     cooldown: 1.5
     attack_speed: 0.9
-    effectiveness: [1.9, 3.0]   # 2026-10：內部比例調高（PoE2 878%，大概是其他技能的一半水準）
+    effectiveness: [2.47, 3.9]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.9, 3.0]）
     mana: [6, 13]
     visual: explosive_grenade
     modifiers:
@@ -490,7 +490,7 @@ skills:
     convert: { chaos: 0.8 }
     cooldown: 2.5
     attack_speed: 0.9
-    effectiveness: [1.2, 1.6]
+    effectiveness: [1.56, 2.08]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.2, 1.6]）
     mana: [7, 14]
     visual: gas_grenade
 
@@ -509,7 +509,7 @@ skills:
     strike: { reach: 4.0, angle: 90, targets: 2 }
     convert: { lightning: 0.4 }
     attack_speed: 1.4
-    effectiveness: [0.55, 0.77]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [0.69, 0.96]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [0.55, 0.77]）
     mana: [3, 7]
     visual: tempest
     modifiers:
@@ -526,7 +526,7 @@ skills:
     cone: { length: [4.5, 5.5], angle: 60 }
     convert: { cold: 0.6 }
     attack_speed: 1.4
-    effectiveness: [0.74, 1.03]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [0.93, 1.29]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [0.74, 1.03]）
     mana: [5, 11]
     visual: ice_cone
     modifiers:
@@ -543,7 +543,7 @@ skills:
     projectile: { speed: 1.1, range: 12, size: 1.3, pierce: 20 }
     convert: { lightning: 0.6 }
     attack_speed: 0.75
-    effectiveness: [1.35, 1.89]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [1.69, 2.36]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.35, 1.89]）
     mana: [5, 10]
     visual: storm_wave
     modifiers:
@@ -559,7 +559,7 @@ skills:
     mechanic: strike
     strike: { reach: 3.5, angle: 60, targets: 1, execute: { below: 0.35, more: 150 } }
     attack_speed: 0.75
-    effectiveness: [1.11, 1.55]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [1.39, 1.94]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.11, 1.55]）
     mana: [4, 9]
     visual: killing_palm
   tempest_bell:
@@ -576,7 +576,7 @@ skills:
     convert: { lightning: 0.5 }
     cooldown: 6
     attack_speed: 0.9
-    effectiveness: [0.55, 0.8]
+    effectiveness: [0.69, 1.0]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [0.55, 0.8]）
     mana: [7, 14]
     visual: tempest_bell
     modifiers:
@@ -1028,7 +1028,7 @@ skills:
     mechanic: projectile
     projectile: { arrow: true, speed: 3.4, range: 44, pierce: 4 }
     attack_speed: 0.8
-    effectiveness: [1.8, 2.52]   # 2026-10：+20%
+    effectiveness: [2.34, 3.28]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.8, 2.52]）
     mana: [5, 11]
     visual: crossbow_bolt
     modifiers:
@@ -1049,7 +1049,7 @@ skills:
     projectile: { speed: 1.6, range: 40, size: 0.25, gravity: 0.06, fuse: 0.8, explode: [3.0, 3.8] }
     cooldown: 1.5
     attack_speed: 0.9
-    effectiveness: [1.6, 2.2]
+    effectiveness: [2.08, 2.86]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.6, 2.2]）
     mana: [6, 13]
     visual: explosive_grenade
     modifiers:
@@ -1362,7 +1362,7 @@ skills:
     cone: { length: [5, 6], angle: 90 }
     convert: { cold: 0.4 }
     attack_speed: 0.9
-    effectiveness: [0.95, 1.33]
+    effectiveness: [1.19, 1.66]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [0.95, 1.33]）
     mana: [5, 10]
     visual: staff_sweep
 
@@ -1377,7 +1377,7 @@ skills:
     mechanic: leap
     leap: { range: 9, radius: [2.6, 3.3] }
     attack_speed: 0.8
-    effectiveness: [1.6, 2.24]
+    effectiveness: [2.0, 2.8]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.6, 2.24]）
     mana: [7, 13]
     visual: leap
     modifiers:
@@ -1395,7 +1395,7 @@ skills:
     dash: { range: 7, hit_width: 1.4, knockback: 0.3 }
     cooldown: 1.5
     attack_speed: 0.7
-    effectiveness: [1.0, 1.4]
+    effectiveness: [1.25, 1.75]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.0, 1.4]）
     mana: [5, 10]
     visual: whirling_blades
 
@@ -1411,7 +1411,7 @@ skills:
     strike: { reach: 4.0, angle: 70, targets: 1 }
     convert: { lightning: 0.6 }
     attack_speed: 1.0
-    effectiveness: [1.15, 1.61]
+    effectiveness: [1.44, 2.01]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.15, 1.61]）
     mana: [5, 10]
     visual: tempest
     modifiers:
@@ -1501,7 +1501,7 @@ skills:
     projectile: { arrow: true, count: 6, spread: 35, speed: 2.6, range: 16 }
     convert: { lightning: 0.7 }
     attack_speed: 0.8
-    effectiveness: [0.5, 0.7]
+    effectiveness: [0.65, 0.91]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [0.5, 0.7]）
     mana: [5, 11]
     visual: crossbow_bolt
     modifiers:
@@ -1520,7 +1520,7 @@ skills:
     convert: { fire: 0.3 }
     cooldown: 3
     attack_speed: 0.7
-    effectiveness: [2.2, 3.08]
+    effectiveness: [2.86, 4.0]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [2.2, 3.08]）
     mana: [8, 16]
     visual: rain_of_arrows
 
@@ -1536,7 +1536,7 @@ skills:
     impact: { range: 22, delay: 0.5, radius: [2.8, 3.5] }
     convert: { cold: 0.7 }
     attack_speed: 0.85
-    effectiveness: [1.1, 1.54]
+    effectiveness: [1.43, 2.0]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.1, 1.54]）
     mana: [6, 13]
     visual: comet
     modifiers:
@@ -2011,7 +2011,7 @@ skills:
     mechanic: strike
     strike: { reach: 4.0, angle: 60, targets: 1, knockback: 0.5 }
     attack_speed: 1.1
-    effectiveness: [0.67, 0.94]      # 2026-10 統一平衡：[1.0, 1.4] → [0.67, 0.94]（PoE2 Staggering Palm 250%、攻速 75% ×0.55，換成我們的攻速 1.1）
+    effectiveness: [0.84, 1.17]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [0.67, 0.94]）
     mana: [4, 9]
     visual: killing_palm
     modifiers:
@@ -2030,7 +2030,7 @@ skills:
     cone: { length: [5, 6], angle: 70 }
     convert: { cold: 0.6 }
     attack_speed: 0.9
-    effectiveness: [1.1, 1.54]
+    effectiveness: [1.38, 1.93]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.1, 1.54]）
     mana: [5, 11]
     visual: ice_cone
     modifiers:
@@ -2048,7 +2048,7 @@ skills:
     projectile: { speed: 1.1, range: 14, size: 1.3, pierce: 20 }
     convert: { cold: 0.7 }
     attack_speed: 0.75
-    effectiveness: [1.4, 1.96]
+    effectiveness: [1.75, 2.45]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.4, 1.96]）
     mana: [6, 12]
     visual: storm_wave
     modifiers:
@@ -2172,7 +2172,7 @@ skills:
     mechanic: projectile
     projectile: { arrow: true, speed: 4.0, range: 50, pierce: 15 }
     attack_speed: 0.7
-    effectiveness: [1.7, 2.38]
+    effectiveness: [2.21, 3.09]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.7, 2.38]）
     mana: [6, 12]
     visual: crossbow_bolt
     modifiers:
@@ -2190,7 +2190,7 @@ skills:
     projectile: { arrow: true, count: 6, spread: 40, speed: 2.4, range: 14 }
     convert: { fire: 0.8 }
     attack_speed: 0.8
-    effectiveness: [0.5, 0.7]
+    effectiveness: [0.65, 0.91]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [0.5, 0.7]）
     mana: [5, 11]
     visual: explosive_bolt
     modifiers:
@@ -2208,7 +2208,7 @@ skills:
     projectile: { arrow: true, speed: 3.0, range: 30, ground: { duration: 4, interval: 0.5, radius: 2.4, damage: 30 } }
     convert: { cold: 0.8 }
     attack_speed: 0.8
-    effectiveness: [1.0, 1.4]
+    effectiveness: [1.3, 1.82]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.0, 1.4]）
     mana: [6, 12]
     visual: permafrost_bolt
     modifiers:
@@ -2226,7 +2226,7 @@ skills:
     projectile: { arrow: true, count: 3, spread: 20, speed: 3.2, range: 36, splash: { targets: 2, radius: 4, damage: 40 } }
     convert: { lightning: 0.7 }
     attack_speed: 0.8
-    effectiveness: [0.85, 1.19]
+    effectiveness: [1.1, 1.55]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [0.85, 1.19]）
     mana: [6, 13]
     visual: crossbow_bolt
     modifiers:
@@ -2245,7 +2245,7 @@ skills:
     convert: { fire: 0.7 }
     cooldown: 2
     attack_speed: 0.9
-    effectiveness: [1.2, 1.68]
+    effectiveness: [1.56, 2.18]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.2, 1.68]）
     mana: [6, 13]
     visual: explosive_grenade
     modifiers:
@@ -2264,7 +2264,7 @@ skills:
     convert: { lightning: 0.7 }
     cooldown: 1.5
     attack_speed: 0.9
-    effectiveness: [1.6, 2.24]
+    effectiveness: [2.08, 2.91]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.6, 2.24]）
     mana: [6, 13]
     visual: explosive_grenade
     modifiers:
@@ -2283,7 +2283,7 @@ skills:
     convert: { fire: 0.4 }
     cooldown: 3
     attack_speed: 0.8
-    effectiveness: [1.9, 2.66]
+    effectiveness: [2.47, 3.46]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.9, 2.66]）
     mana: [8, 16]
     visual: explosive_grenade
 
@@ -2926,7 +2926,7 @@ skills:
     cone: { length: [6.0, 7.5], angle: 40 }
     convert: { lightning: 0.6 }
     attack_speed: 0.8
-    effectiveness: [1.29, 1.8]   # 2026-10：補到標準（PoE2 437%、攻速 60% × 0.55，換成我們的攻速 0.8）；原本 [1.05, 1.46] 只有標準的六成
+    effectiveness: [1.61, 2.25]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.29, 1.8]）
     mana: [6, 12]
     visual: tempest
     modifiers:
@@ -2944,7 +2944,7 @@ skills:
     cone: { length: [8.0, 10.0], angle: 20 }
     convert: { cold: 0.6 }
     attack_speed: 0.85
-    effectiveness: [0.88, 1.23]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [1.1, 1.54]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [0.88, 1.23]）
     mana: [6, 13]
     visual: ice_cone
     modifiers:
@@ -3599,7 +3599,7 @@ skills:
     flicker: { range: 12, reach: 3.5, targets: 2 }
     cooldown: 1.5
     cooldown_bypass: power
-    effectiveness: [1.8, 2.6]
+    effectiveness: [2.25, 3.25]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.8, 2.6]）
     mana: [7, 13]
     visual: flicker
 
@@ -3616,7 +3616,7 @@ skills:
     convert: { lightning: 0.6 }
     cooldown: 2
     attack_speed: 0.8
-    effectiveness: [1.6, 2.24]
+    effectiveness: [2.0, 2.8]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.6, 2.24]）
     mana: [7, 14]
     visual: tempest
     modifiers:
@@ -3737,7 +3737,7 @@ skills:
     projectile: { arrow: true, speed: 2.8, range: 34, explode: [2.0, 2.6], ground: { duration: 4, interval: 0.5, radius: [2.4, 3.0], damage: 15 } }
     convert: { cold: 0.7 }
     attack_speed: 0.9
-    effectiveness: [1.2, 1.68]
+    effectiveness: [1.56, 2.18]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.2, 1.68]）
     mana: [5, 11]
     visual: permafrost_bolt
     modifiers:
@@ -3756,7 +3756,7 @@ skills:
     projectile: { speed: 2.2, range: 34, size: 0.6, pierce: 20, explode: [3.0, 3.8] }
     convert: { lightning: 0.7 }
     attack_speed: 0.4
-    effectiveness: [3.0, 4.2]   # 2026-10 平衡：-14%
+    effectiveness: [3.9, 5.46]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [3.0, 4.2]）
     mana: [10, 20]
     visual: explosive_bolt
 
@@ -5496,7 +5496,7 @@ skills:
     convert: { cold: 0.6 }
     cooldown: 3
     attack_speed: 1.0
-    effectiveness: [0.7, 0.98]
+    effectiveness: [0.88, 1.23]   # 2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [0.7, 0.98]）
     mana: [4, 9]
     visual: ice_cone
     modifiers:
@@ -5556,7 +5556,7 @@ skills:
     mechanic: projectile
     projectile: { arrow: true, count: 3, spread: 12, speed: 3.0, range: 30, pierce: 3 }
     attack_speed: 0.9
-    effectiveness: [0.71, 1.0]      # 2026-10 統一平衡：[0.55, 0.77] → [0.71, 1.0]（弩的基本技能裡偏低（同一波每個敵人只中一發））
+    effectiveness: [0.92, 1.3]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [0.71, 1.0]）
     mana: [5, 10]
     visual: crossbow_bolt
     modifiers:
@@ -5575,7 +5575,7 @@ skills:
     impact: { range: 24, delay: 1.5, radius: [2.8, 3.4] }
     convert: { lightning: 0.8 }
     attack_speed: 0.9
-    effectiveness: [1.5, 2.1]
+    effectiveness: [1.95, 2.73]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [1.5, 2.1]）
     mana: [6, 14]
     visual: lightning_arrow
     modifiers:
@@ -5594,7 +5594,7 @@ skills:
     totem: { duration: 10, interval: 0.9, range: 18, max: 1, head: CROSSBOW }
     convert: { fire: 0.5 }
     cooldown: 1
-    effectiveness: [0.75, 1.05]
+    effectiveness: [0.98, 1.37]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [0.75, 1.05]）
     mana: [8, 18]
     visual: rain_of_arrows
     modifiers:
@@ -5613,7 +5613,7 @@ skills:
     impact: { range: 20, delay: 0.6, radius: [3.0, 3.8] }
     totem: { duration: 10, interval: 1.4, range: 18, max: 1, head: CROSSBOW }
     cooldown: 1
-    effectiveness: [0.8, 1.12]
+    effectiveness: [1.04, 1.46]   # 2026-10 平衡：弩的攻擊技能 ×1.3（統計：同等級只有別人的四分之一左右）（原本 [0.8, 1.12]）
     mana: [8, 18]
     visual: rain_of_arrows
     modifiers:

@@ -22,6 +22,10 @@ import java.util.Locale;
 final class PriceMenu extends Menu {
 
     private static final int CURRENCY_SLOTS = 18;
+    /** 2026-10：第三列左邊四格是通貨頁的四個分組（一般通貨、未切割寶石、星魄、其他機制），右邊兩格換頁。 */
+    private static final int[] GROUP_SLOTS = {18, 19, 20, 21};
+    private static final int SLOT_PREV_PAGE = 24;
+    private static final int SLOT_NEXT_PAGE = 26;
     private static final int SLOT_ITEM = 22;
     private static final int[] STEP_SLOTS = {27, 28, 29, 33, 34, 35};
     private static final int[] STEPS = {-100, -10, -1, 1, 10, 100};
@@ -42,7 +46,12 @@ final class PriceMenu extends Menu {
     private final ItemStack snapshot;
     /** 改價：哪一件；新上架時是 null。 */
     private final Listing listing;
+    /** 能拿來標價的全部通貨（輸入框、照別人價格標時用）。 */
     private final List<String> currencies = new ArrayList<>();
+    /** 現在這一組（畫面上那兩列）。 */
+    private final List<String> shown = new ArrayList<>();
+    private tw.exilecore.currency.CurrencyGroups.Group group = tw.exilecore.currency.CurrencyGroups.Group.BASIC;
+    private int page;
     private final List<Listing> similar = new ArrayList<>();
     private String currency;
     private int amount;
@@ -72,13 +81,37 @@ final class PriceMenu extends Menu {
     }
 
     private void init(final String preferred) {
-        for (final String id : service.config().values().keySet()) {
-            final CurrencyType type = plugin.currencies().repository().get(id);
-            if (type != null && !type.uncutGem()) { // 標價不用未切割寶石（交易所才換）
-                currencies.add(id);
+        // 2026-10：通貨頁上的東西都能拿來標價（照通貨頁的分組與順序；要有參考價值，見 economy.yml 的 values）
+        for (final CurrencyType type : plugin.currencies().repository().all()) {
+            if (service.config().priceable(type.id())) {
+                currencies.add(type.id());
             }
         }
         currency = preferred != null && currencies.contains(preferred) ? preferred : currencies.isEmpty() ? null : currencies.getFirst();
+        if (currency != null) {
+            showGroupOf(currency);
+        }
+    }
+
+    /** 換到某一組（page 照那一種通貨在這組的位置）。 */
+    private void showGroupOf(final String id) {
+        final CurrencyType type = plugin.currencies().repository().get(id);
+        group = type == null ? tw.exilecore.currency.CurrencyGroups.Group.BASIC : tw.exilecore.currency.CurrencyGroups.of(type);
+        fillShown();
+        page = Math.max(0, shown.indexOf(id)) / CURRENCY_SLOTS;
+    }
+
+    private void fillShown() {
+        shown.clear();
+        for (final CurrencyType type : tw.exilecore.currency.CurrencyGroups.in(plugin.currencies().repository().all(), group)) {
+            if (currencies.contains(type.id())) {
+                shown.add(type.id());
+            }
+        }
+    }
+
+    private int pages() {
+        return Math.max(1, (shown.size() + CURRENCY_SLOTS - 1) / CURRENCY_SLOTS);
     }
 
     @Override
@@ -86,13 +119,33 @@ final class PriceMenu extends Menu {
         for (int i = 0; i < 54; i++) {
             set(i, i < CURRENCY_SLOTS ? null : filler());
         }
-        for (int i = 0; i < Math.min(CURRENCY_SLOTS, currencies.size()); i++) {
-            final CurrencyType type = plugin.currencies().repository().get(currencies.get(i));
+        page = Math.max(0, Math.min(page, pages() - 1));
+        final int from = page * CURRENCY_SLOTS;
+        for (int i = 0; i < CURRENCY_SLOTS && from + i < shown.size(); i++) {
+            final CurrencyType type = plugin.currencies().repository().get(shown.get(from + i));
             final boolean selected = type.id().equals(currency);
             final ItemStack icon = plugin.currencies().create(type, 1);
             appendLore(icon, "", selected ? "<green>✔ 用這個標價" : "<yellow>左鍵：用這個標價");
             // 選的那個：外框（沒資源包：通貨本來就會發光，其他的把光拿掉）
             set(i, selected ? highlight(icon) : withoutGlint(icon));
+        }
+        final tw.exilecore.currency.CurrencyGroups.Group[] groups = tw.exilecore.currency.CurrencyGroups.Group.values();
+        for (int g = 0; g < Math.min(GROUP_SLOTS.length, groups.length); g++) {
+            final List<CurrencyType> members = tw.exilecore.currency.CurrencyGroups.in(plugin.currencies().repository().all(), groups[g]);
+            final ItemStack tab = members.isEmpty() ? new ItemStack(Material.SUNFLOWER) : plugin.currencies().create(members.getFirst(), 1);
+            final tw.exilecore.currency.CurrencyGroups.Group each = groups[g];
+            final boolean current = each == group;
+            tab.editMeta(meta -> {
+                meta.displayName(ItemRenderer.line((current ? "<#f5b942>" : "<white>") + each.displayName()));
+                meta.lore(List.of(ItemRenderer.line("<gray>" + each.about()), ItemRenderer.line(""),
+                        ItemRenderer.line(current ? "<green>✔ 目前在這一組" : "<yellow>左鍵：看這一組")));
+                meta.setEnchantmentGlintOverride(false);
+            });
+            set(GROUP_SLOTS[g], current ? highlight(tab) : tab);
+        }
+        if (pages() > 1) {
+            set(SLOT_PREV_PAGE, icon(Material.PAPER, "<white>◀ 上一頁", "<gray>第 " + (page + 1) + " / " + pages() + " 頁"));
+            set(SLOT_NEXT_PAGE, icon(Material.PAPER, "<white>下一頁 ▶", "<gray>第 " + (page + 1) + " / " + pages() + " 頁"));
         }
         set(SLOT_ITEM, snapshot.clone());
         for (int i = 0; i < STEP_SLOTS.length; i++) {
@@ -163,6 +216,7 @@ final class PriceMenu extends Menu {
             return;
         }
         currency = listing.priceCurrency;
+        showGroupOf(currency);
         amount = Math.max(1, Math.min(service.config().maxPrice(), listing.priceAmount - (undercut ? 1 : 0)));
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.5f);
         redraw();
@@ -176,10 +230,26 @@ final class PriceMenu extends Menu {
     @Override
     protected void onClick(final int clicked, final ClickType click, final InventoryClickEvent event) {
         if (clicked < CURRENCY_SLOTS) {
-            if (clicked < currencies.size()) {
-                currency = currencies.get(clicked);
+            final int index = page * CURRENCY_SLOTS + clicked;
+            if (index < shown.size()) {
+                currency = shown.get(index);
                 redraw();
             }
+            return;
+        }
+        for (int g = 0; g < GROUP_SLOTS.length; g++) {
+            if (GROUP_SLOTS[g] == clicked && g < tw.exilecore.currency.CurrencyGroups.Group.values().length) {
+                group = tw.exilecore.currency.CurrencyGroups.Group.values()[g];
+                fillShown();
+                page = 0;
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.2f);
+                redraw();
+                return;
+            }
+        }
+        if ((clicked == SLOT_PREV_PAGE || clicked == SLOT_NEXT_PAGE) && pages() > 1) {
+            page = (page + (clicked == SLOT_NEXT_PAGE ? 1 : pages() - 1)) % pages();
+            redraw();
             return;
         }
         for (int i = 0; i < STEP_SLOTS.length; i++) {
@@ -233,6 +303,7 @@ final class PriceMenu extends Menu {
                 "好", answers -> {
                     if (currencies.contains(answers.get("currency"))) {
                         currency = answers.get("currency");
+                        showGroupOf(currency);
                     }
                     try {
                         amount = Math.max(1, Math.min(service.config().maxPrice(), Integer.parseInt(answers.get("amount").trim())));

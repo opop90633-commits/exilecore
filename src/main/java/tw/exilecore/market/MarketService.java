@@ -495,7 +495,7 @@ public final class MarketService {
 
     String priceProblem(final String currency, final int amount) {
         final CurrencyType type = plugin.currencies().repository().get(currency);
-        if (!config().priceable(currency) || type != null && type.uncutGem()) {
+        if (type == null || !config().priceable(currency)) { // 2026-10：未切割寶石也能拿來標價（通貨頁上的都可以）
             return "這種通貨不能拿來標價";
         }
         if (amount < 1 || amount > config().maxPrice()) {
