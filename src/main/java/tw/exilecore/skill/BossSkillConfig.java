@@ -100,7 +100,7 @@ public final class BossSkillConfig {
     private Map<String, Double> tempo = Map.of();
 
     /** 可以設節奏的 Boss 種類：終局、極境、昇華試煉、金庫之主、世界 Boss。 */
-    public static final Set<String> TEMPO_KINDS = Set.of("final", "uber", "trial", "vault", "world");
+    public static final Set<String> TEMPO_KINDS = Set.of("final", "uber", "pinnacle", "trial", "vault", "world");
 
     public void load(final Path dataFolder) throws IOException {
         final Path file = dataFolder.resolve(FILE);

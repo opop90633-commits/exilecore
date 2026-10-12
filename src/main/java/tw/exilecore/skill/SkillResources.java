@@ -279,11 +279,18 @@ public final class SkillResources implements Listener {
     /** 動作列上的一小段：怒氣、連擊、灌注（沒有回傳空字串）。 */
     public String hud(final Player player) {
         final int rage = rage(player);
-        final int combo = combo(player);
         final java.util.List<String> parts = new java.util.ArrayList<>();
         if (rage > 0) {
-            parts.add("<#e0533b>怒氣 " + rage);
+            parts.add(rageBar(player, rage));
         }
+        parts.addAll(otherParts(player));
+        return String.join(" ", parts);
+    }
+
+    /** 戰鬥資源血條（2026-10，{@link tw.exilecore.character.ResourceBar}）的文字：連擊、灌注、獸性／狂暴（怒氣另外畫成進度條）。 */
+    public java.util.List<String> otherParts(final Player player) {
+        final int combo = combo(player);
+        final java.util.List<String> parts = new java.util.ArrayList<>();
         if (combo > 0) {
             parts.add("<#f5b942>連擊 " + combo);
         }
@@ -302,7 +309,28 @@ public final class SkillResources implements Listener {
         if (!fury.isEmpty()) {
             parts.add(fury);
         }
-        return String.join(" ", parts);
+        return parts;
+    }
+
+    /** 怒氣條的格數。 */
+    static final int RAGE_BAR_SEGMENTS = 10;
+
+    /**
+     * 快捷欄上方的怒氣條（2026-10）：「怒氣 ▰▰▰▰▱▱▱▱▱▱ 12/30」。滿的格子照怒氣多寡從橙到紅；
+     * 在消退（一陣子沒打中）時變灰，提醒要繼續打；滿了寫 MAX。
+     */
+    String rageBar(final Player player, final int rage) {
+        final int max = Math.max(1, rageMax(plugin.players().sheet(player)));
+        final boolean decaying = rageDecaying(player);
+        final boolean full = rage >= max;
+        return rageBar(rage, max, decaying, full);
+    }
+
+    static String rageBar(final int rage, final int max, final boolean decaying, final boolean full) {
+        final int filled = (int) Math.max(rage > 0 ? 1 : 0, Math.min(RAGE_BAR_SEGMENTS, Math.round((double) rage * RAGE_BAR_SEGMENTS / Math.max(1, max))));
+        final String color = decaying ? "<#9a9a9a>" : full ? "<#ff3b1f>" : rage * 2 >= max ? "<#ff6a3d>" : "<#e0533b>";
+        return "<#e0533b>怒氣 " + color + "▰".repeat(filled) + "<dark_gray>" + "▱".repeat(RAGE_BAR_SEGMENTS - filled)
+                + " <white>" + rage + "<gray>/" + max + (full ? " <#ff3b1f>MAX" : "") + (decaying ? " <dark_gray>消退中" : "");
     }
 
     @EventHandler

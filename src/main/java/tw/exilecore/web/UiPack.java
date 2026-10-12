@@ -158,8 +158,12 @@ public final class UiPack {
      *
      * @param artId       圖的代號（currency_art.txt）
      * @param vanillaItem 通貨實際是哪個原版物品（materials 小寫，例如 glowstone_dust）
+     * @param unique      格子裡畫傳奇的外框（2026-10：切不出來、雕不出來的專屬技能寶石、輔助寶石）
      */
-    public record CurrencySkin(String artId, String vanillaItem) {
+    public record CurrencySkin(String artId, String vanillaItem, boolean unique) {
+        public CurrencySkin(final String artId, final String vanillaItem) {
+            this(artId, vanillaItem, false);
+        }
     }
 
     private UiPack() {
@@ -749,8 +753,10 @@ public final class UiPack {
             if (!sprites.containsKey(skin.artId())) {
                 continue;
             }
+            final JsonObject model = plain("exilecore:item/currency/" + skin.artId());
+            // 2026-10：專屬的技能寶石、輔助寶石在格子裡有跟傳奇一樣的外框（手上、地上照原本的圖）
             cases.computeIfAbsent(skin.vanillaItem(), key -> new JsonArray())
-                    .add(selectCase(CurrencyArt.modelKey(skin.artId()), plain("exilecore:item/currency/" + skin.artId())));
+                    .add(selectCase(CurrencyArt.modelKey(skin.artId()), skin.unique() ? framedInGui(UNIQUE_FRAME, model, model) : model));
         }
     }
 

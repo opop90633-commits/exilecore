@@ -39,8 +39,18 @@ public final class DummyConfig {
      */
     public record Dummy(String id, String name, String note, int level, boolean boss, double life, double armour, double evasion,
                         double fire, double cold, double lightning, double chaos, double offsetX, double offsetZ, float yaw,
-                        double scale, String look) {
+                        double scale, String look, double bossFactor) {
+        /** 沒寫 boss_factor 的：首領 1、其他 0.6。 */
+        public Dummy(final String id, final String name, final String note, final int level, final boolean boss, final double life,
+                     final double armour, final double evasion, final double fire, final double cold, final double lightning,
+                     final double chaos, final double offsetX, final double offsetZ, final float yaw, final double scale, final String look) {
+            this(id, name, note, level, boss, life, armour, evasion, fire, cold, lightning, chaos, offsetX, offsetZ, yaw, scale, look,
+                    boss ? 1 : DEFAULT_BOSS_FACTOR);
+        }
     }
+
+    /** 打這隻假人的每秒傷害換成打 Boss 的（2026-10）：沒寫 boss_factor、或紀錄對不到假人的時候用這個。 */
+    public static final double DEFAULT_BOSS_FACTOR = 0.6;
 
     private double arenaMargin;
     private int idleSeconds;
@@ -59,12 +69,12 @@ public final class DummyConfig {
     /** 跟出貨的 dummies.yml 一樣：營地東南邊兩排、每隻隔 8 格（2026-10），首領在第二排最後。 */
     public static List<Dummy> defaults() {
         return List.of(
-                new Dummy("plain", "訓練假人・無防禦", "沒有任何防禦：看你打出的原始傷害", LEVEL_PLAYER, false, 1, 0, 0, 0, 0, 0, 0, 12, 10, 180f, 1, "none"),
-                new Dummy("normal", "訓練假人・一般", "跟同等級的一般怪物一樣", LEVEL_PLAYER, false, 1, 1, 1, 0, 0, 0, 0, 20, 10, 180f, 1, "leather"),
-                new Dummy("armoured", "訓練假人・重甲", "護甲是一般怪物的 5 倍", LEVEL_PLAYER, false, 1, 5, 1, 0, 0, 0, 0, 28, 10, 180f, 1, "netherite"),
-                new Dummy("evasive", "訓練假人・閃避", "閃避是一般怪物的 3 倍", LEVEL_PLAYER, false, 1, 1, 3, 0, 0, 0, 0, 12, 20, 180f, 1, "chainmail"),
-                new Dummy("resistant", "訓練假人・抗性", "元素抗性 40%、混沌抗性 25%", LEVEL_PLAYER, false, 1, 1, 1, 40, 40, 40, 25, 20, 20, 180f, 1, "golden"),
-                new Dummy("boss", "訓練假人・首領", "像最高階地圖的首領：抗性 40%／25%", LEVEL_MAP, true, 10, 1, 1, 40, 40, 40, 25, 28, 20, 180f, 1.3, "diamond"));
+                new Dummy("plain", "訓練假人・無防禦", "沒有任何防禦：看你打出的原始傷害", LEVEL_PLAYER, false, 1, 0, 0, 0, 0, 0, 0, 12, 10, 180f, 1, "none", 0.55),
+                new Dummy("normal", "訓練假人・一般", "跟同等級的一般怪物一樣", LEVEL_PLAYER, false, 1, 1, 1, 0, 0, 0, 0, 20, 10, 180f, 1, "leather", 0.6),
+                new Dummy("armoured", "訓練假人・重甲", "護甲是一般怪物的 5 倍", LEVEL_PLAYER, false, 1, 5, 1, 0, 0, 0, 0, 28, 10, 180f, 1, "netherite", 0.75),
+                new Dummy("evasive", "訓練假人・閃避", "閃避是一般怪物的 3 倍", LEVEL_PLAYER, false, 1, 1, 3, 0, 0, 0, 0, 12, 20, 180f, 1, "chainmail", 0.65),
+                new Dummy("resistant", "訓練假人・抗性", "元素抗性 40%、混沌抗性 25%", LEVEL_PLAYER, false, 1, 1, 1, 40, 40, 40, 25, 20, 20, 180f, 1, "golden", 0.95),
+                new Dummy("boss", "訓練假人・首領", "像最高階地圖的首領：抗性 40%／25%", LEVEL_MAP, true, 10, 1, 1, 40, 40, 40, 25, 28, 20, 180f, 1.3, "diamond", 1));
     }
 
     /** 讀 dummies.yml；先讀進一份新的，全部檢查過才換上去（寫錯時保留原本的設定）。 */
@@ -145,7 +155,12 @@ public final class DummyConfig {
         if (!LOOKS.contains(look)) {
             throw new IllegalArgumentException(node.path() + ".look：不認得「" + look + "」（" + String.join("、", LOOKS.stream().sorted().toList()) + "）");
         }
-        return new Dummy(id, name, note, level, boss, life, armour, evasion, fire, cold, lightning, chaos, offsetX, offsetZ, yaw, scale, look);
+        final double bossFactor = node.decimal("boss_factor", boss ? 1 : DEFAULT_BOSS_FACTOR);
+        if (bossFactor <= 0 || bossFactor > 2) {
+            throw new IllegalArgumentException(node.path() + ".boss_factor：要大於 0、最多 2，卻是 " + bossFactor);
+        }
+        return new Dummy(id, name, note, level, boss, life, armour, evasion, fire, cold, lightning, chaos, offsetX, offsetZ, yaw, scale, look,
+                bossFactor);
     }
 
     private static int parseLevel(final YamlNode node) {
@@ -191,6 +206,22 @@ public final class DummyConfig {
 
     public List<Dummy> dummies() {
         return dummies;
+    }
+
+    /**
+     * 打假人的紀錄換成打 Boss 的每秒傷害（2026-10）：紀錄記的是假人的名字（後面接「（Lv.等級）」），
+     * 對到哪一隻就乘那一隻的 boss_factor；對不到乘 {@link #DEFAULT_BOSS_FACTOR}。
+     */
+    public double bossDps(final DummyRecord record) {
+        if (record == null) {
+            return 0;
+        }
+        for (final Dummy dummy : dummies) {
+            if (record.dummy() != null && record.dummy().startsWith(dummy.name())) {
+                return record.dps() * dummy.bossFactor();
+            }
+        }
+        return record.dps() * DEFAULT_BOSS_FACTOR;
     }
 
     public Dummy dummy(final String id) {

@@ -213,8 +213,8 @@ class UberTest {
         }
         // 極境開在最高階（也吃 ×11.7），再乘自己的倍率（2026-10 每個極境各自重調，原本都是 ×4）：比 T16 終局更硬
         final java.util.Map<String, Double> uberLife = java.util.Map.of(
-                "sky_crucible", 3.12, "frost_throne", 2.58, "bone_throne", 2.45, "ember_citadel", 3.56);
-        for (final MapConfig.MapDef map : config.finals()) {
+                "sky_crucible", 1.9, "frost_throne", 1.9, "bone_throne", 1.9, "ember_citadel", 1.9); // 2026-10：照每秒 10 萬打 3 分半
+        for (final MapConfig.MapDef map : config.regularFinals()) {
             final MapConfig.Uber uber = config.uber(map.id());
             assertEquals(uberLife.get(map.id()), uber.life(), 1e-9, map.id() + "：極境的生命倍率");
             assertTrue(uber.life() > 1, map.id() + "：極境比 T16 終局硬");
@@ -249,7 +249,7 @@ class UberTest {
 
     @Test
     void everyFinalHasMechanicsAndAnUberVersion() {
-        final List<MapConfig.MapDef> finals = config.finals();
+        final List<MapConfig.MapDef> finals = config.regularFinals();
         assertEquals(4, finals.size());
         for (final MapConfig.MapDef map : finals) {
             final MapConfig.Boss boss = map.boss();
@@ -272,7 +272,7 @@ class UberTest {
 
             final MapConfig.Uber uber = config.uber(map.id());
             assertNotNull(uber, map.id() + "：有極境");
-            assertTrue(uber.life() >= 2 && uber.damage() >= 1.3 && uber.cooldown() < 1, map.id() + "：極境更硬、更痛、更快");
+            assertTrue(uber.life() > 1.5 && uber.damage() >= 1.3 && uber.cooldown() < 1, map.id() + "：極境更硬、更痛、更快");
             assertFalse(uber.skills().isEmpty(), map.id() + "：極境專屬的招式");
             for (final BossSkillUse use : uber.skills()) {
                 assertTrue(use.id().startsWith("uber_"), map.id() + "：極境的招式代號 " + use.id());
@@ -336,5 +336,25 @@ class UberTest {
         final EconomyConfig economy = new EconomyConfig();
         economy.load(DATA);
         assertTrue(economy.value("abyss_core") > economy.value("sky_fragment"), "比天穹碎片值錢");
+    }
+
+    @Test
+    void everyUberHasTheDpsReduction() {
+        // 2026-10：每秒傷害上限——終局 5 萬、極境 10 萬、巔峰 15 萬；超過的部分遞減（上限～2 倍算 30%、2 倍以上算 10%）
+        for (final MapConfig.MapDef map : config.regularFinals()) {
+            final MapConfig.Uber uber = config.uber(map.id());
+            assertEquals(100000, uber.dpsCap(), 1e-9, map.id());
+            assertEquals(List.of(new MapConfig.DpsTier(100000, 0.3), new MapConfig.DpsTier(200000, 0.1)), uber.dpsOver(), map.id());
+        }
+        assertEquals(50000, config.finalDpsCap(), 1e-9, "一般終局");
+        assertEquals(List.of(new MapConfig.DpsTier(50000, 0.3), new MapConfig.DpsTier(100000, 0.1)), config.finalDpsOver());
+        assertEquals(150000, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
+        // 打到上限剛好 3 分半：終局 31.8、極境再 ×1.9、巔峰 89.7（T16 的 ×11.7 與等級差另外算）
+        for (final MapConfig.MapDef map : config.regularFinals()) {
+            assertEquals(31.8, map.boss().life(), 1e-9, map.id());
+        }
+        assertEquals(89.7, config.find("awakener").boss().life(), 1e-9);
+        final MapConfig.Uber bare = MapConfig.parseUber(YamlNode.load("test.yml", new java.io.StringReader("name: x\n")));
+        assertEquals(0, bare.dpsCap(), 1e-9, "沒寫就不限");
     }
 }

@@ -35,6 +35,7 @@ import java.util.Locale;
  * /ec map best &lt;階級&gt;              設定自己完成過的最高階（終局能開到這一階；0 = 清掉）
  * /ec map fragments [數量]          給自己天穹碎片
  * /ec map uber &lt;終局&gt;              直接開那個終局的極境（不用鑰匙、不用先打贏）
+ * /ec map pinnacle &lt;巔峰&gt;          直接開那個巔峰（2026-10；不用碎片、不用先打贏）
  * /ec map cores [數量]              給自己開極境的鑰匙（深淵星核）
  * </pre>
  */
@@ -112,6 +113,9 @@ public final class MapCommand {
                 .then(Commands.literal("uber")
                         .then(Commands.argument("map", StringArgumentType.word()).suggests(ubers(plugin))
                                 .executes(context -> uber(plugin, context))))
+                .then(Commands.literal("pinnacle")
+                        .then(Commands.argument("map", StringArgumentType.word()).suggests(pinnacles(plugin))
+                                .executes(context -> pinnacle(plugin, context))))
                 .then(Commands.literal("cores")
                         .executes(context -> cores(plugin, context, 1))
                         .then(Commands.argument("amount", IntegerArgumentType.integer(1, 64))
@@ -146,6 +150,38 @@ public final class MapCommand {
         }
         final String problem = service.adminOpenUber(player, map);
         player.sendMessage(plugin.text().prefixed(problem == null ? "<gray>開了 " + ItemRenderer.escape(map.name()) + " 的極境"
+                + "<dark_gray>（走地圖裝置後面的門進去；每個人只能進一次，/ec map tp 不受限制）" : "<red>" + ItemRenderer.escape(problem)));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** 巔峰的代號（2026-10）。 */
+    private static SuggestionProvider<CommandSourceStack> pinnacles(final ExileCore plugin) {
+        return (context, builder) -> {
+            if (plugin.maps() != null) {
+                final String remaining = builder.getRemainingLowerCase();
+                for (final MapConfig.MapDef map : plugin.maps().config().pinnacles()) {
+                    if (map.id().startsWith(remaining)) {
+                        builder.suggest(map.id());
+                    }
+                }
+            }
+            return builder.buildFuture();
+        };
+    }
+
+    private static int pinnacle(final ExileCore plugin, final CommandContext<CommandSourceStack> context) {
+        final Player player = player(plugin, context);
+        final MapService service = player == null ? null : service(plugin, player);
+        if (service == null) {
+            return Command.SINGLE_SUCCESS;
+        }
+        final MapConfig.MapDef map = service.config().find(StringArgumentType.getString(context, "map"));
+        if (map == null || service.config().pinnacle(map.id()) == null) {
+            player.sendMessage(plugin.text().prefixed("<red>沒有這個巔峰"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final String problem = service.adminOpenPinnacle(player, map);
+        player.sendMessage(plugin.text().prefixed(problem == null ? "<gray>開了巔峰 " + ItemRenderer.escape(map.name())
                 + "<dark_gray>（走地圖裝置後面的門進去；每個人只能進一次，/ec map tp 不受限制）" : "<red>" + ItemRenderer.escape(problem)));
         return Command.SINGLE_SUCCESS;
     }

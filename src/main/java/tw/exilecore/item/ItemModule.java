@@ -65,7 +65,9 @@ public final class ItemModule implements Module {
             return type == null ? null : currencies.create(type, 1);
         });
         // 我們的物品不能拿去做原版的合成、鐵砧、砂輪、釀造、熔爐（做出來的東西會沒有資料）
-        plugin.getServer().getPluginManager().registerEvents(new CustomItemGuard(plugin), plugin);
+        final CustomItemGuard guard = new CustomItemGuard(plugin);
+        plugin.getServer().getPluginManager().registerEvents(guard, plugin);
+        guard.start(); // 2026-10：玩家身上已經撿到的原版雜物（生雞肉、羽毛）每 30 秒清一次
         // 裝備比較：背包裡的裝備說明最後面寫「比身上的 ×」
         final ItemComparer comparer = new ItemComparer(plugin, service);
         service.setComparer(comparer);

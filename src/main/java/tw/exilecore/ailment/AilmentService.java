@@ -627,8 +627,13 @@ public final class AilmentService {
         if (data == null) {
             return;
         }
-        credit(source, living, type, amount);
-        double vanilla = plugin.monsters().toVanillaDamage(living, data, amount);
+        // 巔峰 Boss 的每秒傷害上限（2026-10）：持續傷害算造成的那個人的
+        final double capped = plugin.maps() == null ? amount : plugin.maps().capBossDamage(living, source, amount);
+        if (capped <= 0) {
+            return;
+        }
+        credit(source, living, type, capped);
+        double vanilla = plugin.monsters().toVanillaDamage(living, data, capped);
         final double health = living.getHealth();
         if (plugin.maps() != null) {
             // 換階段鎖血（2026-10）：持續傷害也只能打到下一個階段的門檻

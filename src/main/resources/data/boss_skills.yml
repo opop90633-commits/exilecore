@@ -71,6 +71,7 @@ settings:
   tempo:
     final: 0.7         # 終局 Boss
     uber: 0.6          # 極境
+    pinnacle: 0.6      # 巔峰（萬界之巔；2026-10）
     trial: 0.7         # 昇華試煉的 Boss
     vault: 0.7         # 金庫之主（大劫盜）
     world: 0.7         # 世界 Boss（不定時活動）
@@ -637,6 +638,167 @@ skills:
     safe: 3
     scatter: 11
     shout: "「整片天都塌下來吧，只留一個地方給你。」"
+
+  # ---- 巔峰 Boss：覺醒之主・虛星（2026-10，maps.yml 的 finals.awakener）——招式照 PoE 的萬界覺醒者 ----
+  awakener_die_beam:
+    name: 死亡光束
+    hint: "一道會轉的光束：繞著祂跑，跟著光束轉的方向走"
+    kind: beam
+    damage: 1.3
+    type: lightning
+    cooldown: 14
+    range: 16
+    telegraph: 1.3
+    count: 1
+    angle: 140
+    length: 34
+    width: 0.7
+    duration: 3.5
+    interval: 0.3
+    shout: "「死。」"
+  awakener_storm_maze:
+    name: 風暴迷宮
+    hint: "場上會留一堆風暴：記住空位，別站進去"
+    kind: zone
+    damage: 0.55
+    type: chaos
+    cooldown: 18
+    range: 36
+    telegraph: 1.0
+    radius: 2.5
+    duration: 18
+    interval: 0.6
+    count: 8
+    scatter: 13
+    at: random
+    slow: 1
+    shout: "「風暴，起。」"
+  awakener_meteor:
+    name: 殞星
+    kind: slam
+    damage: 2.4
+    type: physical
+    cooldown: 12
+    range: 30
+    telegraph: 0.8
+    delay: 1.4
+    radius: 4
+    count: 3
+    stagger: 0.5
+    scatter: 5
+    at: target
+    shout: "「接住。」"
+  awakener_blink_slash:
+    name: 瞬閃斬
+    kind: blink
+    damage: 1.3          # 瞬閃到背後落地炸一圈：前搖短，一下不能太痛（單元測試：第三階段也打不死滿血的參考角色）
+    type: physical
+    cooldown: 10
+    range: 36
+    telegraph: 1.0
+    radius: 3
+  awakener_clones:
+    name: 虛星分身
+    hint: "三個殘影各射一條線：看紅線往旁邊走"
+    kind: echoes
+    damage: 1.5
+    type: lightning
+    cooldown: 24
+    range: 20
+    telegraph: 1.4
+    count: 3
+    scatter: 9
+    stagger: 0.8
+    delay: 1.0
+    reach: 28
+    width: 1.0
+    shout: "「哪一個才是我？」"
+  awakener_storm_chasers:
+    name: 風暴追擊
+    kind: orbs
+    damage: 1.0          # 混沌沒有抗性擋：一顆碰到不能太痛
+    type: chaos
+    cooldown: 22
+    range: 26
+    telegraph: 1.2
+    count: 3
+    speed: 0.16
+    duration: 8
+    size: 0.8
+    explode: 2.5
+    shout: "「跑啊。」"
+  awakener_corridor:
+    name: 風暴走廊
+    hint: "前後兩道光束：站到祂的側面"
+    kind: beam
+    damage: 1.4
+    type: lightning
+    cooldown: 20
+    range: 16
+    telegraph: 1.4
+    count: 2
+    angle: 45
+    length: 36
+    width: 1.0
+    duration: 3
+    interval: 0.3
+    shout: "「無路可走。」"
+  awakener_apocalypse:
+    name: 末日
+    kind: sanctuary
+    damage: 4.5
+    type: chaos
+    cooldown: 40
+    range: 30
+    telegraph: 3.2
+    radius: 32
+    count: 2
+    safe: 2.5
+    scatter: 12
+    shout: "「感受吧——死亡的戰慄。」"
+  awakener_collapse:
+    name: 萬界崩解
+    hint: "風暴把場地吃掉：往中間靠，留在圈裡"
+    kind: arena
+    damage: 0.4
+    type: chaos
+    cooldown: 300
+    range: 30
+    telegraph: 1.5
+    reach: 20
+    radius: 8
+    duration: 20
+    interval: 0.5
+    shout: "「這個世界，正在碎。」"
+  awakener_quad_beam:
+    name: 四方死光
+    hint: "四道光束一起轉：待在兩道之間，跟著轉"
+    kind: beam
+    damage: 1.3
+    type: lightning
+    cooldown: 24
+    range: 16
+    telegraph: 1.5
+    count: 4
+    angle: 110
+    length: 34
+    width: 0.7
+    duration: 4.5
+    interval: 0.3
+    shout: "「死。死。死。死。」"
+  hazard_awakener_storm:
+    name: 風暴
+    kind: zone
+    damage: 0.5
+    type: chaos
+    telegraph: 0.8
+    radius: 3
+    duration: 20
+    interval: 0.7
+    count: 1
+    scatter: 4
+    at: target
+    slow: 1
 
   # ---- 終局 Boss：永凍女王（霜心）——冰冷：緩速、凍結，圈越大越冷 ----
   queen_frost_nova:

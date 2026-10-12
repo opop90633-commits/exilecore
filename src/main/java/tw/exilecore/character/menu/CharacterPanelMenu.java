@@ -142,9 +142,15 @@ public final class CharacterPanelMenu extends Menu {
                         "<dark_gray>點下方自己背包裡的" + slot.displayName() + "裝上"));
             } else {
                 final ItemStack shown = equipped.clone();
+                // 2026-10（PoE2）：注入的核心天賦樹上已經點了：不重複生效，寫出來
+                final boolean instilDuplicate = plugin.items().read(equipped)
+                        .map(data -> tw.exilecore.character.PlayerStateService.instilAllocated(state, data)).orElse(false);
                 shown.editMeta(meta -> {
                     final List<net.kyori.adventure.text.Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
                     lore.add(ItemRenderer.line(""));
+                    if (instilDuplicate) {
+                        lore.add(ItemRenderer.line("<gray>注入的核心天賦樹上已經配置，不會重複生效"));
+                    }
                     lore.add(ItemRenderer.line("<yellow>左鍵：卸下回背包"));
                     meta.lore(lore);
                 });

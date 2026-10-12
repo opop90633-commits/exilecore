@@ -50,6 +50,8 @@ public final class PlayerStateService {
     private final Map<UUID, PlayerState> states = new HashMap<>();
     private final NamespacedKey movementKey;
     private final EntryGrace grace;
+    /** 戰鬥資源血條（2026-10）：怒氣、連擊、戰星、灌注從動作列搬到畫面上方的一欄。 */
+    private final ResourceBar resourceBar;
     /** 以前的常駐奔跑的移動速度加成（拿掉了；身上還有就清掉）。 */
     private final NamespacedKey oldRunKey;
 
@@ -93,6 +95,7 @@ public final class PlayerStateService {
         this.movementKey = new NamespacedKey(plugin, "movement_speed");
         this.oldRunKey = new NamespacedKey(plugin, "always_run");
         this.grace = new EntryGrace(plugin, this);
+        this.resourceBar = new ResourceBar(plugin);
     }
 
     public CharacterConfig config() {
@@ -119,6 +122,7 @@ public final class PlayerStateService {
 
     public void remove(final Player player) {
         states.remove(player.getUniqueId());
+        resourceBar.hide(player);
     }
 
     /** 屬性表有變動（換裝、升級、配點）時呼叫；實際重算延後到下次需要時。 */
@@ -452,12 +456,12 @@ public final class PlayerStateService {
     private List<EquippedItem> equippedItems(final Player player, final PlayerState state) {
         final List<EquippedItem> list = new ArrayList<>();
         for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
-            collect(list, state.jewellery(i), PlayerState.JEWELLERY_SLOTS[i]);
+            collect(list, state, state.jewellery(i), PlayerState.JEWELLERY_SLOTS[i]);
         }
         return list;
     }
 
-    private void collect(final List<EquippedItem> list, final ItemStack stack, final ItemSlot slot) {
+    private void collect(final List<EquippedItem> list, final PlayerState state, final ItemStack stack, final ItemSlot slot) {
         if (stack == null || stack.isEmpty()) {
             return;
         }
@@ -470,9 +474,22 @@ public final class PlayerStateService {
             // 放錯欄位（例如把頭盔拿在手上）不算數
             return;
         }
-        list.add(new EquippedItem(base, data.get(),
-                ItemStats.modifiers(plugin.items().repository(), data.get()),
+        List<Modifier> modifiers = ItemStats.modifiers(plugin.items().repository(), data.get());
+        if (instilAllocated(state, data.get())) {
+            // 2026-10（PoE2）：蒸餾是「配置這個核心」，天賦樹上已經點了就不再多給一份
+            final ItemStats.Instil instil = ItemStats.instilOf(data.get());
+            modifiers = new ArrayList<>(modifiers);
+            for (final Modifier mod : instil.modifiers()) {
+                modifiers.remove(mod);
+            }
+        }
+        list.add(new EquippedItem(base, data.get(), modifiers,
                 ItemStats.requirements(plugin.items().repository(), base, data.get())));
+    }
+
+    /** 這件裝備注入的天賦核心，這個角色在天賦樹上已經配置了（注入的效果不重複算）。 */
+    public static boolean instilAllocated(final PlayerState state, final ItemData data) {
+        return data.instilled() != null && state.passives().contains(data.instilled()) && ItemStats.instilOf(data) != null;
     }
 
     private record EquippedItem(ItemBase base, ItemData data, List<Modifier> modifiers, ItemBase.Requirements requirements) {
@@ -768,7 +785,7 @@ public final class PlayerStateService {
         character.setDeaths(character.deaths() + 1);
         // 2026-10：統一——death_penalty_from_level（60）等以上在哪裡死都扣 map_death_penalty（10%：劇情、地圖、劫盜、世界 Boss…），
         // 以下都不扣（競技場本來就不扣，在呼叫的地方擋掉）
-        final double ratio = character.level() >= config.deathPenaltyFromLevel() ? config.mapDeathPenalty() : 0;
+        final double ratio = character.level() >= config.deathPenaltyFromLevel() ? deathPenaltyRatio(player) : 0;
         final long need = config.experienceToNext(character.level());
         if (ratio <= 0 || need <= 0) {
             return 0;
@@ -776,6 +793,12 @@ public final class PlayerStateService {
         final long loss = Math.min(character.experience(), Math.round(need * ratio));
         character.setExperience(character.experience() - loss);
         return loss;
+    }
+
+    /** 這個人死亡扣的比例：map_death_penalty，累積贊助有減免的照那一階（2026-10）。 */
+    public double deathPenaltyRatio(final Player player) {
+        final double base = config.mapDeathPenalty();
+        return plugin.sponsors() == null ? base : plugin.sponsors().deathPenalty(player, base);
     }
 
     /** 管理指令：直接設定等級（經驗歸零）。 */
@@ -1014,6 +1037,7 @@ public final class PlayerStateService {
         player.setLevel((int) Math.round(state.mana()));
         player.setExp(maxMana <= 0 ? 0f : (float) Math.max(0, Math.min(0.999, state.mana() / maxMana)));
         player.sendActionBar(actionBar(player, state));
+        resourceBar.update(player, state);
     }
 
     private Component actionBar(final Player player, final PlayerState state) {
@@ -1047,18 +1071,7 @@ public final class PlayerStateService {
                 text.append("  ").append(inline);
             }
         }
-        if (plugin.skills() != null) {
-            final String resources = plugin.skills().resources().hud(player);
-            if (!resources.isEmpty()) {
-                text.append("  ").append(resources); // 連段、榮耀、元素灌注
-            }
-        }
-        if (plugin.combat() != null && plugin.combat().charges() != null) {
-            final String charges = plugin.combat().charges().hudText(player);
-            if (!charges.isEmpty()) {
-                text.append("  ").append(charges); // 銳星、怒星、磐星
-            }
-        }
+        // 2026-10：怒氣、連擊、灌注、獸性與戰星搬到畫面上方的戰鬥資源血條（ResourceBar），動作列不再寫
         if (state.isSafe()) {
             text.append("  ").append(EntryGrace.HUD); // 入場保護
         }

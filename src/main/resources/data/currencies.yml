@@ -412,6 +412,44 @@ abyss_core:
   description: "終局開到 T12 以上，Boss 有機率掉；在地圖裝置的「極境」打開終局 Boss 的極境版本（每個人只能進一次）"
   flavor: "從星骸最深的地方挖出來的核心，還在一下一下地跳。"
 
+# ---- 巔峰的碎片（2026-10）：四個終局 Boss（一般版本，開到 T12 以上）各有 10% 機率掉一種；四種集齊，
+#   在地圖裝置的「巔峰」打開「萬界之巔」（每個人只能進一次）。機率、階級寫在 maps.yml 的 finals.awakener.pinnacle.fragments ----
+fragment_crucible:
+  name: 熔爐碎片
+  material: BLAZE_ROD
+  stack: 10
+  operation: NONE
+  drop_weight: 0
+  description: "天穹熔爐（T12 以上）的曜帝有 10% 機率掉；跟其他三種碎片一起在地圖裝置打開「萬界之巔」"
+  flavor: "曜帝熔爐裡最後一塊沒燒盡的東西。"
+
+fragment_frost:
+  name: 永凍碎片
+  material: PRISMARINE_CRYSTALS
+  stack: 10
+  operation: NONE
+  drop_weight: 0
+  description: "永凍王座（T12 以上）的永凍女王有 10% 機率掉；跟其他三種碎片一起在地圖裝置打開「萬界之巔」"
+  flavor: "從王座上剝下來的一片冰，三百年沒有融過。"
+
+fragment_bone:
+  name: 冥河碎片
+  material: BONE_MEAL
+  stack: 10
+  operation: NONE
+  drop_weight: 0
+  description: "冥河渡口（T12 以上）的蝕骨之王有 10% 機率掉；跟其他三種碎片一起在地圖裝置打開「萬界之巔」"
+  flavor: "渡者收下的最後一根骨頭。"
+
+fragment_ember:
+  name: 餘燼碎片
+  material: FIRE_CHARGE
+  stack: 10
+  operation: NONE
+  drop_weight: 0
+  description: "餘燼堡壘（T12 以上）的餘燼將軍有 10% 機率掉；跟其他三種碎片一起在地圖裝置打開「萬界之巔」"
+  flavor: "堡壘燒完之後，還在發紅的那一塊。"
+
 # 映星鏡（2026-10；PoE2 的卡蘭德的魔鏡）：複製一件裝備。原本那件不變，多出來的是「鏡像複製品」——
 #   不能再改造（通貨、符文、注入、揭露都不行）、也不能再被複製；可以穿、交易、拆解。
 #   不能複製：傳奇、地圖、藥劑與護符、新手裝備、已腐化的、未鑑定的、已經是複製品的。

@@ -31,7 +31,7 @@ public final class MapConfig {
 
     /** 版面主題。 */
     public static final Set<String> THEMES = Set.of("beach", "forest", "ruins", "swamp", "snow", "cave", "crypt", "star",
-            "desert", "volcano", "fungal");
+            "desert", "volcano", "fungal", "void");
     /** 終局的圈數（只用來排序與顯示；一般地圖照基底的 map_tN）。 */
     public static final int FINAL_RING = 6;
 
@@ -218,6 +218,9 @@ public final class MapConfig {
     /** 讀設定時發現的舊寫法（{@link #validate} 一起回報）。 */
     private final List<String> notes = new ArrayList<>();
     private FirstKill firstKill = new FirstKill(0, 1, 2);
+    /** 一般終局 Boss 的每秒傷害上限（2026-10，maps.yml 的 final_dps；極境、巔峰寫在自己的區塊）。 */
+    private double finalDpsCap;
+    private List<DpsTier> finalDpsOver = List.of();
     private final Map<String, MapDef> maps = new LinkedHashMap<>();
     private MapDef finalMap;
     private int finalLevelBonus = DEFAULT_FINAL_LEVEL_BONUS;
@@ -241,14 +244,49 @@ public final class MapConfig {
      * @param points     首殺的天賦點
      * @param levelBonus 怪物等級比選的那一階高幾級
      */
-    public record FinalInfo(String id, List<String> requires, int points, int levelBonus, Uber uber) {
+    public record FinalInfo(String id, List<String> requires, int points, int levelBonus, Uber uber, Pinnacle pinnacle) {
         public FinalInfo {
             requires = List.copyOf(requires);
         }
 
         public FinalInfo(final String id, final List<String> requires, final int points, final int levelBonus) {
-            this(id, requires, points, levelBonus, null);
+            this(id, requires, points, levelBonus, null, null);
         }
+
+        public FinalInfo(final String id, final List<String> requires, final int points, final int levelBonus, final Uber uber) {
+            this(id, requires, points, levelBonus, uber, null);
+        }
+    }
+
+    /**
+     * 巔峰（2026-10；maps.yml 的 finals 底下某個終局寫 {@code pinnacle:}）：終局之上的最終 Boss。不用天穹碎片、不選階級——
+     * 要集齊 {@code fragments} 列的每一種碎片各一個（各由某個終局 Boss 以機率掉）才能在地圖裝置打開，固定開在最高階
+     * ＋終局的 level_bonus＋這裡的 {@code levelBonus} 級；跟極境一樣只有 Boss 房、沒有路上的怪與地圖事件，每個人只能走進去一次。
+     * Boss 的生命、傷害照這個終局自己的 boss 寫（跟其他終局一樣吃 tier_life 的最高階倍率），
+     * 這張圖所有怪物的招式冷卻乘 {@code cooldown}。
+     *
+     * @param fragments  要集齊的碎片（每一種各 1 個）
+     * @param levelBonus 比終局的最高階再高幾級
+     * @param cooldown   這張圖怪物的招式冷卻倍率（0.65 = 縮短 35%）
+     * @param monster    這張圖所有怪物額外的屬性
+     * @param player     玩家在這張圖裡額外的屬性
+     * @param drops      Boss 的掉落（寫法同極境的 drops：maps、unique_chance、exclusive_chance、extra）
+     */
+    public record Pinnacle(List<FragmentSource> fragments, int levelBonus, double cooldown, List<AffixMod> monster, List<AffixMod> player,
+                           UberDrops drops, int attempts, double dpsCap, List<DpsTier> dpsOver) {
+        public Pinnacle {
+            dpsOver = List.copyOf(dpsOver);
+            fragments = List.copyOf(fragments);
+            monster = List.copyOf(monster);
+            player = List.copyOf(player);
+        }
+    }
+
+    /**
+     * 巔峰的一種碎片：{@code from} 這個終局的 Boss（一般版本，開到 {@code minTier} 階以上）每次倒下、每個有份的人各擲一次
+     * {@code chance} 的機率掉一個 {@code currency}（currencies.yml 的代號）。
+     */
+    public record FragmentSource(String currency, String from, double chance, int minTier) {
     }
 
     /**
@@ -279,8 +317,9 @@ public final class MapConfig {
     public record Uber(String name, double life, double damage, double cooldown, int levelBonus, List<BossSkillUse> skills,
                        List<Phase> phases, Enrage enrage, List<BossHazard> hazards, List<String> mods, String intro,
                        List<AffixMod> monster, List<AffixMod> player, String key, int keyCost, double keyChance, int keyMinTier,
-                       UberDrops drops) {
+                       UberDrops drops, double dpsCap, List<DpsTier> dpsOver) {
         public Uber {
+            dpsOver = List.copyOf(dpsOver);
             skills = List.copyOf(skills);
             phases = List.copyOf(phases);
             hazards = List.copyOf(hazards);
@@ -328,15 +367,82 @@ public final class MapConfig {
         }
     }
 
+    /** 巔峰（2026-10）：見 {@link Pinnacle}。 */
+    static Pinnacle parsePinnacle(final YamlNode node) {
+        final List<FragmentSource> fragments = new ArrayList<>();
+        for (final YamlNode item : node.list("fragments")) {
+            fragments.add(new FragmentSource(item.requireString("currency").trim(), item.requireString("from").trim(),
+                    clamp01(item.decimal("chance", 0.1)), Math.max(1, item.integer("min_tier", 1))));
+        }
+        if (fragments.isEmpty()) {
+            throw new IllegalArgumentException(node.path() + ".fragments：至少要寫一種碎片（{ currency, from, chance, min_tier }）");
+        }
+        final Set<String> seen = new LinkedHashSet<>();
+        for (final FragmentSource fragment : fragments) {
+            if (!seen.add(fragment.currency())) {
+                throw new IllegalArgumentException(node.path() + ".fragments：碎片 " + fragment.currency() + " 寫了兩次");
+            }
+        }
+        final List<AffixMod> monster = new ArrayList<>();
+        for (final YamlNode stat : node.list("monster")) {
+            monster.add(AffixMod.parse(stat));
+        }
+        final List<AffixMod> player = new ArrayList<>();
+        for (final YamlNode stat : node.list("player")) {
+            player.add(AffixMod.parse(stat));
+        }
+        final YamlNode drops = node.node("drops");
+        final List<ExtraDrop> extra = new ArrayList<>();
+        for (final YamlNode item : drops.list("extra")) {
+            final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : "currency";
+            final String id = item.requireString(kind).trim();
+            extra.add(new ExtraDrop(kind, id, Math.max(1, item.integer("amount", 1)), clamp01(item.decimal("chance", 1))));
+        }
+        final double cooldown = node.decimal("cooldown", 0.65);
+        if (cooldown < 0.25 || cooldown > 1.5) {
+            throw new IllegalArgumentException(node.path() + ".cooldown：要在 0.25 到 1.5 之間（招式冷卻的倍率）");
+        }
+        final double dpsCap = Math.max(0, node.decimal("dps_cap", 0));
+        final List<DpsTier> dpsOver = parseDpsOver(node, dpsCap);
+        return new Pinnacle(fragments, Math.max(0, Math.min(30, node.integer("level_bonus", 5))), cooldown, monster, player,
+                new UberDrops(Math.max(0, drops.integer("maps", 6)), clamp01(drops.decimal("unique_chance", 0.2)),
+                        clamp01(drops.decimal("exclusive_chance", 0.1)), extra),
+                Math.max(1, Math.min(5, node.integer("attempts", 2))), dpsCap, dpsOver);
+    }
+
+    /** 巔峰、極境超過每秒上限的那一段（2026-10）：每秒傷害 from 以上的部分只算 rate（0.3 = 30%）。 */
+    public record DpsTier(double from, double rate) {
+    }
+
+    /** dps_over：[{ from, rate }]，由小排到大、第一段從 dps_cap 開始。 */
+    static List<DpsTier> parseDpsOver(final YamlNode node, final double dpsCap) {
+        final List<DpsTier> dpsOver = new ArrayList<>();
+        double previousFrom = dpsCap;
+        for (final YamlNode tier : node.list("dps_over")) {
+            final double from = tier.decimal("from", 0);
+            final double rate = tier.decimal("rate", 0);
+            if (from < previousFrom || (!dpsOver.isEmpty() && from == previousFrom)) {
+                throw new IllegalArgumentException(tier.path() + ".from：要從 dps_cap 開始、由小排到大");
+            }
+            if (rate < 0 || rate > 1) {
+                throw new IllegalArgumentException(tier.path() + ".rate：要在 0 到 1 之間（超過的部分算幾成）");
+            }
+            dpsOver.add(new DpsTier(from, rate));
+            previousFrom = from;
+        }
+        return dpsOver;
+    }
+
     /** 極境專屬傳奇的來源代號（uniques.yml 的 sources）：uber_終局代號。 */
     public static String uberSource(final String finalId) {
         return "uber_" + finalId;
     }
 
     /**
-     * 一項額外掉落：currency: 通貨代號（currencies.yml），或 support: 輔助寶石代號（supports.yml；掉一顆切好的，通常是專屬的）。
+     * 一項額外掉落：currency: 通貨代號（currencies.yml）、support: 輔助寶石代號（supports.yml；掉一顆切好的，通常是專屬的），
+     * 或 skill: 技能寶石代號（skills.yml；掉一顆 20 級的，通常是專屬的）。
      *
-     * @param kind   currency 或 support
+     * @param kind   currency、support 或 skill
      * @param id     代號
      * @param amount 幾個
      * @param chance 機率（0–1）
@@ -357,6 +463,8 @@ public final class MapConfig {
         settings = defaultSettings();
         drops = defaultDrops();
         firstKill = new FirstKill(0, 1, 2);
+        finalDpsCap = 0;
+        finalDpsOver = List.of();
         final Path file = dataFolder.resolve("maps.yml");
         if (!Files.exists(file)) {
             MapStats.setTiers(settings.tiers());
@@ -403,6 +511,9 @@ public final class MapConfig {
         mirrorChance = clamp01(d.decimal("mirror_chance", DEFAULT_MIRROR_CHANCE));
         tw.exilecore.item.ItemGenerator.setMirrorChance(clamp01(d.decimal("mirror_mob_chance", DEFAULT_MIRROR_MOB_CHANCE)));
 
+        final YamlNode finalDps = root.node("final_dps");
+        finalDpsCap = Math.max(0, finalDps.decimal("dps_cap", 0));
+        finalDpsOver = List.copyOf(parseDpsOver(finalDps, finalDpsCap));
         final YamlNode f = root.node("first_kill");
         firstKill = new FirstKill(Math.max(0, f.integer("map_points", 0)), Math.max(0, f.integer("named_points", 1)),
                 Math.max(0, f.integer("final_points", 2)));
@@ -433,8 +544,12 @@ public final class MapConfig {
                 extraFinals.put(id, map);
                 finalInfos.put(id, new FinalInfo(id, node.strings("requires"), Math.max(0, node.integer("points", firstKill.finalPoints())),
                         Math.max(0, Math.min(20, node.integer("level_bonus", finalLevelBonus))),
-                        node.has("uber") ? parseUber(node.node("uber")) : null));
+                        node.has("uber") ? parseUber(node.node("uber")) : null,
+                        node.has("pinnacle") ? parsePinnacle(node.node("pinnacle")) : null));
                 noteUberChase(node);
+                if (node.has("pinnacle") && node.has("uber")) {
+                    throw new IllegalArgumentException(node.path() + "：巔峰（pinnacle）不能再有極境版本（uber）");
+                }
             }
             for (final FinalInfo info : finalInfos.values()) {
                 for (final String required : info.requires()) {
@@ -443,6 +558,23 @@ public final class MapConfig {
                     }
                     if (required.equals(info.id())) {
                         throw new IllegalArgumentException("maps.yml：終局 " + info.id() + " 不能 requires 自己");
+                    }
+                }
+            }
+            // 巔峰（2026-10）：碎片要由存在的、不是巔峰自己的終局掉
+            for (final FinalInfo info : finalInfos.values()) {
+                if (info.pinnacle() == null) {
+                    continue;
+                }
+                for (final FragmentSource fragment : info.pinnacle().fragments()) {
+                    final FinalInfo source = finalInfos.get(fragment.from());
+                    if (source == null) {
+                        throw new IllegalArgumentException("maps.yml：巔峰 " + info.id() + " 的碎片 " + fragment.currency()
+                                + " 寫了不存在的終局 " + fragment.from());
+                    }
+                    if (source.pinnacle() != null) {
+                        throw new IllegalArgumentException("maps.yml：巔峰 " + info.id() + " 的碎片 " + fragment.currency()
+                                + " 不能由另一個巔峰（" + fragment.from() + "）掉");
                     }
                 }
             }
@@ -588,7 +720,7 @@ public final class MapConfig {
         final YamlNode drops = node.node("drops");
         final List<ExtraDrop> extra = new ArrayList<>();
         for (final YamlNode item : drops.list("extra")) {
-            final String kind = item.has("support") ? "support" : "currency";
+            final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : "currency";
             final String id = item.requireString(kind).trim();
             extra.add(new ExtraDrop(kind, id, Math.max(1, item.integer("amount", 1)), clamp01(item.decimal("chance", 1))));
         }
@@ -596,6 +728,7 @@ public final class MapConfig {
         if (cooldown < 0.25 || cooldown > 1.5) {
             throw new IllegalArgumentException(node.path() + ".cooldown：要在 0.25 到 1.5 之間（招式冷卻的倍率）");
         }
+        final double dpsCap = Math.max(0, node.decimal("dps_cap", 0));
         return new Uber(node.string("name", null), Math.max(1, Math.min(50, node.decimal("life", 4))),
                 Math.max(1, Math.min(10, node.decimal("damage", 1.5))), cooldown, Math.max(0, Math.min(30, node.integer("level_bonus", 4))),
                 BossSkillUse.parseList(node, "skills"), phases, node.has("enrage") ? parseEnrage(node.node("enrage")) : null,
@@ -603,7 +736,8 @@ public final class MapConfig {
                 node.string("key", "abyss_core").trim(), Math.max(1, node.integer("key_cost", 1)),
                 clamp01(node.decimal("key_chance", 0.1)), Math.max(1, node.integer("key_min_tier", 12)),
                 new UberDrops(Math.max(0, drops.integer("maps", 4)), clamp01(drops.decimal("unique_chance", 0.2)),
-                        clamp01(drops.decimal("exclusive_chance", 0.05)), extra));
+                        clamp01(drops.decimal("exclusive_chance", 0.05)), extra),
+                dpsCap, parseDpsOver(node, dpsCap));
     }
 
     /** 護盾：{ count, type, name, life, duration, heal }。 */
@@ -783,6 +917,15 @@ public final class MapConfig {
         return drops;
     }
 
+    /** 一般終局 Boss 的每秒傷害上限（0 = 不限）。 */
+    public double finalDpsCap() {
+        return finalDpsCap;
+    }
+
+    public List<DpsTier> finalDpsOver() {
+        return finalDpsOver;
+    }
+
     public FirstKill firstKill() {
         return firstKill;
     }
@@ -819,6 +962,55 @@ public final class MapConfig {
     public Uber uber(final String id) {
         final FinalInfo info = finalInfos.get(id);
         return info == null ? null : info.uber();
+    }
+
+    /** 這個終局是不是巔峰（2026-10：集齊碎片才能開的最終 Boss）；是的話回傳設定，不是回傳 null。 */
+    public Pinnacle pinnacle(final String id) {
+        final FinalInfo info = finalInfos.get(id);
+        return info == null ? null : info.pinnacle();
+    }
+
+    /** 所有的巔峰（依設定檔順序）。 */
+    public List<MapDef> pinnacles() {
+        final List<MapDef> list = new ArrayList<>();
+        for (final MapDef map : finals()) {
+            if (pinnacle(map.id()) != null) {
+                list.add(map);
+            }
+        }
+        return list;
+    }
+
+    /** 一般的終局（用天穹碎片開、可以選階級的）：不含巔峰。 */
+    public List<MapDef> regularFinals() {
+        final List<MapDef> list = new ArrayList<>();
+        for (final MapDef map : finals()) {
+            if (pinnacle(map.id()) == null) {
+                list.add(map);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 巔峰的地圖數值：終局的最高階、怪物等級再加終局本身與巔峰的等級加成；招式冷卻乘 cooldown；monster、player 的屬性。
+     */
+    public MapStats pinnacleStats(final String finalId, final Pinnacle pinnacle) {
+        final MapStats base = MapStats.forTier(tiers(), tiers().max(), finalLevelBonus(finalId) + pinnacle.levelBonus());
+        final List<tw.exilecore.stats.Modifier> monster = new ArrayList<>(base.monsterModifiers());
+        if (pinnacle.cooldown() != 1.0) {
+            monster.add(new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.SKILL_COOLDOWN, tw.exilecore.stats.ModType.INCREASED,
+                    pinnacle.cooldown() - 1.0, Set.of(), "巔峰"));
+        }
+        for (final AffixMod mod : pinnacle.monster()) {
+            monster.add(mod.toModifier(Map.of(), "巔峰"));
+        }
+        final List<tw.exilecore.stats.Modifier> players = new ArrayList<>(base.playerModifiers());
+        for (final AffixMod mod : pinnacle.player()) {
+            players.add(mod.toModifier(Map.of(), "巔峰"));
+        }
+        return new MapStats(base.tier(), base.monsterLevel(), base.quantity(), base.rarity(), base.packSize(), base.magicPacks(),
+                base.rarePacks(), monster, base.bossModifiers(), players);
     }
 
     public FinalInfo finalInfo(final String id) {

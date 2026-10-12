@@ -31,7 +31,7 @@ class MythicSampleTest {
      */
     static final Map<String, String> SHIPPED = Map.of(
             "ExileCore.yml", "a42132e032b6fe09a59dc59e0efc7e324c9750090276b8751a41ba5ecf03b87d",
-            "ExileCore-maps.yml", "4eab7a8fe325679e0363f7ecf840f409970adb72e741c484ea152f96214036a2");
+            "ExileCore-maps.yml", "e28b2194cad0c973a69a87a4704ec2f8217f3173060271779e4d2f6844ee89ba");
 
     @TempDir
     Path dir;
@@ -94,7 +94,7 @@ class MythicSampleTest {
     @Test
     void bossesOnlyKeepCosmeticTimers() throws IOException {
         final Set<String> bosses = Set.of("ExileCore_TideMother", "ExileCore_Broodmother", "ExileCore_Warlord", "ExileCore_BogWitch",
-                "ExileCore_FrostRavager", "ExileCore_TombGeneral", "ExileCore_StarPriest", "ExileCore_StarEmperor");
+                "ExileCore_FrostRavager", "ExileCore_TombGeneral", "ExileCore_StarPriest", "ExileCore_StarEmperor", "ExileCore_Awakener");
         int checked = 0;
         for (final String file : SHIPPED.keySet()) {
             final Map<String, Object> mobs;

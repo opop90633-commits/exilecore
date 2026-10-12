@@ -80,7 +80,10 @@ public record SkillDefinition(String id, String name, String description, String
         if (mechanic == Mechanic.AURA) {
             return aura != null && aura.burns(); // 焚燒光環（焚心業火）每半秒打周圍的敵人
         }
-        if (mechanic == Mechanic.MARK || mechanic == Mechanic.SUMMON || mechanic == Mechanic.WARCRY || mechanic == Mechanic.RALLY
+        if (mechanic == Mechanic.WARCRY) {
+            return damage != null; // 2026-10（PoE2）：有寫 damage 的戰吼（震地戰吼）吼的時候會打範圍內的敵人
+        }
+        if (mechanic == Mechanic.MARK || mechanic == Mechanic.SUMMON || mechanic == Mechanic.RALLY
                 || mechanic == Mechanic.DESECRATE || mechanic == Mechanic.GUARD) {
             return false;
         }
@@ -233,7 +236,10 @@ public record SkillDefinition(String id, String name, String description, String
             }
             // 2026-10：召喚技能不算法術（法術的輔助掛不上、帶 spell 標籤的加成不吃）；type 還是 spell：召喚的動作照施法時間算
             tags.remove(Tags.SPELL);
-            tags.add(summon.isRanged() ? Tags.PROJECTILE : Tags.MELEE); // 召喚物用近戰打；遠程的（骸骨射手、術士）算投射物：近戰的輔助寶石（蠻力）可以掛；主人自己的近戰加成不會給召喚物（只給帶 minion 標籤的）
+            // 召喚物用近戰打：近戰的輔助寶石（蠻力）可以掛；主人自己的近戰加成不會給召喚物（只給帶 minion 標籤的）。
+            // 2026-10：遠程的（骸骨射手、術士）標「遠程」不標投射物——牠們是直接打中的彈道，不是真的投射物：
+            // 「+x 投射物技能等級」吃不到、穿透／分光這些投射物的輔助也掛不上（掛了也沒有作用）；召喚物打人時照樣算投射物攻擊（MinionSheets）
+            tags.add(summon.isRanged() ? Tags.RANGED : Tags.MELEE);
             if (!summon.permanent()) {
                 tags.add(Tags.DURATION);
             }
@@ -304,8 +310,9 @@ public record SkillDefinition(String id, String name, String description, String
         if (mechanic == Mechanic.SUMMON && node.has("damage")) {
             throw new IllegalArgumentException(where + ".damage：召喚技能自己不造成傷害（召喚物的傷害寫在 summon.damage，是同等級怪物的倍數）");
         }
-        if ((mechanic == Mechanic.AURA && (aura == null || !aura.burns()) || mechanic == Mechanic.WARCRY) && node.has("damage")) {
-            throw new IllegalArgumentException(where + ".damage：光環與戰吼自己不造成傷害（捷的擊殺效果寫成隱藏技能，用 aura.on_kill 指過去）");
+        // 2026-10（PoE2）：戰吼可以寫 damage——吼的時候打半徑內的敵人一下（戰吼傷害：不算攻擊也不算法術，吃帶 warcry 標籤的加成）
+        if (mechanic == Mechanic.AURA && (aura == null || !aura.burns()) && node.has("damage")) {
+            throw new IllegalArgumentException(where + ".damage：光環自己不造成傷害（捷的擊殺效果寫成隱藏技能，用 aura.on_kill 指過去）");
         }
         if (type == SkillType.SPELL && (!utility || node.has("damage"))) {
             damage = node.range("damage");

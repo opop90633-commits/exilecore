@@ -57,3 +57,25 @@ ExileCore_StarEmperor:
   Skills:
   - effect:particles{p=flame;a=40;hs=1.2;vs=2;s=0.03;y=1.5} @self ~onTimer:30
   - effect:particles{p=end_rod;a=20;hs=1.5;vs=2;s=0.05;y=2} @self ~onTimer:50
+
+ExileCore_Awakener:
+  Type: WITHER_SKELETON
+  Display: '&5覺醒之主・虛星'
+  Health: 1200
+  Damage: 22
+  Options:
+    MovementSpeed: 0.32
+    FollowRange: 48
+    KnockbackResistance: 1
+    PreventOtherDrops: true
+    PreventRandomEquipment: true
+    Despawn: false
+  Equipment:
+  - netherite_sword HAND
+  - netherite_helmet HEAD
+  - netherite_chestplate CHEST
+  - netherite_leggings LEGS
+  - netherite_boots FEET
+  Skills:
+  - effect:particles{p=reverse_portal;a=40;hs=1.4;vs=2.2;s=0.05;y=1.5} @self ~onTimer:30
+  - effect:particles{p=end_rod;a=16;hs=1.6;vs=2;s=0.04;y=2} @self ~onTimer:50

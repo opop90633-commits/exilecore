@@ -76,6 +76,28 @@ public final class WorldEventModule implements Module, Listener {
         return service;
     }
 
+    /** 死在活動的地方（世界 Boss、怪潮）的人：重生一律回營地，不回最後的檢查點（2026-10）。死掉沒按重生就下線的，重新上線重生時也照樣回營地。 */
+    private final java.util.Set<java.util.UUID> diedAtEvent = new java.util.HashSet<>();
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerDeath(final org.bukkit.event.entity.PlayerDeathEvent event) {
+        if (service != null && service.inEventArea(event.getPlayer().getLocation())) {
+            diedAtEvent.add(event.getPlayer().getUniqueId());
+        }
+    }
+
+    /** 比區域的重生（回最後的檢查點，HIGH）晚，蓋過去。 */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onRespawn(final org.bukkit.event.player.PlayerRespawnEvent event) {
+        if (!diedAtEvent.remove(event.getPlayer().getUniqueId())) {
+            return;
+        }
+        final org.bukkit.Location camp = plugin.zones() == null ? null : plugin.zones().campLocation();
+        if (camp != null) {
+            event.setRespawnLocation(camp);
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(final EntityDeathEvent event) {
         if (service == null || service.role(event.getEntity()) == null) {

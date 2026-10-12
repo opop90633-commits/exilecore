@@ -124,7 +124,7 @@ shop:
 
 # ---- 擊殺稱號（2026-10）----
 # 同一個帳號打倒這隻 Boss kills 次就發（倒下時在裡面的人各記一次，整個帳號一起算）；拿到就戴上，擁有就有 stats 的永久加成。
-# 鍵是 maps.yml 的終局代號（只算極境）；heist_finale 是劫盜終局的金庫之主。id 是稱號代號（不寫是 kill_鍵）。
+# 鍵是 maps.yml 的終局代號（只算極境；巔峰 awakener 算本體）；heist_finale 是劫盜終局的金庫之主。id 是稱號代號（不寫是 kill_鍵）。
 boss_titles:
   sky_crucible:  { id: kill_emperor, boss_name: 極境・曜帝,     name: 弒帝者,     kills: 100, color: "#f5b942",
                    stats: [ { stat: damage, type: INCREASED, value: 5 } ] }
@@ -134,5 +134,7 @@ boss_titles:
                    stats: [ { stat: life.max, type: INCREASED, value: 5 } ] }
   ember_citadel: { id: kill_general, boss_name: 極境・焚天將軍, name: 熄滅焚天者, kills: 100, color: "#ff7a3d",
                    stats: [ { stat: resist.fire, value: 8 }, { stat: damage, type: INCREASED, value: 3 } ] }
+  awakener:      { id: kill_awakener, boss_name: 覺醒之主,   name: 弒星者,     kills: 50,  color: "#c77dff",
+                   stats: [ { stat: damage, type: INCREASED, value: 5 }, { stat: life.max, type: INCREASED, value: 3 } ] }
   heist_finale:  { id: kill_vault,   boss_name: 金庫之主,       name: 萬鎖破除者, kills: 100, color: "#ffd24a",
                    stats: [ { stat: drop.rarity, type: INCREASED, value: 5 } ] }

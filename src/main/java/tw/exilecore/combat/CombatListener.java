@@ -648,8 +648,11 @@ public final class CombatListener implements Listener {
                 pvpRewards(attackerIsPlayer, credit, attackerSheet, skill, result, defender);
             }
         } else {
+            // 巔峰 Boss 的每秒傷害上限（2026-10，maps.yml 的 pinnacle.dps_cap）：玩家與他的召喚物打的才算
+            final double total = credit != null && plugin.maps() != null
+                    ? plugin.maps().capBossDamage(defender, credit.getUniqueId(), result.total()) : result.total();
             // 怪物的原版血量上限 1024，生命更高的怪物按比例縮放
-            event.setDamage(plugin.monsters().toVanillaDamage(defender, defenderMonster, result.total()));
+            event.setDamage(plugin.monsters().toVanillaDamage(defender, defenderMonster, total));
             // 撲殺（2026-10，輔助寶石）：這一下之後生命低於門檻就直接打死
             // 撲殺：換階段鎖血中的 Boss 不能撲殺（2026-10：不然收命、收魂照給，Boss 卻沒死）
             if ((attackerIsPlayer || attackerIsMinion) && StatKeys.flag(skill.effective(attackerSheet), StatKeys.FLAG_CULLING)
@@ -679,9 +682,9 @@ public final class CombatListener implements Listener {
                 }
                 // 真正扣掉的生命（溢出的不算）：剩下的原版血量換回我們的生命
                 final double scale = plugin.monsters().healthScale(defender, defenderMonster);
-                final double remaining = scale > 0 ? defender.getHealth() / scale : result.total();
-                pendingCredits.put(defender.getUniqueId(), new Credit(credit.getUniqueId(), Math.min(result.total(), remaining)));
-                pendingNumbers.put(defender.getUniqueId(), new PendingNumber(credit, result.total(), result.crit(), result.dealt(), attackerIsPlayer,
+                final double remaining = scale > 0 ? defender.getHealth() / scale : total;
+                pendingCredits.put(defender.getUniqueId(), new Credit(credit.getUniqueId(), Math.min(total, remaining)));
+                pendingNumbers.put(defender.getUniqueId(), new PendingNumber(credit, total, result.crit(), result.dealt(), attackerIsPlayer,
                         chargeChances(attackerIsPlayer, skill, attackerSheet), meterName(skill)));
             }
         }

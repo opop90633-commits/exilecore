@@ -416,6 +416,28 @@ public final class WorldEventService {
         return arenaCenter != null;
     }
 
+    /**
+     * 這個位置是不是在活動的地方（2026-10，死在這裡重生回營地）：活動世界裡任何地方，
+     * 或正在進行的事件／蓋好的場地的範圍內（場地蓋在劇情世界的舊設定）。
+     */
+    public boolean inEventArea(final Location location) {
+        if (location == null || location.getWorld() == null) {
+            return false;
+        }
+        final World world = eventWorld();
+        if (world != null && world.equals(location.getWorld())) {
+            return true;
+        }
+        final Location center = active != null ? active.center : hasArena() ? arenaCenter : null;
+        if (center == null || !location.getWorld().equals(center.getWorld())) {
+            return false;
+        }
+        final double radius = eventRadius();
+        final double dx = location.getX() - center.getX();
+        final double dz = location.getZ() - center.getZ();
+        return dx * dx + dz * dz <= radius * radius;
+    }
+
     /** 活動世界（虛空；沒有就 null）。 */
     private World eventWorld() {
         return plugin.world() == null || plugin.world().worlds() == null ? null : plugin.world().worlds().event();

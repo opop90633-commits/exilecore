@@ -13,10 +13,11 @@ import java.util.UUID;
 
 /**
  * 掛機偵測（2026-10）：營地以外的地方站在原地不走（只放技能、按住連續施放也算），
- * {@link #WARN_SECONDS} 秒後提醒「視為掛機」，{@link #KICK_SECONDS} 秒時傳回營地。走出 {@link #MOVE_DISTANCE} 格就重新算。
- * 營地（含練習場）、創造與旁觀模式、死掉的不管。
+ * {@link #WARN_SECONDS} 秒後提醒「視為掛機」，{@link #KICK_SECONDS} 秒時傳回營地。
+ * 自己按移動鍵（前後左右、跳）走出 {@link #MOVE_DISTANCE} 格才重新算：被怪物擊退、推走的不算。
+ * 營地（含練習場）、創造與旁觀模式、死掉的、正在打地圖 Boss 的（Boss 還活著、人在 Boss 附近）不管。
  */
-final class AfkWatcher {
+final class AfkWatcher implements org.bukkit.event.Listener {
 
     /** 幾秒沒走動算掛機（提醒）。 */
     static final int WARN_SECONDS = 180;
@@ -29,6 +30,21 @@ final class AfkWatcher {
         Location anchor;
         long since;
         boolean warned;
+        /** 上次重新算之後，自己按過移動鍵（被擊退的位移不算走動）。 */
+        boolean steered;
+    }
+
+    /** 玩家按下移動鍵（按一下就放開的也抓得到；按住不放的在 {@link #tick} 裡看）。 */
+    @org.bukkit.event.EventHandler(ignoreCancelled = true)
+    public void onInput(final org.bukkit.event.player.PlayerInputEvent event) {
+        if (steering(event.getInput())) {
+            watches.computeIfAbsent(event.getPlayer().getUniqueId(), uuid -> new Watch()).steered = true;
+        }
+    }
+
+    /** 有沒有按移動鍵（前後左右、跳）。 */
+    static boolean steering(final org.bukkit.Input input) {
+        return input != null && (input.isForward() || input.isBackward() || input.isLeft() || input.isRight() || input.isJump());
     }
 
     private final ExileCore plugin;
@@ -47,11 +63,17 @@ final class AfkWatcher {
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             final Location at = player.getLocation();
             final Watch watch = watches.computeIfAbsent(player.getUniqueId(), uuid -> new Watch());
+            if (steering(player.getCurrentInput())) {
+                watch.steered = true;
+            }
+            // 2026-10：被擊退的位移不算走動（要自己按過移動鍵）；打地圖 Boss 的時候不算掛機（召喚師站著打 3 分半也不會被傳走）
+            final boolean walked = watch.anchor == null || moved(watch.anchor, at) && watch.steered;
             if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR || player.isDead()
-                    || zones.inTown(at) || moved(watch.anchor, at)) {
+                    || zones.inTown(at) || walked || plugin.maps() != null && plugin.maps().inBossFight(player)) {
                 watch.anchor = at;
                 watch.since = now;
                 watch.warned = false;
+                watch.steered = false;
                 continue;
             }
             final long idle = (now - watch.since) / 1000;

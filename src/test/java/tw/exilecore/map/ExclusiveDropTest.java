@@ -124,7 +124,7 @@ class ExclusiveDropTest {
                 assertFalse(skills.supportsUpTo(3).contains(support), support.id() + "：未切割輔助寶石切不出來");
             }
         }
-        assertEquals(6, exclusive, "四個終局各一顆＋兩顆極境專屬");
+        assertEquals(13, exclusive, "四個終局各一顆＋兩顆極境專屬＋七顆巔峰（覺醒之主・虛星）專屬");
         for (final String finalId : FINALS) {
             final List<SupportDefinition> own = skills.supportsFrom(finalId);
             assertEquals(1, own.size(), finalId + " 的專屬輔助");
@@ -192,5 +192,32 @@ class ExclusiveDropTest {
         // 沒寫 exclusive_chance：預設 5%
         final MapConfig.Uber bare = MapConfig.parseUber(YamlNode.load("test.yml", new java.io.StringReader("name: x\n")));
         assertEquals(0.05, bare.drops().exclusiveChance(), 1e-9);
+    }
+    @Test
+    void pinnacleDropsItsOwnSupportsAndSkillGems() {
+        // 2026-10：覺醒之主・虛星（萬界之巔）的專屬輔助、專屬技能寶石都寫在巔峰的 drops.extra，各 1%（沒有賽季重置，保持稀缺）
+        final MapConfig.UberDrops drops = maps.pinnacle("awakener").drops();
+        final List<String> supports = new java.util.ArrayList<>();
+        final List<String> gems = new java.util.ArrayList<>();
+        for (final MapConfig.ExtraDrop extra : drops.extra()) {
+            if ("support".equals(extra.kind()) && skills.support(extra.id()).droppedBy("awakener")) {
+                supports.add(extra.id());
+                assertEquals(0.01, extra.chance(), 1e-9, extra.id());
+            } else if ("skill".equals(extra.kind())) {
+                assertNotNull(skills.skill(extra.id()), extra.id());
+                assertTrue(skills.skill(extra.id()).droppedBy("awakener"), extra.id());
+                gems.add(extra.id());
+                assertEquals(0.01, extra.chance(), 1e-9, extra.id());
+            }
+        }
+        assertEquals(skills.supportsFrom("awakener").stream().map(SupportDefinition::id).toList(), supports, "每一顆專屬輔助都會掉");
+        assertEquals(skills.skillsFrom("awakener").stream().map(tw.exilecore.skill.SkillDefinition::id).toList(), gems, "每一顆專屬技能寶石都會掉");
+        assertEquals(7, supports.size());
+        assertEquals(6, gems.size());
+        assertEquals(0.03, drops.uniqueChance(), 1e-9, "自己的十件傳奇 3%");
+        // 寫 skill: 的會讀成技能寶石
+        final MapConfig.Uber parsed = MapConfig.parseUber(YamlNode.load("test.yml", new java.io.StringReader(
+                "name: x\ndrops:\n  extra:\n    - { skill: void_meteor, chance: 0.5 }\n")));
+        assertEquals(List.of(new MapConfig.ExtraDrop("skill", "void_meteor", 1, 0.5)), parsed.drops().extra());
     }
 }

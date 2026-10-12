@@ -31,6 +31,8 @@ public final class MapDeviceMenu extends Menu {
     private static final int SLOT_FINAL = 31;
     private static final int SLOT_HELP = 33;
     private static final int SLOT_UBER = 40;
+    /** 巔峰（2026-10）：集齊四種碎片才能開一次的最終 Boss。 */
+    private static final int SLOT_PINNACLE = 42;
     private static final int SLOT_TREE = 38;
     private static final int SLOT_CLOSE = 53;
     private static final int SLOT_STATUS = 49;
@@ -110,6 +112,7 @@ public final class MapDeviceMenu extends Menu {
         set(SLOT_TREE, AtlasMenu.treeButton(player, service));
         drawFinal(config, completed);
         drawUber(config, completed);
+        drawPinnacle(config, completed);
         set(SLOT_HELP, icon(Material.BOOK, "<white>怎麼用",
                 "<gray>1. 點背包裡的地圖，放上裝置",
                 "<gray>2. 按「開啟」：地圖世界裡會生出那張地圖",
@@ -127,7 +130,7 @@ public final class MapDeviceMenu extends Menu {
     }
 
     private void drawFinal(final MapConfig config, final Set<String> completed) {
-        final List<MapConfig.MapDef> finals = config.finals();
+        final List<MapConfig.MapDef> finals = config.regularFinals();
         if (finals.isEmpty()) {
             return;
         }
@@ -172,7 +175,7 @@ public final class MapDeviceMenu extends Menu {
     /** 終局：選要打哪一個 Boss（好幾個的話）、開第幾階（最高到完成過的最高階），確定才用掉碎片。 */
     private void chooseFinalTier() {
         final MapConfig config = service.config();
-        final List<MapConfig.MapDef> finals = config.finals();
+        final List<MapConfig.MapDef> finals = config.regularFinals();
         // 能開的終局；一個都不能開就把主要那個的原因說出來
         final List<MapConfig.MapDef> openable = new ArrayList<>();
         for (final MapConfig.MapDef map : finals) {
@@ -232,12 +235,96 @@ public final class MapDeviceMenu extends Menu {
     /** 有極境版本的終局（依設定檔順序）。 */
     private List<MapConfig.MapDef> uberFinals(final MapConfig config) {
         final List<MapConfig.MapDef> list = new ArrayList<>();
-        for (final MapConfig.MapDef map : config.finals()) {
+        for (final MapConfig.MapDef map : config.regularFinals()) {
             if (config.uber(map.id()) != null) {
                 list.add(map);
             }
         }
         return list;
+    }
+
+    /** 巔峰（2026-10）：集齊每一種碎片各一個才能開一次的最終 Boss；列出碎片集到哪、要先打贏誰。 */
+    private void drawPinnacle(final MapConfig config, final Set<String> completed) {
+        final List<MapConfig.MapDef> pinnacles = config.pinnacles();
+        if (pinnacles.isEmpty()) {
+            return;
+        }
+        final MapConfig.MapDef map = pinnacles.getFirst();
+        final MapConfig.Pinnacle pinnacle = config.pinnacle(map.id());
+        final List<String> lore = new ArrayList<>();
+        lore.add("<gray>" + ItemRenderer.escape(map.lore()));
+        lore.add("<gray>Boss：<#c77dff>" + ItemRenderer.escape(map.boss().name()));
+        lore.add("<gray>固定開在 T" + config.tiers().max() + " 再高幾級（怪物等級 <white>"
+                + config.pinnacleStats(map.id(), pinnacle).monsterLevel() + "<gray>），只有 Boss 房");
+        lore.add("<red>每個人只能走進去一次<dark_gray>（死了或離開就不能再進）");
+        lore.add("");
+        final String missing = Atlas.missingRequirements(config, map, completed);
+        if (!missing.isEmpty()) {
+            lore.add("<red>先打贏 " + ItemRenderer.escape(missing));
+        } else {
+            lore.add((completed.contains(map.id()) ? "<green>✔ 已打贏" : "<white>要先打贏的終局都打贏了"));
+        }
+        lore.add("<gray>碎片（每一種各 1 個）：");
+        boolean allFragments = true;
+        for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
+            final CurrencyType type = plugin.currencies().repository().get(fragment.currency());
+            final int have = type == null ? 0 : service.countCurrency(player, type);
+            final MapConfig.MapDef from = config.find(fragment.from());
+            allFragments &= have >= 1;
+            lore.add((have >= 1 ? "<green>✔ " : "<dark_gray>・") + (have >= 1 ? "<white>" : "<gray>")
+                    + ItemRenderer.escape(type == null ? fragment.currency() : type.name()) + " <dark_gray>×" + have
+                    + "　" + ItemRenderer.escape(from == null ? fragment.from() : from.name()) + (fragment.minTier() > 1 ? " T" + fragment.minTier() + "+" : "")
+                    + " 的 Boss " + Math.round(fragment.chance() * 100) + "%");
+        }
+        final boolean ready = service.pinnacleProblem(player, map) == null;
+        if (ready) {
+            lore.add("");
+            lore.add("<green>點一下打開傳送門（會用掉碎片）");
+            set(SLOT_PINNACLE, glowing(icon(Material.END_CRYSTAL, "<#c77dff>巔峰：" + ItemRenderer.escape(map.name()), lore)));
+        } else {
+            set(SLOT_PINNACLE, icon(allFragments && missing.isEmpty() ? Material.END_CRYSTAL : Material.ENDER_EYE,
+                    "<gray>巔峰：" + ItemRenderer.escape(map.name()), lore));
+        }
+    }
+
+    /** 巔峰：確認才用掉碎片。 */
+    private void choosePinnacle() {
+        final MapConfig config = service.config();
+        final List<MapConfig.MapDef> pinnacles = config.pinnacles();
+        final List<MapConfig.MapDef> openable = new ArrayList<>();
+        for (final MapConfig.MapDef map : pinnacles) {
+            if (service.pinnacleProblem(player, map) == null) {
+                openable.add(map);
+            }
+        }
+        if (openable.isEmpty()) {
+            final String problem = pinnacles.isEmpty() ? "沒有巔峰" : service.pinnacleProblem(player, pinnacles.getFirst());
+            player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem == null ? "巔峰開不了" : problem)));
+            return;
+        }
+        final List<Dialogs.Option> bosses = new ArrayList<>();
+        for (final MapConfig.MapDef map : openable) {
+            final MapConfig.Pinnacle pinnacle = config.pinnacle(map.id());
+            bosses.add(new Dialogs.Option(map.id(), "<#c77dff>" + ItemRenderer.escape(map.boss().name()) + " <gray>"
+                    + config.pinnacleStats(map.id(), pinnacle).monsterLevel() + " 級（" + ItemRenderer.escape(map.name()) + "）"));
+        }
+        player.closeInventory();
+        plugin.dialogs().form(player, "<#c77dff>巔峰",
+                List.of("<gray>要用掉每一種碎片各 1 個，開在 T" + config.tiers().max() + " 再高幾級",
+                        "<gray>只有 Boss 房：一進去下一間就是 Boss",
+                        "<red>每個人只能走進去一次：死了或離開（包括回營地）就不能再進",
+                        "<dark_gray>準備好藥劑與抗性再進去；隊友也是各進一次"),
+                List.of(new Dialogs.Choice("boss", "挑戰", bosses, openable.getFirst().id())), "打開傳送門",
+                answers -> {
+                    final MapConfig.MapDef chosen = answers.get("boss").isEmpty() ? openable.getFirst() : config.find(answers.get("boss"));
+                    if (chosen == null || !chosen.isFinal()) {
+                        return;
+                    }
+                    final String failed = service.activatePinnacle(player, chosen);
+                    if (failed != null) {
+                        player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(failed)));
+                    }
+                }, null);
     }
 
     /** 極境：終局 Boss 的最強版本；列出每一個能不能開、打贏了沒，鑰匙夠不夠。 */
@@ -370,7 +457,8 @@ public final class MapDeviceMenu extends Menu {
         final List<String> lore = new ArrayList<>();
         lore.add("<gray>" + ItemRenderer.escape(instance.ownerName()) + " 開的・怪物等級 " + instance.level());
         lore.add(instance.state() == MapInstance.State.BUILDING ? "<yellow>成形中……"
-                : (instance.singleEntry() ? "<red>每個人只能進入 1 次<gray>" : "<gray>還能進入 <white>" + instance.portalsLeft() + "<gray> 次")
+                : (instance.usesAttempts() ? "<#f5b942>" + MapService.attemptText(instance) + "<gray>"
+                : instance.singleEntry() ? "<red>每個人只能進入 1 次<gray>" : "<gray>還能進入 <white>" + instance.portalsLeft() + "<gray> 次")
                         + "・裡面 " + instance.inside().size() + " 人");
         if (instance.bossKilled()) {
             lore.add("<#f5b942>已完成");
@@ -378,6 +466,11 @@ public final class MapDeviceMenu extends Menu {
         if (!instance.atlas().isEmpty()) {
             lore.add("<#9fd3ff>星圖天賦<gray>（" + ItemRenderer.escape(instance.ownerName()) + " 點的）："
                     + ItemRenderer.escape(MapService.atlasSummary(instance.atlas(), 3)));
+        }
+        if (instance.usesAttempts()) {
+            lore.add(instance.attemptActive() && instance.enteredThisAttempt(player.getUniqueId())
+                    ? "<red>這一門你已經出來了：等裡面的人全部倒下（或出來）再走下一門"
+                    : "<gray>一門一次挑戰：裡面的人全部倒下，下一門 Boss 回滿重來；打倒 Boss 門全部關掉");
         }
         if (instance.singleEntry()) {
             lore.add(instance.uberEntered(player.getUniqueId()) ? "<red>每個人只能進一次：你已經進去過了"
@@ -412,6 +505,11 @@ public final class MapDeviceMenu extends Menu {
             case SLOT_ATLAS -> new AtlasMenu(plugin, player, service).open();
             case SLOT_TREE -> new AtlasTreeMenu(plugin, player, service).open();
             case SLOT_FINAL -> chooseFinalTier();
+            case SLOT_PINNACLE -> {
+                if (!service.config().pinnacles().isEmpty()) {
+                    choosePinnacle();
+                }
+            }
             case SLOT_UBER -> {
                 if (!uberFinals(service.config()).isEmpty()) {
                     chooseUber();

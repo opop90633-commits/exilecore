@@ -76,6 +76,12 @@ public final class TrainingService {
         this.signatureKey = new NamespacedKey(plugin, "training_dummy_look");
     }
 
+    /** 這個角色打假人的紀錄換成打 Boss 的每秒傷害（2026-10，終局、極境、巔峰的每秒傷害上限用；沒有紀錄 0）。 */
+    public double bossDps(final org.bukkit.entity.Player player) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        return state == null ? 0 : config().bossDps(DummyRecord.decode(state.progress().get(DummyRecord.KEY)));
+    }
+
     DummyConfig config() {
         return config;
     }

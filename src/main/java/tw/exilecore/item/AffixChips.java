@@ -31,7 +31,9 @@ public final class AffixChips {
         MARK("mark", "印記"), GRENADE("grenade", "榴彈"), CORPSE("corpse", "屍體"), TOTEM("totem", "圖騰"), BELL("bell", "鐘"),
         TRAP("trap", "陷阱"), HERALD("herald", "捷光環"), WARCRY("warcry", "戰吼"), PERSISTENT("persistent", "常駐"),
         COMMAND("command", "指令"), CRYSTAL("crystal", "冰晶"), SHAPESHIFT("shapeshift", "變身"), BEAR("bear", "熊形態"),
-        WEREWOLF("werewolf", "狼人形態"), WYVERN("wyvern", "飛龍形態"), SUMMON("summon", "召喚");
+        WEREWOLF("werewolf", "狼人形態"), WYVERN("wyvern", "飛龍形態"), SUMMON("summon", "召喚"),
+        // 2026-10：遠程召喚物（骸骨射手、術士）的標籤；加在最後面，前面的私用字元不會跑掉
+        RANGED("ranged", "遠程");
 
         private final String id;
         private final String label;

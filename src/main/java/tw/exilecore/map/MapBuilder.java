@@ -83,6 +83,10 @@ public final class MapBuilder {
             // 菌窟：菌絲土、蘑菇柄與蘑菇塊的牆、菌光
             case "fungal" -> new Theme(new int[] {MYCELIUM, MYCELIUM, B.ROOTED_DIRT, B.MOSS, B.PODZOL}, new int[] {MUSHROOM_STEM, BROWN_MUSHROOM_BLOCK, RED_MUSHROOM_BLOCK, MUSHROOM_STEM},
                     RED_MUSHROOM_BLOCK, MUSHROOM_STEM, B.SHROOMLIGHT, WARPED_WART, B.SHROOMLIGHT, B.BROWN_MUSHROOM, B.DIRT, 5, 8);
+            // 虛空（2026-10，巔峰「萬界之巔」）：懸在星骸之上的黑石平台，紫晶與末地燭的光，牆是黑曜石與哭泣黑曜石
+            case "void" -> new Theme(new int[] {B.DEEPSLATE_TILES, B.POLISHED_DEEPSLATE, B.DEEPSLATE_TILES, B.PURPUR, B.POLISHED_BLACKSTONE},
+                    new int[] {B.OBSIDIAN, B.DEEPSLATE_BRICKS, B.CRYING_OBSIDIAN, B.POLISHED_BLACKSTONE, B.OBSIDIAN},
+                    B.CHISELED_DEEPSLATE, B.PURPUR_PILLAR, B.END_ROD, B.AMETHYST, B.SOUL_LANTERN, B.AMETHYST_CLUSTER, B.DEEPSLATE, 6, 9);
             default -> new Theme(new int[] {B.STONE_BRICKS, B.CRACKED_BRICKS, B.ANDESITE, B.GRAVEL, B.MOSSY_BRICKS}, new int[] {B.STONE_BRICKS, B.CRACKED_BRICKS, B.MOSSY_BRICKS},
                     B.STONE_BRICK_SLAB, B.STONE_BRICKS, B.SOUL_LANTERN, B.CHISELED_BRICKS, B.SOUL_LANTERN, B.SKULL, B.STONE, 4, 7);
         };
@@ -189,7 +193,7 @@ public final class MapBuilder {
                     case "beach", "desert" -> r < 0.03 ? B.DEAD_BUSH : B.SHORT_DRY_GRASS;
                     case "fungal" -> r < 0.03 ? B.BROWN_MUSHROOM : B.RED_MUSHROOM;
                     case "cave" -> B.GLOW_LICHEN;
-                    case "star" -> B.AMETHYST_CLUSTER;
+                    case "star", "void" -> B.AMETHYST_CLUSTER;
                     case "volcano" -> r < 0.02 ? B.DEAD_BUSH : Palette.AIR;
                     // 廢墟、墓穴：一點灰燼（以前是蜘蛛網：踩進去速度剩四分之一，跑起來像被拉住）
                     default -> r < 0.02 ? B.GRAY_CARPET : Palette.AIR;

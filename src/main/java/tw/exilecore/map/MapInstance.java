@@ -63,12 +63,18 @@ public final class MapInstance {
     private MapService.Special special;
     /** Uber：這張圖的 Boss 用 Uber 的版本（null = 一般的）。 */
     private MapConfig.Uber uber;
+    /** 巔峰（2026-10）：集齊碎片才能開的最終 Boss；跟極境一樣只有 Boss 房、每個人只能進一次。 */
+    private MapConfig.Pinnacle pinnacle;
     /** 開圖的人點的星圖天賦（開圖時算一次；地圖本身的部分已經加進 {@link #stats}）。 */
     private AtlasBonus atlas = AtlasBonus.NONE;
     /** Boss 實際的定義（Uber 合併過的）；null = 地圖原本的。 */
     private MapConfig.Boss bossOverride;
     /** Uber：走進來過的人（每個人只能進一次）。 */
     private final Set<UUID> uberEntered = new HashSet<>();
+    /** 巔峰的門（2026-10）：這一門進去過的人、這一門還在不在進行、用掉幾道。 */
+    private final Set<UUID> attemptEntered = new HashSet<>();
+    private boolean attemptActive;
+    private int attemptsUsed;
     /** 階段護盾：還活著的結晶、什麼時候到期、哪一個護盾（沒有護盾時是空的、null）。 */
     private final Set<UUID> shieldCrystals = new LinkedHashSet<>();
     private long shieldUntilTick;
@@ -354,6 +360,23 @@ public final class MapInstance {
         return uber != null;
     }
 
+    public MapConfig.Pinnacle pinnacle() {
+        return pinnacle;
+    }
+
+    public boolean isPinnacle() {
+        return pinnacle != null;
+    }
+
+    /** 只有 Boss 房的實例（極境、巔峰）：沒有路上的怪、沒有地圖事件，一進去下一間就是 Boss。 */
+    public boolean bossOnly() {
+        return isUber() || isPinnacle();
+    }
+
+    void setPinnacle(final MapConfig.Pinnacle pinnacle) {
+        this.pinnacle = pinnacle;
+    }
+
     /** 設成 Uber：Boss 換成合併過的定義。 */
     void setUber(final MapConfig.Uber uber, final MapConfig.Boss merged) {
         this.uber = uber;
@@ -365,10 +388,52 @@ public final class MapInstance {
         return bossOverride != null ? bossOverride : map.boss();
     }
 
-    /** Uber：這個人第一次走進來（之後就不能再進）；回傳是不是第一次。 */
-    /** 每個人只能進一次的實例：極境、劫盜終局（死了或離開就不能再進）。 */
+    /** 每個人只能進一次的實例：極境、劫盜終局（死了或離開就不能再進）。巔峰另外算「門」（見 {@link #attemptActive}）。 */
     public boolean singleEntry() {
         return isUber() || special != null && "heist_finale".equals(special.kind());
+    }
+
+    /** 用「門」算的實例（2026-10）：終局、極境、巔峰（特別的實例除外）。 */
+    public boolean usesAttempts() {
+        return map.isFinal() && special == null;
+    }
+
+    // ---- 終局、極境、巔峰的「門」（2026-10）：一張有 2 道門（巔峰照 maps.yml 的 attempts），一道門 = 一次挑戰 ----
+    // 第一個人走進去就開始這一門；這一門還有人在裡面的時候，還沒進來過的隊友可以跟進，死了或出去的人不能再進；
+    // 裡面的人全部倒下（或出去）這一門就結束，下一個走進去的人開始下一門，Boss 回滿、從第一階段重來；打倒 Boss 門全部關掉。
+
+    /** 巔峰：這一門是不是還在進行（有人進去了、還沒全部倒下）。 */
+    public boolean attemptActive() {
+        return attemptActive;
+    }
+
+    /** 巔峰：已經用掉幾道門（含進行中的這一道）。 */
+    public int attemptsUsed() {
+        return attemptsUsed;
+    }
+
+    /** 巔峰：開始下一門；回傳是不是第二門以後（要重置 Boss）。 */
+    boolean startAttempt() {
+        attemptActive = true;
+        attemptEntered.clear();
+        attemptsUsed++;
+        return attemptsUsed > 1;
+    }
+
+    /** 巔峰：這一門結束（裡面沒有人了）：用掉一道門。 */
+    void endAttempt() {
+        attemptActive = false;
+        attemptEntered.clear();
+        usePortal();
+    }
+
+    /** 巔峰：這個人這一門進去過了嗎（死了或出去就要等下一門）。 */
+    public boolean enteredThisAttempt(final UUID player) {
+        return attemptEntered.contains(player);
+    }
+
+    void markAttemptEntry(final UUID player) {
+        attemptEntered.add(player);
     }
 
     boolean markUberEntry(final UUID player) {
@@ -442,6 +507,9 @@ public final class MapInstance {
     public String label() {
         if (uber != null) {
             return map.name() + "・極境";
+        }
+        if (pinnacle != null) {
+            return map.name();
         }
         return special != null || stats.tier() <= 0 ? map.name() : map.name() + " T" + stats.tier();
     }

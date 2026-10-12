@@ -25,6 +25,7 @@ CHIPS = [  # 代號, 名稱, 底色
     ('herald', '捷光環', '#7a6a2a'), ('warcry', '戰吼', '#8a4a2a'), ('persistent', '常駐', '#4a5a7a'), ('command', '指令', '#4a6a3a'),
     ('crystal', '冰晶', '#3a7a9a'), ('shapeshift', '變身', '#6a4a7a'), ('bear', '熊形態', '#6a4a2a'), ('werewolf', '狼人形態', '#4a4a6a'),
     ('wyvern', '飛龍形態', '#3a6a6a'), ('summon', '召喚', '#4a7438'),
+    ('ranged', '遠程', '#3a5a7a'),   # 2026-10：遠程召喚物（骸骨射手、術士）
 ]
 FONTS = ['/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc', '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
          'C:/Windows/Fonts/msjhbd.ttc', 'C:/Windows/Fonts/msjh.ttc']

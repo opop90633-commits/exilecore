@@ -26,7 +26,8 @@ final class MythicSamples {
      */
     static final Map<String, Set<String>> PREVIOUS = Map.of(
             "ExileCore.yml", Set.of("4362ac99c66ffa41b560404609def26aa74ffb5bfb0b7aba8e7b687c175e8139"),
-            "ExileCore-maps.yml", Set.of("9261514cefcc9685e3ce7a01db71a39850f2c4a5d9fd7c8f6c17c3e8b5d5c37b"));
+            "ExileCore-maps.yml", Set.of("9261514cefcc9685e3ce7a01db71a39850f2c4a5d9fd7c8f6c17c3e8b5d5c37b",
+                    "4eab7a8fe325679e0363f7ecf840f409970adb72e741c484ea152f96214036a2")); // 2026-10：加了萬界覺醒者之前的版本
 
     /** 一個範例檔同步的結果。 */
     enum Sync {

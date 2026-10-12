@@ -104,7 +104,7 @@ public final class CharacterListener implements Listener {
         if (loss > 0) {
             player.sendMessage(plugin.text().prefixed(String.format(Locale.ROOT, "<red>死亡懲罰：損失 %,d 經驗<gray>（%d 等以上死亡扣這一級 %s）",
                     loss, plugin.players().config().deathPenaltyFromLevel(),
-                    tw.exilecore.character.LevelPace.percent(plugin.players().config().mapDeathPenalty()))));
+                    tw.exilecore.character.LevelPace.percent(states.deathPenaltyRatio(player)))));
         }
         characters.save(player);
     }

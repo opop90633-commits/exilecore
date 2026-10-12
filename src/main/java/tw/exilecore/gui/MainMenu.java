@@ -55,6 +55,8 @@ public final class MainMenu extends Menu {
     private static final int SLOT_MARKET = 40;
     private static final int SLOT_DISCORD = 41;
     private static final int SLOT_STORE = 42;
+    /** 新手教學（2026-10）：網誌的連結。 */
+    private static final int SLOT_TUTORIAL = 16;
     private static final int SLOT_CODEX = 47;
     private static final int SLOT_SETTINGS = 51;
     private static final int SLOT_CLOSE = SLOT_CLOSE_BAR;
@@ -68,7 +70,7 @@ public final class MainMenu extends Menu {
     private static final java.util.Map<Integer, Integer> LABELLED = java.util.Map.ofEntries(
             java.util.Map.entry(SLOT_HEADER, 0), java.util.Map.entry(SLOT_PANEL, 1), java.util.Map.entry(SLOT_TREE, 2),
             java.util.Map.entry(SLOT_SKILLS, 3), java.util.Map.entry(SLOT_TITLES, 4), java.util.Map.entry(SLOT_CHARACTERS, 5),
-            java.util.Map.entry(SLOT_CODEX, 7), java.util.Map.entry(SLOT_SETTINGS, 8),
+            java.util.Map.entry(SLOT_TUTORIAL, 6), java.util.Map.entry(SLOT_CODEX, 7), java.util.Map.entry(SLOT_SETTINGS, 8),
             java.util.Map.entry(SLOT_BAG, 18), java.util.Map.entry(SLOT_STASH, 19), java.util.Map.entry(SLOT_FILTER, 20),
             java.util.Map.entry(SLOT_TRASH, 21), java.util.Map.entry(SLOT_GUILD, 22), java.util.Map.entry(SLOT_MARKET, 23),
             java.util.Map.entry(SLOT_PARTY, 24),
@@ -190,6 +192,7 @@ public final class MainMenu extends Menu {
         // 最下面一排
         put(SLOT_CODEX, button(Material.KNOWLEDGE_BOOK, "圖鑑", "/codex", "傳奇裝備、技能與輔助寶石、各部位會出的詞綴"));
         put(SLOT_DISCORD, withUiIcon(CommunityLinks.button(plugin, CommunityLinks.Link.DISCORD), "community"));
+        put(SLOT_TUTORIAL, CommunityLinks.button(plugin, CommunityLinks.Link.TUTORIAL));
         // 2026-10：有贊助模組就打開贊助（星幣、月卡、全服加倍、外觀特效…），沒有就是商城連結
         put(SLOT_STORE, plugin.sponsors() == null ? CommunityLinks.button(plugin, CommunityLinks.Link.STORE)
                 : icon(Material.GOLD_NUGGET, "<#f5b942>贊助", "<gray>星幣 <white>" + String.format(java.util.Locale.ROOT, "%,d",
@@ -387,6 +390,10 @@ public final class MainMenu extends Menu {
             case SLOT_DISCORD -> {
                 player.closeInventory();
                 CommunityLinks.send(plugin, player, CommunityLinks.Link.DISCORD);
+            }
+            case SLOT_TUTORIAL -> {
+                player.closeInventory();
+                CommunityLinks.send(plugin, player, CommunityLinks.Link.TUTORIAL);
             }
             case SLOT_STORE -> {
                 if (plugin.sponsors() != null) {

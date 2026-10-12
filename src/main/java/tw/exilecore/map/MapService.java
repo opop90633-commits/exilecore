@@ -338,6 +338,49 @@ public final class MapService {
         return bosses.phaseFloor(instanceOf(entity), entity);
     }
 
+    /** 巔峰的每秒傷害上限（2026-10）：每個人的額度。 */
+    private final DpsCap dpsCap = new DpsCap();
+
+    /**
+     * 打終局、極境、巔峰 Boss 的傷害照 maps.yml 的每秒上限限制（2026-10）：每秒傷害超過上限的部分照 dps_over 遞減
+     * （每秒傷害取打訓練假人的紀錄與實際打出來的較高者，見 {@link DpsCap}）。
+     * 不是巔峰 Boss、沒有上限的照原本的回傳。
+     *
+     * @param source 打的玩家（召喚物、持續傷害算主人）
+     */
+    public double capBossDamage(final LivingEntity defender, final UUID source, final double amount) {
+        if (amount <= 0 || source == null || !defender.getPersistentDataContainer().has(bossKey())) {
+            return amount;
+        }
+        final MapInstance instance = instanceOf(defender);
+        // 2026-10：終局 5 萬、極境 10 萬、巔峰 15 萬（maps.yml 的 final_dps、各極境與巔峰的 dps_cap、dps_over；沒寫就不限）
+        if (instance == null || !instance.usesAttempts()) {
+            return amount;
+        }
+        final double cap = instance.isPinnacle() ? instance.pinnacle().dpsCap()
+                : instance.isUber() ? instance.uber().dpsCap() : config.finalDpsCap();
+        if (cap <= 0) {
+            return amount;
+        }
+        final List<MapConfig.DpsTier> over = instance.isPinnacle() ? instance.pinnacle().dpsOver()
+                : instance.isUber() ? instance.uber().dpsOver() : config.finalDpsOver();
+        // 打假人的紀錄換成打 Boss 的每秒傷害（dummies.yml 的 boss_factor：打無防禦的白怪假人比打首領高很多）
+        final Player player = plugin.getServer().getPlayer(source);
+        final double record = player == null || plugin.training() == null ? 0 : plugin.training().bossDps(player);
+        return dpsCap.apply(DpsCap.key(instance.id(), source), amount, cap, over, plugin.getServer().getCurrentTick(), record);
+    }
+
+    /** 正在打地圖 Boss（2026-10，掛機偵測用）：人在自己的地圖裡、Boss 還活著、離 Boss 48 格內。 */
+    public boolean inBossFight(final Player player) {
+        final MapInstance instance = instanceAt(player.getLocation());
+        if (instance == null || instance.state() != MapInstance.State.OPEN || instance.bossKilled() || !belongs(player, instance)) {
+            return false;
+        }
+        final LivingEntity boss = instance.boss();
+        return boss != null && boss.isValid() && !boss.isDead() && boss.getWorld().equals(player.getWorld())
+                && boss.getLocation().distanceSquared(player.getLocation()) <= 48 * 48;
+    }
+
     /** 鎖在門檻上的 Boss：下一個 tick 檢查換階段。 */
     public void phaseLocked(final LivingEntity entity) {
         final MapInstance instance = instanceOf(entity);
@@ -460,8 +503,11 @@ public final class MapService {
         if (!belongs(player, instance) || !canEnter(player, instance)) {
             return "那張地圖已經關閉了";
         }
-        if (instance.isUber()) {
-            return "極境每個人只能進去一次，離開了就不能再回去";
+        if (instance.singleEntry()) {
+            return singleEntryName(instance) + "每個人只能進去一次，離開了就不能再回去";
+        }
+        if (instance.usesAttempts()) {
+            return "這一門你已經出來了：等裡面的人全部倒下（或出來），再走下一門";
         }
         return null;
     }
@@ -670,6 +716,9 @@ public final class MapService {
         if (!Atlas.finalRequirementsMet(config, map, completed)) {
             return "要先打贏 " + Atlas.missingRequirements(config, map, completed) + " 才能開" + map.name();
         }
+        if (config.pinnacle(map.id()) != null) {
+            return map.name() + "不用天穹碎片開：集齊碎片後用地圖裝置的「巔峰」按鈕";
+        }
         final CurrencyType fragment = plugin.currencies().repository().get(config.drops().fragment());
         if (fragment == null) {
             return "currencies.yml 沒有 " + config.drops().fragment();
@@ -782,6 +831,110 @@ public final class MapService {
             pendingUber = java.util.Optional.empty();
         }
         return null;
+    }
+
+    // ---- 巔峰（2026-10：集齊碎片才能開一次的最終 Boss） ----
+
+    /** 下一個 open 要不要做成巔峰（只在 {@link #activatePinnacle} 裡設一下）。 */
+    private java.util.Optional<MapConfig.Pinnacle> pendingPinnacle = java.util.Optional.empty();
+
+    /** 這個人少哪些碎片（通貨代號）：集齊了是空的。 */
+    public List<CurrencyType> missingFragments(final Player player, final MapConfig.Pinnacle pinnacle) {
+        final List<CurrencyType> missing = new ArrayList<>();
+        for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
+            final CurrencyType type = plugin.currencies().repository().get(fragment.currency());
+            if (type != null && countCurrency(player, type) < 1) {
+                missing.add(type);
+            }
+        }
+        return missing;
+    }
+
+    /** 某個巔峰開不了的原因（null = 可以開）：不是巔峰、沒角色、要先打贏的終局還沒打、碎片沒集齊、地圖世界滿了。 */
+    public String pinnacleProblem(final Player player, final MapConfig.MapDef map) {
+        final MapConfig.Pinnacle pinnacle = map == null ? null : config.pinnacle(map.id());
+        if (pinnacle == null) {
+            return "這不是巔峰";
+        }
+        if (!plugin.players().get(player).hasCharacter()) {
+            return "先建立角色";
+        }
+        final Set<String> completed = completed(player);
+        if (!Atlas.finalRequirementsMet(config, map, completed)) {
+            return "要先打贏 " + Atlas.missingRequirements(config, map, completed) + " 才能開" + map.name();
+        }
+        for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
+            if (plugin.currencies().repository().get(fragment.currency()) == null) {
+                return "currencies.yml 沒有 " + fragment.currency();
+            }
+        }
+        final List<CurrencyType> missing = missingFragments(player, pinnacle);
+        if (!missing.isEmpty()) {
+            final List<String> names = new ArrayList<>();
+            for (final CurrencyType type : missing) {
+                names.add(type.name());
+            }
+            return "碎片還沒集齊：缺 " + String.join("、", names) + "（" + fragmentSourceText(pinnacle) + "）";
+        }
+        return null;
+    }
+
+    /** 「天穹熔爐、永凍王座、冥河渡口、餘燼堡壘的 Boss 各有 10% 機率掉」這種說明。 */
+    String fragmentSourceText(final MapConfig.Pinnacle pinnacle) {
+        final List<String> names = new ArrayList<>();
+        int minTier = Integer.MAX_VALUE;
+        double chance = 0;
+        for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
+            final MapConfig.MapDef from = config.find(fragment.from());
+            names.add(from == null ? fragment.from() : from.name());
+            minTier = Math.min(minTier, fragment.minTier());
+            chance = Math.max(chance, fragment.chance());
+        }
+        return String.join("、", names) + (minTier > 1 ? "開到 T" + minTier + " 以上" : "") + "的 Boss 各有 "
+                + Math.round(chance * 100) + "% 機率掉";
+    }
+
+    /**
+     * 開巔峰：用掉每一種碎片各一個，開在終局的最高階＋等級加成；只有 Boss 房，每個人只能走進去一次。
+     */
+    public String activatePinnacle(final Player player, final MapConfig.MapDef map) {
+        final String problem = pinnacleProblem(player, map);
+        if (problem != null) {
+            return problem;
+        }
+        final String capacity = capacityProblem();
+        if (capacity != null) {
+            return capacity;
+        }
+        final MapConfig.Pinnacle pinnacle = config.pinnacle(map.id());
+        for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
+            takeCurrency(player, plugin.currencies().repository().get(fragment.currency()), 1);
+        }
+        pendingPinnacle = java.util.Optional.of(pinnacle);
+        try {
+            open(player, map, config.pinnacleStats(map.id(), pinnacle), UBER_ROOMS, null); // 一進去一間，下一間就是 Boss 房
+        } finally {
+            pendingPinnacle = java.util.Optional.empty();
+        }
+        return null;
+    }
+
+    /** 巔峰的 Boss 生不出來（設定有問題）：把開門用掉的碎片還給開的人（不在線就記在主控台）。 */
+    void refundPinnacleFragments(final MapInstance instance) {
+        final MapConfig.Pinnacle pinnacle = instance.pinnacle();
+        final Player owner = pinnacle == null ? null : plugin.getServer().getPlayer(instance.owner());
+        if (owner == null) {
+            plugin.getSLF4JLogger().warn("巔峰 {} 的 Boss 生不出來，開的人 {} 不在線上，碎片沒有退還", instance.map().id(), instance.ownerName());
+            return;
+        }
+        for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
+            final CurrencyType type = plugin.currencies().repository().get(fragment.currency());
+            if (type != null) {
+                final ItemStack stack = plugin.currencies().create(type, 1);
+                owner.getInventory().addItem(stack).values().forEach(rest -> plugin.personalDrops().dropForever(owner, rest));
+            }
+        }
+        owner.sendMessage(plugin.text().prefixed("<gray>還給你開" + ItemRenderer.escape(instance.map().name()) + "用掉的碎片"));
     }
 
     /** 極境的地圖數值（{@link MapConfig#uberStats}）。 */
@@ -909,12 +1062,16 @@ public final class MapService {
         final int[] origin = origin(cell);
         final MapLayout layout = MapLayout.generate(random().nextLong(), rooms, map.layout());
         // 星圖天賦：開圖的人點的（特別的實例、極境不吃）；地圖本身的部分加進數值，其他的存在實例上
-        final AtlasBonus atlas = special != null || pendingUber.isPresent() ? AtlasBonus.NONE : atlasBonus(owner);
+        final AtlasBonus atlas = special != null || pendingUber.isPresent() || pendingPinnacle.isPresent() ? AtlasBonus.NONE : atlasBonus(owner);
+        // 2026-10：終局、極境、巔峰用「門」算（一道門 = 一次挑戰，預設 2 道；巔峰照 maps.yml 的 attempts）
+        final int portals = map.isFinal() && special == null
+                ? pendingPinnacle.map(MapConfig.Pinnacle::attempts).orElse(BOSS_ATTEMPTS) : config.settings().portals();
         final MapInstance instance = new MapInstance(nextId++, map, stats.plus(atlas), layout, world, cell, origin[0], origin[1],
-                owner.getUniqueId(), owner.getName(), config.settings().portals(), plugin.getServer().getCurrentTick());
+                owner.getUniqueId(), owner.getName(), portals, plugin.getServer().getCurrentTick());
         instance.setSpecial(special);
         instance.setAtlas(atlas);
         pendingUber.ifPresent(uber -> instance.setUber(uber, uber.merge(map.boss())));
+        pendingPinnacle.ifPresent(instance::setPinnacle);
         instances.put(instance.id(), instance);
         cells.put(cell, instance.id());
         dirty.add(cell);
@@ -945,7 +1102,8 @@ public final class MapService {
             }
             for (final Player member : groupOnline(instance)) {
                 member.sendMessage(plugin.text().prefixed("<green>傳送門開好了：<white>" + ItemRenderer.escape(instance.label())
-                        + "<green>（" + ItemRenderer.escape(instance.ownerName()) + " 開的，" + (instance.singleEntry()
+                        + "<green>（" + ItemRenderer.escape(instance.ownerName()) + " 開的，" + (instance.usesAttempts()
+                        ? "共 " + instance.portalsLeft() + " 門，一門一次挑戰" : instance.singleEntry()
                         ? "每個人只能進入 1 次" : "可以進入 " + instance.portalsLeft() + " 次")
                         + "）<gray>——地圖裝置後面的門亮了，只有你" + (plugin.party() != null && plugin.party().inParty(member) ? "和隊友" : "")
                         + "看得到"));
@@ -955,9 +1113,19 @@ public final class MapService {
         return instance;
     }
 
+    /** 終局、極境預設幾道門（2026-10；巔峰照 maps.yml 的 attempts）。 */
+    static final int BOSS_ATTEMPTS = 2;
+
+    /** 用門算的實例：還剩幾道門、這一門進行中的說明（訊息用）。 */
+    static String attemptText(final MapInstance instance) {
+        return instance.attemptActive()
+                ? "第 " + instance.attemptsUsed() + " 門挑戰中・之後還剩 " + Math.max(0, instance.portalsLeft() - 1) + " 門"
+                : "還剩 " + instance.portalsLeft() + " 門（一門一次挑戰）";
+    }
+
     /** 只能進一次的實例叫什麼（訊息用）。 */
     private static String singleEntryName(final MapInstance instance) {
-        return instance.isUber() ? "極境" : "金庫之主";
+        return instance.isUber() ? "極境" : instance.isPinnacle() ? "巔峰" : "金庫之主";
     }
 
     /** 這個玩家能不能走進這張地圖的傳送門：自己開的，或隊友開的。 */
@@ -1025,7 +1193,25 @@ public final class MapService {
         if (instance.state() != MapInstance.State.OPEN || instance.portalsLeft() <= 0) {
             return;
         }
-        if (instance.singleEntry() && instance.uberEntered(player.getUniqueId())) {
+        if (instance.usesAttempts()) {
+            // 2026-10：門（一門一次挑戰）。這一門進行中：還沒進來過的隊友可以跟進，死了或出去的要等全部倒下再走下一門
+            if (instance.attemptActive()) {
+                if (instance.enteredThisAttempt(player.getUniqueId())) {
+                    gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
+                    player.sendActionBar(plugin.text().parse("<red>這一門你已經出來了<gray>：等裡面的人全部倒下（或出來），再走下一門"));
+                    return;
+                }
+            } else if (instance.bossKilled()) {
+                return; // 打倒了：門都關了
+            } else if (instance.startAttempt()) {
+                bosses.resetForAttempt(instance); // 第二門以後：Boss 回滿、從第一階段重來
+                for (final Player member : groupOnline(instance)) {
+                    member.sendMessage(plugin.text().prefixed("<#f5b942>" + ItemRenderer.escape(instance.label()) + "：第 "
+                            + instance.attemptsUsed() + " 門開始<gray>（Boss 回滿、從頭打起；這是最後 " + instance.portalsLeft() + " 門）"));
+                }
+            }
+            instance.markAttemptEntry(player.getUniqueId());
+        } else if (instance.singleEntry() && instance.uberEntered(player.getUniqueId())) {
             // 極境、劫盜終局每個人只能進一次：死了或回營地就出局
             gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
             player.sendActionBar(plugin.text().parse("<red>" + singleEntryName(instance) + "每個人只能進去一次（死了或離開就不能再進）"));
@@ -1034,7 +1220,9 @@ public final class MapService {
         if (instance.singleEntry()) {
             instance.markUberEntry(player.getUniqueId());
         }
-        instance.usePortal();
+        if (!instance.usesAttempts()) {
+            instance.usePortal(); // 用門算的在這一門結束的時候才扣
+        }
         instance.visitors().add(player.getUniqueId());
         remember(player, instance);
         final Location target = instance.at(instance.layout().entrance(), -90f);
@@ -1043,7 +1231,8 @@ public final class MapService {
         plugin.players().markDirty(player); // 地圖詞綴（玩家的抗性、回復）
         plugin.players().grace().grant(player); // 入場保護：移動前不會受傷
         player.showTitle(Title.title(plugin.text().parse("<#9fd3ff>" + ItemRenderer.escape(instance.label())),
-                plugin.text().parse("<gray>怪物等級 " + instance.level() + (instance.singleEntry() ? "・<red>只能進來這一次"
+                plugin.text().parse("<gray>怪物等級 " + instance.level() + (instance.usesAttempts() ? "・<#f5b942>第 " + instance.attemptsUsed() + " 門"
+                        : instance.singleEntry() ? "・<red>只能進來這一次"
                         : "・還能進入 " + instance.portalsLeft() + " 次") + "<dark_gray>・移動前不會受傷"),
                 Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
         if (!instance.map().lore().isBlank()) {
@@ -1193,7 +1382,8 @@ public final class MapService {
                     }
                     if (gate >= Math.min(CampaignStructures.GATE_COUNT, instance.portalsLeft())) {
                         player.sendActionBar(plugin.text().parse("<gray>這道門沒有亮：" + ItemRenderer.escape(instance.label())
-                                + (instance.singleEntry() ? " 每個人只能進入 1 次" : " 還能進入 " + instance.portalsLeft() + " 次") + "，走進亮著的門"));
+                                + (instance.usesAttempts() ? " " + attemptText(instance) : instance.singleEntry() ? " 每個人只能進入 1 次"
+                                : " 還能進入 " + instance.portalsLeft() + " 次") + "，走進亮著的門"));
                         continue;
                     }
                     enter(player, instance);
@@ -1203,7 +1393,9 @@ public final class MapService {
                 if (instance != null && inExitPortal(instance, location)) {
                     // 2026-10：極境、金庫之主走進出口門就直接離開（不再要求蹲下確認）
                     sendToCamp(player);
-                    player.sendMessage(plugin.text().prefixed(instance.singleEntry()
+                    player.sendMessage(plugin.text().prefixed(instance.usesAttempts()
+                            ? "<gray>離開了 " + ItemRenderer.escape(instance.label()) + "<dark_gray>（這一門不能再回去；裡面的人全部倒下或出來之後可以走下一門）"
+                            : instance.singleEntry()
                             ? "<gray>離開了 " + ItemRenderer.escape(instance.label()) + "<dark_gray>（" + singleEntryName(instance) + "每個人只能進一次，不能再回去了）"
                             : "<gray>回到營地（傳送門次數沒有用掉；" + ItemRenderer.escape(instance.label())
                             + " 還能進入 " + instance.portalsLeft() + " 次）"));
@@ -1235,6 +1427,18 @@ public final class MapService {
         final int z = location.getBlockZ() - instance.originZ();
         final int y = location.getBlockY();
         return x == exit.x() && Math.abs(z - exit.z()) <= 1 && y >= MapLayout.FLOOR_Y + 1 && y <= MapLayout.FLOOR_Y + 4;
+    }
+
+    /** 這一門還有人在打嗎：這一門進去過、還在裡面、活著（倒地的、觀戰的不算）。 */
+    private boolean challengerAlive(final MapInstance instance) {
+        for (final UUID uuid : instance.inside()) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            if (player != null && !player.isDead() && instance.enteredThisAttempt(uuid)
+                    && player.getGameMode() != GameMode.SPECTATOR && player.getGameMode() != GameMode.CREATIVE) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 每秒：誰在哪個實例裡、要不要關閉。 */
@@ -1292,6 +1496,20 @@ public final class MapService {
                     }
                 }
             }
+            if (instance.attemptActive() && !challengerAlive(instance)) {
+                // 2026-10：這一門的人全部倒下（或出來）：這一門結束，扣一道門；打倒了就全部關掉
+                instance.endAttempt();
+                if (instance.bossKilled()) {
+                    instance.closePortals();
+                } else {
+                    for (final Player member : groupOnline(instance)) {
+                        member.sendMessage(plugin.text().prefixed(instance.portalsLeft() > 0
+                                ? "<yellow>" + ItemRenderer.escape(instance.label()) + "：這一門的挑戰失敗了<gray>——還剩 <white>"
+                                + instance.portalsLeft() + "<gray> 門，走進亮著的門再挑戰一次（Boss 會回滿）"
+                                : "<red>" + ItemRenderer.escape(instance.label()) + "：門都用完了，挑戰失敗"));
+                    }
+                }
+            }
             if (instance.state() == MapInstance.State.BUILDING) {
                 continue;
             }
@@ -1319,6 +1537,7 @@ public final class MapService {
             return;
         }
         instance.setState(MapInstance.State.CLOSING);
+        dpsCap.forget(instance.id());
         for (final UUID uuid : Set.copyOf(instance.inside())) {
             final Player player = plugin.getServer().getPlayer(uuid);
             if (player != null) {
@@ -1430,6 +1649,7 @@ public final class MapService {
 
     private Component label(final MapInstance instance) {
         final String state = instance.state() == MapInstance.State.BUILDING ? "<yellow>成形中……"
+                : instance.usesAttempts() ? "<#f5b942>" + attemptText(instance)
                 : instance.singleEntry() ? "<red>每個人只能進入 1 次<gray>（死了或離開就不能再進）"
                 : "<green>還能進入 " + instance.portalsLeft() + " 次<gray>（亮著的門）";
         return plugin.text().parse("<#9fd3ff>" + ItemRenderer.escape(instance.label()) + "<newline>" + state
@@ -1493,6 +1713,7 @@ public final class MapService {
             final int lit = building ? CampaignStructures.GATE_COUNT : Math.min(CampaignStructures.GATE_COUNT, instance.portalsLeft());
             final Particle.DustOptions dust = new Particle.DustOptions(instance.special() != null ? Color.fromRGB(instance.special().color())
                     : instance.isUber() ? Color.fromRGB(0xff3b3b)
+                    : instance.isPinnacle() ? Color.fromRGB(0xc77dff)
                     : instance.map().isFinal() ? Color.fromRGB(0xf5b942) : Color.fromRGB(0x9fd3ff), 1.1f);
             for (int i = 0; i < lit; i++) {
                 final CampaignLayout.Spot spot = CampaignStructures.gate(i);
@@ -1581,7 +1802,7 @@ public final class MapService {
         if (boss != null) {
             players.removeIf(uuid -> !atBoss(plugin.getServer().getPlayer(uuid), boss));
         }
-        if (instance.singleEntry() && plugin.discord() != null && !players.isEmpty()) {
+        if ((instance.singleEntry() || instance.isUber() || instance.isPinnacle()) && plugin.discord() != null && !players.isEmpty()) {
             // 2026-10：極境 Boss、金庫之主打倒了：同步到 Discord
             final List<String> names = new ArrayList<>();
             for (final UUID uuid : players) {
@@ -1903,6 +2124,25 @@ public final class MapService {
     }
 
     /** 管理指令：直接開某個終局的極境（不用鑰匙、不用先打贏一般版本）。 */
+    /** 管理指令：直接開巔峰（不用碎片、不用先打贏）。 */
+    public String adminOpenPinnacle(final Player player, final MapConfig.MapDef map) {
+        final MapConfig.Pinnacle pinnacle = map == null ? null : config.pinnacle(map.id());
+        if (pinnacle == null) {
+            return (map == null ? "這個終局" : map.name()) + " 不是巔峰";
+        }
+        final String problem = capacityProblem();
+        if (problem != null) {
+            return problem;
+        }
+        pendingPinnacle = java.util.Optional.of(pinnacle);
+        try {
+            open(player, map, config.pinnacleStats(map.id(), pinnacle), UBER_ROOMS, null);
+        } finally {
+            pendingPinnacle = java.util.Optional.empty();
+        }
+        return null;
+    }
+
     public String adminOpenUber(final Player player, final MapConfig.MapDef map) {
         final MapConfig.Uber uber = map == null ? null : config.uber(map.id());
         if (uber == null) {

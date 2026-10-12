@@ -1694,7 +1694,10 @@ public final class SkillService {
             if (definition.mechanic() != Mechanic.AURA) { // 2026-10：光環、精魂召喚綁著就開著，不用施放（沒有施法時間）
                 lines.add(String.format(Locale.ROOT, "<gray>施法時間：<white>%.2f 秒", definition.castTime()));
             }
-            if (deals && definition.damage() != null) {
+            if (deals && definition.damage() != null && definition.mechanic() == Mechanic.WARCRY) {
+                // 2026-10（PoE2）：戰吼的傷害不算攻擊也不算法術
+                lines.add("<gray>戰吼傷害：<white>不算攻擊也不算法術<gray>，吃「戰吼增加 x% 傷害」與不分種類的傷害加成");
+            } else if (deals && definition.damage() != null) {
                 lines.add(String.format(Locale.ROOT, "<gray>法術附加的效益：<white>%d%%", Math.round(build.profile().effectiveness() * 100)));
             }
         }

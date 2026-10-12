@@ -607,7 +607,7 @@ public final class WebModule implements Module, Listener {
                 // 只掛在有附原版物品定義（web/vanilla_items/）的物品上：沒有的話改寫後的定義會用錯模型，
                 // 那個物品在所有地方都會壞掉（例如方塊類的鐵砧、標靶）
                 if (item != null && WebModule.class.getResource("/web/vanilla_items/" + item + ".json") != null) {
-                    skins.add(new UiPack.CurrencySkin(art, item));
+                    skins.add(new UiPack.CurrencySkin(art, item, !definition.engravable())); // 專屬的：傳奇外框
                 }
             }
         }
@@ -619,7 +619,7 @@ public final class WebModule implements Module, Listener {
             }
             for (final String item : java.util.Arrays.asList("ghast_tear", tw.exilecore.skill.SkillArt.vanillaItem(support.icon()))) {
                 if (item != null && WebModule.class.getResource("/web/vanilla_items/" + item + ".json") != null) {
-                    skins.add(new UiPack.CurrencySkin(art, item));
+                    skins.add(new UiPack.CurrencySkin(art, item, !support.cuttable())); // 專屬的：傳奇外框
                 }
             }
         }

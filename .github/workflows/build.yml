@@ -44,6 +44,7 @@ jobs:
     runs-on: self-hosted
     concurrency: deploy   # 連續 push 時一次只上傳一個，照順序
     env:
+      PYTHONUTF8: "1"   # Windows 主控台預設 Big5：deploy.py 印的「▶」這類字會出錯
       DEPLOY_SFTP_HOST: ${{ secrets.DEPLOY_SFTP_HOST }}
       DEPLOY_SFTP_PORT: ${{ secrets.DEPLOY_SFTP_PORT }}
       DEPLOY_SFTP_USER: ${{ secrets.DEPLOY_SFTP_USER }}
@@ -56,6 +57,12 @@ jobs:
         with:
           name: ExileCore
           path: build/libs
+
+      # 自己裝一份 Python 給上傳用（Windows 服務用系統帳號跑，看不到只裝在使用者帳號底下的 Python）
+      - name: 準備 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
       - name: 準備 paramiko
         run: python -m pip install --quiet paramiko

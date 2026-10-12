@@ -13,6 +13,7 @@
 #                           （揭露詞綴見 affixes/unveiled.yml；可以寫一串，例如 [prefix, prefix, suffix, suffix]，每條各自揭露）
 #   local.unveiled_magnitude（INCREASED）：這件物品上揭露詞綴的數值增加 x%（骷印長杖）
 #     uber_終局代號                       那隻極境 Boss 的專屬（maps.yml 的 uber.drops.exclusive_chance）
+#     awakener                           巔峰 Boss 覺醒之主・虛星（萬界之巔）的專屬（maps.yml 巔峰的 drops.unique_chance）
 #   weight：同一個來源裡的權重；drop_level：物品等級（= 怪物等級）至少多少
 #     chase      追逐級的池子：所有地圖 Boss（一般、具名、終局、極境）每次擊殺、每個有份的人各擲一次 maps.yml 的 drops.chase_chance
 #   chase: true  追逐級（極稀有）：物品上標「✦ 追逐級傳奇」、掉出來全服廣播。只寫 sources: [chase]（不放進 map_boss 這些池子），
@@ -5787,3 +5788,309 @@ abyss_maul:
       value: [10, 10]
       stats:
         - { stat: attack.speed, type: INCREASED, value: "-{value}" }
+
+# ---- 2026-10：覺醒之主・虛星（萬界之巔）的專屬傳奇（sources 寫 awakener；機率見 maps.yml 巔峰的 drops.unique_chance）----
+
+voidstar_diadem:
+  name: 虛星王冠
+  base: helm_int_20
+  drop_level: 85
+  sources: [awakener]
+  weight: 100
+  flavour:
+    - "「祂把四個王放出去的時候，戴的就是這頂。」"
+  mods:
+    - text: "增加 {value}% 最大能量護盾"
+      value: [100, 140]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+1 全部技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 1 }
+    - text: "+{value}% 混沌抗性"
+      value: [17, 23]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "你身邊的敵人閃電抗性 -{value}%"
+      value: [10, 15]
+      stats:
+        - { stat: presence.resist.lightning, type: FLAT, value: "{value}" }
+    - text: "你身邊的敵人混沌抗性 -{value}%"
+      value: [10, 15]
+      stats:
+        - { stat: presence.resist.chaos, type: FLAT, value: "{value}" }
+
+deathgaze_staff:
+  name: 死光之眼
+  base: staff_17
+  drop_level: 85
+  sources: [awakener]
+  weight: 100
+  flavour:
+    - "「祂只要看你一眼，就夠了。」"
+  mods:
+    - text: "+2 全部混沌法術技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 2, tags: [spell, chaos] }
+    - text: "+2 全部閃電法術技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 2, tags: [spell, lightning] }
+    - text: "增加 {value}% 混沌傷害"
+      value: [100, 140]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
+    - text: "增加 {value}% 閃電傷害"
+      value: [100, 140]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
+    - text: "增加 {value}% 施法速度"
+      value: [15, 20]
+      stats:
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "閃電傷害穿透 {value}% 閃電抗性"
+      value: [15, 20]
+      stats:
+        - { stat: penetration, type: FLAT, value: "{value}", tags: [lightning] }
+
+worldsunder:
+  name: 萬界崩解
+  base: mace2_26
+  drop_level: 85
+  sources: [awakener]
+  weight: 100
+  flavour:
+    - "「一個世界碎掉的聲音，比你想的還小。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [260, 320]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "物理傷害額外附加 {value}% 為混沌傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage.gain.chaos, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 攻擊速度"
+      value: [8, 12]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 暈眩累積"
+      value: [40, 60]
+      stats:
+        - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+    - text: "對暈眩中的敵人造成更多 {value}% 傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage.vs_stunned, type: MORE, value: "{value}" }
+    - text: "你殺死的敵人爆炸，對周圍造成牠最大生命 {value}% 的火焰傷害"
+      value: [10, 15]
+      stats:
+        - { stat: kill.explode, type: FLAT, value: "{value}" }
+
+stormmaze_treads:
+  name: 雷獄迷蹤
+  base: boots_dex_16
+  drop_level: 85
+  sources: [awakener]
+  weight: 100
+  flavour:
+    - "「迷宮的出口一直都在，只是會動。」"
+  mods:
+    - text: "增加 {value}% 移動速度"
+      value: [30, 35]
+      stats:
+        - { stat: movement.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 閃避"
+      value: [80, 120]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 閃電抗性"
+      value: [30, 40]
+      stats:
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 感電效果"
+      value: [30, 40]
+      stats:
+        - { stat: shock.effect, type: INCREASED, value: "{value}" }
+    - text: "擊殺時有 {value}% 機率獲得疾速"
+      value: [20, 30]
+      stats:
+        - { stat: onslaught.on_kill, type: FLAT, value: "{value}" }
+
+blinkstep_shroud:
+  name: 瞬閃之影
+  base: body_dex_22
+  drop_level: 85
+  sources: [awakener]
+  weight: 100
+  flavour:
+    - "「你看見祂的時候，祂已經在你背後了。」"
+  mods:
+    - text: "增加 {value}% 閃避"
+      value: [150, 200]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [80, 110]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "獲得閃避的 {value}% 為偏斜值"
+      value: [25, 35]
+      stats:
+        - { stat: deflection.from_evasion, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 暴擊率"
+      value: [30, 40]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - text: "最近 4 秒沒被擊中時，閃避更多 {value}%"
+      value: [30, 40]
+      stats:
+        - { stat: evasion@nohit, type: MORE, value: "{value}" }
+
+quadray_bow:
+  name: 四極天弓
+  base: bow_23
+  drop_level: 85
+  sources: [awakener]
+  weight: 100
+  flavour:
+    - "「東南西北，沒有一個方向是安全的。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [140, 180]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "附加 {min} 到 {max} 閃電傷害"
+      min: [8, 12]
+      max: [120, 150]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, lightning] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
+    - text: "增加 {value}% 攻擊速度"
+      value: [15, 20]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "+2 投射物"
+      stats:
+        - { stat: skill.projectiles, type: FLAT, value: 2, tags: [projectile] }
+    - text: "增加 {value}% 感電機率"
+      value: [100, 100]
+      stats:
+        - { stat: shock.chance, type: INCREASED, value: "{value}" }
+
+apocalypse_band:
+  name: 終末之環
+  base: jring_16
+  drop_level: 85
+  sources: [awakener]
+  weight: 100
+  flavour:
+    - "「時間到了。」"
+  mods:
+    - text: "增加 {value}% 傷害"
+      value: [25, 35]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [50, 70]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [20, 25]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "+{value}% 暴擊傷害加成"
+      value: [20, 25]
+      stats:
+        - { stat: crit.multi, type: FLAT, value: "{value}" }
+    - text: "+1% 全部抗性上限"
+      stats:
+        - { stat: resist.max, type: FLAT, value: 1 }
+
+voidheart_amulet:
+  name: 虛星之心
+  base: jamulet_09
+  drop_level: 85
+  sources: [awakener]
+  weight: 100
+  flavour:
+    - "「它還在跳。跳得比你的還穩。」"
+  mods:
+    - text: "+1 全部技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 1 }
+    - text: "+{value} 最大精魂"
+      value: [30, 40]
+      stats:
+        - { stat: spirit.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 最大生命"
+      value: [8, 10]
+      stats:
+        - { stat: life.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 光環效果"
+      value: [15, 20]
+      stats:
+        - { stat: aura.effect, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 全部元素抗性"
+      value: [15, 20]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+mirrorborn_focus:
+  name: 分身之鏡
+  base: focus_23
+  drop_level: 85
+  sources: [awakener]
+  weight: 100
+  flavour:
+    - "「鏡子裡的那個也會施法。而且比你快。」"
+  mods:
+    - text: "+{value} 最大能量護盾"
+      value: [100, 140]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 施法速度"
+      value: [15, 20]
+      stats:
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "+1 全部法術技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 1, tags: [spell] }
+    - text: "+{value} 最大魔力"
+      value: [60, 80]
+      stats:
+        - { stat: mana.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 暴擊率"
+      value: [40, 60]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+
+awakening_cord:
+  name: 覺醒之索
+  base: jbelt_05
+  drop_level: 85
+  sources: [awakener]
+  weight: 100
+  flavour:
+    - "「把四個王綁在一起的，就是這一條。」"
+  mods:
+    - text: "+{value} 最大生命"
+      value: [90, 110]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "受到的傷害有 {value}% 之後慢慢回復為生命"
+      value: [10, 15]
+      stats:
+        - { stat: life.recoup, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 生命藥劑回復量"
+      value: [30, 40]
+      stats:
+        - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [20, 25]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "+3% 閃電抗性上限"
+      stats:
+        - { stat: resist.max.lightning, type: FLAT, value: 3 }

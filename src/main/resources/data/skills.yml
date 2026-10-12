@@ -54,7 +54,9 @@
 #                          heal: [8, 15] 立刻回復最大生命的 %、allies 隊友也拿到增益、buff: [...] 增益（隨等級）、
 #                          debuff: { taken: [12, 25] } 範圍內的敵人受到的傷害增加（誰打都算）、
 #                          exert: { count: 3, more: [30, 50] } 接下來幾次攻擊更多傷害、
-#                          charges: { frenzy: 1, power: 1 } 立刻獲得幾顆戰星（charges.yml 的代號；只給自己，滿了就把最舊的那顆換新）
+#                          charges: { frenzy: 1, power: 1 } 立刻獲得幾顆戰星（charges.yml 的代號；只給自己，滿了就把最舊的那顆換新）；
+#                          戰吼區塊外面可以寫 damage／damage_types（2026-10 PoE2）：吼的時候打半徑內的敵人一下（戰吼傷害，
+#                          不算攻擊也不算法術，吃帶 warcry 標籤的加成，例如「戰吼增加 x% 傷害」）
 #              flicker     瞬影：瞬移到準心指的敵人身旁打一下（沒指到就找 range 格內最近、看得到的），
 #                          reach／angle／targets／knockback 跟 strike 一樣；只有玩家本人能放（圖騰、陷阱、雙詠不行）
 #            另外可以寫 totem／trap／bell 其中一個區塊，技能就不是自己放，而是放下一個東西讓它放上面的運作方式：
@@ -86,6 +88,8 @@
 #               這裡只在沒有選武器時用。起始技能每個角色送一次，綁在右鍵
 # hidden        普攻用（玩家看不到、不能加進面板）
 # tier          技能階級：未切割技能寶石的等級要 ≥ 這個才雕得出來（PoE2；沒寫是 1）
+# source        專屬的掉落來源（可省略）：寫了就雕不出來，只有那裡會掉（2026-10：awakener＝覺醒之主・虛星，
+#               寫在 maps.yml 巔峰的 drops.extra：{ skill: 代號, chance: 機率 }，掉 20 級的）
 # modifiers     技能自己帶的修飾器（寫法跟輔助寶石一樣，只對這個技能有效），例如熾星彈的點燃機率：
 #               - { stat: ignite.chance, type: FLAT, value: 20 }   點燃機率 +20%（元素異常見 ailments.yml）
 #
@@ -1098,7 +1102,7 @@ skills:
 
   seismic_cry:
     name: 震地戰吼
-    description: 戰吼：範圍內的敵人六秒內受到的傷害增加並轉過來打你；接下來兩次攻擊傷害大幅提高，暈眩累積增加。
+    description: 戰吼：吼出一道震波，打範圍內的敵人一下物理傷害（戰吼傷害），並讓他們六秒內受到的傷害增加、轉過來打你；接下來兩次攻擊傷害大幅提高，暈眩累積增加。
     icon: ANVIL
     type: spell
     tier: 5
@@ -1113,6 +1117,9 @@ skills:
         - { stat: stun.buildup, type: INCREASED, value: [40, 80] }
       debuff: { taken: [10, 20] }
       exert: { count: 2, more: [60, 90] }
+    # 2026-10（PoE2）：震波——吼的時候打半徑內的敵人一下；戰吼傷害不算攻擊也不算法術，吃「戰吼增加 x% 傷害」（珠寶、揭露詞綴）
+    damage: [24, 36]
+    damage_types: { physical: 1.0 }
     cast_time: 0.4
     cooldown: 8
     mana: [8, 18]
@@ -3085,7 +3092,6 @@ skills:
     type: attack
     tier: 1
     tags: [attack, melee, strike, physical, shapeshift, bear]
-    starter: druid   # 2026-10：德魯伊的起始技能（沒選武器時也有技能可用）
     weapons: [talisman]
     mechanic: strike
     strike: { reach: 3.8, angle: 80, targets: 3, knockback: 0.4 }
@@ -5611,3 +5617,123 @@ skills:
     visual: rain_of_arrows
     modifiers:
       - { stat: pin.chance, type: FLAT, value: 30 }
+
+  # ---- 2026-10：覺醒之主・虛星（萬界之巔）的專屬技能寶石：未切割技能寶石雕不出來，只有虛星會掉（20 級）----
+  void_meteor:
+    name: 虛星殞落
+    description: 從萬界之外拉下一顆虛星砸在準心指的地方，一半是閃電、一半是混沌，打中的敵人容易感電、中毒。虛星專屬。
+    icon: NETHER_STAR
+    type: spell
+    tier: 14
+    source: awakener
+    tags: [spell, area, lightning, chaos]
+    mechanic: impact
+    impact: { range: 24, delay: 0.7, radius: [3.6, 4.4] }
+    damage: [40, 62]
+    damage_types: { lightning: 0.5, chaos: 0.5 }
+    cast_time: 1.3
+    effectiveness: 1.6
+    mana: [12, 28]
+    visual: comet
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 30 }
+      - { stat: poison.chance, type: FLAT, value: 25 }
+
+  oblivion_ray:
+    name: 寂滅死光
+    description: 往前射出一道又長又細的混沌死光，直線上的敵人全部打穿；對感電的敵人更多 25% 傷害。虛星專屬。
+    icon: END_ROD
+    type: spell
+    tier: 14
+    source: awakener
+    tags: [spell, area, chaos]
+    mechanic: cone
+    cone: { length: [12, 16], angle: 12 }
+    damage: [13, 20]
+    damage_types: { chaos: 1.0 }
+    cast_time: 0.8
+    effectiveness: 1.0
+    mana: [9, 22]
+    visual: chaos_bolt
+    modifiers:
+      - { stat: damage.vs_shocked, type: MORE, value: 25 }
+      - { stat: poison.chance, type: FLAT, value: 20 }
+
+  storm_labyrinth:
+    name: 雷獄迷陣
+    description: 在面前立起一道雷牆，五秒內穿過或站在裡面的敵人每半秒被電一次、很容易感電。同時最多三道，把走廊封成迷宮。虛星專屬。
+    icon: LIGHTNING_ROD
+    type: spell
+    tier: 14
+    source: awakener
+    tags: [spell, area, lightning]
+    mechanic: zone
+    zone: { shape: line, length: [7, 9], radius: 1.1, duration: 5, interval: 0.5, damage: 100, max: 3 }
+    damage: [6, 10]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.4
+    mana: [8, 20]
+    visual: tempest
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 40 }
+      - { stat: shock.effect, type: INCREASED, value: 30 }
+
+  fourfold_ray:
+    name: 四方死光
+    description: 往四個方向同時放出一道貫穿的虛星光，一半閃電、一半混沌，站在中間清一整圈。虛星專屬。
+    icon: BEACON
+    type: spell
+    tier: 14
+    source: awakener
+    tags: [spell, projectile, lightning, chaos]
+    mechanic: projectile
+    projectile: { count: 4, spread: 360, speed: 1.6, range: 26, size: 0.5, pierce: 20 }
+    damage: [14, 22]
+    damage_types: { lightning: 0.5, chaos: 0.5 }
+    cast_time: 0.8
+    effectiveness: 0.8
+    mana: [9, 22]
+    visual: chaos_bolt
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 20 }
+
+  rift_slash:
+    name: 裂虛閃
+    description: 像虛星一樣撕開空間往前一閃，順路斬過的敵人與落點一圈都受到攻擊，一半的物理傷害轉為混沌，暴擊率更高。冷卻 2 秒。虛星專屬。
+    icon: ECHO_SHARD
+    type: attack
+    tier: 14
+    source: awakener
+    tags: [attack, melee, area, chaos]
+    weapons: [melee]
+    mechanic: dash
+    dash: { range: 10, hit_width: 1.6, end_radius: [3.0, 3.6] }
+    convert: { chaos: 0.5 }
+    cooldown: 2
+    attack_speed: 0.8
+    effectiveness: [1.8, 2.5]
+    mana: [8, 16]
+    visual: dash
+    modifiers:
+      - { stat: crit.chance, type: INCREASED, value: 50 }
+
+  starfall_volley:
+    name: 星墜箭
+    description: 射出一支拖著星屑的箭，打中時往附近最多 5 個敵人落下星光；三成物理傷害轉為閃電、三成轉為混沌。虛星專屬。
+    icon: SPECTRAL_ARROW
+    type: attack
+    tier: 14
+    source: awakener
+    tags: [attack, projectile, area, lightning, chaos]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.2, range: 40, splash: { targets: 5, radius: 5, damage: 80 } }
+    convert: { lightning: 0.3, chaos: 0.3 }
+    attack_speed: 0.9
+    effectiveness: [1.2, 1.68]
+    mana: [5, 11]
+    visual: lightning_arrow
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 20 }
+      - { stat: poison.chance, type: FLAT, value: 20 }

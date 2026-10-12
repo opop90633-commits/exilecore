@@ -19,6 +19,7 @@ public final class ZoneModule implements Module {
     private ZoneService service;
     private PackSpawner spawner;
     private BossService bosses;
+    private AfkWatcher afk;
 
     public ZoneModule(final ExileCore plugin) {
         this.plugin = plugin;
@@ -42,6 +43,8 @@ public final class ZoneModule implements Module {
         final PluginManager manager = plugin.getServer().getPluginManager();
         manager.registerEvents(new ZoneListener(plugin, service, spawner), plugin);
         manager.registerEvents(bosses, plugin);
+        afk = new AfkWatcher(plugin, service);
+        manager.registerEvents(afk, plugin); // 掛機偵測：記玩家自己按的移動鍵（被擊退不算走動）
         schedule();
         logSummary();
     }
@@ -79,7 +82,6 @@ public final class ZoneModule implements Module {
         }, 40, 40));
         tasks.add(plugin.repeat("zone.spawner", spawner::tick, interval, interval));
         tasks.add(plugin.repeat("zone.boss", bosses::tick, 20, 20));
-        final AfkWatcher afk = new AfkWatcher(plugin, service);
         tasks.add(plugin.repeat("zone.afk", afk::tick, 20, 20)); // 掛機偵測：3 分鐘提醒、5 分鐘傳回營地
     }
 

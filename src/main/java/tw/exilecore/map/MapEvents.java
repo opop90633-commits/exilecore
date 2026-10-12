@@ -143,7 +143,7 @@ final class MapEvents implements Listener {
 
     /** 地圖蓋好：挑幾個普通房間放事件（祭壇、幻霧先挑，剩下的房間給神龕、寶箱、裂隙、流寇）。 */
     void place(final MapInstance instance) {
-        if (instance.special() != null || instance.isUber()) {
+        if (instance.special() != null || instance.bossOnly()) {
             return; // 回響、試煉、極境：只有 Boss
         }
         final RandomGenerator random = service.random();

@@ -59,6 +59,28 @@ public final class MapModule implements Module {
         if (plugin.skills() != null) {
             problems.addAll(config.bossProblems(plugin.skills().config().bossSkills()));
         }
+        // 巔峰（2026-10）：碎片的通貨要存在；額外掉落的通貨與輔助要存在
+        for (final MapConfig.MapDef map : config.pinnacles()) {
+            final MapConfig.Pinnacle pinnacle = config.pinnacle(map.id());
+            for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
+                if (plugin.currencies().repository().get(fragment.currency()) == null) {
+                    problems.add("maps.yml：巔峰 " + map.id() + " 的碎片 " + fragment.currency() + " 不在 currencies.yml 裡（碎片不會掉、巔峰開不了）");
+                }
+            }
+            for (final MapConfig.ExtraDrop extra : pinnacle.drops().extra()) {
+                if ("support".equals(extra.kind())) {
+                    if (plugin.skills() != null && plugin.skills().config().support(extra.id()) == null) {
+                        problems.add("maps.yml：巔峰 " + map.id() + " 的掉落寫了 supports.yml 沒有的輔助寶石 " + extra.id() + "（不會掉）");
+                    }
+                } else if ("skill".equals(extra.kind())) {
+                    if (plugin.skills() != null && plugin.skills().config().skill(extra.id()) == null) {
+                        problems.add("maps.yml：巔峰 " + map.id() + " 的掉落寫了 skills.yml 沒有的技能寶石 " + extra.id() + "（不會掉）");
+                    }
+                } else if (plugin.currencies().repository().get(extra.id()) == null) {
+                    problems.add("maps.yml：巔峰 " + map.id() + " 的掉落寫了 currencies.yml 沒有的通貨 " + extra.id() + "（不會掉）");
+                }
+            }
+        }
         // 極境：開門的通貨要存在；額外掉落的通貨要存在
         for (final MapConfig.MapDef map : config.finals()) {
             final MapConfig.Uber uber = config.uber(map.id());
@@ -72,6 +94,10 @@ public final class MapModule implements Module {
                 if ("support".equals(extra.kind())) {
                     if (plugin.skills() != null && plugin.skills().config().support(extra.id()) == null) {
                         problems.add("maps.yml：" + map.id() + " 的極境掉落寫了 supports.yml 沒有的輔助寶石 " + extra.id() + "（不會掉）");
+                    }
+                } else if ("skill".equals(extra.kind())) {
+                    if (plugin.skills() != null && plugin.skills().config().skill(extra.id()) == null) {
+                        problems.add("maps.yml：" + map.id() + " 的極境掉落寫了 skills.yml 沒有的技能寶石 " + extra.id() + "（不會掉）");
                     }
                 } else if (plugin.currencies().repository().get(extra.id()) == null) {
                     problems.add("maps.yml：" + map.id() + " 的極境掉落寫了 currencies.yml 沒有的 " + extra.id() + "（不會掉）");

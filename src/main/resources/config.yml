@@ -36,10 +36,11 @@ backup:
 tab:
   title: "<#7fd4ff>《 <#f5b942><b>星骸</b> <#7fd4ff>》"
 
-# 選單的 Discord、贊助商城按鈕（也可以打 /discord、/store）。空字串 = 按鈕寫「即將開放」。改完 /ec reload
+# 選單的 Discord、贊助商城、新手教學按鈕（也可以打 /discord、/store、/tutorial）。空字串 = 按鈕寫「即將開放」。改完 /ec reload
 links:
   discord: "https://discord.gg/S6FZuGFR93"
   store: ""
+  tutorial: "https://drive.google.com/file/d/1NhlPB1UTjmRL-8fXUdklSOpURGw2aJs2/view?usp=drivesdk"
 
 resource-pack:
   # 介面資源包（星盤式的天賦樹、傳奇裝備的專屬外觀）：插件自己產生、透過下面的 web 網頁伺服器提供下載，玩家登入時會被問要不要套用。

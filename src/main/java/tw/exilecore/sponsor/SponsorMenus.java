@@ -621,6 +621,17 @@ final class SponsorMenus {
                 if (tier.campFly()) {
                     lore.add("<gray>營地飛行");
                 }
+                if (tier.experience() > 0) {
+                    lore.add("<gray>經驗 <white>+" + percentText(tier.experience()) + "%<dark_gray>（每一階疊加，到這一階共 +"
+                            + percentText(service.config().reachedExperience(tier.amount())) + "%）");
+                }
+                if (tier.gold() > 0) {
+                    lore.add("<gray>金幣 <white>+" + percentText(tier.gold()) + "%<dark_gray>（每一階疊加，到這一階共 +"
+                            + percentText(service.config().reachedGold(tier.amount())) + "%）");
+                }
+                if (tier.deathPenalty() >= 0) {
+                    lore.add("<gray>死亡損失經驗 <white>" + percentText(tier.deathPenalty()) + "%");
+                }
                 final ItemStack stack = icon(reached ? Material.NAME_TAG : Material.PAPER,
                         "<" + tier.color() + ">" + format(tier.amount()) + " 星幣", lore);
                 set(slots[index++], reached ? glowing(stack) : stack);
@@ -1354,5 +1365,10 @@ final class SponsorMenus {
                 result(service.buyCardItem(player, item.id()));
             }
         }
+    }
+
+    /** 百分比的數字：整數不寫小數點（5、0），其他照寫（7.5）。 */
+    static String percentText(final double value) {
+        return value == Math.rint(value) ? Long.toString((long) value) : Double.toString(value);
     }
 }

@@ -212,8 +212,10 @@ final class Warcries {
             notice.append(String.format(Locale.ROOT, "<gray>：接下來 <white>%d</white> 次攻擊更多 <white>%d%%</white> 傷害", build.exerts(), Math.round(more)));
         }
 
-        // 敵人：受到的傷害增加、嘲諷
+        // 敵人：受到的傷害增加、嘲諷；有寫 damage 的戰吼（2026-10 PoE2：震地戰吼）再打一下
+        //（先上減益再打：這一下也吃「受到的傷害增加」。傷害帶技能的 warcry 標籤，「戰吼增加 x% 傷害」吃得到）
         final double taken = spec.taken().at(build.level()) * build.auraEffect();
+        final boolean shockwave = build.definition().dealsDamage() && plugin.combat() != null && plugin.combat().skillDamage() != null;
         int hit = 0;
         for (final LivingEntity target : targets.around(player.getLocation(), radius, player)) {
             hit++;
@@ -223,6 +225,12 @@ final class Warcries {
             if (spec.taunt() && target instanceof Mob mob) {
                 taunts.taunt(mob, player, ticks);
             }
+            if (shockwave && target.isValid() && !target.isDead()) {
+                plugin.combat().skillDamage().hit(player, target, build.profile(), null);
+            }
+        }
+        if (shockwave && hit > 0) {
+            notice.append(String.format(Locale.ROOT, "<gray>　震波打中 %d 隻", hit));
         }
         if (hit > 0 && (taken > 0 || spec.taunt())) {
             notice.append(String.format(Locale.ROOT, "<gray>　%d 隻敵人%s", hit, taken > 0 ? (spec.taunt() ? "受到的傷害增加、被嘲諷" : "受到的傷害增加") : "被嘲諷"));

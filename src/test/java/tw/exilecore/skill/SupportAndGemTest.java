@@ -47,16 +47,17 @@ class SupportAndGemTest {
 
     @Test
     void fortySupportsInThreeTiers() {
-        // 2026-10 PoE2 改版：輔助寶石擴充到 288 顆（第 1 階 81、第 2 階 171、第 3 階 36，其中 6 顆專屬掉落）
+        // 2026-10 PoE2 改版：輔助寶石擴充到 295 顆（第 1 階 81、第 2 階 171、第 3 階 43，其中 13 顆專屬掉落：終局 4、極境 2、巔峰 7）
         final List<String> ids = config.supports().stream().map(SupportDefinition::id).toList();
-        assertEquals(288, ids.size());
+        assertEquals(295, ids.size());
         assertEquals(List.of("increased_area", "faster_projectiles", "pierce", "faster_attacks", "faster_casting", "added_fire",
                 "increased_duration", "critical_strikes", "lingering", "minion_damage"), ids.subList(0, 10), "照檔案裡的順序");
         assertTrue(ids.containsAll(List.of("concentrated_effect", "chain", "life_leech", "searing", "lacerate", "envenom", "concussive",
                 "electrocute", "glacial", "static_charge", "cooldown_recovery", "burst", "fork", "critical_damage", "added_chaos",
                 "spell_totem", "minion_life", "warcry_power", "minion_speed", "charge_frenzy", "charge_power", "charge_endurance",
                 "spell_echo", "multiple_projectiles", "elemental_focus",
-                "starfall_resonance", "permafrost_heart", "styx_ferry", "skyburn_fury", "abyssal_touch", "myriad_stars")));
+                "starfall_resonance", "permafrost_heart", "styx_ferry", "skyburn_fury", "abyssal_touch", "myriad_stars",
+                "oblivion_focus", "storm_maze_heart", "rift_echo", "starfall_core", "phantom_double", "world_collapse", "void_legion")));
         // 改版拿掉的輔助：不在清單裡，身上的換成同階的未切割輔助寶石
         for (final String retired : List.of("multistrike", "multiple_totems", "melee_physical", "life_on_hit", "aura_effect", "generosity",
                 "trap", "returning_projectiles", "elemental_damage_with_attacks", "frenzy_on_hit", "power_on_hit", "endurance_on_hit")) {
@@ -66,7 +67,7 @@ class SupportAndGemTest {
         assertEquals(2, config.retiredSupportTier("melee_physical"));
         assertEquals(81, config.supportsUpTo(1).size());
         assertEquals(252, config.supportsUpTo(2).size());
-        assertEquals(282, config.supportsUpTo(3).size(), "專屬掉落的 6 顆切不出來");
+        assertEquals(282, config.supportsUpTo(3).size(), "專屬掉落的 13 顆切不出來");
         for (final SupportDefinition support : config.supports()) {
             assertFalse(support.name().isBlank(), support.id());
             assertFalse(support.modifiers().isEmpty(), support.id());
@@ -303,6 +304,15 @@ class SupportAndGemTest {
                 "disengage", "frozen_locus", "lightning_rod", "fragmentation_rounds"),
                 config.engravable(1).stream().map(SkillDefinition::id).toList(), "Lv.1 的未切割寶石能雕的技能（第 1 階的技能）");
         assertTrue(config.engravable(13).size() < config.visible().size());
-        assertEquals(config.visible().size(), config.engravable(14).size(), "Lv.14 起全部都能雕（2026-10：最高第 14 階）");
+        // 2026-10：巔峰 Boss 的專屬技能寶石（source: awakener）雕不出來，其他的 Lv.14 起全部都能雕（最高第 14 階）
+        final List<SkillDefinition> exclusive = config.skillsFrom("awakener");
+        assertEquals(List.of("void_meteor", "oblivion_ray", "storm_labyrinth", "fourfold_ray", "rift_slash", "starfall_volley"),
+                exclusive.stream().map(SkillDefinition::id).toList());
+        assertEquals(config.visible().size() - exclusive.size(), config.engravable(14).size(), "Lv.14 起全部都能雕（專屬的除外）");
+        assertEquals(config.engravable(14).size(), config.engravable(20).size());
+        for (final SkillDefinition skill : exclusive) {
+            assertFalse(skill.engravable(), skill.id());
+            assertFalse(config.engravable(20).contains(skill), skill.id() + "：未切割技能寶石雕不出來");
+        }
     }
 }

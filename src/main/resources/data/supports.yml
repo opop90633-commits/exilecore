@@ -1383,6 +1383,105 @@ supports:
       - { stat: damage, type: MORE, value: 10, tags: [projectile] }
     notes: ["只有極境的終局 Boss 會掉"]
 
+  # ---- 2026-10：覺醒之主・虛星（萬界之巔）的專屬輔助：切不出來，只有虛星會掉（maps.yml 巔峰的 drops.extra）----
+  oblivion_focus:
+    name: 寂滅聚焦
+    description: 虛星死光的聚焦法：法術更痛，閃電與混沌傷害穿透敵人的抗性。
+    icon: END_ROD
+    tier: 3
+    source: awakener
+    requires: [spell]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: damage, type: MORE, value: 30 }
+      - { stat: penetration, type: FLAT, value: 20, tags: [lightning] }
+      - { stat: penetration, type: FLAT, value: 20, tags: [chaos] }
+    notes: ["覺醒之主・虛星（萬界之巔）掉落"]
+
+  storm_maze_heart:
+    name: 雷獄之心
+    description: 風暴迷宮的核心：地面效果、漩渦這些持續的東西撐得更久，閃電傷害更痛、感電更重。
+    icon: LIGHTNING_ROD
+    tier: 3
+    source: awakener
+    requires: [duration]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: skill.duration, type: INCREASED, value: 40 }
+      - { stat: damage, type: MORE, value: 25, tags: [lightning] }
+      - { stat: shock.effect, type: INCREASED, value: 50 }
+    notes: ["覺醒之主・虛星（萬界之巔）掉落"]
+
+  rift_echo:
+    name: 裂虛回響
+    description: 一刀斬下去，空間的裂縫還會再斬一次：近戰攻擊按一次自動多打一下，攻擊速度也更快。（只對打擊、扇形、繞身一圈的攻擊與瞬影擊有用）
+    icon: ECHO_SHARD
+    tier: 3
+    source: awakener
+    requires: [melee]
+    excludes: [minion, totem, travel]
+    mana_multiplier: 1.5
+    modifiers:
+      - { stat: skill.repeats, type: FLAT, value: 1 }
+      - { stat: attack.speed, type: MORE, value: 15 }
+      - { stat: damage, type: MORE, value: 10 }
+    notes: ["覺醒之主・虛星（萬界之巔）掉落"]
+
+  starfall_core:
+    name: 殞星之核
+    description: 虛星殞落的那一下：範圍更大，範圍傷害更痛，暈眩累積大增。
+    icon: NETHER_STAR
+    tier: 3
+    source: awakener
+    requires: [area]
+    mana_multiplier: 1.35
+    modifiers:
+      - { stat: skill.area, type: INCREASED, value: 35 }
+      - { stat: damage, type: MORE, value: 25, tags: [area] }
+      - { stat: stun.buildup, type: MORE, value: 60 }
+    notes: ["覺醒之主・虛星（萬界之巔）掉落"]
+
+  phantom_double:
+    name: 虛星分身
+    description: 你的影子學著你施法：法術放完 0.25 秒後自動再放一次（不花魔力），而且不像一般的回響那樣變輕。
+    icon: ARMOR_STAND
+    tier: 3
+    source: awakener
+    requires: [spell]
+    excludes: [movement, mark, minion, aura, warcry, totem, bell, trap, persistent, herald]
+    mana_multiplier: 1.6
+    modifiers:
+      - { stat: flag.echo, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: 10 }
+    notes: ["覺醒之主・虛星（萬界之巔）掉落"]
+
+  world_collapse:
+    name: 萬界歸墟
+    description: 虛星最後的那一招：什麼技能都能掛，傷害大增、暴擊又多又重，代價是魔力消耗翻倍。
+    icon: CRYING_OBSIDIAN
+    tier: 3
+    source: awakener
+    mana_multiplier: 2.0
+    modifiers:
+      - { stat: damage, type: MORE, value: 35 }
+      - { stat: crit.chance, type: INCREASED, value: 50 }
+      - { stat: crit.multi, type: FLAT, value: 30 }
+    notes: ["覺醒之主・虛星（萬界之巔）掉落"]
+
+  void_legion:
+    name: 虛星軍勢
+    description: 虛星分身們的軍勢：召喚技能同時多一隻，召喚物更痛、更硬。
+    icon: WITHER_SKELETON_SKULL
+    tier: 3
+    source: awakener
+    requires: [minion]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: skill.minions, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: 30, tags: [minion] }
+      - { stat: life.max, type: MORE, value: 25, tags: [minion] }
+    notes: ["覺醒之主・虛星（萬界之巔）掉落"]
+
   # ---- 2026-10：PoE2 輔助補齊・第 1 批（30 個；機制照 PoE2，名稱是自己的。我們做不到的條件用近似值）----
   fire_mastery:            # Fire Mastery
     name: 燼髓

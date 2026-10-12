@@ -131,4 +131,16 @@ class TrainingLogicTest {
         final IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> broken.load(dir));
         assertTrue(error.getMessage().contains(mention), error.getMessage());
     }
+
+    @Test
+    void dummyRecordsConvertToBossDps() throws IOException {
+        // 2026-10：打假人的紀錄換成打 Boss 的每秒傷害（終局、極境、巔峰的上限用）：白怪假人比首領好打很多
+        final DummyConfig config = new DummyConfig();
+        config.load(DATA);
+        assertEquals(55000, config.bossDps(new DummyRecord(100000, 10, "訓練假人・無防禦（Lv.90）", 0, 0)), 1e-6);
+        assertEquals(60000, config.bossDps(new DummyRecord(100000, 10, "訓練假人・一般（Lv.90）", 0, 0)), 1e-6);
+        assertEquals(100000, config.bossDps(new DummyRecord(100000, 10, "訓練假人・首領（Lv.87）", 0, 0)), 1e-6, "打首領假人照算");
+        assertEquals(100000 * DummyConfig.DEFAULT_BOSS_FACTOR, config.bossDps(new DummyRecord(100000, 10, "別的假人", 0, 0)), 1e-6);
+        assertEquals(0, config.bossDps(null), 1e-9);
+    }
 }

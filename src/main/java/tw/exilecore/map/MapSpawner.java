@@ -47,7 +47,7 @@ final class MapSpawner {
     void tick() {
         final double radius = service.config().settings().packRadius();
         for (final MapInstance instance : service.instances()) {
-            if (instance.state() != MapInstance.State.OPEN || instance.inside().isEmpty() || instance.isUber()) {
+            if (instance.state() != MapInstance.State.OPEN || instance.inside().isEmpty() || instance.bossOnly()) {
                 continue; // 極境沒有路上的怪：只有 Boss（每個人只能進一次，不要死在路上）
             }
             final List<Player> players = new ArrayList<>();

@@ -169,6 +169,24 @@ public final class SponsorService {
         return config.tierFor(total(player));
     }
 
+    // ---- 給別的模組用：累積贊助的經驗、金幣、死亡懲罰（2026-10）----
+
+    /** 累積贊助給的經驗加成（0.05 = 多 5%）：到過的每一階加起來（6 階各 5% = 30%）；沒有 0。 */
+    public double experienceBonus(final Player player) {
+        return config.reachedExperience(total(player)) / 100.0;
+    }
+
+    /** 累積贊助給的金幣加成（0.05 = 多 5%）：到過的每一階加起來；沒有 0。 */
+    public double goldBonus(final Player player) {
+        return config.reachedGold(total(player)) / 100.0;
+    }
+
+    /** 死亡懲罰的比例：累積贊助那一階有寫 death_penalty 就用那個（不會比原本的重），沒有照原本的 base。 */
+    public double deathPenalty(final Player player, final double base) {
+        final SponsorConfig.Tier tier = tier(player);
+        return tier == null || tier.deathPenalty() < 0 ? base : Math.min(base, tier.deathPenalty() / 100.0);
+    }
+
     // ---- 給別的模組用：格子、名字顏色 ----
 
     public int extraCharacterSlots(final Player player) {
@@ -1160,7 +1178,7 @@ public final class SponsorService {
             }
         }
         for (final SponsorConfig.LimitedTitle title : config.limitedTitles().values()) {
-            titles.put(title.id(), new BountyConfig.Title(title.id(), title.name(), title.color(), 0));
+            titles.put(title.id(), new BountyConfig.Title(title.id(), title.name(), title.color(), 0, title.stats()));
         }
         if (!titles.isEmpty()) {
             accounts.registerTitles(titles);

@@ -110,8 +110,8 @@ class UniqueDataTest {
     void everyUniqueLoadsWithValidStatsTagsAndSources() {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
-        assertEquals(88, repository.uniques().size(),
-                "終局 2 + 追逐級 4 + 其他終局 3 + 具名 Boss 2 + 共通 27 + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14");
+        assertEquals(98, repository.uniques().size(),
+                "終局 2 + 追逐級 4 + 其他終局 3 + 具名 Boss 2 + 共通 27 + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 10");
         final Set<String> names = new HashSet<>();
         for (final UniqueItem unique : repository.uniques()) {
             final String where = unique.id();
@@ -194,6 +194,13 @@ class UniqueDataTest {
         for (final String finalId : List.of("sky_crucible", "frost_throne", "bone_throne", "ember_citadel")) {
             assertEquals(1, repository.uniquesFor("uber_" + finalId, 91).size(), finalId + " 的極境專屬傳奇");
             assertTrue(repository.uniquesFor("uber_" + finalId, 79).isEmpty(), finalId + "：極境的傳奇物品等級 80 起");
+        }
+        // 2026-10：巔峰 Boss（覺醒之主・虛星）自己的十件，物品等級 85 起；做不出來、賭不到、一般地圖 Boss 不掉
+        final List<UniqueItem> awakener = repository.uniquesFor("awakener", 92);
+        assertEquals(10, awakener.size(), "虛星的專屬傳奇");
+        assertTrue(repository.uniquesFor("awakener", 84).isEmpty(), "虛星的傳奇物品等級 85 起");
+        for (final UniqueItem unique : awakener) {
+            assertEquals(Set.of("awakener"), Set.copyOf(unique.sources()), unique.id());
         }
     }
 

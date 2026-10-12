@@ -208,7 +208,9 @@ public final class MonsterListener implements Listener {
             plugin.maps().rollLoot(entity, data, owner, quantityBonus, rolled);
         }
         rollMirror(owner, rolled, fatigue);
-        final long goldAmount = drops.rollGold(data.level(), data.rarity(), goldBonus, plugin.items().random());
+        // 2026-10：累積贊助的金幣加成（只算掉給這個人的那份）
+        final double sponsorGold = owner == null || plugin.sponsors() == null ? 0 : plugin.sponsors().goldBonus(owner);
+        final long goldAmount = Math.round(drops.rollGold(data.level(), data.rarity(), goldBonus, plugin.items().random()) * (1 + sponsorGold));
         if (owner != null && plugin.loot() != null
                 && plugin.loot().handleKill(owner, location, data, rolled, goldAmount, this::toStack)) {
             return;

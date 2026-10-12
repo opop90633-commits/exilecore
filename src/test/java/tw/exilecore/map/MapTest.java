@@ -367,7 +367,7 @@ class MapTest {
 
     @Test
     void uniquesLoadAndRoll() {
-        assertEquals(88, repository.uniques().size(), "2026-10 照 PoE2 重做、加了很多傳奇（退役的不算）");
+        assertEquals(98, repository.uniques().size(), "2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件）");
         final ItemData dropped = MapDrops.unique(generator, "final", 68, new Random(5));
         assertNotNull(dropped);
         assertEquals(Rarity.UNIQUE, dropped.rarity());
@@ -401,14 +401,16 @@ class MapTest {
 
     @Test
     void extraFinalsLoadAndUnlockAfterTheEmperor() {
-        assertEquals(4, config.finals().size(), "天穹熔爐 + 三個新終局");
+        assertEquals(5, config.finals().size(), "天穹熔爐 + 三個新終局 + 巔峰");
+        assertEquals(4, config.regularFinals().size(), "用天穹碎片開的終局");
+        assertEquals(List.of("awakener"), config.pinnacles().stream().map(MapConfig.MapDef::id).toList(), "巔峰：萬界之巔");
         assertEquals(config.finalMap(), config.finals().getFirst());
-        assertEquals(14 + 4, config.all().size());
+        assertEquals(14 + 5, config.all().size());
         final Set<String> ids = new HashSet<>();
         for (final MapConfig.MapDef map : config.finals()) {
             assertTrue(map.isFinal());
             assertTrue(map.boss().named());
-            assertEquals(2, map.boss().phases().size(), map.id());
+            assertEquals(config.pinnacle(map.id()) == null ? 2 : 3, map.boss().phases().size(), map.id());
             assertTrue(ids.add(map.id()));
             assertEquals(3, config.finalLevelBonus(map.id()));
             assertEquals(map, config.find(map.id()));
@@ -426,6 +428,23 @@ class MapTest {
         assertTrue(Atlas.unlocked(config, config.find("frost_throne"), done));
         assertTrue(Atlas.unlocked(config, config.find("ember_citadel"), done));
         assertEquals("", Atlas.missingRequirements(config, config.find("ember_citadel"), done));
+        // 巔峰：四個終局都打贏才解鎖；碎片各由一個終局掉
+        assertFalse(Atlas.unlocked(config, config.find("awakener"), done));
+        done.addAll(List.of("frost_throne", "bone_throne", "ember_citadel"));
+        assertTrue(Atlas.unlocked(config, config.find("awakener"), done));
+        final MapConfig.Pinnacle pinnacle = config.pinnacle("awakener");
+        assertEquals(4, pinnacle.fragments().size());
+        assertEquals(Set.of("sky_crucible", "frost_throne", "bone_throne", "ember_citadel"),
+                pinnacle.fragments().stream().map(MapConfig.FragmentSource::from).collect(java.util.stream.Collectors.toSet()));
+        for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
+            assertEquals(0.1, fragment.chance(), 1e-9, fragment.currency() + "：每個終局 Boss 10%");
+            assertTrue(fragment.minTier() <= config.tiers().max());
+        }
+        assertEquals(config.tiers().max(), config.pinnacleStats("awakener", pinnacle).tier(), "巔峰開在最高階");
+        assertTrue(config.pinnacleStats("awakener", pinnacle).monsterLevel() > config.uberStats("sky_crucible", config.uber("sky_crucible")).monsterLevel(),
+                "巔峰的怪物等級比極境高");
+        assertNull(config.uber("awakener"), "巔峰沒有極境版本");
+        assertEquals(2, pinnacle.attempts(), "巔峰兩道門（兩次挑戰）");
         // 星圖位置不重複、招式都存在
         final Set<String> positions = new HashSet<>();
         for (final MapConfig.MapDef map : config.all()) {
@@ -648,5 +667,62 @@ class MapTest {
         assertFalse(warlord.aura().stats().isEmpty());
         assertEquals(1, monsters.mod("swift").minLevel());
         assertNull(monsters.mod("swift").aura());
+    }
+    @Test
+    void bossMapsChallengeThroughTwoDoors() {
+        // 2026-10：終局、極境、巔峰用「門」算——一門一次挑戰；這一門結束（全部倒下或出來）才扣，下一門 Boss 回滿重來
+        final MapConfig.MapDef awakener = config.find("awakener");
+        final MapInstance instance = new MapInstance(1, awakener, null, MapLayout.generate(1, 6), null, 0, 0, 0,
+                java.util.UUID.randomUUID(), "x", config.pinnacle("awakener").attempts(), 0);
+        instance.setPinnacle(config.pinnacle("awakener"));
+        assertTrue(instance.usesAttempts());
+        assertFalse(instance.singleEntry(), "巔峰不再是每個人一次，改成門");
+        final java.util.UUID first = java.util.UUID.randomUUID();
+        final java.util.UUID late = java.util.UUID.randomUUID();
+        assertFalse(instance.attemptActive());
+        assertFalse(instance.startAttempt(), "第一門不用重置 Boss");
+        instance.markAttemptEntry(first);
+        assertTrue(instance.attemptActive());
+        assertTrue(instance.enteredThisAttempt(first), "死了或出去的要等下一門");
+        assertFalse(instance.enteredThisAttempt(late), "還沒進來的隊友可以跟進這一門");
+        assertEquals(2, instance.portalsLeft(), "這一門結束才扣");
+        instance.endAttempt();
+        assertEquals(1, instance.portalsLeft());
+        assertFalse(instance.enteredThisAttempt(first), "下一門大家都能進");
+        assertTrue(instance.startAttempt(), "第二門：Boss 回滿重來");
+        assertEquals(2, instance.attemptsUsed());
+        instance.endAttempt();
+        assertEquals(0, instance.portalsLeft(), "兩門用完");
+        // 終局（一般版、極境）也一樣；一般地圖照舊
+        final MapConfig.MapDef frost = config.find("frost_throne");
+        assertTrue(new MapInstance(2, frost, null, MapLayout.generate(2, 6), null, 1, 0, 0, java.util.UUID.randomUUID(), "x", 2, 0).usesAttempts());
+        final MapConfig.MapDef normal = config.find("wreck_bay");
+        assertFalse(new MapInstance(3, normal, null, MapLayout.generate(3, 6), null, 2, 0, 0, java.util.UUID.randomUUID(), "x", 6, 0).usesAttempts());
+    }
+    @Test
+    void pinnacleDamageAboveTheCapIsHeavilyReduced() {
+        // 2026-10：巔峰每秒傷害超過 15 萬的部分分段減傷：15–30 萬算 30%、30 萬以上算 10%
+        final MapConfig.Pinnacle pinnacle = config.pinnacle("awakener");
+        assertEquals(150000, pinnacle.dpsCap(), 1e-9);
+        assertEquals(List.of(new MapConfig.DpsTier(150000, 0.3), new MapConfig.DpsTier(300000, 0.1)), pinnacle.dpsOver());
+        final List<MapConfig.DpsTier> over = pinnacle.dpsOver();
+        assertEquals(100000, DpsCap.effective(100000, 150000, over), 1e-6, "上限以內照算");
+        assertEquals(195000, DpsCap.effective(300000, 150000, over), 1e-6);
+        assertEquals(215000, DpsCap.effective(500000, 150000, over), 1e-6);
+        assertEquals(265000, DpsCap.effective(1000000, 150000, over), 1e-6);
+        assertEquals(150000, DpsCap.effective(1000000, 150000, List.of()), 1e-6, "沒寫分段：超過的全部不算");
+        final DpsCap cap = new DpsCap();
+        assertEquals(1000 * 195000 / 300000.0, cap.apply("a", 1000, 150000, over, 0, 300000), 1e-6, "照打假人的紀錄：每一下乘同一個比例");
+        // 沒打過假人、實際每秒打 50 萬：打一陣子之後等效大約 21.5 萬
+        double dealt = 0;
+        for (int tick = 0; tick < 20 * 20; tick += 2) {
+            final double hit = cap.apply("b", 50000, 150000, over, tick, 0); // 每 2 tick 5 萬 = 每秒 50 萬
+            if (tick >= 20 * 10) {
+                dealt += hit;
+            }
+        }
+        assertEquals(215000, dealt / 10, 5000, "後 10 秒平均每秒");
+        assertEquals(10, cap.apply("x", 10, 0, over, 0, 999999), 1e-9, "上限 0 = 不限");
+        cap.forget(0);
     }
 }

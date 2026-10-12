@@ -84,6 +84,14 @@ drops:
   campaign_first_kill_maps: 3
   campaign_boss_daily_maps: 3    # 首殺以後，每個角色每天只有前幾次打倒它會掉地圖（Boss 90 秒就重生，不然可以站著一直刷）
 
+# 一般終局 Boss（不含極境、巔峰）的每秒傷害上限（2026-10）：每個人對 Boss 每秒傷害超過 dps_cap 的部分照 dps_over 遞減
+# （每秒傷害取打訓練假人的紀錄與這場實際打出來的較高者；極境、巔峰寫在自己的區塊：極境 10 萬、巔峰 15 萬）
+final_dps:
+  dps_cap: 50000
+  dps_over:
+    - { from: 50000, rate: 0.3 }    # 5–10 萬的部分算 30%
+    - { from: 100000, rate: 0.1 }   # 10 萬以上算 10%
+
 first_kill:                      # 首殺獎勵（存在角色資料裡）：天賦點
   map_points: 0
   named_points: 1
@@ -410,7 +418,7 @@ final:
     type: WARDEN
     mythic: ExileCore_StarEmperor
     named: true
-    life: 12         # 2026-10：10.5 → 12（伺服器紀錄：中位數 60 秒）
+    life: 31.8       # 2026-10：照單人每秒 5 萬傷害（終局的每秒傷害上限）打 3 分半鐘算的（T16 ×11.7 之後約 1,050 萬生命）
     damage: 2.2
     scale: 1.3
     mods: [armoured, resistant]
@@ -451,7 +459,7 @@ final:
         summon: { type: WITHER_SKELETON, count: 3 }
     hazards:
       - { skill: hazard_star_meteor, every: 10, phase: 1 }
-    enrage: { after: 360, damage: 100, speed: 0.3, message: "「夠了。朕不再陪你玩。」" }
+    enrage: { after: 420, damage: 100, speed: 0.3, message: "「夠了。朕不再陪你玩。」" }
   # 極境（Uber）：終局 Boss 的最強版本。用一般終局 Boss 掉的深淵星核開（地圖裝置的「極境」），要先打贏過一般的版本；
   # 固定開在最高階＋level_bonus 級，Boss 生命×life、傷害×damage，所有怪物的招式冷卻×cooldown；沒有路上的怪，直接打 Boss；
   # 每個人只能走進去一次（死了或離開就不能再進）。寫法：
@@ -468,8 +476,12 @@ final:
   #                         exclusive_chance 極境專屬傳奇（uniques.yml 的 sources 寫 uber_終局代號）、
   #                         extra 額外掉落 [{ currency: 代號, amount: 幾個, chance: 機率 }、{ support: 輔助寶石代號, chance: 機率 }]
   uber:
+    dps_cap: 100000    # 2026-10：每個人對極境 Boss 每秒傷害的上限（終局 5 萬、極境 10 萬、巔峰 15 萬）；超過的部分照 dps_over 遞減
+    dps_over:
+      - { from: 100000, rate: 0.3 }   # 10–20 萬的部分算 30%
+      - { from: 200000, rate: 0.1 }   # 20 萬以上算 10%
     intro: "「又是你。這一次，朕不會留手。」"
-    life: 3.12        # 2026-10：照人均單體 15 萬 DPS 重調（極境約 2 分鐘；原 3.5）
+    life: 1.9         # 2026-10：照單人每秒 10 萬傷害（極境的每秒傷害上限）打 3 分半鐘算的（終局的 31.8 × 1.9，T16 之後約 2,100 萬生命）
     damage: 1.5
     cooldown: 0.75
     level_bonus: 4
@@ -498,7 +510,7 @@ final:
         shield: { count: 3, type: BLAZE, name: 熔爐之心, life: 6, duration: 25, heal: 40 }
     hazards:
       - { skill: hazard_star_orbs, every: 14, phase: 1 }
-    enrage: { after: 270, damage: 150, speed: 0.4, message: "「時間到了。熔爐要吞掉你。」" }
+    enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。熔爐要吞掉你。」" }
     key: abyss_core
     key_cost: 1
     key_chance: 0.1
@@ -535,7 +547,7 @@ finals:
       type: STRAY
       mythic: ExileCore_FrostQueen
       named: true
-      life: 13         # 2026-10：9.5 → 13（伺服器紀錄：中位數 33 秒）
+      life: 31.8       # 2026-10：照單人每秒 5 萬傷害（終局的每秒傷害上限）打 3 分半鐘算的（T16 ×11.7 之後約 1,050 萬生命）
       damage: 2.1
       scale: 2.2
       mods: [resistant, swift]
@@ -574,10 +586,14 @@ finals:
           summon: { type: POLAR_BEAR, count: 2 }
       hazards:
         - { skill: hazard_frost_spike, every: 8, phase: 1 }
-      enrage: { after: 360, damage: 100, speed: 0.3, message: "「我累了。讓冬天結束這一切。」" }
+      enrage: { after: 420, damage: 100, speed: 0.3, message: "「我累了。讓冬天結束這一切。」" }
     uber:
+      dps_cap: 100000    # 2026-10：每個人對極境 Boss 每秒傷害的上限（終局 5 萬、極境 10 萬、巔峰 15 萬）；超過的部分照 dps_over 遞減
+      dps_over:
+        - { from: 100000, rate: 0.3 }   # 10–20 萬的部分算 30%
+        - { from: 200000, rate: 0.1 }   # 20 萬以上算 10%
       intro: "「你把冬天弄醒了。現在，它不會再睡。」"
-      life: 2.58        # 2026-10：照人均單體 15 萬 DPS 重調（極境約 2 分鐘；原 2.9）
+      life: 1.9         # 2026-10：照單人每秒 10 萬傷害（極境的每秒傷害上限）打 3 分半鐘算的（終局的 31.8 × 1.9，T16 之後約 2,100 萬生命）
       damage: 1.5
       cooldown: 0.75
       level_bonus: 4
@@ -606,7 +622,7 @@ finals:
           shield: { count: 3, type: STRAY, name: 永凍冰像, life: 6, duration: 25, heal: 40 }
       hazards:
         - { skill: hazard_ice_orbs, every: 12, phase: 1 }
-      enrage: { after: 270, damage: 150, speed: 0.4, message: "「時間到了。永遠留在這裡吧。」" }
+      enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。永遠留在這裡吧。」" }
       key: abyss_core
       key_cost: 1
       key_chance: 0.1
@@ -638,7 +654,7 @@ finals:
       type: WITHER_SKELETON
       mythic: ExileCore_BoneKing
       named: true
-      life: 16         # 2026-10：11 → 16（伺服器紀錄：中位數 27 秒）
+      life: 31.8       # 2026-10：照單人每秒 5 萬傷害（終局的每秒傷害上限）打 3 分半鐘算的（T16 ×11.7 之後約 1,050 萬生命）
       damage: 2.0
       scale: 2.4
       mods: [armoured, venomous]
@@ -677,10 +693,14 @@ finals:
           shield: { count: 3, type: SKELETON, name: 渡魂骨燈, life: 4, duration: 25, heal: 30 }
       hazards:
         - { skill: hazard_grave_hands, every: 9, phase: 1 }
-      enrage: { after: 360, damage: 100, speed: 0.3, message: "「渡船不等人。」" }
+      enrage: { after: 420, damage: 100, speed: 0.3, message: "「渡船不等人。」" }
     uber:
+      dps_cap: 100000    # 2026-10：每個人對極境 Boss 每秒傷害的上限（終局 5 萬、極境 10 萬、巔峰 15 萬）；超過的部分照 dps_over 遞減
+      dps_over:
+        - { from: 100000, rate: 0.3 }   # 10–20 萬的部分算 30%
+        - { from: 200000, rate: 0.1 }   # 20 萬以上算 10%
       intro: "「你的骨頭我記得。這一次，全部留下。」"
-      life: 2.45        # 2026-10：照人均單體 15 萬 DPS 重調（極境約 2 分鐘；原 2.75）
+      life: 1.9         # 2026-10：照單人每秒 10 萬傷害（極境的每秒傷害上限）打 3 分半鐘算的（終局的 31.8 × 1.9，T16 之後約 2,100 萬生命）
       damage: 1.5
       cooldown: 0.75
       level_bonus: 4
@@ -709,7 +729,7 @@ finals:
           shield: { count: 3, type: SKELETON, name: 冥河骨燈, life: 6, duration: 25, heal: 40 }
       hazards:
         - { skill: hazard_grave_hands, every: 6, phase: 0 }
-      enrage: { after: 270, damage: 150, speed: 0.4, message: "「時間到了。河底很安靜。」" }
+      enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。河底很安靜。」" }
       key: abyss_core
       key_cost: 1
       key_chance: 0.1
@@ -741,7 +761,7 @@ finals:
       type: RAVAGER
       mythic: ExileCore_EmberGeneral
       named: true
-      life: 10
+      life: 31.8       # 2026-10：照單人每秒 5 萬傷害（終局的每秒傷害上限）打 3 分半鐘算的（T16 ×11.7 之後約 1,050 萬生命）
       damage: 2.3
       scale: 1.4
       mods: [armoured, fiery]
@@ -780,10 +800,14 @@ finals:
           shield: { count: 3, type: BLAZE, name: 餘燼核心, life: 4, duration: 25, heal: 30 }
       hazards:
         - { skill: hazard_ember_fall, every: 9, phase: 1 }
-      enrage: { after: 360, damage: 100, speed: 0.3, message: "「命令就是命令。全部燒掉。」" }
+      enrage: { after: 420, damage: 100, speed: 0.3, message: "「命令就是命令。全部燒掉。」" }
     uber:
+      dps_cap: 100000    # 2026-10：每個人對極境 Boss 每秒傷害的上限（終局 5 萬、極境 10 萬、巔峰 15 萬）；超過的部分照 dps_over 遞減
+      dps_over:
+        - { from: 100000, rate: 0.3 }   # 10–20 萬的部分算 30%
+        - { from: 200000, rate: 0.1 }   # 20 萬以上算 10%
       intro: "「陛下的命令到了：一個都不留。」"
-      life: 3.56        # 2026-10：照人均單體 15 萬 DPS 重調（極境約 2 分鐘；原 4）
+      life: 1.9         # 2026-10：照單人每秒 10 萬傷害（極境的每秒傷害上限）打 3 分半鐘算的（終局的 31.8 × 1.9，T16 之後約 2,100 萬生命）
       damage: 1.5
       cooldown: 0.75
       level_bonus: 4
@@ -812,7 +836,7 @@ finals:
           shield: { count: 3, type: BLAZE, name: 焚城核心, life: 6, duration: 25, heal: 40 }
       hazards:
         - { skill: hazard_ember_orbs, every: 12, phase: 1 }
-      enrage: { after: 270, damage: 150, speed: 0.4, message: "「時間到了。命令就是命令。」" }
+      enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。命令就是命令。」" }
       key: abyss_core
       key_cost: 1
       key_chance: 0.1
@@ -829,3 +853,115 @@ finals:
           - { support: skyburn_fury, chance: 0.02 }       # 這個終局的專屬輔助（一般版本 1%；2026-10：5% → 2%）
           - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（各 1%；2026-10：2% → 1%）
           - { support: myriad_stars, chance: 0.01 }
+
+  # ---- 巔峰（2026-10）：萬界之巔——終局之上的最終 Boss，招式照 PoE 的「萬界覺醒者」：死亡光束、風暴迷宮、殞星、分身、
+  #   追人的風暴、末日（全場大招，躲進綠色安全區）、四道旋轉光束；場地是懸在星骸之上的黑石平台，風暴會慢慢把場地吃掉。
+  #   不用天穹碎片、不選階級：要集齊 pinnacle.fragments 列的四種碎片各一個（四個終局 Boss 的一般版本、T12 以上，各 10%），
+  #   在地圖裝置的「巔峰」按鈕打開，固定開在最高階＋level_bonus＋pinnacle.level_bonus 級；只有 Boss 房、每個人只能走進去一次。
+  #   pinnacle 的欄位：
+  #     fragments      [{ currency: 通貨代號, from: 終局代號, chance: 機率, min_tier: 那個終局開到幾階以上才掉 }]（每一種要各 1 個）
+  #     level_bonus    比終局的最高階再高幾級（跟極境一樣）     cooldown  這張圖怪物的招式冷卻倍率（0.25–1.5）
+  #     attempts       幾道門（一門一次挑戰，預設 2）　dps_cap  每個人對 Boss 每秒傷害的上限（0 = 不限）
+  #     dps_over       超過上限的部分算幾成：[{ from: 每秒傷害, rate: 0–1 }]（由小排到大，第一段從 dps_cap 開始；沒寫 = 超過的全部不算）
+  #     monster／player 這張圖的怪物、玩家額外的屬性（寫法同 monsters.yml 的 stats）
+  #     drops          寫法同極境的 drops：maps 掉幾張最高階的地圖、unique_chance 自己的傳奇（uniques.yml 的 sources 寫 awakener；
+  #                    沒有就用 final 池）、exclusive_chance 極境專屬池（uber_awakener，沒有就 uber）、extra 額外掉落
+  #                    （extra 可以寫 currency、support 輔助寶石，或 skill 技能寶石：{ skill: 代號, chance: 機率 }，掉 20 級的）
+  #   生命照 boss.life（跟其他終局一樣吃 tier_life 的最高階倍率；曜帝 T16 是 12）。
+  awakener:
+    name: 萬界之巔
+    requires: [sky_crucible, frost_throne, bone_throne, ember_citadel]
+    points: 2
+    level_bonus: 3
+    theme: void
+    atlas: [5, 1]
+    lore: "四個王都是祂放出來的。祂在星骸之上等著，看誰能一路走到這裡。"
+    monsters: { ENDERMAN: 1 }
+    boss:
+      name: 覺醒之主・虛星
+      type: WITHER_SKELETON
+      mythic: ExileCore_Awakener
+      named: true
+      life: 89.7        # 2026-10：照單人每秒 15 萬傷害（巔峰強制上限）打 3 分半鐘算的（T16 ×11.7 之後約 3,150 萬生命）
+      damage: 2.4
+      scale: 1.6
+      mods: [resistant, swift]
+      intro: "「四個王，你都打倒了？……很好。那就換我來，讓你知道什麼叫絕望。」"
+      defeat: "虛星散了。星骸之上，第一次這麼安靜。"
+      # 招式照 PoE 的萬界覺醒者：一開始死亡光束（一道、會轉）、風暴迷宮（場上留一堆風暴）、殞星（三顆落在腳邊）、瞬閃斬；
+      # 第一階段起分身（三個殘影各射一條線）、風暴追擊（追人的風暴球）、走廊光束（前後兩道）、而且風暴開始自己落（場地危害）；
+      # 第二階段起末日（全場大招，躲進綠色安全區）、場地收縮（風暴把場地吃掉，只剩中間）；第三階段起四道旋轉光束（「死」）。
+      # 進入第一、三階段時張開護盾：限時打掉結晶。開打 5 分鐘還沒打倒就狂暴
+      skills:
+        - awakener_die_beam
+        - awakener_storm_maze
+        - awakener_meteor
+        - awakener_blink_slash
+        - { id: awakener_clones, phase: 1 }
+        - { id: awakener_storm_chasers, phase: 1 }
+        - { id: awakener_corridor, phase: 1 }
+        - { id: awakener_apocalypse, phase: 2 }
+        - { id: awakener_collapse, phase: 2 }
+        - { id: awakener_quad_beam, phase: 3 }
+      phases:
+        - at: 0.75
+          name: 星隕
+          message: "「這才剛開始。」"
+          speed: 0.1
+          shield: { count: 3, type: ENDERMAN, name: 虛星結晶, life: 5, duration: 30, heal: 25 }
+        - at: 0.5
+          name: 萬界崩解
+          message: "「看好了——你的世界，是怎麼碎掉的。」"
+          speed: 0.1
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+        - at: 0.25
+          name: 終末
+          message: "「夠了。全部，死。」"
+          speed: 0.2
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          shield: { count: 3, type: ENDERMAN, name: 終末之核, life: 6, duration: 25, heal: 35 }
+      hazards:
+        - { skill: hazard_awakener_storm, every: 9, phase: 1 }
+      enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。這個世界，不需要你。」" }   # 本體約 3 分半＋換階段、護盾
+    pinnacle:
+      attempts: 2        # 2026-10：幾道門（一門一次挑戰；全部倒下才能走下一門，Boss 回滿重來；打倒 Boss 門全部關掉）
+      dps_cap: 150000    # 2026-10：每個人對 Boss 每秒傷害的上限（每秒傷害取打訓練假人的紀錄與實際打出來的較高者；0 = 不限）
+      dps_over:          # 超過上限的部分大幅減傷（分段）：30 萬 → 等效 19.5 萬、50 萬 → 21.5 萬、100 萬 → 26.5 萬
+        - { from: 150000, rate: 0.3 }   # 15–30 萬的部分算 30%
+        - { from: 300000, rate: 0.1 }   # 30 萬以上算 10%
+      level_bonus: 5
+      cooldown: 0.65
+      fragments:
+        - { currency: fragment_crucible, from: sky_crucible,  chance: 0.10, min_tier: 12 }
+        - { currency: fragment_frost,    from: frost_throne,  chance: 0.10, min_tier: 12 }
+        - { currency: fragment_bone,     from: bone_throne,   chance: 0.10, min_tier: 12 }
+        - { currency: fragment_ember,    from: ember_citadel, chance: 0.10, min_tier: 12 }
+      drops:                     # 2026-10：沒有賽季重置，要保持稀缺 → 全部壓低（每個有份的人各擲一份）
+        maps: 3
+        unique_chance: 0.03      # 自己的傳奇（uniques.yml 的 sources 寫 awakener，10 件；沒有的話用終局共通的 final 池）
+        exclusive_chance: 0.03   # 極境專屬池（uber_awakener；沒有就 uber）
+        extra:
+          - { currency: abyss_core, amount: 1, chance: 0.5 }
+          - { currency: sky_fragment, amount: 2, chance: 1 }
+          - { currency: zenith_orb, amount: 4, chance: 1 }
+          - { currency: oracle_orb, amount: 1, chance: 0.2 }
+          - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
+          - { support: abyssal_touch, chance: 0.01 }
+          - { support: myriad_stars, chance: 0.01 }
+          # 虛星專屬的輔助寶石（supports.yml 的 source: awakener；7 顆各 1%，一次大約 7% 至少掉一顆）
+          - { support: oblivion_focus, chance: 0.01 }
+          - { support: storm_maze_heart, chance: 0.01 }
+          - { support: rift_echo, chance: 0.01 }
+          - { support: starfall_core, chance: 0.01 }
+          - { support: phantom_double, chance: 0.01 }
+          - { support: world_collapse, chance: 0.01 }
+          - { support: void_legion, chance: 0.01 }
+          # 虛星專屬的技能寶石（skills.yml 的 source: awakener；直接 20 級；6 顆各 1%，一次大約 6% 至少掉一顆）
+          - { skill: void_meteor, chance: 0.01 }
+          - { skill: oblivion_ray, chance: 0.01 }
+          - { skill: storm_labyrinth, chance: 0.01 }
+          - { skill: fourfold_ray, chance: 0.01 }
+          - { skill: rift_slash, chance: 0.01 }
+          - { skill: starfall_volley, chance: 0.01 }

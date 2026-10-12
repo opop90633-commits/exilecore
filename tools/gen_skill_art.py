@@ -1289,6 +1289,26 @@ SUPPORT_CATEGORIES = {
 }
 
 
+
+# 2026-10：覺醒之主・虛星（萬界之巔）的專屬技能寶石
+AWAKENER_SKILLS = {
+    'void_meteor': A('chaos', lambda i: (i.line(2, 2, 7, 7, 0), i.line(3, 2, 8, 7, 1), i.line(2, 3, 7, 8, 1), i.line(3, 3, 7, 7, 2)),
+                     lambda i: i.ball(9.5, 9.5, 3.4, 0, 1, 2, 3), lambda i: bolt(i, [(9, 7), (8, 9), (10, 10), (9, 12)], '#ffd23a', '#fff27a')),
+    'oblivion_ray': A('chaos', lambda i: i.disc(3, 8, 2.2, 2), lambda i: i.thick(4, 7, 14, 7, 1, 2), lambda i: i.line(4, 8, 14, 8, 3),
+                      lambda i: burst(i, 3, 8, 2.6, 3.6, 6, 1)),
+    'storm_labyrinth': A('lightning', lambda i: [i.line(x, 3, x, 13, 0) for x in (3, 8, 13)],
+                         lambda i: [bolt(i, [(x, 3), (x - 1, 6), (x + 1, 8), (x - 1, 11), (x, 13)], 1, 3) for x in (3, 8, 13)],
+                         lambda i: (i.line(3, 8, 8, 8, 2), i.line(8, 5, 13, 5, 2))),
+    'fourfold_ray': A('chaos', lambda i: (i.line(8, 1, 8, 14, 1), i.line(1, 8, 14, 8, 1), i.line(7, 1, 7, 14, 0), i.line(1, 7, 14, 7, 0)),
+                      lambda i: i.ball(7.5, 7.5, 2.6, 0, 1, 2, 3), lambda i: [i.px(x, y, '#fff27a') for x, y in ((8, 2), (8, 13), (2, 8), (13, 8))]),
+    'rift_slash': A('chaos', lambda i: sword(i, 3, 13, 12, 4), lambda i: speed(i, 1, (4, 7, 10), 1, 4),
+                    lambda i: (i.line(11, 2, 14, 6, 3), i.line(12, 2, 14, 4, 2))),
+    'starfall_volley': A('lightning', bow, lambda i: arrow(i, 5, 8, 13, 8, head='#fff27a'),
+                         lambda i: [i.px(x, y, c) for x, y, c in ((12, 3, '#cf8aff'), (10, 12, '#fff27a'), (14, 12, '#cf8aff'), (3, 2, '#fff27a'))]),
+}
+SKILLS.update(AWAKENER_SKILLS)
+
+
 def support_category(sup):
     mods = sup.get('modifiers', []) or []
     stats = ' '.join(str(m.get('stat', '')) for m in mods)

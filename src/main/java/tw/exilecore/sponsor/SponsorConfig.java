@@ -83,7 +83,12 @@ public final class SponsorConfig {
 
     /** 累積贊助一階：累積多少星幣、稱號、名字顏色與額外功能（listings 0 = 照 economy.yml）。 */
     public record Tier(long amount, String id, String title, String color, String nameColor, int stashPages, int bagPages, int listings,
-                       boolean bypassFull, boolean chatColor, boolean customTitle, boolean campFly) {
+                       boolean bypassFull, boolean chatColor, boolean customTitle, boolean campFly,
+                       double experience, double gold, double deathPenalty) {
+        /** 經驗、金幣多幾 %，死亡懲罰改成幾 %（-1 = 照 character.yml）。2026-10。 */
+        public boolean hasBonus() {
+            return experience > 0 || gold > 0 || deathPenalty >= 0;
+        }
     }
 
     /** 登入天數的稱號。 */
@@ -129,7 +134,11 @@ public final class SponsorConfig {
     }
 
     /** 限定稱號（2026-10，limited_titles）：只有管理網頁、指令發得出來（例如 S1 贊助禮包）；limited 是來源，選單上顯示「…限定」。 */
-    public record LimitedTitle(String id, String name, String color, String limited) {
+    public record LimitedTitle(String id, String name, String color, String limited, List<tw.exilecore.stats.Modifier> stats) {
+        public LimitedTitle {
+            stats = stats == null ? List.of() : List.copyOf(stats);
+        }
+
         public String limitedTag() {
             return limited + "限定";
         }
@@ -327,7 +336,10 @@ public final class SponsorConfig {
                     Math.max(0, Math.min(10, node.integer("bag_pages", 0))),
                     Math.max(0, Math.min(45, node.integer("listings", 0))),
                     node.bool("bypass_full", false), node.bool("chat_color", false), node.bool("custom_title", false),
-                    node.bool("camp_fly", false)));
+                    node.bool("camp_fly", false),
+                    Math.max(0, Math.min(100, node.decimal("experience", 0))),
+                    Math.max(0, Math.min(100, node.decimal("gold", 0))),
+                    node.has("death_penalty") ? Math.max(0, Math.min(100, node.decimal("death_penalty", 10))) : -1));
         }
         tiers = List.copyOf(tierList);
 
@@ -397,7 +409,9 @@ public final class SponsorConfig {
             if (source.isEmpty()) {
                 throw new IllegalArgumentException(node.path() + ".limited：要寫來源（例如「S1 贊助禮包」）");
             }
-            limitedMap.put(id, new LimitedTitle(id, node.requireString("name").trim(), nameColor(node.string("color", "#ffffff").trim(), node.path() + ".color"), source));
+            final String limitedName = node.requireString("name").trim();
+            limitedMap.put(id, new LimitedTitle(id, limitedName, nameColor(node.string("color", "#ffffff").trim(), node.path() + ".color"), source,
+                    tw.exilecore.ascendancy.StatLines.parse(node.list("stats"), "稱號「" + limitedName + "」")));
         }
         limitedTitles = Collections.unmodifiableMap(limitedMap);
 
@@ -770,6 +784,28 @@ public final class SponsorConfig {
     }
 
     /** 累積到 total 時最高的一階（還沒到 null）。 */
+    /** 到過的每一階的經驗加成加起來（%；2026-10 疊加）。 */
+    public double reachedExperience(final long total) {
+        double sum = 0;
+        for (final Tier tier : tiers) {
+            if (total >= tier.amount()) {
+                sum += tier.experience();
+            }
+        }
+        return sum;
+    }
+
+    /** 到過的每一階的金幣加成加起來（%；2026-10 疊加）。 */
+    public double reachedGold(final long total) {
+        double sum = 0;
+        for (final Tier tier : tiers) {
+            if (total >= tier.amount()) {
+                sum += tier.gold();
+            }
+        }
+        return sum;
+    }
+
     public Tier tierFor(final long total) {
         Tier best = null;
         for (final Tier tier : tiers) {

@@ -189,13 +189,15 @@ final class MapBosses {
         if (entity == null) {
             plugin.getSLF4JLogger().warn("地圖 {} 的 Boss 生不出來（type: {}）", instance.map().id(), definition.type());
             instance.setBossKilled(true); // 生不出來也不要卡住：直接算完成
-            if (instance.special() == null && !instance.isUber()) {
+            if (instance.special() == null && !instance.bossOnly()) {
                 service.complete(instance);
             } else {
-                // 回響、試煉、極境：生不出來不算打倒（不給每週的獎勵、不給昇華點、不算極境首殺；極境的鑰匙還給開的人）
+                // 回響、試煉、極境、巔峰：生不出來不算打倒（不給每週的獎勵、不給昇華點、不算極境首殺；極境的鑰匙、巔峰的碎片還給開的人）
                 broadcast(instance, "<red>" + ItemRenderer.escape(instance.label()) + " 的 Boss 沒有出現（設定有問題，請通知管理員），這次不算");
                 if (instance.isUber()) {
                     service.refundUberKey(instance);
+                } else if (instance.isPinnacle()) {
+                    service.refundPinnacleFragments(instance);
                 }
             }
             return;
@@ -601,6 +603,20 @@ final class MapBosses {
         }
     }
 
+    /** 終局、極境、巔峰的下一門（2026-10）：Boss 回滿、第一階段、狂暴重算、護盾收掉；Boss 叫出來的小怪清掉。 */
+    void resetForAttempt(final MapInstance instance) {
+        final LivingEntity boss = instance.boss();
+        if (boss != null && boss.isValid() && !instance.bossKilled()) {
+            reset(instance, boss, center(instance));
+        }
+        for (final LivingEntity extra : List.copyOf(instance.extras())) {
+            if (extra.isValid()) {
+                extra.remove();
+            }
+        }
+        instance.extras().clear();
+    }
+
     private void reset(final MapInstance instance, final LivingEntity boss, final Location center) {
         instance.setBossPhase(0);
         instance.setPhaseTick(PhaseStep.NEVER);
@@ -643,6 +659,10 @@ final class MapBosses {
     void loot(final MapInstance instance, final Player player, final List<DropTable.Drop> drops) {
         if (instance.isUber()) {
             uberLoot(instance, player, drops);
+            return;
+        }
+        if (instance.isPinnacle()) {
+            pinnacleLoot(instance, player, drops);
             return;
         }
         final MapConfig config = service.config();
@@ -690,6 +710,21 @@ final class MapBosses {
             final CurrencyType fragment = plugin.currencies().repository().get(config.drops().fragment());
             if (fragment != null) {
                 drops.add(DropTable.Drop.currency(fragment));
+            }
+        }
+        // 巔峰的碎片（2026-10）：某個終局（一般版本）開到夠高的階，Boss 有機率掉一個
+        if (instance.map().isFinal()) {
+            for (final MapConfig.MapDef pinnacleMap : config.pinnacles()) {
+                for (final MapConfig.FragmentSource fragment : config.pinnacle(pinnacleMap.id()).fragments()) {
+                    if (!fragment.from().equals(instance.map().id()) || instance.stats().tier() < fragment.minTier()
+                            || random.nextDouble() >= fragment.chance()) {
+                        continue;
+                    }
+                    final CurrencyType currency = plugin.currencies().repository().get(fragment.currency());
+                    if (currency != null) {
+                        drops.add(DropTable.Drop.currency(currency));
+                    }
+                }
             }
         }
         // 終局開到夠高的階：有機率掉開極境的鑰匙（深淵星核）
@@ -766,6 +801,79 @@ final class MapBosses {
                 }
                 continue;
             }
+            if ("skill".equals(extra.kind())) {
+                for (int i = 0; i < extra.amount(); i++) {
+                    addSkillId(drops, extra.id());
+                }
+                continue;
+            }
+            final CurrencyType currency = plugin.currencies().repository().get(extra.id());
+            if (currency != null) {
+                for (int i = 0; i < extra.amount(); i++) {
+                    drops.add(DropTable.Drop.currency(currency));
+                }
+            }
+        }
+    }
+
+    /**
+     * 巔峰 Boss 的掉落（2026-10，每個有份的人各一份；寫法同極境的 drops）：最高階的地圖好幾張、自己的傳奇（沒有就終局共通的）、
+     * 極境專屬的傳奇池（uber）、追逐級、額外的通貨與輔助。
+     */
+    private void pinnacleLoot(final MapInstance instance, final Player player, final List<DropTable.Drop> drops) {
+        final MapConfig config = service.config();
+        final MapConfig.UberDrops pinnacleDrops = instance.pinnacle().drops();
+        final var generator = plugin.items().generator();
+        final var random = service.random();
+        final Set<String> completed = player == null ? null : service.completed(player);
+        for (int i = 0; i < pinnacleDrops.maps(); i++) {
+            final ItemData map = MapDrops.roll(config, generator, config.tiers().max(), completed, random);
+            if (map != null) {
+                drops.add(DropTable.Drop.equipment(map));
+            }
+        }
+        final int itemLevel = instance.level();
+        if (random.nextDouble() < pinnacleDrops.uniqueChance()) {
+            ItemData unique = MapDrops.unique(generator, instance.map().id(), itemLevel, random);
+            if (unique == null) {
+                unique = MapDrops.unique(generator, "final", itemLevel, random);
+            }
+            addUnique(drops, unique);
+        }
+        rollChase(drops, itemLevel, random);
+        if (random.nextDouble() < config.drops().finalCommonChance()) {
+            addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
+        }
+        if (random.nextDouble() < pinnacleDrops.exclusiveChance()) {
+            // 先找這隻巔峰自己的（uber_終局代號），沒有就用全部極境共通的（uber）
+            ItemData exclusive = MapDrops.unique(generator, MapConfig.uberSource(instance.map().id()), itemLevel, random);
+            if (exclusive == null) {
+                exclusive = MapDrops.unique(generator, "uber", itemLevel, random);
+            }
+            addUnique(drops, exclusive);
+        }
+        extraDrops(drops, pinnacleDrops.extra(), itemLevel, random);
+    }
+
+    /** 極境、巔峰的額外掉落（maps.yml 的 drops.extra）。 */
+    private void extraDrops(final List<DropTable.Drop> drops, final List<MapConfig.ExtraDrop> extras, final int itemLevel,
+                            final java.util.random.RandomGenerator random) {
+        for (final MapConfig.ExtraDrop extra : extras) {
+            if (random.nextDouble() >= extra.chance()) {
+                continue;
+            }
+            if ("support".equals(extra.kind())) {
+                for (int i = 0; i < extra.amount(); i++) {
+                    addSupportId(drops, extra.id(), itemLevel);
+                }
+                continue;
+            }
+            if ("skill".equals(extra.kind())) {
+                for (int i = 0; i < extra.amount(); i++) {
+                    addSkillId(drops, extra.id());
+                }
+                continue;
+            }
             final CurrencyType currency = plugin.currencies().repository().get(extra.id());
             if (currency != null) {
                 for (int i = 0; i < extra.amount(); i++) {
@@ -786,6 +894,13 @@ final class MapBosses {
         }
     }
 
+    /** 一顆指定的技能寶石，直接 20 級（skills.yml 沒有這個代號就不掉；巔峰 Boss 的專屬技能寶石）。 */
+    private void addSkillId(final List<DropTable.Drop> drops, final String skillId) {
+        if (plugin.skills() != null && plugin.skills().config().skill(skillId) != null) {
+            drops.add(DropTable.Drop.skill(skillId, tw.exilecore.character.SkillLoadout.MAX_LEVEL));
+        }
+    }
+
     /** 一顆指定的輔助寶石（supports.yml 沒有這個代號就不掉）。 */
     private void addSupportId(final List<DropTable.Drop> drops, final String supportId, final int level) {
         if (plugin.skills() != null && plugin.skills().config().support(supportId) != null) {
@@ -799,6 +914,9 @@ final class MapBosses {
             return;
         }
         instance.setBossKilled(true);
+        if (instance.usesAttempts()) {
+            instance.closePortals(); // 2026-10：通關了，門全部關起來（裡面的人照樣可以撿完再出來）
+        }
         clearShield(instance, boss);
         detachSkills(boss);
         final MapConfig.Boss definition = instance.bossDef();
@@ -811,7 +929,7 @@ final class MapBosses {
         boss.getWorld().playSound(boss.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
         // 擊殺稱號（2026-10）：極境 Boss（照終局代號）與金庫之主，倒下時在 Boss 32 格內、活著、不是觀戰的人各記一次
         final String killKey = instance.special() != null && "heist_finale".equals(instance.special().kind()) ? "heist_finale"
-                : instance.isUber() ? instance.map().id() : null;
+                : instance.isUber() || instance.isPinnacle() ? instance.map().id() : null;
         if (killKey != null && plugin.bounties() != null) {
             for (final java.util.UUID uuid : instance.inside()) {
                 final org.bukkit.entity.Player player = plugin.getServer().getPlayer(uuid);
@@ -915,6 +1033,9 @@ final class MapBosses {
     static String tempoKind(final MapInstance instance) {
         if (instance.isUber()) {
             return "uber";
+        }
+        if (instance.isPinnacle()) {
+            return "pinnacle";
         }
         if (instance.special() != null && "heist_finale".equals(instance.special().kind())) {
             return "vault";

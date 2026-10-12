@@ -2,7 +2,8 @@
 #
 # 星幣：1 星幣 = 1 元。管理網頁「發放」選「星幣」，或主控台 /ec sponsor give <玩家> <數量> [bonus]
 #   （贊助商城 Tebex 的指令也是這一行；bonus = 贈送的，不算進累積贊助）。離線的下次登入發。
-# 這裡賣的都不影響戰鬥：買的稱號沒有加成（只有免費的登入天數稱號有小加成）、特效只是好看；全服加倍是全服一起吃的（買的人只有公告署名）；
+# 戰鬥數值不賣：特效只是好看；全服加倍是全服一起吃的（買的人只有公告署名）。2026-10 起累積贊助各階有經驗、金幣 +5% 與死亡懲罰減免，
+# S1 限定稱號有掉落物品數量 +5%（伺服器主決定的；跟下面的商業使用規範有衝突的風險，要注意）；
 # 累積贊助的額外功能是方便性（倉庫、背包、上架格、排隊、聊天顏色、營地飛行），不加戰鬥數值。
 # Minecraft 的商業使用規範（https://www.minecraft.net/usage-guidelines）不能賣影響遊戲的東西，新增東西時請注意。
 # 改完 /ec reload。
@@ -62,19 +63,28 @@ boosts:
 #   stash_pages：倉庫多幾頁　bag_pages：隨身背包多幾頁（每頁 45 格）　listings：市集商店頁最多上架幾件（一般玩家照 economy.yml 的 market.shop_slots）
 #   bypass_full：伺服器滿了也進得來　chat_color：聊天可以用 &a、&l、&#rrggbb 上色　custom_title：自訂稱號（/sponsor title）
 #   camp_fly：在營地可以飛（按兩下空白鍵）
+#   experience、gold：經驗、金幣多幾 %（2026-10；到過的每一階疊加：6 階各 5% = 共 30%；只算這個人自己的：打怪的經驗、怪物掉給他的金幣）
+#   （上面其他的照「用到過的最高一階」，只有 experience、gold 疊加；death_penalty 也是照最高一階）
+#   death_penalty：死亡扣經驗改成幾 %（沒寫照 character.yml 的 map_death_penalty，10%；只會比原本輕）
 tiers:
   - { amount: 1000,  id: patron_1, title: 星塵贊助者, color: "#9fd3ff", name_color: "#cfeaff",
-      stash_pages: 1,  bag_pages: 0, listings: 7,  bypass_full: true, chat_color: true }
+      stash_pages: 1,  bag_pages: 0, listings: 7,  bypass_full: true, chat_color: true, camp_fly: true,
+      experience: 5, gold: 5, death_penalty: 9 }
   - { amount: 3000,  id: patron_2, title: 星芒贊助者, color: "#7fe0c0", name_color: "#a8f5dc",
-      stash_pages: 2,  bag_pages: 0, listings: 9,  bypass_full: true, chat_color: true }
+      stash_pages: 2,  bag_pages: 0, listings: 9,  bypass_full: true, chat_color: true, camp_fly: true,
+      experience: 5, gold: 5, death_penalty: 8 }
   - { amount: 5000,  id: patron_3, title: 星輝贊助者, color: "#f5d76e", name_color: "#ffe58a",
-      stash_pages: 3,  bag_pages: 1, listings: 11, bypass_full: true, chat_color: true }
+      stash_pages: 3,  bag_pages: 1, listings: 11, bypass_full: true, chat_color: true, camp_fly: true,
+      experience: 5, gold: 5, death_penalty: 6 }
   - { amount: 10000, id: patron_4, title: 星耀贊助者, color: "#ff9f5a", name_color: "#ffb98a",
-      stash_pages: 5,  bag_pages: 2, listings: 13, bypass_full: true, chat_color: true, custom_title: true }
+      stash_pages: 5,  bag_pages: 2, listings: 13, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
+      experience: 5, gold: 5, death_penalty: 4 }
   - { amount: 15000, id: patron_5, title: 星曜守護者, color: "#d68cff", name_color: "gradient:#e3a8ff:#9fd3ff",
-      stash_pages: 7,  bag_pages: 3, listings: 15, bypass_full: true, chat_color: true, custom_title: true }
+      stash_pages: 7,  bag_pages: 3, listings: 15, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
+      experience: 5, gold: 5, death_penalty: 2 }
   - { amount: 25000, id: patron_6, title: 星骸至尊,   color: "#ffd24a", name_color: "gradient:#ffe27a:#ff8fe0",
-      stash_pages: 10, bag_pages: 5, listings: 30, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true }
+      stash_pages: 10, bag_pages: 5, listings: 30, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
+      experience: 5, gold: 5, death_penalty: 0 }
 
 # 登入天數的稱號（一天在線 settings.login_minutes 分鐘以上算一天；不用連續）。
 # stats：擁有就有的小加成（2026-10；免費拿的才可以有加成，用錢買的稱號不能有），全部疊起來大約 +30 生命、+3% 生命、+15 魔力、各元素抗性 +3%
@@ -189,9 +199,10 @@ cosmetics:
                       description: "圓滾滾的星空小鯨，噴氣孔冒極光、尾巴拖著星砂" }
 
 # 限定稱號（2026-10）：只有管理網頁「發放 → 時裝」或 /ec sponsor give <玩家> cosmetic title:<代號> 發得出來（抽不到、換不到）；
-#   limited 寫來源，稱號選單上顯示「…限定」，沒有的人看不到。顏色可以是 "#rrggbb" 或 "gradient:#rrggbb:#rrggbb"（漸層）。沒有加成（用錢買的稱號不能有）。
+#   limited 寫來源，稱號選單上顯示「…限定」，沒有的人看不到。顏色可以是 "#rrggbb" 或 "gradient:#rrggbb:#rrggbb"（漸層）。stats：擁有就有的加成（寫法同登入天數稱號）。
 limited_titles:
-  s1_founder: { name: 創世拓荒者, color: "gradient:#39e7ff:#f2c14e", limited: "S1 贊助禮包" }
+  s1_founder: { name: 創世拓荒者, color: "gradient:#39e7ff:#f2c14e", limited: "S1 贊助禮包",
+                stats: [ { stat: drop.quantity, type: INCREASED, value: 5 } ] }   # 擁有就有：掉落物品數量 +5%
 
 # 一組時裝（2026-10）：管理網頁「發放 → 時裝」選【整組】、或 /ec sponsor give <玩家> cosmetic bundle:<代號> 一次發整組（已經有的不重複給）；
 #   項目可以是時裝代號或 title:稱號代號
