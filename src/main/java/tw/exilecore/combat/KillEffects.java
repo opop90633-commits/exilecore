@@ -145,7 +145,7 @@ public final class KillEffects implements Listener {
     }
 
     /**
-     * 逐星者（追逐級傳奇）：殺死稀有怪物時，牠的詞綴變成你的增益 seconds 秒（同一種詞綴再殺一隻就重新計時）。
+     * 斬獲腰環（追逐級傳奇；2026-10 以前叫逐星者）：殺死稀有怪物時，牠的詞綴變成你的增益 seconds 秒（同一種詞綴再殺一隻就重新計時）。
      * 詞綴的 stats 直接套（壯碩的 = 更多最大生命、鐵甲的 = 增加護甲、致命的 = 暴擊…），
      * 「附加 X% 物理為火焰」變成你的額外獲得，極速的變成增加移動速度，光環的詞綴給光環裡的數值；只有招式的詞綴沒有東西可拿。
      */
@@ -164,7 +164,7 @@ public final class KillEffects implements Listener {
             if (mod == null) {
                 continue;
             }
-            final String source = "逐星者：" + mod.name();
+            final String source = "斬獲腰環：" + mod.name();
             final List<Modifier> modifiers = new java.util.ArrayList<>();
             for (final tw.exilecore.item.AffixMod affixMod : mod.mods()) {
                 modifiers.add(affixMod.toModifier(Map.of(), source));
@@ -183,11 +183,11 @@ public final class KillEffects implements Listener {
             if (modifiers.isEmpty()) {
                 continue;
             }
-            plugin.skills().buff(killer, "steal." + mod.id(), mod.name() + "（逐星者）", ticks, modifiers);
+            plugin.skills().buff(killer, "steal." + mod.id(), mod.name() + "（斬獲腰環）", ticks, modifiers);
             stolen++;
         }
         if (stolen > 0) {
-            killer.sendActionBar(plugin.text().parse("<#ffb347>✦ 逐星者：偷到 " + stolen + " 條詞綴（" + Math.round(seconds) + " 秒）"));
+            killer.sendActionBar(plugin.text().parse("<#ffb347>✦ 斬獲腰環：偷到 " + stolen + " 條詞綴（" + Math.round(seconds) + " 秒）"));
             killer.playSound(killer.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, SoundCategory.PLAYERS, 0.6f, 1.5f);
             final Location at = victim.getLocation().add(0, 1, 0);
             tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.END_ROD, at, 20, 0.5, 0.6, 0.5, 0.05);
