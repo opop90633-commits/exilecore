@@ -6186,7 +6186,7 @@ moonhowl_talisman:
     - text: "+{value/100}% 暴擊率"
       value: [200, 300]
       stats:
-        - { stat: local.crit_base, type: FLAT, value: "{value}" }
+        - { stat: local.crit_base, type: FLAT, value: "{value/100}" }   # 2026-10：少了 /100，暴擊率變成 +216%
     - text: "擊中時 {value}% 機率造成流血"
       value: [20, 30]
       stats:
