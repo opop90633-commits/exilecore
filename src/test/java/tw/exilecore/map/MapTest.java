@@ -437,7 +437,8 @@ class MapTest {
         assertEquals(Set.of("sky_crucible", "frost_throne", "bone_throne", "ember_citadel"),
                 pinnacle.fragments().stream().map(MapConfig.FragmentSource::from).collect(java.util.stream.Collectors.toSet()));
         for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
-            assertEquals(0.5, fragment.chance(), 1e-9, fragment.currency() + "：每個終局 Boss 50%（2026-10：10% → 50%）");
+            assertEquals(0.25, fragment.chance(), 1e-9, fragment.currency() + "：每個終局 Boss 25%（2026-10：10% → 50% → 25%）");
+            assertEquals(0.5, fragment.uberChance(), 1e-9, fragment.currency() + "：極境版本 50%（2026-10）");
             assertTrue(fragment.minTier() <= config.tiers().max());
         }
         assertEquals(config.tiers().max(), config.pinnacleStats("awakener", pinnacle).tier(), "巔峰開在最高階");
