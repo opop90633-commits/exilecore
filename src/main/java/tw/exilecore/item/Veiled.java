@@ -95,8 +95,8 @@ public final class Veiled {
     public static boolean addVeiled(final ItemData data, final ItemGenerator generator, final RandomGenerator random,
                                     final boolean replaceWhenFull) {
         final ItemBase base = generator.repository().base(data.base());
-        if (base == null || base.isMap() || base.isJewel() || (data.rarity() != Rarity.MAGIC && data.rarity() != Rarity.RARE)
-                || hasSpecial(data)) {
+        if (base == null || base.isMap() || !hasUnveiledFor(base, generator.repository())
+                || (data.rarity() != Rarity.MAGIC && data.rarity() != Rarity.RARE) || hasSpecial(data)) {
             return false;
         }
         AffixType type = random.nextBoolean() ? AffixType.PREFIX : AffixType.SUFFIX;
@@ -222,13 +222,26 @@ public final class Veiled {
         return VEILED_PREFIX.equals(veiled.id()) ? AffixType.PREFIX : AffixType.SUFFIX;
     }
 
-    /** 揭露石能不能用：已鑑定的魔法／稀有裝備（不是地圖、珠寶）、還沒有隱匿或揭露詞綴、前綴或後綴有空位。 */
+    /**
+     * 這種基底有沒有揭露詞綴可以出（2026-10：以前珠寶一律不行，但 unveiled.yml 早就有 32 條珠寶專用的 unveiled_j_*；
+     * 現在照詞綴庫判斷——一般珠寶可以，遺時星晶這種沒有對應揭露詞綴的就不行）。
+     */
+    public static boolean hasUnveiledFor(final ItemBase base, final ItemRepository repository) {
+        for (final Affix affix : repository.affixes()) {
+            if (isUnveiled(affix.id()) && affix.canSpawnOn(base)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 揭露石能不能用：已鑑定的魔法／稀有裝備（不是地圖；珠寶要有對應的揭露詞綴）、還沒有隱匿或揭露詞綴、前綴或後綴有空位。 */
     public static boolean canUnveil(final ItemData data, final ItemGenerator generator) {
         if (!data.identified() || (data.rarity() != Rarity.MAGIC && data.rarity() != Rarity.RARE) || hasSpecial(data)) {
             return false;
         }
         final ItemBase base = generator.repository().base(data.base());
-        if (base == null || base.isMap() || base.isJewel() || generator.repository().affix(VEILED_PREFIX) == null) {
+        if (base == null || base.isMap() || !hasUnveiledFor(base, generator.repository()) || generator.repository().affix(VEILED_PREFIX) == null) {
             return false;
         }
         return generator.canAddAffix(data, AffixType.PREFIX) || generator.canAddAffix(data, AffixType.SUFFIX);

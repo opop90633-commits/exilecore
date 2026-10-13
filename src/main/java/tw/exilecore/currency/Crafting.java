@@ -122,6 +122,9 @@ public final class Crafting {
                 return null;
             }
             case UNVEIL -> {
+                if (base.isMap() || !tw.exilecore.item.Veiled.hasUnveiledFor(base, generator.repository())) {
+                    return (base.isMap() ? "地圖" : base.isJewel() ? "這種珠寶" : "這種裝備") + "沒有對應的揭露詞綴，不能加隱匿詞綴"; // 2026-10
+                }
                 if (tw.exilecore.item.Veiled.hasSpecial(data)) {
                     return "一件裝備只能有一條隱匿或揭露詞綴";
                 }
