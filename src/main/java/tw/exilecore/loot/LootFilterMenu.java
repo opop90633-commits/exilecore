@@ -528,7 +528,7 @@ public final class LootFilterMenu extends Menu {
             if (types.size() > rowsOf[group] * GROUP_SIZE) {
                 lore.add("<red>還有 " + (types.size() - rowsOf[group] * GROUP_SIZE) + " 種排不下（整組切換照樣會切到）");
             }
-            lore.add("<yellow>右鍵：這一組" + (hidden == 0 ? "全部隱藏" : "全部改成會撿"));
+            lore.add("<yellow>右鍵：這一組" + (shown == 0 ? "全部改成會撿" : "全部隱藏"));   // 有會撿的就全部隱藏（跟 click 一樣）
             set(slot(groupRows[group], 0), icon(group == 0 ? Material.GLOWSTONE_DUST : group == 1 ? Material.GOLD_NUGGET : Material.NETHER_STAR,
                     "<#f5b942>【" + GROUP_NAMES[group] + "】", lore));
             for (int i = 0; i < Math.min(GROUP_SIZE * rowsOf[group], types.size()); i++) {

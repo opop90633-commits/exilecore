@@ -388,6 +388,24 @@ public final class StashMenu extends Menu {
 
     // ---- 地圖頁 ----
 
+    /**
+     * 地圖頁每張地圖的階級、稀有度、名稱（2026-10）：以前排序時每比一次就把 PDC 的 JSON 解一次，
+     * 幾百張地圖一次畫面要解幾千次、拿一堆出來就卡；現在每張只解一次，物件沒換就一直用。
+     */
+    private final Map<ItemStack, MapInfo> mapInfo = new java.util.IdentityHashMap<>();
+
+    private record MapInfo(int tier, int rarity, String name) {
+    }
+
+    private MapInfo infoOf(final ItemStack stack) {
+        MapInfo info = mapInfo.get(stack);
+        if (info == null) {
+            info = new MapInfo(tierOf(stack), rarityOf(stack), StashOrganizer.plainName(stack));
+            mapInfo.put(stack, info);
+        }
+        return info;
+    }
+
     /** 地圖的階級（1–16）；不是地圖回傳 0。 */
     private int tierOf(final ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
@@ -411,15 +429,21 @@ public final class StashMenu extends Menu {
     /** 這一階（0 = 全部）的地圖在 stash.maps() 的位置：高階在前、稀有度高的在前、名稱。 */
     private List<Integer> mapsIn(final int tier) {
         final List<ItemStack> maps = stash.maps();
+        if (mapInfo.size() > maps.size() * 2 + 64) {
+            mapInfo.clear(); // 拿出去的地圖的資料不用留著
+        }
         final List<Integer> list = new ArrayList<>();
+        final List<MapInfo> infos = new ArrayList<>(maps.size());
         for (int i = 0; i < maps.size(); i++) {
-            if (tier == 0 || tierOf(maps.get(i)) == tier) {
+            final MapInfo info = infoOf(maps.get(i));
+            infos.add(info);
+            if (tier == 0 || info.tier() == tier) {
                 list.add(i);
             }
         }
-        list.sort(java.util.Comparator.<Integer>comparingInt(i -> -tierOf(maps.get(i)))
-                .thenComparingInt(i -> -rarityOf(maps.get(i)))
-                .thenComparing(i -> StashOrganizer.plainName(maps.get(i))));
+        list.sort(java.util.Comparator.<Integer>comparingInt(i -> -infos.get(i).tier())
+                .thenComparingInt(i -> -infos.get(i).rarity())
+                .thenComparing(i -> infos.get(i).name()));
         return list;
     }
 
@@ -430,7 +454,7 @@ public final class StashMenu extends Menu {
     private void drawMaps() {
         final int[] counts = new int[MAX_TIER + 1];
         for (final ItemStack map : stash.maps()) {
-            counts[tierOf(map)]++;
+            counts[infoOf(map).tier()]++;
         }
         if (mapTier < 0) {
             mapTier = 0;

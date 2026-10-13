@@ -30,6 +30,8 @@ public final class StashService {
     private final Set<UUID> loading = new HashSet<>();
     private final Set<UUID> failed = new HashSet<>();
     private final Map<UUID, StashMenu> open = new HashMap<>();
+    /** 存檔快照的快取（2026-10）：每個人每一頁上次序列化的結果；頁沒動就直接用。 */
+    private final Map<UUID, EncodeCache> encodeCaches = new HashMap<>();
 
     public StashService(final ExileCore plugin) {
         this.plugin = plugin;
@@ -70,6 +72,7 @@ public final class StashService {
 
     public void unload(final Player player) {
         stashes.remove(player.getUniqueId());
+        encodeCaches.remove(player.getUniqueId());
         loading.remove(player.getUniqueId());
         failed.remove(player.getUniqueId());
         open.remove(player.getUniqueId());
@@ -100,20 +103,84 @@ public final class StashService {
         if (menu != null) {
             menu.syncToModel();
         }
-        final StashRepository.Snapshot snapshot = encode(stash);
+        final StashRepository.Snapshot snapshot = encode(stash, encodeCaches.computeIfAbsent(uuid, key -> new EncodeCache()));
         return connection -> repository.save(connection, uuid, snapshot);
     }
 
-    static StashRepository.Snapshot encode(final Stash stash) {
-        final Map<Integer, byte[]> pages = new HashMap<>();
-        for (int page = 0; page < stash.pageCount(); page++) {
-            final ItemStack[] items = new ItemStack[Stash.PAGE_SIZE];
-            final ItemStack[] source = stash.page(page);
-            for (int i = 0; i < Stash.PAGE_SIZE; i++) {
+    /**
+     * 序列化的快取（2026-10）：以前每次角色存檔（商人買一件、換技能、關倉庫…）都把幾百頁、上千張地圖整個序列化＋壓縮一次，
+     * 倉庫大的人一次要上百毫秒、整台伺服器跟著卡。現在每一頁記上次序列化時每一格是哪個物件、幾個：
+     * 全部一樣就直接用上次的結果（倉庫的頁都是整個物件換掉，不會原地改）。保險起見每 {@link #RECHECK_MS} 重做一次。
+     */
+    static final class EncodeCache {
+        /** 多久一定重新序列化一次（有人原地改了物品也頂多晚這麼久才存到）。 */
+        static final long RECHECK_MS = 5 * 60 * 1000;
+
+        record Entry(ItemStack[] refs, int[] amounts, byte[] bytes, long at) {
+            boolean matches(final ItemStack[] items, final long now) {
+                if (now - at > RECHECK_MS || refs.length != items.length) {
+                    return false;
+                }
+                for (int i = 0; i < items.length; i++) {
+                    if (refs[i] != items[i] || (items[i] != null && amounts[i] != items[i].getAmount())) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            static Entry of(final ItemStack[] items, final byte[] bytes, final long now) {
+                final int[] amounts = new int[items.length];
+                for (int i = 0; i < items.length; i++) {
+                    amounts[i] = items[i] == null ? 0 : items[i].getAmount();
+                }
+                return new Entry(items.clone(), amounts, bytes, now);
+            }
+        }
+
+        final Map<Integer, Entry> pages = new HashMap<>();
+        Entry maps;
+
+        byte[] page(final int key, final ItemStack[] source, final long now) {
+            final Entry cached = pages.get(key);
+            if (cached != null && cached.matches(source, now)) {
+                return cached.bytes();
+            }
+            final ItemStack[] items = new ItemStack[source.length];
+            for (int i = 0; i < source.length; i++) {
                 items[i] = source[i] == null || source[i].isEmpty() ? ItemStack.empty() : source[i];
             }
-            pages.put(Stash.storageKey(page), ItemStack.serializeItemsAsBytes(items));
+            final byte[] bytes = ItemStack.serializeItemsAsBytes(items);
+            pages.put(key, Entry.of(source, bytes, now));
+            return bytes;
         }
+
+        byte[] maps(final List<ItemStack> source, final long now) {
+            final ItemStack[] refs = source.toArray(new ItemStack[0]);
+            if (maps != null && maps.matches(refs, now)) {
+                return maps.bytes();
+            }
+            final ItemStack[] mapItems = new ItemStack[Math.max(1, refs.length)];
+            for (int i = 0; i < mapItems.length; i++) {
+                mapItems[i] = i < refs.length && refs[i] != null && !refs[i].isEmpty() ? refs[i] : ItemStack.empty();
+            }
+            final byte[] bytes = ItemStack.serializeItemsAsBytes(mapItems);
+            maps = Entry.of(refs, bytes, now);
+            return bytes;
+        }
+    }
+
+    static StashRepository.Snapshot encode(final Stash stash) {
+        return encode(stash, new EncodeCache());
+    }
+
+    static StashRepository.Snapshot encode(final Stash stash, final EncodeCache cache) {
+        final long now = System.currentTimeMillis();
+        final Map<Integer, byte[]> pages = new HashMap<>();
+        for (int page = 0; page < stash.pageCount(); page++) {
+            pages.put(Stash.storageKey(page), cache.page(Stash.storageKey(page), stash.page(page), now));
+        }
+        cache.pages.keySet().removeIf(key -> !pages.containsKey(key)); // 頁變少（收回贊助的頁）：快取跟著丟
         final Map<Integer, StashRepository.Tab> tabs = new HashMap<>();
         for (int page = 0; page < stash.pageCount(); page++) {
             if (!stash.tabName(page).isEmpty() || stash.tabCategory(page) != StashCategory.ALL) {
@@ -121,12 +188,7 @@ public final class StashService {
             }
         }
         // 地圖頁：整份存成一個特殊頁碼（空的也要存，拿光之後資料庫裡才不會留著舊的）
-        final List<ItemStack> maps = stash.maps();
-        final ItemStack[] mapItems = new ItemStack[Math.max(1, maps.size())];
-        for (int i = 0; i < mapItems.length; i++) {
-            mapItems[i] = i < maps.size() && maps.get(i) != null && !maps.get(i).isEmpty() ? maps.get(i) : ItemStack.empty();
-        }
-        pages.put(Stash.MAP_STORE_KEY, ItemStack.serializeItemsAsBytes(mapItems));
+        pages.put(Stash.MAP_STORE_KEY, cache.maps(stash.maps(), now));
         return new StashRepository.Snapshot(pages, new HashMap<>(stash.currencies()), tabs);
     }
 

@@ -17515,6 +17515,55 @@ item support_warcry_power
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
+item support_enraged_warcry
+  a=141004
+  b=776a43
+  c=292517
+  d=564618
+  e=1e1808
+  f=ffffff
+  g=524317
+  h=1c1708
+  i=4e4016
+  j=1b1607
+  k=4b3d15
+  l=1a1507
+  m=473a13
+  n=181406
+  o=fff0a0
+  p=433712
+  q=171306
+  r=403411
+  s=161205
+  t=3c3110
+  u=151105
+  v=382e0e
+  w=131004
+  x=352b0d
+  y=120f04
+  z=31280c
+  A=110e04
+  B=2d250b
+  C=0f0c03
+  D=2a220a
+  E=0e0b03
+  .aaaaaaaaaaaaaa.
+  abbbbccccccbbbba
+  addeeffffffeedda
+  aghffhhhhhhffhga
+  aijffjjjjjjffjia
+  akklfffffffflkka
+  ammmnnnoonnnmmma
+  appppqfoooqppppa
+  arrrrsoooosrrrra
+  attttuooooutttta
+  avvvvwwoowwvvvva
+  axxxyooooooyxxxa
+  azzAooooooooAzza
+  aBBCooooooooCBBa
+  aDDDEEEEEEEEDDDa
+  .aaaaaaaaaaaaaa.
+
 item support_minion_speed
   a=0a100c
   b=536458

@@ -310,15 +310,18 @@ public final class StatsReport {
         final SkillProfile attack = SkillProfile.defaultAttack(state.weaponTags());
         final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, attack);
         final double aps = DamageCalculator.attacksPerSecond(sheet, attack.tags());
-        final double crit = DamageCalculator.critChance(sheet, attack);
+        final DefenceEstimates estimates = estimates(plugin, state, sheet);
+        // 2026-10：含亞馬遜命中率溢出轉的暴擊（對同等級怪物）
+        final double crit = DamageCalculator.critChance(sheet, attack, monsterEvasion(plugin, state));
+        final double amazonCrit = DamageCalculator.amazonCritBonus(attack.effective(sheet), attack, monsterEvasion(plugin, state));
         // 暴擊傷害照這一下的標籤算（項鍊、天賦的「攻擊暴擊傷害」只有攻擊吃得到）
         final double critMulti = DamageCalculator.critMultiplier(sheet, attack.tags(), null) * 100;
-        final DefenceEstimates estimates = estimates(plugin, state, sheet);
         final List<String> lines = new ArrayList<>();
         lines.add(String.format(Locale.ROOT, "<gray>⚔ 普攻 <dark_gray>（%s・%s）<gray> 平均 %s%s<gray>每秒 <white>%.2f <gray>次",
                 attack.tags().contains(Tags.PROJECTILE) ? "遠程" : "近戰", weaponText(state.weaponTags()), damageText(expected), SEP, aps));
         final String accuracyText = String.format(Locale.ROOT, "<gray>命中 <white>%d", Math.round(sheet.get(StatKeys.ACCURACY)));
-        final String critText = String.format(Locale.ROOT, "<gray>暴擊 <white>%.1f%% <dark_gray>× <white>%.0f%%", crit * 100, critMulti);
+        final String critText = String.format(Locale.ROOT, "<gray>暴擊 <white>%.1f%% <dark_gray>× <white>%.0f%%", crit * 100, critMulti)
+                + (amazonCrit > 0 && crit > 0 ? String.format(Locale.ROOT, " <dark_gray>（含命中溢出 +%.1f%%）", amazonCrit * 100) : "");
         if (estimates == null) {
             lines.add(accuracyText + SEP + critText);
         } else {
@@ -486,6 +489,11 @@ public final class StatsReport {
     }
 
     /** 對同等級普通怪物的估計值；怪物模組沒啟用時是 null。 */
+    /** 同等級普通怪物的閃避（亞馬遜的命中溢出暴擊用）；沒有怪物設定回傳 0。 */
+    public static double monsterEvasion(final ExileCore plugin, final PlayerState state) {
+        return plugin.monsters() == null ? 0 : plugin.monsters().config().evasionAt(Math.max(1, state.level()));
+    }
+
     static DefenceEstimates estimates(final ExileCore plugin, final PlayerState state, final StatSheet sheet) {
         if (plugin.monsters() == null) {
             return null;

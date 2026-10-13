@@ -7,6 +7,7 @@ import tw.exilecore.ExileCore;
 import tw.exilecore.character.PlayerState;
 import tw.exilecore.combat.Debuffs;
 import tw.exilecore.stats.Modifier;
+import tw.exilecore.stats.StatKeys;
 
 import java.util.List;
 import java.util.Locale;
@@ -157,14 +158,20 @@ final class Warcries {
 
         // 增益：自己與範圍內的隊友
         final List<Modifier> modifiers = build.warcryModifiers();
+        // 2026-10：輔助加的那份（蓄嘯、冰嚙…）照輔助分開記：同一顆輔助掛在好幾個戰吼上只有一份（最後吼的那個刷新時間）
+        for (final java.util.Map.Entry<String, List<Modifier>> grant : build.warcrySupportGrants().entrySet()) {
+            buffs.apply(player, "warcry_support:" + grant.getKey(), grant.getValue().getFirst().source(), ticks, grant.getValue());
+        }
+        if (!build.warcryOwnModifiers().isEmpty()) {
+            buffs.apply(player, id, name, ticks, build.warcryOwnModifiers());
+        }
         if (!modifiers.isEmpty()) {
-            buffs.apply(player, id, name, ticks, modifiers);
             if (spec.allies() && plugin.party() != null) {
                 for (final UUID member : plugin.party().groupMembers(player.getUniqueId())) {
                     final Player ally = member.equals(player.getUniqueId()) ? null : plugin.getServer().getPlayer(member);
                     if (ally != null && ally.getWorld().equals(player.getWorld())
                             && ally.getLocation().distanceSquared(player.getLocation()) <= radius * radius) {
-                        buffs.apply(ally, id, name, ticks, modifiers);
+                        buffs.apply(ally, id, name, ticks, build.warcryOwnModifiers()); // 輔助加的「你得到」只給自己
                         plugin.players().get(ally).notice("<#f5b942>" + tw.exilecore.item.ItemRenderer.escape(name)
                                 + "<gray>：" + tw.exilecore.item.ItemRenderer.escape(player.getName()) + " 的戰吼給了你增益", now + 60);
                     }
@@ -207,9 +214,19 @@ final class Warcries {
 
         // 強化：接下來幾次攻擊更痛
         if (build.exerts() > 0) {
-            final double more = spec.exertMore().at(build.level()) * build.auraEffect(); // 2026-10：戰吼效果
+            double more = spec.exertMore().at(build.level()); // 2026-10：強化攻擊的「更多」不吃戰吼效果（照 PoE；以前捐命＋震嘯會讓它變 1.69 倍）
+            // 怒嘯（2026-10）：用掉全部怒氣，每點強化攻擊更多 x%（跟戰吼自己的「更多」相乘）
+            final double perRage = build.profile().effective(plugin.players().sheet(player)).flat(StatKeys.WARCRY_RAGE_EXERT, build.profile().tags());
+            int rageSpent = 0;
+            if (perRage > 0 && plugin.skills() != null) {
+                rageSpent = plugin.skills().resources().spendRage(player, StatKeys.WARCRY_RAGE_CAP);
+                if (rageSpent > 0) {
+                    more = ((1 + more / 100.0) * (1 + rageSpent * perRage / 100.0) - 1) * 100.0;
+                }
+            }
             runtime.exert = new SkillRuntime.Exert(build.exerts(), more, now + ticks);
-            notice.append(String.format(Locale.ROOT, "<gray>：接下來 <white>%d</white> 次攻擊更多 <white>%d%%</white> 傷害", build.exerts(), Math.round(more)));
+            notice.append(String.format(Locale.ROOT, "<gray>：接下來 <white>%d</white> 次攻擊更多 <white>%d%%</white> 傷害", build.exerts(), Math.round(more)))
+                    .append(rageSpent > 0 ? String.format(Locale.ROOT, "<dark_gray>（用掉 %d 點怒氣）", rageSpent) : "");
         }
 
         // 敵人：受到的傷害增加、嘲諷；有寫 damage 的戰吼（2026-10 PoE2：震地戰吼）再打一下

@@ -374,8 +374,15 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return list;
     }
 
-    /** 戰吼的增益（這個等級）。 */
+    /** 戰吼的增益（這個等級）：戰吼自己的＋輔助加的（說明用；實際套用時輔助的那份照 {@link #warcrySupportGrants} 分開給，同一顆輔助不疊）。 */
     public List<Modifier> warcryModifiers() {
+        final List<Modifier> list = new ArrayList<>(warcryOwnModifiers());
+        warcrySupportGrants().values().forEach(list::addAll);
+        return list;
+    }
+
+    /** 戰吼自己的增益（這個等級，含戰吼效果），不含輔助加的。 */
+    public List<Modifier> warcryOwnModifiers() {
         final WarcrySpec warcry = definition.warcry();
         if (warcry == null) {
             return List.of();
@@ -384,15 +391,28 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         for (final ScaledMod mod : warcry.buff()) {
             list.add(mod.toModifier(level, auraEffect, "戰吼 " + definition.name())); // 2026-10：戰吼效果
         }
-        for (final SupportDefinition support : supports) { // 2026-10：輔助給戰吼增益加的（「grant.」開頭）
+        return list;
+    }
+
+    /**
+     * 輔助給戰吼增益加的（「grant.」開頭；蓄嘯、冰嚙…）：輔助代號 → 加的屬性。
+     * 2026-10：同一顆輔助掛在好幾個戰吼上只算一次（以前四個戰吼各掛蓄嘯＝四個 10% 更多、各掛冰嚙＝物理的 100% 額外附加為冰冷）。
+     */
+    public java.util.Map<String, List<Modifier>> warcrySupportGrants() {
+        if (definition.warcry() == null) {
+            return java.util.Map.of();
+        }
+        final java.util.Map<String, List<Modifier>> grants = new java.util.LinkedHashMap<>();
+        for (final SupportDefinition support : supports) {
             for (final Modifier modifier : support.modifiers()) {
                 if (modifier.stat().startsWith(StatKeys.GRANT_PREFIX)) {
-                    list.add(new Modifier(modifier.stat().substring(StatKeys.GRANT_PREFIX.length()), modifier.type(), modifier.value(),
-                            modifier.tags(), support.name()));
+                    grants.computeIfAbsent(support.id(), key -> new ArrayList<>())
+                            .add(new Modifier(modifier.stat().substring(StatKeys.GRANT_PREFIX.length()), modifier.type(), modifier.value(),
+                                    modifier.tags(), support.name()));
                 }
             }
         }
-        return list;
+        return grants;
     }
 
     /** 這個技能的原始參數（運作方式的細節）。 */

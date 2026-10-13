@@ -1474,6 +1474,7 @@ public final class SkillService {
         final java.util.Map<tw.exilecore.stats.DamageType, Double> resist = new java.util.EnumMap<>(tw.exilecore.stats.DamageType.class);
         final List<double[]> exerts = new ArrayList<>();
         final java.util.Set<String> seen = new java.util.HashSet<>();
+        final java.util.Set<String> grantSeen = new java.util.HashSet<>(); // 2026-10：同一顆輔助掛在好幾個戰吼上只算一次
         for (int slot = 0; slot < SkillLoadout.BIND_SLOTS; slot++) {
             final Resolved resolved = resolve(state, slot);
             if (resolved.isDefault() || !seen.add(resolved.definition().id())) {
@@ -1482,10 +1483,15 @@ public final class SkillService {
             final SkillDefinition definition = resolved.definition();
             if (definition.mechanic() == Mechanic.WARCRY && definition.warcry() != null) {
                 final SkillBuild build = build(state, sheet, resolved);
-                self.addAll(build.warcryModifiers());
+                self.addAll(build.warcryOwnModifiers());
+                for (final java.util.Map.Entry<String, List<tw.exilecore.stats.Modifier>> grant : build.warcrySupportGrants().entrySet()) {
+                    if (grantSeen.add(grant.getKey())) {
+                        self.addAll(grant.getValue());
+                    }
+                }
                 taken += definition.warcry().taken().at(build.level()) * build.auraEffect() / 100.0;
                 if (build.exerts() > 0) {
-                    exerts.add(new double[] {build.exerts(), definition.warcry().exertMore().at(build.level()) * build.auraEffect(),
+                    exerts.add(new double[] {build.exerts(), definition.warcry().exertMore().at(build.level()), // 不吃戰吼效果
                             Math.max(20, build.cooldownTicks()) / 20.0});
                 }
             } else if (definition.mechanic() == Mechanic.MARK && definition.params().mark() != null) {
@@ -1557,7 +1563,7 @@ public final class SkillService {
             }
             final SkillBuild build = build(state, sheet, resolved);
             final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, build.profile());
-            final double crit = DamageCalculator.critChance(sheet, build.profile());
+            final double crit = DamageCalculator.critChance(sheet, build.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
             final double multi = build.profile().effective(sheet).get(StatKeys.CRIT_MULTI, build.profile().tags());
             // 有冷卻的：一輪要等「施放間隔」和「冷卻」比較長的那個。
             // 2026-10：複擊的每一下都要花一次攻擊間隔（打完才能做別的），以前當成同一個間隔裡打完，面板高了好幾倍
@@ -1577,7 +1583,7 @@ public final class SkillService {
                 final SkillBuild fullBuild = build(state, fullSheet, resolved);
                 final tw.exilecore.stats.DamagePacket fullExpected = afterResist(
                         DamageCalculator.expectedOutgoing(fullSheet, fullBuild.profile()), full.resist());
-                final double fullCrit = DamageCalculator.critChance(fullSheet, fullBuild.profile());
+                final double fullCrit = DamageCalculator.critChance(fullSheet, fullBuild.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
                 final double fullMulti = fullBuild.profile().effective(fullSheet).get(StatKeys.CRIT_MULTI, fullBuild.profile().tags());
                 final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
                 final SkillParams fullParams = fullBuild.params();
@@ -1970,9 +1976,12 @@ public final class SkillService {
                     ? String.format(Locale.ROOT, "<gray>平均每次：<white>%d <dark_gray>（%s）", Math.round(expected.total()), expected)
                     : String.format(Locale.ROOT, "<gray>平均每次：<white>%s", expected.isEmpty() ? "0" : expected));
             // 這個技能自己的暴擊（照它的標籤：攻擊吃攻擊暴擊、法術吃法術暴擊；輔助寶石也算進去）
-            lines.add(String.format(Locale.ROOT, "<gray>暴擊：<white>%.1f%% <dark_gray>× <white>%.0f%%",
-                    DamageCalculator.critChance(sheet, build.profile()) * 100,
-                    build.profile().effective(sheet).get(StatKeys.CRIT_MULTI, build.profile().tags())));
+            final double amazonCrit = DamageCalculator.amazonCritBonus(build.profile().effective(sheet), build.profile(),
+                    tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
+            final double skillCrit = DamageCalculator.critChance(sheet, build.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
+            lines.add(String.format(Locale.ROOT, "<gray>暴擊：<white>%.1f%% <dark_gray>× <white>%.0f%%", skillCrit * 100,
+                    build.profile().effective(sheet).get(StatKeys.CRIT_MULTI, build.profile().tags()))
+                    + (amazonCrit > 0 && skillCrit > 0 ? String.format(Locale.ROOT, " <dark_gray>（含命中溢出 +%.1f%%）", amazonCrit * 100) : ""));
             final int extraTargets = SkillExecutor.extraStrikeTargets(sheet, build);
             if (extraTargets > 0) {
                 lines.add("<gray>打擊：一次打 <white>" + (1 + extraTargets) + "</white> 個敵人（多 " + extraTargets + " 個附近的）");
@@ -2777,7 +2786,7 @@ public final class SkillService {
         }
         if (build.exerts() > 0) {
             lines.add(String.format(Locale.ROOT, "<gray>接下來 <white>%d</white> 次攻擊更多 <white>%d%%</white> 傷害（%.1f 秒內有效）",
-                    build.exerts(), Math.round(spec.exertMore().at(build.level()) * build.auraEffect()), duration));
+                    build.exerts(), Math.round(spec.exertMore().at(build.level())), duration));
         }
         if (!spec.charges().isEmpty()) {
             final List<String> charges = new ArrayList<>();

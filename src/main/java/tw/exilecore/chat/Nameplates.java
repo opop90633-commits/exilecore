@@ -46,6 +46,7 @@ import java.util.UUID;
  *   <li>原版名牌用計分板的隊伍藏起來（每個人看的是自己那張計分板：主計分板與側欄的每一張都要有這個隊伍）。</li>
  *   <li>自己看不到自己的（第一人稱抬頭會擋到）；潛行時字變空（跟原版一樣看不到）。</li>
  *   <li>傳送、換世界、重生之後重新坐上去；每秒檢查一次有沒有掉下來，文字有變才重送。</li>
+ *   <li>觀察者模式不掛名牌（不然隱形的人頭上飄著一塊字）。</li>
  *   <li>還沒選角色的人不掛名牌（原版名牌也藏著，TAB 看得到玩家 ID）。config.yml 的 nameplates: false 關掉。</li>
  * </ul>
  */
@@ -143,7 +144,8 @@ public final class Nameplates implements Listener {
         }
         hideVanillaFor(player);
         final String text = text(player);
-        if (text == null || player.isDead()) {
+        // 2026-10：觀察者看不見、穿牆飛，名牌卻照樣掛著，等於替他報位置：觀察者不掛名牌
+        if (text == null || player.isDead() || player.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
             remove(player.getUniqueId());
             return;
         }
@@ -307,6 +309,12 @@ public final class Nameplates implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onWorld(final PlayerChangedWorldEvent event) {
         remove(event.getPlayer().getUniqueId());
+        later(event.getPlayer());
+    }
+
+    /** 進出觀察者模式：進去馬上拿掉名牌、出來馬上掛回去（事件時遊戲模式還沒換，下一刻再看）。 */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onGameMode(final org.bukkit.event.player.PlayerGameModeChangeEvent event) {
         later(event.getPlayer());
     }
 

@@ -424,6 +424,16 @@ supports:
       - { stat: warcry.exerts, type: FLAT, value: 2 }
       - { stat: skill.cooldown, type: INCREASED, value: 20 }
 
+  enraged_warcry:          # Enraged Warcry（PoE2：戰吼消耗怒氣，強化攻擊更多傷害）2026-10
+    name: 怒嘯
+    description: 被輔助的戰吼吼出時用掉你全部的怒氣，每用掉 1 點，它強化的攻擊更多 1% 傷害（最多 30 點）。沒有怒氣就跟平常一樣。只有會強化攻擊的戰吼能掛。
+    icon: BLAZE_POWDER
+    tier: 2
+    requires: [warcry]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: warcry.rage_exert, type: FLAT, value: 1 }
+
   minion_speed:
     name: 迅捷召喚
     description: 被輔助的技能召出來的召喚物打得更快、跑得更快。只有召喚技能能掛。

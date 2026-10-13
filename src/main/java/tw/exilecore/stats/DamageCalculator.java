@@ -99,13 +99,7 @@ public final class DamageCalculator {
 
         // 4. 暴擊
         final Set<String> critContext = skill.tags();
-        double critChance = critChanceOn(attacker, skill);
-        // 亞馬遜（PoE2 昇華）：命中率可以超過 100%，超過部分的 25% 變成暴擊率
-        if (critChance > 0 && skill.isAttack() && StatKeys.flag(attacker, StatKeys.FLAG_AMAZON_CRIT)) {
-            final double accuracy = attacker.get(StatKeys.ACCURACY);
-            final double raw = accuracy * Formulas.ACCURACY_FACTOR / Math.max(1, accuracy + defender.get(StatKeys.EVASION) * Formulas.EVASION_FACTOR);
-            critChance = Math.min(1.0, critChance + Math.max(0, raw - 1) * 0.25);
-        }
+        final double critChance = withAmazonCrit(attacker, skill, critChanceOn(attacker, skill), defender.get(StatKeys.EVASION));
         final boolean crit = critChance > 0 && random.nextDouble() < critChance;
         if (crit) {
             final double multiplier = critMultiplier(attacker, critContext, defender);
@@ -439,6 +433,33 @@ public final class DamageCalculator {
     /** 攻擊方的暴擊率（小數）；基石「無法暴擊」為 0。會把技能的輔助寶石疊上去。 */
     public static double critChance(final StatSheet attacker, final SkillProfile skill) {
         return critChanceOn(skill.effective(attacker), skill);
+    }
+
+    /**
+     * 暴擊率，含亞馬遜「命中率溢出的 25% 變成暴擊率」（2026-10：以前只有打中時才加，面板、技能每秒傷害都看不到）。
+     *
+     * @param defenderEvasion 對方的閃避（面板上用同等級普通怪物的）
+     */
+    public static double critChance(final StatSheet attacker, final SkillProfile skill, final double defenderEvasion) {
+        final StatSheet effective = skill.effective(attacker);
+        return withAmazonCrit(effective, skill, critChanceOn(effective, skill), defenderEvasion);
+    }
+
+    /** 亞馬遜（PoE2 昇華）：攻擊的命中率可以超過 100%，超過部分的 25% 變成暴擊率（對這個閃避的對手多幾個百分點）。 */
+    public static double amazonCritBonus(final StatSheet attacker, final SkillProfile skill, final double defenderEvasion) {
+        if (!skill.isAttack() || !StatKeys.flag(attacker, StatKeys.FLAG_AMAZON_CRIT)) {
+            return 0;
+        }
+        final double accuracy = attacker.get(StatKeys.ACCURACY);
+        final double raw = accuracy * Formulas.ACCURACY_FACTOR / Math.max(1, accuracy + Math.max(0, defenderEvasion) * Formulas.EVASION_FACTOR);
+        return Math.max(0, raw - 1) * 0.25;
+    }
+
+    private static double withAmazonCrit(final StatSheet attacker, final SkillProfile skill, final double critChance, final double defenderEvasion) {
+        if (critChance <= 0) {
+            return critChance; // 不能暴擊的（旗標）就不加
+        }
+        return Math.min(1.0, critChance + amazonCritBonus(attacker, skill, defenderEvasion));
     }
 
     /** 同上，但屬性表已經疊好輔助寶石。 */

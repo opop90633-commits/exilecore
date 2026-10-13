@@ -238,6 +238,7 @@ public final class ModifierText {
                     ? "精魂技能的保留效率增加 " + percent + "%"
                     : scaled(modifier, "精魂保留", percent);
             case StatKeys.WARCRY_EXERTS -> "戰吼多強化 " + number(value) + " 次攻擊";
+            case StatKeys.WARCRY_RAGE_EXERT -> "戰吼吼出時用掉全部怒氣，每點怒氣強化攻擊更多 " + number(value) + "% 傷害（最多 " + StatKeys.WARCRY_RAGE_CAP + " 點）";
             case StatKeys.FLAG_GENEROSITY -> "光環不影響你自己，隊友與召喚物得到的效果更強";
             case StatKeys.ARMOUR -> scaled(modifier, "護甲", percent);
             case StatKeys.EVASION -> scaled(modifier, "閃避", percent);

@@ -124,6 +124,9 @@ public final class StatKeys {
     public static final String FLAG_AURA_LIFE = "flag.aura_life";
     /** FLAT：戰吼之後多強化幾次攻擊。 */
     public static final String WARCRY_EXERTS = "warcry.exerts";
+    /** FLAT：怒嘯（2026-10）：戰吼吼出時用掉全部怒氣，每點怒氣讓強化攻擊更多 x% 傷害（最多 {@link #WARCRY_RAGE_CAP} 點）。 */
+    public static final String WARCRY_RAGE_EXERT = "warcry.rage_exert";
+    public static final int WARCRY_RAGE_CAP = 30;
     /** 開關：光環不影響自己，只給隊友與召喚物（效果更強）。 */
     public static final String FLAG_GENEROSITY = "flag.generosity";
     // ---- 昇華的招牌天賦（2026-10，每個昇華一個，FLAT 1；效果在 combat/Signatures） ----

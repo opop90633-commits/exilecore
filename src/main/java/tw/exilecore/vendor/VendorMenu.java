@@ -614,6 +614,7 @@ public final class VendorMenu extends Menu {
     private void gambleFill(final ItemBase base) {
         int count = 0;
         String problem = null;
+        final List<tw.exilecore.economy.TradeLogRepository.Entry> batch = new ArrayList<>(); // 2026-10：一排只存一次檔
         while (count < GAMBLE_FILL_MAX) {
             // 2026-10：只填背包上面三排（9–35 格），不放快捷列、不放隨身背包
             int free = -1;
@@ -628,12 +629,13 @@ public final class VendorMenu extends Menu {
                 problem = count == 0 ? "背包上面三排沒有空格" : null;
                 break;
             }
-            problem = service.gamble(player, base, free, 0);
+            problem = service.gamble(player, base, free, 0, batch);
             if (problem != null) {
                 break;
             }
             count++;
         }
+        service.commitBatch(player, batch, "賭博");
         if (count == 0) {
             result(problem == null ? "背包上面三排沒有空格" : problem, null);
             return;

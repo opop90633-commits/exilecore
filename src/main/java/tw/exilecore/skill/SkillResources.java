@@ -71,6 +71,18 @@ public final class SkillResources implements Listener {
         }
     }
 
+    /** 用掉怒氣（最多 amount 點）；回傳實際用掉幾點。怒嘯（2026-10）用。 */
+    public int spendRage(final Player player, final int amount) {
+        final State s = states.get(player.getUniqueId());
+        if (s == null || amount <= 0) {
+            return 0;
+        }
+        decay(s, now());
+        final int spent = (int) Math.min(s.rage, amount);
+        s.rage -= spent;
+        return spent;
+    }
+
     /** 現在幾點怒氣。 */
     public int rage(final Player player) {
         final State s = states.get(player.getUniqueId());

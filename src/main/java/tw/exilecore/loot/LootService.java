@@ -199,63 +199,6 @@ public final class LootService {
         return true;
     }
 
-    /**
-     * 不是殺怪來的獎勵（幻霧散掉時給的那一堆）也照掉落過濾（2026-10：以前直接塞進背包，微光石之類的藏不掉）：
-     * 被過濾的通貨、裝備換成金幣（跟殺怪一樣的價錢），回傳要給的。玩家自己挑的獎勵（儀式）不要用這個。
-     */
-    public List<ItemStack> filterRewards(final Player player, final List<ItemStack> items, final int level) {
-        final PlayerState state = plugin.players().get(player);
-        if (!state.isLoaded() || !state.hasCharacter()) {
-            return items;
-        }
-        final LootFilter filter = filter(state);
-        final LootFilter.Viewer viewer = viewer(player, state);
-        final double averageGold = plugin.monsterModule().drops().averageGold(Math.max(1, level));
-        final List<ItemStack> kept = new ArrayList<>();
-        long gold = 0;
-        int filtered = 0;
-        for (final ItemStack stack : items) {
-            if (stack == null || stack.isEmpty()) {
-                continue;
-            }
-            final boolean gem = plugin.skills() != null && plugin.skills().gems().read(stack).isPresent();
-            final CurrencyType currency = gem || plugin.currencies() == null ? null : plugin.currencies().read(stack).orElse(null);
-            if (currency != null) {
-                if (filter.hidesCurrency(currency.id())) {
-                    gold += config.goldValue(DropTable.Kind.CURRENCY, null, currency.dropWeight(), averageGold) * stack.getAmount();
-                    filtered++;
-                    continue;
-                }
-            } else if (!gem) {
-                final tw.exilecore.item.ItemData item = plugin.items().read(stack).orElse(null);
-                final tw.exilecore.item.ItemBase base = item == null ? null : plugin.items().repository().base(item.base());
-                if (item != null && base != null) {
-                    final LootFilter.Candidate candidate = new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, item.rarity(), null, false,
-                            item.ilvl(), base.tags(), base.isMap() ? tw.exilecore.item.ItemStats.mapTier(base, item) : 0, 0,
-                            bestAffixRank(item), item.base());
-                    if (filter.hides(candidate, viewer)) {
-                        gold += config.goldValue(DropTable.Kind.EQUIPMENT, item.rarity(), 0, averageGold);
-                        filtered++;
-                        continue;
-                    }
-                }
-            }
-            kept.add(stack);
-        }
-        if (filtered > 0) {
-            // 2026-10：以前只算進「今天」，「這次登入」少算了獎勵被過濾的部分
-            final long[] stats = filterStats.computeIfAbsent(player.getUniqueId(), uuid -> new long[2]);
-            stats[0] += filtered;
-            stats[1] += gold;
-            addToday(player, filtered, gold);
-        }
-        if (gold > 0 && plugin.gold().add(player, gold)) {
-            plugin.economy().ledger().gold(tw.exilecore.economy.EconomyLedger.FILTER, gold);
-            player.sendMessage(plugin.text().prefixed(String.format(Locale.ROOT, "<gray>掉落過濾：%d 件換成 <#f5b942>%,d 金幣", filtered, gold)));
-        }
-        return kept;
-    }
-
     /** 怪物掉的未切割寶石當通貨是哪一種（不是未切割寶石、專屬的輔助寶石回傳 null）。 */
     private CurrencyType gemCurrency(final DropTable.Drop drop, final ItemStack stack) {
         if ((drop.kind() != DropTable.Kind.SKILL_GEM && drop.kind() != DropTable.Kind.SUPPORT_GEM) || drop.isSpecificGem()) {
@@ -701,11 +644,10 @@ public final class LootService {
         openBags.remove(player.getUniqueId());
         filterStats.remove(player.getUniqueId());
         final long[] today = todayStats.remove(player.getUniqueId());
-        if (today != null && today[1] > 0 && today[4] >= 0) {
-            final var character = plugin.players().get(player).character();
-            if (character != null && character.id() == today[4]) {
-                saveToday(player, today); // 下線前把最後一分鐘的也存起來（角色已經卸下就算了）
-            }
+        if (today != null && (today[1] > 0 || today[2] > 0) && today[4] >= 0) {
+            // 下線前把最後一分鐘的也存起來。這時角色模組已經把角色卸下、PlayerState 也拿掉了（角色的登出比這個先跑），
+            // 不能再 players().get()（會替離線的人重建一個 state）：直接照角色 id 寫（2026-10）
+            plugin.characters().setProgressFor(today[4], TODAY_KEY, today[0] + ":" + today[1] + ":" + today[2]);
         }
     }
 

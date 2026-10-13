@@ -779,6 +779,9 @@ public final class LootFilter {
                 index = i;
             }
         }
+        if (index < 0) {
+            return options[backwards ? options.length - 1 : 0]; // loot.yml 寫了表裡沒有的值：往前從頭、往後從尾
+        }
         final int step = backwards ? -1 : 1;
         return options[((index + step) % options.length + options.length) % options.length];
     }

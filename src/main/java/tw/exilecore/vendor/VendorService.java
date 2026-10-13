@@ -296,6 +296,14 @@ public final class VendorService {
      * itemLevel：賭出來的物品等級（0 或超過角色等級 = 照角色等級；選單一律照角色等級）。
      */
     String gamble(final Player player, final ItemBase base, final int slot, final int itemLevel) {
+        return gamble(player, base, slot, itemLevel, null);
+    }
+
+    /**
+     * 賭一件。batch 不是 null 時不存檔，只把紀錄放進去（Shift 一次賭一排：最後呼叫 {@link #commitBatch} 一次存完；
+     * 2026-10：以前每一件都整個角色＋倉庫存一次檔，賭一排就卡）。
+     */
+    String gamble(final Player player, final ItemBase base, final int slot, final int itemLevel, final List<TradeLogRepository.Entry> batch) {
         final String problem = plugin.characters().transactionProblem(player);
         if (problem != null) {
             return problem;
@@ -332,9 +340,13 @@ public final class VendorService {
         final ItemStack there = slot < 0 ? null : player.getInventory().getItem(slot);
         if (slot >= 0 && (there == null || there.isEmpty())) {
             player.getInventory().setItem(slot, item);
-            log(player, item, "賭博", price);
         } else {
-            deliver(player, item, "賭博", price);
+            wallet().dropFor(player, wallet().give(player, item));
+        }
+        if (batch != null) {
+            batch.add(entry(player, item, "賭博", price));
+        } else {
+            log(player, item, "賭博", price);
         }
         if (chaseHit && plugin.loot() != null) {
             plugin.loot().broadcastChase(player, data); // 追逐級：全服廣播
@@ -515,15 +527,25 @@ public final class VendorService {
         log(player, item, what, price);
     }
 
+    private TradeLogRepository.Entry entry(final Player player, final ItemStack item, final String what, final long price) {
+        final String uuid = plugin.items().read(item).map(ItemData::uuid).orElse(null);
+        return new TradeLogRepository.Entry(UUID.randomUUID().toString(), TradeLogRepository.VENDOR, uuid,
+                Wallet.describe(item) + String.format(Locale.ROOT, "（%s，%,d 金幣）", what, price), item.getAmount(),
+                null, "商人", player.getUniqueId(), player.getName());
+    }
+
     /** 記一筆紀錄（誰跟商人買了什麼、多少錢）並存檔。 */
     private void log(final Player player, final ItemStack item, final String what, final long price) {
-        final String opId = UUID.randomUUID().toString();
-        final String uuid = plugin.items().read(item).map(ItemData::uuid).orElse(null);
-        final List<TradeLogRepository.Entry> entries = List.of(new TradeLogRepository.Entry(opId, TradeLogRepository.VENDOR, uuid,
-                Wallet.describe(item) + String.format(Locale.ROOT, "（%s，%,d 金幣）", what, price), item.getAmount(),
-                null, "商人", player.getUniqueId(), player.getName()));
+        commitBatch(player, List.of(entry(player, item, what, price)), what);
+    }
+
+    /** 一批紀錄一次存檔（角色＋倉庫只拍一次快照、資料庫只寫一個交易）。 */
+    void commitBatch(final Player player, final List<TradeLogRepository.Entry> entries, final String what) {
+        if (entries.isEmpty()) {
+            return;
+        }
         plugin.players().markDirty(player);
-        plugin.characters().commit(List.of(player), connection -> plugin.economy().tradeLog().insert(connection, entries), opId,
+        plugin.characters().commit(List.of(player), connection -> plugin.economy().tradeLog().insert(connection, entries), entries.getFirst().tradeId(),
                 what + "（" + player.getName() + "）");
     }
 
