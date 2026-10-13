@@ -129,9 +129,10 @@ class MonsterAndDropTest {
         }
         final double average = total / 4000.0;
         // 魔法怪 0.968 件（2026-10：寶石、藥劑、低階通貨掉少一點，件數變成以前的 0.7 倍；第二次至臻石等三種再少一點，再 × 0.926）
-        assertTrue(average > 0.92 && average < 1.02, "平均件數 " + average);
-        // 通貨與裝備的分類權重 126：120
-        assertEquals(126.0 / 120.0, currency / (double) equipment, 0.15, "通貨與裝備差不多：" + currency + "／" + equipment);
+        // 2026-10 第五次（照市場報告：寶石、天啟石、恩澤石、星盤刻刀、符文變少）：件數 × 1210/1270 → 0.880
+        assertTrue(average > 0.83 && average < 0.93, "平均件數 " + average);
+        // 通貨與裝備的分類權重 548：600（2026-10 第五次；以前 570：600、更早 126：120）
+        assertEquals(548.0 / 600.0, currency / (double) equipment, 0.1, "通貨與裝備差不多：" + currency + "／" + equipment);
         assertTrue(equipment > gems && gems > flasks && flasks > 0, "裝備 > 寶石 > 藥劑 > 0：" + equipment + "／" + gems + "／" + flasks);
     }
 
@@ -182,8 +183,9 @@ class MonsterAndDropTest {
         assertEquals(currencyBefore * 570 * 300 / 570, bounty / per, 0.004, "豐饒石 570 → 300");
         assertEquals(currencyBefore * 160 * 24 / 160, lesserSocket / per, 0.002, "小鑿星石 160 → 24");
         assertEquals(currencyBefore * 260, spark / per, 0.003, "星火石的掉率不變");
-        assertEquals(1.5 * 6 / 103 / 3, skill / per, 0.006, "未切割技能寶石是以前的 1/3");
-        assertEquals(1.5 * 4 / 103 * 1.5 / 4, support / per, 0.005, "未切割輔助寶石是以前的 3/8（4 → 1.5）");
+        // 2026-10 第五次（照市場報告）：未切割技能寶石的分類權重 40 → 20、輔助寶石 30 → 12
+        assertEquals(1.5 * 6 / 103 / 3 / 2, skill / per, 0.004, "未切割技能寶石是以前的 1/6（1/3 再減半）");
+        assertEquals(1.5 * 4 / 103 * 1.5 / 4 * 0.4, support / per, 0.003, "未切割輔助寶石是以前的 3/8 × 2/5");
         assertEquals(1.5 * 3 / 103 / 2, flask / per, 0.005, "藥劑是以前的一半");
         assertEquals(1.5 * 60 / 103 * 3000 / 10956 / 2, glimmer / per, 0.012, "微光石是以前的一半");
     }

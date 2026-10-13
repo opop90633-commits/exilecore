@@ -46,6 +46,7 @@ class ItemGeneratorTest {
      * （至臻石變得比品質通貨少；神聖大約比崇高少 27 倍）。
      * 2026-10 第三、四次（照 100 人伺服器調高價通貨）：至臻石 400 → 250 → 80、亂流石 170 → 55、湮滅石 13 → 4、神諭石 15 → 10 → 2、
      * 恩澤石 55 → 25、小鑿星石 60 → 24、鑿星石 30 → 9、僥倖石 22 → 9（至臻石變得比豐饒石、星火石少，湮滅石比神諭石常見；神聖比崇高少 40 倍）。
+     * 2026-10 第五次（照市場報告）：神諭石 2 → 1（跟大鑿星石一樣少；神聖比崇高少 80 倍）、恩澤石 25 → 8、星盤刻刀 160 → 60、符文 25 → 10。
      */
     @Test
     void currencyDropRatesFollowPoe2() {
@@ -56,16 +57,18 @@ class ItemGeneratorTest {
         assertEquals(300, currencies.get("bounty_orb").dropWeight());
         assertEquals(24, currencies.get("lesser_socket_orb").dropWeight());
         final List<String> commonToRare = List.of("glimmer_orb", "lustre_orb", "whetstone", "bounty_orb", "spark_orb",
-                "zenith_orb", "turmoil_orb", "chance_orb", "annul_orb", "oracle_orb", "greater_socket_orb");
+                "zenith_orb", "turmoil_orb", "chance_orb", "annul_orb", "oracle_orb");
         int previous = Integer.MAX_VALUE;
         for (final String id : commonToRare) {
             final int weight = currencies.get(id).dropWeight();
             assertTrue(weight > 0 && weight < previous, id + " 的權重 " + weight + " 要比前一個（" + previous + "）小");
             previous = weight;
         }
+        // 2026-10 第五次：神諭石跟大鑿星石一樣少（權重都是 1，最小的整數）
+        assertEquals(currencies.get("oracle_orb").dropWeight(), currencies.get("greater_socket_orb").dropWeight());
         assertEquals(currencies.get("whetstone").dropWeight(), currencies.get("armour_scrap").dropWeight());
         final double exaltedPerDivine = (double) currencies.get("zenith_orb").dropWeight() / currencies.get("oracle_orb").dropWeight();
-        assertTrue(exaltedPerDivine > 30 && exaltedPerDivine < 50, "崇高：神聖 " + exaltedPerDivine);
+        assertTrue(exaltedPerDivine > 60 && exaltedPerDivine < 100, "崇高：神聖 " + exaltedPerDivine); // 2026-10 第五次：40 → 80
         // 掉落等級：蛻變、增幅 1；崇高、富豪、點金 5；混沌、機會 12；神聖、剝離 35
         for (final String id : List.of("glimmer_orb", "lustre_orb")) {
             assertEquals(1, currencies.get(id).dropLevel(), id);
