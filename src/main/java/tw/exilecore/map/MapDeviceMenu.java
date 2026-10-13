@@ -279,7 +279,8 @@ public final class MapDeviceMenu extends Menu {
             lore.add((have >= 1 ? "<green>✔ " : "<dark_gray>・") + (have >= 1 ? "<white>" : "<gray>")
                     + ItemRenderer.escape(type == null ? fragment.currency() : type.name()) + " <dark_gray>×" + have
                     + "　" + ItemRenderer.escape(from == null ? fragment.from() : from.name()) + (fragment.minTier() > 1 ? " T" + fragment.minTier() + "+" : "")
-                    + " 的 Boss " + Math.round(fragment.chance() * 100) + "%");
+                    + " 的 Boss " + Math.round(fragment.chance() * 100) + "%"
+                    + (fragment.uberChance() > 0 ? "<dark_gray>（極境 " + Math.round(fragment.uberChance() * 100) + "%）" : ""));
         }
         final boolean ready = service.pinnacleProblem(player, map) == null;
         if (ready) {

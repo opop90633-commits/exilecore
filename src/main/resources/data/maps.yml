@@ -859,7 +859,7 @@ finals:
   #   不用天穹碎片、不選階級：要集齊 pinnacle.fragments 列的四種碎片各一個（四個終局 Boss 的一般版本、T12 以上，各 50%；2026-10：10% → 50%），
   #   在地圖裝置的「巔峰」按鈕打開，固定開在最高階＋level_bonus＋pinnacle.level_bonus 級；只有 Boss 房、每個人只能走進去一次。
   #   pinnacle 的欄位：
-  #     fragments      [{ currency: 通貨代號, from: 終局代號, chance: 機率, min_tier: 那個終局開到幾階以上才掉 }]（每一種要各 1 個）
+  #     fragments      [{ currency: 通貨代號, from: 終局代號, chance: 機率, min_tier: 那個終局開到幾階以上才掉, uber_chance: 那個終局的極境版本掉的機率（2026-10；沒寫 = 不掉） }]（每一種要各 1 個）
   #     level_bonus    比終局的最高階再高幾級（跟極境一樣）     cooldown  這張圖怪物的招式冷卻倍率（0.25–1.5）
   #     attempts       幾道門（一門一次挑戰，預設 2）　dps_cap  每個人對 Boss 每秒傷害的上限（0 = 不限）
   #     dps_over       超過上限的部分算幾成：[{ from: 每秒傷害, rate: 0–1 }]（由小排到大，第一段從 dps_cap 開始；沒寫 = 超過的全部不算）
@@ -942,10 +942,10 @@ finals:
       level_bonus: 5
       cooldown: 0.65
       fragments:
-        - { currency: fragment_crucible, from: sky_crucible,  chance: 0.50, min_tier: 12 }
-        - { currency: fragment_frost,    from: frost_throne,  chance: 0.50, min_tier: 12 }
-        - { currency: fragment_bone,     from: bone_throne,   chance: 0.50, min_tier: 12 }
-        - { currency: fragment_ember,    from: ember_citadel, chance: 0.50, min_tier: 12 }
+        - { currency: fragment_crucible, from: sky_crucible,  chance: 0.50, min_tier: 12, uber_chance: 0.15 }
+        - { currency: fragment_frost,    from: frost_throne,  chance: 0.50, min_tier: 12, uber_chance: 0.15 }
+        - { currency: fragment_bone,     from: bone_throne,   chance: 0.50, min_tier: 12, uber_chance: 0.15 }
+        - { currency: fragment_ember,    from: ember_citadel, chance: 0.50, min_tier: 12, uber_chance: 0.15 }
       drops:                     # 2026-10：沒有賽季重置，要保持稀缺 → 全部壓低（每個有份的人各擲一份）
         maps: 3
         unique_chance: 0.05      # 2026-10：3% → 5%。自己的傳奇（uniques.yml 的 sources 寫 awakener，10 件；沒有的話用終局共通的 final 池）

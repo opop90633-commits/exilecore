@@ -285,8 +285,9 @@ public final class MapConfig {
     /**
      * 巔峰的一種碎片：{@code from} 這個終局的 Boss（一般版本，開到 {@code minTier} 階以上）每次倒下、每個有份的人各擲一次
      * {@code chance} 的機率掉一個 {@code currency}（currencies.yml 的代號）。
+     * 2026-10：那個終局的極境版本也掉，機率 {@code uberChance}（maps.yml 的 uber_chance；0 = 不掉）。
      */
-    public record FragmentSource(String currency, String from, double chance, int minTier) {
+    public record FragmentSource(String currency, String from, double chance, int minTier, double uberChance) {
     }
 
     /**
@@ -382,7 +383,7 @@ public final class MapConfig {
         final List<FragmentSource> fragments = new ArrayList<>();
         for (final YamlNode item : node.list("fragments")) {
             fragments.add(new FragmentSource(item.requireString("currency").trim(), item.requireString("from").trim(),
-                    clamp01(item.decimal("chance", 0.1)), Math.max(1, item.integer("min_tier", 1))));
+                    clamp01(item.decimal("chance", 0.1)), Math.max(1, item.integer("min_tier", 1)), clamp01(item.decimal("uber_chance", 0))));
         }
         if (fragments.isEmpty()) {
             throw new IllegalArgumentException(node.path() + ".fragments：至少要寫一種碎片（{ currency, from, chance, min_tier }）");

@@ -843,6 +843,19 @@ final class MapBosses {
             addUnique(drops, exclusive);
         }
         extraDrops(drops, uberDrops.extra(), itemLevel, random, bonus);
+        // 巔峰的碎片（2026-10）：這個終局的極境版本也掉（maps.yml 的 uber_chance）
+        for (final MapConfig.MapDef pinnacleMap : config.pinnacles()) {
+            for (final MapConfig.FragmentSource fragment : config.pinnacle(pinnacleMap.id()).fragments()) {
+                if (!fragment.from().equals(instance.map().id()) || fragment.uberChance() <= 0
+                        || random.nextDouble() >= bonus.more(fragment.uberChance())) {
+                    continue;
+                }
+                final CurrencyType currency = plugin.currencies().repository().get(fragment.currency());
+                if (currency != null) {
+                    drops.add(DropTable.Drop.currency(currency));
+                }
+            }
+        }
     }
 
     /**
