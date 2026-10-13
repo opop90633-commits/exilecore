@@ -1119,31 +1119,33 @@ life_regen2_belt:
   mods:
     - { stat: life.regen, type: FLAT, value: "{value/10}" }
 
-accuracy_light:
+accuracy_light:          # 2026-10：PoE2 的 of Shining／Light／Radiance（命中＋光照範圍）：這裡沒有光照範圍，第二條改成增加命中率（百分比）
   type: suffix
   group: light_radius_and_accuracy
-  spawn_tags: [retired]   # 2026-10 停用：PoE 的「光照範圍＋命中」這裡沒有光照範圍，只是一條比較弱的命中（舊物品照常生效）
+  spawn_tags: [helmet]
   names: [之星骸, 之神匠, 之大師]
-  text: "+{value} 命中"
+  text: "+{value} 命中、增加 {b}% 命中"
   tiers:
-    - { tier: 1, ilvl: 30, weight: 640, value: [41, 60] }
-    - { tier: 2, ilvl: 15, weight: 800, value: [21, 40] }
-    - { tier: 3, ilvl: 8, weight: 1000, value: [10, 20] }
+    - { tier: 1, ilvl: 30, weight: 640, value: [41, 60], b: [15, 15] }
+    - { tier: 2, ilvl: 15, weight: 800, value: [21, 40], b: [10, 10] }
+    - { tier: 3, ilvl: 8, weight: 1000, value: [10, 20], b: [5, 5] }
   mods:
     - { stat: accuracy, type: FLAT, value: "{value}" }
+    - { stat: accuracy, type: INCREASED, value: "{b}" }
 
-mana_regen_light:          # 2026-10 停用：PoE 的「光照範圍＋魔力回復」這裡沒有光照範圍，只是一條比較弱的魔力回復。定義留著讓已經擲到的舊物品照常生效
+mana_regen_light:        # 2026-10：PoE2 的 of Warmth／Kindling／the Hearth（魔力回復＋光照範圍）：這裡沒有光照範圍，第二條改成最大魔力；跟純魔力回復不同組，可以並存（照 PoE）
   type: suffix
-  group: mana_regeneration
-  spawn_tags: [retired]
+  group: light_radius_and_mana_regeneration
+  spawn_tags: [ring, sceptre, staff, wand]
   names: [之星骸, 之永生, 之再生]
-  text: "增加 {value}% 魔力回復速度"
+  text: "增加 {value}% 魔力回復速度、+{b} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 30, weight: 640, value: [18, 22] }
-    - { tier: 2, ilvl: 15, weight: 800, value: [13, 17] }
-    - { tier: 3, ilvl: 8, weight: 1000, value: [8, 12] }
+    - { tier: 1, ilvl: 30, weight: 640, value: [18, 22], b: [8, 8] }
+    - { tier: 2, ilvl: 15, weight: 800, value: [13, 17], b: [5, 5] }
+    - { tier: 3, ilvl: 8, weight: 1000, value: [8, 12], b: [3, 3] }
   mods:
     - { stat: mana.regen, type: INCREASED, value: "{value}" }
+    - { stat: mana.max, type: FLAT, value: "{b}" }
 
 resist_lightning:
   type: suffix
@@ -1229,18 +1231,19 @@ local_attack_speed_bow:
   mods:
     - { stat: local.attack_speed, type: INCREASED, value: "{value}" }
 
-accuracy_light_weapon:
+accuracy_light_weapon:   # 2026-10：同上，武器版
   type: suffix
   group: local_light_radius_and_accuracy
-  spawn_tags: [retired]   # 2026-10 停用：PoE 的「光照範圍＋命中」這裡沒有光照範圍，只是一條比較弱的命中（舊物品照常生效）
+  spawn_tags: [bow, crossbow, melee_1h, melee_2h, quarterstaff, spear]
   names: [之星骸, 之神匠, 之大師]
-  text: "+{value} 命中"
+  text: "+{value} 命中、增加 {b}% 命中"
   tiers:
-    - { tier: 1, ilvl: 30, weight: 640, value: [41, 60] }
-    - { tier: 2, ilvl: 15, weight: 800, value: [21, 40] }
-    - { tier: 3, ilvl: 8, weight: 1000, value: [10, 20] }
+    - { tier: 1, ilvl: 30, weight: 640, value: [41, 60], b: [15, 15] }
+    - { tier: 2, ilvl: 15, weight: 800, value: [21, 40], b: [10, 10] }
+    - { tier: 3, ilvl: 8, weight: 1000, value: [10, 20], b: [5, 5] }
   mods:
     - { stat: accuracy, type: FLAT, value: "{value}" }
+    - { stat: accuracy, type: INCREASED, value: "{b}" }
 
 stun_buildup:
   type: suffix
