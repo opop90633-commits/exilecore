@@ -59,7 +59,7 @@
 #                   electrocute.buildup、stun.duration、electrocute.duration
 #                   flag.no_elemental_ailments         FLAT 1：不能造成元素異常
 #                   charge.on_hit.frenzy               FLAT：擊中時 x% 機率獲得一顆怒星（power 銳星、endurance 磐星；見 charges.yml）
-# description     說明；寫 {charge:frenzy} 會換成「怒星（每顆：增加 4% 攻擊速度、…）」（照 charges.yml 的名字與 per_charge，
+# description     說明；寫 {charge:frenzy} 會換成「怒星」（per_charge 有寫才會接「（每顆：…）」；照 charges.yml 的名字與 per_charge，
 #                 改了 charges.yml 說明跟著變；power 銳星、endurance 磐星）
 # notes           額外的說明行（可省略）
 # source          專屬的掉落來源（可省略）：寫了就不能從未切割輔助寶石切出來，只有那裡會掉。
@@ -3296,7 +3296,7 @@ supports:
 
   charge_power:
     name: 聚銳
-    description: 被輔助的技能擊中敵人時，有機率獲得一顆銳星（每顆增加 40% 暴擊率）。
+    description: 被輔助的技能擊中敵人時，有機率獲得一顆銳星。
     icon: PRISMARINE_CRYSTALS
     tier: 2
     requires: [attack, spell]
@@ -3307,7 +3307,7 @@ supports:
 
   charge_frenzy:
     name: 聚怒
-    description: 被輔助的技能擊中敵人時，有機率獲得一顆怒星（每顆攻速、施法速度與傷害都多一點）。
+    description: 被輔助的技能擊中敵人時，有機率獲得一顆怒星。
     icon: SLIME_BALL
     tier: 2
     requires: [attack, spell]
@@ -3318,7 +3318,7 @@ supports:
 
   charge_endurance:
     name: 聚磐
-    description: 被輔助的技能擊中敵人時，有機率獲得一顆磐星（每顆加元素抗性與護甲）。
+    description: 被輔助的技能擊中敵人時，有機率獲得一顆磐星。
     icon: IRON_INGOT
     tier: 2
     requires: [attack, spell]

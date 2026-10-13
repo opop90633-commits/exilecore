@@ -405,8 +405,10 @@ public final class ChargeService implements Listener {
                 continue;
             }
             final double seconds = Math.max(0, (bag.nextExpiry() - now) / 20.0);
-            lines.add(String.format(Locale.ROOT, "<%s>%s %d/%d<gray>（每顆：%s；%.0f 秒後掉一顆）", type.color(), escape(type.name()), count,
-                    maxOf(type, sheet), escape(String.join("、", type.describe())), seconds));
+            final List<String> effects = type.describe();
+            final String each = effects.isEmpty() ? "" : "每顆：" + escape(String.join("、", effects)) + "；"; // 2026-10：戰星本身預設沒有屬性
+            lines.add(String.format(Locale.ROOT, "<%s>%s %d/%d<gray>（%s%.0f 秒後掉一顆）", type.color(), escape(type.name()), count,
+                    maxOf(type, sheet), each, seconds));
         }
         return lines;
     }

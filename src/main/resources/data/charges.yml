@@ -15,6 +15,9 @@
 #   duration   每顆撐幾秒（屬性鍵 charge.duration 可以拉長：「戰星的持續時間增加 x%」）
 #   per_charge 每一顆給的屬性，數值是「一顆」的量（寫法跟詞綴的 mods 一樣，但數字直接寫、不能用 {變數}）；
 #              引擎乘上顆數：3 顆 = 3 倍。可以用的屬性見 data/README.md。
+#              可以不寫或寫 []：這種球本身沒有屬性，只算顆數（給「每顆怒星…」的技能、消耗戰星的技能、條件用）。
+#
+# 2026-10：照 PoE2，三種戰星本身不給任何屬性（預設上限 3 顆）；效果全部來自會吃或消耗戰星的技能、天賦、詞綴。
 #
 # 加新種類：照下面的格式多寫一段，代號自己取（英文小寫）；詞綴與天賦用 charge.chance.代號、charge.max.代號 接上去。
 
@@ -25,8 +28,7 @@ power:
   trigger: crit
   max: 3
   duration: 10
-  per_charge:
-    - { stat: crit.chance, type: INCREASED, value: 40 }      # 每顆：增加 40% 暴擊率
+  per_charge: []
 
 frenzy:
   name: 怒星
@@ -35,10 +37,7 @@ frenzy:
   trigger: kill
   max: 3
   duration: 10
-  per_charge:
-    - { stat: attack.speed, type: INCREASED, value: 4 }      # 每顆：增加 4% 攻擊速度
-    - { stat: cast.speed, type: INCREASED, value: 4 }        #       增加 4% 施法速度
-    - { stat: damage, type: MORE, value: 4 }                 #       更多 4% 傷害
+  per_charge: []
 
 endurance:
   name: 磐星
@@ -47,8 +46,4 @@ endurance:
   trigger: hit
   max: 3
   duration: 10
-  per_charge:
-    - { stat: resist.fire, type: FLAT, value: 4 }            # 每顆：+4% 火焰、冰冷、閃電抗性
-    - { stat: resist.cold, type: FLAT, value: 4 }
-    - { stat: resist.lightning, type: FLAT, value: 4 }
-    - { stat: armour, type: INCREASED, value: 8 }            #       增加 8% 護甲
+  per_charge: []

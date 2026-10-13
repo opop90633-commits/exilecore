@@ -49,7 +49,7 @@ class ChargeTest {
         for (final ChargeType type : types.values()) {
             assertEquals(3, type.baseMax(), type.id());
             assertEquals(10, type.durationSeconds(), 1e-9, type.id());
-            assertFalse(type.describe().isEmpty(), type.id() + " 要寫得出效果");
+            assertTrue(type.describe().isEmpty(), type.id() + " 本身不給屬性（2026-10 照 PoE2）");
             assertFalse(type.symbol().isBlank());
         }
         final ChargeConfig config = new ChargeConfig();
@@ -59,19 +59,26 @@ class ChargeTest {
     }
 
     @Test
-    void effectsScaleWithTheNumberOfCharges() {
-        final ChargeType power = types.get("power");
-        assertTrue(power.modifiers(0).isEmpty());
-        final List<Modifier> two = power.modifiers(2);
-        assertEquals(1, two.size());
+    void shippedChargesGiveNoStatsButCustomOnesScaleWithTheNumberOfCharges() {
+        for (final ChargeType type : types.values()) {
+            assertTrue(type.modifiers(3).isEmpty(), type.id() + "：戰星本身沒有屬性（2026-10 照 PoE2），只算顆數");
+        }
+        final ChargeType custom = ChargeConfig.parse(yaml("""
+                sharp:
+                  name: 試星
+                  trigger: crit
+                  per_charge:
+                    - { stat: crit.chance, type: INCREASED, value: 40 }
+                    - { stat: damage, type: MORE, value: 4 }
+                """)).get("sharp");
+        assertTrue(custom.modifiers(0).isEmpty());
+        final List<Modifier> two = custom.modifiers(2);
+        assertEquals(2, two.size());
         assertEquals(StatKeys.CRIT_CHANCE, two.getFirst().stat());
         assertEquals(ModType.INCREASED, two.getFirst().type());
         assertEquals(0.80, two.getFirst().value(), 1e-9, "每顆增加 40% → 兩顆 80%");
-        final StatSheet sheet = new StatSheet().addAll(types.get("endurance").modifiers(3));
-        assertEquals(12, sheet.get(StatKeys.RESIST_FIRE), 1e-9, "三顆磐星 +12% 抗性");
-        assertEquals(0.24, sheet.increased(StatKeys.ARMOUR, Set.of()), 1e-9);
-        final StatSheet frenzy = new StatSheet().addAll(types.get("frenzy").modifiers(3));
-        assertEquals(1.04 * 1.04 * 1.04, frenzy.more(StatKeys.DAMAGE, Set.of()), 0.02, "更多傷害一顆一顆疊");
+        final StatSheet sheet = new StatSheet().addAll(custom.modifiers(3));
+        assertEquals(1.04 * 1.04 * 1.04, sheet.more(StatKeys.DAMAGE, Set.of()), 0.02, "更多傷害一顆一顆疊");
     }
 
     @Test
@@ -131,12 +138,12 @@ class ChargeTest {
                   per_charge:
                     - { stat: crit.chance, type: INCREASED, value: 10 }
                 """)), "觸發時機寫錯");
-        assertThrows(IllegalArgumentException.class, () -> ChargeConfig.parse(yaml("""
+        assertTrue(ChargeConfig.parse(yaml("""
                 odd:
                   name: 怪球
                   trigger: kill
                   per_charge: []
-                """)), "沒有效果");
+                """)).get("odd").modifiers(3).isEmpty(), "可以沒有效果（只算顆數）");
         assertThrows(IllegalArgumentException.class, () -> ChargeConfig.parse(yaml("""
                 odd:
                   name: 怪球
@@ -225,23 +232,22 @@ class ChargeTest {
         assertEquals(List.of("power", "frenzy", "endurance"), ChargeText.ids().subList(0, 3), "照 charges.yml 的順序");
     }
 
-    /** 2026-10：聚怒、聚銳、聚磐的說明照 charges.yml 寫出每顆給什麼（以前寫死「增加暴擊率」）。 */
+    /** 2026-10：聚怒、聚銳、聚磐的說明照 charges.yml（戰星本身沒有屬性就不寫每顆效果）。 */
     @Test
     void supportDescriptionsSayWhatEachChargeGives() throws IOException {
         ChargeText.register(types.values());
-        assertEquals("增加 40% 暴擊率", ChargeText.effect("power"));
-        assertTrue(ChargeText.effect("frenzy").contains("攻擊速度") && ChargeText.effect("frenzy").contains("施法速度")
-                && ChargeText.effect("frenzy").contains("傷害"), ChargeText.effect("frenzy"));
-        assertTrue(ChargeText.effect("endurance").contains("抗性") && ChargeText.effect("endurance").contains("護甲"), ChargeText.effect("endurance"));
+        for (final String id : List.of("power", "frenzy", "endurance")) {
+            assertEquals("", ChargeText.effect(id), id + "：戰星本身沒有屬性（2026-10 照 PoE2），說明不接「每顆：…」");
+        }
         final tw.exilecore.skill.SkillConfig skills = new tw.exilecore.skill.SkillConfig();
         skills.load(DATA);
         // 2026-10 PoE2 改版：聚銳、聚怒、聚磐換成 charge_power、charge_frenzy、charge_endurance（說明直接寫，不用 {charge:…}）
         assertNull(skills.support("power_on_hit"));
-        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆銳星（每顆" + ChargeText.effect("power") + "）。",
-                skills.support("charge_power").descriptionText(), "寫死的效果要跟 charges.yml 一樣");
+        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆銳星。",
+                skills.support("charge_power").descriptionText(), "戰星本身沒有屬性，說明不寫每顆效果");
         assertTrue(skills.support("charge_frenzy").descriptionText().contains(ChargeText.name("frenzy")));
         assertTrue(skills.support("charge_endurance").descriptionText().contains(ChargeText.name("endurance")));
-        assertEquals("先 x 再 怒星（每顆：" + ChargeText.effect("frenzy") + "）", ChargeText.expand("先 {charge:x} 再 {charge:frenzy}"),
+        assertEquals("先 x 再 怒星", ChargeText.expand("先 {charge:x} 再 {charge:frenzy}"),
                 "不認得的代號換成代號本身");
         assertEquals("沒有預留位置", ChargeText.expand("沒有預留位置"));
         assertEquals(List.of("x", "frenzy"), ChargeText.placeholders("先 {charge:x} 再 {charge:frenzy}"));
@@ -250,13 +256,13 @@ class ChargeTest {
         final Path dir = java.nio.file.Files.createTempDirectory("exilecore-charge");
         java.nio.file.Files.copy(DATA.resolve("skills.yml"), dir.resolve("skills.yml"));
         final String supports = java.nio.file.Files.readString(DATA.resolve("supports.yml"));
-        final String original = "有機率獲得一顆銳星（每顆增加 40% 暴擊率）。";
+        final String original = "有機率獲得一顆銳星。";
         assertTrue(supports.contains(original));
         java.nio.file.Files.writeString(dir.resolve("supports.yml"), supports.replace(original, "有機率獲得一顆{charge:power}。"));
         final tw.exilecore.skill.SkillConfig placeholders = new tw.exilecore.skill.SkillConfig();
         placeholders.load(dir);
-        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆銳星（每顆：" + ChargeText.effect("power") + "）。",
-                placeholders.support("charge_power").descriptionText());
+        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆銳星。",
+                placeholders.support("charge_power").descriptionText(), "沒有每顆效果就只換名字");
         assertEquals(List.of(), placeholders.chargeProblems(types::containsKey));
         assertEquals(1, placeholders.chargeProblems(id -> !id.equals("power")).stream().filter(line -> line.contains("說明寫了 {charge:power}")).count(),
                 "說明裡打錯字也會被抓出來");

@@ -23,8 +23,7 @@ import java.util.Set;
  *   trigger: crit         # crit = 你暴擊時、kill = 你擊殺時、hit = 你被敵人打中時
  *   max: 3                # 基礎最多幾顆（詞綴可以加：charge.max.power）
  *   duration: 10          # 每顆撐幾秒
- *   per_charge:           # 每一顆給的屬性（引擎乘上顆數）
- *     - { stat: crit.chance, type: INCREASED, value: 40 }
+ *   per_charge: []        # 每一顆給的屬性（引擎乘上顆數）；2026-10 照 PoE2 預設不給（只算顆數）
  * </pre>
  *
  * @param id              代號（屬性鍵 charge.max.代號、charge.chance.代號 用它）
@@ -82,9 +81,6 @@ public record ChargeType(String id, String name, String symbol, String color, Tr
                 throw new IllegalArgumentException(modNode.path() + "：" + problem);
             }
             perCharge.add(mod);
-        }
-        if (perCharge.isEmpty()) {
-            throw new IllegalArgumentException(node.path() + "：per_charge 至少要有一條（這種球要給什麼？）");
         }
         return new ChargeType(id, name, symbol, color, trigger, max, duration, perCharge);
     }
