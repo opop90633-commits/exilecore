@@ -734,7 +734,8 @@ public final class AilmentService {
         if (source != null) {
             // 持續傷害也算造成的玩家打的（掉落分份、經驗歸屬）；溢出的不算
             final double scale = plugin.monsters().healthScale(living, data);
-            plugin.monsters().ledger().record(living.getUniqueId(), source, Math.min(amount, scale > 0 ? health / scale : amount));
+            // 2026-10：照上限之後的算（以前記的是上限前的：流血、點燃流派在 Boss 傷害排行上被高估好幾倍）
+            plugin.monsters().ledger().record(living.getUniqueId(), source, Math.min(capped, scale > 0 ? health / scale : capped));
         }
         if (health - vanilla <= 1e-4) {
             // 燒死、流血死、毒死：算造成的玩家殺的（掉落、經驗、藥劑充能照給）

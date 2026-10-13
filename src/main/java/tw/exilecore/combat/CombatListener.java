@@ -696,7 +696,10 @@ public final class CombatListener implements Listener {
                 final double scale = plugin.monsters().healthScale(defender, defenderMonster);
                 final double remaining = scale > 0 ? defender.getHealth() / scale : total;
                 pendingCredits.put(defender.getUniqueId(), new Credit(credit.getUniqueId(), Math.min(total, remaining)));
-                pendingNumbers.put(defender.getUniqueId(), new PendingNumber(credit, total, result.crit(), result.dealt(), attackerIsPlayer,
+                // 2026-10：戰鬥數據（側欄的「輸出」）也照 Boss 每秒傷害上限之後的算：以前是上限前的，跟傷害排行、實際扣的血對不起來
+                final tw.exilecore.stats.DamagePacket shown = total < result.total() && result.total() > 0
+                        ? new tw.exilecore.stats.DamagePacket(result.dealt()).scale(total / result.total()) : result.dealt();
+                pendingNumbers.put(defender.getUniqueId(), new PendingNumber(credit, total, result.crit(), shown, attackerIsPlayer,
                         chargeChances(attackerIsPlayer, skill, attackerSheet), meterName(skill)));
             }
         }
