@@ -1122,7 +1122,7 @@ life_regen2_belt:
 accuracy_light:
   type: suffix
   group: light_radius_and_accuracy
-  spawn_tags: [helmet]
+  spawn_tags: [retired]   # 2026-10 停用：PoE 的「光照範圍＋命中」這裡沒有光照範圍，只是一條比較弱的命中（舊物品照常生效）
   names: [之星骸, 之神匠, 之大師]
   text: "+{value} 命中"
   tiers:
@@ -1132,10 +1132,10 @@ accuracy_light:
   mods:
     - { stat: accuracy, type: FLAT, value: "{value}" }
 
-mana_regen_light:
+mana_regen_light:          # 2026-10 停用：PoE 的「光照範圍＋魔力回復」這裡沒有光照範圍，只是一條比較弱的魔力回復。定義留著讓已經擲到的舊物品照常生效
   type: suffix
-  group: light_radius_and_mana_regeneration
-  spawn_tags: [ring, sceptre, staff, wand]
+  group: mana_regeneration
+  spawn_tags: [retired]
   names: [之星骸, 之永生, 之再生]
   text: "增加 {value}% 魔力回復速度"
   tiers:
@@ -1232,7 +1232,7 @@ local_attack_speed_bow:
 accuracy_light_weapon:
   type: suffix
   group: local_light_radius_and_accuracy
-  spawn_tags: [bow, crossbow, melee_1h, melee_2h, quarterstaff, spear]
+  spawn_tags: [retired]   # 2026-10 停用：PoE 的「光照範圍＋命中」這裡沒有光照範圍，只是一條比較弱的命中（舊物品照常生效）
   names: [之星骸, 之神匠, 之大師]
   text: "+{value} 命中"
   tiers:
