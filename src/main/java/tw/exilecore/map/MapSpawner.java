@@ -76,21 +76,52 @@ final class MapSpawner {
 
     /** 刷第 index 群。 */
     void spawnPack(final MapInstance instance, final int index) {
+        final MapTwists twists = service.events().twists();
+        if (twists.packHeld(instance, index)) {
+            return; // 隱藏房還沒打開：先不刷（打開之後走近再刷）
+        }
         instance.setPackSpawned(index, true);
+        final MapTwists.Theme theme = twists.packTheme(instance, index);
+        if (theme == MapTwists.Theme.VAULT) {
+            return; // 寶庫：沒有怪群
+        }
         final MapConfig.Settings settings = service.config().settings();
         final RandomGenerator random = service.random();
-        final ZoneConfig.SpawnEntry entry = chooseMonster(instance.map().monsters(), random);
+        final ZoneConfig.SpawnEntry mixed = twists.chooseEntry(instance, random);
+        final ZoneConfig.SpawnEntry entry = mixed != null ? mixed : chooseMonster(instance.map().monsters(), random);
         if (entry == null) {
             return;
         }
         final MapStats stats = instance.stats();
-        final double normal = settings.normal().weight();
-        final double magic = settings.magic().weight() * (1 + stats.magicPacks() / 100.0);
-        final double rare = settings.rare().weight() * (1 + stats.rarePacks() / 100.0);
+        double normal = settings.normal().weight();
+        double magic = settings.magic().weight() * (1 + stats.magicPacks() / 100.0);
+        double rare = settings.rare().weight() * (1 + stats.rarePacks() / 100.0);
+        if (theme == MapTwists.Theme.DARK) {
+            normal *= 0.3;
+            magic *= 1.5;
+            rare *= 3;
+        }
         final double roll = random.nextDouble() * (normal + magic + rare);
-        final double sizeFactor = 1 + stats.packSize() / 100.0;
+        final double sizeFactor = 1 + (stats.packSize() + instance.twist().packSize) / 100.0;
         final MapLayout.Spot spot = instance.layout().packSpots().get(index);
         final List<LivingEntity> pack = instance.pack(index);
+        if (theme == MapTwists.Theme.ELITE) {
+            // 精英巢穴：兩隻（30% 三隻）稀有怪，沒有小怪
+            final int count = 2 + (random.nextDouble() < 0.3 ? 1 : 0);
+            for (int i = 0; i < count; i++) {
+                final List<String> rareMods = plugin.events() == null ? null : plugin.events().rareMods(instance.level(), random);
+                add(pack, spawn(instance, entry, around(instance, spot, i == 0, random), MonsterRarity.RARE, rareMods));
+            }
+            return;
+        }
+        if (theme == MapTwists.Theme.SWARM) {
+            // 怪物潮：一大群普通怪
+            final int size = size(settings.normal(), sizeFactor * twists.swarmSize(), random);
+            for (int i = 0; i < size; i++) {
+                add(pack, spawn(instance, entry, around(instance, spot, i == 0, random), MonsterRarity.NORMAL, List.of()));
+            }
+            return;
+        }
         if (roll < normal) {
             final int size = size(settings.normal(), sizeFactor, random);
             for (int i = 0; i < size; i++) {
@@ -163,9 +194,10 @@ final class MapSpawner {
             return null;
         }
         final MonsterData data = plugin.monsters().decorate(entity, instance.level(), rarity, mods, baseName);
-        if (instance.delirium() > 0 && data != null) {
-            // 幻霧中：之後刷出來的怪都更硬（生命與傷害乘 1 + 難度）
-            final double factor = 1 + instance.delirium();
+        final double power = instance.twist().monsterPower;
+        if ((instance.delirium() > 0 || power > 0) && data != null) {
+            // 幻霧中：之後刷出來的怪都更硬（生命與傷害乘 1 + 難度）；詛咒寶匣再乘 1 + 詛咒
+            final double factor = (1 + instance.delirium()) * (1 + power);
             plugin.monsters().decorateData(entity, new MonsterData(data.level(), data.rarity(), data.mods(), data.name(),
                     data.lifeMultiplier() * factor, data.damageMultiplier() * factor, data.boss()));
         }

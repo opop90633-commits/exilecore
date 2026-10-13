@@ -38,6 +38,7 @@ public final class MapModule implements Module {
         plugin.getServer().getPluginManager().registerEvents(created.events(), plugin); // 地圖事件：寶箱、流寇
         plugin.getServer().getPluginManager().registerEvents(created.events().rituals(), plugin); // 祭壇：右鍵、儀式的怪
         plugin.getServer().getPluginManager().registerEvents(created.events().delirium(), plugin); // 幻霧：霧裡殺的怪
+        plugin.getServer().getPluginManager().registerEvents(created.events().twists(), plugin); // 地圖變化：岔路、詛咒寶匣、隱藏房
         plugin.getServer().getPluginManager().registerEvents(created.bossLog(), plugin);
         plugin.getServer().getPluginManager().registerEvents(created.spectators(), plugin); // 極境、金庫之主死掉後觀戰 // 終局 Boss 開打一分鐘的傷害紀錄
         plugin.monsters().addAugmenter(created::augment);

@@ -129,3 +129,38 @@ delirium:
   reward_weights: { emotion: 40, currency: 25, essence: 10, jewel: 10, map: 10, catalyst: 5, unique: 1 }   # unique：幻霧的專屬傳奇（2026-10：2 → 1）
   emotions: [distilled_ire, distilled_guilt, distilled_greed, distilled_paranoia]
   emotion_weights: [50, 30, 15, 5]
+
+# 地圖變化（2026-10）：讓同一張圖每次打起來不一樣。每一種各自照機率出現，機率寫 0 就關掉。
+# 只放在一般的地圖（回響、試煉、極境、巔峰不放）；終局 Boss 不會有 Boss 變體與 Boss 房干擾。/ec map 的狀態會列出這張圖有哪些變化。
+twists:
+  # 房間主題：沒有事件的房間各自照機率變成某種主題（走進去畫面中間會提示）
+  #   elite 精英巢穴（只有 2～3 隻稀有怪）、swarm 怪物潮（普通怪 × swarm_size）、dark 黑暗房（看不清楚，魔法 ×1.5、稀有 ×3）、
+  #   vault 寶庫（沒有怪群，只有一個寶箱）
+  room_theme_chance: 0.3
+  room_themes: { elite: 30, swarm: 30, dark: 25, vault: 15 }
+  swarm_size: 2.5
+  # 怪物混搭：照機率從別張地圖借一個族群，每一群照 mix_share 的機率用借來的
+  mix_chance: 0.5
+  mix_share: 0.35
+  # 流浪精英：一隻生命 ×life、傷害 ×damage 的稀有怪在房間之間遊蕩，打倒牠物品數量 +quantity%
+  wanderer_chance: 0.35
+  wanderer: { life: 4.0, damage: 1.3, quantity: 200 }
+  # 事件疊加：每個放好的事件照機率在同一個房間多放一個不同種類的
+  stack_chance: 0.12
+  # Boss 變體：empowered 強化（生命 ×1.5、傷害 ×1.25、掉落 +50%）、twin 雙生（開打多一隻分身，兩隻生命各 ×0.6，掉落 +25%）
+  boss_variant_chance: 0.15
+  boss_variants: { empowered: 60, twin: 40 }
+  # Boss 房干擾（開打後）：meteors 墜星、hands 冥河之手、embers 流火（場地危害）、reinforce 援軍（每 20 秒一波魔法怪）、
+  #   pillar 守護之柱（開打先張護盾：40 秒內打掉兩根柱子，不然回 25% 生命）
+  boss_room_chance: 0.25
+  boss_rooms: { meteors: 25, hands: 25, embers: 20, reinforce: 15, pillar: 15 }
+  # 命運岔路：兩根石碑二選一——血路（之後的怪物群 +50%、物品數量 +30%）或王道（Boss 生命傷害 +30%、Boss 掉落 +50%）
+  fork_chance: 0.25
+  # 詛咒寶匣：接受馬上拿一份好東西，之後刷的怪生命與傷害 +cursed_power%（Boss 一半）；拒絕就消失
+  cursed_chance: 0.2
+  cursed_power: 25
+  # 限時挑戰：第一次走進普通房間時照機率觸發（一張圖最多 2 次），房間的怪一次全出來，timed_seconds 秒內殺光有獎勵
+  timed_chance: 0.15
+  timed_seconds: 50
+  # 隱藏房：一間死路房間的入口被裂開的牆封住，左鍵敲 6 下打破，裡面有精英與寶箱
+  hidden_chance: 0.25

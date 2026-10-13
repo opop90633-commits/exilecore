@@ -82,6 +82,34 @@ public final class MapInstance {
     /** 這一場從哪個 tick 開打（狂暴計時用；-1 = 還沒有人跟 Boss 打）。 */
     private long fightStartTick = -1;
     private boolean enraged;
+    /** 地圖變化（2026-10，{@link MapTwists}）：岔路、詛咒寶匣、Boss 變體改到的數值。 */
+    private final Twist twist = new Twist();
+
+    /**
+     * 這張圖被「地圖變化」改到的數值（純資料，{@link MapTwists} 寫、刷怪與掉落讀）。
+     * <ul>
+     *   <li>quantity：路上的怪多幾成物品數量（小數，岔路「血路」）</li>
+     *   <li>packSize：之後刷的怪物群大小 +%（岔路「血路」）</li>
+     *   <li>monsterPower：之後刷的怪生命、傷害 ×（1 + 這個）（詛咒寶匣）</li>
+     *   <li>bossPower：Boss 生命、傷害 ×（1 + 這個）（岔路「王道」、詛咒）</li>
+     *   <li>bossLoot：Boss 掉落多幾成物品數量與稀有度（岔路「王道」、強化變體）</li>
+     * </ul>
+     */
+    static final class Twist {
+        double quantity;
+        double packSize;
+        double monsterPower;
+        double bossPower;
+        double bossLoot;
+        /** Boss 變體（null = 一般）。 */
+        MapTwists.BossVariant bossVariant;
+        /** Boss 房的干擾（null = 沒有）。 */
+        MapTwists.BossRoom bossRoom;
+    }
+
+    Twist twist() {
+        return twist;
+    }
 
     MapInstance(final int id, final MapConfig.MapDef map, final MapStats stats, final MapLayout layout, final World world, final int cell,
                 final int originX, final int originZ, final UUID owner, final String ownerName, final int portals, final long now) {

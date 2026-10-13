@@ -55,6 +55,34 @@ class ExclusiveDropTest {
     // ---- 地圖事件 ----
 
     @Test
+    void mapTwistsShipWithTheDefaults() {
+        // 2026-10 地圖變化：出貨的 map_events.yml 跟程式的預設值一樣；權重抽得到每一種
+        final MapEventConfig.Twists shipped = events.twists();
+        assertEquals(new MapEventConfig().twists(), shipped, "程式的預設值跟出貨的 map_events.yml 的 twists 一樣");
+        final java.util.Set<String> seen = new java.util.HashSet<>();
+        final Random random = new Random(7);
+        for (int i = 0; i < 2000; i++) {
+            seen.add(MapEventConfig.Twists.pick(shipped.roomThemes(), random));
+            seen.add(MapEventConfig.Twists.pick(shipped.bossRooms(), random));
+        }
+        assertEquals(java.util.Set.of("elite", "swarm", "dark", "vault", "meteors", "hands", "embers", "reinforce", "pillar"), seen);
+        for (final String id : shipped.roomThemes().keySet()) {
+            assertNotNull(MapTwists.Theme.parse(id), id);
+        }
+        for (final String id : shipped.bossVariants().keySet()) {
+            assertNotNull(MapTwists.BossVariant.parse(id), id);
+        }
+        for (final String id : shipped.bossRooms().keySet()) {
+            final MapTwists.BossRoom room = MapTwists.BossRoom.parse(id);
+            assertNotNull(room, id);
+            if (room.hazard != null) {
+                assertNotNull(skills.bossSkills().skill(room.hazard), "Boss 房干擾的場地危害要在 boss_skills.yml：" + room.hazard);
+                assertTrue(skills.bossSkills().skill(room.hazard).kind().hazardCapable(), room.hazard);
+            }
+        }
+    }
+
+    @Test
     void everyMapEventHasItsOwnUniqueAtOnePercent() {
         for (final MapEventConfig.Kind kind : MapEventConfig.Kind.values()) {
             assertEquals(0.01, events.uniqueChance(kind), 1e-9, kind + "：事件的專屬傳奇 1%（2026-10 從 2% 調低）");

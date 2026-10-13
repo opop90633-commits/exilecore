@@ -501,8 +501,11 @@ public final class MapService {
         final boolean boss = entity.getPersistentDataContainer().has(bossKey);
         final double bossQuantity = boss ? instance.atlas().increased("atlas.boss_quantity") : 0;
         final double bossRarity = boss ? instance.atlas().increased("atlas.boss_rarity") : 0;
-        return new double[] {instance.stats().quantity() / 100.0 + events.quantityBonus(entity) + bossQuantity,
-                instance.stats().rarity() / 100.0 + bossRarity};
+        // 地圖變化：血路、流浪精英加路上的怪；王道、Boss 變體加 Boss
+        final double twistQuantity = boss ? instance.twist().bossLoot : instance.twist().quantity;
+        final double twistRarity = boss ? instance.twist().bossLoot : 0;
+        return new double[] {instance.stats().quantity() / 100.0 + events.quantityBonus(entity) + bossQuantity + twistQuantity,
+                instance.stats().rarity() / 100.0 + bossRarity + twistRarity};
     }
 
     /**

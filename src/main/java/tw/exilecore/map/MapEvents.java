@@ -115,6 +115,10 @@ final class MapEvents implements Listener {
     private final Map<UUID, Event> exiles = new HashMap<>();
     /** 事件刷出來的怪的物品數量加成（裂隙）。 */
     private final NamespacedKey quantityKey;
+    /** 地圖變化的怪（流浪精英）的物品數量加成：跟上面分開，不會掉裂隙的催化劑。 */
+    private final NamespacedKey twistQuantityKey;
+    /** 地圖變化（2026-10）：房間主題、Boss 變體、岔路……。 */
+    private final MapTwists twists;
 
     MapEvents(final ExileCore plugin, final MapService service, final MapEventConfig config) {
         this.plugin = plugin;
@@ -123,6 +127,17 @@ final class MapEvents implements Listener {
         this.quantityKey = new NamespacedKey(plugin, "map_event_quantity");
         this.rituals = new RitualEvents(plugin, service, config);
         this.delirium = new DeliriumEvents(plugin, service, config);
+        this.twistQuantityKey = new NamespacedKey(plugin, "map_twist_quantity");
+        this.twists = new MapTwists(plugin, service, config, this);
+    }
+
+    MapTwists twists() {
+        return twists;
+    }
+
+    /** 地圖變化的怪多掉一點（小數，0.35 = +35%）。 */
+    void markQuantity(final LivingEntity entity, final double bonus) {
+        entity.getPersistentDataContainer().set(twistQuantityKey, PersistentDataType.DOUBLE, bonus);
     }
 
     RitualEvents rituals() {
@@ -136,7 +151,8 @@ final class MapEvents implements Listener {
     /** 事件怪的額外物品數量加成（小數；沒有是 0）。 */
     double quantityBonus(final LivingEntity entity) {
         final Double bonus = entity.getPersistentDataContainer().get(quantityKey, PersistentDataType.DOUBLE);
-        return bonus == null ? 0 : bonus;
+        final Double twist = entity.getPersistentDataContainer().get(twistQuantityKey, PersistentDataType.DOUBLE);
+        return (bonus == null ? 0 : bonus) + (twist == null ? 0 : twist);
     }
 
     // ---- 放置 ----
@@ -170,8 +186,19 @@ final class MapEvents implements Listener {
         }
         if (config.totalWeight() <= 0 || config.maxPerMap() <= 0) {
             plugin.getSLF4JLogger().warn("地圖 #{}：map_events.yml 的 settings.weights 全是 0 或 per_map 是 0，不放事件", instance.id());
-            return;
+        } else {
+            placeEvents(instance, rooms, random);
         }
+        // 地圖變化：剩下沒有事件的房間（出錯不影響上面放好的）
+        try {
+            twists.place(instance, rooms);
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().error("地圖 #{} 放地圖變化出錯", instance.id(), e);
+        }
+    }
+
+    /** 神龕、寶箱、裂隙、流寇（用掉的房間從 rooms 拿掉）；照 twists.stack_chance 在同一個房間多疊一個不同的事件。 */
+    private void placeEvents(final MapInstance instance, final List<MapLayout.Room> rooms, final RandomGenerator random) {
         final int count = Math.min(rooms.size(), config.minPerMap() + (config.maxPerMap() > config.minPerMap()
                 ? random.nextInt(config.maxPerMap() - config.minPerMap() + 1) : 0));
         // 星圖天賦：保證多幾個某種事件（先放保證的，剩下的房間再放隨機的）
@@ -202,36 +229,86 @@ final class MapEvents implements Listener {
             if (kind == null) {
                 continue; // 權重全是 0：隨機的不放，保證的照放
             }
-            final Location center = new Location(instance.world(), instance.originX() + spot.x() + 0.5, MapLayout.FLOOR_Y + 1,
-                    instance.originZ() + spot.z() + 0.5);
-            try {
-                final Event event = switch (kind) {
-                    case SHRINE -> new Event(instance, kind, center, config.shrines().get(random.nextInt(config.shrines().size())), null, null);
-                    case STRONGBOX -> new Event(instance, kind, center, null, pickBox(random), null);
-                    case BREACH -> new Event(instance, kind, center, null, null, null);
-                    case EXILE -> new Event(instance, kind, center, null, null,
-                            config.exileNames().get(random.nextInt(config.exileNames().size())));
-                };
-                build(event);
-                events.add(event);
-                placed.add(event.title() + "(" + center.getBlockX() + "," + center.getBlockZ() + ")");
-            } catch (final RuntimeException e) {
-                plugin.getSLF4JLogger().error("地圖 #{} 放{}出錯", instance.id(), kind, e);
+            final Event event = create(instance, kind, spot, random);
+            if (event == null) {
+                continue;
+            }
+            events.add(event);
+            placed.add(event.title() + "(" + event.center.getBlockX() + "," + event.center.getBlockZ() + ")");
+            // 事件疊加：同一個房間再放一個不同種類的（離第一個至少 3 格）
+            if (random.nextDouble() < config.twists().stackChance()) {
+                final MapEventConfig.Kind second = pickOther(kind, random, atlas);
+                final MapLayout.Spot other = second == null ? null : spotIn(instance.layout(), room, spot, 3);
+                final Event stacked = other == null ? null : create(instance, second, other, random);
+                if (stacked != null) {
+                    events.add(stacked);
+                    placed.add(stacked.title() + "(疊加)");
+                }
             }
         }
         if (!events.isEmpty()) {
-            byInstance.put(instance.id(), events);
+            byInstance.computeIfAbsent(instance.id(), id -> new ArrayList<>()).addAll(events);
         }
         plugin.getSLF4JLogger().info("地圖 #{}（{}）：放了 {} 個事件 {}{}", instance.id(), instance.label(), events.size(), placed,
                 noSpot > 0 ? "，" + noSpot + " 個房間找不到位置" : "");
     }
 
+    /** 在這個房間放一個事件（地圖變化用：寶庫、隱藏房的寶箱）；放不下回傳 false。 */
+    boolean placeIn(final MapInstance instance, final MapLayout.Room room, final MapEventConfig.Kind kind, final RandomGenerator random) {
+        final MapLayout.Spot spot = spotIn(instance.layout(), room);
+        final Event event = spot == null ? null : create(instance, kind, spot, random);
+        if (event == null) {
+            return false;
+        }
+        byInstance.computeIfAbsent(instance.id(), id -> new ArrayList<>()).add(event);
+        return true;
+    }
+
+    /** 蓋一個事件；出錯回傳 null。 */
+    private Event create(final MapInstance instance, final MapEventConfig.Kind kind, final MapLayout.Spot spot, final RandomGenerator random) {
+        final Location center = new Location(instance.world(), instance.originX() + spot.x() + 0.5, MapLayout.FLOOR_Y + 1,
+                instance.originZ() + spot.z() + 0.5);
+        try {
+            final Event event = switch (kind) {
+                case SHRINE -> new Event(instance, kind, center, config.shrines().get(random.nextInt(config.shrines().size())), null, null);
+                case STRONGBOX -> new Event(instance, kind, center, null, pickBox(random), null);
+                case BREACH -> new Event(instance, kind, center, null, null, null);
+                case EXILE -> new Event(instance, kind, center, null, null,
+                        config.exileNames().get(random.nextInt(config.exileNames().size())));
+            };
+            build(event);
+            return event;
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().error("地圖 #{} 放{}出錯", instance.id(), kind, e);
+            return null;
+        }
+    }
+
+    /** 疊加用：抽一種跟 first 不一樣的事件（試幾次都一樣就不疊）。 */
+    private MapEventConfig.Kind pickOther(final MapEventConfig.Kind first, final RandomGenerator random, final AtlasBonus atlas) {
+        for (int attempt = 0; attempt < 6; attempt++) {
+            final MapEventConfig.Kind kind = pickKind(random, atlas);
+            if (kind != null && kind != first) {
+                return kind;
+            }
+        }
+        return null;
+    }
+
     /** 房間中央（或旁邊一點）一個是地板、不跟怪物群的刷怪點重疊的位置；沒有回傳 null。 */
     static MapLayout.Spot spotIn(final MapLayout layout, final MapLayout.Room room) {
+        return spotIn(layout, room, null, 0);
+    }
+
+    /** 同上，但離 away 至少 distance 格（away 是 null 就不管）。 */
+    static MapLayout.Spot spotIn(final MapLayout layout, final MapLayout.Room room, final MapLayout.Spot away, final int distance) {
         for (final int[] offset : MapLayout.EVENT_OFFSETS) {
             final int x = room.cx() + offset[0];
             final int z = room.cz() + offset[1];
             if (!layout.isFloor(x, z) || !room.contains(x, z)) {
+                continue;
+            }
+            if (away != null && Math.max(Math.abs(away.x() - x), Math.abs(away.z() - z)) < distance) {
                 continue;
             }
             boolean clear = true;
@@ -335,6 +412,7 @@ final class MapEvents implements Listener {
         final long now = plugin.getServer().getCurrentTick();
         rituals.tick(now);
         delirium.tick(now);
+        twists.tick(now);
         if (byInstance.isEmpty()) {
             return;
         }
@@ -945,6 +1023,7 @@ final class MapEvents implements Listener {
     void clear(final MapInstance instance) {
         rituals.clear(instance);
         delirium.clear(instance);
+        twists.clear(instance);
         final List<Event> events = byInstance.remove(instance.id());
         if (events != null) {
             for (final Event event : events) {
@@ -956,6 +1035,7 @@ final class MapEvents implements Listener {
     void clearAll() {
         rituals.clearAll();
         delirium.clearAll();
+        twists.clearAll();
         for (final List<Event> events : byInstance.values()) {
             for (final Event event : events) {
                 dispose(event);
@@ -983,10 +1063,9 @@ final class MapEvents implements Listener {
         if (fog != null) {
             parts.add(fog);
         }
-        if (parts.isEmpty()) {
-            return "沒有事件";
-        }
-        return String.format(Locale.ROOT, "事件 %d 個：%s", parts.size(), String.join("、", parts));
+        final String twist = twists.summary(instance);
+        final String base = parts.isEmpty() ? "沒有事件" : String.format(Locale.ROOT, "事件 %d 個：%s", parts.size(), String.join("、", parts));
+        return twist == null ? base : base + "；" + twist;
     }
 
     /** 這個實體是不是某個事件刷出來的（守衛、裂隙怪、流寇、儀式的怪、幻霧怪）。 */

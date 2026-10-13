@@ -105,6 +105,7 @@ final class MapBosses {
                 // 2026-10：有人走進 Boss 房（或從門口打到它）才開打；狂暴也從這一刻開始算
                 if (instance.fightStartTick() < 0 && (anyInRoom(instance, near) || hurt(boss))) {
                     instance.setFightStartTick(now);
+                    service.events().twists().onBossFight(instance, boss); // 地圖變化：雙生、守護之柱、援軍
                 }
             } else if (now - instance.bossLastSeenTick() > RESET_TICKS) {
                 reset(instance, boss, center);
@@ -249,10 +250,15 @@ final class MapBosses {
         // 生命、傷害倍率扣掉 monsters.yml 裡這種生物本身的倍率（設定檔寫的是「比一般傳奇怪強幾倍」）
         final MonsterConfig.TypeSettings type = plugin.monsters().config().type(typeName);
         final double tierLife = tierLife(instance);
-        final double life = definition.life() * tierLife / Math.max(0.1, type.lifeMultiplier());
-        final double damage = definition.damage() / Math.max(0.1, type.damageMultiplier());
+        // 地圖變化（2026-10）：王道、詛咒寶匣的 Boss 加成，Boss 變體的倍率
+        final MapInstance.Twist twist = instance.twist();
+        final MapTwists.BossVariant variant = twist.bossVariant;
+        final double power = 1 + twist.bossPower;
+        final double life = definition.life() * tierLife / Math.max(0.1, type.lifeMultiplier()) * power * (variant == null ? 1 : variant.life);
+        final double damage = definition.damage() / Math.max(0.1, type.damageMultiplier()) * power * (variant == null ? 1 : variant.damage);
         instance.setBossPhase(0);
-        plugin.monsters().decorateBoss(entity, instance.level(), definition.name(), definition.mods(), life, damage, definition.scale());
+        final String bossName = variant == MapTwists.BossVariant.EMPOWERED ? "強化的" + definition.name() : definition.name();
+        plugin.monsters().decorateBoss(entity, instance.level(), bossName, definition.mods(), life, damage, definition.scale());
         MapSpawner.prepare(entity);
         final AttributeInstance follow = entity.getAttribute(Attribute.FOLLOW_RANGE);
         if (follow != null && follow.getBaseValue() < FOLLOW_RANGE) {
@@ -271,6 +277,11 @@ final class MapBosses {
         instance.setBossBar(bar);
         if (definition.intro() != null && !definition.intro().isBlank()) {
             broadcast(instance, Zone.loreLine(definition.name(), definition.intro()));
+        }
+        if (variant == MapTwists.BossVariant.EMPOWERED) {
+            broadcast(instance, "<#ff7070>⚠ 這次的 Boss 是強化的：生命 ×1.5、傷害 ×1.25，掉落 +" + Math.round(variant.loot * 100) + "%");
+        } else if (variant == MapTwists.BossVariant.TWIN) {
+            broadcast(instance, "<#ff7070>⚠ 這次的 Boss 是雙生的：開打時會多一隻分身（兩隻都比較脆），掉落 +" + Math.round(variant.loot * 100) + "%");
         }
         if (alerts(instance)) {
             // 終局與試煉 Boss：開打前先在聊天室說明機制（幾 % 血換階段、護盾、狂暴、場地危害）
@@ -491,6 +502,13 @@ final class MapBosses {
     }
 
     /** 進入有護盾的階段：Boss 無敵，Boss 房裡出現幾顆結晶（不會動、不會打人），限時打掉。 */
+    /** 地圖變化的守護之柱：開打時張一次護盾（已經有護盾就不疊）。 */
+    void raiseShield(final MapInstance instance, final LivingEntity boss, final MapConfig.Shield shield) {
+        if (!instance.shielded() && boss.isValid() && !instance.bossKilled()) {
+            startShield(instance, boss, shield);
+        }
+    }
+
     private void startShield(final MapInstance instance, final LivingEntity boss, final MapConfig.Shield shield) {
         final long now = plugin.getServer().getCurrentTick();
         instance.startShield(shield, now + Math.round(shield.duration() * 20));
@@ -669,6 +687,7 @@ final class MapBosses {
         clearShield(instance, boss); // 也把無敵拿掉（護盾、換階段的等待）
         instance.setFightStartTick(-1);
         instance.setEnraged(false);
+        service.events().twists().onBossReset(instance); // 地圖變化：分身、援軍收掉，下次開打再來
         final AttributeInstance enrageSpeed = boss.getAttribute(Attribute.MOVEMENT_SPEED);
         if (enrageSpeed != null) {
             enrageSpeed.removeModifier(enrageKey);
@@ -935,8 +954,8 @@ final class MapBosses {
      */
     private tw.exilecore.loot.LootBonus.Bonus bonus(final MapInstance instance, final Player player) {
         return tw.exilecore.loot.LootBonus.of(plugin, player).plus(
-                instance.stats().quantity() / 100.0 + instance.atlas().increased("atlas.boss_quantity"),
-                instance.stats().rarity() / 100.0 + instance.atlas().increased("atlas.boss_rarity"));
+                instance.stats().quantity() / 100.0 + instance.atlas().increased("atlas.boss_quantity") + instance.twist().bossLoot,
+                instance.stats().rarity() / 100.0 + instance.atlas().increased("atlas.boss_rarity") + instance.twist().bossLoot);
     }
 
     /** 從某個來源的專屬輔助寶石裡抽一顆（supports.yml 的 source）；沒有就不掉。 */
@@ -1053,7 +1072,13 @@ final class MapBosses {
 
             @Override
             public List<tw.exilecore.skill.BossHazard> hazards() {
-                return instance.bossDef().hazards();
+                final tw.exilecore.skill.BossHazard extra = service.events().twists().bossHazard(instance);
+                if (extra == null) {
+                    return instance.bossDef().hazards();
+                }
+                final List<tw.exilecore.skill.BossHazard> all = new ArrayList<>(instance.bossDef().hazards());
+                all.add(extra); // 地圖變化的 Boss 房干擾（排在最後：前面的計時不受影響）
+                return all;
             }
 
             @Override

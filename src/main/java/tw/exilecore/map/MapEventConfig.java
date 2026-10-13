@@ -175,6 +175,70 @@ public final class MapEventConfig {
     // PoE2 的機制
     private Ritual ritual;
     private Delirium delirium;
+    /** 地圖變化（2026-10，{@link MapTwists}）。 */
+    private Twists twists;
+
+    /**
+     * 地圖變化（2026-10，map_events.yml 的 twists）：讓同一張圖每次打起來不一樣。機率都是 0–1，權重是整數，0 = 關掉。
+     *
+     * @param roomThemeChance  每個沒有事件的房間有主題的機率
+     * @param roomThemes       主題的權重：elite 精英巢穴、swarm 怪物潮、dark 黑暗房、vault 寶庫
+     * @param swarmSize        怪物潮的群大小倍數
+     * @param mixChance        這張圖混進第二種怪物族群的機率
+     * @param mixShare         混進來之後，每一群用第二族群的機率
+     * @param wandererChance   這張圖有一隻流浪精英的機率
+     * @param wandererLife     流浪精英的生命倍數（照稀有怪再乘）
+     * @param wandererDamage   流浪精英的傷害倍數
+     * @param wandererQuantity 流浪精英的物品數量 +%
+     * @param stackChance      每個事件旁邊多疊一個不同事件的機率
+     * @param bossVariantChance 一般地圖 Boss（不含終局、極境、巔峰、回響、試煉）是變體的機率
+     * @param bossVariants     變體的權重：empowered 強化、twin 雙生
+     * @param bossRoomChance   一般地圖的 Boss 房有干擾的機率
+     * @param bossRooms        干擾的權重：meteors 墜星、hands 冥河之手、embers 流火、reinforce 援軍、pillar 守護之柱
+     * @param forkChance       這張圖有命運岔路（二選一的石碑）的機率
+     * @param cursedChance     這張圖有詛咒寶匣的機率
+     * @param cursedPower      接受詛咒之後，之後刷的怪生命與傷害 +%
+     * @param timedChance      第一次走進一個普通房間時，變成限時挑戰的機率（一張圖最多 2 次）
+     * @param timedSeconds     限時挑戰的秒數
+     * @param hiddenChance     這張圖有隱藏房（裂開的牆後面）的機率
+     */
+    public record Twists(double roomThemeChance, Map<String, Integer> roomThemes, double swarmSize, double mixChance, double mixShare,
+                         double wandererChance, double wandererLife, double wandererDamage, double wandererQuantity,
+                         double stackChance, double bossVariantChance, Map<String, Integer> bossVariants,
+                         double bossRoomChance, Map<String, Integer> bossRooms, double forkChance, double cursedChance, double cursedPower,
+                         double timedChance, double timedSeconds, double hiddenChance) {
+        public Twists {
+            roomThemes = Map.copyOf(roomThemes);
+            bossVariants = Map.copyOf(bossVariants);
+            bossRooms = Map.copyOf(bossRooms);
+        }
+
+        static Twists defaults() {
+            return new Twists(0.3, Map.of("elite", 30, "swarm", 30, "dark", 25, "vault", 15), 2.5, 0.5, 0.35,
+                    0.35, 4.0, 1.3, 200, 0.12, 0.15, Map.of("empowered", 60, "twin", 40),
+                    0.25, Map.of("meteors", 25, "hands", 25, "embers", 20, "reinforce", 15, "pillar", 15),
+                    0.25, 0.2, 25, 0.15, 50, 0.25);
+        }
+
+        /** 照權重抽一個鍵；權重全是 0 回傳 null。 */
+        public static String pick(final Map<String, Integer> weights, final java.util.random.RandomGenerator random) {
+            int total = 0;
+            for (final int weight : weights.values()) {
+                total += Math.max(0, weight);
+            }
+            if (total <= 0) {
+                return null;
+            }
+            int roll = random.nextInt(total);
+            for (final Map.Entry<String, Integer> entry : new java.util.TreeMap<>(weights).entrySet()) {
+                roll -= Math.max(0, entry.getValue());
+                if (roll < 0) {
+                    return entry.getKey();
+                }
+            }
+            return null;
+        }
+    }
 
     public MapEventConfig() {
         defaults();
@@ -240,6 +304,7 @@ public final class MapEventConfig {
                 Map.of(Reward.EMOTION, 40, Reward.CURRENCY, 25, Reward.ESSENCE, 10, Reward.JEWEL, 10, Reward.MAP, 10, Reward.CATALYST, 5,
                         Reward.UNIQUE, 1),
                 List.of("distilled_ire", "distilled_guilt", "distilled_greed", "distilled_paranoia"), List.of(50, 30, 15, 5));
+        twists = Twists.defaults();
     }
 
     public void load(final Path dataFolder) throws IOException {
@@ -399,6 +464,47 @@ public final class MapEventConfig {
                 throw new IllegalArgumentException(node.path() + "：emotion_weights 要跟 emotions 一樣長");
             }
         }
+        if (root.has("twists")) {
+            twists = parseTwists(root.node("twists"), twists);
+        }
+    }
+
+    /** map_events.yml 的 twists（沒寫的照預設）。 */
+    static Twists parseTwists(final YamlNode node, final Twists base) {
+        final YamlNode wanderer = node.node("wanderer");
+        return new Twists(
+                clamp(node.decimal("room_theme_chance", base.roomThemeChance()), 0, 1),
+                node.has("room_themes") ? weights(node.node("room_themes"), Set.of("elite", "swarm", "dark", "vault")) : base.roomThemes(),
+                clamp(node.decimal("swarm_size", base.swarmSize()), 1, 5),
+                clamp(node.decimal("mix_chance", base.mixChance()), 0, 1),
+                clamp(node.decimal("mix_share", base.mixShare()), 0, 1),
+                clamp(node.decimal("wanderer_chance", base.wandererChance()), 0, 1),
+                clamp(wanderer.decimal("life", base.wandererLife()), 1, 20),
+                clamp(wanderer.decimal("damage", base.wandererDamage()), 0.5, 5),
+                clamp(wanderer.decimal("quantity", base.wandererQuantity()), 0, 1000),
+                clamp(node.decimal("stack_chance", base.stackChance()), 0, 1),
+                clamp(node.decimal("boss_variant_chance", base.bossVariantChance()), 0, 1),
+                node.has("boss_variants") ? weights(node.node("boss_variants"), Set.of("empowered", "twin")) : base.bossVariants(),
+                clamp(node.decimal("boss_room_chance", base.bossRoomChance()), 0, 1),
+                node.has("boss_rooms") ? weights(node.node("boss_rooms"), Set.of("meteors", "hands", "embers", "reinforce", "pillar")) : base.bossRooms(),
+                clamp(node.decimal("fork_chance", base.forkChance()), 0, 1),
+                clamp(node.decimal("cursed_chance", base.cursedChance()), 0, 1),
+                clamp(node.decimal("cursed_power", base.cursedPower()), 0, 200),
+                clamp(node.decimal("timed_chance", base.timedChance()), 0, 1),
+                clamp(node.decimal("timed_seconds", base.timedSeconds()), 15, 300),
+                clamp(node.decimal("hidden_chance", base.hiddenChance()), 0, 1));
+    }
+
+    private static Map<String, Integer> weights(final YamlNode node, final Set<String> known) {
+        final Map<String, Integer> map = new LinkedHashMap<>();
+        for (final String key : node.keys()) {
+            final String id = key.trim().toLowerCase(Locale.ROOT);
+            if (!known.contains(id)) {
+                throw new IllegalArgumentException(node.path() + "：不認得的 " + key + "（可以寫 " + String.join("、", new java.util.TreeSet<>(known)) + "）");
+            }
+            map.put(id, Math.max(0, node.integer(key, 0)));
+        }
+        return map;
     }
 
     private static Map<tw.exilecore.monster.MonsterRarity, Integer> rarityInts(final YamlNode node) {
@@ -608,5 +714,9 @@ public final class MapEventConfig {
 
     public Delirium delirium() {
         return delirium;
+    }
+
+    public Twists twists() {
+        return twists;
     }
 }
