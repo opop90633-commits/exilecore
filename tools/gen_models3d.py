@@ -1722,6 +1722,12 @@ def render(model, pal_img, size=200, yaw=35, pitch=25):
     return img
 
 
+# 手做的模型：代號 → 部位（模型的貼圖要寫成 exilecore:item/skin3d/<代號>，不要 tintindex）
+CUSTOM = {
+    "fire_spear": ("blade", "staff"),   # 火尖槍（2026-10，玩家用 Blockbench 做的）
+}
+
+
 def main():
     os.makedirs(ROOT, exist_ok=True)
     files = []
@@ -1750,6 +1756,15 @@ def main():
         for part, model_name in parts.items():
             model = model_name if isinstance(model_name, dict) else {"type": "minecraft:model", "model": f"{NS}:item/skin3d/{model_name}"}
             write(f"assets/{NS}/items/skin/{art}_{part}.json", {"model": model})
+    # 手做的模型（Blockbench 匯出）：tools/models3d_custom/<代號>.json + <代號>.png，CUSTOM 寫部位（武器 = blade、staff）
+    custom = os.path.join(os.path.dirname(__file__), "models3d_custom")
+    for art, parts in CUSTOM.items():
+        with open(os.path.join(custom, art + ".json"), encoding="utf-8") as f:
+            write(f"assets/{NS}/models/item/skin3d/{art}.json", json.load(f))
+        write(f"assets/{NS}/textures/item/skin3d/{art}.png", Image.open(os.path.join(custom, art + ".png")).convert("RGBA"))
+        for part in parts:
+            write(f"assets/{NS}/items/skin/{art}_{part}.json",
+                  {"model": {"type": "minecraft:model", "model": f"{NS}:item/skin3d/{art}"}})
     # 打包成一個 zip（web/pack3d.zip）：UiPack 把裡面的檔案照路徑放進介面資源包；資料夾只是給人看、給預覽用
     import zipfile
     with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED) as z:

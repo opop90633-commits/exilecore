@@ -2214,9 +2214,13 @@ public final class MapService {
 
     // ---- 通貨 ----
 
-    /** 背包裡加上通貨袋裡的某種通貨。 */
+    /** 背包＋通貨袋＋倉庫的通貨頁裡的某種通貨（2026-10：倉庫也算）。 */
     public int countCurrency(final Player player, final CurrencyType type) {
         int total = plugin.players().get(player).bag().pouch().amount(type.id());
+        final tw.exilecore.stash.Stash stash = stashOf(player);
+        if (stash != null) {
+            total += stash.currency(type.id());
+        }
         for (final ItemStack stack : player.getInventory().getStorageContents()) {
             if (stack != null && plugin.currencies().read(stack).map(found -> found.id().equals(type.id())).orElse(false)) {
                 total += stack.getAmount();
@@ -2225,12 +2229,17 @@ public final class MapService {
         return total;
     }
 
-    /** 先拿背包裡的，再拿通貨袋的（流水帳記在地圖裝置）。 */
+    /** 先拿背包裡的，再拿通貨袋、倉庫的（流水帳記在地圖裝置）。 */
     void takeCurrency(final Player player, final CurrencyType type, final int amount) {
         takeCurrency(player, type, amount, tw.exilecore.economy.EconomyLedger.MAP_DEVICE);
     }
 
-    /** 先拿背包裡的，再拿通貨袋的；source 是流水帳的來源（EconomySources）。 */
+    /** 這個人的倉庫（還沒載入、沒有倉庫模組是 null）。 */
+    private tw.exilecore.stash.Stash stashOf(final Player player) {
+        return plugin.stash() == null ? null : plugin.stash().stash(player).orElse(null);
+    }
+
+    /** 先拿背包裡的，再拿通貨袋的，最後拿倉庫的；source 是流水帳的來源（EconomySources）。 */
     public void takeCurrency(final Player player, final CurrencyType type, final int amount, final String source) {
         int left = amount;
         final ItemStack[] contents = player.getInventory().getStorageContents();
@@ -2245,7 +2254,13 @@ public final class MapService {
             left -= take;
         }
         if (left > 0) {
-            plugin.players().get(player).bag().pouch().withdraw(type.id(), left);
+            left -= plugin.players().get(player).bag().pouch().withdraw(type.id(), left);
+        }
+        final tw.exilecore.stash.Stash stash = left > 0 ? stashOf(player) : null;
+        if (stash != null) {
+            final int take = Math.min(left, stash.currency(type.id()));
+            stash.setCurrency(type.id(), stash.currency(type.id()) - take); // 倉庫跟角色一起存（下面的 save）
+            left -= take;
         }
         plugin.economy().ledger().consumed(type.id(), source, amount);
         plugin.characters().save(player);

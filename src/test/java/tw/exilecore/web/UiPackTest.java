@@ -418,8 +418,12 @@ class UiPackTest {
             assertTrue(files.containsKey("assets/exilecore/sounds/music/" + track.id() + ".ogg"), track.id());
             assertTrue(music.getAsJsonObject(track.event()).getAsJsonArray("sounds").get(0).getAsJsonObject().get("stream").getAsBoolean());
         }
-        assertEquals(2, tw.exilecore.music.Music.tracks(tw.exilecore.music.Music.Mood.OVERWORLD).size());
-        assertEquals(3, tw.exilecore.music.Music.tracks(tw.exilecore.music.Music.Mood.MAP).size());
+        for (final tw.exilecore.music.Music.Mood mood : tw.exilecore.music.Music.Mood.values()) {
+            assertEquals(1, tw.exilecore.music.Music.tracks(mood).size(), mood + "：每種情境一首");
+        }
+        // 長度照 ogg 檔讀（Moon City 約 79 秒、Escape from Micikplay 約 4 分鐘）
+        assertEquals(78.8, tw.exilecore.music.Music.tracks(tw.exilecore.music.Music.Mood.MAP).getFirst().seconds(), 0.5);
+        assertEquals(240.1, tw.exilecore.music.Music.tracks(tw.exilecore.music.Music.Mood.UBER_BOSS).getFirst().seconds(), 0.5);
     }
 
     @Test

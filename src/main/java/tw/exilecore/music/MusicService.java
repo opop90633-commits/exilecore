@@ -19,7 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 背景音樂（2026-10，見 {@link Music}）：每秒看一次每個人在哪裡（主世界、地圖、Boss 戰），情境變了就換曲，
- * 一首放完接下一首。Boss 戰＝在地圖裡、Boss 還活著、離 Boss {@value #BOSS_RANGE} 格以內。
+ * 一首放完再放一次（每種情境一首）。Boss 戰＝在地圖裡、Boss 還活著、離 Boss {@value #BOSS_RANGE} 格以內。
  * config.yml 的 music.enabled 可以整個關掉（關掉時原版的背景音樂也還是被資源包靜音）。
  */
 public final class MusicService implements Listener {
@@ -87,8 +87,9 @@ public final class MusicService implements Listener {
         final LivingEntity boss = instance.boss();
         if (boss != null && boss.isValid() && !boss.isDead() && boss.getWorld().equals(player.getWorld())
                 && boss.getLocation().distanceSquared(player.getLocation()) <= BOSS_RANGE * BOSS_RANGE) {
-            final boolean endgame = instance.map().isFinal() || instance.isUber() || instance.isPinnacle() || instance.singleEntry();
-            return endgame ? Music.Mood.ENDGAME_BOSS : Music.Mood.BOSS;
+            // 極境、巔峰、金庫之主一首；一般 Boss 與終局 Boss 一首
+            final boolean uber = instance.isUber() || instance.isPinnacle() || instance.singleEntry();
+            return uber ? Music.Mood.UBER_BOSS : Music.Mood.BOSS;
         }
         return Music.Mood.MAP;
     }

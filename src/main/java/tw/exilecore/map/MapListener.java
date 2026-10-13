@@ -41,6 +41,15 @@ final class MapListener implements Listener {
         this.service = service;
     }
 
+    /** 2026-10：還沒開打的地圖 Boss 不找目標（原版 AI 追蹤範圍 64 格，會穿過門口去追隔壁房間的人）。 */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBossTarget(final org.bukkit.event.entity.EntityTargetEvent event) {
+        if (event.getTarget() != null && event.getEntity() instanceof LivingEntity boss
+                && boss.getPersistentDataContainer().has(service.bossKey()) && service.bosses().dormant(boss)) {
+            event.setCancelled(true);
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(final PlayerDeathEvent event) {
         service.markDeath(event.getEntity());

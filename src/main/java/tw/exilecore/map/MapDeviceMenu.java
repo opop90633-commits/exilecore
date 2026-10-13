@@ -26,6 +26,10 @@ import java.util.Set;
 public final class MapDeviceMenu extends Menu {
 
     private static final int SLOT_MAP = 13;
+    /** 2026-10：地圖品質一鍵點滿（用背包＋通貨袋＋倉庫裡的星盤刻刀）。 */
+    private static final int SLOT_QUALITY = 14;
+    /** 地圖品質上限（星盤刻刀，CurrencyOperation.QUALITY_MAP）。 */
+    private static final int MAP_QUALITY_CAP = 20;
     private static final int SLOT_OPEN = 22;
     private static final int SLOT_ATLAS = 29;
     private static final int SLOT_FINAL = 31;
@@ -60,6 +64,7 @@ public final class MapDeviceMenu extends Menu {
         } else {
             final ItemStack preview = plugin.items().toStack(selected);
             set(SLOT_MAP, preview);
+            drawQuality();
             final MapConfig.MapDef map = config.byBase(selected.base());
             final List<String> lore = new ArrayList<>();
             boolean ok = true;
@@ -483,6 +488,7 @@ public final class MapDeviceMenu extends Menu {
     @Override
     protected void onClick(final int slot, final ClickType click, final InventoryClickEvent event) {
         switch (slot) {
+            case SLOT_QUALITY -> fillQuality();
             case SLOT_MAP -> {
                 selected = null;
                 selectedSlot = -1;
@@ -519,6 +525,93 @@ public final class MapDeviceMenu extends Menu {
             default -> {
             }
         }
+    }
+
+    // ---- 地圖品質一鍵點滿（2026-10） ----
+
+    /** 星盤刻刀（地圖品質的通貨；currencies.yml 裡 operation: QUALITY_MAP 的那一種）。 */
+    private CurrencyType qualityCurrency() {
+        if (plugin.currencies() == null) {
+            return null;
+        }
+        for (final CurrencyType type : plugin.currencies().repository().all()) {
+            if (type.operation() == tw.exilecore.currency.CurrencyOperation.QUALITY_MAP) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    private void drawQuality() {
+        final CurrencyType chisel = qualityCurrency();
+        if (chisel == null || selected == null) {
+            return;
+        }
+        final int quality = selected.quality();
+        final int have = service.countCurrency(player, chisel);
+        if (quality >= MAP_QUALITY_CAP) {
+            set(SLOT_QUALITY, icon(Material.GRAY_DYE, "<gray>地圖品質已經滿了（" + quality + "%）",
+                    "<dark_gray>每 1% 品質多 1% 物品數量"));
+            return;
+        }
+        final int need = (MAP_QUALITY_CAP - quality + 4) / 5; // 一顆 +5%
+        final List<String> lore = new ArrayList<>();
+        lore.add("<gray>地圖品質 <white>" + quality + "%</white> → <white>" + MAP_QUALITY_CAP + "%");
+        lore.add("<gray>大約要 <white>" + need + "</white> 個" + ItemRenderer.escape(chisel.name())
+                + "（你有 <white>" + have + "</white> 個，背包＋通貨袋＋倉庫）");
+        lore.add("<dark_gray>每 1% 品質多 1% 物品數量");
+        lore.add("");
+        lore.add(have > 0 ? "<yellow>左鍵：用" + ItemRenderer.escape(chisel.name()) + "把品質點滿" : "<red>沒有" + ItemRenderer.escape(chisel.name()));
+        final Material material = chisel.material() == null ? null : Material.matchMaterial(chisel.material());
+        final ItemStack button = tw.exilecore.currency.CurrencyService.decorate(
+                icon(material == null || !material.isItem() ? Material.QUARTZ : material, have > 0 ? "<#f5b942>品質點滿" : "<gray>品質點滿", lore), chisel);
+        button.setAmount(Math.max(1, Math.min(64, need)));
+        set(SLOT_QUALITY, have > 0 ? glowing(button) : button);
+    }
+
+    /** 一顆一顆用到品質滿或刻刀用完；用了幾顆就從背包、通貨袋扣幾顆。 */
+    private void fillQuality() {
+        final CurrencyType chisel = qualityCurrency();
+        if (chisel == null || selected == null) {
+            return;
+        }
+        final ItemStack target = selectedSlot < 0 ? null : player.getInventory().getItem(selectedSlot);
+        final Optional<ItemData> current = target == null ? Optional.empty() : plugin.items().read(target);
+        if (current.isEmpty() || !current.get().uuid().equals(selected.uuid())) {
+            player.sendMessage(plugin.text().prefixed("<red>那張地圖已經不在背包的那一格了，重新選一次"));
+            selected = null;
+            selectedSlot = -1;
+            redraw();
+            return;
+        }
+        final int have = service.countCurrency(player, chisel);
+        if (have <= 0) {
+            player.sendMessage(plugin.text().prefixed("<red>你沒有" + ItemRenderer.escape(chisel.name())));
+            return;
+        }
+        final ItemStack tool = plugin.currencies().create(chisel, 1);
+        final var character = plugin.players().get(player).character();
+        final Long characterId = character == null ? null : character.id();
+        final int before = current.get().quality();
+        int used = 0;
+        while (used < have) {
+            final var result = plugin.currencies().apply(tool, target, player.getName(), characterId);
+            if (result != tw.exilecore.currency.CurrencyService.Result.APPLIED) {
+                break;
+            }
+            used++;
+        }
+        if (used == 0) {
+            player.sendMessage(plugin.text().prefixed("<gray>這張地圖不能再加品質了"));
+            return;
+        }
+        player.getInventory().setItem(selectedSlot, target);
+        service.takeCurrency(player, chisel, used);
+        selected = plugin.items().read(target).orElse(selected);
+        player.sendMessage(plugin.text().prefixed("<gray>用了 <white>" + used + "</white> 個" + ItemRenderer.escape(chisel.name())
+                + "：地圖品質 " + before + "% → <white>" + selected.quality() + "%"));
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_ANVIL_USE, 0.5f, 1.4f);
+        redraw();
     }
 
     /** 點背包裡的地圖：選起來（東西不動）。 */

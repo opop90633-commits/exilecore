@@ -36,10 +36,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class TooltipHook {
 
-    /** 一個物品最多列幾個技能。 */
-    static final int MAX_SKILLS = 6;
-    /** 一個技能最多列幾條詞綴。 */
-    static final int MAX_MODS = 3;
+    /** 最多列幾條詞綴（說明框太長會被畫面切掉）。 */
+    static final int MAX_MODS = 4;
+    /** 一條詞綴後面最多列幾個技能名字。 */
+    static final int MAX_NAMES = 3;
 
     private static final Map<UUID, List<SkillService.SkillHint>> HINTS = new ConcurrentHashMap<>();
     private static volatile ExileCore plugin;
@@ -158,33 +158,39 @@ public final class TooltipHook {
                 mods.add(Recently.hasCondition(raw.stat())
                         ? new Modifier(Recently.stat(raw.stat()), raw.type(), raw.value(), raw.tags(), raw.source()) : raw);
             }
-            int shown = 0;
-            int more = 0;
+            // 2026-10：說明框太長會被畫面切掉 → 照「詞綴」合併：每條詞綴一行，後面列吃得到它的技能
+            final java.util.Map<String, List<String>> byMod = new java.util.LinkedHashMap<>();
             for (final SkillService.SkillHint hint : hints) {
-                final List<Modifier> useful = new ArrayList<>();
                 for (final Modifier mod : mods) {
-                    if (SkillService.gearAffects(hint.definition(), hint.context(), mod)) {
-                        useful.add(mod);
+                    if (!SkillService.gearAffects(hint.definition(), hint.context(), mod)) {
+                        continue;
+                    }
+                    final String text = ModifierText.describe(mod);
+                    if (text == null || text.isBlank() || text.startsWith("特殊效果")) {
+                        continue; // 說不清楚的不列
+                    }
+                    final List<String> names = byMod.computeIfAbsent(text, key -> new ArrayList<>());
+                    if (!names.contains(hint.name())) {
+                        names.add(hint.name());
                     }
                 }
-                if (useful.isEmpty()) {
-                    continue;
-                }
-                if (shown >= MAX_SKILLS) {
-                    more++;
-                    continue;
-                }
-                final List<String> texts = ModifierText.describeAll(useful);
-                final String joined = String.join("、", texts.subList(0, Math.min(MAX_MODS, texts.size())))
-                        + (texts.size() > MAX_MODS ? "…等 " + texts.size() + " 條" : "");
-                lines.add("<white>　" + ItemRenderer.escape(hint.name()) + "<gray>：" + ItemRenderer.escape(joined));
-                shown++;
             }
-            if (!lines.isEmpty()) {
-                lines.add(0, "<#e7c56b>◆ 對你的技能有效：");
-                if (more > 0) {
-                    lines.add("<dark_gray>　…還有 " + more + " 個技能");
-                }
+            if (byMod.isEmpty()) {
+                return lines;
+            }
+            final List<java.util.Map.Entry<String, List<String>>> sorted = new ArrayList<>(byMod.entrySet());
+            sorted.sort((a, b) -> b.getValue().size() - a.getValue().size());
+            final java.util.Set<String> skills = new java.util.LinkedHashSet<>();
+            byMod.values().forEach(skills::addAll);
+            lines.add("<#e7c56b>◆ 對你的 " + skills.size() + " 個技能有效：");
+            for (int i = 0; i < Math.min(MAX_MODS, sorted.size()); i++) {
+                final List<String> names = sorted.get(i).getValue();
+                final String who = String.join("、", names.subList(0, Math.min(MAX_NAMES, names.size())))
+                        + (names.size() > MAX_NAMES ? " 等 " + names.size() + " 個" : "");
+                lines.add("<white>　" + ItemRenderer.escape(sorted.get(i).getKey()) + " <dark_gray>→ <gray>" + ItemRenderer.escape(who));
+            }
+            if (sorted.size() > MAX_MODS) {
+                lines.add("<dark_gray>　…還有 " + (sorted.size() - MAX_MODS) + " 條詞綴（技能面板 Shift＋右鍵看全部）");
             }
             return lines;
         }

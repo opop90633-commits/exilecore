@@ -1964,7 +1964,11 @@ public final class SkillService {
         }
         final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, build.profile());
         if (deals) {
-            lines.add(String.format(Locale.ROOT, "<gray>平均每次：<white>%s", expected.isEmpty() ? "0" : expected));
+            // 2026-10：好幾種傷害（噬異爆的火、冰、雷）先寫合計，括號裡再分開寫（實際打中時本來就是加在一起）
+            final long kinds = java.util.Arrays.stream(tw.exilecore.stats.DamageType.values()).filter(type -> expected.get(type) > 0).count();
+            lines.add(kinds > 1
+                    ? String.format(Locale.ROOT, "<gray>平均每次：<white>%d <dark_gray>（%s）", Math.round(expected.total()), expected)
+                    : String.format(Locale.ROOT, "<gray>平均每次：<white>%s", expected.isEmpty() ? "0" : expected));
             // 這個技能自己的暴擊（照它的標籤：攻擊吃攻擊暴擊、法術吃法術暴擊；輔助寶石也算進去）
             lines.add(String.format(Locale.ROOT, "<gray>暴擊：<white>%.1f%% <dark_gray>× <white>%.0f%%",
                     DamageCalculator.critChance(sheet, build.profile()) * 100,
@@ -2031,18 +2035,75 @@ public final class SkillService {
     private static final List<String> GEAR_STAT_PREFIXES = List.of("damage", "crit.", "attack.speed", "cast.speed", "accuracy", "skill.",
             "penetration", "ailment.duration", "bleed.", "ignite.", "poison.", "shock.", "chill.", "freeze.", "electrocute.", "stun.buildup",
             "stun.duration", "daze.chance", "pin.chance", "armour.break", "exposure.", "curse.effect", "aura.effect", "herald.effect",
-            "warcry.", "totem.", "infusion.", "presence.", "minion.", "crossbow.", "grenade.", "seal.", "channel.", "combo.", "rage.effect");
+            "warcry.", "totem.", "infusion.", "minion.", "crossbow.", "grenade.", "seal.", "channel.", "combo.", "rage.effect");
 
     /** 沒寫條件標籤的速度、命中照技能種類分：法術不列攻速、命中，攻擊不列施法速度；不造成傷害的技能（光環、增益）不列傷害類。 */
-    private static boolean relevantTo(final SkillDefinition definition, final String stat) {
+    private static boolean relevantTo(final SkillDefinition definition, final java.util.Set<String> context, final String stat) {
         if (stat.startsWith("attack.speed") || stat.startsWith("accuracy")) {
             return definition.isAttack();
         }
         if (stat.startsWith("cast.speed")) {
             return !definition.isAttack();
         }
+        // 2026-10：沒寫條件標籤的詞綴也只列真的用得到的技能（以前戰吼、召喚技能也列出「投射物速度」「弩的裝填」）
+        if (stat.startsWith("crossbow.")) {
+            return definition.weapons().contains(tw.exilecore.stats.Tags.CROSSBOW) || context.contains(tw.exilecore.stats.Tags.CROSSBOW);
+        }
+        if (stat.startsWith("skill.projectile") || stat.equals("skill.pierce") || stat.equals("skill.fork")) {
+            return context.contains(tw.exilecore.stats.Tags.PROJECTILE);
+        }
+        if (stat.equals("skill.chains")) {
+            return context.contains(tw.exilecore.stats.Tags.PROJECTILE) || definition.mechanic() == Mechanic.CHAIN;
+        }
+        if (stat.equals("skill.area")) {
+            return context.contains(tw.exilecore.stats.Tags.AREA);
+        }
+        if (stat.equals("skill.duration")) {
+            return context.contains(tw.exilecore.stats.Tags.DURATION);
+        }
+        if (stat.equals("skill.cooldown") || stat.equals("skill.added_cooldown")) {
+            return definition.cooldown() > 0;
+        }
+        if (stat.equals("skill.strike_targets") || stat.equals("skill.melee_splash") || stat.startsWith("combo.")) {
+            return context.contains(tw.exilecore.stats.Tags.MELEE);
+        }
+        if (stat.equals("skill.totems") || stat.startsWith("totem.")) {
+            return context.contains(tw.exilecore.stats.Tags.TOTEM);
+        }
+        if (stat.equals("skill.minions") || stat.startsWith("minion.")) {
+            return context.contains(tw.exilecore.stats.Tags.MINION);
+        }
+        if (stat.startsWith("warcry.")) {
+            return context.contains(tw.exilecore.stats.Tags.WARCRY);
+        }
+        if (stat.startsWith("curse.")) {
+            return context.contains("curse");
+        }
+        if (stat.startsWith("aura.")) {
+            return context.contains(tw.exilecore.stats.Tags.AURA) || context.contains(tw.exilecore.stats.Tags.HERALD);
+        }
+        if (stat.startsWith("herald.")) {
+            return context.contains(tw.exilecore.stats.Tags.HERALD);
+        }
+        if (stat.startsWith("grenade.")) {
+            return context.contains(tw.exilecore.stats.Tags.GRENADE);
+        }
+        if (stat.startsWith("seal.")) {
+            return context.contains("seal");
+        }
+        if (stat.startsWith("channel.")) {
+            return context.contains("channelling") || context.contains("channel");
+        }
+        if (stat.startsWith("infusion.")) {
+            return context.contains(tw.exilecore.stats.Tags.FIRE) || context.contains(tw.exilecore.stats.Tags.COLD)
+                    || context.contains(tw.exilecore.stats.Tags.LIGHTNING);
+        }
         if (!definition.dealsDamage()) {
-            return !(stat.startsWith("damage") || stat.startsWith("crit.") || stat.startsWith("penetration"));
+            // 不造成傷害的技能（光環、增益、召喚）：傷害、暴擊、穿透、異常、暈眩這些都用不到
+            return !(stat.startsWith("damage") || stat.startsWith("crit.") || stat.startsWith("penetration") || stat.startsWith("ailment.")
+                    || stat.startsWith("bleed.") || stat.startsWith("ignite.") || stat.startsWith("poison.") || stat.startsWith("shock.")
+                    || stat.startsWith("chill.") || stat.startsWith("freeze.") || stat.startsWith("electrocute.") || stat.startsWith("stun.")
+                    || stat.startsWith("daze.") || stat.startsWith("pin.") || stat.startsWith("armour.break") || stat.startsWith("exposure."));
         }
         return true;
     }
@@ -2140,7 +2201,7 @@ public final class SkillService {
 
     /** 這條裝備詞綴吃不吃得到這個技能（context 見 {@link #hintContext}）。 */
     public static boolean gearAffects(final SkillDefinition definition, final java.util.Set<String> context, final Modifier mod) {
-        return gearStat(mod.stat()) && mod.appliesTo(context) && relevantTo(definition, mod.stat());
+        return gearStat(mod.stat()) && mod.appliesTo(context) && relevantTo(definition, context, mod.stat());
     }
 
     /** 拿來判斷詞綴吃不吃得到的情境標籤：技能自己的標籤、等級標籤、它實際打出的傷害類型。 */

@@ -102,11 +102,24 @@ final class MapBosses {
             final List<Player> near = nearbyPlayers(instance, boss.getLocation(), 48);
             if (!near.isEmpty()) {
                 instance.setBossLastSeenTick(now);
-                if (instance.fightStartTick() < 0) {
-                    instance.setFightStartTick(now); // 狂暴從有人跟 Boss 打的那一刻開始算
+                // 2026-10：有人走進 Boss 房（或從門口打到它）才開打；狂暴也從這一刻開始算
+                if (instance.fightStartTick() < 0 && (anyInRoom(instance, near) || hurt(boss))) {
+                    instance.setFightStartTick(now);
                 }
             } else if (now - instance.bossLastSeenTick() > RESET_TICKS) {
                 reset(instance, boss, center);
+                continue;
+            }
+            if (instance.fightStartTick() < 0) {
+                // 還沒開打：待在 Boss 房裡、不盯人（隔壁房間、走廊上的人不會把它引出來；原版 AI 找的目標由 MapListener 擋掉）
+                if (boss instanceof Mob mob && mob.getTarget() != null) {
+                    mob.setTarget(null);
+                }
+                if (!inRoom(instance, boss.getLocation())) {
+                    boss.teleport(center);
+                }
+                plugin.monsters().ensureVanillaHealth(boss);
+                updateBar(instance, boss, near);
                 continue;
             }
             updateShield(instance, boss, now);
@@ -129,6 +142,31 @@ final class MapBosses {
             updateBar(instance, boss, near);
             checkPhases(instance, boss);
         }
+    }
+
+    /** 還沒開打（沒人進過 Boss 房、也沒被打到）：不盯人、不出招、不離開 Boss 房。 */
+    boolean dormant(final LivingEntity entity) {
+        final MapInstance instance = service.instanceOf(entity);
+        return instance != null && instance.boss() == entity && !instance.bossKilled() && instance.fightStartTick() < 0;
+    }
+
+    private static boolean inRoom(final MapInstance instance, final Location at) {
+        return instance.layout().boss().contains(at.getBlockX() - instance.originX(), at.getBlockZ() - instance.originZ());
+    }
+
+    private static boolean anyInRoom(final MapInstance instance, final List<Player> players) {
+        for (final Player player : players) {
+            if (inRoom(instance, player.getLocation())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 被打掉一點血（站在門口射它）也算開打。 */
+    private static boolean hurt(final LivingEntity boss) {
+        final AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
+        return max != null && boss.getHealth() < max.getValue() - 0.01;
     }
 
     private LivingEntity findExisting(final MapInstance instance, final Location center) {
@@ -1013,6 +1051,11 @@ final class MapBosses {
             @Override
             public String tempoKind() {
                 return MapBosses.tempoKind(instance);
+            }
+
+            @Override
+            public boolean dormant() {
+                return instance.boss() == boss && !instance.bossKilled() && instance.fightStartTick() < 0;
             }
 
             @Override

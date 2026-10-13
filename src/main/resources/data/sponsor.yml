@@ -124,6 +124,9 @@ cosmetics:
   m3d_frost_halberd: { type: skin, slot: weapon, art: frost_halberd, name: 霜晶長戟, rarity: epic, fashion_price: 20 }
   m3d_blood_katana: { type: skin, slot: weapon, art: blood_katana, name: 血月太刀, rarity: epic, fashion_price: 20 }
   m3d_verdant_staff: { type: skin, slot: weapon, art: verdant_staff, name: 森語古杖, rarity: rare, fashion_price: 12 }
+  # 2026-10 先隱藏（模型已經在資源包裡，要上架把下面兩行的 # 拿掉；要放進抽獎箱再加回 boxes 的權重）
+  # m3d_fire_spear: { type: skin, slot: weapon, art: fire_spear, name: 火尖槍, rarity: epic, fashion_price: 20,
+  #                   description: "赤紅槍身、燃著火焰的槍尖（近戰武器、法杖都能套）" }   # Blockbench 手做（tools/models3d_custom/）
   m3d_star_aegis: { type: skin, slot: offhand, art: star_aegis, name: 星穹聖盾, rarity: epic, fashion_price: 20 }
   m3d_void_tome: { type: skin, slot: offhand, art: void_tome, name: 虛空魔典, rarity: epic, fashion_price: 20 }
   m3d_star_crown: { type: skin, slot: headgear, art: star_crown, name: 星冠, rarity: legendary, fashion_price: 40 }

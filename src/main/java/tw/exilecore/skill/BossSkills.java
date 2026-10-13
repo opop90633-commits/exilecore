@@ -112,6 +112,11 @@ public final class BossSkills implements Listener {
         default String tempoKind() {
             return null;
         }
+
+        /** 還沒開打（2026-10：地圖 Boss 要有人走進 Boss 房才開打）：不找目標、不出招、場地危害不落。 */
+        default boolean dormant() {
+            return false;
+        }
     }
 
     /** 目標最遠從幾格外找（Boss）。 */
@@ -648,6 +653,9 @@ public final class BossSkills implements Listener {
                 return;
             }
             advance(brain, brain.cast, now);
+            return;
+        }
+        if (brain.host.dormant()) {
             return;
         }
         // 一次只做一件事：上一件還沒完（齊射還在飛、光球剛放出去、場地危害還沒落下）什麼都不開始；
