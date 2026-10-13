@@ -59,7 +59,7 @@ class UiPackTest {
      * 資源包大小的上限：2026-10 多了招式預警的地面範圍（256×256）、裝備幻化、3D 時裝（web/pack3d.zip），
      * 已經不是 512 KB 以內了；還是一次下載、之後有快取，只是不能無限長大。
      */
-    static final int MAX_PACK_BYTES = 8 * 1024 * 1024;
+    static final int MAX_PACK_BYTES = 12 * 1024 * 1024; // 2026-10：加了背景音樂（music/*.ogg）之後約 9.8 MB，上限 8 → 12 MB
 
     /**
      * 改寫的原版物品定義（assets/minecraft/items/）最外層是鎖定的小鎖頭（2026-10）：custom_model_data 的 flag 0
@@ -403,11 +403,23 @@ class UiPackTest {
             assertTrue(event.startsWith("block.") && event.endsWith(".hit"), event);
         }
         final JsonObject sounds = json("assets/minecraft/sounds.json");
-        assertEquals(muted.size(), sounds.size());
+        // 2026-10：原版的背景音樂也一起靜音（我們自己放音樂）
+        assertEquals(muted.size() + tw.exilecore.music.Music.VANILLA_MUSIC.size(), sounds.size());
+        assertEquals(0, sounds.getAsJsonObject("music.game").getAsJsonArray("sounds").size());
+        assertFalse(sounds.has("music.menu"), "主選單的音樂留著");
         final JsonObject stone = sounds.getAsJsonObject("block.stone.hit");
         assertTrue(stone.get("replace").getAsBoolean());
         assertEquals(0, stone.getAsJsonArray("sounds").size(), "換成空的：播的時候什麼都沒有");
-        assertTrue(files.keySet().stream().filter(path -> path.endsWith("sounds.json")).count() == 1, "只動原版的 sounds.json");
+        assertTrue(files.keySet().stream().filter(path -> path.endsWith("sounds.json")).allMatch(path -> path.equals("assets/minecraft/sounds.json")
+                || path.equals("assets/exilecore/sounds.json")), "原版的靜音＋我們自己的背景音樂");
+        // 背景音樂：7 首都有 ogg 與事件（串流）
+        final JsonObject music = json("assets/exilecore/sounds.json");
+        for (final tw.exilecore.music.Music.Track track : tw.exilecore.music.Music.TRACKS) {
+            assertTrue(files.containsKey("assets/exilecore/sounds/music/" + track.id() + ".ogg"), track.id());
+            assertTrue(music.getAsJsonObject(track.event()).getAsJsonArray("sounds").get(0).getAsJsonObject().get("stream").getAsBoolean());
+        }
+        assertEquals(2, tw.exilecore.music.Music.tracks(tw.exilecore.music.Music.Mood.OVERWORLD).size());
+        assertEquals(3, tw.exilecore.music.Music.tracks(tw.exilecore.music.Music.Mood.MAP).size());
     }
 
     @Test

@@ -759,6 +759,19 @@ final class SkillVisuals {
     /** 地面效果平常的樣子（每 2 tick 一次，稀疏一點）。 */
     void zoneAmbient(final String visual, final List<Location> points, final double radius, final long now) {
         final World world = points.getFirst().getWorld();
+        if ("tornado_shot".equals(visual) && points.size() == 1) {
+            // 2026-10：龍捲風（裂空箭）：一根往上轉、越上面越寬的螺旋
+            final Location base = points.getFirst();
+            final int count = allow(base, 10, 2);
+            for (int i = 0; i < count; i++) {
+                final double height = i * 0.35;
+                final double angle = now * 0.6 + i * 0.9;
+                final double r = radius * (0.25 + 0.75 * i / Math.max(1.0, count - 1));
+                final Location at = base.clone().add(Math.cos(angle) * r, 0.1 + height, Math.sin(angle) * r);
+                tw.exilecore.skill.Fx.spawn(world, i % 2 == 0 ? Particle.CLOUD : Particle.WHITE_ASH, at, 1, 0, 0, 0, 0.01);
+            }
+            return;
+        }
         final Style style = style(visual);
         final Particle.DustOptions dust = style == null ? GOLD : style.dust();
         final Particle particle = style == null ? Particle.CRIT : style.particle();

@@ -134,8 +134,20 @@ public final class SupportProcs implements Listener {
         return dot < 0 ? profileId : profileId.substring(0, dot);
     }
 
+    /** 這一下是主要寶石觸發的法術打的（2026-10）：它的輔助觸發出來的技能也標成觸發的，打出暴擊不會再幫暴擊引星充能。 */
+    private boolean metaHit;
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onHit(final HitEvent event) {
+        metaHit = event.skill() != null && event.skill().id().contains(MetaGems.TRIGGERED_SUFFIX);
+        try {
+            onHitInner(event);
+        } finally {
+            metaHit = false;
+        }
+    }
+
+    private void onHitInner(final HitEvent event) {
         if (!(event.attacker() instanceof Player player) || event.skill() == null || !event.result().hit()) {
             return;
         }
@@ -288,6 +300,9 @@ public final class SupportProcs implements Listener {
             if (share > 0 && parent != null) {
                 final SkillBuild parentBuild = service.build(state, plugin.players().sheet(player), parent, entry);
                 build = build.withProfile(parentBuild.profile().scaled(share, sub.name()).derive(sub.id(), sub.tags(), java.util.Set.of()));
+            }
+            if (metaHit) {
+                build = build.withProfile(build.profile().derive(build.profile().id() + MetaGems.TRIGGERED_SUFFIX, java.util.Set.of(), java.util.Set.of()));
             }
             LivingEntity aim = target;
             if (aim == null) {

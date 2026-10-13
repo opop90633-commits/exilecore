@@ -310,16 +310,8 @@ public final class SalvageMenu extends Menu {
     }
 
     private static boolean otherWeapon(final Set<String> tags, final Set<String> mine) {
-        if (tags.contains("weapon")) {
-            // 2026-10：跟掉落過濾器同一套：這把的武器種類有任何一個不是手上的，就算別種（權杖同時是錘和權杖）
-            for (final String tag : tags) {
-                if (tw.exilecore.loot.LootFilter.WEAPON_CLASSES.contains(tag) && !mine.contains(tag)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        return tags.contains("shield") && mine.contains("two_hand");
+        // 2026-10：直接用掉落過濾器的判斷（武器種類、單手／雙手、雙手不用盾、箭袋只有拿弓的人算同類），兩邊不會再對不上
+        return tw.exilecore.loot.LootFilter.unlikeMine(tags, new tw.exilecore.loot.LootFilter.Viewer(0, mine, Set.of()), true, false);
     }
 
     private static boolean otherArmour(final Set<String> tags, final Set<String> mine) {

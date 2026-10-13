@@ -298,7 +298,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 mark = new Mark(check(where, "duration", node.decimal("duration", 2), 0.5, 10), 0, true, 0, java.util.List.of(),
                         ScaledMod.parseList(node, "effects"), scaled(where, node, "slow", 0, 0, 90));
             }
-            case SUMMON, AURA, WARCRY, RALLY -> {
+            case SUMMON, AURA, WARCRY, RALLY, META -> {
                 // 參數在各自的區塊（SummonSpec、AuraSpec、WarcrySpec），這裡沒有東西要讀
             }
             default -> throw new IllegalStateException(mechanic.name());

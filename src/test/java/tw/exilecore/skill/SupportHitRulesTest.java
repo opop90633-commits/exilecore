@@ -70,7 +70,6 @@ class SupportHitRulesTest {
         assertNull(support("minion_damage").refusal(skill("raise_zombie")), "minion 標籤的給召喚物");
         assertNull(support("clarity").refusal(skill("frost_aegis")), "精魂輔助");
         assertNull(support("heightened_curse").refusal(skill("vulnerability_curse")));
-        assertNull(support("trigger_hit_taken").refusal(skill("vulnerability_curse")), "受擊時放詛咒");
         assertNull(support("warcry_power").refusal(skill("fortifying_cry")));
         // 2026-10：好處是傷害、代價是範圍／冷卻／持續／施法速度的輔助，掛在不會造成傷害的技能上只剩代價：不行
         final String reason = "不會造成傷害的技能不行";
@@ -105,7 +104,7 @@ class SupportHitRulesTest {
 
     @Test
     void heraldsAreNotCastSpells() {
-        for (final String id : new String[] {"spell_echo", "trigger_crit", "unleash", "channel_focus", "ember_infusion", "faster_casting", "considered_casting"}) {
+        for (final String id : new String[] {"spell_echo", "unleash", "channel_focus", "ember_infusion", "faster_casting", "considered_casting"}) {
             assertFalse(support(id).supports(skill("herald_of_ash")), id);
             assertFalse(support(id).supports(skill("herald_ash_burst")), id + "：擊殺效果也帶 herald 標籤");
         }

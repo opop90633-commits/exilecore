@@ -1,0 +1,10 @@
+{
+  "sftp_host": "sftp.主機商.org",
+  "sftp_port": 2024,
+  "sftp_user": "面板帳號.伺服器代號",
+  "sftp_password": "面板登入密碼",
+  "remote_plugins": "plugins",
+  "panel_url": "https://面板網址",
+  "server_id": "伺服器代號（面板網址 /server/ 後面那一段）",
+  "api_key": "面板帳號設定裡建立的 API 金鑰"
+}

@@ -595,6 +595,9 @@ public final class CombatListener implements Listener {
                 if (ailments.breakArmour(defender, defenderMonster, result.outgoing().get(DamageType.PHYSICAL), breakPercent, rawArmour)
                         && plugin.skills() != null) {
                     plugin.skills().procEvent((Player) attacker, skill.id(), "armour_broken", null, defender); // 輔助：完全破甲時（2026-10）
+                    if (charges != null) {
+                        charges.onEvent((Player) attacker, "armour_broken", breakSheet, skill.tags(), defender); // 戰星：完全破甲時（2026-10）
+                    }
                 }
             }
         }
@@ -666,6 +669,9 @@ public final class CombatListener implements Listener {
                 if (cull(event, defender, defenderMonster) && attackerIsPlayer) {
                     // 2026-10：收命、收魂（斷命打死時回復）
                     final StatSheet cullSheet = skill.effective(attackerSheet);
+                    if (charges != null) {
+                        charges.onEvent((Player) attacker, "cull", cullSheet, skill.tags(), defender); // 戰星：撲殺時（2026-10，稀有度越高給越多）
+                    }
                     final double lifePct = cullSheet.flat(StatKeys.LIFE_ON_CULL, skill.tags());
                     final double manaPct = cullSheet.flat(StatKeys.MANA_ON_CULL, skill.tags());
                     if (lifePct > 0 || manaPct > 0) {

@@ -214,7 +214,16 @@ class ExclusiveDropTest {
         assertEquals(skills.skillsFrom("awakener").stream().map(tw.exilecore.skill.SkillDefinition::id).toList(), gems, "每一顆專屬技能寶石都會掉");
         assertEquals(7, supports.size());
         assertEquals(6, gems.size());
-        assertEquals(0.03, drops.uniqueChance(), 1e-9, "自己的十件傳奇 3%");
+        assertEquals(0.05, drops.uniqueChance(), 1e-9, "自己的十件傳奇 5%（2026-10：3% → 5%）");
+        assertEquals(0.06, drops.exclusiveChance(), 1e-9, "極境專屬 6%（2026-10：3% → 6%）");
+        assertEquals(0.20, drops.commonChance(maps.drops().finalCommonChance()), 1e-9, "共通傳奇 20%（只有巔峰；終局、極境照 final_common_chance）");
+        for (final MapConfig.ExtraDrop extra : drops.extra()) {
+            if (List.of("abyssal_touch", "myriad_stars").contains(extra.id())) {
+                assertEquals(0.02, extra.chance(), 1e-9, extra.id() + "：2026-10 1% → 2%");
+            }
+        }
+        // 沒寫 common_chance：照 drops.final_common_chance
+        assertEquals(0.1, MapConfig.parseUber(YamlNode.load("test.yml", new java.io.StringReader("name: x\n"))).drops().commonChance(0.1), 1e-9);
         // 寫 skill: 的會讀成技能寶石
         final MapConfig.Uber parsed = MapConfig.parseUber(YamlNode.load("test.yml", new java.io.StringReader(
                 "name: x\ndrops:\n  extra:\n    - { skill: void_meteor, chance: 0.5 }\n")));

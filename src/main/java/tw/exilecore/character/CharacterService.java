@@ -843,6 +843,21 @@ public final class CharacterService {
 
     // ---- 進度 ----
 
+    /**
+     * 直接寫某個角色（用編號，不一定是現在這隻）的進度到資料庫（2026-10：換角色時把上一隻還沒存的統計補存）。
+     * 不動記憶體裡的進度；那隻角色下次載入時從資料庫讀。
+     */
+    public void setProgressFor(final long characterId, final String key, final String value) {
+        plugin.database().async(connection -> {
+            repository.setProgress(connection, characterId, key, value);
+            return null;
+        }).whenComplete((ignored, error) -> {
+            if (error != null) {
+                plugin.getSLF4JLogger().error("寫入角色 {} 的進度 {} 失敗", characterId, key, error);
+            }
+        });
+    }
+
     /** 記一筆角色進度（檢查點、Boss 首殺…），馬上寫進資料庫。 */
     public void setProgress(final Player player, final String key, final String value) {
         final PlayerState state = states.get(player);

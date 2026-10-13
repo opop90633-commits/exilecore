@@ -106,9 +106,32 @@ public final class ChargeText {
         return ids;
     }
 
-    /** 是不是戰星的屬性（charge.chance／charge.on_hit／charge.max.代號）。charge.duration 不算（它是一般的增加）。 */
+    /** 是不是戰星的屬性（charge.chance／charge.on_hit／charge.max／charge.event.事件／charge.extra.代號，加上 {@link #isGenerationStat} 那幾種）。
+     *  charge.duration 不算（它是一般的增加）。 */
     public static boolean isChargeStat(final String stat) {
-        return chargeOf(stat) != null;
+        return chargeOf(stat) != null || isGenerationStat(stat);
+    }
+
+    /** 事件給戰星時文字裡的事件（2026-10；charge.event.事件.代號）。 */
+    public static final Map<String, String> EVENTS = events();
+
+    private static Map<String, String> events() {
+        final Map<String, String> map = new LinkedHashMap<>();
+        map.put("stun_applied", "重暈敵人時");
+        map.put("armour_broken", "完全破甲時");
+        map.put("freeze", "冰凍敵人時");
+        map.put("shock", "讓敵人感電時");
+        map.put("ignite", "點燃敵人時");
+        map.put("cull", "撲殺敵人時");
+        map.put("kill_rare", "擊殺稀有或傳奇怪物時");
+        map.put("dodge", "翻滾時");
+        return Collections.unmodifiableMap(map);
+    }
+
+    /** 不是某一種戰星、但跟戰星的獲得有關的屬性（2026-10）：charge.extra、charge.periodic、charge.event_cooldown.事件。 */
+    public static boolean isGenerationStat(final String stat) {
+        return stat.equals("charge.extra") || stat.equals("charge.periodic")
+                || stat.startsWith("charge.event_cooldown.") && EVENTS.containsKey(stat.substring("charge.event_cooldown.".length()));
     }
 
     /** 擊中時獲得的那一種（可以加技能種類的標籤：「近戰擊中時」）。 */
@@ -118,7 +141,16 @@ public final class ChargeText {
 
     /** 屬性鍵後面的戰星代號；不是戰星屬性回傳 null。 */
     public static String chargeOf(final String stat) {
-        for (final String prefix : List.of(StatKeys.CHARGE_CHANCE, StatKeys.CHARGE_ON_HIT, StatKeys.CHARGE_MAX)) {
+        if (stat.startsWith("charge.event.")) { // 2026-10：charge.event.事件.代號
+            final String rest = stat.substring("charge.event.".length());
+            final int dot = rest.lastIndexOf('.');
+            if (dot <= 0 || !EVENTS.containsKey(rest.substring(0, dot))) {
+                return null;
+            }
+            final String id = rest.substring(dot + 1);
+            return id.matches("[a-z_]+") ? id : null;
+        }
+        for (final String prefix : List.of(StatKeys.CHARGE_CHANCE, StatKeys.CHARGE_ON_HIT, StatKeys.CHARGE_MAX, "charge.extra.")) {
             if (stat.startsWith(prefix)) {
                 final String id = stat.substring(prefix.length());
                 return id.matches("[a-z_]+") ? id : null;
@@ -133,11 +165,30 @@ public final class ChargeText {
      * @param prefix 技能種類的標籤寫成的前綴（「近戰」「攻擊」；沒有是空字串），只有擊中時獲得用得到
      */
     public static String describe(final String stat, final double value, final String prefix) {
+        if (stat.equals("charge.extra")) {
+            return "獲得戰星時 " + number(value) + "% 機率多獲得一顆同種的";
+        }
+        if (stat.equals("charge.periodic")) {
+            return "每分鐘獲得 " + number(value) + " 顆戰星（每 " + number(60 / Math.max(0.01, value)) + " 秒一顆；照最高的能力值：力量" + name("endurance")
+                    + "、敏捷" + name("frenzy") + "、智慧" + name("power") + "）";
+        }
+        if (stat.startsWith("charge.event_cooldown.")) {
+            final String event = EVENTS.get(stat.substring("charge.event_cooldown.".length()));
+            return event == null ? null : event + "給的戰星每 " + number(value) + " 秒最多一次";
+        }
         final String id = chargeOf(stat);
         if (id == null) {
             return null;
         }
         final String name = name(id);
+        if (stat.startsWith("charge.event.")) {
+            final String rest = stat.substring("charge.event.".length());
+            final String event = EVENTS.get(rest.substring(0, rest.lastIndexOf('.')));
+            return event + (value >= 100 ? "獲得一顆" : " " + number(value) + "% 機率獲得一顆") + name;
+        }
+        if (stat.startsWith("charge.extra.")) {
+            return "獲得一顆" + name + "時 " + number(value) + "% 機率多獲得一顆";
+        }
         if (stat.startsWith(StatKeys.CHARGE_MAX)) {
             return (value >= 0 ? "+" : "") + number(value) + " " + name + "上限";
         }

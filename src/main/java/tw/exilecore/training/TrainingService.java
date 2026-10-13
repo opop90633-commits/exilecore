@@ -41,6 +41,9 @@ import java.util.UUID;
  *   <li>不見了補一隻、多的拿掉、跑掉了移回去、設定改了重新裝扮（每 5 秒，只管已經載入的區塊）。</li>
  *   <li>練習場（假人的外框往外幾格）裡可以施放技能；營地其他地方照樣是安全區。</li>
  *   <li>每個人打每一隻各自記一段：畫面上方的計量條（每秒傷害、總傷害、秒數；停手時慢慢變短），停手幾秒後聊天框給總結。</li>
+ *   <li>每人一組（2026-10）：走進練習場就在同樣的位置放一組只有他看得到、只有他打得到的假人（不存檔），共用的那組對他藏起來；
+ *       別人的減益、範圍技能、召喚物碰不到，好幾個人可以同時測。離開練習場 {@link #PERSONAL_GRACE_MILLIS} 毫秒或下線就收掉。
+ *       同時最多 personal_max 組，滿了的人照舊打共用的那組。</li>
  * </ul>
  */
 public final class TrainingService {
@@ -51,6 +54,14 @@ public final class TrainingService {
     private final NamespacedKey dummyKey;
     /** 裝扮時的設定（PDC；設定改了就重新裝扮）。 */
     private final NamespacedKey signatureKey;
+    /** 每人一組的假人：主人的 UUID（PDC；沒有 = 共用的那組）。 */
+    private final NamespacedKey ownerKey;
+    /** 每人一組：主人 → 最後一次在練習場裡的時間。 */
+    private final Map<UUID, Long> personal = new HashMap<>();
+    /** 離開練習場多久收掉自己那組。 */
+    static final long PERSONAL_GRACE_MILLIS = 15_000;
+    /** tick（每 5 tick）數到 4 檢查一次誰進出練習場（約每秒一次）。 */
+    private int personalCounter;
     /** 找過地面的位置：代號 → 位置。 */
     private final Map<String, Location> spots = new HashMap<>();
     /** 玩家 → （假人 → 這一段）。 */
@@ -74,6 +85,7 @@ public final class TrainingService {
         this.config = config;
         this.dummyKey = new NamespacedKey(plugin, "training_dummy");
         this.signatureKey = new NamespacedKey(plugin, "training_dummy_look");
+        this.ownerKey = new NamespacedKey(plugin, "training_dummy_owner");
     }
 
     /** 這個角色打假人的紀錄換成打 Boss 的每秒傷害（2026-10，終局、極境、巔峰的每秒傷害上限用；沒有紀錄 0）。 */
@@ -91,6 +103,37 @@ public final class TrainingService {
     /** 這隻是不是訓練假人。 */
     public boolean isDummy(final Entity entity) {
         return entity != null && entity.getPersistentDataContainer().has(dummyKey, PersistentDataType.STRING);
+    }
+
+    /** 每人一組的假人的主人（共用的、不是假人是 null）。 */
+    public UUID ownerOf(final Entity entity) {
+        if (entity == null) {
+            return null;
+        }
+        final String owner = entity.getPersistentDataContainer().get(ownerKey, PersistentDataType.STRING);
+        if (owner == null) {
+            return null;
+        }
+        try {
+            return UUID.fromString(owner);
+        } catch (final IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /**
+     * 這個玩家（或他的召喚物、圖騰、投射物）能不能打這隻（2026-10，每人一組）：不是假人一律可以；
+     * 別人那組的不行；自己有一組時共用的那組也不行（看不到）。attacker 是 null（不知道是誰）時只有共用的可以。
+     */
+    public boolean canTarget(final Entity entity, final Player attacker) {
+        if (!isDummy(entity)) {
+            return true;
+        }
+        final UUID owner = ownerOf(entity);
+        if (owner != null) {
+            return attacker != null && owner.equals(attacker.getUniqueId());
+        }
+        return attacker == null || !personal.containsKey(attacker.getUniqueId());
     }
 
     /** 這隻假人的設定（不是假人、或設定裡已經沒有這一隻時是 null）。 */
@@ -169,28 +212,107 @@ public final class TrainingService {
             return;
         }
         final Map<String, List<Mannequin>> found = new HashMap<>();
+        final Map<UUID, Map<String, List<Mannequin>>> owned = new HashMap<>();
         for (final Mannequin mannequin : camp.getWorld().getEntitiesByClass(Mannequin.class)) {
             final String id = mannequin.getPersistentDataContainer().get(dummyKey, PersistentDataType.STRING);
             if (id == null || !mannequin.isValid()) {
                 continue;
             }
             final DummyConfig.Dummy dummy = config.dummy(id);
-            if (dummy == null) {
-                mannequin.remove(); // 設定裡拿掉的假人
+            final UUID owner = ownerOf(mannequin);
+            if (dummy == null || (owner != null && !personal.containsKey(owner))) {
+                mannequin.remove(); // 設定裡拿掉的假人；收掉了的人的那組（重開之後殘留的）
                 continue;
             }
-            found.computeIfAbsent(dummy.id(), key -> new ArrayList<>()).add(mannequin);
+            (owner == null ? found : owned.computeIfAbsent(owner, key -> new HashMap<>()))
+                    .computeIfAbsent(dummy.id(), key -> new ArrayList<>()).add(mannequin);
         }
         for (final DummyConfig.Dummy dummy : config.dummies()) {
             try {
-                maintain(dummy, found.getOrDefault(dummy.id(), List.of()));
+                maintain(dummy, found.getOrDefault(dummy.id(), List.of()), null);
             } catch (final RuntimeException e) {
                 plugin.getSLF4JLogger().warn("訓練假人 {} 放不出來", dummy.id(), e); // 一隻出錯不影響其他隻
             }
         }
+        for (final UUID owner : List.copyOf(personal.keySet())) {
+            maintainPersonal(owner, owned.getOrDefault(owner, Map.of()));
+        }
     }
 
-    private void maintain(final DummyConfig.Dummy dummy, final List<Mannequin> mine) {
+    /** 這個人那一組：每隻在不在、對不對；共用的那組對他藏起來。 */
+    private void maintainPersonal(final UUID owner, final Map<String, List<Mannequin>> mine) {
+        final Player player = plugin.getServer().getPlayer(owner);
+        if (player == null) {
+            return;
+        }
+        for (final DummyConfig.Dummy dummy : config.dummies()) {
+            try {
+                maintain(dummy, mine.getOrDefault(dummy.id(), List.of()), owner);
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("{} 的訓練假人 {} 放不出來", player.getName(), dummy.id(), e);
+            }
+        }
+        hideShared(player);
+    }
+
+    /** 共用的那組對這個人藏起來（他有自己的一組）。 */
+    private void hideShared(final Player player) {
+        for (final Mannequin mannequin : player.getWorld().getEntitiesByClass(Mannequin.class)) {
+            if (isDummy(mannequin) && ownerOf(mannequin) == null && player.canSee(mannequin)) {
+                player.hideEntity(plugin, mannequin);
+            }
+        }
+    }
+
+    /** 每秒：在練習場裡的人給一組自己的（還有名額的話）；離開太久、下線的收掉。 */
+    private void personalCheck() {
+        final Location camp = camp();
+        final long now = System.currentTimeMillis();
+        if (camp != null && camp.getWorld() != null && config.personalMax() > 0 && !config.dummies().isEmpty()) {
+            for (final Player player : camp.getWorld().getPlayers()) {
+                if (!inArena(player.getLocation())) {
+                    continue;
+                }
+                final UUID id = player.getUniqueId();
+                if (personal.containsKey(id)) {
+                    personal.put(id, now);
+                } else if (personal.size() < config.personalMax()) {
+                    personal.put(id, now);
+                    maintainPersonal(id, Map.of()); // 馬上放出來（之後每 5 秒的維護照顧）
+                }
+            }
+        }
+        for (final Iterator<Map.Entry<UUID, Long>> it = personal.entrySet().iterator(); it.hasNext(); ) {
+            final Map.Entry<UUID, Long> entry = it.next();
+            final Player player = plugin.getServer().getPlayer(entry.getKey());
+            if (player == null || config.personalMax() <= 0 || now - entry.getValue() > PERSONAL_GRACE_MILLIS) {
+                it.remove();
+                removePersonal(entry.getKey(), player);
+            }
+        }
+    }
+
+    /** 收掉這個人那一組；共用的那組給他看回來。 */
+    private void removePersonal(final UUID owner, final Player player) {
+        final Location camp = camp();
+        if (camp == null || camp.getWorld() == null) {
+            return;
+        }
+        for (final Mannequin mannequin : camp.getWorld().getEntitiesByClass(Mannequin.class)) {
+            if (!isDummy(mannequin)) {
+                continue;
+            }
+            final UUID of = ownerOf(mannequin);
+            if (owner.equals(of)) {
+                plugin.monsters().ledger().forget(mannequin.getUniqueId());
+                mannequin.remove();
+            } else if (of == null && player != null) {
+                player.showEntity(plugin, mannequin);
+            }
+        }
+    }
+
+    private void maintain(final DummyConfig.Dummy dummy, final List<Mannequin> mine, final UUID owner) {
         final Location spot = spot(dummy);
         if (spot == null) {
             return;
@@ -198,7 +320,7 @@ public final class TrainingService {
         if (mine.isEmpty()) {
             // 實體還沒載入完時不放（不然載入後會多一隻）
             if (spot.getWorld().isChunkLoaded(spot.getBlockX() >> 4, spot.getBlockZ() >> 4) && spot.getChunk().isEntitiesLoaded()) {
-                spawn(dummy, spot);
+                spawn(dummy, spot, owner);
             }
             return;
         }
@@ -232,14 +354,34 @@ public final class TrainingService {
         return false;
     }
 
-    private Mannequin spawn(final DummyConfig.Dummy dummy, final Location spot) {
+    private Mannequin spawn(final DummyConfig.Dummy dummy, final Location spot, final UUID owner) {
         final Mannequin mannequin = spot.getWorld().spawn(spot, Mannequin.class, entity -> {
             entity.getPersistentDataContainer().set(dummyKey, PersistentDataType.STRING, dummy.id());
             entity.setImmovable(true);
             entity.setSilent(true);
-            entity.setPersistent(true);
             entity.setRemoveWhenFarAway(false);
+            if (owner == null) {
+                entity.setPersistent(true);
+            } else {
+                // 每人一組：不存檔（重開就沒了）、預設誰都看不到，只給主人看
+                entity.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, owner.toString());
+                entity.setPersistent(false);
+                entity.setVisibleByDefault(false);
+            }
         });
+        if (owner != null) {
+            final Player player = plugin.getServer().getPlayer(owner);
+            if (player != null) {
+                player.showEntity(plugin, mannequin);
+            }
+        } else {
+            for (final UUID id : personal.keySet()) {
+                final Player player = plugin.getServer().getPlayer(id);
+                if (player != null) {
+                    player.hideEntity(plugin, mannequin); // 新放的共用假人：對有自己一組的人藏起來
+                }
+            }
+        }
         dress(mannequin, dummy, levelFor(dummy, 1));
         return mannequin;
     }
@@ -374,6 +516,10 @@ public final class TrainingService {
 
     /** 每 5 tick：計量條更新；停手太久的一段結束（聊天框給總結）。 */
     void tick() {
+        if (++personalCounter >= 4) {
+            personalCounter = 0;
+            personalCheck();
+        }
         final long now = System.currentTimeMillis();
         final long idle = config.idleSeconds() * 1000L;
         for (final Iterator<Map.Entry<UUID, Map<UUID, Session>>> players = sessions.entrySet().iterator(); players.hasNext(); ) {
@@ -498,6 +644,9 @@ public final class TrainingService {
     void forget(final Player player) {
         sessions.remove(player.getUniqueId());
         hideBar(player);
+        if (personal.remove(player.getUniqueId()) != null) {
+            removePersonal(player.getUniqueId(), null);
+        }
     }
 
     /** 重讀設定：位置重找、假人的屬性表重算（下一次維護時照新設定裝扮、移位置）。 */
@@ -516,6 +665,10 @@ public final class TrainingService {
 
     /** 關閉：計量條收起來。 */
     void shutdown() {
+        for (final UUID owner : List.copyOf(personal.keySet())) {
+            personal.remove(owner);
+            removePersonal(owner, plugin.getServer().getPlayer(owner));
+        }
         for (final UUID uuid : List.copyOf(bars.keySet())) {
             final Player player = plugin.getServer().getPlayer(uuid);
             if (player != null) {

@@ -495,7 +495,7 @@ final class MapEvents implements Listener {
             player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.8f, 1.3f);
             blessed++;
             // 神龕的專屬傳奇（每個拿到增益的人各擲一次）
-            final ItemData unique = eventUnique(MapEventConfig.Kind.SHRINE, event.instance, random);
+            final ItemData unique = eventUnique(MapEventConfig.Kind.SHRINE, event.instance, player, random);
             if (unique != null) {
                 deliver(player, event.center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), shrine.name()),
                         List.of(DropTable.Drop.equipment(unique)), 0);
@@ -599,9 +599,12 @@ final class MapEvents implements Listener {
                 continue;
             }
             final StatSheet sheet = plugin.players().sheet(player);
+            final double month = plugin.events() == null ? 0 : plugin.events().quantityBonus(); // 2026-10：這個月的主題是全域的
+            final double monthRarity = plugin.events() == null ? 0 : plugin.events().rarityBonus();
             final double quantity = box.quantityBonus() + instance.stats().quantity() / 100.0 + sheet.increased(StatKeys.DROP_QUANTITY, java.util.Set.of())
-                    + instance.atlas().increased("atlas.strongbox.quantity"); // 星圖天賦：寶箱的物品數量
-            final double rarity = box.rarityBonus() + instance.stats().rarity() / 100.0 + sheet.increased(StatKeys.DROP_RARITY, java.util.Set.of());
+                    + instance.atlas().increased("atlas.strongbox.quantity") + month; // 星圖天賦：寶箱的物品數量
+            final double rarity = box.rarityBonus() + instance.stats().rarity() / 100.0 + sheet.increased(StatKeys.DROP_RARITY, java.util.Set.of())
+                    + monthRarity;
             final List<DropTable.Drop> rolled = new ArrayList<>();
             for (int i = 0; i < box.rolls(); i++) {
                 // 全服掉落加成（管理網頁）：數量與稀有度加在物品上；金幣倍數在 rollGold 裡乘
@@ -633,7 +636,7 @@ final class MapEvents implements Listener {
                 }
             }
             // 寶箱的專屬傳奇（每個有份的人各擲一次）
-            final ItemData unique = eventUnique(MapEventConfig.Kind.STRONGBOX, instance, random);
+            final ItemData unique = eventUnique(MapEventConfig.Kind.STRONGBOX, instance, player, random);
             if (unique != null) {
                 rolled.add(DropTable.Drop.equipment(unique));
             }
@@ -696,7 +699,7 @@ final class MapEvents implements Listener {
                     if (player.getLocation().distanceSquared(center) > 30 * 30) {
                         continue;
                     }
-                    final ItemData unique = eventUnique(MapEventConfig.Kind.BREACH, event.instance, random);
+                    final ItemData unique = eventUnique(MapEventConfig.Kind.BREACH, event.instance, player, random);
                     if (unique != null) {
                         deliver(player, center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), "裂隙"),
                                 List.of(DropTable.Drop.equipment(unique)), 0);
@@ -816,9 +819,10 @@ final class MapEvents implements Listener {
      * 這種事件的專屬傳奇（uniques.yml 的 sources 寫 shrine、strongbox、breach、exile）：照 map_events.yml 的 unique_chance 擲，
      * 沒中或沒有能掉的回傳 null。
      */
-    private ItemData eventUnique(final MapEventConfig.Kind kind, final MapInstance instance, final RandomGenerator random) {
-        // 星圖天賦：這種事件掉專屬傳奇的機率增加 x%
-        if (random.nextDouble() >= config.uniqueChance(kind) * (1 + instance.atlas().eventUnique(kind))) {
+    private ItemData eventUnique(final MapEventConfig.Kind kind, final MapInstance instance, final Player player, final RandomGenerator random) {
+        // 星圖天賦：這種事件掉專屬傳奇的機率增加 x%；2026-10：也吃這個人的物品稀有度（自己的＋全服＋主題＋地圖的）
+        final tw.exilecore.loot.LootBonus.Bonus bonus = tw.exilecore.loot.LootBonus.of(plugin, player).plus(0, instance.stats().rarity() / 100.0);
+        if (random.nextDouble() >= bonus.rare(config.uniqueChance(kind) * (1 + instance.atlas().eventUnique(kind)))) {
             return null;
         }
         return MapDrops.unique(plugin.items().generator(), MapEventConfig.uniqueSource(kind), instance.level(), random);
@@ -839,7 +843,8 @@ final class MapEvents implements Listener {
         final Event found = exiles.remove(entity.getUniqueId());
         if (found == null) {
             // 裂隙的怪：催化劑
-            if (killer != null && entity.getPersistentDataContainer().has(quantityKey) && random.nextDouble() < config.catalystChance()) {
+            if (killer != null && entity.getPersistentDataContainer().has(quantityKey)
+                    && random.nextDouble() < tw.exilecore.loot.LootBonus.of(plugin, killer).more(config.catalystChance())) { // 2026-10：吃物品數量
                 final MapInstance instance = service.instanceOf(entity);
                 final int level = instance == null ? plugin.monsters().data(entity).map(MonsterData::level).orElse(1) : instance.level();
                 final tw.exilecore.currency.CurrencyType catalyst = pickCurrency(tw.exilecore.currency.CurrencyOperation.CATALYST, level, random);
@@ -863,7 +868,10 @@ final class MapEvents implements Listener {
             final List<DropTable.Drop> rolled = new ArrayList<>();
             final int extra = found.instance.atlas().count("atlas.exile.drops"); // 星圖天賦：多掉幾件
             final tw.exilecore.item.LootBias bias = plugin.characters().lootBias(player); // 2026-10：照職業、照分類抽基底
-            for (int i = 0; i < config.exileDrops() + extra && anyBase; i++) {
+            // 2026-10：件數、星籤數吃這個人的物品數量（自己的＋全服＋主題＋地圖的）
+            final tw.exilecore.loot.LootBonus.Bonus bonus = tw.exilecore.loot.LootBonus.of(plugin, player).plus(found.instance.stats().quantity() / 100.0, 0);
+            final int pieces = bonus.amount(config.exileDrops() + extra, random);
+            for (int i = 0; i < pieces && anyBase; i++) {
                 final ItemBase base = plugin.items().repository().pickSold(level, random, bias);
                 if (base == null) {
                     break;
@@ -871,7 +879,7 @@ final class MapEvents implements Listener {
                 rolled.add(DropTable.Drop.equipment(plugin.items().generator().generate(base, Rarity.RARE, level, random)));
             }
             // 流寇的招牌：星籤
-            final int omens = config.minOmens() + (config.maxOmens() > config.minOmens() ? random.nextInt(config.maxOmens() - config.minOmens() + 1) : 0);
+            final int omens = bonus.amount(config.minOmens() + (config.maxOmens() > config.minOmens() ? random.nextInt(config.maxOmens() - config.minOmens() + 1) : 0), random);
             for (int i = 0; i < omens; i++) {
                 final tw.exilecore.currency.CurrencyType omen = pickCurrency(tw.exilecore.currency.CurrencyOperation.OMEN, level, random);
                 if (omen != null) {
@@ -879,7 +887,7 @@ final class MapEvents implements Listener {
                 }
             }
             // 流寇的專屬傳奇（每個有份的人各擲一次）
-            final ItemData unique = eventUnique(MapEventConfig.Kind.EXILE, found.instance, random);
+            final ItemData unique = eventUnique(MapEventConfig.Kind.EXILE, found.instance, player, random);
             if (unique != null) {
                 rolled.add(DropTable.Drop.equipment(unique));
             }

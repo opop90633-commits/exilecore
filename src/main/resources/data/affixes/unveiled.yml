@@ -2157,3 +2157,68 @@ unveiled_d_gloves_speed_frenzy:
   mods:
     - { stat: attack.speed@frenzy, type: INCREASED, value: "{value}" }
     - { stat: cast.speed@frenzy, type: INCREASED, value: "{value}" }
+
+
+# ---- 2026-10：戰星來源（照 PoE2 的魂核、符文、液態情感：「獲得一顆 X 時多一顆」「擊殺稀有怪」「翻滾」）----
+
+unveiled_d_helmet_extra_power:
+  type: suffix
+  group: unveiled_d_helmet_extra_power
+  spawn_tags: [helmet]
+  names: [淵銳之, 黯芒之]
+  text: "獲得一顆銳星時 {value}% 機率多獲得一顆"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 12] }
+  mods:
+    - { stat: charge.extra.power, type: FLAT, value: "{value}" }
+
+unveiled_d_gloves_extra_frenzy:
+  type: suffix
+  group: unveiled_d_gloves_extra_frenzy
+  spawn_tags: [leggings]
+  names: [淵怒之, 黯潮之]
+  text: "獲得一顆怒星時 {value}% 機率多獲得一顆"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 12] }
+  mods:
+    - { stat: charge.extra.frenzy, type: FLAT, value: "{value}" }
+
+unveiled_d_boots_extra_endurance:
+  type: suffix
+  group: unveiled_d_boots_extra_endurance
+  spawn_tags: [boots]
+  names: [淵磐之, 黯壁之]
+  text: "獲得一顆磐星時 {value}% 機率多獲得一顆"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 12] }
+  mods:
+    - { stat: charge.extra.endurance, type: FLAT, value: "{value}" }
+
+unveiled_d_amulet_rare_kill_charge:
+  type: suffix
+  group: unveiled_d_amulet_rare_kill_charge
+  spawn_tags: [amulet]
+  names: [淵獵之, 黯首之]
+  text: "擊殺稀有或傳奇怪物時 {value}% 機率各獲得一顆銳星、怒星與磐星"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 200, value: [40, 50] }
+    - { tier: 2, ilvl: 1, weight: 500, value: [25, 35] }
+  mods:
+    - { stat: charge.event.kill_rare.power, type: FLAT, value: "{value}" }
+    - { stat: charge.event.kill_rare.frenzy, type: FLAT, value: "{value}" }
+    - { stat: charge.event.kill_rare.endurance, type: FLAT, value: "{value}" }
+
+unveiled_d_boots_dodge_frenzy:
+  type: suffix
+  group: unveiled_d_boots_dodge_frenzy
+  spawn_tags: [boots]
+  names: [淵影之, 黯步之]
+  text: "翻滾時 {value}% 機率獲得一顆怒星"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 300, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 14] }
+  mods:
+    - { stat: charge.event.dodge.frenzy, type: FLAT, value: "{value}" }

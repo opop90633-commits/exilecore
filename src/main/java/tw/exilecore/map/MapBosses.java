@@ -664,12 +664,13 @@ final class MapBosses {
      * @param player 拿這份的人；null = 沒有人有份（照任何地圖都可能掉）
      */
     void loot(final MapInstance instance, final Player player, final List<DropTable.Drop> drops) {
+        final tw.exilecore.loot.LootBonus.Bonus bonus = bonus(instance, player);
         if (instance.isUber()) {
-            uberLoot(instance, player, drops);
+            uberLoot(instance, player, drops, bonus);
             return;
         }
         if (instance.isPinnacle()) {
-            pinnacleLoot(instance, player, drops);
+            pinnacleLoot(instance, player, drops, bonus);
             return;
         }
         final MapConfig config = service.config();
@@ -679,7 +680,8 @@ final class MapBosses {
         // 地圖：跟這張圖同一階（終局是開的那一階），有機率高一階；星圖天賦可以多掉幾張、高一階的機率更高
         final AtlasBonus atlas = instance.atlas();
         final int tier = Math.max(1, instance.stats().tier());
-        for (int i = 0; i < config.drops().bossMaps() + atlas.bossMaps(); i++) {
+        final int mapCount = bonus.amount(config.drops().bossMaps() + atlas.bossMaps(), random); // 2026-10：吃物品數量
+        for (int i = 0; i < mapCount; i++) {
             final ItemData map = MapDrops.roll(config, generator, tier, completed, random, atlas.tierUp());
             if (map != null) {
                 drops.add(DropTable.Drop.equipment(map));
@@ -690,7 +692,7 @@ final class MapBosses {
         final MapConfig.Boss definition = instance.bossDef();
         final int itemLevel = instance.level();
         if (instance.map().isFinal()) {
-            if (random.nextDouble() < config.drops().finalUniqueChance()) {
+            if (random.nextDouble() < bonus.rare(config.drops().finalUniqueChance())) { // 2026-10：吃物品稀有度
                 // 終局：先找寫著這個終局代號的傳奇（其他終局 Boss 各自的），沒有就用 final（天穹熔爐的）
                 ItemData unique = MapDrops.unique(generator, instance.map().id(), itemLevel, random);
                 if (unique == null) {
@@ -698,17 +700,17 @@ final class MapBosses {
                 }
                 addUnique(drops, unique);
             }
-        } else if (definition.named() && random.nextDouble() < config.drops().namedUniqueChance() * (1 + atlas.increased("atlas.boss_unique"))) {
+        } else if (definition.named() && random.nextDouble() < bonus.rare(config.drops().namedUniqueChance() * (1 + atlas.increased("atlas.boss_unique")))) {
             addUnique(drops, MapDrops.unique(generator, instance.map().id(), itemLevel, random));
         }
         // 共通傳奇（map_boss 池）：一般地圖 Boss 照 boss_unique_chance（5%，星圖天賦可以增加），終局另外算（final_common_chance，不吃星圖天賦）
         final double common = instance.map().isFinal() ? config.drops().finalCommonChance()
                 : config.drops().bossUniqueChance() * (1 + atlas.increased("atlas.boss_unique"));
-        if (random.nextDouble() < common) {
+        if (random.nextDouble() < bonus.rare(common)) {
             addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
         }
         rollChase(drops, itemLevel, random); // 追逐級傳奇：所有地圖 Boss 一樣的固定機率
-        if (instance.map().isFinal() && random.nextDouble() < config.drops().finalSupportChance()) {
+        if (instance.map().isFinal() && random.nextDouble() < bonus.rare(config.drops().finalSupportChance())) {
             // 終局 Boss 的專屬輔助寶石（supports.yml 的 source 寫這個終局的代號）
             addSupport(drops, instance.map().id(), itemLevel);
         }
@@ -716,7 +718,9 @@ final class MapBosses {
         if (config.drops().fragmentMaps().contains(instance.map().id())) {
             final CurrencyType fragment = plugin.currencies().repository().get(config.drops().fragment());
             if (fragment != null) {
-                drops.add(DropTable.Drop.currency(fragment));
+                for (int i = bonus.amount(1, random); i > 0; i--) { // 2026-10：天穹碎片吃物品數量
+                    drops.add(DropTable.Drop.currency(fragment));
+                }
             }
         }
         // 巔峰的碎片（2026-10）：某個終局（一般版本）開到夠高的階，Boss 有機率掉一個
@@ -724,7 +728,7 @@ final class MapBosses {
             for (final MapConfig.MapDef pinnacleMap : config.pinnacles()) {
                 for (final MapConfig.FragmentSource fragment : config.pinnacle(pinnacleMap.id()).fragments()) {
                     if (!fragment.from().equals(instance.map().id()) || instance.stats().tier() < fragment.minTier()
-                            || random.nextDouble() >= fragment.chance()) {
+                            || random.nextDouble() >= bonus.more(fragment.chance())) {
                         continue;
                     }
                     final CurrencyType currency = plugin.currencies().repository().get(fragment.currency());
@@ -737,7 +741,7 @@ final class MapBosses {
         // 終局開到夠高的階：有機率掉開極境的鑰匙（深淵星核）
         final MapConfig.Uber uber = instance.map().isFinal() ? config.uber(instance.map().id()) : null;
         if (uber != null && instance.stats().tier() >= uber.keyMinTier()
-                && random.nextDouble() < uber.keyChance() * (1 + atlas.increased("atlas.uber_key"))) {
+                && random.nextDouble() < bonus.more(uber.keyChance() * (1 + atlas.increased("atlas.uber_key")))) {
             final CurrencyType key = plugin.currencies().repository().get(uber.key());
             if (key != null) {
                 drops.add(DropTable.Drop.currency(key));
@@ -766,20 +770,22 @@ final class MapBosses {
      * 極境 Boss 的掉落（每個有份的人各一份）：最高階的地圖好幾張、這個終局自己的傳奇（機率比一般版本高）、
      * 極境專屬傳奇、追逐級傳奇（跟一般 Boss 一樣）、額外的通貨（maps.yml 的 uber.drops）。
      */
-    private void uberLoot(final MapInstance instance, final Player player, final List<DropTable.Drop> drops) {
+    private void uberLoot(final MapInstance instance, final Player player, final List<DropTable.Drop> drops,
+                          final tw.exilecore.loot.LootBonus.Bonus bonus) {
         final MapConfig config = service.config();
         final MapConfig.UberDrops uberDrops = instance.uber().drops();
         final var generator = plugin.items().generator();
         final var random = service.random();
         final Set<String> completed = player == null ? null : service.completed(player);
-        for (int i = 0; i < uberDrops.maps(); i++) {
+        final int uberMaps = bonus.amount(uberDrops.maps(), random);
+        for (int i = 0; i < uberMaps; i++) {
             final ItemData map = MapDrops.roll(config, generator, config.tiers().max(), completed, random);
             if (map != null) {
                 drops.add(DropTable.Drop.equipment(map));
             }
         }
         final int itemLevel = instance.level();
-        if (random.nextDouble() < uberDrops.uniqueChance()) {
+        if (random.nextDouble() < bonus.rare(uberDrops.uniqueChance())) {
             ItemData unique = MapDrops.unique(generator, instance.map().id(), itemLevel, random);
             if (unique == null) {
                 unique = MapDrops.unique(generator, "final", itemLevel, random);
@@ -787,10 +793,10 @@ final class MapBosses {
             addUnique(drops, unique);
         }
         rollChase(drops, itemLevel, random); // 追逐級傳奇：跟一般 Boss 一樣的固定機率
-        if (random.nextDouble() < config.drops().finalCommonChance()) {
+        if (random.nextDouble() < bonus.rare(config.drops().finalCommonChance())) {
             addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
         }
-        if (random.nextDouble() < uberDrops.exclusiveChance()) {
+        if (random.nextDouble() < bonus.rare(uberDrops.exclusiveChance())) {
             // 極境專屬傳奇：先找這隻極境自己的（uber_終局代號），沒有就用全部極境共通的（uber）
             ItemData exclusive = MapDrops.unique(generator, MapConfig.uberSource(instance.map().id()), itemLevel, random);
             if (exclusive == null) {
@@ -798,49 +804,29 @@ final class MapBosses {
             }
             addUnique(drops, exclusive);
         }
-        for (final MapConfig.ExtraDrop extra : uberDrops.extra()) {
-            if (random.nextDouble() >= extra.chance()) {
-                continue;
-            }
-            if ("support".equals(extra.kind())) {
-                for (int i = 0; i < extra.amount(); i++) {
-                    addSupportId(drops, extra.id(), itemLevel);
-                }
-                continue;
-            }
-            if ("skill".equals(extra.kind())) {
-                for (int i = 0; i < extra.amount(); i++) {
-                    addSkillId(drops, extra.id());
-                }
-                continue;
-            }
-            final CurrencyType currency = plugin.currencies().repository().get(extra.id());
-            if (currency != null) {
-                for (int i = 0; i < extra.amount(); i++) {
-                    drops.add(DropTable.Drop.currency(currency));
-                }
-            }
-        }
+        extraDrops(drops, uberDrops.extra(), itemLevel, random, bonus);
     }
 
     /**
      * 巔峰 Boss 的掉落（2026-10，每個有份的人各一份；寫法同極境的 drops）：最高階的地圖好幾張、自己的傳奇（沒有就終局共通的）、
      * 極境專屬的傳奇池（uber）、追逐級、額外的通貨與輔助。
      */
-    private void pinnacleLoot(final MapInstance instance, final Player player, final List<DropTable.Drop> drops) {
+    private void pinnacleLoot(final MapInstance instance, final Player player, final List<DropTable.Drop> drops,
+                              final tw.exilecore.loot.LootBonus.Bonus bonus) {
         final MapConfig config = service.config();
         final MapConfig.UberDrops pinnacleDrops = instance.pinnacle().drops();
         final var generator = plugin.items().generator();
         final var random = service.random();
         final Set<String> completed = player == null ? null : service.completed(player);
-        for (int i = 0; i < pinnacleDrops.maps(); i++) {
+        final int pinnacleMaps = bonus.amount(pinnacleDrops.maps(), random);
+        for (int i = 0; i < pinnacleMaps; i++) {
             final ItemData map = MapDrops.roll(config, generator, config.tiers().max(), completed, random);
             if (map != null) {
                 drops.add(DropTable.Drop.equipment(map));
             }
         }
         final int itemLevel = instance.level();
-        if (random.nextDouble() < pinnacleDrops.uniqueChance()) {
+        if (random.nextDouble() < bonus.rare(pinnacleDrops.uniqueChance())) {
             ItemData unique = MapDrops.unique(generator, instance.map().id(), itemLevel, random);
             if (unique == null) {
                 unique = MapDrops.unique(generator, "final", itemLevel, random);
@@ -848,10 +834,10 @@ final class MapBosses {
             addUnique(drops, unique);
         }
         rollChase(drops, itemLevel, random);
-        if (random.nextDouble() < config.drops().finalCommonChance()) {
+        if (random.nextDouble() < bonus.rare(pinnacleDrops.commonChance(config.drops().finalCommonChance()))) {
             addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
         }
-        if (random.nextDouble() < pinnacleDrops.exclusiveChance()) {
+        if (random.nextDouble() < bonus.rare(pinnacleDrops.exclusiveChance())) {
             // 先找這隻巔峰自己的（uber_終局代號），沒有就用全部極境共通的（uber）
             ItemData exclusive = MapDrops.unique(generator, MapConfig.uberSource(instance.map().id()), itemLevel, random);
             if (exclusive == null) {
@@ -859,14 +845,16 @@ final class MapBosses {
             }
             addUnique(drops, exclusive);
         }
-        extraDrops(drops, pinnacleDrops.extra(), itemLevel, random);
+        extraDrops(drops, pinnacleDrops.extra(), itemLevel, random, bonus);
     }
 
     /** 極境、巔峰的額外掉落（maps.yml 的 drops.extra）。 */
     private void extraDrops(final List<DropTable.Drop> drops, final List<MapConfig.ExtraDrop> extras, final int itemLevel,
-                            final java.util.random.RandomGenerator random) {
+                            final java.util.random.RandomGenerator random, final tw.exilecore.loot.LootBonus.Bonus bonus) {
         for (final MapConfig.ExtraDrop extra : extras) {
-            if (random.nextDouble() >= extra.chance()) {
+            final boolean gem = "support".equals(extra.kind()) || "skill".equals(extra.kind());
+            // 2026-10：寶石照物品稀有度、通貨照物品數量
+            if (random.nextDouble() >= (gem ? bonus.rare(extra.chance()) : bonus.more(extra.chance()))) {
                 continue;
             }
             if ("support".equals(extra.kind())) {
@@ -883,11 +871,21 @@ final class MapBosses {
             }
             final CurrencyType currency = plugin.currencies().repository().get(extra.id());
             if (currency != null) {
-                for (int i = 0; i < extra.amount(); i++) {
+                for (int i = bonus.amount(extra.amount(), random); i > 0; i--) {
                     drops.add(DropTable.Drop.currency(currency));
                 }
             }
         }
+    }
+
+    /**
+     * 這個人在這張圖拿 Boss 特殊掉落時的物品數量、稀有度（2026-10：全域）：自己的＋全服＋這個月的主題＋地圖本身的＋星圖天賦的 Boss 加成。
+     * 怪物稀有度（傳奇怪 +300% 數量）不算：那是一般掉落表專用的。
+     */
+    private tw.exilecore.loot.LootBonus.Bonus bonus(final MapInstance instance, final Player player) {
+        return tw.exilecore.loot.LootBonus.of(plugin, player).plus(
+                instance.stats().quantity() / 100.0 + instance.atlas().increased("atlas.boss_quantity"),
+                instance.stats().rarity() / 100.0 + instance.atlas().increased("atlas.boss_rarity"));
     }
 
     /** 從某個來源的專屬輔助寶石裡抽一顆（supports.yml 的 source）；沒有就不掉。 */

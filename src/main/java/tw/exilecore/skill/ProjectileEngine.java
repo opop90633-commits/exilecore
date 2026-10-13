@@ -133,6 +133,12 @@ final class ProjectileEngine implements Listener {
     private final List<Volley> volleys = new ArrayList<>();
     private SkillZones zones;
     private long nextId = 1;
+    /** 龍捲風（2026-10，照 PoE2 的龍捲射擊）：施放者 → 他現在的龍捲風（最新的在最後）。 */
+    private final Map<UUID, List<Tornado>> tornados = new HashMap<>();
+
+    /** 一陣龍捲風：在哪、多大、到哪個 tick、設定、用哪個技能的特效。 */
+    private record Tornado(String skill, World world, Vector center, double radius, long untilTick, TornadoSpec spec, String visual) {
+    }
 
     ProjectileEngine(final ExileCore plugin, final SkillTargets targets, final SkillVisuals visuals, final SkillDamage damage,
                      final RandomGenerator random) {
@@ -262,9 +268,61 @@ final class ProjectileEngine implements Listener {
                 } else {
                     tickBolt(shot);
                 }
+                if (shots.containsKey(shot.id)) {
+                    absorb(shot, now); // 2026-10：飛進自己的龍捲風被吸進去、往外射出複製的
+                }
             } finally {
                 Fx.restore(previous);
             }
+        }
+        if (!tornados.isEmpty()) {
+            tornados.values().forEach(list -> list.removeIf(tornado -> tornado.untilTick() <= now));
+            tornados.values().removeIf(List::isEmpty);
+        }
+    }
+
+    /**
+     * 龍捲風吸投射物（2026-10，照 PoE2）：施放者自己射的攻擊投射物（箭、弩箭、長矛；不是龍捲風技能本身、不是複製出來的）
+     * 飛進他的龍捲風就被吸進去，從龍捲風往外一圈射出 copies 支（傷害更少 copy_less%、最遠 copy_range 格、不會再被複製）。
+     */
+    private void absorb(final Shot shot, final long now) {
+        if (shot.secondary || shot.returning || !shot.build.definition().isAttack()) {
+            return;
+        }
+        final List<Tornado> mine = tornados.get(shot.owner);
+        if (mine == null || mine.isEmpty() || plugin.skills() == null
+                || plugin.skills().config().tornado(shot.build.definition().id()) != null) {
+            return; // 龍捲風技能自己的箭是要落地捲風的，不吸
+        }
+        final Vector at = shot.arrow != null ? shot.arrow.getLocation().toVector() : shot.position;
+        for (final Tornado tornado : mine) {
+            if (tornado.untilTick() <= now || !tornado.world().equals(shot.world)) {
+                continue;
+            }
+            final double dx = at.getX() - tornado.center().getX();
+            final double dz = at.getZ() - tornado.center().getZ();
+            final double dy = at.getY() - tornado.center().getY();
+            if (dx * dx + dz * dz > tornado.radius() * tornado.radius() || dy < -1 || dy > 4) {
+                continue;
+            }
+            final Player owner = plugin.getServer().getPlayer(shot.owner);
+            remove(shot);
+            if (owner == null) {
+                return;
+            }
+            final TornadoSpec spec = tornado.spec();
+            final SkillProfile profile = shot.profile.scaled(1 - spec.copyLess() / 100.0, "龍捲風複製");
+            final double start = random.nextDouble() * Math.PI * 2;
+            final Vector center = tornado.center().clone().add(new Vector(0, 1.0, 0));
+            final Set<UUID> volley = new HashSet<>();
+            for (int i = 0; i < spec.copies(); i++) {
+                final double angle = start + i * Math.PI * 2 / Math.max(1, spec.copies());
+                final Vector direction = new Vector(Math.cos(angle), 0.02, Math.sin(angle)).normalize();
+                spawn(owner, shot.build, profile, shot.world, center.clone().add(direction.clone().multiply(0.6)), direction,
+                        Math.max(0.6, shot.build.speed() * 0.8), spec.copyRange(), volley, true, shot.visual());
+            }
+            visuals.scatter(tornado.visual(), center.toLocation(shot.world));
+            return;
         }
     }
 
@@ -560,6 +618,20 @@ final class ProjectileEngine implements Listener {
         if (shot.secondary || zones == null) {
             return;
         }
+        final TornadoSpec tornado = plugin.skills() == null ? null : plugin.skills().config().tornado(shot.build.definition().id());
+        if (tornado != null) {
+            // 2026-10（照 PoE2 的龍捲射擊）：箭停下來的地方捲起龍捲風，持續打範圍內的敵人；同時最多 max 個（多的最舊的先消失）
+            final double radius = shot.build.scaledRadius(tornado.radius());
+            final int ticks = shot.build.durationTicks(tornado.duration());
+            final String id = shot.build.definition().id();
+            zones.addCircle(owner, at, radius, shot.profile.scaled(tornado.damage() / 100.0, "龍捲風"), shot.visual(), ticks,
+                    tornado.interval(), 0, id, tornado.max(), id + ".tornado");
+            final List<Tornado> mine = tornados.computeIfAbsent(owner.getUniqueId(), uuid -> new ArrayList<>());
+            mine.add(new Tornado(id, at.getWorld(), at.toVector(), radius, plugin.getServer().getCurrentTick() + ticks, tornado, shot.visual()));
+            while (mine.size() > tornado.max()) {
+                mine.removeFirst();
+            }
+        }
         if (params.ground() != null) {
             final SkillParams.Zone ground = params.ground();
             // 2026-10：同一招留下的地面效果疊在一起只算一灘（同一個敵人每個間隔只打一次）；單發、多發都一樣
@@ -724,6 +796,7 @@ final class ProjectileEngine implements Listener {
             }
         }
         volleys.removeIf(volley -> volley.owner().equals(owner));
+        tornados.remove(owner);
     }
 
     /** 全部移除（插件停用）。 */

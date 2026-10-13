@@ -52,7 +52,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final Mechanic mechanic = definition.mechanic();
         return mechanic != Mechanic.DASH && mechanic != Mechanic.LEAP && mechanic != Mechanic.MARK && mechanic != Mechanic.CORPSE
                 && mechanic != Mechanic.SUMMON && mechanic != Mechanic.AURA && mechanic != Mechanic.WARCRY && mechanic != Mechanic.FLICKER
-                && mechanic != Mechanic.RALLY && mechanic != Mechanic.DESECRATE
+                && mechanic != Mechanic.RALLY && mechanic != Mechanic.DESECRATE && mechanic != Mechanic.META
                 && mechanic != Mechanic.GUARD;
     }
 
@@ -241,7 +241,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final boolean echo = !isDefault && !definition.isAttack() && deploy == null && StatKeys.flag(effective, StatKeys.FLAG_ECHO)
                 && definition.mechanic() != Mechanic.DASH && definition.mechanic() != Mechanic.LEAP && definition.mechanic() != Mechanic.MARK
                 && definition.mechanic() != Mechanic.SUMMON && definition.mechanic() != Mechanic.AURA && definition.mechanic() != Mechanic.WARCRY
-                && definition.mechanic() != Mechanic.FLICKER && definition.mechanic() != Mechanic.RALLY && definition.mechanic() != Mechanic.DESECRATE
+                && definition.mechanic() != Mechanic.FLICKER && definition.mechanic() != Mechanic.RALLY && definition.mechanic() != Mechanic.DESECRATE && definition.mechanic() != Mechanic.META
                 && definition.mechanic() != Mechanic.GUARD;
         final SummonSpec summon = definition.summon();
         final int minions = summon == null ? 0 : clamp(summon.max().intAt(level)
@@ -330,7 +330,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             return 0;
         }
         final double percent = effective.flat(StatKeys.SKILL_COST_MAX_MANA, context);
-        return percent <= 0 ? 0 : Math.max(0, effective.get(StatKeys.MANA_MAX)) * percent / 100.0;
+        return percent <= 0 ? 0 : tw.exilecore.stats.DamageCalculator.maxMana(effective) * percent / 100.0; // 2026-10：跟血條的最大魔力一樣（含靈能電池）
     }
 
     /** 光環的效果（這個等級、含光環效果倍率）。 */

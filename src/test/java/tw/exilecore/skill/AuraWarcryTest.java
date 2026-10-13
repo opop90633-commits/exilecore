@@ -330,7 +330,7 @@ class AuraWarcryTest {
         assertTrue(generous.generosity());
         assertFalse(auraEffect.supports(config.skill("fireball")), "強效光環只能掛光環");
         assertFalse(config.support("spell_echo").supports(config.skill("frost_aegis")), "雙詠不能掛光環");
-        assertFalse(config.support("spell_totem").supports(config.skill("frost_aegis")));
+        assertNotNull(MetaGems.problem(config.meta("totem_casting"), config.skill("frost_aegis")), "光環不能插進星咒圖騰");
         assertTrue(config.support("increased_area").supports(config.skill("frost_aegis")), "擴散讓隊友的範圍更大");
     }
 
@@ -410,7 +410,7 @@ class AuraWarcryTest {
         assertFalse(config.support("faster_casting").supports(rally), "疾詠要法術");
         assertEquals("要法術技能", config.support("faster_casting").refusal(rally));
         assertFalse(config.support("added_fire").supports(rally), "引火（攻擊或法術）也不行");
-        assertEquals("戰吼技能不行", config.support("spell_totem").refusal(rally));
+        assertNotNull(MetaGems.problem(config.meta("totem_casting"), rally), "戰吼不能插進星咒圖騰");
         assertNull(config.support("warcry_power").refusal(rally));
     }
 

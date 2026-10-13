@@ -47,27 +47,29 @@ class SupportAndGemTest {
 
     @Test
     void fortySupportsInThreeTiers() {
-        // 2026-10 PoE2 改版：輔助寶石擴充到 295 顆（第 1 階 81、第 2 階 171、第 3 階 43，其中 13 顆專屬掉落：終局 4、極境 2、巔峰 7）
+        // 2026-10 PoE2 改版：輔助寶石 290 顆（第 1 階 81、第 2 階 166、第 3 階 43，其中 13 顆專屬掉落：終局 4、極境 2、巔峰 7）；
+        // 2026-10：圖騰施法與 6 顆觸發改成主要寶石（拿掉 7 顆），加了 2 顆戰星來源（滿星、斷命聚怒）
         final List<String> ids = config.supports().stream().map(SupportDefinition::id).toList();
-        assertEquals(295, ids.size());
+        assertEquals(290, ids.size());
         assertEquals(List.of("increased_area", "faster_projectiles", "pierce", "faster_attacks", "faster_casting", "added_fire",
                 "increased_duration", "critical_strikes", "lingering", "minion_damage"), ids.subList(0, 10), "照檔案裡的順序");
         assertTrue(ids.containsAll(List.of("concentrated_effect", "chain", "life_leech", "searing", "lacerate", "envenom", "concussive",
                 "electrocute", "glacial", "static_charge", "cooldown_recovery", "burst", "fork", "critical_damage", "added_chaos",
-                "spell_totem", "minion_life", "warcry_power", "minion_speed", "charge_frenzy", "charge_power", "charge_endurance",
+                "charge_profusion", "cull_frenzy", "minion_life", "warcry_power", "minion_speed", "charge_frenzy", "charge_power", "charge_endurance",
                 "spell_echo", "multiple_projectiles", "elemental_focus",
                 "starfall_resonance", "permafrost_heart", "styx_ferry", "skyburn_fury", "abyssal_touch", "myriad_stars",
                 "oblivion_focus", "storm_maze_heart", "rift_echo", "starfall_core", "phantom_double", "world_collapse", "void_legion")));
         // 改版拿掉的輔助：不在清單裡，身上的換成同階的未切割輔助寶石
         for (final String retired : List.of("multistrike", "multiple_totems", "melee_physical", "life_on_hit", "aura_effect", "generosity",
-                "trap", "returning_projectiles", "elemental_damage_with_attacks", "frenzy_on_hit", "power_on_hit", "endurance_on_hit")) {
+                "trap", "returning_projectiles", "elemental_damage_with_attacks", "frenzy_on_hit", "power_on_hit", "endurance_on_hit",
+                "spell_totem", "trigger_crit", "trigger_hit_taken", "trigger_kill", "trigger_ailment", "cast_on_dodge", "cast_on_minion_death")) {
             assertNull(config.support(retired), retired);
         }
         assertEquals(3, config.retiredSupportTier("multistrike"));
         assertEquals(2, config.retiredSupportTier("melee_physical"));
         assertEquals(81, config.supportsUpTo(1).size());
-        assertEquals(252, config.supportsUpTo(2).size());
-        assertEquals(282, config.supportsUpTo(3).size(), "專屬掉落的 13 顆切不出來");
+        assertEquals(247, config.supportsUpTo(2).size());
+        assertEquals(277, config.supportsUpTo(3).size(), "專屬掉落的 13 顆切不出來");
         for (final SupportDefinition support : config.supports()) {
             assertFalse(support.name().isBlank(), support.id());
             assertFalse(support.modifiers().isEmpty(), support.id());

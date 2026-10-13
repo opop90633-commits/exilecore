@@ -233,12 +233,16 @@ public final class ExileCore extends JavaPlugin {
             event.registrar().register(tw.exilecore.admin.AdminModule.claimCommand(this), "ExileCore 領取管理員發的物資");
         });
 
+        tw.exilecore.hook.TooltipHook.start(this); // 2026-10：物品的「對你的技能」提示（要裝 PacketEvents）
+        new tw.exilecore.music.MusicService(this).start(); // 2026-10：主世界、地圖、Boss 的背景音樂
+
         getSLF4JLogger().info("ExileCore {} 已啟用（Minecraft {}，Java {}）",
                 getPluginMeta().getVersion(), getServer().getMinecraftVersion(), Runtime.version().feature());
     }
 
     @Override
     public void onDisable() {
+        tw.exilecore.hook.TooltipHook.stop();
         if (modules != null) {
             modules.disableAll();
         }

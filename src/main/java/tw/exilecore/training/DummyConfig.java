@@ -54,6 +54,8 @@ public final class DummyConfig {
 
     private double arenaMargin;
     private int idleSeconds;
+    /** 每人一組自己的假人（2026-10）：同時最多幾組（0 = 關掉，大家打共用的那組）。 */
+    private int personalMax;
     private List<Dummy> dummies;
 
     public DummyConfig() {
@@ -63,6 +65,7 @@ public final class DummyConfig {
     private void reset() {
         arenaMargin = 6;
         idleSeconds = 4;
+        personalMax = 10;
         dummies = defaults();
     }
 
@@ -86,6 +89,7 @@ public final class DummyConfig {
         }
         arenaMargin = fresh.arenaMargin;
         idleSeconds = fresh.idleSeconds;
+        personalMax = fresh.personalMax;
         dummies = fresh.dummies;
     }
 
@@ -98,6 +102,10 @@ public final class DummyConfig {
         idleSeconds = settings.integer("idle_seconds", idleSeconds);
         if (idleSeconds < 1 || idleSeconds > 60) {
             throw new IllegalArgumentException(settings.path() + ".idle_seconds：要在 1 到 60 之間，卻是 " + idleSeconds);
+        }
+        personalMax = settings.integer("personal_max", personalMax);
+        if (personalMax < 0 || personalMax > 50) {
+            throw new IllegalArgumentException(settings.path() + ".personal_max：要在 0 到 50 之間，卻是 " + personalMax);
         }
         if (!root.has("dummies")) {
             return;
@@ -206,6 +214,11 @@ public final class DummyConfig {
 
     public List<Dummy> dummies() {
         return dummies;
+    }
+
+    /** 每人一組自己的假人：同時最多幾組（0 = 關掉）。 */
+    public int personalMax() {
+        return personalMax;
     }
 
     /**

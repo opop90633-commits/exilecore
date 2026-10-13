@@ -513,7 +513,7 @@ final:
     enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。熔爐要吞掉你。」" }
     key: abyss_core
     key_cost: 1
-    key_chance: 0.1
+    key_chance: 0.25   # 2026-10：10% → 25%
     key_min_tier: 12
     drops:
       maps: 4
@@ -625,7 +625,7 @@ finals:
       enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。永遠留在這裡吧。」" }
       key: abyss_core
       key_cost: 1
-      key_chance: 0.1
+      key_chance: 0.25   # 2026-10：10% → 25%
       key_min_tier: 12
       drops:
         maps: 4
@@ -732,7 +732,7 @@ finals:
       enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。河底很安靜。」" }
       key: abyss_core
       key_cost: 1
-      key_chance: 0.1
+      key_chance: 0.25   # 2026-10：10% → 25%
       key_min_tier: 12
       drops:
         maps: 4
@@ -839,7 +839,7 @@ finals:
       enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。命令就是命令。」" }
       key: abyss_core
       key_cost: 1
-      key_chance: 0.1
+      key_chance: 0.25   # 2026-10：10% → 25%
       key_min_tier: 12
       drops:
         maps: 4
@@ -856,7 +856,7 @@ finals:
 
   # ---- 巔峰（2026-10）：萬界之巔——終局之上的最終 Boss，招式照 PoE 的「萬界覺醒者」：死亡光束、風暴迷宮、殞星、分身、
   #   追人的風暴、末日（全場大招，躲進綠色安全區）、四道旋轉光束；場地是懸在星骸之上的黑石平台，風暴會慢慢把場地吃掉。
-  #   不用天穹碎片、不選階級：要集齊 pinnacle.fragments 列的四種碎片各一個（四個終局 Boss 的一般版本、T12 以上，各 10%），
+  #   不用天穹碎片、不選階級：要集齊 pinnacle.fragments 列的四種碎片各一個（四個終局 Boss 的一般版本、T12 以上，各 50%；2026-10：10% → 50%），
   #   在地圖裝置的「巔峰」按鈕打開，固定開在最高階＋level_bonus＋pinnacle.level_bonus 級；只有 Boss 房、每個人只能走進去一次。
   #   pinnacle 的欄位：
   #     fragments      [{ currency: 通貨代號, from: 終局代號, chance: 機率, min_tier: 那個終局開到幾階以上才掉 }]（每一種要各 1 個）
@@ -866,6 +866,7 @@ finals:
   #     monster／player 這張圖的怪物、玩家額外的屬性（寫法同 monsters.yml 的 stats）
   #     drops          寫法同極境的 drops：maps 掉幾張最高階的地圖、unique_chance 自己的傳奇（uniques.yml 的 sources 寫 awakener；
   #                    沒有就用 final 池）、exclusive_chance 極境專屬池（uber_awakener，沒有就 uber）、extra 額外掉落
+  #                    common_chance 共通傳奇（map_boss 池；沒寫照 drops.final_common_chance）
   #                    （extra 可以寫 currency、support 輔助寶石，或 skill 技能寶石：{ skill: 代號, chance: 機率 }，掉 20 級的）
   #   生命照 boss.life（跟其他終局一樣吃 tier_life 的最高階倍率；曜帝 T16 是 12）。
   awakener:
@@ -941,22 +942,23 @@ finals:
       level_bonus: 5
       cooldown: 0.65
       fragments:
-        - { currency: fragment_crucible, from: sky_crucible,  chance: 0.10, min_tier: 12 }
-        - { currency: fragment_frost,    from: frost_throne,  chance: 0.10, min_tier: 12 }
-        - { currency: fragment_bone,     from: bone_throne,   chance: 0.10, min_tier: 12 }
-        - { currency: fragment_ember,    from: ember_citadel, chance: 0.10, min_tier: 12 }
+        - { currency: fragment_crucible, from: sky_crucible,  chance: 0.50, min_tier: 12 }
+        - { currency: fragment_frost,    from: frost_throne,  chance: 0.50, min_tier: 12 }
+        - { currency: fragment_bone,     from: bone_throne,   chance: 0.50, min_tier: 12 }
+        - { currency: fragment_ember,    from: ember_citadel, chance: 0.50, min_tier: 12 }
       drops:                     # 2026-10：沒有賽季重置，要保持稀缺 → 全部壓低（每個有份的人各擲一份）
         maps: 3
-        unique_chance: 0.03      # 自己的傳奇（uniques.yml 的 sources 寫 awakener，10 件；沒有的話用終局共通的 final 池）
-        exclusive_chance: 0.03   # 極境專屬池（uber_awakener；沒有就 uber）
+        unique_chance: 0.05      # 2026-10：3% → 5%。自己的傳奇（uniques.yml 的 sources 寫 awakener，10 件；沒有的話用終局共通的 final 池）
+        exclusive_chance: 0.06   # 2026-10：3% → 6%。極境專屬池（uber_awakener；沒有就 uber）
+        common_chance: 0.20      # 2026-10：共通傳奇（map_boss 池）20%（沒寫的照 drops.final_common_chance 10%，終局、極境還是 10%）
         extra:
           - { currency: abyss_core, amount: 1, chance: 0.5 }
           - { currency: sky_fragment, amount: 2, chance: 1 }
           - { currency: zenith_orb, amount: 4, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.2 }
           - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
-          - { support: abyssal_touch, chance: 0.01 }
-          - { support: myriad_stars, chance: 0.01 }
+          - { support: abyssal_touch, chance: 0.02 }       # 2026-10：1% → 2%
+          - { support: myriad_stars, chance: 0.02 }        # 2026-10：1% → 2%
           # 虛星專屬的輔助寶石（supports.yml 的 source: awakener；7 顆各 1%，一次大約 7% 至少掉一顆）
           - { support: oblivion_focus, chance: 0.01 }
           - { support: storm_maze_heart, chance: 0.01 }

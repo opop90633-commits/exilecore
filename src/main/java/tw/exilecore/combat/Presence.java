@@ -83,7 +83,8 @@ public final class Presence {
             final List<LivingEntity> burning = new ArrayList<>();
             for (final LivingEntity target : world.getNearbyLivingEntities(player.getLocation(), radius)) {
                 if (target instanceof Player || target.isDead() || !target.isValid() || plugin.monsters().data(target).isEmpty()
-                        || target.getLocation().distanceSquared(player.getLocation()) > radiusSquared) {
+                        || target.getLocation().distanceSquared(player.getLocation()) > radiusSquared
+                        || (plugin.training() != null && !plugin.training().canTarget(target, player))) {
                     continue;
                 }
                 if (!mods.isEmpty() || taken > 0 || slow > 0) {

@@ -451,16 +451,17 @@ public final class HeistService implements Listener {
                 continue;
             }
             final List<DropTable.Drop> rolled = rollDrops(player, run.level, settings.chestRolls(), randomIn(settings.chestCurrency()), 1.0);
-            if (random().nextDouble() < settings.unveilStoneChance()) {
+            final tw.exilecore.loot.LootBonus.Bonus bonus = bonus(player); // 2026-10：特殊掉落也吃物品數量、稀有度
+            if (random().nextDouble() < bonus.more(settings.unveilStoneChance())) {
                 addCurrency(rolled, UNVEIL_STONE, 1);
             }
             // 2026-10：金庫箱小機率掉劫盜藍圖（跟大金庫一樣：大劫盜裡不掉，免得一直接著打）
-            if (!run.grand && random().nextDouble() < settings.chestBlueprintChance()) {
+            if (!run.grand && random().nextDouble() < bonus.more(settings.chestBlueprintChance())) {
                 addCurrency(rolled, BLUEPRINT, 1);
             }
             veil(rolled);
             // 2026-10：遺時珠寶只在劫盜掉（合約、藍圖的金庫箱都有小機率）
-            if (random().nextDouble() < settings.timeLostChance()) {
+            if (random().nextDouble() < bonus.rare(settings.timeLostChance())) {
                 addTimeLostJewel(rolled, run.level);
             }
             MapRewards.deliver(plugin, player, center, data, rolled, plugin.monsterModule().drops().rollGold(run.level, MonsterRarity.RARE,
@@ -474,7 +475,13 @@ public final class HeistService implements Listener {
 
     private double quantity(final Player player) {
         final StatSheet sheet = plugin.players().sheet(player);
-        return config.settings().quantity() / 100.0 + sheet.increased(StatKeys.DROP_QUANTITY, Set.of());
+        return config.settings().quantity() / 100.0 + sheet.increased(StatKeys.DROP_QUANTITY, Set.of())
+                + (plugin.events() == null ? 0 : plugin.events().quantityBonus()); // 2026-10：這個月的主題是全域的
+    }
+
+    /** 金庫、金庫箱的特殊掉落用的物品數量與稀有度（2026-10：全域）：自己的＋全服＋主題＋劫盜本身的。 */
+    private tw.exilecore.loot.LootBonus.Bonus bonus(final Player player) {
+        return tw.exilecore.loot.LootBonus.of(plugin, player).plus(config.settings().quantity() / 100.0, config.settings().rarity() / 100.0);
     }
 
     /** 擲 rolls 次掉落表（稀有怪）＋ currencies 個通貨；scale 乘在件數上（封鎖減半）。 */
@@ -482,7 +489,8 @@ public final class HeistService implements Listener {
         final DropTable drops = plugin.monsterModule().drops();
         final StatSheet sheet = plugin.players().sheet(player);
         final double quantity = quantity(player) + drops.serverQuantity();
-        final double rarity = config.settings().rarity() / 100.0 + sheet.increased(StatKeys.DROP_RARITY, Set.of()) + drops.serverRarity();
+        final double rarity = config.settings().rarity() / 100.0 + sheet.increased(StatKeys.DROP_RARITY, Set.of()) + drops.serverRarity()
+                + (plugin.events() == null ? 0 : plugin.events().rarityBonus()); // 2026-10：這個月的主題是全域的
         final List<DropTable.Drop> rolled = new ArrayList<>();
         final int times = scaled(rolls, scale);
         for (int i = 0; i < times; i++) {
@@ -641,9 +649,10 @@ public final class HeistService implements Listener {
         final MonsterData data = new MonsterData(run.level, MonsterRarity.UNIQUE, List.of(), "大金庫");
         for (final Player player : players) {
             final List<DropTable.Drop> rolled = rollDrops(player, run.level, vault.rolls(), randomIn(vault.currency()), grand * lockdown);
-            addCurrency(rolled, UNVEIL_STONE, scaled(randomIn(vault.unveilStones()), grand * lockdown));
+            final tw.exilecore.loot.LootBonus.Bonus bonus = bonus(player); // 2026-10：特殊掉落也吃物品數量、稀有度
+            addCurrency(rolled, UNVEIL_STONE, bonus.amount(scaled(randomIn(vault.unveilStones()), grand * lockdown), random()));
             boolean unique = false;
-            if (random().nextDouble() < Math.min(1, vault.uniqueChance() * grand * lockdown)) {
+            if (random().nextDouble() < bonus.rare(vault.uniqueChance() * grand * lockdown)) {
                 final ItemData item = MapDrops.unique(plugin.items().generator(), UNIQUE_SOURCE, run.level, random());
                 if (item != null) {
                     rolled.add(DropTable.Drop.equipment(item));
@@ -651,21 +660,21 @@ public final class HeistService implements Listener {
                 }
             }
             boolean gem = false;
-            if (random().nextDouble() < Math.min(1, vault.gemChance() * grand * lockdown) && currency(UNCUT_21) != null) {
+            if (random().nextDouble() < bonus.rare(vault.gemChance() * grand * lockdown) && currency(UNCUT_21) != null) {
                 addCurrency(rolled, UNCUT_21, 1); // 2026-10：Lv.21 未切割技能寶石（以前是異質技能寶石）
                 gem = true;
             }
             boolean finaleKey = false;
-            if (run.grand && random().nextDouble() < vault.finaleKeyChance() * lockdown) {
+            if (run.grand && random().nextDouble() < bonus.more(vault.finaleKeyChance() * lockdown)) {
                 addCurrency(rolled, HeistFinale.KEY, 1);
                 finaleKey = true;
             }
-            if (!run.grand && random().nextDouble() < vault.blueprintChance() * lockdown) {
+            if (!run.grand && random().nextDouble() < bonus.more(vault.blueprintChance() * lockdown)) {
                 addCurrency(rolled, BLUEPRINT, 1);
             }
             veil(rolled);
             // 2026-10：遺時珠寶（只在劫盜掉）：合約的大金庫 time_lost_jewel_chance，藍圖（大劫盜）×grand_multiplier；封鎖了減半
-            final boolean timeLost = random().nextDouble() < Math.min(1, vault.timeLostChance() * grand * lockdown)
+            final boolean timeLost = random().nextDouble() < bonus.rare(vault.timeLostChance() * grand * lockdown)
                     && addTimeLostJewel(rolled, run.level);
             final long gold = plugin.monsterModule().drops().rollGold(run.level, MonsterRarity.UNIQUE, quantity(player), random())
                     * Math.max(1, Math.round(vault.rolls() * grand * lockdown));

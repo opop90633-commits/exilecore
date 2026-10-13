@@ -105,7 +105,8 @@ public final class LootService {
         int picked = 0;
         boolean feedChanged = false;
         int onGround = 0;
-        boolean special = false;
+        int soundTier = SOUND_NONE; // 2026-10：稀有掉落音效（取這次最高的那一級）
+        final boolean endgameBoss = endgameBoss(location, data);
         final List<tw.exilecore.gui.SidebarLayout.Item> notable = new ArrayList<>();
         for (final DropTable.Drop drop : drops) {
             final ItemStack stack = toStack.apply(drop);
@@ -139,6 +140,7 @@ public final class LootService {
             }
             final boolean worthNoting = map || drop.isSpecificGem() || config.notable(drop.kind(), rarity, weight,
                     currency == null ? null : currency.id());
+            soundTier = Math.max(soundTier, soundTier(drop, rarity, asCurrency, mirror, endgameBoss));
             if (drop.isEquipment() && drop.item().unique() != null) {
                 broadcastChase(killer, drop.item());
             }
@@ -168,7 +170,6 @@ public final class LootService {
                 if (!(drop.isEquipment() && isMap(drop.item()))) {
                     notable.add(name); // 2026-10：地圖不放進「最近撿到」的卡片（音效照舊）
                 }
-                special |= map || rarity == Rarity.UNIQUE || (currency != null && weight <= 50);
             }
         }
         if (filtered > 0) {
@@ -193,7 +194,8 @@ public final class LootService {
             plugin.players().display(killer, state); // 角落提示馬上出現
         }
         final boolean intoBag = state.bag().freeSlots() < bagFreeBefore;
-        announce(killer, state, picked, intoBag, onGround, filtered, config.autoPickup() ? goldTotal : 0, filterGold, new ArrayList<>(notable), special);
+        announce(killer, state, picked, intoBag, onGround, filtered, config.autoPickup() ? goldTotal : 0, filterGold, new ArrayList<>(notable),
+                filter.dropSounds() ? soundTier : SOUND_NONE);
         return true;
     }
 
@@ -241,6 +243,10 @@ public final class LootService {
             kept.add(stack);
         }
         if (filtered > 0) {
+            // 2026-10：以前只算進「今天」，「這次登入」少算了獎勵被過濾的部分
+            final long[] stats = filterStats.computeIfAbsent(player.getUniqueId(), uuid -> new long[2]);
+            stats[0] += filtered;
+            stats[1] += gold;
             addToday(player, filtered, gold);
         }
         if (gold > 0 && plugin.gold().add(player, gold)) {
@@ -293,12 +299,80 @@ public final class LootService {
         }
     }
 
+    // ---- 稀有掉落音效（2026-10；過濾器可以關） ----
+
+    static final int SOUND_NONE = 0;
+    /** Boss 入場材料、大鑿星石、Lv.21 技能寶石。 */
+    static final int SOUND_CURRENCY = 1;
+    /** 傳奇（含專屬寶石）。 */
+    static final int SOUND_UNIQUE = 2;
+    /** 終局、極境、巔峰、金庫之主的 Boss 掉的傳奇與專屬寶石（通貨、地圖不算，照一般規則）。 */
+    static final int SOUND_ENDGAME = 3;
+    /** 追逐級傳奇、映星鏡。 */
+    static final int SOUND_CHASE = 4;
+
+    /** 有音效的通貨：Boss 入場材料（天穹碎片、深淵星核、萬界之巔四種碎片、金庫之主的鑰印）、劫盜藍圖、大鑿星石、Lv.21 技能寶石。 */
+    static final java.util.Set<String> SOUND_CURRENCIES = java.util.Set.of("sky_fragment", "abyss_core", "fragment_crucible", "fragment_frost",
+            "fragment_bone", "fragment_ember", "heist_finale_key", "heist_blueprint", "greater_socket_orb", "uncut_skill_21");
+
+    /** 這一件掉落是哪一級的音效。 */
+    private int soundTier(final DropTable.Drop drop, final Rarity rarity, final CurrencyType currency, final boolean mirror, final boolean endgameBoss) {
+        if (mirror) {
+            return SOUND_CHASE;
+        }
+        if (drop.isEquipment() && drop.item().unique() != null) {
+            final tw.exilecore.item.UniqueItem unique = plugin.items().repository().unique(drop.item().unique());
+            if (unique != null && unique.chase()) {
+                return SOUND_CHASE;
+            }
+        }
+        if (rarity == Rarity.UNIQUE) {
+            // 專屬寶石（終局、極境、巔峰的輔助／技能寶石、劫盜的異質寶石）也當成傳奇（rarity 是 UNIQUE）
+            return endgameBoss ? SOUND_ENDGAME : SOUND_UNIQUE;
+        }
+        return currency != null && SOUND_CURRENCIES.contains(currency.id()) ? SOUND_CURRENCY : SOUND_NONE;
+    }
+
+    /** 這隻是不是終局以上的 Boss（終局、極境、巔峰的 Boss；金庫之主的寶庫裡的掉落也算）。 */
+    private boolean endgameBoss(final Location location, final MonsterData data) {
+        if (plugin.maps() == null || location == null) {
+            return false;
+        }
+        final tw.exilecore.map.MapInstance instance = plugin.maps().instanceAt(location);
+        if (instance == null) {
+            return false;
+        }
+        return instance.singleEntry() || data != null && data.boss() && (instance.map().isFinal() || instance.isPinnacle());
+    }
+
+    /** 每一級不同的音效（越稀有越響）。 */
+    private static void playDropSound(final Player player, final int tier) {
+        final Location at = player.getLocation();
+        switch (tier) {
+            case SOUND_CHASE -> {
+                player.playSound(at, Sound.BLOCK_END_PORTAL_SPAWN, org.bukkit.SoundCategory.PLAYERS, 0.5f, 1.3f);
+                player.playSound(at, Sound.UI_TOAST_CHALLENGE_COMPLETE, org.bukkit.SoundCategory.PLAYERS, 0.8f, 1.0f);
+            }
+            case SOUND_ENDGAME -> {
+                player.playSound(at, Sound.BLOCK_BEACON_POWER_SELECT, org.bukkit.SoundCategory.PLAYERS, 0.9f, 1.1f);
+                player.playSound(at, Sound.UI_TOAST_CHALLENGE_COMPLETE, org.bukkit.SoundCategory.PLAYERS, 0.5f, 1.2f);
+            }
+            case SOUND_UNIQUE -> player.playSound(at, Sound.UI_TOAST_CHALLENGE_COMPLETE, org.bukkit.SoundCategory.PLAYERS, 0.6f, 1.4f);
+            case SOUND_CURRENCY -> {
+                player.playSound(at, Sound.ENTITY_PLAYER_LEVELUP, org.bukkit.SoundCategory.PLAYERS, 0.5f, 1.8f);
+                player.playSound(at, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, org.bukkit.SoundCategory.PLAYERS, 0.8f, 1.4f);
+            }
+            default -> {
+            }
+        }
+    }
+
     /** 過濾換金幣那張卡片的圖示（通貨的圖：金幣沒有自己的圖，用這個）。 */
     private static final String FILTER_ICON = "glimmer_orb";
 
     private void announce(final Player player, final PlayerState state, final int picked, final boolean intoBag, final int onGround,
                           final int filtered, final long gold, final long filterGold, final List<tw.exilecore.gui.SidebarLayout.Item> notable,
-                          final boolean special) {
+                          final int soundTier) {
         // 2026-10：動作列不再寫「撿到幾件」「+金幣」（值得注意的東西在右邊的卡片；過濾換的金幣也寫在卡片上），只留要注意的警告
         final StringBuilder text = new StringBuilder();
         if (intoBag && picked > 0) {
@@ -323,8 +397,8 @@ public final class LootService {
                     "c:" + FILTER_ICON, "#f5b942", plugin.getServer().getCurrentTick());
             plugin.players().display(player, state);
         }
-        if (special) {
-            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.6f, 1.4f);
+        if (soundTier > SOUND_NONE) {
+            playDropSound(player, soundTier);
         } else if (hadNotable) {
             player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1.0f, 1.2f);
         } else if (picked > 0) {
@@ -686,7 +760,11 @@ public final class LootService {
         final long characterId = character == null ? -1 : character.id();
         long[] entry = todayStats.get(player.getUniqueId());
         if (entry != null && entry[4] != characterId) {
-            entry = null; // 換了角色：重新讀這個角色的
+            // 換了角色：上一個角色還沒寫進資料庫的（最多一分鐘）先存給它，再重新讀這個角色的
+            if (entry[4] >= 0 && (entry[1] > 0 || entry[2] > 0)) {
+                plugin.characters().setProgressFor(entry[4], TODAY_KEY, entry[0] + ":" + entry[1] + ":" + entry[2]);
+            }
+            entry = null;
         }
         if (entry == null) {
             entry = new long[] {day, 0, 0, 0, characterId};

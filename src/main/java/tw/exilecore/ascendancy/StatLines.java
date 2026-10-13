@@ -275,6 +275,13 @@ public final class StatLines {
     /** 這條修飾器有什麼問題（遊戲不會讀、寫法不對）；沒問題回傳 null。 */
     public static String problem(final Modifier modifier) {
         final String stat = modifier.stat();
+        if (ChargeText.isGenerationStat(stat)) {
+            // 2026-10：多一顆的機率、定期給、事件冷卻（秒）
+            if (modifier.type() != ModType.FLAT || !modifier.tags().isEmpty()) {
+                return stat + " 要用 FLAT、不能加標籤";
+            }
+            return modifier.value() <= 0 ? stat + " 要大於 0" : null;
+        }
         if (ChargeText.isChargeStat(stat)) {
             // 戰星：獲得的機率（百分比點數）、上限（顆數）；擊中時獲得可以限定技能種類（近戰、攻擊…），不能限定武器
             if (!ChargeText.ids().contains(ChargeText.chargeOf(stat))) {

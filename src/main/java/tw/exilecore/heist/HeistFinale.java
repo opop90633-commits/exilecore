@@ -145,7 +145,7 @@ final class HeistFinale implements Listener {
         run.placed = true;
         int count = 0;
         for (final Player player : players) {
-            final List<Choice> mine = rollChoices(run);
+            final List<Choice> mine = rollChoices(run, player);
             run.choices.put(player.getUniqueId(), mine);
             count = Math.max(count, mine.size());
         }
@@ -166,7 +166,7 @@ final class HeistFinale implements Listener {
     }
 
     /** 從劫盜的隱匿傳奇裡不重複地挑 finale.choices 件（一個人一組，各自擲）。 */
-    private List<Choice> rollChoices(final Run run) {
+    private List<Choice> rollChoices(final Run run, final Player player) {
         final List<Choice> pool = new ArrayList<>();
         if (plugin.items() != null) {
             for (final UniqueItem unique : plugin.items().repository().uniquesFor(HeistService.UNIQUE_SOURCE, Math.max(run.level, 100))) {
@@ -176,7 +176,8 @@ final class HeistFinale implements Listener {
         Collections.shuffle(pool, new java.util.Random(plugin.random().nextLong()));
         final List<Choice> picked = new ArrayList<>(pool.subList(0, Math.min(pool.size(), heists.config().finaleChoices())));
         // 2026-10：收藏裡有機率多一個 Lv.21 未切割技能寶石的寶箱（以前是異質技能寶石）
-        if (plugin.random().nextDouble() < heists.config().settings().vault().finaleGemChance() && heists.currency(HeistService.UNCUT_21) != null) {
+        if (plugin.random().nextDouble() < tw.exilecore.loot.LootBonus.of(plugin, player).rare(heists.config().settings().vault().finaleGemChance()) // 2026-10：吃物品稀有度
+                && heists.currency(HeistService.UNCUT_21) != null) {
             final Choice gem = new Choice(null, HeistService.UNCUT_21, "<#ff7a6a>未切割技能寶石 Lv.21", 0);
             if (picked.size() >= heists.config().finaleChoices() && !picked.isEmpty()) {
                 picked.set(picked.size() - 1, gem);

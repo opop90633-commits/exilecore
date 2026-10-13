@@ -3,7 +3,7 @@
 # 星幣：1 星幣 = 1 元。管理網頁「發放」選「星幣」，或主控台 /ec sponsor give <玩家> <數量> [bonus]
 #   （贊助商城 Tebex 的指令也是這一行；bonus = 贈送的，不算進累積贊助）。離線的下次登入發。
 # 戰鬥數值不賣：特效只是好看；全服加倍是全服一起吃的（買的人只有公告署名）。2026-10 起累積贊助各階有經驗、金幣 +5% 與死亡懲罰減免，
-# S1 限定稱號有掉落物品數量 +5%（伺服器主決定的；跟下面的商業使用規範有衝突的風險，要注意）；
+# S1 限定稱號有物品數量 +5%、物品稀有度 +5%（伺服器主決定的；跟下面的商業使用規範有衝突的風險，要注意）；
 # 累積贊助的額外功能是方便性（倉庫、背包、上架格、排隊、聊天顏色、營地飛行），不加戰鬥數值。
 # Minecraft 的商業使用規範（https://www.minecraft.net/usage-guidelines）不能賣影響遊戲的東西，新增東西時請注意。
 # 改完 /ec reload。
@@ -208,7 +208,7 @@ cosmetics:
 #   limited 寫來源，稱號選單上顯示「…限定」，沒有的人看不到。顏色可以是 "#rrggbb" 或 "gradient:#rrggbb:#rrggbb"（漸層）。stats：擁有就有的加成（寫法同登入天數稱號）。
 limited_titles:
   s1_founder: { name: 創世拓荒者, color: "gradient:#39e7ff:#f2c14e", limited: "S1 贊助禮包",
-                stats: [ { stat: drop.quantity, type: INCREASED, value: 5 } ] }   # 擁有就有：掉落物品數量 +5%
+                stats: [ { stat: drop.quantity, type: INCREASED, value: 5 }, { stat: drop.rarity, type: INCREASED, value: 5 } ] }   # 擁有就有：物品數量 +5%、物品稀有度 +5%（2026-10）
 
 # 一組時裝（2026-10）：管理網頁「發放 → 時裝」選【整組】、或 /ec sponsor give <玩家> cosmetic bundle:<代號> 一次發整組（已經有的不重複給）；
 #   項目可以是時裝代號或 title:稱號代號

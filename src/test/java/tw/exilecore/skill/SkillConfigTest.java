@@ -46,7 +46,7 @@ class SkillConfigTest {
     void shippedSkillsLoad() {
         // 2026-10 PoE2 改版：技能大改（250 個看得到的技能），這裡抽各種武器、運作方式的代表
         final List<String> visible = config.visible().stream().map(SkillDefinition::id).toList();
-        assertEquals(256, visible.size(), "250 個 + 巔峰 Boss 的 6 個專屬技能寶石");
+        assertEquals(271, visible.size(), "250 個 + 巔峰 Boss 的 6 個專屬技能寶石 + 2026-10 主要寶石 7 個（星咒圖騰、6 個引星）、星律、斬風旋、幻元擊、4 根法術圖騰、幻元箭");
         assertTrue(visible.containsAll(List.of("leap_slam", "earthquake", "boneshatter", "ancestral_totem", "flicker_strike",
                 "caustic_arrow", "rain_of_arrows", "lightning_arrow", "ice_shot", "tornado_shot",
                 "explosive_bolt", "permafrost_bolts", "rapid_fire", "explosive_grenade", "gas_grenade",
@@ -57,7 +57,7 @@ class SkillConfigTest {
                 "herald_of_ash", "herald_of_thunder", "herald_of_ice", "fortifying_cry", "infernal_cry", "seismic_cry", "bear_maul")),
                 visible.toString());
         assertEquals("leap_slam", visible.getFirst(), "照檔案裡的順序");
-        assertEquals(317, config.all().size(), "256 個技能 + 7 種普攻 + 54 個隱藏的效果（使者、觸發…）");
+        assertEquals(332, config.all().size(), "271 個技能 + 7 種普攻 + 54 個隱藏的效果（使者、觸發…）");
         for (final SkillDefinition definition : config.all()) {
             assertTrue(SkillConfig.VISUALS.contains(definition.visual()), definition.id());
             if (definition.mechanic() == Mechanic.WARCRY) {

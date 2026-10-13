@@ -286,8 +286,10 @@ final class SponsorMenus {
                     custom == null ? "<gray>還沒設定" : "<gray>現在：<" + custom[1] + ">【" + ItemRenderer.escape(custom[2]) + "】",
                     "<gray>/sponsor title 文字 [#顏色]（最多 " + SponsorService.CUSTOM_TITLE_MAX + " 個字）", "<gray>　漸層：後面寫好幾個顏色 #ff5555 #ffd24a #55ffff；彩虹：rainbow",
                     "<gray>/sponsor title clear 拿掉",
+                    "<gray>可以<white>無限次</white>更改，不用花錢",
                     tier != null && tier.customTitle() ? "<green>可以用" : "<dark_gray>累積贊助 "
-                            + (titleTier == null ? "—" : format(titleTier.amount())) + " 星幣開放"));
+                            + (titleTier == null ? "—" : format(titleTier.amount())) + " 星幣開放",
+                    "", "<yellow>左鍵：複製指令"));
 
             final SponsorConfig.Cosmetic worn = service.worn(player);
             set(SLOT_COSMETICS, icon(Material.BLAZE_POWDER, FASHION_COLOR + "3D 時裝",
@@ -386,6 +388,24 @@ final class SponsorMenus {
                     if (!service.colorTiers(player).isEmpty()) {
                         result(service.cycleNameColor(player, click.isRightClick() ? -1 : 1));
                     }
+                }
+                case SLOT_TITLE -> {
+                    // 2026-10：按了關掉選單，聊天欄給一串可以點的指令（伺服器不能直接寫玩家的剪貼簿，要玩家點一下）
+                    final SponsorConfig.Tier tier = service.tier(player);
+                    if (tier == null || !tier.customTitle()) {
+                        final SponsorConfig.Tier need = service.firstTier(SponsorConfig.Tier::customTitle);
+                        player.sendMessage(plugin.text().prefixed("<gray>自訂稱號要累積贊助 "
+                                + (need == null ? "（沒有開放）" : format(need.amount()) + " 星幣")));
+                        return;
+                    }
+                    player.closeInventory();
+                    player.sendMessage(plugin.text().prefixed("<gray>自訂稱號指令："
+                            + "<click:copy_to_clipboard:'/sponsor title '><hover:show_text:'<gray>複製 /sponsor title 到剪貼簿'>"
+                            + "<#77ccff><u>[點我複製]</u></hover></click>　"
+                            + "<click:suggest_command:'/sponsor title '><hover:show_text:'<gray>直接填進聊天框'>"
+                            + "<#77ccff><u>[點我填入聊天框]</u></hover></click>"));
+                    player.sendMessage(plugin.text().prefixed("<gray>寫法：/sponsor title 文字 [#顏色]（最多 " + SponsorService.CUSTOM_TITLE_MAX
+                            + " 個字；漸層寫好幾個顏色、彩虹寫 rainbow；無限次更改）"));
                 }
                 case SLOT_FLY -> {
                     final SponsorConfig.Tier tier = service.tier(player);
@@ -663,7 +683,7 @@ final class SponsorMenus {
                     lore.add("<gray>聊天可以上色（&a、&l、&#rrggbb）");
                 }
                 if (tier.customTitle()) {
-                    lore.add("<gray>自訂稱號（/sponsor title）");
+                    lore.add("<gray>自訂稱號（/sponsor title，<white>無限次</white>更改）");
                 }
                 if (tier.campFly()) {
                     lore.add("<gray>營地飛行");

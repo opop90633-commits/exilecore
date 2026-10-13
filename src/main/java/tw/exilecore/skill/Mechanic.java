@@ -42,7 +42,9 @@ public enum Mechanic {
     /** 褻瀆（2026-10）：在準心的地方從地底拖出幾具屍體（給骸爆、喚屍用；不造成傷害）。 */
     DESECRATE,
     /** 舉盾（2026-10）：要拿盾；一段時間內自己得到增益（格擋、受到的傷害更少…；寫在 guard.effects），移動變慢。 */
-    GUARD;
+    GUARD,
+    /** 主要寶石（2026-10，照 PoE2）：法術圖騰這種「用面板上下一格的法術」的技能；設定在 meta 區塊（{@link MetaSpec}）。 */
+    META;
 
     /** skills.yml 裡的名稱（小寫）。 */
     public String key() {
@@ -54,7 +56,7 @@ public enum Mechanic {
             return valueOf(text.trim().toUpperCase(Locale.ROOT));
         } catch (final IllegalArgumentException e) {
             throw new IllegalArgumentException(where + "：mechanic 不認得「" + text
-                    + "」（可用 strike、projectile、nova、cone、leap、chain、dash、impact、zone、mark、corpse、summon、aura、warcry、flicker）");
+                    + "」（可用 strike、projectile、nova、cone、leap、chain、dash、impact、zone、mark、corpse、summon、aura、warcry、flicker、meta）");
         }
     }
 }

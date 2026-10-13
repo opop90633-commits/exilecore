@@ -21,3 +21,8 @@ dependencies:
       load: BEFORE
       required: false
       join-classpath: false
+    # 滑鼠指到裝備、珠寶、輔助寶石時「對你的技能」的提示（2026-10）：有裝就啟用，沒裝照舊
+    packetevents:
+      load: BEFORE
+      required: false
+      join-classpath: true

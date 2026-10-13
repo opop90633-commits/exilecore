@@ -156,6 +156,9 @@ public final class Nameplates implements Listener {
             plates.put(player.getUniqueId(), plate);
             shown.remove(player.getUniqueId());
         }
+        if (player.canSee(plate)) {
+            player.hideEntity(plugin, plate); // 2026-10：自己的名牌有時會又看得到（騎馬後退時）：每秒補藏一次
+        }
         final String want = player.isSneaking() ? "" : text;
         if (!want.equals(shown.get(player.getUniqueId()))) {
             plate.text(want.isEmpty() ? Component.empty() : plugin.text().parse(want));
@@ -198,6 +201,9 @@ public final class Nameplates implements Listener {
             final TextDisplay plate = entry.getValue();
             if (player == null || !plate.isValid() || plate.getWorld() != player.getWorld()) {
                 continue;
+            }
+            if (player.isInsideVehicle() && player.canSee(plate)) {
+                player.hideEntity(plugin, plate); // 2026-10：騎著坐騎時追蹤會重送實體，自己的名牌會露出來：每刻補藏
             }
             final org.bukkit.Location at = player.getLocation();
             at.setPitch(0);

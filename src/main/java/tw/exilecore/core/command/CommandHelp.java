@@ -184,6 +184,8 @@ public final class CommandHelp {
                     e("/ec sponsor give <玩家> <數量>", "發儲值星幣（離線的下次登入發；算累積贊助）"),
                     e("/ec sponsor give <玩家> <數量> bonus", "發贈送星幣（不算累積贊助）"),
                     e("/ec sponsor give <玩家> <數量> card|fashion", "發月卡幣／時裝幣"),
+                    e("/ec sponsor give <玩家> cosmetic <時裝|title:稱號|bundle:組>", "發時裝、限定稱號"),
+                    e("/ec sponsor revoke <玩家> <時裝|title:稱號|bundle:組>", "收回時裝、限定稱號（戴著的一起拿下；離線的下次登入收）"),
                     e("/ec sponsor info <玩家>", "在線玩家的贊助狀態"),
                     e("/ec sponsor take <玩家> <數量> [refund]", "扣星幣（refund = 退款，連累積贊助一起扣）"))),
             new Group("player", "玩家指令", List.of(

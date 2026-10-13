@@ -13,25 +13,20 @@ import tw.exilecore.character.SkillLoadout;
 import tw.exilecore.stats.HitEvent;
 import tw.exilecore.stats.StatKeys;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
- * 觸發（2026-10，照 PoE2 的 Cast on X）：掛了觸發輔助的法術，條件成立時自動施放（不花魔力，每個技能有 {@value #COOLDOWN} tick 的內置冷卻）：
- * 攻擊暴擊（trigger.crit）、被敵人擊中（trigger.hit_taken）、擊殺（trigger.kill）、讓敵人點燃／冰緩／感電（trigger.ailment）。
- * 要綁在上方按鍵格的技能才會被觸發（2026-10；不用按）。掛了觸發輔助的法術不能手動施放（按了沒有用，{@link #triggeredOnly}）。
+ * 觸發（2026-10 第二版，照 PoE2 的主要寶石 Cast on X；見 {@link MetaGems}）：條件成立時，開著的那種主要寶石累積能量，
+ * 滿了就觸發插在它插槽（面板上它後面那一格）的法術。以前的觸發輔助（暴擊觸發、受擊觸發…）已經拿掉（supports.yml 的 retired）。
+ * <ul>
+ *   <li>暴擊時（crit）：你用技能暴擊敵人，能量 × 怪物強度（被觸發的法術自己的暴擊不算）。</li>
+ *   <li>元素異常（ailment）：冰凍 ×3、感電與點燃 ×1，再乘怪物強度。</li>
+ *   <li>翻滾（dodge）、被敵人擊中（damage_taken）、召喚物死掉（minion_death）、近戰擊殺（melee_kill，乘怪物強度）。</li>
+ * </ul>
  */
 public final class SkillTriggers implements Listener {
 
-    /** 同一個技能被觸發的最短間隔（tick）。 */
-    public static final long COOLDOWN = 15;
-
     private final ExileCore plugin;
     private final SkillService service;
-    private final Map<UUID, Map<String, Long>> ready = new HashMap<>();
-    private boolean firing;
 
     SkillTriggers(final ExileCore plugin, final SkillService service) {
         this.plugin = plugin;
@@ -43,8 +38,9 @@ public final class SkillTriggers implements Listener {
         if (!event.result().hit() || event.result().blocked()) {
             return;
         }
-        if (event.attacker() instanceof Player player && event.result().crit() && event.skill() != null && event.skill().isAttack()) {
-            fire(player, StatKeys.TRIGGER_CRIT, event.defender());
+        if (event.attacker() instanceof Player player && event.result().crit() && event.skill() != null
+                && !event.skill().id().contains(MetaGems.TRIGGERED_SUFFIX)) {
+            service.metas().gain(player, MetaSpec.Kind.CRIT, service.metas().power(event.defender()), event.defender());
         }
         if (event.attacker() instanceof Player player && event.result().crit() && plugin.combat() != null
                 && plugin.combat().debuffs().remove(event.defender().getUniqueId(), "hunters_mark", player.getUniqueId(),
@@ -59,26 +55,34 @@ public final class SkillTriggers implements Listener {
             service.zones().detonateGas(player, event.defender().getLocation()); // 火焰引爆毒霧（2026-10 PoE2）
         }
         if (event.defender() instanceof Player player && !(event.attacker() instanceof Player)) {
-            fire(player, StatKeys.TRIGGER_HIT_TAKEN, event.attacker());
+            service.metas().gain(player, MetaSpec.Kind.DAMAGE_TAKEN, 1, event.attacker());
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(final EntityDeathEvent event) {
         final Player killer = event.getEntity().getKiller();
-        if (killer != null && !(event.getEntity() instanceof Player)) {
-            fire(killer, StatKeys.TRIGGER_KILL, null);
+        if (killer == null || event.getEntity() instanceof Player) {
+            return;
+        }
+        final String skillId = service.lastSkill(event.getEntity(), killer);
+        final SkillDefinition skill = skillId == null ? null : service.config().skill(skillId);
+        if (skill != null && skill.tags().contains(tw.exilecore.stats.Tags.MELEE)) {
+            service.metas().gain(killer, MetaSpec.Kind.MELEE_KILL, service.metas().power(event.getEntity()), null);
         }
     }
 
     @EventHandler
     public void onQuit(final PlayerQuitEvent event) {
-        ready.remove(event.getPlayer().getUniqueId());
+        service.metas().forget(event.getPlayer().getUniqueId());
     }
 
     /** 翻滾時（DodgeRoll 呼叫，2026-10）。 */
     public void dodge(final Player player) {
-        fire(player, StatKeys.TRIGGER_DODGE, null);
+        service.metas().gain(player, MetaSpec.Kind.DODGE, 1, null);
+        if (plugin.combat() != null && plugin.combat().charges() != null) {
+            plugin.combat().charges().onEvent(player, "dodge", null, null, null); // 戰星：翻滾時（2026-10）
+        }
         if (StatKeys.flag(plugin.players().sheet(player), StatKeys.FLAG_DODGE_CALTROPS)) {
             service.procs().castAt(player, "proc_caltrops", "trail_of_caltrops", player.getLocation()); // 蒺藜步（2026-10）
         }
@@ -93,7 +97,8 @@ public final class SkillTriggers implements Listener {
         double best = 100;
         for (final org.bukkit.entity.Entity near : at.getWorld().getNearbyEntities(at, 6, 4, 6)) {
             if (near instanceof LivingEntity living && !(near instanceof Player) && service.minions() != null && !service.minions().isMinion(living)
-                    && living.isValid() && !living.isDead() && plugin.monsters() != null && plugin.monsters().data(living).isPresent()) {
+                    && living.isValid() && !living.isDead() && plugin.monsters() != null && plugin.monsters().data(living).isPresent()
+                    && (plugin.training() == null || plugin.training().canTarget(living, owner))) {
                 final double d = living.getLocation().distanceSquared(at);
                 if (d < best) {
                     best = d;
@@ -101,81 +106,23 @@ public final class SkillTriggers implements Listener {
                 }
             }
         }
-        fire(owner, StatKeys.TRIGGER_MINION_DEATH, target);
+        service.metas().gain(owner, MetaSpec.Kind.MINION_DEATH, 1, target);
     }
 
-    /** 讓敵人點燃、冰緩、感電時（異常模組呼叫）。 */
-    public void ailment(final Player player, final LivingEntity target) {
-        fire(player, StatKeys.TRIGGER_AILMENT, target);
-    }
-
-    /** 條件成立：面板上掛了這種觸發輔助的法術各放一次（冷卻好的）。 */
-    void fire(final Player player, final String trigger, final LivingEntity target) {
-        if (firing || !service.eligible(player) || service.inTown(player)) {
-            return; // 觸發出來的法術打中不會再觸發（避免連鎖）
-        }
-        final PlayerState state = plugin.players().get(player);
-        final List<SkillLoadout.Entry> entries = state.skills().entries();
-        if (entries.isEmpty()) {
+    /**
+     * 讓敵人冰凍、感電、點燃時（異常模組呼叫）：冰凍的能量 ×3（照 PoE2）。
+     * 主要寶石觸發的法術造成的異常不算（skillId 帶 {@link MetaGems#TRIGGERED_SUFFIX}），不然會自己一直觸發自己。
+     */
+    public void ailment(final Player player, final LivingEntity target, final tw.exilecore.ailment.AilmentType type, final String skillId) {
+        if (skillId != null && skillId.contains(MetaGems.TRIGGERED_SUFFIX)) {
             return;
         }
-        final long now = plugin.getServer().getCurrentTick();
-        final Map<String, Long> mine = ready.computeIfAbsent(player.getUniqueId(), uuid -> new HashMap<>());
-        for (final SkillLoadout.Entry entry : entries) {
-            if (entry == null || mine.getOrDefault(entry.skillId(), 0L) > now) {
-                continue;
-            }
-            final SkillDefinition definition = service.config().skill(entry.skillId());
-            if (definition == null || definition.hidden() || definition.type() != SkillType.SPELL || !hasTrigger(entry, trigger)
-                    || !AuraService.boundToKey(state, entry.skillId())) {
-                continue; // 2026-10：要綁在上方按鍵格才會被觸發（跟光環一樣算在 10 格裡）
-            }
-            mine.put(entry.skillId(), now + COOLDOWN);
-            firing = true;
-            try {
-                service.triggerCast(player, definition, entry, target != null && target.isValid() && !target.isDead() ? target : null);
-            } finally {
-                firing = false;
-            }
-        }
+        final double kind = type == tw.exilecore.ailment.AilmentType.FREEZE ? 3 : 1;
+        service.metas().gain(player, MetaSpec.Kind.AILMENT, kind * service.metas().power(target), target);
     }
 
-    /** 全部的觸發條件（輔助寶石的 modifiers 寫其中一個）。 */
-    private static final java.util.Set<String> TRIGGERS = java.util.Set.of(StatKeys.TRIGGER_CRIT, StatKeys.TRIGGER_HIT_TAKEN,
-            StatKeys.TRIGGER_KILL, StatKeys.TRIGGER_AILMENT, StatKeys.TRIGGER_DODGE, StatKeys.TRIGGER_MINION_DEATH);
-
-    /** 這個技能掛了觸發輔助（2026-10，照 PoE）：只會自動觸發，不能手動施放。 */
-    boolean triggeredOnly(final SkillLoadout.Entry entry) {
-        if (guardSkill(entry)) {
-            return false; // 2026-10：增益型的技能不能被觸發（舊的掛著也不算），照樣手動放
-        }
-        for (final SupportDefinition support : service.supportsOf(entry)) {
-            for (final tw.exilecore.stats.Modifier modifier : support.modifiers()) {
-                if (modifier.value() > 0 && TRIGGERS.contains(modifier.stat())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /** 增益型的技能（連珠、霜鏃、舉盾…，mechanic: guard）：觸發輔助對它無效。 */
-    private boolean guardSkill(final SkillLoadout.Entry entry) {
-        final SkillDefinition definition = service.config().skill(entry.skillId());
-        return definition != null && definition.mechanic() == Mechanic.GUARD;
-    }
-
-    private boolean hasTrigger(final SkillLoadout.Entry entry, final String trigger) {
-        if (guardSkill(entry)) {
-            return false;
-        }
-        for (final SupportDefinition support : service.supportsOf(entry)) {
-            for (final tw.exilecore.stats.Modifier modifier : support.modifiers()) {
-                if (modifier.stat().equals(trigger) && modifier.value() > 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
+    /** 這個法術插在主要寶石的插槽裡（2026-10，照 PoE2）：只會被觸發／由圖騰放，不能自己按。 */
+    boolean triggeredOnly(final PlayerState state, final SkillLoadout.Entry entry) {
+        return service.metas().socketed(state, entry);
     }
 }

@@ -503,6 +503,47 @@ public final class PlayerStateService {
     private record EquippedItem(ItemBase base, ItemData data, List<Modifier> modifiers, ItemBase.Requirements requirements) {
     }
 
+    /**
+     * 身上一件生效的裝備（2026-10：技能的「裝備加成」用）。
+     *
+     * @param name        顯示名稱（傳奇是傳奇的名字）
+     * @param color       稀有度顏色（MiniMessage）
+     * @param slot        部位名稱
+     * @param modifiers   這件的詞綴（有條件的拿掉條件，放進 conditional）
+     * @param conditional 有條件才生效的那幾條（例如「最近沒被擊中時」）
+     */
+    public record GearPiece(String name, String color, String slot, List<Modifier> modifiers, Set<Modifier> conditional) {
+    }
+
+    /** 身上需求都符合（真的有在算）的裝備與詞綴。 */
+    public List<GearPiece> activeGear(final Player player) {
+        final PlayerState state = get(player);
+        final StatSheet sheet = sheet(player);
+        final double str = sheet.get(StatKeys.STR);
+        final double dex = sheet.get(StatKeys.DEX);
+        final double intelligence = sheet.get(StatKeys.INT);
+        final List<GearPiece> list = new ArrayList<>();
+        for (final EquippedItem item : equippedItems(player, state)) {
+            if (requirementProblem(item.requirements(), state.level(), str, dex, intelligence) != null) {
+                continue;
+            }
+            final List<Modifier> mods = new ArrayList<>();
+            final Set<Modifier> conditional = new java.util.HashSet<>();
+            for (final Modifier raw : item.modifiers()) {
+                if (tw.exilecore.stats.Recently.hasCondition(raw.stat())) {
+                    final Modifier stripped = new Modifier(tw.exilecore.stats.Recently.stat(raw.stat()), raw.type(), raw.value(), raw.tags(), raw.source());
+                    mods.add(stripped);
+                    conditional.add(stripped);
+                } else {
+                    mods.add(raw);
+                }
+            }
+            list.add(new GearPiece(ItemStats.displayName(plugin.items().repository(), item.data()), item.data().rarity().color(),
+                    item.base().slot().displayName(), mods, conditional));
+        }
+        return list;
+    }
+
     /** 把會影響原版行為的數值同步過去：血量上限固定、攻擊冷卻拉到無感、移動速度。 */
     private void syncVanillaAttributes(final Player player, final StatSheet sheet) {
         final AttributeInstance health = player.getAttribute(Attribute.MAX_HEALTH);

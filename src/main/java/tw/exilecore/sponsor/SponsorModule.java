@@ -315,6 +315,10 @@ public final class SponsorModule implements Module, Listener {
                     }
                     return Command.SINGLE_SUCCESS;
                 })))
+                // 2026-10：/ec sponsor revoke 玩家 時裝代號|title:稱號代號|bundle:組代號（收回；離線的下次登入收）
+                .then(Commands.literal("revoke").then(Commands.argument("player", StringArgumentType.word()).suggests(onlineAccounts(plugin))
+                        .then(Commands.argument("id", StringArgumentType.word()).suggests(cosmeticIds(plugin))
+                                .executes(context -> revokeCosmetic(plugin, context)))))
                 .then(Commands.literal("take").then(Commands.argument("player", StringArgumentType.word()).suggests(onlineAccounts(plugin))
                         .then(Commands.argument("amount", LongArgumentType.longArg(1, 1_000_000))
                                 .executes(context -> take(plugin, context, false))
@@ -398,6 +402,38 @@ public final class SponsorModule implements Module, Listener {
                     } else {
                         sender.sendMessage(plugin.text().prefixed("<green>發給 " + ItemRenderer.escape(name) + " " + ItemRenderer.escape(label)
                                 + "<gray>（離線的下次登入發；已經有的不重複給）"));
+                    }
+                }));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int revokeCosmetic(final ExileCore plugin, final CommandContext<CommandSourceStack> context) {
+        final CommandSender sender = context.getSource().getSender();
+        final String name = StringArgumentType.getString(context, "player");
+        final String id = StringArgumentType.getString(context, "id");
+        if (plugin.sponsors() == null || plugin.admin() == null || plugin.admin().deliveries() == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>贊助或管理模組沒有啟用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final String label;
+        try {
+            plugin.sponsors().resolveCosmetics(id);
+            label = plugin.sponsors().cosmeticLabel(id);
+        } catch (final IllegalArgumentException e) {
+            sender.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(e.getMessage())));
+            return Command.SINGLE_SUCCESS;
+        }
+        final DeliveryService.Spec spec = new DeliveryService.Spec(DeliveryService.TAKE_COSMETIC, id, null, 0, 1);
+        plugin.admin().deliveries().grant(name, List.of(spec), "收回（" + label + "）", sender.getName()).whenComplete((created, error) ->
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    if (error != null) {
+                        sender.sendMessage(plugin.text().prefixed("<red>收不回來：" + ItemRenderer.escape(String.valueOf(error.getMessage()))));
+                        plugin.getSLF4JLogger().error("[贊助] 收回 {} 的時裝 {} 失敗", name, id, error);
+                    } else if (!created.unknown().isEmpty()) {
+                        sender.sendMessage(plugin.text().prefixed("<red>找不到玩家「" + ItemRenderer.escape(name) + "」（要進過伺服器）"));
+                    } else {
+                        sender.sendMessage(plugin.text().prefixed("<green>收回 " + ItemRenderer.escape(name) + " 的 " + ItemRenderer.escape(label)
+                                + "<gray>（離線的下次登入收；戴著、套著的一起拿下來；本來就沒有的略過）"));
                     }
                 }));
         return Command.SINGLE_SUCCESS;

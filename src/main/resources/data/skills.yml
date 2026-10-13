@@ -258,7 +258,7 @@ skills:
   ancestral_totem:
     name: 英靈圖騰
     # 2026-10 PoE2（祖靈戰士圖騰式）：圖騰自己不打，叫出英靈用你技能面板上它後面那一格的錘子攻擊技能
-    description: 放下一根英靈圖騰（8 秒）。圖騰每隔一段時間在附近的敵人身邊叫出一個英靈，用你技能面板上排在它後面那一格的錘子攻擊技能打一次（照那個技能與它的輔助算；叫的間隔是那個技能攻擊時間的 1.5 倍）。那一格的技能不能有冷卻、不能蓄力。拿錘子才能用。
+    description: 放下一根英靈圖騰（8 秒）。圖騰每隔一段時間在附近的敵人身邊叫出一個英靈，用你技能面板上排在它後面那一格的錘子攻擊技能打一次（照那個技能與它的輔助算；叫的間隔是那個技能攻擊時間的 1.5 倍）。那一格的技能不能有冷卻、不能蓄力。拿錘子才能用。冷卻 1 秒。
     icon: NAUTILUS_SHELL   # 2026-10：原本 TOTEM_OF_UNDYING（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
@@ -388,14 +388,16 @@ skills:
       - { stat: freeze.buildup, type: INCREASED, value: 50 }
   tornado_shot:
     name: 裂空箭
-    description: 射出一支箭，到了終點炸開，往四周散射小箭。
+    description: 射出一支箭，落地的地方捲起一陣龍捲風（15 秒、同時一個），持續打裡面的敵人。你之後射的箭、弩箭、長矛飛進龍捲風會被吸進去，往外一圈射出 3 支複製的（傷害更少 50%、最遠 6 格；複製的不會再被複製）。
     icon: BREEZE_ROD   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
-    tags: [attack, projectile]
+    tags: [attack, projectile, area, duration]
     weapons: [bow]
     mechanic: projectile
-    projectile: { arrow: true, speed: 2.8, range: 30, scatter: { count: 5, spread: 360, damage: 70, range: 10 } }   # 2026-10：散射 4 → 5 發、60% → 70%
+    # 2026-10（照 PoE2 的龍捲射擊）：以前是到終點散射 5 支小箭，改成落地捲起龍捲風、吸別的箭再往外複製
+    projectile: { arrow: true, speed: 2.8, range: 24 }
+    tornado: { duration: 15, interval: 0.5, radius: [2.5, 3.0], damage: 20, max: 1, copies: 3, copy_less: 50, copy_range: 6 }
     attack_speed: 1.2
     effectiveness: [0.61, 0.86]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
     mana: [5, 11]
@@ -458,7 +460,7 @@ skills:
 
   explosive_grenade:
     name: 爆裂榴彈
-    description: 拋出一顆榴彈，落地會彈跳，不到一秒就炸開一大圈。不會直接打中敵人，丟在怪物腳邊。大部分物理轉換為火焰。
+    description: 拋出一顆榴彈，落地會彈跳，不到一秒就炸開一大圈。不會直接打中敵人，丟在怪物腳邊。大部分物理轉換為火焰。冷卻 1.5 秒。
     icon: GUNPOWDER   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
@@ -478,7 +480,7 @@ skills:
 
   gas_grenade:
     name: 瘴氣榴彈
-    description: 拋出一顆榴彈，落地沒多久就裂開放出一大團毒氣，待在裡面的敵人持續受到混沌傷害；毒氣被你的火焰打到會整團炸開。大部分物理轉換為混沌。
+    description: 拋出一顆榴彈，落地沒多久就裂開放出一大團毒氣，待在裡面的敵人持續受到混沌傷害；毒氣被你的火焰打到會整團炸開。大部分物理轉換為混沌。冷卻 2.5 秒。
     icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 LINGERING_POTION（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
@@ -564,7 +566,7 @@ skills:
     visual: killing_palm
   tempest_bell:
     name: 驚雷之鐘
-    description: 在面前放一口鐘。你用攻擊打中鐘旁邊的敵人，鐘就響一次打周圍一圈（最多八次）。
+    description: 在面前放一口鐘。你用攻擊打中鐘旁邊的敵人，鐘就響一次打周圍一圈（最多八次）。冷卻 6 秒。
     icon: GOLD_INGOT   # 2026-10：原本 BELL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
@@ -632,7 +634,7 @@ skills:
     visual: whirlwind_lance
   lunge:
     name: 突刺衝鋒
-    description: 往前突刺衝過去，打傷路上的敵人，終點再炸一圈。
+    description: 往前突刺衝過去，打傷路上的敵人，終點再炸一圈。冷卻 1.5 秒。
     icon: FLINT   # 2026-10：原本 IRON_SPEAR（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
@@ -647,7 +649,7 @@ skills:
     visual: lunge
   hunters_mark:
     name: 獵殺印記
-    description: 標記準心指的一個敵人，八秒內你下一次對牠打出暴擊時，暴擊傷害加成大幅提高，印記用掉並給你一顆怒星。什麼武器都能放。
+    description: 標記準心指的一個敵人，八秒內你下一次對牠打出暴擊時，暴擊傷害加成大幅提高，印記用掉並給你一顆怒星。什麼武器都能放。冷卻 4 秒。
     icon: GOLD_NUGGET   # 2026-10：原本 TARGET（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
@@ -1039,7 +1041,7 @@ skills:
 
   concussion_grenade:
     name: 震盪榴彈
-    description: 拋出一顆榴彈，落地後炸開一大圈純物理的衝擊，暈眩累積大幅提高。
+    description: 拋出一顆榴彈，落地後炸開一大圈純物理的衝擊，暈眩累積大幅提高。冷卻 1.5 秒。
     icon: FIREWORK_STAR
     type: attack
     tier: 5
@@ -1059,7 +1061,7 @@ skills:
 
   fortifying_cry:
     name: 堅壁戰吼
-    description: 戰吼：吼一聲立刻回復一部分生命，六秒內你和附近的隊友護甲增加、更不容易被暈，範圍內的敵人轉過來打你。
+    description: 戰吼：吼一聲立刻回復一部分生命，六秒內你和附近的隊友護甲增加、更不容易被暈，範圍內的敵人轉過來打你。冷卻 8 秒。
     icon: TURTLE_SCUTE   # 2026-10：原本 SHIELD（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 1
@@ -1081,7 +1083,7 @@ skills:
 
   infernal_cry:
     name: 焚獄戰吼
-    description: 戰吼：八秒內你和附近的隊友物理傷害的一部分額外附加為火焰，接下來三次攻擊傷害更多。
+    description: 戰吼：八秒內你和附近的隊友物理傷害的一部分額外附加為火焰，接下來三次攻擊傷害更多。冷卻 8 秒。
     icon: BLAZE_POWDER
     type: spell
     tier: 3
@@ -1102,7 +1104,7 @@ skills:
 
   seismic_cry:
     name: 震地戰吼
-    description: 戰吼：吼出一道震波，打範圍內的敵人一下物理傷害（戰吼傷害），並讓他們六秒內受到的傷害增加、轉過來打你；接下來兩次攻擊傷害大幅提高，暈眩累積增加。
+    description: 戰吼：吼出一道震波，打範圍內的敵人一下物理傷害（戰吼傷害），並讓他們六秒內受到的傷害增加、轉過來打你；接下來兩次攻擊傷害大幅提高，暈眩累積增加。冷卻 8 秒。
     icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
@@ -1211,7 +1213,7 @@ skills:
   # ---- 2026-10：祭品（照 PoE2 的祭品類技能，名稱是自己的；算戰吼類：吼一聲讓身邊自己的召喚物得到增益）----
   blood_offering:
     name: 嗜血祭
-    description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）在那裡立一根骨柱，十秒內柱子附近你的召喚物傷害更高、攻擊更快。同時只有一根。
+    description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）在那裡立一根骨柱，十秒內柱子附近你的召喚物傷害更高、攻擊更快。同時只有一根。冷卻 10 秒。
     icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
@@ -1233,7 +1235,7 @@ skills:
 
   bone_offering:
     name: 骸骨祭
-    description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）立一根骨柱，十秒內柱子附近你的召喚物更耐打（物理傷害減免、格擋）。同時只有一根。
+    description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）立一根骨柱，十秒內柱子附近你的召喚物更耐打（物理傷害減免、格擋）。同時只有一根。冷卻 10 秒。
     icon: BONE   # 2026-10：原本 BONE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
@@ -1255,7 +1257,7 @@ skills:
 
   soul_offering:
     name: 魂火祭
-    description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）立一根骨柱，十秒內柱子附近你的召喚物每秒回復生命、攻擊與移動更快。同時只有一根。
+    description: 祭柱：用掉附近一具屍體（沒有就獻祭一隻你自己最舊的召喚物）立一根骨柱，十秒內柱子附近你的召喚物每秒回復生命、攻擊與移動更快。同時只有一根。冷卻 10 秒。
     icon: ECHO_SHARD   # 2026-10：原本 SOUL_LANTERN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
@@ -1385,7 +1387,7 @@ skills:
 
   whirling_rush:
     name: 迴旋棍步
-    description: 轉著長棍往前衝，打穿路上的敵人。
+    description: 轉著長棍往前衝，打穿路上的敵人。冷卻 1.5 秒。
     icon: BREEZE_ROD
     type: attack
     tier: 3
@@ -2573,7 +2575,7 @@ skills:
 
   dark_idol:
     name: 冥偶
-    description: 放下一個黑色的雕像，一段時間內一直對附近的敵人放混沌彈。
+    description: 放下一個黑色的雕像，10 秒內一直對附近的敵人放混沌彈。
     icon: COAL   # 2026-10：原本 WITHER_SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
@@ -2854,7 +2856,7 @@ skills:
 
   war_banner:
     name: 征戰之旗
-    description: 插下戰旗，八秒內你和附近的隊友攻擊傷害增加、命中提高。
+    description: 插下戰旗，八秒內你和附近的隊友攻擊傷害增加、命中提高。冷卻 12 秒。
     icon: NETHER_BRICK   # 2026-10：原本 RED_BANNER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
@@ -2875,7 +2877,7 @@ skills:
 
   dread_banner:
     name: 懾敵之旗
-    description: 插下令人膽寒的旗，範圍內的敵人八秒內受到的傷害增加；你和附近的隊友更不容易被暈。
+    description: 插下令人膽寒的旗，範圍內的敵人八秒內受到的傷害增加；你和附近的隊友更不容易被暈。冷卻 12 秒。
     icon: COAL   # 2026-10：原本 BLACK_BANNER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9
@@ -2898,7 +2900,7 @@ skills:
 
   hammer_of_gods:
     name: 天罰巨鎚
-    description: 召來一柄巨鎚砸在準心指的地方，打傷落點一大圈的敵人，暈眩累積更多 100%。
+    description: 召來一柄巨鎚砸在準心指的地方，打傷落點一大圈的敵人，暈眩累積更多 100%。冷卻 8 秒。
     icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
@@ -3238,7 +3240,7 @@ skills:
       - { stat: crit.bonus, type: FLAT, value: 30 }
   arctic_howl:
     name: 寒夜嗥
-    description: 戰吼：狼人仰天長嗥，八秒內你和附近的隊友攻擊附加冰冷傷害，接下來幾次攻擊更痛。（狼人形態）
+    description: 戰吼：狼人仰天長嗥，八秒內你和附近的隊友攻擊附加冰冷傷害，接下來幾次攻擊更痛。（狼人形態）冷卻 8 秒。
     icon: QUARTZ   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 5
@@ -3589,7 +3591,7 @@ skills:
 
   flicker_strike:
     name: 瞬影擊
-    description: 瞬移到準心指著的敵人身旁打一下（連旁邊的一個敵人一起打）；沒指到就找 12 格內最近、看得到的敵人。冷卻中按下去會消耗一顆銳星直接施放。
+    description: 瞬移到準心指著的敵人身旁打一下（連旁邊的一個敵人一起打）；沒指到就找 12 格內最近、看得到的敵人。冷卻中按下去會消耗一顆銳星直接施放。冷卻 1.5 秒（全部打完才開始算）。
     icon: PHANTOM_MEMBRANE
     type: attack
     tier: 13
@@ -3893,7 +3895,7 @@ skills:
   # ---- 2026-10：PoE2 主動技能補齊・第 2 批（印記、精魂增益、武器增益）----
   voltaic_mark:
     name: 引雷印
-    description: 標記準心指的一個敵人，八秒內牠的閃電抗性降低、被你打時受到的傷害增加。
+    description: 標記準心指的一個敵人，八秒內牠的閃電抗性降低、被你打時受到的傷害增加。冷卻 3 秒。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
@@ -3907,7 +3909,7 @@ skills:
 
   freezing_mark:
     name: 霜縛印
-    description: 標記準心指的一個敵人，八秒內牠的冰冷抗性降低、更容易被凍結。
+    description: 標記準心指的一個敵人，八秒內牠的冰冷抗性降低、更容易被凍結。冷卻 3 秒。
     icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
@@ -3921,7 +3923,7 @@ skills:
 
   bloodhounds_mark:
     name: 血嗅印
-    description: 標記準心指的一個敵人，八秒內牠的護甲大幅降低、被你打時受到的傷害增加。
+    description: 標記準心指的一個敵人，八秒內牠的護甲大幅降低、被你打時受到的傷害增加。冷卻 3 秒。
     icon: NETHER_BRICK   # 2026-10：原本 RED_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9
@@ -4011,7 +4013,7 @@ skills:
 
   toxic_domain:
     name: 瘴域
-    description: 在自己腳下開出一片毒花，花裡的敵人一直受到混沌傷害、容易中毒。
+    description: 在自己腳下開出一片毒花，花裡的敵人一直受到混沌傷害、容易中毒。冷卻 6 秒。
     icon: SLIME_BALL   # 2026-10：原本 SPORE_BLOSSOM（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
@@ -4870,7 +4872,7 @@ skills:
   # ---- 2026-10：坐騎（mount：叫出一匹真的坐騎騎上去，再放一次下馬；requires_mount：要騎著才能放）----
   summon_mount:
     name: 喚駒
-    description: 叫出一匹披甲戰馬騎上去，再放一次就下馬。騎著的時候移動快很多（吃你的移動速度加成）、攻擊更多 15% 傷害；放法術、按潛行鍵、被傳送或換世界都會下馬。坐騎不會受傷。
+    description: 叫出一匹披甲戰馬騎上去，再放一次就下馬。騎著的時候移動快很多（吃你的移動速度加成）、攻擊更多 15% 傷害；放法術、按潛行鍵、被傳送或換世界都會下馬。坐騎不會受傷。冷卻 2 秒。
     icon: LEATHER   # 2026-10：原本 SADDLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 2
@@ -4885,7 +4887,7 @@ skills:
 
   bone_steed:
     name: 骨駒
-    description: 叫出一匹骷髏戰馬騎上去，再放一次就下馬。比戰馬更快；騎著的時候攻擊更多 15% 傷害。放法術、按潛行鍵、被傳送或換世界都會下馬。
+    description: 叫出一匹骷髏戰馬騎上去，再放一次就下馬。比戰馬更快；騎著的時候攻擊更多 15% 傷害。放法術、按潛行鍵、被傳送或換世界都會下馬。冷卻 2 秒。
     icon: BONE
     type: spell
     tier: 8
@@ -4900,7 +4902,7 @@ skills:
 
   hoof_trample:
     name: 鐵蹄踐踏
-    description: 騎著坐騎才能放：坐騎往前一衝，前蹄重重踏下，震傷周圍的敵人並大幅累積暈眩。
+    description: 騎著坐騎才能放：坐騎往前一衝，前蹄重重踏下，震傷周圍的敵人並大幅累積暈眩。冷卻 3 秒。
     icon: IRON_INGOT   # 2026-10：原本 IRON_HORSE_ARMOR（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 3
@@ -4919,7 +4921,7 @@ skills:
   # ---- 2026-10：指令型召喚物技能（command：哪些召喚物聽命；每一隻聽命的都從自己身上放一次，最多 8 隻、20 格內）----
   command_skeleton_slam:
     name: 骸兵震地
-    description: 指令：身邊的骸骨兵與骸骨狂卒一起往地上重重一砸，各自震傷周圍的敵人。至少要有一隻在 20 格內。傷害吃召喚物傷害的加成。
+    description: 指令：身邊的骸骨兵與骸骨狂卒一起往地上重重一砸，各自震傷周圍的敵人。至少要有一隻在 20 格內。傷害吃召喚物傷害的加成。冷卻 5 秒。
     icon: BONE   # 2026-10：原本 BONE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4
@@ -4937,7 +4939,7 @@ skills:
 
   command_volley:
     name: 骸弓齊射
-    description: 指令：身邊的骸骨射手一起朝準心的敵人（沒有就朝牠們自己的目標）射出一支重箭。傷害吃召喚物傷害的加成。
+    description: 指令：身邊的骸骨射手一起朝準心的敵人（沒有就朝牠們自己的目標）射出一支重箭。傷害吃召喚物傷害的加成。冷卻 4 秒。
     icon: BONE   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: spell
     tier: 4
@@ -4955,7 +4957,7 @@ skills:
 
   command_elements:
     name: 骸術共鳴
-    description: 指令：身邊的骸骨焰術士、霜術士、雷術士一起朝準心的敵人放出一發會爆開的元素彈（火、冰、電混合）。傷害吃召喚物傷害的加成。
+    description: 指令：身邊的骸骨焰術士、霜術士、雷術士一起朝準心的敵人放出一發會爆開的元素彈（火、冰、電混合）。傷害吃召喚物傷害的加成。冷卻 6 秒。
     icon: BLAZE_ROD
     type: spell
     tier: 7
@@ -4973,7 +4975,7 @@ skills:
 
   command_beast_pounce:
     name: 狼伴撲擊
-    description: 指令：你的荒原狼伴猛力撲咬，震傷牠周圍的敵人，並把附近的怪都引過去。傷害吃召喚物傷害的加成。
+    description: 指令：你的荒原狼伴猛力撲咬，震傷牠周圍的敵人，並把附近的怪都引過去。傷害吃召喚物傷害的加成。冷卻 6 秒。
     icon: BONE
     type: spell
     tier: 6
@@ -5168,7 +5170,7 @@ skills:
 
   combat_frenzy:
     name: 戰意昂揚
-    description: 精魂技能：開著的時候攻擊速度增加、攻擊傷害增加。保留 30 精魂。
+    description: 精魂技能：開著的時候，你冰凍、感電或重暈敵人時獲得一顆怒星；同一種每 4 秒（20 級 2 秒）最多一次。保留 30 精魂。
     icon: SUGAR
     type: spell
     tier: 5
@@ -5178,9 +5180,14 @@ skills:
       reserve: 30          # 2026-10：60 → 30（照 PoE2 的 Combat Frenzy）
       radius: 8
       allies: false   # 2026-10：改回只給自己（PoE2 的常駐增益只作用在角色自己身上；分給隊友時每個隊友、每一隻召喚物都疊一份）
+      # 2026-10：照 PoE2 的 Combat Frenzy 改成給戰星（以前是攻速＋攻擊傷害）
       effects:
-        - { stat: attack.speed, type: INCREASED, value: [8, 15] }
-        - { stat: damage, type: INCREASED, value: [10, 20], tags: [attack] }
+        - { stat: charge.event.freeze.frenzy, type: FLAT, value: 100 }
+        - { stat: charge.event.shock.frenzy, type: FLAT, value: 100 }
+        - { stat: charge.event.stun_applied.frenzy, type: FLAT, value: 100 }
+        - { stat: charge.event_cooldown.freeze, type: FLAT, value: [4, 2] }
+        - { stat: charge.event_cooldown.shock, type: FLAT, value: [4, 2] }
+        - { stat: charge.event_cooldown.stun_applied, type: FLAT, value: [4, 2] }
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -5583,7 +5590,7 @@ skills:
 
   siege_ballista:
     name: 衝霄弩台
-    description: 放下一座弩台（10 秒），每隔一段時間往天上射一發重彈，落在附近的敵人身上，過一下炸開一圈火焰。拿弩才能用。
+    description: 放下一座弩台（10 秒），每隔一段時間往天上射一發重彈，落在附近的敵人身上，過一下炸開一圈火焰。拿弩才能用。冷卻 1 秒。
     icon: GUNPOWDER   # 2026-10：原本 DISPENSER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 9
@@ -5603,7 +5610,7 @@ skills:
   artillery_ballista:
     name: 落釘弩台
     # PoE2 Artillery Ballista：殘廢（Maim）[需要程式]；定身照投射物攻擊的規則（技能帶 projectile 標籤）
-    description: 放下一座弩台（10 秒），每隔一段時間朝附近的敵人降下一輪弩彈，打中的敵人有機率被定身。拿弩才能用。
+    description: 放下一座弩台（10 秒），每隔一段時間朝附近的敵人降下一輪弩彈，打中的敵人有機率被定身。拿弩才能用。冷卻 1 秒。
     icon: GUNPOWDER   # 2026-10：原本 DISPENSER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 7
@@ -5738,3 +5745,270 @@ skills:
     modifiers:
       - { stat: shock.chance, type: FLAT, value: 20 }
       - { stat: poison.chance, type: FLAT, value: 20 }
+
+  # ---- 2026-10：主要寶石（照 PoE2 的 Meta Gem：法術圖騰、Cast on X）----
+  # 主要寶石本身不打人，用的是技能面板上「它後面那一格」的法術（那一格就是它的插槽，那個法術不能自己按）。
+  # meta 區塊：kind（totem 法術圖騰；crit／ailment／dodge／damage_taken／minion_death／melee_kill 常駐、保留精魂）、
+  #   energy 條件成立一次給的基礎能量（暴擊、元素異常、近戰擊殺再乘怪物強度：一般 1、魔法 2、稀有 5、傳奇 10；冰凍再 ×3）、
+  #   energy_more 能量獲得量增加幾 %（隨寶石等級）、less_damage／more_damage 插槽法術更少／更多幾 % 傷害、
+  #   法術圖騰的 charges（消耗幾顆銳星或磐星）、per_power、per_endurance、less_cast_speed、totems（隨寶石等級）。
+  # 能量上限照插槽法術的基礎施法時間：每 0.1 秒 10 點（熾星彈 1.2 秒 = 120）。以前的觸發輔助（暴擊觸發…）、圖騰施法輔助已經拿掉。
+
+  totem_casting:
+    name: 星咒圖騰
+    description: 主要寶石：技能面板上它後面那一格的法術就是插槽。放的時候消耗 3 顆銳星或磐星（銳星先用），放下一根圖騰替你施放插槽法術；每消耗一顆銳星插槽法術更多 10% 傷害，每消耗一顆磐星圖騰更多 20% 生命與持續時間。插槽法術施法速度更少 25%，不能插有冷卻的法術。圖騰持續 8 秒，最多 1 根（15 級起 2 根）。
+    icon: NAUTILUS_SHELL
+    type: spell
+    tier: 7
+    tags: [totem, duration]
+    mechanic: meta
+    meta: { kind: totem, charges: 3, per_power: 10, per_endurance: 20, less_cast_speed: 25, totems: [1, 2.4] }
+    cast_time: 0.6
+    mana: [10, 40]
+    visual: aura_armour
+
+  meta_crit:
+    name: 暴擊引星
+    description: 主要寶石（常駐）：綁在上方按鍵格就開著，保留 100 精魂。你用技能暴擊敵人時獲得能量（每次 10 點，乘怪物強度：一般 1、魔法 2、稀有 5、傳奇 10），能量到插槽法術的上限（基礎施法時間每 0.1 秒 10 點）就觸發它一次。插槽是技能面板上它後面那一格的法術，更少 20% 傷害、不花魔力。
+    icon: ECHO_SHARD
+    type: spell
+    tier: 14
+    tags: [persistent]
+    mechanic: aura
+    aura: { reserve: 100, radius: 8, allies: false }
+    meta: { kind: crit, energy: 10, energy_more: [0, 57], less_damage: 20 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_haste
+
+  meta_ailment:
+    name: 異變引星
+    description: 主要寶石（常駐）：綁在上方按鍵格就開著，保留 100 精魂。你讓敵人冰凍、感電或點燃時獲得能量（感電、點燃 10 點，冰凍 30 點，再乘怪物強度），能量到插槽法術的上限就觸發它一次。插槽是技能面板上它後面那一格的法術，不花魔力。
+    icon: PRISMARINE_CRYSTALS
+    type: spell
+    tier: 14
+    tags: [persistent, fire, cold, lightning]
+    mechanic: aura
+    aura: { reserve: 100, radius: 8, allies: false }
+    meta: { kind: ailment, energy: 10, energy_more: [0, 57] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_purity
+
+  meta_dodge:
+    name: 翻滾引星
+    description: 主要寶石（常駐）：綁在上方按鍵格就開著，保留 100 精魂。你每次翻滾獲得 12 點能量，能量到插槽法術的上限就觸發它一次。插槽是技能面板上它後面那一格的法術，不花魔力。
+    icon: FEATHER
+    type: spell
+    tier: 14
+    tags: [persistent]
+    mechanic: aura
+    aura: { reserve: 100, radius: 8, allies: false }
+    meta: { kind: dodge, energy: 12, energy_more: [0, 57] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_evasion
+
+  meta_damage_taken:
+    name: 受創引星
+    description: 主要寶石（常駐）：綁在上方按鍵格就開著，保留 100 精魂。你每次被敵人擊中獲得 30 點能量，能量到插槽法術的上限就觸發它一次。插槽是技能面板上它後面那一格的法術，不花魔力。
+    icon: TURTLE_SCUTE
+    type: spell
+    tier: 11
+    tags: [persistent]
+    mechanic: aura
+    aura: { reserve: 100, radius: 8, allies: false }
+    meta: { kind: damage_taken, energy: 30, energy_more: [0, 57] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_armour
+
+  meta_minion_death:
+    name: 殞從引星
+    description: 主要寶石（常駐）：綁在上方按鍵格就開著，保留 30 精魂。你的召喚物每死一隻獲得 50 點能量，能量到插槽法術的上限就在牠倒下的地方附近觸發它一次。插槽是技能面板上它後面那一格的法術（不能是召喚法術），不花魔力。
+    icon: BONE
+    type: spell
+    tier: 8
+    tags: [persistent]
+    mechanic: aura
+    aura: { reserve: 30, radius: 8, allies: false }
+    meta: { kind: minion_death, energy: 50, energy_more: [0, 57] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
+  meta_melee_kill:
+    name: 斬殺引星
+    description: 主要寶石（常駐）：綁在上方按鍵格就開著，保留 60 精魂。你用近戰技能擊殺敵人時獲得 100 點能量（乘怪物強度），能量到插槽法術的上限就觸發它一次。插槽是技能面板上它後面那一格的法術，不花魔力。
+    icon: FLINT
+    type: spell
+    tier: 8
+    tags: [persistent]
+    mechanic: aura
+    aura: { reserve: 60, radius: 8, allies: false }
+    meta: { kind: melee_kill, energy: 100, energy_more: [0, 57] }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: rallying_cry
+
+  # ---- 2026-10：更多戰星來源（照 PoE2 的奇術活力；名稱是自己的。戰鬥狂怒是戰意昂揚）----
+
+  star_cadence:
+    name: 星律
+    description: 常駐：綁在上方按鍵格就開著，保留 60 精魂。每 6 秒（20 級 4 秒）獲得一顆戰星，種類照你最高的能力值：力量給磐星、敏捷給怒星、智慧給銳星。
+    icon: CLOCK
+    type: spell
+    tier: 11
+    tags: [persistent]
+    mechanic: aura
+    aura:
+      reserve: 60
+      radius: 8
+      allies: false
+      effects:
+        - { stat: charge.periodic, type: FLAT, value: [10, 15] }   # 每分鐘幾顆：6 秒一顆 → 4 秒一顆
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_mana
+
+  # ---- 2026-10：照 PoE 的旋風斬與元素打擊做的（PoE2 目前沒有；名稱是自己的）----
+
+  storm_spin:
+    name: 斬風旋
+    # 照 PoE2 資料裡還沒實裝的旋風斬做（攻擊速度 330%、傷害效益 78% 的方向，換算成這服的數值）
+    description: 按住左鍵持續旋轉，一直砍傷身邊一圈的敵人（可以邊轉邊走）。轉得很快、每一下比較輕。
+    icon: BREEZE_ROD
+    type: attack
+    tier: 9
+    tags: [attack, melee, area, nova]
+    weapons: [melee]
+    mechanic: nova
+    nova: { radius: [2.4, 3.0] }
+    attack_speed: 2.5            # 轉得快：一般攻擊的 2.5 倍
+    effectiveness: [0.33, 0.46]  # 每一下輕（2.5 倍速 × 0.46 ≈ 單體的碎脊擊再多一點，但打一整圈）
+    mana: [2, 4]
+    visual: whirl
+
+  prismatic_strike:
+    name: 幻元擊
+    description: 用近戰武器打一下，每次隨機變成火焰、冰冷或閃電其中一種（只造成那一種傷害），目標周圍的敵人也受到這一下 60% 的傷害；那種元素的異常更容易發生。
+    icon: AMETHYST_SHARD
+    type: attack
+    tier: 5
+    tags: [attack, melee, strike, fire, cold, lightning]
+    weapons: [melee]
+    mechanic: strike
+    strike: { reach: 3.6, angle: 70, targets: 1 }
+    attack_speed: 1.0
+    effectiveness: [1.15, 1.6]   # 單體約一般攻擊的 1.2 倍（只有一種元素、物理全轉，吃不到物理加成），外加周圍 60%
+    mana: [5, 10]
+    visual: storm_wave
+    modifiers:
+      - { stat: flag.random_element, type: FLAT, value: 1 }
+      - { stat: skill.melee_splash, type: FLAT, value: 60 }
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+      - { stat: shock.chance, type: FLAT, value: 20 }
+      - { stat: freeze.buildup, type: INCREASED, value: 50 }
+
+  prismatic_arrow:
+    name: 幻元箭
+    description: 射出一支箭，每次隨機變成火焰、冰冷或閃電其中一種（只造成那一種傷害），打中時附近最多 4 個敵人也受到這一下 50% 的傷害；那種元素的異常更容易發生。
+    icon: SPECTRAL_ARROW
+    type: attack
+    tier: 5
+    tags: [attack, projectile, area, fire, cold, lightning]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.0, range: 40, splash: { targets: 4, radius: 3.5, damage: 50 } }   # 2026-10：60% → 50%
+    attack_speed: 1.0
+    effectiveness: [0.95, 1.32]   # 2026-10：[1.05, 1.46] → 略高於弓技能中位數（只有一種元素、物理全轉，吃不到物理加成），外加附近 50%
+    mana: [5, 10]
+    visual: lightning_arrow
+    modifiers:
+      - { stat: flag.random_element, type: FLAT, value: 1 }
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+      - { stat: shock.chance, type: FLAT, value: 20 }
+      - { stat: freeze.buildup, type: INCREASED, value: 50 }
+
+  # ---- 2026-10：法術圖騰（照 PoE2 的方向：圖騰站著自己施法、同時一根、8 秒；吃圖騰的加成與輔助。名稱是自己的）----
+
+  ember_nest_totem:
+    name: 焰巢圖騰
+    description: 放下一根燒紅的圖騰，8 秒內每 0.33 秒朝附近最近的敵人噴一顆小火彈，容易點燃。單體輸出穩定，適合黏在王身邊。
+    icon: MAGMA_CREAM
+    type: spell
+    tier: 3
+    tags: [spell, projectile, fire]
+    mechanic: projectile
+    projectile: { speed: 1.4, range: 14, size: 0.35 }
+    totem: { duration: 8, interval: 0.33, range: 14, max: 1, head: MAGMA_BLOCK }   # 2026-10：0.4 → 0.33（跟其他圖騰比偏弱）
+    damage: [3, 5]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.4
+    mana: [8, 20]
+    visual: fireball
+    modifiers:
+      - { stat: ignite.chance, type: FLAT, value: 15 }
+
+  frost_pulse_totem:
+    name: 霜脈圖騰
+    description: 放下一根冰晶圖騰，8 秒內每 1.2 秒往外放一圈寒氣，打傷周圍的敵人並大量累積冰凍。適合守點、把怪凍在原地。
+    icon: PRISMARINE_CRYSTALS
+    type: spell
+    tier: 5
+    tags: [spell, area, cold, nova]
+    mechanic: nova
+    nova: { radius: [3.5, 4.2] }
+    totem: { duration: 8, interval: 1.2, range: 4, max: 1, head: BLUE_ICE }
+    damage: [8, 12]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.55
+    mana: [8, 20]
+    visual: frost_nova
+    modifiers:
+      - { stat: freeze.buildup, type: MORE, value: 60 }
+
+  storm_pylon_totem:
+    name: 雷樁圖騰
+    description: 放下一根引雷的圖騰，8 秒內每 0.9 秒朝附近的敵人劈一道連鎖閃電（連鎖 2–4 次），容易感電。清怪用。
+    icon: COPPER_INGOT
+    type: spell
+    tier: 7
+    tags: [spell, lightning, chain]
+    mechanic: chain
+    chain: { range: 12, chains: [2, 4], chain_range: 6 }
+    totem: { duration: 8, interval: 0.9, range: 12, max: 1, head: LIGHTNING_ROD }
+    damage: [2, 16]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.5
+    mana: [9, 22]
+    visual: arc
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 20 }
+
+  bulwark_totem:
+    name: 磐守圖騰
+    description: 放下一根石碑圖騰（10 秒），每 1.5 秒震一下周圍的敵人；它站著的時候，你增加 30% 護甲、每秒回復 1.5% 最大生命。
+    icon: IRON_INGOT
+    type: spell
+    tier: 5
+    tags: [spell, area, physical, nova]
+    mechanic: nova
+    nova: { radius: [3.0, 3.6] }
+    totem: { duration: 10, interval: 1.5, range: 3.5, max: 1, head: LODESTONE, buff: [ { stat: armour, type: INCREASED, value: 30 }, { stat: life.regen_percent, type: FLAT, value: 1.5 } ] }
+    damage: [6, 9]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.8
+    effectiveness: 0.45
+    mana: [10, 24]
+    visual: shockwave_totem

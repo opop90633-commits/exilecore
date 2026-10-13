@@ -151,6 +151,11 @@ public final class MonsterListener implements Listener {
             quantityBonus += bonus[0];
             rarityBonus += bonus[1];
         }
+        if (plugin.events() != null) {
+            // 2026-10：這個月的主題是全域的（以前只有地圖裡吃得到）
+            quantityBonus += plugin.events().quantityBonus();
+            rarityBonus += plugin.events().rarityBonus();
+        }
         final Location location = entity.getLocation();
         final List<Player> sharers = credit.sharers(entity, killer);
         if (sharers.isEmpty()) {

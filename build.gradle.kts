@@ -19,11 +19,15 @@ java {
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
+    // PacketEvents（2026-10：滑鼠指到物品時「對你的技能」的提示）
+    maven("https://repo.codemc.io/repository/maven-releases/")
 }
 
 dependencies {
     // Paper 26.2 API。伺服器本身提供，所以是 compileOnly
     compileOnly("io.papermc.paper:paper-api:26.2.build.+")
+    // 2026-10：PacketEvents（伺服器上另外裝 packetevents 插件；沒裝也能啟動，只是沒有物品的技能提示）
+    compileOnly("com.github.retrooper:packetevents-spigot:2.14.0")
 
     // 執行期函式庫（HikariCP、H2、MariaDB 驅動）不打包進 jar，
     // 由 tw.exilecore.bootstrap.ExileCoreLoader 在伺服器啟動時下載到 libraries/。

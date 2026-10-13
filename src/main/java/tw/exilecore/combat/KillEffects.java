@@ -88,6 +88,12 @@ public final class KillEffects implements Listener {
         final StatSheet sheet = plugin.players().sheet(killer);
         if (charges != null) {
             charges.onKill(killer); // 怒星
+            final boolean rare = plugin.monsters() != null && plugin.monsters().data(victim)
+                    .map(data -> data.rarity() == tw.exilecore.monster.MonsterRarity.RARE || data.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE)
+                    .orElse(false);
+            if (rare) {
+                charges.onEvent(killer, "kill_rare", null, null, victim); // 戰星：擊殺稀有或傳奇怪時（2026-10）
+            }
         }
         boolean changed = false;
         final double life = sheet.flat(StatKeys.LIFE_ON_KILL, Set.of());
@@ -235,7 +241,8 @@ public final class KillEffects implements Listener {
             final double radiusSquared = EXPLODE_RADIUS * EXPLODE_RADIUS;
             for (final LivingEntity target : world.getNearbyLivingEntities(at, EXPLODE_RADIUS)) {
                 if (target instanceof Player || target.isDead() || !target.isValid() || plugin.monsters().data(target).isEmpty()
-                        || target.getLocation().add(0, 0.5, 0).distanceSquared(at) > radiusSquared) {
+                        || target.getLocation().add(0, 0.5, 0).distanceSquared(at) > radiusSquared
+                        || (plugin.training() != null && !plugin.training().canTarget(target, killer))) {
                     continue; // getNearby 是方框：再用距離篩成圓的
                 }
                 damage.hit(killer, target, profile, null);

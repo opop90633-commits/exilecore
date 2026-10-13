@@ -46,7 +46,8 @@ final class SkillTargets {
             return owner != null && pvp(owner, target);
         }
         if (plugin.monsters().isMonster(living)) {
-            return true;
+            // 2026-10：訓練假人每人一組——別人那組的（看不到）不算目標；自己有一組時共用的那組也不算
+            return plugin.training() == null || plugin.training().canTarget(living, owner);
         }
         if (owner == null) {
             return false;

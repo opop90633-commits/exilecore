@@ -240,7 +240,11 @@ class MechanicsTest {
         assertNotNull(config.skill("earthquake").params().aftershock());
         assertNotNull(config.skill("killing_palm").params().execute());
         assertNotNull(config.skill("lightning_arrow").params().splash());
-        assertNotNull(config.skill("tornado_shot").params().scatter());
+        // 2026-10：裂空箭照 PoE2 改成落地捲起龍捲風（不再散射）
+        assertNull(config.skill("tornado_shot").params().scatter());
+        assertNotNull(config.tornado("tornado_shot"));
+        assertEquals(1, config.tornado("tornado_shot").max());
+        assertEquals(3, config.tornado("tornado_shot").copies());
         assertNotNull(config.skill("rapid_fire").params().burst());
         assertNotNull(config.skill("whirlwind_lance").params().vortex());
         assertTrue(config.skill("whirlwind_lance").tags().contains(Tags.DURATION));
@@ -376,7 +380,12 @@ class MechanicsTest {
     @Test
     void spellTotemAndTrapSupportsTurnSpellsIntoDeployables() {
         final StatSheet sheet = new StatSheet();
-        final SkillBuild totem = build("fireball", sheet, config.support("spell_totem"));
+        // 圖騰施法這顆輔助 2026-10 改成主要寶石（星咒圖騰，MetaGems 用同一個 flag.spell_totem）：用自己做的輔助測這個開關
+        assertNull(config.support("spell_totem"));
+        final SupportDefinition spellTotem = new SupportDefinition("spell_totem", "圖騰施法", "", "NAUTILUS_SHELL", 2, Set.of(Tags.SPELL),
+                Set.of(Tags.MOVEMENT, Tags.MARK, Tags.CORPSE, Tags.TOTEM, Tags.BELL, Tags.TRAP, Tags.MINION, Tags.AURA, Tags.WARCRY, Tags.PERSISTENT), 1.5,
+                List.of(Modifier.flat(StatKeys.FLAG_SPELL_TOTEM, 1, "圖騰施法")), List.of());
+        final SkillBuild totem = build("fireball", sheet, spellTotem);
         assertNotNull(totem.deploy());
         assertEquals(DeploySpec.Kind.TOTEM, totem.deploy().kind());
         assertEquals(1, totem.totems());
@@ -391,17 +400,17 @@ class MechanicsTest {
         assertEquals(DeploySpec.Kind.TRAP, trap.deploy().kind());
         assertEquals(3, trap.deploy().max());
         // 圖騰施法與陷阱施法一起掛：只有第一個生效，第二個連魔力倍率都不算
-        final SkillBuild both = build("comet", sheet, config.support("spell_totem"), trapSupport);
+        final SkillBuild both = build("comet", sheet, spellTotem, trapSupport);
         assertEquals(DeploySpec.Kind.TOTEM, both.deploy().kind());
         assertEquals(1, both.supports().size());
         assertEquals("spell_totem", both.supports().getFirst().id());
-        assertEquals(build("comet", sheet, config.support("spell_totem")).manaCost(), both.manaCost());
+        assertEquals(build("comet", sheet, spellTotem).manaCost(), both.manaCost());
         assertNull(build("fireball", sheet).deploy());
         // 掛不上的：位移、印記、骸爆、本來就是圖騰的、攻擊
-        assertFalse(config.support("spell_totem").supports(config.skill("blink")));
-        assertFalse(config.support("spell_totem").supports(config.skill("hunters_mark")));
-        assertFalse(config.support("spell_totem").supports(config.skill("detonate_dead")));
-        assertFalse(config.support("spell_totem").supports(config.skill("dark_idol")));
+        assertFalse(spellTotem.supports(config.skill("blink")));
+        assertFalse(spellTotem.supports(config.skill("hunters_mark")));
+        assertFalse(spellTotem.supports(config.skill("detonate_dead")));
+        assertFalse(spellTotem.supports(config.skill("dark_idol")));
         assertFalse(trapSupport.supports(config.skill("lightning_arrow")));
         assertTrue(trapSupport.supports(config.skill("frostbolt")));
         // 圖騰列陣（2026-10：豐饒）只有圖騰技能能掛，+1 根

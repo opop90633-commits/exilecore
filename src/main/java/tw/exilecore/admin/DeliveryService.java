@@ -77,6 +77,8 @@ public final class DeliveryService {
     public static final String TAKE_CURRENCY = "take_currency";
     public static final String TAKE_GOLD = "take_gold";
     public static final String TAKE_ITEM = "take_item";
+    /** 收回時裝、限定稱號（2026-10）：ref 跟 {@link #COSMETIC} 一樣（時裝代號、title:稱號代號、bundle:組代號）；沒有的就略過。 */
+    public static final String TAKE_COSMETIC = "take_cosmetic";
 
     static boolean isTake(final String kind) {
         return kind != null && kind.startsWith("take_");
@@ -188,7 +190,7 @@ public final class DeliveryService {
             case TAKE_GOLD -> 1_000_000_000_000L;
             case TAKE_ITEM -> 10_000;
             case REFUND -> 100;
-            case COSMETIC -> 1;
+            case COSMETIC, TAKE_COSMETIC -> 1;
             default -> 50;
         };
     }
@@ -342,6 +344,13 @@ public final class DeliveryService {
                     throw new IllegalArgumentException("收回贊助要選：累積贊助、星幣、月卡幣、時裝幣、買的倉庫頁、買的背包頁、買的上架格、月卡天數、免費抽獎箱");
                 }
                 return String.format(Locale.ROOT, "收回 %s %,d", what, spec.amount());
+            }
+            case TAKE_COSMETIC -> {
+                if (plugin.sponsors() == null) {
+                    throw new IllegalArgumentException("贊助模組沒有啟用，不能收回時裝");
+                }
+                plugin.sponsors().resolveCosmetics(ref(spec)); // 沒有這個代號會丟 IllegalArgumentException
+                return "收回 " + plugin.sponsors().cosmeticLabel(ref(spec));
             }
             case TAKE_CURRENCY -> {
                 final CurrencyType type = plugin.currencies().repository().get(ref(spec));
@@ -926,6 +935,34 @@ public final class DeliveryService {
                     log.add(entry(opId, null, (item.title() ? "稱號 " : "時裝 ") + item.name(), 1, admin, player));
                 }
                 return new Given(1, label + (granted.alreadyOwned().isEmpty() ? "" : "（" + granted.alreadyOwned().size() + " 件已經有了）"), log, granted.work());
+            }
+            case TAKE_COSMETIC -> {
+                if (plugin.sponsors() == null) {
+                    return Given.MISSING;
+                }
+                if (!plugin.sponsors().loaded(player)) {
+                    return Given.WAIT;
+                }
+                final tw.exilecore.sponsor.SponsorService.Granted revoked;
+                try {
+                    revoked = plugin.sponsors().revokeCosmeticWork(player, row.ref());
+                } catch (final IllegalArgumentException e) {
+                    return Given.MISSING; // 資料檔裡已經沒有這個時裝
+                }
+                if (revoked == null) {
+                    return Given.WAIT;
+                }
+                final String label = plugin.sponsors().cosmeticLabel(row.ref());
+                if (revoked.given().isEmpty()) {
+                    return new Given(1, "收回 " + label + "（本來就沒有）",
+                            List.of(entry(opId, null, "收回" + label + "（本來就沒有）", 1, admin, player)), null);
+                }
+                final List<TradeLogRepository.Entry> log = new ArrayList<>();
+                for (final tw.exilecore.sponsor.SponsorService.Grantable item : revoked.given()) {
+                    log.add(entry(opId, null, "收回" + (item.title() ? "稱號 " : "時裝 ") + item.name(), 1, admin, player));
+                }
+                return new Given(1, "收回 " + label + (revoked.alreadyOwned().isEmpty() ? "" : "（" + revoked.alreadyOwned().size() + " 件本來就沒有）"),
+                        log, revoked.work());
             }
             case TAKE_SPONSOR -> {
                 if (plugin.sponsors() == null) {

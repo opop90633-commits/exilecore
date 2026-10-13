@@ -496,14 +496,13 @@ public final class MapService {
         if (instance == null || instance.special() != null && !entity.getPersistentDataContainer().has(bossKey)) {
             return new double[] {0, 0}; // 特別的實例（回響、試煉）：只有 Boss 有加成，路上的怪照一般掉
         }
-        final double monthQuantity = plugin.events() == null ? 0 : plugin.events().quantityBonus();
-        final double monthRarity = plugin.events() == null ? 0 : plugin.events().rarityBonus();
+        // 2026-10：這個月的主題改成全域的（MonsterListener 在地圖內外都加），這裡不再加，免得地圖裡算兩次
         // 星圖天賦：地圖 Boss 另外的物品數量與稀有度（地圖本身的已經在 stats 裡）
         final boolean boss = entity.getPersistentDataContainer().has(bossKey);
         final double bossQuantity = boss ? instance.atlas().increased("atlas.boss_quantity") : 0;
         final double bossRarity = boss ? instance.atlas().increased("atlas.boss_rarity") : 0;
-        return new double[] {instance.stats().quantity() / 100.0 + events.quantityBonus(entity) + monthQuantity + bossQuantity,
-                instance.stats().rarity() / 100.0 + monthRarity + bossRarity};
+        return new double[] {instance.stats().quantity() / 100.0 + events.quantityBonus(entity) + bossQuantity,
+                instance.stats().rarity() / 100.0 + bossRarity};
     }
 
     /**

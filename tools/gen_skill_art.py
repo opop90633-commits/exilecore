@@ -1309,6 +1309,99 @@ AWAKENER_SKILLS = {
 SKILLS.update(AWAKENER_SKILLS)
 
 
+# 2026-10：主要寶石（照 PoE2 的 Meta Gem）、星律、斬風旋、幻元擊、法術圖騰；裂空箭改成龍捲風的樣子
+MANA_ORB = ('#2a4ac0', '#5a86ff', '#a8c4ff', '#ffffff')
+
+
+def spell_orb(i, cx=12, cy=12, r=2.0):
+    """主要寶石的共同記號：右下角一顆藍色法術球（代表「施放插槽裡的法術」）。"""
+    i.ball(cx, cy, r, *MANA_ORB)
+
+
+def mini_totem(i, cx, top, wood=WOOD, face=3):
+    """窄一點的圖騰（寬 4 格，從 top 到底）。"""
+    i.poly([(cx - 2, top), (cx + 1, top), (cx + 1, 14), (cx - 2, 14)], wood[1])
+    i.line(cx - 2, top, cx - 2, 14, wood[0])
+    i.line(cx + 1, top, cx + 1, 14, wood[0])
+    i.line(cx - 2, top + 4, cx + 1, top + 4, wood[0])
+    i.px(cx - 1, top + 2, face)
+    i.px(cx, top + 2, face)
+    i.line(cx - 3, top, cx + 2, top, wood[2])
+
+
+def shield(i, c=STEEL):
+    i.poly([(3, 3), (12, 3), (12, 8), (7.5, 13), (3, 8)], c[1])
+    i.line(3, 3, 12, 3, c[2])
+    i.line(3, 3, 3, 8, c[2])
+    i.line(12, 4, 12, 8, c[0])
+
+
+def tornado(i, cx=9, top=2, bottom=13, w0=5.0, w1=1.0):
+    """漏斗形的龍捲風：上寬下窄，一圈一圈。"""
+    n = bottom - top
+    for k in range(n + 1):
+        t = k / n
+        y = top + k
+        half = w0 * (1 - t) + w1 * t
+        x = cx + math.sin(t * 5) * 0.8
+        i.line(x - half, y, x + half, y, 1 if k % 2 else 2)
+        i.px(x + half, y, 3 if k % 3 == 0 else 2)
+
+
+def tornado_shot2():
+    i = S('wind')
+    tornado(i, 10, 2, 13, 4.2, 0.6)
+    arrow(i, 1, 13, 6, 8)
+    for x, y in ((3, 3), (14, 9), (13, 14)):
+        i.px(x, y, 3)
+    return i
+
+
+def storm_spin():
+    i = S('wind')
+    waves(i, 7.5, 8, (6,), 1, 0.2, 5.6)
+    waves(i, 7.5, 8, (4,), 2, 3.4, 8.8)
+    sword(i, 4, 11, 11, 4)
+    return i
+
+
+META_SKILLS = {
+    'totem_casting': A('mana', lambda i: mini_totem(i, 8, 6, WOOD, 3),
+                       lambda i: burst(i, 7.5, 3, 1, 3, 8, 2), lambda i: (i.px(7, 3, 3), i.px(8, 3, 3)),
+                       lambda i: [i.px(x, y, 2) for x, y in ((3, 9), (12, 10), (2, 5), (13, 5))]),
+    'meta_crit': A('fire', lambda i: burst(i, 7, 7, 2, 6, 8, 2), lambda i: i.disc(7, 7, 1.6, 3), spell_orb),
+    'meta_ailment': A('chaos', lambda i: i.ring(7, 7, 5, 1, 1.0), lambda i: flame(i, 7, 5, 3, 1.5, (F_RED[0], F_RED[1], F_RED[2])),
+                      lambda i: snowflake(i, 4, 9, 1.8, '#5ec4ff', '#ffffff'),
+                      lambda i: bolt(i, [(10, 7), (9, 9), (11, 9), (10, 11)], '#ffd23a', '#fff27a'), spell_orb),
+    'meta_dodge': A('wind', lambda i: waves(i, 7, 8, (5,), 2, 3.4, 6.2), lambda i: i.ball(7, 8, 2.4, 0, 1, 2, 3),
+                    lambda i: speed(i, 1, (5, 8, 11), 0, 2), spell_orb),
+    'meta_damage_taken': A('blood', shield, lambda i: (i.line(7, 3, 6, 6, 0), i.line(6, 6, 8, 8, 0), i.line(8, 8, 7, 11, 0)),
+                           lambda i: spell_orb(i, 12, 12, 2.0)),
+    'meta_minion_death': A('minion', lambda i: skull(i, 3, 2), lambda i: burst(i, 7, 6, 5.5, 6.5, 8, 2), spell_orb),
+    'meta_melee_kill': A('war', lambda i: sword(i, 2, 12, 11, 3), lambda i: burst(i, 11, 3, 1, 2.5, 6, 3), spell_orb),
+    'star_cadence': A('holy', sigil, lambda i: i.disc(7.5, 7.5, 1.5, 3),
+                      lambda i: [i.disc(x, y, 1.1, c) for x, y, c in ((7.5, 4, '#5a86ff'), (4.5, 10, '#5ad84a'), (10.5, 10, '#ff5a3a'))]),
+    'storm_spin': storm_spin,
+    'prismatic_strike': A('holy', lambda i: sword(i, 2, 13, 11, 4),
+                          lambda i: i.disc(12, 3, 1.6, '#ff6a1a'), lambda i: i.disc(13, 8, 1.6, '#5ec4ff'), lambda i: i.disc(8, 2, 1.4, '#ffd23a'),
+                          lambda i: burst(i, 11, 5, 3.5, 4.5, 6, 3)),
+    'prismatic_arrow': A('holy', lambda i: arrow(i, 2, 13, 11, 4),
+                         lambda i: i.disc(12.5, 3, 1.6, '#ff6a1a'), lambda i: i.disc(13, 8, 1.5, '#5ec4ff'), lambda i: i.disc(8, 2, 1.4, '#ffd23a'),
+                         lambda i: burst(i, 11.5, 4.5, 3.6, 4.6, 6, 3), lambda i: speed(i, 1, (9, 12), 1, 3)),
+    'ember_nest_totem': A('fire', lambda i: mini_totem(i, 5, 7, WOOD, 3), lambda i: flame(i, 4.5, 6, 3, 1.6),
+                          lambda i: i.ball(11, 5, 2, 0, 1, 2, 3), lambda i: speed(i, 1, (4, 6), 7, 1)),
+    'frost_pulse_totem': A('cold', lambda i: waves(i, 7.5, 10, (5, 7), 1, 3.3, 6.1), lambda i: mini_totem(i, 8, 7, WOOD, 3),
+                           lambda i: snowflake(i, 7.5, 3.5, 2.2)),
+    'storm_pylon_totem': A('lightning', lambda i: mini_totem(i, 4, 7, WOOD, 3), lambda i: i.line(3, 4, 3, 6, STEEL[2]),
+                           lambda i: bolt(i, [(4, 4), (7, 6), (8, 3), (11, 5), (13, 2)], 1, 3),
+                           lambda i: [i.px(x, y, 3) for x, y in ((11, 9), (13, 11))]),
+    'bulwark_totem': A('physical', lambda i: shield(i, ('#7a5a14', '#4a4036', '#d4a030')), lambda i: mini_totem(i, 8, 5, ('#3a3a3a', '#6e6a62', '#a8a49a'), '#ffe07a'),
+                       ground),
+    'tornado_shot': tornado_shot2,
+}
+SKILLS.update(META_SKILLS)
+
+
 def support_category(sup):
     mods = sup.get('modifiers', []) or []
     stats = ' '.join(str(m.get('stat', '')) for m in mods)

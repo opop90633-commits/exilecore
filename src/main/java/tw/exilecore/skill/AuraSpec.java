@@ -260,7 +260,7 @@ public record AuraSpec(double reserve, double radius, boolean allies, List<Scale
             enemy = new Enemy(taken, e.has("ramp_taken") ? Scaled.parse(e.path() + ".ramp_taken", e.raw("ramp_taken"), 0) : taken,
                     check(e.path(), "ramp", e.decimal("ramp", 0), 0, 60), e.has("tag") ? e.string("tag", "").trim().toLowerCase(Locale.ROOT) : null);
         }
-        if (effects.isEmpty() && onKill == null && !burn && enemy == null && fury == null && !skill.has("summon")) { // 2026-10：夥伴（aura ＋ summon）可以沒有效果
+        if (effects.isEmpty() && onKill == null && !burn && enemy == null && fury == null && !skill.has("summon") && !skill.has("meta")) { // 2026-10：夥伴（aura ＋ summon）、主要寶石（只保留精魂）可以沒有效果
             throw new IllegalArgumentException(where + "：光環至少要有 effects、enemy、on_kill、fury 或 burn");
         }
         if (burn && lifeCost != null) {

@@ -85,6 +85,10 @@ public final class SkillConfig {
     private Map<String, Mounts.Spec> mountSpecs = Map.of();
     /** 連珠（2026-10）：技能代號 → 「下一次弓／矛的投射物攻擊重複」的設定（skills.yml 的 barrage 區塊）。 */
     private Map<String, BarrageSpec> barrages = Map.of();
+    /** 主要寶石（2026-10，照 PoE2 的 Meta Gem）：技能代號 → skills.yml 的 meta 區塊（{@link MetaSpec}）。 */
+    private Map<String, MetaSpec> metas = Map.of();
+    /** 龍捲風（2026-10，照 PoE2 的龍捲射擊）：技能代號 → skills.yml 的 tornado 區塊。 */
+    private Map<String, TornadoSpec> tornados = Map.of();
     private Set<String> mountOnly = Set.of();
     /** 異質技能（variant_of）→ 原本的技能（2026-10：同一系列的技能面板上只能放一個）。 */
     private Map<String, String> variants = Map.of();
@@ -130,6 +134,8 @@ public final class SkillConfig {
         final Map<String, Double> parsedParent = new HashMap<>();
         final Map<String, Mounts.Spec> parsedMounts = new HashMap<>();
         final Map<String, BarrageSpec> parsedBarrages = new HashMap<>();
+        final Map<String, MetaSpec> parsedMetas = new HashMap<>();
+        final Map<String, TornadoSpec> parsedTornados = new HashMap<>();
         final Set<String> parsedMountOnly = new java.util.HashSet<>();
         final YamlNode section = root.node("skills");
         final Map<String, String> starters = new HashMap<>();
@@ -174,6 +180,22 @@ public final class SkillConfig {
                     throw new IllegalArgumentException(node.path() + ".barrage：只有增益技能（mechanic: guard）能寫");
                 }
                 parsedBarrages.put(id, barrage);
+            }
+            if (node.has("tornado")) {
+                if (definition.mechanic() != Mechanic.PROJECTILE) {
+                    throw new IllegalArgumentException(node.path() + ".tornado：只有投射物技能能寫");
+                }
+                parsedTornados.put(id, TornadoSpec.parse(node.path() + ".tornado", node.node("tornado")));
+            }
+            if (node.has("meta")) {
+                final MetaSpec meta = MetaSpec.parse(node.path() + ".meta", node.node("meta"));
+                if (meta.totem() ? definition.mechanic() != Mechanic.META : definition.mechanic() != Mechanic.AURA) {
+                    throw new IllegalArgumentException(node.path() + ".meta：法術圖騰（kind: totem）要寫 mechanic: meta，"
+                            + "其他（暴擊時施放這類）是常駐的，要寫 mechanic: aura");
+                }
+                parsedMetas.put(id, meta);
+            } else if (definition.mechanic() == Mechanic.META) {
+                throw new IllegalArgumentException(node.path() + "：mechanic: meta 要寫 meta 區塊");
             }
             if (node.has("parent_damage")) {
                 final double share = node.decimal("parent_damage", 0);
@@ -269,6 +291,8 @@ public final class SkillConfig {
         this.parentDamage = Map.copyOf(parsedParent);
         this.mountSpecs = Map.copyOf(parsedMounts);
         this.barrages = Map.copyOf(parsedBarrages);
+        this.metas = Map.copyOf(parsedMetas);
+        this.tornados = Map.copyOf(parsedTornados);
         this.mountOnly = Set.copyOf(parsedMountOnly);
         this.variants = Map.copyOf(variantMap);
         this.missingDefaults = List.copyOf(missing);
@@ -467,6 +491,16 @@ public final class SkillConfig {
     }
 
     /** 連珠（2026-10）：這個增益技能讓下一次弓／矛的投射物攻擊重複的設定（不是回傳 null）。 */
+    /** 龍捲風的設定（2026-10）；沒有回傳 null。 */
+    public TornadoSpec tornado(final String id) {
+        return id == null ? null : tornados.get(id);
+    }
+
+    /** 主要寶石的設定（2026-10）；不是主要寶石回傳 null。 */
+    public MetaSpec meta(final String id) {
+        return id == null ? null : metas.get(id);
+    }
+
     public BarrageSpec barrage(final String id) {
         return id == null ? null : barrages.get(id);
     }

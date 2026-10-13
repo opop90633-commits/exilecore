@@ -211,8 +211,14 @@ public final class SkillMenu extends Menu {
         lore.add("<gray>輔助孔 <white>" + entry.sockets() + "</white>／" + SkillLoadout.MAX_SOCKETS + "：" + supportSummary(entry));
         final List<String> bound = boundKeys(loadout, selected);
         lore.add(bound.isEmpty() ? "<dark_gray>還沒綁在任何按鍵上" : "<gray>綁在：<white>" + String.join("、", bound));
+        // 2026-10：裝備有吃得到這個技能的詞綴：標出來，Shift＋右鍵看是哪幾件、哪幾條
+        final int gear = service.gearBonusCount(player, definition, entry);
+        if (gear > 0) {
+            lore.add("<#e7c56b>◆ 裝備加成：<white>" + gear + "</white> 條詞綴吃得到這個技能");
+        }
         lore.add("");
         lore.add("<yellow>點一下：取消選取");
+        lore.add("<yellow>Shift＋右鍵：看裝備對這個技能的加成");
         set(SLOT_SELECTED, highlight(SkillArt.decorate(icon(material(definition.icon(), Material.BOOK),
                 "<green>選取中：<#e0c080>" + ItemRenderer.escape(definition.name()) + " <gray>Lv." + entry.level(), lore), definition)));
         // 升一級：自動挑背包或通貨袋裡夠用、等級最低的那顆
@@ -684,6 +690,18 @@ public final class SkillMenu extends Menu {
         final ClickType click = event.getClick();
         final SkillLoadout loadout = plugin.players().get(player).skills();
         if (slot == SLOT_SELECTED) {
+            if (click == ClickType.SHIFT_RIGHT && selected >= 0) {
+                final SkillLoadout.Entry entry = loadout.skill(selected);
+                final SkillDefinition definition = entry == null ? null : service.config().skill(entry.skillId());
+                if (definition != null) {
+                    // 2026-10：裝備對這個技能的加成（對話框；關掉回到技能面板）
+                    click(1.2f);
+                    plugin.dialogs().notice(player, "<#e7c56b>裝備加成：" + ItemRenderer.escape(definition.name()),
+                            service.gearBonusLines(player, definition, entry),
+                            List.of(tw.exilecore.gui.Dialogs.Button.run("<white>回到技能面板", this::open)), 1);
+                }
+                return;
+            }
             if (selected >= 0 || pendingKey >= 0) {
                 selected = -1;
                 pendingKey = -1;

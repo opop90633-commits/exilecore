@@ -39,8 +39,8 @@ final class TrainingListener implements Listener {
             return;
         }
         final Player player = event instanceof EntityDamageByEntityEvent byEntity ? attacker(byEntity.getDamager()) : null;
-        if (player == null) {
-            event.setCancelled(true);
+        if (player == null || !service.canTarget(dummy, player)) {
+            event.setCancelled(true); // 2026-10：別人那組的假人（每人一組）也打不到
             return;
         }
         service.beforeHit(player, dummy);
@@ -67,7 +67,7 @@ final class TrainingListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onHit(final HitEvent event) {
         final Player player = event.credit();
-        if (player == null || !service.isDummy(event.defender())) {
+        if (player == null || !service.isDummy(event.defender()) || !service.canTarget(event.defender(), player)) {
             return;
         }
         final HitResult result = event.result();

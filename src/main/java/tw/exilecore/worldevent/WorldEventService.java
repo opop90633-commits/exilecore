@@ -962,17 +962,19 @@ public final class WorldEventService {
             case "boss" -> complete(event, entity.getLocation());
             case "commander" -> {
                 for (final Player player : rewardees(event)) {
-                    giveCurrency(player, config.invasion().currency(), config.invasion().commanderAmount());
+                    giveCurrency(player, config.invasion().currency(),
+                            tw.exilecore.loot.LootBonus.of(plugin, player).amount(config.invasion().commanderAmount(), random));
                 }
                 complete(event, entity.getLocation());
             }
             case "rare" -> {
                 if (killer != null) {
-                    giveCurrency(killer, config.invasion().currency(), config.invasion().rareAmount());
+                    giveCurrency(killer, config.invasion().currency(),
+                            tw.exilecore.loot.LootBonus.of(plugin, killer).amount(config.invasion().rareAmount(), random));
                 }
             }
             default -> {
-                if (killer != null && random.nextDouble() < config.invasion().killChance()) {
+                if (killer != null && random.nextDouble() < tw.exilecore.loot.LootBonus.of(plugin, killer).more(config.invasion().killChance())) {
                     giveCurrency(killer, config.invasion().currency(), 1);
                 }
             }
@@ -1008,14 +1010,16 @@ public final class WorldEventService {
         if (event.kind == Kind.BOSS) {
             final WorldEventConfig.Boss def = config.boss();
             for (final Player player : players) {
+                // 2026-10：活動獎勵也吃物品數量（核心數、額外素材的機率與數量）與物品稀有度（專屬傳奇的機率）
+                final tw.exilecore.loot.LootBonus.Bonus bonus = tw.exilecore.loot.LootBonus.of(plugin, player);
                 final int[] range = def.amount();
-                giveCurrency(player, def.currency(), range[0] + random.nextInt(Math.max(1, range[1] - range[0] + 1)));
+                giveCurrency(player, def.currency(), bonus.amount(range[0] + random.nextInt(Math.max(1, range[1] - range[0] + 1)), random));
                 for (final WorldEventConfig.Extra extra : def.extra()) {
-                    if (random.nextDouble() < extra.chance()) {
-                        giveCurrency(player, extra.currency(), extra.amount());
+                    if (random.nextDouble() < bonus.more(extra.chance())) {
+                        giveCurrency(player, extra.currency(), bonus.amount(extra.amount(), random));
                     }
                 }
-                if (!def.uniques().isEmpty() && random.nextDouble() < def.uniqueChance()) {
+                if (!def.uniques().isEmpty() && random.nextDouble() < bonus.rare(def.uniqueChance())) {
                     final String id = def.uniques().get(random.nextInt(def.uniques().size()));
                     final ItemData data = giveUnique(player, id, def.level());
                     if (data != null) {
@@ -1030,7 +1034,8 @@ public final class WorldEventService {
             }
         } else {
             for (final Player player : players) {
-                giveCurrency(player, config.invasion().currency(), config.invasion().completeAmount());
+                giveCurrency(player, config.invasion().currency(),
+                        tw.exilecore.loot.LootBonus.of(plugin, player).amount(config.invasion().completeAmount(), random));
                 player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1f);
             }
         }

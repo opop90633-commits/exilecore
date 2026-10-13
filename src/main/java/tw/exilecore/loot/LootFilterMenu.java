@@ -53,6 +53,7 @@ public final class LootFilterMenu extends Menu {
     private static final int ROW_TOOLS = 3;
     private static final int SLOT_SHOW_ALL = slot(ROW_TOOLS, 1);
     private static final int SLOT_STATS = slot(ROW_TOOLS, 2);
+    private static final int SLOT_SOUNDS = slot(ROW_TOOLS, 3);
     // ---- 裝備 ----
     private static final Map<Integer, Rarity> RARITY_SLOTS = Map.of(slot(1, 1), Rarity.NORMAL, slot(1, 2), Rarity.MAGIC,
             slot(1, 3), Rarity.RARE, slot(1, 4), Rarity.UNIQUE);
@@ -193,6 +194,15 @@ public final class LootFilterMenu extends Menu {
                 String.format(Locale.ROOT, "<gray>今天：過濾掉 <white>%,d<gray> 件，換了 <#f5b942>%,d<gray> 金幣", today[0], today[1]),
                 String.format(Locale.ROOT, "<gray>這次登入：<white>%,d<gray> 件、<#f5b942>%,d<gray> 金幣", stats[0], stats[1]),
                 "<dark_gray>今天的每個角色各自算，過了午夜歸零"));
+        final boolean sounds = filter.dropSounds();
+        set(SLOT_SOUNDS, icon(sounds ? Material.JUKEBOX : Material.NOTE_BLOCK, "<white>稀有掉落音效：" + (sounds ? "<green>開" : "<red>關"),
+                "<gray>掉到這些東西時響不同的音效：",
+                "<#ffb347>　追逐級傳奇、映星鏡<gray>（最響）",
+                "<#ff7a5a>　終局、極境、巔峰、金庫之主掉的傳奇與專屬寶石",
+                "<#af6025>　傳奇、專屬寶石",
+                "<#9fd8ff>　Boss 入場材料、劫盜藍圖、大鑿星石、Lv.21 技能寶石",
+                "<dark_gray>關掉也照樣撿，只是不響（一般撿東西的聲音還在）",
+                "", "<yellow>左鍵：" + (sounds ? "關掉" : "打開")));
     }
 
     /** 目前的設定用一句一句講。 */
@@ -206,6 +216,12 @@ public final class LootFilterMenu extends Menu {
         }
         if (!rarities.isEmpty()) {
             lines.add(String.join("、", rarities) + "裝備");
+        }
+        if (!filter.keepBases().isEmpty()) {
+            lines.add("只撿 " + filter.keepBases().size() + " 種基底：其他基底的普通、魔法、稀有裝備"); // 2026-10：以前總覽沒列
+        }
+        if (filter.hidesCharms()) {
+            lines.add("護符");
         }
         final LootFilter.Rules rules = filter.rules();
         if (filter.jewelRarity() > 0) {
@@ -222,7 +238,7 @@ public final class LootFilterMenu extends Menu {
                     + (filter.timeLostRarity() > 0 && !kinds.isEmpty() ? "；" : "") + (kinds.isEmpty() ? "" : "不撿" + String.join("、", kinds)));
         }
         if (rules.levelGap() > 0) {
-            lines.add("物品等級比你低 " + rules.levelGap() + " 級以上的裝備");
+            lines.add("物品等級比你低超過 " + rules.levelGap() + " 級的裝備");
         }
         if (rules.weaponsLikeMine()) {
             lines.add("跟手上不同類的武器" + (weaponClassName() == null ? "（現在沒拿武器：不管）" : "（手上：" + weaponClassName() + "）"));
@@ -241,7 +257,7 @@ public final class LootFilterMenu extends Menu {
         if (filter.hidesSupportGems()) {
             lines.add("未切割輔助寶石");
         } else if (rules.minSupportTier() > 0) {
-            lines.add("第 " + rules.minSupportTier() + " 階以下的未切割輔助寶石");
+            lines.add("低於第 " + rules.minSupportTier() + " 階的未切割輔助寶石");
         }
         if (filter.flasks() == LootFilter.FlaskRule.NONE) {
             lines.add("藥劑");
@@ -330,13 +346,13 @@ public final class LootFilterMenu extends Menu {
                 "最後一格可以把有好詞綴的撿回來"));
         final LootFilter.Rules rules = filter.rules();
         final int gap = rules.levelGap();
-        set(SLOT_LEVEL_GAP, option(Material.EXPERIENCE_BOTTLE, "等級差", gap == 0 ? "關" : "低 " + gap + " 級以上就隱藏", gap > 0,
+        set(SLOT_LEVEL_GAP, option(Material.EXPERIENCE_BOTTLE, "等級差", gap == 0 ? "關" : "低超過 " + gap + " 級就隱藏", gap > 0,
                 List.of("<gray>物品等級比你低太多的裝備（詞綴階級低、賣不掉）不撿",
                         "<gray>傳奇、珠寶、地圖不管；只看普通、魔法、稀有",
                         gap == 0 ? "<dark_gray>例：開 10 級、你 70 級 → 物品等級 59 以下的隱藏"
                                 : "<dark_gray>現在你 " + plugin.players().get(player).level() + " 級 → 物品等級 "
                                 + Math.max(0, plugin.players().get(player).level() - gap - 1) + " 以下的隱藏"),
-                options(LootFilter.LEVEL_GAPS, gap, value -> value == 0 ? "關" : "低 " + value + " 級以上")));
+                options(LootFilter.LEVEL_GAPS, gap, value -> value == 0 ? "關" : "低超過 " + value + " 級")));
         final String weapon = weaponClassName();
         set(SLOT_WEAPONS_LIKE_MINE, option(Material.BOW, "只撿跟手上同類的武器", rules.weaponsLikeMine() ? "開" : "關", rules.weaponsLikeMine(),
                 List.of("<gray>拿弓就只撿弓、拿雙手劍就只撿雙手劍；雙手武器的人不撿盾",
@@ -651,6 +667,9 @@ public final class LootFilterMenu extends Menu {
             player.closeInventory();
             return;
         }
+        if (click == ClickType.DOUBLE_CLICK) {
+            return; // 2026-10：雙擊會先送兩次左鍵再送一次雙擊，多選項的格子會多跳一格
+        }
         if (slot == SLOT_CLOSE_BAR) {
             goBack();
             return;
@@ -672,7 +691,17 @@ public final class LootFilterMenu extends Menu {
                 if (presetAt.containsKey(slot)) {
                     final LootConfig.Preset preset = service.config().preset(presetAt.get(slot));
                     if (preset != null) {
-                        apply(LootFilter.of(preset).withKeepBases(filter.keepBases())); // 只撿的基底留著
+                        // 只撿的基底、珠寶、遺時星晶的設定留著（2026-10：以前只留基底，另外兩項被悄悄重設）
+                        apply(LootFilter.of(preset).withKeepBases(filter.keepBases()).withJewelRarity(filter.jewelRarity()).withTimeLost(filter)
+                                .withDropSounds(filter.dropSounds()));
+                    }
+                    return;
+                }
+                if (slot == SLOT_SOUNDS) {
+                    next.toggleDropSounds();
+                    apply(next);
+                    if (next.dropSounds()) {
+                        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.5f, 1.4f); // 試聽
                     }
                     return;
                 }

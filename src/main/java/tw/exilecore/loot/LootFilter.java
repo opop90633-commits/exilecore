@@ -261,9 +261,27 @@ public final class LootFilter {
     private String preset = CUSTOM;
     /** 只撿的基底（2026-10，基底代號，可以一直加）：有設定就只撿這些基底的裝備，稀有度照「依稀有度」的設定。 */
     private final TreeSet<String> keepBases = new TreeSet<>();
-    /** 珠寶依稀有度（2026-10）：0 全部撿、1 隱藏普通、2 只撿稀有、3 全部不撿。 */
+    /**
+     * 珠寶依稀有度（2026-10）：0 全部撿、2 只撿稀有、3 全部不撿。
+     * （1「隱藏普通」拿掉了：珠寶掉出來至少是魔法，那一格藏不到任何東西；舊存檔的 1 讀成 0）
+     */
     private int jewelRarity;
-    public static final int[] JEWEL_RARITIES = {0, 1, 2, 3};
+    public static final int[] JEWEL_RARITIES = {0, 2, 3};
+    /** 稀有掉落的音效（2026-10）：傳奇、追逐級、映星鏡、Boss 入場材料、大鑿星石、Lv.21 寶石、終局以上 Boss 的掉落。預設開。 */
+    private boolean dropSounds = true;
+
+    public boolean dropSounds() {
+        return dropSounds;
+    }
+
+    public void toggleDropSounds() {
+        dropSounds = !dropSounds;
+    }
+
+    public LootFilter withDropSounds(final boolean on) {
+        dropSounds = on;
+        return this;
+    }
 
     public static String jewelRarityName(final int value) {
         return switch (value) {
@@ -435,7 +453,7 @@ public final class LootFilter {
 
     /** 換預設組合時把珠寶的設定帶過去。 */
     public LootFilter withJewelRarity(final int value) {
-        jewelRarity = Math.max(0, Math.min(3, value));
+        jewelRarity = normalizeJewelRarity(value);
         return this;
     }
 
@@ -539,6 +557,17 @@ public final class LootFilter {
      * @param checkWeapons 要不要看武器（與盾對雙手武器）
      * @param checkArmour  要不要看防具與盾的系別
      */
+    /** 武器是單手還是雙手（基底標籤 one_hand／two_hand；都沒寫回傳 null）。 */
+    private static String handedness(final Set<String> tags) {
+        return tags.contains("two_hand") ? "two_hand" : tags.contains("one_hand") ? "one_hand" : null;
+    }
+
+    /** 珠寶依稀有度只剩 0、2、3（1 跟 0 一樣，讀成 0）。 */
+    private static int normalizeJewelRarity(final int value) {
+        final int clamped = Math.max(0, Math.min(3, value));
+        return clamped == 1 ? 0 : clamped;
+    }
+
     public static boolean unlikeMine(final Set<String> tags, final Viewer who, final boolean checkWeapons, final boolean checkArmour) {
         if (checkWeapons && !who.weaponTags().isEmpty()) {
             if (tags.contains("weapon")) {
@@ -546,6 +575,9 @@ public final class LootFilter {
                     if (WEAPON_CLASSES.contains(tag) && !who.weaponTags().contains(tag)) {
                         return true; // 跟手上的不同類
                     }
+                }
+                if (handedness(tags) != null && handedness(who.weaponTags()) != null && !handedness(tags).equals(handedness(who.weaponTags()))) {
+                    return true; // 2026-10：同種類但單手／雙手不同（拿雙手錘不撿單手錘），跟選單說明一致
                 }
             } else if (tags.contains("shield") && who.weaponTags().contains("two_hand")) {
                 return true; // 雙手武器用不到盾
@@ -722,6 +754,11 @@ public final class LootFilter {
         flasks = FlaskRule.ALL;
         rules = Rules.NONE;
         preset = CUSTOM;
+        // 2026-10：以前漏了這幾項（只撿的基底、珠寶、遺時星晶），按了「全部顯示」還是會藏東西
+        keepBases.clear();
+        jewelRarity = 0;
+        timeLostRarity = 0;
+        hiddenTimeLost.clear();
     }
 
     /** 一次設定好幾種通貨（選單上「這一級全部隱藏／顯示」）。 */
@@ -759,7 +796,8 @@ public final class LootFilter {
             timeLostHidden.add(kind.id());
         }
         final String kept = (keepBases.isEmpty() ? "" : ";kb=" + String.join(",", keepBases)) + (jewelRarity > 0 ? ";jr=" + jewelRarity : "")
-                + (timeLostRarity > 0 ? ";tr=" + timeLostRarity : "") + (timeLostHidden.isEmpty() ? "" : ";th=" + String.join(",", timeLostHidden));
+                + (timeLostRarity > 0 ? ";tr=" + timeLostRarity : "") + (timeLostHidden.isEmpty() ? "" : ";th=" + String.join(",", timeLostHidden))
+                + (dropSounds ? "" : ";ds=0");
         if (!CUSTOM.equals(preset)) {
             return "p=" + preset + kept;
         }
@@ -823,7 +861,8 @@ public final class LootFilter {
                 case "mr" -> filter.rules = filter.rules.withMapRarity(integer(value));
                 case "kt" -> filter.rules = filter.rules.withKeepAffixTier(integer(value));
                 case "kb" -> filter.keepBases.addAll(list(value));
-                case "jr" -> filter.jewelRarity = Math.max(0, Math.min(3, integer(value)));
+                case "jr" -> filter.jewelRarity = normalizeJewelRarity(integer(value));
+                case "ds" -> filter.dropSounds = !"0".equals(value);
                 case "tr" -> filter.timeLostRarity = Math.max(0, Math.min(2, integer(value)));
                 case "th" -> {
                     for (final String name : list(value)) {
@@ -839,12 +878,13 @@ public final class LootFilter {
             }
         }
         if (presetId == null) {
-            return config.defaultFilter().copy().withKeepBases(filter.keepBases).withJewelRarity(filter.jewelRarity).withTimeLost(filter);
+            return config.defaultFilter().copy().withKeepBases(filter.keepBases).withJewelRarity(filter.jewelRarity).withTimeLost(filter)
+                    .withDropSounds(filter.dropSounds);
         }
         if (!CUSTOM.equals(presetId)) {
             final LootConfig.Preset preset = config.preset(presetId);
             return (preset == null ? config.defaultFilter().copy() : of(preset)).withKeepBases(filter.keepBases)
-                    .withJewelRarity(filter.jewelRarity).withTimeLost(filter);
+                    .withJewelRarity(filter.jewelRarity).withTimeLost(filter).withDropSounds(filter.dropSounds);
         }
         filter.preset = CUSTOM;
         return filter;
@@ -884,6 +924,7 @@ public final class LootFilter {
         copy.jewelRarity = jewelRarity;
         copy.timeLostRarity = timeLostRarity;
         copy.hiddenTimeLost.addAll(hiddenTimeLost);
+        copy.dropSounds = dropSounds;
         return copy;
     }
 
@@ -895,12 +936,12 @@ public final class LootFilter {
         return hiddenEquipment.equals(that.hiddenEquipment) && hiddenCurrencies.equals(that.hiddenCurrencies)
                 && hideSkillGems == that.hideSkillGems && hideSupportGems == that.hideSupportGems && hideCharms == that.hideCharms && keepAffixLikeMine == that.keepAffixLikeMine
                 && flasks == that.flasks && rules.equals(that.rules) && preset.equals(that.preset) && keepBases.equals(that.keepBases) && jewelRarity == that.jewelRarity
-                && timeLostRarity == that.timeLostRarity && hiddenTimeLost.equals(that.hiddenTimeLost);
+                && timeLostRarity == that.timeLostRarity && hiddenTimeLost.equals(that.hiddenTimeLost) && dropSounds == that.dropSounds;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hiddenEquipment, hiddenCurrencies, hideSkillGems, hideSupportGems, hideCharms, keepAffixLikeMine, flasks, rules, preset, keepBases, jewelRarity, timeLostRarity, hiddenTimeLost);
+        return Objects.hash(hiddenEquipment, hiddenCurrencies, hideSkillGems, hideSupportGems, hideCharms, keepAffixLikeMine, flasks, rules, preset, keepBases, jewelRarity, timeLostRarity, hiddenTimeLost, dropSounds);
     }
 
     @Override

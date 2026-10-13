@@ -343,10 +343,11 @@ public final class UiPack {
         }
 
         // 按住左鍵連續施放時，客戶端以為在挖準星指著的方塊（skill/HoldToCast）：把「挖方塊」的敲擊聲都換成沒有聲音
-        final List<String> muted = mutedSounds();
-        if (!muted.isEmpty()) {
-            files.put("assets/minecraft/sounds.json", json(mutedSoundsJson(muted)));
-        }
+        // 2026-10：原版的背景音樂也換成沒有聲音（我們自己放主世界、地圖、Boss 的音樂，見 music/Music）
+        final List<String> muted = new java.util.ArrayList<>(mutedSounds());
+        muted.addAll(tw.exilecore.music.Music.VANILLA_MUSIC);
+        files.put("assets/minecraft/sounds.json", json(mutedSoundsJson(muted)));
+        music(files);
         bossBars(files); // 2026-10：Boss 血條的樣式與換階段的刻度
         menuFont(files);
         lootFont(files);
@@ -1386,6 +1387,30 @@ public final class UiPack {
             return List.copyOf(list);
         } catch (final IOException e) {
             return List.of();
+        }
+    }
+
+    /** 背景音樂（2026-10）：web/music/曲名.ogg → assets/exilecore/sounds/music/，事件 exilecore:music.曲名（串流播放）。 */
+    static void music(final Map<String, byte[]> files) throws IOException {
+        final JsonObject sounds = new JsonObject();
+        for (final tw.exilecore.music.Music.Track track : tw.exilecore.music.Music.TRACKS) {
+            try (java.io.InputStream in = UiPack.class.getResourceAsStream("/web/music/" + track.id() + ".ogg")) {
+                if (in == null) {
+                    continue; // 沒有這首（單元測試、還沒產生）：不放
+                }
+                files.put("assets/exilecore/sounds/music/" + track.id() + ".ogg", in.readAllBytes());
+            }
+            final JsonObject sound = new JsonObject();
+            sound.addProperty("name", "exilecore:music/" + track.id());
+            sound.addProperty("stream", true);
+            final JsonArray list = new JsonArray();
+            list.add(sound);
+            final JsonObject event = new JsonObject();
+            event.add("sounds", list);
+            sounds.add(track.event(), event);
+        }
+        if (!sounds.isEmpty()) {
+            files.put("assets/exilecore/sounds.json", json(sounds));
         }
     }
 

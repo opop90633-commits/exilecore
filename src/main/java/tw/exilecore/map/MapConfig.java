@@ -353,10 +353,20 @@ public final class MapConfig {
      * @param uniqueChance    掉這個終局自己那件傳奇的機率
      * @param exclusiveChance 掉極境專屬傳奇（uniques.yml 的 sources 寫 uber_終局代號；沒有的話用 uber）的機率
      * @param extra           額外的掉落（極境專屬的通貨、輔助寶石…）
+     * @param commonChance    掉共通傳奇（map_boss 池）的機率（2026-10）；負的 = 沒寫，照 drops.final_common_chance
      */
-    public record UberDrops(int maps, double uniqueChance, double exclusiveChance, List<ExtraDrop> extra) {
+    public record UberDrops(int maps, double uniqueChance, double exclusiveChance, List<ExtraDrop> extra, double commonChance) {
         public UberDrops {
             extra = List.copyOf(extra);
+        }
+
+        public UberDrops(final int maps, final double uniqueChance, final double exclusiveChance, final List<ExtraDrop> extra) {
+            this(maps, uniqueChance, exclusiveChance, extra, -1);
+        }
+
+        /** 共通傳奇的機率：有寫 common_chance 用它，沒寫用 fallback（drops.final_common_chance）。 */
+        public double commonChance(final double fallback) {
+            return commonChance < 0 ? fallback : commonChance;
         }
     }
 
@@ -406,7 +416,7 @@ public final class MapConfig {
         final List<DpsTier> dpsOver = parseDpsOver(node, dpsCap);
         return new Pinnacle(fragments, Math.max(0, Math.min(30, node.integer("level_bonus", 5))), cooldown, monster, player,
                 new UberDrops(Math.max(0, drops.integer("maps", 6)), clamp01(drops.decimal("unique_chance", 0.2)),
-                        clamp01(drops.decimal("exclusive_chance", 0.1)), extra),
+                        clamp01(drops.decimal("exclusive_chance", 0.1)), extra, commonChance(drops)),
                 Math.max(1, Math.min(5, node.integer("attempts", 2))), dpsCap, dpsOver);
     }
 
@@ -736,7 +746,7 @@ public final class MapConfig {
                 node.string("key", "abyss_core").trim(), Math.max(1, node.integer("key_cost", 1)),
                 clamp01(node.decimal("key_chance", 0.1)), Math.max(1, node.integer("key_min_tier", 12)),
                 new UberDrops(Math.max(0, drops.integer("maps", 4)), clamp01(drops.decimal("unique_chance", 0.2)),
-                        clamp01(drops.decimal("exclusive_chance", 0.05)), extra),
+                        clamp01(drops.decimal("exclusive_chance", 0.05)), extra, commonChance(drops)),
                 dpsCap, parseDpsOver(node, dpsCap));
     }
 
@@ -1126,6 +1136,11 @@ public final class MapConfig {
             hi = Math.max(lo, Math.max(range[0], range[1]));
         }
         return new PackSettings(Math.max(0, node.integer("weight", weight)), lo, hi);
+    }
+
+    /** drops.common_chance（2026-10）：沒寫回傳 -1（照 drops.final_common_chance）。 */
+    private static double commonChance(final YamlNode drops) {
+        return drops.has("common_chance") ? clamp01(drops.decimal("common_chance", 0)) : -1;
     }
 
     private static double clamp01(final double value) {

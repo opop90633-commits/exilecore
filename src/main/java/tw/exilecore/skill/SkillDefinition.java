@@ -83,7 +83,7 @@ public record SkillDefinition(String id, String name, String description, String
         if (mechanic == Mechanic.WARCRY) {
             return damage != null; // 2026-10（PoE2）：有寫 damage 的戰吼（震地戰吼）吼的時候會打範圍內的敵人
         }
-        if (mechanic == Mechanic.MARK || mechanic == Mechanic.SUMMON || mechanic == Mechanic.RALLY
+        if (mechanic == Mechanic.MARK || mechanic == Mechanic.SUMMON || mechanic == Mechanic.RALLY || mechanic == Mechanic.META
                 || mechanic == Mechanic.DESECRATE || mechanic == Mechanic.GUARD) {
             return false;
         }
@@ -207,7 +207,7 @@ public record SkillDefinition(String id, String name, String description, String
         if (deploy != null) {
             if (mechanic == Mechanic.DASH || mechanic == Mechanic.LEAP || mechanic == Mechanic.MARK || mechanic == Mechanic.CORPSE
                     || mechanic == Mechanic.SUMMON || mechanic == Mechanic.AURA || mechanic == Mechanic.WARCRY || mechanic == Mechanic.FLICKER
-                    || mechanic == Mechanic.RALLY || mechanic == Mechanic.DESECRATE || mechanic == Mechanic.GUARD) {
+                    || mechanic == Mechanic.RALLY || mechanic == Mechanic.DESECRATE || mechanic == Mechanic.GUARD || mechanic == Mechanic.META) {
                 throw new IllegalArgumentException(where + "：位移、跳躍、瞬影、印記、骸爆、召喚、光環、戰吼不能交給圖騰、陷阱或鐘放");
             }
             tags.add(deploy.kind() == DeploySpec.Kind.TRAP ? Tags.TRAP : Tags.TOTEM);
@@ -303,7 +303,7 @@ public record SkillDefinition(String id, String name, String description, String
         Map<DamageType, Double> damageTypes = Map.of();
         final boolean utility = mechanic == Mechanic.MARK || mechanic == Mechanic.SUMMON
                 || mechanic == Mechanic.AURA && (aura == null || !aura.burns())
-                || mechanic == Mechanic.WARCRY || mechanic == Mechanic.RALLY || mechanic == Mechanic.DESECRATE
+                || mechanic == Mechanic.WARCRY || mechanic == Mechanic.RALLY || mechanic == Mechanic.DESECRATE || mechanic == Mechanic.META
                 || mechanic == Mechanic.GUARD
                 || (mechanic == Mechanic.DASH && params.dash().hitWidth() <= 0 && params.dash().startRadius().last() <= 0
                 && params.dash().endRadius().last() <= 0 && params.ground() == null);

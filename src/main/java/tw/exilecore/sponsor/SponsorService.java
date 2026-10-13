@@ -1623,6 +1623,67 @@ public final class SponsorService {
         return new Granted(given, owned, work);
     }
 
+    /**
+     * 收回時裝、限定稱號（2026-10，/ec sponsor revoke）：ref 跟發放一樣（時裝代號、title:稱號代號、bundle:組代號）。
+     * 拿掉擁有的紀錄，戴著的特效、套著的幻化、綁在按鍵上的動作一起清掉；戴著的稱號由 refreshTitle 換下來。
+     * 記憶體改好，回傳寫進資料庫的工作（放進領取的交易）。回傳的 given 是這次收回的、alreadyOwned 是本來就沒有的。
+     * 帳號還沒載入回傳 null；沒有這個代號丟 IllegalArgumentException。
+     */
+    public Granted revokeCosmeticWork(final Player player, final String ref) {
+        final List<Grantable> wanted = resolveCosmetics(ref);
+        if (accounts() == null || !accounts().accountLoaded(player)) {
+            return null;
+        }
+        final List<Grantable> taken = new ArrayList<>();
+        final List<Grantable> notOwned = new ArrayList<>();
+        final Map<String, String> values = new LinkedHashMap<>();
+        for (final Grantable item : wanted) {
+            if (value(player, item.progressKey()) == null) {
+                notOwned.add(item);
+                continue;
+            }
+            values.put(item.progressKey(), null);
+            taken.add(item);
+            if (item.title()) {
+                continue;
+            }
+            if (item.id().equals(value(player, WORN))) {
+                values.put(WORN, null);
+            }
+            for (final Look look : Look.values()) {
+                if (item.id().equals(value(player, TRANSMOG + look.name()))) {
+                    values.put(TRANSMOG + look.name(), null);
+                }
+            }
+            for (final EmoteKey key : EmoteKey.values()) {
+                if (item.id().equals(value(player, EMOTE_KEY + key.name()))) {
+                    values.put(EMOTE_KEY + key.name(), null);
+                }
+            }
+        }
+        if (taken.isEmpty()) {
+            return new Granted(taken, notOwned, null);
+        }
+        final CharacterRepository.ExtraWork work = accounts().accountWork(player, values);
+        if (work == null) {
+            return null;
+        }
+        final StringBuilder names = new StringBuilder();
+        for (final Grantable item : taken) {
+            names.append(names.isEmpty() ? "" : "、").append(item.title() ? "稱號「" + item.name() + "」" : item.name());
+        }
+        plugin.getSLF4JLogger().info("[贊助] 管理員收回 {} 的 {}（{}）", player.getName(), names, ref);
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            refresh(player); // 戴著的稱號沒有了就換下來
+            plugin.characters().gear().sync(player); // 套著的幻化拿掉
+            player.sendMessage(plugin.text().prefixed(FASHION_COLOR + "管理員收回了</#ff9ad5>：<white>" + ItemRenderer.escape(names.toString())));
+        });
+        return new Granted(taken, notOwned, work);
+    }
+
     /** 「時裝代號」「title:稱號代號」或「bundle:組代號」→ 要發的東西（沒有丟 IllegalArgumentException）。 */
     public List<Grantable> resolveCosmetics(final String ref) {
         final String id = ref == null ? "" : ref.trim();

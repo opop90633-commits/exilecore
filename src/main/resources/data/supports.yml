@@ -98,6 +98,14 @@ retired:
   aura_amplify: 2
   aura_thrift: 2
   aura_benevolence: 2
+  # 2026-10（照 PoE2）：圖騰施法、觸發類改成主要寶石（skills.yml 的 totem_casting、meta_*）；掛著的會換成同階的未切割輔助寶石
+  spell_totem: 2
+  trigger_crit: 2
+  trigger_hit_taken: 2
+  trigger_kill: 2
+  trigger_ailment: 3
+  cast_on_dodge: 2
+  cast_on_minion_death: 2
   aura_sanctum: 3
   efficiency: 1           # 2026-10：節流（魔力消耗）也刪掉
 
@@ -384,18 +392,6 @@ supports:
     modifiers:
       - { stat: damage.gain.chaos, type: FLAT, value: 20 }
 
-  spell_totem:
-    name: 圖騰施法
-    description: 被輔助的法術改由圖騰施放：放下圖騰（8 秒、一次一根），它每隔一段時間對 12 格內最近的敵人放一次；傷害少一些。位移、印記、骸爆、本來就是圖騰或陷阱的不行。
-    icon: NAUTILUS_SHELL   # 2026-10：原本 TOTEM_OF_UNDYING（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
-    tier: 2
-    requires: [spell]
-    excludes: [movement, mark, corpse, totem, bell, trap, minion, aura, warcry, persistent]
-    mana_multiplier: 1.5
-    modifiers:
-      - { stat: flag.spell_totem, type: FLAT, value: 1 }
-      - { stat: damage, type: MORE, value: -35 }
-
   minion_life:
     name: 堅韌召喚
     description: 被輔助的技能召出來的召喚物更耐打，而且每秒回復一點生命。只有召喚技能能掛。
@@ -629,7 +625,6 @@ supports:
       - { stat: damage.vs_rare, type: INCREASED, value: 40 }
 
   # ---- 2026-10 PoE2 補齊：更多輔助（效果照 PoE2，名稱是自己的）----
-
 
   martial_tempo:
     name: 快刀
@@ -1027,54 +1022,6 @@ supports:
       - { stat: crit.chance, type: INCREASED, value: 20 }
 
   # ---- 2026-10：觸發、對異常狀態、擊殺增益、蓄力 ----
-
-  trigger_crit:
-    name: 暴擊觸發
-    description: 被輔助的法術在你攻擊暴擊時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。技能要綁在上方按鍵格（不用按）。掛上之後這個法術只會自動觸發，不能手動施放。
-    icon: GOLD_NUGGET
-    tier: 2
-    requires: [spell]
-    excludes: [minion, aura, warcry, movement, herald]
-    mana_multiplier: 1.0
-    modifiers:
-      - { stat: trigger.crit, type: FLAT, value: 1 }
-      - { stat: damage, type: MORE, value: -20 }
-
-  trigger_hit_taken:
-    name: 受擊觸發
-    description: 被輔助的法術在你被敵人擊中時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。掛上之後這個法術只會自動觸發，不能手動施放。
-    icon: ARMADILLO_SCUTE   # 2026-10：原本 SHIELD（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
-    tier: 2
-    requires: [spell]
-    excludes: [minion, aura, warcry, movement, herald]
-    mana_multiplier: 1.0
-    modifiers:
-      - { stat: trigger.hit_taken, type: FLAT, value: 1 }
-      - { stat: damage, type: MORE, value: -20 }
-
-  trigger_kill:
-    name: 擊殺觸發
-    description: 被輔助的法術在你擊殺敵人時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。掛上之後這個法術只會自動觸發，不能手動施放。
-    icon: BONE   # 2026-10：原本 SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 2
-    requires: [spell]
-    excludes: [minion, aura, warcry, movement, herald]
-    mana_multiplier: 1.0
-    modifiers:
-      - { stat: trigger.kill, type: FLAT, value: 1 }
-      - { stat: damage, type: MORE, value: -20 }
-
-  trigger_ailment:
-    name: 異常觸發
-    description: 被輔助的法術在你讓敵人點燃、冰緩、凍結或感電時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。掛上之後這個法術只會自動觸發，不能手動施放。
-    icon: BLAZE_POWDER   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
-    tier: 3
-    requires: [spell]
-    excludes: [minion, aura, warcry, movement, herald]
-    mana_multiplier: 1.0
-    modifiers:
-      - { stat: trigger.ailment, type: FLAT, value: 1 }
-      - { stat: damage, type: MORE, value: -25 }
 
   vs_chilled:
     name: 趁寒
@@ -2136,30 +2083,6 @@ supports:
       - { stat: grant.flask.life_recovery, type: INCREASED, value: 30 }
 
   # ---- 2026-10：PoE2 輔助補齊・第 3 批（觸發、其他）----
-  cast_on_dodge:           # Cast on Dodge
-    name: 翻身詠
-    description: 被輔助的法術在你翻滾時自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。技能要綁在上方按鍵格（不用按）。掛上之後這個法術只會自動觸發，不能手動施放。
-    icon: FEATHER
-    tier: 2
-    requires: [spell]
-    excludes: [minion, aura, warcry, movement, herald]
-    mana_multiplier: 1.0
-    modifiers:
-      - { stat: trigger.dodge, type: FLAT, value: 1 }
-      - { stat: damage, type: MORE, value: -20 }
-
-  cast_on_minion_death:    # Cast on Minion Death
-    name: 殞僕詠
-    description: 你的召喚物死掉時，被輔助的法術在牠倒下的地方自動施放（不花魔力，同一個法術至少間隔 0.75 秒），但傷害少一點。掛上之後這個法術只會自動觸發，不能手動施放。
-    icon: BONE
-    tier: 2
-    requires: [spell]
-    excludes: [minion, aura, warcry, movement, herald]
-    mana_multiplier: 1.0
-    modifiers:
-      - { stat: trigger.minion_death, type: FLAT, value: 1 }
-      - { stat: damage, type: MORE, value: -20 }
-
   armour_demolisher:       # Armour Demolisher
     name: 拆甲
     description: 被輔助的技能破甲強很多。
@@ -3175,7 +3098,7 @@ supports:
 
   break_endurance:         # Break Endurance
     name: 磐破
-    description: 被輔助的技能把敵人的護甲完全打破時，有機率給你一顆耐星。
+    description: 被輔助的技能把敵人的護甲完全打破時，有機率給你一顆磐星。
     icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     excludes: [minion]
@@ -3196,7 +3119,7 @@ supports:
 
   enduring_impact:         # Enduring Impact
     name: 磐震
-    description: 被輔助的技能讓敵人重暈時，有機率給你一顆耐星。
+    description: 被輔助的技能讓敵人重暈時，有機率給你一顆磐星。
     icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
@@ -3393,3 +3316,27 @@ supports:
     mana_multiplier: 1.1
     modifiers:
       - { stat: charge.on_hit.endurance, type: FLAT, value: 10 }
+
+  # ---- 2026-10：更多戰星來源（照 PoE2 的充能滿盈、撲殺技能；名稱是自己的。重暈、破甲給磐星的是磐震、磐破）----
+
+  charge_profusion:
+    name: 滿星
+    description: 被輔助的技能讓你獲得戰星時（擊中、重暈、破甲、撲殺…），有 25% 機率多獲得一顆同種的。
+    icon: GLOWSTONE_DUST
+    tier: 2
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: charge.extra, type: FLAT, value: 25 }
+
+  cull_frenzy:
+    name: 斷命聚怒
+    description: 被輔助的技能撲殺敵人時獲得一顆{charge:frenzy}，稀有怪多一顆、傳奇怪多兩顆（技能要能撲殺，例如掛斷命）。
+    icon: RABBIT_FOOT
+    tier: 3
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: charge.event.cull.frenzy, type: FLAT, value: 100 }

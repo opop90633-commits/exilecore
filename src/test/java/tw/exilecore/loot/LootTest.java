@@ -182,6 +182,22 @@ class LootTest {
         assertEquals(0, mine.activeRuleCount());
         assertFalse(mine.hides(equipment(Rarity.NORMAL, 1, "weapon", "one_hand", "sword", "melee"), archer));
         assertEquals("p=custom;eq=;cur=;sg=0;ug=0;fl=all", mine.encode(), "沒有規則就不多記");
+        // 2026-10：全部顯示也清掉只撿的基底、珠寶、遺時星晶
+        final LootFilter extra = LootFilter.decode("p=custom;eq=;cur=;sg=0;ug=0;fl=all;kb=some_base;jr=3;tr=1", config);
+        assertFalse(extra.keepBases().isEmpty());
+        extra.showEverything();
+        assertTrue(extra.keepBases().isEmpty());
+        assertEquals(0, extra.jewelRarity());
+        assertFalse(extra.filtersTimeLost());
+        // 珠寶「隱藏普通」拿掉了（珠寶至少是魔法）：舊存檔的 jr=1 讀成全部撿
+        assertEquals(0, LootFilter.decode("p=custom;eq=;cur=;sg=0;ug=0;fl=all;jr=1", config).jewelRarity());
+        assertEquals(2, LootFilter.decode("p=custom;eq=;cur=;sg=0;ug=0;fl=all;jr=2", config).jewelRarity());
+        // 2026-10：稀有掉落音效預設開；關掉的存檔來回、換預設組合都留著
+        assertTrue(LootFilter.decode("p=standard", config).dropSounds());
+        final LootFilter quiet = LootFilter.decode("p=standard;ds=0", config);
+        assertFalse(quiet.dropSounds());
+        assertEquals(quiet, LootFilter.decode(quiet.encode(), config));
+        assertFalse(quiet.copy().dropSounds());
         // 舊存檔（沒有規則欄位）讀起來規則全關
         assertEquals(LootFilter.Rules.NONE, LootFilter.decode("p=custom;eq=normal;cur=;sg=0;ug=0;fl=all", config).rules());
         // 選項表
@@ -338,6 +354,10 @@ class LootTest {
         final LootFilter.Viewer crossbow = new LootFilter.Viewer(50, Set.of("weapon", "two_hand", "crossbow", "ranged"), Set.of());
         assertTrue(LootFilter.unlikeMine(Set.of("quiver"), crossbow, true, true), "弩不能裝箭袋");
         assertFalse(LootFilter.unlikeMine(Set.of("quiver"), new LootFilter.Viewer(50, Set.of(), Set.of()), true, true), "沒拿武器：不管");
+        // 2026-10：同種類但單手／雙手不同也算不同類（說明寫「拿雙手劍就只撿雙手劍」）
+        final LootFilter.Viewer bigMace = new LootFilter.Viewer(50, Set.of("weapon", "two_hand", "mace", "melee", "melee_2h"), Set.of());
+        assertTrue(LootFilter.unlikeMine(Set.of("weapon", "one_hand", "mace", "melee"), bigMace, true, true), "拿雙手錘不撿單手錘");
+        assertFalse(LootFilter.unlikeMine(Set.of("weapon", "two_hand", "mace", "melee", "melee_2h"), bigMace, true, true), "雙手錘對雙手錘");
         assertFalse(LootFilter.unlikeMine(Set.of("weapon", "one_hand", "sword", "melee"), bowman, false, true), "不看武器就不藏");
         final LootFilter.Viewer bare = new LootFilter.Viewer(40, Set.of(), Set.of());
         assertFalse(LootFilter.unlikeMine(Set.of("weapon", "one_hand", "sword", "melee"), bare, true, true), "沒拿武器全列");

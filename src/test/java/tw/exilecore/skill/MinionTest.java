@@ -153,7 +153,9 @@ class MinionTest {
         final SupportDefinition speed = config.support("minion_speed");
         final SupportDefinition rage = config.support("rage");
         final SupportDefinition echo = config.support("spell_echo");
-        final SupportDefinition totem = config.support("spell_totem");
+        final SupportDefinition totem = new SupportDefinition("spell_totem", "圖騰施法", "", "NAUTILUS_SHELL", 2, Set.of(Tags.SPELL),
+                Set.of(Tags.MOVEMENT, Tags.MARK, Tags.CORPSE, Tags.TOTEM, Tags.BELL, Tags.TRAP, Tags.MINION, Tags.AURA, Tags.WARCRY, Tags.PERSISTENT), 1.5,
+                List.of(Modifier.flat(StatKeys.FLAG_SPELL_TOTEM, 1, "圖騰施法")), List.of()); // 2026-10：圖騰施法改成主要寶石，開關還在
         final SupportDefinition duration = config.support("increased_duration");
         assertTrue(damage.supports(config.skill("raise_zombie")));
         assertFalse(damage.supports(config.skill("fireball")), "兇猛召喚只能掛召喚技能");

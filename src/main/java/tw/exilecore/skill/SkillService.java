@@ -58,6 +58,7 @@ public final class SkillService {
     private final SkillZones zones;
     private final SkillExecutor executor;
     private final SkillDeployables deployables;
+    private final MetaGems metas; // 2026-10：主要寶石（法術圖騰、暴擊時施放這類）
     private final MinionService minions;
     private final SkillBuffs buffs;
     private final AuraService auras;
@@ -87,6 +88,7 @@ public final class SkillService {
         this.projectiles.setZones(zones);
         this.executor = new SkillExecutor(plugin, targets, visuals, projectiles, zones, damage);
         this.deployables = new SkillDeployables(plugin, targets, visuals, executor, damage);
+        this.metas = new MetaGems(plugin, this);
         // 2026-10：設定「別人的技能特效」關掉的人不送別人的技能粒子（Fx）
         Fx.hidesOthers(viewer -> !tw.exilecore.character.PlayerSettings.enabled(plugin.players().get(viewer),
                 tw.exilecore.character.PlayerSettings.OTHERS_FX));
@@ -170,6 +172,11 @@ public final class SkillService {
 
     /** 玩家的召喚物（殭屍、骷髏、焚魂、魔像）。 */
     private SkillTriggers triggers;
+
+    /** 主要寶石（2026-10）。 */
+    MetaGems metas() {
+        return metas;
+    }
 
     private SupportProcs procs;
     private IceCrystals crystals;
@@ -311,24 +318,30 @@ public final class SkillService {
         return player.getLocation();
     }
 
-    /** 觸發（2026-10）：自動施放面板上的一個法術（不花魔力、不看冷卻與施法時間；位移、召喚、光環、戰吼不會被觸發）。 */
-    void triggerCast(final Player player, final SkillDefinition definition, final SkillLoadout.Entry entry, final LivingEntity target) {
-        final Mechanic mechanic = definition.mechanic();
-        if (mechanic == Mechanic.AURA || mechanic == Mechanic.SUMMON || mechanic == Mechanic.WARCRY || mechanic == Mechanic.DASH
-                || mechanic == Mechanic.LEAP || mechanic == Mechanic.FLICKER || mechanic == Mechanic.RALLY
-                || mechanic == Mechanic.GUARD) {
-            return; // 2026-10：增益型（GUARD）不能掛觸發輔助（SupportDefinition.refusal），這裡只是保險
+    /**
+     * 主要寶石觸發插槽裡的法術（2026-10，照 PoE2）：不花魔力、不看冷卻與施法時間；傷害乘 scale（暴擊時施放更少 20%…）。
+     * 技能描述的代號後面接 {@link MetaGems#TRIGGERED_SUFFIX}：打出來的暴擊不會再幫暴擊時施放充能。
+     */
+    void metaCast(final Player player, final SkillDefinition definition, final SkillLoadout.Entry entry, final LivingEntity target,
+                  final double scale, final String source) {
+        if (MetaGems.problem(new MetaSpec(MetaSpec.Kind.CRIT, 1, Scaled.of(0), 0, 0, 0, 0, 0, Scaled.of(1), 0), definition) != null) {
+            return; // 插槽的檢查在 MetaGems 已經做過，這裡只是保險
         }
         final PlayerState state = plugin.players().get(player);
         final StatSheet sheet = plugin.players().sheet(player);
-        final SkillBuild build = build(state, sheet, definition, entry).rollElement(sheet, plugin.items().random());
+        SkillBuild build = build(state, sheet, definition, entry).rollElement(sheet, plugin.items().random());
+        build = build.withProfile(build.profile().scaled(scale, source)
+                .derive(build.profile().id() + MetaGems.TRIGGERED_SUFFIX, java.util.Set.of(), java.util.Set.of()));
         final SkillRuntime runtime = runtime(player);
         final long now = now();
         final java.util.UUID previousFx = Fx.source(player.getUniqueId());
         try {
             executor.execute(player, runtime, build, target, now);
+            // 2026-10：被觸發的法術也算「放了這個技能」——咒爆、朽咒這類「放下時」的輔助才會觸發
+            //   （以前只有手動施放才呼叫，翻滾、暴擊時施放的詛咒掛咒爆／朽咒都打不出來）
+            procs().onUse(player, definition, useLocation(player, definition, build, target));
         } catch (final RuntimeException e) {
-            plugin.getSLF4JLogger().error("觸發 {} 失敗", definition.id(), e);
+            plugin.getSLF4JLogger().error("主要寶石觸發 {} 失敗", definition.id(), e);
         } finally {
             Fx.restore(previousFx);
         }
@@ -817,9 +830,12 @@ public final class SkillService {
             fail(player, runtime, state, "營地裡不能戰鬥", now); // 光環在營地也能開關
             return;
         }
-        if (pressed.entry() != null && definition.type() == SkillType.SPELL && triggers().triggeredOnly(pressed.entry())) {
-            // 2026-10（照 PoE）：掛了觸發輔助的法術只會自動觸發，不能自己按
-            fail(player, runtime, state, definition.name() + "掛了觸發輔助：只會自動觸發，不能手動施放", now);
+        if (pressed.entry() != null && definition.type() == SkillType.SPELL && triggers().triggeredOnly(state, pressed.entry())) {
+            // 2026-10（照 PoE2）：插在主要寶石插槽裡的法術只會被觸發（或由法術圖騰放），不能自己按
+            final int position = state.skills().find(definition.id());
+            final SkillDefinition owner = position > 0 ? config.skill(state.skills().skill(position - 1).skillId()) : null;
+            fail(player, runtime, state, definition.name() + "插在" + (owner == null ? "主要寶石" : owner.name())
+                    + "的插槽裡：只會由它施放，不能自己按", now);
             return;
         }
         if (plugin.ailments() != null && plugin.ailments().isIncapacitated(player)) {
@@ -862,6 +878,11 @@ public final class SkillService {
                 runtime.reloadDone.remove(definition.id());
                 runtime.ammo.remove(definition.id());
             }
+        }
+        final MetaSpec metaSpec = pressed.entry() == null ? null : config.meta(definition.id());
+        if (metaSpec != null && metaSpec.totem()) {
+            spellTotem(player, runtime, state, sheet, key, pressed.entry(), build, metaSpec, now); // 2026-10：法術圖騰（PoE2 主要寶石）
+            return;
         }
         final String problem = build.deploy() != null ? deployables.precheck(player, build)
                 : definition.mechanic() == Mechanic.SUMMON ? minions.precheck(player, build)
@@ -1226,6 +1247,71 @@ public final class SkillService {
     }
 
     /** 英靈圖騰：技能面板上排在它後面一格的錘子攻擊技能（不能有冷卻、不能蓄力、要能交給圖騰放）；不行回傳錯誤訊息。 */
+    /**
+     * 法術圖騰（2026-10，照 PoE2 的主要寶石）：消耗 3 顆銳星或磐星（銳星先用），放一根用插槽法術（面板上它後面那一格）的圖騰。
+     * 魔力照法術圖騰自己的消耗。
+     */
+    private void spellTotem(final Player player, final SkillRuntime runtime, final PlayerState state, final StatSheet sheet, final int key,
+                            final SkillLoadout.Entry entry, final SkillBuild metaBuild, final MetaSpec spec, final long now) {
+        final SkillDefinition definition = metaBuild.definition();
+        final int position = state.skills().find(definition.id());
+        final MetaGems.Socket socket = position < 0 ? null : metas.socket(state, position);
+        if (socket == null) {
+            final String problem = position < 0 ? null : metas.socketProblem(state, position);
+            fail(player, runtime, state, problem == null ? definition.name() + "：技能面板上它後面那一格要放一個法術" : problem, now);
+            return;
+        }
+        final tw.exilecore.charge.ChargeService charges = plugin.combat() == null ? null : plugin.combat().charges();
+        final int power = charges == null ? 0 : charges.count(player, "power");
+        final int endurance = charges == null ? 0 : charges.count(player, "endurance");
+        if (power + endurance < spec.charges()) {
+            fail(player, runtime, state, String.format(Locale.ROOT, "%s要消耗 %d 顆銳星或磐星（現在 %d 顆）", definition.name(), spec.charges(),
+                    power + endurance), now);
+            return;
+        }
+        final int powerUsed = Math.min(power, spec.charges());
+        final int enduranceUsed = spec.charges() - powerUsed;
+        final SkillBuild build = metas.totemBuild(state, sheet, socket, metaBuild.level(), powerUsed, enduranceUsed);
+        if (build.deploy() == null) {
+            fail(player, runtime, state, definition.name() + "：" + socket.spell().name() + "不能交給圖騰放", now);
+            return;
+        }
+        final String problem = deployables.precheck(player, build);
+        if (problem != null) {
+            fail(player, runtime, state, problem, now);
+            return;
+        }
+        final int cost = metaBuild.manaCost();
+        final boolean bloodMagic = StatKeys.flag(state.sheet(), StatKeys.FLAG_BLOOD_MAGIC);
+        if (cost > 0 && (bloodMagic ? state.life() <= cost : state.mana() + 1e-9 < cost)) {
+            fail(player, runtime, state, (bloodMagic ? "生命不足（" : "魔力不足（") + definition.name() + "要 " + cost + "）", now);
+            return;
+        }
+        for (int i = 0; i < powerUsed; i++) {
+            charges.consume(player, "power");
+        }
+        for (int i = 0; i < enduranceUsed; i++) {
+            charges.consume(player, "endurance");
+        }
+        if (cost > 0) {
+            if (bloodMagic) {
+                state.setLife(state.life() - cost);
+            } else {
+                state.setMana(state.mana() - cost);
+            }
+        }
+        plugin.players().grace().end(player, true);
+        final double speed = plugin.ailments() == null ? 1.0 : Math.max(0.05, plugin.ailments().actionSpeed(player));
+        runtime.readyAt = SkillMath.nextReady(runtime.readyAt, now, metaBuild.intervalTicks(sheet) / speed);
+        if (key != SkillLoadout.KEY_LEFT && key != SkillLoadout.KEY_SNEAK_LEFT) {
+            player.swingMainHand();
+        }
+        deployables.place(player, build);
+        state.notice(String.format(Locale.ROOT, "<#c9a7ff>%s：%s（銳星 %d、磐星 %d）", ItemRenderer.escape(definition.name()),
+                ItemRenderer.escape(socket.spell().name()), powerUsed, enduranceUsed), now + 40);
+        plugin.players().display(player, state);
+    }
+
     private Object linkedMace(final PlayerState state, final StatSheet sheet, final SkillDefinition totem) {
         final SkillLoadout loadout = state.skills();
         int position = -1;
@@ -1583,6 +1669,7 @@ public final class SkillService {
         minions.forget(player.getUniqueId());
         buffs.forget(player.getUniqueId());
         auras.forget(player.getUniqueId());
+        metas.forget(player.getUniqueId());
         if (state.hasCharacter()) {
             migrateRemoved(player, state); // 2026-10 PoE2 改版拿掉的技能、輔助換成未切割寶石
             auras.sync(player); // 技能面板上的光環開起來
@@ -1810,6 +1897,10 @@ public final class SkillService {
             lines.add("<gray>" + ItemRenderer.escape(definition.description()));
         }
         lines.add("");
+        if (config.meta(definition.id()) != null) {
+            lines.addAll(metas.lines(player, definition)); // 2026-10：主要寶石的插槽、能量
+            lines.add("");
+        }
         final boolean deals = definition.dealsDamage();
         if (definition.isAttack()) {
             if (deals) {
@@ -1934,6 +2025,189 @@ public final class SkillService {
             lines.add((definition.usableWith(state.weaponTags()) ? "<gray>" : "<red>") + "需要" + definition.weaponText());
         }
         return lines;
+    }
+
+    /** 「裝備加成」只列這些屬性（傷害、暴擊、速度、技能等級／範圍／投射物…、異常、穿透、光環／戰吼／詛咒效果）。 */
+    private static final List<String> GEAR_STAT_PREFIXES = List.of("damage", "crit.", "attack.speed", "cast.speed", "accuracy", "skill.",
+            "penetration", "ailment.duration", "bleed.", "ignite.", "poison.", "shock.", "chill.", "freeze.", "electrocute.", "stun.buildup",
+            "stun.duration", "daze.chance", "pin.chance", "armour.break", "exposure.", "curse.effect", "aura.effect", "herald.effect",
+            "warcry.", "totem.", "infusion.", "presence.", "minion.", "crossbow.", "grenade.", "seal.", "channel.", "combo.", "rage.effect");
+
+    /** 沒寫條件標籤的速度、命中照技能種類分：法術不列攻速、命中，攻擊不列施法速度；不造成傷害的技能（光環、增益）不列傷害類。 */
+    private static boolean relevantTo(final SkillDefinition definition, final String stat) {
+        if (stat.startsWith("attack.speed") || stat.startsWith("accuracy")) {
+            return definition.isAttack();
+        }
+        if (stat.startsWith("cast.speed")) {
+            return !definition.isAttack();
+        }
+        if (!definition.dealsDamage()) {
+            return !(stat.startsWith("damage") || stat.startsWith("crit.") || stat.startsWith("penetration"));
+        }
+        return true;
+    }
+
+    private static boolean gearStat(final String stat) {
+        for (final String prefix : GEAR_STAT_PREFIXES) {
+            if (stat.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 裝備對這個技能的加成（2026-10，技能面板 Shift＋右鍵）：身上每件生效的裝備裡，條件標籤吃得到這個技能
+     * （技能自己的標籤＋它打出的傷害類型）的詞綴；上面先給合計（技能等級、增加／更多傷害、暴擊、速度）。
+     */
+    public List<String> gearBonusLines(final Player player, final SkillBuild build) {
+        final java.util.Set<String> context = hintContext(plugin.players().sheet(player), build);
+        double levels = 0;
+        double increased = 0;
+        double more = 1;
+        double critInc = 0;
+        double speedInc = 0;
+        final String speedStat = build.definition().isAttack() ? StatKeys.ATTACK_SPEED : StatKeys.CAST_SPEED;
+        final List<String> items = new ArrayList<>();
+        int count = 0;
+        for (final tw.exilecore.character.PlayerStateService.GearPiece piece : plugin.players().activeGear(player)) {
+            final List<Modifier> useful = new ArrayList<>();
+            final List<Modifier> conditional = new ArrayList<>();
+            for (final Modifier mod : piece.modifiers()) {
+                if (!gearAffects(build.definition(), context, mod)) {
+                    continue;
+                }
+                (piece.conditional().contains(mod) ? conditional : useful).add(mod);
+                if (piece.conditional().contains(mod)) {
+                    continue; // 合計只算一直有的
+                }
+                if (mod.stat().equals(StatKeys.SKILL_LEVEL) && mod.type() == tw.exilecore.stats.ModType.FLAT) {
+                    levels += mod.value();
+                } else if (mod.stat().equals(StatKeys.DAMAGE) && mod.type() == tw.exilecore.stats.ModType.INCREASED) {
+                    increased += mod.value();
+                } else if (mod.stat().equals(StatKeys.DAMAGE) && mod.type() == tw.exilecore.stats.ModType.MORE) {
+                    more *= 1 + mod.value();
+                } else if (mod.stat().equals(StatKeys.CRIT_CHANCE) && mod.type() == tw.exilecore.stats.ModType.INCREASED) {
+                    critInc += mod.value();
+                } else if (mod.stat().equals(speedStat) && mod.type() == tw.exilecore.stats.ModType.INCREASED) {
+                    speedInc += mod.value();
+                }
+            }
+            if (useful.isEmpty() && conditional.isEmpty()) {
+                continue;
+            }
+            count += useful.size() + conditional.size();
+            items.add("<" + piece.color() + ">" + ItemRenderer.escape(piece.name()) + " <dark_gray>（" + ItemRenderer.escape(piece.slot()) + "）");
+            for (final String text : ModifierText.describeAll(useful)) {
+                items.add("<#8fd3ff>　" + ItemRenderer.escape(text));
+            }
+            for (final String text : ModifierText.describeAll(conditional)) {
+                items.add("<#8fd3ff>　" + ItemRenderer.escape(text) + " <dark_gray>（有條件）");
+            }
+        }
+        final List<String> lines = new ArrayList<>();
+        if (items.isEmpty()) {
+            lines.add("<gray>你身上的裝備沒有對這個技能有效的詞綴。");
+            lines.add("<dark_gray>（只看生效中的裝備；需求不符的不算）");
+            return lines;
+        }
+        final List<String> totals = new ArrayList<>();
+        if (levels > 0) {
+            totals.add("技能等級 <white>+" + ModifierText.number(levels));
+        }
+        if (increased != 0) {
+            totals.add("增加傷害 <white>" + (increased > 0 ? "+" : "") + Math.round(increased * 100) + "%");
+        }
+        if (more != 1) {
+            totals.add(String.format(Locale.ROOT, "更多傷害 <white>×%.2f", more));
+        }
+        if (critInc != 0) {
+            totals.add("暴擊率 <white>+" + Math.round(critInc * 100) + "%");
+        }
+        if (speedInc != 0) {
+            totals.add((build.definition().isAttack() ? "攻擊速度" : "施法速度") + " <white>+" + Math.round(speedInc * 100) + "%");
+        }
+        lines.add("<gray>你的裝備有 <white>" + count + "</white> 條詞綴吃得到「" + ItemRenderer.escape(build.definition().name()) + "」");
+        if (!totals.isEmpty()) {
+            lines.add("<gray>合計：" + String.join("<gray>、", totals));
+        }
+        lines.add("");
+        lines.addAll(items);
+        lines.add("");
+        lines.add("<dark_gray>照這個技能的標籤與傷害類型篩選；天賦、光環、輔助寶石不在這裡");
+        return lines;
+    }
+
+    /** 這條裝備詞綴吃不吃得到這個技能（context 見 {@link #hintContext}）。 */
+    public static boolean gearAffects(final SkillDefinition definition, final java.util.Set<String> context, final Modifier mod) {
+        return gearStat(mod.stat()) && mod.appliesTo(context) && relevantTo(definition, mod.stat());
+    }
+
+    /** 拿來判斷詞綴吃不吃得到的情境標籤：技能自己的標籤、等級標籤、它實際打出的傷害類型。 */
+    private java.util.Set<String> hintContext(final StatSheet sheet, final SkillBuild build) {
+        final java.util.Set<String> context = new java.util.HashSet<>(build.profile().tags());
+        context.addAll(SkillBuild.levelTags(build.definition()));
+        final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, build.profile());
+        for (final tw.exilecore.stats.DamageType type : tw.exilecore.stats.DamageType.values()) {
+            if (expected.get(type) > 0) {
+                context.addAll(build.profile().contextFor(type));
+            }
+        }
+        return java.util.Set.copyOf(context);
+    }
+
+    /** 技能面板上的一個技能（滑鼠指到裝備、輔助寶石時的提示用；主執行緒算好，封包那邊只讀）。 */
+    public record SkillHint(String id, String name, SkillDefinition definition, java.util.Set<String> context) {
+    }
+
+    /** 這個玩家技能面板上的技能（重複的只算一次）。 */
+    public List<SkillHint> skillHints(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        final List<SkillHint> hints = new ArrayList<>();
+        if (!state.isLoaded() || !state.hasCharacter()) {
+            return hints;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        final SkillLoadout loadout = state.skills();
+        final java.util.Set<String> seen = new java.util.HashSet<>();
+        for (int i = 0; i < SkillLoadout.MAX_SKILLS; i++) {
+            final SkillLoadout.Entry entry = loadout.skill(i);
+            if (entry == null || !seen.add(entry.skillId())) {
+                continue;
+            }
+            final SkillDefinition definition = config.skill(entry.skillId());
+            if (definition == null) {
+                continue;
+            }
+            try {
+                hints.add(new SkillHint(definition.id(), definition.name(), definition, hintContext(sheet, build(state, sheet, definition, entry))));
+            } catch (final RuntimeException e) {
+                // 算不出來的技能（設定有問題）就不提示
+            }
+        }
+        return hints;
+    }
+
+    /** 面板上一個技能的裝備加成（Shift＋右鍵）。 */
+    public List<String> gearBonusLines(final Player player, final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        return gearBonusLines(player, build(plugin.players().get(player), plugin.players().sheet(player), definition, entry));
+    }
+
+    /** 有幾條裝備詞綴吃得到這個技能（技能面板的提示用）。 */
+    public int gearBonusCount(final Player player, final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        return gearBonusCount(player, build(plugin.players().get(player), plugin.players().sheet(player), definition, entry));
+    }
+
+    /** 同上（已經算好的 build）。 */
+    public int gearBonusCount(final Player player, final SkillBuild build) {
+        final List<String> lines = gearBonusLines(player, build);
+        int count = 0;
+        for (final String line : lines) {
+            if (line.startsWith("<#8fd3ff>　")) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /** 以前付了連段、榮耀才有的加成（2026-10 拿掉資源之後一律算上）。 */
@@ -2322,7 +2596,7 @@ public final class SkillService {
                 lines.add(String.format(Locale.ROOT, "<dark_gray>　（已含光環效果 ×%.2f）", build.auraEffect()));
             }
             // 2026-10（祕法之心）：照最大魔力算的效果，把現在的數字寫出來
-            final double maxMana = Math.max(0, plugin.players().sheet(player).get(StatKeys.MANA_MAX));
+            final double maxMana = tw.exilecore.character.PlayerState.maxMana(plugin.players().sheet(player)); // 2026-10：跟血條一樣（含靈能電池）
             for (final Modifier effect : effects) {
                 if (effect.stat().startsWith(StatKeys.DAMAGE_EXTRA_PER_MANA)) {
                     lines.add(String.format(Locale.ROOT, "<gray>　你現在最大魔力 <white>%.0f</white>：獲得 <white>%s%%</white> 傷害為額外傷害",

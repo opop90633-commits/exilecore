@@ -318,8 +318,9 @@ public final class Gear {
         if (off == null) {
             return null;
         }
+        // 法器（focus）的基底也帶 shield 標籤，所以這一條同時擋盾牌和法器
         if (off.isShield() && main != null && main.hasTag(tw.exilecore.stats.Tags.TWO_HAND)) {
-            return "雙手武器不能配盾";
+            return off.hasTag("focus") ? "雙手武器不能配法器" : "雙手武器不能配盾";
         }
         if (off.isQuiver() && (main == null || !main.hasTag(tw.exilecore.stats.Tags.BOW))) {
             return "箭袋要配弓（弩不能裝箭袋）";

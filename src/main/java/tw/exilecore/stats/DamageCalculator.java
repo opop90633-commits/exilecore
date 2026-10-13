@@ -295,7 +295,19 @@ public final class DamageCalculator {
         if (per <= 0 || attacker.flat(StatKeys.CHANNEL_STAGES, context) > 0) {
             return 0;
         }
-        return per * Math.max(0, attacker.get(StatKeys.MANA_MAX)) / 100.0;
+        return per * maxMana(attacker) / 100.0;
+    }
+
+    /**
+     * 最大魔力（跟血條上顯示的一樣，同 PlayerState.maxMana）：血魔法 0；靈能電池把能量護盾也算進最大魔力。
+     * 2026-10：以前直接讀 mana.max，靈能電池的人祕法之心少算了能量護盾那一段。
+     */
+    public static double maxMana(final StatSheet sheet) {
+        if (StatKeys.flag(sheet, StatKeys.FLAG_BLOOD_MAGIC)) {
+            return 0;
+        }
+        final double mana = Math.max(0, sheet.get(StatKeys.MANA_MAX));
+        return StatKeys.flag(sheet, StatKeys.FLAG_ELDRITCH_BATTERY) ? mana + Math.max(0, sheet.get(StatKeys.ES_MAX)) : mana;
     }
 
     private static DamagePacket outgoing(final StatSheet attacker, final SkillProfile skill, final Roller roller) {
