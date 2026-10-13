@@ -663,7 +663,7 @@ skills:
     telegraph: 1.5       # 施放時間 1.5 秒
     track: true          # 前搖時跟著目標轉
     count: 1
-    angle: 50            # track 的光束：放出來之後每秒最多再轉幾度（追著你）
+    angle: 60            # track 的光束：放出來之後每秒最多再轉幾度（追著你）；2026-10：50 → 60
     length: 34
     width: 0.8
     duration: 0.7        # 一瞬間
@@ -847,7 +847,7 @@ skills:
     range: 16
     telegraph: 1.5
     count: 1
-    angle: 40
+    angle: 48            # 2026-10：40 → 48（掃快一點）
     length: 32
     width: 1.0
     duration: 6.0        # 施放時間 7.5 秒（前搖 1.5＋掃 6）
@@ -882,6 +882,21 @@ skills:
     duration: 20
     interval: 0.5
     shout: "「傲慢。」"
+  awakener_collapse_ruin:
+    name: 荒蕪
+    kind: zone           # 跟萬界崩解一起放（maps.yml 的 with:，2026-10）：收縮中的圈裡每 cooldown 秒落一批荒蕪，數量照在場人數（每人 count 個）
+    damage: 0.35
+    type: physical
+    convert: { chaos: 0.25, fire: 0.25, lightning: 0.25 }
+    cooldown: 8          # 幾秒落一批
+    telegraph: 2.0
+    radius: 2.5
+    duration: 10
+    interval: 0.5
+    ruin: 4
+    count: 1             # 每個在場的人幾個（最多 12 個）
+    at: arena
+    slow: 1
   awakener_quad_beam:
     name: 四方死光
     hint: "四道光束一起轉：待在兩道之間，跟著轉"
@@ -893,7 +908,7 @@ skills:
     range: 16
     telegraph: 1.5
     count: 4
-    angle: 110
+    angle: 130           # 2026-10：110 → 130（轉快一點）
     length: 34
     width: 0.7
     duration: 4.5

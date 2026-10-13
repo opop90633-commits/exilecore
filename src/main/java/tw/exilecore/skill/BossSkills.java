@@ -188,6 +188,8 @@ public final class BossSkills implements Listener {
         long lastMark = BossPacing.NEVER;
         /** 場地收縮（2026-10）：放過之後維持到這場打完，重置才消失。 */
         Arena arena;
+        /** 跟場地收縮一起放的招（with:）：收縮期間 at: arena 的地面效果照各自的 cooldown 一直落（2026-10）。 */
+        List<BossSkill> arenaWith = List.of();
 
         Brain(final LivingEntity boss, final Host host, final List<BossSkillUse> configured) {
             this.boss = boss;
@@ -221,6 +223,7 @@ public final class BossSkills implements Listener {
             marks.clear();
             lastMark = BossPacing.NEVER;
             arena = null;
+            arenaWith = List.of();
             phase = host.phase();
             farSince = -1;
             // 一般怪物：出場後的等待多一點隨機，一群怪才不會同時出招
@@ -385,6 +388,8 @@ public final class BossSkills implements Listener {
         final String mark;
         /** 地上的圈上次標的半徑（縮超過半格才重標）。 */
         double shown = -1;
+        /** 跟收縮一起放的地面效果下次落的 tick（招式代號 → tick）。 */
+        final Map<String, Long> nextExtra = new HashMap<>();
 
         Arena(final BossSkill skill, final Location center, final long startTick, final String mark) {
             this.skill = skill;
@@ -739,6 +744,9 @@ public final class BossSkills implements Listener {
                 break;
             }
         }
+        if (chosen.skill().kind() == BossSkill.Kind.ARENA) {
+            brain.arenaWith = chosen.with(); // 收縮期間照 cooldown 一直落（tickArena）
+        }
         start(brain, chosen.skill(), target, now);
         if (!chosen.with().isEmpty()) {
             combo(brain, chosen.with(), target, now);
@@ -1086,6 +1094,19 @@ public final class BossSkills implements Listener {
             }
         }
         final List<Location> points = new ArrayList<>();
+        if (skill.at() == BossSkill.Target.ARENA && brain.arena != null) {
+            // 2026-10：落在收縮中的圈裡（整個都在圈內），每個在場的人 count 個（最多 12 個）
+            final Arena arena = brain.arena;
+            final double inner = Math.max(0.5, arena.radius(now()) - skill.radius() - 0.5);
+            final int people = Math.max(1, playersNear(brain.boss.getLocation(), SEARCH).size());
+            final int total = Math.min(12, Math.max(1, skill.count()) * people);
+            for (int i = 0; i < total; i++) {
+                final double angle = random.nextDouble() * Math.PI * 2;
+                final double distance = Math.sqrt(random.nextDouble()) * inner;
+                points.add(ground(arena.center.clone().add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance)));
+            }
+            return points;
+        }
         final List<Player> players = skill.at() == BossSkill.Target.RANDOM ? playersNear(brain.boss.getLocation(), skill.range() + 4) : List.of();
         for (int i = 0; i < skill.count(); i++) {
             Location base = switch (skill.at()) {
@@ -2396,6 +2417,12 @@ public final class BossSkills implements Listener {
      */
     private boolean dropPending(final Brain brain, final BossSkill skill, final LivingEntity target, final long now, final String tag) {
         final List<Location> points = points(brain, skill, target);
+        if ("hazard".equals(tag) && brain.arena != null) {
+            // 2026-10：場地收縮中，場地危害不落在圈裡（圈裡只有跟收縮一起放的那些）
+            final Arena arena = brain.arena;
+            final double limit = arena.radius(now) + skill.radius();
+            points.removeIf(point -> point.distanceSquared(arena.center) < limit * limit);
+        }
         final long fire = now + settings().telegraphTicks(skill, brain.host.boss())
                 + (skill.kind() == BossSkill.Kind.SLAM ? Math.round(skill.delay() * 20) : 0);
         final Material color = DangerZones.colorFor(skill.type());
@@ -2633,6 +2660,18 @@ public final class BossSkills implements Listener {
         }
         if ((now + brain.offset) % 10 == 0) {
             visuals.bossWarningRing(arena.center, radius, 1);
+        }
+        // 2026-10：跟收縮一起放的地面效果（荒蕪）：照各自的 cooldown 在圈裡一直落，數量看在場人數（points 的 at: arena）
+        for (final BossSkill extra : brain.arenaWith) {
+            if (extra.kind() != BossSkill.Kind.ZONE || extra.at() != BossSkill.Target.ARENA) {
+                continue;
+            }
+            final long every = Math.max(20, Math.round((extra.cooldown() > 0 ? extra.cooldown() : 6) * 20));
+            final long due = arena.nextExtra.getOrDefault(extra.id(), arena.startTick + every);
+            if (now >= due) {
+                arena.nextExtra.put(extra.id(), now + every);
+                dropPending(brain, extra, null, now, "arena");
+            }
         }
         if (now < arena.nextPulse) {
             return;

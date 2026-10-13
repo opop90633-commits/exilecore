@@ -908,7 +908,7 @@ finals:
         - { id: awakener_corridor, phase: 1, with: [awakener_corridor_walls] }
         - { id: awakener_storm_maze_3, phase: 1 }
         - { id: awakener_apocalypse, phase: 2 }
-        - { id: awakener_collapse, phase: 2 }
+        - { id: awakener_collapse, phase: 2, with: [awakener_collapse_ruin] }   # 2026-10：圈裡照人數一直落荒蕪
         - { id: awakener_storm_maze_4, phase: 2 }
         - { id: awakener_quad_beam, phase: 3 }
       phases:

@@ -181,13 +181,18 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
          * 2026-10（照賽勒斯的風暴走廊）：從 Boss 朝目標的方向，兩排平行的風暴牆（左右各 scatter 格、長 reach 格），
          * 中間是走廊——跟 beam 一起放（with:），光束在走廊裡掃，只能在走廊裡左右閃。
          */
-        WALLS;
+        WALLS,
+        /**
+         * 2026-10（巔峰 Boss 的萬界崩解）：落在收縮中的場地圈裡的隨機位置；count 是「每個在場的人幾個」。
+         * 跟 arena 一起放（with:）的地面效果會照它的 cooldown 秒一直落，直到收縮結束。場地沒在收縮時當 target。
+         */
+        ARENA;
 
         static Target parse(final String where, final String text) {
             try {
                 return valueOf(text.trim().toUpperCase(Locale.ROOT));
             } catch (final IllegalArgumentException e) {
-                throw new IllegalArgumentException(where + ".at：要寫 self、target、random、spiral、cross、line、cage、maze 或 walls");
+                throw new IllegalArgumentException(where + ".at：要寫 self、target、random、spiral、cross、line、cage、maze、walls 或 arena");
             }
         }
     }
