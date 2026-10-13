@@ -55,10 +55,20 @@ public record CurrencyType(String id, String name, String material, String model
      * @param triggers 用哪些操作的通貨時生效
      * @param effect   怎麼改
      */
-    public record Omen(Set<CurrencyOperation> triggers, Effect effect) {
+    /**
+     * @param weight 流寇、祭壇給星籤時抽到這種的權重（2026-10；omen 的 weight，沒寫 100）：好用的（去劣、保前後綴）少一點
+     */
+    public record Omen(Set<CurrencyOperation> triggers, Effect effect, int weight) {
         public Omen {
             triggers = Set.copyOf(triggers);
+            weight = Math.max(0, weight);
         }
+
+        public Omen(final Set<CurrencyOperation> triggers, final Effect effect) {
+            this(triggers, effect, DEFAULT_WEIGHT);
+        }
+
+        public static final int DEFAULT_WEIGHT = 100;
 
         /** 星籤的效果。 */
         public enum Effect {
@@ -144,7 +154,7 @@ public record CurrencyType(String id, String name, String material, String model
                 throw new IllegalArgumentException(rule.path() + ".effect：不認得的效果 " + rule.string("effect", "")
                         + "（FORCE_PREFIX、FORCE_SUFFIX、DOUBLE_ADD、REMOVE_LOWEST、KEEP_PREFIXES、KEEP_SUFFIXES）");
             }
-            omen = new Omen(triggers, effect);
+            omen = new Omen(triggers, effect, rule.integer("weight", Omen.DEFAULT_WEIGHT));
         }
         final boolean uncut = id.startsWith(UNCUT_SKILL_PREFIX) || id.startsWith(UNCUT_SUPPORT_PREFIX);
         return new CurrencyType(id, node.requireString("name"),

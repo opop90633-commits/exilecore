@@ -63,12 +63,29 @@ public final class MapRewards {
     /** 隨機一種這類操作的通貨（掉落等級夠的）；沒有回傳 null。 */
     static CurrencyType pickCurrency(final ExileCore plugin, final CurrencyOperation operation, final int level, final RandomGenerator random) {
         final List<CurrencyType> options = new ArrayList<>();
+        int total = 0;
         for (final CurrencyType type : plugin.currencies().repository().all()) {
-            if (type.operation() == operation && type.dropLevel() <= level) {
+            if (type.operation() == operation && type.dropLevel() <= level && weight(type) > 0) {
                 options.add(type);
+                total += weight(type);
             }
         }
-        return options.isEmpty() ? null : options.get(random.nextInt(options.size()));
+        if (options.isEmpty()) {
+            return null;
+        }
+        // 2026-10：星籤照 omen 的 weight 抽（去劣、保前後綴比較少）；其他（催化劑…）一樣機會
+        int pick = random.nextInt(total);
+        for (final CurrencyType type : options) {
+            pick -= weight(type);
+            if (pick < 0) {
+                return type;
+            }
+        }
+        return options.getLast();
+    }
+
+    private static int weight(final CurrencyType type) {
+        return type.omen() == null ? 1 : type.omen().weight();
     }
 
     /**

@@ -131,7 +131,7 @@ oracle_orb:
   stack: 10
   operation: REROLL_VALUES
   applies_to: { rarity: [MAGIC, RARE, UNIQUE] }
-  drop_weight: 2    # 2026-10：10 → 2（照 100 人伺服器調：高價通貨少掉一點）
+  drop_weight: 1   # 2026-10：2 → 1（市場報告：一天一顆太多）
   drop_level: 35
   description: "重新隨機所有詞綴的數值，階級不變"
   flavor: "盯著它看，會看見同一件東西的另一種樣子。"
@@ -143,7 +143,7 @@ blessing_orb:
   stack: 20
   operation: REROLL_IMPLICIT
   applies_to: { rarity: [] }
-  drop_weight: 25    # 2026-10：55 → 25（照 100 人伺服器調：高價通貨少掉一點）
+  drop_weight: 8   # 2026-10：25 → 8（市場報告：每人每天 9 顆、只用掉 4%）
   drop_level: 12
   description: "重新隨機固定詞綴的數值"
   flavor: "曜朝祭司祝福過的星骸，只改變物品與生俱來的那一部分。"
@@ -246,7 +246,7 @@ rune_iron:
   operation: RUNE
   rune: iron
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
-  drop_weight: 25
+  drop_weight: 10   # 2026-10：25 → 10（市場報告：六種一天 56 顆、只用掉 2%）
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 增加 15% 物理攻擊傷害；防具、副手 +25 最大生命。孔滿了可以選一顆覆蓋（被換掉的會消失）"
   flavor: "刻在老兵盾牌背面的記號，摸起來還帶著鐵鏽味。"
@@ -258,7 +258,7 @@ rune_ember:
   operation: RUNE
   rune: ember
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
-  drop_weight: 25
+  drop_weight: 10   # 2026-10：25 → 10（市場報告：六種一天 56 顆、只用掉 2%）
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 物理傷害的 10% 額外附加為火焰；防具、副手 +12% 火焰抗性。孔滿了可以選一顆覆蓋（被換掉的會消失）"
   flavor: "紋路裡封著一小撮餘燼，夜裡會自己亮起來。"
@@ -270,7 +270,7 @@ rune_frost:
   operation: RUNE
   rune: frost
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
-  drop_weight: 25
+  drop_weight: 10   # 2026-10：25 → 10（市場報告：六種一天 56 顆、只用掉 2%）
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 物理傷害的 10% 額外附加為冰冷；防具、副手 +12% 冰冷抗性。孔滿了可以選一顆覆蓋（被換掉的會消失）"
   flavor: "放在掌心不會融，只會讓掌心慢慢結霜。"
@@ -282,7 +282,7 @@ rune_storm:
   operation: RUNE
   rune: storm
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
-  drop_weight: 25
+  drop_weight: 10   # 2026-10：25 → 10（市場報告：六種一天 56 顆、只用掉 2%）
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 物理傷害的 10% 額外附加為閃電；防具、副手 +12% 閃電抗性。孔滿了可以選一顆覆蓋（被換掉的會消失）"
   flavor: "靠近耳邊，聽得見很遠很遠的雷聲。"
@@ -294,7 +294,7 @@ rune_mind:
   operation: RUNE
   rune: mind
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
-  drop_weight: 25
+  drop_weight: 10   # 2026-10：25 → 10（市場報告：六種一天 56 顆、只用掉 2%）
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 增加 15% 法術傷害；防具、副手 +20 最大魔力。孔滿了可以選一顆覆蓋（被換掉的會消失）"
   flavor: "星象師的筆跡，看久了會想起本來不知道的事。"
@@ -306,7 +306,7 @@ rune_swift:
   operation: RUNE
   rune: swift
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
-  drop_weight: 25
+  drop_weight: 10   # 2026-10：25 → 10（市場報告：六種一天 56 顆、只用掉 2%）
   drop_level: 8
   description: "嵌進一個空的符文孔：武器 增加 6% 攻擊速度；防具、副手 +10 敏捷。孔滿了可以選一顆覆蓋（被換掉的會消失）"
   flavor: "從風裡撿回來的羽紋，輕得像隨時會飛走。"
@@ -317,7 +317,7 @@ chisel:
   model: exilecore:currency/chisel
   stack: 20
   operation: QUALITY_MAP
-  drop_weight: 160
+  drop_weight: 60   # 2026-10：160 → 60（市場報告：每人每天 41 顆、只用掉 29%）
   drop_level: 50
   description: "地圖品質 +5%（上限 20%）；每 1% 品質讓地圖多 1% 物品數量"
   flavor: "刻過星圖的石英釘，能把星骸的記憶釘得更牢。"
@@ -738,7 +738,7 @@ omen_whittling:
   material: BOOK
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: REMOVE_LOWEST }
+  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: REMOVE_LOWEST, weight: 25 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——去劣籤：最好用、消耗 72%
   applies_to: { rarity: [MAGIC, RARE] }
   drop_weight: 0
   description: "下一顆湮滅石／亂流石移除的是階級最差的那條"
@@ -748,7 +748,7 @@ omen_sinistral_guard:
   material: BOOK
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_PREFIXES }
+  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_PREFIXES, weight: 40 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——保前綴籤
   applies_to: { rarity: [MAGIC, RARE] }
   drop_weight: 0
   description: "下一顆湮滅石／亂流石不動前綴（只拿後綴）"
@@ -758,7 +758,7 @@ omen_dextral_guard:
   material: BOOK
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_SUFFIXES }
+  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_SUFFIXES, weight: 40 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——保後綴籤
   applies_to: { rarity: [MAGIC, RARE] }
   drop_weight: 0
   description: "下一顆湮滅石／亂流石不動後綴（只拿前綴）"

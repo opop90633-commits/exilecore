@@ -54,9 +54,9 @@ values:
   omen_sinistral: 220
   omen_dextral: 220
   omen_abundance: 600
-  omen_whittling: 350
-  omen_sinistral_guard: 260
-  omen_dextral_guard: 260
+  omen_whittling: 1500          # 2026-10：350 → 1500（消耗率全服最高；流寇、祭壇抽到的權重也降成 1/4）
+  omen_sinistral_guard: 800     # 2026-10：260 → 800（洗裝備必需，消耗 46%；權重降成 2/5）
+  omen_dextral_guard: 800       # 2026-10：260 → 800（同上）
   distilled_ire: 40
   distilled_guilt: 90
   distilled_greed: 200
@@ -87,7 +87,7 @@ values:
   uncut_support_2: 300
   uncut_support_3: 1500
   # 2026-10：通貨頁上其他的東西也能拿來標價、在交易所買賣（以前沒寫價值就不行；鑑定卷軸照舊不列）。起始值是估的，之後照成交價走
-  unveil_stone: 500
+  unveil_stone: 1000            # 2026-10：500 → 1000（劫盜掉落機率也減半）
   rune_iron: 400
   rune_ember: 400
   rune_frost: 400
