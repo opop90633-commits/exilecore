@@ -430,6 +430,19 @@ public final class Migrations {
                         PRIMARY KEY (guild_id, account_uuid)
                     )""",
                     "CREATE INDEX IF NOT EXISTS idx_guild_applications_account ON guild_applications (account_uuid)"
+            )),
+            // 2026-10：衝等活動——每個昇華第一個升到 100 級的角色（昇華代號是主鍵：只會有一個）
+            new Migration(24, "衝等活動", List.of(
+                    """
+                    CREATE TABLE IF NOT EXISTS level_race (
+                        ascendancy VARCHAR(64) NOT NULL PRIMARY KEY,
+                        account_uuid VARCHAR(36) NOT NULL,
+                        character_id BIGINT NOT NULL,
+                        character_name VARCHAR(32) NOT NULL,
+                        player_name VARCHAR(32) NOT NULL,
+                        level INT NOT NULL,
+                        claimed_at DATETIME NOT NULL
+                    )"""
             ))
     );
 
@@ -440,7 +453,7 @@ public final class Migrations {
             "trade_log", "market_listings", "market_proceeds", "exchange_orders", "exchange_fills", "stash_tabs",
             "economy_flow", "economy_stock", "economy_income", "exchange_trades", "currency_values", "account_progress",
             "admin_deliveries", "admin_log", "star_vouchers", "character_profiles",
-            "guilds", "guild_members", "guild_stash", "guild_log", "guild_applications");
+            "guilds", "guild_members", "guild_stash", "guild_log", "guild_applications", "level_race");
 
     private Migrations() {
     }

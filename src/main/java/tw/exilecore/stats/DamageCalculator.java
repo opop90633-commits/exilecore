@@ -306,6 +306,10 @@ public final class DamageCalculator {
 
     private static DamagePacket outgoing(final StatSheet attacker, final SkillProfile skill, final Roller roller) {
         final DamagePacket packet = new DamagePacket();
+        // 墨焰誓（PoE2 黑焰之約）：火焰法術的火焰傷害最後會轉成混沌；照 PoE2 轉換的規則，轉過去的傷害火焰與混沌的修飾器都吃
+        // （2026-10：以前只吃火焰的，「增加混沌傷害」對墨焰誓的火焰法術完全沒用）
+        final boolean blackflame = StatKeys.flag(attacker, StatKeys.FLAG_BLACKFLAME) && skill.tags().contains(Tags.SPELL)
+                && skill.tags().contains(Tags.FIRE);
         for (final DamageType type : DamageType.values()) {
             final Set<String> context = skill.contextFor(type);
             final double min;
@@ -332,6 +336,9 @@ public final class DamageCalculator {
                 if (percent > 0) {
                     final Set<String> both = new HashSet<>(context);
                     both.addAll(extra.tags());
+                    if (blackflame && extra == DamageType.FIRE) {
+                        both.addAll(DamageType.CHAOS.tags());
+                    }
                     packet.add(extra, attacker.apply(StatKeys.DAMAGE, amount * percent / 100.0, both));
                 }
             }
@@ -365,11 +372,18 @@ public final class DamageCalculator {
                 }
             }
             if (amount > 1e-9) {
-                packet.add(type, attacker.apply(StatKeys.DAMAGE, amount, context));
+                final Set<String> scale;
+                if (blackflame && type == DamageType.FIRE) {
+                    scale = new HashSet<>(context);
+                    scale.addAll(DamageType.CHAOS.tags());
+                } else {
+                    scale = context;
+                }
+                packet.add(type, attacker.apply(StatKeys.DAMAGE, amount, scale));
             }
         }
         // 黑焰之約（PoE2 基石）：火焰法術的火焰傷害全部轉成混沌
-        if (StatKeys.flag(attacker, StatKeys.FLAG_BLACKFLAME) && skill.tags().contains(Tags.SPELL) && skill.tags().contains(Tags.FIRE)) {
+        if (blackflame) {
             packet.add(DamageType.CHAOS, packet.get(DamageType.FIRE));
             packet.set(DamageType.FIRE, 0);
         }

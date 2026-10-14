@@ -1408,12 +1408,14 @@ unveiled_jr_regenerate_percent_life_per_second:
   group: unveiled_jr_regenerate_percent_life_per_second
   spawn_tags: [r_emerald, r_ruby, r_sapphire]
   names: [淵痕之, 黯痕之]
-  text: "範圍內的小天賦也各給：每秒回復 {value/10}% 最大生命"
+  # 2026-10：原本是 {value/10}，第 2 階 [0, 0] 擲出來是 0%。改成 {regen/100}（0.05%／0.1%）；
+  # 舊物品沒有 regen，讀的時候 AffixUpgrade 照那一階補上（第 1 階 0.1% 不變，第 2 階從 0% 變 0.05%）
+  text: "範圍內的小天賦也各給：每秒回復 {regen/100}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [0, 0] }
+    - { tier: 1, ilvl: 60, weight: 300, regen: [10, 10] }
+    - { tier: 2, ilvl: 1, weight: 700, regen: [5, 5] }
   mods:
-    - { stat: radius:life.regen_percent, type: FLAT, value: "{value/10}" }
+    - { stat: radius:life.regen_percent, type: FLAT, value: "{regen/100}" }
 
 unveiled_jr_mana_cost_efficiency:
   type: suffix

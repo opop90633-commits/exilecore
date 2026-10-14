@@ -113,9 +113,8 @@ final class AscendancyMenu extends Menu {
                 "<gray>・第一次完成後選昇華職業：每個職業兩到三個，選了不能換（有月卡隨時可以換）",
                 "<gray>・昇華天賦一個 1 點；每條分支要從第一個配起",
                 "<gray>・退掉昇華天賦花金幣（跟天賦樹退點同一個價格）",
-                plugin.players().config().mapDeathPenalty() > 0
-                        ? "<gray>・" + plugin.players().config().deathPenaltyFromLevel() + " 等以上死亡扣這一級 "
-                        + tw.exilecore.character.LevelPace.percent(plugin.players().config().mapDeathPenalty()) + " 的經驗（哪裡都一樣）"
+                plugin.players().config().deathPenaltyText() != null
+                        ? "<gray>・" + plugin.players().config().deathPenaltyText() + "（哪裡都一樣）"
                         : "<gray>・死亡不扣經驗"));
         set(SLOT_PREVIEW, icon(Material.SPYGLASS, "<white>昇華預覽",
                 "<gray>還沒選、還沒解鎖也能先看：每個昇華職業的完整天賦樹",
@@ -123,7 +122,7 @@ final class AscendancyMenu extends Menu {
                 "",
                 "<yellow>左鍵：打開預覽<dark_gray>（/ascend preview）"));
         if (chosen != null) {
-            final boolean card = plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0;
+            final boolean card = plugin.sponsors() != null && plugin.sponsors().cardActive(player);
             set(SLOT_RESPEC, icon(Material.CLOCK, "<#bcd4ff>更換昇華職業（月卡）",
                     "<gray>現在：" + chosen.colored(),
                     "<gray>清掉昇華職業與昇華天賦（點數全部拿回來，試煉不用重打），",
@@ -267,7 +266,7 @@ final class AscendancyMenu extends Menu {
                 if (click != ClickType.SHIFT_LEFT) {
                     return;
                 }
-                if (plugin.sponsors() == null || plugin.sponsors().cardDaysLeft(player) <= 0) {
+                if (plugin.sponsors() == null || !plugin.sponsors().cardActive(player)) {
                     player.sendMessage(plugin.text().prefixed("<red>更換昇華職業是月卡的福利"));
                     return;
                 }

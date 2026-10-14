@@ -268,7 +268,7 @@ public final class CodexMenu extends Menu {
         }
         drawOptions();
         if (tab != Tab.AFFIXES) {
-            set(SLOT_TEXT_SEARCH, searchButton(textQuery, tab == Tab.UNIQUES ? "傳奇（名稱、詞綴）" : tab == Tab.SKILLS ? "技能（名稱、說明）" : "輔助（名稱、說明、效果）"));
+            set(SLOT_TEXT_SEARCH, searchButton(textQuery, tab == Tab.UNIQUES ? "傳奇（名稱、詞綴）" : tab == Tab.SKILLS ? "技能（名稱、說明、效果）" : "輔助（名稱、說明、效果）"));
         }
         set(SLOT_HELP, helpButton(List.of(
                 "這裡只能看，東西拿不出來",
@@ -383,8 +383,38 @@ public final class CodexMenu extends Menu {
     /** 技能搜尋用的文字：名稱、說明、效果。 */
     public static String[] skillSearchText(final SkillDefinition definition) {
         final List<String> texts = new ArrayList<>(List.of(definition.name(), definition.description() == null ? "" : definition.description()));
-        texts.addAll(tw.exilecore.skill.ModifierText.describeAll(definition.modifiers()));
+        texts.addAll(skillEffectTexts(definition));
         return texts.toArray(String[]::new);
+    }
+
+    /**
+     * 技能的效果文字（2026-10：圖鑑搜尋也找得到）：技能自己的修飾器，加上光環、狂怒、戰吼（自己與召喚物）、印記／詛咒給的效果
+     * （照 20 級寫；搜尋只看字，數字不重要）。
+     */
+    public static List<String> skillEffectTexts(final SkillDefinition definition) {
+        final List<String> texts = new ArrayList<>(tw.exilecore.skill.ModifierText.describeAll(definition.modifiers()));
+        final List<tw.exilecore.skill.ScaledMod> scaled = new ArrayList<>();
+        if (definition.aura() != null) {
+            scaled.addAll(definition.aura().effects());
+            if (definition.aura().fury() != null) {
+                scaled.addAll(definition.aura().fury().effects());
+            }
+        }
+        if (definition.warcry() != null) {
+            scaled.addAll(definition.warcry().buff());
+            scaled.addAll(definition.warcry().minionBuff());
+        }
+        if (definition.params() != null && definition.params().mark() != null) {
+            scaled.addAll(definition.params().mark().effects());
+        }
+        for (final tw.exilecore.skill.ScaledMod mod : scaled) {
+            try {
+                texts.add(mod.describe(SkillLoadout.MAX_LEVEL, 1.0));
+            } catch (final RuntimeException ignored) {
+                // 寫不出說明的略過（只影響搜尋）
+            }
+        }
+        return texts;
     }
 
     /** 輔助搜尋用的文字：名稱、說明、效果（2026-10：可以搜「封印」「連鎖」這種只寫在說明裡的字）。 */

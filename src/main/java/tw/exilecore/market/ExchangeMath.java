@@ -59,4 +59,93 @@ final class ExchangeMath {
     private static int clamp(final long value, final int max) {
         return (int) Math.max(1, Math.min(Math.max(1, max), value));
     }
+
+    // ---- 2026-10：像 PoE2 一樣「打數量就照市價」與市場深度 ----
+
+    /** 試算一張單（給 give 個、要 want 個）馬上能換到幾個；交易所用 {@link ExchangeBook#simulate}。 */
+    @FunctionalInterface
+    interface Simulator {
+        int received(int give, int want);
+    }
+
+    /**
+     * 照市價「我要 want 個」：馬上能換到 want 個的最少給多少（照掛著的單由便宜到貴吃下去）。
+     * 市場上不夠 want 個：回傳 null（呼叫端照最後一個價位算剩下掛著的）。
+     */
+    static Amounts cheapestFor(final Simulator book, final int want, final int max) {
+        final int w = clamp(want, max);
+        if (book.received(max, w) < w) {
+            return null;
+        }
+        int low = 1;
+        int high = max;
+        while (low < high) {
+            final int mid = low + (high - low) / 2;
+            if (book.received(mid, w) >= w) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+        return new Amounts(low, w);
+    }
+
+    /**
+     * 照市價「我給 give 個」：馬上能換到最多幾個（每一個都馬上成交，不留掛單）。一個都換不到回傳 null。
+     */
+    static Amounts mostFor(final Simulator book, final int give, final int max) {
+        final int g = clamp(give, max);
+        if (book.received(g, 1) < 1) {
+            return null;
+        }
+        int low = 1;
+        int high = max;
+        while (low < high) {
+            final int mid = low + (high - low + 1) / 2;
+            if (book.received(g, mid) >= mid) {
+                low = mid;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return new Amounts(g, low);
+    }
+
+    /**
+     * 價格往上（多給一點，比較快成交）或往下（少給一點，掛著等）調一檔：大約 5%，至少動 1 個。
+     * 比較多的那一邊動（給 1 換 100 的單動「要」那一邊，才不會一下差 100%）。
+     */
+    static Amounts nudge(final int give, final int want, final boolean up, final int max) {
+        if (give >= want) {
+            final int step = Math.max(1, (int) Math.round(give * 0.05));
+            return new Amounts(clamp(give + (up ? step : -step), max), want);
+        }
+        final int step = Math.max(1, (int) Math.round(want * 0.05));
+        return new Amounts(give, clamp(want + (up ? -step : step), max));
+    }
+
+    /**
+     * 一個價位（市場深度的一列）：每 lotGive 個（掛單拿出來的）換 lotWant 個，這個價位總共還有 stock 個、幾張單、有沒有自己的。
+     */
+    record Level(int lotGive, int lotWant, int stock, int orders, boolean mine) {
+    }
+
+    /** 把掛單照價位合併（保持原本的順序：第一張出現的價位在前）。 */
+    static java.util.List<Level> levels(final java.util.List<ExchangeBook.Order> orders, final java.util.UUID me) {
+        final java.util.Map<String, int[]> merged = new java.util.LinkedHashMap<>();
+        for (final ExchangeBook.Order order : orders) {
+            final int[] row = merged.computeIfAbsent(order.lotGive() + ":" + order.lotWant(),
+                    key -> new int[] {order.lotGive(), order.lotWant(), 0, 0, 0});
+            row[2] += order.lots() * order.lotGive();
+            row[3]++;
+            if (me != null && me.equals(order.account())) {
+                row[4] = 1;
+            }
+        }
+        final java.util.List<Level> list = new java.util.ArrayList<>();
+        for (final int[] row : merged.values()) {
+            list.add(new Level(row[0], row[1], row[2], row[3], row[4] == 1));
+        }
+        return list;
+    }
 }

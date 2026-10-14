@@ -17,6 +17,25 @@ import java.util.function.Function;
 public final class DamageLedger {
 
     private final Map<UUID, Map<UUID, Double>> damage = new HashMap<>();
+    /** 每個玩家第一次打到這隻怪物的 tick（2026-10：Boss 秒傷紀錄算「從開打到倒下」幾秒）。 */
+    private final Map<UUID, Map<UUID, Long>> firstHit = new HashMap<>();
+    /** 現在的 tick（單元測試不設就是 0）。 */
+    private java.util.function.LongSupplier clock = () -> 0L;
+
+    /** 設定時鐘（伺服器的 tick）。 */
+    public void setClock(final java.util.function.LongSupplier clock) {
+        this.clock = clock == null ? () -> 0L : clock;
+    }
+
+    /** 每個玩家第一次打到這隻怪物的 tick（沒有回傳空的）。 */
+    public Map<UUID, Long> firstHits(final UUID monster) {
+        final Map<UUID, Long> map = firstHit.get(monster);
+        return map == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(map));
+    }
+
+    public long now() {
+        return clock.getAsLong();
+    }
 
     /** 記一筆：monster 被 player 打掉 amount 生命。 */
     public void record(final UUID monster, final UUID player, final double amount) {
@@ -24,6 +43,7 @@ public final class DamageLedger {
             return;
         }
         damage.computeIfAbsent(monster, key -> new LinkedHashMap<>()).merge(player, amount, Double::sum);
+        firstHit.computeIfAbsent(monster, key -> new HashMap<>()).putIfAbsent(player, clock.getAsLong());
     }
 
     /** 這隻怪物受到的玩家傷害（玩家 → 傷害；沒有回傳空的）。 */
@@ -34,6 +54,7 @@ public final class DamageLedger {
 
     public void forget(final UUID monster) {
         damage.remove(monster);
+        firstHit.remove(monster);
     }
 
     /** 記著幾隻怪物（除錯用）。 */
@@ -43,6 +64,7 @@ public final class DamageLedger {
 
     public void clear() {
         damage.clear();
+        firstHit.clear();
     }
 
     /**

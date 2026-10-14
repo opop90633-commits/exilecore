@@ -167,23 +167,42 @@ public final class JewelSockets {
         if (state.jewels().isEmpty() || tree == null || plugin.items() == null) {
             return List.of();
         }
+        final Map<String, tw.exilecore.item.ItemData> data = new java.util.LinkedHashMap<>();
+        for (final Map.Entry<String, ItemStack> entry : state.jewels().entrySet()) {
+            plugin.items().read(entry.getValue()).ifPresent(read -> data.put(entry.getKey(), read));
+        }
+        return modifiers(plugin.items().repository(), data, state.passives(), tree);
+    }
+
+    /**
+     * 同上，珠寶直接給物品資料（2026-10：網頁計算器的虛擬角色，沒有真的物品）。純函式。
+     *
+     * @param jewels   孔位節點代號 → 嵌著的珠寶
+     * @param passives 已配置的天賦（孔位要配了才算）
+     */
+    public static List<Modifier> modifiers(final tw.exilecore.item.ItemRepository repository, final Map<String, tw.exilecore.item.ItemData> jewels,
+                                           final java.util.Set<String> passives, final PassiveTree tree) {
+        if (jewels == null || jewels.isEmpty() || tree == null || repository == null) {
+            return List.of();
+        }
         final List<Modifier> list = new ArrayList<>();
         boolean uniqueSeen = false;
-        for (final Map.Entry<String, ItemStack> entry : state.jewels().entrySet()) {
+        for (final Map.Entry<String, tw.exilecore.item.ItemData> entry : jewels.entrySet()) {
             final PassiveNode node = tree.node(entry.getKey());
-            if (node == null || !node.isSocket() || !state.passives().contains(entry.getKey())) {
+            final tw.exilecore.item.ItemData data = entry.getValue();
+            if (data == null || node == null || !node.isSocket() || !passives.contains(entry.getKey())) {
                 continue;
             }
-            if (isUnique(plugin, entry.getValue())) {
+            if (data.rarity() == tw.exilecore.item.Rarity.UNIQUE) {
                 if (uniqueSeen) {
                     continue; // 以前放進去的第二顆傳奇珠寶不算
                 }
                 uniqueSeen = true;
             }
-            final List<Modifier> mods = plugin.items().modifiers(entry.getValue());
-            final ItemBase base = plugin.items().read(entry.getValue()).map(data -> plugin.items().repository().base(data.base())).orElse(null);
+            final List<Modifier> mods = tw.exilecore.item.ItemStats.modifiers(repository, data);
+            final ItemBase base = repository.base(data.base());
             if (base != null && base.isRadiusJewel()) {
-                list.addAll(radiusModifiers(tree, node, state.passives(), mods));
+                list.addAll(radiusModifiers(tree, node, passives, mods));
             } else {
                 list.addAll(mods);
             }
@@ -285,7 +304,7 @@ public final class JewelSockets {
         lines.add("<" + data.get().rarity().color() + ">" + ItemRenderer.escape(ItemStats.displayName(plugin.items().repository(), data.get()))
                 + (base != null && base.jewelColor() != null ? " <" + base.jewelColor() + ">◆" : ""));
         for (final ItemStats.AffixLine line : ItemStats.affixLines(plugin.items().repository(), data.get())) {
-            lines.add("<white>" + ItemRenderer.escape(line.ranged()) + " <dark_gray>(T" + line.tier() + ")");
+            lines.add("<white>" + line.ranged() + " <dark_gray>(T" + line.tier() + ")"); // ranged 已經是 MiniMessage（跳脫過），不能再跳脫一次
         }
         return lines;
     }

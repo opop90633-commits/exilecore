@@ -25,6 +25,10 @@ final class DiscordGateway {
     private static final String URL = "wss://gateway.discord.gg/?v=10&encoding=json";
     /** GUILDS | GUILD_MESSAGES | MESSAGE_CONTENT。 */
     private static final int INTENTS = 1 | (1 << 9) | (1 << 15);
+    /** GUILD_MEMBERS（2026-10，特權：開發者平台要打開 SERVER MEMBERS INTENT）：加成開始、結束即時收到。 */
+    private static final int MEMBERS = 1 << 1;
+    /** 有沒有要 GUILD_MEMBERS（沒開被 Discord 拒絕就拿掉重連，其他功能照常）。 */
+    private volatile boolean members = true;
 
     private final Logger logger;
     private final String token;
@@ -135,7 +139,7 @@ final class DiscordGateway {
         properties.addProperty("device", "exilecore");
         final JsonObject data = new JsonObject();
         data.addProperty("token", token);
-        data.addProperty("intents", INTENTS);
+        data.addProperty("intents", INTENTS | (members ? MEMBERS : 0));
         data.add("properties", properties);
         final JsonObject payload = new JsonObject();
         payload.addProperty("op", 2);
@@ -250,6 +254,11 @@ final class DiscordGateway {
             if (statusCode == 4004) {
                 stopped = true;
                 logger.error("[Discord] 機器人 Token 不對（Gateway 4004）：檢查 config.yml 的 discord.bot-token，改好之後 /ec reload");
+            } else if (statusCode == 4014 && members) {
+                // 2026-10：多半是沒開 SERVER MEMBERS INTENT：拿掉重連（Discord 加成改成登入時才確認），聊天、客服單照常
+                members = false;
+                logger.warn("[Discord] 機器人沒開 SERVER MEMBERS INTENT（Gateway 4014）：Discord 加成改成玩家登入時才確認；"
+                        + "要即時生效到 Discord 開發者平台的 Bot 頁打開，再 /ec reload");
             } else if (statusCode == 4014) {
                 stopped = true;
                 logger.error("[Discord] 機器人沒開 MESSAGE CONTENT INTENT（Gateway 4014）：到 Discord 開發者平台的 Bot 頁打開，再 /ec reload");

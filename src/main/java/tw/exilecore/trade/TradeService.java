@@ -331,7 +331,7 @@ public final class TradeService {
 
     /** 有月卡：面對面交易不收手續費（2026-10；只免自己那一份，對方沒月卡照付）。 */
     boolean feeFree(final org.bukkit.entity.Player player) {
-        return player != null && plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0;
+        return player != null && plugin.sponsors() != null && plugin.sponsors().cardActive(player);
     }
 
     private TradeFee.Received appraise(final TradeSession.Offer offer) {

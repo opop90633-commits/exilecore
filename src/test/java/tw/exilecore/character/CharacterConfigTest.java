@@ -21,13 +21,13 @@ class CharacterConfigTest {
 
     @Test
     void experienceTableIsThePoe2Table() {
-        assertEquals(100, config.levelCap());
+        assertEquals(120, config.levelCap()); // 2026-10：上限 120（100 級以後的經驗表另外檢查）
         assertEquals(525, config.experienceToNext(1));
         long previous = 0;
         long total = 0;
         long to60 = 0;
         long to90 = 0;
-        for (int level = 1; level < config.levelCap(); level++) {
+        for (int level = 1; level < 100; level++) {
             final long need = config.experienceToNext(level);
             assertEquals(CharacterConfig.DEFAULT_EXPERIENCE[level - 1], need, "出貨的 character.yml 跟內建的表一樣：等級 " + level);
             assertTrue(need > previous, "等級 " + level + " 需要的經驗要遞增");
@@ -43,7 +43,6 @@ class CharacterConfigTest {
                 to90 += need;
             }
         }
-        assertEquals(0, config.experienceToNext(100), "滿級不再需要經驗");
         // PoE2 的累計經驗：60 級 146,749,362、90 級 1,934,009,687、100 級 4,250,334,444
         assertEquals(146_749_362L, to60);
         assertEquals(1_934_009_687L, to90);
@@ -193,5 +192,30 @@ class CharacterConfigTest {
         assertEquals(CharacterClass.WITCH, CharacterClass.parse("witch", null));
         assertEquals(CharacterClass.RANGER, CharacterClass.parse("弓箭手", null));
         assertEquals(CharacterClass.MARAUDER, CharacterClass.parse("nope", CharacterClass.MARAUDER));
+    }
+
+    @Test
+    void levelCap120WithFrozenPenaltyAndHeavierDeaths() {
+        assertEquals(120, config.levelCap());
+        assertEquals(99, config.penaltyLevelCap());
+        // 100 級以後打怪的經驗跟 99 級一樣（不會再往下掉）
+        assertEquals(config.levelPenalty(99, 84), config.levelPenalty(105, 84), 1e-12);
+        assertEquals(config.levelPenalty(99, 84), config.levelPenalty(119, 84), 1e-12);
+        // 經驗表接到 119 級，一級比一級多、從 99 → 100 的量起跳
+        long previous = config.experienceToNext(99);
+        for (int level = 100; level < 120; level++) {
+            final long need = config.experienceToNext(level);
+            assertTrue(need > previous, "第 " + level + " 級要比前一級多");
+            previous = need;
+        }
+        assertEquals(0, config.experienceToNext(120), "滿級");
+        // 死亡懲罰：60–99 級 10%、100–109 級 20%、110 級起 30%
+        assertEquals(0, config.deathPenaltyAt(59), 1e-12);
+        assertEquals(0.10, config.deathPenaltyAt(99), 1e-12);
+        assertEquals(0.20, config.deathPenaltyAt(100), 1e-12);
+        assertEquals(0.20, config.deathPenaltyAt(109), 1e-12);
+        assertEquals(0.30, config.deathPenaltyAt(110), 1e-12);
+        assertEquals(0.30, config.deathPenaltyAt(119), 1e-12);
+        assertTrue(config.deathPenaltyText().contains("100 等起 20%"));
     }
 }

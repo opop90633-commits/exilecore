@@ -167,7 +167,7 @@ public final class WaypointMenu extends Menu {
 
     /** 有月卡：傳送免費。 */
     private boolean card() {
-        return plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0;
+        return plugin.sponsors() != null && plugin.sponsors().cardActive(player);
     }
 
     /** 沒有月卡時傳送到這裡的價格（2026-10：照目的地的怪物等級 × 100）。 */

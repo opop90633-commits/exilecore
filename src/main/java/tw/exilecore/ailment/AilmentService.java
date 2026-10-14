@@ -324,7 +324,8 @@ public final class AilmentService {
             final double chance = config.poisonChance(physical + chaos, threshold, attack.flat(StatKeys.POISON_CHANCE, context),
                     attack.increased(StatKeys.POISON_CHANCE, context))
                     * attack.more(StatKeys.POISON_CHANCE, context); // 2026-10：輔助的「更多／更少機率」
-            if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_POISON, random)) {
+            if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_POISON, random)
+                    && !StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE)) { // 2026-10：混沌免疫也免疫中毒
                 final double dps = config.poisonDps(physical + chaos, attack.increased(StatKeys.POISON_MAGNITUDE, context),
                         attack.more(StatKeys.POISON_MAGNITUDE, context));
                 final double seconds = AilmentConfig.duration(config.poisonDuration(),
@@ -771,6 +772,10 @@ public final class AilmentService {
             return false;
         }
         final PlayerState state = plugin.players().get(player);
+        final StatSheet sheet = plugin.players().sheet(player);
+        if (type == AilmentType.POISON && StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
+            return false; // 2026-10：無垢之軀（混沌免疫）也不吃中毒的混沌持續傷害（以前只擋了「上中毒」以外的混沌擊中）
+        }
         double rest = amount;
         final double shield = state.energyShield();
         double absorbed = 0;
@@ -778,6 +783,16 @@ public final class AilmentService {
             absorbed = Math.min(shield, rest);
             state.setEnergyShield(shield - absorbed);
             rest -= absorbed;
+        }
+        // 2026-10：「受到的傷害先從魔力扣」（以念御身、傳奇）持續傷害也算（以前只算擊中：無垢之軀＋以念御身摸到一次點燃就死）
+        final double fromMana = sheet.flat(StatKeys.DAMAGE_FROM_MANA, Set.of());
+        if (fromMana > 0 && rest > 0) {
+            final tw.exilecore.stats.IncomingDamage split = tw.exilecore.stats.IncomingDamage.split(0, rest, state.mana(), fromMana, 0);
+            if (split.mana() > 0) {
+                state.setMana(state.mana() - split.mana());
+                absorbed += split.mana();
+                rest = split.life();
+            }
         }
         state.setLife(state.life() - rest);
         if (plugin.combat() != null) {

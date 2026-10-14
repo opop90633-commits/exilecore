@@ -1105,10 +1105,22 @@ public final class SkillService {
             final org.bukkit.util.Vector facing = SkillTargets.facing(player);
             final org.bukkit.Location from = player.getLocation().add(new org.bukkit.util.Vector(-facing.getZ(), 0, facing.getX()).multiply(1.5));
             final java.util.UUID aim = preferred == null ? null : preferred.getUniqueId();
+            // 2026-10：幻影要射向放的那一刻準心指的地方（以前用玩家的水平朝向從旁邊 1.5 格平行射出：
+            // 不管上下的角度，單發的箭打不到同一個地方，偏一格半而且往下瞄時從頭頂飛過去）
+            final org.bukkit.Location eye = player.getEyeLocation();
+            final org.bukkit.util.RayTraceResult ray = player.getWorld().rayTraceBlocks(eye, eye.getDirection(), MIRAGE_AIM_RANGE,
+                    org.bukkit.FluidCollisionMode.NEVER, true);
+            final org.bukkit.util.Vector point = ray != null && ray.getHitPosition() != null ? ray.getHitPosition()
+                    : eye.toVector().add(eye.getDirection().multiply(MIRAGE_AIM_RANGE));
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                 if (player.isOnline() && player.getWorld().equals(from.getWorld())) {
                     from.getWorld().spawnParticle(org.bukkit.Particle.END_ROD, from.clone().add(0, 1, 0), 12, 0.2, 0.5, 0.2, 0.01);
-                    executor.executeFrom(Origin.at(player, from, SkillTargets.facing(player)), mirage, aim == null ? null : living(player, aim));
+                    final org.bukkit.entity.LivingEntity mirageTarget = aim == null ? null : living(player, aim);
+                    // 有鎖定的敵人就朝牠（牠可能動了），沒有就朝放的時候準心指的點
+                    final Origin origin = mirageTarget != null && mirageTarget.isValid()
+                            ? Origin.towards(player, from, mirageTarget)
+                            : Origin.at(player, from, point.clone().subtract(from.toVector().add(new org.bukkit.util.Vector(0, 1.2, 0))));
+                    executor.executeFrom(origin, mirage, mirageTarget);
                 }
             }, 10);
         }
@@ -1439,6 +1451,9 @@ public final class SkillService {
      * 沒算怪物的減免、持續傷害）。召喚技能算召喚物：一隻的每秒傷害 × 同時最多幾隻（名字後面寫「召喚物 ×N」）。
      * 回傳「按鍵、名字、每秒傷害」，同一個技能綁在好幾個鍵只算一次。
      */
+    /** 幻弓影：找準心指的點最遠幾格。 */
+    private static final double MIRAGE_AIM_RANGE = 48;
+
     /**
      * 一個技能每秒打幾下：一輪是「複擊的每一下各一次攻擊間隔」再加「最後一下的間隔與冷卻比較長的那個」。
      */
@@ -1526,115 +1541,272 @@ public final class SkillService {
     }
 
     /**
+     * 光環現在的樣子（2026-10）：在線的玩家看 {@link AuraService}，網頁計算器的虛擬角色看 {@link #virtualAuras} 算出來的。
+     */
+    public interface AuraView {
+        /** 這個光環（精魂召喚）開著沒。 */
+        boolean active(String skillId);
+
+        /** 照隻數算精魂的召喚養得起幾隻（沒開 -1、不是照隻數算的 Integer.MAX_VALUE）。 */
+        int minionCap(String skillId);
+
+        /** 召喚物也吃到的光環效果。 */
+        List<tw.exilecore.stats.Modifier> minionEffects();
+    }
+
+    /**
+     * 虛擬角色開著的光環（2026-10，網頁計算器）：照 {@link AuraService#sync} 的規則——綁在按鍵上、能用的光環照按鍵順序開，
+     * 精魂不夠的不開。
+     *
+     * @param self          給自己的效果（含保留的精魂），要加進屬性表
+     * @param minionEffects 召喚物也吃到的
+     * @param active        開著的（技能代號，照順序）
+     * @param skipped       精魂不夠沒開的（名字）
+     */
+    public record VirtualAuras(List<tw.exilecore.stats.Modifier> self, List<tw.exilecore.stats.Modifier> minionEffects,
+                               java.util.Map<String, Integer> minionCaps, List<String> active, List<String> skipped, double reserved)
+            implements AuraView {
+        @Override
+        public boolean active(final String skillId) {
+            return active.contains(skillId);
+        }
+
+        @Override
+        public int minionCap(final String skillId) {
+            return minionCaps.getOrDefault(skillId, -1);
+        }
+    }
+
+    /** 照這張屬性表（不含光環）算虛擬角色會開哪些光環。 */
+    public VirtualAuras virtualAuras(final PlayerState state, final StatSheet sheet) {
+        final List<tw.exilecore.stats.Modifier> self = new ArrayList<>();
+        final List<tw.exilecore.stats.Modifier> minion = new ArrayList<>();
+        final java.util.Map<String, Integer> caps = new java.util.LinkedHashMap<>();
+        final List<String> active = new ArrayList<>();
+        final List<String> skipped = new ArrayList<>();
+        double total = 0;
+        for (final SkillLoadout.Entry entry : state.skills().entriesInKeyOrder()) {
+            final SkillDefinition definition = config.skill(entry.skillId());
+            if (definition == null || definition.aura() == null || definition.hidden() || active.contains(definition.id())
+                    || !AuraService.wearable(state, definition)) {
+                continue;
+            }
+            final SkillBuild build = build(state, sheet, definition, entry);
+            final AuraService.Fit fit = AuraService.fit(build, AuraService.capacity(sheet) - total);
+            if (fit == null) {
+                skipped.add(definition.name());
+                continue;
+            }
+            if (!build.generosity()) {
+                self.addAll(build.auraModifiers());
+            }
+            self.addAll(build.grantModifiers());
+            minion.addAll(build.minionAuraModifiers());
+            caps.put(definition.id(), fit.minions());
+            active.add(definition.id());
+            total += fit.reserve();
+        }
+        if (total > 0) {
+            self.add(tw.exilecore.stats.Modifier.flat(StatKeys.SPIRIT_RESERVED, total, "光環保留"));
+        }
+        return new VirtualAuras(List.copyOf(self), List.copyOf(minion), java.util.Map.copyOf(caps), List.copyOf(active), List.copyOf(skipped), total);
+    }
+
+    private AuraView liveAuras(final Player player) {
+        final java.util.UUID uuid = player.getUniqueId();
+        return new AuraView() {
+            @Override
+            public boolean active(final String skillId) {
+                return auras.isActive(uuid, skillId);
+            }
+
+            @Override
+            public int minionCap(final String skillId) {
+                return auras.minionCap(uuid, skillId);
+            }
+
+            @Override
+            public List<tw.exilecore.stats.Modifier> minionEffects() {
+                return auras.effectsFor(uuid);
+            }
+        };
+    }
+
+    /**
+     * 一個技能的估計每秒傷害（2026-10，網頁計算器）。
+     *
+     * @param slot      綁在哪個按鍵格（{@link SkillLoadout} 的按鍵格）
+     * @param position  技能面板上第幾格
+     * @param dps       每秒傷害（同 /stats 的「✦ 技能 每秒」）
+     * @param full      全開：戰吼、戰旗、詛咒、印記都開著
+     * @param minions   召喚技能：算了幾隻（不是召喚技能是 0）
+     * @param hit       平均一下（含暴擊期望；召喚物是一隻的）
+     * @param rate      每秒幾下（召喚物是一隻的）
+     * @param crit      暴擊率（0–1）
+     */
+    public record DpsRow(int slot, int position, String skillId, String name, double dps, double full, int minions,
+                         double hit, double rate, double crit) {
+    }
+
+    /**
      * 每個技能的估計每秒傷害：{按鍵, 名稱, 每秒傷害, 全開的每秒傷害}（第四格：戰吼、戰旗、詛咒、印記都開著；沒有這些技能時跟第三格一樣）。
      */
     public List<String[]> skillDps(final Player player) {
-        final PlayerState state = plugin.players().get(player);
-        final StatSheet sheet = plugin.players().sheet(player);
+        final List<String[]> rows = new ArrayList<>();
+        for (final DpsRow row : skillDps(plugin.players().get(player), plugin.players().sheet(player), liveAuras(player))) {
+            rows.add(new String[] {SkillLoadout.shortKeyName(row.slot()),
+                    row.minions() > 0 ? row.name() + "（召喚物 ×" + row.minions() + "）" : row.name(),
+                    String.valueOf(Math.round(row.dps())), String.valueOf(Math.round(row.full()))});
+        }
+        return rows;
+    }
+
+    /**
+     * 每個綁在按鍵上的技能的估計每秒傷害（同一個技能綁兩個鍵只算一次）。在線的玩家與虛擬角色共用（2026-10）。
+     * 不碰玩家、不碰世界，可以在網頁伺服器的執行緒上算（資料都是唯讀的）。
+     */
+    public List<DpsRow> skillDps(final PlayerState state, final StatSheet sheet, final AuraView view) {
         final FullOn full = fullOn(state, sheet);
         final StatSheet fullSheet = full.self().isEmpty() ? sheet : sheet.overlay(full.self());
-        final List<String[]> rows = new ArrayList<>();
+        final List<DpsRow> rows = new ArrayList<>();
         final java.util.Set<String> seen = new java.util.HashSet<>();
         for (int slot = 0; slot < SkillLoadout.BIND_SLOTS; slot++) {
             final Resolved resolved = resolve(state, slot);
             if (resolved.isDefault() || !seen.add(resolved.definition().id())) {
                 continue;
             }
-            final SkillDefinition definition = resolved.definition();
-            if (definition.summon() != null) {
-                // 2026-10：召喚技能算召喚物的（每隻每秒傷害 × 同時最多幾隻；精魂召喚要開著才算）
-                final SkillBuild build = build(state, sheet, resolved);
-                if (definition.mechanic() == Mechanic.AURA && !auras.isActive(player.getUniqueId(), definition.id())) {
-                    continue;
-                }
-                final double each = minionDps(player, build, sheet);
-                final int cap = auras.minionCap(player.getUniqueId(), definition.id()); // 2026-10：照隻數算精魂的，只算養得起的隻數
-                final int count = Math.max(1, cap > 0 ? Math.min(build.minions(), cap) : build.minions());
-                if (each > 0) {
-                    // 全開：召喚物吃不到你的戰吼增益（只吃「召喚物…」的加成），只算敵人受到的傷害增加
-                    final double fullEach = each * (1 + full.taken());
-                    rows.add(new String[] {SkillLoadout.shortKeyName(slot), definition.name() + "（召喚物 ×" + count + "）",
-                            String.valueOf(Math.round(each * count)), String.valueOf(Math.round(fullEach * count))});
-                }
-                continue;
+            final DpsRow row = dpsOf(state, sheet, fullSheet, full, view, slot, state.skills().bound(slot), resolved);
+            if (row != null) {
+                rows.add(row);
             }
-            if (!definition.dealsDamage() || definition.mechanic() == Mechanic.AURA) {
-                continue;
-            }
-            final SkillBuild build = build(state, sheet, resolved);
-            final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, build.profile());
-            final double crit = DamageCalculator.critChance(sheet, build.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
-            final double multi = build.profile().effective(sheet).get(StatKeys.CRIT_MULTI, build.profile().tags());
-            // 有冷卻的：一輪要等「施放間隔」和「冷卻」比較長的那個。
-            // 2026-10：複擊的每一下都要花一次攻擊間隔（打完才能做別的），以前當成同一個間隔裡打完，面板高了好幾倍
-            final SkillParams params = build.params();
-            final double critFactor = 1 + crit * (multi / 100.0 - 1);
-            final double hitRate = hitsPerSecond(build.intervalTicks(sheet), build.cooldownTicks(), build.repeats())
-                    * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
-                            params.aftershock() == null ? 0 : params.aftershock().more());
-            double dps = expected.total() * critFactor * hitRate;
-            if (plugin.ailments() != null) {
-                // 2026-10：面板以前只算擊中；點燃、流血、中毒的持續傷害與感電的增傷也算進去（對同等級一般怪物、站著不動）
-                dps = plugin.ailments().estimateDps(sheet, build.profile(), expected, critFactor, hitRate, state.level(), dps);
-            }
-            double fullDps = dps;
-            if (!full.isEmpty()) {
-                // 全開：用疊上戰吼增益的屬性表重算一次（攻速、傷害都會變），再算敵人的抗性降低、受到的傷害增加、強化攻擊
-                final SkillBuild fullBuild = build(state, fullSheet, resolved);
-                final tw.exilecore.stats.DamagePacket fullExpected = afterResist(
-                        DamageCalculator.expectedOutgoing(fullSheet, fullBuild.profile()), full.resist());
-                final double fullCrit = DamageCalculator.critChance(fullSheet, fullBuild.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
-                final double fullMulti = fullBuild.profile().effective(fullSheet).get(StatKeys.CRIT_MULTI, fullBuild.profile().tags());
-                final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
-                final SkillParams fullParams = fullBuild.params();
-                final double casts = hitsPerSecond(fullBuild.intervalTicks(fullSheet), fullBuild.cooldownTicks(), fullBuild.repeats());
-                final double fullRate = casts * castHits(fullParams.burst() == null ? 1 : fullParams.burst().count(), fullParams.aftershock() != null,
-                        fullParams.aftershock() == null ? 0 : fullParams.aftershock().more());
-                double exert = 1.0;
-                if (fullBuild.profile().isAttack()) {
-                    // 強化：每次戰吼冷卻好就吼一次，接下來幾次攻擊更痛；攻擊比強化的次數多時照比例平均
-                    for (final double[] each : full.exerts()) {
-                        final double attacksPerCycle = Math.max(1e-6, casts * each[2]);
-                        exert *= 1 + each[1] / 100.0 * Math.min(1, each[0] / attacksPerCycle);
-                    }
-                }
-                fullDps = fullExpected.total() * fullCritFactor * fullRate * exert;
-                if (plugin.ailments() != null) {
-                    fullDps = plugin.ailments().estimateDps(fullSheet, fullBuild.profile(), new tw.exilecore.stats.DamagePacket(fullExpected).scale(exert), fullCritFactor, fullRate,
-                            state.level(), fullDps);
-                }
-                fullDps *= 1 + full.taken();
-            }
-            rows.add(new String[] {SkillLoadout.shortKeyName(slot), definition.name(), String.valueOf(Math.round(dps)),
-                    String.valueOf(Math.round(Math.max(dps, fullDps)))});
         }
         return rows;
     }
 
-    /** 一隻召喚物的估計每秒傷害（同召喚物說明的算法：平均一下 × 暴擊期望 × 每秒次數）；沒有怪物模組回傳 0。 */
-    double minionDps(final Player player, final SkillBuild build, final StatSheet ownerSheet) {
+    /**
+     * 技能面板上第 position 格的技能，照這張屬性表算的每秒傷害（網頁計算器比較輔助寶石用：技能可以沒綁鍵）。
+     * 不造成傷害的技能回傳 null。
+     */
+    public DpsRow skillDpsAt(final PlayerState state, final StatSheet sheet, final AuraView view, final int position) {
+        final SkillLoadout.Entry entry = state.skills().skill(position);
+        final SkillDefinition definition = entry == null ? null : config.skill(entry.skillId());
+        if (definition == null) {
+            return null;
+        }
+        final FullOn full = fullOn(state, sheet);
+        final StatSheet fullSheet = full.self().isEmpty() ? sheet : sheet.overlay(full.self());
+        int slot = -1;
+        for (int i = 0; i < SkillLoadout.BIND_SLOTS; i++) {
+            if (state.skills().bound(i) == position) {
+                slot = i;
+                break;
+            }
+        }
+        return dpsOf(state, sheet, fullSheet, full, view, slot, position, new Resolved(definition, entry));
+    }
+
+    private DpsRow dpsOf(final PlayerState state, final StatSheet sheet, final StatSheet fullSheet, final FullOn full, final AuraView view,
+                         final int slot, final int position, final Resolved resolved) {
+        final SkillDefinition definition = resolved.definition();
+        if (definition.summon() != null) {
+            // 2026-10：召喚技能算召喚物的（每隻每秒傷害 × 同時最多幾隻；精魂召喚要開著才算）
+            final SkillBuild build = build(state, sheet, resolved);
+            if (definition.mechanic() == Mechanic.AURA && !view.active(definition.id())) {
+                return null;
+            }
+            final double[] each = minionDps(state.level(), view.minionEffects(), build, sheet);
+            final int cap = view.minionCap(definition.id()); // 2026-10：照隻數算精魂的，只算養得起的隻數
+            final int count = Math.max(1, cap > 0 ? Math.min(build.minions(), cap) : build.minions());
+            if (each[0] <= 0) {
+                return null;
+            }
+            // 全開：召喚物吃不到你的戰吼增益（只吃「召喚物…」的加成），只算敵人受到的傷害增加
+            final double fullEach = each[0] * (1 + full.taken());
+            return new DpsRow(slot, position, definition.id(), definition.name(), each[0] * count, Math.max(each[0], fullEach) * count, count,
+                    each[1], each[2], each[3]);
+        }
+        if (!definition.dealsDamage() || definition.mechanic() == Mechanic.AURA) {
+            return null;
+        }
+        final SkillBuild build = build(state, sheet, resolved);
+        final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, build.profile());
+        final double crit = DamageCalculator.critChance(sheet, build.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
+        final double multi = build.profile().effective(sheet).get(StatKeys.CRIT_MULTI, build.profile().tags());
+        // 有冷卻的：一輪要等「施放間隔」和「冷卻」比較長的那個。
+        // 2026-10：複擊的每一下都要花一次攻擊間隔（打完才能做別的），以前當成同一個間隔裡打完，面板高了好幾倍
+        final SkillParams params = build.params();
+        final double critFactor = 1 + crit * (multi / 100.0 - 1);
+        final double hitRate = hitsPerSecond(build.intervalTicks(sheet), build.cooldownTicks(), build.repeats())
+                * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
+                        params.aftershock() == null ? 0 : params.aftershock().more());
+        double dps = expected.total() * critFactor * hitRate;
+        if (plugin.ailments() != null) {
+            // 2026-10：面板以前只算擊中；點燃、流血、中毒的持續傷害與感電的增傷也算進去（對同等級一般怪物、站著不動）
+            dps = plugin.ailments().estimateDps(sheet, build.profile(), expected, critFactor, hitRate, state.level(), dps);
+        }
+        double fullDps = dps;
+        if (!full.isEmpty()) {
+            // 全開：用疊上戰吼增益的屬性表重算一次（攻速、傷害都會變），再算敵人的抗性降低、受到的傷害增加、強化攻擊
+            final SkillBuild fullBuild = build(state, fullSheet, resolved);
+            final tw.exilecore.stats.DamagePacket fullExpected = afterResist(
+                    DamageCalculator.expectedOutgoing(fullSheet, fullBuild.profile()), full.resist());
+            final double fullCrit = DamageCalculator.critChance(fullSheet, fullBuild.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
+            final double fullMulti = fullBuild.profile().effective(fullSheet).get(StatKeys.CRIT_MULTI, fullBuild.profile().tags());
+            final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
+            final SkillParams fullParams = fullBuild.params();
+            final double casts = hitsPerSecond(fullBuild.intervalTicks(fullSheet), fullBuild.cooldownTicks(), fullBuild.repeats());
+            final double fullRate = casts * castHits(fullParams.burst() == null ? 1 : fullParams.burst().count(), fullParams.aftershock() != null,
+                    fullParams.aftershock() == null ? 0 : fullParams.aftershock().more());
+            double exert = 1.0;
+            if (fullBuild.profile().isAttack()) {
+                // 強化：每次戰吼冷卻好就吼一次，接下來幾次攻擊更痛；攻擊比強化的次數多時照比例平均
+                for (final double[] each : full.exerts()) {
+                    final double attacksPerCycle = Math.max(1e-6, casts * each[2]);
+                    exert *= 1 + each[1] / 100.0 * Math.min(1, each[0] / attacksPerCycle);
+                }
+            }
+            fullDps = fullExpected.total() * fullCritFactor * fullRate * exert;
+            if (plugin.ailments() != null) {
+                fullDps = plugin.ailments().estimateDps(fullSheet, fullBuild.profile(), new tw.exilecore.stats.DamagePacket(fullExpected).scale(exert), fullCritFactor, fullRate,
+                        state.level(), fullDps);
+            }
+            fullDps *= 1 + full.taken();
+        }
+        return new DpsRow(slot, position, definition.id(), definition.name(), dps, Math.max(dps, fullDps), 0,
+                expected.total() * critFactor, hitRate, crit);
+    }
+
+    /**
+     * 一隻召喚物的估計：{每秒傷害, 平均一下（含暴擊期望）, 每秒幾下, 暴擊率}（同召喚物說明的算法）；沒有怪物模組全部是 0。
+     *
+     * @param ownerLevel  主人的等級
+     * @param auraEffects 召喚物吃到的光環效果
+     */
+    double[] minionDps(final int ownerLevel, final List<tw.exilecore.stats.Modifier> auraEffects, final SkillBuild build, final StatSheet ownerSheet) {
         final SummonSpec spec = build.definition().summon();
         if (spec == null || plugin.monsters() == null) {
-            return 0;
+            return new double[4];
         }
         final tw.exilecore.monster.MonsterConfig monsters = plugin.monsters().config();
-        final int level = MinionSheets.monsterLevel(config, build.level(), plugin.players().get(player).level());
+        final int level = MinionSheets.monsterLevel(config, build.level(), ownerLevel);
         final double[] damage = monsters.damageAt(level);
         final double scale = MinionSheets.extraScale(config, build.level());
         final MinionSheets.Base base = new MinionSheets.Base(monsters.lifeAt(level) * scale, monsters.accuracyAt(level), monsters.evasionAt(level),
                 monsters.armourAt(level), damage[0] * scale, damage[1] * scale, monsters.critChance());
         final List<Modifier> ownerModifiers = new ArrayList<>(MinionSheets.ownerModifiers(ownerSheet));
-        ownerModifiers.addAll(auras.effectsFor(player.getUniqueId()));
+        ownerModifiers.addAll(auraEffects);
         final StatSheet minionSheet = MinionSheets.build(spec, base, ownerModifiers);
         final tw.exilecore.stats.SkillProfile profile = MinionSheets.profile(build);
         final StatSheet effective = profile.effective(minionSheet);
         final DamagePacket expected = DamageCalculator.expectedOutgoing(minionSheet, profile);
         if (expected.isEmpty()) {
-            return 0;
+            return new double[4];
         }
         final double crit = DamageCalculator.critChance(minionSheet, profile);
         final double multi = effective.get(StatKeys.CRIT_MULTI, profile.tags());
-        return expected.total() * (1 + crit * (multi / 100.0 - 1)) * MinionSheets.attacksPerSecond(effective, profile);
+        final double hit = expected.total() * (1 + crit * (multi / 100.0 - 1));
+        final double rate = MinionSheets.attacksPerSecond(effective, profile);
+        return new double[] {hit * rate, hit, rate, crit};
     }
 
     /** 這個按鍵這次會放出的數值（含輔助寶石、角色等級的限制）。 */

@@ -37,12 +37,19 @@ public final class AscendancyService {
 
     private final ExileCore plugin;
     private final AscendancyConfig config;
+    private final LevelRaceService race;
     /** 開了試煉之後，什麼時候才能再開（毫秒）。 */
     private final Map<UUID, Long> trialReadyAt = new HashMap<>();
 
     public AscendancyService(final ExileCore plugin, final AscendancyConfig config) {
         this.plugin = plugin;
         this.config = config;
+        this.race = new LevelRaceService(plugin, config);
+    }
+
+    /** 衝等活動（2026-10）。 */
+    public LevelRaceService race() {
+        return race;
     }
 
     public AscendancyConfig config() {
@@ -78,8 +85,18 @@ public final class AscendancyService {
             return List.of();
         }
         final List<Modifier> list = new ArrayList<>(ascension(state).modifiers());
-        list.addAll(Legacy.modifiers(legacy(player, state), AscendancyService::className));
+        if (player != null) { // 網頁計算器的虛擬角色（player 是 null）：分身獎勵用快照記下來的（legacyModifiers）
+            list.addAll(Legacy.modifiers(legacy(player, state), AscendancyService::className));
+        }
         return list;
+    }
+
+    /** 分身獎勵的修飾器（帳號的其他角色給的；2026-10 網頁計算器的快照記下來）。 */
+    public List<Modifier> legacyModifiers(final Player player, final PlayerState state) {
+        if (player == null || !state.hasCharacter()) {
+            return List.of();
+        }
+        return Legacy.modifiers(legacy(player, state), AscendancyService::className);
     }
 
     /** 職業的名字（分身獎勵的說明）。 */
@@ -131,6 +148,7 @@ public final class AscendancyService {
 
     /** 升級（from → to）讓帳號的分身獎勵多一階時，告訴玩家（屬性表升級時已經重算了）。 */
     public void onLevelUp(final Player player, final int from, final int to) {
+        race.check(player); // 衝等活動：第一個到 100 級的昇華拿稱號
         final PlayerState state = plugin.players().get(player);
         final CharacterRecord active = state.character();
         if (active == null || from >= to) {
@@ -346,6 +364,7 @@ public final class AscendancyService {
             plugin.discord().achievement("流放者 " + characterName + "（" + escape(player.getName()) + "）走過了熔爐的門，昇華為 " + ascendancy.colored());
         }
         updateTracker(player);
+        race.check(player); // 衝等活動：先到 100 級才昇華的也算
         return null;
     }
 
@@ -381,7 +400,7 @@ public final class AscendancyService {
 
     /** 退一個昇華天賦要花的金幣：天賦樹退一點的價格 × 這個天賦的點數。 */
     long refundCost(final Player player, final AscendancyConfig.Node node) {
-        if (plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0) {
+        if (plugin.sponsors() != null && plugin.sponsors().cardActive(player)) {
             return 0; // 2026-10 月卡福利：昇華天賦退點免費
         }
         return plugin.players().config().respecCost(plugin.players().get(player).level()) * node.cost();

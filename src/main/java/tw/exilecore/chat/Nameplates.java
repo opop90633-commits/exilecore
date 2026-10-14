@@ -118,7 +118,7 @@ public final class Nameplates implements Listener {
         }
         final String title = plugin.bounties() == null ? "" : plugin.bounties().titleTag(player);
         final String name = ItemRenderer.escape(character.name());
-        final String moon = plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0 ? "<#bcd4ff>☾</#bcd4ff>" : "";
+        final String moon = plugin.sponsors() != null && plugin.sponsors().cardActive(player) ? "<#bcd4ff>☾</#bcd4ff>" : "";
         final String style = plugin.sponsors() == null ? null : plugin.sponsors().nameColor(player);
         final String styledName = style == null ? "<white>" + name + "</white>"
                 : "<" + style + ">" + name + "</" + (style.startsWith("gradient:") ? "gradient" : style) + ">";

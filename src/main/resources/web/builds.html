@@ -402,12 +402,12 @@
     fetch(url, { cache: "no-cache", credentials: "same-origin" }).then(r => {
       if (!r.ok) throw new Error(r.status === 404 || r.status === 400 ? "沒有這個角色（或沒有公開）" : "讀不到角色資料，稍後再試");
       return r.json();
-    }).then(c => drawCharacter(c)).catch(err => {
+    }).then(c => drawCharacter(c, key)).catch(err => {
       main.replaceChildren(el("span", { cls: "back", text: "← 所有角色", onclick: () => { location.hash = ""; } }),
         el("div", { cls: "empty", text: err.message }));
     });
   }
-  function drawCharacter(c) {
+  function drawCharacter(c, key) {
     document.title = c.name + " — 星骸 角色";
     const back = el("span", { cls: "back", role: "link", tabindex: "0", text: "← 所有角色", onclick: () => { location.hash = ""; },
       onkeydown: e => { if (e.key === "Enter") location.hash = ""; } });
@@ -437,7 +437,10 @@
     // 天賦
     const treeCard = el("div", { cls: "card" }, el("h3", { text: "天賦" }),
       el("p", { cls: "muted", style: "margin:0 0 10px", text: "配了 " + (c.passiveCount || 0) + " 點" }),
-      c.treeCode ? el("a", { cls: "btn", href: "tree#" + encodeURIComponent(c.treeCode), target: "_blank", rel: "noopener", text: "在天賦規劃器打開" }) : null);
+      c.treeCode ? el("a", { cls: "btn", href: "tree#" + encodeURIComponent(c.treeCode), target: "_blank", rel: "noopener", text: "在天賦規劃器打開" }) : null,
+      // 2026-10：網頁計算器（像 PoB）：天賦、裝備、技能一起帶過去算傷害、試輔助寶石
+      c.calc && !admin ? el("a", { cls: "btn", href: "tree?load=" + encodeURIComponent(c.name) + (key ? "&key=" + encodeURIComponent(key) : ""), target: "_blank", rel: "noopener",
+        text: "用計算器打開（傷害、輔助寶石）" }) : null);
     if (c.ascendancy && c.ascendancy.nodes.length) {
       const asc = el("div", { cls: "asc", style: "margin-top:12px" }, el("h3", { text: "昇華：" + c.ascendancy.name }));
       for (const n of c.ascendancy.nodes) {

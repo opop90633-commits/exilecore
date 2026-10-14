@@ -20,6 +20,7 @@ public final class MarketModule implements Module {
 
     private final ExileCore plugin;
     private MarketService service;
+    private org.bukkit.scheduler.BukkitTask autoCollect;
 
     public MarketModule(final ExileCore plugin) {
         this.plugin = plugin;
@@ -36,6 +37,20 @@ public final class MarketModule implements Module {
         created.load();
         plugin.characters().onRecovered(created::confirm);
         service = created;
+        // 2026-10：成交自動入袋（像 PoE2）：每 10 秒把線上玩家確定了的收入放進通貨（離線的上線後下一輪就放）
+        autoCollect = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            final MarketService current = service;
+            if (current == null) {
+                return;
+            }
+            for (final Player online : plugin.getServer().getOnlinePlayers()) {
+                try {
+                    current.autoCollect(online);
+                } catch (final RuntimeException e) {
+                    plugin.getSLF4JLogger().warn("收入自動入袋失敗（{}）：{}", online.getName(), e.toString());
+                }
+            }
+        }, 200L, 200L);
     }
 
     @Override
@@ -49,6 +64,10 @@ public final class MarketModule implements Module {
     @Override
     public void disable() {
         // 市集的東西都在資料庫裡（每個操作當下就寫了），這裡不用存
+        if (autoCollect != null) {
+            autoCollect.cancel();
+            autoCollect = null;
+        }
     }
 
     public MarketService service() {

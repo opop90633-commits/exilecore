@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>星骸 天賦規劃器</title>
+<title>星骸 天賦規劃器・計算器</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0d1a'/%3E%3Cpolygon points='32,6 38,25 58,25 42,37 48,57 32,45 16,57 22,37 6,25 26,25' fill='%23f5b942'/%3E%3C/svg%3E">
 <style>
   :root {
@@ -157,6 +157,58 @@
   .itemcard .sep { border-top: 1px solid #2c2440; margin: 4px 0; }
   .itemcard .fl { color: #af6025; font-style: italic; }
   #gearTotals li { color: #9db4ff; }
+  /* 計算器（2026-10，像 PoB）：載入角色、技能與輔助、算出來的數字 */
+  .calcbar { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
+  .calcbar input, .calcrow input, .calcrow select, #skillDialog select, #skillDialog input {
+    font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; min-width: 0; }
+  .calcbar button, .calcrow button, .skillrow button, .calcbtn { border: 1px solid var(--line); background: var(--panel-2); color: var(--text);
+    padding: 6px 10px; border-radius: 6px; cursor: pointer; font: inherit; }
+  .calcbar button:hover, .calcrow button:hover, .skillrow button:hover, .calcbtn:hover { border-color: var(--quiet); }
+  .calcbtn.primary { border-color: var(--gold); color: var(--gold); }
+  .calcrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+  .calcrow label { color: var(--quiet); font-size: 12px; display: flex; align-items: center; gap: 4px; }
+  .calcrow input[type=number] { width: 64px; }
+  .calcstatus { font-size: 12px; color: var(--quiet); margin-top: 6px; min-height: 1.4em; }
+  .calcstatus.err { color: var(--red); }
+  .dps { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+  .dps th { text-align: left; font-weight: 600; color: var(--quiet); font-size: 11px; padding: 2px 4px; border-bottom: 1px solid var(--line); }
+  .dps td { padding: 4px; border-bottom: 1px dashed #1f2440; vertical-align: top; }
+  .dps td.num, .dps th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .dps .key { color: var(--quiet); font-size: 11px; display: block; }
+  .delta { font-size: 11px; display: block; font-variant-numeric: tabular-nums; }
+  .delta.up { color: #5bd65b; } .delta.down { color: var(--red); }
+  .nums { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 13px; margin-top: 8px; }
+  .nums div { display: flex; justify-content: space-between; gap: 6px; padding: 2px 0; border-bottom: 1px dashed #1f2440; }
+  .nums span:first-child { color: var(--quiet); }
+  .nums b { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .nums .wide { grid-column: 1 / -1; }
+  .warn { color: #ffb347; font-size: 12px; margin-top: 6px; line-height: 1.5; }
+  .skillrow { display: grid; grid-template-columns: 96px 1fr auto; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px dashed #1f2440; }
+  .skillrow select { font: inherit; font-size: 12px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px; width: 100%; }
+  .skillrow .nm { font-size: 13px; line-height: 1.35; cursor: pointer; }
+  .skillrow .nm small { color: var(--quiet); display: block; font-size: 11px; }
+  .skillrow .sup { color: #b4bcff; }
+  .skillrow .btnpair { display: flex; gap: 4px; }
+  .skillrow button { padding: 4px 8px; font-size: 12px; }
+  dialog#skillDialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 0;
+    width: min(620px, calc(100vw - 24px)); max-height: calc(100vh - 32px); }
+  dialog#skillDialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+  .supgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+  .supgrid button { text-align: left; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 6px; padding: 6px 8px;
+    cursor: pointer; font: inherit; font-size: 12px; line-height: 1.35; }
+  .supgrid button.on { border-color: #8f9cff; color: #b4bcff; }
+  .supgrid button.empty { color: var(--dim); }
+  .suplist { max-height: 46vh; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; }
+  .suplist table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .suplist td { padding: 5px 8px; border-bottom: 1px dashed #1f2440; }
+  .suplist tr.pick { cursor: pointer; }
+  .suplist tr.pick:hover { background: var(--panel-2); }
+  .suplist td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .suplist .tier { color: var(--quiet); font-size: 11px; }
+  .suplist .prob { color: #ffb347; font-size: 11px; display: block; }
+  .asc .card.pickable { cursor: pointer; }
+  .asc .card.on { border-color: var(--c, var(--gold)); box-shadow: inset 0 0 0 1px var(--c, var(--gold)); }
+  .asc .card.locked { opacity: 0.55; }
   @media (max-width: 720px) {
     main { flex-direction: column; }
     aside { width: 100%; max-width: none; border-left: 0; border-top: 1px solid var(--line); max-height: 42vh; }
@@ -198,6 +250,29 @@
     </div>
   </div>
   <aside>
+    <section id="calcSection">
+      <h2>計算器（像 PoB）</h2>
+      <div class="calcbar">
+        <input type="search" id="charName" placeholder="角色名稱（載入遊戲裡的角色）" aria-label="角色名稱">
+        <button type="button" id="charLoad">載入</button>
+      </div>
+      <div class="calcrow">
+        <label>等級 <input type="number" id="calcLevel" min="1" max="120" value="1"></label>
+        <select id="calcAsc" aria-label="昇華職業"></select>
+        <button type="button" id="calcAscNodes">昇華天賦</button>
+        <button type="button" id="calcBaseline" title="記下現在的數字，之後的改動都跟它比">設為比較基準</button>
+      </div>
+      <div class="calcstatus" id="calcStatus">配天賦、裝備、技能，右邊會算出每秒傷害與防禦</div>
+      <table class="dps" id="calcDps"></table>
+      <div class="nums" id="calcNums"></div>
+      <div id="calcWarn"></div>
+    </section>
+    <section>
+      <h2>技能與輔助寶石</h2>
+      <div id="skillList"></div>
+      <div class="calcrow"><button type="button" class="calcbtn primary" id="skillAdd">＋ 加技能</button></div>
+      <div class="hint">點技能名稱改等級與輔助寶石；裡面會列出每一顆輔助掛上去大約多幾 % 傷害。光環要綁在按鍵上才會開。</div>
+    </section>
     <section>
       <h2>規劃</h2>
       <div class="actions">
@@ -251,6 +326,7 @@
 </main>
 <dialog id="itemDialog"><div class="dlg" id="dlg"></div></dialog>
 <dialog id="ascDialog" aria-label="昇華預覽"><div class="asc" id="asc"></div></dialog>
+<dialog id="skillDialog" aria-label="技能"><div class="dlg" id="skillDlg"></div></dialog>
 <div id="tip"></div>
 <div id="attrMenu" role="dialog" aria-label="屬性點">
   <div class="ttl" id="attrMenuTitle"></div>
@@ -329,6 +405,7 @@
     else { setClass(data.classes[0].id, false); }
     render();
     centerOn(start, 1);
+    startupLoad();
   }).catch(err => { document.getElementById("points").textContent = "讀不到天賦樹資料：" + err; });
 
   // ---- 裝備（2026-10）----
@@ -348,13 +425,16 @@
     const text = pendingGear !== null ? pendingGear : gearText(hashText());
     pendingGear = null;
     gear = decodeGear(text);
+    if (pendingItemData) { gear = GEAR_SLOTS.map((_, i) => fromItemData(pendingItemData[i], i)); pendingItemData = null; } // 先載入了角色
     renderGear();
     if (data) updatePanel();
   }).catch(() => { /* 沒有裝備資料：只有天賦 */ });
 
   function gearText(hash) {
     const i = hash.indexOf("~");
-    return i < 0 ? "" : hash.slice(i + 1);
+    const text = i < 0 ? "" : hash.slice(i + 1);
+    const bang = text.indexOf("!"); // ! 後面是計算器的技能與等級（2026-10）
+    return bang < 0 ? text : text.slice(0, bang);
   }
   function b64urlEncode(str) {
     const bytes = new TextEncoder().encode(str);
@@ -373,8 +453,8 @@
     if (!gear.some(Boolean)) return "";
     const packed = gear.map(g => {
       if (!g) return 0;
-      if (g.rarity === "unique") return [0, "u", g.unique, 0, g.uvals.map(v => v || [])];
-      return [g.base, g.rarity[0], 0, g.affixes.map(a => [a.id, a.tier, a.vals])];
+      if (g.rarity === "unique") return [0, "u", g.unique, 0, g.uvals.map(v => v || []), g.ilvl || 0, g.quality || 0];
+      return [g.base, g.rarity[0], 0, g.affixes.map(a => [a.id, a.tier, a.vals]), g.ilvl || 0, g.quality || 0];
     });
     return "~" + b64urlEncode(JSON.stringify(packed));
   }
@@ -389,7 +469,8 @@
       if (p[1] === "u") {
         const u = items.uniqueById.get(p[2]);
         if (!u || u.slot !== GEAR_SLOTS[i][0]) return;
-        out[i] = { rarity: "unique", unique: u.id, base: u.base, uvals: u.mods.map((m, k) => Array.isArray(p[4] && p[4][k]) ? p[4][k] : []) };
+        out[i] = { rarity: "unique", unique: u.id, base: u.base, uvals: u.mods.map((m, k) => Array.isArray(p[4] && p[4][k]) ? p[4][k] : []),
+          ilvl: Number(p[5]) || 0, quality: Number(p[6]) || 0 };
         return;
       }
       const base = items.baseById.get(p[0]);
@@ -397,7 +478,7 @@
       const rarity = { n: "normal", m: "magic", r: "rare" }[p[1]] || "normal";
       const affixes = (Array.isArray(p[3]) ? p[3] : []).filter(a => Array.isArray(a) && items.affixById.has(a[0]))
         .map(a => ({ id: a[0], tier: a[1], vals: Array.isArray(a[2]) ? a[2] : [] }));
-      out[i] = { rarity, base: base.id, affixes };
+      out[i] = { rarity, base: base.id, affixes, ilvl: Number(p[4]) || 0, quality: Number(p[5]) || 0 };
     });
     return out;
   }
@@ -671,6 +752,14 @@
         drawEditor();
       } }) : null, node("span", { cls: "hint", style: "margin:0", text: hint })));
     }
+    // 2026-10：物品等級與品質（計算器用：傳奇武器的傷害、防具的品質）；0 = 照預設（物品等級 82、品質 0）
+    const ilvlInput = node("input", { type: "number", min: "0", max: "100", value: String(g.ilvl || 0), "aria-label": "物品等級", style: "width:72px" });
+    ilvlInput.addEventListener("input", () => { g.ilvl = clamp(Math.round(Number(ilvlInput.value)), 0, 100); });
+    const qualityInput = node("input", { type: "number", min: "0", max: "20", value: String(g.quality || 0), "aria-label": "品質", style: "width:64px" });
+    qualityInput.addEventListener("input", () => { g.quality = clamp(Math.round(Number(qualityInput.value)), 0, 20); });
+    body.append(node("div", { cls: "row" }, node("span", { cls: "hint", style: "margin:0", text: "物品等級" }), ilvlInput,
+      node("span", { cls: "hint", style: "margin:0", text: "品質 %" }), qualityInput,
+      node("span", { cls: "hint", style: "margin:0", text: g.raw ? "（遊戲裡的物品）" : "（0 = 物品等級 82）" })));
     const previewBox = node("div", { id: "itemPreview" });
     const btns = node("div", { cls: "btns" },
       node("button", { type: "button", text: "清掉這格", onclick: () => { gear[index] = null; closeEditor(); renderGear(); updatePanel(); } }),
@@ -1160,7 +1249,8 @@
       list.appendChild(li);
     }
     renderGearTotals();
-    try { history.replaceState(null, "", "#" + encodeCode() + gearSuffix()); } catch (e) { /* file:// 之類的不能改 */ }
+    try { history.replaceState(null, "", "#" + encodeCode() + fullSuffix()); } catch (e) { /* file:// 之類的不能改 */ }
+    scheduleCalc();
   }
 
   // ---- 視野：拖曳、縮放 ----
@@ -1434,7 +1524,7 @@
     }
   }
   document.getElementById("copyCode").addEventListener("click", () => copy(encodeCode(), "代碼"));
-  document.getElementById("copyLink").addEventListener("click", () => copy(location.href.split("#")[0] + "#" + encodeCode() + gearSuffix(), "連結（含裝備）"));
+  document.getElementById("copyLink").addEventListener("click", () => copy(location.href.split("#")[0] + "#" + encodeCode() + fullSuffix(), "連結（含裝備與技能）"));
   document.getElementById("paste").addEventListener("click", () => {
     const text = prompt("貼上代碼（或整個網址）");
     if (!text) return;
@@ -1464,6 +1554,7 @@
   });
   window.addEventListener("hashchange", () => {
     if (items) { const next = gearText(hashText()); if (next !== gearSuffix().slice(1)) { gear = decodeGear(next); renderGear(); renderGearTotals(); } }
+    applyCalcHash(hashText());
     const decoded = decodeCode(hashText());
     const sameAttrs = decoded && decoded.attrs.size === attrs.size && [...decoded.attrs].every(([id, v]) => attrs.get(id) === v);
     if (decoded && (decoded.classId !== classId || decoded.nodes.size !== allocated.size || [...decoded.nodes].some(id => !allocated.has(id)) || !sameAttrs)) {
@@ -1472,6 +1563,688 @@
       render();
     }
   });
+
+  // ---- 計算器（2026-10，像 PoB）----
+  // 天賦、裝備、昇華、技能面板送到伺服器（POST tree/calc），伺服器用遊戲裡同一套算法（跟 /stats、技能說明一樣）算出屬性與每秒傷害。
+  // 打開一個技能可以看每一顆輔助寶石掛上去大約多幾 %。
+  const calc = { level: 0, asc: "", ascNodes: [], skills: [], binds: new Array(10).fill(-1),
+    progress: {}, extra: [], jewels: {}, loaded: null, baseline: null, wantBaseline: false, last: null, lastMap: [] };
+  let skillData = null;
+  let calcTimer = 0;
+  let calcAbort = null;
+  const calcStatus = document.getElementById("calcStatus");
+  const BIND_COUNT = 10;
+  const DEFAULT_SOCKETS = 2;
+  function setStatus(text, err) { calcStatus.textContent = text; calcStatus.classList.toggle("err", !!err); }
+  function fmtNum(v) {
+    if (!isFinite(v)) return "—";
+    const a = Math.abs(v);
+    if (a >= 1e7) return (v / 1e6).toFixed(1) + "M";
+    if (a >= 1e5) return (v / 1e3).toFixed(0) + "K";
+    return v.toLocaleString("en-US", { maximumFractionDigits: a < 10 ? 2 : a < 100 ? 1 : 0 });
+  }
+  function keyName(slot) { return skillData && skillData.keys[slot] ? skillData.keys[slot] : "鍵" + (slot + 1); }
+  function skillDef(id) { return skillData ? skillData.skillById.get(id) : null; }
+  function supportDef(id) { return skillData ? skillData.supportById.get(id) : null; }
+  function maxLevel() { return skillData ? skillData.maxLevel : 20; }
+  function maxSockets() { return skillData ? skillData.maxSockets : 5; }
+
+  fetch("tree/skills.json", { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(json => {
+    skillData = json;
+    skillData.skillById = new Map(json.skills.map(s => [s.id, s]));
+    skillData.supportById = new Map(json.supports.map(s => [s.id, s]));
+    renderSkills();
+    scheduleCalc();
+  }).catch(() => setStatus("讀不到技能資料（伺服器還沒更新？）", true));
+
+  // ---- 等級 ----
+  function autoLevel() {
+    if (!data) return 1;
+    const ppl = data.pointsPerLevel || 1;
+    return clamp(Math.ceil(Math.max(0, allocated.size - (data.bonusPoints || 0)) / ppl) + 1, 1, data.levelCap || 120);
+  }
+  function calcLevel() { return calc.level > 0 ? calc.level : autoLevel(); }
+  const levelInput = document.getElementById("calcLevel");
+  levelInput.value = "";
+  levelInput.addEventListener("input", () => {
+    const v = Math.round(Number(levelInput.value));
+    calc.level = levelInput.value === "" || !isFinite(v) ? 0 : clamp(v, 1, (data && data.levelCap) || 120);
+    updatePanel();
+  });
+
+  // ---- 網址：#天賦代碼~裝備!計算器 ----
+  function calcHash() {
+    const skills = calc.skills.map(s => [s.id, s.level, s.sockets, s.supports]);
+    if (!skills.length && !calc.level && !calc.asc && !calc.loaded) return "";
+    return b64urlEncode(JSON.stringify([calc.level, calc.asc, calc.ascNodes, skills, calc.binds, calc.loaded ? calc.loaded.name : ""]));
+  }
+  const initialGearText = gearText(hashText());
+  function fullSuffix() {
+    // 裝備資料還沒載入時保留網址原本的裝備（不然一開頁面就被洗掉）
+    const g = items ? gearSuffix() : (initialGearText ? "~" + initialGearText : "");
+    const c = calcHash();
+    return c ? (g || "~") + "!" + c : g;
+  }
+  function calcPart(hash) {
+    const i = hash.indexOf("~");
+    if (i < 0) return "";
+    const text = hash.slice(i + 1);
+    const bang = text.indexOf("!");
+    return bang < 0 ? "" : text.slice(bang + 1);
+  }
+  function applyCalcHash(hash) {
+    const text = calcPart(hash);
+    if (!text || text === calcHash()) return;
+    let p;
+    try { p = JSON.parse(b64urlDecode(text)); } catch (e) { return; }
+    if (!Array.isArray(p)) return;
+    calc.level = clamp(Math.round(Number(p[0]) || 0), 0, 200);
+    calc.asc = typeof p[1] === "string" ? p[1] : "";
+    calc.ascNodes = Array.isArray(p[2]) ? p[2].filter(x => typeof x === "string").slice(0, 64) : [];
+    calc.skills = (Array.isArray(p[3]) ? p[3] : []).filter(Array.isArray).slice(0, 27).map(s => ({
+      id: String(s[0]), level: clamp(Math.round(Number(s[1]) || 1), 1, 99), sockets: clamp(Math.round(Number(s[2]) || DEFAULT_SOCKETS), 1, 9),
+      supports: (Array.isArray(s[3]) ? s[3] : []).slice(0, 9).map(x => typeof x === "string" ? x : "") }));
+    const binds = Array.isArray(p[4]) ? p[4] : [];
+    calc.binds = new Array(BIND_COUNT).fill(-1).map((_, k) => {
+      const v = Math.round(Number(binds[k]));
+      return isFinite(v) && v >= 0 && v < calc.skills.length ? v : -1;
+    });
+    const name = typeof p[5] === "string" ? p[5] : "";
+    if (!name) { calc.loaded = null; calc.progress = {}; calc.extra = []; calc.jewels = {}; }
+    else if (!calc.loaded || calc.loaded.name !== name) {
+      // 分享的連結只記角色名稱：再讀一次角色，拿任務進度、稱號之類的加成與珠寶（天賦、裝備、技能照連結的）
+      calc.loaded = { name, key: "" };
+      loadCharacter(name, "", false);
+    }
+    levelInput.value = calc.level ? String(calc.level) : "";
+    renderSkills();
+    scheduleCalc();
+  }
+  applyCalcHash(hashText());
+
+  // ---- 遊戲裡的物品資料 ↔ 規劃器的裝備 ----
+  function itemKey(g) {
+    return JSON.stringify([g.base, g.rarity, g.unique || 0, g.affixes || 0, g.uvals || 0, g.ilvl || 0, g.quality || 0]);
+  }
+  function fromItemData(d, index) {
+    if (!d || !items || !d.base) return null;
+    const rarity = String(d.rarity || "NORMAL").toLowerCase();
+    const affixes = Array.isArray(d.affixes) ? d.affixes : [];
+    let g = null;
+    if (rarity === "unique" && d.unique && items.uniqueById.has(d.unique)) {
+      const u = items.uniqueById.get(d.unique);
+      if (u.slot !== GEAR_SLOTS[index][0]) return null;
+      g = { rarity: "unique", unique: u.id, base: u.base, uvals: u.mods.map(m => {
+        const a = affixes.find(x => x.id === m.id);
+        return a && a.vars ? varNames(m.vars).map(n => a.vars[n]) : [];
+      }) };
+    } else {
+      const base = items.baseById.get(d.base);
+      if (!base || base.slot !== GEAR_SLOTS[index][0]) return null;
+      g = { rarity: rarity === "unique" ? "rare" : (RARITY_NAME[rarity] ? rarity : "normal"), base: base.id,
+        affixes: affixes.filter(a => items.affixById.has(a.id)).map(a => {
+          const t = tierOf(items.affixById.get(a.id), a.tier);
+          return { id: a.id, tier: t.tier, vals: varNames(t.vars).map(n => a.vars ? a.vars[n] : undefined) };
+        }) };
+    }
+    g.ilvl = Number(d.ilvl) || 0;
+    g.quality = Number(d.quality) || 0;
+    g.raw = d;
+    g.rawKey = itemKey(g);
+    return g;
+  }
+  /** 送去伺服器的物品資料：沒改過的遊戲物品原封不動；改過或自己配的照編輯器的內容，遊戲物品上規劃器不認得的詞綴（揭露、汙染…）留著。 */
+  function toItemData(g) {
+    if (!g) return null;
+    if (g.raw && g.rawKey === itemKey(g)) return g.raw;
+    const sameBase = g.raw && g.raw.base === g.base;
+    const d = sameBase ? JSON.parse(JSON.stringify(g.raw)) : {};
+    d.base = g.base;
+    d.rarity = g.rarity.toUpperCase();
+    d.ilvl = g.ilvl || 82;
+    d.quality = g.quality || 0;
+    d.identified = true;
+    if (!sameBase) d.implicitVars = {};
+    const known = new Set();
+    const out = [];
+    if (g.rarity === "unique") {
+      const u = items.uniqueById.get(g.unique);
+      if (!g.raw || g.raw.unique !== g.unique) d.uniqueVersion = 0;
+      d.unique = g.unique;
+      if (u) u.mods.forEach((m, k) => {
+        known.add(m.id);
+        const vars = {};
+        varNames(m.vars).forEach((n, j) => {
+          const v = g.uvals[k] && g.uvals[k][j];
+          vars[n] = v !== undefined && v !== null && v !== "" ? Number(v) : m.vars[n][1];
+        });
+        out.push({ id: m.id, tier: 1, vars });
+      });
+    } else {
+      delete d.unique;
+      delete d.uniqueVersion;
+      for (const id of items.affixById.keys()) known.add(id);
+      for (const a of g.affixes) {
+        const affix = items.affixById.get(a.id);
+        if (!affix) continue;
+        const t = tierOf(affix, a.tier);
+        const vars = {};
+        varNames(t.vars).forEach((n, j) => { vars[n] = a.vals[j] !== undefined && a.vals[j] !== null ? Number(a.vals[j]) : t.vars[n][1]; });
+        out.push({ id: a.id, tier: t.tier, vars });
+      }
+    }
+    if (sameBase && Array.isArray(g.raw.affixes)) for (const a of g.raw.affixes) if (!known.has(a.id)) out.push(a);
+    d.affixes = out;
+    return d;
+  }
+
+  // ---- 算 ----
+  /** 要送的資料；map[伺服器的技能位置] = calc.skills 的第幾個（只送認得的技能，位置照順序排）。 */
+  function calcBody(supportsFor) {
+    const asc = ascendanciesOf(classId).some(a => a.id === calc.asc) ? calc.asc : null;
+    const map = [];
+    const indexOf = new Map();
+    const skills = [];
+    calc.skills.forEach((s, i) => {
+      if (skillData && !skillDef(s.id)) return;
+      indexOf.set(i, skills.length);
+      map.push(i);
+      skills.push({ id: s.id, level: s.level, sockets: s.sockets, supports: s.supports });
+    });
+    const json = {
+      tree: encodeCode(), level: calcLevel(), asc, ascNodes: asc ? calc.ascNodes : [], progress: calc.progress,
+      gear: gear.map(toItemData), jewels: calc.jewels, skills,
+      binds: calc.binds.map(i => indexOf.has(i) ? indexOf.get(i) : -1), extra: calc.extra
+    };
+    if (supportsFor !== null && supportsFor !== undefined && indexOf.has(supportsFor)) json.supportsFor = indexOf.get(supportsFor);
+    return { json, map };
+  }
+  function postCalc(json, signal) {
+    return fetch("tree/calc", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(json), signal })
+      .then(async r => {
+        if (r.status === 429) { const e = new Error("算太快了，稍等一下"); e.retry = true; throw e; }
+        if (r.status === 404 || r.status === 405) throw new Error("伺服器還沒有計算器（要更新外掛）");
+        if (!r.ok) throw new Error((await r.text().catch(() => "")) || "伺服器錯誤 " + r.status);
+        return r.json();
+      });
+  }
+  function scheduleCalc(now) {
+    if (!data) return;
+    renderAscControls();
+    clearTimeout(calcTimer);
+    calcTimer = setTimeout(runCalc, now ? 0 : 350);
+  }
+  function runCalc() {
+    if (!data) return;
+    if (calcAbort) calcAbort.abort();
+    const ctl = new AbortController();
+    calcAbort = ctl;
+    const body = calcBody(null);
+    setStatus("計算中…");
+    postCalc(body.json, ctl.signal).then(res => {
+      if (ctl !== calcAbort) return;
+      calc.last = res;
+      calc.lastMap = body.map;
+      if (calc.wantBaseline) { calc.baseline = snapshot(res); calc.wantBaseline = false; }
+      renderCalc();
+      if (skillEditing !== null) requestSupports();
+    }).catch(err => {
+      if (err.name === "AbortError") return;
+      if (err.retry) { clearTimeout(calcTimer); calcTimer = setTimeout(runCalc, 1200); setStatus(err.message); return; }
+      setStatus("算不出來：" + err.message, true);
+    });
+  }
+  function snapshot(res) {
+    const rows = new Map();
+    for (const row of res.skills || []) if (!rows.has(row.id)) rows.set(row.id, row);
+    return { rows, numbers: Object.assign({}, res.numbers || {}) };
+  }
+  document.getElementById("calcBaseline").addEventListener("click", () => {
+    if (!calc.last) { flash("還沒有算出結果"); return; }
+    calc.baseline = snapshot(calc.last);
+    renderCalc();
+    flash("記下來了：之後的改動都跟現在比");
+  });
+
+  // ---- 結果 ----
+  function deltaEl(now, before, digits) {
+    if (before === undefined || before === null || !isFinite(before) || !isFinite(now)) return null;
+    const diff = now - before;
+    if (Math.abs(diff) < Math.max(1e-6, Math.abs(before) * 1e-4)) return null;
+    const pct = before > 0 ? " (" + (diff > 0 ? "+" : "") + (diff / before * 100).toFixed(1) + "%)" : "";
+    const text = (diff > 0 ? "+" : "") + (digits !== undefined ? diff.toFixed(digits) : fmtNum(diff)) + pct;
+    return node("span", { cls: "delta " + (diff > 0 ? "up" : "down"), text });
+  }
+  const DAMAGE_NAME = { physical: "物理", fire: "火焰", cold: "冰冷", lightning: "閃電", chaos: "混沌" };
+  function renderCalc() {
+    const res = calc.last;
+    if (!res) return;
+    const base = calc.baseline;
+    const auras = res.auras || {};
+    setStatus((calc.loaded ? "「" + calc.loaded.name + "」　" : "") + "Lv." + calcLevel()
+      + (auras.active && auras.active.length ? "　光環：" + auras.active.join("、") : "")
+      + (base ? "　（綠／紅是跟比較基準比）" : ""));
+    // 每秒傷害
+    const table = document.getElementById("calcDps");
+    table.replaceChildren();
+    const rows = res.skills || [];
+    if (!rows.length) {
+      table.append(node("tr", null, node("td", { cls: "hint", text: calc.skills.length
+        ? "綁在按鍵上的傷害技能才會列出來（下面的技能清單選按鍵）" : "在下面「技能與輔助寶石」加技能、選按鍵，就會算每秒傷害" })));
+    } else {
+      table.append(node("tr", null, node("th", { text: "技能" }), node("th", { cls: "num", text: "每秒傷害" }),
+        node("th", { cls: "num", text: "一下" }), node("th", { cls: "num", text: "每秒次數" }), node("th", { cls: "num", text: "暴擊" })));
+      for (const row of rows) {
+        const prev = base ? base.rows.get(row.id) : null;
+        const dps = node("td", { cls: "num" }, node("b", { text: fmtNum(row.dps) }));
+        if (row.full > row.dps * 1.001) dps.append(node("span", { cls: "key", text: "全開 " + fmtNum(row.full), title: "戰吼、戰旗、詛咒、印記都開著" }));
+        if (prev) { const d = deltaEl(row.dps, prev.dps); if (d) dps.append(d); }
+        const name = node("td", { style: "cursor:pointer", title: "改這個技能的輔助寶石", onclick: () => {
+          const i = calc.lastMap[row.position];
+          if (i !== undefined) openSkillEditor(i);
+        } }, node("span", { cls: "key", text: row.key ? "按鍵 " + row.key : "沒綁按鍵" }), row.name + (row.minions ? " ×" + row.minions + " 隻" : ""));
+        table.append(node("tr", null, name, dps, node("td", { cls: "num", text: fmtNum(row.hit) }),
+          node("td", { cls: "num", text: row.rate.toFixed(2) }), node("td", { cls: "num", text: (row.crit * 100).toFixed(1) + "%" })));
+      }
+    }
+    // 屬性與防禦
+    const n = res.numbers || {};
+    const b = base ? base.numbers : null;
+    const box = document.getElementById("calcNums");
+    box.replaceChildren();
+    const add = (label, key, text, wide, digits) => {
+      if (n[key] === undefined) return;
+      const value = node("b", { text: text !== undefined ? text : fmtNum(n[key]) });
+      const cell = node("div", wide ? { cls: "wide" } : null, node("span", { text: label }), node("span", null, value, b ? deltaEl(n[key], b[key], digits) : null));
+      box.append(cell);
+    };
+    add("生命", "life");
+    add("能量護盾", "es");
+    add("魔力", "mana");
+    add("精魂", "spirit", fmtNum((n["spirit.reserved"] || 0)) + " / " + fmtNum(n.spirit || 0));
+    add("生命回復/秒", "life.regen");
+    add("魔力回復/秒", "mana.regen");
+    add("力量", "str");
+    add("敏捷", "dex");
+    add("智慧", "int");
+    add("命中", "accuracy");
+    add("護甲", "armour", fmtNum(n.armour) + (n["armour.reduction"] !== undefined ? "（擋 " + n["armour.reduction"].toFixed(0) + "%）" : ""));
+    add("閃避", "evasion", fmtNum(n.evasion) + (n["evade.chance"] !== undefined ? "（" + n["evade.chance"].toFixed(0) + "%）" : ""));
+    add("格擋", "block", n.block !== undefined ? n.block.toFixed(0) + "%" : undefined, false, 0);
+    add("移動速度", "movement", n.movement !== undefined ? (n.movement >= 0 ? "+" : "") + n.movement.toFixed(0) + "%" : undefined, false, 0);
+    for (const k of ["fire", "cold", "lightning", "chaos"]) {
+      const v = n["resist." + k], raw = n["resist." + k + ".raw"];
+      if (v === undefined) continue;
+      add(DAMAGE_NAME[k] + "抗性", "resist." + k, v.toFixed(0) + "%" + (raw > v + 0.5 ? "（堆到 " + raw.toFixed(0) + "%）" : ""), false, 0);
+    }
+    const hits = Object.keys(DAMAGE_NAME).filter(k => n["maxhit." + k] !== undefined).map(k => {
+      const v = n["maxhit." + k];
+      return DAMAGE_NAME[k] + " " + (v === -1 ? "免疫" : v === -2 ? "∞" : fmtNum(v));
+    });
+    if (hits.length) box.append(node("div", { cls: "wide" }, node("span", { text: "最多吃得下一下" }), node("b", { text: hits.join("　") })));
+    // 提醒
+    const warn = document.getElementById("calcWarn");
+    warn.replaceChildren();
+    const lines = [];
+    if (res.inactive && res.inactive.length) lines.push("需求不夠（遊戲裡穿不上去）：" + res.inactive.join("、"));
+    if (auras.skipped && auras.skipped.length) lines.push("精魂不夠，沒開：" + auras.skipped.join("、"));
+    if (!calc.loaded && calc.skills.length) lines.push("沒載入角色：任務、Boss 首殺、稱號之類的加成沒算進去。");
+    for (const l of lines) warn.append(node("div", { cls: "warn", text: l }));
+  }
+
+  // ---- 載入遊戲裡的角色（角色頁要公開，或用本人的連結 #名字~鑰匙）----
+  let pendingItemData = null;
+  function parseCharInput(text) {
+    text = text.trim();
+    const hashAt = text.indexOf("#");
+    if (hashAt >= 0) text = text.slice(hashAt + 1);
+    const cut = text.lastIndexOf("~");
+    let name = cut >= 0 ? text.slice(0, cut) : text, key = cut >= 0 ? text.slice(cut + 1) : "";
+    try { name = decodeURIComponent(name); } catch (e) { /* 照原樣 */ }
+    return { name: name.trim(), key: key.trim() };
+  }
+  function loadCharacter(name, key, full) {
+    if (!name) return Promise.resolve();
+    if (full) setStatus("讀取角色「" + name + "」…");
+    return fetch("builds/character.json?name=" + encodeURIComponent(name) + (key ? "&key=" + encodeURIComponent(key) : ""), { cache: "no-cache" })
+      .then(r => {
+        if (!r.ok) throw new Error(r.status === 404 || r.status === 400 ? "沒有「" + name + "」這個角色（或沒有公開）" : "讀不到角色資料，稍後再試");
+        return r.json();
+      }).then(c => {
+        const d = c.calc;
+        if (!d) throw new Error("「" + name + "」的角色資料是舊的：請本人上線一次（或換一次裝備）再載入");
+        calc.loaded = { name: c.name || name, key };
+        calc.progress = d.progress || {};
+        calc.extra = Array.isArray(d.extra) ? d.extra : [];
+        calc.jewels = d.jewels || {};
+        if (full) {
+          const decoded = decodeCode(d.tree || "");
+          if (!decoded) throw new Error("天賦代碼對不上（天賦樹改版過，請本人上線一次）");
+          closeAttrMenu();
+          load(decoded);
+          calc.level = Number(d.level) || 0;
+          levelInput.value = calc.level ? String(calc.level) : "";
+          calc.asc = d.asc || "";
+          calc.ascNodes = Array.isArray(d.ascNodes) ? d.ascNodes.slice() : [];
+          calc.skills = (d.skills || []).map(s => ({ id: s.id, level: s.level || 1, sockets: s.sockets || DEFAULT_SOCKETS,
+            supports: (s.supports || []).slice() }));
+          calc.binds = new Array(BIND_COUNT).fill(-1).map((_, k) => {
+            const v = d.binds ? d.binds[k] : -1;
+            return typeof v === "number" && v >= 0 && v < calc.skills.length ? v : -1;
+          });
+          if (items) { gear = GEAR_SLOTS.map((_, i) => fromItemData((d.gear || [])[i], i)); renderGear(); }
+          else pendingItemData = d.gear || [];
+          calc.baseline = null;
+          calc.wantBaseline = true;
+          renderSkills();
+          render();
+          centerOn(start, view.scale);
+          flash("已載入「" + calc.loaded.name + "」：改天賦、裝備、輔助，綠／紅數字是跟原本比");
+        }
+        scheduleCalc(true);
+      }).catch(err => {
+        setStatus(err.message || String(err), true);
+        if (!full) { calc.loaded = null; scheduleCalc(); }
+      });
+  }
+  function startupLoad() {
+    const params = new URLSearchParams(location.search);
+    const name = params.get("load");
+    if (!name) return;
+    const key = params.get("key") || "";
+    try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { /* 改不了就算了 */ }
+    document.getElementById("charName").value = name;
+    loadCharacter(name, key, true);
+  }
+  function loadFromInput() {
+    if (!data) { flash("天賦樹還沒載入"); return; }
+    const { name, key } = parseCharInput(document.getElementById("charName").value);
+    if (!name) { flash("輸入角色名稱，或貼上角色頁的網址"); return; }
+    loadCharacter(name, key, true);
+  }
+  document.getElementById("charLoad").addEventListener("click", loadFromInput);
+  document.getElementById("charName").addEventListener("keydown", e => { if (e.key === "Enter") loadFromInput(); });
+
+  // ---- 昇華 ----
+  const ascSelect = document.getElementById("calcAsc");
+  let ascSelectFor = null;
+  function renderAscControls() {
+    if (!data) return;
+    const list = ascendanciesOf(classId);
+    if (ascSelectFor !== classId) {
+      ascSelectFor = classId;
+      ascSelect.replaceChildren(node("option", { value: "", text: "沒有昇華" }), ...list.map(a => node("option", { value: a.id, text: a.name })));
+    }
+    if (calc.asc && !list.some(a => a.id === calc.asc)) { calc.asc = ""; calc.ascNodes = []; }
+    ascSelect.value = calc.asc;
+    ascSelect.hidden = !list.length;
+    const btn = document.getElementById("calcAscNodes");
+    btn.hidden = !calc.asc;
+    btn.textContent = "昇華天賦（" + ascPointsUsed() + (data.ascendancyPoints ? "/" + data.ascendancyPoints : "") + "）";
+  }
+  ascSelect.addEventListener("change", () => { calc.asc = ascSelect.value; calc.ascNodes = []; updatePanel(); if (calc.asc) openAscPicker(); });
+  function ascInfo() { return (data.ascendancies || []).find(a => a.id === calc.asc); }
+  function ascPointsUsed() {
+    const a = calc.asc && data ? ascInfo() : null;
+    if (!a) return 0;
+    let used = 0;
+    for (const branch of a.branches) for (const n of branch) if (calc.ascNodes.includes(n.id)) used += n.cost;
+    return used;
+  }
+  document.getElementById("calcAscNodes").addEventListener("click", openAscPicker);
+  function openAscPicker() {
+    renderAscPicker();
+    if (!ascDialog.open) { if (typeof ascDialog.showModal === "function") ascDialog.showModal(); else ascDialog.setAttribute("open", ""); }
+  }
+  function toggleAscNode(a, branch, k) {
+    const id = branch[k].id;
+    if (calc.ascNodes.includes(id)) {
+      const drop = new Set(branch.slice(k).map(n => n.id)); // 後面接著的一起退
+      calc.ascNodes = calc.ascNodes.filter(x => !drop.has(x));
+    } else {
+      const need = branch.slice(0, k + 1).filter(n => !calc.ascNodes.includes(n.id)); // 前面沒配的一起配
+      const cost = need.reduce((s, n) => s + n.cost, 0);
+      if (data.ascendancyPoints && ascPointsUsed() + cost > data.ascendancyPoints) { flash("昇華點不夠（最多 " + data.ascendancyPoints + " 點）"); return; }
+      calc.ascNodes = calc.ascNodes.concat(need.map(n => n.id));
+    }
+    renderAscPicker();
+    updatePanel();
+  }
+  function renderAscPicker() {
+    const a = ascInfo();
+    const box = document.getElementById("asc");
+    if (!a) { closeAscendancy(); return; }
+    const used = ascPointsUsed();
+    box.replaceChildren(node("h3", { style: "color:" + a.color, text: a.name + "：配昇華天賦" }),
+      node("div", { cls: "sub", text: "已用 " + used + (data.ascendancyPoints ? " / " + data.ascendancyPoints : "") + " 點　點卡片配／退（每條分支要從第一個配起）" }));
+    for (const branch of a.branches) {
+      const row = node("div", { cls: "branch" });
+      branch.forEach((n, k) => {
+        if (k) row.append(node("div", { cls: "link" }));
+        const on = calc.ascNodes.includes(n.id);
+        const reachable = k === 0 || calc.ascNodes.includes(branch[k - 1].id);
+        const card = node("div", { cls: "card pickable" + (on ? " on" : reachable ? "" : " locked"), style: "--c:" + a.color, role: "button", tabindex: "0",
+          onclick: () => toggleAscNode(a, branch, k), onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleAscNode(a, branch, k); } } },
+          node("div", { cls: "nm", style: "color:" + a.color, text: (on ? "✔ " : "") + n.name + " " }, node("span", { cls: "cost", text: n.cost + " 點" })),
+          ...n.lines.map(l => node("div", { cls: "ln", text: l })));
+        row.append(card);
+      });
+      box.append(row);
+    }
+    box.append(node("div", { cls: "foot" }, node("span", { text: "計算器用：照你配的昇華天賦算加成。" }),
+      node("button", { type: "button", text: "完成", onclick: closeAscendancy })));
+  }
+
+  // ---- 技能清單 ----
+  function renderSkills() {
+    const list = document.getElementById("skillList");
+    list.replaceChildren();
+    if (!calc.skills.length) { list.append(node("div", { cls: "hint", text: "還沒有技能：按「加技能」，或上面載入遊戲裡的角色。" })); return; }
+    calc.skills.forEach((s, i) => {
+      const def = skillDef(s.id);
+      const keySel = node("select", { "aria-label": "按鍵" }, node("option", { value: "-1", text: "不綁" }),
+        ...new Array(BIND_COUNT).fill(0).map((_, slot) => node("option", { value: String(slot), text: keyName(slot) })));
+      keySel.value = String(calc.binds.indexOf(i));
+      keySel.addEventListener("change", () => {
+        const slot = Number(keySel.value);
+        calc.binds = calc.binds.map(b => b === i ? -1 : b);
+        if (slot >= 0) calc.binds[slot] = i;
+        renderSkills();
+        updatePanel();
+      });
+      const sups = s.supports.filter(Boolean).map(id => supportDef(id) ? supportDef(id).name : id);
+      const name = node("div", { cls: "nm", role: "button", tabindex: "0", title: "改等級與輔助寶石", onclick: () => openSkillEditor(i),
+        onkeydown: e => { if (e.key === "Enter") openSkillEditor(i); } },
+        (def ? def.name : s.id + "（不認得）") + "　Lv." + s.level,
+        node("small", null, node("span", { cls: "sup", text: sups.length ? sups.join("、") : "沒有輔助" }), "　" + s.supports.filter(Boolean).length + "/" + s.sockets + " 孔"));
+      const remove = node("button", { type: "button", text: "✕", title: "拿掉這個技能", onclick: () => {
+        calc.skills.splice(i, 1);
+        calc.binds = calc.binds.map(b => b === i ? -1 : b > i ? b - 1 : b);
+        renderSkills();
+        updatePanel();
+      } });
+      list.append(node("div", { cls: "skillrow" }, keySel, name, node("div", { cls: "btnpair" }, remove)));
+    });
+  }
+  document.getElementById("skillAdd").addEventListener("click", () => {
+    if (!skillData) { flash("技能資料還沒載入"); return; }
+    if (calc.skills.length >= (skillData.maxSkills || 27)) { flash("技能面板滿了"); return; }
+    openSkillPicker();
+  });
+
+  // ---- 技能對話框：挑技能／改等級與輔助寶石 ----
+  const skillDialog = document.getElementById("skillDialog");
+  const skillDlg = document.getElementById("skillDlg");
+  let skillEditing = null;
+  let socketPick = -1;
+  let supportResult = null;
+  let supportAbort = null;
+  let supportFilter = "";
+  function showSkillDialog() { if (!skillDialog.open) { if (typeof skillDialog.showModal === "function") skillDialog.showModal(); else skillDialog.setAttribute("open", ""); } }
+  function closeSkillDialog() {
+    if (typeof skillDialog.close === "function") skillDialog.close(); else skillDialog.removeAttribute("open");
+    skillEditing = null;
+    if (supportAbort) supportAbort.abort();
+  }
+  skillDialog.addEventListener("close", () => { skillEditing = null; });
+  skillDialog.addEventListener("click", e => { if (e.target === skillDialog) closeSkillDialog(); });
+  function openSkillPicker() {
+    skillEditing = null;
+    const search = node("input", { type: "search", placeholder: "搜尋技能（名稱、類型、武器）", "aria-label": "搜尋技能", style: "width:100%" });
+    const box = node("div", { cls: "suplist" });
+    const draw = () => {
+      const q = search.value.trim().toLowerCase();
+      const rows = skillData.skills.filter(s => !q || (s.name + " " + s.type + " " + s.weapon + " " + (s.tags || []).join(" ")).toLowerCase().includes(q))
+        .sort((a, b) => (b.damage - a.damage) || a.tier - b.tier || a.name.localeCompare(b.name));
+      const table = node("table");
+      for (const s of rows) {
+        table.append(node("tr", { cls: "pick", title: s.description, onclick: () => {
+          calc.skills.push({ id: s.id, level: Math.min(20, maxLevel()), sockets: DEFAULT_SOCKETS, supports: [] });
+          const i = calc.skills.length - 1;
+          const free = calc.binds.indexOf(-1);
+          if (free >= 0 && !s.aura) calc.binds[free] = i;
+          else if (free >= 0 && s.aura) calc.binds[calc.binds.lastIndexOf(-1)] = i; // 光環要綁著才會開
+          renderSkills();
+          updatePanel();
+          openSkillEditor(i);
+        } }, node("td", null, s.name, node("span", { cls: "prob", style: "color:var(--quiet)", text: s.type + (s.weapon ? "・" + s.weapon : "") })),
+          node("td", { cls: "num tier", text: s.aura ? "光環" : s.summon ? "召喚" : s.damage ? "" : "輔助型" })));
+      }
+      box.replaceChildren(table);
+    };
+    search.addEventListener("input", draw);
+    skillDlg.replaceChildren(node("h3", { text: "加一個技能" }), node("div", { cls: "row" }, search), box,
+      node("div", { cls: "btns" }, node("button", { type: "button", text: "取消", onclick: closeSkillDialog })));
+    draw();
+    showSkillDialog();
+    search.focus();
+  }
+  function openSkillEditor(i) {
+    if (!calc.skills[i]) return;
+    skillEditing = i;
+    socketPick = -1;
+    supportResult = null;
+    supportFilter = "";
+    drawSkillEditor();
+    showSkillDialog();
+    requestSupports();
+  }
+  function requestSupports() {
+    if (skillEditing === null || !skillData) return;
+    if (supportAbort) supportAbort.abort();
+    const ctl = new AbortController();
+    supportAbort = ctl;
+    const index = skillEditing;
+    const body = calcBody(index);
+    if (body.json.supportsFor === undefined) { supportResult = { error: "這個技能伺服器不認得" }; drawSkillEditor(); return; }
+    supportResult = Object.assign({}, supportResult && !supportResult.error ? supportResult : {}, { loading: true });
+    drawSkillEditor();
+    postCalc(body.json, ctl.signal).then(res => {
+      if (ctl !== supportAbort || skillEditing !== index) return;
+      supportResult = res.supports || { error: "算不出來" };
+      drawSkillEditor();
+    }).catch(err => {
+      if (err.name === "AbortError") return;
+      if (err.retry) { setTimeout(() => { if (ctl === supportAbort) requestSupports(); }, 1200); return; }
+      supportResult = { error: err.message };
+      drawSkillEditor();
+    });
+  }
+  /** 改了這個技能：重算清單與上面的結果（輔助的排名也跟著重算）。 */
+  function skillChanged() {
+    renderSkills();
+    if (skillEditing !== null) drawSkillEditor();
+    updatePanel(); // 會排一次重算；算完 runCalc 會順便重算輔助排名
+  }
+  function putSupport(s, id) {
+    if (s.supports.includes(id)) return;
+    let at = socketPick >= 0 && socketPick < s.sockets ? socketPick : -1;
+    if (at < 0) for (let k = 0; k < s.sockets; k++) if (!s.supports[k]) { at = k; break; }
+    if (at < 0 && s.sockets < maxSockets()) { s.sockets++; at = s.sockets - 1; flash("多開了一個輔助孔（第 " + s.sockets + " 孔）"); }
+    if (at < 0) { flash("輔助孔滿了：先點上面一個孔，再點要換上去的輔助"); return; }
+    while (s.supports.length < s.sockets) s.supports.push("");
+    s.supports[at] = id;
+    socketPick = -1;
+    skillChanged();
+  }
+  function drawSkillEditor() {
+    const i = skillEditing;
+    const s = calc.skills[i];
+    if (!s) { closeSkillDialog(); return; }
+    while (s.supports.length < s.sockets) s.supports.push("");
+    const def = skillDef(s.id);
+    const levelIn = node("input", { type: "number", min: "1", max: String(maxLevel()), value: String(s.level), "aria-label": "技能等級", style: "width:64px" });
+    levelIn.addEventListener("change", () => { s.level = clamp(Math.round(Number(levelIn.value)), 1, maxLevel()); skillChanged(); });
+    const socketSel = node("select", { "aria-label": "輔助孔數" }, ...new Array(maxSockets()).fill(0).map((_, k) => node("option", { value: String(k + 1), text: (k + 1) + " 孔" })));
+    socketSel.value = String(Math.min(s.sockets, maxSockets()));
+    socketSel.addEventListener("change", () => {
+      s.sockets = Number(socketSel.value);
+      s.supports = s.supports.slice(0, s.sockets);
+      socketPick = -1;
+      skillChanged();
+    });
+    // 掛著的輔助：拿掉會少多少（＝這一顆貢獻多少）
+    const removeMap = new Map((supportResult && supportResult.remove || []).map(r => [r.id, r]));
+    const grid = node("div", { cls: "supgrid" });
+    for (let k = 0; k < s.sockets; k++) {
+      const id = s.supports[k];
+      const sup = id ? supportDef(id) : null;
+      const r = id ? removeMap.get(id) : null;
+      const gain = r && r.full > 0 && supportResult.full > 0 ? (supportResult.full / r.full - 1) * 100 : null;
+      const b = node("button", { type: "button", cls: (id ? "on" : "empty") + (socketPick === k ? " picked" : ""),
+        style: socketPick === k ? "outline:2px solid var(--gold)" : null,
+        title: id ? "點一下選這個孔（再點下面的輔助就換上去）；右鍵拿掉" : "空孔：點一下選這個孔",
+        onclick: () => { socketPick = socketPick === k ? -1 : k; drawSkillEditor(); },
+        oncontextmenu: e => { e.preventDefault(); if (id) { s.supports[k] = ""; skillChanged(); } } },
+        node("div", { text: "第 " + (k + 1) + " 孔：" + (sup ? sup.name : id ? id : "空") }),
+        gain !== null ? node("span", { cls: "delta up", text: "這顆讓傷害 +" + gain.toFixed(1) + "%" }) : null,
+        id ? node("span", { cls: "delta", style: "color:var(--quiet)", text: "（右鍵拿掉）" }) : null);
+      grid.append(b);
+    }
+    // 輔助排名
+    const listBox = node("div", { cls: "suplist" });
+    const filter = node("input", { type: "search", placeholder: "篩選輔助寶石", value: supportFilter, "aria-label": "篩選輔助寶石", style: "width:100%" });
+    filter.addEventListener("input", () => { supportFilter = filter.value; drawSupportRows(listBox, s); });
+    let head = "";
+    if (supportResult && supportResult.error) head = supportResult.error;
+    else if (!supportResult || supportResult.loading && !supportResult.add) head = "計算每一顆輔助的效果…";
+    else head = "現在每秒傷害 " + fmtNum(supportResult.dps) + (supportResult.full > supportResult.dps * 1.001 ? "（全開 " + fmtNum(supportResult.full) + "）" : "")
+      + "　下面是每一顆輔助掛上去（孔滿了就換掉最差的那顆）大約變多少，照全開算";
+    skillDlg.replaceChildren(
+      node("h3", { text: (def ? def.name : s.id) + (def && def.type ? "　" : ""), title: def ? def.description : "" }, def && def.type ? node("span", { cls: "tier", style: "font-size:12px;color:var(--quiet)", text: def.type }) : null),
+      def && def.description ? node("div", { cls: "hint", text: def.description }) : null,
+      node("div", { cls: "calcrow" }, node("label", null, "等級", levelIn), socketSel,
+        node("span", { cls: "hint", style: "margin:0", text: "最高 Lv." + maxLevel() + "、" + maxSockets() + " 孔" })),
+      node("div", { cls: "calcrow" }, node("span", { cls: "hint", style: "margin:0", text: socketPick >= 0 ? "選了第 " + (socketPick + 1) + " 孔：點下面的輔助換上去" : "點下面的輔助掛到空孔；要換掉某一顆先點那個孔" })),
+      grid,
+      node("div", { cls: "calcstatus" + (supportResult && supportResult.error ? " err" : ""), text: head }),
+      filter, listBox,
+      node("div", { cls: "btns" }, node("button", { type: "button", cls: "primary", text: "完成", onclick: closeSkillDialog })));
+    drawSupportRows(listBox, s);
+  }
+  function drawSupportRows(box, s) {
+    const table = node("table");
+    const q = supportFilter.trim().toLowerCase();
+    const rows = (supportResult && supportResult.add ? supportResult.add.slice() : []).filter(r => !q || r.name.toLowerCase().includes(q)
+      || ((supportDef(r.id) || {}).description || "").toLowerCase().includes(q));
+    rows.sort((a, b) => (!!a.problem - !!b.problem) || b.pct - a.pct || a.name.localeCompare(b.name));
+    for (const r of rows) {
+      const def = supportDef(r.id) || {};
+      const pct = r.pct;
+      const tr = node("tr", { cls: "pick", title: def.description || "", onclick: () => {
+        if (r.problem && r.problem.includes("別的技能")) { if (!confirm(r.name + " 已經掛在別的技能上（一個角色只能一顆）。還是要掛上去？")) return; }
+        putSupport(s, r.id);
+      } },
+        node("td", null, r.name, node("span", { cls: "tier", text: "　" + (def.tier ? "T" + def.tier : "") }),
+          r.problem ? node("span", { cls: "prob", text: r.problem }) : null,
+          def.description ? node("span", { cls: "prob", style: "color:var(--quiet)", text: def.description }) : null),
+        node("td", { cls: "num" }, node("b", { cls: "delta " + (pct > 0.05 ? "up" : pct < -0.05 ? "down" : ""), style: "font-size:13px",
+          text: (pct > 0 ? "+" : "") + pct.toFixed(1) + "%" }), node("span", { cls: "key", text: fmtNum(r.full) })));
+      table.append(tr);
+    }
+    if (!rows.length && supportResult && supportResult.add) table.append(node("tr", null, node("td", { cls: "hint", text: "沒有能掛的輔助" })));
+    box.replaceChildren(table);
+  }
 })();
 </script>
 </body>

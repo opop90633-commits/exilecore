@@ -42,6 +42,9 @@ public final class AscendancyModule implements Module, Listener {
         plugin.players().addStateModifierSource((player, state) -> service == null ? List.of() : service.modifiers(player, state));
         // 已經在線上的玩家（/reload）
         service.reloaded();
+        // 衝等活動：要等稱號系統（委託模組，在這個模組後面啟用）好了才開始
+        final AscendancyService created = service;
+        plugin.getServer().getScheduler().runTask(plugin, () -> created.race().start());
         plugin.getSLF4JLogger().info("昇華：{} 個試煉（共 {} 昇華點）、{} 個昇華職業、{} 種職業有分身獎勵", config.trials().size(),
                 config.totalPoints(), config.ascendancies().size(), config.legacy().size());
     }
@@ -51,6 +54,7 @@ public final class AscendancyModule implements Module, Listener {
         load();
         if (service != null) {
             service.reloaded();
+            service.race().reloaded();
         }
     }
 

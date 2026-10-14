@@ -141,7 +141,7 @@ public final class SkillMenu extends Menu {
         // 2026-10 月卡福利：技能按鍵存好幾組
         set(SLOT_PRESETS, icon(Material.CLOCK, "<#bcd4ff>技能組（月卡）　<white>第 " + (plugin.players().get(player).activeSkillSet() + 1) + " 組",
                 "<gray>5 組技能面板（技能、輔助、按鍵），切換時一起換；只有正在用的那一組有效果",
-                plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0 ? "<green>月卡：可以使用" : "<dark_gray>要有月卡才能使用",
+                plugin.sponsors() != null && plugin.sponsors().cardActive(player) ? "<green>月卡：可以使用" : "<dark_gray>要有月卡才能使用",
                 "", "<yellow>左鍵：打開"));
         set(SLOT_MOUSE_LABEL, icon(Material.OAK_SIGN, "<white>滑鼠",
                 "<gray>右邊 4 格：左鍵、右鍵、潛行＋左鍵、潛行＋右鍵",

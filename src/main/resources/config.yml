@@ -144,6 +144,13 @@ discord:
     world-events: true  # 開天者、星潮入侵的預告、開始、結束
     achievements: true  # 昇華、極境 Boss／金庫之主打倒、追逐級傳奇、滿級、每月挑戰全部完成
     server: true        # 伺服器開啟、關閉
+  # Discord 帳號連結與伺服器加成（2026-10）：在遊戲裡打 /discord panel 頻道ID 把「連結遊戲帳號」面板發到 Discord，
+  # 玩家按按鈕拿代碼、遊戲裡 /discord link 代碼。連結的 Discord 帳號在這個 Discord 伺服器加成（Server Boost）期間，
+  # 遊戲帳號就有月卡的功能（不含月卡每天發的月卡幣、時裝幣、免費抽獎箱）。加成開始、結束即時生效
+  # （開發者平台的 Bot 頁要打開 SERVER MEMBERS INTENT；沒開的話只在登入時確認）。要有 bot-token。
+  boost:
+    enabled: true
+    guild-id: ""            # Discord 伺服器 ID（空白 = 用下面客服單的 guild-id）
   # 客服單（2026-10，不用 Ticket Tool）：Discord 上按按鈕開單，遊戲裡 /ticket 內容 也能開（自動附上角色、位置、贊助狀況），
   # 客服在單裡說的話會轉到遊戲給那個玩家。設定好之後在遊戲裡打 /ticket panel general 頻道ID 把面板發到 Discord 頻道。
   # ID 都是在 Discord 開發者模式下按右鍵「複製 ID」：伺服器 ID、分類 ID、頻道 ID、身分組 ID（伺服器設定 → 身分組 → 右鍵）。

@@ -128,6 +128,9 @@ final class AdminWeb {
         server.endpoint("/admin/api/builds/list", request -> api(request, false, session -> builds(null)), "GET");
         server.endpoint("/admin/api/builds/character", request -> api(request, false, session -> builds(request.param("name"))), "GET");
         server.endpoint("/admin/api/builds/meta", request -> api(request, false, session -> buildsMeta()), "GET");
+        // 2026-10：輸出紀錄（每場 Boss、每段假人：每個人打了多少、幾秒）
+        server.endpoint("/admin/api/dps", request -> api(request, false, session -> tw.exilecore.combat.DpsRecords.get(plugin)
+                .json(parseDays(request.param("days")))), "GET");
         server.endpoint("/admin/api/deliver", request -> api(request, true, session -> deliver(session, body(request))), "POST");
         server.endpoint("/admin/api/cancel", request -> api(request, true, session -> cancel(session, body(request))), "POST");
         server.endpoint("/admin/api/setting", request -> api(request, true, session -> setting(session, body(request))), "POST");
@@ -282,6 +285,14 @@ final class AdminWeb {
         } catch (final Exception e) {
             plugin.getSLF4JLogger().error("管理網頁處理 {} 時出錯", request.path(), e);
             return json(500, Map.of("error", "伺服器出錯了（主控台有錯誤訊息）：" + e));
+        }
+    }
+
+    private static int parseDays(final String value) {
+        try {
+            return value == null ? 7 : Math.max(0, Math.min(3650, Integer.parseInt(value.trim())));
+        } catch (final NumberFormatException e) {
+            return 7;
         }
     }
 

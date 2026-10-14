@@ -82,7 +82,7 @@ final class AscendancyTreeMenu extends Menu {
             }
         }
 
-        final boolean card = plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0;
+        final boolean card = plugin.sponsors() != null && plugin.sponsors().cardActive(player);
         set(SLOT_RESPEC, icon(Material.CLOCK, "<#bcd4ff>更換昇華職業（月卡）",
                 "<gray>清掉昇華職業與昇華天賦（點數全部拿回來，試煉不用重打），",
                 "<gray>重新選這個職業的昇華",
@@ -149,7 +149,7 @@ final class AscendancyTreeMenu extends Menu {
                 if (click != ClickType.SHIFT_LEFT) {
                     return;
                 }
-                if (plugin.sponsors() == null || plugin.sponsors().cardDaysLeft(player) <= 0) {
+                if (plugin.sponsors() == null || !plugin.sponsors().cardActive(player)) {
                     player.sendMessage(plugin.text().prefixed("<red>更換昇華職業是月卡的福利"));
                     return;
                 }

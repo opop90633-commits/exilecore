@@ -31,8 +31,8 @@ import java.util.UUID;
  * 市集（PoE2 的非同步交易）與通貨交易所。
  * <ul>
  *   <li>商店頁：把背包裡的東西用通貨標價上架（付金幣手續費），東西離開背包放在市集；上架後一段時間內不能下架或改價。</li>
- *   <li>市集：搜尋所有人上架的東西，直接買（付通貨＋金幣手續費），賣家不用在線；賣家的收入到市集掌櫃那裡領。</li>
- *   <li>通貨交易所：掛單「用 A 換 B」，價格合得來就自動成交；成交的通貨也是到市集掌櫃那裡領。</li>
+ *   <li>市集：搜尋所有人上架的東西，直接買（付通貨＋金幣手續費），賣家不用在線；賣家的收入自動放進他的通貨（離線的等上線）。</li>
+ *   <li>通貨交易所：掛單「用 A 換 B」，價格合得來就自動成交；成交的通貨也自動入袋（2026-10，像 PoE2）。</li>
  * </ul>
  * 啟動時把所有上架、收入、掛單讀進記憶體；每個操作改完記憶體後，用 CharacterService.commit 把操作的資料表與玩家存檔
  * 放在同一個交易寫入。新上架的東西、新的收入、新的掛單要等寫進資料庫後才能被別人買、領、成交。
@@ -71,7 +71,7 @@ public final class MarketService {
 
     /** 有月卡：上架、改價、購買、掛單都不收手續費。 */
     public boolean feeFree(final Player player) {
-        return plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0;
+        return plugin.sponsors() != null && plugin.sponsors().cardActive(player);
     }
 
     public long listingFee(final Player player, final String currency, final int amount) {
@@ -643,7 +643,7 @@ public final class MarketService {
         if (seller != null) {
             seller.sendMessage(plugin.text().prefixed("<#f5b942>市集：<gray>你的 ").append(listing.item.effectiveName())
                     .append(plugin.text().parse("<gray> 賣掉了，收入 <white>" + ItemRenderer.escape(wallet().price(currency, amount))
-                            + "</white>（到市集掌櫃那裡領）")));
+                            + "</white>（稍後自動放進你的通貨）")));
             seller.playSound(seller.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.2f);
         }
         return null;
@@ -657,23 +657,55 @@ public final class MarketService {
         if (problem != null) {
             return problem;
         }
-        final List<Proceed> mine = proceedsOf(player.getUniqueId(), true);
-        if (mine.isEmpty()) {
+        if (proceedsOf(player.getUniqueId(), true).isEmpty()) {
             return proceedsOf(player.getUniqueId(), false).isEmpty() ? "沒有可以領的收入" : "收入還在存檔中，請稍等";
         }
+        deposit(player, false);
+        return null;
+    }
+
+    /** 自動入袋時「放不下」只提醒一次（放得下了再重來）。 */
+    private final Set<UUID> warnedFull = new java.util.HashSet<>();
+
+    /**
+     * 成交自動入袋（2026-10，像 PoE2）：交易所成交、市集賣出的收入不用再去領，在線上就直接放進通貨
+     * （倉庫通貨頁 → 通貨袋 → 背包），離線的等上線。不限地點；角色資料處理中、交易中、資料庫有問題時先不放，下次再試。
+     * 定時呼叫（{@link MarketModule}）。
+     */
+    public void autoCollect(final Player player) {
+        if (proceedsOf(player.getUniqueId(), true).isEmpty() || plugin.characters().transactionProblem(player) != null
+                || (plugin.trade() != null && plugin.trade().inTrade(player))) {
+            return;
+        }
+        // 開著別的介面（倉庫、隨身背包、拆解…）時先不放，免得跟介面裡的東西打架；市集與交易所的介面可以
+        final org.bukkit.inventory.Inventory top = player.getOpenInventory().getTopInventory();
+        if (top.getType() != org.bukkit.event.inventory.InventoryType.CRAFTING
+                && !(top.getHolder() instanceof ExchangeMenu || top.getHolder() instanceof OrdersMenu || top.getHolder() instanceof MarketMenu)) {
+            return;
+        }
+        deposit(player, true);
+    }
+
+    /** 把確定的收入放進通貨；完全放不下的那幾筆不動（不寫資料庫），放了一部分的剩下的變成新的一筆。 */
+    private void deposit(final Player player, final boolean auto) {
+        final List<Proceed> mine = proceedsOf(player.getUniqueId(), true);
         final String opId = UUID.randomUUID().toString();
         final List<String> removed = new ArrayList<>();
         final List<MarketRepository.ProceedRow> leftovers = new ArrayList<>();
         final Map<String, Integer> collected = new LinkedHashMap<>();
         final long now = System.currentTimeMillis();
+        boolean blocked = false;
         for (final Proceed proceed : mine) {
             final int rest = wallet().deposit(player, proceed.currencyId, proceed.amount);
+            if (rest >= proceed.amount) {
+                blocked = true; // 一個都放不下：這筆不動
+                continue;
+            }
             proceeds.remove(proceed.id);
             removed.add(proceed.id);
-            if (proceed.amount - rest > 0) {
-                collected.merge(proceed.currencyId, proceed.amount - rest, Integer::sum);
-            }
+            collected.merge(proceed.currencyId, proceed.amount - rest, Integer::sum);
             if (rest > 0) {
+                blocked = true;
                 // 放不下的部分變成一筆新的收入，下次再領
                 final Proceed left = new Proceed(UUID.randomUUID().toString(), proceed.account, proceed.currencyId, rest,
                         proceed.source, proceed.note, now, opId, false);
@@ -682,25 +714,56 @@ public final class MarketService {
                         Instant.ofEpochMilli(now)));
             }
         }
-        plugin.characters().commit(List.of(player), connection -> {
-            repository.deleteProceeds(connection, removed);
-            for (final MarketRepository.ProceedRow row : leftovers) {
-                repository.insertProceed(connection, row);
-            }
-        }, opId, "領取市集收入（" + player.getName() + "）").thenAccept(ok -> {
-            if (ok) {
-                confirm(opId);
-            }
-        });
+        if (!removed.isEmpty()) {
+            plugin.characters().commit(List.of(player), connection -> {
+                repository.deleteProceeds(connection, removed);
+                for (final MarketRepository.ProceedRow row : leftovers) {
+                    repository.insertProceed(connection, row);
+                }
+            }, opId, (auto ? "收入自動入袋（" : "領取市集收入（") + player.getName() + "）").thenAccept(ok -> {
+                if (ok) {
+                    confirm(opId);
+                }
+            });
+        }
         final List<String> parts = new ArrayList<>();
         for (final Map.Entry<String, Integer> entry : collected.entrySet()) {
             parts.add(ItemRenderer.escape(wallet().price(entry.getKey(), entry.getValue())));
         }
-        player.sendMessage(plugin.text().prefixed(parts.isEmpty() ? "<red>倉庫、通貨袋、背包都放不下了"
-                : "<green>領到收入：<white>" + String.join("、", parts) + "</white><gray>（先放倉庫的通貨頁）"
-                + (leftovers.isEmpty() ? "" : "<yellow>；放不下的還留著")));
+        if (parts.isEmpty()) {
+            if (!auto || warnedFull.add(player.getUniqueId())) {
+                player.sendMessage(plugin.text().prefixed("<red>" + (auto ? "交易收入：" : "") + "倉庫通貨頁、通貨袋、背包都放不下了"
+                        + (auto ? "<gray>（空出位置後會自動放進來，或用 /market collect）" : "")));
+            }
+            return;
+        }
+        if (!blocked) {
+            warnedFull.remove(player.getUniqueId());
+        }
+        player.sendMessage(plugin.text().prefixed((auto ? "<#f5b942>交易收入入袋：" : "<green>領到收入：") + "<white>" + String.join("、", parts)
+                + "</white><gray>（先放倉庫的通貨頁）" + (blocked ? "<yellow>；放不下的還留著，空出位置後會再放" : "")));
         player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.4f);
-        return null;
+    }
+
+    // ---- 常用通貨（交易所，2026-10）：最近選過、交易過的（只記在記憶體，重開伺服器就清掉）----
+
+    private final Map<UUID, java.util.Deque<String>> recentCurrencies = new java.util.HashMap<>();
+
+    void remember(final UUID account, final String currencyId) {
+        if (currencyId == null) {
+            return;
+        }
+        final java.util.Deque<String> list = recentCurrencies.computeIfAbsent(account, key -> new java.util.ArrayDeque<>());
+        list.remove(currencyId);
+        list.addFirst(currencyId);
+        while (list.size() > 12) {
+            list.removeLast();
+        }
+    }
+
+    List<String> recent(final UUID account) {
+        final java.util.Deque<String> list = recentCurrencies.get(account);
+        return list == null ? List.of() : List.copyOf(list);
     }
 
     // ---- 通貨交易所 ----
@@ -740,6 +803,8 @@ public final class MarketService {
         if (preview.paid() <= 0 && !preview.resting()) {
             return "這個比例掛不出去：給的數量太少，換不到 1 個";
         }
+        remember(account, want);
+        remember(account, give);
         // 先成交，剩下的掛著
         final ExchangeBook.Result result = book.match(give, giveAmount, want, wantAmount, account);
         plugin.gold().take(player, fee, tw.exilecore.economy.EconomyLedger.FEE_EXCHANGE);
@@ -776,7 +841,7 @@ public final class MarketService {
             if (makerPlayer != null) {
                 makerPlayer.sendMessage(plugin.text().prefixed("<#f5b942>通貨交易所：<gray>你的單成交了 <white>"
                         + ItemRenderer.escape(wallet().price(maker.give(), fill.makerGave())) + " → "
-                        + ItemRenderer.escape(wallet().price(give, fill.makerGot())) + "</white>（到市集掌櫃那裡領）"));
+                        + ItemRenderer.escape(wallet().price(give, fill.makerGot())) + "</white>（稍後自動放進你的通貨）"));
             }
         }
         // 自己收到的：直接放（倉庫通貨頁 → 通貨袋 → 背包），放不下的變成收入
@@ -874,7 +939,7 @@ public final class MarketService {
             }
         });
         player.sendMessage(plugin.text().prefixed("<gray>已取消掛單，退回 <white>" + ItemRenderer.escape(wallet().price(order.give(), refund))
-                + "</white>" + (rest > 0 ? "<yellow>（放不下的 " + rest + " 個到市集掌櫃那裡領）" : "")));
+                + "</white>" + (rest > 0 ? "<yellow>（放不下的 " + rest + " 個先留著，空出位置後自動放進來）" : "")));
         return null;
     }
 

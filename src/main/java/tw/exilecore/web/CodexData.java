@@ -72,6 +72,15 @@ public final class CodexData {
                     }
                 }
                 s.add("supports", fits);
+                final JsonArray effects = new JsonArray(); // 2026-10：效果文字（光環、戰吼、印記…；搜尋也找得到）
+                try {
+                    for (final String text : tw.exilecore.gui.CodexMenu.skillEffectTexts(skill)) {
+                        effects.add(plain(text));
+                    }
+                } catch (final RuntimeException ignored) {
+                    // 寫不出來的略過
+                }
+                s.add("effects", effects);
                 s.addProperty("kind", skill.summon() != null ? "summon" : skill.aura() != null ? "aura" : skill.warcry() != null ? "warcry" : "");
                 if (skill.cooldown() > 0) {
                     s.addProperty("cooldown", skill.cooldown());

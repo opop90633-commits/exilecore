@@ -64,7 +64,7 @@ final class ShopMenu extends Menu {
         set(SLOT_INFO, icon(Material.BOOK, "<white>商店頁（" + shown.size() + " / " + capacity + "）",
                 "<gray>點你背包裡的東西：上架（下一步選價格）",
                 "<gray>上架後東西離開背包，放在市集裡",
-                "<gray>別人在市集買走時你不用在線，收入到市集領（/market）",
+                "<gray>別人在市集買走時你不用在線，收入會自動放進你的通貨",
                 "",
                 String.format(Locale.ROOT, "<gray>上架手續費：東西估價的 %s%%（至少 %,d 金幣，跟標價無關），改價也算一次",
                         trim(service.config().listingFee().percent()), service.config().listingFee().min()),

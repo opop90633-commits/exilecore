@@ -47,6 +47,7 @@ public final class DiscordBridge {
     private DiscordGateway gateway;
     private final DiscordRest rest;
     private final DiscordTickets tickets;
+    private final DiscordLink link;
 
     private boolean enabled;
     private String token = "";
@@ -65,6 +66,12 @@ public final class DiscordBridge {
         this.plugin = plugin;
         this.rest = new DiscordRest(plugin.getSLF4JLogger());
         this.tickets = new DiscordTickets(plugin, rest);
+        this.link = new DiscordLink(plugin, rest);
+    }
+
+    /** Discord 帳號連結與伺服器加成（2026-10）。 */
+    public DiscordLink link() {
+        return link;
     }
 
     /** 客服單（設定沒開也有物件，指令會說沒開放）。 */
@@ -91,6 +98,7 @@ public final class DiscordBridge {
         syncServer = section.getBoolean("sync.server", true);
         rest.token(token);
         tickets.configure(section);
+        link.configure(section);
         return enabled;
     }
 
@@ -112,6 +120,7 @@ public final class DiscordBridge {
             gateway = new DiscordGateway(plugin.getSLF4JLogger(), token, this::onDispatch);
             tickets.gateway(gateway);
             gateway.start();
+            link.start(); // 2026-10：連結的 Discord 帳號有沒有在加成伺服器
             plugin.getSLF4JLogger().info("[Discord] 已啟用：遊戲 → Discord（{}），Discord → 遊戲（頻道 {}），客服單{}",
                     webhookUrl.isEmpty() ? "機器人" : "Webhook", channelId.isEmpty() ? "沒設" : channelId, tickets.enabled ? "開" : "關");
         } else {
@@ -122,7 +131,11 @@ public final class DiscordBridge {
     /** Gateway 的事件（Gateway 執行緒）。 */
     private void onDispatch(final String type, final JsonObject data) {
         if ("INTERACTION_CREATE".equals(type)) {
-            tickets.onInteraction(data);
+            if (!link.onInteraction(data)) {
+                tickets.onInteraction(data);
+            }
+        } else if ("GUILD_MEMBER_UPDATE".equals(type) || "GUILD_MEMBER_REMOVE".equals(type)) {
+            link.onMemberUpdate(data, "GUILD_MEMBER_REMOVE".equals(type)); // 2026-10：加成開始、結束
         } else if ("MESSAGE_CREATE".equals(type)) {
             final String channel = data.has("channel_id") ? data.get("channel_id").getAsString() : "";
             if (channel.equals(channelId)) {
@@ -135,6 +148,7 @@ public final class DiscordBridge {
 
     /** 停掉背景工作；flush = 先把排隊中的送完（最多等幾秒，關服時用）。 */
     void stop(final boolean flush) {
+        link.stop();
         if (gateway != null) {
             gateway.stop();
             gateway = null;

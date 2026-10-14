@@ -34,7 +34,7 @@ public final class BalanceCommand {
     public static LiteralArgumentBuilder<CommandSourceStack> node(final ExileCore plugin) {
         return Commands.literal("balance")
                 .executes(context -> summary(plugin, context.getSource().getSender()))
-                .then(Commands.argument("level", IntegerArgumentType.integer(1, 100))
+                .then(Commands.argument("level", IntegerArgumentType.integer(1, 200))
                         .executes(context -> detail(plugin, context.getSource().getSender(),
                                 IntegerArgumentType.getInteger(context, "level"))));
     }

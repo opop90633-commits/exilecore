@@ -44,7 +44,7 @@ public final class MapModule implements Module {
         plugin.monsters().addAugmenter(created::augment);
         plugin.monsters().addLevelSource(created::levelAt);
         plugin.monsters().addInheritedTag(created.instanceKey());
-        plugin.players().addModifierSource(created::playerModifiers);
+        plugin.players().addSituationalSource(created::playerModifiers); // 地圖詞綴：網頁計算器的快照不記
         created.start();
         service = created;
         task = plugin.repeat("map", created::tick, 1, 1);

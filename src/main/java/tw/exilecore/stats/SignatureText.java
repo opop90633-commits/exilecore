@@ -57,7 +57,7 @@ public final class SignatureText {
         TEXT.put(StatKeys.SELF_IGNITE_ON_CRIT, "暴擊時你自己著火 4 秒：每秒受到最大生命與能量護盾 15% 的火焰傷害");
         TEXT.put(StatKeys.FLAG_SPELL_BASE_CRIT, "法術的基礎暴擊率是 15%");
         TEXT.put(StatKeys.CRIT_BONUS_PER_LIFE, "每 50 目前生命，增加 1% 暴擊傷害加成");
-        TEXT.put(StatKeys.FLAG_CRIMSON_POWER, "最大生命增加胸甲上的能量護盾數值");
+        TEXT.put(StatKeys.FLAG_CRIMSON_POWER, "胸甲上的能量護盾有多少，最大生命就多加多少（能量護盾本身不變）");
         TEXT.put(StatKeys.FLAG_SANGUIMANCY, "技能另外扣跟魔力消耗一樣多的生命");
         TEXT.put(StatKeys.KILL_EXPLODE_CHANCE, "殺死的敵人 10% 機率爆炸，造成牠最大生命 100% 的傷害");
         TEXT.put(StatKeys.FLAG_CRUSH_PRIMED, "你的擊中是粉碎打擊：蓄勢待暈的敵人被打中直接重暈");

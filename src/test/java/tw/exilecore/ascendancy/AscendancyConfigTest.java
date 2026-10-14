@@ -184,7 +184,7 @@ class AscendancyConfigTest {
                 trials:
                   one:
                     name: 一
-                    requires: { trial: nope, boss: camp, level: 120 }
+                    requires: { trial: nope, boss: camp, level: 999 }
                     level: 0
                     points: 0
                     theme: moon
@@ -225,7 +225,7 @@ class AscendancyConfigTest {
                 "settings.weekly_opens：不能是負的",
                 "trials.one.requires.trial：沒有試煉 nope",
                 "trials.one.requires.boss：區域 camp 沒有區域 Boss",
-                "trials.one.requires.level：要在 0 到 100 之間",
+                "trials.one.requires.level：要在 0 到 " + levelCap + " 之間",
                 "trials.one.level：怪物等級要在 1 到 100 之間",
                 "trials.one.points：至少 1 點",
                 "trials.one.theme：不認得的主題 moon",
@@ -243,7 +243,7 @@ class AscendancyConfigTest {
                 "ascendancies.hero.nodes.a：後面接了 2 個天賦",
                 "ascendancies.hero.nodes：有天賦接不到任何一條分支",
                 "legacy.marauder.30.stats：resist.fire 只能用 FLAT",
-                "legacy.marauder.130：等級要在 1 到 100 之間",
+                "legacy.marauder.130：等級要在 1 到 " + levelCap + " 之間",
                 "legacy.paladin：沒有職業 paladin")) {
             assertTrue(problems.contains(expected), "少了「" + expected + "」：\n" + problems);
         }
@@ -280,5 +280,20 @@ class AscendancyConfigTest {
         assertTrue(empty.trials().isEmpty());
         assertTrue(empty.ascendancies().isEmpty());
         assertEquals(List.of(), validate(empty));
+    }
+
+    @Test
+    void levelRaceHasATitleForEveryAscendancy() {
+        final AscendancyConfig.LevelRace race = config.levelRace();
+        assertTrue(race.enabled());
+        assertEquals(100, race.level());
+        final java.util.Set<String> names = new java.util.HashSet<>();
+        for (final AscendancyConfig.Ascendancy ascendancy : config.ascendancies()) {
+            final String title = race.title(ascendancy);
+            assertTrue(title.startsWith("巔峰"), title);
+            assertTrue(title.length() <= 5, "稱號要短：" + title);
+            assertTrue(names.add(title), "稱號重複：" + title);
+        }
+        assertEquals("race_bloodmage", AscendancyConfig.LevelRace.titleId("bloodmage"));
     }
 }

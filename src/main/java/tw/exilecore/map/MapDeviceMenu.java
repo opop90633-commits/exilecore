@@ -89,9 +89,8 @@ public final class MapDeviceMenu extends Menu {
                 }
                 lore.add("<gray>地圖會被裝置吃掉，後面的傳送門會亮起來");
                 lore.add("<gray>可以進入 <white>" + config.settings().portals() + "<gray> 次（你和隊友走進去都算一次）");
-                final double death = plugin.players().config().mapDeathPenalty();
-                lore.add(death > 0 ? "<gray>" + plugin.players().config().deathPenaltyFromLevel() + " 等以上死亡扣這一級 " + LevelPace.percent(death)
-                        + " 的經驗（哪裡都一樣）" : "<gray>死亡不扣經驗");
+                final String death = plugin.players().config().deathPenaltyText();
+                lore.add(death != null ? "<gray>" + death + "（哪裡都一樣）" : "<gray>死亡不扣經驗");
                 final String craft = plugin.items().renderer().mapCraftHint(selected);
                 if (craft != null) {
                     // PoE2：沒洗的地圖等於少拿東西——開之前提醒還能洗什麼

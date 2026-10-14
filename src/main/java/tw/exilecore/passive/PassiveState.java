@@ -86,7 +86,7 @@ public final class PassiveState {
 
     /** 有月卡：退點不花金幣、也不用掉免費退點次數（2026-10 月卡福利）。 */
     private boolean card() {
-        return plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0;
+        return plugin.sponsors() != null && plugin.sponsors().cardActive(player);
     }
 
     /** 退一點要花的金幣（有免費退點次數、有月卡時為 0）。 */

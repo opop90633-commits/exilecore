@@ -47,7 +47,7 @@ public final class TreeSetMenu extends Menu {
     }
 
     private boolean card() {
-        return plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0;
+        return plugin.sponsors() != null && plugin.sponsors().cardActive(player);
     }
 
     private static String chunkKey(final int set, final int chunk) {

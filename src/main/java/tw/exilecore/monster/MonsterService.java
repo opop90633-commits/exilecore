@@ -82,6 +82,7 @@ public final class MonsterService {
         this.toughnessKey = new NamespacedKey(plugin, "monster_no_toughness");
         this.summonedKey = new NamespacedKey(plugin, "monster_summoned");
         this.playersKey = new NamespacedKey(plugin, "monster_players");
+        this.ledger.setClock(() -> plugin.getServer().getCurrentTick()); // 2026-10：Boss 秒傷紀錄要知道每個人從什麼時候開始打
     }
 
     /** 每隻怪物受到的玩家傷害。 */

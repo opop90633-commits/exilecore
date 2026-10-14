@@ -143,7 +143,7 @@ public final class ExileCoreCommand {
                                         .executes(context -> forceAffix(plugin, context, IntegerArgumentType.getInteger(context, "tier"))))))
                 .then(Commands.literal("item").executes(context -> item(plugin, context)))
                 .then(Commands.literal("level")
-                        .then(Commands.argument("level", IntegerArgumentType.integer(1, 100))
+                        .then(Commands.argument("level", IntegerArgumentType.integer(1, 200)) // 2026-10：上限照 character.yml 的 level_cap（setLevel 會夾）
                                 .executes(context -> level(plugin, context, IntegerArgumentType.getInteger(context, "level")))
                                 .then(Commands.argument("target", StringArgumentType.word()).suggests(ExileCoreCommand::onlineNames)
                                         .executes(context -> levelOther(plugin, context, IntegerArgumentType.getInteger(context, "level"), false)))))

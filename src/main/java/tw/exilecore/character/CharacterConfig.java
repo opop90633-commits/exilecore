@@ -88,6 +88,13 @@ public final class CharacterConfig {
     private int monsterLevelCap = 0;
     /** 高等級另外乘的倍率：從這一級起。出貨的檔案照 PoE 寫 95–99 級；檔案沒寫 = 不乘（同上）。 */
     private final TreeMap<Integer, Double> highLevel = new TreeMap<>();
+    /**
+     * 2026-10（等級上限 120）：算經驗懲罰（等級差、高等級的減少）時玩家等級最高算幾級（0 = 不限）。出貨的檔案寫 99：
+     * 100 級以後打怪的經驗跟 99 級一樣，升級的難度只看經驗表（不然 100 級以後等級差懲罰一路掉到 1%，根本練不動）。
+     */
+    private int penaltyLevelCap = 0;
+    /** 2026-10：高等級的死亡懲罰（從這一級起扣幾 %；例如 100: 0.20、110: 0.30）；沒寫到的等級照 map_death_penalty。 */
+    private final TreeMap<Integer, Double> deathPenaltyTiers = new TreeMap<>();
     private final TreeMap<Integer, Double> deathPenalty = new TreeMap<>();
     private double mapDeathPenalty = 0.10;
     /** 2026-10：統一的死亡懲罰——這個等級以上在哪裡死都扣 map_death_penalty（10%），以下都不扣。 */
@@ -176,6 +183,7 @@ public final class CharacterConfig {
         safeBase = penalty.integer("safe_base", safeBase);
         safePerLevels = Math.max(1, penalty.integer("safe_per_levels", safePerLevels));
         monsterLevelCap = Math.max(0, penalty.integer("monster_level_cap", monsterLevelCap));
+        penaltyLevelCap = Math.max(0, penalty.integer("player_level_cap", 0));
         if (penalty.has("high_level")) {
             // 先全部讀完再換上去：寫錯時保留原本的
             final TreeMap<Integer, Double> parsed = new TreeMap<>();
@@ -199,6 +207,17 @@ public final class CharacterConfig {
         }
         mapDeathPenalty = Math.max(0, root.decimal("map_death_penalty", mapDeathPenalty));
         deathPenaltyFromLevel = Math.max(1, root.integer("death_penalty_from_level", deathPenaltyFromLevel));
+        deathPenaltyTiers.clear();
+        if (root.has("death_penalty_tiers")) {
+            final YamlNode node = root.node("death_penalty_tiers");
+            for (final String key : node.keys()) {
+                final double value = node.decimal(key, 0);
+                if (value < 0 || value > 1) {
+                    throw new IllegalArgumentException("character.yml：death_penalty_tiers." + key + " 要在 0 到 1 之間（比例），卻是 " + value);
+                }
+                deathPenaltyTiers.put(Integer.parseInt(key.trim()), value);
+            }
+        }
         final YamlNode respec = root.node("respec");
         respecFreeUntilLevel = Math.max(1, respec.integer("free_until_level", respecFreeUntilLevel));
         if (respec.has("gold_per_point")) {
@@ -397,12 +416,13 @@ public final class CharacterConfig {
             return 1.0;
         }
         final int counted = monsterLevelCap > 0 ? Math.min(monsterLevel, monsterLevelCap) : monsterLevel;
-        final int safe = safeBase + playerLevel / safePerLevels;
-        final int diff = Math.max(0, Math.abs(playerLevel - counted) - safe);
+        final int level = penaltyLevel(playerLevel);
+        final int safe = safeBase + level / safePerLevels;
+        final int diff = Math.max(0, Math.abs(level - counted) - safe);
         if (diff == 0) {
             return 1.0;
         }
-        final double base = playerLevel + 5.0;
+        final double base = level + 5.0;
         return Math.pow(base / (base + Math.pow(diff, 2.5)), 1.5);
     }
 
@@ -411,8 +431,49 @@ public final class CharacterConfig {
         if (!levelPenaltyEnabled) {
             return 1.0;
         }
-        final Map.Entry<Integer, Double> entry = highLevel.floorEntry(playerLevel);
+        final Map.Entry<Integer, Double> entry = highLevel.floorEntry(penaltyLevel(playerLevel));
         return entry == null ? 1.0 : entry.getValue();
+    }
+
+    /** 算懲罰用的玩家等級（player_level_cap 以上照那一級）。 */
+    private int penaltyLevel(final int playerLevel) {
+        return penaltyLevelCap > 0 ? Math.min(playerLevel, penaltyLevelCap) : playerLevel;
+    }
+
+    /** 算經驗懲罰時玩家等級最高算幾級（0 = 不限）。 */
+    public int penaltyLevelCap() {
+        return penaltyLevelCap;
+    }
+
+    /**
+     * 這個等級死亡扣「這一級升級所需經驗」的比例（還沒算累積贊助的減免）：death_penalty_tiers 寫到的等級照那個，
+     * 其他照 map_death_penalty；未滿 death_penalty_from_level 不扣。
+     */
+    public double deathPenaltyAt(final int level) {
+        if (level < deathPenaltyFromLevel) {
+            return 0;
+        }
+        final Map.Entry<Integer, Double> tier = deathPenaltyTiers.floorEntry(level);
+        return tier == null ? mapDeathPenalty : tier.getValue();
+    }
+
+    /** 「60 等以上死亡扣這一級 10%（100 等起 20%、110 等起 30%）」；都不扣回傳 null。 */
+    public String deathPenaltyText() {
+        if (mapDeathPenalty <= 0 && deathPenaltyTiers.isEmpty()) {
+            return null;
+        }
+        final StringBuilder text = new StringBuilder(deathPenaltyFromLevel + " 等以上死亡扣這一級 " + LevelPace.percent(mapDeathPenalty) + " 的經驗");
+        if (!deathPenaltyTiers.isEmpty()) {
+            final List<String> parts = new java.util.ArrayList<>();
+            deathPenaltyTiers.forEach((level, ratio) -> parts.add(level + " 等起 " + LevelPace.percent(ratio)));
+            text.append("（").append(String.join("、", parts)).append("）");
+        }
+        return text.toString();
+    }
+
+    /** 高等級的死亡懲罰（等級 → 比例，照等級排）。 */
+    public java.util.NavigableMap<Integer, Double> deathPenaltyTiers() {
+        return java.util.Collections.unmodifiableNavigableMap(deathPenaltyTiers);
     }
 
     /** 算等級差時怪物等級最高算幾級（0 = 不限）。 */

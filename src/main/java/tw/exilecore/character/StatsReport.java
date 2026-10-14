@@ -259,17 +259,31 @@ public final class StatsReport {
 
     /** 這一種傷害最大能吃多大的一下（減免前的傷害）：二分搜尋，因為護甲對大傷害比較沒效。 */
     private static String maxHitText(final PlayerState state, final StatSheet sheet, final DamageType type) {
-        if (type == DamageType.CHAOS && StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
+        final double hit = maxHit(sheet, type);
+        if (Double.isNaN(hit)) {
             return "免疫";
         }
-        final double pool = Math.max(1, state.maxLife() + (type == DamageType.CHAOS ? state.maxEnergyShield() / tw.exilecore.stats.DamageCalculator.CHAOS_ES_MULTIPLIER : state.maxEnergyShield()));
+        return Double.isInfinite(hit) ? "∞" : String.format(Locale.ROOT, "%,d", Math.round(hit));
+    }
+
+    /**
+     * 這一種傷害最大能吃多大的一下（減免前；生命＋能量護盾，混沌不過護盾）。免疫回傳 NaN，大到算不完回傳無限大。
+     * 只看屬性表（2026-10：網頁計算器的虛擬角色也用）。
+     */
+    public static double maxHit(final StatSheet sheet, final DamageType type) {
+        if (type == DamageType.CHAOS && StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
+            return Double.NaN;
+        }
+        final double life = PlayerState.maxLife(sheet);
+        final double es = PlayerState.maxEnergyShield(sheet);
+        final double pool = Math.max(1, life + (type == DamageType.CHAOS ? es / tw.exilecore.stats.DamageCalculator.CHAOS_ES_MULTIPLIER : es));
         double low = 0;
         double high = pool;
         final double limit = pool * 1000;
         while (taken(sheet, type, high) <= pool) {
             high *= 2;
             if (high > limit) {
-                return "∞";
+                return Double.POSITIVE_INFINITY;
             }
         }
         for (int i = 0; i < 40; i++) {
@@ -280,7 +294,53 @@ public final class StatsReport {
                 high = mid;
             }
         }
-        return String.format(Locale.ROOT, "%,d", Math.round(low));
+        return low;
+    }
+
+    /**
+     * 屬性表的主要數字（2026-10，網頁計算器）：鍵 → 數值。跟 /stats 同一套算法，只看屬性表與等級。
+     * 抗性是封頂後的；另外給 resist.*.raw（堆了多少）。最大承受一擊：免疫是 -1、無限大是 -2。
+     */
+    public static java.util.LinkedHashMap<String, Double> numbers(final ExileCore plugin, final StatSheet sheet, final int level) {
+        final java.util.LinkedHashMap<String, Double> out = new java.util.LinkedHashMap<>();
+        final double life = PlayerState.maxLife(sheet);
+        out.put("life", life);
+        out.put("life.regen", sheet.get(StatKeys.LIFE_REGEN) + life * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0);
+        out.put("mana", PlayerState.maxMana(sheet));
+        out.put("mana.regen", sheet.get(StatKeys.MANA_REGEN));
+        out.put("es", PlayerState.maxEnergyShield(sheet));
+        out.put("spirit", Math.max(0, sheet.get(StatKeys.SPIRIT_MAX)));
+        out.put("spirit.reserved", Math.max(0, sheet.get(StatKeys.SPIRIT_RESERVED)));
+        out.put("str", sheet.get(StatKeys.STR));
+        out.put("dex", sheet.get(StatKeys.DEX));
+        out.put("int", sheet.get(StatKeys.INT));
+        out.put("armour", sheet.get(StatKeys.ARMOUR));
+        out.put("evasion", sheet.get(StatKeys.EVASION));
+        out.put("block", Math.min(StatKeys.BLOCK_CAP, sheet.get(StatKeys.BLOCK_CHANCE)));
+        out.put("accuracy", sheet.get(StatKeys.ACCURACY));
+        out.put("movement", sheet.increased(StatKeys.MOVEMENT_SPEED, Set.of()) * 100); // 跟 /stats 一樣：增加幾 %
+        final double max = sheet.get(StatKeys.RESIST_MAX);
+        out.put("resist.max", max);
+        for (final DamageType type : new DamageType[] {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING, DamageType.CHAOS}) {
+            final String key = "resist." + shortKey(type);
+            final double raw = sheet.get(type.mitigationStat());
+            out.put(key, Math.min(raw, max));
+            out.put(key + ".raw", raw);
+        }
+        final DefenceEstimates estimates = plugin == null ? null : estimatesAt(plugin, level, sheet);
+        if (estimates != null) {
+            out.put("armour.reduction", estimates.armourReduction() * 100);
+            out.put("evade.chance", estimates.evadeChance() * 100);
+        }
+        for (final DamageType type : DamageType.values()) {
+            final double hit = maxHit(sheet, type);
+            out.put("maxhit." + shortKey(type), Double.isNaN(hit) ? -1 : Double.isInfinite(hit) ? -2 : hit);
+        }
+        return out;
+    }
+
+    private static String shortKey(final DamageType type) {
+        return type.name().toLowerCase(Locale.ROOT);
     }
 
     private static double taken(final StatSheet sheet, final DamageType type, final double raw) {
@@ -495,11 +555,15 @@ public final class StatsReport {
     }
 
     static DefenceEstimates estimates(final ExileCore plugin, final PlayerState state, final StatSheet sheet) {
+        return estimatesAt(plugin, state.level(), sheet);
+    }
+
+    static DefenceEstimates estimatesAt(final ExileCore plugin, final int characterLevel, final StatSheet sheet) {
         if (plugin.monsters() == null) {
             return null;
         }
         final tw.exilecore.monster.MonsterConfig monsters = plugin.monsters().config();
-        final int level = Math.max(1, state.level());
+        final int level = Math.max(1, characterLevel);
         final double[] damage = monsters.damageAt(level);
         return DefenceEstimates.of(damage[0], damage[1], monsters.accuracyAt(level), monsters.evasionAt(level),
                 sheet.get(StatKeys.ARMOUR), sheet.get(StatKeys.EVASION), sheet.get(StatKeys.ACCURACY));

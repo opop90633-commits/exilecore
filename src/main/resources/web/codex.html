@@ -44,6 +44,7 @@
   }
   .tabs button { cursor: pointer; }
   .tabs button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); font-weight: 600; }
+  .fx { margin: 4px 0 6px; padding-left: 18px; color: #8fd3ff; font-size: 13px; line-height: 1.45; }
   .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
   .filters input { flex: 1; min-width: 180px; }
   .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
@@ -97,7 +98,7 @@
     <button type="button" data-tab="uniques" aria-pressed="false">傳奇裝備</button>
   </div>
   <div class="filters">
-    <input type="search" id="search" placeholder="找名稱或說明…" aria-label="搜尋">
+    <input type="search" id="search" placeholder="找名稱、說明或效果…" aria-label="搜尋">
     <select id="filter" aria-label="篩選"></select>
   </div>
   <div class="list" id="list"></div>
@@ -149,7 +150,7 @@
   }
   function haystack(e) {
     if (tab === 'uniques') { return (e.name + ' ' + (e.mods || []).map(fill).join(' ')).toLowerCase(); }
-    return (e.name + ' ' + (e.text || '') + ' ' + (e.requires || '') + ' ' + (e.flavor || '') + ' ' + (e.tags || []).map(tagName).join(' ')).toLowerCase();
+    return (e.name + ' ' + (e.text || '') + ' ' + (e.effects || []).join(' ') + ' ' + (e.requires || '') + ' ' + (e.flavor || '') + ' ' + (e.tags || []).map(tagName).join(' ')).toLowerCase();
   }
   function tagName(t) { return (data && data.tagNames && data.tagNames[t]) || t; }
   /** 技能的標籤（小按鈕：點了就用這個標籤篩選）。 */
@@ -304,6 +305,11 @@
     if (tab === 'skills') {
       box.appendChild(el('div', 'meta', skillMeta(e)));
       box.appendChild(el('p', null, e.text));
+      if (e.effects && e.effects.length) { // 2026-10：效果（光環、戰吼、印記給的；20 級）
+        var fx = el('ul', 'fx');
+        e.effects.forEach(function (t) { fx.appendChild(el('li', null, t)); });
+        box.appendChild(fx);
+      }
       if (e.tags && e.tags.length) { box.appendChild(tagRow(e.tags, pickTag)); }
       var count = (e.supports || []).length;
       box.appendChild(el('div', 'more', count ? '能掛 ' + count + ' 種輔助寶石 →' : '不能掛輔助寶石'));

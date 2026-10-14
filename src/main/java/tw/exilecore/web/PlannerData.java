@@ -23,9 +23,13 @@ public final class PlannerData {
     }
 
     /** 一個昇華天賦（給規劃器的昇華預覽）。lines 是效果的說明；note 是補充（沒有是 null）。 */
-    public record AscendancyNode(String name, int cost, List<String> lines, String note) {
+    public record AscendancyNode(String name, int cost, List<String> lines, String note, String id) {
         public AscendancyNode {
             lines = List.copyOf(lines);
+        }
+
+        public AscendancyNode(final String name, final int cost, final List<String> lines, final String note) {
+            this(name, cost, lines, note, null);
         }
     }
 
@@ -127,6 +131,9 @@ public final class PlannerData {
                 final JsonArray branchArray = new JsonArray();
                 for (final AscendancyNode node : branch) {
                     final JsonObject nodeObject = new JsonObject();
+                    if (node.id() != null) {
+                        nodeObject.addProperty("id", node.id()); // 2026-10：網頁計算器配昇華天賦用
+                    }
                     nodeObject.addProperty("name", node.name());
                     nodeObject.addProperty("cost", node.cost());
                     final JsonArray lines = new JsonArray();

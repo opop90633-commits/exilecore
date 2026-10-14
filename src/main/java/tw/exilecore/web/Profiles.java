@@ -3,6 +3,7 @@ package tw.exilecore.web;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
@@ -372,7 +373,113 @@ public final class Profiles implements Listener {
             stats.add(block);
         }
         root.add("stats", stats);
+        // 2026-10：網頁計算器（/tree 的「載入角色」）要的原始資料
+        try {
+            root.add("calc", calcJson(player, state, character));
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("角色頁：{} 的計算器資料做不出來：{}", character.name(), e.toString());
+        }
         return root;
+    }
+
+    /**
+     * 網頁計算器的原始資料（2026-10）：天賦代碼（含屬性點）、昇華、算加成用的進度、十個裝備欄與珠寶的物品資料、技能面板與按鍵、
+     * 要看玩家本人才算得出來的永久加成（稱號、公會、贊助、分身獎勵）。格式就是 {@link BuildCalc} 收的。
+     * 物品的 UUID 拿掉（網頁用不到）。
+     */
+    private JsonObject calcJson(final Player player, final PlayerState state, final CharacterRecord character) {
+        final JsonObject calc = new JsonObject();
+        calc.addProperty("level", state.level());
+        final PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
+        final Map<String, String> attributes = new java.util.LinkedHashMap<>();
+        final JsonObject progress = new JsonObject();
+        for (final Map.Entry<String, String> entry : state.progress().entrySet()) {
+            if (entry.getKey().startsWith("attr.")) {
+                attributes.put(entry.getKey().substring("attr.".length()), entry.getValue());
+            }
+            if (BuildCalc.allowedProgress(entry.getKey())) {
+                progress.addProperty(entry.getKey(), entry.getValue());
+            }
+        }
+        if (tree != null) {
+            calc.addProperty("tree", TreeCode.encode(tree, character.characterClass().id(), state.passives(), attributes));
+        }
+        final String asc = state.progress().get(tw.exilecore.ascendancy.Ascension.CHOSEN);
+        if (asc != null && !asc.isBlank()) {
+            calc.addProperty("asc", asc);
+            final JsonArray ascNodes = new JsonArray();
+            final String nodes = state.progress().get(tw.exilecore.ascendancy.Ascension.NODES);
+            if (nodes != null) {
+                for (final String id : nodes.split(",")) {
+                    if (!id.isBlank()) {
+                        ascNodes.add(id.trim());
+                    }
+                }
+            }
+            calc.add("ascNodes", ascNodes);
+        }
+        calc.add("progress", progress);
+        final JsonArray gear = new JsonArray();
+        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
+            gear.add(itemData(state.jewellery(i)));
+        }
+        calc.add("gear", gear);
+        final JsonObject jewels = new JsonObject();
+        for (final Map.Entry<String, ItemStack> entry : state.jewels().entrySet()) {
+            final JsonElement data = itemData(entry.getValue());
+            if (!data.isJsonNull()) {
+                jewels.add(entry.getKey(), data);
+            }
+        }
+        calc.add("jewels", jewels);
+        final JsonArray skills = new JsonArray();
+        final JsonArray binds = new JsonArray();
+        final SkillLoadout loadout = state.skills();
+        final Map<Integer, Integer> index = new java.util.HashMap<>();
+        if (loadout != null) {
+            for (int position = 0; position < SkillLoadout.MAX_SKILLS; position++) {
+                final SkillLoadout.Entry entry = loadout.skill(position);
+                if (entry == null) {
+                    continue;
+                }
+                index.put(position, skills.size());
+                final JsonObject skill = new JsonObject();
+                skill.addProperty("id", entry.skillId());
+                skill.addProperty("level", entry.level());
+                skill.addProperty("sockets", entry.sockets());
+                final JsonArray supports = new JsonArray();
+                for (int i = 0; i < entry.sockets(); i++) {
+                    supports.add(entry.support(i));
+                }
+                skill.add("supports", supports);
+                skills.add(skill);
+            }
+            for (int slot = 0; slot < SkillLoadout.BIND_SLOTS; slot++) {
+                binds.add(index.getOrDefault(loadout.bound(slot), -1));
+            }
+        }
+        calc.add("skills", skills);
+        calc.add("binds", binds);
+        final JsonArray extra = new JsonArray();
+        for (final tw.exilecore.stats.Modifier modifier : plugin.players().persistentExtras(player)) {
+            extra.add(BuildCalc.modifierJson(modifier));
+        }
+        calc.add("extra", extra);
+        return calc;
+    }
+
+    /** 一件物品的資料（JSON，拿掉 UUID）；不是我們的物品回傳 JsonNull。 */
+    private JsonElement itemData(final ItemStack stack) {
+        if (stack == null || stack.isEmpty() || plugin.items() == null) {
+            return com.google.gson.JsonNull.INSTANCE;
+        }
+        final ItemData data = plugin.items().read(stack).orElse(null);
+        if (data == null) {
+            return com.google.gson.JsonNull.INSTANCE;
+        }
+        final JsonObject json = com.google.gson.JsonParser.parseString(plugin.items().toJson(data)).getAsJsonObject();
+        json.remove("uuid");
+        return json;
     }
 
     /** 一件物品：名稱、說明文字（照遊戲裡的樣子，含顏色）、稀有度、圖示。 */

@@ -1011,7 +1011,24 @@ public final class SponsorService {
 
     String cardText(final Player player) {
         final long left = cardDaysLeft(player);
-        return left <= 0 ? null : CARD_COLOR + "月卡剩 " + left + " 天</#bcd4ff>";
+        if (left <= 0) {
+            return discordBoost(player) ? "<#ff73fa>Discord 加成中（月卡功能）</#ff73fa>" : null;
+        }
+        return CARD_COLOR + "月卡剩 " + left + " 天</#bcd4ff>" + (discordBoost(player) ? "<#ff73fa>＋Discord 加成</#ff73fa>" : "");
+    }
+
+    /**
+     * 有月卡的功能（2026-10）：月卡還沒到期，或連結的 Discord 帳號正在加成 Discord 伺服器（加成結束就自動沒有）。
+     * 每天發的月卡幣、時裝幣、免費抽獎箱只看真的月卡（{@link #cardDaysLeft}）。
+     */
+    public boolean cardActive(final Player player) {
+        return cardDaysLeft(player) > 0 || discordBoost(player);
+    }
+
+    /** 連結的 Discord 帳號正在加成 Discord 伺服器。 */
+    public boolean discordBoost(final Player player) {
+        final tw.exilecore.discord.DiscordBridge bridge = plugin.discord();
+        return bridge != null && bridge.link().boosting(player);
     }
 
     String buyCard(final Player player) {

@@ -109,11 +109,48 @@ public final class CommunityLinks {
     }
 
     private static LiteralCommandNode<CommandSourceStack> command(final ExileCore plugin, final Link link) {
-        return Commands.literal(link.key)
+        final com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(link.key)
                 .executes(context -> {
                     send(plugin, context.getSource().getSender(), link);
                     return Command.SINGLE_SUCCESS;
-                })
-                .build();
+                });
+        if (link == Link.DISCORD) {
+            // 2026-10：/discord link 代碼、/discord unlink、/discord status、（管理員）/discord panel 頻道ID
+            root.then(Commands.literal("link").then(Commands.argument("code", com.mojang.brigadier.arguments.StringArgumentType.word())
+                            .executes(context -> discord(plugin, context.getSource().getSender(),
+                                    (bridge, player) -> bridge.link().link(player, com.mojang.brigadier.arguments.StringArgumentType.getString(context, "code"))))))
+                    .then(Commands.literal("unlink").executes(context -> discord(plugin, context.getSource().getSender(),
+                            (bridge, player) -> bridge.link().unlink(player))))
+                    .then(Commands.literal("status").executes(context -> discord(plugin, context.getSource().getSender(),
+                            (bridge, player) -> bridge.link().status(player))))
+                    .then(Commands.literal("panel").requires(source -> source.getSender().hasPermission(ExileCore.PERMISSION_ADMIN))
+                            .then(Commands.argument("channel", com.mojang.brigadier.arguments.StringArgumentType.word()).executes(context -> {
+                                final org.bukkit.command.CommandSender sender = context.getSource().getSender();
+                                final tw.exilecore.discord.DiscordBridge bridge = plugin.discord();
+                                if (bridge == null || !bridge.link().enabledForCommands()) {
+                                    sender.sendMessage(plugin.text().prefixed("<red>Discord 連結沒有開（要有 bot-token 與 guild-id）"));
+                                    return Command.SINGLE_SUCCESS;
+                                }
+                                bridge.link().postPanel(com.mojang.brigadier.arguments.StringArgumentType.getString(context, "channel"),
+                                        text -> plugin.getServer().getScheduler().runTask(plugin, () -> sender.sendMessage(plugin.text().prefixed(text))));
+                                return Command.SINGLE_SUCCESS;
+                            })));
+        }
+        return root.build();
+    }
+
+    private static int discord(final ExileCore plugin, final org.bukkit.command.CommandSender sender,
+                               final java.util.function.BiConsumer<tw.exilecore.discord.DiscordBridge, org.bukkit.entity.Player> action) {
+        if (!(sender instanceof org.bukkit.entity.Player player)) {
+            sender.sendMessage(plugin.text().prefixed("<red>這個指令要在遊戲內使用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final tw.exilecore.discord.DiscordBridge bridge = plugin.discord();
+        if (bridge == null || !bridge.link().enabledForCommands()) {
+            player.sendMessage(plugin.text().prefixed("<red>Discord 連結現在沒有開放"));
+            return Command.SINGLE_SUCCESS;
+        }
+        action.accept(bridge, player);
+        return Command.SINGLE_SUCCESS;
     }
 }

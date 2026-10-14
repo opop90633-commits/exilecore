@@ -602,6 +602,10 @@ public final class Gear {
         if (target < 0) {
             return "這不是能裝備的東西";
         }
+        final String blocked = plugin.players().equipProblem(player, stack); // 2026-10：未鑑定、需求不夠的穿不上
+        if (blocked != null) {
+            return blocked;
+        }
         if (base.slot() == ItemSlot.RING && state.jewellery(0) != null && state.jewellery(1) == null) {
             target = 1;
         }
@@ -638,6 +642,10 @@ public final class Gear {
         final int natural = index(base.slot());
         if (natural != index && !(base.slot() == ItemSlot.RING && (index == 0 || index == 1))) {
             return "放錯欄位";
+        }
+        final String blocked = plugin.players().equipProblem(player, stack); // 2026-10：未鑑定、需求不夠的穿不上
+        if (blocked != null) {
+            return blocked;
         }
         if (index == OFF) {
             final String problem = pairProblem(baseOf(state.jewellery(MAIN)), base);

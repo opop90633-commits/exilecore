@@ -94,6 +94,30 @@ public final class AscendancyConfig {
         }
     }
 
+    /**
+     * 衝等活動（2026-10）：每個昇華職業第一個升到 level 級的角色拿那個昇華的專屬稱號（全服只有一個，拿了就沒了，沒有加成）。
+     *
+     * @param enabled 開著
+     * @param level   幾級
+     * @param titles  昇華代號 → 稱號名稱（沒寫的用「巔峰」＋昇華名稱）
+     */
+    public record LevelRace(boolean enabled, int level, java.util.Map<String, String> titles) {
+        public LevelRace {
+            titles = java.util.Map.copyOf(titles);
+        }
+
+        /** 這個昇華的稱號名稱。 */
+        public String title(final Ascendancy ascendancy) {
+            final String name = titles.get(ascendancy.id());
+            return name == null || name.isBlank() ? "巔峰" + ascendancy.name() : name;
+        }
+
+        /** 這個昇華的稱號代號。 */
+        public static String titleId(final String ascendancyId) {
+            return "race_" + ascendancyId;
+        }
+    }
+
     /** 一個昇華職業。 */
     public record Ascendancy(String id, String classId, String name, String color, String icon, String summary, List<Node> nodes) {
         public Ascendancy {
@@ -155,6 +179,7 @@ public final class AscendancyConfig {
     }
 
     private Settings settings = new Settings(60, 8);
+    private LevelRace levelRace = new LevelRace(false, 100, java.util.Map.of());
     private final Map<String, Trial> trials = new LinkedHashMap<>();
     private final Map<String, Ascendancy> ascendancies = new LinkedHashMap<>();
     /** 職業 → 分身獎勵（等級由低到高）。 */
@@ -180,6 +205,7 @@ public final class AscendancyConfig {
     /** 換成另一份（模組先讀進新的一份、檢查過才換）。 */
     public void copyFrom(final AscendancyConfig other) {
         settings = other.settings;
+        levelRace = other.levelRace;
         trials.clear();
         trials.putAll(other.trials);
         ascendancies.clear();
@@ -191,6 +217,13 @@ public final class AscendancyConfig {
     private void parse(final YamlNode root) {
         final YamlNode s = root.node("settings");
         settings = new Settings(s.integer("cooldown_seconds", 60), s.integer("weekly_opens", 8));
+        final YamlNode race = root.node("level_race");
+        final java.util.Map<String, String> raceTitles = new java.util.LinkedHashMap<>();
+        final YamlNode titlesNode = race.node("titles");
+        for (final String id : titlesNode.keys()) {
+            raceTitles.put(id, titlesNode.string(id, "").trim());
+        }
+        levelRace = new LevelRace(race.bool("enabled", false), race.integer("level", 100), raceTitles);
 
         final YamlNode trialsNode = root.node("trials");
         for (final String id : trialsNode.keys()) {
@@ -272,6 +305,14 @@ public final class AscendancyConfig {
     public List<String> validate(final Collection<String> classIds, final Collection<String> bossZones, final Collection<String> mods,
                                  final Collection<String> themes, final int levelCap) {
         final List<String> problems = new ArrayList<>();
+        if (levelRace.enabled() && (levelRace.level() < 2 || levelRace.level() > levelCap)) {
+            problems.add("level_race.level：要在 2 到等級上限 " + levelCap + " 之間");
+        }
+        for (final String id : levelRace.titles().keySet()) {
+            if (!ascendancies.containsKey(id)) {
+                problems.add("level_race.titles." + id + "：沒有這個昇華職業");
+            }
+        }
         if (settings.cooldownSeconds() < 0) {
             problems.add("settings.cooldown_seconds：不能是負的");
         }
@@ -460,6 +501,11 @@ public final class AscendancyConfig {
 
     public Trial trial(final String id) {
         return id == null ? null : trials.get(id);
+    }
+
+    /** 衝等活動的設定。 */
+    public LevelRace levelRace() {
+        return levelRace;
     }
 
     public Collection<Ascendancy> ascendancies() {

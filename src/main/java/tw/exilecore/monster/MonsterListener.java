@@ -138,7 +138,15 @@ public final class MonsterListener implements Listener {
 
         if (data.boss()) {
             // Boss 倒下：傷害排行（打過的人各收到一份，最後一行是自己的）
-            BossDamageReport.send(plugin, entity, data, monsters.ledger().damageTo(entity.getUniqueId()));
+            final java.util.Map<java.util.UUID, Double> dealt = monsters.ledger().damageTo(entity.getUniqueId());
+            BossDamageReport.send(plugin, entity, data, dealt);
+            // 2026-10：輸出紀錄（管理網頁）：每個人打了多少、從第一下到倒下幾秒
+            try {
+                tw.exilecore.combat.DpsRecords.get(plugin).bossKilled(entity, data.name(), dealt,
+                        monsters.ledger().firstHits(entity.getUniqueId()), monsters.ledger().now());
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("記錄 Boss 輸出時出錯", e);
+            }
         }
         final KillCredit credit = plugin.monsterModule().credit();
         credit.awardExperience(entity, data, killer);

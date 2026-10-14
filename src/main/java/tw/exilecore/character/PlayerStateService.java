@@ -59,6 +59,8 @@ public final class PlayerStateService {
 
     /** 其他模組給的修飾器（地圖詞綴：在地圖裡的玩家）。 */
     private final List<Function<Player, List<Modifier>>> modifierSources = new ArrayList<>();
+    /** 其中哪些是看場合的（{@link #addSituationalSource}：地圖詞綴）。 */
+    private final java.util.Set<Function<Player, List<Modifier>>> situationalSources = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     /** 其中哪些是暫時的增益（{@link #addBuffSource}）。 */
     private final java.util.Set<Function<Player, List<Modifier>>> buffSources = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
     private final List<java.util.function.BiFunction<Player, PlayerState, List<Modifier>>> stateModifierSources = new ArrayList<>();
@@ -79,7 +81,17 @@ public final class PlayerStateService {
     }
 
     /**
+     * 註冊一個看場合的來源（地圖詞綴：在地圖裡才有）：跟 {@link #addModifierSource} 一樣進屬性表，
+     * 只是網頁計算器的快照（{@link #persistentExtras}）不記它（2026-10）。
+     */
+    public void addSituationalSource(final Function<Player, List<Modifier>> source) {
+        modifierSources.add(source);
+        situationalSources.add(source);
+    }
+
+    /**
      * 註冊一個要看角色狀態（進度）的修飾器來源，例如任務的永久獎勵。
+     * 網頁計算器的虛擬角色也會呼叫（player 是 null）：要看玩家本人的部分自己略過。
      * 拿到的是正在重算的那個狀態：不要在裡面呼叫 {@link #get}（新玩家的狀態還沒放進去）。
      */
     public void addStateModifierSource(final java.util.function.BiFunction<Player, PlayerState, List<Modifier>> source) {
@@ -168,7 +180,62 @@ public final class PlayerStateService {
     }
 
     public void rebuild(final Player player, final PlayerState state) {
-        build(player, state, state.sheet(), true);
+        build(player, state, state.sheet(), true, null);
+    }
+
+    /**
+     * 網頁計算器（2026-10）的虛擬角色要的東西：不在線、沒有真的物品，裝備與珠寶直接給物品資料。
+     *
+     * @param gear   照 {@link PlayerState#JEWELLERY_SLOTS} 的順序（武器、防具、飾品；空的是 null）
+     * @param jewels 天賦樹珠寶孔：節點代號 → 珠寶
+     * @param extra  要看玩家本人才算得出來的永久加成（稱號、公會、贊助、分身獎勵），快照時記下來的
+     */
+    public record VirtualInputs(List<ItemData> gear, Map<String, ItemData> jewels, List<Modifier> extra) {
+        public VirtualInputs {
+            gear = gear == null ? List.of() : java.util.Collections.unmodifiableList(new ArrayList<>(gear));
+            jewels = jewels == null ? Map.of() : java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(jewels));
+            extra = extra == null ? List.of() : List.copyOf(extra);
+        }
+
+        /** 同樣的裝備與珠寶，多加幾條修飾器（光環的效果）。 */
+        public VirtualInputs plus(final List<Modifier> more) {
+            final List<Modifier> all = new ArrayList<>(extra);
+            all.addAll(more);
+            return new VirtualInputs(gear, jewels, all);
+        }
+    }
+
+    /** 虛擬角色算出來的屬性表，與需求不符、不生效的裝備（「頭盔：力量不足（需要 40，你有 32）」）。 */
+    public record VirtualSheet(StatSheet sheet, List<String> inactive) {
+    }
+
+    /**
+     * 虛擬角色的屬性表（2026-10，網頁計算器）：跟玩家身上那張同一套算法，只是不算暫時增益（光環另外算，見
+     * {@link tw.exilecore.skill.SkillService#virtualAuras}）與有條件的詞綴（「最近…」），也不碰任何玩家的狀態。
+     * 會把武器的標籤寫進 state（技能看得到用什麼武器）。
+     */
+    public VirtualSheet virtualSheet(final PlayerState state, final VirtualInputs inputs) {
+        final StatSheet sheet = new StatSheet();
+        final List<String> inactive = new ArrayList<>();
+        build(null, state, sheet, false, inputs, inactive);
+        return new VirtualSheet(sheet, List.copyOf(inactive));
+    }
+
+    /**
+     * 要看玩家本人的永久加成（稱號、公會、贊助、分身獎勵…）：網頁計算器的快照記下來，虛擬角色照樣加上。
+     * 不含暫時的增益、地圖詞綴這種看場合的，也不含天賦、裝備、任務、昇華天賦（那些虛擬角色自己算）。
+     */
+    public List<Modifier> persistentExtras(final Player player) {
+        final List<Modifier> list = new ArrayList<>();
+        for (final Function<Player, List<Modifier>> source : modifierSources) {
+            if (!buffSources.contains(source) && !situationalSources.contains(source)) {
+                list.addAll(source.apply(player));
+            }
+        }
+        if (plugin.ascendancy() != null) {
+            list.addAll(plugin.ascendancy().legacyModifiers(player, get(player)));
+        }
+        return list;
     }
 
     /**
@@ -181,14 +248,21 @@ public final class PlayerStateService {
             rebuild(player, state);
         }
         final StatSheet baseline = new StatSheet();
-        build(player, state, baseline, false);
+        build(player, state, baseline, false, null);
         return baseline;
     }
 
     /**
-     * @param live true＝玩家身上那張表（全部算、更新狀態）；false＝比對用的表（不算暫時增益、不改任何狀態）
+     * @param live    true＝玩家身上那張表（全部算、更新狀態）；false＝比對用的表（不算暫時增益、不改任何狀態）
+     * @param virtual 不是 null＝網頁計算器的虛擬角色（player 是 null、live 是 false）：裝備與珠寶從這裡拿，要看玩家的來源用快照的
      */
-    private void build(final Player player, final PlayerState state, final StatSheet sheet, final boolean live) {
+    private void build(final Player player, final PlayerState state, final StatSheet sheet, final boolean live, final VirtualInputs virtual) {
+        build(player, state, sheet, live, virtual, null);
+    }
+
+    /** @param inactiveSink 不是 null：需求不符的裝備寫進這裡（虛擬角色用） */
+    private void build(final Player player, final PlayerState state, final StatSheet sheet, final boolean live, final VirtualInputs virtual,
+                       final List<String> inactiveSink) {
         sheet.clearModifiers();
         final int level = state.level();
         final CharacterClass characterClass = state.characterClass();
@@ -205,7 +279,9 @@ public final class PlayerStateService {
         final PassiveTree tree = plugin.passives().tree();
         final List<Modifier> passiveModifiers = attributeChoices(state, characterClass,
                 tree == null ? List.of() : tree.modifiers(state.passives()), tree);
-        passiveModifiers.addAll(tw.exilecore.passive.JewelSockets.modifiers(plugin, state, tree));
+        passiveModifiers.addAll(virtual != null
+                ? tw.exilecore.passive.JewelSockets.modifiers(plugin.items() == null ? null : plugin.items().repository(), virtual.jewels(), state.passives(), tree)
+                : tw.exilecore.passive.JewelSockets.modifiers(plugin, state, tree));
         // 2026-10：「最近…」的條件詞綴（珠寶、裝備）：條件成立才算；記下算過哪些條件，變了就重算（tick）
         final Map<String, Boolean> conditions = new java.util.HashMap<>();
         final long now = plugin.getServer().getCurrentTick();
@@ -219,9 +295,13 @@ public final class PlayerStateService {
         sheet.addAll(passiveResolved);
         // 其他來源（地圖詞綴、任務獎勵、昇華天賦、分身獎勵）：給的屬性點也算進裝備需求，所以兩輪都加
         final List<Modifier> extra = new ArrayList<>();
-        for (final Function<Player, List<Modifier>> source : modifierSources) {
-            if (live || !buffSources.contains(source)) {
-                extra.addAll(source.apply(player));
+        if (virtual != null) {
+            extra.addAll(virtual.extra()); // 虛擬角色：要看玩家的來源用快照記下來的
+        } else {
+            for (final Function<Player, List<Modifier>> source : modifierSources) {
+                if (live || !buffSources.contains(source)) {
+                    extra.addAll(source.apply(player));
+                }
             }
         }
         for (final java.util.function.BiFunction<Player, PlayerState, List<Modifier>> source : stateModifierSources) {
@@ -230,7 +310,7 @@ public final class PlayerStateService {
         sheet.addAll(extra);
 
         // 第一輪：所有裝備的修飾器，用來算屬性值
-        final List<EquippedItem> equipped = equippedItems(player, state);
+        final List<EquippedItem> equipped = virtual != null ? equippedItems(state, virtual.gear()) : equippedItems(player, state);
         for (final EquippedItem item : equipped) {
             sheet.addAll(item.modifiers());
         }
@@ -279,6 +359,11 @@ public final class PlayerStateService {
         if (live) {
             state.setWeaponTags(weaponTags);
             state.setConditionsEvaluated(conditions);
+        } else if (virtual != null) {
+            state.setWeaponTags(weaponTags); // 虛擬角色：技能要知道拿什麼武器
+        }
+        if (inactiveSink != null) {
+            inactiveSink.addAll(inactive);
         }
         ascendancyEquipment(sheet, state, active, tree);
         // 與死共舞（2026-10 PoE2 基石）：主手單手武器（魔杖、權杖除外）、副手空著：技能速度更多 25%
@@ -382,6 +467,36 @@ public final class PlayerStateService {
         return penalty;
     }
 
+    /**
+     * 能不能穿上這件（2026-10）：還沒鑑定的、等級或屬性需求不夠的穿不上去。
+     * 用現在的屬性比（換下來的那件給的屬性還算在內；換完不夠的話那件照舊標成沒生效）。
+     *
+     * @return 穿不上的原因；可以穿回傳 null（不是我們的物品也回傳 null，由呼叫的人判斷）
+     */
+    public String equipProblem(final Player player, final ItemStack stack) {
+        if (stack == null || stack.isEmpty() || plugin.items() == null) {
+            return null;
+        }
+        final ItemData data = plugin.items().read(stack).orElse(null);
+        final ItemBase base = data == null ? null : plugin.items().repository().base(data.base());
+        if (base == null) {
+            return null;
+        }
+        final StatSheet sheet = sheet(player);
+        return equipProblem(data, ItemStats.requirements(plugin.items().repository(), base, data), get(player).level(),
+                sheet.get(StatKeys.STR), sheet.get(StatKeys.DEX), sheet.get(StatKeys.INT));
+    }
+
+    /** 同上，純邏輯。 */
+    static String equipProblem(final ItemData data, final ItemBase.Requirements req, final int level,
+                               final double str, final double dex, final double intelligence) {
+        if (!data.identified()) {
+            return "還沒鑑定，穿不上去：先找營地的鑑定師（免費）或用鑑定卷軸";
+        }
+        final String reason = requirementProblem(req, level, str, dex, intelligence);
+        return reason == null ? null : "穿不上去：" + reason;
+    }
+
     /** 需求不符的原因；符合回傳 null。 */
     private static String requirementProblem(final ItemBase.Requirements req, final int level,
                                              final double str, final double dex, final double intelligence) {
@@ -469,14 +584,29 @@ public final class PlayerStateService {
         return list;
     }
 
+    /** 虛擬角色的裝備（物品資料，照 {@link PlayerState#JEWELLERY_SLOTS} 的順序）。 */
+    private List<EquippedItem> equippedItems(final PlayerState state, final List<ItemData> gear) {
+        final List<EquippedItem> list = new ArrayList<>();
+        if (plugin.items() == null) {
+            return list;
+        }
+        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length && i < gear.size(); i++) {
+            if (gear.get(i) != null) {
+                collect(list, state, gear.get(i), PlayerState.JEWELLERY_SLOTS[i]);
+            }
+        }
+        return list;
+    }
+
     private void collect(final List<EquippedItem> list, final PlayerState state, final ItemStack stack, final ItemSlot slot) {
         if (stack == null || stack.isEmpty()) {
             return;
         }
-        final Optional<ItemData> data = plugin.items().read(stack);
-        if (data.isEmpty()) {
-            return;
-        }
+        plugin.items().read(stack).ifPresent(data -> collect(list, state, data, slot));
+    }
+
+    private void collect(final List<EquippedItem> list, final PlayerState state, final ItemData item, final ItemSlot slot) {
+        final Optional<ItemData> data = Optional.of(item);
         final ItemBase base = plugin.items().repository().base(data.get().base());
         if (base == null || base.slot() != slot) {
             // 放錯欄位（例如把頭盔拿在手上）不算數
@@ -752,7 +882,7 @@ public final class PlayerStateService {
     /** 名字（已跳脫的 MiniMessage）套上累積贊助的名字顏色（沒有就是白色）。 */
     private String styledName(final Player player, final String escapedName) {
         // 2026-10 月卡福利：有月卡的人名字前面一個小月亮（TAB、聊天）
-        final String moon = plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0 ? "<#bcd4ff>☾</#bcd4ff>" : "";
+        final String moon = plugin.sponsors() != null && plugin.sponsors().cardActive(player) ? "<#bcd4ff>☾</#bcd4ff>" : "";
         final String style = plugin.sponsors() == null ? null : plugin.sponsors().nameColor(player);
         if (style == null) {
             return moon + "<white>" + escapedName + "</white>";
@@ -834,7 +964,7 @@ public final class PlayerStateService {
         character.setDeaths(character.deaths() + 1);
         // 2026-10：統一——death_penalty_from_level（60）等以上在哪裡死都扣 map_death_penalty（10%：劇情、地圖、劫盜、世界 Boss…），
         // 以下都不扣（競技場本來就不扣，在呼叫的地方擋掉）
-        final double ratio = character.level() >= config.deathPenaltyFromLevel() ? deathPenaltyRatio(player) : 0;
+        final double ratio = deathPenaltyRatio(player, character.level());
         final long need = config.experienceToNext(character.level());
         if (ratio <= 0 || need <= 0) {
             return 0;
@@ -844,10 +974,24 @@ public final class PlayerStateService {
         return loss;
     }
 
-    /** 這個人死亡扣的比例：map_death_penalty，累積贊助有減免的照那一階（2026-10）。 */
+    /** 這個人死亡扣的比例（現在的等級）：map_death_penalty，累積贊助有減免的照那一階（2026-10）。 */
     public double deathPenaltyRatio(final Player player) {
-        final double base = config.mapDeathPenalty();
-        return plugin.sponsors() == null ? base : plugin.sponsors().deathPenalty(player, base);
+        final CharacterRecord character = get(player).character();
+        return deathPenaltyRatio(player, character == null ? 1 : character.level());
+    }
+
+    /**
+     * 這個人在這個等級死亡扣的比例（2026-10）：照等級（100 級起 20%、110 級起 30%…，character.yml 的 death_penalty_tiers），
+     * 累積贊助的減免是固定值（贊助把 10% 減成 6% = 少 4%：20% 變 16%、30% 變 26%），未滿 death_penalty_from_level 不扣。
+     */
+    public double deathPenaltyRatio(final Player player, final int level) {
+        final double base = config.deathPenaltyAt(level);
+        final double normal = config.mapDeathPenalty();
+        if (base <= 0 || plugin.sponsors() == null) {
+            return base;
+        }
+        final double reduction = Math.max(0, normal - plugin.sponsors().deathPenalty(player, normal));
+        return Math.max(0, base - reduction);
     }
 
     /** 管理指令：直接設定等級（經驗歸零）。 */

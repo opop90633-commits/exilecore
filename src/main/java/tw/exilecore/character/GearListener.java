@@ -109,6 +109,11 @@ final class GearListener implements Listener {
             player.sendActionBar(plugin.text().parse("<red>這不是能裝備的東西"));
             return;
         }
+        final String blocked = plugin.players().equipProblem(player, stack); // 2026-10：未鑑定、需求不夠的穿不上
+        if (blocked != null) {
+            player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(blocked)));
+            return;
+        }
         int index = Gear.index(base.slot());
         if (base.slot() == tw.exilecore.item.ItemSlot.RING && state.jewellery(0) != null && state.jewellery(1) == null) {
             index = 1;

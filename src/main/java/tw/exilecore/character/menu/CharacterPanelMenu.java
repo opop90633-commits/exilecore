@@ -131,7 +131,7 @@ public final class CharacterPanelMenu extends Menu {
         set(SLOT_PRESETS, icon(Material.CLOCK, "<#bcd4ff>裝備組（月卡）　<white>第 " + (state.activeGearSet() + 1) + " 組",
                 "<gray>5 組裝備，每一組的裝備放在自己那一組裡，切換時一起換",
                 "<gray>只有正在用的那一組有效果",
-                plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0 ? "<green>月卡：可以使用" : "<dark_gray>要有月卡才能使用",
+                plugin.sponsors() != null && plugin.sponsors().cardActive(player) ? "<green>月卡：可以使用" : "<dark_gray>要有月卡才能使用",
                 "", "<yellow>左鍵：打開"));
 
         for (int i = 0; i < JEWELLERY_POSITIONS.length; i++) {

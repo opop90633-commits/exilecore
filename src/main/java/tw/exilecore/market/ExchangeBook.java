@@ -215,6 +215,22 @@ public final class ExchangeBook {
     }
 
     /**
+     * 跟你同方向的掛單（2026-10，交易所的「市場深度」）：也是「給 give、要 want」的那些，出價高的（每個 want 願意給比較多 give）在前，
+     * 同價再依時間。含自己的單；還沒寫進資料庫、已經沒得成交的不算。
+     */
+    public List<Order> competitors(final String give, final String want) {
+        final List<Order> list = new ArrayList<>();
+        for (final Order order : orders.values()) {
+            if (order.give().equals(give) && order.want().equals(want) && order.confirmed() && order.lots() > 0) {
+                list.add(order);
+            }
+        }
+        list.sort(Comparator.<Order>comparingDouble(order -> -(double) order.giveTotal() / order.wantTotal())
+                .thenComparingLong(Order::createdAt));
+        return list;
+    }
+
+    /**
      * 新單：最多拿 giveAmount 個 give，想換 wantAmount 個 want。跟舊單成交（改掉舊單的剩餘數量，用完的舊單移除），
      * 回傳結果；剩下的要不要掛著由呼叫端決定（{@link Result#resting()} 的數量照這裡算）。
      */

@@ -188,6 +188,7 @@
     <button type="button" role="tab" data-tab="players" aria-selected="false">線上玩家</button>
     <button type="button" role="tab" data-tab="guilds" aria-selected="false">公會</button>
     <button type="button" role="tab" data-tab="trace" aria-selected="false">物品追查</button>
+    <button type="button" role="tab" data-tab="dps" aria-selected="false">輸出紀錄</button>
     <button type="button" role="tab" data-tab="log" aria-selected="false">操作紀錄</button>
   </nav>
 
@@ -319,6 +320,36 @@
         <button type="button" id="trace-player-go">查這個玩家最近的交易</button></div>
       <div class="scroll"><table id="trace-table"><tbody></tbody></table></div>
       <p class="empty" id="trace-empty" hidden></p>
+    </div>
+  </section>
+
+  <section id="tab-dps" role="tabpanel" hidden>
+    <div class="card">
+      <h2>輸出紀錄</h2>
+      <p class="note">每場 Boss（區域、地圖、終局、極境、巔峰、世界 Boss）倒下時，每個打過的人打了多少、從自己第一下到 Boss 倒下幾秒（至少算 3 秒）；
+        訓練假人每一段夠長的也記一筆。傷害是真正扣掉的生命（含點燃、召喚物，Boss 的每秒傷害上限之後）。
+        「Boss 平均」＝總傷害 ÷ 總秒數（打得久的場次比重大）。</p>
+      <div class="filters">
+        <label>範圍 <select id="dps-days"><option value="1">今天（24 小時）</option><option value="7" selected>最近 7 天</option>
+          <option value="30">最近 30 天</option><option value="0">全部</option></select></label>
+        <label>Boss 種類 <select id="dps-where"><option value="">全部</option><option value="世界 Boss">世界 Boss</option>
+          <option value="map">地圖（含終局）</option><option value="極境">極境</option><option value="區域 Boss">區域 Boss</option></select></label>
+        <input type="text" id="dps-name" placeholder="找玩家或角色" aria-label="找玩家或角色" size="16">
+        <button type="button" id="dps-refresh">重新整理</button>
+      </div>
+      <h3>每個人</h3>
+      <div class="scroll"><table id="dps-players">
+        <thead><tr><th>玩家</th><th>角色</th><th>職業</th><th class="num">等級</th><th class="num">Boss 場數</th>
+          <th class="num">Boss 平均每秒</th><th class="num">Boss 最高每秒</th><th class="num">假人最近</th><th class="num">假人最高</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <h3>每一筆（新的在前）</h3>
+      <div class="scroll"><table id="dps-rows">
+        <thead><tr><th>時間</th><th>種類</th><th>玩家</th><th>角色</th><th class="num">等級</th><th>對象</th><th>地點</th>
+          <th class="num">人數</th><th class="num">傷害</th><th class="num">秒</th><th class="num">每秒</th><th class="num">佔比</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty" id="dps-empty" hidden>還沒有紀錄（更新之後打倒的 Boss、打假人才會記）。</p>
     </div>
   </section>
 
@@ -1438,12 +1469,67 @@
     }).catch(fail);
   }
 
+  // ---- 輸出紀錄（2026-10） ----
+  var dpsData = null;
+  function wan(v) {
+    v = Number(v) || 0;
+    if (v >= 100000000) { return (v / 100000000).toFixed(2).replace(/\.?0+$/, '') + ' 億'; }
+    if (v >= 10000) { return (v / 10000).toFixed(1).replace(/\.0$/, '') + ' 萬'; }
+    return Math.round(v).toLocaleString();
+  }
+  function dpsMatch(row) {
+    var where = $('dps-where').value;
+    if (where === 'map' && (row.kind !== 'boss' || row.where === '世界 Boss' || row.where === '區域 Boss' || row.where.indexOf('極境') >= 0)) { return false; }
+    if (where && where !== 'map' && (row.kind !== 'boss' || row.where.indexOf(where) < 0)) { return false; }
+    var q = $('dps-name').value.trim().toLowerCase();
+    return !q || (row.player || '').toLowerCase().indexOf(q) >= 0 || (row.character || '').toLowerCase().indexOf(q) >= 0;
+  }
+  function renderDps() {
+    if (!dpsData) { return; }
+    var shown = dpsData.rows.filter(dpsMatch);
+    // 每個人：照篩過的紀錄重算（Boss 平均 = 總傷害 ÷ 總秒數）
+    var by = {};
+    shown.forEach(function (r) {
+      var p = by[r.uuid] || (by[r.uuid] = { player: r.player, character: r.character, className: r.className, level: r.level,
+        dmg: 0, sec: 0, fights: 0, best: 0, dummyLast: null, dummyBest: 0 });
+      var dps = r.seconds > 0 ? r.damage / r.seconds : 0;
+      if (r.kind === 'boss') { p.dmg += r.damage; p.sec += r.seconds; p.fights++; p.best = Math.max(p.best, dps); }
+      else { if (p.dummyLast === null) { p.dummyLast = dps; } p.dummyBest = Math.max(p.dummyBest, dps); }
+    });
+    var players = Object.keys(by).map(function (k) { return by[k]; });
+    players.sort(function (a, b) { return (b.sec > 0 ? b.dmg / b.sec : 0) - (a.sec > 0 ? a.dmg / a.sec : 0) || b.dummyBest - a.dummyBest; });
+    var pb = clear($('dps-players').querySelector('tbody'));
+    players.forEach(function (p) {
+      pb.appendChild(h('tr', null, h('td', { text: p.player }), h('td', { text: p.character || '' }), h('td', { text: p.className || '' }),
+        h('td', { cls: 'num', text: p.level || '' }), h('td', { cls: 'num', text: p.fights || '' }),
+        h('td', { cls: 'num', text: p.sec > 0 ? wan(p.dmg / p.sec) : '' }), h('td', { cls: 'num', text: p.best ? wan(p.best) : '' }),
+        h('td', { cls: 'num', text: p.dummyLast !== null ? wan(p.dummyLast) : '' }), h('td', { cls: 'num', text: p.dummyBest ? wan(p.dummyBest) : '' })));
+    });
+    var rb = clear($('dps-rows').querySelector('tbody'));
+    shown.slice(0, 500).forEach(function (r) {
+      rb.appendChild(h('tr', null, h('td', { cls: 'time', text: time(r.at) }), h('td', { text: r.kind === 'boss' ? 'Boss' : '假人' }),
+        h('td', { text: r.player }), h('td', { text: r.character || '' }), h('td', { cls: 'num', text: r.level || '' }),
+        h('td', { text: r.target || '' }), h('td', { text: r.where || '' }), h('td', { cls: 'num', text: r.kind === 'boss' ? r.players : '' }),
+        h('td', { cls: 'num', text: wan(r.damage) }), h('td', { cls: 'num', text: Number(r.seconds).toFixed(1) }),
+        h('td', { cls: 'num', text: wan(r.seconds > 0 ? r.damage / r.seconds : 0) }),
+        h('td', { cls: 'num', text: r.kind === 'boss' ? Math.round(r.share * 100) + '%' : '' })));
+    });
+    $('dps-empty').hidden = shown.length > 0;
+  }
+  function loadDps() {
+    return api('GET', 'admin/api/dps?days=' + encodeURIComponent($('dps-days').value)).then(function (json) {
+      dpsData = json;
+      renderDps();
+    }).catch(fail);
+  }
+
   // ---- 分頁 ----
   function showTab(tab) {
     Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
       b.setAttribute('aria-selected', b.getAttribute('data-tab') === tab ? 'true' : 'false');
     });
-    ['give', 'records', 'settings', 'players', 'guilds', 'trace', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    ['give', 'records', 'settings', 'players', 'guilds', 'trace', 'dps', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    if (tab === 'dps') { loadDps(); }
     if (tab === 'records') { loadRecords(); }
     if (tab === 'guilds') { loadGuilds(); }
     if (tab === 'log') { loadLog(); }
@@ -1485,6 +1571,10 @@
     var name = $('trace-player').value.trim();
     if (name) { runTrace('player=' + encodeURIComponent(name)); }
   });
+  $('dps-refresh').addEventListener('click', loadDps);
+  $('dps-days').addEventListener('change', loadDps);
+  $('dps-where').addEventListener('change', renderDps);
+  $('dps-name').addEventListener('input', renderDps);
   $('refresh').addEventListener('click', function () { load(false, 'safe'); var tab = document.querySelector('.tabs button[aria-selected="true"]').getAttribute('data-tab'); if (tab === 'records') { loadRecords(); } if (tab === 'log') { loadLog(); } });
   $('logout').addEventListener('click', function () {
     rememberFailed(null); // 登出：沒確認的發放也不留給下一個在這個分頁登入的人

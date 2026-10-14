@@ -57,7 +57,7 @@ final class OrdersMenu extends Menu {
         return appendLore(icon, "",
                 "<#7fd4ff>給 " + order.giveTotal() + " " + ItemRenderer.escape(service.currencyName(order.give()))
                         + " 換 " + order.wantTotal() + " " + ItemRenderer.escape(service.currencyName(order.want())),
-                "<gray>已經成交 " + order.taken() + " / " + order.giveTotal() + "（成交的到市集領）",
+                "<gray>已經成交 " + order.taken() + " / " + order.giveTotal() + "（成交的自動放進你的通貨）",
                 "<dark_gray>掛了 " + MarketService.ago(order.createdAt()),
                 order.confirmed() ? "<yellow>左鍵：取消（沒成交的 " + order.remaining() + " 個退回）" : "<yellow>存檔中…");
     }

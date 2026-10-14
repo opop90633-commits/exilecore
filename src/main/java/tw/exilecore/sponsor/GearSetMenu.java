@@ -36,7 +36,7 @@ public final class GearSetMenu extends Menu {
     }
 
     private boolean card() {
-        return plugin.sponsors() != null && plugin.sponsors().cardDaysLeft(player) > 0;
+        return plugin.sponsors() != null && plugin.sponsors().cardActive(player);
     }
 
     @Override

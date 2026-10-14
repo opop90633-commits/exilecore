@@ -68,6 +68,8 @@ public final class WebModule implements Module, Listener {
     private volatile byte[] plannerData = new byte[0];
     /** 規劃器的裝備資料（2026-10）。 */
     private volatile byte[] plannerItems = "{}".getBytes(StandardCharsets.UTF_8);
+    /** 網頁計算器的技能與輔助清單（2026-10）。 */
+    private volatile byte[] plannerSkills = "{\"skills\":[],\"supports\":[]}".getBytes(StandardCharsets.UTF_8);
     /** 首頁、圖鑑（2026-10）。 */
     private volatile byte[] homePage = new byte[0];
     private volatile byte[] codexPage = new byte[0];
@@ -203,6 +205,11 @@ public final class WebModule implements Module, Listener {
                 java.util.Map.of("Cache-Control", "no-cache")));
         server.route("/tree/data.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", plannerData,
                 java.util.Map.of("Cache-Control", "no-cache", "X-Build", BUILD)));
+        // 2026-10：網頁計算器（像 PoB）：技能與輔助清單、送一個角色過來算屬性與每秒傷害
+        server.route("/tree/skills.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", plannerSkills,
+                java.util.Map.of("Cache-Control", "no-cache")));
+        final BuildCalc calc = new BuildCalc(plugin);
+        server.endpoint("/tree/calc", calc::handle, "POST");
         // 市場報告：全服通貨與金幣的產出、消耗、存量、參考價值（只有加總，沒有個人資料）；關掉時整頁 404
         server.route("/economy", path -> economyEnabled ? WebServer.Response.of("text/html; charset=utf-8", economyPage) : null);
         server.route("/economy/", path -> economyEnabled ? WebServer.Response.redirect("../economy") : null);
@@ -280,6 +287,13 @@ public final class WebModule implements Module, Listener {
                 plugin.getSLF4JLogger().warn("規劃器的裝備資料做不出來：{}", e.toString());
             }
         }
+        if (plugin.skills() != null) {
+            try {
+                plannerSkills = BuildCalc.skillsJson(plugin.skills().config());
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("網頁計算器的技能資料做不出來：{}", e.toString());
+            }
+        }
         try {
             codexData = CodexData.json(plugin); // 2026-10：圖鑑（技能、輔助寶石、通貨）
         } catch (final RuntimeException e) {
@@ -306,7 +320,7 @@ public final class WebModule implements Module, Listener {
                     final List<PlannerData.AscendancyNode> nodes = new ArrayList<>();
                     for (final tw.exilecore.ascendancy.AscendancyConfig.Node node : branch) {
                         nodes.add(new PlannerData.AscendancyNode(node.name(), node.cost(),
-                                tw.exilecore.ascendancy.StatLines.describeAll(node.stats()), node.note()));
+                                tw.exilecore.ascendancy.StatLines.describeAll(node.stats()), node.note(), node.id()));
                     }
                     branches.add(nodes);
                 }

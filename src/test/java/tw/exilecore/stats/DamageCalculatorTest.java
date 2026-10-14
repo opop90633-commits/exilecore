@@ -143,6 +143,25 @@ class DamageCalculatorTest {
     }
 
     @Test
+    void blackflameFireSpellsUseFireAndChaosModifiers() {
+        // 2026-10：墨焰誓的火焰法術轉成混沌，火焰與混沌的「增加」都吃（以前只吃火焰的）
+        final SkillProfile blast = new SkillProfile("inferno_blast", Set.of(Tags.SPELL, Tags.FIRE), 1.0,
+                new DamagePacket().set(DamageType.FIRE, 100));
+        final StatSheet caster = new StatSheet()
+                .add(Modifier.flat(StatKeys.FLAG_BLACKFLAME, 1, "墨焰誓"))
+                .add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 0.5, Set.of(Tags.FIRE), "火焰"))
+                .add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 1.0, Set.of(Tags.CHAOS), "混沌"));
+        final DamagePacket out = DamageCalculator.expectedOutgoing(caster, blast);
+        assertEquals(0, out.get(DamageType.FIRE), 1e-9);
+        assertEquals(250, out.get(DamageType.CHAOS), 1e-9, "100 × (1 + 50% + 100%)");
+        // 沒有墨焰誓：混沌的增加吃不到
+        final StatSheet plain = new StatSheet()
+                .add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 0.5, Set.of(Tags.FIRE), "火焰"))
+                .add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 1.0, Set.of(Tags.CHAOS), "混沌"));
+        assertEquals(150, DamageCalculator.expectedOutgoing(plain, blast).get(DamageType.FIRE), 1e-9);
+    }
+
+    @Test
     void spellDamageHasARange() {
         final DamagePacket min = new DamagePacket().set(DamageType.LIGHTNING, 10);
         final DamagePacket max = new DamagePacket().set(DamageType.LIGHTNING, 30);

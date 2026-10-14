@@ -630,6 +630,12 @@ public final class TrainingService {
         if (fresh.dps() > 0 && fresh.replaces(DummyRecord.decode(state.progress().get(DummyRecord.KEY)))) {
             plugin.characters().setProgress(player, DummyRecord.KEY, fresh.encode());
         }
+        // 2026-10：輸出紀錄（管理網頁）：每一段夠長的都記（角色頁只留最好的那筆）
+        try {
+            tw.exilecore.combat.DpsRecords.get(plugin).dummy(player, session.name, meter.total(), meter.seconds());
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("記錄假人輸出時出錯", e);
+        }
     }
 
     private static String number(final double value) {

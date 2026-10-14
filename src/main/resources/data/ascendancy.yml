@@ -17,6 +17,35 @@ settings:
   cooldown_seconds: 60        # 開了一個試煉之後多久才能再開（每個人）
   weekly_opens: 8             # 每個角色每週最多開幾次試煉（打倒前全倒了可以重開，算次數；每週一 0 點重置；0 = 不限）
 
+# ---- 衝等活動（2026-10）----
+# 每個昇華職業第一個升到 level 級的角色，帳號拿到那個昇華的專屬稱號（沒有加成）。每個稱號全服只有一個，拿了就沒了。
+# 誰拿走了記在資料庫（清進度時一起清，新賽季重新搶）。先到 level 級才昇華的，昇華的那一刻算。
+# titles：昇華代號 → 稱號名稱（沒寫的用「巔峰」＋昇華名稱）。改完 /ec reload。
+level_race:
+  enabled: true
+  level: 100
+  titles:
+    ironwarden: 巔峰鐵衛
+    berserker: 巔峰狂嘯
+    forgesmith: 巔峰鑄星
+    witchhunter: 巔峰斷咒
+    legionnaire: 巔峰弩衛
+    gemling: 巔峰嵌晶
+    amazon: 巔峰獵姬
+    ritualist: 巔峰儀祭
+    stararrow: 巔峰星矢
+    windwalker: 巔峰御風
+    invoker: 巔峰喚雷
+    voidwalker: 巔峰虛步
+    starfire: 巔峰星焰
+    voidrobe: 巔峰法袍
+    sandsage: 巔峰沙靈
+    blightcaller: 巔峰疫喚
+    bloodmage: 巔峰血術
+    lich: 巔峰骸主
+    starseer: 巔峰觀星
+    wildshaman: 巔峰獸巫
+
 # ---- 試煉 ----
 #   name        名稱
 #   requires    解鎖條件（都要符合；可以不寫）：
