@@ -77,7 +77,7 @@ class SkillLevelBonusTest {
     void spellDamageAndScaledValuesKeepGrowingPastTwenty() {
         final double twenty = SkillProfiles.spellDamage(config, config.skill("fireball"), 20)[1];
         final double twentyTwo = build("fireball", 20, 100, levels(2, Tags.SPELL)).profile().spellMax().total();
-        assertEquals(twenty * config.extraLevelGrowth() * config.extraLevelGrowth(), twentyTwo, 1e-6, "每多一級 ×1.1");
+        assertEquals(twenty * config.extraLevelGrowth() * config.extraLevelGrowth(), twentyTwo, 1e-6, "每多一級 ×1.13");
         assertEquals(1.0 + SkillConfig.DEFAULT_EXTRA_LEVEL_DAMAGE / 100.0, config.extraLevelGrowth(), 1e-9);
 
         // 攻擊的傷害效益照 1 → 20 級的趨勢往上加

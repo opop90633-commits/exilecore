@@ -228,7 +228,7 @@ class SkillConfigTest {
         assertEquals(7, split.params().projectiles().intAt(20));
         final SkillProfile arrows = SkillProfiles.build(config, split, 1, Set.of("weapon", "two_hand", Tags.CROSSBOW, Tags.RANGED));
         assertTrue(arrows.tags().containsAll(Set.of(Tags.ATTACK, Tags.PROJECTILE, Tags.CROSSBOW)), "攻擊帶武器標籤");
-        assertEquals(1.23, arrows.effectiveness(), 1e-9);
+        assertEquals(1.6, arrows.effectiveness(), 1e-9); // 2026-10：弩再 ×1.3（1.23 → 1.6）
 
         final SkillProfile burning = SkillProfiles.build(config, config.skill("explosive_bolt"), 1, Set.of(Tags.CROSSBOW));
         assertEquals(0.5, burning.conversion().get(DamageType.FIRE), 1e-9);
@@ -260,7 +260,7 @@ class SkillConfigTest {
     void badFilesAreRejectedWithTheFieldName(@TempDir final Path dir) throws IOException {
         final String shipped = Files.readString(DATA.resolve(SkillConfig.FILE), StandardCharsets.UTF_8);
         assertRejected(dir, shipped.replace("visual: fireball", "visual: lasers"), "visual");
-        assertRejected(dir, shipped.replace("    effectiveness: [1.3, 1.82]\n", "    effectiveness: [1.3, 1.82]\n    damage: [1, 2]\n"), "damage");
+        assertRejected(dir, shipped.replace("    effectiveness: [1.0, 1.4]\n", "    effectiveness: [1.0, 1.4]\n    damage: [1, 2]\n"), "damage");
         assertRejected(dir, shipped.replace("  default_staff:", "  default_staff_renamed:"), "default_staff");
         assertRejected(dir, shipped.replace("starter: witch", "starter: marauder"), "起始技能");
         assertRejected(dir, shipped.replace("convert: { fire: 0.5 }", "convert: { fire: 0.8, cold: 0.5 }"), "convert");

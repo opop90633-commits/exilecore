@@ -124,9 +124,8 @@ cosmetics:
   m3d_frost_halberd: { type: skin, slot: weapon, art: frost_halberd, name: 霜晶長戟, rarity: epic, fashion_price: 20 }
   m3d_blood_katana: { type: skin, slot: weapon, art: blood_katana, name: 血月太刀, rarity: epic, fashion_price: 20 }
   m3d_verdant_staff: { type: skin, slot: weapon, art: verdant_staff, name: 森語古杖, rarity: rare, fashion_price: 12 }
-  # 2026-10 先隱藏（模型已經在資源包裡，要上架把下面兩行的 # 拿掉；要放進抽獎箱再加回 boxes 的權重）
-  # m3d_fire_spear: { type: skin, slot: weapon, art: fire_spear, name: 火尖槍, rarity: epic, fashion_price: 20,
-  #                   description: "赤紅槍身、燃著火焰的槍尖（近戰武器、法杖都能套）" }   # Blockbench 手做（tools/models3d_custom/）
+  m3d_fire_spear: { type: skin, slot: weapon, art: fire_spear, name: 火尖槍, rarity: epic, fashion_price: 20,
+                    description: "赤紅槍身、燃著火焰的槍尖（近戰武器、法杖都能套）" }   # Blockbench 手做（tools/models3d_custom/）
   m3d_star_aegis: { type: skin, slot: offhand, art: star_aegis, name: 星穹聖盾, rarity: epic, fashion_price: 20 }
   m3d_void_tome: { type: skin, slot: offhand, art: void_tome, name: 虛空魔典, rarity: epic, fashion_price: 20 }
   m3d_star_crown: { type: skin, slot: headgear, art: star_crown, name: 星冠, rarity: legendary, fashion_price: 40 }
@@ -243,28 +242,29 @@ boxes:
       m3d_armor_ironguard: 4.8
       m3d_rune_shield: 4.8
       m3d_pet_bat: 4.8
-      # 史詩（合計 45%，21 件）
-      m3d_inferno_axe: 2.1429
-      m3d_frost_halberd: 2.1429
-      m3d_blood_katana: 2.1429
-      m3d_star_aegis: 2.1429
-      m3d_void_tome: 2.1429
-      m3d_inferno_horns: 2.1429
-      m3d_void_mask: 2.1429
-      m3d_halo_back: 2.1429
-      m3d_pet_owl: 2.1429
-      m3d_pet_golem: 2.1429
-      m3d_pet_tome: 2.1429
-      m3d_blood_bow: 2.1429
-      m3d_inferno_repeater: 2.1429
-      m3d_frost_arbalest: 2.1429
-      m3d_armor_inferno: 2.1429
-      m3d_armor_frost: 2.1429
-      m3d_thunder_hammer: 2.1429
-      m3d_shadow_crossbow: 2.1429
-      m3d_oni_mask: 2.1429
-      m3d_butterfly_wings: 2.1429
-      m3d_pet_jelly: 2.1429
+      # 史詩（合計 45%，22 件）
+      m3d_inferno_axe: 2.0455
+      m3d_frost_halberd: 2.0455
+      m3d_blood_katana: 2.0455
+      m3d_star_aegis: 2.0455
+      m3d_void_tome: 2.0455
+      m3d_inferno_horns: 2.0455
+      m3d_void_mask: 2.0455
+      m3d_halo_back: 2.0455
+      m3d_pet_owl: 2.0455
+      m3d_pet_golem: 2.0455
+      m3d_pet_tome: 2.0455
+      m3d_blood_bow: 2.0455
+      m3d_inferno_repeater: 2.0455
+      m3d_frost_arbalest: 2.0455
+      m3d_armor_inferno: 2.0455
+      m3d_armor_frost: 2.0455
+      m3d_thunder_hammer: 2.0455
+      m3d_shadow_crossbow: 2.0455
+      m3d_oni_mask: 2.0455
+      m3d_butterfly_wings: 2.0455
+      m3d_pet_jelly: 2.0455
+      m3d_fire_spear: 2.0455
       # 傳說（合計 7%，9 件）
       m3d_star_greatsword: 0.7778
       m3d_star_crown: 0.7778
@@ -297,28 +297,29 @@ boxes:
       m3d_armor_starlight: 1.4444
       m3d_abyss_trident: 1.4444
       m3d_sun_bow: 1.4444
-      # 史詩（合計 49.5%）
-      m3d_inferno_axe: 2.3571
-      m3d_frost_halberd: 2.3571
-      m3d_blood_katana: 2.3571
-      m3d_star_aegis: 2.3571
-      m3d_void_tome: 2.3571
-      m3d_inferno_horns: 2.3571
-      m3d_void_mask: 2.3571
-      m3d_halo_back: 2.3571
-      m3d_pet_owl: 2.3571
-      m3d_pet_golem: 2.3571
-      m3d_pet_tome: 2.3571
-      m3d_blood_bow: 2.3571
-      m3d_inferno_repeater: 2.3571
-      m3d_frost_arbalest: 2.3571
-      m3d_armor_inferno: 2.3571
-      m3d_armor_frost: 2.3571
-      m3d_thunder_hammer: 2.3571
-      m3d_shadow_crossbow: 2.3571
-      m3d_oni_mask: 2.3571
-      m3d_butterfly_wings: 2.3571
-      m3d_pet_jelly: 2.3571
+      # 史詩（合計 49.5%，22 件）
+      m3d_inferno_axe: 2.25
+      m3d_frost_halberd: 2.25
+      m3d_blood_katana: 2.25
+      m3d_star_aegis: 2.25
+      m3d_void_tome: 2.25
+      m3d_inferno_horns: 2.25
+      m3d_void_mask: 2.25
+      m3d_halo_back: 2.25
+      m3d_pet_owl: 2.25
+      m3d_pet_golem: 2.25
+      m3d_pet_tome: 2.25
+      m3d_blood_bow: 2.25
+      m3d_inferno_repeater: 2.25
+      m3d_frost_arbalest: 2.25
+      m3d_armor_inferno: 2.25
+      m3d_armor_frost: 2.25
+      m3d_thunder_hammer: 2.25
+      m3d_shadow_crossbow: 2.25
+      m3d_oni_mask: 2.25
+      m3d_butterfly_wings: 2.25
+      m3d_pet_jelly: 2.25
+      m3d_fire_spear: 2.25
       # 稀有（合計 25.5%）
       m3d_verdant_staff: 2.55
       m3d_verdant_wreath: 2.55

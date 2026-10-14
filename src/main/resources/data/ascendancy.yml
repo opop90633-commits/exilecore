@@ -963,6 +963,7 @@ ascendancies:
         icon: ARROW
         stats:
           - { stat: flag.amazon_crit, value: 1 }
+          - { stat: damage, type: MORE, value: 20, tags: [spear] }   # 2026-10 補強：林嵐獵姬沒有像星矢「弒神」那樣的更多傷害
       a_leech:
         name: 汲取
         cost: 1

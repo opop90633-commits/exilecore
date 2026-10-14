@@ -64,12 +64,12 @@ public final class SkillConfig {
      * 弩改用射箭、長棍與矛改用一般近戰，啟用時提醒（{@link #missingDefaults()}）。
      */
     public static final List<String> OPTIONAL_DEFAULT_ATTACKS = List.of(DEFAULT_CROSSBOW, DEFAULT_QUARTERSTAFF, DEFAULT_SPEAR);
-    /** skills.yml 沒寫 extra_level_damage 時：21 級以上每級多 10% 法術基礎傷害（PoE 的 20 → 21 級大約這麼多）。 */
-    public static final double DEFAULT_EXTRA_LEVEL_DAMAGE = 10;
+    /** skills.yml 沒寫 extra_level_damage 時：21 級以上每級多 13% 法術基礎傷害（2026-10：10 → 13，跟出貨的 skills.yml 一樣）。 */
+    public static final double DEFAULT_EXTRA_LEVEL_DAMAGE = 13;
 
     private int[] requirements = new int[SkillLoadout.MAX_LEVEL];
     private NavigableMap<Integer, Double> growth = new TreeMap<>(Map.of(1, 1.0));
-    /** 超過 20 級（裝備的 +技能等級）每多一級，法術基礎傷害的倍率（skills.yml 的 extra_level_damage，預設 10%）。 */
+    /** 超過 20 級（裝備的 +技能等級）每多一級，法術基礎傷害的倍率（skills.yml 的 extra_level_damage，預設 13%）。 */
     private double extraLevelGrowth = 1.0 + DEFAULT_EXTRA_LEVEL_DAMAGE / 100.0;
     /** 2026-10：召喚物超過 20 級每多一級，生命與傷害的倍率（skills.yml 的 minion_extra_level_damage，預設 5%）。 */
     public static final double DEFAULT_MINION_EXTRA_LEVEL_DAMAGE = 5;

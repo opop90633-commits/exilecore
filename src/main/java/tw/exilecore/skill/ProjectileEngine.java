@@ -193,11 +193,11 @@ final class ProjectileEngine implements Listener {
     }
 
     /** 做出一發（主要的或散射、分裂出來的）。 */
-    private void spawn(final Player owner, final SkillBuild build, final SkillProfile profile, final World world, final Vector start,
+    private Shot spawn(final Player owner, final SkillBuild build, final SkillProfile profile, final World world, final Vector start,
                        final Vector direction, final double speed, final double range, final Set<UUID> volley, final boolean secondary,
                        final String visual) {
         if (counts.getOrDefault(owner.getUniqueId(), 0) >= MAX_PER_PLAYER) {
-            return;
+            return null;
         }
         final long id = nextId++;
         final Shot shot;
@@ -231,6 +231,7 @@ final class ProjectileEngine implements Listener {
         }
         shots.put(id, shot);
         counts.merge(owner.getUniqueId(), 1, Integer::sum);
+        return shot;
     }
 
     /** 每 tick：魔法彈前進一段、檢查碰撞；箭矢檢查壽命與是否插進方塊；連射的下一波。 */
@@ -582,7 +583,13 @@ final class ProjectileEngine implements Listener {
         for (final double degrees : new double[] {-30, 30}) {
             final Vector direction = shot.direction.clone().rotateAroundY(Math.toRadians(degrees)).normalize();
             final Vector start = at.toVector().add(direction.clone().multiply(0.5));
-            spawn(owner, shot.build, profile, shot.world, start, direction, shot.speed, Math.max(6, shot.build.range() / 2), shot.hit, true, shot.visual());
+            final Shot forked = spawn(owner, shot.build, profile, shot.world, start, direction, shot.speed, Math.max(6, shot.build.range() / 2),
+                    shot.hit, true, shot.visual());
+            if (forked != null) {
+                // 2026-10：分裂出來的兩發從被打中的敵人身上出發，往下射時馬上插進地板爆炸，又炸到原本那隻（單體每次多吃 2 × 80%）。
+                // 照 PoE：分裂的投射物不會再打到分裂出來的那個敵人，爆炸也一樣
+                forked.struck.addAll(shot.struck);
+            }
         }
     }
 
@@ -675,8 +682,11 @@ final class ProjectileEngine implements Listener {
         final Vector start = at.toVector().add(new Vector(0, 0.2, 0));
         for (final double[] d : directions) {
             final Vector direction = new Vector(d[0], 0.05, d[2]).normalize();
-            spawn(owner, shot.build, profile, shot.world, start.clone().add(direction.clone().multiply(0.4)), direction,
+            final Shot piece = spawn(owner, shot.build, profile, shot.world, start.clone().add(direction.clone().multiply(0.4)), direction,
                     Math.max(0.6, shot.build.speed() * 0.8), scatter.range(), volley, true, shot.visual());
+            if (piece != null) {
+                piece.struck.addAll(shot.struck); // 會爆炸的話也不炸剛打中的那隻（同分裂）
+            }
         }
         visuals.scatter(shot.visual(), at);
     }
