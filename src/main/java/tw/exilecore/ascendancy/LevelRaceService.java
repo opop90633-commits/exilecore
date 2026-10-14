@@ -34,6 +34,10 @@ public final class LevelRaceService {
     public record Claim(String ascendancy, UUID account, long characterId, String characterName, String playerName, Instant at) {
     }
 
+    /** 角色進度：這個角色到衝等等級時是哪個昇華（{@link #NONE} = 還沒昇華，之後第一次選的算）。 */
+    static final String REACHED_AS = "race.reached_as";
+    private static final String NONE = "-";
+
     private final ExileCore plugin;
     private final AscendancyConfig config;
     private final Map<String, Claim> claims = new LinkedHashMap<>();
@@ -172,6 +176,15 @@ public final class LevelRaceService {
         }
         final String ascendancyId = state.progress().get(Ascension.CHOSEN);
         final AscendancyConfig.Ascendancy ascendancy = ascendancyId == null ? null : config.ascendancy(ascendancyId);
+        // 到 100 級那一刻是哪個昇華就鎖死（還沒昇華的：鎖給之後第一次選的）——月卡換昇華不能再搶別的稱號
+        String reachedAs = state.progress().get(REACHED_AS);
+        if (character.level() >= race().level()) {
+            final String now = ascendancy == null ? NONE : ascendancy.id();
+            if (reachedAs == null || (NONE.equals(reachedAs) && !NONE.equals(now))) {
+                reachedAs = now;
+                plugin.characters().setProgress(player, REACHED_AS, now);
+            }
+        }
         if (ascendancy == null) {
             return;
         }
@@ -182,7 +195,8 @@ public final class LevelRaceService {
             }
             return;
         }
-        if (!race().enabled() || character.level() < race().level() || !pending.add(ascendancy.id())) {
+        if (!race().enabled() || character.level() < race().level() || !ascendancy.id().equals(reachedAs)
+                || !pending.add(ascendancy.id())) {
             return;
         }
         final Claim claim = new Claim(ascendancy.id(), player.getUniqueId(), character.id(), character.name(), player.getName(), Instant.now());

@@ -32,6 +32,7 @@ public final class CharacterModule implements Module {
     private BukkitTask autosaveTask;
     private BukkitTask sidebarTask;
     private BukkitTask gearTask;
+    private BukkitTask slotHealTask;
     private BukkitTask cooldownTask;
 
     public CharacterModule(final ExileCore plugin, final CharacterConfig config, final PlayerStateService states,
@@ -96,6 +97,9 @@ public final class CharacterModule implements Module {
                 }
             }
         }, 20L, 20L);
+        // 2026-10 效能：原版比對背包「內容一樣但被重寫過」的格子每 tick 都要整段重比（spark 兩成）：每秒換成同一份
+        final tw.exilecore.core.SlotSyncHealer healer = new tw.exilecore.core.SlotSyncHealer(plugin.getSLF4JLogger());
+        slotHealTask = plugin.repeat("slot_heal", () -> healer.tick(plugin.getServer().getOnlinePlayers()), 30L, 20L);
         // 2026-10：快捷列技能的冷卻倒數（圖示數量＝剩幾秒）
         cooldownTask = plugin.repeat("skill_cooldowns", () -> {
             for (final Player player : plugin.getServer().getOnlinePlayers()) {
@@ -147,6 +151,10 @@ public final class CharacterModule implements Module {
         if (autosaveTask != null) {
             autosaveTask.cancel();
             autosaveTask = null;
+        }
+        if (slotHealTask != null) {
+            slotHealTask.cancel();
+            slotHealTask = null;
         }
         if (gearTask != null) {
             gearTask.cancel();
