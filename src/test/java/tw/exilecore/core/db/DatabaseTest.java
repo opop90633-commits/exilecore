@@ -43,7 +43,7 @@ class DatabaseTest {
     void migrationsAreIdempotent() throws SQLException {
         assertTrue(database.isConnected());
         assertEquals(0, Migrations.apply(database, LoggerFactory.getLogger("test")), "第二次不該再套用");
-        assertEquals(24, Migrations.currentVersion());
+        assertEquals(25, Migrations.currentVersion());
     }
 
     @Test

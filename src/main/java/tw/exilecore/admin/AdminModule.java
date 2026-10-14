@@ -139,6 +139,11 @@ public final class AdminModule implements Module, Listener {
         return repository;
     }
 
+    /** 寫一筆操作紀錄（管理網頁「操作紀錄」看得到；2026-10：贊助商店自動發星幣也記）。在資料庫的執行緒上呼叫。 */
+    public void log(final java.sql.Connection connection, final String admin, final String action, final String detail) throws java.sql.SQLException {
+        repository.log(connection, admin, action, detail);
+    }
+
     /** 重新啟動（幾分鐘後、每天定時）。 */
     public RestartScheduler restarts() {
         return restarts;

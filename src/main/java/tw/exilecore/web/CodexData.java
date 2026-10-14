@@ -116,7 +116,87 @@ public final class CodexData {
             }
         }
         root.add("currencies", currencies);
+        if (plugin.items() != null) {
+            affixes(root, plugin.items().repository());
+        }
         return GSON.toJson(root).getBytes(StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 2026-10：詞綴（跟遊戲裡圖鑑的「詞綴一覽」同一套規則：一般掉落、通貨擲得到的，加上揭露才有的），每一種寫各階的範圍與擲得到的部位；
+     * 以及規劃器沒有的傳奇（珠寶、藥劑、護符：規劃器只放穿得上身的）。
+     */
+    static void affixes(final JsonObject root, final tw.exilecore.item.ItemRepository repository) {
+        final List<tw.exilecore.item.ItemBase> bases = tw.exilecore.gui.CodexMenu.codexBases(repository);
+        final JsonArray list = new JsonArray();
+        for (final tw.exilecore.item.Affix affix : repository.affixes()) {
+            final boolean normal = tw.exilecore.gui.CodexMenu.normalAffix(affix);
+            final boolean unveiled = !normal && tw.exilecore.gui.CodexMenu.unveiledAffix(affix);
+            if (!normal && !unveiled) {
+                continue;
+            }
+            final java.util.Set<String> slots = new java.util.LinkedHashSet<>();
+            final JsonArray baseNames = new JsonArray();
+            for (final tw.exilecore.item.ItemBase base : bases) {
+                if (affix.canSpawnOn(base)) {
+                    slots.add(base.slot().name().toLowerCase(Locale.ROOT));
+                    baseNames.add(base.name());
+                }
+            }
+            if (slots.isEmpty()) {
+                continue;
+            }
+            final JsonObject a = new JsonObject();
+            a.addProperty("id", affix.id());
+            final List<tw.exilecore.item.AffixTier> tiers = affix.tiers();
+            a.addProperty("name", plain(affix.rangeText(tiers.getFirst().tier())));
+            a.addProperty("type", unveiled ? "unveiled" : affix.type() == tw.exilecore.item.AffixType.PREFIX ? "prefix" : "suffix");
+            a.addProperty("affixType", affix.type() == tw.exilecore.item.AffixType.PREFIX ? "prefix" : "suffix");
+            final JsonArray slotArray = new JsonArray();
+            slots.forEach(slotArray::add);
+            a.add("slots", slotArray);
+            a.add("bases", baseNames);
+            final JsonArray tierArray = new JsonArray();
+            for (int i = 0; i < tiers.size(); i++) {
+                final tw.exilecore.item.AffixTier tier = tiers.get(i);
+                final JsonObject t = new JsonObject();
+                t.addProperty("t", i + 1);
+                t.addProperty("ilvl", tier.ilvl());
+                t.addProperty("name", plain(affix.nameFor(tier.tier())));
+                t.addProperty("text", plain(affix.rangeText(tier.tier())));
+                tierArray.add(t);
+            }
+            a.add("tiers", tierArray);
+            list.add(a);
+        }
+        root.add("affixes", list);
+        final JsonArray extra = new JsonArray();
+        for (final tw.exilecore.item.UniqueItem unique : repository.uniques()) {
+            final tw.exilecore.item.ItemBase base = repository.base(unique.base());
+            if (base == null || base.isMap() || !(base.slot() == tw.exilecore.item.ItemSlot.JEWEL || base.isFlaskLike())) {
+                continue;
+            }
+            final JsonObject u = new JsonObject();
+            u.addProperty("id", unique.id());
+            u.addProperty("name", unique.name());
+            u.addProperty("baseName", base.name());
+            u.addProperty("slot", base.slot().name().toLowerCase(Locale.ROOT));
+            u.addProperty("level", unique.dropLevel());
+            u.addProperty("icon", tw.exilecore.item.UniqueArt.has(unique.id()));
+            final JsonArray lines = new JsonArray();
+            for (final String id : unique.affixIds()) {
+                final tw.exilecore.item.Affix affix = repository.affix(id);
+                if (affix != null && !affix.tiers().isEmpty()) {
+                    lines.add(plain(affix.rangeText(affix.tiers().getFirst().tier())));
+                }
+            }
+            u.add("lines", lines);
+            final JsonArray flavour = new JsonArray();
+            unique.flavour().forEach(flavour::add);
+            u.add("flavour", flavour);
+            extra.add(u);
+        }
+        root.add("uniquesExtra", extra);
     }
 
     /** 拿掉 MiniMessage 標籤。 */

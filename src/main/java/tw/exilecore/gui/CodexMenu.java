@@ -739,8 +739,7 @@ public final class CodexMenu extends Menu {
     private List<Affix> pool(final ItemBase itemBase) {
         final List<Affix> list = new ArrayList<>();
         for (final Affix affix : plugin.items().repository().affixes()) {
-            if (affix.id().startsWith(UniqueItem.AFFIX_PREFIX) || Veiled.isUnveiled(affix.id()) || Veiled.isVeiled(affix.id())
-                    || affix.spawnTags().contains(ItemRepository.RETIRED_TAG) || affix.tiers().isEmpty() || !affix.canSpawnOn(itemBase)) {
+            if (!normalAffix(affix) || !affix.canSpawnOn(itemBase)) {
                 continue;
             }
             list.add(affix);
@@ -753,8 +752,7 @@ public final class CodexMenu extends Menu {
     private List<Affix> unveiledPool(final ItemBase itemBase, final AffixType only) {
         final List<Affix> list = new ArrayList<>();
         for (final Affix affix : plugin.items().repository().affixes()) {
-            if (Veiled.isUnveiled(affix.id()) && !affix.tiers().isEmpty() && affix.canSpawnOn(itemBase) && (only == null || affix.type() == only)
-                    && !affix.spawnTags().contains(ItemRepository.RETIRED_TAG)) {
+            if (unveiledAffix(affix) && affix.canSpawnOn(itemBase) && (only == null || affix.type() == only)) {
                 list.add(affix);
             }
         }
@@ -762,15 +760,32 @@ public final class CodexMenu extends Menu {
         return list;
     }
 
-    private List<ItemBase> bases() {
+    /** 一般掉落、通貨擲得到的詞綴（傳奇專屬、隱匿、揭露、停用的不算）。網頁圖鑑也用。 */
+    public static boolean normalAffix(final Affix affix) {
+        return !affix.id().startsWith(UniqueItem.AFFIX_PREFIX) && !Veiled.isUnveiled(affix.id()) && !Veiled.isVeiled(affix.id())
+                && !affix.spawnTags().contains(ItemRepository.RETIRED_TAG) && !affix.tiers().isEmpty();
+    }
+
+    /** 揭露才拿得到的詞綴（隱匿詞綴找盜賊首領）。網頁圖鑑也用。 */
+    public static boolean unveiledAffix(final Affix affix) {
+        return Veiled.isUnveiled(affix.id()) && !affix.tiers().isEmpty() && !affix.spawnTags().contains(ItemRepository.RETIRED_TAG);
+    }
+
+    /** 圖鑑列的基底：裝備、珠寶，加上藥劑與護符（2026-10）；地圖不列。照部位、需要等級排。網頁圖鑑也用。 */
+    public static List<ItemBase> codexBases(final ItemRepository repository) {
         final List<ItemBase> list = new ArrayList<>();
-        for (final ItemBase each : plugin.items().repository().bases()) {
+        for (final ItemBase each : repository.bases()) {
             if (!each.isMap()) {
                 list.add(each);
             }
         }
+        list.addAll(repository.flaskLikeBases());
         list.sort(Comparator.<ItemBase>comparingInt(each -> each.slot().ordinal()).thenComparingInt(each -> each.requirements().level()));
         return list;
+    }
+
+    private List<ItemBase> bases() {
+        return codexBases(plugin.items().repository());
     }
 
     private List<ItemStack> baseEntries() {
@@ -804,6 +819,11 @@ public final class CodexMenu extends Menu {
     /** 基底的種類（看得懂的標籤）。 */
     private static String tagText(final ItemBase each) {
         final List<String> parts = new ArrayList<>();
+        if (each.hasTag("life_flask")) {
+            parts.add("生命藥劑");
+        } else if (each.hasTag("mana_flask")) {
+            parts.add("魔力藥劑");
+        }
         if (each.hasTag("two_hand")) {
             parts.add("雙手");
         } else if (each.hasTag("one_hand")) {

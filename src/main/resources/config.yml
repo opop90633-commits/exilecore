@@ -92,6 +92,42 @@ web:
   # 網頁伺服器是 http：從別台電腦連線時，登入後的 Cookie 在網路上看得到——放在 https 的反向代理後面（public-url 填 https://…）最安全。
   # false = 不提供（網址 404、/ec web 不給連結）。舊的 config.yml 沒有這一行時用預設值（提供）。
   admin-page: true
+  # 贊助商店（網址/shop，2026-10）：金流（PayUni）審核要的「商店網址」——儲值方案（新台幣）、星幣能換的東西（照 data/sponsor.yml 現在的價格自動列）、
+  # 抽獎箱的機率、累積贊助、商家資料、退款與隱私權條款。merchant 沒填的欄位頁面上會寫「（未填寫）」：送審前全部填好。改完 /ec reload
+  shop:
+    enabled: true
+    merchant:
+      name: ""        # 商店名稱（跟金流申請的一樣）
+      owner: ""       # 負責人
+      tax-id: ""      # 統一編號（個人賣家可以空白，頁面就不顯示這一行）
+      email: ""       # 客服信箱
+      phone: ""       # 客服電話
+      address: ""     # 營業地址（個人賣家照金流的要求填）
+      hours: "週一至週五 10:00–18:00（Discord 隨時可以留言）"
+    payments: "信用卡、ATM 轉帳、超商代碼（PayUni 統一金流）"
+    # 儲值方案：stars = 拿到多少星幣，price = 新台幣，bonus = 加送的星幣（不算進累積贊助），name = 方案名稱（可以空白）
+    packages:
+      - { stars: 100,  price: 100 }
+      - { stars: 300,  price: 300 }
+      - { stars: 500,  price: 500 }
+      - { stars: 1000, price: 1000 }
+      - { stars: 3000, price: 3000 }
+      - { stars: 5000, price: 5000 }
+    # 線上付款（統一金流 PAYUNi 整合式支付頁）：在 PAYUNi 後台「商店串接資訊」拿商店代號、Hash Key、Hash IV。
+    # 背景通知只送到 80、443 埠：上面的 public-url 要是 https 的網址（https://web.你的網域），反向代理要把 /shop/ 轉給這個網頁伺服器。
+    # 付款成功（含 ATM、超商代碼繳費完成）自動發星幣到填的遊戲名稱（離線的下次登入發），同一筆訂單只會發一次；訂單記在資料表 shop_orders。
+    # 先用 sandbox: true 在測試區試（測試卡號 4147631000000001，到期日、末三碼隨便填），沒問題再換正式區的代號與金鑰、sandbox: false。
+    # Hash Key／Hash IV 等同密碼：不要外流、不要貼到 Discord。
+    payuni:
+      enabled: false
+      sandbox: true
+      mer-id: ""
+      hash-key: ""    # 32 個字
+      hash-iv: ""     # 16 個字
+      # 測試區（sandbox: true）只有這些遊戲名稱可以下單：測試卡付的款不是真的錢，卻會發真的星幣，不能讓一般玩家用
+      test-players: []
+    # 網頁伺服器前面有反向代理（nginx、Cloudflare）時看代理給的真實 IP（CF-Connecting-IP、X-Forwarded-For），下單次數限制才不會全部算成同一個人
+    trust-proxy: true
 
 items:
   # 玩家能不能把東西丟在地上（Q 鍵、拖到視窗外面）。false = 不能：免得直接丟給別人、繞過面對面交易的手續費，也不會手滑丟掉；

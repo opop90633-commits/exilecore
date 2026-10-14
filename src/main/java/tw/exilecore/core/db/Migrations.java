@@ -443,6 +443,27 @@ public final class Migrations {
                         level INT NOT NULL,
                         claimed_at DATETIME NOT NULL
                     )"""
+            )),
+            // 2026-10：贊助商店的訂單（統一金流 PAYUNi）。付款成功時在同一筆訂單編號的發放批次裡發星幣（重送的通知不會發兩次）
+            new Migration(25, "贊助商店訂單", List.of(
+                    """
+                    CREATE TABLE IF NOT EXISTS shop_orders (
+                        order_no VARCHAR(25) NOT NULL PRIMARY KEY,
+                        account_uuid VARCHAR(36) NOT NULL,
+                        player_name VARCHAR(32) NOT NULL,
+                        stars BIGINT NOT NULL,
+                        bonus BIGINT NOT NULL,
+                        amount INT NOT NULL,
+                        email VARCHAR(120) NULL,
+                        status VARCHAR(16) NOT NULL,
+                        trade_no VARCHAR(40) NULL,
+                        payment_type INT NULL,
+                        remote VARCHAR(64) NULL,
+                        created_at DATETIME NOT NULL,
+                        paid_at DATETIME NULL,
+                        note VARCHAR(255) NULL
+                    )""",
+                    "CREATE INDEX IF NOT EXISTS idx_shop_orders_account ON shop_orders (account_uuid)"
             ))
     );
 
@@ -453,7 +474,7 @@ public final class Migrations {
             "trade_log", "market_listings", "market_proceeds", "exchange_orders", "exchange_fills", "stash_tabs",
             "economy_flow", "economy_stock", "economy_income", "exchange_trades", "currency_values", "account_progress",
             "admin_deliveries", "admin_log", "star_vouchers", "character_profiles",
-            "guilds", "guild_members", "guild_stash", "guild_log", "guild_applications", "level_race");
+            "guilds", "guild_members", "guild_stash", "guild_log", "guild_applications", "level_race", "shop_orders");
 
     private Migrations() {
     }

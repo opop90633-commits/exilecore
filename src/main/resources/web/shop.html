@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星骸 贊助商店</title>
+<meta name="description" content="星骸 Minecraft 伺服器的贊助商店：星幣儲值方案、星幣能兌換的遊戲內服務、抽獎箱機率、商家資訊與退款、隱私權條款。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0d1a'/%3E%3Cpolygon points='32,6 38,25 58,25 42,37 48,57 32,45 16,57 22,37 6,25 26,25' fill='%23f5b942'/%3E%3C/svg%3E">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface-1: #fcfcfb; --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+    --grid: #e1e0d9; --border: rgba(11, 11, 11, 0.10); --wash: rgba(11, 11, 11, 0.04); --gold: #b8860b; --warn: #b3261e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --wash: rgba(255, 255, 255, 0.06); --gold: #f5b942; --warn: #ff8a80;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19; --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --grid: #2c2c2a; --border: rgba(255, 255, 255, 0.10); --wash: rgba(255, 255, 255, 0.06); --gold: #f5b942; --warn: #ff8a80;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page); color: var(--text-primary);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px; line-height: 1.65; padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; }
+  a { color: inherit; }
+  header h1 { margin: 4px 0 0; font-size: 26px; font-weight: 700; }
+  header .sub { margin: 6px 0 0; color: var(--text-secondary); max-width: 62ch; }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 16px 0 8px; font-size: 13px; }
+  nav.toc a { color: var(--text-secondary); text-decoration: none; border-bottom: 1px solid var(--grid); }
+  nav.toc a:hover { color: var(--text-primary); border-color: var(--gold); }
+  section { margin-top: 32px; scroll-margin-top: 16px; }
+  h2 { font-size: 19px; margin: 0 0 4px; }
+  h2 + .note { margin-top: 0; }
+  h3 { font-size: 15px; margin: 18px 0 6px; }
+  .note { color: var(--text-secondary); font-size: 13px; margin: 4px 0 12px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .packages { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .pkg { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .pkg .stars { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .pkg .stars small { font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-left: 4px; }
+  .pkg .price { margin-top: 2px; font-size: 15px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .pkg .bonus { margin-top: 6px; font-size: 12px; color: var(--gold); font-weight: 600; }
+  .pkg .name { font-size: 12px; color: var(--text-muted); }
+  label.pkg { cursor: pointer; display: block; position: relative; }
+  label.pkg input { position: absolute; opacity: 0; pointer-events: none; }
+  label.pkg:has(input:checked) { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+  label.pkg:has(input:focus-visible) { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .buybox { margin-top: 12px; display: grid; gap: 10px; max-width: 520px; }
+  .buybox[hidden] { display: none; }
+  .field { display: grid; gap: 4px; }
+  .field span { font-size: 13px; color: var(--text-secondary); }
+  .field input { font: inherit; color: var(--text-primary); background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+  .buybox .note { margin: -6px 0 0; }
+  .agree { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--text-secondary); }
+  .agree input { margin-top: 4px; }
+  #pay { font: inherit; font-weight: 600; color: #0b0b0b; background: #f5b942; border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer; justify-self: start; }
+  #pay:hover { filter: brightness(1.05); }
+  .sandbox { color: var(--warn); font-size: 13px; font-weight: 600; }
+  ol.steps { margin: 0; padding-left: 20px; }
+  ol.steps li { margin: 4px 0; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  th { color: var(--text-secondary); font-weight: 500; white-space: nowrap; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.grp { color: var(--text-muted); white-space: nowrap; }
+  .perks { color: var(--text-secondary); font-size: 13px; }
+  details { border-top: 1px solid var(--grid); padding: 10px 0; }
+  details:first-of-type { border-top: none; }
+  summary { cursor: pointer; font-weight: 600; }
+  summary .meta { font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 6px; }
+  .rar { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0; font-size: 14px; }
+  .rar b { font-variant-numeric: tabular-nums; }
+  dl.info { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+  dl.info dt { color: var(--text-secondary); }
+  dl.info dd { margin: 0; overflow-wrap: anywhere; }
+  .missing { color: var(--warn); }
+  .policy p, .policy li { color: var(--text-primary); }
+  .policy ul { padding-left: 20px; margin: 6px 0; }
+  footer { color: var(--text-muted); font-size: 12px; margin-top: 40px; border-top: 1px solid var(--grid); padding-top: 12px; }
+  .err { color: var(--warn); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="./" style="color:var(--text-secondary);text-decoration:none;font-size:13px">← 首頁</a>
+    <h1>星骸 贊助商店</h1>
+    <p class="sub">贊助《星骸》Minecraft 伺服器，拿到遊戲內的虛擬貨幣「星幣」（1 星幣＝新台幣 1 元），用來兌換遊戲裡的方便功能與外觀。
+      不賣戰鬥數值，外觀不加任何能力。</p>
+  </header>
+  <nav class="toc" aria-label="本頁目錄">
+    <a href="#packages">儲值方案</a><a href="#how">購買流程</a><a href="#items">星幣能換什麼</a><a href="#card">月卡</a>
+    <a href="#boxes">抽獎箱機率</a><a href="#tiers">累積贊助</a><a href="#merchant">商家資訊</a>
+    <a href="#terms">服務條款</a><a href="#refund">退款政策</a><a href="#privacy">隱私權政策</a>
+  </nav>
+
+  <section id="packages">
+    <h2>儲值方案</h2>
+    <p class="note">價格為新台幣，含稅。付款方式：<span id="payments">—</span></p>
+    <p class="sandbox" id="sandbox" hidden>測試模式：付款走統一金流的測試區，不會真的扣款（只有管理員指定的測試帳號可以下單）。</p>
+    <form id="buy" method="post" action="shop/checkout">
+      <input type="hidden" name="price" id="price">
+      <div class="packages" id="pkg-list"><p class="note">讀取中…</p></div>
+      <div class="card buybox" id="buybox" hidden>
+        <label class="field"><span>Minecraft 遊戲名稱</span>
+          <input name="name" required minlength="3" maxlength="16" pattern="[A-Za-z0-9_]{3,16}" autocomplete="off" placeholder="例如 Steve" aria-describedby="name-help"></label>
+        <p class="note" id="name-help">星幣會發到這個帳號，要先進過伺服器一次。</p>
+        <label class="field"><span>聯絡信箱（選填，寄收據與客服用）</span>
+          <input name="email" type="email" maxlength="120" autocomplete="email"></label>
+        <label class="agree"><input type="checkbox" name="agree" value="1" required>
+          <span>我已閱讀並同意<a href="#terms">服務條款</a>與<a href="#refund">退款政策</a>，了解星幣是虛擬商品（數位內容），付款並發到帳號後<strong>不適用七天猶豫期、不能退款</strong>。</span></label>
+        <button type="submit" id="pay">前往付款</button>
+        <p class="note" id="selected"></p>
+      </div>
+    </form>
+    <p class="note" id="soon" hidden>線上付款即將開放。</p>
+  </section>
+
+  <section id="how">
+    <h2>購買流程</h2>
+    <div class="card">
+      <ol class="steps">
+        <li>選一個儲值方案，填上你的 <strong>Minecraft 遊戲名稱</strong>（星幣會發到這個帳號），按「前往付款」。</li>
+        <li>付款：<span class="pay-inline">信用卡、ATM 轉帳、超商代碼（PayUni 統一金流）</span>。</li>
+        <li>付款完成後星幣自動發到帳號（ATM、超商代碼在繳費完成後發）；不在線上的話，下次登入時發。超過 24 小時沒到請聯絡客服。</li>
+        <li>在遊戲裡打 <code>/sponsor</code>（或 Shift＋F → 贊助）用星幣兌換下面的項目。</li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="items">
+    <h2>星幣能換什麼</h2>
+    <p class="note">在遊戲裡用星幣兌換，價格以遊戲內顯示為準（這張表照伺服器目前的設定自動產生）。</p>
+    <div class="card scroll"><table id="item-table"><thead><tr><th>類別</th><th>項目</th><th>說明</th><th class="num">星幣</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section id="card">
+    <h2>月卡</h2>
+    <div class="card" id="card-body"><p class="note">讀取中…</p></div>
+  </section>
+
+  <section id="boxes">
+    <h2>抽獎箱機率</h2>
+    <p class="note">依《機率型商品》資訊揭露規定公開。抽到的都是外觀（時裝），不加任何能力；抽到已經有的會退回時裝幣。</p>
+    <div class="card" id="box-list"><p class="note">讀取中…</p></div>
+  </section>
+
+  <section id="tiers">
+    <h2>累積贊助</h2>
+    <p class="note">累積儲值（加送的星幣不算）到一定金額，帳號會拿到贊助稱號、名字顏色與方便功能，到過的最高一階一直有效。</p>
+    <div class="card scroll"><table id="tier-table"><thead><tr><th class="num">累積</th><th>稱號</th><th>內容</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section id="merchant">
+    <h2>商家資訊</h2>
+    <div class="card"><dl class="info" id="merchant-info"></dl></div>
+  </section>
+
+  <section id="terms" class="policy">
+    <h2>服務條款</h2>
+    <div class="card">
+      <ul>
+        <li>本商店販售的是《星骸》伺服器的遊戲內虛擬貨幣「星幣」，只能在本伺服器使用，不能兌換現金、不能轉讓到其他伺服器或遊戲。</li>
+        <li>星幣與兌換的項目都綁定在付款時填寫的 Minecraft 帳號；填錯帳號請在入帳前聯絡客服更正。</li>
+        <li>本伺服器不是 Mojang Studios 或 Microsoft 的官方服務，跟它們沒有關係。</li>
+        <li>違反伺服器規則（作弊、利用漏洞、詐騙其他玩家等）被停權的帳號，已經兌換的項目不會退還。</li>
+        <li>伺服器可能因為維護、改版調整遊戲內容與兌換價格；已經兌換、已經入帳的不受影響。</li>
+        <li>未滿 18 歲請在法定代理人同意下購買。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="refund" class="policy">
+    <h2>退款政策</h2>
+    <div class="card">
+      <ul>
+        <li>星幣屬於非以有形媒介提供之數位內容（虛擬商品），付款完成並發到帳號後即視為已提供，依《通訊交易解除權合理例外情事適用準則》<strong>不適用七天猶豫期（無鑑賞期）</strong>，付款前會請你勾選同意；購買前請確認。</li>
+        <li>星幣入帳後，不論是否使用過，一律不接受退款或換回現金；兌換的月卡、加倍、抽獎箱與其他項目也一樣。</li>
+        <li>以下情況例外，查證後全額退款或補發：重複付款、付款成功卻沒有入帳、因本伺服器的錯誤無法提供服務。</li>
+        <li>申請方式：寫信到客服信箱，附上 Minecraft 遊戲名稱、付款時間與金額、訂單編號。收到後 3 個工作天內回覆。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="privacy" class="policy">
+    <h2>隱私權政策</h2>
+    <div class="card">
+      <ul>
+        <li>我們收集的資料：Minecraft 遊戲名稱與 UUID、訂單編號、金額、付款時間、你填的聯絡信箱。</li>
+        <li>信用卡號、銀行帳號等付款資料由 PayUni 統一金流處理，本商店<strong>不會</strong>拿到也不會儲存。</li>
+        <li>這些資料只用在發放星幣、客服、退款與依法需要保存的帳務紀錄，不會賣給或提供給第三方（法律要求時除外）。</li>
+        <li>你可以寫信到客服信箱查詢、更正或要求刪除你的資料（依法必須保存的帳務紀錄除外）。</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer id="footer">星骸 Minecraft 伺服器</footer>
+</div>
+<script>
+(function () {
+  'use strict';
+  function $(id) { return document.getElementById(id); }
+  function esc(text) {
+    return String(text == null ? '' : text).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function num(n) { return Number(n).toLocaleString('zh-TW'); }
+  function pct(n) { return (Math.round(n * 100) / 100).toString() + '%'; }
+
+  function merchant(m) {
+    var rows = [['商店名稱', m.name], ['負責人', m.owner], ['統一編號', m['tax-id'], true], ['客服信箱', m.email, false, 'mailto:'],
+      ['客服電話', m.phone, false, 'tel:'], ['地址', m.address], ['客服時間', m.hours]];
+    $('merchant-info').innerHTML = rows.filter(function (r) { return !(r[2] && !r[1]); }).map(function (r) {
+      var value = r[1] ? (r[3] ? '<a href="' + r[3] + esc(r[1]) + '">' + esc(r[1]) + '</a>' : esc(r[1])) : '<span class="missing">（未填寫）</span>';
+      return '<dt>' + r[0] + '</dt><dd>' + value + '</dd>';
+    }).join('');
+    if (m.name) { $('footer').textContent = '© ' + new Date().getFullYear() + ' ' + m.name + '　星骸 Minecraft 伺服器'; }
+  }
+
+  function packages(list, checkout) {
+    if (!list.length) { $('pkg-list').innerHTML = '<p class="note">目前沒有開放儲值。</p>'; return; }
+    var tag = checkout ? 'label' : 'div';
+    $('pkg-list').innerHTML = list.map(function (p, i) {
+      return '<' + tag + ' class="pkg">' + (checkout ? '<input type="radio" name="pkg" value="' + i + '" data-price="' + p.price + '"' + (i === 0 ? ' checked' : '') + ' required>' : '') +
+        (p.name ? '<div class="name">' + esc(p.name) + '</div>' : '') +
+        '<div class="stars">' + num(p.stars) + '<small>星幣</small></div>' +
+        '<div class="price">NT$ ' + num(p.price) + '</div>' +
+        (p.bonus ? '<div class="bonus">加送 ' + num(p.bonus) + ' 星幣</div>' : '') + '</' + tag + '>';
+    }).join('');
+    if (!checkout) { return; }
+    $('buybox').hidden = false;
+    function show() {
+      var picked = document.querySelector('input[name="pkg"]:checked');
+      var p = picked ? list[Number(picked.value)] : null;
+      $('selected').textContent = p ? '選擇：' + num(p.stars) + ' 星幣' + (p.bonus ? '（加送 ' + num(p.bonus) + '）' : '') + '，NT$ ' + num(p.price) : '';
+    }
+    $('pkg-list').addEventListener('change', show);
+    show();
+    $('buy').addEventListener('submit', function () {
+      var picked = document.querySelector('input[name="pkg"]:checked');
+      $('price').value = picked ? picked.getAttribute('data-price') : '';
+      $('pay').disabled = true; $('pay').textContent = '前往付款中…';
+    });
+    window.addEventListener('pageshow', function () { $('pay').disabled = false; $('pay').textContent = '前往付款'; });
+  }
+
+  function items(list) {
+    $('item-table').tBodies[0].innerHTML = list.map(function (i) {
+      return '<tr><td class="grp">' + esc(i.group) + '</td><td>' + esc(i.name) + '</td><td class="perks">' + esc(i.about) +
+        '</td><td class="num">' + num(i.stars) + '</td></tr>';
+    }).join('');
+  }
+
+  function card(c) {
+    if (!c) { $('card-body').innerHTML = '<p class="note">目前沒有販售。</p>'; return; }
+    $('card-body').innerHTML = '<p style="margin:0 0 8px"><strong>' + num(c.price) + ' 星幣／' + c.days + ' 天</strong></p><ul style="margin:0;padding-left:20px">' +
+      '<li>開卡送 ' + c.welcome_card_coins + ' 月卡幣、' + c.welcome_fashion_coins + ' 時裝幣；之後每天送 ' + c.daily_card_coins + ' 月卡幣、' + c.daily_fashion_coins + ' 時裝幣（兌換外觀用）</li>' +
+      '<li>每天一箱免費的時裝抽獎箱</li>' +
+      '<li>傳送點免費、市集與交易免手續費</li>' +
+      '<li>多組裝備、天賦、技能按鍵切換；天賦退點免費、可以更換昇華職業</li>' +
+      '<li>名字前面的 ☾ 標記</li></ul>' +
+      '<p class="note" style="margin:8px 0 0">月卡從兌換當天開始算，到期自動結束，不會自動續扣。</p>';
+  }
+
+  function boxes(list) {
+    if (!list.length) { $('box-list').innerHTML = '<p class="note">目前沒有抽獎箱。</p>'; return; }
+    $('box-list').innerHTML = list.map(function (b) {
+      var price = [];
+      if (b.stars) { price.push(num(b.stars) + ' 星幣'); }
+      if (b.fashion) { price.push(num(b.fashion) + ' 時裝幣'); }
+      return '<details><summary>' + esc(b.name) + '<span class="meta">' + esc(price.join(' 或 ')) +
+        (b.pity ? '・連續 ' + b.pity + ' 箱沒抽到傳說，下一箱必得傳說' : '') + '</span></summary>' +
+        (b.description ? '<p class="note">' + esc(b.description) + '</p>' : '') +
+        '<div class="rar">' + b.rarities.map(function (r) { return '<span>' + esc(r.rarity) + ' <b>' + pct(r.percent) + '</b></span>'; }).join('') + '</div>' +
+        '<div class="scroll"><table><thead><tr><th>外觀</th><th>稀有度</th><th class="num">機率</th></tr></thead><tbody>' +
+        b.entries.map(function (e) {
+          return '<tr><td>' + esc(e.name) + '</td><td>' + esc(e.rarity) + '</td><td class="num">' + pct(e.percent) + '</td></tr>';
+        }).join('') + '</tbody></table></div></details>';
+    }).join('');
+  }
+
+  function tiers(list) {
+    $('tier-table').tBodies[0].innerHTML = list.map(function (t) {
+      return '<tr><td class="num">' + num(t.amount) + ' 元</td><td><b style="color:' + esc(t.color) + '">' + esc(t.title) + '</b></td><td class="perks">' +
+        esc(['稱號、名字顏色'].concat(t.perks).join('、')) + '</td></tr>';
+    }).join('');
+  }
+
+  fetch('shop/data.json', { cache: 'no-store' }).then(function (r) {
+    if (!r.ok) { throw new Error(r.status); }
+    return r.json();
+  }).then(function (d) {
+    merchant(d.merchant || {});
+    packages(d.packages || [], !!d.checkout);
+    $('soon').hidden = !!d.checkout || !(d.packages || []).length;
+    $('sandbox').hidden = !d.sandbox;
+    if (d.payments) {
+      $('payments').textContent = d.payments;
+      Array.prototype.forEach.call(document.querySelectorAll('.pay-inline'), function (el) { el.textContent = d.payments; });
+    }
+    items(d.items || []);
+    card(d.card);
+    boxes(d.boxes || []);
+    tiers(d.tiers || []);
+  }).catch(function () {
+    $('pkg-list').innerHTML = '<p class="err">讀不到商店資料，請稍後重新整理。</p>';
+  });
+})();
+</script>
+</body>
+</html>

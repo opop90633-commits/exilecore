@@ -89,13 +89,14 @@
   <header>
     <a class="back" href="./">← 首頁</a>
     <h1>圖鑑</h1>
-    <p class="sub">技能、輔助寶石、通貨與傳奇裝備的說明，跟遊戲裡寫的一樣。數值會跟著你的等級與裝備變，實際的以遊戲裡為準。</p>
+    <p class="sub">技能、輔助寶石、通貨、傳奇裝備與詞綴（含珠寶、藥劑、護符）的說明，跟遊戲裡寫的一樣。數值會跟著你的等級與裝備變，實際的以遊戲裡為準。</p>
   </header>
   <div class="tabs" role="tablist">
     <button type="button" data-tab="skills" aria-pressed="true">技能</button>
     <button type="button" data-tab="supports" aria-pressed="false">輔助寶石</button>
     <button type="button" data-tab="currencies" aria-pressed="false">通貨</button>
     <button type="button" data-tab="uniques" aria-pressed="false">傳奇裝備</button>
+    <button type="button" data-tab="affixes" aria-pressed="false">詞綴</button>
   </div>
   <div class="filters">
     <input type="search" id="search" placeholder="找名稱、說明或效果…" aria-label="搜尋">
@@ -124,7 +125,9 @@
     melee: '近戰武器' };
   var TYPE = { attack: '攻擊', spell: '法術' };
   var KIND = { summon: '召喚', aura: '常駐', warcry: '戰吼' };
-  var SLOT = { ring: '戒指', amulet: '項鍊', belt: '腰帶', main_hand: '主手', off_hand: '副手', head: '頭部', chest: '身體', legs: '腿部', feet: '腳部' };
+  var SLOT = { ring: '戒指', amulet: '項鍊', belt: '腰帶', main_hand: '主手', off_hand: '副手', head: '頭部', chest: '身體', legs: '腿部', feet: '腳部',
+    jewel: '珠寶', flask: '藥劑', charm: '護符' };
+  var AFFIX_TYPE = { prefix: '前綴', suffix: '後綴', unveiled: '揭露' };
   var data = null, items = null, tab = 'skills', query = '', pick = '';
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -145,11 +148,22 @@
     });
   }
   function rows() {
-    if (tab === 'uniques') { return items ? items.uniques : []; }
+    if (tab === 'uniques') {
+      if (!items) { return []; }
+      if (!items.merged && data) { // 2026-10：珠寶、藥劑、護符的傳奇（規劃器沒有，圖鑑資料另外給）
+        items.uniques = items.uniques.concat(data.uniquesExtra || []).sort(function (a, b) { return (a.level - b.level) || a.name.localeCompare(b.name); });
+        items.merged = true;
+      }
+      return items.uniques;
+    }
     return data ? (data[tab] || []) : [];
   }
   function haystack(e) {
-    if (tab === 'uniques') { return (e.name + ' ' + (e.mods || []).map(fill).join(' ')).toLowerCase(); }
+    if (tab === 'uniques') { return (e.name + ' ' + (e.mods || []).map(fill).join(' ') + ' ' + (e.lines || []).join(' ')).toLowerCase(); }
+    if (tab === 'affixes') {
+      return (e.name + ' ' + e.tiers.map(function (t) { return t.text + ' ' + t.name; }).join(' ') + ' ' + (e.bases || []).join(' ')
+        + ' ' + AFFIX_TYPE[e.type] + ' ' + e.slots.map(function (x) { return SLOT[x] || x; }).join(' ')).toLowerCase();
+    }
     return (e.name + ' ' + (e.text || '') + ' ' + (e.effects || []).join(' ') + ' ' + (e.requires || '') + ' ' + (e.flavor || '') + ' ' + (e.tags || []).map(tagName).join(' ')).toLowerCase();
   }
   function tagName(t) { return (data && data.tagNames && data.tagNames[t]) || t; }
@@ -272,6 +286,9 @@
       });
     } else if (tab === 'uniques') {
       Object.keys(SLOT).forEach(function (s) { options.push(['s:' + s, SLOT[s]]); });
+    } else if (tab === 'affixes') {
+      Object.keys(SLOT).forEach(function (s) { options.push(['a:' + s, '部位：' + SLOT[s]]); });
+      options.push(['y:prefix', '前綴'], ['y:suffix', '後綴'], ['y:unveiled', '揭露（隱匿詞綴找盜賊首領）']);
     }
     select.textContent = '';
     options.forEach(function (o) { var opt = el('option', null, o[1]); opt.value = o[0]; select.appendChild(opt); });
@@ -290,6 +307,8 @@
     if (kind === 'r') { return String(e.tier) === value; }
     if (kind === 'f') { return !!(supportFits()[value] || {})[e.id]; }
     if (kind === 'l') { return String(e.level > 1 ? e.level : 1) === value; }
+    if (kind === 'a') { return (e.slots || []).indexOf(value) >= 0; }
+    if (kind === 'y') { return e.type === value; }
     return true;
   }
   function card(e) {
@@ -328,6 +347,21 @@
       if (e.level > 1) { box.appendChild(el('div', 'meta', e.level + ' 級以上的怪物才會掉')); }
       box.appendChild(el('p', null, e.text));
       if (e.flavor) { box.appendChild(el('div', 'flavour', e.flavor)); }
+    } else if (tab === 'affixes') {
+      var lowest = e.tiers.reduce(function (m, t) { return Math.min(m, t.ilvl); }, 999);
+      box.appendChild(el('div', 'meta', AFFIX_TYPE[e.type] + (e.type === 'unveiled' ? '（' + (e.affixType === 'prefix' ? '前綴' : '後綴') + '）' : '')
+        + '　' + e.slots.map(function (x) { return SLOT[x] || x; }).join('、') + '　物品等級 ' + lowest + ' 以上'));
+      if (e.type === 'unveiled') { box.appendChild(el('div', 'muted', '一般掉落、通貨擲不到：裝備上的隱匿詞綴帶去營地找盜賊首領三選一（揭露石也能加一條）')); }
+      var table = el('ul', 'fx');
+      e.tiers.forEach(function (t) { table.appendChild(el('li', null, 'T' + t.t + '　ilvl ' + t.ilvl + (t.name ? '・' + t.name : '') + '　' + t.text)); });
+      box.appendChild(table);
+      if (e.bases && e.bases.length) {
+        box.appendChild(el('div', 'muted', '擲得到：' + e.bases.slice(0, 8).join('、') + (e.bases.length > 8 ? ' 等 ' + e.bases.length + ' 種基底' : '')));
+      }
+    } else if (e.lines) {
+      box.appendChild(el('div', 'meta', e.baseName + '　' + (SLOT[e.slot] || e.slot) + (e.level > 1 ? '　' + e.level + ' 級以上掉落' : '')));
+      e.lines.forEach(function (t) { box.appendChild(el('div', 'mod', t)); });
+      if (e.flavour && e.flavour.length) { box.appendChild(el('div', 'flavour', e.flavour.join(' '))); }
     } else {
       var base = items && items.baseById[e.base];
       box.appendChild(el('div', 'meta', (base ? base.name + '　' : '') + (SLOT[e.slot] || e.slot) + (e.level > 1 ? '　' + e.level + ' 級以上掉落' : '')));
@@ -361,7 +395,7 @@
   $('dlg-close').addEventListener('click', function () { $('detail').close(); });
   $('detail').addEventListener('click', function (ev) { if (ev.target === $('detail')) { $('detail').close(); } });
   $('filter').addEventListener('change', function () { pick = $('filter').value; render(); });
-  fetch('codex/data.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (json) { data = json; supportById = null; fitsByTag = null; show(tab); })
+  fetch('codex/data.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (json) { data = json; supportById = null; fitsByTag = null; if (items) { items.merged = false; } show(tab); })
     .catch(function () { $('footer').textContent = '讀不到圖鑑資料，稍後再試'; });
   fetch('tree/items.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (json) {
     items = json;

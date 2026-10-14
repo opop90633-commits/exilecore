@@ -67,6 +67,7 @@
     <a href="ladder" id="link-ladder"><b>排行榜</b><span>等級、地圖、不死、金錢、公會</span></a>
     <a href="codex"><b>圖鑑</b><span>技能、輔助寶石、通貨、傳奇裝備</span></a>
     <a href="economy" id="link-economy"><b>市場報告</b><span>通貨與金幣每天的產出、消耗</span></a>
+    <a href="shop" id="link-shop"><b>贊助商店</b><span>星幣儲值方案、能換什麼、機率公開</span></a>
   </nav>
   <div class="tops" id="tops" hidden>
     <section class="card"><h2>等級前五</h2><ol id="top-level"></ol></section>
@@ -90,7 +91,7 @@
     fetch('home/status.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (s) {
       $('dot').className = 'dot on';
       $('online').textContent = '伺服器開著　在線 ' + s.online + ' / ' + s.max + ' 人';
-      ['builds', 'ladder', 'economy'].forEach(function (page) { $('link-' + page).hidden = !(s.pages && s.pages[page]); });
+      ['builds', 'ladder', 'economy', 'shop'].forEach(function (page) { $('link-' + page).hidden = !(s.pages && s.pages[page]); });
       if (s.pages && s.pages.ladder) { loadTops(); }
     }).catch(function () {
       $('dot').className = 'dot';

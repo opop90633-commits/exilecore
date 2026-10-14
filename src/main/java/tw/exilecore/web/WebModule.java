@@ -72,6 +72,9 @@ public final class WebModule implements Module, Listener {
     private volatile byte[] plannerSkills = "{\"skills\":[],\"supports\":[]}".getBytes(StandardCharsets.UTF_8);
     /** 首頁、圖鑑（2026-10）。 */
     private volatile byte[] homePage = new byte[0];
+    private volatile byte[] shopPage = new byte[0];
+    /** 贊助商店的付款（網頁伺服器開著才有）。 */
+    private ShopCheckout checkout;
     private volatile byte[] codexPage = new byte[0];
     private volatile byte[] codexData = "{}".getBytes(StandardCharsets.UTF_8);
     private volatile byte[] economyPage = new byte[0];
@@ -129,6 +132,7 @@ public final class WebModule implements Module, Listener {
         ladderPage = loadResource("web/ladder.html");
         buildsPage = loadResource("web/builds.html");
         homePage = loadResource("web/home.html");
+        shopPage = loadResource("web/shop.html");
         codexPage = loadResource("web/codex.html");
         if (profiles == null) {
             profiles = new Profiles(plugin);
@@ -165,6 +169,9 @@ public final class WebModule implements Module, Listener {
     }
 
     private void readConfig() {
+        if (checkout != null) {
+            checkout.refresh(); // 付款設定的快照（網頁執行緒只讀快照）
+        }
         final ConfigurationSection web = plugin.getConfig().getConfigurationSection("web");
         bind = web == null ? "" : web.getString("bind", "");
         port = web == null ? 25580 : web.getInt("port", 25580);
@@ -205,7 +212,7 @@ public final class WebModule implements Module, Listener {
                 java.util.Map.of("Cache-Control", "no-cache")));
         server.route("/tree/data.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", plannerData,
                 java.util.Map.of("Cache-Control", "no-cache", "X-Build", BUILD)));
-        // 2026-10：網頁計算器（像 PoB）：技能與輔助清單、送一個角色過來算屬性與每秒傷害
+        // 2026-10：網頁計算器：技能與輔助清單、送一個角色過來算屬性與每秒傷害
         server.route("/tree/skills.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", plannerSkills,
                 java.util.Map.of("Cache-Control", "no-cache")));
         final BuildCalc calc = new BuildCalc(plugin);
@@ -220,6 +227,30 @@ public final class WebModule implements Module, Listener {
         server.route("/ladder/", path -> plugin.ladder() == null ? null : WebServer.Response.redirect("../ladder"));
         server.route("/ladder/data.json", path -> plugin.ladder() == null ? null : new WebServer.Response(200, "application/json; charset=utf-8",
                 plugin.ladder().webJson().getBytes(java.nio.charset.StandardCharsets.UTF_8), java.util.Map.of("Cache-Control", "no-cache")));
+        // 贊助商店（2026-10，金流審核要的商店網址）：儲值方案、星幣能換的東西、機率、商家資料與條款（config.yml 的 web.shop）
+        server.route("/shop", path -> shopEnabled() ? WebServer.Response.of("text/html; charset=utf-8", shopPage) : null);
+        server.route("/shop/", path -> shopEnabled() ? WebServer.Response.redirect("../shop") : null);
+        final ShopCheckout checkout = new ShopCheckout(plugin, this::publicUrl);
+        checkout.refresh();
+        this.checkout = checkout;
+        server.route("/shop/data.json", path -> shopEnabled() ? new WebServer.Response(200, "application/json; charset=utf-8",
+                ShopData.json(plugin.getConfig().getConfigurationSection("web.shop"), plugin.sponsors() == null ? null : plugin.sponsors().config(),
+                        checkout.ready(), checkout.sandbox()),
+                java.util.Map.of("Cache-Control", "no-cache")) : null);
+        // 付款（統一金流 PAYUNi）：建立訂單 → PAYUNi 付款頁；背景通知、付款完返回都會驗證後發星幣（同一筆只發一次）
+        server.endpoint("/shop/checkout", request -> shopEnabled() ? checkout.checkout(request) : null, "POST");
+        server.endpoint("/shop/payuni/notify", checkout::notify, "POST");
+        server.endpoint("/shop/payuni/return", checkout::result, "POST", "GET");
+        if (plugin.getConfig().getBoolean("web.shop.payuni.enabled", false)) {
+            final String problem = checkout.problem();
+            if (problem != null) {
+                plugin.getSLF4JLogger().warn("贊助商店：線上付款開著但不能用：{}（config.yml 的 web.shop.payuni）", problem);
+            } else if (!publicUrl().startsWith("https://")) {
+                plugin.getSLF4JLogger().warn("贊助商店：public-url（{}）不是 https：PAYUNi 的背景通知只送 80、443 埠，星幣會發不出去", publicUrl());
+            } else {
+                plugin.getSLF4JLogger().info("贊助商店：線上付款開著（{}），通知網址 {}/shop/payuni/notify", checkout.sandbox() ? "測試區" : "正式區", publicUrl());
+            }
+        }
         // 角色頁（2026-10，像 poe.ninja）：公開的角色（玩家可以 /char profile off 關掉）
         server.route("/builds", path -> profiles == null ? null : WebServer.Response.of("text/html; charset=utf-8", buildsPage));
         server.route("/builds/", path -> profiles == null ? null : WebServer.Response.redirect("../builds"));
@@ -409,6 +440,11 @@ public final class WebModule implements Module, Listener {
 
     /** 玩家看到的網址（沒有結尾的 /）。 */
     /** 首頁用的狀態：在線人數、有開哪些頁。任何執行緒都可以叫（只讀人數）。 */
+    /** 贊助商店頁開著沒（web.shop.enabled，預設開）。 */
+    private boolean shopEnabled() {
+        return plugin.getConfig().getBoolean("web.shop.enabled", true);
+    }
+
     private byte[] statusJson() {
         final com.google.gson.JsonObject root = new com.google.gson.JsonObject();
         root.addProperty("online", plugin.getServer().getOnlinePlayers().size());
@@ -417,6 +453,7 @@ public final class WebModule implements Module, Listener {
         pages.addProperty("ladder", plugin.ladder() != null);
         pages.addProperty("builds", profiles != null);
         pages.addProperty("economy", economyEnabled && plugin.economy() != null);
+        pages.addProperty("shop", shopEnabled());
         root.add("pages", pages);
         return root.toString().getBytes(StandardCharsets.UTF_8);
     }

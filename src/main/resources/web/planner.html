@@ -157,7 +157,7 @@
   .itemcard .sep { border-top: 1px solid #2c2440; margin: 4px 0; }
   .itemcard .fl { color: #af6025; font-style: italic; }
   #gearTotals li { color: #9db4ff; }
-  /* 計算器（2026-10，像 PoB）：載入角色、技能與輔助、算出來的數字 */
+  /* 計算器（2026-10）：載入角色、技能與輔助、算出來的數字 */
   .calcbar { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
   .calcbar input, .calcrow input, .calcrow select, #skillDialog select, #skillDialog input {
     font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; min-width: 0; }
@@ -251,7 +251,7 @@
   </div>
   <aside>
     <section id="calcSection">
-      <h2>計算器（像 PoB）</h2>
+      <h2>計算器</h2>
       <div class="calcbar">
         <input type="search" id="charName" placeholder="角色名稱（載入遊戲裡的角色）" aria-label="角色名稱">
         <button type="button" id="charLoad">載入</button>
@@ -1564,7 +1564,7 @@
     }
   });
 
-  // ---- 計算器（2026-10，像 PoB）----
+  // ---- 計算器（2026-10）----
   // 天賦、裝備、昇華、技能面板送到伺服器（POST tree/calc），伺服器用遊戲裡同一套算法（跟 /stats、技能說明一樣）算出屬性與每秒傷害。
   // 打開一個技能可以看每一顆輔助寶石掛上去大約多幾 %。
   const calc = { level: 0, asc: "", ascNodes: [], skills: [], binds: new Array(10).fill(-1),

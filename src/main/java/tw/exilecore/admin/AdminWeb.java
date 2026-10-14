@@ -123,6 +123,7 @@ final class AdminWeb {
         server.endpoint("/admin/api/deliveries", request -> api(request, false, session -> deliveries(request)), "GET");
         server.endpoint("/admin/api/search", request -> api(request, false, session -> search(request)), "GET");
         server.endpoint("/admin/api/log", request -> api(request, false, session -> log()), "GET");
+        server.endpoint("/admin/api/orders", request -> api(request, false, session -> orders(request)), "GET");
         server.endpoint("/admin/api/affixes", request -> api(request, false, session -> affixes(request)), "GET");
         // 2026-10：網頁角色頁的管理員檢視（不公開的角色也看得到；/builds 頁面登入管理網頁時自動用這個）
         server.endpoint("/admin/api/builds/list", request -> api(request, false, session -> builds(null)), "GET");
@@ -881,6 +882,89 @@ final class AdminWeb {
             list.add(map);
         }
         return Map.of("rows", list);
+    }
+
+    /**
+     * 贊助商店的訂單（2026-10，PAYUNi）：最新的 300 筆，可以照狀態、玩家／訂單編號篩選；加上已付款的合計（今天、這個月、全部，台灣時間）。
+     * 每筆附發放批次代號：在「發放紀錄」看實際發了什麼、領了沒。
+     */
+    private Object orders(final WebServer.Request request) throws Exception {
+        final String status = request.param("status") == null ? "all" : request.param("status");
+        final String query = request.param("q") == null ? "" : request.param("q").trim().toLowerCase(java.util.Locale.ROOT);
+        final java.time.ZoneId zone = java.time.ZoneId.of("Asia/Taipei");
+        final java.time.ZonedDateTime now = java.time.ZonedDateTime.now(zone);
+        final Instant today = now.toLocalDate().atStartOfDay(zone).toInstant();
+        final Instant month = now.toLocalDate().withDayOfMonth(1).atStartOfDay(zone).toInstant();
+        return onDatabase(connection -> {
+            final StringBuilder sql = new StringBuilder("SELECT order_no, player_name, stars, bonus, amount, email, status, trade_no, payment_type, "
+                    + "created_at, paid_at, note FROM shop_orders WHERE 1 = 1");
+            final List<String> args = new ArrayList<>();
+            if (!"all".equals(status)) {
+                sql.append(" AND status = ?");
+                args.add(status);
+            }
+            if (!query.isEmpty()) {
+                sql.append(" AND (LOWER(player_name) LIKE ? OR LOWER(order_no) LIKE ? OR LOWER(COALESCE(trade_no, '')) LIKE ?)");
+                final String like = "%" + query.replace("%", "") + "%";
+                args.add(like);
+                args.add(like);
+                args.add(like);
+            }
+            sql.append(" ORDER BY created_at DESC LIMIT 300");
+            final List<Map<String, Object>> rows = new ArrayList<>();
+            try (java.sql.PreparedStatement select = connection.prepareStatement(sql.toString())) {
+                for (int i = 0; i < args.size(); i++) {
+                    select.setString(i + 1, args.get(i));
+                }
+                try (java.sql.ResultSet result = select.executeQuery()) {
+                    while (result.next()) {
+                        final Map<String, Object> row = new LinkedHashMap<>();
+                        final String orderNo = result.getString(1);
+                        row.put("order", orderNo);
+                        row.put("player", result.getString(2));
+                        row.put("stars", result.getLong(3));
+                        row.put("bonus", result.getLong(4));
+                        row.put("amount", result.getInt(5));
+                        row.put("email", result.getString(6));
+                        row.put("status", result.getString(7));
+                        row.put("trade", result.getString(8));
+                        final int type = result.getInt(9);
+                        row.put("payment", result.wasNull() ? "" : tw.exilecore.web.ShopCheckout.paymentName(String.valueOf(type)));
+                        final java.sql.Timestamp created = result.getTimestamp(10);
+                        final java.sql.Timestamp paid = result.getTimestamp(11);
+                        row.put("at", created == null ? null : created.getTime());
+                        row.put("paidAt", paid == null ? null : paid.getTime());
+                        row.put("note", result.getString(12));
+                        row.put("batch", tw.exilecore.web.ShopCheckout.batchId(orderNo));
+                        rows.add(row);
+                    }
+                }
+            }
+            final Map<String, Object> totals = new LinkedHashMap<>();
+            try (java.sql.PreparedStatement sum = connection.prepareStatement("SELECT "
+                    + "COALESCE(SUM(CASE WHEN paid_at >= ? THEN amount ELSE 0 END), 0), SUM(CASE WHEN paid_at >= ? THEN 1 ELSE 0 END), "
+                    + "COALESCE(SUM(CASE WHEN paid_at >= ? THEN amount ELSE 0 END), 0), SUM(CASE WHEN paid_at >= ? THEN 1 ELSE 0 END), "
+                    + "COALESCE(SUM(amount), 0), COUNT(*) FROM shop_orders WHERE status = 'paid'")) {
+                sum.setTimestamp(1, java.sql.Timestamp.from(today));
+                sum.setTimestamp(2, java.sql.Timestamp.from(today));
+                sum.setTimestamp(3, java.sql.Timestamp.from(month));
+                sum.setTimestamp(4, java.sql.Timestamp.from(month));
+                try (java.sql.ResultSet result = sum.executeQuery()) {
+                    if (result.next()) {
+                        totals.put("today", result.getLong(1));
+                        totals.put("todayCount", result.getLong(2));
+                        totals.put("month", result.getLong(3));
+                        totals.put("monthCount", result.getLong(4));
+                        totals.put("all", result.getLong(5));
+                        totals.put("allCount", result.getLong(6));
+                    }
+                }
+            }
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("rows", rows);
+            out.put("totals", totals);
+            return out;
+        });
     }
 
     private Object search(final WebServer.Request request) throws Exception {
