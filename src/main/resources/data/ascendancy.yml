@@ -24,6 +24,13 @@ settings:
 level_race:
   enabled: true
   level: 100
+  # 2026-10：全服第一個到 level 級的角色拿 first_title（全服只有一個，沒有加成）；
+  # 任何角色到 level 級，帳號就拿到 reach_title（不限量；擁有就有效，經驗 +reach_experience%）。寫空字串 = 不發。
+  first_title: 百星之首
+  reach_title: 燃星者
+  reach_experience: 5
+  # 升到這些等級時全服廣播（Discord 也發）
+  announce_levels: [100, 110, 120]
   titles:
     ironwarden: 巔峰鐵衛
     berserker: 巔峰狂嘯

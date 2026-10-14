@@ -1484,7 +1484,7 @@ public final class CharacterService {
             }
             for (int i = 0; i < 9; i++) {
                 if (i != Gear.HAND_SLOT && isEmpty(inventory.getItem(i))
-                        && (plugin.flasks() == null || !plugin.flasks().config().isFlaskSlot(i))) {
+                        && (plugin.flasks() == null || !plugin.flasks().isFlaskSlot(player, i))) {
                     inventory.setItem(i, stack);
                     stowed = true;
                     return;

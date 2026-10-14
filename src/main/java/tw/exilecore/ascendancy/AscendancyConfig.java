@@ -101,10 +101,30 @@ public final class AscendancyConfig {
      * @param level   幾級
      * @param titles  昇華代號 → 稱號名稱（沒寫的用「巔峰」＋昇華名稱）
      */
-    public record LevelRace(boolean enabled, int level, java.util.Map<String, String> titles) {
+    /**
+     * @param firstTitle      全服第一個到 level 級的稱號（2026-10，只有一個；空白 = 不發）
+     * @param reachTitle      到 level 級就有的稱號（2026-10，不限量；空白 = 不發）
+     * @param reachExperience 擁有 reachTitle 的帳號經驗多幾 %
+     * @param announceLevels  升到這些等級時全服廣播（2026-10）
+     */
+    public record LevelRace(boolean enabled, int level, java.util.Map<String, String> titles, String firstTitle, String reachTitle,
+                            double reachExperience, List<Integer> announceLevels) {
         public LevelRace {
             titles = java.util.Map.copyOf(titles);
+            firstTitle = firstTitle == null ? "" : firstTitle.trim();
+            reachTitle = reachTitle == null ? "" : reachTitle.trim();
+            reachExperience = Math.max(0, reachExperience);
+            announceLevels = announceLevels == null ? List.of() : List.copyOf(announceLevels);
         }
+
+        public LevelRace(final boolean enabled, final int level, final java.util.Map<String, String> titles) {
+            this(enabled, level, titles, "百星之首", "燃星者", 5, List.of(100, 110, 120));
+        }
+
+        public static final String FIRST_TITLE_ID = "race_first";
+        public static final String REACH_TITLE_ID = "race_reach";
+        /** 全服第一個的紀錄在 level_race 表裡的代號（不會跟昇華代號撞到）。 */
+        public static final String FIRST_KEY = "*server";
 
         /** 這個昇華的稱號名稱。 */
         public String title(final Ascendancy ascendancy) {
@@ -223,7 +243,20 @@ public final class AscendancyConfig {
         for (final String id : titlesNode.keys()) {
             raceTitles.put(id, titlesNode.string(id, "").trim());
         }
-        levelRace = new LevelRace(race.bool("enabled", false), race.integer("level", 100), raceTitles);
+        final List<Integer> announce = new ArrayList<>();
+        if (race.has("announce_levels")) {
+            for (final String value : race.strings("announce_levels")) {
+                try {
+                    announce.add(Integer.parseInt(value.trim()));
+                } catch (final NumberFormatException e) {
+                    throw new IllegalArgumentException("level_race.announce_levels：「" + value + "」不是數字");
+                }
+            }
+        } else {
+            announce.addAll(List.of(100, 110, 120));
+        }
+        levelRace = new LevelRace(race.bool("enabled", false), race.integer("level", 100), raceTitles,
+                race.string("first_title", "百星之首"), race.string("reach_title", "燃星者"), race.decimal("reach_experience", 5), announce);
 
         final YamlNode trialsNode = root.node("trials");
         for (final String id : trialsNode.keys()) {

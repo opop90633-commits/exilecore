@@ -148,7 +148,8 @@ public final class AscendancyService {
 
     /** 升級（from → to）讓帳號的分身獎勵多一階時，告訴玩家（屬性表升級時已經重算了）。 */
     public void onLevelUp(final Player player, final int from, final int to) {
-        race.check(player); // 衝等活動：第一個到 100 級的昇華拿稱號
+        race.check(player); // 衝等活動：第一個到 100 級的昇華拿稱號（2026-10：還有百星之首、燃星者）
+        race.levelUp(player, from, to); // 2026-10：升到 100、110、120 級全服廣播
         final PlayerState state = plugin.players().get(player);
         final CharacterRecord active = state.character();
         if (active == null || from >= to) {

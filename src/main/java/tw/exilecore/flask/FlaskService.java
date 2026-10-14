@@ -315,15 +315,117 @@ public final class FlaskService {
                 + number + perUse + "</" + (boosted ? "#8888ff" : "white") + ">（還能喝 <white>" + charges / perUse + "</white> 次）");
         lines.add("<gray>需求：等級 <white>" + base.level());
         lines.add("");
-        final String key = slotKey(base.kind());
-        lines.add("<gray>放在快捷欄 <white>" + key + "</white>（" + base.kind().displayName() + "藥劑欄），按 <white>" + key
-                + "</white> 喝（手上的武器不會換掉）");
+        // 2026-10：藥劑欄的位置玩家可以選（1–8 任選兩格），說明不寫死是哪個數字鍵
+        lines.add("<gray>放在快捷欄的" + base.kind().displayName() + "藥劑欄，按那一格的數字鍵喝（手上的武器不會換掉）");
         lines.add("<gray>殺怪充能；回營地、碰到檢查點、重生時補滿");
         lines.add("<dark_gray>" + base.kind().displayName() + "回滿了效果就結束");
         return lines;
     }
 
+    // ---- 2026-10：藥劑欄的位置照玩家選的快捷列排法（HotbarLayout：1–8 任選兩格） ----
+
+    private tw.exilecore.character.HotbarLayout layout(final Player player) {
+        return player == null ? tw.exilecore.character.HotbarLayout.CLASSIC : tw.exilecore.character.HotbarLayout.of(plugin.players().get(player));
+    }
+
+    /** 這個玩家的兩格藥劑欄（生命、魔力；快捷欄索引）。 */
+    public int[] slots(final Player player) {
+        return layout(player).flaskSlots(config.slots());
+    }
+
+    /** 這個玩家這種藥劑放哪一格。 */
+    public int slotFor(final Player player, final FlaskKind kind) {
+        return layout(player).flaskSlot(kind == FlaskKind.LIFE ? 0 : 1, config.slots());
+    }
+
+    /** 這個玩家的這一格是哪一種藥劑欄（不是回傳 null）。 */
+    public FlaskKind kindAt(final Player player, final int hotbarIndex) {
+        final int index = layout(player).flaskIndex(hotbarIndex, config.slots());
+        return index < 0 ? null : index == 0 ? FlaskKind.LIFE : FlaskKind.MANA;
+    }
+
+    public boolean isFlaskSlot(final Player player, final int hotbarIndex) {
+        return kindAt(player, hotbarIndex) != null;
+    }
+
+    /** 這個玩家這種藥劑是數字鍵幾。 */
+    public String slotKey(final Player player, final FlaskKind kind) {
+        return String.valueOf(slotFor(player, kind) + 1);
+    }
+
+    /**
+     * 換快捷列排法（設定 →「按鍵」；只能在營地換，技能圖示沒有擺出來時才不會亂）：
+     * 藥劑（含空瓶）搬到新的藥劑欄，新藥劑欄原本的東西搬到空出來的舊藥劑欄（放不下就收進背包）。回傳有沒有換。
+     */
+    public boolean switchLayout(final Player player, final tw.exilecore.character.HotbarLayout target) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        if (!state.hasCharacter() || target == null) {
+            return false;
+        }
+        final int[] before = slots(player);
+        final int[] after = target.flaskSlots(config.slots());
+        if (before[0] == after[0] && before[1] == after[1]) {
+            return false;
+        }
+        final PlayerInventory inventory = player.getInventory();
+        final int[] from = slots(player);
+        final ItemStack[] flasks = {inventory.getItem(from[0]), inventory.getItem(from[1])};
+        final String encoded = target.encode();
+        if (encoded != null) {
+            plugin.characters().setProgress(player, tw.exilecore.character.HotbarLayout.PROGRESS, encoded);
+        } else {
+            plugin.characters().removeProgress(player, tw.exilecore.character.HotbarLayout.PROGRESS);
+        }
+        final int[] to = slots(player);
+        final List<ItemStack> displaced = new ArrayList<>();
+        for (final int slot : to) {
+            if (slot != from[0] && slot != from[1]) {
+                final ItemStack there = inventory.getItem(slot);
+                if (!vacant(there) && !isPlaceholder(there)) {
+                    displaced.add(there);
+                }
+            }
+        }
+        for (final int slot : from) {
+            inventory.setItem(slot, null);
+        }
+        for (int i = 0; i < 2; i++) {
+            inventory.setItem(to[i], flasks[i] == null || flasks[i].isEmpty() ? null : flasks[i]);
+        }
+        for (final ItemStack item : displaced) {
+            ItemStack left = item;
+            for (final int slot : from) {
+                if (left != null && slot != to[0] && slot != to[1] && vacant(inventory.getItem(slot))) {
+                    inventory.setItem(slot, left);
+                    left = null;
+                }
+            }
+            if (left != null) {
+                final ItemStack rest = plugin.loot() != null ? plugin.loot().stow(player, state, left)
+                        : inventory.addItem(left).values().stream().findFirst().orElse(null);
+                if (rest != null && !rest.isEmpty()) {
+                    player.getWorld().dropItemNaturally(player.getLocation(), rest);
+                }
+            }
+        }
+        ensureSlots(player);
+        plugin.players().markDirty(player);
+        if (plugin.characters().gear() != null) {
+            plugin.characters().gear().resync(player);
+        }
+        return true;
+    }
+
     /** 「1（生命）、2（魔力）」。 */
+    public String slotText(final Player player) {
+        return slotKey(player, FlaskKind.LIFE) + "（生命）、" + slotKey(player, FlaskKind.MANA) + "（魔力）";
+    }
+
+    private static Player holder(final PlayerInventory inventory) {
+        return inventory.getHolder() instanceof Player player ? player : null;
+    }
+
+    /** 「1（生命）、2（魔力）」（設定檔的經典排法；記錄用）。 */
     String slotText() {
         return slotKey(FlaskKind.LIFE) + "（生命）、" + slotKey(FlaskKind.MANA) + "（魔力）";
     }
@@ -370,13 +472,13 @@ public final class FlaskService {
     public boolean drink(final Player player, final int hotbarSlot) {
         final PlayerInventory inventory = player.getInventory();
         final ItemStack item = inventory.getItem(hotbarSlot);
-        final FlaskKind slotKind = config.kindAt(hotbarSlot);
+        final FlaskKind slotKind = kindAt(player, hotbarSlot);
         final PlayerState state = plugin.players().get(player);
         if (isPlaceholder(item)) {
             if (slotKind != null) {
                 // 只提示、不出聲：滾輪滾過去也會到這裡
                 state.notice("<gray>" + slotKind.displayName() + "藥劑欄是空的：把" + slotKind.displayName() + "藥劑放進快捷欄 "
-                        + slotKey(slotKind) + "（撿到時會自動放進來）", now() + 40);
+                        + slotKey(player, slotKind) + "（撿到時會自動放進來）", now() + 40);
                 plugin.players().display(player, state);
             }
             return true;
@@ -391,7 +493,7 @@ public final class FlaskService {
             return true;
         }
         if (slotKind != null && base.kind() != slotKind) {
-            fail(player, state, base.kind().displayName() + "藥劑要放在快捷欄 " + slotKey(base.kind()) + " 才能喝");
+            fail(player, state, base.kind().displayName() + "藥劑要放在快捷欄 " + slotKey(player, base.kind()) + " 才能喝");
             return true;
         }
         final long now = now();
@@ -547,7 +649,7 @@ public final class FlaskService {
         if (amount <= 0) {
             return;
         }
-        addCharges(player, config.slotFor(kind), amount, true);
+        addCharges(player, slotFor(player, kind), amount, true);
     }
 
     /** 殺怪：藥劑欄裡的藥劑都充能（藥劑自己的「充能獲得」詞綴、殺怪多一點的機率，與裝備的全域加成都算進去）。 */
@@ -555,7 +657,7 @@ public final class FlaskService {
         if (amount <= 0) {
             return;
         }
-        for (final int slot : config.slots()) {
+        for (final int slot : slots(player)) {
             addCharges(player, slot, amount, true);
         }
     }
@@ -587,7 +689,7 @@ public final class FlaskService {
                 continue;
             }
             final PlayerInventory inventory = player.getInventory();
-            for (final int slot : config.slots()) {
+            for (final int slot : slots(player)) {
                 final ItemStack stack = inventory.getItem(slot);
                 final FlaskData data = read(stack).orElse(null);
                 final FlaskBase base = data == null ? null : config.base(data.base());
@@ -678,7 +780,7 @@ public final class FlaskService {
             final FlaskBase base = config.base(id);
             final ItemStack flask = create(base, base.charges());
             // 照種類放：生命藥劑放生命藥劑欄、魔力放魔力（那格已經有同一種的就放背包）
-            final int slot = config.slotFor(base.kind());
+            final int slot = slotFor(player, base.kind());
             final ItemStack current = inventory.getItem(slot);
             if (kindOf(current) != base.kind() && makeRoom(inventory, slot)) {
                 inventory.setItem(slot, flask);
@@ -696,10 +798,10 @@ public final class FlaskService {
                 dropped = true;
             }
         }
-        final String where = dropped ? "。<yellow>背包滿了，藥劑掉在腳邊，記得撿起來放到快捷欄 " + slotText()
-                : bagged ? "。<yellow>背包滿了，藥劑放進隨身背包（Shift＋F），記得搬到快捷欄 " + slotText()
-                : moved ? "。<yellow>快捷欄滿了，藥劑放在背包裡，記得搬到快捷欄 " + slotText() : "";
-        player.sendMessage(plugin.text().prefixed("<gray>拿到藥劑：放在快捷欄 <white>" + slotText()
+        final String where = dropped ? "。<yellow>背包滿了，藥劑掉在腳邊，記得撿起來放到快捷欄 " + slotText(player)
+                : bagged ? "。<yellow>背包滿了，藥劑放進隨身背包（Shift＋F），記得搬到快捷欄 " + slotText(player)
+                : moved ? "。<yellow>快捷欄滿了，藥劑放在背包裡，記得搬到快捷欄 " + slotText(player) : "";
+        player.sendMessage(plugin.text().prefixed("<gray>拿到藥劑：放在快捷欄 <white>" + slotText(player)
                 + "</white>，按那個數字鍵喝（手上的武器不會換掉）；殺怪充能，回營地或檢查點補滿" + where));
     }
 
@@ -711,7 +813,7 @@ public final class FlaskService {
         }
         final boolean held = inventory.getHeldItemSlot() == slot;
         for (int target = 0; target < 36; target++) {
-            if (target == slot || config.isFlaskSlot(target)) {
+            if (target == slot || isFlaskSlot(holder(inventory), target)) {
                 continue;
             }
             final ItemStack there = inventory.getItem(target);
@@ -730,12 +832,12 @@ public final class FlaskService {
     /** 手上拿的是藥劑欄：換到第一個不是藥劑欄的格子（優先有武器的那格）。回傳有沒有換。 */
     public boolean leaveFlaskSlot(final Player player) {
         final PlayerInventory inventory = player.getInventory();
-        if (!config.isFlaskSlot(inventory.getHeldItemSlot())) {
+        if (!isFlaskSlot(player, inventory.getHeldItemSlot())) {
             return false;
         }
         int fallback = -1;
         for (int slot = 0; slot < 9; slot++) {
-            if (config.isFlaskSlot(slot)) {
+            if (isFlaskSlot(player, slot)) {
                 continue;
             }
             if (fallback < 0) {
@@ -771,9 +873,9 @@ public final class FlaskService {
     }
 
     /** 做一個空瓶提示（放在空著的藥劑欄）。 */
-    ItemStack placeholder(final FlaskKind kind) {
+    ItemStack placeholder(final Player player, final FlaskKind kind) {
         final ItemStack stack = ItemStack.of(Material.PAPER); // 紙沒有右鍵的用途（空玻璃瓶右鍵水會裝水）
-        final String key = slotKey(kind);
+        final String key = slotKey(player, kind);
         final String color = kind.color();
         stack.editMeta(meta -> {
             meta.displayName(ItemRenderer.line("<" + color + ">" + kind.displayName() + "藥劑欄（空的）"));
@@ -791,9 +893,9 @@ public final class FlaskService {
     }
 
     /** 這一格（快捷欄索引）是藥劑欄的話，做一個它的空瓶提示；不是藥劑欄回傳 null。 */
-    public ItemStack placeholderFor(final int hotbarIndex) {
-        final FlaskKind kind = hotbarIndex >= 0 && hotbarIndex < 9 ? config.kindAt(hotbarIndex) : null;
-        return kind == null ? null : placeholder(kind);
+    public ItemStack placeholderFor(final Player player, final int hotbarIndex) {
+        final FlaskKind kind = hotbarIndex >= 0 && hotbarIndex < 9 ? kindAt(player, hotbarIndex) : null;
+        return kind == null ? null : placeholder(player, kind);
     }
 
     /** 這個角色的等級喝得了這瓶嗎（自動放進藥劑欄只放喝得了的）。 */
@@ -841,14 +943,14 @@ public final class FlaskService {
         boolean changed = false;
         for (int slot = 0; slot < inventory.getSize(); slot++) {
             final ItemStack item = inventory.getItem(slot);
-            final FlaskKind kind = slot < 9 ? config.kindAt(slot) : null;
+            final FlaskKind kind = slot < 9 ? kindAt(player, slot) : null;
             if (kind == null) {
                 if (isPlaceholder(item)) {
                     inventory.setItem(slot, null);
                     changed = true;
                 }
             } else if (item == null || item.isEmpty() || isPlaceholder(item) && !kind.key().equals(placeholderKind(item))) {
-                inventory.setItem(slot, placeholder(kind));
+                inventory.setItem(slot, placeholder(player, kind));
                 changed = true;
             }
         }
@@ -870,7 +972,7 @@ public final class FlaskService {
         final PlayerInventory inventory = player.getInventory();
         final List<String> moved = new ArrayList<>();
         for (final FlaskKind kind : FlaskKind.values()) {
-            final int slot = config.slotFor(kind);
+            final int slot = slotFor(player, kind);
             final ItemStack item = inventory.getItem(slot);
             if (vacant(item) || kindOf(item) == kind) {
                 continue;
@@ -882,7 +984,7 @@ public final class FlaskService {
         final boolean placed = autoPlace(player, false);
         final boolean marked = ensureSlots(player);
         if (!moved.isEmpty()) {
-            player.sendMessage(plugin.text().prefixed("<gray>快捷欄 <white>" + slotText() + "</white> 是藥劑欄，只能放對應的藥劑："
+            player.sendMessage(plugin.text().prefixed("<gray>快捷欄 <white>" + slotText(player) + "</white> 是藥劑欄，只能放對應的藥劑："
                     + "原本放在那裡的 <white>" + ItemRenderer.escape(String.join("、", moved)) + "</white> 搬到背包了"));
         }
         return !moved.isEmpty() || placed || marked;
@@ -928,7 +1030,7 @@ public final class FlaskService {
             return false;
         }
         final FlaskKind kind = kindOf(stack);
-        player.getInventory().setItem(config.slotFor(kind), stack.asOne());
+        player.getInventory().setItem(slotFor(player, kind), stack.asOne());
         announcePlaced(player, kind);
         return true;
     }
@@ -938,7 +1040,7 @@ public final class FlaskService {
         final FlaskData data = read(stack).orElse(null);
         final FlaskBase base = data == null ? null : config.base(data.base());
         return base != null && stack.getAmount() == 1 && eligible(player) && usable(player, base)
-                && vacant(player.getInventory().getItem(config.slotFor(base.kind())));
+                && vacant(player.getInventory().getItem(slotFor(player, base.kind())));
     }
 
     /**
@@ -952,7 +1054,7 @@ public final class FlaskService {
         final PlayerInventory inventory = player.getInventory();
         boolean placed = false;
         for (final FlaskKind kind : FlaskKind.values()) {
-            final int slot = config.slotFor(kind);
+            final int slot = slotFor(player, kind);
             if (!vacant(inventory.getItem(slot))) {
                 continue;
             }
@@ -960,7 +1062,7 @@ public final class FlaskService {
             int bestLevel = -1;
             int bestCharges = -1;
             for (int source = 0; source < 36; source++) {
-                if (config.isFlaskSlot(source)) {
+                if (isFlaskSlot(player, source)) {
                     continue;
                 }
                 final ItemStack item = inventory.getItem(source);
@@ -989,7 +1091,7 @@ public final class FlaskService {
 
     private void announcePlaced(final Player player, final FlaskKind kind) {
         final PlayerState state = plugin.players().get(player);
-        state.notice("<" + kind.color() + ">" + kind.displayName() + "藥劑放進快捷欄 " + slotKey(kind) + "<gray>（按 " + slotKey(kind) + " 喝）",
+        state.notice("<" + kind.color() + ">" + kind.displayName() + "藥劑放進快捷欄 " + slotKey(player, kind) + "<gray>（按 " + slotKey(player, kind) + " 喝）",
                 now() + 60);
         plugin.players().display(player, state);
     }

@@ -182,6 +182,7 @@ final class ExchangeMenu extends Menu {
         for (int i = 0; i < 54; i++) {
             set(i, i < CURRENCY_SLOTS ? null : filler());
         }
+        final java.util.Map<String, java.util.Map<String, Offer>> market = market();
         for (int i = 0; i < Math.min(CURRENCY_SLOTS, currencies.size()); i++) {
             final CurrencyType type = plugin.currencies().repository().get(currencies.get(i));
             if (type == null) {
@@ -191,9 +192,13 @@ final class ExchangeMenu extends Menu {
             final boolean want = type.id().equals(choice.want);
             ItemStack icon = plugin.currencies().icon(type, 1);
             final int have = service.wallet().available(player, type.id());
-            appendLore(icon, "", String.format(Locale.ROOT, "<gray>你有 <white>%,d</white>（通貨袋＋背包＋倉庫）", have),
-                    give ? "<#7fd4ff>◀ 你給這個" : want ? "<#f5b942>▶ 你要這個" : "",
-                    "<yellow>左鍵：我給這個　右鍵：我要這個");
+            final List<String> extra = new ArrayList<>();
+            extra.add("");
+            extra.add(String.format(Locale.ROOT, "<gray>你有 <white>%,d</white>（通貨袋＋背包＋倉庫）", have));
+            extra.addAll(marketLines(market, type.id()));
+            extra.add(give ? "<#7fd4ff>◀ 你給這個" : want ? "<#f5b942>▶ 你要這個" : "");
+            extra.add("<yellow>左鍵：我給這個　右鍵：我要這個");
+            appendLore(icon, extra.toArray(String[]::new));
             if (give || want) {
                 icon = highlight(icon);
             } else {
@@ -214,6 +219,91 @@ final class ExchangeMenu extends Menu {
                 "<yellow>左鍵：查看"));
         set(SLOT_PLACE, placeIcon());
         set(SLOT_CLOSE, closeButton());
+    }
+
+    // ---- 2026-10：滑鼠移到上面的通貨就看得到誰在賣、誰在收、比值多少 ----
+
+    /** 一組「用 a 換 b」的掛單合起來：最好的比值（每個 a 換幾個 b）、還有多少個 a、幾張單。 */
+    private static final class Offer {
+        long bestNum;
+        long bestDen;
+        long stock;
+        int orders;
+
+        double price() {
+            return (double) bestNum / bestDen;
+        }
+    }
+
+    /** 掛單簿整理成「通貨 → 換的通貨 → Offer」：key "sell:X" = 有人拿 X 出來賣；"buy:X" = 有人要收 X（付別的）。不含自己的單。 */
+    private java.util.Map<String, java.util.Map<String, Offer>> market() {
+        final java.util.Map<String, java.util.Map<String, Offer>> out = new java.util.HashMap<>();
+        for (final ExchangeBook.Order order : service.book().all()) {
+            if (!order.confirmed() || order.lots() <= 0 || order.account().equals(player.getUniqueId())) {
+                continue;
+            }
+            // 賣 order.give：每個 give 要 wantTotal/giveTotal 個 want（越少越好）
+            final Offer sell = out.computeIfAbsent("sell:" + order.give(), k -> new java.util.HashMap<>())
+                    .computeIfAbsent(order.want(), k -> new Offer());
+            if (sell.orders == 0 || (double) order.wantTotal() / order.giveTotal() < sell.price()) {
+                sell.bestNum = order.wantTotal();
+                sell.bestDen = order.giveTotal();
+            }
+            sell.stock += order.remaining();
+            sell.orders++;
+            // 收 order.want：每個 want 付 giveTotal/wantTotal 個 give（越多越好）
+            final Offer buy = out.computeIfAbsent("buy:" + order.want(), k -> new java.util.HashMap<>())
+                    .computeIfAbsent(order.give(), k -> new Offer());
+            if (buy.orders == 0 || (double) order.giveTotal() / order.wantTotal() > buy.price()) {
+                buy.bestNum = order.giveTotal();
+                buy.bestDen = order.wantTotal();
+            }
+            buy.stock += order.remainingWant();
+            buy.orders++;
+        }
+        return out;
+    }
+
+    /** 通貨圖示多幾行：誰在賣它（要換什麼、最好的比值、還有多少）、誰在收它。你選的「我給」那一種排第一個、標 ★。 */
+    private List<String> marketLines(final java.util.Map<String, java.util.Map<String, Offer>> market, final String id) {
+        final List<String> lines = new ArrayList<>();
+        final java.util.Map<String, Offer> sells = market.getOrDefault("sell:" + id, java.util.Map.of());
+        final java.util.Map<String, Offer> buys = market.getOrDefault("buy:" + id, java.util.Map.of());
+        lines.add("");
+        if (sells.isEmpty()) {
+            lines.add("<dark_gray>目前沒有人在賣" + name(id));
+        } else {
+            lines.add("<#5bd65b>有人在賣" + name(id) + "<gray>（你付什麼：最好的比值）");
+            offerLines(lines, sells, id, choice.give, true);
+        }
+        if (!buys.isEmpty()) {
+            lines.add("<#7fd4ff>有人在收" + name(id) + "<gray>（他付什麼：最好的比值）");
+            offerLines(lines, buys, id, choice.want != null && !choice.want.equals(id) ? choice.want : choice.give, false);
+        }
+        return lines;
+    }
+
+    private static final int OFFER_LINES = 4;
+
+    private void offerLines(final List<String> lines, final java.util.Map<String, Offer> offers, final String id, final String mine,
+                            final boolean selling) {
+        final List<java.util.Map.Entry<String, Offer>> sorted = new ArrayList<>(offers.entrySet());
+        sorted.sort((a, b) -> {
+            if (a.getKey().equals(mine) != b.getKey().equals(mine)) {
+                return a.getKey().equals(mine) ? -1 : 1;
+            }
+            return Long.compare(b.getValue().stock, a.getValue().stock);
+        });
+        for (int i = 0; i < Math.min(OFFER_LINES, sorted.size()); i++) {
+            final String other = sorted.get(i).getKey();
+            final Offer offer = sorted.get(i).getValue();
+            final String star = other.equals(mine) ? "<#f5b942>★ " : "<gray>　";
+            lines.add(star + "<white>" + ratio(id, offer.bestNum, other, offer.bestDen)
+                    + String.format(Locale.ROOT, " <dark_gray>（%s %,d 個，%d 張單）", selling ? "還有" : "要收", offer.stock, offer.orders));
+        }
+        if (sorted.size() > OFFER_LINES) {
+            lines.add("<dark_gray>　…還有 " + (sorted.size() - OFFER_LINES) + " 種");
+        }
     }
 
     private ItemStack sectionIcon() {

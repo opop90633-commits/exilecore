@@ -1280,8 +1280,7 @@ public final class PlayerStateService {
         if (notice != null) {
             text.append("  ").append(notice);
         }
-        final String mainPlain = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
-                .serialize(plugin.text().parse(text.toString()));
+        final String mainPlain = cachedPlain(player, text.toString());
         if (sides) {
             final String side = HotbarSides.render(auraNames, pets, mainPlain);
             if (side != null) {
@@ -1299,7 +1298,44 @@ public final class PlayerStateService {
                 text.append(HotbarSides.renderLoot(loot, start, mainPlain, now));
             }
         }
-        return plugin.text().parse(text.toString());
+        return cachedParse(player, text.toString());
+    }
+
+    /** 2026-10 效能（spark：動作列每 tick 解析 MiniMessage 兩次）：字一樣就沿用上一次的結果。 */
+    private record Parsed(String text, Object value) {
+    }
+
+    private final Map<UUID, Parsed> lastPlain = new java.util.HashMap<>();
+    private final Map<UUID, Parsed> lastBar = new java.util.HashMap<>();
+
+    private String cachedPlain(final Player player, final String text) {
+        final Parsed cached = lastPlain.get(player.getUniqueId());
+        if (cached != null && cached.text().equals(text)) {
+            return (String) cached.value();
+        }
+        final String plain = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(plugin.text().parse(text));
+        trimCaches();
+        lastPlain.put(player.getUniqueId(), new Parsed(text, plain));
+        return plain;
+    }
+
+    private Component cachedParse(final Player player, final String text) {
+        final Parsed cached = lastBar.get(player.getUniqueId());
+        if (cached != null && cached.text().equals(text)) {
+            return (Component) cached.value();
+        }
+        final Component parsed = plugin.text().parse(text);
+        trimCaches();
+        lastBar.put(player.getUniqueId(), new Parsed(text, parsed));
+        return parsed;
+    }
+
+    /** 下線的人留下的快取清掉（人數多出不少時才掃）。 */
+    private void trimCaches() {
+        if (lastBar.size() + lastPlain.size() > 2 * plugin.getServer().getOnlinePlayers().size() + 64) {
+            lastBar.keySet().removeIf(uuid -> plugin.getServer().getPlayer(uuid) == null);
+            lastPlain.keySet().removeIf(uuid -> plugin.getServer().getPlayer(uuid) == null);
+        }
     }
 
     /** 全部在線玩家的狀態。 */

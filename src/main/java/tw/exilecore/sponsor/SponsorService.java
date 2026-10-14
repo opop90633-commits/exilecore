@@ -1695,7 +1695,7 @@ public final class SponsorService {
                 return;
             }
             refresh(player); // 戴著的稱號沒有了就換下來
-            plugin.characters().gear().sync(player); // 套著的幻化拿掉
+            plugin.characters().gear().resync(player); // 套著的幻化拿掉
             player.sendMessage(plugin.text().prefixed(FASHION_COLOR + "管理員收回了</#ff9ad5>：<white>" + ItemRenderer.escape(names.toString())));
         });
         return new Granted(taken, notOwned, work);
@@ -1982,7 +1982,7 @@ public final class SponsorService {
             }
         }
         accounts().writeProgress(player, TRANSMOG + look.name(), id);
-        plugin.characters().gear().sync(player);
+        plugin.characters().gear().resync(player);
         return null;
     }
 
@@ -2023,10 +2023,10 @@ public final class SponsorService {
         final long until = plugin.getServer().getCurrentTick() + TRY_ON_TICKS;
         final TryOn entry = new TryOn(id, until);
         tryOns.put(player.getUniqueId(), entry);
-        plugin.characters().gear().sync(player);
+        plugin.characters().gear().resync(player);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (tryOns.remove(player.getUniqueId(), entry) && player.isOnline()) {
-                plugin.characters().gear().sync(player);
+                plugin.characters().gear().resync(player);
                 player.sendMessage(plugin.text().prefixed("<gray>試穿結束：" + rarityTag(cosmetic)));
             }
         }, TRY_ON_TICKS + 1);
@@ -2097,7 +2097,7 @@ public final class SponsorService {
             return;
         }
         accounts().writeProgress(player, QUIVER_SKIN_OFF, quiverSkinEnabled(player) ? "1" : null);
-        plugin.characters().gear().sync(player);
+        plugin.characters().gear().resync(player);
     }
 
     /**

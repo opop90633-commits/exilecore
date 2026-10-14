@@ -225,17 +225,17 @@ public final class DropTable {
     }
 
     public double serverQuantity() {
-        return serverQuantity + tw.exilecore.sponsor.Boosts.quantity(); // 2026-10：加上贊助的全服加倍
+        return serverQuantity + tw.exilecore.sponsor.Boosts.quantity() + tw.exilecore.character.OnlineBonus.quantity(); // 2026-10：加上贊助的全服加倍、在線人數加成
     }
 
     /** 全服的物品稀有度加成（小數）。 */
     public double serverRarity() {
-        return serverRarity + tw.exilecore.sponsor.Boosts.rarity(); // 2026-10：加上贊助的全服加倍
+        return serverRarity + tw.exilecore.sponsor.Boosts.rarity() + tw.exilecore.character.OnlineBonus.rarity(); // 2026-10：加上贊助的全服加倍、在線人數加成
     }
 
     /** 全服的金幣倍數。 */
     public double serverGold() {
-        return serverGold * tw.exilecore.sponsor.Boosts.gold(); // 2026-10：加上贊助的全服加倍
+        return serverGold * tw.exilecore.sponsor.Boosts.gold() * tw.exilecore.character.OnlineBonus.gold(); // 2026-10：加上贊助的全服加倍、在線人數加成
     }
 
     private static MonsterRarity parseMonsterRarity(final YamlNode node, final String key) {

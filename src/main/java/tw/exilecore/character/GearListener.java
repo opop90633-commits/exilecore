@@ -73,7 +73,7 @@ final class GearListener implements Listener {
                 player.setItemOnCursor(null);
             }
             final ItemStack held = cursor == null || cursor.isEmpty() || Gear.isDisplay(cursor) ? null : cursor;
-            if (ownSlot && Gear.isDisplay(current) && Gear.skillSlot(event.getSlot()) && held == null && plugin.skills() != null
+            if (ownSlot && Gear.isDisplay(current) && Gear.skillSlot(plugin.players().get(player), event.getSlot()) && held == null && plugin.skills() != null
                     && (event.getClick().isLeftClick() || event.getClick().isRightClick())) {
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     if (player.isOnline()) {

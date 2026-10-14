@@ -47,6 +47,7 @@ links:
 #   vendor 商人、market 市集掌櫃、heist 盜賊首領（沒名字的擺設也可以）
 # 劇情人物寫 quests.yml 的人物代號：ming_yi 明夷、ji_heng（沒名字的擺設）…
 # 沒寫的：上面四個用程式內建的，其他隨機一個原版皮膚
+# 單獨一個人（同種類的其中一個、沒有名字的擺設、用原版指令放的假人）：看著他打 /ec npc skin <正版玩家名稱>，reset 還原；記在那個人身上，蓋過這裡的設定
 npc_skins:
   identifier: G22332004
   map_device: UTro_
@@ -55,6 +56,23 @@ npc_skins:
   ming_yi: Raincoat_OwO
   stash: Truffle_26
   ji_heng: winter_Re3
+
+# 在線人數加成（2026-10）：同時在線、真的在玩的人數到門檻，全服就有加成；人數掉下來超過 1 分鐘就收回。改完 /ec reload
+# 只算在玩的人：有角色、不是旁觀模式、idle-minutes 分鐘內按過移動鍵或說過話；one-per-ip = 同一個 IP 只算一個（擋分身灌人數）。
+#   前面有 Velocity／BungeeCord 代理卻沒有轉送真實 IP 時，所有人看起來是同一個 IP：要改成 false。
+# 每一階寫「總共」加多少 %（不是跟上一階的差）：experience 經驗、quantity 掉落數量、rarity 掉落稀有度、gold 金幣。
+# 跟管理網頁的全服加成、贊助的全服加倍一起算：經驗、金幣相乘，數量、稀有度相加。
+online_bonus:
+  enabled: true
+  idle-minutes: 5
+  one-per-ip: true
+  tiers:
+    - { players: 10,  experience: 5 }
+    - { players: 20,  experience: 5,  quantity: 5 }
+    - { players: 30,  experience: 5,  quantity: 5,  rarity: 5 }
+    - { players: 50,  experience: 10, quantity: 10, rarity: 10, gold: 10 }
+    - { players: 70,  experience: 15, quantity: 15, rarity: 15, gold: 15 }
+    - { players: 100, experience: 20, quantity: 20, rarity: 20, gold: 20 }
 
 resource-pack:
   # 介面資源包（星盤式的天賦樹、傳奇裝備的專屬外觀）：插件自己產生、透過下面的 web 網頁伺服器提供下載，玩家登入時會被問要不要套用。

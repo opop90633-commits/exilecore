@@ -238,6 +238,10 @@ public final class ExileCoreCommand {
                                                 : java.util.List.copyOf(plugin.quests().config().npcs().keySet())))
                                         .executes(context -> npcStory(plugin, context, StringArgumentType.getString(context, "id")))))
                         .then(Commands.literal("remove").executes(context -> npcRemove(plugin, context)))
+                        // 2026-10：/ec npc skin <正版玩家名稱|reset>：看著的（或最近的）人換皮膚，營地的擺設、原版指令放的假人也可以
+                        .then(Commands.literal("skin").then(Commands.argument("name", StringArgumentType.word())
+                                .suggests(suggest(() -> java.util.List.of("reset")))
+                                .executes(context -> npcSkin(plugin, context, StringArgumentType.getString(context, "name")))))
                         .then(Commands.literal("list").executes(context -> npcList(plugin, context.getSource().getSender()))))
                 .then(ZoneAdminCommand.node(plugin))
                 .then(SkillCommands.adminNode(plugin))
@@ -846,6 +850,44 @@ public final class ExileCoreCommand {
         final String name = plugin.npcs().type(nearest.get()).map(NpcType::displayName).orElse("NPC");
         nearest.get().remove();
         player.sendMessage(plugin.text().prefixed("<gray>移除了 <white>" + name));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int npcSkin(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final String name) {
+        final Player player = playerOrNull(plugin, context);
+        if (player == null) {
+            return Command.SINGLE_SUCCESS;
+        }
+        final boolean reset = "reset".equalsIgnoreCase(name);
+        if (!reset && !name.matches("[A-Za-z0-9_]{3,16}")) {
+            player.sendMessage(plugin.text().prefixed("<red>皮膚要寫正版玩家名稱（3–16 個英文字母、數字、底線），或 reset 回到預設"));
+            return Command.SINGLE_SUCCESS;
+        }
+        org.bukkit.entity.Mannequin target = player.getTargetEntity(6) instanceof org.bukkit.entity.Mannequin looked ? looked : null;
+        if (target == null) {
+            double best = 25; // 5 格內最近的
+            for (final Entity entity : player.getNearbyEntities(5, 5, 5)) {
+                if (entity instanceof org.bukkit.entity.Mannequin mannequin) {
+                    final double distance = entity.getLocation().distanceSquared(player.getLocation());
+                    if (distance < best) {
+                        best = distance;
+                        target = mannequin;
+                    }
+                }
+            }
+        }
+        if (target == null) {
+            player.sendMessage(plugin.text().prefixed("<red>看著要換的人（6 格內），或站到他旁邊 5 格內"));
+            return Command.SINGLE_SUCCESS;
+        }
+        if (plugin.training() != null && plugin.training().isDummy(target)) {
+            player.sendMessage(plugin.text().prefixed("<red>訓練假人的樣子由 dummies.yml 決定，不能用這個換"));
+            return Command.SINGLE_SUCCESS;
+        }
+        plugin.npcs().setOwnSkin(target, reset ? null : name);
+        final String who = plugin.npcs().type(target).map(NpcType::displayName).orElse("假人");
+        player.sendMessage(plugin.text().prefixed(reset ? "<gray>" + escape(who) + " 的皮膚回到預設（npc_skins 或隨機）"
+                : "<gray>" + escape(who) + " 換成 <white>" + escape(name) + "</white> 的皮膚（記在這個人身上，重開也不會變回去；/ec npc skin reset 還原）"));
         return Command.SINGLE_SUCCESS;
     }
 

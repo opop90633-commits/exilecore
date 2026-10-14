@@ -49,6 +49,10 @@ public final class WorldModule implements Module, Listener {
         } catch (final RuntimeException e) {
             plugin.getSLF4JLogger().warn("檢查虛空地圖的出生點失敗", e);
         }
+        // 2026-10 效能：原版的定位條（畫面上其他玩家的方向點，每 tick 更新；spark 1.5%）這裡用不到：所有世界都關掉
+        for (final org.bukkit.World world : plugin.getServer().getWorlds()) {
+            world.setGameRule(org.bukkit.GameRules.LOCATOR_BAR, false);
+        }
         final CampaignWorld created = new CampaignWorld(plugin, lore);
         created.enable();
         worlds = created;

@@ -514,16 +514,16 @@ public final class LootFilter {
         if (candidate.rarity() == Rarity.UNIQUE) {
             return false;
         }
-        if (!keepBases.isEmpty()) {
-            // 2026-10：有設定「只撿的基底」：只撿這些基底，稀有度照上面三格（普通、魔法、稀有）；其他基底都不撿
-            // （等級差、同類同系不看；有好詞綴的照樣撿回來）
-            final boolean listed = candidate.baseId() != null && keepBases.contains(candidate.baseId());
-            final boolean hidden = !listed || candidate.rarity() != null && hiddenEquipment.contains(candidate.rarity());
-            return hidden && !keptByAffixTier(candidate, who);
-        }
-        final boolean hidden = candidate.rarity() != null && hiddenEquipment.contains(candidate.rarity())
+        // 2026-10：優先順序（由上往下，先符合的算數；以前各條規則互相蓋掉，開了「保留好詞綴」或「只撿的基底」幾乎什麼都不藏）
+        //   1. 傳奇：永遠撿（上面）
+        //   2. 不同類的武器／不同系的防具、等級差太多、不在「只撿的基底」裡：不撿，好詞綴也救不回來
+        //   3. 稀有度被勾成隱藏：不撿，但有好詞綴（保留好詞綴）的撿回來
+        if (unlikeMine(candidate.tags(), who, rules.weaponsLikeMine(), rules.armourLikeMine())
                 || rules.levelGap() > 0 && candidate.itemLevel() > 0 && who.level() > 0 && candidate.itemLevel() < who.level() - rules.levelGap()
-                || unlikeMine(candidate.tags(), who, rules.weaponsLikeMine(), rules.armourLikeMine());
+                || !keepBases.isEmpty() && (candidate.baseId() == null || !keepBases.contains(candidate.baseId()))) {
+            return true;
+        }
+        final boolean hidden = candidate.rarity() != null && hiddenEquipment.contains(candidate.rarity());
         return hidden && !keptByAffixTier(candidate, who);
     }
 

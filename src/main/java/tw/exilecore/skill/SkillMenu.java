@@ -119,7 +119,8 @@ public final class SkillMenu extends Menu {
         set(SLOT_GUIDE, helpButton(List.of(
                 "<#e0c080>綁按鍵（哪個先點都可以）",
                 "點技能 → 點上面的按鍵格；或點按鍵格 → 點技能",
-                "滑鼠移到技能上按數字鍵 <white>1</white><gray>：綁左鍵、<white>2</white><gray>：綁右鍵、<white>3–8</white><gray>：綁那個數字鍵",
+                "滑鼠移到技能上按數字鍵 <white>" + flaskKey(0) + "</white><gray>：綁左鍵、<white>" + flaskKey(1) + "</white><gray>：綁右鍵、<white>"
+                        + layout().skillKeysText() + "</white><gray>：綁那個數字鍵",
                 "潛行＋左、潛行＋右：點技能再點按鍵格；右鍵點按鍵格：改回普攻",
                 "右上角換頁：技能一共三頁、27 個",
                 "",
@@ -134,7 +135,8 @@ public final class SkillMenu extends Menu {
                 "點掛著的輔助：拿下來；專屬掉落的輔助一個技能只能掛一顆",
                 "",
                 "光環、精魂召喚要綁在上方按鍵格才開著（常駐，不用按），保留的精魂加起來不能超過上限（照面板的順序）",
-                "按鍵：左鍵、右鍵、潛行＋左、潛行＋右，還有數字鍵 3–8（1、2 是藥劑，9 是手上的武器）",
+                "按鍵：左鍵、右鍵、潛行＋左、潛行＋右，還有數字鍵 " + layout().skillKeysText() + "（" + flaskKey(0) + "、" + flaskKey(1)
+                        + " 是藥劑，9 是手上的武器；設定裡可以把藥劑換到 1、2 或 5、6）",
                 "沒綁技能的按鍵是普攻：弓射箭、法杖與長杖射魔法彈、其他近戰")));
         // 2026-10：左下角的「回選單」跟右下角的「← 返回選單」重複，拿掉
         set(SLOT_CLOSE, closeButton());
@@ -146,9 +148,9 @@ public final class SkillMenu extends Menu {
         set(SLOT_MOUSE_LABEL, icon(Material.OAK_SIGN, "<white>滑鼠",
                 "<gray>右邊 4 格：左鍵、右鍵、潛行＋左鍵、潛行＋右鍵",
                 service.hold().enabled() ? "<gray>左鍵、右鍵都可以按住連續施放" : "<gray>右鍵可以按住連續施放（左鍵一下一下點）"));
-        set(SLOT_NUMBER_LABEL, icon(Material.OAK_SIGN, "<white>數字鍵 3–8",
-                "<gray>右邊 6 格：在可以戰鬥的地方按 3–8 放技能",
-                "<gray>手上一直拿著第 9 格（武器），1、2 喝藥劑",
+        set(SLOT_NUMBER_LABEL, icon(Material.OAK_SIGN, "<white>數字鍵 " + layout().skillKeysText(),
+                "<gray>右邊 6 格：在可以戰鬥的地方按 " + layout().skillKeysText() + " 放技能",
+                "<gray>手上一直拿著第 9 格（武器），" + flaskKey(0) + "、" + flaskKey(1) + " 喝藥劑（設定裡可以換位置）",
                 "<dark_gray>（營地裡數字鍵照原版換格子）"));
         for (int bindSlot = 0; bindSlot < SkillLoadout.BIND_SLOTS; bindSlot++) {
             set(BIND[bindSlot], bindIcon(state, bindSlot, holding));
@@ -239,8 +241,18 @@ public final class SkillMenu extends Menu {
                 "<dark_gray>也可以 Shift＋點技能"));
     }
 
-    private static String keyName(final int bindSlot) {
-        return SkillLoadout.keyName(bindSlot);
+    private String keyName(final int bindSlot) {
+        return layout().keyName(bindSlot); // 2026-10：照玩家選的快捷列排法（藥劑 1、2 或 5、6）
+    }
+
+    private tw.exilecore.character.HotbarLayout layout() {
+        return tw.exilecore.character.HotbarLayout.of(plugin.players().get(player));
+    }
+
+    /** 藥劑欄的數字鍵（0 生命、1 魔力）：技能上按這兩個綁左鍵、右鍵。 */
+    private int flaskKey(final int which) {
+        final int[] slots = plugin.flasks() != null ? plugin.flasks().slots(player) : layout().flaskSlots(new int[] {0, 1});
+        return slots[which] + 1;
     }
 
     private Holding holding(final ItemStack cursor) {
@@ -365,7 +377,7 @@ public final class SkillMenu extends Menu {
             chosen = position == selected;
             lore.add(chosen ? "<green>已選取：點上面的按鍵格綁上去，最下面一排是它的輔助孔"
                     : "<yellow>點一下：選取（看輔助孔、綁按鍵、升級）");
-            lore.add("<yellow>數字鍵 1：綁左鍵　2：綁右鍵　3–8：綁那個數字鍵");
+            lore.add("<yellow>數字鍵 " + flaskKey(0) + "：綁左鍵　" + flaskKey(1) + "：綁右鍵　" + layout().skillKeysText() + "：綁那個數字鍵");
             lore.add("<yellow>Shift＋點一下：取出成技能寶石");
             if (chosen) {
                 rail = rail(Material.LIME_STAINED_GLASS_PANE, "<green>▼ 選取中：" + name, "<gray>最下面一排是它的輔助孔");
@@ -597,7 +609,7 @@ public final class SkillMenu extends Menu {
         return supportInHand ? glowing(stack) : stack; // 可以換：只發光（外框留給空的孔）
     }
 
-    private static List<String> boundKeys(final SkillLoadout loadout, final int position) {
+    private List<String> boundKeys(final SkillLoadout loadout, final int position) {
         final List<String> keys = new ArrayList<>();
         for (int bindSlot = 0; bindSlot < SkillLoadout.BIND_SLOTS; bindSlot++) {
             if (loadout.bound(bindSlot) == position) {
@@ -727,10 +739,11 @@ public final class SkillMenu extends Menu {
                 return;
             }
             if (click == ClickType.NUMBER_KEY) {
-                // 滑鼠移到技能上按 1：左鍵、2：右鍵、3–8：那個數字鍵（9 沒有）
+                // 滑鼠移到技能上按藥劑的兩個數字鍵：左鍵、右鍵；技能鍵：那個數字鍵（9 沒有）。照玩家選的排法
                 final int button = event.getHotbarButton();
                 pendingKey = -1;
-                final int bindSlot = button == 0 ? SkillLoadout.KEY_LEFT : button == 1 ? SkillLoadout.KEY_RIGHT : SkillLoadout.hotbarBind(button + 1);
+                final int bindSlot = button == flaskKey(0) - 1 ? SkillLoadout.KEY_LEFT : button == flaskKey(1) - 1 ? SkillLoadout.KEY_RIGHT
+                        : layout().bindForSlot(button);
                 if (bindSlot >= 0) {
                     bind(loadout, bindSlot, position);
                 } else {

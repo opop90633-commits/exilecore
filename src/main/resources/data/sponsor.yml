@@ -31,7 +31,7 @@ stash_currency_upgrade: { price: 150, step: 5000, max: 4 }   # 倉庫通貨頁�
 listing:    { price: 50,  max: 0 }      # 市集商店頁的上架上限
 rename_card: { price: 50 }            # 改名卡（2026-10）：一張改一次角色名字（/char rename；管理員不用卡）
 # 公會（2026-10）
-guild_rename_card: { price: 300 }     # 公會改名卡：一張改一次公會的名稱與標籤（會長用 /guild rename；管理員不用卡）
+guild_rename_card: { price: 100 }     # 公會改名卡：一張改一次公會的名稱與標籤（會長用 /guild rename；管理員不用卡）
 guild_stash_page: { price: 300, max: 0 }    # 公會倉庫頁：買給自己的公會（整個公會共用；頁是公會的，解散就沒了）。max = 一個公會最多買幾頁，0 = 沒有上限
 
 # 月卡：買了之後每天（換日的時候，還沒上線的下次上線補發）發月卡幣、時裝幣到倉庫的「贊助頁」

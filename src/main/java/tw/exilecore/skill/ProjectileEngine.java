@@ -414,9 +414,12 @@ final class ProjectileEngine implements Listener {
         }
         final RayTraceResult block = shot.world.rayTraceBlocks(start, shot.direction, shot.speed, FluidCollisionMode.NEVER, true);
         final double travel = block == null ? shot.speed : block.getHitPosition().distance(from);
-        final RayTraceResult entity = travel <= 1e-6 || !shot.contact() ? null
+        RayTraceResult entity = travel <= 1e-6 || !shot.contact() ? null
                 : shot.world.rayTraceEntities(start, shot.direction, travel, shot.size,
                         candidate -> targets.valid(candidate, owner) && !shot.hit.contains(candidate.getUniqueId()));
+        if (entity == null && travel > 1e-6 && shot.contact()) {
+            entity = lowTarget(shot, owner, start, travel); // 2026-10：矮的怪（洞穴蜘蛛、蠹魚）從頭頂飛過去打不到
+        }
         if (entity != null && entity.getHitEntity() instanceof LivingEntity target) {
             final Vector at = entity.getHitPosition();
             visuals.trail(shot.visual(), shot.world, from, at);
@@ -465,6 +468,41 @@ final class ProjectileEngine implements Listener {
             stopEffects(shot, owner, next.toLocation(shot.world), false);
             remove(shot);
         }
+    }
+
+    /** 矮的怪比照這個高度算（大約一個人高）：投射物從腰的高度飛出去，蜘蛛、蠹魚只有半格高，從牠頭上飛過去。 */
+    static final double LOW_TARGET_HEIGHT = 1.6;
+
+    /**
+     * 2026-10：比 {@link #LOW_TARGET_HEIGHT} 矮的怪，碰撞箱往上拉到這個高度再算一次（洞穴蜘蛛、蠹魚、史萊姆小隻的：
+     * 投射物在牠們頭頂上飛過、明明穿過去卻打不到）。只拉高、不加寬，所以不會打到旁邊的。
+     */
+    private RayTraceResult lowTarget(final Shot shot, final Player owner, final Location start, final double travel) {
+        final Vector from = start.toVector();
+        final Vector to = from.clone().add(shot.direction.clone().multiply(travel));
+        final org.bukkit.util.BoundingBox sweep = org.bukkit.util.BoundingBox.of(from, to).expand(shot.size + 0.5, LOW_TARGET_HEIGHT, shot.size + 0.5);
+        RayTraceResult best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (final org.bukkit.entity.Entity candidate : shot.world.getNearbyEntities(sweep)) {
+            if (!(candidate instanceof LivingEntity) || shot.hit.contains(candidate.getUniqueId()) || !targets.valid(candidate, owner)) {
+                continue;
+            }
+            final org.bukkit.util.BoundingBox box = candidate.getBoundingBox();
+            if (box.getHeight() >= LOW_TARGET_HEIGHT) {
+                continue; // 一般高的照原本的算法（上面已經沒打到）
+            }
+            final org.bukkit.util.BoundingBox tall = box.clone().expand(shot.size, 0, shot.size, shot.size, LOW_TARGET_HEIGHT - box.getHeight(), shot.size);
+            final RayTraceResult hit = tall.rayTrace(from, shot.direction, travel);
+            if (hit == null) {
+                continue;
+            }
+            final double distance = hit.getHitPosition().distanceSquared(from);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = new RayTraceResult(hit.getHitPosition(), candidate, hit.getHitBlockFace());
+            }
+        }
+        return best;
     }
 
     /** 榴彈碰到方塊：彈開（沿著碰到的面反彈，速度打折）。 */

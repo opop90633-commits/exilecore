@@ -50,6 +50,7 @@ public final class CharacterModule implements Module {
     }
 
     private ServerBonusBar bonusBar;
+    private OnlineBonus onlineBonus;
     private org.bukkit.scheduler.BukkitTask bonusTask;
 
     @Override
@@ -64,8 +65,12 @@ public final class CharacterModule implements Module {
         plugin.getServer().getPluginManager().registerEvents(chatPrompts, plugin);
         plugin.getServer().getPluginManager().registerEvents(plugin.sidebar(), plugin); // 右邊側欄（任務追蹤、最近撿到）
         bonusBar = new ServerBonusBar(plugin);
+        onlineBonus = new OnlineBonus(plugin); // 2026-10：在線人數加成（config.yml 的 online_bonus）
+        plugin.getServer().getPluginManager().registerEvents(onlineBonus, plugin);
+        bonusBar.online(onlineBonus);
         final TabList tabList = new TabList(plugin);
         bonusTask = plugin.repeat("bonus_bar", () -> {
+            onlineBonus.tick(); // 在線人數加成：數人、換階
             bonusBar.tick(); // 全服加成的公告（畫面最上面的金色血條）
             tabList.tick(); // TAB 列表的伺服器名稱、在線人數、PING、TPS
         }, 40, 40);
@@ -120,6 +125,9 @@ public final class CharacterModule implements Module {
     public void reload() throws Exception {
         config.load(plugin.dataFolder().resolve("data"));
         warnStarterProblems();
+        if (onlineBonus != null) {
+            onlineBonus.readConfig();
+        }
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             states.markDirty(player);
         }

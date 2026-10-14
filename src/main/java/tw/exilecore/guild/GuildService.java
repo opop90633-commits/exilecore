@@ -1537,7 +1537,7 @@ public final class GuildService {
             return "<gray>這是空的藥劑欄（提示），不是東西";
         }
         if (plugin.flasks() != null) {
-            for (final int flaskSlot : plugin.flasks().config().slots()) {
+            for (final int flaskSlot : plugin.flasks().slots(player)) {
                 if (flaskSlot == slot) {
                     return "<gray>藥劑欄裡的東西先拿到背包再放";
                 }

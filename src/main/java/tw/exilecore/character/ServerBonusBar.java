@@ -17,12 +17,18 @@ import java.util.UUID;
 public final class ServerBonusBar {
 
     private final ExileCore plugin;
+    /** 在線人數加成（2026-10；寫在血條上：幾個人、下一階還差幾個）。 */
+    private OnlineBonus online;
     private final BossBar bar = BossBar.bossBar(net.kyori.adventure.text.Component.empty(), 1f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
     private final Set<UUID> shown = new HashSet<>();
     private String lastText;
 
     ServerBonusBar(final ExileCore plugin) {
         this.plugin = plugin;
+    }
+
+    void online(final OnlineBonus online) {
+        this.online = online;
     }
 
     /** 現在的全服加成（沒有回傳 null）。 */
@@ -55,8 +61,10 @@ public final class ServerBonusBar {
             final long left = Math.max(0, (active.until() - now) / 1000);
             sponsored.add(active.label() + String.format(java.util.Locale.ROOT, " %d:%02d", left / 60, left % 60));
         }
+        final String crowd = online == null || online.current() == null ? ""
+                : " <#9fd3ff>（在線 " + online.counted() + " 人加成" + online.nextText().replace("<gray>（", "，").replace("）", "") + "<#9fd3ff>）";
         return String.join("<gray>・<white>", parts) + (sponsored.isEmpty() ? ""
-                : " <#ffd27f>（贊助加倍 " + String.join("、", sponsored) + "）");
+                : " <#ffd27f>（贊助加倍 " + String.join("、", sponsored) + "）") + crowd;
     }
 
     /** 每 2 秒：文字跟上、新上線的人掛上、加成關掉就收起來。 */

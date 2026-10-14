@@ -26,6 +26,13 @@ final class MapWorks {
 
     /** 每個 tick 最多放幾個方塊（清格子時算讀取的格數）。 */
     static final int BLOCKS_PER_TICK = 30_000;
+    /**
+     * 每個 tick 最多花多少時間（2026-10 效能：以前只看方塊數，3 萬格一口氣放下去會卡上百毫秒，玩家感覺到「頓一下」；
+     * 現在到時間就停，下一個 tick 接著做，地圖晚一兩秒蓋好，換來不卡）。
+     */
+    static final long NANOS_PER_TICK = 8_000_000L;
+    /** 放幾格看一次時間。 */
+    static final int CHECK_EVERY = 256;
 
     /** 一件工作。 */
     abstract static class Job {
@@ -49,8 +56,19 @@ final class MapWorks {
             this.done = done;
         }
 
+        /** 這個 tick 最晚做到什麼時候（System.nanoTime）。 */
+        long deadline = Long.MAX_VALUE;
+
         /** @return 用掉多少額度；做完時回傳負數 */
         abstract int step(int budget);
+
+        /** 動方塊之前先做的事（清格子：移掉範圍裡的實體）。在尋路清單拿開之前呼叫。 */
+        void prepare() {
+        }
+
+        boolean late() {
+            return System.nanoTime() > deadline;
+        }
     }
 
     private final Plugin plugin;
@@ -83,14 +101,30 @@ final class MapWorks {
 
     /** 每個 tick：處理排在最前面的工作。 */
     void tick() {
+        final Job first = jobs.peek();
+        if (first == null) {
+            return;
+        }
+        if (first.ready) {
+            first.prepare();
+        }
+        NavigationPause.run(first.world, logger, this::work);
+    }
+
+    private void work() {
+        final long deadline = System.nanoTime() + NANOS_PER_TICK;
         int budget = BLOCKS_PER_TICK;
-        while (budget > 0 && !jobs.isEmpty()) {
+        while (budget > 0 && !jobs.isEmpty() && System.nanoTime() < deadline) {
             final Job job = jobs.peek();
             if (!job.ready) {
                 if (!job.loading) {
                     load(job);
                 }
                 return; // 等區塊載入
+            }
+            job.deadline = deadline;
+            if (job.ready) {
+                job.prepare();
             }
             final int used = job.step(budget);
             if (used < 0) {
@@ -150,13 +184,18 @@ final class MapWorks {
         @Override
         int step(final int budget) {
             final int end = Math.min(blocks.size(), next + budget);
-            for (int i = next; i < end; i++) {
+            int i = next;
+            while (i < end) {
                 final BlockData data = BlockPalette.get(blocks.block(i));
                 world.getBlockAt(blocks.x(i), blocks.y(i), blocks.z(i)).setBlockData(data, false);
+                i++;
+                if ((i - next) % CHECK_EVERY == 0 && late()) {
+                    break; // 這個 tick 的時間用完了：下一個 tick 接著放
+                }
             }
-            final int used = end - next;
-            next = end;
-            return next >= blocks.size() ? -1 : used;
+            final int used = i - next;
+            next = i;
+            return next >= blocks.size() ? -1 : Math.max(1, used);
         }
     }
 
@@ -175,7 +214,7 @@ final class MapWorks {
         }
 
         @Override
-        int step(final int budget) {
+        void prepare() {
             if (!entitiesRemoved) {
                 entitiesRemoved = true;
                 for (final Chunk chunk : chunks) {
@@ -186,8 +225,13 @@ final class MapWorks {
                     }
                 }
             }
+        }
+
+        @Override
+        int step(final int budget) {
+            prepare();
             int used = 0;
-            while (chunkIndex < chunks.size() && used < budget) {
+            while (chunkIndex < chunks.size() && used < budget && (used == 0 || !late())) {
                 used += clearChunk(chunks.get(chunkIndex));
                 chunkIndex++;
             }

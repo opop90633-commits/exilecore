@@ -177,6 +177,7 @@ public final class CampaignWorld {
         rule(world, GameRules.RAIDS, false);
         rule(world, GameRules.RESPAWN_RADIUS, 0);
         rule(world, GameRules.WATER_SOURCE_CONVERSION, false);
+        rule(world, GameRules.LOCATOR_BAR, false); // 2026-10 效能：原版的定位條（每 tick 更新每個玩家的路標，spark 1.5%）用不到
         world.setStorm(false);
         world.setThundering(false);
         world.setClearWeatherDuration(Integer.MAX_VALUE / 2);

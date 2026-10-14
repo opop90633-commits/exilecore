@@ -209,7 +209,7 @@ class LootTest {
 
     /** 保留有 T 幾以上詞綴的裝備（2026-10）：被稀有度、等級差、不同類藏起來的，有夠好的詞綴照樣撿。 */
     @Test
-    void goodAffixTiersAreKeptEvenWhenOtherRulesHide() {
+    void goodAffixTiersOnlyRescueRarityHiding() {
         final LootFilter filter = LootFilter.of(config.preset("strict")); // 藏普通、魔法；等級差 10；只撿同類武器
         final LootFilter.Viewer archer = new LootFilter.Viewer(70, Set.of("weapon", "two_hand", "bow", "ranged"), Set.of("dex_armour"));
         final LootFilter.Candidate magicT1 = equipment(Rarity.MAGIC, 70, 1, "armour", "helmet", "dex_armour");
@@ -223,12 +223,12 @@ class LootTest {
         assertEquals(LootFilter.CUSTOM, keep.preset(), "自己改過就是自訂");
         assertFalse(keep.hides(magicT1, archer), "有 T1：魔法也撿");
         assertTrue(keep.hides(magicT3, archer), "只有 T3：照藏");
-        assertFalse(keep.hides(oldT1, archer), "等級差要藏的，有 T1 也撿");
+        assertTrue(keep.hides(oldT1, archer), "2026-10 優先順序：等級差一定不撿，T1 也不救");
         assertTrue(keep.hides(swordT2, archer), "不同類的劍只有 T2：照藏");
         keep.cycleKeepAffixTier(false);
         keep.cycleKeepAffixTier(false);
         assertEquals(3, keep.rules().keepAffixTier());
-        assertFalse(keep.hides(swordT2, archer), "開到 T3：T2 的劍也撿");
+        assertTrue(keep.hides(swordT2, archer), "不同類一定不撿，開到 T3 也不救");
         assertFalse(keep.hides(magicT3, archer));
         assertTrue(keep.hides(equipment(Rarity.NORMAL, 70, 0, "armour", "helmet", "dex_armour"), archer), "沒有詞綴的普通照藏");
         assertTrue(keep.encode().endsWith(";kt=3"), keep.encode());

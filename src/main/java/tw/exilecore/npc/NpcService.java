@@ -54,12 +54,15 @@ public final class NpcService {
     private final ExileCore plugin;
     private final NamespacedKey typeKey;
     private final NamespacedKey storyKey;
+    /** 2026-10：這一個人自己指定的皮膚（/ec npc skin；蓋過 npc_skins，擺設、沒有標記的假人也能設）。 */
+    private final NamespacedKey skinKey;
     private final Map<UUID, Long> lastInteract = new HashMap<>();
 
     public NpcService(final ExileCore plugin) {
         this.plugin = plugin;
         this.typeKey = new NamespacedKey(plugin, "npc");
         this.storyKey = new NamespacedKey(plugin, "npc_story");
+        this.skinKey = new NamespacedKey(plugin, "npc_skin");
     }
 
     // ---- 生成與查詢 ----
@@ -186,13 +189,17 @@ public final class NpcService {
      * 用實體的 UUID 決定，同一個 NPC 每次都一樣；皮膚跟著實體存檔。
      */
     public void ensureSkin(final Entity entity) {
-        if (!(entity instanceof Mannequin mannequin) || !isNpc(entity)) {
+        if (!(entity instanceof Mannequin mannequin)) {
+            return;
+        }
+        final String own = entity.getPersistentDataContainer().get(skinKey, PersistentDataType.STRING);
+        if (!isNpc(entity) && (own == null || own.isBlank())) {
             return;
         }
         final io.papermc.paper.datacomponent.item.ResolvableProfile current = mannequin.getProfile();
         // 2026-10：盜賊首領用玩家 Penguin0c0、地圖裝置用 UTro_、商人用 ss9319622 的皮膚（照名字讓客戶端去抓；換成別的名字改這裡）
         final NpcType npcType = type(entity).orElse(null);
-        final String named = npcType == null ? null : configuredSkin(entity, npcType);
+        final String named = own != null && !own.isBlank() ? own : npcType == null ? null : configuredSkin(entity, npcType);
         if (named != null) {
             if (current == null || !named.equals(current.name())) {
                 mannequin.setProfile(io.papermc.paper.datacomponent.item.ResolvableProfile.resolvableProfile().name(named).build());
@@ -214,6 +221,25 @@ public final class NpcService {
                 .skinPatch(patch -> patch.body(body).model(slim ? org.bukkit.profile.PlayerTextures.SkinModel.SLIM
                         : org.bukkit.profile.PlayerTextures.SkinModel.CLASSIC))
                 .build());
+    }
+
+    /**
+     * 這一個人換皮膚（2026-10，/ec npc skin）：名字 = 正版玩家名稱；null = 拿掉自己指定的，回到 npc_skins／內建／隨機。
+     * 營地的擺設、沒有標記的假人（原版指令放的）都可以；記在實體上，重開、/ec reload 都不會被換回去。
+     */
+    public void setOwnSkin(final Mannequin mannequin, final String name) {
+        if (name == null) {
+            mannequin.getPersistentDataContainer().remove(skinKey);
+            mannequin.setProfile(Mannequin.defaultProfile()); // 回到沒設過的樣子，下面照設定（或隨機）重套
+        } else {
+            mannequin.getPersistentDataContainer().set(skinKey, PersistentDataType.STRING, name);
+        }
+        ensureSkin(mannequin);
+    }
+
+    /** 這一個人自己指定的皮膚（沒有回傳 null）。 */
+    public String ownSkin(final Entity entity) {
+        return entity == null ? null : entity.getPersistentDataContainer().get(skinKey, PersistentDataType.STRING);
     }
 
     public boolean isNpc(final Entity entity) {

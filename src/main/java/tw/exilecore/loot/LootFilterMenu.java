@@ -343,7 +343,7 @@ public final class LootFilterMenu extends Menu {
                     rarity == Rarity.RARE ? "<dark_gray>稀有掉出來未鑑定，隱藏前想清楚" : null));
         }
         set(slot(2, 0), rowLabel(Material.COMPARATOR, "進階規則", "照你的等級、手上的武器、身上的防具藏東西",
-                "最後一格可以把有好詞綴的撿回來"));
+                "優先順序：傳奇一定撿 → 等級差、不同類、不在只撿的基底裡一定不撿", "→ 剩下的看稀有度；被稀有度藏起來的，有好詞綴就撿回來"));
         final LootFilter.Rules rules = filter.rules();
         final int gap = rules.levelGap();
         set(SLOT_LEVEL_GAP, option(Material.EXPERIENCE_BOTTLE, "等級差", gap == 0 ? "關" : "低超過 " + gap + " 級就隱藏", gap > 0,
@@ -369,7 +369,7 @@ public final class LootFilterMenu extends Menu {
         final int keep = rules.keepAffixTier();
         set(SLOT_KEEP_AFFIX_TIER, option(Material.ENCHANTED_BOOK, "保留好詞綴的裝備", keep == 0 ? "關" : "有 T" + keep + " 以上就撿", keep > 0,
                 List.of("<gray>裝備身上只要有一條詞綴是 T1～T" + (keep == 0 ? "幾" : keep) + "（T1 最好），",
-                        "<gray>就算被稀有度、等級差、不同類藏起來也照樣撿",
+                        "<gray>被<white>稀有度</white><gray>藏起來的照樣撿（等級差、不同類、不在只撿的基底裡的不救）",
                         "<dark_gray>未鑑定的也算；珠寶也算（被珠寶的稀有度藏起來的照樣撿）；地圖、遺時星晶不管",
                         "<dark_gray>只有一兩階的詞綴（例如 +1 技能等級）不算",
                         keep == 0 ? "<dark_gray>例：開 T2、隱藏魔法裝備 → 有 T1、T2 詞綴的魔法裝備還是會撿" : ""),
@@ -378,7 +378,7 @@ public final class LootFilterMenu extends Menu {
         set(SLOT_KEEP_AFFIX_LIKE, option(Material.WRITABLE_BOOK, "好詞綴也只撿同類", keepLike ? "開" : "關", keepLike,
                 List.of("<gray>開了之後，「保留好詞綴的裝備」只保留跟你同類的：",
                         "<gray>武器跟手上同種類、防具與盾跟身上同系",
-                        keep == 0 ? "<dark_gray>（「保留好詞綴的裝備」關著，這條沒差）" : "<dark_gray>不同類的照上面的規則藏起來"),
+                        keep == 0 ? "<dark_gray>（「保留好詞綴的裝備」關著，這條沒差）" : "<dark_gray>不同類的照稀有度的規則藏起來"),
                 List.of("<yellow>左鍵：" + (keepLike ? "關" : "開"))));
         set(slot(3, 0), rowLabel(Material.FILLED_MAP, "地圖與珠寶", "本來永遠會撿；太多的時候可以照稀有度不撿"));
         final int mapRarity = rules.mapRarity();
@@ -415,7 +415,7 @@ public final class LootFilterMenu extends Menu {
         final List<String> keptLore = new ArrayList<>();
         keptLore.add("<gray>挑了之後，普通、魔法、稀有裝備<white>只撿這些基底</white><gray>，");
         keptLore.add("<gray>要撿哪幾種稀有度照第一排（三格都開＝三種都撿）");
-        keptLore.add("<dark_gray>等級差、同類同系這時不看；好詞綴照樣撿回來");
+        keptLore.add("<dark_gray>不在清單裡的一律不撿（好詞綴也不救）；等級差、同類同系照樣看");
         keptLore.add("<dark_gray>傳奇、珠寶、地圖不受影響；全部拿掉就恢復原本的規則");
         keptLore.add("");
         int listed = 0;

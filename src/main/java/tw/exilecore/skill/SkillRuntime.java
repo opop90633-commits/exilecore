@@ -13,6 +13,15 @@ final class SkillRuntime {
 
     /** 排隊的按鍵最多等幾 tick，太久就丟掉（避免放開按鍵很久之後突然放出來）。 */
     static final int QUEUE_TIMEOUT = 10;
+    /**
+     * 數字鍵（戰吼、光環、位移…）排隊可以等多久（2026-10：慢的攻擊動作超過半秒，按了數字鍵會被丟掉，要再按一次）。
+     */
+    static final int HOTBAR_QUEUE_TIMEOUT = 30;
+
+    /** 這個排隊的按鍵最多等幾 tick。 */
+    static int queueTimeout(final int key) {
+        return tw.exilecore.character.SkillLoadout.mouseKey(key) ? QUEUE_TIMEOUT : HOTBAR_QUEUE_TIMEOUT;
+    }
 
     /** 下一次可以動作的 tick（有小數，見 {@link SkillMath#nextReady}）。 */
     double readyAt = Double.NEGATIVE_INFINITY;
@@ -120,6 +129,12 @@ final class SkillRuntime {
     }
 
     void queue(final int key, final UUID target, final long now) {
+        // 2026-10：按住左鍵連續施放時每 tick 都會排一次左鍵，以前會把剛按的數字鍵（戰吼…）蓋掉，按了沒反應。
+        // 數字鍵排著的時候，滑鼠鍵不能插隊（數字鍵還沒逾時）
+        if (queuedKey >= 0 && !tw.exilecore.character.SkillLoadout.mouseKey(queuedKey) && tw.exilecore.character.SkillLoadout.mouseKey(key)
+                && now - queuedAt <= HOTBAR_QUEUE_TIMEOUT) {
+            return;
+        }
         queuedKey = key;
         queuedTarget = target;
         queuedAt = now;

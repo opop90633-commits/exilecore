@@ -291,8 +291,8 @@ final class SkillInputListener implements Listener {
     }
 
     /**
-     * 數字鍵 3–8（快捷列第 3–8 格）：在可以戰鬥的地方放綁在那一格的技能，手上的東西不換（一直拿著第 9 格的武器）。
-     * 1、2 是藥劑（藥劑模組先處理）；9 是手上的武器。營地裡照原版換格子。
+     * 技能鍵（經典排法 3–8；藥劑往後的排法 1–4、7、8，見 HotbarLayout）：在可以戰鬥的地方放綁在那一格的技能，
+     * 手上的東西不換（一直拿著第 9 格的武器）。藥劑鍵由藥劑模組先處理；9 是手上的武器。營地裡照原版換格子。
      * 滾輪也會送這個事件：滾輪往上、往下會被當成按了旁邊那一格（所以戰鬥中不要用滾輪）。
      */
     @EventHandler(priority = EventPriority.NORMAL)
@@ -306,7 +306,7 @@ final class SkillInputListener implements Listener {
             return;
         }
         event.setCancelled(true); // 戰鬥中手上一直是第 9 格的武器
-        final int bind = SkillLoadout.bindForHotbarSlot(newSlot);
+        final int bind = tw.exilecore.character.HotbarLayout.of(plugin.players().get(player)).bindForSlot(newSlot); // 2026-10：照玩家選的排法
         if (bind >= 0) {
             service.trigger(player, bind, null);
         }

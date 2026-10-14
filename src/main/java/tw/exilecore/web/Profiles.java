@@ -254,9 +254,9 @@ public final class Profiles implements Listener {
                         charms.add(slot);
                     }
                 }
-                for (final int hotbar : flaskService.config().slots()) {
+                for (final int hotbar : flaskService.slots(player)) {
                     final JsonObject slot = new JsonObject();
-                    final tw.exilecore.flask.FlaskKind kind = flaskService.config().kindAt(hotbar);
+                    final tw.exilecore.flask.FlaskKind kind = flaskService.kindAt(player, hotbar);
                     slot.addProperty("label", kind == null ? "藥劑" : kind.displayName() + "藥劑");
                     final ItemStack stack = player.getInventory().getItem(hotbar);
                     if (stack != null && !stack.isEmpty() && flaskService.kindOf(stack) != null) {

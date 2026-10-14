@@ -139,7 +139,7 @@ public final class PresetMenu extends Menu {
             if (!ids[slot].isEmpty() && !ids[slot].equals("-")) {
                 final String name = plugin.skills() == null || plugin.skills().config().skill(ids[slot]) == null ? ids[slot]
                         : plugin.skills().config().skill(ids[slot]).name();
-                lines.add("<gray>" + SkillLoadout.shortKeyName(slot) + "：<white>" + ItemRenderer.escape(name));
+                lines.add("<gray>" + tw.exilecore.character.HotbarLayout.of(plugin.players().get(player)).shortKeyName(slot) + "：<white>" + ItemRenderer.escape(name));
             }
         }
         if (lines.isEmpty()) {

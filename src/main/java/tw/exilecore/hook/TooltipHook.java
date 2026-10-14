@@ -38,8 +38,6 @@ public final class TooltipHook {
 
     /** 最多列幾條詞綴（說明框太長會被畫面切掉）。 */
     static final int MAX_MODS = 4;
-    /** 一條詞綴後面最多列幾個技能名字。 */
-    static final int MAX_NAMES = 3;
 
     private static final Map<UUID, List<SkillService.SkillHint>> HINTS = new ConcurrentHashMap<>();
     private static volatile ExileCore plugin;
@@ -145,6 +143,22 @@ public final class TooltipHook {
         }
     }
 
+    /** 一行最多放幾個技能名稱（說明框太寬會超出畫面）。 */
+    static final int NAMES_PER_ROW = 4;
+
+    /** 名稱用「、」串起來，每 perRow 個換一行（換行的那行最後留「、」表示還有）。 */
+    static List<String> wrap(final List<String> names, final int perRow) {
+        final List<String> rows = new ArrayList<>();
+        for (int i = 0; i < names.size(); i += perRow) {
+            final boolean last = i + perRow >= names.size();
+            rows.add(String.join("、", names.subList(i, Math.min(names.size(), i + perRow))) + (last ? "" : "、"));
+        }
+        if (rows.isEmpty()) {
+            rows.add("");
+        }
+        return rows;
+    }
+
     static List<String> lines(final ExileCore core, final List<SkillService.SkillHint> hints, final ItemStack stack) {
         final List<String> lines = new ArrayList<>();
         final Optional<tw.exilecore.item.ItemData> data = core.items().read(stack);
@@ -184,10 +198,12 @@ public final class TooltipHook {
             byMod.values().forEach(skills::addAll);
             lines.add("<#e7c56b>◆ 對你的 " + skills.size() + " 個技能有效：");
             for (int i = 0; i < Math.min(MAX_MODS, sorted.size()); i++) {
-                final List<String> names = sorted.get(i).getValue();
-                final String who = String.join("、", names.subList(0, Math.min(MAX_NAMES, names.size())))
-                        + (names.size() > MAX_NAMES ? " 等 " + names.size() + " 個" : "");
-                lines.add("<white>　" + ItemRenderer.escape(sorted.get(i).getKey()) + " <dark_gray>→ <gray>" + ItemRenderer.escape(who));
+                // 2026-10：技能全部列出來（以前超過 3 個寫「等 12 個」看不到是哪些）；太長的換行接著寫
+                final List<String> rows = wrap(sorted.get(i).getValue(), NAMES_PER_ROW);
+                lines.add("<white>　" + ItemRenderer.escape(sorted.get(i).getKey()) + " <dark_gray>→ <gray>" + ItemRenderer.escape(rows.getFirst()));
+                for (int r = 1; r < rows.size(); r++) {
+                    lines.add("<gray>　　　" + ItemRenderer.escape(rows.get(r)));
+                }
             }
             if (sorted.size() > MAX_MODS) {
                 lines.add("<dark_gray>　…還有 " + (sorted.size() - MAX_MODS) + " 條詞綴（技能面板 Shift＋右鍵看全部）");
@@ -214,9 +230,11 @@ public final class TooltipHook {
         if (names.isEmpty()) {
             lines.add("<#e7c56b>◆ <gray>你技能面板上沒有它能輔助的技能");
         } else {
-            final List<String> head = names.subList(0, Math.min(8, names.size()));
-            lines.add("<#e7c56b>◆ 可以輔助你的：<white>" + ItemRenderer.escape(String.join("、", head))
-                    + (names.size() > head.size() ? "<gray> 等 " + names.size() + " 個" : ""));
+            final List<String> rows = wrap(names, NAMES_PER_ROW + 1);
+            lines.add("<#e7c56b>◆ 可以輔助你的 " + names.size() + " 個：<white>" + ItemRenderer.escape(rows.getFirst()));
+            for (int r = 1; r < rows.size(); r++) {
+                lines.add("<white>　" + ItemRenderer.escape(rows.get(r)));
+            }
         }
         return lines;
     }

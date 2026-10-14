@@ -143,6 +143,7 @@ public final class MetaGems {
             }
             final Socket socket = socket(state, i);
             if (socket == null) {
+                warnProblem(player, state, i, now); // 2026-10：插槽放錯（不是法術、增益技能…）以前完全沒反應，看不出為什麼不觸發
                 continue;
             }
             final int level = Math.min(entry.level(), service.config().maxLevelFor(state.level()));
@@ -167,6 +168,19 @@ public final class MetaGems {
         }
     }
 
+    /** 上次提醒插槽有問題的時間（每 15 秒最多提醒一次）。 */
+    private final Map<UUID, Long> warned = new HashMap<>();
+
+    private void warnProblem(final Player player, final PlayerState state, final int position, final long now) {
+        final String problem = socketProblem(state, position);
+        if (problem == null || now - warned.getOrDefault(player.getUniqueId(), Long.MIN_VALUE / 2) < 300) {
+            return;
+        }
+        warned.put(player.getUniqueId(), now);
+        state.notice("<red>" + ItemRenderer.escape(problem), now + 60);
+        plugin.players().display(player, state);
+    }
+
     /** 這顆主要寶石現在累積的能量（說明用）。 */
     double energyOf(final UUID player, final String metaId, final String spellId) {
         final Map<String, Double> mine = energy.get(player);
@@ -176,6 +190,7 @@ public final class MetaGems {
     void forget(final UUID player) {
         energy.remove(player);
         lastFired.remove(player);
+        warned.remove(player);
     }
 
     // ---- 法術圖騰 ----

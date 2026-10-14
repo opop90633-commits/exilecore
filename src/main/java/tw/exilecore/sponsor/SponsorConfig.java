@@ -206,7 +206,7 @@ public final class SponsorConfig {
     /** 改名卡（2026-10）：一張改一次角色名字。 */
     private long renamePrice = 50;
     /** 公會（2026-10）：公會改名卡、公會倉庫頁（頁是公會的，不是買的人的）。 */
-    private long guildRenamePrice = 300;
+    private long guildRenamePrice = 100;
     private long guildStashPrice = 300;
     private int guildStashMax;
     private int listingMax = 15;
@@ -282,7 +282,7 @@ public final class SponsorConfig {
         listingPrice = positive(listing, "price", 50);
         listingMax = Math.max(0, listing.integer("max", 0));
         renamePrice = positive(root.node("rename_card"), "price", 50);
-        guildRenamePrice = positive(root.node("guild_rename_card"), "price", 300);
+        guildRenamePrice = positive(root.node("guild_rename_card"), "price", 100);
         final YamlNode guildStash = root.node("guild_stash_page");
         guildStashPrice = positive(guildStash, "price", 300);
         guildStashMax = Math.max(0, Math.min(tw.exilecore.guild.GuildStash.MAX_PAGES, guildStash.integer("max", 0)));

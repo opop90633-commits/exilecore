@@ -33,7 +33,7 @@ import java.util.Set;
  * 第 6 列是拆解前的清單（總共拿到多少金幣與通貨、有沒有該再想一下的東西）、拆解、反選、清除。
  * 傳奇（含未鑑定的）不會被快速選擇選到，拆解前還要 Shift＋左鍵確認；珠寶、地圖「全部可以拆的」會選（2026-10）。
  * 稀有不分等級，快速選擇都會選到（想留的先右鍵鎖定）。
- * 藥劑欄（快捷欄 1、2，照 flasks.yml）裡的藥劑不能拆：不會被點選、也不會被快速選擇選到。
+ * 藥劑欄（預設快捷欄 1、2，玩家可以在設定改）裡的藥劑不能拆：不會被點選、也不會被快速選擇選到。
  * 拆解前會再核對每一格還是同一件物品（裝備看物品 UUID，寶石與藥劑看內容與數量），中途換過位置的不會被拆。
  * 左下的「傳奇三換一」打開 {@link UniqueRecipeMenu}（重複的傳奇三件換一件；salvage.yml 的 unique_recipe）。
  */
@@ -304,9 +304,9 @@ public final class SalvageMenu extends Menu {
         return data.rarity() == Rarity.UNIQUE; // 2026-10：地圖不用再確認（「全部可以拆的」會選）
     }
 
-    /** 這一格是藥劑欄（flasks.yml 的快捷欄，預設 1、2）而且放的是藥劑：保護起來不能拆。 */
+    /** 這一格是藥劑欄（照玩家選的排法）而且放的是藥劑：保護起來不能拆。 */
     private boolean protectedFlask(final int inventorySlot, final ItemStack stack) {
-        return plugin.flasks() != null && plugin.flasks().config().kindAt(inventorySlot) != null && plugin.flasks().read(stack).isPresent();
+        return plugin.flasks() != null && plugin.flasks().kindAt(player, inventorySlot) != null && plugin.flasks().read(stack).isPresent();
     }
 
     private static boolean otherWeapon(final Set<String> tags, final Set<String> mine) {
@@ -639,7 +639,7 @@ public final class SalvageMenu extends Menu {
                     "<gray>拆解＝金幣＋品質通貨（武器礪鋒石、防具甲冑殘片、地圖星盤刻刀）",
                     "<gray>寶石、藥劑、護符只有金幣；飾品與珠寶只有金幣",
                     "<dark_gray>身上穿的、副手、飾品欄位不會出現在這裡；想留的先右鍵鎖定",
-                    "<dark_gray>藥劑欄（快捷欄 1、2）的藥劑不會被拆"));
+                    "<dark_gray>藥劑欄（位置看設定，預設 1、2）的藥劑不會被拆"));
             if (config.recipe().enabled()) {
                 help.add("<#af6025>重複的傳奇：右邊的「" + config.recipe().title() + "」");
             }

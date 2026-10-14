@@ -73,7 +73,7 @@ public final class FlaskCommands {
             }
         }
         player.sendMessage(plugin.text().prefixed("<green>給了一瓶 " + ItemRenderer.escape(base.name())
-                + "，" + base.kind().displayName() + "藥劑放在快捷欄 " + plugin.flasks().slotKey(base.kind()) + " 按數字鍵喝"));
+                + "，" + base.kind().displayName() + "藥劑放在快捷欄 " + plugin.flasks().slotKey(player, base.kind()) + " 按數字鍵喝"));
     }
 
     private static int run(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final Consumer<Player> action) {

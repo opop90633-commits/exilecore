@@ -28,7 +28,7 @@ public final class Guide {
             new Step("character", "選一個職業", "輸入 /char，挑一個喜歡的職業建立角色", "/char", Snapshot::hasCharacter),
             new Step("menu", "打開選單", "蹲下（Shift）再按 F：技能、背包、倉庫、天賦都在這裡", null, Snapshot::menuOpened),
             new Step("skill", "裝上技能", "選單 →「技能」→ 把技能放到「左鍵」，就能用左鍵放技能", "/skills", Snapshot::skillBound),
-            new Step("flask", "放好藥劑", "紅藥水放背包第 1 格、藍藥水放第 2 格，按 1、2 喝", null, Snapshot::flasksPlaced),
+            new Step("flask", "放好藥劑", "紅藥水、藍藥水放快捷欄的藥劑欄（預設 1、2；設定裡可以改到 1–8 任一格），按那一格的數字鍵喝", null, Snapshot::flasksPlaced),
             new Step("quest", "接任務", "找頭上有光點的 NPC，右鍵跟他說話", null, Snapshot::questStarted),
             new Step("checkpoint", "出發冒險", "走出營地，碰到第一個發光的檢查點（會記住重生點）", null, Snapshot::checkpoint),
             new Step("passive", "點天賦", "升級會拿到天賦點：選單 →「天賦」→ 點亮一格", "/tree", Snapshot::passiveAllocated),

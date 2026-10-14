@@ -451,7 +451,7 @@ public final class LootService {
             return true;
         }
         int best = -1;
-        for (final int slot : flasks.config().slots()) {
+        for (final int slot : flasks.slots(player)) {
             final FlaskBase held = flasks.read(player.getInventory().getItem(slot))
                     .map(data -> flasks.config().base(data.base())).orElse(null);
             if (held != null && held.kind() == base.kind()) {

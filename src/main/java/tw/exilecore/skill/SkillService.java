@@ -497,6 +497,15 @@ public final class SkillService {
         }
         final long now = now();
         if (now + 1e-9 >= runtime.readyAt) {
+            // 2026-10：排著的數字鍵還沒放（剛好這一 tick 好了），按住左鍵的連發先讓它
+            if (runtime.queuedKey >= 0 && !SkillLoadout.mouseKey(runtime.queuedKey) && SkillLoadout.mouseKey(key)
+                    && now - runtime.queuedAt <= SkillRuntime.HOTBAR_QUEUE_TIMEOUT) {
+                final int queued = runtime.queuedKey;
+                final LivingEntity target = runtime.queuedTarget == null ? null : living(player, runtime.queuedTarget);
+                runtime.clearQueue();
+                perform(player, runtime, queued, target, now);
+                return;
+            }
             runtime.clearQueue();
             perform(player, runtime, key, preferred, now);
         } else {
@@ -510,7 +519,7 @@ public final class SkillService {
         for (int slot = 0; slot < SkillLoadout.BIND_SLOTS; slot++) {
             final Resolved resolved = resolve(state, slot);
             if (!resolved.isDefault()) {
-                text.append("<dark_gray>｜<gray>").append(SkillLoadout.shortKeyName(slot)).append(" <white>")
+                text.append("<dark_gray>｜<gray>").append(tw.exilecore.character.HotbarLayout.of(state).shortKeyName(slot)).append(" <white>")
                         .append(tw.exilecore.item.ItemRenderer.escape(resolved.definition().name()));
             }
         }
@@ -713,7 +722,7 @@ public final class SkillService {
         if (runtime.queuedKey < 0) {
             return;
         }
-        if (now - runtime.queuedAt > SkillRuntime.QUEUE_TIMEOUT || !eligible(player)) {
+        if (now - runtime.queuedAt > SkillRuntime.queueTimeout(runtime.queuedKey) || !eligible(player)) {
             runtime.clearQueue();
             return;
         }
@@ -972,7 +981,10 @@ public final class SkillService {
         }
         if (definition.mechanic() == Mechanic.AURA) {
             // 2026-10：光環放在技能面板上就一直開著，按鍵不用開關（魔力不扣回來：這一下也沒花魔力，光環的 mana 是 0）
-            state.notice(auras.isActive(player.getUniqueId(), definition.id())
+            final String socketProblem = config.meta(definition.id()) == null ? null
+                    : metas().socketProblem(state, state.skills().find(definition.id()));
+            state.notice(socketProblem != null ? "<red>" + ItemRenderer.escape(socketProblem) // 2026-10：主要寶石插槽放錯，按下去說清楚
+                    : auras.isActive(player.getUniqueId(), definition.id())
                     ? "<#8fd3ff>✦ " + ItemRenderer.escape(definition.name()) + " 一直開著（綁在按鍵格上就常駐有效，不用按）"
                     : "<red>" + ItemRenderer.escape(definition.name()) + " 沒開：保留的魔力不夠（面板上排前面的光環先開）", now + 60);
             plugin.players().display(player, state);
@@ -1105,22 +1117,10 @@ public final class SkillService {
             final org.bukkit.util.Vector facing = SkillTargets.facing(player);
             final org.bukkit.Location from = player.getLocation().add(new org.bukkit.util.Vector(-facing.getZ(), 0, facing.getX()).multiply(1.5));
             final java.util.UUID aim = preferred == null ? null : preferred.getUniqueId();
-            // 2026-10：幻影要射向放的那一刻準心指的地方（以前用玩家的水平朝向從旁邊 1.5 格平行射出：
-            // 不管上下的角度，單發的箭打不到同一個地方，偏一格半而且往下瞄時從頭頂飛過去）
-            final org.bukkit.Location eye = player.getEyeLocation();
-            final org.bukkit.util.RayTraceResult ray = player.getWorld().rayTraceBlocks(eye, eye.getDirection(), MIRAGE_AIM_RANGE,
-                    org.bukkit.FluidCollisionMode.NEVER, true);
-            final org.bukkit.util.Vector point = ray != null && ray.getHitPosition() != null ? ray.getHitPosition()
-                    : eye.toVector().add(eye.getDirection().multiply(MIRAGE_AIM_RANGE));
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                 if (player.isOnline() && player.getWorld().equals(from.getWorld())) {
                     from.getWorld().spawnParticle(org.bukkit.Particle.END_ROD, from.clone().add(0, 1, 0), 12, 0.2, 0.5, 0.2, 0.01);
-                    final org.bukkit.entity.LivingEntity mirageTarget = aim == null ? null : living(player, aim);
-                    // 有鎖定的敵人就朝牠（牠可能動了），沒有就朝放的時候準心指的點
-                    final Origin origin = mirageTarget != null && mirageTarget.isValid()
-                            ? Origin.towards(player, from, mirageTarget)
-                            : Origin.at(player, from, point.clone().subtract(from.toVector().add(new org.bukkit.util.Vector(0, 1.2, 0))));
-                    executor.executeFrom(origin, mirage, mirageTarget);
+                    executor.executeFrom(Origin.at(player, from, SkillTargets.facing(player)), mirage, aim == null ? null : living(player, aim));
                 }
             }, 10);
         }
@@ -1451,9 +1451,6 @@ public final class SkillService {
      * 沒算怪物的減免、持續傷害）。召喚技能算召喚物：一隻的每秒傷害 × 同時最多幾隻（名字後面寫「召喚物 ×N」）。
      * 回傳「按鍵、名字、每秒傷害」，同一個技能綁在好幾個鍵只算一次。
      */
-    /** 幻弓影：找準心指的點最遠幾格。 */
-    private static final double MIRAGE_AIM_RANGE = 48;
-
     /**
      * 一個技能每秒打幾下：一輪是「複擊的每一下各一次攻擊間隔」再加「最後一下的間隔與冷卻比較長的那個」。
      */
@@ -1654,7 +1651,7 @@ public final class SkillService {
     public List<String[]> skillDps(final Player player) {
         final List<String[]> rows = new ArrayList<>();
         for (final DpsRow row : skillDps(plugin.players().get(player), plugin.players().sheet(player), liveAuras(player))) {
-            rows.add(new String[] {SkillLoadout.shortKeyName(row.slot()),
+            rows.add(new String[] {tw.exilecore.character.HotbarLayout.of(plugin.players().get(player)).shortKeyName(row.slot()),
                     row.minions() > 0 ? row.name() + "（召喚物 ×" + row.minions() + "）" : row.name(),
                     String.valueOf(Math.round(row.dps())), String.valueOf(Math.round(row.full()))});
         }
@@ -2001,7 +1998,7 @@ public final class SkillService {
         final PlayerState state = plugin.players().get(player);
         final Resolved resolved = resolve(state, bindSlot);
         final SkillDefinition definition = resolved.definition();
-        final String key = SkillLoadout.shortKeyName(bindSlot);
+        final String key = tw.exilecore.character.HotbarLayout.of(state).shortKeyName(bindSlot); // 2026-10：照玩家選的排法
         final List<String> lore = new ArrayList<>();
         final org.bukkit.Material material;
         final String title;

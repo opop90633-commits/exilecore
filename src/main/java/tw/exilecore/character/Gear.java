@@ -48,6 +48,11 @@ public final class Gear {
     private static final NamespacedKey STAMP_KEY = Objects.requireNonNull(NamespacedKey.fromString("exilecore:gear_stamp"));
     /** 同一件裝備、同一個技能，顯示用的複本最多多久重做一次（技能圖示的數值照這個頻率更新）。 */
     private static final long REBUILD_TICKS = 100;
+    /**
+     * 裝備的顯示用複本多久重做一次（2026-10 效能：spark 裡 Gear.place 的說明轉換佔 1.5%）。裝備本身換了（來源不一樣）馬上重做，
+     * 這個只是讓幻化、箭袋顯示開關這種不換裝備的改變跟上（最多慢 30 秒）。
+     */
+    private static final long GEAR_REBUILD_TICKS = 600;
 
     private final ExileCore plugin;
     /** 每個玩家每一格上次放的顯示用複本（2026-10 效能：以前每秒每格都重做說明、再整個比對，人多時很重）。 */
@@ -100,6 +105,12 @@ public final class Gear {
         return copy;
     }
 
+    /** 外觀換了（幻化、試穿、箭袋顯示開關）：顯示用複本馬上重做（不等 {@link #GEAR_REBUILD_TICKS}）。 */
+    public boolean resync(final Player player) {
+        shown.remove(player.getUniqueId());
+        return sync(player);
+    }
+
     /** 下線、換角色：記的顯示用複本清掉。 */
     public void forget(final java.util.UUID player) {
         shown.remove(player);
@@ -112,12 +123,17 @@ public final class Gear {
      * @param build 做新的複本（null = 這格應該是空的）
      */
     private void place(final Player player, final int slot, final Object source, final java.util.function.Supplier<ItemStack> build) {
+        place(player, slot, source, build, REBUILD_TICKS);
+    }
+
+    private void place(final Player player, final int slot, final Object source, final java.util.function.Supplier<ItemStack> build,
+                       final long rebuildTicks) {
         final PlayerInventory inventory = player.getInventory();
         final Shown[] mine = shown.computeIfAbsent(player.getUniqueId(), key -> new Shown[41]);
         final Shown last = mine[slot];
         final long now = plugin.getServer().getCurrentTick();
         final ItemStack current = inventory.getItem(slot);
-        if (last != null && last.source() == source && now - last.built() < REBUILD_TICKS) {
+        if (last != null && last.source() == source && now - last.built() < rebuildTicks) {
             if (last.want() == null) {
                 if (current != null && !current.isEmpty()) {
                     inventory.setItem(slot, null);
@@ -242,12 +258,12 @@ public final class Gear {
         }
         // 別的格子裡的顯示用複本（被拖走、存檔時留下的）
         for (int slot = 0; slot < 36; slot++) {
-            if (slot != HAND_SLOT && !(combat && skillSlot(slot)) && isDisplay(inventory.getItem(slot))) {
+            if (slot != HAND_SLOT && !(combat && skillSlot(state, slot)) && isDisplay(inventory.getItem(slot))) {
                 inventory.setItem(slot, null);
             }
         }
         if (combat) {
-            showSkills(player, state); // 戰鬥區域：快捷列第 3–8 格換成技能圖示
+            showSkills(player, state); // 戰鬥區域：快捷列的技能鍵（經典 3–8；自訂時是藥劑以外的 6 格）換成技能圖示
         }
         if (isDisplay(player.getItemOnCursor())) {
             player.setItemOnCursor(null);
@@ -285,7 +301,7 @@ public final class Gear {
     }
 
     private void show(final Player player, final int slot, final ItemStack real, final boolean hand, final ItemSlot itemSlot) {
-        place(player, slot, real, () -> buildShown(player, real, hand, itemSlot));
+        place(player, slot, real, () -> buildShown(player, real, hand, itemSlot), GEAR_REBUILD_TICKS);
     }
 
     /** 這一格該放的顯示用複本（null = 空的）。 */
@@ -368,7 +384,7 @@ public final class Gear {
         final PlayerInventory inventory = player.getInventory();
         final boolean combat = combat(player);
         for (int slot = 0; slot < 36; slot++) {
-            if (slot == HAND_SLOT || combat && skillSlot(slot)) {
+            if (slot == HAND_SLOT || combat && skillSlot(state, slot)) {
                 continue;
             }
             final ItemStack there = inventory.getItem(slot);
@@ -396,12 +412,9 @@ public final class Gear {
 
     // ---- 快捷列的技能圖示 ----
 
-    /** 快捷列第 3–8 格（0 起算的 2–7）：戰鬥區域裡顯示技能。 */
-    public static final int FIRST_SKILL_SLOT = 2;
-    public static final int LAST_SKILL_SLOT = 7;
-
-    static boolean skillSlot(final int slot) {
-        return slot >= FIRST_SKILL_SLOT && slot <= LAST_SKILL_SLOT;
+    /** 快捷列這一格是不是技能鍵（2026-10：照這個角色選的排法 {@link HotbarLayout}）。 */
+    static boolean skillSlot(final PlayerState state, final int slot) {
+        return HotbarLayout.of(state).isSkillSlot(slot);
     }
 
     /** 在可以戰鬥的地方（快捷列 3–8 是技能）。 */
@@ -409,15 +422,17 @@ public final class Gear {
         return plugin.skills() != null && plugin.skills().eligible(player) && !plugin.skills().inTown(player);
     }
 
-    /** 戰鬥區域：第 3–8 格原本的東西收起來（收的位置有東西就放回背包別的地方），換成技能圖示。 */
+    /** 戰鬥區域：技能鍵那幾格原本的東西收起來（收的位置有東西就放回背包別的地方），換成技能圖示。 */
     private void showSkills(final Player player, final PlayerState state) {
         final PlayerInventory inventory = player.getInventory();
-        for (int slot = FIRST_SKILL_SLOT; slot <= LAST_SKILL_SLOT; slot++) {
+        final HotbarLayout layout = HotbarLayout.of(state);
+        for (int index = 0; index < layout.skillKeys(); index++) {
+            final int slot = layout.skillSlot(index);
             final int at = slot;
             final ItemStack current = inventory.getItem(slot);
             if (current != null && !current.isEmpty() && !isDisplay(current)) {
                 inventory.setItem(slot, icon(player, slot)); // 先放圖示，放回背包時才不會又放回這一格
-                final int stash = PlayerState.HOTBAR_STASH + slot - FIRST_SKILL_SLOT;
+                final int stash = PlayerState.HOTBAR_STASH + index;
                 if (state.jewellery(stash) == null) {
                     state.setJewellery(stash, current);
                 } else {
@@ -433,7 +448,7 @@ public final class Gear {
     /** 技能圖示的來源簽名：綁的是哪個技能、幾級、掛什麼輔助（變了就馬上重做；沒變的話每 5 秒更新一次數值）。 */
     private static String skillSource(final Player player, final PlayerState state, final int slot) {
         final SkillLoadout loadout = state.skills();
-        final int position = loadout.bound(SkillLoadout.hotbarBind(slot + 1));
+        final int position = loadout.bound(HotbarLayout.of(state).bindForSlot(slot));
         final SkillLoadout.Entry entry = loadout.skill(position);
         return (entry == null ? "-" : entry.skillId() + "@" + entry.level() + ":" + entry.encodeSupports()).intern();
     }
@@ -452,12 +467,14 @@ public final class Gear {
         }
         final PlayerInventory inventory = player.getInventory();
         final SkillLoadout loadout = state.skills();
-        for (int slot = FIRST_SKILL_SLOT; slot <= LAST_SKILL_SLOT; slot++) {
+        final HotbarLayout layout = HotbarLayout.of(state);
+        for (int index = 0; index < layout.skillKeys(); index++) {
+            final int slot = layout.skillSlot(index);
             final ItemStack current = inventory.getItem(slot);
             if (!isDisplay(current)) {
                 continue;
             }
-            final SkillLoadout.Entry entry = loadout.skill(loadout.bound(SkillLoadout.hotbarBind(slot + 1)));
+            final SkillLoadout.Entry entry = loadout.skill(loadout.bound(layout.bindForSlot(slot)));
             long left = 0;
             if (entry != null) {
                 left = plugin.skills().cooldownLeft(player, entry.skillId());
@@ -480,8 +497,10 @@ public final class Gear {
     /** 不在戰鬥區域：技能圖示拿掉，收起來的東西放回原本那一格（那一格被別的東西佔了就放回背包別的地方）。 */
     private void restoreHotbar(final Player player, final PlayerState state) {
         final PlayerInventory inventory = player.getInventory();
-        for (int slot = FIRST_SKILL_SLOT; slot <= LAST_SKILL_SLOT; slot++) {
-            final int stash = PlayerState.HOTBAR_STASH + slot - FIRST_SKILL_SLOT;
+        final HotbarLayout layout = HotbarLayout.of(state);
+        for (int index = 0; index < layout.skillKeys(); index++) {
+            final int slot = layout.skillSlot(index);
+            final int stash = PlayerState.HOTBAR_STASH + index;
             final ItemStack current = inventory.getItem(slot);
             if (isDisplay(current)) {
                 inventory.setItem(slot, null);
@@ -503,7 +522,7 @@ public final class Gear {
 
     /** 這一格的技能圖示（標成顯示用）。 */
     private ItemStack icon(final Player player, final int slot) {
-        final ItemStack stack = plugin.skills().hotbarIcon(player, SkillLoadout.hotbarBind(slot + 1));
+        final ItemStack stack = plugin.skills().hotbarIcon(player, HotbarLayout.of(plugin.players().get(player)).bindForSlot(slot));
         stack.editMeta(meta -> meta.getPersistentDataContainer().set(DISPLAY_KEY, PersistentDataType.BYTE, (byte) 1));
         return stack;
     }
@@ -574,7 +593,8 @@ public final class Gear {
         }
         player.sendMessage(plugin.text().prefixed("<#f5b942>裝備改版：<gray>武器、副手、防具改成裝在角色面板上（Shift＋F → 角色），手上不用拿著也有效。"
                 + (moved.isEmpty() ? "" : "<white>" + ItemRenderer.escape(String.join("、", moved)) + "<gray> 已經幫你裝上。")
-                + "快捷列第 9 格顯示手上的武器，戰鬥中按 3–8 放技能、1、2 喝藥劑。"));
+                + "快捷列第 9 格顯示手上的武器，戰鬥中按 " + HotbarLayout.of(state).skillKeysText() + " 放技能、"
+                + (plugin.flasks() == null ? "1、2" : plugin.flasks().slotText(player)) + " 喝藥劑（設定裡可以改位置）。"));
     }
 
     // ---- 裝上、卸下（角色面板） ----

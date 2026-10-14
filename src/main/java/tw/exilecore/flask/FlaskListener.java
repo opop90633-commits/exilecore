@@ -49,7 +49,7 @@ final class FlaskListener implements Listener {
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onHeld(final PlayerItemHeldEvent event) {
         final Player player = event.getPlayer();
-        if (!flasks.config().isFlaskSlot(event.getNewSlot()) || !flasks.eligible(player)) {
+        if (!flasks.isFlaskSlot(player, event.getNewSlot()) || !flasks.eligible(player)) {
             return;
         }
         if (flasks.drink(player, event.getNewSlot())) {
@@ -130,19 +130,19 @@ final class FlaskListener implements Listener {
         final int slot = event.getSlot();
         // 自己的背包（看別人背包的外掛畫面裡，那個背包是別人的：不算）
         final boolean own = clicked instanceof PlayerInventory mine && mine.getHolder() == player;
-        final FlaskKind slotKind = own && slot < 9 ? flasks.config().kindAt(slot) : null;
+        final FlaskKind slotKind = own && slot < 9 ? flasks.kindAt(player, slot) : null;
         final ItemStack current = event.getCurrentItem();
         final ClickType click = event.getClick();
 
         if ((click == ClickType.NUMBER_KEY || click == ClickType.SWAP_OFFHAND) && event.getAction() == InventoryAction.NOTHING
-                && (slotKind != null || click == ClickType.NUMBER_KEY && flasks.config().kindAt(event.getHotbarButton()) != null)) {
+                && (slotKind != null || click == ClickType.NUMBER_KEY && flasks.kindAt(player, event.getHotbarButton()) != null)) {
             // 原版也不會換的（合成結果格、盔甲格放不下…）：不要自己搬（搬進合成結果格的東西會不見）
             event.setCancelled(true);
             return;
         }
         if (click == ClickType.NUMBER_KEY) {
             final int button = event.getHotbarButton();
-            final FlaskKind buttonKind = button >= 0 ? flasks.config().kindAt(button) : null;
+            final FlaskKind buttonKind = button >= 0 ? flasks.kindAt(player, button) : null;
             if (slotKind != null && buttonKind != null) {
                 if (own && slot != button) {
                     deny(event, player, "生命藥劑欄和魔力藥劑欄不能對調");
@@ -191,7 +191,7 @@ final class FlaskListener implements Listener {
                     && flasks.kindOf(current) != null && flasks.canEquip(player, current)) {
                 event.setCancelled(true);
                 final FlaskKind kind = flasks.kindOf(current);
-                inventory.setItem(flasks.config().slotFor(kind), current.asOne());
+                inventory.setItem(flasks.slotFor(player, kind), current.asOne());
                 clicked.setItem(slot, null);
                 sound(player, true);
             }
@@ -217,7 +217,7 @@ final class FlaskListener implements Listener {
                 inventory.setItem(slot, flask); // 放進去：空瓶不見
                 sound(player, true);
             } else if (!cursorEmpty) {
-                deny(event, player, wrongItem(kind, cursor));
+                deny(event, player, wrongItem(player, kind, cursor));
             }
             return;
         }
@@ -227,13 +227,13 @@ final class FlaskListener implements Listener {
                     // 拿起藥劑欄的東西：那格馬上換成空瓶（不會空著一瞬間被別的東西塞進去）
                     final ItemStack taken = current.clone();
                     event.setCancelled(true);
-                    inventory.setItem(slot, flasks.placeholder(kind));
+                    inventory.setItem(slot, flasks.placeholder(player, kind));
                     event.getView().setCursor(taken);
                 }
                 return;
             }
             if (!cursorFits) {
-                deny(event, player, wrongItem(kind, cursor));
+                deny(event, player, wrongItem(player, kind, cursor));
             }
             return; // 對的藥劑：照原版對調
         }
@@ -245,7 +245,7 @@ final class FlaskListener implements Listener {
                 if (there == null || there.isEmpty()) {
                     final ItemStack moving = current.clone();
                     event.setCancelled(true);
-                    inventory.setItem(slot, flasks.placeholder(kind));
+                    inventory.setItem(slot, flasks.placeholder(player, kind));
                     inventory.setItem(target, moving);
                     return;
                 }
@@ -274,7 +274,7 @@ final class FlaskListener implements Listener {
         final boolean incomingEmpty = incoming == null || incoming.isEmpty();
         final boolean incomingFits = !incomingEmpty && flasks.kindOf(incoming) == kind && incoming.getAmount() == 1;
         if (!incomingEmpty && !incomingFits) {
-            deny(event, player, wrongItem(kind, incoming));
+            deny(event, player, wrongItem(player, kind, incoming));
             return;
         }
         if (FlaskService.isPlaceholder(inSlot)) {
@@ -295,7 +295,7 @@ final class FlaskListener implements Listener {
             // 藥劑換到別的格子，藥劑欄空了：自己搬，藥劑欄馬上換成空瓶
             final ItemStack moving = inSlot.clone();
             event.setCancelled(true);
-            inventory.setItem(flaskSlot, flasks.placeholder(kind));
+            inventory.setItem(flaskSlot, flasks.placeholder(player, kind));
             if (sourceSlot == 40 && sourceInventory == inventory) {
                 inventory.setItemInOffHand(moving);
             } else {
@@ -320,9 +320,9 @@ final class FlaskListener implements Listener {
             final Inventory target = event.getView().getInventory(raw);
             final int slot = event.getView().convertSlot(raw);
             final FlaskKind kind = target instanceof PlayerInventory mine && mine.getHolder() == player && slot < 9
-                    ? flasks.config().kindAt(slot) : null;
+                    ? flasks.kindAt(player, slot) : null;
             if (kind != null && flasks.kindOf(event.getOldCursor()) != kind) {
-                deny(event, player, wrongItem(kind, event.getOldCursor()));
+                deny(event, player, wrongItem(player, kind, event.getOldCursor()));
                 return;
             }
         }
@@ -362,15 +362,15 @@ final class FlaskListener implements Listener {
     }
 
     /** 放錯東西的說明：另一種藥劑告訴他放哪格，其他東西告訴他這格只能放什麼。 */
-    private String wrongItem(final FlaskKind kind, final ItemStack item) {
+    private String wrongItem(final Player player, final FlaskKind kind, final ItemStack item) {
         if (FlaskService.isPlaceholder(item)) {
             return "空瓶只是提示，不能搬";
         }
         final FlaskKind itemKind = flasks.kindOf(item);
         if (itemKind != null && itemKind != kind) {
-            return itemKind.displayName() + "藥劑要放在快捷欄 " + flasks.slotKey(itemKind);
+            return itemKind.displayName() + "藥劑要放在快捷欄 " + flasks.slotKey(player, itemKind);
         }
-        return "快捷欄 " + flasks.slotKey(kind) + " 是" + kind.displayName() + "藥劑欄，只能放" + kind.displayName() + "藥劑";
+        return "快捷欄 " + flasks.slotKey(player, kind) + " 是" + kind.displayName() + "藥劑欄，只能放" + kind.displayName() + "藥劑";
     }
 
     private void deny(final org.bukkit.event.Cancellable event, final Player player, final String message) {

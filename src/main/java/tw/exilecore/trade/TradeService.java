@@ -556,9 +556,9 @@ public final class TradeService {
         }
         if (plugin.flasks() != null) {
             // 藥劑欄不放收到的東西：空出來的放回空瓶提示（收到的藥劑成交後再放進去）
-            for (final int slot : plugin.flasks().config().slots()) {
+            for (final int slot : plugin.flasks().slots(receiver.player)) {
                 if (plan.contents[slot] == null || plan.contents[slot].isEmpty()) {
-                    plan.contents[slot] = plugin.flasks().placeholderFor(slot);
+                    plan.contents[slot] = plugin.flasks().placeholderFor(receiver.player, slot);
                 }
             }
         }
