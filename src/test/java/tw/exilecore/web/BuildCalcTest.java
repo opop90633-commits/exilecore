@@ -189,6 +189,14 @@ class BuildCalcTest {
         assertEquals(position, loadout.bound(SkillLoadout.KEY_LEFT));
         assertEquals(-1, loadout.bound(SkillLoadout.KEY_RIGHT));
         assertEquals(position, build.supportsFor());
+        assertNull(build.instilFor(), "沒寫就不比較注入");
+        // 2026-10：項鍊注入比較：指定技能（第 1 個）→ 伺服器的位置；不認得的、-1 → 自動挑傷害最高的
+        json.addProperty("instilFor", 1);
+        assertEquals(position, BuildCalc.parse(json.toString(), tree, skills).instilFor());
+        json.addProperty("instilFor", 0);
+        assertEquals(-1, BuildCalc.parse(json.toString(), tree, skills).instilFor());
+        json.addProperty("instilFor", -1);
+        assertEquals(-1, BuildCalc.parse(json.toString(), tree, skills).instilFor());
     }
 
     @Test

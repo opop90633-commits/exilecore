@@ -238,6 +238,9 @@ public final class ExileCoreCommand {
                                                 : java.util.List.copyOf(plugin.quests().config().npcs().keySet())))
                                         .executes(context -> npcStory(plugin, context, StringArgumentType.getString(context, "id")))))
                         .then(Commands.literal("remove").executes(context -> npcRemove(plugin, context)))
+                        // 2026-10：/ec npc move：第一次選（看著的或 5 格內最近的），走到新位置再打一次搬過去（種類、皮膚都留著）
+                        .then(Commands.literal("move").executes(context -> npcMove(plugin, context))
+                                .then(Commands.literal("cancel").executes(context -> npcMoveCancel(plugin, context))))
                         // 2026-10：/ec npc skin <正版玩家名稱|reset>：看著的（或最近的）人換皮膚，營地的擺設、原版指令放的假人也可以
                         .then(Commands.literal("skin").then(Commands.argument("name", StringArgumentType.word())
                                 .suggests(suggest(() -> java.util.List.of("reset")))
@@ -837,14 +840,78 @@ public final class ExileCoreCommand {
         return Command.SINGLE_SUCCESS;
     }
 
+    /** /ec npc move 選好、還沒放下去的 NPC：玩家 → (NPC, 選的時間)。 */
+    private static final java.util.Map<java.util.UUID, java.util.Map.Entry<java.util.UUID, Long>> NPC_MOVING = new java.util.HashMap<>();
+    /** 選好之後幾毫秒內要放下去。 */
+    private static final long NPC_MOVE_TIMEOUT = 5 * 60_000L;
+
+    /** 看著的 NPC（6 格內），沒有就 5 格內最近的。 */
+    private static Optional<Entity> pickNpc(final ExileCore plugin, final Player player) {
+        final Entity looked = player.getTargetEntity(6);
+        if (looked != null && plugin.npcs().isNpc(looked)) {
+            return Optional.of(looked);
+        }
+        return plugin.npcs().nearest(player, 5);
+    }
+
+    private static int npcMove(final ExileCore plugin, final CommandContext<CommandSourceStack> context) {
+        final Player player = playerOrNull(plugin, context);
+        if (player == null) {
+            return Command.SINGLE_SUCCESS;
+        }
+        final java.util.Map.Entry<java.util.UUID, Long> chosen = NPC_MOVING.get(player.getUniqueId());
+        final Entity selected = chosen == null || System.currentTimeMillis() - chosen.getValue() > NPC_MOVE_TIMEOUT ? null
+                : plugin.getServer().getEntity(chosen.getKey());
+        if (selected == null || !selected.isValid()) {
+            // 第一次：選
+            final Optional<Entity> picked = pickNpc(plugin, player);
+            if (picked.isEmpty()) {
+                NPC_MOVING.remove(player.getUniqueId());
+                player.sendMessage(plugin.text().prefixed("<red>看著要搬的 NPC（6 格內），或站到他旁邊 5 格內再打"));
+                return Command.SINGLE_SUCCESS;
+            }
+            NPC_MOVING.put(player.getUniqueId(), java.util.Map.entry(picked.get().getUniqueId(), System.currentTimeMillis()));
+            picked.get().setGlowing(true);
+            final String name = plugin.npcs().type(picked.get()).map(NpcType::displayName).orElse("NPC");
+            player.sendMessage(plugin.text().prefixed("<gray>選了 <white>" + escape(name)
+                    + "</white>（發光的那個）：走到新位置、面向你要他面對的方向，再打一次 <white>/ec npc move</white>（5 分鐘內；/ec npc move cancel 取消）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        // 第二次：搬到腳下，面向跟你一樣
+        NPC_MOVING.remove(player.getUniqueId());
+        final Location to = player.getLocation().clone();
+        to.setPitch(0f);
+        selected.setGlowing(false);
+        selected.teleport(to);
+        final String name = plugin.npcs().type(selected).map(NpcType::displayName).orElse("NPC");
+        player.sendMessage(plugin.text().prefixed(String.format(java.util.Locale.ROOT,
+                "<gray>把 <white>%s</white> 搬到 <white>%s %d, %d, %d</white>（往旁邊走一步就看得到；種類、皮膚都沒變）",
+                escape(name), escape(to.getWorld().getName()), to.getBlockX(), to.getBlockY(), to.getBlockZ())));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int npcMoveCancel(final ExileCore plugin, final CommandContext<CommandSourceStack> context) {
+        final Player player = playerOrNull(plugin, context);
+        if (player == null) {
+            return Command.SINGLE_SUCCESS;
+        }
+        final java.util.Map.Entry<java.util.UUID, Long> chosen = NPC_MOVING.remove(player.getUniqueId());
+        final Entity selected = chosen == null ? null : plugin.getServer().getEntity(chosen.getKey());
+        if (selected != null) {
+            selected.setGlowing(false);
+        }
+        player.sendMessage(plugin.text().prefixed(chosen == null ? "<gray>沒有選著要搬的 NPC" : "<gray>取消搬 NPC"));
+        return Command.SINGLE_SUCCESS;
+    }
+
     private static int npcRemove(final ExileCore plugin, final CommandContext<CommandSourceStack> context) {
         final Player player = playerOrNull(plugin, context);
         if (player == null) {
             return Command.SINGLE_SUCCESS;
         }
-        final Optional<Entity> nearest = plugin.npcs().nearest(player, 5);
+        final Optional<Entity> nearest = pickNpc(plugin, player); // 2026-10：看著的優先（旁邊有好幾個時不會刪錯）
         if (nearest.isEmpty()) {
-            player.sendMessage(plugin.text().prefixed("<red>身邊 5 格內沒有 NPC"));
+            player.sendMessage(plugin.text().prefixed("<red>看著要移除的 NPC（6 格內），或站到他旁邊 5 格內"));
             return Command.SINGLE_SUCCESS;
         }
         final String name = plugin.npcs().type(nearest.get()).map(NpcType::displayName).orElse("NPC");

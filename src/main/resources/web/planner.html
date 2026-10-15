@@ -157,6 +157,14 @@
   .itemcard .sep { border-top: 1px solid #2c2440; margin: 4px 0; }
   .itemcard .fl { color: #af6025; font-style: italic; }
   #gearTotals li { color: #9db4ff; }
+  /* 項鍊注入（2026-10，蒸餾情緒）：選核心、比較每個核心多少傷害 */
+  .dlg .instil { border-top: 1px dashed #1f2440; padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .instlist { max-height: 260px; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; }
+  .instlist button { display: flex; width: 100%; justify-content: space-between; align-items: baseline; gap: 8px; padding: 5px 8px; background: none;
+    border: 0; border-bottom: 1px solid #1f2440; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; text-align: left; }
+  .instlist button:hover { background: var(--panel-2); }
+  .instlist button.on { color: var(--gold); }
+  .instlist .em { color: var(--quiet); font-size: 12px; }
   /* 計算器（2026-10）：載入角色、技能與輔助、算出來的數字 */
   .calcbar { display: grid; grid-template-columns: 1fr auto; gap: 6px; }
   .calcbar input, .calcrow input, .calcrow select, #skillDialog select, #skillDialog input {
@@ -453,8 +461,8 @@
     if (!gear.some(Boolean)) return "";
     const packed = gear.map(g => {
       if (!g) return 0;
-      if (g.rarity === "unique") return [0, "u", g.unique, 0, g.uvals.map(v => v || []), g.ilvl || 0, g.quality || 0];
-      return [g.base, g.rarity[0], 0, g.affixes.map(a => [a.id, a.tier, a.vals]), g.ilvl || 0, g.quality || 0];
+      if (g.rarity === "unique") return [0, "u", g.unique, 0, g.uvals.map(v => v || []), g.ilvl || 0, g.quality || 0, g.instil || 0];
+      return [g.base, g.rarity[0], 0, g.affixes.map(a => [a.id, a.tier, a.vals]), g.ilvl || 0, g.quality || 0, g.instil || 0];
     });
     return "~" + b64urlEncode(JSON.stringify(packed));
   }
@@ -470,7 +478,7 @@
         const u = items.uniqueById.get(p[2]);
         if (!u || u.slot !== GEAR_SLOTS[i][0]) return;
         out[i] = { rarity: "unique", unique: u.id, base: u.base, uvals: u.mods.map((m, k) => Array.isArray(p[4] && p[4][k]) ? p[4][k] : []),
-          ilvl: Number(p[5]) || 0, quality: Number(p[6]) || 0 };
+          ilvl: Number(p[5]) || 0, quality: Number(p[6]) || 0, instil: typeof p[7] === "string" ? p[7] : "" };
         return;
       }
       const base = items.baseById.get(p[0]);
@@ -478,7 +486,7 @@
       const rarity = { n: "normal", m: "magic", r: "rare" }[p[1]] || "normal";
       const affixes = (Array.isArray(p[3]) ? p[3] : []).filter(a => Array.isArray(a) && items.affixById.has(a[0]))
         .map(a => ({ id: a[0], tier: a[1], vals: Array.isArray(a[2]) ? a[2] : [] }));
-      out[i] = { rarity, base: base.id, affixes, ilvl: Number(p[4]) || 0, quality: Number(p[5]) || 0 };
+      out[i] = { rarity, base: base.id, affixes, ilvl: Number(p[4]) || 0, quality: Number(p[5]) || 0, instil: typeof p[6] === "string" ? p[6] : "" };
     });
     return out;
   }
@@ -492,6 +500,11 @@
     });
   }
   function tierOf(affix, tier) { return affix.tiers.find(t => t.tier === tier) || affix.tiers[0]; }
+  // 項鍊注入（2026-10，蒸餾情緒）：把天賦樹的一個核心注入項鍊，效果跟點了那個核心一樣（天賦樹上已經點了就沒效果）
+  const EMOTIONS = ["蒸餾怒火", "蒸餾愧疚", "蒸餾貪婪", "蒸餾妄想"];
+  /** 注入這個核心要哪一種情緒（跟遊戲一樣：離天賦樹中心 ≤7 格、≤11、≤15、更遠）。 */
+  function emotionTier(n) { const d = Math.max(Math.abs(n.x), Math.abs(n.y)); return d <= 7 ? 0 : d <= 11 ? 1 : d <= 15 ? 2 : 3; }
+  function instilNode(g) { const n = g && g.instil && byId ? byId.get(g.instil) : null; return n && n.type === "notable" ? n : null; }
   /** 這件裝備的說明行（不含名稱）。 */
   function itemLines(g) {
     const lines = [];
@@ -516,6 +529,12 @@
         const vals = names.map((n, j) => a.vals[j] !== undefined && a.vals[j] !== null ? a.vals[j] : t.vars[n][1]);
         lines.push({ text: fill(affix.text, affix.div, names, vals), type: affix.type });
       }
+    }
+    const n = instilNode(g);
+    if (n) {
+      const dead = allocated.has(n.id);
+      lines.push({ text: "注入：" + n.name + "（" + EMOTIONS[emotionTier(n)] + "）" + (dead ? "　天賦樹已點，沒有效果" : ""), instil: true, head: true });
+      for (const l of linesOf(n)) lines.push({ text: l, instil: true, dead });
     }
     return lines;
   }
@@ -568,9 +587,9 @@
     const lines = itemLines(g);
     let sep = false;
     for (const l of lines) {
-      if (!l.implicit && !sep) { const s = document.createElement("div"); s.className = "sep"; card.appendChild(s); sep = true; }
+      if ((!l.implicit && !sep) || l.head) { const s = document.createElement("div"); s.className = "sep"; card.appendChild(s); sep = true; }
       const d = document.createElement("div");
-      d.style.color = l.implicit ? "#c8c8c8" : "#8888ff";
+      d.style.color = l.implicit ? "#c8c8c8" : l.instil ? (l.dead ? "#6a5a80" : "#c77dff") : "#8888ff";
       d.textContent = l.text;
       card.appendChild(d);
     }
@@ -597,7 +616,7 @@
     if (!list) return;
     list.replaceChildren();
     const lines = [];
-    if (items) for (const g of gear) if (g) lines.push(...itemLines(g).map(l => l.text).filter(t => !t.includes("?")));
+    if (items) for (const g of gear) if (g) lines.push(...itemLines(g).filter(l => !l.head && !l.dead).map(l => l.text).filter(t => !t.includes("?")));
     const sums = sumLines(lines);
     if (!sums.length) { const li = document.createElement("li"); li.className = "empty"; li.textContent = "還沒有配裝備"; list.appendChild(li); }
     for (const line of sums) { const li = document.createElement("li"); li.textContent = line; list.appendChild(li); }
@@ -760,6 +779,7 @@
     body.append(node("div", { cls: "row" }, node("span", { cls: "hint", style: "margin:0", text: "物品等級" }), ilvlInput,
       node("span", { cls: "hint", style: "margin:0", text: "品質 %" }), qualityInput,
       node("span", { cls: "hint", style: "margin:0", text: g.raw ? "（遊戲裡的物品）" : "（0 = 物品等級 82）" })));
+    if (slot === "amulet") body.append(instilSection(g));
     const previewBox = node("div", { id: "itemPreview" });
     const btns = node("div", { cls: "btns" },
       node("button", { type: "button", text: "清掉這格", onclick: () => { gear[index] = null; closeEditor(); renderGear(); updatePanel(); } }),
@@ -767,6 +787,67 @@
       node("button", { type: "button", cls: "primary", text: "完成", onclick: () => { gear[index] = editing.g; closeEditor(); renderGear(); updatePanel(); } }));
     dlg.replaceChildren(node("h3", { text: GEAR_SLOTS[index][1] }), seg, body, previewBox, btns);
     refreshPreview();
+  }
+  /** 項鍊的注入（蒸餾情緒）：選一個核心；也可以請伺服器把每個核心都算一次，看哪個加最多傷害。 */
+  function instilSection(g) {
+    const box = node("div", { cls: "instil" });
+    const notables = data ? data.nodes.filter(n => n.type === "notable") : [];
+    const sel = node("select", { "aria-label": "注入的核心" }, node("option", { value: "", text: "沒有注入" }));
+    EMOTIONS.forEach((emotion, tier) => {
+      const group = node("optgroup", { label: emotion + "（3 顆）" });
+      for (const n of notables.filter(n => emotionTier(n) === tier).sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"))) {
+        group.append(node("option", { value: n.id, text: n.name + (allocated.has(n.id) ? "（天賦樹已點）" : "") }));
+      }
+      if (group.children.length) sel.append(group);
+    });
+    sel.value = instilNode(g) ? g.instil : "";
+    sel.addEventListener("change", () => { g.instil = sel.value; drawEditor(); });
+    box.append(node("div", { cls: "row" }, node("span", { cls: "hint", style: "margin:0", text: "注入（蒸餾情緒）" }), sel,
+      node("button", { type: "button", cls: "small", text: "算每個核心加多少傷害", onclick: requestInstilRank })));
+    const res = editing.instilRes;
+    if (!res) {
+      box.append(node("div", { cls: "hint", style: "margin:0", text: "注入的核心效果跟在天賦樹上點了一樣（已經點了的沒有效果）。按上面的按鈕，用你現在的天賦、裝備、技能把每個沒點的核心都算一次。" }));
+    } else if (res.loading) {
+      box.append(node("div", { cls: "hint", style: "margin:0", text: "計算中…（每個核心都要重算一次，要幾秒）" }));
+    } else if (res.error) {
+      box.append(node("div", { cls: "hint", style: "margin:0;color:var(--red)", text: res.error }));
+    } else {
+      const list = res.list || [];
+      box.append(node("div", { cls: "hint", style: "margin:0", text: "看「" + res.name + "」：沒注入時每秒 " + fmtNum(res.dps) + "　點一行就換成那個核心" }));
+      const ul = node("div", { cls: "instlist" });
+      const shown = editing.instilAll ? list : list.slice(0, 20);
+      for (const o of shown) {
+        const n = byId.get(o.id);
+        const diff = o.dps - res.dps;
+        const pct = res.dps > 0 ? diff / res.dps * 100 : 0;
+        const delta = Math.abs(diff) < Math.max(1e-6, res.dps * 1e-4) ? node("span", { cls: "em", text: "沒變" })
+          : node("span", { cls: "delta " + (diff > 0 ? "up" : "down"), text: (diff > 0 ? "+" : "") + fmtNum(diff) + "/秒（" + (diff > 0 ? "+" : "") + pct.toFixed(1) + "%）" });
+        ul.append(node("button", { type: "button", cls: g.instil === o.id ? "on" : "", title: n ? linesOf(n).join("\n") : "",
+          onclick: () => { g.instil = o.id; drawEditor(); } },
+          node("span", null, (g.instil === o.id ? "▶ " : "") + o.name + " ", node("span", { cls: "em", text: n ? EMOTIONS[emotionTier(n)] : "" })), delta));
+      }
+      box.append(ul);
+      if (list.length > shown.length) {
+        box.append(node("button", { type: "button", cls: "small", text: "顯示全部（" + list.length + " 個）", onclick: () => { editing.instilAll = true; drawEditor(); } }));
+      }
+    }
+    return box;
+  }
+  function requestInstilRank() {
+    if (!editing || !data) return;
+    const ed = editing;
+    const body = calcBody(null);
+    body.json.gear = gear.map((x, i) => toItemData(i === ed.index ? ed.g : x));
+    body.json.instilFor = -1; // 伺服器挑現在傷害最高的技能
+    ed.instilRes = { loading: true };
+    drawEditor();
+    postCalc(body.json).then(res => {
+      ed.instilRes = res.instils || { error: "伺服器還不會算注入（要更新外掛）" };
+      if (editing === ed) drawEditor();
+    }).catch(err => {
+      ed.instilRes = { error: err.retry ? "算太快了，等一下再按" : "算不出來：" + err.message };
+      if (editing === ed) drawEditor();
+    });
   }
   function refreshPreview() {
     const box = document.getElementById("itemPreview");
@@ -1664,7 +1745,7 @@
 
   // ---- 遊戲裡的物品資料 ↔ 規劃器的裝備 ----
   function itemKey(g) {
-    return JSON.stringify([g.base, g.rarity, g.unique || 0, g.affixes || 0, g.uvals || 0, g.ilvl || 0, g.quality || 0]);
+    return JSON.stringify([g.base, g.rarity, g.unique || 0, g.affixes || 0, g.uvals || 0, g.ilvl || 0, g.quality || 0, g.instil || 0]);
   }
   function fromItemData(d, index) {
     if (!d || !items || !d.base) return null;
@@ -1689,6 +1770,7 @@
     }
     g.ilvl = Number(d.ilvl) || 0;
     g.quality = Number(d.quality) || 0;
+    g.instil = typeof d.instilled === "string" ? d.instilled : "";
     g.raw = d;
     g.rawKey = itemKey(g);
     return g;
@@ -1704,6 +1786,7 @@
     d.ilvl = g.ilvl || 82;
     d.quality = g.quality || 0;
     d.identified = true;
+    if (g.instil) d.instilled = g.instil; else delete d.instilled;
     if (!sameBase) d.implicitVars = {};
     const known = new Set();
     const out = [];

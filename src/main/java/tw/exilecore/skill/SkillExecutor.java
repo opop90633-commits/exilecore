@@ -191,9 +191,12 @@ final class SkillExecutor {
             }
         } else {
             hits.addAll(targets.cone(origin, reach, build.angle()));
-            if (preferred != null && targets.valid(preferred, origin.owner()) && !hits.contains(preferred)
-                    && preferred.getLocation().distanceSquared(from) <= Math.pow(reach + 1.5, 2)) {
-                hits.add(0, preferred);
+            // 2026-10 手感：準心指到的敵人一定打得到（跟單一目標的刺擊一樣有輔助瞄準）；以前多目標的只看扇形，準心指著但偏出扇形的打不到
+            final LivingEntity aimed = preferred != null && targets.valid(preferred, origin.owner())
+                    && preferred.getLocation().distanceSquared(from) <= Math.pow(reach + 1.5, 2) ? preferred : targets.aimed(origin, reach, 0.6);
+            if (aimed != null) {
+                hits.remove(aimed);
+                hits.add(0, aimed);
             }
             if (build.targets() > 0 && hits.size() > build.targets()) {
                 hits.subList(build.targets(), hits.size()).clear();

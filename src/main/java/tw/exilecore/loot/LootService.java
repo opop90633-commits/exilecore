@@ -62,7 +62,13 @@ public final class LootService {
     /** 這個角色目前的過濾器（沒設定過用預設組合）。 */
     public LootFilter filter(final PlayerState state) {
         final CharacterRecord character = state.character();
-        return LootFilter.decode(character == null ? null : character.lootFilter(), config);
+        return LootFilter.decode(character == null ? null : character.lootFilter(), config).withBaseTags(this::baseTags);
+    }
+
+    /** 基底代號的標籤（「只撿的基底」看有挑的是哪幾類；不認得的基底回傳空的）。 */
+    private java.util.Set<String> baseTags(final String baseId) {
+        final tw.exilecore.item.ItemBase base = plugin.items() == null ? null : plugin.items().repository().base(baseId);
+        return base == null ? java.util.Set.of() : base.tags();
     }
 
     public LootFilter filter(final Player player) {

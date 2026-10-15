@@ -210,12 +210,43 @@ final class MapTwists implements Listener {
         UUID twin;
         // 主題房的提示：每個人上次在哪個房間
         final Map<UUID, Integer> lastRoom = new HashMap<>();
-        final List<TextDisplay> labels = new ArrayList<>();
+        final List<Label> labels = new ArrayList<>();
 
         State(final MapInstance instance) {
             this.instance = instance;
         }
     }
+
+    /**
+     * 浮在石碑、寶匣上的說明（2026-10）：地圖蓋好時區塊還沒有人，當下生出來的文字會跟著區塊卸載消失
+     * （岔路的石碑上面空空的）→ 只記位置與文字，有人走近、區塊載入時才生出來，不見了再補。
+     */
+    private static final class Label {
+        final Location at;
+        String text;
+        TextDisplay entity;
+        boolean removed;
+
+        Label(final Location at, final String text) {
+            this.at = at;
+            this.text = text;
+        }
+
+        boolean near(final Location base, final double dy) {
+            return at.getWorld().equals(base.getWorld()) && at.distanceSquared(base.clone().add(0.5, dy, 0.5)) < 1;
+        }
+
+        void remove() {
+            removed = true;
+            if (entity != null && entity.isValid()) {
+                entity.remove();
+            }
+            entity = null;
+        }
+    }
+
+    /** 說明文字：玩家幾格內才生出來。 */
+    private static final double LABEL_RANGE = 48;
 
     /** 進行中的限時挑戰。 */
     private static final class Timed {
@@ -625,6 +656,7 @@ final class MapTwists implements Listener {
                 }
             }
         }
+        tickLabels(state, players);
         tickWanderer(state, players, now);
         tickTimed(state, now);
         tickHidden(state, players, now);
@@ -969,7 +1001,7 @@ final class MapTwists implements Listener {
         bottom.getRelative(0, 1, 0).setType(core, false);
         blocks.put(MapEvents.key(bottom), state);
         blocks.put(MapEvents.key(bottom.getRelative(0, 1, 0)), state);
-        state.labels.add(label(base.clone().add(0.5, 2.6, 0.5), text));
+        state.labels.add(new Label(base.clone().add(0.5, 2.6, 0.5), text));
         return base;
     }
 
@@ -1004,22 +1036,14 @@ final class MapTwists implements Listener {
             twist.bossPower += 0.30;
             twist.bossLoot += 0.50;
         }
-        final Location other = blood ? state.forkKing : state.forkBlood;
-        final Block bottom = other.getBlock();
-        blocks.remove(MapEvents.key(bottom));
-        blocks.remove(MapEvents.key(bottom.getRelative(0, 1, 0)));
-        bottom.getRelative(0, 1, 0).setType(Material.AIR, false);
-        bottom.setType(Material.AIR, false);
-        other.getWorld().spawnParticle(Particle.SMOKE, other.clone().add(0.5, 1, 0.5), 30, 0.3, 0.6, 0.3, 0.02);
+        // 選完兩根都消失：選中的那根冒出它的顏色，沒選的冒煙
         final Location chosen = blood ? state.forkBlood : state.forkKing;
+        final Location other = blood ? state.forkKing : state.forkBlood;
+        closeFork(state);
+        chosen.getWorld().spawnParticle(Particle.DUST, chosen.clone().add(0.5, 1, 0.5), 40, 0.4, 0.8, 0.4, 0,
+                new Particle.DustOptions(blood ? org.bukkit.Color.fromRGB(255, 70, 70) : org.bukkit.Color.fromRGB(245, 185, 66), 1.4f));
+        other.getWorld().spawnParticle(Particle.SMOKE, other.clone().add(0.5, 1, 0.5), 30, 0.3, 0.6, 0.3, 0.02);
         chosen.getWorld().playSound(chosen, Sound.BLOCK_BEACON_POWER_SELECT, 1.0f, blood ? 0.7f : 1.3f);
-        for (final TextDisplay label : state.labels) {
-            if (label.isValid() && label.getLocation().distanceSquared(other.clone().add(0.5, 2.6, 0.5)) < 1) {
-                label.remove();
-            } else if (label.isValid() && label.getLocation().distanceSquared(chosen.clone().add(0.5, 2.6, 0.5)) < 1) {
-                label.text(plugin.text().parse((blood ? "<#ff5c5c>血路" : "<#f5b942>王道") + "<newline><gray>（已選）"));
-            }
-        }
         broadcast(state.instance, ItemRenderer.escape(who.getName()) + " 選了" + (blood
                 ? "<#ff5c5c>血路</#ff5c5c><gray>：之後刷的怪物群 +50%、物品數量 +30%"
                 : "<#f5b942>王道</#f5b942><gray>：Boss 生命與傷害 +30%、Boss 掉落 +50%"));
@@ -1035,9 +1059,9 @@ final class MapTwists implements Listener {
             bottom.getRelative(0, 1, 0).setType(Material.AIR, false);
             bottom.setType(Material.AIR, false);
         }
-        for (final TextDisplay label : state.labels) {
+        for (final Label label : state.labels) {
             for (final Location base : new Location[] {state.forkBlood, state.forkKing}) {
-                if (label.isValid() && label.getLocation().distanceSquared(base.clone().add(0.5, 2.6, 0.5)) < 1) {
+                if (label.near(base, 2.6)) {
                     label.remove();
                 }
             }
@@ -1055,7 +1079,7 @@ final class MapTwists implements Listener {
         blocks.put(MapEvents.key(bottom), state);
         blocks.put(MapEvents.key(bottom.getRelative(0, 1, 0)), state);
         state.cursed = base;
-        state.labels.add(label(base.clone().add(0.5, 2.4, 0.5), "<#c48bff>詛咒寶匣<newline><gray>右鍵看看裡面有什麼"));
+        state.labels.add(new Label(base.clone().add(0.5, 2.4, 0.5), "<#c48bff>詛咒寶匣<newline><gray>右鍵看看裡面有什麼"));
     }
 
     private void offerCursed(final State state, final Player player) {
@@ -1108,8 +1132,8 @@ final class MapTwists implements Listener {
         blocks.remove(MapEvents.key(bottom.getRelative(0, 1, 0)));
         bottom.getRelative(0, 1, 0).setType(Material.AIR, false);
         bottom.setType(base, false);
-        for (final TextDisplay label : state.labels) {
-            if (label.isValid() && label.getLocation().distanceSquared(state.cursed.clone().add(0.5, 2.4, 0.5)) < 1) {
+        for (final Label label : state.labels) {
+            if (label.near(state.cursed, 2.4)) {
                 label.remove();
             }
         }
@@ -1263,10 +1287,10 @@ final class MapTwists implements Listener {
         return new Location(instance.world(), instance.originX() + room.cx() + 0.5, MapLayout.FLOOR_Y + 1, instance.originZ() + room.cz() + 0.5);
     }
 
-    private TextDisplay label(final Location at, final String text) {
+    private TextDisplay spawnLabel(final Location at, final String text) {
         final TextDisplay display = at.getWorld().spawn(at, TextDisplay.class, created -> {
             created.setBillboard(Display.Billboard.CENTER);
-            created.setPersistent(false);
+            created.setPersistent(false); // 不存檔：區塊卸載就消失，有人走近再補（tickLabels）
             created.setSeeThrough(false);
             created.setShadowed(true);
         });
@@ -1274,11 +1298,25 @@ final class MapTwists implements Listener {
         return display;
     }
 
-    private void dispose(final State state) {
-        for (final TextDisplay label : state.labels) {
-            if (label.isValid()) {
-                label.remove();
+    /** 有人在附近、區塊載入了：還沒生出來（或跟著區塊卸載不見了）的說明文字補上。 */
+    private void tickLabels(final State state, final List<Player> players) {
+        for (final Label label : state.labels) {
+            if (label.removed || label.entity != null && label.entity.isValid()) {
+                continue;
             }
+            boolean near = false;
+            for (final Player player : players) {
+                near |= player.getWorld().equals(label.at.getWorld()) && player.getLocation().distanceSquared(label.at) <= LABEL_RANGE * LABEL_RANGE;
+            }
+            if (near && label.at.getWorld().isChunkLoaded(label.at.getBlockX() >> 4, label.at.getBlockZ() >> 4)) {
+                label.entity = spawnLabel(label.at, label.text);
+            }
+        }
+    }
+
+    private void dispose(final State state) {
+        for (final Label label : state.labels) {
+            label.remove();
         }
         state.labels.clear();
         if (state.timed != null) {

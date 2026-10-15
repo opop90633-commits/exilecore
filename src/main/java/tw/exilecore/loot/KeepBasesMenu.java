@@ -136,10 +136,11 @@ final class KeepBasesMenu extends Menu {
                 query.isEmpty() ? "<gray>輸入名稱的一部分" : "<gray>現在：<white>" + ItemRenderer.escape(query),
                 "", "<yellow>左鍵：輸入", query.isEmpty() ? "" : "<yellow>右鍵：清掉搜尋"));
         set(SLOT_INFO, icon(Material.BOOK, "<white>只撿的基底",
-                "<gray>有挑的話，普通、魔法、稀有裝備只撿這些基底",
+                "<gray>有挑的那幾類（武器／防具／盾與箭袋／飾品），普通、魔法、稀有裝備只撿這些基底",
+                "<gray>沒挑的類別照原本的規則（例：只挑弓 → 其他武器不撿，防具、飾品照常）",
                 "<gray>撿哪幾種稀有度照過濾器「依稀有度」那三格",
                 "<gray>可以一直加；每個角色各自設定；全部拿掉就恢復原本的規則",
-                "<dark_gray>傳奇、珠寶、地圖不受影響；有好詞綴（保留詞綴階級）的照樣撿",
+                "<dark_gray>傳奇、珠寶、地圖不受影響；有挑的類別裡不在清單的，好詞綴也不救",
                 "",
                 "<gray>現在保留了 <white>" + filter.keepBases().size() + "<gray> 種"));
         final List<ItemBase> list = bases();
@@ -171,7 +172,7 @@ final class KeepBasesMenu extends Menu {
         final boolean kept = filter.keepsBase(base.id());
         final List<String> lore = new ArrayList<>();
         lore.add("<gray>" + base.slot().displayName() + "・掉落等級 " + base.dropLevel());
-        lore.add(kept ? "<green>✔ 會撿（稀有度照過濾器）" : filter.keepBases().isEmpty() ? "<dark_gray>照一般的過濾規則" : "<dark_gray>不撿");
+        lore.add(kept ? "<green>✔ 會撿（稀有度照過濾器）" : !filter.keepBasesCover(base.tags()) ? "<dark_gray>照一般的過濾規則（這一類沒挑基底）" : "<dark_gray>不撿");
         lore.add("");
         lore.add(kept ? "<yellow>左鍵：拿掉" : "<yellow>左鍵：加入");
         final ItemStack stack = icon(Menu.material(base.iconMaterial(), Material.PAPER),

@@ -181,7 +181,10 @@ public final class LootFilterMenu extends Menu {
             }
         }
         if (filter.rules().keepAffixTier() > 0) {
-            lore.add("<green>　✔ <gray>有 T" + filter.rules().keepAffixTier() + " 以上詞綴的裝備照樣撿");
+            lore.add("<green>　✔ <gray>有 T" + filter.rules().keepAffixTier() + " 以上詞綴的裝備照樣撿<dark_gray>（只救被稀有度藏起來的）");
+            if (filter.keepAffixLikeMine()) {
+                lore.add("<dark_gray>　　好詞綴也只撿跟你同類的武器、同系的防具");
+            }
         }
         set(slot(ROW_SUMMARY, 0), icon(Material.WRITABLE_BOOK, "<#f5b942>【目前的設定】", lore));
         set(slot(ROW_SUMMARY, 1), icon(Material.PAPER, "<white>目前：" + ItemRenderer.escape(presetName),
@@ -218,7 +221,7 @@ public final class LootFilterMenu extends Menu {
             lines.add(String.join("、", rarities) + "裝備");
         }
         if (!filter.keepBases().isEmpty()) {
-            lines.add("只撿 " + filter.keepBases().size() + " 種基底：其他基底的普通、魔法、稀有裝備"); // 2026-10：以前總覽沒列
+            lines.add("只撿 " + filter.keepBases().size() + " 種基底：有挑的那幾類裡，其他基底的普通、魔法、稀有裝備"); // 2026-10：以前總覽沒列
         }
         if (filter.hidesCharms()) {
             lines.add("護符");
@@ -413,9 +416,11 @@ public final class LootFilterMenu extends Menu {
         }
         set(slot(4, 0), rowLabel(Material.EMERALD, "只撿的基底", "有挑的話：裝備只撿這些基底", "稀有度照第一排；可以一直加"));
         final List<String> keptLore = new ArrayList<>();
-        keptLore.add("<gray>挑了之後，普通、魔法、稀有裝備<white>只撿這些基底</white><gray>，");
+        keptLore.add("<gray>挑了之後，<white>有挑的那幾類</white><gray>（武器／防具／盾與箭袋／飾品）");
+        keptLore.add("<gray>普通、魔法、稀有裝備只撿這些基底；沒挑的類別照原本的規則");
         keptLore.add("<gray>要撿哪幾種稀有度照第一排（三格都開＝三種都撿）");
-        keptLore.add("<dark_gray>不在清單裡的一律不撿（好詞綴也不救）；等級差、同類同系照樣看");
+        keptLore.add("<dark_gray>例：只挑了兩種弓 → 其他武器不撿，防具、飾品照常");
+        keptLore.add("<dark_gray>有挑的類別裡不在清單的一律不撿（好詞綴也不救）；等級差、同類同系照樣看");
         keptLore.add("<dark_gray>傳奇、珠寶、地圖不受影響；全部拿掉就恢復原本的規則");
         keptLore.add("");
         int listed = 0;
@@ -691,9 +696,9 @@ public final class LootFilterMenu extends Menu {
                 if (presetAt.containsKey(slot)) {
                     final LootConfig.Preset preset = service.config().preset(presetAt.get(slot));
                     if (preset != null) {
-                        // 只撿的基底、珠寶、遺時星晶的設定留著（2026-10：以前只留基底，另外兩項被悄悄重設）
+                        // 只撿的基底、珠寶、遺時星晶、音效、護符、好詞綴也只撿同類的設定留著（2026-10：以前護符與好詞綴同類會被悄悄重設）
                         apply(LootFilter.of(preset).withKeepBases(filter.keepBases()).withJewelRarity(filter.jewelRarity()).withTimeLost(filter)
-                                .withDropSounds(filter.dropSounds()));
+                                .withDropSounds(filter.dropSounds()).withExtras(filter));
                     }
                     return;
                 }

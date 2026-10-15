@@ -396,8 +396,16 @@ public final class GemService {
     /** 輔助寶石的效果（每條修飾器一行，加上魔力倍率與備註）。 */
     public static List<String> effectLines(final SupportDefinition support) {
         final List<String> lines = new ArrayList<>();
+        boolean procs = false;
         for (final Modifier modifier : support.modifiers()) {
             lines.add("<#8fd3ff>" + ItemRenderer.escape(ModifierText.describe(modifier)));
+            if (ProcText.isProc(modifier)) {
+                // 2026-10：觸發的專屬技能實際做什麼（範圍、傷害、持續時間…）
+                procs = true;
+                for (final String detail : ProcText.details(modifier.tags().iterator().next())) {
+                    lines.add("<gray>　" + ItemRenderer.escape(detail));
+                }
+            }
         }
         if (Math.abs(support.manaMultiplier() - 1.0) > 1e-9) {
             lines.add(String.format(Locale.ROOT, "<gray>魔力消耗 <white>×%s", ModifierText.number(support.manaMultiplier())));
@@ -410,6 +418,9 @@ public final class GemService {
         }
         for (final String note : support.notes()) {
             lines.add("<dark_gray>" + ItemRenderer.escape(note));
+        }
+        if (procs) {
+            lines.add("<dark_gray>" + ItemRenderer.escape(ProcText.RULES));
         }
         return lines;
     }

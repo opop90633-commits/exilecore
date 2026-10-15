@@ -33,6 +33,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * 物品本身不改：只在送給這個玩家的封包裡多加幾行說明（{@link PacketTooltips}），每個人看到的是自己的技能。
  * 技能面板的資料在主執行緒每 5 秒算一次存起來（封包在網路執行緒，只讀這份）；變了就重送一次背包讓說明更新。
  * 沒裝 PacketEvents 時整個功能不啟用（這個類別不碰任何 PacketEvents 的型別，ExileCore 可以放心呼叫）。
+ * <p>
+ * 2026-10：預設收著（只有一行「對你的 N 個技能有效」）；在任何背包、箱子裡對著物品按 F（換到副手的鍵）展開、再按一次收起來。
+ * 背包裡的 F 本來就被擋掉（副手是顯示用的複本），所以不會影響別的操作；每個人各自記，下線就回到收著。
  */
 public final class TooltipHook {
 
@@ -40,6 +43,8 @@ public final class TooltipHook {
     static final int MAX_MODS = 4;
 
     private static final Map<UUID, List<SkillService.SkillHint>> HINTS = new ConcurrentHashMap<>();
+    /** 展開「對你的技能」說明的人（2026-10；按 F 切換）。 */
+    private static final java.util.Set<UUID> EXPANDED = ConcurrentHashMap.newKeySet();
     private static volatile ExileCore plugin;
     private static Object listener;
 
@@ -65,6 +70,37 @@ public final class TooltipHook {
             @EventHandler
             public void onQuit(final PlayerQuitEvent event) {
                 HINTS.remove(event.getPlayer().getUniqueId());
+                EXPANDED.remove(event.getPlayer().getUniqueId());
+            }
+
+            /** 對著有「對你的技能」說明的物品按 F：展開／收起（不換到副手）。 */
+            @EventHandler(priority = org.bukkit.event.EventPriority.LOWEST)
+            public void onSwapKey(final org.bukkit.event.inventory.InventoryClickEvent event) {
+                if (event.getClick() != org.bukkit.event.inventory.ClickType.SWAP_OFFHAND
+                        || !(event.getWhoClicked() instanceof Player player) || player.getGameMode() == GameMode.CREATIVE) {
+                    return;
+                }
+                final ItemStack current = event.getCurrentItem();
+                final List<SkillService.SkillHint> hints = HINTS.get(player.getUniqueId());
+                if (current == null || current.isEmpty() || hints == null || hints.isEmpty()) {
+                    return;
+                }
+                try {
+                    if (lines(core, hints, current, true).isEmpty()) {
+                        return; // 沒有說明的物品照原本的處理
+                    }
+                } catch (final RuntimeException e) {
+                    return;
+                }
+                event.setCancelled(true);
+                if (!EXPANDED.remove(player.getUniqueId())) {
+                    EXPANDED.add(player.getUniqueId());
+                }
+                core.getServer().getScheduler().runTask(core, () -> {
+                    if (player.isOnline()) {
+                        player.updateInventory(); // 重送一次，說明換成展開／收起的樣子
+                    }
+                });
             }
         }, core);
         core.getSLF4JLogger().info("物品的「對你的技能」提示：已啟用（PacketEvents）");
@@ -128,7 +164,7 @@ public final class TooltipHook {
             return List.of();
         }
         try {
-            final List<String> lines = lines(core, hints, stack);
+            final List<String> lines = lines(core, hints, stack, EXPANDED.contains(viewer.getUniqueId()));
             if (lines.isEmpty()) {
                 return List.of();
             }
@@ -160,6 +196,30 @@ public final class TooltipHook {
     }
 
     static List<String> lines(final ExileCore core, final List<SkillService.SkillHint> hints, final ItemStack stack) {
+        return lines(core, hints, stack, true);
+    }
+
+    /** expanded = false：只留第一行（幾個技能），後面寫「按 F 展開」。 */
+    static List<String> lines(final ExileCore core, final List<SkillService.SkillHint> hints, final ItemStack stack, final boolean expanded) {
+        final List<String> full = fullLines(core, hints, stack);
+        if (full.isEmpty() || full.size() == 1 && full.getFirst().indexOf('：') < 0) {
+            return full; // 只有一行（「技能面板上沒有它能輔助的技能」）：不用收
+        }
+        if (!expanded) {
+            return List.of(stripColon(full.getFirst()) + " <dark_gray>（按 F 展開）");
+        }
+        final List<String> out = new ArrayList<>(full);
+        out.add("<dark_gray>　按 F 收起");
+        return out;
+    }
+
+    /** 收起時第一行的「：」與後面接的名字拿掉（輔助寶石那一行後面直接接技能名字）。 */
+    private static String stripColon(final String line) {
+        final int colon = line.indexOf('：');
+        return colon < 0 ? line : line.substring(0, colon);
+    }
+
+    private static List<String> fullLines(final ExileCore core, final List<SkillService.SkillHint> hints, final ItemStack stack) {
         final List<String> lines = new ArrayList<>();
         final Optional<tw.exilecore.item.ItemData> data = core.items().read(stack);
         if (data.isPresent()) {

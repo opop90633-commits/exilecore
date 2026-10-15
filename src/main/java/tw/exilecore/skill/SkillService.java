@@ -790,6 +790,7 @@ public final class SkillService {
             runtime.landedAt = now;
             if (eligible(player)) {
                 executor.land(player, leap);
+                procs().onUse(player, leap.build().definition(), player.getLocation()); // 2026-10：躍電這類「放技能時」的輔助在落地點觸發
             }
         }
     }
@@ -1109,7 +1110,9 @@ public final class SkillService {
         if (config.requiresMount(definition.id())) {
             mounts().charge(player); // 坐騎技能：坐騎往前衝一下
         }
-        procs().onUse(player, definition, useLocation(player, definition, build, preferred)); // 2026-10：輔助觸發的專屬技能
+        if (definition.mechanic() != Mechanic.LEAP) {
+            procs().onUse(player, definition, useLocation(player, definition, build, preferred)); // 2026-10：輔助觸發的專屬技能
+        } // 跳躍：落地時才算「放了這個技能」（updateLeap），躍電的帶電地面在落地點（衝刺是瞬間到終點，本來就在落地點）
         // 2026-10：幻弓影：弓的攻擊過一下由身旁的幻影再射一次（傷害少很多）
         if (definition.isAttack() && definition.weapons().contains("bow") && !definition.hidden() && definition.cooldown() <= 0
                 && StatKeys.flag(state.sheet(), StatKeys.FLAG_MIRAGE)) {
@@ -1117,10 +1120,22 @@ public final class SkillService {
             final org.bukkit.util.Vector facing = SkillTargets.facing(player);
             final org.bukkit.Location from = player.getLocation().add(new org.bukkit.util.Vector(-facing.getZ(), 0, facing.getX()).multiply(1.5));
             final java.util.UUID aim = preferred == null ? null : preferred.getUniqueId();
+            // 2026-10：幻影要射向放的那一刻準心指的地方（以前用玩家的水平朝向從旁邊 1.5 格平行射出：
+            // 不管上下的角度、也不管鎖定的目標，單發的箭打不到同一個地方，偏一格半而且往下瞄時從頭頂飛過去）
+            final org.bukkit.Location eye = player.getEyeLocation();
+            final org.bukkit.util.RayTraceResult ray = player.getWorld().rayTraceBlocks(eye, eye.getDirection(), MIRAGE_AIM_RANGE,
+                    org.bukkit.FluidCollisionMode.NEVER, true);
+            final org.bukkit.util.Vector point = ray != null && ray.getHitPosition() != null ? ray.getHitPosition()
+                    : eye.toVector().add(eye.getDirection().multiply(MIRAGE_AIM_RANGE));
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                 if (player.isOnline() && player.getWorld().equals(from.getWorld())) {
                     from.getWorld().spawnParticle(org.bukkit.Particle.END_ROD, from.clone().add(0, 1, 0), 12, 0.2, 0.5, 0.2, 0.01);
-                    executor.executeFrom(Origin.at(player, from, SkillTargets.facing(player)), mirage, aim == null ? null : living(player, aim));
+                    final org.bukkit.entity.LivingEntity mirageTarget = aim == null ? null : living(player, aim);
+                    // 有鎖定的敵人就朝牠（牠可能動了），沒有就朝放的時候準心指的點
+                    final Origin origin = mirageTarget != null && mirageTarget.isValid()
+                            ? Origin.towards(player, from, mirageTarget)
+                            : Origin.at(player, from, point.clone().subtract(from.toVector().add(new org.bukkit.util.Vector(0, 1.2, 0))));
+                    executor.executeFrom(origin, mirage, mirageTarget);
                 }
             }, 10);
         }
@@ -1451,6 +1466,9 @@ public final class SkillService {
      * 沒算怪物的減免、持續傷害）。召喚技能算召喚物：一隻的每秒傷害 × 同時最多幾隻（名字後面寫「召喚物 ×N」）。
      * 回傳「按鍵、名字、每秒傷害」，同一個技能綁在好幾個鍵只算一次。
      */
+    /** 幻弓影：找準心指的點最遠幾格。 */
+    private static final double MIRAGE_AIM_RANGE = 48;
+
     /**
      * 一個技能每秒打幾下：一輪是「複擊的每一下各一次攻擊間隔」再加「最後一下的間隔與冷卻比較長的那個」。
      */

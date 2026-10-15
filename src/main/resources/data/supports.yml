@@ -2936,9 +2936,9 @@ supports:
     modifiers:
       - { stat: proc.use, type: FLAT, value: 100, tags: [proc_side_aftershock] }
 
-  shocking_leap:           # Shocking Leap（PoE2 是落地的地方；觸發點在出發的地方）
+  shocking_leap:           # Shocking Leap（照 PoE2：落地的地方；2026-10 以前跳躍在出發點、衝刺在終點，統一成落地點）
     name: 躍電
-    description: 被輔助的突進技能（衝刺、跳躍）出發時，在起跳的地方留下一片帶電的地面，容易讓踩在上面的敵人感電。
+    description: 被輔助的突進技能（衝刺、跳躍）落地時，在落地的地方留下一片帶電的地面，容易讓踩在上面的敵人感電。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [travel]

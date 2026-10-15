@@ -289,6 +289,59 @@ class LootTest {
         assertEquals(config.defaultFilter(), LootFilter.decode("p=standard", config), "沒設定的照舊");
     }
 
+    /** 2026-10：只撿的基底只管有挑的那一類；權杖與錘分開；護符與好詞綴同類換預設組合也留著。 */
+    @Test
+    void keepBasesOnlyLimitListedCategoriesAndExtrasSurvivePresets() {
+        final java.util.Map<String, Set<String>> bases = java.util.Map.of(
+                "long_bow", Set.of("weapon", "two_hand", "bow", "ranged"),
+                "short_bow", Set.of("weapon", "two_hand", "bow", "ranged"),
+                "iron_ring", Set.of("jewellery", "ring"));
+        final LootFilter filter = new LootFilter().withBaseTags(id -> bases.getOrDefault(id, Set.of()));
+        filter.toggleKeepBase("long_bow");
+        final LootFilter.Viewer nobody = LootFilter.Viewer.NONE;
+        assertFalse(filter.hides(base(Rarity.RARE, "long_bow", "weapon", "two_hand", "bow", "ranged"), nobody));
+        assertTrue(filter.hides(base(Rarity.RARE, "short_bow", "weapon", "two_hand", "bow", "ranged"), nobody), "同一類沒挑的基底不撿");
+        assertFalse(filter.hides(base(Rarity.RARE, "leather_hood", "armour", "helmet", "dex_armour"), nobody), "防具沒挑：照原本規則");
+        assertFalse(filter.hides(base(Rarity.RARE, "iron_ring", "jewellery", "ring"), nobody), "飾品沒挑：照原本規則");
+        assertFalse(filter.hides(base(Rarity.RARE, "quiver_a", "quiver"), nobody), "箭袋沒挑：照原本規則");
+        filter.toggleKeepBase("iron_ring");
+        assertTrue(filter.hides(base(Rarity.RARE, "gold_ring", "jewellery", "ring"), nobody), "飾品有挑了：其他戒指不撿");
+        assertTrue(filter.copy().hides(base(Rarity.RARE, "gold_ring", "jewellery", "ring"), nobody), "複本也知道基底的標籤");
+        // 不知道基底標籤（舊呼叫、測試）：照舊全部都管
+        final LootFilter plain = new LootFilter();
+        plain.toggleKeepBase("long_bow");
+        assertTrue(plain.hides(base(Rarity.RARE, "leather_hood", "armour", "helmet", "dex_armour"), nobody));
+
+        // 權杖也有錘的標籤：拿權杖不撿單手錘、拿單手錘不撿權杖
+        final LootFilter.Viewer sceptre = new LootFilter.Viewer(70, Set.of("weapon", "one_hand", "mace", "sceptre", "melee"), Set.of());
+        final LootFilter.Viewer mace = new LootFilter.Viewer(70, Set.of("weapon", "one_hand", "mace", "melee", "melee_1h"), Set.of());
+        final Set<String> maceTags = Set.of("weapon", "one_hand", "mace", "melee", "melee_1h");
+        final Set<String> sceptreTags = Set.of("weapon", "one_hand", "mace", "sceptre", "melee");
+        assertTrue(LootFilter.unlikeMine(maceTags, sceptre, true, false));
+        assertTrue(LootFilter.unlikeMine(sceptreTags, mace, true, false));
+        assertFalse(LootFilter.unlikeMine(sceptreTags, sceptre, true, false));
+        assertFalse(LootFilter.unlikeMine(maceTags, mace, true, false));
+
+        // 護符、好詞綴也只撿同類：不會變成自訂，存檔來回、換預設組合都留著
+        final LootFilter standard = LootFilter.decode("p=standard", config);
+        standard.toggleCharms();
+        standard.toggleKeepAffixLikeMine();
+        assertEquals("standard", standard.preset());
+        final LootFilter again = LootFilter.decode(standard.encode(), config);
+        assertTrue(again.hidesCharms());
+        assertTrue(again.keepAffixLikeMine());
+        final LootFilter strict = LootFilter.of(config.preset("strict")).withExtras(again);
+        assertTrue(strict.hidesCharms());
+        assertTrue(strict.keepAffixLikeMine());
+        final LootFilter custom = LootFilter.decode("p=custom;eq=;cur=;sg=0;ch=1;kl=1;ug=0;fl=all", config);
+        assertTrue(custom.hidesCharms(), "舊的自訂存檔照樣讀得到");
+        assertEquals(custom, LootFilter.decode(custom.encode(), config));
+    }
+
+    private static LootFilter.Candidate base(final Rarity rarity, final String baseId, final String... tags) {
+        return new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, rarity, null, false, 70, Set.of(tags), 0, 0, 0, baseId);
+    }
+
     private static LootFilter.Candidate equipment(final Rarity rarity, final int itemLevel, final int bestRank, final String... tags) {
         return new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, rarity, null, false, itemLevel, Set.of(tags), 0, 0, bestRank);
     }

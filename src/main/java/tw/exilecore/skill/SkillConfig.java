@@ -310,6 +310,14 @@ public final class SkillConfig {
         final Map<String, String> names = new java.util.HashMap<>();
         parsed.forEach((id, definition) -> names.put(id, definition.name()));
         skillNames = Map.copyOf(names);
+        current = this;
+    }
+
+    /** 最近一次載入的設定（2026-10：寶石說明列觸發技能的詳細效果用，見 {@link ProcText}）。 */
+    private static volatile SkillConfig current;
+
+    static SkillConfig current() {
+        return current;
     }
 
     /** 最近一次載入的技能代號 → 名稱（說明文字用，2026-10）。 */

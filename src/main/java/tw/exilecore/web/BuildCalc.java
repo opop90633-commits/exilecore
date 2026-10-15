@@ -48,7 +48,8 @@ import java.util.Set;
  *   "skills": [{ "id", "level", "sockets", "supports": [...] }],   技能面板（最多 27 個）
  *   "binds": [技能的位置 | -1 × 10],         按鍵格（左、右、蹲左、蹲右、數字鍵 3–8）
  *   "extra": [{ "stat", "type", "value", "tags", "source" }],      快照記的稱號、公會、贊助、分身獎勵
- *   "supportsFor": 2                        要比較輔助寶石的技能位置（可以不寫）
+ *   "supportsFor": 2,                       要比較輔助寶石的技能位置（可以不寫）
+ *   "instilFor": -1                         要比較項鍊注入哪個核心（蒸餾情緒）：看哪個技能位置的傷害，-1 = 傷害最高的那個（可以不寫）
  * }
  * </pre>
  * 讀進來的部分（{@link #parse}）是純函式，可以單元測試；算的部分要插件的模組。
@@ -65,7 +66,7 @@ public final class BuildCalc {
     /** 讀進來的角色。 */
     public record Build(CharacterClass characterClass, int level, Set<String> passives, Map<String, String> progress,
                         List<ItemData> gear, Map<String, ItemData> jewels, SkillLoadout skills, List<Modifier> extra,
-                        Integer supportsFor) {
+                        Integer supportsFor, Integer instilFor) {
     }
 
     /** 讀不懂送來的東西。 */
@@ -212,7 +213,13 @@ public final class BuildCalc {
                 supportsFor = positions.get(index);
             }
         }
-        return new Build(characterClass, level, new LinkedHashSet<>(decoded.nodes()), progress, gear, jewels, loadout, extra, supportsFor);
+        Integer instilFor = null;
+        if (json.has("instilFor") && json.get("instilFor").isJsonPrimitive()) {
+            final int index = json.get("instilFor").getAsInt();
+            instilFor = index >= 0 && index < positions.size() && positions.get(index) >= 0 ? positions.get(index) : -1;
+        }
+        return new Build(characterClass, level, new LinkedHashSet<>(decoded.nodes()), progress, gear, jewels, loadout, extra, supportsFor,
+                instilFor);
     }
 
     static boolean allowedProgress(final String key) {
@@ -393,6 +400,9 @@ public final class BuildCalc {
             if (build.supportsFor() != null) {
                 root.add("supports", supports(build, result));
             }
+            if (build.instilFor() != null) {
+                root.add("instils", instils(build, result));
+            }
         }
         root.add("skills", rows);
         return GSON.toJson(root).getBytes(StandardCharsets.UTF_8);
@@ -505,6 +515,90 @@ public final class BuildCalc {
         }
         out.add("remove", remove);
         return out;
+    }
+
+    /** 裝備欄裡項鍊是第幾格。 */
+    static int amuletIndex() {
+        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
+            if (PlayerState.JEWELLERY_SLOTS[i] == tw.exilecore.item.ItemSlot.AMULET) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 項鍊注入比較（2026-10，蒸餾情緒）：天賦樹上每一個還沒配的核心，假設注入在項鍊上（換掉原本注入的）重算一次，
+     * 看某個技能的每秒傷害多多少（跟「沒注入」比）。注入會改屬性（力量、敏捷…），所以每一個都整張屬性表重算。
+     */
+    private JsonObject instils(final Build build, final Result result) {
+        final JsonObject out = new JsonObject();
+        final int amulet = amuletIndex();
+        final ItemData current = amulet < 0 ? null : build.gear().get(amulet);
+        if (current == null) {
+            out.addProperty("error", "先配一條項鍊");
+            return out;
+        }
+        final SkillService skills = plugin.skills();
+        final PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
+        if (tree == null) {
+            out.addProperty("error", "天賦樹還沒載入");
+            return out;
+        }
+        // 看哪個技能：指定的，不然現在傷害最高的那個
+        int position = build.instilFor() != null && build.instilFor() >= 0 ? build.instilFor() : -1;
+        if (position < 0) {
+            double best = -1;
+            for (final SkillService.DpsRow row : skills.skillDps(result.state(), result.sheet(), auraView(result))) {
+                if (row.full() > best) {
+                    best = row.full();
+                    position = row.position();
+                }
+            }
+        }
+        if (position < 0) {
+            out.addProperty("error", "沒有能算傷害的技能（加技能、綁按鍵）");
+            return out;
+        }
+        final SkillLoadout.Entry entry = result.state().skills().skill(position);
+        final SkillDefinition definition = entry == null ? null : skills.config().skill(entry.skillId());
+        out.addProperty("position", position);
+        out.addProperty("name", definition == null ? "?" : definition.name());
+        out.addProperty("current", current.instilled());
+        final ItemData plain = current.copy();
+        plain.setInstilled(null);
+        final SkillService.DpsRow base = dpsWith(build, amulet, plain, position);
+        out.addProperty("dps", base == null ? 0 : base.dps());
+        out.addProperty("full", base == null ? 0 : base.full());
+        final List<JsonObject> list = new ArrayList<>();
+        for (final tw.exilecore.passive.PassiveNode node : tree.nodes()) {
+            if (node.type() != tw.exilecore.passive.PassiveNode.Type.NOTABLE || build.passives().contains(node.id())) {
+                continue; // 天賦樹上已經配了：注入沒有效果
+            }
+            final ItemData trial = current.copy();
+            trial.setInstilled(node.id());
+            final SkillService.DpsRow row = dpsWith(build, amulet, trial, position);
+            final JsonObject o = new JsonObject();
+            o.addProperty("id", node.id());
+            o.addProperty("name", node.name());
+            put(o, row, base);
+            list.add(o);
+        }
+        list.sort((a, b) -> Double.compare(b.get("full").getAsDouble(), a.get("full").getAsDouble()));
+        final JsonArray array = new JsonArray();
+        list.forEach(array::add);
+        out.add("list", array);
+        return out;
+    }
+
+    /** 項鍊換成 amulet 時第 position 個技能的每秒傷害（其他都不變）。 */
+    private SkillService.DpsRow dpsWith(final Build build, final int index, final ItemData amulet, final int position) {
+        final List<ItemData> gear = new ArrayList<>(build.gear());
+        gear.set(index, amulet);
+        final Build trial = new Build(build.characterClass(), build.level(), build.passives(), build.progress(), gear, build.jewels(),
+                build.skills(), build.extra(), null, null);
+        final Result result = evaluate(trial, trial.skills());
+        return plugin.skills().skillDpsAt(result.state(), result.sheet(), auraView(result), position);
     }
 
     /** 孔滿了：換掉掛著的哪一顆最好（傷害最高的那個結果）。 */

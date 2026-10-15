@@ -93,8 +93,8 @@ public final class LootFilter {
      * @param minSkillGemLevel 未切割技能寶石低於這個等級隱藏（0 = 關）
      * @param minSupportTier   未切割輔助寶石低於這一階隱藏（0 = 關）
      * @param mapRarity        地圖依稀有度隱藏：0 = 關（地圖本來永遠顯示）、1 = 隱藏普通（白）地圖、2 = 普通與魔法（藍）都隱藏，只撿稀有（黃）
-     * @param keepAffixTier    保留有 T 幾以上詞綴的裝備（2026-10）：身上有一條詞綴的階級是 T1～T這個數字，就算被上面的規則或稀有度藏起來
-     *                         也照樣撿（0 = 關；未鑑定的也看得到，過濾器知道它的詞綴）
+     * @param keepAffixTier    保留有 T 幾以上詞綴的裝備（2026-10）：身上有一條詞綴的階級是 T1～T這個數字，被稀有度藏起來的照樣撿
+     *                         （等級差、不同類、不在只撿的基底裡的不救；0 = 關；未鑑定的也看得到，過濾器知道它的詞綴）
      */
     public record Rules(boolean weaponsLikeMine, boolean armourLikeMine, int levelGap, int minSkillGemLevel, int minSupportTier,
                         int mapRarity, int keepAffixTier) {
@@ -261,6 +261,11 @@ public final class LootFilter {
     private String preset = CUSTOM;
     /** 只撿的基底（2026-10，基底代號，可以一直加）：有設定就只撿這些基底的裝備，稀有度照「依稀有度」的設定。 */
     private final TreeSet<String> keepBases = new TreeSet<>();
+    /**
+     * 基底代號 → 基底標籤（撿取模組給，2026-10）：「只撿的基底」只限制有挑基底的那幾類（武器、防具、盾與箭袋、飾品），
+     * 沒挑的類別照原本的規則。沒給（測試、舊呼叫）就照舊：不在清單裡的全部不撿。不存檔、不算進 equals。
+     */
+    private java.util.function.Function<String, Set<String>> baseTags;
     /**
      * 珠寶依稀有度（2026-10）：0 全部撿、2 只撿稀有、3 全部不撿。
      * （1「隱藏普通」拿掉了：珠寶掉出來至少是魔法，那一格藏不到任何東西；舊存檔的 1 讀成 0）
@@ -440,6 +445,51 @@ public final class LootFilter {
         return keepBases.contains(baseId);
     }
 
+    /** 給基底標籤的查法（撿取模組讀過濾器時給）。 */
+    public LootFilter withBaseTags(final java.util.function.Function<String, Set<String>> lookup) {
+        baseTags = lookup;
+        return this;
+    }
+
+    /**
+     * 裝備的大類（跟「只撿的基底」選單的分頁一樣）：weapon 武器、offhand 盾與箭袋、armour 防具、jewellery 飾品；其他 null。
+     */
+    public static String gearCategory(final Set<String> tags) {
+        if (tags == null) {
+            return null;
+        }
+        if (tags.contains("weapon")) {
+            return "weapon";
+        }
+        if (tags.contains("shield") || tags.contains("quiver")) {
+            return "offhand";
+        }
+        if (tags.contains("armour")) {
+            return "armour";
+        }
+        return tags.contains("jewellery") ? "jewellery" : null;
+    }
+
+    /** 「只撿的基底」有沒有管到這一類（這一類至少挑了一種基底；不知道基底標籤時當成全部都管）。 */
+    public boolean keepBasesCover(final Set<String> tags) {
+        if (keepBases.isEmpty()) {
+            return false;
+        }
+        if (baseTags == null) {
+            return true;
+        }
+        final String category = gearCategory(tags);
+        if (category == null) {
+            return false;
+        }
+        for (final String id : keepBases) {
+            if (category.equals(gearCategory(baseTags.apply(id)))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** 加入或拿掉一個一定要撿的基底（不會讓預設組合變成自訂：存檔時另外記）。 */
     public void toggleKeepBase(final String baseId) {
         if (!keepBases.remove(baseId)) {
@@ -516,18 +566,18 @@ public final class LootFilter {
         }
         // 2026-10：優先順序（由上往下，先符合的算數；以前各條規則互相蓋掉，開了「保留好詞綴」或「只撿的基底」幾乎什麼都不藏）
         //   1. 傳奇：永遠撿（上面）
-        //   2. 不同類的武器／不同系的防具、等級差太多、不在「只撿的基底」裡：不撿，好詞綴也救不回來
+        //   2. 不同類的武器／不同系的防具、等級差太多、不在「只撿的基底」裡（只看有挑基底的那幾類）：不撿，好詞綴也救不回來
         //   3. 稀有度被勾成隱藏：不撿，但有好詞綴（保留好詞綴）的撿回來
         if (unlikeMine(candidate.tags(), who, rules.weaponsLikeMine(), rules.armourLikeMine())
                 || rules.levelGap() > 0 && candidate.itemLevel() > 0 && who.level() > 0 && candidate.itemLevel() < who.level() - rules.levelGap()
-                || !keepBases.isEmpty() && (candidate.baseId() == null || !keepBases.contains(candidate.baseId()))) {
+                || keepBasesCover(candidate.tags()) && (candidate.baseId() == null || !keepBases.contains(candidate.baseId()))) {
             return true;
         }
         final boolean hidden = candidate.rarity() != null && hiddenEquipment.contains(candidate.rarity());
         return hidden && !keptByAffixTier(candidate, who);
     }
 
-    /** 有夠好的詞綴（T1～T「保留詞綴階級」）：就算稀有度、等級差、不同類的規則要藏，也照樣撿。 */
+    /** 有夠好的詞綴（T1～T「保留詞綴階級」）：被稀有度藏起來的照樣撿（等級差、不同類、只撿的基底先判斷，救不回來）。 */
     public boolean keptByAffixTier(final Candidate candidate) {
         return rules.keepAffixTier() > 0 && candidate.bestAffixRank() > 0 && candidate.bestAffixRank() <= rules.keepAffixTier();
     }
@@ -549,14 +599,6 @@ public final class LootFilter {
         };
     }
 
-    /**
-     * 這件裝備（基底標籤）是不是「跟我不同類」：手上拿弓就只有弓是同類（雙手武器的人盾也不同類；沒拿弓的人箭袋也不同類）、
-     * 身上穿力量系防具就只有力量系的防具與盾是同類。沒拿武器／沒穿防具時不管（都算同類）。
-     * 掉落過濾器的「只撿跟我同類的」與商人賭博的「只看我這類」共用。
-     *
-     * @param checkWeapons 要不要看武器（與盾對雙手武器）
-     * @param checkArmour  要不要看防具與盾的系別
-     */
     /** 武器是單手還是雙手（基底標籤 one_hand／two_hand；都沒寫回傳 null）。 */
     private static String handedness(final Set<String> tags) {
         return tags.contains("two_hand") ? "two_hand" : tags.contains("one_hand") ? "one_hand" : null;
@@ -568,6 +610,14 @@ public final class LootFilter {
         return clamped == 1 ? 0 : clamped;
     }
 
+    /**
+     * 這件裝備（基底標籤）是不是「跟我不同類」：手上拿弓就只有弓是同類（雙手武器的人盾也不同類；沒拿弓的人箭袋也不同類）、
+     * 身上穿力量系防具就只有力量系的防具與盾是同類。沒拿武器／沒穿防具時不管（都算同類）。
+     * 掉落過濾器的「只撿跟我同類的」與商人賭博的「只看我這類」共用。
+     *
+     * @param checkWeapons 要不要看武器（與盾對雙手武器）
+     * @param checkArmour  要不要看防具與盾的系別
+     */
     public static boolean unlikeMine(final Set<String> tags, final Viewer who, final boolean checkWeapons, final boolean checkArmour) {
         if (checkWeapons && !who.weaponTags().isEmpty()) {
             if (tags.contains("weapon")) {
@@ -575,6 +625,11 @@ public final class LootFilter {
                     if (WEAPON_CLASSES.contains(tag) && !who.weaponTags().contains(tag)) {
                         return true; // 跟手上的不同類
                     }
+                }
+                final String dropClass = primaryWeaponClass(tags);
+                final String myClass = primaryWeaponClass(who.weaponTags());
+                if (dropClass != null && myClass != null && !dropClass.equals(myClass)) {
+                    return true; // 2026-10：權杖也有錘的標籤，以前拿權杖照樣撿單手錘（拿錘的不撿權杖）；主要種類要一樣
                 }
                 if (handedness(tags) != null && handedness(who.weaponTags()) != null && !handedness(tags).equals(handedness(who.weaponTags()))) {
                     return true; // 2026-10：同種類但單手／雙手不同（拿雙手錘不撿單手錘），跟選單說明一致
@@ -680,14 +735,21 @@ public final class LootFilter {
         return keepAffixLikeMine;
     }
 
+    /** 跟珠寶、遺時星晶一樣另外記：不會讓預設組合變成自訂，換預設組合也留著。 */
     public void toggleKeepAffixLikeMine() {
         keepAffixLikeMine = !keepAffixLikeMine;
-        preset = CUSTOM;
     }
 
+    /** 跟珠寶、遺時星晶一樣另外記：不會讓預設組合變成自訂，換預設組合也留著。 */
     public void toggleCharms() {
         hideCharms = !hideCharms;
-        preset = CUSTOM;
+    }
+
+    /** 換預設組合時把護符、「好詞綴也只撿同類」帶過去（2026-10：以前套用預設組合會悄悄重設這兩項）。 */
+    public LootFilter withExtras(final LootFilter from) {
+        hideCharms = from.hideCharms;
+        keepAffixLikeMine = from.keepAffixLikeMine;
+        return this;
     }
 
     public void toggleSkillGems() {
@@ -800,7 +862,7 @@ public final class LootFilter {
         }
         final String kept = (keepBases.isEmpty() ? "" : ";kb=" + String.join(",", keepBases)) + (jewelRarity > 0 ? ";jr=" + jewelRarity : "")
                 + (timeLostRarity > 0 ? ";tr=" + timeLostRarity : "") + (timeLostHidden.isEmpty() ? "" : ";th=" + String.join(",", timeLostHidden))
-                + (dropSounds ? "" : ";ds=0");
+                + (dropSounds ? "" : ";ds=0") + (hideCharms ? ";ch=1" : "") + (keepAffixLikeMine ? ";kl=1" : "");
         if (!CUSTOM.equals(preset)) {
             return "p=" + preset + kept;
         }
@@ -812,8 +874,6 @@ public final class LootFilter {
                 + ";eq=" + String.join(",", rarities)
                 + ";cur=" + String.join(",", hiddenCurrencies)
                 + ";sg=" + (hideSkillGems ? 1 : 0)
-                + (hideCharms ? ";ch=1" : "")
-                + (keepAffixLikeMine ? ";kl=1" : "")
                 + ";ug=" + (hideSupportGems ? 1 : 0)
                 + ";fl=" + flasks.name().toLowerCase(Locale.ROOT)
                 + (rules.equals(Rules.NONE) ? "" : ";wl=" + (rules.weaponsLikeMine() ? 1 : 0) + ";al=" + (rules.armourLikeMine() ? 1 : 0)
@@ -882,12 +942,12 @@ public final class LootFilter {
         }
         if (presetId == null) {
             return config.defaultFilter().copy().withKeepBases(filter.keepBases).withJewelRarity(filter.jewelRarity).withTimeLost(filter)
-                    .withDropSounds(filter.dropSounds);
+                    .withDropSounds(filter.dropSounds).withExtras(filter);
         }
         if (!CUSTOM.equals(presetId)) {
             final LootConfig.Preset preset = config.preset(presetId);
             return (preset == null ? config.defaultFilter().copy() : of(preset)).withKeepBases(filter.keepBases)
-                    .withJewelRarity(filter.jewelRarity).withTimeLost(filter).withDropSounds(filter.dropSounds);
+                    .withJewelRarity(filter.jewelRarity).withTimeLost(filter).withDropSounds(filter.dropSounds).withExtras(filter);
         }
         filter.preset = CUSTOM;
         return filter;
@@ -928,6 +988,7 @@ public final class LootFilter {
         copy.timeLostRarity = timeLostRarity;
         copy.hiddenTimeLost.addAll(hiddenTimeLost);
         copy.dropSounds = dropSounds;
+        copy.baseTags = baseTags;
         return copy;
     }
 
