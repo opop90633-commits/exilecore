@@ -186,7 +186,13 @@ public final class MonsterListener implements Listener {
                 if (plugin.guilds() != null) {
                     plugin.guilds().onKill(player, data); // 公會經驗（2026-10）
                 }
+                if (plugin.festival() != null) {
+                    plugin.festival().onKill(player, entity, data); // 萬燈夜（2026-10）：地圖裡的怪掉糖果
+                }
             }
+        }
+        if (plugin.festival() != null) {
+            plugin.festival().onMonsterDeath(entity, data); // 萬燈夜：稀有怪、地圖 Boss 有機會留下搗蛋南瓜
         }
         if (plugin.maps() != null) {
             // 殺怪數；地圖 Boss：完成（星圖、首殺）——每個人的那份已經擲完了

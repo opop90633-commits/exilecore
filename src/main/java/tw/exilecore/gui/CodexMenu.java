@@ -268,7 +268,7 @@ public final class CodexMenu extends Menu {
         }
         drawOptions();
         if (tab != Tab.AFFIXES) {
-            set(SLOT_TEXT_SEARCH, searchButton(textQuery, tab == Tab.UNIQUES ? "傳奇（名稱、詞綴）" : tab == Tab.SKILLS ? "技能（名稱、說明、效果）" : "輔助（名稱、說明、效果）"));
+            set(SLOT_TEXT_SEARCH, searchButton(textQuery, tab == Tab.UNIQUES ? "傳奇（名稱、詞綴、掉落來源：Boss、地圖、事件）" : tab == Tab.SKILLS ? "技能（名稱、說明、效果）" : "輔助（名稱、說明、效果）"));
         }
         set(SLOT_HELP, helpButton(List.of(
                 "這裡只能看，東西拿不出來",
@@ -450,6 +450,7 @@ public final class CodexMenu extends Menu {
                     }
                 }
                 texts.addAll(unique.flavour());
+                texts.addAll(sourceTexts(unique)); // 2026-10-16：也能搜掉落來源（萬界、Boss 的名字、祭壇、追逐級…）
                 if (!matches(textQuery, texts.toArray(String[]::new))) {
                     continue;
                 }
@@ -573,6 +574,29 @@ public final class CodexMenu extends Menu {
         lines.add("<dark_gray>預覽：數值是隨機擲的一個例子，括號裡是範圍");
         lines.add("<dark_gray>（基底的傷害、護甲照物品等級 " + level + " 算，越高越多）");
         return appendLore(stack, lines);
+    }
+
+    /** 搜尋用（2026-10-16）：這件傳奇的掉落來源——來源說明、地圖名字、那張圖 Boss 的名字；追逐級寫「追逐級」。 */
+    private List<String> sourceTexts(final UniqueItem unique) {
+        final List<String> texts = new ArrayList<>();
+        if (unique.chase()) {
+            texts.add("追逐級");
+        }
+        for (final String source : unique.sources()) {
+            final String text = sourceName(source);
+            if (text != null) {
+                texts.add(text);
+            }
+            final String key = source.toLowerCase(Locale.ROOT);
+            final String mapId = key.startsWith("uber_") ? key.substring("uber_".length()) : key;
+            if (plugin.maps() != null) {
+                final var map = plugin.maps().config().find(mapId);
+                if (map != null && map.boss() != null && map.boss().name() != null) {
+                    texts.add(map.boss().name());
+                }
+            }
+        }
+        return texts;
     }
 
     /** 掉落來源的說明；不用列的（chase：上面另外寫）回傳 null。 */

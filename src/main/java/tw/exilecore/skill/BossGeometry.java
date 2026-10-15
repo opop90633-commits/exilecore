@@ -147,6 +147,8 @@ public final class BossGeometry {
                 Math.max(gaps, MAZE_ARENA_GAPS)};
     }
 
+    /** 場地收縮中：圈外的荒蕪、場地危害的風暴離圈邊至少再多幾格（2026-10-16）。 */
+    public static final double ARENA_OUTSIDE_MARGIN = 2;
     /** 場地收縮中：只落一個的招（滅世殞星、它的荒蕪）最大是圈半徑的這個比例。 */
     public static final double ARENA_SINGLE_SHARE = 0.4;
     /** 場地收縮中：一次落好幾個的招（殞星三顆）每個最大是圈半徑的這個比例。 */
@@ -171,11 +173,12 @@ public final class BossGeometry {
     }
 
     /**
-     * 圈外鋪荒蕪的範圍（2026-10-15）：從圈邊往外一整個荒蕪的半徑（荒蕪完全不壓進圈裡）到一開始的圈再外 2 格。
+     * 圈外鋪荒蕪的範圍（2026-10-15）：從圈邊往外一整個荒蕪的半徑再加 {@link #ARENA_OUTSIDE_MARGIN} 格（2026-10-16：離圈遠一點）
+     * 到一開始的圈再外 2 格。
      * 回傳 {內, 外}；圈已經比外緣大（還沒開始縮）回傳 null。
      */
     public static double[] outsideBand(final double arenaRadius, final double startRadius, final double zoneRadius) {
-        final double inner = arenaRadius + zoneRadius;
+        final double inner = arenaRadius + zoneRadius + ARENA_OUTSIDE_MARGIN;
         final double outer = startRadius + 2;
         return inner >= outer ? null : new double[] {inner, outer};
     }

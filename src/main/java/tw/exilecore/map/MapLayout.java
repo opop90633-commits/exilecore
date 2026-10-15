@@ -169,16 +169,48 @@ public final class MapLayout {
         final SplittableRandom random = new SplittableRandom(seed);
         // 2 = 只有起點跟 Boss 房（極境、劫盜終局：一進去就是一間，下一間就是王房）
         final int target = Math.max(2, Math.min(12, roomTarget));
+        // 2026-10-16：Boss 房旁邊（八個方向）有別的房間，王房會被縮到很窄——多走幾次，挑走得到目標、王房旁邊最空的那條
         List<int[]> path = null;
-        for (int attempt = 0; attempt < 40 && (path == null || path.size() < target); attempt++) {
+        for (int attempt = 0; attempt < 60 && (path == null || path.size() < target || bossCrowd(path) > 0); attempt++) {
             final List<int[]> candidate = walk(random, target);
-            if (path == null || candidate.size() > path.size()) {
+            if (path == null || better(candidate, path, target)) {
                 path = candidate;
             }
         }
         final MapLayout layout = new MapLayout(seed, style == null ? Style.HALLS : style);
         layout.build(path, random);
         return layout;
+    }
+
+    /** 走到目標房間數的優先；一樣的話王房旁邊越空越好；再一樣的話越長越好。 */
+    private static boolean better(final List<int[]> candidate, final List<int[]> current, final int target) {
+        final boolean reach = candidate.size() >= target;
+        final boolean reachNow = current.size() >= target;
+        if (reach != reachNow) {
+            return reach;
+        }
+        final int crowd = bossCrowd(candidate);
+        final int crowdNow = bossCrowd(current);
+        if (crowd != crowdNow) {
+            return crowd < crowdNow;
+        }
+        return candidate.size() > current.size();
+    }
+
+    /** 王房（最後一格）旁邊八個方向有幾個主路的格位（不算前一格：從那裡進來）。 */
+    static int bossCrowd(final List<int[]> path) {
+        if (path.size() < 3) {
+            return 0;
+        }
+        final int[] last = path.get(path.size() - 1);
+        int crowd = 0;
+        for (int i = 0; i < path.size() - 2; i++) {
+            final int[] cell = path.get(i);
+            if (Math.abs(cell[0] - last[0]) <= 1 && Math.abs(cell[1] - last[1]) <= 1) {
+                crowd++;
+            }
+        }
+        return crowd;
     }
 
     /** 從左邊一格隨機走到沒走過的鄰格，偏好離起點越來越遠。 */
@@ -256,6 +288,10 @@ public final class MapLayout {
                 final int nz = from[1] + dir[1];
                 if (nx < 0 || nz < 0 || nx >= GRID || nz >= GRID || bySlot[nx][nz] != null) {
                     continue;
+                }
+                final int[] bossSlot = path.get(path.size() - 1);
+                if (Math.abs(nx - bossSlot[0]) <= 1 && Math.abs(nz - bossSlot[1]) <= 1) {
+                    continue; // 2026-10-16：岔路不開在王房旁邊（不然王房要縮小讓出牆）
                 }
                 final Room fromRoom = bySlot[from[0]][from[1]];
                 if (fromRoom.kind() != Kind.NORMAL) {

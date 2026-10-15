@@ -48,5 +48,6 @@ data/charges.yml
 data/heist.yml
 data/sponsor.yml
 data/world_events.yml
+data/festival.yml
 data/guilds.yml
 data/anticheat.yml

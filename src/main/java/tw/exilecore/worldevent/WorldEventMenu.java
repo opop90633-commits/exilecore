@@ -24,6 +24,7 @@ public final class WorldEventMenu extends Menu {
 
     private static final int SLOT_STATUS = 4;
     private static final int SLOT_TRAVEL = 13;
+    private static final int SLOT_FESTIVAL = 15; // 2026-10 萬燈夜
     private static final int FIRST_ITEM = 18;
 
     private final WorldEventService service;
@@ -87,6 +88,15 @@ public final class WorldEventMenu extends Menu {
             final String next = service.nextClock();
             set(SLOT_TRAVEL, icon(Material.GRAY_DYE, "<dark_gray>傳送到事件", "<gray>事件進行中才能傳送",
                     next == null ? "<gray>等待下一次事件" : "<gray>下一次：<white>" + next));
+        }
+
+        final tw.exilecore.festival.FestivalService festival = plugin.festival();
+        if (festival != null && festival.visible()) {
+            final ItemStack pumpkin = icon(Material.JACK_O_LANTERN, "<" + festival.config().color() + ">🎃 " + ItemRenderer.escape(festival.config().name()),
+                    festival.running() ? "<gray>萬聖節活動：幽燈墓園、點燈、南瓜王、不給糖就搗蛋" : "<gray>活動結束了，兌換還開著",
+                    festival.kingRunning() ? "<green>南瓜王在幽燈墓園！" : festival.nextKingClock() == null ? ""
+                            : "<gray>南瓜王：下一次 <white>" + festival.nextKingClock(), "", "<yellow>左鍵：打開<dark_gray>（/festival）");
+            set(SLOT_FESTIVAL, festival.kingRunning() ? glowing(pumpkin) : pumpkin);
         }
 
         int slot = FIRST_ITEM;
@@ -184,6 +194,10 @@ public final class WorldEventMenu extends Menu {
             return;
         }
         if (!acceptAction(click)) {
+            return;
+        }
+        if (slot == SLOT_FESTIVAL && plugin.festival() != null && plugin.festival().visible()) {
+            tw.exilecore.festival.FestivalModule.open(plugin, player);
             return;
         }
         if (slot == SLOT_TRAVEL && service.canTravel()) {

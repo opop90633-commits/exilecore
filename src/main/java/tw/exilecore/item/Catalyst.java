@@ -15,9 +15,9 @@ public enum Catalyst {
     LIFE("生命", "生命與魔力詞綴"),
     ATTACK("攻擊", "攻擊詞綴"),
     CASTER("法術", "法術詞綴"),
-    CRIT("暴擊", "暴擊詞綴"),
-    ELEMENTAL("元素", "元素詞綴"),
-    PHYS_CHAOS("物理與混沌", "物理與混沌詞綴"),
+    CRIT("暴擊", "暴擊率與暴擊傷害加成詞綴"),
+    ELEMENTAL("元素", "元素傷害詞綴（火焰、冰冷、閃電）"),
+    PHYS_CHAOS("物理與混沌", "物理傷害與混沌傷害詞綴"),
     ATTRIBUTE("屬性", "屬性詞綴"),
     SPEED("速度", "速度詞綴"),
     DEFENCE("防禦", "防禦詞綴");
@@ -68,7 +68,8 @@ public enum Catalyst {
             case ATTACK -> damage(mod) && (mod.tags().contains("attack") || mod.tags().contains("trap") || mod.tags().contains("grenade"));
             // 法術：法術專用的（tags 有 spell）傷害類；施法速度歸速度、法術暴擊歸暴擊
             case CASTER -> damage(mod) && spell;
-            case CRIT -> stat.equals(StatKeys.CRIT_CHANCE) || stat.equals(StatKeys.CRIT_MULTI);
+            // 2026-10-16：「增加 x% 暴擊傷害加成」（crit.bonus，飾品上的暴傷詞綴都是這個）也算——以前只認 crit.multi，暴傷詞綴吃不到
+            case CRIT -> stat.equals(StatKeys.CRIT_CHANCE) || stat.equals(StatKeys.CRIT_MULTI) || stat.equals(StatKeys.CRIT_BONUS);
             // 元素、物理與混沌：看傷害種類（攻擊、法術都算）；「額外火焰傷害」（damage.gain.火焰）也算
             case ELEMENTAL -> damage(mod) && (mod.tags().contains("elemental") || mod.tags().contains("fire")
                     || mod.tags().contains("cold") || mod.tags().contains("lightning"))

@@ -80,8 +80,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     /** 複擊最多再打幾下。 */
     public static final int MAX_REPEATS = 4;
 
-    /** 一個召喚技能同時最多幾隻（連「+x 召喚物數量」都算進去的上限）。 */
-    public static final int MAX_MINIONS = 40;
+    /** 一個召喚技能同時最多幾隻（連「+x 召喚物數量」都算進去的上限；2026-10-16：40 → 50）。 */
+    public static final int MAX_MINIONS = 50;
 
     /** 投射物連鎖時，下一個目標最遠幾格。 */
     public static final double PROJECTILE_CHAIN_RANGE = 10;

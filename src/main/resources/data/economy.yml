@@ -99,6 +99,8 @@ values:
   rune_swift: 400
   event_swarm_shard: 100
   event_titan_core: 3000
+  event_candy: 30                  # 2026-10 萬燈夜的素材
+  event_lamp_wick: 2500
   heist_contract: 300
   heist_blueprint: 1500
   heist_finale_key: 15000

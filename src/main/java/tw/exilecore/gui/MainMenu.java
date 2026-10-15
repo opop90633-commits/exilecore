@@ -48,6 +48,7 @@ public final class MainMenu extends Menu {
     private static final int SLOT_EVENT = 32;
     /** 不定時活動（2026-10，開服活動）。 */
     private static final int SLOT_WORLD_EVENT = 34;
+    private static final int SLOT_FESTIVAL = 35; // 2026-10 節慶活動（萬燈夜）：活動到兌換結束才出現
     private static final int SLOT_PVP = 33;
     private static final int SLOT_PARTY = 39;
     /** 公會（2026-10）。 */
@@ -77,7 +78,7 @@ public final class MainMenu extends Menu {
             java.util.Map.entry(SLOT_DISCORD, 25), java.util.Map.entry(SLOT_STORE, 26),
             java.util.Map.entry(SLOT_TOWN, 36), java.util.Map.entry(SLOT_WAYPOINTS, 37), java.util.Map.entry(SLOT_QUESTS, 38),
             java.util.Map.entry(SLOT_BOUNTY, 39), java.util.Map.entry(SLOT_EVENT, 40), java.util.Map.entry(SLOT_PVP, 41),
-            java.util.Map.entry(SLOT_WORLD_EVENT, 42));
+            java.util.Map.entry(SLOT_WORLD_EVENT, 42), java.util.Map.entry(SLOT_FESTIVAL, 43));
     /** 反過來：「圖示＋中文」版面的格子 → 按鈕代號。 */
     private static final java.util.Map<Integer, Integer> LABELLED_BACK = invert(LABELLED);
 
@@ -177,6 +178,9 @@ public final class MainMenu extends Menu {
         put(SLOT_EVENT, button(Material.CLOCK, "每月固定活動", "/event", eventSummary()));
         put(SLOT_PVP, button(Material.DIAMOND_SWORD, "競技場", "/pvp", pvpSummary()));
         put(SLOT_WORLD_EVENT, worldEventButton());
+        if (plugin.festival() != null && plugin.festival().visible()) {
+            put(SLOT_FESTIVAL, festivalButton());
+        }
         // 【多人】
         final var party = plugin.party() == null ? null : plugin.party().party(player.getUniqueId());
         put(SLOT_PARTY, button(Material.PLAYER_HEAD, "隊伍", "/party",
@@ -243,6 +247,23 @@ public final class MainMenu extends Menu {
                         ? "<gray>下一次 <white>" + events.nextClock() + "</white>（約 " + minutes + " 分鐘後）"
                         : "<gray>下一次大約 " + minutes + " 分鐘後", "<gray>素材兌換限定稱號、極境鑰匙、傳奇",
                 "", "<yellow>左鍵：打開");
+    }
+
+    /** 節慶活動（2026-10 萬燈夜）：南瓜王在場時發光。 */
+    private org.bukkit.inventory.ItemStack festivalButton() {
+        final tw.exilecore.festival.FestivalService festival = plugin.festival();
+        final tw.exilecore.festival.FestivalConfig config = festival.config();
+        final String name = "<" + config.color() + ">🎃 " + ItemRenderer.escape(config.name());
+        if (!festival.running()) {
+            return icon(Material.CARVED_PUMPKIN, name, "<gray>活動結束了；兌換開到 " + config.format(config.shopUntil()), "",
+                    "<yellow>左鍵：打開<dark_gray>（/festival）");
+        }
+        final String king = festival.kingRunning() ? "<green>南瓜王在幽燈墓園！"
+                : festival.nextKingClock() == null ? "<gray>南瓜王：每天固定時段" : "<gray>南瓜王：下一次 <white>" + festival.nextKingClock();
+        final org.bukkit.inventory.ItemStack stack = icon(Material.JACK_O_LANTERN, name,
+                "<gray>活動到 " + config.format(config.end()) + "：點燈、南瓜王、不給糖就搗蛋", king,
+                "<gray>糖果、燈芯兌換限定時裝與稱號", "", "<yellow>左鍵：打開<dark_gray>（/festival）");
+        return festival.kingRunning() ? glowing(stack) : stack;
     }
 
     private static org.bukkit.inventory.ItemStack button(final Material material, final String name, final String command,
@@ -342,6 +363,11 @@ public final class MainMenu extends Menu {
                     needCharacter();
                 } else {
                     new tw.exilecore.quest.QuestMenu(plugin, player, plugin.quests()).open();
+                }
+            }
+            case SLOT_FESTIVAL -> {
+                if (plugin.festival() != null && plugin.festival().visible()) {
+                    tw.exilecore.festival.FestivalModule.open(plugin, player);
                 }
             }
             case SLOT_WORLD_EVENT -> {

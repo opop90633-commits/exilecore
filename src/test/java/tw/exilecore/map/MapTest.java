@@ -698,6 +698,20 @@ class MapTest {
         assertFalse(new MapInstance(3, normal, null, MapLayout.generate(3, 6), null, 2, 0, 0, java.util.UUID.randomUUID(), "x", 6, 0).usesAttempts());
     }
     @Test
+    void bossRoomsStayWide() {
+        // 2026-10-16：王房旁邊有別的房間時會縮小（最小 13 格），以前一成多的地圖王房很窄；現在主路挑王房旁邊空的、岔路不開在王房旁邊
+        for (final MapLayout.Style style : MapLayout.Style.values()) {
+            int rooms = 0;
+            for (long seed = 0; seed < 600; seed++) {
+                final MapLayout layout = MapLayout.generate(seed, 8, style);
+                assertTrue(layout.boss().halfX() >= 19, style + " #" + seed + "：王房半徑 " + layout.boss().halfX());
+                rooms += layout.roomCount();
+            }
+            assertTrue(rooms / 600.0 >= 9, style + "：房間數沒有變少（平均 " + rooms / 600.0 + "）");
+        }
+    }
+
+    @Test
     void lateComersToFinalBossesGetNoLoot() {
         // 2026-10-15：終局以上的 Boss，生命掉到 75% 以下才進來的人沒有掉落（隊友也一樣）；一般地圖不管
         final MapConfig.MapDef awakener = config.find("awakener");

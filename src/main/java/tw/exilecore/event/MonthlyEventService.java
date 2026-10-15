@@ -89,7 +89,9 @@ public final class MonthlyEventService {
     /** 地圖怪物多掉的物品數量（小數）。 */
     public double quantityBonus() {
         final EventConfig.Theme theme = theme();
-        return theme == null ? 0 : theme.quantity() / 100.0;
+        // 2026-10 萬燈夜：全服點燈點滿的物品數量加成也是全域的，加在這裡（掉落、地圖、劫盜都吃得到）
+        final double festival = plugin.festival() == null ? 0 : plugin.festival().quantityBonus();
+        return (theme == null ? 0 : theme.quantity() / 100.0) + festival;
     }
 
     public double rarityBonus() {

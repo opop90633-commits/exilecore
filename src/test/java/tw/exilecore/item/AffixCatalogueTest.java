@@ -68,17 +68,8 @@ class AffixCatalogueTest {
             stats.add(StatKeys.chargeChance(charge));
             stats.add(StatKeys.chargeOnHit(charge));
             stats.add(StatKeys.chargeMax(charge));
-            stats.add("charge.extra." + charge); // 2026-10：獲得一顆時多一顆
-            for (final String event : tw.exilecore.charge.ChargeText.EVENTS.keySet()) {
-                stats.add("charge.event." + event + "." + charge); // 2026-10：事件給的戰星
-            }
         }
         stats.addAll(LocalMods.KNOWN);
-        stats.add("charge.extra");
-        stats.add("charge.periodic");
-        for (final String event : tw.exilecore.charge.ChargeText.EVENTS.keySet()) {
-            stats.add("charge.event_cooldown." + event);
-        }
         // 2026-10 新的引擎屬性鍵（引擎照字串組出來讀的）：自己身上某種異常的持續時間（AilmentService）、傷害轉換、
         // 臨在的抗性降低（Presence）、護符欄位（CharmService）、揭露詞綴的幅度（ItemStats）
         for (final String ailment : List.of("ignite", "chill", "freeze", "shock", "bleed", "poison")) {
@@ -398,6 +389,10 @@ class AffixCatalogueTest {
             assertFalse(Catalyst.ATTACK.matches(crit), "攻擊催化劑不加暴擊");
             assertFalse(Catalyst.CASTER.matches(crit), "法術催化劑不加暴擊");
         }
+        // 2026-10-16：飾品的暴傷詞綴是「增加 x% 暴擊傷害加成」（crit.bonus），也要吃暴擊催化劑
+        final Modifier critBonus = repository.affix("crit_bonus_amulet").mods().getFirst().toModifier(Map.of("value", 30), "項鍊");
+        assertTrue(Catalyst.CRIT.matches(critBonus), "暴擊催化劑要加暴擊傷害加成");
+        assertFalse(Catalyst.ELEMENTAL.matches(critBonus));
     }
 
     @Test

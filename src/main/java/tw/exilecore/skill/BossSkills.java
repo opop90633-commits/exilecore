@@ -1129,6 +1129,38 @@ public final class BossSkills implements Listener {
 
     /** 圈外的荒蕪（at: outside）一次最多落幾個。 */
     static final int OUTSIDE_MAX = 32;
+    /** 圈外的荒蕪同時最多幾片（地上的＋還沒落下的；2026-10-16 留很久之後要有上限，不然越疊越多）。 */
+    static final int OUTSIDE_ZONE_CAP = 48;
+
+    /** 收掉這招在地上最舊的幾片（地上的標示一起拿掉）。 */
+    private void evictOldest(final Brain brain, final String skillId, final int count) {
+        int left = count;
+        final Iterator<ZoneArea> iterator = brain.zones.iterator();
+        while (left > 0 && iterator.hasNext()) {
+            final ZoneArea zone = iterator.next();
+            if (zone.skill.id().equals(skillId)) {
+                danger.hide(zone.mark);
+                iterator.remove();
+                left--;
+            }
+        }
+    }
+
+    /** 這招現在在地上、還沒落下的有幾個。 */
+    private static int alive(final Brain brain, final String skillId) {
+        int count = 0;
+        for (final ZoneArea zone : brain.zones) {
+            if (zone.skill.id().equals(skillId)) {
+                count++;
+            }
+        }
+        for (final Pending pending : brain.pendings) {
+            if (pending.skill.id().equals(skillId)) {
+                count++;
+            }
+        }
+        return count;
+    }
 
     /** 延遲落下、地面效果的落點。 */
     private List<Location> points(final Brain brain, final BossSkill skill, final LivingEntity target) {
@@ -2521,7 +2553,7 @@ public final class BossSkills implements Listener {
         if ("hazard".equals(tag) && brain.arena != null) {
             // 2026-10：場地收縮中，場地危害不落在圈裡（圈裡只有跟收縮一起放的那些）
             final Arena arena = brain.arena;
-            final double limit = arena.radius(now) + skill.radius();
+            final double limit = arena.radius(now) + skill.radius() + BossGeometry.ARENA_OUTSIDE_MARGIN; // 2026-10-16：離圈遠一點
             points.removeIf(point -> point.distanceSquared(arena.center) < limit * limit);
         }
         final long fire = now + settings().telegraphTicks(skill, brain.host.boss())
@@ -2744,7 +2776,27 @@ public final class BossSkills implements Listener {
     /** 場地開始收縮：以 Boss 現在的位置為中心。 */
     private void startArena(final Brain brain, final Cast cast, final long now) {
         final Location center = ground(cast.anchor != null ? cast.anchor : brain.boss.getLocation());
+        clearField(brain); // 2026-10-15：收縮一開始先清場（還留在地上的風暴、荒蕪、還沒落下的、追人的光球都收掉）
         brain.arena = new Arena(cast.skill, center, now, brain.boss.getUniqueId() + ":arena:" + now);
+    }
+
+    /** 清場（2026-10-15，萬界崩解開始時）：地上的地面效果、還沒落下的延遲落下、追人的光球全部收掉，地上的標示一起拿掉。 */
+    private void clearField(final Brain brain) {
+        for (final ZoneArea zone : brain.zones) {
+            danger.hide(zone.mark);
+            visuals.zoneAmbient(zone.skill.visual(), List.of(zone.center), 0.5, now()); // 消散的一點粒子
+        }
+        brain.zones.clear();
+        for (final Pending pending : brain.pendings) {
+            danger.hide(pending.mark);
+        }
+        brain.pendings.clear();
+        for (final Orb orb : brain.orbs) {
+            if (orb.mark != null) {
+                danger.hide(orb.mark);
+            }
+        }
+        brain.orbs.clear();
     }
 
     /** 場地收縮每 tick：圈慢慢縮小（地上的圈、粒子），圈外的人每 interval 秒挨一下、畫面中間提醒回到圈內。 */
@@ -2773,7 +2825,22 @@ public final class BossSkills implements Listener {
             final long due = arena.nextExtra.getOrDefault(extra.id(), arena.startTick + every);
             if (now >= due) {
                 arena.nextExtra.put(extra.id(), now + every);
-                dropPending(brain, extra, null, now, "arena");
+                // 2026-10-16：圈外的荒蕪留很久（跟場地危害的風暴一樣）：同時最多 OUTSIDE_ZONE_CAP 片。
+                // 還在縮的時候收掉最舊的（圈外的範圍一直往內長，要跟著鋪過去）；縮完就鋪滿為止，消掉幾片才補
+                boolean drop = true;
+                if (extra.at() == BossSkill.Target.OUTSIDE) {
+                    final int over = alive(brain, extra.id()) + Math.min(OUTSIDE_MAX, Math.max(1, extra.count())) - OUTSIDE_ZONE_CAP;
+                    if (over > 0) {
+                        if (now < arena.startTick + arena.shrinkTicks) {
+                            evictOldest(brain, extra.id(), over);
+                        } else {
+                            drop = false;
+                        }
+                    }
+                }
+                if (drop) {
+                    dropPending(brain, extra, null, now, "arena");
+                }
             }
         }
         if (now < arena.nextPulse) {

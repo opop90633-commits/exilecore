@@ -212,6 +212,13 @@ public final class ExileCoreCommand {
                         .then(Commands.literal("start")
                                 .then(Commands.literal("boss").executes(context -> worldEvent(plugin, context, "start", "boss")))
                                 .then(Commands.literal("invasion").executes(context -> worldEvent(plugin, context, "start", "invasion")))))
+                .then(Commands.literal("festival")
+                        .executes(context -> festival(plugin, context, "status"))
+                        .then(Commands.literal("king").executes(context -> festival(plugin, context, "king")))
+                        .then(Commands.literal("stop").executes(context -> festival(plugin, context, "stop")))
+                        .then(Commands.literal("build").executes(context -> festival(plugin, context, "build")))
+                        .then(Commands.literal("bonus").executes(context -> festival(plugin, context, "bonus")))
+                        .then(Commands.literal("pumpkin").executes(context -> festival(plugin, context, "pumpkin"))))
                 .then(Commands.literal("inv")
                         .then(Commands.argument("player", StringArgumentType.greedyString())
                                 .suggests(tw.exilecore.chat.ChatModule.targets(plugin))
@@ -712,6 +719,45 @@ public final class ExileCoreCommand {
             default -> sender.sendMessage(plugin.text().prefixed(events.running()
                     ? "<gray>進行中：" + events.runningKind().displayName() + "，還剩 " + events.secondsLeft() + " 秒"
                     : "<gray>沒有事件；下一次" + (events.nextClock() != null ? " " + events.nextClock() + "，" : "") + "大約 " + events.minutesUntilNext() + " 分鐘後。指令：arena [半徑]、here、clearspots、start boss|invasion、stop"));
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** /ec festival（2026-10 萬燈夜）：狀態、叫出／收掉南瓜王、重蓋墓園、全服加成、放一個搗蛋南瓜。 */
+    private static int festival(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final String action) {
+        final CommandSender sender = context.getSource().getSender();
+        final tw.exilecore.festival.FestivalService festival = plugin.festival();
+        if (festival == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>節慶活動模組沒有啟用（看主控台）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        switch (action) {
+            case "king" -> {
+                final String problem = festival.startKing();
+                sender.sendMessage(plugin.text().prefixed(problem == null ? "<green>南瓜王出來了" : "<red>" + problem));
+            }
+            case "stop" -> {
+                festival.stopKing("管理員收掉了南瓜王");
+                sender.sendMessage(plugin.text().prefixed("<green>收掉了"));
+            }
+            case "build" -> {
+                final String problem = festival.buildArena(sender);
+                if (problem != null) {
+                    sender.sendMessage(plugin.text().prefixed("<red>" + problem));
+                }
+            }
+            case "bonus" -> {
+                festival.triggerBonus();
+                sender.sendMessage(plugin.text().prefixed("<green>全服加成開了"));
+            }
+            case "pumpkin" -> {
+                final Player player = playerOrNull(plugin, context);
+                if (player != null) {
+                    festival.spawnPumpkin(player.getLocation(), Math.max(1, plugin.players().get(player).level()));
+                }
+            }
+            default -> sender.sendMessage(plugin.text().prefixed("<gray>" + tw.exilecore.item.ItemRenderer.escape(festival.status())
+                    + "。指令：king、stop、build、bonus、pumpkin"));
         }
         return Command.SINGLE_SUCCESS;
     }

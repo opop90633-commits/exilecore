@@ -906,10 +906,10 @@ skills:
     cooldown: 2          # 幾秒鋪一批
     telegraph: 1.0
     radius: 3.5
-    duration: 5
+    duration: 150        # 2026-10-16：5 → 150（跟場地危害的風暴一樣久；同時最多 48 片，消掉才補）
     interval: 0.5
     ruin: 4
-    count: 16            # 一批幾個（最多 32）：16 個 × 5 秒 ÷ 2 秒 ≈ 同時 40 個，縮到 8 格時圈外大約鋪滿
+    count: 16            # 一批幾個（最多 32）；同時最多 48 片（BossSkills.OUTSIDE_ZONE_CAP），縮到 8 格時圈外大約鋪滿
     at: outside
     slow: 1
   awakener_quad_beam:
@@ -2483,6 +2483,95 @@ skills:
     safe: 2.5
     scatter: 11
     shout: "「這個世界剛開始——也可以馬上結束。」"
+
+  # ---- 2026-10 萬燈夜：南瓜王「燈魂領主・瓜首」（data/festival.yml） ----
+  hallow_pumpkin_roll:
+    name: 滾地南瓜
+    hint: "一圈南瓜往外滾：找缺口鑽過去"
+    kind: ring
+    damage: 1.9
+    type: fire
+    cooldown: 16
+    range: 18
+    telegraph: 1.2
+    radius: 1.5
+    reach: 26
+    speed: 0.35
+    width: 0.9
+    count: 3
+    stagger: 1.1
+    gaps: 2
+    gap_angle: 45
+    shout: "「滾吧，南瓜們！」"
+  hallow_wisp_beams:
+    name: 鬼火迴廊
+    hint: "四道鬼火繞著轉：跟著轉的方向繞著跑"
+    kind: beam
+    damage: 1.2
+    type: cold
+    cooldown: 20
+    range: 18
+    telegraph: 1.5
+    count: 4
+    angle: 150
+    length: 24
+    width: 0.7
+    duration: 4.0
+    interval: 0.3
+    shout: "「燈火，跳舞吧。」"
+  hallow_bat_swarm:
+    name: 蝠群
+    hint: "蝙蝠會追著你飛：拉開距離、繞開來"
+    kind: orbs
+    damage: 1.6
+    type: chaos
+    cooldown: 18
+    range: 30
+    telegraph: 1.0
+    count: 6
+    speed: 0.16
+    duration: 7
+    size: 0.7
+    explode: 2.4
+  hallow_grave_burst:
+    name: 墳土翻湧
+    hint: "腳下的墳土要炸開：看到紅圈就離開"
+    kind: slam
+    damage: 1.8
+    type: physical
+    cooldown: 12
+    range: 24
+    telegraph: 0.9
+    delay: 1.0
+    radius: 2.6
+    count: 8
+    stagger: 0.12
+    scatter: 5
+    at: target
+    shout: "「躺下來，陪他們。」"
+  hallow_lights_out:
+    name: 燈滅
+    hint: "所有的燈都要熄了：躲進還亮著的光圈"
+    kind: sanctuary
+    damage: 3.2
+    type: chaos
+    cooldown: 40
+    range: 30
+    telegraph: 3.0
+    radius: 30
+    count: 2
+    safe: 2.5
+    scatter: 11
+    shout: "「熄燈了——找得到光的人，才活得下來。」"
+  hallow_ghost_call:
+    name: 喚燈魂
+    kind: summon
+    summon: VEX
+    count: 3
+    summon_max: 6
+    cooldown: 25
+    telegraph: 1.0
+    shout: "「燈裡的孩子們，出來玩。」"
 
 # 各種生物預設的招式組（maps.yml／zones.yml 沒寫 skills 時）
 defaults:

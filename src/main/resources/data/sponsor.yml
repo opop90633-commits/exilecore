@@ -206,6 +206,41 @@ cosmetics:
   s1_genesis_whale: { type: skin, slot: pet, art: pet_genesis_whale, name: 創世小星鯨, rarity: legendary, fashion_price: 0, limited: "S1 贊助禮包",
                       description: "圓滾滾的星空小鯨，噴氣孔冒極光、尾巴拖著星砂" }
 
+  # 2026-10 萬燈夜（萬聖節活動）限定：活動的兌換商店用糖果、燈芯換，南瓜王也有機會掉（data/festival.yml）。
+  #   limited 寫來源，選單上顯示「萬燈夜限定」；沒有的人在商城、裝備幻化都看不到。
+  hw_pumpkin_head: { type: skin, slot: headgear, art: hw_pumpkin_head, name: 南瓜頭, rarity: legendary, fashion_price: 0, limited: "萬燈夜",
+                     description: "雕著鬼臉的南瓜整顆套在頭上，眼睛、嘴巴透出燈火" }
+  hw_witch_hat: { type: skin, slot: headgear, art: hw_witch_hat, name: 巫女帽, rarity: epic, fashion_price: 0, limited: "萬燈夜",
+                  description: "歪歪的尖帽，帽帶上別著一隻小南瓜" }
+  hw_devil_horns: { type: skin, slot: headgear, art: hw_devil_horns, name: 小惡魔角, rarity: rare, fashion_price: 0, limited: "萬燈夜",
+                    description: "一對紅色的小角" }
+  hw_pumpkin_scythe: { type: skin, slot: weapon, art: hw_pumpkin_scythe, name: 南瓜收割鐮, rarity: legendary, fashion_price: 0, limited: "萬燈夜",
+                       description: "黑柄長鐮，刃根嵌著一顆亮著的南瓜燈（近戰武器、法杖都能套）" }
+  hw_broom_staff: { type: skin, slot: weapon, art: hw_broom_staff, name: 巫婆掃帚, rarity: epic, fashion_price: 0, limited: "萬燈夜",
+                    description: "綁著麥草的老掃帚（近戰武器、法杖都能套）" }
+  hw_candy_cane: { type: skin, slot: weapon, art: hw_candy_cane, name: 拐杖糖, rarity: rare, fashion_price: 0, limited: "萬燈夜",
+                   description: "紅白條紋的大拐杖糖（近戰武器、法杖都能套）" }
+  hw_ghost_lantern: { type: skin, slot: offhand, art: hw_ghost_lantern, name: 幽魂提燈, rarity: epic, fashion_price: 0, limited: "萬燈夜",
+                      description: "綠火在燈罩裡打轉的提燈（盾、箭袋都能套）" }
+  hw_coffin_shield: { type: skin, slot: offhand, art: hw_coffin_shield, name: 棺木盾, rarity: epic, fashion_price: 0, limited: "萬燈夜",
+                      description: "釘著十字鐵片的棺材蓋（盾、箭袋都能套）" }
+  hw_bat_wings: { type: skin, slot: back, art: hw_bat_wings, name: 蝙蝠之翼, rarity: legendary, fashion_price: 0, limited: "萬燈夜",
+                  description: "薄膜張開的一對大蝙蝠翅膀" }
+  hw_wisp_halo: { type: skin, slot: back, art: hw_wisp_halo, name: 鬼火輪, rarity: epic, fashion_price: 0, limited: "萬燈夜",
+                  description: "背後一圈繞著轉的鬼火" }
+  hw_bat_bow: { type: skin, slot: bow, art: hw_bat_bow, name: 蝠翼弓, rarity: epic, fashion_price: 0, limited: "萬燈夜",
+                description: "弓臂是一對張開的蝙蝠翅膀" }
+  hw_pumpkin_crossbow: { type: skin, slot: crossbow, art: hw_pumpkin_crossbow, name: 南瓜連弩, rarity: epic, fashion_price: 0, limited: "萬燈夜",
+                         description: "弩身頂著一顆南瓜燈" }
+  hw_pet_pumpkin: { type: skin, slot: pet, art: hw_pet_pumpkin, name: 小南瓜, rarity: epic, fashion_price: 0, limited: "萬燈夜",
+                    description: "會跟著你蹦的小南瓜燈" }
+  hw_pet_ghost: { type: skin, slot: pet, art: hw_pet_ghost, name: 小幽靈, rarity: epic, fashion_price: 0, limited: "萬燈夜",
+                  description: "白白軟軟、有點害羞的小幽靈" }
+  hw_pet_cat: { type: skin, slot: pet, art: hw_pet_cat, name: 黑貓, rarity: rare, fashion_price: 0, limited: "萬燈夜",
+                description: "綠眼睛的小黑貓" }
+  hw_pet_skull: { type: skin, slot: pet, art: hw_pet_skull, name: 骷髏小頭, rarity: rare, fashion_price: 0, limited: "萬燈夜",
+                  description: "下巴會一開一合的小骷髏頭" }
+
 # 限定稱號（2026-10）：只有管理網頁「發放 → 時裝」或 /ec sponsor give <玩家> cosmetic title:<代號> 發得出來（抽不到、換不到）；
 #   limited 寫來源，稱號選單上顯示「…限定」，沒有的人看不到。顏色可以是 "#rrggbb" 或 "gradient:#rrggbb:#rrggbb"（漸層）。stats：擁有就有的加成（寫法同登入天數稱號）。
 limited_titles:

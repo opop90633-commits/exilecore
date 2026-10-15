@@ -353,6 +353,27 @@ event_titan_core:
   description: "打倒世界 Boss「開天者」時，每個有份的人都拿得到；在選單的「不定時活動」兌換"
   flavor: "開天者胸口的那顆星，碎了還在發光。"
 
+# ---- 萬燈夜（2026-10 萬聖節，data/festival.yml）：活動素材，到選單的「萬燈夜」兌換限定時裝、稱號 ----
+event_candy:
+  name: 萬燈糖
+  material: SUGAR
+  model: exilecore:currency/event_candy
+  stack: 1000
+  operation: NONE
+  drop_weight: 0
+  description: "萬燈夜期間地圖裡的怪掉落、搗蛋南瓜給的；在選單的「萬燈夜」兌換"
+  flavor: "包著南瓜色的糖紙，打開來還是溫的。"
+
+event_lamp_wick:
+  name: 魂燈芯
+  material: STRING
+  model: exilecore:currency/event_lamp_wick
+  stack: 100
+  operation: NONE
+  drop_weight: 0
+  description: "萬燈夜：一天點滿幽燈墓園的燈、打倒南瓜王、完成活動挑戰拿得到；在選單的「萬燈夜」兌換"
+  flavor: "從燈裡抽出來的芯，綠色的火還沒熄。"
+
 # ---- 傳奇兌換券（2026-10 PoE2 改版）：舊的傳奇全部退役，玩家手上的登入時換成這個；拿在主手右鍵，選一件新的傳奇 ----
 unique_voucher:
   name: 傳奇兌換券
@@ -686,7 +707,7 @@ catalyst_crit:
   operation: CATALYST
   catalyst: crit
   drop_weight: 0
-  description: "飾品品質 +5%：暴擊詞綴的數值 +品質%"
+  description: "飾品品質 +5%：暴擊率與暴擊傷害加成詞綴的數值 +品質%"
   flavor: "磨成粉的裂隙邊緣。"
 catalyst_elemental:
   name: 元素催化劑
@@ -695,7 +716,7 @@ catalyst_elemental:
   operation: CATALYST
   catalyst: elemental
   drop_weight: 0
-  description: "飾品品質 +5%：元素詞綴的數值 +品質%"
+  description: "飾品品質 +5%：元素傷害（火焰、冰冷、閃電）詞綴的數值 +品質%"
   flavor: "磨成粉的裂隙邊緣。"
 catalyst_phys_chaos:
   name: 物理與混沌催化劑
@@ -704,7 +725,7 @@ catalyst_phys_chaos:
   operation: CATALYST
   catalyst: phys_chaos
   drop_weight: 0
-  description: "飾品品質 +5%：物理與混沌詞綴的數值 +品質%"
+  description: "飾品品質 +5%：物理傷害與混沌傷害詞綴的數值 +品質%"
   flavor: "磨成粉的裂隙邊緣。"
 catalyst_attribute:
   name: 屬性催化劑

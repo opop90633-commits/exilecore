@@ -217,18 +217,23 @@ public final class MapRewards {
         }
     }
 
-    /** 把做好的物品直接給玩家（先背包、再隨身背包，都滿了掉在腳下）；不經過掉落過濾（是他自己選的）。回傳有沒有掉在地上。 */
+    /** 把做好的物品直接給玩家（通貨先進通貨袋；其他先背包、再隨身背包，都滿了掉在腳下）；不經過掉落過濾（是他自己選的）。回傳有沒有掉在地上。 */
     static boolean give(final ExileCore plugin, final Player player, final List<ItemStack> items) {
         boolean dropped = false;
         for (final ItemStack item : items) {
+            final java.util.Optional<tw.exilecore.currency.CurrencyType> currency = plugin.currencies() == null
+                    ? java.util.Optional.empty() : plugin.currencies().read(item);
             // 流水帳（2026-10）：祭壇、幻霧挑的通貨也算產出（以前沒記，星籤這類主要從這裡來的就變成「消耗比產出多」）
-            if (plugin.economy() != null && plugin.currencies() != null) {
-                plugin.currencies().read(item).ifPresent(type -> plugin.economy().ledger().produced(type.id(),
+            if (plugin.economy() != null) {
+                currency.ifPresent(type -> plugin.economy().ledger().produced(type.id(),
                         tw.exilecore.economy.EconomyLedger.EVENT, item.getAmount()));
             }
             ItemStack rest = item;
             if (plugin.loot() != null) {
-                rest = plugin.loot().stow(player, plugin.players().get(player), item);
+                // 2026-10-16：通貨先進通貨袋（跟殺怪撿到的一樣），滿了才放背包
+                rest = currency.isPresent()
+                        ? plugin.loot().stowCurrency(player, plugin.players().get(player), currency.get(), item)
+                        : plugin.loot().stow(player, plugin.players().get(player), item);
             } else {
                 final Map<Integer, ItemStack> leftover = player.getInventory().addItem(item);
                 rest = leftover.isEmpty() ? null : leftover.values().iterator().next();

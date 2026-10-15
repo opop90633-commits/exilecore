@@ -1,0 +1,119 @@
+# 節慶活動（2026-10）：第一個是萬聖節「萬燈夜」。改完 /ec reload。
+#
+# 活動期間（start ～ end，照 timezone）：
+#   ・幽燈墓園：活動世界（虛空）裡的萬燈夜場地，永遠是夜晚、飄著霧。選單 → 萬燈夜 傳送過去，/town 回營地。
+#     第一次啟動自動蓋好；/ec festival build 可以重蓋。
+#   ・點燈：墓園裡一圈南瓜燈，站在燈旁邊守 guard_seconds 秒就點亮，燈裡會竄出幽魂。每個人每天每盞點一次；
+#     一天點滿全部給燈芯。全服每點亮 global_target 盞，全服物品數量 +global_quantity%，持續 global_minutes 分鐘。
+#   ・南瓜王：每天 boss.hours 的整點出現在墓園中央（世界 Boss 等級）。
+#   ・不給糖就搗蛋：地圖裡的怪掉糖果；稀有怪、地圖 Boss 倒下有機會留下「搗蛋南瓜」，右鍵敲門：
+#     給糖（直接拿糖果）或搗蛋（竄出幽魂，清完拿雙倍糖果）。
+#   ・挑戰（帳號共用）與兌換商店（限定時裝、限定稱號、通貨）。
+# 活動結束後兌換商店再開到 shop_until。時裝、稱號拿到就是永久的。
+
+settings:
+  enabled: true
+  name: 萬燈夜
+  color: "#ff8a1e"
+  timezone: Asia/Taipei
+  start: "2026-10-16 00:00"
+  end: "2026-10-31 23:59"
+  shop_until: "2026-11-07 23:59"
+
+# 幽燈墓園（活動世界裡；跟不定時活動的場地分開）
+arena:
+  x: 0
+  z: 400
+  radius: 40
+
+lanterns:
+  count: 13
+  ring: 32                  # 燈離中央幾格
+  guard_seconds: 10         # 站在燈旁邊（3 格內）幾秒點亮
+  ghosts: [3, 5]            # 點亮時竄出幾隻幽魂
+  ghost_type: VEX
+  ghost_seconds: 60         # 幽魂沒打掉，幾秒後散掉
+  daily_wick: 5             # 一天點滿全部：燈芯
+  global_target: 1300       # 全服點亮幾盞觸發全服加成
+  global_quantity: 10       # 全服物品數量 +%
+  global_minutes: 60
+
+boss:
+  name: 燈魂領主・瓜首
+  type: WITHER_SKELETON
+  hours: [13, 20, 23]
+  warn_minutes: 2
+  duration_minutes: 15
+  empty_close_seconds: 180
+  level: 88
+  life: 300                 # 一個人的份（比照開天者的 440 低一點：一天三場）
+  life_per_player: 1.0
+  count_level: 80
+  max_counted_players: 0
+  damage: 2.6
+  scale: 1.8
+  mods: [armoured]
+  intro: "「點了燈的人……都要留下來陪我。」"
+  defeat: "瓜首的燈火熄了。南瓜殼裂開，滾出一地的燈芯與糖。"
+  skills:
+    - hallow_pumpkin_roll
+    - hallow_wisp_beams
+    - hallow_bat_swarm
+    - hallow_grave_burst
+    - hallow_lights_out
+    - hallow_ghost_call
+  rewards:
+    wick: [3, 5]
+    candy: 50
+    cosmetic_chance: 0.02   # 掉一件還沒有的萬燈夜時裝（每個人各擲；吃物品稀有度）
+
+candy:
+  normal: 0.05              # 地圖裡的普通怪：掉 1 顆的機率（吃物品數量）
+  magic: 0.15
+  rare: 3                   # 稀有怪：幾顆
+  boss: 10                  # 地圖 Boss：幾顆
+  pumpkin_rare: 0.04        # 稀有怪倒下留下搗蛋南瓜的機率
+  pumpkin_boss: 0.3         # 地圖 Boss
+  pumpkin_seconds: 90       # 搗蛋南瓜放多久
+  treat: [15, 30]           # 給糖
+  trick_chance: 0.3         # 搗蛋的機率
+  trick_ghosts: [4, 6]
+  trick_seconds: 60         # 幾秒內清完才算
+  trick_reward: [30, 60]    # 清完幽魂（雙倍）
+
+# 挑戰（帳號共用，達成自動發）；全部完成再給稱號
+challenges:
+  king: { count: 5, wick: 10 }          # 打倒南瓜王 5 次
+  pumpkin: { count: 30, candy: 300 }    # 敲 30 個搗蛋南瓜
+  lantern: { days: 7, wick: 15 }        # 7 天點滿全部的燈
+  title: hallow_walker
+
+titles:
+  hallow_walker: { name: 萬燈夜行者, color: "gradient:#ff8a1e:#9b5cff",
+                   stats: [ { stat: drop.rarity, type: INCREASED, value: 3 } ] }
+  hallow_sleepless: { name: 燈下不眠者, color: "#ffb347",
+                      stats: [ { stat: movement.speed, type: INCREASED, value: 2 } ] }
+
+# 兌換：kind: cosmetic（sponsor.yml 的時裝代號）、title（上面 titles 的代號）、currency
+shop:
+  - { id: cos_pumpkin_head,    kind: cosmetic, cosmetic: hw_pumpkin_head,     cost: { event_candy: 2500, event_lamp_wick: 25 } }
+  - { id: cos_pumpkin_scythe,  kind: cosmetic, cosmetic: hw_pumpkin_scythe,   cost: { event_candy: 2500, event_lamp_wick: 25 } }
+  - { id: cos_bat_wings,       kind: cosmetic, cosmetic: hw_bat_wings,        cost: { event_candy: 2500, event_lamp_wick: 25 } }
+  - { id: cos_witch_hat,       kind: cosmetic, cosmetic: hw_witch_hat,        cost: { event_candy: 1200, event_lamp_wick: 10 } }
+  - { id: cos_broom_staff,     kind: cosmetic, cosmetic: hw_broom_staff,      cost: { event_candy: 1200, event_lamp_wick: 10 } }
+  - { id: cos_ghost_lantern,   kind: cosmetic, cosmetic: hw_ghost_lantern,    cost: { event_candy: 1200, event_lamp_wick: 10 } }
+  - { id: cos_coffin_shield,   kind: cosmetic, cosmetic: hw_coffin_shield,    cost: { event_candy: 1200, event_lamp_wick: 10 } }
+  - { id: cos_wisp_halo,       kind: cosmetic, cosmetic: hw_wisp_halo,        cost: { event_candy: 1200, event_lamp_wick: 10 } }
+  - { id: cos_bat_bow,         kind: cosmetic, cosmetic: hw_bat_bow,          cost: { event_candy: 1200, event_lamp_wick: 10 } }
+  - { id: cos_pumpkin_crossbow, kind: cosmetic, cosmetic: hw_pumpkin_crossbow, cost: { event_candy: 1200, event_lamp_wick: 10 } }
+  - { id: cos_pet_pumpkin,     kind: cosmetic, cosmetic: hw_pet_pumpkin,      cost: { event_candy: 1200, event_lamp_wick: 10 } }
+  - { id: cos_pet_ghost,       kind: cosmetic, cosmetic: hw_pet_ghost,        cost: { event_candy: 1200, event_lamp_wick: 10 } }
+  - { id: cos_devil_horns,     kind: cosmetic, cosmetic: hw_devil_horns,      cost: { event_candy: 600 } }
+  - { id: cos_candy_cane,      kind: cosmetic, cosmetic: hw_candy_cane,       cost: { event_candy: 600 } }
+  - { id: cos_pet_cat,         kind: cosmetic, cosmetic: hw_pet_cat,          cost: { event_candy: 600 } }
+  - { id: cos_pet_skull,       kind: cosmetic, cosmetic: hw_pet_skull,        cost: { event_candy: 600 } }
+  - { id: t_sleepless,         kind: title,    title: hallow_sleepless,       cost: { event_candy: 2000 } }
+  - { id: c_contract,          kind: currency, currency: heist_contract,   amount: 1, cost: { event_candy: 150 } }
+  - { id: c_sky,               kind: currency, currency: sky_fragment,     amount: 2, cost: { event_candy: 400 } }
+  - { id: c_zenith,            kind: currency, currency: zenith_orb,       amount: 3, cost: { event_candy: 250 } }
+  - { id: c_abyss,             kind: currency, currency: abyss_core,       amount: 1, cost: { event_candy: 300, event_lamp_wick: 12 } }

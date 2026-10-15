@@ -83,8 +83,8 @@ public final class MinionService implements Listener, MinionHooks {
     static final long FOCUS_TICKS = 60;
     /** 焚魂飛行速度（格／tick）。 */
     static final double FLY_SPEED = 0.32;
-    /** 一個玩家全部的召喚物最多幾隻（各技能的上限另外算）。 */
-    static final int MAX_PER_PLAYER = 40;
+    /** 一個玩家全部的召喚物最多幾隻（各技能的上限另外算；2026-10-16：40 → 50）。 */
+    static final int MAX_PER_PLAYER = 50;
 
     /** 一隻召喚物。 */
     static final class Minion {

@@ -38,6 +38,10 @@
     font-size: 14px; line-height: 1.5; padding: 24px 16px 64px;
   }
   .wrap { max-width: 1040px; margin: 0 auto; }
+  th[data-sort] { cursor: pointer; user-select: none; white-space: nowrap; }
+  th[data-sort]:hover { color: var(--gold-fill); }
+  th[data-sort][aria-sort="ascending"]::after { content: " ▲"; }
+  th[data-sort][aria-sort="descending"]::after { content: " ▼"; }
   [hidden] { display: none !important; }
   h1 { margin: 0; font-size: 22px; font-weight: 600; }
   h2 { margin: 0 0 12px; font-size: 16px; font-weight: 600; }
@@ -368,16 +372,20 @@
         <input type="text" id="dps-name" placeholder="找玩家或角色" aria-label="找玩家或角色" size="16">
         <button type="button" id="dps-refresh">重新整理</button>
       </div>
-      <h3>每個人</h3>
+      <h3>每個人（點標題排序）</h3>
       <div class="scroll"><table id="dps-players">
-        <thead><tr><th>玩家</th><th>角色</th><th>職業</th><th class="num">等級</th><th class="num">Boss 場數</th>
-          <th class="num">Boss 平均每秒</th><th class="num">Boss 最高每秒</th><th class="num">假人最近</th><th class="num">假人最高</th></tr></thead>
+        <thead><tr><th data-sort="player">玩家</th><th data-sort="character">角色</th><th data-sort="className">職業</th>
+          <th class="num" data-sort="level">等級</th><th class="num" data-sort="fights">Boss 場數</th>
+          <th class="num" data-sort="avg">Boss 平均每秒</th><th class="num" data-sort="best">Boss 最高每秒</th>
+          <th class="num" data-sort="dummyLast">假人最近</th><th class="num" data-sort="dummyBest">假人最高</th></tr></thead>
         <tbody></tbody>
       </table></div>
-      <h3>每一筆（新的在前）</h3>
+      <h3>每一筆（點標題排序；預設新的在前）</h3>
       <div class="scroll"><table id="dps-rows">
-        <thead><tr><th>時間</th><th>種類</th><th>玩家</th><th>角色</th><th class="num">等級</th><th>對象</th><th>地點</th>
-          <th class="num">人數</th><th class="num">傷害</th><th class="num">秒</th><th class="num">每秒</th><th class="num">佔比</th></tr></thead>
+        <thead><tr><th data-sort="at">時間</th><th data-sort="kind">種類</th><th data-sort="player">玩家</th><th data-sort="character">角色</th>
+          <th class="num" data-sort="level">等級</th><th data-sort="target">對象</th><th data-sort="where">地點</th>
+          <th class="num" data-sort="players">人數</th><th class="num" data-sort="damage">傷害</th><th class="num" data-sort="seconds">秒</th>
+          <th class="num" data-sort="dps">每秒</th><th class="num" data-sort="share">佔比</th></tr></thead>
         <tbody></tbody>
       </table></div>
       <p class="empty" id="dps-empty" hidden>還沒有紀錄（更新之後打倒的 Boss、打假人才會記）。</p>
@@ -1515,7 +1523,52 @@
     var q = $('dps-name').value.trim().toLowerCase();
     return !q || (row.player || '').toLowerCase().indexOf(q) >= 0 || (row.character || '').toLowerCase().indexOf(q) >= 0;
   }
+  // 2026-10-16：兩張表都能點標題排序（再點一次反過來）；文字照中文排，數字大的在前
+  var dpsSort = { players: { key: 'avg', dir: -1 }, rows: { key: 'at', dir: -1 } };
+  function dpsValue(o, key) {
+    if (key === 'avg') { return o.sec > 0 ? o.dmg / o.sec : 0; }
+    if (key === 'dps') { return o.seconds > 0 ? o.damage / o.seconds : 0; }
+    if (key === 'dummyLast') { return o.dummyLast === null ? -1 : o.dummyLast; }
+    if (key === 'players' || key === 'share') { return o.kind === 'boss' ? Number(o[key]) || 0 : -1; }
+    var v = o[key];
+    return v === undefined || v === null ? '' : v;
+  }
+  function dpsCompare(table) {
+    var s = dpsSort[table];
+    return function (a, b) {
+      var x = dpsValue(a, s.key), y = dpsValue(b, s.key);
+      var c = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'zh-Hant');
+      return c * s.dir;
+    };
+  }
+  function dpsHeaders() {
+    ['players', 'rows'].forEach(function (table) {
+      $('dps-' + table).querySelectorAll('th[data-sort]').forEach(function (th) {
+        th.setAttribute('aria-sort', th.getAttribute('data-sort') === dpsSort[table].key
+          ? (dpsSort[table].dir > 0 ? 'ascending' : 'descending') : 'none');
+      });
+    });
+  }
+  ['players', 'rows'].forEach(function (table) {
+    $('dps-' + table).querySelectorAll('th[data-sort]').forEach(function (th) {
+      th.setAttribute('tabindex', '0');
+      var pick = function () {
+        var key = th.getAttribute('data-sort');
+        var s = dpsSort[table];
+        if (s.key === key) { s.dir = -s.dir; }
+        else {
+          s.key = key;
+          // 文字欄先由小到大，數字欄先由大到小
+          s.dir = th.classList.contains('num') || key === 'at' ? -1 : 1;
+        }
+        renderDps();
+      };
+      th.addEventListener('click', pick);
+      th.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+    });
+  });
   function renderDps() {
+    dpsHeaders();
     if (!dpsData) { return; }
     var shown = dpsData.rows.filter(dpsMatch);
     // 每個人：照篩過的紀錄重算（Boss 平均 = 總傷害 ÷ 總秒數）
@@ -1528,7 +1581,7 @@
       else { if (p.dummyLast === null) { p.dummyLast = dps; } p.dummyBest = Math.max(p.dummyBest, dps); }
     });
     var players = Object.keys(by).map(function (k) { return by[k]; });
-    players.sort(function (a, b) { return (b.sec > 0 ? b.dmg / b.sec : 0) - (a.sec > 0 ? a.dmg / a.sec : 0) || b.dummyBest - a.dummyBest; });
+    players.sort(dpsCompare('players'));
     var pb = clear($('dps-players').querySelector('tbody'));
     players.forEach(function (p) {
       pb.appendChild(h('tr', null, h('td', { text: p.player }), h('td', { text: p.character || '' }), h('td', { text: p.className || '' }),
@@ -1537,7 +1590,7 @@
         h('td', { cls: 'num', text: p.dummyLast !== null ? wan(p.dummyLast) : '' }), h('td', { cls: 'num', text: p.dummyBest ? wan(p.dummyBest) : '' })));
     });
     var rb = clear($('dps-rows').querySelector('tbody'));
-    shown.slice(0, 500).forEach(function (r) {
+    shown.slice().sort(dpsCompare('rows')).slice(0, 500).forEach(function (r) {
       rb.appendChild(h('tr', null, h('td', { cls: 'time', text: time(r.at) }), h('td', { text: r.kind === 'boss' ? 'Boss' : '假人' }),
         h('td', { text: r.player }), h('td', { text: r.character || '' }), h('td', { cls: 'num', text: r.level || '' }),
         h('td', { text: r.target || '' }), h('td', { text: r.where || '' }), h('td', { cls: 'num', text: r.kind === 'boss' ? r.players : '' }),

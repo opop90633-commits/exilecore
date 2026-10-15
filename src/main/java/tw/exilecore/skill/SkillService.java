@@ -1699,7 +1699,7 @@ public final class SkillService {
      * @param crit      暴擊率（0–1）
      */
     public record DpsRow(int slot, int position, String skillId, String name, double dps, double full, int minions,
-                         double hit, double rate, double crit) {
+                         double hit, double rate, double crit, double multi) {
     }
 
     /**
@@ -1709,7 +1709,8 @@ public final class SkillService {
         final List<String[]> rows = new ArrayList<>();
         for (final DpsRow row : skillDps(plugin.players().get(player), plugin.players().sheet(player), liveAuras(player))) {
             rows.add(new String[] {tw.exilecore.character.HotbarLayout.of(plugin.players().get(player)).shortKeyName(row.slot()),
-                    row.minions() > 0 ? row.name() + "（召喚物 ×" + row.minions() + "）" : row.name(),
+                    row.minions() > 0 ? row.name() + "（召喚物 ×" + row.minions() + "，暴擊 " + ModifierText.number(row.crit() * 100)
+                            + "% ×" + ModifierText.number(row.multi()) + "%）" : row.name(),
                     String.valueOf(Math.round(row.dps())), String.valueOf(Math.round(row.full()))});
         }
         return rows;
@@ -1777,7 +1778,7 @@ public final class SkillService {
             // 全開：召喚物吃不到你的戰吼增益（只吃「召喚物…」的加成），只算敵人受到的傷害增加
             final double fullEach = each[0] * (1 + full.taken());
             return new DpsRow(slot, position, definition.id(), definition.name(), each[0] * count, Math.max(each[0], fullEach) * count, count,
-                    each[1], each[2], each[3]);
+                    each[1], each[2], each[3], each[4]);
         }
         if (!definition.dealsDamage() || definition.mechanic() == Mechanic.AURA) {
             return null;
@@ -1827,11 +1828,11 @@ public final class SkillService {
             fullDps *= 1 + full.taken();
         }
         return new DpsRow(slot, position, definition.id(), definition.name(), dps, Math.max(dps, fullDps), 0,
-                expected.total() * critFactor, hitRate, crit);
+                expected.total() * critFactor, hitRate, crit, multi);
     }
 
     /**
-     * 一隻召喚物的估計：{每秒傷害, 平均一下（含暴擊期望）, 每秒幾下, 暴擊率}（同召喚物說明的算法）；沒有怪物模組全部是 0。
+     * 一隻召喚物的估計：{每秒傷害, 平均一下（含暴擊期望）, 每秒幾下, 暴擊率, 暴擊傷害 %}（同召喚物說明的算法）；沒有怪物模組全部是 0。
      *
      * @param ownerLevel  主人的等級
      * @param auraEffects 召喚物吃到的光環效果
@@ -1839,7 +1840,7 @@ public final class SkillService {
     double[] minionDps(final int ownerLevel, final List<tw.exilecore.stats.Modifier> auraEffects, final SkillBuild build, final StatSheet ownerSheet) {
         final SummonSpec spec = build.definition().summon();
         if (spec == null || plugin.monsters() == null) {
-            return new double[4];
+            return new double[5];
         }
         final tw.exilecore.monster.MonsterConfig monsters = plugin.monsters().config();
         final int level = MinionSheets.monsterLevel(config, build.level(), ownerLevel);
@@ -1854,13 +1855,13 @@ public final class SkillService {
         final StatSheet effective = profile.effective(minionSheet);
         final DamagePacket expected = DamageCalculator.expectedOutgoing(minionSheet, profile);
         if (expected.isEmpty()) {
-            return new double[4];
+            return new double[5];
         }
         final double crit = DamageCalculator.critChance(minionSheet, profile);
         final double multi = DamageCalculator.critMultiplier(effective, profile.tags(), null) * 100; // 2026-10：含召喚物的「增加暴擊加成」
         final double hit = expected.total() * (1 + crit * (multi / 100.0 - 1));
         final double rate = MinionSheets.attacksPerSecond(effective, profile);
-        return new double[] {hit * rate, hit, rate, crit};
+        return new double[] {hit * rate, hit, rate, crit, multi};
     }
 
     /** 這個按鍵這次會放出的數值（含輔助寶石、角色等級的限制）。 */
@@ -2825,6 +2826,10 @@ public final class SkillService {
             lines.add(String.format(Locale.ROOT, "<gray>召喚物等級 <white>%d</white>：生命 <white>%,d</white>、每下平均 <white>%s</white>、每秒 <white>%.2f</white> 次",
                     level, Math.round(MinionSheets.life(effective)), expected.isEmpty() ? "0" : expected,
                     MinionSheets.attacksPerSecond(effective, profile)));
+            // 2026-10-16：召喚物的暴擊率、暴擊傷害（跟 /stats 的召喚物每秒傷害同一套算法：含主人身上「召喚物…」的加成、光環、輔助）
+            lines.add(String.format(Locale.ROOT, "<gray>召喚物暴擊率 <white>%s%%</white>、暴擊傷害 <white>×%s%%</white>",
+                    ModifierText.number(DamageCalculator.critChance(minionSheet, profile) * 100),
+                    ModifierText.number(DamageCalculator.critMultiplier(effective, profile.tags(), null) * 100)));
             final double regen = MinionSheets.regenPercent(effective);
             if (regen > 0) {
                 lines.add(String.format(Locale.ROOT, "<gray>召喚物每秒回復 <white>%s%%</white> 最大生命", ModifierText.number(regen)));
