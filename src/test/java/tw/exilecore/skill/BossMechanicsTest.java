@@ -280,10 +280,10 @@ class BossMechanicsTest {
 
     @Test
     void wasteCoversOutsideTheCollapse() {
-        // 2026-10-15：萬界崩解的圈外鋪滿荒蕪——圈邊（往外半個荒蕪）到一開始的圈再外 2 格
+        // 2026-10-15：萬界崩解的圈外鋪滿荒蕪——圈邊（往外一整個荒蕪的半徑）到一開始的圈再外 2 格
         assertNull(BossGeometry.outsideBand(20, 20, 3.5), "還沒開始縮：圈外沒地方鋪");
         final double[] band = BossGeometry.outsideBand(8, 20, 3.5);
-        assertEquals(8 + 3.5 * 0.6, band[0], 1e-9);
+        assertEquals(8 + 3.5, band[0], 1e-9, "圈外的荒蕪完全不壓進圈裡");
         assertEquals(22, band[1], 1e-9);
         assertEquals(band[0], BossGeometry.inBand(band[0], band[1], 0), 1e-9);
         assertEquals(band[1], BossGeometry.inBand(band[0], band[1], 1), 1e-9);

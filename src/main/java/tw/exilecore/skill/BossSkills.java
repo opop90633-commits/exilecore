@@ -447,6 +447,10 @@ public final class BossSkills implements Listener {
     private final RandomGenerator random;
     private final DangerZones danger;
     private final Map<UUID, Brain> brains = new HashMap<>();
+    /** 正在放全場大招（綠色安全區，sanctuary）的 Boss（2026-10-15）：附近的 Boss 都等它落下才出招。 */
+    private final java.util.Set<Brain> channeling = new java.util.HashSet<>();
+    /** 安全區大招範圍再往外幾格內的 Boss 也要等。 */
+    static final double SANCTUARY_HOLD_MARGIN = 16;
     private final Map<String, SkillProfile> profiles = new HashMap<>();
     private final Set<String> warned = new HashSet<>();
     /** 放招時暫停了原版 AI 的記號：萬一來不及恢復（區塊卸載、當機），下次載入時 {@link #recover} 恢復。 */
@@ -663,6 +667,12 @@ public final class BossSkills implements Listener {
         if (brain.host.dormant()) {
             return;
         }
+        if (underSanctuary(brain)) {
+            // 2026-10-15：別的 Boss（雙生、援軍…）在放綠色安全區的大招：等它落下，再隔一個空檔才出招（場地危害也不落）
+            brain.globalReadyAt = Math.max(brain.globalReadyAt,
+                    now + Math.round(settings().gapFor(brain.host.boss()) * 20 * cooldownFactor(brain.boss) * tempo(brain)));
+            return;
+        }
         // 一次只做一件事：上一件還沒完（齊射還在飛、光球剛放出去、場地危害還沒落下）什麼都不開始；
         // 放完一招後的空檔裡只有到時間的場地危害可以落
         if (BossPacing.unsettled(brain.bolts.size(), brain.rings.size(), brain.pendings.size(), Math.max(brain.lastOrb, brain.lastMark), now)) {
@@ -731,6 +741,9 @@ public final class BossSkills implements Listener {
             }
             if (skill.kind() == BossSkill.Kind.ARENA && brain.arena != null) {
                 continue; // 場地已經在收縮了（維持到這場打完）
+            }
+            if (skill.kind() == BossSkill.Kind.SANCTUARY && (!brain.orbs.isEmpty() || !brain.marks.isEmpty())) {
+                continue; // 2026-10-15：追人的光球、點名標記還在：綠色安全區的大招等它們結束才放（安全區期間只有這一招）
             }
             candidates.add(entry);
         }
@@ -1035,7 +1048,10 @@ public final class BossSkills implements Listener {
                 cast.beamSign = random.nextBoolean() ? 1 : -1;
             }
             case RING -> cast.gaps = BossGeometry.gapCenters(skill.gaps(), random.nextDouble() * Math.PI * 2);
-            case SANCTUARY -> cast.safeSpots = safeSpots(brain, skill);
+            case SANCTUARY -> {
+                cast.safeSpots = safeSpots(brain, skill);
+                channeling.add(brain); // 2026-10-15：安全區還在的時候，附近的 Boss 不出招、圈裡的荒蕪不落
+            }
             default -> {
             }
         }
@@ -1232,7 +1248,8 @@ public final class BossSkills implements Listener {
                 final double mazeReach = fit[0];
                 final int rings = (int) fit[1];
                 final int gaps = (int) fit[2];
-                final double step = Math.max(1.5, skill.radius() * 1.7); // 相鄰兩塊的間距（稍微重疊，牆才連得起來）
+                // 相鄰兩塊的間距：一定比一塊的直徑小（重疊），牆才連得起來（2026-10-15：牆調細之後原本至少 1.5 格會出現縫）
+                final double step = Math.max(1.0, skill.radius() * 1.6);
                 final double gapAngle = Math.toRadians(skill.gapAngle());
                 double offset = random.nextDouble() * Math.PI * 2;
                 for (int ring = 1; ring <= rings; ring++) {
@@ -1648,6 +1665,34 @@ public final class BossSkills implements Listener {
                 }
             }
         }
+    }
+
+    /**
+     * 附近有別的 Boss 正在放綠色安全區的大招（2026-10-15）：這隻先不出招。順便清掉已經放完的。
+     */
+    private boolean underSanctuary(final Brain brain) {
+        if (channeling.isEmpty()) {
+            return false;
+        }
+        boolean held = false;
+        final Iterator<Brain> iterator = channeling.iterator();
+        while (iterator.hasNext()) {
+            final Brain other = iterator.next();
+            if (other.cast == null || other.cast.skill.kind() != BossSkill.Kind.SANCTUARY || !other.boss.isValid()
+                    || brains.get(other.boss.getUniqueId()) != other) {
+                iterator.remove();
+                continue;
+            }
+            if (other == brain || !other.boss.getWorld().equals(brain.boss.getWorld())) {
+                continue;
+            }
+            final Location center = other.cast.anchor != null ? other.cast.anchor : other.boss.getLocation();
+            final double reach = other.cast.skill.radius() + SANCTUARY_HOLD_MARGIN;
+            if (center.distanceSquared(brain.boss.getLocation()) <= reach * reach) {
+                held = true;
+            }
+        }
+        return held;
     }
 
     private void finish(final Brain brain, final long now) {
@@ -2718,7 +2763,9 @@ public final class BossSkills implements Listener {
             visuals.bossWarningRing(arena.center, radius, 1);
         }
         // 2026-10：跟收縮一起放的地面效果（荒蕪）：照各自的 cooldown 在圈裡一直落，數量看在場人數（points 的 at: arena）
-        for (final BossSkill extra : brain.arenaWith) {
+        // 2026-10-15：放綠色安全區的大招時先不落（等安全區結束），不會蓋住綠色
+        final boolean holdExtras = brain.cast != null && brain.cast.skill.kind() == BossSkill.Kind.SANCTUARY || underSanctuary(brain);
+        for (final BossSkill extra : holdExtras ? List.<BossSkill>of() : brain.arenaWith) {
             if (extra.kind() != BossSkill.Kind.ZONE || extra.at() != BossSkill.Target.ARENA && extra.at() != BossSkill.Target.OUTSIDE) {
                 continue;
             }

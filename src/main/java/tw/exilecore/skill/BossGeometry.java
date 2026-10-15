@@ -171,11 +171,11 @@ public final class BossGeometry {
     }
 
     /**
-     * 圈外鋪荒蕪的範圍（2026-10-15）：從圈邊往外半個荒蕪（荒蕪不壓進圈裡太多）到一開始的圈再外 2 格。
+     * 圈外鋪荒蕪的範圍（2026-10-15）：從圈邊往外一整個荒蕪的半徑（荒蕪完全不壓進圈裡）到一開始的圈再外 2 格。
      * 回傳 {內, 外}；圈已經比外緣大（還沒開始縮）回傳 null。
      */
     public static double[] outsideBand(final double arenaRadius, final double startRadius, final double zoneRadius) {
-        final double inner = arenaRadius + zoneRadius * 0.6;
+        final double inner = arenaRadius + zoneRadius;
         final double outer = startRadius + 2;
         return inner >= outer ? null : new double[] {inner, outer};
     }

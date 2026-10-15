@@ -679,7 +679,7 @@ skills:
     cooldown: 23
     range: 36
     telegraph: 1.5       # 施放時間 1.5 秒
-    radius: 2.2
+    radius: 0.8          # 2026-10-15：2.2 → 0.8（牆不要看起來這麼粗）
     duration: 7          # poedb：圈留 2 秒＋1（我們的牆要讓人走得出來，留久一點）
     interval: 0.6
     ruin: 3              # poedb：apply gauntlet ruin on hit
@@ -701,7 +701,7 @@ skills:
     cooldown: 26
     range: 36
     telegraph: 1.5
-    radius: 1.8
+    radius: 0.8          # 2026-10-15：1.8 → 0.8（牆不要看起來這麼粗）
     duration: 9
     interval: 0.6
     ruin: 3              # poedb：apply gauntlet ruin on hit
@@ -723,7 +723,7 @@ skills:
     cooldown: 32
     range: 36
     telegraph: 1.5
-    radius: 1.5
+    radius: 0.7          # 2026-10-15：1.5 → 0.7（牆不要看起來這麼粗）
     duration: 11
     interval: 0.6
     ruin: 3              # poedb：apply gauntlet ruin on hit
@@ -888,10 +888,10 @@ skills:
     damage: 0.35
     type: physical
     convert: { chaos: 0.25, fire: 0.25, lightning: 0.25 }
-    cooldown: 8          # 幾秒落一批
+    cooldown: 12         # 幾秒落一批（2026-10-15：8 → 12，圈裡紅圈太多）
     telegraph: 2.0
-    radius: 2.5
-    duration: 10
+    radius: 2.0          # 2026-10-15：2.5 → 2.0
+    duration: 6          # 2026-10-15：10 → 6
     interval: 0.5
     ruin: 4
     count: 1             # 每個在場的人幾個（最多 12 個）
