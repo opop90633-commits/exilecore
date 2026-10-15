@@ -350,8 +350,10 @@ public final class MapService {
      * @param source 打的玩家（召喚物、持續傷害算主人）
      */
     public double capBossDamage(final LivingEntity defender, final UUID source, final double amount) {
-        if (amount > 0 && source != null && plugin.worldEvents() != null && "boss".equals(plugin.worldEvents().role(defender))) {
-            // 2026-10：世界 Boss（開天者）比照極境：每秒傷害上限與分段遞減照 maps.yml 的 final_dps（15 萬）
+        final String worldRole = plugin.worldEvents() == null ? null : plugin.worldEvents().role(defender);
+        if (amount > 0 && source != null && ("boss".equals(worldRole) || "commander".equals(worldRole)
+                || plugin.festival() != null && plugin.festival().isKing(defender))) {
+            // 2026-10：世界 Boss（開天者、萬燈夜的南瓜王）、入侵怪潮的潮汐統帥比照極境：每秒傷害上限與分段遞減照 maps.yml 的 final_dps（15 萬）
             final Player player = plugin.getServer().getPlayer(source);
             final double record = player == null || plugin.training() == null ? 0 : plugin.training().bossDps(player);
             return dpsCap.apply("world:" + source, amount, config.finalDpsCap(), config.finalDpsOver(),

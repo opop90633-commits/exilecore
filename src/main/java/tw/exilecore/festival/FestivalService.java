@@ -1006,6 +1006,11 @@ public final class FestivalService {
         }
     }
 
+    /** 這是不是南瓜王（每秒傷害上限跟開天者一樣，照 maps.yml 的 final_dps；MapService.capBossDamage）。 */
+    public boolean isKing(final Entity entity) {
+        return "king".equals(role(entity));
+    }
+
     /** 這是不是搗蛋南瓜的感應框（右鍵沿視線找實體時用：拿著武器時客戶端的準星停不到它）。 */
     public boolean isPumpkin(final Entity entity) {
         return pumpkins.containsKey(entity.getUniqueId());
