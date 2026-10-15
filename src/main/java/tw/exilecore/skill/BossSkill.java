@@ -186,13 +186,18 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
          * 2026-10（巔峰 Boss 的萬界崩解）：落在收縮中的場地圈裡的隨機位置；count 是「每個在場的人幾個」。
          * 跟 arena 一起放（with:）的地面效果會照它的 cooldown 秒一直落，直到收縮結束。場地沒在收縮時當 target。
          */
-        ARENA;
+        ARENA,
+        /**
+         * 2026-10-15（萬界崩解）：落在收縮圈「外面」（圈邊到一開始的圈 reach 再外 2 格之間）的隨機位置，count 個（最多 32）；
+         * 跟 arena 一起放（with:），照它的 cooldown 秒一直落：圈外鋪滿荒蕪。場地沒在收縮時不落。
+         */
+        OUTSIDE;
 
         static Target parse(final String where, final String text) {
             try {
                 return valueOf(text.trim().toUpperCase(Locale.ROOT));
             } catch (final IllegalArgumentException e) {
-                throw new IllegalArgumentException(where + ".at：要寫 self、target、random、spiral、cross、line、cage、maze、walls 或 arena");
+                throw new IllegalArgumentException(where + ".at：要寫 self、target、random、spiral、cross、line、cage、maze、walls、arena 或 outside");
             }
         }
     }

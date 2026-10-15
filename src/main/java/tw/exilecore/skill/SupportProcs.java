@@ -41,6 +41,9 @@ import java.util.UUID;
 public final class SupportProcs implements Listener {
 
     static final String PREFIX = "proc.";
+    /** 銀月庇的增益代號（技能代號）與它落下的月光（隱藏技能）。 */
+    static final String LUNAR_BLESSING = "lunar_blessing";
+    static final String LUNAR_MOONBEAM = "lunar_moonbeam";
     /** 完美時機放開的那一下（技能描述的代號後面接這個；baseId 會把它去掉）。 */
     static final String PERFECT_SUFFIX = ".perfect";
     static final long COOLDOWN = 20; // 2026-10 平衡：0.5 → 1 秒
@@ -177,6 +180,11 @@ public final class SupportProcs implements Listener {
             lastHits.values().removeIf(hit -> now() - hit.tick() > KILL_WINDOW);
         }
         fireAll(player, skillId, "hit", target.getLocation(), target, null);
+        // 銀月庇（2026-10，PoE2 的月光賜福）：增益期間狼人形態的攻擊打中時落下月光（每秒最多一次）
+        if (event.skill().tags().contains(tw.exilecore.stats.Tags.WEREWOLF) && event.skill().tags().contains(tw.exilecore.stats.Tags.ATTACK)
+                && service.buffs().has(player.getUniqueId(), LUNAR_BLESSING)) {
+            castAt(player, LUNAR_MOONBEAM, LUNAR_BLESSING, target.getLocation());
+        }
         if (event.skill().id().endsWith(PERFECT_SUFFIX)) {
             fireAll(player, skillId, "perfect_hit", target.getLocation(), target, null); // 2026-10：完美時機放開的那一下打中（穿雲箭的爆炸）
         }

@@ -1028,6 +1028,7 @@ public final class SkillService {
         if (definition.mechanic() == Mechanic.WARCRY) {
             procs().onUse(player, definition, player.getLocation()); // 2026-10：戰吼觸發的專屬技能在腳下
             final String notice = warcries.shout(player, runtime, build);
+            shapeshift(player, definition); // 銀月庇（2026-10-15）：帶狼人標籤的戰吼吼完變狼人
             if (notice != null) {
                 state.notice(notice, now + 60);
                 plugin.players().display(player, state);
@@ -1784,7 +1785,7 @@ public final class SkillService {
         final SkillBuild build = build(state, sheet, resolved);
         final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, build.profile());
         final double crit = DamageCalculator.critChance(sheet, build.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
-        final double multi = build.profile().effective(sheet).get(StatKeys.CRIT_MULTI, build.profile().tags());
+        final double multi = DamageCalculator.critMultiplier(build.profile().effective(sheet), build.profile().tags(), null) * 100; // 2026-10：跟戰鬥一樣算「增加／更多暴擊加成」
         // 有冷卻的：一輪要等「施放間隔」和「冷卻」比較長的那個。
         // 2026-10：複擊的每一下都要花一次攻擊間隔（打完才能做別的），以前當成同一個間隔裡打完，面板高了好幾倍
         final SkillParams params = build.params();
@@ -1804,7 +1805,7 @@ public final class SkillService {
             final tw.exilecore.stats.DamagePacket fullExpected = afterResist(
                     DamageCalculator.expectedOutgoing(fullSheet, fullBuild.profile()), full.resist());
             final double fullCrit = DamageCalculator.critChance(fullSheet, fullBuild.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
-            final double fullMulti = fullBuild.profile().effective(fullSheet).get(StatKeys.CRIT_MULTI, fullBuild.profile().tags());
+            final double fullMulti = DamageCalculator.critMultiplier(fullBuild.profile().effective(fullSheet), fullBuild.profile().tags(), null) * 100;
             final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
             final SkillParams fullParams = fullBuild.params();
             final double casts = hitsPerSecond(fullBuild.intervalTicks(fullSheet), fullBuild.cooldownTicks(), fullBuild.repeats());
@@ -1856,7 +1857,7 @@ public final class SkillService {
             return new double[4];
         }
         final double crit = DamageCalculator.critChance(minionSheet, profile);
-        final double multi = effective.get(StatKeys.CRIT_MULTI, profile.tags());
+        final double multi = DamageCalculator.critMultiplier(effective, profile.tags(), null) * 100; // 2026-10：含召喚物的「增加暴擊加成」
         final double hit = expected.total() * (1 + crit * (multi / 100.0 - 1));
         final double rate = MinionSheets.attacksPerSecond(effective, profile);
         return new double[] {hit * rate, hit, rate, crit};
@@ -2205,7 +2206,7 @@ public final class SkillService {
                     tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
             final double skillCrit = DamageCalculator.critChance(sheet, build.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
             lines.add(String.format(Locale.ROOT, "<gray>暴擊：<white>%.1f%% <dark_gray>× <white>%.0f%%", skillCrit * 100,
-                    build.profile().effective(sheet).get(StatKeys.CRIT_MULTI, build.profile().tags()))
+                    DamageCalculator.critMultiplier(build.profile().effective(sheet), build.profile().tags(), null) * 100)
                     + (amazonCrit > 0 && skillCrit > 0 ? String.format(Locale.ROOT, " <dark_gray>（含命中溢出 +%.1f%%）", amazonCrit * 100) : ""));
             final int extraTargets = SkillExecutor.extraStrikeTargets(sheet, build);
             if (extraTargets > 0) {
@@ -3086,6 +3087,9 @@ public final class SkillService {
         final List<tw.exilecore.item.AffixChips.Chip> chips = new ArrayList<>();
         chips.add(definition.summon() != null ? tw.exilecore.item.AffixChips.Chip.SUMMON
                 : definition.mechanic() == Mechanic.WARCRY ? tw.exilecore.item.AffixChips.Chip.WARCRY
+                // 2026-10：光環、捷光環、常駐不算法術，第一格寫它自己的種類（不再掛「法術」）
+                : definition.mechanic() == Mechanic.AURA ? (definition.tags().contains(Tags.HERALD) ? tw.exilecore.item.AffixChips.Chip.HERALD
+                        : definition.tags().contains(Tags.PERSISTENT) ? tw.exilecore.item.AffixChips.Chip.PERSISTENT : tw.exilecore.item.AffixChips.Chip.AURA)
                 : definition.isAttack() ? tw.exilecore.item.AffixChips.Chip.ATTACK : tw.exilecore.item.AffixChips.Chip.CASTER);
         for (final String tag : orderedTags(definition)) {
             final tw.exilecore.item.AffixChips.Chip chip = tw.exilecore.item.AffixChips.byId(tag);

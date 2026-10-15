@@ -39,6 +39,9 @@ final class Warcries {
         return taunts;
     }
 
+    /** 銀月庇一次最多用掉幾點怒氣（比任何怒氣上限都大：等於全部）。 */
+    static final int RAGE_FEED_CAP = 1000;
+
     /** 祭柱找屍體、獻祭召喚物的範圍（格）。 */
     static final double SPIKE_SEARCH = 12;
 
@@ -146,8 +149,17 @@ final class Warcries {
         final String id = build.definition().id();
         final String name = build.definition().name();
         final double radius = spec.radius() * build.areaScale();
-        final int ticks = build.durationTicks(spec.duration());
+        int ticks = build.durationTicks(spec.duration());
+        // 銀月庇（2026-10，PoE2 的月光賜福）：吼的時候用掉全部怒氣，每點怒氣增益多撐 rage_extend 秒
+        int rageFed = 0;
+        if (spec.rageExtend() > 0 && plugin.skills() != null) {
+            rageFed = plugin.skills().resources().spendRage(player, RAGE_FEED_CAP);
+            ticks += (int) Math.round(rageFed * spec.rageExtend() * 20);
+        }
         final StringBuilder notice = new StringBuilder("<#f5b942>" + tw.exilecore.item.ItemRenderer.escape(name));
+        if (rageFed > 0) {
+            notice.append(String.format(Locale.ROOT, "<gray>：獻上 <white>%d</white> 點怒氣，增益 <white>%.1f</white> 秒", rageFed, ticks / 20.0));
+        }
 
         // 回復
         final double heal = spec.heal().at(build.level());

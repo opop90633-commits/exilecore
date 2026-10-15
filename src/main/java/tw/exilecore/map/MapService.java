@@ -612,6 +612,12 @@ public final class MapService {
         return instance == null ? 0 : instance.atlas().experience();
     }
 
+    /** 終局以上的 Boss（2026-10-15）：Boss 生命掉到 75% 以下才進來的人沒有掉落；其他怪物、其他地圖都有。 */
+    public boolean bossLootEligible(final LivingEntity entity, final Player player) {
+        final MapInstance instance = instanceOf(entity);
+        return instance == null || instance.boss() != entity || instance.lootEligible(player.getUniqueId());
+    }
+
     /** 這隻怪物跟這個玩家在同一張地圖裡（掉落、經驗「在附近」的判斷：同一張地圖都算）。 */
     public boolean sameInstance(final LivingEntity entity, final Player player) {
         final MapInstance instance = instanceOf(entity);

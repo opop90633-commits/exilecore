@@ -3413,24 +3413,45 @@ skills:
     visual: intimidating_cry
   lunar_blessing:
     name: 銀月庇
-    description: 精魂技能（要拿獸魂符）：月光一直灑在你身上，攻擊的物理傷害一部分額外附加為冰冷，暴擊率增加。保留 30 精魂。
-    weapons: [talisman]          # 2026-10：PoE2 的原型（Lunar Blessing）是獸魂符的技能；以前不限武器
+    description: 戰吼（要拿獸魂符）：化身狼人向月亮獻上怒氣，你與 4 格內你的召喚物得到增益——攻擊額外獲得冰冷傷害、攻擊速度與移動速度提高，持續 5 秒；吼的時候用掉全部怒氣，每點多撐 0.2 秒。增益期間狼人形態的攻擊打中時落下月光，對周圍的敵人造成冰冷傷害（每秒最多一次）。冷卻 22 秒。
+    weapons: [talisman]          # 2026-10：PoE2 的原型（Lunar Blessing）是獸魂符的技能
     icon: NETHER_STAR   # 2026-10：原本 END_CRYSTAL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 13
-    tags: [spell, cold]
-    mechanic: aura
-    aura:
-      reserve: 30
-      radius: 8
-      allies: false   # 2026-10：改回只給自己（PoE2 的常駐增益只作用在角色自己身上；分給隊友時每個隊友、每一隻召喚物都疊一份）
-      effects:
-        - { stat: damage.gain.cold, type: FLAT, value: [10, 20], tags: [attack] }
-        - { stat: crit.chance, type: INCREASED, value: [20, 40] }
-    cast_time: 0.5
-    cooldown: 1.5
-    mana: 0
+    # 2026-10-15 照 PoE2 的月光賜福重做：以前是常駐光環（附加 10～20% 冰冷、暴擊率），現在是會變身狼人的戰吼，
+    #   冷卻 22 秒、增益 5 秒＋每點怒氣 0.2 秒；增益期間狼人攻擊打中落月光（lunar_moonbeam，SupportProcs）。
+    #   poedb：額外獲得 40%～59% 冰冷、月光 65%～235%（我們的倍率約 PoE2 的 0.6）
+    tags: [cold, shapeshift, werewolf]
+    mechanic: warcry
+    warcry:
+      radius: 4
+      duration: 5
+      taunt: false
+      allies: false
+      rage_extend: 0.2
+      buff:
+        - { stat: damage.gain.cold, type: FLAT, value: [40, 59], tags: [attack] }
+        - { stat: attack.speed, type: INCREASED, value: [10, 20] }
+        - { stat: movement.speed, type: INCREASED, value: [10, 15] }
+      minion_buff:
+        - { stat: damage.gain.cold, type: FLAT, value: [40, 59], tags: [attack] }
+        - { stat: attack.speed, type: INCREASED, value: [10, 20] }
+        - { stat: movement.speed, type: INCREASED, value: [10, 15] }
+    cooldown: 22
+    cast_time: 1.0
+    mana: [10, 22]
     visual: aura_cold
+  lunar_moonbeam:
+    name: 月光
+    hidden: true
+    type: attack
+    tags: [attack, area, cold]
+    mechanic: nova
+    nova: { radius: [2.0, 2.4] }
+    convert: { cold: 1.0 }
+    attack_speed: 1.0
+    effectiveness: [0.4, 1.4]
+    visual: frost_nova
 
   # -- 飛龍（法術）--
   # 2026-10：飛龍技能照 PoE2 改成「攻擊」——吃獸魂符的武器傷害、攻擊速度、命中與攻擊類的輔助（以前是自帶基礎傷害的法術，

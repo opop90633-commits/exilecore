@@ -698,6 +698,35 @@ class MapTest {
         assertFalse(new MapInstance(3, normal, null, MapLayout.generate(3, 6), null, 2, 0, 0, java.util.UUID.randomUUID(), "x", 6, 0).usesAttempts());
     }
     @Test
+    void lateComersToFinalBossesGetNoLoot() {
+        // 2026-10-15：終局以上的 Boss，生命掉到 75% 以下才進來的人沒有掉落（隊友也一樣）；一般地圖不管
+        final MapConfig.MapDef awakener = config.find("awakener");
+        final MapInstance instance = new MapInstance(4, awakener, null, MapLayout.generate(4, 6), null, 0, 0, 0,
+                java.util.UUID.randomUUID(), "x", config.pinnacle("awakener").attempts(), 0);
+        instance.setPinnacle(config.pinnacle("awakener"));
+        assertTrue(instance.lateEntryRule());
+        final java.util.UUID early = java.util.UUID.randomUUID();
+        final java.util.UUID atEdge = java.util.UUID.randomUUID();
+        final java.util.UUID late = java.util.UUID.randomUUID();
+        assertTrue(instance.lootEligible(late), "還沒有人記進名單（一下就打死）：都有");
+        assertEquals(List.of(), instance.noteRoster(List.of(early), 1.0));
+        assertEquals(List.of(), instance.noteRoster(List.of(early, atEdge), 0.75), "剛好 75% 還算");
+        assertEquals(List.of(late), instance.noteRoster(List.of(early, atEdge, late), 0.74), "低於 75% 才進來的要提醒");
+        assertEquals(List.of(), instance.noteRoster(List.of(early, atEdge, late), 0.5), "只提醒一次");
+        assertTrue(instance.lootEligible(early));
+        assertTrue(instance.lootEligible(atEdge));
+        assertFalse(instance.lootEligible(late), "殘血才進來：沒有掉落");
+        final MapConfig.MapDef frost = config.find("frost_throne");
+        assertTrue(new MapInstance(5, frost, null, MapLayout.generate(5, 6), null, 1, 0, 0, java.util.UUID.randomUUID(), "x", 2, 0).lateEntryRule(),
+                "終局也算");
+        final MapInstance normal = new MapInstance(6, config.find("wreck_bay"), null, MapLayout.generate(6, 6), null, 2, 0, 0,
+                java.util.UUID.randomUUID(), "x", 6, 0);
+        assertFalse(normal.lateEntryRule());
+        normal.noteRoster(List.of(early), 1.0);
+        assertTrue(normal.lootEligible(late), "一般地圖不管什麼時候進來");
+    }
+
+    @Test
     void pinnacleDamageAboveTheCapIsHeavilyReduced() {
         // 2026-10：巔峰每秒傷害超過 15 萬的部分分段減傷：15–30 萬算 30%、30 萬以上算 10%
         final MapConfig.Pinnacle pinnacle = config.pinnacle("awakener");

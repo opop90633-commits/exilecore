@@ -100,6 +100,9 @@ final class MapBosses {
             }
             // 「附近」以 Boss 現在的位置算：追著人跑出 Boss 房也不算沒人
             final List<Player> near = nearbyPlayers(instance, boss.getLocation(), 48);
+            if (instance.lateEntryRule()) {
+                trackRoster(instance, boss);
+            }
             if (!near.isEmpty()) {
                 instance.setBossLastSeenTick(now);
                 // 2026-10：有人走進 Boss 房（或從門口打到它）才開打；狂暴也從這一刻開始算
@@ -142,6 +145,28 @@ final class MapBosses {
             plugin.monsters().ensureVanillaHealth(boss); // 別的插件改了原版血量上限就改回來
             updateBar(instance, boss, near);
             checkPhases(instance, boss);
+        }
+    }
+
+    /**
+     * 終局以上（2026-10-15）：Boss 生命還在 75% 以上時在圖裡的人記進名單；掉到 75% 以下才進來的人提醒一次「這場沒有掉落」。
+     */
+    private void trackRoster(final MapInstance instance, final LivingEntity boss) {
+        final AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
+        final double fraction = max == null ? 1 : boss.getHealth() / Math.max(1, max.getValue());
+        final List<UUID> present = new ArrayList<>();
+        for (final UUID uuid : instance.inside()) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            if (player != null && !player.isDead() && player.getGameMode() != GameMode.SPECTATOR && instance.contains(player.getLocation())) {
+                present.add(uuid);
+            }
+        }
+        for (final UUID late : instance.noteRoster(present, fraction)) {
+            final Player player = plugin.getServer().getPlayer(late);
+            if (player != null) {
+                player.sendMessage(plugin.text().parse("<#ff9f43>⚠ Boss 的生命已經低於 " + Math.round(MapInstance.LATE_ENTRY_LIFE * 100)
+                        + "%，你來晚了：這場打死時沒有你的掉落"));
+            }
         }
     }
 
@@ -244,6 +269,7 @@ final class MapBosses {
         // 新的 Boss：上一隻的戰鬥狀態（狂暴的計時、還在的護盾結晶）不帶過來
         clearShield(instance, null);
         instance.setFightStartTick(-1);
+        instance.clearRoster();
         instance.setEnraged(false);
         instance.setPhaseTick(PhaseStep.NEVER);
         instance.setPhaseHold(false);
@@ -686,6 +712,7 @@ final class MapBosses {
         instance.setPhaseHold(false);
         clearShield(instance, boss); // 也把無敵拿掉（護盾、換階段的等待）
         instance.setFightStartTick(-1);
+        instance.clearRoster();
         instance.setEnraged(false);
         service.events().twists().onBossReset(instance); // 地圖變化：分身、援軍收掉，下次開打再來
         final AttributeInstance enrageSpeed = boss.getAttribute(Attribute.MOVEMENT_SPEED);

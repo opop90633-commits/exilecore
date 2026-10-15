@@ -79,9 +79,9 @@ class AuraWarcryTest {
     void onlyAllyAurasReachTheOwnersMinions() {
         // 2026-10：只給自己的常駐增益（allies: false）不再給召喚物；給隊友的光環照舊給完整效果
         final StatSheet owner = new StatSheet();
-        // 攻擊型的五個（戰意昂揚、崩滅心咒、銀月庇、元素潮汐、磨蝕之志）2026-10 也改回只給自己
+        // 攻擊型的四個（戰意昂揚、崩滅心咒、元素潮汐、磨蝕之志）2026-10 也改回只給自己（銀月庇 2026-10-15 改成戰吼）
         for (final String id : List.of("storm_staff", "battle_rage",
-                "combat_frenzy", "ruin_mantra", "lunar_blessing", "elemental_conflux", "attrition")) {
+                "combat_frenzy", "ruin_mantra", "elemental_conflux", "attrition")) {
             final SkillBuild self = build(id, 20, owner);
             assertFalse(self.definition().aura().allies(), id);
             assertFalse(self.auraModifiers().isEmpty(), id + "：自己還是有效果");
@@ -279,6 +279,27 @@ class AuraWarcryTest {
                 assertTrue(each.isAttack() && each.mechanic() == Mechanic.PROJECTILE && each.cooldown() <= 0, each.id());
             }
         }
+    }
+
+    @Test
+    void lunarBlessingIsAWerewolfWarcryFedByRage() {
+        // 2026-10-15 照 PoE2 的月光賜福：會變身狼人的戰吼，冷卻 22 秒、增益 5 秒，用掉全部怒氣每點多 0.2 秒；月光是隱藏技能
+        final SkillDefinition lunar = config.skill("lunar_blessing");
+        assertEquals(Mechanic.WARCRY, lunar.mechanic());
+        assertTrue(lunar.tags().contains(Tags.WEREWOLF) && lunar.tags().contains(Tags.SHAPESHIFT), "放了就變狼人");
+        assertFalse(lunar.tags().contains(Tags.SPELL), "戰吼不算法術");
+        assertEquals(22, lunar.cooldown(), 1e-9);
+        assertEquals(5, lunar.warcry().duration(), 1e-9);
+        assertEquals(0.2, lunar.warcry().rageExtend(), 1e-9);
+        assertFalse(lunar.warcry().buff().isEmpty());
+        assertFalse(lunar.warcry().minionBuff().isEmpty(), "召喚物（狼）也有增益");
+        final SkillDefinition beam = config.skill(SupportProcs.LUNAR_MOONBEAM);
+        assertTrue(beam.hidden());
+        assertTrue(beam.isAttack());
+        assertTrue(beam.tags().contains(Tags.COLD));
+        assertFalse(beam.tags().contains(Tags.WEREWOLF), "月光打中不會再落月光");
+        assertEquals(SupportProcs.LUNAR_BLESSING, lunar.id());
+        assertEquals(0, config.skill("arctic_howl").warcry().rageExtend(), 1e-9, "其他戰吼不吃怒氣");
     }
 
     @Test

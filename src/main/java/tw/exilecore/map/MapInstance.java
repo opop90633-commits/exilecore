@@ -41,6 +41,15 @@ public final class MapInstance {
     private long emptySinceTick = -1;
     /** 在裡面的玩家（最後一次檢查時）。 */
     private final Set<UUID> inside = new HashSet<>();
+    /**
+     * 終局以上的 Boss（2026-10-15）：Boss 生命還在 {@link #LATE_ENTRY_LIFE} 以上時在這張圖裡的人；
+     * 生命掉到那以下才進來的人，打死時沒有掉落（防殘血才進來撿）。Boss 重置時清掉。
+     */
+    private final Set<UUID> fightRoster = new HashSet<>();
+    /** 已經提醒過「來晚了」的人（每場一次）。 */
+    private final Set<UUID> lateWarned = new HashSet<>();
+    /** Boss 生命低於這個比例之後才進來的人沒有掉落。 */
+    public static final double LATE_ENTRY_LIFE = 0.75;
     /** 進來過的玩家（完成時一起算）。 */
     private final Set<UUID> visitors = new LinkedHashSet<>();
     /** 每個怪物群有沒有刷過（索引對 {@link MapLayout#packSpots()}）。 */
@@ -509,6 +518,40 @@ public final class MapInstance {
 
     public boolean shielded() {
         return shield != null;
+    }
+
+    /** 有「殘血才進來沒有掉落」的規則：終局（特別的實例除外）、極境、巔峰。 */
+    public boolean lateEntryRule() {
+        return map.isFinal() && special == null || isUber() || isPinnacle();
+    }
+
+    /**
+     * 記一次誰在場（MapBosses 每次巡 Boss 時）：Boss 生命還在 {@link #LATE_ENTRY_LIFE} 以上就把在場的人記進名單。
+     * 回傳這次第一次被判定「來晚了」的人（要提醒的）。
+     */
+    public List<UUID> noteRoster(final java.util.Collection<UUID> present, final double lifeFraction) {
+        if (lifeFraction >= LATE_ENTRY_LIFE) {
+            fightRoster.addAll(present);
+            return List.of();
+        }
+        final List<UUID> late = new ArrayList<>();
+        for (final UUID id : present) {
+            if (!fightRoster.contains(id) && lateWarned.add(id)) {
+                late.add(id);
+            }
+        }
+        return late;
+    }
+
+    /** 這個人打死 Boss 時有沒有掉落（沒有這條規則、或名單是空的（一下就打死）都算有）。 */
+    public boolean lootEligible(final UUID player) {
+        return !lateEntryRule() || fightRoster.isEmpty() || fightRoster.contains(player);
+    }
+
+    /** Boss 重置、換一隻：名單重來。 */
+    void clearRoster() {
+        fightRoster.clear();
+        lateWarned.clear();
     }
 
     public long fightStartTick() {

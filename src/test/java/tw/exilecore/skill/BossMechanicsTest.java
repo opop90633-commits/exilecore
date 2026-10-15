@@ -13,6 +13,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -278,6 +279,23 @@ class BossMechanicsTest {
     }
 
     @Test
+    void wasteCoversOutsideTheCollapse() {
+        // 2026-10-15：萬界崩解的圈外鋪滿荒蕪——圈邊（往外半個荒蕪）到一開始的圈再外 2 格
+        assertNull(BossGeometry.outsideBand(20, 20, 3.5), "還沒開始縮：圈外沒地方鋪");
+        final double[] band = BossGeometry.outsideBand(8, 20, 3.5);
+        assertEquals(8 + 3.5 * 0.6, band[0], 1e-9);
+        assertEquals(22, band[1], 1e-9);
+        assertEquals(band[0], BossGeometry.inBand(band[0], band[1], 0), 1e-9);
+        assertEquals(band[1], BossGeometry.inBand(band[0], band[1], 1), 1e-9);
+        final double mid = BossGeometry.inBand(band[0], band[1], 0.5);
+        assertTrue(mid > (band[0] + band[1]) / 2, "照面積平均：外圈多一點");
+        final BossSkill waste = config.bossSkills().skill("awakener_collapse_waste");
+        assertEquals(BossSkill.Target.OUTSIDE, waste.at());
+        assertEquals(BossSkill.Kind.ZONE, waste.kind());
+        assertTrue(waste.ruin() > 0, "荒蕪：踩到禁療");
+    }
+
+    @Test
     void echoesSurroundTheBossAndTakeTurnsAcrossTheCircle() {
         final List<double[]> offsets = BossGeometry.echoOffsets(12, 10, 0);
         assertEquals(12, offsets.size());
@@ -380,7 +398,7 @@ class BossMechanicsTest {
                         skill.id() + "：擴散環要有缺口，沒有缺口的要夠薄、夠慢、寫 hint");
                 case MARK -> assertTrue(skill.explode() <= 4, skill.id() + "：標記的爆炸不要太大（走得出隊友的圈）");
                 case ECHOES -> assertTrue(skill.delay() >= 1.0, skill.id() + "：殘影的紅線至少標 1 秒");
-                case ARENA -> assertTrue(skill.radius() >= 6 && skill.damage() <= 0.5, skill.id() + "：場地收縮最後的圈要站得下、圈外一下不要太痛");
+                case ARENA -> assertTrue(skill.radius() >= 6 && skill.damage() <= 1.2, skill.id() + "：場地收縮最後的圈要站得下、圈外一下不要太痛（2026-10-15：萬界崩解 1.0，圈外要很痛）");
                 case BEAM -> assertTrue(skill.interval() >= 0.25, skill.id() + "：光束不要每 tick 都打");
                 default -> {
                 }

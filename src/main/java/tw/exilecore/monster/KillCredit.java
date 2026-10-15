@@ -65,7 +65,7 @@ public final class KillCredit {
         for (final UUID id : ids) {
             final Player player = plugin.getServer().getPlayer(id);
             // Boss：一律看 Boss 旁邊 32 格（地圖裡也是；死掉、觀戰的不算）；小怪照 share_radius（地圖裡整張地圖都算）
-            final boolean counts = boss ? atBoss(player, entity) : player != null && near(player, entity, config.shareRadius());
+            final boolean counts = boss ? atBoss(player, entity) && lateEntryOk(entity, player) : player != null && near(player, entity, config.shareRadius());
             if (counts) {
                 result.add(player);
                 if (result.size() >= config.maxCountedPlayers()) {
@@ -74,6 +74,11 @@ public final class KillCredit {
             }
         }
         return result;
+    }
+
+    /** 終局以上的 Boss（2026-10-15）：Boss 生命掉到 75% 以下才進來的人沒有掉落（隊友也一樣）。 */
+    private boolean lateEntryOk(final LivingEntity entity, final Player player) {
+        return plugin.maps() == null || plugin.maps().bossLootEligible(entity, player);
     }
 
     /** 給經驗（照上面的規則）。 */

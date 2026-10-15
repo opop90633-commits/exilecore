@@ -57,7 +57,7 @@ class SkillConfigTest {
                 "herald_of_ash", "herald_of_thunder", "herald_of_ice", "fortifying_cry", "infernal_cry", "seismic_cry", "bear_maul")),
                 visible.toString());
         assertEquals("leap_slam", visible.getFirst(), "照檔案裡的順序");
-        assertEquals(342, config.all().size(), "271 個技能 + 7 種普攻 + 64 個隱藏的效果（使者、觸發…）");
+        assertEquals(343, config.all().size(), "271 個技能 + 7 種普攻 + 65 個隱藏的效果（使者、觸發…、銀月庇的月光）");
         for (final SkillDefinition definition : config.all()) {
             assertTrue(SkillConfig.VISUALS.contains(definition.visual()), definition.id());
             if (definition.mechanic() == Mechanic.WARCRY) {
@@ -71,6 +71,14 @@ class SkillConfigTest {
             } else if (definition.mechanic() == Mechanic.AURA && !definition.tags().contains(Tags.HERALD)) {
                 // 光環、常駐技能不算法術（2026-10）：type 寫 spell（照施法時間），但沒有 spell 標籤；捷光環例外
                 assertFalse(definition.tags().contains(Tags.SPELL) || definition.tags().contains(Tags.ATTACK), definition.id());
+                assertEquals(definition.tags().contains(Tags.PERSISTENT) ? "常駐" : "光環", definition.typeName(), definition.id());
+                assertFalse(SkillService.headlineChips(definition).contains(tw.exilecore.item.AffixChips.Chip.CASTER.key()),
+                        definition.id() + "：標籤列不掛「法術」");
+            } else if (definition.mechanic() == Mechanic.AURA) {
+                // 捷光環：輔助要傳給擊殺效果，所以內部還留著 spell 標籤；顯示的種類是「捷光環」，不寫法術
+                assertEquals("捷光環", definition.typeName(), definition.id());
+                assertFalse(SkillService.headlineChips(definition).contains(tw.exilecore.item.AffixChips.Chip.CASTER.key()),
+                        definition.id() + "：標籤列不掛「法術」");
             } else {
                 assertTrue(definition.tags().contains(definition.isAttack() ? Tags.ATTACK : Tags.SPELL), definition.id());
                 assertEquals(definition.isAttack() ? "攻擊" : "法術", definition.typeName(), definition.id());

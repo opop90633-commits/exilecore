@@ -1095,7 +1095,7 @@ public final class BossSkills implements Listener {
             return skill;
         }
         switch (skill.at()) {
-            case SPIRAL, CROSS, LINE, CAGE, MAZE, WALLS, ARENA -> {
+            case SPIRAL, CROSS, LINE, CAGE, MAZE, WALLS, ARENA, OUTSIDE -> {
                 return skill;
             }
             default -> {
@@ -1111,6 +1111,9 @@ public final class BossSkills implements Listener {
         return skill.sized(fit[0], fit[1], fit[2]);
     }
 
+    /** 圈外的荒蕪（at: outside）一次最多落幾個。 */
+    static final int OUTSIDE_MAX = 32;
+
     /** 延遲落下、地面效果的落點。 */
     private List<Location> points(final Brain brain, final BossSkill skill, final LivingEntity target) {
         switch (skill.at()) {
@@ -1121,6 +1124,25 @@ public final class BossSkills implements Listener {
             }
         }
         final List<Location> points = new ArrayList<>();
+        if (skill.at() == BossSkill.Target.OUTSIDE) {
+            // 2026-10-15：圈外鋪滿荒蕪（萬界崩解）：落下那一刻的圈邊到一開始的圈再外 2 格之間，平均灑 count 個
+            final Arena arena = brain.arena;
+            if (arena == null) {
+                return points;
+            }
+            final long landing = now() + settings().telegraphTicks(skill, brain.host.boss());
+            final double[] band = BossGeometry.outsideBand(arena.radius(landing), arena.skill.reach(), skill.radius());
+            if (band == null) {
+                return points;
+            }
+            final int total = Math.min(OUTSIDE_MAX, Math.max(1, skill.count()));
+            for (int i = 0; i < total; i++) {
+                final double angle = random.nextDouble() * Math.PI * 2;
+                final double distance = BossGeometry.inBand(band[0], band[1], random.nextDouble());
+                points.add(ground(arena.center.clone().add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance)));
+            }
+            return points;
+        }
         if (skill.at() == BossSkill.Target.ARENA && brain.arena != null) {
             // 2026-10：落在收縮中的圈裡（整個都在圈內），每個在場的人 count 個（最多 12 個）
             final Arena arena = brain.arena;
@@ -2697,7 +2719,7 @@ public final class BossSkills implements Listener {
         }
         // 2026-10：跟收縮一起放的地面效果（荒蕪）：照各自的 cooldown 在圈裡一直落，數量看在場人數（points 的 at: arena）
         for (final BossSkill extra : brain.arenaWith) {
-            if (extra.kind() != BossSkill.Kind.ZONE || extra.at() != BossSkill.Target.ARENA) {
+            if (extra.kind() != BossSkill.Kind.ZONE || extra.at() != BossSkill.Target.ARENA && extra.at() != BossSkill.Target.OUTSIDE) {
                 continue;
             }
             final long every = Math.max(20, Math.round((extra.cooldown() > 0 ? extra.cooldown() : 6) * 20));

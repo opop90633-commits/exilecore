@@ -170,6 +170,21 @@ public final class BossGeometry {
                 lingers ? Math.min(duration, ARENA_ZONE_SECONDS) : duration};
     }
 
+    /**
+     * 圈外鋪荒蕪的範圍（2026-10-15）：從圈邊往外半個荒蕪（荒蕪不壓進圈裡太多）到一開始的圈再外 2 格。
+     * 回傳 {內, 外}；圈已經比外緣大（還沒開始縮）回傳 null。
+     */
+    public static double[] outsideBand(final double arenaRadius, final double startRadius, final double zoneRadius) {
+        final double inner = arenaRadius + zoneRadius * 0.6;
+        final double outer = startRadius + 2;
+        return inner >= outer ? null : new double[] {inner, outer};
+    }
+
+    /** 環帶裡平均分布的距離（面積平均：外圈多一點）；roll 是 0～1。 */
+    public static double inBand(final double inner, final double outer, final double roll) {
+        return Math.sqrt(inner * inner + roll * (outer * outer - inner * inner));
+    }
+
     /** 在圈外（身體完全出去才算：中心離圈心超過半徑再加半個身體）。 */
     public static boolean outsideArena(final double cx, final double cz, final double radius, final double px, final double pz,
                                        final double halfBody) {

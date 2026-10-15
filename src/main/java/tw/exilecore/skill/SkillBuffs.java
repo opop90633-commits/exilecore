@@ -46,6 +46,13 @@ final class SkillBuffs {
         plugin.players().markDirty(player);
     }
 
+    /** 這個增益現在有沒有效（2026-10：銀月庇的月光要看增益還在不在）。 */
+    boolean has(final UUID player, final String id) {
+        final Map<String, Buff> mine = buffs.get(player);
+        final Buff buff = mine == null ? null : mine.get(id);
+        return buff != null && buff.active(now());
+    }
+
     /** 提早拿掉一個增益（2026-10：獸血沸的狂暴提早結束）。 */
     void remove(final Player player, final String id) {
         final Map<String, Buff> mine = buffs.get(player.getUniqueId());

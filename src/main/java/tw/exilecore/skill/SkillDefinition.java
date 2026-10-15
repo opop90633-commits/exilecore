@@ -104,6 +104,10 @@ public record SkillDefinition(String id, String name, String description, String
         if (summon != null) {
             return "召喚"; // 2026-10：召喚技能不算法術
         }
+        if (mechanic == Mechanic.AURA) {
+            // 2026-10：光環、捷光環、常駐技能不算法術——種類就寫「光環」「捷光環」「常駐」（type 寫 spell 只是開的動作照施法時間）
+            return ModifierText.tagName(tags.contains(Tags.HERALD) ? Tags.HERALD : tags.contains(Tags.PERSISTENT) ? Tags.PERSISTENT : Tags.AURA);
+        }
         return mechanic == Mechanic.WARCRY ? ModifierText.tagName(Tags.WARCRY) : type.displayName();
     }
 
