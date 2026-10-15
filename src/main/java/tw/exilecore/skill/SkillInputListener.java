@@ -252,6 +252,9 @@ final class SkillInputListener implements Listener {
         if (plugin.npcs() != null && plugin.npcs().isNpc(entity) || entity.hasMetadata("NPC")) {
             return true;
         }
+        if (plugin.festival() != null && plugin.festival().isPumpkin(entity)) {
+            return true; // 2026-10 萬燈夜：搗蛋南瓜（拿著武器時準星停不到它，照視線找）
+        }
         return entity instanceof Player && player.isSneaking() && service.inTown(player);
     }
 

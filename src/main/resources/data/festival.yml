@@ -35,7 +35,7 @@ lanterns:
   ghost_seconds: 60         # 幽魂沒打掉，幾秒後散掉
   daily_wick: 5             # 一天點滿全部：燈芯
   global_target: 1300       # 全服點亮幾盞觸發全服加成
-  global_quantity: 10       # 全服物品數量 +%
+  global_quantity: 30       # 全服物品數量 +%（2026-10-16：10 → 30）
   global_minutes: 60
 
 boss:

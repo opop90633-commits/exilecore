@@ -745,16 +745,20 @@ class MapTest {
         // 2026-10：巔峰每秒傷害超過 15 萬的部分分段減傷：15–30 萬算 30%、30 萬以上算 10%
         final MapConfig.Pinnacle pinnacle = config.pinnacle("awakener");
         assertEquals(150000, pinnacle.dpsCap(), 1e-9);
-        assertEquals(List.of(new MapConfig.DpsTier(150000, 0.3), new MapConfig.DpsTier(300000, 0.1)), pinnacle.dpsOver());
+        assertEquals(List.of(new MapConfig.DpsTier(150000, 0.3), new MapConfig.DpsTier(300000, 0.1), new MapConfig.DpsTier(450000, 0.05), new MapConfig.DpsTier(600000, 0.01)), pinnacle.dpsOver());
         final List<MapConfig.DpsTier> over = pinnacle.dpsOver();
         assertEquals(100000, DpsCap.effective(100000, 150000, over), 1e-6, "上限以內照算");
         assertEquals(195000, DpsCap.effective(300000, 150000, over), 1e-6);
-        assertEquals(215000, DpsCap.effective(500000, 150000, over), 1e-6);
-        assertEquals(265000, DpsCap.effective(1000000, 150000, over), 1e-6);
+        assertEquals(212500, DpsCap.effective(500000, 150000, over), 1e-6);
+        assertEquals(221500, DpsCap.effective(1000000, 150000, over), 1e-6);
+        // 2026-10-16：45 萬以上算 5%、60 萬以上算 1%——每秒 700 萬只算 28.15 萬
+        assertEquals(210000, DpsCap.effective(450000, 150000, over), 1e-6);
+        assertEquals(217500, DpsCap.effective(600000, 150000, over), 1e-6);
+        assertEquals(281500, DpsCap.effective(7000000, 150000, over), 1e-6);
         assertEquals(150000, DpsCap.effective(1000000, 150000, List.of()), 1e-6, "沒寫分段：超過的全部不算");
         final DpsCap cap = new DpsCap();
         assertEquals(1000 * 195000 / 300000.0, cap.apply("a", 1000, 150000, over, 0, 300000), 1e-6, "照打假人的紀錄：每一下乘同一個比例");
-        // 沒打過假人、實際每秒打 50 萬：打一陣子之後等效大約 21.5 萬
+        // 沒打過假人、實際每秒打 50 萬：打一陣子之後等效大約 21.25 萬
         double dealt = 0;
         for (int tick = 0; tick < 20 * 20; tick += 2) {
             final double hit = cap.apply("b", 50000, 150000, over, tick, 0); // 每 2 tick 5 萬 = 每秒 50 萬
@@ -762,7 +766,7 @@ class MapTest {
                 dealt += hit;
             }
         }
-        assertEquals(215000, dealt / 10, 5000, "後 10 秒平均每秒");
+        assertEquals(212500, dealt / 10, 5000, "後 10 秒平均每秒");
         assertEquals(10, cap.apply("x", 10, 0, over, 0, 999999), 1e-9, "上限 0 = 不限");
         cap.forget(0);
     }

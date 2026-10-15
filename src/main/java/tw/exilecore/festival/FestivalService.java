@@ -1006,6 +1006,11 @@ public final class FestivalService {
         }
     }
 
+    /** 這是不是搗蛋南瓜的感應框（右鍵沿視線找實體時用：拿著武器時客戶端的準星停不到它）。 */
+    public boolean isPumpkin(final Entity entity) {
+        return pumpkins.containsKey(entity.getUniqueId());
+    }
+
     /** 右鍵了一個實體（FestivalModule）：是搗蛋南瓜就處理，回傳要不要取消事件。 */
     boolean interact(final Player player, final Entity entity) {
         final Pumpkin pumpkin = pumpkins.remove(entity.getUniqueId());
