@@ -85,6 +85,12 @@ public final class SkillConfig {
     private Map<String, Mounts.Spec> mountSpecs = Map.of();
     /** 連珠（2026-10）：技能代號 → 「下一次弓／矛的投射物攻擊重複」的設定（skills.yml 的 barrage 區塊）。 */
     private Map<String, BarrageSpec> barrages = Map.of();
+    /** 蓄力放開（2026-10，PoE2 的 Snipe、Perfect Strike、Flameblast）：技能代號 → skills.yml 的 charge 區塊。 */
+    private Map<String, ChargeSpec> charges = Map.of();
+    /** 專屬機制（2026-10，PoE2）：技能代號 → whirl（旋矛擊的旋風）、lance（霆落矛插地放電）、ember（星火連珠懸浮）。 */
+    private Map<String, String> signatures = Map.of();
+    /** signature 可以寫的值。 */
+    static final java.util.Set<String> SIGNATURES = java.util.Set.of("whirl", "lance", "ember", "bolt_spear"); // 2026-10-15：bolt_spear（擲雷槍）
     /** 主要寶石（2026-10，照 PoE2 的 Meta Gem）：技能代號 → skills.yml 的 meta 區塊（{@link MetaSpec}）。 */
     private Map<String, MetaSpec> metas = Map.of();
     /** 龍捲風（2026-10，照 PoE2 的龍捲射擊）：技能代號 → skills.yml 的 tornado 區塊。 */
@@ -134,6 +140,8 @@ public final class SkillConfig {
         final Map<String, Double> parsedParent = new HashMap<>();
         final Map<String, Mounts.Spec> parsedMounts = new HashMap<>();
         final Map<String, BarrageSpec> parsedBarrages = new HashMap<>();
+        final Map<String, ChargeSpec> parsedCharges = new HashMap<>();
+        final Map<String, String> parsedSignatures = new HashMap<>();
         final Map<String, MetaSpec> parsedMetas = new HashMap<>();
         final Map<String, TornadoSpec> parsedTornados = new HashMap<>();
         final Set<String> parsedMountOnly = new java.util.HashSet<>();
@@ -174,6 +182,17 @@ public final class SkillConfig {
             if (node.bool("requires_mount", false)) {
                 parsedMountOnly.add(id);
             }
+            final ChargeSpec charge = ChargeSpec.parse(node);
+            if (charge != null) {
+                parsedCharges.put(id, charge);
+            }
+            if (node.has("signature")) {
+                final String signature = node.string("signature", "").trim().toLowerCase(java.util.Locale.ROOT);
+                if (!SIGNATURES.contains(signature)) {
+                    throw new IllegalArgumentException(node.path() + ".signature：要寫 " + String.join("、", SIGNATURES) + "，卻是「" + signature + "」");
+                }
+                parsedSignatures.put(id, signature);
+            }
             final BarrageSpec barrage = BarrageSpec.parse(node);
             if (barrage != null) {
                 if (definition.mechanic() != Mechanic.GUARD) {
@@ -199,8 +218,8 @@ public final class SkillConfig {
             }
             if (node.has("parent_damage")) {
                 final double share = node.decimal("parent_damage", 0);
-                if (share <= 0 || share > 3) {
-                    throw new IllegalArgumentException(node.path() + ".parent_damage：要在 0 到 3 之間（原技能一下的倍數）");
+                if (share <= 0 || share > 5) {
+                    throw new IllegalArgumentException(node.path() + ".parent_damage：要在 0 到 5 之間（原技能一下的倍數）");
                 }
                 parsedParent.put(id, share);
             }
@@ -291,6 +310,8 @@ public final class SkillConfig {
         this.parentDamage = Map.copyOf(parsedParent);
         this.mountSpecs = Map.copyOf(parsedMounts);
         this.barrages = Map.copyOf(parsedBarrages);
+        this.charges = Map.copyOf(parsedCharges);
+        this.signatures = Map.copyOf(parsedSignatures);
         this.metas = Map.copyOf(parsedMetas);
         this.tornados = Map.copyOf(parsedTornados);
         this.mountOnly = Set.copyOf(parsedMountOnly);
@@ -507,6 +528,16 @@ public final class SkillConfig {
     /** 主要寶石的設定（2026-10）；不是主要寶石回傳 null。 */
     public MetaSpec meta(final String id) {
         return id == null ? null : metas.get(id);
+    }
+
+    /** 蓄力放開的設定（沒有回傳 null）。 */
+    public ChargeSpec charge(final String id) {
+        return id == null ? null : charges.get(id);
+    }
+
+    /** 專屬機制（whirl、lance、ember；沒有回傳 null）。 */
+    public String signature(final String id) {
+        return id == null ? null : signatures.get(id);
     }
 
     public BarrageSpec barrage(final String id) {

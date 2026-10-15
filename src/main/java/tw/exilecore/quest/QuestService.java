@@ -73,6 +73,46 @@ public final class QuestService {
         }
     }
 
+    /**
+     * /ec npc move 搬了劇情世界自動擺的劇情人物（2026-10-15）：把新位置寫回 data/quests.yml 的 place
+     * （at、y、yaw；只改那一行），之後重讀任務設定——不然區塊重新載入、重開伺服器時會被移回原位。
+     *
+     * @return null = 存好了（或這個人物不是自動擺的，不用存）；其他 = 存不了的原因
+     */
+    public String saveStoryPlace(final String id, final org.bukkit.Location to) {
+        final QuestConfig.Npc npc = config.npc(id);
+        if (npc == null || npc.placement() == null || storyNpcs == null) {
+            return null;
+        }
+        final org.bukkit.Location spot = storyNpcs.spots().get(id);
+        if (spot == null) {
+            return "找不到 " + id + " 原本的擺放位置（區域或檢查點不見了）";
+        }
+        if (to.getWorld() == null || !to.getWorld().equals(spot.getWorld())) {
+            return "劇情人物只能搬在劇情世界裡（" + spot.getWorld().getName() + "），不然會被收回去";
+        }
+        final QuestConfig.Placement place = npc.placement();
+        final double anchorX = spot.getX() - place.x();
+        final double anchorY = spot.getY() - place.y();
+        final double anchorZ = spot.getZ() - place.z();
+        final java.nio.file.Path file = plugin.dataFolder().resolve("data").resolve(QuestConfig.FILE);
+        try {
+            if (!java.nio.file.Files.exists(file)) {
+                return "data/" + QuestConfig.FILE + " 不存在";
+            }
+            final String changed = tw.exilecore.core.config.YamlPatch.storyPlacement(java.nio.file.Files.readString(file), id,
+                    to.getX() - anchorX, to.getZ() - anchorZ, Math.round(to.getY() - anchorY), Math.round(org.bukkit.Location.normalizeYaw(to.getYaw())));
+            if (changed == null) {
+                return "data/" + QuestConfig.FILE + " 裡找不到 " + id + " 的 place";
+            }
+            java.nio.file.Files.writeString(file, changed);
+        } catch (final java.io.IOException e) {
+            plugin.getSLF4JLogger().error("存劇情人物 {} 的位置失敗", id, e);
+            return "寫入 data/" + QuestConfig.FILE + " 失敗：" + e.getMessage();
+        }
+        return null;
+    }
+
     // ---- 狀態 ----
 
     /** 角色載入好了才有任務。 */

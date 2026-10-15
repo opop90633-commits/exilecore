@@ -584,6 +584,40 @@ essence_seeking:
   drop_level: 20
   description: "普通→魔法、魔法→稀有，一定帶「暴擊率」（武器、頭盔、項鍊、箭袋）"
   flavor: "總是落在最痛的地方。"
+# 2026-10-15：附加元素傷害的星魄（照 PoE2 的火焰、冰冷、閃電精髓）：武器是本地的「附加 X 傷害」，戒指、褲子、箭袋是攻擊的
+essence_blaze:
+  name: 炎擊星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: added_fire_local, added_fire_local_crossbow, added_fire
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  drop_level: 20
+  description: "普通→魔法、魔法→稀有，一定帶「附加火焰傷害」（武器、戒指、褲子、箭袋）"
+  flavor: "握著它的手，會一直覺得燙。"
+essence_rime:
+  name: 霜擊星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: added_cold_local, added_cold_local_crossbow, added_cold
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  drop_level: 20
+  description: "普通→魔法、魔法→稀有，一定帶「附加冰冷傷害」（武器、戒指、褲子、箭袋）"
+  flavor: "裂開的地方，結著一層霜。"
+essence_thunder:
+  name: 雷擊星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: added_lightning_local, added_lightning_local_crossbow, added_lightning
+  applies_to: { rarity: [NORMAL, MAGIC] }
+  drop_weight: 0
+  drop_level: 20
+  description: "普通→魔法、魔法→稀有，一定帶「附加閃電傷害」（武器、戒指、褲子、箭袋）"
+  flavor: "裡面困著一道還沒落下的雷。"
 essence_ward:
   name: 能盾星魄
   material: GLOW_INK_SAC

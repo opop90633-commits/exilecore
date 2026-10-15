@@ -130,7 +130,7 @@ public final class ChargeText {
 
     /** 不是某一種戰星、但跟戰星的獲得有關的屬性（2026-10）：charge.extra、charge.periodic、charge.event_cooldown.事件。 */
     public static boolean isGenerationStat(final String stat) {
-        return stat.equals("charge.extra") || stat.equals("charge.periodic")
+        return stat.equals("charge.extra") || stat.equals("charge.extra_random") || stat.equals("charge.periodic")
                 || stat.startsWith("charge.event_cooldown.") && EVENTS.containsKey(stat.substring("charge.event_cooldown.".length()));
     }
 
@@ -167,6 +167,9 @@ public final class ChargeText {
     public static String describe(final String stat, final double value, final String prefix) {
         if (stat.equals("charge.extra")) {
             return "獲得戰星時 " + number(value) + "% 機率多獲得一顆同種的";
+        }
+        if (stat.equals("charge.extra_random")) {
+            return "獲得戰星時 " + number(value) + "% 機率多獲得一顆隨機種類的";
         }
         if (stat.equals("charge.periodic")) {
             return "每分鐘獲得 " + number(value) + " 顆戰星（每 " + number(60 / Math.max(0.01, value)) + " 秒一顆；照最高的能力值：力量" + name("endurance")

@@ -56,7 +56,7 @@ final class StoryNpcs implements Listener {
             if (anchor == null || !anchor.world().equals(campaign.getName())) {
                 continue;
             }
-            spots.put(npc.id(), new Location(campaign, anchor.x() + place.x(), anchor.y(), anchor.z() + place.z(), place.yaw(), 0f));
+            spots.put(npc.id(), new Location(campaign, anchor.x() + place.x(), anchor.y() + place.y(), anchor.z() + place.z(), place.yaw(), 0f));
         }
         return spots;
     }

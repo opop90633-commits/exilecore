@@ -46,6 +46,8 @@ public final class ChargeService implements Listener {
     public static final String EVENT_COOLDOWN = "charge.event_cooldown.";
     /** 屬性鍵（2026-10）：獲得一顆戰星時多一顆同種的機率，FLAT 百分比點數；charge.extra（任何種類）或 charge.extra.代號。 */
     public static final String EXTRA = "charge.extra";
+    /** 2026-10-15（照 PoE2 的充能滿盈 II）：獲得戰星時 x% 機率再多一顆隨機種類的。 */
+    public static final String EXTRA_RANDOM = "charge.extra_random";
     /** 屬性鍵（2026-10）：每分鐘給幾顆戰星（照最高的能力值：力量 → 磐星、敏捷 → 怒星、智慧 → 銳星），FLAT；好幾個來源加起來。 */
     public static final String PERIODIC = "charge.periodic";
     /** 撲殺：稀有怪多給一顆、傳奇怪多給兩顆（照 PoE2）。 */
@@ -89,7 +91,7 @@ public final class ChargeService implements Listener {
             if (chance <= 0 || plugin.items().random().nextDouble() >= chance) {
                 continue;
             }
-            changed |= gainRolled(player, type, sheet, 0);
+            changed |= gainRolled(player, type, sheet, 0, 0);
         }
         if (changed) {
             plugin.players().markDirty(player); // 屬性表重算：多了球的效果
@@ -116,6 +118,10 @@ public final class ChargeService implements Listener {
             if (extra > 0) {
                 chances.put(EXTRA, extra / 100.0); // 2026-10：輔助寶石的「多一顆」只算這個技能給的
             }
+            final double random = effective.flat(EXTRA_RANDOM, context);
+            if (random > 0) {
+                chances.put(EXTRA_RANDOM, random / 100.0);
+            }
         }
         return chances == null ? Map.of() : chances;
     }
@@ -128,13 +134,14 @@ public final class ChargeService implements Listener {
         final StatSheet sheet = plugin.players().sheet(player);
         // 技能屬性表的 charge.extra 含玩家本身的（gainRolled 會再加一次），只留輔助寶石給的那份
         final double localExtra = Math.max(0, chances.getOrDefault(EXTRA, 0.0) - sheet.flat(EXTRA, java.util.Set.of()) / 100.0);
+        final double localRandom = Math.max(0, chances.getOrDefault(EXTRA_RANDOM, 0.0) - sheet.flat(EXTRA_RANDOM, java.util.Set.of()) / 100.0);
         boolean changed = false;
         for (final Map.Entry<String, Double> entry : chances.entrySet()) {
             final ChargeType type = config.type(entry.getKey());
             if (type == null || plugin.items().random().nextDouble() >= entry.getValue()) {
                 continue;
             }
-            changed |= gainRolled(player, type, sheet, localExtra);
+            changed |= gainRolled(player, type, sheet, localExtra, localRandom);
         }
         if (changed) {
             plugin.players().markDirty(player);
@@ -152,7 +159,7 @@ public final class ChargeService implements Listener {
         final StatSheet sheet = plugin.players().sheet(player);
         int grew = 0;
         for (int i = 0; i < count; i++) {
-            if (gainRolled(player, type, sheet, 0)) {
+            if (gainRolled(player, type, sheet, 0, 0)) {
                 grew++;
             }
         }
@@ -189,11 +196,20 @@ public final class ChargeService implements Listener {
      * 獲得一顆，再擲「多一顆同種的」（2026-10，照 PoE2 的「當你獲得一顆 X 時，有 N% 機率多一顆」）：
      * 機率 = 屬性表的 charge.extra 與 charge.extra.代號（百分比點數）＋ localExtra（輔助寶石只對被輔助的技能，0–1）。多出來的那顆不會再擲。
      */
-    private boolean gainRolled(final Player player, final ChargeType type, final StatSheet sheet, final double localExtra) {
+    private boolean gainRolled(final Player player, final ChargeType type, final StatSheet sheet, final double localExtra,
+                               final double localRandom) {
         boolean grew = gainOne(player, type, sheet);
         final double extra = (sheet.flat(EXTRA, java.util.Set.of()) + sheet.flat(EXTRA + "." + type.id(), java.util.Set.of())) / 100.0 + localExtra;
         if (extra > 0 && plugin.items().random().nextDouble() < Math.min(1, extra)) {
             grew |= gainOne(player, type, sheet);
+        }
+        // 2026-10-15（充能滿盈 II）：再擲一次「多一顆隨機種類的」
+        final double random = sheet.flat(EXTRA_RANDOM, java.util.Set.of()) / 100.0 + localRandom;
+        if (random > 0 && plugin.items().random().nextDouble() < Math.min(1, random)) {
+            final java.util.List<ChargeType> all = java.util.List.copyOf(config.types());
+            if (!all.isEmpty()) {
+                grew |= gainOne(player, all.get(plugin.items().random().nextInt(all.size())), sheet);
+            }
         }
         return grew;
     }
@@ -227,6 +243,8 @@ public final class ChargeService implements Listener {
             }).orElse(0);
         }
         final double localExtra = effective != null ? effective.flat(EXTRA, tags) / 100.0 - sheet.flat(EXTRA, java.util.Set.of()) / 100.0 : 0;
+        final double localRandom = effective != null
+                ? effective.flat(EXTRA_RANDOM, tags) / 100.0 - sheet.flat(EXTRA_RANDOM, java.util.Set.of()) / 100.0 : 0;
         boolean changed = false;
         boolean gave = false;
         for (final ChargeType type : config.types()) {
@@ -236,7 +254,7 @@ public final class ChargeService implements Listener {
             }
             gave = true;
             for (int i = 0; i <= bonus; i++) {
-                changed |= gainRolled(player, type, sheet, Math.max(0, localExtra));
+                changed |= gainRolled(player, type, sheet, Math.max(0, localExtra), Math.max(0, localRandom));
             }
         }
         if (gave) {
@@ -277,7 +295,7 @@ public final class ChargeService implements Listener {
             final double intel = sheet.get(StatKeys.INT);
             final String id = str >= dex && str >= intel ? "endurance" : dex >= intel ? "frenzy" : "power";
             final ChargeType type = config.type(id);
-            if (type != null && gainRolled(player, type, sheet, 0)) {
+            if (type != null && gainRolled(player, type, sheet, 0, 0)) {
                 plugin.players().markDirty(player);
             }
         }

@@ -69,6 +69,10 @@ public final class SkillService {
         return decals;
     }
     private final Warcries warcries;
+    /** 照 PoE2 做的專屬機制（2026-10）：蓄力放開、旋矛擊的旋風、霆落矛插地、星火連珠懸浮。 */
+    private final Signatures signatures;
+    /** 蓄力技能放開之後要等這一招攻擊／施法間隔的幾成才能做別的（蓄力的時間就是出手的時間）。 */
+    static final double RELEASE_RECOVERY = 0.25;
     /** 連段、榮耀、元素灌注（2026-10 PoE2）。 */
     private final SkillResources resources;
     private final BossSkills bossSkills;
@@ -106,6 +110,7 @@ public final class SkillService {
         this.minions.setAuras(auras);
         this.gems = new GemService(plugin, this);
         this.hold = new HoldToCast(plugin, this);
+        this.signatures = new Signatures(plugin, this);
     }
 
     /** 戰吼（嘲諷的監聽要註冊）。 */
@@ -154,6 +159,7 @@ public final class SkillService {
         minions.forget(player.getUniqueId());
         buffs.forget(player.getUniqueId());
         auras.forget(player.getUniqueId());
+        signatures.forget(player.getUniqueId());
     }
 
     SkillZones zones() {
@@ -703,6 +709,7 @@ public final class SkillService {
     }
 
     private void tickPlayerInner(final Player player, final SkillRuntime runtime, final long now) {
+        signatures.tick(player, runtime, now); // 2026-10：蓄力放開、旋風、插地的矛、火星
         if (runtime.leap != null) {
             updateLeap(player, runtime, now);
             return;
@@ -820,7 +827,7 @@ public final class SkillService {
     }
 
     /** 真正放一次。 */
-    private void perform(final Player player, final SkillRuntime runtime, final int key, final LivingEntity target, final long now) {
+    void perform(final Player player, final SkillRuntime runtime, final int key, final LivingEntity target, final long now) {
         final java.util.UUID previousFx = Fx.source(player.getUniqueId()); // 2026-10：隱藏別人的技能特效
         try {
             performInner(player, runtime, key, target, now);
@@ -836,6 +843,9 @@ public final class SkillService {
         final Resolved pressed = resolve(state, key);
         SkillBuild build = build(state, sheet, pressed).rollElement(sheet, plugin.items().random());
         final SkillDefinition definition = build.definition();
+        if (runtime.charging != null && !runtime.charging.skillId.equals(definition.id())) {
+            runtime.charging = null; // 蓄力中按了別的技能：這次蓄力取消
+        }
         if (inTown(player) && definition.mechanic() != Mechanic.AURA) {
             fail(player, runtime, state, "營地裡不能戰鬥", now); // 光環在營地也能開關
             return;
@@ -908,6 +918,15 @@ public final class SkillService {
             fail(player, runtime, state, problem, now);
             return;
         }
+        // 2026-10 蓄力放開（PoE2 的穿雲箭、蓄勁一擊、炎核爆）：按下去先蓄力，放開（Signatures 偵測到）才真的出手
+        final ChargeSpec chargeSpec = config.charge(definition.id());
+        final SkillRuntime.Release release = chargeSpec != null && runtime.releasing != null
+                && runtime.releasing.skillId().equals(definition.id()) ? runtime.releasing : null;
+        runtime.releasing = null;
+        if (chargeSpec != null && release == null) {
+            signatures.press(player, runtime, state, key, definition, build, chargeSpec, preferred, sheet, now);
+            return;
+        }
         final ResourceSpec resourceSpec = config.resource(definition.id());
         final int cost = build.manaCost();
         // 血魔法（2026-10 PoE2 基石）：沒有魔力，技能的消耗改扣生命
@@ -948,7 +967,7 @@ public final class SkillService {
         // 冰緩讓攻擊與施法變慢（動作速度 0.7 = 間隔 ÷ 0.7）
         final double speed = plugin.ailments() == null ? 1.0 : Math.max(0.05, plugin.ailments().actionSpeed(player));
         final double interval = build.intervalTicks(sheet) / speed;
-        runtime.readyAt = SkillMath.nextReady(runtime.readyAt, now, interval);
+        runtime.readyAt = SkillMath.nextReady(runtime.readyAt, now, release != null && chargeSpec.stages() <= 0 ? interval * RELEASE_RECOVERY : interval);
         if (key != SkillLoadout.KEY_LEFT && key != SkillLoadout.KEY_SNEAK_LEFT) {
             player.swingMainHand(); // 左鍵客戶端自己會揮手；右鍵、數字鍵要伺服器揮
         }
@@ -1074,11 +1093,20 @@ public final class SkillService {
         }
         resources.beforeCast(player, build.profile().effective(sheet), build.profile().tags()); // 2026-10：終式、怒鑄
         // 2026-10：元素灌注：有 infusion.consume 的用掉身上每種灌注各一層換這一下的加成
-        final List<tw.exilecore.stats.Modifier> infused = resources.consumeInfusion(player, build.profile().effective(sheet), build.profile().tags());
+        final int[] infusionUsed = new int[3];
+        final List<tw.exilecore.stats.Modifier> infused = resources.consumeInfusion(player, build.profile().effective(sheet), build.profile().tags(),
+                infusionUsed);
         if (!infused.isEmpty()) {
             build = build.withProfile(build.profile().withLocal(infused));
-            state.notice("<#ffd27f>" + ItemRenderer.escape(definition.name()) + " 用掉灌注", now + 20);
         }
+        final String infusionText = resources.infusionUsed(player, ItemRenderer.escape(definition.name()), infusionUsed); // 2026-10-15：寫清楚用掉哪幾種
+        if (infusionText != null) {
+            state.notice(infusionText, now + 40);
+        }
+        if (release != null) {
+            build = signatures.applyRelease(player, state, build, chargeSpec, release, now); // 完美時機、疊層
+        }
+        build = signatures.beforeCast(player, definition, build, state, now); // 2026-10-15：霆落矛、擲雷槍消耗狂怒球
         final java.util.List<String> commanded = config.command(definition.id());
         final Mounts.Spec mountSpec = config.mount(definition.id());
         if (mountSpec == null && !definition.isAttack() && !config.requiresMount(definition.id()) && mounts().mounted(player)) {
@@ -1103,6 +1131,9 @@ public final class SkillService {
                 }
                 executor.executeFrom(Origin.at(player, from, direction.normalize()), build, aim);
             }
+        } else if ("ember".equals(config.signature(definition.id()))) {
+            airborne = 0;
+            signatures.conjureEmber(player, build, preferred, now); // 星火連珠（PoE2）：火星先懸在頭上
         } else {
             airborne = executor.execute(player, runtime, build, preferred, now);
         }
@@ -1113,6 +1144,13 @@ public final class SkillService {
         if (definition.mechanic() != Mechanic.LEAP) {
             procs().onUse(player, definition, useLocation(player, definition, build, preferred)); // 2026-10：輔助觸發的專屬技能
         } // 跳躍：落地時才算「放了這個技能」（updateLeap），躍電的帶電地面在落地點（衝刺是瞬間到終點，本來就在落地點）
+        if (release != null && release.perfect()) {
+            procs().event(player, definition.id(), "perfect", player.getLocation(), preferred); // 完美時機放開（蓄勁一擊的火浪）
+        }
+        if (config.signature(definition.id()) != null) {
+            signatures.afterCast(player, definition, build, useLocation(player, definition, build, preferred), now); // 旋風、插地的矛
+        }
+        signatures.detonateNear(player, definition, useLocation(player, definition, build, preferred)); // 2026-10-15：其他技能引爆霆落矛
         // 2026-10：幻弓影：弓的攻擊過一下由身旁的幻影再射一次（傷害少很多）
         if (definition.isAttack() && definition.weapons().contains("bow") && !definition.hidden() && definition.cooldown() <= 0
                 && StatKeys.flag(state.sheet(), StatKeys.FLAG_MIRAGE)) {

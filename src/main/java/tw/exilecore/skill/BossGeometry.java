@@ -128,6 +128,48 @@ public final class BossGeometry {
         return start + (end - start) * elapsed / (double) total;
     }
 
+    /** 收縮中放殞星迷宮：最外圈不超過圈半徑的這個比例。 */
+    public static final double MAZE_ARENA_SHARE = 0.8;
+    /** 收縮中放殞星迷宮：最多幾圈。 */
+    public static final int MAZE_ARENA_RINGS = 2;
+    /** 收縮中放殞星迷宮：每圈至少幾個缺口。 */
+    public static final int MAZE_ARENA_GAPS = 3;
+
+    /**
+     * 殞星迷宮跟萬界崩解（場地收縮）一起出現時（2026-10）：牆整個縮進安全圈裡、最多兩圈、每圈至少三個缺口，
+     * 一定有路走。arenaRadius 是牆消失那一刻的圈半徑；沒有收縮（≤ 0）照原本的。回傳 {reach, rings, gaps}。
+     */
+    public static double[] mazeInArena(final double reach, final int rings, final int gaps, final double arenaRadius) {
+        if (arenaRadius <= 0) {
+            return new double[] {reach, rings, gaps};
+        }
+        return new double[] {Math.min(reach, arenaRadius * MAZE_ARENA_SHARE), Math.min(rings, MAZE_ARENA_RINGS),
+                Math.max(gaps, MAZE_ARENA_GAPS)};
+    }
+
+    /** 場地收縮中：只落一個的招（滅世殞星、它的荒蕪）最大是圈半徑的這個比例。 */
+    public static final double ARENA_SINGLE_SHARE = 0.4;
+    /** 場地收縮中：一次落好幾個的招（殞星三顆）每個最大是圈半徑的這個比例。 */
+    public static final double ARENA_MULTI_SHARE = 0.3;
+    /** 場地收縮中：落點散布最多是圈半徑的這個比例。 */
+    public static final double ARENA_SCATTER_SHARE = 0.6;
+    /** 場地收縮中：留在地上的（荒蕪）最多幾秒。 */
+    public static final double ARENA_ZONE_SECONDS = 8;
+
+    /**
+     * 場地收縮（萬界崩解、天穹收攏）中落在腳下的招（2026-10）：範圍照圈的大小縮小，圈裡一定留得出地方躲；傷害不變。
+     * arenaRadius 是落下那一刻的圈半徑（≤ 0 = 沒有收縮，照原本的）。回傳 {radius, scatter, duration}。
+     */
+    public static double[] fitArena(final double radius, final int count, final double scatter, final double duration,
+                                    final boolean lingers, final double arenaRadius) {
+        if (arenaRadius <= 0) {
+            return new double[] {radius, scatter, duration};
+        }
+        final double share = count > 1 ? ARENA_MULTI_SHARE : ARENA_SINGLE_SHARE;
+        return new double[] {Math.min(radius, arenaRadius * share), Math.min(scatter, arenaRadius * ARENA_SCATTER_SHARE),
+                lingers ? Math.min(duration, ARENA_ZONE_SECONDS) : duration};
+    }
+
     /** 在圈外（身體完全出去才算：中心離圈心超過半徑再加半個身體）。 */
     public static boolean outsideArena(final double cx, final double cz, final double radius, final double px, final double pz,
                                        final double halfBody) {

@@ -57,7 +57,7 @@ class SkillConfigTest {
                 "herald_of_ash", "herald_of_thunder", "herald_of_ice", "fortifying_cry", "infernal_cry", "seismic_cry", "bear_maul")),
                 visible.toString());
         assertEquals("leap_slam", visible.getFirst(), "照檔案裡的順序");
-        assertEquals(332, config.all().size(), "271 個技能 + 7 種普攻 + 54 個隱藏的效果（使者、觸發…）");
+        assertEquals(342, config.all().size(), "271 個技能 + 7 種普攻 + 64 個隱藏的效果（使者、觸發…）");
         for (final SkillDefinition definition : config.all()) {
             assertTrue(SkillConfig.VISUALS.contains(definition.visual()), definition.id());
             if (definition.mechanic() == Mechanic.WARCRY) {

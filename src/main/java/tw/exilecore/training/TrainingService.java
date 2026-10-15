@@ -182,6 +182,56 @@ public final class TrainingService {
         return nearY;
     }
 
+    /** 全部假人的代號（/ec dummy move 的提示）。 */
+    public List<String> dummyIds() {
+        final List<String> ids = new ArrayList<>();
+        for (final DummyConfig.Dummy dummy : config.dummies()) {
+            ids.add(dummy.id());
+        }
+        return ids;
+    }
+
+    /**
+     * 把一隻假人搬到這個位置（2026-10-15，/ec dummy move）：算出相對營地落點的 offset 與面向，寫回 data/dummies.yml
+     * （只改那兩行，註解都留著），再重讀設定——重開伺服器也在新位置。每人一組的假人一起搬。
+     *
+     * @return 不能搬的原因；成功 null
+     */
+    public String moveDummy(final String id, final Location to) {
+        final DummyConfig.Dummy dummy = config.dummy(id);
+        if (dummy == null) {
+            return "沒有這隻假人：" + id;
+        }
+        final Location camp = camp();
+        if (camp == null || camp.getWorld() == null) {
+            return "找不到營地（區域模組沒有營地）";
+        }
+        if (to.getWorld() == null || !to.getWorld().equals(camp.getWorld())) {
+            return "假人只能放在營地那個世界（" + camp.getWorld().getName() + "）";
+        }
+        final java.nio.file.Path folder = plugin.dataFolder().resolve("data");
+        final java.nio.file.Path file = folder.resolve(DummyConfig.FILE);
+        try {
+            if (!java.nio.file.Files.exists(file)) {
+                return "data/" + DummyConfig.FILE + " 不存在（目前用的是程式的預設值），先放一份設定檔再搬";
+            }
+            final String text = java.nio.file.Files.readString(file);
+            final float yaw = Math.round(Location.normalizeYaw(to.getYaw()));
+            final String changed = tw.exilecore.core.config.YamlPatch.dummyPlacement(text, dummy.id(),
+                    to.getX() - camp.getX(), to.getZ() - camp.getZ(), yaw);
+            if (changed == null) {
+                return "data/" + DummyConfig.FILE + " 的 dummies 裡找不到 " + dummy.id() + "（程式預設的假人要先寫進設定檔）";
+            }
+            java.nio.file.Files.writeString(file, changed);
+            config.load(folder);
+        } catch (final java.io.IOException | RuntimeException e) {
+            plugin.getSLF4JLogger().error("搬訓練假人 {} 失敗", id, e);
+            return "寫入或重讀 data/" + DummyConfig.FILE + " 失敗：" + e.getMessage();
+        }
+        reloaded();
+        return null;
+    }
+
     /** 練習場（所有假人的外框往外 arena_margin 格）：在裡面可以施放技能。 */
     public boolean inArena(final Location location) {
         final Location camp = camp();

@@ -1333,6 +1333,9 @@ public final class MapService {
         if (ticks % 20 == 10) {
             guarded("卡住的怪", this::unstick);
         }
+        if (ticks % 10 == 3) {
+            guarded("卡在牆裡的怪", this::unembed);
+        }
     }
 
     /** 卡住偵測（2026-10）：每隻追著玩家的地圖怪上次檢查時的位置與連續卡住的次數。 */
@@ -1395,6 +1398,115 @@ public final class MapService {
         stuck.keySet().retainAll(seen);
     }
 
+    /** 卡在牆裡（身體跟方塊重疊）連續幾次檢查才挪出來（每 0.5 秒檢查一次；被推撞牆的那一下會自己彈開，不算）。 */
+    private static final int EMBED_CHECKS = 2;
+    /** 卡在牆裡的怪：連續幾次檢查都卡著。 */
+    private final Map<UUID, Integer> embedded = new HashMap<>();
+
+    /**
+     * 卡在牆裡的地圖怪（2026-10-15）：碰撞箱跟方塊重疊（刷在柱子、道具上，被推、被傳送進牆裡，體型大的貼著牆刷出來…），
+     * 不管有沒有在追人、是不是 Boss，連續 {@link #EMBED_CHECKS} 次都卡著就挪到附近最近的空地（{@link #freeSpot}）。
+     */
+    private void unembed() {
+        final World maps = world();
+        if (maps == null || instances.isEmpty()) {
+            embedded.clear();
+            return;
+        }
+        final Set<UUID> seen = new HashSet<>();
+        for (final LivingEntity entity : maps.getLivingEntities()) {
+            if (entity instanceof Player || !entity.isValid() || entity.isDead() || entity.isInsideVehicle()) {
+                continue;
+            }
+            final MapInstance instance = instanceOf(entity);
+            if (instance == null || !isEmbedded(entity)) {
+                continue;
+            }
+            seen.add(entity.getUniqueId());
+            final int count = embedded.merge(entity.getUniqueId(), 1, Integer::sum);
+            if (count >= EMBED_CHECKS) {
+                freeFromWalls(instance, entity);
+                embedded.remove(entity.getUniqueId());
+            }
+        }
+        embedded.keySet().retainAll(seen);
+    }
+
+    /**
+     * 這隻的碰撞箱（稍微縮一點，貼著牆、站在地上的不算）有沒有跟方塊重疊。只看會動的怪（盔甲座、標籤不算）；
+     * 惱鬼本來就穿牆，不算。
+     */
+    static boolean isEmbedded(final LivingEntity entity) {
+        if (!(entity instanceof org.bukkit.entity.Mob) || entity instanceof org.bukkit.entity.Vex) {
+            return false;
+        }
+        return entity.getWorld().hasCollisionsIn(entity.getBoundingBox().expand(-0.06));
+    }
+
+    /**
+     * 卡在牆裡的話挪到附近最近的空地（地圖的地板上、整個碰撞箱放得下、腳下是實心的）；沒卡住、找不到空地都不動。
+     *
+     * @return 有沒有挪
+     */
+    boolean freeFromWalls(final MapInstance instance, final LivingEntity entity) {
+        if (!isEmbedded(entity)) {
+            return false;
+        }
+        final Location spot = freeSpot(instance, entity);
+        if (spot == null) {
+            return false;
+        }
+        entity.teleport(spot);
+        return true;
+    }
+
+    /** 由近到遠（最遠 6 格）找一個放得下這隻的位置；找不到 null。 */
+    private static Location freeSpot(final MapInstance instance, final LivingEntity entity) {
+        final Location at = entity.getLocation();
+        final org.bukkit.util.BoundingBox box = entity.getBoundingBox();
+        final double halfX = box.getWidthX() / 2;
+        final double halfZ = box.getWidthZ() / 2;
+        final double height = box.getHeight();
+        final int cx = at.getBlockX();
+        final int cz = at.getBlockZ();
+        Location best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (int radius = 0; radius <= 6 && best == null; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                        continue; // 只看這一圈
+                    }
+                    final int bx = cx + dx;
+                    final int bz = cz + dz;
+                    if (!instance.layout().isFloor(bx - instance.originX(), bz - instance.originZ())) {
+                        continue;
+                    }
+                    for (int up = 1; up <= 2; up++) { // 地板上一格；有台階、道具墊高的再上一格
+                        final double y = MapLayout.FLOOR_Y + up;
+                        final double x = bx + 0.5;
+                        final double z = bz + 0.5;
+                        final org.bukkit.util.BoundingBox there = new org.bukkit.util.BoundingBox(x - halfX, y, z - halfZ, x + halfX, y + height, z + halfZ)
+                                .expand(-0.06);
+                        if (entity.getWorld().hasCollisionsIn(there)) {
+                            continue;
+                        }
+                        if (entity.getWorld().getBlockAt(bx, (int) y - 1, bz).isPassable()) {
+                            continue; // 腳下要是實心的
+                        }
+                        final double distance = (x - at.getX()) * (x - at.getX()) + (z - at.getZ()) * (z - at.getZ());
+                        if (distance < bestDistance) {
+                            bestDistance = distance;
+                            best = new Location(entity.getWorld(), x, y, z, at.getYaw(), at.getPitch());
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
     /** 往側面（左右，找不到再往後）挪 1.5 格：要是地圖裡的地板、身體兩格是空的。 */
     private void sidestep(final MapInstance instance, final org.bukkit.entity.Mob mob, final Player target) {
         final Location at = mob.getLocation();
@@ -1419,6 +1531,10 @@ public final class MapService {
             if (!spot.getBlock().isPassable() || !spot.clone().add(0, 1, 0).getBlock().isPassable()
                     || spot.clone().add(0, -1, 0).getBlock().isPassable()) {
                 continue;
+            }
+            final org.bukkit.util.BoundingBox box = mob.getBoundingBox();
+            if (mob.getWorld().hasCollisionsIn(box.clone().shift(spot.getX() - at.getX(), spot.getY() - at.getY(), spot.getZ() - at.getZ()).expand(-0.06))) {
+                continue; // 體型大的：整個碰撞箱要放得下，不然挪過去就卡進牆裡
             }
             spot.setYaw(at.getYaw());
             spot.setPitch(at.getPitch());
@@ -1451,6 +1567,7 @@ public final class MapService {
             final Location floor = new Location(maps, at.getX(), MapLayout.FLOOR_Y + 1, at.getZ(), at.getYaw(), at.getPitch());
             if (instance.insideWalls(floor)) {
                 entity.teleport(floor);
+                freeFromWalls(instance, entity); // 放回去的地方是柱子、道具的話再挪到旁邊的空地
                 continue;
             }
             Player nearest = null;

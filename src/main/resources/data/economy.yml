@@ -41,6 +41,9 @@ values:
   essence_seeking: 90
   essence_torment: 90
   essence_ward: 70
+  essence_blaze: 80                # 2026-10-15：附加元素傷害的星魄（跟攻速星魄同價）
+  essence_rime: 80
+  essence_thunder: 80
   catalyst_resist: 108
   catalyst_life: 108
   catalyst_attack: 108

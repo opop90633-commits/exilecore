@@ -482,6 +482,12 @@ public final class DamageCalculator {
             return 0;
         }
         double baseCrit = skill.isAttack() ? attacker.flat(StatKeys.WEAPON_CRIT, skill.tags()) : BASE_SPELL_CRIT;
+        if (!skill.isAttack()) {
+            final double own = attacker.flat(StatKeys.SPELL_BASE_CRIT, skill.tags()); // 2026-10-15：照 PoE2，每個法術自己的基礎暴擊率
+            if (own > 0) {
+                baseCrit = own;
+            }
+        }
         if (!skill.isAttack() && skill.tags().contains(Tags.SPELL) && StatKeys.flag(attacker, StatKeys.FLAG_SPELL_BASE_CRIT)) {
             baseCrit = Math.max(baseCrit, 15); // 撕裂血肉（血術士）：法術的基礎暴擊率 15%
         }

@@ -21613,6 +21613,52 @@ item support_void_legion
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
+item support_shattering_strike
+  a=140a04
+  b=6d503b
+  c=261c14
+  d=4a280f
+  e=190e05
+  f=ffc86a
+  g=47260e
+  h=180d04
+  i=44240d
+  j=170c04
+  k=fff4d0
+  l=41230c
+  m=160c04
+  n=150b04
+  o=140a03
+  p=ffffff
+  q=130a03
+  r=120903
+  s=321a09
+  t=110903
+  u=2f1908
+  v=100802
+  w=2c1707
+  x=0f0802
+  y=291506
+  z=0e0702
+  A=261406
+  B=0d0702
+  .aaaaaaaaaaaaaa.
+  abbbbbccccbbbbba
+  adddeeffffeeddda
+  agghfffhhfffhgga
+  aijffjjkkjjffjia
+  almfmkkkkkkmfmla
+  anffnknnnnknffna
+  aofokkoppokkofoa
+  aqfqkkqppqkkqfqa
+  arffrkrrrrkrffra
+  astftkkkkkktftsa
+  auvffvvkkvvffvua
+  awwxfffxxfffxwwa
+  ayyyzzffffzzyyya
+  aAAAAABBBBAAAAAa
+  .aaaaaaaaaaaaaa.
+
 item support_fire_mastery
   a=100e0c
   b=67625d

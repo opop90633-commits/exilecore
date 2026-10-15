@@ -79,7 +79,8 @@ class BalanceTest {
             //   現狀：擊殺約 1.2～2.6 倍（30 級後怪物偏硬）、法術 43 級起 1.5～2 倍、1 級被打只有目標的一半。
             //   先擋住「比現狀更糟」，調好之後把範圍改回目標。
             assertTrue(kill > 0.8 && kill < 2.8, "等級 " + level + " 攻擊擊殺 " + row.attackSeconds() + " 秒，目標 " + row.targetSeconds());
-            assertTrue(row.spellRatio() > 0.5 && row.spellRatio() < 2.1, "等級 " + level + " 法術是攻擊的 " + row.spellRatio());
+            // 2026-10-15：法術改成照 PoE2 各自的基礎暴擊率（5%～15%，以前全部 5%），上限 2.1 → 2.25
+            assertTrue(row.spellRatio() > 0.5 && row.spellRatio() < 2.25, "等級 " + level + " 法術是攻擊的 " + row.spellRatio());
             final double hit = row.hitPercent() / row.targetHitPercent();
             assertTrue(hit > 0.45 && hit < 1.25, "等級 " + level + " 被打一下扣 " + row.hitPercent() + "%，目標 " + row.targetHitPercent());
             assertTrue(row.attack().dps() >= previousAttack * 0.98, "等級 " + level + " 參考角色的輸出不該變低");

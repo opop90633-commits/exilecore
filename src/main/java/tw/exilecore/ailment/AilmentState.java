@@ -131,6 +131,8 @@ public final class AilmentState {
     private final List<Ignite> ignites = new ArrayList<>();
     private final List<Ignite> bleeds = new ArrayList<>();
     private final List<Ignite> poisons = new ArrayList<>();
+    /** 混沌持續傷害的減益（2026-10，PoE2 的汲魂彈、疫潮）：技能代號 → 那個減益（同一種不疊加：留每秒傷害高的、時間取長的）。 */
+    private final java.util.Map<String, Debuff> debuffs = new java.util.HashMap<>();
     private double chill;
     private long chillEnd;
     private double shock;
@@ -236,6 +238,58 @@ public final class AilmentState {
         for (final Ignite poison : poisons(now)) {
             if (poison.source() != null && (strongest == null || poison.dps() > strongest.dps())) {
                 strongest = poison;
+            }
+        }
+        return strongest == null ? null : strongest.source();
+    }
+
+    // ---- 混沌減益（2026-10）----
+
+    /**
+     * 一個混沌持續傷害的減益。
+     *
+     * @param spread  死掉時會不會傳染給附近的敵人（疫潮）
+     * @param spreads 已經傳了幾手（每傳一手傷害更多，有上限）
+     * @param base    第一手的每秒傷害（傳染時照它算，不會越傳越大到沒上限）
+     */
+    public record Debuff(double dps, long endTick, UUID source, boolean spread, int spreads, double base) {
+    }
+
+    /** 加一個減益：同一種已經有的話，留每秒傷害高的那個、結束時間取比較晚的。 */
+    public void addDebuff(final String key, final Debuff debuff) {
+        if (debuff.dps() <= 0) {
+            return;
+        }
+        final Debuff old = debuffs.get(key);
+        if (old == null || debuff.dps() >= old.dps()) {
+            debuffs.put(key, old == null || debuff.endTick() >= old.endTick() ? debuff
+                    : new Debuff(debuff.dps(), old.endTick(), debuff.source(), debuff.spread(), debuff.spreads(), debuff.base()));
+        } else if (debuff.endTick() > old.endTick()) {
+            debuffs.put(key, new Debuff(old.dps(), debuff.endTick(), old.source(), old.spread(), old.spreads(), old.base()));
+        }
+    }
+
+    /** 還在的減益（丟掉結束的）。 */
+    public java.util.Map<String, Debuff> debuffs(final long now) {
+        debuffs.values().removeIf(debuff -> debuff.endTick() <= now);
+        return java.util.Map.copyOf(debuffs);
+    }
+
+    /** 所有減益加起來每秒多少傷害。 */
+    public double debuffDps(final long now) {
+        double total = 0;
+        for (final Debuff debuff : debuffs(now).values()) {
+            total += debuff.dps();
+        }
+        return total;
+    }
+
+    /** 傷害最高的減益的來源。 */
+    public UUID debuffSource(final long now) {
+        Debuff strongest = null;
+        for (final Debuff debuff : debuffs(now).values()) {
+            if (debuff.source() != null && (strongest == null || debuff.dps() > strongest.dps())) {
+                strongest = debuff;
             }
         }
         return strongest == null ? null : strongest.source();
@@ -398,7 +452,7 @@ public final class AilmentState {
 
     /** 還有沒有要追蹤的東西（沒有就可以丟掉這份狀態）。 */
     public boolean isEmpty(final long now) {
-        return ignite(now) == null && bleed(now) == null && poisons(now).isEmpty() && chill(now) <= 0 && shock(now) <= 0
+        return ignite(now) == null && bleed(now) == null && poisons(now).isEmpty() && debuffs(now).isEmpty() && chill(now) <= 0 && shock(now) <= 0
                 && freeze.idle(now) && stun.idle(now) && electrocute.idle(now)
                 && lightStunUntil <= now && armourBroken(now) <= 0 && !fullyBroken(now);
     }
@@ -431,6 +485,7 @@ public final class AilmentState {
         ignites.clear();
         bleeds.clear();
         poisons.clear();
+        debuffs.clear();
         chill = 0;
         chillEnd = 0;
         shock = 0;

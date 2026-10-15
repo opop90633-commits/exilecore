@@ -64,8 +64,6 @@ npc_skins:
 # 跟管理網頁的全服加成、贊助的全服加倍一起算：經驗、金幣相乘，數量、稀有度相加。
 online_bonus:
   enabled: true
-  idle-minutes: 5
-  one-per-ip: true
   tiers:
     - { players: 10,  experience: 5 }
     - { players: 20,  experience: 5,  quantity: 5 }

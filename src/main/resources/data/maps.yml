@@ -884,7 +884,7 @@ finals:
       mythic: ExileCore_Awakener
       named: true
       life: 53.8        # 2026-10：照打白怪假人每秒 15 萬（打 Boss 9 萬）單人打 3 分半鐘算的（T16 ×11.7 之後約 1,890 萬生命）
-      damage: 2.4
+      damage: 2.9       # 2026-10-15：2.4 → 3.4 → 2.9（第二、三階段再更多 30%、40%）
       scale: 1.6
       mods: [resistant, swift]
       intro: "「四個王，你都打倒了？……傲慢。那就換我來——感受吧，虛空的戰慄。」"
@@ -959,7 +959,7 @@ finals:
           - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
           - { support: abyssal_touch, chance: 0.02 }       # 2026-10：1% → 2%
           - { support: myriad_stars, chance: 0.02 }        # 2026-10：1% → 2%
-          # 虛星專屬的輔助寶石（supports.yml 的 source: awakener；7 顆各 1%，一次大約 7% 至少掉一顆）
+          # 虛星專屬的輔助寶石（supports.yml 的 source: awakener；8 顆各 1%，一次大約 8% 至少掉一顆）
           - { support: oblivion_focus, chance: 0.01 }
           - { support: storm_maze_heart, chance: 0.01 }
           - { support: rift_echo, chance: 0.01 }
@@ -967,6 +967,7 @@ finals:
           - { support: phantom_double, chance: 0.01 }
           - { support: world_collapse, chance: 0.01 }
           - { support: void_legion, chance: 0.01 }
+          - { support: shattering_strike, chance: 0.01 }   # 2026-10-15：碎界擴散（打擊的近戰擴散）
           # 虛星專屬的技能寶石（skills.yml 的 source: awakener；直接 20 級；6 顆各 1%，一次大約 6% 至少掉一顆）
           - { skill: void_meteor, chance: 0.01 }
           - { skill: oblivion_ray, chance: 0.01 }

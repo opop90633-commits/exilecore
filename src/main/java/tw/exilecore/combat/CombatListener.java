@@ -616,6 +616,11 @@ public final class CombatListener implements Listener {
                 numbers.takenWord((Player) defender, result.blocked() ? "格擋" : "閃避"); // 自己閃掉、擋掉
                 if (result.blocked()) {
                     plugin.players().get((Player) defender).markRecent(tw.exilecore.stats.Recently.BLOCK, plugin.getServer().getCurrentTick());
+                    // 2026-10-15（蛛巢壁壘）：格擋時讓攻擊者中毒，視同造成這麼多基礎混沌傷害
+                    final double blockPoison = defenderSheet.flat(StatKeys.BLOCK_POISON, java.util.Set.of());
+                    if (blockPoison > 0 && ailments != null && !(attacker instanceof Player)) {
+                        ailments.poisonFrom((Player) defender, attacker, blockPoison, defenderSheet);
+                    }
                 }
                 if (signatures != null) {
                     signatures.avoided((Player) defender, defenderSheet); // 虛步
@@ -786,7 +791,7 @@ public final class CombatListener implements Listener {
             final double dealt = result.dealt().get(type);
             if (dealt > 0) {
                 life += dealt * effective.flat(StatKeys.LEECH_LIFE_ELEMENTAL, skill.contextFor(type)) / 100.0;
-                if (elementalAll) {
+                if (elementalAll || type == DamageType.LIGHTNING && StatKeys.flag(effective, StatKeys.FLAG_LEECH_LIGHTNING)) {
                     // 神秘收割（亞馬遜）：元素傷害也照物理的偷取率偷取
                     life += dealt * effective.flat(StatKeys.LEECH_LIFE, skill.contextFor(DamageType.PHYSICAL)) / 100.0;
                 }

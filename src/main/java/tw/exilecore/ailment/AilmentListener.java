@@ -22,6 +22,7 @@ final class AilmentListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(final EntityDeathEvent event) {
+        service.spreadDebuffs(event.getEntity()); // 2026-10：疫潮死掉時傳染（清掉之前先看）
         service.clear(event.getEntity());
     }
 

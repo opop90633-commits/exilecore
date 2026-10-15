@@ -201,7 +201,7 @@ class CurrencySkinTest {
         }
         assertTrue(inFrame.containsKey("paper") && inFrame.containsKey("emerald"), "原版物品的照舊");
         assertTrue(UiPack.isArtKey(CurrencyArt.modelKey("spark_orb")));
-        assertTrue(UiPack.isArtKey(tw.exilecore.item.UniqueArt.modelKey("tomb_oath")));
+        assertTrue(UiPack.isArtKey(tw.exilecore.item.UniqueArt.modelKey("trophy_girdle")));
         assertFalse(UiPack.isArtKey("paper"));
         assertFalse(UiPack.isArtKey("life"));
         assertFalse(UiPack.isArtKey(null));

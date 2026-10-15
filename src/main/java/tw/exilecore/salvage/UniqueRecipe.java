@@ -13,7 +13,8 @@ import java.util.Locale;
 /**
  * 傳奇三換一（拆解台的「傳奇三換一」）：放進 {@code inputs} 件傳奇，換一件隨機的傳奇。純計算，不依賴 Bukkit。
  * <ul>
- *   <li>能放的：已鑑定、沒鎖定的傳奇。追逐級、極境專屬不能放（換掉太可惜）；已經不在 uniques.yml 的也不能放。</li>
+ *   <li>能放的：已鑑定、沒鎖定的傳奇。極境專屬不能放（換掉太可惜）；已經不在 uniques.yml 的也不能放。</li>
+ *   <li>追逐級（2026-10）：放 {@code inputs} 件追逐級，必定換一件隨機追逐級（{@link #chaseOutcomes}；可能換到同一種；不能跟一般傳奇混放）。</li>
  *   <li>換出來的池子：uniques.yml 的 sources 有 salvage.yml 的 {@code unique_recipe.sources} 其中一個
  *       （預設：地圖 Boss 池、六種地圖事件、兩個具名 Boss）。追逐級、極境專屬不管怎麼寫都不在池子裡。</li>
  *   <li>物品等級 = 放進去最高的那件；傳奇的 drop_level 要到。</li>
@@ -86,7 +87,7 @@ public final class UniqueRecipe {
         }
     }
 
-    /** 追逐級、極境專屬：不能放、也不會換到。 */
+    /** 追逐級、極境專屬：一般的三換一不會換到（追逐級另外照 {@link #chaseOutcomes} 換；極境專屬不能放）。 */
     public static boolean protectedUnique(final UniqueItem unique) {
         if (unique.chase()) {
             return true;
@@ -120,10 +121,31 @@ public final class UniqueRecipe {
         if (definition == null) {
             return "這件傳奇已經沒有了，不能換";
         }
-        if (protectedUnique(definition)) {
-            return definition.chase() ? "追逐級傳奇不能放（換掉太可惜）" : "極境專屬傳奇不能放（換掉太可惜）";
+        if (protectedUnique(definition) && !definition.chase()) {
+            return "極境專屬傳奇不能放（換掉太可惜）";
         }
         return null;
+    }
+
+    /** 已經放進來的是追逐級（firstChase）時，這件能不能一起放；可以回傳 null。 */
+    public static String mixProblem(final boolean firstChase, final boolean chase) {
+        if (firstChase == chase) {
+            return null;
+        }
+        return firstChase ? "追逐級只能跟追逐級一起換" : "追逐級不能跟一般傳奇混放（要放就全部放追逐級）";
+    }
+
+    /**
+     * 追逐級三換一（2026-10）：可能換到的追逐級（必定是追逐級、全部現役的追逐級隨機；放進去的那幾種也可能換到，不看 exclude_inputs）。
+     */
+    public static List<UniqueItem> chaseOutcomes(final Collection<UniqueItem> all, final int itemLevel) {
+        final List<UniqueItem> pool = new ArrayList<>();
+        for (final UniqueItem unique : all) {
+            if (unique.chase() && unique.weight() > 0 && unique.dropLevel() <= itemLevel) {
+                pool.add(unique);
+            }
+        }
+        return pool;
     }
 
     /** 換出來的物品等級：放進去最高的那件。 */
@@ -156,6 +178,10 @@ public final class UniqueRecipe {
                 }
             }
         }
+        return exclude(pool, settings, inputIds);
+    }
+
+    private static List<UniqueItem> exclude(final List<UniqueItem> pool, final Settings settings, final Collection<String> inputIds) {
         if (settings.excludeInputs()) {
             final List<UniqueItem> fresh = new ArrayList<>();
             for (final UniqueItem unique : pool) {

@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** data/uniques.yml：每件傳奇都讀得到、屬性與標籤遊戲真的會讀、掉落來源存在，特殊效果真的在物品上。 */
@@ -110,8 +111,8 @@ class UniqueDataTest {
     void everyUniqueLoadsWithValidStatsTagsAndSources() {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
-        assertEquals(102, repository.uniques().size(),
-                "終局 2 + 追逐級 4 + 其他終局 3 + 具名 Boss 2 + 共通 31（2026-10：＋德魯伊的獸魂符 4 件） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 10");
+        assertEquals(122, repository.uniques().size(),
+                "終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 40（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘）");
         final Set<String> names = new HashSet<>();
         for (final UniqueItem unique : repository.uniques()) {
             final String where = unique.id();
@@ -163,7 +164,7 @@ class UniqueDataTest {
     void sourcesSplitIntoBossOnlyAndFindableUniques() {
         // 2026-10 PoE2 改版：天穹之心、星爐、守陵者的誓約、觀星者的星盤…退役，換成新的一批
         final Set<String> finals = ids(repository.uniquesFor("final", 84));
-        assertEquals(Set.of("celestial_pivot", "meteor_anvil"), finals);
+        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark"), finals); // 2026-10-15：＋蛛巢壁壘（四個終局都掉）
         assertEquals(Set.of("gravewarden_maul"), ids(repository.uniquesFor("royal_tomb", 84)));
         assertEquals(Set.of("astrolabe_wand"), ids(repository.uniquesFor("observatory", 84)));
         // 新武器（弩、長棍、矛）都有自己的傳奇，地圖 Boss 會掉、僥倖石做得出來
@@ -197,7 +198,7 @@ class UniqueDataTest {
         }
         // 2026-10：巔峰 Boss（覺醒之主・虛星）自己的十件，物品等級 85 起；做不出來、賭不到、一般地圖 Boss 不掉
         final List<UniqueItem> awakener = repository.uniquesFor("awakener", 92);
-        assertEquals(10, awakener.size(), "虛星的專屬傳奇");
+        assertEquals(11, awakener.size(), "虛星的專屬傳奇（2026-10-15：＋神諭之矛）");
         assertTrue(repository.uniquesFor("awakener", 84).isEmpty(), "虛星的傳奇物品等級 85 起");
         for (final UniqueItem unique : awakener) {
             assertEquals(Set.of("awakener"), Set.copyOf(unique.sources()), unique.id());
@@ -208,35 +209,6 @@ class UniqueDataTest {
         return uniques.stream().map(UniqueItem::id).collect(Collectors.toSet());
     }
 
-    @Test
-    void specialEffectsEndUpOnTheRolledItem() {
-        final ItemData heart = generator.generateUnique(repository.unique("sky_heart"), 84, new Random(2));
-        assertEquals(6, heart.affixes().size());
-        assertEquals(1, total(heart, StatKeys.SKILL_LEVEL, Set.of()), 1e-9, "+1 全部技能等級");
-
-        final ItemData staff = generator.generateUnique(repository.unique("city_burner"), 84, new Random(3));
-        assertEquals(2, total(staff, StatKeys.SKILL_LEVEL, Set.of(Tags.SPELL, Tags.FIRE)), 1e-9);
-        final double explode = total(staff, StatKeys.KILL_EXPLODE, Set.of());
-        assertTrue(explode >= 5 && explode <= 8, "爆炸 " + explode);
-
-        final ItemData crossbow = generator.generateUnique(repository.unique("formation_breaker"), 84, new Random(4));
-        assertEquals(1, total(crossbow, StatKeys.SKILL_PROJECTILES, Set.of(Tags.CROSSBOW)), 1e-9, "用弩多一支");
-        assertEquals(0, sheetOf(crossbow).flat(StatKeys.SKILL_PROJECTILES, Set.of(Tags.BOW)), 1e-9, "換成弓就沒有");
-
-        final ItemData shell = generator.generateUnique(repository.unique("hollow_shell"), 84, new Random(5));
-        assertTrue(StatKeys.flag(sheetOf(shell), StatKeys.FLAG_CHAOS_IMMUNE), "空殼給混沌免疫");
-
-        final ItemData boots = generator.generateUnique(repository.unique("frostbite"), 84, new Random(6));
-        assertTrue(StatKeys.flag(sheetOf(boots), StatKeys.FLAG_FREEZE_IMMUNE), "無法被凍結：用開關，不是避免（避免有 75% 上限）");
-        assertEquals(0, sheetOf(boots).get(StatKeys.AVOID_FREEZE), 1e-9);
-        assertTrue(SpecialEffectLines.of(sheetOf(boots)).contains("無法被凍結"), "角色面板看得到");
-
-        // 角色面板的「特殊效果」看得到
-        final List<String> lines = SpecialEffectLines.of(sheetOf(staff));
-        assertTrue(lines.contains("+2 火焰法術技能等級"), lines.toString());
-        assertTrue(lines.stream().anyMatch(line -> line.startsWith("你殺死的敵人爆炸")), lines.toString());
-    }
-
     private static StatSheet sheetOf(final ItemData data) {
         return new StatSheet().addAll(ItemStats.modifiers(repository, data));
     }
@@ -245,18 +217,6 @@ class UniqueDataTest {
         return sheetOf(data).flat(stat, context);
     }
 
-    @Test
-    void recoupRollsInsideItsRange() {
-        final ItemData vow = generator.generateUnique(repository.unique("iron_vow"), 70, new Random(8));
-        final Map<String, Double> recoup = new java.util.HashMap<>();
-        for (final Modifier modifier : ItemStats.modifiers(repository, vow)) {
-            if (modifier.stat().equals(StatKeys.LIFE_RECOUP)) {
-                recoup.put(modifier.stat(), modifier.value());
-            }
-        }
-        final double value = recoup.getOrDefault(StatKeys.LIFE_RECOUP, 0.0);
-        assertTrue(value >= 12 && value <= 18, "回復 " + value);
-    }
     /** 第 1 版的傳奇（這次改版之前掉的）：照舊的定義擺詞綴，沒有版本。 */
     private static ItemData legacy(final String unique, final int... values) {
         final ItemData old = generator.generateUnique(repository.unique(unique), 70, new Random(1));
@@ -273,80 +233,6 @@ class UniqueDataTest {
     }
 
     @Test
-    void oldUniquesAreUpgradedToTheCurrentDefinitionKeepingRollsThatStillFit() {
-        // 舊版的潮痕：三條詞綴（生命 50、冰冷抗性 25、物品數量 10）；新版五條，legacy { 1: [1, 2, 0, 0, 3] }
-        final ItemData old = legacy("tide_scar", 50, 25, 10);
-        final String uuid = old.uuid();
-        assertEquals(1, old.uniqueVersion());
-        assertTrue(UniqueUpgrade.outdated(repository, old));
-        final ItemData copy = ItemDataCopy.of(old);
-
-        assertTrue(UniqueUpgrade.apply(repository, old));
-        assertEquals(5, old.affixes().size());
-        assertEquals(50, value(old, 1), "生命 50 還在新範圍 [40, 60] 裡：留著");
-        assertTrue(value(old, 2) >= 30 && value(old, 2) <= 40, "冰冷抗性 25 不在 [30, 40]：重擲 " + value(old, 2));
-        assertTrue(value(old, 3) >= 3 && value(old, 3) <= 5, "新的擊殺回復生命 [3, 5]：擲 " + value(old, 3));
-        assertTrue(value(old, 4) >= 3 && value(old, 4) <= 5);
-        assertEquals(10, value(old, 5), "物品數量 10 從舊的第 3 條搬到新的第 5 條，還在 [8, 12] 裡：留著");
-        assertEquals(uuid, old.uuid(), "還是同一件");
-        assertEquals(70, old.ilvl());
-        assertEquals(2, old.uniqueVersion(), "補完記下版本");
-        assertFalse(UniqueUpgrade.outdated(repository, old), "補完就是新版");
-        assertFalse(UniqueUpgrade.apply(repository, old), "新版的不再動");
-
-        // 同一件（同一個 UUID）每次補出來都一樣
-        UniqueUpgrade.apply(repository, copy);
-        for (int i = 0; i < old.affixes().size(); i++) {
-            assertEquals(old.affixes().get(i).vars(), copy.affixes().get(i).vars());
-        }
-    }
-
-    @Test
-    void reorderedUniquesKeepTheRightRollsThroughTheLegacyMap() {
-        // 舊版的守陵者的誓約：近戰物理 55、力量 40、攻速 12、護甲 220；新版插了攻擊附加與雙倍傷害進去
-        final ItemData oath = legacy("tomb_oath", 55, 40, 12, 220);
-        assertTrue(UniqueUpgrade.apply(repository, oath));
-        assertEquals(6, oath.affixes().size());
-        assertTrue(value(oath, 1) >= 150 && value(oath, 1) <= 190, "近戰物理 55 不在新範圍：重擲");
-        final Map<String, Integer> added = oath.affixes().get(1).vars();
-        assertTrue(added.get("min") >= 14 && added.get("min") <= 18 && added.get("max") >= 30 && added.get("max") <= 38, "新的攻擊附加 " + added);
-        assertEquals(40, value(oath, 3), "力量 40 從舊的第 2 條搬到新的第 3 條");
-        assertEquals(12, value(oath, 4), "攻速 12 從舊的第 3 條搬到新的第 4 條");
-        assertTrue(value(oath, 5) >= 10 && value(oath, 5) <= 15, "新的雙倍傷害");
-        assertEquals(220, value(oath, 6), "護甲 220 從舊的第 4 條搬到新的第 6 條");
-
-        // 舊版的觀星者的星盤：法術傷害 50、魔力 55、施法速度 14、閃電抗性 25 → 新版 [0, 1, 3, 0, 2, 0]
-        final ItemData chart = legacy("star_chart", 50, 55, 14, 25);
-        assertTrue(UniqueUpgrade.apply(repository, chart));
-        assertEquals("unique.star_chart.1", chart.affixes().get(0).id(), "+1 法術技能等級（固定值，沒有變數）");
-        assertTrue(value(chart, 2) >= 60 && value(chart, 2) <= 80, "法術傷害 50 不在 [60, 80]：重擲");
-        assertEquals(14, value(chart, 3), "施法速度 14 從舊的第 3 條搬到新的第 3 條");
-        assertEquals(55, value(chart, 5), "魔力 55 從舊的第 2 條搬到新的第 5 條");
-
-        // 舊版的天穹之心：全部往後挪一條
-        final ItemData heart = legacy("sky_heart", 30, 28, 80, 10, 20);
-        assertTrue(UniqueUpgrade.apply(repository, heart));
-        assertEquals("unique.sky_heart.1", heart.affixes().get(0).id());
-        assertEquals(30, value(heart, 2), "全部屬性 30");
-        assertEquals(28, value(heart, 3), "傷害 28");
-        assertEquals(80, value(heart, 4), "生命 80");
-        assertEquals(10, value(heart, 5), "全部元素抗性 10");
-        assertEquals(20, value(heart, 6), "稀有度 20");
-
-        // 剛掉的新版傳奇不動
-        final ItemData fresh = generator.generateUnique(repository.unique("iron_vow"), 70, new Random(3));
-        assertEquals(2, fresh.uniqueVersion());
-        assertFalse(UniqueUpgrade.outdated(repository, fresh));
-        // 新的傳奇是第 1 版
-        assertEquals(1, generator.generateUnique(repository.unique("hawk_eye"), 70, new Random(3)).uniqueVersion());
-        // 不是傳奇、或傳奇被拿掉了：不動
-        final ItemData rare = generator.generate(repository.base("coral_ring"), Rarity.RARE, 70, new Random(4));
-        assertFalse(UniqueUpgrade.apply(repository, rare));
-        fresh.setUnique("removed_unique");
-        assertFalse(UniqueUpgrade.apply(repository, fresh));
-    }
-
-    @Test
     void legacyMapsCoverEveryVersionedUnique() {
         for (final UniqueItem unique : repository.uniques()) {
             for (final Map.Entry<Integer, List<Integer>> entry : unique.legacy().entrySet()) {
@@ -358,10 +244,6 @@ class UniqueDataTest {
                 }
             }
             assertEquals(unique.version() > 1 || unique.legacy().isEmpty(), true, unique.id() + "：第 1 版不該有 legacy");
-        }
-        // 這次改版的 7 件是第 2 版
-        for (final String id : List.of("sky_heart", "tomb_oath", "star_chart", "tide_scar", "ashen_mantle", "frostbite", "iron_vow")) {
-            assertEquals(2, repository.unique(id).version(), id);
         }
     }
 
@@ -416,26 +298,18 @@ class UniqueDataTest {
             // 2026-10：照 PoE2 同部位的傳奇重做，巨像之心只剩三條（大量生命、沒有精魂）
             assertTrue(unique.affixIds().size() >= 3, unique.id() + "：追逐級至少三條");
         }
-        assertEquals(4, chase, "四件追逐級傳奇");
+        assertEquals(13, chase, "十三件追逐級傳奇（2026-10-15 加了九件）");
         // 共通池（map_boss）任何等級都沒有追逐級：追逐級只從 chase 池、照固定機率掉
         for (final int level : new int[] {70, 75, 90}) {
             for (final UniqueItem unique : repository.uniquesFor("map_boss", level)) {
                 assertFalse(unique.chase(), unique.id());
             }
         }
-        assertEquals(4, repository.uniquesFor("chase", 75).size());
+        assertEquals(13, repository.uniquesFor("chase", 75).size());
         assertEquals(0, repository.uniquesFor("chase", 74).size());
-        // 逐星者的「偷詞綴」是 steal.mods（秒數）；2026-10 PoE2 改版退役了，定義留著讓舊物品照常生效
-        final UniqueItem chaser = repository.unique("star_chaser");
-        assertTrue(repository.retiredUnique("star_chaser"));
-        assertFalse(chaser.chase(), "退役的不算追逐級（不會掉）");
-        boolean steal = false;
-        for (final String affixId : chaser.affixIds()) {
-            for (final AffixMod mod : repository.affix(affixId).mods()) {
-                steal |= mod.stat().equals(StatKeys.STEAL_MODS);
-            }
-        }
-        assertTrue(steal, "逐星者要有 steal.mods");
+        // 2026-10-15：退役的傳奇定義從 uniques.yml 刪掉了
+        assertNull(repository.unique("star_chaser"));
+        assertFalse(repository.retiredUnique("star_chaser"));
     }
 
     /** 只看基底的物理傷害：沒鑑定的物品不算詞綴，品質 0。 */

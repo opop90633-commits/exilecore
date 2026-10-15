@@ -55,7 +55,7 @@ class UniqueSkinTest {
         for (final UniqueItem unique : repository.uniques()) {
             uniques.add(unique.id());
         }
-        // 2026-10 PoE2 改版：退役的傳奇（retired: true）不在 uniques() 裡，但定義與圖都留著（還沒換成兌換券的舊物品）
+        // 2026-10-15：退役的傳奇定義與圖都從檔案刪掉了
         final Set<String> missing = new java.util.TreeSet<>(uniques);
         missing.removeAll(UniqueArt.ids());
         assertEquals(Set.of(), missing, "uniques.yml 的每一件都要有圖");
@@ -63,12 +63,11 @@ class UniqueSkinTest {
             assertNotNull(repository.unique(id), "圖不能指到不存在的傳奇：" + id);
         }
         assertEquals(uniques.size(), skins.size());
-        assertTrue(UniqueArt.has("tomb_oath"));
-        assertNotNull(repository.unique("tomb_oath"), "退役的傳奇定義還在");
-        assertFalse(uniques.contains("tomb_oath"), "退役的傳奇不會產生外觀");
-        assertFalse(UniqueArt.has("hawk_eye_pulling_1"), "拉弓的那幾張不是獨立的傳奇");
+        assertTrue(UniqueArt.has("trophy_girdle"));
+        assertFalse(UniqueArt.has("tomb_oath"), "退役的傳奇圖刪掉了");
+        assertFalse(UniqueArt.has("horizon_cleaver_pulling_1"), "拉弓的那幾張不是獨立的傳奇");
         assertFalse(UniqueArt.has(null));
-        assertEquals("unique:tomb_oath", UniqueArt.modelKey("tomb_oath"));
+        assertEquals("unique:trophy_girdle", UniqueArt.modelKey("trophy_girdle"));
     }
 
     @Test

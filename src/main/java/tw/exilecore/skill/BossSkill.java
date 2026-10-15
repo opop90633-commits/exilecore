@@ -209,6 +209,13 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                 slow, width, summonType, summonMax, taken, at, visual, shout, gaps, gapAngle, safe, hint, countPerPlayer, convert, track, solid, ruin);
     }
 
+    /** 範圍、散布、持續時間換掉的一份（萬界崩解等場地收縮中縮小落點，見 {@link BossGeometry#fitArena}）。 */
+    public BossSkill sized(final double newRadius, final double newScatter, final double newDuration) {
+        return new BossSkill(id, name, kind, damage, type, cooldown, range,
+                telegraph, delay, newRadius, angle, length, count, stagger, newScatter, spread, speed, reach, size, explode, newDuration, interval,
+                slow, width, summonType, summonMax, taken, at, visual, shout, gaps, gapAngle, safe, hint, countPerPlayer, convert, track, solid, ruin);
+    }
+
     /** 閃現到目標旁邊之後落地震一下（撲擊）。 */
     public boolean pounce() {
         return kind == Kind.BLINK && damage > 0;

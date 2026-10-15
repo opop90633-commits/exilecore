@@ -40,7 +40,8 @@ import java.util.UUID;
  * <ul>
  *   <li>閃身步（sidestep）：左跨一步、收回、右跨一步、收回，留下殘影。<b>只有營地裡會真的移動</b>（贊助不影響戰鬥）。</li>
  *   <li>浪子踢球（kick_ball）：張開雙手，小跳往後勾腳、交叉步、再勾另一腳。</li>
- *   <li>狗熊哆嗦毛（bear_shake）：蹲低亂甩手、扭身甩頭、甩出水花跟毛，最後兩手高舉。</li>
+ *   <li>狗熊哆嗦毛（bear_shake）：蹲低亂甩手、扭身甩頭、甩出水花跟毛，最後兩手高舉。2026-10-15：跟影片一樣左右、前後跨步繞小圈、小跳
+ *       （<b>只有營地裡會真的移動</b>，跟閃身步一樣）。</li>
  *   <li>搖頭晃腦（head_bob）：馬步、一手伸出去，頭左右快速甩動。</li>
  * </ul>
  * 每個人 3 秒冷卻；Q 在背包介面裡丟東西的那一下不算。
@@ -245,6 +246,7 @@ public final class Emotes implements Listener {
             }
             case "bear_shake" -> {
                 later(player, 0, at -> world.playSound(at, Sound.ENTITY_POLAR_BEAR_AMBIENT, 0.8f, 0.9f));
+                bearSteps(player, BEAR_STEPS);
                 // 2026-10 重抓：每跨一步、換一個大姿勢甩一點水（時間對 gen_emotes.py 的 bear_steps）
                 for (final long tick : new long[] {3, 9, 14, 20, 26, 31, 36, 40, 44, 80}) {
                     later(player, tick, at -> world.spawnParticle(Particle.SPLASH, at.clone().add(0, 1.0, 0), 12, 0.4, 0.4, 0.4, 0.1));
@@ -598,6 +600,37 @@ public final class Emotes implements Listener {
     // ---- 狗熊哆嗦毛 ----
 
     /**
+     * 狗熊哆嗦毛的跨步（2026-10-15，照影片）：{第幾 tick, 往右幾像素（負的往左）, 往前幾像素（負的往後）, 往上跳多少（速度）}。
+     * 左右來回之外再帶前後，整段走起來像在原地繞小圈（右前 → 左前 → 左後 → 右後…）。一像素大約 0.04 的速度（閃身步 10 像素＝0.4，大約半格）。
+     */
+    private static final double[][] BEAR_STEPS = {
+            {5, 6, 4, 0}, {10, -5, 5, 0}, {20, -6, -2, 0}, {25, 6, -6, 0}, {31, 6, 2, 0}, {35, -6, 6, 0.25},
+            {44, -4, -4, 0}, {52, 3, -3, 0}, {60, 3, 3, 0}, {68, -3, 3, 0}, {72, -6, -2, 0}, {76, 5, -3, 0}};
+    /** 沒有 BetterModel 的版本（約 2 秒）：跨步的時間壓短，一樣繞一小圈。 */
+    private static final double[][] BEAR_STEPS_VANILLA = {
+            {3, 6, 4, 0}, {8, -6, 5, 0}, {14, -6, -4, 0}, {20, 6, -5, 0.25}, {26, 4, 3, 0}, {32, -4, -3, 0}};
+
+    /** 照表跨步（左右＋前後；只有營地裡真的移動；其他地方不動，贊助不影響戰鬥）。 */
+    private void bearSteps(final Player player, final double[][] steps) {
+        if (!inTown(player)) {
+            return;
+        }
+        final Vector forward = player.getLocation().getDirection().setY(0);
+        if (forward.lengthSquared() < 1.0e-4) {
+            forward.setX(0).setZ(1);
+        }
+        forward.normalize();
+        final Vector right = new Vector(-forward.getZ(), 0, forward.getX()); // 玩家的右手邊（跟閃身步一樣）
+        for (final double[] step : steps) {
+            later(player, (long) step[0], at -> {
+                player.setVelocity(right.clone().multiply(step[1] * 0.04).add(forward.clone().multiply(step[2] * 0.04))
+                        .setY(step[3] > 0 ? step[3] : 0.04));
+                at.getWorld().spawnParticle(Particle.CLOUD, at.clone().add(0, 0.15, 0), 3, 0.2, 0.03, 0.2, 0.01);
+            });
+        }
+    }
+
+    /**
      * 照影片：兩腳張開蹲低，兩手在身前、頭上亂甩，身子左右扭、甩頭，最後兩手高舉成 X（約 2 秒）。
      * 用蹲起、左右手輪流揮、甩頭與水花、毛屑表現。
      */
@@ -608,6 +641,7 @@ public final class Emotes implements Listener {
         final boolean wasSneaking = player.isSneaking();
         world.playSound(player.getLocation(), Sound.ENTITY_POLAR_BEAR_AMBIENT, 0.8f, 0.9f);
         world.playSound(player.getLocation(), Sound.ENTITY_WOLF_SHAKE, 1f, 0.7f);
+        bearSteps(player, BEAR_STEPS_VANILLA); // 2026-10-15：左右跨步
         final ItemStack fur = new ItemStack(Material.BROWN_WOOL);
         final float[] turned = {0};
         final int[] age = {0};

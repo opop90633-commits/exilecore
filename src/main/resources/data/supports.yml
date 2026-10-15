@@ -1439,6 +1439,20 @@ supports:
       - { stat: life.max, type: MORE, value: 25, tags: [minion] }
     notes: ["覺醒之主・虛星（萬界之巔）掉落"]
 
+  # 2026-10-15：虛星的第八顆專屬——打擊的近戰擴散（打中一個，旁邊的一起吃）
+  shattering_strike:
+    name: 碎界擴散
+    description: 虛星碎界的一擊：被輔助的近戰打擊打中敵人時，那個敵人周圍 2.5 格的其他敵人也受到這一下 60% 的傷害（範圍吃範圍效果加成）。
+    icon: FLINT
+    tier: 3
+    source: awakener
+    requires: [strike]
+    excludes: [minion]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: skill.melee_splash, type: FLAT, value: 60 }
+    notes: ["覺醒之主・虛星（萬界之巔）掉落"]
+
   # ---- 2026-10：PoE2 輔助補齊・第 1 批（30 個；機制照 PoE2，名稱是自己的。我們做不到的條件用近似值）----
   fire_mastery:            # Fire Mastery
     name: 燼髓
@@ -3331,14 +3345,15 @@ supports:
 
   charge_profusion:
     name: 滿星
-    description: 被輔助的技能讓你獲得戰星時（擊中、重暈、破甲、撲殺…），有 25% 機率多獲得一顆同種的。
+    description: 被輔助的技能讓你獲得戰星時（擊中、重暈、破甲、撲殺…），有 30% 機率多獲得一顆同種的，另外 15% 機率多獲得一顆隨機種類的。
     icon: GLOWSTONE_DUST
     tier: 2
     requires: [attack, spell]
     excludes: [minion]
     mana_multiplier: 1.1
     modifiers:
-      - { stat: charge.extra, type: FLAT, value: 25 }
+      - { stat: charge.extra, type: FLAT, value: 30 }          # 2026-10-15：照 PoE2 的充能滿盈 II（25 → 30）
+      - { stat: charge.extra_random, type: FLAT, value: 15 }   # 2026-10-15：照 PoE2 的充能滿盈 II，多一顆隨機種類的
 
   cull_frenzy:
     name: 斷命聚怒

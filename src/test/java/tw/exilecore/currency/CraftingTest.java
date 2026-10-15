@@ -72,7 +72,7 @@ class CraftingTest {
             assertEquals(0, type.operation() == CurrencyOperation.ESSENCE || type.operation() == CurrencyOperation.CATALYST
                     || type.operation() == CurrencyOperation.OMEN ? type.dropWeight() : 0, "機制的通貨怪物不掉");
         }
-        assertEquals(13, essences); // 2026-10：＋能盾星魄
+        assertEquals(16, essences); // 2026-10：＋能盾星魄；2026-10-15：＋炎擊、霜擊、雷擊星魄
         assertEquals(Catalyst.values().length, catalysts, "每一種催化劑一顆");
         assertEquals(6, omens);
     }
@@ -219,6 +219,39 @@ class CraftingTest {
         assertTrue(ring.affixes().stream().anyMatch(a -> a.id().equals("resist_fire")), "後綴（火抗）留著");
         assertFalse(ring.affixes().stream().anyMatch(a -> a.id().equals("life_flat")), "前綴（生命）被拿掉");
         assertEquals(2, ring.affixes().size(), "拿掉一條再加一條");
+    }
+
+    @Test
+    void forcePrefixWithTurmoilOnAFullJewelSwapsAPrefix() {
+        final CurrencyType sinistral = currencies.get("omen_sinistral");
+        final CurrencyType turmoil = currencies.firstWith(CurrencyOperation.REMOVE_AND_ADD).orElseThrow();
+        for (int seed = 0; seed < 30; seed++) {
+            final ItemData jewel = new ItemData("time_lost_ruby", Rarity.RARE, 80);
+            jewel.setIdentified(true);
+            jewel.setName("測試");
+            final SplittableRandom random = new SplittableRandom(seed);
+            while (generator.addAffix(jewel, null, random)) {
+                // 加到滿
+            }
+            final int prefixes = generator.countOf(jewel, AffixType.PREFIX);
+            final int suffixes = generator.countOf(jewel, AffixType.SUFFIX);
+            assertEquals(generator.maxAffixes(jewel, AffixType.PREFIX), prefixes, "前綴滿了");
+            final java.util.Set<String> suffixIds = new java.util.HashSet<>();
+            for (final RolledAffix rolled : jewel.affixes()) {
+                if (items.affix(rolled.id()).type() == AffixType.SUFFIX) {
+                    suffixIds.add(rolled.id());
+                }
+            }
+            assertNull(Crafting.omenProblem(sinistral, turmoil, jewel, generator));
+            assertTrue(Crafting.applyWithOmen(sinistral, turmoil, jewel, generator, new SplittableRandom(seed + 100)));
+            assertEquals(prefixes, generator.countOf(jewel, AffixType.PREFIX), "前綴換一條，數量不變");
+            assertEquals(suffixes, generator.countOf(jewel, AffixType.SUFFIX), "後綴不動");
+            for (final RolledAffix rolled : jewel.affixes()) {
+                if (items.affix(rolled.id()).type() == AffixType.SUFFIX) {
+                    assertTrue(suffixIds.contains(rolled.id()), "後綴一條都沒換：" + rolled.id());
+                }
+            }
+        }
     }
 
     @Test

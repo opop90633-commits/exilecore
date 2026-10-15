@@ -41,6 +41,8 @@ import java.util.UUID;
 public final class SupportProcs implements Listener {
 
     static final String PREFIX = "proc.";
+    /** 完美時機放開的那一下（技能描述的代號後面接這個；baseId 會把它去掉）。 */
+    static final String PERFECT_SUFFIX = ".perfect";
     static final long COOLDOWN = 20; // 2026-10 平衡：0.5 → 1 秒
     /** 打死的記錄留多久（tick）。 */
     private static final long KILL_WINDOW = 20;
@@ -74,6 +76,15 @@ public final class SupportProcs implements Listener {
         final List<Modifier> list = new java.util.ArrayList<>();
         for (final SupportDefinition support : service.supportsOf(entry)) {
             for (final Modifier modifier : support.modifiers()) {
+                if (modifier.stat().equals(PREFIX + event) && !modifier.tags().isEmpty()) {
+                    list.add(modifier);
+                }
+            }
+        }
+        // 2026-10：技能自己寫的 proc（碎脊擊的震波、血獵的血爆、穿雲箭與蓄勁一擊的完美時機、霜綻的冰地…，照 PoE2）
+        final SkillDefinition own = service.config().skill(skillId);
+        if (own != null) {
+            for (final Modifier modifier : own.modifiers()) {
                 if (modifier.stat().equals(PREFIX + event) && !modifier.tags().isEmpty()) {
                     list.add(modifier);
                 }
@@ -166,6 +177,9 @@ public final class SupportProcs implements Listener {
             lastHits.values().removeIf(hit -> now() - hit.tick() > KILL_WINDOW);
         }
         fireAll(player, skillId, "hit", target.getLocation(), target, null);
+        if (event.skill().id().endsWith(PERFECT_SUFFIX)) {
+            fireAll(player, skillId, "perfect_hit", target.getLocation(), target, null); // 2026-10：完美時機放開的那一下打中（穿雲箭的爆炸）
+        }
         if (event.result().crit()) {
             fireAll(player, skillId, "crit", target.getLocation(), target, null);
         }
@@ -201,6 +215,7 @@ public final class SupportProcs implements Listener {
         if (player == null || !player.getWorld().equals(event.getEntity().getWorld())) {
             return;
         }
+        fireAll(player, hit.skillId(), "kill", event.getEntity().getLocation(), null, event.getEntity()); // 2026-10：打死（霜綻給怒星）
         for (final AilmentType type : hit.ailments()) {
             fireAll(player, hit.skillId(), "kill_" + word(type), event.getEntity().getLocation(), null, event.getEntity());
         }

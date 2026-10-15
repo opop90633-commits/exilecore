@@ -185,7 +185,8 @@ public final class SalvageMenu extends Menu {
         return icon(Material.SMITHING_TABLE, "<#af6025>" + recipe.title(),
                 "<gray>放 " + recipe.inputs() + " 件傳奇，換一件隨機傳奇（重複的、用不到的）",
                 recipe.excludeInputs() ? "<dark_gray>不會換到放進去的那幾種" : "<dark_gray>換到哪一件是隨機的",
-                "<dark_gray>追逐級、極境專屬不能放；有極低的機率換到追逐級（跟小怪掉的一樣）",
+                "<#ffb347>" + recipe.inputs() + " 件追逐級：必定換一件隨機追逐級",
+                "<dark_gray>極境專屬不能放；一般傳奇有極低的機率換到追逐級",
                 "",
                 eligible >= recipe.inputs() ? "<gray>背包裡可以放的傳奇：<white>" + eligible + "<gray> 件"
                         : "<gray>背包裡可以放的傳奇：<white>" + eligible + "<gray> 件<dark_gray>（要 " + recipe.inputs() + " 件）",

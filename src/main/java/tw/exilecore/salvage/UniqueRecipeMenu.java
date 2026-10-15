@@ -29,6 +29,7 @@ import java.util.Optional;
  * 傳奇三換一（拆解台左下的按鈕打開）：上面 4 列是你的背包（跟拆解台一樣：前 3 列＝背包、第 4 列＝快捷列），
  * 點三件傳奇放進來，按「換一件」再確認一次，就拿走那三件、給一件隨機傳奇（池子與規則見 {@link UniqueRecipe}）。
  * 換之前再核對每一格還是同一件（物品 UUID），中途換過位置、鎖起來的不會被拿走。身上穿的、飾品欄位不會出現在這裡。
+ * 放的是追逐級（2026-10）：必定換一件隨機追逐級（不能跟一般傳奇混放）。
  */
 public final class UniqueRecipeMenu extends Menu {
 
@@ -168,13 +169,26 @@ public final class UniqueRecipeMenu extends Menu {
         return UniqueRecipe.itemLevel(data);
     }
 
-    /** 這幾件可能換到的傳奇。 */
+    /** 這件是不是追逐級。 */
+    private boolean chase(final ItemData data) {
+        final UniqueItem definition = plugin.items().repository().unique(data.unique());
+        return definition != null && definition.chase();
+    }
+
+    /** 放進來的是追逐級（看第一件；空的 false）。 */
+    private boolean chaseMode(final List<Input> inputs) {
+        return !inputs.isEmpty() && chase(inputs.getFirst().data());
+    }
+
+    /** 這幾件可能換到的傳奇（追逐級：必定換追逐級）。 */
     private List<UniqueItem> outcomes(final List<Input> inputs) {
         final List<String> ids = new ArrayList<>();
         for (final Input input : inputs) {
             ids.add(input.data().unique());
         }
-        return UniqueRecipe.outcomes(plugin.items().repository().uniques(), settings, ids, itemLevel(inputs));
+        return chaseMode(inputs)
+                ? UniqueRecipe.chaseOutcomes(plugin.items().repository().uniques(), itemLevel(inputs))
+                : UniqueRecipe.outcomes(plugin.items().repository().uniques(), settings, ids, itemLevel(inputs));
     }
 
     /** 傳奇的名字，一行幾個。 */
@@ -214,7 +228,8 @@ public final class UniqueRecipeMenu extends Menu {
                 lore.add("<dark_gray>不會換到你放進去的那幾種");
             }
             lore.add("<dark_gray>物品等級＝放進去最高的那件");
-            lore.add("<dark_gray>追逐級、極境專屬不能放；有極低的機率換到追逐級（跟小怪掉的一樣）");
+            lore.add("<#ffb347>" + need + " 件追逐級：必定換一件隨機追逐級<dark_gray>（可能換到同一種；不能跟一般傳奇混放）");
+            lore.add("<dark_gray>極境專屬不能放；一般傳奇有極低的機率換到追逐級（跟小怪掉的一樣）");
             lore.add("<dark_gray>想留的先右鍵鎖定");
             return icon(Material.BOOK, "<white>怎麼用", lore);
         }
@@ -227,7 +242,7 @@ public final class UniqueRecipeMenu extends Menu {
         if (pool.isEmpty()) {
             lore.add("<red>換不到東西：物品等級太低（最高 " + itemLevel(inputs) + "）");
         } else {
-            lore.add("<gray>可能換到（" + pool.size() + " 種，隨機一種；物品等級 " + itemLevel(inputs) + "）：");
+            lore.add((chaseMode(inputs) ? "<#ffb347>追逐級：" : "") + "<gray>可能換到（" + pool.size() + " 種，隨機一種；物品等級 " + itemLevel(inputs) + "）：");
             lore.addAll(nameLines(pool));
         }
         return icon(Material.BOOK, "<white>放了 " + inputs.size() + "／" + need + " 件", lore);
@@ -288,6 +303,10 @@ public final class UniqueRecipeMenu extends Menu {
         String problem = problem(stack, data.get());
         if (problem == null && selected.containsValue(data.get().uuid())) {
             problem = "同一件已經放進來了";
+        }
+        final List<Input> already = current();
+        if (problem == null && !already.isEmpty()) {
+            problem = UniqueRecipe.mixProblem(chaseMode(already), chase(data.get()));
         }
         if (problem != null) {
             player.sendActionBar(plugin.text().parse("<red>不能放：" + ItemRenderer.escape(problem)));
@@ -374,7 +393,7 @@ public final class UniqueRecipeMenu extends Menu {
             body.add("<white>· " + ItemRenderer.escape(Wallet.describe(input.stack())));
         }
         body.add("");
-        body.add("<gray>換一件隨機傳奇：" + pool.size() + " 種裡抽一種" + (settings.excludeInputs() ? "（不會是放進去的那幾種）" : "")
+        body.add("<gray>換一件隨機" + (chaseMode(inputs) ? "<#ffb347>追逐級<gray>" : "") + "傳奇：" + pool.size() + " 種裡抽一種" + (settings.excludeInputs() && !chaseMode(inputs) ? "（不會是放進去的那幾種）" : "")
                 + "，物品等級 " + itemLevel(inputs));
         body.add("");
         body.add("<red>放進去的就沒了，不能復原。");
@@ -405,8 +424,10 @@ public final class UniqueRecipeMenu extends Menu {
             return;
         }
         // 2026-10：先擲一次跟小怪一樣的極低機率（maps.yml 的 drops.chase_mob_chance）：換到追逐級傳奇
+        // （放的是追逐級：outcomes 本來就是追逐級的池子，不用再擲）
+        final boolean chaseMode = chaseMode(inputs);
         UniqueItem pick = null;
-        final List<UniqueItem> chase = plugin.items().generator().chaseUniques(itemLevel(inputs));
+        final List<UniqueItem> chase = chaseMode ? List.of() : plugin.items().generator().chaseUniques(itemLevel(inputs));
         if (!chase.isEmpty() && plugin.items().random().nextDouble() < ItemGenerator.chaseChance()) {
             pick = ItemGenerator.pickUnique(chase, plugin.items().random());
         }
@@ -447,8 +468,8 @@ public final class UniqueRecipeMenu extends Menu {
                 + " 換到 <#af6025>" + ItemRenderer.escape(got)));
         player.playSound(player.getLocation(), Sound.BLOCK_SMITHING_TABLE_USE, 0.8f, 1.0f);
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.4f);
-        if (pick.chase() && plugin.loot() != null) {
-            plugin.loot().broadcastChase(player, result); // 追逐級：全服廣播
+        if (pick.chase() && !chaseMode && plugin.loot() != null) {
+            plugin.loot().broadcastChase(player, result); // 一般傳奇換到追逐級：全服廣播（追逐級換追逐級不廣播）
         }
     }
 }

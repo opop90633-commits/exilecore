@@ -249,6 +249,35 @@ class BossMechanicsTest {
     }
 
     @Test
+    void mazeFitsInsideTheShrinkingArena() {
+        final double[] free = BossGeometry.mazeInArena(16, 4, 2, 0);
+        assertArrayEquals(new double[] {16, 4, 2}, free, 1e-9, "沒有收縮：照原本的四圈");
+        final double[] squeezed = BossGeometry.mazeInArena(16, 4, 2, 8);
+        assertEquals(6.4, squeezed[0], 1e-9, "最外圈在圈半徑的 0.8（8 格的圈：3.2、6.4 兩圈）");
+        assertEquals(2, squeezed[1], 1e-9, "最多兩圈");
+        assertEquals(3, squeezed[2], 1e-9, "每圈至少三個缺口");
+        assertTrue(squeezed[0] < 8, "牆整個在圈裡");
+        assertEquals(1, BossGeometry.mazeInArena(10, 1, 4, 20)[1], 1e-9, "本來就比較少圈、比較多缺口的不變");
+        assertEquals(4, BossGeometry.mazeInArena(10, 1, 4, 20)[2], 1e-9);
+        assertEquals(10, BossGeometry.mazeInArena(10, 1, 4, 20)[0], 1e-9, "圈還很大：不用縮");
+    }
+
+    @Test
+    void groundSlamsShrinkInsideTheArena() {
+        assertArrayEquals(new double[] {6.5, 0, 13}, BossGeometry.fitArena(6.5, 1, 0, 13, true, 0), 1e-9, "沒有收縮：照原本的");
+        final double[] great = BossGeometry.fitArena(6.5, 1, 0, 0, false, 8);
+        assertEquals(3.2, great[0], 1e-9, "滅世殞星：半徑 8 的圈裡最大 3.2（佔圈 16%）");
+        final double[] desolation = BossGeometry.fitArena(6.5, 1, 0, 13, true, 8);
+        assertEquals(3.2, desolation[0], 1e-9);
+        assertEquals(8, desolation[2], 1e-9, "荒蕪最多留 8 秒");
+        final double[] meteors = BossGeometry.fitArena(4, 3, 5, 0, false, 8);
+        assertEquals(2.4, meteors[0], 1e-9, "殞星三顆：每顆最大 2.4");
+        assertEquals(4.8, meteors[1], 1e-9, "散布最多圈半徑的 0.6");
+        assertTrue(3 * meteors[0] * meteors[0] < 0.3 * 8 * 8, "三顆加起來不到圈的 30%");
+        assertArrayEquals(new double[] {2, 3, 5}, BossGeometry.fitArena(2, 1, 3, 5, true, 18), 1e-9, "圈還很大、本來就小的不變");
+    }
+
+    @Test
     void echoesSurroundTheBossAndTakeTurnsAcrossTheCircle() {
         final List<double[]> offsets = BossGeometry.echoOffsets(12, 10, 0);
         assertEquals(12, offsets.size());

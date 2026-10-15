@@ -367,24 +367,16 @@ class MapTest {
 
     @Test
     void uniquesLoadAndRoll() {
-        assertEquals(102, repository.uniques().size(), "2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件）");
+        assertEquals(122, repository.uniques().size(), "2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件）");
         final ItemData dropped = MapDrops.unique(generator, "final", 68, new Random(5));
         assertNotNull(dropped);
         assertEquals(Rarity.UNIQUE, dropped.rarity());
-        assertTrue(java.util.Set.of("celestial_pivot", "meteor_anvil").contains(dropped.unique()), "終局掉的是終局的傳奇（2026-10：天穹之心、星鑄退役，換成新的兩件）");
-        assertTrue(repository.retiredUnique("sky_heart"), "退役的傳奇定義還留著，舊物品照常生效");
-        final ItemData heart = generator.generateUnique(repository.unique("sky_heart"), 68, new Random(5));
-        assertEquals("sky_heart", heart.unique());
-        assertEquals("天穹之心", heart.name());
-        assertEquals(6, heart.affixes().size());
-        final UniqueItem definition = repository.unique("sky_heart");
-        assertFalse(definition.flavour().isEmpty());
-        boolean life = false;
-        for (final Modifier modifier : ItemStats.modifiers(repository, heart)) {
-            life |= modifier.stat().equals(StatKeys.LIFE_MAX) && modifier.value() >= 70 && modifier.value() <= 100;
-        }
-        assertTrue(life);
-        assertEquals("天穹之心", ItemStats.displayName(repository, heart));
+        assertTrue(java.util.Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark").contains(dropped.unique()), "終局掉的是終局的傳奇（2026-10：天穹之心、星鑄退役，換成新的兩件）");
+        assertNull(repository.unique("sky_heart"), "退役的傳奇定義刪掉了（2026-10-15）");
+        final ItemData pivot = generator.generateUnique(repository.unique("celestial_pivot"), 68, new Random(5));
+        assertEquals("celestial_pivot", pivot.unique());
+        assertFalse(pivot.affixes().isEmpty());
+        assertEquals(repository.unique("celestial_pivot").name(), ItemStats.displayName(repository, pivot));
         // 傳奇詞綴不會被隨機抽到
         final ItemData amulet = generator.generate(repository.base("jade_amulet"), Rarity.RARE, 80, new Random(9));
         for (final RolledAffix affix : amulet.affixes()) {
@@ -394,9 +386,14 @@ class MapTest {
         assertNotNull(MapDrops.unique(generator, "map_boss", 61, new Random(1)));
         assertNull(MapDrops.unique(generator, "nobody", 61, new Random(1)));
         // 其他終局 Boss 各自有自己的那件（掉不掉看 drops.final_unique_chance，不是必掉）
-        assertEquals("rime_halo", MapDrops.unique(generator, "frost_throne", 68, new Random(2)).unique());
-        assertEquals("bone_cinch", MapDrops.unique(generator, "bone_throne", 68, new Random(2)).unique());
-        assertEquals("molten_aegis", MapDrops.unique(generator, "ember_citadel", 68, new Random(2)).unique());
+        // 2026-10-15：四個終局都多一件蛛巢壁壘（跟自己的那件一起抽）
+        for (final String[] own : new String[][] {{"frost_throne", "rime_halo"}, {"bone_throne", "bone_cinch"}, {"ember_citadel", "molten_aegis"}}) {
+            final java.util.Set<String> seen = new java.util.HashSet<>();
+            for (int seed = 0; seed < 40; seed++) {
+                seen.add(MapDrops.unique(generator, own[0], 68, new Random(seed)).unique());
+            }
+            assertEquals(java.util.Set.of(own[1], "spider_bulwark"), seen, own[0]);
+        }
     }
 
     @Test

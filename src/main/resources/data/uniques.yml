@@ -48,2753 +48,8 @@
 #     91 是 ×1.19），不會比那一階低；需求、防禦、固定詞綴、詞綴的附加傷害都不跟著長
 #   其他（skill.projectiles、skill.pierce、skill.chains、leech.life、damage.gain.閃電…）跟輔助寶石一樣，見 supports.yml
 
-# ---- 終局 Boss（天穹熔爐）：有 5% 的機率（maps.yml 的 drops.final_unique_chance）掉一件，從這兩件裡抽 ----
-
-sky_heart:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 天穹之心
-  base: jade_amulet
-  drop_level: 60
-  sources: [final]
-  weight: 100
-  version: 2
-  legacy: { 1: [0, 1, 2, 3, 4, 5] }
-  flavour:
-    - "它曾照亮整片天空；"
-    - "現在它只照亮你。"
-  mods:
-    - text: "+1 全部技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 1 }
-    - text: "+{value} 全部屬性"
-      value: [25, 35]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 傷害"
-      value: [25, 35]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [70, 100]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value}% 全部元素抗性"
-      value: [10, 15]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-        - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 物品掉落稀有度"
-      value: [15, 25]
-      stats:
-        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-
-star_forge:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 星鑄
-  base: great_hammer
-  drop_level: 60
-  sources: [final]
-  weight: 100
-  flavour:
-    - "曜帝把自己丟進熔爐那天，"
-    - "鐵匠們撿回來的只有這把錘子。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [220, 260]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 攻擊速度"
-      value: [8, 12]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [80, 100]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 攻擊的範圍效果"
-      value: [20, 30]
-      stats:
-        - { stat: skill.area, type: INCREASED, value: "{value}", tags: [attack] }
-    - text: "擊中時 {value}% 機率造成雙倍傷害"
-      value: [6, 10]
-      stats:
-        - { stat: damage.double, type: FLAT, value: "{value}" }
-
-# ---- 追逐級傳奇（極稀有）：所有地圖 Boss（一般、具名、終局、極境）每次擊殺各擲 maps.yml 的 drops.chase_chance（0.034%），
-#      物品等級 75 以上（T11 以上的地圖、T10 以上的終局）才會掉；任何加成都不影響。
-#      2026-10：一般怪物也會掉（maps.yml 的 drops.chase_mob_chance，0.0001%），僥倖石用在同一個基底（物品等級 75 以上）
-#      每次也是同樣的機率變成追逐級（沒中就照一般的僥倖石）----
-# 每一件都是改玩法的：逐星者偷稀有怪的詞綴、曜帝的冠冕讓魔力替你挨打、星骸之心大量生命加連鎖爆炸、天穹裂痕把弓變成混沌砲。
-
-star_chaser:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 逐星者
-  base: chain_belt
-  drop_level: 75
-  sources: [chase]
-  weight: 6
-  chase: true
-  flavour:
-    - "十二個星衛追著墜落的星跑了一整夜。"
-    - "只有一個人追上，把它繫在腰上。"
-  mods:
-    - text: "殺死稀有怪物時，獲得牠的詞綴 {value} 秒"
-      value: [20, 20]
-      stats:
-        - { stat: steal.mods, type: FLAT, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [50, 70]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value} 力量與敏捷"
-      value: [25, 35]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "擊殺時 {value}% 機率獲得疾速"
-      value: [20, 30]
-      stats:
-        - { stat: onslaught.on_kill, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 物品稀有度"
-      value: [15, 25]
-      stats:
-        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-
-emperor_crown:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 曜帝的冠冕
-  base: silk_helmet
-  drop_level: 75
-  sources: [chase]
-  weight: 6
-  chase: true
-  flavour:
-    - "他走進熔爐前把冠冕摘下來，說："
-    - "「替我戴著。我回來時要認得自己。」"
-  mods:
-    - text: "+2 全部技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 2 }
-    - text: "+{value} 智慧"
-      value: [30, 40]
-      stats:
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 能量護盾"
-      value: [60, 80]
-      stats:
-        - { stat: es.max, type: INCREASED, value: "{value}" }
-    - text: "受到的傷害有 {value}% 先從魔力扣除"
-      value: [30, 30]
-      stats:
-        - { stat: damage.from_mana, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 施法速度"
-      value: [15, 25]
-      stats:
-        - { stat: cast.speed, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大魔力"
-      value: [80, 120]
-      stats:
-        - { stat: mana.max, type: FLAT, value: "{value}" }
-
-starfall_heart:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 星骸之心
-  base: plate_body
-  drop_level: 75
-  sources: [chase]
-  weight: 6
-  chase: true
-  flavour:
-    - "最大的那塊星骸沒有被煉成通貨。"
-    - "它被鑄成一件胸甲，穿上的人不再怕火。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [400, 500]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 護甲"
-      value: [60, 80]
-      stats:
-        - { stat: armour, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 火焰抗性"
-      value: [20, 30]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-    - text: "你殺死的敵人爆炸，對周圍造成牠最大生命 {value}% 的火焰傷害"
-      value: [10, 15]
-      stats:
-        - { stat: kill.explode, type: FLAT, value: "{value}" }
-    - text: "受到的傷害有 {value}% 之後回復為生命"
-      value: [10, 15]
-      stats:
-        - { stat: life.recoup, type: FLAT, value: "{value}" }
-
-sky_rift:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 天穹裂痕
-  base: bow
-  drop_level: 75
-  sources: [chase]
-  weight: 6
-  chase: true
-  flavour:
-    - "天裂開的那一晚，有人把裂縫的邊削下來做成弓。"
-    - "每一箭都帶著那邊的黑。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [160, 200]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "攻擊附加 {min} 到 {max} 混沌傷害"
-      min: [40, 55]
-      max: [95, 125]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, chaos] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, chaos] }
-    - text: "+1 投射物"
-      stats:
-        - { stat: skill.projectiles, type: FLAT, value: 1 }
-    - text: "投射物穿透 2 個敵人"
-      stats:
-        - { stat: skill.pierce, type: FLAT, value: 2 }
-    - text: "增加 {value}% 攻擊速度"
-      value: [10, 15]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "擊中時 {value}% 機率造成雙倍傷害"
-      value: [15, 20]
-      stats:
-        - { stat: damage.double, type: FLAT, value: "{value}" }
-
-# ---- 其他終局 Boss（maps.yml 的 finals）：各自有 5% 的機率（final_unique_chance）掉自己的；sources 寫終局的代號 ----
-
-frost_crown:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 永凍之冠
-  base: silk_helmet
-  drop_level: 60
-  sources: [frost_throne]
-  weight: 100
-  flavour:
-    - "她把冬天戴在頭上，"
-    - "這樣就沒有人能再叫她妹妹。"
-  mods:
-    - text: "+{value} 最大能量護盾"
-      value: [90, 120]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 冰冷傷害"
-      value: [60, 80]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
-    - text: "增加 {value}% 凍結累積"
-      value: [40, 60]
-      stats:
-        - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 冰緩效果"
-      value: [20, 30]
-      stats:
-        - { stat: chill.effect, type: INCREASED, value: "{value}" }
-    - text: "不會被凍結"
-      stats:
-        - { stat: flag.freeze_immune, type: FLAT, value: 1 }
-    - text: "+{value}% 冰冷抗性"
-      value: [25, 35]
-      stats:
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-
-ferryman_toll:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 渡者的船資
-  base: chain_belt
-  drop_level: 60
-  sources: [bone_throne]
-  weight: 100
-  flavour:
-    - "他收的不是錢。"
-    - "但你活著回來了，所以這條帶子是你的。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [90, 120]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 混沌傷害"
-      value: [50, 70]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
-    - text: "+{value}% 混沌抗性"
-      value: [25, 35]
-      stats:
-        - { stat: resist.chaos, type: FLAT, value: "{value}" }
-    - text: "物理傷害的 {value}% 偷取為生命"
-      value: [2, 3]
-      stats:
-        - { stat: leech.life, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大生命"
-      value: [3, 5]
-      stats:
-        - { stat: life.on_kill, type: FLAT, value: "{value}" }
-    - text: "受到的傷害有 {value}% 之後慢慢回復為生命"
-      value: [15, 25]
-      stats:
-        - { stat: life.recoup, type: FLAT, value: "{value}" }
-
-ember_bulwark:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 餘燼壁壘
-  base: plate_body
-  drop_level: 60
-  sources: [ember_citadel]
-  weight: 100
-  flavour:
-    - "鎧甲還是燙的。"
-    - "三百年了，他一直沒有脫下來。"
-  mods:
-    - text: "增加 {value}% 護甲"
-      value: [120, 160]
-      stats:
-        - { stat: armour, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [80, 110]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 火焰傷害"
-      value: [50, 70]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
-    - text: "+{value}% 火焰抗性"
-      value: [30, 40]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-    - text: "+{value}% 點燃機率"
-      value: [15, 25]
-      stats:
-        - { stat: ignite.chance, type: FLAT, value: "{value}" }
-    - text: "你殺死的敵人爆炸，造成牠最大生命 {value}% 的火焰傷害"
-      value: [6, 10]
-      stats:
-        - { stat: kill.explode, type: FLAT, value: "{value}" }
-
-# ---- 具名 Boss：那張地圖的 Boss 機率掉自己的（maps.yml 的 drops.named_unique_chance）----
-
-tomb_oath:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 守陵者的誓約
-  base: great_hammer   # 2026-10 PoE2 改版：原本是 great_sword（劍、斧、匕首、爪拿掉了；已經掉出來的照舊）
-  drop_level: 60
-  sources: [royal_tomb]
-  weight: 100
-  version: 2
-  legacy: { 1: [1, 0, 2, 3, 0, 4] }
-  flavour:
-    - "陵門不開，將軍不退。"
-  mods:
-    - text: "增加 {value}% 近戰物理傷害"
-      value: [150, 190]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [melee, physical] }
-    - text: "攻擊附加 {min} 到 {max} 物理傷害"
-      min: [14, 18]
-      max: [30, 38]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
-    - text: "+{value} 力量"
-      value: [30, 40]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 攻擊速度"
-      value: [8, 12]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "擊中時 {value}% 機率造成雙倍傷害"
-      value: [10, 15]
-      stats:
-        - { stat: damage.double, type: FLAT, value: "{value}" }
-    - text: "+{value} 護甲"
-      value: [200, 300]
-      stats:
-        - { stat: armour, type: FLAT, value: "{value}" }
-
-star_chart:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 觀星者的星盤
-  base: wand
-  drop_level: 60
-  sources: [observatory]
-  weight: 100
-  version: 2
-  legacy: { 1: [0, 1, 3, 0, 2, 0] }
-  flavour:
-    - "她看見了那顆星的墜落，"
-    - "卻沒有看見自己的。"
-  mods:
-    - text: "+1 法術技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 1, tags: [spell] }
-    - text: "增加 {value}% 法術傷害"
-      value: [60, 80]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
-    - text: "增加 {value}% 施法速度"
-      value: [12, 18]
-      stats:
-        - { stat: cast.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 法術暴擊率"
-      value: [50, 80]
-      stats:
-        - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
-    - text: "+{value} 最大魔力"
-      value: [50, 70]
-      stats:
-        - { stat: mana.max, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大魔力"
-      value: [4, 6]
-      stats:
-        - { stat: mana.on_kill, type: FLAT, value: "{value}" }
-
-# ---- 地圖 Boss（任何一張，5%）、僥倖石、賭博（一次約 0.66%：照 Boss 的 5% 校準，見 economy.yml）----
-
-tide_scar:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 潮痕
-  base: coral_ring
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  version: 2
-  legacy: { 1: [1, 2, 0, 0, 3] }
-  flavour:
-    - "海退去以後，留下的只有鹽。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [40, 60]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value}% 冰冷抗性"
-      value: [30, 40]
-      stats:
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大生命"
-      value: [3, 5]
-      stats:
-        - { stat: life.on_kill, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大魔力"
-      value: [3, 5]
-      stats:
-        - { stat: mana.on_kill, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 物品掉落數量"
-      value: [8, 12]
-      stats:
-        - { stat: drop.quantity, type: INCREASED, value: "{value}" }
-
-shadow_raiment:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 掠影獵衣
-  base: leather_body
-  drop_level: 53
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "盾牌留給膽小的人；"
-    - "你只需要比刀更快。"
-  mods:
-    # 2026-10：原本是「插槽中的移動寶石 +5 級」，這裡沒有插槽：改成全部移動技能 +2 級
-    - text: "+2 移動技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 2, tags: [movement] }
-    - text: "增加 10% 攻擊速度"
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: 10 }
-    - text: "移動技能增加 {value}% 傷害"
-      value: [60, 100]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [movement] }
-    # 原本是這件的閃避值 +200～250%（只算這件）；這裡的閃避加成是全身的，改成 60～80%
-    - text: "增加 {value}% 閃避值"
-      value: [60, 80]
-      stats:
-        - { stat: evasion, type: INCREASED, value: "{value}" }
-    - text: "增加 10% 移動速度"
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: 10 }
-
-elemental_sanctuary:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 元素的庇護
-  base: kite_shield
-  drop_level: 68
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "它擋下的不只是刀劍，"
-    - "還有你為信念付出的代價。"
-  mods:
-    # 2026-10：原本是「插槽中的光環寶石」，這裡沒有插槽：改成對你全部的光環有效
-    - text: "+2 光環技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 2, tags: [aura] }
-    - text: "+50 最大精魂"   # 2026-10 精魂改版：原本是「光環保留生命而非魔力」
-      stats:
-        - { stat: spirit.max, type: FLAT, value: 50 }
-    - text: "光環的保留效率增加 30%"
-      stats:
-        - { stat: aura.reservation, type: INCREASED, value: -30 }   # 2026-10：改成保留效率（30% 效率 ≈ 保留少 23%，跟原本一樣）
-    - text: "+{value} 敏捷"
-      value: [20, 30]
-      stats:
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "+25% 全部元素抗性"
-      stats:
-        - { stat: resist.fire, type: FLAT, value: 25 }
-        - { stat: resist.cold, type: FLAT, value: 25 }
-        - { stat: resist.lightning, type: FLAT, value: 25 }
-
-ashen_mantle:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 灰燼斗篷
-  base: silk_body
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  version: 2
-  flavour:
-    - "曜京燒了七天七夜，這是第八天的灰。"
-  mods:
-    - text: "+{value} 最大能量護盾"
-      value: [90, 130]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 火焰傷害"
-      value: [30, 40]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
-    - text: "+{value}% 火焰抗性"
-      value: [30, 40]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 點燃機率"
-      value: [30, 50]
-      stats:
-        - { stat: ignite.chance, type: INCREASED, value: "{value}" }
-    - text: "你殺死的敵人爆炸，對周圍造成牠最大生命 {value}% 的火焰傷害"
-      value: [8, 12]
-      stats:
-        - { stat: kill.explode, type: FLAT, value: "{value}" }
-
-frostbite:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 霜嚙
-  base: scale_boots
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  version: 2
-  flavour:
-    - "走過霜頂山脈的人，腳趾都不是自己的了。"
-  mods:
-    - text: "增加 {value}% 移動速度"
-      value: [25, 30]
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: "{value}" }
-    - text: "+{value} 閃避"
-      value: [150, 220]
-      stats:
-        - { stat: evasion, type: FLAT, value: "{value}" }
-    - text: "+{value}% 冰冷抗性"
-      value: [30, 40]
-      stats:
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-    - text: "擊殺時 {value}% 機率獲得疾速（4 秒：增加 20% 攻擊、施法與移動速度）"
-      value: [20, 30]
-      stats:
-        - { stat: onslaught.on_kill, type: FLAT, value: "{value}" }
-    - text: "無法被凍結"
-      stats:
-        - { stat: flag.freeze_immune, type: FLAT, value: 1 }
-
-iron_vow:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 鐵誓
-  base: chain_belt
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  version: 2
-  flavour:
-    - "流放者的腰帶上刻著編號，不是名字。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [55, 75]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value} 護甲"
-      value: [250, 350]
-      stats:
-        - { stat: armour, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 最大生命"
-      value: [8, 12]
-      stats:
-        - { stat: life.max, type: INCREASED, value: "{value}" }
-    - text: "受到的傷害有 {value}% 之後慢慢回復為生命"
-      value: [12, 18]
-      stats:
-        - { stat: life.recoup, type: FLAT, value: "{value}" }
-
-formation_breaker:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 破陣
-  base: crossbow
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "曜朝的弩手一排排倒下，"
-    - "弩還在射。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [130, 160]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "攻擊附加 {min} 到 {max} 物理傷害"
-      min: [12, 16]
-      max: [26, 32]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
-    - text: "使用弩時多射出 1 支弩箭"
-      stats:
-        - { stat: skill.projectiles, type: FLAT, value: 1, tags: [crossbow] }
-    - text: "使用弩時投射物多穿透 {value} 個敵人"
-      value: [1, 2]
-      stats:
-        - { stat: skill.pierce, type: FLAT, value: "{value}", tags: [crossbow] }
-    - text: "+{value} 力量"
-      value: [20, 30]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-
-awakening_thunder:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 驚蟄
-  base: quarterstaff
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "春雷一響，"
-    - "山裡睡著的東西都醒了。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [110, 140]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "物理傷害的 {value}% 額外附加為閃電傷害"
-      value: [25, 35]
-      stats:
-        - { stat: damage.gain.lightning, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 攻擊速度"
-      value: [10, 14]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "攻擊每次擊中回復 {value} 生命"
-      value: [12, 20]
-      stats:
-        - { stat: life.on_hit, type: FLAT, value: "{value}", tags: [attack] }
-    - text: "增加 {value}% 感電機率"
-      value: [40, 60]
-      stats:
-        - { stat: shock.chance, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 格擋率"
-      value: [4, 6]
-      stats:
-        - { stat: block.chance, type: FLAT, value: "{value}" }
-
-cloud_piercer:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 破雲
-  base: spear
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "擲出去的矛不肯落地，"
-    - "一個接一個找下去。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [120, 150]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 暴擊率"
-      value: [30, 45]
-      stats:
-        - { stat: crit.chance, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 暴擊傷害"
-      value: [25, 35]
-      stats:
-        - { stat: crit.multi, type: FLAT, value: "{value}" }
-    - text: "投射物多連鎖 1 次"
-      stats:
-        - { stat: skill.chains, type: FLAT, value: 1, tags: [projectile] }
-    - text: "擊殺時 {value}% 機率獲得疾速（4 秒：增加 20% 攻擊、施法與移動速度）"
-      value: [10, 15]
-      stats:
-        - { stat: onslaught.on_kill, type: FLAT, value: "{value}" }
-
-bone_rot:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 蝕骨
-  base: wand
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "骨頭會記得疼，"
-    - "比肉記得久。"
-  mods:
-    - text: "+1 混沌技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 1, tags: [chaos] }
-    - text: "增加 {value}% 混沌傷害"
-      value: [50, 70]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
-    - text: "法術附加 {min} 到 {max} 混沌傷害"
-      min: [10, 14]
-      max: [22, 28]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [spell, chaos] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [spell, chaos] }
-    - text: "擊殺時回復 {value}% 最大魔力"
-      value: [4, 6]
-      stats:
-        - { stat: mana.on_kill, type: FLAT, value: "{value}" }
-    - text: "+{value}% 混沌抗性"
-      value: [17, 23]
-      stats:
-        - { stat: resist.chaos, type: FLAT, value: "{value}" }
-
-city_burner:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 焚城
-  base: staff
-  drop_level: 68
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "一顆火星落進枯草，"
-    - "曜京就再也沒有冬天。"
-  mods:
-    - text: "+2 火焰法術技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 2, tags: [spell, fire] }
-    - text: "增加 {value}% 火焰傷害"
-      value: [60, 90]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
-    - text: "點燃機率 +{value}%"
-      value: [15, 25]
-      stats:
-        - { stat: ignite.chance, type: FLAT, value: "{value}" }
-    - text: "你殺死的敵人爆炸，對周圍造成牠最大生命 {value}% 的火焰傷害"
-      value: [5, 8]
-      stats:
-        - { stat: kill.explode, type: FLAT, value: "{value}" }
-    - text: "+{value} 智慧"
-      value: [30, 40]
-      stats:
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-
-still_mind:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 澄心
-  base: silk_helmet
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "心靜下來的時候，"
-    - "刀砍在身上也只是風。"
-  mods:
-    - text: "+{value} 最大魔力"
-      value: [60, 80]
-      stats:
-        - { stat: mana.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 最大魔力"
-      value: [15, 20]
-      stats:
-        - { stat: mana.max, type: INCREASED, value: "{value}" }
-    - text: "受到的傷害有 {value}% 先從魔力扣除"
-      value: [25, 30]
-      stats:
-        - { stat: damage.from_mana, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
-      value: [40, 60]
-      stats:
-        - { stat: mana.regen, type: INCREASED, value: "{value}" }
-    - text: "+{value} 智慧"
-      value: [20, 30]
-      stats:
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-
-blood_edge:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 飲刃
-  base: iron_ring
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "刀喝了血就不會鈍，"
-    - "人也是。"
-  mods:
-    - text: "攻擊附加 {min} 到 {max} 物理傷害"
-      min: [6, 9]
-      max: [13, 17]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
-    - text: "造成的物理傷害有 {value}% 偷取為生命"
-      value: [2, 3]
-      stats:
-        - { stat: leech.life, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 攻擊速度"
-      value: [6, 10]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [30, 45]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-
-hollow_shell:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 空殼
-  base: amber_amulet
-  drop_level: 68
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "裡面什麼都沒有，"
-    - "所以什麼都傷不了它。"
-  mods:
-    - text: "無垢之軀：免疫混沌傷害，最大生命變成 1"
-      stats:
-        - { stat: flag.chaos_immune, type: FLAT, value: 1 }
-    - text: "+{value} 最大能量護盾"
-      value: [40, 60]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 最大能量護盾"
-      value: [25, 35]
-      stats:
-        - { stat: es.max, type: INCREASED, value: "{value}" }
-    - text: "+{value} 智慧"
-      value: [30, 40]
-      stats:
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大能量護盾"
-      value: [3, 5]
-      stats:
-        - { stat: es.on_kill, type: FLAT, value: "{value}" }
-
-unyielding:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 不屈
-  base: plate_body
-  drop_level: 68
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "曜朝的最後一個士兵沒有倒下，"
-    - "他只是站著死了。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [100, 130]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 護甲"
-      value: [80, 120]
-      stats:
-        - { stat: armour, type: INCREASED, value: "{value}" }
-    - text: "+1% 全部抗性上限"
-      stats:
-        - { stat: resist.max, type: FLAT, value: 1 }
-    - text: "+{value}% 全部元素抗性"
-      value: [8, 12]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-        - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "受到的傷害有 {value}% 之後慢慢回復為生命"
-      value: [8, 12]
-      stats:
-        - { stat: life.recoup, type: FLAT, value: "{value}" }
-
-hawk_eye:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 隼瞳
-  base: bow
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "鷹看得見的東西，"
-    - "就跑不掉。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [120, 150]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "攻擊附加 {min} 到 {max} 物理傷害"
-      min: [10, 13]
-      max: [22, 28]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
-    - text: "攻擊必定命中"
-      stats:
-        - { stat: flag.always_hit, type: FLAT, value: 1 }
-    - text: "增加 {value}% 攻擊速度"
-      value: [8, 12]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "+{value} 敏捷"
-      value: [25, 35]
-      stats:
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-
-# ---- 練功用（劇情期間就拿得到）：只有僥倖石與賭博，物品等級 1 起 ----
-
-wanderer:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 流浪者
-  base: leather_boots
-  drop_level: 1
-  sources: [chance, gamble]
-  weight: 100
-  flavour:
-    - "走得夠遠，"
-    - "就沒有人記得你為什麼被流放。"
-  mods:
-    - text: "增加 {value}% 移動速度"
-      value: [15, 20]
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: "{value}" }
-    - text: "+{value} 敏捷"
-      value: [10, 20]
-      stats:
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [15, 25]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大生命"
-      value: [2, 3]
-      stats:
-        - { stat: life.on_kill, type: FLAT, value: "{value}" }
-
-gilded_brim:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 金邊
-  base: leather_helmet
-  drop_level: 1
-  sources: [chance, gamble]
-  weight: 100
-  flavour:
-    - "帽子比頭值錢的時候，"
-    - "最好不要低頭。"
-  mods:
-    - text: "+{value} 閃避"
-      value: [30, 50]
-      stats:
-        - { stat: evasion, type: FLAT, value: "{value}" }
-    - text: "+{value}% 全部元素抗性"
-      value: [25, 30]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-        - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 物品掉落稀有度"
-      value: [10, 15]
-      stats:
-        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-
-# ---- 地圖事件的專屬傳奇（機率見 map_events.yml：神龕、寶箱、裂隙、流寇各 1%；祭壇、幻霧是獎勵裡的「傳奇」）----
-# 不能用僥倖石做、賭不到。
-
-shrine_lamp:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 長明燈
-  base: amber_amulet
-  drop_level: 60
-  sources: [shrine]
-  weight: 100
-  flavour:
-    - "神龕的火熄了三百年；"
-    - "提著它的人，走到哪裡都是神龕。"
-  mods:
-    - text: "神龕的增益持續時間增加 {value}%"
-      value: [80, 100]
-      stats:
-        - { stat: shrine.duration, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 移動速度"
-      value: [8, 12]
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [40, 60]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value}% 全部元素抗性"
-      value: [12, 16]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-        - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "擊殺時 {value}% 機率獲得疾速"
-      value: [10, 15]
-      stats:
-        - { stat: onslaught.on_kill, type: FLAT, value: "{value}" }
-
-thousand_locks:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 千鎖
-  base: ruby_ring
-  drop_level: 60
-  sources: [strongbox]
-  weight: 100
-  flavour:
-    - "每打開一把鎖，"
-    - "就有另一把鎖在等它。"
-  mods:
-    - text: "增加 {value}% 物品掉落數量"
-      value: [8, 12]
-      stats:
-        - { stat: drop.quantity, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 物品掉落稀有度"
-      value: [25, 35]
-      stats:
-        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-    - text: "+{value} 全部屬性"
-      value: [10, 16]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "+{value}% 火焰與冰冷抗性"
-      value: [20, 25]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-
-rift_sceptre:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 裂界
-  base: sceptre
-  drop_level: 60
-  sources: [breach]
-  weight: 100
-  flavour:
-    - "裂隙關上之前，"
-    - "總會有一點紫色的東西漏出來。"
-  mods:
-    - text: "+1 混沌法術技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 1, tags: [spell, chaos] }
-    - text: "法術附加 {min} 到 {max} 混沌傷害"
-      min: [18, 24]
-      max: [38, 48]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [spell, chaos] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [spell, chaos] }
-    - text: "增加 {value}% 混沌傷害"
-      value: [40, 60]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
-    - text: "增加 {value}% 施法速度"
-      value: [10, 15]
-      stats:
-        - { stat: cast.speed, type: INCREASED, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大魔力"
-      value: [3, 5]
-      stats:
-        - { stat: mana.on_kill, type: FLAT, value: "{value}" }
-
-exile_oath:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 流寇之誓
-  base: scale_body
-  drop_level: 60
-  sources: [exile]
-  weight: 100
-  flavour:
-    - "他們被趕出了曜京，"
-    - "卻沒有一個人脫下這身甲。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [80, 110]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 護甲與閃避"
-      value: [80, 120]
-      stats:
-        - { stat: armour, type: INCREASED, value: "{value}" }
-        - { stat: evasion, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 攻擊速度"
-      value: [6, 10]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 全部元素抗性"
-      value: [10, 14]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-        - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "攻擊每次擊中回復 {value} 生命"
-      value: [8, 14]
-      stats:
-        - { stat: life.on_hit, type: FLAT, value: "{value}", tags: [attack] }
-
-blood_rite:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 血祭
-  base: great_hammer   # 2026-10 PoE2 改版：原本是 great_axe（劍、斧、匕首、爪拿掉了；已經掉出來的照舊）
-  drop_level: 60
-  sources: [ritual]
-  weight: 100
-  flavour:
-    - "祭壇要的是血；"
-    - "這把斧頭，從來不缺。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [170, 210]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 攻擊速度"
-      value: [6, 10]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "物理傷害的 {value}% 偷取為生命"
-      value: [2, 3]
-      stats:
-        - { stat: leech.life, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大生命"
-      value: [3, 5]
-      stats:
-        - { stat: life.on_kill, type: FLAT, value: "{value}" }
-    - text: "+{value} 力量"
-      value: [20, 30]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-
-mist_mirror:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 霧中鏡
-  base: wrap_helmet
-  drop_level: 60
-  sources: [delirium]
-  weight: 100
-  flavour:
-    - "鏡子裡的霧，比鏡子外的還濃。"
-    - "看久了，你會分不清哪一邊才是你。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [50, 70]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value} 最大能量護盾"
-      value: [40, 60]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 暴擊率"
-      value: [40, 60]
-      stats:
-        - { stat: crit.chance, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 暴擊傷害"
-      value: [20, 30]
-      stats:
-        - { stat: crit.multi, type: FLAT, value: "{value}" }
-    - text: "受到的傷害有 {value}% 之後慢慢回復為生命"
-      value: [8, 12]
-      stats:
-        - { stat: life.recoup, type: FLAT, value: "{value}" }
-
-# ---- 極境的專屬傳奇：四隻極境 Boss 各一件（sources 寫 uber_終局代號；機率見 maps.yml 的 uber.drops.exclusive_chance，5%）----
-# 物品等級 80 起（極境的怪物等級 91，一定夠）；不能用僥倖石做、賭不到。
-
-blazing_sun:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 曜日
-  base: staff
-  drop_level: 80
-  sources: [uber_sky_crucible]
-  weight: 100
-  flavour:
-    - "熔爐熄了，"
-    - "但曜帝心裡的那顆太陽，從來沒有落下。"
-  mods:
-    - text: "+2 火焰技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 2, tags: [fire] }
-    - text: "增加 {value}% 火焰傷害"
-      value: [90, 120]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
-    - text: "增加 {value}% 施法速度"
-      value: [15, 20]
-      stats:
-        - { stat: cast.speed, type: INCREASED, value: "{value}" }
-    - text: "擊中時 {value}% 機率造成雙倍傷害"
-      value: [6, 9]
-      stats:
-        - { stat: damage.double, type: FLAT, value: "{value}" }
-    - text: "+{value} 最大魔力"
-      value: [60, 90]
-      stats:
-        - { stat: mana.max, type: FLAT, value: "{value}" }
-
-eternal_winter:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 永冬
-  base: sapphire_ring
-  drop_level: 80
-  sources: [uber_frost_throne]
-  weight: 100
-  flavour:
-    - "她把冬天戴在指上，"
-    - "從此再也沒有春天。"
-  mods:
-    - text: "+1 冰冷技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 1, tags: [cold] }
-    - text: "增加 {value}% 冰冷傷害"
-      value: [30, 40]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
-    - text: "增加 {value}% 冰緩效果"
-      value: [25, 35]
-      stats:
-        - { stat: chill.effect, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 凍結累積"
-      value: [40, 60]
-      stats:
-        - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 冰冷抗性"
-      value: [30, 40]
-      stats:
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-
-styx_ward:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 冥河之盾
-  base: spirit_shield
-  drop_level: 80
-  sources: [uber_bone_throne]
-  weight: 100
-  flavour:
-    - "渡者把最後一塊船板留給了你。"
-    - "跟著你過河的，不只有你自己。"
-  mods:
-    - text: "+1 召喚物技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 1, tags: [minion] }
-    - text: "召喚物增加 {value}% 傷害"
-      value: [40, 60]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
-    - text: "召喚物增加 {value}% 最大生命"
-      value: [30, 40]
-      stats:
-        - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
-    - text: "+{value} 最大生命"
-      value: [60, 80]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value}% 混沌抗性"
-      value: [35, 45]
-      stats:
-        - { stat: resist.chaos, type: FLAT, value: "{value}" }
-
-skyburn_greaves:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 焚天之履
-  base: plate_boots
-  drop_level: 80
-  sources: [uber_ember_citadel]
-  weight: 100
-  flavour:
-    - "將軍走過的地方，"
-    - "三百年都長不出草。"
-  mods:
-    - text: "增加 {value}% 移動速度"
-      value: [30, 35]
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [70, 90]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value}% 火焰抗性"
-      value: [35, 45]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-    - text: "擊殺時 {value}% 機率獲得疾速"
-      value: [20, 30]
-      stats:
-        - { stat: onslaught.on_kill, type: FLAT, value: "{value}" }
-    - text: "你殺死的敵人爆炸，造成牠最大生命 {value}% 的火焰傷害"
-      value: [5, 8]
-      stats:
-        - { stat: kill.explode, type: FLAT, value: "{value}" }
-
-# ---- 劫盜（heist.yml）：大金庫的專屬傳奇 ----
-
-# 二律背反（照 PoE 的 Paradoxica）：攻擊一定造成雙倍傷害
-antinomy:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 二律背反
-  base: war_hammer   # 2026-10 PoE2 改版：原本是 short_sword（劍、斧、匕首、爪拿掉了；已經掉出來的照舊）
-  drop_level: 45
-  sources: [heist]
-  veiled: [prefix, suffix]   # 隱匿傳奇：帶一條隱匿前綴、一條隱匿後綴，找盜賊首領各自揭露（照 PoE 的 Paradoxica）
-  weight: 100
-  version: 2
-  legacy: { 1: [4] }          # 第 1 版的物品：只留「兩倍傷害」那一條，其他的拿掉
-  flavour:
-    - "同一把劍，砍下去是兩次；"
-    - "被砍的人，也死兩次。"
-  mods:
-    - text: "使用此武器攻擊造成兩倍傷害"
-      stats:
-        - { stat: damage.double, type: FLAT, value: 100, tags: [attack] }
-
-# ---- 劫盜（大金庫，heist.yml 的 vault.unique_chance；大劫盜 ×3）：盜賊主題 ----
-
-# 竊影之履：跑得快、殺了人更快
-shadowstep:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 竊影之履
-  base: leather_boots
-  drop_level: 40
-  sources: [heist]
-  veiled: suffix             # 隱匿傳奇：帶一條隱匿後綴，找盜賊首領揭露
-  weight: 100
-  flavour:
-    - "警報響起的時候，"
-    - "他已經在下一條街了。"
-  mods:
-    - text: "+{value} 敏捷"
-      value: [20, 30]
-      stats:
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 閃避值"
-      value: [40, 60]
-      stats:
-        - { stat: evasion, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 移動速度"
-      value: [25, 30]
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: "{value}" }
-    - text: "擊殺時 {value}% 機率獲得疾速"
-      value: [20, 30]
-      stats:
-        - { stat: onslaught.on_kill, type: FLAT, value: "{value}" }
-
-# 夜梟之眼：看得清楚的人打得準
-owl_eye:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 夜梟之眼
-  base: wrap_helmet
-  drop_level: 45
-  sources: [heist]
-  veiled: prefix             # 隱匿傳奇：帶一條隱匿前綴，找盜賊首領揭露
-  weight: 100
-  flavour:
-    - "黑暗裡沒有秘密，"
-    - "只有還沒被看見的東西。"
-  mods:
-    - text: "+{value} 智慧"
-      value: [20, 30]
-      stats:
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [50, 70]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value} 命中值"
-      value: [250, 400]
-      stats:
-        - { stat: accuracy, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 暴擊率"
-      value: [40, 60]
-      stats:
-        - { stat: crit.chance, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 暴擊傷害"
-      value: [20, 30]
-      stats:
-        - { stat: crit.multi, type: FLAT, value: "{value}" }
-
-# 撬鎖人：手快
-lockpick:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 撬鎖人
-  base: iron_ring
-  drop_level: 40
-  sources: [heist]
-  veiled: suffix             # 隱匿傳奇：帶一條隱匿後綴，找盜賊首領揭露
-  weight: 100
-  flavour:
-    - "沒有打不開的鎖，"
-    - "只有不夠快的手。"
-  mods:
-    - text: "+{value} 敏捷"
-      value: [15, 25]
-      stats:
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "攻擊附加 {min}–{max} 物理傷害"
-      min: [5, 8]
-      max: [11, 15]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
-    - text: "增加 {value}% 攻擊速度"
-      value: [8, 12]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 物品稀有度"
-      value: [15, 25]
-      stats:
-        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-
-# 金庫守衛：站著不動的那一個
-vault_warden:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 金庫守衛
-  base: tower_shield
-  drop_level: 50
-  sources: [heist]
-  veiled: prefix             # 隱匿傳奇：帶一條隱匿前綴，找盜賊首領揭露
-  weight: 80
-  flavour:
-    - "他守了三十年金庫，"
-    - "從來沒有人問過他累不累。"
-  mods:
-    - text: "+{value} 力量"
-      value: [25, 35]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [60, 90]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 護甲"
-      value: [80, 120]
-      stats:
-        - { stat: armour, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 格擋率"
-      value: [6, 9]
-      stats:
-        - { stat: block.chance, type: FLAT, value: "{value}" }
-    - text: "受到的傷害有 {value}% 之後慢慢回復為生命"
-      value: [10, 15]
-      stats:
-        - { stat: life.recoup, type: FLAT, value: "{value}" }
-
-# 贓物袋：裝得多、撈得多
-loot_sack:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 贓物袋
-  base: leather_belt
-  drop_level: 40
-  sources: [heist]
-  veiled: suffix             # 隱匿傳奇：帶一條隱匿後綴，找盜賊首領揭露
-  weight: 100
-  flavour:
-    - "袋子越重，"
-    - "腳步越輕。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [40, 60]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value}% 全部元素抗性"
-      value: [10, 15]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-        - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 物品數量"
-      value: [8, 12]
-      stats:
-        - { stat: drop.quantity, type: INCREASED, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大魔力"
-      value: [2, 3]
-      stats:
-        - { stat: mana.on_kill, type: FLAT, value: "{value}" }
-
-# 蛇信：一刀見血，再一刀見毒
-serpent_tongue:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 蛇信
-  base: spear   # 2026-10 PoE2 改版：原本是 dagger（劍、斧、匕首、爪拿掉了；已經掉出來的照舊）
-  drop_level: 50
-  sources: [heist]
-  veiled: prefix             # 隱匿傳奇：帶一條隱匿前綴，找盜賊首領揭露
-  weight: 80
-  flavour:
-    - "傷口不痛，"
-    - "痛的是三天後。"
-  mods:
-    - text: "+{value} 敏捷"
-      value: [20, 30]
-      stats:
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 混沌傷害"
-      value: [40, 60]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
-    - text: "物理傷害的 {value}% 額外附加為混沌"
-      value: [15, 25]
-      stats:
-        - { stat: damage.gain.chaos, type: FLAT, value: "{value}" }
-    - text: "攻擊有 +{value}% 機率造成中毒"
-      value: [30, 40]
-      stats:
-        - { stat: poison.chance, type: FLAT, value: "{value}", tags: [attack] }
-    - text: "增加 {value}% 中毒傷害"
-      value: [25, 40]
-      stats:
-        - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
-
-# ---- 2026-10 擴充：地圖事件的專屬傳奇（每個事件再多兩件；偏弩與物理）----
-# 機率照 map_events.yml 各事件的 unique_chance（1%）；同一個事件的幾件照 weight 抽。
-
-# 神龕
-rain_prayer:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 祈雨弩
-  base: crossbow
-  drop_level: 60
-  sources: [shrine]
-  weight: 100
-  flavour:
-    - "向神龕求雨的人，"
-    - "最後等到的是箭雨。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [120, 150]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 攻擊速度"
-      value: [10, 14]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 投射物速度"
-      value: [25, 35]
-      stats:
-        - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
-    - text: "擊殺時 {value}% 機率獲得一顆怒星"
-      value: [15, 25]
-      stats:
-        - { stat: charge.chance.frenzy, type: FLAT, value: "{value}" }
-    - text: "神龕的增益持續時間增加 {value}%"
-      value: [30, 50]
-      stats:
-        - { stat: shrine.duration, type: INCREASED, value: "{value}" }
-
-shrine_keeper:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 守龕人
-  base: plate_helmet
-  drop_level: 60
-  sources: [shrine]
-  weight: 100
-  flavour:
-    - "他不記得守了多久，"
-    - "只記得不能讓火熄。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [60, 80]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 護甲"
-      value: [80, 120]
-      stats:
-        - { stat: armour, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 物理傷害"
-      value: [20, 30]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "+{value}% 機率避免暈眩"
-      value: [30, 40]
-      stats:
-        - { stat: avoid.stun, type: FLAT, value: "{value}" }
-    - text: "神龕的增益持續時間增加 {value}%"
-      value: [40, 60]
-      stats:
-        - { stat: shrine.duration, type: INCREASED, value: "{value}" }
-
-# 寶箱
-smith_maul:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 鍛爐之錘
-  base: great_hammer
-  drop_level: 60
-  sources: [strongbox]
-  weight: 100
-  flavour:
-    - "打鐵的錘子，"
-    - "打人一樣順手。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [160, 200]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 暈眩累積"
-      value: [40, 60]
-      stats:
-        - { stat: stun.buildup, type: INCREASED, value: "{value}" }
-    - text: "+{value} 力量"
-      value: [25, 35]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大生命"
-      value: [3, 5]
-      stats:
-        - { stat: life.on_kill, type: FLAT, value: "{value}" }
-
-chain_quiver:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 鎖鏈箭袋
-  base: serrated_quiver
-  drop_level: 60
-  sources: [strongbox]
-  weight: 100
-  flavour:
-    - "箭袋上纏著寶箱的鎖鏈，"
-    - "裡面的箭一支都沒少。"
-  mods:
-    - text: "攻擊附加 {min} 到 {max} 物理傷害"
-      min: [6, 9]
-      max: [12, 16]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
-    - text: "增加 {value}% 攻擊速度"
-      value: [8, 12]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "投射物多穿透 {value} 個敵人"
-      value: [1, 1]
-      stats:
-        - { stat: skill.pierce, type: FLAT, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [40, 60]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-
-# 裂隙
-void_crossbow:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 虛空連弩
-  base: crossbow
-  drop_level: 60
-  sources: [breach]
-  weight: 100
-  flavour:
-    - "從裂隙裡撿回來的弩，"
-    - "弦是紫色的。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [100, 130]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "物理傷害額外附加 {value}% 為混沌傷害"
-      value: [20, 30]
-      stats:
-        - { stat: damage.gain.chaos, type: FLAT, value: "{value}" }
-    - text: "攻擊有 +{value}% 機率造成中毒"
-      value: [20, 30]
-      stats:
-        - { stat: poison.chance, type: FLAT, value: "{value}", tags: [attack] }
-    - text: "+{value}% 混沌抗性"
-      value: [15, 20]
-      stats:
-        - { stat: resist.chaos, type: FLAT, value: "{value}" }
-
-rift_band:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 裂隙指環
-  base: iron_ring
-  drop_level: 60
-  sources: [breach]
-  weight: 100
-  flavour:
-    - "戴上它，"
-    - "指尖會有一點不屬於這裡的冷。"
-  mods:
-    - text: "攻擊附加 {min} 到 {max} 物理傷害"
-      min: [5, 8]
-      max: [11, 15]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
-    - text: "+{value}% 暴擊傷害"
-      value: [15, 25]
-      stats:
-        - { stat: crit.multi, type: FLAT, value: "{value}" }
-    - text: "物理傷害的 {value}% 偷取為生命"
-      value: [1, 2]
-      stats:
-        - { stat: leech.life, type: FLAT, value: "{value}" }
-    - text: "+{value}% 混沌抗性"
-      value: [10, 15]
-      stats:
-        - { stat: resist.chaos, type: FLAT, value: "{value}" }
-
-# 流寇
-deserter_spear:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 逃兵之矛
-  base: spear
-  drop_level: 60
-  sources: [exile]
-  weight: 100
-  flavour:
-    - "他丟下了旗，"
-    - "沒丟下矛。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [140, 170]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "攻擊擊中時 {value}% 機率造成流血"
-      value: [20, 30]
-      stats:
-        - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
-    - text: "增加 {value}% 攻擊速度"
-      value: [8, 12]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 移動速度"
-      value: [6, 10]
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: "{value}" }
-
-exile_greaves:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 流寇護腿
-  base: scale_leggings
-  drop_level: 60
-  sources: [exile]
-  weight: 100
-  flavour:
-    - "跑過的路比走過的多，"
-    - "護腿上全是泥。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [60, 90]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 護甲與閃避"
-      value: [60, 100]
-      stats:
-        - { stat: armour, type: INCREASED, value: "{value}" }
-        - { stat: evasion, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 物理傷害"
-      value: [15, 25]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "+{value}% 機率避免流血"
-      value: [40, 60]
-      stats:
-        - { stat: avoid.bleed, type: FLAT, value: "{value}" }
-
-# 祭壇
-blood_pact:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 血契弩
-  base: crossbow
-  drop_level: 60
-  sources: [ritual]
-  weight: 100
-  flavour:
-    - "每一支弩箭，"
-    - "都是先跟祭壇借來的。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [150, 190]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "物理傷害的 {value}% 偷取為生命"
-      value: [2, 3]
-      stats:
-        - { stat: leech.life, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大生命"
-      value: [3, 5]
-      stats:
-        - { stat: life.on_kill, type: FLAT, value: "{value}" }
-    - text: "使用弩時投射物多穿透 {value} 個敵人"
-      value: [1, 2]
-      stats:
-        - { stat: skill.pierce, type: FLAT, value: "{value}", tags: [crossbow] }
-
-sacrifice_belt:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 獻祭腰鏈
-  base: chain_belt
-  drop_level: 60
-  sources: [ritual]
-  weight: 100
-  flavour:
-    - "鏈子上每一環，"
-    - "都刻著一個名字。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [50, 70]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value} 力量"
-      value: [20, 30]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 物理傷害"
-      value: [20, 30]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 流血傷害"
-      value: [25, 35]
-      stats:
-        - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
-
-# 幻霧
-dream_repeater:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 幻夢連弩
-  base: crossbow
-  drop_level: 60
-  sources: [delirium]
-  weight: 100
-  flavour:
-    - "扣一次扳機，"
-    - "霧裡好像有好幾把弩一起響。"
-  mods:
-    - text: "增加 {value}% 攻擊速度"
-      value: [15, 20]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 暴擊率"
-      value: [40, 60]
-      stats:
-        - { stat: crit.chance, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 暴擊傷害"
-      value: [25, 35]
-      stats:
-        - { stat: crit.multi, type: FLAT, value: "{value}" }
-    - text: "使用弩時多射出 1 支弩箭"
-      stats:
-        - { stat: skill.projectiles, type: FLAT, value: 1, tags: [crossbow] }
-
-nightmare_claw:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 夢魘之爪
-  base: quarterstaff   # 2026-10 PoE2 改版：原本是 claw（劍、斧、匕首、爪拿掉了；已經掉出來的照舊）
-  drop_level: 60
-  sources: [delirium]
-  weight: 100
-  flavour:
-    - "醒來的時候，"
-    - "手上的抓痕還在。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [120, 150]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 暴擊率"
-      value: [30, 45]
-      stats:
-        - { stat: crit.chance, type: INCREASED, value: "{value}" }
-    - text: "攻擊每次擊中回復 {value} 生命"
-      value: [8, 12]
-      stats:
-        - { stat: life.on_hit, type: FLAT, value: "{value}", tags: [attack] }
-    - text: "擊中時 {value}% 機率獲得一顆怒星"
-      value: [10, 15]
-      stats:
-        - { stat: charge.on_hit.frenzy, type: FLAT, value: "{value}" }
-
-# ---- 2026-10 擴充（二）：地圖事件再各兩件 ----
-
-votive_wand:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 祝禱法杖
-  base: wand
-  drop_level: 60
-  sources: [shrine]
-  weight: 100
-  flavour:
-    - "每一句禱詞，"
-    - "都化成一道光。"
-  mods:
-    - text: "增加 {value}% 法術傷害"
-      value: [60, 80]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
-    - text: "增加 {value}% 施法速度"
-      value: [10, 15]
-      stats:
-        - { stat: cast.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
-      value: [40, 60]
-      stats:
-        - { stat: mana.regen, type: INCREASED, value: "{value}" }
-    - text: "神龕的增益持續時間增加 {value}%"
-      value: [40, 60]
-      stats:
-        - { stat: shrine.duration, type: INCREASED, value: "{value}" }
-
-incense_amulet:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 香灰護符
-  base: jade_amulet
-  drop_level: 60
-  sources: [shrine]
-  weight: 100
-  flavour:
-    - "香早就燒完了，"
-    - "灰還是暖的。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [40, 60]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "每秒回復 {value/10}% 最大生命"
-      value: [8, 12]
-      stats:
-        - { stat: life.regen_percent, type: FLAT, value: "{value/10}" }
-    - text: "+{value}% 全部元素抗性"
-      value: [10, 15]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-        - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 光環效果"
-      value: [8, 12]
-      stats:
-        - { stat: aura.effect, type: INCREASED, value: "{value}" }
-
-crowbar:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 撬棍
-  base: war_hammer
-  drop_level: 60
-  sources: [strongbox]
-  weight: 100
-  flavour:
-    - "本來是拿來開箱子的。"
-    - "後來發現什麼都開得了。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [130, 160]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 暈眩累積"
-      value: [30, 50]
-      stats:
-        - { stat: stun.buildup, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 物品掉落稀有度"
-      value: [20, 30]
-      stats:
-        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-    - text: "+{value} 力量"
-      value: [20, 30]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-
-ledger_ring:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 帳房指環
-  base: coral_ring
-  drop_level: 60
-  sources: [strongbox]
-  weight: 100
-  flavour:
-    - "每一筆帳都記得，"
-    - "除了自己欠的。"
-  mods:
-    - text: "增加 {value}% 物品掉落稀有度"
-      value: [15, 25]
-      stats:
-        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大魔力"
-      value: [30, 50]
-      stats:
-        - { stat: mana.max, type: FLAT, value: "{value}" }
-    - text: "+{value}% 冰冷與閃電抗性"
-      value: [15, 20]
-      stats:
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-        - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "技能的魔力消耗減少 {value}%"
-      value: [5, 8]
-      stats:
-        - { stat: skill.cost, type: INCREASED, value: "-{value}" }
-
-rift_walkers:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 裂隙行者
-  base: wrap_boots
-  drop_level: 60
-  sources: [breach]
-  weight: 100
-  flavour:
-    - "走過裂隙的人，"
-    - "腳步聲會晚一拍。"
-  mods:
-    - text: "增加 {value}% 移動速度"
-      value: [20, 25]
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大能量護盾"
-      value: [30, 45]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 閃避"
-      value: [40, 60]
-      stats:
-        - { stat: evasion, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 混沌抗性"
-      value: [15, 25]
-      stats:
-        - { stat: resist.chaos, type: FLAT, value: "{value}" }
-
-void_eye:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 虛空之瞳
-  base: scale_helmet
-  drop_level: 60
-  sources: [breach]
-  weight: 100
-  flavour:
-    - "盯著裂隙太久，"
-    - "裂隙也會盯回來。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [50, 70]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 混沌傷害"
-      value: [30, 45]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
-    - text: "擊中時 {value}% 機率造成中毒"
-      value: [15, 25]
-      stats:
-        - { stat: poison.chance, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 中毒傷害"
-      value: [20, 30]
-      stats:
-        - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
-
-exile_bow:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 流寇長弓
-  base: bow
-  drop_level: 60
-  sources: [exile]
-  weight: 100
-  flavour:
-    - "弓是偷來的，"
-    - "準頭是自己的。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [120, 150]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 攻擊速度"
-      value: [10, 14]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "攻擊擊中時 {value}% 機率造成流血"
-      value: [15, 25]
-      stats:
-        - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
-    - text: "增加 {value}% 移動速度"
-      value: [5, 8]
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: "{value}" }
-
-rebel_kite:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 叛軍鳶盾
-  base: kite_shield
-  drop_level: 60
-  sources: [exile]
-  weight: 100
-  flavour:
-    - "盾上的紋章被刮掉了，"
-    - "刮痕比紋章還醒目。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [60, 80]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 護甲與閃避"
-      value: [80, 110]
-      stats:
-        - { stat: armour, type: INCREASED, value: "{value}" }
-        - { stat: evasion, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 格擋率"
-      value: [5, 8]
-      stats:
-        - { stat: block.chance, type: FLAT, value: "{value}" }
-    - text: "+{value}% 全部元素抗性"
-      value: [8, 12]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-        - { stat: resist.lightning, type: FLAT, value: "{value}" }
-
-bone_flute:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 骨笛長杖
-  base: staff
-  drop_level: 60
-  sources: [ritual]
-  weight: 100
-  flavour:
-    - "吹一聲，"
-    - "土裡就有東西站起來。"
-  mods:
-    - text: "增加 {value}% 召喚物傷害"
-      value: [60, 80]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
-    - text: "增加 {value}% 召喚物最大生命"
-      value: [30, 40]
-      stats:
-        - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
-    - text: "同時最多多 {value} 隻召喚物"
-      value: [1, 1]
-      stats:
-        - { stat: skill.minions, type: FLAT, value: "{value}", tags: [minion] }
-    - text: "+{value} 智慧"
-      value: [25, 35]
-      stats:
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-
-priest_robe:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 祭司長袍
-  base: wrap_body
-  drop_level: 60
-  sources: [ritual]
-  weight: 100
-  flavour:
-    - "袍子的下擺，"
-    - "總是染著洗不掉的顏色。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [60, 90]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value} 最大能量護盾"
-      value: [50, 70]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 施法速度"
-      value: [6, 10]
-      stats:
-        - { stat: cast.speed, type: INCREASED, value: "{value}" }
-    - text: "受到的傷害有 {value}% 之後慢慢回復為生命"
-      value: [8, 12]
-      stats:
-        - { stat: life.recoup, type: FLAT, value: "{value}" }
-
-trance_dagger:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 恍惚之刃
-  base: spear   # 2026-10 PoE2 改版：原本是 dagger（劍、斧、匕首、爪拿掉了；已經掉出來的照舊）
-  drop_level: 60
-  sources: [delirium]
-  weight: 100
-  flavour:
-    - "刺下去的時候，"
-    - "你會以為自己還在作夢。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [100, 130]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 暴擊率"
-      value: [40, 60]
-      stats:
-        - { stat: crit.chance, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 暴擊傷害"
-      value: [20, 30]
-      stats:
-        - { stat: crit.multi, type: FLAT, value: "{value}" }
-    - text: "擊中時 {value}% 機率造成中毒"
-      value: [15, 25]
-      stats:
-        - { stat: poison.chance, type: FLAT, value: "{value}" }
-
-sleepwalker:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 夢遊者
-  base: silk_boots
-  drop_level: 60
-  sources: [delirium]
-  weight: 100
-  flavour:
-    - "他從來不記得，"
-    - "昨晚走去了哪裡。"
-  mods:
-    - text: "增加 {value}% 移動速度"
-      value: [20, 25]
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大能量護盾"
-      value: [40, 60]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "+{value} 最大魔力"
-      value: [30, 50]
-      stats:
-        - { stat: mana.max, type: FLAT, value: "{value}" }
-    - text: "+{value}% 機率避免被冰緩與凍結"
-      value: [30, 50]
-      stats:
-        - { stat: avoid.freeze, type: FLAT, value: "{value}" }
-
-# ---- 2026-10 擴充（二）：共通掉落（任何地圖 Boss、僥倖石、商人賭博）----
-
-butcher:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 屠夫
-  base: great_hammer   # 2026-10 PoE2 改版：原本是 great_sword（劍、斧、匕首、爪拿掉了；已經掉出來的照舊）
-  drop_level: 50
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "刀口上的缺，"
-    - "每一個都有故事。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [150, 180]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 攻擊速度"
-      value: [6, 10]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大生命"
-      value: [2, 4]
-      stats:
-        - { stat: life.on_kill, type: FLAT, value: "{value}" }
-    - text: "+{value} 力量"
-      value: [25, 35]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-
-rattle:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 響尾
-  base: quarterstaff
-  drop_level: 50
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "棍子轉起來的聲音，"
-    - "像蛇在警告你。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [120, 150]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 攻擊速度"
-      value: [10, 14]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 暈眩累積"
-      value: [30, 50]
-      stats:
-        - { stat: stun.buildup, type: INCREASED, value: "{value}" }
-    - text: "擊中時 {value}% 機率獲得一顆怒星"
-      value: [8, 12]
-      stats:
-        - { stat: charge.on_hit.frenzy, type: FLAT, value: "{value}" }
-
-glacier_buckler:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 冰河圓盾
-  base: buckler
-  drop_level: 50
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "冰河走得很慢，"
-    - "但從來不退。"
-  mods:
-    - text: "增加 {value}% 閃避"
-      value: [80, 110]
-      stats:
-        - { stat: evasion, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 冰冷抗性"
-      value: [30, 40]
-      stats:
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-    - text: "+{value}% 機率避免被冰緩與凍結"
-      value: [40, 60]
-      stats:
-        - { stat: avoid.freeze, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 冰緩效果"
-      value: [20, 30]
-      stats:
-        - { stat: chill.effect, type: INCREASED, value: "{value}" }
-
-iron_rain:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 鐵雨
-  base: crossbow
-  drop_level: 55
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "天上下的不是雨，"
-    - "是一排排的弩箭。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [110, 140]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "使用弩時多射出 1 支弩箭"
-      stats:
-        - { stat: skill.projectiles, type: FLAT, value: 1, tags: [crossbow] }
-    - text: "使用弩時投射物多穿透 {value} 個敵人"
-      value: [1, 2]
-      stats:
-        - { stat: skill.pierce, type: FLAT, value: "{value}", tags: [crossbow] }
-    - text: "+{value} 敏捷"
-      value: [20, 30]
-      stats:
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-
-ascetic_belt:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 苦行者束帶
-  base: leather_belt
-  drop_level: 45
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "少吃一口，"
-    - "多念一句。"
-  mods:
-    - text: "+{value} 最大魔力"
-      value: [50, 70]
-      stats:
-        - { stat: mana.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
-      value: [40, 60]
-      stats:
-        - { stat: mana.regen, type: INCREASED, value: "{value}" }
-    - text: "技能的魔力消耗減少 {value}%"
-      value: [8, 12]
-      stats:
-        - { stat: skill.cost, type: INCREASED, value: "-{value}" }
-    - text: "+{value} 最大能量護盾"
-      value: [25, 40]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-
-wildfire_ring:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 野火指環
-  base: sapphire_ring
-  drop_level: 45
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "一點火星，"
-    - "就能燒掉整座山。"
-  mods:
-    - text: "增加 {value}% 元素傷害"
-      value: [20, 30]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
-    - text: "增加 {value}% 點燃機率"
-      value: [30, 50]
-      stats:
-        - { stat: ignite.chance, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 點燃傷害"
-      value: [20, 30]
-      stats:
-        - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 火焰抗性"
-      value: [25, 35]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-
-bulwark_greaves:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 鐵壁護腿
-  base: plate_leggings
-  drop_level: 50
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "站在最前面的人，"
-    - "腿最不能軟。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [70, 100]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 護甲"
-      value: [100, 140]
-      stats:
-        - { stat: armour, type: INCREASED, value: "{value}" }
-    - text: "+{value} 磐星上限"
-      value: [1, 1]
-      stats:
-        - { stat: charge.max.endurance, type: FLAT, value: "{value}" }
-    - text: "+{value}% 機率避免暈眩"
-      value: [25, 35]
-      stats:
-        - { stat: avoid.stun, type: FLAT, value: "{value}" }
-
-scholar_leggings:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 學者綁腿
-  base: silk_leggings
-  drop_level: 45
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "書讀得越多，"
-    - "走得越慢。"
-  mods:
-    - text: "+{value} 智慧"
-      value: [25, 35]
-      stats:
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "+{value} 最大能量護盾"
-      value: [40, 60]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 施法速度"
-      value: [6, 10]
-      stats:
-        - { stat: cast.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 法術傷害"
-      value: [20, 30]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
-
-gale_feather:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 疾風之羽
-  base: gale_quiver
-  drop_level: 60
-  sources: [map_boss, chance, gamble]
-  weight: 100
-  flavour:
-    - "羽毛輕得像沒有，"
-    - "箭快得像沒射。"
-  mods:
-    - text: "增加 {value}% 攻擊速度"
-      value: [8, 12]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 暴擊率"
-      value: [30, 45]
-      stats:
-        - { stat: crit.chance, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 投射物速度"
-      value: [25, 35]
-      stats:
-        - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [40, 60]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-
-# ---- 2026-10：隱匿傳奇（劫盜大金庫專屬；照 PoE 的 Veiled Unique）----
-
-skull_sigil:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 骷印長杖
-  base: staff
-  drop_level: 55
-  sources: [heist]
-  veiled: prefix
-  weight: 100
-  flavour:
-    - "杖頭的骷髏在笑，"
-    - "笑的是還沒揭開的那一條。"
-  mods:
-    - text: "+{value}% 格擋率"
-      value: [15, 20]
-      stats:
-        - { stat: block.chance, type: FLAT, value: "{value}" }
-    - text: "+{value} 智慧"
-      value: [25, 35]
-      stats:
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 已揭露詞綴的幅度"
-      value: [60, 90]
-      stats:
-        - { stat: local.unveiled_magnitude, type: INCREASED, value: "{value}" }
-
-thorn_hail:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 棘雹箭袋
-  base: broadhead_quiver
-  drop_level: 55
-  sources: [heist]
-  veiled: suffix
-  weight: 100
-  flavour:
-    - "每一根箭上都長著刺，"
-    - "拔出來比射進去還痛。"
-  mods:
-    - text: "+{value} 敏捷與智慧"
-      value: [10, 20]
-      stats:
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 攻擊速度"
-      value: [8, 12]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "攻擊附加 {min} 到 {max} 物理傷害"
-      min: [6, 10]
-      max: [14, 18]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
-    - text: "物理傷害額外附加 {value}% 為混沌傷害"
-      value: [15, 25]
-      stats:
-        - { stat: damage.gain.chaos, type: FLAT, value: "{value}" }
-
-crimson_tide:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 赤潮之弓
-  base: bow
-  drop_level: 60
-  sources: [heist]
-  veiled: prefix
-  weight: 100
-  flavour:
-    - "潮水退去的時候，"
-    - "岸上全是紅的。"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [140, 170]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 暴擊率"
-      value: [25, 35]
-      stats:
-        - { stat: crit.chance, type: INCREASED, value: "{value}" }
-    - text: "攻擊擊中時 {value}% 機率造成流血"
-      value: [20, 30]
-      stats:
-        - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
-    - text: "增加 {value}% 移動速度"
-      value: [5, 10]
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: "{value}" }
-
-polar_cinch:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 極地束帶
-  base: leather_belt
-  drop_level: 50
-  sources: [heist]
-  veiled: suffix
-  weight: 100
-  flavour:
-    - "束緊一點，"
-    - "寒氣就進不來。"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [25, 40]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value}% 冰冷抗性"
-      value: [30, 40]
-      stats:
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 冰緩效果"
-      value: [20, 30]
-      stats:
-        - { stat: chill.effect, type: INCREASED, value: "{value}" }
-    - text: "冷卻時間減少 {value}%"
-      value: [8, 12]
-      stats:
-        - { stat: skill.cooldown, type: INCREASED, value: "-{value}" }
-
-queen_hunger:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 女王之渴
-  base: silk_body
-  drop_level: 60
-  sources: [heist]
-  veiled: prefix
-  weight: 100
-  flavour:
-    - "她喝乾了整座宮殿，"
-    - "還是渴。"
-  mods:
-    - text: "+{value} 最大能量護盾"
-      value: [80, 110]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 最大生命"
-      value: [6, 10]
-      stats:
-        - { stat: life.max, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 施法速度"
-      value: [8, 12]
-      stats:
-        - { stat: cast.speed, type: INCREASED, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大能量護盾"
-      value: [3, 5]
-      stats:
-        - { stat: es.on_kill, type: FLAT, value: "{value}" }
-
-parasite:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 寄生之戒
-  base: iron_ring
-  drop_level: 55
-  sources: [heist]
-  veiled: suffix
-  weight: 100
-  flavour:
-    - "戒指是活的，"
-    - "它吃什麼，你就少什麼。"
-  mods:
-    - text: "+{value} 全部屬性"
-      value: [15, 25]
-      stats:
-        - { stat: attr.str, type: FLAT, value: "{value}" }
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-        - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 光環效果"
-      value: [8, 12]
-      stats:
-        - { stat: aura.effect, type: INCREASED, value: "{value}" }
-    - text: "光環的保留效率增加 {value}%"
-      value: [6, 10]
-      stats:
-        - { stat: aura.reservation, type: INCREASED, value: "-{value}" }
-
-devouring_crown:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 噬魂之冠
-  base: silk_helmet
-  drop_level: 55
-  sources: [heist]
-  veiled: prefix
-  weight: 100
-  flavour:
-    - "戴上它的人，"
-    - "聽得見被吞下去的聲音。"
-  mods:
-    - text: "+{value} 最大能量護盾"
-      value: [50, 70]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 召喚物傷害"
-      value: [25, 35]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
-    - text: "物理傷害的 {value}% 偷取為生命"
-      value: [1, 2]
-      stats:
-        - { stat: leech.life, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大生命"
-      value: [2, 3]
-      stats:
-        - { stat: life.on_kill, type: FLAT, value: "{value}" }
-
-# ---- 開服活動的世界 Boss「開天者」專屬（2026-10，events.yml 的 world_events.boss.unique_chance；也能用素材兌換） ----
-origin_crown:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 始源星冕
-  base: silk_helmet
-  drop_level: 80
-  sources: [world_boss]
-  weight: 100
-  flavour:
-    - "世界剛開始的時候，"
-    - "第一顆星就戴在他的頭上。"
-  mods:
-    - text: "+1 所有技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 1 }
-    - text: "+{value} 最大能量護盾"
-      value: [90, 130]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 傷害"
-      value: [25, 35]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 混沌抗性"
-      value: [17, 23]
-      stats:
-        - { stat: resist.chaos, type: FLAT, value: "{value}" }
-    - text: "物品稀有度增加 {value}%"
-      value: [12, 18]
-      stats:
-        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-
-skysplitter:
-  retired: true   # 2026-10 PoE2 改版：退役（換成傳奇兌換券）
-  name: 開天
-  base: great_hammer   # 2026-10 PoE2 改版：原本是 great_sword（劍、斧、匕首、爪拿掉了；已經掉出來的照舊）
-  drop_level: 80
-  sources: [world_boss]
-  weight: 100
-  flavour:
-    - "一劍下去，"
-    - "天跟地才分得開。"
-  mods:
-    - text: "攻擊附加 {min} 到 {max} 物理傷害"
-      min: [38, 52]
-      max: [70, 94]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
-    - text: "增加 {value}% 物理傷害"
-      value: [150, 190]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "增加 {value}% 攻擊速度"
-      value: [10, 14]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "擊中時 {value}% 機率造成雙倍傷害"
-      value: [8, 12]
-      stats:
-        - { stat: damage.double, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value} 生命"
-      value: [30, 45]
-      stats:
-        - { stat: life.on_kill, type: FLAT, value: "{value}" }
-
 # =====================================================================================================
-# 2026-10 PoE2 改版：新的傳奇（效果照 PoE2 的風格，名稱是自己的）。上面的舊傳奇全部退役（retired: true）：
-# 不會再掉、不會出現在圖鑑；玩家身上、倉庫裡的舊傳奇登入時自動換成「傳奇兌換券」（右鍵選一件新的傳奇）。
+# 2026-10 PoE2 改版：新的傳奇（效果照 PoE2 的風格，名稱是自己的）。舊傳奇退役後，定義已經從這個檔案刪掉（2026-10-15）。
 # 每一件新傳奇接手一件舊傳奇的掉落來源（sources、drop_level、weight、追逐級、隱匿都一樣）。
 # =====================================================================================================
 
@@ -4933,390 +2188,6 @@ tailwind_quiver:
       stats:
         - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
 
-twinfold:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 雙生
-  base: war_hammer
-  drop_level: 45
-  sources: [heist]
-  veiled: [prefix, suffix]
-  weight: 100
-  flavour:
-    - "「同一下，打兩次。」"
-  mods:
-    - text: "擊中時 {value}% 機率造成雙倍傷害"
-      value: [30, 40]
-      stats:
-        - { stat: damage.double, type: FLAT, value: "{value}" }
-
-silent_step:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 無聲之履
-  base: leather_boots
-  drop_level: 40
-  sources: [heist]
-  veiled: suffix
-  weight: 100
-  flavour:
-    - "「沒有人聽見他進來。」"
-  mods:
-    - text: "+{value} 閃避"
-      value: [30, 50]
-      stats:
-        - { stat: evasion, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 移動速度"
-      value: [20, 20]
-      stats:
-        - { stat: movement.speed, type: INCREASED, value: "{value}" }
-    - text: "擊殺時 {value}% 機率獲得疾速"
-      value: [20, 30]
-      stats:
-        - { stat: onslaught.on_kill, type: FLAT, value: "{value}" }
-    - text: "+{value} 敏捷"
-      value: [15, 25]
-      stats:
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-
-nightwatch_mask:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 夜巡面具
-  base: wrap_helmet
-  drop_level: 45
-  sources: [heist]
-  veiled: prefix
-  weight: 100
-  flavour:
-    - "「黑暗裡，它看得比白天清楚。」"
-  mods:
-    - text: "+{value} 閃避"
-      value: [40, 60]
-      stats:
-        - { stat: evasion, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 暴擊率"
-      value: [30, 50]
-      stats:
-        - { stat: crit.chance, type: INCREASED, value: "{value}" }
-    - text: "+{value} 命中"
-      value: [150, 250]
-      stats:
-        - { stat: accuracy, type: FLAT, value: "{value}" }
-    - text: "+{value} 敏捷"
-      value: [20, 30]
-      stats:
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 物品掉落稀有度"
-      value: [10, 15]
-      stats:
-        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-
-tumbler_ring:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 簧片之戒
-  base: iron_ring
-  drop_level: 40
-  sources: [heist]
-  veiled: suffix
-  weight: 100
-  flavour:
-    - "「聽，鎖在說話。」"
-  mods:
-    - text: "+{value} 敏捷"
-      value: [20, 30]
-      stats:
-        - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 攻擊速度"
-      value: [6, 10]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 物品掉落稀有度"
-      value: [10, 15]
-      stats:
-        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-    - text: "+{value} 閃避"
-      value: [30, 50]
-      stats:
-        - { stat: evasion, type: FLAT, value: "{value}" }
-
-vaultgate:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 金庫之門
-  base: tower_shield
-  drop_level: 50
-  sources: [heist]
-  veiled: prefix
-  weight: 80
-  flavour:
-    - "「它擋了一輩子的賊。」"
-  mods:
-    - text: "增加 {value}% 護甲"
-      value: [80, 120]
-      stats:
-        - { stat: armour, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 格擋率"
-      value: [25, 35]
-      stats:
-        - { stat: block.chance, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [50, 70]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "{value}% 額外物理傷害減免"
-      value: [3, 5]
-      stats:
-        - { stat: physical.reduction, type: FLAT, value: "{value}" }
-    - text: "+{value}% 全部元素抗性"
-      value: [8, 12]
-      stats:
-        - { stat: resist.fire, type: FLAT, value: "{value}" }
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-        - { stat: resist.lightning, type: FLAT, value: "{value}" }
-
-plunder_pouch:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 戰利品囊
-  base: leather_belt
-  drop_level: 40
-  sources: [heist]
-  veiled: suffix
-  weight: 100
-  flavour:
-    - "「裝得下的，都是你的。」"
-  mods:
-    - text: "增加 {value}% 物品掉落稀有度"
-      value: [20, 30]
-      stats:
-        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 物品掉落數量"
-      value: [5, 8]
-      stats:
-        - { stat: drop.quantity, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [30, 50]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 生命藥劑回復量"
-      value: [15, 25]
-      stats:
-        - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
-
-fork_tongue:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 叉舌之矛
-  base: spear
-  drop_level: 50
-  sources: [heist]
-  veiled: prefix
-  weight: 80
-  flavour:
-    - "「它說的話，一半是毒。」"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [130, 170]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "物理傷害的 {value}% 額外附加為混沌傷害"
-      value: [15, 20]
-      stats:
-        - { stat: damage.gain.chaos, type: FLAT, value: "{value}" }
-    - text: "擊中時 30% 機率造成中毒"
-      stats:
-        - { stat: poison.chance, type: FLAT, value: 30 }
-    - text: "增加 {value}% 攻擊速度"
-      value: [8, 12]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 中毒傷害"
-      value: [20, 30]
-      stats:
-        - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
-
-skullbearer:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 負顱長杖
-  base: staff
-  drop_level: 55
-  sources: [heist]
-  veiled: prefix
-  weight: 100
-  flavour:
-    - "「骷髏記得它們生前的事。」"
-  mods:
-    - text: "增加 {value}% 已揭露詞綴的幅度"
-      value: [50, 80]
-      stats:
-        - { stat: local.unveiled_magnitude, type: INCREASED, value: "{value}" }
-    - text: "+1 全部法術技能等級"
-      stats:
-        - { stat: skill.level, type: FLAT, value: 1, tags: [spell] }
-    - text: "增加 {value}% 法術傷害"
-      value: [40, 60]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
-
-briar_quiver:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 荊棘箭袋
-  base: broadhead_quiver
-  drop_level: 55
-  sources: [heist]
-  veiled: suffix
-  weight: 100
-  flavour:
-    - "「箭頭上都是刺。」"
-  mods:
-    - text: "攻擊附加 {min} 到 {max} 物理傷害"
-      min: [5, 7]
-      max: [10, 14]
-      stats:
-        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
-        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
-    - text: "攻擊擊中時 20% 機率造成流血"
-      stats:
-        - { stat: bleed.chance, type: FLAT, value: 20, tags: [attack] }
-    - text: "增加 {value}% 流血傷害"
-      value: [30, 50]
-      stats:
-        - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 投射物傷害"
-      value: [15, 25]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
-
-bloodtide_bow:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 血潮之弓
-  base: bow
-  drop_level: 60
-  sources: [heist]
-  veiled: prefix
-  weight: 100
-  flavour:
-    - "「潮水是紅的。」"
-  mods:
-    - text: "增加 {value}% 物理傷害"
-      value: [150, 190]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
-    - text: "造成的物理傷害有 {value/100}% 偷取為生命"
-      value: [300, 500]
-      stats:
-        - { stat: leech.life, type: FLAT, value: "{value/100}", tags: [attack] }
-    - text: "攻擊擊中時 20% 機率造成流血"
-      stats:
-        - { stat: bleed.chance, type: FLAT, value: 20, tags: [attack] }
-    - text: "增加 {value}% 攻擊速度"
-      value: [8, 12]
-      stats:
-        - { stat: attack.speed, type: INCREASED, value: "{value}" }
-
-arctic_sash:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 極地腰帶
-  base: leather_belt
-  drop_level: 50
-  sources: [heist]
-  veiled: suffix
-  weight: 100
-  flavour:
-    - "「冰天雪地裡，它是最暖的東西。」"
-  mods:
-    - text: "+{value} 最大生命"
-      value: [50, 70]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "+{value}% 冰冷抗性"
-      value: [30, 40]
-      stats:
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 冰緩效果"
-      value: [20, 30]
-      stats:
-        - { stat: chill.effect, type: INCREASED, value: "{value}" }
-    - text: "你身上的異常狀態持續時間減少 {value}%"
-      value: [20, 30]
-      stats:
-        - { stat: ailment.self_duration, type: INCREASED, value: "-{value}" }
-
-famished_regalia:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 饑后華服
-  base: silk_body
-  drop_level: 60
-  sources: [heist]
-  veiled: prefix
-  weight: 100
-  flavour:
-    - "「她從來沒吃飽過。」"
-  mods:
-    - text: "+{value} 最大能量護盾"
-      value: [80, 110]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 最大能量護盾"
-      value: [60, 90]
-      stats:
-        - { stat: es.max, type: INCREASED, value: "{value}" }
-    - text: "造成的元素傷害有 {value/100}% 偷取為生命"
-      value: [100, 200]
-      stats:
-        - { stat: leech.life_elemental, type: FLAT, value: "{value/100}" }
-    - text: "增加 {value}% 法術傷害"
-      value: [20, 30]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
-
-leech_band:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 寄生之環
-  base: iron_ring
-  drop_level: 55
-  sources: [heist]
-  veiled: suffix
-  weight: 100
-  flavour:
-    - "「它吃你吃剩的。」"
-  mods:
-    - text: "造成的物理傷害有 {value/100}% 偷取為生命"
-      value: [300, 500]
-      stats:
-        - { stat: leech.life, type: FLAT, value: "{value/100}", tags: [attack] }
-    - text: "增加 {value}% 偷取速度"
-      value: [30, 50]
-      stats:
-        - { stat: leech.rate, type: INCREASED, value: "{value}" }
-    - text: "+{value} 最大生命"
-      value: [30, 40]
-      stats:
-        - { stat: life.max, type: FLAT, value: "{value}" }
-
-maw_circlet:
-  retired: true   # 2026-10：隱匿傳奇照 PoE2 的深淵傳奇重新設計，換成下面「淵」系列
-  name: 巨口頭環
-  base: silk_helmet
-  drop_level: 55
-  sources: [heist]
-  veiled: prefix
-  weight: 100
-  flavour:
-    - "「它戴在頭上，卻長在你心裡。」"
-  mods:
-    - text: "+{value} 最大能量護盾"
-      value: [50, 70]
-      stats:
-        - { stat: es.max, type: FLAT, value: "{value}" }
-    - text: "擊殺時回復 {value}% 最大能量護盾"
-      value: [3, 5]
-      stats:
-        - { stat: es.on_kill, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 混沌傷害"
-      value: [20, 30]
-      stats:
-        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
-    - text: "+{value}% 混沌抗性"
-      value: [20, 30]
-      stats:
-        - { stat: resist.chaos, type: FLAT, value: "{value}" }
-
 solar_sceptre:
   name: 炎陽長杖
   base: staff_17        # 2026-10：staff → PoE2 分階基底
@@ -6233,3 +3104,614 @@ cinderscale_talisman:
       value: [25, 35]
       stats:
         - { stat: resist.fire, type: FLAT, value: "{value}" }
+
+# ---- 2026-10-15：追逐級擴充（四件 → 八件；一樣只在 chase 池、固定機率，三換一的追逐級也會換到）----
+
+star_oath:
+  name: 星淵之誓
+  base: jamulet_09
+  drop_level: 75
+  sources: [chase]
+  chase: true
+  weight: 6
+  flavour:
+    - "「向深淵起誓的人，什麼都會一點，什麼都捨得。」"
+  mods:
+    - text: "+{value} 全部屬性"
+      value: [60, 80]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "+1 全部技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 1 }
+    - text: "+{value} 最大精魂"
+      value: [30, 40]
+      stats:
+        - { stat: spirit.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}" }
+    - text: "減少 {value}% 最大生命"
+      value: [8, 12]
+      stats:
+        - { stat: life.max, type: INCREASED, value: "-{value}" }
+
+eclipse_band:
+  name: 蝕星之環
+  base: jring_17
+  drop_level: 75
+  sources: [chase]
+  chase: true
+  weight: 6
+  flavour:
+    - "「星光被吃掉的那一刻，世界是紫色的。」"
+  mods:
+    - text: "增加 {value}% 混沌傷害"
+      value: [40, 60]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
+    - text: "+{value}% 混沌抗性"
+      value: [23, 29]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "你身邊的敵人混沌抗性 -{value}%"
+      value: [20, 30]
+      stats:
+        - { stat: presence.resist.chaos, type: FLAT, value: "{value}" }
+    - text: "混沌抗性加倍"
+      stats:
+        - { stat: flag.chaos_res_double, type: FLAT, value: 1 }
+    - text: "生命偷取也照混沌傷害算"
+      stats:
+        - { stat: flag.leech_chaos, type: FLAT, value: 1 }
+
+shadowstep_boots:
+  name: 疾影之靴
+  base: boots_dex_16
+  drop_level: 75
+  sources: [chase]
+  chase: true
+  weight: 6
+  flavour:
+    - "「冰追不上，火也追不上。」"
+  mods:
+    - text: "增加 {value}% 移動速度"
+      value: [30, 40]
+      stats:
+        - { stat: movement.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 閃避"
+      value: [100, 150]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "+{value} 敏捷"
+      value: [30, 40]
+      stats:
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - text: "不會被冰緩減速"
+      stats:
+        - { stat: flag.unslowable, type: FLAT, value: 1 }
+    - text: "免疫元素異常（點燃、冰緩、凍結、感電）"
+      stats:
+        - { stat: flag.elemental_ailment_immune, type: FLAT, value: 1 }
+
+trinity_greaves:
+  name: 三相纏腿
+  base: legs_dex_int_13
+  drop_level: 75
+  sources: [chase]
+  chase: true
+  weight: 6
+  flavour:
+    - "「火、霜、雷，從來都是同一件事。」"
+  mods:
+    - text: "增加 {value}% 攻擊與施法速度"
+      value: [10, 15]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 全部元素抗性"
+      value: [20, 25]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "擊中的所有傷害都算進點燃"
+      stats:
+        - { stat: flag.all_damage_ignites, type: FLAT, value: 1 }
+    - text: "擊中的所有傷害都算進冰緩"
+      stats:
+        - { stat: flag.all_damage_chills, type: FLAT, value: 1 }
+    - text: "擊中的所有傷害都算進感電"
+      stats:
+        - { stat: flag.all_damage_shocks, type: FLAT, value: 1 }
+
+# ---- 2026-10-15：追逐級擴充（二）：八件 → 十二件 ----
+
+godslayer_spear:
+  name: 弒神之矛
+  base: spear_28
+  drop_level: 75
+  sources: [chase]
+  chase: true
+  weight: 6
+  flavour:
+    - "「神也會流血，只是沒人刺得夠深。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [170, 210]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "附加 {min} 到 {max} 物理傷害"
+      min: [45, 55]
+      max: [80, 95]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+    - text: "增加 {value}% 攻擊速度"
+      value: [15, 20]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "+{value/100}% 暴擊率"
+      value: [300, 400]
+      stats:
+        - { stat: local.crit_base, type: FLAT, value: "{value/100}" }
+    - text: "增加 {value}% 對傳奇怪物與 Boss 的傷害"
+      value: [40, 60]
+      stats:
+        - { stat: damage.vs_unique, type: INCREASED, value: "{value}" }
+    - text: "斷命：擊中後生命太低的敵人直接倒下"
+      stats:
+        - { stat: flag.culling, type: FLAT, value: 1 }
+
+omniscience_staff:
+  name: 萬象之杖
+  base: staff_17
+  drop_level: 75
+  sources: [chase]
+  chase: true
+  weight: 6
+  flavour:
+    - "「它知道每一道咒語的名字。」"
+  mods:
+    - text: "+3 全部法術技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 3, tags: [spell] }
+    - text: "增加 {value}% 法術傷害"
+      value: [80, 120]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+    - text: "增加 {value}% 施法速度"
+      value: [15, 25]
+      stats:
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大魔力"
+      value: [100, 150]
+      stats:
+        - { stat: mana.max, type: FLAT, value: "{value}" }
+    - text: "法術傷害的 {value}% 偷取為生命"
+      value: [2, 3]
+      stats:
+        - { stat: leech.life_spell, type: FLAT, value: "{value}" }
+
+starfall_quiver:
+  name: 群星箭袋
+  base: quiver_11
+  drop_level: 75
+  sources: [chase]
+  chase: true
+  weight: 6
+  flavour:
+    - "「拉一次弓，下一場流星雨。」"
+  mods:
+    - text: "+1 投射物"
+      stats:
+        - { stat: skill.projectiles, type: FLAT, value: 1, tags: [projectile] }
+    - text: "增加 {value}% 投射物傷害"
+      value: [40, 60]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
+    - text: "投射物穿透 3 個敵人"
+      stats:
+        - { stat: skill.pierce, type: FLAT, value: 3, tags: [projectile] }
+    - text: "增加 {value}% 攻擊速度"
+      value: [10, 15]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [80, 100]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+
+everwall_tower:
+  name: 永劫壁壘
+  base: tshield_24
+  drop_level: 75
+  sources: [chase]
+  chase: true
+  weight: 6
+  flavour:
+    - "「它擋下的，比它記得的還多。」"
+  mods:
+    - text: "+{value}% 格擋率"
+      value: [10, 15]
+      stats:
+        - { stat: block.chance, type: FLAT, value: "{value}" }
+    - text: "+{value}% 格擋上限"
+      value: [5, 5]
+      stats:
+        - { stat: block.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 護甲"
+      value: [150, 200]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+    - text: "護甲的 {value}% 也套用在元素傷害上"
+      value: [40, 60]
+      stats:
+        - { stat: armour.elemental, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [100, 130]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "磐石不移：不會被輕暈，不能翻滾"
+      stats:
+        - { stat: flag.unwavering_stance, type: FLAT, value: 1 }
+
+# ---- 2026-10-15：共通傳奇擴充（任何地圖 Boss、僥倖石、商人賭博）----
+
+ashfall_maul:
+  name: 燼落戰錘
+  base: mace2_27
+  drop_level: 60
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「砸下去的地方，三天都還是燙的。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [120, 160]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "附加 {min} 到 {max} 火焰傷害"
+      min: [20, 30]
+      max: [40, 55]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, fire] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, fire] }
+    - text: "物理傷害的 30% 轉換為火焰傷害"
+      stats:
+        - { stat: damage.convert.fire, type: FLAT, value: 30 }
+    - text: "增加 {value}% 暈眩累積"
+      value: [30, 50]
+      stats:
+        - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+    - text: "+{value} 力量"
+      value: [20, 30]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+
+frostwhisper_wand:
+  name: 霜語法杖
+  base: wand_14
+  drop_level: 55
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「它說話的時候，空氣會結霜。」"
+  mods:
+    - text: "+1 全部冰冷法術技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 1, tags: [spell, cold] }
+    - text: "增加 {value}% 冰冷傷害"
+      value: [60, 90]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
+    - text: "增加 {value}% 施法速度"
+      value: [10, 15]
+      stats:
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 冰緩效果"
+      value: [20, 30]
+      stats:
+        - { stat: chill.effect, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大魔力"
+      value: [40, 60]
+      stats:
+        - { stat: mana.max, type: FLAT, value: "{value}" }
+
+bloodoath_ring:
+  name: 血誓指環
+  base: jring_14
+  drop_level: 50
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「拿走的血，總要還回來。」"
+  mods:
+    - text: "+{value} 最大生命"
+      value: [40, 60]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "物理攻擊傷害的 {value}% 偷取為生命"
+      value: [3, 5]
+      stats:
+        - { stat: leech.life, type: FLAT, value: "{value}", tags: [attack, physical] }
+    - text: "擊中時 {value}% 機率造成流血"
+      value: [10, 15]
+      stats:
+        - { stat: bleed.chance, type: FLAT, value: "{value}" }
+    - text: "擊殺時回復 {value} 生命"
+      value: [15, 25]
+      stats:
+        - { stat: life.per_kill, type: FLAT, value: "{value}" }
+
+hawkgaze_hood:
+  name: 鷹視兜帽
+  base: helm_dex_20
+  drop_level: 55
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「牠看得見你，在你看見牠之前。」"
+  mods:
+    - text: "增加 {value}% 閃避"
+      value: [80, 120]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "+{value} 命中"
+      value: [150, 250]
+      stats:
+        - { stat: accuracy, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 暴擊率"
+      value: [20, 30]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - text: "+{value} 敏捷"
+      value: [20, 30]
+      stats:
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 投射物速度"
+      value: [15, 25]
+      stats:
+        - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+
+moltencore_belt:
+  name: 熔心腰帶
+  base: jbelt_07
+  drop_level: 55
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「腰間繫著一團不會熄的火。」"
+  mods:
+    - text: "+{value} 最大生命"
+      value: [50, 70]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value}% 火焰抗性"
+      value: [25, 35]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 藥劑生命回復"
+      value: [20, 30]
+      stats:
+        - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
+    - text: "護甲的 {value}% 也套用在元素傷害上"
+      value: [20, 30]
+      stats:
+        - { stat: armour.elemental, type: FLAT, value: "{value}" }
+    - text: "+{value} 力量"
+      value: [15, 25]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+
+spiritcall_amulet:
+  name: 祈靈墜飾
+  base: jamulet_10
+  drop_level: 60
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「叫一聲，牠們就來。」"
+  mods:
+    - text: "+{value} 最大精魂"
+      value: [20, 30]
+      stats:
+        - { stat: spirit.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 光環效果"
+      value: [10, 15]
+      stats:
+        - { stat: aura.effect, type: INCREASED, value: "{value}" }
+    - text: "召喚物增加 {value}% 傷害"
+      value: [30, 50]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+    - text: "+{value} 智慧"
+      value: [20, 30]
+      stats:
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "+{value}% 全部元素抗性"
+      value: [10, 15]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+# ---- 2026-10-15：參考 PoE2 的狼蛛塔盾、長矛（賦予技能、神性碎片先不做）。蛛巢壁壘：四個終局 Boss 都掉；神諭之矛：萬界之巔 ----
+
+spider_bulwark:
+  name: 蛛巢壁壘
+  base: tshield_24
+  drop_level: 60
+  sources: [final, frost_throne, bone_throne, ember_citadel]   # 2026-10-15：從萬界之巔改到四個終局 Boss（跟各自的專屬傳奇一起抽）
+  weight: 100
+  flavour:
+    - "「撞上來的，都會被纏住。」"
+  mods:
+    - text: "增加 {value}% 格擋率"
+      value: [10, 15]
+      stats:
+        - { stat: block.chance, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 護甲"
+      value: [60, 100]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+    - text: "命中值加倍"
+      stats:
+        - { stat: accuracy, type: MORE, value: 100 }
+    - text: "格擋時使攻擊者中毒，視同造成 200 基礎混沌傷害"
+      stats:
+        - { stat: block.poison, type: FLAT, value: 200 }
+
+oracle_spear:
+  name: 神諭之矛
+  base: spear_28
+  drop_level: 85
+  sources: [awakener]
+  weight: 100
+  flavour:
+    - "「神沒有開口，矛替祂說了。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [150, 250]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "附加 {min} 到 {max} 閃電傷害"
+      min: [1, 1]
+      max: [200, 300]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, lightning] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
+    - text: "+{value/100}% 暴擊率"
+      value: [500, 800]
+      stats:
+        - { stat: local.crit_base, type: FLAT, value: "{value/100}" }
+    - text: "生命偷取也照閃電傷害算（跟物理一樣）"
+      stats:
+        - { stat: flag.leech_lightning, type: FLAT, value: 1 }
+    - text: "增加 {value}% 近戰技能範圍"
+      value: [25, 25]
+      stats:
+        - { stat: skill.area, type: INCREASED, value: "{value}", tags: [melee] }
+
+# ---- 2026-10-15：圖騰傳奇（三件共通、一件追逐級）----
+
+ancestor_crown:
+  name: 祖靈之冠
+  base: helm_str_20
+  drop_level: 60
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「戴上它的人，身後總站著好幾個影子。」"
+  mods:
+    - text: "同時最多多 1 個圖騰"
+      stats:
+        - { stat: skill.totems, type: FLAT, value: 1 }
+    - text: "增加 {value}% 圖騰傷害"
+      value: [40, 60]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [totem] }
+    - text: "增加 {value}% 圖騰生命"
+      value: [40, 60]
+      stats:
+        - { stat: totem.life, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [50, 70]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value} 力量"
+      value: [20, 30]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+
+grudgecarver_mace:
+  name: 怨刻之錘
+  base: mace1_26
+  drop_level: 55
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「刻在圖騰上的，不是名字，是仇。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [100, 140]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "附加 {min} 到 {max} 物理傷害"
+      min: [12, 18]
+      max: [28, 36]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+    - text: "增加 {value}% 圖騰傷害"
+      value: [30, 50]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [totem] }
+    - text: "圖騰被打（或你在圖騰 10 格內被打）時，往打的敵人丟一團怨燼：造成圖騰最大生命 {value}% 的火焰傷害"
+      value: [6, 10]
+      stats:
+        - { stat: totem.vengeful, type: FLAT, value: "{value}" }
+    - text: "+{value} 力量"
+      value: [15, 25]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+
+totemkeeper_amulet:
+  name: 守靈墜飾
+  base: jamulet_03
+  drop_level: 55
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「牠們替你站著，你替牠們記著。」"
+  mods:
+    - text: "同時最多多 1 個圖騰"
+      stats:
+        - { stat: skill.totems, type: FLAT, value: 1 }
+    - text: "增加 {value}% 圖騰傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [totem] }
+    - text: "增加 {value}% 圖騰生命"
+      value: [20, 30]
+      stats:
+        - { stat: totem.life, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 全部元素抗性"
+      value: [10, 15]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+spiritgrove_plate:
+  name: 萬靈之林
+  base: body_str_25
+  drop_level: 75
+  sources: [chase]
+  chase: true
+  weight: 6
+  flavour:
+    - "「它走過的地方，長出一整片圖騰。」"
+  mods:
+    - text: "圖騰之林：圖騰上限加倍"
+      stats:
+        - { stat: flag.ancestral_bond, type: FLAT, value: 1 }
+    - text: "增加 {value}% 圖騰傷害"
+      value: [60, 80]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [totem] }
+    - text: "增加 {value}% 圖騰生命"
+      value: [50, 70]
+      stats:
+        - { stat: totem.life, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 護甲"
+      value: [100, 140]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [100, 140]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }

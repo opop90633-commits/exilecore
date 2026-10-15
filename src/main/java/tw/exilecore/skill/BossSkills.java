@@ -763,7 +763,7 @@ public final class BossSkills implements Listener {
             switch (extra.kind()) {
                 case ORBS -> spawnOrbs(brain, extra, target, now);
                 case MARK -> spawnMarks(brain, extra, target, now);
-                case SLAM, ZONE -> dropPending(brain, extra, target, now, "combo");
+                case SLAM, ZONE -> dropPending(brain, fitArena(brain, extra, now), target, now, "combo");
                 default -> {
                 }
             }
@@ -1018,8 +1018,9 @@ public final class BossSkills implements Listener {
 
     // ---- 出招 ----
 
-    private void start(final Brain brain, final BossSkill skill, final LivingEntity target, final long now) {
+    private void start(final Brain brain, final BossSkill picked, final LivingEntity target, final long now) {
         final LivingEntity boss = brain.boss;
+        final BossSkill skill = fitArena(brain, picked, now);
         // Boss 的招式冷卻再乘 boss_cooldown（2026-10：0.8，Boss 出招快一點；一般怪物照寫的）
         brain.readyAt.put(skill.id(), now + Math.round(skill.cooldown() * 20 * cooldownFactor(boss) * settings().cooldownFor(brain.host.boss())
                 * tempo(brain)));
@@ -1082,6 +1083,32 @@ public final class BossSkills implements Listener {
             return new Vector(-Math.sin(yaw), 0, Math.cos(yaw));
         }
         return to.normalize();
+    }
+
+    /**
+     * 場地收縮中（萬界崩解、天穹收攏，2026-10）：落在腳下的延遲落下、地面效果（滅世殞星、荒蕪、殞星）照落下那一刻的圈縮小，
+     * 不然半徑 8 的圈被一顆 6.5 的殞星和 13 秒的荒蕪佔掉大半，沒地方躲。傷害不變；圖形招（迷宮、走廊…）和圈裡的荒蕪另外處理。
+     */
+    private BossSkill fitArena(final Brain brain, final BossSkill skill, final long now) {
+        final Arena arena = brain.arena;
+        if (arena == null || skill.kind() != BossSkill.Kind.SLAM && skill.kind() != BossSkill.Kind.ZONE) {
+            return skill;
+        }
+        switch (skill.at()) {
+            case SPIRAL, CROSS, LINE, CAGE, MAZE, WALLS, ARENA -> {
+                return skill;
+            }
+            default -> {
+            }
+        }
+        final long landing = now + settings().telegraphTicks(skill, brain.host.boss())
+                + (skill.kind() == BossSkill.Kind.SLAM ? Math.round(skill.delay() * 20) : 0);
+        final double[] fit = BossGeometry.fitArena(skill.radius(), skill.count(), skill.scatter(), skill.duration(),
+                skill.kind() == BossSkill.Kind.ZONE, arena.radius(landing));
+        if (fit[0] == skill.radius() && fit[1] == skill.scatter() && fit[2] == skill.duration()) {
+            return skill;
+        }
+        return skill.sized(fit[0], fit[1], fit[2]);
     }
 
     /** 延遲落下、地面效果的落點。 */
@@ -1174,13 +1201,20 @@ public final class BossSkills implements Listener {
             }
             case MAZE -> {
                 // 2026-10（賽勒斯的殞星迷宮）：count 圈同心的風暴牆，每圈 gaps 個缺口、各圈錯開；一塊接一塊照距離鋪
-                final int rings = Math.max(1, Math.min(5, count));
+                // 萬界崩解收縮中：以收縮圈的中心為準、牆縮進圈裡（牆消失那一刻的圈 ×0.8）、最多兩圈、每圈三個缺口
+                final Arena arena = brain.arena;
+                final double arenaRadius = arena == null ? 0
+                        : arena.radius(now() + settings().telegraphTicks(skill, brain.host.boss()) + Math.round(skill.duration() * 20));
+                final double[] fit = BossGeometry.mazeInArena(reach, Math.max(1, Math.min(5, count)), Math.max(1, skill.gaps()), arenaRadius);
+                final Location middle = arena != null ? arena.center.clone() : center;
+                final double mazeReach = fit[0];
+                final int rings = (int) fit[1];
+                final int gaps = (int) fit[2];
                 final double step = Math.max(1.5, skill.radius() * 1.7); // 相鄰兩塊的間距（稍微重疊，牆才連得起來）
                 final double gapAngle = Math.toRadians(skill.gapAngle());
-                final int gaps = Math.max(1, skill.gaps());
                 double offset = random.nextDouble() * Math.PI * 2;
                 for (int ring = 1; ring <= rings; ring++) {
-                    final double distance = reach * ring / rings;
+                    final double distance = mazeReach * ring / rings;
                     final double[] centers = BossGeometry.gapCenters(gaps, offset);
                     final int slots = Math.max(6, (int) Math.round(Math.PI * 2 * distance / step));
                     for (int i = 0; i < slots; i++) {
@@ -1188,7 +1222,7 @@ public final class BossSkills implements Listener {
                         if (BossGeometry.inGap(angle, centers, gapAngle)) {
                             continue; // 缺口：留路
                         }
-                        points.add(ground(center.clone().add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance)));
+                        points.add(ground(middle.clone().add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance)));
                     }
                     offset += Math.PI / gaps; // 下一圈的缺口錯開半格：要繞著走
                 }

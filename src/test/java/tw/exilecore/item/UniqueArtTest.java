@@ -46,8 +46,8 @@ class UniqueArtTest {
     @Test
     void shippedArtLoads() {
         assertTrue(UniqueArt.sprites().size() >= 20);
-        assertTrue(UniqueArt.ids().contains("star_forge"));
-        assertTrue(UniqueArt.sprites().containsKey("hawk_eye_pulling_2"));
-        assertTrue(UniqueArt.sprites().containsKey("formation_breaker_arrow"));
+        assertTrue(UniqueArt.ids().contains("trophy_girdle"));
+        assertTrue(UniqueArt.sprites().containsKey("horizon_cleaver_pulling_2"));
+        assertTrue(UniqueArt.sprites().containsKey("barrage_crossbow_arrow"));
     }
 }

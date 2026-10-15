@@ -310,7 +310,12 @@ public final class Crafting {
                     after.setRarity(Rarity.RARE); // 變稀有之後空位比較多
                 }
                 if (used.operation() == CurrencyOperation.REMOVE_AND_ADD) {
-                    return null; // 先拿掉一條，之後一定有位子（同型態的）
+                    // 亂流石（2026-10-15 修正）：那一型滿了的話拿掉的一定是那一型，拿掉之後要加得上去
+                    makeRoomFor(after, wanted, generator, null);
+                    if (!generator.canAddAffix(after, wanted)) {
+                        return omen.name() + "：沒有能加的" + (wanted == AffixType.PREFIX ? "前綴" : "後綴") + "，這顆通貨用不上去";
+                    }
+                    return null;
                 }
                 if (!generator.canAddAffix(after, wanted)) {
                     return omen.name() + "：" + (wanted == AffixType.PREFIX ? "前綴" : "後綴") + "沒有空位，這顆通貨用不上去";
@@ -375,6 +380,16 @@ public final class Crafting {
                 return true;
             }
             case REMOVE_AND_ADD -> {
+                if (effect == CurrencyType.Omen.Effect.FORCE_PREFIX || effect == CurrencyType.Omen.Effect.FORCE_SUFFIX) {
+                    // 加前綴／加後綴籤＋亂流石（2026-10-15 修正）：那一型滿了的話拿掉的一定是那一型（以前隨便拿一條，
+                    // 拿到另一型就加不上去，結果是白白少一條）；沒滿就照常隨便拿一條。加的一定是那一型
+                    final AffixType wanted = effect == CurrencyType.Omen.Effect.FORCE_PREFIX ? AffixType.PREFIX : AffixType.SUFFIX;
+                    if (!makeRoomFor(data, wanted, generator, random)) {
+                        generator.removeRandomAffix(data, random);
+                    }
+                    generator.addAffix(data, wanted, random);
+                    return true;
+                }
                 final boolean removed = removeByOmen(effect, data, generator, random);
                 if (!removed) {
                     generator.removeRandomAffix(data, random);
@@ -391,6 +406,29 @@ public final class Crafting {
                 return false;
             }
         }
+    }
+
+    /**
+     * 這一型滿了的話拿掉一條這一型的（random 為 null 時拿第一條：只是試算）。
+     *
+     * @return 有沒有拿（沒滿就不拿）
+     */
+    private static boolean makeRoomFor(final ItemData data, final AffixType type, final ItemGenerator generator, final RandomGenerator random) {
+        if (generator.countOf(data, type) < generator.maxAffixes(data, type)) {
+            return false;
+        }
+        final List<RolledAffix> same = new ArrayList<>();
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix affix = generator.repository().affix(rolled.id());
+            if (affix != null && affix.type() == type) {
+                same.add(rolled);
+            }
+        }
+        if (same.isEmpty()) {
+            return false;
+        }
+        data.affixes().remove(same.get(random == null ? 0 : random.nextInt(same.size())));
+        return true;
     }
 
     /** 照星籤移除一條：最差的、只拿後綴、只拿前綴；星籤跟移除無關回傳 false（沒動）。 */

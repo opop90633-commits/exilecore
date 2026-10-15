@@ -144,6 +144,9 @@ public final class ModifierText {
                 case "stun_applied" -> "讓敵人重暈時";
                 case "freeze" -> "讓敵人凍結時";
                 case "minion_death" -> "被輔助的技能叫出來的召喚物死掉時（在牠倒下的地方）";
+                case "perfect" -> "完美時機放開時";
+                case "perfect_hit" -> "完美時機放開的那一下打中時";
+                case "kill" -> "打死敵人時";
                 default -> "條件成立時";
             };
             final String sub = modifier.tags().isEmpty() ? "" : modifier.tags().iterator().next();
@@ -337,6 +340,9 @@ public final class ModifierText {
             case StatKeys.DAMAGE_VS_RARE -> scaled(modifier, "對稀有與傳奇怪物的傷害", percent);
             case StatKeys.ONKILL_SPEED -> "擊殺後 4 秒內增加 " + number(value) + "% 攻擊與施法速度";
             case StatKeys.ONKILL_DAMAGE -> "擊殺後 4 秒內增加 " + number(value) + "% 傷害";
+            case StatKeys.DEBUFF_CHAOS -> "擊中時讓敵人受到混沌持續傷害：每秒是這一下傷害的 " + number(value) + "%（同一個技能的不疊加）";
+            case StatKeys.DEBUFF_DURATION -> "混沌持續傷害持續 " + number(value) + " 秒";
+            case StatKeys.FLAG_DEBUFF_SPREAD -> "掛著的敵人死掉時傳給附近的敵人，每傳一手更多 100% 傷害（最多更多 300%）";
             case StatKeys.CHANNEL_STAGES -> "持續施放（按住）：每放一次加一層蓄力，最多 " + number(value) + " 層";
             case StatKeys.CHANNEL_MORE -> "每層蓄力更多 " + number(value) + "% 傷害";
             case StatKeys.TRIGGER_CRIT -> "攻擊暴擊時自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
@@ -398,6 +404,7 @@ public final class ModifierText {
             case StatKeys.DAMAGE_HIGH_MANA -> scaled(modifier, "魔力 90% 以上時的傷害", percent);
             case StatKeys.DAMAGE_CLASH -> "生命百分比比敵人低時更多 " + number(value) + "% 傷害，比敵人高時更少 " + number(value / 2) + "%";
             case StatKeys.DAMAGE_VS_UNIQUE -> scaled(modifier, "對傳奇怪物與 Boss 的傷害", percent);
+            case StatKeys.SPELL_BASE_CRIT -> "基礎暴擊率 " + number(value) + "%"; // 2026-10-15
             case StatKeys.DEFLECTION -> scaled(modifier, "偏斜值", percent);
             case StatKeys.DEFLECTION_FROM_EVASION -> "獲得閃避值 " + number(value) + "% 的偏斜值";
             case "charm.slots" -> "+" + number(value) + " 護符欄位";

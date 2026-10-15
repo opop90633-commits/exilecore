@@ -70,6 +70,42 @@ final class SkillRuntime {
     /** 連珠（2026-10）：下一次弓／矛的投射物攻擊會重複（null = 沒有）。 */
     Barrage barrage;
 
+    /**
+     * 蓄力中（2026-10，{@link ChargeSpec}）：哪個技能、哪個按鍵、從哪個 tick 開始、最後一次收到按住的 tick、
+     * 完美時機那一刻的 tick（-1 = 沒有）、提示過完美時機了沒、上一次提示的層數。
+     */
+    static final class Charging {
+        final String skillId;
+        final int key;
+        final long start;
+        long last;
+        final long perfectAt;
+        boolean cued;
+        int shownStage;
+        final java.util.UUID target;
+        /** 數字鍵再按一次：下一個 tick 放出。 */
+        boolean releaseNow;
+        /** 開始蓄的時候這一招的攻擊／施法間隔（tick）與速度倍率。 */
+        double interval;
+        double speed = 1.0;
+
+        Charging(final String skillId, final int key, final long start, final long perfectAt, final java.util.UUID target) {
+            this.skillId = skillId;
+            this.key = key;
+            this.start = start;
+            this.last = start;
+            this.perfectAt = perfectAt;
+            this.target = target;
+        }
+    }
+
+    /** 放開的那一下（performInner 用）：蓄了幾 tick、是不是完美時機。 */
+    record Release(String skillId, long held, boolean perfect, double speed) {
+    }
+
+    Charging charging;
+    Release releasing;
+
     /** 雙詠要重複的一次施放。 */
     record Echo(long atTick, SkillBuild build, UUID target) {
     }

@@ -352,6 +352,12 @@ public final class StatKeys {
     public static final String BEIDAT_WILL = "flag.beidat_will";                // 每 25 最大生命 +1 精魂，保留 25% 生命
     public static final String SELF_IGNITE_ON_CRIT = "self.ignite_on_crit";     // FLAT：暴擊時自己著火，每秒 x% 最大生命與護盾的火焰傷害
     public static final String FLAG_SPELL_BASE_CRIT = "flag.spell_base_crit_15"; // 血術士：法術基礎暴擊率 15%
+    /** 2026-10-15：FLAT：這個法術的基礎暴擊率（百分比點數，照 PoE2 每個法術寶石自己的數字；skills.yml 的 modifiers）。沒寫 = 5%。 */
+    public static final String SPELL_BASE_CRIT = "spell.base_crit";
+    /** 2026-10-15：FLAT：格擋擊中時讓攻擊者中毒，視同造成這麼多基礎混沌傷害（蛛巢壁壘）。 */
+    public static final String BLOCK_POISON = "block.poison";
+    /** 2026-10-15：開關：閃電傷害也照物理的偷取率偷取生命（神諭之矛）。 */
+    public static final String FLAG_LEECH_LIGHTNING = "flag.leech_lightning";
     public static final String CRIT_BONUS_PER_LIFE = "crit.bonus_per_50_life";  // FLAT：每 50 目前生命增加 x% 暴擊傷害加成
     public static final String FLAG_CRIMSON_POWER = "flag.crimson_power";       // 血術士：+最大生命＝胸甲上的能量護盾
     public static final String FLAG_SANGUIMANCY = "flag.sanguimancy";           // 血術士：技能另外扣同樣多的生命
@@ -430,6 +436,12 @@ public final class StatKeys {
     public static final String ONKILL_SPEED = "onkill.speed";
     /** FLAT：擊殺後 4 秒內增加 x% 傷害。 */
     public static final String ONKILL_DAMAGE = "onkill.damage";
+    /** FLAT：擊中時讓敵人掛上混沌持續傷害的減益（2026-10，PoE2 的汲魂彈、疫潮）：每秒傷害 = 這一下傷害的 x%。同一個技能的不疊加。 */
+    public static final String DEBUFF_CHAOS = "debuff.chaos";
+    /** FLAT：上面那個減益持續幾秒（沒寫 4 秒）。 */
+    public static final String DEBUFF_DURATION = "debuff.duration";
+    /** FLAT 1：掛著減益的敵人死掉時傳給附近的敵人（疫潮），每傳一手更多 100% 傷害、最多更多 300%。 */
+    public static final String FLAG_DEBUFF_SPREAD = "flag.debuff_spread";
     /** FLAT：持續引導（蓄力）：最多幾層；連續放同一個技能每放一次加一層。 */
     public static final String CHANNEL_STAGES = "channel.stages";
     /** FLAT：持續引導每層更多 x% 傷害。 */

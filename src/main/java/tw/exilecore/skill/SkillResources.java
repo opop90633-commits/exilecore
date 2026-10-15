@@ -260,6 +260,14 @@ public final class SkillResources implements Listener {
      * 放技能前：有 infusion.consume 就把每種灌注各用掉一層，回傳這一下的加成（更多傷害、額外的元素傷害）；沒有回傳空的。
      */
     java.util.List<tw.exilecore.stats.Modifier> consumeInfusion(final Player player, final StatSheet effective, final Set<String> tags) {
+        return consumeInfusion(player, effective, tags, null);
+    }
+
+    /**
+     * 同上；{@code usedOut}（長度 3：火、冰、電）記下這一次各用掉幾層（2026-10-15：消耗提示用）。
+     */
+    java.util.List<tw.exilecore.stats.Modifier> consumeInfusion(final Player player, final StatSheet effective, final Set<String> tags,
+                                                               final int[] usedOut) {
         if (effective.flat(StatKeys.INFUSION_CONSUME, tags) <= 0) {
             return java.util.List.of();
         }
@@ -275,6 +283,9 @@ public final class SkillResources implements Listener {
             if (have[i] > 0) {
                 s.infusion[i]--;
                 used++;
+                if (usedOut != null) {
+                    usedOut[i]++;
+                }
                 if (extra > 0) {
                     mods.add(tw.exilecore.stats.Modifier.flat(StatKeys.damageExtra(tw.exilecore.stats.DamageType.fromTag(INFUSION_ELEMENTS[i])),
                             extra, INFUSION_NAMES[i] + "灌注"));
@@ -286,6 +297,30 @@ public final class SkillResources implements Listener {
             mods.add(tw.exilecore.stats.Modifier.more(StatKeys.DAMAGE, more / 100.0, "灌注"));
         }
         return mods;
+    }
+
+
+    /**
+     * 用掉灌注的提示（2026-10-15）：動作列寫「技能 用掉灌注：火 ×1、冰 ×1」（照元素上色），叮一聲，身上冒對應顏色的粒子。
+     * 沒用掉回傳 null。
+     */
+    String infusionUsed(final Player player, final String skillName, final int[] used) {
+        final java.util.List<String> parts = new java.util.ArrayList<>();
+        final org.bukkit.Location at = player.getLocation().add(0, 1.0, 0);
+        for (int i = 0; i < 3; i++) {
+            if (used[i] <= 0) {
+                continue;
+            }
+            parts.add(INFUSION_COLORS[i] + INFUSION_NAMES[i] + " ×" + used[i]);
+            final int rgb = Integer.parseInt(INFUSION_COLORS[i].substring(2, 8), 16);
+            player.getWorld().spawnParticle(org.bukkit.Particle.DUST, at, 10, 0.35, 0.5, 0.35, 0,
+                    new org.bukkit.Particle.DustOptions(org.bukkit.Color.fromRGB(rgb), 1.3f));
+        }
+        if (parts.isEmpty()) {
+            return null;
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.4f);
+        return "<#ffd27f>" + skillName + " 用掉灌注：" + String.join("<gray>、", parts);
     }
 
     /** 動作列上的一小段：怒氣、連擊、灌注（沒有回傳空字串）。 */

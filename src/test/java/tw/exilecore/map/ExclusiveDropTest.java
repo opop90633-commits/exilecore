@@ -131,14 +131,6 @@ class ExclusiveDropTest {
         assertEquals(0.01, custom.uniqueChance(MapEventConfig.Kind.BREACH), 1e-9, "沒寫的照預設 1%");
     }
 
-    @Test
-    void shrineLampLengthensShrineBuffs() {
-        final ItemData lamp = generator.generateUnique(repository.unique("shrine_lamp"), 70, new Random(4));
-        final StatSheet sheet = new StatSheet().addAll(ItemStats.modifiers(repository, lamp));
-        final double longer = sheet.increased(StatKeys.SHRINE_DURATION, Set.of());
-        assertTrue(longer >= 0.8 && longer <= 1.0, "神龕的增益持續時間增加 80–100%：" + longer);
-    }
-
     // ---- 專屬輔助寶石 ----
 
     @Test
@@ -152,7 +144,7 @@ class ExclusiveDropTest {
                 assertFalse(skills.supportsUpTo(3).contains(support), support.id() + "：未切割輔助寶石切不出來");
             }
         }
-        assertEquals(13, exclusive, "四個終局各一顆＋兩顆極境專屬＋七顆巔峰（覺醒之主・虛星）專屬");
+        assertEquals(14, exclusive, "四個終局各一顆＋兩顆極境專屬＋八顆巔峰（覺醒之主・虛星）專屬（2026-10-15：＋碎界擴散）");
         for (final String finalId : FINALS) {
             final List<SupportDefinition> own = skills.supportsFrom(finalId);
             assertEquals(1, own.size(), finalId + " 的專屬輔助");
@@ -240,7 +232,7 @@ class ExclusiveDropTest {
         }
         assertEquals(skills.supportsFrom("awakener").stream().map(SupportDefinition::id).toList(), supports, "每一顆專屬輔助都會掉");
         assertEquals(skills.skillsFrom("awakener").stream().map(tw.exilecore.skill.SkillDefinition::id).toList(), gems, "每一顆專屬技能寶石都會掉");
-        assertEquals(7, supports.size());
+        assertEquals(8, supports.size()); // 2026-10-15：＋碎界擴散
         assertEquals(6, gems.size());
         assertEquals(0.05, drops.uniqueChance(), 1e-9, "自己的十件傳奇 5%（2026-10：3% → 5%）");
         assertEquals(0.06, drops.exclusiveChance(), 1e-9, "極境專屬 6%（2026-10：3% → 6%）");

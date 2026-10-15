@@ -1,26 +1,20 @@
 package tw.exilecore.character;
 
-import org.bukkit.GameMode;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import tw.exilecore.ExileCore;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * 在線人數加成（2026-10）：同時在線、真的在玩的人數到門檻，全服就有經驗、掉落數量、稀有度、金幣加成；人數掉下來就收回。
  * 門檻與數值寫在 config.yml 的 online_bonus。
  * <p>
- * 只算「在玩的人」：有角色、不是旁觀模式、{@code idle-minutes} 分鐘內按過移動鍵或說過話；同一個 IP 只算一個（擋分身灌人數）。
+ * 人數就是在線的人數（2026-10-15：不再判斷閒置、同 IP、旁觀，跟 TAB 的「在線玩家」一樣）。
+ * <p>
  * 人數掉到門檻以下要持續 {@link #GRACE_MILLIS} 才降階（有人換角色、斷線重連不會讓加成一閃一閃）。
  * <p>
  * 數值放在靜態欄位（跟贊助的全服加倍 {@link tw.exilecore.sponsor.Boosts} 一樣），讀設定時乘（加）上去：
@@ -61,10 +55,7 @@ public final class OnlineBonus implements Listener {
     }
 
     private final ExileCore plugin;
-    private final Map<UUID, Long> lastActive = new HashMap<>();
     private boolean enabled;
-    private long idleMillis = 5 * 60_000L;
-    private boolean onePerIp = true;
     private List<Tier> tiers = List.of();
     private int counted;
     private Tier current;
@@ -80,8 +71,6 @@ public final class OnlineBonus implements Listener {
     void readConfig() {
         final ConfigurationSection section = plugin.getConfig().getConfigurationSection("online_bonus");
         enabled = section != null && section.getBoolean("enabled", true);
-        idleMillis = Math.max(1, section == null ? 5 : section.getInt("idle-minutes", 5)) * 60_000L;
-        onePerIp = section == null || section.getBoolean("one-per-ip", true);
         tiers = section == null ? List.of() : parse(section.getMapList("tiers"));
         current = null;
         droppedSince = 0;
@@ -134,32 +123,6 @@ public final class OnlineBonus implements Listener {
         return null;
     }
 
-    // ---- 在玩的人 ----
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onInput(final org.bukkit.event.player.PlayerInputEvent event) {
-        final org.bukkit.Input input = event.getInput();
-        if (input.isForward() || input.isBackward() || input.isLeft() || input.isRight() || input.isJump()) {
-            lastActive.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onChat(final io.papermc.paper.event.player.AsyncChatEvent event) {
-        final UUID uuid = event.getPlayer().getUniqueId();
-        plugin.getServer().getScheduler().runTask(plugin, () -> lastActive.put(uuid, System.currentTimeMillis()));
-    }
-
-    @EventHandler
-    public void onJoin(final org.bukkit.event.player.PlayerJoinEvent event) {
-        lastActive.put(event.getPlayer().getUniqueId(), System.currentTimeMillis());
-    }
-
-    @EventHandler
-    public void onQuit(final org.bukkit.event.player.PlayerQuitEvent event) {
-        lastActive.remove(event.getPlayer().getUniqueId());
-    }
-
     /** 現在算進去的人數。 */
     public int counted() {
         return counted;
@@ -181,33 +144,7 @@ public final class OnlineBonus implements Listener {
             return;
         }
         final long now = System.currentTimeMillis();
-        final Set<String> addresses = new HashSet<>();
-        int count = 0;
-        for (final Player player : plugin.getServer().getOnlinePlayers()) {
-            if (player.getGameMode() == GameMode.SPECTATOR) {
-                continue;
-            }
-            final PlayerState state = plugin.players().get(player);
-            if (!state.isLoaded() || !state.hasCharacter()) {
-                continue;
-            }
-            if (steering(player)) {
-                lastActive.put(player.getUniqueId(), now);
-            }
-            final Long active = lastActive.get(player.getUniqueId());
-            if (active == null || now - active > idleMillis) {
-                continue;
-            }
-            if (onePerIp) {
-                final java.net.InetSocketAddress address = player.getAddress();
-                final String ip = address == null || address.getAddress() == null ? player.getUniqueId().toString()
-                        : address.getAddress().getHostAddress();
-                if (!addresses.add(ip)) {
-                    continue;
-                }
-            }
-            count++;
-        }
+        final int count = plugin.getServer().getOnlinePlayers().size();
         counted = count;
         final Tier want = tierFor(tiers, count);
         if (want == current) {
@@ -230,11 +167,6 @@ public final class OnlineBonus implements Listener {
         announce(before, want);
     }
 
-    private static boolean steering(final Player player) {
-        final org.bukkit.Input input = player.getCurrentInput();
-        return input != null && (input.isForward() || input.isBackward() || input.isLeft() || input.isRight() || input.isJump());
-    }
-
     private static void apply(final Tier tier) {
         experience = tier == null ? 1 : 1 + tier.experience() / 100.0;
         quantity = tier == null ? 0 : tier.quantity() / 100.0;
@@ -245,7 +177,7 @@ public final class OnlineBonus implements Listener {
     private void announce(final Tier before, final Tier after) {
         final String message;
         if (after == null) {
-            message = "<gray>在線人數加成結束了（在玩的人少於 " + tiers.getFirst().players() + " 人）";
+            message = "<gray>在線人數加成結束了（在線少於 " + tiers.getFirst().players() + " 人）";
         } else if (before == null || after.players() > before.players()) {
             message = "<#ffd27f>在線 " + after.players() + " 人！<white>全服加成：" + describe(after) + nextText();
         } else {

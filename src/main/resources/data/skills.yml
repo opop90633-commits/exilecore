@@ -241,7 +241,7 @@ skills:
 
   boneshatter:
     name: 碎脊擊
-    description: 用錘子往前砸一下。打中蓄勢待暈的敵人直接重暈；碎脊擊打中時會累積很多暈眩，適合把稀有怪砸暈。
+    description: 用錘子往前砸一下。打中蓄勢待暈的敵人直接重暈；每次造成重暈時震出一圈衝擊波（兩倍多的傷害）。碎脊擊打中時會累積很多暈眩，適合把稀有怪砸暈。
     icon: BONE   # 2026-10：原本 MACE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
@@ -258,6 +258,7 @@ skills:
       - { stat: stun.buildup, type: MORE, value: 100 }
       - { stat: stun.duration, type: INCREASED, value: 30 }
       - { stat: flag.crush_primed, value: 1 }
+      - { stat: proc.stun_applied, type: FLAT, value: 100, tags: [proc_boneshatter_wave] }   # 2026-10 照 PoE2 改機制（Boneshatter）：重暈時震波
   ancestral_totem:
     name: 英靈圖騰
     # 2026-10 PoE2（祖靈戰士圖騰式）：圖騰自己不打，叫出英靈用你技能面板上它後面那一格的錘子攻擊技能
@@ -602,7 +603,7 @@ skills:
 
   lightning_spear:
     name: 擲雷槍
-    description: 擲出一支帶電的矛，打中時迸出閃電打附近的敵人，一半的物理傷害轉為閃電。
+    description: 擲出一支帶電的矛（物理 80% 轉閃電），打中敵人時炸開，朝 5 格內的敵人射出 5 道全是閃電傷害的雷彈。身上有怒星時消耗一顆，矛分裂成 3 支、每支都會炸開。
     icon: COPPER_INGOT   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 1
@@ -610,8 +611,10 @@ skills:
     weapons: [spear]
     starter: huntress
     mechanic: projectile
-    projectile: { speed: 2.0, range: 32, size: 0.4, pierce: 2, splash: { targets: 3, radius: 4, damage: 50 } }
-    convert: { lightning: 0.5 }
+    # 2026-10-15 照 PoE2 的閃電長矛：不穿透；打中炸開，朝 5 格內最多 5 個敵人射雷彈（主矛的 68%：PoE2 雷彈 75～234% ÷ 主矛 110～343%）
+    projectile: { speed: 2.0, range: 32, size: 0.4, pierce: 0, splash: { targets: 5, radius: 5, damage: 68 } }
+    convert: { lightning: 0.8 }
+    signature: bolt_spear   # 2026-10-15：有怒星就消耗一顆，分裂成 3 支
     attack_speed: 0.6
     effectiveness: [2.84, 5.94]   # 2026-10 長矛技能第二輪：20 級端 ×1.5（目標：中等裝 5 萬、高裝 15 萬、頂裝 20～30 萬；1 級端不動，前期不會變太強）；這次之前 [2.84, 3.96]
     # （更早）2026-10 補強：長矛技能再 ×1.4（第一次 ×1.5 之後官網高裝實測仍只有弓、召喚的兩到四成）；這次之前 [2.03, 2.83]
@@ -620,9 +623,10 @@ skills:
     visual: lightning_spear
     modifiers:
       - { stat: shock.chance, type: FLAT, value: 15 }
+      - { stat: shock.chance, type: MORE, value: 100 }   # 2026-10-15：PoE2「100% 更多感電機率」
   whirling_slash:
     name: 旋矛擊
-    description: 揮矛轉一圈，打傷周圍一圈的敵人。
+    description: 揮矛轉一圈，打傷周圍一圈的敵人，並在身邊捲起旋風（再揮一次升一階，最多 3 階，裡面的敵人變慢）。走出旋風或 3 秒沒再揮，旋風崩散打一圈，階數越高越痛、越大。
     icon: BREEZE_ROD   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
@@ -630,6 +634,7 @@ skills:
     weapons: [spear]
     mechanic: nova
     nova: { radius: [3.0, 3.8] }
+    signature: whirl   # 2026-10 照 PoE2 改機制（Whirling Slash）：旋風疊階、崩散（whirling_slash_collapse）
     attack_speed: 0.7
     effectiveness: [2.71, 5.67]   # 2026-10 弱勢補強（理論單體輸出只有同類中位數的五到七成，補到中位數附近）：×1.5；這次之前 [1.81, 3.78]
     # （更早）2026-10 長矛技能第二輪：20 級端 ×1.5（目標：中等裝 5 萬、高裝 15 萬、頂裝 20～30 萬；1 級端不動，前期不會變太強）；這次之前 [1.81, 2.52]
@@ -704,6 +709,7 @@ skills:
     mana: [5, 14]
     visual: fireball
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: ignite.chance, type: FLAT, value: 20 }
 
   frost_nova:
@@ -722,6 +728,7 @@ skills:
     mana: [6, 16]
     visual: frost_nova
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 12 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: freeze.buildup, type: MORE, value: 100 }
       - { stat: chill.effect, type: MORE, value: 100 }
       - { stat: flag.nova_from_frostbolt, type: FLAT, value: 1 }
@@ -742,6 +749,7 @@ skills:
     mana: [4, 12]
     visual: spark
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.chance, type: FLAT, value: 10 }
 
   arc:
@@ -760,6 +768,7 @@ skills:
     mana: [6, 15]
     visual: arc
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.chance, type: FLAT, value: 15 }
       - { stat: shock.effect, type: INCREASED, value: 50 }
 
@@ -780,6 +789,7 @@ skills:
     mana: [9, 24]
     visual: comet
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 13 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: freeze.buildup, type: INCREASED, value: 60 }
 
   flame_wall:
@@ -798,6 +808,7 @@ skills:
     mana: [6, 16]
     visual: flame_wall
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 5 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: ignite.chance, type: FLAT, value: 30 }
 
   # ---- 圖騰與陷阱（法術；什麼武器都能放）----
@@ -820,6 +831,8 @@ skills:
     effectiveness: [0.55, 0.75]   # 2026-10：內部比例調低（圖騰自己一直砸）
     mana: [8, 20]
     visual: shockwave_totem
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
 
   # ---- 混沌（混沌術士）----
 
@@ -839,6 +852,7 @@ skills:
     mana: [6, 15]
     visual: detonate_dead
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 8 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: ignite.chance, type: FLAT, value: 20 }
 
   # ---- 召喚物（混沌術士）：召喚物有自己的數值（同等級怪物的倍數），只吃「召喚物…」的加成與掛在技能上的輔助 ----
@@ -1586,7 +1600,7 @@ skills:
   # -- 矛 --
   storm_javelin:
     name: 霆落矛
-    description: 擲出一支標槍插在準心指的地方，過一下引爆一圈閃電。
+    description: 擲出一支帶電的矛插在準心指的地方，落地炸一圈閃電；矛插著 6 秒，每 0.8 秒朝附近的敵人放一道連鎖閃電，時間到再炸開並留下 8 秒的帶電地（站在上面的敵人會感電）。身上有怒星時消耗一顆：這支只插 1.5 秒，但每 0.2 秒放電、物理全部轉閃電。你的其他技能打在矛附近會把它提早引爆。同時最多 3 支（第 4 支讓最舊的提早炸開）。
     icon: COPPER_INGOT   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
@@ -1595,6 +1609,7 @@ skills:
     mechanic: impact
     impact: { range: 20, delay: 0.5, radius: [3.0, 3.8] }   # 2026-10 手感：落下延遲 0.8 → 0.5 秒
     convert: { lightning: 0.7 }
+    signature: lance   # 2026-10 照 PoE2 改機制（Storm Lance）：插地放電（storm_lance_bolt）、時間到炸開（storm_lance_burst）
     attack_speed: 0.75
     effectiveness: [3.15, 6.62]   # 2026-10 長矛技能第二輪：20 級端 ×1.5（目標：中等裝 5 萬、高裝 15 萬、頂裝 20～30 萬；1 級端不動，前期不會變太強）；這次之前 [3.15, 4.41]
     # （更早）2026-10 補強：長矛技能再 ×1.4（第一次 ×1.5 之後官網高裝實測仍只有弓、召喚的兩到四成）；這次之前 [2.25, 3.15]
@@ -1660,6 +1675,7 @@ skills:
     mana: [8, 20]
     visual: blizzard
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: ignite.chance, type: FLAT, value: 20 }
 
   scorch_breath:
@@ -1678,29 +1694,32 @@ skills:
     mana: [5, 13]
     visual: fireball
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 6 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: ignite.chance, type: FLAT, value: 30 }
 
   ember_volley:
     name: 星火連珠
-    description: 連續射出好幾顆火星，一顆接一顆飛向前方。
+    description: 每放一次在頭上叫出一顆火星（最多 6～10 顆）；最後一次施放 1.3 秒後，火星一顆接一顆射向敵人（優先打你指著的那隻），打中炸開一小圈，越後面射出的越痛。
     icon: BLAZE_POWDER
     type: spell
     tier: 3
     tags: [spell, projectile, fire]
     mechanic: projectile
-    projectile: { speed: 1.4, range: 28, size: 0.3, burst: { count: 4, interval: 3 } }
-    damage: [4, 7]
+    projectile: { speed: 1.4, range: 28, size: 0.3, explode: [1.2, 1.5] }   # 2026-10 照 PoE2 改機制（Ember Fusillade）：一次一顆、先懸浮再射
+    signature: ember
+    damage: [8, 14]   # 2026-10 照 PoE2 改機制：一次一顆（以前一次四顆、施法 0.8 秒），每顆 ×2；這次之前 [4, 7]
     damage_types: { fire: 1.0 }
-    cast_time: 0.8
-    effectiveness: 0.5
-    mana: [6, 15]
+    cast_time: 0.4   # 這次之前 0.8
+    effectiveness: 1.0   # 這次之前 0.5
+    mana: [3, 8]   # 這次之前 [6, 15]
     visual: fireball
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: ignite.chance, type: FLAT, value: 10 }
 
   frost_snap:
     name: 霜綻
-    description: 準心指的地方瞬間結冰炸開，打傷一圈敵人，凍結累積很多。冷卻 2 秒。
+    description: 準心指的地方瞬間結冰炸開，打傷一圈敵人，凍結累積很多，並留下 4 秒會冰傷敵人的冰地。打死敵人時獲得一顆怒星；冷卻中按下去可以消耗一顆怒星直接放。冷卻 2 秒。
     icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
@@ -1710,12 +1729,16 @@ skills:
     damage: [20, 31]   # 2026-10 弱勢補強（理論單體輸出只有同類中位數的五到七成，補到中位數附近）；這次之前 [14, 22]
     damage_types: { cold: 1.0 }
     cooldown: 2
+    cooldown_bypass: frenzy   # 2026-10 照 PoE2 改機制（Cold Snap）：用怒星跳過冷卻
     cast_time: 0.6
     effectiveness: 1.2
     mana: [8, 18]
     visual: frost_nova
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 11 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: freeze.buildup, type: INCREASED, value: 120 }
+      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_cold_snap_ground] }   # 2026-10 照 PoE2 改機制：留下冰地
+      - { stat: proc.kill, type: FLAT, value: 100, tags: [proc_gain_frenzy] }   # 2026-10 照 PoE2 改機制：打死敵人給怒星
 
   frost_orb:
     name: 凝霜星核
@@ -1733,6 +1756,7 @@ skills:
     mana: [8, 20]
     visual: staff_bolt
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 12 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: freeze.buildup, type: INCREASED, value: 40 }
 
   storm_orb:
@@ -1751,6 +1775,7 @@ skills:
     mana: [7, 18]
     visual: arc
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 10 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.chance, type: FLAT, value: 20 }
 
   lightning_pillar:
@@ -1769,6 +1794,7 @@ skills:
     mana: [10, 24]
     visual: arc
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 10 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.effect, type: INCREASED, value: 50 }
 
   hex_burst:
@@ -1787,6 +1813,7 @@ skills:
     mana: [8, 20]
     visual: void_rift
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: damage.vs_cursed, type: MORE, value: 50 }
 
   bone_storm:
@@ -1805,6 +1832,7 @@ skills:
     mana: [6, 16]
     visual: puncture
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 15 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: bleed.chance, type: FLAT, value: 20 }
 
   void_bolt:
@@ -1822,8 +1850,11 @@ skills:
     effectiveness: 0.9
     mana: [5, 14]
     visual: chaos_bolt
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
 
   # -- 召喚 --
+
   skeletal_brute:
     name: 召喚骸骨重卒
     description: 精魂召喚：綁在上方按鍵格就一直跟著你，召出高大的凋零骷髏，很耐打，打中時連周圍一起打，會把附近的怪引過來。同時最多兩個。死掉的 8 秒後自己補回來。每一隻都要保留精魂（技能等級越高每隻越少），精魂付得起幾隻就叫幾隻。
@@ -1979,7 +2010,7 @@ skills:
 
   true_strike:
     name: 蓄勁一擊
-    description: 蓄足力氣打出一記極重的單體攻擊，必定命中、暴擊傷害更高。冷卻 3 秒。
+    description: 按住蓄力，放開打出一記重擊（必定命中、暴擊傷害更高）。蓄到「叮」一聲的那一刻放開是完美時機：再往前方轟出一道大火浪。數字鍵：按一下開始蓄、再按一下放。
     icon: NETHERITE_INGOT
     type: attack
     tier: 9
@@ -1987,15 +2018,16 @@ skills:
     weapons: [mace]
     mechanic: strike
     strike: { reach: 3.8, angle: 50, targets: 1, knockback: 0.6 }
-    cooldown: 3
+    charge: { perfect_at: 60 }   # 2026-10 照 PoE2 改機制（Perfect Strike）：拿掉冷卻 3 秒改成蓄力；完美時機觸發 proc_perfect_wave
     attack_speed: 0.45
-    effectiveness: [4.42, 8.05]   # 2026-10 錘的攻擊技能第二輪：20 級端 ×1.3（目標：中等裝 5 萬、高裝 15 萬、頂裝 20～30 萬；1 級端不動，前期不會變太強）；這次之前 [4.42, 6.19]
+    effectiveness: [1.11, 2.01]   # 2026-10 照 PoE2 改機制：沒有冷卻了（蓄力就是出手時間），重擊 ×0.25，完美時機的火浪另外 2.3 倍；這次之前 [4.42, 8.05]   # 2026-10 錘的攻擊技能第二輪：20 級端 ×1.3（目標：中等裝 5 萬、高裝 15 萬、頂裝 20～30 萬；1 級端不動，前期不會變太強）；這次之前 [4.42, 6.19]
     # （更早）2026-10 補強：錘的攻擊技能 ×1.3（高裝實測 3～6 萬）；這次之前 [3.4, 4.76]
     mana: [8, 16]
     visual: boneshatter
     modifiers:
       - { stat: flag.always_hit, type: FLAT, value: 1 }
       - { stat: crit.multi, type: FLAT, value: 50 }
+      - { stat: proc.perfect, type: FLAT, value: 100, tags: [proc_perfect_wave] }   # 2026-10 照 PoE2 改機制：完美時機放開時轟出火浪
 
   titan_slam:
     name: 撼天重砸
@@ -2454,7 +2486,7 @@ skills:
 
   blood_harvest:
     name: 血獵
-    description: 矛刺向準心指的地方，炸開一圈血花，容易流血。
+    description: 矛刺向準心指的地方，炸開一圈血花，容易流血。打中流血中的敵人時用掉牠的流血，引發一場血爆（兩倍傷害的一大圈）。
     icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
@@ -2470,6 +2502,7 @@ skills:
     visual: puncture
     modifiers:
       - { stat: bleed.chance, type: FLAT, value: 40 }
+      - { stat: proc.hit_bleeding, type: FLAT, value: 100, tags: [proc_blood_hunt_burst] }   # 2026-10 照 PoE2 改機制（Blood Hunt）：用掉流血引發血爆
 
   sunfire_spear:
     name: 熾陽之矛
@@ -2509,6 +2542,7 @@ skills:
     mana: [8, 20]
     visual: comet
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 13 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: crystal.count, type: FLAT, value: 1 }
       - { stat: freeze.buildup, type: INCREASED, value: 100 }
 
@@ -2528,6 +2562,7 @@ skills:
     mana: [6, 16]
     visual: blizzard
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 11 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: crystal.count, type: FLAT, value: 4 }
       - { stat: chill.effect, type: INCREASED, value: 50 }
 
@@ -2547,25 +2582,27 @@ skills:
     effectiveness: 0.8
     mana: [6, 14]
     visual: dash
-
-
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 11 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
 
   inferno_blast:
     name: 炎核爆
-    description: 準心指的地方慢慢聚出一團火，過一下炸開一大圈，傷害極高。
+    description: 按住蓄力（最多 10 層，每 0.25 秒一層，吃施法速度），放開時在準心指的地方炸開：每多一層更多 75% 傷害、範圍更大，蓄滿最划算。數字鍵：按一下開始蓄、再按一下放。
     icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9
     tags: [spell, area, fire]
     mechanic: impact
-    impact: { range: 22, delay: 2.0, radius: [3.6, 4.6] }
-    damage: [34, 52]
+    impact: { range: 22, delay: 0.3, radius: [3.6, 4.6] }   # 2026-10 照 PoE2 改機制：延遲 2 秒 → 0.3 秒（改成蓄力）
+    charge: { stages: 10, stage_time: 0.25, stage_more: 75, stage_area: 12 }   # 2026-10 照 PoE2 改機制（Flameblast）：每層更多 75%、增加 12% 範圍
+    damage: [14, 22]   # 2026-10 照 PoE2 改機制：蓄滿（2.25 秒蓄力＋1 秒收招，7.75 倍）的每秒傷害跟以前一樣；這次之前 [34, 52]
     damage_types: { fire: 1.0 }
     cast_time: 1.0
-    effectiveness: 2.0
+    effectiveness: 0.84   # 這次之前 2.0
     mana: [10, 26]
     visual: comet
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 8 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: ignite.chance, type: FLAT, value: 30 }
 
   sun_orb:
@@ -2584,6 +2621,7 @@ skills:
     mana: [7, 18]
     visual: flame_wall
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: ignite.chance, type: FLAT, value: 15 }
 
   ember_seed:
@@ -2602,6 +2640,7 @@ skills:
     mana: [6, 15]
     visual: fireball
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: ignite.chance, type: FLAT, value: 25 }
 
   winter_eye:
@@ -2619,6 +2658,8 @@ skills:
     effectiveness: 0.8
     mana: [8, 20]
     visual: staff_bolt
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 12 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
 
   static_field:
     name: 雷域
@@ -2636,6 +2677,7 @@ skills:
     mana: [8, 20]
     visual: arc
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.chance, type: FLAT, value: 25 }
 
   bone_spikes:
@@ -2654,6 +2696,7 @@ skills:
     mana: [7, 17]
     visual: puncture
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 14 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: bleed.chance, type: FLAT, value: 30 }
 
   dark_idol:
@@ -2672,8 +2715,11 @@ skills:
     effectiveness: 0.75
     mana: [9, 22]
     visual: chaos_bolt
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
 
   # -- 召喚 --
+
   bone_raise:
     name: 掘骸
     description: 用附近一具屍體拼出一個骷髏戰士，二十秒後散掉。可以一直放。
@@ -2844,6 +2890,7 @@ skills:
     mana: [2, 5]
     visual: fireball
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 6 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: channel.stages, type: FLAT, value: 8 }
       - { stat: channel.more, type: FLAT, value: 10 }
       - { stat: ignite.chance, type: FLAT, value: 10 }
@@ -2864,6 +2911,7 @@ skills:
     mana: [2, 5]
     visual: ice_cone
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: channel.stages, type: FLAT, value: 8 }
       - { stat: channel.more, type: FLAT, value: 10 }
       - { stat: freeze.buildup, type: INCREASED, value: 60 }
@@ -2884,6 +2932,7 @@ skills:
     mana: [2, 6]
     visual: arc
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 10 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: channel.stages, type: FLAT, value: 6 }
       - { stat: channel.more, type: FLAT, value: 12 }
 
@@ -3080,7 +3129,7 @@ skills:
 
   snipe:
     name: 穿雲箭
-    description: 拉滿弓射出一支很重的箭，飛得又快又遠，貫穿五個敵人；出手慢，一箭的傷害很高，暴擊率增加 50%。
+    description: 按住拉弓蓄力，放開射出一支很重的箭（貫穿五個敵人，暴擊率增加 50%）。蓄到「叮」一聲的那一刻放開是完美時機：箭打中時炸開一大圈（對凍結的敵人更痛）。數字鍵：按一下開始拉、再按一下放。
     icon: QUARTZ   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: attack
     tier: 9
@@ -3088,12 +3137,14 @@ skills:
     weapons: [bow]
     mechanic: projectile
     projectile: { arrow: true, speed: 4.0, range: 50, pierce: 5 }
+    charge: { perfect_at: 100 }   # 2026-10 照 PoE2 改機制（Snipe）：按住蓄力，蓄到一次攻擊時間放開是完美時機（觸發 proc_snipe_blast）
     attack_speed: 0.4
-    effectiveness: [2.36, 3.3]   # 2026-10 PoE2：照 PoE2 20 級的傷害效益換算
+    effectiveness: [1.77, 2.48]   # 2026-10 照 PoE2 改機制：箭本身 ×0.75（完美時機另外炸開 2 倍）；這次之前 [2.36, 3.3]
     mana: [6, 14]
     visual: arrow
     modifiers:
       - { stat: crit.chance, type: INCREASED, value: 50 }
+      - { stat: proc.perfect_hit, type: FLAT, value: 100, tags: [proc_snipe_blast] }   # 2026-10 照 PoE2 改機制：完美時機的箭打中時炸開
 
   frostbolt:
     name: 霜鑽
@@ -3111,6 +3162,7 @@ skills:
     mana: [5, 13]
     visual: staff_bolt
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 12 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: freeze.buildup, type: INCREASED, value: 50 }
       - { stat: chill.effect, type: MORE, value: 100 }
 
@@ -3130,44 +3182,51 @@ skills:
     mana: [7, 18]
     visual: spark
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.chance, type: FLAT, value: 15 }
       - { stat: shock.chance, type: INCREASED, value: 375 }
 
   essence_drain:
     name: 汲魂彈
-    description: 射出一顆混沌能量，打中造成混沌傷害（不吃元素抗性，看混沌抗性），停下的地方留下三秒的腐蝕地面。
+    description: 射出一顆混沌能量，打中造成混沌傷害，並讓敵人受到強烈的混沌持續傷害 4 秒（每秒 1.5 倍那一下的傷害；同一個技能不疊加，再打中就刷新）。
     icon: ECHO_SHARD
     type: spell
     tier: 1
     tags: [spell, projectile, chaos, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
     starter: witch
     mechanic: projectile
-    projectile: { speed: 0.56, range: 30, size: 0.35, ground: { duration: 4, interval: 0.5, radius: 1.6, damage: 30 } }   # 2026-10 PoE2
+    projectile: { speed: 0.56, range: 30, size: 0.35 }   # 2026-10 照 PoE2 改機制（Essence Drain）：拿掉腐蝕地面，改成掛在敵人身上的持續傷害
     damage: [5, 9]
     damage_types: { chaos: 1.0 }
     cast_time: 0.8
     effectiveness: 1.0           # 法術附加乘這個
     mana: [5, 13]
     visual: chaos_bolt
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
+      - { stat: debuff.chaos, type: FLAT, value: 150 }   # 2026-10 照 PoE2 改機制：混沌持續傷害，每秒 = 這一下的 150%
+      - { stat: debuff.duration, type: FLAT, value: 4 }
 
   contagion:
     name: 疫潮
-    description: 在準心指的地方爆出一團瘟疫，打中的敵人一定中毒，毒更強 30%。
+    description: 在準心指的地方爆出一小團瘟疫，讓敵人受到混沌持續傷害 5 秒（每秒 4 倍那一下的傷害）。掛著的敵人死掉時傳給附近的敵人，每傳一手更多 100% 傷害（最多更多 300%）。
     icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
     tags: [spell, area, chaos]
     mechanic: impact
-    impact: { range: 20, delay: 0.3, radius: [3.0, 3.8] }
-    damage: [6, 10]
+    impact: { range: 20, delay: 0.3, radius: [1.6, 2.0] }   # 2026-10 照 PoE2 改機制（Contagion）：本來就是點單體再傳染；這次之前半徑 [3.0, 3.8]
+    damage: [2, 4]   # 2026-10 照 PoE2 改機制：主要傷害改成持續傷害；這次之前 [6, 10]
     damage_types: { chaos: 1.0 }
     cast_time: 0.6
     effectiveness: 0.7           # 法術附加乘這個
     mana: [6, 16]
     visual: blight_nova
     modifiers:
-      - { stat: poison.chance, type: FLAT, value: 100 }
-      - { stat: poison.magnitude, type: MORE, value: 30 }
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
+      - { stat: debuff.chaos, type: FLAT, value: 400 }   # 2026-10 照 PoE2 改機制：混沌持續傷害，每秒 = 這一下的 400%（這次之前一定中毒、毒更強 30%）
+      - { stat: debuff.duration, type: FLAT, value: 5 }
+      - { stat: flag.debuff_spread, type: FLAT, value: 1 }
 
   # ==== 2026-10：德魯伊（照 PoE2，名稱是自己的）====
   # 變身：放帶 bear／werewolf／wyvern 標籤的技能就變成那種形態 8 秒（換一種就換掉）：
@@ -3488,6 +3547,7 @@ skills:
     mana: [8, 20]
     visual: blizzard
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.chance, type: FLAT, value: 25 }
   primal_tornado:
     name: 野旋風
@@ -3504,6 +3564,9 @@ skills:
     effectiveness: 0.5
     mana: [9, 20]
     visual: void_rift
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 8 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
+
   thrashing_vines:
     name: 抽荊
     description: 準心指的地方猛然竄出粗藤狠狠抽下，打傷一圈敵人，容易流血。
@@ -3520,6 +3583,7 @@ skills:
     mana: [7, 16]
     visual: earthquake
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 8 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: bleed.chance, type: FLAT, value: 30 }
   volcano:
     name: 地火柱
@@ -3537,6 +3601,7 @@ skills:
     mana: [8, 18]
     visual: flame_wall
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 8 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: ignite.chance, type: FLAT, value: 25 }
   entangle:
     name: 縛根
@@ -3890,6 +3955,7 @@ skills:
     mana: [5, 12]
     visual: staff_bolt
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 11 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: damage.vs_chilled, type: MORE, value: 30 }
       - { stat: damage.vs_frozen, type: MORE, value: 30 }
 
@@ -3908,6 +3974,8 @@ skills:
     effectiveness: 0.5
     mana: [7, 16]
     visual: blight_nova
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
 
   herald_of_blood:
     name: 血宣
@@ -4907,6 +4975,131 @@ skills:
     cooldown: 1
     mana: 0
     visual: enduring_cry
+  # ---- 2026-10 照 PoE2 改機制：技能自己觸發的隱藏技能 ----
+  proc_snipe_blast:
+    name: 穿雲爆
+    hidden: true
+    type: attack
+    tags: [attack, area, projectile, physical]
+    mechanic: nova
+    parent_damage: 2.0   # 穿雲箭完美時機的箭打中時炸開＝那一箭的 2 倍（PoE2 的 Snipe）
+    nova: { radius: [2.5, 2.9] }
+    attack_speed: 1.0
+    effectiveness: [1.0, 1.0]
+    visual: comet
+    modifiers:
+      - { stat: damage.vs_frozen, type: MORE, value: 60 }   # PoE2：用掉凍結的爆炸更強
+
+  proc_perfect_wave:
+    name: 熾勁火浪
+    hidden: true
+    type: attack
+    tags: [attack, melee, area, fire]
+    mechanic: cone
+    parent_damage: 2.3   # 蓄勁一擊完美時機：往前轟出一道火浪＝那一擊的 2.3 倍（PoE2 的 Perfect Strike）
+    cone: { length: [6, 7.5], angle: 60 }
+    convert: { fire: 0.8 }
+    attack_speed: 1.0
+    effectiveness: [1.0, 1.0]
+    visual: fireball
+
+  whirling_slash_collapse:
+    name: 旋風崩散
+    hidden: true
+    type: attack
+    tags: [attack, melee, area, nova]
+    mechanic: nova
+    nova: { radius: [2.2, 2.2] }   # 實際半徑照旋風的階數（Signatures）
+    attack_speed: 1.0
+    effectiveness: [1.0, 1.0]
+    visual: whirl
+
+  storm_lance_bolt:
+    name: 霆矛放電
+    hidden: true
+    type: attack
+    tags: [attack, lightning]
+    mechanic: chain
+    chain: { range: 8, chains: [3, 5], chain_range: 6 }
+    attack_speed: 1.0
+    effectiveness: [1.0, 1.0]
+    visual: arc
+
+  storm_lance_burst:
+    name: 霆矛炸裂
+    hidden: true
+    type: attack
+    tags: [attack, area, lightning]
+    mechanic: nova
+    nova: { radius: [3.0, 3.6] }
+    attack_speed: 1.0
+    effectiveness: [1.0, 1.0]
+    visual: lightning_spear
+  storm_lance_ground:
+    name: 霆矛帶電地
+    hidden: true
+    type: spell
+    tags: [spell, area, lightning, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [2.6, 3.2], duration: 8, interval: 0.5, damage: 20, max: 3 }   # 2026-10-15：霆落矛炸開留下的帶電地（PoE2 的感電地面，持續 8 秒）
+    damage: [1, 2]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.5
+    effectiveness: 0.5
+    visual: spark
+    modifiers:
+      - { stat: shock.chance, type: FLAT, value: 100 }
+
+  proc_blood_hunt_burst:
+    name: 血爆
+    hidden: true
+    type: attack
+    tags: [attack, area, physical]
+    mechanic: nova
+    parent_damage: 2.0   # 血獵用掉流血引發的血爆＝那一下的 2 倍（PoE2 的 Blood Hunt）
+    nova: { radius: [2.4, 3.0] }
+    attack_speed: 1.0
+    effectiveness: [1.0, 1.0]
+    visual: puncture
+
+  proc_boneshatter_wave:
+    name: 碎脊震波
+    hidden: true
+    type: attack
+    tags: [attack, melee, area, slam, physical]
+    mechanic: nova
+    parent_damage: 2.3   # 碎脊擊造成重暈時的震波＝那一下的 2.3 倍（PoE2 的 Boneshatter）
+    nova: { radius: [2.2, 3.0] }
+    attack_speed: 1.0
+    effectiveness: [1.0, 1.0]
+    visual: slam
+
+  proc_cold_snap_ground:
+    name: 霜綻冰地
+    hidden: true
+    type: spell
+    tags: [spell, area, cold, duration]
+    mechanic: zone
+    zone: { range: 0, radius: [2.8, 3.6], duration: 4, interval: 0.5, damage: 25, max: 1 }
+    damage: [10, 16]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.1
+    effectiveness: 0.8
+    visual: frost_nova
+    modifiers:
+      - { stat: chill.effect, type: INCREASED, value: 30 }
+
+  proc_gain_frenzy:
+    name: 怒星
+    hidden: true
+    type: spell
+    tags: [warcry]
+    mechanic: warcry
+    warcry: { radius: 2, duration: 1, taunt: false, allies: false, charges: { frenzy: 1 } }
+    cast_time: 0.1
+    cooldown: 1
+    mana: 0
+    visual: enduring_cry
 
   proc_blazing_critical:
     name: 燼勢焰
@@ -4984,12 +5177,12 @@ skills:
   # ---- 2026-10：坐騎（mount：叫出一匹真的坐騎騎上去，再放一次下馬；requires_mount：要騎著才能放）----
   summon_mount:
     name: 喚駒
-    description: 叫出一匹披甲戰馬騎上去，再放一次就下馬。騎著的時候移動快很多（吃你的移動速度加成）、攻擊更多 15% 傷害；放法術、按潛行鍵、被傳送或換世界都會下馬。坐騎不會受傷。冷卻 2 秒。
+    description: 叫出一匹披甲戰馬騎上去，再放一次就下馬。騎著的時候比跑步快一點（吃你的移動速度加成）、攻擊更多 15% 傷害；放法術、按潛行鍵、被傳送或換世界都會下馬。坐騎不會受傷。冷卻 2 秒。
     icon: LEATHER   # 2026-10：原本 SADDLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 2
     tags: [spell, movement]
-    mount: { kind: HORSE, speed: 1.3 }
+    mount: { kind: HORSE, speed: 0.6 }   # 2026-10-15：1.3 → 0.6（約 6.3 格／秒，比跑步快一點；再乘你的移動速度加成）
     mechanic: dash
     dash: { range: 2 }
     cast_time: 0.5
@@ -5004,7 +5197,7 @@ skills:
     type: spell
     tier: 8
     tags: [spell, movement]
-    mount: { kind: SKELETON_HORSE, speed: 1.55 }
+    mount: { kind: SKELETON_HORSE, speed: 0.7 }   # 2026-10-15：1.55 → 0.7（約 7.4 格／秒；再乘你的移動速度加成）
     mechanic: dash
     dash: { range: 2 }
     cast_time: 0.5
@@ -5121,6 +5314,7 @@ skills:
     mana: [5, 12]
     visual: frost_nova
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: infusion.gain, type: FLAT, value: 1 }
 
   infusion_bolt:
@@ -5139,6 +5333,7 @@ skills:
     mana: [6, 16]
     visual: fireball
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: infusion.consume, type: FLAT, value: 1 }
       - { stat: infusion.more, type: FLAT, value: 25 }
       - { stat: infusion.extra, type: FLAT, value: 20 }
@@ -5198,6 +5393,7 @@ skills:
     mana: [6, 14]
     visual: blight_nova
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: poison.chance, type: FLAT, value: 60 }
 
   iron_ward:
@@ -5431,6 +5627,7 @@ skills:
     mana: [6, 15]
     visual: puncture
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 15 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: stun.buildup, type: MORE, value: 100 }
 
   snap:
@@ -5450,6 +5647,7 @@ skills:
     mana: [7, 17]
     visual: frost_nova
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 11 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: damage.vs_frozen, type: MORE, value: 50 }
       - { stat: damage.vs_shocked, type: MORE, value: 50 }
       - { stat: damage.vs_ignited, type: MORE, value: 50 }
@@ -5765,6 +5963,7 @@ skills:
     mana: [12, 28]
     visual: comet
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 13 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.chance, type: FLAT, value: 30 }
       - { stat: poison.chance, type: FLAT, value: 25 }
 
@@ -5785,6 +5984,7 @@ skills:
     mana: [9, 22]
     visual: chaos_bolt
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: damage.vs_shocked, type: MORE, value: 25 }
       - { stat: poison.chance, type: FLAT, value: 20 }
 
@@ -5805,6 +6005,7 @@ skills:
     mana: [8, 20]
     visual: tempest
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 10 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.chance, type: FLAT, value: 40 }
       - { stat: shock.effect, type: INCREASED, value: 30 }
 
@@ -5825,6 +6026,7 @@ skills:
     mana: [9, 22]
     visual: chaos_bolt
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.chance, type: FLAT, value: 20 }
 
   rift_slash:
@@ -6077,6 +6279,7 @@ skills:
     mana: [8, 20]
     visual: fireball
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: ignite.chance, type: FLAT, value: 15 }
 
   frost_pulse_totem:
@@ -6096,6 +6299,7 @@ skills:
     mana: [8, 20]
     visual: frost_nova
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: freeze.buildup, type: MORE, value: 60 }
 
   storm_pylon_totem:
@@ -6115,6 +6319,7 @@ skills:
     mana: [9, 22]
     visual: arc
     modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.chance, type: FLAT, value: 20 }
 
   bulwark_totem:
@@ -6133,3 +6338,6 @@ skills:
     effectiveness: 0.45
     mana: [10, 24]
     visual: shockwave_totem
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
+

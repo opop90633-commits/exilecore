@@ -193,6 +193,7 @@ final class MapSpawner {
         if (entity == null || !entity.isValid()) {
             return null;
         }
+        service.freeFromWalls(instance, entity); // 刷在柱子、道具上，或體型大的貼著牆刷出來：馬上挪到旁邊的空地（2026-10-15）
         final MonsterData data = plugin.monsters().decorate(entity, instance.level(), rarity, mods, baseName);
         final double power = instance.twist().monsterPower;
         if ((instance.delirium() > 0 || power > 0) && data != null) {

@@ -142,8 +142,9 @@ public final class QuestConfig {
      * @param x          往東幾格
      * @param z          往南幾格
      * @param yaw        面向（0 = 南、90 = 西、180 = 北、-90 = 東）
+     * @param y          比落點／檢查點高幾格（2026-10-15；/ec npc move 搬到台階上時寫的，沒寫 0）
      */
-    public record Placement(String zone, String checkpoint, double x, double z, float yaw) {
+    public record Placement(String zone, String checkpoint, double x, double z, float yaw, double y) {
     }
 
     /**
@@ -311,7 +312,7 @@ public final class QuestConfig {
         } else if (at != null) {
             throw new IllegalArgumentException(place.path() + ".at：要寫成 [往東, 往南]，卻是「" + at + "」");
         }
-        return new Placement(zone, checkpoint, x, z, (float) place.decimal("yaw", 0));
+        return new Placement(zone, checkpoint, x, z, (float) place.decimal("yaw", 0), place.decimal("y", 0));
     }
 
     private static Quest quest(final String id, final YamlNode node) {

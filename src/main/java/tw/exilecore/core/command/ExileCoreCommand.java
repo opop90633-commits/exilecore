@@ -246,6 +246,12 @@ public final class ExileCoreCommand {
                                 .suggests(suggest(() -> java.util.List.of("reset")))
                                 .executes(context -> npcSkin(plugin, context, StringArgumentType.getString(context, "name")))))
                         .then(Commands.literal("list").executes(context -> npcList(plugin, context.getSource().getSender()))))
+                // 2026-10-15：/ec dummy move <假人>：訓練假人搬到你腳下、面向跟你一樣，寫回 data/dummies.yml（重開也在新位置）
+                .then(Commands.literal("dummy")
+                        .then(Commands.literal("move")
+                                .then(Commands.argument("id", StringArgumentType.word())
+                                        .suggests(suggest(() -> plugin.training() == null ? java.util.List.<String>of() : plugin.training().dummyIds()))
+                                        .executes(context -> dummyMove(plugin, context, StringArgumentType.getString(context, "id"))))))
                 .then(ZoneAdminCommand.node(plugin))
                 .then(SkillCommands.adminNode(plugin))
                 .then(SkillCommands.gemNode(plugin))
@@ -882,11 +888,52 @@ public final class ExileCoreCommand {
         final Location to = player.getLocation().clone();
         to.setPitch(0f);
         selected.setGlowing(false);
+        // 劇情世界自動擺的劇情人物（2026-10-15）：先存進 quests.yml，不然區塊重新載入、重開伺服器時會被移回原位
+        final String storyId = plugin.npcs().storyId(selected);
+        final boolean placed = storyId != null && plugin.quests() != null && plugin.quests().config().npc(storyId) != null
+                && plugin.quests().config().npc(storyId).placement() != null;
+        if (placed) {
+            final String problem = plugin.quests().saveStoryPlace(storyId, to);
+            if (problem != null) {
+                player.sendMessage(plugin.text().prefixed("<red>沒有搬：" + escape(problem)));
+                return Command.SINGLE_SUCCESS;
+            }
+        }
         selected.teleport(to);
+        if (placed) {
+            try {
+                plugin.modules().reload("quest");
+            } catch (final Exception e) {
+                plugin.getSLF4JLogger().error("搬劇情人物後重讀任務設定失敗", e);
+                player.sendMessage(plugin.text().prefixed("<red>位置存進 quests.yml 了，但重讀任務設定失敗（看主控台）；/ec reload 之後才會生效"));
+            }
+        }
         final String name = plugin.npcs().type(selected).map(NpcType::displayName).orElse("NPC");
         player.sendMessage(plugin.text().prefixed(String.format(java.util.Locale.ROOT,
-                "<gray>把 <white>%s</white> 搬到 <white>%s %d, %d, %d</white>（往旁邊走一步就看得到；種類、皮膚都沒變）",
-                escape(name), escape(to.getWorld().getName()), to.getBlockX(), to.getBlockY(), to.getBlockZ())));
+                "<gray>把 <white>%s</white> 搬到 <white>%s %d, %d, %d</white>（往旁邊走一步就看得到；種類、皮膚都沒變）%s",
+                escape(name), escape(to.getWorld().getName()), to.getBlockX(), to.getBlockY(), to.getBlockZ(),
+                placed ? "<dark_gray>。劇情人物的新位置寫進 data/quests.yml 了，重開也在這裡" : "<dark_gray>。跟著世界存檔，重開也在這裡")));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int dummyMove(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final String id) {
+        final Player player = playerOrNull(plugin, context);
+        if (player == null) {
+            return Command.SINGLE_SUCCESS;
+        }
+        if (plugin.training() == null) {
+            player.sendMessage(plugin.text().prefixed("<red>訓練假人模組沒有啟用（看主控台的錯誤訊息）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final Location to = player.getLocation().clone();
+        final String problem = plugin.training().moveDummy(id, to);
+        if (problem != null) {
+            player.sendMessage(plugin.text().prefixed("<red>" + escape(problem)));
+            return Command.SINGLE_SUCCESS;
+        }
+        player.sendMessage(plugin.text().prefixed(String.format(java.util.Locale.ROOT,
+                "<gray>把假人 <white>%s</white> 搬到你腳下（面向跟你一樣），已經寫進 data/dummies.yml，重開伺服器也在這裡"
+                        + "<dark_gray>（練習場範圍跟著變；往旁邊走一步就看得到）", escape(id))));
         return Command.SINGLE_SUCCESS;
     }
 

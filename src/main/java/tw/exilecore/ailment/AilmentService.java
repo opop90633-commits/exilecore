@@ -101,6 +101,34 @@ public final class AilmentService {
         return Math.max(1, Math.round(seconds * 20));
     }
 
+    /**
+     * 讓 target 中毒，視同 source 造成 baseChaos 點基礎混沌傷害（2026-10-15，蛛巢壁壘的「格擋時使敵人中毒」）：
+     * 吃 source 的中毒傷害、中毒持續時間加成；混沌免疫、避免中毒的不會中。回傳有沒有中。
+     */
+    public boolean poisonFrom(final Player source, final LivingEntity target, final double baseChaos, final StatSheet sourceSheet) {
+        if (baseChaos <= 0 || target == null || !target.isValid() || target.isDead() || target instanceof Player) {
+            return false;
+        }
+        final java.util.Optional<tw.exilecore.monster.MonsterData> data = plugin.monsters() == null ? java.util.Optional.empty()
+                : plugin.monsters().data(target);
+        final StatSheet defenderSheet = data.isPresent() ? plugin.monsters().sheet(target, data.get()) : null;
+        final RandomGenerator random = plugin.items().random();
+        if (defenderSheet != null && (StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE)
+                || avoided(defenderSheet, StatKeys.AVOID_POISON, random))) {
+            return false;
+        }
+        final Set<String> context = Set.of(tw.exilecore.stats.Tags.CHAOS);
+        final double dps = config.poisonDps(baseChaos, sourceSheet.increased(StatKeys.POISON_MAGNITUDE, context),
+                sourceSheet.more(StatKeys.POISON_MAGNITUDE, context));
+        final double seconds = AilmentConfig.duration(config.poisonDuration(),
+                sourceSheet.increased(StatKeys.POISON_DURATION, context) + sourceSheet.increased(StatKeys.AILMENT_DURATION, context), 0);
+        final long now = now();
+        track(target).state.addPoison(dps, now + ticks(seconds), source.getUniqueId(),
+                config.poisonMaxStacks() * (StatKeys.flag(sourceSheet, StatKeys.FLAG_DOUBLE_POISON) ? 2 : 1));
+        feedback(target, AilmentType.POISON);
+        return true;
+    }
+
     // ---- 給其他模組查詢 ----
 
     /** 受到的傷害倍率（感電：1.2 = 增加 20%）。 */
@@ -339,6 +367,16 @@ public final class AilmentService {
                 changed = true;
             }
         }
+        // 混沌減益（2026-10，PoE2 的汲魂彈、疫潮）：每秒傷害 = 這一下傷害的 x%；同一個技能的不疊加
+        final double debuffPercent = attack.flat(StatKeys.DEBUFF_CHAOS, skill.contextFor(DamageType.CHAOS));
+        if (debuffPercent > 0 && !StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
+            final double seconds = attack.flat(StatKeys.DEBUFF_DURATION, Set.of()) > 0 ? attack.flat(StatKeys.DEBUFF_DURATION, Set.of()) : 4;
+            final double dps = allDamage * debuffPercent / 100.0;
+            entry = entry == null ? track(defender) : entry;
+            entry.state.addDebuff(debuffKey(skill.id()), new AilmentState.Debuff(dps, now + ticks(seconds),
+                    attacker instanceof Player ? attacker.getUniqueId() : null, StatKeys.flag(attack, StatKeys.FLAG_DEBUFF_SPREAD), 0, dps));
+            changed = true;
+        }
         // 暈眩（PoE2 的重暈）：任何傷害都累積，物理算 100%、其他算幾成；滿了就暈一段時間。
         // 2026-10：玩家打出的物理、近戰各多 50%（相乘）；玩家不會被重暈（PoE2），只會輕暈
         final boolean playerAttacker = attacker instanceof Player;
@@ -426,6 +464,56 @@ public final class AilmentService {
         }
     }
 
+    /** 減益的代號：技能代號去掉後綴（「.triggered」之類），同一個技能的不疊加。 */
+    static String debuffKey(final String skillId) {
+        final int dot = skillId == null ? -1 : skillId.indexOf('.');
+        return skillId == null ? "?" : dot < 0 ? skillId : skillId.substring(0, dot);
+    }
+
+    /** 傳染的半徑（格）。 */
+    static final double SPREAD_RADIUS = 4.0;
+    /** 每傳一手更多幾倍、最多幾手（PoE2：每手更多 100%，最多更多 300%）。 */
+    static final int SPREAD_MAX = 3;
+
+    /**
+     * 疫潮（2026-10，PoE2）：掛著會傳染的減益的敵人死掉時，傳給附近的敵人（怪物），每傳一手更多 100% 傷害（最多更多 300%）、
+     * 時間重新算。被傳到的敵人身上已經有更強的就不換。
+     */
+    public void spreadDebuffs(final LivingEntity dead) {
+        final Tracked entry = tracked.get(dead.getUniqueId());
+        if (entry == null || dead instanceof Player) {
+            return;
+        }
+        final long now = now();
+        for (final java.util.Map.Entry<String, AilmentState.Debuff> one : entry.state.debuffs(now).entrySet()) {
+            final AilmentState.Debuff debuff = one.getValue();
+            if (!debuff.spread()) {
+                continue;
+            }
+            final int spreads = Math.min(SPREAD_MAX, debuff.spreads() + 1);
+            final long length = Math.max(ticks(1), debuff.endTick() - now) + ticks(2);
+            final AilmentState.Debuff passed = new AilmentState.Debuff(debuff.base() * (1 + spreads), now + Math.min(ticks(5), length),
+                    debuff.source(), true, spreads, debuff.base());
+            for (final org.bukkit.entity.Entity near : dead.getNearbyEntities(SPREAD_RADIUS, SPREAD_RADIUS, SPREAD_RADIUS)) {
+                if (!(near instanceof LivingEntity living) || near instanceof Player || !living.isValid() || living.isDead()
+                        || plugin.monsters() == null || plugin.monsters().data(living).isEmpty()) {
+                    continue;
+                }
+                Tracked other = tracked.get(living.getUniqueId());
+                other = other == null ? track(living) : other;
+                other.state.addDebuff(one.getKey(), passed);
+            }
+            dead.getWorld().spawnParticle(org.bukkit.Particle.SQUID_INK, dead.getLocation().add(0, 1, 0), 30, SPREAD_RADIUS / 2, 0.6,
+                    SPREAD_RADIUS / 2, 0.02);
+        }
+    }
+
+    /** 敵人身上的混沌減益每秒多少傷害（說明、測試用）。 */
+    public double debuffDps(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        return entry == null ? 0 : entry.state.debuffDps(now());
+    }
+
     /** 創造、旁觀模式與還沒選角色的玩家不會中異常。 */
     private boolean canBeAilmented(final Player player) {
         if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
@@ -499,6 +587,12 @@ public final class AilmentService {
             final double stacks = Math.min(maxStacks, Math.max(0, Math.min(1, chance)) * hitsPerSecond * seconds);
             dot += config.poisonDps(physical + chaos, attack.increased(StatKeys.POISON_MAGNITUDE, context), attack.more(StatKeys.POISON_MAGNITUDE, context))
                     * stacks;
+        }
+        // 混沌減益（2026-10，汲魂彈、疫潮）：每一下都會掛上（同一個技能不疊加），只要一直打就一直在
+        final double debuffPercent = attack.flat(StatKeys.DEBUFF_CHAOS, skill.contextFor(DamageType.CHAOS));
+        if (debuffPercent > 0) {
+            final double seconds = attack.flat(StatKeys.DEBUFF_DURATION, Set.of()) > 0 ? attack.flat(StatKeys.DEBUFF_DURATION, Set.of()) : 4;
+            dot += all * debuffPercent / 100.0 * uptime(1.0, hitsPerSecond, seconds);
         }
         // 感電：受到的傷害增加（擊中與持續傷害都吃）
         double shocked = 1.0;
@@ -641,6 +735,13 @@ public final class AilmentService {
         final double poisonDps = entry.state.poisonDps(now);
         if (poisonDps > 0) {
             damageOverTime(living, entry, poisonDps, entry.state.poisonSource(now), AilmentType.POISON, now);
+            if (tracked.get(uuid) != entry || !living.isValid() || living.isDead()) {
+                return;
+            }
+        }
+        final double debuffDps = entry.state.debuffDps(now); // 2026-10：混沌減益（汲魂彈、疫潮），算成混沌的持續傷害
+        if (debuffDps > 0) {
+            damageOverTime(living, entry, debuffDps, entry.state.debuffSource(now), AilmentType.POISON, now);
             if (tracked.get(uuid) != entry || !living.isValid() || living.isDead()) {
                 return;
             }
