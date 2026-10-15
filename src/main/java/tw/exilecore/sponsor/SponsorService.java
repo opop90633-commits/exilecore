@@ -2003,6 +2003,15 @@ public final class SponsorService {
      *
      * @return 問題（null = 開始試穿）
      */
+    /**
+     * 節慶活動的限定時裝（2026-10 萬燈夜）：活動到兌換結束之前，沒有的人也看得到、能試穿（不能用時裝幣買，要去活動兌換）。
+     * limited 寫的來源跟節慶活動的名字一樣才算。
+     */
+    boolean festivalPreview(final SponsorConfig.Cosmetic cosmetic) {
+        final tw.exilecore.festival.FestivalService festival = plugin.festival();
+        return cosmetic.isLimited() && festival != null && festival.visible() && festival.config().name().equals(cosmetic.limited());
+    }
+
     String tryOn(final Player player, final String id) {
         if (!loaded(player)) {
             return "帳號資料載入中，請稍等";
@@ -2014,7 +2023,7 @@ public final class SponsorService {
         if (cosmetic.isEmote()) {
             return "動作不能試穿";
         }
-        if (cosmetic.isLimited() && !ownsCosmetic(player, id)) {
+        if (cosmetic.isLimited() && !ownsCosmetic(player, id) && !festivalPreview(cosmetic)) {
             return "限定的時裝不能試穿";
         }
         if (cosmetic.skin() && !packSent()) {

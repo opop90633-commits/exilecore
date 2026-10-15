@@ -750,7 +750,8 @@ final class SponsorMenus {
             }
             for (final SponsorConfig.Cosmetic cosmetic : service.config().cosmetics().values()) {
                 // 2026-10：限定（絕版）的時裝沒有的人看不到（商城不放）
-                if (!cosmetic.isEmote() && !cosmetic.isLimited() && !service.ownsCosmetic(player, cosmetic.id())) {
+                // 2026-10-16：節慶活動（萬燈夜）的限定時裝活動期間也列出來（只能試穿，去活動兌換）
+                if (!cosmetic.isEmote() && (!cosmetic.isLimited() || service.festivalPreview(cosmetic)) && !service.ownsCosmetic(player, cosmetic.id())) {
                     ordered.add(cosmetic);
                 }
             }
@@ -778,13 +779,20 @@ final class SponsorMenus {
             final boolean owned = service.ownsCosmetic(player, cosmetic.id());
             final List<String> lore = new ArrayList<>();
             lore.add("<gray>" + cosmetic.rarity().displayName() + "・" + kindText(cosmetic));
-            if (cosmetic.isLimited()) {
+            final boolean festival = service.festivalPreview(cosmetic);
+            if (festival) {
+                lore.add("<#ff8a1e>★ " + ItemRenderer.escape(cosmetic.limitedTag()) + " <gray>活動兌換商店用糖果、燈芯換（/festival）");
+            } else if (cosmetic.isLimited()) {
                 lore.add("<#ffd24a>★ " + ItemRenderer.escape(cosmetic.limitedTag()) + " <dark_gray>絕版：抽不到、也不能兌換");
             }
             if (!cosmetic.description().isEmpty()) {
                 lore.add("<gray>" + ItemRenderer.escape(cosmetic.description()));
             }
-            if (owned && cosmetic.skin()) {
+            if (!owned && festival) {
+                lore.add("<dark_gray>還沒有（這裡不能買）");
+                lore.add("");
+                lore.add("<yellow>右鍵：試穿 " + SponsorService.TRY_ON_TICKS / 20 + " 秒");
+            } else if (owned && cosmetic.skin()) {
                 lore.add("<gray>擁有");
                 lore.add("");
                 lore.add("<yellow>左鍵：去裝備幻化套上");
@@ -823,7 +831,7 @@ final class SponsorMenus {
             if (slot == SLOT_PREV || slot == SLOT_NEXT) {
                 page += slot == SLOT_NEXT ? 1 : -1;
                 final int count = (int) service.config().cosmetics().values().stream()
-                        .filter(c -> !c.isEmote() && (!c.isLimited() || service.ownsCosmetic(player, c.id()))).count();
+                        .filter(c -> !c.isEmote() && (!c.isLimited() || service.festivalPreview(c) || service.ownsCosmetic(player, c.id()))).count();
                 final int pages = Math.max(1, (count + PER_PAGE - 1) / PER_PAGE);
                 page = Math.floorMod(page, pages);
                 redraw();

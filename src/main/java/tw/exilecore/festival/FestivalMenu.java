@@ -238,6 +238,9 @@ public final class FestivalMenu extends Menu {
             lore.add("");
             lore.add(confirmSlot == slot && System.currentTimeMillis() < confirmUntil ? "<#ffd27f>▶ 再點一次確認兌換"
                     : !service.shopOpen() ? "<dark_gray>兌換已經結束" : enough ? "<yellow>左鍵：兌換" : "<dark_gray>素材不夠");
+            if (item.kind() == FestivalConfig.Kind.COSMETIC && plugin.sponsors() != null) {
+                lore.add("<yellow>右鍵：試穿 " + tw.exilecore.sponsor.CosmeticPreview.tryOnSeconds() + " 秒");
+            }
         }
         final ItemStack result = appendLore(stack, lore);
         return confirmSlot == slot || owned ? glowing(result) : result;
@@ -261,6 +264,18 @@ public final class FestivalMenu extends Menu {
             return;
         }
         final FestivalConfig.ShopItem item = shown.get(slot);
+        if (item != null && click == ClickType.RIGHT && item.kind() == FestivalConfig.Kind.COSMETIC && plugin.sponsors() != null
+                && !service.owned(player, item)) {
+            // 2026-10-16：右鍵試穿（關掉選單才看得到自己）
+            final String problem = tw.exilecore.sponsor.CosmeticPreview.tryOn(plugin, plugin.sponsors(), player, item.cosmetic());
+            if (problem != null) {
+                player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
+            } else {
+                player.closeInventory();
+                player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_GENERIC, 0.8f, 1.2f);
+            }
+            return;
+        }
         if (item == null || click != ClickType.LEFT || service.owned(player, item)) {
             return;
         }
