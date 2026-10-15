@@ -68,6 +68,17 @@ class AffixCatalogueTest {
             stats.add(StatKeys.chargeChance(charge));
             stats.add(StatKeys.chargeOnHit(charge));
             stats.add(StatKeys.chargeMax(charge));
+            // 2026-10：揭露詞綴的戰星屬性——獲得某種戰星時多一顆（charge.extra.代號）、某個事件時獲得（charge.event.事件.代號）
+            stats.add(tw.exilecore.charge.ChargeService.EXTRA + "." + charge);
+            for (final String event : tw.exilecore.charge.ChargeText.EVENTS.keySet()) {
+                stats.add("charge.event." + event + "." + charge);
+            }
+        }
+        // 跟戰星的獲得有關、不分種類的（charge.extra、charge.periodic、charge.event_cooldown.事件）
+        stats.add(tw.exilecore.charge.ChargeService.EXTRA);
+        stats.add("charge.periodic");
+        for (final String event : tw.exilecore.charge.ChargeText.EVENTS.keySet()) {
+            stats.add("charge.event_cooldown." + event);
         }
         stats.addAll(LocalMods.KNOWN);
         // 2026-10 新的引擎屬性鍵（引擎照字串組出來讀的）：自己身上某種異常的持續時間（AilmentService）、傷害轉換、
