@@ -56,11 +56,12 @@ boss:
   intro: "「點了燈的人……都要留下來陪我。」"
   defeat: "瓜首的燈火熄了。南瓜殼裂開，滾出一地的燈芯與糖。"
   skills:
+    # 2026-10-16：不放要躲進綠色安全區的招式（燈滅拿掉，補南瓜雨）
     - hallow_pumpkin_roll
+    - hallow_pumpkin_rain
     - hallow_wisp_beams
     - hallow_bat_swarm
     - hallow_grave_burst
-    - hallow_lights_out
     - hallow_ghost_call
   rewards:
     wick: [3, 5]

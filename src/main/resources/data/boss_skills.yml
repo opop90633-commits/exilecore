@@ -2503,6 +2503,22 @@ skills:
     gaps: 2
     gap_angle: 45
     shout: "「滾吧，南瓜們！」"
+  hallow_pumpkin_rain:
+    name: 南瓜雨
+    hint: "南瓜從天上砸下來：看到紅圈就離開"
+    kind: slam
+    damage: 1.6
+    type: fire
+    cooldown: 14
+    range: 22
+    telegraph: 0.8
+    delay: 1.1
+    radius: 2.4
+    count: 7
+    stagger: 0.2
+    scatter: 6
+    at: random
+    shout: "「下糖果囉——是南瓜口味的。」"
   hallow_wisp_beams:
     name: 鬼火迴廊
     hint: "四道鬼火繞著轉：跟著轉的方向繞著跑"

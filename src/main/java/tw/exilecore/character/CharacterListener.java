@@ -99,6 +99,16 @@ public final class CharacterListener implements Listener {
             characters.save(player);
             return; // 競技場：不扣經驗、不算死亡次數（排行榜的「不死」也不受影響）
         }
+        if (plugin.worldEvents() != null && plugin.worldEvents().inEventArea(player.getLocation())) {
+            // 2026-10-16：死在活動的地方（世界 Boss 開天者、入侵怪潮、萬燈夜的幽燈墓園與南瓜王——整個活動世界）不扣經驗；死亡次數照算
+            final tw.exilecore.character.CharacterRecord character = states.get(player).character();
+            if (character != null) {
+                character.setDeaths(character.deaths() + 1);
+            }
+            player.sendMessage(plugin.text().prefixed("<gray>死在活動場地：不扣經驗"));
+            characters.save(player);
+            return;
+        }
         final boolean inMap = plugin.maps() != null && plugin.maps().inMap(player);
         final long loss = states.applyDeathPenalty(player, inMap);
         if (loss > 0) {
