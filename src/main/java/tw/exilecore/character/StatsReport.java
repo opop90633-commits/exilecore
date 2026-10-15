@@ -460,7 +460,7 @@ public final class StatsReport {
         final SkillProfile spell = new SkillProfile("stats_spell", Set.of(Tags.SPELL), 1.0, null);
         final String spellText = String.format(Locale.ROOT, "<gray>✦ 法術 暴擊 <white>%.1f%% <dark_gray>× <white>%.0f%%",
                 DamageCalculator.critChance(sheet, spell) * 100, DamageCalculator.critMultiplier(sheet, spell.tags(), null) * 100);
-        final String spellHelp = "照 PoE2，每個法術有自己的基礎暴擊率（5%～15%，寫在寶石說明）；這裡用 "
+        final String spellHelp = "每個法術有自己的基礎暴擊率（5%～15%，寫在寶石說明）；這裡用 "
                 + Math.round(DamageCalculator.BASE_SPELL_CRIT) + "% 算，吃通用的與法術的暴擊率、暴擊傷害"
                 + "<newline><dark_gray>每個技能自己的數字看 /skill";
         lines.add(chat ? hover(spellText, spellHelp) : spellText + " <dark_gray>（以基礎 " + Math.round(DamageCalculator.BASE_SPELL_CRIT) + "% 算；每個法術不同）");

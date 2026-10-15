@@ -199,7 +199,7 @@ class ChargeTest {
             }
         }
         assertTrue(found >= 9, "三種球各有機率、擊中時、上限的詞綴");
-        assertEquals(5, onHit, "擊中時獲得（2026-10）：怒星、銳星、磐星三條詞綴，加上兩件傳奇的「擊中時獲得怒星」");
+        assertEquals(3, onHit, "擊中時獲得（2026-10）：怒星、銳星、磐星三條詞綴（原本兩件「擊中時獲得怒星」的傳奇已退役刪除）");
     }
 
     @Test
@@ -290,8 +290,9 @@ class ChargeTest {
         assertEquals(1, skills.chargeProblems(id -> !id.equals("power")).stream().filter(line -> line.contains("cooldown_bypass")).count(),
                 "打錯字會被抓出來");
         assertEquals("power", skills.skill("flicker_strike").cooldownBypass(), "瞬影擊冷卻中消耗銳星（2026-10）");
-        assertEquals(1, bypass);
-        assertEquals(1, warcry, "聚星戰吼拿掉了（2026-10），只剩隱藏的磐星給一種");
+        assertEquals("frenzy", skills.skill("frost_snap").cooldownBypass(), "霜綻冷卻中消耗怒星（2026-10）");
+        assertEquals(2, bypass);
+        assertEquals(2, warcry, "聚星戰吼拿掉了（2026-10），只剩隱藏的磐星、怒星（proc_gain_frenzy）各給一種");
         for (final tw.exilecore.skill.SupportDefinition support : skills.supports()) {
             for (final Modifier modifier : support.modifiers()) {
                 final String charge = ChargeText.chargeOf(modifier.stat());
