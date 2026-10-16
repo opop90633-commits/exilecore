@@ -355,7 +355,8 @@ public final class LifeModule implements Module, Listener {
     /**
      * 玩家指令：/sea 打開星骸之海。
      * 管理員（2026-10：先只開給管理員）：/sea allow &lt;玩家&gt; 先開放給某人、/sea deny &lt;玩家&gt; 拿掉、/sea list 名單、
-     * /sea open 全部開放、/sea close 關回只有管理員與名單。
+     * /sea open 全部開放、/sea close 關回只有管理員與名單、/sea stamina &lt;玩家&gt; [數量] 給精力（沒寫數量 = 回滿；不受每天上限）。
+     * 一起玩（2026-10-16）：/sea home 回自己的筏、/sea invite／visit／accept／kick &lt;玩家&gt;、/sea member add|remove &lt;玩家&gt;、/sea members。
      */
     public static List<LiteralCommandNode<CommandSourceStack>> commands(final ExileCore plugin) {
         final java.util.function.Predicate<CommandSourceStack> admin = source -> source.getSender().hasPermission(ExileCore.PERMISSION_ADMIN);
@@ -368,6 +369,20 @@ public final class LifeModule implements Module, Listener {
             open(plugin, player);
             return Command.SINGLE_SUCCESS;
         })
+                .then(Commands.literal("home").executes(context -> social(plugin, context.getSource(), "home", null)))
+                .then(Commands.literal("accept").executes(context -> social(plugin, context.getSource(), "accept", null)))
+                .then(Commands.literal("members").executes(context -> social(plugin, context.getSource(), "members", null)))
+                .then(Commands.literal("invite").then(onlineArgument(plugin)
+                        .executes(context -> social(plugin, context.getSource(), "invite", com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player")))))
+                .then(Commands.literal("visit").then(onlineArgument(plugin)
+                        .executes(context -> social(plugin, context.getSource(), "visit", com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player")))))
+                .then(Commands.literal("kick").then(onlineArgument(plugin)
+                        .executes(context -> social(plugin, context.getSource(), "kick", com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player")))))
+                .then(Commands.literal("member")
+                        .then(Commands.literal("add").then(onlineArgument(plugin)
+                                .executes(context -> social(plugin, context.getSource(), "member_add", com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player")))))
+                        .then(Commands.literal("remove").then(onlineArgument(plugin)
+                                .executes(context -> social(plugin, context.getSource(), "member_remove", com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player"))))))
                 .then(Commands.literal("open").requires(admin).executes(context -> access(plugin, context.getSource().getSender(), "open", null)))
                 .then(Commands.literal("close").requires(admin).executes(context -> access(plugin, context.getSource().getSender(), "close", null)))
                 .then(Commands.literal("list").requires(admin).executes(context -> access(plugin, context.getSource().getSender(), "list", null)))
@@ -381,6 +396,20 @@ public final class LifeModule implements Module, Listener {
                                 })
                                 .executes(context -> access(plugin, context.getSource().getSender(), "allow",
                                         com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player")))))
+                .then(Commands.literal("stamina").requires(admin)
+                        .then(Commands.argument("player", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                .suggests((context, builder) -> {
+                                    for (final Player online : plugin.getServer().getOnlinePlayers()) {
+                                        builder.suggest(online.getName());
+                                    }
+                                    return builder.buildFuture();
+                                })
+                                .executes(context -> stamina(plugin, context.getSource().getSender(),
+                                        com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player"), 0))
+                                .then(Commands.argument("amount", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 100000))
+                                        .executes(context -> stamina(plugin, context.getSource().getSender(),
+                                                com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player"),
+                                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "amount"))))))
                 .then(Commands.literal("deny").requires(admin)
                         .then(Commands.argument("player", com.mojang.brigadier.arguments.StringArgumentType.word())
                                 .suggests((context, builder) -> {
@@ -395,6 +424,134 @@ public final class LifeModule implements Module, Listener {
                                 .executes(context -> access(plugin, context.getSource().getSender(), "deny",
                                         com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player")))))
                 .build());
+    }
+
+    private static com.mojang.brigadier.builder.RequiredArgumentBuilder<CommandSourceStack, String> onlineArgument(final ExileCore plugin) {
+        return Commands.argument("player", com.mojang.brigadier.arguments.StringArgumentType.word())
+                .suggests((context, builder) -> {
+                    for (final Player online : plugin.getServer().getOnlinePlayers()) {
+                        builder.suggest(online.getName());
+                    }
+                    return builder.buildFuture();
+                });
+    }
+
+    /** 找玩家：在線的照現在的名字，不在線的照伺服器記得的（沒來過 null）。 */
+    private static org.bukkit.OfflinePlayer findPlayer(final ExileCore plugin, final String name) {
+        final Player online = plugin.getServer().getPlayerExact(name);
+        if (online != null) {
+            return online;
+        }
+        return plugin.getServer().getOfflinePlayerIfCached(name);
+    }
+
+    /** 一起玩的指令（2026-10-16）。 */
+    private static int social(final ExileCore plugin, final CommandSourceStack source, final String action, final String name) {
+        if (!(source.getExecutor() instanceof Player player)) {
+            source.getSender().sendMessage(plugin.text().prefixed("<red>這個指令要在遊戲內使用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final LifeService life = plugin.life();
+        if (life == null) {
+            player.sendMessage(plugin.text().prefixed("<red>生活模組沒有啟用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        if (!life.canEnter(player)) {
+            player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(life.config().name()) + "還沒有開放"));
+            return Command.SINGLE_SUCCESS;
+        }
+        String problem = null;
+        String done = null;
+        switch (action) {
+            case "home" -> problem = life.travel(player, false);
+            case "accept" -> problem = life.accept(player);
+            case "members" -> {
+                final LifeService.Profile profile = life.profile(player);
+                final java.util.Map<java.util.UUID, String> mine = profile == null || profile.plot < 0 ? java.util.Map.of() : life.membersOf(profile.plot);
+                player.sendMessage(plugin.text().prefixed("<white>你的木筏的共用成員：" + (mine.isEmpty() ? "<gray>沒有（/sea member add 玩家）"
+                        : "<green>" + ItemRenderer.escape(String.join("、", mine.values())))));
+                final List<String> others = new java.util.ArrayList<>();
+                for (final int plot : life.memberOf(player.getUniqueId())) {
+                    others.add(life.ownerName(plot));
+                }
+                if (!others.isEmpty()) {
+                    player.sendMessage(plugin.text().prefixed("<white>你也是這些人的共用成員：<green>" + ItemRenderer.escape(String.join("、", others))
+                            + "<gray>（/sea visit 名字 直接去）"));
+                }
+            }
+            default -> {
+                final org.bukkit.OfflinePlayer target = findPlayer(plugin, name);
+                if (target == null) {
+                    problem = "找不到 " + name;
+                    break;
+                }
+                final String shown = target.getName() == null ? name : target.getName();
+                final Player online = target.getPlayer();
+                switch (action) {
+                    case "invite" -> {
+                        if (online == null) {
+                            problem = shown + " 不在線上";
+                        } else {
+                            problem = life.invite(player, online);
+                            done = "邀請了 " + shown + "（" + LifeService.INVITE_MILLIS / 60_000 + " 分鐘內有效）";
+                        }
+                    }
+                    case "visit" -> problem = life.visit(player, target.getUniqueId(), shown);
+                    case "kick" -> {
+                        if (online == null) {
+                            problem = shown + " 不在線上";
+                        } else {
+                            problem = life.kick(player, online);
+                            done = "請 " + shown + " 離開了";
+                        }
+                    }
+                    case "member_add" -> {
+                        problem = life.addMember(player, target.getUniqueId(), shown);
+                        done = shown + " 成了你的木筏的共用成員：可以蓋、拆、收網、種田、掌舵（/sea visit " + player.getName() + " 直接來）";
+                        if (problem == null && online != null) {
+                            online.sendMessage(plugin.text().prefixed("<" + life.config().color() + ">" + ItemRenderer.escape(player.getName())
+                                    + " 把你加成木筏的共用成員<gray>（/sea visit " + ItemRenderer.escape(player.getName()) + " 直接去）"));
+                        }
+                    }
+                    case "member_remove" -> {
+                        problem = life.removeMember(player, target.getUniqueId(), shown);
+                        done = "把 " + shown + " 從共用成員拿掉了";
+                    }
+                    default -> {
+                    }
+                }
+            }
+        }
+        if (problem != null) {
+            player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
+        } else if (done != null) {
+            player.sendMessage(plugin.text().prefixed("<green>" + ItemRenderer.escape(done)));
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int stamina(final ExileCore plugin, final org.bukkit.command.CommandSender sender, final String name, final int amount) {
+        final LifeService life = plugin.life();
+        if (life == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>生活模組沒有啟用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final Player target = plugin.getServer().getPlayerExact(name);
+        if (target == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(name) + " 不在線上"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final int restored = life.grantStamina(target, amount);
+        if (restored < 0) {
+            sender.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(target.getName()) + " 還沒有角色"));
+            return Command.SINGLE_SUCCESS;
+        }
+        sender.sendMessage(plugin.text().prefixed("<green>" + ItemRenderer.escape(target.getName()) + " 的精力 +" + restored
+                + "<gray>（現在 " + life.stamina(target) + "）"));
+        if (restored > 0 && target != sender) {
+            target.sendMessage(plugin.text().prefixed("<#7fd4ff>精力 +" + restored + "<gray>（現在 " + life.stamina(target) + "）"));
+        }
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int access(final ExileCore plugin, final org.bukkit.command.CommandSender sender, final String action, final String name) {

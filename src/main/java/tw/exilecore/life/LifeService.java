@@ -296,6 +296,8 @@ public final class LifeService {
         world.setStorm(false);
         world.setClearWeatherDuration(Integer.MAX_VALUE / 2);
         loadPlots();
+        loadMembers();
+        loadPlotLevels();
     }
 
     public World world() {
@@ -395,6 +397,338 @@ public final class LifeService {
         return index;
     }
 
+    // ---- 一起玩（2026-10-16）：拜訪、共用木筏、隊伍同行 ----
+
+    /** 現在在別人筏上的人 → 那塊筏（拜訪、共用、跟隊長）；回自己的筏、離開海域就拿掉。 */
+    private final Map<UUID, Integer> guests = new HashMap<>();
+    /** 共用木筏的成員：筏 → 成員（UUID → 名字；life_members.txt）。成員可以在那塊筏上蓋、拆、收網、種田、掌舵。 */
+    private final Map<Integer, Map<UUID, String>> members = new HashMap<>();
+    /** 筏主的生活等級（筏主不在線時，成員蓋筏、訪客的漂流物範圍照這個；life_plot_levels.txt）。 */
+    private final Map<Integer, Integer> plotLevels = new HashMap<>();
+    /** 拜訪邀請：被邀請的人 → 邀請。 */
+    private final Map<UUID, Invite> invites = new HashMap<>();
+    static final long INVITE_MILLIS = 120_000;
+
+    record Invite(int plot, UUID from, String fromName, long until) {
+    }
+
+    private Path membersFile() {
+        return plugin.dataFolder().resolve("life_members.txt");
+    }
+
+    private Path plotLevelsFile() {
+        return plugin.dataFolder().resolve("life_plot_levels.txt");
+    }
+
+    private void loadMembers() {
+        members.clear();
+        try {
+            if (Files.exists(membersFile())) {
+                for (final String raw : Files.readAllLines(membersFile())) {
+                    final String line = raw.trim();
+                    if (line.isEmpty() || line.startsWith("#")) {
+                        continue;
+                    }
+                    final String[] parts = line.split(",", 3);
+                    try {
+                        members.computeIfAbsent(Integer.parseInt(parts[0].trim()), k -> new LinkedHashMap<>())
+                                .put(UUID.fromString(parts[1].trim()), parts.length > 2 ? parts[2].trim() : "?");
+                    } catch (final RuntimeException ignored) {
+                        // 壞掉的一行跳過
+                    }
+                }
+            }
+        } catch (final java.io.IOException e) {
+            plugin.getSLF4JLogger().warn("{}：讀不到 life_members.txt：{}", config.name(), e.toString());
+        }
+    }
+
+    private void saveMembers() {
+        final StringBuilder out = new StringBuilder("# 星骸之海的共用木筏：每行「筏的編號,成員 UUID,名字」（/sea member 改）\n");
+        for (final Map.Entry<Integer, Map<UUID, String>> plot : members.entrySet()) {
+            for (final Map.Entry<UUID, String> member : plot.getValue().entrySet()) {
+                out.append(plot.getKey()).append(',').append(member.getKey()).append(',').append(member.getValue()).append('\n');
+            }
+        }
+        try {
+            Files.writeString(membersFile(), out.toString());
+        } catch (final java.io.IOException e) {
+            plugin.getSLF4JLogger().warn("{}：寫不進 life_members.txt：{}", config.name(), e.toString());
+        }
+    }
+
+    private void loadPlotLevels() {
+        plotLevels.clear();
+        try {
+            if (Files.exists(plotLevelsFile())) {
+                for (final String raw : Files.readAllLines(plotLevelsFile())) {
+                    final String[] parts = raw.trim().split(",");
+                    if (parts.length == 2) {
+                        try {
+                            plotLevels.put(Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()));
+                        } catch (final NumberFormatException ignored) {
+                            // 壞掉的一行跳過
+                        }
+                    }
+                }
+            }
+        } catch (final java.io.IOException e) {
+            plugin.getSLF4JLogger().warn("{}：讀不到 life_plot_levels.txt：{}", config.name(), e.toString());
+        }
+    }
+
+    /** 記下筏主現在的生活等級（變了才寫檔）。 */
+    private void rememberLevel(final Profile profile) {
+        if (profile.plot < 0) {
+            return;
+        }
+        final int level = config.levelOf(profile.xp);
+        final Integer old = plotLevels.put(profile.plot, level);
+        if (old != null && old == level) {
+            return;
+        }
+        final StringBuilder out = new StringBuilder();
+        for (final Map.Entry<Integer, Integer> entry : plotLevels.entrySet()) {
+            out.append(entry.getKey()).append(',').append(entry.getValue()).append('\n');
+        }
+        try {
+            Files.writeString(plotLevelsFile(), out.toString());
+        } catch (final java.io.IOException e) {
+            plugin.getSLF4JLogger().warn("{}：寫不進 life_plot_levels.txt：{}", config.name(), e.toString());
+        }
+    }
+
+    /** 這個人現在待的筏（在別人的筏上就是那塊；沒有 -1）。 */
+    int activePlot(final Player player) {
+        final Integer guest = guests.get(player.getUniqueId());
+        if (guest != null) {
+            return guest;
+        }
+        final Profile profile = profiles.get(player.getUniqueId());
+        return profile == null ? -1 : profile.plot;
+    }
+
+    /** 能不能在這塊筏上蓋、拆、收網、種田、掌舵：筏主或共用成員。 */
+    boolean canBuild(final Player player, final Profile profile, final int plot) {
+        if (plot < 0 || profile == null) {
+            return false;
+        }
+        return plot == profile.plot || members.getOrDefault(plot, Map.of()).containsKey(player.getUniqueId());
+    }
+
+    /** 筏主的生活等級（決定筏多大）：筏主在線照現在的，不在線照記下來的。 */
+    int plotLevel(final int plot) {
+        final UUID owner = plotOwners.get(plot);
+        final Profile profile = owner == null ? null : profiles.get(owner);
+        if (profile != null) {
+            return config.levelOf(profile.xp);
+        }
+        return plotLevels.getOrDefault(plot, 1);
+    }
+
+    /** 筏主的名字。 */
+    String ownerName(final int plot) {
+        final UUID owner = plotOwners.get(plot);
+        if (owner == null) {
+            return "?";
+        }
+        final Player online = plugin.getServer().getPlayer(owner);
+        if (online != null) {
+            return online.getName();
+        }
+        final String name = plugin.getServer().getOfflinePlayer(owner).getName();
+        return name == null ? "?" : name;
+    }
+
+    /** 這個人的筏（分過的；沒分過 -1）。 */
+    private int plotOf(final UUID owner) {
+        final Profile profile = profiles.get(owner);
+        if (profile != null && profile.plot >= 0) {
+            return profile.plot;
+        }
+        for (final Map.Entry<Integer, UUID> entry : plotOwners.entrySet()) {
+            if (entry.getValue().equals(owner)) {
+                return entry.getKey();
+            }
+        }
+        return -1;
+    }
+
+    /** 站在這塊筏上（附近）的人：一起出航、一起打淵鯨。 */
+    List<Player> crewOn(final int plot) {
+        final List<Player> crew = new ArrayList<>();
+        if (world == null || plot < 0) {
+            return crew;
+        }
+        for (final Player player : world.getPlayers()) {
+            if (player.isDead() || player.getGameMode() == GameMode.SPECTATOR || activePlot(player) != plot) {
+                continue;
+            }
+            if (plotAt(player.getLocation().getX(), player.getLocation().getZ()) == plot) {
+                crew.add(player);
+            }
+        }
+        return crew;
+    }
+
+    /** 共用成員（名字）。 */
+    Map<UUID, String> membersOf(final int plot) {
+        return java.util.Collections.unmodifiableMap(members.getOrDefault(plot, Map.of()));
+    }
+
+    /** 這個人是哪幾塊筏的共用成員。 */
+    List<Integer> memberOf(final UUID player) {
+        final List<Integer> plots = new ArrayList<>();
+        for (final Map.Entry<Integer, Map<UUID, String>> entry : members.entrySet()) {
+            if (entry.getValue().containsKey(player)) {
+                plots.add(entry.getKey());
+            }
+        }
+        return plots;
+    }
+
+    /** 加共用成員（筏主）；回傳問題，成功 null。 */
+    String addMember(final Player owner, final UUID id, final String name) {
+        final Profile profile = profile(owner);
+        if (profile == null) {
+            return "帳號資料載入中，請稍等";
+        }
+        if (profile.plot < 0) {
+            return "你還沒有木筏（先 /sea 去一次）";
+        }
+        if (id.equals(owner.getUniqueId())) {
+            return "不用加自己";
+        }
+        final Map<UUID, String> list = members.computeIfAbsent(profile.plot, k -> new LinkedHashMap<>());
+        if (list.containsKey(id)) {
+            return name + " 已經是共用成員了";
+        }
+        if (list.size() >= 8) {
+            return "共用成員最多 8 個";
+        }
+        list.put(id, name);
+        saveMembers();
+        return null;
+    }
+
+    /** 拿掉共用成員（筏主）；回傳問題，成功 null。 */
+    String removeMember(final Player owner, final UUID id, final String name) {
+        final Profile profile = profile(owner);
+        if (profile == null || profile.plot < 0) {
+            return "你還沒有木筏";
+        }
+        final Map<UUID, String> list = members.get(profile.plot);
+        if (list == null || list.remove(id) == null) {
+            return name + " 不是你的共用成員";
+        }
+        if (list.isEmpty()) {
+            members.remove(profile.plot);
+        }
+        saveMembers();
+        return null;
+    }
+
+    /** 邀請別人來自己待的這塊筏（筏主、共用成員才能邀）；回傳問題，成功 null。 */
+    String invite(final Player from, final Player target) {
+        final Profile profile = profile(from);
+        final int plot = activePlot(from);
+        if (profile == null) {
+            return "帳號資料載入中，請稍等";
+        }
+        if (world == null || !world.equals(from.getWorld()) || plot < 0) {
+            return "要在木筏上才能邀請";
+        }
+        if (!canBuild(from, profile, plot)) {
+            return "只有筏主、共用成員能邀請別人來";
+        }
+        if (target.equals(from)) {
+            return "不用邀請自己";
+        }
+        if (!canEnter(target)) {
+            return target.getName() + " 還不能進" + config.name();
+        }
+        invites.put(target.getUniqueId(), new Invite(plot, from.getUniqueId(), from.getName(), System.currentTimeMillis() + INVITE_MILLIS));
+        target.sendMessage(plugin.text().prefixed("<" + config.color() + ">" + ItemRenderer.escape(from.getName()) + " 邀請你去 "
+                + ItemRenderer.escape(ownerName(plot)) + " 的木筏 <click:run_command:'/sea accept'><hover:show_text:'<gray>點一下前往'><green>[前往]</hover></click>"
+                + "<gray>（/sea accept，" + INVITE_MILLIS / 60_000 + " 分鐘內有效）"));
+        return null;
+    }
+
+    /** 接受邀請；回傳問題，成功 null。 */
+    String accept(final Player player) {
+        final Invite invite = invites.remove(player.getUniqueId());
+        if (invite == null || invite.until() < System.currentTimeMillis()) {
+            return "沒有人邀請你（或邀請過期了）";
+        }
+        return travelTo(player, invite.plot(), invite.fromName() + " 的邀請");
+    }
+
+    /**
+     * 去某人的木筏：自己的、你是共用成員的、同一隊的人在的那塊都可以直接去；其他要對方先邀請（/sea invite）。
+     * 回傳問題，成功 null。
+     */
+    String visit(final Player player, final UUID target, final String name) {
+        if (target.equals(player.getUniqueId())) {
+            return travel(player, false);
+        }
+        final Player online = plugin.getServer().getPlayer(target);
+        final boolean party = plugin.party() != null && plugin.party().sameGroup(player.getUniqueId(), target);
+        // 對方在海上：去他現在待的那塊（他可能也在別人的筏上）；不在就去他自己的筏
+        final int plot = online != null && world != null && world.equals(online.getWorld()) && activePlot(online) >= 0 ? activePlot(online) : plotOf(target);
+        if (plot < 0) {
+            return name + " 還沒有木筏";
+        }
+        final Profile profile = profile(player);
+        final Invite invite = invites.get(player.getUniqueId());
+        final boolean invited = invite != null && invite.plot() == plot && invite.until() >= System.currentTimeMillis();
+        if (!party && !invited && !canBuild(player, profile, plot)) {
+            return "要 " + name + " 先邀請你（/sea invite），或是同一隊、共用成員才能直接去";
+        }
+        if (invited) {
+            invites.remove(player.getUniqueId());
+        }
+        return travelTo(player, plot, party ? "隊伍" : null);
+    }
+
+    /** 把別人請離自己待的這塊筏（筏主、共用成員）；回傳問題，成功 null。 */
+    String kick(final Player from, final Player target) {
+        final Profile profile = profile(from);
+        final int plot = activePlot(from);
+        if (!canBuild(from, profile, plot)) {
+            return "只有筏主、共用成員能請人離開";
+        }
+        if (activePlot(target) != plot || target.equals(from)) {
+            return target.getName() + " 不在這塊筏上";
+        }
+        final Profile other = profile(target);
+        if (other != null && other.plot == plot) {
+            return "這是 " + target.getName() + " 自己的筏";
+        }
+        final String problem = travel(target, false);
+        if (problem != null) {
+            guests.remove(target.getUniqueId());
+            target.performCommand("town");
+        }
+        target.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(from.getName()) + " 請你離開了這塊筏"));
+        return null;
+    }
+
+    /** 隊長現在待的筏（隊長在海上、不是自己）；沒有 -1。 */
+    int leaderPlot(final Player player) {
+        if (plugin.party() == null || world == null) {
+            return -1;
+        }
+        final tw.exilecore.party.PartyRoster.Party party = plugin.party().party(player.getUniqueId());
+        if (party == null || party.leader().equals(player.getUniqueId())) {
+            return -1;
+        }
+        final Player leader = plugin.getServer().getPlayer(party.leader());
+        if (leader == null || !world.equals(leader.getWorld())) {
+            return -1;
+        }
+        return activePlot(leader);
+    }
+
     /** 筏的範圍（相對中心）：[最小, 最大]。 */
     static int[] extent(final int size) {
         return new int[] {-(size / 2), size - size / 2 - 1};
@@ -442,8 +776,20 @@ public final class LifeService {
         return at;
     }
 
-    /** 前往自己的木筏（選單）；回傳問題，成功 null。 */
+    /** 前往木筏（選單、/sea）：在隊伍裡、隊長在海上就去隊長待的那塊，不然回自己的；回傳問題，成功 null。 */
     public String travel(final Player player) {
+        return travel(player, true);
+    }
+
+    /** followLeader false：一定回自己的筏（/sea home、選單右鍵）。 */
+    String travel(final Player player, final boolean followLeader) {
+        if (followLeader) {
+            final int leader = leaderPlot(player);
+            final Profile profile = profiles.get(player.getUniqueId());
+            if (leader >= 0 && (profile == null || leader != profile.plot)) {
+                return travelTo(player, leader, "隊伍");
+            }
+        }
         if (world == null) {
             return config.name() + "的世界沒有載入（看主控台）";
         }
@@ -458,10 +804,15 @@ public final class LifeService {
             return "帳號資料載入中，請稍等";
         }
         final int index = ensurePlot(player, profile);
+        rememberLevel(profile);
         ensureStarter(plotCenter(index));
+        if (guests.containsKey(player.getUniqueId())) {
+            leaveRaft(player);
+        }
         if (plugin.zones() == null || !plugin.zones().teleport(player, raftSpawn(index), config.name())) {
             return "現在不能傳送";
         }
+        guests.remove(player.getUniqueId());
         if (!hasHook(player)) {
             giveItem(player, hookItem());
         }
@@ -470,6 +821,62 @@ public final class LifeService {
                 Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
         player.sendMessage(plugin.text().prefixed("<" + config.color() + ">" + ItemRenderer.escape(config.name())
                 + "<gray>：漂流物從東邊漂來；材料在選單 <white>/sea</white> 做成筏的方塊；回營地：<white>/town"));
+        return null;
+    }
+
+    /** 換筏之前：漂流物、島、航行、淵鯨收掉（到新的筏重新算）。 */
+    private void leaveRaft(final Player player) {
+        islands.leave(player);
+        whale.leave(player);
+        final Session session = sessions.remove(player.getUniqueId());
+        if (session != null) {
+            clearSession(session);
+        }
+    }
+
+    /** 去別人的筏（拜訪、共用、跟隊長）；回傳問題，成功 null。 */
+    String travelTo(final Player player, final int plot, final String reason) {
+        if (world == null) {
+            return config.name() + "的世界沒有載入（看主控台）";
+        }
+        if (!canEnter(player)) {
+            return config.name() + "還沒有開放";
+        }
+        if (!plugin.players().get(player).hasCharacter()) {
+            return "先選一個角色";
+        }
+        final Profile profile = profile(player);
+        if (profile == null) {
+            return "帳號資料載入中，請稍等";
+        }
+        ensurePlot(player, profile);
+        if (plot == profile.plot) {
+            return travel(player, false);
+        }
+        if (!plotOwners.containsKey(plot)) {
+            return "那塊筏不在了";
+        }
+        if (whale.fighting(player)) {
+            return "正在跟淵鯨打，先打完";
+        }
+        leaveRaft(player);
+        if (plugin.zones() == null || !plugin.zones().teleport(player, raftSpawn(plot), config.name())) {
+            return "現在不能傳送";
+        }
+        guests.put(player.getUniqueId(), plot);
+        if (!hasHook(player)) {
+            giveItem(player, hookItem());
+        }
+        final boolean member = canBuild(player, profile, plot);
+        player.sendMessage(plugin.text().prefixed("<" + config.color() + ">來到 " + ItemRenderer.escape(ownerName(plot)) + " 的木筏"
+                + (reason == null ? "" : "<gray>（" + ItemRenderer.escape(reason) + "）")
+                + (member ? "<gray>：你是共用成員，可以蓋、拆、收網、掌舵" : "<gray>：可以撈東西、釣魚，蓋筏要筏主加你為共用成員")
+                + "；回自己的筏：<white>/sea home"));
+        for (final Player other : crewOn(plot)) {
+            if (!other.equals(player)) {
+                other.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(player.getName()) + " 來到了這塊筏"));
+            }
+        }
         return null;
     }
 
@@ -528,6 +935,7 @@ public final class LifeService {
             }
         }
         profiles.put(player.getUniqueId(), profile);
+        rememberLevel(profile);
         return profile;
     }
 
@@ -593,6 +1001,8 @@ public final class LifeService {
     }
 
     void forget(final Player player) {
+        guests.remove(player.getUniqueId());
+        invites.remove(player.getUniqueId());
         islands.leave(player);
         whale.leave(player);
         diedAtSea.remove(player.getUniqueId());
@@ -635,6 +1045,27 @@ public final class LifeService {
         final int max = config.staminaMax(config.levelOf(profile.xp));
         final String today = config.day(System.currentTimeMillis());
         return today.equals(profile.staminaDay) ? Math.max(0, max - profile.staminaUsed) : max;
+    }
+
+    /**
+     * 管理員給精力（/sea stamina；2026-10-16）：不受每天回復上限限制，最多回到滿；amount 0 以下 = 回滿。
+     * 回傳實際回了幾點；這個人沒有生活資料（不在線上、沒有角色）回傳 -1。
+     */
+    public int grantStamina(final Player player, final int amount) {
+        final Profile profile = profile(player);
+        if (profile == null) {
+            return -1;
+        }
+        final String today = config.day(System.currentTimeMillis());
+        if (!today.equals(profile.staminaDay)) {
+            profile.staminaDay = today;
+            profile.staminaUsed = 0;
+            profile.staminaRestored = 0;
+        }
+        final int restored = amount <= 0 ? profile.staminaUsed : Math.min(amount, profile.staminaUsed);
+        profile.staminaUsed -= restored;
+        profile.dirty = true;
+        return restored;
     }
 
     /** 回精力（喝淡水、吃料理）：一天最多回 daily_restore 點，最多回到滿。回傳實際回了幾點。 */
@@ -690,6 +1121,7 @@ public final class LifeService {
         profile.dirty = true;
         final int after = config.levelOf(profile.xp);
         if (after > before) {
+            rememberLevel(profile);
             final int beforeSize = config.raftSize(before);
             final int afterSize = config.raftSize(after);
             player.showTitle(Title.title(plugin.text().parse("<" + config.color() + ">生活等級 " + after),
@@ -853,10 +1285,11 @@ public final class LifeService {
                 continue;
             }
             final Profile profile = profile(player);
-            if (profile == null || profile.plot < 0) {
+            final int plot = profile == null ? -1 : activePlot(player);
+            if (plot < 0) {
                 continue;
             }
-            final int[] center = plotCenter(profile.plot);
+            final int[] center = plotCenter(plot);
             final Location at = player.getLocation();
             if (at.getX() - center[0] < -48 || at.getX() - center[0] > LifeIslands.OFFSET + LifeIslands.RADIUS + 16
                     || Math.abs(at.getZ() - center[1]) > 48) {
@@ -864,7 +1297,7 @@ public final class LifeService {
             }
             active.add(player.getUniqueId());
             final Session session = sessions.computeIfAbsent(player.getUniqueId(), id -> new Session());
-            tickSession(player, profile, session, center);
+            tickSession(player, profile, session, center, plot);
         }
         for (final Iterator<Map.Entry<UUID, Session>> it = sessions.entrySet().iterator(); it.hasNext(); ) {
             final Map.Entry<UUID, Session> entry = it.next();
@@ -872,6 +1305,9 @@ public final class LifeService {
                 final Player gone = plugin.getServer().getPlayer(entry.getKey());
                 if (gone != null) {
                     islands.leave(gone); // 離開筏：島清掉、航行取消
+                }
+                if (gone == null || !world.equals(gone.getWorld())) {
+                    guests.remove(entry.getKey()); // 離開海域：下次 /sea 照常回自己的（或隊長的）筏
                 }
                 clearSession(entry.getValue());
                 it.remove();
@@ -889,8 +1325,8 @@ public final class LifeService {
         }
     }
 
-    private void tickSession(final Player player, final Profile profile, final Session session, final int[] center) {
-        final int size = config.raftSize(config.levelOf(profile.xp));
+    private void tickSession(final Player player, final Profile profile, final Session session, final int[] center, final int plot) {
+        final int size = config.raftSize(plotLevel(plot));
         final double lane = Math.max(14, size / 2.0 + 10);
         // 生成
         if (--session.nextSpawn <= 0 && session.drifts.size() < config.maxDrifts()) {
@@ -913,7 +1349,9 @@ public final class LifeService {
                     created.setGlowing(true);
                 }
                 created.getPersistentDataContainer().set(driftKey, PersistentDataType.STRING, player.getUniqueId().toString());
+                created.setVisibleByDefault(false); // 每個人的漂流物只有自己看得到（同一塊筏上好幾個人時不會亂成一片）
             });
+            player.showEntity(plugin, display);
             session.drifts.add(new Drift(type, display, x, y, z));
         }
         // 移動
@@ -942,7 +1380,7 @@ public final class LifeService {
             drift.x -= config.driftSpeed() * 2;
             final double bob = Math.sin(drift.age * 0.25) * 0.06;
             drift.display.teleport(new Location(world, drift.x, drift.baseY + bob, drift.z));
-            if (netCatch(player, profile, drift, center)) {
+            if (netCatch(player, profile, drift, plot)) {
                 drift.display.remove();
                 it.remove();
                 continue;
@@ -956,7 +1394,9 @@ public final class LifeService {
         if (tickCount % 10 == 0) {
             tickCrops(player, profile, session);
         }
-        tickShark(player, profile, session, center);
+        if (plot == profile.plot) {
+            tickShark(player, profile, session, center); // 渦齒鯊只咬自己的筏（去別人的筏不會帶鯊魚過去）
+        }
         islands.tick(player, profile, center);
     }
 
@@ -1093,7 +1533,7 @@ public final class LifeService {
         return null;
     }
 
-    private boolean netCatch(final Player player, final Profile profile, final Drift drift, final int[] center) {
+    private boolean netCatch(final Player player, final Profile profile, final Drift drift, final int plot) {
         final Material net = netBlock();
         if (net == null || islands.storm(player)) {
             return false;
@@ -1108,7 +1548,7 @@ public final class LifeService {
                     continue;
                 }
                 final Block block = world.getBlockAt(bx, y, bz);
-                if (block.getType() != net || plotAt(bx, bz) != profile.plot) {
+                if (block.getType() != net || plotAt(bx, bz) != plot) {
                     continue;
                 }
                 final List<String> held = nets.computeIfAbsent(key(bx, y, bz), k -> new ArrayList<>());
@@ -1132,7 +1572,8 @@ public final class LifeService {
             return false;
         }
         final Profile profile = profile(player);
-        if (profile == null || plotAt(block.getX(), block.getZ()) != profile.plot) {
+        if (profile == null || !canBuild(player, profile, plotAt(block.getX(), block.getZ()))) {
+            player.sendActionBar(plugin.text().parse("<gray>只有筏主、共用成員能收這張網"));
             return true;
         }
         final List<String> held = nets.remove(key(block.getX(), block.getY(), block.getZ()));
@@ -1179,11 +1620,12 @@ public final class LifeService {
         if (profile == null) {
             return "帳號資料載入中，請稍等";
         }
-        if (profile.plot < 0 || plotAt(block.getX(), block.getZ()) != profile.plot) {
-            return "只能蓋在自己的筏上";
+        final int plot = plotAt(block.getX(), block.getZ());
+        if (!canBuild(player, profile, plot)) {
+            return "只能蓋在自己的筏（或共用的筏）上";
         }
-        final int[] center = plotCenter(profile.plot);
-        final int level = config.levelOf(profile.xp);
+        final int[] center = plotCenter(plot);
+        final int level = plotLevel(plot);
         final int size = config.raftSize(level);
         final int[] range = extent(size);
         final int dx = block.getX() - center[0];
@@ -1227,10 +1669,11 @@ public final class LifeService {
             return "這個拆不了";
         }
         final Profile profile = profile(player);
-        if (profile == null || profile.plot < 0 || plotAt(block.getX(), block.getZ()) != profile.plot) {
-            return "只能拆自己的筏";
+        final int plot = plotAt(block.getX(), block.getZ());
+        if (!canBuild(player, profile, plot)) {
+            return "只能拆自己的筏（或共用的筏）";
         }
-        final int[] center = plotCenter(profile.plot);
+        final int[] center = plotCenter(plot);
         if (block.getX() == center[0] && block.getZ() == center[1] && block.getY() == config.seaLevel()) {
             return "筏心不能拆";
         }
@@ -1361,8 +1804,14 @@ public final class LifeService {
             return false;
         }
         final Profile profile = profile(player);
-        if (profile == null || plotAt(block.getX(), block.getZ()) != profile.plot) {
-            player.sendActionBar(plugin.text().parse("<gray>這不是你的筏"));
+        final int plot = plotAt(block.getX(), block.getZ());
+        // 自己待的這塊筏上的設施都能用（拜訪也可以淨水、做菜、研究）；種田、掌舵要筏主或共用成員
+        if (profile == null || plot != activePlot(player)) {
+            player.sendActionBar(plugin.text().parse("<gray>這不是你待的筏"));
+            return true;
+        }
+        if (("helm".equals(item.station()) || item.station().startsWith("planter")) && !canBuild(player, profile, plot)) {
+            player.sendActionBar(plugin.text().parse("<gray>只有筏主、共用成員能" + ("helm".equals(item.station()) ? "掌舵" : "種田")));
             return true;
         }
         switch (item.station()) {
@@ -1447,8 +1896,8 @@ public final class LifeService {
     /** 種下去（種田選單）；回傳問題，成功 null。 */
     String plant(final Player player, final Block block, final LifeConfig.Crop crop) {
         final Profile profile = profile(player);
-        if (profile == null || plotAt(block.getX(), block.getZ()) != profile.plot) {
-            return "這不是你的筏";
+        if (profile == null || !canBuild(player, profile, plotAt(block.getX(), block.getZ()))) {
+            return "只有筏主、共用成員能種";
         }
         final LifeConfig.Item planter = config.itemByBlock(block.getType().name());
         if (planter == null || planter.station() == null || !planter.station().startsWith("planter")) {
@@ -1968,8 +2417,8 @@ public final class LifeService {
         if (arena != null) {
             return arena; // 打淵鯨倒下：重生在場地邊上
         }
-        final Profile profile = profile(player);
-        return profile == null || profile.plot < 0 ? null : raftSpawn(profile.plot);
+        final int plot = activePlot(player);
+        return plot < 0 ? null : raftSpawn(plot);
     }
 
     private void guard() {
@@ -1985,14 +2434,15 @@ public final class LifeService {
                 continue;
             }
             final Profile profile = profile(player);
-            if (profile == null || profile.plot < 0) {
+            final int plot = profile == null ? -1 : activePlot(player);
+            if (plot < 0) {
                 continue;
             }
-            final int[] center = plotCenter(profile.plot);
+            final int[] center = plotCenter(plot);
             final Location at = player.getLocation();
             if (Math.abs(at.getX() - center[0]) > config.roamRadius() || Math.abs(at.getZ() - center[1]) > config.roamRadius()
                     || at.getY() < config.seaLevel() - 30) {
-                player.teleportAsync(raftSpawn(profile.plot));
+                player.teleportAsync(raftSpawn(plot));
                 player.sendMessage(plugin.text().prefixed("<gray>海流把你沖回了筏上"));
             }
         }

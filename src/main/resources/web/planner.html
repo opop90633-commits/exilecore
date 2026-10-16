@@ -299,8 +299,8 @@
       <div class="hint">點節點：配到那裡（自動走最短的路）。點已配的節點：退掉（連帶退掉因此斷線的）。<br>
         <b>屬性點</b>（+5 任一屬性）配了之後有顏色：<span style="color:var(--str)">紅＝力量</span>、<span style="color:var(--dex)">綠＝敏捷</span>、<span style="color:var(--int)">藍＝智慧</span>；
         點已配的屬性點可以改屬性或退掉。沒選的照職業的主屬性，選好的會跟著代碼帶進遊戲。<br>
-        <span style="color:#c77dff">六角形</span>是珠寶孔：配了之後在遊戲裡把珠寶放進去（這裡只能規劃孔位）。
-        滑到珠寶孔會畫出<b>遺時星晶的範圍</b>（基本 2 格、「更大」3 格、「巨大」4 格），並列出範圍裡有幾個小點、核心。<br>
+        <span style="color:#c77dff">六角形</span>是珠寶孔：配了之後<b>點它放珠寶</b>（挑基底、詞綴，或載入角色時帶進來遊戲裡的珠寶），珠寶的效果會算進天賦加總與計算器。
+        滑到珠寶孔會畫出<b>遺時星晶的範圍</b>（基本 2 格、「更大」3 格、「巨大」4 格；放了遺時星晶就畫它實際的範圍），並列出範圍裡有幾個小點、核心。<br>
         複製代碼後，遊戲裡打 <b>/tree import</b> 貼上，或在天賦總覽按「匯入規劃代碼」。</div>
     </section>
     <section>
@@ -311,7 +311,7 @@
         <option value="3">已配的珠寶孔一直顯示：更大 3 格</option>
         <option value="4">已配的珠寶孔一直顯示：巨大 4 格</option>
       </select>
-      <div class="hint">遺時星晶放在珠寶孔裡，範圍內<b>已配置</b>的每個小點都多給一次它的詞綴。</div>
+      <div class="hint">遺時星晶放在珠寶孔裡，範圍內<b>已配置</b>的每個小點都多給一次它的詞綴；放了之後範圍一直畫著，滑到範圍內的節點會寫它多給什麼。</div>
     </section>
     <section id="ascSection" hidden>
       <h2>昇華預覽</h2>
@@ -328,7 +328,7 @@
       <div class="gear" id="gear"></div>
       <div class="hint">點格子挑基底、詞綴與數值（或選傳奇）。裝備存在「複製連結」的網址裡，一起分享；遊戲裡的 /tree import 只看天賦。</div>
     </section>
-    <div id="totals"><h2 style="margin:0 0 8px;font-size:13px;color:var(--gold)">天賦加起來</h2><ul id="totalList"></ul>
+    <div id="totals"><h2 style="margin:0 0 8px;font-size:13px;color:var(--gold)">天賦加起來（含珠寶）</h2><ul id="totalList"></ul>
       <h2 style="margin:14px 0 8px;font-size:13px;color:var(--gold)">裝備加起來</h2><ul id="gearTotals"></ul></div>
   </aside>
 </main>
@@ -425,6 +425,13 @@
   let items = null;
   let gear = new Array(GEAR_SLOTS.length).fill(null);
   let pendingGear = null;
+  // 2026-10-16：珠寶孔裡的珠寶（節點代號 → 跟裝備一樣的物品）；算進天賦加總與計算器，跟裝備一起存在連結裡
+  const JEWEL_LIMIT = { normal: 0, magic: 1, rare: 2 };
+  let jewels = {};
+  let pendingJewelData = null;
+  let hashHasJewels = false;
+  /** 伺服器算出來的珠寶效果（節點代號 → { radius, inRange: Set, lines }）。 */
+  let jewelFx = {};
   fetch("tree/items.json", { cache: "no-cache" }).then(r => r.json()).then(json => {
     items = json;
     items.baseById = new Map(json.bases.map(b => [b.id, b]));
@@ -433,9 +440,12 @@
     const text = pendingGear !== null ? pendingGear : gearText(hashText());
     pendingGear = null;
     gear = decodeGear(text);
+    jewels = decodeJewels(text);
+    hashHasJewels = Object.keys(jewels).length > 0;
     if (pendingItemData) { gear = GEAR_SLOTS.map((_, i) => fromItemData(pendingItemData[i], i)); pendingItemData = null; } // 先載入了角色
+    if (pendingJewelData) { jewels = jewelsFromData(pendingJewelData); pendingJewelData = null; }
     renderGear();
-    if (data) updatePanel();
+    if (data) render();
   }).catch(() => { /* 沒有裝備資料：只有天賦 */ });
 
   function gearText(hash) {
@@ -457,37 +467,62 @@
     return new TextDecoder().decode(bytes);
   }
   /** 裝備存成 [基底, 稀有度, 傳奇, [[詞綴, 階, [值…]]…], [[傳奇第幾條的值…]…]]，JSON 之後 base64url。 */
+  function packItem(g) {
+    if (!g) return 0;
+    if (g.rarity === "unique") return [0, "u", g.unique, 0, g.uvals.map(v => v || []), g.ilvl || 0, g.quality || 0, g.instil || 0];
+    return [g.base, g.rarity[0], 0, g.affixes.map(a => [a.id, a.tier, a.vals]), g.ilvl || 0, g.quality || 0, g.instil || 0];
+  }
+  function unpackItem(p, slot) {
+    if (!Array.isArray(p)) return null;
+    if (p[1] === "u") {
+      const u = items.uniqueById.get(p[2]);
+      if (!u || u.slot !== slot) return null;
+      return { rarity: "unique", unique: u.id, base: u.base, uvals: u.mods.map((m, k) => Array.isArray(p[4] && p[4][k]) ? p[4][k] : []),
+        ilvl: Number(p[5]) || 0, quality: Number(p[6]) || 0, instil: typeof p[7] === "string" ? p[7] : "" };
+    }
+    const base = items.baseById.get(p[0]);
+    if (!base || base.slot !== slot) return null;
+    const rarity = { n: "normal", m: "magic", r: "rare" }[p[1]] || "normal";
+    const affixes = (Array.isArray(p[3]) ? p[3] : []).filter(a => Array.isArray(a) && items.affixById.has(a[0]))
+      .map(a => ({ id: a[0], tier: a[1], vals: Array.isArray(a[2]) ? a[2] : [] }));
+    return { rarity, base: base.id, affixes, ilvl: Number(p[4]) || 0, quality: Number(p[5]) || 0, instil: typeof p[6] === "string" ? p[6] : "" };
+  }
+  /** 已配的孔位裡的珠寶（沒配的孔位放著的不算）。 */
+  function placedJewels() {
+    return Object.entries(jewels).filter(([id, g]) => g && allocated.has(id) && byId.get(id) && byId.get(id).type === "socket");
+  }
+  /** 裝備存成 [基底, 稀有度, 傳奇, [[詞綴, 階, [值…]]…], …]；最後一格是珠寶 { 孔位: 同樣的格式 }。JSON 之後 base64url。 */
   function gearSuffix() {
-    if (!gear.some(Boolean)) return "";
-    const packed = gear.map(g => {
-      if (!g) return 0;
-      if (g.rarity === "unique") return [0, "u", g.unique, 0, g.uvals.map(v => v || []), g.ilvl || 0, g.quality || 0, g.instil || 0];
-      return [g.base, g.rarity[0], 0, g.affixes.map(a => [a.id, a.tier, a.vals]), g.ilvl || 0, g.quality || 0, g.instil || 0];
-    });
+    const placed = placedJewels();
+    if (!gear.some(Boolean) && !placed.length) return "";
+    const packed = gear.map(packItem);
+    if (placed.length) packed.push(Object.fromEntries(placed.map(([id, g]) => [id, packItem(g)])));
     return "~" + b64urlEncode(JSON.stringify(packed));
+  }
+  function unpackGear(text) {
+    if (!text || !items) return null;
+    try { const packed = JSON.parse(b64urlDecode(text)); return Array.isArray(packed) ? packed : null; } catch (e) { return null; }
   }
   function decodeGear(text) {
     const out = new Array(GEAR_SLOTS.length).fill(null);
-    if (!text || !items) return out;
-    let packed;
-    try { packed = JSON.parse(b64urlDecode(text)); } catch (e) { return out; }
-    if (!Array.isArray(packed)) return out;
-    packed.forEach((p, i) => {
-      if (!Array.isArray(p) || i >= out.length) return;
-      if (p[1] === "u") {
-        const u = items.uniqueById.get(p[2]);
-        if (!u || u.slot !== GEAR_SLOTS[i][0]) return;
-        out[i] = { rarity: "unique", unique: u.id, base: u.base, uvals: u.mods.map((m, k) => Array.isArray(p[4] && p[4][k]) ? p[4][k] : []),
-          ilvl: Number(p[5]) || 0, quality: Number(p[6]) || 0, instil: typeof p[7] === "string" ? p[7] : "" };
-        return;
-      }
-      const base = items.baseById.get(p[0]);
-      if (!base || base.slot !== GEAR_SLOTS[i][0]) return;
-      const rarity = { n: "normal", m: "magic", r: "rare" }[p[1]] || "normal";
-      const affixes = (Array.isArray(p[3]) ? p[3] : []).filter(a => Array.isArray(a) && items.affixById.has(a[0]))
-        .map(a => ({ id: a[0], tier: a[1], vals: Array.isArray(a[2]) ? a[2] : [] }));
-      out[i] = { rarity, base: base.id, affixes, ilvl: Number(p[4]) || 0, quality: Number(p[5]) || 0, instil: typeof p[6] === "string" ? p[6] : "" };
-    });
+    const packed = unpackGear(text);
+    if (!packed) return out;
+    packed.forEach((p, i) => { if (i < out.length) out[i] = unpackItem(p, GEAR_SLOTS[i][0]); });
+    return out;
+  }
+  function decodeJewels(text) {
+    const packed = unpackGear(text);
+    const extra = packed && packed.length > GEAR_SLOTS.length ? packed[GEAR_SLOTS.length] : null;
+    const out = {};
+    if (extra && typeof extra === "object" && !Array.isArray(extra)) {
+      for (const [id, p] of Object.entries(extra)) { const g = unpackItem(p, "jewel"); if (g) out[id] = g; }
+    }
+    return out;
+  }
+  /** 遊戲裡的珠寶（角色資料：孔位 → 物品資料）換成規劃器的。 */
+  function jewelsFromData(map) {
+    const out = {};
+    for (const [id, d] of Object.entries(map || {})) { const g = fromItemData(d, "jewel"); if (g) out[id] = g; }
     return out;
   }
   function varNames(vars) { return Object.keys(vars || {}); }
@@ -657,6 +692,22 @@
     if (typeof dialog.close === "function") dialog.close(); else dialog.removeAttribute("open");
     editing = null;
   }
+  /** 珠寶孔放珠寶（2026-10-16）：跟裝備用同一個編輯器；index = -1，jewelNode 是孔位。 */
+  function openJewelEditor(socket) {
+    if (!items) { flash("裝備資料還沒載入"); return; }
+    const current = jewels[socket.id];
+    editing = { index: -1, jewelNode: socket.id, slot: "jewel", g: current ? JSON.parse(JSON.stringify(current)) : null };
+    if (!editing.g) {
+      const first = items.bases.filter(b => b.slot === "jewel" && b.radius).sort((a, b) => a.level - b.level)[0]
+        || items.bases.filter(b => b.slot === "jewel")[0];
+      editing.g = first ? { rarity: "rare", base: first.id, affixes: [] } : null;
+    }
+    if (!editing.g) { flash("沒有珠寶的資料（要更新外掛）"); return; }
+    hideTip();
+    drawEditor();
+    if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "");
+  }
+  function affixLimit(rarity) { return (editing && editing.slot === "jewel" ? JEWEL_LIMIT : AFFIX_LIMIT)[rarity] || 0; }
   dialog.addEventListener("cancel", () => { editing = null; });
   function drawEditor() {
     const { index, slot } = editing;
@@ -671,7 +722,7 @@
       node("button", { type: "button", cls: isUnique ? "on" : "", text: "傳奇", onclick: () => {
         if (isUnique) return;
         const list = items.uniques.filter(u => u.slot === slot);
-        if (!list.length) { flash("這一格沒有傳奇"); return; }
+        if (!list.length) { flash(slot === "jewel" ? "沒有傳奇珠寶" : "這一格沒有傳奇"); return; }
         const u = list[0];
         editing.g = { rarity: "unique", unique: u.id, base: u.base, uvals: u.mods.map(() => []) }; drawEditor();
       } }));
@@ -737,7 +788,7 @@
           for (const x of items.affixes) {
             if (x.type !== type || !canSpawn(x, base)) continue;
             if (x.id !== a.id && usedGroups.has(x.group)) continue;
-            if (x.id !== a.id && x.type !== affix.type && count(x.type) >= AFFIX_LIMIT[g.rarity]) continue;
+            if (x.id !== a.id && x.type !== affix.type && count(x.type) >= affixLimit(g.rarity)) continue;
             group.append(node("option", { value: x.id, text: x.text.replace(/\{[^}]*\}/g, "#") }));
           }
           if (group.children.length) choice.append(group);
@@ -761,11 +812,11 @@
         row.append(node("button", { type: "button", cls: "small", text: "拿掉", onclick: () => { g.affixes.splice(k, 1); drawEditor(); } }));
         body.append(row);
       });
-      const canAdd = ["prefix", "suffix"].some(type => count(type) < AFFIX_LIMIT[g.rarity]);
-      const hint = g.rarity === "normal" ? "普通裝備沒有詞綴（改成魔法或稀有）"
-        : "前綴 " + count("prefix") + "/" + AFFIX_LIMIT[g.rarity] + "、後綴 " + count("suffix") + "/" + AFFIX_LIMIT[g.rarity];
+      const canAdd = ["prefix", "suffix"].some(type => count(type) < affixLimit(g.rarity));
+      const hint = g.rarity === "normal" ? (slot === "jewel" ? "普通珠寶沒有詞綴（改成魔法或稀有）" : "普通裝備沒有詞綴（改成魔法或稀有）")
+        : "前綴 " + count("prefix") + "/" + affixLimit(g.rarity) + "、後綴 " + count("suffix") + "/" + affixLimit(g.rarity);
       body.append(node("div", { cls: "row" }, canAdd ? node("button", { type: "button", cls: "small", text: "＋ 加一條詞綴", onclick: () => {
-        const next = items.affixes.find(x => canSpawn(x, base) && !usedGroups.has(x.group) && count(x.type) < AFFIX_LIMIT[g.rarity]);
+        const next = items.affixes.find(x => canSpawn(x, base) && !usedGroups.has(x.group) && count(x.type) < affixLimit(g.rarity));
         if (!next) { flash("沒有能加的詞綴了"); return; }
         g.affixes.push({ id: next.id, tier: next.tiers[0].tier, vals: [] });
         drawEditor();
@@ -776,11 +827,41 @@
     ilvlInput.addEventListener("input", () => { g.ilvl = clamp(Math.round(Number(ilvlInput.value)), 0, 100); });
     const qualityInput = node("input", { type: "number", min: "0", max: "20", value: String(g.quality || 0), "aria-label": "品質", style: "width:64px" });
     qualityInput.addEventListener("input", () => { g.quality = clamp(Math.round(Number(qualityInput.value)), 0, 20); });
-    body.append(node("div", { cls: "row" }, node("span", { cls: "hint", style: "margin:0", text: "物品等級" }), ilvlInput,
-      node("span", { cls: "hint", style: "margin:0", text: "品質 %" }), qualityInput,
-      node("span", { cls: "hint", style: "margin:0", text: g.raw ? "（遊戲裡的物品）" : "（0 = 物品等級 82）" })));
+    if (slot !== "jewel") {
+      body.append(node("div", { cls: "row" }, node("span", { cls: "hint", style: "margin:0", text: "物品等級" }), ilvlInput,
+        node("span", { cls: "hint", style: "margin:0", text: "品質 %" }), qualityInput,
+        node("span", { cls: "hint", style: "margin:0", text: g.raw ? "（遊戲裡的物品）" : "（0 = 物品等級 82）" })));
+    } else {
+      const jb = items.baseById.get(g.base);
+      body.append(node("div", { cls: "hint", style: "margin:0", text: (g.raw ? "遊戲裡的珠寶。" : "")
+        + (jb && jb.radius ? "遺時星晶：「範圍內的小天賦也各給」的詞綴，照孔位範圍內已配的小點數量算（完成後天賦樹上會畫出範圍）。" : "珠寶的詞綴直接加在角色身上。") }));
+    }
     if (slot === "amulet") body.append(instilSection(g));
     const previewBox = node("div", { id: "itemPreview" });
+    if (editing.jewelNode) {
+      const socketId = editing.jewelNode;
+      const socketNode = byId.get(socketId);
+      const cascade = socketNode ? removal(socketNode).size : 1;
+      const saveJewel = () => {
+        const ng = editing.g;
+        if (ng.rarity === "unique" && Object.entries(jewels).some(([id, x]) => id !== socketId && x && x.rarity === "unique" && allocated.has(id))) {
+          flash("傳奇珠寶只能配一顆（天賦樹上已經有一顆了）"); return;
+        }
+        jewels[socketId] = ng; closeEditor(); render();
+      };
+      const jbtns = node("div", { cls: "btns" },
+        node("button", { type: "button", text: cascade > 1 ? "退掉這個孔（連帶 " + (cascade - 1) + " 點）" : "退掉這個孔", onclick: () => {
+          closeEditor();
+          if (socketNode) { for (const id of removal(socketNode)) allocated.delete(id); pruneAttrs(); }
+          hover = null; preview = { add: new Set(), remove: new Set() }; render();
+        } }),
+        jewels[socketId] ? node("button", { type: "button", text: "拿掉珠寶", onclick: () => { delete jewels[socketId]; closeEditor(); render(); } }) : null,
+        node("button", { type: "button", text: "取消", onclick: closeEditor }),
+        node("button", { type: "button", cls: "primary", text: "放進去", onclick: saveJewel }));
+      dlg.replaceChildren(node("h3", { text: "珠寶孔：" + (socketNode ? socketNode.name : "") }), seg, body, previewBox, jbtns);
+      refreshPreview();
+      return;
+    }
     const btns = node("div", { cls: "btns" },
       node("button", { type: "button", text: "清掉這格", onclick: () => { gear[index] = null; closeEditor(); renderGear(); updatePanel(); } }),
       node("button", { type: "button", text: "取消", onclick: closeEditor }),
@@ -858,7 +939,7 @@
     const count = { prefix: 0, suffix: 0 };
     for (const a of g.affixes) {
       const type = items.affixById.get(a.id).type;
-      if (count[type] < AFFIX_LIMIT[g.rarity]) { keep.push(a); count[type]++; }
+      if (count[type] < affixLimit(g.rarity)) { keep.push(a); count[type]++; }
     }
     g.affixes = keep;
   }
@@ -1009,7 +1090,7 @@
    */
   function tipLines(node) {
     if (node.type === "socket") {
-      return ["配了這一點，遊戲裡就能把珠寶放進這個孔，珠寶的詞綴直接加在角色身上。", "規劃器只規劃孔位：這裡不能放珠寶。"];
+      return jewels[node.id] && items ? [] : ["配了這一點就能把珠寶放進這個孔（遊戲裡、這裡都可以），珠寶的詞綴直接加在角色身上。"];
     }
     if (node.attr && !allocated.has(node.id)) {
       return node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " 任一屬性（配了之後點它選力量／敏捷／智慧）" : l);
@@ -1022,15 +1103,24 @@
   }
 
   // ---- 加總（跟遊戲的 PassiveSummary 一樣）----
-  function summarize(nodes) {
+  function summarize(nodes, extraJewels) {
     let sockets = 0;
     const lines = [];
     for (const node of nodes) {
       if (node.type === "socket") { sockets++; continue; } // 珠寶孔的說明不加總；最後列一行數量
       lines.push(...linesOf(node)); // 屬性點照選的屬性加（+5 力量、+5 敏捷…）
     }
+    // 2026-10-16：放在已配孔位裡的珠寶（伺服器算好的效果：遺時星晶已經照範圍內的小點乘過）一起加
+    let filled = 0;
+    if (extraJewels) {
+      for (const node of nodes) {
+        if (node.type !== "socket" || !jewels[node.id]) continue;
+        const fx = jewelFx[node.id];
+        if (fx) { lines.push(...fx.lines); filled++; }
+      }
+    }
     const out = sumLines(lines);
-    if (sockets) out.push("珠寶孔 ×" + sockets + "（在遊戲裡放珠寶）");
+    if (sockets) out.push("珠寶孔 ×" + sockets + (filled ? "（放了 " + filled + " 顆珠寶，效果已經加在上面）" : "（點珠寶孔放珠寶）"));
     return out;
   }
   /** 一樣的文字（數字以外）加在一起。 */
@@ -1200,14 +1290,54 @@
       t.setAttribute("style", "fill:" + RING_COLOR[index]);
     }
   }
+  /** 放了遺時星晶的孔位：照它實際的範圍畫（伺服器算的半徑；還沒算好就照基本範圍）。 */
+  function drawJewelRing(socket, labelled) {
+    const g = jewels[socket.id];
+    const fx = jewelFx[socket.id];
+    const radius = fx && fx.radius ? fx.radius : jewelRadii()[0];
+    const r = (radius + 0.5) * SPACING, cx = socket.x * SPACING, cy = socket.y * SPACING;
+    el("circle", { cx, cy, r, fill: "rgba(255,210,127,0.06)", stroke: jewelColor(g), "stroke-width": 2.5, opacity: 0.9, "pointer-events": "none" }, layers.rings);
+    if (labelled) {
+      const t = el("text", { x: cx, y: cy - r - 6, "text-anchor": "middle", class: "label", "pointer-events": "none" }, layers.rings);
+      t.textContent = itemName(g) + " " + format(radius) + " 格";
+      t.setAttribute("style", "fill:" + jewelColor(g));
+    }
+  }
+  function isRadiusJewel(g) { const b = g && items ? items.baseById.get(g.base) : null; return !!(b && b.radius); }
+  function jewelColor(g) {
+    const id = g ? g.base : "";
+    return /ruby/.test(id) ? "#f0544f" : /emerald/.test(id) ? "#5bd65b" : /sapphire/.test(id) ? "#5a8cff" : /diamond/.test(id) ? "#e8e8f2" : "#c77dff";
+  }
+  function setJewelFx(list) {
+    jewelFx = {};
+    for (const j of Array.isArray(list) ? list : []) jewelFx[j.node] = { radius: j.radius || 0, inRange: new Set(j.inRange || []), lines: j.lines || [] };
+    drawRings();
+    renderTotals();
+  }
+  /** 範圍內有這一點的遺時星晶（已配的孔位）。 */
+  function jewelsCovering(n) {
+    const out = [];
+    for (const [id, g] of placedJewels()) {
+      if (!isRadiusJewel(g)) continue;
+      const socket = byId.get(id);
+      const fx = jewelFx[id];
+      const radius = fx && fx.radius ? fx.radius : jewelRadii()[0];
+      const dx = n.x - socket.x, dy = n.y - socket.y;
+      if (n !== socket && dx * dx + dy * dy <= (radius + 0.5) * (radius + 0.5)) out.push([socket, g]);
+    }
+    return out;
+  }
   function drawRings() {
     layers.rings.replaceChildren();
     if (!data) return;
+    for (const [id, g] of placedJewels()) if (isRadiusJewel(g)) drawJewelRing(byId.get(id), hover && hover.id === id);
     if (ringMode > 0) {
       const index = Math.max(0, jewelRadii().indexOf(ringMode));
       for (const n of order) if (n.type === "socket" && allocated.has(n.id)) drawRing(n, index, false);
     }
-    if (hover && hover.type === "socket") for (let i = jewelRadii().length - 1; i >= 0; i--) drawRing(hover, i, true);
+    if (hover && hover.type === "socket" && !(jewels[hover.id] && isRadiusJewel(jewels[hover.id]) && allocated.has(hover.id))) {
+      for (let i = jewelRadii().length - 1; i >= 0; i--) drawRing(hover, i, true);
+    }
   }
   document.getElementById("ringMode").addEventListener("change", e => { ringMode = Number(e.target.value) || 0; drawRings(); });
 
@@ -1250,7 +1380,8 @@
       el("polygon", { points: pts.join(" "), fill: "#0a0d1a", stroke: fill, "stroke-width": 4, "stroke-linejoin": "round" }, parent);
       const inner = [];
       for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + i * Math.PI / 3; inner.push((x + Math.cos(a) * 7).toFixed(1) + "," + (y + Math.sin(a) * 7).toFixed(1)); }
-      el("polygon", { points: inner.join(" "), fill: "none", stroke: fill, "stroke-width": 1.5, opacity: 0.6 }, parent);
+      const placed = jewels[node.id] && allocated.has(node.id) ? jewels[node.id] : null;
+      el("polygon", { points: inner.join(" "), fill: placed ? jewelColor(placed) : "none", stroke: fill, "stroke-width": 1.5, opacity: placed ? 0.95 : 0.6 }, parent);
     } else {
       el("circle", { cx: x, cy: y, r: 9, fill, stroke: "#101018", "stroke-width": 2.5 }, parent);
     }
@@ -1306,6 +1437,13 @@
     document.getElementById("points").innerHTML =
       "已用 <b" + (over ? " class=over" : "") + ">" + used + "</b> / " + maxPoints + " 點　" +
       "需要 Lv." + Math.min(levelNoBonus, 999) + (data.bonusPoints ? "（算上 " + data.bonusPoints + " 點首殺獎勵 Lv." + levelBonus + "）" : "");
+    renderTotals();
+    try { history.replaceState(null, "", "#" + encodeCode() + fullSuffix()); } catch (e) { /* file:// 之類的不能改 */ }
+    scheduleCalc();
+  }
+  /** 天賦（含珠寶）、裝備的加總；計算器算完珠寶的效果也會叫這個（不重算）。 */
+  function renderTotals() {
+    if (!data) return;
     const list = document.getElementById("totalList");
     list.replaceChildren();
     const nodes = order.filter(n => allocated.has(n.id)); // 照樹的順序加總，跟遊戲裡的天賦總覽一樣
@@ -1318,7 +1456,7 @@
       ? "屬性點：" + ATTR_KEYS.map(k => "<b class='" + k + "'>" + ATTR_NAME[k] + " +" + attrTotal[k] + "</b>（" + attrNodes[k] + " 個）").join("　")
       : "還沒有配屬性點";
     document.getElementById("attrBulk").style.display = anyAttr ? "" : "none";
-    const lines = summarize(nodes);
+    const lines = summarize(nodes, true);
     if (!lines.length) {
       const li = document.createElement("li"); li.className = "empty"; li.textContent = "還沒有配任何天賦"; list.appendChild(li);
     }
@@ -1330,8 +1468,6 @@
       list.appendChild(li);
     }
     renderGearTotals();
-    try { history.replaceState(null, "", "#" + encodeCode() + fullSuffix()); } catch (e) { /* file:// 之類的不能改 */ }
-    scheduleCalc();
   }
 
   // ---- 視野：拖曳、縮放 ----
@@ -1457,6 +1593,10 @@
       openAttrMenu(node, e.clientX, e.clientY);
       return;
     }
+    if (allocated.has(node.id) && node.type === "socket" && items) {
+      openJewelEditor(node); // 已配的珠寶孔：放、換、拿掉珠寶，或退掉這個孔
+      return;
+    }
     if (allocated.has(node.id)) {
       for (const id of removal(node)) allocated.delete(id);
       pruneAttrs();
@@ -1543,6 +1683,8 @@
     else if (allocated.has(node.id) && node.attr) {
       action = "<span style='color:" + ATTR_COLOR[attrOf(node)] + "'>現在算" + ATTR_NAME[attrOf(node)] + "</span>"
         + "<span style='color:var(--quiet)'>　點一下：改屬性或退掉</span>";
+    } else if (allocated.has(node.id) && node.type === "socket" && items) {
+      action = "<span style='color:var(--quiet)'>點一下：" + (jewels[node.id] ? "換珠寶、拿掉，或退掉這個孔" : "放珠寶，或退掉這個孔") + "</span>";
     } else if (allocated.has(node.id)) {
       const n = preview.remove.size;
       action = "<span style='color:var(--red)'>" + verb + "退掉" + (n > 1 ? "（連帶 " + (n - 1) + " 點斷線的）" : "") + "</span>";
@@ -1562,12 +1704,42 @@
     tip.innerHTML = "<div class='name' style='color:" + color + "'>" + escapeHtml(node.name) + "</div>" +
       "<div class='type'>" + typeName + "</div>" +
       tipLines(node).map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("") +
-      (node.type === "socket" ? socketRangeHtml(node) : "") +
+      (node.type === "socket" ? socketJewelHtml(node) + socketRangeHtml(node) : coveredHtml(node)) +
       "<div class='action'>" + action + "</div>";
     tip.style.display = "block";
     const w = tip.offsetWidth, h = tip.offsetHeight;
     tip.style.left = Math.min(window.innerWidth - w - 8, x + 16) + "px";
     tip.style.top = Math.min(window.innerHeight - h - 8, y + 16) + "px";
+  }
+  /** 孔位裡的珠寶：名稱、詞綴，與實際加在角色身上的效果（伺服器算的）。 */
+  function socketJewelHtml(node) {
+    const g = jewels[node.id];
+    if (!g || !items) return "";
+    let html = "<div style='margin-top:6px;color:" + RARITY_COLOR[g.rarity] + "'>" + escapeHtml(itemName(g)) + "</div>";
+    html += itemLines(g).map(l => "<div class='line' style='color:#8888ff'>" + escapeHtml(l.text) + "</div>").join("");
+    if (!allocated.has(node.id)) return html + "<div style='color:var(--red);font-size:12px'>孔位沒配：珠寶沒有效果</div>";
+    const fx = jewelFx[node.id];
+    if (!fx) return html + "<div style='color:var(--quiet);font-size:12px'>效果計算中…</div>";
+    if (isRadiusJewel(g)) {
+      let smalls = 0;
+      for (const id of fx.inRange) if (byId.get(id) && byId.get(id).type === "small") smalls++;
+      html += "<div style='margin-top:4px;color:var(--gold)'>範圍 " + format(fx.radius) + " 格：已配 " + fx.inRange.size + " 點（小點 " + smalls + " 個）</div>";
+    }
+    html += "<div style='margin-top:4px;color:var(--gold)'>實際加在角色身上：</div>"
+      + (fx.lines.length ? fx.lines.map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("") : "<div class='line' style='color:var(--quiet)'>（沒有）</div>");
+    return html;
+  }
+  /** 小點、核心在遺時星晶的範圍內：寫是哪一顆、它對範圍內的節點給什麼。 */
+  function coveredHtml(node) {
+    if (!items || (node.type !== "small" && node.type !== "notable")) return "";
+    let html = "";
+    for (const [socket, g] of jewelsCovering(node)) {
+      const lines = itemLines(g).filter(l => !l.implicit && l.text.includes("範圍內")).map(l => l.text);
+      html += "<div style='margin-top:6px;color:" + jewelColor(g) + "'>在「" + escapeHtml(socket.name) + "」的" + escapeHtml(itemName(g)) + "範圍內"
+        + (allocated.has(node.id) ? "" : "（配了才算）") + "</div>"
+        + lines.map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("");
+    }
+    return html;
   }
   /** 珠寶孔：遺時星晶三種範圍裡各有幾個小點、核心（括號裡是已經配了的）。 */
   function socketRangeHtml(node) {
@@ -1749,19 +1921,20 @@
   }
   function fromItemData(d, index) {
     if (!d || !items || !d.base) return null;
+    const slotName = typeof index === "string" ? index : GEAR_SLOTS[index][0];
     const rarity = String(d.rarity || "NORMAL").toLowerCase();
     const affixes = Array.isArray(d.affixes) ? d.affixes : [];
     let g = null;
     if (rarity === "unique" && d.unique && items.uniqueById.has(d.unique)) {
       const u = items.uniqueById.get(d.unique);
-      if (u.slot !== GEAR_SLOTS[index][0]) return null;
+      if (u.slot !== slotName) return null;
       g = { rarity: "unique", unique: u.id, base: u.base, uvals: u.mods.map(m => {
         const a = affixes.find(x => x.id === m.id);
         return a && a.vars ? varNames(m.vars).map(n => a.vars[n]) : [];
       }) };
     } else {
       const base = items.baseById.get(d.base);
-      if (!base || base.slot !== GEAR_SLOTS[index][0]) return null;
+      if (!base || base.slot !== slotName) return null;
       g = { rarity: rarity === "unique" ? "rare" : (RARITY_NAME[rarity] ? rarity : "normal"), base: base.id,
         affixes: affixes.filter(a => items.affixById.has(a.id)).map(a => {
           const t = tierOf(items.affixById.get(a.id), a.tier);
@@ -1836,7 +2009,7 @@
     });
     const json = {
       tree: encodeCode(), level: calcLevel(), asc, ascNodes: asc ? calc.ascNodes : [], progress: calc.progress,
-      gear: gear.map(toItemData), jewels: calc.jewels, skills,
+      gear: gear.map(toItemData), jewels: Object.fromEntries(placedJewels().map(([id, g]) => [id, toItemData(g)])), skills,
       binds: calc.binds.map(i => indexOf.has(i) ? indexOf.get(i) : -1), extra: calc.extra
     };
     if (supportsFor !== null && supportsFor !== undefined && indexOf.has(supportsFor)) json.supportsFor = indexOf.get(supportsFor);
@@ -1868,6 +2041,7 @@
       if (ctl !== calcAbort) return;
       calc.last = res;
       calc.lastMap = body.map;
+      setJewelFx(res.jewels);
       if (calc.wantBaseline) { calc.baseline = snapshot(res); calc.wantBaseline = false; }
       renderCalc();
       if (skillEditing !== null) requestSupports();
@@ -1999,7 +2173,10 @@
         calc.loaded = { name: c.name || name, key };
         calc.progress = d.progress || {};
         calc.extra = Array.isArray(d.extra) ? d.extra : [];
-        calc.jewels = d.jewels || {};
+        // 珠寶：完整載入一定換成角色的；只記角色名稱的分享連結，連結裡自己有珠寶就照連結的
+        if (full || !hashHasJewels) {
+          if (items) jewels = jewelsFromData(d.jewels || {}); else pendingJewelData = d.jewels || {};
+        }
         if (full) {
           const decoded = decodeCode(d.tree || "");
           if (!decoded) throw new Error("天賦代碼對不上（天賦樹改版過，請本人上線一次）");

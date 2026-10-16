@@ -2491,7 +2491,7 @@ ascendancies:
         cost: 1
         icon: NETHER_STAR
         stats:
-          - { stat: skill.level, type: FLAT, value: 1, tags: [spell] }
+          - { stat: skill.level, type: FLAT, value: 1, tags: [wyvern] }   # 2026-10：飛龍技能改成攻擊，原本的 +1 法術等級吃不到 → 改 +1 飛龍形態技能等級
 
   wildshaman:
     class: druid

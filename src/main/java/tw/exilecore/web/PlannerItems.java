@@ -45,6 +45,9 @@ public final class PlannerItems {
             final JsonArray tags = new JsonArray();
             base.tags().stream().sorted().forEach(tags::add);
             b.add("tags", tags);
+            if (base.isRadiusJewel()) {
+                b.addProperty("radius", true); // 遺時星晶：詞綴照範圍內的小點算
+            }
             if (base.implicit() != null && base.implicit().text() != null) {
                 b.addProperty("implicit", plain(base.implicit().text()));
                 b.add("implicitVars", ranges(base.implicit().vars()));
@@ -119,8 +122,9 @@ public final class PlannerItems {
         return GSON.toJson(root).getBytes(StandardCharsets.UTF_8);
     }
 
+    /** 規劃器配得到的：裝備欄位的東西，還有珠寶（2026-10-16：放進天賦樹的珠寶孔）。 */
     private static boolean wearable(final ItemSlot slot) {
-        return slot != null && slot != ItemSlot.MAP && slot != ItemSlot.JEWEL && slot != ItemSlot.FLASK && slot != ItemSlot.CHARM;
+        return slot != null && slot != ItemSlot.MAP && slot != ItemSlot.FLASK && slot != ItemSlot.CHARM;
     }
 
     private static JsonObject ranges(final Map<String, int[]> vars) {

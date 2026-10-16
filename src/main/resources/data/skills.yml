@@ -935,7 +935,7 @@ skills:
     icon: BONE
     type: spell
     tier: 5
-    tags: [spell, physical]
+    tags: [physical]
     mechanic: aura
     aura:
       reserve: 30
@@ -1127,7 +1127,7 @@ skills:
     icon: BLAZE_POWDER
     type: spell
     tier: 3
-    tags: [warcry, fire]
+    tags: [warcry]
     mechanic: warcry
     warcry:
       radius: 8
@@ -1192,7 +1192,7 @@ skills:
     icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
-    tags: [spell, chaos]
+    tags: [spell]
     mechanic: mark
     mark: { range: 22, radius: 3.0, duration: 6, effects: [ { stat: resist.chaos, type: FLAT, value: [-35, -49] } ] }   # 2026-10 PoE2
     cast_time: 0.7
@@ -1205,7 +1205,7 @@ skills:
     icon: PRISMARINE_CRYSTALS
     type: spell
     tier: 9
-    tags: [spell, fire, cold, lightning]
+    tags: [spell]
     mechanic: mark
     mark: { range: 22, radius: 3.0, duration: 6, effects: [ { stat: resist.fire, type: FLAT, value: [-18, -24] }, { stat: resist.cold, type: FLAT, value: [-18, -24] }, { stat: resist.lightning, type: FLAT, value: [-18, -24] } ] }   # 2026-10 PoE2
     cast_time: 0.7
@@ -1953,7 +1953,7 @@ skills:
     icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
-    tags: [spell, cold]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30          # 2026-10：25 → 30（照 PoE2 的 Arctic Armour）
@@ -2776,7 +2776,7 @@ skills:
     icon: BLAZE_POWDER
     type: spell
     tier: 7
-    tags: [spell, physical]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -2798,7 +2798,7 @@ skills:
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
-    tags: [spell, lightning]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -2819,7 +2819,7 @@ skills:
     icon: NETHER_STAR
     type: spell
     tier: 9
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 40
@@ -2839,7 +2839,7 @@ skills:
     icon: CLOCK
     type: spell
     tier: 7
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -2858,7 +2858,7 @@ skills:
     icon: LAPIS_LAZULI   # 2026-10：原本 LAPIS_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -3396,7 +3396,7 @@ skills:
     icon: QUARTZ   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 5
-    tags: [warcry, cold, shapeshift, werewolf]
+    tags: [warcry, shapeshift, werewolf]
     weapons: [talisman]   # 2026-10：變形技能都要拿獸魂符（照 PoE2；以前只有熊、狼人的攻擊技能有寫）
     mechanic: warcry
     warcry:
@@ -3421,7 +3421,7 @@ skills:
     # 2026-10-15 照 PoE2 的月光賜福重做：以前是常駐光環（附加 10～20% 冰冷、暴擊率），現在是會變身狼人的戰吼，
     #   冷卻 22 秒、增益 5 秒＋每點怒氣 0.2 秒；增益期間狼人攻擊打中落月光（lunar_moonbeam，SupportProcs）。
     #   poedb：額外獲得 40%～59% 冰冷、月光 65%～235%（我們的倍率約 PoE2 的 0.6）
-    tags: [cold, shapeshift, werewolf]
+    tags: [shapeshift, werewolf]
     mechanic: warcry
     warcry:
       radius: 4
@@ -3630,7 +3630,7 @@ skills:
     icon: STICK   # 2026-10：原本 TWISTING_VINES（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
-    tags: [spell, physical]
+    tags: [spell]
     mechanic: mark
     mark: { range: 22, radius: 3.0, duration: 6, taken: 15, tags: [physical], slow: [25, 40] }
     cast_time: 0.7
@@ -3644,7 +3644,7 @@ skills:
     icon: STICK   # 2026-10：原本 OAK_LOG（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
-    tags: [spell, physical]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -3663,7 +3663,7 @@ skills:
     icon: FLINT   # 2026-10：原本 SWEET_BERRIES（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
-    tags: [spell, physical]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -3682,7 +3682,7 @@ skills:
     icon: BLAZE_POWDER
     type: spell
     tier: 7
-    tags: [spell, physical]
+    tags: [physical]
     mechanic: aura
     aura:
       reserve: 30
@@ -4037,7 +4037,7 @@ skills:
     icon: NETHER_BRICK   # 2026-10：原本 NETHER_WART（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 13
-    tags: [spell, physical]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -4059,7 +4059,7 @@ skills:
     icon: NAUTILUS_SHELL   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 8
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30          # 2026-10：60 → 30（照 PoE2 的 Overwhelming Presence）
@@ -4081,7 +4081,7 @@ skills:
     icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4
-    tags: [spell, chaos]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -4100,7 +4100,7 @@ skills:
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
-    tags: [spell, lightning]
+    tags: [spell]
     mechanic: mark
     mark: { range: 22, duration: 8, self_only: true, taken: 10, effects: [ { stat: resist.lightning, type: FLAT, value: [-15, -30] } ] }
     cooldown: 3
@@ -4114,7 +4114,7 @@ skills:
     icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
-    tags: [spell, cold]
+    tags: [spell]
     mechanic: mark
     mark: { range: 22, duration: 8, self_only: true, taken: 10, effects: [ { stat: resist.cold, type: FLAT, value: [-15, -30] }, { stat: ailment.threshold, type: INCREASED, value: -30 } ] }
     cooldown: 3
@@ -4128,7 +4128,7 @@ skills:
     icon: NETHER_BRICK   # 2026-10：原本 RED_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9
-    tags: [spell, physical]
+    tags: [spell]
     mechanic: mark
     mark: { range: 22, duration: 8, self_only: true, taken: 10, effects: [ { stat: armour, type: MORE, value: [-30, -50] } ] }
     cooldown: 3
@@ -4142,7 +4142,7 @@ skills:
     icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
-    tags: [duration, cold]
+    tags: [duration]
     weapons: [bow]
     mechanic: guard
     guard:
@@ -4251,7 +4251,7 @@ skills:
     icon: GOLD_INGOT   # 2026-10：原本 GOLDEN_APPLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 8
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -4271,7 +4271,7 @@ skills:
     icon: PHANTOM_MEMBRANE
     type: spell
     tier: 4
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -4291,7 +4291,7 @@ skills:
     icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 4
-    tags: [spell, physical]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -4311,7 +4311,7 @@ skills:
     icon: BLAZE_POWDER
     type: spell
     tier: 14
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 100         # 2026-10：45 → 100（照 PoE2 的 Eternal Rage）
@@ -4331,7 +4331,7 @@ skills:
     icon: LAPIS_LAZULI
     type: spell
     tier: 4
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -4351,7 +4351,7 @@ skills:
     icon: BLAZE_ROD   # 2026-10：原本 BREWING_STAND（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 14
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -5182,7 +5182,7 @@ skills:
     icon: IRON_NUGGET
     type: spell
     tier: 8
-    tags: [spell, physical]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -5365,7 +5365,7 @@ skills:
     icon: STICK   # 2026-10：原本 ARMOR_STAND（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 6
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -5384,7 +5384,7 @@ skills:
     icon: PHANTOM_MEMBRANE   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: spell
     tier: 11
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 60          # 2026-10：45 → 60（照 PoE2 的 Mirage Archer）
@@ -5423,7 +5423,7 @@ skills:
     icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 4
-    tags: [duration, physical]
+    tags: [duration]
     weapons: [mace]
     mechanic: guard
     guard:
@@ -5464,7 +5464,7 @@ skills:
     icon: FEATHER
     type: spell
     tier: 3
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -5484,7 +5484,7 @@ skills:
     icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -5504,7 +5504,7 @@ skills:
     icon: SUGAR
     type: spell
     tier: 5
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30          # 2026-10：60 → 30（照 PoE2 的 Combat Frenzy）
@@ -5529,7 +5529,7 @@ skills:
     icon: LAPIS_LAZULI
     type: spell
     tier: 5
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 100
@@ -5554,7 +5554,7 @@ skills:
     icon: PRISMARINE_CRYSTALS
     type: spell
     tier: 5
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 60
@@ -5612,7 +5612,7 @@ skills:
     icon: MAGMA_CREAM
     type: spell
     tier: 13
-    tags: [warcry, fire]
+    tags: [warcry]
     weapons: [mace]
     mechanic: warcry
     warcry:
@@ -5681,7 +5681,7 @@ skills:
     icon: NETHER_STAR
     type: spell
     tier: 14
-    tags: [spell]
+    tags: []
     weapons: [quarterstaff, crossbow]
     mechanic: aura
     aura:
@@ -5703,7 +5703,7 @@ skills:
     icon: PRISMARINE_SHARD
     type: spell
     tier: 4
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -5724,7 +5724,7 @@ skills:
     icon: BONE   # 2026-10：原本 ROTTEN_FLESH（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 4
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -5745,7 +5745,7 @@ skills:
     icon: BONE   # 2026-10：原本 SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 14
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 60          # 2026-10：30 → 60（照 PoE2 的 Sacrifice）
@@ -5765,7 +5765,7 @@ skills:
     icon: AMETHYST_SHARD
     type: spell
     tier: 8
-    tags: [spell]
+    tags: []
     weapons: [crossbow]
     mechanic: aura
     aura:
@@ -5787,7 +5787,7 @@ skills:
     icon: LAPIS_LAZULI
     type: spell
     tier: 8
-    tags: [spell]
+    tags: []
     mechanic: aura
     aura:
       reserve: 30
@@ -5807,7 +5807,7 @@ skills:
     icon: HEART_OF_THE_SEA   # 2026-10：原本 END_CRYSTAL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 14
-    tags: [spell, fire, cold, lightning]
+    tags: []
     mechanic: aura
     aura:
       reserve: 100
@@ -6155,7 +6155,7 @@ skills:
     icon: PRISMARINE_CRYSTALS
     type: spell
     tier: 14
-    tags: [persistent, fire, cold, lightning]
+    tags: [persistent]
     mechanic: aura
     aura: { reserve: 100, radius: 8, allies: false }
     meta: { kind: ailment, energy: 10, energy_more: [0, 57] }

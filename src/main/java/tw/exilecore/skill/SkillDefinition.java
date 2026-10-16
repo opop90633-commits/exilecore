@@ -291,7 +291,11 @@ public record SkillDefinition(String id, String name, String description, String
             } else {
                 tags.add(Tags.AURA);
             }
-            tags.add(Tags.AREA); // 隊友在範圍內才有效：範圍效果的加成讓它更大
+            // 隊友在範圍內才有效：範圍效果的加成讓它更大。2026-10-16：沒有任何效果會分給範圍內的人（引星：只是觸發別的技能）
+            // 就不算範圍技能——擴散、凝聚這些範圍的輔助掛上去不會有作用，不要讓人誤會
+            if (!aura.effects().isEmpty() || aura.burn() || aura.enemy() != null || aura.onKill() != null) {
+                tags.add(Tags.AREA);
+            }
             // 2026-10：光環、常駐技能不算法術（照 PoE2：它們是「增益、常駐」）——法術的輔助掛不上、
             // 「+法術技能等級」與帶 spell 標籤的加成不吃。type 還是寫 spell：開光環的動作照施法時間算。
             // 捷光環例外：它的輔助會傳給擊殺效果（隱藏的法術），拿掉的話傷害類的輔助全部掛不上去
@@ -377,12 +381,24 @@ public record SkillDefinition(String id, String name, String description, String
         for (final YamlNode child : node.list("modifiers")) {
             modifiers.add(AffixMod.parse(child).toModifier(Map.of(), name));
         }
-        return new SkillDefinition(id, name, node.string("description", ""),
+        final SkillDefinition parsed = new SkillDefinition(id, name, node.string("description", ""),
                 node.string("icon", "BOOK"), type, Set.copyOf(tags), Set.copyOf(lower(node.strings("weapons"))),
                 starter == null ? null : CharacterClass.parse(starter, null).id(), node.bool("hidden", false), tier, mechanic,
                 attackSpeed, castTime, effectiveness, mana, damage, damageTypes, conversion,
                 params, visual, modifiers, cooldown, deploy, summon, aura, warcry, cooldownBypass, node.string("source", null));
+        // 2026-10-16：不會造成傷害的技能（增益光環、印記、詛咒、戰吼、護體、引星…）不帶傷害類型的標籤：
+        // 「冰冷傷害增加」這種本來就吃不到，「+冰冷技能等級」也不再算——不要讓人以為它吃元素的加成。
+        // 召喚物（召喚物打的傷害類型）與捷（擊殺時的爆炸會打人）照留
+        if (!parsed.dealsDamage() && summon == null && !tags.contains(Tags.HERALD) && tags.removeAll(DAMAGE_TYPE_TAGS)) {
+            return new SkillDefinition(id, name, parsed.description(), parsed.icon(), type, Set.copyOf(tags), parsed.weapons(), parsed.starter(),
+                    parsed.hidden(), tier, mechanic, attackSpeed, castTime, effectiveness, mana, damage, damageTypes, conversion,
+                    params, visual, parsed.modifiers(), cooldown, deploy, summon, aura, warcry, cooldownBypass, parsed.source());
+        }
+        return parsed;
     }
+
+    /** 傷害類型的標籤。 */
+    static final Set<String> DAMAGE_TYPE_TAGS = Set.of(Tags.PHYSICAL, Tags.FIRE, Tags.COLD, Tags.LIGHTNING, Tags.CHAOS, Tags.ELEMENTAL);
 
     /** { fire: 1.0, cold: 0.5 } 這種類型比例；normalize = true 時總和調成 1。 */
     private static Map<DamageType, Double> weights(final String where, final YamlNode node, final boolean normalize) {

@@ -282,6 +282,11 @@ public final class LevelRaceService {
         return value == Math.rint(value) ? String.valueOf((long) value) : String.valueOf(value);
     }
 
+    /** 到了就有的稱號名字（燃星者）。 */
+    public String reachTitleName() {
+        return race().reachTitle();
+    }
+
     /** 燃星者的經驗加成（0.05 = 多 5%）：帳號有這個稱號才有。 */
     public double experienceBonus(final Player player) {
         final BountyService bounties = plugin.bounties();

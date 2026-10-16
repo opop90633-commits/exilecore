@@ -44,6 +44,9 @@ final class LifeIslands {
     final class Island {
         final LifeConfig.Island def;
         final UUID owner;
+        /** 出航的那塊筏；一起來的人（2026-10-16：同一塊筏上的人一起出航，寶箱每個人各拿一份）。 */
+        int plot = -1;
+        final Set<UUID> crew = new HashSet<>();
         final int cx;
         final int cz;
         final long expireAt;
@@ -69,7 +72,7 @@ final class LifeIslands {
         }
     }
 
-    private record Voyage(LifeConfig.Island def, int arriveTick) {
+    private record Voyage(LifeConfig.Island def, int arriveTick, int plot) {
     }
 
     private record ActiveWeather(LifeConfig.Weather def, int untilTick) {
@@ -110,9 +113,60 @@ final class LifeIslands {
         return false;
     }
 
+    /** 這塊筏有沒有在航行、島還在（同一塊筏一次一趟）。 */
+    boolean busy(final int plot) {
+        for (final Voyage voyage : voyages.values()) {
+            if (voyage.plot() == plot) {
+                return true;
+            }
+        }
+        for (final Island island : islands.values()) {
+            if (island.plot == plot) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Voyage voyageOn(final int plot) {
+        for (final Voyage voyage : voyages.values()) {
+            if (voyage.plot() == plot) {
+                return voyage;
+            }
+        }
+        return null;
+    }
+
+    /** 這個人在的島（自己開的、跟著來的）。 */
+    private Island islandOf(final UUID id) {
+        final Island own = islands.get(id);
+        if (own != null) {
+            return own;
+        }
+        for (final Island island : islands.values()) {
+            if (island.crew.contains(id)) {
+                return island;
+            }
+        }
+        return null;
+    }
+
+    /** 島上一起的人（在線、在島上、沒倒下）。 */
+    private List<Player> crewHere(final Island island) {
+        final List<Player> here = new ArrayList<>();
+        for (final UUID id : island.crew) {
+            final Player player = plugin.getServer().getPlayer(id);
+            if (player != null && !player.isDead() && world() != null && world().equals(player.getWorld())
+                    && island.contains(player.getLocation().getX(), player.getLocation().getZ())) {
+                here.add(player);
+            }
+        }
+        return here;
+    }
+
     /** 漂流物的生成倍率（海象）。 */
     double driftFactor(final Player player) {
-        double factor = voyages.containsKey(player.getUniqueId()) ? 1.6 : 1.0; // 航行中漂流物變多
+        double factor = voyageOn(service.activePlot(player)) != null ? 1.6 : 1.0; // 航行中漂流物變多（同一塊筏上的人都算）
         final ActiveWeather weather = weathers.get(player.getUniqueId());
         if (weather != null) {
             factor *= weather.def().drift();
@@ -133,11 +187,11 @@ final class LifeIslands {
     }
 
     String status(final Player player) {
-        final Voyage voyage = voyages.get(player.getUniqueId());
+        final Voyage voyage = voyageOn(service.activePlot(player));
         if (voyage != null) {
             return "航行中：" + voyage.def().name() + "（" + Math.max(0, (voyage.arriveTick() - tick) / 10) + " 秒）";
         }
-        final Island island = islands.get(player.getUniqueId());
+        final Island island = islandOf(player.getUniqueId());
         if (island != null) {
             return "停在" + island.def.name() + "（" + Math.max(0, (island.expireAt - System.currentTimeMillis() + 59_999) / 60_000) + " 分鐘後漂走）";
         }
@@ -170,34 +224,48 @@ final class LifeIslands {
     /** 出發（海圖桌選單）；回傳問題，成功 null。 */
     String sail(final Player player, final LifeConfig.Island def) {
         final LifeService.Profile profile = service.profile(player);
-        if (profile == null || profile.plot < 0) {
+        final int plot = service.activePlot(player);
+        if (profile == null || plot < 0) {
             return "帳號資料載入中，請稍等";
+        }
+        if (!service.canBuild(player, profile, plot)) {
+            return "只有筏主、共用成員能掌舵";
         }
         final int level = config().levelOf(profile.xp);
         if (level < def.level()) {
             return "要生活等級 " + def.level();
         }
-        if (voyages.containsKey(player.getUniqueId())) {
+        if (voyages.containsKey(player.getUniqueId()) || voyageOn(plot) != null) {
             return "已經在航行了";
         }
-        if (service.whale().fighting(player)) {
+        if (service.whale().fighting(player) || service.whale().busy(plot)) {
             return "正在跟淵鯨打，先打完再出航";
         }
-        final int[] center = service.plotCenter(profile.plot);
-        if (!hasSail(center, config().raftSize(level))) {
+        final int[] center = service.plotCenter(plot);
+        if (!hasSail(center, config().raftSize(service.plotLevel(plot)))) {
             return "筏上要有一面船帆";
         }
         if (!service.spendStamina(player, profile, def.stamina())) {
             return "精力不夠（要 " + def.stamina() + "）";
         }
-        final Island old = islands.remove(player.getUniqueId());
-        if (old != null) {
-            clear(old);
+        // 這塊筏上的島（自己的、別人開的）先收掉：同一個位置
+        for (final java.util.Iterator<Map.Entry<UUID, Island>> it = islands.entrySet().iterator(); it.hasNext(); ) {
+            final Island old = it.next().getValue();
+            if (old.plot == plot || old.owner.equals(player.getUniqueId())) {
+                it.remove();
+                clear(old);
+            }
         }
-        voyages.put(player.getUniqueId(), new Voyage(def, tick + def.travelSeconds() * 10));
-        player.playSound(player.getLocation(), Sound.ENTITY_BOAT_PADDLE_WATER, 1f, 0.8f);
-        player.sendMessage(plugin.text().prefixed("<" + config().color() + ">起航：" + ItemRenderer.escape(def.name()) + "<gray>（"
-                + def.travelSeconds() + " 秒；路上漂流物會變多）"));
+        voyages.put(player.getUniqueId(), new Voyage(def, tick + def.travelSeconds() * 10, plot));
+        final List<Player> crew = service.crewOn(plot);
+        if (!crew.contains(player)) {
+            crew.add(player);
+        }
+        for (final Player member : crew) {
+            member.playSound(member.getLocation(), Sound.ENTITY_BOAT_PADDLE_WATER, 1f, 0.8f);
+            member.sendMessage(plugin.text().prefixed("<" + config().color() + ">起航：" + ItemRenderer.escape(def.name()) + "<gray>（"
+                    + def.travelSeconds() + " 秒；路上漂流物會變多" + (crew.size() > 1 ? "；筏上的人一起上島" : "") + "）"));
+        }
         return null;
     }
 
@@ -214,13 +282,15 @@ final class LifeIslands {
         if (voyage != null) {
             final int left = (voyage.arriveTick() - tick) / 10;
             if (tick % 10 == 0) {
-                player.sendActionBar(plugin.text().parse("<" + config().color() + ">⛵ 航向" + ItemRenderer.escape(voyage.def().name())
-                        + " <white>" + Math.max(0, left) + " 秒"));
+                for (final Player member : service.crewOn(voyage.plot())) {
+                    member.sendActionBar(plugin.text().parse("<" + config().color() + ">⛵ 航向" + ItemRenderer.escape(voyage.def().name())
+                            + " <white>" + Math.max(0, left) + " 秒"));
+                }
                 world().spawnParticle(Particle.SPLASH, player.getLocation().add(2, -0.5, 0), 20, 2, 0.1, 2, 0.1);
             }
             if (tick >= voyage.arriveTick()) {
                 voyages.remove(id);
-                arrive(player, profile, center, voyage.def());
+                arrive(player, profile, service.plotCenter(voyage.plot()), voyage.def(), voyage.plot());
             }
         }
         final Island island = islands.get(id);
@@ -275,13 +345,22 @@ final class LifeIslands {
                 }), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(1800), Duration.ofMillis(500))));
     }
 
-    /** 離開筏（下線、傳走）：島清掉、航行取消、天氣恢復。 */
+    /** 離開筏（下線、傳走）：自己開的島清掉、航行取消、天氣恢復；跟別人來的就只是不跟了。 */
     void leave(final Player player) {
         final UUID id = player.getUniqueId();
         voyages.remove(id);
         final Island island = islands.remove(id);
         if (island != null) {
+            for (final Player member : crewHere(island)) {
+                if (!member.equals(player)) {
+                    member.sendMessage(plugin.text().prefixed("<gray>開船的人離開了，" + ItemRenderer.escape(island.def.name()) + "漂走了"));
+                    member.teleportAsync(service.raftSpawn(island.plot));
+                }
+            }
             clear(island);
+        }
+        for (final Island other : islands.values()) {
+            other.crew.remove(id);
         }
         if (weathers.remove(id) != null) {
             player.resetPlayerWeather();
@@ -316,8 +395,17 @@ final class LifeIslands {
 
     // ---- 小島 ----
 
-    private void arrive(final Player player, final LifeService.Profile profile, final int[] center, final LifeConfig.Island def) {
+    private void arrive(final Player player, final LifeService.Profile profile, final int[] center, final LifeConfig.Island def, final int plot) {
         final Island island = new Island(def, player.getUniqueId(), center[0] + OFFSET, center[1]);
+        island.plot = plot;
+        island.crew.add(player.getUniqueId());
+        final List<Player> others = new ArrayList<>();
+        for (final Player member : service.crewOn(plot)) {
+            if (!member.equals(player)) {
+                island.crew.add(member.getUniqueId());
+                others.add(member);
+            }
+        }
         LifeService.holdChunks(plugin, world(), island.cx, island.cz, RADIUS, true); // 島存在的時候區塊不卸載（怪不會被收掉）
         clearRegion(island);
         switch (def.id()) {
@@ -342,6 +430,11 @@ final class LifeIslands {
             default -> 8;
         };
         player.teleportAsync(new Location(world(), island.cx - landing + 0.5, config().seaLevel() + 2.1, island.cz + 0.5, -90, 0));
+        for (final Player member : others) {
+            member.teleportAsync(new Location(world(), island.cx - landing + 0.5, config().seaLevel() + 2.1, island.cz + 1.5, -90, 0));
+            member.sendMessage(plugin.text().prefixed("<" + config().color() + ">跟著 " + ItemRenderer.escape(player.getName()) + " 抵達"
+                    + ItemRenderer.escape(def.name()) + "<gray>：" + hint(def) + "；寶箱每個人各拿一份"));
+        }
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_SPLASH_HIGH_SPEED, 0.8f, 1f);
         player.showTitle(Title.title(plugin.text().parse("<" + config().color() + ">" + ItemRenderer.escape(def.name())),
                 plugin.text().parse("<gray>島上可以放技能；回筏：/sea → 前往我的木筏"), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2000), Duration.ofMillis(500))));
@@ -365,17 +458,29 @@ final class LifeIslands {
         });
         if (System.currentTimeMillis() >= island.expireAt) {
             islands.remove(island.owner);
+            for (final UUID id : island.crew) {
+                final Player member = plugin.getServer().getPlayer(id);
+                if (member != null) {
+                    member.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(island.def.name()) + "漂走了"));
+                }
+            }
             clear(island);
-            player.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(island.def.name()) + "漂走了"));
             return;
         }
-        // 怪去追筏主（只有人在島上的時候；回到筏上就不打了——筏上不能放技能）
+        // 怪去追島上的人（只有人在島上的時候；回到筏上就不打了——筏上不能放技能）
         if (tick % 20 == 0) {
-            final boolean here = island.contains(player.getLocation().getX(), player.getLocation().getZ()) && !player.isDead();
+            final List<Player> crew = crewHere(island);
+            final boolean here = !crew.isEmpty();
             for (final UUID id : island.mobs) {
                 if (plugin.getServer().getEntity(id) instanceof Mob mob) {
                     if (here && !(mob.getTarget() instanceof Player)) {
-                        mob.setTarget(player);
+                        Player nearest = crew.get(0);
+                        for (final Player member : crew) {
+                            if (member.getLocation().distanceSquared(mob.getLocation()) < nearest.getLocation().distanceSquared(mob.getLocation())) {
+                                nearest = member;
+                            }
+                        }
+                        mob.setTarget(nearest);
                     } else if (!here && mob.getTarget() != null) {
                         mob.setTarget(null);
                     }
@@ -477,9 +582,8 @@ final class LifeIslands {
 
                 @Override
                 public boolean dormant() {
-                    // 筏主不在島上（回到筏上不能放技能）：不找人、不出招
-                    final Player owner = plugin.getServer().getPlayer(island.owner);
-                    return owner == null || owner.isDead() || !island.contains(owner.getLocation().getX(), owner.getLocation().getZ());
+                    // 一起來的人都不在島上（回到筏上不能放技能）：不找人、不出招
+                    return crewHere(island).isEmpty();
                 }
 
                 @Override
@@ -496,9 +600,8 @@ final class LifeIslands {
                 }
             });
         }
-        final Player owner = plugin.getServer().getPlayer(island.owner);
-        if (owner != null) {
-            owner.showTitle(Title.title(plugin.text().parse("<#ff9b6b>" + ItemRenderer.escape(def.name())), plugin.text().parse("<gray>" + ItemRenderer.escape(island.def.name())),
+        for (final Player member : crewHere(island)) {
+            member.showTitle(Title.title(plugin.text().parse("<#ff9b6b>" + ItemRenderer.escape(def.name())), plugin.text().parse("<gray>" + ItemRenderer.escape(island.def.name())),
                     Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1800), Duration.ofMillis(400))));
         }
     }
@@ -557,6 +660,10 @@ final class LifeIslands {
         }
         final String at = LifeService.key(block.getX(), block.getY(), block.getZ());
         if (island.pillars.contains(at)) {
+            if (!island.crew.contains(player.getUniqueId())) {
+                player.sendActionBar(plugin.text().parse("<gray>這是別人的島"));
+                return true;
+            }
             if (!island.mobs.isEmpty()) {
                 player.sendActionBar(plugin.text().parse("<red>先打倒守衛（還有 " + island.mobs.size() + " 隻）"));
                 return true;
@@ -573,7 +680,7 @@ final class LifeIslands {
         if (!island.chests.contains(at)) {
             return block.getType() == Material.CHEST;
         }
-        if (!island.owner.equals(player.getUniqueId())) {
+        if (!island.crew.contains(player.getUniqueId())) {
             player.sendActionBar(plugin.text().parse("<gray>這是別人的島"));
             return true;
         }
@@ -587,14 +694,23 @@ final class LifeIslands {
         }
         island.chests.remove(at);
         place(block, Material.AIR.createBlockData());
-        openChest(player, island);
+        // 一起來、在島上的人每個人各拿一份
+        final List<Player> crew = crewHere(island);
+        if (!crew.contains(player)) {
+            crew.add(player);
+        }
+        for (final Player member : crew) {
+            openChest(member, island);
+        }
         if (island.chests.isEmpty() && (!"atoll".equals(island.def.id()) || island.captainOut)) {
             island.done = true;
-            final LifeService.Profile profile = service.profile(player);
-            if (profile != null) {
-                service.addXp(player, profile, island.def.xp());
+            for (final Player member : crew) {
+                final LifeService.Profile profile = service.profile(member);
+                if (profile != null) {
+                    service.addXp(member, profile, island.def.xp());
+                }
+                member.sendMessage(plugin.text().prefixed("<" + config().color() + ">" + ItemRenderer.escape(island.def.name()) + "探索完了！<gray>生活經驗 +" + island.def.xp()));
             }
-            player.sendMessage(plugin.text().prefixed("<" + config().color() + ">" + ItemRenderer.escape(island.def.name()) + "探索完了！<gray>生活經驗 +" + island.def.xp()));
         }
         return true;
     }

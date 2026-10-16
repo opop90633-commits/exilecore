@@ -70,8 +70,17 @@ public final class LifeMenu extends Menu {
         info.add("<gray>生活等級、材料、筏都是帳號共用的");
         set(SLOT_INFO, icon(Material.OAK_BOAT, "<" + color() + ">" + ItemRenderer.escape(config.name()), info));
 
-        set(SLOT_TRAVEL, icon(Material.ENDER_PEARL, "<#7fd4ff>前往我的木筏", "<gray>免費；回營地：/town", "<gray>筏上不能放技能，快捷列照原版用（島上、打淵鯨可以）",
-                "", "<yellow>左鍵：傳送"));
+        final int leaderPlot = service.leaderPlot(player);
+        final List<String> travel = new ArrayList<>(List.of("<gray>免費；回營地：/town", "<gray>筏上不能放技能，快捷列照原版用（島上、打淵鯨可以）", "",
+                "<#f5b942>一起玩：", "<gray>/sea invite 玩家　邀請別人來你待的筏", "<gray>/sea visit 玩家　去隊友、共用、邀請你的人的筏",
+                "<gray>/sea member add 玩家　共用木筏（一起蓋、收網、掌舵）", "<gray>隊伍：隊長在海上時，隊員會到隊長的筏；筏上的人一起出航、打淵鯨", ""));
+        if (leaderPlot >= 0) {
+            travel.add("<yellow>左鍵：去隊長的筏（" + ItemRenderer.escape(service.ownerName(leaderPlot)) + " 的）");
+            travel.add("<yellow>右鍵：回自己的筏");
+        } else {
+            travel.add("<yellow>左鍵：傳送");
+        }
+        set(SLOT_TRAVEL, icon(Material.ENDER_PEARL, "<#7fd4ff>前往我的木筏", travel.toArray(new String[0])));
 
         final List<String> mats = new ArrayList<>();
         for (final LifeConfig.Material material : config.materials().values()) {
@@ -180,7 +189,7 @@ public final class LifeMenu extends Menu {
         }
         if (slot == SLOT_TRAVEL) {
             player.closeInventory();
-            final String problem = service.travel(player);
+            final String problem = service.travel(player, !click.isRightClick());
             if (problem != null) {
                 player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
             }

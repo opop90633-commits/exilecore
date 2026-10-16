@@ -405,7 +405,53 @@ public final class BuildCalc {
             }
         }
         root.add("skills", rows);
+        root.add("jewels", jewelEffects(build));
         return GSON.toJson(root).getBytes(StandardCharsets.UTF_8);
+    }
+
+    /**
+     * 珠寶孔裡的珠寶實際給了什麼（2026-10-16：網頁天賦樹上直接看得到）：每個有配、有放珠寶的孔位一筆——
+     * 半徑（遺時星晶才有）、範圍內已配的節點、這顆珠寶加在角色身上的所有效果（遺時星晶的「範圍內小點各給 x」已經乘上小點數）。
+     */
+    private JsonArray jewelEffects(final Build build) {
+        final JsonArray out = new JsonArray();
+        final PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
+        final tw.exilecore.item.ItemRepository repository = plugin.items() == null ? null : plugin.items().repository();
+        if (tree == null || repository == null) {
+            return out;
+        }
+        for (final Map.Entry<String, ItemData> entry : build.jewels().entrySet()) {
+            final tw.exilecore.passive.PassiveNode socket = tree.node(entry.getKey());
+            final ItemData data = normalize(repository, entry.getValue());
+            if (socket == null || !socket.isSocket() || data == null || !build.passives().contains(socket.id())) {
+                continue;
+            }
+            final tw.exilecore.item.ItemBase base = repository.base(data.base());
+            final List<Modifier> mods;
+            try {
+                mods = tw.exilecore.passive.JewelSockets.modifiers(repository, Map.of(socket.id(), data), build.passives(), tree);
+            } catch (final RuntimeException e) {
+                continue;
+            }
+            final JsonObject jewel = new JsonObject();
+            jewel.addProperty("node", socket.id());
+            final JsonArray inRange = new JsonArray();
+            if (base != null && base.isRadiusJewel()) {
+                final double radius = tw.exilecore.passive.JewelSockets.radiusOf(tw.exilecore.item.ItemStats.modifiers(repository, data));
+                jewel.addProperty("radius", radius);
+                for (final tw.exilecore.passive.PassiveNode near : tw.exilecore.passive.JewelSockets.nodesInRadius(tree, socket, radius)) {
+                    if (build.passives().contains(near.id())) {
+                        inRange.add(near.id());
+                    }
+                }
+            }
+            jewel.add("inRange", inRange);
+            final JsonArray lines = new JsonArray();
+            tw.exilecore.skill.ModifierText.describeAll(mods).forEach(lines::add);
+            jewel.add("lines", lines);
+            out.add(jewel);
+        }
+        return out;
     }
 
     private static SkillService.AuraView auraView(final Result result) {

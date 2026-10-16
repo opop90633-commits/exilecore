@@ -60,6 +60,9 @@ final class LifeWhale {
 
     private final class Fight {
         final UUID owner;
+        /** 吹號角的那塊筏；一起打的人（2026-10-16：筏上的人一起進場，之後走進場地的也算；打倒了每個人各拿一份）。 */
+        int plot = -1;
+        final Set<UUID> crew = new HashSet<>();
         final int cx;
         final int cz;
         final long startMillis = System.currentTimeMillis();
@@ -122,7 +125,58 @@ final class LifeWhale {
     }
 
     boolean fighting(final Player player) {
-        return fights.containsKey(player.getUniqueId());
+        return fightOf(player.getUniqueId()) != null;
+    }
+
+    /** 這個人在打的那一場（吹號角的、一起打的）。 */
+    private Fight fightOf(final UUID id) {
+        final Fight own = fights.get(id);
+        if (own != null) {
+            return own;
+        }
+        for (final Fight fight : fights.values()) {
+            if (fight.crew.contains(id)) {
+                return fight;
+            }
+        }
+        return null;
+    }
+
+    /** 這塊筏的淵鯨在不在。 */
+    boolean busy(final int plot) {
+        for (final Fight fight : fights.values()) {
+            if (fight.plot == plot) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 這一場的人（吹號角的＋一起打的，在線上）。 */
+    private List<Player> audience(final Fight fight) {
+        final List<Player> list = new ArrayList<>();
+        final Player owner = plugin.getServer().getPlayer(fight.owner);
+        if (owner != null) {
+            list.add(owner);
+        }
+        for (final UUID id : fight.crew) {
+            final Player member = plugin.getServer().getPlayer(id);
+            if (member != null && !list.contains(member)) {
+                list.add(member);
+            }
+        }
+        return list;
+    }
+
+    /** 在場地上、沒倒下的人。 */
+    private List<Player> onArena(final Fight fight) {
+        final List<Player> list = new ArrayList<>();
+        for (final Player player : audience(fight)) {
+            if (!player.isDead() && world().equals(player.getWorld()) && fight.contains(player.getLocation().getX(), player.getLocation().getZ())) {
+                list.add(player);
+            }
+        }
+        return list;
     }
 
     /** 這是不是淵鯨（MapService：每秒傷害上限、掉落不吃加成）。 */
@@ -262,19 +316,32 @@ final class LifeWhale {
     private String summon(final Player player) {
         final LifeConfig.Whale def = config().whale();
         final LifeService.Profile profile = service.profile(player);
-        if (profile == null || profile.plot < 0) {
+        final int plot = service.activePlot(player);
+        if (profile == null || plot < 0) {
             return "帳號資料載入中，請稍等";
         }
-        if (world() == null || !world().equals(player.getWorld()) || service.plotAt(player.getLocation().getX(), player.getLocation().getZ()) != profile.plot
+        if (world() == null || !world().equals(player.getWorld()) || service.plotAt(player.getLocation().getX(), player.getLocation().getZ()) != plot
                 || !service.lifeMode(player.getLocation())) {
-            return "要在自己的筏上吹";
+            return "要在筏上吹";
         }
-        if (fights.containsKey(player.getUniqueId())) {
+        if (!service.canBuild(player, profile, plot)) {
+            return "只有筏主、共用成員能在這塊筏上吹";
+        }
+        if (fightOf(player.getUniqueId()) != null || busy(plot)) {
             return def.name() + "已經在了";
         }
-        final int[] center = service.plotCenter(profile.plot);
-        service.islands().dismiss(player); // 島、航行收掉（同一個位置）
+        final int[] center = service.plotCenter(plot);
+        service.islands().dismiss(player); // 自己開的島、航行收掉（同一個位置）
+        if (service.islands().busy(plot)) {
+            return "這塊筏的船還在外面（等島漂走、或開船的人回來）";
+        }
         final Fight fight = new Fight(player.getUniqueId(), center[0] + LifeIslands.OFFSET, center[1]);
+        fight.plot = plot;
+        for (final Player member : service.crewOn(plot)) {
+            if (!member.equals(player) && fightOf(member.getUniqueId()) == null) {
+                fight.crew.add(member.getUniqueId());
+            }
+        }
         LifeService.holdChunks(plugin, world(), fight.cx, fight.cz, RADIUS, true); // 打的時候場地的區塊不卸載
         buildArena(fight);
         final MapStats stats = like();
@@ -292,7 +359,7 @@ final class LifeWhale {
             boss.getPersistentDataContainer().set(service.driftKey(), PersistentDataType.STRING, TAG + player.getUniqueId());
             fight.boss = boss;
             fights.put(player.getUniqueId(), fight); // 先登記：decorateBoss 算屬性表時 augment 認得
-            plugin.monsters().fixPlayers(boss, 1);
+            plugin.monsters().fixPlayers(boss, 1 + fight.crew.size()); // 一起打的人多，血量照隊伍的規則加
             plugin.monsters().decorateBoss(boss, fight.level, def.name(), def.mods(), def.life() * tierLife / Math.max(0.1, type.lifeMultiplier()),
                     def.damage() / Math.max(0.1, type.damageMultiplier()), def.scale());
         } catch (final RuntimeException e) {
@@ -315,13 +382,16 @@ final class LifeWhale {
             knockback.setBaseValue(1.0);
         }
         attachSkills(fight);
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.players().markDirty(player), 10L); // 巔峰的玩家詞綴
-        player.teleportAsync(new Location(world(), fight.cx - RADIUS + 3.5, config().seaLevel() + 2.1, fight.cz + 0.5, -90, 0));
-        player.showBossBar(fight.bar);
-        player.showTitle(Title.title(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(def.name())), plugin.text().parse("<gray>深淵巨獸"),
-                Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2400), Duration.ofMillis(600))));
-        if (!def.intro().isBlank()) {
-            player.sendMessage(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(def.intro())));
+        int slot = 0;
+        for (final Player member : audience(fight)) {
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.players().markDirty(member), 10L); // 巔峰的玩家詞綴
+            member.teleportAsync(new Location(world(), fight.cx - RADIUS + 3.5, config().seaLevel() + 2.1, fight.cz + 0.5 + (slot++ % 5 - 2), -90, 0));
+            member.showBossBar(fight.bar);
+            member.showTitle(Title.title(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(def.name())), plugin.text().parse("<gray>深淵巨獸"),
+                    Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2400), Duration.ofMillis(600))));
+            if (!def.intro().isBlank()) {
+                member.sendMessage(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(def.intro())));
+            }
         }
         world().playSound(fight.center(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 1.2f, 0.5f);
         world().spawnParticle(Particle.SPLASH, fight.center().add(0, 4, 0), 300, 6, 2, 6, 0.4);
@@ -389,9 +459,7 @@ final class LifeWhale {
             @Override
             public boolean dormant() {
                 // 護盾中、挑戰的人不在場地上（回到筏上不能放技能）：不找人、不出招
-                final Player owner = plugin.getServer().getPlayer(fight.owner);
-                return fight.shieldUntil > 0 || owner == null || owner.isDead()
-                        || !fight.contains(owner.getLocation().getX(), owner.getLocation().getZ());
+                return fight.shieldUntil > 0 || onArena(fight).isEmpty();
             }
         });
     }
@@ -467,11 +535,27 @@ final class LifeWhale {
         if (boss.getLocation().distanceSquared(home) > 7 * 7 || Math.abs(boss.getLocation().getY() - home.getY()) > 2) {
             boss.teleport(home.setDirection(at.toVector().subtract(home.toVector())));
         }
+        // 後來走進（游進）場地、待在這塊筏上的人也算一起打
+        for (final Player nearby : world().getPlayers()) {
+            if (!nearby.isDead() && !nearby.equals(owner) && !fight.crew.contains(nearby.getUniqueId()) && service.activePlot(nearby) == fight.plot
+                    && fight.contains(nearby.getLocation().getX(), nearby.getLocation().getZ()) && fightOf(nearby.getUniqueId()) == null) {
+                fight.crew.add(nearby.getUniqueId());
+                nearby.showBossBar(fight.bar);
+                plugin.players().markDirty(nearby);
+            }
+        }
         // 只打場地上的人；回到筏上（不能放技能）就不追
-        final boolean onArena = !owner.isDead() && fight.contains(at.getX(), at.getZ());
+        final List<Player> fighters = onArena(fight);
+        final boolean onArena = !fighters.isEmpty();
         if (boss instanceof Mob mob) {
-            if (onArena && !(mob.getTarget() instanceof Player)) {
-                mob.setTarget(owner);
+            if (onArena && !(mob.getTarget() instanceof Player target && fighters.contains(target))) {
+                Player nearest = fighters.get(0);
+                for (final Player member : fighters) {
+                    if (member.getLocation().distanceSquared(boss.getLocation()) < nearest.getLocation().distanceSquared(boss.getLocation())) {
+                        nearest = member;
+                    }
+                }
+                mob.setTarget(nearest);
             } else if (!onArena && mob.getTarget() != null) {
                 mob.setTarget(null);
             }
@@ -489,7 +573,9 @@ final class LifeWhale {
         if (!fight.enraged && now - fight.startMillis > def.enrageAfter() * 1000L) {
             fight.enraged = true;
             plugin.monsters().invalidate(boss.getUniqueId());
-            owner.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(def.name()) + "狂暴了：傷害更多 " + Math.round(def.enrageDamage()) + "%"));
+            for (final Player member : audience(fight)) {
+                member.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(def.name()) + "狂暴了：傷害更多 " + Math.round(def.enrageDamage()) + "%"));
+            }
             world().playSound(boss.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_AMBIENT, 1.5f, 0.5f);
         }
         // 換階段
@@ -499,14 +585,16 @@ final class LifeWhale {
             final LifeConfig.WhalePhase next = def.phases().get(fight.phase);
             fight.phase++;
             plugin.monsters().invalidate(boss.getUniqueId());
-            owner.showTitle(Title.title(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(next.name())),
-                    plugin.text().parse("<gray>" + ItemRenderer.escape(next.message())),
-                    Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(2000), Duration.ofMillis(400))));
+            for (final Player member : audience(fight)) {
+                member.showTitle(Title.title(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(next.name())),
+                        plugin.text().parse("<gray>" + ItemRenderer.escape(next.message())),
+                        Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(2000), Duration.ofMillis(400))));
+            }
             if (next.shieldCount() > 0) {
                 raiseShield(fight, next);
             }
         }
-        updateShield(fight, owner);
+        updateShield(fight);
         fight.bar.progress((float) fraction);
         final long left = Math.max(0, (fight.startMillis + def.minutes() * 60_000L - now) / 1000);
         fight.bar.name(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(def.name()) + " <gray>Lv." + fight.level
@@ -549,15 +637,14 @@ final class LifeWhale {
             fight.boss.setInvulnerable(false);
             return;
         }
-        final Player owner = plugin.getServer().getPlayer(fight.owner);
-        if (owner != null) {
+        for (final Player owner : audience(fight)) {
             owner.sendMessage(plugin.text().prefixed("<#ffd27f>⛨ " + ItemRenderer.escape(config().whale().name()) + "被潮水包住了：" + phase.shieldSeconds()
                     + " 秒內打掉 " + fight.cores.size() + " 顆「" + ItemRenderer.escape(phase.shieldName()) + "」，不然牠會回復 " + Math.round(phase.shieldHeal()) + "% 生命"));
         }
         world().playSound(fight.boss.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.0f, 0.6f);
     }
 
-    private void updateShield(final Fight fight, final Player owner) {
+    private void updateShield(final Fight fight) {
         if (fight.shieldUntil == 0) {
             return;
         }
@@ -568,7 +655,9 @@ final class LifeWhale {
         if (fight.cores.isEmpty()) {
             fight.shieldUntil = 0;
             fight.boss.setInvulnerable(false);
-            owner.sendMessage(plugin.text().prefixed("<#ffd27f>⛨ 潮核全部打掉了，護盾破了！"));
+            for (final Player owner : audience(fight)) {
+                owner.sendMessage(plugin.text().prefixed("<#ffd27f>⛨ 潮核全部打掉了，護盾破了！"));
+            }
             world().playSound(fight.boss.getLocation(), Sound.BLOCK_GLASS_BREAK, 1.2f, 0.6f);
             return;
         }
@@ -580,8 +669,10 @@ final class LifeWhale {
             removeCores(fight);
             fight.shieldUntil = 0;
             fight.boss.setInvulnerable(false);
-            owner.sendMessage(plugin.text().prefixed("<red>⛨ 時間到：" + ItemRenderer.escape(config().whale().name()) + "回復了 "
-                    + Math.round(fight.shield == null ? 0 : fight.shield.shieldHeal()) + "% 生命"));
+            for (final Player owner : audience(fight)) {
+                owner.sendMessage(plugin.text().prefixed("<red>⛨ 時間到：" + ItemRenderer.escape(config().whale().name()) + "回復了 "
+                        + Math.round(fight.shield == null ? 0 : fight.shield.shieldHeal()) + "% 生命"));
+            }
         }
     }
 
@@ -644,16 +735,27 @@ final class LifeWhale {
                 if (plugin.skills() != null) {
                     plugin.skills().bossSkills().detach(entity.getUniqueId());
                 }
-                final Player owner = plugin.getServer().getPlayer(fight.owner);
-                if (owner != null) {
-                    reward(owner, fight);
+                // 一起打、還在場地或筏上的人每個人各拿一份（全服公告一次）
+                final List<Player> winners = new ArrayList<>();
+                for (final Player member : audience(fight)) {
+                    if (world().equals(member.getWorld()) && (fight.contains(member.getLocation().getX(), member.getLocation().getZ())
+                            || service.activePlot(member) == fight.plot)) {
+                        winners.add(member);
+                    }
+                }
+                final List<String> names = new ArrayList<>();
+                for (final Player member : winners) {
+                    names.add(member.getName());
+                }
+                for (int i = 0; i < winners.size(); i++) {
+                    reward(winners.get(i), fight, i == 0 ? String.join("、", names) : null);
                 }
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> end(fight, null), 20L * 8);
             }
         }
     }
 
-    private void reward(final Player player, final Fight fight) {
+    private void reward(final Player player, final Fight fight, final String announce) {
         final LifeConfig.Whale def = config().whale();
         if (def == null) {
             return;
@@ -726,8 +828,11 @@ final class LifeWhale {
             player.sendMessage(plugin.text().prefixed("<#5fd3ff>第一次打倒" + ItemRenderer.escape(def.name()) + "！獲得稱號「"
                     + ItemRenderer.escape(config().titles().get("abyss_hunter").name()) + "」（稱號選單可以戴）"));
         }
+        if (announce == null) {
+            return;
+        }
         for (final Player online : plugin.getServer().getOnlinePlayers()) {
-            online.sendMessage(plugin.text().prefixed("<#5fd3ff>🐋 " + ItemRenderer.escape(player.getName()) + " 在" + ItemRenderer.escape(config().name())
+            online.sendMessage(plugin.text().prefixed("<#5fd3ff>🐋 " + ItemRenderer.escape(announce) + " 在" + ItemRenderer.escape(config().name())
                     + "打倒了深淵巨獸「" + ItemRenderer.escape(def.name()) + "」！<gray>（" + String.format(Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60) + "）"));
         }
         plugin.getSLF4JLogger().info("[Boss 紀錄] {}：{} 被 {} 打倒（{} 秒、倒下 {} 次）", config().name(), def.name(), player.getName(), seconds, fight.deaths);
@@ -745,7 +850,7 @@ final class LifeWhale {
 
     /** 挑戰中倒下：重生在場地邊上（不用從筏游過來）；不是 null。 */
     Location respawn(final Player player) {
-        final Fight fight = fights.get(player.getUniqueId());
+        final Fight fight = fightOf(player.getUniqueId());
         if (fight == null || fight.done) {
             return null;
         }
@@ -759,6 +864,12 @@ final class LifeWhale {
         final Fight fight = fights.get(player.getUniqueId());
         if (fight != null && !fight.done) {
             end(fight, null);
+        }
+        for (final Fight other : fights.values()) {
+            if (other.crew.remove(player.getUniqueId())) {
+                player.hideBossBar(other.bar);
+                plugin.players().markDirty(player);
+            }
         }
     }
 
@@ -783,8 +894,7 @@ final class LifeWhale {
             }
         }
         fight.adds.clear();
-        final Player owner = plugin.getServer().getPlayer(fight.owner);
-        if (owner != null) {
+        for (final Player owner : audience(fight)) {
             owner.hideBossBar(fight.bar);
             plugin.players().markDirty(owner);
             if (reason != null && !reason.isBlank()) {
