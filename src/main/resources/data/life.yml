@@ -3,11 +3,11 @@
 #
 #   ・海域是獨立的世界 exilecore:sea（整片海），每人一塊筏。選單 → 星骸之海（/sea）前往自己的木筏，/town 回營地。
 #     筏上不能放技能（跟營地一樣），快捷列照原版用；渦齒鯊來咬的筏、小島、淵鯨的場地是戰鬥區。
-#   ・漂流物從東邊漂過來；拿著星索鉤對準 range 格內的漂流物按右鍵撈起來（花 1 點精力）。
+#   ・漂流物從東邊漂過來；拿著星索鉤對準 range 格內的漂流物按右鍵撈起來（2026-10-16 起不花精力：drift.stamina）。
 #   ・材料（浮木、帆布…）記在帳號裡，不能交易；做出來的成品（筏的方塊、料理、深淵號角）可以交易。
 #   ・筏只有自己能蓋、能拆；多大照生活等級（raft_size）。地板、攔截網蓋在水面那一層、要接在原本的地板旁邊；其他蓋在地板上面。
 #   ・攔截網放在筏邊（水面那一層），漂過去的東西會被攔住（每張最多 net.capacity 樣），右鍵收。不花精力。
-#   ・精力每天（timezone 的半夜）回滿；撈東西、做工具、出航花精力，做筏的方塊不花（材料就是限制）。
+#   ・精力每天（timezone 的半夜）回滿；做工具、種田、料理、出航花精力；撈東西、釣魚、做筏的方塊不花（2026-10-16）。
 
 settings:
   enabled: true
@@ -79,6 +79,7 @@ drift:
   spawn_seconds: [1.0, 2.2]   # 隔幾秒漂來一個（隨機）
   max_per_player: 20
   speed: 0.06                 # 每 tick 漂幾格
+  stamina: 0                  # 撈一個花幾點精力（2026-10-16：1 → 0，撈東西不花；島、號角、料理照樣花）
   items:
     - { id: driftwood,  weight: 40,  display: OAK_LOG,           gives: { driftwood: [1, 2] }, xp: 3 }
     - { id: canvas,     weight: 20,  display: WHITE_WOOL,        gives: { canvas: [1, 1] },    xp: 3 }
@@ -283,7 +284,7 @@ crops:
 fishing:
   wait_seconds: [3, 8]
   bite_ticks: 30
-  stamina: 1
+  stamina: 0                  # 2026-10-16：1 → 0，釣魚不花精力
   xp: 5
   fish:
     - { material: silver_fish, weight: 70, level: 1, night_weight: 55 }

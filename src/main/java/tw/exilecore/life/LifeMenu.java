@@ -101,7 +101,7 @@ public final class LifeMenu extends Menu {
                 "<gray>6. 對著水面拋線可以釣魚；渦齒鯊來咬筏時可以放技能打牠",
                 "<gray>7. 研究「航海」做海圖桌和船帆，就能開到小島探索（島上可以放技能）",
                 "<gray>8. 環礁的號角碎片在海圖桌做成深淵號角，在筏上吹：深淵巨獸淵鯨",
-                "<dark_gray>撈東西、做工具、出航花精力；做筏的方塊不花"));
+                "<dark_gray>做工具、種田、料理、出航花精力；撈東西、釣魚、做筏的方塊不花"));
 
         set(18, rowLabel(Material.CRAFTING_TABLE, "<#f5b942>製作", "左鍵做 1 次；Shift＋左鍵做 5 次（工具一次一個）"));
         int slot = FIRST_RECIPE;

@@ -1447,7 +1447,7 @@ public final class LifeService {
             }
             return true;
         }
-        if (!spendStamina(player, profile, 1)) {
+        if (!spendStamina(player, profile, config.driftStamina())) { // 2026-10-16：撈東西預設不花精力（life.yml 的 drift.stamina）
             return true;
         }
         best.pulling = true;

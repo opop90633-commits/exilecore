@@ -132,6 +132,7 @@ public final class LifeConfig {
     private double[] spawnSeconds = {1.0, 2.2};
     private int maxDrifts = 20;
     private double driftSpeed = 0.06;
+    private int driftStamina = 0;   // 2026-10-16：撈漂流物花幾點精力（0 = 不花）
     private List<Drift> drifts = List.of();
     private double bottleCurrencyChance = 0.3;
     private int bottleDailyCurrency = 10;
@@ -190,6 +191,7 @@ public final class LifeConfig {
         spawnSeconds = o.spawnSeconds;
         maxDrifts = o.maxDrifts;
         driftSpeed = o.driftSpeed;
+        driftStamina = o.driftStamina;
         drifts = o.drifts;
         bottleCurrencyChance = o.bottleCurrencyChance;
         bottleDailyCurrency = o.bottleDailyCurrency;
@@ -291,6 +293,7 @@ public final class LifeConfig {
         }
         maxDrifts = Math.max(1, d.integer("max_per_player", maxDrifts));
         driftSpeed = Math.max(0.01, Math.min(0.5, d.decimal("speed", driftSpeed)));
+        driftStamina = Math.max(0, d.integer("stamina", driftStamina));
         final List<Drift> driftList = new ArrayList<>();
         for (final YamlNode node : d.list("items")) {
             final String id = node.requireString("id").trim();
@@ -889,6 +892,11 @@ public final class LifeConfig {
 
     public double driftSpeed() {
         return driftSpeed;
+    }
+
+    /** 撈一個漂流物花幾點精力（2026-10-16；0 = 不花）。 */
+    public int driftStamina() {
+        return driftStamina;
     }
 
     public List<Drift> drifts() {
