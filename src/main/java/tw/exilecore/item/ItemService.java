@@ -166,12 +166,21 @@ public final class ItemService {
             return false;
         }
         if (!oldRender && !checkUnique) {
-            // 2026-10-16：外觀是新版畫的，但說明跟資料對不上（沒跟著更新）也重畫；登入、打開倉庫時都會檢查
-            if (!renderer.outdated(stack, data.get())) {
+            // 2026-10-16：外觀是新版畫的，但說明跟資料對不上（沒跟著更新）也重畫；登入、打開倉庫時都會檢查。
+            // 先補詞綴後來多出來的變數；還是畫不出來就原樣不動（不能讓整個倉庫、市集因為一件裝備起不來）
+            try {
+                final boolean upgraded = AffixUpgrade.apply(repository, data.get());
+                if (!upgraded && !renderer.outdated(stack, data.get())) {
+                    return false;
+                }
+                renderer.render(stack, data.get());
+                if (upgraded) {
+                    codec.write(stack, data.get());
+                }
+                return true;
+            } catch (final RuntimeException e) {
                 return false;
             }
-            renderer.render(stack, data.get());
-            return true;
         }
         // 2026-10：詞綴後來多出來的變數也補上（不補的話重畫時丟「缺少變數」，整個倉庫被當成資料損毀）
         final boolean upgraded = UniqueUpgrade.apply(repository, data.get()) | AffixUpgrade.apply(repository, data.get());
