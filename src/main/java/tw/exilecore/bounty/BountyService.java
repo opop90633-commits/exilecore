@@ -468,7 +468,9 @@ public final class BountyService {
     public long experience(final Player player, final double fraction) {
         final int level = plugin.players().get(player).level();
         final long base = config.rewardExperience(fraction, level, plugin.players().config()::experienceToNext);
-        return Math.round(base * plugin.players().config().experienceBonus());
+        // 2026-10-16：個人經驗加倍藥也吃（跟全服加起來算：全服 ×2.1、個人 ×2 → ×3.1）
+        final double personal = plugin.sponsors() == null ? 0 : plugin.sponsors().personalExperience(player);
+        return Math.round(base * plugin.players().config().experienceBonus() * (1 + personal));
     }
 
     private void notice(final Player player, final BountyBoard.Counted counted) {

@@ -57,10 +57,58 @@ public final class StatsReport {
         final double ownRarity = sheet.increased(StatKeys.DROP_RARITY, Set.of()) * 100;
         final double serverQuantity = tw.exilecore.sponsor.Boosts.quantity() * 100;
         final double serverRarity = tw.exilecore.sponsor.Boosts.rarity() * 100;
+        // 2026-10-16：個人加倍藥（在屬性表裡，已經算在自己的裡面）也寫出含多少
+        double personalQuantity = 0;
+        double personalRarity = 0;
+        if (plugin.sponsors() != null) {
+            for (final tw.exilecore.sponsor.SponsorConfig.BoostType type : plugin.sponsors().personalBoosts(player)) {
+                personalQuantity += type.quantity() * 100;
+                personalRarity += type.rarity() * 100;
+            }
+        }
         lines.add(String.format(Locale.ROOT, "<gray>物品掉落數量 <white>%+.0f%%%s" + SEP + "<gray>物品稀有度 <white>%+.0f%%%s",
-                ownQuantity + serverQuantity, serverQuantity > 0 ? String.format(Locale.ROOT, " <#ffd27f>（含全服 %+.0f%%）", serverQuantity) : "",
-                ownRarity + serverRarity, serverRarity > 0 ? String.format(Locale.ROOT, " <#ffd27f>（含全服 %+.0f%%）", serverRarity) : ""));
+                ownQuantity + serverQuantity, included(serverQuantity, personalQuantity), ownRarity + serverRarity, included(serverRarity, personalRarity)));
         return lines;
+    }
+
+    /** 「（含全服 +100%、個人加倍 +100%）」；都沒有是空的。 */
+    private static String included(final double server, final double personal) {
+        if (server <= 0 && personal <= 0) {
+            return "";
+        }
+        final List<String> parts = new ArrayList<>();
+        if (server > 0) {
+            parts.add(String.format(Locale.ROOT, "全服 %+.0f%%", server));
+        }
+        if (personal > 0) {
+            parts.add(String.format(Locale.ROOT, "個人加倍 %+.0f%%", personal));
+        }
+        return " <#ffd27f>（含" + String.join("、", parts) + "）";
+    }
+
+    /**
+     * 打怪實際的經驗倍數（2026-10-16）：全服（character.yml、全服加倍、在線人數）×（1 ＋ 累積贊助＋個人加倍藥＋種族），
+     * 跟 KillCredit 給經驗的算法一樣。
+     */
+    public static double experienceMultiplier(final ExileCore plugin, final Player player) {
+        final double personal = (plugin.sponsors() == null ? 0 : plugin.sponsors().experienceBonus(player) + plugin.sponsors().personalExperience(player))
+                + (plugin.ascendancy() == null ? 0 : plugin.ascendancy().race().experienceBonus(player));
+        return plugin.players().config().experienceBonus() * (1 + personal);
+    }
+
+    /** 經驗那一行後面的括號：全服倍數；有個人加倍藥（或累積贊助、種族）時寫實際倍數。 */
+    private static String experienceNote(final ExileCore plugin, final Player player, final String serverText) {
+        final boolean personal = plugin.sponsors() != null && plugin.sponsors().personalExperience(player) > 0;
+        final double actual = experienceMultiplier(plugin, player);
+        final String actualText = String.format(Locale.ROOT, "×%s", actual == Math.rint(actual) ? String.valueOf((long) actual)
+                : String.format(Locale.ROOT, "%.2f", actual).replaceAll("0+$", "").replaceAll("\\.$", ""));
+        if (personal) {
+            return " <#ffd27f>（" + (serverText == null ? "" : "全服經驗 " + serverText + "＋") + "個人加倍：實際 " + actualText + "）";
+        }
+        if (serverText == null) {
+            return Math.abs(actual - 1) > 1e-9 ? " <#ffd27f>（經驗 " + actualText + "）" : "";
+        }
+        return " <#ffd27f>（全服經驗 " + serverText + (Math.abs(actual - plugin.players().config().experienceBonus()) > 1e-9 ? "，實際 " + actualText : "") + "）";
     }
 
     public static List<String> header(final ExileCore plugin, final Player player) {
@@ -85,7 +133,7 @@ public final class StatsReport {
                     + " <white>Lv." + character.level()
                     + (need > 0 ? String.format(Locale.ROOT, "%s<gray>經驗 <white>%,d<dark_gray>/%,d %s <gray>%.1f%%",
                     SEP, character.experience(), need, bar(character.experience(), need), 100.0 * character.experience() / need)
-                    + (bonus == null ? "" : " <#ffd27f>（全服經驗 " + bonus + "）")
+                    + experienceNote(plugin, player, bonus)
                     : SEP + "<gray>滿級"));
             if (self) {
                 lines.add(String.format(Locale.ROOT, "<gray>金幣 %s%,d <dark_gray>（帳號共用）", GOLD, state.gold()));

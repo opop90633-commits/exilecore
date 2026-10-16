@@ -210,15 +210,17 @@ public final class SponsorService {
     }
 
     /**
-     * 個人經驗加倍：加在「1 + 累積贊助的加成」裡的值。全服加倍是乘在外面的倍數，所以除掉它，
-     * 讓結果是「全服倍數 + 個人多的」（全服 ×2、個人 ×2 → ×3）。
+     * 個人經驗加倍：加在「1 + 累積贊助的加成」裡的值。全服的經驗倍數是乘在外面的，所以除掉它，
+     * 讓結果是「全服倍數 + 個人多的」（全服 ×2、個人 ×2 → ×3；全服 ×2.1 → ×3.1）。
+     * 2026-10-16：全服倍數改成完整的那個（character.yml 的 experience_bonus × 贊助的全服加倍 × 在線人數），
+     * 以前只除贊助的全服加倍，character.yml 開 ×2 時變成乘起來（×4.2）。
      */
     public double personalExperience(final Player player) {
         double extra = 0;
         for (final SponsorConfig.BoostType type : personalBoosts(player)) {
             extra += type.experience() - 1;
         }
-        return extra <= 0 ? 0 : extra / Math.max(1, Boosts.experience());
+        return extra <= 0 ? 0 : extra / Math.max(1, plugin.players().config().experienceBonus());
     }
 
     /** 個人金幣加倍：同 {@link #personalExperience}（全服 ×2、個人 ×2 → ×3）。 */
