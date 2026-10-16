@@ -57,8 +57,8 @@ public final class SettingsMenu extends Menu {
         set(SLOT_TRACKER, toggle(Material.WRITABLE_BOOK, "任務追蹤", PlayerSettings.enabled(state, PlayerSettings.QUEST_TRACKER),
                 "畫面右邊列出進行中的任務與現在這一步，還有每日委託、每月活動的進度"));
         set(SLOT_OTHERS_FX, toggle(Material.BLAZE_POWDER, "別人的技能特效", PlayerSettings.enabled(state, PlayerSettings.OTHERS_FX),
-                "看得到別的玩家放技能的粒子、圖騰與陷阱，也聽得到他們技能的聲音（人多時關掉比較不眼花、不吵、也比較不卡）；"
-                        + "自己的技能、Boss 的警告圈、時裝照常"));
+                "看得到別的玩家放技能的粒子、圖騰與陷阱、召喚物，也聽得到他們技能的聲音（人多時關掉比較不眼花、不吵、也比較不卡）；"
+                        + "自己的技能與召喚物、Boss 的警告圈、時裝照常；競技場裡一定看得到"));
         set(SLOT_SKILL_SOUNDS, toggle(Material.NOTE_BLOCK, "技能音效", PlayerSettings.enabled(state, PlayerSettings.SKILL_SOUNDS),
                 "自己放技能的聲音（施放、命中、爆炸）。關掉就完全靜音；別人的技能本來就只有三分之一的音量，"
                         + "要完全不聽把「別人的技能特效」關掉。怪物與 Boss 的聲音不受影響"));

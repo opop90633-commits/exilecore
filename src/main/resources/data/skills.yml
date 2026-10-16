@@ -1604,7 +1604,7 @@ skills:
     icon: COPPER_INGOT   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
-    tags: [attack, area, lightning]
+    tags: [attack, area, projectile, lightning]   # 2026-10-17：擲出去的矛算投射物（投射物的傷害、等級加成照吃；多射、穿透這類輔助還是掛不上）
     weapons: [spear]
     mechanic: impact
     impact: { range: 20, delay: 0.5, radius: [3.0, 3.8] }   # 2026-10 手感：落下延遲 0.8 → 0.5 秒
@@ -2451,7 +2451,7 @@ skills:
     icon: PRISMARINE_SHARD
     type: attack
     tier: 7
-    tags: [attack, area, fire, cold, lightning]
+    tags: [attack, area, projectile, fire, cold, lightning]   # 2026-10-17：算投射物（投射物的傷害、等級加成照吃；多射、穿透這類輔助還是掛不上）
     weapons: [spear]
     mechanic: impact
     impact: { range: 18, delay: 0.5, radius: [3.0, 3.6] }
@@ -2490,7 +2490,7 @@ skills:
     icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
-    tags: [attack, area, physical]
+    tags: [attack, area, projectile, physical]   # 2026-10-17：算投射物（投射物的傷害、等級加成照吃；多射、穿透這類輔助還是掛不上）
     weapons: [spear]
     mechanic: impact
     impact: { range: 14, delay: 0.3, radius: [2.6, 3.2] }
@@ -2510,7 +2510,7 @@ skills:
     icon: BLAZE_ROD
     type: attack
     tier: 13
-    tags: [attack, area, fire]
+    tags: [attack, area, projectile, fire]   # 2026-10-17：擲出去的光矛算投射物
     weapons: [spear]
     mechanic: impact
     impact: { range: 24, delay: 0.9, radius: [4.0, 5.0] }

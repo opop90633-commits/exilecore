@@ -274,6 +274,21 @@ public final class LifeModule implements Module, Listener {
         }
     }
 
+    /**
+     * 2026-10-16：海水不會流進筏上的東西（攔截網是蜘蛛網，原版會被水沖掉；旗子、火把這類也是）。
+     * 海域世界裡水只能流進空氣與水。
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onFlow(final org.bukkit.event.block.BlockFromToEvent event) {
+        if (service == null || service.world() == null || !service.world().equals(event.getBlock().getWorld())) {
+            return;
+        }
+        final org.bukkit.Material to = event.getToBlock().getType();
+        if (to != org.bukkit.Material.AIR && to != org.bukkit.Material.WATER && to != org.bukkit.Material.CAVE_AIR) {
+            event.setCancelled(true);
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGH)
     public void onBucketFill(final PlayerBucketFillEvent event) {
         if (service != null && service.lifeModeOrSea(event.getBlock().getLocation()) && !event.getPlayer().hasPermission(ExileCore.PERMISSION_ADMIN)) {

@@ -844,6 +844,9 @@ public final class MinionService implements Listener, MinionHooks {
         if (now % 200 == 0) {
             aggroCache.values().removeIf(aggro -> now - aggro.tick() > 200); // 下線、沒召喚物的人不留著
         }
+        if (now % 20 == 0) {
+            syncVisibility();
+        }
         for (final Minion minion : new ArrayList<>(minions)) {
             if (!byEntity.containsKey(minion.mob.getUniqueId())) {
                 continue; // 這一輪已經被收掉了
@@ -853,6 +856,28 @@ public final class MinionService implements Listener, MinionHooks {
             } catch (final RuntimeException e) {
                 plugin.getSLF4JLogger().error("召喚物更新出錯（{}）", minion.skillId(), e);
                 remove(minion, Gone.QUIET);
+            }
+        }
+    }
+
+    /**
+     * 2026-10-16：「隱藏別人的技能特效」也隱藏別人的召喚物（每秒對一次：剛開關設定、剛走進來的人也跟上）。
+     * 自己的一定看得到；競技場裡不隱藏（看不到敵人的召喚物不公平）。
+     */
+    private void syncVisibility() {
+        for (final Minion minion : minions) {
+            final Mob mob = minion.mob;
+            if (!mob.isValid()) {
+                continue;
+            }
+            final boolean arena = plugin.pvp() != null && plugin.pvp().inArena(mob.getLocation());
+            for (final Player viewer : mob.getWorld().getPlayers()) {
+                final boolean hide = !arena && !viewer.getUniqueId().equals(minion.owner) && Fx.hides(viewer);
+                if (hide && viewer.canSee(mob)) {
+                    viewer.hideEntity(plugin, mob);
+                } else if (!hide && !viewer.canSee(mob)) {
+                    viewer.showEntity(plugin, mob);
+                }
             }
         }
     }
