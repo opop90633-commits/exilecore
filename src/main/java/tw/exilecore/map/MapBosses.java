@@ -781,15 +781,12 @@ final class MapBosses {
         } else if (definition.named() && random.nextDouble() < bonus.rare(config.drops().namedUniqueChance() * (1 + atlas.increased("atlas.boss_unique")))) {
             addUnique(drops, MapDrops.unique(generator, instance.map().id(), itemLevel, random));
         }
-        // 共通傳奇（map_boss 池）：終局擲一次 final_common_chance、中了抽一件；一般地圖 Boss（含具名）每一件各自擲
-        // boss_unique_chance（2026-10-16；星圖天賦可以增加）
-        if (instance.map().isFinal()) {
-            if (random.nextDouble() < bonus.rare(config.drops().finalCommonChance())) {
-                addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
-            }
-        } else {
-            eachUnique(drops, plugin.items().repository().uniquesFor("map_boss", itemLevel),
-                    config.drops().bossUniqueChance() * (1 + atlas.increased("atlas.boss_unique")), itemLevel, random, bonus);
+        // 共通傳奇（map_boss 池，賭博也賭得到）：擲一次、中了抽一件。一般地圖 Boss（含具名）照 boss_unique_chance（5%，星圖天賦可以增加；
+        // 跟賭博一起校準，2026-10-16 維持擲一次），終局照 final_common_chance
+        final double common = instance.map().isFinal() ? config.drops().finalCommonChance()
+                : config.drops().bossUniqueChance() * (1 + atlas.increased("atlas.boss_unique"));
+        if (random.nextDouble() < bonus.rare(common)) {
+            addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
         }
         rollChase(drops, itemLevel, random); // 追逐級傳奇：所有地圖 Boss 一樣的固定機率
         if (instance.map().isFinal() && plugin.skills() != null) {

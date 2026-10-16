@@ -185,8 +185,10 @@ public final class MapConfig {
     public static final int MAX_TIERS = 30;
     /** 地圖事件（神龕、寶箱、裂隙、流寇）掉專屬傳奇的預設機率（2026-10 從 2% 調成 1%）。 */
     public static final double DEFAULT_UNIQUE_CHANCE = 0.01;
-    /** 地圖 Boss 的共通傳奇（每一件各自擲）、具名 Boss 掉自己那件的預設機率（2026-10-16：1%）；終局另外算。 */
-    public static final double DEFAULT_BOSS_UNIQUE_CHANCE = 0.01;
+    /** 地圖 Boss 掉共通傳奇（擲一次、中了抽一件；跟賭博一起校準）的預設機率；終局另外算。 */
+    public static final double DEFAULT_BOSS_UNIQUE_CHANCE = 0.05;
+    /** 具名 Boss 掉自己那件的預設機率（2026-10-16：1%）。 */
+    public static final double DEFAULT_NAMED_UNIQUE_CHANCE = 0.01;
     /** 追逐級傳奇：所有地圖 Boss（含終局、極境）每次擊殺的固定機率（0.034%，約 3000 隻一件）。 */
     public static final double DEFAULT_CHASE_CHANCE = 0.00034;
     /** 追逐級傳奇：一般怪物（不是 Boss）每隻、以及僥倖石每次使用的機率（2026-10：0.0001%，約 100 萬隻一件）。 */
@@ -510,7 +512,7 @@ public final class MapConfig {
                 Math.max(0, d.decimal("tier_up_per_completed", 0.01)), Math.max(1, d.integer("tier_cap_base", 4)),
                 Math.max(0, d.integer("tier_cap_per_map", 1)), rarityWeights, rarityTop, Math.max(1, d.integer("frontier_weight", 2)),
                 clamp01(d.decimal("boss_unique_chance", DEFAULT_BOSS_UNIQUE_CHANCE)),
-                clamp01(d.decimal("named_unique_chance", DEFAULT_BOSS_UNIQUE_CHANCE)), d.string("fragment", "sky_fragment"),
+                clamp01(d.decimal("named_unique_chance", DEFAULT_NAMED_UNIQUE_CHANCE)), d.string("fragment", "sky_fragment"),
                 new LinkedHashSet<>(d.strings("fragment_maps")), Math.max(1, d.integer("fragment_cost", 2)),
                 d.string("campaign_boss_zone", "mountain"), Math.max(0, d.integer("campaign_boss_maps", 1)),
                 Math.max(0, d.integer("campaign_first_kill_maps", 3)), Math.max(0, d.integer("campaign_boss_daily_maps", 3)),
@@ -1167,7 +1169,7 @@ public final class MapConfig {
         rarityTop.put(Rarity.NORMAL, 40); // 2026-10：高階少掉現成的稀有圖（以前 15／35／50），低階通貨拿來洗地圖
         rarityTop.put(Rarity.MAGIC, 45);
         rarityTop.put(Rarity.RARE, 15);
-        return new Drops(chance, 1, 0.15, 0.01, 4, 1, rarity, rarityTop, 2, DEFAULT_BOSS_UNIQUE_CHANCE, DEFAULT_BOSS_UNIQUE_CHANCE, "sky_fragment", Set.of(), 2,
+        return new Drops(chance, 1, 0.15, 0.01, 4, 1, rarity, rarityTop, 2, DEFAULT_BOSS_UNIQUE_CHANCE, DEFAULT_NAMED_UNIQUE_CHANCE, "sky_fragment", Set.of(), 2,
                 "mountain", 1, 3, 3, DEFAULT_CHASE_CHANCE, 0.01, 0.01, 0.01);
     }
 }

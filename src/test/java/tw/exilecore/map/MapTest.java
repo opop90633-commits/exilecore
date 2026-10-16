@@ -628,9 +628,10 @@ class MapTest {
         assertEquals(0.01, config.drops().finalUniqueChance(), 1e-9, "終局 Boss 自己的傳奇每一件各自 1%（2026-10-16）");
         assertEquals(0.00034, config.drops().chaseChance(), 1e-12, "追逐級傳奇：所有地圖 Boss 固定 0.034%");
         assertEquals(MapConfig.DEFAULT_CHASE_CHANCE, config.drops().chaseChance(), 1e-12);
-        assertEquals(0.01, config.drops().bossUniqueChance(), 1e-9, "地圖 Boss 的共通傳奇每一件各自 1%（2026-10-16）");
+        assertEquals(0.05, config.drops().bossUniqueChance(), 1e-9, "地圖 Boss 的共通傳奇擲一次 5%（跟賭博一起校準）");
         assertEquals(0.01, config.drops().namedUniqueChance(), 1e-9, "具名 Boss 自己那件 1%");
         assertEquals(MapConfig.DEFAULT_BOSS_UNIQUE_CHANCE, config.drops().bossUniqueChance(), 1e-12);
+        assertEquals(MapConfig.DEFAULT_NAMED_UNIQUE_CHANCE, config.drops().namedUniqueChance(), 1e-12);
         assertEquals(0.01, MapConfig.DEFAULT_UNIQUE_CHANCE, 1e-12, "地圖事件 1%（2026-10 從 2% 調低）");
         assertEquals(0.01, config.drops().finalCommonChance(), 1e-9, "終局另外算：共通傳奇擲一次 1%（2026-10-16）");
         assertEquals(0.01, config.drops().finalSupportChance(), 1e-9, "終局專屬輔助寶石 1%（2026-10 從 2% 調低）");
