@@ -2447,14 +2447,15 @@ ascendancies:
         cost: 1
         icon: ENCHANTED_BOOK
         stats:
-          - { stat: damage, type: INCREASED, value: 20, tags: [spell] }
+          - { stat: damage, type: INCREASED, value: 20 }   # 2026-10：德魯伊的法術很少 → 法術傷害改成全部傷害
       o_cast:
         name: 速曜
         requires: o_spell
         cost: 1
         icon: SUGAR
         stats:
-          - { stat: cast.speed, type: INCREASED, value: 12 }
+          - { stat: attack.speed, type: INCREASED, value: 8 }   # 2026-10：施法速度 12% → 攻擊與施法速度各 8%（形態技能是攻擊）
+          - { stat: cast.speed, type: INCREASED, value: 8 }
       o_elem:
         name: 三元眸
         requires: o_cast
