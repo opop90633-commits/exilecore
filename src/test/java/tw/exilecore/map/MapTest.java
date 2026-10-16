@@ -155,7 +155,7 @@ class MapTest {
         assertEquals(1.0, old.finalLifeMultiplier(5), 1e-9, "沒寫 final.tier_life：照預設（T5 以下 ×1）");
         assertEquals(MapConfig.DEFAULT_FINAL_TIER_LIFE_MAX, old.finalLifeMultiplier(16), 1e-9, "沒寫 final.tier_life：照預設（T16 ×2.5）");
         assertEquals(old.drops().rarity(), old.drops().rarityTop(), "沒寫 rarity_top：每一階都照 rarity");
-        assertEquals(0.05, old.drops().finalUniqueChance(), 1e-9, "舊的設定檔沒寫 final_unique_chance：終局專屬傳奇 5%，不是必掉");
+        assertEquals(0.01, old.drops().finalUniqueChance(), 1e-9, "舊的設定檔沒寫 final_unique_chance：終局自己的傳奇每件 1%，不是必掉");
         config.load(DATA); // MapStats 的階級表換回出貨的
         config.validate(repository);
         assertEquals(61, MapStats.tiers().level(1));
@@ -625,14 +625,14 @@ class MapTest {
 
     @Test
     void finalBossUniqueIsAFivePercentDropNotGuaranteed() {
-        assertEquals(0.05, config.drops().finalUniqueChance(), 1e-9, "終局 Boss 專屬傳奇 5%");
+        assertEquals(0.01, config.drops().finalUniqueChance(), 1e-9, "終局 Boss 自己的傳奇每一件各自 1%（2026-10-16）");
         assertEquals(0.00034, config.drops().chaseChance(), 1e-12, "追逐級傳奇：所有地圖 Boss 固定 0.034%");
         assertEquals(MapConfig.DEFAULT_CHASE_CHANCE, config.drops().chaseChance(), 1e-12);
-        assertEquals(0.05, config.drops().bossUniqueChance(), 1e-9, "地圖 Boss 的傳奇 5%（2026-10 從 2% 調高）");
-        assertEquals(0.05, config.drops().namedUniqueChance(), 1e-9, "具名 Boss 自己那件也是 5%");
+        assertEquals(0.01, config.drops().bossUniqueChance(), 1e-9, "地圖 Boss 的共通傳奇每一件各自 1%（2026-10-16）");
+        assertEquals(0.01, config.drops().namedUniqueChance(), 1e-9, "具名 Boss 自己那件 1%");
         assertEquals(MapConfig.DEFAULT_BOSS_UNIQUE_CHANCE, config.drops().bossUniqueChance(), 1e-12);
         assertEquals(0.01, MapConfig.DEFAULT_UNIQUE_CHANCE, 1e-12, "地圖事件 1%（2026-10 從 2% 調低）");
-        assertEquals(0.10, config.drops().finalCommonChance(), 1e-9, "終局另外算：共通傳奇 10%（2026-10 從 25% 調低）");
+        assertEquals(0.01, config.drops().finalCommonChance(), 1e-9, "終局另外算：共通傳奇擲一次 1%（2026-10-16）");
         assertEquals(0.01, config.drops().finalSupportChance(), 1e-9, "終局專屬輔助寶石 1%（2026-10 從 2% 調低）");
         // 設定檔的字面值寫對了（0 = 永遠不掉、1 = 必掉都行，夾在 0–1）
         assertTrue(config.drops().finalUniqueChance() > 0 && config.drops().finalUniqueChance() < 1);

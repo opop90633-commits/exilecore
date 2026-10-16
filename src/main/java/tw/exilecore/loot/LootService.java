@@ -547,6 +547,19 @@ public final class LootService {
         return rest == null;
     }
 
+    /**
+     * 通貨袋收得下多少就收多少，多的直接丟掉（萬燈糖：超過上限自動過濾，不進背包、不掉在地上；2026-10-16）。
+     * 回傳收了幾個；隨身背包打不開時回傳 -1（照一般通貨收）。
+     */
+    public int depositOrDiscard(final Player player, final PlayerState state, final CurrencyType type, final int amount) {
+        if (state == null || !state.bag().usable()) {
+            return -1;
+        }
+        final int accepted = state.bag().pouch().deposit(type.id(), Math.max(0, amount));
+        refreshCurrency(player);
+        return accepted;
+    }
+
     /** 通貨：先進通貨袋（每種最多 5000 個），滿了照一般物品收。 */
     public ItemStack stowCurrency(final Player player, final PlayerState state, final CurrencyType type, final ItemStack stack) {
         if (!state.bag().usable()) {

@@ -652,10 +652,10 @@ public final class HeistService implements Listener {
             final tw.exilecore.loot.LootBonus.Bonus bonus = bonus(player); // 2026-10：特殊掉落也吃物品數量、稀有度
             addCurrency(rolled, UNVEIL_STONE, bonus.amount(scaled(randomIn(vault.unveilStones()), grand * lockdown), random()));
             boolean unique = false;
-            if (random().nextDouble() < bonus.rare(vault.uniqueChance() * grand * lockdown)) {
-                final ItemData item = MapDrops.unique(plugin.items().generator(), UNIQUE_SOURCE, run.level, random());
-                if (item != null) {
-                    rolled.add(DropTable.Drop.equipment(item));
+            // 2026-10-16：劫盜專屬傳奇每一件各自擲 unique_chance（大劫盜 ×grand_multiplier）
+            for (final tw.exilecore.item.UniqueItem each : plugin.items().repository().uniquesFor(UNIQUE_SOURCE, run.level)) {
+                if (random().nextDouble() < bonus.rare(vault.uniqueChance() * grand * lockdown)) {
+                    rolled.add(DropTable.Drop.equipment(plugin.items().generator().generateUnique(each, run.level, random())));
                     unique = true;
                 }
             }

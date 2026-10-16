@@ -1357,7 +1357,7 @@ public final class FestivalService {
         }
     }
 
-    /** 給素材：先進通貨袋，滿了背包，再滿掉在腳下。 */
+    /** 給素材：先進通貨袋，滿了背包，再滿掉在腳下（萬燈糖例外：通貨袋滿了，多的自動過濾掉，2026-10-16）。 */
     void giveCurrency(final Player player, final String currencyId, final int amount) {
         if (amount <= 0 || plugin.currencies() == null) {
             return;
@@ -1365,6 +1365,19 @@ public final class FestivalService {
         final CurrencyType type = plugin.currencies().repository().get(currencyId);
         if (type == null) {
             return;
+        }
+        if (FestivalConfig.CANDY.equals(type.id()) && plugin.loot() != null) {
+            final int accepted = plugin.loot().depositOrDiscard(player, plugin.players().get(player), type, amount);
+            if (accepted >= 0) {
+                if (accepted > 0 && plugin.economy() != null) {
+                    plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, accepted);
+                }
+                player.sendActionBar(plugin.text().parse(accepted >= amount
+                        ? "<" + config.color() + ">+" + amount + " " + ItemRenderer.escape(type.name())
+                        : "<gray>" + ItemRenderer.escape(type.name()) + "滿了（上限 " + plugin.players().get(player).bag().pouch().cap()
+                        + "），" + (accepted > 0 ? "收下 " + accepted + " 個、" : "") + "多的 " + (amount - accepted) + " 個自動過濾"));
+                return;
+            }
         }
         if (plugin.economy() != null) {
             plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, amount);

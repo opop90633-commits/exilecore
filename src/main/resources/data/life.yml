@@ -423,12 +423,12 @@ whale:
     - { at: 0.66, name: 深潛, message: "（淵鯨潛了下去，海面浮出幾顆發光的潮核）", damage: 30, shield: { count: 3, name: 潮核, life: 5, duration: 30, heal: 25 } }
     - { at: 0.33, name: 怒濤, message: "（淵鯨發狂了，整片海翻了過來）", damage: 40, shield: { count: 3, name: 潮核, life: 6, duration: 25, heal: 35 } }
   drops:
-    - { unique: abyss_echo, chance: 0.03 }
-    - { unique: tidewhisper_bow, chance: 0.03 }
-    - { unique: tide_devourer, chance: 0.03 }
+    - { unique: abyss_echo, chance: 0.01 }
+    - { unique: tidewhisper_bow, chance: 0.01 }
+    - { unique: tide_devourer, chance: 0.01 }
     - { skill: tide_call, chance: 0.01 }
-    - { support: tidal_resonance, chance: 0.02 }
-    - { pool: map_boss, chance: 0.20 }
+    - { support: tidal_resonance, chance: 0.01 }
+    - { pool: map_boss, chance: 0.03 }
     - { currency: sky_fragment, amount: 2, chance: 1 }
     - { currency: zenith_orb, amount: 4, chance: 1 }
     - { currency: oracle_orb, amount: 1, chance: 0.2 }

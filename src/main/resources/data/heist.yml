@@ -41,7 +41,7 @@ settings:
     rolls: 6               # 擲幾次掉落表（大劫盜 ×grand_multiplier）
     currency: [4, 7]
     unveil_stones: [0, 1]
-    unique_chance: 0.02    # 劫盜專屬傳奇（uniques.yml 的 sources 寫 heist）的機率；大劫盜 ×grand_multiplier
+    unique_chance: 0.01    # 劫盜專屬傳奇（uniques.yml 的 sources 寫 heist）：每一件各自 1%（2026-10-16）；大劫盜 ×grand_multiplier
     blueprint_chance: 0.10 # 掉一張劫盜藍圖（只有合約的大金庫掉；大劫盜不掉）
     grand_multiplier: 3
     finale_key_chance: 0.10 # 大劫盜的大金庫：掉一個金庫之主的鑰印（劫盜終局）；封鎖了減半

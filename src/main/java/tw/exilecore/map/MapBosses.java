@@ -776,27 +776,29 @@ final class MapBosses {
         final MapConfig.Boss definition = instance.bossDef();
         final int itemLevel = instance.level();
         if (instance.map().isFinal()) {
-            if (random.nextDouble() < bonus.rare(config.drops().finalUniqueChance())) { // 2026-10：吃物品稀有度
-                // 終局：先找寫著這個終局代號的傳奇（其他終局 Boss 各自的），沒有就用 final（天穹熔爐的）
-                ItemData unique = MapDrops.unique(generator, instance.map().id(), itemLevel, random);
-                if (unique == null) {
-                    unique = MapDrops.unique(generator, "final", itemLevel, random);
-                }
-                addUnique(drops, unique);
-            }
+            // 終局：寫著這個終局代號的傳奇（其他終局 Boss 各自的），沒有就用 final（天穹熔爐的）——2026-10-16：每一件各自擲
+            eachUnique(drops, ownFinalPool(instance.map().id(), itemLevel), config.drops().finalUniqueChance(), itemLevel, random, bonus);
         } else if (definition.named() && random.nextDouble() < bonus.rare(config.drops().namedUniqueChance() * (1 + atlas.increased("atlas.boss_unique")))) {
             addUnique(drops, MapDrops.unique(generator, instance.map().id(), itemLevel, random));
         }
-        // 共通傳奇（map_boss 池）：一般地圖 Boss 照 boss_unique_chance（5%，星圖天賦可以增加），終局另外算（final_common_chance，不吃星圖天賦）
-        final double common = instance.map().isFinal() ? config.drops().finalCommonChance()
-                : config.drops().bossUniqueChance() * (1 + atlas.increased("atlas.boss_unique"));
-        if (random.nextDouble() < bonus.rare(common)) {
-            addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
+        // 共通傳奇（map_boss 池）：終局擲一次 final_common_chance、中了抽一件；一般地圖 Boss（含具名）每一件各自擲
+        // boss_unique_chance（2026-10-16；星圖天賦可以增加）
+        if (instance.map().isFinal()) {
+            if (random.nextDouble() < bonus.rare(config.drops().finalCommonChance())) {
+                addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
+            }
+        } else {
+            eachUnique(drops, plugin.items().repository().uniquesFor("map_boss", itemLevel),
+                    config.drops().bossUniqueChance() * (1 + atlas.increased("atlas.boss_unique")), itemLevel, random, bonus);
         }
         rollChase(drops, itemLevel, random); // 追逐級傳奇：所有地圖 Boss 一樣的固定機率
-        if (instance.map().isFinal() && random.nextDouble() < bonus.rare(config.drops().finalSupportChance())) {
-            // 終局 Boss 的專屬輔助寶石（supports.yml 的 source 寫這個終局的代號）
-            addSupport(drops, instance.map().id(), itemLevel);
+        if (instance.map().isFinal() && plugin.skills() != null) {
+            // 終局 Boss 的專屬輔助寶石（supports.yml 的 source 寫這個終局的代號）：每一顆各自擲 final_support_chance（2026-10-16）
+            for (final tw.exilecore.skill.SupportDefinition support : plugin.skills().config().supportsFrom(instance.map().id())) {
+                if (random.nextDouble() < bonus.rare(config.drops().finalSupportChance())) {
+                    drops.add(DropTable.Drop.support(support.id(), itemLevel));
+                }
+            }
         }
         // 天穹碎片
         if (config.drops().fragmentMaps().contains(instance.map().id())) {
@@ -869,25 +871,13 @@ final class MapBosses {
             }
         }
         final int itemLevel = instance.level();
-        if (random.nextDouble() < bonus.rare(uberDrops.uniqueChance())) {
-            ItemData unique = MapDrops.unique(generator, instance.map().id(), itemLevel, random);
-            if (unique == null) {
-                unique = MapDrops.unique(generator, "final", itemLevel, random);
-            }
-            addUnique(drops, unique);
-        }
+        // 2026-10-16：自己的傳奇、極境專屬每一件各自擲；共通傳奇擲一次（common_chance，沒寫照 final_common_chance）
+        eachUnique(drops, ownFinalPool(instance.map().id(), itemLevel), uberDrops.uniqueChance(), itemLevel, random, bonus);
         rollChase(drops, itemLevel, random); // 追逐級傳奇：跟一般 Boss 一樣的固定機率
-        if (random.nextDouble() < bonus.rare(config.drops().finalCommonChance())) {
+        if (random.nextDouble() < bonus.rare(uberDrops.commonChance(config.drops().finalCommonChance()))) {
             addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
         }
-        if (random.nextDouble() < bonus.rare(uberDrops.exclusiveChance())) {
-            // 極境專屬傳奇：先找這隻極境自己的（uber_終局代號），沒有就用全部極境共通的（uber）
-            ItemData exclusive = MapDrops.unique(generator, MapConfig.uberSource(instance.map().id()), itemLevel, random);
-            if (exclusive == null) {
-                exclusive = MapDrops.unique(generator, "uber", itemLevel, random);
-            }
-            addUnique(drops, exclusive);
-        }
+        eachUnique(drops, uberExclusives(MapConfig.uberSource(instance.map().id()), itemLevel), uberDrops.exclusiveChance(), itemLevel, random, bonus);
         extraDrops(drops, uberDrops.extra(), itemLevel, random, bonus);
         // 巔峰的碎片（2026-10）：這個終局的極境版本也掉（maps.yml 的 uber_chance）
         for (final MapConfig.MapDef pinnacleMap : config.pinnacles()) {
@@ -947,6 +937,23 @@ final class MapBosses {
             }
         }
         extraDrops(drops, pinnacleDrops.extra(), itemLevel, random, bonus);
+    }
+
+    /** 這個終局自己的傳奇（uniques.yml 的 sources 寫這個終局代號）；沒有就用 final（天穹熔爐的）。 */
+    private List<tw.exilecore.item.UniqueItem> ownFinalPool(final String mapId, final int itemLevel) {
+        final List<tw.exilecore.item.UniqueItem> own = plugin.items().repository().uniquesFor(mapId, itemLevel);
+        return own.isEmpty() ? plugin.items().repository().uniquesFor("final", itemLevel) : own;
+    }
+
+    /** 每一件各自擲 chance（吃物品稀有度；終局以上 bonus 是 NONE）。 */
+    private void eachUnique(final List<DropTable.Drop> drops, final List<tw.exilecore.item.UniqueItem> pool, final double chance,
+                            final int itemLevel, final java.util.random.RandomGenerator random, final tw.exilecore.loot.LootBonus.Bonus bonus) {
+        final double rolled = bonus.rare(chance);
+        for (final tw.exilecore.item.UniqueItem unique : pool) {
+            if (random.nextDouble() < rolled) {
+                addUnique(drops, plugin.items().generator().generateUnique(unique, itemLevel, random));
+            }
+        }
     }
 
     /** 巔峰的極境專屬池：自己的（source），沒有就所有 uber_ 開頭來源的傳奇（2026-10-16：以前找 uber 找不到，一件都不會掉）。 */

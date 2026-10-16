@@ -187,7 +187,9 @@ class ExclusiveDropTest {
         for (final String finalId : FINALS) {
             final MapConfig.Uber uber = maps.uber(finalId);
             assertNotNull(uber, finalId);
-            assertEquals(0.03, uber.drops().exclusiveChance(), 1e-9, finalId + "（2026-10：5% → 3%）");
+            assertEquals(0.01, uber.drops().exclusiveChance(), 1e-9, finalId + "：極境專屬每一件各自 1%（2026-10-16）");
+            assertEquals(0.02, uber.drops().uniqueChance(), 1e-9, finalId + "：自己的傳奇每一件各自 2%");
+            assertEquals(0.02, uber.drops().commonChance(maps.drops().finalCommonChance()), 1e-9, finalId + "：共通傳奇 2%");
             assertEquals("uber_" + finalId, MapConfig.uberSource(finalId));
             final ItemData exclusive = MapDrops.unique(generator, MapConfig.uberSource(finalId), 91, new Random(2));
             assertNotNull(exclusive, finalId + " 的極境專屬傳奇");
@@ -206,8 +208,7 @@ class ExclusiveDropTest {
                     }
                 }
             }
-            assertEquals(0.02, own, 1e-9, finalId + "：極境掉自己專屬輔助 2%");
-            assertTrue(own > maps.drops().finalSupportChance(), finalId + "：極境掉自己專屬輔助的機率比一般版本高");
+            assertEquals(0.01, own, 1e-9, finalId + "：極境掉自己專屬輔助每顆 1%（2026-10-16）");
             assertEquals(2, uberOnly, finalId + "：兩顆極境專屬的輔助");
         }
         // 沒寫 exclusive_chance：預設 5%
@@ -237,10 +238,10 @@ class ExclusiveDropTest {
         assertEquals(6, gems.size());
         assertEquals(0.01, drops.uniqueChance(), 1e-9, "自己的傳奇每一件各自 1%（2026-10-16）");
         assertEquals(0.01, drops.exclusiveChance(), 1e-9, "極境專屬每一件各自 1%（2026-10-16）");
-        assertEquals(0.20, drops.commonChance(maps.drops().finalCommonChance()), 1e-9, "共通傳奇 20%（只有巔峰；終局、極境照 final_common_chance）");
+        assertEquals(0.03, drops.commonChance(maps.drops().finalCommonChance()), 1e-9, "共通傳奇 3%（2026-10-16）");
         for (final MapConfig.ExtraDrop extra : drops.extra()) {
             if (List.of("abyssal_touch", "myriad_stars").contains(extra.id())) {
-                assertEquals(0.02, extra.chance(), 1e-9, extra.id() + "：2026-10 1% → 2%");
+                assertEquals(0.01, extra.chance(), 1e-9, extra.id() + "：輔助每顆各自 1%（2026-10-16）");
             }
         }
         // 沒寫 common_chance：照 drops.final_common_chance

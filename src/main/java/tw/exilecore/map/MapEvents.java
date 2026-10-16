@@ -573,10 +573,9 @@ final class MapEvents implements Listener {
             player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.8f, 1.3f);
             blessed++;
             // 神龕的專屬傳奇（每個拿到增益的人各擲一次）
-            final ItemData unique = eventUnique(MapEventConfig.Kind.SHRINE, event.instance, player, random);
-            if (unique != null) {
-                deliver(player, event.center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), shrine.name()),
-                        List.of(DropTable.Drop.equipment(unique)), 0);
+            final List<DropTable.Drop> uniques = eventUniques(MapEventConfig.Kind.SHRINE, event.instance, player, random);
+            if (!uniques.isEmpty()) {
+                deliver(player, event.center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), shrine.name()), uniques, 0);
             }
         }
         event.center.getWorld().spawnParticle(Particle.END_ROD, event.center.getX(), event.center.getY() + 1.5, event.center.getZ(), 40, 0.8, 1.0, 0.8, 0.05);
@@ -714,10 +713,7 @@ final class MapEvents implements Listener {
                 }
             }
             // 寶箱的專屬傳奇（每個有份的人各擲一次）
-            final ItemData unique = eventUnique(MapEventConfig.Kind.STRONGBOX, instance, player, random);
-            if (unique != null) {
-                rolled.add(DropTable.Drop.equipment(unique));
-            }
+            rolled.addAll(eventUniques(MapEventConfig.Kind.STRONGBOX, instance, player, random));
             final long gold = drops.rollGold(level, MonsterRarity.RARE, quantity, random) * Math.max(1, box.rolls());
             deliver(player, event.center, data, rolled, gold);
             takers++;
@@ -777,10 +773,9 @@ final class MapEvents implements Listener {
                     if (player.getLocation().distanceSquared(center) > 30 * 30) {
                         continue;
                     }
-                    final ItemData unique = eventUnique(MapEventConfig.Kind.BREACH, event.instance, player, random);
-                    if (unique != null) {
-                        deliver(player, center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), "裂隙"),
-                                List.of(DropTable.Drop.equipment(unique)), 0);
+                    final List<DropTable.Drop> uniques = eventUniques(MapEventConfig.Kind.BREACH, event.instance, player, random);
+                    if (!uniques.isEmpty()) {
+                        deliver(player, center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), "裂隙"), uniques, 0);
                     }
                 }
             }
@@ -894,16 +889,21 @@ final class MapEvents implements Listener {
     }
 
     /**
-     * 這種事件的專屬傳奇（uniques.yml 的 sources 寫 shrine、strongbox、breach、exile）：照 map_events.yml 的 unique_chance 擲，
-     * 沒中或沒有能掉的回傳 null。
+     * 這種事件的專屬傳奇（uniques.yml 的 sources 寫 shrine、strongbox、breach、exile）：每一件各自照 map_events.yml 的 unique_chance 擲
+     * （2026-10-16：以前整個池子擲一次再抽一件）；沒中的是空的。
      */
-    private ItemData eventUnique(final MapEventConfig.Kind kind, final MapInstance instance, final Player player, final RandomGenerator random) {
+    private List<DropTable.Drop> eventUniques(final MapEventConfig.Kind kind, final MapInstance instance, final Player player,
+                                              final RandomGenerator random) {
         // 星圖天賦：這種事件掉專屬傳奇的機率增加 x%；2026-10：也吃這個人的物品稀有度（自己的＋全服＋主題＋地圖的）
         final tw.exilecore.loot.LootBonus.Bonus bonus = tw.exilecore.loot.LootBonus.of(plugin, player).plus(0, instance.stats().rarity() / 100.0);
-        if (random.nextDouble() >= bonus.rare(config.uniqueChance(kind) * (1 + instance.atlas().eventUnique(kind)))) {
-            return null;
+        final double chance = bonus.rare(config.uniqueChance(kind) * (1 + instance.atlas().eventUnique(kind)));
+        final List<DropTable.Drop> drops = new java.util.ArrayList<>();
+        for (final tw.exilecore.item.UniqueItem unique : plugin.items().repository().uniquesFor(MapEventConfig.uniqueSource(kind), instance.level())) {
+            if (random.nextDouble() < chance) {
+                drops.add(DropTable.Drop.equipment(plugin.items().generator().generateUnique(unique, instance.level(), random)));
+            }
         }
-        return MapDrops.unique(plugin.items().generator(), MapEventConfig.uniqueSource(kind), instance.level(), random);
+        return drops;
     }
 
     /** 隨機一種這類操作的通貨（掉落等級夠的）；沒有回傳 null。 */
@@ -965,10 +965,7 @@ final class MapEvents implements Listener {
                 }
             }
             // 流寇的專屬傳奇（每個有份的人各擲一次）
-            final ItemData unique = eventUnique(MapEventConfig.Kind.EXILE, found.instance, player, random);
-            if (unique != null) {
-                rolled.add(DropTable.Drop.equipment(unique));
-            }
+            rolled.addAll(eventUniques(MapEventConfig.Kind.EXILE, found.instance, player, random));
             if (!rolled.isEmpty()) {
                 deliver(player, entity.getLocation(), data, rolled, 0);
             }

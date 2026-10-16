@@ -185,8 +185,8 @@ public final class MapConfig {
     public static final int MAX_TIERS = 30;
     /** 地圖事件（神龕、寶箱、裂隙、流寇）掉專屬傳奇的預設機率（2026-10 從 2% 調成 1%）。 */
     public static final double DEFAULT_UNIQUE_CHANCE = 0.01;
-    /** 地圖 Boss 掉共通傳奇、具名 Boss 掉自己那件的預設機率（2026-10 從 2% 調成 5%）；終局另外算。 */
-    public static final double DEFAULT_BOSS_UNIQUE_CHANCE = 0.05;
+    /** 地圖 Boss 的共通傳奇（每一件各自擲）、具名 Boss 掉自己那件的預設機率（2026-10-16：1%）；終局另外算。 */
+    public static final double DEFAULT_BOSS_UNIQUE_CHANCE = 0.01;
     /** 追逐級傳奇：所有地圖 Boss（含終局、極境）每次擊殺的固定機率（0.034%，約 3000 隻一件）。 */
     public static final double DEFAULT_CHASE_CHANCE = 0.00034;
     /** 追逐級傳奇：一般怪物（不是 Boss）每隻、以及僥倖石每次使用的機率（2026-10：0.0001%，約 100 萬隻一件）。 */
@@ -514,8 +514,8 @@ public final class MapConfig {
                 new LinkedHashSet<>(d.strings("fragment_maps")), Math.max(1, d.integer("fragment_cost", 2)),
                 d.string("campaign_boss_zone", "mountain"), Math.max(0, d.integer("campaign_boss_maps", 1)),
                 Math.max(0, d.integer("campaign_first_kill_maps", 3)), Math.max(0, d.integer("campaign_boss_daily_maps", 3)),
-                clamp01(d.decimal("chase_chance", DEFAULT_CHASE_CHANCE)), clamp01(d.decimal("final_unique_chance", 0.05)),
-                clamp01(d.decimal("final_common_chance", 0.25)), clamp01(d.decimal("final_support_chance", 0.02)));
+                clamp01(d.decimal("chase_chance", DEFAULT_CHASE_CHANCE)), clamp01(d.decimal("final_unique_chance", 0.01)),
+                clamp01(d.decimal("final_common_chance", 0.01)), clamp01(d.decimal("final_support_chance", 0.01)));
 
         chaseMobChance = clamp01(d.decimal("chase_mob_chance", DEFAULT_CHASE_MOB_CHANCE));
         tw.exilecore.item.ItemGenerator.setChaseChance(chaseMobChance); // 僥倖石賭追逐級也照這個機率
@@ -1168,6 +1168,6 @@ public final class MapConfig {
         rarityTop.put(Rarity.MAGIC, 45);
         rarityTop.put(Rarity.RARE, 15);
         return new Drops(chance, 1, 0.15, 0.01, 4, 1, rarity, rarityTop, 2, DEFAULT_BOSS_UNIQUE_CHANCE, DEFAULT_BOSS_UNIQUE_CHANCE, "sky_fragment", Set.of(), 2,
-                "mountain", 1, 3, 3, DEFAULT_CHASE_CHANCE, 0.05, 0.25, 0.02);
+                "mountain", 1, 3, 3, DEFAULT_CHASE_CHANCE, 0.01, 0.01, 0.01);
     }
 }

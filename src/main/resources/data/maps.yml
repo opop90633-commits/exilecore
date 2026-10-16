@@ -61,10 +61,11 @@ drops:
   # T16 的（中間照階級內插）。2026-10：高階地圖少掉現成的稀有圖（以前 15／35／50）——想要詞綴多、掉得多的地圖，
   # 用微光石 → 添輝石 → 豐饒石 → 至臻石自己洗（PoE2 也是靠洗換界石用掉這些通貨）
   rarity_top: { normal: 40, magic: 45, rare: 15 }
-  # 傳奇的掉落機率（每個有份的人各擲一次）：地圖 Boss、具名 Boss 5%（2026-10 從 2% 調高）；地圖事件 1%（map_events.yml，2026-10 從 2% 調低）；終局另外算
-  boss_unique_chance: 0.05       # 地圖 Boss 掉傳奇（uniques.yml 的 map_boss）的機率
-  named_unique_chance: 0.05      # 具名 Boss 掉自己那件傳奇的機率
-  final_unique_chance: 0.05      # 終局 Boss（曜帝與其他終局）掉自己專屬那件傳奇的機率（不是必掉：每個有份的人各擲一次）
+  # 傳奇的掉落機率（每個有份的人各擲一次；2026-10-16 改成「池子裡每一件各自擲」，不是中了再抽一件）：
+  # 地圖事件每件 1%（map_events.yml）；終局另外算
+  boss_unique_chance: 0.01       # 地圖 Boss（含具名）的共通傳奇（uniques.yml 的 map_boss）：每一件各自 1%（星圖天賦可以增加）
+  named_unique_chance: 0.01      # 具名 Boss 掉自己那件傳奇的機率
+  final_unique_chance: 0.01      # 終局 Boss 自己的傳奇（曜帝 3 件、其他終局各 2 件）：每一件各自 1%
   chase_chance: 0.00034          # 追逐級傳奇（uniques.yml 的 chase 池，四件任一件）：所有地圖 Boss（一般、具名、終局、極境）
                                  # 每次擊殺、每個有份的人各擲一次；固定 0.034%，星圖天賦、物品數量、稀有度都不影響
   chase_mob_chance: 0.000001     # 追逐級傳奇（2026-10）：一般怪物（不是 Boss）每隻、每個有份的人各擲一次（0.0001%，約 100 萬隻一件），
@@ -74,8 +75,8 @@ drops:
   #（地圖 Boss 大約 3 萬隻一個、一般怪物大約 1000 萬隻一個）。每個有份的人各擲一次，不吃任何加成
   mirror_chance: 0.000034        # 地圖 Boss（一般、具名、終局、極境）每次擊殺
   mirror_mob_chance: 0.0000001   # 一般怪物每隻（任何地方、任何等級）
-  final_common_chance: 0.10      # 終局 Boss（與極境）另外掉一件共通傳奇（map_boss 池）的機率（2026-10：25% → 10%）
-  final_support_chance: 0.01     # 2026-10：2% → 1%。終局 Boss 掉它自己專屬輔助寶石（supports.yml 寫 source: 這個終局的代號）的機率
+  final_common_chance: 0.01      # 終局 Boss 另外擲一次共通傳奇（map_boss 池，中了抽一件）：1%（2026-10-16）；極境、巔峰寫在各自的 common_chance
+  final_support_chance: 0.01     # 終局 Boss 自己的專屬輔助寶石（supports.yml 寫 source: 這個終局的代號）：每一顆各自 1%
   fragment: sky_fragment         # 天穹碎片（currencies.yml）
   fragment_maps: [starfall_tundra, observatory]   # 這些地圖的 Boss 必掉一片
   fragment_cost: 2               # 開終局要幾片
@@ -474,8 +475,9 @@ final:
   #                         enrage 寫了就換掉；mods 多的怪物詞綴
   #   monster／player       這張圖的怪物、玩家額外的屬性（寫法同 monsters.yml 的 stats）
   #   key／key_cost         開門要哪種通貨幾個；key_chance、key_min_tier：一般版本開到第幾階以上，Boss 有多少機率掉一個（每個有份的人各擲）
-  #   drops                 maps 掉幾張最高階的地圖、unique_chance 掉這個終局自己的傳奇（追逐級照 drops.chase_chance，跟一般 Boss 一樣）、
-  #                         exclusive_chance 極境專屬傳奇（uniques.yml 的 sources 寫 uber_終局代號）、
+  #   drops                 maps 掉幾張最高階的地圖、unique_chance 這個終局自己的傳奇每一件各自擲（追逐級照 drops.chase_chance，跟一般 Boss 一樣）、
+  #                         exclusive_chance 極境專屬傳奇每一件各自擲（uniques.yml 的 sources 寫 uber_終局代號）、
+  #                         common_chance 共通傳奇（map_boss 池）擲一次、中了抽一件（沒寫照 drops.final_common_chance）、
   #                         extra 額外掉落 [{ currency: 代號, amount: 幾個, chance: 機率 }、{ support: 輔助寶石代號, chance: 機率 }]
   uber:
     dps_cap: 150000    # 2026-10：每個人對極境 Boss 每秒傷害的上限（終局、極境、巔峰統一 15 萬；血量照打白怪假人每秒 10 萬打 3 分半）；超過的部分照 dps_over 遞減
@@ -521,15 +523,16 @@ final:
     key_min_tier: 12
     drops:
       maps: 4
-      unique_chance: 0.05   # 2026-10：25% → 5%
-      exclusive_chance: 0.03   # 2026-10：5% → 3%        # 極境專屬傳奇（uniques.yml 的 uber_sky_crucible）
+      unique_chance: 0.02   # 自己的傳奇每一件各自 2%（2026-10-16）
+      common_chance: 0.02   # 共通傳奇（map_boss 池）擲一次 2%
+      exclusive_chance: 0.01   # 極境專屬傳奇（uniques.yml 的 uber_sky_crucible）：每一件各自 1%（2026-10-16）
       extra:
         - { currency: sky_fragment, amount: 2, chance: 1 }
         - { currency: zenith_orb, amount: 5, chance: 1 }
         - { currency: oracle_orb, amount: 1, chance: 0.3 }
         - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
-        - { support: starfall_resonance, chance: 0.02 }       # 這個終局的專屬輔助（一般版本 1%；2026-10：5% → 2%）
-        - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（各 1%；2026-10：2% → 1%）
+        - { support: starfall_resonance, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
+        - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
         - { support: myriad_stars, chance: 0.01 }
 
 # 其他終局 Boss（PoE2 有好幾個巔峰 Boss）：寫法跟 final 一樣，多了
@@ -635,15 +638,16 @@ finals:
       key_min_tier: 12
       drops:
         maps: 4
-        unique_chance: 0.05   # 2026-10：25% → 5%
-        exclusive_chance: 0.03   # 2026-10：5% → 3%        # 極境專屬傳奇（uniques.yml 的 uber_frost_throne）
+        unique_chance: 0.02   # 自己的傳奇每一件各自 2%（2026-10-16）
+        common_chance: 0.02   # 共通傳奇（map_boss 池）擲一次 2%
+        exclusive_chance: 0.01   # 極境專屬傳奇（uniques.yml 的 uber_frost_throne）：每一件各自 1%（2026-10-16）
         extra:
           - { currency: sky_fragment, amount: 2, chance: 1 }
           - { currency: zenith_orb, amount: 5, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.3 }
           - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
-          - { support: permafrost_heart, chance: 0.02 }       # 這個終局的專屬輔助（一般版本 1%；2026-10：5% → 2%）
-          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（各 1%；2026-10：2% → 1%）
+          - { support: permafrost_heart, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
+          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
           - { support: myriad_stars, chance: 0.01 }
 
   bone_throne:
@@ -744,15 +748,16 @@ finals:
       key_min_tier: 12
       drops:
         maps: 4
-        unique_chance: 0.05   # 2026-10：25% → 5%
-        exclusive_chance: 0.03   # 2026-10：5% → 3%        # 極境專屬傳奇（uniques.yml 的 uber_bone_throne）
+        unique_chance: 0.02   # 自己的傳奇每一件各自 2%（2026-10-16）
+        common_chance: 0.02   # 共通傳奇（map_boss 池）擲一次 2%
+        exclusive_chance: 0.01   # 極境專屬傳奇（uniques.yml 的 uber_bone_throne）：每一件各自 1%（2026-10-16）
         extra:
           - { currency: sky_fragment, amount: 2, chance: 1 }
           - { currency: zenith_orb, amount: 5, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.3 }
           - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
-          - { support: styx_ferry, chance: 0.02 }       # 這個終局的專屬輔助（一般版本 1%；2026-10：5% → 2%）
-          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（各 1%；2026-10：2% → 1%）
+          - { support: styx_ferry, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
+          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
           - { support: myriad_stars, chance: 0.01 }
 
   ember_citadel:
@@ -853,15 +858,16 @@ finals:
       key_min_tier: 12
       drops:
         maps: 4
-        unique_chance: 0.05   # 2026-10：25% → 5%
-        exclusive_chance: 0.03   # 2026-10：5% → 3%        # 極境專屬傳奇（uniques.yml 的 uber_ember_citadel）
+        unique_chance: 0.02   # 自己的傳奇每一件各自 2%（2026-10-16）
+        common_chance: 0.02   # 共通傳奇（map_boss 池）擲一次 2%
+        exclusive_chance: 0.01   # 極境專屬傳奇（uniques.yml 的 uber_ember_citadel）：每一件各自 1%（2026-10-16）
         extra:
           - { currency: sky_fragment, amount: 2, chance: 1 }
           - { currency: zenith_orb, amount: 5, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.3 }
           - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
-          - { support: skyburn_fury, chance: 0.02 }       # 這個終局的專屬輔助（一般版本 1%；2026-10：5% → 2%）
-          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（各 1%；2026-10：2% → 1%）
+          - { support: skyburn_fury, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
+          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
           - { support: myriad_stars, chance: 0.01 }
 
   # ---- 巔峰（2026-10）：萬界之巔——終局之上的最終 Boss，招式照 PoE 的「萬界覺醒者」：死亡光束、風暴迷宮、殞星、分身、
@@ -962,15 +968,15 @@ finals:
         maps: 3
         unique_chance: 0.01      # 自己的傳奇（uniques.yml 的 sources 寫 awakener，11 件）：每一件各自擲 1%（2026-10-16；沒有自己的就用終局共通的 final 池抽一件）
         exclusive_chance: 0.01   # 極境專屬（uber_awakener；沒有就是四個極境各自的專屬，共 4 件）：每一件各自擲 1%
-        common_chance: 0.20      # 2026-10：共通傳奇（map_boss 池）20%（沒寫的照 drops.final_common_chance 10%，終局、極境還是 10%）
+        common_chance: 0.03      # 2026-10-16：共通傳奇（map_boss 池）擲一次 3%（沒寫的照 drops.final_common_chance）
         extra:
           - { currency: abyss_core, amount: 1, chance: 0.5 }
           - { currency: sky_fragment, amount: 2, chance: 1 }
           - { currency: zenith_orb, amount: 4, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.2 }
           - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
-          - { support: abyssal_touch, chance: 0.02 }       # 2026-10：1% → 2%
-          - { support: myriad_stars, chance: 0.02 }        # 2026-10：1% → 2%
+          - { support: abyssal_touch, chance: 0.01 }       # 2026-10-16：輔助、技能寶石每顆各自 1%
+          - { support: myriad_stars, chance: 0.01 }
           # 虛星專屬的輔助寶石（supports.yml 的 source: awakener；8 顆各 1%，一次大約 8% 至少掉一顆）
           - { support: oblivion_focus, chance: 0.01 }
           - { support: storm_maze_heart, chance: 0.01 }
