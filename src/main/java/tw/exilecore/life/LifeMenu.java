@@ -27,6 +27,7 @@ public final class LifeMenu extends Menu {
     private static final int FIRST_RECIPE = 27;
     private static final int SLOT_DRINK = 22;
     private static final int SLOT_FOOD = 24;
+    private static final int SLOT_RAFT = 20;   // 2026-10-16：木筏管理
 
     private final LifeService service;
     private final Map<Integer, LifeConfig.Recipe> shown = new HashMap<>();
@@ -108,6 +109,9 @@ public final class LifeMenu extends Menu {
         final String food = service.foodStatus(player);
         set(SLOT_FOOD, icon(Material.COOKED_COD, "<#ffb46b>料理", food == null ? "<gray>現在沒有料理的效果" : "<green>" + ItemRenderer.escape(food),
                 "<gray>在筏上的烤爐、料理台做；右鍵吃", "<gray>同時只有一種（吃新的蓋掉舊的）"));
+        final int members = service.profile(player) == null || service.profile(player).plot < 0 ? 0 : service.membersOf(service.profile(player).plot).size();
+        set(SLOT_RAFT, icon(Material.PLAYER_HEAD, "<#f5b942>木筏管理", "<gray>共用成員 <white>" + members + "</white>／8",
+                "<gray>邀請、加共用成員、請人離開、去共用的筏", "", "<yellow>左鍵：打開"));
         set(SLOT_DRINK, icon(Material.POTION, "<#7fd4ff>喝一份淡水", "<gray>有 " + service.material(player, config.freshWater()) + " 份；精力 +"
                 + config.drinkStamina(), "<dark_gray>淡水、料理一天最多回 " + config.dailyRestore() + " 點精力", "", "<yellow>左鍵：喝"));
         for (final LifeConfig.Recipe recipe : config.recipes()) {
@@ -193,6 +197,10 @@ public final class LifeMenu extends Menu {
             if (problem != null) {
                 player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
             }
+            return;
+        }
+        if (slot == SLOT_RAFT) {
+            new LifeRaftMenu(plugin, player, service).open();
             return;
         }
         if (slot == SLOT_DRINK) {

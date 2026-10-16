@@ -540,6 +540,11 @@ public final class LifeService {
         return name == null ? "?" : name;
     }
 
+    /** 筏主（2026-10-16，木筏管理選單用）；沒人 null。 */
+    UUID ownerOf(final int plot) {
+        return plotOwners.get(plot);
+    }
+
     /** 這個人的筏（分過的；沒分過 -1）。 */
     private int plotOf(final UUID owner) {
         final Profile profile = profiles.get(owner);
