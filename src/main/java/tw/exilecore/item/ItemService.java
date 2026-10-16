@@ -161,12 +161,17 @@ public final class ItemService {
         final boolean oldRender = version == null || version < ItemRenderer.RENDER_VERSION;
         // 傳奇：uniques.yml 改過（指紋不一樣）才解開來檢查
         final boolean checkUnique = codec.isUnique(stack) && !Integer.valueOf(repository.uniqueRevision()).equals(codec.uniqueRevision(stack));
-        if (!oldRender && !checkUnique) {
-            return false;
-        }
         final Optional<ItemData> data = codec.read(stack);
         if (data.isEmpty() || repository.base(data.get().base()) == null) {
             return false;
+        }
+        if (!oldRender && !checkUnique) {
+            // 2026-10-16：外觀是新版畫的，但說明跟資料對不上（沒跟著更新）也重畫；登入、打開倉庫時都會檢查
+            if (!renderer.outdated(stack, data.get())) {
+                return false;
+            }
+            renderer.render(stack, data.get());
+            return true;
         }
         // 2026-10：詞綴後來多出來的變數也補上（不補的話重畫時丟「缺少變數」，整個倉庫被當成資料損毀）
         final boolean upgraded = UniqueUpgrade.apply(repository, data.get()) | AffixUpgrade.apply(repository, data.get());

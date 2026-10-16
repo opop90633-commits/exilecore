@@ -39,7 +39,7 @@ import java.util.Set;
  * @param aura          光環的設定（mechanic: aura 才有）；null = 不是光環
  * @param warcry        戰吼的設定（mechanic: warcry 才有）；null = 不是戰吼
  * @param cooldownBypass 冷卻中可以消耗一顆這種戰星直接放（charges.yml 的代號，例如瞬影擊的 frenzy）；null = 不行
- * @param source        專屬的掉落來源（例如 heist：劫盜大金庫的異質寶石）：未切割技能寶石雕不出來，只有那裡會掉；null = 一般的
+ * @param source        專屬的掉落來源（例如 awakener：萬界之巔的虛星）：未切割技能寶石雕不出來，只有那裡會掉；null = 一般的
  */
 public record SkillDefinition(String id, String name, String description, String icon, SkillType type,
                               Set<String> tags, Set<String> weapons, String starter, boolean hidden, int tier, Mechanic mechanic,
@@ -63,6 +63,22 @@ public record SkillDefinition(String id, String name, String description, String
     /** 能不能從未切割技能寶石雕出來（專屬掉落的不行）。 */
     public boolean engravable() {
         return source == null;
+    }
+
+    /**
+     * 專屬技能寶石從哪裡掉（玩家看的文字；2026-10-16：以前寫死「劫盜的大金庫」，現在專屬寶石都是萬界之巔的虛星掉）。
+     * 一般的（雕得出來）回傳 null。
+     */
+    public String sourceText() {
+        if (source == null) {
+            return null;
+        }
+        return switch (source) {
+            case "awakener" -> "萬界之巔的覺醒之主・虛星";
+            case "heist" -> "劫盜的大金庫";
+            case "abyss_whale" -> "星骸之海的淵鯨";
+            default -> "專屬的掉落來源";
+        };
     }
 
     /** 是不是這個來源的專屬技能寶石。 */

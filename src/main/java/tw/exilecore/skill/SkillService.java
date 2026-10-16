@@ -472,6 +472,9 @@ public final class SkillService {
 
     /** 營地是安全區，不能戰鬥；營地的練習場（訓練假人旁邊）例外。 */
     public boolean inTown(final Player player) {
+        if (plugin.life() != null && plugin.life().lifeMode(player.getLocation())) {
+            return true; // 2026-10 星骸之海：海上是生活區，跟營地一樣不能放技能、快捷列照原版用
+        }
         if (plugin.zones() == null || !plugin.zones().inTown(player.getLocation())) {
             return false;
         }

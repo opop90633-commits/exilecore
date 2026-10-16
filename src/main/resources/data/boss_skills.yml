@@ -2589,6 +2589,185 @@ skills:
     telegraph: 1.0
     shout: "「燈裡的孩子們，出來玩。」"
 
+  # ---- 2026-10：星骸之海的淵鯨（life.yml 的 whale）——巔峰級：傷害、前搖照虛星那一級，出招節奏用 tempo.pinnacle ----
+  #   招式跟萬界之巔的虛星不重複（沒有光束、迷宮、全場安全區、場地收縮、荒蕪）：
+  #   潮湧（擴散環，站進缺口）、深淵吐息（三波扇形）、吞噬（漩渦，往外跑）、喚潮（全場亂落的潮柱＋留下冰冷的暗流）；
+  #   第一階段起破浪衝撞（橫衝過場地）、翻身（以牠為中心兩圈大浪）、潮汐印記（點名）、場地危害浪花；
+  #   第二階段起怒濤齊射（一大片水彈）、深海壓力（受到的傷害增加）、喚來溺魂
+  abyss_tide_ring:
+    name: 潮湧
+    hint: "潮水一圈一圈湧出來：站進綠色的缺口"
+    kind: ring
+    damage: 1.7
+    type: physical
+    convert: { cold: 0.5 }
+    cooldown: 14
+    range: 20
+    telegraph: 1.2
+    radius: 2
+    reach: 22
+    speed: 0.4
+    width: 0.9
+    count: 3
+    stagger: 0.8
+    gaps: 2
+    gap_angle: 45
+    shout: "（深海傳來很低的鳴叫）"
+  abyss_breath:
+    name: 深淵吐息
+    hint: "牠朝你吐了三口深海的水：往牠側面繞"
+    kind: cone
+    damage: 1.8
+    type: cold
+    cooldown: 10
+    range: 18
+    telegraph: 1.2
+    angle: 60
+    length: 18
+    count: 3
+    stagger: 0.5
+    slow: 2
+    shout: "（淵鯨張開了嘴）"
+  abyss_devour:
+    name: 吞噬
+    hint: "牠在吸：往外跑，別被拉進嘴裡"
+    kind: pull
+    damage: 3.2
+    type: physical
+    convert: { cold: 0.3 }
+    cooldown: 22
+    range: 16
+    telegraph: 1.2
+    radius: 16
+    speed: 0.12
+    duration: 3.5
+    explode: 5.5
+    shout: "（海水往牠嘴裡倒灌）"
+  abyss_call_tide:
+    name: 喚潮
+    hint: "潮柱在整片場地亂落：看地上的紅圈，一直移動"
+    kind: slam
+    damage: 2.0
+    type: cold
+    cooldown: 14
+    range: 30
+    telegraph: 0.8
+    delay: 1.2
+    radius: 3
+    count: 8
+    stagger: 0.25
+    scatter: 13
+    at: self
+    slow: 2
+    shout: "（天上落下一道一道的潮柱）"
+  abyss_undertow:
+    name: 暗流
+    kind: zone           # 跟喚潮一起放（life.yml 的 whale.skills 的 with:）：腳邊留下冰冷的暗流（很慢，不會禁療）
+    damage: 0.5
+    type: cold
+    telegraph: 2.0
+    radius: 3
+    duration: 8
+    interval: 0.5
+    count: 2
+    scatter: 4
+    at: target
+    slow: 3
+  abyss_ram:
+    name: 破浪衝撞
+    hint: "牠要橫衝過場地：往紅線的兩邊閃"
+    kind: charge
+    damage: 3.0
+    type: physical
+    convert: { cold: 0.3 }
+    cooldown: 16
+    range: 30
+    telegraph: 1.2
+    speed: 1.2
+    reach: 24
+    width: 3.0
+    slow: 2
+    shout: "（淵鯨沉下去，又從浪裡衝了出來）"
+  abyss_roll:
+    name: 翻身
+    hint: "牠要翻身：離牠 10 格以外"
+    kind: nova
+    damage: 2.4
+    type: physical
+    convert: { cold: 0.5 }
+    cooldown: 18
+    range: 12
+    telegraph: 2.0
+    radius: 10
+    count: 2
+    stagger: 0.8
+    slow: 2
+    shout: "（淵鯨翻了個身，大浪往四面八方打出去）"
+  abyss_tide_mark:
+    name: 潮汐印記
+    hint: "被點名的人 4 秒後被大浪拍下：離開隊友"
+    kind: mark
+    damage: 2.2
+    type: cold
+    cooldown: 16
+    range: 30
+    telegraph: 0.8
+    count: 1
+    duration: 4
+    explode: 4
+    shout: "（你身上浮出一圈潮痕）"
+  abyss_fury:
+    name: 怒濤齊射
+    hint: "一大片水彈朝你打過來：找縫鑽，或往側面跑"
+    kind: volley
+    damage: 1.5
+    type: physical
+    convert: { cold: 0.75 }
+    cooldown: 12
+    range: 26
+    telegraph: 1.2
+    count: 13
+    spread: 120
+    speed: 0.7
+    reach: 28
+    size: 0.8
+    explode: 2.0
+    shout: "（淵鯨噴出了一整片的水彈）"
+  abyss_pressure:
+    name: 深海壓力
+    hint: "整片海壓下來：受到的傷害增加，先拉開距離"
+    kind: curse
+    type: cold
+    cooldown: 24
+    range: 30
+    telegraph: 1.0
+    radius: 30
+    duration: 8
+    taken: 25
+    shout: "（耳朵好痛……整片海都壓了下來）"
+  abyss_sharks:
+    name: 喚來溺魂
+    kind: summon
+    summon: DROWNED
+    count: 3
+    summon_max: 6
+    duration: 20
+    cooldown: 26
+    telegraph: 1.0
+    shout: "（沉在這片海底的水手，跟著牠浮了上來）"
+  hazard_abyss_splash:
+    name: 浪花
+    kind: slam
+    damage: 1.4
+    type: cold
+    telegraph: 0.8
+    delay: 1.0
+    radius: 3.5
+    count: 1
+    scatter: 3
+    at: target
+    slow: 1
+
 # 各種生物預設的招式組（maps.yml／zones.yml 沒寫 skills 時）
 defaults:
   default: [slam, charge]

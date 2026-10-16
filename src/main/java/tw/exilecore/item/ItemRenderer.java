@@ -92,6 +92,22 @@ public final class ItemRenderer {
         return stack;
     }
 
+    /**
+     * 物品上的名稱、說明跟照目前資料畫出來的不一樣（2026-10-16：說明沒跟著資料更新的保險——
+     * 曾經有說明寫 T1、實際是 T3 的情況）。基底不見了回傳 false（不動）。
+     */
+    public boolean outdated(final ItemStack stack, final ItemData data) {
+        final ItemBase base = repository.base(data.base());
+        if (base == null || !stack.hasItemMeta()) {
+            return base != null;
+        }
+        final ItemStats.Snapshot snapshot = ItemStats.snapshot(repository, base, data);
+        final List<Component> lore = buildLore(base, data, snapshot);
+        final Component name = line("<" + data.rarity().color() + ">" + escape(ItemStats.displayName(repository, data)));
+        final org.bukkit.inventory.meta.ItemMeta meta = stack.getItemMeta();
+        return !lore.equals(meta.lore()) || !name.equals(meta.displayName());
+    }
+
     /** 依資料重繪既有物品的外觀。 */
     public void render(final ItemStack stack, final ItemData data) {
         final ItemBase base = repository.requireBase(data.base());

@@ -6090,6 +6090,29 @@ skills:
       - { stat: shock.chance, type: FLAT, value: 20 }
       - { stat: poison.chance, type: FLAT, value: 20 }
 
+  # ---- 2026-10：星骸之海的淵鯨（life.yml 的 whale）專屬技能寶石：未切割技能寶石雕不出來，只有淵鯨會掉（20 級）----
+  tide_call:
+    name: 喚潮
+    description: 喚來一道深海的潮水往前捲過去，扇形裡的敵人全部打到；六成是冰冷、四成是物理，冰緩又重又久，被冰緩的敵人更多 20% 傷害。淵鯨專屬。
+    icon: HEART_OF_THE_SEA
+    type: spell
+    tier: 14
+    source: abyss_whale
+    tags: [spell, area, cold, physical]
+    mechanic: cone
+    cone: { length: [9, 12], angle: 70 }
+    damage: [30, 46]
+    damage_types: { cold: 0.6, physical: 0.4 }
+    cast_time: 0.9
+    effectiveness: 1.3
+    mana: [10, 24]
+    visual: storm_wave
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }
+      - { stat: chill.effect, type: INCREASED, value: 50 }
+      - { stat: damage.vs_chilled, type: MORE, value: 20 }
+      - { stat: freeze.buildup, type: INCREASED, value: 40 }
+
   # ---- 2026-10：主要寶石（照 PoE2 的 Meta Gem：法術圖騰、Cast on X）----
   # 主要寶石本身不打人，用的是技能面板上「它後面那一格」的法術（那一格就是它的插槽，那個法術不能自己按）。
   # meta 區塊：kind（totem 法術圖騰；crit／ailment／dodge／damage_taken／minion_death／melee_kill 常駐、保留精魂）、

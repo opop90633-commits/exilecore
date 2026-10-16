@@ -494,8 +494,8 @@ public final class LootFilterMenu extends Menu {
             groups.add(new ArrayList<>());
         }
         for (final CurrencyType type : plugin.currencies().repository().all()) {
-            if (type.dropWeight() <= 0) {
-                continue; // 怪物不會掉的（鑑定卷軸、地圖機制的、未切割寶石）
+            if (type.dropWeight() <= 0 && !tw.exilecore.heist.HeistService.CONTRACT.equals(type.id())) {
+                continue; // 怪物不會掉的（鑑定卷軸、地圖機制的、未切割寶石）；劫盜合約另外掉（星圖裡的怪），也可以過濾（2026-10-16）
             }
             final long value = value(type);
             final int group = value < GROUP_BOUNDS[0] ? 0 : value < GROUP_BOUNDS[1] ? 1 : 2;
@@ -546,7 +546,8 @@ public final class LootFilterMenu extends Menu {
                         isHidden ? "<red>隱藏<gray>：不會掉，換成約 <#f5b942>" + String.format(Locale.ROOT, "%,d", gold) + "<gray> 金幣"
                                 : "<green>會撿<gray>：自動收進通貨袋",
                         "<dark_gray>" + ItemRenderer.escape(type.description()),
-                        String.format(Locale.ROOT, "<dark_gray>參考價值 %,d 金幣・%s", value(type), frequency(type.dropWeight())),
+                        String.format(Locale.ROOT, "<dark_gray>參考價值 %,d 金幣・%s", value(type),
+                                type.dropWeight() <= 0 ? "只在星圖裡掉" : frequency(type.dropWeight())),
                         "",
                         "<yellow>左鍵：" + (isHidden ? "改成會撿" : "改成隱藏"));
                 final ItemStack decorated = tw.exilecore.currency.CurrencyService.decorate(icon, type);

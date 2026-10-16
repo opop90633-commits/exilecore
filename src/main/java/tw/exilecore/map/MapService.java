@@ -352,8 +352,9 @@ public final class MapService {
     public double capBossDamage(final LivingEntity defender, final UUID source, final double amount) {
         final String worldRole = plugin.worldEvents() == null ? null : plugin.worldEvents().role(defender);
         if (amount > 0 && source != null && ("boss".equals(worldRole) || "commander".equals(worldRole)
-                || plugin.festival() != null && plugin.festival().isKing(defender))) {
-            // 2026-10：世界 Boss（開天者、萬燈夜的南瓜王）、入侵怪潮的潮汐統帥比照極境：每秒傷害上限與分段遞減照 maps.yml 的 final_dps（15 萬）
+                || plugin.festival() != null && plugin.festival().isKing(defender)
+                || plugin.life() != null && plugin.life().isWhale(defender))) {
+            // 2026-10：世界 Boss（開天者、萬燈夜的南瓜王）、入侵怪潮的潮汐統帥、星骸之海的淵鯨比照極境：每秒傷害上限與分段遞減照 maps.yml 的 final_dps（15 萬）
             final Player player = plugin.getServer().getPlayer(source);
             final double record = player == null || plugin.training() == null ? 0 : plugin.training().bossDps(player);
             return dpsCap.apply("world:" + source, amount, config.finalDpsCap(), config.finalDpsOver(),
@@ -490,6 +491,20 @@ public final class MapService {
     List<Modifier> playerModifiers(final Player player) {
         final MapInstance instance = instanceAt(player.getLocation());
         return instance == null ? List.of() : instance.stats().playerModifiers();
+    }
+
+    /**
+     * 終局以上的 Boss（終局、極境、巔峰、金庫之主；2026-10-16）：掉落不吃物品數量、稀有度（自己的、全服、主題、地圖的都不算）。
+     */
+    public boolean flatBossLoot(final LivingEntity entity) {
+        if (plugin.life() != null && plugin.life().isWhale(entity)) {
+            return true; // 星骸之海的淵鯨（比照巔峰）
+        }
+        if (!entity.getPersistentDataContainer().has(bossKey)) {
+            return false;
+        }
+        final MapInstance instance = instanceOf(entity);
+        return instance != null && instance.usesAttempts();
     }
 
     /** 掉落加成（小數）：{物品數量, 物品稀有度}。 */

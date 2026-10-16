@@ -41,7 +41,7 @@ class UniqueDataTest {
     /** 地圖事件的來源（map_events.yml）。 */
     static final Set<String> EVENT_SOURCES = Set.of("shrine", "strongbox", "breach", "exile", "ritual", "delirium");
     /** 其他專屬的來源（2026-10）：劫盜的大金庫、開服活動的世界 Boss（world_events.yml 直接列傳奇代號）。 */
-    static final Set<String> OTHER_SOURCES = Set.of("heist", "world_boss");
+    static final Set<String> OTHER_SOURCES = Set.of("heist", "world_boss", "abyss_whale");
     /** 地圖代號（具名 Boss 的來源）。 */
     static Set<String> maps;
     /** 引擎用空的情境查的屬性（寫標籤也不會生效）。 */
@@ -111,8 +111,8 @@ class UniqueDataTest {
     void everyUniqueLoadsWithValidStatsTagsAndSources() {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
-        assertEquals(122, repository.uniques().size(),
-                "終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 40（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘）");
+        assertEquals(125, repository.uniques().size(),
+                "終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 40（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘） + 星骸之海的淵鯨 3");
         final Set<String> names = new HashSet<>();
         for (final UniqueItem unique : repository.uniques()) {
             final String where = unique.id();
@@ -203,6 +203,9 @@ class UniqueDataTest {
         for (final UniqueItem unique : awakener) {
             assertEquals(Set.of("awakener"), Set.copyOf(unique.sources()), unique.id());
         }
+        // 2026-10：星骸之海的淵鯨（比照巔峰）三件，物品等級 85 起，只有淵鯨會掉
+        assertEquals(Set.of("abyss_echo", "tidewhisper_bow", "tide_devourer"), ids(repository.uniquesFor("abyss_whale", 92)));
+        assertTrue(repository.uniquesFor("abyss_whale", 84).isEmpty());
     }
 
     private static Set<String> ids(final List<UniqueItem> uniques) {

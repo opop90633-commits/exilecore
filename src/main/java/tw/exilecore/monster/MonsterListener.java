@@ -153,13 +153,15 @@ public final class MonsterListener implements Listener {
 
         double quantityBonus = monsters.config().rarity(data.rarity()).quantityBonus();
         double rarityBonus = monsters.config().rarity(data.rarity()).rarityBonus();
-        if (plugin.maps() != null) {
+        // 2026-10-16：終局以上的 Boss 掉落不吃物品數量、稀有度（地圖、主題、全服、自己的都不算；Boss 本身的稀有度加成照算）
+        final boolean flat = plugin.maps() != null && plugin.maps().flatBossLoot(entity);
+        if (!flat && plugin.maps() != null) {
             // 地圖的物品數量與稀有度（地圖詞綴、品質）
             final double[] bonus = plugin.maps().dropBonus(entity);
             quantityBonus += bonus[0];
             rarityBonus += bonus[1];
         }
-        if (plugin.events() != null) {
+        if (plugin.events() != null && !flat) {
             // 2026-10：這個月的主題是全域的（以前只有地圖裡吃得到）
             quantityBonus += plugin.events().quantityBonus();
             rarityBonus += plugin.events().rarityBonus();
@@ -168,12 +170,12 @@ public final class MonsterListener implements Listener {
         final List<Player> sharers = credit.sharers(entity, killer);
         if (sharers.isEmpty()) {
             // 沒有玩家有份（摔死、被別的怪打死）：擲一份掉在地上，誰都能撿
-            rollAndDeliver(entity, data, null, quantityBonus, rarityBonus, location);
+            rollAndDeliver(entity, data, null, quantityBonus, rarityBonus, location, flat);
         } else {
             for (final Player player : sharers) {
                 final StatSheet sheet = plugin.players().sheet(player);
-                rollAndDeliver(entity, data, player, quantityBonus + sheet.increased(StatKeys.DROP_QUANTITY, java.util.Set.of()),
-                        rarityBonus + sheet.increased(StatKeys.DROP_RARITY, java.util.Set.of()), location);
+                rollAndDeliver(entity, data, player, quantityBonus + (flat ? 0 : sheet.increased(StatKeys.DROP_QUANTITY, java.util.Set.of())),
+                        rarityBonus + (flat ? 0 : sheet.increased(StatKeys.DROP_RARITY, java.util.Set.of())), location, flat);
                 if (plugin.quests() != null) {
                     plugin.quests().onKill(player, location, data.rarity()); // 任務：擊殺、撿任務物品
                 }
@@ -202,9 +204,10 @@ public final class MonsterListener implements Listener {
 
     /** 替一個人（null = 沒有人）擲一份掉落並交給他：過濾器、自動撿取、金幣直接進角色；不能撿的掉在地上、先歸他。 */
     private void rollAndDeliver(final LivingEntity entity, final MonsterData data, final Player owner, final double baseQuantity,
-                                final double rarityBonus, final Location location) {
+                                final double rarityBonus, final Location location, final boolean flat) {
         // 全服掉落加成（管理網頁、drops.yml 的 server_bonus）：數量加在物品上（地圖也算），金幣另外乘金幣倍數（rollGold 裡）
-        final double server = drops.serverQuantity();
+        // 終局以上的 Boss 不算（flat）
+        final double server = flat ? 0 : drops.serverQuantity();
         double quantityBonus = baseQuantity + server;
         double goldBonus = baseQuantity;
         double fatigue = 1.0;
@@ -221,7 +224,7 @@ public final class MonsterListener implements Listener {
         final tw.exilecore.item.LootBias bias = owner == null || plugin.characters() == null ? tw.exilecore.item.LootBias.NONE
                 : plugin.characters().lootBias(owner);
         final List<DropTable.Drop> rolled = new java.util.ArrayList<>(drops.roll(data.level(), data.rarity(), quantityBonus,
-                rarityBonus + drops.serverRarity(), plugin.items().generator(), plugin.currencies().repository(), plugin.items().random(), bias));
+                rarityBonus + (flat ? 0 : drops.serverRarity()), plugin.items().generator(), plugin.currencies().repository(), plugin.items().random(), bias));
         if (plugin.maps() != null) {
             // 地圖怪掉地圖（照這個人的星圖）、地圖 Boss 的地圖、傳奇、天穹碎片
             plugin.maps().rollLoot(entity, data, owner, quantityBonus, rolled);

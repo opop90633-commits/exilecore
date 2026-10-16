@@ -137,6 +137,7 @@ public final class ExileCore extends JavaPlugin {
     private tw.exilecore.event.EventModule eventModule;
     private tw.exilecore.worldevent.WorldEventModule worldEventModule;
     private tw.exilecore.festival.FestivalModule festivalModule;
+    private tw.exilecore.life.LifeModule lifeModule;
     private tw.exilecore.ascendancy.AscendancyModule ascendancyModule;
     private final Perf perf = new Perf();
     private tw.exilecore.admin.AdminOverrides overrides;
@@ -225,6 +226,9 @@ public final class ExileCore extends JavaPlugin {
             for (final LiteralCommandNode<CommandSourceStack> node : tw.exilecore.event.EventModule.commands(this)) {
                 event.registrar().register(node, "ExileCore 每月活動");
             }
+            for (final LiteralCommandNode<CommandSourceStack> node : tw.exilecore.life.LifeModule.commands(this)) {
+                event.registrar().register(node, "ExileCore 生活玩法（星骸之海）");
+            }
             for (final LiteralCommandNode<CommandSourceStack> node : tw.exilecore.festival.FestivalModule.commands(this)) {
                 event.registrar().register(node, "ExileCore 節慶活動（萬燈夜）");
             }
@@ -292,6 +296,7 @@ public final class ExileCore extends JavaPlugin {
         this.eventModule = new tw.exilecore.event.EventModule(this);
         this.worldEventModule = new tw.exilecore.worldevent.WorldEventModule(this);
         this.festivalModule = new tw.exilecore.festival.FestivalModule(this);
+        this.lifeModule = new tw.exilecore.life.LifeModule(this);
         this.chatModule = new tw.exilecore.chat.ChatModule(this);
         this.trainingModule = new tw.exilecore.training.TrainingModule(this);
         this.ladderModule = new tw.exilecore.ladder.LadderModule(this);
@@ -332,6 +337,7 @@ public final class ExileCore extends JavaPlugin {
         modules.register(sponsorModule);                    // 贊助：星幣、累積贊助、月卡、全服加倍、外觀特效、抽獎箱、登入天數（委託模組之後：帳號進度）
         modules.register(eventModule);                      // 每月活動：主題輪替、每月挑戰、限定稱號（委託模組之後：進度與稱號）
         modules.register(worldEventModule);                 // 不定時活動（開服活動）：世界 Boss、入侵怪潮、素材兌換（委託模組之後：稱號）
+        modules.register(lifeModule);                       // 生活玩法「星骸之海」（2026-10）：海域、木筏、撈取、精力、生活等級（委託模組之後：帳號進度）
         modules.register(festivalModule);                   // 節慶活動（2026-10 萬燈夜）：幽燈墓園、點燈、南瓜王、糖果、兌換（委託、贊助之後：稱號、時裝）
         modules.register(chatModule);                       // 角色名稱（TAB、聊天）、私訊、聊天裡的物品連結（要在昇華、委託之後：TAB 的稱號）
         modules.register(ladderModule);                     // 排行榜（等級、地圖、不死）
@@ -651,6 +657,11 @@ public final class ExileCore extends JavaPlugin {
     /** 不定時活動（開服活動）；模組沒啟用時為 null。 */
     public tw.exilecore.worldevent.WorldEventService worldEvents() {
         return worldEventModule == null ? null : worldEventModule.service();
+    }
+
+    /** 生活玩法「星骸之海」（2026-10）；模組沒啟用時為 null。 */
+    public tw.exilecore.life.LifeService life() {
+        return lifeModule == null ? null : lifeModule.service();
     }
 
     /** 節慶活動（2026-10 萬燈夜）；模組沒啟用時為 null。 */

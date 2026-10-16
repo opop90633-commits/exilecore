@@ -256,11 +256,11 @@ public final class FestivalService {
         if (arenaChecked || !config.shopOpen(System.currentTimeMillis())) {
             return;
         }
-        arenaChecked = true;
         final World world = eventWorld();
         if (world == null) {
-            return;
+            return; // 活動世界還沒載入：下次再檢查
         }
+        arenaChecked = true;
         try {
             if (Files.exists(arenaFile()) && Files.readString(arenaFile()).trim().equals(arenaStamp())) {
                 arenaReady = true;
@@ -394,9 +394,21 @@ public final class FestivalService {
         }
     }
 
+    /** /ec reload 之後：場地、下一隻南瓜王的時間重新算（場地的座標、燈的數量可能改了）。 */
+    void reloaded() {
+        arenaChecked = false;
+        arenaReady = false;
+        if (king == null) {
+            nextKingMillis = -1;
+        }
+    }
+
     void forget(final Player player) {
         inside.remove(player.getUniqueId());
         guards.remove(player.getUniqueId());
+        if (king != null) {
+            king.viewers.remove(player.getUniqueId()); // 重新登入要再顯示血條
+        }
     }
 
     // ---- 點燈 ----
@@ -646,8 +658,8 @@ public final class FestivalService {
 
     /** 下一次南瓜王（「20:00」；正在打、活動沒在進行 null）。 */
     public String nextKingClock() {
-        if (king != null || nextKingMillis < 0) {
-            return null;
+        if (king != null || nextKingMillis < 0 || !config.running(nextKingMillis)) {
+            return null; // 最後一隻打完了（只剩兌換的那幾天）不顯示
         }
         final java.time.ZonedDateTime at = java.time.Instant.ofEpochMilli(nextKingMillis).atZone(config.timezone());
         final java.time.ZonedDateTime today = java.time.ZonedDateTime.now(config.timezone());
@@ -931,7 +943,8 @@ public final class FestivalService {
             return;
         }
         final FestivalConfig.Candy candy = config.candy();
-        final LootBonus.Bonus bonus = LootBonus.of(plugin, player);
+        // 終局以上的 Boss 不吃物品數量（跟一般掉落一樣）
+        final LootBonus.Bonus bonus = plugin.maps().flatBossLoot(entity) ? LootBonus.Bonus.NONE : LootBonus.of(plugin, player);
         final int amount;
         if (data.boss()) {
             amount = bonus.amount(candy.boss(), random);
@@ -1195,14 +1208,17 @@ public final class FestivalService {
                 c.lanternDays() + " 天點滿全部的燈");
         if (!c.title().isEmpty() && progress(player, DONE + "title") == null && progress(player, DONE + "king") != null
                 && progress(player, DONE + "pumpkin") != null && progress(player, DONE + "lamp") != null) {
-            plugin.bounties().commitAccount(player, Map.of(DONE + "title", "1"), config.name() + "挑戰");
             final FestivalConfig.Title title = config.titles().get(c.title());
+            // 先發稱號（失敗下次再試），成功了才記「完成」
             if (!plugin.bounties().ownedTitles(player).contains(c.title())) {
                 final String problem = plugin.bounties().grantTitle(player, c.title());
                 if (problem != null) {
                     plugin.getSLF4JLogger().warn("{}：{} 拿不到稱號 {}：{}", config.name(), player.getName(), c.title(), problem);
                     return;
                 }
+            }
+            if (!plugin.bounties().commitAccount(player, Map.of(DONE + "title", "1"), config.name() + "挑戰")) {
+                return;
             }
             broadcast("<" + config.color() + ">🎃 " + ItemRenderer.escape(player.getName()) + " 完成了" + ItemRenderer.escape(config.name())
                     + "的全部挑戰，拿到稱號【" + ItemRenderer.escape(title == null ? c.title() : title.name()) + "】！");

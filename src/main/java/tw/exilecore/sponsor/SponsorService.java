@@ -229,7 +229,9 @@ public final class SponsorService {
         for (final SponsorConfig.BoostType type : personalBoosts(player)) {
             extra += type.gold() - 1;
         }
-        return extra <= 0 ? 0 : extra / Math.max(1, Boosts.gold());
+        // 全服的金幣倍數是 drops.yml 的 server_bonus.gold × 全服加倍 × 在線人數加成（DropTable.serverGold）；只除全服加倍會變成相乘
+        final double server = plugin.monsterModule() == null ? Boosts.gold() : plugin.monsterModule().drops().serverGold();
+        return extra <= 0 ? 0 : extra / Math.max(1, server);
     }
 
     /** 個人掉落數量、稀有度加倍：進屬性表的物品數量、稀有度（跟全服的 +100% 本來就是加起來的）。 */
@@ -1998,6 +2000,18 @@ public final class SponsorService {
     }
 
     private final Map<UUID, TryOn> tryOns = new ConcurrentHashMap<>();
+    /** 同一件時裝再試穿要等到（「玩家:時裝」→ tick）：避免一直重按把限定時裝當成自己的穿。 */
+    private final Map<String, Long> tryOnAgain = new ConcurrentHashMap<>();
+    static final long TRY_ON_AGAIN_TICKS = 20L * 120;
+
+    /** 取消試穿（選單的「拿下」：試穿中只拿掉試穿的，不動真的戴著的）；有在試穿回傳 true。 */
+    boolean cancelTryOn(final Player player) {
+        if (tryOns.remove(player.getUniqueId()) == null) {
+            return false;
+        }
+        plugin.characters().gear().resync(player);
+        return true;
+    }
 
     /**
      * 試穿還沒有的時裝 {@value #TRY_ON_TICKS} tick：外觀（武器、副手、防具、頭飾、背飾、寵物）照幻化的方式蓋上去，特效照戴著的方式出現；
@@ -2031,7 +2045,14 @@ public final class SponsorService {
         if (cosmetic.skin() && !packSent()) {
             return "伺服器沒有送介面資源包，3D 時裝畫不出來";
         }
-        final long until = plugin.getServer().getCurrentTick() + TRY_ON_TICKS;
+        final long now = plugin.getServer().getCurrentTick();
+        final String againKey = player.getUniqueId() + ":" + id;
+        final Long again = tryOnAgain.get(againKey);
+        if (again != null && now < again && !ownsCosmetic(player, id)) {
+            return "這件剛試穿過，" + Math.max(1, (again - now) / 20) + " 秒後可以再試";
+        }
+        tryOnAgain.put(againKey, now + TRY_ON_AGAIN_TICKS);
+        final long until = now + TRY_ON_TICKS;
         final TryOn entry = new TryOn(id, until);
         tryOns.put(player.getUniqueId(), entry);
         plugin.characters().gear().resync(player);

@@ -349,7 +349,7 @@ public final class GemService {
         }
         lines.add(SkillService.headlineChips(definition));
         if (!definition.engravable()) {
-            lines.add("<#d4a017>異質品質：只有劫盜的大金庫會掉，未切割技能寶石雕不出來");
+            lines.add("<#d4a017>異質品質：只有" + definition.sourceText() + "會掉，未切割技能寶石雕不出來");
         }
         if (!definition.description().isBlank()) {
             lines.add("<gray>" + ItemRenderer.escape(definition.description()));
@@ -604,7 +604,7 @@ public final class GemService {
             return "沒有這個技能：" + skillId;
         }
         if (!definition.engravable()) {
-            return definition.name() + "雕不出來（只有劫盜的大金庫會掉）";
+            return definition.name() + "雕不出來（只有" + definition.sourceText() + "會掉）";
         }
         if (definition.tier() > uncut.level()) {
             return "要 Lv." + definition.tier() + " 以上的未切割技能寶石才能雕出" + definition.name();

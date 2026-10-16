@@ -1,0 +1,437 @@
+# 生活玩法「星骸之海」（2026-10）：漂在海上撈東西、蓋木筏、種田料理、出航探索小島、挑戰深淵巨獸。改完 /ec reload。
+#   開放：一開始只有管理員能進；/sea allow <玩家> 先開放給某人、/sea open 全部開放（記在伺服器資料夾的 life_access.txt）。
+#
+#   ・海域是獨立的世界 exilecore:sea（整片海），每人一塊筏。選單 → 星骸之海（/sea）前往自己的木筏，/town 回營地。
+#     筏上不能放技能（跟營地一樣），快捷列照原版用；渦齒鯊來咬的筏、小島、淵鯨的場地是戰鬥區。
+#   ・漂流物從東邊漂過來；拿著星索鉤對準 range 格內的漂流物按右鍵撈起來（花 1 點精力）。
+#   ・材料（浮木、帆布…）記在帳號裡，不能交易；做出來的成品（筏的方塊、料理、深淵號角）可以交易。
+#   ・筏只有自己能蓋、能拆；多大照生活等級（raft_size）。地板、攔截網蓋在水面那一層、要接在原本的地板旁邊；其他蓋在地板上面。
+#   ・攔截網放在筏邊（水面那一層），漂過去的東西會被攔住（每張最多 net.capacity 樣），右鍵收。不花精力。
+#   ・精力每天（timezone 的半夜）回滿；撈東西、做工具、出航花精力，做筏的方塊不花（材料就是限制）。
+
+settings:
+  enabled: true
+  name: 星骸之海
+  color: "#3fc8e8"
+  timezone: Asia/Taipei
+  plot_spacing: 512           # 每塊筏之間隔幾格（每個人分開）
+  plots_per_row: 40
+  sea_level: 62               # 水面那一層的 y（地板蓋在這一層）
+  roam_radius: 200            # 游離自己的筏多遠就傳回來
+  build_height: 12            # 地板上面最多蓋幾層
+
+stamina:
+  base: 100
+  per_5_levels: 5             # 每 5 個生活等級多幾點
+  max: 150
+
+level:
+  max: 50
+  base: 20                    # 從 L 級升到 L+1 要 base + factor × L^exponent 點生活經驗
+  factor: 6
+  exponent: 1.5
+
+# 筏最大幾×幾（照生活等級）
+raft_size:
+  - { level: 1, size: 4 }
+  - { level: 10, size: 9 }
+  - { level: 20, size: 15 }
+  - { level: 35, size: 23 }
+  - { level: 50, size: 31 }
+
+# 星索鉤：range 撈得到幾格內的、pull_ticks 拉回來要幾 tick、double 多撈一份的機率
+hooks:
+  - { tier: 0, name: 繩索鉤, range: 8, pull_ticks: 8, double: 0 }
+  - { tier: 1, name: 鐵鉤, range: 11, pull_ticks: 6, double: 0.05 }
+  - { tier: 2, name: 星骸鉤, range: 14, pull_ticks: 5, double: 0.12 }
+
+# 材料（帳號共用、不能交易）
+materials:
+  driftwood: { name: 浮木, icon: OAK_LOG }
+  canvas: { name: 帆布, icon: WHITE_WOOL }
+  rope: { name: 繩索, icon: LEAD }
+  plastic: { name: 塑膠殘片, icon: PRISMARINE_SHARD }
+  scrap: { name: 廢鐵, icon: IRON_NUGGET }
+  star_shard: { name: 星骸碎片, icon: AMETHYST_SHARD }
+  # 淡水、種子、作物、魚、鯊魚
+  fresh_water: { name: 淡水, icon: POTION }
+  algae_seed: { name: 星藻孢子, icon: KELP }
+  taro_seed: { name: 海芋球莖, icon: POTATO }
+  berry_seed: { name: 日光莓種子, icon: SWEET_BERRIES }
+  star_algae: { name: 星藻, icon: DRIED_KELP }
+  taro: { name: 海芋, icon: BAKED_POTATO }
+  sunberry: { name: 日光莓, icon: GLOW_BERRIES }
+  silver_fish: { name: 銀鱗魚, icon: COD }
+  star_fish: { name: 星斑魚, icon: TROPICAL_FISH }
+  lantern_fish: { name: 深海燈籠魚, icon: PUFFERFISH }
+  shark_skin: { name: 鯊魚皮, icon: RABBIT_HIDE }
+  shark_tooth: { name: 鯊魚利齒, icon: PRISMARINE_CRYSTALS }
+  shark_meat: { name: 鯊魚肉, icon: BEEF }
+  # 小島、淵鯨
+  coral: { name: 珊瑚枝, icon: TUBE_CORAL }
+  sponge: { name: 海綿, icon: SPONGE }
+  relic: { name: 遺跡殘片, icon: CHISELED_STONE_BRICKS }
+  abyss_pearl: { name: 淵珠, icon: HEART_OF_THE_SEA }
+  horn_shard: { name: 深淵號角碎片, icon: NAUTILUS_SHELL }
+
+# 漂流物：weight 權重、gives 撈到給什麼（範圍）、xp 生活經驗；kind: bottle 瓶中信、crate 漂流箱
+drift:
+  spawn_seconds: [1.0, 2.2]   # 隔幾秒漂來一個（隨機）
+  max_per_player: 20
+  speed: 0.06                 # 每 tick 漂幾格
+  items:
+    - { id: driftwood,  weight: 40,  display: OAK_LOG,           gives: { driftwood: [1, 2] }, xp: 3 }
+    - { id: canvas,     weight: 20,  display: WHITE_WOOL,        gives: { canvas: [1, 1] },    xp: 3 }
+    - { id: rope,       weight: 15,  display: LEAD,              gives: { rope: [1, 2] },      xp: 3 }
+    - { id: plastic,    weight: 12,  display: PRISMARINE_SHARD,  gives: { plastic: [1, 1] },   xp: 4 }
+    - { id: scrap,      weight: 8,   display: IRON_NUGGET,       gives: { scrap: [1, 1] },     xp: 4 }
+    - { id: star_shard, weight: 3,   display: AMETHYST_SHARD,    gives: { star_shard: [1, 1] }, xp: 8 }
+    - { id: seeds,      weight: 6,   display: WHEAT_SEEDS,       gives: { algae_seed: [0, 2], taro_seed: [0, 1], berry_seed: [0, 1] }, xp: 4 }   # 種子包
+    - { id: bottle,     weight: 1.5, display: GLASS_BOTTLE,      kind: bottle, xp: 10 }
+    - { id: crate,      weight: 0.5, display: BARREL,            kind: crate, rolls: [3, 5], xp: 15 }
+
+# 瓶中信：一段星骸之海的故事；currency_chance 附一顆低階通貨（每天最多 daily_currency 顆，帳號共用）
+bottle:
+  currency_chance: 0.3
+  daily_currency: 15          # 瓶中信、小島的寶箱合算
+  currencies: [glimmer_orb, lustre_orb, whetstone, armour_scrap]
+  letters:
+    - "「第三天了。押送船在這片海翻了，只剩我抱著一塊船板。天上那顆碎掉的星，晚上會唱歌。」"
+    - "「如果你撿到這封信，往東看。漂過來的東西都是從那裡來的——星骸掉下來的地方。」"
+    - "「我用浮木綁了一張筏。繩子不夠，就拆衣服。活下去比體面重要。」"
+    - "「海裡有東西在咬我的筏。牠的牙是螺旋的，像攪碎星光的漩渦。」"
+    - "「今天撈到一塊會發光的碎片，摸起來是溫的。我把它放在筏中間，晚上就不那麼冷了。」"
+    - "「給下一個漂到這裡的人：別往下看。海底有很大、很大的影子，在等。」"
+    - "「今天看到一座島，上面有石柱，柱頂嵌著和我撿到的一樣的碎片。四根柱子都亮起來的時候，地底下有東西在響。」"
+    - "「沉船上的人還在。他們沒有肉了，卻還守著船艙。船長說：『貨還沒送到。』」"
+    - "「環礁中間的守衛是珊瑚長成的。牠胸口那顆珠子，是海的心跳。」"
+    - "「我把五片螺殼拼起來，吹了一下。整片海安靜了三秒。然後海底的影子，睜開了眼睛。」"
+    - "「牠叫淵鯨。星骸掉進海裡的那天，牠吞下了最大的那一塊。牠的歌，就是那顆星在哭。」"
+    - "「如果你讀到最後一封：別怕。把筏蓋大一點，把燈點亮。這片海，終究會記得你。」"
+
+# 攔截網：每張最多攔幾樣、漂流物離網多近會被攔住
+net:
+  capacity: 10
+  radius: 1.6
+
+# 做得出來的東西：block 放下去是什麼方塊、place：floor（水面那一層，接在地板旁邊）、edge（水面那一層，接在地板旁邊；攔截網）、
+#   above（地板上面）；hook 是升級星索鉤（tier）
+items:
+  raft_floor: { name: 筏地板, block: BAMBOO_MOSAIC, place: floor, description: "蓋在水面上，接在原本的地板旁邊" }
+  raft_plank: { name: 筏木板, block: BAMBOO_PLANKS, place: above, description: "蓋牆、隔間、二樓" }
+  raft_slab: { name: 筏屋頂, block: BAMBOO_MOSAIC_SLAB, place: above, description: "半格，蓋屋頂、桌子" }
+  raft_stairs: { name: 筏樓梯, block: BAMBOO_STAIRS, place: above, description: "上二樓" }
+  raft_fence: { name: 筏欄杆, block: BAMBOO_FENCE, place: above, description: "圍在邊上，不會掉下去" }
+  raft_lamp: { name: 筏燈, block: LANTERN, place: above, description: "晚上的海很暗" }
+  raft_net: { name: 攔截網, block: COBWEB, place: edge, description: "放在筏邊的水面上：漂過去的東西會被攔住，右鍵收" }
+  # 航行（筏上要有船帆，右鍵海圖桌選目的地）
+  helm: { name: 海圖桌, block: CARTOGRAPHY_TABLE, place: above, station: helm, description: "右鍵：選航線（筏上要有船帆）" }
+  sail: { name: 船帆, block: WHITE_BANNER, place: above, station: sail, description: "航行要有一面" }
+  # 設施（蓋在地板上，右鍵用）
+  research_table: { name: 研究台, block: LECTERN, place: above, station: research, description: "右鍵：研究新撈到的東西，解鎖新配方" }
+  purifier: { name: 淨水器, block: BREWING_STAND, place: above, station: purifier, description: "右鍵：海水煮成淡水（每台一分鐘一次）" }
+  grill: { name: 烤爐, block: SMOKER, place: above, station: grill, description: "右鍵：烤魚、烤肉" }
+  kitchen: { name: 料理台, block: CRAFTER, place: above, station: kitchen, description: "右鍵：做高階料理" }
+  planter_sea: { name: 海水盆, block: CAULDRON, place: above, station: planter_sea, description: "右鍵：種星藻、收成" }
+  planter_soil: { name: 菜圃, block: MOSS_BLOCK, place: above, station: planter_soil, description: "右鍵：種海芋、日光莓、收成" }
+  sprinkler: { name: 灑水器, block: LIGHTNING_ROD, place: above, station: sprinkler, description: "旁邊 4 格內的菜圃才種得了日光莓" }
+
+# 配方：cost 材料、amount 做幾個、level 要生活等級、stamina 花精力（做筏的方塊不花）、xp 生活經驗；
+#   hook: 1 = 把星索鉤升級到第 1 階（不給物品）
+recipes:
+  - { id: raft_floor,  item: raft_floor,  amount: 2, cost: { driftwood: 2, rope: 1 }, level: 1, xp: 2 }
+  - { id: raft_plank,  item: raft_plank,  amount: 2, cost: { driftwood: 2 }, level: 1, xp: 2 }
+  - { id: raft_slab,   item: raft_slab,   amount: 4, cost: { driftwood: 1, canvas: 1 }, level: 2, xp: 2 }
+  - { id: raft_stairs, item: raft_stairs, amount: 2, cost: { driftwood: 2 }, level: 2, xp: 2 }
+  - { id: raft_fence,  item: raft_fence,  amount: 4, cost: { driftwood: 1, rope: 1 }, level: 2, xp: 2 }
+  - { id: raft_net,    item: raft_net,    amount: 1, cost: { canvas: 2, rope: 3, driftwood: 2 }, level: 3, stamina: 2, xp: 10 }
+  - { id: raft_lamp,   item: raft_lamp,   amount: 1, cost: { scrap: 1, plastic: 1, rope: 1 }, level: 5, xp: 4 }
+  - { id: hook_iron,   hook: 1, cost: { scrap: 5, rope: 3, driftwood: 2 }, level: 8, stamina: 3, xp: 30 }
+  - { id: hook_star,   hook: 2, cost: { star_shard: 3, scrap: 8, rope: 4 }, level: 20, stamina: 3, xp: 60 }
+  # ---- 設施、料理（research 要先在研究台研究）----
+  - { id: research_table, item: research_table, cost: { driftwood: 6, canvas: 2, scrap: 2 }, level: 4, stamina: 2, xp: 15 }
+  - { id: purifier,     item: purifier,     cost: { plastic: 4, scrap: 2, driftwood: 2 }, level: 5, stamina: 2, xp: 15, research: water }
+  - { id: planter_sea,  item: planter_sea,  cost: { plastic: 3, scrap: 1 }, level: 6, stamina: 1, xp: 10, research: planting }
+  - { id: planter_soil, item: planter_soil, cost: { driftwood: 3, plastic: 2 }, level: 8, stamina: 1, xp: 10, research: planting }
+  - { id: grill,        item: grill,        cost: { scrap: 4, driftwood: 3, rope: 1 }, level: 6, stamina: 2, xp: 15, research: cooking }
+  - { id: kitchen,      item: kitchen,      cost: { driftwood: 6, scrap: 3, canvas: 2, plastic: 2 }, level: 10, stamina: 2, xp: 20, research: cooking }
+  - { id: sprinkler,    item: sprinkler,    cost: { scrap: 5, plastic: 4, rope: 2 }, level: 15, stamina: 2, xp: 20, research: irrigation }
+  # ---- 料理（成品，可以交易；station：grill 烤爐、kitchen 料理台）----
+  - { id: food_skewer,   food: grilled_skewer,  station: grill,   cost: { silver_fish: 2, driftwood: 1 }, level: 6, stamina: 1, xp: 6, research: cooking }
+  - { id: food_soup,     food: algae_soup,      station: kitchen, cost: { star_algae: 3, fresh_water: 2 }, level: 10, stamina: 1, xp: 8, research: cooking }
+  - { id: food_stew,     food: taro_stew,       station: kitchen, cost: { taro: 3, star_fish: 1, fresh_water: 1 }, level: 12, stamina: 1, xp: 10, research: stew }
+  - { id: food_steak,    food: shark_steak,     station: grill,   cost: { shark_meat: 2, star_algae: 1 }, level: 12, stamina: 1, xp: 12, research: shark }
+  - { id: food_pie,      food: sunberry_pie,    station: kitchen, cost: { sunberry: 4, taro: 1, fresh_water: 1 }, level: 18, stamina: 1, xp: 14, research: pie }
+  - { id: food_sashimi,  food: lantern_sashimi, station: kitchen, cost: { lantern_fish: 2, star_algae: 1 }, level: 25, stamina: 1, xp: 16, research: deep }
+  - { id: food_feast,    food: star_feast,      station: kitchen, cost: { abyss_pearl: 1, sunberry: 3, lantern_fish: 1, taro: 2, fresh_water: 2 }, level: 40, stamina: 2, xp: 40, research: feast }
+  # 航行（研究「航海」）
+  - { id: helm,         item: helm,         cost: { driftwood: 8, scrap: 4, canvas: 2 }, level: 5, stamina: 2, xp: 20, research: navigation }
+  - { id: sail,         item: sail,         cost: { canvas: 6, rope: 4, driftwood: 4 }, level: 5, stamina: 2, xp: 20, research: navigation }
+
+# ---- 設施、研究、料理、種田、釣魚、渦齒鯊 ----
+
+# 研究：在研究台放進材料（用掉）解鎖配方
+research:
+  water: { name: 淨水, level: 4, needs: { plastic: 2 }, description: "海水裡的鹽要怎麼去掉？" }
+  planting: { name: 種植, level: 5, needs: { algae_seed: 1, plastic: 1 }, description: "種子包裡的東西，好像種得活" }
+  cooking: { name: 料理, level: 6, needs: { silver_fish: 1, driftwood: 2 }, description: "生魚吃久了會出事" }
+  stew: { name: 燉煮, level: 12, needs: { taro: 1, star_fish: 1 }, description: "海芋配上星斑魚，慢火燉" }
+  shark: { name: 鯊魚料理, level: 12, needs: { shark_tooth: 1, shark_skin: 1 }, description: "咬我的筏，就把你吃掉" }
+  irrigation: { name: 灌溉, level: 15, needs: { scrap: 3, plastic: 3 }, description: "日光莓要一直有水才長得好" }
+  pie: { name: 烘焙, level: 18, needs: { sunberry: 2 }, description: "日光莓的甜味，烤過會變成陽光的味道" }
+  deep: { name: 深海料理, level: 25, needs: { lantern_fish: 1, star_shard: 1 }, description: "深海燈籠魚的光，吃下去也還亮著" }
+  navigation: { name: 航海, level: 5, needs: { canvas: 3, star_shard: 1 }, description: "漂流物都是從遠方來的：去看看" }
+  feast: { name: 星海盛宴, level: 40, needs: { abyss_pearl: 1, sunberry: 2 }, description: "把整片海的味道，放進同一個盤子" }
+
+# 料理：吃了 minutes 分鐘的加成（同時只有一種，吃新的蓋掉舊的；跟藥劑、光環分開算），另外回 stamina 點精力
+foods:
+  grilled_skewer:
+    name: 烤魚串
+    icon: COOKED_COD
+    minutes: 30
+    stamina: 10
+    stats: [ { stat: movement.speed, type: INCREASED, value: 10 } ]
+  algae_soup:
+    name: 星藻湯
+    icon: BEETROOT_SOUP
+    minutes: 30
+    stamina: 10
+    stats: [ { stat: life.regen_percent, value: 1 } ]
+  taro_stew:
+    name: 海芋燉菜
+    icon: RABBIT_STEW
+    minutes: 45
+    stamina: 15
+    stats:
+      - { stat: life.max, type: INCREASED, value: 15 }
+      - { stat: resist.fire, value: 10 }
+      - { stat: resist.cold, value: 10 }
+      - { stat: resist.lightning, value: 10 }
+  shark_steak:
+    name: 鯊魚排
+    icon: COOKED_BEEF
+    minutes: 45
+    stamina: 15
+    stats: [ { stat: crit.bonus, type: INCREASED, value: 30 } ]
+  sunberry_pie:
+    name: 日光莓派
+    icon: PUMPKIN_PIE
+    minutes: 45
+    stamina: 15
+    stats: [ { stat: damage, type: MORE, value: 10 } ]
+  lantern_sashimi:
+    name: 燈籠魚生魚片
+    icon: COOKED_SALMON
+    minutes: 45
+    stamina: 15
+    stats:
+      - { stat: attack.speed, type: INCREASED, value: 10 }
+      - { stat: cast.speed, type: INCREASED, value: 10 }
+      - { stat: skill.cooldown, type: INCREASED, value: -15 }
+
+  star_feast:
+    name: 星海盛宴
+    icon: CAKE
+    minutes: 60
+    stamina: 25
+    stats:
+      - { stat: damage, type: MORE, value: 10 }
+      - { stat: drop.quantity, type: INCREASED, value: 15 }
+      - { stat: drop.rarity, type: INCREASED, value: 20 }
+
+# 作物：planter sea（海水盆）／soil（菜圃）；water 種的時候用掉幾份淡水；sprinkler 旁邊要有灑水器；
+#   harvest 收成給什麼、seeds_back 還給幾顆種子；sprout／ripe 長大前後的樣子
+crops:
+  star_algae:
+    name: 星藻
+    seed: algae_seed
+    planter: sea
+    minutes: 20
+    harvest: { star_algae: [2, 4] }
+    seeds_back: [1, 2]
+    sprout: KELP
+    ripe: DRIED_KELP_BLOCK
+    xp: 6
+    level: 6
+  taro:
+    name: 海芋
+    seed: taro_seed
+    planter: soil
+    minutes: 40
+    water: 1
+    harvest: { taro: [2, 3] }
+    seeds_back: [1, 2]
+    sprout: SHORT_GRASS
+    ripe: POTATO
+    xp: 10
+    level: 8
+  sunberry:
+    name: 日光莓
+    seed: berry_seed
+    planter: soil
+    minutes: 60
+    water: 1
+    sprinkler: true
+    harvest: { sunberry: [3, 5] }
+    seeds_back: [1, 2]
+    sprout: SWEET_BERRIES
+    ripe: GLOW_BERRIES
+    xp: 14
+    level: 15
+
+# 釣魚：拿著星索鉤對著水面（沒有對到漂流物時）按右鍵拋線；wait_seconds 後咬鉤，bite_ticks 內再按右鍵就釣起來（花 stamina 精力）
+fishing:
+  wait_seconds: [3, 8]
+  bite_ticks: 30
+  stamina: 1
+  xp: 5
+  fish:
+    - { material: silver_fish, weight: 70, level: 1, night_weight: 55 }
+    - { material: star_fish, weight: 25, level: 10, night_weight: 25 }
+    - { material: lantern_fish, weight: 5, level: 25, night_weight: 20 }   # 晚上比較好釣
+
+# 淨水器：右鍵煮一次（每台 cooldown_seconds 秒一次）
+purifier:
+  cooldown_seconds: 60
+  water: 2
+  stamina: 1
+  xp: 2
+
+# 喝淡水（選單）回精力；一天最多用淡水、料理回 daily_restore 點
+water:
+  material: fresh_water
+  drink_stamina: 5
+  daily_restore: 40
+
+# 渦齒鯊：生活等級 min_level 以上、在自己的筏上時每隔 interval_seconds 秒游過來咬筏邊的地板（每 bite_seconds 秒咬掉一格）。
+#   鯊魚來了這塊筏就變成戰鬥區（可以放技能），打倒牠拿 drops；flee_seconds 秒沒打倒就游走。等級照筏主的角色等級。
+shark:
+  min_level: 5
+  interval_seconds: [240, 420]
+  type: DOLPHIN
+  life: 3                     # 生命倍率（照筏主等級的普通怪）
+  scale: 1.6
+  bite_seconds: 5
+  flee_seconds: 90
+  drops: { shark_skin: [1, 2], shark_tooth: [0, 1], shark_meat: [1, 3] }
+  xp: 25
+
+# ---- 航行、小島、海象、稱號、淵鯨 ----
+
+# 航行：海圖桌選目的地，航行 travel_seconds 秒（這段時間漂流物變多），小島生在筏的東邊；島上是戰鬥區（正常的戰鬥，怪物等級照角色）。
+#   一次一座島；minutes 分鐘後（或離開筏）島就漂走。寶箱要先清掉守衛才打得開。通貨跟瓶中信合算每天的上限。
+islands:
+  reef:
+    name: 珊瑚礁
+    level: 5
+    stamina: 8
+    travel_seconds: 60
+    minutes: 20
+    monsters: { types: [DROWNED], count: [4, 6], magic: 2, rare: 0 }
+    chests: 2
+    loot: { coral: [2, 4], sponge: [0, 2], star_fish: [1, 2], algae_seed: [0, 2] }
+    currency: { chance: 0.2, ids: [glimmer_orb, lustre_orb, whetstone] }
+    xp: 40
+  ruin:
+    name: 星骸殘島
+    level: 15
+    stamina: 10
+    travel_seconds: 80
+    minutes: 25
+    monsters: { types: [SKELETON, STRAY, ZOMBIE], count: [3, 4], magic: 1, rare: 1 }   # 每點亮一根星柱來一波
+    chests: 1
+    loot: { star_shard: [2, 4], relic: [2, 3], plastic: [1, 3] }
+    currency: { chance: 0.5, ids: [zenith_orb, lustre_orb, annul_orb] }
+    letter: true
+    xp: 80
+  wreck:
+    name: 沉船
+    level: 25
+    stamina: 12
+    travel_seconds: 100
+    minutes: 25
+    monsters: { types: [SKELETON, DROWNED], count: [7, 9], magic: 3, rare: 1 }
+    captain: { name: 幽靈船長, type: WITHER_SKELETON, life: 8, damage: 1.4, skills: [slam, charge] }
+    chests: 2
+    loot: { scrap: [3, 6], canvas: [2, 4], rope: [2, 4], shark_tooth: [0, 1] }
+    currency: { chance: 0.8, ids: [zenith_orb, oracle_orb, sky_fragment, heist_contract] }
+    xp: 140
+  atoll:
+    name: 星骸環礁
+    level: 40
+    stamina: 15
+    travel_seconds: 120
+    minutes: 30
+    monsters: { types: [DROWNED, GUARDIAN], count: [6, 8], magic: 3, rare: 2 }   # 兩波
+    captain: { name: 礁石守衛, type: IRON_GOLEM, life: 30, damage: 1.8, skills: [tide_slam, quake, slam] }
+    chests: 1
+    loot: { abyss_pearl: [1, 2], coral: [3, 5], star_shard: [2, 3] }
+    horn_shard: 0.35            # 深淵號角碎片的機率（五片做一支號角）
+    currency: { chance: 1.0, ids: [zenith_orb, oracle_orb, sky_fragment, greater_socket_orb] }
+    xp: 260
+
+# 海象：在筏上每隔 interval_seconds 秒來一次（seconds 秒）
+weather:
+  interval_seconds: [600, 900]
+  events:
+    - { id: fog, name: 起霧, weight: 40, seconds: 180, drift: 1.5 }           # 漂流物多 50%
+    - { id: storm, name: 暴風, weight: 30, seconds: 120, drift: 0.5 }         # 漂流物少一半、攔截網攔不到東西
+    - { id: star_tide, name: 星潮, weight: 30, seconds: 120, drift: 1.2, star_shard: 8 }   # 星骸碎片的權重 ×8
+
+# 稱號（擁有就有的加成）
+titles:
+  letter_finder: { name: 拾信者, color: "#bfe6ff", stats: [ { stat: movement.speed, type: INCREASED, value: 2 } ] }   # 12 封瓶中信全部收集
+  sea_wanderer: { name: 星海旅人, color: "gradient:#3fc8e8:#9bf6ff", stats: [ { stat: drop.rarity, type: INCREASED, value: 3 } ] }   # 生活等級 50
+  abyss_hunter: { name: 淵鯨獵人, color: "gradient:#1b3a6b:#5fd3ff", stats: [ { stat: resist.cold, type: FLAT, value: 5 }, { stat: life.max, type: INCREASED, value: 2 } ] }   # 第一次打倒淵鯨
+
+# 深淵巨獸「淵鯨」：拿深淵號角（成品，可以交易）在自己的筏上右鍵吹，淵鯨從筏的東邊浮上來。
+#   強度比照巔峰（萬界之巔的虛星；招式不跟虛星重複，boss_skills.yml 的 abyss_*）：等級、怪物屬性、玩家受到的巔峰詞綴、生命與傷害的寫法都照 maps.yml 的 like 那個巔峰；
+#   每秒傷害上限、分段遞減跟終局一樣（maps.yml 的 final_dps）；掉落不吃物品數量、稀有度。
+#   life／damage 跟 maps.yml 的 boss.life／damage 同一個寫法（生命再乘終局最高階的 tier_life）。
+#   attempts：倒下幾次就算失敗（淵鯨回滿、號角沒了）；enrage：開打幾秒後狂暴（傷害更多 x%）
+#   phases：生命低於 at 進下一個階段（傷害更多 damage%；shield 叫出幾顆潮核，打掉之前淵鯨無敵，時間到牠回 heal% 生命）
+#   drops：每一樣各擲一次（unique 這裡的專屬傳奇、skill 專屬技能寶石 20 級、support 專屬輔助、currency 通貨、pool 傳奇池）
+whale:
+  name: 淵鯨
+  type: HAPPY_GHAST
+  like: awakener
+  life: 53.8
+  damage: 2.9
+  scale: 1.0
+  mods: [resistant, swift]
+  attempts: 2
+  enrage: { after: 360, damage: 150 }
+  minutes: 10
+  xp: 600
+  horn: { name: 深淵號角, cost: { horn_shard: 5, shark_tooth: 2, star_shard: 10, abyss_pearl: 3 }, level: 40 }
+  intro: "（海面下有什麼東西翻了個身。整片海，往上鼓了起來。）"
+  defeat: "淵鯨沉回了深海。浪平了，海面上漂著牠留下來的東西。"
+  skills:
+    - abyss_tide_ring
+    - abyss_breath
+    - abyss_devour
+    - { id: abyss_call_tide, with: [abyss_undertow] }
+    - { id: abyss_ram, phase: 1 }
+    - { id: abyss_roll, phase: 1 }
+    - { id: abyss_tide_mark, phase: 1 }
+    - { id: abyss_fury, phase: 2 }
+    - { id: abyss_pressure, phase: 2 }
+    - { id: abyss_sharks, phase: 2 }
+  hazards:
+    - { skill: hazard_abyss_splash, every: 9, phase: 1 }
+  phases:
+    - { at: 0.66, name: 深潛, message: "（淵鯨潛了下去，海面浮出幾顆發光的潮核）", damage: 30, shield: { count: 3, name: 潮核, life: 5, duration: 30, heal: 25 } }
+    - { at: 0.33, name: 怒濤, message: "（淵鯨發狂了，整片海翻了過來）", damage: 40, shield: { count: 3, name: 潮核, life: 6, duration: 25, heal: 35 } }
+  drops:
+    - { unique: abyss_echo, chance: 0.03 }
+    - { unique: tidewhisper_bow, chance: 0.03 }
+    - { unique: tide_devourer, chance: 0.03 }
+    - { skill: tide_call, chance: 0.01 }
+    - { support: tidal_resonance, chance: 0.02 }
+    - { pool: map_boss, chance: 0.20 }
+    - { currency: sky_fragment, amount: 2, chance: 1 }
+    - { currency: zenith_orb, amount: 4, chance: 1 }
+    - { currency: oracle_orb, amount: 1, chance: 0.2 }
+    - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
+    - { currency: abyss_core, amount: 1, chance: 0.5 }
+    - { material: abyss_pearl, amount: 3, chance: 1 }

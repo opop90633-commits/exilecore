@@ -176,7 +176,7 @@ final class HeistFinale implements Listener {
         Collections.shuffle(pool, new java.util.Random(plugin.random().nextLong()));
         final List<Choice> picked = new ArrayList<>(pool.subList(0, Math.min(pool.size(), heists.config().finaleChoices())));
         // 2026-10：收藏裡有機率多一個 Lv.21 未切割技能寶石的寶箱（以前是異質技能寶石）
-        if (plugin.random().nextDouble() < tw.exilecore.loot.LootBonus.of(plugin, player).rare(heists.config().settings().vault().finaleGemChance()) // 2026-10：吃物品稀有度
+        if (plugin.random().nextDouble() < heists.config().settings().vault().finaleGemChance() // 2026-10-16：終局以上的掉落不吃物品稀有度
                 && heists.currency(HeistService.UNCUT_21) != null) {
             final Choice gem = new Choice(null, HeistService.UNCUT_21, "<#ff7a6a>未切割技能寶石 Lv.21", 0);
             if (picked.size() >= heists.config().finaleChoices() && !picked.isEmpty()) {

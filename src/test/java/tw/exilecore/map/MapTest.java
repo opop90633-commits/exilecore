@@ -367,7 +367,7 @@ class MapTest {
 
     @Test
     void uniquesLoadAndRoll() {
-        assertEquals(122, repository.uniques().size(), "2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件）");
+        assertEquals(125, repository.uniques().size(), "2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件；星骸之海的淵鯨 3 件）");
         final ItemData dropped = MapDrops.unique(generator, "final", 68, new Random(5));
         assertNotNull(dropped);
         assertEquals(Rarity.UNIQUE, dropped.rarity());

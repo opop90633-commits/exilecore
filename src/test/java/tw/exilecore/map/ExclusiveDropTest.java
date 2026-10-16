@@ -144,7 +144,8 @@ class ExclusiveDropTest {
                 assertFalse(skills.supportsUpTo(3).contains(support), support.id() + "：未切割輔助寶石切不出來");
             }
         }
-        assertEquals(14, exclusive, "四個終局各一顆＋兩顆極境專屬＋八顆巔峰（覺醒之主・虛星）專屬（2026-10-15：＋碎界擴散）");
+        assertEquals(15, exclusive, "四個終局各一顆＋兩顆極境專屬＋八顆巔峰（覺醒之主・虛星）專屬（2026-10-15：＋碎界擴散）＋星骸之海的淵鯨一顆");
+        assertEquals(List.of("tidal_resonance"), skills.supportsFrom("abyss_whale").stream().map(SupportDefinition::id).toList());
         for (final String finalId : FINALS) {
             final List<SupportDefinition> own = skills.supportsFrom(finalId);
             assertEquals(1, own.size(), finalId + " 的專屬輔助");
@@ -234,8 +235,8 @@ class ExclusiveDropTest {
         assertEquals(skills.skillsFrom("awakener").stream().map(tw.exilecore.skill.SkillDefinition::id).toList(), gems, "每一顆專屬技能寶石都會掉");
         assertEquals(8, supports.size()); // 2026-10-15：＋碎界擴散
         assertEquals(6, gems.size());
-        assertEquals(0.05, drops.uniqueChance(), 1e-9, "自己的十件傳奇 5%（2026-10：3% → 5%）");
-        assertEquals(0.06, drops.exclusiveChance(), 1e-9, "極境專屬 6%（2026-10：3% → 6%）");
+        assertEquals(0.01, drops.uniqueChance(), 1e-9, "自己的傳奇每一件各自 1%（2026-10-16）");
+        assertEquals(0.01, drops.exclusiveChance(), 1e-9, "極境專屬每一件各自 1%（2026-10-16）");
         assertEquals(0.20, drops.commonChance(maps.drops().finalCommonChance()), 1e-9, "共通傳奇 20%（只有巔峰；終局、極境照 final_common_chance）");
         for (final MapConfig.ExtraDrop extra : drops.extra()) {
             if (List.of("abyssal_touch", "myriad_stars").contains(extra.id())) {

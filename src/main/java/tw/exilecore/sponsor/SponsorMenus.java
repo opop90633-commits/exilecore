@@ -841,6 +841,10 @@ final class SponsorMenus {
                 return;
             }
             if (slot == SLOT_OFF && service.worn(player) != null) {
+                if (service.cancelTryOn(player)) {
+                    redraw(); // 試穿中：只拿掉試穿的，真的戴著的不動
+                    return;
+                }
                 result(service.wear(player, null));
                 return;
             }

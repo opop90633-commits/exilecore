@@ -49,6 +49,7 @@ public final class MainMenu extends Menu {
     /** 不定時活動（2026-10，開服活動）。 */
     private static final int SLOT_WORLD_EVENT = 34;
     private static final int SLOT_FESTIVAL = 35; // 2026-10 節慶活動（萬燈夜）：活動到兌換結束才出現
+    private static final int SLOT_SEA = 24; // 2026-10 生活玩法「星骸之海」
     private static final int SLOT_PVP = 33;
     private static final int SLOT_PARTY = 39;
     /** 公會（2026-10）。 */
@@ -78,7 +79,7 @@ public final class MainMenu extends Menu {
             java.util.Map.entry(SLOT_DISCORD, 25), java.util.Map.entry(SLOT_STORE, 26),
             java.util.Map.entry(SLOT_TOWN, 36), java.util.Map.entry(SLOT_WAYPOINTS, 37), java.util.Map.entry(SLOT_QUESTS, 38),
             java.util.Map.entry(SLOT_BOUNTY, 39), java.util.Map.entry(SLOT_EVENT, 40), java.util.Map.entry(SLOT_PVP, 41),
-            java.util.Map.entry(SLOT_WORLD_EVENT, 42), java.util.Map.entry(SLOT_FESTIVAL, 43));
+            java.util.Map.entry(SLOT_WORLD_EVENT, 42), java.util.Map.entry(SLOT_FESTIVAL, 43), java.util.Map.entry(SLOT_SEA, 44));
     /** 反過來：「圖示＋中文」版面的格子 → 按鈕代號。 */
     private static final java.util.Map<Integer, Integer> LABELLED_BACK = invert(LABELLED);
 
@@ -180,6 +181,9 @@ public final class MainMenu extends Menu {
         put(SLOT_WORLD_EVENT, worldEventButton());
         if (plugin.festival() != null && plugin.festival().visible()) {
             put(SLOT_FESTIVAL, festivalButton());
+        }
+        if (plugin.life() != null && plugin.life().config().enabled() && plugin.life().canEnter(player)) { // 2026-10：先只開給管理員與名單
+            put(SLOT_SEA, button(Material.OAK_BOAT, plugin.life().config().name(), "/sea", "生活玩法：漂在海上撈東西、蓋自己的木筏"));
         }
         // 【多人】
         final var party = plugin.party() == null ? null : plugin.party().party(player.getUniqueId());
@@ -363,6 +367,11 @@ public final class MainMenu extends Menu {
                     needCharacter();
                 } else {
                     new tw.exilecore.quest.QuestMenu(plugin, player, plugin.quests()).open();
+                }
+            }
+            case SLOT_SEA -> {
+                if (plugin.life() != null && plugin.life().config().enabled() && plugin.life().canEnter(player)) {
+                    tw.exilecore.life.LifeModule.open(plugin, player);
                 }
             }
             case SLOT_FESTIVAL -> {

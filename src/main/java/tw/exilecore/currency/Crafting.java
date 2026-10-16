@@ -431,26 +431,43 @@ public final class Crafting {
         return true;
     }
 
+    /** 這一階的物品等級需求（詞綴的階級被刪掉了就當 0：最差）。 */
+    private static int tierLevel(final Affix affix, final int tierId) {
+        try {
+            return affix.tier(tierId).ilvl();
+        } catch (final IllegalArgumentException e) {
+            return 0;
+        }
+    }
+
     /** 照星籤移除一條：最差的、只拿後綴、只拿前綴；星籤跟移除無關回傳 false（沒動）。 */
     private static boolean removeByOmen(final CurrencyType.Omen.Effect effect, final ItemData data, final ItemGenerator generator,
                                         final RandomGenerator random) {
         final List<RolledAffix> candidates = new ArrayList<>();
         switch (effect) {
             case REMOVE_LOWEST -> {
-                RolledAffix worst = null;
+                // 階級（T 幾）最差的；一樣差的比那一階的物品等級需求（越低越差，照 PoE 的去劣）；還是一樣就隨機挑一條
+                // （2026-10-16：以前一樣差時固定拿第一條，T3 暴擊率跟 T3 魔力偷取一起時拿掉的是暴擊率）
+                final List<RolledAffix> worst = new ArrayList<>();
                 int worstRank = -1;
+                int worstLevel = Integer.MAX_VALUE;
                 for (final RolledAffix rolled : data.affixes()) {
                     final Affix affix = generator.repository().affix(rolled.id());
                     final int rank = affix == null ? 99 : affix.rank(rolled.tier());
-                    if (rank > worstRank) {
+                    final int level = affix == null ? 0 : tierLevel(affix, rolled.tier());
+                    if (rank > worstRank || rank == worstRank && level < worstLevel) {
                         worstRank = rank;
-                        worst = rolled;
+                        worstLevel = level;
+                        worst.clear();
+                        worst.add(rolled);
+                    } else if (rank == worstRank && level == worstLevel) {
+                        worst.add(rolled);
                     }
                 }
-                if (worst == null) {
+                if (worst.isEmpty()) {
                     return false;
                 }
-                data.affixes().remove(worst);
+                data.affixes().remove(worst.get(random == null || worst.size() == 1 ? 0 : random.nextInt(worst.size())));
                 return true;
             }
             case KEEP_PREFIXES, KEEP_SUFFIXES -> {

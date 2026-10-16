@@ -290,7 +290,7 @@ public final class FestivalConfig {
             return false;
         }
         final LocalDateTime now = local(millis);
-        return !now.isBefore(start) && !now.isAfter(end);
+        return !now.isBefore(start) && now.isBefore(end.plusMinutes(1)); // 寫 23:59 = 到 24:00
     }
 
     /** 兌換商店開著（活動期間＋結束後到 shop_until）。 */
@@ -299,7 +299,7 @@ public final class FestivalConfig {
             return false;
         }
         final LocalDateTime now = local(millis);
-        return !now.isBefore(start) && !now.isAfter(shopUntil);
+        return !now.isBefore(start) && now.isBefore(shopUntil.plusMinutes(1));
     }
 
     /** 今天（活動時區）的代號，例如 20261016。 */

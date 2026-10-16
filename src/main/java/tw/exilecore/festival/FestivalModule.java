@@ -52,6 +52,7 @@ public final class FestivalModule implements Module, Listener {
         load();
         if (service != null) {
             service.registerTitles();
+            service.reloaded();
         }
     }
 

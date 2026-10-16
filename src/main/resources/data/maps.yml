@@ -874,8 +874,8 @@ finals:
   #     attempts       幾道門（一門一次挑戰，預設 2）　dps_cap  每個人對 Boss 每秒傷害的上限（0 = 不限）
   #     dps_over       超過上限的部分算幾成：[{ from: 每秒傷害, rate: 0–1 }]（由小排到大，第一段從 dps_cap 開始；沒寫 = 超過的全部不算）
   #     monster／player 這張圖的怪物、玩家額外的屬性（寫法同 monsters.yml 的 stats）
-  #     drops          寫法同極境的 drops：maps 掉幾張最高階的地圖、unique_chance 自己的傳奇（uniques.yml 的 sources 寫 awakener；
-  #                    沒有就用 final 池）、exclusive_chance 極境專屬池（uber_awakener，沒有就 uber）、extra 額外掉落
+  #     drops          寫法同極境的 drops：maps 掉幾張最高階的地圖、unique_chance 自己的傳奇每一件各自擲（uniques.yml 的 sources 寫 awakener；
+  #                    沒有就用 final 池抽一件）、exclusive_chance 極境專屬每一件各自擲（uber_awakener，沒有就四個極境的專屬）、extra 額外掉落
   #                    common_chance 共通傳奇（map_boss 池；沒寫照 drops.final_common_chance）
   #                    （extra 可以寫 currency、support 輔助寶石，或 skill 技能寶石：{ skill: 代號, chance: 機率 }，掉 20 級的）
   #   生命照 boss.life（跟其他終局一樣吃 tier_life 的最高階倍率；曜帝 T16 是 12）。
@@ -960,8 +960,8 @@ finals:
         - { currency: fragment_ember,    from: ember_citadel, chance: 0.25, min_tier: 12, uber_chance: 0.50 }
       drops:                     # 2026-10：沒有賽季重置，要保持稀缺 → 全部壓低（每個有份的人各擲一份）
         maps: 3
-        unique_chance: 0.05      # 2026-10：3% → 5%。自己的傳奇（uniques.yml 的 sources 寫 awakener，10 件；沒有的話用終局共通的 final 池）
-        exclusive_chance: 0.06   # 2026-10：3% → 6%。極境專屬池（uber_awakener；沒有就 uber）
+        unique_chance: 0.01      # 自己的傳奇（uniques.yml 的 sources 寫 awakener，11 件）：每一件各自擲 1%（2026-10-16；沒有自己的就用終局共通的 final 池抽一件）
+        exclusive_chance: 0.01   # 極境專屬（uber_awakener；沒有就是四個極境各自的專屬，共 4 件）：每一件各自擲 1%
         common_chance: 0.20      # 2026-10：共通傳奇（map_boss 池）20%（沒寫的照 drops.final_common_chance 10%，終局、極境還是 10%）
         extra:
           - { currency: abyss_core, amount: 1, chance: 0.5 }

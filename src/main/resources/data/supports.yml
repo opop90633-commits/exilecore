@@ -1453,6 +1453,22 @@ supports:
       - { stat: skill.melee_splash, type: FLAT, value: 60 }
     notes: ["覺醒之主・虛星（萬界之巔）掉落"]
 
+  # 2026-10：星骸之海的淵鯨（life.yml 的 whale）專屬輔助
+  tidal_resonance:
+    name: 潮汐共鳴
+    description: 淵鯨的潮聲跟著你的招一起打：物理傷害額外附加 25% 為冰冷傷害，冰緩效果大增，對冰緩的敵人更多 25% 傷害。攻擊、法術都能掛。
+    icon: NAUTILUS_SHELL
+    tier: 3
+    source: abyss_whale
+    requires: [attack, spell]
+    excludes: [minion, aura, warcry, herald]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: damage.gain.cold, type: FLAT, value: 25 }
+      - { stat: chill.effect, type: INCREASED, value: 40 }
+      - { stat: damage.vs_chilled, type: MORE, value: 25 }
+    notes: ["星骸之海的淵鯨掉落"]
+
   # ---- 2026-10：PoE2 輔助補齊・第 1 批（30 個；機制照 PoE2，名稱是自己的。我們做不到的條件用近似值）----
   fire_mastery:            # Fire Mastery
     name: 燼髓

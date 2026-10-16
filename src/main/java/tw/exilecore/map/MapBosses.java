@@ -906,7 +906,8 @@ final class MapBosses {
 
     /**
      * 巔峰 Boss 的掉落（2026-10，每個有份的人各一份；寫法同極境的 drops）：最高階的地圖好幾張、自己的傳奇（沒有就終局共通的）、
-     * 極境專屬的傳奇池（uber）、追逐級、額外的通貨與輔助。
+     * 極境專屬的傳奇、追逐級、額外的通貨與輔助。
+     * 2026-10-16：自己的傳奇、極境專屬都是「每一件各自擲」unique_chance／exclusive_chance（不是整個池子擲一次再抽一件）。
      */
     private void pinnacleLoot(final MapInstance instance, final Player player, final List<DropTable.Drop> drops,
                               final tw.exilecore.loot.LootBonus.Bonus bonus) {
@@ -923,26 +924,44 @@ final class MapBosses {
             }
         }
         final int itemLevel = instance.level();
-        if (random.nextDouble() < bonus.rare(pinnacleDrops.uniqueChance())) {
-            ItemData unique = MapDrops.unique(generator, instance.map().id(), itemLevel, random);
-            if (unique == null) {
-                unique = MapDrops.unique(generator, "final", itemLevel, random);
+        final List<tw.exilecore.item.UniqueItem> own = plugin.items().repository().uniquesFor(instance.map().id(), itemLevel);
+        if (own.isEmpty()) {
+            if (random.nextDouble() < bonus.rare(pinnacleDrops.uniqueChance())) {
+                addUnique(drops, MapDrops.unique(generator, "final", itemLevel, random)); // 沒有自己的：終局共通池抽一件
             }
-            addUnique(drops, unique);
+        } else {
+            for (final tw.exilecore.item.UniqueItem unique : own) {
+                if (random.nextDouble() < bonus.rare(pinnacleDrops.uniqueChance())) {
+                    addUnique(drops, generator.generateUnique(unique, itemLevel, random));
+                }
+            }
         }
         rollChase(drops, itemLevel, random);
         if (random.nextDouble() < bonus.rare(pinnacleDrops.commonChance(config.drops().finalCommonChance()))) {
             addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
         }
-        if (random.nextDouble() < bonus.rare(pinnacleDrops.exclusiveChance())) {
-            // 先找這隻巔峰自己的（uber_終局代號），沒有就用全部極境共通的（uber）
-            ItemData exclusive = MapDrops.unique(generator, MapConfig.uberSource(instance.map().id()), itemLevel, random);
-            if (exclusive == null) {
-                exclusive = MapDrops.unique(generator, "uber", itemLevel, random);
+        // 極境專屬：這隻巔峰自己的（uber_終局代號）；沒有就是四個極境各自的專屬（uber_ 開頭）——每一件各自擲
+        for (final tw.exilecore.item.UniqueItem unique : uberExclusives(MapConfig.uberSource(instance.map().id()), itemLevel)) {
+            if (random.nextDouble() < bonus.rare(pinnacleDrops.exclusiveChance())) {
+                addUnique(drops, generator.generateUnique(unique, itemLevel, random));
             }
-            addUnique(drops, exclusive);
         }
         extraDrops(drops, pinnacleDrops.extra(), itemLevel, random, bonus);
+    }
+
+    /** 巔峰的極境專屬池：自己的（source），沒有就所有 uber_ 開頭來源的傳奇（2026-10-16：以前找 uber 找不到，一件都不會掉）。 */
+    List<tw.exilecore.item.UniqueItem> uberExclusives(final String source, final int itemLevel) {
+        final List<tw.exilecore.item.UniqueItem> own = plugin.items().repository().uniquesFor(source, itemLevel);
+        if (!own.isEmpty()) {
+            return own;
+        }
+        final List<tw.exilecore.item.UniqueItem> all = new ArrayList<>();
+        for (final tw.exilecore.item.UniqueItem unique : plugin.items().repository().uniques()) {
+            if (unique.weight() > 0 && unique.dropLevel() <= itemLevel && unique.sources().stream().anyMatch(s -> s.startsWith("uber_"))) {
+                all.add(unique);
+            }
+        }
+        return all;
     }
 
     /** 極境、巔峰的額外掉落（maps.yml 的 drops.extra）。 */
@@ -980,6 +999,9 @@ final class MapBosses {
      * 怪物稀有度（傳奇怪 +300% 數量）不算：那是一般掉落表專用的。
      */
     private tw.exilecore.loot.LootBonus.Bonus bonus(final MapInstance instance, final Player player) {
+        if (instance.usesAttempts()) {
+            return tw.exilecore.loot.LootBonus.Bonus.NONE; // 2026-10-16：終局以上（終局、極境、巔峰、金庫之主）的掉落不吃物品數量、稀有度
+        }
         return tw.exilecore.loot.LootBonus.of(plugin, player).plus(
                 instance.stats().quantity() / 100.0 + instance.atlas().increased("atlas.boss_quantity") + instance.twist().bossLoot,
                 instance.stats().rarity() / 100.0 + instance.atlas().increased("atlas.boss_rarity") + instance.twist().bossLoot);

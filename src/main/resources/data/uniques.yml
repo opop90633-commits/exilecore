@@ -3715,3 +3715,107 @@ spiritgrove_plate:
       value: [100, 140]
       stats:
         - { stat: life.max, type: FLAT, value: "{value}" }
+
+# ---- 2026-10：星骸之海的淵鯨（life.yml 的 whale）專屬傳奇（sources 寫 abyss_whale；機率見 life.yml 的 whale.drops）----
+
+abyss_echo:
+  name: 深淵迴響
+  base: jamulet_09
+  drop_level: 85
+  sources: [abyss_whale]
+  weight: 100
+  flavour:
+    - "「牠在很深的地方唱歌。聽過一次的人，施法的時候都會跟著哼。」"
+  mods:
+    - text: "+1 全部冰冷法術技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 1, tags: [spell, cold] }
+    - text: "增加 {value}% 冰冷傷害"
+      value: [40, 60]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
+    - text: "增加 {value}% 施法速度"
+      value: [10, 15]
+      stats:
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "冰冷傷害穿透 {value}% 冰冷抗性"
+      value: [10, 15]
+      stats:
+        - { stat: penetration, type: FLAT, value: "{value}", tags: [cold] }
+    - text: "+{value} 最大能量護盾"
+      value: [60, 90]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "+{value}% 冰冷抗性"
+      value: [25, 35]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+tidewhisper_bow:
+  name: 潮汐低語
+  base: bow_26
+  drop_level: 85
+  sources: [abyss_whale]
+  weight: 100
+  flavour:
+    - "「弦拉開的時候，聽得到浪的聲音。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [150, 190]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "附加 {min} 到 {max} 冰冷傷害"
+      min: [20, 28]
+      max: [90, 120]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, cold] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, cold] }
+    - text: "增加 {value}% 攻擊速度"
+      value: [12, 16]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "投射物穿透 2 個敵人"
+      stats:
+        - { stat: skill.pierce, type: FLAT, value: 2, tags: [projectile] }
+    - text: "增加 {value}% 投射物速度"
+      value: [20, 30]
+      stats:
+        - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 冰緩效果"
+      value: [30, 40]
+      stats:
+        - { stat: chill.effect, type: INCREASED, value: "{value}" }
+
+tide_devourer:
+  name: 噬潮
+  base: spear_28
+  drop_level: 85
+  sources: [abyss_whale]
+  weight: 100
+  flavour:
+    - "「牠吞下去的東西，從來沒有吐出來過。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [170, 220]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "擊中時 {value}% 機率造成流血"
+      value: [25, 35]
+      stats:
+        - { stat: bleed.chance, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 流血傷害"
+      value: [40, 60]
+      stats:
+        - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
+    - text: "對流血中的敵人造成更多 {value}% 傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage.vs_bleeding, type: MORE, value: "{value}" }
+    - text: "增加 {value}% 攻擊速度"
+      value: [8, 12]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "物理攻擊傷害的 {value}% 偷取為生命"
+      value: [6, 8]
+      stats:
+        - { stat: leech.life, type: FLAT, value: "{value}", tags: [attack, physical] }
