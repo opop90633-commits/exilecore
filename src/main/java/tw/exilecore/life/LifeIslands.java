@@ -415,7 +415,7 @@ final class LifeIslands {
             default -> buildAtoll(island);
         }
         islands.put(player.getUniqueId(), island);
-        final int level = Math.max(1, plugin.players().get(player).level());
+        final int level = islandLevel(player);
         if (!"ruin".equals(def.id())) {
             spawnWave(island, level);
         }
@@ -493,7 +493,7 @@ final class LifeIslands {
         }
         // 環礁：第一波清完來第二波，第二波清完守衛出來
         if ("atoll".equals(island.def.id()) && island.mobs.isEmpty() && !island.captainOut) {
-            final int level = Math.max(1, plugin.players().get(player).level());
+            final int level = islandLevel(player);
             if (island.wave < 2) {
                 spawnWave(island, level);
                 player.sendActionBar(plugin.text().parse("<#ff9b6b>第 " + island.wave + " 波！"));
@@ -509,6 +509,13 @@ final class LifeIslands {
             player.sendMessage(plugin.text().prefixed("<" + config().color() + ">礁石守衛倒下了，環礁中央浮出一個寶箱"));
         }
     }
+
+    /** 島上的怪幾級（2026-10-17）：開船的人的等級減 10，最高照 T16 地圖（84）——生活是休閒內容，掉落的物品等級不會比打地圖高。 */
+    private int islandLevel(final Player player) {
+        return Math.max(1, Math.min(ISLAND_LEVEL_CAP, plugin.players().get(player).level() - 10));
+    }
+
+    static final int ISLAND_LEVEL_CAP = 84;
 
     private void spawnWave(final Island island, final int level) {
         island.wave++;
@@ -674,7 +681,7 @@ final class LifeIslands {
             world().playSound(block.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.4f);
             world().spawnParticle(Particle.END_ROD, block.getLocation().add(0.5, 1, 0.5), 30, 0.3, 1, 0.3, 0.05);
             player.sendActionBar(plugin.text().parse("<#bfe6ff>星柱亮了 " + island.lit + "／4"));
-            spawnWave(island, Math.max(1, plugin.players().get(player).level()));
+            spawnWave(island, islandLevel(player));
             return true;
         }
         if (!island.chests.contains(at)) {

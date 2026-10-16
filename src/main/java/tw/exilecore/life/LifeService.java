@@ -2327,7 +2327,8 @@ public final class LifeService {
         shark.setPersistent(false);
         shark.setSilent(false);
         try {
-            final int level = Math.max(1, plugin.players().get(player).level());
+            // 2026-10-17：跟小島的怪一樣，玩家等級減 10、最高 84（掉落的物品等級不比打地圖高）
+            final int level = Math.max(1, Math.min(LifeIslands.ISLAND_LEVEL_CAP, plugin.players().get(player).level() - 10));
             plugin.monsters().decorate(shark, level, tw.exilecore.monster.MonsterRarity.MAGIC, List.of());
             plugin.monsters().markSummoned(shark); // 不掉一般的東西、不給經驗（獎勵是鯊魚材料）
             plugin.monsters().setLifeMultiplier(shark, def.life());
