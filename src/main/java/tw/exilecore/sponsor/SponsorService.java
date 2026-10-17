@@ -784,6 +784,18 @@ public final class SponsorService {
         plugin.getSLF4JLogger().info("[贊助] {} 得到 {} 星幣：{}（現在 {}）", player.getName(), amount, what, coins(player));
     }
 
+    /** 2026-10-18：星幣券兌換：加星幣改在記憶體，回傳寫進資料庫的工作（跟 credited = 1 放同一個交易）；帳號沒載入 null。 */
+    CharacterRepository.ExtraWork addCoinsWork(final Player player, final long amount, final String what) {
+        if (amount <= 0 || accounts() == null || !accounts().accountLoaded(player)) {
+            return null;
+        }
+        final CharacterRepository.ExtraWork work = accounts().accountWork(player, Map.of(COINS, String.valueOf(coins(player) + amount)));
+        if (work != null) {
+            plugin.getSLF4JLogger().info("[贊助] {} 得到 {} 星幣：{}（現在 {}）", player.getName(), amount, what, coins(player));
+        }
+        return work;
+    }
+
     /** 星幣券的處理（SponsorModule 設定）。 */
     StarVouchers vouchers;
 

@@ -3383,7 +3383,7 @@ skills:
     tags: [attack, melee, area, physical, shapeshift, werewolf]
     weapons: [talisman]
     mechanic: cone
-    cone: { length: [3.5, 4.5], angle: 100 }
+    cone: { length: [4.5, 5.5], angle: 100 }   # 2026-10-18：範圍太小（原本 [3.5, 4.5]，面積只有嵐棍橫掃的六成），加長 1 格
     attack_speed: 0.85
     effectiveness: [1.15, 2.58]   # 2026-10 德魯伊變身技能：20 級端 ×1.6（目標：中等裝 5 萬、高裝 15 萬、頂裝 20～30 萬；1 級端不動，前期不會變太強）；這次之前 [1.15, 1.61]
     # （更早）2026-10 平衡：-23%（扇形）

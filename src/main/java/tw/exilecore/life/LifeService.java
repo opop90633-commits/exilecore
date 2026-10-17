@@ -135,6 +135,12 @@ public final class LifeService {
     private final Map<UUID, Session> sessions = new HashMap<>();
     /** 攔截網裡攔到的東西：「x,y,z」→ 漂流物代號。 */
     private final Map<String, List<String>> nets = new HashMap<>();
+    /**
+     * 2026-10-18：盆被誰種了（全域、存 life_pots.txt）：「x,y,z」→ 帳號 UUID；{@link #POT_CLEARED} = 盆拆掉了、誰的作物都不算。
+     * 以前只看在線玩家的資料，種的人下線後別人可以在同一盆再種一份。
+     */
+    private final Map<String, String> pots = new HashMap<>();
+    private static final String POT_CLEARED = "-";
     private final Map<Integer, UUID> plotOwners = new HashMap<>();
     private int nextPlot;
     private final Set<UUID> diedAtSea = new HashSet<>();
@@ -297,6 +303,7 @@ public final class LifeService {
         world.setClearWeatherDuration(Integer.MAX_VALUE / 2);
         loadPlots();
         loadNets();
+        loadPots(); // 2026-10-18
         loadMembers();
         loadPlotLevels();
     }
@@ -946,6 +953,7 @@ public final class LifeService {
                 profile.materials.put(id, (int) Math.min(Integer.MAX_VALUE, count));
             }
         }
+        reconcilePots(player, profile); // 2026-10-18
         profiles.put(player.getUniqueId(), profile);
         rememberLevel(profile);
         return profile;
@@ -1032,6 +1040,273 @@ public final class LifeService {
             flush(player);
         }
         saveNets();
+        savePots(); // 2026-10-18
+    }
+
+    // ---- 盆被誰種了（2026-10-18）----
+
+    private Path potFile() {
+        return plugin.dataFolder().resolve("life_pots.txt");
+    }
+
+    /**
+     * 跟攔截網一樣：每 60 秒、關服時寫一次，一行一盆「x,y,z=帳號 UUID@種下的時間（或 -）」。內容沒變就不寫。
+     * 2026-10-18：加上種下的時間（舊格式只有 UUID 也讀得懂），同一盆兩個人都種了的時候早種的算。
+     */
+    private String savedPots = "";
+    /** 2026-10-18：life_pots.txt 讀壞了、也備份不了：不要拿記憶體裡不完整的蓋掉它（等管理員處理）。 */
+    private boolean potsUnsafe;
+    /** 2026-10-18：第一次上線沒有 life_pots.txt：正在從所有帳號的作物建紀錄，建好之前不能種（不然會種到下線的人的盆上）。 */
+    private boolean potsLoading;
+    /** 2026-10-18：重新載入就換一代，舊的那次查詢回來不要套用。 */
+    private int potsGeneration;
+
+    private void savePots() {
+        if (potsUnsafe) {
+            return; // 2026-10-18：讀壞的檔案留著，不覆蓋
+        }
+        final StringBuilder out = new StringBuilder();
+        for (final Map.Entry<String, String> entry : new java.util.TreeMap<>(pots).entrySet()) {
+            out.append(entry.getKey()).append('=').append(entry.getValue()).append(System.lineSeparator());
+        }
+        final String text = out.toString();
+        if (text.equals(savedPots)) {
+            return;
+        }
+        try {
+            final Path temp = potFile().resolveSibling("life_pots.txt.tmp");
+            Files.writeString(temp, text);
+            Files.move(temp, potFile(), java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            savedPots = text;
+        } catch (final java.io.IOException e) {
+            plugin.getSLF4JLogger().warn("{}：寫不進 life_pots.txt：{}", config.name(), e.toString());
+        }
+    }
+
+    private void loadPots() {
+        if (!pots.isEmpty()) {
+            savePots(); // 重新載入時：記憶體裡的比較新，先寫下去
+        }
+        pots.clear();
+        savedPots = "";
+        potsUnsafe = false;
+        potsLoading = false;
+        potsGeneration++;
+        try {
+            if (!Files.exists(potFile())) {
+                rebuildPots(); // 2026-10-18：第一次上線：從帳號資料建
+                return;
+            }
+            for (final String line : Files.readAllLines(potFile())) {
+                final int eq = line.indexOf('=');
+                if (eq > 0 && eq < line.length() - 1) {
+                    pots.put(line.substring(0, eq).trim(), line.substring(eq + 1).trim());
+                }
+            }
+        } catch (final java.io.IOException | RuntimeException e) {
+            plugin.getSLF4JLogger().warn("{}：讀不到 life_pots.txt：{}", config.name(), e.toString());
+            // 2026-10-18：讀壞了：先備份成 life_pots.txt.bad 才准之後覆蓋；備份不了就不寫（不蓋掉原本的）
+            try {
+                Files.copy(potFile(), potFile().resolveSibling("life_pots.txt.bad"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                plugin.getSLF4JLogger().warn("{}：已備份成 life_pots.txt.bad，從帳號資料重建盆的紀錄", config.name());
+            } catch (final java.io.IOException | RuntimeException backup) {
+                potsUnsafe = true;
+                plugin.getSLF4JLogger().warn("{}：life_pots.txt 備份不了，這次開服不會覆蓋它：{}", config.name(), backup.toString());
+            }
+            pots.clear();
+            rebuildPots();
+        }
+    }
+
+    /**
+     * 2026-10-18：在資料庫執行緒上讀所有帳號的作物（account_progress 的 life.crops），每盆取最早種的那個人當紀錄。
+     * 期間在線的人已經對過的盆、拆掉的盆以記憶體為準；查不到（資料庫沒開、出錯）就只靠「早種的算」的規則。
+     */
+    private void rebuildPots() {
+        if (plugin.database() == null) {
+            return;
+        }
+        final int generation = potsGeneration;
+        potsLoading = true;
+        plugin.database().async(connection -> {
+            final Map<String, String> earliest = new HashMap<>();
+            try (java.sql.PreparedStatement statement = connection.prepareStatement(
+                    "SELECT account_uuid, progress_value FROM account_progress WHERE progress_key = ?")) {
+                statement.setString(1, CROPS);
+                try (java.sql.ResultSet result = statement.executeQuery()) {
+                    while (result.next()) {
+                        final String account = result.getString(1);
+                        final String crops = result.getString(2);
+                        if (account == null || crops == null) {
+                            continue;
+                        }
+                        for (final String entry : crops.split(";")) {
+                            final int eq = entry.indexOf('=');
+                            if (eq <= 0) {
+                                continue;
+                            }
+                            final String at = entry.substring(0, eq);
+                            final long time = plantedAt(entry.substring(eq + 1));
+                            final String before = earliest.get(at);
+                            if (before == null || time < potTime(before)) {
+                                earliest.put(at, potRecord(account, time));
+                            }
+                        }
+                    }
+                }
+            }
+            return earliest;
+        }).whenComplete((earliest, error) -> plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (generation != potsGeneration) {
+                return;
+            }
+            potsLoading = false;
+            if (error != null) {
+                plugin.getSLF4JLogger().warn("{}：從帳號資料建盆的紀錄失敗（改用早種的算）：{}", config.name(), error.toString());
+                return;
+            }
+            int added = 0;
+            for (final Map.Entry<String, String> entry : earliest.entrySet()) {
+                if (pots.containsKey(entry.getKey())) {
+                    continue; // 在線的人已經對過、或盆拆掉了：記憶體為準
+                }
+                try {
+                    if (profiles.containsKey(UUID.fromString(potOwner(entry.getValue())))) {
+                        continue; // 在線、資料已載入的人：他記憶體裡的作物才是最新的
+                    }
+                } catch (final IllegalArgumentException ignored) {
+                    continue;
+                }
+                pots.put(entry.getKey(), entry.getValue());
+                added++;
+            }
+            plugin.getSLF4JLogger().info("{}：從帳號資料建好盆的紀錄（{} 盆）", config.name(), added);
+        }));
+    }
+
+    /** 2026-10-18：紀錄「UUID@時間」；時間不明（舊作物沒寫）就只有 UUID。 */
+    private static String potRecord(final String owner, final long time) {
+        return time < 0 ? owner : owner + "@" + time;
+    }
+
+    /** 2026-10-18：紀錄裡的帳號 UUID（舊格式整串就是 UUID；「-」照樣回「-」）。 */
+    private static String potOwner(final String record) {
+        final int at = record.indexOf('@');
+        return at < 0 ? record : record.substring(0, at);
+    }
+
+    /** 2026-10-18：紀錄裡的種下時間；舊格式（沒有時間）、壞掉的 -1。 */
+    private static long potTime(final String record) {
+        final int at = record.indexOf('@');
+        if (at < 0) {
+            return -1;
+        }
+        try {
+            return Long.parseLong(record.substring(at + 1).trim());
+        } catch (final NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    /** 2026-10-18：作物「代號@種下的時間」的時間（沒寫時間的舊作物當 0：跟長大的算法一樣）。 */
+    private static long plantedAt(final String crop) {
+        final int sep = crop.indexOf('@');
+        return sep < 0 ? 0 : parseLong(crop.substring(sep + 1));
+    }
+
+    /**
+     * 2026-10-18：載入一個人的生活資料時對一下全域紀錄：
+     * 沒有紀錄（舊資料、當機前沒寫到）→ 記成他的（不丟東西）；盆拆掉了 → 他這盆的作物不算了（告訴他）；
+     * 紀錄指向別人 → 比種下的時間，早種的算（紀錄沒有時間也當他的比較早）：他比較早就把紀錄改回他、
+     * 晚種的人在線就把那份拿掉（下線的話他上線時對紀錄自己會拿掉）；別人比較早就拿掉他這份；
+     * 紀錄指向他但他沒種 → 清掉紀錄（不卡住盆）。
+     */
+    private void reconcilePots(final Player player, final Profile profile) {
+        final String me = player.getUniqueId().toString();
+        int broken = 0;
+        int lost = 0;
+        for (final Iterator<Map.Entry<String, String>> it = profile.crops.entrySet().iterator(); it.hasNext(); ) {
+            final Map.Entry<String, String> crop = it.next();
+            final String at = crop.getKey();
+            final long mine = plantedAt(crop.getValue());
+            final String record = pots.get(at);
+            if (record == null) {
+                pots.put(at, potRecord(me, mine));
+                continue;
+            }
+            if (record.equals(POT_CLEARED)) {
+                it.remove();
+                profile.dirty = true;
+                broken++;
+                continue;
+            }
+            final String owner = potOwner(record);
+            if (owner.equals(me)) {
+                pots.put(at, potRecord(me, mine)); // 補上時間
+                continue;
+            }
+            long theirs = potTime(record);
+            if (theirs < 0) {
+                // 舊格式沒有時間：那個人資料在記憶體的話用他作物的時間
+                try {
+                    final Profile other = profiles.get(UUID.fromString(owner));
+                    final String planted = other == null ? null : other.crops.get(at);
+                    theirs = planted == null ? -1 : plantedAt(planted);
+                } catch (final IllegalArgumentException ignored) {
+                    // 壞掉的值：當作沒有時間
+                }
+            }
+            if (theirs < 0 || mine < theirs) {
+                pots.put(at, potRecord(me, mine));
+                dropLaterCrop(owner, at);
+            } else {
+                it.remove();
+                profile.dirty = true;
+                lost++;
+            }
+        }
+        pots.entrySet().removeIf(entry -> potOwner(entry.getValue()).equals(me) && !profile.crops.containsKey(entry.getKey()));
+        if (broken > 0) {
+            player.sendMessage(plugin.text().prefixed("<gray>你種的作物有 " + broken + " 盆不見了：盆在你下線時被拆掉了"));
+        }
+        if (lost > 0) {
+            player.sendMessage(plugin.text().prefixed("<gray>你種的作物有 " + lost + " 盆不算了：那盆別人比你早種"));
+        }
+    }
+
+    /** 2026-10-18：同一盆早種的人上線了：晚種的人在線就拿掉他那份並告訴他（下線的話等他上線對紀錄時拿掉）。 */
+    private void dropLaterCrop(final String owner, final String at) {
+        final UUID id;
+        try {
+            id = UUID.fromString(owner);
+        } catch (final IllegalArgumentException ignored) {
+            return;
+        }
+        final Profile theirs = profiles.get(id);
+        if (theirs == null || theirs.crops.remove(at) == null) {
+            return;
+        }
+        theirs.dirty = true;
+        final Player other = plugin.getServer().getPlayer(id);
+        if (other != null) {
+            other.sendMessage(plugin.text().prefixed("<gray>你在 " + at + " 種的作物不算了：那盆別人比你早種（他剛上線）"));
+        }
+    }
+
+    /** 2026-10-18：收成、作物不見了：紀錄還是他的才清。 */
+    private void releasePot(final Player player, final String at) {
+        final String record = pots.get(at);
+        if (record != null && potOwner(record).equals(player.getUniqueId().toString())) {
+            pots.remove(at);
+        }
+    }
+
+    /** 2026-10-18：拆掉的是盆：記成拆掉了（下線的人上線時作物不算了）。 */
+    private void clearPot(final Block block) {
+        final LifeConfig.Item pot = config.itemByBlock(block.getType().name());
+        if (pot != null && pot.station() != null && pot.station().startsWith("planter")) {
+            pots.put(key(block.getX(), block.getY(), block.getZ()), POT_CLEARED);
+        }
     }
 
     // ---- 攔截網裡的東西（2026-10-17：以前只在記憶體，重開伺服器就沒了）----
@@ -1913,6 +2188,7 @@ public final class LifeService {
         if (builder(player)) {
             // 2026-10-17：管理員拆的也清掉攔截網的內容（以前同一格再放網會繼承舊的）
             nets.remove(key(block.getX(), block.getY(), block.getZ()));
+            clearPot(block); // 2026-10-18：管理員拆的盆也記成拆掉了
             return null;
         }
         // 2026-10：貼在牆上的船帆（WHITE_WALL_BANNER）、疊成一整格的半磚也拆得下來（以前拆不了、或少一塊）
@@ -1940,6 +2216,7 @@ public final class LifeService {
             return "上面還有東西，先拆上面的";
         }
         giveItem(player, raftItem(item, count));
+        clearPot(block); // 2026-10-18：下線的人種的也不算了（全域紀錄）
         // 盆裡的作物（誰種的都清：共用成員種的也是）
         final String cropKey = key(block.getX(), block.getY(), block.getZ());
         boolean cropGone = false;
@@ -2128,6 +2405,7 @@ public final class LifeService {
         final long since = sep < 0 ? 0 : parseLong(planted.substring(sep + 1));
         if (crop == null) {
             profile.crops.remove(at);
+            releasePot(player, at); // 2026-10-18
             profile.dirty = true;
             return;
         }
@@ -2137,6 +2415,7 @@ public final class LifeService {
             return;
         }
         profile.crops.remove(at);
+        releasePot(player, at); // 2026-10-18
         final StringBuilder got = new StringBuilder();
         for (final Map.Entry<String, int[]> give : crop.harvest().entrySet()) {
             final int amount = give.getValue()[0] + random.nextInt(Math.max(1, give.getValue()[1] - give.getValue()[0] + 1));
@@ -2186,6 +2465,25 @@ public final class LifeService {
                 return "已經有人種了東西";
             }
         }
+        // 2026-10-18：種的人下線了也算（全域紀錄）；紀錄是在線的人、但他其實沒種（當機前沒寫到）就不算
+        if (potsLoading) {
+            return "盆的資料還在載入，請稍等"; // 2026-10-18：第一次上線、從帳號資料建紀錄中
+        }
+        final String record = pots.get(at);
+        final String owner = record == null ? null : potOwner(record); // 2026-10-18：紀錄是「UUID@時間」
+        if (owner != null && !owner.equals(POT_CLEARED) && !owner.equals(player.getUniqueId().toString())) {
+            UUID ownerId = null;
+            try {
+                ownerId = UUID.fromString(owner);
+            } catch (final IllegalArgumentException ignored) {
+                // 檔案壞掉的值：當作沒人種
+            }
+            final Player other = ownerId == null ? null : plugin.getServer().getPlayer(ownerId);
+            final Profile theirs = other == null ? null : profiles.get(other.getUniqueId());
+            if (ownerId != null && (theirs == null || theirs.crops.containsKey(at))) {
+                return "已經有人種了東西";
+            }
+        }
         if (config.levelOf(profile.xp) < crop.level()) {
             return "要生活等級 " + crop.level();
         }
@@ -2206,7 +2504,9 @@ public final class LifeService {
             profile.materials.merge(config.freshWater(), -crop.water(), Integer::sum);
         }
         profile.materials.values().removeIf(count -> count <= 0);
-        profile.crops.put(at, crop.id() + "@" + System.currentTimeMillis());
+        final long now = System.currentTimeMillis();
+        profile.crops.put(at, crop.id() + "@" + now);
+        pots.put(at, potRecord(player.getUniqueId().toString(), now)); // 2026-10-18：連種下的時間一起記（同一盆早種的算）
         profile.dirty = true;
         addXp(player, profile, 1);
         player.playSound(block.getLocation(), Sound.ITEM_CROP_PLANT, 0.8f, 1f);
@@ -2255,6 +2555,7 @@ public final class LifeService {
             final LifeConfig.Item pot = config.itemByBlock(block.getType().name());
             if (pot == null || pot.station() == null || !pot.station().startsWith("planter")) {
                 it.remove();
+                releasePot(player, entry.getKey()); // 2026-10-18
                 profile.dirty = true;
                 continue;
             }

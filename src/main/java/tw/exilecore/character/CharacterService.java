@@ -66,7 +66,9 @@ public final class CharacterService {
     // ---- 經濟操作的存檔（見 commit）----
 
     /** 寫入失敗、等重試的一筆操作（只在資料庫執行緒上讀寫）。 */
-    private record Deferred(String opId, Set<UUID> members, CharacterRepository.ExtraWork work) {
+    private record Deferred(String opId, Set<UUID> members, CharacterRepository.ExtraWork work,
+                            java.util.function.Supplier<CharacterRepository.ExtraWork> refresh) {
+        // 2026-10-18：refresh（可為 null）＝重試前在主執行緒重新產生 work（公會倉庫頁、公會資料用當下的，不重放卡住那一刻的舊快照）
     }
 
     /** 重試間隔（tick）。 */
@@ -1061,6 +1063,18 @@ public final class CharacterService {
      */
     public CompletableFuture<Boolean> commit(final Collection<Player> players, final CharacterRepository.ExtraWork work,
                                              final String opId, final String what) {
+        return commit(players, work, null, opId, what);
+    }
+
+    /**
+     * 同上；refresh 不是 null 的話，這筆卡住後重試時不重放 work，改在主執行緒呼叫 refresh 重新產生一份（跟玩家當下的存檔一起寫）。
+     * 給「work 裡有別的地方也會直接寫的共用資料」用（公會倉庫頁、公會資料）：卡住期間那些資料被直接寫成更新的，重放舊快照會蓋回去。
+     * refresh 回傳 null ＝ 這筆已經沒有要寫的（例如公會解散了）。
+     */
+    // 2026-10-18：新增 refresh 版本，修重試時用舊快照蓋掉新資料（公會倉庫複製物品、成員消失）
+    public CompletableFuture<Boolean> commit(final Collection<Player> players, final CharacterRepository.ExtraWork work,
+                                             final java.util.function.Supplier<CharacterRepository.ExtraWork> refresh,
+                                             final String opId, final String what) {
         final Set<UUID> members = new LinkedHashSet<>();
         final List<CharacterRepository.SaveJob> jobs = new ArrayList<>();
         for (final Player player : players) {
@@ -1084,7 +1098,7 @@ public final class CharacterService {
                 return Boolean.FALSE; // 還原備份中（沒有人在線，不會走到這裡）
             }
             if (economyFrozen || anyBlocked) {
-                defer(opId, members, work); // 前面已經有卡住的操作：排在它們後面一起重試
+                defer(opId, members, work, refresh); // 前面已經有卡住的操作：排在它們後面一起重試
                 return Boolean.FALSE;
             }
             repository.saveAll(connection, jobs, work);
@@ -1095,7 +1109,7 @@ public final class CharacterService {
                 return Boolean.FALSE;
             }
             plugin.getSLF4JLogger().error("{} 寫入資料庫失敗：交易系統暫停，之後每 15 秒重試到成功為止", what, failure);
-            defer(opId, members, work);
+            defer(opId, members, work, refresh);
             return Boolean.FALSE;
         }).whenComplete((committed, error) -> sync(() -> {
             for (final UUID uuid : members) {
@@ -1123,9 +1137,10 @@ public final class CharacterService {
     }
 
     /** 資料庫執行緒：把操作記下來等重試，參與的玩家之後的存檔先不寫。 */
-    private void defer(final String opId, final Set<UUID> members, final CharacterRepository.ExtraWork work) {
+    private void defer(final String opId, final Set<UUID> members, final CharacterRepository.ExtraWork work,
+                       final java.util.function.Supplier<CharacterRepository.ExtraWork> refresh) {
         synchronized (deferred) {
-            deferred.add(new Deferred(opId, Set.copyOf(members), work));
+            deferred.add(new Deferred(opId, Set.copyOf(members), work, refresh));
             blocked.addAll(members);
             economyFrozen = true;
         }
@@ -1159,6 +1174,24 @@ public final class CharacterService {
             }
             jobs.put(uuid, job);
         }
+        // 2026-10-18：有 refresh 的卡住操作，在主執行緒上（跟上面玩家的快照同一刻）重新產生 work，不重放舊快照
+        final Map<Deferred, CharacterRepository.ExtraWork> refreshed = new java.util.IdentityHashMap<>();
+        final List<Deferred> pending;
+        synchronized (deferred) {
+            pending = List.copyOf(deferred);
+        }
+        for (final Deferred entry : pending) {
+            if (entry.refresh() != null) {
+                CharacterRepository.ExtraWork fresh;
+                try {
+                    fresh = entry.refresh().get();
+                } catch (final RuntimeException e) {
+                    plugin.getSLF4JLogger().error("重試交易存檔：重新產生 {} 的資料失敗（用卡住那一刻的）", entry.opId(), e);
+                    fresh = entry.work();
+                }
+                refreshed.put(entry, fresh);
+            }
+        }
         retrying = true;
         plugin.database().async(connection -> {
             if (writesPaused || !jobs.keySet().containsAll(blocked)) {
@@ -1168,10 +1201,16 @@ public final class CharacterService {
             synchronized (deferred) {
                 works = List.copyOf(deferred);
             }
+            for (final Deferred entry : works) {
+                if (entry.refresh() != null && !refreshed.containsKey(entry)) {
+                    return null; // 2026-10-18：主執行緒重新產生之後才排進來的（還沒有當下的資料），下一輪再一起寫
+                }
+            }
             repository.saveAll(connection, List.copyOf(jobs.values()), c -> {
                 for (final Deferred entry : works) {
-                    if (entry.work() != null) {
-                        entry.work().run(c);
+                    final CharacterRepository.ExtraWork work = entry.refresh() != null ? refreshed.get(entry) : entry.work();
+                    if (work != null) {
+                        work.run(c);
                     }
                 }
             });

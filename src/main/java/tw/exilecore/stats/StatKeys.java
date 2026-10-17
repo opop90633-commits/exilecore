@@ -56,6 +56,10 @@ public final class StatKeys {
     // 掉落
     public static final String DROP_QUANTITY = "drop.quantity";    // INCREASED
     public static final String DROP_RARITY = "drop.rarity";
+    /** 2026-10-18：打怪的經驗多幾 %（INCREASED；稱號這類加成用，跟累積贊助的經驗加成加在一起算）。 */
+    public static final String EXPERIENCE_GAIN = "experience.gain";
+    /** 2026-10-18：怪物掉給你的金幣多幾 %（INCREASED；稱號這類加成用，跟累積贊助的金幣加成加在一起算）。 */
+    public static final String GOLD_FIND = "gold.find";
 
     // 藥劑
     /** INCREASED：喝生命藥劑回復的量（任務獎勵）。 */

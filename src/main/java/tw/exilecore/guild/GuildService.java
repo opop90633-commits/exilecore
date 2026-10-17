@@ -385,10 +385,14 @@ public final class GuildService {
         final long id = guild.id();
         clearApplications(player.getUniqueId());
         plugin.players().markDirty(player);
-        plugin.characters().commit(List.of(player), connection -> {
-            repository.save(connection, row);
-            repository.insertLog(connection, id, now, leaderName, "建立", "建立公會（" + GoldService.format(cost) + " 金幣）");
-        }, null, "建立公會 " + name + "（" + player.getName() + "）");
+        // 2026-10-18：卡住重試時用當下的公會資料（期間有人加入、改公告都在），不重放建立那一刻的；解散了就不寫公會的部分
+        final java.util.function.Function<GuildRepository.GuildRow, tw.exilecore.character.CharacterRepository.ExtraWork> work =
+                current -> current == null ? null : connection -> {
+                    repository.save(connection, current);
+                    repository.insertLog(connection, id, now, leaderName, "建立", "建立公會（" + GoldService.format(cost) + " 金幣）");
+                };
+        plugin.characters().commit(List.of(player), work.apply(row), () -> work.apply(currentRow(id)),
+                null, "建立公會 " + name + "（" + player.getName() + "）");
         refresh(player);
         refreshLadder();
         tell(player, "<green>公會「" + ItemRenderer.escape(name) + "」建立了<gray>（花了 " + GoldService.format(cost) + " 金幣）　"
@@ -1158,10 +1162,14 @@ public final class GuildService {
         final long id = guild.id();
         final long now = System.currentTimeMillis();
         plugin.players().markDirty(player);
-        plugin.characters().commit(List.of(player), connection -> {
-            repository.save(connection, row);
-            repository.insertLog(connection, id, now, name, "捐獻", GoldService.format(gold) + " 金幣 → " + GoldService.format(experience) + " 公會經驗");
-        }, null, "公會捐獻（" + player.getName() + "）");
+        // 2026-10-18：卡住重試時用當下的公會資料（不把成員、等級、經驗蓋回捐獻那一刻的）；解散了就不寫公會的部分
+        final java.util.function.Function<GuildRepository.GuildRow, tw.exilecore.character.CharacterRepository.ExtraWork> work =
+                current -> current == null ? null : connection -> {
+                    repository.save(connection, current);
+                    repository.insertLog(connection, id, now, name, "捐獻", GoldService.format(gold) + " 金幣 → " + GoldService.format(experience) + " 公會經驗");
+                };
+        plugin.characters().commit(List.of(player), work.apply(row), () -> work.apply(currentRow(id)),
+                null, "公會捐獻（" + player.getName() + "）");
         broadcast(guild, "<white>" + ItemRenderer.escape(name) + "<gray> 捐了 <#f5b942>" + GoldService.format(gold) + " 金幣<gray>（公會經驗 +"
                 + GoldService.format(experience) + (maxed ? "；公會已經滿級，只算進排行" : "") + "）");
     }
@@ -1980,10 +1988,18 @@ public final class GuildService {
                 : new TradeLogRepository.Entry(opId, TRADE_KIND, itemUuid, what + "（從公會倉庫取出）", moved.getAmount(),
                         null, guildName, player.getUniqueId(), player.getName());
         plugin.players().markDirty(player);
-        plugin.characters().commit(List.of(player), connection -> {
-            repository.saveStashPage(connection, id, page, contents);
-            repository.insertLog(connection, id, at, actor, action, what + "（第 " + (page + 1) + " 頁）");
+        // 2026-10-18：卡住重試時重新序列化這一頁當下的內容（期間整理、重新分頁直接寫過的不會被舊快照蓋回去＝不會複製物品）；
+        // 公會解散了就只寫交易紀錄
+        final java.util.function.Function<byte[], tw.exilecore.character.CharacterRepository.ExtraWork> work = current -> connection -> {
+            if (current != null) {
+                repository.saveStashPage(connection, id, page, current);
+                repository.insertLog(connection, id, at, actor, action, what + "（第 " + (page + 1) + " 頁）");
+            }
             plugin.economy().tradeLog().insert(connection, List.of(entry));
+        };
+        plugin.characters().commit(List.of(player), work.apply(contents), () -> {
+            final GuildStash now = roster.guild(id) != null ? stashes.get(id) : null;
+            return work.apply(now != null && page < now.pageCount() ? now.serialize(page) : null);
         }, opId, "公會倉庫" + action + "（" + player.getName() + "）");
     }
 
@@ -2506,6 +2522,12 @@ public final class GuildService {
     }
 
     // ---- 內部 ----
+
+    /** 2026-10-18：公會當下的資料（卡住的存檔重試時用）；已經解散＝null。 */
+    private GuildRepository.GuildRow currentRow(final long id) {
+        final Guild guild = roster.guild(id);
+        return guild == null ? null : GuildRepository.GuildRow.of(guild);
+    }
 
     /** 整個公會存一次（背景；失敗的話記下來，下一輪再存）。 */
     private void persist(final Guild guild) {

@@ -232,8 +232,10 @@ public final class MonsterListener implements Listener {
         rollMirror(owner, rolled, fatigue);
         // 2026-10：累積贊助的金幣加成（只算掉給這個人的那份）
         // 個人金幣加倍藥：跟全服加倍加起來（全服 ×2、個人 ×2 → ×3）
-        final double sponsorGold = owner == null || plugin.sponsors() == null ? 0
-                : plugin.sponsors().goldBonus(owner) + plugin.sponsors().personalGold(owner);
+        final double sponsorGold = (owner == null || plugin.sponsors() == null ? 0
+                : plugin.sponsors().goldBonus(owner) + plugin.sponsors().personalGold(owner))
+                // 2026-10-18：稱號等的「怪物掉落金幣 +x%」，跟累積贊助的金幣加成加在一起
+                + (owner == null ? 0 : plugin.players().sheet(owner).increased(tw.exilecore.stats.StatKeys.GOLD_FIND, java.util.Set.of()));
         final long goldAmount = Math.round(drops.rollGold(data.level(), data.rarity(), goldBonus, plugin.items().random()) * (1 + sponsorGold));
         if (owner != null && plugin.loot() != null
                 && plugin.loot().handleKill(owner, location, data, rolled, goldAmount, this::toStack)) {

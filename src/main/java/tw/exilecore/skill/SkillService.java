@@ -1863,6 +1863,10 @@ public final class SkillService {
                                   final List<DpsRow> rows) {
         DpsRow main = null;
         for (final DpsRow row : rows) {
+            final SkillDefinition rowDefinition = config.skill(row.skillId());
+            if (rowDefinition != null && SkillExecutor.hasFlag(rowDefinition, StatKeys.FLAG_TOTEM_LINKED)) {
+                continue; // 2026-10-18：英靈圖騰那行是英靈打的（含好幾根），不當成你自己打的能量來源
+            }
             if (row.minions() == 0 && row.rate() > 0 && (main == null || row.dps() > main.dps())) {
                 main = row;
             }
@@ -1980,6 +1984,13 @@ public final class SkillService {
             return new DpsRow(slot, position, definition.id(), definition.name(), each[0] * count, Math.max(each[0], fullEach) * count, count,
                     each[1], each[2], each[3], each[4]);
         }
+        if (!resolved.isDefault() && SkillExecutor.hasFlag(definition, StatKeys.FLAG_TOTEM_LINKED)) {
+            // 2026-10-18：英靈圖騰自己不打，算英靈用下一格錘子技能打的（以前只算圖騰本身那一下，面板低了好幾百倍）
+            final DpsRow ancestors = ancestralDps(state, sheet, fullSheet, full, slot, position, resolved);
+            if (ancestors != null) {
+                return ancestors;
+            }
+        }
         if (!definition.dealsDamage() || definition.mechanic() == Mechanic.AURA) {
             return null;
         }
@@ -2028,6 +2039,70 @@ public final class SkillService {
             fullDps *= 1 + full.taken();
         }
         return new DpsRow(slot, position, definition.id(), definition.name(), dps, Math.max(dps, fullDps), 0,
+                expected.total() * critFactor, hitRate, crit, multi);
+    }
+
+    /** 2026-10-18：一根英靈圖騰每秒叫幾次英靈（跟 {@link SkillDeployables} 一樣：錘子技能攻擊時間 ×1.5，最少 4 tick）。 */
+    static double ancestorCallsPerSecond(final double linkedIntervalTicks) {
+        return 20.0 / Math.max(4, Math.round(linkedIntervalTicks * 1.5));
+    }
+
+    /** 2026-10-18：同時立著幾根圖騰：上限與「持續時間 ÷ 放一根要多久（施放間隔與冷卻較長的）」比較小的那個，至少 1。 */
+    static double totemsUp(final int totems, final double durationTicks, final double placeIntervalTicks, final double cooldownTicks) {
+        final double cycle = Math.max(1, Math.max(placeIntervalTicks, cooldownTicks));
+        return Math.max(1, Math.min(Math.max(1, totems), durationTicks / cycle));
+    }
+
+    /**
+     * 英靈圖騰的估計每秒傷害（2026-10-18）：下一格錘子技能（含它的輔助、餘震）平均一下 × 每根每秒叫幾次英靈 × 同時幾根；
+     * 被叫出的英靈只打一次（沒有複擊、不吃戰吼強化）。下一格不是能連的錘子技能時回傳 null（照舊算圖騰本身）。
+     * 不含你自己按那個錘子技能打的（那個技能有綁鍵的話自己另外一行）。
+     */
+    private DpsRow ancestralDps(final PlayerState state, final StatSheet sheet, final StatSheet fullSheet, final FullOn full,
+                                final int slot, final int position, final Resolved resolved) {
+        final SkillDefinition definition = resolved.definition();
+        if (!(linkedMace(state, sheet, definition) instanceof SkillBuild linked)) {
+            return null;
+        }
+        final SkillBuild totem = build(state, sheet, resolved);
+        if (totem.deploy() == null) {
+            return null;
+        }
+        final double up = totemsUp(totem.totems(), totem.durationTicks(totem.deploy().duration()), totem.intervalTicks(sheet), totem.cooldownTicks());
+        final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, linked.profile());
+        final double crit = DamageCalculator.critChance(sheet, linked.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
+        final double multi = DamageCalculator.critMultiplier(linked.profile().effective(sheet), linked.profile().tags(), null) * 100;
+        final double critFactor = 1 + crit * (multi / 100.0 - 1);
+        final SkillParams params = linked.params();
+        final double hitRate = ancestorCallsPerSecond(linked.intervalTicks(sheet)) * up
+                * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
+                        params.aftershock() == null ? 0 : params.aftershock().more());
+        double dps = expected.total() * critFactor * hitRate;
+        if (plugin.ailments() != null) {
+            dps = plugin.ailments().estimateDps(sheet, linked.profile(), expected, critFactor, hitRate, state.level(), dps);
+        }
+        double fullDps = dps;
+        if (!full.isEmpty() && linkedMace(state, fullSheet, definition) instanceof SkillBuild fullLinked) {
+            // 全開：同 dpsOf，用疊上戰吼增益的屬性表重算（攻速變快英靈也叫得快），再算抗性降低、受到的傷害增加；英靈不吃強化
+            final SkillBuild fullTotem = build(state, fullSheet, resolved);
+            final double fullUp = totemsUp(fullTotem.totems(), fullTotem.durationTicks(totem.deploy().duration()),
+                    fullTotem.intervalTicks(fullSheet), fullTotem.cooldownTicks());
+            final DamagePacket fullExpected = afterResist(DamageCalculator.expectedOutgoing(fullSheet, fullLinked.profile()), full.resist());
+            final double fullCrit = DamageCalculator.critChance(fullSheet, fullLinked.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
+            final double fullMulti = DamageCalculator.critMultiplier(fullLinked.profile().effective(fullSheet), fullLinked.profile().tags(), null) * 100;
+            final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
+            final SkillParams fullParams = fullLinked.params();
+            final double fullRate = ancestorCallsPerSecond(fullLinked.intervalTicks(fullSheet)) * fullUp
+                    * castHits(fullParams.burst() == null ? 1 : fullParams.burst().count(), fullParams.aftershock() != null,
+                            fullParams.aftershock() == null ? 0 : fullParams.aftershock().more());
+            fullDps = fullExpected.total() * fullCritFactor * fullRate;
+            if (plugin.ailments() != null) {
+                fullDps = plugin.ailments().estimateDps(fullSheet, fullLinked.profile(), fullExpected, fullCritFactor, fullRate, state.level(), fullDps);
+            }
+            fullDps *= 1 + full.taken();
+        }
+        final String name = definition.name() + "（含英靈用" + linked.definition().name() + " ×" + ModifierText.number(up) + " 根）";
+        return new DpsRow(slot, position, definition.id(), name, dps, Math.max(dps, fullDps), 0,
                 expected.total() * critFactor, hitRate, crit, multi);
     }
 

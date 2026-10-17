@@ -67,7 +67,20 @@ public final class StatsReport {
             }
         }
         lines.add(String.format(Locale.ROOT, "<gray>物品掉落數量 <white>%+.0f%%%s" + SEP + "<gray>物品稀有度 <white>%+.0f%%%s",
-                ownQuantity + serverQuantity, included(serverQuantity, personalQuantity), ownRarity + serverRarity, included(serverRarity, personalRarity)));
+                ownQuantity + serverQuantity, included(serverQuantity, personalQuantity),
+                ownRarity + serverRarity, included(serverRarity, personalRarity)));
+        // 2026-10-18：怪物掉的金幣：全服 ×（1 ＋ 累積贊助＋個人加倍藥＋稱號等），跟 MonsterListener 的算法一樣
+        final double serverGold = plugin.monsterModule() == null || plugin.monsterModule().drops() == null ? 1
+                : plugin.monsterModule().drops().serverGold();
+        final double sponsorGold = plugin.sponsors() == null ? 0 : plugin.sponsors().goldBonus(player) * 100;
+        final double personalGold = plugin.sponsors() == null ? 0 : plugin.sponsors().personalGold(player) * 100;
+        final double sheetGold = sheet.increased(StatKeys.GOLD_FIND, Set.of()) * 100;
+        // 2026-10-18：自己的物品掉落數量也乘在金幣上（rollGold 的 1 ＋ 數量加成），跟實際掉的一樣
+        final double quantityGold = Math.max(0, 1 + sheet.increased(StatKeys.DROP_QUANTITY, Set.of()));
+        final double goldMultiplier = serverGold * quantityGold * (1 + (sponsorGold + personalGold + sheetGold) / 100);
+        if (Math.abs(goldMultiplier - 1) > 1e-9) {
+            lines.add("<gray>怪物掉落金幣 <white>" + percentText(goldMultiplier)); // 2026-10-18：只寫加起來的結果
+        }
         return lines;
     }
 
@@ -141,24 +154,18 @@ public final class StatsReport {
      */
     public static double experienceMultiplier(final ExileCore plugin, final Player player) {
         final double personal = (plugin.sponsors() == null ? 0 : plugin.sponsors().experienceBonus(player) + plugin.sponsors().personalExperience(player))
-                + (plugin.ascendancy() == null ? 0 : plugin.ascendancy().race().experienceBonus(player));
+                + (plugin.ascendancy() == null ? 0 : plugin.ascendancy().race().experienceBonus(player))
+                + plugin.players().sheet(player).increased(StatKeys.EXPERIENCE_GAIN, Set.of()); // 2026-10-18：稱號等的「打怪經驗 +x%」
         return plugin.players().config().experienceBonus() * (1 + personal);
     }
 
-    /** 經驗那一行後面的括號：全服倍數；有個人加倍藥（或累積贊助、種族）時寫實際倍數。2026-10-18：倍數改顯示成 %（×2.1 → +110%）。 */
+    /**
+     * 經驗那一行後面的括號：全部加起來的經驗倍數（全服、累積贊助、燃星者、稱號、個人加倍藥）。
+     * 2026-10-18：只寫加起來的結果，倍數寫成 %（×3.21 → +221%）；沒有任何加成不寫。
+     */
     private static String experienceNote(final ExileCore plugin, final Player player, final String serverText) {
-        final boolean personal = plugin.sponsors() != null && plugin.sponsors().personalExperience(player) > 0;
         final double actual = experienceMultiplier(plugin, player);
-        final double server = plugin.players().config().experienceBonus();
-        final String actualText = percentText(actual);
-        final String serverPercent = serverText == null ? null : percentText(server);
-        if (personal) {
-            return " <#ffd27f>（" + (serverPercent == null ? "" : "全服經驗 " + serverPercent + "＋") + "個人加倍：實際 " + actualText + "）";
-        }
-        if (serverPercent == null) {
-            return Math.abs(actual - 1) > 1e-9 ? " <#ffd27f>（經驗 " + actualText + "）" : "";
-        }
-        return " <#ffd27f>（全服經驗 " + serverPercent + (Math.abs(actual - server) > 1e-9 ? "，實際 " + actualText : "") + "）";
+        return Math.abs(actual - 1) > 1e-9 ? " <#ffd27f>（經驗 " + percentText(actual) + "）" : "";
     }
 
     /** 2026-10-18：經驗倍數寫成多出來的 %（跟 {@link CharacterConfig#percentText} 一樣）。 */

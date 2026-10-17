@@ -164,6 +164,16 @@ public final class CombatListener implements Listener {
 
     private final Map<UUID, PendingNumber> pendingNumbers = new HashMap<>();
     private final Map<UUID, LifeGain> pendingLifeGains = new HashMap<>();
+    /**
+     * 2026-10-18：算傷害時（HIGH）就會生效的副作用（相位形態／緊握傷口的延遲扣血、守護吃掉的量、偷取、收命收魂）
+     * 改成記在這裡，等 MONITOR 確定事件沒被取消才執行；key 是挨打的那一隻，同一隻接連挨打照順序疊在一起。
+     */
+    private final Map<UUID, java.util.List<Runnable>> pendingEffects = new HashMap<>();
+
+    /** 2026-10-18：記一個等事件確定沒被取消才執行的副作用。 */
+    private void defer(final LivingEntity defender, final Runnable effect) {
+        pendingEffects.computeIfAbsent(defender.getUniqueId(), uuid -> new java.util.ArrayList<>()).add(effect);
+    }
     private final SkillDamage skills;
     private final DamageNumbers numbers;
     private final Debuffs debuffs;
@@ -675,7 +685,8 @@ public final class CombatListener implements Listener {
                 pvpRewards(attackerIsPlayer, credit, attackerSheet, skill, result, defender);
             }
             if (!attackerIsPlayer && !attackerIsMinion) {
-                monsterLeech(attacker, attackerSheet, result); // 地圖詞綴：怪物偷取
+                // 2026-10-18：怪物偷取等事件確定沒被取消才回
+                defer(defender, () -> monsterLeech(attacker, attackerSheet, result)); // 地圖詞綴：怪物偷取
             }
         } else if (defenderIsMinion) {
             // 召喚物跟怪物一樣：原版血量只是比例
@@ -701,29 +712,32 @@ public final class CombatListener implements Listener {
                     && (plugin.maps() == null || plugin.maps().phaseFloor(defender) <= 0)) {
                 if (cull(event, defender, defenderMonster) && attackerIsPlayer) {
                     // 2026-10：收命、收魂（斷命打死時回復）
-                    final StatSheet cullSheet = skill.effective(attackerSheet);
-                    if (charges != null) {
-                        charges.onEvent((Player) attacker, "cull", cullSheet, skill.tags(), defender); // 戰星：撲殺時（2026-10，稀有度越高給越多）
-                    }
-                    final double lifePct = cullSheet.flat(StatKeys.LIFE_ON_CULL, skill.tags());
-                    final double manaPct = cullSheet.flat(StatKeys.MANA_ON_CULL, skill.tags());
-                    if (lifePct > 0 || manaPct > 0) {
-                        final PlayerState culler = plugin.players().get((Player) attacker);
-                        culler.setLife(Math.min(culler.maxLife(), culler.life() + culler.maxLife() * lifePct / 100.0));
-                        culler.setMana(Math.min(culler.maxMana(), culler.mana() + culler.maxMana() * manaPct / 100.0));
-                        plugin.players().display((Player) attacker, culler);
-                    }
+                    // 2026-10-18：撲殺的戰星與回復等事件確定沒被取消（MONITOR）才給
+                    defer(defender, () -> {
+                        final StatSheet cullSheet = skill.effective(attackerSheet);
+                        if (charges != null) {
+                            charges.onEvent((Player) attacker, "cull", cullSheet, skill.tags(), defender); // 戰星：撲殺時（2026-10，稀有度越高給越多）
+                        }
+                        final double lifePct = cullSheet.flat(StatKeys.LIFE_ON_CULL, skill.tags());
+                        final double manaPct = cullSheet.flat(StatKeys.MANA_ON_CULL, skill.tags());
+                        if (lifePct > 0 || manaPct > 0) {
+                            final PlayerState culler = plugin.players().get((Player) attacker);
+                            culler.setLife(Math.min(culler.maxLife(), culler.life() + culler.maxLife() * lifePct / 100.0));
+                            culler.setMana(Math.min(culler.maxMana(), culler.mana() + culler.maxMana() * manaPct / 100.0));
+                            plugin.players().display((Player) attacker, culler);
+                        }
+                    });
                 }
             }
             if (credit != null) {
                 final double lifeOnHit = skill.effective(attackerSheet).flat(StatKeys.LIFE_ON_HIT, skill.tags());
                 if (attackerIsPlayer) {
-                    leech(credit, attackerSheet, skill, result);
+                    defer(defender, () -> leech(credit, attackerSheet, skill, result)); // 2026-10-18：偷取等事件確定沒被取消才存
                     if (lifeOnHit > 0) {
                         pendingLifeGains.put(defender.getUniqueId(), new LifeGain(credit, lifeOnHit));
                     }
                 } else if (lifeOnHit > 0) {
-                    minions.heal(attacker, lifeOnHit); // 召喚物的擊中回復生命回給牠自己
+                    defer(defender, () -> minions.heal(attacker, lifeOnHit)); // 召喚物的擊中回復生命回給牠自己（2026-10-18：等事件確定沒被取消）
                 }
                 // 真正扣掉的生命（溢出的不算）：剩下的原版血量換回我們的生命
                 final double scale = plugin.monsters().healthScale(defender, defenderMonster);
@@ -902,7 +916,8 @@ public final class CombatListener implements Listener {
         if (!attackerIsPlayer) {
             return;
         }
-        leech(credit, attackerSheet, skill, result, lastPvpCapScale);
+        final double capScale = lastPvpCapScale;
+        defer(defender, () -> leech(credit, attackerSheet, skill, result, capScale)); // 2026-10-18：偷取等事件確定沒被取消才存
         final double lifeOnHit = skill.effective(attackerSheet).flat(StatKeys.LIFE_ON_HIT, skill.tags());
         if (lifeOnHit > 0) {
             pendingLifeGains.put(defender.getUniqueId(), new LifeGain(credit, lifeOnHit));
@@ -1003,22 +1018,27 @@ public final class CombatListener implements Listener {
                 final double later = (esTaken + lifeTaken) * 0.3;
                 esTaken *= 0.7;
                 lifeTaken *= 0.7;
-                delayedLoss(player, later, 80, 1, true);
+                defer(player, () -> delayedLoss(player, later, 80, 1, true)); // 2026-10-18：事件被取消就不排延遲扣血
             }
             // 緊握傷口（血術士）：擊中扣的生命有 25% 改成 4 秒內慢慢扣
             if (StatKeys.flag(sheet, StatKeys.FLAG_GRASPING_WOUNDS) && lifeTaken > 0) {
                 final double later = lifeTaken * 0.25;
                 lifeTaken -= later;
-                delayedLoss(player, later, 10, 8, false);
+                defer(player, () -> delayedLoss(player, later, 10, 8, false)); // 2026-10-18：事件被取消就不排延遲扣血
             }
         }
         // 守護（2026-10，護符詞綴）：效果期間先替你吃掉傷害（先吃護盾那份、再吃生命那份）
         if (esTaken + lifeTaken > 0 && state.guard(plugin.getServer().getCurrentTick()) > 0) {
             final long now = plugin.getServer().getCurrentTick();
-            final double fromEs = state.absorbGuard(esTaken, now);
+            // 2026-10-18：這裡只算會吃掉多少（跟 absorbGuard 同樣的算法），真的扣守護等 MONITOR 確定事件沒被取消
+            final double available = state.guard(now);
+            final double fromEs = esTaken > 0 ? Math.min(available, esTaken) : 0;
             esTaken -= fromEs;
-            final double fromLife = state.absorbGuard(lifeTaken, now);
+            final double fromLife = lifeTaken > 0 ? Math.min(available - fromEs, lifeTaken) : 0;
             lifeTaken -= fromLife;
+            if (fromEs + fromLife > 0) {
+                defer(player, () -> state.absorbGuard(fromEs + fromLife, now));
+            }
         }
         // 傳奇「受到的傷害先從魔力扣」與「受到的傷害有 x% 之後慢慢回成生命」
         final IncomingDamage split = IncomingDamage.split(esTaken, lifeTaken, state.mana(),
@@ -1134,6 +1154,18 @@ public final class CombatListener implements Listener {
     /** 事件塵埃落定後才把算好的傷害寫進狀態，再算元素異常。 */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDamageMonitor(final EntityDamageEvent event) {
+        // 2026-10-18：HIGH 記下的副作用（延遲扣血、守護、偷取、收命收魂）：取消了就丟掉，沒取消才執行（在套用傷害之前，跟以前的順序一樣）
+        final java.util.List<Runnable> effects = pendingEffects.remove(event.getEntity().getUniqueId());
+        if (effects != null && !event.isCancelled()) {
+            for (final Runnable effect : effects) {
+                // 2026-10-18：一個副作用出錯不要讓後面的（其他副作用、記傷害、異常）全部跳過
+                try {
+                    effect.run();
+                } catch (final RuntimeException e) {
+                    plugin.getSLF4JLogger().error("傷害的延遲效果出錯（{}）", event.getEntity().getType(), e);
+                }
+            }
+        }
         final PendingAilment ailment = pendingAilments.remove(event.getEntity().getUniqueId());
         final Credit credit = pendingCredits.remove(event.getEntity().getUniqueId());
         if (credit != null && !event.isCancelled()) {

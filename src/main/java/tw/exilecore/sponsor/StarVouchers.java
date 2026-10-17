@@ -14,6 +14,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import tw.exilecore.ExileCore;
+import tw.exilecore.character.CharacterRepository;
 import tw.exilecore.item.ItemRenderer;
 
 import java.sql.PreparedStatement;
@@ -53,6 +54,28 @@ final class StarVouchers implements Listener {
         this.service = service;
         this.idKey = new NamespacedKey(plugin, "star_voucher");
         this.amountKey = new NamespacedKey(plugin, "star_voucher_amount");
+        // 2026-10-18：交易系統暫停時補給、補加會放棄（只重試幾次）：恢復時對在線的人再跑一次。
+        // 每個 CharacterService 只掛一次（模組重新啟用不會越掛越多），呼叫時找現在的贊助模組
+        if (plugin.characters() != null && recoveryHookedOn != plugin.characters()) {
+            recoveryHookedOn = plugin.characters();
+            plugin.characters().onRecovered(ops -> {
+                final SponsorService current = plugin.sponsors();
+                if (current != null && current.vouchers != null) {
+                    current.vouchers.reclaimOnline();
+                }
+            });
+        }
+    }
+
+    /** 2026-10-18：已經掛了交易恢復通知的 CharacterService。 */
+    private static Object recoveryHookedOn;
+
+    /** 2026-10-18：交易系統恢復：在線的人補給券、補加星幣（沒有要補的只是查一下資料表）。 */
+    private void reclaimOnline() {
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            claimDeliveries(player);
+            claimCredits(player);
+        }
     }
 
     /** 這張是星幣券嗎（回傳代號；不是 null）。 */
@@ -284,42 +307,67 @@ final class StarVouchers implements Listener {
         }
     }
 
-    /** 開了但還沒交到手上的券：先在資料表標記交了（只有一次），再給物品；這時下線了就改回來，下次再給。 */
-    private void claimDeliveries(final Player player) {
-        final UUID uuid = player.getUniqueId();
-        plugin.database().async(connection -> {
-            final List<Object[]> claimed = new ArrayList<>();
+    /**
+     * 2026-10-18：這次開服已經送進交易的券號（交付記 d:、入帳記 c:）：同一張不會給兩次（交易卡住等重試時也是）。
+     * 2026-10-18：改成 static——贊助模組重新啟用（新的 StarVouchers）時也還記得，卡住重試中的券不會再給一次。
+     */
+    private static final Set<String> inflight = new HashSet<>();
+
+    /** 2026-10-18：現在能不能給東西、存檔（跟管理員發放一樣的檢查）。 */
+    private boolean canCommit(final Player player) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        return state.isLoaded() && state.hasCharacter() && !plugin.characters().isBusy(player)
+                && plugin.characters().transactionProblem(player) == null;
+    }
+
+    /** 2026-10-18：讀出還沒處理的券（只讀，不標記）。 */
+    private java.util.concurrent.CompletableFuture<List<Object[]>> pending(final String sql, final UUID uuid, final int columns) {
+        return plugin.database().async(connection -> {
             final List<Object[]> pending = new ArrayList<>();
-            try (PreparedStatement statement = connection.prepareStatement(
-                    "SELECT id, amount, issuer_name FROM star_vouchers WHERE issuer_uuid = ? AND delivered = 0 AND redeemed_at IS NULL")) {
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setString(1, uuid.toString());
                 try (java.sql.ResultSet rows = statement.executeQuery()) {
                     while (rows.next()) {
-                        pending.add(new Object[] {rows.getString(1), rows.getLong(2), rows.getString(3)});
+                        pending.add(columns == 3 ? new Object[] {rows.getString(1), rows.getLong(2), rows.getString(3)}
+                                : new Object[] {rows.getString(1), rows.getLong(2)});
                     }
                 }
             }
-            for (final Object[] row : pending) {
-                try (PreparedStatement statement = connection.prepareStatement(
-                        "UPDATE star_vouchers SET delivered = 1 WHERE id = ? AND delivered = 0")) {
-                    statement.setString(1, (String) row[0]);
-                    if (statement.executeUpdate() == 1) {
-                        claimed.add(row);
-                    }
-                }
-            }
-            return claimed;
-        }).whenComplete((claimed, error) -> plugin.getServer().getScheduler().runTask(plugin, () -> {
+            return pending;
+        });
+    }
+
+    /**
+     * 開了但還沒交到手上的券。2026-10-18：先放進背包，再把玩家存檔跟 delivered = 1 放在同一個交易
+     * （跟管理員發放一樣）——當機的話兩個都沒寫進去，下次上線再給；不會券沒存到卻已經標記交了。
+     */
+    private void claimDeliveries(final Player player) {
+        claimDeliveries(player, 1);
+    }
+
+    private void claimDeliveries(final Player player, final int attempt) {
+        final UUID uuid = player.getUniqueId();
+        pending("SELECT id, amount, issuer_name FROM star_vouchers WHERE issuer_uuid = ? AND delivered = 0 AND redeemed_at IS NULL", uuid, 3)
+                .whenComplete((pending, error) -> plugin.getServer().getScheduler().runTask(plugin, () -> {
             if (error != null) {
                 plugin.getSLF4JLogger().error("星幣券：補給券失敗", error);
                 return;
             }
-            if (claimed.isEmpty()) {
+            final Player online = plugin.getServer().getPlayer(uuid);
+            if (online == null || !canCommit(online)) {
+                // 下線了、還沒選角色、交易系統暫停：資料表沒動，等一下再試幾次，不然下次上線再給
+                if (online != null && !pending.isEmpty() && attempt < OFFLINE_REDEEM_TRIES) {
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> claimDeliveries(online, attempt + 1), 300L);
+                }
                 return;
             }
-            final Player online = plugin.getServer().getPlayer(uuid);
-            if (online == null) {
-                revert(claimed, "delivered");
+            final List<Object[]> claimed = new ArrayList<>();
+            for (final Object[] row : pending) {
+                if (inflight.add("d:" + row[0])) {
+                    claimed.add(row);
+                }
+            }
+            if (claimed.isEmpty()) {
                 return;
             }
             for (final Object[] row : claimed) {
@@ -329,72 +377,91 @@ final class StarVouchers implements Listener {
                         + " 星幣的星幣券<gray>（可以交易、上架；右鍵換回星幣）"));
             }
             online.playSound(online.getLocation(), Sound.ENTITY_VILLAGER_YES, 0.6f, 1.2f);
-            plugin.characters().save(online);
+            final CharacterRepository.ExtraWork work = connection -> mark(connection, claimed, "delivered", false);
+            commit(online, claimed, work, "星幣券交付");
         }));
     }
 
-    /** 兌換了、星幣還沒加的：先標記加了（只有一次），再加星幣；這時下線了就改回來。 */
+    /**
+     * 兌換了、星幣還沒加的。2026-10-18：星幣改在記憶體，帳號的星幣跟 credited = 1 放在同一個交易——
+     * 當機的話兩個都沒寫進去，下次上線再加；不會標記加了卻沒加到。
+     */
     private void claimCredits(final Player player) {
+        claimCredits(player, 1);
+    }
+
+    private void claimCredits(final Player player, final int attempt) {
         final UUID uuid = player.getUniqueId();
-        plugin.database().async(connection -> {
-            final List<Object[]> claimed = new ArrayList<>();
-            final List<Object[]> pending = new ArrayList<>();
-            try (PreparedStatement statement = connection.prepareStatement(
-                    "SELECT id, amount FROM star_vouchers WHERE redeemed_uuid = ? AND credited = 0")) {
-                statement.setString(1, uuid.toString());
-                try (java.sql.ResultSet rows = statement.executeQuery()) {
-                    while (rows.next()) {
-                        pending.add(new Object[] {rows.getString(1), rows.getLong(2)});
-                    }
-                }
-            }
-            for (final Object[] row : pending) {
-                try (PreparedStatement statement = connection.prepareStatement(
-                        "UPDATE star_vouchers SET credited = 1 WHERE id = ? AND credited = 0")) {
-                    statement.setString(1, (String) row[0]);
-                    if (statement.executeUpdate() == 1) {
-                        claimed.add(row);
-                    }
-                }
-            }
-            return claimed;
-        }).whenComplete((claimed, error) -> plugin.getServer().getScheduler().runTask(plugin, () -> {
+        pending("SELECT id, amount FROM star_vouchers WHERE redeemed_uuid = ? AND credited = 0", uuid, 2)
+                .whenComplete((pending, error) -> plugin.getServer().getScheduler().runTask(plugin, () -> {
             if (error != null) {
                 plugin.getSLF4JLogger().error("星幣券：補加星幣失敗", error);
                 return;
             }
+            final Player online = plugin.getServer().getPlayer(uuid);
+            if (online == null || !service.loaded(online) || !canCommit(online)) {
+                // 資料表沒動：等一下再試幾次，不然下次上線再加
+                if (online != null && !pending.isEmpty() && attempt < OFFLINE_REDEEM_TRIES) {
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> claimCredits(online, attempt + 1), 300L);
+                }
+                return;
+            }
+            final List<Object[]> claimed = new ArrayList<>();
+            long total = 0;
+            for (final Object[] row : pending) {
+                if (inflight.add("c:" + row[0])) {
+                    claimed.add(row);
+                    total += (Long) row[1];
+                }
+            }
             if (claimed.isEmpty()) {
                 return;
             }
-            final Player online = plugin.getServer().getPlayer(uuid);
-            if (online == null || !service.loaded(online)) {
-                revert(claimed, "credited");
+            final CharacterRepository.ExtraWork coins = service.addCoinsWork(online, total, "兌換星幣券 " + claimed.size() + " 張");
+            if (coins == null) {
+                for (final Object[] row : claimed) {
+                    inflight.remove("c:" + row[0]);
+                }
                 return;
             }
-            long total = 0;
-            for (final Object[] row : claimed) {
-                total += (Long) row[1];
-            }
-            service.addCoins(online, total, "兌換星幣券 " + claimed.size() + " 張");
+            final CharacterRepository.ExtraWork work = connection -> {
+                mark(connection, claimed, "credited", false); // 2026-10-18：不用 strict：丟例外會讓這筆一直重試失敗、整個交易系統卡到重開（inflight 已經擋重複）
+                coins.run(connection);
+            };
             online.sendMessage(plugin.text().prefixed("<green>星幣券兌換成功：+" + SponsorService.format(total) + " 星幣<gray>（現在 "
                     + SponsorService.format(service.coins(online)) + "）"));
             online.playSound(online.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.4f);
-            plugin.characters().save(online);
+            commit(online, claimed, work, "星幣券入帳");
         }));
     }
 
-    /** 標記了但人已經下線：改回 0，下次上線再補。 */
-    private void revert(final List<Object[]> claimed, final String column) {
-        plugin.database().async(connection -> {
-            for (final Object[] row : claimed) {
-                try (PreparedStatement statement = connection.prepareStatement(
-                        "UPDATE star_vouchers SET " + column + " = 0 WHERE id = ?")) {
-                    statement.setString(1, (String) row[0]);
-                    statement.executeUpdate();
+    /**
+     * 2026-10-18：在交易裡標記（WHERE … = 0：只有一次）；已經不是 0 的記一筆（同一台伺服器有 inflight 擋著，不應該發生）。
+     * strict：有一張不是剛好改到 1 列就丟 SQLException（目前沒有用：失敗的交易會一直重試，會讓交易系統卡住）。
+     */
+    private void mark(final java.sql.Connection connection, final List<Object[]> claimed, final String column, final boolean strict)
+            throws java.sql.SQLException {
+        for (final Object[] row : claimed) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "UPDATE star_vouchers SET " + column + " = 1 WHERE id = ? AND " + column + " = 0")) {
+                statement.setString(1, (String) row[0]);
+                final int changed = statement.executeUpdate();
+                if (changed != 1) {
+                    plugin.getSLF4JLogger().warn("[贊助] 星幣券 {} 寫 {} 時已經不是 0（改到 {} 列）", row[0], column, changed);
+                    if (strict) {
+                        throw new java.sql.SQLException("星幣券 " + row[0] + " 已經入帳過（" + column + " 不是 0），這筆星幣不加");
+                    }
                 }
             }
-            return null;
-        });
+        }
+    }
+
+    /**
+     * 2026-10-18：玩家存檔＋標記同一個交易。寫入失敗時跟其他經濟操作一樣不還原記憶體，交易系統暫停、
+     * 連同之後的存檔重試到成功。券號一直留在 inflight（這次開服）：寫進去之前讀到的舊資料也不會再給一次。
+     */
+    private void commit(final Player player, final List<Object[]> claimed, final CharacterRepository.ExtraWork work, final String what) {
+        plugin.characters().commit(List.of(player), work, null, what + "（" + player.getName() + "，" + claimed.size() + " 張）");
     }
 
     /** 給選單說明用。 */

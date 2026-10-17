@@ -70,6 +70,8 @@ public final class StatLines {
         put(StatKeys.INT, "智慧", FLAT_OR_INCREASED, false);
         put(StatKeys.DROP_RARITY, "物品掉落稀有度", INCREASED, false);
         put(StatKeys.DROP_QUANTITY, "物品掉落數量", INCREASED, false);
+        put(StatKeys.EXPERIENCE_GAIN, "打怪經驗", INCREASED, false); // 2026-10-18
+        put(StatKeys.GOLD_FIND, "怪物掉落金幣", INCREASED, false); // 2026-10-18
         put(StatKeys.FLASK_LIFE_RECOVERY, "生命藥劑回復", INCREASED, false);
         put(StatKeys.FLASK_MANA_RECOVERY, "魔力藥劑回復", INCREASED, false);
         put(StatKeys.SKILL_AREA, "範圍效果", SCALED, true);
