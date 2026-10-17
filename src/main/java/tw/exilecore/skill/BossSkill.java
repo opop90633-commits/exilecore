@@ -434,7 +434,7 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                 if (skill.delay < MIN_ECHO_WARNING) {
                     throw new IllegalArgumentException(where + ".delay：殘影的長槍至少標 " + MIN_ECHO_WARNING + " 秒才射穿，卻是 " + skill.delay);
                 }
-                if (skill.scatter < 3) {
+                if (skill.scatter < 3 && skill.at != Target.WALLS) {
                     throw new IllegalArgumentException(where + ".scatter：殘影離 Boss 至少 3 格");
                 }
             }

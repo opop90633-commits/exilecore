@@ -82,6 +82,33 @@ public final class Veiled {
         }
     }
 
+    /**
+     * 2026-10-17：修正舊的 bug 留下來的重複揭露詞綴——同一個群組出現第二條時，第二條（含之後的）換回隱匿詞綴（同一種前綴／後綴），
+     * 讓玩家重新揭露。回傳有沒有改。
+     */
+    public static boolean dedupe(final ItemData data, final ItemRepository repository, final RandomGenerator random) {
+        final Set<String> seen = new HashSet<>();
+        boolean changed = false;
+        for (int i = 0; i < data.affixes().size(); i++) {
+            final RolledAffix rolled = data.affixes().get(i);
+            final Affix affix = repository.affix(rolled.id());
+            if (affix == null || isVeiled(rolled.id())) {
+                continue;
+            }
+            if (seen.add(affix.group()) || !isUnveiled(rolled.id())) {
+                continue;
+            }
+            final String id = affix.type() == AffixType.PREFIX ? VEILED_PREFIX : VEILED_SUFFIX;
+            final Affix veiled = repository.affix(id);
+            if (veiled == null) {
+                continue;
+            }
+            data.affixes().set(i, fresh(id, veiled.tiers().getFirst(), random));
+            changed = true;
+        }
+        return changed;
+    }
+
     /** 這條是不是隱匿或揭露詞綴。 */
     public static boolean isSpecial(final String affixId) {
         return isVeiled(affixId) || isUnveiled(affixId);
@@ -224,6 +251,31 @@ public final class Veiled {
             }
         }
         return new RolledAffix(affix.id(), chosen.tier(), chosen.roll(random));
+    }
+
+    /**
+     * 2026-10-17：這幾個選項裡有沒有跟物品上其他詞綴同一個群組的（例如兩條隱匿前綴的選項是同時擲的，
+     * 先揭露了一條「+精魂」，另一條的選項裡還留著「+精魂」——選了就會有兩條一樣的）。
+     */
+    public static boolean conflicts(final ItemData data, final RolledAffix replacing, final List<RolledAffix> options,
+                                    final ItemRepository repository) {
+        final Set<String> used = new HashSet<>();
+        for (final RolledAffix rolled : data.affixes()) {
+            if (rolled == replacing) {
+                continue;
+            }
+            final Affix affix = repository.affix(rolled.id());
+            if (affix != null) {
+                used.add(affix.group());
+            }
+        }
+        for (final RolledAffix option : options) {
+            final Affix affix = repository.affix(option.id());
+            if (affix != null && used.contains(affix.group())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 把 veiled 換成 chosen（揭露）；veiled 不在物品上時回傳 false。 */

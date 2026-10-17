@@ -120,6 +120,11 @@ public final class BossSkills implements Listener {
         default boolean dormant() {
             return false;
         }
+
+        /** 2026-10-17：場地收縮（萬界崩解）的中心——地圖 Boss 是 Boss 房正中間；null = 照 Boss 當時的位置。 */
+        default Location arenaCenter() {
+            return null;
+        }
     }
 
     /** 目標最遠從幾格外找（Boss）。 */
@@ -425,6 +430,11 @@ public final class BossSkills implements Listener {
         Vector direction;
         boolean shown;
         boolean done;
+        /** 2026-10-17 走廊的光球（at: walls）：固定方向；射出去之後是一顆往前飛的球，飛完 reach 格才算結束。 */
+        Vector fixed;
+        Location ball;
+        double travelled;
+        final java.util.Set<UUID> struck = new java.util.HashSet<>();
 
         EchoLance(final Location from, final long showTick, final long hitTick, final String mark) {
             this.from = from;
@@ -1815,7 +1825,8 @@ public final class BossSkills implements Listener {
             }
             case ECHOES -> {
                 cast.lances = lances(brain, cast, now);
-                cast.channelEnd = cast.lances.isEmpty() ? now : cast.lances.getLast().hitTick;
+                cast.channelEnd = cast.lances.isEmpty() ? now : cast.lances.getLast().hitTick
+                        + (skill.at() == BossSkill.Target.WALLS ? Math.round(skill.reach() / Math.max(0.2, skill.speed())) : 0); // 走廊的球還要飛
             }
             case BLINK -> {
                 danger.hide(cast.mark);
@@ -2116,16 +2127,14 @@ public final class BossSkills implements Listener {
             if (now % 2 == 0) {
                 visuals.zoneAmbient(zone.skill.visual(), List.of(zone.center), zone.skill.radius(), now);
             }
+            if (zone.skill.solid() && now % 6 == 0) {
+                wallPillar(zone.center, zone.skill.radius()); // 2026-10-17：牆畫成一圈直立的淡紫光柱，跟地上會痛的區域分得出來
+            }
             if (zone.skill.solid()) {
                 // 2026-10（賽勒斯的風暴牆）：這塊是牆——站進來的人每 tick 往外推（從中心往外），穿不過去，只能找缺口
+                // 2026-10-17：不彈開，只是擋住——走進牆裡就放回牆邊（貼著牆滑），騎著坐騎的連坐騎一起擋
                 for (final LivingEntity victim : victims(brain, zone.center, zone.skill.radius())) {
-                    final Vector out = victim.getLocation().toVector().subtract(zone.center.toVector()).setY(0);
-                    if (out.lengthSquared() < 1e-4) {
-                        out.setX(1);
-                    }
-                    final Vector push = out.normalize().multiply(WALL_PUSH);
-                    final Vector current = victim.getVelocity();
-                    victim.setVelocity(new Vector(push.getX(), Math.max(0, Math.min(0.1, current.getY())), push.getZ()));
+                    blockAtWall(victim, zone.center, zone.skill.radius());
                 }
             }
             if (now >= zone.nextPulse) {
@@ -2139,6 +2148,47 @@ public final class BossSkills implements Listener {
                 }
             }
         }
+    }
+
+    private static final org.bukkit.Particle.DustOptions WALL_DUST = new org.bukkit.Particle.DustOptions(org.bukkit.Color.fromRGB(205, 180, 255), 1.6f);
+
+    /** 風暴牆的外觀：邊緣一圈 6 根、兩層高的光點（看起來像一道立起來的牆）。 */
+    private static void wallPillar(final Location center, final double radius) {
+        final org.bukkit.World world = center.getWorld();
+        if (world == null) {
+            return;
+        }
+        for (int i = 0; i < 6; i++) {
+            final double angle = Math.PI * 2 * i / 6;
+            final double x = center.getX() + Math.cos(angle) * radius;
+            final double z = center.getZ() + Math.sin(angle) * radius;
+            for (final double y : new double[] {0.6, 1.8}) {
+                world.spawnParticle(org.bukkit.Particle.DUST, x, center.getY() + y, z, 1, 0.05, 0.25, 0.05, 0, WALL_DUST);
+            }
+        }
+    }
+
+    /** 風暴牆（solid）：人在牆裡就放回牆的邊緣（同一個高度、面向不變），不給速度——穿不過去，也不會被彈飛。 */
+    private static void blockAtWall(final LivingEntity victim, final Location center, final double radius) {
+        final org.bukkit.entity.Entity mover = victim.getVehicle() != null ? victim.getVehicle() : victim;
+        final Location at = mover.getLocation();
+        final Vector out = at.toVector().subtract(center.toVector()).setY(0);
+        if (out.lengthSquared() >= radius * radius) {
+            return;
+        }
+        if (out.lengthSquared() < 1e-4) {
+            out.setX(1);
+        }
+        out.normalize().multiply(radius + 0.05);
+        final Location edge = at.clone();
+        edge.setX(center.getX() + out.getX());
+        edge.setZ(center.getZ() + out.getZ());
+        if (!edge.getBlock().isPassable() || !edge.clone().add(0, 1, 0).getBlock().isPassable()) {
+            return; // 牆邊是方塊（貼著場地邊緣）：不放進方塊裡
+        }
+        final Vector velocity = mover.getVelocity();
+        mover.teleport(edge, io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
+        mover.setVelocity(new Vector(0, Math.min(0, velocity.getY()), 0));
     }
 
     /** 衝鋒的一 tick：沿鎖定的方向前進，撞到的人受傷；回傳還要不要繼續。 */
@@ -2825,6 +2875,9 @@ public final class BossSkills implements Listener {
     /** 殘影出現：Boss 周圍一圈（照出手的順序排好每一槍的時間）。 */
     private List<EchoLance> lances(final Brain brain, final Cast cast, final long now) {
         final BossSkill skill = cast.skill;
+        if (skill.at() == BossSkill.Target.WALLS) {
+            return corridorBalls(brain, cast, now);
+        }
         final Location center = cast.anchor != null ? cast.anchor : brain.boss.getLocation();
         final List<double[]> offsets = BossGeometry.echoOffsets(skill.count(), skill.scatter(), random.nextDouble() * Math.PI * 2);
         final int[] order = BossGeometry.echoOrder(skill.count());
@@ -2841,6 +2894,49 @@ public final class BossSkills implements Listener {
         return lances;
     }
 
+    /**
+     * 2026-10-17 風暴走廊（echoes 的 at: walls）：沿著走廊（跟風暴牆同一個方向）左、右、左、右輪流——
+     * 那半邊先標紅 delay 秒，然後一顆半徑 width 的球從 Boss 前面往前飛 reach 格（每 tick speed 格），碰到的人挨一下。
+     * 每一發標完才換下一發（count 發）；球的寬度剛好是走廊的一半，閃到另一半就沒事。
+     */
+    private List<EchoLance> corridorBalls(final Brain brain, final Cast cast, final long now) {
+        final BossSkill skill = cast.skill;
+        final Vector dir = cast.facing.clone().setY(0);
+        if (dir.lengthSquared() < 1e-6) {
+            dir.setX(1);
+        }
+        dir.normalize();
+        final Vector side = new Vector(-dir.getZ(), 0, dir.getX());
+        final Location center = cast.anchor != null ? cast.anchor : brain.boss.getLocation();
+        final long warning = Math.max(1, Math.round(skill.delay() * 20));
+        final int first = random.nextBoolean() ? 1 : -1;
+        final List<EchoLance> lances = new ArrayList<>();
+        for (int k = 0; k < skill.count(); k++) {
+            final double offset = (k % 2 == 0 ? first : -first) * skill.width();
+            final Location from = ground(center.clone().add(side.clone().multiply(offset)).add(dir.clone().multiply(1.5)));
+            final long show = now + k * warning;
+            final EchoLance lance = new EchoLance(from, show, show + warning, cast.mark + "#e" + k);
+            lance.fixed = dir.clone();
+            lances.add(lance);
+        }
+        return lances;
+    }
+
+    /** 走廊的球往前飛一 tick：碰到的人各挨一下（同一顆只打一次）；飛完 reach 格回傳 true。 */
+    private boolean flyBall(final Brain brain, final BossSkill skill, final EchoLance lance) {
+        final double step = Math.max(0.2, skill.speed());
+        lance.ball.add(lance.direction.clone().multiply(step));
+        lance.travelled += step;
+        visuals.bossOrb(skill.visual(), lance.ball.clone().add(0, 1.0, 0));
+        visuals.bossWarningRing(lance.ball, skill.width(), 1.0);
+        for (final LivingEntity victim : victims(brain, lance.ball, skill.width() + 0.6)) {
+            if (lance.struck.add(victim.getUniqueId())) {
+                hurt(brain, skill, victim, Tags.AREA);
+            }
+        }
+        return lance.travelled >= skill.reach();
+    }
+
     /** 殘影每 tick：輪到的殘影朝某個玩家標出紅線，時間到射穿；全部射完這一招才結束。 */
     private void echoes(final Brain brain, final Cast cast, final long now) {
         final BossSkill skill = cast.skill;
@@ -2853,7 +2949,16 @@ public final class BossSkills implements Listener {
                 continue;
             }
             pending = true;
+            if (lance.ball != null) {
+                if (flyBall(brain, skill, lance)) {
+                    lance.done = true;
+                }
+                continue;
+            }
             if (now < lance.showTick) {
+                if (lance.fixed != null) {
+                    continue; // 走廊的球：輪到才標
+                }
                 if ((now + brain.offset + i) % 6 == 0) {
                     visuals.bossOrb(skill.visual(), lance.from.clone().add(0, 1.2, 0)); // 還沒出手的殘影在原地閃著
                 }
@@ -2861,9 +2966,19 @@ public final class BossSkills implements Listener {
             }
             if (!lance.shown) {
                 lance.shown = true;
-                lance.direction = aimEcho(brain, lance.from, cast.anchor != null ? cast.anchor : brain.boss.getLocation());
-                danger.show(lance.mark, lance.from, DangerZones.strip(lance.from, lance.direction, skill.reach(), skill.width()), color);
+                lance.direction = lance.fixed != null ? lance.fixed.clone()
+                        : aimEcho(brain, lance.from, cast.anchor != null ? cast.anchor : brain.boss.getLocation());
+                if (lance.fixed == null) {
+                    danger.show(lance.mark, lance.from, DangerZones.strip(lance.from, lance.direction, skill.reach(), skill.width()), color);
+                }
                 visuals.blink(lance.from, lance.from);
+            }
+            if (lance.fixed != null && now < lance.hitTick) {
+                // 2026-10-17：走廊的球不在地上標紅（看不清楚球過來）：只在起點聚一顆球，蓄滿就射
+                if ((now + i) % 3 == 0) {
+                    visuals.bossOrb(skill.visual(), lance.from.clone().add(0, 1.0, 0));
+                }
+                continue;
             }
             if (now < lance.hitTick) {
                 final double progress = (now - lance.showTick) / (double) Math.max(1, lance.hitTick - lance.showTick);
@@ -2872,6 +2987,11 @@ public final class BossSkills implements Listener {
                 }
                 flash(lance.mark, skill, progress, now);
                 warnInside(brain, skill, lance.mark, now);
+                continue;
+            }
+            if (lance.fixed != null) {
+                danger.hide(lance.mark);
+                lance.ball = lance.from.clone(); // 標完了：球射出去（之後每 tick 往前飛）
                 continue;
             }
             lance.done = true;
@@ -2912,7 +3032,8 @@ public final class BossSkills implements Listener {
 
     /** 場地開始收縮：以 Boss 現在的位置為中心。 */
     private void startArena(final Brain brain, final Cast cast, final long now) {
-        final Location center = ground(cast.anchor != null ? cast.anchor : brain.boss.getLocation());
+        final Location fixed = brain.host.arenaCenter();
+        final Location center = ground(fixed != null ? fixed : cast.anchor != null ? cast.anchor : brain.boss.getLocation());
         clearField(brain); // 2026-10-15：收縮一開始先清場（還留在地上的風暴、荒蕪、還沒落下的、追人的光球都收掉）
         brain.arena = new Arena(cast.skill, center, now, brain.boss.getUniqueId() + ":arena:" + now);
     }

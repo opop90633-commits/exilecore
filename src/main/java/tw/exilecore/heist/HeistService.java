@@ -732,13 +732,24 @@ public final class HeistService implements Listener {
     List<tw.exilecore.item.RolledAffix> offers(final ItemData data, final int affixIndex) {
         final String offerKey = tw.exilecore.item.Veiled.offerKey(data, affixIndex); // 2026-10-17：新的隱匿詞綴帶種子，重新加一條會換三個選項
         final List<tw.exilecore.item.RolledAffix> cached = offers.get(offerKey);
-        if (cached != null) {
+        final tw.exilecore.item.RolledAffix veiled = data.affixes().get(affixIndex);
+        final tw.exilecore.item.ItemRepository repository = plugin.items().repository();
+        if (cached != null && !Veiled.conflicts(data, veiled, cached, repository)) {
             return cached;
         }
-        final tw.exilecore.item.RolledAffix veiled = data.affixes().get(affixIndex);
         // 2026-10：用「物品 UUID＋第幾條」當種子擲：重開伺服器、快取清掉之後還是同樣三個（以前會變成重擲）
+        // 2026-10-17：這件上已經有別的揭露詞綴時，種子再帶上它們（選項照現在的詞綴排除同群組，結果一樣固定）：
+        //   以前兩條隱匿詞綴的選項同時擲，先揭露一條之後另一條還會出現同一種，變成兩條一樣的
+        final List<String> others = new java.util.ArrayList<>();
+        for (final tw.exilecore.item.RolledAffix rolled : data.affixes()) {
+            if (rolled != veiled && Veiled.isUnveiled(rolled.id())) {
+                others.add(rolled.id());
+            }
+        }
+        java.util.Collections.sort(others);
+        final String seed = "unveil:" + offerKey + (others.isEmpty() ? "" : ":" + String.join(",", others));
         final java.util.Random seeded = new java.util.Random(java.util.UUID.nameUUIDFromBytes(
-                ("unveil:" + offerKey).getBytes(java.nio.charset.StandardCharsets.UTF_8)).getMostSignificantBits());
+                seed.getBytes(java.nio.charset.StandardCharsets.UTF_8)).getMostSignificantBits());
         final List<tw.exilecore.item.RolledAffix> fresh = Veiled.options(data, Veiled.typeOf(veiled), veiled, plugin.items().generator(),
                 seeded, Veiled.CHOICES);
         if (offers.size() > 2000) {

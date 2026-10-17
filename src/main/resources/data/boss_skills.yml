@@ -785,7 +785,7 @@ skills:
     type: physical
     convert: { lightning: 0.25, chaos: 0.25, fire: 0.25 }   # poedb：CorridorBlast
     telegraph: 1.5
-    radius: 2.2
+    radius: 1.4          # 2026-10-17：2.2 → 1.4（牆變細：走廊從約 4.6 格寬變成約 6.2 格，外側也少占 1.6 格）
     duration: 8
     interval: 0.6
     reach: 30
@@ -843,20 +843,22 @@ skills:
     shout: "「想要追逐的快感嗎？」"
   awakener_corridor:
     name: 風暴走廊
-    hint: "兩邊是風暴牆、穿不過；光束在走廊裡掃：在走廊裡左右閃"
-    kind: beam           # 2026-10（照 PoE1 賽勒斯）：走廊牆（awakener_corridor_walls）一起落，一道光束在走廊裡來回掃
+    hint: "兩邊是風暴牆、穿不過；看球在哪半邊聚起來：閃到另一半"
+    # 2026-10-17 改版：不再用掃的光束——走廊的左半、右半輪流在起點聚一顆球 1.5 秒（地上不標紅，看得清楚球），然後那顆球沿那半邊飛 30 格（球的寬度剛好半條走廊）。
+    #   左、右、左、右共 4 發（約 6 秒），風暴牆（awakener_corridor_walls）一起落、留 8 秒
+    kind: echoes
+    at: walls
     damage: 1.4
     type: physical
     convert: { lightning: 0.25, chaos: 0.25, fire: 0.25 }   # poedb：CorridorBlast
     cooldown: 20        # poedb：冷卻 20 秒
     range: 16
-    telegraph: 1.5
-    count: 1
-    angle: 48            # 2026-10：40 → 48（掃快一點）
-    length: 32
-    width: 1.0
-    duration: 6.0        # 施放時間 7.5 秒（前搖 1.5＋掃 6）
-    interval: 0.3
+    telegraph: 1.0
+    count: 4            # 左右輪流幾發
+    delay: 1.5          # 每一發標紅幾秒才射
+    width: 1.55         # 球的半徑＝半條走廊（牆在左右 4.5 格、牆半徑 1.4 → 走廊中間約 6.2 格寬）
+    speed: 1.2          # 球每 tick 飛幾格（30 格約 1.25 秒）
+    reach: 30
     shout: "「無路可走。」"
   awakener_apocalypse:
     name: 末日

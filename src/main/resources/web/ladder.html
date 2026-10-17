@@ -111,7 +111,7 @@
   }
   function nameCell(row) {
     return (row.online ? '<span class="dot" title="在線"></span>' : '') + '<span class="name" style="color:' + esc(row.classColor) + '">' + esc(row.name)
-      + '</span><span class="cls">' + esc(row['class']) + '　' + esc(row.account) + '</span>';
+      + '</span><span class="cls">' + esc(row['class']) + (row.asc ? '（' + esc(row.asc) + '）' : '') + '　' + esc(row.account) + '</span>';
   }
   function guildCell(row) {
     return (row.online > 0 ? '<span class="dot" title="有 ' + row.online + ' 個成員在線"></span>' : '') + '<span class="name">[' + esc(row.tag) + '] '

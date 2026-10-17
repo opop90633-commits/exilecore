@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
@@ -29,6 +30,8 @@ public final class LadderService {
 
     private final ExileCore plugin;
     private volatile List<Entry> entries = List.of();
+    /** 2026-10-17：角色代號 → 選的昇華（代號；沒昇華沒有）。 */
+    private volatile Map<Long, String> ascendancies = Map.of();
     /** 金錢榜（2026-10，只在網頁）：帳號的金幣（帳號共用），配上那個帳號等級最高的角色。 */
     private volatile List<GoldEntry> gold = List.of();
 
@@ -77,6 +80,16 @@ public final class LadderService {
         }
     }
 
+    /** 這個角色選的昇華名稱（沒昇華、或設定裡沒有這個昇華回傳 null）。 */
+    private String ascendancyName(final long characterId) {
+        final String id = ascendancies.get(characterId);
+        if (id == null || plugin.ascendancy() == null) {
+            return null;
+        }
+        final tw.exilecore.ascendancy.AscendancyConfig.Ascendancy ascendancy = plugin.ascendancy().config().ascendancy(id);
+        return ascendancy == null ? null : ascendancy.name();
+    }
+
     /** 從資料庫重讀（背景執行緒）。 */
     public void refresh() {
         if (refreshing || plugin.database() == null || !plugin.database().isConnected()) {
@@ -85,11 +98,13 @@ public final class LadderService {
         refreshing = true;
         plugin.database().async(connection -> {
             final List<Entry> list = new ArrayList<>();
+            final Map<Long, String> ascs = new java.util.HashMap<>();
             try (PreparedStatement statement = connection.prepareStatement("""
                     SELECT c.id, c.name, a.name AS account, c.class_id, c.char_level, c.experience, c.deaths, c.playtime_seconds,
                            (SELECT COUNT(*) FROM progress p WHERE p.character_id = c.id AND p.progress_key LIKE 'atlas.%') AS maps,
                            (SELECT COUNT(*) FROM progress p WHERE p.character_id = c.id AND p.progress_key LIKE 'boss.%') AS bosses,
-                           (SELECT p.progress_value FROM progress p WHERE p.character_id = c.id AND p.progress_key = 'mapbest') AS best
+                           (SELECT p.progress_value FROM progress p WHERE p.character_id = c.id AND p.progress_key = 'mapbest') AS best,
+                           (SELECT p.progress_value FROM progress p WHERE p.character_id = c.id AND p.progress_key = 'asc') AS asc_id
                     FROM characters c JOIN accounts a ON a.uuid = c.account_uuid
                     WHERE c.deleted_at IS NULL
                     ORDER BY c.char_level DESC, c.experience DESC
@@ -105,6 +120,10 @@ public final class LadderService {
                             } catch (final NumberFormatException ignored) {
                                 best = 0;
                             }
+                        }
+                        final String ascId = rows.getString("asc_id");
+                        if (ascId != null && !ascId.isBlank()) {
+                            ascs.put(rows.getLong("id"), ascId.trim());
                         }
                         list.add(new Entry(rows.getLong("id"), rows.getString("name"), rows.getString("account"), rows.getString("class_id"),
                                 rows.getInt("char_level"), rows.getLong("experience"), rows.getInt("deaths"), rows.getLong("playtime_seconds"),
@@ -136,6 +155,7 @@ public final class LadderService {
                 }
             }
             gold = List.copyOf(golds);
+            ascendancies = Map.copyOf(ascs);
             return list;
         }).whenComplete((list, error) -> {
             refreshing = false;
@@ -246,6 +266,10 @@ public final class LadderService {
                 object.addProperty("name", entry.name());
                 object.addProperty("account", entry.account());
                 object.addProperty("class", entry.className());
+                final String asc = ascendancyName(entry.id());
+                if (asc != null) {
+                    object.addProperty("asc", asc); // 2026-10-17：昇華職業
+                }
                 object.addProperty("classColor", entry.classColor().replace("<", "").replace(">", ""));
                 object.addProperty("level", entry.level());
                 object.addProperty("experience", entry.experience());

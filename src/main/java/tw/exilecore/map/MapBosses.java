@@ -1150,6 +1150,11 @@ final class MapBosses {
             }
 
             @Override
+            public Location arenaCenter() {
+                return center(instance); // 2026-10-17：萬界崩解固定在 Boss 房正中間
+            }
+
+            @Override
             public LivingEntity summon(final String type, final Location at) {
                 Location spot = at;
                 if (!instance.layout().isFloor(spot.getBlockX() - instance.originX(), spot.getBlockZ() - instance.originZ())) {

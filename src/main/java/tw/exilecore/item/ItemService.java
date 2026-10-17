@@ -165,6 +165,16 @@ public final class ItemService {
         if (data.isEmpty() || repository.base(data.get().base()) == null) {
             return false;
         }
+        // 2026-10-17：舊 bug 揭露出兩條同一種的：第二條換回隱匿詞綴（重新揭露）
+        try {
+            if (Veiled.dedupe(data.get(), repository, random())) {
+                codec.write(stack, data.get());
+                renderer.render(stack, data.get());
+                return true;
+            }
+        } catch (final RuntimeException ignored) {
+            // 畫不出來就原樣不動
+        }
         if (!oldRender && !checkUnique) {
             // 2026-10-16：外觀是新版畫的，但說明跟資料對不上（沒跟著更新）也重畫；登入、打開倉庫時都會檢查。
             // 先補詞綴後來多出來的變數；還是畫不出來就原樣不動（不能讓整個倉庫、市集因為一件裝備起不來）
