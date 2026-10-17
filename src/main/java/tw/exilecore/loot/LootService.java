@@ -158,11 +158,23 @@ public final class LootService {
                 continue;
             }
             final tw.exilecore.gui.SidebarLayout.Item name = sidebarItem(stack, drop, asCurrency);
+            final int bagFreeBeforeThis = state.bag().freeSlots();
             final ItemStack rest = asCurrency != null ? stowCurrency(killer, state, asCurrency, stack)
                     : drop.isEquipment() && isMap(drop.item()) && stashMap(killer, state, stack) ? null : stow(killer, state, stack);
             if (rest != null && !rest.isEmpty()) {
                 MonsterListener.dropOwned(plugin, location, rest, killer, true);
                 onGround++;
+            }
+            if (mirror || chase(drop)) {
+                // 2026-10-17：追逐級傳奇、映星鏡最後放到哪裡寫進紀錄（玩家說沒拿到時查得到）
+                final boolean ground = rest != null && !rest.isEmpty();
+                plugin.getSLF4JLogger().info("極稀有掉落去向：{} 的 {} → {}（{} {}, {}, {}）", killer.getName(),
+                        net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(
+                                stack.getItemMeta() != null && stack.getItemMeta().displayName() != null ? stack.getItemMeta().displayName()
+                                        : net.kyori.adventure.text.Component.text(stack.getType().name())),
+                        ground ? "背包和隨身背包都滿了，掉在地上（60 秒內只有他撿得到）"
+                                : state.bag().freeSlots() < bagFreeBeforeThis ? "收進隨身背包" : "收進身上的背包",
+                        location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
             }
             if (rest == null || rest.getAmount() < stack.getAmount()) {
                 picked++;
@@ -273,6 +285,15 @@ public final class LootService {
     }
 
     /** 動作列摘要、右邊側欄的「最近撿到」列出值得注意的東西、音效。 */
+    /** 這個掉落是不是追逐級傳奇。 */
+    private boolean chase(final DropTable.Drop drop) {
+        if (!drop.isEquipment() || drop.item().unique() == null) {
+            return false;
+        }
+        final tw.exilecore.item.UniqueItem unique = plugin.items().repository().unique(drop.item().unique());
+        return unique != null && unique.chase();
+    }
+
     /** 追逐級傳奇掉出來：全服都看得到是誰、掉了什麼（PoE 的伺服器習慣；極稀有才值得吵大家）。 */
     public void broadcastChase(final Player finder, final tw.exilecore.item.ItemData item) {
         final tw.exilecore.item.UniqueItem unique = plugin.items().repository().unique(item.unique());

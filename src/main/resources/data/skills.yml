@@ -2027,7 +2027,7 @@ skills:
     visual: boneshatter
     modifiers:
       - { stat: flag.always_hit, type: FLAT, value: 1 }
-      - { stat: crit.multi, type: FLAT, value: 50 }
+      - { stat: crit.bonus, type: INCREASED, value: 50 }
       - { stat: proc.perfect, type: FLAT, value: 100, tags: [proc_perfect_wave] }   # 2026-10 照 PoE2 改機制：完美時機放開時轟出火浪
 
   titan_slam:

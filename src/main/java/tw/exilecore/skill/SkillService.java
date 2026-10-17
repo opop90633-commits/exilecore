@@ -364,7 +364,15 @@ public final class SkillService {
 
     /** 夥伴能不能出來：有角色、不在營地（營地裡收起來）。 */
     boolean eligibleForCompanion(final Player player) {
-        return plugin.players().get(player).hasCharacter() && !inTown(player);
+        // 2026-10-17：觀戰中（旁觀模式）不叫精魂召喚物出來
+        return plugin.players().get(player).hasCharacter() && !inTown(player)
+                && player.getGameMode() != org.bukkit.GameMode.SPECTATOR;
+    }
+
+    /** 2026-10-17：收掉這個人的召喚物、圖騰、陷阱、鐘（倒下變觀戰時）；精魂召喚物觀戰中不會再叫出來。 */
+    public void dismissSummons(final Player player) {
+        minions.forget(player.getUniqueId());
+        deployables.forget(player.getUniqueId());
     }
 
     public MinionService minions() {

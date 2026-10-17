@@ -47,11 +47,32 @@ public final class MapSpectators implements Listener {
     /** 死在只能進一次的實例、Boss 還活著：記下來，重生時變成觀戰。 */
     void died(final Player player) {
         final MapInstance instance = service.instanceAt(player.getLocation());
-        if (instance == null || !instance.singleEntry() || instance.bossKilled() || instance.state() == MapInstance.State.CLOSING) {
+        if (instance == null || !(instance.singleEntry() || instance.usesAttempts()) || instance.bossKilled()
+                || instance.state() == MapInstance.State.CLOSING) {
+            return;
+        }
+        // 2026-10-17：用「門」算的（終局、萬界…）也觀戰：隊友還在打就在旁邊看，這一門不能再進；
+        // 全部倒下這一門才結束，觀戰的回營地、可以走下一門。自己一個人（沒有隊友還活著）直接回營地
+        if (instance.usesAttempts() && !otherChallengerAlive(instance, player)) {
             return;
         }
         final GameMode previous = player.getGameMode() == GameMode.SPECTATOR ? GameMode.SURVIVAL : player.getGameMode();
         pending.put(player.getUniqueId(), new Watch(instance.id(), instance.token(), player.getLocation().clone().add(0, 1, 0), previous));
+    }
+
+    /** 這一門除了他還有沒有人活著在打。 */
+    private boolean otherChallengerAlive(final MapInstance instance, final Player self) {
+        for (final UUID uuid : instance.inside()) {
+            if (uuid.equals(self.getUniqueId())) {
+                continue;
+            }
+            final Player other = plugin.getServer().getPlayer(uuid);
+            if (other != null && !other.isDead() && instance.enteredThisAttempt(uuid) && !watching(other)
+                    && (other.getGameMode() == GameMode.SURVIVAL || other.getGameMode() == GameMode.ADVENTURE)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 重生點：觀戰的人重生在倒下的地方（null = 不是觀戰）。 */
@@ -66,13 +87,16 @@ public final class MapSpectators implements Listener {
                 return;
             }
             player.setGameMode(GameMode.SPECTATOR);
+            if (plugin.skills() != null) {
+                plugin.skills().dismissSummons(player); // 2026-10-17：召喚師變觀戰：召喚物、圖騰一起收掉
+            }
             // 2026-10-17：記在玩家身上——伺服器當掉、沒走到 end() 時，下次登入改回原本的模式（MapListener.onJoin）
             player.getPersistentDataContainer().set(flagKey(), org.bukkit.persistence.PersistentDataType.STRING, watch.previous().name());
             player.showTitle(Title.title(plugin.text().parse("<#ff5555>你倒下了"),
                     plugin.text().parse("<gray>觀戰中：隊友打完再一起回營地"),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(3000), Duration.ofMillis(600))));
-            player.sendMessage(plugin.text().prefixed("<gray>你在旁邊觀戰（不算人數、不會被打、也不分掉落）；"
-                    + "Boss 倒下或隊友都倒下後自動回營地　<red><click:run_command:'/spectate leave'>"
+            player.sendMessage(plugin.text().prefixed("<gray>你在旁邊觀戰（不算人數、不會被打、也不分掉落；這一門不能再進去）；"
+                    + "Boss 倒下或隊友都倒下後自動回營地、離開觀戰模式　<red><click:run_command:'/spectate leave'>"
                     + "<hover:show_text:'<gray>不看了，現在回營地'>[離開觀戰]</hover></click>"));
         });
         return watch.anchor();

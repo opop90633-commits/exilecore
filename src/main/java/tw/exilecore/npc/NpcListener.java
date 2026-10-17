@@ -48,6 +48,25 @@ public final class NpcListener implements Listener {
         }
     }
 
+    /** 2026-10-17：跟 NPC 對話中，怪物不會把你當目標。 */
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onTarget(final org.bukkit.event.entity.EntityTargetLivingEntityEvent event) {
+        if (event.getTarget() instanceof org.bukkit.entity.Player player && npcs.talking(player)) {
+            event.setCancelled(true);
+        }
+    }
+
+    /** 自己出手打東西：對話保護結束。 */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onAttack(final org.bukkit.event.entity.EntityDamageByEntityEvent event) {
+        if (event.getDamager() instanceof org.bukkit.entity.Player player) {
+            npcs.stopTalking(player.getUniqueId());
+        } else if (event.getDamager() instanceof org.bukkit.entity.Projectile projectile
+                && projectile.getShooter() instanceof org.bukkit.entity.Player player) {
+            npcs.stopTalking(player.getUniqueId());
+        }
+    }
+
     @EventHandler
     public void onQuit(final PlayerQuitEvent event) {
         npcs.forget(event.getPlayer().getUniqueId());

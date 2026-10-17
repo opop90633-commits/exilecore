@@ -198,7 +198,7 @@ themes:
       - { id: boss, kind: boss, text: "打倒 {count} 個 Boss", count: 120, merits: 80 }
       - { id: maps, kind: maps, text: "完成 {count} 張地圖", count: 160, merits: 100 }
       - { id: events, kind: events, text: "完成 {count} 個地圖事件", count: 240, merits: 80 }
-    title: { name: 巨獸獵人, color: "#c48c4c", stats: [ { stat: crit.multi, value: 5 } ] }
+    title: { name: 巨獸獵人, color: "#c48c4c", stats: [ { stat: crit.bonus, type: INCREASED, value: 5 } ] }
     bonus_merits: 200
   star_month:
     name: 星痕之月

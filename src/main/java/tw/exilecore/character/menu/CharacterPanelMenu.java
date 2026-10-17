@@ -137,7 +137,10 @@ public final class CharacterPanelMenu extends Menu {
         for (int i = 0; i < JEWELLERY_POSITIONS.length; i++) {
             final ItemSlot slot = PlayerState.JEWELLERY_SLOTS[i];
             final ItemStack equipped = state.jewellery(i);
-            if (equipped == null) {
+            final ItemStack ghost = equipped == null && slot == ItemSlot.OFF_HAND ? twoHandGhost(state) : null;
+            if (ghost != null) {
+                set(JEWELLERY_POSITIONS[i], ghost); // 2026-10-17：拿雙手武器時副手欄顯示同一把（只是外觀）
+            } else if (equipped == null) {
                 // 2026-10：套了資源包的人看到那一欄的剪影（戒指、項鍊、頭盔…），比較好認
                 set(JEWELLERY_POSITIONS[i], uiIcon(slotShape(slot), emptyIcon(slot), "<gray>" + slot.displayName() + "欄",
                         "<dark_gray>點下方自己背包裡的" + slot.displayName() + "裝上"));
@@ -169,6 +172,38 @@ public final class CharacterPanelMenu extends Menu {
         set(SLOT_CLOSE, closeButton());
         drawnSignature = signature();
         lastDrawTick = plugin.getServer().getCurrentTick();
+    }
+
+    /**
+     * 2026-10-17：主手是雙手武器、副手沒裝東西時，副手欄顯示主手那把的樣子（只是外觀、沒有效果；
+     * 拿掉所有標記，不會被當成真的裝備）。不是雙手武器回傳 null。
+     */
+    private ItemStack twoHandGhost(final tw.exilecore.character.PlayerState state) {
+        final int mainIndex = java.util.Arrays.asList(PlayerState.JEWELLERY_SLOTS).indexOf(ItemSlot.MAIN_HAND);
+        final ItemStack main = mainIndex < 0 ? null : state.jewellery(mainIndex);
+        if (main == null || main.isEmpty()) {
+            return null;
+        }
+        final boolean twoHand = plugin.items().read(main)
+                .map(data -> plugin.items().repository().base(data.base()))
+                .map(base -> base != null && base.hasTag(tw.exilecore.stats.Tags.TWO_HAND)).orElse(false);
+        if (!twoHand) {
+            return null;
+        }
+        final ItemStack ghost = main.clone();
+        ghost.setAmount(1);
+        ghost.editMeta(meta -> {
+            for (final org.bukkit.NamespacedKey key : java.util.Set.copyOf(meta.getPersistentDataContainer().getKeys())) {
+                meta.getPersistentDataContainer().remove(key);
+            }
+            final net.kyori.adventure.text.Component name = meta.hasDisplayName() ? meta.displayName() : null;
+            meta.displayName(name == null ? ItemRenderer.line("<gray>雙手武器")
+                    : net.kyori.adventure.text.Component.text().append(name).append(ItemRenderer.line(" <dark_gray>（雙手）")).build());
+            meta.lore(List.of(ItemRenderer.line("<gray>雙手武器同時佔用副手"),
+                    ItemRenderer.line("<dark_gray>只是外觀，沒有效果（效果算在主手那把）")));
+            meta.setEnchantmentGlintOverride(false);
+        });
+        return ghost;
     }
 
     // ---- 增益（2026-10） ----

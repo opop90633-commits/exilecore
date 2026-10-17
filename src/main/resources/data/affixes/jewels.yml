@@ -394,13 +394,13 @@ jewel_crit_multi:
   group: jewel_crit_multi
   spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
   names: [之滅世, 之毀滅, 之殘酷]
-  text: "+{value}% 暴擊傷害"
+  text: "增加 {value}% 暴擊傷害加成"
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [16, 18] }
     - { tier: 1, ilvl: 50, weight: 400, value: [13, 15] }
     - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
   mods:
-    - { stat: crit.multi, type: FLAT, value: "{value}" }
+    - { stat: crit.bonus, type: INCREASED, value: "{value}" }
 
 jewel_accuracy:
   type: suffix
@@ -841,13 +841,13 @@ jewel_spell_crit_multi:
   group: jewel_spell_crit_multi
   spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
   names: [之星隕, 之碎星, 之咒鋒]
-  text: "+{value}% 法術暴擊傷害"
+  text: "增加 {value}% 法術暴擊傷害加成"
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [20, 23] }
     - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
     - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
   mods:
-    - { stat: crit.multi, type: FLAT, value: "{value}", tags: [spell] }
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
 
 
 # ---- 新增：攻擊暴擊（2026-10；翠星晶，跟蒼星晶的法術暴擊對稱）----
@@ -869,13 +869,13 @@ jewel_attack_crit_multi:
   group: jewel_attack_crit_multi
   spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
   names: [之斬首, 之穿心, 之見血]
-  text: "+{value}% 攻擊暴擊傷害"
+  text: "增加 {value}% 攻擊暴擊傷害加成"
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [20, 23] }
     - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
     - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
   mods:
-    - { stat: crit.multi, type: FLAT, value: "{value}", tags: [attack] }
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [attack] }
 
 # ===== 2026-10 改版：照 PoE2 的珠寶詞綴（紅＝力量系、綠＝敏捷系、藍＝智慧系；沒有生命、屬性、抗性這些平坦的）=====
 

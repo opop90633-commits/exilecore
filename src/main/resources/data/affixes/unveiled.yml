@@ -855,12 +855,12 @@ unveiled_d_helmet_crit:
   group: unveiled_d_helmet_crit
   spawn_tags: [helmet]
   names: [之淵斷, 之蝕決]
-  text: "+{value}% 暴擊傷害"
+  text: "增加 {value}% 暴擊傷害加成"
   tiers:
     - { tier: 1, ilvl: 60, weight: 300, value: [17, 20] }
     - { tier: 2, ilvl: 1, weight: 700, value: [13, 16] }
   mods:
-    - { stat: crit.multi, type: FLAT, value: "{value}" }
+    - { stat: crit.bonus, type: INCREASED, value: "{value}" }
 
 unveiled_d_shield_max_res:
   type: suffix
@@ -1256,14 +1256,14 @@ unveiled_elemental_crit:
   group: unveiled_elemental_crit
   spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
   names: [銷贓人的, 黑市的, 走私者的]
-  text: "增加 {value}% 元素傷害、+{multi}% 暴擊傷害"
+  text: "增加 {value}% 元素傷害、增加 {multi}% 暴擊傷害加成"
   tiers:
     - { tier: 1, ilvl: 60, weight: 200, value: [25, 30], multi: [15, 20] }
     - { tier: 2, ilvl: 35, weight: 500, value: [17, 24], multi: [10, 14] }
     - { tier: 3, ilvl: 1, weight: 700, value: [9, 16], multi: [5, 9] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
-    - { stat: crit.multi, type: FLAT, value: "{multi}" }
+    - { stat: crit.bonus, type: INCREASED, value: "{multi}" }
 
 unveiled_defences:
   type: prefix

@@ -155,6 +155,18 @@ public final class ItemCompare {
                         }
                     }
                 }
+                // 2026-10-17：裝備的暴擊傷害改成「增加 x% 暴擊傷害加成」（武器以外）：一樣算進暴擊傷害比較（照百分比）
+                case StatKeys.CRIT_BONUS -> {
+                    if (mod.type() == ModType.INCREASED) {
+                        if (mod.tags().contains("spell")) {
+                            spellCritMulti += value * 100;
+                        } else if (mod.tags().contains("attack")) {
+                            attackCritMulti += value * 100;
+                        } else {
+                            critMulti += value * 100;
+                        }
+                    }
+                }
                 default -> {
                 }
             }

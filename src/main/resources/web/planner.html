@@ -782,12 +782,14 @@
       const count = type => g.affixes.filter(a => items.affixById.get(a.id).type === type).length;
       g.affixes.forEach((a, k) => {
         const affix = items.affixById.get(a.id);
+        // 2026-10-17：只擋「別條」佔掉的群組——同一群組的別的詞綴（半徑更大／半徑巨大）可以在這一條換來換去
+        const usedByOthers = new Set(g.affixes.filter((b, j) => j !== k).map(b => items.affixById.get(b.id).group));
         const choice = node("select", { "aria-label": "詞綴" });
         for (const type of ["prefix", "suffix"]) {
           const group = node("optgroup", { label: type === "prefix" ? "前綴" : "後綴" });
           for (const x of items.affixes) {
             if (x.type !== type || !canSpawn(x, base)) continue;
-            if (x.id !== a.id && usedGroups.has(x.group)) continue;
+            if (x.id !== a.id && usedByOthers.has(x.group)) continue;
             if (x.id !== a.id && x.type !== affix.type && count(x.type) >= affixLimit(g.rarity)) continue;
             group.append(node("option", { value: x.id, text: x.text.replace(/\{[^}]*\}/g, "#") }));
           }

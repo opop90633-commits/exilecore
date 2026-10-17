@@ -1876,7 +1876,7 @@ crit_multi:
   group: crit_multi
   spawn_tags: [retired]
   names: [之滅世, 之殲滅, 之毀滅, 之破壞, 之殘酷, 之兇殘]
-  text: "+{value}% 暴擊傷害"
+  text: "增加 {value}% 暴擊傷害加成"
   tiers:
     - { tier: -1, ilvl: 78, weight: 80, value: [39, 42] }
     - { tier: 0, ilvl: 68, weight: 150, value: [35, 38] }
@@ -1885,7 +1885,7 @@ crit_multi:
     - { tier: 3, ilvl: 16, weight: 800, value: [15, 19] }
     - { tier: 4, ilvl: 1, weight: 1000, value: [8, 12] }
   mods:
-    - { stat: crit.multi, type: FLAT, value: "{value}" }
+    - { stat: crit.bonus, type: INCREASED, value: "{value}" }
 
 life_regen:
   type: suffix
@@ -2775,7 +2775,7 @@ amulet_spell_crit_multi:
   group: spell_crit_multi
   spawn_tags: [retired]
   names: [之星隕, 之天崩, 之裂空, 之碎星, 之破法, 之咒鋒]
-  text: "+{value}% 法術暴擊傷害"
+  text: "增加 {value}% 法術暴擊傷害加成"
   tiers:
     - { tier: -1, ilvl: 78, weight: 40, value: [43, 46] }
     - { tier: 0, ilvl: 68, weight: 80, value: [39, 42] }
@@ -2784,7 +2784,7 @@ amulet_spell_crit_multi:
     - { tier: 3, ilvl: 16, weight: 500, value: [17, 21] }
     - { tier: 4, ilvl: 1, weight: 600, value: [9, 13] }
   mods:
-    - { stat: crit.multi, type: FLAT, value: "{value}", tags: [spell] }
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
 
 amulet_attack_crit_chance:
   type: suffix
@@ -2807,7 +2807,7 @@ amulet_attack_crit_multi:
   group: attack_crit_multi
   spawn_tags: [retired]
   names: [之斬首, 之碎顱, 之穿心, 之斷骨, 之裂甲, 之見血]
-  text: "+{value}% 攻擊暴擊傷害"
+  text: "增加 {value}% 攻擊暴擊傷害加成"
   tiers:
     - { tier: -1, ilvl: 78, weight: 40, value: [43, 46] }
     - { tier: 0, ilvl: 68, weight: 80, value: [39, 42] }
@@ -2816,7 +2816,7 @@ amulet_attack_crit_multi:
     - { tier: 3, ilvl: 16, weight: 500, value: [17, 21] }
     - { tier: 4, ilvl: 1, weight: 600, value: [9, 13] }
   mods:
-    - { stat: crit.multi, type: FLAT, value: "{value}", tags: [attack] }
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [attack] }
 
 strike_targets:
   type: suffix

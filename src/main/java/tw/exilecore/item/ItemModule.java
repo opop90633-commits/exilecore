@@ -86,6 +86,37 @@ public final class ItemModule implements Module {
         for (final String warning : repository.warnings()) {
             plugin.getSLF4JLogger().warn(warning);
         }
+        // 2026-10-17：在線玩家身上的裝備照新的資料重畫說明（符文、詞綴的文字改了，以前要重新登入才看得到；屬性本來就照新的算）
+        if (service != null) {
+            final int refreshed = refreshOnline();
+            if (refreshed > 0) {
+                plugin.getSLF4JLogger().info("在線玩家身上 {} 件裝備照新的資料重畫了說明", refreshed);
+            }
+        }
+    }
+
+    /** 在線玩家背包、身上、副手的裝備：說明跟資料對不上的重畫。回傳重畫了幾件。 */
+    private int refreshOnline() {
+        int refreshed = 0;
+        for (final org.bukkit.entity.Player player : plugin.getServer().getOnlinePlayers()) {
+            final org.bukkit.inventory.PlayerInventory inventory = player.getInventory();
+            final org.bukkit.inventory.ItemStack[] contents = inventory.getContents();
+            boolean changed = false;
+            for (final org.bukkit.inventory.ItemStack stack : contents) {
+                try {
+                    if (stack != null && service.refresh(stack)) {
+                        changed = true;
+                        refreshed++;
+                    }
+                } catch (final RuntimeException e) {
+                    // 一件畫不出來就跳過（不能讓重載因為一件裝備失敗）
+                }
+            }
+            if (changed) {
+                inventory.setContents(contents);
+            }
+        }
+        return refreshed;
     }
 
     @Override

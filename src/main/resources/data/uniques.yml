@@ -2869,10 +2869,10 @@ apocalypse_band:
       value: [20, 25]
       stats:
         - { stat: resist.chaos, type: FLAT, value: "{value}" }
-    - text: "+{value}% 暴擊傷害加成"
+    - text: "增加 {value}% 暴擊傷害加成"
       value: [20, 25]
       stats:
-        - { stat: crit.multi, type: FLAT, value: "{value}" }
+        - { stat: crit.bonus, type: INCREASED, value: "{value}" }
     - text: "+1% 全部抗性上限"
       stats:
         - { stat: resist.max, type: FLAT, value: 1 }

@@ -307,6 +307,9 @@ public final class NpcService {
             return;
         }
         lastInteract.put(player.getUniqueId(), now);
+        if (!type.decorative()) {
+            startTalking(player, entity);
+        }
         if (type.decorative()) {
             dress(entity, type); // 只是擺設：舊的名字拿掉，右鍵沒有反應
             return;
@@ -411,7 +414,49 @@ public final class NpcService {
         }
     }
 
+    // ---- 對話中（2026-10-17）：跟 NPC 講話、開它的選單時，怪物不會鎖定你 ----
+
+    /** 對話中：玩家 → [NPC 的位置, 最晚到哪個 tick]。 */
+    private record Talk(org.bukkit.Location at, long until) {
+    }
+
+    private final Map<UUID, Talk> talking = new HashMap<>();
+    /** 對話保護最多多久（沒離開也會結束）。 */
+    static final long TALK_TICKS = 60 * 20;
+    /** 離 NPC 多遠就算走開了。 */
+    static final double TALK_RADIUS = 6;
+
+    private void startTalking(final Player player, final Entity npc) {
+        talking.put(player.getUniqueId(), new Talk(npc.getLocation().clone(), plugin.getServer().getCurrentTick() + TALK_TICKS));
+        // 已經盯上他的怪先放掉
+        for (final Entity nearby : player.getNearbyEntities(32, 16, 32)) {
+            if (nearby instanceof org.bukkit.entity.Mob mob && player.equals(mob.getTarget())) {
+                mob.setTarget(null);
+            }
+        }
+    }
+
+    /** 這個人正在跟 NPC 對話嗎（在 NPC 旁邊、還沒超過時間、沒有出手）。 */
+    public boolean talking(final Player player) {
+        final Talk talk = talking.get(player.getUniqueId());
+        if (talk == null) {
+            return false;
+        }
+        if (plugin.getServer().getCurrentTick() > talk.until() || !player.getWorld().equals(talk.at().getWorld())
+                || player.getLocation().distanceSquared(talk.at()) > TALK_RADIUS * TALK_RADIUS) {
+            talking.remove(player.getUniqueId());
+            return false;
+        }
+        return true;
+    }
+
+    /** 出手攻擊了：對話保護結束。 */
+    public void stopTalking(final UUID uuid) {
+        talking.remove(uuid);
+    }
+
     public void forget(final UUID uuid) {
+        talking.remove(uuid);
         lastInteract.remove(uuid);
     }
 

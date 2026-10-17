@@ -380,7 +380,7 @@ supports:
     requires: [attack, spell]
     mana_multiplier: 1.25
     modifiers:
-      - { stat: crit.multi, type: FLAT, value: 40 }
+      - { stat: crit.bonus, type: INCREASED, value: 40 }
 
   added_chaos:
     name: 蝕化
@@ -1267,7 +1267,7 @@ supports:
     modifiers:
       - { stat: damage, type: MORE, value: 25 }
       - { stat: skill.area, type: INCREASED, value: 20 }
-      - { stat: crit.multi, type: FLAT, value: 20 }
+      - { stat: crit.bonus, type: INCREASED, value: 20 }
     notes: ["曜帝・星骸之軀（天穹熔爐）掉落"]
 
   permafrost_heart:
@@ -1422,7 +1422,7 @@ supports:
     modifiers:
       - { stat: damage, type: MORE, value: 35 }
       - { stat: crit.chance, type: INCREASED, value: 50 }
-      - { stat: crit.multi, type: FLAT, value: 30 }
+      - { stat: crit.bonus, type: INCREASED, value: 30 }
     notes: ["覺醒之主・虛星（萬界之巔）掉落"]
 
   void_legion:

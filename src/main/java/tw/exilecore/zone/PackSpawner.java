@@ -301,13 +301,28 @@ final class PackSpawner {
                 final Block feet = world.getBlockAt(x, y, z);
                 final Block below = feet.getRelative(BlockFace.DOWN);
                 final Block head = feet.getRelative(BlockFace.UP);
-                if (below.isSolid() && !Tag.LEAVES.isTagged(below.getType())
+                if (below.isSolid() && !Tag.LEAVES.isTagged(below.getType()) && !built(below.getType())
                         && feet.isPassable() && !feet.isLiquid() && head.isPassable() && !head.isLiquid()) {
                     return y;
                 }
             }
         }
         return null;
+    }
+
+    /**
+     * 2026-10-17：蓋出來的東西上面不刷（屋頂、地板、圍牆上）：木板、樓梯、半磚、原木、羊毛、玻璃、柵欄、牆、地毯、磚類。
+     * 天然的地面（草地、泥土、石頭、沙、雪…）照常刷；要讓某塊地不刷怪，地面鋪這些方塊就好。
+     */
+    static boolean built(final org.bukkit.Material type) {
+        if (Tag.PLANKS.isTagged(type) || Tag.STAIRS.isTagged(type) || Tag.SLABS.isTagged(type) || Tag.LOGS.isTagged(type)
+                || Tag.WOOL.isTagged(type) || Tag.WOOL_CARPETS.isTagged(type) || Tag.FENCES.isTagged(type) || Tag.WALLS.isTagged(type)
+                || Tag.FENCE_GATES.isTagged(type) || Tag.TRAPDOORS.isTagged(type)) {
+            return true;
+        }
+        final String name = type.name();
+        return name.contains("GLASS") || name.endsWith("BRICKS") || name.endsWith("TERRACOTTA") || name.endsWith("CONCRETE")
+                || name.startsWith("POLISHED_") || name.equals("BOOKSHELF");
     }
 
     /** 檢查點與 Boss 場地附近不刷。 */
