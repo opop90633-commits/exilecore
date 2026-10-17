@@ -72,7 +72,8 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                         double scatter, double spread, double speed, double reach, double size, double explode,
                         double duration, double interval, double slow, double width, String summonType, int summonMax,
                         double taken, Target at, String visual, String shout, int gaps, double gapAngle, double safe, String hint,
-                        int countPerPlayer, java.util.Map<DamageType, Double> convert, boolean track, boolean solid, double ruin) {
+                        int countPerPlayer, java.util.Map<DamageType, Double> convert, boolean track, boolean solid, double ruin,
+                        double lock) {
 
     public BossSkill {
         convert = convert == null || convert.isEmpty() ? java.util.Map.of() : java.util.Map.copyOf(new java.util.EnumMap<>(convert));
@@ -211,14 +212,14 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
     public BossSkill with(final double newDamage, final double newCooldown) {
         return new BossSkill(id, name, kind, newDamage >= 0 ? newDamage : damage, type, newCooldown >= 0 ? newCooldown : cooldown, range,
                 telegraph, delay, radius, angle, length, count, stagger, scatter, spread, speed, reach, size, explode, duration, interval,
-                slow, width, summonType, summonMax, taken, at, visual, shout, gaps, gapAngle, safe, hint, countPerPlayer, convert, track, solid, ruin);
+                slow, width, summonType, summonMax, taken, at, visual, shout, gaps, gapAngle, safe, hint, countPerPlayer, convert, track, solid, ruin, lock);
     }
 
     /** 範圍、散布、持續時間換掉的一份（萬界崩解等場地收縮中縮小落點，見 {@link BossGeometry#fitArena}）。 */
     public BossSkill sized(final double newRadius, final double newScatter, final double newDuration) {
         return new BossSkill(id, name, kind, damage, type, cooldown, range,
                 telegraph, delay, newRadius, angle, length, count, stagger, newScatter, spread, speed, reach, size, explode, newDuration, interval,
-                slow, width, summonType, summonMax, taken, at, visual, shout, gaps, gapAngle, safe, hint, countPerPlayer, convert, track, solid, ruin);
+                slow, width, summonType, summonMax, taken, at, visual, shout, gaps, gapAngle, safe, hint, countPerPlayer, convert, track, solid, ruin, lock);
     }
 
     /** 閃現到目標旁邊之後落地震一下（撲擊）。 */
@@ -314,6 +315,14 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
         if (track && kind != Kind.BEAM) {
             throw new IllegalArgumentException(where + ".track：只有光束（beam）可以追著目標");
         }
+        // 2026-10-17：lock（追著目標的光束：前搖最後幾秒停止追蹤、紅線定住，讓人有時間走開；放出來之後也不再轉）
+        final double lock = check(where, "lock", node.decimal("lock", 0), 0, 3);
+        if (lock > 0 && !track) {
+            throw new IllegalArgumentException(where + ".lock：只有追著目標的光束（track: true）可以鎖定");
+        }
+        if (lock > 0 && lock >= node.decimal("telegraph", 1.2)) {
+            throw new IllegalArgumentException(where + ".lock：要比 telegraph 短（前搖裡先追、最後 lock 秒定住）");
+        }
         final boolean solid = node.bool("solid", false);
         if (solid && kind != Kind.ZONE) {
             throw new IllegalArgumentException(where + ".solid：只有地面效果（zone）可以當牆");
@@ -400,7 +409,7 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                 Target.parse(where, node.string("at", kind == Kind.ZONE ? "target" : "self")),
                 node.string("visual", visualFor(type)).trim(), node.string("shout", null),
                 gaps, gapAngle, check(where, "safe", node.decimal("safe", 2.5), 1, 6), parseHint(where, node.string("hint", null)),
-                (int) check(where, "count_per_player", node.integer("count_per_player", 0), 0, 5), convert, track, solid, ruin);
+                (int) check(where, "count_per_player", node.integer("count_per_player", 0), 0, 5), convert, track, solid, ruin, lock);
         validateSpecial(where, parsed);
         return parsed;
     }

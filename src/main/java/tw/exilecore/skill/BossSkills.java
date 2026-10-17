@@ -18,9 +18,12 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Pose;
+import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Warden;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -164,6 +167,8 @@ public final class BossSkills implements Listener {
         boolean aiPaused;
         /** 放招時移動速度歸零（AI 暫停前最後一次算出的速度是 0，暫停後才不會照原本的方向滑）。 */
         boolean anchored;
+        /** 2026-10-17 仇恨：玩家 → 對這隻 Boss 打了多少（召喚物、投射物算主人的；每秒衰減，Boss 盯仇恨最高的人）。 */
+        final Map<UUID, Double> threat = new HashMap<>();
         /** 這隻 Boss 叫出來的小怪 → 到期的 tick（0 = 不限）。 */
         final Map<UUID, Long> summons = new HashMap<>();
         /** 目標從哪個 tick 起一直在追擊距離外（-1 = 沒有）。 */
@@ -226,6 +231,7 @@ public final class BossSkills implements Listener {
             arenaWith = List.of();
             phase = host.phase();
             farSince = -1;
+            threat.clear();
             // 一般怪物：出場後的等待多一點隨機，一群怪才不會同時出招
             globalReadyAt = now + Math.round(settings().firstDelayFor(host.boss()) * 20) + (host.boss() ? 0 : random.nextInt(40));
         }
@@ -505,6 +511,7 @@ public final class BossSkills implements Listener {
             // 舊的腦袋放招時暫停的 AI、歸零的速度交給新的（下一 tick 照新的狀態恢復）
             brain.aiPaused = old.aiPaused;
             brain.anchored = old.anchored;
+            brain.summons.putAll(old.summons); // 2026-10-17：已經叫出來的召喚物也交給新的（召喚師死了才清得到）
         }
         brains.put(boss.getUniqueId(), brain);
         lockSonicBoom(brain);
@@ -516,6 +523,7 @@ public final class BossSkills implements Listener {
         if (brain != null) {
             danger.hidePrefix(boss + ":");
             release(brain);
+            dismissSummons(brain); // 2026-10-17：召喚師死了、被移除、戰鬥結束：召喚物一起清掉
         }
     }
 
@@ -607,6 +615,7 @@ public final class BossSkills implements Listener {
             if (!brain.boss.isValid() || brain.boss.isDead()) {
                 iterator.remove();
                 danger.hidePrefix(brain.boss.getUniqueId() + ":");
+                dismissSummons(brain); // 2026-10-17：召喚師死了，叫出來的東西一起消失
                 continue;
             }
             try {
@@ -642,6 +651,10 @@ public final class BossSkills implements Listener {
         tickArena(brain, now);
         if (now % 20 == 0) {
             expireSummons(brain, now);
+            decayThreat(brain);
+            if (brain.host.boss() && brain.cast == null && !brain.threat.isEmpty()) {
+                pickTarget(brain); // 沒在放招時也每秒看一次仇恨：近戰、追人也跟著轉向
+            }
             brain.gate.prune(now);
             lockSonicBoom(brain);
         }
@@ -837,6 +850,18 @@ public final class BossSkills implements Listener {
         }
     }
 
+    /** 2026-10-17：召喚師死了（或被移除、戰鬥結束）：祂叫出來、還活著的召喚物全部消失（不掉東西、不給經驗）。 */
+    private void dismissSummons(final Brain brain) {
+        for (final UUID uuid : brain.summons.keySet()) {
+            final Entity entity = plugin.getServer().getEntity(uuid);
+            if (entity != null && entity.isValid() && !entity.isDead()) {
+                visuals.minionBlink(entity.getLocation());
+                entity.remove();
+            }
+        }
+        brain.summons.clear();
+    }
+
     // ---- 原版 AI：放招時暫停 ----
 
     /**
@@ -976,6 +1001,19 @@ public final class BossSkills implements Listener {
     private LivingEntity pickTarget(final Brain brain) {
         final LivingEntity boss = brain.boss;
         final double search = brain.host.boss() ? SEARCH : SEARCH_MINION;
+        if (brain.host.boss()) {
+            // 2026-10-17 仇恨：誰打得最痛就轉向誰（要比現在的目標多 THREAT_SWITCH 倍才換，不會一直來回轉）
+            final Player top = topThreat(brain);
+            if (top != null) {
+                final Player current = boss instanceof Mob mob && mob.getTarget() instanceof Player p && validPlayer(p, boss.getWorld())
+                        && p.getLocation().distanceSquared(boss.getLocation()) <= search * search ? p : null;
+                final Player chosen = current == null || current == top
+                        || brain.threat.getOrDefault(top.getUniqueId(), 0.0) > brain.threat.getOrDefault(current.getUniqueId(), 0.0) * THREAT_SWITCH
+                        ? top : current;
+                aim(brain, chosen);
+                return chosen;
+            }
+        }
         if (boss instanceof Mob mob && mob.getTarget() instanceof Player current && validPlayer(current, boss.getWorld())
                 && current.getLocation().distanceSquared(boss.getLocation()) <= search * search) {
             return current;
@@ -996,6 +1034,92 @@ public final class BossSkills implements Listener {
             mob.setTarget(best);
         }
         return best;
+    }
+
+    // ---- 仇恨（2026-10-17，所有 Boss）----
+
+    /** 新的仇恨最高的人要比現在的目標多幾倍才換目標。 */
+    static final double THREAT_SWITCH = 1.2;
+    /** 仇恨每秒剩幾成（0.85：大約 4 秒少一半，不打了很快就淡掉）。 */
+    static final double THREAT_DECAY = 0.85;
+
+    /** 玩家（或他的召喚物、投射物）打到 Boss：記仇恨。 */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBossHurt(final EntityDamageByEntityEvent event) {
+        final Brain brain = brains.get(event.getEntity().getUniqueId());
+        if (brain == null || !brain.host.boss()) {
+            return;
+        }
+        final Player attacker = attacker(event.getDamager());
+        final double amount = event.getFinalDamage();
+        if (attacker == null || amount <= 0) {
+            return;
+        }
+        brain.threat.merge(attacker.getUniqueId(), amount, Double::sum);
+    }
+
+    /** 打人的是誰：投射物算射的人、召喚物算主人。 */
+    private Player attacker(final Entity damager) {
+        Entity source = damager;
+        if (source instanceof Projectile projectile && projectile.getShooter() instanceof Entity shooter) {
+            source = shooter;
+        }
+        if (source instanceof Player player) {
+            return player;
+        }
+        final MinionHooks minions = plugin.combat() == null ? null : plugin.combat().minions();
+        return minions != null && source instanceof LivingEntity living && minions.isMinion(living) ? minions.owner(living) : null;
+    }
+
+    /** 每秒：仇恨衰減，太小的、離線的拿掉。 */
+    private void decayThreat(final Brain brain) {
+        final Iterator<Map.Entry<UUID, Double>> iterator = brain.threat.entrySet().iterator();
+        while (iterator.hasNext()) {
+            final Map.Entry<UUID, Double> entry = iterator.next();
+            final double value = entry.getValue() * THREAT_DECAY;
+            if (value < 1e-4 || plugin.getServer().getPlayer(entry.getKey()) == null) {
+                iterator.remove();
+            } else {
+                entry.setValue(value);
+            }
+        }
+    }
+
+    /** 仇恨最高、現在還能當目標（有效、在 SEARCH 格內）的人；沒有回傳 null。 */
+    private Player topThreat(final Brain brain) {
+        final LivingEntity boss = brain.boss;
+        Player best = null;
+        double most = 0;
+        for (final Map.Entry<UUID, Double> entry : brain.threat.entrySet()) {
+            final Player player = plugin.getServer().getPlayer(entry.getKey());
+            if (player == null || !validPlayer(player, boss.getWorld())
+                    || player.getLocation().distanceSquared(boss.getLocation()) > SEARCH * SEARCH) {
+                continue;
+            }
+            if (entry.getValue() > most) {
+                most = entry.getValue();
+                best = player;
+            }
+        }
+        return best;
+    }
+
+    /**
+     * 盯住這個人。伏守者另外照原版的怒氣挑目標：新的目標怒氣拉滿、換掉的人壓到不生氣（79），
+     * 原版 AI 才不會自己轉回去。
+     */
+    private void aim(final Brain brain, final Player chosen) {
+        if (brain.boss instanceof Mob mob && mob.getTarget() != chosen) {
+            mob.setTarget(chosen);
+        }
+        if (brain.boss instanceof Warden warden) {
+            warden.setAnger(chosen, 150);
+            for (final Player other : playersNear(warden.getLocation(), SEARCH)) {
+                if (other != chosen && warden.getAnger(other) >= 80) {
+                    warden.setAnger(other, 79);
+                }
+            }
+        }
     }
 
     /** 範圍內會被打到的人：玩家與玩家的召喚物（距離量到碰撞箱，高度差 HEIGHT 內）。 */
@@ -1531,7 +1655,9 @@ public final class BossSkills implements Listener {
                 }
             }
             case BEAM -> {
-                if (skill.track() && cast.target != null && cast.target.isValid() && cast.target.getWorld() == feet.getWorld()) {
+                // 2026-10-17：前搖最後 lock 秒鎖定——紅線停住不再追，給人時間走開（不然幾乎躲不掉）
+                final boolean locked = skill.lock() > 0 && now >= cast.telegraphEnd - Math.round(skill.lock() * 20);
+                if (skill.track() && !locked && cast.target != null && cast.target.isValid() && cast.target.getWorld() == feet.getWorld()) {
                     // 2026-10（賽勒斯的「死」）：前搖時紅線一直跟著目標轉——站著不動一定被打到，要在放出來那一刻往旁邊走
                     final Vector to = facing(brain.boss, cast.target);
                     cast.beamStart = Math.atan2(to.getZ(), to.getX());
@@ -2155,7 +2281,8 @@ public final class BossSkills implements Listener {
         final Location feet = boss.getLocation();
         final double progress = (now - cast.telegraphEnd) / (double) Math.max(1, cast.channelEnd - cast.telegraphEnd);
         final double sweep = skill.track() ? 0 : Math.toRadians(skill.angle());
-        if (skill.track() && cast.target != null && cast.target.isValid() && cast.target.getWorld() == feet.getWorld()) {
+        if (skill.track() && skill.lock() <= 0 && cast.target != null && cast.target.isValid() && cast.target.getWorld() == feet.getWorld()) {
+            // 2026-10-17：有 lock 的光束放出來之後不再轉（鎖在哪就打哪）
             // 2026-10：追著目標的光束放出來之後還會慢慢轉過去（每秒最多 angle 度）——要一直往旁邊跑，不能停
             final Vector to = facing(boss, cast.target);
             final double want = Math.atan2(to.getZ(), to.getX());
