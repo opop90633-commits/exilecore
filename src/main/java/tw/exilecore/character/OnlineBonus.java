@@ -207,6 +207,11 @@ public final class OnlineBonus implements Listener {
         return String.join("、", parts);
     }
 
+    /** 2026-10-18：現在給的加成（「經驗 +5%、掉落數量 +5%」）；沒有回傳空字串。 */
+    String currentText() {
+        return current == null ? "" : describe(current);
+    }
+
     /** 「（再 7 人：稀有度 +5%）」；已經最高回傳空字串。 */
     String nextText() {
         final Tier next = next();

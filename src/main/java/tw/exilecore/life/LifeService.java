@@ -2808,6 +2808,14 @@ public final class LifeService {
         if (def == null || config.levelOf(profile.xp) < def.minLevel()) {
             return;
         }
+        // 2026-10-18：航行中或島還開著時渦齒鯊不會來（已經在咬的游走，倒數也暫停）
+        if (islands.busy(profile.plot)) {
+            if (session.shark != null) {
+                player.sendMessage(plugin.text().prefixed("<gray>渦齒鯊游走了"));
+                removeShark(session);
+            }
+            return;
+        }
         if (session.shark == null) {
             if (session.nextShark < 0) {
                 session.nextShark = randomInterval(def);

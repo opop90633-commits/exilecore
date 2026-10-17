@@ -640,7 +640,8 @@ public final class MapDeviceMenu extends Menu {
             return;
         }
         player.getInventory().setItem(selectedSlot, target);
-        service.takeCurrency(player, chisel, used);
+        // 2026-10-18：每次 apply 已經記了「做裝備、地圖」的消耗，這裡不再記地圖裝置（以前重複算兩次）
+        service.takeCurrency(player, chisel, used, null);
         selected = plugin.items().read(target).orElse(selected);
         player.sendMessage(plugin.text().prefixed("<gray>用了 <white>" + used + "</white> 個" + ItemRenderer.escape(chisel.name())
                 + "：地圖品質 " + before + "% → <white>" + selected.quality() + "%"));

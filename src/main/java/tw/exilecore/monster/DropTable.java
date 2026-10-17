@@ -235,7 +235,8 @@ public final class DropTable {
 
     /** 全服的金幣倍數。 */
     public double serverGold() {
-        return serverGold * tw.exilecore.sponsor.Boosts.gold() * tw.exilecore.character.OnlineBonus.gold(); // 2026-10：加上贊助的全服加倍、在線人數加成
+        // 2026-10：加上贊助的全服加倍、在線人數加成；2026-10-18：改成加起來（以前乘起來）
+        return Math.max(0, serverGold + (tw.exilecore.sponsor.Boosts.gold() - 1) + (tw.exilecore.character.OnlineBonus.gold() - 1));
     }
 
     private static MonsterRarity parseMonsterRarity(final YamlNode node, final String key) {

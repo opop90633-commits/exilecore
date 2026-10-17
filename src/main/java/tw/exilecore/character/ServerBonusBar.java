@@ -63,7 +63,7 @@ public final class ServerBonusBar {
             sponsored.add(active.label() + String.format(java.util.Locale.ROOT, " %d:%02d", left / 60, left % 60));
         }
         final String crowd = online == null || online.current() == null ? ""
-                : " <#9fd3ff>（在線 " + online.counted() + " 人加成" + online.nextText().replace("<gray>（", "，").replace("）", "") + "<#9fd3ff>）";
+                : " <#9fd3ff>（在線 " + online.counted() + " 人加成：" + online.currentText() + "）"; // 2026-10-18：只寫現在給的，不寫下一階
         return String.join("<gray>・<white>", parts) + (sponsored.isEmpty() ? ""
                 : " <#ffd27f>（贊助加倍 " + String.join("、", sponsored) + "）") + crowd;
     }

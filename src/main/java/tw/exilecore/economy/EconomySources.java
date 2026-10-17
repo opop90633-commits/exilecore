@@ -57,6 +57,14 @@ public final class EconomySources {
     public static final String FEE_EXCHANGE = "fee_exchange";
     /** 公會：建立公會的費用、捐給公會換公會經驗。 */
     public static final String GUILD = "guild";
+    // 2026-10-18：活動商店用掉的素材另外一個來源（記在 EVENT 會跟活動產出同一列互相抵掉，看起來 0 消耗）
+    /** 節慶、不定時活動的兌換商店用掉的素材。 */
+    public static final String EVENT_SHOP = "event_shop";
+    // 2026-10-18：管理員扣、拆解用掉的另外分開記（同一個來源正負會在同一列抵掉，報表看不出產出與消耗各多少）
+    /** 管理員扣掉、刪掉的。 */
+    public static final String ADMIN_TAKE = "admin_take";
+    /** 拆解時被拆掉的通貨。 */
+    public static final String SALVAGE_COST = "salvage_cost";
 
     /** 來源給人看的名字。 */
     public static String sourceName(final String source) {
@@ -84,13 +92,17 @@ public final class EconomySources {
             case FEE_BUY -> "購買手續費";
             case FEE_EXCHANGE -> "交易所手續費";
             case GUILD -> "公會（建立、捐獻）";
+            case EVENT_SHOP -> "活動兌換";
+            case ADMIN_TAKE -> "管理員扣除";
+            case SALVAGE_COST -> "拆解用掉";
             default -> source;
         };
     }
 
     /** 全部的來源（網頁的名稱表照這個順序）。 */
     public static final List<String> ALL = List.of(DROP, FILTER, SALVAGE, NPC, ADMIN, MERITS, EVENT, CRAFT, SKILL, MAP_DEVICE, HEIST, TRASH, DELETE, VENDOR, VENDOR_REFRESH,
-            GAMBLE, SHOP, RESPEC, FEE_TRADE, FEE_LIST, FEE_BUY, FEE_EXCHANGE, GUILD);
+            GAMBLE, SHOP, RESPEC, FEE_TRADE, FEE_LIST, FEE_BUY, FEE_EXCHANGE, GUILD,
+            EVENT_SHOP, ADMIN_TAKE, SALVAGE_COST); // 2026-10-18：加上活動兌換、管理員扣除、拆解用掉
 
     private EconomySources() {
     }

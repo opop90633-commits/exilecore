@@ -1147,6 +1147,10 @@ public final class WorldEventService {
             case CURRENCY -> giveCurrency(player, item.currency(), item.amount());
             case UNIQUE -> giveUnique(player, item.unique(), item.itemLevel());
         }
+        // 2026-10-18：兌換成功才記素材消耗（wallet.take 不記流水帳；用 EVENT_SHOP，記 EVENT 會跟活動產出抵掉）
+        for (final Map.Entry<String, Integer> cost : taken.entrySet()) {
+            plugin.economy().ledger().consumed(cost.getKey(), tw.exilecore.economy.EconomyLedger.EVENT_SHOP, cost.getValue());
+        }
         plugin.players().markDirty(player);
         plugin.characters().save(player);
         plugin.getSLF4JLogger().info("[不定時活動] {} 兌換 {}", player.getName(), item.id());

@@ -255,6 +255,8 @@ public final class InstilMenu extends Menu {
         final PlayerState state = plugin.players().get(player);
         plugin.currencies().recordUse(state.hasCharacter() ? state.character().id() : null, player.getName(), data.uuid(), emotion.id(),
                 before, plugin.items().toJson(data));
+        // 2026-10-18：recordUse 只記 1 顆消耗，注入實際用掉 INSTIL_COST 顆，補記其餘的
+        plugin.economy().ledger().consumed(emotion.id(), tw.exilecore.economy.EconomyLedger.CRAFT, Crafting.INSTIL_COST - 1);
         plugin.players().markDirty(player);
         plugin.characters().save(player);
         player.playSound(player.getLocation(), Sound.BLOCK_BREWING_STAND_BREW, 0.9f, 1.3f);

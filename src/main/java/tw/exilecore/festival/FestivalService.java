@@ -1334,6 +1334,10 @@ public final class FestivalService {
             }
             case CURRENCY -> giveCurrency(player, item.currency(), item.amount());
         }
+        // 2026-10-18：兌換成功才記素材消耗（wallet.take 不記流水帳；用 EVENT_SHOP，記 EVENT 會跟活動產出抵掉）
+        for (final Map.Entry<String, Integer> cost : taken.entrySet()) {
+            plugin.economy().ledger().consumed(cost.getKey(), tw.exilecore.economy.EconomyLedger.EVENT_SHOP, cost.getValue());
+        }
         plugin.players().markDirty(player);
         plugin.characters().save(player);
         plugin.getSLF4JLogger().info("[{}] {} 兌換 {}", config.name(), player.getName(), item.id());

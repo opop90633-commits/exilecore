@@ -1034,7 +1034,7 @@ public final class DeliveryService {
                 }
                 final int taken = (int) Math.min(amount, wallet.available(player, type.id()));
                 if (taken > 0 && wallet.take(player, type.id(), taken)) {
-                    plugin.economy().ledger().consumed(type.id(), EconomyLedger.ADMIN, taken);
+                    plugin.economy().ledger().consumed(type.id(), EconomyLedger.ADMIN_TAKE, taken); // 2026-10-18：收回另記一列，不跟發放抵掉
                 }
                 return new Given(amount, "收回 " + type.name() + " ×" + Math.max(0, taken),
                         List.of(entry(opId, null, "收回" + type.name(), Math.max(1, taken), admin, player)), null);
@@ -1042,7 +1042,7 @@ public final class DeliveryService {
             case TAKE_GOLD -> {
                 final long taken = Math.min(amount, Math.max(0, state.gold()));
                 state.setGold(state.gold() - taken);
-                plugin.economy().ledger().gold(EconomyLedger.ADMIN, -taken);
+                plugin.economy().ledger().gold(EconomyLedger.ADMIN_TAKE, -taken); // 2026-10-18：收回另記一列，不跟發放抵掉
                 return new Given(amount, String.format(Locale.ROOT, "收回 金幣 %,d", taken),
                         List.of(entry(opId, null, "收回金幣", (int) Math.min(Integer.MAX_VALUE, Math.max(1, taken)), admin, player)), null);
             }

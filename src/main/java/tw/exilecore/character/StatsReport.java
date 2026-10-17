@@ -55,8 +55,10 @@ public final class StatsReport {
         // 2026-10：合併成一個總數（自己的＋全服加倍，實際就是加起來算），全服加倍開著時括號寫出含多少
         final double ownQuantity = sheet.increased(StatKeys.DROP_QUANTITY, Set.of()) * 100;
         final double ownRarity = sheet.increased(StatKeys.DROP_RARITY, Set.of()) * 100;
-        final double serverQuantity = tw.exilecore.sponsor.Boosts.quantity() * 100;
-        final double serverRarity = tw.exilecore.sponsor.Boosts.rarity() * 100;
+        // 2026-10-18：全服的部分用跟掉落一樣的總數（drops.yml 的全服加成＋贊助的全服加倍＋在線人數加成），以前只算贊助的全服加倍
+        final boolean hasDrops = plugin.monsterModule() != null && plugin.monsterModule().drops() != null;
+        final double serverQuantity = (hasDrops ? plugin.monsterModule().drops().serverQuantity() : tw.exilecore.sponsor.Boosts.quantity()) * 100;
+        final double serverRarity = (hasDrops ? plugin.monsterModule().drops().serverRarity() : tw.exilecore.sponsor.Boosts.rarity()) * 100;
         // 2026-10-16：個人加倍藥（在屬性表裡，已經算在自己的裡面）也寫出含多少
         double personalQuantity = 0;
         double personalRarity = 0;
@@ -69,17 +71,20 @@ public final class StatsReport {
         lines.add(String.format(Locale.ROOT, "<gray>物品掉落數量 <white>%+.0f%%%s" + SEP + "<gray>物品稀有度 <white>%+.0f%%%s",
                 ownQuantity + serverQuantity, included(serverQuantity, personalQuantity),
                 ownRarity + serverRarity, included(serverRarity, personalRarity)));
-        // 2026-10-18：怪物掉的金幣：全服 ×（1 ＋ 累積贊助＋個人加倍藥＋稱號等），跟 MonsterListener 的算法一樣
-        final double serverGold = plugin.monsterModule() == null || plugin.monsterModule().drops() == null ? 1
-                : plugin.monsterModule().drops().serverGold();
-        final double sponsorGold = plugin.sponsors() == null ? 0 : plugin.sponsors().goldBonus(player) * 100;
-        final double personalGold = plugin.sponsors() == null ? 0 : plugin.sponsors().personalGold(player) * 100;
-        final double sheetGold = sheet.increased(StatKeys.GOLD_FIND, Set.of()) * 100;
-        // 2026-10-18：自己的物品掉落數量也乘在金幣上（rollGold 的 1 ＋ 數量加成），跟實際掉的一樣
-        final double quantityGold = Math.max(0, 1 + sheet.increased(StatKeys.DROP_QUANTITY, Set.of()));
-        final double goldMultiplier = serverGold * quantityGold * (1 + (sponsorGold + personalGold + sheetGold) / 100);
+        // 2026-10-18：打怪經驗（全部加起來的結果；括號寫含個人加倍多少），放在怪物掉落金幣前面
+        final double experience = experienceMultiplier(plugin, player);
+        if (Math.abs(experience - 1) > 1e-9) {
+            final double personalExperience = plugin.sponsors() == null ? 0
+                    : plugin.sponsors().personalExperience(player) * plugin.players().config().experienceBonus() * 100;
+            lines.add("<gray>打怪經驗 <white>" + percentText(experience) + personalNote(personalExperience));
+        }
+        // 2026-10-18：怪物掉的金幣：全服＋累積贊助＋稱號等＋個人加倍藥，全部加起來（跟 MonsterListener 的算法一樣；物品數量不影響金幣）
+        final double serverGold = hasDrops ? plugin.monsterModule().drops().serverGold() : 1;
+        final double personalGold = plugin.sponsors() == null ? 0 : plugin.sponsors().personalGold(player) * serverGold;
+        final double goldMultiplier = serverGold + (plugin.sponsors() == null ? 0 : plugin.sponsors().goldBonus(player))
+                + sheet.increased(StatKeys.GOLD_FIND, Set.of()) + personalGold;
         if (Math.abs(goldMultiplier - 1) > 1e-9) {
-            lines.add("<gray>怪物掉落金幣 <white>" + percentText(goldMultiplier)); // 2026-10-18：只寫加起來的結果
+            lines.add("<gray>怪物掉落金幣 <white>" + percentText(goldMultiplier) + personalNote(personalGold * 100));
         }
         return lines;
     }
@@ -133,6 +138,11 @@ public final class StatsReport {
         return java.math.BigDecimal.valueOf(value).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
     }
 
+    /** 2026-10-18：「（含個人加倍 +100%）」；沒有個人加倍是空的。value 是 %。 */
+    private static String personalNote(final double value) {
+        return value > 1e-6 ? " <#ffd27f>（含個人加倍 +" + number(value) + "%）" : "";
+    }
+
     /** 「（含全服 +100%、個人加倍 +100%）」；都沒有是空的。 */
     private static String included(final double server, final double personal) {
         if (server <= 0 && personal <= 0) {
@@ -153,19 +163,12 @@ public final class StatsReport {
      * 跟 KillCredit 給經驗的算法一樣。
      */
     public static double experienceMultiplier(final ExileCore plugin, final Player player) {
-        final double personal = (plugin.sponsors() == null ? 0 : plugin.sponsors().experienceBonus(player) + plugin.sponsors().personalExperience(player))
+        // 2026-10-18：全部加起來（全服 + 累積贊助 + 燃星者 + 稱號等 + 個人加倍），跟 KillCredit 一樣
+        final double server = plugin.players().config().experienceBonus();
+        final double personal = plugin.sponsors() == null ? 0 : plugin.sponsors().personalExperience(player) * server;
+        return server + (plugin.sponsors() == null ? 0 : plugin.sponsors().experienceBonus(player))
                 + (plugin.ascendancy() == null ? 0 : plugin.ascendancy().race().experienceBonus(player))
-                + plugin.players().sheet(player).increased(StatKeys.EXPERIENCE_GAIN, Set.of()); // 2026-10-18：稱號等的「打怪經驗 +x%」
-        return plugin.players().config().experienceBonus() * (1 + personal);
-    }
-
-    /**
-     * 經驗那一行後面的括號：全部加起來的經驗倍數（全服、累積贊助、燃星者、稱號、個人加倍藥）。
-     * 2026-10-18：只寫加起來的結果，倍數寫成 %（×3.21 → +221%）；沒有任何加成不寫。
-     */
-    private static String experienceNote(final ExileCore plugin, final Player player, final String serverText) {
-        final double actual = experienceMultiplier(plugin, player);
-        return Math.abs(actual - 1) > 1e-9 ? " <#ffd27f>（經驗 " + percentText(actual) + "）" : "";
+                + plugin.players().sheet(player).increased(StatKeys.EXPERIENCE_GAIN, Set.of()) + personal;
     }
 
     /** 2026-10-18：經驗倍數寫成多出來的 %（跟 {@link CharacterConfig#percentText} 一樣）。 */
@@ -190,12 +193,10 @@ public final class StatsReport {
             lines.add(self ? "<red>還沒有角色<gray>（/char 建立）　等級 1" : "<red>還沒有角色<gray>　等級 1");
         } else {
             final long need = plugin.players().config().experienceToNext(character.level());
-            final String bonus = plugin.players().config().experienceBonusText();
             lines.add(character.characterClass().color() + escape(character.name()) + " <gray>" + character.characterClass().displayName()
                     + " <white>Lv." + character.level()
                     + (need > 0 ? String.format(Locale.ROOT, "%s<gray>經驗 <white>%,d<dark_gray>/%,d %s <gray>%.1f%%",
                     SEP, character.experience(), need, bar(character.experience(), need), 100.0 * character.experience() / need)
-                    + experienceNote(plugin, player, bonus)
                     : SEP + "<gray>滿級"));
             if (self) {
                 lines.add(String.format(Locale.ROOT, "<gray>金幣 %s%,d <dark_gray>（帳號共用）", GOLD, state.gold()));

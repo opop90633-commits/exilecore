@@ -2546,7 +2546,7 @@ public final class MapService {
         return plugin.stash() == null ? null : plugin.stash().stash(player).orElse(null);
     }
 
-    /** 先拿背包裡的，再拿通貨袋的，最後拿倉庫的；source 是流水帳的來源（EconomySources）。 */
+    /** 先拿背包裡的，再拿通貨袋的，最後拿倉庫的；source 是流水帳的來源（EconomySources），null 不記（已經在別處記過）。 */
     public void takeCurrency(final Player player, final CurrencyType type, final int amount, final String source) {
         int left = amount;
         final ItemStack[] contents = player.getInventory().getStorageContents();
@@ -2569,7 +2569,9 @@ public final class MapService {
             stash.setCurrency(type.id(), stash.currency(type.id()) - take); // 倉庫跟角色一起存（下面的 save）
             left -= take;
         }
-        plugin.economy().ledger().consumed(type.id(), source, amount);
+        if (source != null) { // 2026-10-18：null＝呼叫的地方已經記過（星盤刻刀在 currencies().apply 記了做裝備、地圖）
+            plugin.economy().ledger().consumed(type.id(), source, amount);
+        }
         plugin.characters().save(player);
     }
 

@@ -209,7 +209,7 @@ public final class MonsterListener implements Listener {
         // 終局以上的 Boss 不算（flat）
         final double server = flat ? 0 : drops.serverQuantity();
         double quantityBonus = baseQuantity + server;
-        double goldBonus = baseQuantity;
+        double goldBonus = 0; // 2026-10-18：金幣只吃金幣加成（以前物品掉落數量也讓金幣變多：個人掉落加倍連金幣也翻倍）
         double fatigue = 1.0;
         if (owner != null && plugin.zones() != null) {
             // 防刷：同一個區域刷太久（角色等級已經到這個區域的最高等級），件數與金幣慢慢變少；地圖裡不算
@@ -217,7 +217,7 @@ public final class MonsterListener implements Listener {
             fatigue = Math.max(0, Math.min(1, factor));
             if (factor < 1) {
                 quantityBonus = Math.max(0, 1 + baseQuantity + server) * factor - 1;
-                goldBonus = Math.max(0, 1 + baseQuantity) * factor - 1;
+                goldBonus = factor - 1; // 2026-10-18：金幣只吃防刷的倍率，不吃物品數量
             }
         }
         // 2026-10：裝備基底照這個人的職業調整（傳奇不吃）
@@ -232,10 +232,12 @@ public final class MonsterListener implements Listener {
         rollMirror(owner, rolled, fatigue);
         // 2026-10：累積贊助的金幣加成（只算掉給這個人的那份）
         // 個人金幣加倍藥：跟全服加倍加起來（全服 ×2、個人 ×2 → ×3）
-        final double sponsorGold = (owner == null || plugin.sponsors() == null ? 0
-                : plugin.sponsors().goldBonus(owner) + plugin.sponsors().personalGold(owner))
-                // 2026-10-18：稱號等的「怪物掉落金幣 +x%」，跟累積贊助的金幣加成加在一起
-                + (owner == null ? 0 : plugin.players().sheet(owner).increased(tw.exilecore.stats.StatKeys.GOLD_FIND, java.util.Set.of()));
+        // 2026-10-18：全部加起來：全服（已經在 rollGold 裡）＋累積贊助＋稱號等＋個人加倍。personalGold 已經除過全服倍數；
+        // 累積贊助、稱號也除掉全服倍數，結果才是「全服 + 各項」而不是乘起來
+        final double serverGoldNow = Math.max(1e-9, drops.serverGold());
+        final double sponsorGold = (owner == null || plugin.sponsors() == null ? 0 : plugin.sponsors().personalGold(owner)
+                + plugin.sponsors().goldBonus(owner) / serverGoldNow)
+                + (owner == null ? 0 : plugin.players().sheet(owner).increased(tw.exilecore.stats.StatKeys.GOLD_FIND, java.util.Set.of()) / serverGoldNow);
         final long goldAmount = Math.round(drops.rollGold(data.level(), data.rarity(), goldBonus, plugin.items().random()) * (1 + sponsorGold));
         if (owner != null && plugin.loot() != null
                 && plugin.loot().handleKill(owner, location, data, rolled, goldAmount, this::toStack)) {

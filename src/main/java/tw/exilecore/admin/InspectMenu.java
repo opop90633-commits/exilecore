@@ -467,7 +467,8 @@ public final class InspectMenu extends Menu {
         player.playSound(player.getLocation(), delete ? Sound.ENTITY_ITEM_BREAK : Sound.ENTITY_ITEM_PICKUP, 0.6f, 1f);
         plugin.getSLF4JLogger().info("[管理] {} {} {} {} 的 {} ×{}", player.getName(), delete ? "刪掉" : "拿走", target.getName(), where, name, taken);
         if (delete && plugin.economy() != null) {
-            plugin.economy().ledger().consumed(id, tw.exilecore.economy.EconomyLedger.ADMIN, taken); // 刪掉的算消耗（拿走的只是換人放）
+            // 2026-10-18：記在 ADMIN_TAKE，不跟管理員發放同一列互相抵掉
+            plugin.economy().ledger().consumed(id, tw.exilecore.economy.EconomyLedger.ADMIN_TAKE, taken); // 刪掉的算消耗（拿走的只是換人放）
         }
         final tw.exilecore.economy.TradeLogRepository.Entry entry = new tw.exilecore.economy.TradeLogRepository.Entry(UUID.randomUUID().toString(),
                 tw.exilecore.economy.TradeLogRepository.ADMIN, null, (delete ? "刪除" : "收回") + name, Math.max(1, Math.min(Integer.MAX_VALUE, taken)), null,

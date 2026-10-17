@@ -401,7 +401,7 @@ whale:
   scale: 1.0
   mods: [resistant, swift]
   attempts: 2
-  enrage: { after: 360, damage: 150 }
+  enrage: { after: 300, damage: 150 }   # 2026-10-18：360 → 300
   minutes: 10
   xp: 600
   horn: { name: 深淵號角, cost: { horn_shard: 5, shark_tooth: 2, star_shard: 10, abyss_pearl: 3 }, level: 40 }
@@ -418,8 +418,13 @@ whale:
     - { id: abyss_fury, phase: 2 }
     - { id: abyss_pressure, phase: 2 }
     - { id: abyss_sharks, phase: 2 }
+    - abyss_bubbles                       # 2026-10-18：新招
+    - abyss_whirlpool                     # 2026-10-18：新招
+    - { id: abyss_breach, phase: 1 }      # 2026-10-18：新招
+    - { id: abyss_whalefall, phase: 2 }   # 2026-10-18：新招
+    - { id: abyss_tide_walls, phase: 2 }  # 2026-10-18：新招
   hazards:
-    - { skill: hazard_abyss_splash, every: 9, phase: 1 }
+    - { skill: hazard_abyss_splash, every: 6, phase: 1 }   # 2026-10-18：9 → 6
   phases:
     - { at: 0.66, name: 深潛, message: "（淵鯨潛了下去，海面浮出幾顆發光的潮核）", damage: 30, shield: { count: 3, name: 潮核, life: 5, duration: 30, heal: 25 } }
     - { at: 0.33, name: 怒濤, message: "（淵鯨發狂了，整片海翻了過來）", damage: 40, shield: { count: 3, name: 潮核, life: 6, duration: 25, heal: 35 } }

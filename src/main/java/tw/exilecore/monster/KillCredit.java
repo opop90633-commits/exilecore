@@ -137,10 +137,13 @@ public final class KillCredit {
                     * factor * shares.getOrDefault(player.getUniqueId(), 0.0);
             // 2026-10：累積贊助的經驗加成（每個人自己的）
             // 個人經驗加倍藥：跟全服加倍加起來（全服 ×2、個人 ×2 → ×3）
-            final double sponsor = (plugin.sponsors() == null ? 0
-                    : plugin.sponsors().experienceBonus(player) + plugin.sponsors().personalExperience(player))
+            // 2026-10-18：全部加起來：全服（已經乘在 factor 裡）＋累積贊助＋燃星者＋稱號等＋個人加倍。
+            // personalExperience 已經除過全服倍數；其他幾項也除掉，結果是「全服 + 各項」而不是乘起來
+            final double server = Math.max(1e-9, plugin.players().config().experienceBonus());
+            final double sponsor = (plugin.sponsors() == null ? 0 : plugin.sponsors().personalExperience(player))
+                    + ((plugin.sponsors() == null ? 0 : plugin.sponsors().experienceBonus(player))
                     + (plugin.ascendancy() == null ? 0 : plugin.ascendancy().race().experienceBonus(player)) // 2026-10：燃星者 +5%
-                    + plugin.players().sheet(player).increased(tw.exilecore.stats.StatKeys.EXPERIENCE_GAIN, java.util.Set.of()); // 2026-10-18：稱號等的「打怪經驗 +x%」
+                    + plugin.players().sheet(player).increased(tw.exilecore.stats.StatKeys.EXPERIENCE_GAIN, java.util.Set.of())) / server; // 稱號等
             final long amount = Math.round(exact * (1 + sponsor));
             if (amount <= 0) {
                 continue;

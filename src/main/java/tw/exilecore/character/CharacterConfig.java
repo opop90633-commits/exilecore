@@ -375,8 +375,10 @@ public final class CharacterConfig {
 
     /** 全服經驗的倍數（打怪、委託的經驗再乘這個；1 = 不加倍）。 */
     public double experienceBonus() {
-        // 2026-10：贊助的全服經驗加倍、在線人數加成再乘上去
-        return experienceBonus * tw.exilecore.sponsor.Boosts.experience() * OnlineBonus.experience();
+        // 2026-10：贊助的全服經驗加倍、在線人數加成
+        // 2026-10-18：改成加起來（設定 ×2 ＋ 在線 +5% = +105%，以前乘起來變 +110%）
+        return Math.max(MIN_EXPERIENCE_BONUS,
+                experienceBonus + (tw.exilecore.sponsor.Boosts.experience() - 1) + (OnlineBonus.experience() - 1));
     }
 
     /** 設定檔（管理網頁）的全服經驗倍數，不含贊助的全服加倍。 */

@@ -45,6 +45,10 @@ public final class EconomyLedger {
     public static final String FEE_LIST = EconomySources.FEE_LIST;
     public static final String FEE_BUY = EconomySources.FEE_BUY;
     public static final String FEE_EXCHANGE = EconomySources.FEE_EXCHANGE;
+    // 2026-10-18：新的消耗來源（活動兌換、管理員扣除、拆解用掉）
+    public static final String EVENT_SHOP = EconomySources.EVENT_SHOP;
+    public static final String ADMIN_TAKE = EconomySources.ADMIN_TAKE;
+    public static final String SALVAGE_COST = EconomySources.SALVAGE_COST;
 
     /** 來源給人看的名字。 */
     public static String sourceName(final String source) {
