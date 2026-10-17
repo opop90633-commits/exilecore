@@ -21,6 +21,25 @@ public final class Veiled {
 
     public static final String VEILED_PREFIX = "veiled_prefix";
     public static final String VEILED_SUFFIX = "veiled_suffix";
+    /**
+     * 2026-10-17：隱匿詞綴身上多存一個隨機數（不顯示、不影響數值）：揭露的三個選項用「物品＋第幾條＋這個數」當種子。
+     * 以前只用物品＋第幾條，湮滅掉再用揭露石加一條新的隱匿詞綴，還是同樣三個選項。
+     */
+    public static final String SALT = "salt";
+
+    /** 新的隱匿詞綴：照階級擲（數值是 0），再加上種子用的隨機數。 */
+    private static RolledAffix fresh(final String id, final AffixTier tier, final RandomGenerator random) {
+        final java.util.Map<String, Integer> vars = new java.util.LinkedHashMap<>(tier.roll(random));
+        vars.put(SALT, random.nextInt(Integer.MAX_VALUE));
+        return new RolledAffix(id, tier.tier(), vars);
+    }
+
+    /** 揭露選項的代號：物品、第幾條，新的隱匿詞綴再加上它的種子（舊的沒有，照以前）。 */
+    public static String offerKey(final ItemData data, final int affixIndex) {
+        final RolledAffix veiled = affixIndex >= 0 && affixIndex < data.affixes().size() ? data.affixes().get(affixIndex) : null;
+        final Integer salt = veiled == null ? null : veiled.vars().get(SALT);
+        return data.uuid() + ":" + affixIndex + (salt == null ? "" : ":" + salt);
+    }
     /** 揭露詞綴的代號開頭。 */
     public static final String UNVEILED = "unveiled_";
     /** 揭露時給幾個選項。 */
@@ -58,7 +77,7 @@ public final class Veiled {
             final Affix veiled = repository.affix(id);
             if (veiled != null) {
                 final AffixTier tier = veiled.tiers().getFirst();
-                data.affixes().add(new RolledAffix(id, tier.tier(), tier.roll(random)));
+                data.affixes().add(fresh(id, tier, random));
             }
         }
     }
@@ -125,7 +144,7 @@ public final class Veiled {
             data.affixes().remove(same.get(random.nextInt(same.size())));
         }
         final AffixTier tier = veiled.tiers().getFirst();
-        data.affixes().add(new RolledAffix(id, tier.tier(), tier.roll(random)));
+        data.affixes().add(fresh(id, tier, random));
         return true;
     }
 

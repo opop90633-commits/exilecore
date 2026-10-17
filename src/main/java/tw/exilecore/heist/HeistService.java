@@ -730,7 +730,7 @@ public final class HeistService implements Listener {
     private final Map<String, List<tw.exilecore.item.RolledAffix>> offers = new HashMap<>();
 
     List<tw.exilecore.item.RolledAffix> offers(final ItemData data, final int affixIndex) {
-        final String offerKey = data.uuid() + ":" + affixIndex;
+        final String offerKey = tw.exilecore.item.Veiled.offerKey(data, affixIndex); // 2026-10-17：新的隱匿詞綴帶種子，重新加一條會換三個選項
         final List<tw.exilecore.item.RolledAffix> cached = offers.get(offerKey);
         if (cached != null) {
             return cached;
@@ -749,6 +749,7 @@ public final class HeistService implements Listener {
     }
 
     void forgetOffer(final ItemData data, final int affixIndex) {
-        offers.remove(data.uuid() + ":" + affixIndex);
+        final String prefix = data.uuid() + ":" + affixIndex;
+        offers.keySet().removeIf(key -> key.equals(prefix) || key.startsWith(prefix + ":"));
     }
 }
