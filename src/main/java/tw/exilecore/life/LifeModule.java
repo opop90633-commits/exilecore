@@ -251,7 +251,7 @@ public final class LifeModule implements Module, Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true) // 2026-10：別的插件擋掉的拆不給東西
     public void onBreak(final BlockBreakEvent event) {
         if (service == null) {
             return;

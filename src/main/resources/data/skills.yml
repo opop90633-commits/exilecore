@@ -1148,7 +1148,7 @@ skills:
     icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
-    tags: [warcry]
+    tags: [warcry, physical]   # 2026-10-17：會打物理傷害，補上物理（鐵髓這類物理輔助掛得上）
     mechanic: warcry
     warcry:
       radius: 8
@@ -1703,7 +1703,7 @@ skills:
     icon: BLAZE_POWDER
     type: spell
     tier: 3
-    tags: [spell, projectile, fire]
+    tags: [spell, projectile, fire, area]   # 2026-10-17：投射物會爆炸（吃範圍效果），補上範圍
     mechanic: projectile
     projectile: { speed: 1.4, range: 28, size: 0.3, explode: [1.2, 1.5] }   # 2026-10 照 PoE2 改機制（Ember Fusillade）：一次一顆、先懸浮再射
     signature: ember
@@ -2960,7 +2960,7 @@ skills:
     icon: ECHO_SHARD   # 2026-10：原本 SOUL_LANTERN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
-    tags: [minion, chaos]
+    tags: [minion, physical]   # 2026-10-17：召回的怪打的是武器的物理傷害（以前寫混沌，混沌的加成其實吃不到）
     mechanic: summon
     summon: { kind: ZOMBIE, count: 1, max: [2, 3], duration: 0, life: 2.0, damage: 1.0, attack_speed: 1.0, speed: 1.1, reach: 2.2,
               corpse: true, spectre: true, search: 12 }
@@ -2974,7 +2974,7 @@ skills:
     icon: GOLD_NUGGET   # 2026-10：原本 GOLDEN_HELMET（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 5
-    tags: [minion]
+    tags: [minion, physical]   # 2026-10-17：跟其他骷髏一樣標上打的傷害類型
     mechanic: aura
     aura: { reserve: 0, per_minion: [60, 20], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 60 → 20 級 20），付得起幾隻叫幾隻
     summon: { kind: SKELETON, count: 1, max: [1, 2], duration: 0, life: 1.2, damage: 0.2, attack_speed: 0.8, speed: 1.1, reach: 2.0,
@@ -3192,7 +3192,7 @@ skills:
     icon: ECHO_SHARD
     type: spell
     tier: 1
-    tags: [spell, projectile, chaos, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
+    tags: [spell, projectile, chaos]   # 2026-10-17：沒有範圍效果，拿掉範圍（擴散、凝聚掛了沒作用）
     starter: witch
     mechanic: projectile
     projectile: { speed: 0.56, range: 30, size: 0.35 }   # 2026-10 照 PoE2 改機制（Essence Drain）：拿掉腐蝕地面，改成掛在敵人身上的持續傷害
@@ -3783,7 +3783,7 @@ skills:
     icon: PHANTOM_MEMBRANE
     type: attack
     tier: 13
-    tags: [attack, melee, area, strike]
+    tags: [attack, melee, strike]   # 2026-10-17：瞬移打目標，沒有範圍效果，拿掉範圍
     weapons: [quarterstaff]
     mechanic: flicker
     flicker: { range: 12, reach: 3.5, targets: 2 }

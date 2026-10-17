@@ -144,6 +144,7 @@ public final class ChatService {
         online.remove(player);
         replies.remove(player);
         moderation.forget(player);
+        linked.remove(player); // 2026-10：下線清掉貼過的物品複本
     }
 
     /** 別人看到的名字：角色名稱（還沒選角色時是玩家 ID）。 */

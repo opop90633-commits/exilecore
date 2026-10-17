@@ -84,13 +84,61 @@ public final class BountyCommand {
                                     player.sendMessage(plugin.text().prefixed(problem == null
                                             ? "<green>給了稱號 " + MeritShop.tag(plugin.bounties().title(id)) + "<green>（已經戴上；/title 看加成）"
                                             : "<red>" + BountyService.escape(problem)));
-                                }))))
+                                }))
+                                // 2026-10-17：發給別的玩家（例如 /ec bounty title mentor 玩家：新手指導員）
+                                .then(Commands.argument("player", StringArgumentType.word()).suggests(onlineNames(plugin))
+                                        .executes(context -> runAny(plugin, context, admin -> {
+                                            final String id = StringArgumentType.getString(context, "id");
+                                            final Player target = plugin.getServer().getPlayerExact(StringArgumentType.getString(context, "player"));
+                                            if (target == null) {
+                                                admin.sendMessage(plugin.text().prefixed("<red>那個玩家不在線上（要在線才能發）"));
+                                                return;
+                                            }
+                                            final String problem = plugin.bounties().grantTitle(target, id);
+                                            if (problem != null) {
+                                                admin.sendMessage(plugin.text().prefixed("<red>" + BountyService.escape(problem)));
+                                                return;
+                                            }
+                                            final String tag = MeritShop.tag(plugin.bounties().title(id));
+                                            admin.sendMessage(plugin.text().prefixed("<green>給了 " + BountyService.escape(target.getName()) + " 稱號 " + tag));
+                                            target.sendMessage(plugin.text().prefixed("<green>你得到了稱號 " + tag + "<green>（已經戴上；/title 可以換）"));
+                                            plugin.getSLF4JLogger().info("[稱號] {} 發給 {}：{}", admin.getName(), target.getName(), id);
+                                        })))))
                 .then(Commands.literal("untitle")
                         .then(Commands.argument("id", StringArgumentType.word()).suggests(titleIds(plugin))
                                 .executes(context -> run(plugin, context, true, player -> {
                                     final String problem = plugin.bounties().adminRemoveTitle(player, StringArgumentType.getString(context, "id"));
                                     player.sendMessage(plugin.text().prefixed(problem == null ? "<green>拿掉了" : "<red>" + BountyService.escape(problem)));
-                                }))));
+                                }))
+                                .then(Commands.argument("player", StringArgumentType.word()).suggests(onlineNames(plugin))
+                                        .executes(context -> runAny(plugin, context, admin -> {
+                                            final Player target = plugin.getServer().getPlayerExact(StringArgumentType.getString(context, "player"));
+                                            if (target == null) {
+                                                admin.sendMessage(plugin.text().prefixed("<red>那個玩家不在線上（要在線才能拿掉）"));
+                                                return;
+                                            }
+                                            final String id = StringArgumentType.getString(context, "id");
+                                            final String problem = plugin.bounties().adminRemoveTitle(target, id);
+                                            admin.sendMessage(plugin.text().prefixed(problem == null
+                                                    ? "<green>拿掉了 " + BountyService.escape(target.getName()) + " 的稱號 " + BountyService.escape(id)
+                                                    : "<red>" + BountyService.escape(problem)));
+                                            if (problem == null) {
+                                                plugin.getSLF4JLogger().info("[稱號] {} 拿掉 {} 的：{}", admin.getName(), target.getName(), id);
+                                            }
+                                        })))));
+    }
+
+    /** 在線玩家的名字（發稱號用）。 */
+    private static SuggestionProvider<CommandSourceStack> onlineNames(final ExileCore plugin) {
+        return (context, builder) -> {
+            final String remaining = builder.getRemainingLowerCase();
+            for (final Player online : plugin.getServer().getOnlinePlayers()) {
+                if (online.getName().toLowerCase(java.util.Locale.ROOT).startsWith(remaining)) {
+                    builder.suggest(online.getName());
+                }
+            }
+            return builder.buildFuture();
+        };
     }
 
     /** 認得的稱號代號（功勳兌換的，再接每月活動的 event.主題）。 */
@@ -113,7 +161,19 @@ public final class BountyCommand {
         for (final String line : plugin.bounties().adminInfo(player)) {
             player.sendMessage(plugin.text().parse(line));
         }
-        player.sendMessage(plugin.text().parse("<dark_gray>/ec bounty reroll|complete 第幾個|weekly|merits 數量|merits set 數量|title 代號|untitle 代號"));
+        player.sendMessage(plugin.text().parse("<dark_gray>/ec bounty reroll|complete 第幾個|weekly|merits 數量|merits set 數量|title 代號 [玩家]|untitle 代號 [玩家]"));
+    }
+
+    /** 指定玩家的管理指令（2026-10-17）：主控台也能用（不需要管理員自己在線、帳號載入）。 */
+    private static int runAny(final ExileCore plugin, final CommandContext<CommandSourceStack> context,
+                              final Consumer<org.bukkit.command.CommandSender> action) {
+        final org.bukkit.command.CommandSender sender = context.getSource().getSender();
+        if (plugin.bounties() == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>委託模組沒有啟用（看主控台的錯誤訊息）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        action.accept(sender);
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int run(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final boolean admin,

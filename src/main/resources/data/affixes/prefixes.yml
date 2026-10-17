@@ -895,7 +895,7 @@ attack_ele_inc:
   spawn_tags: [bow, melee_1h, spear]
   names: [星芒的, 神匠的, 大師的, 名家的, 精良的, 優質的]
   text: "增加 {value}% 攻擊的元素傷害"
-  chips: [damage, elemental, fire, cold, lightning]   # PoE2 的標籤（IncreasedWeaponElementalDamagePercent）
+  chips: [damage, elemental, fire, cold, lightning, attack]   # PoE2 的標籤（IncreasedWeaponElementalDamagePercent）；2026-10-17 補攻擊
   tiers:
     - { tier: 1, ilvl: 81, weight: 328, value: [87, 100] }
     - { tier: 2, ilvl: 60, weight: 410, value: [73, 86] }
@@ -912,7 +912,7 @@ attack_ele_inc_crossbow:
   spawn_tags: [crossbow, melee_2h, quarterstaff]
   names: [星芒的, 神匠的, 大師的, 名家的, 精良的, 優質的]
   text: "增加 {value}% 攻擊的元素傷害"
-  chips: [damage, elemental, fire, cold, lightning]   # PoE2 的標籤（IncreasedWeaponElementalDamagePercent）
+  chips: [damage, elemental, fire, cold, lightning, attack]   # PoE2 的標籤（IncreasedWeaponElementalDamagePercent）；2026-10-17 補攻擊
   tiers:
     - { tier: 1, ilvl: 81, weight: 328, value: [120, 139] }
     - { tier: 2, ilvl: 60, weight: 410, value: [100, 119] }
@@ -2335,7 +2335,7 @@ spell_phys_inc:
   exclude_tags: [body, boots, helmet, leggings]
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的]
   text: "增加 {value}% 法術物理傷害"
-  chips: [damage, physical]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）
+  chips: [damage, physical, caster]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）；2026-10-17 補法術
   tiers:
     - { tier: 1, ilvl: 60, weight: 328, value: [75, 89] }
     - { tier: 2, ilvl: 46, weight: 410, value: [65, 74] }
@@ -2352,7 +2352,7 @@ spell_phys_inc_wand:
   spawn_tags: [wand]
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的, 鋒利的, 磨光的]
   text: "增加 {value}% 法術物理傷害"
-  chips: [damage, physical]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）
+  chips: [damage, physical, caster]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）；2026-10-17 補法術
   tiers:
     - { tier: 1, ilvl: 81, weight: 210, value: [105, 119] }
     - { tier: 2, ilvl: 70, weight: 262, value: [90, 104] }
@@ -2371,7 +2371,7 @@ spell_phys_inc_staff:
   spawn_tags: [staff]
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的, 鋒利的, 磨光的]
   text: "增加 {value}% 法術物理傷害"
-  chips: [damage, physical]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）
+  chips: [damage, physical, caster]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）；2026-10-17 補法術
   tiers:
     - { tier: 1, ilvl: 81, weight: 210, value: [209, 238] }
     - { tier: 2, ilvl: 70, weight: 262, value: [189, 208] }
@@ -2744,7 +2744,7 @@ trap_inc:
   # 已經洗出來的裝備不受影響
   spawn_tags: [retired]
   names: [爆破手的, 詭雷的, 布雷的, 引信的, 火藥的, 機關的]
-  text: "增加 {value}% 陷阱與榴彈傷害"
+  text: "增加 {value}% 榴彈傷害"   # 2026-10-17：沒有陷阱技能，舊裝備這條以前完全沒作用 → 改成榴彈傷害
   tiers:
     - { tier: 1, ilvl: 68, weight: 50, value: [60, 72] }
     - { tier: 2, ilvl: 55, weight: 100, value: [48, 59] }
@@ -2753,7 +2753,7 @@ trap_inc:
     - { tier: 5, ilvl: 14, weight: 500, value: [16, 25] }
     - { tier: 6, ilvl: 1, weight: 500, value: [8, 15] }
   mods:
-    - { stat: damage, type: INCREASED, value: "{value}", tags: [trap] }
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [grenade] }
     - { stat: damage, type: INCREASED, value: "{value}", tags: [grenade] }
 
 # 混合防禦跟「增加 x% 護甲」不同群組，可以同時出（防具的前綴群組本來只有 6 個，補一個）

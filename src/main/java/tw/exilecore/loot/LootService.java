@@ -158,7 +158,8 @@ public final class LootService {
                 continue;
             }
             final tw.exilecore.gui.SidebarLayout.Item name = sidebarItem(stack, drop, asCurrency);
-            final ItemStack rest = asCurrency != null ? stowCurrency(killer, state, asCurrency, stack) : stow(killer, state, stack);
+            final ItemStack rest = asCurrency != null ? stowCurrency(killer, state, asCurrency, stack)
+                    : drop.isEquipment() && isMap(drop.item()) && stashMap(killer, state, stack) ? null : stow(killer, state, stack);
             if (rest != null && !rest.isEmpty()) {
                 MonsterListener.dropOwned(plugin, location, rest, killer, true);
                 onGround++;
@@ -913,6 +914,22 @@ public final class LootService {
     private boolean isJewel(final tw.exilecore.item.ItemData item) {
         final tw.exilecore.item.ItemBase base = item == null ? null : plugin.items().repository().base(item.base());
         return base != null && base.isJewel();
+    }
+
+    /**
+     * 2026-10：設定開著「星圖直接進倉庫」就把撿到的星圖收進倉庫的地圖頁。
+     * 倉庫沒載入、地圖頁滿了回傳 false（照舊放背包）。
+     */
+    public boolean stashMap(final Player player, final PlayerState state, final ItemStack stack) {
+        if (plugin.stash() == null || !tw.exilecore.character.PlayerSettings.on(state, tw.exilecore.character.PlayerSettings.MAP_TO_STASH)) {
+            return false;
+        }
+        final tw.exilecore.stash.Stash stash = plugin.stash().stash(player).orElse(null);
+        if (stash == null || !stash.depositMap(stack)) {
+            return false;
+        }
+        plugin.players().markDirty(player); // 倉庫跟著角色存檔一起存
+        return true;
     }
 
     private boolean isMap(final tw.exilecore.item.ItemData item) {

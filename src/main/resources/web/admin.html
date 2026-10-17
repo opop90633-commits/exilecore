@@ -363,13 +363,17 @@
       <h2>輸出紀錄</h2>
       <p class="note">每場 Boss（區域、地圖、終局、極境、巔峰、世界 Boss）倒下時，每個打過的人打了多少、從自己第一下到 Boss 倒下幾秒（至少算 3 秒）；
         訓練假人每一段夠長的也記一筆。傷害是真正扣掉的生命（含點燃、召喚物，Boss 的每秒傷害上限之後）。
-        「Boss 平均」＝總傷害 ÷ 總秒數（打得久的場次比重大）。</p>
+        「Boss 平均」＝總傷害 ÷ 總秒數（打得久的場次比重大）。<br>
+        假人的數字都<b>換算成打「訓練假人・一般」（白怪靶）</b>：打別隻的照 dummies.yml 的 boss_factor 比例換算（滑鼠移到數字上看原始數字與打哪一隻）。
+        「假人最高」照上面選的範圍算：7 天、30 天內的最高；選「全部」是有史以來的最高（不會因為紀錄太多被洗掉）。</p>
       <div class="filters">
         <label>範圍 <select id="dps-days"><option value="1">今天（24 小時）</option><option value="7" selected>最近 7 天</option>
           <option value="30">最近 30 天</option><option value="0">全部</option></select></label>
         <label>Boss 種類 <select id="dps-where"><option value="">全部</option><option value="世界 Boss">世界 Boss</option>
           <option value="map">地圖（含終局）</option><option value="極境">極境</option><option value="區域 Boss">區域 Boss</option></select></label>
+        <label>地點 <select id="dps-place"><option value="">全部</option></select></label>
         <input type="text" id="dps-name" placeholder="找玩家或角色" aria-label="找玩家或角色" size="16">
+        <label>每一筆 <select id="dps-view"><option value="best" selected>每個人最高</option><option value="all">全部紀錄</option></select></label>
         <button type="button" id="dps-refresh">重新整理</button>
       </div>
       <h3>每個人（點標題排序）</h3>
@@ -377,10 +381,10 @@
         <thead><tr><th data-sort="player">玩家</th><th data-sort="character">角色</th><th data-sort="className">職業</th>
           <th class="num" data-sort="level">等級</th><th class="num" data-sort="fights">Boss 場數</th>
           <th class="num" data-sort="avg">Boss 平均每秒</th><th class="num" data-sort="best">Boss 最高每秒</th>
-          <th class="num" data-sort="dummyLast">假人最近</th><th class="num" data-sort="dummyBest">假人最高</th></tr></thead>
+          <th class="num" data-sort="dummyLast">假人最近（換算一般靶）</th><th class="num" data-sort="dummyBest">假人最高（換算一般靶）</th></tr></thead>
         <tbody></tbody>
       </table></div>
-      <h3>每一筆（點標題排序；預設新的在前）</h3>
+      <h3>紀錄（點標題排序；預設每個人最高的那筆、高的在前：Boss、假人各一筆，假人照換算一般靶比）</h3>
       <div class="scroll"><table id="dps-rows">
         <thead><tr><th data-sort="at">時間</th><th data-sort="kind">種類</th><th data-sort="player">玩家</th><th data-sort="character">角色</th>
           <th class="num" data-sort="level">等級</th><th data-sort="target">對象</th><th data-sort="where">地點</th>
@@ -1520,14 +1524,18 @@
     var where = $('dps-where').value;
     if (where === 'map' && (row.kind !== 'boss' || row.where === '世界 Boss' || row.where === '區域 Boss' || row.where.indexOf('極境') >= 0)) { return false; }
     if (where && where !== 'map' && (row.kind !== 'boss' || row.where.indexOf(where) < 0)) { return false; }
+    // 2026-10-17：指定地點（例如萬界之巔、某張地圖 T16、訓練假人）
+    var place = $('dps-place').value;
+    if (place && row.where !== place) { return false; }
     var q = $('dps-name').value.trim().toLowerCase();
     return !q || (row.player || '').toLowerCase().indexOf(q) >= 0 || (row.character || '').toLowerCase().indexOf(q) >= 0;
   }
   // 2026-10-16：兩張表都能點標題排序（再點一次反過來）；文字照中文排，數字大的在前
-  var dpsSort = { players: { key: 'avg', dir: -1 }, rows: { key: 'at', dir: -1 } };
+  // 2026-10-17：預設照最高排（假人最高換算一般靶；紀錄只列每個人最高的那筆）
+  var dpsSort = { players: { key: 'dummyBest', dir: -1 }, rows: { key: 'dps', dir: -1 } };
   function dpsValue(o, key) {
     if (key === 'avg') { return o.sec > 0 ? o.dmg / o.sec : 0; }
-    if (key === 'dps') { return o.seconds > 0 ? o.damage / o.seconds : 0; }
+    if (key === 'dps') { return o.kind !== 'boss' && o.normal !== undefined ? o.normal : o.seconds > 0 ? o.damage / o.seconds : 0; }
     if (key === 'dummyLast') { return o.dummyLast === null ? -1 : o.dummyLast; }
     if (key === 'players' || key === 'share') { return o.kind === 'boss' ? Number(o[key]) || 0 : -1; }
     var v = o[key];
@@ -1574,11 +1582,28 @@
     // 每個人：照篩過的紀錄重算（Boss 平均 = 總傷害 ÷ 總秒數）
     var by = {};
     shown.forEach(function (r) {
+      if (r.kind !== 'boss') { return; } // 假人的欄位用伺服器算好的（整個範圍、換算成一般靶，不受 2000 筆的限制）
       var p = by[r.uuid] || (by[r.uuid] = { player: r.player, character: r.character, className: r.className, level: r.level,
         dmg: 0, sec: 0, fights: 0, best: 0, dummyLast: null, dummyBest: 0 });
       var dps = r.seconds > 0 ? r.damage / r.seconds : 0;
-      if (r.kind === 'boss') { p.dmg += r.damage; p.sec += r.seconds; p.fights++; p.best = Math.max(p.best, dps); }
-      else { if (p.dummyLast === null) { p.dummyLast = dps; } p.dummyBest = Math.max(p.dummyBest, dps); }
+      p.dmg += r.damage; p.sec += r.seconds; p.fights++; p.best = Math.max(p.best, dps);
+    });
+    // 2026-10：假人最近、最高（換算成一般靶）
+    var q = $('dps-name').value.trim().toLowerCase();
+    (dpsData.players || []).forEach(function (s) {
+      if (s.dummyBest === undefined && s.dummyLast === undefined) { return; }
+      if (q && (s.player || '').toLowerCase().indexOf(q) < 0 && (s.character || '').toLowerCase().indexOf(q) < 0
+          && (s.dummyBestCharacter || '').toLowerCase().indexOf(q) < 0) { return; }
+      var p = by[s.uuid];
+      if (!p) {
+        if ($('dps-where').value || $('dps-place').value) { return; } // 選了 Boss 種類或地點：只打假人的人不列
+        p = by[s.uuid] = { player: s.player, character: s.character, className: s.className, level: s.level,
+          dmg: 0, sec: 0, fights: 0, best: 0, dummyLast: null, dummyBest: 0 };
+      }
+      p.dummyLast = s.dummyLast === undefined ? null : s.dummyLast;
+      p.dummyBest = s.dummyBest || 0;
+      p.dummyBestTitle = s.dummyBest ? '原始每秒 ' + wan(s.dummyBestRaw) + '（' + (s.dummyBestTarget || '') + '）'
+        + (s.dummyBestCharacter ? '・角色 ' + s.dummyBestCharacter : '') + (s.dummyBestAt ? '・' + time(s.dummyBestAt) : '') : '';
     });
     var players = Object.keys(by).map(function (k) { return by[k]; });
     players.sort(dpsCompare('players'));
@@ -1587,22 +1612,47 @@
       pb.appendChild(h('tr', null, h('td', { text: p.player }), h('td', { text: p.character || '' }), h('td', { text: p.className || '' }),
         h('td', { cls: 'num', text: p.level || '' }), h('td', { cls: 'num', text: p.fights || '' }),
         h('td', { cls: 'num', text: p.sec > 0 ? wan(p.dmg / p.sec) : '' }), h('td', { cls: 'num', text: p.best ? wan(p.best) : '' }),
-        h('td', { cls: 'num', text: p.dummyLast !== null ? wan(p.dummyLast) : '' }), h('td', { cls: 'num', text: p.dummyBest ? wan(p.dummyBest) : '' })));
+        h('td', { cls: 'num', text: p.dummyLast !== null ? wan(p.dummyLast) : '' }),
+        h('td', { cls: 'num', text: p.dummyBest ? wan(p.dummyBest) : '', title: p.dummyBestTitle || '' })));
     });
     var rb = clear($('dps-rows').querySelector('tbody'));
-    shown.slice().sort(dpsCompare('rows')).slice(0, 500).forEach(function (r) {
+    var listed = shown;
+    if ($('dps-view').value === 'best') {
+      // 每個人 Boss、假人各留最高的一筆（假人照換算一般靶比）
+      var bestBy = {};
+      shown.forEach(function (r) {
+        var k = r.uuid + '|' + r.kind;
+        if (!bestBy[k] || dpsValue(r, 'dps') > dpsValue(bestBy[k], 'dps')) { bestBy[k] = r; }
+      });
+      listed = Object.keys(bestBy).map(function (k) { return bestBy[k]; });
+    }
+    listed.slice().sort(dpsCompare('rows')).slice(0, 500).forEach(function (r) {
       rb.appendChild(h('tr', null, h('td', { cls: 'time', text: time(r.at) }), h('td', { text: r.kind === 'boss' ? 'Boss' : '假人' }),
         h('td', { text: r.player }), h('td', { text: r.character || '' }), h('td', { cls: 'num', text: r.level || '' }),
         h('td', { text: r.target || '' }), h('td', { text: r.where || '' }), h('td', { cls: 'num', text: r.kind === 'boss' ? r.players : '' }),
         h('td', { cls: 'num', text: wan(r.damage) }), h('td', { cls: 'num', text: Number(r.seconds).toFixed(1) }),
-        h('td', { cls: 'num', text: wan(r.seconds > 0 ? r.damage / r.seconds : 0) }),
+        h('td', { cls: 'num', text: wan(r.seconds > 0 ? r.damage / r.seconds : 0)
+          + (r.kind !== 'boss' && r.normal !== undefined && Math.abs(r.normal - (r.seconds > 0 ? r.damage / r.seconds : 0)) >= 1 ? '（一般靶 ' + wan(r.normal) + '）' : '') }),
         h('td', { cls: 'num', text: r.kind === 'boss' ? Math.round(r.share * 100) + '%' : '' })));
     });
     $('dps-empty').hidden = shown.length > 0;
   }
+  /** 地點的選單：照這次抓到的紀錄裡出現過的地點（Boss 的地圖名稱、世界 Boss、區域 Boss、訓練假人），選過的留著。 */
+  function fillDpsPlaces() {
+    var select = $('dps-place');
+    var keep = select.value;
+    var seen = {};
+    (dpsData.rows || []).forEach(function (r) { if (r.where) { seen[r.where] = (seen[r.where] || 0) + 1; } });
+    var places = Object.keys(seen).sort(function (a, b) { return a.localeCompare(b, 'zh-Hant'); });
+    clear(select);
+    select.appendChild(h('option', { value: '', text: '全部' }));
+    places.forEach(function (w) { select.appendChild(h('option', { value: w, text: w + '（' + seen[w] + '）' })); });
+    if (keep && seen[keep]) { select.value = keep; }
+  }
   function loadDps() {
     return api('GET', 'admin/api/dps?days=' + encodeURIComponent($('dps-days').value)).then(function (json) {
       dpsData = json;
+      fillDpsPlaces();
       renderDps();
     }).catch(fail);
   }
@@ -1647,7 +1697,7 @@
       b.setAttribute('aria-selected', b.getAttribute('data-tab') === tab ? 'true' : 'false');
     });
     ['give', 'records', 'orders', 'settings', 'players', 'guilds', 'trace', 'dps', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
-    if (tab === 'dps') { loadDps(); }
+    if (tab === 'dps' && !dpsData) { loadDps(); } // 2026-10-17：切回來不重抓（要新的按「重新整理」）
     if (tab === 'records') { loadRecords(); }
     if (tab === 'orders') { loadOrders(); }
     if (tab === 'guilds') { loadGuilds(); }
@@ -1697,6 +1747,8 @@
   $('dps-refresh').addEventListener('click', loadDps);
   $('dps-days').addEventListener('change', loadDps);
   $('dps-where').addEventListener('change', renderDps);
+  $('dps-view').addEventListener('change', renderDps);
+  $('dps-place').addEventListener('change', renderDps);
   $('dps-name').addEventListener('input', renderDps);
   $('refresh').addEventListener('click', function () { load(false, 'safe'); var tab = document.querySelector('.tabs button[aria-selected="true"]').getAttribute('data-tab'); if (tab === 'records') { loadRecords(); } if (tab === 'orders') { loadOrders(); } if (tab === 'log') { loadLog(); } });
   $('logout').addEventListener('click', function () {

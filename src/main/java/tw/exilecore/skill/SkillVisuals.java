@@ -1130,6 +1130,25 @@ final class SkillVisuals {
     }
 
     /** 屍體的記號（有骸爆、喚屍的人才看得到附近有沒有材料）。 */
+    /** 屍體記號的顏色（2026-10-17：更明顯）：綠灰、快消失時變暗紅。 */
+    private static final Particle.DustOptions CORPSE = new Particle.DustOptions(Color.fromRGB(0x9BE36A), 1.5f);
+    private static final Particle.DustOptions CORPSE_FADING = new Particle.DustOptions(Color.fromRGB(0xA0382E), 1.5f);
+
+    /**
+     * 屍體記號（2026-10-17）：只畫給用屍體的人看（不吵到別人）——地上一圈亮綠點、中間一縷靈魂往上飄；
+     * 快消失（剩 3 秒內）圈變暗紅。
+     */
+    void corpseMarker(final org.bukkit.entity.Player viewer, final Location at, final boolean fading) {
+        final Particle.DustOptions color = fading ? CORPSE_FADING : CORPSE;
+        for (int i = 0; i < 8; i++) {
+            final double angle = Math.PI * 2 * i / 8;
+            viewer.spawnParticle(Particle.DUST, at.getX() + Math.cos(angle) * 0.5, at.getY() + 0.1, at.getZ() + Math.sin(angle) * 0.5,
+                    1, 0, 0, 0, 0, color);
+        }
+        viewer.spawnParticle(Particle.SOUL, at.getX(), at.getY() + 0.3, at.getZ(), 1, 0.1, 0.1, 0.1, 0.01);
+        viewer.spawnParticle(Particle.ASH, at.getX(), at.getY() + 0.6, at.getZ(), 2, 0.2, 0.3, 0.2, 0.01);
+    }
+
     void corpseMarker(final Location at) {
         tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.ASH, at.clone().add(0, 0.5, 0), 3, 0.25, 0.3, 0.25, 0.01);
         tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.DUST, at.clone().add(0, 0.2, 0), 1, 0.2, 0.05, 0.2, 0, ROT);

@@ -45,6 +45,8 @@ final class MapWorks {
         boolean ready;
         boolean loading;
         boolean failed;
+        /** 載入區塊失敗後重試了幾次（2026-10-17）。 */
+        int retries;
         final List<Chunk> chunks = new ArrayList<>();
 
         Job(final World world, final int minX, final int minZ, final int maxX, final int maxZ, final Runnable done) {
@@ -83,6 +85,12 @@ final class MapWorks {
     /** 蓋地圖：done 在全部放完之後（主執行緒）呼叫。 */
     void build(final World world, final BufferSink blocks, final int minX, final int minZ, final int maxX, final int maxZ, final Runnable done) {
         blocks.compact();
+        buildCompacted(world, blocks, minX, minZ, maxX, maxZ, done);
+    }
+
+    /** 蓋地圖：blocks 已經 compact 過（2026-10：在背景執行緒做好，主執行緒只排工作）。 */
+    void buildCompacted(final World world, final BufferSink blocks, final int minX, final int minZ, final int maxX, final int maxZ,
+                        final Runnable done) {
         jobs.add(new BuildJob(world, blocks, minX, minZ, maxX, maxZ, done));
     }
 
@@ -146,6 +154,9 @@ final class MapWorks {
         }
     }
 
+    /** 載入區塊失敗最多重試幾次。 */
+    private static final int MAX_LOAD_RETRIES = 3;
+
     private void load(final Job job) {
         job.loading = true;
         final List<CompletableFuture<Chunk>> futures = new ArrayList<>();
@@ -157,9 +168,17 @@ final class MapWorks {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0])).whenComplete((ignored, error) ->
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     if (error != null) {
-                        logger.error("地圖世界載入區塊失敗", error);
+                        // 2026-10-17：載入失敗重試（最多 3 次，每次隔 1 秒）；以前標了失敗就照樣施工，沒載入的區塊會在主執行緒同步載入（卡頓）
+                        if (job.retries < MAX_LOAD_RETRIES) {
+                            job.retries++;
+                            logger.warn("地圖世界載入區塊失敗，{} 秒後重試（第 {} 次）：{}", 1, job.retries, error.toString());
+                            plugin.getServer().getScheduler().runTaskLater(plugin, () -> job.loading = false, 20);
+                            return;
+                        }
+                        logger.error("地圖世界載入區塊失敗（重試 {} 次都不行，照樣施工）", MAX_LOAD_RETRIES, error);
                         job.failed = true;
                     }
+                    job.chunks.clear();
                     for (final CompletableFuture<Chunk> future : futures) {
                         if (!future.isCompletedExceptionally()) {
                             final Chunk chunk = future.join();

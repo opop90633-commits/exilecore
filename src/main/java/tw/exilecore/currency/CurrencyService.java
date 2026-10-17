@@ -122,9 +122,12 @@ public final class CurrencyService {
                 lore.add(ItemRenderer.line("<dark_gray><i>" + ItemRenderer.escape(type.flavor())));
             }
             lore.add(Component.empty());
-            lore.add(ItemRenderer.line(type.isSkillCurrency()
-                    ? "<dark_gray>打開技能面板（/skills），拿在游標上點技能來使用"
-                    : "<dark_gray>拿在游標上點擊裝備來使用"));
+            // 2026-10-17：不改物品的（碎片、鑰匙、入場券、活動素材…）不寫「點擊裝備來使用」
+            if (type.isSkillCurrency()) {
+                lore.add(ItemRenderer.line("<dark_gray>打開技能面板（/skills），拿在游標上點技能來使用"));
+            } else if (type.operation() != CurrencyOperation.NONE) {
+                lore.add(ItemRenderer.line("<dark_gray>拿在游標上點擊裝備來使用"));
+            }
             lore.add(ItemRenderer.line("<dark_gray>通貨・堆疊上限 " + type.stack()));
             meta.lore(lore);
             meta.setMaxStackSize(type.stack());

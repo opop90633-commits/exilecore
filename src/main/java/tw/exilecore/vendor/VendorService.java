@@ -254,7 +254,20 @@ public final class VendorService {
      * 只有能賭的（劇情期間用的）→ unique；沒有 → 0。
      */
     double uniqueWeight(final List<UniqueItem> uniques) {
-        return config().gambleUniqueWeight(!uniques.isEmpty(), bossPool(uniques));
+        return config().gambleUniqueWeight(!uniques.isEmpty(), bossRate(uniques));
+    }
+
+    /** 這個基底賭傳奇用 boss_unique 的權重：有地圖 Boss 也會掉的，或寫在 economy.yml 的 gamble.boss_rate_uniques（2026-10-17）。 */
+    boolean bossRate(final List<UniqueItem> uniques) {
+        if (bossPool(uniques)) {
+            return true;
+        }
+        for (final UniqueItem unique : uniques) {
+            if (config().gambleBossRate(unique.id())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 能賭到的傳奇裡有地圖 Boss 也會掉的（用 boss_unique 的權重）。 */

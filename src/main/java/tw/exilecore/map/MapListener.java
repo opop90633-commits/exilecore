@@ -68,7 +68,16 @@ final class MapListener implements Listener {
     public void onJoin(final PlayerJoinEvent event) {
         final Player player = event.getPlayer();
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (!player.isOnline() || service.world() == null || !player.getWorld().equals(service.world())
+            if (!player.isOnline()) {
+                return;
+            }
+            // 2026-10-17：上次觀戰時伺服器關掉（沒還原模式）：改回原本的模式、回營地
+            if (service.spectators().restoreStale(player)) {
+                service.sendToCamp(player);
+                player.sendMessage(plugin.text().prefixed("<gray>上次觀戰到一半伺服器重開了，回到營地"));
+                return;
+            }
+            if (service.world() == null || !player.getWorld().equals(service.world())
                     || player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
                 return;
             }
@@ -76,6 +85,10 @@ final class MapListener implements Listener {
             if (!service.belongs(player, instance)) {
                 service.sendToCamp(player);
                 player.sendMessage(plugin.text().prefixed("<gray>你離線的時候那張地圖關閉了，回到營地"));
+            } else if (instance.usesAttempts()) {
+                // 2026-10-17：終局、極境、巔峰、金庫之主：下線算離開這一門（以前重登可以留在裡面、不扣門繼續打）
+                service.sendToCamp(player);
+                player.sendMessage(plugin.text().prefixed("<gray>下線算離開這一門，回到營地（門還亮著就能走進去挑戰下一門）"));
             }
         }, 5);
     }
@@ -138,6 +151,15 @@ final class MapListener implements Listener {
         }
         final MapInstance instance = service.instanceOf(living);
         final LivingEntity current = instance == null ? null : instance.boss();
+        // 2026-10-17：Boss 已經打倒了，又有一隻帶 Boss 標記的回來（舊區塊載入）：一樣移除
+        if (instance != null && instance.bossKilled() && (current == null || !current.getUniqueId().equals(living.getUniqueId()))) {
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                if (living.isValid()) {
+                    living.remove();
+                }
+            });
+            return;
+        }
         if (current == null || !current.isValid() || current.getUniqueId().equals(living.getUniqueId())) {
             return;
         }

@@ -1323,6 +1323,7 @@ final class AuraService implements Listener {
 
     /** 登出、換角色（進度裡的紀錄留著，下次載入會開回來）。 */
     void forget(final UUID player) {
+        oppressed.keySet().removeIf(key -> key.startsWith(player + ":")); // 2026-10-17：以前只增不減
         active.remove(player);
         furies.remove(player);
         dropDecals(player);

@@ -668,7 +668,7 @@ public final class WorldEventService {
         if (follow != null && follow.getBaseValue() < 48) {
             follow.setBaseValue(48);
         }
-        attachSkills(boss, def.name(), def.skills(), def.level());
+        attachSkills(boss, def.name(), def.skills(), def.level(), "world");
         for (final Player player : nearPlayers(event, eventRadius() + 24)) {
             player.showTitle(Title.title(plugin.text().parse("<#ffb347>" + ItemRenderer.escape(def.name())),
                     plugin.text().parse("<gray>世界 Boss"), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
@@ -867,7 +867,7 @@ public final class WorldEventService {
         tickCommander(event, nearPlayers(event, eventRadius() + 24)); // 一出來就照現在的人數
         plugin.getSLF4JLogger().info("[Boss 紀錄] 不定時活動：{} Lv.{} 出現：生命 {}（算 {} 人，開始後 {} 秒）", def.name(), event.level,
                 number(event.commanderLife), event.commanderPlayers, seconds(event));
-        attachSkills(commander, def.name(), def.skills(), event.level);
+        attachSkills(commander, def.name(), def.skills(), event.level, "invasion");
         for (final Player player : nearPlayers(event, eventRadius() + 24)) {
             player.showTitle(Title.title(plugin.text().parse("<#ff7a3d>" + ItemRenderer.escape(def.name())),
                     plugin.text().parse("<gray>最後一波：打倒牠就完成了"), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2000), Duration.ofMillis(500))));
@@ -909,7 +909,8 @@ public final class WorldEventService {
         return entity.getPersistentDataContainer().get(key, PersistentDataType.STRING);
     }
 
-    private void attachSkills(final LivingEntity boss, final String name, final List<tw.exilecore.skill.BossSkillUse> skills, final int level) {
+    private void attachSkills(final LivingEntity boss, final String name, final List<tw.exilecore.skill.BossSkillUse> skills, final int level,
+                              final String tempoKind) {
         if (plugin.skills() == null || skills.isEmpty()) {
             return;
         }
@@ -926,7 +927,7 @@ public final class WorldEventService {
 
             @Override
             public String tempoKind() {
-                return "world"; // 2026-10：出招節奏照 boss_skills.yml 的 settings.tempo.world
+                return tempoKind; // 出招節奏照 boss_skills.yml 的 settings.tempo（世界 Boss：world；入侵統帥：invasion）
             }
 
             @Override
@@ -1059,7 +1060,14 @@ public final class WorldEventService {
         int left = amount;
         while (left > 0) {
             final int stack = Math.min(left, Math.max(1, type.stack()));
-            give(player, plugin.currencies().create(type, stack));
+            final ItemStack item = plugin.currencies().create(type, stack);
+            if (plugin.loot() != null) {
+                // 2026-10：跟打怪撿到的通貨一樣先進通貨袋（滿了才放背包、隨身背包）
+                final tw.exilecore.economy.Wallet wallet = plugin.economy().wallet();
+                wallet.dropFor(player, plugin.loot().stowCurrency(player, plugin.players().get(player), type, item));
+            } else {
+                give(player, item);
+            }
             left -= stack;
         }
         player.sendActionBar(plugin.text().parse("<#ffd060>+" + amount + " " + ItemRenderer.escape(type.name())));

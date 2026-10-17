@@ -94,7 +94,10 @@ public final class AffixChips {
             return;
         }
         if (lower.startsWith("local.")) {
-            chips.add(Chip.ATTACK); // 武器自己的攻速、暴擊
+            // 武器自己的攻速、暴擊。2026-10-17：「這件物品上揭露詞綴的幅度」不是武器屬性，不標攻擊
+            if (!lower.startsWith("local.unveiled")) {
+                chips.add(Chip.ATTACK);
+            }
             lower = lower.substring("local.".length()).replace("attack_speed", "attack.speed").replace("crit_base", "crit");
         }
         if (lower.startsWith("daze") || lower.startsWith("physical.reduction")) {
@@ -115,6 +118,20 @@ public final class AffixChips {
                 case "projectile" -> chips.add(Chip.PROJECTILE);
                 case "curse" -> chips.add(Chip.CURSE);
                 case "aura" -> chips.add(Chip.AURA);
+                // 2026-10-17：技能類的標籤也要顯示（以前「圖騰傷害」只顯示傷害、「戰吼冷卻」整條沒有標籤）
+                case "melee" -> chips.add(Chip.MELEE);
+                case "strike" -> chips.add(Chip.STRIKE);
+                case "slam" -> chips.add(Chip.SLAM);
+                case "area" -> chips.add(Chip.AREA);
+                case "totem" -> chips.add(Chip.TOTEM);
+                case "warcry" -> chips.add(Chip.WARCRY);
+                case "mark" -> chips.add(Chip.MARK);
+                case "herald" -> chips.add(Chip.HERALD);
+                case "grenade" -> chips.add(Chip.GRENADE);
+                case "shapeshift" -> chips.add(Chip.SHAPESHIFT);
+                case "bear" -> chips.addAll(List.of(Chip.SHAPESHIFT, Chip.BEAR));
+                case "werewolf" -> chips.addAll(List.of(Chip.SHAPESHIFT, Chip.WEREWOLF));
+                case "wyvern" -> chips.addAll(List.of(Chip.SHAPESHIFT, Chip.WYVERN));
                 default -> {
                 }
             }
@@ -142,6 +159,11 @@ public final class AffixChips {
             }
         } else if (stat.startsWith("leech")) {
             chips.add(stat.contains("mana") ? Chip.MANA : Chip.LIFE);
+            if (stat.contains("spell")) {
+                chips.add(Chip.CASTER); // 2026-10-17：「法術傷害偷取」
+            }
+        } else if (stat.startsWith("penetration")) {
+            chips.add(Chip.DAMAGE); // 2026-10-17：穿透（珠寶手寫的都有標傷害）
         } else if (stat.startsWith("aura.reservation")) {
             chips.add(Chip.SPIRIT);
         } else if (stat.startsWith("thorns")) {
@@ -190,6 +212,13 @@ public final class AffixChips {
             chips.add(Chip.MINION);
         } else if (stat.startsWith("projectile")) {
             chips.add(Chip.PROJECTILE);
+        }
+        // 2026-10-17：屬性名稱裡帶召喚物（藥劑的「召喚物也回復」）、對被詛咒的敵人
+        if (stat.contains("minion")) {
+            chips.add(Chip.MINION);
+        }
+        if (stat.contains("cursed")) {
+            chips.add(Chip.CURSE);
         }
         if (stat.startsWith("ignite") || stat.startsWith("chill") || stat.startsWith("freeze") || stat.startsWith("shock")
                 || stat.startsWith("bleed") || stat.startsWith("poison") || stat.startsWith("stun") || stat.startsWith("ailment")

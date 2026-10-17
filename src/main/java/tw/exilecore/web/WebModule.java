@@ -39,6 +39,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class WebModule implements Module, Listener {
 
+    /** 角色頁同時最多幾個資料庫查詢（2026-10）。 */
+    private final java.util.concurrent.Semaphore buildQueries = new java.util.concurrent.Semaphore(4);
+
     /** 資源包的代號（固定：重送時取代同一個，不會疊好幾份）。 */
     private static final UUID PACK_ID = UUID.nameUUIDFromBytes("exilecore-ui-pack".getBytes(StandardCharsets.UTF_8));
 
@@ -220,7 +223,7 @@ public final class WebModule implements Module, Listener {
         // 市場報告：全服通貨與金幣的產出、消耗、存量、參考價值（只有加總，沒有個人資料）；關掉時整頁 404
         server.route("/economy", path -> economyEnabled ? WebServer.Response.of("text/html; charset=utf-8", economyPage) : null);
         server.route("/economy/", path -> economyEnabled ? WebServer.Response.redirect("../economy") : null);
-        server.route("/economy/data.json", path -> economyEnabled ? new WebServer.Response(200, "application/json; charset=utf-8",
+        server.route("/economy/data.json", path -> economyEnabled && plugin.economy() != null ? new WebServer.Response(200, "application/json; charset=utf-8",
                 plugin.economy().reports().webJson(), java.util.Map.of("Cache-Control", "no-cache")) : null);
         // 排行榜：角色名稱、職業、等級、地圖、死亡（沒有帳號以外的個人資料）
         server.route("/ladder", path -> plugin.ladder() == null ? null : WebServer.Response.of("text/html; charset=utf-8", ladderPage));
@@ -255,20 +258,34 @@ public final class WebModule implements Module, Listener {
         server.route("/builds", path -> profiles == null ? null : WebServer.Response.of("text/html; charset=utf-8", buildsPage));
         server.route("/builds/", path -> profiles == null ? null : WebServer.Response.redirect("../builds"));
         server.route("/builds/list.json", path -> {
+            if (profiles == null) {
+                return null;
+            }
+            // 2026-10：同時最多幾個查資料庫（角色頁沒有登入、誰都能打：以前一直打會把遊戲存檔的資料庫排隊塞爆）
+            if (!buildQueries.tryAcquire()) {
+                return WebServer.Response.text(503, "查詢的人太多了，稍後再試");
+            }
             try {
-                return profiles == null ? null : new WebServer.Response(200, "application/json; charset=utf-8", profiles.listJson(),
+                return new WebServer.Response(200, "application/json; charset=utf-8", profiles.listJson(),
                         java.util.Map.of("Cache-Control", "no-cache"));
             } catch (final Exception e) {
                 return WebServer.Response.text(503, "資料庫忙碌中，稍後再試");
+            } finally {
+                buildQueries.release();
             }
         });
         server.endpoint("/builds/character.json", request -> {
+            if (!buildQueries.tryAcquire()) {
+                return WebServer.Response.text(503, "查詢的人太多了，稍後再試");
+            }
             try {
                 final byte[] body = profiles == null ? null : profiles.characterJson(request.param("name"), request.param("key"));
                 return body == null ? WebServer.Response.text(404, "沒有這個角色（或沒有公開）")
                         : new WebServer.Response(200, "application/json; charset=utf-8", body, java.util.Map.of("Cache-Control", "no-cache"));
             } catch (final Exception e) {
                 return WebServer.Response.text(503, "資料庫忙碌中，稍後再試");
+            } finally {
+                buildQueries.release();
             }
         }, "GET");
         server.endpoint("/builds/icon.png", request -> {

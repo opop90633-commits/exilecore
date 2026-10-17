@@ -70,7 +70,7 @@ class SupportHitRulesTest {
         assertNull(support("minion_damage").refusal(skill("raise_zombie")), "minion 標籤的給召喚物");
         assertNull(support("clarity").refusal(skill("frost_aegis")), "精魂輔助");
         assertNull(support("heightened_curse").refusal(skill("vulnerability_curse")));
-        assertNull(support("warcry_power").refusal(skill("fortifying_cry")));
+        assertNull(support("warcry_power").refusal(skill("seismic_cry")), "震地戰吼會強化攻擊");
         // 2026-10：好處是傷害、代價是範圍／冷卻／持續／施法速度的輔助，掛在不會造成傷害的技能上只剩代價：不行
         final String reason = "不會造成傷害的技能不行";
         assertEquals(reason, support("burst").refusal(skill("hunters_mark")), "爆發：傷害吃不到，只剩冷卻變久");
@@ -123,5 +123,39 @@ class SupportHitRulesTest {
         assertTrue(support("added_fire").supportsText(config.all()).contains("不會造成傷害的技能除外"));
         assertFalse(support("life_leech").supportsText(config.all()).contains("不會造成傷害"), "只要攻擊的不用寫");
         assertFalse(support("increased_area").supportsText(config.all()).contains("不會造成傷害"));
+    }
+
+    /** 2026-10-17 標籤整理：掛得上卻沒作用的輔助擋掉、技能標籤補齊。 */
+    @Test
+    void tagAuditRules() {
+        assertEquals("要會強化攻擊的戰吼", support("warcry_power").refusal(skill("fortifying_cry")));
+        assertEquals("要會強化攻擊的戰吼", support("enraged_warcry").refusal(skill("war_banner")));
+        assertEquals("要原本只打一個目標的打擊技能", support("additional_strike").refusal(skill("lunge")));
+        assertEquals("要原本只打一個目標的打擊技能", support("additional_strike").refusal(skill("tempest_flurry")));
+        assertNull(support("additional_strike").refusal(skill(firstSingleStrike())));
+        assertEquals("要打擊技能（衝過去、扇形的不行）", support("shattering_strike").refusal(skill("disengage")));
+        assertEquals("本身會蓄力的技能不行", support("unleash").refusal(skill("flame_stream")));
+        assertEquals("本身會蓄力的技能不行", support("hit_and_run").refusal(skill("charged_shot")));
+        assertEquals("遠程技能不行", support("danse_macabre").refusal(skill("skeletal_archers")));
+        assertTrue(skill("meta_crit").tags().contains(tw.exilecore.stats.Tags.AURA), "引星維持算光環（精魂輔助掛得上）");
+        assertFalse(skill("summon_mount").tags().contains(tw.exilecore.stats.Tags.TRAVEL), "坐騎不算突進");
+        assertTrue(skill("lunge").tags().contains(tw.exilecore.stats.Tags.TRAVEL), "突刺還是突進");
+        assertTrue(skill("bramble_arrow").tags().contains(tw.exilecore.stats.Tags.PHYSICAL), "剩 70% 物理");
+        assertTrue(skill("lightning_arrow").tags().contains(tw.exilecore.stats.Tags.PHYSICAL), "剩 50% 物理");
+        assertFalse(skill("prismatic_strike").tags().contains(tw.exilecore.stats.Tags.PHYSICAL), "隨機元素不算");
+        assertTrue(skill("seismic_cry").tags().contains(tw.exilecore.stats.Tags.PHYSICAL));
+        assertTrue(skill("ember_volley").tags().contains(tw.exilecore.stats.Tags.AREA));
+        assertFalse(skill("essence_drain").tags().contains(tw.exilecore.stats.Tags.AREA));
+        assertFalse(skill("flicker_strike").tags().contains(tw.exilecore.stats.Tags.AREA));
+    }
+
+    private static String firstSingleStrike() {
+        for (final SkillDefinition s : config.all()) {
+            if (!s.hidden() && s.isAttack() && s.mechanic() == Mechanic.STRIKE && s.params().targets() == 1
+                    && s.tags().contains(tw.exilecore.stats.Tags.STRIKE) && !s.tags().contains(tw.exilecore.stats.Tags.TOTEM)) {
+                return s.id();
+            }
+        }
+        throw new AssertionError("沒有單體打擊技能");
     }
 }

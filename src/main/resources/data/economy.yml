@@ -187,6 +187,8 @@ gamble:
     base: 100
     per_level: 25
   rarity_weights: { magic: 55, rare: 43, unique: 2, boss_unique: 0.65 }
+  # 只能賭、但照 boss_unique 的機率出的傳奇（2026-10-17；一次約 0.66%）：uniques.yml 的代號
+  boss_rate_uniques: [bonewalker]
 
 # 補給（商人的「補給」分頁）：用金幣買藥劑與未切割寶石，價格固定、跟著劇情進度解鎖（PoE2 的商人也收金幣）。
 # 金幣不能交易，老玩家再有錢也抬不了這裡的價格；買到的東西跟掉落的一樣，可以交易。

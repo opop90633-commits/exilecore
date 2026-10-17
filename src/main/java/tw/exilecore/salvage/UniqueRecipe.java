@@ -13,19 +13,22 @@ import java.util.Locale;
 /**
  * 傳奇三換一（拆解台的「傳奇三換一」）：放進 {@code inputs} 件傳奇，換一件隨機的傳奇。純計算，不依賴 Bukkit。
  * <ul>
- *   <li>能放的：已鑑定、沒鎖定的傳奇。極境專屬不能放（換掉太可惜）；已經不在 uniques.yml 的也不能放。</li>
+ *   <li>能放的：已鑑定、沒鎖定的傳奇；已經不在 uniques.yml 的不能放。</li>
+ *   <li>極境專屬（2026-10）：可以放，但那一組換出來的是一般賭博賭得到的傳奇（{@link #gambleOutcomes}）。</li>
  *   <li>追逐級（2026-10）：放 {@code inputs} 件追逐級，必定換一件隨機追逐級（{@link #chaseOutcomes}；可能換到同一種；不能跟一般傳奇混放）。</li>
  *   <li>換出來的池子：uniques.yml 的 sources 有 salvage.yml 的 {@code unique_recipe.sources} 其中一個
- *       （預設：地圖 Boss 池、六種地圖事件、兩個具名 Boss）。追逐級、極境專屬不管怎麼寫都不在池子裡。</li>
+ *       （預設：地圖 Boss 池、兩個具名 Boss；地圖事件的專屬換不到）。追逐級、極境專屬不管怎麼寫都不在池子裡。</li>
  *   <li>物品等級 = 放進去最高的那件；傳奇的 drop_level 要到。</li>
  *   <li>不會換到放進去的那幾種（{@code exclude_inputs}；池子只剩那幾種時例外）。</li>
  * </ul>
  */
 public final class UniqueRecipe {
 
-    /** 預設的池子：地圖 Boss 池、六種地圖事件、兩個具名 Boss（終局自己的、只能賭的、追逐級、極境專屬都不換）。 */
-    public static final List<String> DEFAULT_SOURCES = List.of("map_boss", "shrine", "strongbox", "breach", "exile", "ritual", "delirium",
-            "royal_tomb", "observatory");
+    /**
+     * 預設的池子：地圖 Boss 池、兩個具名 Boss（終局自己的、只能賭的、追逐級、極境專屬都不換；
+     * 2026-10-17：地圖事件的專屬也拿掉了，跟賭博一樣換不到）。
+     */
+    public static final List<String> DEFAULT_SOURCES = List.of("map_boss", "royal_tomb", "observatory");
     /** 最少、最多放幾件。 */
     public static final int MIN_INPUTS = 2;
     public static final int MAX_INPUTS = 6;
@@ -87,6 +90,36 @@ public final class UniqueRecipe {
         }
     }
 
+    /** uniques.yml 的 sources：賭博賭得到（跟商人的賭博同一個代號）。 */
+    public static final String GAMBLE_SOURCE = "gamble";
+
+    /** 極境專屬（sources 有 uber…，不是追逐級）。 */
+    public static boolean uberExclusive(final UniqueItem unique) {
+        if (unique == null || unique.chase()) {
+            return false;
+        }
+        for (final String source : unique.sources()) {
+            if (source.startsWith("uber")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 放了極境專屬的那一組（2026-10）：換出來的是一般賭博賭得到的傳奇（追逐級、極境專屬不在裡面）。
+     */
+    public static List<UniqueItem> gambleOutcomes(final Collection<UniqueItem> all, final Settings settings, final Collection<String> inputIds,
+                                                  final int itemLevel) {
+        final List<UniqueItem> pool = new ArrayList<>();
+        for (final UniqueItem unique : all) {
+            if (unique.weight() > 0 && unique.dropLevel() <= itemLevel && !protectedUnique(unique) && unique.droppedBy(GAMBLE_SOURCE)) {
+                pool.add(unique);
+            }
+        }
+        return exclude(pool, settings, inputIds);
+    }
+
     /** 追逐級、極境專屬：一般的三換一不會換到（追逐級另外照 {@link #chaseOutcomes} 換；極境專屬不能放）。 */
     public static boolean protectedUnique(final UniqueItem unique) {
         if (unique.chase()) {
@@ -120,9 +153,6 @@ public final class UniqueRecipe {
         }
         if (definition == null) {
             return "這件傳奇已經沒有了，不能換";
-        }
-        if (protectedUnique(definition) && !definition.chase()) {
-            return "極境專屬傳奇不能放（換掉太可惜）";
         }
         return null;
     }

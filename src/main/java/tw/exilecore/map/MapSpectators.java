@@ -13,6 +13,7 @@ import tw.exilecore.ExileCore;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -65,6 +66,8 @@ public final class MapSpectators implements Listener {
                 return;
             }
             player.setGameMode(GameMode.SPECTATOR);
+            // 2026-10-17：記在玩家身上——伺服器當掉、沒走到 end() 時，下次登入改回原本的模式（MapListener.onJoin）
+            player.getPersistentDataContainer().set(flagKey(), org.bukkit.persistence.PersistentDataType.STRING, watch.previous().name());
             player.showTitle(Title.title(plugin.text().parse("<#ff5555>你倒下了"),
                     plugin.text().parse("<gray>觀戰中：隊友打完再一起回營地"),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(3000), Duration.ofMillis(600))));
@@ -148,10 +151,48 @@ public final class MapSpectators implements Listener {
             return;
         }
         player.setGameMode(watch.previous());
+        player.getPersistentDataContainer().remove(flagKey());
         service.sendToCamp(player);
         if (message != null) {
             player.sendMessage(plugin.text().prefixed(message));
         }
+    }
+
+    /** 觀戰中的標記（存原本的模式）。 */
+    private org.bukkit.NamespacedKey flagKey() {
+        return new org.bukkit.NamespacedKey(plugin, "map_spectating");
+    }
+
+    /** 模組停用（關機、重開）：觀戰的人全部改回原本的模式、回營地（以前會卡在旁觀模式）。 */
+    void endAll() {
+        for (final UUID uuid : List.copyOf(watching.keySet())) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            if (player != null) {
+                end(player, null);
+            } else {
+                watching.remove(uuid);
+            }
+        }
+        pending.clear();
+    }
+
+    /** 登入時：身上有觀戰標記、卻不在觀戰（伺服器當掉沒還原）→ 改回原本的模式，回傳要不要送回營地。 */
+    boolean restoreStale(final Player player) {
+        final String previous = player.getPersistentDataContainer().get(flagKey(), org.bukkit.persistence.PersistentDataType.STRING);
+        if (previous == null || watching(player)) {
+            return false;
+        }
+        player.getPersistentDataContainer().remove(flagKey());
+        if (player.getGameMode() == GameMode.SPECTATOR) {
+            GameMode mode;
+            try {
+                mode = GameMode.valueOf(previous);
+            } catch (final IllegalArgumentException e) {
+                mode = GameMode.SURVIVAL;
+            }
+            player.setGameMode(mode == GameMode.SPECTATOR ? GameMode.SURVIVAL : mode);
+        }
+        return true;
     }
 
     void forget(final Player player) {

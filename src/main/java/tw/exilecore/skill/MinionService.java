@@ -1015,7 +1015,10 @@ public final class MinionService implements Listener, MinionHooks {
         final List<LivingEntity> hits = new ArrayList<>();
         hits.add(target);
         if (minion.spec.radius() > 0) {
-            for (final LivingEntity other : targets.around(target.getLocation(), minion.spec.radius(), plugin.getServer().getPlayer(minion.owner))) {
+            // 2026-10-17：「召喚物範圍」的加成以前讀不到——半徑照範圍效果開根號放大（跟技能的範圍一樣算法）
+            final double area = minion.effective == null || minion.profile == null ? 1.0
+                    : Math.sqrt(Math.max(0.05, minion.effective.apply(tw.exilecore.stats.StatKeys.SKILL_AREA, 1.0, minion.profile.tags())));
+            for (final LivingEntity other : targets.around(target.getLocation(), minion.spec.radius() * area, plugin.getServer().getPlayer(minion.owner))) {
                 if (other != target && !hits.contains(other)) {
                     hits.add(other);
                 }

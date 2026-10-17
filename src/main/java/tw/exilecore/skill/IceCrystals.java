@@ -135,7 +135,8 @@ public final class IceCrystals implements Listener {
             return;
         }
         final List<Crystal> mine = crystals.get(player.getUniqueId());
-        if (mine == null || mine.isEmpty() || event.skill().id().startsWith("proc_crystal")) {
+        if (mine == null || mine.isEmpty() || event.skill().id().startsWith("proc_crystal")
+                || event.skill().id().startsWith("proc_hoarfrost")) { // 2026-10-17：冰晶旁邊的霜蝕地面也不打冰晶（以前站著就自己碎）
             return; // 冰晶自己炸出來的不再打冰晶（避免連鎖一次全碎）
         }
         final Location hit = event.defender().getLocation();

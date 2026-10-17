@@ -296,6 +296,7 @@ public final class LifeService {
         world.setStorm(false);
         world.setClearWeatherDuration(Integer.MAX_VALUE / 2);
         loadPlots();
+        loadNets();
         loadMembers();
         loadPlotLevels();
     }
@@ -661,11 +662,17 @@ public final class LifeService {
 
     /** 接受邀請；回傳問題，成功 null。 */
     String accept(final Player player) {
-        final Invite invite = invites.remove(player.getUniqueId());
+        final Invite invite = invites.get(player.getUniqueId());
         if (invite == null || invite.until() < System.currentTimeMillis()) {
+            invites.remove(player.getUniqueId());
             return "沒有人邀請你（或邀請過期了）";
         }
-        return travelTo(player, invite.plot(), invite.fromName() + " 的邀請");
+        // 2026-10：去不了（正在打淵鯨、資料載入中…）邀請留著，等一下可以再接受
+        final String problem = travelTo(player, invite.plot(), invite.fromName() + " 的邀請");
+        if (problem == null) {
+            invites.remove(player.getUniqueId());
+        }
+        return problem;
     }
 
     /**
@@ -1003,6 +1010,67 @@ public final class LifeService {
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             flush(player);
         }
+        saveNets();
+    }
+
+    // ---- 攔截網裡的東西（2026-10-17：以前只在記憶體，重開伺服器就沒了）----
+
+    private Path netFile() {
+        return plugin.dataFolder().resolve("life_nets.txt");
+    }
+
+    /** 每 60 秒、關服時寫一次：一行一張網「x,y,z=漂流物代號;代號…」。內容沒變就不寫。 */
+    private String savedNets = "";
+
+    private void saveNets() {
+        final StringBuilder out = new StringBuilder();
+        for (final Map.Entry<String, List<String>> entry : new java.util.TreeMap<>(nets).entrySet()) {
+            if (!entry.getValue().isEmpty()) {
+                out.append(entry.getKey()).append('=').append(String.join(";", entry.getValue())).append(System.lineSeparator());
+            }
+        }
+        final String text = out.toString();
+        if (text.equals(savedNets)) {
+            return;
+        }
+        try {
+            final Path temp = netFile().resolveSibling("life_nets.txt.tmp");
+            Files.writeString(temp, text);
+            Files.move(temp, netFile(), java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            savedNets = text;
+        } catch (final java.io.IOException e) {
+            plugin.getSLF4JLogger().warn("{}：寫不進 life_nets.txt：{}", config.name(), e.toString());
+        }
+    }
+
+    private void loadNets() {
+        if (!nets.isEmpty()) {
+            saveNets(); // 重新載入（reload）時：記憶體裡的比較新，先寫下去
+        }
+        nets.clear();
+        savedNets = "";
+        try {
+            if (!Files.exists(netFile())) {
+                return;
+            }
+            for (final String line : Files.readAllLines(netFile())) {
+                final int eq = line.indexOf('=');
+                if (eq <= 0) {
+                    continue;
+                }
+                final List<String> held = new ArrayList<>();
+                for (final String id : line.substring(eq + 1).trim().split(";")) {
+                    if (!id.isBlank() && held.size() < config.netCapacity()) {
+                        held.add(id.trim());
+                    }
+                }
+                if (!held.isEmpty()) {
+                    nets.put(line.substring(0, eq).trim(), held);
+                }
+            }
+        } catch (final java.io.IOException | RuntimeException e) {
+            plugin.getSLF4JLogger().warn("{}：讀不到 life_nets.txt：{}", config.name(), e.toString());
+        }
     }
 
     void forget(final Player player) {
@@ -1101,7 +1169,7 @@ public final class LifeService {
         }
         final int max = config.staminaMax(config.levelOf(profile.xp));
         if (profile.staminaUsed + amount > max) {
-            player.sendActionBar(plugin.text().parse("<red>今天的精力用完了<gray>（半夜回滿）"));
+            bar(player, ("<red>今天的精力用完了<gray>（半夜回滿）"));
             return false;
         }
         profile.staminaUsed += amount;
@@ -1181,10 +1249,37 @@ public final class LifeService {
         return stack.getItemMeta().getPersistentDataContainer().get(itemKey, PersistentDataType.STRING);
     }
 
+    /**
+     * 身上有沒有星索鉤。2026-10-17：連游標、隨身背包、倉庫一起看（以前只看背包，
+     * 把鉤子收進隨身背包或倉庫之後每次上筏、按選單都再給一把，可以一直拿）。
+     */
     private boolean hasHook(final Player player) {
+        if (HOOK_ITEM.equals(itemId(player.getItemOnCursor()))) {
+            return true;
+        }
         for (final ItemStack stack : player.getInventory().getContents()) {
             if (HOOK_ITEM.equals(itemId(stack))) {
                 return true;
+            }
+        }
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        if (state != null && state.bag() != null && state.bag().usable()) {
+            for (int page = 0; page < state.bag().pages(); page++) {
+                for (final ItemStack stack : state.bag().page(page)) {
+                    if (HOOK_ITEM.equals(itemId(stack))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        final tw.exilecore.stash.Stash stash = plugin.stash() == null ? null : plugin.stash().stash(player).orElse(null);
+        if (stash != null) {
+            for (int page = 0; page < stash.pageCount(); page++) {
+                for (final ItemStack stack : stash.page(page)) {
+                    if (HOOK_ITEM.equals(itemId(stack))) {
+                        return true;
+                    }
+                }
             }
         }
         return false;
@@ -1193,16 +1288,15 @@ public final class LifeService {
     /** 給星索鉤（選單；身上沒有才給）。 */
     String giveHook(final Player player) {
         if (hasHook(player)) {
-            return "身上已經有星索鉤了";
+            return "你已經有星索鉤了（背包、隨身背包或倉庫裡）";
         }
         giveItem(player, hookItem());
         return null;
     }
 
     void giveItem(final Player player, final ItemStack stack) {
-        for (final ItemStack rest : player.getInventory().addItem(stack).values()) {
-            player.getWorld().dropItemNaturally(player.getLocation(), rest);
-        }
+        // 2026-10-17：先放背包、隨身背包，還是放不下才掉在腳下而且只有自己撿得到（以前掉成誰都能撿的，淵鯨的傳奇會被別人撿走）
+        plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, stack));
     }
 
     // ---- 製作 ----
@@ -1258,6 +1352,33 @@ public final class LifeService {
         addXp(player, profile, recipe.xp() * count);
         flush(player);
         return null;
+    }
+
+    /** 2026-10：生活的提示走 HUD 的提示欄（state.notice），不會被每 tick 重畫的動作列蓋掉。 */
+    static final long NOTICE_TICKS = 60;
+    /** 撈到、釣到、收網、收成：留久一點。 */
+    static final long CATCH_TICKS = 100;
+
+    void bar(final Player player, final String miniMessage) {
+        bar(player, miniMessage, NOTICE_TICKS);
+    }
+
+    void bar(final Player player, final String miniMessage, final long ticks) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        if (state == null || !state.hasCharacter()) {
+            player.sendActionBar(plugin.text().parse(miniMessage));
+            return;
+        }
+        state.notice(miniMessage, plugin.getServer().getCurrentTick() + ticks);
+        plugin.players().display(player, state);
+    }
+
+    /** 2026-10：撈到、釣到、收網、收成也進撿東西的角落提示（快捷欄右邊，跟打怪掉落一樣）。 */
+    void feedMaterial(final Player player, final String id, final int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        plugin.players().lootFeed().add(player.getUniqueId(), materialName(id), amount, null, "#7fd4ff", plugin.getServer().getCurrentTick());
     }
 
     String materialName(final String id) {
@@ -1385,7 +1506,8 @@ public final class LifeService {
             drift.x -= config.driftSpeed() * 2;
             final double bob = Math.sin(drift.age * 0.25) * 0.06;
             drift.display.teleport(new Location(world, drift.x, drift.baseY + bob, drift.z));
-            if (netCatch(player, profile, drift, plot)) {
+            // 2026-10-17：只有筏主自己的漂流物會進網（以前訪客、隊友各自的漂流物也進，產量跟筏上人數成正比）
+            if (profile.plot == plot && netCatch(player, profile, drift, plot)) {
                 drift.display.remove();
                 it.remove();
                 continue;
@@ -1415,7 +1537,7 @@ public final class LifeService {
         final Profile profile = profile(player);
         final Session session = sessions.get(player.getUniqueId());
         if (profile == null || session == null) {
-            player.sendActionBar(plugin.text().parse("<gray>回到自己的筏上才撈得到東西"));
+            bar(player, ("<gray>回到自己的筏上才撈得到東西"));
             return true;
         }
         final LifeConfig.Hook hook = config.hook(profile.hook);
@@ -1448,7 +1570,7 @@ public final class LifeService {
         }
         if (best == null) {
             if (!castLine(player, session, hook)) {
-                player.sendActionBar(plugin.text().parse("<gray>對準 " + trim(hook.range()) + " 格內的漂流物（或水面：釣魚）再按右鍵"));
+                bar(player, ("<gray>對準 " + trim(hook.range()) + " 格內的漂流物（或水面：釣魚）再按右鍵"));
             }
             return true;
         }
@@ -1498,6 +1620,9 @@ public final class LifeService {
             }
             for (final Map.Entry<String, Integer> entry : sum.entrySet()) {
                 addMaterial(profile, entry.getKey(), entry.getValue());
+                if (!fromNet) {
+                    feedMaterial(player, entry.getKey(), entry.getValue());
+                }
                 got.append(got.isEmpty() ? "漂流箱：" : "、").append(materialName(entry.getKey())).append(" +").append(entry.getValue());
             }
             player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 0.8f, 1.1f);
@@ -1509,6 +1634,9 @@ public final class LifeService {
                     amount *= 2;
                 }
                 addMaterial(profile, give.getKey(), amount);
+                if (!fromNet) {
+                    feedMaterial(player, give.getKey(), amount);
+                }
                 got.append(got.isEmpty() ? "" : "、").append(materialName(give.getKey())).append(" +").append(amount);
             }
             if (doubled) {
@@ -1517,8 +1645,8 @@ public final class LifeService {
         }
         addXp(player, profile, fromNet ? Math.max(1, type.xp() / 2) : type.xp());
         if (!fromNet) {
-            player.sendActionBar(plugin.text().parse("<" + config.color() + ">" + ItemRenderer.escape(got.toString())
-                    + " <dark_gray>｜ <gray>精力 " + stamina(player)));
+            bar(player, "<" + config.color() + ">" + ItemRenderer.escape(got.toString())
+                    + " <dark_gray>｜ <gray>精力 " + stamina(player), CATCH_TICKS);
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 1.2f);
         }
     }
@@ -1563,7 +1691,7 @@ public final class LifeService {
                 held.add(drift.type.id());
                 world.spawnParticle(Particle.BUBBLE_POP, drift.display.getLocation(), 6, 0.2, 0.1, 0.2, 0.01);
                 if (held.size() == config.netCapacity()) {
-                    player.sendActionBar(plugin.text().parse("<yellow>有一張攔截網滿了（右鍵收）"));
+                    bar(player, ("<yellow>有一張攔截網滿了（右鍵收）"));
                 }
                 return true;
             }
@@ -1578,12 +1706,12 @@ public final class LifeService {
         }
         final Profile profile = profile(player);
         if (profile == null || !canBuild(player, profile, plotAt(block.getX(), block.getZ()))) {
-            player.sendActionBar(plugin.text().parse("<gray>只有筏主、共用成員能收這張網"));
+            bar(player, ("<gray>只有筏主、共用成員能收這張網"));
             return true;
         }
         final List<String> held = nets.remove(key(block.getX(), block.getY(), block.getZ()));
         if (held == null || held.isEmpty()) {
-            player.sendActionBar(plugin.text().parse("<gray>攔截網是空的"));
+            bar(player, ("<gray>攔截網是空的"));
             return true;
         }
         final Map<String, Integer> before = new LinkedHashMap<>(profile.materials);
@@ -1599,9 +1727,10 @@ public final class LifeService {
             final int delta = entry.getValue() - before.getOrDefault(entry.getKey(), 0);
             if (delta > 0) {
                 got.append(got.isEmpty() ? "" : "、").append(materialName(entry.getKey())).append(" +").append(delta);
+                feedMaterial(player, entry.getKey(), delta);
             }
         }
-        player.sendActionBar(plugin.text().parse("<" + config.color() + ">收網：" + (got.isEmpty() ? held.size() + " 樣" : ItemRenderer.escape(got.toString()))));
+        bar(player, "<" + config.color() + ">收網：" + (got.isEmpty() ? held.size() + " 樣" : ItemRenderer.escape(got.toString())), CATCH_TICKS);
         player.playSound(player.getLocation(), Sound.ITEM_BUNDLE_REMOVE_ONE, 0.8f, 1f);
         return true;
     }
@@ -1667,12 +1796,21 @@ public final class LifeService {
     /** 拆方塊（LifeModule）；回傳問題（要取消），可以拆 null（拆下來的東西還給他）。 */
     String breakBlock(final Player player, final Block block) {
         if (builder(player)) {
+            // 2026-10-17：管理員拆的也清掉攔截網的內容（以前同一格再放網會繼承舊的）
+            nets.remove(key(block.getX(), block.getY(), block.getZ()));
             return null;
         }
-        final LifeConfig.Item item = config.itemByBlock(block.getType().name());
+        // 2026-10：貼在牆上的船帆（WHITE_WALL_BANNER）、疊成一整格的半磚也拆得下來（以前拆不了、或少一塊）
+        final String typeName = block.getType().name();
+        LifeConfig.Item item = config.itemByBlock(typeName);
+        if (item == null && typeName.contains("_WALL_")) {
+            item = config.itemByBlock(typeName.replace("_WALL_", "_"));
+        }
         if (item == null) {
             return "這個拆不了";
         }
+        final int count = block.getBlockData() instanceof org.bukkit.block.data.type.Slab slab
+                && slab.getType() == org.bukkit.block.data.type.Slab.Type.DOUBLE ? 2 : 1;
         final Profile profile = profile(player);
         final int plot = plotAt(block.getX(), block.getZ());
         if (!canBuild(player, profile, plot)) {
@@ -1682,13 +1820,21 @@ public final class LifeService {
         if (block.getX() == center[0] && block.getZ() == center[1] && block.getY() == config.seaLevel()) {
             return "筏心不能拆";
         }
-        if (item.place() == LifeConfig.Place.FLOOR && block.getRelative(0, 1, 0).getType() != Material.AIR
-                && !block.getRelative(0, 1, 0).isPassable()) {
+        // 2026-10：上面有任何東西（旗子、船帆這種穿得過的也算）都要先拆：以前地板拆了，上面的東西彈掉、不見
+        if (item.place() == LifeConfig.Place.FLOOR && !block.getRelative(0, 1, 0).getType().isAir()) {
             return "上面還有東西，先拆上面的";
         }
-        giveItem(player, raftItem(item, 1));
-        if (profile.crops.remove(key(block.getX(), block.getY(), block.getZ())) != null) {
-            profile.dirty = true;
+        giveItem(player, raftItem(item, count));
+        // 盆裡的作物（誰種的都清：共用成員種的也是）
+        final String cropKey = key(block.getX(), block.getY(), block.getZ());
+        boolean cropGone = false;
+        for (final Profile each : profiles.values()) {
+            if (each.crops.remove(cropKey) != null) {
+                each.dirty = true;
+                cropGone = true;
+            }
+        }
+        if (cropGone) {
             player.sendMessage(plugin.text().prefixed("<gray>盆裡的作物也一起丟掉了"));
         }
         if (item.place() == LifeConfig.Place.EDGE) {
@@ -1744,7 +1890,7 @@ public final class LifeService {
         session.biteAt = (int) Math.round((wait[0] + random.nextDouble() * Math.max(0, wait[1] - wait[0])) * 10);
         session.biteUntil = session.biteAt + Math.max(2, config.fishing().biteTicks() / 2);
         player.playSound(session.bobber, Sound.ENTITY_FISHING_BOBBER_THROW, 0.7f, 1f);
-        player.sendActionBar(plugin.text().parse("<gray>拋線了……等魚咬鉤（咬鉤時再按右鍵）"));
+        bar(player, ("<gray>拋線了……等魚咬鉤（咬鉤時再按右鍵）"));
         return true;
     }
 
@@ -1766,12 +1912,12 @@ public final class LifeService {
         if (session.fishTick == session.biteAt) {
             player.playSound(session.bobber, Sound.ENTITY_FISHING_BOBBER_SPLASH, 1f, 1f);
             player.spawnParticle(Particle.SPLASH, session.bobber, 20, 0.2, 0.1, 0.2, 0);
-            player.sendActionBar(plugin.text().parse("<#7fd4ff>🐟 咬鉤了！<white>快按右鍵"));
+            bar(player, ("<#7fd4ff>🐟 咬鉤了！<white>快按右鍵"));
             return;
         }
         if (session.fishTick > session.biteUntil) {
             session.bobber = null;
-            player.sendActionBar(plugin.text().parse("<gray>魚跑掉了……"));
+            bar(player, ("<gray>魚跑掉了……"));
         }
     }
 
@@ -1779,7 +1925,7 @@ public final class LifeService {
         final boolean biting = session.fishTick >= session.biteAt && session.fishTick <= session.biteUntil;
         session.bobber = null;
         if (!biting) {
-            player.sendActionBar(plugin.text().parse("<gray>收線了（太早了）"));
+            bar(player, ("<gray>收線了（太早了）"));
             return;
         }
         if (!spendStamina(player, profile, config.fishing().stamina())) {
@@ -1792,9 +1938,10 @@ public final class LifeService {
             return;
         }
         addMaterial(profile, fish, 1);
+        feedMaterial(player, fish, 1);
         addXp(player, profile, config.fishing().xp());
         player.playSound(player.getLocation(), Sound.ENTITY_FISHING_BOBBER_RETRIEVE, 0.8f, 1.3f);
-        player.sendActionBar(plugin.text().parse("<#7fd4ff>釣到了 " + ItemRenderer.escape(materialName(fish)) + "！<dark_gray> ｜ <gray>精力 " + stamina(player)));
+        bar(player, "<#7fd4ff>釣到了 " + ItemRenderer.escape(materialName(fish)) + "！<dark_gray> ｜ <gray>精力 " + stamina(player), CATCH_TICKS);
     }
 
     // -- 設施 --
@@ -1812,11 +1959,11 @@ public final class LifeService {
         final int plot = plotAt(block.getX(), block.getZ());
         // 自己待的這塊筏上的設施都能用（拜訪也可以淨水、做菜、研究）；種田、掌舵要筏主或共用成員
         if (profile == null || plot != activePlot(player)) {
-            player.sendActionBar(plugin.text().parse("<gray>這不是你待的筏"));
+            bar(player, ("<gray>這不是你待的筏"));
             return true;
         }
         if (("helm".equals(item.station()) || item.station().startsWith("planter")) && !canBuild(player, profile, plot)) {
-            player.sendActionBar(plugin.text().parse("<gray>只有筏主、共用成員能" + ("helm".equals(item.station()) ? "掌舵" : "種田")));
+            bar(player, ("<gray>只有筏主、共用成員能" + ("helm".equals(item.station()) ? "掌舵" : "種田")));
             return true;
         }
         switch (item.station()) {
@@ -1825,7 +1972,7 @@ public final class LifeService {
             case "grill", "kitchen" -> new LifeCookMenu(plugin, player, this, item.station()).open();
             case "planter_sea", "planter_soil" -> planter(player, profile, block, item.station().equals("planter_sea") ? "sea" : "soil");
             case "helm" -> new LifeVoyageMenu(plugin, player, this).open();
-            default -> player.sendActionBar(plugin.text().parse("<gray>" + ItemRenderer.escape(item.description())));
+            default -> bar(player, ("<gray>" + ItemRenderer.escape(item.description())));
         }
         return true;
     }
@@ -1835,7 +1982,7 @@ public final class LifeService {
         final long now = System.currentTimeMillis();
         final long ready = purifierReady.getOrDefault(at, 0L);
         if (now < ready) {
-            player.sendActionBar(plugin.text().parse("<gray>還在煮（" + ((ready - now + 999) / 1000) + " 秒）"));
+            bar(player, ("<gray>還在煮（" + ((ready - now + 999) / 1000) + " 秒）"));
             return;
         }
         final LifeConfig.Purifier def = config.purifier();
@@ -1847,7 +1994,7 @@ public final class LifeService {
         addXp(player, profile, def.xp());
         world.spawnParticle(Particle.CLOUD, block.getLocation().add(0.5, 1, 0.5), 8, 0.2, 0.2, 0.2, 0.01);
         player.playSound(block.getLocation(), Sound.BLOCK_BREWING_STAND_BREW, 0.8f, 1.2f);
-        player.sendActionBar(plugin.text().parse("<#7fd4ff>" + ItemRenderer.escape(materialName(config.freshWater())) + " +" + def.water()
+        bar(player, ("<#7fd4ff>" + ItemRenderer.escape(materialName(config.freshWater())) + " +" + def.water()
                 + " <dark_gray>｜ <gray>" + def.cooldownSeconds() + " 秒後再煮一次"));
     }
 
@@ -1870,7 +2017,7 @@ public final class LifeService {
         }
         final long left = since + crop.minutes() * 60_000L - System.currentTimeMillis();
         if (left > 0) {
-            player.sendActionBar(plugin.text().parse("<gray>" + ItemRenderer.escape(crop.name()) + "還要 " + ((left + 59_999) / 60_000) + " 分鐘"));
+            bar(player, ("<gray>" + ItemRenderer.escape(crop.name()) + "還要 " + ((left + 59_999) / 60_000) + " 分鐘"));
             return;
         }
         profile.crops.remove(at);
@@ -1878,10 +2025,12 @@ public final class LifeService {
         for (final Map.Entry<String, int[]> give : crop.harvest().entrySet()) {
             final int amount = give.getValue()[0] + random.nextInt(Math.max(1, give.getValue()[1] - give.getValue()[0] + 1));
             addMaterial(profile, give.getKey(), amount);
+            feedMaterial(player, give.getKey(), amount);
             got.append(got.isEmpty() ? "" : "、").append(materialName(give.getKey())).append(" +").append(amount);
         }
         final int seeds = crop.seedsBack()[0] + random.nextInt(Math.max(1, crop.seedsBack()[1] - crop.seedsBack()[0] + 1));
         addMaterial(profile, crop.seed(), seeds);
+        feedMaterial(player, crop.seed(), seeds);
         if (seeds > 0) {
             got.append("、").append(materialName(crop.seed())).append(" +").append(seeds);
         }
@@ -1895,7 +2044,7 @@ public final class LifeService {
             }
         }
         player.playSound(block.getLocation(), Sound.BLOCK_CROP_BREAK, 0.8f, 1.1f);
-        player.sendActionBar(plugin.text().parse("<#9be37f>收成：" + ItemRenderer.escape(got.toString())));
+        bar(player, "<#9be37f>收成：" + ItemRenderer.escape(got.toString()), CATCH_TICKS);
     }
 
     /** 種下去（種田選單）；回傳問題，成功 null。 */
@@ -1914,6 +2063,12 @@ public final class LifeService {
         final String at = key(block.getX(), block.getY(), block.getZ());
         if (profile.crops.containsKey(at)) {
             return "已經種了東西";
+        }
+        // 2026-10：同一個盆別人（共用成員）種了也不能再種（以前每個人各種一份，一盆收好幾份）
+        for (final Profile each : profiles.values()) {
+            if (each != profile && each.crops.containsKey(at)) {
+                return "已經有人種了東西";
+            }
         }
         if (config.levelOf(profile.xp) < crop.level()) {
             return "要生活等級 " + crop.level();
@@ -1963,8 +2118,14 @@ public final class LifeService {
     /** 作物的樣子：長大前小小的、熟了換成果實並發光。 */
     private void tickCrops(final Player player, final Profile profile, final Session session) {
         final long now = System.currentTimeMillis();
-        for (final Map.Entry<String, String> entry : profile.crops.entrySet()) {
+        final int here = plotAt(player.getLocation().getX(), player.getLocation().getZ());
+        for (final java.util.Iterator<Map.Entry<String, String>> it = profile.crops.entrySet().iterator(); it.hasNext(); ) {
+            final Map.Entry<String, String> entry = it.next();
             final String[] pos = entry.getKey().split(",");
+            // 2026-10：只看現在這塊筏上的（別塊筏的不去載入遠方的區塊）
+            if (pos.length == 3 && plotAt(Integer.parseInt(pos[0]), Integer.parseInt(pos[2])) != here) {
+                continue;
+            }
             final int sep = entry.getValue().indexOf('@');
             final LifeConfig.Crop crop = config.crops().get(sep < 0 ? entry.getValue() : entry.getValue().substring(0, sep));
             if (crop == null || pos.length != 3) {
@@ -1974,6 +2135,13 @@ public final class LifeService {
             final double grown = Math.max(0, Math.min(1, (now - since) / (crop.minutes() * 60_000.0)));
             final boolean ripe = grown >= 1;
             final Block block = world.getBlockAt(Integer.parseInt(pos[0]), Integer.parseInt(pos[1]), Integer.parseInt(pos[2]));
+            // 2026-10：盆已經被拆掉（別人拆的）：作物跟著清掉，不會飄在水上
+            final LifeConfig.Item pot = config.itemByBlock(block.getType().name());
+            if (pot == null || pot.station() == null || !pot.station().startsWith("planter")) {
+                it.remove();
+                profile.dirty = true;
+                continue;
+            }
             final double height = block.getType() == Material.CAULDRON ? 0.85 : 1.25;
             final float scale = (float) (0.35 + 0.45 * grown);
             ItemDisplay view = session.cropViews.get(entry.getKey());
@@ -2068,7 +2236,9 @@ public final class LifeService {
                 lore.add(ItemRenderer.line("<#8fd3ff>・" + ItemRenderer.escape(line)));
             }
             if (food.stamina() > 0) {
-                lore.add(ItemRenderer.line("<gray>・在海上回 " + food.stamina() + " 點精力"));
+                lore.add(ItemRenderer.line("<gray>・在海上吃：回 " + food.stamina() + " 點精力"));
+                // 2026-10：寫出限制（以前玩家以為沒作用）
+                lore.add(ItemRenderer.line("<dark_gray>　只回用掉的精力；跟喝淡水合計一天最多回 " + config.dailyRestore() + " 點"));
             }
             lore.add(ItemRenderer.line("<dark_gray>同時只有一種料理的效果（吃新的蓋掉舊的）"));
             if (!food.description().isBlank()) {
@@ -2113,13 +2283,21 @@ public final class LifeService {
         profile.foodUntil = System.currentTimeMillis() + food.minutes() * 60_000L;
         profile.dirty = true;
         int restored = 0;
-        if (food.stamina() > 0 && lifeModeOrShark(player.getLocation())) {
-            restored = restoreStamina(profile, food.stamina());
+        String noStamina = "";
+        if (food.stamina() > 0) {
+            if (!lifeModeOrShark(player.getLocation())) {
+                noStamina = "<dark_gray>（不在海上，精力沒回）";
+            } else {
+                restored = restoreStamina(profile, food.stamina());
+                if (restored <= 0) {
+                    noStamina = "<dark_gray>（精力是滿的，或今天用料理、淡水回的已經到 " + config.dailyRestore() + " 點上限）";
+                }
+            }
         }
         plugin.players().markDirty(player);
         player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_EAT, 0.8f, 1f);
         player.sendMessage(plugin.text().prefixed("<#ffb46b>吃了" + ItemRenderer.escape(food.name()) + "<gray>：" + food.minutes() + " 分鐘的加成"
-                + (restored > 0 ? "，精力 +" + restored : "")));
+                + (restored > 0 ? "，精力 +" + restored : "") + noStamina));
         flush(player);
         return true;
     }
@@ -2202,7 +2380,7 @@ public final class LifeService {
         profile.materials.merge(config.freshWater(), -1, Integer::sum);
         profile.materials.values().removeIf(count -> count <= 0);
         player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_DRINK, 0.8f, 1f);
-        player.sendActionBar(plugin.text().parse("<#7fd4ff>精力 +" + restored + " <dark_gray>｜ <gray>精力 " + stamina(player)));
+        bar(player, ("<#7fd4ff>精力 +" + restored + " <dark_gray>｜ <gray>精力 " + stamina(player)));
         return null;
     }
 
@@ -2260,7 +2438,7 @@ public final class LifeService {
                 floor.setType(Material.WATER, false);
                 world.playSound(floor.getLocation(), Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 1f, 0.8f);
                 world.spawnParticle(Particle.BLOCK, floor.getLocation().add(0.5, 0.5, 0.5), 30, 0.4, 0.3, 0.4, floorBlock().createBlockData());
-                player.sendActionBar(plugin.text().parse("<red>渦齒鯊咬掉了一塊筏！"));
+                bar(player, ("<red>渦齒鯊咬掉了一塊筏！"));
             }
             session.sharkTarget = null;
         } else if (session.sharkBite % 5 == 0) {
@@ -2479,7 +2657,7 @@ public final class LifeService {
         profile.letters |= 1L << index;
         profile.dirty = true;
         final int read = Long.bitCount(profile.letters & ((1L << count) - 1));
-        player.sendActionBar(plugin.text().parse("<#bfe6ff>收集瓶中信 " + read + "／" + count));
+        bar(player, ("<#bfe6ff>收集瓶中信 " + read + "／" + count));
         if (read == count) {
             flush(player);
             final LifeConfig.Title title = config.titles().get("letter_finder");

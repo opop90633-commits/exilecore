@@ -331,6 +331,10 @@ final class LifeWhale {
             return def.name() + "已經在了";
         }
         final int[] center = service.plotCenter(plot);
+        // 2026-10-17：先確認別人的船、島不在，才收掉自己的（以前先收掉自己的島，召喚失敗也回不來）
+        if (service.islands().busyByOthers(plot, player.getUniqueId())) {
+            return "這塊筏的船還在外面（等島漂走、或開船的人回來）";
+        }
         service.islands().dismiss(player); // 自己開的島、航行收掉（同一個位置）
         if (service.islands().busy(plot)) {
             return "這塊筏的船還在外面（等島漂走、或開船的人回來）";
@@ -536,7 +540,10 @@ final class LifeWhale {
             boss.teleport(home.setDirection(at.toVector().subtract(home.toVector())));
         }
         // 後來走進（游進）場地、待在這塊筏上的人也算一起打
-        for (final Player nearby : world().getPlayers()) {
+        // 2026-10：淵鯨還有 90% 以上的生命才能加進來（以前打到剩一點再叫人進來，每個人都拿一整份巔峰獎勵）
+        final AttributeInstance lateMax = boss.getAttribute(Attribute.MAX_HEALTH);
+        final boolean lateJoin = lateMax == null || boss.getHealth() >= lateMax.getValue() * 0.9;
+        for (final Player nearby : lateJoin ? world().getPlayers() : List.<Player>of()) {
             if (!nearby.isDead() && !nearby.equals(owner) && !fight.crew.contains(nearby.getUniqueId()) && service.activePlot(nearby) == fight.plot
                     && fight.contains(nearby.getLocation().getX(), nearby.getLocation().getZ()) && fightOf(nearby.getUniqueId()) == null) {
                 fight.crew.add(nearby.getUniqueId());

@@ -186,7 +186,8 @@ public final class SalvageMenu extends Menu {
                 "<gray>放 " + recipe.inputs() + " 件傳奇，換一件隨機傳奇（重複的、用不到的）",
                 recipe.excludeInputs() ? "<dark_gray>不會換到放進去的那幾種" : "<dark_gray>換到哪一件是隨機的",
                 "<#ffb347>" + recipe.inputs() + " 件追逐級：必定換一件隨機追逐級",
-                "<dark_gray>極境專屬不能放；一般傳奇有極低的機率換到追逐級",
+                "<#c77dff>極境專屬也能放<dark_gray>（那一組換一般賭博的傳奇）；一般傳奇有極低的機率換到追逐級",
+                "<dark_gray>可以一次放很多組批量換",
                 "",
                 eligible >= recipe.inputs() ? "<gray>背包裡可以放的傳奇：<white>" + eligible + "<gray> 件"
                         : "<gray>背包裡可以放的傳奇：<white>" + eligible + "<gray> 件<dark_gray>（要 " + recipe.inputs() + " 件）",
@@ -674,10 +675,13 @@ public final class SalvageMenu extends Menu {
     @Override
     protected void onClick(final int slot, final ClickType click, final InventoryClickEvent event) {
         if (slot < MIRROR_SLOTS) {
-            if (click.isRightClick()) {
+            // 2026-10：只認左鍵、右鍵（雙擊多送的那一下、數字鍵、Q 不算，免得選了又取消）
+            if (click == ClickType.RIGHT || click == ClickType.SHIFT_RIGHT) {
                 toggleLock(inventorySlot(slot));
-            } else {
+            } else if (click == ClickType.LEFT || click == ClickType.SHIFT_LEFT) {
                 toggle(inventorySlot(slot));
+            } else {
+                return;
             }
         } else if (slot == SLOT_SELECT_NORMAL) {
             quickSelect(Pick.NORMAL);
@@ -807,6 +811,11 @@ public final class SalvageMenu extends Menu {
         if (!plugin.players().get(player).hasCharacter()) {
             player.sendMessage(plugin.text().prefixed("<red>先建立角色（/char）"));
             return; // 沒角色收不了金幣，不能拆
+        }
+        final String busy = plugin.characters().transactionProblem(player); // 2026-10：跟其他交易一樣（存檔卡住時不能拆）
+        if (busy != null) {
+            player.sendMessage(plugin.text().prefixed("<red>" + busy));
+            return;
         }
         final PlayerInventory inventory = player.getInventory();
         int count = 0;

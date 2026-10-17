@@ -393,6 +393,9 @@ public final class DiscordBridge {
                 line = line.append(Component.space()).append(attachment.link());
             }
             for (final Player player : plugin.getServer().getOnlinePlayers()) {
+                if (plugin.chat() != null && plugin.chat().hidesPublic(player.getUniqueId())) {
+                    continue; // 2026-10：/ch hide 的人也看不到 Discord 轉進來的公開頻道
+                }
                 player.sendMessage(line);
             }
             plugin.getSLF4JLogger().info("[Discord] {}: {}{}", finalName, finalContent, attachments.isEmpty() ? "" : " " + attachments);
@@ -503,6 +506,9 @@ public final class DiscordBridge {
 
     private static String shorten(final String body) {
         final String text = body == null ? "" : body.replaceAll("\\s+", " ");
-        return text.length() > 200 ? text.substring(0, 200) : text.toLowerCase(Locale.ROOT).contains("token") ? "（略）" : text;
+        if (text.toLowerCase(Locale.ROOT).contains("token")) {
+            return "（略）"; // 2026-10：長的也遮（以前只有 200 字以內的會遮）
+        }
+        return text.length() > 200 ? text.substring(0, 200) : text;
     }
 }

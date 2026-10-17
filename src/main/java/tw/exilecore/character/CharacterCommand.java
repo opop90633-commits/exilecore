@@ -44,7 +44,7 @@ public final class CharacterCommand {
                 .then(Commands.literal("panel")
                         .executes(context -> run(plugin, context, player -> plugin.characterMenus().openPanel(player))))
                 .then(Commands.literal("select")
-                        .then(Commands.argument("slot", IntegerArgumentType.integer(1, 9))
+                        .then(Commands.argument("slot", IntegerArgumentType.integer(1))
                                 .executes(context -> run(plugin, context, player -> select(plugin, player, IntegerArgumentType.getInteger(context, "slot"))))))
                 .then(Commands.literal("profile")
                         .executes(context -> run(plugin, context, player -> profile(plugin, player, null)))

@@ -48,6 +48,28 @@ public final class CodexMenu extends Menu {
     private static final int PER_PAGE = CONTENT_END - CONTENT_START;
     private static final int SLOT_OPTION = 47;
     private static final int SLOT_INFO = 46;
+    /** 2026-10：來源分類（傳奇：一般／追逐級；技能、輔助：切割／專屬）。 */
+    private static final int SLOT_SOURCE = 51;
+    private static final String[] UNIQUE_GRADES = {"全部", "傳奇", "追逐級"};
+    private static final String[] GEM_SOURCES = {"全部", "切割", "專屬"};
+    /** 傳奇的等級分類：0 全部、1 一般傳奇、2 追逐級。 */
+    private int uniqueGrade;
+    /** 技能的來源：0 全部、1 未切割寶石雕得出來、2 專屬掉落。 */
+    private int skillSource;
+    /** 輔助的來源：0 全部、1 未切割寶石切得出來、2 專屬掉落。 */
+    private int supportSource;
+
+    private static boolean uniqueGradeMatches(final UniqueItem unique, final int grade) {
+        return grade == 0 || (grade == 2) == unique.chase();
+    }
+
+    private static boolean skillSourceMatches(final SkillDefinition definition, final int source) {
+        return source == 0 || (source == 1) == definition.engravable();
+    }
+
+    private static boolean supportSourceMatches(final SupportDefinition support, final int source) {
+        return source == 0 || (source == 1) == support.cuttable();
+    }
 
     enum Tab {
         UNIQUES("傳奇圖鑑", Material.GOLDEN_HELMET, "每件傳奇的樣子、誰會掉"),
@@ -88,7 +110,7 @@ public final class CodexMenu extends Menu {
             {tw.exilecore.stats.Tags.MINION, "召喚"},
             {tw.exilecore.stats.Tags.AURA + "," + tw.exilecore.stats.Tags.HERALD + "," + tw.exilecore.stats.Tags.WARCRY, "光環・戰吼"},
     };
-    private static final String[] SUPPORT_FILTERS = {"全部", "第 1 階", "第 2 階", "第 3 階", "專屬掉落"};
+    private static final String[] SUPPORT_FILTERS = {"全部", "第 1 階", "第 2 階", "第 3 階"};
     /** 輔助照能掛的技能標籤分類（2026-10）：標籤、名字；"*" = 什麼技能都能掛的。 */
     private static final String[][] SUPPORT_KINDS = {
             {"", "全部"},
@@ -135,8 +157,7 @@ public final class CodexMenu extends Menu {
     private static boolean supportMatches(final SupportDefinition support, final int filter) {
         return switch (filter) {
             case 0 -> true;
-            case 4 -> !support.cuttable();
-            default -> support.cuttable() && support.tier() == filter;
+            default -> support.tier() == filter; // 2026-10：專屬掉落搬到「來源」分類
         };
     }
 
@@ -295,6 +316,19 @@ public final class CodexMenu extends Menu {
                 lore.add("");
                 lore.add("<yellow>左鍵：下一個　右鍵：上一個");
                 set(SLOT_OPTION, icon(Material.HOPPER, "<white>部位：<#f5b942>" + slotName(filter), lore));
+                final int[] gradeCounts = new int[UNIQUE_GRADES.length];
+                for (final UniqueItem unique : plugin.items().repository().uniques()) {
+                    final ItemBase uniqueBase = plugin.items().repository().base(unique.base());
+                    if (uniqueBase == null || filter != null && uniqueBase.slot() != filter) {
+                        continue;
+                    }
+                    for (int i = 0; i < UNIQUE_GRADES.length; i++) {
+                        if (uniqueGradeMatches(unique, i)) {
+                            gradeCounts[i]++;
+                        }
+                    }
+                }
+                set(SLOT_SOURCE, filterButton(Material.GOLD_INGOT, "分類", UNIQUE_GRADES, gradeCounts, uniqueGrade));
             }
             case SKILLS -> {
                 set(SLOT_OPTION, icon(Material.EXPERIENCE_BOTTLE, "<white>寶石等級：<#f5b942>Lv." + gemLevel,
@@ -307,12 +341,21 @@ public final class CodexMenu extends Menu {
                     for (int i = 0; i < SKILL_FILTERS.length; i++) {
                         names[i] = SKILL_FILTERS[i][1];
                         for (final SkillDefinition definition : plugin.skills().config().visible()) {
-                            if (skillMatches(definition, i)) {
+                            if (skillMatches(definition, i) && skillSourceMatches(definition, skillSource)) {
                                 counts[i]++;
                             }
                         }
                     }
                     set(SLOT_INFO, filterButton(Material.HOPPER, "分類", names, counts, skillFilter));
+                    final int[] sourceCounts = new int[GEM_SOURCES.length];
+                    for (final SkillDefinition definition : plugin.skills().config().visible()) {
+                        for (int i = 0; i < GEM_SOURCES.length; i++) {
+                            if (skillMatches(definition, skillFilter) && skillSourceMatches(definition, i)) {
+                                sourceCounts[i]++;
+                            }
+                        }
+                    }
+                    set(SLOT_SOURCE, filterButton(Material.SHEARS, "來源（切割：未切割技能寶石雕得出來）", GEM_SOURCES, sourceCounts, skillSource));
                 }
             }
             case SUPPORTS -> {
@@ -320,7 +363,7 @@ public final class CodexMenu extends Menu {
                     final int[] counts = new int[SUPPORT_FILTERS.length];
                     for (int i = 0; i < SUPPORT_FILTERS.length; i++) {
                         for (final SupportDefinition support : plugin.skills().config().supports()) {
-                            if (supportMatches(support, i)) {
+                            if (supportMatches(support, i) && supportSourceMatches(support, supportSource) && supportKindMatches(support, supportKind)) {
                                 counts[i]++;
                             }
                         }
@@ -332,12 +375,21 @@ public final class CodexMenu extends Menu {
                     for (int i = 0; i < SUPPORT_KINDS.length; i++) {
                         kindNames[i] = SUPPORT_KINDS[i][1];
                         for (final SupportDefinition support : plugin.skills().config().supports()) {
-                            if (supportMatches(support, supportFilter) && supportKindMatches(support, i)) {
+                            if (supportMatches(support, supportFilter) && supportSourceMatches(support, supportSource) && supportKindMatches(support, i)) {
                                 kindCounts[i]++;
                             }
                         }
                     }
                     set(SLOT_INFO, filterButton(Material.NAME_TAG, "分類（能掛的技能）", kindNames, kindCounts, supportKind));
+                    final int[] sourceCounts = new int[GEM_SOURCES.length];
+                    for (final SupportDefinition support : plugin.skills().config().supports()) {
+                        for (int i = 0; i < GEM_SOURCES.length; i++) {
+                            if (supportMatches(support, supportFilter) && supportKindMatches(support, supportKind) && supportSourceMatches(support, i)) {
+                                sourceCounts[i]++;
+                            }
+                        }
+                    }
+                    set(SLOT_SOURCE, filterButton(Material.SHEARS, "來源（切割：未切割輔助寶石切得出來）", GEM_SOURCES, sourceCounts, supportSource));
                 }
             }
             case AFFIXES -> {
@@ -438,7 +490,7 @@ public final class CodexMenu extends Menu {
         final List<UniqueItem> list = new ArrayList<>();
         for (final UniqueItem unique : repository.uniques()) {
             final ItemBase uniqueBase = repository.base(unique.base());
-            if (uniqueBase == null || filter != null && uniqueBase.slot() != filter) {
+            if (uniqueBase == null || filter != null && uniqueBase.slot() != filter || !uniqueGradeMatches(unique, uniqueGrade)) {
                 continue;
             }
             if (!textQuery.isBlank()) {
@@ -656,7 +708,7 @@ public final class CodexMenu extends Menu {
         }
         final List<SkillDefinition> list = new ArrayList<>();
         for (final SkillDefinition definition : plugin.skills().config().visible()) {
-            if (skillMatches(definition, skillFilter) && matches(textQuery, skillSearchText(definition))) {
+            if (skillMatches(definition, skillFilter) && skillSourceMatches(definition, skillSource) && matches(textQuery, skillSearchText(definition))) {
                 list.add(definition);
             }
         }
@@ -736,7 +788,7 @@ public final class CodexMenu extends Menu {
         }
         final List<SupportDefinition> list = new ArrayList<>();
         for (final SupportDefinition support : plugin.skills().config().supports()) {
-            if (supportMatches(support, supportFilter) && supportKindMatches(support, supportKind)
+            if (supportMatches(support, supportFilter) && supportKindMatches(support, supportKind) && supportSourceMatches(support, supportSource)
                     && matches(textQuery, supportSearchText(support))) {
                 list.add(support);
             }
@@ -1046,6 +1098,17 @@ public final class CodexMenu extends Menu {
                     }, self::open);
         } else if (slot == SLOT_BACK && tab == Tab.AFFIXES && base != null) {
             base = null;
+            page = 0;
+            redraw();
+        } else if (slot == SLOT_SOURCE && tab != Tab.AFFIXES) {
+            final int step = click.isRightClick() ? 2 : 1; // 三個選項：右鍵 = 往回一個
+            switch (tab) {
+                case UNIQUES -> uniqueGrade = (uniqueGrade + step) % UNIQUE_GRADES.length;
+                case SKILLS -> skillSource = (skillSource + step) % GEM_SOURCES.length;
+                case SUPPORTS -> supportSource = (supportSource + step) % GEM_SOURCES.length;
+                default -> {
+                }
+            }
             page = 0;
             redraw();
         } else if (slot == SLOT_OPTION && tab == Tab.UNIQUES) {

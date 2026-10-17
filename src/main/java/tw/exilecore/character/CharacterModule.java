@@ -16,6 +16,9 @@ import java.util.UUID;
  */
 public final class CharacterModule implements Module {
 
+    /** 2026-10：關服時收好合成格的東西用。 */
+    private CharacterListener listener;
+
     /** 每幾 tick 跑一次回復與顯示。 */
     private static final int TICK_PERIOD = 10;
     /** 自動存檔間隔（tick）：5 分鐘。 */
@@ -57,7 +60,8 @@ public final class CharacterModule implements Module {
     public void enable() throws Exception {
         final Path data = plugin.dataFolder().resolve("data");
         config.load(data);
-        plugin.getServer().getPluginManager().registerEvents(new CharacterListener(plugin, states, characters), plugin);
+        listener = new CharacterListener(plugin, states, characters);
+        plugin.getServer().getPluginManager().registerEvents(listener, plugin);
         plugin.getServer().getPluginManager().registerEvents(new GearListener(plugin, characters.gear()), plugin); // 角色面板的裝備欄
         plugin.getServer().getPluginManager().registerEvents(states.grace(), plugin); // 入場保護
         plugin.getServer().getPluginManager().registerEvents(new MenuListener(), plugin);
@@ -180,6 +184,9 @@ public final class CharacterModule implements Module {
         // 關伺服器時插件先停用、玩家才被踢：這裡就是最後一次存檔。
         // 先關掉視窗讓游標上的物品回到背包，再排進資料庫執行緒；core 模組關閉資料庫前會等它做完。
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            if (listener != null) {
+                listener.settle(player); // 2026-10：2×2 合成格、游標上的東西（關服時收不到下線事件）
+            }
             player.closeInventory();
         }
         characters.saveAll();

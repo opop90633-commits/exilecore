@@ -736,8 +736,11 @@ public final class HeistService implements Listener {
             return cached;
         }
         final tw.exilecore.item.RolledAffix veiled = data.affixes().get(affixIndex);
+        // 2026-10：用「物品 UUID＋第幾條」當種子擲：重開伺服器、快取清掉之後還是同樣三個（以前會變成重擲）
+        final java.util.Random seeded = new java.util.Random(java.util.UUID.nameUUIDFromBytes(
+                ("unveil:" + offerKey).getBytes(java.nio.charset.StandardCharsets.UTF_8)).getMostSignificantBits());
         final List<tw.exilecore.item.RolledAffix> fresh = Veiled.options(data, Veiled.typeOf(veiled), veiled, plugin.items().generator(),
-                random(), Veiled.CHOICES);
+                seeded, Veiled.CHOICES);
         if (offers.size() > 2000) {
             offers.clear();
         }

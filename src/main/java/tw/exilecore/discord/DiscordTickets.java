@@ -550,6 +550,32 @@ public final class DiscordTickets {
      */
     private Ticket openTicket(final Panel panel, final String discordUser, final String discordName, final String mcUuid, final String mcName,
                               final Map<String, String> answers, final String token) {
+        // 2026-10：先佔一個位子再建頻道（建頻道要等 Discord，兩次同時送出以前都會過「最多幾張」的檢查）
+        final String key = discordUser != null ? "d:" + discordUser : "m:" + mcUuid;
+        synchronized (this) {
+            final int open = (discordUser != null ? openBy(discordUser, null) : openBy(null, mcUuid)).size();
+            if (opening.contains(key) || open >= maxOpen) {
+                if (token != null) {
+                    editOriginal(token, "你已經有開著（或正在開）的客服單了。");
+                }
+                return null;
+            }
+            opening.add(key);
+        }
+        try {
+            return openTicketNow(panel, discordUser, discordName, mcUuid, mcName, answers, token);
+        } finally {
+            synchronized (this) {
+                opening.remove(key);
+            }
+        }
+    }
+
+    /** 正在建頻道的人（d:Discord 帳號、m:遊戲 UUID；鎖 this）。 */
+    private final java.util.Set<String> opening = new java.util.HashSet<>();
+
+    private Ticket openTicketNow(final Panel panel, final String discordUser, final String discordName, final String mcUuid, final String mcName,
+                                 final Map<String, String> answers, final String token) {
         final DiscordGateway gw = gateway;
         final Ticket ticket = create(panel.id());
         final JsonArray overwrites = new JsonArray();

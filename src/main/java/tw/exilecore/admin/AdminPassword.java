@@ -114,6 +114,9 @@ public final class AdminPassword {
         clearFailures();
     }
 
+    /** 正在算雜湊的 IP（鎖 this）。 */
+    private final java.util.Set<String> checking = new java.util.HashSet<>();
+
     /** 用密碼登入（ip 用來限制猜錯的次數）。 */
     public Result attempt(final String ip, final String password) {
         final String current = stored;
@@ -126,9 +129,22 @@ public final class AdminPassword {
             if (now.isBefore(lockedAll) || now.isBefore(lockedIps.getOrDefault(key, Instant.MIN))) {
                 return Result.LOCKED;
             }
+            // 2026-10：同一個 IP 一次只算一個（以前同時送一堆，在記下失敗之前全部都會算）
+            if (checking.contains(key)) {
+                return Result.LOCKED;
+            }
+            checking.add(key);
         }
         // 雜湊很慢（故意的），不要佔著鎖
-        final boolean ok = password != null && password.length() <= MAX_LENGTH && matches(current, password);
+        boolean matched = false;
+        try {
+            matched = password != null && password.length() <= MAX_LENGTH && matches(current, password);
+        } finally {
+            synchronized (this) {
+                checking.remove(key);
+            }
+        }
+        final boolean ok = matched;
         synchronized (this) {
             final Instant now = clock.instant();
             if (ok) {

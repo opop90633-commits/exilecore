@@ -482,6 +482,12 @@ public final class SponsorService {
             tiers.put(player.getUniqueId(), tier);
         }
         final PlayerState state = plugin.players().get(player);
+        // 2026-10-17：開著隨身背包或倉庫的時候先關掉（關的時候把畫面寫回去），再搬東西——
+        // 以前收回頁數時畫面上的東西之後寫回會變兩份，或把搬進來的蓋掉
+        if (player.getOpenInventory().getTopInventory().getHolder() instanceof tw.exilecore.loot.BagMenu
+                || player.getOpenInventory().getTopInventory().getHolder() instanceof tw.exilecore.stash.StashMenu) {
+            player.closeInventory();
+        }
         if (state.isLoaded()) {
             state.bag().setPages(tw.exilecore.character.Bag.BASE_PAGES + extraBagPages(player));
             if (loaded(player) && state.bag().storedPages() > state.bag().pages()) {
@@ -929,6 +935,71 @@ public final class SponsorService {
         }
         accounts().commitAccount(player, Map.of(RENAME, String.valueOf(have - 1)), "用掉改名卡");
         return true;
+    }
+
+    /**
+     * 改名失敗時人已經下線（2026-10）：直接在資料庫把改名卡加回 1 張（資料庫只有一條執行緒，排在扣卡之後，不會算錯）。
+     * 在資料庫執行緒呼叫。
+     */
+    public static void refundRenameCardOffline(final java.sql.Connection connection, final java.util.UUID account) throws java.sql.SQLException {
+        long have = 0;
+        boolean exists = false;
+        try (java.sql.PreparedStatement select = connection.prepareStatement(
+                "SELECT progress_value FROM account_progress WHERE account_uuid = ? AND progress_key = ?")) {
+            select.setString(1, account.toString());
+            select.setString(2, RENAME);
+            try (java.sql.ResultSet result = select.executeQuery()) {
+                if (result.next()) {
+                    exists = true;
+                    have = parse(result.getString(1));
+                }
+            }
+        }
+        try (java.sql.PreparedStatement write = connection.prepareStatement(exists
+                ? "UPDATE account_progress SET progress_value = ? WHERE account_uuid = ? AND progress_key = ?"
+                : "INSERT INTO account_progress (progress_value, account_uuid, progress_key) VALUES (?, ?, ?)")) {
+            write.setString(1, String.valueOf(have + 1));
+            write.setString(2, account.toString());
+            write.setString(3, RENAME);
+            write.executeUpdate();
+        }
+    }
+
+    /** 2026-10-17：星幣退給已經下線的人：直接加到資料庫的帳號進度（下次登入讀到）。 */
+    void refundCoinsOffline(final java.util.UUID account, final long amount, final String what) {
+        if (amount <= 0) {
+            return;
+        }
+        plugin.database().async(connection -> {
+            long have = 0;
+            boolean exists = false;
+            try (java.sql.PreparedStatement select = connection.prepareStatement(
+                    "SELECT progress_value FROM account_progress WHERE account_uuid = ? AND progress_key = ?")) {
+                select.setString(1, account.toString());
+                select.setString(2, COINS);
+                try (java.sql.ResultSet result = select.executeQuery()) {
+                    if (result.next()) {
+                        exists = true;
+                        have = parse(result.getString(1));
+                    }
+                }
+            }
+            try (java.sql.PreparedStatement write = connection.prepareStatement(exists
+                    ? "UPDATE account_progress SET progress_value = ? WHERE account_uuid = ? AND progress_key = ?"
+                    : "INSERT INTO account_progress (progress_value, account_uuid, progress_key) VALUES (?, ?, ?)")) {
+                write.setString(1, String.valueOf(have + amount));
+                write.setString(2, account.toString());
+                write.setString(3, COINS);
+                write.executeUpdate();
+            }
+            return null;
+        }).whenComplete((ignored, error) -> {
+            if (error != null) {
+                plugin.getSLF4JLogger().error("[贊助] {}：{} 星幣退不回去（{}），請手動補", what, amount, account, error);
+            } else {
+                plugin.getSLF4JLogger().info("[贊助] {}：{} 星幣退回 {}（離線，寫進資料庫）", what, amount, account);
+            }
+        });
     }
 
     public void refundRenameCard(final Player player) {

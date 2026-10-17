@@ -42,12 +42,13 @@ currency:
   percent: 10
 
 # 傳奇三換一（拆解台的「傳奇三換一」按鈕）：放 inputs 件傳奇，換一件隨機的傳奇（2026-10：重複的傳奇有用途）。
-#   能放：已鑑定、沒鎖定的傳奇；追逐級、極境專屬不能放（換掉太可惜）。
-#   sources：換出來的池子（uniques.yml 的 sources）。預設地圖 Boss 池（14 件）、六種地圖事件的專屬、兩個具名 Boss 的（共 22 件）；
+#   能放：已鑑定、沒鎖定的傳奇。追逐級三件換一件追逐級；極境專屬也能放（2026-10），那一組換一般賭博賭得到的傳奇。
+#   可以一次放很多組批量換（每 inputs 件一組，湊不滿的不會被拿走）。
+#   sources：換出來的池子（uniques.yml 的 sources）。預設地圖 Boss 池、兩個具名 Boss 的（2026-10-17：地圖事件的專屬拿掉，跟賭博一樣換不到）；
 #     終局自己的、只能賭的兩件（流浪者、金邊）不在池子裡；追逐級、極境專屬寫了也不會換到。
 #   物品等級 = 放進去最高的那件（傳奇的 drop_level 要到）；exclude_inputs：不會換到放進去的那幾種（池子只剩那幾種時例外）。
 unique_recipe:
   enabled: true
   inputs: 3
-  sources: [map_boss, shrine, strongbox, breach, exile, ritual, delirium, royal_tomb, observatory]
+  sources: [map_boss, royal_tomb, observatory]
   exclude_inputs: true

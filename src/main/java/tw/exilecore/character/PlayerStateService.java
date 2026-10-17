@@ -282,6 +282,11 @@ public final class PlayerStateService {
         passiveModifiers.addAll(virtual != null
                 ? tw.exilecore.passive.JewelSockets.modifiers(plugin.items() == null ? null : plugin.items().repository(), virtual.jewels(), state.passives(), tree)
                 : tw.exilecore.passive.JewelSockets.modifiers(plugin, state, tree));
+        // 2026-10：半徑珠寶放大的「+x 任一屬性」：照那一點選的屬性換成力量／敏捷／智慧
+        passiveModifiers.replaceAll(mod -> mod.stat().startsWith(StatKeys.ATTR_CHOICE + "@")
+                ? new Modifier(attributeStat(chosenAttribute(state, characterClass, mod.stat().substring(StatKeys.ATTR_CHOICE.length() + 1))),
+                        mod.type(), mod.value(), mod.tags(), mod.source())
+                : mod);
         // 2026-10：「最近…」的條件詞綴（珠寶、裝備）：條件成立才算；記下算過哪些條件，變了就重算（tick）
         final Map<String, Boolean> conditions = new java.util.HashMap<>();
         final long now = plugin.getServer().getCurrentTick();

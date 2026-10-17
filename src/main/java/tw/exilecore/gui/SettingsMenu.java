@@ -32,6 +32,8 @@ public final class SettingsMenu extends Menu {
     private static final int SLOT_TRADE = 19;
     /** 網頁角色頁公不公開（2026-10）。 */
     private static final int SLOT_PROFILE = 20;
+    /** 撿到的星圖直接進倉庫的地圖頁（2026-10；預設關）。 */
+    private static final int SLOT_MAP_STASH = 21;
     /** 按鍵（2026-10）：生命、魔力藥劑各放 1–8 的哪一格。 */
     private static final int ROW_KEYS = 3;
     private static final int SLOT_LIFE_FLASK = 28;
@@ -69,6 +71,11 @@ public final class SettingsMenu extends Menu {
         set(slot(ROW_OTHER, 0), rowLabel(Material.EMERALD, "其他", "跟別的玩家有關的"));
         set(SLOT_TRADE, toggle(Material.EMERALD, "交易邀請", PlayerSettings.enabled(state, PlayerSettings.TRADE_REQUESTS),
                 "別人可以邀請你面對面交易（/trade）"));
+        if (plugin.stash() != null) {
+            set(SLOT_MAP_STASH, toggle(Material.FILLED_MAP, "星圖直接進倉庫", PlayerSettings.on(state, PlayerSettings.MAP_TO_STASH),
+                    "撿到的星圖直接收進倉庫的地圖頁，不佔背包（地圖頁滿了才放背包）；"
+                            + "地圖裝置可以直接從地圖頁挑地圖"));
+        }
         final tw.exilecore.web.Profiles profiles = plugin.web() == null ? null : plugin.web().profiles();
         if (profiles != null && state.hasCharacter()) {
             set(SLOT_PROFILE, toggle(Material.FILLED_MAP, "網頁角色頁公開", profiles.isPublic(player),
@@ -113,16 +120,10 @@ public final class SettingsMenu extends Menu {
             }
             case SLOT_COMBAT -> flip(PlayerSettings.COMBAT_METER);
             case SLOT_SKILL_SOUNDS -> flip(PlayerSettings.SKILL_SOUNDS);
-            case SLOT_COMBAT_SKILLS -> {
-                // 預設關的設定：沒設定過算關
-                final PlayerState state = plugin.players().get(player);
-                if (!state.hasCharacter()) {
-                    player.sendMessage(plugin.text().prefixed("<red>先選一個角色（/char）"));
-                } else {
-                    final boolean on = PlayerSettings.on(state, PlayerSettings.COMBAT_SKILLS);
-                    plugin.characters().setProgress(player, PlayerSettings.COMBAT_SKILLS, on ? "0" : "1");
-                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, on ? 0.8f : 1.4f);
-                    redraw();
+            case SLOT_COMBAT_SKILLS -> flipOff(PlayerSettings.COMBAT_SKILLS);
+            case SLOT_MAP_STASH -> {
+                if (plugin.stash() != null) {
+                    flipOff(PlayerSettings.MAP_TO_STASH);
                 }
             }
             case SLOT_OTHERS_FX -> {
@@ -142,6 +143,19 @@ public final class SettingsMenu extends Menu {
             default -> {
             }
         }
+    }
+
+    /** 預設關的設定：沒設定過算關。 */
+    private void flipOff(final String key) {
+        final PlayerState state = plugin.players().get(player);
+        if (!state.hasCharacter()) {
+            player.sendMessage(plugin.text().prefixed("<red>先選一個角色（/char）"));
+            return;
+        }
+        final boolean on = PlayerSettings.on(state, key);
+        plugin.characters().setProgress(player, key, on ? "0" : "1");
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, on ? 0.8f : 1.4f);
+        redraw();
     }
 
     private ItemStack flaskButton(final Material material, final String name, final String now) {

@@ -172,9 +172,7 @@ public final class Signatures {
             more *= 1 + 0.06 * allies.getOrDefault(id, 0);
         }
         if (has(sheet, StatKeys.SIG_VOID_STEP) && voidStepUntil.getOrDefault(id, 0L) >= now) {
-            voidStepUntil.remove(id); // 只有下一下
-            more *= 1.60;
-            target.getWorld().spawnParticle(Particle.REVERSE_PORTAL, target.getLocation().add(0, 1, 0), 18, 0.3, 0.5, 0.3, 0.05);
+            more *= 1.60; // 2026-10-17：這裡只看，真的打中才用掉（hitLanded）——以前被閃掉、擋掉也用掉
         }
         if (has(sheet, StatKeys.SIG_GODSLAYER) && targetMonster != null) {
             if (targetMonster.boss()) {
@@ -198,15 +196,8 @@ public final class Signatures {
         final long now = now();
         double less = 1.0;
         if (has(sheet, StatKeys.SIG_LAST_STAND)) {
-            if (lastStandUntil.getOrDefault(id, 0L) < now && lastStandReady.getOrDefault(id, 0L) <= now
-                    && state.maxLife() > 0 && state.life() < state.maxLife() * LAST_STAND_AT) {
-                lastStandUntil.put(id, now + LAST_STAND_TICKS);
-                lastStandReady.put(id, now + LAST_STAND_COOLDOWN);
-                defender.getWorld().playSound(defender.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.8f, 0.6f);
-                defender.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, defender.getLocation().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.2);
-                defender.sendActionBar(plugin.text().parse("<#d4a24c><bold>背水</bold> <gray>8 秒內受到的傷害減半"));
-            }
-            if (lastStandUntil.getOrDefault(id, 0L) >= now) {
+            // 2026-10-17：這裡只看（觸發這一下也減半），真的被打中才啟動、進冷卻（hitTaken）——以前被閃掉的攻擊也會啟動
+            if (lastStandUntil.getOrDefault(id, 0L) >= now || lastStandWouldTrigger(id, state, now)) {
                 less *= 0.5;
             }
         }
@@ -217,6 +208,39 @@ public final class Signatures {
             less *= 1 - 0.04 * allies.getOrDefault(id, 0);
         }
         return less;
+    }
+
+    private boolean lastStandWouldTrigger(final UUID id, final PlayerState state, final long now) {
+        return lastStandUntil.getOrDefault(id, 0L) < now && lastStandReady.getOrDefault(id, 0L) <= now
+                && state.maxLife() > 0 && state.life() < state.maxLife() * LAST_STAND_AT;
+    }
+
+    /** 玩家真的被打中（沒閃掉、沒擋掉）：背水這時才啟動。 */
+    public void hitTaken(final Player defender, final PlayerState state, final StatSheet sheet) {
+        if (sheet == null || state == null || !has(sheet, StatKeys.SIG_LAST_STAND)) {
+            return;
+        }
+        final UUID id = defender.getUniqueId();
+        final long now = now();
+        if (lastStandWouldTrigger(id, state, now)) {
+            lastStandUntil.put(id, now + LAST_STAND_TICKS);
+            lastStandReady.put(id, now + LAST_STAND_COOLDOWN);
+            defender.getWorld().playSound(defender.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.8f, 0.6f);
+            defender.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, defender.getLocation().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.2);
+            defender.sendActionBar(plugin.text().parse("<#d4a24c><bold>背水</bold> <gray>8 秒內受到的傷害減半"));
+        }
+    }
+
+    /** 玩家真的打中（沒被閃掉、擋掉）：虛步的「下一下」這時才用掉。 */
+    public void hitLanded(final Player attacker, final StatSheet sheet, final LivingEntity target) {
+        if (sheet == null || !has(sheet, StatKeys.SIG_VOID_STEP)) {
+            return;
+        }
+        final UUID id = attacker.getUniqueId();
+        if (voidStepUntil.getOrDefault(id, 0L) >= now()) {
+            voidStepUntil.remove(id); // 只有下一下
+            target.getWorld().spawnParticle(Particle.REVERSE_PORTAL, target.getLocation().add(0, 1, 0), 18, 0.3, 0.5, 0.3, 0.05);
+        }
     }
 
     /** 玩家閃掉、擋掉一下（虛步）。 */

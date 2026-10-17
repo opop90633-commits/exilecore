@@ -25,6 +25,9 @@ public final class PlayerSettings {
     /** 自己放技能的聲音（2026-10；別人的技能本來就小聲，跟著「別人的技能特效」關）。預設開。 */
     public static final String SKILL_SOUNDS = "setting.skill_sounds";
 
+    /** 撿到的星圖直接收進倉庫的地圖頁（2026-10；地圖頁滿了或倉庫沒載入才放背包）。預設關（{@link #on}）。 */
+    public static final String MAP_TO_STASH = "setting.map_to_stash";
+
     private PlayerSettings() {
     }
 

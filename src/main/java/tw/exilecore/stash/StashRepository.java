@@ -99,6 +99,33 @@ public final class StashRepository {
                 insert.executeUpdate();
             }
         }
+        // 2026-10：快照裡沒有的物品頁刪掉（收回的頁搬空、拿掉之後，資料庫那一列還留著舊的東西，
+        // 下次上線又讀回來＝複製）。地圖頁（MAP_STORE_KEY）在快照裡、不會刪；倉庫頁以外的頁碼不動。
+        try (PreparedStatement stale = connection.prepareStatement(
+                "SELECT page FROM stash_pages WHERE account_uuid = ?")) {
+            stale.setString(1, account.toString());
+            final java.util.List<Integer> remove = new java.util.ArrayList<>();
+            try (ResultSet result = stale.executeQuery()) {
+                while (result.next()) {
+                    final int key = result.getInt(1);
+                    if (key != Stash.MAP_STORE_KEY && key >= 0 && key < Stash.storageKey(Stash.MAX_PAGES)
+                            && !snapshot.pages().containsKey(key)) {
+                        remove.add(key);
+                    }
+                }
+            }
+            if (!remove.isEmpty()) {
+                try (PreparedStatement delete = connection.prepareStatement(
+                        "DELETE FROM stash_pages WHERE account_uuid = ? AND page = ?")) {
+                    for (final int key : remove) {
+                        delete.setString(1, account.toString());
+                        delete.setInt(2, key);
+                        delete.addBatch();
+                    }
+                    delete.executeBatch();
+                }
+            }
+        }
         try (PreparedStatement delete = connection.prepareStatement("DELETE FROM stash_currency WHERE account_uuid = ?")) {
             delete.setString(1, account.toString());
             delete.executeUpdate();

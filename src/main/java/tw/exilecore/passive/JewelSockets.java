@@ -284,7 +284,10 @@ public final class JewelSockets {
                 continue;
             }
             for (final Modifier mod : node.modifiers()) {
-                list.add(new Modifier(mod.stat(), mod.type(), mod.value() * scale, mod.tags(), "半徑珠寶：" + node.name()));
+                // 2026-10：「+x 任一屬性」記下是哪一點（屬性表那邊照那一點選的屬性換成力量／敏捷／智慧，以前加到沒人讀的 attr.choice）
+                final String stat = tw.exilecore.stats.StatKeys.ATTR_CHOICE.equals(mod.stat())
+                        ? tw.exilecore.stats.StatKeys.ATTR_CHOICE + "@" + node.id() : mod.stat();
+                list.add(new Modifier(stat, mod.type(), mod.value() * scale, mod.tags(), "半徑珠寶：" + node.name()));
             }
         }
         return list;

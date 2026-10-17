@@ -407,6 +407,18 @@ public final class DropTable {
         return Math.max(0, Math.min(1, Math.log(max / weight) / Math.log(max / min)));
     }
 
+    /** economy.yml 的 gamble.boss_rate_uniques（只能賭的稀有傳奇，例如踏骸之履）：怪物掉落一樣用 Boss 傳奇的機率。 */
+    private static volatile java.util.Set<String> bossRateUniques = java.util.Set.of();
+
+    /** 這件是不是照 Boss 機率的稀有傳奇（兌換券不能直接挑）。 */
+    public static boolean bossRateUnique(final String id) {
+        return bossRateUniques.contains(id);
+    }
+
+    public static void setBossRateUniques(final java.util.Collection<String> ids) {
+        bossRateUniques = java.util.Set.copyOf(ids);
+    }
+
     /** 能賭出傳奇的基底：照權重擲一次會不會變成傳奇（權重乘 1 + 稀有度）；不會或沒有能賭的傳奇回傳 null。 */
     ItemData rollUnique(final ItemBase base, final int level, final double rarityBonus, final ItemGenerator generator,
                         final RandomGenerator random) {
@@ -418,7 +430,7 @@ public final class DropTable {
         for (final tw.exilecore.item.UniqueItem unique : generator.repository().uniques()) {
             if (unique.base().equals(base.id()) && unique.droppedBy("gamble") && unique.dropLevel() <= level && unique.weight() > 0) {
                 pool.add(unique);
-                boss |= unique.droppedBy("map_boss");
+                boss |= unique.droppedBy("map_boss") || bossRateUniques.contains(unique.id()); // 2026-10-17：以前只有賭博照這份名單
             }
         }
         if (pool.isEmpty()) {

@@ -575,7 +575,9 @@ public final class AscendancyService {
     }
 
     void forget(final Player player) {
-        trialReadyAt.remove(player.getUniqueId());
+        // 2026-10：下線不清冷卻（以前重新登入就能馬上再開）；過期的順便清掉
+        final long now = System.currentTimeMillis();
+        trialReadyAt.values().removeIf(until -> until <= now);
     }
 
     // ---- 管理員 ----

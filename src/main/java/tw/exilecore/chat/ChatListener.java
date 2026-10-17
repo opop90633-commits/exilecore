@@ -44,12 +44,7 @@ final class ChatListener implements Listener {
                     player.sendMessage(chat.plugin().text().prefixed("<red>你不在隊伍裡，切回公開頻道了<gray>（剛剛那則沒送出）"));
                     return;
                 }
-                final ChatModeration.Verdict check = chat.moderation().check(player, raw);
-                if (!check.allowed()) {
-                    player.sendMessage(chat.plugin().text().prefixed("<red>" + tw.exilecore.item.ItemRenderer.escape(check.reason())));
-                    return;
-                }
-                chat.plugin().party().chat(player, check.text());
+                chat.plugin().party().chat(player, raw); // 禁言、洗頻、髒話在 PartyService.chat 裡檢查（/p 也走那裡）
             });
             return;
         }

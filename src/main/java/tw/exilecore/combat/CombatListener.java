@@ -392,8 +392,9 @@ public final class CombatListener implements Listener {
         if (defenderMonster != null && ailments != null && rawArmour > 0) {
             final double broken = ailments.armourBroken(defender);
             if (broken > 0) {
-                hitDefender = defenderSheet.overlay(java.util.List.of(Modifier.flat(StatKeys.ARMOUR, -Math.min(rawArmour, broken), "破甲")));
-                if (Double.isInfinite(broken) && (hitTags(skill).contains(Tags.PHYSICAL)
+                // 2026-10-17：照比例扣（rawArmour 已經含增加；以前用 FLAT 扣會再乘一次增加，有「增加護甲」的怪一下就被扣光）
+                hitDefender = defenderSheet.overlay(java.util.List.of(Modifier.more(StatKeys.ARMOUR, -Math.min(1.0, broken / rawArmour), "破甲")));
+                if (Double.isInfinite(broken) && (skill.tags().contains(Tags.PHYSICAL)
                         || attackerIsPlayer && StatKeys.flag(attackerSheet, StatKeys.FLAG_IMPLODING))) { // 內爆衝擊：所有擊中都增加
                     brokenTaken = ailments.fullyBrokenTaken();
                 }
@@ -436,9 +437,12 @@ public final class CombatListener implements Listener {
         // PoE2 昇華：對重暈中的敵人更多傷害、對低血的敵人增加傷害、每 50 目前生命增加暴擊傷害加成
         if (attackerIsPlayer) {
             final java.util.List<Modifier> conditional = new java.util.ArrayList<>();
-            final double vsStunned = attackerSheet.flat(StatKeys.DAMAGE_VS_STUNNED, java.util.Set.of());
-            if (vsStunned > 0 && ailments != null && ailments.has(defender, tw.exilecore.ailment.AilmentType.STUN)) {
-                conditional.add(Modifier.more(StatKeys.DAMAGE, vsStunned / 100.0, "裂勁"));
+            // 2026-10-17：傳奇寫的是 MORE（更多 35～70%），以前只讀 FLAT（昇華的裂勁），傳奇那條完全沒效果——兩種都算
+            final double vsStunned = attackerSheet.flat(StatKeys.DAMAGE_VS_STUNNED, java.util.Set.of()) / 100.0
+                    + (attackerSheet.more(StatKeys.DAMAGE_VS_STUNNED, java.util.Set.of()) - 1);
+            // 2026-10-17：只算重暈（說明寫的「重暈中的敵人」；以前凍結、輕暈也算）
+            if (vsStunned > 0 && ailments != null && ailments.heavyStunned(defender)) {
+                conditional.add(Modifier.more(StatKeys.DAMAGE, vsStunned, "對暈眩的敵人"));
             }
             final double vsLow = skill.effective(attackerSheet).flat(StatKeys.DAMAGE_VS_LOW_LIFE, java.util.Set.of()); // 2026-10：輔助寶石（處刑）也算
             final org.bukkit.attribute.AttributeInstance maxHealth = defender.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
@@ -628,6 +632,15 @@ public final class CombatListener implements Listener {
             }
             return;
         }
+        // 2026-10-17：真的打中了才用掉虛步、啟動背水（以前算倍率時就用掉，被閃掉、擋掉也一樣）
+        if (signatures != null) {
+            if (attackerIsPlayer) {
+                signatures.hitLanded((Player) attacker, attackerSheet, defender);
+            }
+            if (defenderIsPlayer) {
+                signatures.hitTaken((Player) defender, defenderState, defenderSheet);
+            }
+        }
         if (ailments != null && !defenderIsMinion) {
             // 點燃、冰緩、凍結、感電：等事件確定沒被其他插件取消再算（召喚物不會中異常；召喚物點燃的算主人點的）
             if (defenderMonster != null && StatKeys.flag(skill.effective(attackerSheet), StatKeys.FLAG_STUN_FULL_LIFE)) {
@@ -642,7 +655,8 @@ public final class CombatListener implements Listener {
             // 所以還要看這一下是不是牠本人直接打的（箭、火球、喚魔者的尖牙打到時 damager 是投射物或效果，不算）
             final boolean directHit = event.getDamager() == attacker && (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK
                     || event.getCause() == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK);
-            final LivingEntity thornsTarget = !attackerIsPlayer && !attackerIsMinion && Thorns.triggersOn(directHit, skill.tags()) ? attacker : null;
+            final LivingEntity thornsTarget = !attackerIsPlayer && !attackerIsMinion && Thorns.triggersOn(directHit, skill.tags(),
+                    StatKeys.flag(defenderSheet, StatKeys.FLAG_THORNS_ANY_HIT)) ? attacker : null;
             if (result.deflected()) {
                 numbers.takenWord((Player) defender, "偏斜"); // 2026-10：偏斜的那一下傷害更少
             }
@@ -659,6 +673,7 @@ public final class CombatListener implements Listener {
             // 召喚物跟怪物一樣：原版血量只是比例
             event.setDamage(Math.max(0.01, result.total() * minions.healthScale(defender)));
             if (pvpAttacker != null) {
+                lastPvpCapScale = 1.0; // 打召喚物沒有上限
                 pvpRewards(attackerIsPlayer, credit, attackerSheet, skill, result, defender);
             }
         } else {
@@ -773,6 +788,11 @@ public final class CombatListener implements Listener {
 
     /** 生命與魔力偷取（飲血輔助、詞綴）：造成的物理傷害有 x% 存進偷取，之後慢慢回。 */
     private void leech(final Player player, final StatSheet sheet, final SkillProfile skill, final HitResult result) {
+        leech(player, sheet, skill, result, 1.0);
+    }
+
+    /** @param capScale 競技場的上限把這一下壓到幾成（2026-10-17：偷取照上限後真的打掉的算，以前照上限前的整下）。 */
+    private void leech(final Player player, final StatSheet sheet, final SkillProfile skill, final HitResult result, final double capScale) {
         final StatSheet effective = skill.effective(sheet);
         if (StatKeys.flag(effective, StatKeys.FLAG_NO_LEECH)) {
             return; // 地圖詞綴：無法從怪物身上偷取
@@ -803,13 +823,13 @@ public final class CombatListener implements Listener {
             life += chaosDealt * effective.flat(StatKeys.LEECH_LIFE, skill.contextFor(DamageType.PHYSICAL)) / 100.0;
         }
         // 生命虹吸（血術士）：法術傷害的 x% 偷取為生命
-        if (!skill.isAttack()) {
+        if (skill.isSpell()) { // 2026-10：只算法術（反傷、擊殺爆炸、臨在灼燒不是法術）
             life += result.dealt().total() * effective.flat(StatKeys.LEECH_SPELL, java.util.Set.of()) / 100.0;
         }
         if (life <= 0 && mana <= 0) {
             return;
         }
-        final double scale = Math.max(0, effective.apply(StatKeys.LEECH_EFFECT, 1.0, java.util.Set.of()));
+        final double scale = Math.max(0, effective.apply(StatKeys.LEECH_EFFECT, 1.0, java.util.Set.of())) * Math.max(0, Math.min(1, capScale));
         life *= scale;
         mana *= scale;
         // 立即偷取（2026-10，照 PoE）：x% 立即生效，其餘照常存起來慢慢回；一下最多立即回 {@value #INSTANT_LEECH_CAP} 的最大生命／魔力
@@ -869,7 +889,7 @@ public final class CombatListener implements Listener {
         if (!attackerIsPlayer) {
             return;
         }
-        leech(credit, attackerSheet, skill, result);
+        leech(credit, attackerSheet, skill, result, lastPvpCapScale);
         final double lifeOnHit = skill.effective(attackerSheet).flat(StatKeys.LIFE_ON_HIT, skill.tags());
         if (lifeOnHit > 0) {
             pendingLifeGains.put(defender.getUniqueId(), new LifeGain(credit, lifeOnHit));
@@ -885,10 +905,19 @@ public final class CombatListener implements Listener {
         skills.hit(player, target, Thorns.profile(range[0], range[1]), null);
     }
 
+    /** 2026-10-17：下線清掉環境傷害的冷卻與三相共鳴（以前每個進過伺服器的人各留一筆）。 */
+    @EventHandler
+    public void onQuitCleanup(final org.bukkit.event.player.PlayerQuitEvent event) {
+        environmentCooldown.remove(event.getPlayer().getUniqueId());
+        trinity.forget(event.getPlayer().getUniqueId());
+    }
+
     /** 環境傷害（掉落、火、岩漿、溺水…）只處理玩家。 */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEnvironmentDamage(final EntityDamageEvent event) {
-        if (event instanceof EntityDamageByEntityEvent) {
+        // 2026-10-17：雷擊、TNT、掉落的鐵砧、藥水雲這些「實體造成」但找不到攻擊者的，也照環境傷害換算
+        // （以前兩邊都不管，玩家直接吃原版的數字、扣原版血量）
+        if (event instanceof EntityDamageByEntityEvent byEntity && resolveAttacker(byEntity.getDamager()) != null) {
             return;
         }
         if (!(event.getEntity() instanceof Player player)) {
@@ -933,6 +962,9 @@ public final class CombatListener implements Listener {
      * 準備扣玩家的護盾與生命：原版傷害改成 0，致死時改成致死值讓原版處理死亡。
      * 真正扣血在 {@link #onDamageMonitor}，這樣後面優先度更高的插件（領地保護、PvP 開關）取消事件時我們不會白扣。
      */
+    /** 上一次 applyToPlayer 的競技場上限比例（主執行緒；緊接著的 pvpRewards 用）。 */
+    private double lastPvpCapScale = 1.0;
+
     private void applyToPlayer(final Player player, final PlayerState state, final double esDamage,
                                final double lifeDamage, final EntityDamageEvent event,
                                final String source, final String skillName, final DamagePacket dealt, final DamagePacket outgoing,
@@ -948,6 +980,9 @@ public final class CombatListener implements Listener {
                 esTaken *= allowed / total;
                 lifeTaken *= allowed / total;
             }
+            lastPvpCapScale = total <= 0 ? 1.0 : Math.min(1.0, allowed / total);
+        } else {
+            lastPvpCapScale = 1.0;
         }
         if (byEnemy) {
             // 相位形態（時空術士）：受到的傷害更少 30%，4 秒後再受到那一擊 30% 的傷害
@@ -1003,6 +1038,7 @@ public final class CombatListener implements Listener {
                     rest -= absorbed;
                 }
                 state.setLife(state.life() - rest);
+                state.setLastDamageTick(plugin.getServer().getCurrentTick()); // 2026-10-17：延遲扣血也算在戰鬥中
                 if (state.life() <= 0) {
                     player.setHealth(0);
                 } else {

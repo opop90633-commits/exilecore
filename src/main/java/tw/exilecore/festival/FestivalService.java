@@ -876,7 +876,7 @@ public final class FestivalService {
 
             @Override
             public String tempoKind() {
-                return "world";
+                return "festival"; // 2026-10-17：南瓜王自己一個節奏（不普攻，出招比較快）
             }
 
             @Override
@@ -1307,23 +1307,29 @@ public final class FestivalService {
                 return "素材不夠：" + currencyName(cost.getKey()) + " 要 " + cost.getValue() + "，你有 " + wallet.available(player, cost.getKey());
             }
         }
+        // 2026-10-17：中途扣不到、或後面給不出去：已經扣的退回去（以前只記一條 log，素材就沒了）
+        final Map<String, Integer> taken = new java.util.LinkedHashMap<>();
         for (final Map.Entry<String, Integer> cost : item.cost().entrySet()) {
             if (!wallet.take(player, cost.getKey(), cost.getValue())) {
+                refundCosts(player, taken);
                 return "素材不夠";
             }
+            taken.put(cost.getKey(), cost.getValue());
         }
         switch (item.kind()) {
             case COSMETIC -> {
                 if (!grantCosmetic(player, item.cosmetic())) {
-                    plugin.getSLF4JLogger().warn("{}：{} 換時裝 {} 失敗（素材已扣）", config.name(), player.getName(), item.cosmetic());
-                    return "時裝寫不進帳號（素材已扣，請通知管理員）";
+                    plugin.getSLF4JLogger().warn("{}：{} 換時裝 {} 失敗（素材退回）", config.name(), player.getName(), item.cosmetic());
+                    refundCosts(player, taken);
+                    return "時裝寫不進帳號（素材退回了，請通知管理員）";
                 }
             }
             case TITLE -> {
                 final String problem = plugin.bounties().grantTitle(player, item.title());
                 if (problem != null) {
-                    plugin.getSLF4JLogger().warn("{}：{} 換稱號 {} 失敗：{}（素材已扣）", config.name(), player.getName(), item.title(), problem);
-                    return problem;
+                    plugin.getSLF4JLogger().warn("{}：{} 換稱號 {} 失敗：{}（素材退回）", config.name(), player.getName(), item.title(), problem);
+                    refundCosts(player, taken);
+                    return problem + "（素材退回了）";
                 }
             }
             case CURRENCY -> giveCurrency(player, item.currency(), item.amount());
@@ -1358,6 +1364,13 @@ public final class FestivalService {
     }
 
     /** 給素材：先進通貨袋，滿了背包，再滿掉在腳下（萬燈糖例外：通貨袋滿了，多的自動過濾掉，2026-10-16）。 */
+    /** 兌換失敗：把已經扣的素材退回去。 */
+    private void refundCosts(final Player player, final Map<String, Integer> taken) {
+        for (final Map.Entry<String, Integer> cost : taken.entrySet()) {
+            giveCurrency(player, cost.getKey(), cost.getValue());
+        }
+    }
+
     void giveCurrency(final Player player, final String currencyId, final int amount) {
         if (amount <= 0 || plugin.currencies() == null) {
             return;

@@ -25,6 +25,7 @@ public final class SignatureText {
         TEXT.put(StatKeys.SIG_SACRIFICE, "獻祭：擊殺時回復 4% 最大生命，5 秒內傷害更多 20%");
         // ---- 2026-10 PoE2 昇華（數值固定，寫在說明裡）----
         TEXT.put(StatKeys.FLAG_STONE_SKIN, "胸甲的護甲更多 50%");
+        TEXT.put(StatKeys.FLAG_THORNS_ANY_HIT, "荊棘也會被遠程攻擊與法術擊中觸發（反彈給出手的怪物）");
         TEXT.put(StatKeys.FLAG_HULKING_FORM, "天賦樹小點的效果增加 50%");
         TEXT.put(StatKeys.DAMAGE_VS_STUNNED, "對重暈中的敵人傷害更多 25%");
         TEXT.put(StatKeys.DAMAGE_VS_LOW_LIFE, "對低血（35% 以下）的敵人增加 35% 擊中傷害");

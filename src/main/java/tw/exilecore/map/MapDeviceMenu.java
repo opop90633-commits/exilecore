@@ -28,6 +28,10 @@ public final class MapDeviceMenu extends Menu {
     private static final int SLOT_MAP = 13;
     /** 2026-10：地圖品質一鍵點滿（用背包＋通貨袋＋倉庫裡的星盤刻刀）。 */
     private static final int SLOT_QUALITY = 14;
+    /** 2026-10：從倉庫的地圖頁挑一張地圖（拿到背包再選起來）。 */
+    private static final int SLOT_FROM_STASH = 12;
+    /** 挑倉庫地圖的畫面：一頁 45 張（最下面一排是按鈕）。 */
+    private static final int PICK_SLOTS = 45;
     /** 地圖品質上限（星盤刻刀，CurrencyOperation.QUALITY_MAP）。 */
     private static final int MAP_QUALITY_CAP = 20;
     private static final int SLOT_OPEN = 22;
@@ -44,6 +48,12 @@ public final class MapDeviceMenu extends Menu {
     private final MapService service;
     private int selectedSlot = -1;
     private ItemData selected;
+    /** 正在挑倉庫地圖頁的地圖（2026-10）。 */
+    private boolean picking;
+    private int pickPage;
+    /** 挑地圖畫面每一格對應的地圖（stash.maps() 裡的那個物件；拿之前確認還在）。 */
+    private final List<ItemStack> pickShown = new ArrayList<>();
+    private final java.util.Map<ItemStack, int[]> pickInfo = new java.util.IdentityHashMap<>();
 
     public MapDeviceMenu(final ExileCore plugin, final Player player, final MapService service) {
         super(plugin, player, 6, "<#9fd3ff>地圖裝置");
@@ -55,11 +65,16 @@ public final class MapDeviceMenu extends Menu {
         for (int i = 0; i < 54; i++) {
             set(i, filler());
         }
+        if (picking) {
+            drawPicker();
+            return;
+        }
+        drawFromStash();
         final MapConfig config = service.config();
         final Set<String> completed = service.completed(player);
         if (selected == null) {
             set(SLOT_MAP, icon(Material.MAP, "<gray>還沒放地圖",
-                    "<dark_gray>點一下你背包裡的地圖，放上裝置"));
+                    "<dark_gray>點一下你背包裡的地圖，放上裝置", "<dark_gray>或點左邊的「從倉庫挑地圖」"));
             set(SLOT_OPEN, icon(Material.GRAY_DYE, "<gray>開啟", "<dark_gray>先選一張地圖"));
         } else {
             final ItemStack preview = plugin.items().toStack(selected);
@@ -260,7 +275,7 @@ public final class MapDeviceMenu extends Menu {
         lore.add("<gray>Boss：<#c77dff>" + ItemRenderer.escape(map.boss().name()));
         lore.add("<gray>固定開在 T" + config.tiers().max() + " 再高幾級（怪物等級 <white>"
                 + config.pinnacleStats(map.id(), pinnacle).monsterLevel() + "<gray>），只有 Boss 房");
-        lore.add("<red>每個人只能走進去一次<dark_gray>（死了或離開就不能再進）");
+        lore.add("<red>每一門每個人只能走進去一次<dark_gray>（死了或離開要等這一門結束、走下一門）");
         lore.add("");
         final String missing = Atlas.missingRequirements(config, map, completed);
         if (!missing.isEmpty()) {
@@ -317,7 +332,7 @@ public final class MapDeviceMenu extends Menu {
         plugin.dialogs().form(player, "<#c77dff>巔峰",
                 List.of("<gray>要用掉每一種碎片各 1 個，開在 T" + config.tiers().max() + " 再高幾級",
                         "<gray>只有 Boss 房：一進去下一間就是 Boss",
-                        "<red>每個人只能走進去一次：死了或離開（包括回營地）就不能再進",
+                        "<red>每一門每個人只能走進去一次：死了或離開（包括回營地）要等這一門結束、走下一門",
                         "<dark_gray>準備好藥劑與抗性再進去；隊友也是各進一次"),
                 List.of(new Dialogs.Choice("boss", "挑戰", bosses, openable.getFirst().id())), "打開傳送門",
                 answers -> {
@@ -347,7 +362,7 @@ public final class MapDeviceMenu extends Menu {
         final List<String> lore = new ArrayList<>();
         lore.add("<gray>終局 Boss 的最強版本：固定開在最高階再高幾級，");
         lore.add("<gray>Boss 更硬、更痛、招式更快，還有極境才有的招式與機制");
-        lore.add("<red>每個人只能走進去一次<dark_gray>（死了或離開就不能再進）");
+        lore.add("<red>每一門每個人只能走進去一次<dark_gray>（死了或離開要等這一門結束、走下一門）");
         lore.add("");
         boolean any = false;
         for (final MapConfig.MapDef map : ubers) {
@@ -407,7 +422,7 @@ public final class MapDeviceMenu extends Menu {
         plugin.dialogs().form(player, "<#ff5f5f>極境",
                 List.of("<gray>要用掉 " + (sameKey ? keyText(first) : "清單上寫的鑰匙") + "，開在 T" + config.tiers().max() + " 再高幾級",
                         "<gray>Boss 的生命、傷害比一般版本高（清單上的倍率），所有怪物的招式冷卻更短",
-                        "<red>每個人只能走進去一次：死了或離開（包括回營地）就不能再進",
+                        "<red>每一門每個人只能走進去一次：死了或離開（包括回營地）要等這一門結束、走下一門",
                         "<dark_gray>準備好藥劑與抗性再進去；隊友也是各進一次"),
                 List.of(new Dialogs.Choice("boss", "挑戰", bosses, openable.getFirst().id())), "打開傳送門",
                 answers -> {
@@ -487,7 +502,26 @@ public final class MapDeviceMenu extends Menu {
 
     @Override
     protected void onClick(final int slot, final ClickType click, final InventoryClickEvent event) {
+        if (picking) {
+            pickerClick(slot, click);
+            return;
+        }
         switch (slot) {
+            case SLOT_FROM_STASH -> {
+                final tw.exilecore.stash.Stash stash = stash();
+                if (stash != null && stash.mapCount() > 0) {
+                    if (click.isRightClick()) {
+                        // 2026-10：右鍵直接拿地圖頁最高階（同階稀有度高的）那張放上裝置
+                        if (acceptAction(click)) {
+                            takeFromStash(pickList(stash).getFirst());
+                        }
+                        return;
+                    }
+                    picking = true;
+                    pickPage = 0;
+                    redraw();
+                }
+            }
             case SLOT_QUALITY -> fillQuality();
             case SLOT_MAP -> {
                 selected = null;
@@ -614,9 +648,142 @@ public final class MapDeviceMenu extends Menu {
         redraw();
     }
 
+    // ---- 從倉庫的地圖頁挑（2026-10） ----
+
+    private tw.exilecore.stash.Stash stash() {
+        return plugin.stash() == null ? null : plugin.stash().stash(player).orElse(null);
+    }
+
+    private void drawFromStash() {
+        final tw.exilecore.stash.Stash stash = stash();
+        if (stash == null) {
+            return;
+        }
+        final int count = stash.mapCount();
+        set(SLOT_FROM_STASH, count == 0
+                ? icon(Material.PAPER, "<gray>倉庫的地圖頁", "<dark_gray>地圖頁裡沒有地圖",
+                        "<dark_gray>設定開「星圖直接進倉庫」，撿到的星圖會直接放進去")
+                : icon(Material.FILLED_MAP, "<#9fd3ff>從倉庫挑地圖",
+                        "<gray>地圖頁有 <white>" + count + "</white> 張",
+                        "<gray>點一張：拿到背包並放上裝置", "",
+                        "<yellow>左鍵：打開　右鍵：直接拿最高階的一張"));
+    }
+
+    /** 地圖的 {階級, 稀有度}（每張只解一次）。 */
+    private int[] pickInfoOf(final ItemStack stack) {
+        int[] info = pickInfo.get(stack);
+        if (info == null) {
+            final Optional<ItemData> data = plugin.items().read(stack);
+            final tw.exilecore.item.ItemBase base = data.map(d -> plugin.items().repository().base(d.base())).orElse(null);
+            info = base == null || !base.isMap() ? new int[] {0, 0}
+                    : new int[] {tw.exilecore.item.ItemStats.mapTier(base, data.get()), data.get().rarity().ordinal()};
+            pickInfo.put(stack, info);
+        }
+        return info;
+    }
+
+    private List<ItemStack> pickList(final tw.exilecore.stash.Stash stash) {
+        final List<ItemStack> list = new ArrayList<>(stash.maps());
+        list.sort(java.util.Comparator.<ItemStack>comparingInt(s -> -pickInfoOf(s)[0]).thenComparingInt(s -> -pickInfoOf(s)[1]));
+        return list;
+    }
+
+    private void drawPicker() {
+        final tw.exilecore.stash.Stash stash = stash();
+        pickShown.clear();
+        if (stash == null) {
+            picking = false;
+            draw();
+            return;
+        }
+        final List<ItemStack> list = pickList(stash);
+        final int pages = Math.max(1, (list.size() + PICK_SLOTS - 1) / PICK_SLOTS);
+        pickPage = Math.max(0, Math.min(pickPage, pages - 1));
+        for (int i = 0; i < PICK_SLOTS; i++) {
+            final int index = pickPage * PICK_SLOTS + i;
+            if (index >= list.size()) {
+                break;
+            }
+            final ItemStack map = list.get(index);
+            pickShown.add(map);
+            set(i, appendLore(map.clone(), "", "<yellow>左鍵：拿到背包並放上裝置"));
+        }
+        set(SLOT_BACK, backButton("地圖裝置"));
+        if (pages > 1) {
+            set(SLOT_PREV, pageButton(false, pickPage, pages));
+            set(SLOT_NEXT, pageButton(true, pickPage, pages));
+        }
+        set(Menu.SLOT_HELP, icon(Material.BOOK, "<white>倉庫的地圖頁", "<gray>共 <white>" + list.size() + "</white> 張（高階、稀有度高的在前）",
+                "<gray>點一張：放進背包的空格並選起來", "<dark_gray>沒按開啟的話地圖就留在背包"));
+        set(SLOT_CLOSE, closeButton());
+    }
+
+    private void pickerClick(final int slot, final ClickType click) {
+        if (slot == SLOT_BACK) {
+            picking = false;
+            redraw();
+            return;
+        }
+        if (slot == SLOT_CLOSE) {
+            player.closeInventory();
+            return;
+        }
+        if (slot == SLOT_PREV || slot == SLOT_NEXT) {
+            pickPage += slot == SLOT_NEXT ? 1 : -1;
+            redraw();
+            return;
+        }
+        if (slot < 0 || slot >= pickShown.size() || !acceptAction(click)) {
+            return;
+        }
+        takeFromStash(pickShown.get(slot));
+    }
+
+    /** 從地圖頁拿這一張（確認還在）到背包空格並選起來。 */
+    private void takeFromStash(final ItemStack wanted) {
+        final tw.exilecore.stash.Stash stash = stash();
+        if (stash == null || wanted == null) {
+            return;
+        }
+        int index = -1;
+        for (int i = 0; i < stash.maps().size(); i++) {
+            if (stash.maps().get(i) == wanted) {
+                index = i;
+                break;
+            }
+        }
+        if (index < 0) {
+            redraw(); // 已經不在了（被拿走）
+            return;
+        }
+        final int free = player.getInventory().firstEmpty();
+        if (free < 0 || free >= 36) {
+            player.sendMessage(plugin.text().prefixed("<red>背包沒有空格，先空出一格"));
+            return;
+        }
+        final ItemStack map = stash.takeMap(index);
+        if (map == null) {
+            return;
+        }
+        player.getInventory().setItem(free, map);
+        plugin.players().markDirty(player);
+        final Optional<ItemData> data = plugin.items().read(map);
+        picking = false;
+        if (data.isPresent() && service.isMap(data.get())) {
+            selected = data.get();
+            selectedSlot = free;
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ITEM_PICKUP, 0.5f, 0.9f);
+        redraw();
+    }
+
     /** 點背包裡的地圖：選起來（東西不動）。 */
     @Override
     protected void onBottomClick(final int slot, final ClickType click, final InventoryClickEvent event) {
+        if (picking) {
+            picking = false;
+            redraw();
+        }
         final ItemStack stack = event.getCurrentItem();
         if (stack == null || stack.isEmpty()) {
             return;

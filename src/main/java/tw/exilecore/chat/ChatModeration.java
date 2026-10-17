@@ -94,6 +94,11 @@ public final class ChatModeration {
         if (player.hasPermission(ExileCore.PERMISSION_ADMIN)) {
             return Verdict.allow(text);
         }
+        // 2026-10-17：洗頻冷卻中連貼物品的訊息也不行（以前加個 [i] 就能繞過冷卻；貼物品本身還是不限）
+        final Long burstCooldown = cooldownUntil.get(player.getUniqueId());
+        if (burstCooldown != null && burstCooldown > now) {
+            return Verdict.deny("說太快了，" + remaining(burstCooldown - now) + "後再說");
+        }
         if (ChatService.hasLinks(text)) {
             // 2026-10：貼物品（[i]）不算洗頻、不算重複；只有每 LINK_COOLDOWN_MS 一則的限制，免得整排都是物品
             final Long lastLink = lastLinkAt.get(player.getUniqueId());
@@ -162,7 +167,8 @@ public final class ChatModeration {
 
     /** 禁言（minutes = 0 是永久）。 */
     public void mute(final UUID player, final long minutes, final String reason, final String by) {
-        final long until = minutes <= 0 ? 0 : System.currentTimeMillis() + minutes * 60_000L;
+        // 2026-10：分鐘數太大（溢位）會變成馬上解除：最多 100 年
+        final long until = minutes <= 0 ? 0 : System.currentTimeMillis() + Math.min(minutes, 52_560_000L) * 60_000L;
         mutes.put(player, new Mute(until, reason == null ? "" : reason.strip(), by));
         saveMutesLater();
     }

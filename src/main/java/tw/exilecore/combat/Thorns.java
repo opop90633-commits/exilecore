@@ -54,4 +54,9 @@ public final class Thorns {
     public static boolean triggersOn(final boolean directHit, final Set<String> skillTags) {
         return directHit && skillTags.contains(Tags.MELEE);
     }
+
+    /** 2026-10-17：有「荊棘也會被遠程與法術觸發」的話，什麼擊中都觸發。 */
+    public static boolean triggersOn(final boolean directHit, final Set<String> skillTags, final boolean anyHit) {
+        return anyHit || triggersOn(directHit, skillTags);
+    }
 }

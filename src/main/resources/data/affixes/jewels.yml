@@ -539,14 +539,13 @@ jewel_trap_inc:
   group: jewel_trap
   spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
   names: [詭雷的, 引信的, 機關的]
-  text: "增加 {value}% 陷阱與榴彈傷害"
+  text: "增加 {value}% 榴彈傷害"
   tiers:
     - { tier: 0, ilvl: 75, weight: 80, value: [18, 21] }
     - { tier: 1, ilvl: 50, weight: 250, value: [15, 17] }
     - { tier: 2, ilvl: 1, weight: 600, value: [10, 14] }
   mods:
-    - { stat: damage, type: INCREASED, value: "{value}", tags: [trap] }
-    - { stat: damage, type: INCREASED, value: "{value}", tags: [grenade] }
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [grenade] }   # 2026-10-17：沒有陷阱了，拿掉陷阱那條（榴彈照吃）
 
 jewel_leech_life:
   type: suffix
@@ -632,7 +631,7 @@ jewel_bleed_chance:
   spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
   names: [之血刃, 之裂創, 之割傷]
   text: "攻擊擊中時 {value}% 機率造成流血"
-  chips: [ailment]   # PoE2 的標籤（jewel BaseChanceToBleed）
+  chips: [attack, ailment]   # PoE2 的標籤（jewel BaseChanceToBleed）；2026-10-17 補攻擊
   tiers:
     - { tier: 0, ilvl: 75, weight: 80, value: [6, 7] }
     - { tier: 1, ilvl: 50, weight: 250, value: [4, 5] }
@@ -953,7 +952,7 @@ j2_base_chance_to_bleed:
   spawn_tags: [ruby]
   names: [星骸的, 精煉的, 雕琢的]
   text: "攻擊擊中時 {value}% 機率造成流血"
-  chips: [physical, ailment]   # PoE2 的標籤（BaseChanceToBleed）
+  chips: [attack, physical, ailment]   # PoE2 的標籤（BaseChanceToBleed）；2026-10-17 補攻擊
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [6, 7] }
     - { tier: 1, ilvl: 50, weight: 400, value: [5, 5] }
@@ -1617,14 +1616,13 @@ j2_minion_attack_speed_and_cast_speed:
   group: j2_minion_attack_speed_and_cast_speed
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
-  text: "增加 {value}% 召喚物攻擊與施法速度"
+  text: "增加 {value}% 召喚物攻擊速度"   # 2026-10-17：召喚物不會施法，拿掉沒作用的施法速度那半
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [4, 4] }
     - { tier: 1, ilvl: 50, weight: 400, value: [3, 3] }
     - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
-    - { stat: cast.speed, type: INCREASED, value: "{value}", tags: [minion] }
 
 j2_minion_critical_strike_chance_increase:
   type: suffix

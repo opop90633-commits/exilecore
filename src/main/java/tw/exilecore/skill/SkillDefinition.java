@@ -205,7 +205,8 @@ public record SkillDefinition(String id, String name, String description, String
         if (mechanic == Mechanic.DASH || mechanic == Mechanic.LEAP || mechanic == Mechanic.FLICKER) {
             tags.add(Tags.MOVEMENT);
         }
-        if (mechanic == Mechanic.DASH || mechanic == Mechanic.LEAP) {
+        // 2026-10-17：坐騎（喚駒、骨駒）借 dash 實作，但不是衝過去：不算突進（躍電這種突進輔助掛不上）
+        if ((mechanic == Mechanic.DASH || mechanic == Mechanic.LEAP) && !node.has("mount")) {
             tags.add(Tags.TRAVEL); // 一路衝過去、跳過去的（瞬影擊是瞬移到敵人身邊，不算）
         }
         if (params.zone() != null || params.ground() != null || params.vortex() != null || params.mark() != null) {
@@ -219,6 +220,9 @@ public record SkillDefinition(String id, String name, String description, String
         }
         if (mechanic == Mechanic.CORPSE) {
             tags.add(Tags.CORPSE);
+        }
+        if (mechanic == Mechanic.CHAIN) {
+            tags.add("chain"); // 2026-10-17：連鎖機制一律標上連鎖（以前隱藏的連鎖技能沒寫）
         }
         if (mechanic == Mechanic.PROJECTILE && params.fuse() > 0) {
             tags.add(Tags.GRENADE);
@@ -289,6 +293,7 @@ public record SkillDefinition(String id, String name, String description, String
                 tags.remove(Tags.AURA);
                 tags.add(Tags.HERALD);
             } else {
+                // （2026-10-17 試過把引星這類 yml 寫 persistent 的拿掉光環標籤：精魂輔助、雕琢的分類會跟著掛不上，先維持算光環）
                 tags.add(Tags.AURA);
             }
             // 隊友在範圍內才有效：範圍效果的加成讓它更大。2026-10-16：沒有任何效果會分給範圍內的人（引星：只是觸發別的技能）
@@ -357,6 +362,10 @@ public record SkillDefinition(String id, String name, String description, String
         }
         if (conversion.containsKey(DamageType.PHYSICAL) || converted > 1.0 + 1e-9) {
             throw new IllegalArgumentException(where + ".convert：只能把物理轉成其他類型，總和最多 1");
+        }
+        // 2026-10-17 標籤統一：部分轉換的攻擊，剩下的物理還有一半以上就算物理技能（[物理]標籤、鐵髓這類物理輔助掛得上）
+        if (type == SkillType.ATTACK && !conversion.isEmpty() && converted <= 0.5 + 1e-9) {
+            tags.add(Tags.PHYSICAL);
         }
 
         final double attackSpeed = node.decimal("attack_speed", 1.0);

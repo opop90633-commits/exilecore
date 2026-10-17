@@ -258,7 +258,12 @@ public final class MapService {
 
     /** 模組停用：玩家送回營地、Boss 血條收掉、實體移除（格子留到下次啟動清）。 */
     void shutdown() {
+        spectators.endAll(); // 2026-10-17：觀戰的人先改回原本的模式（以前重開後會卡在旁觀模式）
         for (final MapInstance instance : List.copyOf(instances.values())) {
+            // 2026-10-17：重開時還沒打完的終局、極境、巔峰、金庫之主（花碎片、鑰匙開的）：退回開門用掉的東西
+            if ((instance.usesAttempts() || instance.singleEntry()) && !instance.bossKilled() && instance.state() != MapInstance.State.CLOSING) {
+                instance.refundPaid();
+            }
             for (final UUID uuid : Set.copyOf(instance.inside())) {
                 final Player player = plugin.getServer().getPlayer(uuid);
                 if (player != null) {
@@ -386,6 +391,13 @@ public final class MapService {
      * 全部靠光束、殞星、風暴）；原版的近戰、射箭整場都擋掉。護盾結晶、小怪不算。
      */
     public boolean bossSkillsOnly(final LivingEntity entity) {
+        // 2026-10-17：世界 Boss（不定時活動）與南瓜王（萬燈夜）也不普攻，只用招式（出招節奏另外調快）
+        if (plugin.worldEvents() != null && "boss".equals(plugin.worldEvents().role(entity))) {
+            return true;
+        }
+        if (plugin.festival() != null && plugin.festival().isKing(entity)) {
+            return true;
+        }
         if (!entity.getPersistentDataContainer().has(bossKey())) {
             return false;
         }
@@ -588,7 +600,8 @@ public final class MapService {
                 drops.add(DropTable.Drop.currency(type));
             }
         }
-        if (boss) {
+        // 2026-10-17：只有這張圖現在的 Boss 給 Boss 掉落（區塊重新載入帶回來的舊 Boss 不算，以前打死會再擲一整份）
+        if (boss && instance.boss() != null && instance.boss().getUniqueId().equals(entity.getUniqueId())) {
             bosses.loot(instance, player, drops);
             return;
         }
@@ -724,18 +737,31 @@ public final class MapService {
         if (!Atlas.unlocked(config, map, completed(player))) {
             return map.name() + " 還沒在星圖上解鎖：先完成跟它相連的地圖";
         }
-        final String problem = capacityProblem();
+        String problem = capacityProblem();
+        if (problem == null) {
+            problem = endgameProblem(player);
+        }
         if (problem != null) {
             return problem;
         }
         // 先拿走地圖（背包那一格減一）
+        final ItemStack one = stack.asOne();
         if (stack.getAmount() > 1) {
             stack.setAmount(stack.getAmount() - 1);
         } else {
             player.getInventory().setItem(slot, null);
         }
         final MapStats stats = MapStats.of(plugin.items().repository(), data.get(), config.tiers());
-        open(player, map, stats);
+        try {
+            final MapInstance opened = open(player, map, stats);
+            final UUID ownerId = player.getUniqueId();
+            opened.paidRefund(() -> giveBackLater(ownerId, one, "地圖"));
+        } catch (final RuntimeException e) {
+            // 2026-10：生成地圖出錯（設定有問題）：地圖還給他，不會不見
+            plugin.getSLF4JLogger().error("開地圖 {} 失敗，地圖還給 {}", map.id(), player.getName(), e);
+            plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, one));
+            return "這張地圖開不起來（設定有問題，已經記在主控台）；地圖還給你了";
+        }
         return null;
     }
 
@@ -812,13 +838,24 @@ public final class MapService {
         if (tier < 1 || tier > best) {
             return "終局最高只能開到 T" + best + "（你完成過的最高階）";
         }
-        final String problem = capacityProblem();
+        String problem = capacityProblem();
+        if (problem == null) {
+            problem = endgameProblem(player);
+        }
         if (problem != null) {
             return problem;
         }
         final CurrencyType fragment = plugin.currencies().repository().get(config.drops().fragment());
         takeCurrency(player, fragment, config.drops().fragmentCost());
-        open(player, map, MapStats.forTier(config.tiers(), tier, config.finalLevelBonus(map.id())));
+        final UUID ownerId = player.getUniqueId();
+        final Runnable refund = () -> refundLater(ownerId, fragment, config.drops().fragmentCost());
+        try {
+            open(player, map, MapStats.forTier(config.tiers(), tier, config.finalLevelBonus(map.id()))).paidRefund(refund);
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().error("開終局 {} 失敗，碎片還給 {}", map.id(), player.getName(), e);
+            refund.run();
+            return "這張終局開不起來（設定有問題，已經記在主控台）；碎片還給你了";
+        }
         return null;
     }
 
@@ -863,15 +900,25 @@ public final class MapService {
         if (problem != null) {
             return problem;
         }
-        final String capacity = capacityProblem();
+        String capacity = capacityProblem();
+        if (capacity == null) {
+            capacity = endgameProblem(player);
+        }
         if (capacity != null) {
             return capacity;
         }
         final MapConfig.Uber uber = config.uber(map.id());
-        takeCurrency(player, plugin.currencies().repository().get(uber.key()), uber.keyCost());
+        final CurrencyType uberKey = plugin.currencies().repository().get(uber.key());
+        takeCurrency(player, uberKey, uber.keyCost());
+        final UUID ownerId = player.getUniqueId();
+        final Runnable refund = () -> refundLater(ownerId, uberKey, uber.keyCost());
         pendingUber = java.util.Optional.of(uber);
         try {
-            open(player, map, uberStats(map, uber), UBER_ROOMS, null); // 一進去一間，下一間就是 Boss 房
+            open(player, map, uberStats(map, uber), UBER_ROOMS, null).paidRefund(refund); // 一進去一間，下一間就是 Boss 房
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().error("開極境 {} 失敗，鑰匙還給 {}", map.id(), player.getName(), e);
+            refund.run();
+            return "極境開不起來（設定有問題，已經記在主控台）；鑰匙還給你了";
         } finally {
             pendingUber = java.util.Optional.empty();
         }
@@ -947,7 +994,10 @@ public final class MapService {
         if (problem != null) {
             return problem;
         }
-        final String capacity = capacityProblem();
+        String capacity = capacityProblem();
+        if (capacity == null) {
+            capacity = endgameProblem(player);
+        }
         if (capacity != null) {
             return capacity;
         }
@@ -955,9 +1005,19 @@ public final class MapService {
         for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
             takeCurrency(player, plugin.currencies().repository().get(fragment.currency()), 1);
         }
+        final UUID ownerId = player.getUniqueId();
+        final Runnable refund = () -> {
+            for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
+                refundLater(ownerId, plugin.currencies().repository().get(fragment.currency()), 1);
+            }
+        };
         pendingPinnacle = java.util.Optional.of(pinnacle);
         try {
-            open(player, map, config.pinnacleStats(map.id(), pinnacle), UBER_ROOMS, null); // 一進去一間，下一間就是 Boss 房
+            open(player, map, config.pinnacleStats(map.id(), pinnacle), UBER_ROOMS, null).paidRefund(refund); // 一進去一間，下一間就是 Boss 房
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().error("開巔峰 {} 失敗，碎片還給 {}", map.id(), player.getName(), e);
+            refund.run();
+            return "巔峰開不起來（設定有問題，已經記在主控台）；碎片還給你了";
         } finally {
             pendingPinnacle = java.util.Optional.empty();
         }
@@ -966,6 +1026,7 @@ public final class MapService {
 
     /** 巔峰的 Boss 生不出來（設定有問題）：把開門用掉的碎片還給開的人（不在線就記在主控台）。 */
     void refundPinnacleFragments(final MapInstance instance) {
+        instance.paidRefund(null); // 退過了：重開伺服器時不要再退一次
         final MapConfig.Pinnacle pinnacle = instance.pinnacle();
         final Player owner = pinnacle == null ? null : plugin.getServer().getPlayer(instance.owner());
         if (owner == null) {
@@ -975,8 +1036,7 @@ public final class MapService {
         for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
             final CurrencyType type = plugin.currencies().repository().get(fragment.currency());
             if (type != null) {
-                final ItemStack stack = plugin.currencies().create(type, 1);
-                owner.getInventory().addItem(stack).values().forEach(rest -> plugin.personalDrops().dropForever(owner, rest));
+                refundCurrency(owner, type, plugin.currencies().create(type, 1));
             }
         }
         owner.sendMessage(plugin.text().prefixed("<gray>還給你開" + ItemRenderer.escape(instance.map().name()) + "用掉的碎片"));
@@ -985,6 +1045,22 @@ public final class MapService {
     /** 極境的地圖數值（{@link MapConfig#uberStats}）。 */
     MapStats uberStats(final MapConfig.MapDef map, final MapConfig.Uber uber) {
         return config.uberStats(map.id(), uber);
+    }
+
+    /**
+     * 2026-10：你（隊伍）還有一張花了碎片、鑰匙開的終局、極境、巔峰、劫盜終局沒打完（還有門、Boss 還沒倒）：
+     * 不能開新的——開新的會把那張的傳送門關掉，碎片、鑰匙就白花了（隊友亂開也一樣）。
+     */
+    private String endgameProblem(final Player player) {
+        for (final MapInstance old : instances.values()) {
+            if (old.state() != MapInstance.State.CLOSING && old.portalsLeft() > 0 && !old.bossKilled()
+                    && (old.usesAttempts() || old.singleEntry()) && canEnter(player, old)) {
+                return "你" + (plugin.party() != null && plugin.party().groupMembers(player.getUniqueId()).size() > 1 ? "的隊伍" : "")
+                        + "的「" + old.label() + "」還沒打完（還剩 " + old.portalsLeft() + " 門）：開新的會把它關掉、碎片或鑰匙就白花了；"
+                        + "先打完或等它關閉";
+            }
+        }
+        return null;
     }
 
     private String capacityProblem() {
@@ -1006,7 +1082,10 @@ public final class MapService {
      * @param rooms 主路大約幾個房間（5–12）
      */
     public String openSpecial(final Player owner, final MapConfig.MapDef map, final MapStats stats, final int rooms, final Special special) {
-        final String problem = capacityProblem();
+        String problem = capacityProblem();
+        if (problem == null) {
+            problem = endgameProblem(owner); // 2026-10-17：開回響、試煉也會關掉隊伍沒打完的終局門（碎片白花）
+        }
         if (problem != null) {
             return problem;
         }
@@ -1019,15 +1098,23 @@ public final class MapService {
      */
     public MapInstance openSpecialInstance(final Player owner, final MapConfig.MapDef map, final MapStats stats, final int rooms,
                                            final Special special) {
-        if (capacityProblem() != null) {
+        String problem = capacityProblem();
+        if (problem == null) {
+            problem = endgameProblem(owner); // 2026-10-17：劫盜也一樣，不能把隊伍沒打完的終局門關掉
+        }
+        lastSpecialProblem = problem;
+        if (problem != null) {
             return null;
         }
         return open(owner, map, stats, rooms, special);
     }
 
-    /** 現在開不了特別的實例的原因（實例太多）；可以開回傳 null。 */
+    /** 上一次 openSpecialInstance 開不了的原因（主執行緒用）。 */
+    private String lastSpecialProblem;
+
+    /** 現在開不了特別的實例的原因（實例太多、隊伍還有沒打完的終局）；可以開回傳 null。 */
     public String specialProblem() {
-        return capacityProblem();
+        return lastSpecialProblem != null ? lastSpecialProblem : capacityProblem();
     }
 
     /**
@@ -1122,14 +1209,13 @@ public final class MapService {
         cells.put(cell, instance.id());
         dirty.add(cell);
         saveCells();
-        final BufferSink sink = new BufferSink();
-        MapBuilder.build(layout, map.theme(), origin[0], origin[1], sink);
         owner.sendMessage(plugin.text().prefixed("<gray>地圖裝置亮了起來：<white>" + ItemRenderer.escape(instance.label())
                 + "<gray>（怪物等級 " + instance.level() + "）正在成形……"));
         if (!atlas.isEmpty()) {
             owner.sendMessage(plugin.text().parse("<gray>  星圖天賦：<white>" + ItemRenderer.escape(atlasSummary(atlas, 3))));
         }
-        works.build(world, sink, origin[0] + layout.minX(), origin[1] + layout.minZ(), origin[0] + layout.maxX(), origin[1] + layout.maxZ(), () -> {
+        // 2026-10：算方塊（幾十萬格）、排序在背景執行緒做（以前在主執行緒，每開一張圖卡一下）；只碰 Palette（有鎖），不碰 Bukkit
+        final Runnable whenBuilt = () -> {
             if (!instances.containsKey(instance.id())) {
                 return; // 蓋的時候被關掉了
             }
@@ -1155,6 +1241,30 @@ public final class MapService {
                         + "看得到"));
                 member.playSound(member.getLocation(), Sound.BLOCK_END_PORTAL_SPAWN, 0.6f, 1.2f);
             }
+        };
+        final var theme = map.theme();
+        java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            final BufferSink sink = new BufferSink();
+            MapBuilder.build(layout, theme, origin[0], origin[1], sink);
+            sink.compact();
+            return sink;
+        }).whenComplete((sink, error) -> {
+            if (!plugin.isEnabled()) {
+                return;
+            }
+            plugin.getServer().getScheduler().runTask(plugin, () -> {
+                if (!instances.containsKey(instance.id())) {
+                    return;
+                }
+                if (error != null || sink == null) {
+                    plugin.getSLF4JLogger().error("蓋地圖 {} 失敗", instance.label(), error);
+                    final boolean refunded = instance.refundPaid(); // 2026-10-17：背景蓋圖失敗也要退（以前只有同步出錯才退）
+                    close(instance, "地圖蓋不出來（設定有問題，已經記在主控台）" + (refunded ? "；開門用掉的東西退還了" : ""));
+                    return;
+                }
+                works.buildCompacted(world, sink, origin[0] + layout.minX(), origin[1] + layout.minZ(), origin[0] + layout.maxX(),
+                        origin[1] + layout.maxZ(), whenBuilt);
+            });
         });
         return instance;
     }
@@ -2190,6 +2300,7 @@ public final class MapService {
 
     /** 極境的 Boss 生不出來（設定有問題）：把開門用掉的鑰匙還給開的人（不在線就記在主控台）。 */
     void refundUberKey(final MapInstance instance) {
+        instance.paidRefund(null); // 退過了：重開伺服器時不要再退一次
         final MapConfig.Uber uber = instance.uber();
         final CurrencyType key = uber == null ? null : plugin.currencies().repository().get(uber.key());
         final Player owner = plugin.getServer().getPlayer(instance.owner());
@@ -2197,9 +2308,60 @@ public final class MapService {
             plugin.getSLF4JLogger().warn("{} 的 Boss 生不出來，鑰匙沒辦法還給 {}（不在線或通貨不存在）", instance.label(), instance.ownerName());
             return;
         }
-        final ItemStack stack = plugin.currencies().create(key, uber.keyCost());
-        owner.getInventory().addItem(stack).values().forEach(rest -> plugin.personalDrops().dropForever(owner, rest));
+        refundCurrency(owner, key, plugin.currencies().create(key, uber.keyCost()));
         owner.sendMessage(plugin.text().prefixed("<gray>還給你 " + uber.keyCost() + " 個" + ItemRenderer.escape(key.name())));
+    }
+
+    /**
+     * 退還通貨（2026-10）：先進通貨袋、背包、隨身背包；以前放不下的掉在腳下——人在地圖裡的話，地圖關掉時會被清掉。
+     * 還是放不下的：記到營地回來的地方（{@link #deviceReturn}）掉給他，不在地圖世界裡。
+     */
+    /** 記下這個實例開門花掉的通貨（劫盜終局用）：蓋圖失敗、重開伺服器時沒打完就退。 */
+    public void refundIfUnfinished(final MapInstance instance, final Player owner, final CurrencyType type, final int amount) {
+        final UUID ownerId = owner.getUniqueId();
+        instance.paidRefund(() -> refundLater(ownerId, type, amount));
+    }
+
+    /** 退通貨給某個人（2026-10-17）：在線就退，不在線記在主控台（方便手動補）。 */
+    private void refundLater(final UUID ownerId, final CurrencyType type, final int amount) {
+        final Player owner = plugin.getServer().getPlayer(ownerId);
+        if (type == null || amount <= 0) {
+            return;
+        }
+        if (owner == null) {
+            plugin.getSLF4JLogger().warn("要退 {} 個 {} 給 {}，但他不在線上：請手動補", amount, type.id(), ownerId);
+            return;
+        }
+        refundCurrency(owner, type, plugin.currencies().create(type, amount));
+        owner.sendMessage(plugin.text().prefixed("<gray>開門用掉的 " + amount + " 個" + ItemRenderer.escape(type.name()) + "退還給你了"));
+    }
+
+    /** 退物品（地圖）給某個人：在線就給（放不下掉腳下），不在線記在主控台。 */
+    private void giveBackLater(final UUID ownerId, final ItemStack item, final String what) {
+        final Player owner = plugin.getServer().getPlayer(ownerId);
+        if (owner == null) {
+            plugin.getSLF4JLogger().warn("要退{}給 {}，但他不在線上：請手動補（{}）", what, ownerId, item.getType());
+            return;
+        }
+        plugin.economy().wallet().dropFor(owner, plugin.economy().wallet().give(owner, item));
+        owner.sendMessage(plugin.text().prefixed("<gray>開門用掉的" + what + "退還給你了"));
+    }
+
+    private void refundCurrency(final Player owner, final CurrencyType type, final ItemStack stack) {
+        ItemStack rest = plugin.loot() != null ? plugin.loot().stowCurrency(owner, plugin.players().get(owner), type, stack)
+                : plugin.economy().wallet().give(owner, stack);
+        if (rest != null && !rest.isEmpty()) {
+            final Location safe = deviceReturn();
+            if (safe != null) {
+                safe.getWorld().dropItem(safe, rest, item -> {
+                    item.setOwner(owner.getUniqueId());
+                    item.setUnlimitedLifetime(true);
+                });
+                owner.sendMessage(plugin.text().prefixed("<yellow>放不下的退還放在地圖裝置旁邊（只有你撿得到）"));
+            } else {
+                plugin.personalDrops().dropForever(owner, rest);
+            }
+        }
     }
 
     /** 管理指令：清掉打贏過極境的紀錄。 */

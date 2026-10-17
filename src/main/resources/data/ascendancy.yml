@@ -267,7 +267,7 @@ ascendancies:
     name: 鐵衛
     color: "#d4a24c"
     icon: SHIELD
-    summary: 曜京十二道城門的守將：更多生命、胸甲護甲、放大天賦小點、粉碎打擊。
+    summary: 曜京十二道城門的守將：更多生命、胸甲護甲、荊棘、放大天賦小點、粉碎打擊。
     nodes:
       t_armour:
         name: 鐵壁
@@ -337,6 +337,8 @@ ascendancies:
         stats:
           - { stat: stun.threshold, type: INCREASED, value: 30 }
           - { stat: life.max, type: INCREASED, value: 5 }
+          - { stat: flag.thorns_any_hit, value: 1 }         # 2026-10-17：荊棘也會被遠程攻擊與法術觸發
+          - { stat: thorns.damage, type: INCREASED, value: 50 }
       t_str3:
         name: 巨力 III
         requires: t_lineage

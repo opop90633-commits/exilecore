@@ -1598,7 +1598,7 @@ supports:
 
   intense_agony:           # Intense Agony（「對滿血的敵人」改成一律，數值調低）
     name: 速蝕
-    description: 被輔助的持續傷害法術更痛，但持續時間更短。
+    description: 被輔助的持續時間技能（攻擊以外）更痛，但持續時間更短。
     icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [duration]
@@ -2000,7 +2000,7 @@ supports:
 
   persistent_ground:       # Persistent Ground
     name: 久地
-    description: 被輔助的技能留在地上的效果持續更久。
+    description: 被輔助技能的持續時間更久（留在地上的效果、印記、詛咒、戰吼的增益都算）。
     icon: SLIME_BALL   # 2026-10：原本 MOSS_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [duration]
@@ -2817,7 +2817,7 @@ supports:
     icon: BONE   # 2026-10：原本 SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [minion]
-    excludes: [melee, projectile, spell]
+    excludes: [melee, projectile, ranged, spell]   # 2026-10-17：遠程骷髏是 ranged 不是 projectile，以前掛得上
     mana_multiplier: 1.2
     modifiers:
       - { stat: warcry.effect, type: MORE, value: 30 }

@@ -88,6 +88,9 @@ public final class StatLines {
         put(StatKeys.SKILL_COST, "魔力消耗", SCALED, false);
         put(StatKeys.LEECH_LIFE, "生命偷取", FLAT, true);
         put(StatKeys.LEECH_MANA, "魔力偷取", FLAT, true);
+        put(StatKeys.CORPSE_WALK, "移動時留下屍體", FLAT, false);
+        put(StatKeys.CORPSE_LIFE_REGEN, "每具屍體的生命回復", FLAT, false);
+        put(StatKeys.CORPSE_MOVEMENT, "每具屍體的移動速度", FLAT, true);
         put(StatKeys.LEECH_LIFE_ELEMENTAL, "元素傷害的生命偷取", FLAT, true);
         put(StatKeys.LEECH_INSTANT, "立即偷取", FLAT, false);
         put(StatKeys.LEECH_RATE, "最大偷取速度", INCREASED, false);
@@ -396,6 +399,9 @@ public final class StatLines {
             case StatKeys.PHYS_REDUCTION -> number(value) + "% 額外物理傷害減免";
             case StatKeys.LEECH_LIFE -> "造成的物理" + prefix(modifier) + "傷害有 " + number(value) + "% 偷取為生命";
             case StatKeys.LEECH_MANA -> "造成的物理" + prefix(modifier) + "傷害有 " + number(value) + "% 偷取為魔力";
+            case StatKeys.CORPSE_WALK -> "移動時每 1.5 秒在腳下留下一具屍體";
+            case StatKeys.CORPSE_LIFE_REGEN -> "附近每具屍體，每秒回復 " + number(value) + " 生命";
+            case StatKeys.CORPSE_MOVEMENT -> "附近每具屍體，增加 " + number(value) + "% 移動速度";
             case StatKeys.LEECH_LIFE_ELEMENTAL -> "造成的元素傷害有 " + number(value) + "% 偷取為生命";
             case StatKeys.LEECH_INSTANT -> "偷取有 " + number(value) + "% 立即生效";
             case StatKeys.FLAG_INSTANT_LEECH -> "偷取全部立即生效（一下最多回 6% 最大生命）";

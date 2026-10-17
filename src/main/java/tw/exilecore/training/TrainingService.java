@@ -98,6 +98,11 @@ public final class TrainingService {
         return config;
     }
 
+    /** 假人的設定（2026-10：輸出紀錄換算成一般靶用）。 */
+    public DummyConfig dummyConfig() {
+        return config;
+    }
+
     // ---- 假人 ----
 
     /** 這隻是不是訓練假人。 */

@@ -62,7 +62,7 @@ class UniqueRecipeTest {
     private static final List<String> EVENTS = List.of("shrine", "strongbox", "breach", "exile", "ritual", "delirium");
 
     @Test
-    void poolIsBossEventAndNamedUniquesOnly() {
+    void poolIsBossAndNamedUniquesOnly() {
         // 2026-10 PoE2 改版：舊的傳奇退役，換成新的一批（地圖事件各五件）
         final List<UniqueItem> pool = UniqueRecipe.outcomes(items.uniques(), config.recipe(), List.of(), 100);
         final Set<String> got = ids(pool);
@@ -72,20 +72,17 @@ class UniqueRecipeTest {
                 expected.add(unique.id());
             }
         }
-        assertEquals(38, expected.size(), "地圖 Boss 池 38 件（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰）");
+        assertEquals(39, expected.size(), "地圖 Boss 池 39 件（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰；2026-10-17 ＋棘壘）");
         for (final String event : EVENTS) {
-            final Set<String> eventUniques = new HashSet<>();
             for (final UniqueItem unique : items.uniques()) {
                 if (unique.droppedBy(event)) {
-                    eventUniques.add(unique.id());
+                    assertFalse(got.contains(unique.id()), unique.id() + "：地圖事件的專屬換不到（2026-10-17，跟賭博一樣）");
                 }
             }
-            assertEquals(5, eventUniques.size(), event + " 的專屬傳奇");
-            expected.addAll(eventUniques);
         }
         expected.addAll(Set.of("gravewarden_maul", "astrolabe_wand"));
-        assertEquals(expected, got, "地圖 Boss 池＋六種事件＋兩個具名 Boss");
-        assertEquals(70, pool.size());
+        assertEquals(expected, got, "地圖 Boss 池＋兩個具名 Boss");
+        assertEquals(41, pool.size());
         for (final String never : List.of("trophy_girdle", "hollow_diadem", "colossus_heart", "horizon_cleaver", "solar_sceptre",
                 "winterbound_ring", "styxguard", "ashwalker_boots", "celestial_pivot", "meteor_anvil", "rime_halo", "bone_cinch",
                 "molten_aegis", "roamers_boots", "goldleaf_hood", "genesis_crown", "worldsplitter", "abyss_maul")) {
@@ -108,7 +105,7 @@ class UniqueRecipeTest {
     void inputsAreExcludedUnlessNothingElseIsLeft() {
         final List<UniqueItem> pool = UniqueRecipe.outcomes(items.uniques(), config.recipe(),
                 List.of("keymasters_ring", "keymasters_ring", "undertow_band"), 100);
-        assertEquals(68, pool.size(), "放進去的兩種不會換到");
+        assertEquals(40, pool.size(), "放進去的不會換到（2026-10-17：事件的專屬本來就不在池子裡，只少了一種）");
         assertFalse(ids(pool).contains("keymasters_ring"));
         assertFalse(ids(pool).contains("undertow_band"));
         // 池子只剩放進去的那種：照樣換（不然永遠換不了）
@@ -116,14 +113,14 @@ class UniqueRecipeTest {
         assertEquals(Set.of("astrolabe_wand"), ids(UniqueRecipe.outcomes(items.uniques(), onlyObservatory, List.of("astrolabe_wand"), 100)));
         // 不排除：放進去的也可能換到
         final UniqueRecipe.Settings keep = new UniqueRecipe.Settings(true, 3, UniqueRecipe.DEFAULT_SOURCES, false);
-        assertEquals(70, UniqueRecipe.outcomes(items.uniques(), keep, List.of("keymasters_ring"), 100).size());
+        assertEquals(41, UniqueRecipe.outcomes(items.uniques(), keep, List.of("keymasters_ring"), 100).size());
     }
 
     @Test
     void itemLevelIsTheHighestInputAndGatesDropLevel() {
         assertEquals(84, UniqueRecipe.itemLevel(List.of(unique("undertow_band", 62), unique("crimson_coil", 84), unique("skypierce", 70))));
         final List<UniqueItem> at60 = UniqueRecipe.outcomes(items.uniques(), config.recipe(), List.of(), 60);
-        assertEquals(66, at60.size(), "60 級（2026-10：獸魂符 4 件都 60 級以下；2026-10-15 新的 6 件也是）：稜壁、火葬長杖、空殼護符、石衛鎧（68）還換不到");
+        assertEquals(37, at60.size(), "60 級（2026-10-17：事件的專屬拿掉了）：60 級以上的還換不到");
         for (final UniqueItem unique : at60) {
             assertTrue(unique.dropLevel() <= 60, unique.id());
         }
@@ -146,7 +143,10 @@ class UniqueRecipeTest {
         locked.setLocked(true);
         assertTrue(UniqueRecipe.problem(locked, items.unique("undertow_band")).contains("鎖定"));
         assertNull(UniqueRecipe.problem(unique("trophy_girdle", 80), items.unique("trophy_girdle")), "追逐級可以放（2026-10：換追逐級）");
-        assertTrue(UniqueRecipe.problem(unique("styxguard", 91), items.unique("styxguard")).contains("極境"));
+        assertNull(UniqueRecipe.problem(unique("styxguard", 91), items.unique("styxguard")), "極境專屬可以放（2026-10：換一般賭博的傳奇）");
+        assertTrue(UniqueRecipe.uberExclusive(items.unique("styxguard")));
+        assertFalse(UniqueRecipe.uberExclusive(items.unique("undertow_band")));
+        assertFalse(UniqueRecipe.uberExclusive(items.unique("trophy_girdle")), "追逐級不算極境專屬");
         assertTrue(UniqueRecipe.problem(unique("undertow_band", 70), null).contains("沒有了"), "uniques.yml 已經拿掉的");
         final ItemData noUuid = new ItemData();
         noUuid.setRarity(Rarity.UNIQUE);
@@ -156,6 +156,17 @@ class UniqueRecipeTest {
             assertEquals(unique.chase() || unique.sources().stream().anyMatch(source -> source.startsWith("uber")),
                     UniqueRecipe.protectedUnique(unique), unique.id());
         }
+    }
+
+    @Test
+    void uberInputsGiveGambleUniques() {
+        final List<UniqueItem> pool = UniqueRecipe.gambleOutcomes(items.uniques(), config.recipe(), List.of("styxguard"), 100);
+        assertFalse(pool.isEmpty());
+        for (final UniqueItem unique : pool) {
+            assertTrue(unique.droppedBy(UniqueRecipe.GAMBLE_SOURCE), unique.id() + " 賭得到");
+            assertFalse(UniqueRecipe.protectedUnique(unique), unique.id() + " 不是追逐級、極境專屬");
+        }
+        assertTrue(ids(pool).contains("roamers_boots"), "只能賭的也會換到");
     }
 
     @Test

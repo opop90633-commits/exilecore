@@ -105,6 +105,23 @@ public record SupportDefinition(String id, String name, String description, Stri
                 return ModifierText.tagName(tag) + "技能不行";
             }
         }
+        // 2026-10-17 標籤整理：以前 excludes 寫 channel，但沒有技能有這個標籤（蓄力看 channel.stages），等於沒擋
+        if (excludes.contains("channel") && channels(skill)) {
+            return "本身會蓄力的技能不行";
+        }
+        // 掃擊：只有原本只打一個的打擊（strike 機制）會多打；突刺、爪擊這種衝過去打的、本來就打好幾個的沒作用只剩代價
+        if (flags(StatKeys.STRIKE_TARGETS) && (skill.mechanic() != Mechanic.STRIKE || skill.params().targets() != 1)) {
+            return "要原本只打一個目標的打擊技能";
+        }
+        // 碎界擴散這類近戰擴散：只有打擊（strike 機制）會擴散
+        if (flags(StatKeys.MELEE_SPLASH) && skill.mechanic() != Mechanic.STRIKE) {
+            return "要打擊技能（衝過去、扇形的不行）";
+        }
+        // 強勢戰吼、怒嘯：要戰吼本身會強化攻擊，加次數才有意義
+        if ((flags(StatKeys.WARCRY_EXERTS) || flags(StatKeys.WARCRY_RAGE_EXERT))
+                && (skill.warcry() == null || skill.warcry().exerts() <= 0)) {
+            return "要會強化攻擊的戰吼";
+        }
         if (flags(StatKeys.CHANNEL_STAGES) && channels(skill)) {
             return "本身會蓄力的技能不行"; // 2026-10：蓄勢不能疊在本來就會蓄力的技能上（熾息、蓄力射擊…）
         }
@@ -308,8 +325,17 @@ public record SupportDefinition(String id, String name, String description, Stri
         for (final String tag : relevantExcludes(skills)) {
             names.add(ModifierText.tagName(tag));
         }
-        if (flags(StatKeys.CHANNEL_STAGES)) {
+        if (flags(StatKeys.CHANNEL_STAGES) || excludes.contains("channel")) {
             names.add("本身會蓄力的技能");
+        }
+        // 2026-10-17：跟 refusal 的新條件一致
+        if (flags(StatKeys.STRIKE_TARGETS)) {
+            names.add("本來就打好幾個目標、或衝過去打的");
+        } else if (flags(StatKeys.MELEE_SPLASH)) {
+            names.add("衝過去、扇形打的");
+        }
+        if (flags(StatKeys.WARCRY_EXERTS) || flags(StatKeys.WARCRY_RAGE_EXERT)) {
+            names.add("不會強化攻擊的戰吼");
         }
         if (hitsOnly() && !Set.of(Tags.ATTACK, Tags.MELEE, Tags.PROJECTILE, Tags.STRIKE, Tags.SLAM, Tags.GRENADE).containsAll(requires)) {
             names.add("不會造成傷害的技能"); // 只要攻擊的（攻擊一定會打到敵人）就不用寫

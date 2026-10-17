@@ -148,6 +148,13 @@ public final class StatKeys {
     public static final String LEECH_LIFE = "leech.life";
     /** 造成的物理傷害有 x% 偷取為魔力（百分比點數，FLAT；跟生命偷取一樣先存起來再慢慢回）。 */
     public static final String LEECH_MANA = "leech.mana";
+    // ---- 屍體（2026-10-17，傳奇「踏骸之履」）----
+    /** 移動時在腳下留下屍體（FLAG：FLAT 1；每 1.5 秒最多一具）。 */
+    public static final String CORPSE_WALK = "corpse.walk";
+    /** 附近（6 格）每具屍體，每秒回復 x 生命（FLAT；最多算 15 具）。 */
+    public static final String CORPSE_LIFE_REGEN = "corpse.life_regen";
+    /** 附近（6 格）每具屍體，增加 x% 移動速度（FLAT 百分比點數；最多算 15 具）。 */
+    public static final String CORPSE_MOVEMENT = "corpse.movement";
     // ---- 偷取（2026-10，照 PoE）----
     /** 偷取有 x% 立即生效（FLAT 百分比點數；其餘照常慢慢回）。 */
     public static final String LEECH_INSTANT = "leech.instant";
@@ -164,6 +171,8 @@ public final class StatKeys {
     /** 被近戰攻擊擊中時，對攻擊者反彈的物理傷害（荊棘）：下限與上限，FLAT。 */
     public static final String THORNS_MIN = "thorns.min";
     public static final String THORNS_MAX = "thorns.max";
+    /** 2026-10-17：荊棘也會被遠程攻擊、法術擊中觸發（FLAG：FLAT 1；以前只有近戰貼身打你才會）。 */
+    public static final String FLAG_THORNS_ANY_HIT = "flag.thorns_any_hit";
     /** 球（銳星、怒星、磐星）：最大顆數，後面接球的代號（charges.yml），FLAT；基礎值在 charges.yml。 */
     public static final String CHARGE_MAX = "charge.max.";
     /** 球：每次觸發（暴擊、擊殺、被擊中，照 charges.yml）獲得一顆的機率，百分比點數，FLAT；後面接球的代號。 */

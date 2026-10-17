@@ -83,6 +83,8 @@ public final class MapInstance {
     /** 巔峰的門（2026-10）：這一門進去過的人、這一門還在不在進行、用掉幾道。 */
     private final Set<UUID> attemptEntered = new HashSet<>();
     private boolean attemptActive;
+    /** 2026-10-17：開門花掉的東西怎麼退（蓋地圖失敗、重開伺服器時終局沒打完）；退過一次就清掉。 */
+    private Runnable paidRefund;
     private int attemptsUsed;
     /** 階段護盾：還活著的結晶、什麼時候到期、哪一個護盾（沒有護盾時是空的、null）。 */
     private final Set<UUID> shieldCrystals = new LinkedHashSet<>();
@@ -451,6 +453,21 @@ public final class MapInstance {
     // ---- 終局、極境、巔峰的「門」（2026-10）：一張有 2 道門（巔峰照 maps.yml 的 attempts），一道門 = 一次挑戰 ----
     // 第一個人走進去就開始這一門；這一門還有人在裡面的時候，還沒進來過的隊友可以跟進，死了或出去的人不能再進；
     // 裡面的人全部倒下（或出去）這一門就結束，下一個走進去的人開始下一門，Boss 回滿、從第一階段重來；打倒 Boss 門全部關掉。
+
+    void paidRefund(final Runnable refund) {
+        this.paidRefund = refund;
+    }
+
+    /** 把開門花掉的東西退回去（只會退一次；沒有記就什麼都不做）。 */
+    boolean refundPaid() {
+        final Runnable refund = paidRefund;
+        paidRefund = null;
+        if (refund == null) {
+            return false;
+        }
+        refund.run();
+        return true;
+    }
 
     /** 巔峰：這一門是不是還在進行（有人進去了、還沒全部倒下）。 */
     public boolean attemptActive() {

@@ -125,16 +125,17 @@ minion_speed:
 minion_cast_speed:
   type: suffix
   group: allies_in_presence_increased_cast_speed
-  spawn_tags: [sceptre]
+  # 2026-10-17：召喚物不會施法，這條以前完全沒作用 → 停用；已經洗出來的改成召喚物攻擊速度（不會白放一條）
+  spawn_tags: [retired]
   names: [之星骸, 之神速, 之疾風, 之迅捷]
-  text: "增加 {value}% 召喚物施法速度"
+  text: "增加 {value}% 召喚物攻擊速度"
   tiers:
     - { tier: 1, ilvl: 56, weight: 512, value: [17, 20] }
     - { tier: 2, ilvl: 36, weight: 640, value: [13, 16] }
     - { tier: 3, ilvl: 21, weight: 800, value: [9, 12] }
     - { tier: 4, ilvl: 6, weight: 1000, value: [5, 8] }
   mods:
-    - { stat: cast.speed, type: INCREASED, value: "{value}", tags: [minion] }
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
 
 armour_elemental:
   type: suffix

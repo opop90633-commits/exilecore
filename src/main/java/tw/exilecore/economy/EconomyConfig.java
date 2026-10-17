@@ -92,6 +92,8 @@ public final class EconomyConfig {
     private final Map<Rarity, Double> gambleWeights = new EnumMap<>(Rarity.class);
     /** 地圖 Boss 也會掉的傳奇（uniques.yml 的 sources 有 map_boss）在賭博裡的權重。 */
     private double gambleBossUnique;
+    /** 2026-10-17：只能賭、但照 boss_unique 的機率出的傳奇（gamble.boss_rate_uniques）。 */
+    private final java.util.Set<String> gambleBossRate = new java.util.HashSet<>();
     /**
      * 等級 → 同等級普通怪平均掉的金幣（drops.yml；經濟模組啟用時接上）。拿不到（0）時，價格退回 base + per_level 的舊算法。
      * 不跟著 /ec reload 換（不是設定檔的內容）。
@@ -159,6 +161,7 @@ public final class EconomyConfig {
         gambleWeights.put(Rarity.RARE, 43.0);
         gambleWeights.put(Rarity.UNIQUE, 2.0);
         gambleBossUnique = 0.65;
+        gambleBossRate.clear();
     }
 
     /** 讀 economy.yml；先讀進一份新的，全部檢查過才換上去。檔案不存在就用預設值。 */
@@ -254,6 +257,14 @@ public final class EconomyConfig {
             gambleWeights.put(rarity, nonNegative(weights, key(rarity), gambleWeights.get(rarity)));
         }
         gambleBossUnique = nonNegative(weights, "boss_unique", gambleBossUnique);
+        if (gamble.has("boss_rate_uniques")) {
+            for (final String id : gamble.strings("boss_rate_uniques")) {
+                if (!id.isBlank()) {
+                    gambleBossRate.add(id.trim().toLowerCase(java.util.Locale.ROOT));
+                }
+            }
+        }
+        tw.exilecore.monster.DropTable.setBossRateUniques(gambleBossRate); // 2026-10-17：怪物掉落也照這份名單用 Boss 的機率
         if (gambleWeights.get(Rarity.MAGIC) + gambleWeights.get(Rarity.RARE) <= 0) {
             throw new IllegalArgumentException(weights.path() + "：魔法與稀有的權重不能都是 0");
         }
@@ -352,6 +363,9 @@ public final class EconomyConfig {
         gambleWeights.clear();
         gambleWeights.putAll(other.gambleWeights);
         gambleBossUnique = other.gambleBossUnique;
+        gambleBossRate.clear();
+        gambleBossRate.addAll(other.gambleBossRate);
+        tw.exilecore.monster.DropTable.setBossRateUniques(gambleBossRate);
     }
 
     private static String key(final Rarity rarity) {
@@ -575,6 +589,11 @@ public final class EconomyConfig {
      * 一個基底的傳奇權重：能賭到的傳奇裡有地圖 Boss 也會掉的（bossPool）→ boss_unique；只有能賭的（劇情期間用的）→ unique；
      * 沒有能賭的傳奇 → 0（那份權重算成稀有，見 {@link #rollGamble(RandomGenerator, double)}）。
      */
+    /** 這件只能賭的傳奇照 boss_unique 的機率出（gamble.boss_rate_uniques）。 */
+    public boolean gambleBossRate(final String uniqueId) {
+        return uniqueId != null && gambleBossRate.contains(uniqueId);
+    }
+
     public double gambleUniqueWeight(final boolean anyUnique, final boolean bossPool) {
         if (!anyUnique) {
             return 0;

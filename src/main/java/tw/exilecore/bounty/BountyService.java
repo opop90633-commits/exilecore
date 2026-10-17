@@ -92,8 +92,33 @@ public final class BountyService {
     /** 管理員稱號的代號：有管理員權限（OP）的人自動擁有，沒戴別的稱號時自動顯示。 */
     public static final String ADMIN_TITLE = "admin";
 
+    /** 新手指導員（2026-10-17）：管理員用指令發給帶新人的玩家（/ec bounty title mentor 玩家）。沒有加成，只是名牌。 */
+    public static final String MENTOR_TITLE = "mentor";
+
     private void registerAdminTitle() {
-        registerTitles(Map.of(ADMIN_TITLE, new BountyConfig.Title(ADMIN_TITLE, "管理員", "gradient:#ff5555:#ffaa00", 0)));
+        registerTitles(Map.of(ADMIN_TITLE, new BountyConfig.Title(ADMIN_TITLE, "管理員", "gradient:#ff5555:#ffaa00", 0),
+                MENTOR_TITLE, new BountyConfig.Title(MENTOR_TITLE, "新手指導員", "gradient:#7fe0a8:#5fb4ff", 0)));
+        setTitleSource("mentor", new TitleSource() {
+            @Override
+            public Set<String> owned(final Map<String, String> progress) {
+                return Set.of(); // 發了就記在帳號的稱號清單裡（grantTitle）
+            }
+
+            @Override
+            public List<String> howTo(final Player player, final String id) {
+                return MENTOR_TITLE.equals(id) ? List.of("<gray>管理員發給幫忙帶新人的玩家") : null;
+            }
+
+            @Override
+            public boolean listed(final Player player, final String id) {
+                return !MENTOR_TITLE.equals(id); // 沒有的人不列
+            }
+
+            @Override
+            public String sourceName(final String id) {
+                return MENTOR_TITLE.equals(id) ? "管理員發放" : null;
+            }
+        });
         setTitleSource("admin", new TitleSource() {
             @Override
             public Set<String> owned(final Map<String, String> progress) {
@@ -1087,7 +1112,10 @@ public final class BountyService {
             return poor;
         }
         owned.add(id);
-        final String value = MeritShop.titlesValue(owned, config.shop().titles().keySet());
+        // 2026-10-17：活動、指導員這些不是商店的稱號也算認得的（以前記不下時會被優先丟掉）
+        final Set<String> knownTitles = new LinkedHashSet<>(config.shop().titles().keySet());
+        knownTitles.addAll(extraTitles.keySet());
+        final String value = MeritShop.titlesValue(owned, knownTitles);
         if (!MeritShop.ownedTitles(Map.of(MeritShop.TITLES, value)).contains(id)) {
             return "稱號太多了，記不下（請通知管理員）";
         }
@@ -1289,6 +1317,9 @@ public final class BountyService {
         }
         if (title(id) == null) {
             return "沒有這個稱號";
+        }
+        if (ADMIN_TITLE.equals(id)) {
+            return "管理員稱號跟著權限走（OP 自動有），不能發"; // 2026-10-17：以前發了會永久寫進帳號
         }
         final Set<String> owned = MeritShop.ownedTitles(account.progress);
         if (owned.contains(id)) {

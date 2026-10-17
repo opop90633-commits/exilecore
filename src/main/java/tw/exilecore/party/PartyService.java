@@ -284,11 +284,21 @@ public final class PartyService {
     }
 
     /** 隊伍聊天（/p 訊息）。 */
-    public void chat(final Player player, final String message) {
+    public void chat(final Player player, final String raw) {
         final PartyRoster.Party party = roster.partyOf(player.getUniqueId());
         if (party == null) {
             player.sendMessage(plugin.text().prefixed("<gray>你不在隊伍裡（/party invite 玩家 邀請人）"));
             return;
+        }
+        // 2026-10-17：禁言、洗頻、髒話一樣要檢查（以前 /p 訊息完全不經過，被禁言的人照樣能在隊伍頻道講話）
+        String message = raw;
+        if (plugin.chat() != null) {
+            final tw.exilecore.chat.ChatModeration.Verdict verdict = plugin.chat().moderation().check(player, raw);
+            if (!verdict.allowed()) {
+                player.sendMessage(plugin.text().prefixed("<red>" + tw.exilecore.item.ItemRenderer.escape(verdict.reason())));
+                return;
+            }
+            message = verdict.text();
         }
         // 訊息裡的 [i] 換成手上的物品（聊天模組）
         final net.kyori.adventure.text.Component body = plugin.chat() == null

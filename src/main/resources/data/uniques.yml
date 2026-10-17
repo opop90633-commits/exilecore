@@ -2365,7 +2365,7 @@ worldsplitter:
         - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
     - text: "+3 全部近戰技能等級"
       stats:
-        - { stat: skill.level, type: FLAT, value: 3, tags: [melee] }
+        - { stat: skill.level, type: FLAT, value: 3, tags: [attack, melee] }   # 2026-10-17：只寫 melee 會連召喚技能（召喚物算近戰）也 +3
     - text: "+{value} 智慧"
       value: [20, 30]
       stats:
@@ -3819,3 +3819,65 @@ tide_devourer:
       value: [6, 8]
       stats:
         - { stat: leech.life, type: FLAT, value: "{value}", tags: [attack, physical] }
+
+# ---- 2026-10-17：只能賭到的傳奇（一次約 0.66%：economy.yml 的 gamble.boss_rate_uniques）----
+bonewalker:
+  name: 踏骸之履
+  base: boots_dex_int_13
+  stat_base: boots_dex_int_07          # 數值照 52 級那一階（鋼脊纏履）
+  drop_level: 55
+  sources: [gamble]
+  weight: 100
+  flavour:
+    - "「走過的地方，總會留下些什麼。」"
+  mods:
+    - text: "增加 {value}% 閃避與能量護盾"
+      value: [80, 120]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 移動速度"
+      value: [25, 25]
+      stats:
+        - { stat: movement.speed, type: INCREASED, value: "{value}" }
+    - text: "移動時每 1.5 秒在腳下留下一具屍體"
+      stats:
+        - { stat: corpse.walk, type: FLAT, value: 1 }
+    - text: "附近每具屍體，每秒回復 {value} 生命"
+      value: [8, 8]
+      stats:
+        - { stat: corpse.life_regen, type: FLAT, value: "{value}" }
+    - text: "附近每具屍體，增加 {value}% 移動速度"
+      value: [1, 1]
+      stats:
+        - { stat: corpse.movement, type: FLAT, value: "{value}" }
+
+# ---- 2026-10-17：護甲流的荊棘盾（共通：地圖 Boss、僥倖石、賭博）----
+thornwall_aegis:
+  name: 棘壘
+  base: tshield_24
+  stat_base: tshield_18          # 數值照 60 級那一階的塔盾
+  drop_level: 60
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「想打穿我？先嚐嚐你自己的力氣。」"
+  mods:
+    - text: "增加 {value}% 護甲"
+      value: [120, 160]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [70, 100]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "{min} 到 {max} 物理荊棘傷害"
+      min: [40, 60]
+      max: [80, 110]
+      stats:
+        - { stat: thorns.min, type: FLAT, value: "{min}" }
+        - { stat: thorns.max, type: FLAT, value: "{max}" }
+    - text: "增加 {value}% 荊棘傷害"
+      value: [40, 60]
+      stats:
+        - { stat: thorns.damage, type: INCREASED, value: "{value}" }

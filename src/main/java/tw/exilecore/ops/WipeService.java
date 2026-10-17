@@ -34,7 +34,8 @@ import java.util.stream.Stream;
  * </pre>
  * 「清進度」留下帳號與贊助：星幣、累積贊助、買的格子、月卡、外觀、登入天數（帳號進度裡 sp.、login. 開頭的），
  * 還沒兌換的星幣券退回給開券的人（下次登入加回星幣，用星幣券原本的補發流程），還沒領的管理員發放只留星幣類的。
- * 其他的（角色、背包、倉庫、天賦、任務、星圖、市集、交易所、紀錄、經濟報表、金幣、功勳、稱號）全部清掉。
+ * 其他的（角色、背包、倉庫、天賦、任務、星圖、市集、交易所、紀錄、經濟報表、金幣、功勳、稱號、公會）全部清掉。
+ * 公會用星幣買的倉庫頁（2026-10-17）：公會清掉了，買的人照目前的價格退回星幣（帳號進度 sp.guild_stash 記著每個人買了幾頁）。
  * 清之前一定先備份（失敗就不清），要反悔用 ec backup restore 那個檔。
  */
 public final class WipeService {
@@ -132,6 +133,7 @@ public final class WipeService {
             lines.add("<gray>留下：<white>帳號、贊助（星幣、累積贊助、買的格子、月卡、外觀、抽獎保底）、登入天數、管理員操作紀錄、"
                     + "區域版面、資料檔與 config.yml");
             lines.add("<gray>星幣券：還沒兌換的退回給開券的人（下次登入加回星幣）；管理員發放：還沒領的只留星幣類，其他取消");
+            lines.add("<gray>公會：整個清掉；用星幣買的公會倉庫頁照現在的價格退回星幣給買的人");
         } else {
             lines.add("<gray>清掉：<white>資料庫裡所有的玩家資料，包括帳號、贊助（星幣、月卡、外觀）、星幣券、管理員發放");
             lines.add("<gray>留下：<white>資料表版本、管理員操作紀錄、區域版面、資料檔與 config.yml、全服加倍（sponsor-boosts.yml）");
@@ -203,13 +205,14 @@ public final class WipeService {
 
     private void wipe(final CommandSender sender, final Mode mode, final Path backup) {
         final String admin = sender.getName();
+        final long guildPagePrice = plugin.sponsors() == null ? 0 : plugin.sponsors().config().guildStashPrice();
         plugin.database().async(connection -> {
             // 在資料庫執行緒上暫停存檔：排在前面的都寫完了，之後的都不寫（不能讓記憶體裡的舊資料寫回去）
             plugin.characters().pauseWrites();
             final boolean autoCommit = connection.getAutoCommit();
             connection.setAutoCommit(false);
             try {
-                final Result result = mode == Mode.ALL ? wipeAll(connection) : wipeProgress(connection);
+                final Result result = mode == Mode.ALL ? wipeAll(connection) : wipeProgress(connection, guildPagePrice);
                 log(connection, admin, mode, backup, result);
                 connection.commit();
                 return result;
@@ -253,7 +256,80 @@ public final class WipeService {
 
     /** 清進度：角色、倉庫、市集…整張清；帳號留著（金幣、功勳歸零），帳號進度只留贊助。 */
     static Result wipeProgress(final Connection connection) throws SQLException {
+        return wipeProgress(connection, 0);
+    }
+
+    /** 帳號進度：每個人用星幣買了幾頁公會倉庫（SponsorService.GUILD_STASH）。 */
+    static final String GUILD_PAGES_KEY = "sp.guild_stash";
+    /** 帳號進度：星幣（SponsorService.COINS）。 */
+    static final String COINS_KEY = "sp.coins";
+
+    /**
+     * 公會倉庫頁退回星幣（2026-10-17）：每頁照 pagePrice 加回買的人的星幣，買了幾頁的紀錄歸零。回傳退了幾個帳號。
+     * pagePrice ≤ 0 就不退（贊助模組沒開）。
+     */
+    static int refundGuildPages(final Connection connection, final long pagePrice) throws SQLException {
+        if (pagePrice <= 0 || !exists(connection, "account_progress")) {
+            return 0;
+        }
+        final Map<String, Long> bought = new LinkedHashMap<>();
+        try (PreparedStatement select = connection.prepareStatement(
+                "SELECT account_uuid, progress_value FROM account_progress WHERE progress_key = ?")) {
+            select.setString(1, GUILD_PAGES_KEY);
+            try (java.sql.ResultSet result = select.executeQuery()) {
+                while (result.next()) {
+                    long pages;
+                    try {
+                        pages = Long.parseLong(result.getString(2).trim());
+                    } catch (final RuntimeException e) {
+                        pages = 0;
+                    }
+                    if (pages > 0) {
+                        bought.put(result.getString(1), pages);
+                    }
+                }
+            }
+        }
+        for (final Map.Entry<String, Long> entry : bought.entrySet()) {
+            long coins = 0;
+            boolean has = false;
+            try (PreparedStatement select = connection.prepareStatement(
+                    "SELECT progress_value FROM account_progress WHERE account_uuid = ? AND progress_key = ?")) {
+                select.setString(1, entry.getKey());
+                select.setString(2, COINS_KEY);
+                try (java.sql.ResultSet result = select.executeQuery()) {
+                    if (result.next()) {
+                        has = true;
+                        try {
+                            coins = Long.parseLong(result.getString(1).trim());
+                        } catch (final RuntimeException ignored) {
+                            coins = 0;
+                        }
+                    }
+                }
+            }
+            final String value = String.valueOf(coins + entry.getValue() * pagePrice);
+            try (PreparedStatement write = connection.prepareStatement(has
+                    ? "UPDATE account_progress SET progress_value = ? WHERE account_uuid = ? AND progress_key = ?"
+                    : "INSERT INTO account_progress (progress_value, account_uuid, progress_key) VALUES (?, ?, ?)")) {
+                write.setString(1, value);
+                write.setString(2, entry.getKey());
+                write.setString(3, COINS_KEY);
+                write.executeUpdate();
+            }
+            try (PreparedStatement reset = connection.prepareStatement(
+                    "UPDATE account_progress SET progress_value = '0' WHERE account_uuid = ? AND progress_key = ?")) {
+                reset.setString(1, entry.getKey());
+                reset.setString(2, GUILD_PAGES_KEY);
+                reset.executeUpdate();
+            }
+        }
+        return bought.size();
+    }
+
+    static Result wipeProgress(final Connection connection, final long guildPagePrice) throws SQLException {
         final Map<String, Integer> rows = new LinkedHashMap<>();
+        rows.put("公會倉庫頁退回星幣（帳號）", refundGuildPages(connection, guildPagePrice));
         final Timestamp now = Timestamp.from(Instant.now());
         int vouchers = 0;
         int deliveries = 0;

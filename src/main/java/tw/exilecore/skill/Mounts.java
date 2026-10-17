@@ -144,6 +144,7 @@ final class Mounts implements Listener {
 
     /** 下馬（坐騎收掉）。 */
     void dismount(final Player player) {
+        service.buffs().remove(player, "mounted"); // 2026-10-17：下馬馬上拿掉騎乘的傷害加成（以前多留 1.5 秒）
         final AbstractHorse horse = mounts.remove(player.getUniqueId());
         if (horse != null && horse.isValid()) {
             horse.eject();

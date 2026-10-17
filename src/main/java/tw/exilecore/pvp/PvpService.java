@@ -213,6 +213,10 @@ public final class PvpService implements Listener {
         if (plugin.maps() != null && plugin.maps().inUber(player)) {
             return "極境裡不能直接去競技場";
         }
+        final String combat = combatProblem(player);
+        if (combat != null) {
+            return combat;
+        }
         final World campaign = plugin.world().worlds().campaign();
         if (campaign != null && player.getWorld().equals(campaign)) {
             returnTo.put(player.getUniqueId(), player.getLocation().clone());
@@ -264,9 +268,24 @@ public final class PvpService implements Listener {
         return null;
     }
 
+    /**
+     * 2026-10：剛受到攻擊（3 秒內）不能去競技場——進競技場會補滿生命、藥劑、清掉異常，離場又回到原地，
+     * 打 Boss 打到一半可以拿來免費回滿（跟傳送到檢查點一樣擋 3 秒）。
+     */
+    private String combatProblem(final Player player) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        if (state != null && plugin.getServer().getCurrentTick() - state.lastDamageTick() < 60) {
+            return "剛受到攻擊，3 秒內不能去競技場";
+        }
+        return null;
+    }
+
     /** 進場；不能進回傳原因。 */
     public String join(final Player player) {
-        final String problem = joinProblem(player);
+        String problem = joinProblem(player);
+        if (problem == null && !watching(player)) {
+            problem = combatProblem(player);
+        }
         if (problem != null) {
             return problem;
         }

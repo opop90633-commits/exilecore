@@ -63,7 +63,18 @@ public final class ItemRepository {
         return java.util.Collections.unmodifiableCollection(runes.values());
     }
 
+    /**
+     * 讀物品資料。2026-10：先在一份新的上面讀一次，全部讀得過才換掉現在的
+     * （以前先清空再讀，/ec reload 的時候檔案打錯字，伺服器上的基底、詞綴、傳奇就全部不見，直到下次讀成功）。
+     */
     public void load(final Path dataFolder) throws IOException {
+        if (!bases.isEmpty()) {
+            new ItemRepository().loadNow(dataFolder); // 讀不過就丟例外，現在的資料不動
+        }
+        loadNow(dataFolder);
+    }
+
+    private void loadNow(final Path dataFolder) throws IOException {
         bases.clear();
         uniqueVeiled.clear();
         uniqueRuneSockets.clear();

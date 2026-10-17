@@ -1659,6 +1659,17 @@ public final class CharacterService {
             return false;
         }).whenComplete((taken, error) -> sync(() -> {
             if (!stillOnline(player)) {
+                // 2026-10：等的時候下線了：沒改成的話改名卡直接在資料庫還回去（以前就不見了）
+                if (needsCard && (error != null || Boolean.TRUE.equals(taken))) {
+                    plugin.database().async(connection -> {
+                        tw.exilecore.sponsor.SponsorService.refundRenameCardOffline(connection, account);
+                        return null;
+                    }).whenComplete((done, failed) -> {
+                        if (failed != null) {
+                            plugin.getSLF4JLogger().error("還改名卡給下線的 {} 失敗（請手動補一張）", account, failed);
+                        }
+                    });
+                }
                 return;
             }
             if (error != null) {

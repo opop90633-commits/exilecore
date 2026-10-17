@@ -158,6 +158,7 @@ public final class SkillService {
         deployables.forget(player.getUniqueId());
         minions.forget(player.getUniqueId());
         buffs.forget(player.getUniqueId());
+        walkers.remove(player.getUniqueId());
         auras.forget(player.getUniqueId());
         signatures.forget(player.getUniqueId());
     }
@@ -340,6 +341,13 @@ public final class SkillService {
                 .derive(build.profile().id() + MetaGems.TRIGGERED_SUFFIX, java.util.Set.of(), java.util.Set.of()));
         final SkillRuntime runtime = runtime(player);
         final long now = now();
+        // 2026-10-17：有冷卻的法術被觸發也照冷卻（以前能量一滿就放，冷卻等於沒有）
+        if (runtime.cooldownLeft(definition.id(), now) > 0) {
+            return;
+        }
+        if (build.cooldownTicks() > 0) {
+            runtime.startCooldown(definition.id(), now, build.cooldownTicks());
+        }
         final java.util.UUID previousFx = Fx.source(player.getUniqueId());
         try {
             executor.execute(player, runtime, build, target, now);
@@ -593,6 +601,11 @@ public final class SkillService {
                 plugin.getSLF4JLogger().error("光環、增益更新出錯", e);
             }
             try {
+                corpseWalkers(now);
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().error("踏骸之履出錯", e);
+            }
+            try {
                 corpseMarkers(now);
             } catch (final RuntimeException e) {
                 plugin.getSLF4JLogger().error("屍體記號出錯", e);
@@ -621,8 +634,87 @@ public final class SkillService {
                 continue;
             }
             final Location at = player.getLocation();
-            for (final tw.exilecore.combat.Corpses.Corpse corpse : plugin.combat().corpses().near(at.getWorld().getUID(), at.getX(), at.getZ(), 14, now)) {
-                visuals.corpseMarker(new Location(at.getWorld(), corpse.x(), corpse.y(), corpse.z()));
+            for (final tw.exilecore.combat.Corpses.Corpse corpse : plugin.combat().corpses().near(at.getWorld().getUID(), at.getX(), at.getZ(), 18, now)) {
+                // 2026-10-17：更明顯（一圈亮綠點＋靈魂），只畫給自己；快消失變紅
+                visuals.corpseMarker(player, new Location(at.getWorld(), corpse.x(), corpse.y(), corpse.z()), corpse.until() - now <= 60);
+            }
+        }
+    }
+
+    // ---- 踏骸之履（2026-10-17 傳奇）：移動時在腳下留屍體；附近每具屍體回生命、加移動速度 ----
+
+    /** 移動時每幾 tick 留一具。 */
+    private static final long WALK_CORPSE_TICKS = 30;
+    /** 數「附近的屍體」的半徑（格）。 */
+    private static final double WALK_RADIUS = 6;
+    /** 最多算幾具（不會無限疊）。 */
+    private static final int WALK_MAX = 15;
+    /** 留下的屍體大小：同等級一般怪最大生命的幾成。 */
+    private static final double WALK_CORPSE_LIFE = 0.5;
+
+    /** {上次算到幾具, 上次給增益的 tick, 上次留屍體的 tick, 上次留屍體的 x, z}。 */
+    private final Map<UUID, double[]> walkers = new HashMap<>();
+
+    private void corpseWalkers(final long now) {
+        if (plugin.combat() == null) {
+            return;
+        }
+        final tw.exilecore.combat.Corpses corpses = plugin.combat().corpses();
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            final PlayerState state = plugin.players().get(player);
+            if (!state.hasCharacter() || player.isDead()) {
+                continue;
+            }
+            final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+            final double regen = sheet.get(tw.exilecore.stats.StatKeys.CORPSE_LIFE_REGEN);
+            final double move = sheet.get(tw.exilecore.stats.StatKeys.CORPSE_MOVEMENT);
+            final boolean walk = sheet.get(tw.exilecore.stats.StatKeys.CORPSE_WALK) > 0;
+            double[] memo = walkers.get(player.getUniqueId());
+            if (regen <= 0 && move <= 0 && !walk) {
+                if (memo != null) {
+                    walkers.remove(player.getUniqueId());
+                    buffs.remove(player, "corpsewalker");
+                }
+                continue;
+            }
+            final Location at = player.getLocation();
+            if (memo == null) {
+                memo = new double[] {-1, 0, 0, at.getX(), at.getZ()};
+                walkers.put(player.getUniqueId(), memo);
+            }
+            // 移動時留屍體（走了 2 格以上、間隔夠了；那裡已經堆了 8 具就不再留）
+            if (walk && plugin.monsters() != null && now - (long) memo[2] >= WALK_CORPSE_TICKS) {
+                final double dx = at.getX() - memo[3];
+                final double dz = at.getZ() - memo[4];
+                if (dx * dx + dz * dz >= 4 && corpses.near(at.getWorld().getUID(), at.getX(), at.getZ(), 3, now).size() < DESECRATE_PILE) {
+                    final Location ground = groundOf(at);
+                    corpses.add(at.getWorld().getUID(), ground.getX(), ground.getY(), ground.getZ(),
+                            plugin.monsters().config().lifeAt(Math.max(1, state.level())) * WALK_CORPSE_LIFE, now);
+                    Fx.as(player.getUniqueId(), () -> Fx.spawn(ground.getWorld(), org.bukkit.Particle.SOUL, ground.clone().add(0, 0.2, 0),
+                            4, 0.25, 0.05, 0.25, 0.01));
+                    memo[2] = now;
+                    memo[3] = at.getX();
+                    memo[4] = at.getZ();
+                }
+            }
+            final int count = Math.min(WALK_MAX, corpses.near(at.getWorld().getUID(), at.getX(), at.getZ(), WALK_RADIUS, now).size());
+            // 數量變了、或快到期（每 2 秒續一次）才重給增益（不要每次都重算屬性表）
+            if (count != (int) memo[0] || now - (long) memo[1] >= 40) {
+                memo[0] = count;
+                memo[1] = now;
+                if (count <= 0) {
+                    buffs.remove(player, "corpsewalker");
+                } else {
+                    final List<tw.exilecore.stats.Modifier> mods = new ArrayList<>();
+                    if (regen > 0) {
+                        mods.add(tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.StatKeys.LIFE_REGEN, regen * count, "踏骸之履（屍體 ×" + count + "）"));
+                    }
+                    if (move > 0) {
+                        mods.add(tw.exilecore.stats.Modifier.increased(tw.exilecore.stats.StatKeys.MOVEMENT_SPEED, move * count,
+                                "踏骸之履（屍體 ×" + count + "）"));
+                    }
+                    buffs.apply(player, "corpsewalker", "踏骸之履：附近 " + count + " 具屍體", 60, mods);
+                }
             }
         }
     }
@@ -1904,8 +1996,16 @@ public final class SkillService {
         deployables.forget(player.getUniqueId());
         minions.forget(player.getUniqueId());
         buffs.forget(player.getUniqueId());
+        walkers.remove(player.getUniqueId());
         auras.forget(player.getUniqueId());
         metas.forget(player.getUniqueId());
+        signatures.forget(player.getUniqueId()); // 2026-10-17：換角色也清掉插地的矛、蓄力這些（以前照舊角色的 build 繼續打）
+        if (mounts != null) {
+            mounts.dismount(player);
+        }
+        if (crystals != null) {
+            crystals.clear(player.getUniqueId());
+        }
         if (state.hasCharacter()) {
             migrateRemoved(player, state); // 2026-10 PoE2 改版拿掉的技能、輔助換成未切割寶石
             auras.sync(player); // 技能面板上的光環開起來
@@ -2890,8 +2990,8 @@ public final class SkillService {
         }
         final List<Modifier> effects = build.auraModifiers();
         if (!effects.isEmpty()) {
-            final String who = build.generosity() ? String.format(Locale.ROOT, "%.0f 格內的隊友（效果 ×%.1f）與你的召喚物", spec.radius() * build.areaScale(), AuraService.GENEROSITY_ALLY_BONUS)
-                    : spec.allies() ? String.format(Locale.ROOT, "你、%.0f 格內的隊友與你的召喚物", spec.radius() * build.areaScale()) : "你"; // 2026-10：只給自己的增益不再給召喚物
+            final String who = build.generosity() ? String.format(Locale.ROOT, "%.0f 格內的隊友（要組隊；效果 ×%.1f）與你的召喚物", spec.radius() * build.areaScale(), AuraService.GENEROSITY_ALLY_BONUS)
+                    : spec.allies() ? String.format(Locale.ROOT, "你、%.0f 格內的隊友（要組隊）與你的召喚物", spec.radius() * build.areaScale()) : "你"; // 2026-10：只給自己的增益不再給召喚物
             lines.add("<gray>開著的時候" + who + "：");
             for (final String line : ModifierText.describeAll(effects)) {
                 lines.add("<#8fd3ff>　" + ItemRenderer.escape(line));
@@ -3007,7 +3107,7 @@ public final class SkillService {
         }
         final List<Modifier> buff = build.warcryModifiers();
         if (!buff.isEmpty()) {
-            lines.add(String.format(Locale.ROOT, "<gray>%.1f 秒內你%s：", duration, spec.allies() ? "和範圍內的隊友" : ""));
+            lines.add(String.format(Locale.ROOT, "<gray>%.1f 秒內你%s：", duration, spec.allies() ? "和範圍內的隊友（要組隊）" : ""));
             for (final String line : ModifierText.describeAll(buff)) {
                 lines.add("<#f5b942>　" + ItemRenderer.escape(line));
             }

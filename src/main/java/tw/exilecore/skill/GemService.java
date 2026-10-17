@@ -705,7 +705,7 @@ public final class GemService {
             }
         }
         if (state.bag() != null && state.bag().usable()) {
-            for (int level = need; level < bestLevel && level <= SkillLoadout.MAX_LEVEL; level++) {
+            for (int level = need; level < bestLevel && level <= SkillLoadout.GEM_CAP; level++) { // 2026-10：21 級的也找得到
                 final String id = GemData.uncutSkill(level).currencyId();
                 if (state.bag().pouch().amount(id) > 0) {
                     best = UncutSource.pouch(id);

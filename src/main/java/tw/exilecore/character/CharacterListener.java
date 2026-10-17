@@ -284,6 +284,11 @@ public final class CharacterListener implements Listener {
      * 不收的話伺服器會在存檔之後才處理它們：游標上的存檔裡一份、又丟在地上一份；合成格裡的根本不在存檔裡。
      * 背包和隨身背包都滿了才丟在腳下（只有自己撿得到、不會消失；這一份不在存檔裡，所以只有一份）。
      */
+    /** 關服時（插件先停用、收不到下線事件）也收好游標與合成格的東西（2026-10）。 */
+    void settle(final Player player) {
+        settleLooseItems(player);
+    }
+
     private void settleLooseItems(final Player player) {
         final PlayerState state = states.get(player);
         if (!state.isLoaded() || !state.hasCharacter()) {
@@ -363,6 +368,36 @@ public final class CharacterListener implements Listener {
     private static boolean mayTake(final Item item, final Entity taker) {
         final UUID owner = item.getOwner();
         return owner == null || owner.equals(taker.getUniqueId());
+    }
+
+    /**
+     * 2026-10：設定開著「星圖直接進倉庫」時，走過地上的星圖也直接收進倉庫的地圖頁（背包滿了也收得到）；
+     * 地圖頁滿了、倉庫沒載入就照原版撿進背包。有主人的、交易存檔重試中的不收（上面的監聽器先擋掉）。
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onMapPickup(final PlayerAttemptPickupItemEvent event) {
+        final Player player = event.getPlayer();
+        if (plugin.loot() == null || plugin.items() == null || characters.tradeLocked(player)
+                || !mayTake(event.getItem(), player) || event.getItem().isDead()) {
+            return;
+        }
+        final ItemStack stack = event.getItem().getItemStack();
+        if (stack.getAmount() != 1) {
+            return;
+        }
+        final tw.exilecore.item.ItemData data = plugin.items().read(stack).orElse(null);
+        final tw.exilecore.item.ItemBase base = data == null ? null : plugin.items().repository().base(data.base());
+        if (base == null || !base.isMap()) {
+            return;
+        }
+        final PlayerState state = plugin.players().get(player);
+        if (!state.hasCharacter() || !plugin.loot().stashMap(player, state, stack)) {
+            return;
+        }
+        event.setCancelled(true);
+        event.getItem().remove();
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.2f);
+        state.notice("<#9fd3ff>星圖收進倉庫的地圖頁", plugin.getServer().getCurrentTick() + 50);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)

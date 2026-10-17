@@ -589,6 +589,9 @@ final class SkillDeployables implements Listener {
                 final long start = bossTauntStart.computeIfAbsent(mob.getUniqueId(), key -> now);
                 if (now - start >= BOSS_TAUNT_TICKS) {
                     bossTauntStart.remove(mob.getUniqueId());
+                    if (bossImmuneUntil.size() > 256) {
+                        bossImmuneUntil.values().removeIf(until -> until < now); // 2026-10-17：過期的清掉（以前只增不減）
+                    }
                     bossImmuneUntil.put(mob.getUniqueId(), now + BOSS_IMMUNE_TICKS);
                     decoyed.remove(mob.getUniqueId());
                     continue;

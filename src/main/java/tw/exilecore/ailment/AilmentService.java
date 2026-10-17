@@ -155,6 +155,12 @@ public final class AilmentService {
         };
     }
 
+    /** 2026-10-17：是不是重暈中（暈眩條滿了的那種；輕暈、凍結、電擊不算）。 */
+    public boolean heavyStunned(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        return entry != null && entry.state.stun().active(now());
+    }
+
     /** 身上疊了幾層中毒。 */
     public int poisonStacks(final LivingEntity entity) {
         final Tracked entry = tracked.get(entity.getUniqueId());
@@ -896,6 +902,10 @@ public final class AilmentService {
             }
         }
         state.setLife(state.life() - rest);
+        if (amount > 0) {
+            // 2026-10-17：持續傷害也算在戰鬥中——打斷能量護盾回充、不能直接傳送走或離開競技場
+            state.setLastDamageTick(plugin.getServer().getCurrentTick());
+        }
         if (plugin.combat() != null) {
             // 死亡回顧：持續傷害也記（同一秒內合併成一筆）
             final DamageType damageType = dotType(type);

@@ -155,9 +155,8 @@ public final class CurrencyListener implements Listener {
         final ItemStack cursor = event.getView().getCursor();
         event.getView().setCursor(ItemStack.empty());
         if (cursor != null && !cursor.isEmpty()) {
-            for (final ItemStack left : player.getInventory().addItem(cursor).values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), left);
-            }
+            // 2026-10：放不下的進隨身背包，再不行掉在腳下只有自己撿得到（以前掉成誰都能撿的）
+            plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, cursor));
         }
         player.closeInventory();
         plugin.dialogs().form(player, "<dark_gray>覆蓋符文",
@@ -217,9 +216,8 @@ public final class CurrencyListener implements Listener {
         final ItemStack cursor = event.getView().getCursor();
         event.getView().setCursor(ItemStack.empty());
         if (cursor != null && !cursor.isEmpty()) {
-            for (final ItemStack left : player.getInventory().addItem(cursor).values()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), left);
-            }
+            // 2026-10：放不下的進隨身背包，再不行掉在腳下只有自己撿得到（以前掉成誰都能撿的）
+            plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, cursor));
         }
         player.closeInventory();
         final String itemName = net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().serialize(target.effectiveName());
@@ -251,9 +249,8 @@ public final class CurrencyListener implements Listener {
                     final ItemStack copy = currencies.mirror(mirror, stack, player.getName(), state.hasCharacter() ? state.character().id() : null);
                     if (copy == null) {
                         // 不會走到這裡（上面確認過了）；真的做不出來就把那顆還回去
-                        for (final ItemStack left : player.getInventory().addItem(currencies.create(mirror, 1)).values()) {
-                            player.getWorld().dropItemNaturally(player.getLocation(), left);
-                        }
+                        // 2026-10：放不下的進隨身背包，再不行掉在腳下只有自己撿得到（以前掉成誰都能撿的）
+                        plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, currencies.create(mirror, 1)));
                         fail(player, mirror.name() + "不能複製這件");
                         return;
                     }

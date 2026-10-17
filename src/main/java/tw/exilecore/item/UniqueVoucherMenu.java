@@ -77,7 +77,7 @@ public final class UniqueVoucherMenu extends Menu {
         final List<UniqueItem> list = new ArrayList<>();
         for (final UniqueItem unique : repository.uniques()) {
             final ItemBase base = repository.base(unique.base());
-            if (unique.chase() || base == null || slot != null && !matches(base.slot(), slot)) {
+            if (unique.chase() || base == null || slot != null && !matches(base.slot(), slot) || !voucherable(unique)) {
                 continue;
             }
             if (!query.isBlank()) {
@@ -97,6 +97,22 @@ public final class UniqueVoucherMenu extends Menu {
         list.sort(Comparator.<UniqueItem>comparingInt(unique -> repository.base(unique.base()).slot().ordinal())
                 .thenComparingInt(UniqueItem::dropLevel).thenComparing(UniqueItem::name));
         return list;
+    }
+
+    /**
+     * 2026-10-17：兌換券跟賭博、三換一一樣：只換得到一般來源（地圖 Boss、王陵、觀星台、賭博）的傳奇；
+     * 極境專屬、萬界、世界 Boss、淵鯨、劫盜、地圖事件這些專屬的，還有照 Boss 機率的稀有傳奇（踏骸之履）都不行。
+     */
+    static boolean voucherable(final UniqueItem unique) {
+        if (tw.exilecore.salvage.UniqueRecipe.protectedUnique(unique) || tw.exilecore.monster.DropTable.bossRateUnique(unique.id())) {
+            return false;
+        }
+        for (final String source : tw.exilecore.salvage.UniqueRecipe.DEFAULT_SOURCES) {
+            if (unique.droppedBy(source)) {
+                return true;
+            }
+        }
+        return unique.droppedBy("gamble");
     }
 
     private static boolean matches(final ItemSlot slot, final ItemSlot filter) {

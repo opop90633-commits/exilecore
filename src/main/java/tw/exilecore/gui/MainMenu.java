@@ -22,7 +22,7 @@ import java.util.Locale;
  * 第 1 排：角色（名字、職業、等級、金幣、功勳、天賦點）
  * （2026-10：拿掉每排最左邊不能按的分類名稱，每排置中）
  * 第 2 排【角色】：角色面板、天賦樹、技能、稱號、切換角色（2026-10：屬性改成點第 1 排的角色；昇華在天賦樹的總覽、鎖定在拆解台）
- * 第 3 排【物品】：隨身背包、倉庫、掉落過濾、拆解
+ * 第 3 排【物品】：隨身背包、倉庫、掉落過濾、垃圾桶（2026-10-17：拆解改回垃圾桶；拆解台找拆解師）
  * 第 4 排【冒險】：傳送、回營地、任務、委託、每月固定活動、競技場（星圖在地圖裝置）
  * 第 5 排【多人】：公會、隊伍、市集、Discord、贊助商城（2026-10：交易、說明拿掉；交易改成蹲下右鍵對方或 /trade）
  * 第 6 排：圖鑑、設定、關閉
@@ -170,7 +170,7 @@ public final class MainMenu extends Menu {
         put(SLOT_STASH, button(Material.CHEST, "倉庫", "/stash",
                 inTown ? "帳號共用的倉庫" : "只能在營地打開"));
         put(SLOT_FILTER, button(Material.HOPPER, "掉落過濾", "/filter", "哪些東西不撿、直接換成金幣"));
-        put(SLOT_TRASH, button(Material.ANVIL, "拆解", "垃圾桶改用 /trash", "不要的裝備拆成金幣與通貨；鎖定裝備也在這裡（/lock）"));
+        put(SLOT_TRASH, button(Material.CAULDRON, "垃圾桶", "/trash", "不要的東西丟進來刪掉（刪了就沒了）；拆成金幣與通貨請找營地的拆解師"));
         // 【冒險】
         put(SLOT_WAYPOINTS, button(Material.ENDER_PEARL, "傳送", "/wp", "營地、檢查點、回到剛才的位置"));
         put(SLOT_TOWN, button(Material.CAMPFIRE, "回營地", "/town", "免費、隨時都可以（被打也可以），/wp 可以傳回來"));
@@ -417,7 +417,7 @@ public final class MainMenu extends Menu {
                 if (!ready) {
                     needCharacter();
                 } else {
-                    new tw.exilecore.salvage.SalvageMenu(plugin, player).open(); // 2026-10：銷毀改成拆解（垃圾桶還是 /trash）
+                    new TrashMenu(plugin, player).open(); // 2026-10-17：改回垃圾桶（/trash）；拆解台找拆解師
                 }
             }
             case SLOT_CODEX -> CodexMenu.open(plugin, player);

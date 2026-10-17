@@ -138,6 +138,9 @@ final class StarVouchers implements Listener {
                 if (online != null) {
                     service.addCoins(online, amount, "星幣券開券失敗退回");
                     online.sendMessage(plugin.text().prefixed("<red>星幣券開不出來（資料庫錯誤），星幣已經退回"));
+                } else {
+                    // 2026-10-17：已經下線：直接寫回資料庫（以前不在線就少了）
+                    service.refundCoinsOffline(uuid, amount, "星幣券開券失敗退回");
                 }
                 return;
             }

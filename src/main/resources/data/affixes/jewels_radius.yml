@@ -184,7 +184,7 @@ jr_bleeding_chance:
   spawn_tags: [r_ruby]
   names: [遺時的]
   text: "範圍內的小天賦也各給：攻擊擊中時 {value}% 機率造成流血"
-  chips: [ailment]   # PoE2 的標籤（jewel BaseChanceToBleed）
+  chips: [attack, ailment]   # PoE2 的標籤（jewel BaseChanceToBleed）；2026-10-17 補攻擊
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
@@ -908,12 +908,11 @@ jr_minion_attackand_cast_speed:
   group: jr_minion_attackand_cast_speed
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 召喚物攻擊與施法速度"
+  text: "範圍內的小天賦也各給：增加 {value}% 召喚物攻擊速度"   # 2026-10-17：召喚物不會施法，拿掉施法速度那半
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
     - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
-    - { stat: radius:cast.speed, type: INCREASED, value: "{value}", tags: [minion] }
 
 jr_minion_chaos_resistance:
   type: suffix

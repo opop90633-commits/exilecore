@@ -126,6 +126,8 @@ public final class Stash {
 
     /** 頁數補到至少 count 頁（最多 {@value #MAX_PAGES}；不會變少）。 */
     public void ensurePages(final int count) {
+        // 2026-10：收回之後又給回來（或買了）：那幾頁解鎖（以前要重新上線才能用）
+        usable = Math.max(usable, Math.min(MAX_PAGES, count));
         while (pages.size() < Math.min(MAX_PAGES, count)) {
             pages.add(new ItemStack[PAGE_SIZE]);
             tabNames.add("");

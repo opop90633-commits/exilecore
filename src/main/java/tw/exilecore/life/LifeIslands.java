@@ -114,6 +114,28 @@ final class LifeIslands {
     }
 
     /** 這塊筏有沒有在航行、島還在（同一塊筏一次一趟）。 */
+    /** 2026-10-17：這塊筏有別人的航行、或別人開的島還沒打完（自己的不算）。 */
+    boolean busyByOthers(final int plot, final UUID self) {
+        for (final Map.Entry<UUID, Voyage> entry : voyages.entrySet()) {
+            if (entry.getValue().plot() == plot && !entry.getKey().equals(self)) {
+                return true;
+            }
+        }
+        for (final Map.Entry<UUID, Island> entry : islands.entrySet()) {
+            if (entry.getValue().plot == plot && !entry.getKey().equals(self) && !entry.getValue().done) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 島收掉前：還在島上的人送回筏上（以前直接掉進海裡）。 */
+    private void sendCrewHome(final Island island) {
+        for (final Player member : crewHere(island)) {
+            member.teleportAsync(service.raftSpawn(island.plot));
+        }
+    }
+
     boolean busy(final int plot) {
         for (final Voyage voyage : voyages.values()) {
             if (voyage.plot() == plot) {
@@ -212,7 +234,8 @@ final class LifeIslands {
         for (int dx = range[0]; dx <= range[1]; dx++) {
             for (int dz = range[0]; dz <= range[1]; dz++) {
                 for (int y = sea + 1; y <= sea + config().buildHeight(); y++) {
-                    if (world().getBlockAt(center[0] + dx, y, center[1] + dz).getType() == type) {
+                    final Material here = world().getBlockAt(center[0] + dx, y, center[1] + dz).getType();
+                    if (here == type || here.name().equals(type.name().replace("_BANNER", "_WALL_BANNER"))) { // 2026-10：貼牆的也算
                         return true;
                     }
                 }
@@ -241,6 +264,9 @@ final class LifeIslands {
         if (service.whale().fighting(player) || service.whale().busy(plot)) {
             return "正在跟淵鯨打，先打完再出航";
         }
+        if (busyByOthers(plot, player.getUniqueId())) {
+            return "這塊筏上別人開的島還沒打完（等他們打完、或島漂走）"; // 2026-10-17：以前會直接把別人正在打的島收掉
+        }
         final int[] center = service.plotCenter(plot);
         if (!hasSail(center, config().raftSize(service.plotLevel(plot)))) {
             return "筏上要有一面船帆";
@@ -253,6 +279,7 @@ final class LifeIslands {
             final Island old = it.next().getValue();
             if (old.plot == plot || old.owner.equals(player.getUniqueId())) {
                 it.remove();
+                sendCrewHome(old);
                 clear(old);
             }
         }
@@ -373,6 +400,7 @@ final class LifeIslands {
         voyages.remove(player.getUniqueId());
         final Island island = islands.remove(player.getUniqueId());
         if (island != null) {
+            sendCrewHome(island);
             clear(island);
         }
     }

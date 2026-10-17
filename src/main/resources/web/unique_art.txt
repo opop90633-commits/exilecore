@@ -4807,3 +4807,51 @@ item tide_devourer
   .fegf...........
   ..ff............
 
+item bonewalker
+  o=2a2620
+  b=d8d0b8
+  w=f4efe0
+  g=8a8270
+  s=6fe0a0
+  t=3fa070
+  ................
+  ................
+  ...s........s...
+  ..sts......sts..
+  ...s........s...
+  .oooo......oooo.
+  .obwo......obwo.
+  .obgo......obgo.
+  .owbo......owbo.
+  .obgbo....obgbo.
+  .owbbbo..owbbbo.
+  .ogggggo.ogggggo
+  .oooooo..oooooo.
+  ................
+  ................
+  ................
+
+item thornwall_aegis
+  o=1e1a14
+  i=5a5a62
+  m=8a8a94
+  l=c0c0c8
+  g=3a7a2a
+  t=6abf3a
+  r=a0382e
+  ..t....oo....t..
+  .tgt.oommoo.tgt.
+  ..tooimllmioot..
+  ..oimmllllmmio..
+  .toimlliillmiot.
+  tgoimlirrilmiogt
+  .toimlirrilmiot.
+  ..oimlliillmio..
+  .toimmllllmmiot.
+  tgooimmllmmioogt
+  .t.ooimmmmioo.t.
+  ....ooimmioo....
+  ..t...oimio...t.
+  .tgt...ooo...tgt
+  ..t..........t..
+  ................

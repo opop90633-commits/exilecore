@@ -107,6 +107,8 @@ public final class CombatHud {
 
     /** 每 {@link #PERIOD} tick：在戰鬥中的人更新側欄，停手的收起來。 */
     public void tick() {
+        // 2026-10：下線的人的上一段統計清掉（以前只有還在打的人下線才清，打完再下線的一直留著）
+        lastFights.keySet().removeIf(uuid -> plugin.getServer().getPlayer(uuid) == null);
         if (meters.isEmpty() && shown.isEmpty()) {
             return;
         }

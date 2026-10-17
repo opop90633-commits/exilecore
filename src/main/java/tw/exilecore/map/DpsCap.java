@@ -35,6 +35,10 @@ final class DpsCap {
         if (amount <= 0 || cap <= 0) {
             return amount;
         }
+        if (recent.size() > 512) {
+            // 2026-10-17：世界 Boss 的紀錄（world:玩家）不跟實例一起清：太多筆時把一分鐘沒更新的丟掉
+            recent.values().removeIf(old -> tick - old[1] > 60 * 20);
+        }
         final double[] state = recent.computeIfAbsent(key, k -> new double[] {0, tick});
         final double elapsed = Math.max(0, tick - state[1]) / 20.0;
         state[0] = state[0] * Math.exp(-elapsed / WINDOW_SECONDS) + amount;

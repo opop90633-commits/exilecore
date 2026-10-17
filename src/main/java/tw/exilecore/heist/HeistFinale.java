@@ -128,6 +128,7 @@ final class HeistFinale implements Listener {
             return problem == null ? "地圖世界現在開不了新的實例，等一下再試" : problem;
         }
         maps.takeCurrency(player, key, 1, EconomySources.HEIST);
+        maps.refundIfUnfinished(instance, player, key, 1); // 2026-10-17：蓋圖失敗、重開伺服器時沒打完就退鑰匙
         runs.put(instance.id(), new Run(instance, level));
         player.sendMessage(plugin.text().prefixed("<#8b0000>盜賊首領：<gray>你真的要去？金庫之主從來沒輸過。"
                 + "打倒他，他的收藏讓你挑一件。<dark_gray>（傳送門在地圖裝置後面）"));

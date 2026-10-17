@@ -199,7 +199,11 @@ public final class StashMenu extends Menu {
                 }
             }
         }
-        player.setItemOnCursor(rest); // 還是放不下的交給原版（丟在腳下）
+        // 2026-10-17：還是放不下的（例如在通貨頁、地圖頁關掉）：掉在腳下只有自己撿得到（以前交給原版，誰都撿得到）
+        player.setItemOnCursor(null);
+        if (rest != null && !rest.isEmpty()) {
+            plugin.economy().wallet().dropFor(player, rest);
+        }
     }
 
     /** 把畫面上這一頁的內容寫回倉庫（換頁、關閉、存檔前）。搜尋中畫面上不是真的東西，不同步（搜尋中也不能搬）。 */

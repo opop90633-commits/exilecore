@@ -29,12 +29,18 @@ import java.util.Optional;
  * 傳奇三換一（拆解台左下的按鈕打開）：上面 4 列是你的背包（跟拆解台一樣：前 3 列＝背包、第 4 列＝快捷列），
  * 點三件傳奇放進來，按「換一件」再確認一次，就拿走那三件、給一件隨機傳奇（池子與規則見 {@link UniqueRecipe}）。
  * 換之前再核對每一格還是同一件（物品 UUID），中途換過位置、鎖起來的不會被拿走。身上穿的、飾品欄位不會出現在這裡。
- * 放的是追逐級（2026-10）：必定換一件隨機追逐級（不能跟一般傳奇混放）。
+ * 放的是追逐級（2026-10）：必定換一件隨機追逐級（追逐級自己一組）。
+ * 批量（2026-10）：可以放很多件（3 的倍數），一次換好幾組；「全部放進來」把背包裡能放的都放進來（鎖定的不會）。
+ * 極境專屬也能放，但那一組換出來的是一般賭博賭得到的傳奇。
  */
 public final class UniqueRecipeMenu extends Menu {
 
     private static final int MIRROR_SLOTS = 36;
     private static final int SLOT_SUMMARY = 45;
+    /** 2026-10：全部放進來（鎖定的不會）。 */
+    private static final int SLOT_ALL = 46;
+    /** 說明裡最多列幾件放進來的。 */
+    private static final int LIST_MAX = 12;
     private static final int SLOT_CLEAR = 47;
     private static final int SLOT_CONFIRM = 49;
     private static final int SLOT_BACK = 51;
@@ -78,6 +84,8 @@ public final class UniqueRecipeMenu extends Menu {
             set(slot, filler());
         }
         set(SLOT_SUMMARY, summaryIcon());
+        set(SLOT_ALL, icon(Material.HOPPER, "<white>全部放進來", "<gray>背包裡能放的傳奇全部放進來（批量換）",
+                "<dark_gray>鎖定的、還沒鑑定的不會；想留的先右鍵鎖定", "", "<yellow>左鍵：全部放進來"));
         set(SLOT_CLEAR, icon(Material.MILK_BUCKET, "<gray>清除選擇", "<yellow>左鍵：全部拿出來"));
         set(SLOT_CONFIRM, confirmIcon());
         set(SLOT_BACK, backButton("拆解台"));
@@ -175,20 +183,72 @@ public final class UniqueRecipeMenu extends Menu {
         return definition != null && definition.chase();
     }
 
-    /** 放進來的是追逐級（看第一件；空的 false）。 */
-    private boolean chaseMode(final List<Input> inputs) {
-        return !inputs.isEmpty() && chase(inputs.getFirst().data());
+    /** 這件是不是極境專屬。 */
+    private boolean uber(final ItemData data) {
+        return UniqueRecipe.uberExclusive(plugin.items().repository().unique(data.unique()));
     }
 
-    /** 這幾件可能換到的傳奇（追逐級：必定換追逐級）。 */
-    private List<UniqueItem> outcomes(final List<Input> inputs) {
-        final List<String> ids = new ArrayList<>();
+    /** 這一組是追逐級（追逐級自己一組）。 */
+    private boolean chaseMode(final List<Input> group) {
+        return !group.isEmpty() && chase(group.getFirst().data());
+    }
+
+    /** 這一組有極境專屬：換一般賭博賭得到的。 */
+    private boolean uberMode(final List<Input> group) {
+        for (final Input input : group) {
+            if (uber(input.data())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 分組（2026-10 批量）：追逐級照放進來的順序每 N 件一組；其他的一般傳奇在前、極境專屬在後，每 N 件一組。
+     * 湊不滿一組的不換（留在背包）。
+     */
+    private List<List<Input>> groups(final List<Input> inputs) {
+        final int need = settings.inputs();
+        final List<Input> chase = new ArrayList<>();
+        final List<Input> normal = new ArrayList<>();
+        final List<Input> ubers = new ArrayList<>();
         for (final Input input : inputs) {
+            (chase(input.data()) ? chase : uber(input.data()) ? ubers : normal).add(input);
+        }
+        normal.addAll(ubers);
+        final List<List<Input>> groups = new ArrayList<>();
+        for (final List<Input> list : List.of(chase, normal)) {
+            for (int from = 0; from + need <= list.size(); from += need) {
+                groups.add(List.copyOf(list.subList(from, from + need)));
+            }
+        }
+        return groups;
+    }
+
+    private static int grouped(final List<List<Input>> groups) {
+        int total = 0;
+        for (final List<Input> group : groups) {
+            total += group.size();
+        }
+        return total;
+    }
+
+    /** 這一組可能換到的傳奇（追逐級：必定換追逐級；有極境專屬：一般賭博賭得到的）。 */
+    private List<UniqueItem> outcomes(final List<Input> group) {
+        final List<String> ids = new ArrayList<>();
+        for (final Input input : group) {
             ids.add(input.data().unique());
         }
-        return chaseMode(inputs)
-                ? UniqueRecipe.chaseOutcomes(plugin.items().repository().uniques(), itemLevel(inputs))
-                : UniqueRecipe.outcomes(plugin.items().repository().uniques(), settings, ids, itemLevel(inputs));
+        if (chaseMode(group)) {
+            return UniqueRecipe.chaseOutcomes(plugin.items().repository().uniques(), itemLevel(group));
+        }
+        return uberMode(group)
+                ? UniqueRecipe.gambleOutcomes(plugin.items().repository().uniques(), settings, ids, itemLevel(group))
+                : UniqueRecipe.outcomes(plugin.items().repository().uniques(), settings, ids, itemLevel(group));
+    }
+
+    private String poolLabel(final List<Input> group) {
+        return chaseMode(group) ? "<#ffb347>追逐級" : uberMode(group) ? "<#c77dff>賭博的傳奇" : "<gray>一般";
     }
 
     /** 傳奇的名字，一行幾個。 */
@@ -218,44 +278,72 @@ public final class UniqueRecipeMenu extends Menu {
         final List<Input> inputs = current();
         if (inputs.isEmpty()) {
             final List<String> lore = new ArrayList<>();
-            lore.add("<gray>1. 點上面 " + need + " 件傳奇放進來（重複的、用不到的）");
-            lore.add("<gray>2. 按「換一件」：拿走這 " + need + " 件，換一件隨機傳奇");
+            lore.add("<gray>1. 點上面的傳奇放進來（每 " + need + " 件換一件；可以放很多組，一次換完）");
+            lore.add("<gray>   或按右邊的「全部放進來」");
+            lore.add("<gray>2. 按「換」：拿走湊滿的那幾組，每組換一件隨機傳奇");
             lore.add("");
             lore.add("<gray>可能換到：");
             lore.addAll(nameLines(UniqueRecipe.outcomes(plugin.items().repository().uniques(), settings, List.of(), Integer.MAX_VALUE)));
             lore.add("");
             if (settings.excludeInputs()) {
-                lore.add("<dark_gray>不會換到你放進去的那幾種");
+                lore.add("<dark_gray>不會換到那一組放進去的那幾種");
             }
-            lore.add("<dark_gray>物品等級＝放進去最高的那件");
-            lore.add("<#ffb347>" + need + " 件追逐級：必定換一件隨機追逐級<dark_gray>（可能換到同一種；不能跟一般傳奇混放）");
-            lore.add("<dark_gray>極境專屬不能放；一般傳奇有極低的機率換到追逐級（跟小怪掉的一樣）");
+            lore.add("<dark_gray>物品等級＝那一組放進去最高的那件");
+            lore.add("<#ffb347>" + need + " 件追逐級：必定換一件隨機追逐級<dark_gray>（可能換到同一種；追逐級自己一組）");
+            lore.add("<#c77dff>極境專屬也能放：<gray>那一組換出來的是一般賭博賭得到的傳奇");
+            lore.add("<dark_gray>一般傳奇有極低的機率換到追逐級（跟小怪掉的一樣）");
             lore.add("<dark_gray>想留的先右鍵鎖定");
             return icon(Material.BOOK, "<white>怎麼用", lore);
         }
         final List<String> lore = new ArrayList<>();
-        for (final Input input : inputs) {
+        for (int i = 0; i < inputs.size() && i < LIST_MAX; i++) {
+            final Input input = inputs.get(i);
             lore.add("<white>· " + ItemRenderer.escape(Wallet.describe(input.stack())) + " <dark_gray>（物品等級 " + input.data().ilvl() + "）");
         }
-        lore.add("");
-        final List<UniqueItem> pool = outcomes(inputs);
-        if (pool.isEmpty()) {
-            lore.add("<red>換不到東西：物品等級太低（最高 " + itemLevel(inputs) + "）");
-        } else {
-            lore.add((chaseMode(inputs) ? "<#ffb347>追逐級：" : "") + "<gray>可能換到（" + pool.size() + " 種，隨機一種；物品等級 " + itemLevel(inputs) + "）：");
-            lore.addAll(nameLines(pool));
+        if (inputs.size() > LIST_MAX) {
+            lore.add("<dark_gray>…還有 " + (inputs.size() - LIST_MAX) + " 件");
         }
-        return icon(Material.BOOK, "<white>放了 " + inputs.size() + "／" + need + " 件", lore);
+        lore.add("");
+        final List<List<Input>> groups = groups(inputs);
+        final int left = inputs.size() - grouped(groups);
+        if (groups.isEmpty()) {
+            lore.add("<gray>還不夠一組（每組 " + need + " 件；追逐級要 " + need + " 件追逐級）");
+        } else if (groups.size() == 1) {
+            final List<UniqueItem> pool = outcomes(groups.getFirst());
+            if (pool.isEmpty()) {
+                lore.add("<red>換不到東西：物品等級太低（最高 " + itemLevel(groups.getFirst()) + "）");
+            } else {
+                lore.add(poolLabel(groups.getFirst()) + "<gray>：可能換到（" + pool.size() + " 種，隨機一種；物品等級 " + itemLevel(groups.getFirst()) + "）：");
+                lore.addAll(nameLines(pool));
+            }
+        } else {
+            lore.add("<gray>會換 <white>" + groups.size() + "</white> 次：");
+            for (int i = 0; i < groups.size() && i < LIST_MAX; i++) {
+                final List<Input> group = groups.get(i);
+                final int kinds = outcomes(group).size();
+                lore.add("<gray>　第 " + (i + 1) + " 組：" + poolLabel(group) + "<gray>，" + (kinds == 0 ? "<red>換不到（物品等級太低）"
+                        : kinds + " 種裡抽一種、物品等級 " + itemLevel(group)));
+            }
+            if (groups.size() > LIST_MAX) {
+                lore.add("<dark_gray>　…還有 " + (groups.size() - LIST_MAX) + " 組");
+            }
+        }
+        if (left > 0 && !groups.isEmpty()) {
+            lore.add("<dark_gray>剩 " + left + " 件湊不滿一組：不會被拿走");
+        }
+        return icon(Material.BOOK, "<white>放了 " + inputs.size() + " 件" + (groups.isEmpty() ? "" : "（" + groups.size() + " 組）"), lore);
     }
 
     private ItemStack confirmIcon() {
         final int need = settings.inputs();
-        final int have = current().size();
-        if (have < need) {
-            return icon(Material.SMITHING_TABLE, "<gray>換一件", "<gray>還要放 <white>" + (need - have) + "</white> 件傳奇",
+        final List<Input> inputs = current();
+        final List<List<Input>> groups = groups(inputs);
+        if (groups.isEmpty()) {
+            return icon(Material.SMITHING_TABLE, "<gray>換一件", "<gray>每 <white>" + need + "</white> 件傳奇換一件",
                     "<dark_gray>點上面的傳奇放進來");
         }
-        return glowing(icon(Material.SMITHING_TABLE, "<#af6025>換一件", "<gray>拿走這 " + need + " 件，換一件隨機傳奇",
+        final int count = groups.size();
+        return glowing(icon(Material.SMITHING_TABLE, "<#af6025>換 " + count + " 件", "<gray>拿走 " + grouped(groups) + " 件，換 " + count + " 件隨機傳奇",
                 "<red>放進去的就沒了，按了會再問一次", "", "<yellow>左鍵：換"));
     }
 
@@ -271,6 +359,8 @@ public final class UniqueRecipeMenu extends Menu {
             } else {
                 return;
             }
+        } else if (slot == SLOT_ALL) {
+            selectAll();
         } else if (slot == SLOT_CLEAR) {
             selected.clear();
         } else if (slot == SLOT_CONFIRM) {
@@ -304,20 +394,31 @@ public final class UniqueRecipeMenu extends Menu {
         if (problem == null && selected.containsValue(data.get().uuid())) {
             problem = "同一件已經放進來了";
         }
-        final List<Input> already = current();
-        if (problem == null && !already.isEmpty()) {
-            problem = UniqueRecipe.mixProblem(chaseMode(already), chase(data.get()));
-        }
         if (problem != null) {
             player.sendActionBar(plugin.text().parse("<red>不能放：" + ItemRenderer.escape(problem)));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
-        if (selected.size() >= settings.inputs()) {
-            player.sendActionBar(plugin.text().parse("<yellow>已經放了 " + settings.inputs() + " 件：先點一件拿出來"));
-            return;
-        }
         selected.put(inventorySlot, data.get().uuid());
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.4f);
+    }
+
+    /** 全部放進來（2026-10 批量）：背包裡能放的傳奇（鎖定的、沒鑑定的不會）。 */
+    private void selectAll() {
+        final PlayerInventory inventory = player.getInventory();
+        int added = 0;
+        for (int slot = 0; slot < MIRROR_SLOTS; slot++) {
+            final int inventorySlot = SalvageMenu.inventorySlot(slot);
+            if (selected.containsKey(inventorySlot)) {
+                continue;
+            }
+            final String uuid = eligibleUuid(inventory.getItem(inventorySlot));
+            if (uuid != null && !selected.containsValue(uuid)) {
+                selected.put(inventorySlot, uuid);
+                added++;
+            }
+        }
+        player.sendActionBar(plugin.text().parse(added == 0 ? "<gray>沒有能放的傳奇了" : "<green>放進來 " + added + " 件"));
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.4f);
     }
 
@@ -350,8 +451,8 @@ public final class UniqueRecipeMenu extends Menu {
             redraw();
             return null;
         }
-        if (inputs.size() < settings.inputs()) {
-            player.sendActionBar(plugin.text().parse("<yellow>還要放 " + (settings.inputs() - inputs.size()) + " 件傳奇"));
+        if (groups(inputs).isEmpty()) {
+            player.sendActionBar(plugin.text().parse("<yellow>還不夠一組（每組 " + settings.inputs() + " 件）"));
             return null;
         }
         return inputs;
@@ -382,19 +483,38 @@ public final class UniqueRecipeMenu extends Menu {
         if (inputs == null) {
             return;
         }
-        final List<UniqueItem> pool = outcomes(inputs);
-        if (pool.isEmpty()) {
-            player.sendMessage(plugin.text().prefixed("<red>換不到東西：放進去的傳奇物品等級太低（最高 " + itemLevel(inputs) + "）"));
-            return;
+        final List<List<Input>> groups = groups(inputs);
+        for (final List<Input> group : groups) {
+            if (outcomes(group).isEmpty()) {
+                player.sendMessage(plugin.text().prefixed("<red>有一組換不到東西：放進去的傳奇物品等級太低（最高 " + itemLevel(group) + "）；先拿出來"));
+                return;
+            }
         }
         final List<String> body = new ArrayList<>();
-        body.add("<gray>拿走這 " + inputs.size() + " 件：");
-        for (final Input input : inputs) {
-            body.add("<white>· " + ItemRenderer.escape(Wallet.describe(input.stack())));
+        body.add("<gray>拿走這 " + grouped(groups) + " 件，換 " + groups.size() + " 件：");
+        int shown = 0;
+        for (int i = 0; i < groups.size(); i++) {
+            final List<Input> group = groups.get(i);
+            for (final Input input : group) {
+                if (shown++ < LIST_MAX * 2) {
+                    body.add("<white>· " + ItemRenderer.escape(Wallet.describe(input.stack())) + (groups.size() > 1 ? " <dark_gray>（第 " + (i + 1) + " 組）" : ""));
+                }
+            }
+        }
+        if (shown > LIST_MAX * 2) {
+            body.add("<dark_gray>…還有 " + (shown - LIST_MAX * 2) + " 件");
         }
         body.add("");
-        body.add("<gray>換一件隨機" + (chaseMode(inputs) ? "<#ffb347>追逐級<gray>" : "") + "傳奇：" + pool.size() + " 種裡抽一種" + (settings.excludeInputs() && !chaseMode(inputs) ? "（不會是放進去的那幾種）" : "")
-                + "，物品等級 " + itemLevel(inputs));
+        for (int i = 0; i < groups.size() && i < LIST_MAX; i++) {
+            final List<Input> group = groups.get(i);
+            body.add("<gray>" + (groups.size() > 1 ? "第 " + (i + 1) + " 組：" : "") + "換一件隨機" + poolLabel(group) + "<gray>傳奇："
+                    + outcomes(group).size() + " 種裡抽一種" + (settings.excludeInputs() && !chaseMode(group) ? "（不會是放進去的那幾種）" : "")
+                    + "，物品等級 " + itemLevel(group));
+        }
+        final int left = inputs.size() - grouped(groups);
+        if (left > 0) {
+            body.add("<dark_gray>剩 " + left + " 件湊不滿一組：不會被拿走");
+        }
         body.add("");
         body.add("<red>放進去的就沒了，不能復原。");
         // 確認框下一個 tick 才關掉選單：這中間背包變了的話不換、請他再按一次
@@ -423,53 +543,79 @@ public final class UniqueRecipeMenu extends Menu {
         if (inputs == null) {
             return;
         }
-        // 2026-10：先擲一次跟小怪一樣的極低機率（maps.yml 的 drops.chase_mob_chance）：換到追逐級傳奇
-        // （放的是追逐級：outcomes 本來就是追逐級的池子，不用再擲）
-        final boolean chaseMode = chaseMode(inputs);
-        UniqueItem pick = null;
-        final List<UniqueItem> chase = chaseMode ? List.of() : plugin.items().generator().chaseUniques(itemLevel(inputs));
-        if (!chase.isEmpty() && plugin.items().random().nextDouble() < ItemGenerator.chaseChance()) {
-            pick = ItemGenerator.pickUnique(chase, plugin.items().random());
-        }
-        if (pick == null) {
-            pick = ItemGenerator.pickUnique(outcomes(inputs), plugin.items().random());
-        }
-        if (pick == null) {
-            player.sendMessage(plugin.text().prefixed("<red>換不到東西：放進去的傳奇物品等級太低（最高 " + itemLevel(inputs) + "）"));
-            return;
-        }
-        final ItemData result = plugin.items().generator().generateUnique(pick, itemLevel(inputs), plugin.items().random());
-        result.setIdentified(true);
-        final ItemStack item = plugin.items().toStack(result);
         final String counter = settings.countText() + "換一";
         final String opId = TradeLogRepository.newTradeId();
         final List<TradeLogRepository.Entry> log = new ArrayList<>();
         final List<String> names = new ArrayList<>();
+        final List<String> gotNames = new ArrayList<>();
+        final List<ItemData> chaseResults = new ArrayList<>();
+        int uberGroups = 0;
         final PlayerInventory inventory = player.getInventory();
-        for (final Input input : inputs) {
-            final String name = Wallet.describe(input.stack());
-            names.add(name);
-            inventory.setItem(input.slot(), null);
-            log.add(new TradeLogRepository.Entry(opId, TradeLogRepository.RECIPE, input.data().uuid(), name, 1,
-                    player.getUniqueId(), player.getName(), null, counter));
+        for (final List<Input> group : groups(inputs)) {
+            // 2026-10：先擲一次跟小怪一樣的極低機率（maps.yml 的 drops.chase_mob_chance）：換到追逐級傳奇
+            // （放的是追逐級：outcomes 本來就是追逐級的池子，不用再擲）
+            final boolean chaseMode = chaseMode(group);
+            if (uberMode(group) && !chaseMode) {
+                uberGroups++;
+            }
+            UniqueItem pick = null;
+            final List<UniqueItem> chase = chaseMode ? List.of() : plugin.items().generator().chaseUniques(itemLevel(group));
+            if (!chase.isEmpty() && plugin.items().random().nextDouble() < ItemGenerator.chaseChance()) {
+                pick = ItemGenerator.pickUnique(chase, plugin.items().random());
+            }
+            if (pick == null) {
+                pick = ItemGenerator.pickUnique(outcomes(group), plugin.items().random());
+            }
+            if (pick == null) {
+                continue; // 換不到（物品等級太低）：這一組不動
+            }
+            final ItemData result = plugin.items().generator().generateUnique(pick, itemLevel(group), plugin.items().random());
+            result.setIdentified(true);
+            final ItemStack item = plugin.items().toStack(result);
+            for (final Input input : group) {
+                final String name = Wallet.describe(input.stack());
+                names.add(name);
+                inventory.setItem(input.slot(), null);
+                log.add(new TradeLogRepository.Entry(opId, TradeLogRepository.RECIPE, input.data().uuid(), name, 1,
+                        player.getUniqueId(), player.getName(), null, counter));
+            }
+            final String got = Wallet.describe(item);
+            gotNames.add(got);
+            log.add(new TradeLogRepository.Entry(opId, TradeLogRepository.RECIPE, result.uuid(), got, 1,
+                    null, counter, player.getUniqueId(), player.getName()));
+            // 放進這一組第一件空出來的那一格：一定放得下，不會因為背包滿了掉在地上
+            inventory.setItem(group.getFirst().slot(), item);
+            if (pick.chase() && !chaseMode) {
+                chaseResults.add(result);
+            }
         }
         selected.clear();
-        final String got = Wallet.describe(item);
-        log.add(new TradeLogRepository.Entry(opId, TradeLogRepository.RECIPE, result.uuid(), got, 1,
-                null, counter, player.getUniqueId(), player.getName()));
-        // 放進第一件空出來的那一格：一定放得下，不會因為背包滿了掉在地上
-        inventory.setItem(inputs.getFirst().slot(), item);
+        if (gotNames.isEmpty()) {
+            player.sendMessage(plugin.text().prefixed("<red>換不到東西：放進去的傳奇物品等級太低"));
+            return;
+        }
         plugin.players().markDirty(player);
         final TradeLogRepository tradeLog = plugin.economy().tradeLog();
         plugin.characters().commit(List.of(player), connection -> tradeLog.insert(connection, log), opId,
                 settings.title() + "（" + player.getName() + "）");
-        plugin.getSLF4JLogger().info("[recipe] {} 用 {} 換到 {}", player.getName(), String.join("、", names), got);
-        player.sendMessage(plugin.text().prefixed("<gray>" + settings.title() + "：用 " + ItemRenderer.escape(String.join("、", names))
-                + " 換到 <#af6025>" + ItemRenderer.escape(got)));
+        // 2026-10：紀錄寫幾組、其中幾組有極境專屬（批量換之後方便查有沒有被拿來大量洗）
+        plugin.getSLF4JLogger().info("[recipe] {} 換了 {} 組（極境 {} 組）：用 {} 換到 {}", player.getName(), gotNames.size(), uberGroups,
+                String.join("、", names), String.join("、", gotNames));
+        if (gotNames.size() == 1) {
+            player.sendMessage(plugin.text().prefixed("<gray>" + settings.title() + "：用 " + ItemRenderer.escape(String.join("、", names))
+                    + " 換到 <#af6025>" + ItemRenderer.escape(gotNames.getFirst())));
+        } else {
+            player.sendMessage(plugin.text().prefixed("<gray>" + settings.title() + "：用 " + names.size() + " 件換到 " + gotNames.size() + " 件："));
+            for (final String got : gotNames) {
+                player.sendMessage(plugin.text().parse("<dark_gray>　· <#af6025>" + ItemRenderer.escape(got)));
+            }
+        }
         player.playSound(player.getLocation(), Sound.BLOCK_SMITHING_TABLE_USE, 0.8f, 1.0f);
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.4f);
-        if (pick.chase() && !chaseMode && plugin.loot() != null) {
-            plugin.loot().broadcastChase(player, result); // 一般傳奇換到追逐級：全服廣播（追逐級換追逐級不廣播）
+        if (plugin.loot() != null) {
+            for (final ItemData result : chaseResults) {
+                plugin.loot().broadcastChase(player, result); // 一般傳奇換到追逐級：全服廣播（追逐級換追逐級不廣播）
+            }
         }
     }
 }

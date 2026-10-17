@@ -153,11 +153,13 @@ public final class SupportProcs implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onHit(final HitEvent event) {
-        metaHit = event.skill() != null && event.skill().id().contains(MetaGems.TRIGGERED_SUFFIX);
+        // 2026-10-17：存起來再還原（輔助觸發的技能同步打中又進來一次時，以前 finally 直接清成 false，外層後面的觸發就不算主要寶石的）
+        final boolean previous = metaHit;
+        metaHit = previous || event.skill() != null && event.skill().id().contains(MetaGems.TRIGGERED_SUFFIX);
         try {
             onHitInner(event);
         } finally {
-            metaHit = false;
+            metaHit = previous;
         }
     }
 

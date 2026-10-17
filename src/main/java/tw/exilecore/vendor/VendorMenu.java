@@ -171,7 +171,7 @@ public final class VendorMenu extends Menu {
             if (weight > 0) { // 權重設成 0 的就當作賭不到（不畫 ★）
                 uniqueCapable.add(base.id());
                 uniqueWeights.put(base.id(), weight);
-                if (VendorService.bossPool(uniques)) {
+                if (service.bossRate(uniques)) {
                     bossBases.add(base.id());
                 }
             }
