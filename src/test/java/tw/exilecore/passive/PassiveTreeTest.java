@@ -69,8 +69,8 @@ class PassiveTreeTest {
         final int ailmentEnd = 734 + 16 * 5;
         final int critEnd = ailmentEnd + 4 * 5;
         final int chargeEnd = critEnd + 3;
-        assertEquals(chargeEnd + 61, ordered.size(), "716 ＋ 18 珠寶孔 ＋ 16 個異常狀態的叉 ＋ 4 個暴擊的叉（各 5 個）＋ 3 個戰星的核心"
-                + " ＋ 61 個第 3 版新加的（德魯伊與 PoE2 機制的群組）");
+        assertEquals(chargeEnd + 61 + 1, ordered.size(), "716 ＋ 18 珠寶孔 ＋ 16 個異常狀態的叉 ＋ 4 個暴擊的叉（各 5 個）＋ 3 個戰星的核心"
+                + " ＋ 61 個第 3 版新加的（德魯伊與 PoE2 機制的群組）＋ 1 個元素汲取（2026-10-17，雷性旁邊）");
         for (int i = 716; i < 734; i++) {
             assertTrue(ordered.get(i).isSocket(), "第 " + i + " 個節點應該是珠寶孔");
         }

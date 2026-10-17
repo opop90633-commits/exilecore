@@ -83,7 +83,7 @@ class MinionTest {
 
         // 魔像拿掉了（2026-10）：固定隻數、會嘲諷的換成狼伴，打中連周圍一起打的是骸骨重卒
         final SkillDefinition wolf = config.skill("beast_companion");
-        assertTrue(wolf.summon().fixedMax());
+        assertFalse(wolf.summon().fixedMax(), "2026-10-17：狼伴吃 +x 召喚物（每隻保留 30 精魂）");
         assertEquals(6, wolf.summon().taunt(), 1e-9);
         assertEquals("狼", wolf.summon().kindName());
         assertEquals(2.0, config.skill("skeletal_brute").summon().radius(), 1e-9);
@@ -198,7 +198,7 @@ class MinionTest {
         assertEquals(1, build("beast_companion", 20, owner).minions());
         owner.add(new Modifier(StatKeys.SKILL_MINIONS, ModType.FLAT, 1, Set.of(Tags.MINION), "不死軍團"));
         assertEquals(11, build("raise_zombie", 20, owner).minions(), "+1 召喚物數量");
-        assertEquals(1, build("beast_companion", 20, owner).minions(), "狼伴固定一隻");
+        assertEquals(2, build("beast_companion", 20, owner).minions(), "狼伴也吃 +1 召喚物（2026-10-17 拿掉固定隻數）");
         assertEquals(0, build("fireball", 20, owner).minions());
         final SkillBuild skeletons = build("raise_zombie", 20, owner, config.support("increased_duration"));
         assertEquals(Math.round(20 * 20 * skeletons.durationScale()), skeletons.durationTicks(skeletons.definition().summon().duration()));
