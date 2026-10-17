@@ -96,6 +96,8 @@ public final class StatLines {
         put(StatKeys.LEECH_RATE, "最大偷取速度", INCREASED, false);
         put(StatKeys.LEECH_EFFECT, "偷取的量", INCREASED, false);
         put(StatKeys.FLAG_INSTANT_LEECH, "偷取全部立即生效", FLAT, false);
+        put(StatKeys.THORNS_DAMAGE, "荊棘傷害", INCREASED, false);   // 2026-10-17：昇華用得到
+        put(StatKeys.FLAG_THORNS_ANY_HIT, "荊棘也會被遠程攻擊與法術觸發", FLAT, false);
         put(StatKeys.ES_RECHARGE, "能量護盾回充速度", SCALED, false);
         put(StatKeys.ES_DELAY, "能量護盾回充延遲", INCREASED, false);
         put(StatKeys.CHARGE_DURATION, "戰星的持續時間", INCREASED, false);
@@ -406,6 +408,7 @@ public final class StatLines {
             case StatKeys.LEECH_INSTANT -> "偷取有 " + number(value) + "% 立即生效";
             case StatKeys.FLAG_INSTANT_LEECH -> "偷取全部立即生效（一下最多回 6% 最大生命）";
             case StatKeys.FLAG_NO_LEECH -> "無法偷取";
+            case StatKeys.FLAG_THORNS_ANY_HIT -> "荊棘也會被遠程攻擊與法術觸發";
             case StatKeys.IGNITE_CHANCE, StatKeys.SHOCK_CHANCE, StatKeys.BLEED_CHANCE, StatKeys.POISON_CHANCE, StatKeys.ELECTROCUTE_CHANCE ->
                     modifier.type() == ModType.FLAT ? name + " " + signed(value) + "%" : scaled(modifier, name);
             case StatKeys.AVOID_IGNITE, StatKeys.AVOID_CHILL, StatKeys.AVOID_FREEZE, StatKeys.AVOID_SHOCK, StatKeys.AVOID_BLEED, StatKeys.AVOID_POISON,

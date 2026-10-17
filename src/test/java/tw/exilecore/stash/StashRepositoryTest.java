@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -58,7 +59,7 @@ class StashRepositoryTest {
         assertArrayEquals(new byte[] {9}, loaded.pages().get(3));
         assertEquals(Map.of("glimmer_orb", 12, "zenith_orb", 1), loaded.currency(), "數量 0 的不存");
 
-        // 第二次存：頁面覆蓋、通貨整批換掉（拿光的那種要消失）
+        // 第二次存：頁面覆蓋、快照裡沒有的頁刪掉、通貨整批換掉（拿光的那種要消失）
         database.sync(c -> {
             stash.save(c, account, new StashRepository.Snapshot(
                     Map.of(0, new byte[] {4}), Map.of("glimmer_orb", 5000)));
@@ -66,7 +67,7 @@ class StashRepositoryTest {
         });
         loaded = database.sync(c -> stash.load(c, account));
         assertArrayEquals(new byte[] {4}, loaded.pages().get(0));
-        assertArrayEquals(new byte[] {9}, loaded.pages().get(3), "這次沒存的頁不動");
+        assertNull(loaded.pages().get(3), "快照裡沒有的頁刪掉（2026-10：收回的頁留在資料庫會被讀回來＝複製）");
         assertEquals(Map.of("glimmer_orb", 5000), loaded.currency());
     }
 
