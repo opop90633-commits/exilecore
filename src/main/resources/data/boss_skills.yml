@@ -29,6 +29,7 @@
 #   summon：summon 原版生物、count 一次幾隻、summon_max 同時最多幾隻、duration 小怪活幾秒（0 = 不限）
 #   curse：radius、duration、taken 受到的傷害增加幾 %
 #   blink：前搖時目標腳下畫圈（圈跟著目標走）；damage > 0 就是「撲擊」：落地後 0.7 秒在腳下炸一圈（radius），落地那一下用走的躲
+#             2026-10-17：Boss 不普攻，所以 Boss 用沒寫 damage 的閃現也一樣：落地停 0.7 秒再炸一圈（1.0 倍、半徑至少 2.5）
 #   ---- 特殊機制（2026-10；放的時候 Boss 站著不動，地上會標出危險或安全的地方）----
 #   beam      光束掃射：count 道光束從 Boss 射出（length 長、左右各 width 格；2 道 = 一前一後、4 道 = 十字），前搖指著目標，
 #             之後 duration 秒內一起轉 angle 度（往哪邊轉隨機），掃到的人每 interval 秒挨一下——繞著 Boss 跑、跟著光束轉的方向走
@@ -351,7 +352,7 @@ skills:
     shout: "「腐朽吧。」"
   blink:
     name: 閃現
-    kind: blink
+    kind: blink          # 一般怪物用是單純的閃現；Boss 用的話落地後停一下再震一圈（BossSkills.BOSS_BLINK_DAMAGE，2026-10-17）
     cooldown: 9
     range: 20
     telegraph: 0.6
@@ -741,13 +742,13 @@ skills:
     shout: "「風暴，起。」"
   awakener_shift:
     name: 虛移
-    kind: blink          # 2026-10：賽勒斯不走路——不帶傷害的瞬移，常常換位置、拉開距離
-    damage: 0
+    kind: blink          # 2026-10：賽勒斯不走路，常常瞬移換位置
+    damage: 1.0          # 2026-10-17：0 → 1.0：瞬移到你身邊之後停一下（0.7 秒、腳下紅圈）再放一圈閃電（巔峰不普攻，瞬移過來不能什麼都不做）
     type: lightning
     cooldown: 6          # poedb：TeleportOrion 冷卻 6 秒
     range: 40
     telegraph: 0.4
-    radius: 1.5
+    radius: 3            # 2026-10-17：1.5 → 3（落地範圍傷害）
   awakener_great_meteor:
     name: 滅世殞星
     hint: "一顆很大的殞星：看到紅圈就往外跑；落點會留下荒蕪，別再踩回去"

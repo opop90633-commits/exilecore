@@ -136,6 +136,9 @@ public final class BossSkills implements Listener {
     private static final double VOLLEY_MARK = 16;
     /** 撲擊落地到震一下的 tick（0.7 秒：看到腳下變紅、走出去剛好來得及）。 */
     private static final int LAND_TICKS = 14;
+    /** 2026-10-17：Boss 用沒有傷害的閃現（Boss 不普攻）：落地後一樣停一下再震一圈，傷害是普通一下的幾倍、半徑至少幾格。 */
+    static final double BOSS_BLINK_DAMAGE = 1.0;
+    static final double BOSS_BLINK_RADIUS = 2.5;
     /** 閃現、撲擊的前搖：跟著目標標地板，目標移動超過這麼多格就重標。 */
     private static final double REMARK_DISTANCE = 0.8;
     /** Boss 附近一個目標都沒有超過這麼久（5 秒），重新看到人時先等 boss_first_delay 秒才出招。 */
@@ -268,6 +271,8 @@ public final class BossSkills implements Listener {
         List<Location> safeSpots = List.of();
         /** 標示地板時 Boss 的位置：新星、扇形、全場大招的傷害照這裡算（2026-10）。 */
         Location anchor;
+        /** 閃現落地那一下用的招（Boss 用沒有傷害的閃現時補上傷害與範圍；null = 照 skill）。 */
+        BossSkill landSkill;
         /** 光束、擴散環、漩渦：結束的 tick。 */
         long channelEnd;
         /** 殘影（2026-10）：每個殘影的那一槍，照出手的順序。 */
@@ -1532,22 +1537,23 @@ public final class BossSkills implements Listener {
                 }
             }
             case BLINK -> {
+                final BossSkill land = cast.landSkill != null ? cast.landSkill : skill;
                 if (cast.landAt == null) {
                     finish(brain, now);
                 } else if (now >= cast.landTick) {
-                    visuals.bossLand(skill.visual(), cast.landAt, skill.radius());
-                    for (final LivingEntity victim : victims(brain, cast.landAt, skill.radius())) {
-                        hurt(brain, skill, victim, Tags.AREA);
+                    visuals.bossLand(land.visual(), cast.landAt, land.radius());
+                    for (final LivingEntity victim : victims(brain, cast.landAt, land.radius())) {
+                        hurt(brain, land, victim, Tags.AREA);
                     }
                     finish(brain, now);
                 } else {
                     hold(brain, cast);
                     final double progress = (now - cast.telegraphEnd) / (double) LAND_TICKS;
                     if (drawTick(brain, now, 0)) {
-                        visuals.bossWarningRing(cast.landAt, skill.radius(), progress);
+                        visuals.bossWarningRing(cast.landAt, land.radius(), progress);
                     }
-                    flash(cast.mark, skill, progress, now);
-                    warnInside(brain, skill, cast.mark, now);
+                    flash(cast.mark, land, progress, now);
+                    warnInside(brain, land, cast.mark, now);
                 }
             }
             case BEAM -> sweep(brain, cast, now);
@@ -1814,12 +1820,16 @@ public final class BossSkills implements Listener {
             case BLINK -> {
                 danger.hide(cast.mark);
                 final Location to = blink(brain, cast);
-                if (to == null || !skill.pounce()) {
+                // 2026-10-17：Boss 不普攻——沒有傷害的閃現（單純瞬移到你身邊）也停一下再震一圈
+                final BossSkill land = skill.pounce() || !brain.host.boss() ? skill
+                        : skill.with(BOSS_BLINK_DAMAGE, -1).sized(Math.max(BOSS_BLINK_RADIUS, skill.radius()), skill.scatter(), skill.duration());
+                if (to == null || !land.pounce()) {
                     finish(brain, now);
                 } else {
                     cast.landAt = to;
                     cast.landTick = now + LAND_TICKS;
-                    danger.show(cast.mark, to, DangerZones.disc(to, skill.radius()), DangerZones.colorFor(skill.type()));
+                    cast.landSkill = land;
+                    danger.show(cast.mark, to, DangerZones.disc(to, land.radius()), DangerZones.colorFor(land.type()));
                 }
             }
         }

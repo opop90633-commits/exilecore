@@ -144,6 +144,11 @@ final class AdminWeb {
         server.endpoint("/admin/api/guild/action", request -> api(request, true, session -> guildAction(session, body(request))), "POST");
         server.endpoint("/admin/api/player", request -> api(request, true, session -> playerAction(session, body(request))), "POST");
         server.endpoint("/admin/api/trace", request -> api(request, false, session -> trace(session, request)), "GET");
+        // 2026-10-17：帳號轉移（A 的整個帳號覆蓋到 B；排進下次開機時做，見 AccountTransfer）
+        server.endpoint("/admin/api/transfer", request -> api(request, false, session -> transferList()), "GET");
+        server.endpoint("/admin/api/transfer/preview", request -> api(request, false, session -> transferPreview(session, request)), "GET");
+        server.endpoint("/admin/api/transfer/queue", request -> api(request, true, session -> transferQueue(session, body(request))), "POST");
+        server.endpoint("/admin/api/transfer/cancel", request -> api(request, true, session -> transferCancel(session, body(request))), "POST");
     }
 
     // ---- 頁面與登入 ----
@@ -1389,6 +1394,69 @@ final class AdminWeb {
         plugin.getSLF4JLogger().info("[管理網頁] {} {}", session.admin(), result);
         record(session.admin(), "玩家", result);
         return Map.of("ok", true, "message", result);
+    }
+
+    // ---- 帳號轉移（2026-10-17）----
+
+    private tw.exilecore.ops.AccountTransfer transfers() {
+        if (plugin.ops() == null || plugin.ops().transfer() == null) {
+            throw new IllegalArgumentException("維運模組沒有啟用（看主控台的錯誤訊息）");
+        }
+        return plugin.ops().transfer();
+    }
+
+    private static String account(final String value) {
+        final String text = value == null ? "" : value.strip();
+        if (!text.matches("[A-Za-z0-9_]{1,16}|[0-9a-fA-F-]{36}")) {
+            throw new IllegalArgumentException("帳號要填 Minecraft ID（英數字）或 UUID：「" + text + "」");
+        }
+        return text;
+    }
+
+    /** 排著的轉移。 */
+    private Object transferList() {
+        final List<Map<String, Object>> rows = new ArrayList<>();
+        for (final tw.exilecore.ops.AccountTransfer.Pending entry : transfers().pending()) {
+            rows.add(Map.of("from", entry.fromName(), "fromUuid", entry.from(), "to", entry.toName(), "toUuid", entry.to(), "admin", entry.admin()));
+        }
+        return Map.of("rows", rows);
+    }
+
+    /** 預覽：兩邊各有什麼、會清掉什麼（不動任何東西）。 */
+    private Object transferPreview(final AdminAuth.Session session, final WebServer.Request request) throws Exception {
+        final tw.exilecore.ops.AccountTransfer.Preview preview = wait(transfers().inspect(
+                account(request.param("from")), account(request.param("to")), "網頁:" + session.admin()));
+        return Map.of("ok", preview.pending() != null, "lines", preview.lines(), "warning", preview.warning());
+    }
+
+    /** 排進下次開機：送出前在伺服器上再預覽一次（不能轉就不排）。 */
+    private Object transferQueue(final AdminAuth.Session session, final JsonObject body) throws Exception {
+        final tw.exilecore.ops.AccountTransfer service = transfers();
+        final tw.exilecore.ops.AccountTransfer.Preview preview = wait(service.inspect(
+                account(string(body, "from")), account(string(body, "to")), "網頁:" + session.admin()));
+        if (preview.pending() == null) {
+            throw new IllegalArgumentException(preview.lines().get(0));
+        }
+        final tw.exilecore.ops.AccountTransfer.Pending pending = preview.pending();
+        onMain(() -> {
+            service.enqueue(pending);
+            return null;
+        });
+        final String what = "轉移帳號 " + pending.fromName() + " → " + pending.toName() + "（下次開機時做）";
+        plugin.getSLF4JLogger().info("[管理網頁] {} 排了{}", session.admin(), what);
+        record(session.admin(), "轉移帳號", "排了 " + pending.fromName() + "（" + pending.from() + "）→ " + pending.toName() + "（" + pending.to() + "），下次開機時做");
+        return Map.of("ok", true, "message", "排好了：" + pending.fromName() + " → " + pending.toName() + "。重新啟動伺服器時才會轉移（開機先自動備份）");
+    }
+
+    /** 取消一筆排著的轉移。 */
+    private Object transferCancel(final AdminAuth.Session session, final JsonObject body) throws Exception {
+        final int index = (int) number(body, "index", -1);
+        final tw.exilecore.ops.AccountTransfer.Pending removed = transfers().cancel(index);
+        if (removed == null) {
+            throw new IllegalArgumentException("沒有這一筆（可能已經被取消了，重新整理看看）");
+        }
+        record(session.admin(), "轉移帳號", "取消 " + removed.fromName() + " → " + removed.toName());
+        return Map.of("ok", true, "message", "取消了：" + removed.fromName() + " → " + removed.toName());
     }
 
     /** 物品追查：一件物品（UUID）的交易與通貨紀錄，或一個玩家最近的交易。 */

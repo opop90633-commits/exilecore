@@ -14,15 +14,18 @@ import java.util.UUID;
 
 /**
  * Boss 倒下時的傷害排行（2026-10）：打過這隻 Boss 的人（傷害紀錄裡有、在線、同一個世界）每人在聊天欄收到一份，
- * 前 5 名照傷害排（不滿 5 個人的寫「無」），最後一行是自己的傷害與佔比。
+ * 前 10 名照傷害排（2026-10-17：5 → 10；前 5 名不滿的寫「無」，第 6～10 名有人才列），最後一行是自己的傷害與佔比。
  * 區域 Boss、地圖 Boss（含終局、極境、金庫之主）都算（{@link MonsterData#boss()}）；召喚出來的小怪不算。
  */
 public final class BossDamageReport {
 
     /** 列幾名。 */
-    static final int TOP = 5;
-    /** 第 1～5 名的顏色（金、白、橙、紫、藍）。 */
-    private static final String[] RANK_COLORS = {"#ffd84a", "#f0f0f0", "#ff9a3c", "#c48bff", "#6fd3ff"};
+    static final int TOP = 10;
+    /** 沒人也要寫「無」的名次（前幾名）。 */
+    static final int ALWAYS = 5;
+    /** 第 1～5 名的顏色（金、白、橙、紫、藍），第 6～10 名灰綠。 */
+    private static final String[] RANK_COLORS = {"#ffd84a", "#f0f0f0", "#ff9a3c", "#c48bff", "#6fd3ff",
+            "#9fc9b0", "#9fc9b0", "#9fc9b0", "#9fc9b0", "#9fc9b0"};
     private static final String LINE = "<#c0392b><st>                                                            </st>";
 
     private BossDamageReport() {
@@ -87,7 +90,7 @@ public final class BossDamageReport {
                 final Entry entry = ranking.get(i);
                 lines.add(" <" + color + ">" + (i + 1) + ". " + ItemRenderer.escape(name(plugin, entry.player())) + "<gray>： <" + color + ">"
                         + amount(entry.damage()) + " <dark_gray>（" + percent(entry.damage(), total) + "）");
-            } else {
+            } else if (i < ALWAYS) {
                 lines.add(" <" + color + ">" + (i + 1) + ". <dark_gray>無");
             }
         }

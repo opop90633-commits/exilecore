@@ -199,6 +199,7 @@
     <button type="button" role="tab" data-tab="players" aria-selected="false">線上玩家</button>
     <button type="button" role="tab" data-tab="guilds" aria-selected="false">公會</button>
     <button type="button" role="tab" data-tab="trace" aria-selected="false">物品追查</button>
+    <button type="button" role="tab" data-tab="transfer" aria-selected="false">帳號轉移</button>
     <button type="button" role="tab" data-tab="dps" aria-selected="false">輸出紀錄</button>
     <button type="button" role="tab" data-tab="log" aria-selected="false">操作紀錄</button>
   </nav>
@@ -355,6 +356,28 @@
         <button type="button" id="trace-player-go">查這個玩家最近的交易</button></div>
       <div class="scroll"><table id="trace-table"><tbody></tbody></table></div>
       <p class="empty" id="trace-empty" hidden></p>
+    </div>
+  </section>
+
+  <section id="tab-transfer" role="tabpanel" hidden>
+    <div class="card">
+      <h2>帳號轉移</h2>
+      <p class="note">把 A 的整個帳號（角色、倉庫、金幣、功勳、贊助、市集、公會身分…）搬到 B 身上：B 原本的資料清掉，A 變成空帳號。玩家換了 Minecraft 帳號時用。
+        兩個人都要登入過伺服器一次。排進去之後<b>下次重新啟動伺服器時才轉移</b>（開機先自動備份資料庫，失敗整筆退回）。</p>
+      <div class="filters"><input type="text" id="transfer-from" placeholder="A：舊帳號 ID 或 UUID" aria-label="從哪個帳號" size="24">
+        <span>→</span>
+        <input type="text" id="transfer-to" placeholder="B：新帳號 ID 或 UUID" aria-label="轉到哪個帳號" size="24">
+        <button type="button" id="transfer-preview">預覽</button></div>
+      <div id="transfer-result" hidden>
+        <div class="scroll"><table id="transfer-lines"><tbody></tbody></table></div>
+        <div class="filters"><button type="button" id="transfer-go">排進下次開機</button></div>
+      </div>
+      <h2>排著的轉移</h2>
+      <div class="scroll"><table id="transfer-table">
+        <thead><tr><th>從 A</th><th>到 B</th><th>誰排的</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty" id="transfer-empty" hidden>沒有排著的轉移。</p>
     </div>
   </section>
 
@@ -1489,6 +1512,54 @@
     });
   }
 
+  // ---- 帳號轉移（2026-10-17） ----
+  var transferPreviewed = null;
+  function loadTransfers() {
+    return api('GET', 'admin/api/transfer').then(function (json) {
+      var body = clear($('transfer-table').querySelector('tbody'));
+      $('transfer-empty').hidden = json.rows.length > 0;
+      json.rows.forEach(function (row, index) {
+        var cancel = h('button', { text: '取消' });
+        cancel.type = 'button';
+        cancel.addEventListener('click', function () {
+          confirmBox('取消轉移 ' + row.from + ' → ' + row.to + '？', ['這一筆不會在下次開機時做。'], '取消這筆').then(function (yes) {
+            if (!yes) { return; }
+            api('POST', 'admin/api/transfer/cancel', { index: index }).then(function (r) { toast(r.message); loadTransfers(); }).catch(function (e) { fail(e); loadTransfers(); });
+          });
+        });
+        body.appendChild(h('tr', null, h('td', { text: row.from }), h('td', { text: row.to }), h('td', { text: row.admin }), h('td', null, cancel)));
+      });
+    }).catch(fail);
+  }
+  function previewTransfer() {
+    var from = $('transfer-from').value.trim(), to = $('transfer-to').value.trim();
+    transferPreviewed = null;
+    $('transfer-result').hidden = true;
+    if (!from || !to) { toast('A、B 都要填', true); return; }
+    api('GET', 'admin/api/transfer/preview?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to)).then(function (json) {
+      var body = clear($('transfer-lines').querySelector('tbody'));
+      json.lines.forEach(function (line) { body.appendChild(h('tr', null, h('td', { text: line }))); });
+      $('transfer-result').hidden = false;
+      $('transfer-go').hidden = !json.ok;
+      if (json.ok) { transferPreviewed = { from: from, to: to, lines: json.lines, warning: json.warning }; }
+    }).catch(fail);
+  }
+  function queueTransfer() {
+    if (!transferPreviewed) { return; }
+    var p = transferPreviewed;
+    var lines = ['B（' + p.to + '）原本的資料會全部清掉，換成 A（' + p.from + '）的；A 變成空帳號。', '下次重新啟動伺服器時才轉移，開機前都可以取消。'];
+    if (p.warning) { lines.push('B 有贊助的資料（星幣、累積贊助…），會被 A 的蓋掉！'); }
+    confirmBox('把 ' + p.from + ' 轉到 ' + p.to + '？', lines, '排進下次開機').then(function (yes) {
+      if (!yes) { return; }
+      api('POST', 'admin/api/transfer/queue', { from: p.from, to: p.to }).then(function (json) {
+        toast(json.message);
+        transferPreviewed = null;
+        $('transfer-result').hidden = true;
+        loadTransfers();
+      }).catch(fail);
+    });
+  }
+
   // ---- 物品追查（2026-10） ----
   function runTrace(query) {
     var body = clear($('trace-table').querySelector('tbody'));
@@ -1696,7 +1767,8 @@
     Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
       b.setAttribute('aria-selected', b.getAttribute('data-tab') === tab ? 'true' : 'false');
     });
-    ['give', 'records', 'orders', 'settings', 'players', 'guilds', 'trace', 'dps', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    ['give', 'records', 'orders', 'settings', 'players', 'guilds', 'trace', 'transfer', 'dps', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    if (tab === 'transfer') { loadTransfers(); }
     if (tab === 'dps' && !dpsData) { loadDps(); } // 2026-10-17：切回來不重抓（要新的按「重新整理」）
     if (tab === 'records') { loadRecords(); }
     if (tab === 'orders') { loadOrders(); }
@@ -1744,6 +1816,10 @@
     var name = $('trace-player').value.trim();
     if (name) { runTrace('player=' + encodeURIComponent(name)); }
   });
+  $('transfer-preview').addEventListener('click', previewTransfer);
+  $('transfer-go').addEventListener('click', queueTransfer);
+  $('transfer-from').addEventListener('input', function () { transferPreviewed = null; $('transfer-result').hidden = true; });
+  $('transfer-to').addEventListener('input', function () { transferPreviewed = null; $('transfer-result').hidden = true; });
   $('dps-refresh').addEventListener('click', loadDps);
   $('dps-days').addEventListener('change', loadDps);
   $('dps-where').addEventListener('change', renderDps);

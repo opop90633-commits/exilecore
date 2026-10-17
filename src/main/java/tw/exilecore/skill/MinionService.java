@@ -163,6 +163,9 @@ public final class MinionService implements Listener, MinionHooks {
     private final Map<UUID, Focus> focus = new HashMap<>();
     /** 光環：主人開著的、隊友給的光環效果也給召喚物。 */
     private AuraService auras;
+    private Taunts taunts;
+    /** 召喚物吼一聲嘲諷多久（tick）：吼的間隔，最多 3 秒。 */
+    private static final long MINION_TAUNT_MAX = 3 * 20;
 
     MinionService(final ExileCore plugin, final SkillConfig config, final SkillTargets targets, final SkillVisuals visuals) {
         this.plugin = plugin;
@@ -182,6 +185,11 @@ public final class MinionService implements Listener, MinionHooks {
 
     void setAuras(final AuraService auras) {
         this.auras = auras;
+    }
+
+    /** 2026-10-17：召喚物的吼叫也走共用的嘲諷（身上已經有嘲諷的不搶、嘲諷之間有冷卻）。 */
+    void setTaunts(final Taunts taunts) {
+        this.taunts = taunts;
     }
 
     // ---- 查詢 ----
@@ -1253,10 +1261,23 @@ public final class MinionService implements Listener, MinionHooks {
         return list;
     }
 
-    /** 把附近的怪引過來打這隻（all = false 只引還沒有目標的）。 */
+    /**
+     * 把附近的怪引過來打這隻（all = false 只引還沒有目標的）。
+     * 2026-10-17：all（吼叫）走共用的嘲諷：身上已經有嘲諷（玩家的戰吼、別隻召喚物）或還在嘲諷冷卻中的怪不會被搶過來。
+     */
     private void taunt(final Minion minion, final double radius, final boolean all) {
+        final long ticks = Math.min(MINION_TAUNT_MAX, Math.max(20, Math.round(minion.spec.taunt() * 20)));
         for (final LivingEntity near : targets.around(minion.mob.getLocation(), radius)) {
-            if (near instanceof Mob monster && (all || monster.getTarget() == null)) {
+            if (!(near instanceof Mob monster)) {
+                continue;
+            }
+            if (all) {
+                if (taunts != null) {
+                    taunts.taunt(monster, minion.mob, ticks);
+                } else {
+                    monster.setTarget(minion.mob);
+                }
+            } else if (monster.getTarget() == null && (taunts == null || taunts.canTaunt(monster))) {
                 monster.setTarget(minion.mob);
             }
         }

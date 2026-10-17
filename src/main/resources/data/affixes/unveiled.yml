@@ -133,7 +133,7 @@ unveiled_d_weapon_lightning_pen:
 unveiled_d_mace_crush:
   type: prefix
   group: unveiled_d_mace_crush
-  spawn_tags: [mace]
+  spawn_tags: [mace, talisman]   # 2026-10-17：獸符也能揭露出來
   exclude_tags: [sceptre]
   names: [碾骨的, 沉淵的]
   text: "增加 {value}% 物理傷害、減少 15% 攻擊速度"

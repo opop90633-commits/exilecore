@@ -19838,6 +19838,32 @@
     "增加 15% 戰吼效果",
     "減少 10% 戰吼冷卻時間"
    ]
+  },
+  {
+   "id": "n19_m9",
+   "x": 19,
+   "y": -9,
+   "type": "notable",
+   "name": "元素汲取",
+   "icon": "HEART_OF_THE_SEA",
+   "stats": [
+    {
+     "stat": "leech.life_elemental",
+     "type": "FLAT",
+     "value": 2.0,
+     "tags": []
+    },
+    {
+     "stat": "leech.rate",
+     "type": "INCREASED",
+     "value": 0.15,
+     "tags": []
+    }
+   ],
+   "description": [
+    "造成的元素傷害有 2% 偷取為生命",
+    "增加 15% 最大偷取速度"
+   ]
   }
  ]
 }

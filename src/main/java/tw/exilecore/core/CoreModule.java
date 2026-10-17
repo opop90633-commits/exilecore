@@ -29,6 +29,8 @@ public final class CoreModule implements Module {
     public void enable() throws Exception {
         database.connect(plugin.settings().storage());
         connected = plugin.settings().storage();
+        // 2026-10-17：排著的帳號轉移（ec transfer）在其他模組讀資料之前做
+        tw.exilecore.ops.AccountTransfer.applyPending(plugin, database);
     }
 
     @Override

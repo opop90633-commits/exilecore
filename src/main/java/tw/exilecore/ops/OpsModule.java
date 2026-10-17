@@ -39,6 +39,7 @@ import java.util.Locale;
  *   <li>/ec trace 物品UUID｜player 名字：一件裝備的交易與通貨紀錄、一個玩家最近的交易。</li>
  *   <li>/ec dupes：找同一個 UUID 出現在兩個地方的裝備（複製）。</li>
  *   <li>/ec wipe [all|confirm 碼|cancel]：清檔（只能在主控台，見 {@link WipeService}）。</li>
+ *   <li>/ec transfer A B|confirm 碼|list|cancel：轉移帳號（A 覆蓋到 B，只能在主控台，下次開機時做；見 {@link AccountTransfer}）。</li>
  *   <li>/ec economy：交易系統的狀態與經濟報表（見 {@link tw.exilecore.economy.EconomyCommand}）。</li>
  * </ul>
  */
@@ -49,6 +50,7 @@ public final class OpsModule implements Module, Listener {
     private final ExileCore plugin;
     private BackupService backups;
     private WipeService wipe;
+    private AccountTransfer transfer;
     private BukkitTask rollTask;
     private BukkitTask backupTask;
 
@@ -65,6 +67,7 @@ public final class OpsModule implements Module, Listener {
     public void enable() {
         backups = new BackupService(plugin);
         wipe = new WipeService(plugin);
+        transfer = new AccountTransfer(plugin);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         rollTask = plugin.getServer().getScheduler().runTaskTimer(plugin, plugin.perf()::roll, 20, 20);
         backupTask = plugin.getServer().getScheduler().runTaskTimer(plugin, backups::tick, 20L * 60, 20L * 60);
@@ -95,6 +98,11 @@ public final class OpsModule implements Module, Listener {
 
     public WipeService wipe() {
         return wipe;
+    }
+
+    /** 轉移帳號（2026-10-17）。 */
+    public AccountTransfer transfer() {
+        return transfer;
     }
 
     /** 還原中（或還原完了等重開）：不讓人登入。 */
@@ -177,6 +185,21 @@ public final class OpsModule implements Module, Listener {
                         .then(Commands.argument("code", StringArgumentType.word())
                                 .executes(context -> withWipe(plugin, context.getSource().getSender(),
                                         wipe -> wipe.confirm(context.getSource().getSender(), StringArgumentType.getString(context, "code")))))));
+        // 2026-10-17：轉移帳號（A 的整個帳號搬到 B、覆蓋 B；只能在主控台，下次開機時做）
+        nodes.add(Commands.literal("transfer")
+                .then(Commands.literal("list").executes(context -> withTransfer(plugin, context.getSource().getSender(),
+                        transfer -> transfer.list(context.getSource().getSender()))))
+                .then(Commands.literal("cancel").executes(context -> withTransfer(plugin, context.getSource().getSender(),
+                        transfer -> transfer.cancel(context.getSource().getSender()))))
+                .then(Commands.literal("confirm")
+                        .then(Commands.argument("code", StringArgumentType.word())
+                                .executes(context -> withTransfer(plugin, context.getSource().getSender(),
+                                        transfer -> transfer.confirm(context.getSource().getSender(), StringArgumentType.getString(context, "code"))))))
+                .then(Commands.argument("from", StringArgumentType.word())
+                        .then(Commands.argument("to", StringArgumentType.word())
+                                .executes(context -> withTransfer(plugin, context.getSource().getSender(),
+                                        transfer -> transfer.preview(context.getSource().getSender(),
+                                                StringArgumentType.getString(context, "from"), StringArgumentType.getString(context, "to")))))));
         return nodes;
     }
 
@@ -185,6 +208,15 @@ public final class OpsModule implements Module, Listener {
             sender.sendMessage(plugin.text().prefixed("<red>維運模組沒有啟用（看主控台的錯誤訊息）"));
         } else {
             action.accept(plugin.ops().wipe());
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int withTransfer(final ExileCore plugin, final CommandSender sender, final java.util.function.Consumer<AccountTransfer> action) {
+        if (plugin.ops() == null || plugin.ops().transfer() == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>維運模組沒有啟用（看主控台的錯誤訊息）"));
+        } else {
+            action.accept(plugin.ops().transfer());
         }
         return Command.SINGLE_SUCCESS;
     }

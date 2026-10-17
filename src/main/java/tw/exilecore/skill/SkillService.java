@@ -108,6 +108,7 @@ public final class SkillService {
         this.resources = new SkillResources(plugin, config);
         this.bossSkills = new BossSkills(plugin, config, visuals, damage, plugin.random());
         this.minions.setAuras(auras);
+        this.minions.setTaunts(warcries.taunts()); // 2026-10-17：召喚物的吼叫也走共用的嘲諷
         this.gems = new GemService(plugin, this);
         this.hold = new HoldToCast(plugin, this);
         this.signatures = new Signatures(plugin, this);
