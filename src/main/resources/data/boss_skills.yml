@@ -2722,7 +2722,7 @@ skills:
     telegraph: 0.8
     count: 1
     duration: 4
-    explode: 4.5
+    explode: 4
     shout: "（你身上浮出一圈潮痕）"
   abyss_fury:
     name: 怒濤齊射
