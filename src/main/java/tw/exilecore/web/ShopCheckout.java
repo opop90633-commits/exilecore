@@ -84,8 +84,8 @@ public final class ShopCheckout {
      * @param testPlayers 測試區只有這些遊戲名稱可以下單（測試卡付的款不是真的錢）
      */
     record Settings(boolean enabled, boolean sandbox, String merId, PayUniCrypto crypto, String keysProblem, List<Package> packages,
-                    java.util.Set<String> testPlayers, boolean trustProxy) {
-        static final Settings OFF = new Settings(false, true, "", null, "線上付款還沒設定", List.of(), java.util.Set.of(), false);
+                    java.util.Set<String> testPlayers, boolean trustProxy, boolean cloudflare) {
+        static final Settings OFF = new Settings(false, true, "", null, "線上付款還沒設定", List.of(), java.util.Set.of(), false, false);
     }
 
     private volatile Settings settings = Settings.OFF;
@@ -107,7 +107,9 @@ public final class ShopCheckout {
             }
         }
         if (payuni == null) {
-            settings = new Settings(false, true, "", null, "線上付款還沒設定", List.copyOf(packages), java.util.Set.of(), false);
+            // 2026-10-18：沒設金流時代理設定也照讀（/tree/calc 的次數限制共用 clientIp）
+            settings = new Settings(false, true, "", null, "線上付款還沒設定", List.copyOf(packages), java.util.Set.of(),
+                    shop != null && shop.getBoolean("trust-proxy", true), shop != null && cloudflare(shop));
             return;
         }
         final String merId = payuni.getString("mer-id", "").trim();
@@ -125,7 +127,16 @@ public final class ShopCheckout {
             testers.add(name.trim().toLowerCase(Locale.ROOT));
         }
         settings = new Settings(payuni.getBoolean("enabled", false), payuni.getBoolean("sandbox", true), merId, crypto, keysProblem,
-                List.copyOf(packages), java.util.Set.copyOf(testers), shop.getBoolean("trust-proxy", true));
+                List.copyOf(packages), java.util.Set.copyOf(testers), shop.getBoolean("trust-proxy", true), cloudflare(shop));
+    }
+
+    /**
+     * 2026-10-18：web.shop.proxy 決定信不信 CF-Connecting-IP。沒寫（或 cloudflare）照舊相信（走 Cloudflare 的伺服器不受影響）；
+     * 前面只有 nginx／Caddy、沒有 Cloudflare 的請寫 nginx 或 none——這類代理會原樣轉送用戶端偽造的這個標頭，可以拿來繞過次數限制。
+     */
+    private static boolean cloudflare(final ConfigurationSection shop) {
+        final String proxy = shop.getString("proxy", "").trim();
+        return proxy.isEmpty() || "cloudflare".equalsIgnoreCase(proxy);
     }
 
     /** 付款有沒有開、設定齊不齊（商店頁照這個決定要不要顯示購買表單）。 */
@@ -193,11 +204,17 @@ public final class ShopCheckout {
         }
     }
 
+    /** 對方的 IP（2026-10-18：/tree/calc 的次數限制也用這個）。 */
+    String clientIp(final WebServer.Request request) {
+        return clientIp(request, settings);
+    }
+
     /** 對方的 IP：前面有反向代理（本機或內網連進來）時看代理給的標頭。 */
     private String clientIp(final WebServer.Request request, final Settings current) {
         final String remote = request.remote() == null ? "" : request.remote();
         if (current.trustProxy() && privateAddress(remote)) {
-            final String cf = request.header("cf-connecting-ip");
+            // 2026-10-18：web.shop.proxy 寫 nginx／none 時不信 CF-Connecting-IP（沒有 Cloudflare 時可以每次偽造一個來繞過次數限制）
+            final String cf = current.cloudflare() ? request.header("cf-connecting-ip") : null;
             if (cf != null && !cf.isBlank()) {
                 return cut(cf.trim(), 64);
             }

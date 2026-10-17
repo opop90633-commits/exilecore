@@ -130,10 +130,12 @@ public final class ZoneLayout {
     // ---- 讀寫 ----
 
     public void load(final Path file) throws IOException {
-        zones.clear();
         if (!Files.exists(file)) {
+            zones.clear();
             return;
         }
+        // 2026-10-18：先解析到暫存，全部成功才換上（原本先清空，寫錯一個字之後 /ec zone 會把殘缺版面寫回檔案）
+        final Map<String, Entry> parsed = new LinkedHashMap<>();
         final YamlNode root = YamlNode.load(file);
         for (final String zoneId : root.keys()) {
             final YamlNode node = root.node(zoneId);
@@ -161,8 +163,10 @@ public final class ZoneLayout {
                 final YamlNode cp = checkpoints.node(id);
                 entry.putCheckpoint(new Checkpoint(id, cp.string("name", id), point(world, cp)));
             }
-            zones.put(zoneId, entry);
+            parsed.put(zoneId, entry);
         }
+        zones.clear();
+        zones.putAll(parsed);
     }
 
     private static Point point(final String world, final YamlNode node) {

@@ -1026,6 +1026,9 @@ public final class LifeConfig {
                 total += night ? fish.nightWeight() : fish.weight();
             }
         }
+        if (total <= 0) {
+            return null; // 2026-10-18：沒有解鎖的魚（或權重都是 0）：不要落到下面回傳等級不夠的第一條
+        }
         double at = roll * total;
         for (final Fish fish : fishing.fish()) {
             if (level >= fish.level()) {

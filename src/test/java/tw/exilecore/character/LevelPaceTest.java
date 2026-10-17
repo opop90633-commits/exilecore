@@ -37,7 +37,7 @@ class LevelPaceTest {
         assertEquals(874, Math.round(LevelPace.sameLevelKills(character, monsters::experienceAt, 60)));
         assertEquals(2916, Math.round(LevelPace.sameLevelKills(character, monsters::experienceAt, 80)));
         assertEquals(0, LevelPace.sameLevelKills(character, monsters::experienceAt, character.levelCap()), "滿級");
-        assertEquals("60 級升一級要殺 874 隻同等級的普通怪（全服經驗 ×2：實際 437 隻）", LevelPace.summary(character, monsters::experienceAt),
+        assertEquals("60 級升一級要殺 874 隻同等級的普通怪（全服經驗 +100%：實際 437 隻）", LevelPace.summary(character, monsters::experienceAt),
                 "出貨的 character.yml 有全服經驗 ×2；上面的檢查不算加倍（看的是兩個檔案搭不搭）");
         // 高等級在 T16（84 級）打，加上等級差與高等級的減少：90 級約 6,600 隻、99 級約 20 萬隻
         assertEquals(6622, Math.round(character.experienceToNext(90) / (monsters.experienceAt(84) * character.levelPenalty(90, 84))));

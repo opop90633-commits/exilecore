@@ -267,6 +267,9 @@ final class MythicBridge implements MythicHook, Listener {
                 return;
             }
             final boolean summoned = spawnEventReason.invoke(event) == summonReason;
+            if (summoned) {
+                monsters.markSummoned(living); // 2026-10-18：MM 召喚出來的小怪不掉東西、不給經驗（以前留著召喚者可以一直刷）
+            }
             // 下一個 tick 等 MythicMobs 把名字、裝備、屬性都套完再蓋上我們的
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 if (!living.isValid()) {

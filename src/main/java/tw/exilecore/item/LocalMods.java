@@ -136,6 +136,9 @@ public record LocalMods(double physical, double attackSpeed, double crit, Map<Da
                 }
             }
         }
+        if (repository != null) {
+            all.addAll(Runes.weaponLocal(repository, base, data)); // 2026-10-17：符文的本地加成也改武器面板
+        }
         double physical = 0;
         double attackSpeed = 0;
         double crit = 0;

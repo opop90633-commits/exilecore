@@ -72,7 +72,7 @@ final class OrdersMenu extends Menu {
             goBack();
             return;
         }
-        if (slot >= shown.size() || !acceptAction(click)) {
+        if (slot >= 45 || slot >= shown.size() || !acceptAction(click)) { // 2026-10-18：只畫前 45 張，最下排是裝飾格（以前點到會取消看不到的單）
             return;
         }
         final String problem = service.cancelOrder(player, shown.get(slot).id());

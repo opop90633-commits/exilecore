@@ -217,6 +217,16 @@ public final class AilmentService {
     public void onHit(final LivingEntity attacker, final LivingEntity defender, final SkillProfile skill,
                       final StatSheet attackerSheet, final StatSheet defenderSheet, final HitResult result,
                       final double takenMultiplier, final MonsterData defenderMonster) {
+        onHit(attacker, defender, skill, attackerSheet, defenderSheet, result, takenMultiplier, defenderMonster, 1.0);
+    }
+
+    /**
+     * 同上；stunScale：暈眩（重暈累積、輕暈機率）用的傷害倍率。
+     * 2026-10-18：Boss 的每秒傷害遞減之後，暈眩照遞減後的傷害算（以前照遞減前的幾百萬算，Boss 一直被暈、被打斷）
+     */
+    public void onHit(final LivingEntity attacker, final LivingEntity defender, final SkillProfile skill,
+                      final StatSheet attackerSheet, final StatSheet defenderSheet, final HitResult result,
+                      final double takenMultiplier, final MonsterData defenderMonster, final double stunScale) {
         if (!result.hit() || result.blocked() || !defender.isValid() || defender.isDead()) {
             return;
         }
@@ -389,7 +399,8 @@ public final class AilmentService {
         final boolean melee = skill.tags() != null && skill.tags().contains(tw.exilecore.stats.Tags.MELEE);
         final double physicalStun = physical * (playerAttacker ? 1.5 : 2.0);
         final double meleeStun = melee ? (playerAttacker ? 1.5 : 1.33) : 1.0;
-        final double stunDamage = (physicalStun + (fire + cold + lightning + chaos) * config.stunElementalMultiplier()) * meleeStun;
+        final double stunDamage = (physicalStun + (fire + cold + lightning + chaos) * config.stunElementalMultiplier()) * meleeStun
+                * Math.max(0, Math.min(1.0, stunScale)); // 2026-10-18：Boss 照遞減後的傷害算暈眩
         if (stunDamage > 0) {
             final Set<String> context = skill.contextFor(DamageType.PHYSICAL);
             // 暈眩門檻 = 基礎門檻 ×（1 ＋ 增加暈眩門檻）：元素異常門檻不影響暈眩
@@ -541,6 +552,44 @@ public final class AilmentService {
      * @param hitDps 擊中的每秒傷害（不含異常）
      * @return 擊中＋持續傷害，再乘上感電的期望增傷
      */
+    /**
+     * 面板估計主要寶石（元素異常時施放）的能量用（2026-10-17）：打同等級一般怪物，一下平均造成幾次 {點燃, 感電, 冰凍}。
+     * 點燃、感電照機率；冰凍照一下的累積量（滿 1 凍一次）。不能造成元素異常的回傳全 0。
+     */
+    public double[] ailmentsPerHit(final StatSheet attackerSheet, final tw.exilecore.stats.SkillProfile skill,
+                                   final tw.exilecore.stats.DamagePacket expected, final double critFactor, final int level) {
+        final double[] out = new double[3];
+        if (expected == null || expected.isEmpty() || plugin.monsters() == null) {
+            return out;
+        }
+        final double threshold = plugin.monsters().config().lifeAt(Math.max(1, level)) * config.monsterThreshold(MonsterRarity.NORMAL);
+        final StatSheet attack = skill.effective(attackerSheet);
+        if (threshold <= 0 || StatKeys.flag(attack, StatKeys.FLAG_NO_AILMENTS)) {
+            return out;
+        }
+        final double fire = expected.get(DamageType.FIRE) * critFactor;
+        final double cold = expected.get(DamageType.COLD) * critFactor;
+        final double lightning = expected.get(DamageType.LIGHTNING) * critFactor;
+        final double all = expected.total() * critFactor;
+        final double igniteBase = StatKeys.flag(attack, StatKeys.FLAG_ALL_IGNITE) ? all : fire;
+        if (igniteBase > 0) {
+            final Set<String> context = skill.contextFor(DamageType.FIRE);
+            out[0] = Math.min(1, config.igniteChance(igniteBase, threshold, attack.flat(StatKeys.IGNITE_CHANCE, context),
+                    attack.increased(StatKeys.IGNITE_CHANCE, context)) * attack.more(StatKeys.IGNITE_CHANCE, context));
+        }
+        final double shockBase = StatKeys.flag(attack, StatKeys.FLAG_ALL_SHOCK) ? all : lightning;
+        if (shockBase > 0) {
+            final Set<String> context = skill.contextFor(DamageType.LIGHTNING);
+            out[1] = Math.min(1, config.shockChance(shockBase, threshold, attack.flat(StatKeys.SHOCK_CHANCE, context),
+                    attack.increased(StatKeys.SHOCK_CHANCE, context)) * attack.more(StatKeys.SHOCK_CHANCE, context));
+        }
+        if (cold > 0) {
+            final Set<String> context = skill.contextFor(DamageType.COLD);
+            out[2] = Math.min(1, config.freezeBuildup(cold, threshold, attack.apply(StatKeys.FREEZE_BUILDUP, 1.0, context), false));
+        }
+        return out;
+    }
+
     public double estimateDps(final StatSheet attackerSheet, final tw.exilecore.stats.SkillProfile skill, final tw.exilecore.stats.DamagePacket expected,
                               final double critFactor, final double hitsPerSecond, final int level, final double hitDps) {
         if (hitsPerSecond <= 0 || expected == null || expected.isEmpty() || plugin.monsters() == null) {

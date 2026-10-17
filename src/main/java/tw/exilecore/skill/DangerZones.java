@@ -443,6 +443,22 @@ final class DangerZones {
         for (final Block block : zone.shape.cells) {
             real.put(position(block), block.getBlockData());
         }
+        // 2026-10-18：重疊的格子還在別塊標示裡（錯開落下的 slam）：照那一塊的顏色，不要換回真的方塊（同 move()）
+        for (final Zone other : zones.values()) {
+            if (!other.world.equals(zone.world)) {
+                continue;
+            }
+            BlockData otherColor = null;
+            for (final Block block : other.shape.cells) {
+                final BlockPosition at = position(block);
+                if (real.containsKey(at)) {
+                    if (otherColor == null) {
+                        otherColor = other.color.createBlockData();
+                    }
+                    real.put(at, otherColor);
+                }
+            }
+        }
         for (final UUID uuid : zone.viewers) {
             final Player player = plugin.getServer().getPlayer(uuid);
             if (player != null && player.getWorld().equals(zone.world)) {
@@ -527,7 +543,8 @@ final class DangerZones {
             zone.outline = spawn(zone, zone.shape.placement(1), 0);
             zone.markViewers.clear();
         }
-        if (zone.markViewers.add(player.getUniqueId())) {
+        // 2026-10-18：已記過但看不到（重新登入後 showEntity 的狀態不在了）也要重新 showEntity
+        if (zone.markViewers.add(player.getUniqueId()) || !player.canSee(zone.outline)) {
             player.showEntity(plugin, zone.outline);
             if (zone.fill != null && zone.fill.isValid()) {
                 player.showEntity(plugin, zone.fill);

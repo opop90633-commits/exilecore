@@ -52,6 +52,11 @@ public final class PlayerStateService {
     private final EntryGrace grace;
     /** 戰鬥資源血條（2026-10）：怒氣、連擊、戰星、灌注從動作列搬到畫面上方的一欄。 */
     private final ResourceBar resourceBar;
+    /** 2026-10-18：收掉所有人的戰鬥資源血條（插件停用時）。 */
+    void hideResourceBars() {
+        resourceBar.hideAll();
+    }
+
     /** 撿到東西的角落提示（2026-10）。 */
     private final LootFeed lootFeed = new LootFeed();
     /** 以前的常駐奔跑的移動速度加成（拿掉了；身上還有就清掉）。 */
@@ -901,7 +906,7 @@ public final class PlayerStateService {
      * 還沒選角色回傳 null。
      */
     public String plainFullName(final Player player) {
-        final PlayerState state = get(player);
+        final PlayerState state = find(player.getUniqueId()).orElse(null); // 2026-10-18：只查不建（下線時 Discord 也會問，不能把狀態建回來）
         final CharacterRecord character = state != null && state.isLoaded() ? state.character() : null;
         if (character == null) {
             return null;
@@ -925,8 +930,8 @@ public final class PlayerStateService {
      * 還沒選角色回傳 null。
      */
     public net.kyori.adventure.text.Component nameComponent(final Player player) {
-        final PlayerState state = get(player);
-        final CharacterRecord character = state.isLoaded() ? state.character() : null;
+        final PlayerState state = find(player.getUniqueId()).orElse(null); // 2026-10-18：只查不建（死亡訊息等可能在下線前後問）
+        final CharacterRecord character = state != null && state.isLoaded() ? state.character() : null;
         if (character == null) {
             return null;
         }

@@ -63,7 +63,15 @@ public final class CombatListener implements Listener {
 
     /** 算好、等傷害事件確定沒被取消（MONITOR）才套用的元素異常。 */
     private record PendingAilment(LivingEntity attacker, SkillProfile skill, StatSheet attackerSheet, StatSheet defenderSheet,
-                                  HitResult result, double taken, MonsterData defenderMonster) {
+                                  HitResult result, double taken, MonsterData defenderMonster, double stunScale) {
+        PendingAilment(final LivingEntity attacker, final SkillProfile skill, final StatSheet attackerSheet, final StatSheet defenderSheet,
+                       final HitResult result, final double taken, final MonsterData defenderMonster) {
+            this(attacker, skill, attackerSheet, defenderSheet, result, taken, defenderMonster, 1.0);
+        }
+
+        PendingAilment withStunScale(final double scale) {
+            return new PendingAilment(attacker, skill, attackerSheet, defenderSheet, result, taken, defenderMonster, scale);
+        }
     }
 
     private final ExileCore plugin;
@@ -680,6 +688,11 @@ public final class CombatListener implements Listener {
             // 巔峰 Boss 的每秒傷害上限（2026-10，maps.yml 的 pinnacle.dps_cap）：玩家與他的召喚物打的才算
             final double total = credit != null && plugin.maps() != null
                     ? plugin.maps().capBossDamage(defender, credit.getUniqueId(), result.total()) : result.total();
+            if (total < result.total() && result.total() > 0) {
+                // 2026-10-18：被每秒傷害遞減砍掉的部分也不算暈眩（重暈累積、輕暈機率照遞減後的傷害）
+                final double stunScale = total / result.total();
+                pendingAilments.computeIfPresent(defender.getUniqueId(), (uuid, pending) -> pending.withStunScale(stunScale));
+            }
             // 怪物的原版血量上限 1024，生命更高的怪物按比例縮放
             event.setDamage(plugin.monsters().toVanillaDamage(defender, defenderMonster, total));
             // 撲殺（2026-10，輔助寶石）：這一下之後生命低於門檻就直接打死
@@ -1186,7 +1199,7 @@ public final class CombatListener implements Listener {
         }
         if (ailment != null && !event.isCancelled() && plugin.ailments() != null && event.getEntity() instanceof LivingEntity defender) {
             plugin.ailments().onHit(ailment.attacker(), defender, ailment.skill(), ailment.attackerSheet(), ailment.defenderSheet(),
-                    ailment.result(), ailment.taken(), ailment.defenderMonster());
+                    ailment.result(), ailment.taken(), ailment.defenderMonster(), ailment.stunScale());
         }
     }
 

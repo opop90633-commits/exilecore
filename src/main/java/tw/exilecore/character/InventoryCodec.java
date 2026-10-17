@@ -178,17 +178,28 @@ public final class InventoryCodec {
                 overflow.add(item);
             }
         }
+        int lost = 0;
         for (final ItemStack item : overflow) {
+            boolean placed = false;
+            // 2026-10-18：所有頁都找（以前只找前 2 頁，滿了就無聲不見；放到收回的頁也看得到、拿得出來）
             place:
-            for (int page = 0; page < Bag.BASE_PAGES; page++) {
+            for (int page = 0; page < Bag.MAX_PAGES; page++) {
                 final ItemStack[] slots = bag.page(page);
                 for (int i = 0; i < slots.length; i++) {
                     if (slots[i] == null) {
                         slots[i] = item;
+                        placed = true;
                         break place;
                     }
                 }
             }
+            if (!placed) {
+                lost++;
+            }
+        }
+        if (lost > 0) {
+            // 2026-10-18：還是放不下就當讀不出來（呼叫端 markUnreadable 保留原始資料、記 log），不丟東西
+            throw new IllegalStateException("隨身背包存檔有 " + lost + " 件超出頁數上限、放不下");
         }
         return bag;
     }

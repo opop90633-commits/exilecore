@@ -980,6 +980,29 @@ public final class LifeService {
         if (profile == null || !profile.dirty || plugin.bounties() == null) {
             return;
         }
+        if (plugin.bounties().commitAccount(player, values(profile), config.name())) {
+            profile.dirty = false;
+        }
+    }
+
+    /**
+     * 2026-10-18：管理員發放／收回材料用——生活資料改在記憶體，回傳把它寫進資料庫的工作，
+     * 由呼叫端放進「這筆已經領了」的同一個交易（以前材料自己先寫，當機會重複發／重複收回）。沒有要寫的回傳 null。
+     */
+    public tw.exilecore.character.CharacterRepository.ExtraWork adminWork(final Player player) {
+        final Profile profile = profiles.get(player.getUniqueId());
+        if (profile == null || !profile.dirty || plugin.bounties() == null) {
+            return null;
+        }
+        final tw.exilecore.character.CharacterRepository.ExtraWork work = plugin.bounties().accountWork(player, values(profile));
+        if (work != null) {
+            profile.dirty = false;
+        }
+        return work;
+    }
+
+    /** 要寫回帳號進度的生活資料（2026-10-18：從 flush 抽出來，adminWork 共用）。 */
+    private Map<String, String> values(final Profile profile) {
         final Map<String, String> values = new LinkedHashMap<>();
         values.put(XP, String.valueOf(profile.xp));
         values.put(HOOK, String.valueOf(profile.hook));
@@ -1001,9 +1024,7 @@ public final class LifeService {
             final int count = profile.materials.getOrDefault(id, 0);
             values.put(MATERIAL + id, count > 0 ? String.valueOf(count) : null);
         }
-        if (plugin.bounties().commitAccount(player, values, config.name())) {
-            profile.dirty = false;
-        }
+        return values;
     }
 
     void flushAll() {
@@ -1175,6 +1196,100 @@ public final class LifeService {
         profile.staminaUsed += amount;
         profile.dirty = true;
         return true;
+    }
+
+    // ---- 管理員發放、收回（2026-10-18，管理網頁）----
+
+    /** 管理網頁的選單：{代號, 名稱}。代號：mat:材料、item:筏的方塊與設施、food:料理、horn（深淵號角）。 */
+    public List<String[]> adminChoices() {
+        final List<String[]> out = new ArrayList<>();
+        for (final LifeConfig.Material material : config.materials().values()) {
+            out.add(new String[] {"mat:" + material.id(), "材料・" + material.name()});
+        }
+        for (final LifeConfig.Item item : config.items().values()) {
+            out.add(new String[] {"item:" + item.id(), "方塊・" + item.name()});
+        }
+        for (final LifeConfig.Food food : config.foods().values()) {
+            out.add(new String[] {"food:" + food.id(), "料理・" + food.name()});
+        }
+        if (config.whale() != null) {
+            out.add(new String[] {"horn", "道具・" + config.whale().hornName()});
+        }
+        return out;
+    }
+
+    /** 這個代號（見 {@link #adminChoices}）的名稱；不認得回傳 null。 */
+    public String adminName(final String ref) {
+        if (ref == null) {
+            return null;
+        }
+        if (ref.startsWith("mat:")) {
+            final LifeConfig.Material material = config.materials().get(ref.substring(4));
+            return material == null ? null : material.name();
+        }
+        if (ref.startsWith("item:")) {
+            final LifeConfig.Item item = config.items().get(ref.substring(5));
+            return item == null ? null : item.name();
+        }
+        if (ref.startsWith("food:")) {
+            final LifeConfig.Food food = config.foods().get(ref.substring(5));
+            return food == null ? null : food.name();
+        }
+        return "horn".equals(ref) && config.whale() != null ? config.whale().hornName() : null;
+    }
+
+    /**
+     * 管理員發（2026-10-18）：材料加進帳號（馬上寫回帳號進度）；方塊、料理、號角做成物品，先放背包、隨身背包，放不下掉在腳下（只有他撿得到）。
+     * 回傳發了幾個；帳號還沒載入 -1；不認得的代號 -2。
+     */
+    public long adminGive(final Player player, final String ref, final long amount) {
+        final String name = adminName(ref);
+        if (name == null) {
+            return -2;
+        }
+        final Profile profile = profile(player);
+        if (profile == null) {
+            return -1;
+        }
+        final int count = (int) Math.max(0, Math.min(Integer.MAX_VALUE, amount));
+        if (ref.startsWith("mat:")) {
+            addMaterial(profile, ref.substring(4), count); // 2026-10-18：不在這裡 flush，呼叫端用 adminWork 放進領取的交易
+            return count;
+        }
+        int left = count;
+        while (left > 0) {
+            final ItemStack one = ref.startsWith("item:") ? raftItem(config.items().get(ref.substring(5)), 1)
+                    : ref.startsWith("food:") ? foodItem(config.foods().get(ref.substring(5)), 1)
+                    : whale.hornItem(1);
+            final int stack = Math.min(left, Math.max(1, one.getMaxStackSize()));
+            one.setAmount(stack);
+            giveItem(player, one);
+            left -= stack;
+        }
+        return count;
+    }
+
+    /** 管理員收回材料（2026-10-18）：有多少拿多少。回傳拿了幾個；帳號還沒載入 -1；不是材料 -2（方塊、料理、號角是物品，用收回物品）。 */
+    public long adminTake(final Player player, final String ref, final long amount) {
+        if (ref == null || !ref.startsWith("mat:") || adminName(ref) == null) {
+            return -2;
+        }
+        final Profile profile = profile(player);
+        if (profile == null) {
+            return -1;
+        }
+        final String id = ref.substring(4);
+        final int have = profile.materials.getOrDefault(id, 0);
+        final int taken = (int) Math.max(0, Math.min(have, amount));
+        if (taken > 0) {
+            if (have - taken <= 0) {
+                profile.materials.remove(id);
+            } else {
+                profile.materials.put(id, have - taken);
+            }
+            profile.dirty = true; // 2026-10-18：不在這裡 flush，呼叫端用 adminWork 放進領取的交易
+        }
+        return taken;
     }
 
     void addMaterial(final Profile profile, final String id, final int amount) {
@@ -1928,13 +2043,14 @@ public final class LifeService {
             bar(player, ("<gray>收線了（太早了）"));
             return;
         }
-        if (!spendStamina(player, profile, config.fishing().stamina())) {
-            return;
-        }
         final long time = world.getTime();
         final boolean night = time >= 13_000 && time <= 23_000;
         final String fish = config.rollFish(config.levelOf(profile.xp), night, random.nextDouble());
         if (fish == null) {
+            bar(player, "<gray>什麼都沒釣到（這個等級還沒有魚可以釣）"); // 2026-10-18：先抽再扣精力，沒魚不扣
+            return;
+        }
+        if (!spendStamina(player, profile, config.fishing().stamina())) {
             return;
         }
         addMaterial(profile, fish, 1);

@@ -37,6 +37,11 @@ public final class LadderService {
 
     record GoldEntry(String account, long gold, String character, String classId, int level) {
     }
+    /** 2026-10-18：各榜各自查的前 LIMIT 名（等級榜同 entries）。 */
+    private volatile Map<Board, List<Entry>> boards = Map.of();
+    /** 2026-10-18：主執行緒定期整理的在線角色名／帳號名快照（網頁 HTTP 執行緒只讀這份，不碰 Bukkit 與 PlayerState）。 */
+    private volatile Set<String> onlineCharacters = Set.of();
+    private volatile Set<String> onlineAccounts = Set.of();
     private volatile long refreshedMillis;
     private volatile boolean refreshing;
 
@@ -70,14 +75,31 @@ public final class LadderService {
     }
 
     private List<Entry> sorted(final Board board) {
-        return Ladder.sorted(entries, board);
+        return Ladder.sorted(boards.getOrDefault(board, entries), board); // 2026-10-18：各榜用自己查的那份
     }
 
     /** 每分鐘：背景重讀（前一次還沒完就跳過）。 */
     public void tick() {
+        snapshotOnline(); // 2026-10-18：主執行緒更新在線快照給網頁用
         if (System.currentTimeMillis() - refreshedMillis >= REFRESH_SECONDS * 1000L) {
             refresh();
         }
+    }
+
+    /** 2026-10-18：在主執行緒整理在線角色名與帳號名的不可變快照（只用 find，不替下線／未載入的人建狀態）。 */
+    private void snapshotOnline() {
+        final Set<String> characters = new TreeSet<>();
+        final Set<String> accounts = new TreeSet<>();
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            accounts.add(player.getName());
+            final tw.exilecore.character.CharacterRecord character = plugin.players().find(player.getUniqueId())
+                    .map(tw.exilecore.character.PlayerState::character).orElse(null);
+            if (character != null) {
+                characters.add(character.name());
+            }
+        }
+        onlineCharacters = Set.copyOf(characters);
+        onlineAccounts = Set.copyOf(accounts);
     }
 
     /** 這個角色選的昇華名稱（沒昇華、或設定裡沒有這個昇華回傳 null）。 */
@@ -97,40 +119,14 @@ public final class LadderService {
         }
         refreshing = true;
         plugin.database().async(connection -> {
-            final List<Entry> list = new ArrayList<>();
             final Map<Long, String> ascs = new java.util.HashMap<>();
-            try (PreparedStatement statement = connection.prepareStatement("""
-                    SELECT c.id, c.name, a.name AS account, c.class_id, c.char_level, c.experience, c.deaths, c.playtime_seconds,
-                           (SELECT COUNT(*) FROM progress p WHERE p.character_id = c.id AND p.progress_key LIKE 'atlas.%') AS maps,
-                           (SELECT COUNT(*) FROM progress p WHERE p.character_id = c.id AND p.progress_key LIKE 'boss.%') AS bosses,
-                           (SELECT p.progress_value FROM progress p WHERE p.character_id = c.id AND p.progress_key = 'mapbest') AS best,
-                           (SELECT p.progress_value FROM progress p WHERE p.character_id = c.id AND p.progress_key = 'asc') AS asc_id
-                    FROM characters c JOIN accounts a ON a.uuid = c.account_uuid
-                    WHERE c.deleted_at IS NULL
-                    ORDER BY c.char_level DESC, c.experience DESC
-                    LIMIT ?""")) {
-                statement.setInt(1, LIMIT);
-                try (ResultSet rows = statement.executeQuery()) {
-                    while (rows.next()) {
-                        int best = 0;
-                        final String bestText = rows.getString("best");
-                        if (bestText != null) {
-                            try {
-                                best = Integer.parseInt(bestText.trim());
-                            } catch (final NumberFormatException ignored) {
-                                best = 0;
-                            }
-                        }
-                        final String ascId = rows.getString("asc_id");
-                        if (ascId != null && !ascId.isBlank()) {
-                            ascs.put(rows.getLong("id"), ascId.trim());
-                        }
-                        list.add(new Entry(rows.getLong("id"), rows.getString("name"), rows.getString("account"), rows.getString("class_id"),
-                                rows.getInt("char_level"), rows.getLong("experience"), rows.getInt("deaths"), rows.getLong("playtime_seconds"),
-                                rows.getInt("maps"), best, rows.getInt("bosses")));
-                    }
-                }
-            }
+            // 2026-10-18：三個榜各自從資料庫排前 LIMIT 名（以前地圖榜、不死榜只從等級前 200 名裡挑）
+            final List<Entry> list = query(connection, "", "c.char_level DESC, c.experience DESC", ascs);
+            final List<Entry> mapList = query(connection,
+                    " AND EXISTS (SELECT 1 FROM progress p WHERE p.character_id = c.id AND p.progress_key LIKE 'atlas.%')",
+                    "maps DESC, c.char_level DESC, c.experience DESC", ascs);
+            final List<Entry> deathlessList = query(connection, " AND c.char_level >= " + Ladder.DEATHLESS_MIN_LEVEL,
+                    "c.deaths ASC, c.char_level DESC, c.experience DESC", ascs);
             final List<GoldEntry> golds = new ArrayList<>();
             try (PreparedStatement statement = connection.prepareStatement("""
                     SELECT a.name, a.gold,
@@ -156,6 +152,7 @@ public final class LadderService {
             }
             gold = List.copyOf(golds);
             ascendancies = Map.copyOf(ascs);
+            boards = Map.of(Board.LEVEL, List.copyOf(list), Board.MAPS, List.copyOf(mapList), Board.DEATHLESS, List.copyOf(deathlessList));
             return list;
         }).whenComplete((list, error) -> {
             refreshing = false;
@@ -166,6 +163,43 @@ public final class LadderService {
             entries = List.copyOf(list);
             refreshedMillis = System.currentTimeMillis();
         });
+    }
+
+    /** 2026-10-18：讀一個榜的前 LIMIT 名（where 接在 deleted_at 條件後面、orderBy 是排序；只放程式裡寫死的字串）。 */
+    private static List<Entry> query(final java.sql.Connection connection, final String where, final String orderBy,
+                                     final Map<Long, String> ascs) throws java.sql.SQLException {
+        final List<Entry> list = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement("""
+                SELECT c.id, c.name, a.name AS account, c.class_id, c.char_level, c.experience, c.deaths, c.playtime_seconds,
+                       (SELECT COUNT(*) FROM progress p WHERE p.character_id = c.id AND p.progress_key LIKE 'atlas.%') AS maps,
+                       (SELECT COUNT(*) FROM progress p WHERE p.character_id = c.id AND p.progress_key LIKE 'boss.%') AS bosses,
+                       (SELECT p.progress_value FROM progress p WHERE p.character_id = c.id AND p.progress_key = 'mapbest') AS best,
+                       (SELECT p.progress_value FROM progress p WHERE p.character_id = c.id AND p.progress_key = 'asc') AS asc_id
+                FROM characters c JOIN accounts a ON a.uuid = c.account_uuid
+                WHERE c.deleted_at IS NULL""" + where + "\nORDER BY " + orderBy + "\nLIMIT ?")) {
+            statement.setInt(1, LIMIT);
+            try (ResultSet rows = statement.executeQuery()) {
+                while (rows.next()) {
+                    int best = 0;
+                    final String bestText = rows.getString("best");
+                    if (bestText != null) {
+                        try {
+                            best = Integer.parseInt(bestText.trim());
+                        } catch (final NumberFormatException ignored) {
+                            best = 0;
+                        }
+                    }
+                    final String ascId = rows.getString("asc_id");
+                    if (ascId != null && !ascId.isBlank()) {
+                        ascs.put(rows.getLong("id"), ascId.trim());
+                    }
+                    list.add(new Entry(rows.getLong("id"), rows.getString("name"), rows.getString("account"), rows.getString("class_id"),
+                            rows.getInt("char_level"), rows.getLong("experience"), rows.getInt("deaths"), rows.getLong("playtime_seconds"),
+                            rows.getInt("maps"), best, rows.getInt("bosses")));
+                }
+            }
+        }
+        return list;
     }
 
     /** 給聊天欄：某個榜的前 count 名，加上看的人自己的名次。 */
@@ -250,13 +284,7 @@ public final class LadderService {
         final JsonObject root = new JsonObject();
         root.addProperty("refreshed", refreshedMillis);
         root.addProperty("deathlessMinLevel", Ladder.DEATHLESS_MIN_LEVEL);
-        final Set<String> online = new TreeSet<>();
-        for (final Player player : plugin.getServer().getOnlinePlayers()) {
-            final tw.exilecore.character.CharacterRecord character = plugin.players().get(player).character();
-            if (character != null) {
-                online.add(character.name());
-            }
-        }
+        final Set<String> online = onlineCharacters; // 2026-10-18：HTTP 執行緒只讀主執行緒的快照
         for (final Board board : Board.values()) {
             final JsonArray array = new JsonArray();
             int rank = 0;
@@ -284,10 +312,7 @@ public final class LadderService {
             root.add(board.name().toLowerCase(Locale.ROOT), array);
         }
         // 金錢榜（帳號的金幣）
-        final Set<String> onlineAccounts = new TreeSet<>();
-        for (final Player player : plugin.getServer().getOnlinePlayers()) {
-            onlineAccounts.add(player.getName());
-        }
+        final Set<String> onlineAccounts = this.onlineAccounts; // 2026-10-18：同上，用快照
         final JsonArray golds = new JsonArray();
         int rank = 0;
         for (final GoldEntry entry : gold) {

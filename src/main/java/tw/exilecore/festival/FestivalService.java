@@ -418,7 +418,7 @@ public final class FestivalService {
     }
 
     private int allMask() {
-        return (1 << config.lanterns().count()) - 1;
+        return (int) ((1L << config.lanterns().count()) - 1); // 2026-10-18：用 long 算（32 盞時 1 << 32 == 1，全滿永遠不成立）
     }
 
     /** 今天點了哪幾盞（位元）。 */
@@ -1366,8 +1366,17 @@ public final class FestivalService {
     /** 給素材：先進通貨袋，滿了背包，再滿掉在腳下（萬燈糖例外：通貨袋滿了，多的自動過濾掉，2026-10-16）。 */
     /** 兌換失敗：把已經扣的素材退回去。 */
     private void refundCosts(final Player player, final Map<String, Integer> taken) {
+        // 2026-10-18：退回走 Wallet.deposit（倉庫通貨頁 → 通貨袋 → 背包），放不下的做成物品掉腳下；
+        // 不走 giveCurrency（萬燈糖通貨袋滿了會被自動過濾掉，也不該再算一次產出）
+        final tw.exilecore.economy.Wallet wallet = plugin.economy().wallet();
         for (final Map.Entry<String, Integer> cost : taken.entrySet()) {
-            giveCurrency(player, cost.getKey(), cost.getValue());
+            int left = wallet.deposit(player, cost.getKey(), cost.getValue());
+            final CurrencyType type = plugin.currencies() == null ? null : plugin.currencies().repository().get(cost.getKey());
+            while (left > 0 && type != null) {
+                final int stack = Math.min(left, Math.max(1, type.stack()));
+                wallet.dropFor(player, plugin.currencies().create(type, stack));
+                left -= stack;
+            }
         }
     }
 

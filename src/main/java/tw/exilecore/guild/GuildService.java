@@ -596,6 +596,20 @@ public final class GuildService {
         if (application == null) {
             return;
         }
+        approve(actor, guild, application);
+    }
+
+    /** 2026-10-18：選單用（直接用 UUID，名字重複時不會批准到別人）。 */
+    public void approve(final Player actor, final UUID applicant) {
+        final Guild guild = reviewGuild(actor);
+        final Application application = guild == null ? null : findApplication(actor, guild, applicant);
+        if (application == null) {
+            return;
+        }
+        approve(actor, guild, application);
+    }
+
+    private void approve(final Player actor, final Guild guild, final Application application) {
         final GuildRoster.Joined joined = roster.adminAdd(guild.id(), application.uuid(), application.name(), System.currentTimeMillis(), config);
         switch (joined.result()) {
             case OK -> {
@@ -636,6 +650,20 @@ public final class GuildService {
         if (application == null) {
             return;
         }
+        reject(actor, guild, application);
+    }
+
+    /** 2026-10-18：選單用（直接用 UUID，名字重複時不會拒絕到別人）。 */
+    public void reject(final Player actor, final UUID applicant) {
+        final Guild guild = reviewGuild(actor);
+        final Application application = guild == null ? null : findApplication(actor, guild, applicant);
+        if (application == null) {
+            return;
+        }
+        reject(actor, guild, application);
+    }
+
+    private void reject(final Player actor, final Guild guild, final Application application) {
         removeApplication(guild.id(), application.uuid());
         tell(actor, "<gray>拒絕了 <white>" + ItemRenderer.escape(application.name()) + "<gray> 的入會申請");
         final Player target = plugin.getServer().getPlayer(application.uuid());
@@ -698,6 +726,16 @@ public final class GuildService {
         }
         tell(actor, "<red>沒有「" + ItemRenderer.escape(wanted) + "」的入會申請<gray>（/guild applications 看名單）");
         return null;
+    }
+
+    /** 2026-10-18：用 UUID 找申請（選單用）。 */
+    private Application findApplication(final Player actor, final Guild guild, final UUID uuid) {
+        final java.util.LinkedHashMap<UUID, Application> pending = applications.get(guild.id());
+        final Application application = pending == null ? null : pending.get(uuid);
+        if (application == null) {
+            tell(actor, "<red>這筆入會申請已經不在了<gray>（/guild applications 看名單）");
+        }
+        return application;
     }
 
     /** 申請的人的名字（指令補完）。 */
@@ -812,6 +850,25 @@ public final class GuildService {
             tell(actor, "<red>公會裡沒有「" + ItemRenderer.escape(targetName.strip()) + "」");
             return;
         }
+        kick(actor, guild, target);
+    }
+
+    /** 2026-10-18：選單用（直接用 UUID，名字重複時不會請出別人）。 */
+    public void kick(final Player actor, final UUID targetId) {
+        final Guild guild = roster.guildOf(actor.getUniqueId());
+        if (guild == null) {
+            tell(actor, "<gray>你不在公會裡");
+            return;
+        }
+        final Guild.Member target = guild.member(targetId);
+        if (target == null) {
+            tell(actor, "<red>這個人已經不在公會裡了");
+            return;
+        }
+        kick(actor, guild, target);
+    }
+
+    private void kick(final Player actor, final Guild guild, final Guild.Member target) {
         final GuildRoster.Result result = roster.kick(actor.getUniqueId(), target.uuid());
         switch (result) {
             case OK -> {
@@ -841,6 +898,25 @@ public final class GuildService {
             tell(actor, "<red>公會裡沒有「" + ItemRenderer.escape(targetName.strip()) + "」");
             return;
         }
+        setRank(actor, guild, target, rank);
+    }
+
+    /** 2026-10-18：選單用（直接用 UUID，名字重複時不會升降到別人）。 */
+    public void setRank(final Player actor, final UUID targetId, final GuildRank rank) {
+        final Guild guild = roster.guildOf(actor.getUniqueId());
+        if (guild == null) {
+            tell(actor, "<gray>你不在公會裡");
+            return;
+        }
+        final Guild.Member target = guild.member(targetId);
+        if (target == null) {
+            tell(actor, "<red>這個人已經不在公會裡了");
+            return;
+        }
+        setRank(actor, guild, target, rank);
+    }
+
+    private void setRank(final Player actor, final Guild guild, final Guild.Member target, final GuildRank rank) {
         final GuildRank before = target.rank();
         final GuildRoster.Result result = roster.setRank(actor.getUniqueId(), target.uuid(), rank);
         switch (result) {
@@ -1451,7 +1527,7 @@ public final class GuildService {
     }
 
     /** 倉庫讀好了就做 action；還沒讀先去讀（背景），讀好再做。 */
-    private void withStash(final Guild guild, final Player asker, final Consumer<GuildStash> action) {
+    private void withStash(final Guild guild, final CommandSender asker, final Consumer<GuildStash> action) { // 2026-10-18：管理員（可能是主控台）解散也走這裡
         final long id = guild.id();
         final GuildStash loaded = stashes.get(id);
         if (loaded != null) {
@@ -1475,8 +1551,8 @@ public final class GuildService {
             }
             if (error != null || pages == null) {
                 plugin.getSLF4JLogger().error("公會倉庫（#{}）讀取失敗", id, error);
-                if (asker.isOnline()) {
-                    tell(asker, "<red>公會倉庫讀取失敗，稍後再試（主控台有錯誤訊息）");
+                if (!(asker instanceof Player online) || online.isOnline()) {
+                    asker.sendMessage(plugin.text().prefixed("<red>公會倉庫讀取失敗，稍後再試（主控台有錯誤訊息）"));
                 }
                 return;
             }
@@ -1485,8 +1561,8 @@ public final class GuildService {
                 stash = GuildStash.decode(pages, stashPages(current));
             } catch (final RuntimeException e) {
                 plugin.getSLF4JLogger().error("公會倉庫（#{}）的內容讀不出來", id, e);
-                if (asker.isOnline()) {
-                    tell(asker, "<red>公會倉庫的內容讀不出來（主控台有錯誤訊息），先不要動它");
+                if (!(asker instanceof Player online) || online.isOnline()) {
+                    asker.sendMessage(plugin.text().prefixed("<red>公會倉庫的內容讀不出來（主控台有錯誤訊息），先不要動它"));
                 }
                 return;
             }
@@ -1941,24 +2017,8 @@ public final class GuildService {
             sender.sendMessage(plugin.text().prefixed("<green>解散了公會 " + label(current) + (items > 0 ? "<gray>（倉庫裡的 " + items + " 件一起刪了）" : "")));
             plugin.getSLF4JLogger().warn("[公會] 管理員 {} 解散了公會 [{}] {}（#{}，倉庫 {} 件）", sender.getName(), current.tag(), current.name(), id, items);
         };
-        final GuildStash loaded = stashes.get(id);
-        if (loaded != null) {
-            finish.accept(loaded);
-            return;
-        }
-        plugin.database().async(connection -> repository.loadStash(connection, id)).whenComplete((pages, error) -> sync(() -> {
-            if (error != null || pages == null) {
-                sender.sendMessage(plugin.text().prefixed("<red>公會倉庫讀取失敗，沒有解散（主控台有錯誤訊息）"));
-                plugin.getSLF4JLogger().error("公會倉庫（#{}）讀取失敗", id, error);
-                return;
-            }
-            try {
-                finish.accept(GuildStash.decode(pages, 1));
-            } catch (final RuntimeException e) {
-                sender.sendMessage(plugin.text().prefixed("<red>公會倉庫的內容讀不出來，沒有解散（主控台有錯誤訊息）"));
-                plugin.getSLF4JLogger().error("公會倉庫（#{}）的內容讀不出來", id, e);
-            }
-        }));
+        // 2026-10-18：用 withStash（跟成員共用同一份倉庫）；以前另外讀一份複本，成員剛放進去的東西不算、解散時一起刪掉
+        withStash(guild, sender, finish);
     }
 
     /** 管理員加公會經驗（測試、補償）。 */

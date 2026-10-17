@@ -1,13 +1,13 @@
 # 符文（2026-10，照 PoE2 的符文）：currencies.yml 裡 operation: RUNE 的通貨用在裝備上，嵌進一個空的符文孔。
 # 符文孔：雙手武器 2、單手武器 1、胸甲 2、頭盔／褲子／鞋子／副手 1；飾品、地圖、珠寶沒有。孔滿了可以選一顆覆蓋（被換掉的會消失）。
-# weapon：嵌在武器上的加成；armour：嵌在防具、副手上的加成。每條寫 text（顯示的字）與修飾器（寫法跟詞綴的 mods 一樣，數值固定）。
+# weapon：嵌在武器上的加成（local.physical／local.attack_speed 這類本地的改武器自己的數值，跟詞綴一樣算進武器面板）；armour：嵌在防具、副手上的加成。每條寫 text（顯示的字）與修飾器（寫法跟詞綴的 mods 一樣，數值固定）。
 # 改完重新啟動或 /ec reload。
 
 runes:
   iron:
     name: 鐵骨符文
     weapon:
-      - { text: "增加 15% 物理攻擊傷害", stat: damage, type: INCREASED, value: 15, tags: [attack, physical] }
+      - { text: "增加 15% 物理傷害", stat: local.physical, type: INCREASED, value: 15 }   # 2026-10-17：改成武器本地（跟詞綴的「增加 x% 物理傷害」相加，武器面板的物理傷害會直接變）；原本全域的「增加 15% 物理攻擊傷害」
     armour:
       - { text: "+25 最大生命", stat: life.max, type: FLAT, value: 25 }
   ember:
@@ -37,6 +37,6 @@ runes:
   swift:
     name: 疾風符文
     weapon:
-      - { text: "增加 6% 攻擊速度", stat: attack.speed, type: INCREASED, value: 6 }
+      - { text: "增加 6% 攻擊速度", stat: local.attack_speed, type: INCREASED, value: 6 }   # 2026-10-17：武器本地（面板的每秒攻擊會直接變）
     armour:
       - { text: "+10 敏捷", stat: attr.dex, type: FLAT, value: 10 }

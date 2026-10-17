@@ -122,6 +122,10 @@ public final class SponsorModule implements Module, Listener {
 
     private void load() throws Exception {
         config.load(plugin.dataFolder().resolve("data"));
+        if (!config.missingFreeBox().isEmpty()) { // 2026-10-18：免費箱的箱子不存在，警告一次
+            plugin.getSLF4JLogger().warn("贊助：monthly_card.daily_free_box 寫的「{}」沒有這種箱子（boxes 裡沒有），當作沒有每日免費箱",
+                    config.missingFreeBox());
+        }
     }
 
     /** 打開贊助選單（主選單的「贊助」、倉庫的贊助頁）。 */

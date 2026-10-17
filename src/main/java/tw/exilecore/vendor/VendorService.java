@@ -50,7 +50,8 @@ public final class VendorService {
     }
 
     private final ExileCore plugin;
-    private final Map<UUID, Stock> stocks = new HashMap<>();
+    /** 2026-10-18：以角色 ID 保存、下線不清（原本以 UUID 存、下線就刪，重登／換角能免費刷新）；過期的在有人下線時清掉。 */
+    private final Map<Long, Stock> stocks = new HashMap<>();
 
     public VendorService(final ExileCore plugin) {
         this.plugin = plugin;
@@ -66,12 +67,14 @@ public final class VendorService {
     Stock stock(final Player player) {
         final PlayerState state = plugin.players().get(player);
         final long characterId = state.hasCharacter() ? state.character().id() : -1;
-        final Stock current = stocks.get(player.getUniqueId());
+        final Stock current = characterId < 0 ? null : stocks.get(characterId);
         final long now = System.currentTimeMillis();
         if (current == null || current.characterId != characterId || current.level != state.level()
                 || now - current.generatedAt >= config().vendorRefreshMillis()) {
             final Stock fresh = new Stock(characterId, state.level(), now, generate(player, state.level()));
-            stocks.put(player.getUniqueId(), fresh);
+            if (characterId >= 0) {
+                stocks.put(characterId, fresh);
+            }
             return fresh;
         }
         return current;
@@ -226,7 +229,7 @@ public final class VendorService {
         if (!plugin.gold().take(player, cost, EconomyLedger.VENDOR_REFRESH)) {
             return String.format(Locale.ROOT, "金幣不夠：換一批要 %,d", cost);
         }
-        stocks.put(player.getUniqueId(), new Stock(state.character().id(), state.level(), System.currentTimeMillis(), generate(player, state.level())));
+        stocks.put(state.character().id(), new Stock(state.character().id(), state.level(), System.currentTimeMillis(), generate(player, state.level())));
         plugin.characters().save(player);
         return null;
     }
@@ -567,6 +570,9 @@ public final class VendorService {
     }
 
     public void forget(final Player player) {
-        stocks.remove(player.getUniqueId());
+        // 2026-10-18：下線不刪這個角色的貨（重登不會換一批），只清掉所有已經到時間的（不會無限累積）
+        final long now = System.currentTimeMillis();
+        final long refreshMillis = config().vendorRefreshMillis();
+        stocks.values().removeIf(stock -> now - stock.generatedAt >= refreshMillis);
     }
 }

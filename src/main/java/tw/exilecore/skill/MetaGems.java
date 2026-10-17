@@ -149,11 +149,7 @@ public final class MetaGems {
                 warnProblem(player, state, i, now); // 2026-10：插槽放錯（不是法術、增益技能…）以前完全沒反應，看不出為什麼不觸發
                 continue;
             }
-            // 2026-10-17：Lv.21 寶石照 21 級算（跟 SkillBuild 一樣：角色到 20 級寶石的需求等級就能用 21 級）
-            final int usable = entry.level() > tw.exilecore.character.SkillLoadout.MAX_LEVEL
-                    && state.level() >= service.config().requiredLevel(tw.exilecore.character.SkillLoadout.MAX_LEVEL)
-                    ? Math.min(entry.level(), tw.exilecore.character.SkillLoadout.GEM_CAP) : service.config().maxLevelFor(state.level());
-            final int level = Math.max(1, Math.min(entry.level(), usable));
+            final int level = usableLevel(state, entry);
             final double gained = spec.energy() * multiplier * (1 + spec.energyMore().at(level) / 100.0);
             final double max = MetaSpec.maxEnergy(socket.spell());
             final Map<String, Double> mine = energy.computeIfAbsent(player.getUniqueId(), id -> new HashMap<>());
@@ -173,6 +169,14 @@ public final class MetaGems {
                 mine.put(key, Math.min(raw, max)); // 還在間隔裡：存到滿為止
             }
         }
+    }
+
+    /** 主要寶石實際用幾級算能量（2026-10-17：Lv.21 寶石照 21 級算，跟 SkillBuild 一樣：角色到 20 級寶石的需求等級就能用 21 級）。 */
+    int usableLevel(final PlayerState state, final SkillLoadout.Entry entry) {
+        final int usable = entry.level() > SkillLoadout.MAX_LEVEL
+                && state.level() >= service.config().requiredLevel(SkillLoadout.MAX_LEVEL)
+                ? Math.min(entry.level(), SkillLoadout.GEM_CAP) : service.config().maxLevelFor(state.level());
+        return Math.max(1, Math.min(entry.level(), usable));
     }
 
     /** 上次提醒插槽有問題的時間（每 15 秒最多提醒一次）。 */

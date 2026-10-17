@@ -41,7 +41,7 @@ public final class ItemStats {
         final ItemBase base = statBase(repository, itemBase, data);
         final ItemRepository.Scaling scaling = repository.scaling();
         final int statLevel = statLevel(repository, base, data);
-        final double levelFactorDamage = damageFactor(base, scaling.damagePerLevel(), statLevel, data);
+        final double levelFactorDamage = damageFactor(base, scaling.damagePerLevel(), statLevel, scaling.cap(data.ilvl()), data);
         final double levelFactorDefence = levelFactor(base, scaling.defencePerLevel(), statLevel);
         final double qualityWeapon = 1 + data.quality() * scaling.qualityWeaponPercent() / 100.0;
         final double qualityArmour = 1 + data.quality() * scaling.qualityArmourPercent() / 100.0;
@@ -90,7 +90,7 @@ public final class ItemStats {
         if (data.unique() != null && base.baseLevel() > 0) {
             return base.baseLevel();
         }
-        return Math.max(1, data.ilvl());
+        return Math.max(1, repository.scaling().cap(data.ilvl())); // 2026-10-18：超過 stat_level_cap 的照上限算（商人照角色等級賣，會到 120）
     }
 
     /** 算數值用的基底：傳奇寫了 stat_base 的用那個（原本那一階、固定數值），其他就是物品本身的基底。 */
@@ -116,12 +116,12 @@ public final class ItemStats {
      * 物品等級比那一階高多少就多多少，不會比那一階低（低物品等級的舊傳奇數值不變）。
      * 等級與屬性需求、固定詞綴、防禦照舊固定在那一階；詞綴的附加傷害不跟著長。
      */
-    public static double damageFactor(final ItemBase base, final double perLevel, final int statLevel, final ItemData data) {
+    public static double damageFactor(final ItemBase base, final double perLevel, final int statLevel, final int itemLevel, final ItemData data) {
         final int tier = data.unique() != null && base.isWeapon() ? uniqueTier(base) : 0;
         if (tier <= 0) {
             return levelFactor(base, perLevel, statLevel);
         }
-        final int level = Math.max(tier, data.ilvl());
+        final int level = Math.max(tier, itemLevel); // itemLevel 已經夾過 stat_level_cap
         return (1 + perLevel * (level - 1)) / (1 + perLevel * (tier - 1));
     }
 
@@ -198,14 +198,16 @@ public final class ItemStats {
 
     /** 裝備需求：等級 = max(基底等級, 物品等級 × 0.9)；屬性需求隨物品等級放大。 */
     public static ItemBase.Requirements requirements(final ItemRepository repository, final ItemBase base, final int itemLevel) {
-        return requirements(repository, base, itemLevel, itemLevel, 0);
+        final int capped = repository.scaling().cap(itemLevel);
+        return requirements(repository, base, capped, capped, 0);
     }
 
     /** 同上，這件物品的（傳奇的屬性需求照它那一階、等級需求至少是那一階）。 */
     public static ItemBase.Requirements requirements(final ItemRepository repository, final ItemBase itemBase, final ItemData data) {
         final ItemBase base = statBase(repository, itemBase, data);
         final int statLevel = statLevel(repository, base, data);
-        return requirements(repository, base, data.ilvl(), statLevel, data.unique() != null && base.baseLevel() > 0 ? statLevel : 0);
+        return requirements(repository, base, repository.scaling().cap(data.ilvl()), statLevel,
+                data.unique() != null && base.baseLevel() > 0 ? statLevel : 0);
     }
 
     private static ItemBase.Requirements requirements(final ItemRepository repository, final ItemBase base, final int itemLevel,

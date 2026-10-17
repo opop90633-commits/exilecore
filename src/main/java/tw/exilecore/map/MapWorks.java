@@ -141,7 +141,10 @@ final class MapWorks {
                     chunk.removePluginChunkTicket(plugin);
                 }
                 try {
-                    if (job.done != null) {
+                    if (job.failed && job instanceof ClearJob) {
+                        // 2026-10-18：有區塊沒載入、沒清乾淨：不要當成清好釋放格子（留在 dirty，下次啟動再清）
+                        logger.warn("地圖世界清格子時有區塊沒載入，這一格先不釋放，下次啟動再清");
+                    } else if (job.done != null) {
                         job.done.run();
                     }
                 } catch (final RuntimeException e) {

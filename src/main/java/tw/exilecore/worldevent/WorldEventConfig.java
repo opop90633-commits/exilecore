@@ -80,6 +80,8 @@ public final class WorldEventConfig {
         if (Files.exists(file)) {
             fresh.parse(YamlNode.load(file));
         } else {
+            // 2026-10-18：檔案不存在也照空設定解析一次，boss／invasion 才有預設值（原本是 null，開選單 NPE）
+            fresh.parse(YamlNode.of(FILE, java.util.Map.of()));
             fresh.enabled = false;
         }
         enabled = fresh.enabled;

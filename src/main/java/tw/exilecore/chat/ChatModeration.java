@@ -37,8 +37,6 @@ public final class ChatModeration {
     static final long BURST_COOLDOWN_MS = 15_000;
     static final long REPEAT_WINDOW_MS = 30_000;
     static final long REPORT_COOLDOWN_MS = 60_000;
-    /** 貼物品（[i]）的訊息不算洗頻，但兩則之間至少隔這麼久。 */
-    static final long LINK_COOLDOWN_MS = 2_000;
 
     /** 一則檢查的結果：送不送、送的話用哪段文字（髒話換成＊之後）、不送的話跟發話的人說什麼。 */
     public record Verdict(boolean allowed, String text, String reason) {
@@ -66,7 +64,6 @@ public final class ChatModeration {
     private final Map<UUID, String> lastText = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastTextAt = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastReport = new ConcurrentHashMap<>();
-    private final Map<UUID, Long> lastLinkAt = new ConcurrentHashMap<>();
     private final File muteFile;
     private final File reportFile;
 
@@ -100,12 +97,7 @@ public final class ChatModeration {
             return Verdict.deny("說太快了，" + remaining(burstCooldown - now) + "後再說");
         }
         if (ChatService.hasLinks(text)) {
-            // 2026-10：貼物品（[i]）不算洗頻、不算重複；只有每 LINK_COOLDOWN_MS 一則的限制，免得整排都是物品
-            final Long lastLink = lastLinkAt.get(player.getUniqueId());
-            if (lastLink != null && now - lastLink < LINK_COOLDOWN_MS) {
-                return Verdict.deny("貼物品太快了，" + remaining(lastLink + LINK_COOLDOWN_MS - now) + "後再貼");
-            }
-            lastLinkAt.put(player.getUniqueId(), now);
+            // 2026-10-18：貼物品（[i]）沒有冷卻：不算洗頻、不算重複，也沒有兩則之間的間隔限制
             return filtered(text);
         }
         final Long cooldown = cooldownUntil.get(player.getUniqueId());
@@ -265,6 +257,5 @@ public final class ChatModeration {
         cooldownUntil.remove(player);
         lastText.remove(player);
         lastTextAt.remove(player);
-        lastLinkAt.remove(player);
     }
 }

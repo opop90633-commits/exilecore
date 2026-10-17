@@ -86,7 +86,17 @@ public final class DiscordModule implements Module, Listener {
         final String plain = PlainTextComponentSerializer.plainText().serialize(event.message());
         final java.util.List<org.bukkit.inventory.ItemStack> items = plugin.chat() == null ? java.util.List.of()
                 : plugin.chat().takeLinked(event.getPlayer().getUniqueId()); // 2026-10：[i] 貼的物品也送到 Discord
-        bridge.chat(event.getPlayer(), plain, items);
+        // 2026-10-18：聊天執行緒只取純文字與物品複本；名字（PlayerState、稱號、昇華）與嵌入排回主執行緒算
+        final DiscordBridge current = bridge;
+        final Player player = event.getPlayer();
+        if (!plugin.isEnabled()) {
+            return;
+        }
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (current.active()) {
+                current.chat(player, plain, items);
+            }
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

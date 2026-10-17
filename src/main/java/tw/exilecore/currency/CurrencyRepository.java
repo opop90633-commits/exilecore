@@ -17,15 +17,19 @@ public final class CurrencyRepository {
     private final Map<String, CurrencyType> currencies = new LinkedHashMap<>();
 
     public void load(final Path dataFolder) throws IOException {
-        currencies.clear();
         final Path file = dataFolder.resolve("currencies.yml");
         if (!Files.exists(file)) {
+            currencies.clear();
             return;
         }
+        // 2026-10-18：先解析到新的表，全部成功才換上（原本先清空，寫錯一個字 /ec reload 通貨表就剩一半）
+        final Map<String, CurrencyType> parsed = new LinkedHashMap<>();
         final YamlNode root = YamlNode.load(file);
         for (final String id : root.keys()) {
-            currencies.put(id, CurrencyType.parse(id, root.node(id)));
+            parsed.put(id, CurrencyType.parse(id, root.node(id)));
         }
+        currencies.clear();
+        currencies.putAll(parsed);
     }
 
     public CurrencyType get(final String id) {

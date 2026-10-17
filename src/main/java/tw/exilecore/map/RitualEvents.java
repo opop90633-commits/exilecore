@@ -477,7 +477,8 @@ final class RitualEvents implements Listener {
                         + (timedOut ? "<gray>（時間到）" : "") + "<gray>，你有 <white>" + tribute + "</white> 貢品；下一座的貢品更多"));
             }
         }
-        if (all && ritual.bar != null) {
+        // 2026-10-18：每做完一座都收血條（以前只有最後一座才收，中間那幾座的血條一直掛著；下一座開始會再顯示）
+        if (ritual.bar != null) {
             for (final UUID uuid : ritual.watching) {
                 final Player player = plugin.getServer().getPlayer(uuid);
                 if (player != null) {

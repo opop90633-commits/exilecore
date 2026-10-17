@@ -290,6 +290,14 @@ public final class SkillConfig {
                 parsedSupports.put(id, SupportDefinition.parse(id, supportSection.node(id)));
             }
         }
+        // 2026-10-18：驗證移到任何欄位指定之前（以前先換掉一半才驗證，失敗時新舊混用）；Boss 招式也在換之前載入（它自己解析好才換）
+        for (final Map.Entry<String, java.util.List<String>> entry : parsedCommands.entrySet()) {
+            for (final String who : entry.getValue()) {
+                if (!who.equals("any") && (parsed.get(who) == null || parsed.get(who).summon() == null)) {
+                    throw new IllegalArgumentException(FILE + "：" + entry.getKey() + ".command 的 " + who + " 不是召喚物技能");
+                }
+            }
+        }
         bossSkills.load(dataFolder);
         this.requirements = parsedRequirements;
         this.uncutLevelWeights = parsedUncutWeights;
@@ -299,13 +307,6 @@ public final class SkillConfig {
         this.growth = parsedGrowth;
         this.skills = parsed;
         this.resources = parsedResources;
-        for (final Map.Entry<String, java.util.List<String>> entry : parsedCommands.entrySet()) {
-            for (final String who : entry.getValue()) {
-                if (!who.equals("any") && (parsed.get(who) == null || parsed.get(who).summon() == null)) {
-                    throw new IllegalArgumentException(FILE + "：" + entry.getKey() + ".command 的 " + who + " 不是召喚物技能");
-                }
-            }
-        }
         this.commands = Map.copyOf(parsedCommands);
         this.parentDamage = Map.copyOf(parsedParent);
         this.mountSpecs = Map.copyOf(parsedMounts);

@@ -1631,6 +1631,10 @@ public final class CharacterService {
 
     /** 改名。 */
     public void rename(final Player player, final String name, final Consumer<String> onError) {
+        if (busy.contains(player.getUniqueId())) {
+            onError.accept("角色資料還在處理中，請稍等"); // 2026-10-18：切換／存檔中不准改名（舊名存檔、角色對象會錯）
+            return;
+        }
         final PlayerState state = states.get(player);
         if (!state.hasCharacter()) {
             onError.accept("你還沒有角色");

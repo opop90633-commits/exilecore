@@ -308,6 +308,52 @@ public final class MapEventConfig {
     }
 
     public void load(final Path dataFolder) throws IOException {
+        // 2026-10-18：先讀到新的一份，成功才換上（以前讀到一半出錯會留下半套設定，例如神龕清空但權重還在）
+        final MapEventConfig fresh = new MapEventConfig();
+        fresh.parse(dataFolder);
+        copyFrom(fresh);
+    }
+
+    private void copyFrom(final MapEventConfig other) {
+        minPerMap = other.minPerMap;
+        maxPerMap = other.maxPerMap;
+        weights.clear();
+        weights.putAll(other.weights);
+        uniqueChance.clear();
+        uniqueChance.putAll(other.uniqueChance);
+        approach = other.approach;
+        shrineDuration = other.shrineDuration;
+        minGuards = other.minGuards;
+        maxGuards = other.maxGuards;
+        shrineReach = other.shrineReach;
+        shrines.clear();
+        shrines.addAll(other.shrines);
+        minAmbush = other.minAmbush;
+        maxAmbush = other.maxAmbush;
+        boxRadius = other.boxRadius;
+        boxes.clear();
+        boxes.addAll(other.boxes);
+        breachDuration = other.breachDuration;
+        waveSeconds = other.waveSeconds;
+        minWave = other.minWave;
+        maxWave = other.maxWave;
+        breachStart = other.breachStart;
+        breachEnd = other.breachEnd;
+        breachQuantity = other.breachQuantity;
+        catalystChance = other.catalystChance;
+        exileLife = other.exileLife;
+        exileDamage = other.exileDamage;
+        exileMods = other.exileMods;
+        exileDrops = other.exileDrops;
+        minOmens = other.minOmens;
+        maxOmens = other.maxOmens;
+        exileNames = other.exileNames;
+        ritual = other.ritual;
+        delirium = other.delirium;
+        twists = other.twists;
+    }
+
+    private void parse(final Path dataFolder) throws IOException {
         defaults();
         final Path file = dataFolder.resolve("map_events.yml");
         if (!Files.exists(file)) {

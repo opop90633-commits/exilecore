@@ -29,7 +29,7 @@ public final class GuideService {
     public static final String PROGRESS_DONE = "guide.done";
     /** 角色進度：打開過選單（蹲下＋F）。 */
     public static final String PROGRESS_MENU = "guide.menu";
-    private static final int FLASK_SLOTS = 2;
+    private static final int HOTBAR_SLOTS = 9;
 
     private final ExileCore plugin;
     /** 上次看到的那一步（判斷有沒有前進）。 */
@@ -65,8 +65,10 @@ public final class GuideService {
         }
         boolean flasks = false;
         if (plugin.flasks() != null) {
-            for (int slot = 0; slot < FLASK_SLOTS && !flasks; slot++) {
-                flasks = plugin.flasks().read(player.getInventory().getItem(slot)).isPresent();
+            // 2026-10-18：藥劑欄位置可以改（設定 → 按鍵），掃整排快捷列、只看該玩家的藥劑欄（原本只看第 1、2 格）
+            for (int slot = 0; slot < HOTBAR_SLOTS && !flasks; slot++) {
+                flasks = plugin.flasks().kindAt(player, slot) != null
+                        && plugin.flasks().read(player.getInventory().getItem(slot)).isPresent();
             }
         }
         return new Guide.Snapshot(state.hasCharacter(), state.progress().containsKey(PROGRESS_MENU), questStarted, skillBound, flasks,

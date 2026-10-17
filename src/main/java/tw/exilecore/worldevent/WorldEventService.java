@@ -1118,20 +1118,29 @@ public final class WorldEventService {
             if (plugin.bounties() == null) {
                 return "稱號系統沒有啟用";
             }
+            // 2026-10-18：先預檢帳號載入（grantTitle 會因此失敗），免得素材扣了才發現
+            if (!plugin.bounties().accountLoaded(player)) {
+                return "帳號資料載入中，請稍等";
+            }
             if (plugin.bounties().ownedTitles(player).contains(item.titleId())) {
                 return "已經有這個稱號了";
             }
         }
+        // 2026-10-18：記下已扣的素材，中途失敗或稱號發不出去時退回
+        final Map<String, Integer> taken = new java.util.LinkedHashMap<>();
         for (final Map.Entry<String, Integer> cost : item.cost().entrySet()) {
             if (!wallet.take(player, cost.getKey(), cost.getValue())) {
+                refund(player, taken);
                 return "素材不夠";
             }
+            taken.put(cost.getKey(), cost.getValue());
         }
         switch (item.kind()) {
             case TITLE -> {
                 final String problem = plugin.bounties().grantTitle(player, item.titleId());
                 if (problem != null) {
-                    plugin.getSLF4JLogger().warn("不定時活動：{} 換稱號 {} 失敗：{}（素材已扣）", player.getName(), item.titleId(), problem);
+                    plugin.getSLF4JLogger().warn("不定時活動：{} 換稱號 {} 失敗：{}（素材已退回）", player.getName(), item.titleId(), problem);
+                    refund(player, taken);
                     return problem;
                 }
             }
@@ -1142,6 +1151,25 @@ public final class WorldEventService {
         plugin.characters().save(player);
         plugin.getSLF4JLogger().info("[不定時活動] {} 兌換 {}", player.getName(), item.id());
         return null;
+    }
+
+    /** 2026-10-18：退回兌換時已扣的素材（倉庫通貨頁 → 通貨袋 → 背包，都放不下掉在腳下只有自己撿得到）。 */
+    private void refund(final Player player, final Map<String, Integer> taken) {
+        if (taken.isEmpty()) {
+            return;
+        }
+        final tw.exilecore.economy.Wallet wallet = plugin.economy().wallet();
+        for (final Map.Entry<String, Integer> entry : taken.entrySet()) {
+            int left = wallet.deposit(player, entry.getKey(), entry.getValue());
+            final CurrencyType type = plugin.currencies() == null ? null : plugin.currencies().repository().get(entry.getKey());
+            while (left > 0 && type != null) {
+                final int stack = Math.min(left, Math.max(1, type.stack()));
+                wallet.dropFor(player, plugin.currencies().create(type, stack));
+                left -= stack;
+            }
+        }
+        plugin.players().markDirty(player);
+        plugin.characters().save(player);
     }
 
     String currencyName(final String id) {

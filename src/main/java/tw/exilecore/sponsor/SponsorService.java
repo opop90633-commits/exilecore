@@ -471,6 +471,10 @@ public final class SponsorService {
             accounts().writeProgress(player, LOGIN_TODAY, today[0] + "|" + today[1]);
         }
         flying.remove(uuid);
+        // 2026-10-18：試穿下線要清（以前一直留著）；再試穿的冷卻只清已經過了的（還沒過的留著，重登不能跳過冷卻）
+        tryOns.remove(uuid);
+        final long tick = plugin.getServer().getCurrentTick();
+        tryOnAgain.values().removeIf(again -> again <= tick);
     }
 
     /** 累積贊助、買的格子變了：名字、稱號、背包頁、倉庫頁跟上。 */
@@ -658,15 +662,16 @@ public final class SponsorService {
         final long[] fresh;
         final long changed;
         if (delta > 0) {
+            // 2026-10-18：今天收回又加回：「發到哪一天」留著（今天發過就不再發一次）
             fresh = card != null && card[1] >= today ? new long[] {card[0], card[1] + delta, card[2]}
-                    : new long[] {today, today + delta - 1, today - 1};
+                    : new long[] {today, today + delta - 1, card == null ? today - 1 : Math.max(today - 1, card[2])};
             changed = delta;
         } else if (card == null || card[1] < today) {
             fresh = card;
             changed = 0;
         } else {
             final long end = Math.max(today - 1, card[1] + delta);
-            fresh = new long[] {card[0], end, Math.min(card[2], end)};
+            fresh = new long[] {card[0], end, card[2]}; // 2026-10-18：發到哪一天不往小改（以前改小，同一天加回來又發一次）
             changed = card[1] - end;
         }
         final Map<String, String> values = new LinkedHashMap<>();
@@ -1113,7 +1118,8 @@ public final class SponsorService {
         if (card != null && card[1] >= today) {
             fresh = new long[] {card[0], card[1] + config.cardDays(), card[2]};
         } else {
-            fresh = new long[] {today, today + config.cardDays() - 1, today - 1};
+            // 2026-10-18：今天被收回後再買：今天已經發過的不再發（發到哪一天留著）
+            fresh = new long[] {today, today + config.cardDays() - 1, card == null ? today - 1 : Math.max(today - 1, card[2])};
         }
         // 2026-10 月卡福利：開卡禮（買下就送）、續卡獎勵（月卡還沒過期、或昨天才到期就算連續）
         final boolean continued = card != null && card[1] >= today - 1;

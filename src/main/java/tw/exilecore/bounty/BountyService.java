@@ -1364,6 +1364,24 @@ public final class BountyService {
         return connection -> repository.setMerits(connection, uuid, merits);
     }
 
+    /** 管理員收回功勳（2026-10-18）：拿了幾點、寫資料庫的工作。 */
+    public record TakenMerits(long taken, tw.exilecore.character.CharacterRepository.ExtraWork work) {
+    }
+
+    /** 管理員收回功勳（2026-10-18）：有多少拿多少（扣到 0 為止）；帳號還沒載入回傳 null。 */
+    public TakenMerits revokeMeritsWork(final Player player, final long amount) {
+        final Account account = accounts.get(player.getUniqueId());
+        if (account == null || amount <= 0) {
+            return null;
+        }
+        flush(player);
+        final long taken = Math.min(amount, Math.max(0, account.merits));
+        account.merits -= taken;
+        final UUID uuid = account.uuid;
+        final long merits = account.merits;
+        return new TakenMerits(taken, connection -> repository.setMerits(connection, uuid, merits));
+    }
+
     /** 帳號進度裡的一個值（別的模組存自己的東西；沒有 null、帳號還沒載入也 null）。 */
     public String progressValue(final Player player, final String key) {
         final Account account = accounts.get(player.getUniqueId());
@@ -1463,16 +1481,8 @@ public final class BountyService {
             return;
         }
         account.merits = Math.max(0, set ? delta : account.merits + delta);
-        final UUID uuid = account.uuid;
-        final long merits = account.merits;
-        plugin.database().async(connection -> {
-            repository.setMerits(connection, uuid, merits);
-            return null;
-        }).whenComplete((ignored, error) -> {
-            if (error != null) {
-                plugin.getSLF4JLogger().error("寫入功勳失敗", error);
-            }
-        });
+        // 2026-10-18：跟其他功勳變動走同一條 commit（以前直接寫 DB，可能被重試中的舊快照蓋回）
+        commit(player, account, Map.of(), List.of(), "管理員改功勳");
     }
 
     /** 管理員：拿掉一個稱號（測試稱號的加成用；戴著的話一起拿下）；成功回傳 null。 */

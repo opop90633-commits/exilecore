@@ -48,15 +48,19 @@ public final class NameFilter {
     private static final String SIMPLIFIED = "妈干鸡机贱渣杀狗种杂恶淫强奸暴轮迷援骚发阴脑痴废垃圾全龟贝鬼纳粹杀屠灭恐怖份系统务员伺服务器丽猪弯凯";
     private static final String TRADITIONAL = "媽幹雞機賤渣殺狗種雜惡淫強姦暴輪迷援騷發陰腦癡廢垃圾全龜貝鬼納粹殺屠滅恐怖份系統務員伺服務器麗豬彎凱";
 
-    private final Set<String> blocked = new LinkedHashSet<>();
-    /** 同樣的字，數字不轉成字母的寫法（426 這種數字本身就是歧視用語的）。 */
-    private final Set<String> blockedPlain = new LinkedHashSet<>();
-    private final Set<String> reserved = new LinkedHashSet<>();
-    private final Set<String> allowed = new LinkedHashSet<>();
-    /** 聊天用：字的「摺疊寫法」（小寫、簡轉繁，長度不變），在訊息裡找出來換成＊。 */
-    private final Set<String> chatWords = new LinkedHashSet<>();
-    /** 聊天用：拆開、數字代字母的寫法要比對的字（比對用的寫法；純數字的字不在這裡）。 */
-    private final Set<String> disguised = new LinkedHashSet<>();
+    /**
+     * 2026-10-18：一份建好就不再改的字表；聊天在非同步執行緒讀、重載在主執行緒建新的一份再用 volatile 一次換上
+     * （以前是主執行緒直接 clear 重建，聊天執行緒可能讀到清到一半的表或 ConcurrentModificationException）。
+     *
+     * @param blockedPlain 同樣的字，數字不轉成字母的寫法（426 這種數字本身就是歧視用語的）
+     * @param chatWords    聊天用：字的「摺疊寫法」（小寫、簡轉繁，長度不變），在訊息裡找出來換成＊
+     * @param disguised    聊天用：拆開、數字代字母的寫法要比對的字（比對用的寫法；純數字的字不在這裡）
+     */
+    private record Words(Set<String> blocked, Set<String> blockedPlain, Set<String> reserved, Set<String> allowed,
+                         Set<String> chatWords, Set<String> disguised) {
+    }
+
+    private volatile Words words;
 
     public NameFilter() {
         configure(List.of(), List.of(), List.of());
@@ -64,12 +68,12 @@ public final class NameFilter {
 
     /** 內建的字再加上設定檔的 blocked、reserved；allow 是整個名字一樣就放行的例外。 */
     public void configure(final Collection<String> extraBlocked, final Collection<String> extraReserved, final Collection<String> allow) {
-        blocked.clear();
-        blockedPlain.clear();
-        reserved.clear();
-        allowed.clear();
-        chatWords.clear();
-        disguised.clear();
+        final Set<String> blocked = new LinkedHashSet<>();
+        final Set<String> blockedPlain = new LinkedHashSet<>();
+        final Set<String> reserved = new LinkedHashSet<>();
+        final Set<String> allowed = new LinkedHashSet<>();
+        final Set<String> chatWords = new LinkedHashSet<>();
+        final Set<String> disguised = new LinkedHashSet<>();
         for (final String word : BLOCKED) {
             add(blocked, word);
             addPlain(blockedPlain, word);
@@ -95,6 +99,10 @@ public final class NameFilter {
         for (final String word : allow) {
             add(allowed, word);
         }
+        // 2026-10-18：全部建好才一次換上（照原本的順序，不可變）
+        words = new Words(java.util.Collections.unmodifiableSet(blocked), java.util.Collections.unmodifiableSet(blockedPlain),
+                java.util.Collections.unmodifiableSet(reserved), java.util.Collections.unmodifiableSet(allowed),
+                java.util.Collections.unmodifiableSet(chatWords), java.util.Collections.unmodifiableSet(disguised));
     }
 
     private static void addFold(final Set<String> set, final String word) {
@@ -128,7 +136,7 @@ public final class NameFilter {
         final String folded = fold(normalized);
         final char[] out = normalized.toCharArray();
         boolean changed = false;
-        for (final String word : chatWords) {
+        for (final String word : words.chatWords()) { // 2026-10-18：讀當下那一份
             final boolean digits = word.chars().allMatch(Character::isDigit);
             int from = 0;
             while (true) {
@@ -157,12 +165,13 @@ public final class NameFilter {
      * （this hit 不會變成 shit）。數字的字不看（交給 {@link #maskChat}）。
      */
     public boolean disguisedInChat(final String text) {
+        final Words words = this.words; // 2026-10-18：整段用同一份字表
         for (final String token : Normalizer.normalize(text, Normalizer.Form.NFKC).split("\\s+")) {
             final String canonical = canonical(token);
-            if (canonical.isEmpty() || allowed.contains(canonical)) {
+            if (canonical.isEmpty() || words.allowed().contains(canonical)) {
                 continue;
             }
-            for (final String word : disguised) {
+            for (final String word : words.disguised()) {
                 if (canonical.contains(word)) {
                     return true;
                 }
@@ -187,23 +196,24 @@ public final class NameFilter {
 
     /** 不能用的話回傳原因（不寫是哪個字，免得變成教人怎麼繞過）；可以用回傳 null。 */
     public String problem(final String name) {
+        final Words words = this.words; // 2026-10-18：整段用同一份字表
         final String canonical = canonical(name);
-        if (canonical.isEmpty() || allowed.contains(canonical)) {
+        if (canonical.isEmpty() || words.allowed().contains(canonical)) {
             return null;
         }
-        for (final String word : reserved) {
+        for (final String word : words.reserved()) {
             if (canonical.startsWith(word)) {
                 return "這個名稱容易被誤會成管理員或官方，換一個吧";
             }
         }
-        for (final String word : blocked) {
+        for (final String word : words.blocked()) {
             if (canonical.contains(word)) {
                 return "名稱含有不雅、歧視或敏感的字，換一個吧";
             }
         }
         // 也看「數字不轉成字母」的寫法（例如 426 這種數字本身就是歧視用語的）
         final String plain = plain(name);
-        for (final String word : blockedPlain) {
+        for (final String word : words.blockedPlain()) {
             if (plain.contains(word)) {
                 return "名稱含有不雅、歧視或敏感的字，換一個吧";
             }
@@ -254,6 +264,6 @@ public final class NameFilter {
 
     /** 給測試：目前的字（比對用的寫法）。 */
     List<String> blockedWords() {
-        return new ArrayList<>(blocked);
+        return new ArrayList<>(words.blocked());
     }
 }

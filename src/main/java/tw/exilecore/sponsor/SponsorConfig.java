@@ -220,6 +220,8 @@ public final class SponsorConfig {
     private int renewalSecond = 5;
     private int renewalThird = 10;
     private String freeBox = "random";
+    /** 2026-10-18：daily_free_box 寫了但沒有這種箱子（當作沒有免費箱；載入時警告一次）。 */
+    private String missingFreeBox = "";
     private long boostPrice = 10;
     private int boostMinutes = 15;
     private int boostMaxMinutes = 240;
@@ -486,6 +488,10 @@ public final class SponsorConfig {
                     Math.max(0, node.integer("pity", 0)), node.string("description", "").trim(), weights));
         }
         boxes = Collections.unmodifiableMap(boxMap);
+        if (!freeBox.isEmpty() && !boxMap.containsKey(freeBox)) {
+            missingFreeBox = freeBox; // 2026-10-18：箱子不存在：當作沒有免費箱（以前每天累積卻永遠開不了）
+            freeBox = "";
+        }
 
         final List<CardItem> cardList = new ArrayList<>();
         for (final YamlNode node : root.list("card_shop")) {
@@ -621,6 +627,7 @@ public final class SponsorConfig {
         renewalSecond = other.renewalSecond;
         renewalThird = other.renewalThird;
         freeBox = other.freeBox;
+        missingFreeBox = other.missingFreeBox;
         boostPrice = other.boostPrice;
         boostMinutes = other.boostMinutes;
         boostMaxMinutes = other.boostMaxMinutes;
@@ -742,6 +749,11 @@ public final class SponsorConfig {
     /** 有月卡每天免費開一次的箱子代號（空字串 = 沒有這個福利）。 */
     public String freeBox() {
         return freeBox;
+    }
+
+    /** 2026-10-18：daily_free_box 寫了卻沒有的箱子代號（空字串 = 沒問題）。 */
+    public String missingFreeBox() {
+        return missingFreeBox;
     }
 
     public long boostPrice() {

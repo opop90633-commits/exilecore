@@ -50,6 +50,7 @@ public final class MarketModule implements Module {
                     plugin.getSLF4JLogger().warn("收入自動入袋失敗（{}）：{}", online.getName(), e.toString());
                 }
             }
+            current.forgetOffline(); // 2026-10-18：下線的人的提示紀錄、常用通貨清掉
         }, 200L, 200L);
     }
 

@@ -43,6 +43,8 @@ public final class LootHud {
 
     private static volatile Map<Character, Glyph> glyphs = Map.of();
     private static volatile Collection<String> texts = List.of();
+    /** 2026-10-18：字數超過上限的警告只說一次。 */
+    private static boolean warnedOverflow;
 
     private LootHud() {
     }
@@ -158,6 +160,13 @@ public final class LootHud {
         }
         final List<Character> list = new ArrayList<>(wanted);
         if (list.size() > MAX_TEXT) {
+            if (!warnedOverflow) {
+                // 2026-10-18：字數超過上限時說一聲（以前默默截掉碼位高的字，角落提示少字）
+                warnedOverflow = true;
+                System.getLogger(LootHud.class.getName()).log(System.Logger.Level.WARNING,
+                        "撿到東西的角落提示：要收 " + list.size() + " 個字，超過上限 " + MAX_TEXT + "，碼位高的 "
+                                + (list.size() - MAX_TEXT) + " 個字畫不出來（從「" + list.get(MAX_TEXT) + "」開始）");
+            }
             list.subList(MAX_TEXT, list.size()).clear();
         }
         // 名稱的字：16 欄的大圖，每格 16×16（顯示 8 格高）

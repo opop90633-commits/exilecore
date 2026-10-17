@@ -126,6 +126,41 @@ public final class MonsterConfig {
     }
 
     public void load(final Path dataFolder) throws IOException {
+        // 2026-10-18：先在一份複本上讀（照舊疊在目前的設定上），成功才換上；以前讀到一半出錯，詞綴等會被清掉一半
+        final MonsterConfig fresh = new MonsterConfig();
+        fresh.copyFrom(this);
+        fresh.parse(dataFolder);
+        copyFrom(fresh);
+    }
+
+    private void copyFrom(final MonsterConfig other) {
+        minLevel = other.minLevel;
+        maxLevel = other.maxLevel;
+        ringSize = other.ringSize;
+        levelPerRing = other.levelPerRing;
+        lifeTable.clear();
+        lifeTable.putAll(other.lifeTable);
+        damageTable.clear();
+        damageTable.putAll(other.damageTable);
+        experienceTable.clear();
+        experienceTable.putAll(other.experienceTable);
+        experienceMultiplier = other.experienceMultiplier;
+        accuracyPerLevel = other.accuracyPerLevel;
+        accuracyBase = other.accuracyBase;
+        evasionPerLevel = other.evasionPerLevel;
+        evasionBase = other.evasionBase;
+        armourPerLevel = other.armourPerLevel;
+        critChance = other.critChance;
+        rarities.clear();
+        rarities.putAll(other.rarities);
+        types.clear();
+        types.putAll(other.types);
+        defaultType = other.defaultType;
+        mods.clear();
+        mods.putAll(other.mods);
+    }
+
+    private void parse(final Path dataFolder) throws IOException {
         final Path file = dataFolder.resolve("monsters.yml");
         if (!Files.exists(file)) {
             return;

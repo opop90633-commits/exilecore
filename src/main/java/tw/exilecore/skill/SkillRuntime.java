@@ -23,6 +23,16 @@ final class SkillRuntime {
         return tw.exilecore.character.SkillLoadout.mouseKey(key) ? QUEUE_TIMEOUT : HOTBAR_QUEUE_TIMEOUT;
     }
 
+    /**
+     * 滑鼠鍵排隊最多等到動作結束（2026-10-17：慢的攻擊（擲雷槍、重錘）一下超過半秒，動作還沒做完就點的那一下
+     * 以前等 10 tick 就被丟掉：客戶端自己揮了手，卻什麼都沒放出去）。最多等 MOUSE_QUEUE_MAX tick。
+     */
+    static final int MOUSE_QUEUE_MAX = 40;
+    /** 這個排隊的按鍵等到哪個 tick（含）。 */
+    long queuedUntil;
+    /** 這次是從排隊放出來的（左鍵的揮手早就做過了，客戶端不會再揮：伺服器補揮）。 */
+    boolean fromQueue;
+
     /** 下一次可以動作的 tick（有小數，見 {@link SkillMath#nextReady}）。 */
     double readyAt = Double.NEGATIVE_INFINITY;
     /** 排隊的按鍵（-1 = 沒有）與想打的目標。 */
@@ -174,6 +184,11 @@ final class SkillRuntime {
         queuedKey = key;
         queuedTarget = target;
         queuedAt = now;
+        final long ready = Double.isFinite(readyAt) ? (long) Math.ceil(readyAt) : now;
+        queuedUntil = now + queueTimeout(key);
+        if (tw.exilecore.character.SkillLoadout.mouseKey(key)) {
+            queuedUntil = Math.max(queuedUntil, Math.min(now + MOUSE_QUEUE_MAX, ready + 1));
+        }
     }
 
     void clearQueue() {
@@ -192,5 +207,13 @@ final class SkillRuntime {
         repeat = null;
         exert = null;
         barrage = null;
+        // 2026-10-18：蓄力、彈匣、封印、引導也清掉（不然上一個角色的蓄力會放出新角色綁在同一鍵的技能）
+        charging = null;
+        releasing = null;
+        ammo.clear();
+        reloadDone.clear();
+        sealSince.clear();
+        channelSkill = null;
+        channelStage = 0;
     }
 }

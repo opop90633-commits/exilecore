@@ -118,7 +118,8 @@ final class ProjectileEngine implements Listener {
     }
 
     /** 還沒射出的後續幾波（連射）。 */
-    private record Volley(UUID owner, SkillBuild build, long atTick, int remaining) {
+    // 2026-10-18：記住整個 Origin，圖騰／陷阱／召喚物放出的後續波次才會照原位置方向射，不是從玩家身上
+    private record Volley(UUID owner, Origin origin, SkillBuild build, long atTick, int remaining) {
     }
 
     private final ExileCore plugin;
@@ -158,7 +159,7 @@ final class ProjectileEngine implements Listener {
         launchVolley(origin, build);
         final SkillParams.Burst burst = build.params().burst();
         if (burst != null && burst.count() > 1) {
-            volleys.add(new Volley(origin.owner().getUniqueId(), build, plugin.getServer().getCurrentTick() + burst.interval(), burst.count() - 1));
+            volleys.add(new Volley(origin.owner().getUniqueId(), origin, build, plugin.getServer().getCurrentTick() + burst.interval(), burst.count() - 1));
         }
     }
 
@@ -251,9 +252,14 @@ final class ProjectileEngine implements Listener {
                 if (owner == null || !owner.isValid() || owner.isDead()) {
                     continue;
                 }
-                launchVolley(Origin.of(owner), volley.build());
+                // 2026-10-18：非本人放出的照原位置方向；原點的世界已卸載或玩家換了世界就不再射（原點實體被打掉時照最後位置射完這串）
+                final Origin from = volley.origin();
+                if (!from.self() && (!from.feet().isWorldLoaded() || !owner.getWorld().equals(from.world()))) {
+                    continue;
+                }
+                launchVolley(from.self() ? Origin.of(owner) : Origin.at(owner, from.feet(), from.direction()), volley.build());
                 if (volley.remaining() > 1) {
-                    volleys.add(new Volley(volley.owner(), volley.build(), now + volley.build().params().burst().interval(), volley.remaining() - 1));
+                    volleys.add(new Volley(volley.owner(), from, volley.build(), now + volley.build().params().burst().interval(), volley.remaining() - 1));
                 }
             }
         }

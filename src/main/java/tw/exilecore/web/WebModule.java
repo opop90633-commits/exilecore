@@ -77,7 +77,10 @@ public final class WebModule implements Module, Listener {
     private volatile byte[] homePage = new byte[0];
     private volatile byte[] shopPage = new byte[0];
     /** 贊助商店的付款（網頁伺服器開著才有）。 */
-    private ShopCheckout checkout;
+    private volatile ShopCheckout checkout; // 2026-10-18：網頁執行緒（/tree/calc 的 clientIp）也會讀
+    /** 2026-10-18：商店開關與商店資料的快照（主執行緒算好；網頁執行緒只讀這個，不碰重讀中的 live config）。 */
+    private volatile boolean shopOn = true;
+    private volatile byte[] shopJson = "{}".getBytes(StandardCharsets.UTF_8);
     private volatile byte[] codexPage = new byte[0];
     private volatile byte[] codexData = "{}".getBytes(StandardCharsets.UTF_8);
     private volatile byte[] economyPage = new byte[0];
@@ -175,6 +178,9 @@ public final class WebModule implements Module, Listener {
         if (checkout != null) {
             checkout.refresh(); // 付款設定的快照（網頁執行緒只讀快照）
         }
+        refreshShopSnapshot();
+        // 2026-10-18：贊助模組可能排在後面才重讀：下一個 tick 再算一次商店資料
+        plugin.getServer().getScheduler().runTask(plugin, this::refreshShopSnapshot);
         final ConfigurationSection web = plugin.getConfig().getConfigurationSection("web");
         bind = web == null ? "" : web.getString("bind", "");
         port = web == null ? 25580 : web.getInt("port", 25580);
@@ -218,7 +224,11 @@ public final class WebModule implements Module, Listener {
         // 2026-10：網頁計算器：技能與輔助清單、送一個角色過來算屬性與每秒傷害
         server.route("/tree/skills.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", plannerSkills,
                 java.util.Map.of("Cache-Control", "no-cache")));
-        final BuildCalc calc = new BuildCalc(plugin);
+        // 2026-10-18：次數限制用跟贊助商店同一套 clientIp（代理後面不會全服共用一個桶）
+        final BuildCalc calc = new BuildCalc(plugin, request -> {
+            final ShopCheckout current = checkout;
+            return current == null ? request.remote() : current.clientIp(request);
+        });
         server.endpoint("/tree/calc", calc::handle, "POST");
         // 市場報告：全服通貨與金幣的產出、消耗、存量、參考價值（只有加總，沒有個人資料）；關掉時整頁 404
         server.route("/economy", path -> economyEnabled ? WebServer.Response.of("text/html; charset=utf-8", economyPage) : null);
@@ -236,10 +246,9 @@ public final class WebModule implements Module, Listener {
         final ShopCheckout checkout = new ShopCheckout(plugin, this::publicUrl);
         checkout.refresh();
         this.checkout = checkout;
+        refreshShopSnapshot();
         server.route("/shop/data.json", path -> shopEnabled() ? new WebServer.Response(200, "application/json; charset=utf-8",
-                ShopData.json(plugin.getConfig().getConfigurationSection("web.shop"), plugin.sponsors() == null ? null : plugin.sponsors().config(),
-                        checkout.ready(), checkout.sandbox()),
-                java.util.Map.of("Cache-Control", "no-cache")) : null);
+                shopJson, java.util.Map.of("Cache-Control", "no-cache")) : null); // 2026-10-18：只讀主執行緒算好的快照
         // 付款（統一金流 PAYUNi）：建立訂單 → PAYUNi 付款頁；背景通知、付款完返回都會驗證後發星幣（同一筆只發一次）
         server.endpoint("/shop/checkout", request -> shopEnabled() ? checkout.checkout(request) : null, "POST");
         server.endpoint("/shop/payuni/notify", checkout::notify, "POST");
@@ -459,7 +468,19 @@ public final class WebModule implements Module, Listener {
     /** 首頁用的狀態：在線人數、有開哪些頁。任何執行緒都可以叫（只讀人數）。 */
     /** 贊助商店頁開著沒（web.shop.enabled，預設開）。 */
     private boolean shopEnabled() {
-        return plugin.getConfig().getBoolean("web.shop.enabled", true);
+        return shopOn; // 2026-10-18：網頁執行緒只讀快照（refreshShopSnapshot）
+    }
+
+    /** 2026-10-18：主執行緒算商店開關與 /shop/data.json（啟動、/ec reload 時）。 */
+    private void refreshShopSnapshot() {
+        shopOn = plugin.getConfig().getBoolean("web.shop.enabled", true);
+        final ShopCheckout current = checkout;
+        try {
+            shopJson = ShopData.json(plugin.getConfig().getConfigurationSection("web.shop"), plugin.sponsors() == null ? null : plugin.sponsors().config(),
+                    current != null && current.ready(), current != null && current.sandbox());
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("贊助商店：商店資料產生失敗（沿用上一份）：{}", e.toString());
+        }
     }
 
     private byte[] statusJson() {

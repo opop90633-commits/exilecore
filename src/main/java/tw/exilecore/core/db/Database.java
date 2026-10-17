@@ -276,7 +276,8 @@ public final class Database implements AutoCloseable {
         service.shutdown();
         try {
             if (!service.awaitTermination(seconds, TimeUnit.SECONDS)) {
-                log.warn("資料庫背景工作 {} 秒內沒做完，可能有存檔遺失", seconds);
+                // 2026-10-18：記下還有幾件沒寫進去（之後關連線池，這些都會失敗）
+                log.warn("資料庫背景工作 {} 秒內沒做完，還有 {} 件沒寫入，可能有存檔遺失", seconds, queued());
             }
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -286,7 +287,7 @@ public final class Database implements AutoCloseable {
 
     @Override
     public void close() {
-        flush(10);
+        flush(45); // 2026-10-18：10 秒太短（MariaDB 關服時慢一點最後一批存檔就沒了）；做完會提早結束，45 秒留在 watchdog 預設 60 秒內
         final HikariDataSource source = this.dataSource;
         if (source != null) {
             source.close();

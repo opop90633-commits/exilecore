@@ -211,6 +211,9 @@ final class StarVouchers implements Listener {
                 if (online != null) {
                     plugin.economy().wallet().dropFor(online, plugin.economy().wallet().give(online, taken));
                     online.sendMessage(plugin.text().prefixed("<red>兌換失敗（資料庫錯誤），券還給你了，等一下再試"));
+                } else {
+                    // 2026-10-18：已經下線，券還不回去：改在資料表上幫他兌換（下次上線照補加星幣的流程加），券才不會消失
+                    redeemOffline(id, uuid, name, 1);
                 }
                 return;
             }
@@ -228,6 +231,41 @@ final class StarVouchers implements Listener {
             plugin.getSLF4JLogger().info("[贊助] {} 兌換星幣券 {}（{} 星幣）", name, id, real);
             if (online != null) {
                 claimCredits(online); // 星幣照資料表加（下線了等下次上線補）
+            }
+        }));
+    }
+
+    /** 重試幾次（每次隔 15 秒）。 */
+    private static final int OFFLINE_REDEEM_TRIES = 5;
+
+    /**
+     * 2026-10-18：兌換時資料庫出錯、人又已經下線（券拿走了還不回去）：在資料表上把券記成他兌換的（credited = 0），
+     * 下次上線 claimCredits 加星幣。條件跟兌換一樣（redeemed_at IS NULL），第一次其實已經寫進去的話什麼都不改。
+     */
+    private void redeemOffline(final String id, final UUID uuid, final String name, final int attempt) {
+        plugin.database().async(connection -> {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "UPDATE star_vouchers SET redeemed_uuid = ?, redeemed_name = ?, redeemed_at = ?, credited = 0 WHERE id = ? AND redeemed_at IS NULL")) {
+                statement.setString(1, uuid.toString());
+                statement.setString(2, name);
+                statement.setTimestamp(3, Timestamp.from(Instant.now()));
+                statement.setString(4, id);
+                return statement.executeUpdate();
+            }
+        }).whenComplete((updated, error) -> plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (error != null) {
+                if (attempt < OFFLINE_REDEEM_TRIES) {
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> redeemOffline(id, uuid, name, attempt + 1), 300L);
+                } else {
+                    plugin.getSLF4JLogger().error("[贊助] 星幣券 {} 兌換失敗、{}（{}）已經下線，重試 {} 次都失敗：券已經從他身上拿走，請手動處理",
+                            id, name, uuid, attempt, error);
+                }
+                return;
+            }
+            plugin.getSLF4JLogger().info("[贊助] {} 兌換星幣券 {} 時下線、資料庫出錯：已改記成他兌換的（下次上線加星幣；更新 {} 筆）", name, id, updated);
+            final Player online = plugin.getServer().getPlayer(uuid);
+            if (online != null && service.loaded(online)) {
+                claimCredits(online); // 這段時間又上線了（登入時的補加已經跑過）
             }
         }));
     }

@@ -120,7 +120,17 @@ public final class DiscordLink {
             boosting.remove(player.getUniqueId());
             return;
         }
-        check(player.getUniqueId(), userId, null);
+        final UUID account = player.getUniqueId();
+        check(account, userId, answer -> {
+            if (answer == null) {
+                // 2026-10-18：登入時問不到 Discord 就先不給（以前沿用上次的 TRUE，取消加成後仍有月卡權益）
+                final Boolean was = boosting.remove(account);
+                final Player online = plugin.getServer().getPlayer(account);
+                if (online != null && Boolean.TRUE.equals(was)) {
+                    changed(online, false);
+                }
+            }
+        });
     }
 
     /** 問 Discord 這個使用者有沒有在加成（背景執行緒），問到了在主執行緒更新；done 收結果（問不到是 null）。 */
@@ -138,9 +148,9 @@ public final class DiscordLink {
             }
             final Boolean answer = value;
             plugin.getServer().getScheduler().runTask(plugin, () -> {
-                if (answer != null) {
+                final Player player = plugin.getServer().getPlayer(account);
+                if (answer != null && player != null) { // 2026-10-18：問到時已經下線就不記
                     final Boolean before = boosting.put(account, answer);
-                    final Player player = plugin.getServer().getPlayer(account);
                     if (player != null && !answer.equals(before) && (before != null || answer)) {
                         changed(player, answer);
                     }

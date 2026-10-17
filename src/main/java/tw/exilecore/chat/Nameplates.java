@@ -161,7 +161,21 @@ public final class Nameplates implements Listener {
         if (player.canSee(plate)) {
             player.hideEntity(plugin, plate); // 2026-10：自己的名牌有時會又看得到（騎馬後退時）：每秒補藏一次
         }
-        final String want = player.isSneaking() ? "" : text;
+        // 2026-10-18：被 hidePlayer（隱身的管理員等）藏起來的人，看不到他的人也不該看到名牌
+        for (final Player viewer : player.getWorld().getPlayers()) {
+            if (viewer == player) {
+                continue;
+            }
+            final boolean hidden = !viewer.canSee(player);
+            if (hidden && viewer.canSee(plate)) {
+                viewer.hideEntity(plugin, plate);
+            } else if (!hidden && !viewer.canSee(plate)) {
+                viewer.showEntity(plugin, plate);
+            }
+        }
+        // 2026-10-18：隱形（藥水等）時字變空，跟潛行一樣看不到
+        final boolean invisible = player.isInvisible() || player.hasPotionEffect(org.bukkit.potion.PotionEffectType.INVISIBILITY);
+        final String want = player.isSneaking() || invisible ? "" : text;
         if (!want.equals(shown.get(player.getUniqueId()))) {
             plate.text(want.isEmpty() ? Component.empty() : plugin.text().parse(want));
             plate.setBackgroundColor(want.isEmpty() ? Color.fromARGB(0, 0, 0, 0) : Color.fromARGB(0x50, 0, 0, 0));

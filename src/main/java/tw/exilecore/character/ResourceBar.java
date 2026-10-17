@@ -83,4 +83,15 @@ public final class ResourceBar {
             player.hideBossBar(bar);
         }
     }
+
+    /** 2026-10-18：插件停用時把每個人的血條收掉（熱重載後不會殘留一條沒人更新的）。 */
+    void hideAll() {
+        for (final Map.Entry<UUID, BossBar> entry : bars.entrySet()) {
+            final Player player = plugin.getServer().getPlayer(entry.getKey());
+            if (player != null) {
+                player.hideBossBar(entry.getValue());
+            }
+        }
+        bars.clear();
+    }
 }

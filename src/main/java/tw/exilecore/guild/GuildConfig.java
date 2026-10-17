@@ -193,7 +193,7 @@ public final class GuildConfig {
         }
 
         final YamlNode stash = root.node("stash");
-        stashBasePages = Math.max(0, Math.min(20, stash.integer("pages", stashBasePages)));
+        stashBasePages = Math.max(1, Math.min(20, stash.integer("pages", stashBasePages))); // 2026-10-18：下限 0 → 1（0 頁時打開倉庫 IndexOutOfBounds）
         if (stash.has("page_levels")) {
             stashPageLevels.clear();
             for (final String text : stash.strings("page_levels")) {

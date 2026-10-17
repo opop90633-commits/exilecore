@@ -90,6 +90,7 @@ public final class Signatures {
             }
         }
         lastStandUntil.values().removeIf(until -> until < now);
+        lastStandReady.values().removeIf(ready -> ready <= now); // 2026-10-18：下線不清了，冷卻過了在這裡清
         voidStepUntil.values().removeIf(until -> until < now);
         sacrificeUntil.values().removeIf(until -> until < now);
     }
@@ -298,7 +299,7 @@ public final class Signatures {
 
     public void forget(final UUID player) {
         lastStandUntil.remove(player);
-        lastStandReady.remove(player);
+        // 2026-10-18：背水的冷卻（伺服器 tick 的絕對時間）下線不清，重新登入不能馬上再觸發；過期的在 tick 裡清
         voidStepUntil.remove(player);
         sacrificeUntil.remove(player);
         thunderSoulAt.remove(player);

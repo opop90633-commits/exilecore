@@ -322,25 +322,25 @@ public final class CharacterRepository {
     }
 
     public void updateCharacter(final Connection connection, final CharacterRecord record) throws SQLException {
+        // 2026-10-18：不寫 name（名字只由 renameCharacter 寫；以前排在改名前面的舊存檔會把名字蓋回去）
         try (PreparedStatement statement = connection.prepareStatement(
-                "UPDATE characters SET name = ?, char_level = ?, experience = ?, bonus_points = ?, refund_points = ?, deaths = ?, "
+                "UPDATE characters SET char_level = ?, experience = ?, bonus_points = ?, refund_points = ?, deaths = ?, "
                         + "playtime_seconds = ?, life = ?, mana = ?, energy_shield = ?, last_zone = ?, updated_at = ?, "
                         + "loot_filter = ?, class_id = ? WHERE id = ?")) {
-            statement.setString(1, record.name());
-            statement.setInt(2, record.level());
-            statement.setLong(3, record.experience());
-            statement.setInt(4, record.bonusPoints());
-            statement.setInt(5, record.refundPoints());
-            statement.setInt(6, record.deaths());
-            statement.setLong(7, record.playtimeSeconds());
-            statement.setDouble(8, record.life());
-            statement.setDouble(9, record.mana());
-            statement.setDouble(10, record.energyShield());
-            statement.setString(11, record.lastZone());
-            statement.setTimestamp(12, now());
-            statement.setString(13, record.lootFilter());
-            statement.setString(14, record.characterClass().id()); // 混沌術士選了元素法師之後，平常的存檔也帶著職業
-            statement.setLong(15, record.id());
+            statement.setInt(1, record.level());
+            statement.setLong(2, record.experience());
+            statement.setInt(3, record.bonusPoints());
+            statement.setInt(4, record.refundPoints());
+            statement.setInt(5, record.deaths());
+            statement.setLong(6, record.playtimeSeconds());
+            statement.setDouble(7, record.life());
+            statement.setDouble(8, record.mana());
+            statement.setDouble(9, record.energyShield());
+            statement.setString(10, record.lastZone());
+            statement.setTimestamp(11, now());
+            statement.setString(12, record.lootFilter());
+            statement.setString(13, record.characterClass().id()); // 混沌術士選了元素法師之後，平常的存檔也帶著職業
+            statement.setLong(14, record.id());
             statement.executeUpdate();
         }
     }

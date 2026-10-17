@@ -761,6 +761,12 @@ public final class MarketService {
         }
     }
 
+    /** 2026-10-18：下線的人的「背包滿了」提示紀錄與常用通貨清掉（以前一直累積）；MarketModule 每 10 秒叫一次。 */
+    void forgetOffline() {
+        warnedFull.removeIf(uuid -> plugin.getServer().getPlayer(uuid) == null);
+        recentCurrencies.keySet().removeIf(uuid -> plugin.getServer().getPlayer(uuid) == null);
+    }
+
     List<String> recent(final UUID account) {
         final java.util.Deque<String> list = recentCurrencies.get(account);
         return list == null ? List.of() : List.copyOf(list);

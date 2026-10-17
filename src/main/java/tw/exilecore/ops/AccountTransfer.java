@@ -247,13 +247,27 @@ public final class AccountTransfer {
         return readPending(plugin.dataFolder());
     }
 
-    /** 取消第 index 筆（從 0 算）；回傳取消的那一筆（沒有這筆回傳 null）。 */
-    public synchronized Pending cancel(final int index) throws IOException {
+    /**
+     * 取消一筆；回傳取消的那一筆（沒有這筆回傳 null）。
+     * 2026-10-18：給了 from/to（UUID）就照內容找（清單變動後索引可能指到別筆）；沒給才用第 index 筆（從 0 算）。
+     */
+    public synchronized Pending cancel(final int index, final String from, final String to) throws IOException {
         final List<Pending> list = new ArrayList<>(pending());
-        if (index < 0 || index >= list.size()) {
+        int at = -1;
+        if (from != null && to != null) {
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).from().equalsIgnoreCase(from) && list.get(i).to().equalsIgnoreCase(to)) {
+                    at = i;
+                    break;
+                }
+            }
+        } else {
+            at = index;
+        }
+        if (at < 0 || at >= list.size()) {
             return null;
         }
-        final Pending removed = list.remove(index);
+        final Pending removed = list.remove(at);
         final Path file = plugin.dataFolder().resolve(PENDING_FILE);
         if (list.isEmpty()) {
             Files.deleteIfExists(file);
@@ -606,7 +620,11 @@ public final class AccountTransfer {
         try (Stream<Path> walk = Files.walk(root, 3)) {
             final List<Path> folders = walk.filter(Files::isDirectory).filter(path -> {
                 final String name = path.getFileName().toString();
-                return name.equals("playerdata") || name.equals("advancements") || name.equals("stats");
+                // 2026-10-18：比照 WipeService，新版存檔格式的 players/data、players/advancements、players/stats 也要搬
+                final String parent = path.getParent() == null || path.getParent().getFileName() == null ? ""
+                        : path.getParent().getFileName().toString();
+                return name.equals("playerdata") || name.equals("advancements") || name.equals("stats")
+                        || parent.equals("players") && (name.equals("data") || name.equals("advancements") || name.equals("stats"));
             }).toList();
             for (final Path folder : folders) {
                 try (Stream<Path> files = Files.list(folder)) {

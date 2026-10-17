@@ -36,7 +36,7 @@ public final class LadderModule implements Module {
     public void enable() {
         service = new LadderService(plugin);
         service.refresh();
-        task = plugin.repeat("ladder", service::tick, 200, 200); // 每 10 秒看一次要不要重讀（到了一分鐘才真的讀）
+        task = plugin.repeat("ladder", service::tick, 40, 40); // 2026-10-18：每 2 秒更新網頁用的在線快照；重讀仍是到了一分鐘才真的讀
     }
 
     @Override

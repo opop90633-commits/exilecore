@@ -92,23 +92,25 @@ public final class ZoneConfig {
     }
 
     public void load(final Path dataFolder) throws IOException {
-        zones.clear();
-        spawner = defaultSpawner();
-        fatigue = ZoneFatigue.Settings.defaults();
         final Path file = dataFolder.resolve("zones.yml");
         if (!Files.exists(file)) {
+            zones.clear();
+            spawner = defaultSpawner();
+            fatigue = ZoneFatigue.Settings.defaults();
             return;
         }
+        // 2026-10-18：先解析到區域變數，全部成功才換上（原本先清空，解析失敗會留下殘缺設定）
         final YamlNode root = YamlNode.load(file);
+        final Map<String, ZoneDefinition> parsedZones = new LinkedHashMap<>();
         final YamlNode zonesNode = root.node("zones");
         for (final String id : zonesNode.keys()) {
-            zones.put(id, parseZone(id, zonesNode.node(id)));
+            parsedZones.put(id, parseZone(id, zonesNode.node(id)));
         }
 
         final YamlNode spawnerNode = root.node("spawner");
         final int[] distance = spawnerNode.has("distance") ? spawnerNode.range("distance") : new int[] {16, 28};
         final YamlNode packs = spawnerNode.node("packs");
-        spawner = new SpawnerSettings(
+        final SpawnerSettings parsedSpawner = new SpawnerSettings(
                 Math.max(10, spawnerNode.integer("interval_ticks", 40)),
                 Math.max(4, Math.min(distance[0], distance[1])), Math.max(6, Math.max(distance[0], distance[1])),
                 Math.max(1, spawnerNode.integer("max_nearby", 14)),
@@ -119,7 +121,7 @@ public final class ZoneConfig {
                 parsePack(packs.node("rare"), "minions", new PackSettings(6, 2, 3)));
 
         final YamlNode bossNode = root.node("boss");
-        boss = new BossSettings(
+        final BossSettings parsedBoss = new BossSettings(
                 Math.max(4, bossNode.decimal("radius", 20)),
                 Math.max(0, bossNode.integer("respawn_seconds", 90)),
                 Math.max(5, bossNode.integer("reset_seconds", 60)),
@@ -131,10 +133,15 @@ public final class ZoneConfig {
         if (floor < 0 || floor > 1) {
             throw new IllegalArgumentException(fatigueNode.path() + ".floor：要在 0 到 1 之間");
         }
-        fatigue = new ZoneFatigue.Settings(fatigueNode.bool("enabled", defaults.enabled()),
+        final ZoneFatigue.Settings parsedFatigue = new ZoneFatigue.Settings(fatigueNode.bool("enabled", defaults.enabled()),
                 Math.max(0, fatigueNode.decimal("free", defaults.free())), Math.max(0, fatigueNode.decimal("span", defaults.span())), floor,
                 Math.max(0, fatigueNode.decimal("recover_per_minute", defaults.recoverPerMinute())),
                 Math.max(0, fatigueNode.decimal("boss_weight", defaults.bossWeight())));
+        zones.clear();
+        zones.putAll(parsedZones);
+        spawner = parsedSpawner;
+        boss = parsedBoss;
+        fatigue = parsedFatigue;
     }
 
     private static ZoneDefinition parseZone(final String id, final YamlNode node) {

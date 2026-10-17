@@ -262,13 +262,33 @@ public final class ZoneAdminCommand {
                 box.maxX() - box.minX() + 1, box.maxZ() - box.minZ() + 1));
     }
 
+    /**
+     * 2026-10-18：版面只存一個世界名稱（範圍所在的世界），別的世界設的點重載後會被搬過去，所以不同世界直接拒絕。
+     * 回傳 true 表示世界不同、已經提示過。
+     */
+    private static boolean wrongWorld(final ExileCore plugin, final Player player, final Zone zone) {
+        final ZoneLayout.Entry entry = plugin.zones().layout().get(zone.id());
+        if (entry == null || entry.box() == null || entry.box().world().equals(player.getWorld().getName())) {
+            return false;
+        }
+        player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(zone.name()) + " 的範圍在世界 "
+                + ItemRenderer.escape(entry.box().world()) + "，落點／檢查點／Boss 場地要設在同一個世界"));
+        return true;
+    }
+
     private static void entry(final ExileCore plugin, final Player player, final Zone zone) {
+        if (wrongWorld(plugin, player, zone)) {
+            return;
+        }
         plugin.zones().layout().getOrCreate(zone.id()).setEntry(ZoneService.toPoint(player.getLocation()));
         saved(plugin, player, "<green>" + ItemRenderer.escape(zone.name()) + " 的落點設在 " + format(player.getLocation())
                 + (zone.town() ? "（回城、新角色、死亡沒有重生點時都到這裡）" : ""));
     }
 
     private static void arena(final ExileCore plugin, final Player player, final Zone zone) {
+        if (wrongWorld(plugin, player, zone)) {
+            return;
+        }
         plugin.zones().layout().getOrCreate(zone.id()).setArena(ZoneService.toPoint(player.getLocation()));
         saved(plugin, player, "<green>" + ItemRenderer.escape(zone.name()) + " 的 Boss 場地設在 " + format(player.getLocation())
                 + "（等級在這裡最高）");
@@ -277,6 +297,9 @@ public final class ZoneAdminCommand {
     private static void checkpointAdd(final ExileCore plugin, final Player player, final Zone zone, final String id, final String name) {
         if (!id.matches("[a-z0-9_]{1,24}")) {
             player.sendMessage(plugin.text().prefixed("<red>代號只能用小寫英文、數字、底線（最多 24 個字）"));
+            return;
+        }
+        if (wrongWorld(plugin, player, zone)) {
             return;
         }
         final ZoneLayout.Entry entry = plugin.zones().layout().getOrCreate(zone.id());

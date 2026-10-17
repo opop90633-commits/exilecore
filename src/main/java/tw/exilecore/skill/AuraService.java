@@ -354,11 +354,13 @@ final class AuraService implements Listener {
     /** 開關或數值變了：存進角色進度、屬性表重算、魔力夾在新的上限內。 */
     private void afterChange(final Player player) {
         final Map<String, Active> mine = active.getOrDefault(player.getUniqueId(), new LinkedHashMap<>());
-        if (plugin.characters() != null) {
-            plugin.characters().setProgress(player, PROGRESS_KEY, String.join(",", mine.keySet()));
+        final PlayerState state = plugin.players().get(player);
+        final String opened = String.join(",", mine.keySet());
+        // 2026-10-18：開著的光環沒變就不寫資料庫（精魂不夠時每 2 秒重試一次，不然每次都寫一筆）
+        if (plugin.characters() != null && !opened.equals(state.progress().get(PROGRESS_KEY))) {
+            plugin.characters().setProgress(player, PROGRESS_KEY, opened);
         }
         plugin.players().markDirty(player);
-        final PlayerState state = plugin.players().get(player);
         plugin.players().sheet(player); // 重算（也把魔力夾進新的上限）
         plugin.players().display(player, state);
     }

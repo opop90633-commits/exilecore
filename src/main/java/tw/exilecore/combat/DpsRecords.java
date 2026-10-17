@@ -202,6 +202,25 @@ public final class DpsRecords {
     // ---- 管理網頁 ----
 
     /**
+     * 打這隻假人的每秒傷害換成打「訓練假人・一般」的倍率（2026-10-17）：兩隻的 boss_factor 相除
+     * （無防禦 0.55 ÷ 一般 0.6 ≈ 0.92）。對不到假人、沒有訓練模組時是 1。
+     */
+    private double normalFactor(final String target) {
+        if (plugin.training() == null || target == null) {
+            return 1;
+        }
+        final tw.exilecore.training.DummyConfig config = plugin.training().dummyConfig();
+        final tw.exilecore.training.DummyConfig.Dummy normal = config.dummy("normal");
+        final double base = normal == null ? tw.exilecore.training.DummyConfig.DEFAULT_BOSS_FACTOR : normal.bossFactor();
+        for (final tw.exilecore.training.DummyConfig.Dummy dummy : config.dummies()) {
+            if (target.startsWith(dummy.name())) {
+                return base <= 0 ? 1 : dummy.bossFactor() / base;
+            }
+        }
+        return 1;
+    }
+
+    /**
      * 最近的紀錄與每個人的平均。days = 只看最近幾天（0 = 全部）。
      * 平均每秒傷害 = 總傷害 ÷ 總秒數（打得久的場次比重大；只打一下就倒的不會拉高）。
      */
@@ -209,7 +228,8 @@ public final class DpsRecords {
         final long since = days <= 0 ? 0 : System.currentTimeMillis() - days * 86_400_000L;
         final JsonArray rows = new JsonArray();
         final Map<String, double[]> boss = new LinkedHashMap<>();   // uuid → {傷害, 秒數, 場數, 最高每秒}
-        final Map<String, double[]> dummy = new HashMap<>();        // uuid → {最近的每秒, 最高的每秒, 次數}
+        final Map<String, double[]> dummy = new HashMap<>();        // uuid → {最近的每秒, 最高的每秒, 次數}（換算成一般靶）
+        final Map<String, Entry> dummyBest = new HashMap<>();       // uuid → 換算後最高的那一筆
         final Map<String, Entry> latest = new HashMap<>();
         final List<Entry> list;
         synchronized (entries) {
@@ -220,8 +240,13 @@ public final class DpsRecords {
             if (entry.at() < since) {
                 continue;
             }
+            final double normal = "boss".equals(entry.kind()) ? entry.dps() : entry.dps() * normalFactor(entry.target());
             if (rows.size() < 2000) {
-                rows.add(GSON.toJsonTree(entry));
+                final JsonObject json = GSON.toJsonTree(entry).getAsJsonObject();
+                if (!"boss".equals(entry.kind())) {
+                    json.addProperty("normal", Math.round(normal)); // 2026-10-17：換算成一般靶（網頁的排序、「一般靶」括號）
+                }
+                rows.add(json);
             }
             latest.putIfAbsent(entry.uuid(), entry);
             if ("boss".equals(entry.kind())) {
@@ -231,8 +256,11 @@ public final class DpsRecords {
                 sum[2]++;
                 sum[3] = Math.max(sum[3], entry.dps());
             } else {
-                final double[] sum = dummy.computeIfAbsent(entry.uuid(), key -> new double[] {entry.dps(), 0, 0});
-                sum[1] = Math.max(sum[1], entry.dps());
+                final double[] sum = dummy.computeIfAbsent(entry.uuid(), key -> new double[] {normal, 0, 0});
+                if (normal > sum[1]) {
+                    sum[1] = normal;
+                    dummyBest.put(entry.uuid(), entry);
+                }
                 sum[2]++;
             }
         }
@@ -240,6 +268,7 @@ public final class DpsRecords {
         for (final Map.Entry<String, Entry> each : latest.entrySet()) {
             final Entry last = each.getValue();
             final JsonObject row = new JsonObject();
+            row.addProperty("uuid", each.getKey()); // 2026-10-17：網頁用 uuid 把假人的欄位對到人（以前沒給，假人欄全擠成一個人）
             row.addProperty("player", last.player());
             row.addProperty("character", last.character());
             row.addProperty("className", last.className());
@@ -255,6 +284,13 @@ public final class DpsRecords {
                 row.addProperty("dummyLast", Math.round(d[0]));
                 row.addProperty("dummyBest", Math.round(d[1]));
                 row.addProperty("dummyCount", (int) d[2]);
+                final Entry best = dummyBest.get(each.getKey());
+                if (best != null) {
+                    row.addProperty("dummyBestRaw", Math.round(best.dps()));
+                    row.addProperty("dummyBestTarget", best.target());
+                    row.addProperty("dummyBestCharacter", best.character());
+                    row.addProperty("dummyBestAt", best.at());
+                }
             }
             players.add(row);
         }

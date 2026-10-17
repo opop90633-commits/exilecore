@@ -37,6 +37,8 @@ public final class MapInstance {
     private final long createdTick;
     private State state = State.BUILDING;
     private int portalsLeft;
+    // 2026-10-18：開圖時的門數（關服退費要知道門用過了沒）
+    private final int portalsTotal;
     private long lastOccupiedTick;
     private long emptySinceTick = -1;
     /** 在裡面的玩家（最後一次檢查時）。 */
@@ -135,6 +137,7 @@ public final class MapInstance {
         this.owner = owner;
         this.ownerName = ownerName;
         this.portalsLeft = portals;
+        this.portalsTotal = portals;
         this.createdTick = now;
         this.lastOccupiedTick = now;
         this.packSpawned = new boolean[layout.packSpots().size()];
@@ -201,6 +204,11 @@ public final class MapInstance {
 
     public int portalsLeft() {
         return portalsLeft;
+    }
+
+    /** 2026-10-18：一道門都還沒用掉（關服退費用：打輸過一門就不退）。 */
+    public boolean portalsUntouched() {
+        return portalsLeft == portalsTotal;
     }
 
     void usePortal() {

@@ -601,12 +601,22 @@ final class AdminWeb {
         final Map<String, Object> limits = new LinkedHashMap<>();
         for (final String kind : List.of(DeliveryService.CURRENCY, DeliveryService.GOLD, DeliveryService.MERITS, DeliveryService.SPONSOR, DeliveryService.COSMETIC, DeliveryService.REFUND,
                 DeliveryService.ITEM, DeliveryService.UNIQUE, DeliveryService.GEM, DeliveryService.FLASK, DeliveryService.MAP,
-                DeliveryService.TAKE_SPONSOR, DeliveryService.TAKE_CURRENCY, DeliveryService.TAKE_GOLD, DeliveryService.TAKE_ITEM)) {
+                DeliveryService.TAKE_SPONSOR, DeliveryService.TAKE_CURRENCY, DeliveryService.TAKE_GOLD, DeliveryService.TAKE_ITEM,
+                DeliveryService.LIFE, DeliveryService.TAKE_LIFE, DeliveryService.TAKE_MERITS, DeliveryService.TAKE_REFUND, DeliveryService.TAKE_COSMETIC)) {
             limits.put(kind, DeliveryService.maxAmount(kind));
         }
         catalog.put("limits", limits);
         catalog.put("hasMerits", plugin.bounties() != null);
         catalog.put("hasSponsor", plugin.sponsors() != null);
+        // 2026-10-18：生活（材料、筏的方塊與設施、料理、深淵號角）
+        final List<Map<String, Object>> life = new ArrayList<>();
+        if (plugin.life() != null) {
+            for (final String[] choice : plugin.life().adminChoices()) {
+                life.add(choice(choice[0], choice[1]));
+            }
+        }
+        catalog.put("life", life);
+        catalog.put("hasLife", plugin.life() != null);
         // 2026-10：時裝（整組的排前面；限定的標出來源）
         final List<Map<String, Object>> cosmetics = new ArrayList<>();
         if (plugin.sponsors() != null) {
@@ -1448,10 +1458,29 @@ final class AdminWeb {
         return Map.of("ok", true, "message", "排好了：" + pending.fromName() + " → " + pending.toName() + "。重新啟動伺服器時才會轉移（開機先自動備份）");
     }
 
+    /** 2026-10-18：是不是合法的 UUID 字串。 */
+    private static boolean uuidText(final String text) {
+        if (text == null || text.isBlank()) {
+            return false;
+        }
+        try {
+            java.util.UUID.fromString(text.trim());
+            return true;
+        } catch (final IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     /** 取消一筆排著的轉移。 */
     private Object transferCancel(final AdminAuth.Session session, final JsonObject body) throws Exception {
         final int index = (int) number(body, "index", -1);
-        final tw.exilecore.ops.AccountTransfer.Pending removed = transfers().cancel(index);
+        // 2026-10-18：有送 fromUuid/toUuid（清單裡的那兩欄）就照內容比對，不只靠索引（清單變動後可能取消到別筆）；
+        // 不是合法的 UUID（例如送成名字）就照舊用索引
+        final String from = optionalString(body, "fromUuid");
+        final String to = optionalString(body, "toUuid");
+        final boolean byContent = uuidText(from) && uuidText(to);
+        final tw.exilecore.ops.AccountTransfer.Pending removed = transfers().cancel(index,
+                byContent ? from.trim() : null, byContent ? to.trim() : null);
         if (removed == null) {
             throw new IllegalArgumentException("沒有這一筆（可能已經被取消了，重新整理看看）");
         }

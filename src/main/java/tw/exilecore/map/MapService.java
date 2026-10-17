@@ -165,7 +165,7 @@ public final class MapService {
         try {
             eventConfig.load(plugin.dataFolder().resolve("data"));
         } catch (final Exception e) {
-            plugin.getSLF4JLogger().error("map_events.yml 讀取失敗，地圖事件照預設", e);
+            plugin.getSLF4JLogger().error("map_events.yml 讀取失敗，地圖事件照原本的設定", e); // 2026-10-18：load 改成成功才換上，舊的設定留著
         }
     }
 
@@ -261,7 +261,9 @@ public final class MapService {
         spectators.endAll(); // 2026-10-17：觀戰的人先改回原本的模式（以前重開後會卡在旁觀模式）
         for (final MapInstance instance : List.copyOf(instances.values())) {
             // 2026-10-17：重開時還沒打完的終局、極境、巔峰、金庫之主（花碎片、鑰匙開的）：退回開門用掉的東西
-            if ((instance.usesAttempts() || instance.singleEntry()) && !instance.bossKilled() && instance.state() != MapInstance.State.CLOSING) {
+            // 2026-10-18：門用掉過（打輸過一門）就不退；也不退「進去過但已經沒人在裡面」的（以前打輸後遇到重開就全額退，等於免費重打）
+            if ((instance.usesAttempts() || instance.singleEntry()) && !instance.bossKilled() && instance.state() != MapInstance.State.CLOSING
+                    && instance.portalsUntouched() && (instance.visitors().isEmpty() || !instance.inside().isEmpty())) {
                 instance.refundPaid();
             }
             for (final UUID uuid : Set.copyOf(instance.inside())) {

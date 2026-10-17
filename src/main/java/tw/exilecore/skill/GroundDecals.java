@@ -20,12 +20,9 @@ import tw.exilecore.ExileCore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 
 /**
  * 常駐的地面圈（2026-10，減少粒子）：光環、焚燒光環、怪物的光環詞綴、裂隙、祭壇這些「一直在的圈」，
@@ -58,7 +55,6 @@ public final class GroundDecals {
         double size;
         double angle;
         boolean spin;
-        final Set<UUID> viewers = new HashSet<>();
     }
 
     private final ExileCore plugin;
@@ -248,7 +244,8 @@ public final class GroundDecals {
         final World world = decal.display.getWorld();
         final Location at = decal.display.getLocation();
         for (final Player player : world.getPlayers()) {
-            if (player.getLocation().distanceSquared(at) <= VIEW * VIEW && marked(player) && decal.viewers.add(player.getUniqueId())) {
+            // 2026-10-18：用 canSee 判斷（重新登入後 showEntity 的狀態不在了，記 UUID 會讓重登的人永遠看不到）
+            if (player.getLocation().distanceSquared(at) <= VIEW * VIEW && marked(player) && !player.canSee(decal.display)) {
                 player.showEntity(plugin, decal.display);
             }
         }

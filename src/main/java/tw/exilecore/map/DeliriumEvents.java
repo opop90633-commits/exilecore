@@ -157,7 +157,8 @@ final class DeliriumEvents implements Listener {
     private void tickFog(final Fog fog, final long now) {
         final MapEventConfig.Delirium settings = config.delirium();
         final Location mirror = fog.mirror;
-        if (!mirror.getWorld().isChunkLoaded(mirror.getBlockX() >> 4, mirror.getBlockZ() >> 4)) {
+        // 2026-10-18：只有開始前（鏡子的標籤、粒子、碰觸）要鏡子的區塊；開始後霧跟著人走，往遠處打也要照常計時、刷怪、結算
+        if (!fog.started && !mirror.getWorld().isChunkLoaded(mirror.getBlockX() >> 4, mirror.getBlockZ() >> 4)) {
             return;
         }
         final List<Player> players = players(fog.instance);

@@ -138,10 +138,13 @@ class CharacterConfigTest {
     @Test
     void serverWideExperienceBonus(@org.junit.jupiter.api.io.TempDir final Path dir) throws IOException {
         assertEquals(2.0, config.experienceBonus(), 1e-12, "出貨的 character.yml：全服經驗 ×2");
-        assertEquals("×2", config.experienceBonusText());
-        assertEquals("×1.5", CharacterConfig.bonusText(1.5));
-        assertEquals("×1.25", CharacterConfig.bonusText(1.25));
-        assertEquals("×3", CharacterConfig.bonusText(3.0));
+        assertEquals("+100%", config.experienceBonusText()); // 2026-10-18：倍數改顯示成 %
+        assertEquals("+50%", CharacterConfig.bonusText(1.5));
+        assertEquals("+25%", CharacterConfig.bonusText(1.25));
+        assertEquals("+200%", CharacterConfig.bonusText(3.0));
+        assertEquals("+110%", CharacterConfig.percentText(2.1));
+        assertEquals("+221%", CharacterConfig.percentText(3.21));
+        assertEquals("-20%", CharacterConfig.percentText(0.8));
         assertEquals(null, CharacterConfig.bonusText(1.0), "沒加倍不寫");
         // 舊的 character.yml（沒有這一行）：不加倍
         java.nio.file.Files.writeString(dir.resolve("character.yml"), "level_cap: 100\n");

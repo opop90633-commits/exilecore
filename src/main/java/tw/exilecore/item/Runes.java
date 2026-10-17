@@ -88,7 +88,30 @@ public final class Runes {
         return list;
     }
 
-    /** 嵌著的符文給的修飾器。 */
+    /** 嵌在武器上、改武器自己數值的符文修飾器（2026-10-17，LocalMods 用；已乘上傳奇的符文效果增加）。 */
+    static List<Modifier> weaponLocal(final ItemRepository repository, final ItemBase base, final ItemData data) {
+        if (data.runes().isEmpty() || base == null || !base.isWeapon()) {
+            return List.of();
+        }
+        final List<Modifier> list = new ArrayList<>();
+        final double effect = 1 + (data.unique() == null ? 0 : repository.uniqueRuneEffect(data.unique()));
+        for (final String id : data.runes()) {
+            final Rune rune = repository.rune(id);
+            if (rune == null) {
+                continue;
+            }
+            for (final Line line : rune.weapon()) {
+                if (LocalMods.isWeaponLocal(line.mod())) {
+                    final Modifier modifier = line.mod().toModifier(Map.of(), "符文 " + rune.name());
+                    list.add(effect == 1 ? modifier
+                            : new Modifier(modifier.stat(), modifier.type(), modifier.value() * effect, modifier.tags(), modifier.source()));
+                }
+            }
+        }
+        return list;
+    }
+
+    /** 嵌著的符文給的修飾器（武器本地的不算，見 {@link #weaponLocal}）。 */
     static List<Modifier> modifiers(final ItemRepository repository, final ItemBase base, final ItemData data) {
         if (data.runes().isEmpty()) {
             return List.of();
@@ -101,6 +124,9 @@ public final class Runes {
                 continue;
             }
             for (final Line line : rune.on(base)) {
+                if (base.isWeapon() && LocalMods.isWeaponLocal(line.mod())) {
+                    continue; // 2026-10-17：武器本地的（增加 x% 物理傷害、攻擊速度）算進武器面板（LocalMods）
+                }
                 final Modifier modifier = line.mod().toModifier(Map.of(), "符文 " + rune.name());
                 list.add(effect == 1 ? modifier
                         : new Modifier(modifier.stat(), modifier.type(), modifier.value() * effect, modifier.tags(), modifier.source()));

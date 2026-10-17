@@ -76,7 +76,8 @@ final class PackSpawner {
     /** 移除所有區域怪物（/ec zone clear、模組停用）。回傳移除幾隻。 */
     int removeAll() {
         int count = 0;
-        for (final LivingEntity entity : alive.values()) {
+        // 2026-10-18：走訪複本——remove() 同步觸發移除事件會 forget() 改到同一張 HashMap（CME）
+        for (final LivingEntity entity : java.util.List.copyOf(alive.values())) {
             if (entity.isValid()) {
                 entity.remove();
                 count++;

@@ -64,8 +64,11 @@ public final class GuildRepository {
             }
             if (chief == null) {
                 for (final MemberRow member : members) {
-                    if (chief == null || member.rank() > chief.rank()
-                            || member.rank() == chief.rank() && member.joinedAt() < chief.joinedAt()) {
+                    // 2026-10-18：比權限高低（power），不是存檔代號（副會長代號 3 會壓過會長 2）
+                    final int power = GuildRank.of(member.rank()).power();
+                    final int best = chief == null ? -1 : GuildRank.of(chief.rank()).power();
+                    if (chief == null || power > best
+                            || power == best && member.joinedAt() < chief.joinedAt()) {
                         chief = member;
                     }
                 }

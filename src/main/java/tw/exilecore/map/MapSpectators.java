@@ -159,8 +159,12 @@ public final class MapSpectators implements Listener {
             }
         }
         // 剛死還沒按重生的隊友也算（等他重生變觀戰）
-        for (final UUID uuid : pending.keySet()) {
-            final Player player = plugin.getServer().getPlayer(uuid);
+        for (final Map.Entry<UUID, Watch> entry : pending.entrySet()) {
+            // 2026-10-18：只算同一個實例的（以前別的實例有人在死亡畫面，所有觀戰的人都不會被送回去）
+            if (entry.getValue().instanceId() != instance.id() || !entry.getValue().token().equals(instance.token())) {
+                continue;
+            }
+            final Player player = plugin.getServer().getPlayer(entry.getKey());
             if (player != null && player.isDead()) {
                 return true;
             }

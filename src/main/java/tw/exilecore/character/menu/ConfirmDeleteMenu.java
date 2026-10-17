@@ -12,8 +12,14 @@ import tw.exilecore.item.ItemRenderer;
 /** 刪除角色的確認。 */
 public final class ConfirmDeleteMenu extends Menu {
 
-    private static final int SLOT_CONFIRM = 11;
-    private static final int SLOT_CANCEL = 15;
+    // 2026-10-18：確認／取消放第一列（角色選擇的角色格只會在第二列以下：3 格排 11/13/15、更多格排滿 9–44），
+    // 對角色連點右鍵時第二下不會剛好落在「確定刪除」
+    private static final int SLOT_CONFIRM = 2;
+    private static final int SLOT_CANCEL = 6;
+    /** 2026-10-18：剛打開多久內不接受「確定刪除」（從角色選擇連點過來的那一下不算）。 */
+    private static final long OPEN_GRACE_MILLIS = 500;
+
+    private final long openedMillis = System.currentTimeMillis();
 
     private final CharacterRecord record;
 
@@ -37,7 +43,13 @@ public final class ConfirmDeleteMenu extends Menu {
 
     @Override
     protected void onClick(final int slot, final ClickType click, final InventoryClickEvent event) {
+        if (!acceptAction(click)) {
+            return; // 2026-10-18：擋連點
+        }
         if (slot == SLOT_CONFIRM) {
+            if (System.currentTimeMillis() - openedMillis < OPEN_GRACE_MILLIS) {
+                return; // 2026-10-18：剛打開就點到的不算
+            }
             player.closeInventory();
             plugin.characters().delete(player, record.id(),
                     error -> player.sendMessage(plugin.text().prefixed("<red>" + error)));

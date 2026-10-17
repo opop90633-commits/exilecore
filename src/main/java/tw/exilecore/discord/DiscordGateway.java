@@ -125,10 +125,15 @@ final class DiscordGateway {
         }
     }
 
-    private void send(final JsonObject payload) {
+    /** 2026-10-18：上一筆送出的進度（WebSocket 同一時間只能送一筆：心跳與 IDENTIFY 同時送，第二筆會被拒絕）。 */
+    private java.util.concurrent.CompletableFuture<WebSocket> sending = java.util.concurrent.CompletableFuture.completedFuture(null);
+
+    private synchronized void send(final JsonObject payload) {
         final WebSocket current = socket;
         if (current != null) {
-            current.sendText(payload.toString(), true);
+            final String text = payload.toString();
+            // 2026-10-18：接在上一筆後面依序送（上一筆失敗也照送這一筆）
+            sending = sending.exceptionally(error -> null).thenCompose(ignored -> current.sendText(text, true));
         }
     }
 

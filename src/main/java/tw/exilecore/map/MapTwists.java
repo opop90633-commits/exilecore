@@ -208,6 +208,8 @@ final class MapTwists implements Listener {
         long nextReinforce;
         final List<LivingEntity> reinforcements = new ArrayList<>();
         UUID twin;
+        // 2026-10-18：分身被打死過就不再生（Boss 重置不清），免得重置一次刷一隻傳奇掉落；沒被打死就被收掉的，下次開打照樣出來
+        boolean twinKilled;
         // 主題房的提示：每個人上次在哪個房間
         final Map<UUID, Integer> lastRoom = new HashMap<>();
         final List<Label> labels = new ArrayList<>();
@@ -515,7 +517,7 @@ final class MapTwists implements Listener {
         state.bossFightStarted = true;
         final MapInstance.Twist twist = instance.twist();
         final List<String> lines = new ArrayList<>();
-        if (twist.bossVariant == BossVariant.TWIN) {
+        if (twist.bossVariant == BossVariant.TWIN && !state.twinKilled) {
             spawnTwin(state, boss);
             lines.add("<#ff7070>雙生：" + ItemRenderer.escape(instance.bossDef().name()) + "有一隻分身");
         }
@@ -598,6 +600,7 @@ final class MapTwists implements Listener {
         MapSpawner.prepare(twin);
         twin.setGlowing(true);
         state.twin = twin.getUniqueId();
+        plugin.getSLF4JLogger().info("[雙生] 地圖 #{}（{}）生出分身 {}", instance.id(), instance.label(), twin.getUniqueId());
         instance.extras().add(twin);
         at.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, at, 40, 1.0, 1.0, 1.0, 0.05);
     }
@@ -957,6 +960,7 @@ final class MapTwists implements Listener {
             final Location at = new Location(instance.world(), instance.originX() + x + 0.5, MapLayout.FLOOR_Y + 1, instance.originZ() + z + 0.5);
             final LivingEntity monster = service.spawner().spawn(instance, entry, at, MonsterRarity.MAGIC, mods);
             if (monster != null) {
+                plugin.monsters().markSummoned(monster); // 2026-10-18：援軍跟 Boss 階段叫出來的小怪一樣不掉東西，免得不打 Boss 一直刷
                 state.reinforcements.add(monster);
                 instance.extras().add(monster);
                 at.getWorld().spawnParticle(Particle.PORTAL, at.clone().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.2);
@@ -1207,6 +1211,11 @@ final class MapTwists implements Listener {
             broadcast(instance, "<#ffd27f>流浪精英倒下了");
         } else if (uuid.equals(state.twin)) {
             state.twin = null;
+            state.twinKilled = true; // 2026-10-18：打死過了，Boss 重置後不再生
+            // 2026-10-18：記一行誰打死分身（查刷分身用）
+            final Player killer = entity.getKiller();
+            plugin.getSLF4JLogger().info("[雙生] 地圖 #{}（{}，開圖：{}）的分身被打死，擊殺者：{}", instance.id(), instance.label(),
+                    instance.ownerName(), killer == null ? "（不明）" : killer.getName());
             broadcast(instance, "<#ff7070>分身倒下了");
         }
     }

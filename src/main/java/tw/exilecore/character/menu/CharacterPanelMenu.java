@@ -83,6 +83,11 @@ public final class CharacterPanelMenu extends Menu {
                     (character.playtimeSeconds() + state.sessionSeconds()) / 3600,
                     (character.playtimeSeconds() + state.sessionSeconds()) % 3600 / 60, character.deaths()));
             characterLore.addAll(StatsReport.drops(plugin, player)); // 2026-10：物品掉落數量、稀有度
+            final List<String> titles = StatsReport.titles(plugin, player); // 2026-10-18：稱號給的加成（經驗、金幣、屬性）
+            if (!titles.isEmpty()) {
+                characterLore.add("");
+                characterLore.addAll(titles);
+            }
         }
         set(SLOT_CHARACTER, glowing(icon(character == null ? Material.PLAYER_HEAD : material(character.characterClass().icon(), Material.IRON_SWORD),
                 character == null ? "<red>沒有角色" : character.characterClass().color() + ItemRenderer.escape(character.name()), characterLore)));

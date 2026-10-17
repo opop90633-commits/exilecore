@@ -144,6 +144,9 @@ web:
       test-players: []
     # 網頁伺服器前面有反向代理（nginx、Cloudflare）時看代理給的真實 IP（CF-Connecting-IP、X-Forwarded-For），下單次數限制才不會全部算成同一個人
     trust-proxy: true
+    # 2026-10-18：前面是哪種代理。空白或 cloudflare = 相信 CF-Connecting-IP；只有 nginx／Caddy、沒有 Cloudflare 的請寫 nginx（或 none），
+    # 不然玩家可以自己帶一個假的 CF-Connecting-IP 繞過下單次數限制
+    proxy: ""
 
 items:
   # 玩家能不能把東西丟在地上（Q 鍵、拖到視窗外面）。false = 不能：免得直接丟給別人、繞過面對面交易的手續費，也不會手滑丟掉；

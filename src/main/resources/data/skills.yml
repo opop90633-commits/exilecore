@@ -392,7 +392,7 @@ skills:
       - { stat: freeze.buildup, type: INCREASED, value: 50 }
   tornado_shot:
     name: 裂空箭
-    description: 射出一支箭，落地的地方捲起一陣龍捲風（15 秒、同時一個），持續打裡面的敵人。你之後射的箭、弩箭、長矛飛進龍捲風會被吸進去，往外一圈射出 3 支複製的（傷害更少 50%、最遠 6 格；複製的不會再被複製）。
+    description: （要拿弓才能放）射出一支箭，落地處捲起一陣龍捲風，持續打裡面的敵人（存在 15 秒、同時只會有一個）。龍捲風還在的時候，你的攻擊投射物飛進去會被吸收，再往四周射出 3 支複製（傷害更少 50%、最遠 6 格，複製的不會再被複製）。能被吸的不只弓箭：就算換了裝備組改拿弩或矛，射出的弩箭、擲出的長矛一樣算。
     icon: BREEZE_ROD   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
@@ -1605,7 +1605,7 @@ skills:
     icon: COPPER_INGOT   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
-    tags: [attack, area, projectile, lightning]   # 2026-10-17：擲出去的矛算投射物（投射物的傷害、等級加成照吃；多射、穿透這類輔助還是掛不上）
+    tags: [attack, area, projectile, lightning, duration]   # 2026-10-17：擲出去的矛算投射物（投射物的傷害、等級加成照吃；多射、穿透這類輔助還是掛不上）；2026-10-18：加持續（矛插 6 秒、帶電地 8 秒）
     weapons: [spear]
     mechanic: impact
     impact: { range: 20, delay: 0.5, radius: [3.0, 3.8] }   # 2026-10 手感：落下延遲 0.8 → 0.5 秒

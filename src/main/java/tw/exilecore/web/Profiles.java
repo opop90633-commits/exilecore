@@ -635,7 +635,9 @@ public final class Profiles implements Listener {
                 try (ResultSet result = select.executeQuery()) {
                     while (result.next()) {
                         final boolean hidden = result.getInt(2) != 0;
-                        final boolean owner = admin || key != null && !key.isBlank() && key.equals(key(result.getLong(3)));
+                        // 2026-10-18：鑰匙用固定時間比對（MessageDigest.isEqual）
+                        final boolean owner = admin || key != null && !key.isBlank() && java.security.MessageDigest.isEqual(
+                                key.getBytes(StandardCharsets.UTF_8), key(result.getLong(3)).getBytes(StandardCharsets.UTF_8));
                         if (hidden && !owner) { // 不公開、又不是本人或管理員：跳過
                             continue;
                         }

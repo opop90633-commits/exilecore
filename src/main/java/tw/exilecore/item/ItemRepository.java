@@ -24,7 +24,17 @@ public final class ItemRepository {
 
     /** items.yml 的縮放設定。 */
     public record Scaling(double damagePerLevel, double defencePerLevel, double requirementPerLevel,
-                          double qualityWeaponPercent, double qualityArmourPercent) {
+                          double qualityWeaponPercent, double qualityArmourPercent, int statLevelCap) {
+
+        public Scaling(final double damagePerLevel, final double defencePerLevel, final double requirementPerLevel,
+                       final double qualityWeaponPercent, final double qualityArmourPercent) {
+            this(damagePerLevel, defencePerLevel, requirementPerLevel, qualityWeaponPercent, qualityArmourPercent, 0);
+        }
+
+        /** 算基底數值、需求用的物品等級（2026-10-18）：超過 stat_level_cap 的照上限算；0 = 不限。 */
+        public int cap(final int itemLevel) {
+            return statLevelCap > 0 ? Math.min(itemLevel, statLevelCap) : itemLevel;
+        }
     }
 
     private final Map<String, ItemBase> bases = new LinkedHashMap<>();
@@ -47,7 +57,7 @@ public final class ItemRepository {
     private final List<String> warnings = new ArrayList<>();
     private List<String> rareNamePrefixes = List.of();
     private Map<String, List<String>> rareNameSuffixes = Map.of();
-    private Scaling scaling = new Scaling(0.035, 0.035, 0.02, 1.0, 1.0);
+    private Scaling scaling = new Scaling(0.035, 0.035, 0.02, 1.0, 1.0, 92); // items.yml 沒寫 stat_level_cap 也照 92
     /** 傳奇定義的指紋（名字、詞綴、範圍）：uniques.yml 改了就變；物品上記著上次檢查時的指紋（{@link UniqueUpgrade}）。 */
     private int uniqueRevision;
 
@@ -198,7 +208,8 @@ public final class ItemRepository {
                     config.decimal("defence_per_level", scaling.defencePerLevel()),
                     config.decimal("requirement_per_level", scaling.requirementPerLevel()),
                     config.decimal("quality_weapon_percent", scaling.qualityWeaponPercent()),
-                    config.decimal("quality_armour_percent", scaling.qualityArmourPercent()));
+                    config.decimal("quality_armour_percent", scaling.qualityArmourPercent()),
+                    config.integer("stat_level_cap", scaling.statLevelCap()));
         }
 
         validate();

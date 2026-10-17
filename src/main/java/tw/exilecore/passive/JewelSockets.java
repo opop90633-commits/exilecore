@@ -157,8 +157,9 @@ public final class JewelSockets {
             rest = leftover.isEmpty() ? null : leftover.values().iterator().next();
         }
         if (rest != null && !rest.isEmpty()) {
-            player.getWorld().dropItemNaturally(player.getLocation(), rest);
-            player.sendMessage(plugin.text().prefixed("<red>背包滿了，珠寶掉在你腳下"));
+            // 2026-10-18：改成只有自己撿得到、不會消失的個人掉落（原本公開掉落 5 分鐘就沒了）
+            plugin.personalDrops().dropForever(player, rest);
+            player.sendMessage(plugin.text().prefixed("<red>背包滿了，珠寶掉在你腳下（只有你撿得到，不會消失）"));
         }
     }
 

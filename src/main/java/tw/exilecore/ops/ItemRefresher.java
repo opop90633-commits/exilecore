@@ -180,8 +180,39 @@ public final class ItemRefresher {
             int written = 0;
             int skipped = 0;
             final Timestamp now = Timestamp.from(Instant.now());
+            // 2026-10-18：同一個角色的幾欄合成一個 UPDATE（以前每欄各寫一次、都比對同一個舊 updated_at，第一欄寫完其他欄全被判成「有人動過」）
+            final Map<Long, List<Change>> byCharacter = new java.util.LinkedHashMap<>();
+            for (final Change change : pending) {
+                if (!change.row().kind().equals("stash")) {
+                    byCharacter.computeIfAbsent(change.row().characterId(), id -> new ArrayList<>()).add(change);
+                }
+            }
+            for (final List<Change> group : byCharacter.values()) {
+                final StringBuilder sql = new StringBuilder("UPDATE character_inventory SET ");
+                for (final Change change : group) {
+                    sql.append(change.row().kind()).append(" = ?, ");
+                }
+                sql.append("updated_at = ? WHERE character_id = ? AND updated_at = ?");
+                try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+                    int index = 1;
+                    for (final Change change : group) {
+                        statement.setBytes(index++, change.bytes());
+                    }
+                    statement.setTimestamp(index++, now);
+                    statement.setLong(index++, group.getFirst().row().characterId());
+                    statement.setTimestamp(index, group.getFirst().row().updatedAt());
+                    if (statement.executeUpdate() == 1) {
+                        written += group.size();
+                    } else {
+                        skipped += group.size(); // 讀完之後被存過：不寫
+                    }
+                }
+            }
             for (final Change change : pending) {
                 final Row row = change.row();
+                if (!row.kind().equals("stash")) {
+                    continue; // 角色的欄位上面一起寫了
+                }
                 final String sql = row.kind().equals("stash")
                         ? "UPDATE stash_pages SET contents = ?, updated_at = ? WHERE account_uuid = ? AND page = ? AND updated_at = ?"
                         : "UPDATE character_inventory SET " + row.kind() + " = ?, updated_at = ? WHERE character_id = ? AND updated_at = ?";

@@ -473,8 +473,9 @@
 
   var KINDS = [
     ['currency', '通貨'], ['gold', '金幣'], ['merits', '功勳'], ['sponsor', '星幣／月卡幣／時裝幣／免費抽獎箱'], ['cosmetic', '時裝（限定、整組）'], ['item', '裝備'], ['unique', '傳奇'],
-    ['gem', '寶石'], ['flask', '藥劑'], ['map', '地圖'], ['refund', '免費退點'],
-    ['take_sponsor', '⛔ 收回：累積贊助／星幣／買的格子'], ['take_currency', '⛔ 收回：通貨'], ['take_gold', '⛔ 收回：金幣'], ['take_item', '⛔ 收回：物品']
+    ['gem', '寶石'], ['flask', '藥劑'], ['map', '地圖'], ['refund', '免費退點'], ['life', '生活（材料、筏的方塊、料理、號角）'],
+    ['take_sponsor', '⛔ 收回：累積贊助／星幣／買的格子'], ['take_currency', '⛔ 收回：通貨'], ['take_gold', '⛔ 收回：金幣'], ['take_item', '⛔ 收回：物品'],
+    ['take_merits', '⛔ 收回：功勳'], ['take_refund', '⛔ 收回：免費退點'], ['take_life', '⛔ 收回：生活材料'], ['take_cosmetic', '⛔ 收回：時裝、限定稱號']
   ];
   var GEM_TYPES = [['uncut_skill', '未切割技能寶石'], ['uncut_support', '未切割輔助寶石'], ['skill', '技能寶石'], ['support', '輔助寶石']];
 
@@ -767,7 +768,9 @@
         { id: 'bought_bag', text: '星幣買的隨身背包頁' }, { id: 'bought_listing', text: '星幣買的上架格' },
         { id: 'card_days', text: '月卡天數（扣到 0 = 拔掉月卡；數量填大一點就全拔）' }, { id: 'free_box', text: '免費抽獎箱' }];
       case 'take_currency': return c.currencies.map(function (e) { return { id: e.id, text: e.name }; });
-      case 'cosmetic': return c.cosmetics.filter(match).map(function (e) { return { id: e.id, text: e.name }; });
+      case 'cosmetic': case 'take_cosmetic': return c.cosmetics.filter(match).map(function (e) { return { id: e.id, text: e.name }; });
+      case 'life': return (c.life || []).filter(match).map(function (e) { return { id: e.id, text: e.name }; });
+      case 'take_life': return (c.life || []).filter(function (e) { return e.id.indexOf('mat:') === 0 && match(e); }).map(function (e) { return { id: e.id, text: e.name }; });
       case 'sponsor': return [{ id: 'paid', text: '星幣・儲值（算進累積贊助）' }, { id: 'bonus', text: '星幣・贈送（不算累積贊助）' }, { id: 'card', text: '月卡幣' }, { id: 'fashion', text: '時裝幣' }, { id: 'card_days', text: '月卡天數（直接開月卡，不扣星幣、不送開卡禮）' }, { id: 'free_box', text: '免費抽獎箱（月卡的那種，會累積）' }];
       default: return [];
     }
@@ -780,13 +783,13 @@
   function itemRow(item) {
     var c = catalog();
     var row = h('div', { cls: 'item-row' });
-    row.appendChild(h('label', null, '種類', select('', '種類', KINDS.filter(function (k) { return (k[0] !== 'merits' || c.hasMerits) && (k[0] !== 'sponsor' || c.hasSponsor) && (k[0] !== 'cosmetic' || c.hasSponsor) && (k[0] !== 'take_sponsor' || c.hasSponsor); })
+    row.appendChild(h('label', null, '種類', select('', '種類', KINDS.filter(function (k) { return (k[0] !== 'merits' || c.hasMerits) && (k[0] !== 'sponsor' || c.hasSponsor) && (k[0] !== 'cosmetic' || c.hasSponsor) && (k[0] !== 'take_sponsor' || c.hasSponsor) && (k[0] !== 'take_cosmetic' || c.hasSponsor) && (k[0] !== 'take_merits' || c.hasMerits) && ((k[0] !== 'life' && k[0] !== 'take_life') || c.hasLife); })
       .map(function (k) { return { id: k[0], text: k[1] }; }), item.kind, function (v) {
         item.kind = v; item.ref = ''; item.level = 0; item.amount = 1; item.filter = ''; item.rarity = v === 'map' ? 'normal' : 'rare';
         renderItems();
       })));
-    var refLabel = { currency: '通貨', item: '基底', unique: '傳奇', flask: '藥劑', map: '地圖', sponsor: '幣別', cosmetic: '時裝', take_sponsor: '收回什麼', take_currency: '通貨' }[item.kind];
-    if (item.kind === 'item' || item.kind === 'unique' || item.kind === 'cosmetic') {
+    var refLabel = { currency: '通貨', item: '基底', unique: '傳奇', flask: '藥劑', map: '地圖', sponsor: '幣別', cosmetic: '時裝', take_sponsor: '收回什麼', take_currency: '通貨', take_cosmetic: '時裝', life: '生活', take_life: '材料' }[item.kind];
+    if (item.kind === 'item' || item.kind === 'unique' || item.kind === 'cosmetic' || item.kind === 'take_cosmetic' || item.kind === 'life' || item.kind === 'take_life') {
       var filter = h('input', { type: 'search', cls: 'filter', placeholder: '篩選…', value: item.filter, 'aria-label': '篩選' });
       filter.addEventListener('input', function () {
         item.filter = filter.value;
@@ -815,7 +818,8 @@
       row.appendChild(h('label', null, '物品編號或名稱', keyword));
     }
     if (item.kind && item.kind.indexOf('take_') === 0) {
-      row.appendChild(h('span', { cls: 'hint', text: '有多少拿多少；找的是領的那個角色的背包、隨身背包與帳號倉庫' }));
+      row.appendChild(h('span', { cls: 'hint', text: item.kind === 'take_item' ? '有多少拿多少；找的是領的那個角色的背包、隨身背包與帳號倉庫'
+        : item.kind === 'take_refund' ? '有多少拿多少；領的那個角色的' : '有多少拿多少（帳號共用）' }));
     }
     if (item.kind === 'item' || item.kind === 'map') {
       row.appendChild(h('label', null, '稀有度', select('', '稀有度', c.rarities.map(function (r) { return { id: r.id, text: r.name }; }),
@@ -850,7 +854,7 @@
       }
     }
     var max = c.limits[item.kind] || 1;
-    var amountLabel = item.kind === 'gold' ? '金幣' : item.kind === 'merits' ? '功勳' : item.kind === 'sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'free_box' ? '箱數' : item.ref === 'card' ? '月卡幣' : item.ref === 'fashion' ? '時裝幣' : '星幣') : item.kind === 'refund' ? '次數' : item.kind === 'take_gold' ? '金幣' : item.kind === 'take_item' ? '最多幾件' : item.kind === 'take_sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'free_box' ? '箱數' : '數量（星幣、頁、格）') : '數量';
+    var amountLabel = item.kind === 'gold' ? '金幣' : item.kind === 'merits' ? '功勳' : item.kind === 'sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'free_box' ? '箱數' : item.ref === 'card' ? '月卡幣' : item.ref === 'fashion' ? '時裝幣' : '星幣') : item.kind === 'refund' ? '次數' : item.kind === 'take_gold' ? '金幣' : item.kind === 'take_merits' ? '功勳' : item.kind === 'take_refund' ? '次數' : item.kind === 'take_item' ? '最多幾件' : item.kind === 'take_sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'free_box' ? '箱數' : '數量（星幣、頁、格）') : '數量';
     row.appendChild(numberInput(amountLabel, item.amount, 1, max, function (v) { item.amount = v; renderSummary(); }, '最多 ' + num(max)));
     row.appendChild(h('button', { type: 'button', cls: 'small remove', text: '移除', 'aria-label': '移除這一樣', onclick: function () {
       items = items.filter(function (x) { return x !== item; });
@@ -992,7 +996,7 @@
       spec.ref = item.gemType === 'skill' ? 'skill:' + item.ref : item.gemType === 'support' ? 'support:' + item.ref : item.gemType;
       if (item.gemType === 'support') { spec.level = 0; }
     }
-    if (item.kind === 'gold' || item.kind === 'merits' || item.kind === 'refund' || item.kind === 'take_gold') { spec.ref = null; spec.level = 0; }
+    if (item.kind === 'gold' || item.kind === 'merits' || item.kind === 'refund' || item.kind === 'take_gold' || item.kind === 'take_merits' || item.kind === 'take_refund') { spec.ref = null; spec.level = 0; }
     if (item.kind === 'take_item') { spec.ref = (item.ref || '').trim(); }
     if (item.kind === 'item' || item.kind === 'unique') { spec.affixes = affixSpec(item); }
     return spec;
@@ -1014,6 +1018,11 @@
         return '⛔ 收回 ' + what + ' ' + num(n);
       case 'take_currency': return '⛔ 收回 ' + nameOf(c.currencies, item.ref) + ' ×' + num(n);
       case 'take_gold': return '⛔ 收回 金幣 ' + num(n);
+      case 'take_merits': return '⛔ 收回 功勳 ' + num(n);
+      case 'take_refund': return '⛔ 收回 免費退點 ×' + num(n);
+      case 'take_life': return '⛔ 收回 ' + nameOf(c.life || [], item.ref) + ' ×' + num(n);
+      case 'take_cosmetic': return '⛔ 收回 ' + nameOf(c.cosmetics, item.ref);
+      case 'life': return nameOf(c.life || [], item.ref) + ' ×' + num(n);
       case 'take_item': return '⛔ 收回 物品「' + (item.ref || '') + '」最多 ' + num(n) + ' 件';
       case 'item': return rarityName(item.rarity) + ' ' + nameOf(c.bases, item.ref) + (item.level ? '（物品等級 ' + item.level + '）' : '') + count + affixSummary(item);
       case 'unique': return '傳奇 ' + nameOf(c.uniques, item.ref) + (item.level ? '（物品等級 ' + item.level + '）' : '') + count + affixSummary(item);
@@ -1524,7 +1533,7 @@
         cancel.addEventListener('click', function () {
           confirmBox('取消轉移 ' + row.from + ' → ' + row.to + '？', ['這一筆不會在下次開機時做。'], '取消這筆').then(function (yes) {
             if (!yes) { return; }
-            api('POST', 'admin/api/transfer/cancel', { index: index }).then(function (r) { toast(r.message); loadTransfers(); }).catch(function (e) { fail(e); loadTransfers(); });
+            api('POST', 'admin/api/transfer/cancel', { index: index, fromUuid: row.fromUuid, toUuid: row.toUuid }).then(function (r) { toast(r.message); loadTransfers(); }).catch(function (e) { fail(e); loadTransfers(); });
           });
         });
         body.appendChild(h('tr', null, h('td', { text: row.from }), h('td', { text: row.to }), h('td', { text: row.admin }), h('td', null, cancel)));

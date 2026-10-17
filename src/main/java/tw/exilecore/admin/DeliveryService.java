@@ -80,6 +80,15 @@ public final class DeliveryService {
     /** 收回時裝、限定稱號（2026-10）：ref 跟 {@link #COSMETIC} 一樣（時裝代號、title:稱號代號、bundle:組代號）；沒有的就略過。 */
     public static final String TAKE_COSMETIC = "take_cosmetic";
 
+    /** 生活（2026-10-18）：ref mat:材料、item:筏的方塊與設施、food:料理、horn（深淵號角）（LifeService.adminChoices）。 */
+    public static final String LIFE = "life";
+    /** 收回生活材料（2026-10-18）：ref mat:材料；方塊、料理、號角是物品，用 {@link #TAKE_ITEM}。 */
+    public static final String TAKE_LIFE = "take_life";
+    /** 收回功勳（2026-10-18，帳號共用）。 */
+    public static final String TAKE_MERITS = "take_merits";
+    /** 收回免費退點（2026-10-18，領的那個角色的）。 */
+    public static final String TAKE_REFUND = "take_refund";
+
     static boolean isTake(final String kind) {
         return kind != null && kind.startsWith("take_");
     }
@@ -190,6 +199,10 @@ public final class DeliveryService {
             case TAKE_GOLD -> 1_000_000_000_000L;
             case TAKE_ITEM -> 10_000;
             case REFUND -> 100;
+            case LIFE -> 100_000;
+            case TAKE_LIFE -> 1_000_000;
+            case TAKE_MERITS -> 1_000_000_000L;
+            case TAKE_REFUND -> 1_000;
             case COSMETIC, TAKE_COSMETIC -> 1;
             default -> 50;
         };
@@ -361,6 +374,38 @@ public final class DeliveryService {
             }
             case TAKE_GOLD -> {
                 return String.format(Locale.ROOT, "收回 金幣 %,d", spec.amount());
+            }
+            case LIFE -> {
+                if (plugin.life() == null) {
+                    throw new IllegalArgumentException("生活模組沒有啟用");
+                }
+                final String name = plugin.life().adminName(ref(spec));
+                if (name == null) {
+                    throw new IllegalArgumentException("沒有這種生活的東西：" + spec.ref());
+                }
+                if (!ref(spec).startsWith("mat:") && spec.amount() > 640) {
+                    throw new IllegalArgumentException("方塊、料理、號角一次最多 640 個（材料最多 100,000）");
+                }
+                return name + " ×" + spec.amount();
+            }
+            case TAKE_LIFE -> {
+                if (plugin.life() == null) {
+                    throw new IllegalArgumentException("生活模組沒有啟用");
+                }
+                final String name = ref(spec).startsWith("mat:") ? plugin.life().adminName(ref(spec)) : null;
+                if (name == null) {
+                    throw new IllegalArgumentException("收回生活只能選材料（方塊、料理、號角是物品，用「收回：物品」）：" + spec.ref());
+                }
+                return "收回 " + name + " ×" + spec.amount();
+            }
+            case TAKE_MERITS -> {
+                if (plugin.bounties() == null) {
+                    throw new IllegalArgumentException("委託模組沒有啟用，不能收回功勳");
+                }
+                return String.format(Locale.ROOT, "收回 功勳 %,d", spec.amount());
+            }
+            case TAKE_REFUND -> {
+                return "收回 免費退點 ×" + spec.amount();
             }
             case TAKE_ITEM -> {
                 final String keyword = ref(spec);
@@ -1017,6 +1062,64 @@ public final class DeliveryService {
                 state.markDirty();
                 return new Given(amount, "免費退點 ×" + amount + "（" + state.character().name() + "）", List.of(), null);
             }
+            case TAKE_REFUND -> {
+                final int have = Math.max(0, state.character().refundPoints());
+                final int taken = (int) Math.min(have, amount);
+                state.character().setRefundPoints(have - taken);
+                state.markDirty();
+                return new Given(amount, "收回 免費退點 ×" + taken + "（" + state.character().name() + "）", List.of(), null);
+            }
+            case LIFE -> {
+                if (plugin.life() == null) {
+                    return Given.MISSING;
+                }
+                final String name = plugin.life().adminName(row.ref());
+                if (name == null) {
+                    return Given.MISSING; // 資料檔裡已經沒有了
+                }
+                final long given = plugin.life().adminGive(player, row.ref(), amount);
+                if (given == -1) {
+                    return Given.WAIT; // 帳號資料還沒載入
+                }
+                if (given < 0) {
+                    return Given.MISSING;
+                }
+                // 2026-10-18：材料跟「已領取」寫在同一個交易（數量 0 時這筆會被跳過，不拿 work，免得生活資料被標成已存卻沒寫）
+                return new Given(given, name + " ×" + given,
+                        List.of(entry(opId, null, name, (int) Math.min(Integer.MAX_VALUE, given), admin, player)),
+                        given > 0 ? plugin.life().adminWork(player) : null);
+            }
+            case TAKE_LIFE -> {
+                if (plugin.life() == null) {
+                    return Given.MISSING;
+                }
+                final String name = plugin.life().adminName(row.ref());
+                final long taken = plugin.life().adminTake(player, row.ref(), amount);
+                if (taken == -1) {
+                    return Given.WAIT;
+                }
+                if (taken < 0 || name == null) {
+                    return Given.MISSING;
+                }
+                // 2026-10-18：材料跟「已領取」寫在同一個交易
+                return new Given(amount, "收回 " + name + " ×" + taken,
+                        List.of(entry(opId, null, "收回" + name, (int) Math.max(1, Math.min(Integer.MAX_VALUE, taken)), admin, player)), plugin.life().adminWork(player));
+            }
+            case TAKE_MERITS -> {
+                if (plugin.bounties() == null) {
+                    return Given.MISSING;
+                }
+                if (!plugin.bounties().accountLoaded(player)) {
+                    return Given.WAIT;
+                }
+                final tw.exilecore.bounty.BountyService.TakenMerits taken = plugin.bounties().revokeMeritsWork(player, amount);
+                if (taken == null) {
+                    return Given.WAIT;
+                }
+                return new Given(amount, String.format(Locale.ROOT, "收回 功勳 %,d", taken.taken()),
+                        List.of(entry(opId, null, "收回功勳", (int) Math.max(1, Math.min(Integer.MAX_VALUE, taken.taken())), admin, player)),
+                        taken.work());
+            }
             case ITEM, UNIQUE, GEM, FLASK, MAP -> {
                 return giveItems(player, state, row, opId, wallet);
             }
@@ -1173,11 +1276,13 @@ public final class DeliveryService {
         for (int page = 0; page < state.bag().storedPages(); page++) {
             places.add(state.bag().page(page));
         }
-        plugin.stash().stash(player).ifPresent(stash -> {
-            for (int page = 0; page < stash.pageCount(); page++) {
-                places.add(stash.page(page));
-            }
-        });
+        if (plugin.stash() != null) { // 2026-10-18：倉庫模組沒啟用時 NPE，這筆會永遠卡住
+            plugin.stash().stash(player).ifPresent(stash -> {
+                for (int page = 0; page < stash.pageCount(); page++) {
+                    places.add(stash.page(page));
+                }
+            });
+        }
         int taken = 0;
         for (final ItemStack[] place : places) {
             for (int i = 0; i < place.length && taken < max; i++) {

@@ -262,6 +262,8 @@ final class MapBosses {
                     service.refundUberKey(instance);
                 } else if (instance.isPinnacle()) {
                     service.refundPinnacleFragments(instance);
+                } else {
+                    instance.refundPaid(); // 2026-10-18：劫盜終局等其他特殊實例：開門花的通貨也退（以前 bossKilled 已設，重開也不會補退）
                 }
             }
             return;

@@ -77,9 +77,12 @@ public final class BuildCalc {
     }
 
     private final ExileCore plugin;
+    /** 2026-10-18：對方的 IP（跟贊助商店同一套：代理後面看代理給的標頭；以前用 remote()，接代理後全服共用一個桶）。 */
+    private final java.util.function.Function<WebServer.Request, String> clientIp;
 
-    BuildCalc(final ExileCore plugin) {
+    BuildCalc(final ExileCore plugin, final java.util.function.Function<WebServer.Request, String> clientIp) {
         this.plugin = plugin;
+        this.clientIp = clientIp;
     }
 
     // ---- 讀 ----
@@ -767,7 +770,7 @@ public final class BuildCalc {
 
     /** POST /tree/calc 的處理。 */
     WebServer.Response handle(final WebServer.Request request) {
-        if (!limiter.allow(request.remote(), System.currentTimeMillis())) {
+        if (!limiter.allow(clientIp.apply(request), System.currentTimeMillis())) {
             return WebServer.Response.text(429, "算太快了，等一下再試");
         }
         final Build build;
@@ -776,6 +779,9 @@ public final class BuildCalc {
                     plugin.skills() == null ? null : plugin.skills().config());
         } catch (final BadRequest e) {
             return WebServer.Response.text(400, e.getMessage());
+        } catch (final RuntimeException e) {
+            // 2026-10-18：型別不對的 JSON（例如該是數字卻是物件）當成讀不懂，不要變 500、每次印整段 stack trace
+            return WebServer.Response.text(400, "讀不懂送來的資料");
         }
         boolean acquired = false;
         try {

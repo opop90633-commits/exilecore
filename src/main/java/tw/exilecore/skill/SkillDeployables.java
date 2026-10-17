@@ -586,7 +586,12 @@ final class SkillDeployables implements Listener {
                 if (now < bossImmuneUntil.getOrDefault(mob.getUniqueId(), 0L)) {
                     continue;
                 }
-                final long start = bossTauntStart.computeIfAbsent(mob.getUniqueId(), key -> now);
+                long start = bossTauntStart.computeIfAbsent(mob.getUniqueId(), key -> now);
+                if (now - start > BOSS_TAUNT_TICKS + 20) {
+                    // 2026-10-18：開始時間過舊（上次沒嘲諷滿就離開，殘留的紀錄）：重新計時，不要直接判成免疫
+                    start = now;
+                    bossTauntStart.put(mob.getUniqueId(), now);
+                }
                 if (now - start >= BOSS_TAUNT_TICKS) {
                     bossTauntStart.remove(mob.getUniqueId());
                     if (bossImmuneUntil.size() > 256) {
@@ -695,11 +700,21 @@ final class SkillDeployables implements Listener {
         if (!deployed.contains(decoy) || !event.getEntity().getWorld().equals(decoy.feet.getWorld())
                 || event.getEntity().getLocation().distanceSquared(decoy.feet) > (decoy.spec.range() + 6) * (decoy.spec.range() + 6)) {
             decoyed.remove(event.getEntity().getUniqueId());
+            bossTauntStart.remove(event.getEntity().getUniqueId()); // 2026-10-18：離開範圍：Boss 的嘲諷計時一起清掉（不然下次直接判成免疫）
             return;
         }
         if (event.getTarget() instanceof Player) {
             event.setCancelled(true);
         }
+    }
+
+    /** 2026-10-18：怪死掉：替身圖騰的紀錄清掉（不然 map 一直累積）。 */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDecoyDeath(final org.bukkit.event.entity.EntityDeathEvent event) {
+        final UUID uuid = event.getEntity().getUniqueId();
+        decoyed.remove(uuid);
+        bossTauntStart.remove(uuid);
+        bossImmuneUntil.remove(uuid);
     }
 
     /** 你在有怨燼的圖騰旁邊被怪打中：圖騰也反擊（2026-10；圖騰平常不會被打，這樣一般圖騰也用得到）。 */

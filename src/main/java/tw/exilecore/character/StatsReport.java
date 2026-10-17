@@ -71,6 +71,55 @@ public final class StatsReport {
         return lines;
     }
 
+    /**
+     * 稱號給的加成（2026-10-18）：擁有的稱號（不用戴，整個帳號都有）合起來的屬性、累積贊助稱號的經驗／金幣／死亡懲罰、
+     * 燃星者的經驗。都沒有（或沒有角色）是空的。
+     */
+    public static List<String> titles(final ExileCore plugin, final Player player) {
+        final List<String> lines = new ArrayList<>();
+        if (plugin.players().get(player).character() == null) {
+            return lines;
+        }
+        if (plugin.sponsors() != null) {
+            final tw.exilecore.sponsor.SponsorConfig.Tier tier = plugin.sponsors().config().tierFor(plugin.sponsors().total(player));
+            final double experience = plugin.sponsors().experienceBonus(player) * 100;
+            final double gold = plugin.sponsors().goldBonus(player) * 100;
+            final List<String> parts = new ArrayList<>();
+            if (experience > 0) {
+                parts.add("經驗 +" + number(experience) + "%");
+            }
+            if (gold > 0) {
+                parts.add("金幣 +" + number(gold) + "%");
+            }
+            if (tier != null && tier.deathPenalty() >= 0) {
+                parts.add("死亡扣經驗 " + number(tier.deathPenalty()) + "%");
+            }
+            if (tier != null && !parts.isEmpty()) {
+                lines.add("<gray>" + escape(tier.title()) + "<dark_gray>（累積贊助）<gray>：<white>" + String.join("<gray>、<white>", parts));
+            }
+        }
+        if (plugin.ascendancy() != null) {
+            final double race = plugin.ascendancy().race().experienceBonus(player) * 100;
+            if (race > 0) {
+                lines.add("<gray>" + escape(plugin.ascendancy().race().reachTitleName()) + "<gray>：<white>經驗 +" + number(race) + "%");
+            }
+        }
+        if (plugin.bounties() != null) {
+            for (final String line : tw.exilecore.ascendancy.StatLines.describeAll(plugin.bounties().titleBonus(player))) {
+                lines.add("<white>" + escape(line));
+            }
+        }
+        if (!lines.isEmpty()) {
+            lines.add(0, "<#7fe07f>稱號加成<dark_gray>（擁有就有、不用戴）");
+        }
+        return lines;
+    }
+
+    /** 2026-10-18：5 → 「5」、2.5 → 「2.5」。 */
+    private static String number(final double value) {
+        return java.math.BigDecimal.valueOf(value).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+    }
+
     /** 「（含全服 +100%、個人加倍 +100%）」；都沒有是空的。 */
     private static String included(final double server, final double personal) {
         if (server <= 0 && personal <= 0) {
@@ -96,19 +145,25 @@ public final class StatsReport {
         return plugin.players().config().experienceBonus() * (1 + personal);
     }
 
-    /** 經驗那一行後面的括號：全服倍數；有個人加倍藥（或累積贊助、種族）時寫實際倍數。 */
+    /** 經驗那一行後面的括號：全服倍數；有個人加倍藥（或累積贊助、種族）時寫實際倍數。2026-10-18：倍數改顯示成 %（×2.1 → +110%）。 */
     private static String experienceNote(final ExileCore plugin, final Player player, final String serverText) {
         final boolean personal = plugin.sponsors() != null && plugin.sponsors().personalExperience(player) > 0;
         final double actual = experienceMultiplier(plugin, player);
-        final String actualText = String.format(Locale.ROOT, "×%s", actual == Math.rint(actual) ? String.valueOf((long) actual)
-                : String.format(Locale.ROOT, "%.2f", actual).replaceAll("0+$", "").replaceAll("\\.$", ""));
+        final double server = plugin.players().config().experienceBonus();
+        final String actualText = percentText(actual);
+        final String serverPercent = serverText == null ? null : percentText(server);
         if (personal) {
-            return " <#ffd27f>（" + (serverText == null ? "" : "全服經驗 " + serverText + "＋") + "個人加倍：實際 " + actualText + "）";
+            return " <#ffd27f>（" + (serverPercent == null ? "" : "全服經驗 " + serverPercent + "＋") + "個人加倍：實際 " + actualText + "）";
         }
-        if (serverText == null) {
+        if (serverPercent == null) {
             return Math.abs(actual - 1) > 1e-9 ? " <#ffd27f>（經驗 " + actualText + "）" : "";
         }
-        return " <#ffd27f>（全服經驗 " + serverText + (Math.abs(actual - plugin.players().config().experienceBonus()) > 1e-9 ? "，實際 " + actualText : "") + "）";
+        return " <#ffd27f>（全服經驗 " + serverPercent + (Math.abs(actual - server) > 1e-9 ? "，實際 " + actualText : "") + "）";
+    }
+
+    /** 2026-10-18：經驗倍數寫成多出來的 %（跟 {@link CharacterConfig#percentText} 一樣）。 */
+    static String percentText(final double multiplier) {
+        return CharacterConfig.percentText(multiplier);
     }
 
     public static List<String> header(final ExileCore plugin, final Player player) {
@@ -662,6 +717,7 @@ public final class StatsReport {
         effects.addAll(buffs(plugin, player));
         effects.addAll(impactSection(plugin, player));
         effects.addAll(minions(plugin, player));
+        effects.addAll(titles(plugin, player)); // 2026-10-18：稱號給的加成（放在「效果」裡，網頁不用多認一段）
         if (!effects.isEmpty()) {
             map.put("效果", effects);
         }
@@ -683,6 +739,7 @@ public final class StatsReport {
         lines.add(title(self ? "角色" : escape(player.getName()) + " 的角色"));
         indent(lines, header(plugin, player, self));
         indent(lines, drops(plugin, player)); // 2026-10：物品掉落數量、稀有度
+        indent(lines, titles(plugin, player)); // 2026-10-18：稱號給的加成
         // 2026-10：聊天欄的屬性只列力量、敏捷、智慧各多少（不列各給了什麼；角色面板的「屬性」還看得到）
         lines.add(title("屬性"));
         indent(lines, attributes(plugin, player).subList(0, 1));

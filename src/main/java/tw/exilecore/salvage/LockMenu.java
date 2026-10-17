@@ -6,8 +6,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
 import tw.exilecore.ExileCore;
+import tw.exilecore.character.Gear;
+import tw.exilecore.character.PlayerState;
 import tw.exilecore.gui.Menu;
 import tw.exilecore.item.ItemData;
 import tw.exilecore.item.Rarity;
@@ -42,11 +43,38 @@ public final class LockMenu extends Menu {
         return menuSlot < 27 ? menuSlot + 9 : menuSlot - 27;
     }
 
+    /**
+     * 2026-10-18：這一格真的物品。身上穿的、快捷列第 9 格放的是 Gear 的顯示用複本（沒有物品資料，以前怎麼點都鎖不到），
+     * 要讀角色面板裝備欄裡的那件。
+     */
+    private ItemStack realStack(final int inventorySlot) {
+        if (Gear.indexAt(inventorySlot) >= 0) {
+            return Gear.realAt(plugin.players().get(player), inventorySlot);
+        }
+        return player.getInventory().getItem(inventorySlot);
+    }
+
+    /** 2026-10-18：改好鎖定的物品寫回去（裝備欄的換成新的那件、標記要存檔，背包格是原地改的不用動）。 */
+    private void storeBack(final int inventorySlot, final ItemStack stack) {
+        final int index = Gear.indexAt(inventorySlot);
+        if (index < 0) {
+            return;
+        }
+        final PlayerState state = plugin.players().get(player);
+        state.setJewellery(index, stack);
+        plugin.players().markDirty(player);
+    }
+
+    /** 2026-10-18：要改的那一件（裝備欄的先複製一份，改完再整件寫回）。 */
+    private ItemStack editable(final int inventorySlot) {
+        final ItemStack stack = realStack(inventorySlot);
+        return stack != null && Gear.indexAt(inventorySlot) >= 0 ? stack.clone() : stack;
+    }
+
     @Override
     protected void draw() {
-        final PlayerInventory inventory = player.getInventory();
         for (int slot = 0; slot < WORN_START + WORN_INVENTORY.length; slot++) {
-            final ItemStack stack = inventory.getItem(inventorySlot(slot));
+            final ItemStack stack = realStack(inventorySlot(slot));
             final Optional<ItemData> data = plugin.items().read(stack);
             if (data.isEmpty()) {
                 set(slot, slot >= WORN_START ? icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>（身上沒穿東西）") : null);
@@ -87,7 +115,7 @@ public final class LockMenu extends Menu {
     }
 
     private void toggle(final int inventorySlot) {
-        final ItemStack stack = player.getInventory().getItem(inventorySlot);
+        final ItemStack stack = editable(inventorySlot);
         final Optional<ItemData> data = plugin.items().read(stack);
         if (data.isEmpty()) {
             return;
@@ -95,6 +123,7 @@ public final class LockMenu extends Menu {
         final boolean locked = !data.get().locked();
         data.get().setLocked(locked);
         plugin.items().update(stack, data.get());
+        storeBack(inventorySlot, stack);
         player.playSound(player.getLocation(), locked ? Sound.BLOCK_CHAIN_PLACE : Sound.BLOCK_CHAIN_BREAK, 0.6f, 1.2f);
     }
 
@@ -102,13 +131,14 @@ public final class LockMenu extends Menu {
     private void lockAll(final Rarity rarity, final boolean locked) {
         int changed = 0;
         for (int slot = 0; slot < WORN_START + WORN_INVENTORY.length; slot++) {
-            final ItemStack stack = player.getInventory().getItem(inventorySlot(slot));
+            final ItemStack stack = editable(inventorySlot(slot));
             final Optional<ItemData> data = plugin.items().read(stack);
             if (data.isEmpty() || (rarity != null && data.get().rarity() != rarity) || data.get().locked() == locked) {
                 continue;
             }
             data.get().setLocked(locked);
             plugin.items().update(stack, data.get());
+            storeBack(inventorySlot(slot), stack);
             changed++;
         }
         player.sendActionBar(plugin.text().parse(locked ? "<#ffd27f>🔒 鎖定了 " + changed + " 件" : "<gray>解除了 " + changed + " 件的鎖定"));

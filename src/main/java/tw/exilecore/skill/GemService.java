@@ -88,6 +88,10 @@ public final class GemService {
      */
     @SuppressWarnings("deprecation")
     public boolean refresh(final ItemStack stack) {
+        // 2026-10-18：遷移時會拆下輔助的寶石這裡不動（這條路徑沒有擁有者，拆下來的輔助只能丟掉）：留給知道擁有者的路徑遷移
+        if (read(stack).map(this::detachesSupports).orElse(false)) {
+            return false;
+        }
         final List<ItemStack> extra = migrateRemoved(stack);
         if (extra != null) {
             if (!extra.isEmpty()) {
@@ -118,6 +122,23 @@ public final class GemService {
             stack.setData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA, model);
         }
         return true;
+    }
+
+    /** 2026-10-18：migrateRemoved 會不會拆下輔助（技能被拿掉且掛著輔助，或掛著被拿掉的輔助）。 */
+    private boolean detachesSupports(final GemData data) {
+        if (data.kind() != GemData.Kind.SKILL || data.entry() == null) {
+            return false;
+        }
+        if (config().skill(data.id()) == null) {
+            return !data.entry().supportIds().isEmpty();
+        }
+        for (int i = 0; i < data.entry().sockets(); i++) {
+            final String support = data.entry().support(i);
+            if (!support.isEmpty() && config().support(support) == null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -655,13 +655,13 @@ public final class GuildMenu extends Menu {
             return;
         }
         if (click == ClickType.SHIFT_RIGHT) {
-            service.kick(player, member.name());
+            service.kick(player, member.uuid()); // 2026-10-18：用 UUID（名字重複時會請出別人）
             redraw();
         } else if (click == ClickType.SHIFT_LEFT && guild.rank(player.getUniqueId()) == GuildRank.VICE) {
-            service.setRank(player, member.name(), member.rank() == GuildRank.OFFICER ? GuildRank.MEMBER : GuildRank.OFFICER);
+            service.setRank(player, member.uuid(), member.rank() == GuildRank.OFFICER ? GuildRank.MEMBER : GuildRank.OFFICER); // 2026-10-18：用 UUID
             redraw();
         } else if (click == ClickType.SHIFT_LEFT && guild.rank(player.getUniqueId()) == GuildRank.LEADER) {
-            service.setRank(player, member.name(), member.rank() == GuildRank.VICE ? GuildRank.MEMBER
+            service.setRank(player, member.uuid(), member.rank() == GuildRank.VICE ? GuildRank.MEMBER // 2026-10-18：用 UUID
                     : member.rank() == GuildRank.OFFICER ? GuildRank.VICE : GuildRank.OFFICER);
             redraw();
         }
@@ -692,10 +692,10 @@ public final class GuildMenu extends Menu {
             return;
         }
         if (click == ClickType.SHIFT_RIGHT) {
-            service.reject(player, chosen.name());
+            service.reject(player, chosen.uuid()); // 2026-10-18：用 UUID（名字重複時會審核到別人）
             redraw();
         } else if (click.isLeftClick()) {
-            service.approve(player, chosen.name());
+            service.approve(player, chosen.uuid()); // 2026-10-18：用 UUID
             redraw();
         }
     }

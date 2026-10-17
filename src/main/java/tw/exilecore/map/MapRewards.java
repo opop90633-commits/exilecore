@@ -239,7 +239,7 @@ public final class MapRewards {
                 rest = leftover.isEmpty() ? null : leftover.values().iterator().next();
             }
             if (rest != null && !rest.isEmpty()) {
-                player.getWorld().dropItemNaturally(player.getLocation(), rest);
+                plugin.personalDrops().dropForever(player, rest); // 2026-10-18：只有他撿得到、不會自己消失（以前沒歸屬，隊友撿得走）
                 dropped = true;
             }
         }

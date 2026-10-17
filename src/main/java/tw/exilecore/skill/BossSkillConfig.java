@@ -108,6 +108,7 @@ public final class BossSkillConfig {
             settings = Settings.DEFAULT;
             skills = Map.of();
             defaults = Map.of();
+            tempo = Map.of(); // 2026-10-18：檔案刪掉後重載，節奏倍率也要清掉
             return;
         }
         load(YamlNode.load(file));

@@ -464,6 +464,44 @@ public final class MapConfig {
     }
 
     public void load(final Path dataFolder) throws IOException {
+        // 2026-10-18：先讀到新的一份，成功才換上（以前讀到一半出錯，地圖全部消失、設定回預設）；讀的途中改到的全域值失敗時還原
+        final double oldChase = tw.exilecore.item.ItemGenerator.chaseChance();
+        final double oldMirror = tw.exilecore.item.ItemGenerator.mirrorChance();
+        final MapStats.Tiers oldTiers = MapStats.tiers();
+        final MapConfig fresh = new MapConfig();
+        try {
+            fresh.parse(dataFolder);
+        } catch (final IOException | RuntimeException e) {
+            tw.exilecore.item.ItemGenerator.setChaseChance(oldChase);
+            tw.exilecore.item.ItemGenerator.setMirrorChance(oldMirror);
+            MapStats.setTiers(oldTiers);
+            throw e;
+        }
+        chaseMobChance = fresh.chaseMobChance;
+        mirrorChance = fresh.mirrorChance;
+        settings = fresh.settings;
+        drops = fresh.drops;
+        notes.clear();
+        notes.addAll(fresh.notes);
+        firstKill = fresh.firstKill;
+        finalDpsCap = fresh.finalDpsCap;
+        finalDpsOver = fresh.finalDpsOver;
+        maps.clear();
+        maps.putAll(fresh.maps);
+        finalMap = fresh.finalMap;
+        finalLevelBonus = fresh.finalLevelBonus;
+        finalTierLifeFrom = fresh.finalTierLifeFrom;
+        finalTierLifeMax = fresh.finalTierLifeMax;
+        bossTierLifeFrom = fresh.bossTierLifeFrom;
+        bossTierLifeMax = fresh.bossTierLifeMax;
+        shieldTierShare = fresh.shieldTierShare;
+        extraFinals.clear();
+        extraFinals.putAll(fresh.extraFinals);
+        finalInfos.clear();
+        finalInfos.putAll(fresh.finalInfos);
+    }
+
+    private void parse(final Path dataFolder) throws IOException {
         maps.clear();
         finalMap = null;
         finalLevelBonus = DEFAULT_FINAL_LEVEL_BONUS;

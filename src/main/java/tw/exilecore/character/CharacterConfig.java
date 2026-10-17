@@ -169,14 +169,17 @@ public final class CharacterConfig {
         }
         experienceBonus = bonus;
         if (root.has("experience")) {
-            experience.clear();
+            // 2026-10-18：先讀到暫存再換上去（寫錯時保留原本的經驗表，不會變成空的沒人能升級）
+            final TreeMap<Integer, Long> parsed = new TreeMap<>();
             final YamlNode node = root.node("experience");
             for (final String key : node.keys()) {
-                experience.put(Integer.parseInt(key.trim()), (long) node.decimal(key, 0));
+                parsed.put(Integer.parseInt(key.trim()), (long) node.decimal(key, 0));
             }
-            if (experience.isEmpty()) {
+            if (parsed.isEmpty()) {
                 throw new IllegalArgumentException("character.yml：experience 至少要有一個等級");
             }
+            experience.clear();
+            experience.putAll(parsed);
         }
         final YamlNode penalty = root.node("level_penalty");
         levelPenaltyEnabled = penalty.bool("enabled", levelPenaltyEnabled);
@@ -199,15 +202,19 @@ public final class CharacterConfig {
             highLevel.putAll(parsed);
         }
         if (root.has("death_penalty")) {
-            deathPenalty.clear();
+            // 2026-10-18：先讀到暫存再換上去（寫錯時保留原本的）
+            final TreeMap<Integer, Double> parsed = new TreeMap<>();
             final YamlNode node = root.node("death_penalty");
             for (final String key : node.keys()) {
-                deathPenalty.put(Integer.parseInt(key.trim()), node.decimal(key, 0));
+                parsed.put(Integer.parseInt(key.trim()), node.decimal(key, 0));
             }
+            deathPenalty.clear();
+            deathPenalty.putAll(parsed);
         }
         mapDeathPenalty = Math.max(0, root.decimal("map_death_penalty", mapDeathPenalty));
         deathPenaltyFromLevel = Math.max(1, root.integer("death_penalty_from_level", deathPenaltyFromLevel));
-        deathPenaltyTiers.clear();
+        // 2026-10-18：先讀到暫存再換上去（寫錯時保留原本的）
+        final TreeMap<Integer, Double> parsedTiers = new TreeMap<>();
         if (root.has("death_penalty_tiers")) {
             final YamlNode node = root.node("death_penalty_tiers");
             for (final String key : node.keys()) {
@@ -215,20 +222,25 @@ public final class CharacterConfig {
                 if (value < 0 || value > 1) {
                     throw new IllegalArgumentException("character.yml：death_penalty_tiers." + key + " 要在 0 到 1 之間（比例），卻是 " + value);
                 }
-                deathPenaltyTiers.put(Integer.parseInt(key.trim()), value);
+                parsedTiers.put(Integer.parseInt(key.trim()), value);
             }
         }
+        deathPenaltyTiers.clear();
+        deathPenaltyTiers.putAll(parsedTiers);
         final YamlNode respec = root.node("respec");
         respecFreeUntilLevel = Math.max(1, respec.integer("free_until_level", respecFreeUntilLevel));
         if (respec.has("gold_per_point")) {
-            respecCost.clear();
+            // 2026-10-18：先讀到暫存再換上去（寫錯時保留原本的，不會變成退點免費）
+            final TreeMap<Integer, Long> parsed = new TreeMap<>();
             final YamlNode node = respec.node("gold_per_point");
             for (final String key : node.keys()) {
-                respecCost.put(Integer.parseInt(key.trim()), (long) node.decimal(key, 0));
+                parsed.put(Integer.parseInt(key.trim()), (long) node.decimal(key, 0));
             }
-            if (respecCost.isEmpty()) {
+            if (parsed.isEmpty()) {
                 throw new IllegalArgumentException("character.yml：respec.gold_per_point 至少要有一個等級");
             }
+            respecCost.clear();
+            respecCost.putAll(parsed);
         }
         loadStarter(root.has("starter") ? root.node("starter") : null);
     }
@@ -372,17 +384,25 @@ public final class CharacterConfig {
         return experienceBonus;
     }
 
-    /** 全服經驗加倍的寫法「×2」「×1.5」；沒有加倍（1）回傳 null。 */
+    /** 全服經驗加倍的寫法「+100%」「+50%」；沒有加倍（1）回傳 null。 */
     public String experienceBonusText() {
         return bonusText(experienceBonus());
     }
 
-    /** 2 → 「×2」、1.5 → 「×1.5」、1 → null。 */
+    /** 2 → 「+100%」、1.5 → 「+50%」、0.8 → 「-20%」、1 → null（2026-10-18：倍數改顯示成 %，以前是「×2」）。 */
     public static String bonusText(final double bonus) {
         if (Math.abs(bonus - 1) < 1e-9) {
             return null;
         }
-        return "×" + java.math.BigDecimal.valueOf(bonus).setScale(2, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+        return percentText(bonus);
+    }
+
+    /** 2026-10-18：倍數寫成多出來的 %：2.1 → 「+110%」、3.21 → 「+221%」、0.8 → 「-20%」（最多一位小數）。 */
+    public static String percentText(final double multiplier) {
+        final double percent = (multiplier - 1) * 100;
+        final String number = java.math.BigDecimal.valueOf(Math.abs(percent)).setScale(1, java.math.RoundingMode.HALF_UP)
+                .stripTrailingZeros().toPlainString();
+        return (percent < 0 ? "-" : "+") + number + "%";
     }
 
     /** 從 level 升到 level+1 需要的經驗（沒列的等級用相鄰值線性內插）；到達上限後為 0。 */

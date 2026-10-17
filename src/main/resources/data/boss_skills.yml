@@ -689,7 +689,7 @@ skills:
     interval: 0.6
     ruin: 3              # poedb：apply gauntlet ruin on hit
     count: 2             # at: maze 時 count 是幾圈牆（PoE1 每個階段多一圈：1 → 5）
-    reach: 12            # 最外圈離祂幾格
+    reach: 14            # 最外圈離祂幾格（2026-10-17：12 → 14，稍微放大）
     gaps: 2              # 每圈幾個缺口（各圈錯開）
     gap_angle: 55
     at: maze
@@ -711,7 +711,7 @@ skills:
     interval: 0.6
     ruin: 3              # poedb：apply gauntlet ruin on hit
     count: 3
-    reach: 15
+    reach: 17            # 2026-10-17：15 → 17（稍微放大）
     gaps: 2
     gap_angle: 50
     at: maze
@@ -733,7 +733,7 @@ skills:
     interval: 0.6
     ruin: 3              # poedb：apply gauntlet ruin on hit
     count: 4
-    reach: 16
+    reach: 18.5          # 2026-10-17：16 → 18.5（稍微放大）
     gaps: 2
     gap_angle: 45
     at: maze
@@ -789,7 +789,7 @@ skills:
     duration: 8
     interval: 0.6
     reach: 30
-    scatter: 4.5        # 走廊左右各幾格
+    scatter: 5.2        # 走廊左右各幾格（2026-10-17：4.5 → 5.2，稍微放大）
     at: walls
     solid: true
     slow: 1
@@ -856,7 +856,7 @@ skills:
     telegraph: 1.0
     count: 4            # 左右輪流幾發
     delay: 1.5          # 每一發標紅幾秒才射
-    width: 1.55         # 球的半徑＝半條走廊（牆在左右 4.5 格、牆半徑 1.4 → 走廊中間約 6.2 格寬）
+    width: 1.9          # 球的半徑＝半條走廊（2026-10-17：走廊放大，牆在左右 5.2 格、牆半徑 1.4 → 走廊中間約 7.6 格寬；原本 1.55）
     speed: 1.2          # 球每 tick 飛幾格（30 格約 1.25 秒）
     reach: 30
     shout: "「無路可走。」"

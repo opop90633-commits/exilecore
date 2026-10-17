@@ -330,8 +330,10 @@ public final class AntiCheatService implements Listener {
         final double horizontal = Math.sqrt(velocity.getX() * velocity.getX() + velocity.getZ() * velocity.getZ());
         // 每刻的速度 × 20 = 一秒；速度會衰減，所以用一半再加一點保險
         final double bonus = Math.max(4.0, horizontal * 20 * 0.7 + Math.abs(velocity.getY()) * 10);
+        // 2026-10-18：先看舊加成還有沒有效、再延長時間（原本順序反了，條件永遠成立，過期的大加成一直被保留）
+        final boolean active = tick < state.velocityUntil;
         state.velocityUntil = Math.max(state.velocityUntil, tick + VELOCITY_GRACE_TICKS);
-        state.velocityBonus = Math.max(tick < state.velocityUntil ? state.velocityBonus : 0, bonus);
+        state.velocityBonus = Math.max(active ? state.velocityBonus : 0, bonus);
         state.check.reset();
     }
 

@@ -468,6 +468,10 @@ public final class BossSkills implements Listener {
     private final RandomGenerator random;
     private final DangerZones danger;
     private final Map<UUID, Brain> brains = new HashMap<>();
+    /** 2026-10-18：正在 tick 的那隻（招式傷害同步觸發死亡事件時，它的 detach／reset 等這隻 tick 完才做，不然走訪中的清單被改）。 */
+    private Brain ticking;
+    private boolean deferredDetach;
+    private boolean deferredReset;
     /** 正在放全場大招（綠色安全區，sanctuary）的 Boss（2026-10-15）：附近的 Boss 都等它落下才出招。 */
     private final java.util.Set<Brain> channeling = new java.util.HashSet<>();
     /** 安全區大招範圍再往外幾格內的 Boss 也要等。 */
@@ -534,6 +538,10 @@ public final class BossSkills implements Listener {
 
     /** Boss 死了、被移除、戰鬥結束：拿掉，留在地上的東西一起消失；放招時暫停的原版 AI 恢復。 */
     public void detach(final UUID boss) {
+        if (ticking != null && ticking == brains.get(boss)) {
+            deferredDetach = true; // 2026-10-18：自己的招式打死了自己（荊棘反傷）：tick 完再拿掉
+            return;
+        }
         final Brain brain = brains.remove(boss);
         if (brain != null) {
             danger.hidePrefix(boss + ":");
@@ -544,6 +552,10 @@ public final class BossSkills implements Listener {
 
     /** Boss 重置（附近沒人、回滿血）：冷卻清掉、正在放的招取消。 */
     public void reset(final UUID boss) {
+        if (ticking != null && ticking == brains.get(boss)) {
+            deferredReset = true; // 2026-10-18：自己的招式打死了擁有者（淵鯨）：tick 完再重置，不要清掉正在走訪的清單
+            return;
+        }
         final Brain brain = brains.get(boss);
         if (brain != null) {
             brain.reset(now());
@@ -624,15 +636,19 @@ public final class BossSkills implements Listener {
             return;
         }
         final long now = now();
-        final Iterator<Brain> iterator = brains.values().iterator();
-        while (iterator.hasNext()) {
-            final Brain brain = iterator.next();
+        // 2026-10-18：走訪複本（招式傷害同步觸發的死亡事件會 detach／attach 別隻），已經被拿掉或換掉的跳過
+        for (final Brain brain : List.copyOf(brains.values())) {
+            final UUID id = brain.boss.getUniqueId();
+            if (brains.get(id) != brain) {
+                continue;
+            }
             if (!brain.boss.isValid() || brain.boss.isDead()) {
-                iterator.remove();
+                brains.remove(id);
                 danger.hidePrefix(brain.boss.getUniqueId() + ":");
                 dismissSummons(brain); // 2026-10-17：召喚師死了，叫出來的東西一起消失
                 continue;
             }
+            ticking = brain;
             try {
                 tickBrain(brain, now);
             } catch (final RuntimeException e) {
@@ -650,6 +666,21 @@ public final class BossSkills implements Listener {
                 if (now - brain.lastError >= 20 * 30) {
                     brain.lastError = now; // 同一隻 30 秒內只記一次（一直出錯不要洗版）
                     plugin.getSLF4JLogger().error("Boss {} 的招式出錯", brain.host.name(), e);
+                }
+            } finally {
+                ticking = null;
+            }
+            if (deferredDetach || deferredReset) {
+                // 2026-10-18：tick 途中被要求的 detach／reset 現在做（腦袋已經被換掉就不動新的）
+                final boolean detachNow = deferredDetach;
+                deferredDetach = false;
+                deferredReset = false;
+                if (brains.get(id) == brain) {
+                    if (detachNow) {
+                        detach(id);
+                    } else {
+                        reset(id);
+                    }
                 }
             }
         }
@@ -2124,10 +2155,10 @@ public final class BossSkills implements Listener {
                 iterator.remove();
                 continue;
             }
-            if (now % 2 == 0) {
+            if (now % (zone.skill.solid() ? 8 : 2) == 0) { // 2026-10-17：牆的粒子少一點（牆一塊接一塊，每塊都畫太密）
                 visuals.zoneAmbient(zone.skill.visual(), List.of(zone.center), zone.skill.radius(), now);
             }
-            if (zone.skill.solid() && now % 6 == 0) {
+            if (zone.skill.solid() && now % 12 == 0) {
                 wallPillar(zone.center, zone.skill.radius()); // 2026-10-17：牆畫成一圈直立的淡紫光柱，跟地上會痛的區域分得出來
             }
             if (zone.skill.solid()) {
@@ -2158,13 +2189,12 @@ public final class BossSkills implements Listener {
         if (world == null) {
             return;
         }
-        for (int i = 0; i < 6; i++) {
-            final double angle = Math.PI * 2 * i / 6;
-            final double x = center.getX() + Math.cos(angle) * radius;
-            final double z = center.getZ() + Math.sin(angle) * radius;
-            for (final double y : new double[] {0.6, 1.8}) {
-                world.spawnParticle(org.bukkit.Particle.DUST, x, center.getY() + y, z, 1, 0.05, 0.25, 0.05, 0, WALL_DUST);
-            }
+        // 2026-10-17：6 點 × 2 層 → 4 點 × 1 層（牆的粒子太多）
+        final double turn = Math.floorMod((long) (center.getX() * 7 + center.getZ() * 13), 4) * Math.PI / 8; // 相鄰幾塊錯開，不要排成直線
+        for (int i = 0; i < 4; i++) {
+            final double angle = turn + Math.PI * 2 * i / 4;
+            world.spawnParticle(org.bukkit.Particle.DUST, center.getX() + Math.cos(angle) * radius, center.getY() + 1.2,
+                    center.getZ() + Math.sin(angle) * radius, 1, 0.05, 0.4, 0.05, 0, WALL_DUST);
         }
     }
 
@@ -2928,13 +2958,19 @@ public final class BossSkills implements Listener {
         lance.ball.add(lance.direction.clone().multiply(step));
         lance.travelled += step;
         visuals.bossOrb(skill.visual(), lance.ball.clone().add(0, 1.0, 0));
-        visuals.bossWarningRing(lance.ball, skill.width(), 1.0);
+        final boolean done = lance.travelled >= skill.reach();
+        // 2026-10-17：球底下跟著一個紅圈（球的範圍；每 2 tick 移一次，地板只換變了的格子）
+        if (done) {
+            danger.hide(lance.mark + "#ball");
+        } else if (lance.travelled <= step + 1e-9 || Math.round(lance.travelled / step) % 2 == 0) {
+            danger.show(lance.mark + "#ball", lance.ball, DangerZones.disc(lance.ball, skill.width()), DangerZones.colorFor(skill.type()));
+        }
         for (final LivingEntity victim : victims(brain, lance.ball, skill.width() + 0.6)) {
             if (lance.struck.add(victim.getUniqueId())) {
                 hurt(brain, skill, victim, Tags.AREA);
             }
         }
-        return lance.travelled >= skill.reach();
+        return done;
     }
 
     /** 殘影每 tick：輪到的殘影朝某個玩家標出紅線，時間到射穿；全部射完這一招才結束。 */

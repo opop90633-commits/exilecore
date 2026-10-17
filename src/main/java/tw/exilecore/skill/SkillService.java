@@ -833,7 +833,7 @@ public final class SkillService {
         if (runtime.queuedKey < 0) {
             return;
         }
-        if (now - runtime.queuedAt > SkillRuntime.queueTimeout(runtime.queuedKey) || !eligible(player)) {
+        if (now > runtime.queuedUntil || !eligible(player)) {
             runtime.clearQueue();
             return;
         }
@@ -841,7 +841,12 @@ public final class SkillService {
             final int key = runtime.queuedKey;
             final LivingEntity target = runtime.queuedTarget == null ? null : living(player, runtime.queuedTarget);
             runtime.clearQueue();
-            perform(player, runtime, key, target, now);
+            runtime.fromQueue = true;
+            try {
+                perform(player, runtime, key, target, now);
+            } finally {
+                runtime.fromQueue = false;
+            }
         }
     }
 
@@ -1072,8 +1077,8 @@ public final class SkillService {
         final double speed = plugin.ailments() == null ? 1.0 : Math.max(0.05, plugin.ailments().actionSpeed(player));
         final double interval = build.intervalTicks(sheet) / speed;
         runtime.readyAt = SkillMath.nextReady(runtime.readyAt, now, release != null && chargeSpec.stages() <= 0 ? interval * RELEASE_RECOVERY : interval);
-        if (key != SkillLoadout.KEY_LEFT && key != SkillLoadout.KEY_SNEAK_LEFT) {
-            player.swingMainHand(); // 左鍵客戶端自己會揮手；右鍵、數字鍵要伺服器揮
+        if ((key != SkillLoadout.KEY_LEFT && key != SkillLoadout.KEY_SNEAK_LEFT) || runtime.fromQueue) {
+            player.swingMainHand(); // 左鍵客戶端自己會揮手；右鍵、數字鍵要伺服器揮；排隊放出來的左鍵也要（2026-10-17：揮手時機對上真的出手）
         }
         runtime.startCooldown(definition.id(), now, build.cooldownTicks());
         showCooldown(player, definition.id(), build.cooldownTicks());
@@ -1812,7 +1817,7 @@ public final class SkillService {
     public List<String[]> skillDps(final Player player) {
         final List<String[]> rows = new ArrayList<>();
         for (final DpsRow row : skillDps(plugin.players().get(player), plugin.players().sheet(player), liveAuras(player))) {
-            rows.add(new String[] {tw.exilecore.character.HotbarLayout.of(plugin.players().get(player)).shortKeyName(row.slot()),
+            rows.add(new String[] {row.slot() < 0 ? "觸發" : tw.exilecore.character.HotbarLayout.of(plugin.players().get(player)).shortKeyName(row.slot()),
                     row.minions() > 0 ? row.name() + "（召喚物 ×" + row.minions() + "，暴擊 " + ModifierText.number(row.crit() * 100)
                             + "% ×" + ModifierText.number(row.multi()) + "%）" : row.name(),
                     String.valueOf(Math.round(row.dps())), String.valueOf(Math.round(row.full()))});
@@ -1839,7 +1844,98 @@ public final class SkillService {
                 rows.add(row);
             }
         }
+        rows.addAll(metaRows(state, sheet, full, view, rows)); // 2026-10-17：主要寶石觸發的法術也算
         return rows;
+    }
+
+    /** 主要寶石觸發：兩次觸發最快隔 {@link MetaGems#MIN_GAP} tick，每秒最多幾次。 */
+    static final double META_MAX_PER_SECOND = 20.0 / MetaGems.MIN_GAP;
+
+    /**
+     * 主要寶石（暴擊時施放、元素異常時施放）觸發的法術的估計每秒傷害（2026-10-17，面板以前完全沒算）：
+     * 能量照面板上每秒傷害最高的那個技能（不是召喚物）一直打同等級一般怪物來估——
+     * 暴擊時：每秒暴擊次數 × 能量；元素異常時：每秒（點燃＋感電＋冰凍 ×3）次數 × 能量；
+     * 每秒觸發 = 每秒能量 ÷ 插槽法術的能量上限，最多 {@link #META_MAX_PER_SECOND} 次，有冷卻的不超過冷卻。
+     * 翻滾、被擊中、召喚物死掉、近戰擊殺這幾種看打法，不估；法術圖騰不算（圖騰自己放）。
+     * 名字寫成「法術（主要寶石觸發，每秒約 N 次）」，按鍵格是 -1。
+     */
+    private List<DpsRow> metaRows(final PlayerState state, final StatSheet sheet, final FullOn full, final AuraView view,
+                                  final List<DpsRow> rows) {
+        DpsRow main = null;
+        for (final DpsRow row : rows) {
+            if (row.minions() == 0 && row.rate() > 0 && (main == null || row.dps() > main.dps())) {
+                main = row;
+            }
+        }
+        if (main == null) {
+            return List.of();
+        }
+        double[] ailmentsPerHit = null;
+        final List<DpsRow> out = new ArrayList<>();
+        for (int position = 0; position < SkillLoadout.MAX_SKILLS; position++) {
+            final SkillLoadout.Entry entry = state.skills().skill(position);
+            final MetaSpec spec = entry == null ? null : config.meta(entry.skillId());
+            if (spec == null || spec.totem() || !view.active(entry.skillId())) {
+                continue;
+            }
+            final MetaGems.Socket socket = metas.socket(state, position);
+            if (socket == null || !socket.spell().dealsDamage()) {
+                continue;
+            }
+            final double events;
+            if (spec.kind() == MetaSpec.Kind.CRIT) {
+                events = main.rate() * main.crit();
+            } else if (spec.kind() == MetaSpec.Kind.AILMENT) {
+                if (ailmentsPerHit == null) {
+                    ailmentsPerHit = mainAilments(state, sheet, main);
+                }
+                events = main.rate() * (ailmentsPerHit[0] + ailmentsPerHit[1] + 3 * ailmentsPerHit[2]);
+            } else {
+                continue;
+            }
+            final double energy = events * spec.energy() * (1 + spec.energyMore().at(metas.usableLevel(state, entry)) / 100.0);
+            SkillBuild build = build(state, sheet, socket.spell(), socket.spellEntry());
+            double triggers = Math.min(META_MAX_PER_SECOND, energy / MetaSpec.maxEnergy(socket.spell()));
+            if (build.cooldownTicks() > 0) {
+                triggers = Math.min(triggers, 20.0 / build.cooldownTicks());
+            }
+            if (triggers <= 0) {
+                continue;
+            }
+            final SkillDefinition metaDefinition = config.skill(entry.skillId());
+            final String metaName = metaDefinition == null ? "主要寶石" : metaDefinition.name();
+            build = build.withProfile(build.profile().scaled((1 - spec.lessDamage() / 100.0) * (1 + spec.moreDamage() / 100.0), metaName));
+            final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, build.profile());
+            final double crit = DamageCalculator.critChance(sheet, build.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
+            final double multi = DamageCalculator.critMultiplier(build.profile().effective(sheet), build.profile().tags(), null) * 100;
+            final double critFactor = 1 + crit * (multi / 100.0 - 1);
+            final SkillParams params = build.params();
+            // 被觸發的只放一次（複擊、雙詠、虛星分身的重複只有自己按的時候才有）
+            final double hitRate = triggers * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
+                    params.aftershock() == null ? 0 : params.aftershock().more());
+            double dps = expected.total() * critFactor * hitRate;
+            if (plugin.ailments() != null) {
+                dps = plugin.ailments().estimateDps(sheet, build.profile(), expected, critFactor, hitRate, state.level(), dps);
+            }
+            final double fullDps = afterResist(expected, full.resist()).total() / Math.max(1e-9, expected.total()) * dps * (1 + full.taken());
+            out.add(new DpsRow(-1, socket.metaPosition() + 1, socket.spell().id(),
+                    socket.spell().name() + "（" + metaName + "觸發，每秒約 " + ModifierText.number(triggers) + " 次）",
+                    dps, Math.max(dps, fullDps), 0, expected.total() * critFactor, hitRate, crit, multi));
+        }
+        return out;
+    }
+
+    /** 能量來源那個技能一下平均造成幾次 {點燃, 感電, 冰凍}。 */
+    private double[] mainAilments(final PlayerState state, final StatSheet sheet, final DpsRow main) {
+        final SkillLoadout.Entry entry = main.position() < 0 ? null : state.skills().skill(main.position());
+        final SkillDefinition definition = entry == null ? null : config.skill(entry.skillId());
+        if (definition == null || plugin.ailments() == null) {
+            return new double[3];
+        }
+        final SkillBuild build = build(state, sheet, definition, entry);
+        final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, build.profile());
+        final double critFactor = 1 + main.crit() * (main.multi() / 100.0 - 1);
+        return plugin.ailments().ailmentsPerHit(sheet, build.profile(), expected, critFactor, state.level());
     }
 
     /**

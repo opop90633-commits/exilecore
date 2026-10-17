@@ -351,6 +351,24 @@ public final class StashService {
             // 2026-10：收回累積贊助、買的頁之後頁數變少：後面的東西搬到前面，搬不完的頁鎖起來（只能拿出來）
             if (stash.pageCount() > entitled && plugin.sponsors() != null && plugin.sponsors().loaded(player)
                     && plugin.bounties().accountLoaded(player)) {
+                // 2026-10-18：倉庫開著時不要直接收（關閉時舊畫面會蓋回搬過的頁：複製／吃掉物品、頁被拿掉時 IOOBE）。
+                // 改到下一刻：先把畫面同步回來、關掉（不在點擊事件裡關視窗），再重新跑一次收頁
+                final StashMenu menu = open.get(player.getUniqueId());
+                if (menu != null) {
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        final StashMenu still = open.get(player.getUniqueId());
+                        if (still != null && player.isOnline()) {
+                            still.returnCursor();
+                            still.syncToModel();
+                            player.closeInventory(); // onClose 在這裡跑完（還沒 shrink，同步的是同一份內容），之後選單不再寫回
+                            open.remove(player.getUniqueId(), still);
+                        }
+                        if (player.isOnline() && !open.containsKey(player.getUniqueId())) {
+                            ensurePages(player);
+                        }
+                    });
+                    return;
+                }
                 final int locked = stash.shrinkTo(entitled);
                 if (locked > 0) {
                     player.sendMessage(plugin.text().prefixed("<yellow>倉庫有 " + locked

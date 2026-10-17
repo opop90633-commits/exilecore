@@ -20,7 +20,8 @@ public final class ServerBonusBar {
     /** 在線人數加成（2026-10；寫在血條上：幾個人、下一階還差幾個）。 */
     private OnlineBonus online;
     private final BossBar bar = BossBar.bossBar(net.kyori.adventure.text.Component.empty(), 1f, BossBar.Color.YELLOW, BossBar.Overlay.PROGRESS);
-    private final Set<UUID> shown = new HashSet<>();
+    /** 2026-10-18：記玩家物件本身（2 秒內重登是新的 Player，只記 UUID 會以為已經掛上而看不到血條）。 */
+    private final java.util.Map<UUID, Player> shown = new java.util.HashMap<>();
     private String lastText;
 
     ServerBonusBar(final ExileCore plugin) {
@@ -81,11 +82,11 @@ public final class ServerBonusBar {
         final Set<UUID> online = new HashSet<>();
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             online.add(player.getUniqueId());
-            if (shown.add(player.getUniqueId())) {
+            if (shown.put(player.getUniqueId(), player) != player) {
                 player.showBossBar(bar);
             }
         }
-        shown.retainAll(online);
+        shown.keySet().retainAll(online);
     }
 
     void clear() {

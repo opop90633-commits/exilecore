@@ -156,6 +156,7 @@ public final class CharacterModule implements Module {
         if (bonusBar != null) {
             bonusBar.clear();
         }
+        states.hideResourceBars(); // 2026-10-18：戰鬥資源血條也收掉
         if (tickTask != null) {
             tickTask.cancel();
             tickTask = null;

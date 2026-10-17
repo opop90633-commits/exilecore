@@ -320,7 +320,7 @@ final class SponsorMenus {
         private static String boostText(final SponsorConfig.BoostType type) {
             final List<String> parts = new ArrayList<>();
             if (type.experience() > 1) {
-                parts.add("經驗 ×" + trim(type.experience()));
+                parts.add("經驗 " + tw.exilecore.character.CharacterConfig.percentText(type.experience())); // 2026-10-18：倍數改顯示成 %
             }
             if (type.quantity() > 0) {
                 parts.add("掉落數量 +" + Math.round(type.quantity() * 100) + "%");
@@ -329,13 +329,9 @@ final class SponsorMenus {
                 parts.add("稀有度 +" + Math.round(type.rarity() * 100) + "%");
             }
             if (type.gold() > 1) {
-                parts.add("金幣 ×" + trim(type.gold()));
+                parts.add("金幣 " + tw.exilecore.character.CharacterConfig.percentText(type.gold())); // 2026-10-18：倍數改顯示成 %
             }
             return "<white>" + String.join("、", parts);
-        }
-
-        private static String trim(final double value) {
-            return java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
         }
 
         @Override

@@ -617,8 +617,10 @@ public final class ExileCoreCommand {
             player.sendMessage(plugin.text().prefixed("<red>先建立角色（/char）"));
             return Command.SINGLE_SUCCESS;
         }
-        state.setGold(state.gold() + amount);
-        plugin.economy().ledger().gold(tw.exilecore.economy.EconomyLedger.ADMIN, amount);
+        final long before = state.gold();
+        state.setGold(before + amount);
+        // 2026-10-18：流水帳記實際變動量（扣到 0 被夾住時不是 amount）
+        plugin.economy().ledger().gold(tw.exilecore.economy.EconomyLedger.ADMIN, state.gold() - before);
         player.sendMessage(plugin.text().prefixed(String.format(Locale.ROOT, "<gray>金幣 %s%,d，現在 <#f5b942>%,d<gray>（帳號共用）",
                 amount >= 0 ? "+" : "", amount, state.gold())));
         return Command.SINGLE_SUCCESS;
@@ -915,6 +917,14 @@ public final class ExileCoreCommand {
         final Entity selected = chosen == null || System.currentTimeMillis() - chosen.getValue() > NPC_MOVE_TIMEOUT ? null
                 : plugin.getServer().getEntity(chosen.getKey());
         if (selected == null || !selected.isValid()) {
+            if (chosen != null) {
+                // 2026-10-18：上次選了沒放（逾時）：先把那個 NPC 的發光關掉，不然會永遠發光
+                final Entity old = plugin.getServer().getEntity(chosen.getKey());
+                if (old != null) {
+                    old.setGlowing(false);
+                }
+                NPC_MOVING.remove(player.getUniqueId());
+            }
             // 第一次：選
             final Optional<Entity> picked = pickNpc(plugin, player);
             if (picked.isEmpty()) {
