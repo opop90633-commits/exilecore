@@ -76,8 +76,8 @@ drops:
   mirror_chance: 0.000034        # 地圖 Boss（一般、具名、終局、極境）每次擊殺
   mirror_mob_chance: 0.0000001   # 一般怪物每隻（任何地方、任何等級）
   # 2026-10-18：共鳴石（讓一顆專屬輔助寶石不佔專屬名額的通貨）：比追逐級傳奇難，每個有份的人各擲一次，不吃任何加成
-  resonance_chance: 0.00017      # 地圖 Boss（一般、具名、終局、極境）每次擊殺（追逐級 0.00034 ÷ 2；2026-10-18）
-  resonance_mob_chance: 0.0000005     # 一般怪物（等級 75 以上）每隻：1/2,000,000（約 200 萬隻一顆，追逐級的一半；2026-10-18 擁有者定）
+  resonance_chance: 0.000068     # 地圖 Boss（一般、具名、終局、極境）每次擊殺（追逐級 0.00034 ÷ 5；2026-10-18）
+  resonance_mob_chance: 0.0000002     # 一般怪物（等級 75 以上）每隻：1/5,000,000（約 500 萬隻一顆，追逐級的 1/5；2026-10-18 擁有者定）
   final_common_chance: 0.01      # 終局 Boss 另外擲一次共通傳奇（map_boss 池，中了抽一件）：1%（2026-10-16）；極境、巔峰寫在各自的 common_chance
   final_support_chance: 0.01     # 終局 Boss 自己的專屬輔助寶石（supports.yml 寫 source: 這個終局的代號）：每一顆各自 1%
   fragment: sky_fragment         # 天穹碎片（currencies.yml）

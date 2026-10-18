@@ -168,8 +168,8 @@ class ResonanceTest {
     void resonanceRatesAreOneAndAHalfTimesRarerThanChase() throws IOException {
         final tw.exilecore.map.MapConfig maps = new tw.exilecore.map.MapConfig();
         maps.load(Path.of("src/main/resources/data"));
-        assertEquals(maps.drops().chaseChance() / 2, maps.resonanceChance(), maps.drops().chaseChance() * 0.01, "Boss：追逐級的一半（2026-10-18）");
-        assertEquals(0.0000005, maps.resonanceMobChance(), 1e-12, "一般怪物：約 200 萬隻一顆");
+        assertEquals(maps.drops().chaseChance() / 5, maps.resonanceChance(), maps.drops().chaseChance() * 0.01, "Boss：追逐級的 1/5（2026-10-18）");
+        assertEquals(0.0000002, maps.resonanceMobChance(), 1e-12, "一般怪物：約 500 萬隻一顆");
         assertTrue(maps.resonanceMobChance() < maps.chaseMobChance(), "比一般怪物掉追逐級（100 萬隻一件）更難");
         assertEquals(75, tw.exilecore.map.MapConfig.RESONANCE_MIN_LEVEL);
     }

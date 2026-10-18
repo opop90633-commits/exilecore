@@ -493,8 +493,8 @@ star_mirror:
 # 2026-10-18：共鳴石——用在一顆「專屬掉落的輔助寶石」上，那顆就共鳴：不佔一個技能只能掛一顆專屬輔助的名額
 #   （沒共鳴的專屬輔助一個技能還是只能有一顆生效，共鳴過的可以再掛好幾顆）。背包裡的寶石直接點，或在技能面板點掛著的那顆。
 #   掉率：drop_weight 0（掉落表的整數權重做不到這麼低），改用跟映星鏡一樣的「另外擲一次」：maps.yml 的 drops.resonance_mob_chance
-#   （一般怪物、等級 75 以上、每隻每個有份的人 1/2,000,000，約 200 萬隻一顆）與 drops.resonance_chance（地圖 Boss 每次擊殺 0.017%），
-#   Boss 與一般怪物都是追逐級傳奇的一半（2026-10-18 擁有者定：約 200 萬隻一顆）；不吃數量、稀有度、全服加成。掉落時全服公告（LootService.broadcastResonance）。
+#   （一般怪物、等級 75 以上、每隻每個有份的人 1/5,000,000，約 500 萬隻一顆）與 drops.resonance_chance（地圖 Boss 每次擊殺 0.0068%），
+#   Boss 與一般怪物都是追逐級傳奇的 1/5（2026-10-18 擁有者定：約 500 萬隻一顆）；不吃數量、稀有度、全服加成。掉落時全服公告（LootService.broadcastResonance）。
 resonance_orb:
   name: 共鳴石
   material: HEART_OF_THE_SEA

@@ -207,8 +207,8 @@ public final class MapConfig {
      * 共鳴石（2026-10-18）：比追逐級傳奇難——地圖 Boss 每次擊殺 0.00034/1.5、一般怪物（等級 75 以上）每隻 1/15,000,000（擁有者定的「約 1500 萬隻一顆」）。
      * 每個有份的人各擲一次，跟追逐級一樣不吃任何加成（maps.yml 的 drops.resonance_chance、drops.resonance_mob_chance）。
      */
-    public static final double DEFAULT_RESONANCE_CHANCE = 0.00017; // 2026-10-18：追逐級 ÷ 2
-    public static final double DEFAULT_RESONANCE_MOB_CHANCE = 0.0000005; // 2026-10-18：約 200 萬隻一顆（追逐級 ÷ 2）
+    public static final double DEFAULT_RESONANCE_CHANCE = 0.000068; // 2026-10-18：追逐級 ÷ 5
+    public static final double DEFAULT_RESONANCE_MOB_CHANCE = 0.0000002; // 2026-10-18：約 500 萬隻一顆（追逐級 ÷ 5）
     /** 共鳴石：怪物等級不到這個不掉（跟追逐級傳奇的池子一樣 75 起）。 */
     public static final int RESONANCE_MIN_LEVEL = 75;
     private double resonanceChance = DEFAULT_RESONANCE_CHANCE;
