@@ -1542,6 +1542,9 @@ BOSS_SKILLS = {
 }
 SKILLS.update(BOSS_SKILLS)
 
+# 2026-10-18：召歸令（召喚物回到身邊）：中間一個骷髏、四周往內的箭頭
+SKILLS['minion_recall'] = A('minion', lambda i: skull(i, 5, 4), lambda i: [arrow(i, 1, 1, 4, 4), arrow(i, 14, 1, 11, 4), arrow(i, 1, 14, 4, 11), arrow(i, 14, 14, 11, 11)])
+
 
 def support_category(sup):
     mods = sup.get('modifiers', []) or []

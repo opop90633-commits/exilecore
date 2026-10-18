@@ -258,6 +258,20 @@ public final class MinionService implements Listener, MinionHooks {
     }
 
     /** 祭品（2026-10）：主人身邊 radius 格內自己的召喚物得到增益 ticks；回傳幾隻。 */
+    /** 2026-10-18 召歸令：owner 在同一個世界的召喚物全部傳到他身邊（殘影不算）；回傳傳了幾隻。 */
+    int recall(final Player owner) {
+        int count = 0;
+        for (final Minion minion : minions) {
+            if (!minion.owner.equals(owner.getUniqueId()) || minion.decoy || !minion.mob.isValid() || !minion.mob.getWorld().equals(owner.getWorld())) {
+                continue;
+            }
+            minion.mob.getWorld().spawnParticle(org.bukkit.Particle.PORTAL, minion.mob.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.05);
+            teleportToOwner(minion, owner);
+            count++;
+        }
+        return count;
+    }
+
     int offer(final Player player, final double radius, final int ticks, final List<Modifier> mods) {
         final long now = now();
         final Location at = player.getLocation();

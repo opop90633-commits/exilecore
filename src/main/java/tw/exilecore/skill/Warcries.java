@@ -208,7 +208,14 @@ final class Warcries {
             for (final ScaledMod mod : spec.minionBuff()) {
                 minionMods.add(mod.toModifier(build.level(), build.auraEffect(), name));
             }
-            final int count = plugin.skills().minions().offer(player, radius, ticks, minionMods);
+            if (spec.recall()) { // 2026-10-18 召歸令：先把全部召喚物傳回身邊，再給增益（傳回來之後都在範圍內）
+                final int recalled = plugin.skills().minions().recall(player);
+                if (recalled == 0) {
+                    return "<red>你現在沒有召喚物";
+                }
+                notice.append(String.format(Locale.ROOT, "<gray>：%d 隻召喚物回到你身邊", recalled));
+            }
+            final int count = plugin.skills().minions().offer(player, spec.recall() ? Math.max(radius, 12) : radius, ticks, minionMods);
             notice.append(count > 0 ? String.format(Locale.ROOT, "<gray>：%d 隻召喚物得到增益", count) : "<gray>：附近沒有你的召喚物");
         }
 

@@ -16907,6 +16907,56 @@ item skill_abyss_grasp
   aEFrrruuuuurrFEa
   .aaaaaaaaaaaaaa.
 
+item skill_minion_recall
+  a=0a100c
+  b=a8743a
+  c=e8e0d0
+  d=1d231e
+  e=536458
+  f=0f1611
+  g=d6dcea
+  h=2c3f31
+  i=0e1510
+  j=2a3c2f
+  k=0d130f
+  l=c8bea0
+  m=26362b
+  n=0d120f
+  o=f4ecd6
+  p=243429
+  q=0c120e
+  r=223127
+  s=0b110d
+  t=1a1010
+  u=202e24
+  v=0b100c
+  w=1e2b22
+  x=0a0f0b
+  y=1c2920
+  z=090e0b
+  A=090d0a
+  B=080c09
+  C=070b09
+  D=16201a
+  E=070a08
+  F=141e18
+  .aaaaaaaaaaaaaa.
+  abcddeeeeeeddcba
+  acbfgfhhhhfgfbca
+  aiiggijiiiiggiia
+  akgggkkllllgggka
+  amnnngloolglnnma
+  apppqllllllllqpa
+  arrrslttllttlsra
+  auuuvlttllttlvua
+  awwwxllllllllxwa
+  ayzzzgllttglzzya
+  aAgggAAllllgggAa
+  aBBggBBlBlBggBBa
+  acbCgCDCDCCgCbca
+  abcEEFFFFFFEEcba
+  .aaaaaaaaaaaaaa.
+
 item support_increased_area
   a=140a04
   b=6d503b

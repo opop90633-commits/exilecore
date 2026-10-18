@@ -27,10 +27,18 @@ import java.util.Map;
  * @param spike         2026-10 祭柱（PoE2 的祭品）：用掉附近一具屍體（沒有就獻祭一隻自己的召喚物）在那裡立一根祭柱，
  *                      duration 秒內祭柱 radius 格內你的召喚物一直有 minionBuff
  * @param rageExtend    2026-10 銀月庇（PoE2 的月光賜福）：吼的時候用掉全部怒氣，每點怒氣增益多撐幾秒（0 = 不用怒氣）
+ * @param recall        2026-10-18 召歸令：發動時先把你所有的召喚物（不管多遠、同一個世界）傳到你身邊，minionBuff 給全部的召喚物
  */
 public record WarcrySpec(double radius, double duration, boolean taunt, Scaled heal, boolean allies, List<ScaledMod> buff,
                          Scaled taken, int exerts, Scaled exertMore, Map<String, Integer> charges,
-                         List<ScaledMod> minionBuff, boolean spike, double rageExtend) {
+                         List<ScaledMod> minionBuff, boolean spike, double rageExtend, boolean recall) {
+
+    /** 2026-10-18：舊的 13 參數建構式（沒有 recall）。 */
+    public WarcrySpec(final double radius, final double duration, final boolean taunt, final Scaled heal, final boolean allies, final List<ScaledMod> buff,
+                      final Scaled taken, final int exerts, final Scaled exertMore, final Map<String, Integer> charges,
+                      final List<ScaledMod> minionBuff, final boolean spike, final double rageExtend) {
+        this(radius, duration, taunt, heal, allies, buff, taken, exerts, exertMore, charges, minionBuff, spike, rageExtend, false);
+    }
 
     public WarcrySpec {
         buff = List.copyOf(buff);
@@ -77,7 +85,8 @@ public record WarcrySpec(double radius, double duration, boolean taunt, Scaled h
         return new WarcrySpec(check(where, "radius", node.decimal("radius", 8), 2, 16),
                 check(where, "duration", node.decimal("duration", 6), 1, 30),
                 node.bool("taunt", true), heal, node.bool("allies", true), buff, taken, exerts, exertMore, charges, minionBuff,
-                node.bool("spike", false), check(where, "rage_extend", node.decimal("rage_extend", 0), 0, 2));
+                node.bool("spike", false), check(where, "rage_extend", node.decimal("rage_extend", 0), 0, 2),
+                node.bool("recall", false)); // 2026-10-18：召歸令
     }
 
     private static Scaled scaled(final String where, final YamlNode node, final String key, final double def,

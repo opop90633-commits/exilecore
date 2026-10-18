@@ -1323,6 +1323,28 @@ skills:
   # ==== 2026-10 PoE2 補齊：新技能（機制照 PoE2，名稱是自己的）====
 
   # -- 錘 --
+  # 2026-10-18：召歸令（照 PoE1 的 Convocation 改名）：把所有召喚物傳回身邊、短暫回血。沒有召喚物不能放
+  minion_recall:
+    name: 召歸令
+    description: 一聲令下，你所有的召喚物不管在哪都立刻回到你身邊，並且 2 秒內每秒回復生命。瞬間發動，冷卻 3 秒。
+    icon: ECHO_SHARD
+    type: spell
+    tier: 5
+    tags: [minion, duration]
+    mechanic: warcry
+    warcry:
+      radius: 12
+      duration: 2
+      taunt: false
+      allies: false
+      recall: true
+      minion_buff:
+        - { stat: life.regen_percent, type: FLAT, value: [1.5, 3.5] }   # 每秒回復最大生命的 %（PoE 是 0.7–1.65，這裡的戰鬥快，給多一點）
+    cast_time: 0.1
+    cooldown: 3
+    mana: [6, 13]
+    visual: rallying_cry
+
   rolling_slam:
     name: 震野雙錘
     description: 錘子往前砸兩下：第一下砸出一道扇形震波，第二下更重、範圍更大。容易暈眩。
