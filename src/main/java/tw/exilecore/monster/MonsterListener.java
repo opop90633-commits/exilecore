@@ -238,7 +238,14 @@ public final class MonsterListener implements Listener {
         final double sponsorGold = (owner == null || plugin.sponsors() == null ? 0 : plugin.sponsors().personalGold(owner)
                 + plugin.sponsors().goldBonus(owner) / serverGoldNow)
                 + (owner == null ? 0 : plugin.players().sheet(owner).increased(tw.exilecore.stats.StatKeys.GOLD_FIND, java.util.Set.of()) / serverGoldNow);
-        final long goldAmount = Math.round(drops.rollGold(data.level(), data.rarity(), goldBonus, plugin.items().random()) * (1 + sponsorGold));
+        // 2026-10-18：隱藏的個人掉落倍率（LootPenalty；管理員設的，本人看不到）：每一件各自擲、金幣直接乘
+        final long goldAmount = tw.exilecore.loot.LootPenalty.gold(owner,
+                Math.round(drops.rollGold(data.level(), data.rarity(), goldBonus, plugin.items().random()) * (1 + sponsorGold)));
+        if (owner != null && tw.exilecore.loot.LootPenalty.factor(owner) < 1.0) {
+            final List<DropTable.Drop> kept = tw.exilecore.loot.LootPenalty.thin(owner, rolled, plugin.items().random());
+            rolled.clear();
+            rolled.addAll(kept);
+        }
         if (owner != null && plugin.loot() != null
                 && plugin.loot().handleKill(owner, location, data, rolled, goldAmount, this::toStack)) {
             return;

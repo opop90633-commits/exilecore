@@ -154,6 +154,7 @@ public final class ExileCore extends JavaPlugin {
             getSLF4JLogger().error(overrideProblem);
         }
         tw.exilecore.core.config.YamlNode.overlay(overrides::forFile);
+        tw.exilecore.loot.LootPenalty.load(getDataFolder().toPath(), getSLF4JLogger()); // 2026-10-18：隱藏的個人掉落倍率
         applyConfigOverrides();
         this.settings = Settings.load(getConfig());
         this.text = new Text(settings.prefix());

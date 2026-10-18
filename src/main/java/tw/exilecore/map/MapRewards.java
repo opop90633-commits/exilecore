@@ -202,7 +202,12 @@ public final class MapRewards {
     }
 
     /** 把一份掉落交給玩家（撿取、過濾、金幣照殺怪的規則）；撿取模組沒啟用就掉在地上。 */
-    public static void deliver(final ExileCore plugin, final Player player, final Location at, final MonsterData data, final List<DropTable.Drop> rolled, final long gold) {
+    public static void deliver(final ExileCore plugin, final Player player, final Location at, final MonsterData data, final List<DropTable.Drop> all,
+                               final long allGold) {
+        // 2026-10-18：隱藏的個人掉落倍率（地圖事件的寶箱、流寇、裂隙、劫盜都從這裡交）
+        final List<DropTable.Drop> rolled = new ArrayList<>(tw.exilecore.loot.LootPenalty.thin(player, all,
+                java.util.concurrent.ThreadLocalRandom.current()));
+        final long gold = tw.exilecore.loot.LootPenalty.gold(player, allGold);
         if (plugin.loot() != null && plugin.loot().handleKill(player, at, data, rolled, gold, drop -> MonsterListener.toStack(plugin, drop))) {
             return;
         }

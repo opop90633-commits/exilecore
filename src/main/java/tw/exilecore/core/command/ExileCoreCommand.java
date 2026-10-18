@@ -165,6 +165,16 @@ public final class ExileCoreCommand {
                 .then(Commands.literal("gold")
                         .then(Commands.argument("amount", IntegerArgumentType.integer(-1_000_000_000, 1_000_000_000))
                                 .executes(context -> gold(plugin, context, IntegerArgumentType.getInteger(context, "amount")))))
+                // 2026-10-18：工作室、外掛、洗資源帳號的掉落倍率（/ec droppenalty 看名單；/ec droppenalty 玩家 倍率；倍率 1 = 拿掉）
+                .then(Commands.literal("droppenalty")
+                        .executes(context -> dropPenaltyList(plugin, context.getSource().getSender()))
+                        .then(Commands.argument("player", StringArgumentType.word())
+                                .executes(context -> dropPenalty(plugin, context.getSource().getSender(),
+                                        StringArgumentType.getString(context, "player"), null))
+                                .then(Commands.argument("factor", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0, 1))
+                                        .executes(context -> dropPenalty(plugin, context.getSource().getSender(),
+                                                StringArgumentType.getString(context, "player"),
+                                                com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(context, "factor"))))))
                 .then(Commands.literal("resetpassives").executes(context -> resetPassives(plugin, context)))
                 .then(Commands.literal("setclass")
                         .then(Commands.argument("class", StringArgumentType.word())
@@ -625,6 +635,46 @@ public final class ExileCoreCommand {
         plugin.economy().ledger().gold(delta >= 0 ? tw.exilecore.economy.EconomyLedger.ADMIN : tw.exilecore.economy.EconomyLedger.ADMIN_TAKE, delta);
         player.sendMessage(plugin.text().prefixed(String.format(Locale.ROOT, "<gray>金幣 %s%,d，現在 <#f5b942>%,d<gray>（帳號共用）",
                 amount >= 0 ? "+" : "", amount, state.gold())));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** 2026-10-18：掉落倍率的名單（只給下指令的管理員看）。 */
+    private static int dropPenaltyList(final ExileCore plugin, final CommandSender sender) {
+        final Map<java.util.UUID, Double> all = tw.exilecore.loot.LootPenalty.all();
+        if (all.isEmpty()) {
+            sender.sendMessage(plugin.text().prefixed("<gray>沒有人有掉落倍率"));
+            return Command.SINGLE_SUCCESS;
+        }
+        sender.sendMessage(plugin.text().prefixed("<gray>掉落倍率（" + all.size() + " 人）："));
+        for (final Map.Entry<java.util.UUID, Double> entry : all.entrySet()) {
+            final String name = plugin.getServer().getOfflinePlayer(entry.getKey()).getName();
+            sender.sendMessage(plugin.text().parse(String.format(Locale.ROOT, "<gray>  %s <dark_gray>%s <white>×%.2f",
+                    name == null ? "?" : tw.exilecore.item.ItemRenderer.escape(name), entry.getKey(), entry.getValue())));
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** 2026-10-18：看或改一個人的掉落倍率（factor null = 只看）。 */
+    private static int dropPenalty(final ExileCore plugin, final CommandSender sender, final String name, final Double factor) {
+        org.bukkit.OfflinePlayer target = plugin.getServer().getPlayerExact(name);
+        if (target == null) {
+            target = plugin.getServer().getOfflinePlayerIfCached(name);
+        }
+        if (target == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>找不到玩家 " + tw.exilecore.item.ItemRenderer.escape(name) + "（要進過伺服器）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final String shown = target.getName() == null ? name : target.getName();
+        if (factor == null) {
+            final double now = tw.exilecore.loot.LootPenalty.factor(target.getUniqueId());
+            sender.sendMessage(plugin.text().prefixed(String.format(Locale.ROOT, "<gray>%s 的掉落倍率：<white>%s",
+                    tw.exilecore.item.ItemRenderer.escape(shown), now >= 1.0 ? "正常" : String.format(Locale.ROOT, "×%.2f", now))));
+            return Command.SINGLE_SUCCESS;
+        }
+        final boolean saved = tw.exilecore.loot.LootPenalty.set(target.getUniqueId(), shown, factor);
+        sender.sendMessage(plugin.text().prefixed(String.format(Locale.ROOT, "<gray>%s 的掉落倍率 → <white>%s%s",
+                tw.exilecore.item.ItemRenderer.escape(shown), factor >= 1.0 ? "正常" : String.format(Locale.ROOT, "×%.2f", factor),
+                saved ? "" : " <red>（存檔失敗，重開會不見，看伺服器 log）")));
         return Command.SINGLE_SUCCESS;
     }
 
