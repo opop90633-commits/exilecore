@@ -34,6 +34,8 @@ public final class SettingsMenu extends Menu {
     private static final int SLOT_PROFILE = 20;
     /** 撿到的星圖直接進倉庫的地圖頁（2026-10；預設關）。 */
     private static final int SLOT_MAP_STASH = 21;
+    /** 畫面左邊的隊伍框（2026-10-18）。 */
+    private static final int SLOT_PARTY_FRAMES = 22;
     /** 按鍵（2026-10）：生命、魔力藥劑各放 1–8 的哪一格。 */
     private static final int ROW_KEYS = 3;
     private static final int SLOT_LIFE_FLASK = 28;
@@ -76,6 +78,9 @@ public final class SettingsMenu extends Menu {
                     "撿到的星圖直接收進倉庫的地圖頁，不佔背包（地圖頁滿了才放背包）；"
                             + "地圖裝置可以直接從地圖頁挑地圖"));
         }
+        set(SLOT_PARTY_FRAMES, toggle(Material.PLAYER_HEAD, "隊伍框", PlayerSettings.enabled(state, PlayerSettings.PARTY_FRAMES),
+                "組隊時畫面左上角列出隊友：頭像、名字、等級、生命（護盾是血條上面薄薄的一層）、魔力；"
+                        + "死了名字變紅、離線變灰（要套用介面資源包）"));
         final tw.exilecore.web.Profiles profiles = plugin.web() == null ? null : plugin.web().profiles();
         if (profiles != null && state.hasCharacter()) {
             set(SLOT_PROFILE, toggle(Material.FILLED_MAP, "網頁角色頁公開", profiles.isPublic(player),
@@ -119,6 +124,7 @@ public final class SettingsMenu extends Menu {
                 }
             }
             case SLOT_COMBAT -> flip(PlayerSettings.COMBAT_METER);
+            case SLOT_PARTY_FRAMES -> flip(PlayerSettings.PARTY_FRAMES);
             case SLOT_SKILL_SOUNDS -> flip(PlayerSettings.SKILL_SOUNDS);
             case SLOT_COMBAT_SKILLS -> flipOff(PlayerSettings.COMBAT_SKILLS);
             case SLOT_MAP_STASH -> {

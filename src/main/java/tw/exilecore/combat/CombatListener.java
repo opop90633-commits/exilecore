@@ -722,7 +722,9 @@ public final class CombatListener implements Listener {
                         final double manaPct = cullSheet.flat(StatKeys.MANA_ON_CULL, skill.tags());
                         if (lifePct > 0 || manaPct > 0) {
                             final PlayerState culler = plugin.players().get((Player) attacker);
-                            culler.setLife(Math.min(culler.maxLife(), culler.life() + culler.maxLife() * lifePct / 100.0));
+                            if (!culler.ruined(plugin.getServer().getCurrentTick())) { // 2026-10-18：荒蕪禁療中不回生命
+                                culler.setLife(Math.min(culler.maxLife(), culler.life() + culler.maxLife() * lifePct / 100.0));
+                            }
                             culler.setMana(Math.min(culler.maxMana(), culler.mana() + culler.maxMana() * manaPct / 100.0));
                             plugin.players().display((Player) attacker, culler);
                         }
@@ -732,9 +734,12 @@ public final class CombatListener implements Listener {
             if (credit != null) {
                 final double lifeOnHit = skill.effective(attackerSheet).flat(StatKeys.LIFE_ON_HIT, skill.tags());
                 if (attackerIsPlayer) {
-                    defer(defender, () -> leech(credit, attackerSheet, skill, result)); // 2026-10-18：偷取等事件確定沒被取消才存
-                    if (lifeOnHit > 0) {
-                        pendingLifeGains.put(defender.getUniqueId(), new LifeGain(credit, lifeOnHit));
+                    // 2026-10-18：照 PoE，圖騰（含英靈）打中的偷取、擊中回復生命不回給玩家
+                    if (!totemHit(skill)) {
+                        defer(defender, () -> leech(credit, attackerSheet, skill, result)); // 2026-10-18：偷取等事件確定沒被取消才存
+                        if (lifeOnHit > 0) {
+                            pendingLifeGains.put(defender.getUniqueId(), new LifeGain(credit, lifeOnHit));
+                        }
                     }
                 } else if (lifeOnHit > 0) {
                     defer(defender, () -> minions.heal(attacker, lifeOnHit)); // 召喚物的擊中回復生命回給牠自己（2026-10-18：等事件確定沒被取消）
@@ -824,6 +829,9 @@ public final class CombatListener implements Listener {
         if (StatKeys.flag(effective, StatKeys.FLAG_NO_LEECH)) {
             return; // 地圖詞綴：無法從怪物身上偷取
         }
+        if (plugin.players().get(player).ruined(plugin.getServer().getCurrentTick())) {
+            return; // 2026-10-18：荒蕪（黑水）禁療中偷不到：生命、魔力偷取都不存，立即偷取也不回（以前立即偷取照回、偷取為魔力照回）
+        }
         double life = 0;
         double mana = 0;
         final double physical = result.dealt().get(DamageType.PHYSICAL);
@@ -905,6 +913,11 @@ public final class CombatListener implements Listener {
         }
     }
 
+    /** 2026-10-18：這一下是不是圖騰打的（圖騰自己放的技能、英靈、引爆、焚鏈、怨燼；見 SkillDeployables）。 */
+    private static boolean totemHit(final SkillProfile skill) {
+        return skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT);
+    }
+
     /** 競技場裡打中敵方玩家或召喚物：跟打怪一樣冒傷害數字；玩家本人打的還有偷取與擊中回復生命（等事件確定沒被取消）。 */
     private void pvpRewards(final boolean attackerIsPlayer, final Player credit, final StatSheet attackerSheet, final SkillProfile skill,
                             final HitResult result, final LivingEntity defender) {
@@ -913,8 +926,8 @@ public final class CombatListener implements Listener {
         }
         pendingNumbers.put(defender.getUniqueId(), new PendingNumber(credit, result.total(), result.crit(), result.dealt(), attackerIsPlayer,
                 chargeChances(attackerIsPlayer, skill, attackerSheet), meterName(skill)));
-        if (!attackerIsPlayer) {
-            return;
+        if (!attackerIsPlayer || totemHit(skill)) {
+            return; // 2026-10-18：圖騰打的不給玩家偷取、擊中回復生命（照 PoE）
         }
         final double capScale = lastPvpCapScale;
         defer(defender, () -> leech(credit, attackerSheet, skill, result, capScale)); // 2026-10-18：偷取等事件確定沒被取消才存
@@ -1187,7 +1200,8 @@ public final class CombatListener implements Listener {
         final LifeGain gain = pendingLifeGains.remove(event.getEntity().getUniqueId());
         if (gain != null && !event.isCancelled() && gain.player().isOnline()) {
             final PlayerState attackerState = plugin.players().get(gain.player());
-            if (attackerState.hasCharacter() && !attackerState.isDead() && attackerState.life() < attackerState.maxLife()) {
+            if (attackerState.hasCharacter() && !attackerState.isDead() && attackerState.life() < attackerState.maxLife()
+                    && !attackerState.ruined(plugin.getServer().getCurrentTick())) { // 2026-10-18：荒蕪（黑水）禁療中不回
                 attackerState.setLife(attackerState.life() + gain.amount());
                 plugin.players().display(gain.player(), attackerState);
             }
@@ -1216,7 +1230,7 @@ public final class CombatListener implements Listener {
                     hud.taken(player, damage.dealt().asMap(), lost); // 戰鬥數據：受到的
                 }
                 if (!state.isDead()) {
-                    if (damage.recoup() > 0) {
+                    if (damage.recoup() > 0 && !state.ruined(plugin.getServer().getCurrentTick())) { // 2026-10-18：禁療中不存
                         state.addLeech(damage.recoup());
                     }
                     plugin.players().display(player, state);

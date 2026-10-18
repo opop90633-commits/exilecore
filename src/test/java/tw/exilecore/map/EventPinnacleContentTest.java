@@ -86,13 +86,10 @@ class EventPinnacleContentTest {
         assertTrue(repository.uniquesFor("abyss", 59).isEmpty(), "深淵裂縫：物品等級 60 起");
     }
 
-    /** 每隻的招式組：8–10 招＋1 個場地危害，特殊招式躲得掉，前搖短的一下打不死（照 BossBurstTest 的算法，傷害 3.2、第三階段 ×1.4×1.55）。 */
+    /** 每隻的招式組：8–10 招＋1 個場地危害，特殊招式躲得掉，前搖短的一下打不死由 BossBurstTest 檢查。 */
     @Test
     void eventBossKitsAreEscapableAndCannotOneShot() {
         final BossSkillConfig bosses = skills.bossSkills();
-        // 等級 87（T16＋3）普通怪一下 9.19% 生命；Boss 一下 = 傳奇倍率 2 × damage 2.9 × 這個
-        final double hit = 2.0 * 3.2 * 0.091875; // 2026-10-18：Boss 傷害 2.9 → 3.2
-        final double more = 1.4 * 1.55; // 2026-10-18：第二、三階段更多 40%、55%
         for (final Map.Entry<String, String> entry : BOSSES.entrySet()) {
             final String prefix = entry.getValue();
             final List<BossSkill> kit = new ArrayList<>();
@@ -133,32 +130,7 @@ class EventPinnacleContentTest {
                 }
                 assertTrue(skill.telegraph() >= 1.0 || skill.kind() == BossSkill.Kind.SLAM && skill.telegraph() + skill.delay() >= 1.5
                         || skill.kind() == BossSkill.Kind.ZONE && skill.telegraph() >= 0.8, skill.id() + "：前搖至少 1 秒");
-                // 一下打不死：前搖短的招（照 BossBurstTest）
-                if (!skill.dealsDamage() || skill.kind() == BossSkill.Kind.SANCTUARY || skill.kind() == BossSkill.Kind.PULL) {
-                    continue;
-                }
-                final double warning = skill.telegraph() + (skill.kind() == BossSkill.Kind.SLAM ? skill.delay() : 0);
-                final boolean escapable = skill.kind() == BossSkill.Kind.NOVA
-                        ? skill.telegraph() >= (skill.radius() - 2) / RUN_SPEED + 0.5
-                        : warning >= 1.5;
-                if (escapable) {
-                    continue;
-                }
-                double taken = 0;
-                for (final Map.Entry<tw.exilecore.stats.DamageType, Double> share : skill.typeShares().entrySet()) {
-                    taken += share.getValue() * switch (share.getKey()) {
-                        case PHYSICAL -> 0.75;
-                        case CHAOS -> 1.0;
-                        default -> 0.25;
-                    };
-                }
-                final boolean waves = skill.kind() == BossSkill.Kind.NOVA || skill.kind() == BossSkill.Kind.CONE
-                        || skill.kind() == BossSkill.Kind.RING;
-                final int inOneSecond = !waves ? 1
-                        : skill.stagger() <= 0 ? skill.count() : Math.min(skill.count(), (int) Math.floor(1.0 / skill.stagger() + 1e-9) + 1);
-                final double fraction = skill.damage() * hit * more * (1 + curse) * taken * inOneSecond;
-                assertTrue(fraction < 1.0, entry.getKey() + " 的 " + skill.id() + "（前搖 " + warning + " 秒）一下就是參考角色 "
-                        + Math.round(fraction * 100) + "% 的生命");
+                // 2026-10-18：一下打不死的檢查統一由 BossBurstTest 做（參考角色照 balance.yml 的 boss_reference）
             }
             assertEquals(1, hazards, entry.getKey() + "：一個場地危害");
             assertTrue(special >= 5, entry.getKey() + "：特殊招式夠多（每個階段至少一招），實際 " + special);

@@ -150,7 +150,7 @@ class ResonanceTest {
     }
 
     @Test
-    void resonanceOrbIsShippedAsAKey() throws IOException {
+    void resonanceOrbIsShippedAsBasicCurrency() throws IOException {
         final CurrencyRepository currencies = new CurrencyRepository();
         currencies.load(Path.of("src/main/resources/data"));
         final CurrencyType orb = currencies.get("resonance_orb");
@@ -158,7 +158,7 @@ class ResonanceTest {
         assertEquals(CurrencyOperation.RESONANCE, orb.operation());
         assertEquals(0, orb.dropWeight(), "掉落表不掉（另外擲，跟映星鏡一樣）");
         assertEquals(10, orb.stack());
-        assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(orb));
+        assertEquals(CurrencyGroups.Group.BASIC, CurrencyGroups.of(orb));
         assertEquals(orb, currencies.firstWith(CurrencyOperation.RESONANCE).orElseThrow());
         assertFalse(orb.isSkillCurrency(), "不是開孔的通貨（技能面板另外認 RESONANCE）");
         assertFalse(CurrencyOperation.RESONANCE.canApply(null, null), "不能直接用在裝備上");

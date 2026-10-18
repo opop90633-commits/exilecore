@@ -32,6 +32,11 @@ public final class Tags {
     /** 召喚物：召喚技能本身，以及召喚物打出去的每一下（召喚物只吃帶這個標籤的修飾器）。 */
     public static final String MINION = "minion";
     public static final String TOTEM = "totem";
+    /**
+     * 2026-10-18：圖騰打出去的每一下（圖騰自己放的技能、英靈圖騰的英靈、引爆、焚鏈、怨燼）。不是 PoE 的標籤、沒有修飾器看它，
+     * 只用來讓 CombatListener 分辨「這一下是圖騰打的」：照 PoE，圖騰命中的擊中回復生命、偷取不回給玩家。
+     */
+    public static final String TOTEM_HIT = "totem_hit";
     /** 鐘（驚雷之鐘）：算圖騰的一種，但圖騰列陣對它沒用。 */
     public static final String BELL = "bell";
     public static final String TRAP = "trap";

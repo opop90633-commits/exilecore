@@ -35,6 +35,11 @@ public final class BalanceConfig {
     private NavigableMap<Integer, Double> hitPercent = new TreeMap<>(Map.of(1, 5.0, 60, 8.0, 84, 9.0, 100, 10.0));
     private NavigableMap<Integer, Double> bossSeconds = new TreeMap<>(Map.of(12, 30.0, 60, 75.0, 84, 95.0, 100, 110.0));
     private double spellVsAttack = 0.8;
+    /** 2026-10-18：Boss 招式「一下打不死」的參考角色（終局、巔峰的測試用）：生命、護甲擋下的物理比例、四抗。 */
+    private double bossLife = 2500;
+    private double bossArmour = 25; // 2026-10-18：擁有者定 25
+    private double bossQuickHitMax = 100; // 2026-10-18：前搖短的招一下最多幾 % 生命
+    private double bossResist = 75;
     private int gearTier = 2;
     private int itemLevelCap = 84;
     private double treeDamagePerLevel = 2;
@@ -74,6 +79,11 @@ public final class BalanceConfig {
         final NavigableMap<Integer, Integer> newSockets = reference.has("support_sockets") ? integers(reference.node("support_sockets")) : supportSockets;
         final Build newAttack = reference.has("attack") ? build(reference.node("attack")) : attack;
         final Build newSpell = reference.has("spell") ? build(reference.node("spell")) : spell;
+        final YamlNode bossRef = root.node("boss_reference"); // 2026-10-18
+        final double newBossLife = Math.max(1, bossRef.decimal("life", bossLife));
+        final double newBossArmour = Math.max(0, Math.min(90, bossRef.decimal("armour_reduction", bossArmour)));
+        final double newBossResist = Math.max(0, Math.min(90, bossRef.decimal("resist", bossResist)));
+        final double newQuickHit = Math.max(10, Math.min(100, bossRef.decimal("quick_hit_max", bossQuickHitMax)));
         if (newKill.isEmpty() || newHit.isEmpty() || newBoss.isEmpty()) {
             throw new IllegalArgumentException("balance.yml：targets.kill_seconds、hit_percent、boss_seconds 至少要有一個等級");
         }
@@ -90,6 +100,25 @@ public final class BalanceConfig {
         supportSockets = newSockets;
         attack = newAttack;
         spell = newSpell;
+        bossLife = newBossLife;
+        bossArmour = newBossArmour;
+        bossResist = newBossResist;
+        bossQuickHitMax = newQuickHit;
+    }
+
+    /** 2026-10-18：前搖短的 Boss 招式，對參考角色一下最多幾成生命（0.7 = 七成）。 */
+    public double bossQuickHitMax() {
+        return bossQuickHitMax / 100.0;
+    }
+
+    /** 2026-10-18：Boss 參考角色的最大生命。 */
+    public double bossLife() {
+        return bossLife;
+    }
+
+    /** 2026-10-18：Boss 參考角色身上，這種傷害實際吃進去的比例（物理照護甲擋下的 %，四種元素／混沌照抗性）。 */
+    public double bossTaken(final tw.exilecore.stats.DamageType type) {
+        return type == tw.exilecore.stats.DamageType.PHYSICAL ? 1 - bossArmour / 100.0 : 1 - bossResist / 100.0;
     }
 
     private static NavigableMap<Integer, Double> decimals(final YamlNode node) {

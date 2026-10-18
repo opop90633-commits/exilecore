@@ -252,7 +252,11 @@ class BossBurstTest {
                     }
                 }
             }
-            final double hit = monsters.rarity(MonsterRarity.UNIQUE).damageMultiplier() * boss.damage() * added * balance.hitPercent(level) / 100;
+            // 2026-10-18：參考角色改成 balance.yml 的 boss_reference（2500 生命、護甲擋 50% 物理、四抗 75%）：
+            //   Boss 普通一下的實際傷害（同等級普通怪的平均傷害 × 傳奇倍率 × damage × 物理附加）÷ 參考生命
+            final double[] range = monsters.damageAt(level);
+            final double hit = monsters.rarity(MonsterRarity.UNIQUE).damageMultiplier() * boss.damage() * added
+                    * (range[0] + range[1]) / 2 / balance.bossLife();
             double more = 1;
             for (final MapConfig.Phase phase : boss.phases()) {
                 for (final AffixMod stat : phase.stats()) {
@@ -285,11 +289,7 @@ class BossBurstTest {
                 }
                 double taken = 0; // 2026-10：convert 的招照各類型的比例加權
                 for (final Map.Entry<tw.exilecore.stats.DamageType, Double> share : skill.typeShares().entrySet()) {
-                    taken += share.getValue() * switch (share.getKey()) {
-                        case PHYSICAL -> 0.75;
-                        case CHAOS -> 1.0;
-                        default -> 0.25;
-                    };
+                    taken += share.getValue() * balance.bossTaken(share.getKey()); // 2026-10-18：照參考角色的護甲、四抗
                 }
                 // 新星、扇形、擴散環一秒內打完的幾波：算成一下（第一波打到還來不及走出去、走進缺口）
                 final boolean waves = skill.kind() == BossSkill.Kind.NOVA || skill.kind() == BossSkill.Kind.CONE
@@ -298,7 +298,7 @@ class BossBurstTest {
                         : skill.stagger() <= 0 ? skill.count() : Math.min(skill.count(), (int) Math.floor(1.0 / skill.stagger() + 1e-9) + 1);
                 final double fraction = skill.damage() * hit * more * (1 + curse) * taken * inOneSecond;
                 report.add(String.format("%s %s %.0f%%", map.id(), skill.id(), fraction * 100));
-                assertTrue(fraction < 1.0, map.id() + " 的 " + skill.id() + "（前搖 " + warning + " 秒）打中一下就是參考角色 "
+                assertTrue(fraction <= balance.bossQuickHitMax() + 1e-9, map.id() + " 的 " + skill.id() + "（前搖 " + warning + " 秒）打中一下就是參考角色 " // 2026-10-18：上限照 boss_reference.quick_hit_max
                         + Math.round(fraction * 100) + "% 的生命：" + report);
                 checked++;
             }

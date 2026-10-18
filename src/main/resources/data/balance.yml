@@ -55,3 +55,12 @@ reference:
       - { from: 5, affix: skill_level_spell }          # 魔杖：+法術技能等級（PoE2 法術主要靠這個）
       - { from: 10, affix: skill_level_spell_amulet }  # 項鍊
     supports: [faster_casting, faster_projectiles, concentrated_effect, elemental_focus, pierce]
+
+# 2026-10-18：Boss 招式「一下打不死」的參考角色（終局、極境、巔峰、事件巔峰；BossBurstTest 照這個檢查前搖短的招）。
+#   護甲擋下 armour_reduction % 的物理傷害，火、冰、電、混沌四抗都是 resist %，最大生命 life。
+#   前搖不到 1.5 秒（或跑不出去的新星）的招，對這個角色一下不能打死（quick_hit_max 100）。
+boss_reference:
+  life: 2500
+  quick_hit_max: 100    # 2026-10-18：前搖短的招一下最多幾 % 生命（100 = 一下打不死；擁有者 70 → 100）
+  armour_reduction: 25   # 2026-10-18：擁有者定 25（50 → 75 → 25）
+  resist: 75

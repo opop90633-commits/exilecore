@@ -359,6 +359,7 @@ public final class UiPack {
         marks(files);
         HudFont.build(files, HudFont.texts()); // 2026-10：快捷欄兩側的光環、召喚物
         LootHud.build(files); // 2026-10：撿到東西的角落提示（沿用 lootFont 的框與圖示）
+        PartyFont.build(files); // 2026-10-18：畫面左邊的隊伍框（文字著色器，pack.mcmeta 的 overlays 分版本）
         affixChips(files); // 2026-10：詞綴標籤的小方塊
         final java.util.Set<String> framed = rarityFrames(files, gearItems, cases);
         for (final Map.Entry<String, JsonArray> entry : cases.entrySet()) {
@@ -1711,6 +1712,10 @@ public final class UiPack {
         pack.addProperty("max_format", 999);
         final JsonObject root = new JsonObject();
         root.add("pack", pack);
+        // 2026-10-18：隊伍框的文字著色器（26.2、26.3 寫法不同，各放一個 overlay）
+        final JsonObject overlays = new JsonObject();
+        overlays.add("entries", PartyFont.overlayEntries());
+        root.add("overlays", overlays);
         return root;
     }
 

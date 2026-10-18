@@ -1090,7 +1090,9 @@ public final class PlayerStateService {
             state.recoverLeech(seconds, leechRate);
         }
         state.setMana(state.mana() + sheet.get(StatKeys.MANA_REGEN) * seconds);
-        state.recoverManaLeech(seconds, leechRate);
+        if (!ruined) {
+            state.recoverManaLeech(seconds, leechRate); // 2026-10-18：荒蕪禁療中魔力偷取也停（以前照回）
+        }
         if (youth && !ruined && currentTick - state.lastDamageTick() >= esRechargeDelay(sheet)) {
             // 永恆青春：生命像護盾一樣回充（護盾不回充）
             state.setLife(state.life() + Formulas.esRechargePerSecond(state.maxLife(), esRechargeSpeed(sheet)) * seconds);

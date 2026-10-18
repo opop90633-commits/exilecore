@@ -25,6 +25,9 @@ public final class PlayerSettings {
     /** 自己放技能的聲音（2026-10；別人的技能本來就小聲，跟著「別人的技能特效」關）。預設開。 */
     public static final String SKILL_SOUNDS = "setting.skill_sounds";
 
+    /** 畫面左邊的隊伍框：隊友的頭像、名字、生命（護盾）、魔力（2026-10-18；要套資源包）。預設開。 */
+    public static final String PARTY_FRAMES = "setting.party_frames";
+
     /** 撿到的星圖直接收進倉庫的地圖頁（2026-10；地圖頁滿了或倉庫沒載入才放背包）。預設關（{@link #on}）。 */
     public static final String MAP_TO_STASH = "setting.map_to_stash";
 

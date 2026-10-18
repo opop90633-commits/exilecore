@@ -8,17 +8,18 @@ import java.util.function.ToIntFunction;
 /**
  * 通貨袋、倉庫通貨頁、通貨交易所的分組：通貨種類超過一頁（45 格）之後分成幾組，各一個分頁。純邏輯。
  * 一般通貨（怪物會掉的）一組、未切割寶石一組（2026-10 算通貨）、星魄一組、其他機制的通貨（催化劑、星籤、蒸餾情緒）一組；
- * 2026-10-18：門票／鑰匙（代號 ticket_ 開頭的事件入場券）與共鳴石另外一組，放在最前面（一般通貨那一頁快滿了）。
+ * 2026-10-18：Boss 門票另外一組，放在最後：事件巔峰的入場券（ticket_ 開頭）、巔峰碎片（fragment_ 開頭）、終局的天穹碎片、極境的深淵星核、
+ * 金庫之主的鑰印（共鳴石算一般通貨）。
  */
 public final class CurrencyGroups {
 
     /** 一組。 */
     public enum Group {
-        KEYS("門票／鑰匙", "開事件巔峰 Boss 的入場券，與讓專屬輔助共鳴的共鳴石"), // 2026-10-18
         BASIC("一般通貨", "改造裝備、開孔、開地圖用的石頭與碎片"),
         GEM("未切割寶石", "右鍵雕成技能寶石、切成輔助寶石，或幫技能升級"),
         ESSENCE("星魄", "保證加上某一條詞綴"),
-        MECHANIC("催化劑・星籤・蒸餾情緒", "飾品品質、改變下一次改造、項鍊注入");
+        MECHANIC("催化劑・星籤・蒸餾情緒", "飾品品質、改變下一次改造、項鍊注入"),
+        KEYS("Boss 門票", "開終局、極境、巔峰、事件巔峰、金庫之主的碎片與入場券"); // 2026-10-18
 
         private final String displayName;
         private final String about;
@@ -50,8 +51,17 @@ public final class CurrencyGroups {
     /** 一組最多幾種（通貨袋、倉庫通貨頁的一組是四排 36 格；多的放不下、看不到）。 */
     public static final int PAGE_CAPACITY = 36;
 
-    /** 2026-10-18：事件入場券的代號前綴（ticket_<事件>），這些自動進「門票／鑰匙」那一組。 */
+    /** 2026-10-18：事件入場券的代號前綴（ticket_<事件>），這些自動進「Boss 門票」那一組。 */
     public static final String TICKET_PREFIX = "ticket_";
+    /** 2026-10-18：巔峰碎片的代號前綴（fragment_<終局>）。 */
+    public static final String FRAGMENT_PREFIX = "fragment_";
+    /** 2026-10-18：其他開 Boss 用的門票：終局的天穹碎片、極境的深淵星核、金庫之主的鑰印。 */
+    public static final java.util.Set<String> BOSS_KEYS = java.util.Set.of("sky_fragment", "abyss_core", "heist_finale_key");
+
+    /** 2026-10-18：這種通貨是不是開 Boss 用的門票。 */
+    public static boolean bossKey(final CurrencyType type) {
+        return type.id().startsWith(TICKET_PREFIX) || type.id().startsWith(FRAGMENT_PREFIX) || BOSS_KEYS.contains(type.id());
+    }
 
     private CurrencyGroups() {
     }
@@ -73,8 +83,8 @@ public final class CurrencyGroups {
         if (type.uncutGem()) {
             return Group.GEM;
         }
-        if (type.id().startsWith(TICKET_PREFIX) || type.operation() == CurrencyOperation.RESONANCE) {
-            return Group.KEYS; // 2026-10-18：入場券、共鳴石
+        if (bossKey(type)) {
+            return Group.KEYS; // 2026-10-18：Boss 門票（共鳴石算一般通貨）
         }
         return switch (type.operation()) {
             case ESSENCE -> Group.ESSENCE;

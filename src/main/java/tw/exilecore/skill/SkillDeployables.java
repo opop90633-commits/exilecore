@@ -202,8 +202,10 @@ final class SkillDeployables implements Listener {
         if (stand == null) {
             return;
         }
-        final Deployed item = new Deployed(player.getUniqueId(), build, spec, stand, at, now, now + build.durationTicks(spec.duration()), label);
-        item.linked = linked;
+        final boolean totem = spec.kind() == DeploySpec.Kind.TOTEM;
+        final Deployed item = new Deployed(player.getUniqueId(), totem ? totemHits(build) : build, spec, stand, at, now,
+                now + build.durationTicks(spec.duration()), label);
+        item.linked = totem ? totemHits(linked) : linked;
         item.linkedTicks = Math.max(4, linkedTicks);
         if (spec.kind() == DeploySpec.Kind.TOTEM) {
             final tw.exilecore.stats.StatSheet effective = build.profile().effective(plugin.players().sheet(player));
@@ -240,6 +242,17 @@ final class SkillDeployables implements Listener {
                 detonate(all, player);
             }
         }
+    }
+
+    /**
+     * 2026-10-18：圖騰（與英靈）放的技能標上 {@link tw.exilecore.stats.Tags#TOTEM_HIT}：照 PoE，圖騰打中的擊中回復生命、偷取不回給玩家。
+     * 引爆、焚鏈都從 item.build 的技能描述衍生，一起帶著。
+     */
+    private static SkillBuild totemHits(final SkillBuild build) {
+        if (build == null || build.profile().tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) {
+            return build;
+        }
+        return build.withProfile(build.profile().derive(build.profile().id(), Set.of(tw.exilecore.stats.Tags.TOTEM_HIT), Set.of()));
     }
 
     /** 引爆（2026-10）：每根圖騰在原地炸一圈；炸幾根，每一下更多 30%（第一根不加）。 */
@@ -656,7 +669,7 @@ final class SkillDeployables implements Listener {
         max.set(tw.exilecore.stats.DamageType.FIRE, base * 1.15);
         final SkillProfile profile = new SkillProfile(item.skillId() + ".vengeful",
                 Set.of(tw.exilecore.stats.Tags.SPELL, tw.exilecore.stats.Tags.FIRE, tw.exilecore.stats.Tags.AREA,
-                        tw.exilecore.stats.Tags.TOTEM, tw.exilecore.stats.Tags.PROJECTILE),
+                        tw.exilecore.stats.Tags.TOTEM, tw.exilecore.stats.Tags.TOTEM_HIT, tw.exilecore.stats.Tags.PROJECTILE),
                 0.0, min, max, java.util.Map.of(), item.build.profile().local());
         final double radius = 1.8 * item.build.areaScale();
         final Location from = item.feet.clone().add(0, 2, 0);

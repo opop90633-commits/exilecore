@@ -429,7 +429,7 @@ skills:
     name: 曜帝音爆
     hint: "朝目標射出一道直線音波：往旁邊閃"
     kind: cone
-    damage: 1.5              # 2026-10：2.4 → 1.5（前搖只有 1.2 秒；第二階段加傷害、身上有曜帝的詛咒時，物理一下打穿滿血的參考角色）
+    damage: 1.5
     cooldown: 9
     range: 22
     telegraph: 1.2
@@ -505,7 +505,7 @@ skills:
   emperor_charge:
     name: 曜帝衝鋒
     kind: charge
-    damage: 1.5              # 2026-10：2.0 → 1.5（同上）
+    damage: 1.5
     cooldown: 12
     range: 26
     telegraph: 1.1
@@ -1371,7 +1371,7 @@ skills:
     name: 餘燼吐息
     hint: "前方兩波火焰：繞到 Boss 側面"
     kind: cone
-    damage: 1.6              # 2026-10：2.0 → 1.6（兩波 0.5 秒內打完，加燃焰的附加火焰與戰吼）
+    damage: 1.6
     type: fire
     cooldown: 8
     range: 14
@@ -3189,7 +3189,7 @@ skills:
     name: 千鎖齊發
     hint: "周圍的鎖一個接一個射出鎖鏈：看紅線往旁邊走"
     kind: echoes
-    damage: 1.5
+    damage: 1.38   # 2026-10-18：前搖短的招一下打不死（參考角色約九成五）
     type: physical
     convert: { fire: 0.5 }
     cooldown: 14   # 2026-10-18：難度提高（原 16）
@@ -3337,7 +3337,7 @@ skills:
     name: 穿界齊射
     hint: "一大片裂隙碎片朝你打來：找縫鑽，或往側面跑"
     kind: volley
-    damage: 1.3   # 2026-10-18：Boss 傷害提高後壓一點（一下不能秒殺參考角色）
+    damage: 1.5
     type: physical
     convert: { lightning: 0.5, chaos: 0.25 }
     cooldown: 8   # 2026-10-18：難度提高（原 9）
@@ -3584,7 +3584,7 @@ skills:
     name: 血契標記
     hint: "被點名的兩個人 4 秒後血爆：各自離開隊友"
     kind: mark
-    damage: 2.4
+    damage: 2.2   # 2026-10-18：前搖短的招一下打不死（參考角色約九成五）
     type: fire
     cooldown: 10   # 2026-10-18：難度提高（原 12）
     range: 30
@@ -3705,7 +3705,7 @@ skills:
     name: 妄念光球
     hint: "幾顆妄念慢慢追著你：帶著跑，別讓它們碰到"
     kind: orbs
-    damage: 1.16   # 2026-10-18：Boss 傷害提高後壓到一下打不死（原 1.4）
+    damage: 1.4
     type: physical
     convert: { chaos: 0.5, cold: 0.5 }
     cooldown: 14   # 2026-10-18：難度提高（原 16）
@@ -3838,7 +3838,7 @@ skills:
     name: 骨矛
     hint: "一排骨矛從地底射出來：找縫鑽，或往側面跑"
     kind: volley
-    damage: 1.46   # 2026-10-18：Boss 傷害提高後壓到一下打不死（原 1.6）
+    damage: 1.38   # 2026-10-18：前搖短的招一下打不死（參考角色約九成五）
     type: physical
     convert: { cold: 0.5 }
     cooldown: 7   # 2026-10-18：難度提高（原 8）
