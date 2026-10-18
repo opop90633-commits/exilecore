@@ -3662,12 +3662,12 @@ skills:
     name: 亂矢   # 2026-10-18：「箭雨」跟別的遊戲撞名（OwnNamesTest）
     hint: "一排箭朝你射來：找縫鑽，或往側面跑"
     kind: volley
-    damage: 1.3   # 2026-10-18：前搖短的招一下打不死（只轉 30% 閃電、吃護甲的部分多，比殘影再低一點）（原 1.6）
+    damage: 1.6   # 2026-10-18：前搖改回 1.5（躲得掉），傷害回 1.6；1.2 秒時流寇之王的戰吼＋八成物理會一下打死參考角色（BossBurstTest）
     type: physical
     convert: { lightning: 0.3 }
     cooldown: 9
     range: 26
-    telegraph: 1.2   # 2026-10-18：前搖縮短（原 1.5）
+    telegraph: 1.5
     count: 14
     spread: 110
     speed: 0.8
