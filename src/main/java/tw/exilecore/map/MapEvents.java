@@ -1553,7 +1553,7 @@ final class MapEvents implements Listener {
 
     // ---- 保險箱（2026-10-18）----
 
-    /** 右鍵保險箱：手上要拿著劫盜合約，吃掉一張開始開鎖。 */
+    /** 右鍵保險箱：身上要有一張劫盜合約（通貨袋、背包、倉庫都算），吃掉一張開始開鎖。 */
     private void useSafe(final Event event, final Player player) {
         final MapEventConfig.Safe settings = config.safe();
         if (event.done) {
@@ -1569,10 +1569,13 @@ final class MapEvents implements Listener {
             return;
         }
         final tw.exilecore.currency.CurrencyType contract = plugin.currencies().repository().get(tw.exilecore.heist.HeistService.CONTRACT);
-        final ItemStack hand = player.getInventory().getItemInMainHand();
-        final boolean holding = contract != null && plugin.currencies().read(hand).map(found -> found.id().equals(contract.id())).orElse(false);
-        if (!holding) {
-            player.sendActionBar(plugin.text().parse("<red>手上拿著" + (contract == null ? "劫盜合約" : ItemRenderer.escape(contract.name())) + "右鍵保險箱，才能開鎖（會吃掉一張）"));
+        // 2026-10-18：地圖裡通貨在通貨袋、快捷列又被技能占住，拿在手上右鍵做不到——改成跟劫盜一樣：身上（通貨袋、背包、倉庫）有合約就直接扣一張
+        if (contract == null) {
+            player.sendActionBar(plugin.text().parse("<red>currencies.yml 沒有劫盜合約"));
+            return;
+        }
+        if (service.countCurrency(player, contract) < 1) {
+            player.sendActionBar(plugin.text().parse("<red>要有一張" + ItemRenderer.escape(contract.name()) + "才能開鎖（會吃掉一張；通貨袋、背包、倉庫裡的都算）"));
             return;
         }
         // 流水帳記 consumed（來源 HEIST）：takeCurrency 裡記
@@ -1781,7 +1784,7 @@ final class MapEvents implements Listener {
             // 2026-10-18
             case ABYSS -> ABYSS_COLOR + "深淵裂縫<newline><gray>走近它：地會裂開往前延伸，跟著縫走到盡頭（縫裡的怪掉的東西多 "
                     + Math.round(config.abyss().quantityBonus() * 100) + "%）";
-            case SAFE -> SAFE_COLOR + "保險箱<newline><gray>手上拿著劫盜合約右鍵：吃掉一張，守著它開鎖 " + Math.round(config.safe().unlockSeconds())
+            case SAFE -> SAFE_COLOR + "保險箱<newline><gray>右鍵（身上要有劫盜合約）：吃掉一張，守著它開鎖 " + Math.round(config.safe().unlockSeconds())
                     + " 秒（會一波一波湧怪）";
         }));
         return display;
