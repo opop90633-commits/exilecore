@@ -1035,6 +1035,9 @@ finals:
         - { id: shrine_dawn, phase: 2 }
         - { id: shrine_lance_volley, phase: 2 }
         - { id: shrine_judgement, phase: 3 }
+        - { id: shrine_blessing_mark, phase: 1 }   # 2026-10-18 第二批
+        - { id: shrine_halo_maze, phase: 2 }
+        - { id: shrine_dawn_ray, phase: 3 }
       phases:
         - at: 0.75
           name: 奪取祝福
@@ -1113,6 +1116,9 @@ finals:
         - { id: box_vault_collapse, phase: 2 }
         - { id: box_thousand_locks, phase: 2 }
         - { id: box_slam_shut, phase: 3 }
+        - { id: box_lock_ring, phase: 1 }   # 2026-10-18 第二批
+        - { id: box_coin_orbs, phase: 2 }
+        - { id: box_vault_seal, phase: 3 }
       phases:
         - at: 0.75
           name: 千鎖開啟
@@ -1191,6 +1197,9 @@ finals:
         - { id: breach_collapse, phase: 2 }
         - { id: breach_volley, phase: 2 }
         - { id: breach_shatter, phase: 3 }
+        - { id: breach_rift_mark, phase: 1 }   # 2026-10-18 第二批
+        - { id: breach_hands, phase: 2 }
+        - { id: breach_rift_pull, phase: 3 }
       phases:
         - at: 0.75
           name: 裂隙擴大
@@ -1269,6 +1278,9 @@ finals:
         - { id: exile_execute_mark, phase: 2 }
         - { id: exile_death_spiral, phase: 2 }
         - { id: exile_duel, phase: 3 }
+        - { id: exile_arrow_rain, phase: 1 }   # 2026-10-18 第二批
+        - { id: exile_blade_storm, phase: 2 }
+        - { id: exile_grapple, phase: 3 }
       phases:
         - at: 0.75
           name: 流寇圍觀
@@ -1347,6 +1359,9 @@ finals:
         - { id: ritual_blood_sea, phase: 2 }
         - { id: ritual_final_offering, phase: 2 }
         - { id: ritual_blood_orbs, phase: 3 }
+        - { id: ritual_blood_spiral, phase: 1 }   # 2026-10-18 第二批
+        - { id: ritual_candle_beams, phase: 2 }
+        - { id: ritual_blood_pull, phase: 3 }
       phases:
         - at: 0.75
           name: 第一座祭壇
@@ -1425,6 +1440,9 @@ finals:
         - { id: mist_mirror_maze, phase: 2 }
         - { id: mist_shatter, phase: 2 }
         - { id: mist_mirror_blink, phase: 3 }
+        - { id: mist_mirror_corridor, phase: 1, with: [mist_mirror_corridor_walls] }   # 2026-10-18 第二批
+        - { id: mist_doubt_mark, phase: 2 }
+        - { id: mist_awakening, phase: 3 }
       phases:
         - at: 0.75
           name: 霧更濃了
@@ -1503,6 +1521,9 @@ finals:
         - { id: abyssal_collapse, phase: 2 }
         - { id: abyssal_bone_storm, phase: 2 }
         - { id: abyssal_grave_mark, phase: 3 }
+        - { id: abyssal_bone_cage, phase: 1 }   # 2026-10-18 第二批
+        - { id: abyssal_bone_lances, phase: 2 }
+        - { id: abyssal_drown, phase: 3 }
       phases:
         - at: 0.75
           name: 骨潮漲起

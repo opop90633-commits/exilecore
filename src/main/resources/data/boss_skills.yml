@@ -3064,6 +3064,58 @@ skills:
     duration: 5
     interval: 0.3
     shout: "「審判——降下。」"
+  # 2026-10-18 第二批（更多專屬招式）：祝福反噬（點名）、聖環迷宮（兩圈光牆）、晨曦追光（會追人的光束）
+  shrine_blessing_mark:
+    name: 祝福反噬
+    hint: "被點名的兩個人 4 秒後聖光爆開：各自離開隊友"
+    kind: mark
+    damage: 2.2
+    type: fire
+    cooldown: 11
+    range: 30
+    telegraph: 1.0   # 2026-10-18：點名之後還有 4 秒才炸，前搖縮短（原 1.5）
+    count: 2
+    duration: 4
+    explode: 4
+    shout: "「這份祝福，太重了。」"
+  shrine_halo_maze:
+    name: 聖環迷宮
+    hint: "兩圈光牆、穿不過：一圈一圈找缺口繞出去"
+    kind: zone
+    damage: 0.7
+    type: lightning
+    cooldown: 20
+    range: 36
+    telegraph: 1.5
+    radius: 0.8
+    duration: 8
+    interval: 0.6
+    count: 2
+    reach: 14
+    gaps: 3
+    gap_angle: 45
+    at: maze
+    solid: true
+    slow: 1
+    shout: "「光環，圍起來。」"
+  shrine_dawn_ray:
+    name: 晨曦追光
+    hint: "紅線會跟著你，停住之後馬上往旁邊走"
+    kind: beam
+    damage: 1.3
+    type: fire
+    cooldown: 11
+    range: 20
+    telegraph: 2.1       # 1.5 秒追＋0.6 秒鎖定（跟死亡光束一樣）
+    track: true
+    lock: 0.6
+    count: 1
+    angle: 60
+    length: 34
+    width: 0.8
+    duration: 0.7
+    interval: 0.3
+    shout: "「晨光，照過去。」"
   hazard_shrine_ray:
     name: 天光
     kind: slam
@@ -3216,6 +3268,57 @@ skills:
     count: 1
     slow: 2
     shout: "「關門。」"
+  # 2026-10-18 第二批（更多專屬招式）：鎖環（有缺口的環）、貪金球（追人的光球）、封庫（全場大招）
+  box_lock_ring:
+    name: 鎖環
+    hint: "鎖鏈一圈圈甩出來：站進綠色的缺口"
+    kind: ring
+    damage: 1.7
+    type: physical
+    convert: { fire: 0.5 }
+    cooldown: 10
+    range: 20
+    telegraph: 1.2   # 2026-10-18：跟現有的漩渦、擴散環、光球一樣（原 1.5）
+    radius: 2
+    reach: 18
+    speed: 0.4
+    width: 0.9
+    count: 3
+    stagger: 1.0
+    gaps: 3
+    gap_angle: 35
+    shout: "（上千條鎖鏈從匣口甩出來）"
+  box_coin_orbs:
+    name: 貪金球
+    hint: "幾顆金球慢慢追著你：帶著跑，別讓它們碰到"
+    kind: orbs
+    damage: 1.4
+    type: physical
+    convert: { fire: 0.6 }
+    cooldown: 15
+    range: 26
+    telegraph: 1.2   # 2026-10-18：跟現有的漩渦、擴散環、光球一樣（原 1.5）
+    count: 4
+    speed: 0.16
+    duration: 8
+    size: 0.8
+    explode: 2.5
+    shout: "「金子會自己找主人。」"
+  box_vault_seal:
+    name: 封庫
+    kind: sanctuary
+    damage: 4.5
+    type: physical
+    convert: { fire: 0.5 }
+    cooldown: 34
+    range: 30
+    telegraph: 2.5   # 2026-10-18：大招前搖縮短，安全區拉近（原 3.0）
+    radius: 30
+    count: 2
+    safe: 2.5
+    scatter: 8   # 2026-10-18：安全區離 Boss 近一點，留反應時間（原 10）
+    count_per_player: 1
+    shout: "「封庫——所有東西，連你，一起鎖進來。」"
   hazard_box_coins:
     name: 落金
     kind: slam
@@ -3363,6 +3466,51 @@ skills:
     count: 1
     slow: 2
     shout: "「碎。」"
+  # 2026-10-18 第二批（更多專屬招式）：裂隙烙印（點名）、群手（殘影）、界縫吸引（漩渦）
+  breach_rift_mark:
+    name: 裂隙烙印
+    hint: "被點名的兩個人 4 秒後裂開：各自離開隊友"
+    kind: mark
+    damage: 2.2
+    type: lightning
+    cooldown: 11
+    range: 30
+    telegraph: 1.0   # 2026-10-18：點名之後還有 4 秒才炸，前搖縮短（原 1.5）
+    count: 2
+    duration: 4
+    explode: 4
+    shout: "「烙上去了。」"
+  breach_hands:
+    name: 群手
+    hint: "裂縫裡伸出一隻隻手：看紅線往旁邊走"
+    kind: echoes
+    damage: 1.38   # 2026-10-18：前搖短的招一下打不死（參考角色約九成五）（原 1.6）
+    type: physical
+    convert: { lightning: 0.5, chaos: 0.25 }
+    cooldown: 14
+    range: 20
+    telegraph: 1.2   # 2026-10-18：紅線標完還有 1 秒才射，前搖縮短（原 1.5）
+    count: 6
+    scatter: 7
+    stagger: 0.5
+    delay: 1.0
+    reach: 26
+    width: 1.0
+    shout: "（好幾隻手同時從裂縫裡探出來）"
+  breach_rift_pull:
+    name: 界縫吸引
+    hint: "裂縫把你往祂吸：往外跑，別被吸進去"
+    kind: pull
+    damage: 3.0
+    type: chaos
+    cooldown: 13
+    range: 15
+    telegraph: 1.2   # 2026-10-18：跟現有的漩渦、擴散環、光球一樣（原 1.5）
+    radius: 15
+    speed: 0.13
+    duration: 3.2
+    explode: 5
+    shout: "「過來，另一邊更好。」"
   hazard_breach_rift:
     name: 裂縫
     kind: zone
@@ -3509,6 +3657,55 @@ skills:
     width: 2.5
     slow: 2
     shout: "「來，一對一。」"
+  # 2026-10-18 第二批（更多專屬招式）：箭雨（齊射）、刃風（光束）、鉤索（漩渦）——都是流寇從玩家身上學來的
+  exile_arrow_rain:
+    name: 箭雨
+    hint: "一排箭朝你射來：找縫鑽，或往側面跑"
+    kind: volley
+    damage: 1.3   # 2026-10-18：前搖短的招一下打不死（只轉 30% 閃電、吃護甲的部分多，比殘影再低一點）（原 1.6）
+    type: physical
+    convert: { lightning: 0.3 }
+    cooldown: 9
+    range: 26
+    telegraph: 1.2   # 2026-10-18：前搖縮短（原 1.5）
+    count: 14
+    spread: 110
+    speed: 0.8
+    reach: 26
+    size: 0.7
+    explode: 1.8
+    shout: "「這把弓，也是撿來的。」"
+  exile_blade_storm:
+    name: 刃風
+    hint: "兩道刀風一前一後轉：跟著轉的方向繞"
+    kind: beam
+    damage: 1.2
+    type: physical
+    cooldown: 12
+    range: 18
+    telegraph: 1.6
+    count: 2
+    angle: 160
+    length: 28
+    width: 0.8
+    duration: 4
+    interval: 0.3
+    shout: "「轉起來——」"
+  exile_grapple:
+    name: 鉤索
+    hint: "鉤索把你往牠拉：往外跑，別被拉到牠面前"
+    kind: pull
+    damage: 3.0
+    type: physical
+    convert: { lightning: 0.3 }
+    cooldown: 13
+    range: 15
+    telegraph: 1.2   # 2026-10-18：跟現有的漩渦、擴散環、光球一樣（原 1.5）
+    radius: 15
+    speed: 0.13
+    duration: 3.2
+    explode: 5
+    shout: "「過來，近一點打。」"
   hazard_exile_knives:
     name: 飛刀
     kind: slam
@@ -3656,6 +3853,53 @@ skills:
     size: 0.8
     explode: 2.5
     shout: "（祭壇上的血浮了起來）"
+  # 2026-10-18 第二批（更多專屬招式）：血渦（螺旋落下）、燭火光束（三道）、血引（漩渦）
+  ritual_blood_spiral:
+    name: 血渦
+    hint: "血從祭壇螺旋湧出去：往旋轉的反方向跑"
+    kind: slam
+    damage: 2.0
+    type: fire
+    cooldown: 13
+    range: 20
+    telegraph: 1.0
+    delay: 0.8
+    radius: 2.5
+    count: 20
+    stagger: 0.08
+    reach: 16
+    at: spiral
+    shout: "「血，轉起來。」"
+  ritual_candle_beams:
+    name: 燭火光束
+    hint: "三道燭火一起轉：待在兩道之間，跟著轉"
+    kind: beam
+    damage: 1.3
+    type: fire
+    cooldown: 12
+    range: 18
+    telegraph: 1.6
+    count: 3
+    angle: 200
+    length: 30
+    width: 0.8
+    duration: 5
+    interval: 0.3
+    shout: "「三座燭台，一起亮。」"
+  ritual_blood_pull:
+    name: 血引
+    hint: "血往祭壇流、把你一起拉過去：往外跑"
+    kind: pull
+    damage: 3.0
+    type: fire
+    cooldown: 13
+    range: 15
+    telegraph: 1.2   # 2026-10-18：跟現有的漩渦、擴散環、光球一樣（原 1.5）
+    radius: 15
+    speed: 0.13
+    duration: 3.2
+    explode: 5
+    shout: "「你的血，認得祭壇。」"
   hazard_ritual_blood:
     name: 血滴
     kind: zone
@@ -3802,6 +4046,65 @@ skills:
     radius: 4
     slow: 2
     shout: "「我一直都在你後面。」"
+  # 2026-10-18 第二批（更多專屬招式）：鏡廊（兩面鏡牆的走廊，光球輪流沿半邊飛；跟 mist_mirror_corridor_walls 一起放）、
+  #   疑心標記（點名）、夢醒（全場大招）
+  mist_mirror_corridor:
+    name: 鏡廊
+    hint: "兩邊是鏡牆、穿不過；看球在哪半邊聚：閃到另一半"
+    kind: echoes
+    at: walls
+    damage: 1.4
+    type: cold
+    cooldown: 20
+    range: 16
+    telegraph: 1.5
+    count: 4            # 左右輪流幾發
+    delay: 1.5          # 每一發標幾秒才射
+    width: 1.9          # 球的半徑＝半條走廊（牆在左右 5.2 格、牆半徑 1.4）
+    speed: 1.2
+    reach: 30
+    shout: "「鏡子裡，只有一條路。」"
+  mist_mirror_corridor_walls:
+    name: 鏡牆
+    kind: zone           # 跟鏡廊一起放（maps.yml 的 with:）：走廊兩邊的鏡牆（是牆，穿不過）
+    damage: 0.55
+    type: cold
+    telegraph: 1.5
+    radius: 1.4
+    duration: 8
+    interval: 0.6
+    reach: 30
+    scatter: 5.2
+    at: walls
+    solid: true
+    slow: 1
+  mist_doubt_mark:
+    name: 疑心標記
+    hint: "被點名的兩個人 4 秒後妄念爆開：各自離開隊友"
+    kind: mark
+    damage: 2.2
+    type: cold
+    cooldown: 11
+    range: 30
+    telegraph: 1.0   # 2026-10-18：點名之後還有 4 秒才炸，前搖縮短（原 1.5）
+    count: 2
+    duration: 4
+    explode: 4
+    shout: "「你確定旁邊那個是隊友？」"
+  mist_awakening:
+    name: 夢醒
+    kind: sanctuary
+    damage: 4.5
+    type: cold
+    cooldown: 34
+    range: 30
+    telegraph: 2.5   # 2026-10-18：大招前搖縮短，安全區拉近（原 3.0）
+    radius: 30
+    count: 2
+    safe: 2.5
+    scatter: 8   # 2026-10-18：安全區離 Boss 近一點，留反應時間（原 10）
+    count_per_player: 1
+    shout: "「該醒了——醒不來的，就留在霧裡。」"
   hazard_mist_orb:
     name: 迷霧光球
     kind: orbs
@@ -3954,6 +4257,58 @@ skills:
     duration: 4
     explode: 4
     shout: "「你的墳，挖好了。」"
+  # 2026-10-18 第二批（更多專屬招式）：骨牢（兩圈骨牆）、骨槍（殘影）、滅頂（全場大招）
+  abyssal_bone_cage:
+    name: 骨牢
+    hint: "兩圈骨牆、穿不過：一圈一圈找缺口繞出去"
+    kind: zone
+    damage: 0.7
+    type: cold
+    cooldown: 20
+    range: 36
+    telegraph: 1.5
+    radius: 0.8
+    duration: 8
+    interval: 0.6
+    count: 2
+    reach: 13
+    gaps: 2
+    gap_angle: 50
+    at: maze
+    solid: true
+    slow: 1
+    shout: "（骨頭從地底長成一圈圈的牆）"
+  abyssal_bone_lances:
+    name: 骨槍
+    hint: "地底冒出一根根骨槍：看紅線往旁邊走"
+    kind: echoes
+    damage: 1.38   # 2026-10-18：前搖短的招一下打不死（參考角色約九成五）（原 1.6）
+    type: physical
+    convert: { cold: 0.5 }
+    cooldown: 14
+    range: 20
+    telegraph: 1.2   # 2026-10-18：紅線標完還有 1 秒才射，前搖縮短（原 1.5）
+    count: 6
+    scatter: 7
+    stagger: 0.5
+    delay: 1.0
+    reach: 26
+    width: 1.0
+    shout: "「穿過去。」"
+  abyssal_drown:
+    name: 滅頂
+    kind: sanctuary
+    damage: 4.5
+    type: cold
+    cooldown: 34
+    range: 30
+    telegraph: 2.5   # 2026-10-18：大招前搖縮短，安全區拉近（原 3.0）
+    radius: 30
+    count: 2
+    safe: 2.5
+    scatter: 8   # 2026-10-18：安全區離 Boss 近一點，留反應時間（原 10）
+    count_per_player: 1
+    shout: "「骨潮滅頂——站高一點的，才活得下來。」"
   hazard_abyssal_spike:
     name: 骨刺
     kind: slam
