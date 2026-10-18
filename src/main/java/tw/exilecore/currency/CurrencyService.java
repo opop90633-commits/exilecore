@@ -125,6 +125,9 @@ public final class CurrencyService {
             // 2026-10-17：不改物品的（碎片、鑰匙、入場券、活動素材…）不寫「點擊裝備來使用」
             if (type.isSkillCurrency()) {
                 lore.add(ItemRenderer.line("<dark_gray>打開技能面板（/skills），拿在游標上點技能來使用"));
+            } else if (type.operation() == CurrencyOperation.RESONANCE) {
+                // 2026-10-18：共鳴石用在專屬輔助寶石上（背包裡的寶石，或技能面板上掛著的）
+                lore.add(ItemRenderer.line("<dark_gray>拿在游標上點一顆專屬掉落的輔助寶石，或點技能面板（/skills）裡掛著的那顆"));
             } else if (type.operation() != CurrencyOperation.NONE) {
                 lore.add(ItemRenderer.line("<dark_gray>拿在游標上點擊裝備來使用"));
             }
@@ -302,6 +305,11 @@ public final class CurrencyService {
     /** 複製裝備的通貨（operation: MIRROR，預設是映星鏡）；currencies.yml 沒有這種通貨回傳 null。 */
     public CurrencyType mirrorType() {
         return repository.firstWith(CurrencyOperation.MIRROR).orElse(null);
+    }
+
+    /** 2026-10-18：共鳴石（operation: RESONANCE）；currencies.yml 沒有這種通貨回傳 null。 */
+    public CurrencyType resonanceType() {
+        return repository.firstWith(CurrencyOperation.RESONANCE).orElse(null);
     }
 
     /**

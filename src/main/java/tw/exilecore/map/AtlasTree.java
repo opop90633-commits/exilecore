@@ -129,6 +129,10 @@ public final class AtlasTree {
         stats.put("atlas.exile.extra", "每張地圖多 {v} 個流寇");
         stats.put("atlas.exile.drops", "流寇多掉 {v} 件稀有裝備");
         stats.put("atlas.exile.unique", "流寇掉專屬傳奇的機率增加 {v}%");
+        // 2026-10-18：深淵裂縫（atlas_tree.yml 還沒有點這些的節點；先認得鍵）
+        stats.put("atlas.abyss.weight", "深淵裂縫出現的機會增加 {v}%");
+        stats.put("atlas.abyss.extra", "每張地圖多 {v} 條深淵裂縫");
+        stats.put("atlas.abyss.unique", "深淵裂縫掉專屬傳奇的機率增加 {v}%");
         stats.put("atlas.ritual.chance", "祭壇出現的機率增加 {v}%");
         stats.put("atlas.ritual.tribute", "祭壇的貢品 +{v}%");
         stats.put("atlas.delirium.chance", "幻霧出現的機率增加 {v}%");

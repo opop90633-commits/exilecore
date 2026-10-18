@@ -355,6 +355,7 @@ public final class MonthlyEventService {
                 case "strongbox" -> "寶箱";
                 case "breach" -> "裂隙";
                 case "exile" -> "流寇";
+                case "abyss" -> "深淵裂縫"; // 2026-10-18
                 default -> entry.getKey();
             };
             lines.add(name + "更常出現（權重 +" + entry.getValue() + "）");

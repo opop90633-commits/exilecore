@@ -221,7 +221,7 @@ public final class EventConfig {
             }
             for (final String kind : theme.eventBoost().keySet()) {
                 if (!eventKinds.contains(kind)) {
-                    problems.add("events.yml 的 " + theme.id() + ".event_boost：沒有「" + kind + "」這種事件（shrine、strongbox、breach、exile）");
+                    problems.add("events.yml 的 " + theme.id() + ".event_boost：沒有「" + kind + "」這種事件（shrine、strongbox、breach、exile、abyss）"); // 2026-10-18
                 }
             }
             boolean themed = false;

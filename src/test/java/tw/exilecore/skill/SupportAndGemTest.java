@@ -50,7 +50,7 @@ class SupportAndGemTest {
         // 2026-10 PoE2 改版：輔助寶石 290 顆（第 1 階 81、第 2 階 166、第 3 階 43，其中 13 顆專屬掉落：終局 4、極境 2、巔峰 7）；
         // 2026-10：圖騰施法與 6 顆觸發改成主要寶石（拿掉 7 顆），加了 2 顆戰星來源（滿星、斷命聚怒）
         final List<String> ids = config.supports().stream().map(SupportDefinition::id).toList();
-        assertEquals(293, ids.size()); // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）
+        assertEquals(293 + 21 + 2, ids.size()); // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）；2026-10-18：＋七隻事件巔峰 Boss 各 3 顆專屬、淵鯨再 2 顆
         assertEquals(List.of("increased_area", "faster_projectiles", "pierce", "faster_attacks", "faster_casting", "added_fire",
                 "increased_duration", "critical_strikes", "lingering", "minion_damage"), ids.subList(0, 10), "照檔案裡的順序");
         assertTrue(ids.containsAll(List.of("concentrated_effect", "chain", "life_leech", "searing", "lacerate", "envenom", "concussive",
@@ -311,9 +311,9 @@ class SupportAndGemTest {
         assertEquals(List.of("void_meteor", "oblivion_ray", "storm_labyrinth", "fourfold_ray", "rift_slash", "starfall_volley"),
                 exclusive.stream().map(SkillDefinition::id).toList());
         // 2026-10：星骸之海的淵鯨的專屬（source: abyss_whale）也雕不出來
-        assertEquals(List.of("tide_call"), config.skillsFrom("abyss_whale").stream().map(SkillDefinition::id).toList());
+        assertEquals(List.of("tide_call", "abyssal_pull"), config.skillsFrom("abyss_whale").stream().map(SkillDefinition::id).toList()); // 2026-10-18：＋鯨吞漩渦
         assertFalse(config.skill("tide_call").engravable());
-        assertEquals(config.visible().size() - exclusive.size() - 1, config.engravable(14).size(), "Lv.14 起全部都能雕（專屬的除外）");
+        assertEquals(config.visible().size() - exclusive.size() - 2 - 14, config.engravable(14).size(), "Lv.14 起全部都能雕（專屬的除外；2026-10-18：事件巔峰的 14 顆、淵鯨的 2 顆也除外）");
         assertEquals(config.engravable(14).size(), config.engravable(20).size());
         for (final SkillDefinition skill : exclusive) {
             assertFalse(skill.engravable(), skill.id());

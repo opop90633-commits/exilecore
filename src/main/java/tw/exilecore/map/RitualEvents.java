@@ -467,6 +467,9 @@ final class RitualEvents implements Listener {
             if (all && plugin.events() != null) {
                 plugin.events().onMapEvent(player, ritual.instance.level()); // 每月挑戰：做完全部祭壇算一個地圖事件
             }
+            if (all && service.events() != null) {
+                service.events().rollTicket(MapEventConfig.RITUAL_SOURCE, player, player.getLocation()); // 2026-10-18：入場券（整張圖的人都有份）
+            }
             if (all) {
                 player.showTitle(Title.title(plugin.text().parse("<#ff5c6a>儀式全部完成"),
                         plugin.text().parse("<gray>右鍵任何一座祭壇換獎勵（你有 <white>" + tribute + "</white> 貢品）"),

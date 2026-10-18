@@ -80,11 +80,12 @@ public final class JewelSockets {
         if (problem != null) {
             return PassiveState.Result.fail(problem);
         }
-        // 2026-10：傳奇珠寶一次只能配一顆
-        if (isUnique(plugin, stack)) {
+        // 2026-10：傳奇珠寶一次只能配一顆；2026-10-18：改成「每一種傳奇珠寶各一顆」（不同的傳奇珠寶可以一起配）
+        final String unique = uniqueOf(plugin, stack);
+        if (unique != null) {
             for (final ItemStack placed : state.jewels().values()) {
-                if (isUnique(plugin, placed)) {
-                    return PassiveState.Result.fail("傳奇珠寶只能配一顆（天賦樹上已經有一顆了）");
+                if (unique.equals(uniqueOf(plugin, placed))) {
+                    return PassiveState.Result.fail("同一種傳奇珠寶只能配一顆（天賦樹上已經有一顆了）");
                 }
             }
         }
@@ -95,8 +96,11 @@ public final class JewelSockets {
         return PassiveState.Result.success();
     }
 
-    private static boolean isUnique(final ExileCore plugin, final ItemStack stack) {
-        return stack != null && plugin.items().read(stack).map(data -> data.rarity() == tw.exilecore.item.Rarity.UNIQUE).orElse(false);
+    /** 這顆珠寶是哪一種傳奇（傳奇的代號）；不是傳奇是 null。 */
+    private static String uniqueOf(final ExileCore plugin, final ItemStack stack) {
+        return stack == null ? null : plugin.items().read(stack)
+                .filter(data -> data.rarity() == tw.exilecore.item.Rarity.UNIQUE)
+                .map(data -> data.unique() == null || data.unique().isBlank() ? "?" : data.unique()).orElse(null);
     }
 
     /** 把孔位裡的珠寶拿回背包（背包滿就放隨身背包，都滿就不拿）。 */

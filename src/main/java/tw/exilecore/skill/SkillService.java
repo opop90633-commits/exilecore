@@ -2149,7 +2149,19 @@ public final class SkillService {
 
     /** 面板上（或寶石裡）的一個技能在這個角色身上的數值。 */
     SkillBuild build(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
-        return SkillBuild.of(config, definition, entry.level(), state.level(), false, supportsOf(entry), state.weaponTags(), sheet);
+        return SkillBuild.of(config, definition, entry.level(), state.level(), false, supportsOf(entry), state.weaponTags(), sheet,
+                resonantOf(entry)); // 2026-10-18：共鳴的專屬輔助不佔名額
+    }
+
+    /** 2026-10-18：技能掛的輔助裡已共鳴（用過共鳴石）的代號。 */
+    static java.util.Set<String> resonantOf(final SkillLoadout.Entry entry) {
+        final java.util.Set<String> set = new java.util.HashSet<>();
+        for (int i = 0; i < entry.sockets(); i++) {
+            if (entry.resonant(i) && !entry.support(i).isEmpty()) {
+                set.add(entry.support(i));
+            }
+        }
+        return set;
     }
 
     /** 技能掛的輔助寶石（資料檔裡已經沒有的略過）。 */

@@ -68,6 +68,14 @@ public final class MapModule implements Module {
                     problems.add("maps.yml：巔峰 " + map.id() + " 的碎片 " + fragment.currency() + " 不在 currencies.yml 裡（碎片不會掉、巔峰開不了）");
                 }
             }
+            // 2026-10-18：事件巔峰的入場券要存在，而且要有某種事件掉它（map_events.yml 的 ticket）
+            if (pinnacle.ticket() != null) {
+                if (plugin.currencies().repository().get(pinnacle.ticket()) == null) {
+                    problems.add("maps.yml：事件巔峰 " + map.id() + " 的入場券 " + pinnacle.ticket() + " 不在 currencies.yml 裡（巔峰開不了）");
+                } else if (service != null && service.ticketEventSource(pinnacle.ticket()) == null) { // 第一次載入時 service 還沒建（重讀時才查）
+                    problems.add("maps.yml：事件巔峰 " + map.id() + " 的入場券 " + pinnacle.ticket() + " 沒有任何地圖事件掉（map_events.yml 的 ticket）");
+                }
+            }
             for (final MapConfig.ExtraDrop extra : pinnacle.drops().extra()) {
                 if ("support".equals(extra.kind())) {
                     if (plugin.skills() != null && plugin.skills().config().support(extra.id()) == null) {

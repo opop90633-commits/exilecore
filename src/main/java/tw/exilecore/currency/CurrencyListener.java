@@ -42,11 +42,19 @@ public final class CurrencyListener implements Listener {
         if (event.getClick() != ClickType.LEFT && event.getClick() != ClickType.RIGHT) {
             return;
         }
+        final CurrencyType holding = currencies.read(cursor).orElse(null);
+        if (holding != null && holding.operation() == CurrencyOperation.RESONANCE) {
+            // 2026-10-18：共鳴石用在背包裡的專屬輔助寶石上（不是裝備）：寶石標成共鳴，之後不佔一個技能的專屬輔助名額
+            if (plugin.skills() != null && plugin.skills().gems().read(target).isPresent()) {
+                event.setCancelled(true);
+                resonate(player, event, holding, target);
+            }
+            return;
+        }
         if (!plugin.items().isEquipment(target)) {
             // 通貨點到非裝備：照原版行為（交換／堆疊）
             return;
         }
-        final CurrencyType holding = currencies.read(cursor).orElse(null);
         if (holding != null && holding.operation() == CurrencyOperation.NONE) {
             // 不能用在裝備上的（碎片、未切割寶石）：照原版拿起、交換，不要擋著說「不能用」
             return;
@@ -116,6 +124,56 @@ public final class CurrencyListener implements Listener {
             default -> {
                 // 不是裝備或不是通貨：不會走到這裡
             }
+        }
+    }
+
+    /**
+     * 2026-10-18：共鳴石點一顆寶石：要是「專屬掉落的輔助寶石」（未切割輔助寶石切不出來的那種）、還沒共鳴。
+     * 一疊只處理一顆（共鳴的跟沒共鳴的不能疊在一起），剩下的留在原格。流水帳記 CRAFT。
+     */
+    private void resonate(final Player player, final InventoryClickEvent event, final CurrencyType orb, final ItemStack target) {
+        final tw.exilecore.skill.GemService gems = plugin.skills().gems();
+        final tw.exilecore.skill.GemData gem = gems.read(target).orElse(null);
+        String why = null;
+        if (gem == null || gem.kind() != tw.exilecore.skill.GemData.Kind.SUPPORT) {
+            why = "只能用在專屬掉落的輔助寶石上";
+        } else {
+            final tw.exilecore.skill.SupportDefinition support = plugin.skills().config().support(gem.id());
+            if (support == null || support.cuttable()) {
+                why = "只能用在專屬掉落的輔助寶石上（" + (support == null ? gem.id() : support.name()) + "不是）";
+            } else if (gem.resonant()) {
+                why = support.name() + "已經共鳴了";
+            }
+        }
+        if (why != null) {
+            player.sendActionBar(plugin.text().parse("<red>" + orb.name() + "：" + tw.exilecore.item.ItemRenderer.escape(why)));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+            return;
+        }
+        if (target.getAmount() > 1 && event.getClickedInventory() != player.getInventory()) {
+            player.sendActionBar(plugin.text().parse("<red>一疊寶石只能共鳴一顆：先把寶石拿到自己的背包，或拆成一顆"));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+            return;
+        }
+        final ItemStack marked = gems.create(gem.withResonant(true), 1);
+        cursor(event, target.getAmount() - 1 <= 0 ? ItemStack.empty() : target.asQuantity(target.getAmount() - 1), event.getCursor());
+        if (target.getAmount() > 1) {
+            gems.giveAll(player, List.of(marked)); // 疊的剩下留在原格，共鳴的那顆進背包
+        } else {
+            event.setCurrentItem(marked);
+        }
+        plugin.economy().ledger().consumed(orb.id(), tw.exilecore.economy.EconomyLedger.CRAFT, 1);
+        player.sendMessage(plugin.text().prefixed("<#c48bff>共鳴：").append(marked.effectiveName())
+                .append(plugin.text().parse("<gray>（不佔一個技能的專屬輔助名額）")));
+        player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.1f);
+    }
+
+    /** 2026-10-18：共鳴石用掉一顆；一疊多顆時剩下的寶石放回原格。 */
+    private static void cursor(final InventoryClickEvent event, final ItemStack rest, final ItemStack cursor) {
+        cursor.setAmount(cursor.getAmount() - 1);
+        event.getView().setCursor(cursor.getAmount() <= 0 ? ItemStack.empty() : cursor);
+        if (!rest.isEmpty()) {
+            event.setCurrentItem(rest);
         }
     }
 

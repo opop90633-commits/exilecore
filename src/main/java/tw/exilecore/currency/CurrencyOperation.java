@@ -414,6 +414,23 @@ public enum CurrencyOperation {
         public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
             throw new UnsupportedOperationException("開輔助孔的通貨要用在技能面板上");
         }
+    },
+
+    /**
+     * 共鳴石（2026-10-18）：用在一顆「專屬輔助寶石」（source != null、不能切的那種）上，那顆寶石就「共鳴」——
+     * 不佔一個技能只能掛一顆專屬輔助的名額。不是用在裝備上：對背包裡的寶石物品用（CurrencyListener），
+     * 或拿在游標上點技能面板（/skills）裡已經掛了專屬輔助的孔（SkillMenu）。
+     */
+    RESONANCE {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return false;
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            throw new UnsupportedOperationException("共鳴石要用在專屬輔助寶石上");
+        }
     };
 
     /** 這個操作現在能不能用在這件物品上（規則面，不含通貨自己的 applies_to）。 */

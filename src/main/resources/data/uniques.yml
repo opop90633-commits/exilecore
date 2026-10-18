@@ -3881,3 +3881,792 @@ thornwall_aegis:
       value: [40, 60]
       stats:
         - { stat: thorns.damage, type: INCREASED, value: "{value}" }
+
+# =====================================================================================================
+# 2026-10-18：地圖事件巔峰 Boss 的專屬傳奇（每隻 3 件，其中 1 件是傳奇珠寶；sources 寫 Boss 代號，maps.yml 的 finals 裡那隻的
+#   pinnacle.drops.unique_chance 各擲；物品等級 85 起；做不出來、賭不到、一般地圖 Boss 不掉）。
+#   傳奇珠寶：同一種只能插一顆（不同的傳奇珠寶可以一起插），所以數值設計成「一顆就有感、彼此能搭配」，不靠疊同一顆。
+# =====================================================================================================
+
+# ---- 神龕守望・晨曦（shrine_warden）：增益、光環、聖光 ----
+dawnkeeper_crown:
+  name: 晨曦冠冕
+  base: helm_str_int_18
+  drop_level: 85
+  sources: [shrine_warden]
+  weight: 100
+  flavour:
+    - "「祂把四座神龕的光都戴在頭上。現在換你。」"
+  mods:
+    - text: "增加 {value}% 光環效果"
+      value: [20, 30]
+      stats:
+        - { stat: aura.effect, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大精魂"
+      value: [30, 40]
+      stats:
+        - { stat: spirit.max, type: FLAT, value: "{value}" }
+    - text: "+{value}% 火焰與閃電抗性"
+      value: [20, 25]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 護甲與能量護盾"
+      value: [80, 120]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "最近 4 秒被擊中過時，每秒回復 {value/10}% 最大生命"
+      value: [10, 15]
+      stats:
+        - { stat: life.regen_percent@hit, type: FLAT, value: "{value/10}" }
+
+warden_vow:
+  name: 守望之誓
+  base: jring_16
+  drop_level: 85
+  sources: [shrine_warden]
+  weight: 100
+  flavour:
+    - "「守了三百年，不是為了神龕，是為了等人來搶。」"
+  mods:
+    - text: "增加 {value}% 光環效果"
+      value: [10, 15]
+      stats:
+        - { stat: aura.effect, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [60, 80]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 魔力回復速度"
+      value: [40, 60]
+      stats:
+        - { stat: mana.regen, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 生命藥劑回復量"
+      value: [20, 30]
+      stats:
+        - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
+
+dawn_shard:
+  name: 晨光晶
+  base: diamond_jewel
+  drop_level: 85
+  sources: [shrine_warden]
+  weight: 100
+  flavour:
+    - "「神龕碎掉的時候，裡面的光沒有散，凝成了這一顆。」"
+  mods:
+    - text: "增加 {value}% 光環效果"
+      value: [8, 12]
+      stats:
+        - { stat: aura.effect, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 全部元素抗性"
+      value: [6, 8]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 魔力回復速度"
+      value: [20, 30]
+      stats:
+        - { stat: mana.regen, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大精魂"
+      value: [10, 15]
+      stats:
+        - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+# ---- 貪匣・千鎖之主（strongbox_mimic）：掉落、金幣、鎖鏈 ----
+thousandlock_girdle:
+  name: 千鎖腰封
+  base: jbelt_05
+  drop_level: 85
+  sources: [strongbox_mimic]
+  weight: 100
+  flavour:
+    - "「一千把鎖，鎖的不是箱子，是繫著它的人。」"
+  mods:
+    - text: "增加 {value}% 物品掉落稀有度"
+      value: [25, 35]
+      stats:
+        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [70, 90]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 暈眩門檻"
+      value: [30, 40]
+      stats:
+        - { stat: stun.threshold, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 全部元素抗性"
+      value: [10, 14]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+greedmaw_hammer:
+  name: 貪匣之齒
+  base: mace1_26
+  drop_level: 85
+  sources: [strongbox_mimic]
+  weight: 100
+  flavour:
+    - "「牠咬過的東西，都會變成牠的一部分。這把也是。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [160, 200]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "擊中時 {value}% 機率造成雙倍傷害"
+      value: [10, 14]
+      stats:
+        - { stat: damage.double, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 攻擊速度"
+      value: [10, 14]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "擊殺時回復 {value} 生命"
+      value: [25, 35]
+      stats:
+        - { stat: life.per_kill, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 物品掉落稀有度"
+      value: [10, 15]
+      stats:
+        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
+
+lockbox_coin:
+  name: 鎖匣金幣
+  base: ruby_jewel
+  drop_level: 85
+  sources: [strongbox_mimic]
+  weight: 100
+  flavour:
+    - "「牠肚子裡最後一枚，誰也沒拿到過。」"
+  mods:
+    - text: "增加 {value}% 物品掉落稀有度"
+      value: [10, 15]
+      stats:
+        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
+    - text: "擊中時 {value}% 機率造成雙倍傷害"
+      value: [4, 6]
+      stats:
+        - { stat: damage.double, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [25, 35]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+
+# ---- 裂隙之主・穿界者（breach_lord）：裂隙、空間、投射物穿越 ----
+worldtear_bow:
+  name: 穿界長弓
+  base: bow_26
+  drop_level: 85
+  sources: [breach_lord]
+  weight: 100
+  flavour:
+    - "「箭不是飛過去的。是從裂縫的另一邊出來的。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [150, 190]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "投射物穿透 3 個敵人"
+      stats:
+        - { stat: skill.pierce, type: FLAT, value: 3, tags: [projectile] }
+    - text: "增加 {value}% 投射物速度"
+      value: [30, 40]
+      stats:
+        - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+    - text: "物理傷害額外附加 {value}% 為混沌傷害"
+      value: [15, 20]
+      stats:
+        - { stat: damage.gain.chaos, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 攻擊速度"
+      value: [8, 12]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+
+riftwalker_boots:
+  name: 裂隙行者
+  base: boots_int_16
+  drop_level: 85
+  sources: [breach_lord]
+  weight: 100
+  flavour:
+    - "「牠走的不是路，是裂縫。穿上之後，你也會。」"
+  mods:
+    - text: "增加 {value}% 移動速度"
+      value: [30, 30]
+      stats:
+        - { stat: movement.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 能量護盾"
+      value: [80, 120]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [20, 25]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "最近 4 秒沒被擊中時，閃避更多 {value}%"
+      value: [20, 30]
+      stats:
+        - { stat: evasion@nohit, type: MORE, value: "{value}" }
+    - text: "增加 {value}% 施法速度"
+      value: [8, 12]
+      stats:
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+rift_splinter:
+  name: 裂隙碎晶
+  base: sapphire_jewel
+  drop_level: 85
+  sources: [breach_lord]
+  weight: 100
+  flavour:
+    - "「裂縫合上的時候，掉下來的一小片。另一邊的東西。」"
+  mods:
+    - text: "增加 {value}% 投射物速度"
+      value: [15, 20]
+      stats:
+        - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 混沌傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
+    - text: "混沌傷害穿透 {value}% 混沌抗性"
+      value: [5, 8]
+      stats:
+        - { stat: penetration, type: FLAT, value: "{value}", tags: [chaos] }
+    - text: "+{value}% 混沌抗性"
+      value: [5, 8]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+# ---- 流寇之王・無名者（exile_king）：決鬥、單體、偷技能 ----
+nameless_mace:
+  name: 無名之錘
+  base: mace1_26
+  drop_level: 85
+  sources: [exile_king]
+  weight: 100
+  flavour:
+    - "「沒有名字的人，用的是從別人手上搶來的武器。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [180, 230]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "增加 {value}% 攻擊速度"
+      value: [10, 14]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 對傳奇怪物與 Boss 的傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage.vs_unique, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 暴擊率"
+      value: [30, 40]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - text: "擊殺時回復 {value} 生命"
+      value: [30, 40]
+      stats:
+        - { stat: life.per_kill, type: FLAT, value: "{value}" }
+
+nameless_mantle:
+  name: 無名者之袍
+  base: body_str_dex_27
+  drop_level: 85
+  sources: [exile_king]
+  weight: 100
+  flavour:
+    - "「每一塊補丁，都是一個被他殺掉的人的衣服。」"
+  mods:
+    - text: "增加 {value}% 護甲與閃避"
+      value: [100, 140]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [80, 100]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 對傳奇怪物與 Boss 的傷害"
+      value: [10, 15]
+      stats:
+        - { stat: damage.vs_unique, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 暈眩門檻"
+      value: [30, 40]
+      stats:
+        - { stat: stun.threshold, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 移動速度"
+      value: [5, 8]
+      stats:
+        - { stat: movement.speed, type: INCREASED, value: "{value}" }
+
+stolen_memory:
+  name: 偷來的記憶
+  base: emerald_jewel
+  drop_level: 85
+  sources: [exile_king]
+  weight: 100
+  flavour:
+    - "「他記得每一個殺過的人怎麼出招。現在你也記得了。」"
+  mods:
+    - text: "增加 {value}% 暴擊率"
+      value: [15, 20]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 對傳奇怪物與 Boss 的傷害"
+      value: [8, 12]
+      stats:
+        - { stat: damage.vs_unique, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 攻擊速度"
+      value: [4, 6]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+
+# ---- 祭司・血契（ritual_priest）：獻祭、生命換傷害、召喚、血 ----
+bloodpact_sceptre:
+  name: 血契權杖
+  base: sceptre_16
+  drop_level: 85
+  sources: [ritual_priest]
+  weight: 100
+  flavour:
+    - "「契約寫在血裡。墨會乾，血不會。」"
+  mods:
+    - text: "+2 全部召喚技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 2, tags: [minion] }
+    - text: "增加 {value}% 召喚物傷害"
+      value: [60, 80]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+    - text: "增加 {value}% 召喚物最大生命"
+      value: [40, 60]
+      stats:
+        - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
+    - text: "+{value} 最大生命"
+      value: [60, 80]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "血償契：沒有魔力，技能的消耗改扣生命"
+      stats:
+        - { stat: flag.blood_magic, type: FLAT, value: 1 }
+
+altar_vestment:
+  name: 祭壇法衣
+  base: body_int_25
+  drop_level: 85
+  sources: [ritual_priest]
+  weight: 100
+  flavour:
+    - "「衣服上的紅不是染的。」"
+  mods:
+    - text: "增加 {value}% 能量護盾"
+      value: [120, 160]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "受到的傷害有 {value}% 之後慢慢回復為生命"
+      value: [20, 30]
+      stats:
+        - { stat: life.recoup, type: FLAT, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [20, 30]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "召喚技能同時最多多 1 隻召喚物"
+      stats:
+        - { stat: skill.minions, type: FLAT, value: 1 }
+    - text: "增加 {value}% 詛咒效果"
+      value: [10, 15]
+      stats:
+        - { stat: curse.effect, type: INCREASED, value: "{value}" }
+
+blood_tithe:
+  name: 血稅晶
+  base: ruby_jewel
+  drop_level: 85
+  sources: [ritual_priest]
+  weight: 100
+  flavour:
+    - "「每一滴獻上去的血，祭壇都會還一點回來。」"
+  mods:
+    - text: "增加 {value}% 召喚物傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+    - text: "每秒回復 {value} 生命"
+      value: [20, 30]
+      stats:
+        - { stat: life.regen, type: FLAT, value: "{value}" }
+    - text: "擊殺時回復 {value} 生命"
+      value: [10, 15]
+      stats:
+        - { stat: life.per_kill, type: FLAT, value: "{value}" }
+
+# ---- 幻霧之鏡・妄念（delirium_mirror）：幻影、迷霧、暴擊幻覺 ----
+mirrorshard_staff:
+  name: 碎鏡長棍
+  base: qstaff_28
+  drop_level: 85
+  sources: [delirium_mirror]
+  weight: 100
+  flavour:
+    - "「每一片鏡子裡，都有一個比你快一點的你。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [150, 190]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "增加 {value}% 暴擊率"
+      value: [60, 80]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 暴擊傷害加成"
+      value: [30, 40]
+      stats:
+        - { stat: crit.bonus, type: INCREASED, value: "{value}" }
+    - text: "物理傷害額外附加 {value}% 為冰冷傷害"
+      value: [20, 25]
+      stats:
+        - { stat: damage.gain.cold, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 攻擊速度"
+      value: [10, 14]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+
+mistveil_hood:
+  name: 霧紗面罩
+  base: helm_dex_int_17
+  drop_level: 85
+  sources: [delirium_mirror]
+  weight: 100
+  flavour:
+    - "「霧裡看不到你——但你看得到霧裡的每一樣東西。」"
+  mods:
+    - text: "增加 {value}% 閃避與能量護盾"
+      value: [120, 160]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "最近 4 秒沒被擊中時，閃避更多 {value}%"
+      value: [30, 40]
+      stats:
+        - { stat: evasion@nohit, type: MORE, value: "{value}" }
+    - text: "增加 {value}% 暴擊率"
+      value: [20, 30]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 冰冷抗性"
+      value: [25, 35]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+delusion_shard:
+  name: 妄念晶
+  base: diamond_jewel
+  drop_level: 85
+  sources: [delirium_mirror]
+  weight: 100
+  flavour:
+    - "「你以為那一下很痛。對，是真的很痛。」"
+  mods:
+    - text: "增加 {value}% 暴擊率"
+      value: [15, 20]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 暴擊傷害加成"
+      value: [10, 15]
+      stats:
+        - { stat: crit.bonus, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 冰冷傷害"
+      value: [15, 20]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
+    - text: "增加 {value}% 能量護盾"
+      value: [8, 12]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+
+# ---- 淵底之王・骨潮（abyss_lich）：地裂、骨、深淵、冰冷混沌 ----
+bonetide_maul:
+  name: 骨潮巨錘
+  base: mace2_27
+  drop_level: 85
+  sources: [abyss_lich]
+  weight: 100
+  flavour:
+    - "「砸下去的時候，整片地底都會回應。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [200, 260]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "物理傷害額外附加 {value}% 為冰冷傷害"
+      value: [25, 35]
+      stats:
+        - { stat: damage.gain.cold, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 暈眩累積"
+      value: [40, 60]
+      stats:
+        - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 凍結累積"
+      value: [40, 60]
+      stats:
+        - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+    - text: "對冰緩中的敵人造成的傷害更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: damage.vs_chilled, type: MORE, value: "{value}" }
+
+abyssal_greaves:
+  name: 淵底脛甲
+  base: legs_str_int_14
+  drop_level: 85
+  sources: [abyss_lich]
+  weight: 100
+  flavour:
+    - "「站在上面的人不會被拉下去。因為它本來就是從下面上來的。」"
+  mods:
+    - text: "增加 {value}% 護甲與能量護盾"
+      value: [120, 160]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [80, 100]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value}% 冰冷抗性"
+      value: [30, 40]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [15, 20]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "不會被冰緩"
+      stats:
+        - { stat: flag.unslowable, type: FLAT, value: 1 }
+
+deep_marrow:
+  name: 淵髓晶
+  base: sapphire_jewel
+  drop_level: 85
+  sources: [abyss_lich]
+  weight: 100
+  flavour:
+    - "「骨頭最裡面的那一點，是冷的。」"
+  mods:
+    - text: "增加 {value}% 冰冷傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
+    - text: "增加 {value}% 混沌傷害"
+      value: [15, 20]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
+    - text: "增加 {value}% 凍結累積"
+      value: [20, 30]
+      stats:
+        - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [5, 8]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+# =====================================================================================================
+# 2026-10-18：深淵裂縫（地圖事件 abyss，map_events.yml 第五種）的專屬傳奇（五件；sources 寫 abyss，深淵寶箱打開時 20 格內的人各擲
+#   map_events.yml 的 abyss.unique_chance；物品等級 60 起；做不出來、賭不到）
+# =====================================================================================================
+crevice_band:
+  name: 裂縫之戒
+  base: jring_13
+  drop_level: 60
+  sources: [abyss]
+  weight: 100
+  flavour:
+    - "「縫合上之前，從裡面撿起來的。」"
+  mods:
+    - text: "+{value} 最大生命"
+      value: [40, 60]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value}% 冰冷抗性"
+      value: [20, 30]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 物品掉落稀有度"
+      value: [10, 15]
+      stats:
+        - { stat: drop.rarity, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 魔力回復速度"
+      value: [20, 30]
+      stats:
+        - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+shardwalker_boots:
+  name: 殘片行履
+  base: boots_str_dex_13
+  drop_level: 60
+  sources: [abyss]
+  weight: 100
+  flavour:
+    - "「沿著裂縫走到底的人，鞋底都是潮湧的殘片。」"
+  mods:
+    - text: "增加 {value}% 移動速度"
+      value: [25, 25]
+      stats:
+        - { stat: movement.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 護甲與閃避"
+      value: [60, 80]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 冰冷抗性"
+      value: [20, 30]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - text: "不會被冰緩"
+      stats:
+        - { stat: flag.unslowable, type: FLAT, value: 1 }
+
+crevice_spear:
+  name: 裂淵之矛
+  base: spear_24
+  drop_level: 60
+  sources: [abyss]
+  weight: 100
+  flavour:
+    - "「從地縫裡抽出來的時候，矛尖還在冒冷氣。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [120, 160]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
+    - text: "附加 {min} 到 {max} 冰冷傷害"
+      min: [15, 25]
+      max: [60, 80]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, cold] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, cold] }
+    - text: "增加 {value}% 攻擊速度"
+      value: [8, 12]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 冰緩效果"
+      value: [20, 30]
+      stats:
+        - { stat: chill.effect, type: INCREASED, value: "{value}" }
+
+abyss_crevice_quiver:
+  name: 裂縫箭袋
+  base: quiver_08
+  drop_level: 60
+  sources: [abyss]
+  weight: 100
+  flavour:
+    - "「箭袋底部有一道縫。箭不會掉出去，寒氣會。」"
+  mods:
+    - text: "增加 {value}% 投射物速度"
+      value: [20, 30]
+      stats:
+        - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 投射物傷害"
+      value: [30, 40]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
+    - text: "附加 {min} 到 {max} 冰冷傷害"
+      min: [8, 12]
+      max: [30, 40]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, cold] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, cold] }
+    - text: "+{value} 最大生命"
+      value: [40, 60]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+
+abyss_ward:
+  name: 淵縫護符
+  base: jamulet_08
+  drop_level: 60
+  sources: [abyss]
+  weight: 100
+  flavour:
+    - "「掛在胸口，就不會聽到底下的聲音了。大概。」"
+  mods:
+    - text: "+{value}% 混沌抗性"
+      value: [20, 30]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大能量護盾"
+      value: [50, 70]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [40, 60]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 混沌傷害"
+      value: [30, 40]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
+
+# ---- 2026-10-18：星骸之海的淵鯨（abyss_whale）再多兩件（一件傳奇珠寶）：潮水、深淵、拉扯 ----
+undertow_coil:
+  name: 暗流束帶
+  base: jbelt_01
+  drop_level: 85
+  sources: [abyss_whale]
+  weight: 100
+  flavour:
+    - "「暗流不會把你推開。它把你拉下去。」"
+  mods:
+    - text: "+{value} 最大生命"
+      value: [80, 100]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value}% 冰冷抗性"
+      value: [30, 40]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 冰緩效果"
+      value: [30, 40]
+      stats:
+        - { stat: chill.effect, type: INCREASED, value: "{value}" }
+    - text: "對冰緩中的敵人造成的傷害更多 {value}%"
+      value: [10, 15]
+      stats:
+        - { stat: damage.vs_chilled, type: MORE, value: "{value}" }
+    - text: "不會被冰緩"
+      stats:
+        - { stat: flag.unslowable, type: FLAT, value: 1 }
+
+whalesong_pearl:
+  name: 鯨歌珠
+  base: sapphire_jewel
+  drop_level: 85
+  sources: [abyss_whale]
+  weight: 100
+  flavour:
+    - "「把它貼在耳邊，聽得到牠在很深的地方唱歌。」"
+  mods:
+    - text: "增加 {value}% 冰冷傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
+    - text: "增加 {value}% 施法速度"
+      value: [4, 6]
+      stats:
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 凍結累積"
+      value: [20, 30]
+      stats:
+        - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大能量護盾"
+      value: [30, 40]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }

@@ -18,6 +18,9 @@ ART = ROOT / 'src/main/resources/web/unique_art.txt'
 DATA = ROOT / 'src/main/resources/data'
 MARK = '# ---- 2026-10 自動產生（tools/gen_unique_art.py）----'
 FRAMES = ['_pulling_0', '_pulling_1', '_pulling_2', '_arrow']
+KIND_TAGS = {'bow', 'crossbow', 'quarterstaff', 'staff', 'wand', 'sceptre', 'mace', 'axe', 'sword', 'dagger', 'claw', 'spear', 'flail',
+             'one_hand', 'two_hand', 'shield', 'buckler', 'focus', 'quiver', 'helmet', 'body', 'boots', 'leggings', 'gloves',
+             'ring', 'amulet', 'belt', 'ruby', 'emerald', 'sapphire'}
 THEMES = [('火焰', 0.04), ('點燃', 0.04), ('冰冷', 0.57), ('凍結', 0.57), ('冰緩', 0.57), ('閃電', 0.14), ('感電', 0.14),
           ('混沌', 0.78), ('中毒', 0.30), ('生命', 0.0), ('魔力', 0.62), ('能量護盾', 0.52), ('召喚物', 0.33), ('暴擊', 0.9)]
 
@@ -91,29 +94,34 @@ def block(name, pal, rows):
 
 def main():
     text = ART.read_text(encoding='utf-8')
-    if MARK in text:
-        text = text[:text.index(MARK)].rstrip('\n') + '\n'
+    # 2026-10-18：只附加、不重做——檔案裡已經有的圖（不管是手畫的還是之前產生的）一律當底圖、原樣保留
     sprites = parse(text)
     uniques = yaml.safe_load((DATA / 'uniques.yml').read_text(encoding='utf-8'))
-    bases = {}
+    bases, kinds = {}, {}
     for f in (DATA / 'bases').glob('*.yml'):
         for k, v in (yaml.safe_load(f.read_text(encoding='utf-8')) or {}).items():
             if isinstance(v, dict):
                 bases[k] = v.get('slot')
-    by_base, by_slot = {}, {}
+                # 2026-10-18：同欄位再照「種類」分（弓、弩、長棍、單手錘、矛、頭盔、戒指、赤星晶…），
+                # 免得長棍拿弩的圖、珠寶拿戒指的圖
+                kinds[k] = (v.get('slot'),) + tuple(sorted(t for t in (v.get('tags') or []) if t in KIND_TAGS))
+    by_base, by_kind, by_slot = {}, {}, {}
     for uid, u in uniques.items():
-        if isinstance(u, dict) and uid in sprites:
+        if isinstance(u, dict) and uid in sprites and not uid.endswith(tuple(FRAMES)):
             by_base.setdefault(u['base'], []).append(uid)
+            by_kind.setdefault(kinds.get(u['base']), []).append(uid)
             by_slot.setdefault(bases.get(u['base']), []).append(uid)
-    out = [MARK]
+    out = [MARK + '（' + __import__('datetime').date.today().isoformat() + '）']
     made = 0
     for uid, u in uniques.items():
         if not isinstance(u, dict) or u.get('retired') or uid in sprites:
             continue
-        pool = by_base.get(u['base']) or by_slot.get(bases.get(u['base'])) or []
+        pool = by_base.get(u['base']) or by_kind.get(kinds.get(u['base'])) or by_slot.get(bases.get(u['base'])) or []
         if not pool:
             print('沒有底圖：', uid, u['base'])
             continue
+        if not by_base.get(u['base']) and not by_kind.get(kinds.get(u['base'])):
+            print('只找到同欄位的底圖（種類不同）：', uid, u['base'], kinds.get(u['base']))
         digest = int(hashlib.md5(uid.encode()).hexdigest(), 16)
         tpl = pool[digest % len(pool)]
         words = ' '.join(str(m.get('text', '')) for m in u.get('mods', []) if isinstance(m, dict)) + u.get('name', '')
@@ -131,7 +139,8 @@ def main():
             pal, rows = gem(pal, rows, hue, seed + 0.5)
             out.append(block(uid + suffix, pal, rows))
         made += 1
-    ART.write_text(text.rstrip('\n') + '\n\n' + '\n\n'.join(out) + '\n', encoding='utf-8')
+    if made:
+        ART.write_text(text.rstrip('\n') + '\n\n' + '\n\n'.join(out) + '\n', encoding='utf-8')
     print('傳奇圖：新產生', made, '件')
 
 

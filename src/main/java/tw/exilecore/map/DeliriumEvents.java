@@ -362,6 +362,9 @@ final class DeliriumEvents implements Listener {
                     items.size(), dropped ? "<yellow>（背包滿了，有的掉在腳下）" : "")));
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.2f);
             MapRewards.deliver(plugin, player, player.getLocation(), new MonsterData(fog.instance.level(), MonsterRarity.RARE, List.of(), "幻霧"), none, 0);
+            if (service.events() != null) {
+                service.events().rollTicket(MapEventConfig.DELIRIUM_SOURCE, player, player.getLocation()); // 2026-10-18：入場券（拿到獎勵的人）
+            }
         }
         plugin.getSLF4JLogger().info("地圖 #{}：幻霧結束", fog.instance.id());
     }

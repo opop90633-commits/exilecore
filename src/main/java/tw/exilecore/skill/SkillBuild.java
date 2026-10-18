@@ -122,6 +122,17 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     public static SkillBuild of(final SkillConfig config, final SkillDefinition definition, final int gemLevel,
                                 final int characterLevel, final boolean isDefault, final List<SupportDefinition> supports,
                                 final Set<String> weaponTags, final StatSheet sheet) {
+        return of(config, definition, gemLevel, characterLevel, isDefault, supports, weaponTags, sheet, Set.of());
+    }
+
+    /**
+     * 2026-10-18：多一個「哪些輔助已共鳴」（用過共鳴石的專屬輔助的代號）：共鳴的專屬輔助不佔「一個技能只有一顆專屬輔助生效」的名額。
+     *
+     * @param resonant 已共鳴的輔助代號（{@link tw.exilecore.character.SkillLoadout.Entry#resonant(int)} 為 true 的那些）
+     */
+    public static SkillBuild of(final SkillConfig config, final SkillDefinition definition, final int gemLevel,
+                                final int characterLevel, final boolean isDefault, final List<SupportDefinition> supports,
+                                final Set<String> weaponTags, final StatSheet sheet, final Set<String> resonant) {
         // 2026-10：Lv.21 的寶石（劫盜大金庫、金庫之主）跟 Lv.20 一樣要 80 級，角色夠了就照 21 級算（以前一律被壓回 20）
         final int usable = gemLevel > tw.exilecore.character.SkillLoadout.MAX_LEVEL
                 && characterLevel >= config.requiredLevel(tw.exilecore.character.SkillLoadout.MAX_LEVEL)
@@ -155,7 +166,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 if (support == null || !support.supports(definition)) {
                     continue;
                 }
-                if (!support.cuttable()) {
+                if (!support.cuttable() && !resonant.contains(support.id())) { // 2026-10-18：共鳴的專屬輔助不佔名額
                     if (exclusive) {
                         continue; // 一個技能只有一顆專屬掉落的輔助生效（2026-10；以前掛了兩顆的，第二顆不算）
                     }

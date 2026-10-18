@@ -138,3 +138,18 @@ boss_titles:
                    stats: [ { stat: damage, type: INCREASED, value: 5 }, { stat: life.max, type: INCREASED, value: 3 } ] }
   heist_finale:  { id: kill_vault,   boss_name: 金庫之主,       name: 萬鎖破除者, kills: 100, color: "#ffd24a",
                    stats: [ { stat: drop.rarity, type: INCREASED, value: 5 } ] }
+  # 2026-10-18：地圖事件的巔峰 Boss（一張券打一次，所以 50 次）
+  shrine_warden:   { id: kill_shrine_warden,   boss_name: 神龕守望・晨曦,   name: 熄燈之人,   kills: 50, color: "#f5b942",
+                     stats: [ { stat: life.regen_percent, type: FLAT, value: 0.5 } ] }
+  strongbox_mimic: { id: kill_strongbox_mimic, boss_name: 貪匣・千鎖之主,   name: 開匣之人,   kills: 50, color: "#ffa040",
+                     stats: [ { stat: drop.quantity, type: INCREASED, value: 3 } ] }
+  breach_lord:     { id: kill_breach_lord,     boss_name: 裂隙之主・穿界者, name: 縫界之人,   kills: 50, color: "#cf8aff",
+                     stats: [ { stat: movement.speed, type: INCREASED, value: 3 } ] }
+  exile_king:      { id: kill_exile_king,      boss_name: 流寇之王・無名者, name: 無名者之敵, kills: 50, color: "#ff7a5a",
+                     stats: [ { stat: damage, type: INCREASED, value: 4 } ] }
+  ritual_priest:   { id: kill_ritual_priest,   boss_name: 祭司・血契,       name: 毀契者,     kills: 50, color: "#e05050",
+                     stats: [ { stat: life.max, type: INCREASED, value: 3 } ] }
+  delirium_mirror: { id: kill_delirium_mirror, boss_name: 幻霧之鏡・妄念,   name: 破鏡之人,   kills: 50, color: "#d0d0e0",
+                     stats: [ { stat: crit.chance, type: INCREASED, value: 5 } ] }
+  abyss_lich:      { id: kill_abyss_lich,      boss_name: 淵底之王・骨潮,   name: 淵底歸來者, kills: 50, color: "#5ec4ff",
+                     stats: [ { stat: resist.cold, value: 5 }, { stat: resist.chaos, value: 3 } ] }

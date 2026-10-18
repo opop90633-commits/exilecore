@@ -89,7 +89,7 @@ public final class EventModule implements Module, Listener {
                 }
             }
         }
-        final List<String> problems = fresh.validate(mods, List.of("shrine", "strongbox", "breach", "exile"));
+        final List<String> problems = fresh.validate(mods, List.of("shrine", "strongbox", "breach", "exile", "abyss")); // 2026-10-18：＋深淵裂縫（保險箱不照權重，不能加權）
         if (!problems.isEmpty()) {
             throw new IllegalArgumentException("events.yml 有 " + problems.size() + " 個問題：\n  " + String.join("\n  ", problems));
         }

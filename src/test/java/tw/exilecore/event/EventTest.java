@@ -43,7 +43,7 @@ class EventTest {
         for (final MonsterConfig.MonsterMod mod : monsters.mods()) {
             mods.add(mod.id());
         }
-        assertEquals(List.of(), config.validate(mods, List.of("shrine", "strongbox", "breach", "exile")));
+        assertEquals(List.of(), config.validate(mods, List.of("shrine", "strongbox", "breach", "exile", "abyss"))); // 2026-10-18
         final java.util.Set<String> titleNames = new java.util.HashSet<>();
         for (final EventConfig.Theme theme : config.themes()) {
             assertNotNull(theme.title(), theme.id() + " 要有限定稱號");

@@ -23,7 +23,7 @@ final class PriceMenu extends Menu {
 
     private static final int CURRENCY_SLOTS = 18;
     /** 2026-10：第三列左邊四格是通貨頁的四個分組（一般通貨、未切割寶石、星魄、其他機制），右邊兩格換頁。 */
-    private static final int[] GROUP_SLOTS = {18, 19, 20, 21};
+    private static final int[] GROUP_SLOTS = {18, 19, 20, 21, 23}; // 2026-10-18：第五組（門票／鑰匙）
     private static final int SLOT_PREV_PAGE = 24;
     private static final int SLOT_NEXT_PAGE = 26;
     private static final int SLOT_ITEM = 22;

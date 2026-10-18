@@ -85,6 +85,9 @@ class ExclusiveDropTest {
     @Test
     void everyMapEventHasItsOwnUniqueAtOnePercent() {
         for (final MapEventConfig.Kind kind : MapEventConfig.Kind.values()) {
+            if (events.uniqueChance(kind) == 0) {
+                continue; // 2026-10-18：保險箱沒有專屬傳奇（unique_chance 0、uniques.yml 沒有 safe 的來源）
+            }
             assertEquals(0.01, events.uniqueChance(kind), 1e-9, kind + "：事件的專屬傳奇 1%（2026-10 從 2% 調低）");
             final String source = MapEventConfig.uniqueSource(kind);
             assertEquals(kind.name().toLowerCase(java.util.Locale.ROOT), source);
@@ -144,8 +147,8 @@ class ExclusiveDropTest {
                 assertFalse(skills.supportsUpTo(3).contains(support), support.id() + "：未切割輔助寶石切不出來");
             }
         }
-        assertEquals(15, exclusive, "四個終局各一顆＋兩顆極境專屬＋八顆巔峰（覺醒之主・虛星）專屬（2026-10-15：＋碎界擴散）＋星骸之海的淵鯨一顆");
-        assertEquals(List.of("tidal_resonance"), skills.supportsFrom("abyss_whale").stream().map(SupportDefinition::id).toList());
+        assertEquals(15 + 21 + 2, exclusive, "四個終局各一顆＋兩顆極境專屬＋八顆巔峰（覺醒之主・虛星）專屬（2026-10-15：＋碎界擴散）＋星骸之海的淵鯨一顆＋七隻事件巔峰 Boss 各三顆、淵鯨再兩顆（2026-10-18）");
+        assertEquals(List.of("tidal_resonance", "undertow_drag", "whale_breath"), skills.supportsFrom("abyss_whale").stream().map(SupportDefinition::id).toList()); // 2026-10-18：＋暗流拖曳、鯨息
         for (final String finalId : FINALS) {
             final List<SupportDefinition> own = skills.supportsFrom(finalId);
             assertEquals(1, own.size(), finalId + " 的專屬輔助");

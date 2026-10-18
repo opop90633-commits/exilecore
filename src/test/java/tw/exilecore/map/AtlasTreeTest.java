@@ -66,7 +66,8 @@ class AtlasTreeTest {
     /** 拿得到的點數比全部點滿少（要挑），但至少能點滿一半以上。 */
     @Test
     void pointsForceChoices() {
-        final int finals = maps.finals().size();
+        // 2026-10-18：事件巔峰（用入場券開的）不算星圖的終局點數（MapService.atlasEarned 略過）
+        final int finals = maps.finals().size() - maps.eventPinnacles().size();
         final AtlasTree.Earned all = tree.earned(maps.maps().size(), finals, finals, maps.tiers().max());
         assertEquals(maps.maps().size() + finals + finals + 5, all.total());
         assertEquals(29, all.total(), "14 張地圖 + 5 個終局（含巔峰萬界之巔）+ 5 個極境 + 5 個階級");
@@ -77,7 +78,7 @@ class AtlasTreeTest {
     /** 點了的代號存在一格（progress_value，2026-10 第 20 版加長成 VARCHAR 4096）：出貨的設定拿到全部天賦點時，最長的組合也存得下。 */
     @Test
     void longestAffordableAllocationFitsTheDatabase() {
-        final int finals = maps.finals().size();
+        final int finals = maps.finals().size() - maps.eventPinnacles().size(); // 2026-10-18：事件巔峰不算
         final int budget = tree.earned(maps.maps().size(), finals, finals, maps.tiers().max()).total();
         // 上限：最長的 budget 個代號（每個至少 1 點）加上逗號
         final List<Integer> lengths = new ArrayList<>();

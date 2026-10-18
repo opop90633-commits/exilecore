@@ -6,27 +6,37 @@
 #   strongbox  寶箱：點開會跳出一群怪（照這張圖的魔法／稀有群比例），殺光才打開；radius 格內的每個人各拿自己那份。
 #   breach     裂隙：踩進去就打開，duration 秒內每 wave_seconds 秒從越來越大的邊緣湧出一波怪；裂隙的怪物品數量 +quantity_bonus%。
 #   exile      流寇：穿著整套裝備的稀有怪，招式像 Boss（mods 裡的招式詞綴），生命是同等稀有怪的 life 倍；殺了照稀有怪掉，另外多掉 drops 件稀有裝備。
+# 2026-10-18 新增兩種：
+#   abyss      深淵裂縫：走近時地上裂開一條縫往地圖裡延伸，每段湧怪；有人跟著才繼續，沒人跟就合上（沒獎勵）；盡頭一隻小 Boss＋一個深淵寶箱。
+#   safe       地圖保險箱：鐵塊、鐵門、箱子的小結構，一直都在；手上拿著劫盜合約右鍵，吃掉一張開始開鎖，開鎖時一波一波湧怪。
+#              不在 weights 裡、不佔 per_map：每張地圖照 settings.safe_chance 另外放，最多一個。沒有專屬傳奇、沒有入場券。
 #
 # 機制的招牌通貨（照 PoE2，定義在 currencies.yml）：寶箱掉星魄（保證詞綴的改造）、裂隙的怪掉催化劑（飾品品質＝某一類詞綴的加成）、
 # 流寇掉星籤（改下一顆通貨的規則）；祭壇的獎勵也以星籤為主、幻霧掉蒸餾情緒（注入項鍊）。
-# 每種事件各有自己的專屬傳奇（uniques.yml 的 sources 寫 shrine、strongbox、breach、exile、ritual、delirium）：
+# 每種事件各有自己的專屬傳奇（uniques.yml 的 sources 寫 shrine、strongbox、breach、exile、ritual、delirium；2026-10-18 ＋abyss，保險箱沒有）：
 #   神龕、寶箱、裂隙、流寇照各自的 unique_chance（1%，每個有份的人各擲一次：碰到神龕的人、開箱時在旁邊的人、
 #   裂隙關上時在 30 格內的人、流寇有份的人）；祭壇與幻霧是獎勵裡的「傳奇」那一種（reward_weights 的 unique）。
 #   2026-10：2% → 1%、祭壇與幻霧的 unique 權重 2 → 1（星圖天賦的「+50%」也改 +25%）。伺服器的紀錄裡事件專屬佔了新傳奇的一半，
 #   點了寶箱天賦的人一天拿到 8 件千鎖；常見的傳奇重複得太快。
 #
 # 另外兩個 PoE2 的機制（最下面的 ritual、delirium）：跟上面的事件可以同時出現，各自照 chance 決定這張圖有沒有。
+#
+# 2026-10-18：事件巔峰的入場券——每種事件（保險箱除外）的 ticket: { currency, chance }：完成事件時「有份的人」（跟 unique_chance 同一群人）
+#   各擲一次 chance（2%）掉一張 currency（currencies.yml 的 ticket_*）；固定機率，不吃稀有度、星圖天賦、每月加成。
+#   一張券在地圖裝置的「事件巔峰」開那隻 Boss 一次（maps.yml finals 底下 pinnacle.ticket）。沒寫照預設 ticket_<事件> 2%；chance 0 = 不掉。
 
 settings:
   per_map: [2, 3]                  # 每張地圖放幾個事件（最多一個房間一個，起點與 Boss 房不放）
-  weights: { shrine: 35, strongbox: 35, breach: 15, exile: 15 }
-  approach: 20                     # 玩家幾格內事件現身（守衛、流寇刷出來；寶箱、裂隙一直都在）
+  weights: { shrine: 30, strongbox: 30, breach: 15, exile: 10, abyss: 15 }   # 2026-10-18：35/35/15/15 → 30/30/15/10，＋深淵裂縫 15（總和還是 100）
+  approach: 20                     # 玩家幾格內事件現身（守衛、流寇、深淵裂縫刷出來；寶箱、裂隙、保險箱一直都在）
+  safe_chance: 0.35                # 2026-10-18：每張地圖有保險箱的機率（per_map 之外另外算，一張圖最多一個）
 
 shrine:
   duration: 40                     # 增益幾秒
   guards: [3, 5]                   # 守衛幾隻（照地圖的怪物種類，一隻魔法怪帶一群普通怪）
   reach: 12                        # 啟動時幾格內的人一起拿
   unique_chance: 0.01              # 拿到增益的人各擲一次：掉神龕的專屬傳奇
+  ticket: { currency: ticket_shrine, chance: 0.02 }       # 2026-10-18：事件巔峰的入場券（同一群人各擲一次；固定機率、不吃加成）
   # 種類：name 顯示名稱、color 顏色、mods 增益（stat 屬性鍵、type FLAT／INCREASED／MORE、value 數值；INCREASED／MORE 是百分比）
   kinds:
     acceleration:
@@ -64,6 +74,7 @@ strongbox:
   ambush: [6, 9]                   # 跳出幾隻
   radius: 20                       # 打開時幾格內的人有份
   unique_chance: 0.01              # 有份的人各擲一次：掉寶箱的專屬傳奇
+  ticket: { currency: ticket_strongbox, chance: 0.02 }    # 2026-10-18：入場券
   # 種類：weight 出現權重；rolls 像殺幾隻稀有怪那樣擲掉落表（quantity_bonus／rarity_bonus 是百分比）；
   # currency 另外掉幾個通貨（照掉落權重抽、等級夠的才會）；maps 另外掉幾張地圖（照開箱的人的星圖）；
   # essences 掉幾顆星魄（currencies.yml 裡 operation: ESSENCE 的，隨機一種；星魄是寶箱的招牌）
@@ -81,6 +92,7 @@ breach:
   quantity_bonus: 50               # 裂隙怪的物品數量 +%
   catalyst_chance: 0.06            # 每隻裂隙怪死掉時掉一顆催化劑（currencies.yml 裡 operation: CATALYST 的，隨機一種）的機率
   unique_chance: 0.01              # 裂隙關上時 30 格內的人各擲一次：掉裂隙的專屬傳奇
+  ticket: { currency: ticket_breach, chance: 0.02 }       # 2026-10-18：入場券
 
 exile:
   life: 4.0                        # 生命是同等級稀有怪的幾倍
@@ -89,7 +101,55 @@ exile:
   drops: 2                         # 殺了另外掉幾件稀有裝備（物品等級 = 地圖等級）
   omens: [1, 1]                    # 殺了掉幾個星籤（currencies.yml 裡 operation: OMEN 的，隨機一種；有份的人各拿）
   unique_chance: 0.01              # 有份的人各擲一次：掉流寇的專屬傳奇
+  ticket: { currency: ticket_exile, chance: 0.02 }        # 2026-10-18：入場券
   names: [伊薇特, 柯林, 瑞瓦, 托爾加, 安雅, 莫瑟, 迦南, 希爾達, 奧倫, 薇拉, 迪倫, 娜塔]
+
+# ---- 深淵裂縫（2026-10-18）----
+# 玩家走近（approach）時地上裂開一條黑紫色的縫（寬 2–3 格），從起點沿著房間的走道往地圖裡延伸：每 advance_seconds 秒延伸 advance 格，
+# 總長 length 格（隨機；碰到牆就提早結束）。每段從縫裡湧 wave 隻怪（照地圖的怪物種類，每 3 段一隻魔法怪），縫裡的怪物品數量 +quantity_bonus%。
+# 只要有人在縫尾端 follow 格內就繼續延伸；沒人跟著超過 stall_seconds 秒，縫就合上（怪留著、事件結束、沒獎勵）。
+# 到長度上限冒出一隻小 Boss（稀有怪、生命 ×boss.life、詞綴 boss.mods）＋一個深淵寶箱；打倒小 Boss 寶箱才開：radius 格內的人各拿一份
+# （掉落表 chest.rolls 次＋shards 顆 shard_currency 的通貨）、各擲 unique_chance 的專屬傳奇（uniques.yml 的 sources 寫 abyss）。
+# 事件結束（或地圖關閉）linger 秒後把縫的方塊還原。
+abyss:
+  advance_seconds: 1.5
+  advance: 3
+  length: [30, 45]
+  wave: [2, 3]
+  quantity_bonus: 40
+  follow: 8
+  stall_seconds: 6
+  boss: { life: 3.0, mods: [slammer, swift] }
+  chest: { rolls: 3, quantity_bonus: 60, rarity_bonus: 80 }
+  # 招牌通貨：設計上是「潮湧殘片 abyss_shard」，但 currencies.yml 還沒有這個通貨；天啟石（oracle_orb）一顆值 150000、一天掉一顆都嫌多，
+  # 所以先用亂流石（turmoil_orb，4500）。加了 abyss_shard 之後把這裡改成 abyss_shard 就好；
+  # 寫了 currencies.yml 沒有的代號會改成照掉落表的通貨池抽。
+  shard_currency: turmoil_orb
+  shards: [1, 1]               # 2026-10-18：擁有者決定先給 1 顆
+  radius: 20
+  unique_chance: 0.01              # 寶箱打開時 radius 內的人各擲一次：掉深淵裂縫的專屬傳奇
+  ticket: { currency: ticket_abyss, chance: 0.02 }        # 2026-10-18：入場券
+  linger: 20
+
+# ---- 地圖保險箱（2026-10-18）----
+# 手上拿著劫盜合約（currencies.yml 的 heist_contract）右鍵保險箱：吃掉 1 張（流水帳記劫盜的消耗），開始開鎖 unlock_seconds 秒：
+# 每 wave_seconds 秒從房間邊緣湧一波 wave 隻怪（照地圖怪物；每波一隻魔法怪，最後一波一隻稀有怪）。保險箱 radius 格內有人進度才走；
+# 沒人就暫停，暫停超過 grace 秒就失敗（合約沒了）。打開：reward_radius 格內的人各拿 rolls 次掉落表（quantity_bonus／rarity_bonus 是百分比）
+# ＋currency 顆通貨（照掉落表的通貨池抽，等級＝地圖等級：合約沒有階級）＋blueprint_chance 一張劫盜藍圖。
+# 沒有專屬傳奇（unique_chance 固定 0）、沒有入場券。出現機率在 settings.safe_chance。
+safe:
+  unlock_seconds: 20
+  wave_seconds: 4
+  wave: [3, 5]
+  radius: 6
+  grace: 15
+  rolls: [2, 3]
+  quantity_bonus: 50
+  rarity_bonus: 100
+  currency: [2, 4]
+  blueprint_chance: 0.2
+  reward_radius: 20
+  unique_chance: 0
 
 # ---- 祭壇（PoE2 的 Ritual）----
 # 地圖裡放 altars 座祭壇（哭泣黑曜石＋紅蠟燭，各在不同房間）。右鍵一座開始儀式：地上一個 radius 格的圓，怪一波一波在圓裡出現
@@ -110,6 +170,7 @@ ritual:
   reroll: { cost: 0.2, growth: 1.5 }   # 重擲花「總共拿到的貢品」的幾成，每次乘 growth
   reward_weights: { omen: 30, currency: 25, rare: 15, essence: 10, jewel: 8, map: 6, catalyst: 4, unique: 1 }   # unique：祭壇的專屬傳奇（2026-10：2 → 1）
   prices: { omen: [260, 420], currency: [40, 160], rare: [140, 260], essence: [110, 190], jewel: [180, 320], map: [150, 260], catalyst: [120, 200], unique: [520, 880] }
+  ticket: { currency: ticket_ritual, chance: 0.02 }       # 2026-10-18：入場券（祭壇全部完成時，這張圖裡的每個人各擲一次）
 
 # ---- 幻霧（PoE2 的 Delirium）----
 # 地圖裡放一面鏡子（染色玻璃）。走過去，霧就跟著這張圖裡的每個人 duration 秒：越久越難（之後刷出來的怪與幻霧怪的生命、傷害
@@ -129,6 +190,7 @@ delirium:
   reward_weights: { emotion: 40, currency: 25, essence: 10, jewel: 10, map: 10, catalyst: 5, unique: 1 }   # unique：幻霧的專屬傳奇（2026-10：2 → 1）
   emotions: [distilled_ire, distilled_guilt, distilled_greed, distilled_paranoia]
   emotion_weights: [50, 30, 15, 5]
+  ticket: { currency: ticket_delirium, chance: 0.02 }     # 2026-10-18：入場券（幻霧結束時拿到獎勵的人各擲一次）
 
 # 地圖變化（2026-10）：讓同一張圖每次打起來不一樣。每一種各自照機率出現，機率寫 0 就關掉。
 # 只放在一般的地圖（回響、試煉、極境、巔峰不放）；終局 Boss 不會有 Boss 變體與 Boss 房干擾。/ec map 的狀態會列出這張圖有哪些變化。

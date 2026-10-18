@@ -51,6 +51,67 @@ class MapEventConfigTest {
         assertEquals(0.5, config.breachQuantity(), 1e-9);
         assertEquals(4.0, config.exileLife(), 1e-9);
         assertFalse(config.exileNames().isEmpty());
+        // 2026-10-18：深淵裂縫、保險箱
+        assertEquals(15, config.weights().get(MapEventConfig.Kind.ABYSS), "深淵裂縫的權重 15");
+        assertFalse(config.weights().containsKey(MapEventConfig.Kind.SAFE), "保險箱不照權重抽");
+        assertEquals(0.35, config.safe().chance(), 1e-9);
+        assertEquals(0.01, config.uniqueChance(MapEventConfig.Kind.ABYSS), 1e-9);
+        assertEquals(0.0, config.uniqueChance(MapEventConfig.Kind.SAFE), 1e-9, "保險箱沒有專屬傳奇");
+    }
+
+    @Test
+    void abyssAndSafeLoad() throws IOException {
+        final MapEventConfig config = new MapEventConfig();
+        config.load(DATA);
+        final MapEventConfig.Abyss abyss = config.abyss();
+        assertEquals(1.5, abyss.advanceSeconds(), 1e-9);
+        assertEquals(3, abyss.advance());
+        assertEquals(30, abyss.minLength());
+        assertEquals(45, abyss.maxLength());
+        assertEquals(2, abyss.minWave());
+        assertEquals(3, abyss.maxWave());
+        assertEquals(0.4, abyss.quantityBonus(), 1e-9, "40% 寫成小數");
+        assertEquals(8, abyss.follow(), 1e-9);
+        assertEquals(6, abyss.stallSeconds(), 1e-9);
+        assertEquals(3.0, abyss.bossLife(), 1e-9);
+        assertEquals(List.of("slammer", "swift"), abyss.bossMods());
+        assertEquals(3, abyss.rolls());
+        assertEquals(0.6, abyss.chestQuantity(), 1e-9);
+        assertEquals(0.8, abyss.chestRarity(), 1e-9);
+        assertEquals(1, abyss.minShards()); // 2026-10-18：擁有者決定先給 1 顆
+        assertEquals(1, abyss.maxShards());
+        assertEquals(20, abyss.radius(), 1e-9);
+        assertEquals(20, abyss.linger(), 1e-9);
+        // 招牌通貨真的在 currencies.yml 裡
+        final tw.exilecore.currency.CurrencyRepository currencies = new tw.exilecore.currency.CurrencyRepository();
+        currencies.load(DATA);
+        assertNotNull(currencies.get(abyss.shardCurrency()), "abyss.shard_currency：" + abyss.shardCurrency());
+        final MonsterConfig monsters = new MonsterConfig();
+        monsters.load(DATA);
+        for (final String id : abyss.bossMods()) {
+            assertNotNull(monsters.mod(id), "abyss.boss.mods 要是 monsters.yml 裡的詞綴：" + id);
+        }
+        final MapEventConfig.Safe safe = config.safe();
+        assertEquals(0.35, safe.chance(), 1e-9);
+        assertEquals(20, safe.unlockSeconds(), 1e-9);
+        assertEquals(4, safe.waveSeconds(), 1e-9);
+        assertEquals(3, safe.minWave());
+        assertEquals(5, safe.maxWave());
+        assertEquals(6, safe.radius(), 1e-9);
+        assertEquals(15, safe.grace(), 1e-9);
+        assertEquals(2, safe.minRolls());
+        assertEquals(3, safe.maxRolls());
+        assertEquals(0.5, safe.quantityBonus(), 1e-9);
+        assertEquals(1.0, safe.rarityBonus(), 1e-9);
+        assertEquals(2, safe.minCurrency());
+        assertEquals(4, safe.maxCurrency());
+        assertEquals(0.2, safe.blueprintChance(), 1e-9);
+        assertEquals(20, safe.rewardRadius(), 1e-9);
+        // 程式的預設值跟出貨的檔案一樣
+        final MapEventConfig defaults = new MapEventConfig();
+        assertEquals(defaults.abyss(), abyss);
+        assertEquals(defaults.safe(), safe);
+        assertEquals(defaults.weights(), config.weights());
     }
 
     @Test
@@ -103,6 +164,46 @@ class MapEventConfigTest {
         }
     }
 
+    /** 2026-10-18：深淵裂縫的路線只走地板、一格一格相連、從事件的位置出發、長度不超過上限。 */
+    @Test
+    void riftPathsStayOnTheFloor() {
+        final java.util.Random random = new java.util.Random(11);
+        int planned = 0;
+        for (long seed = 1; seed <= 12; seed++) {
+            for (final MapLayout.Style style : MapLayout.Style.values()) {
+                final MapLayout layout = MapLayout.generate(seed * 7919, 8, style);
+                for (final MapLayout.Room room : layout.rooms()) {
+                    if (room.kind() != MapLayout.Kind.NORMAL && room.kind() != MapLayout.Kind.SIDE) {
+                        continue;
+                    }
+                    final MapLayout.Spot start = MapEvents.spotIn(layout, room);
+                    if (start == null) {
+                        continue;
+                    }
+                    final List<MapLayout.Spot> path = MapEvents.planRift(layout, start, 40, random);
+                    assertFalse(path.isEmpty(), style + " #" + seed + "：要有路線");
+                    assertEquals(start, path.getFirst(), "從事件的位置出發");
+                    assertTrue(path.size() <= 40, "不超過長度上限");
+                    for (int i = 0; i < path.size(); i++) {
+                        final MapLayout.Spot spot = path.get(i);
+                        assertTrue(layout.isFloor(spot.x(), spot.z()), style + " #" + seed + "：第 " + i + " 格不是地板");
+                        // 2026-10-18：不裂進起點、Boss 房，也不裂到任何房間的中心（事件、寶箱放在那）
+                        final MapLayout.Room at = layout.roomAt(spot.x(), spot.z());
+                        assertTrue(at == null || at.kind() == MapLayout.Kind.NORMAL || at.kind() == MapLayout.Kind.SIDE,
+                                style + " #" + seed + "：第 " + i + " 格裂進了" + (at == null ? "" : at.kind().name()));
+                        assertTrue(at == null || at == room || spot.x() != at.cx() || spot.z() != at.cz(), style + " #" + seed + "：裂到了別的房間中心");
+                        if (i > 0) {
+                            final MapLayout.Spot previous = path.get(i - 1);
+                            assertEquals(1, Math.abs(spot.x() - previous.x()) + Math.abs(spot.z() - previous.z()), "一格一格相連");
+                        }
+                    }
+                    planned++;
+                }
+            }
+        }
+        assertTrue(planned > 50, "有測到東西：" + planned);
+    }
+
     @Test
     void exileModsExistInMonstersYml() throws IOException {
         final MapEventConfig config = new MapEventConfig();
@@ -132,6 +233,12 @@ class MapEventConfigTest {
     void brokenFilesAreRejected(@org.junit.jupiter.api.io.TempDir final Path temp) throws IOException {
         Files.writeString(temp.resolve("map_events.yml"), "settings:\n  weights: { tower: 5 }\n");
         assertThrows(IllegalArgumentException.class, () -> new MapEventConfig().load(temp), "不認得的事件");
+        // 2026-10-18：weights 裡寫 safe 不算（保險箱照 safe_chance）
+        Files.writeString(temp.resolve("map_events.yml"), "settings:\n  weights: { shrine: 50, safe: 50 }\n");
+        final MapEventConfig withSafe = new MapEventConfig();
+        withSafe.load(temp);
+        assertEquals(50, withSafe.totalWeight());
+        assertFalse(withSafe.weights().containsKey(MapEventConfig.Kind.SAFE));
         Files.writeString(temp.resolve("map_events.yml"), "shrine:\n  kinds:\n    x: { name: 空 }\n");
         assertThrows(IllegalArgumentException.class, () -> new MapEventConfig().load(temp), "神龕沒有 mods");
         Files.writeString(temp.resolve("map_events.yml"), "shrine:\n  kinds:\n    x: { name: 怪, mods: [{ stat: damage, type: BIG, value: 1 }] }\n");

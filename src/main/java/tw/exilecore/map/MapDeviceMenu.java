@@ -41,6 +41,8 @@ public final class MapDeviceMenu extends Menu {
     private static final int SLOT_UBER = 40;
     /** 巔峰（2026-10）：集齊四種碎片才能開一次的最終 Boss。 */
     private static final int SLOT_PINNACLE = 42;
+    /** 2026-10-18：事件巔峰——用地圖事件的入場券開的七隻 Boss（子選單 {@link EventPinnacleMenu}）。 */
+    private static final int SLOT_EVENT_PINNACLE = 44;
     private static final int SLOT_TREE = 38;
     private static final int SLOT_CLOSE = 53;
     private static final int SLOT_STATUS = 49;
@@ -132,6 +134,7 @@ public final class MapDeviceMenu extends Menu {
         drawFinal(config, completed);
         drawUber(config, completed);
         drawPinnacle(config, completed);
+        drawEventPinnacle(config, completed);
         set(SLOT_HELP, icon(Material.BOOK, "<white>怎麼用",
                 "<gray>1. 點背包裡的地圖，放上裝置",
                 "<gray>2. 按「開啟」：地圖世界裡會生出那張地圖",
@@ -264,7 +267,7 @@ public final class MapDeviceMenu extends Menu {
 
     /** 巔峰（2026-10）：集齊每一種碎片各一個才能開一次的最終 Boss；列出碎片集到哪、要先打贏誰。 */
     private void drawPinnacle(final MapConfig config, final Set<String> completed) {
-        final List<MapConfig.MapDef> pinnacles = config.pinnacles();
+        final List<MapConfig.MapDef> pinnacles = config.fragmentPinnacles(); // 2026-10-18：事件巔峰另外一顆按鈕
         if (pinnacles.isEmpty()) {
             return;
         }
@@ -307,10 +310,50 @@ public final class MapDeviceMenu extends Menu {
         }
     }
 
+    /**
+     * 2026-10-18：事件巔峰的按鈕：七隻 Boss 各用一張事件入場券開；寫有幾張券、幾隻能開，點了進子選單挑。
+     */
+    private void drawEventPinnacle(final MapConfig config, final Set<String> completed) {
+        final List<MapConfig.MapDef> pinnacles = config.eventPinnacles();
+        if (pinnacles.isEmpty()) {
+            return;
+        }
+        int openable = 0;
+        int tickets = 0;
+        int defeated = 0;
+        final List<String> lore = new ArrayList<>();
+        lore.add("<gray>地圖事件的巔峰 Boss：完成事件時有份的人各擲一次入場券，");
+        lore.add("<gray>一張券開一次；固定開在 T" + config.tiers().max() + " 再高幾級，只有 Boss 房");
+        lore.add("<red>每一門每個人只能走進去一次<dark_gray>（死了或離開要等這一門結束、走下一門）");
+        lore.add("");
+        for (final MapConfig.MapDef map : pinnacles) {
+            final MapConfig.Pinnacle pinnacle = config.pinnacle(map.id());
+            final CurrencyType ticket = plugin.currencies().repository().get(pinnacle.ticket());
+            final int have = ticket == null ? 0 : service.countCurrency(player, ticket);
+            final boolean done = completed.contains(map.id());
+            final boolean ready = service.pinnacleProblem(player, map) == null;
+            openable += ready ? 1 : 0;
+            tickets += have;
+            defeated += done ? 1 : 0;
+            lore.add((done ? "<green>✔ " : ready ? "<white>・" : "<dark_gray>・") + (ready || done ? "<#c77dff>" : "<dark_gray>")
+                    + ItemRenderer.escape(map.boss().name()) + " <dark_gray>" + ItemRenderer.escape(ticket == null ? pinnacle.ticket() : ticket.name())
+                    + " ×" + have + (done ? " <green>已打贏" : ""));
+        }
+        lore.add("");
+        lore.add("<gray>打贏過 <white>" + defeated + "<gray> / " + pinnacles.size() + "・入場券共 <white>" + tickets + "<gray> 張");
+        if (openable > 0) {
+            lore.add("<green>點一下挑要打哪一隻（會用掉 1 張券）");
+            set(SLOT_EVENT_PINNACLE, glowing(icon(Material.ECHO_SHARD, "<#c77dff>事件巔峰", lore)));
+        } else {
+            lore.add("<dark_gray>點一下看每一隻的機制與入場券的來源");
+            set(SLOT_EVENT_PINNACLE, icon(Material.AMETHYST_SHARD, "<gray>事件巔峰", lore));
+        }
+    }
+
     /** 巔峰：確認才用掉碎片。 */
     private void choosePinnacle() {
         final MapConfig config = service.config();
-        final List<MapConfig.MapDef> pinnacles = config.pinnacles();
+        final List<MapConfig.MapDef> pinnacles = config.fragmentPinnacles(); // 2026-10-18：事件巔峰走 EventPinnacleMenu
         final List<MapConfig.MapDef> openable = new ArrayList<>();
         for (final MapConfig.MapDef map : pinnacles) {
             if (service.pinnacleProblem(player, map) == null) {
@@ -546,8 +589,13 @@ public final class MapDeviceMenu extends Menu {
             case SLOT_TREE -> new AtlasTreeMenu(plugin, player, service).open();
             case SLOT_FINAL -> chooseFinalTier();
             case SLOT_PINNACLE -> {
-                if (!service.config().pinnacles().isEmpty()) {
+                if (!service.config().fragmentPinnacles().isEmpty()) {
                     choosePinnacle();
+                }
+            }
+            case SLOT_EVENT_PINNACLE -> {
+                if (!service.config().eventPinnacles().isEmpty()) {
+                    new EventPinnacleMenu(plugin, player, service).open(); // 2026-10-18
                 }
             }
             case SLOT_UBER -> {

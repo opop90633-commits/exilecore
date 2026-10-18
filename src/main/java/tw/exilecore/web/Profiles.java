@@ -449,7 +449,8 @@ public final class Profiles implements Listener {
                 skill.addProperty("sockets", entry.sockets());
                 final JsonArray supports = new JsonArray();
                 for (int i = 0; i < entry.sockets(); i++) {
-                    supports.add(entry.support(i));
+                    // 2026-10-18：共鳴的寶石要帶 ~，BuildCalc 才會算成共鳴（跟存檔格式一樣）
+                    supports.add(entry.support(i) + (entry.resonant(i) ? SkillLoadout.Entry.RESONANT_SUFFIX : ""));
                 }
                 skill.add("supports", supports);
                 skills.add(skill);

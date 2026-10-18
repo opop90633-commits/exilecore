@@ -60,7 +60,7 @@ public record AtlasBonus(Map<String, Double> values) {
         return increased("atlas.experience");
     }
 
-    /** 事件效果的鍵：atlas.神龕／寶箱／裂隙／流寇.什麼。 */
+    /** 事件效果的鍵：atlas.神龕／寶箱／裂隙／流寇／深淵裂縫.什麼（2026-10-18：＋abyss；safe 不照權重抽、也沒有專屬，沒有這些鍵）。 */
     static String kindKey(final MapEventConfig.Kind kind, final String what) {
         return "atlas." + kind.name().toLowerCase(Locale.ROOT) + "." + what;
     }

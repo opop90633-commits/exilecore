@@ -849,6 +849,14 @@ final class MapBosses {
                 drops.add(DropTable.Drop.currency(mirror));
             }
         }
+        // 共鳴石（2026-10-18）：另外擲一次 maps.yml 的 drops.resonance_chance（追逐級的 1/1.5；不吃任何加成；一般怪物的那一份在 MapService.rollLoot）
+        if (plugin.currencies() != null && itemLevel >= MapConfig.RESONANCE_MIN_LEVEL
+                && random.nextDouble() < service.config().resonanceChance()) {
+            final tw.exilecore.currency.CurrencyType resonance = plugin.currencies().resonanceType();
+            if (resonance != null) {
+                drops.add(DropTable.Drop.currency(resonance));
+            }
+        }
     }
 
     /**

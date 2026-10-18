@@ -58,8 +58,8 @@ class UniqueRecipeTest {
         assertEquals("傳奇三換一", config.recipe().title());
     }
 
-    /** 六種地圖事件。 */
-    private static final List<String> EVENTS = List.of("shrine", "strongbox", "breach", "exile", "ritual", "delirium");
+    /** 七種有專屬傳奇的地圖事件（2026-10-18：＋深淵裂縫）。 */
+    private static final List<String> EVENTS = List.of("shrine", "strongbox", "breach", "exile", "ritual", "delirium", "abyss");
 
     @Test
     void poolIsBossAndNamedUniquesOnly() {

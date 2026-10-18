@@ -15,11 +15,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * data/map_events.yml：地圖事件（神龕、寶箱、裂隙、流寇）與 PoE2 的兩個機制（祭壇、幻霧）的設定。純資料，不依賴 Bukkit。
+ * data/map_events.yml：地圖事件（神龕、寶箱、裂隙、流寇、深淵裂縫、保險箱）與 PoE2 的兩個機制（祭壇、幻霧）的設定。純資料，不依賴 Bukkit。
  */
 public final class MapEventConfig {
 
-    public enum Kind { SHRINE, STRONGBOX, BREACH, EXILE }
+    /** 2026-10-18：＋深淵裂縫（abyss，weights 的第五種）、地圖保險箱（safe，不在 weights 裡，照 settings.safe_chance 另外算，一張圖最多一個）。 */
+    public enum Kind { SHRINE, STRONGBOX, BREACH, EXILE, ABYSS, SAFE }
 
     /** 祭壇與幻霧的獎勵種類（reward_weights 的鍵）。 */
     public enum Reward {
@@ -137,11 +138,72 @@ public final class MapEventConfig {
                       int minCurrency, int maxCurrency, int minMaps, int maxMaps, int minEssences, int maxEssences) {
     }
 
+    /**
+     * 深淵裂縫（2026-10-18）：走近時地上裂開一條縫，往地圖裡延伸，每段湧怪；盡頭一隻小 Boss＋一個深淵寶箱。
+     *
+     * @param advanceSeconds 每幾秒延伸一段
+     * @param advance        一段幾格
+     * @param minLength      總長幾格（隨機；碰到牆提早結束）
+     * @param minWave        每段湧幾隻
+     * @param quantityBonus  縫裡的怪的物品數量加成（小數，0.4 = +40%）
+     * @param follow         有人在縫尾端幾格內才繼續延伸
+     * @param stallSeconds   沒人跟著超過幾秒就合上（沒獎勵）
+     * @param bossLife       小 Boss 的生命是同等稀有怪的幾倍
+     * @param bossMods       小 Boss 的詞綴
+     * @param rolls          寶箱擲幾次掉落表
+     * @param chestQuantity  寶箱的物品數量加成（小數）
+     * @param chestRarity    寶箱的物品稀有度加成（小數）
+     * @param shardCurrency  另外掉的通貨代號（currencies.yml；沒有這個代號就照掉落表抽）
+     * @param minShards      掉幾顆
+     * @param radius         寶箱打開時幾格內的人有份
+     * @param linger         事件結束幾秒後把縫的方塊還原
+     */
+    public record Abyss(double advanceSeconds, int advance, int minLength, int maxLength, int minWave, int maxWave, double quantityBonus,
+                        double follow, double stallSeconds, double bossLife, List<String> bossMods, int rolls, double chestQuantity,
+                        double chestRarity, String shardCurrency, int minShards, int maxShards, double radius, double linger) {
+        public Abyss {
+            bossMods = List.copyOf(bossMods);
+        }
+
+        static Abyss defaults() {
+            return new Abyss(1.5, 3, 30, 45, 2, 3, 0.4, 8, 6, 3.0, List.of("slammer", "swift"), 3, 0.6, 0.8, "turmoil_orb", 1, 1, 20, 20); // 2026-10-18：先給 1 顆
+        }
+    }
+
+    /**
+     * 地圖保險箱（2026-10-18）：鐵塊、鐵門、箱子的小結構；手上拿著劫盜合約右鍵，吃掉一張開始開鎖，開鎖時一波一波湧怪。
+     *
+     * @param chance          每張地圖有保險箱的機率（settings.safe_chance；跟 per_map 分開算，最多一個）
+     * @param unlockSeconds   開鎖幾秒
+     * @param waveSeconds     開鎖時每幾秒一波怪
+     * @param minWave         一波幾隻
+     * @param radius          幾格內有人進度才走
+     * @param grace           沒人最多暫停幾秒，超過就失敗（合約沒了）
+     * @param minRolls        打開擲幾次掉落表
+     * @param quantityBonus   物品數量加成（小數）
+     * @param rarityBonus     物品稀有度加成（小數）
+     * @param minCurrency     另外掉幾顆通貨（照掉落表的通貨池抽）
+     * @param blueprintChance 掉一張劫盜藍圖的機率
+     * @param rewardRadius    打開時幾格內的人有份
+     */
+    public record Safe(double chance, double unlockSeconds, double waveSeconds, int minWave, int maxWave, double radius, double grace,
+                       int minRolls, int maxRolls, double quantityBonus, double rarityBonus, int minCurrency, int maxCurrency,
+                       double blueprintChance, double rewardRadius) {
+        static Safe defaults() {
+            return new Safe(0.35, 20, 4, 3, 5, 6, 15, 2, 3, 0.5, 1.0, 2, 4, 0.2, 20);
+        }
+    }
+
     private int minPerMap = 2;
     private int maxPerMap = 3;
     private final Map<Kind, Integer> weights = new LinkedHashMap<>();
     /** 每種事件掉它專屬傳奇的機率（每個有份的人各擲一次；uniques.yml 的 sources 寫 shrine、strongbox、breach、exile）。 */
     private final Map<Kind, Double> uniqueChance = new java.util.EnumMap<>(Kind.class);
+    /**
+     * 2026-10-18：每種事件完成時「有份的人」各擲一次的事件巔峰入場券（map_events.yml 各事件的 ticket: { currency, chance }）；
+     * 鍵是事件的來源代號（shrine、strongbox、breach、exile、ritual、delirium、abyss；保險箱沒有）。固定機率，不吃任何加成。
+     */
+    private final Map<String, Ticket> tickets = new LinkedHashMap<>();
     private double approach = 20;
     // 神龕
     private int shrineDuration = 40;
@@ -172,6 +234,9 @@ public final class MapEventConfig {
     private int minOmens = 1;
     private int maxOmens = 1;
     private List<String> exileNames = List.of("伊薇特", "柯林", "瑞瓦", "托爾加", "安雅", "莫瑟");
+    // 2026-10-18：深淵裂縫、地圖保險箱
+    private Abyss abyss = Abyss.defaults();
+    private Safe safe = Safe.defaults();
     // PoE2 的機制
     private Ritual ritual;
     private Delirium delirium;
@@ -244,18 +309,36 @@ public final class MapEventConfig {
         defaults();
     }
 
+    /**
+     * 2026-10-18：事件巔峰的入場券：完成這種事件時有份的人各擲一次 {@code chance} 掉一張 {@code currency}（currencies.yml 的代號）。
+     */
+    public record Ticket(String currency, double chance) {
+    }
+
+    /** 2026-10-18：有入場券的事件來源代號（map_events.yml 的區塊名；保險箱沒有）。 */
+    public static final List<String> TICKET_SOURCES = List.of("shrine", "strongbox", "breach", "exile", "ritual", "delirium", "abyss");
+    /** 2026-10-18：入場券的預設機率（2%）。 */
+    public static final double DEFAULT_TICKET_CHANCE = 0.02;
+
     private void defaults() {
         minPerMap = 2;
         maxPerMap = 3;
         weights.clear();
-        weights.put(Kind.SHRINE, 35);
-        weights.put(Kind.STRONGBOX, 35);
+        weights.put(Kind.SHRINE, 30); // 2026-10-18：35、35、15、15 → 30、30、15、10，多一種深淵裂縫 15（保險箱不在這裡，照 safe_chance）
+        weights.put(Kind.STRONGBOX, 30);
         weights.put(Kind.BREACH, 15);
-        weights.put(Kind.EXILE, 15);
+        weights.put(Kind.EXILE, 10);
+        weights.put(Kind.ABYSS, 15);
         uniqueChance.clear();
         for (final Kind kind : Kind.values()) {
-            uniqueChance.put(kind, MapConfig.DEFAULT_UNIQUE_CHANCE);
+            uniqueChance.put(kind, kind == Kind.SAFE ? 0 : MapConfig.DEFAULT_UNIQUE_CHANCE); // 2026-10-18：保險箱沒有專屬傳奇
         }
+        tickets.clear(); // 2026-10-18：入場券預設 ticket_<事件> 2%
+        for (final String source : TICKET_SOURCES) {
+            tickets.put(source, new Ticket("ticket_" + source, DEFAULT_TICKET_CHANCE));
+        }
+        abyss = Abyss.defaults();
+        safe = Safe.defaults();
         approach = 20;
         shrineDuration = 40;
         minGuards = 3;
@@ -321,6 +404,8 @@ public final class MapEventConfig {
         weights.putAll(other.weights);
         uniqueChance.clear();
         uniqueChance.putAll(other.uniqueChance);
+        tickets.clear(); // 2026-10-18
+        tickets.putAll(other.tickets);
         approach = other.approach;
         shrineDuration = other.shrineDuration;
         minGuards = other.minGuards;
@@ -348,6 +433,8 @@ public final class MapEventConfig {
         minOmens = other.minOmens;
         maxOmens = other.maxOmens;
         exileNames = other.exileNames;
+        abyss = other.abyss; // 2026-10-18
+        safe = other.safe;
         ritual = other.ritual;
         delirium = other.delirium;
         twists = other.twists;
@@ -374,6 +461,7 @@ public final class MapEventConfig {
             }
         }
         approach = clamp(settings.decimal("approach", approach), 4, 64);
+        weights.remove(Kind.SAFE); // 2026-10-18：保險箱不照權重抽（寫了也不算），照 settings.safe_chance
 
         final YamlNode shrine = root.node("shrine");
         shrineDuration = (int) clamp(shrine.integer("duration", shrineDuration), 5, 600);
@@ -384,6 +472,15 @@ public final class MapEventConfig {
         }
         shrineReach = clamp(shrine.decimal("reach", shrineReach), 2, 48);
         uniqueChance.put(Kind.SHRINE, clamp(shrine.decimal("unique_chance", uniqueChance.get(Kind.SHRINE)), 0, 1));
+        // 2026-10-18：各事件的入場券（ticket: { currency, chance }；沒寫照預設 ticket_<事件> 2%；chance 0 = 不掉）
+        for (final String source : TICKET_SOURCES) {
+            final YamlNode section = root.node(source);
+            if (section.has("ticket")) {
+                final YamlNode node = section.node("ticket");
+                final Ticket base = tickets.get(source);
+                tickets.put(source, new Ticket(node.string("currency", base.currency()).trim(), clamp(node.decimal("chance", base.chance()), 0, 1)));
+            }
+        }
         if (shrine.has("kinds")) {
             shrines.clear();
             final YamlNode kinds = shrine.node("kinds");
@@ -463,6 +560,49 @@ public final class MapEventConfig {
         }
         if (exile.has("names") && !exile.strings("names").isEmpty()) {
             exileNames = List.copyOf(exile.strings("names"));
+        }
+
+        // 2026-10-18：深淵裂縫
+        final YamlNode abyssNode = root.node("abyss");
+        {
+            final Abyss base = abyss;
+            final int[] length = abyssNode.has("length") ? abyssNode.range("length") : new int[] {base.minLength(), base.maxLength()};
+            final int[] wave = abyssNode.has("wave") ? abyssNode.range("wave") : new int[] {base.minWave(), base.maxWave()};
+            final int[] shards = abyssNode.has("shards") ? abyssNode.range("shards") : new int[] {base.minShards(), base.maxShards()};
+            final YamlNode boss = abyssNode.node("boss");
+            final YamlNode chest = abyssNode.node("chest");
+            abyss = new Abyss(clamp(abyssNode.decimal("advance_seconds", base.advanceSeconds()), 0.5, 30),
+                    (int) clamp(abyssNode.integer("advance", base.advance()), 1, 10),
+                    Math.max(6, Math.min(length[0], length[1])), Math.min(120, Math.max(length[0], length[1])),
+                    Math.max(0, Math.min(wave[0], wave[1])), Math.min(20, Math.max(wave[0], wave[1])),
+                    clamp(abyssNode.decimal("quantity_bonus", base.quantityBonus() * 100), 0, 1000) / 100.0,
+                    clamp(abyssNode.decimal("follow", base.follow()), 2, 48), clamp(abyssNode.decimal("stall_seconds", base.stallSeconds()), 1, 120),
+                    clamp(boss.decimal("life", base.bossLife()), 0.5, 50), boss.has("mods") ? List.copyOf(boss.strings("mods")) : base.bossMods(),
+                    (int) clamp(chest.integer("rolls", base.rolls()), 0, 20),
+                    clamp(chest.decimal("quantity_bonus", base.chestQuantity() * 100), -100, 1000) / 100.0,
+                    clamp(chest.decimal("rarity_bonus", base.chestRarity() * 100), -100, 1000) / 100.0,
+                    abyssNode.string("shard_currency", base.shardCurrency()).trim(),
+                    Math.max(0, Math.min(shards[0], shards[1])), Math.min(50, Math.max(shards[0], shards[1])),
+                    clamp(abyssNode.decimal("radius", base.radius()), 4, 64), clamp(abyssNode.decimal("linger", base.linger()), 0, 600));
+            uniqueChance.put(Kind.ABYSS, clamp(abyssNode.decimal("unique_chance", uniqueChance.get(Kind.ABYSS)), 0, 1));
+        }
+        // 2026-10-18：地圖保險箱（出現機率在 settings.safe_chance）
+        final YamlNode safeNode = root.node("safe");
+        {
+            final Safe base = safe;
+            final int[] wave = safeNode.has("wave") ? safeNode.range("wave") : new int[] {base.minWave(), base.maxWave()};
+            final int[] rolls = safeNode.has("rolls") ? safeNode.range("rolls") : new int[] {base.minRolls(), base.maxRolls()};
+            final int[] currency = safeNode.has("currency") ? safeNode.range("currency") : new int[] {base.minCurrency(), base.maxCurrency()};
+            safe = new Safe(clamp(settings.decimal("safe_chance", base.chance()), 0, 1),
+                    clamp(safeNode.decimal("unlock_seconds", base.unlockSeconds()), 3, 300), clamp(safeNode.decimal("wave_seconds", base.waveSeconds()), 1, 60),
+                    Math.max(0, Math.min(wave[0], wave[1])), Math.min(20, Math.max(wave[0], wave[1])),
+                    clamp(safeNode.decimal("radius", base.radius()), 2, 32), clamp(safeNode.decimal("grace", base.grace()), 0, 300),
+                    Math.max(0, Math.min(rolls[0], rolls[1])), Math.min(20, Math.max(rolls[0], rolls[1])),
+                    clamp(safeNode.decimal("quantity_bonus", base.quantityBonus() * 100), -100, 1000) / 100.0,
+                    clamp(safeNode.decimal("rarity_bonus", base.rarityBonus() * 100), -100, 1000) / 100.0,
+                    Math.max(0, Math.min(currency[0], currency[1])), Math.min(50, Math.max(currency[0], currency[1])),
+                    clamp(safeNode.decimal("blueprint_chance", base.blueprintChance()), 0, 1), clamp(safeNode.decimal("reward_radius", base.rewardRadius()), 4, 64));
+            uniqueChance.put(Kind.SAFE, clamp(safeNode.decimal("unique_chance", uniqueChance.get(Kind.SAFE)), 0, 1));
         }
 
         if (root.has("ritual")) {
@@ -594,7 +734,7 @@ public final class MapEventConfig {
         try {
             return Kind.valueOf(text.trim().toUpperCase(Locale.ROOT));
         } catch (final IllegalArgumentException e) {
-            throw new IllegalArgumentException(where + "：不認得的事件 " + text + "（shrine、strongbox、breach、exile）");
+            throw new IllegalArgumentException(where + "：不認得的事件 " + text + "（shrine、strongbox、breach、exile、abyss、safe）");
         }
     }
 
@@ -713,7 +853,7 @@ public final class MapEventConfig {
         return uniqueChance.getOrDefault(kind, MapConfig.DEFAULT_UNIQUE_CHANCE);
     }
 
-    /** 這種事件的專屬傳奇在 uniques.yml 的來源代號（shrine、strongbox、breach、exile）。 */
+    /** 這種事件的專屬傳奇在 uniques.yml 的來源代號（shrine、strongbox、breach、exile、abyss；safe 沒有專屬）。 */
     public static String uniqueSource(final Kind kind) {
         return kind.name().toLowerCase(Locale.ROOT);
     }
@@ -721,6 +861,46 @@ public final class MapEventConfig {
     /** 祭壇、幻霧的專屬傳奇來源代號。 */
     public static final String RITUAL_SOURCE = "ritual";
     public static final String DELIRIUM_SOURCE = "delirium";
+
+    /** 2026-10-18：這種事件的入場券（來源代號 shrine、ritual…）；沒有（保險箱、不認得的）回傳 null。 */
+    public Ticket ticket(final String source) {
+        return tickets.get(source);
+    }
+
+    /** 2026-10-18：這種事件的入場券；保險箱沒有（null）。 */
+    public Ticket ticket(final Kind kind) {
+        return ticket(uniqueSource(kind));
+    }
+
+    /** 2026-10-18：所有的入場券（來源代號 → 券），依事件順序。 */
+    public Map<String, Ticket> tickets() {
+        return java.util.Collections.unmodifiableMap(tickets);
+    }
+
+    /** 2026-10-18：哪一種事件掉這張入場券（通貨代號 → 來源代號）；沒有事件掉它回傳 null。 */
+    public String ticketSource(final String currency) {
+        for (final Map.Entry<String, Ticket> entry : tickets.entrySet()) {
+            if (entry.getValue().currency().equals(currency) && entry.getValue().chance() > 0) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    /** 2026-10-18：事件來源代號的中文名（神龕、寶箱、裂隙、流寇、祭壇、幻霧、深淵裂縫、保險箱）。 */
+    public static String sourceName(final String source) {
+        return switch (source) {
+            case "shrine" -> "神龕";
+            case "strongbox" -> "寶箱";
+            case "breach" -> "裂隙";
+            case "exile" -> "流寇";
+            case RITUAL_SOURCE -> "祭壇";
+            case DELIRIUM_SOURCE -> "幻霧";
+            case "abyss" -> "深淵裂縫";
+            case "safe" -> "保險箱";
+            default -> source;
+        };
+    }
 
     public double catalystChance() {
         return catalystChance;
@@ -752,6 +932,16 @@ public final class MapEventConfig {
 
     public List<String> exileNames() {
         return exileNames;
+    }
+
+    /** 深淵裂縫（2026-10-18）。 */
+    public Abyss abyss() {
+        return abyss;
+    }
+
+    /** 地圖保險箱（2026-10-18）。 */
+    public Safe safe() {
+        return safe;
     }
 
     public Ritual ritual() {

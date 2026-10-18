@@ -132,7 +132,9 @@ public final class LootService {
                     && plugin.flasks().charms().isCharm(stack);
             // 映星鏡（2026-10）：永遠不會被過濾掉（就算自己把它勾成隱藏）
             final boolean mirror = currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.MIRROR;
-            if (!mirror && (charm ? filter.hidesCharms() : filter.hides(candidate(drop, stack, rarity, currency, upgrade), viewer))) {
+            // 共鳴石（2026-10-18）：跟映星鏡一樣不過濾、全服公告
+            final boolean resonance = currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.RESONANCE;
+            if (!mirror && !resonance && (charm ? filter.hidesCharms() : filter.hides(candidate(drop, stack, rarity, currency, upgrade), viewer))) {
                 final long converted = config.goldValue(drop.kind(), rarity, weight, averageGold);
                 goldTotal += converted;
                 filterGold += converted;
@@ -146,12 +148,15 @@ public final class LootService {
             }
             final boolean worthNoting = map || drop.isSpecificGem() || config.notable(drop.kind(), rarity, weight,
                     currency == null ? null : currency.id());
-            soundTier = Math.max(soundTier, soundTier(drop, rarity, asCurrency, mirror, endgameBoss));
+            soundTier = Math.max(soundTier, soundTier(drop, rarity, asCurrency, mirror || resonance, endgameBoss));
             if (drop.isEquipment() && drop.item().unique() != null) {
                 broadcastChase(killer, drop.item());
             }
             if (mirror) {
                 broadcastMirror(killer, currency);
+            }
+            if (resonance) {
+                broadcastResonance(killer, currency); // 2026-10-18
             }
             if (!config.autoPickup()) {
                 MonsterListener.dropOwned(plugin, location, stack, killer, MonsterListener.highlight(drop));
@@ -165,8 +170,8 @@ public final class LootService {
                 MonsterListener.dropOwned(plugin, location, rest, killer, true);
                 onGround++;
             }
-            if (mirror || chase(drop)) {
-                // 2026-10-17：追逐級傳奇、映星鏡最後放到哪裡寫進紀錄（玩家說沒拿到時查得到）
+            if (mirror || resonance || chase(drop)) {
+                // 2026-10-17：追逐級傳奇、映星鏡（2026-10-18：共鳴石）最後放到哪裡寫進紀錄（玩家說沒拿到時查得到）
                 final boolean ground = rest != null && !rest.isEmpty();
                 plugin.getSLF4JLogger().info("極稀有掉落去向：{} 的 {} → {}（{} {}, {}, {}）", killer.getName(),
                         net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(
@@ -241,7 +246,8 @@ public final class LootService {
             final CurrencyType currency = gem || plugin.currencies() == null ? null : plugin.currencies().read(stack).orElse(null);
             if (currency != null) {
                 // 映星鏡永遠不會被過濾掉（跟 handleKill 一樣）；金幣照一疊算（2026-10）
-                if (currency.operation() != tw.exilecore.currency.CurrencyOperation.MIRROR && filter.hidesCurrency(currency.id())) {
+                if (currency.operation() != tw.exilecore.currency.CurrencyOperation.MIRROR
+                        && currency.operation() != tw.exilecore.currency.CurrencyOperation.RESONANCE && filter.hidesCurrency(currency.id())) { // 2026-10-18
                     gold += config.goldValue(DropTable.Kind.CURRENCY, null, currency.dropWeight(), averageGold);
                     filtered++;
                     continue;
@@ -328,6 +334,21 @@ public final class LootService {
         }
     }
 
+    /** 共鳴石掉出來（2026-10-18）：跟追逐級傳奇、映星鏡一樣全服廣播、Discord 成就頻道。 */
+    public void broadcastResonance(final Player finder, final CurrencyType orb) {
+        final String name = plugin.chat() == null ? finder.getName() : plugin.chat().display(finder);
+        final net.kyori.adventure.text.Component message = plugin.text().prefixed("<#c48bff>✦ " + tw.exilecore.item.ItemRenderer.escape(name)
+                + " <light_purple>找到了 <#c48bff><bold>" + tw.exilecore.item.ItemRenderer.escape(orb.name()) + "</bold><light_purple>！");
+        for (final Player online : plugin.getServer().getOnlinePlayers()) {
+            online.sendMessage(message);
+            online.playSound(online.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, org.bukkit.SoundCategory.PLAYERS, 0.7f, 1.2f);
+        }
+        plugin.getSLF4JLogger().info("共鳴石：{} 掉出 {}（{}）", finder.getName(), orb.name(), orb.id());
+        if (plugin.discord() != null) {
+            plugin.discord().achievement(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了「" + tw.exilecore.item.ItemRenderer.escape(orb.name()) + "」！");
+        }
+    }
+
     // ---- 稀有掉落音效（2026-10；過濾器可以關） ----
 
     static final int SOUND_NONE = 0;
@@ -337,12 +358,13 @@ public final class LootService {
     static final int SOUND_UNIQUE = 2;
     /** 終局、極境、巔峰、金庫之主的 Boss 掉的傳奇與專屬寶石（通貨、地圖不算，照一般規則）。 */
     static final int SOUND_ENDGAME = 3;
-    /** 追逐級傳奇、映星鏡。 */
+    /** 追逐級傳奇、映星鏡、共鳴石（2026-10-18）。 */
     static final int SOUND_CHASE = 4;
 
     /** 有音效的通貨：Boss 入場材料（天穹碎片、深淵星核、萬界之巔四種碎片、金庫之主的鑰印）、劫盜藍圖、大鑿星石、Lv.21 技能寶石。 */
     static final java.util.Set<String> SOUND_CURRENCIES = java.util.Set.of("sky_fragment", "abyss_core", "fragment_crucible", "fragment_frost",
-            "fragment_bone", "fragment_ember", "heist_finale_key", "heist_blueprint", "greater_socket_orb", "uncut_skill_21");
+            "fragment_bone", "fragment_ember", "heist_finale_key", "heist_blueprint", "greater_socket_orb", "uncut_skill_21",
+            "resonance_orb"); // 2026-10-18：共鳴石（掉出來本來就是 SOUND_CHASE，這裡是通貨袋、過濾器那邊的清單）
 
     /** 這一件掉落是哪一級的音效。 */
     private int soundTier(final DropTable.Drop drop, final Rarity rarity, final CurrencyType currency, final boolean mirror, final boolean endgameBoss) {

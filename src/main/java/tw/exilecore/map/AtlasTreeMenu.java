@@ -161,7 +161,7 @@ public final class AtlasTreeMenu extends Menu {
         }
         if (rules.perFinal() > 0) {
             lore.add("<gray>打贏一個終局 <white>+" + rules.perFinal() + "<gray>（你打贏了 <white>" + earned.finals() / rules.perFinal()
-                    + "<gray> / " + config.finals().size() + "）");
+                    + "<gray> / " + (config.finals().size() - config.eventPinnacles().size()) + "）"); // 2026-10-18：事件巔峰不算
         }
         if (rules.perUber() > 0) {
             lore.add("<gray>打贏一個極境 <white>+" + rules.perUber() + "<gray>（你打贏了 <white>" + earned.ubers() / rules.perUber() + "<gray>）");

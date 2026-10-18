@@ -252,6 +252,7 @@ ORBS = {
     'turmoil_orb':        (shades('2a2a5a', '5a5ac8', '9a9aff'), 'swirl',    'e8e8ff', 'ffffff'),
     'annul_orb':          (shades('101014', '2a2a36', '4a4a5e'), 'ring',     '9a9ad0', None),
     'zenith_orb':         (shades('5a3a00', 'e0a010', 'ffd861'), 'star',     'ffffff', 'fff3c0'),
+    'resonance_orb':      (shades('0a2a30', '1aa0b0', '7af0ff'), 'ring',     'ffd861', 'fff3c0'),   # 2026-10-18：共鳴石（青色球、金色環）
     'oracle_orb':         (shades('3a1a5a', '8a3fd0', 'c77dff'), 'eye',      'ffffff', '2a0a4a'),
     'blessing_orb':       (shades('5a4a10', 'd8c040', 'fff0a0'), 'plus',     'ffffff', None),
     'lesser_socket_orb':  (shades('1a3a4a', '2f7fa8', '7fd1ff'), 'ring',     'e8f8ff', None),
@@ -785,6 +786,35 @@ GEMS_CUT = {
     'gem_skill':   (CUT_GEM,   ('0a1a3a', '1a3a9a', '3a6ae0', '8ab0ff', 'eaf2ff')),
     'gem_support': (ROUND_GEM, ('1a2a2a', '2a6a6a', '4ab0a8', '9ae8dc', 'f0fffc', 'b8902e')),
 }
+# 2026-10-18：事件巔峰的入場券（鑰匙：圓環把手＋齒），每個事件一個顏色；共鳴石用 ORBS（雙色）
+TICKET_KEY = [
+    '................',
+    '....ooo.........',
+    '...olhlo........',
+    '..olhmmlo.......',
+    '..olmddmo.......',
+    '..olmddmo.......',
+    '...olmmlo.......',
+    '....ooddo.......',
+    '......odmo......',
+    '......odmmo.....',
+    '......oddmmo....',
+    '......oddorro...',
+    '......oddoro....',
+    '......oddorro...',
+    '.......ooo.oo...',
+    '................',
+]
+TICKETS = {
+    'ticket_shrine':    ('3a2a08', 'a07a1a', 'e8c04a', 'fff0a0', 'ffffff', 'f5b942'),   # 神龕：金
+    'ticket_strongbox': ('2a1a08', '7a4a1a', 'c88a3a', 'f0c070', 'fff4d0', 'ffa040'),   # 寶箱：銅
+    'ticket_breach':    ('1a0828', '4a1a7a', '8a3ad8', 'cf8aff', 'f0d8ff', 'ff6ad8'),   # 裂隙：紫
+    'ticket_exile':     ('2a0808', '7a1818', 'c83a2a', 'ff7a5a', 'ffd0c0', 'ffd23a'),   # 流寇：紅
+    'ticket_ritual':    ('180404', '5a0a0a', 'a81a1a', 'e05050', 'ffb0b0', '40ff80'),   # 祭壇：血紅
+    'ticket_delirium':  ('18181c', '4a4a58', '8a8aa0', 'd0d0e0', 'ffffff', 'ff80ff'),   # 幻霧：灰白
+    'ticket_abyss':     ('04101c', '103a50', '2a7aa0', '5ec4ff', 'c0f0ff', '9dff7a'),   # 深淵：深藍
+}
+
 EXTRA = {
     'heist_contract':   (SCROLL, ('3a2a14', '8a6a3a', 'c8a878', 'f0e0c0', 'fffaf0', '6a2a14')),
     'heist_blueprint':  (SCROLL, ('0a1a3a', '1a4a8a', '2a6ab0', '3a7ac8', '8ab8f0', 'e8f4ff')),
@@ -877,6 +907,8 @@ def extras():
         items.append((cid, *shaded(OMEN, colours)))
     for cid, (template, colours) in list(EXTRA.items()) + list(GEMS_CUT.items()):
         items.append((cid, *shaded(template, colours)))
+    for cid, colours in TICKETS.items():   # 2026-10-18：入場券
+        items.append((cid, *shaded(TICKET_KEY, colours)))
     return items
 
 
@@ -902,6 +934,20 @@ def main():
             assert len(row) == 16, (cid, row)
             out.append('  ' + row)
         out.append('')
+    # 手畫、沒在這支程式裡的項目（星魄 essence_blaze／活動素材 event_candy……）：從舊檔照抄保留
+    have = {cid for cid, _, _ in items}
+    if OUT.exists():
+        kept = 0
+        block = []
+        for line in OUT.read_text(encoding='utf-8').split('\n') + ['']:
+            if line.startswith('item ') or line == '':
+                if block and block[0].startswith('item ') and block[0][5:].strip() not in have:
+                    out.extend(block + ['']); kept += 1
+                block = []
+            if line:
+                block.append(line)
+        if kept:
+            print('kept', kept, 'hand-drawn items')
     OUT.write_text('\n'.join(out), encoding='utf-8')
     print('wrote', OUT, len(items), 'items')
 

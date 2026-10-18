@@ -675,6 +675,10 @@ public final class CodexMenu extends Menu {
                 return "地圖事件：裂隙";
             case "exile":
                 return "地圖事件：流寇";
+            case "abyss": // 2026-10-18
+                return "地圖事件：深淵裂縫";
+            case "safe":
+                return "地圖事件：保險箱";
             case "ritual":
                 return "祭壇";
             case "delirium":

@@ -75,6 +75,9 @@ drops:
   #（地圖 Boss 大約 3 萬隻一個、一般怪物大約 1000 萬隻一個）。每個有份的人各擲一次，不吃任何加成
   mirror_chance: 0.000034        # 地圖 Boss（一般、具名、終局、極境）每次擊殺
   mirror_mob_chance: 0.0000001   # 一般怪物每隻（任何地方、任何等級）
+  # 2026-10-18：共鳴石（讓一顆專屬輔助寶石不佔專屬名額的通貨）：比追逐級傳奇難，每個有份的人各擲一次，不吃任何加成
+  resonance_chance: 0.00017      # 地圖 Boss（一般、具名、終局、極境）每次擊殺（追逐級 0.00034 ÷ 2；2026-10-18）
+  resonance_mob_chance: 0.0000005     # 一般怪物（等級 75 以上）每隻：1/2,000,000（約 200 萬隻一顆，追逐級的一半；2026-10-18 擁有者定）
   final_common_chance: 0.01      # 終局 Boss 另外擲一次共通傳奇（map_boss 池，中了抽一件）：1%（2026-10-16）；極境、巔峰寫在各自的 common_chance
   final_support_chance: 0.01     # 終局 Boss 自己的專屬輔助寶石（supports.yml 寫 source: 這個終局的代號）：每一顆各自 1%
   fragment: sky_fragment         # 天穹碎片（currencies.yml）
@@ -952,11 +955,11 @@ finals:
     pinnacle:
       attempts: 2        # 2026-10：幾道門（一門一次挑戰；全部倒下才能走下一門，Boss 回滿重來；打倒 Boss 門全部關掉）
       dps_cap: 150000    # 2026-10：每個人對 Boss 每秒傷害的上限（每秒傷害取打訓練假人的紀錄與實際打出來的較高者；0 = 不限）
-      dps_over:          # 超過上限的部分大幅減傷（分段）：30 萬 → 等效 19.5 萬、45 萬 → 21 萬、60 萬 → 21.75 萬、100 萬 → 21.83 萬、700 萬 → 23.03 萬（2026-10-18）
+      dps_over:          # 超過上限的部分大幅減傷（分段；2026-10-18 第二版）：30 萬 → 等效 19.5 萬、45 萬 → 21 萬、60 萬 → 21.75 萬、100 萬 → 21.79 萬、700 萬 → 22.39 萬
         - { from: 150000, rate: 0.3 }   # 15–30 萬的部分算 30%
         - { from: 300000, rate: 0.1 }   # 30–45 萬的部分算 10%
-        - { from: 450000, rate: 0.05 }  # 45–60 萬的部分算 5%（2026-10-16）
-        - { from: 600000, rate: 0.002 } # 60 萬以上算 0.2%（2026-10-18：原本 1%，堆到幾百萬還能快三成）
+        - { from: 450000, rate: 0.05 }  # 45–60 萬的部分算 5%
+        - { from: 600000, rate: 0.001 } # 60 萬以上算 0.1%
       level_bonus: 5
       cooldown: 0.65
       fragments:
@@ -993,3 +996,556 @@ finals:
           - { skill: fourfold_ray, chance: 0.01 }
           - { skill: rift_slash, chance: 0.01 }
           - { skill: starfall_volley, chance: 0.01 }
+
+  # =====================================================================================================
+  # 2026-10-18：地圖事件的巔峰 Boss（七隻）——用事件的入場券（ticket_*，完成事件時有份的人各擲 2%）在地圖裝置的「事件巔峰」打開，
+  #   一張券進一次。開法照萬界之巔：固定最高階＋level_bonus、只有 Boss 房、attempts 2、dps_cap、tempo.pinnacle、不普攻。
+  #   不在星圖上（沒有 atlas、requires 空、points 0），生命 50～55、傷害 2.9（跟虛星同一級），三個階段（0.75／0.5／0.25）加傷害、護盾，
+  #   5 分鐘狂暴。掉落：最高階地圖 2 張、自己的 3 件傳奇各 2%、共通 2%、天穹碎片 1、天啟石 3、深淵核心 25%、
+  #   自己的 3 顆輔助與 2 顆技能寶石各 1%。招式在 boss_skills.yml（shrine_／box_／breach_／exile_／ritual_／mist_／abyssal_）。
+  # =====================================================================================================
+  shrine_warden:
+    name: 晨曦神龕
+    requires: []
+    points: 0
+    level_bonus: 3
+    theme: star
+    lore: "四座神龕圍成一圈，中間站著守了它們三百年的人。祂不讓你碰——祂要自己吃。"
+    monsters: { VINDICATOR: 2, PILLAGER: 1 }
+    boss:
+      name: 神龕守望・晨曦
+      type: IRON_GOLEM
+      named: true
+      life: 52
+      damage: 2.9
+      scale: 1.4
+      mods: [resistant, swift]
+      intro: "「神龕的祝福只有一份。你要？先從我手上拿走。」"
+      defeat: "四座神龕同時亮了起來，這次，光是你的。"
+      # 增益反轉：祂會吃掉神龕的增益（詛咒：受到的傷害增加）；聖光柱（十字落下）、祈禱環（有缺口）、神諭光束（兩道）、淨化新星；
+      # 第一階段起神龕吞噬、守衛召喚，天光開始自己落（場地危害）；第二階段起晨曦降臨（全場大招）、光矛齊射；第三階段起審判之光（三道）
+      skills:
+        - shrine_light_pillar
+        - shrine_prayer_ring
+        - shrine_oracle_beams
+        - shrine_purge_nova
+        - { id: shrine_devour, phase: 1 }
+        - { id: shrine_guardians, phase: 1 }
+        - { id: shrine_dawn, phase: 2 }
+        - { id: shrine_lance_volley, phase: 2 }
+        - { id: shrine_judgement, phase: 3 }
+      phases:
+        - at: 0.75
+          name: 奪取祝福
+          message: "「這一座，歸我。」"
+          speed: 0.1
+          shield: { count: 3, type: VINDICATOR, name: 神龕守衛, life: 5, duration: 30, heal: 25 }
+        - at: 0.5
+          name: 聖光灼身
+          message: "「光太亮了？那就閉上眼。」"
+          speed: 0.1
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+        - at: 0.25
+          name: 晨曦
+          message: "「天亮了——這是你最後看到的太陽。」"
+          speed: 0.2
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          shield: { count: 3, type: VINDICATOR, name: 晨曦結晶, life: 6, duration: 25, heal: 35 }
+      hazards:
+        - { skill: hazard_shrine_ray, every: 9, phase: 1 }
+      enrage: { after: 360, damage: 150, speed: 0.4, message: "「夠了。全部，燒乾淨。」" }
+    pinnacle:
+      attempts: 2
+      dps_cap: 150000
+      dps_over:
+        - { from: 150000, rate: 0.3 }
+        - { from: 300000, rate: 0.1 }
+        - { from: 450000, rate: 0.05 }
+        - { from: 600000, rate: 0.001 }
+      level_bonus: 5
+      cooldown: 0.65
+      ticket: ticket_shrine
+      drops:
+        maps: 2
+        unique_chance: 0.02
+        exclusive_chance: 0
+        common_chance: 0.02
+        extra:
+          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: zenith_orb, amount: 3, chance: 1 }
+          - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
+          - { support: dawn_blessing, chance: 0.01 }
+          - { support: shrine_echo, chance: 0.01 }
+          - { support: sacred_focus, chance: 0.01 }
+          - { skill: dawn_pillar, chance: 0.01 }
+          - { skill: shrine_prayer, chance: 0.01 }
+
+  strongbox_mimic:
+    name: 千鎖寶庫
+    requires: []
+    points: 0
+    level_bonus: 3
+    theme: crypt
+    lore: "一座堆滿寶箱的寶庫。只有一個是真的，而真的那個，會咬人。"
+    monsters: { SILVERFISH: 2, HUSK: 1 }
+    boss:
+      name: 貪匣・千鎖之主
+      type: RAVAGER
+      named: true
+      life: 55
+      damage: 2.9
+      scale: 1.3
+      mods: [armoured, swift]
+      intro: "「你開了那麼多箱子……這次，換箱子開你。」"
+      defeat: "匣口慢慢合上。裡面裝的，終於真的是寶物了。"
+      # 寶箱怪：假寶箱（踩到會炸）、鎖鏈拉扯（漩渦）、金幣雨、咬合（短扇形）；
+      # 第一階段起鎖鏈牢籠（圍著你一圈）、分身箱（蠹魚群），落金開始自己落；第二階段起寶庫崩塌（場地收縮）、千鎖齊發（殘影）；第三階段起匣門重合（大新星）
+      skills:
+        - box_fake_chests
+        - box_chain_pull
+        - box_coin_rain
+        - box_bite
+        - { id: box_chain_cage, phase: 1 }
+        - { id: box_spawn, phase: 1 }
+        - { id: box_vault_collapse, phase: 2 }
+        - { id: box_thousand_locks, phase: 2 }
+        - { id: box_slam_shut, phase: 3 }
+      phases:
+        - at: 0.75
+          name: 千鎖開啟
+          message: "「第一把鎖，開了。」"
+          speed: 0.1
+          shield: { count: 3, type: SILVERFISH, name: 鎖匣, life: 5, duration: 30, heal: 25 }
+        - at: 0.5
+          name: 貪慾
+          message: "「再給我一點。再一點。」"
+          speed: 0.1
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+        - at: 0.25
+          name: 寶庫崩塌
+          message: "「全部——都是我的！」"
+          speed: 0.2
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          shield: { count: 3, type: SILVERFISH, name: 千鎖之核, life: 6, duration: 25, heal: 35 }
+      hazards:
+        - { skill: hazard_box_coins, every: 9, phase: 1 }
+      enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到。這座寶庫，連你一起鎖起來。」" }
+    pinnacle:
+      attempts: 2
+      dps_cap: 150000
+      dps_over:
+        - { from: 150000, rate: 0.3 }
+        - { from: 300000, rate: 0.1 }
+        - { from: 450000, rate: 0.05 }
+        - { from: 600000, rate: 0.001 }
+      level_bonus: 5
+      cooldown: 0.65
+      ticket: ticket_strongbox
+      drops:
+        maps: 2
+        unique_chance: 0.02
+        exclusive_chance: 0
+        common_chance: 0.02
+        extra:
+          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: zenith_orb, amount: 3, chance: 1 }
+          - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
+          - { support: greed_lock, chance: 0.01 }
+          - { support: chain_bind, chance: 0.01 }
+          - { support: coin_toss, chance: 0.01 }
+          - { skill: chain_lash, chance: 0.01 }
+          - { skill: coin_barrage, chance: 0.01 }
+
+  breach_lord:
+    name: 穿界裂隙
+    requires: []
+    points: 0
+    level_bonus: 3
+    theme: void
+    lore: "裂隙的另一邊不是黑的，是紫的。那裡的主人等了很久，想看看這一邊長什麼樣子。"
+    monsters: { ENDERMAN: 2, ENDERMITE: 1 }
+    boss:
+      name: 裂隙之主・穿界者
+      type: ENDERMAN
+      named: true
+      life: 50
+      damage: 2.9
+      scale: 1.6
+      mods: [evasive, swift]
+      intro: "「你們關了那麼多裂隙。這一道，關不上。」"
+      defeat: "裂隙合上了。這次，從這一邊。"
+      # 空間裂縫：裂隙擴散（多波擴散環）、空間撕裂（四道裂縫轉）、湧出（召喚）、裂隙之手（一直線炸過來）；
+      # 第一階段起相位閃現（撲擊）、裂隙風暴（追人的碎片），裂縫開始自己冒出來（場地危害）；第二階段起界縫崩解（場地收縮）、穿界齊射；第三階段起界崩新星
+      skills:
+        - breach_spread
+        - breach_tear
+        - breach_surge
+        - breach_hand
+        - { id: breach_phase_blink, phase: 1 }
+        - { id: breach_storm, phase: 1 }
+        - { id: breach_collapse, phase: 2 }
+        - { id: breach_volley, phase: 2 }
+        - { id: breach_shatter, phase: 3 }
+      phases:
+        - at: 0.75
+          name: 裂隙擴大
+          message: "「裂縫，再開大一點。」"
+          speed: 0.1
+          shield: { count: 3, type: ENDERMITE, name: 裂隙結晶, life: 5, duration: 30, heal: 25 }
+        - at: 0.5
+          name: 穿界
+          message: "「這一邊的空氣……真難聞。」"
+          speed: 0.1
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+        - at: 0.25
+          name: 界崩
+          message: "「那就兩邊一起碎。」"
+          speed: 0.2
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          shield: { count: 3, type: ENDERMITE, name: 界縫之核, life: 6, duration: 25, heal: 35 }
+      hazards:
+        - { skill: hazard_breach_rift, every: 8, phase: 1 }
+      enrage: { after: 360, damage: 150, speed: 0.4, message: "「夠久了。整片空間，一起撕開。」" }
+    pinnacle:
+      attempts: 2
+      dps_cap: 150000
+      dps_over:
+        - { from: 150000, rate: 0.3 }
+        - { from: 300000, rate: 0.1 }
+        - { from: 450000, rate: 0.05 }
+        - { from: 600000, rate: 0.001 }
+      level_bonus: 5
+      cooldown: 0.65
+      ticket: ticket_breach
+      drops:
+        maps: 2
+        unique_chance: 0.02
+        exclusive_chance: 0
+        common_chance: 0.02
+        extra:
+          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: zenith_orb, amount: 3, chance: 1 }
+          - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
+          - { support: rift_passage, chance: 0.01 }
+          - { support: rift_surge, chance: 0.01 }
+          - { support: worldtear, chance: 0.01 }
+          - { skill: rift_hand, chance: 0.01 }
+          - { skill: breach_ring, chance: 0.01 }
+
+  exile_king:
+    name: 無名者競技場
+    requires: []
+    points: 0
+    level_bonus: 3
+    theme: ruins
+    lore: "一座廢掉的競技場。流寇們都聽一個沒有名字的人的，因為他用的招，全是從殺掉的人身上學來的。"
+    monsters: { VINDICATOR: 2, PILLAGER: 2 }
+    boss:
+      name: 流寇之王・無名者
+      type: VINDICATOR
+      named: true
+      life: 50
+      damage: 2.9
+      scale: 1.3
+      mods: [deadly, swift]
+      intro: "「殺了那麼多流寇，該學會幾招了吧？來，讓我看看。」"
+      defeat: "無名者倒下的時候，笑了一下——好像終於有人配得上他的名字。"
+      # 鏡像決鬥（招式取材玩家的技能）：重斬（扇形）、迴身旋刃（兩圈）、貫穿射擊（三條紅線）、閃現背刺（撲擊）；
+      # 第一階段起無名戰吼（詛咒）、投擲陷阱，飛刀開始自己落；第二階段起處決標記、絕命連斬（螺旋）；第三階段起決鬥（衝鋒）
+      skills:
+        - exile_heavy_slash
+        - exile_whirl
+        - exile_pierce_shot
+        - exile_backstab
+        - { id: exile_warcry, phase: 1 }
+        - { id: exile_traps, phase: 1 }
+        - { id: exile_execute_mark, phase: 2 }
+        - { id: exile_death_spiral, phase: 2 }
+        - { id: exile_duel, phase: 3 }
+      phases:
+        - at: 0.75
+          name: 流寇圍觀
+          message: "「別插手，這是我的決鬥。」"
+          speed: 0.1
+          shield: { count: 3, type: PILLAGER, name: 流寇護衛, life: 5, duration: 30, heal: 25 }
+        - at: 0.5
+          name: 認真了
+          message: "「不錯。那我也認真一點。」"
+          speed: 0.1
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+        - at: 0.25
+          name: 最後一招
+          message: "「最後一招……是你教我的。」"
+          speed: 0.2
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          shield: { count: 3, type: PILLAGER, name: 無名之誓, life: 6, duration: 25, heal: 35 }
+      hazards:
+        - { skill: hazard_exile_knives, every: 8, phase: 1 }
+      enrage: { after: 360, damage: 150, speed: 0.4, message: "「拖太久了。結束吧。」" }
+    pinnacle:
+      attempts: 2
+      dps_cap: 150000
+      dps_over:
+        - { from: 150000, rate: 0.3 }
+        - { from: 300000, rate: 0.1 }
+        - { from: 450000, rate: 0.05 }
+        - { from: 600000, rate: 0.001 }
+      level_bonus: 5
+      cooldown: 0.65
+      ticket: ticket_exile
+      drops:
+        maps: 2
+        unique_chance: 0.02
+        exclusive_chance: 0
+        common_chance: 0.02
+        extra:
+          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: zenith_orb, amount: 3, chance: 1 }
+          - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
+          - { support: duelist_focus, chance: 0.01 }
+          - { support: stolen_technique, chance: 0.01 }
+          - { support: nameless_edge, chance: 0.01 }
+          - { skill: nameless_backstab, chance: 0.01 }
+          - { skill: execution_mark, chance: 0.01 }
+
+  ritual_priest:
+    name: 血契祭場
+    requires: []
+    points: 0
+    level_bonus: 3
+    theme: volcano
+    lore: "三座祭壇圍著一塊黑地。祭司收了這麼多年的貢品，終於要獻祭自己最想要的東西：你。"
+    monsters: { HUSK: 2, ZOMBIE: 1, WITCH: 1 }
+    boss:
+      name: 祭司・血契
+      type: EVOKER
+      named: true
+      life: 52
+      damage: 2.9
+      scale: 1.5
+      mods: [resistant, swift]
+      intro: "「你在我的祭壇上拿了那麼多東西。今天，換你當貢品。」"
+      defeat: "三座祭壇一起熄了。契約，到此為止。"
+      # 獻祭：祭壇圈（腳下一大圈留很久）、血祭（詛咒）、獻祭召喚、血矛（齊射）；
+      # 第一階段起血契標記（點兩個人）、祭火柱（十字），血滴開始自己落；第二階段起血海（沒缺口、薄而慢）、終末獻祭（全場大招）；第三階段起血球
+      skills:
+        - ritual_circle
+        - ritual_blood_curse
+        - ritual_offering
+        - ritual_blood_spears
+        - { id: ritual_pact_mark, phase: 1 }
+        - { id: ritual_fire_pillars, phase: 1 }
+        - { id: ritual_blood_sea, phase: 2 }
+        - { id: ritual_final_offering, phase: 2 }
+        - { id: ritual_blood_orbs, phase: 3 }
+      phases:
+        - at: 0.75
+          name: 第一座祭壇
+          message: "「第一座祭壇，點燃。」"
+          speed: 0.1
+          shield: { count: 3, type: HUSK, name: 祭壇燭台, life: 5, duration: 30, heal: 25 }
+        - at: 0.5
+          name: 第二座祭壇
+          message: "「血還不夠。再多一點。」"
+          speed: 0.1
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+        - at: 0.25
+          name: 第三座祭壇
+          message: "「三座都亮了——契約，完成。」"
+          speed: 0.2
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          shield: { count: 3, type: HUSK, name: 血契之核, life: 6, duration: 25, heal: 35 }
+      hazards:
+        - { skill: hazard_ritual_blood, every: 8, phase: 1 }
+      enrage: { after: 360, damage: 150, speed: 0.4, message: "「祭壇等不下去了。全部，燒。」" }
+    pinnacle:
+      attempts: 2
+      dps_cap: 150000
+      dps_over:
+        - { from: 150000, rate: 0.3 }
+        - { from: 300000, rate: 0.1 }
+        - { from: 450000, rate: 0.05 }
+        - { from: 600000, rate: 0.001 }
+      level_bonus: 5
+      cooldown: 0.65
+      ticket: ticket_ritual
+      drops:
+        maps: 2
+        unique_chance: 0.02
+        exclusive_chance: 0
+        common_chance: 0.02
+        extra:
+          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: zenith_orb, amount: 3, chance: 1 }
+          - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
+          - { support: blood_tribute, chance: 0.01 }
+          - { support: altar_legion, chance: 0.01 }
+          - { support: pact_seal, chance: 0.01 }
+          - { skill: blood_altar, chance: 0.01 }
+          - { skill: tribute_spears, chance: 0.01 }
+
+  delirium_mirror:
+    name: 妄念霧原
+    requires: []
+    points: 0
+    level_bonus: 3
+    theme: swamp
+    lore: "一片滿是霧的空地。霧裡有一面鏡子，鏡子裡的你，比你更想活下去。"
+    monsters: { STRAY: 2, VEX: 1, PHANTOM: 1 }
+    boss:
+      name: 幻霧之鏡・妄念
+      type: STRAY
+      named: true
+      life: 50
+      damage: 2.9
+      scale: 1.5
+      mods: [evasive, swift]
+      intro: "「你在霧裡拿走的每一樣東西，都是從我這裡拿的。還回來。」"
+      defeat: "鏡子碎了。霧散的時候，地上只有你一個人的影子。"
+      # 幻覺：霧（大範圍緩速、一直掉血）、鏡像（五個殘影）、妄念光球、迷霧斬（三波）；
+      # 第一階段起幻影召喚、顛倒（漩渦），迷霧光球開始自己冒出來；第二階段起鏡牢（一圈鏡牆）、碎鏡（大新星）；第三階段起鏡影閃現
+      skills:
+        - mist_fog
+        - mist_mirrors
+        - mist_orbs
+        - mist_slash
+        - { id: mist_phantoms, phase: 1 }
+        - { id: mist_invert, phase: 1 }
+        - { id: mist_mirror_maze, phase: 2 }
+        - { id: mist_shatter, phase: 2 }
+        - { id: mist_mirror_blink, phase: 3 }
+      phases:
+        - at: 0.75
+          name: 霧更濃了
+          message: "「看不見了吧？我看得很清楚。」"
+          speed: 0.1
+          shield: { count: 3, type: VEX, name: 鏡像碎片, life: 5, duration: 30, heal: 25 }
+        - at: 0.5
+          name: 妄念
+          message: "「你以為那是真的？」"
+          speed: 0.1
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+        - at: 0.25
+          name: 鏡裡的你
+          message: "「現在——鏡子裡的才是真的。」"
+          speed: 0.2
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          shield: { count: 3, type: VEX, name: 妄念之核, life: 6, duration: 25, heal: 35 }
+      hazards:
+        - { skill: hazard_mist_orb, every: 9, phase: 1 }
+      enrage: { after: 360, damage: 150, speed: 0.4, message: "「霧要散了。在那之前，你得留下來。」" }
+    pinnacle:
+      attempts: 2
+      dps_cap: 150000
+      dps_over:
+        - { from: 150000, rate: 0.3 }
+        - { from: 300000, rate: 0.1 }
+        - { from: 450000, rate: 0.05 }
+        - { from: 600000, rate: 0.001 }
+      level_bonus: 5
+      cooldown: 0.65
+      ticket: ticket_delirium
+      drops:
+        maps: 2
+        unique_chance: 0.02
+        exclusive_chance: 0
+        common_chance: 0.02
+        extra:
+          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: zenith_orb, amount: 3, chance: 1 }
+          - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
+          - { support: mirror_image, chance: 0.01 }
+          - { support: mist_veil, chance: 0.01 }
+          - { support: delusion_crit, chance: 0.01 }
+          - { skill: mirror_shards, chance: 0.01 }
+          - { skill: mirror_step, chance: 0.01 }
+
+  abyss_lich:
+    name: 骨潮深坑
+    requires: []
+    points: 0
+    level_bonus: 3
+    theme: cave
+    lore: "深淵裂縫的盡頭不是底。再往下，有一個把整片地底的骨頭都當成自己身體的東西。"
+    monsters: { SKELETON: 2, STRAY: 1, WITHER_SKELETON: 1 }
+    boss:
+      name: 淵底之王・骨潮
+      type: WITHER_SKELETON
+      named: true
+      life: 55
+      damage: 2.9
+      scale: 1.7
+      mods: [armoured, resistant]
+      intro: "「你們沿著裂縫一路走下來……那就別想再走上去。」"
+      defeat: "骨潮退了。深坑的底部，第一次照到光。"
+      # 從地底湧出：地裂（一直線炸過來）、骨矛（齊射）、深淵之手（漩渦）、骨潮（擴散環）；
+      # 第一階段起從地底湧出（召喚骷髏）、沉淵（腳下留很久），骨刺開始自己冒出來；第二階段起淵底崩塌（場地收縮）、骨嵐（光球）；第三階段起墳墓標記
+      skills:
+        - abyssal_fissure
+        - abyssal_bone_spears
+        - abyssal_hand
+        - abyssal_bone_tide
+        - { id: abyssal_risen, phase: 1 }
+        - { id: abyssal_sinkhole, phase: 1 }
+        - { id: abyssal_collapse, phase: 2 }
+        - { id: abyssal_bone_storm, phase: 2 }
+        - { id: abyssal_grave_mark, phase: 3 }
+      phases:
+        - at: 0.75
+          name: 骨潮漲起
+          message: "「潮，漲了。」"
+          speed: 0.1
+          shield: { count: 3, type: SKELETON, name: 骨柱, life: 5, duration: 30, heal: 25 }
+        - at: 0.5
+          name: 淵底
+          message: "「再下去一點。這裡還不是底。」"
+          speed: 0.1
+          stats:
+            - { stat: damage, type: MORE, value: 30 }
+        - at: 0.25
+          name: 骨潮滅頂
+          message: "「整片地底——都是我的骨頭。」"
+          speed: 0.2
+          stats:
+            - { stat: damage, type: MORE, value: 40 }
+          shield: { count: 3, type: SKELETON, name: 淵底之核, life: 6, duration: 25, heal: 35 }
+      hazards:
+        - { skill: hazard_abyssal_spike, every: 8, phase: 1 }
+      enrage: { after: 360, damage: 150, speed: 0.4, message: "「夠了。骨潮，滅頂。」" }
+    pinnacle:
+      attempts: 2
+      dps_cap: 150000
+      dps_over:
+        - { from: 150000, rate: 0.3 }
+        - { from: 300000, rate: 0.1 }
+        - { from: 450000, rate: 0.05 }
+        - { from: 600000, rate: 0.001 }
+      level_bonus: 5
+      cooldown: 0.65
+      ticket: ticket_abyss
+      drops:
+        maps: 2
+        unique_chance: 0.02
+        exclusive_chance: 0
+        common_chance: 0.02
+        extra:
+          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: zenith_orb, amount: 3, chance: 1 }
+          - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
+          - { support: bone_tide, chance: 0.01 }
+          - { support: abyssal_grip, chance: 0.01 }
+          - { support: deep_cold, chance: 0.01 }
+          - { skill: bone_fissure, chance: 0.01 }
+          - { skill: abyss_grasp, chance: 0.01 }

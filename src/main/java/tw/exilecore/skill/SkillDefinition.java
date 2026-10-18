@@ -77,6 +77,14 @@ public record SkillDefinition(String id, String name, String description, String
             case "awakener" -> "萬界之巔的覺醒之主・虛星";
             case "heist" -> "劫盜的大金庫";
             case "abyss_whale" -> "星骸之海的淵鯨";
+            // 2026-10-18：地圖事件的巔峰 Boss
+            case "shrine_warden" -> "晨曦神龕的神龕守望・晨曦";
+            case "strongbox_mimic" -> "千鎖寶庫的貪匣・千鎖之主";
+            case "breach_lord" -> "穿界裂隙的裂隙之主・穿界者";
+            case "exile_king" -> "無名者競技場的流寇之王・無名者";
+            case "ritual_priest" -> "血契祭場的祭司・血契";
+            case "delirium_mirror" -> "妄念霧原的幻霧之鏡・妄念";
+            case "abyss_lich" -> "骨潮深坑的淵底之王・骨潮";
             default -> "專屬的掉落來源";
         };
     }

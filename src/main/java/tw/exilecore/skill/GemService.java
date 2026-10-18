@@ -329,7 +329,8 @@ public final class GemService {
             case SUPPORT -> {
                 final SupportDefinition support = config().support(data.id());
                 yield support == null ? "<red>不認得的輔助：" + ItemRenderer.escape(data.id())
-                        : (support.cuttable() ? "<#8fd3ff>" : "<#ff9f43>") + "輔助寶石：" + ItemRenderer.escape(support.name());
+                        : (support.cuttable() ? "<#8fd3ff>" : "<#ff9f43>") + "輔助寶石：" + ItemRenderer.escape(support.name())
+                        + (data.resonant() ? "<#c48bff>（共鳴）" : ""); // 2026-10-18：用過共鳴石的
             }
         };
     }
@@ -350,7 +351,7 @@ public final class GemService {
                 lines.add("<dark_gray><i>一小塊碎星，只夠刻一道紋。");
             }
             case SKILL -> skillLore(data.entry(), lines);
-            case SUPPORT -> supportLore(config().support(data.id()), lines);
+            case SUPPORT -> supportLore(config().support(data.id()), data.resonant(), lines);
         }
         lines.add("");
         if (currencyOf(data) != null) {
@@ -387,21 +388,26 @@ public final class GemService {
                 lines.add("<dark_gray> ◇ 空");
             } else {
                 final SupportDefinition support = config().support(id);
-                lines.add("<#8fd3ff> ◆ " + ItemRenderer.escape(support == null ? id : support.name()));
+                lines.add("<#8fd3ff> ◆ " + ItemRenderer.escape(support == null ? id : support.name())
+                        + (entry.resonant(i) ? "<#c48bff>（共鳴）" : "")); // 2026-10-18
             }
         }
         lines.add("");
         lines.add("<yellow>右鍵：放進技能面板");
     }
 
-    private void supportLore(final SupportDefinition support, final List<String> lines) {
+    private void supportLore(final SupportDefinition support, final boolean resonant, final List<String> lines) {
         if (support == null) {
             lines.add("<gray>supports.yml 裡沒有這個輔助（被刪掉或改名了）");
             return;
         }
         if (!support.cuttable()) {
             lines.add("<#ff9f43>✦ 專屬掉落的輔助寶石<dark_gray>（未切割輔助寶石切不出來）");
-            lines.add("<#ff9f43>一個技能只能掛一顆專屬掉落的輔助寶石");
+            if (resonant) {
+                lines.add("<#c48bff>共鳴：不佔一個技能的專屬輔助名額"); // 2026-10-18：用過共鳴石
+            } else {
+                lines.add("<#ff9f43>一個技能只能掛一顆沒有共鳴的專屬掉落輔助寶石<dark_gray>（用共鳴石就不佔名額）");
+            }
         }
         if (!support.description().isBlank()) {
             lines.add("<gray>" + ItemRenderer.escape(support.descriptionText()));
@@ -856,6 +862,11 @@ public final class GemService {
 
     /** 把輔助寶石掛到技能的輔助孔（index = -1 掛第一個空孔）；孔裡原本有的換下來回傳。 */
     Change socket(final Player player, final int position, final int index, final String supportId) {
+        return socket(player, position, index, supportId, false);
+    }
+
+    /** 2026-10-18：帶著寶石物品的共鳴旗標掛上去（共鳴的專屬輔助不佔專屬名額；拔下來時旗標會還給寶石）。 */
+    Change socket(final Player player, final int position, final int index, final String supportId, final boolean resonant) {
         final SkillLoadout loadout = plugin.players().get(player).skills();
         final SkillLoadout.Entry entry = loadout.skill(position);
         if (entry == null) {
@@ -879,7 +890,7 @@ public final class GemService {
         if (entry.hasSupport(supportId) && !supportId.equals(entry.support(socket))) {
             return Change.fail(definition.name() + "已經掛著" + support.name() + "了（同一個技能不能掛兩顆一樣的）");
         }
-        final String exclusive = SupportDefinition.exclusiveConflict(entry, socket, support, config()::support);
+        final String exclusive = SupportDefinition.exclusiveConflict(entry, socket, support, resonant, config()::support); // 2026-10-18：看共鳴
         if (exclusive != null) {
             return Change.fail(exclusive);
         }
@@ -890,8 +901,37 @@ public final class GemService {
             }
         }
         final String old = entry.support(socket);
-        loadout.set(position, entry.withSupport(socket, supportId));
-        return Change.ok(old.isEmpty() ? null : create(GemData.support(old), 1));
+        final boolean oldResonant = entry.resonant(socket);
+        loadout.set(position, entry.withSupport(socket, supportId, resonant && !support.cuttable()));
+        return Change.ok(old.isEmpty() ? null : create(GemData.support(old, oldResonant), 1)); // 2026-10-18：換下來的保留共鳴
+    }
+
+    /**
+     * 2026-10-18：用共鳴石把技能上第 index 孔的專屬輔助標成共鳴（之後不佔專屬名額）。
+     * 孔要掛著沒共鳴的專屬輔助才行；通貨由技能面板扣。
+     */
+    Change resonate(final Player player, final int position, final int index, final CurrencyType orb) {
+        final SkillLoadout loadout = plugin.players().get(player).skills();
+        final SkillLoadout.Entry entry = loadout.skill(position);
+        if (entry == null) {
+            return Change.fail("那一格沒有技能");
+        }
+        if (orb.operation() != CurrencyOperation.RESONANCE) {
+            return Change.fail(orb.name() + "不能用在輔助上");
+        }
+        if (index < 0 || index >= entry.sockets() || entry.support(index).isEmpty()) {
+            return Change.fail(orb.name() + "要點一顆已經掛上去的專屬輔助寶石");
+        }
+        final SupportDefinition support = config().support(entry.support(index));
+        if (support == null || support.cuttable()) {
+            return Change.fail(orb.name() + "只能用在專屬掉落的輔助寶石上（" + (support == null ? entry.support(index) : support.name()) + "不是）");
+        }
+        if (entry.resonant(index)) {
+            return Change.fail(support.name() + "已經共鳴了");
+        }
+        loadout.set(position, entry.withResonant(index, true));
+        plugin.economy().ledger().consumed(orb.id(), tw.exilecore.economy.EconomyLedger.CRAFT, 1); // 技能面板會把游標上的那顆用掉
+        return Change.ok(null);
     }
 
     /** 把輔助寶石從技能上拿下來。 */
@@ -902,8 +942,9 @@ public final class GemService {
             return Change.fail("這個孔是空的");
         }
         final String old = entry.support(index);
-        loadout.set(position, entry.withSupport(index, ""));
-        return Change.ok(create(GemData.support(old), 1));
+        final boolean oldResonant = entry.resonant(index);
+        loadout.set(position, entry.withSupport(index, "", false));
+        return Change.ok(create(GemData.support(old, oldResonant), 1)); // 2026-10-18：共鳴旗標還給寶石
     }
 
     /** 用鑿星石幫技能開一個輔助孔（小的開第 3 孔、普通的開第 4 孔、大的開第 5 孔）。 */

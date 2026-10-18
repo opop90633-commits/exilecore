@@ -1469,6 +1469,353 @@ supports:
       - { stat: damage.vs_chilled, type: MORE, value: 25 }
     notes: ["星骸之海的淵鯨掉落"]
 
+  # 2026-10-18：淵鯨再多兩顆專屬輔助
+  undertow_drag:
+    name: 暗流拖曳
+    description: 淵鯨的暗流跟著你的範圍技能：範圍更大、留在地上的東西撐得更久，打中的敵人更容易凍結，代價是傷害少一點。
+    icon: HEART_OF_THE_SEA
+    tier: 3
+    source: abyss_whale
+    requires: [area]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: skill.area, type: INCREASED, value: 30 }
+      - { stat: skill.duration, type: INCREASED, value: 30 }
+      - { stat: freeze.buildup, type: MORE, value: 40 }
+      - { stat: damage, type: MORE, value: -10 }
+    notes: ["淵鯨掉落"]
+
+  whale_breath:
+    name: 鯨息
+    description: 淵鯨吐出來的深海：冰冷傷害更痛、穿透冰冷抗性，但魔力消耗很高。攻擊、法術都能掛。
+    icon: NAUTILUS_SHELL
+    tier: 3
+    source: abyss_whale
+    requires: [attack, spell]
+    excludes: [minion, aura, warcry, herald]
+    mana_multiplier: 1.6
+    modifiers:
+      - { stat: damage, type: MORE, value: 30, tags: [cold] }
+      - { stat: penetration, type: FLAT, value: 20, tags: [cold] }
+    notes: ["淵鯨掉落"]
+
+  # ---- 2026-10-18：地圖事件巔峰 Boss 的專屬輔助（每隻 3 顆；source 寫 Boss 代號，maps.yml 那隻的 pinnacle.drops.extra 各 1%）----
+  #   切不出來，只有那隻 Boss 會掉；跟虛星的一樣：一條強效果＋一個代價（魔力倍率高、或減別的東西）。
+  #   一個技能只能掛 1 顆沒處理過的專屬輔助（用共鳴石處理過的不佔名額）。
+  # 神龕守望・晨曦：增益
+  dawn_blessing:
+    name: 晨曦祝福
+    description: 神龕的祝福留在你的光環裡：光環的每一條效果更強，代價是保留的精魂更多。
+    icon: NETHER_STAR
+    tier: 3
+    source: shrine_warden
+    requires: [aura]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: aura.effect, type: MORE, value: 25 }
+      - { stat: support.spirit, type: FLAT, value: 20 }
+    notes: ["神龕守望・晨曦（晨曦神龕）掉落"]
+
+  shrine_echo:
+    name: 神龕回響
+    description: 戰吼像神龕一樣迴盪：戰吼的效果大增、冷卻更短，但吼完要再等一下才能吼第二聲。
+    icon: GOLD_INGOT
+    tier: 3
+    source: shrine_warden
+    requires: [warcry]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: warcry.effect, type: MORE, value: 40 }
+      - { stat: skill.cooldown, type: INCREASED, value: -20 }
+      - { stat: skill.added_cooldown, type: FLAT, value: 1 }
+    notes: ["神龕守望・晨曦（晨曦神龕）掉落"]
+
+  sacred_focus:
+    name: 聖光聚焦
+    description: 神龕的光打進敵人的抗性：火焰與閃電傷害更痛、穿透抗性，但不能造成元素異常。
+    icon: GLOWSTONE_DUST
+    tier: 3
+    source: shrine_warden
+    requires: [attack, spell]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: damage, type: MORE, value: 25, tags: [fire] }
+      - { stat: damage, type: MORE, value: 25, tags: [lightning] }
+      - { stat: penetration, type: FLAT, value: 15, tags: [fire] }
+      - { stat: penetration, type: FLAT, value: 15, tags: [lightning] }
+      - { stat: flag.no_elemental_ailments, type: FLAT, value: 1 }
+    notes: ["神龕守望・晨曦（晨曦神龕）掉落"]
+
+  # 貪匣・千鎖之主：金幣、鎖鏈
+  greed_lock:
+    name: 貪匣之鎖
+    description: 把匣子鎖在敵人身上：對稀有與傳奇怪物的傷害大增，但攻擊與施法變慢。
+    icon: GOLD_NUGGET
+    tier: 3
+    source: strongbox_mimic
+    requires: [attack, spell]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: damage.vs_rare, type: MORE, value: 30 }
+      - { stat: damage.vs_unique, type: MORE, value: 20 }
+      - { stat: attack.speed, type: MORE, value: -10 }
+      - { stat: cast.speed, type: MORE, value: -10 }
+    notes: ["貪匣・千鎖之主（千鎖寶庫）掉落"]
+
+  chain_bind:
+    name: 鎖鏈纏縛
+    description: 近戰打中的敵人被鎖鏈纏住：擊退、暈眩累積大增，打中後也容易流血，代價是傷害少一點。
+    icon: IRON_NUGGET
+    tier: 3
+    source: strongbox_mimic
+    requires: [melee]
+    excludes: [minion]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 60 }
+      - { stat: bleed.chance, type: FLAT, value: 30 }
+      - { stat: skill.knockback, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: -10 }
+    notes: ["貪匣・千鎖之主（千鎖寶庫）掉落"]
+
+  coin_toss:
+    name: 擲幣
+    description: 每一下都像擲一枚金幣：傷害隨機在很低到很高之間，平均起來更痛；什麼技能都能掛。
+    icon: GOLD_NUGGET
+    tier: 3
+    source: strongbox_mimic
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: damage.random, type: FLAT, value: 40 }
+      - { stat: damage, type: MORE, value: 15 }
+    notes: ["貪匣・千鎖之主（千鎖寶庫）掉落"]
+
+  # 裂隙之主・穿界者：裂隙、穿越
+  rift_passage:
+    name: 裂隙通道
+    description: 投射物從裂縫穿過去：穿透更多敵人、飛得更快、更遠，但每一發的傷害少一點。
+    icon: POPPED_CHORUS_FRUIT
+    tier: 3
+    source: breach_lord
+    requires: [projectile]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: skill.pierce, type: FLAT, value: 3 }
+      - { stat: skill.projectile_speed, type: INCREASED, value: 40 }
+      - { stat: damage, type: MORE, value: -10, tags: [projectile] }
+    notes: ["裂隙之主・穿界者（穿界裂隙）掉落"]
+
+  rift_surge:
+    name: 裂隙湧出
+    description: 從裂縫裡湧出來的東西：召喚技能同時多一隻、召喚物更快，但每隻比較脆。
+    icon: ECHO_SHARD
+    tier: 3
+    source: breach_lord
+    requires: [minion]
+    mana_multiplier: 1.4
+    modifiers:
+      - { stat: skill.minions, type: FLAT, value: 1 }   # 2026-10-18：審查：+2 隻太強，改 +1
+      - { stat: movement.speed, type: INCREASED, value: 25, tags: [minion] }
+      - { stat: life.max, type: MORE, value: -20, tags: [minion] }
+    notes: ["裂隙之主・穿界者（穿界裂隙）掉落"]
+
+  worldtear:
+    name: 穿界撕裂
+    description: 裂隙之主撕開空間的那一下：閃電與混沌傷害更痛，閃電傷害有機率電擊，代價是魔力消耗大增。
+    icon: AMETHYST_SHARD
+    tier: 3
+    source: breach_lord
+    requires: [attack, spell]
+    mana_multiplier: 1.7
+    modifiers:
+      - { stat: damage, type: MORE, value: 30, tags: [lightning] }
+      - { stat: damage, type: MORE, value: 30, tags: [chaos] }
+      - { stat: electrocute.chance, type: FLAT, value: 15 }
+    notes: ["裂隙之主・穿界者（穿界裂隙）掉落"]
+
+  # 流寇之王・無名者：決鬥、單體
+  duelist_focus:
+    name: 決鬥專注
+    description: 決鬥裡只看一個人：打擊的每一下更痛很多、暴擊率更高，但出手慢一點。
+    icon: IRON_INGOT
+    tier: 3
+    source: exile_king
+    requires: [strike]
+    excludes: [minion]
+    mana_multiplier: 1.6              # 2026-10-18：審查：MORE 40% 的輔助 1.3 倍太便宜，改 1.6
+    modifiers:
+      - { stat: damage, type: MORE, value: 40 }
+      - { stat: crit.chance, type: INCREASED, value: 40 }
+      - { stat: attack.speed, type: MORE, value: -10 }
+    notes: ["流寇之王・無名者（無名者競技場）掉落"]
+
+  stolen_technique:
+    name: 偷來的招式
+    description: 無名者學別人招式的本事：攻擊速度與施法速度大增、擊殺時有機率獲得疾速，但傷害少一點。
+    icon: PHANTOM_MEMBRANE
+    tier: 3
+    source: exile_king
+    requires: [attack, spell]
+    excludes: [minion, aura, warcry, herald]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: attack.speed, type: MORE, value: 20 }
+      - { stat: cast.speed, type: MORE, value: 20 }
+      - { stat: onkill.speed, type: FLAT, value: 30 }
+      - { stat: damage, type: MORE, value: -10 }
+    notes: ["流寇之王・無名者（無名者競技場）掉落"]
+
+  nameless_edge:
+    name: 無名之刃
+    description: 流寇之王的刀口：對低血量的敵人更痛、擊中時更容易暈眩，代價是魔力倍率高。
+    icon: FLINT
+    tier: 3
+    source: exile_king
+    requires: [attack]
+    excludes: [minion]
+    mana_multiplier: 1.5
+    modifiers:
+      - { stat: damage.vs_low_life, type: FLAT, value: 40 }
+      - { stat: stun.buildup, type: MORE, value: 40 }
+      - { stat: damage, type: MORE, value: 10 }
+    notes: ["流寇之王・無名者（無名者競技場）掉落"]
+
+  # 祭司・血契：獻祭、召喚、血
+  blood_tribute:
+    name: 血貢
+    description: 把血獻給祭壇：技能的消耗改扣生命（血償契），傷害大增。
+    icon: FIREWORK_STAR
+    tier: 3
+    source: ritual_priest
+    requires: [attack, spell]
+    excludes: [minion, aura]
+    mana_multiplier: 1.0
+    modifiers:
+      - { stat: flag.blood_magic, type: FLAT, value: 1 }
+      - { stat: damage, type: MORE, value: 30 }
+    # 2026-10-18：審查：拿掉 4% 偷取（血償契＋偷取等於沒有代價），只留血償契＋MORE 30
+    notes: ["祭司・血契（血契祭場）掉落"]
+
+  altar_legion:
+    name: 祭壇軍勢
+    description: 獻祭召來的東西：召喚物更痛、更硬、擊殺時回復你的生命，代價是召喚物動作慢一點。
+    icon: COAL
+    tier: 3
+    source: ritual_priest
+    requires: [minion]
+    mana_multiplier: 1.35
+    modifiers:
+      - { stat: damage, type: MORE, value: 30, tags: [minion] }
+      - { stat: life.max, type: MORE, value: 30, tags: [minion] }
+      - { stat: grant.life.on_kill, type: FLAT, value: 2 }
+      - { stat: attack.speed, type: MORE, value: -10, tags: [minion] }
+    notes: ["祭司・血契（血契祭場）掉落"]
+
+  pact_seal:
+    name: 血契封印
+    description: 契約刻在詛咒裡：詛咒效果大增、持續更久，對被詛咒的敵人更痛，代價是魔力倍率高。
+    icon: FERMENTED_SPIDER_EYE
+    tier: 3
+    source: ritual_priest
+    requires: [curse]
+    mana_multiplier: 1.5
+    modifiers:
+      - { stat: curse.effect, type: MORE, value: 30 }
+      - { stat: skill.duration, type: INCREASED, value: 40 }
+      - { stat: grant.damage, type: MORE, value: 15 }
+    notes: ["祭司・血契（血契祭場）掉落"]
+
+  # 幻霧之鏡・妄念：殘影、迷霧、暴擊
+  mirror_image:
+    name: 鏡像
+    description: 鏡子裡的你跟著放：法術放完 0.25 秒後自動再放一次（不花魔力），而且暴擊率更高；代價是魔力倍率很高。
+    icon: QUARTZ
+    tier: 3
+    source: delirium_mirror
+    requires: [spell]
+    excludes: [movement, mark, minion, aura, warcry, totem, bell, trap, persistent, herald]
+    mana_multiplier: 1.7
+    modifiers:
+      - { stat: flag.echo, type: FLAT, value: 1 }
+      - { stat: crit.chance, type: INCREASED, value: 40 }
+    notes: ["幻霧之鏡・妄念（妄念霧原）掉落"]
+
+  mist_veil:
+    name: 迷霧紗
+    description: 霧裡的招式：冰冷傷害更痛、冰緩更重、持續的東西撐得更久，但施法變慢。
+    icon: PRISMARINE_CRYSTALS
+    tier: 3
+    source: delirium_mirror
+    requires: [spell]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: damage, type: MORE, value: 25, tags: [cold] }
+      - { stat: chill.effect, type: INCREASED, value: 50 }
+      - { stat: skill.duration, type: INCREASED, value: 30 }
+      - { stat: cast.speed, type: MORE, value: -10 }
+    notes: ["幻霧之鏡・妄念（妄念霧原）掉落"]
+
+  delusion_crit:
+    name: 妄念暴擊
+    description: 你以為那一下很痛——真的很痛：暴擊率與暴擊傷害大增，但沒暴擊的那一下更輕。
+    icon: AMETHYST_SHARD
+    tier: 3
+    source: delirium_mirror
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.35
+    modifiers:
+      - { stat: crit.chance, type: INCREASED, value: 60 }
+      - { stat: crit.bonus, type: INCREASED, value: 40 }
+      - { stat: damage, type: MORE, value: -15 }
+    notes: ["幻霧之鏡・妄念（妄念霧原）掉落"]
+
+  # 淵底之王・骨潮：地裂、骨、深淵
+  bone_tide:
+    name: 骨潮
+    description: 從地底湧出的骨潮：猛擊與範圍技能範圍更大、暈眩累積大增，代價是攻擊變慢。
+    icon: BONE
+    tier: 3
+    source: abyss_lich
+    requires: [area]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: skill.area, type: INCREASED, value: 40 }
+      - { stat: stun.buildup, type: MORE, value: 50 }
+      - { stat: attack.speed, type: MORE, value: -10 }
+    notes: ["淵底之王・骨潮（骨潮深坑）掉落"]
+
+  abyssal_grip:
+    name: 深淵之握
+    description: 深淵的手抓著敵人：打中的敵人被破甲，對冰緩的敵人更痛很多，代價是本身的傷害少一點。
+    icon: PRISMARINE_SHARD
+    tier: 3
+    source: abyss_lich
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.35
+    modifiers:
+      - { stat: armour.break, type: FLAT, value: 30 }
+      - { stat: damage.vs_chilled, type: MORE, value: 25 }
+      - { stat: damage, type: MORE, value: -10 }
+    notes: ["淵底之王・骨潮（骨潮深坑）掉落"]
+
+  deep_cold:
+    name: 淵底寒意
+    description: 淵底的冷：物理傷害額外附加 30% 為冰冷傷害、凍結累積大增，但魔力消耗很高。
+    icon: HEART_OF_THE_SEA
+    tier: 3
+    source: abyss_lich
+    requires: [attack, spell]
+    excludes: [minion, aura, warcry, herald]
+    mana_multiplier: 1.6
+    modifiers:
+      - { stat: damage.gain.cold, type: FLAT, value: 30 }
+      - { stat: freeze.buildup, type: MORE, value: 50 }
+    notes: ["淵底之王・骨潮（骨潮深坑）掉落"]
+
   # ---- 2026-10：PoE2 輔助補齊・第 1 批（30 個；機制照 PoE2，名稱是自己的。我們做不到的條件用近似值）----
   fire_mastery:            # Fire Mastery
     name: 燼髓

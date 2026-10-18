@@ -2926,6 +2926,1048 @@ skills:
     at: target
     slow: 1
 
+  # =====================================================================================================
+  # 2026-10-18：地圖事件的巔峰 Boss（maps.yml 的 finals，用事件的入場券打開）——七隻都是巔峰級（傷害、前搖照虛星那一級，
+  #   節奏用 tempo.pinnacle、不普攻），每隻一個自己的機制主題，招式組合不跟虛星（光束迷宮、殞星、荒蕪）、淵鯨（潮水）重複。
+  #   前搖短的招（前搖＋落下不到 1.5 秒）傷害都壓低、幾乎全是元素或轉一半元素；物理的重招前搖都 1.5 秒以上（BossBurstTest）。
+  # =====================================================================================================
+
+  # ---- 神龕守望・晨曦（shrine_warden）：增益反轉——祂會吃掉場上的神龕，聖光、神諭 ----
+  shrine_light_pillar:
+    name: 聖光柱
+    hint: "光柱往四個方向一路炸出去：站到斜角"
+    kind: slam
+    damage: 2.0
+    type: fire
+    cooldown: 11
+    range: 26
+    telegraph: 1.0
+    delay: 0.8
+    radius: 2.6
+    count: 16
+    stagger: 0.08
+    reach: 16
+    at: cross
+    shout: "「光，照亮四方。」"
+  shrine_prayer_ring:
+    name: 祈禱環
+    hint: "祈禱的光環一圈圈擴散：站進綠色的缺口"
+    kind: ring
+    damage: 1.8
+    type: lightning
+    cooldown: 11
+    range: 22
+    telegraph: 1.5
+    radius: 2
+    reach: 20
+    speed: 0.4
+    width: 0.9
+    count: 3
+    stagger: 1.0
+    gaps: 3
+    gap_angle: 35
+    shout: "「跟著我唸。」"
+  shrine_oracle_beams:
+    name: 神諭光束
+    hint: "兩道光束一前一後轉：跟著光束轉的方向繞"
+    kind: beam
+    damage: 1.3
+    type: fire
+    cooldown: 13
+    range: 18
+    telegraph: 1.6
+    count: 2
+    angle: 150
+    length: 30
+    width: 0.8
+    duration: 4
+    interval: 0.3
+    shout: "「神諭已下。」"
+  shrine_purge_nova:
+    name: 淨化新星
+    hint: "祂要淨化身邊的一切：跑出 9 格外"
+    kind: nova
+    damage: 2.2
+    type: lightning
+    cooldown: 12
+    range: 9
+    telegraph: 1.8
+    radius: 9
+    count: 1
+    slow: 1
+    shout: "「不潔的，退下。」"
+  shrine_devour:
+    name: 神龕吞噬
+    hint: "祂吃掉了神龕的增益：受到的傷害增加"
+    kind: curse
+    type: fire
+    cooldown: 18
+    range: 30
+    telegraph: 1.0
+    radius: 30
+    duration: 8
+    taken: 25
+    shout: "「這份祝福……是我的。」"
+  shrine_guardians:
+    name: 守衛召喚
+    kind: summon
+    summon: VINDICATOR
+    count: 3
+    summon_max: 6
+    duration: 25
+    cooldown: 18
+    telegraph: 1.0
+    shout: "「守衛，護住神龕。」"
+  shrine_dawn:
+    name: 晨曦降臨
+    kind: sanctuary
+    damage: 4.5
+    type: fire
+    cooldown: 40
+    range: 30
+    telegraph: 3.0
+    radius: 30
+    count: 2
+    safe: 2.5
+    scatter: 11
+    count_per_player: 1
+    shout: "「晨曦降臨——只有陰影裡的人活得下來。」"
+  shrine_lance_volley:
+    name: 光矛齊射
+    hint: "一排光矛朝你射來：找縫鑽，或往側面跑"
+    kind: volley
+    damage: 1.6
+    type: fire
+    cooldown: 9
+    range: 26
+    telegraph: 1.2
+    count: 14
+    spread: 100
+    speed: 0.8
+    reach: 26
+    size: 0.7
+    explode: 1.8
+    shout: "「光矛，齊發。」"
+  shrine_judgement:
+    name: 審判之光
+    hint: "三道光束一起轉：待在兩道之間，跟著轉"
+    kind: beam
+    damage: 1.4
+    type: lightning
+    cooldown: 12
+    range: 18
+    telegraph: 1.6
+    count: 3
+    angle: 200
+    length: 32
+    width: 0.8
+    duration: 5
+    interval: 0.3
+    shout: "「審判——降下。」"
+  hazard_shrine_ray:
+    name: 天光
+    kind: slam
+    damage: 1.4
+    type: fire
+    telegraph: 0.8
+    delay: 1.0
+    radius: 3
+    count: 2
+    stagger: 0.3
+    scatter: 5
+    at: random
+
+  # ---- 貪匣・千鎖之主（strongbox_mimic）：寶箱怪——假箱、鎖鏈、金幣雨、咬合 ----
+  box_fake_chests:
+    name: 假寶箱
+    hint: "別站進假寶箱：站進去會一直被燙"   # 2026-10-18：審查：它是持續燒的區域，不是一次爆
+    kind: zone
+    damage: 0.9
+    type: physical
+    convert: { fire: 0.5 }
+    cooldown: 12
+    range: 26
+    telegraph: 1.2
+    radius: 1.8
+    duration: 10
+    interval: 0.6
+    count: 6
+    scatter: 9
+    at: random
+    slow: 2
+    shout: "「哪一個是真的？猜猜看。」"
+  box_chain_pull:
+    name: 鎖鏈拉扯
+    hint: "鎖鏈往匣口拉：往外跑，別被拉進去"
+    kind: pull
+    damage: 3.0
+    type: physical
+    convert: { fire: 0.3 }
+    cooldown: 14
+    range: 15
+    telegraph: 1.2
+    radius: 15
+    speed: 0.13
+    duration: 3.2
+    explode: 5
+    shout: "「進來，裡面什麼都有。」"
+  box_coin_rain:
+    name: 金幣雨
+    hint: "金幣像雨一樣落下：看地上的紅圈，一直移動"
+    kind: slam
+    damage: 2.0
+    type: physical
+    convert: { fire: 0.6 }
+    cooldown: 10
+    range: 28
+    telegraph: 0.8
+    delay: 1.0
+    radius: 2.8
+    count: 10
+    stagger: 0.25
+    scatter: 7
+    at: random
+    shout: "「要錢？拿去啊。」"
+  box_bite:
+    name: 咬合
+    hint: "牠張開匣口要咬：往牠背後繞"
+    kind: cone
+    damage: 2.6
+    type: physical
+    cooldown: 7
+    range: 7
+    telegraph: 1.5
+    angle: 90
+    length: 6
+    count: 1
+    slow: 1
+    shout: "（匣口張到最大，上面一排鎖全在打顫）"
+  box_chain_cage:
+    name: 鎖鏈牢籠
+    hint: "鎖鏈在你四周圍成一圈：待在圈裡別出去"
+    kind: slam
+    damage: 2.4
+    type: physical
+    convert: { fire: 0.4 }
+    cooldown: 16
+    range: 26
+    telegraph: 1.4
+    delay: 1.0
+    radius: 2.2
+    count: 12
+    stagger: 0.04
+    scatter: 5
+    at: cage
+    slow: 2
+    shout: "「鎖起來。」"
+  box_spawn:
+    name: 分身箱
+    kind: summon
+    summon: SILVERFISH
+    count: 6
+    summon_max: 12
+    duration: 20
+    cooldown: 18
+    telegraph: 1.0
+    shout: "（好幾個小匣子從牠身上掉下來，長出腳）"
+  box_vault_collapse:
+    name: 寶庫崩塌
+    hint: "寶庫在塌：往中間靠，留在圈裡"
+    kind: arena
+    damage: 1.0
+    type: physical
+    convert: { fire: 0.5 }
+    cooldown: 300
+    range: 30
+    telegraph: 1.5
+    reach: 20
+    radius: 8
+    duration: 20
+    interval: 0.5
+    shout: "「這座寶庫，跟你一起埋。」"
+  box_thousand_locks:
+    name: 千鎖齊發
+    hint: "周圍的鎖一個接一個射出鎖鏈：看紅線往旁邊走"
+    kind: echoes
+    damage: 1.5
+    type: physical
+    convert: { fire: 0.5 }
+    cooldown: 16
+    range: 20
+    telegraph: 1.2
+    count: 8
+    scatter: 8
+    stagger: 0.5
+    delay: 1.0
+    reach: 26
+    width: 1.0
+    shout: "「千把鎖，一起開。」"
+  box_slam_shut:
+    name: 匣門重合
+    hint: "匣門要合上了：跑出 10 格外"
+    kind: nova
+    damage: 2.6
+    type: physical
+    convert: { fire: 0.5 }
+    cooldown: 14
+    range: 10
+    telegraph: 2.0
+    radius: 10
+    count: 1
+    slow: 2
+    shout: "「關門。」"
+  hazard_box_coins:
+    name: 落金
+    kind: slam
+    damage: 1.3
+    type: physical
+    convert: { fire: 0.6 }
+    telegraph: 0.8
+    delay: 1.0
+    radius: 2.5
+    count: 3
+    stagger: 0.3
+    scatter: 6
+    at: random
+
+  # ---- 裂隙之主・穿界者（breach_lord）：空間裂縫、裂隙擴散、從邊緣湧怪 ----
+  breach_spread:
+    name: 裂隙擴散
+    hint: "裂隙一圈圈往外裂：站進綠色的缺口"
+    kind: ring
+    damage: 1.7
+    type: lightning
+    cooldown: 11
+    range: 22
+    telegraph: 1.5
+    radius: 2
+    reach: 22
+    speed: 0.45
+    width: 0.9
+    count: 4
+    stagger: 1.0
+    gaps: 2
+    gap_angle: 40
+    shout: "（空間像玻璃一樣，一圈圈裂開）"
+  breach_tear:
+    name: 空間撕裂
+    hint: "四道裂縫一起轉：待在兩道之間，跟著轉"
+    kind: beam
+    damage: 1.0
+    type: chaos
+    cooldown: 13
+    range: 18
+    telegraph: 1.6
+    count: 4
+    angle: 110
+    length: 30
+    width: 0.7
+    duration: 4
+    interval: 0.3
+    shout: "「撕開。」"
+  breach_surge:
+    name: 湧出
+    kind: summon
+    summon: ENDERMAN
+    count: 3
+    summon_max: 6
+    duration: 25
+    cooldown: 16
+    telegraph: 1.0
+    shout: "（裂縫的另一邊，有東西爬了過來）"
+  breach_hand:
+    name: 裂隙之手
+    hint: "裂縫朝你一路裂過來：往旁邊閃"
+    kind: slam
+    damage: 2.2
+    type: physical
+    convert: { lightning: 0.5, chaos: 0.25 }
+    cooldown: 10
+    range: 28
+    telegraph: 1.0
+    delay: 0.7
+    radius: 2.8
+    count: 14
+    stagger: 0.08
+    reach: 24
+    at: line
+    shout: "（一隻手從裂縫裡伸出來，抓向地面）"
+  breach_phase_blink:
+    name: 相位閃現
+    hint: "牠穿過裂縫撲到你身邊：落地前走出紅圈"
+    kind: blink
+    damage: 2.2
+    type: lightning
+    cooldown: 9
+    range: 36
+    telegraph: 1.0
+    radius: 3.5
+    slow: 1
+    shout: "「這邊。」"
+  breach_storm:
+    name: 裂隙風暴
+    hint: "幾顆裂隙球慢慢追著你：帶著跑，別讓它們碰到"
+    kind: orbs
+    damage: 1.4
+    type: lightning
+    cooldown: 18
+    range: 26
+    telegraph: 1.2
+    count: 4
+    speed: 0.17
+    duration: 8
+    size: 0.8
+    explode: 2.5
+    shout: "（空間裡飄出好幾顆亂閃的碎片）"
+  breach_collapse:
+    name: 界縫崩解
+    hint: "外面的空間在崩：往中間靠，留在圈裡"
+    kind: arena
+    damage: 1.0
+    type: lightning
+    cooldown: 300
+    range: 30
+    telegraph: 1.5
+    reach: 20
+    radius: 7
+    duration: 18
+    interval: 0.5
+    shout: "「這個世界，正在被吃掉。」"
+  breach_volley:
+    name: 穿界齊射
+    hint: "一大片裂隙碎片朝你打來：找縫鑽，或往側面跑"
+    kind: volley
+    damage: 1.5
+    type: physical
+    convert: { lightning: 0.5, chaos: 0.25 }
+    cooldown: 9
+    range: 26
+    telegraph: 1.2
+    count: 16
+    spread: 140
+    speed: 0.75
+    reach: 28
+    size: 0.8
+    explode: 1.8
+    shout: "（裂縫裡噴出一整片碎片）"
+  breach_shatter:
+    name: 界崩新星
+    hint: "祂身邊的空間整個要碎：跑出 12 格外"
+    kind: nova
+    damage: 2.6
+    type: chaos
+    cooldown: 16
+    range: 12
+    telegraph: 2.3
+    radius: 12
+    count: 1
+    slow: 2
+    shout: "「碎。」"
+  hazard_breach_rift:
+    name: 裂縫
+    kind: zone
+    damage: 0.5
+    type: chaos
+    telegraph: 1.0
+    radius: 2.5
+    duration: 12
+    interval: 0.6
+    count: 1
+    at: random
+    slow: 1
+
+  # ---- 流寇之王・無名者（exile_king）：鏡像決鬥——招式取材玩家的技能，閃現、處決 ----
+  exile_heavy_slash:
+    name: 重斬
+    hint: "牠舉刀重斬：繞到牠背後"
+    kind: cone
+    damage: 2.8
+    type: physical
+    cooldown: 7
+    range: 8
+    telegraph: 1.5
+    angle: 100
+    length: 7
+    count: 1
+    slow: 1
+    shout: "「這招，你也會吧？」"
+  exile_whirl:
+    name: 迴身旋刃
+    hint: "牠要轉兩圈：離牠 7 格以外"
+    kind: nova
+    damage: 1.6
+    type: physical
+    cooldown: 10
+    range: 8
+    telegraph: 1.5
+    radius: 7
+    count: 2
+    stagger: 0.9
+    shout: "（刀光轉成一個圈）"
+  exile_pierce_shot:
+    name: 貫穿射擊
+    hint: "三支箭各畫一條紅線：往旁邊走"
+    kind: echoes
+    damage: 2.0
+    type: physical
+    convert: { lightning: 0.3 }
+    cooldown: 12
+    range: 24
+    telegraph: 1.5
+    count: 3
+    scatter: 3
+    stagger: 0.6
+    delay: 1.0
+    reach: 26
+    width: 0.9
+    shout: "「站好，別動。」"
+  exile_backstab:
+    name: 閃現背刺
+    hint: "牠要閃到你背後：落地前走出紅圈"
+    kind: blink
+    damage: 2.2
+    type: physical
+    convert: { chaos: 0.3 }
+    cooldown: 9
+    range: 36
+    telegraph: 1.5
+    radius: 3
+    slow: 1
+    shout: "「後面。」"
+  exile_warcry:
+    name: 無名戰吼
+    hint: "牠吼了一聲：受到的傷害增加，先拉開距離"
+    kind: curse
+    type: physical
+    cooldown: 18
+    range: 24
+    telegraph: 1.0
+    radius: 24
+    duration: 8
+    taken: 20
+    shout: "「流寇們——看著我打！」"
+  exile_traps:
+    name: 投擲陷阱
+    hint: "牠往地上撒了幾個陷阱：別踩到紅圈"
+    kind: zone
+    damage: 0.8
+    type: physical
+    convert: { fire: 0.5 }
+    cooldown: 13
+    range: 26
+    telegraph: 1.2
+    radius: 2
+    duration: 12
+    interval: 0.6
+    count: 5
+    scatter: 8
+    at: random
+    slow: 2
+    shout: "「小心腳下。」"
+  exile_execute_mark:
+    name: 處決標記
+    hint: "被點名的人 4 秒後被處決：離開隊友"
+    kind: mark
+    damage: 2.6
+    type: physical
+    convert: { lightning: 0.5 }
+    cooldown: 12
+    range: 30
+    telegraph: 1.5
+    count: 1
+    duration: 4
+    explode: 4
+    shout: "「就你了。」"
+  exile_death_spiral:
+    name: 絕命連斬
+    hint: "刀光從牠身邊螺旋轉出去：往旋轉的反方向跑"
+    kind: slam
+    damage: 2.0
+    type: physical
+    cooldown: 15
+    range: 20
+    telegraph: 0.8
+    delay: 0.8
+    radius: 2.5
+    count: 20
+    stagger: 0.08
+    reach: 16
+    at: spiral
+    shout: "「一刀、兩刀、三刀——」"
+  exile_duel:
+    name: 決鬥
+    hint: "牠朝你衝過來：往紅線的兩邊閃"
+    kind: charge
+    damage: 2.8
+    type: physical
+    convert: { lightning: 0.3 }
+    cooldown: 10
+    range: 30
+    telegraph: 1.5
+    speed: 1.3
+    reach: 22
+    width: 2.5
+    slow: 2
+    shout: "「來，一對一。」"
+  hazard_exile_knives:
+    name: 飛刀
+    kind: slam
+    damage: 1.2
+    type: physical
+    convert: { lightning: 0.5 }
+    telegraph: 0.8
+    delay: 0.9
+    radius: 2.5
+    count: 2
+    stagger: 0.3
+    scatter: 5
+    at: random
+
+  # ---- 祭司・血契（ritual_priest）：獻祭——祭壇圈、血祭、貢品、召喚 ----
+  ritual_circle:
+    name: 祭壇圈
+    hint: "祂腳下的祭壇圈一直在燒：別站在圈裡"
+    kind: zone
+    damage: 0.7
+    type: fire
+    cooldown: 20                 # 2026-10-18：審查：圈燒 14 秒／16 秒冷卻幾乎是永久地板，改 8 秒／20 秒
+    range: 30
+    telegraph: 1.2
+    radius: 9
+    duration: 8
+    interval: 0.6
+    count: 1
+    at: self
+    solid: false
+    slow: 1
+    shout: "「祭壇，點燃。」"
+  ritual_blood_curse:
+    name: 血祭
+    hint: "你的血被祂獻了出去：受到的傷害增加"
+    kind: curse
+    type: fire
+    cooldown: 18
+    range: 30
+    telegraph: 1.0
+    radius: 30
+    duration: 8
+    taken: 25
+    shout: "「你的血，是今天的貢品。」"
+  ritual_offering:
+    name: 獻祭召喚
+    kind: summon
+    summon: HUSK
+    count: 4
+    summon_max: 8
+    duration: 25
+    cooldown: 16
+    telegraph: 1.0
+    shout: "「獻上來的，起來。」"
+  ritual_blood_spears:
+    name: 血矛
+    hint: "一排血矛朝你射來：找縫鑽，或往側面跑"
+    kind: volley
+    damage: 1.7
+    type: physical
+    convert: { fire: 0.5, chaos: 0.25 }
+    cooldown: 9
+    range: 26
+    telegraph: 1.5
+    count: 12
+    spread: 90
+    speed: 0.8
+    reach: 26
+    size: 0.7
+    explode: 1.6
+    shout: "（血在祂身邊凝成一排矛）"
+  ritual_pact_mark:
+    name: 血契標記
+    hint: "被點名的兩個人 4 秒後血爆：各自離開隊友"
+    kind: mark
+    damage: 2.4
+    type: fire
+    cooldown: 12
+    range: 30
+    telegraph: 1.0
+    count: 2
+    duration: 4
+    explode: 4
+    shout: "「契約，成立。」"
+  ritual_fire_pillars:
+    name: 祭火柱
+    hint: "祭火往四個方向一路燒出去：站到斜角"
+    kind: slam
+    damage: 2.2
+    type: fire
+    cooldown: 11
+    range: 26
+    telegraph: 1.0
+    delay: 0.8
+    radius: 2.6
+    count: 16
+    stagger: 0.08
+    reach: 18
+    at: cross
+    shout: "「火，起。」"
+  ritual_blood_sea:
+    name: 血海
+    hint: "沒有缺口的血浪：跑出去，或在浪碰到前翻滾"
+    kind: ring
+    damage: 1.8
+    type: physical
+    convert: { chaos: 0.5 }
+    cooldown: 20
+    range: 16
+    telegraph: 1.5
+    radius: 1.5
+    reach: 16
+    speed: 0.3
+    width: 0.6
+    count: 2
+    stagger: 1.3
+    gaps: 0
+    shout: "（整座祭場的血一起漲了起來）"
+  ritual_final_offering:
+    name: 終末獻祭
+    kind: sanctuary
+    damage: 4.5
+    type: fire
+    cooldown: 40
+    range: 30
+    telegraph: 3.0
+    radius: 30
+    count: 2
+    safe: 2.5
+    scatter: 10
+    count_per_player: 1
+    shout: "「全部——獻給祭壇。」"
+  ritual_blood_orbs:
+    name: 血球
+    hint: "幾顆血球慢慢追著你：帶著跑，別讓它們碰到"
+    kind: orbs
+    damage: 1.4
+    type: fire
+    cooldown: 18
+    range: 26
+    telegraph: 1.2
+    count: 4
+    speed: 0.16
+    duration: 8
+    size: 0.8
+    explode: 2.5
+    shout: "（祭壇上的血浮了起來）"
+  hazard_ritual_blood:
+    name: 血滴
+    kind: zone
+    damage: 0.6
+    type: fire
+    telegraph: 0.9
+    radius: 2.5
+    duration: 8
+    interval: 0.5
+    count: 1
+    at: random
+
+  # ---- 幻霧之鏡・妄念（delirium_mirror）：幻覺——霧、殘影、分身、鏡牢 ----
+  mist_fog:
+    name: 霧
+    hint: "霧漫過來：裡面走得慢、一直掉血，往外走"
+    kind: zone
+    damage: 0.4
+    type: cold
+    cooldown: 16
+    range: 30
+    telegraph: 1.0
+    radius: 10                   # 2026-10-18：審查：14 格的霧蓋掉大半個場地，縮到 10、緩速 2 秒
+    duration: 12
+    interval: 0.8
+    count: 1
+    at: self
+    slow: 2
+    shout: "（霧濃到看不見自己的手）"
+  mist_mirrors:
+    name: 鏡像
+    hint: "五個鏡像各畫一條紅線：往旁邊走"
+    kind: echoes
+    damage: 1.6
+    type: cold
+    cooldown: 14
+    range: 22
+    telegraph: 1.2
+    count: 5
+    scatter: 7
+    stagger: 0.6
+    delay: 1.0
+    reach: 26
+    width: 1.0
+    shout: "「哪一個才是我？」"
+  mist_orbs:
+    name: 妄念光球
+    hint: "幾顆妄念慢慢追著你：帶著跑，別讓它們碰到"
+    kind: orbs
+    damage: 1.4
+    type: physical
+    convert: { chaos: 0.5, cold: 0.5 }
+    cooldown: 16
+    range: 26
+    telegraph: 1.2
+    count: 5
+    speed: 0.16
+    duration: 8
+    size: 0.8
+    explode: 2.5
+    slow: 2
+    shout: "（霧裡浮出幾張你認識的臉）"
+  mist_slash:
+    name: 迷霧斬
+    hint: "霧裡連砍三下：往牠側面繞"
+    kind: cone
+    damage: 1.6
+    type: cold
+    cooldown: 8
+    range: 10
+    telegraph: 1.5
+    angle: 80
+    length: 9
+    count: 3
+    stagger: 0.5
+    slow: 2
+    shout: "（三道刀光同時從霧裡劃出來）"
+  mist_phantoms:
+    name: 幻影召喚
+    kind: summon
+    summon: VEX
+    count: 4
+    summon_max: 8
+    duration: 15
+    cooldown: 16
+    telegraph: 1.0
+    shout: "「你怕的東西，都在這裡。」"
+  mist_invert:
+    name: 顛倒
+    hint: "上下顛倒、一直往牠滑過去：往外跑"
+    kind: pull
+    damage: 2.8
+    type: cold
+    cooldown: 15
+    range: 14
+    telegraph: 1.2
+    radius: 14
+    speed: 0.12
+    duration: 3
+    explode: 5
+    shout: "「地在哪？天在哪？」"
+  mist_mirror_maze:
+    name: 鏡牢
+    hint: "一圈鏡牆圍著祂、穿不過：找缺口繞出去"
+    kind: zone
+    damage: 0.7
+    type: cold
+    cooldown: 22
+    range: 36
+    telegraph: 1.5
+    radius: 0.8
+    duration: 8
+    interval: 0.6
+    count: 1
+    reach: 12
+    gaps: 3
+    gap_angle: 50
+    at: maze
+    solid: true
+    slow: 1
+    shout: "「照照鏡子。」"
+  mist_shatter:
+    name: 碎鏡
+    hint: "整面鏡子要碎在你身上：跑出 13 格外"
+    kind: nova
+    damage: 2.6
+    type: cold
+    cooldown: 16
+    range: 13
+    telegraph: 2.5
+    radius: 13
+    count: 1
+    slow: 2
+    shout: "（鏡面上的裂痕一路爬到邊緣）"
+  mist_mirror_blink:
+    name: 鏡影閃現
+    hint: "祂從鏡子裡跳到你身邊：落地前走出紅圈"
+    kind: blink
+    damage: 2.4
+    type: cold
+    cooldown: 9
+    range: 36
+    telegraph: 1.0
+    radius: 4
+    slow: 2
+    shout: "「我一直都在你後面。」"
+  hazard_mist_orb:
+    name: 迷霧光球
+    kind: orbs
+    damage: 1.2
+    type: cold
+    telegraph: 1.0
+    count: 1
+    speed: 0.15
+    duration: 6
+    size: 0.8
+    explode: 2.5
+    slow: 2
+
+  # ---- 淵底之王・骨潮（abyss_lich）：從地底湧出——地裂、骨矛、拉人下去、骨潮 ----
+  abyssal_fissure:
+    name: 地裂
+    hint: "地面朝你一路裂開：往旁邊閃"
+    kind: slam
+    damage: 2.4
+    type: physical
+    convert: { cold: 0.5 }
+    cooldown: 9
+    range: 30
+    telegraph: 1.0
+    delay: 0.7
+    radius: 2.6
+    count: 18
+    stagger: 0.07
+    reach: 28
+    at: line
+    slow: 1
+    shout: "（地底傳來骨頭碎裂的聲音）"
+  abyssal_bone_spears:
+    name: 骨矛
+    hint: "一排骨矛從地底射出來：找縫鑽，或往側面跑"
+    kind: volley
+    damage: 1.6
+    type: physical
+    convert: { cold: 0.5 }
+    cooldown: 8
+    range: 26
+    telegraph: 1.2
+    count: 12
+    spread: 70
+    speed: 0.9
+    reach: 26
+    size: 0.7
+    explode: 1.5
+    shout: "「刺穿。」"
+  abyssal_hand:
+    name: 深淵之手
+    hint: "地底的手要把你拉下去：往外跑"
+    kind: pull
+    damage: 3.0
+    type: cold
+    cooldown: 15
+    range: 14
+    telegraph: 1.2
+    radius: 14
+    speed: 0.12
+    duration: 4
+    explode: 4.5
+    shout: "「下來。下面很冷。」"
+  abyssal_bone_tide:
+    name: 骨潮
+    hint: "骨頭像潮水一樣一圈圈湧出：站進綠色的缺口"
+    kind: ring
+    damage: 1.8
+    type: physical
+    convert: { cold: 0.5 }
+    cooldown: 11
+    range: 20
+    telegraph: 1.5
+    radius: 2
+    reach: 20
+    speed: 0.4
+    width: 0.9
+    count: 3
+    stagger: 1.0
+    gaps: 2
+    gap_angle: 40
+    shout: "（整片地面的骨頭一起往外翻）"
+  abyssal_risen:
+    name: 從地底湧出
+    kind: summon
+    summon: SKELETON
+    count: 5
+    summon_max: 10
+    duration: 25
+    cooldown: 16
+    telegraph: 1.0
+    shout: "「埋在這裡的，都起來。」"
+  abyssal_sinkhole:
+    name: 沉淵
+    hint: "你腳下的地陷下去了：走出紅圈，別再踩回去"
+    kind: zone
+    damage: 0.6
+    type: cold
+    cooldown: 13
+    range: 30
+    telegraph: 1.2
+    radius: 3
+    duration: 12
+    interval: 0.5
+    count: 3
+    scatter: 4
+    at: target
+    slow: 3
+    shout: "「沉下去。」"
+  abyssal_collapse:
+    name: 淵底崩塌
+    hint: "外圍的地面在塌：往中間靠，留在圈裡"
+    kind: arena
+    damage: 1.0
+    type: cold
+    cooldown: 300
+    range: 30
+    telegraph: 1.5
+    reach: 20
+    radius: 8
+    duration: 20
+    interval: 0.5
+    shout: "「這片地，撐不住了。」"
+  abyssal_bone_storm:
+    name: 骨嵐
+    hint: "幾團骨嵐慢慢追著你：帶著跑，別讓它們碰到"
+    kind: orbs
+    damage: 1.4
+    type: cold
+    cooldown: 18
+    range: 26
+    telegraph: 1.2
+    count: 4
+    speed: 0.16
+    duration: 8
+    size: 0.8
+    explode: 2.5
+    slow: 2
+    shout: "（骨屑捲成一團團的風）"
+  abyssal_grave_mark:
+    name: 墳墓標記
+    hint: "被點名的兩個人 4 秒後腳下塌陷：各自離開隊友"
+    kind: mark
+    damage: 2.4
+    type: cold
+    cooldown: 12
+    range: 30
+    telegraph: 1.0
+    count: 2
+    duration: 4
+    explode: 4
+    shout: "「你的墳，挖好了。」"
+  hazard_abyssal_spike:
+    name: 骨刺
+    kind: slam
+    damage: 1.4
+    type: cold
+    telegraph: 0.8
+    delay: 0.9
+    radius: 2.5
+    count: 2
+    stagger: 0.3
+    scatter: 5
+    at: random
+
+
 # 各種生物預設的招式組（maps.yml／zones.yml 沒寫 skills 時）
 defaults:
   default: [slam, charge]

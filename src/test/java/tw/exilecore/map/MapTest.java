@@ -165,6 +165,11 @@ class MapTest {
     void linksAreSymmetricAndPositionsUnique() {
         final Set<String> positions = new HashSet<>();
         for (final MapConfig.MapDef map : config.all()) {
+            if (!map.onAtlas()) {
+                assertTrue(config.isEventPinnacle(map.id()), map.id() + " 不在星圖上，只有事件巔峰可以"); // 2026-10-18
+                assertTrue(map.links().isEmpty(), map.id());
+                continue;
+            }
             assertTrue(positions.add(map.col() + "," + map.row()), map.id());
             for (final String link : map.links()) {
                 assertTrue(config.find(link).links().contains(map.id()), map.id() + " → " + link);
@@ -367,7 +372,7 @@ class MapTest {
 
     @Test
     void uniquesLoadAndRoll() {
-        assertEquals(127, repository.uniques().size(), "2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件；星骸之海的淵鯨 3 件；2026-10-17 只能賭的踏骸之履；共通的荊棘盾棘壘）");
+        assertEquals(127 + 21 + 5 + 2, repository.uniques().size(), "2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件；2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件；星骸之海的淵鯨 3 件；2026-10-17 只能賭的踏骸之履；共通的荊棘盾棘壘）");
         final ItemData dropped = MapDrops.unique(generator, "final", 68, new Random(5));
         assertNotNull(dropped);
         assertEquals(Rarity.UNIQUE, dropped.rarity());
@@ -398,11 +403,14 @@ class MapTest {
 
     @Test
     void extraFinalsLoadAndUnlockAfterTheEmperor() {
-        assertEquals(5, config.finals().size(), "天穹熔爐 + 三個新終局 + 巔峰");
+        // 2026-10-18：事件巔峰（用入場券開的）也是 finals 的一種，數量照設定檔；星圖上的終局還是 5 個
+        final int eventPinnacles = config.eventPinnacles().size();
+        assertEquals(5 + eventPinnacles, config.finals().size(), "天穹熔爐 + 三個新終局 + 巔峰 + 事件巔峰");
         assertEquals(4, config.regularFinals().size(), "用天穹碎片開的終局");
-        assertEquals(List.of("awakener"), config.pinnacles().stream().map(MapConfig.MapDef::id).toList(), "巔峰：萬界之巔");
+        assertEquals(List.of("awakener"), config.fragmentPinnacles().stream().map(MapConfig.MapDef::id).toList(), "巔峰：萬界之巔");
+        assertEquals("awakener", config.pinnacles().getFirst().id());
         assertEquals(config.finalMap(), config.finals().getFirst());
-        assertEquals(14 + 5, config.all().size());
+        assertEquals(14 + 5 + eventPinnacles, config.all().size());
         final Set<String> ids = new HashSet<>();
         for (final MapConfig.MapDef map : config.finals()) {
             assertTrue(map.isFinal());
@@ -411,6 +419,7 @@ class MapTest {
             assertTrue(ids.add(map.id()));
             assertEquals(3, config.finalLevelBonus(map.id()));
             assertEquals(map, config.find(map.id()));
+            assertEquals(config.isEventPinnacle(map.id()), !map.onAtlas(), map.id() + "：只有事件巔峰不在星圖上");
         }
         assertEquals(2, config.finalPoints("sky_crucible"));
         assertEquals(1, config.finalPoints("frost_throne"), "新終局首殺 1 點");
@@ -446,6 +455,9 @@ class MapTest {
         // 星圖位置不重複、招式都存在
         final Set<String> positions = new HashSet<>();
         for (final MapConfig.MapDef map : config.all()) {
+            if (!map.onAtlas()) {
+                continue; // 2026-10-18：事件巔峰不在星圖上
+            }
             assertTrue(positions.add(map.col() + "," + map.row()), map.id() + " 的星圖位置重複");
         }
     }
@@ -746,16 +758,16 @@ class MapTest {
         // 2026-10：巔峰每秒傷害超過 15 萬的部分分段減傷：15–30 萬算 30%、30 萬以上算 10%
         final MapConfig.Pinnacle pinnacle = config.pinnacle("awakener");
         assertEquals(150000, pinnacle.dpsCap(), 1e-9);
-        assertEquals(List.of(new MapConfig.DpsTier(150000, 0.3), new MapConfig.DpsTier(300000, 0.1), new MapConfig.DpsTier(450000, 0.05), new MapConfig.DpsTier(600000, 0.002)), pinnacle.dpsOver());
+        assertEquals(List.of(new MapConfig.DpsTier(150000, 0.3), new MapConfig.DpsTier(300000, 0.1), new MapConfig.DpsTier(450000, 0.05), new MapConfig.DpsTier(600000, 0.001)), pinnacle.dpsOver());
         final List<MapConfig.DpsTier> over = pinnacle.dpsOver();
         assertEquals(100000, DpsCap.effective(100000, 150000, over), 1e-6, "上限以內照算");
         assertEquals(195000, DpsCap.effective(300000, 150000, over), 1e-6);
         assertEquals(212500, DpsCap.effective(500000, 150000, over), 1e-6);
-        assertEquals(218300, DpsCap.effective(1000000, 150000, over), 1e-6); // 2026-10-18：60 萬以上 1% → 0.2%
+        assertEquals(217900, DpsCap.effective(1000000, 150000, over), 1e-6); // 2026-10-18：60 萬以上 1% → 0.1%
         // 2026-10-16：45 萬以上算 5%、60 萬以上算 1%——每秒 700 萬只算 28.15 萬
         assertEquals(210000, DpsCap.effective(450000, 150000, over), 1e-6);
         assertEquals(217500, DpsCap.effective(600000, 150000, over), 1e-6);
-        assertEquals(230300, DpsCap.effective(7000000, 150000, over), 1e-6);
+        assertEquals(223900, DpsCap.effective(7000000, 150000, over), 1e-6);
         assertEquals(150000, DpsCap.effective(1000000, 150000, List.of()), 1e-6, "沒寫分段：超過的全部不算");
         final DpsCap cap = new DpsCap();
         assertEquals(1000 * 195000 / 300000.0, cap.apply("a", 1000, 150000, over, 0, 300000), 1e-6, "照打假人的紀錄：每一下乘同一個比例");

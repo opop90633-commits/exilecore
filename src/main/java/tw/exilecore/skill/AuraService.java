@@ -1303,8 +1303,11 @@ final class AuraService implements Listener {
                 continue;
             }
             final PlayerState state = plugin.players().get(credit);
+            // 2026-10-18：光環面板上的那一條：共鳴的專屬輔助不佔名額（跟主技能算法一致）
+            final int position = state.skills() == null ? -1 : state.skills().find(aura.build.definition().id());
+            final tw.exilecore.character.SkillLoadout.Entry entry = position < 0 ? null : state.skills().skill(position);
             final SkillBuild subBuild = SkillBuild.of(config, sub, aura.build.gemLevel(), state.level(), false, aura.build.supports(),
-                    state.weaponTags(), plugin.players().sheet(credit));
+                    state.weaponTags(), plugin.players().sheet(credit), entry == null ? Set.of() : SkillService.resonantOf(entry));
             // 方向：朝屍體附近最近的另一隻怪，沒有就照主人的面向
             LivingEntity target = null;
             for (final LivingEntity candidate : targets.around(at, HERALD_SEARCH)) {

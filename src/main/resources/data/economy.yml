@@ -110,6 +110,15 @@ values:
   fragment_bone: 30000
   fragment_ember: 30000
   star_mirror: 450000              # 映星鏡：最稀有的那一種
+  resonance_orb: 300000            # 2026-10-18：共鳴石：比天啟石高、比映星鏡低（約 1500 萬隻怪一顆）
+  # 2026-10-18：事件巔峰的入場券（完成事件時有份的人各 2%；一張開一次）：跟天穹碎片同級
+  ticket_shrine: 15000
+  ticket_strongbox: 15000
+  ticket_breach: 15000
+  ticket_exile: 15000
+  ticket_ritual: 15000
+  ticket_delirium: 15000
+  ticket_abyss: 15000
 
 # 參考價值跟著市價走：每天換日後，用通貨交易所最近 days 天的成交重算上面這些價值（手續費、市集排序、交易估價都用新的）。
 # 金幣不能交易，市場只看得到「通貨之間」的比例，所以要一個基準：anchor 的價值固定（照上面），其他照成交比例換算。

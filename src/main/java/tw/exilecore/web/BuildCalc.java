@@ -180,7 +180,10 @@ public final class BuildCalc {
             }
             final List<String> supports = new ArrayList<>();
             for (final String supportId : strings(s, "supports", SkillLoadout.MAX_SOCKETS)) {
-                supports.add(skills.support(supportId) == null ? "" : supportId);
+                // 2026-10-18：共鳴的輔助代號後面有 ~（照存檔的寫法），查定義時剝掉、放進 Entry 時保留讓它記成共鳴
+                final String clean = supportId.endsWith(SkillLoadout.Entry.RESONANT_SUFFIX)
+                        ? supportId.substring(0, supportId.length() - SkillLoadout.Entry.RESONANT_SUFFIX.length()) : supportId;
+                supports.add(skills.support(clean) == null ? "" : supportId);
             }
             final int sockets = s.has("sockets") ? s.get("sockets").getAsInt() : Math.max(SkillLoadout.BASE_SOCKETS, supports.size());
             final int level1 = s.has("level") ? s.get("level").getAsInt() : 1;

@@ -6115,6 +6115,321 @@ skills:
       - { stat: damage.vs_chilled, type: MORE, value: 20 }
       - { stat: freeze.buildup, type: INCREASED, value: 40 }
 
+  # 2026-10-18：淵鯨的第二顆專屬——鯨吞（把敵人往你這邊吸的漩渦）
+  abyssal_pull:
+    name: 鯨吞漩渦
+    description: 在準心指的地方留下一個深海的漩渦，六秒內把周圍的敵人往中心拉、每半秒打一次；七成冰冷、三成物理，冰緩很重。同時最多一個。淵鯨專屬。
+    icon: HEART_OF_THE_SEA
+    type: spell
+    tier: 14
+    source: abyss_whale
+    tags: [spell, area, cold, physical]
+    mechanic: zone
+    zone: { range: 18, radius: [3.0, 3.8], duration: 6, interval: 0.5, damage: 100, pull: 0.3, max: 1 }
+    damage: [7, 12]
+    damage_types: { cold: 0.7, physical: 0.3 }
+    cast_time: 0.9
+    effectiveness: 0.4
+    mana: [9, 22]
+    visual: void_rift
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }
+      - { stat: chill.effect, type: INCREASED, value: 40 }
+      - { stat: freeze.buildup, type: INCREASED, value: 30 }
+
+  # ---- 2026-10-18：地圖事件巔峰 Boss 的專屬技能寶石（每隻 2 顆；source 寫 Boss 代號，maps.yml 那隻的 pinnacle.drops.extra 各 1%，掉 20 級）----
+  #   未切割技能寶石雕不出來，只有那隻 Boss 會掉。機制都用既有的運作方式，各自照 Boss 的主題。
+  # 神龕守望・晨曦：聖光、增益
+  dawn_pillar:
+    name: 晨曦光柱
+    description: 從天上拉下一道晨曦的光柱砸在準心指的地方，一半是火焰、一半是閃電，打中的敵人容易點燃、感電。神龕守望專屬。
+    icon: GLOWSTONE_DUST
+    type: spell
+    tier: 14
+    source: shrine_warden
+    tags: [spell, area, fire, lightning]
+    mechanic: impact
+    impact: { range: 24, delay: 0.6, radius: [3.2, 4.0] }
+    damage: [38, 58]
+    damage_types: { fire: 0.5, lightning: 0.5 }
+    cast_time: 1.1
+    effectiveness: 1.5
+    mana: [11, 26]
+    visual: comet
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }
+      - { stat: ignite.chance, type: FLAT, value: 25 }
+      - { stat: shock.chance, type: FLAT, value: 25 }
+
+  shrine_prayer:
+    name: 神龕祝禱
+    description: 戰吼：像神龕一樣祝禱一聲，立刻回復一部分生命，八秒內你和附近的隊友傷害增加、跑得更快，範圍內的敵人受到的傷害增加。冷卻 10 秒。神龕守望專屬。
+    icon: NETHER_STAR
+    type: spell
+    tier: 14
+    source: shrine_warden
+    tags: [warcry]
+    mechanic: warcry
+    warcry:
+      radius: 9
+      duration: 8
+      heal: [10, 18]
+      allies: true
+      buff:
+        - { stat: damage, type: INCREASED, value: [20, 35] }
+        - { stat: movement.speed, type: INCREASED, value: [10, 15] }
+      debuff: { taken: [10, 20] }
+    cast_time: 0.4
+    cooldown: 10
+    mana: [8, 18]
+    visual: rallying_cry
+
+  # 貪匣・千鎖之主：鎖鏈、金幣
+  chain_lash:
+    name: 鎖鏈橫掃
+    description: 甩出一串貪匣的鎖鏈往前橫掃，扇形裡的敵人全部打到、容易流血；四成物理傷害轉為火焰。貪匣專屬。
+    icon: IRON_NUGGET
+    type: attack
+    tier: 14
+    source: strongbox_mimic
+    tags: [attack, melee, area, fire, physical]
+    weapons: [melee]
+    mechanic: cone
+    cone: { length: [7, 9], angle: 60 }
+    convert: { fire: 0.4 }
+    attack_speed: 0.85
+    effectiveness: [1.7, 2.5]
+    mana: [7, 14]
+    visual: cleave
+    modifiers:
+      - { stat: bleed.chance, type: FLAT, value: 25 }
+      - { stat: skill.knockback, type: FLAT, value: 1 }
+
+  coin_barrage:
+    name: 金幣彈幕
+    description: 撒出一把燒紅的金幣往前飛，一次好幾枚；每一枚擊中時有機率造成雙倍傷害——擲到正面就是兩倍。貪匣專屬。
+    icon: GOLD_NUGGET
+    type: spell
+    tier: 14
+    source: strongbox_mimic
+    tags: [spell, projectile, fire]
+    mechanic: projectile
+    projectile: { count: [5, 8], spread: 40, speed: 0.7, range: 22, size: 0.35 }
+    damage: [6, 18]
+    damage_types: { fire: 1.0 }
+    cast_time: 0.7
+    effectiveness: 0.65
+    mana: [6, 15]
+    visual: fireball
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }
+      - { stat: damage.double, type: FLAT, value: 15 }
+      - { stat: ignite.chance, type: FLAT, value: 15 }
+
+  # 裂隙之主・穿界者：空間裂縫、連鎖穿越
+  rift_hand:
+    name: 裂隙之手
+    description: 從裂縫裡伸出一隻手抓住前方的敵人，再從牠身上裂開跳到附近的其他敵人，一路連鎖；六成混沌、四成閃電，容易中毒、感電。裂隙之主專屬。
+    icon: POPPED_CHORUS_FRUIT
+    type: spell
+    tier: 14
+    source: breach_lord
+    tags: [spell, lightning, chaos, chain]
+    mechanic: chain
+    chain: { range: 14, chains: [4, 7], chain_range: 8 }
+    damage: [10, 30]
+    damage_types: { chaos: 0.6, lightning: 0.4 }
+    cast_time: 0.9
+    effectiveness: 0.9
+    mana: [8, 19]
+    visual: arc
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 8 }
+      - { stat: poison.chance, type: FLAT, value: 20 }
+      - { stat: shock.chance, type: FLAT, value: 20 }
+
+  breach_ring:
+    name: 裂隙擴散
+    description: 以自己為中心裂開一圈空間，過一下子再往外裂開更大、更痛的第二圈；一半閃電、一半混沌。裂隙之主專屬。
+    icon: ECHO_SHARD
+    type: spell
+    tier: 14
+    source: breach_lord
+    tags: [spell, area, lightning, chaos, nova]
+    mechanic: nova
+    nova: { radius: [3.6, 4.4], aftershock: { delay: 0.8, radius: 1.8, more: 80 } }
+    damage: [16, 26]
+    damage_types: { lightning: 0.5, chaos: 0.5 }
+    cast_time: 0.9
+    effectiveness: 1.0
+    mana: [9, 21]
+    visual: void_rift
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 10 }
+      - { stat: shock.chance, type: FLAT, value: 25 }
+
+  # 流寇之王・無名者：決鬥、閃現、處決
+  nameless_backstab:
+    name: 無名背刺
+    description: 瞬移到準心指著的敵人身後打一下（沒指到就找 12 格內最近、看得到的敵人），暴擊率大幅提高、對傳奇怪物與 Boss 更痛。什麼近戰武器都能用。冷卻 2 秒。無名者專屬。
+    icon: PHANTOM_MEMBRANE
+    type: attack
+    tier: 14
+    source: exile_king
+    tags: [attack, melee, strike]
+    weapons: [melee]
+    mechanic: flicker
+    flicker: { range: 12, reach: 3.2, targets: 1 }
+    cooldown: 2
+    attack_speed: 0.9
+    effectiveness: [2.4, 3.4]
+    mana: [7, 14]
+    visual: flicker
+    modifiers:
+      - { stat: crit.chance, type: INCREASED, value: 50 }
+      - { stat: damage.vs_unique, type: INCREASED, value: 20 }
+
+  execution_mark:
+    name: 處決印記
+    description: 點名準心指的一個敵人，八秒內你對牠造成的傷害增加，牠的暴擊傷害加成也更吃得進去——決鬥裡只打一個人。什麼武器都能放。冷卻 6 秒。無名者專屬。
+    icon: GOLD_NUGGET
+    type: spell
+    tier: 14
+    source: exile_king
+    tags: [spell]
+    mechanic: mark
+    mark: { range: 22, duration: 8, taken: 30, self_only: true, effects: [ { stat: crit.bonus_taken, type: INCREASED, value: [20, 40] } ] }
+    cooldown: 6
+    cast_time: 0.4
+    mana: [5, 10]
+    visual: hunters_mark
+
+  # 祭司・血契：獻祭、血
+  blood_altar:
+    name: 血祭壇
+    description: 在腳下畫出一圈祭壇，八秒內圈裡的敵人每半秒被血火燒一次、容易點燃與中毒；一半火焰、一半混沌。同時最多一圈。血契祭司專屬。
+    icon: FIREWORK_STAR
+    type: spell
+    tier: 14
+    source: ritual_priest
+    tags: [spell, area, fire, chaos]
+    mechanic: zone
+    zone: { range: 0, radius: [3.5, 4.5], duration: 8, interval: 0.5, damage: 100, max: 1 }
+    damage: [8, 14]
+    damage_types: { fire: 0.5, chaos: 0.5 }
+    cast_time: 0.8
+    effectiveness: 0.4
+    mana: [9, 22]
+    visual: flame_wall
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 6 }
+      - { stat: ignite.chance, type: FLAT, value: 20 }
+      - { stat: poison.chance, type: FLAT, value: 20 }
+
+  tribute_spears:
+    name: 貢品血矛
+    description: 把自己的血凝成幾支矛往前射出去，每支穿透兩個敵人；一半火焰、一半混沌，容易中毒。血契祭司專屬。
+    icon: FIREWORK_STAR
+    type: spell
+    tier: 14
+    source: ritual_priest
+    tags: [spell, projectile, fire, chaos]
+    mechanic: projectile
+    projectile: { count: [3, 5], spread: 25, speed: 0.9, range: 24, size: 0.4, pierce: 2 }
+    damage: [12, 20]
+    damage_types: { fire: 0.5, chaos: 0.5 }
+    cast_time: 0.8
+    effectiveness: 0.9
+    mana: [8, 19]
+    visual: chaos_bolt
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 8 }
+      - { stat: poison.chance, type: FLAT, value: 25 }
+
+  # 幻霧之鏡・妄念：碎鏡、殘影
+  mirror_shards:
+    name: 碎鏡
+    description: 以自己為中心炸出一圈鏡子的碎片往四周飛，一次好幾片，打中的敵人冰緩很重、容易凍結，碎片的暴擊率很高。幻霧之鏡專屬。
+    icon: QUARTZ
+    type: spell
+    tier: 14
+    source: delirium_mirror
+    tags: [spell, projectile, cold]
+    mechanic: projectile
+    projectile: { count: [6, 10], spread: 360, speed: 0.8, range: 10, size: 0.35 }
+    damage: [5, 14]
+    damage_types: { cold: 1.0 }
+    cast_time: 0.7
+    effectiveness: 0.6
+    mana: [6, 15]
+    visual: frost_nova
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 12 }
+      - { stat: chill.effect, type: INCREASED, value: 30 }
+      - { stat: freeze.buildup, type: INCREASED, value: 30 }
+
+  mirror_step:
+    name: 鏡影穿霧
+    description: 從鏡子裡穿過去：往面向的方向瞬移，起點留下一個炸開的殘影、終點再炸一圈寒霧，一路留下的霧地會一直凍人。冷卻 2 秒。幻霧之鏡專屬。
+    icon: PHANTOM_MEMBRANE
+    type: spell
+    tier: 14
+    source: delirium_mirror
+    tags: [spell, area, cold, movement]
+    mechanic: dash
+    dash: { range: 10, start_radius: [2.2, 2.8], end_radius: [2.6, 3.2], ground: { duration: 4, interval: 0.5, radius: 1.3, damage: 35 } }
+    damage: [8, 26]
+    damage_types: { cold: 1.0 }
+    cooldown: 2
+    cast_time: 0.4
+    effectiveness: 0.8
+    mana: [7, 16]
+    visual: frostblink
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }
+      - { stat: chill.effect, type: INCREASED, value: 40 }
+
+  # 淵底之王・骨潮：地裂、深淵之手
+  bone_fissure:
+    name: 骨裂地脈
+    description: 錘子往地上一砸，一道骨刺從地底一路裂到前方很遠的地方，直線上的敵人全部打到；一半物理傷害轉為冰冷，暈眩、凍結都累積得快。拿錘子才能用。淵底之王專屬。
+    icon: BONE
+    type: attack
+    tier: 14
+    source: abyss_lich
+    tags: [attack, melee, area, slam, cold, physical]
+    weapons: [mace]
+    mechanic: cone
+    cone: { length: [10, 13], angle: 20 }
+    convert: { cold: 0.5 }
+    attack_speed: 0.75
+    effectiveness: [2.2, 3.2]
+    mana: [8, 16]
+    visual: earthquake
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 50 }
+      - { stat: freeze.buildup, type: INCREASED, value: 40 }
+
+  abyss_grasp:
+    name: 深淵之手
+    description: 射出一隻從地底伸出來的手，停下的地方留下一個把敵人往中心拉、一直打的漩渦；六成冰冷、四成混沌，冰緩很重。淵底之王專屬。
+    icon: PRISMARINE_SHARD
+    type: spell
+    tier: 14
+    source: abyss_lich
+    tags: [spell, projectile, area, cold, chaos]
+    mechanic: projectile
+    projectile: { speed: 1.2, range: 16, size: 0.45, vortex: { duration: 3, radius: 3.5, interval: 0.5, pull: 0.3, damage: 40 } }
+    damage: [14, 24]
+    damage_types: { cold: 0.6, chaos: 0.4 }
+    cast_time: 0.9
+    effectiveness: 0.9
+    mana: [9, 21]
+    visual: void_rift
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 8 }
+      - { stat: chill.effect, type: INCREASED, value: 40 }
+
   # ---- 2026-10：主要寶石（照 PoE2 的 Meta Gem：法術圖騰、Cast on X）----
   # 主要寶石本身不打人，用的是技能面板上「它後面那一格」的法術（那一格就是它的插槽，那個法術不能自己按）。
   # meta 區塊：kind（totem 法術圖騰；crit／ailment／dodge／damage_taken／minion_death／melee_kill 常駐、保留精魂）、

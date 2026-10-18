@@ -179,6 +179,11 @@ public final class MapConfig {
                       final String lore, final boolean isFinal) {
             this(id, name, base, ring, level, theme, col, row, links, start, monsters, boss, lore, isFinal, MapLayout.Style.HALLS);
         }
+
+        /** 2026-10-18：在星圖上有格子（事件巔峰沒有 atlas，col／row 是 -1，星圖與連線都略過）。 */
+        public boolean onAtlas() {
+            return col >= 0 && row >= 0;
+        }
     }
 
     /** 最多幾階。 */
@@ -198,6 +203,26 @@ public final class MapConfig {
     public static final double DEFAULT_MIRROR_CHANCE = 0.000034;
     public static final double DEFAULT_MIRROR_MOB_CHANCE = 0.0000001;
     private double mirrorChance = DEFAULT_MIRROR_CHANCE;
+    /**
+     * 共鳴石（2026-10-18）：比追逐級傳奇難——地圖 Boss 每次擊殺 0.00034/1.5、一般怪物（等級 75 以上）每隻 1/15,000,000（擁有者定的「約 1500 萬隻一顆」）。
+     * 每個有份的人各擲一次，跟追逐級一樣不吃任何加成（maps.yml 的 drops.resonance_chance、drops.resonance_mob_chance）。
+     */
+    public static final double DEFAULT_RESONANCE_CHANCE = 0.00017; // 2026-10-18：追逐級 ÷ 2
+    public static final double DEFAULT_RESONANCE_MOB_CHANCE = 0.0000005; // 2026-10-18：約 200 萬隻一顆（追逐級 ÷ 2）
+    /** 共鳴石：怪物等級不到這個不掉（跟追逐級傳奇的池子一樣 75 起）。 */
+    public static final int RESONANCE_MIN_LEVEL = 75;
+    private double resonanceChance = DEFAULT_RESONANCE_CHANCE;
+    private double resonanceMobChance = DEFAULT_RESONANCE_MOB_CHANCE;
+
+    /** 2026-10-18：共鳴石：地圖 Boss（一般、具名、終局、極境）每次擊殺、每個有份的人的機率（maps.yml 的 drops.resonance_chance）。 */
+    public double resonanceChance() {
+        return resonanceChance;
+    }
+
+    /** 2026-10-18：共鳴石：一般怪物（等級 75 以上）每隻、每個有份的人的機率（maps.yml 的 drops.resonance_mob_chance）。 */
+    public double resonanceMobChance() {
+        return resonanceMobChance;
+    }
 
     /** 映星鏡：地圖 Boss（一般、具名、終局、極境）每次擊殺、每個有份的人的機率（maps.yml 的 drops.mirror_chance）。 */
     public double mirrorChance() {
@@ -258,6 +283,14 @@ public final class MapConfig {
         public FinalInfo(final String id, final List<String> requires, final int points, final int levelBonus, final Uber uber) {
             this(id, requires, points, levelBonus, uber, null);
         }
+
+        /**
+         * 2026-10-18：事件巔峰——用一張事件入場券（pinnacle.ticket）開的巔峰，不在星圖上（沒有 atlas）、不算星圖天賦的終局點數、
+         * 在地圖裝置的「事件巔峰」按鈕裡開。
+         */
+        public boolean isEventPinnacle() {
+            return pinnacle != null && pinnacle.ticket() != null;
+        }
     }
 
     /**
@@ -273,14 +306,34 @@ public final class MapConfig {
      * @param monster    這張圖所有怪物額外的屬性
      * @param player     玩家在這張圖裡額外的屬性
      * @param drops      Boss 的掉落（寫法同極境的 drops：maps、unique_chance、exclusive_chance、extra）
+     * @param ticket     2026-10-18：事件巔峰——用這一種通貨（入場券，currencies.yml 的代號）1 張開，不用碎片（fragments 是空的）；
+     *                   一般的巔峰（集碎片的）是 null
      */
     public record Pinnacle(List<FragmentSource> fragments, int levelBonus, double cooldown, List<AffixMod> monster, List<AffixMod> player,
-                           UberDrops drops, int attempts, double dpsCap, List<DpsTier> dpsOver) {
+                           UberDrops drops, int attempts, double dpsCap, List<DpsTier> dpsOver, String ticket) {
         public Pinnacle {
             dpsOver = List.copyOf(dpsOver);
             fragments = List.copyOf(fragments);
             monster = List.copyOf(monster);
             player = List.copyOf(player);
+        }
+
+        /** 2026-10-18：舊的建構式（集碎片的巔峰）。 */
+        public Pinnacle(final List<FragmentSource> fragments, final int levelBonus, final double cooldown, final List<AffixMod> monster,
+                        final List<AffixMod> player, final UberDrops drops, final int attempts, final double dpsCap, final List<DpsTier> dpsOver) {
+            this(fragments, levelBonus, cooldown, monster, player, drops, attempts, dpsCap, dpsOver, null);
+        }
+
+        /** 2026-10-18：開門要用掉的通貨代號（各 1 個）：事件巔峰是那一張入場券，一般巔峰是每一種碎片。 */
+        public List<String> costs() {
+            if (ticket != null) {
+                return List.of(ticket);
+            }
+            final List<String> list = new ArrayList<>();
+            for (final FragmentSource fragment : fragments) {
+                list.add(fragment.currency());
+            }
+            return list;
         }
     }
 
@@ -382,13 +435,21 @@ public final class MapConfig {
 
     /** 巔峰（2026-10）：見 {@link Pinnacle}。 */
     static Pinnacle parsePinnacle(final YamlNode node) {
+        // 2026-10-18：事件巔峰寫 ticket:（一張入場券開），就不寫 fragments
+        final String ticket = node.has("ticket") ? node.requireString("ticket").trim() : null;
+        if (ticket != null && ticket.isEmpty()) {
+            throw new IllegalArgumentException(node.path() + ".ticket：要寫入場券的通貨代號（currencies.yml）");
+        }
+        if (ticket != null && node.has("fragments")) {
+            throw new IllegalArgumentException(node.path() + "：寫了 ticket 就不能再寫 fragments（事件巔峰只用一張入場券開）");
+        }
         final List<FragmentSource> fragments = new ArrayList<>();
         for (final YamlNode item : node.list("fragments")) {
             fragments.add(new FragmentSource(item.requireString("currency").trim(), item.requireString("from").trim(),
                     clamp01(item.decimal("chance", 0.1)), Math.max(1, item.integer("min_tier", 1)), clamp01(item.decimal("uber_chance", 0))));
         }
-        if (fragments.isEmpty()) {
-            throw new IllegalArgumentException(node.path() + ".fragments：至少要寫一種碎片（{ currency, from, chance, min_tier }）");
+        if (fragments.isEmpty() && ticket == null) {
+            throw new IllegalArgumentException(node.path() + ".fragments：至少要寫一種碎片（{ currency, from, chance, min_tier }），或 ticket: 入場券代號");
         }
         final Set<String> seen = new LinkedHashSet<>();
         for (final FragmentSource fragment : fragments) {
@@ -420,7 +481,7 @@ public final class MapConfig {
         return new Pinnacle(fragments, Math.max(0, Math.min(30, node.integer("level_bonus", 5))), cooldown, monster, player,
                 new UberDrops(Math.max(0, drops.integer("maps", 6)), clamp01(drops.decimal("unique_chance", 0.2)),
                         clamp01(drops.decimal("exclusive_chance", 0.1)), extra, commonChance(drops)),
-                Math.max(1, Math.min(5, node.integer("attempts", 2))), dpsCap, dpsOver);
+                Math.max(1, Math.min(5, node.integer("attempts", 2))), dpsCap, dpsOver, ticket);
     }
 
     /** 巔峰、極境超過每秒上限的那一段（2026-10）：每秒傷害 from 以上的部分只算 rate（0.3 = 30%）。 */
@@ -479,6 +540,8 @@ public final class MapConfig {
         }
         chaseMobChance = fresh.chaseMobChance;
         mirrorChance = fresh.mirrorChance;
+        resonanceChance = fresh.resonanceChance; // 2026-10-18
+        resonanceMobChance = fresh.resonanceMobChance;
         settings = fresh.settings;
         drops = fresh.drops;
         notes.clear();
@@ -561,6 +624,8 @@ public final class MapConfig {
         tw.exilecore.item.ItemGenerator.setChaseChance(chaseMobChance); // 僥倖石賭追逐級也照這個機率
         mirrorChance = clamp01(d.decimal("mirror_chance", DEFAULT_MIRROR_CHANCE));
         tw.exilecore.item.ItemGenerator.setMirrorChance(clamp01(d.decimal("mirror_mob_chance", DEFAULT_MIRROR_MOB_CHANCE)));
+        resonanceChance = clamp01(d.decimal("resonance_chance", DEFAULT_RESONANCE_CHANCE)); // 2026-10-18：共鳴石
+        resonanceMobChance = clamp01(d.decimal("resonance_mob_chance", DEFAULT_RESONANCE_MOB_CHANCE));
 
         final YamlNode finalDps = root.node("final_dps");
         finalDpsCap = Math.max(0, finalDps.decimal("dps_cap", 0));
@@ -591,7 +656,9 @@ public final class MapConfig {
                 if (maps.containsKey(id) || finalMap != null && finalMap.id().equals(id)) {
                     throw new IllegalArgumentException(node.path() + "：代號跟別的地圖或終局重複");
                 }
-                final MapDef map = parseMap(id, node, true);
+                // 2026-10-18：事件巔峰（pinnacle.ticket）不在星圖上，atlas 可以不寫
+                final boolean eventPinnacle = node.has("pinnacle") && node.node("pinnacle").has("ticket");
+                final MapDef map = parseMap(id, node, true, eventPinnacle);
                 extraFinals.put(id, map);
                 finalInfos.put(id, new FinalInfo(id, node.strings("requires"), Math.max(0, node.integer("points", firstKill.finalPoints())),
                         Math.max(0, Math.min(20, node.integer("level_bonus", finalLevelBonus))),
@@ -677,6 +744,11 @@ public final class MapConfig {
     }
 
     private MapDef parseMap(final String id, final YamlNode node, final boolean isFinal) {
+        return parseMap(id, node, isFinal, false);
+    }
+
+    /** @param atlasOptional 2026-10-18：事件巔峰可以不寫 atlas（不在星圖上；col／row 是 -1） */
+    private MapDef parseMap(final String id, final YamlNode node, final boolean isFinal, final boolean atlasOptional) {
         final String theme = node.string("theme", "ruins").trim().toLowerCase(Locale.ROOT);
         if (!THEMES.contains(theme)) {
             throw new IllegalArgumentException(node.path() + ".theme：不認得的主題 " + theme + "（可以用 " + THEMES + "）");
@@ -690,7 +762,11 @@ public final class MapConfig {
                 }
             }
         }
-        if (atlas.size() != 2 || atlas.get(0) < 0 || atlas.get(0) > 8 || atlas.get(1) < 0 || atlas.get(1) > 4) {
+        if (atlasOptional && raw == null) {
+            atlas.clear();
+            atlas.add(-1);
+            atlas.add(-1);
+        } else if (atlas.size() != 2 || atlas.get(0) < 0 || atlas.get(0) > 8 || atlas.get(1) < 0 || atlas.get(1) > 4) {
             throw new IllegalArgumentException(node.path() + ".atlas：星圖位置要寫成 [欄 0–8, 列 0–4]");
         }
         final List<ZoneConfig.SpawnEntry> monsters = parseMonsters(node.node("monsters"));
@@ -862,7 +938,7 @@ public final class MapConfig {
                     map.boss(), map.lore(), false, map.layout()));
         }
         for (final MapDef map : all()) {
-            if (!positions.add(map.col() + "," + map.row())) {
+            if (map.onAtlas() && !positions.add(map.col() + "," + map.row())) { // 2026-10-18：事件巔峰不在星圖上
                 problems.add("maps.yml：" + map.id() + " 的星圖位置 [" + map.col() + ", " + map.row() + "] 跟別張重複");
             }
             for (final String link : map.links()) {
@@ -1026,6 +1102,34 @@ public final class MapConfig {
         final List<MapDef> list = new ArrayList<>();
         for (final MapDef map : finals()) {
             if (pinnacle(map.id()) != null) {
+                list.add(map);
+            }
+        }
+        return list;
+    }
+
+    /** 2026-10-18：這個終局是不是事件巔峰（用一張事件入場券開的巔峰；不在星圖上、不算終局點數）。 */
+    public boolean isEventPinnacle(final String id) {
+        final FinalInfo info = finalInfos.get(id);
+        return info != null && info.isEventPinnacle();
+    }
+
+    /** 2026-10-18：所有的事件巔峰（依設定檔順序）。 */
+    public List<MapDef> eventPinnacles() {
+        final List<MapDef> list = new ArrayList<>();
+        for (final MapDef map : pinnacles()) {
+            if (isEventPinnacle(map.id())) {
+                list.add(map);
+            }
+        }
+        return list;
+    }
+
+    /** 2026-10-18：一般的巔峰（集碎片開的，像萬界之巔）：不含事件巔峰。 */
+    public List<MapDef> fragmentPinnacles() {
+        final List<MapDef> list = new ArrayList<>();
+        for (final MapDef map : pinnacles()) {
+            if (!isEventPinnacle(map.id())) {
                 list.add(map);
             }
         }

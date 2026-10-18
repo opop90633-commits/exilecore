@@ -614,6 +614,13 @@ public final class MapService {
                 drops.add(DropTable.Drop.equipment(chase));
             }
         }
+        // 共鳴石（2026-10-18）：一般怪物（等級 75 以上）另外擲一次 drops.resonance_mob_chance（約 1500 萬隻一顆；跟追逐級一樣不吃任何加成）
+        if (plugin.currencies() != null && data.level() >= MapConfig.RESONANCE_MIN_LEVEL && random().nextDouble() < config.resonanceMobChance()) {
+            final tw.exilecore.currency.CurrencyType resonance = plugin.currencies().resonanceType();
+            if (resonance != null) {
+                drops.add(DropTable.Drop.currency(resonance));
+            }
+        }
         // 星圖天賦：地圖怪掉地圖的機率增加、高一階的機率增加
         final double chance = config.drops().mapChance().getOrDefault(data.rarity(), 0.0) * (1 + Math.max(0, quantityBonus))
                 * (1 + instance.atlas().mapDrop());
@@ -789,6 +796,9 @@ public final class MapService {
         if (!Atlas.finalRequirementsMet(config, map, completed)) {
             return "要先打贏 " + Atlas.missingRequirements(config, map, completed) + " 才能開" + map.name();
         }
+        if (config.isEventPinnacle(map.id())) {
+            return map.name() + "不用天穹碎片開：用入場券在地圖裝置的「事件巔峰」按鈕開"; // 2026-10-18
+        }
         if (config.pinnacle(map.id()) != null) {
             return map.name() + "不用天穹碎片開：集齊碎片後用地圖裝置的「巔峰」按鈕";
         }
@@ -935,8 +945,8 @@ public final class MapService {
     /** 這個人少哪些碎片（通貨代號）：集齊了是空的。 */
     public List<CurrencyType> missingFragments(final Player player, final MapConfig.Pinnacle pinnacle) {
         final List<CurrencyType> missing = new ArrayList<>();
-        for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
-            final CurrencyType type = plugin.currencies().repository().get(fragment.currency());
+        for (final String currency : pinnacle.costs()) { // 2026-10-18：事件巔峰是那一張入場券
+            final CurrencyType type = plugin.currencies().repository().get(currency);
             if (type != null && countCurrency(player, type) < 1) {
                 missing.add(type);
             }
@@ -954,12 +964,15 @@ public final class MapService {
             return "先建立角色";
         }
         final Set<String> completed = completed(player);
+        if (pinnacle.ticket() != null && !Atlas.finalUnlocked(config, completed)) { // 2026-10-18：事件巔峰要先解鎖終局（擁有者：不能只買一張券就開）
+            return "先完成星圖最外圈的地圖（" + ringNames(config.maxRing()) + "）才能開事件巔峰";
+        }
         if (!Atlas.finalRequirementsMet(config, map, completed)) {
             return "要先打贏 " + Atlas.missingRequirements(config, map, completed) + " 才能開" + map.name();
         }
-        for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
-            if (plugin.currencies().repository().get(fragment.currency()) == null) {
-                return "currencies.yml 沒有 " + fragment.currency();
+        for (final String currency : pinnacle.costs()) { // 2026-10-18：事件巔峰是那一張入場券
+            if (plugin.currencies().repository().get(currency) == null) {
+                return "currencies.yml 沒有 " + currency;
             }
         }
         final List<CurrencyType> missing = missingFragments(player, pinnacle);
@@ -968,13 +981,38 @@ public final class MapService {
             for (final CurrencyType type : missing) {
                 names.add(type.name());
             }
+            if (pinnacle.ticket() != null) {
+                // 2026-10-18：事件巔峰：要一張入場券
+                return "需要 1 張" + String.join("、", names) + "（" + fragmentSourceText(pinnacle) + "）";
+            }
             return "碎片還沒集齊：缺 " + String.join("、", names) + "（" + fragmentSourceText(pinnacle) + "）";
         }
         return null;
     }
 
+    /**
+     * 2026-10-18：事件巔峰的入場券由哪一種地圖事件掉（map_events.yml 的 ticket）：回傳事件的來源代號（shrine、ritual…），
+     * 沒有事件掉這張券回傳 null。
+     */
+    public String ticketEventSource(final String currency) {
+        return eventConfig.ticketSource(currency);
+    }
+
+    /** 2026-10-18：「完成神龕事件時有份的人各 2% 掉落」。 */
+    String ticketSourceText(final String currency) {
+        final String source = ticketEventSource(currency);
+        if (source == null) {
+            return "地圖事件完成時有份的人有機率掉";
+        }
+        final MapEventConfig.Ticket ticket = eventConfig.ticket(source);
+        return "完成" + MapEventConfig.sourceName(source) + "事件時有份的人各 " + MapDeviceMenu.number(ticket.chance() * 100) + "% 掉落";
+    }
+
     /** 「天穹熔爐、永凍王座、冥河渡口、餘燼堡壘的 Boss 各有 10% 機率掉」這種說明。 */
     String fragmentSourceText(final MapConfig.Pinnacle pinnacle) {
+        if (pinnacle.ticket() != null) {
+            return ticketSourceText(pinnacle.ticket()); // 2026-10-18：事件巔峰
+        }
         final List<String> names = new ArrayList<>();
         int minTier = Integer.MAX_VALUE;
         double chance = 0;
@@ -1004,13 +1042,13 @@ public final class MapService {
             return capacity;
         }
         final MapConfig.Pinnacle pinnacle = config.pinnacle(map.id());
-        for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
-            takeCurrency(player, plugin.currencies().repository().get(fragment.currency()), 1);
+        for (final String currency : pinnacle.costs()) { // 2026-10-18：事件巔峰吃 1 張入場券（流水帳 MAP_DEVICE，跟碎片一樣）
+            takeCurrency(player, plugin.currencies().repository().get(currency), 1);
         }
         final UUID ownerId = player.getUniqueId();
         final Runnable refund = () -> {
-            for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
-                refundLater(ownerId, plugin.currencies().repository().get(fragment.currency()), 1);
+            for (final String currency : pinnacle.costs()) {
+                refundLater(ownerId, plugin.currencies().repository().get(currency), 1);
             }
         };
         pendingPinnacle = java.util.Optional.of(pinnacle);
@@ -1019,7 +1057,7 @@ public final class MapService {
         } catch (final RuntimeException e) {
             plugin.getSLF4JLogger().error("開巔峰 {} 失敗，碎片還給 {}", map.id(), player.getName(), e);
             refund.run();
-            return "巔峰開不起來（設定有問題，已經記在主控台）；碎片還給你了";
+            return "巔峰開不起來（設定有問題，已經記在主控台）；" + (pinnacle.ticket() != null ? "入場券" : "碎片") + "還給你了";
         } finally {
             pendingPinnacle = java.util.Optional.empty();
         }
@@ -1035,13 +1073,14 @@ public final class MapService {
             plugin.getSLF4JLogger().warn("巔峰 {} 的 Boss 生不出來，開的人 {} 不在線上，碎片沒有退還", instance.map().id(), instance.ownerName());
             return;
         }
-        for (final MapConfig.FragmentSource fragment : pinnacle.fragments()) {
-            final CurrencyType type = plugin.currencies().repository().get(fragment.currency());
+        for (final String currency : pinnacle.costs()) { // 2026-10-18：事件巔峰還那一張入場券
+            final CurrencyType type = plugin.currencies().repository().get(currency);
             if (type != null) {
                 refundCurrency(owner, type, plugin.currencies().create(type, 1));
             }
         }
-        owner.sendMessage(plugin.text().prefixed("<gray>還給你開" + ItemRenderer.escape(instance.map().name()) + "用掉的碎片"));
+        owner.sendMessage(plugin.text().prefixed("<gray>還給你開" + ItemRenderer.escape(instance.map().name()) + "用掉的"
+                + (pinnacle.ticket() != null ? "入場券" : "碎片")));
     }
 
     /** 極境的地圖數值（{@link MapConfig#uberStats}）。 */
@@ -2251,6 +2290,10 @@ public final class MapService {
             completeUber(player, instance);
             return;
         }
+        if (config.isEventPinnacle(map.id())) {
+            completeEventPinnacle(player, instance); // 2026-10-18：事件巔峰不在星圖上：只記打贏過、大字標題
+            return;
+        }
         final Set<String> before = completed(player);
         final boolean newBest = recordBest(player, before, map, instance.stats().tier());
         final boolean first = !before.contains(map.id());
@@ -2273,6 +2316,9 @@ public final class MapService {
         after.add(map.id());
         final List<String> unlocked = new ArrayList<>();
         for (final MapConfig.MapDef other : config.all()) {
+            if (config.isEventPinnacle(other.id())) {
+                continue; // 2026-10-18：事件巔峰不在星圖上，不算「解鎖了」
+            }
             if (!Atlas.unlocked(config, other, before) && Atlas.unlocked(config, other, after)) {
                 unlocked.add(other.name());
             }
@@ -2297,6 +2343,29 @@ public final class MapService {
         }
         if (plugin.quests() != null) {
             plugin.quests().refresh(player); // 任務：完成地圖
+        }
+    }
+
+    /**
+     * 2026-10-18：打贏事件巔峰：不點亮星圖、不動最高完成階級、不算星圖天賦的終局點數（它不在星圖上，requires 空、points 0）；
+     * 第一次打贏記在進度裡（{@link Atlas#key}，之後的稱號、/map 清單看這個）、大字標題。
+     */
+    private void completeEventPinnacle(final Player player, final MapInstance instance) {
+        final String key = Atlas.key(instance.map().id());
+        final boolean first = !plugin.players().get(player).progress().containsKey(key);
+        final String name = ItemRenderer.escape(instance.bossDef() == null ? instance.map().boss().name() : instance.bossDef().name());
+        if (first) {
+            plugin.characters().setProgress(player, key, String.valueOf(System.currentTimeMillis() / 1000));
+            plugin.characters().save(player);
+        }
+        player.showTitle(Title.title(plugin.text().parse("<#c77dff>" + (first ? "巔峰首殺" : "巔峰擊破")),
+                plugin.text().parse("<#af6025>" + name),
+                Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(3600), Duration.ofMillis(800))));
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.9f, 0.9f);
+        player.sendMessage(plugin.text().prefixed("<#c77dff>" + (first ? "第一次" : "") + "打倒了事件巔峰的 <#af6025>" + name
+                + "<gray>（" + ItemRenderer.escape(instance.map().name()) + "）"));
+        if (plugin.quests() != null) {
+            plugin.quests().refresh(player);
         }
     }
 
@@ -2325,7 +2394,7 @@ public final class MapService {
     }
 
     /** 退通貨給某個人（2026-10-17）：在線就退，不在線記在主控台（方便手動補）。 */
-    private void refundLater(final UUID ownerId, final CurrencyType type, final int amount) {
+    void refundLater(final UUID ownerId, final CurrencyType type, final int amount) { // 2026-10-18：MapEvents 退保險箱的合約也用這個
         final Player owner = plugin.getServer().getPlayer(ownerId);
         if (type == null || amount <= 0) {
             return;
@@ -2429,7 +2498,7 @@ public final class MapService {
         final Set<String> completed = Atlas.completed(config, progress);
         int finals = 0;
         for (final MapConfig.MapDef map : config.finals()) {
-            if (completed.contains(map.id())) {
+            if (completed.contains(map.id()) && !config.isEventPinnacle(map.id())) { // 2026-10-18：事件巔峰不算星圖的終局點數
                 finals++;
             }
         }

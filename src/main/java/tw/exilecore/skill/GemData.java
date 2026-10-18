@@ -18,8 +18,17 @@ import java.util.Optional;
  * @param id    技能或輔助的代號（未切割的為 null）
  * @param level 等級（未切割輔助寶石是階級；輔助寶石是 0）
  * @param entry 技能寶石的內容（其他種類為 null）
+ * @param resonant 2026-10-18：輔助寶石有沒有用過共鳴石（共鳴的專屬輔助不佔一個技能的專屬名額；其他種類為 false）
  */
-public record GemData(Kind kind, String id, int level, SkillLoadout.Entry entry) {
+public record GemData(Kind kind, String id, int level, SkillLoadout.Entry entry, boolean resonant) {
+
+    /** 2026-10-18：舊的四個欄位的建構式（沒有共鳴）。 */
+    public GemData(final Kind kind, final String id, final int level, final SkillLoadout.Entry entry) {
+        this(kind, id, level, entry, false);
+    }
+
+    /** 2026-10-18：輔助寶石第四欄寫這個字＝已共鳴。 */
+    static final String RESONANT_FLAG = "resonant";
 
     /** 寶石的種類與存檔用的代號。 */
     public enum Kind {
@@ -64,9 +73,20 @@ public record GemData(Kind kind, String id, int level, SkillLoadout.Entry entry)
         return new GemData(Kind.SUPPORT, supportId, 0, null);
     }
 
-    /** 一行文字：種類;代號;等級;輔助孔（技能寶石才有）。 */
+    /** 2026-10-18：輔助寶石，可以帶共鳴旗標。 */
+    public static GemData support(final String supportId, final boolean resonant) {
+        return new GemData(Kind.SUPPORT, supportId, 0, null, resonant);
+    }
+
+    /** 2026-10-18：同一顆寶石標成共鳴。 */
+    public GemData withResonant(final boolean value) {
+        return new GemData(kind, id, level, entry, value);
+    }
+
+    /** 一行文字：種類;代號;等級;輔助孔（技能寶石才有；輔助寶石這一欄寫 resonant＝已共鳴）。 */
     public String encode() {
-        return kind.key + ";" + (id == null ? "" : id) + ";" + level + ";" + (entry == null ? "" : entry.encodeSupports());
+        return kind.key + ";" + (id == null ? "" : id) + ";" + level + ";"
+                + (entry != null ? entry.encodeSupports() : kind == Kind.SUPPORT && resonant ? RESONANT_FLAG : "");
     }
 
     /** 讀回來；格式不對回傳空的。 */
@@ -92,7 +112,8 @@ public record GemData(Kind kind, String id, int level, SkillLoadout.Entry entry)
         return switch (kind) {
             case UNCUT_SKILL -> Optional.of(uncutSkill(level));
             case UNCUT_SUPPORT -> Optional.of(uncutSupport(level));
-            case SUPPORT -> id.isEmpty() ? Optional.empty() : Optional.of(support(id));
+            case SUPPORT -> id.isEmpty() ? Optional.empty()
+                    : Optional.of(support(id, parts.length > 3 && RESONANT_FLAG.equals(parts[3].trim()))); // 2026-10-18：共鳴旗標
             case SKILL -> id.isEmpty() ? Optional.empty()
                     : Optional.of(skill(SkillLoadout.Entry.decode(id, level, parts.length > 3 ? parts[3] : null)));
         };

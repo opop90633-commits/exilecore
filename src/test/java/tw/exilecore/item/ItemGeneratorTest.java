@@ -93,10 +93,10 @@ class ItemGeneratorTest {
         assertEquals(8, repository.bases().stream().filter(ItemBase::isJewel).count(), "4 種珠寶 + 4 種半徑珠寶");
         assertEquals(940 - 168 - 35, repository.baseCount() - repository.bases().size() - repository.flaskLikeBases().size());
         assertTrue(repository.affixCount() >= 30, "詞綴數 " + repository.affixCount());
-        assertEquals(35 + 16 + 10 + 6 + 4 + 21 + 3 + 4, currencies.size(),
+        assertEquals(35 + 16 + 10 + 6 + 4 + 21 + 3 + 4 + 1 + 7, currencies.size(), // 2026-10-18：＋共鳴石、＋7 張事件巔峰的入場券
                 "12 種改造通貨 + 3 種鑿星石 + 星盤刻刀 + 天穹碎片 + 僥倖石 + 6 種符文 + 2 種開服活動素材 + 2 種萬燈夜素材（2026-10）+ 傳奇兌換券 + 劫盜 6 種（含深淵星核），"
                         + "加上地圖機制的 16 星魄（2026-10：＋能盾星魄；2026-10-15：＋炎擊、霜擊、雷擊）、10 催化劑、6 星籤、4 蒸餾情緒，"
-                        + "還有未切割寶石（技能 1–21 級、輔助 1–3 階，2026-10 算通貨），巔峰的 4 種碎片");
+                        + "還有未切割寶石（技能 1–21 級、輔助 1–3 階，2026-10 算通貨），巔峰的 4 種碎片，共鳴石（2026-10-18），7 張事件巔峰的入場券（2026-10-18）");
         // 鑿星石：開技能的第 3、4、5 個輔助孔，不能用在裝備上，高階的要高等級的怪才掉
         int previousLevel = 0;
         for (final String id : java.util.List.of("lesser_socket_orb", "socket_orb", "greater_socket_orb")) {

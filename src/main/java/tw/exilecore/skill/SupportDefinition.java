@@ -63,11 +63,22 @@ public record SupportDefinition(String id, String name, String description, Stri
      */
     public static String exclusiveConflict(final tw.exilecore.character.SkillLoadout.Entry entry, final int socket,
                                            final SupportDefinition adding, final java.util.function.Function<String, SupportDefinition> lookup) {
-        if (adding == null || adding.cuttable()) {
+        return exclusiveConflict(entry, socket, adding, false, lookup);
+    }
+
+    /**
+     * 2026-10-18：共鳴版。adding 本身共鳴（用過共鳴石）就不算；其他孔已掛的專屬輔助若共鳴（{@link tw.exilecore.character.SkillLoadout.Entry#resonant(int)}）也不算。
+     *
+     * @param addingResonant 要掛的這顆有沒有共鳴
+     */
+    public static String exclusiveConflict(final tw.exilecore.character.SkillLoadout.Entry entry, final int socket,
+                                           final SupportDefinition adding, final boolean addingResonant,
+                                           final java.util.function.Function<String, SupportDefinition> lookup) {
+        if (adding == null || adding.cuttable() || addingResonant) {
             return null;
         }
         for (int i = 0; i < entry.sockets(); i++) {
-            if (i == socket) {
+            if (i == socket || entry.resonant(i)) {
                 continue;
             }
             final String id = entry.support(i);

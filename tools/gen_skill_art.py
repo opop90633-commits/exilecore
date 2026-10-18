@@ -1402,6 +1402,147 @@ META_SKILLS = {
 SKILLS.update(META_SKILLS)
 
 
+# ======================================================================
+# 2026-10：首領／事件專屬技能寶石（鯨、晨曦神龕、鎖鏈商人、裂隙、無名者、血祭、碎鏡、深淵）
+# ======================================================================
+COIN = ('#7a5a14', '#d4a030', '#ffe07a', '#fffbe0')
+CHAIN = ('#3a3e4a', '#8a92a6', '#d6dcea')
+MIRROR = ('#2a78c0', '#9ad8f0', '#e8fbff', '#ffffff')
+
+
+def chain_link(i, cx, cy, c=CHAIN):
+    """一節鎖鏈（3×2 的小環）。"""
+    i.px(cx - 1, cy, c[1]); i.px(cx + 1, cy, c[1]); i.px(cx, cy - 1, c[2]); i.px(cx, cy + 1, c[0])
+
+
+def chain(i, pts, c=CHAIN):
+    """沿折線排鎖鏈。"""
+    for a, b in zip(pts, pts[1:]):
+        L = max(1, int(math.hypot(b[0] - a[0], b[1] - a[1]) / 2))
+        for k in range(L + 1):
+            t = k / L
+            chain_link(i, a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, c)
+
+
+def coin(i, cx, cy, r=1.6, c=COIN):
+    i.disc(cx, cy, r, c[0]); i.disc(cx - 0.2, cy - 0.2, r - 0.6, c[1]); i.px(cx - 0.5, cy - 0.5, c[2])
+
+
+def hand(i, ox, oy, skin, nail=None, flip=False):
+    """從下面伸出來的手掌＋五指（寬 8，高 9）。flip=True 指尖朝下。"""
+    rows = ['.x.x.x..', '.x.x.x.x', '.xxxxxxx', 'xxxxxxxx', 'xxxxxxx.', '.xxxxxx.', '..xxxx..', '..xxxx..', '..xxxx..']
+    if flip:
+        rows = rows[::-1]
+    i.art(rows, {'x': skin}, ox, oy)
+    if nail:
+        for x in (1, 3, 5):
+            i.px(ox + x, oy + (8 if flip else 0), nail)
+
+
+def whirlpool(i, cx=7.5, cy=8, c=(0, 1, 2, 3), turns=2.4, r=6.2):
+    """漩渦：由外往內的螺旋，愈往中心愈亮。"""
+    steps = 60
+    for k in range(steps):
+        t = k / steps
+        ang = t * turns * 2 * math.pi
+        rr = r * (1 - t) + 0.3
+        col = c[1] if t < 0.4 else c[2] if t < 0.8 else c[3]
+        i.px(cx + math.cos(ang) * rr, cy + math.sin(ang) * rr * 0.75, col)
+    i.px(cx, cy, c[3])
+
+
+def mirror_shard(i, pts, c=MIRROR):
+    i.poly(pts, c[1])
+    i.line(pts[0][0], pts[0][1], pts[1][0], pts[1][1], c[2])
+    i.px(pts[0][0], pts[0][1], c[3])
+
+
+def altar(i, c=('#2a1010', '#5a2a2a', '#8a4a4a')):
+    """祭壇：石台（下）＋ 台面亮邊。"""
+    i.poly([(4, 10), (11, 10), (12, 13), (3, 13)], c[1])
+    i.line(4, 10, 11, 10, c[2]); i.line(3, 13, 12, 13, c[0])
+    i.line(5, 11, 10, 11, c[0])
+
+
+BOSS_SKILLS = {
+    # 喚潮：半圓潮環從中央湧出（三層同心弧），底下一道海面
+    'tide_call': A('cold', lambda i: i.line(1, 12, 14, 12, 1), lambda i: i.line(1, 13, 14, 13, 0),
+                   lambda i: [waves(i, 7.5, 12, [r], 2 if k % 2 else 1, -3.0, -0.14) for k, r in enumerate((3, 5.5, 8))],
+                   lambda i: [i.px(x, y, 3) for x, y in ((7, 4), (8, 4), (2, 11), (13, 11))]),
+    # 鯨吞漩渦：整格大漩渦，中心白點，外緣幾滴水花
+    'abyssal_pull': A('cold', lambda i: i.disc(7.5, 8, 6.6, '#07182c'), lambda i: whirlpool(i, 7.5, 8, (0, 1, 2, 3), 2.6, 6.4),
+                      lambda i: i.disc(7.5, 8, 1.2, '#04101c'), lambda i: [i.px(x, y, 2) for x, y in ((2, 1), (13, 2), (1, 13))]),
+    # 晨曦光柱：天上落下的金白光柱打在地上，四周放射光芒
+    'dawn_pillar': A('holy', ground, lambda i: i.poly([(6, 1), (10, 1), (10, 13), (6, 13)], 1),
+                     lambda i: i.line(7, 1, 7, 12, 2), lambda i: i.line(8, 1, 8, 12, 3),
+                     lambda i: burst(i, 8, 12, 2.5, 5, 7, '#ff9a3a'), lambda i: [i.px(x, y, 3) for x, y in ((3, 3), (12, 2), (2, 8), (13, 7))]),
+    # 神龕祝禱：小神龕（屋頂＋柱子＋供桌）加光環
+    'shrine_prayer': A('holy', lambda i: [i.px(7.5 + math.cos(a / 5.7) * 5.6, 7.5 + math.sin(a / 5.7) * 5.6, 2) for a in range(0, 36, 2)],
+                       lambda i: i.poly([(7.5, 2), (12.5, 6), (2.5, 6)], GOLD[1]), lambda i: i.line(3, 6, 12, 6, GOLD[2]),
+                       lambda i: (i.line(4, 7, 4, 11, BONE[1]), i.line(11, 7, 11, 11, BONE[1])),
+                       lambda i: i.poly([(3, 11), (12, 11), (12, 13), (3, 13)], BONE[0]),
+                       lambda i: (i.disc(7.5, 8.5, 1.2, 3), i.px(7, 8, '#ffffff'))),
+    # 鎖鏈橫掃：一條鎖鏈從左下甩到右上，末端帶刃，掃過的弧線
+    'chain_lash': A('war', lambda i: waves(i, 4, 11, [8, 9.5], 1, -1.5, -0.2),
+                    lambda i: chain(i, [(2, 13), (6, 9), (8, 5), (11, 3)]),
+                    lambda i: (i.poly([(10, 1), (14, 2), (12, 5)], STEEL[1]), i.px(14, 2, STEEL[3]), i.px(2, 13, GOLD[1])),
+                    lambda i: [i.px(x, y, '#ff9a3a') for x, y in ((12, 7), (13, 10), (10, 12))]),
+    # 金幣彈幕：一把金幣從左下往右上噴出
+    'coin_barrage': A('fire', lambda i: speed(i, 1, (11, 13), 1, 3),
+                      lambda i: [coin(i, x, y, r) for x, y, r in ((4.5, 11.5, 1.7), (8, 7.5, 1.7), (11.5, 3.5, 1.7), (12.5, 9.5, 1.3), (5.5, 4.5, 1.3))],
+                      lambda i: [i.px(x, y, 3) for x, y in ((2, 7), (9, 13), (14, 7), (8, 2))]),
+    # 裂隙之手：紫色裂口中伸出一隻雷光的手
+    'rift_hand': A('chaos', lambda i: i.poly([(1, 13), (14, 13), (12, 10), (3, 10)], 0),
+                   lambda i: i.poly([(2, 12), (13, 12), (11, 11), (4, 11)], 1),
+                   lambda i: hand(i, 4, 2, '#cf8aff', nail='#ffffff'),
+                   lambda i: bolt(i, [(12, 2), (10, 5), (13, 6), (11, 9)], '#ffd23a', '#fff27a'),
+                   lambda i: i.px(2, 9, '#9dff7a')),
+    # 裂隙擴散：由中心向外一圈圈擴散的裂隙環，中心雷光
+    'breach_ring': A('chaos', lambda i: i.ring(7.5, 7.5, 6.3, 0, 1), lambda i: i.ring(7.5, 7.5, 4.3, 1, 1), lambda i: i.ring(7.5, 7.5, 2.2, 2, 1),
+                     lambda i: [i.px(7.5 + math.cos(a) * 6.3, 7.5 + math.sin(a) * 6.3, 3) for a in (0.3, 1.9, 3.5, 5.1)],
+                     lambda i: (i.disc(7.5, 7.5, 1.0, '#ffd23a'), i.px(7, 7, '#ffffff'))),
+    # 無名背刺：背影（深色人形）＋ 從後面刺入的匕首與血滴
+    'nameless_backstab': A('blood', lambda i: (i.disc(5.5, 4, 2.2, '#2a2228'), i.poly([(2, 14), (9, 14), (9, 8), (7.5, 6), (3.5, 6), (2, 8)], '#2a2228')),
+                           lambda i: (i.line(4, 7, 4, 13, '#3e343c'), i.line(7, 7, 7, 13, '#3e343c')),
+                           lambda i: (i.line(13, 3, 9, 7, STEEL[2]), i.line(14, 4, 10, 8, STEEL[1]), i.px(13, 3, STEEL[3]), i.line(13, 2, 14, 1, GOLD[1])),
+                           lambda i: [i.px(x, y, 2) for x, y in ((8, 9), (9, 11), (7, 10))]),
+    # 處決印記：血紅的叉形印記，外圈目標環，底下一滴血
+    'execution_mark': A('blood', lambda i: i.ring(7.5, 7, 5.5, 0, 1),
+                        lambda i: [i.thick(a, b, c, d, 1, 2) for a, b, c, d in ((4, 3, 11, 10), (11, 3, 4, 10))],
+                        lambda i: (i.line(4, 3, 11, 10, 2), i.line(11, 3, 4, 10, 2)),
+                        lambda i: (i.px(7, 6, 3), i.px(8, 7, 3)),
+                        lambda i: (i.disc(7.5, 13, 1.1, 2), i.px(7, 12, 1))),
+    # 血祭壇：祭壇上一團血焰，地上血色法陣
+    'blood_altar': A('blood', lambda i: [i.px(7.5 + math.cos(a / 3.8) * 6.5, 12 + math.sin(a / 3.8) * 1.8, 1) for a in range(24)],
+                     altar, lambda i: flame(i, 7.5, 9, 7, 2.2, (1, 2, 3)), lambda i: i.px(7, 7, 3),
+                     lambda i: [i.px(x, y, 2) for x, y in ((3, 8), (12, 7))]),
+    # 貢品血矛：三支血紅的矛從上方射下
+    'tribute_spears': A('blood', lambda i: [spear(i, x, 14, x + 2, 2, tip=('#7a1010', '#c8282a', '#ff6a5a', '#ffd0c8')) for x in (2, 6, 10)],
+                        lambda i: [i.px(x, y, 2) for x, y in ((5, 11), (9, 12), (13, 10))]),
+    # 碎鏡：一面鏡子裂成幾塊三角碎片，四處飛散
+    'mirror_shards': A('cold', lambda i: mirror_shard(i, [(3, 3), (8, 2), (6, 7)]),
+                       lambda i: mirror_shard(i, [(9, 3), (13, 5), (9, 8)]),
+                       lambda i: mirror_shard(i, [(2, 9), (6, 9), (3, 13)]),
+                       lambda i: mirror_shard(i, [(8, 10), (13, 9), (11, 14)]),
+                       lambda i: [i.px(x, y, 3) for x, y in ((7, 8), (14, 2), (1, 7), (7, 12))]),
+    # 鏡影穿霧：一道身影穿過霧氣，留下兩個殘影
+    'mirror_step': A('cold', lambda i: [i.px(x, y, 0) for x, y in ((1, 13), (2, 13), (3, 14), (5, 14), (6, 13), (7, 14), (13, 14), (14, 13), (1, 2), (2, 1), (14, 1), (13, 2), (1, 7))],
+                     lambda i: [(i.px(x, 3, 1), i.px(x, 4, 1), i.line(x, 6, x, 10, 1), i.px(x - 1, 7, 1), i.px(x + 1, 7, 1), i.px(x - 1, 11, 1), i.px(x + 1, 11, 1)) for x in (3, 6)],
+                     lambda i: (i.disc(10.5, 3.5, 1.3, 2), i.poly([(9, 6), (12, 6), (12, 10), (9, 10)], 2), i.line(9, 11, 9, 13, 2), i.line(12, 11, 12, 13, 2),
+                                i.line(8, 7, 8, 9, 2), i.line(13, 7, 13, 9, 2), i.px(10, 3, 3), i.px(10, 7, 3))),
+    # 骨裂地脈：地面裂開，裂縫中伸出白骨尖刺，凍藍的縫
+    'bone_fissure': A('cold', ground, lambda i: (i.line(1, 12, 14, 12, 1), i.line(3, 11, 6, 9, 1), i.line(9, 11, 11, 9, 1), i.line(6, 11, 7, 10, 2)),
+                      lambda i: [i.poly([(x - 1.2, 12), (x + 1.2, 12), (x, 12 - h)], BONE[1]) for x, h in ((3, 5), (6, 9), (9, 7), (12, 6))],
+                      lambda i: [i.line(x, 12 - h + 1, x, 10, BONE[2]) for x, h in ((6, 9), (9, 7))],
+                      lambda i: [i.px(x, y, 3) for x, y in ((2, 4), (13, 3), (8, 2))]),
+    # 深淵之手：漩渦裡伸出一隻深藍紫的手
+    'abyss_grasp': A('cold', lambda i: i.disc(7.5, 10, 6.0, 0), lambda i: whirlpool(i, 7.5, 10, (0, '#5a1e8c', '#9a4ad8', '#cf8aff'), 2.0, 6.0),
+                     lambda i: hand(i, 4, 1, '#3a6ab0', nail='#e0f8ff'), lambda i: (i.line(7, 5, 7, 8, '#5ec4ff'), i.px(6, 7, '#5ec4ff')),
+                     lambda i: [i.px(x, y, 3) for x, y in ((2, 3), (13, 2))]),
+}
+SKILLS.update(BOSS_SKILLS)
+
+
 def support_category(sup):
     mods = sup.get('modifiers', []) or []
     stats = ' '.join(str(m.get('stat', '')) for m in mods)

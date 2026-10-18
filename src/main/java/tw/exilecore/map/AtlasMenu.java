@@ -62,6 +62,9 @@ public final class AtlasMenu extends Menu {
         }
         final List<String> next = new ArrayList<>();
         for (final MapConfig.MapDef map : config.all()) {
+            if (!map.onAtlas()) {
+                continue; // 2026-10-18：事件巔峰不在星圖上（地圖裝置的「事件巔峰」按鈕）
+            }
             final int slot = map.row() * 9 + map.col();
             shown.put(slot, map);
             set(slot, node(config, map, completed));

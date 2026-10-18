@@ -74,7 +74,7 @@ public final class SkillMenu extends Menu {
     private boolean changed;
 
     /** 游標上拿著什麼（決定哪些格子要亮、哪些要變暗）。 */
-    private enum Holding { NONE, SKILL_GEM, SUPPORT_GEM, UNCUT_SKILL, SOCKET_ORB, OTHER }
+    private enum Holding { NONE, SKILL_GEM, SUPPORT_GEM, UNCUT_SKILL, SOCKET_ORB, RESONANCE_ORB, OTHER } // 2026-10-18：共鳴石
 
     /** 拿著的東西放在某一格：BEST＝放這裡（亮起來）、SWAP＝可以放，但會換下原本的、NO＝不能放（變暗）。 */
     private enum Fit { BEST, SWAP, NO }
@@ -269,6 +269,9 @@ public final class SkillMenu extends Menu {
             };
         }
         final CurrencyType currency = plugin.currencies().read(cursor).orElse(null);
+        if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.RESONANCE) {
+            return Holding.RESONANCE_ORB; // 2026-10-18：共鳴石點掛著的專屬輔助
+        }
         return currency != null && currency.isSkillCurrency() ? Holding.SOCKET_ORB : Holding.OTHER;
     }
 
@@ -418,7 +421,7 @@ public final class SkillMenu extends Menu {
                     return Hint.no(problem);
                 }
                 // 放在技能上 = 掛到第一個空孔
-                final String exclusive = SupportDefinition.exclusiveConflict(entry, -1, support, service.config()::support);
+                final String exclusive = SupportDefinition.exclusiveConflict(entry, -1, support, gem.resonant(), service.config()::support); // 2026-10-18
                 if (exclusive != null) {
                     return Hint.no(exclusive);
                 }
@@ -441,6 +444,10 @@ public final class SkillMenu extends Menu {
                 return entry.sockets() == orb.sockets() - 1 ? Hint.best("放這裡：開第 " + orb.sockets() + " 個輔助孔")
                         : Hint.no("要用" + gems.socketOrbName(entry.sockets() + 1) + "開第 " + (entry.sockets() + 1) + " 個孔");
             }
+            case RESONANCE_ORB -> {
+                // 2026-10-18：共鳴石要點最下面一排掛著的專屬輔助，不是點技能
+                return Hint.no("共鳴石要點最下面一排掛著的專屬輔助寶石");
+            }
             case OTHER -> {
                 return Hint.no("這個東西不能放在技能面板");
             }
@@ -458,7 +465,8 @@ public final class SkillMenu extends Menu {
                 names.add("<dark_gray>空</dark_gray>");
             } else {
                 final SupportDefinition support = service.config().support(id);
-                names.add("<#8fd3ff>" + ItemRenderer.escape(support == null ? id : support.name()) + "</#8fd3ff>");
+                names.add("<#8fd3ff>" + ItemRenderer.escape(support == null ? id : support.name()) + "</#8fd3ff>"
+                        + (entry.resonant(i) ? "<#c48bff>（共鳴）</#c48bff>" : "")); // 2026-10-18
             }
         }
         return String.join("<gray>、", names);
@@ -536,15 +544,18 @@ public final class SkillMenu extends Menu {
                         : "<gray>同一種輔助可以掛在不同技能上（各用一顆），要保留精魂的輔助一個角色只能掛一顆"));
         // 手上拿的輔助寶石（能不能掛在這個技能上）或鑿星石
         SupportDefinition held = null;
+        boolean heldResonant = false;
         String problem = null;
         if (holding == Holding.SUPPORT_GEM) {
             final GemData gem = gems.read(cursor).orElse(null);
             held = gem == null ? null : service.config().support(gem.id());
+            heldResonant = gem != null && gem.resonant(); // 2026-10-18
             problem = held == null ? "不認得的輔助寶石" : supportProblem(loadout, selected, entry, definition, held);
         }
-        final CurrencyType orb = holding == Holding.SOCKET_ORB ? plugin.currencies().read(cursor).orElse(null) : null;
+        final CurrencyType orb = holding == Holding.SOCKET_ORB || holding == Holding.RESONANCE_ORB
+                ? plugin.currencies().read(cursor).orElse(null) : null;
         for (int i = 0; i < SkillLoadout.MAX_SOCKETS; i++) {
-            set(SUPPORT_START + i, socketIcon(entry, definition, i, holding, held, problem, orb));
+            set(SUPPORT_START + i, socketIcon(entry, definition, i, holding, held, heldResonant, problem, orb));
         }
     }
 
@@ -553,9 +564,15 @@ public final class SkillMenu extends Menu {
      * 拿著鑿星石時：它能開的那個孔變成亮綠色。
      */
     private ItemStack socketIcon(final SkillLoadout.Entry entry, final SkillDefinition definition, final int index,
-                                 final Holding holding, final SupportDefinition held, final String problem, final CurrencyType orb) {
+                                 final Holding holding, final SupportDefinition held, final boolean heldResonant,
+                                 final String problem, final CurrencyType orb) {
         final boolean supportInHand = holding == Holding.SUPPORT_GEM;
+        final boolean resonanceInHand = holding == Holding.RESONANCE_ORB && orb != null; // 2026-10-18
         if (index >= entry.sockets()) {
+            if (resonanceInHand) {
+                return uiIcon("slot_support_locked", Material.RED_STAINED_GLASS_PANE, "<gray>第 " + (index + 1) + " 個輔助孔（還沒開）",
+                        "<gray>共鳴石要點掛著專屬輔助的孔");
+            }
             final String orbName = gems.socketOrbName(index + 1);
             final String title = "第 " + (index + 1) + " 個輔助孔（還沒開）";
             if (orb != null && index == entry.sockets() && orb.sockets() == index + 1) {
@@ -570,9 +587,12 @@ public final class SkillMenu extends Menu {
         final String id = entry.support(index);
         // 專屬掉落的輔助一個技能一顆：照這一孔算（換掉孔裡那顆專屬的可以）
         final String exclusive = supportInHand && problem == null
-                ? SupportDefinition.exclusiveConflict(entry, index, held, service.config()::support) : null;
+                ? SupportDefinition.exclusiveConflict(entry, index, held, heldResonant, service.config()::support) : null; // 2026-10-18：看共鳴
         final String socketProblem = problem != null ? problem : exclusive;
         if (id.isEmpty()) {
+            if (resonanceInHand) {
+                return icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>空的輔助孔", "<red>共鳴石要點掛著專屬輔助的孔");
+            }
             if (supportInHand) {
                 return socketProblem == null
                         ? targetHighlight(icon(Material.LIME_STAINED_GLASS_PANE, "<green>▶ 空的輔助孔",
@@ -590,22 +610,37 @@ public final class SkillMenu extends Menu {
             return icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>" + ItemRenderer.escape(support.name()),
                     "<red>" + ItemRenderer.escape(socketProblem), "<dark_gray>（放下手上的東西就恢復）");
         }
+        if (resonanceInHand) {
+            // 2026-10-18：拿著共鳴石：掛著沒共鳴的專屬輔助的孔亮起來，其他變暗
+            final String why = support.cuttable() ? "只能用在專屬掉落的輔助寶石上" : entry.resonant(index) ? "已經共鳴了" : null;
+            return why == null
+                    ? targetHighlight(icon(Material.LIME_STAINED_GLASS_PANE, "<green>▶ " + ItemRenderer.escape(support.name()),
+                            "<green>放這裡：用" + ItemRenderer.escape(orb.name()) + "讓它共鳴（不佔專屬輔助名額）"))
+                    : icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>" + ItemRenderer.escape(support.name()),
+                            "<red>" + ItemRenderer.escape(orb.name()) + why, "<dark_gray>（放下手上的東西就恢復）");
+        }
+        final boolean resonant = entry.resonant(index); // 2026-10-18
         final List<String> lore = new ArrayList<>(GemService.effectLines(support));
         if (definition != null && !support.supports(definition)) {
             lore.add("<red>不能輔助這個技能（" + ItemRenderer.escape(support.refusal(definition)) + "，不會生效）");
         }
         if (!support.cuttable()) {
-            for (int j = 0; j < index; j++) {
-                final SupportDefinition before = service.config().support(entry.support(j));
-                if (before != null && !before.cuttable() && (definition == null || before.supports(definition))) {
-                    lore.add("<red>不會生效：一個技能只能掛一顆專屬掉落的輔助寶石（前面已經有" + ItemRenderer.escape(before.name()) + "）");
-                    break;
+            if (resonant) {
+                lore.add("<#c48bff>共鳴：不佔專屬輔助名額"); // 2026-10-18
+            } else {
+                for (int j = 0; j < index; j++) {
+                    final SupportDefinition before = service.config().support(entry.support(j));
+                    if (before != null && !before.cuttable() && !entry.resonant(j) && (definition == null || before.supports(definition))) {
+                        lore.add("<red>不會生效：一個技能只能掛一顆沒有共鳴的專屬掉落輔助寶石（前面已經有" + ItemRenderer.escape(before.name()) + "）");
+                        break;
+                    }
                 }
             }
         }
         lore.add("");
         lore.add(supportInHand ? "<yellow>放這裡：換成" + ItemRenderer.escape(held.name()) + "（這個拿下來）" : "<yellow>點一下：拿下來");
-        final ItemStack stack = SkillArt.decorateSupport(icon(material(support.icon(), Material.GHAST_TEAR), "<#8fd3ff>" + ItemRenderer.escape(support.name()), lore), support.id());
+        final ItemStack stack = SkillArt.decorateSupport(icon(material(support.icon(), Material.GHAST_TEAR),
+                "<#8fd3ff>" + ItemRenderer.escape(support.name()) + (resonant ? "<#c48bff>（共鳴）" : ""), lore), support.id());
         return supportInHand ? glowing(stack) : stack; // 可以換：只發光（外框留給空的孔）
     }
 
@@ -819,14 +854,20 @@ public final class SkillMenu extends Menu {
             apply(event, cursor, position < 0 ? GemService.Change.fail("先點一個技能") : gems.addSocket(player, position, currency));
             return;
         }
+        if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.RESONANCE) {
+            // 2026-10-18：共鳴石點掛著專屬輔助的孔：那顆輔助共鳴（不佔專屬名額），用掉一顆
+            apply(event, cursor, !socketSlot || position < 0 ? GemService.Change.fail("先點一個技能，再拿共鳴石點它掛著的專屬輔助")
+                    : gems.resonate(player, position, slot - SUPPORT_START, currency));
+            return;
+        }
         if (gem == null) {
-            fail("這裡只能放寶石與鑿星石");
+            fail("這裡只能放寶石、鑿星石與共鳴石");
             return;
         }
         final GemService.Change change = switch (gem.kind()) {
             case SKILL -> skillSlot ? gems.place(player, position, gem) : GemService.Change.fail("技能寶石要點技能格");
             case SUPPORT -> position < 0 ? GemService.Change.fail("先點一個技能")
-                    : gems.socket(player, position, socketSlot ? slot - SUPPORT_START : -1, gem.id());
+                    : gems.socket(player, position, socketSlot ? slot - SUPPORT_START : -1, gem.id(), gem.resonant()); // 2026-10-18：帶共鳴
             case UNCUT_SKILL -> position < 0 || !skillSlot ? GemService.Change.fail("拿未切割技能寶石點技能來升級")
                     : levelUp(position, gem);
             case UNCUT_SUPPORT -> GemService.Change.fail("未切割輔助寶石要先右鍵切成輔助寶石");
@@ -876,7 +917,7 @@ public final class SkillMenu extends Menu {
             change = gems.place(player, -1, gem);
         } else if (gem != null && gem.kind() == GemData.Kind.SUPPORT) {
             change = selected < 0 ? GemService.Change.fail("先點一個技能，再 Shift＋點輔助寶石")
-                    : gems.socket(player, selected, -1, gem.id());
+                    : gems.socket(player, selected, -1, gem.id(), gem.resonant()); // 2026-10-18：帶共鳴
         } else {
             fail("Shift＋點背包裡的技能寶石或輔助寶石可以直接放進面板");
             return;

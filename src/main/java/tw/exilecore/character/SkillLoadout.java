@@ -42,9 +42,16 @@ public final class SkillLoadout {
     public static final int MAX_SOCKETS = 5;
 
     /**
-     * 一個技能：代號、等級、輔助孔數、掛的輔助寶石（長度固定 {@link #MAX_SOCKETS}，空孔是空字串）。
+     * 一個技能：代號、等級、輔助孔數、掛的輔助寶石（長度固定 {@link #MAX_SOCKETS}，空孔是空字串）、
+     * 每一孔的輔助有沒有共鳴（2026-10-18：用過共鳴石的專屬輔助不佔專屬名額；長度也固定 {@link #MAX_SOCKETS}）。
+     * 存檔裡共鳴的寶石代號後面接一個 {@value #RESONANT_SUFFIX}（例如 3:rift_echo~,,pierce）；建構式會把它剝掉放進 resonant，
+     * {@link #support(int)} 永遠回傳乾淨的代號，舊資料沒有 ~ 就全是 false。
      */
-    public record Entry(String skillId, int level, int sockets, List<String> supports) {
+    public record Entry(String skillId, int level, int sockets, List<String> supports, List<Boolean> resonant) {
+
+        /** 2026-10-18：存檔文字裡標「這顆輔助已共鳴」的字尾。 */
+        public static final String RESONANT_SUFFIX = "~";
+
         public Entry {
             if (skillId == null || skillId.isBlank()) {
                 throw new IllegalArgumentException("技能代號不能是空的");
@@ -52,14 +59,32 @@ public final class SkillLoadout {
             level = Math.max(1, Math.min(GEM_CAP, level));
             sockets = Math.max(BASE_SOCKETS, Math.min(MAX_SOCKETS, sockets));
             final String[] filled = new String[MAX_SOCKETS];
+            final Boolean[] marks = new Boolean[MAX_SOCKETS];
             Arrays.fill(filled, "");
+            Arrays.fill(marks, Boolean.FALSE);
             if (supports != null) {
                 for (int i = 0; i < Math.min(sockets, supports.size()); i++) {
-                    final String id = supports.get(i);
-                    filled[i] = id == null ? "" : id.trim();
+                    String id = supports.get(i) == null ? "" : supports.get(i).trim();
+                    if (id.endsWith(RESONANT_SUFFIX)) { // 2026-10-18：存檔裡的 ~ 剝掉，記成共鳴
+                        id = id.substring(0, id.length() - RESONANT_SUFFIX.length()).trim();
+                        marks[i] = Boolean.TRUE;
+                    }
+                    filled[i] = id;
+                    if (resonant != null && i < resonant.size() && Boolean.TRUE.equals(resonant.get(i))) {
+                        marks[i] = Boolean.TRUE;
+                    }
+                    if (filled[i].isEmpty()) {
+                        marks[i] = Boolean.FALSE; // 空孔不會共鳴
+                    }
                 }
             }
             supports = List.of(filled);
+            resonant = List.of(marks);
+        }
+
+        /** 沒有共鳴資訊的建構式（代號裡可以帶 ~）。 */
+        public Entry(final String skillId, final int level, final int sockets, final List<String> supports) {
+            this(skillId, level, sockets, supports, null);
         }
 
         /** 新做出來的技能：2 個空的輔助孔。 */
@@ -72,22 +97,39 @@ public final class SkillLoadout {
             return index >= 0 && index < MAX_SOCKETS ? supports.get(index) : "";
         }
 
+        /** 2026-10-18：第 index 個輔助孔的輔助有沒有共鳴（不佔專屬名額）；空孔或超出範圍回傳 false。 */
+        public boolean resonant(final int index) {
+            return index >= 0 && index < MAX_SOCKETS && resonant.get(index);
+        }
+
         public Entry withLevel(final int newLevel) {
-            return new Entry(skillId, newLevel, sockets, supports);
+            return new Entry(skillId, newLevel, sockets, supports, resonant);
         }
 
         public Entry withSockets(final int newSockets) {
-            return new Entry(skillId, level, newSockets, supports);
+            return new Entry(skillId, level, newSockets, supports, resonant);
         }
 
-        /** 換掉一個輔助孔的內容（null 或空字串 = 拿掉）。 */
+        /** 換掉一個輔助孔的內容（null 或空字串 = 拿掉）；沒有共鳴。 */
         public Entry withSupport(final int index, final String supportId) {
+            return withSupport(index, supportId, false);
+        }
+
+        /** 2026-10-18：換掉一個輔助孔的內容（null 或空字串 = 拿掉），並記這顆輔助有沒有共鳴。 */
+        public Entry withSupport(final int index, final String supportId, final boolean isResonant) {
             if (index < 0 || index >= sockets) {
                 throw new IllegalArgumentException("輔助孔超出範圍：" + index);
             }
             final List<String> list = new ArrayList<>(supports);
+            final List<Boolean> marks = new ArrayList<>(resonant);
             list.set(index, supportId == null ? "" : supportId);
-            return new Entry(skillId, level, sockets, list);
+            marks.set(index, isResonant);
+            return new Entry(skillId, level, sockets, list, marks);
+        }
+
+        /** 2026-10-18：只改一孔的共鳴旗標（孔裡要有輔助）。 */
+        public Entry withResonant(final int index, final boolean isResonant) {
+            return withSupport(index, support(index), isResonant);
         }
 
         /** 第一個空的輔助孔；沒有回傳 -1。 */
@@ -115,9 +157,19 @@ public final class SkillLoadout {
             return supportIds().contains(supportId);
         }
 
-        /** 存檔用的文字：「孔數:輔助1,輔助2,…」，空孔留空，例如 3:faster_attacks,,pierce。 */
+        /** 存檔用的文字：「孔數:輔助1,輔助2,…」，空孔留空，共鳴的代號後面接 ~，例如 3:faster_attacks,,pierce~。 */
         public String encodeSupports() {
-            return sockets + ":" + String.join(",", supports.subList(0, sockets));
+            final StringBuilder text = new StringBuilder().append(sockets).append(':');
+            for (int i = 0; i < sockets; i++) {
+                if (i > 0) {
+                    text.append(',');
+                }
+                text.append(supports.get(i));
+                if (resonant.get(i) && !supports.get(i).isEmpty()) {
+                    text.append(RESONANT_SUFFIX); // 2026-10-18：共鳴旗標
+                }
+            }
+            return text.toString();
         }
 
         /** 讀存檔；壞掉的文字當成 2 個空孔。 */

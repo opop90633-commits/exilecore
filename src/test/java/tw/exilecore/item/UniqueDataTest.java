@@ -39,7 +39,7 @@ class UniqueDataTest {
     /** Tags 裡所有的標籤。 */
     static Set<String> tags;
     /** 地圖事件的來源（map_events.yml）。 */
-    static final Set<String> EVENT_SOURCES = Set.of("shrine", "strongbox", "breach", "exile", "ritual", "delirium");
+    static final Set<String> EVENT_SOURCES = Set.of("shrine", "strongbox", "breach", "exile", "ritual", "delirium", "abyss"); // 2026-10-18：＋深淵裂縫
     /** 其他專屬的來源（2026-10）：劫盜的大金庫、開服活動的世界 Boss（world_events.yml 直接列傳奇代號）。 */
     static final Set<String> OTHER_SOURCES = Set.of("heist", "world_boss", "abyss_whale");
     /** 地圖代號（具名 Boss 的來源）。 */
@@ -111,7 +111,7 @@ class UniqueDataTest {
     void everyUniqueLoadsWithValidStatsTagsAndSources() {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
-        assertEquals(127, repository.uniques().size(),
+        assertEquals(127 + 21 + 5 + 2, repository.uniques().size(), // 2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件、淵鯨再 2 件
                 "終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 41（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰；2026-10-17 ＋棘壘） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘） + 星骸之海的淵鯨 3 + 只能賭的 1（2026-10-17 踏骸之履）");
         final Set<String> names = new HashSet<>();
         for (final UniqueItem unique : repository.uniques()) {
@@ -187,7 +187,7 @@ class UniqueDataTest {
                 assertFalse(unique.droppedBy("chance") || unique.droppedBy("gamble") || unique.droppedBy("map_boss"), unique.id());
             }
         }
-        // 每種地圖事件各五件（2026-10 擴充兩次，各多兩件）；每個極境各一件，而且物品等級 80 起
+        // 每種地圖事件各五件（2026-10 擴充兩次，各多兩件；2026-10-18 深淵裂縫也五件）；每個極境各一件，而且物品等級 80 起
         for (final String event : EVENT_SOURCES) {
             assertEquals(5, repository.uniquesFor(event, 84).size(), event + " 的專屬傳奇");
             assertTrue(repository.uniquesFor(event, 59).isEmpty(), event + "：物品等級 60 起");
@@ -204,7 +204,7 @@ class UniqueDataTest {
             assertEquals(Set.of("awakener"), Set.copyOf(unique.sources()), unique.id());
         }
         // 2026-10：星骸之海的淵鯨（比照巔峰）三件，物品等級 85 起，只有淵鯨會掉
-        assertEquals(Set.of("abyss_echo", "tidewhisper_bow", "tide_devourer"), ids(repository.uniquesFor("abyss_whale", 92)));
+        assertEquals(Set.of("abyss_echo", "tidewhisper_bow", "tide_devourer", "undertow_coil", "whalesong_pearl"), ids(repository.uniquesFor("abyss_whale", 92))); // 2026-10-18：＋暗流束帶、鯨歌珠
         assertTrue(repository.uniquesFor("abyss_whale", 84).isEmpty());
     }
 
