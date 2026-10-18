@@ -86,13 +86,13 @@ class EventPinnacleContentTest {
         assertTrue(repository.uniquesFor("abyss", 59).isEmpty(), "深淵裂縫：物品等級 60 起");
     }
 
-    /** 每隻的招式組：8–10 招＋1 個場地危害，特殊招式躲得掉，前搖短的一下打不死（照 BossBurstTest 的算法，傷害 2.9、第三階段 ×1.3×1.4）。 */
+    /** 每隻的招式組：8–10 招＋1 個場地危害，特殊招式躲得掉，前搖短的一下打不死（照 BossBurstTest 的算法，傷害 3.2、第三階段 ×1.4×1.55）。 */
     @Test
     void eventBossKitsAreEscapableAndCannotOneShot() {
         final BossSkillConfig bosses = skills.bossSkills();
         // 等級 87（T16＋3）普通怪一下 9.19% 生命；Boss 一下 = 傳奇倍率 2 × damage 2.9 × 這個
-        final double hit = 2.0 * 2.9 * 0.091875;
-        final double more = 1.3 * 1.4;
+        final double hit = 2.0 * 3.2 * 0.091875; // 2026-10-18：Boss 傷害 2.9 → 3.2
+        final double more = 1.4 * 1.55; // 2026-10-18：第二、三階段更多 40%、55%
         for (final Map.Entry<String, String> entry : BOSSES.entrySet()) {
             final String prefix = entry.getValue();
             final List<BossSkill> kit = new ArrayList<>();
@@ -179,8 +179,8 @@ class EventPinnacleContentTest {
             final MapConfig.Boss boss = map.boss();
             assertTrue(boss.named(), id);
             assertEquals(3, boss.phases().size(), id);
-            assertTrue(boss.life() >= 50 && boss.life() <= 55, id + "：巔峰級生命");
-            assertTrue(boss.damage() >= 2.8 && boss.damage() <= 3.0, id + "：巔峰級傷害");
+            assertTrue(boss.life() >= 50 && boss.life() <= 61, id + "：巔峰級生命（2026-10-18 提高難度後 55–60.5）");
+            assertTrue(boss.damage() >= 2.8 && boss.damage() <= 3.3, id + "：巔峰級傷害（2026-10-18 提高到 3.2）");
             assertNotNull(boss.enrage(), id);
             assertEquals(1, boss.hazards().size(), id);
             final List<String> problems = new ArrayList<>();

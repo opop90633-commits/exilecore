@@ -2939,7 +2939,7 @@ skills:
     kind: slam
     damage: 2.0
     type: fire
-    cooldown: 11
+    cooldown: 9   # 2026-10-18：難度提高（原 11）
     range: 26
     telegraph: 1.0
     delay: 0.8
@@ -2955,7 +2955,7 @@ skills:
     kind: ring
     damage: 1.8
     type: lightning
-    cooldown: 11
+    cooldown: 9   # 2026-10-18：難度提高（原 11）
     range: 22
     telegraph: 1.5
     radius: 2
@@ -2973,7 +2973,7 @@ skills:
     kind: beam
     damage: 1.3
     type: fire
-    cooldown: 13
+    cooldown: 11   # 2026-10-18：難度提高（原 13）
     range: 18
     telegraph: 1.6
     count: 2
@@ -2989,7 +2989,7 @@ skills:
     kind: nova
     damage: 2.2
     type: lightning
-    cooldown: 12
+    cooldown: 10   # 2026-10-18：難度提高（原 12）
     range: 9
     telegraph: 1.8
     radius: 9
@@ -3001,7 +3001,7 @@ skills:
     hint: "祂吃掉了神龕的增益：受到的傷害增加"
     kind: curse
     type: fire
-    cooldown: 18
+    cooldown: 15   # 2026-10-18：難度提高（原 18）
     range: 30
     telegraph: 1.0
     radius: 30
@@ -3015,7 +3015,7 @@ skills:
     count: 3
     summon_max: 6
     duration: 25
-    cooldown: 18
+    cooldown: 15   # 2026-10-18：難度提高（原 18）
     telegraph: 1.0
     shout: "「守衛，護住神龕。」"
   shrine_dawn:
@@ -3023,7 +3023,7 @@ skills:
     kind: sanctuary
     damage: 4.5
     type: fire
-    cooldown: 40
+    cooldown: 34   # 2026-10-18：難度提高（原 40）
     range: 30
     telegraph: 3.0
     radius: 30
@@ -3038,7 +3038,7 @@ skills:
     kind: volley
     damage: 1.6
     type: fire
-    cooldown: 9
+    cooldown: 8   # 2026-10-18：難度提高（原 9）
     range: 26
     telegraph: 1.2
     count: 14
@@ -3054,7 +3054,7 @@ skills:
     kind: beam
     damage: 1.4
     type: lightning
-    cooldown: 12
+    cooldown: 10   # 2026-10-18：難度提高（原 12）
     range: 18
     telegraph: 1.6
     count: 3
@@ -3085,7 +3085,7 @@ skills:
     damage: 0.9
     type: physical
     convert: { fire: 0.5 }
-    cooldown: 12
+    cooldown: 10   # 2026-10-18：難度提高（原 12）
     range: 26
     telegraph: 1.2
     radius: 1.8
@@ -3103,7 +3103,7 @@ skills:
     damage: 3.0
     type: physical
     convert: { fire: 0.3 }
-    cooldown: 14
+    cooldown: 12   # 2026-10-18：難度提高（原 14）
     range: 15
     telegraph: 1.2
     radius: 15
@@ -3118,7 +3118,7 @@ skills:
     damage: 2.0
     type: physical
     convert: { fire: 0.6 }
-    cooldown: 10
+    cooldown: 8   # 2026-10-18：難度提高（原 10）
     range: 28
     telegraph: 0.8
     delay: 1.0
@@ -3134,7 +3134,7 @@ skills:
     kind: cone
     damage: 2.6
     type: physical
-    cooldown: 7
+    cooldown: 6   # 2026-10-18：難度提高（原 7）
     range: 7
     telegraph: 1.5
     angle: 90
@@ -3149,7 +3149,7 @@ skills:
     damage: 2.4
     type: physical
     convert: { fire: 0.4 }
-    cooldown: 16
+    cooldown: 14   # 2026-10-18：難度提高（原 16）
     range: 26
     telegraph: 1.4
     delay: 1.0
@@ -3167,7 +3167,7 @@ skills:
     count: 6
     summon_max: 12
     duration: 20
-    cooldown: 18
+    cooldown: 15   # 2026-10-18：難度提高（原 18）
     telegraph: 1.0
     shout: "（好幾個小匣子從牠身上掉下來，長出腳）"
   box_vault_collapse:
@@ -3177,7 +3177,7 @@ skills:
     damage: 1.0
     type: physical
     convert: { fire: 0.5 }
-    cooldown: 300
+    cooldown: 255   # 2026-10-18：難度提高（原 300）
     range: 30
     telegraph: 1.5
     reach: 20
@@ -3192,7 +3192,7 @@ skills:
     damage: 1.5
     type: physical
     convert: { fire: 0.5 }
-    cooldown: 16
+    cooldown: 14   # 2026-10-18：難度提高（原 16）
     range: 20
     telegraph: 1.2
     count: 8
@@ -3209,7 +3209,7 @@ skills:
     damage: 2.6
     type: physical
     convert: { fire: 0.5 }
-    cooldown: 14
+    cooldown: 12   # 2026-10-18：難度提高（原 14）
     range: 10
     telegraph: 2.0
     radius: 10
@@ -3237,7 +3237,7 @@ skills:
     kind: ring
     damage: 1.7
     type: lightning
-    cooldown: 11
+    cooldown: 9   # 2026-10-18：難度提高（原 11）
     range: 22
     telegraph: 1.5
     radius: 2
@@ -3255,7 +3255,7 @@ skills:
     kind: beam
     damage: 1.0
     type: chaos
-    cooldown: 13
+    cooldown: 11   # 2026-10-18：難度提高（原 13）
     range: 18
     telegraph: 1.6
     count: 4
@@ -3272,7 +3272,7 @@ skills:
     count: 3
     summon_max: 6
     duration: 25
-    cooldown: 16
+    cooldown: 14   # 2026-10-18：難度提高（原 16）
     telegraph: 1.0
     shout: "（裂縫的另一邊，有東西爬了過來）"
   breach_hand:
@@ -3282,7 +3282,7 @@ skills:
     damage: 2.2
     type: physical
     convert: { lightning: 0.5, chaos: 0.25 }
-    cooldown: 10
+    cooldown: 8   # 2026-10-18：難度提高（原 10）
     range: 28
     telegraph: 1.0
     delay: 0.7
@@ -3298,7 +3298,7 @@ skills:
     kind: blink
     damage: 2.2
     type: lightning
-    cooldown: 9
+    cooldown: 8   # 2026-10-18：難度提高（原 9）
     range: 36
     telegraph: 1.0
     radius: 3.5
@@ -3310,7 +3310,7 @@ skills:
     kind: orbs
     damage: 1.4
     type: lightning
-    cooldown: 18
+    cooldown: 15   # 2026-10-18：難度提高（原 18）
     range: 26
     telegraph: 1.2
     count: 4
@@ -3325,7 +3325,7 @@ skills:
     kind: arena
     damage: 1.0
     type: lightning
-    cooldown: 300
+    cooldown: 255   # 2026-10-18：難度提高（原 300）
     range: 30
     telegraph: 1.5
     reach: 20
@@ -3337,10 +3337,10 @@ skills:
     name: 穿界齊射
     hint: "一大片裂隙碎片朝你打來：找縫鑽，或往側面跑"
     kind: volley
-    damage: 1.5
+    damage: 1.3   # 2026-10-18：Boss 傷害提高後壓一點（一下不能秒殺參考角色）
     type: physical
     convert: { lightning: 0.5, chaos: 0.25 }
-    cooldown: 9
+    cooldown: 8   # 2026-10-18：難度提高（原 9）
     range: 26
     telegraph: 1.2
     count: 16
@@ -3356,7 +3356,7 @@ skills:
     kind: nova
     damage: 2.6
     type: chaos
-    cooldown: 16
+    cooldown: 14   # 2026-10-18：難度提高（原 16）
     range: 12
     telegraph: 2.3
     radius: 12
@@ -3383,7 +3383,7 @@ skills:
     kind: cone
     damage: 2.8
     type: physical
-    cooldown: 7
+    cooldown: 6   # 2026-10-18：難度提高（原 7）
     range: 8
     telegraph: 1.5
     angle: 100
@@ -3397,7 +3397,7 @@ skills:
     kind: nova
     damage: 1.6
     type: physical
-    cooldown: 10
+    cooldown: 8   # 2026-10-18：難度提高（原 10）
     range: 8
     telegraph: 1.5
     radius: 7
@@ -3411,7 +3411,7 @@ skills:
     damage: 2.0
     type: physical
     convert: { lightning: 0.3 }
-    cooldown: 12
+    cooldown: 10   # 2026-10-18：難度提高（原 12）
     range: 24
     telegraph: 1.5
     count: 3
@@ -3428,7 +3428,7 @@ skills:
     damage: 2.2
     type: physical
     convert: { chaos: 0.3 }
-    cooldown: 9
+    cooldown: 8   # 2026-10-18：難度提高（原 9）
     range: 36
     telegraph: 1.5
     radius: 3
@@ -3439,7 +3439,7 @@ skills:
     hint: "牠吼了一聲：受到的傷害增加，先拉開距離"
     kind: curse
     type: physical
-    cooldown: 18
+    cooldown: 15   # 2026-10-18：難度提高（原 18）
     range: 24
     telegraph: 1.0
     radius: 24
@@ -3453,7 +3453,7 @@ skills:
     damage: 0.8
     type: physical
     convert: { fire: 0.5 }
-    cooldown: 13
+    cooldown: 11   # 2026-10-18：難度提高（原 13）
     range: 26
     telegraph: 1.2
     radius: 2
@@ -3471,7 +3471,7 @@ skills:
     damage: 2.6
     type: physical
     convert: { lightning: 0.5 }
-    cooldown: 12
+    cooldown: 10   # 2026-10-18：難度提高（原 12）
     range: 30
     telegraph: 1.5
     count: 1
@@ -3484,7 +3484,7 @@ skills:
     kind: slam
     damage: 2.0
     type: physical
-    cooldown: 15
+    cooldown: 13   # 2026-10-18：難度提高（原 15）
     range: 20
     telegraph: 0.8
     delay: 0.8
@@ -3501,7 +3501,7 @@ skills:
     damage: 2.8
     type: physical
     convert: { lightning: 0.3 }
-    cooldown: 10
+    cooldown: 8   # 2026-10-18：難度提高（原 10）
     range: 30
     telegraph: 1.5
     speed: 1.3
@@ -3530,7 +3530,7 @@ skills:
     kind: zone
     damage: 0.7
     type: fire
-    cooldown: 20                 # 2026-10-18：審查：圈燒 14 秒／16 秒冷卻幾乎是永久地板，改 8 秒／20 秒
+    cooldown: 17   # 2026-10-18：難度提高（原 20）
     range: 30
     telegraph: 1.2
     radius: 9
@@ -3546,7 +3546,7 @@ skills:
     hint: "你的血被祂獻了出去：受到的傷害增加"
     kind: curse
     type: fire
-    cooldown: 18
+    cooldown: 15   # 2026-10-18：難度提高（原 18）
     range: 30
     telegraph: 1.0
     radius: 30
@@ -3560,7 +3560,7 @@ skills:
     count: 4
     summon_max: 8
     duration: 25
-    cooldown: 16
+    cooldown: 14   # 2026-10-18：難度提高（原 16）
     telegraph: 1.0
     shout: "「獻上來的，起來。」"
   ritual_blood_spears:
@@ -3570,7 +3570,7 @@ skills:
     damage: 1.7
     type: physical
     convert: { fire: 0.5, chaos: 0.25 }
-    cooldown: 9
+    cooldown: 8   # 2026-10-18：難度提高（原 9）
     range: 26
     telegraph: 1.5
     count: 12
@@ -3586,7 +3586,7 @@ skills:
     kind: mark
     damage: 2.4
     type: fire
-    cooldown: 12
+    cooldown: 10   # 2026-10-18：難度提高（原 12）
     range: 30
     telegraph: 1.0
     count: 2
@@ -3599,7 +3599,7 @@ skills:
     kind: slam
     damage: 2.2
     type: fire
-    cooldown: 11
+    cooldown: 9   # 2026-10-18：難度提高（原 11）
     range: 26
     telegraph: 1.0
     delay: 0.8
@@ -3616,7 +3616,7 @@ skills:
     damage: 1.8
     type: physical
     convert: { chaos: 0.5 }
-    cooldown: 20
+    cooldown: 17   # 2026-10-18：難度提高（原 20）
     range: 16
     telegraph: 1.5
     radius: 1.5
@@ -3632,7 +3632,7 @@ skills:
     kind: sanctuary
     damage: 4.5
     type: fire
-    cooldown: 40
+    cooldown: 34   # 2026-10-18：難度提高（原 40）
     range: 30
     telegraph: 3.0
     radius: 30
@@ -3647,7 +3647,7 @@ skills:
     kind: orbs
     damage: 1.4
     type: fire
-    cooldown: 18
+    cooldown: 15   # 2026-10-18：難度提高（原 18）
     range: 26
     telegraph: 1.2
     count: 4
@@ -3675,7 +3675,7 @@ skills:
     kind: zone
     damage: 0.4
     type: cold
-    cooldown: 16
+    cooldown: 14   # 2026-10-18：難度提高（原 16）
     range: 30
     telegraph: 1.0
     radius: 10                   # 2026-10-18：審查：14 格的霧蓋掉大半個場地，縮到 10、緩速 2 秒
@@ -3691,7 +3691,7 @@ skills:
     kind: echoes
     damage: 1.6
     type: cold
-    cooldown: 14
+    cooldown: 12   # 2026-10-18：難度提高（原 14）
     range: 22
     telegraph: 1.2
     count: 5
@@ -3705,10 +3705,10 @@ skills:
     name: 妄念光球
     hint: "幾顆妄念慢慢追著你：帶著跑，別讓它們碰到"
     kind: orbs
-    damage: 1.4
+    damage: 1.16   # 2026-10-18：Boss 傷害提高後壓到一下打不死（原 1.4）
     type: physical
     convert: { chaos: 0.5, cold: 0.5 }
-    cooldown: 16
+    cooldown: 14   # 2026-10-18：難度提高（原 16）
     range: 26
     telegraph: 1.2
     count: 5
@@ -3724,7 +3724,7 @@ skills:
     kind: cone
     damage: 1.6
     type: cold
-    cooldown: 8
+    cooldown: 7   # 2026-10-18：難度提高（原 8）
     range: 10
     telegraph: 1.5
     angle: 80
@@ -3740,7 +3740,7 @@ skills:
     count: 4
     summon_max: 8
     duration: 15
-    cooldown: 16
+    cooldown: 14   # 2026-10-18：難度提高（原 16）
     telegraph: 1.0
     shout: "「你怕的東西，都在這裡。」"
   mist_invert:
@@ -3749,7 +3749,7 @@ skills:
     kind: pull
     damage: 2.8
     type: cold
-    cooldown: 15
+    cooldown: 13   # 2026-10-18：難度提高（原 15）
     range: 14
     telegraph: 1.2
     radius: 14
@@ -3763,7 +3763,7 @@ skills:
     kind: zone
     damage: 0.7
     type: cold
-    cooldown: 22
+    cooldown: 19   # 2026-10-18：難度提高（原 22）
     range: 36
     telegraph: 1.5
     radius: 0.8
@@ -3783,7 +3783,7 @@ skills:
     kind: nova
     damage: 2.6
     type: cold
-    cooldown: 16
+    cooldown: 14   # 2026-10-18：難度提高（原 16）
     range: 13
     telegraph: 2.5
     radius: 13
@@ -3796,7 +3796,7 @@ skills:
     kind: blink
     damage: 2.4
     type: cold
-    cooldown: 9
+    cooldown: 8   # 2026-10-18：難度提高（原 9）
     range: 36
     telegraph: 1.0
     radius: 4
@@ -3823,7 +3823,7 @@ skills:
     damage: 2.4
     type: physical
     convert: { cold: 0.5 }
-    cooldown: 9
+    cooldown: 8   # 2026-10-18：難度提高（原 9）
     range: 30
     telegraph: 1.0
     delay: 0.7
@@ -3838,10 +3838,10 @@ skills:
     name: 骨矛
     hint: "一排骨矛從地底射出來：找縫鑽，或往側面跑"
     kind: volley
-    damage: 1.6
+    damage: 1.46   # 2026-10-18：Boss 傷害提高後壓到一下打不死（原 1.6）
     type: physical
     convert: { cold: 0.5 }
-    cooldown: 8
+    cooldown: 7   # 2026-10-18：難度提高（原 8）
     range: 26
     telegraph: 1.2
     count: 12
@@ -3857,7 +3857,7 @@ skills:
     kind: pull
     damage: 3.0
     type: cold
-    cooldown: 15
+    cooldown: 13   # 2026-10-18：難度提高（原 15）
     range: 14
     telegraph: 1.2
     radius: 14
@@ -3872,7 +3872,7 @@ skills:
     damage: 1.8
     type: physical
     convert: { cold: 0.5 }
-    cooldown: 11
+    cooldown: 9   # 2026-10-18：難度提高（原 11）
     range: 20
     telegraph: 1.5
     radius: 2
@@ -3891,7 +3891,7 @@ skills:
     count: 5
     summon_max: 10
     duration: 25
-    cooldown: 16
+    cooldown: 14   # 2026-10-18：難度提高（原 16）
     telegraph: 1.0
     shout: "「埋在這裡的，都起來。」"
   abyssal_sinkhole:
@@ -3900,7 +3900,7 @@ skills:
     kind: zone
     damage: 0.6
     type: cold
-    cooldown: 13
+    cooldown: 11   # 2026-10-18：難度提高（原 13）
     range: 30
     telegraph: 1.2
     radius: 3
@@ -3917,7 +3917,7 @@ skills:
     kind: arena
     damage: 1.0
     type: cold
-    cooldown: 300
+    cooldown: 255   # 2026-10-18：難度提高（原 300）
     range: 30
     telegraph: 1.5
     reach: 20
@@ -3931,7 +3931,7 @@ skills:
     kind: orbs
     damage: 1.4
     type: cold
-    cooldown: 18
+    cooldown: 15   # 2026-10-18：難度提高（原 18）
     range: 26
     telegraph: 1.2
     count: 4
@@ -3947,7 +3947,7 @@ skills:
     kind: mark
     damage: 2.4
     type: cold
-    cooldown: 12
+    cooldown: 10   # 2026-10-18：難度提高（原 12）
     range: 30
     telegraph: 1.0
     count: 2

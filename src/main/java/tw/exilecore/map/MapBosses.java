@@ -537,6 +537,9 @@ final class MapBosses {
         }
     }
 
+    /** 2026-10-18：護盾結晶照人數乘，最多算幾個人。 */
+    static final int MAX_SHIELD_PLAYERS = 6;
+
     private void startShield(final MapInstance instance, final LivingEntity boss, final MapConfig.Shield shield) {
         final long now = plugin.getServer().getCurrentTick();
         instance.startShield(shield, now + Math.round(shield.duration() * 20));
@@ -552,8 +555,11 @@ final class MapBosses {
         final double offset = service.random().nextDouble() * Math.PI * 2;
         // 結晶只吃一部分的階級倍率（maps.yml 的 settings.shield_tier_share，預設一半）
         final double tierLife = service.config().shieldLifeMultiplier(tierLife(instance));
-        for (int i = 0; i < shield.count(); i++) {
-            final double angle = offset + Math.PI * 2 * i / shield.count();
+        // 2026-10-18：結晶數量照地圖裡的人數乘（maps.yml 寫的 count 是一個人的份：一人 3 根、兩人 6 根…，最多算 6 人）
+        final int players = Math.min(MAX_SHIELD_PLAYERS, service.playersIn(boss).orElse(1));
+        final int count = Math.max(1, shield.count() * players);
+        for (int i = 0; i < count; i++) {
+            final double angle = offset + Math.PI * 2 * i / count;
             final Location spot = center.clone().add(Math.cos(angle) * ring, 0.3, Math.sin(angle) * ring);
             if (!instance.layout().isFloor(spot.getBlockX() - instance.originX(), spot.getBlockZ() - instance.originZ())) {
                 spot.setX(center.getX() + Math.cos(angle) * Math.min(3, ring));

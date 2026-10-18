@@ -29,6 +29,7 @@ settings:
   empty_close_seconds: 60     # 進入次數用完、裡面也沒人：這麼久之後關閉
   pack_radius: 36             # 玩家走到離怪物群多近時刷出來
   boss_radius: 22             # 玩家走進 Boss 房多近時 Boss 出現
+  # 2026-10-18：護盾結晶（phases 的 shield.count）寫的是「一個人」的數量，實際照地圖裡的人數乘（最多算 6 人）：一人 3 根、兩人 6 根…
   # 一般地圖 Boss（不是終局）的生命照階級再乘（2026-10）：這一階（含）以下 ×1，到 T16 ×max，中間每階等量增加。
   #   伺服器紀錄：T14–T16 的地圖 Boss 中位數 22 秒就倒（T12–T13 約 40 秒），高階加厚一點、低階不動
   # 2026-10：照人均單體 15 萬 DPS 重調：T16 一般地圖 Boss 約 20 秒（原 from 12、max 1.6）
@@ -502,7 +503,7 @@ final:
         name: 星骸甦醒
         message: "「朕的碎片，回到朕身邊！」"
         summon: { type: BLAZE, count: 5 }
-        shield: { count: 4, type: BLAZE, name: 星骸結晶, life: 5, duration: 30, heal: 30 }
+        shield: { count: 3, type: BLAZE, name: 星骸結晶, life: 5, duration: 30, heal: 30 }
       - at: 0.5
         name: 天穹墜落
         message: "「那就再墜落一次吧！」"
@@ -618,7 +619,7 @@ finals:
           message: "「風雪，起。」"
           speed: 0.15
           summon: { type: STRAY, count: 5 }
-          shield: { count: 4, type: STRAY, name: 霜心冰像, life: 5, duration: 30, heal: 30 }
+          shield: { count: 3, type: STRAY, name: 霜心冰像, life: 5, duration: 30, heal: 30 }
         - at: 0.5
           name: 絕對零度
           message: "「全部，停下來。」"
@@ -727,7 +728,7 @@ finals:
           name: 亡者起身
           message: "「起來，再死一次。」"
           summon: { type: ZOMBIE, count: 6 }
-          shield: { count: 4, type: SKELETON, name: 渡魂骨燈, life: 5, duration: 30, heal: 30 }
+          shield: { count: 3, type: SKELETON, name: 渡魂骨燈, life: 5, duration: 30, heal: 30 }
         - at: 0.5
           name: 冥河倒灌
           message: "「河水，淹過來！」"
@@ -837,7 +838,7 @@ finals:
           name: 餘燼復燃
           message: "「燒起來！」"
           summon: { type: MAGMA_CUBE, count: 5 }
-          shield: { count: 4, type: BLAZE, name: 餘燼核心, life: 5, duration: 30, heal: 30 }
+          shield: { count: 3, type: BLAZE, name: 餘燼核心, life: 5, duration: 30, heal: 30 }
         - at: 0.5
           name: 焚天
           message: "「天也燒給你看。」"
@@ -1016,8 +1017,8 @@ finals:
       name: 神龕守望・晨曦
       type: IRON_GOLEM
       named: true
-      life: 52
-      damage: 2.9
+      life: 57.2   # 2026-10-18：難度提高（原 52）
+      damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.4
       mods: [resistant, swift]
       intro: "「神龕的祝福只有一份。你要？先從我手上拿走。」"
@@ -1039,22 +1040,22 @@ finals:
           name: 奪取祝福
           message: "「這一座，歸我。」"
           speed: 0.1
-          shield: { count: 3, type: VINDICATOR, name: 神龕守衛, life: 5, duration: 30, heal: 25 }
+          shield: { count: 3, type: VINDICATOR, name: 神龕守衛, life: 5, duration: 25, heal: 35 }
         - at: 0.5
           name: 聖光灼身
           message: "「光太亮了？那就閉上眼。」"
           speed: 0.1
           stats:
-            - { stat: damage, type: MORE, value: 30 }
+            - { stat: damage, type: MORE, value: 40 }   # 2026-10-18：30 → 40
         - at: 0.25
           name: 晨曦
           message: "「天亮了——這是你最後看到的太陽。」"
           speed: 0.2
           stats:
-            - { stat: damage, type: MORE, value: 40 }
-          shield: { count: 3, type: VINDICATOR, name: 晨曦結晶, life: 6, duration: 25, heal: 35 }
+            - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
+          shield: { count: 3, type: VINDICATOR, name: 晨曦結晶, life: 6, duration: 20, heal: 45 }
       hazards:
-        - { skill: hazard_shrine_ray, every: 9, phase: 1 }
+        - { skill: hazard_shrine_ray, every: 7, phase: 1 }
       enrage: { after: 360, damage: 150, speed: 0.4, message: "「夠了。全部，燒乾淨。」" }
     pinnacle:
       attempts: 2
@@ -1094,8 +1095,8 @@ finals:
       name: 貪匣・千鎖之主
       type: RAVAGER
       named: true
-      life: 55
-      damage: 2.9
+      life: 60.5   # 2026-10-18：難度提高（原 55）
+      damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.3
       mods: [armoured, swift]
       intro: "「你開了那麼多箱子……這次，換箱子開你。」"
@@ -1117,22 +1118,22 @@ finals:
           name: 千鎖開啟
           message: "「第一把鎖，開了。」"
           speed: 0.1
-          shield: { count: 3, type: SILVERFISH, name: 鎖匣, life: 5, duration: 30, heal: 25 }
+          shield: { count: 3, type: SILVERFISH, name: 鎖匣, life: 5, duration: 25, heal: 35 }
         - at: 0.5
           name: 貪慾
           message: "「再給我一點。再一點。」"
           speed: 0.1
           stats:
-            - { stat: damage, type: MORE, value: 30 }
+            - { stat: damage, type: MORE, value: 40 }   # 2026-10-18：30 → 40
         - at: 0.25
           name: 寶庫崩塌
           message: "「全部——都是我的！」"
           speed: 0.2
           stats:
-            - { stat: damage, type: MORE, value: 40 }
-          shield: { count: 3, type: SILVERFISH, name: 千鎖之核, life: 6, duration: 25, heal: 35 }
+            - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
+          shield: { count: 3, type: SILVERFISH, name: 千鎖之核, life: 6, duration: 20, heal: 45 }
       hazards:
-        - { skill: hazard_box_coins, every: 9, phase: 1 }
+        - { skill: hazard_box_coins, every: 7, phase: 1 }
       enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到。這座寶庫，連你一起鎖起來。」" }
     pinnacle:
       attempts: 2
@@ -1172,8 +1173,8 @@ finals:
       name: 裂隙之主・穿界者
       type: ENDERMAN
       named: true
-      life: 50
-      damage: 2.9
+      life: 55   # 2026-10-18：難度提高（原 50）
+      damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.6
       mods: [evasive, swift]
       intro: "「你們關了那麼多裂隙。這一道，關不上。」"
@@ -1195,22 +1196,22 @@ finals:
           name: 裂隙擴大
           message: "「裂縫，再開大一點。」"
           speed: 0.1
-          shield: { count: 3, type: ENDERMITE, name: 裂隙結晶, life: 5, duration: 30, heal: 25 }
+          shield: { count: 3, type: ENDERMITE, name: 裂隙結晶, life: 5, duration: 25, heal: 35 }
         - at: 0.5
           name: 穿界
           message: "「這一邊的空氣……真難聞。」"
           speed: 0.1
           stats:
-            - { stat: damage, type: MORE, value: 30 }
+            - { stat: damage, type: MORE, value: 40 }   # 2026-10-18：30 → 40
         - at: 0.25
           name: 界崩
           message: "「那就兩邊一起碎。」"
           speed: 0.2
           stats:
-            - { stat: damage, type: MORE, value: 40 }
-          shield: { count: 3, type: ENDERMITE, name: 界縫之核, life: 6, duration: 25, heal: 35 }
+            - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
+          shield: { count: 3, type: ENDERMITE, name: 界縫之核, life: 6, duration: 20, heal: 45 }
       hazards:
-        - { skill: hazard_breach_rift, every: 8, phase: 1 }
+        - { skill: hazard_breach_rift, every: 6, phase: 1 }
       enrage: { after: 360, damage: 150, speed: 0.4, message: "「夠久了。整片空間，一起撕開。」" }
     pinnacle:
       attempts: 2
@@ -1250,8 +1251,8 @@ finals:
       name: 流寇之王・無名者
       type: VINDICATOR
       named: true
-      life: 50
-      damage: 2.9
+      life: 55   # 2026-10-18：難度提高（原 50）
+      damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.3
       mods: [deadly, swift]
       intro: "「殺了那麼多流寇，該學會幾招了吧？來，讓我看看。」"
@@ -1273,22 +1274,22 @@ finals:
           name: 流寇圍觀
           message: "「別插手，這是我的決鬥。」"
           speed: 0.1
-          shield: { count: 3, type: PILLAGER, name: 流寇護衛, life: 5, duration: 30, heal: 25 }
+          shield: { count: 3, type: PILLAGER, name: 流寇護衛, life: 5, duration: 25, heal: 35 }
         - at: 0.5
           name: 認真了
           message: "「不錯。那我也認真一點。」"
           speed: 0.1
           stats:
-            - { stat: damage, type: MORE, value: 30 }
+            - { stat: damage, type: MORE, value: 40 }   # 2026-10-18：30 → 40
         - at: 0.25
           name: 最後一招
           message: "「最後一招……是你教我的。」"
           speed: 0.2
           stats:
-            - { stat: damage, type: MORE, value: 40 }
-          shield: { count: 3, type: PILLAGER, name: 無名之誓, life: 6, duration: 25, heal: 35 }
+            - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
+          shield: { count: 3, type: PILLAGER, name: 無名之誓, life: 6, duration: 20, heal: 45 }
       hazards:
-        - { skill: hazard_exile_knives, every: 8, phase: 1 }
+        - { skill: hazard_exile_knives, every: 6, phase: 1 }
       enrage: { after: 360, damage: 150, speed: 0.4, message: "「拖太久了。結束吧。」" }
     pinnacle:
       attempts: 2
@@ -1328,8 +1329,8 @@ finals:
       name: 祭司・血契
       type: EVOKER
       named: true
-      life: 52
-      damage: 2.9
+      life: 57.2   # 2026-10-18：難度提高（原 52）
+      damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.5
       mods: [resistant, swift]
       intro: "「你在我的祭壇上拿了那麼多東西。今天，換你當貢品。」"
@@ -1351,22 +1352,22 @@ finals:
           name: 第一座祭壇
           message: "「第一座祭壇，點燃。」"
           speed: 0.1
-          shield: { count: 3, type: HUSK, name: 祭壇燭台, life: 5, duration: 30, heal: 25 }
+          shield: { count: 3, type: HUSK, name: 祭壇燭台, life: 5, duration: 25, heal: 35 }
         - at: 0.5
           name: 第二座祭壇
           message: "「血還不夠。再多一點。」"
           speed: 0.1
           stats:
-            - { stat: damage, type: MORE, value: 30 }
+            - { stat: damage, type: MORE, value: 40 }   # 2026-10-18：30 → 40
         - at: 0.25
           name: 第三座祭壇
           message: "「三座都亮了——契約，完成。」"
           speed: 0.2
           stats:
-            - { stat: damage, type: MORE, value: 40 }
-          shield: { count: 3, type: HUSK, name: 血契之核, life: 6, duration: 25, heal: 35 }
+            - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
+          shield: { count: 3, type: HUSK, name: 血契之核, life: 6, duration: 20, heal: 45 }
       hazards:
-        - { skill: hazard_ritual_blood, every: 8, phase: 1 }
+        - { skill: hazard_ritual_blood, every: 6, phase: 1 }
       enrage: { after: 360, damage: 150, speed: 0.4, message: "「祭壇等不下去了。全部，燒。」" }
     pinnacle:
       attempts: 2
@@ -1406,8 +1407,8 @@ finals:
       name: 幻霧之鏡・妄念
       type: STRAY
       named: true
-      life: 50
-      damage: 2.9
+      life: 55   # 2026-10-18：難度提高（原 50）
+      damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.5
       mods: [evasive, swift]
       intro: "「你在霧裡拿走的每一樣東西，都是從我這裡拿的。還回來。」"
@@ -1429,22 +1430,22 @@ finals:
           name: 霧更濃了
           message: "「看不見了吧？我看得很清楚。」"
           speed: 0.1
-          shield: { count: 3, type: VEX, name: 鏡像碎片, life: 5, duration: 30, heal: 25 }
+          shield: { count: 3, type: VEX, name: 鏡像碎片, life: 5, duration: 25, heal: 35 }
         - at: 0.5
           name: 妄念
           message: "「你以為那是真的？」"
           speed: 0.1
           stats:
-            - { stat: damage, type: MORE, value: 30 }
+            - { stat: damage, type: MORE, value: 40 }   # 2026-10-18：30 → 40
         - at: 0.25
           name: 鏡裡的你
           message: "「現在——鏡子裡的才是真的。」"
           speed: 0.2
           stats:
-            - { stat: damage, type: MORE, value: 40 }
-          shield: { count: 3, type: VEX, name: 妄念之核, life: 6, duration: 25, heal: 35 }
+            - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
+          shield: { count: 3, type: VEX, name: 妄念之核, life: 6, duration: 20, heal: 45 }
       hazards:
-        - { skill: hazard_mist_orb, every: 9, phase: 1 }
+        - { skill: hazard_mist_orb, every: 7, phase: 1 }
       enrage: { after: 360, damage: 150, speed: 0.4, message: "「霧要散了。在那之前，你得留下來。」" }
     pinnacle:
       attempts: 2
@@ -1484,8 +1485,8 @@ finals:
       name: 淵底之王・骨潮
       type: WITHER_SKELETON
       named: true
-      life: 55
-      damage: 2.9
+      life: 60.5   # 2026-10-18：難度提高（原 55）
+      damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.7
       mods: [armoured, resistant]
       intro: "「你們沿著裂縫一路走下來……那就別想再走上去。」"
@@ -1507,22 +1508,22 @@ finals:
           name: 骨潮漲起
           message: "「潮，漲了。」"
           speed: 0.1
-          shield: { count: 3, type: SKELETON, name: 骨柱, life: 5, duration: 30, heal: 25 }
+          shield: { count: 3, type: SKELETON, name: 骨柱, life: 5, duration: 25, heal: 35 }
         - at: 0.5
           name: 淵底
           message: "「再下去一點。這裡還不是底。」"
           speed: 0.1
           stats:
-            - { stat: damage, type: MORE, value: 30 }
+            - { stat: damage, type: MORE, value: 40 }   # 2026-10-18：30 → 40
         - at: 0.25
           name: 骨潮滅頂
           message: "「整片地底——都是我的骨頭。」"
           speed: 0.2
           stats:
-            - { stat: damage, type: MORE, value: 40 }
-          shield: { count: 3, type: SKELETON, name: 淵底之核, life: 6, duration: 25, heal: 35 }
+            - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
+          shield: { count: 3, type: SKELETON, name: 淵底之核, life: 6, duration: 20, heal: 45 }
       hazards:
-        - { skill: hazard_abyssal_spike, every: 8, phase: 1 }
+        - { skill: hazard_abyssal_spike, every: 6, phase: 1 }
       enrage: { after: 360, damage: 150, speed: 0.4, message: "「夠了。骨潮，滅頂。」" }
     pinnacle:
       attempts: 2

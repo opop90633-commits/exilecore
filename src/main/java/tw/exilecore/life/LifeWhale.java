@@ -620,8 +620,10 @@ final class LifeWhale {
         final double tierLife = plugin.maps() == null ? 1
                 : plugin.maps().config().shieldLifeMultiplier(plugin.maps().config().finalLifeMultiplier(plugin.maps().config().tiers().max()));
         final double offset = random.nextDouble() * Math.PI * 2;
-        for (int i = 0; i < phase.shieldCount(); i++) {
-            final double angle = offset + Math.PI * 2 * i / phase.shieldCount();
+        // 2026-10-18：潮核數量照場上的人數乘（life.yml 寫的 count 是一個人的份，最多算 6 人）
+        final int count = Math.max(1, phase.shieldCount() * Math.max(1, Math.min(6, onArena(fight).size())));
+        for (int i = 0; i < count; i++) {
+            final double angle = offset + Math.PI * 2 * i / count;
             final Location spot = new Location(world(), fight.cx + 0.5 + Math.cos(angle) * 8, config().seaLevel() + 2, fight.cz + 0.5 + Math.sin(angle) * 8);
             final LivingEntity core = spawn("SHULKER", spot);
             if (core == null) {
