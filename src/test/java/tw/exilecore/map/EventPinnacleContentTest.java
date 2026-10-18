@@ -102,7 +102,7 @@ class EventPinnacleContentTest {
                     }
                 }
             }
-            assertTrue(kit.size() >= 9 && kit.size() <= 11, entry.getKey() + "：8–10 招＋1 個場地危害，實際 " + kit.size());
+            assertTrue(kit.size() >= 12 && kit.size() <= 14, entry.getKey() + "：11–13 招（含走廊的牆）＋1 個場地危害，實際 " + kit.size()); // 2026-10-18 第二批：每隻多 3 招
             int hazards = 0;
             int special = 0;
             for (final BossSkill skill : kit) {
