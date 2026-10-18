@@ -423,6 +423,10 @@ whale:
     - { id: abyss_breach, phase: 1 }      # 2026-10-18：新招
     - { id: abyss_whalefall, phase: 2 }   # 2026-10-18：新招
     - { id: abyss_tide_walls, phase: 2 }  # 2026-10-18：新招
+    - abyss_maelstrom                     # 2026-10-18：獨有招（螺旋潮柱）
+    - { id: abyss_tail_slap, phase: 1 }   # 2026-10-18：獨有招（一直線拍浪）
+    - { id: abyss_tide_cage, phase: 1 }   # 2026-10-18：獨有招（潮籠）
+    - { id: abyss_tsunami, phase: 2, with: [abyss_bubbles] }   # 2026-10-18：獨有招（海嘯，帶著潮泡一起來）
   hazards:
     - { skill: hazard_abyss_splash, every: 6, phase: 1 }   # 2026-10-18：9 → 6
   phases:

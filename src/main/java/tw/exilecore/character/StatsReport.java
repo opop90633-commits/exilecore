@@ -45,117 +45,152 @@ public final class StatsReport {
 
     // ---- 區塊（角色面板的物品說明；/stats 也用其中一部分） ----
 
-    /** 物品掉落數量、稀有度（2026-10）：裝備、稱號、個人加倍藥……加上全服加倍的總數。沒有角色是空的。 */
+    /**
+     * 打怪經驗、怪物掉落金幣、物品掉落數量、稀有度的總數（2026-10；2026-10-18：上面只寫總數，怎麼來的寫在「加倍詳細」）。沒有角色是空的。
+     */
     public static List<String> drops(final ExileCore plugin, final Player player) {
         final List<String> lines = new ArrayList<>();
         if (plugin.players().get(player).character() == null) {
             return lines;
         }
-        final StatSheet sheet = plugin.players().sheet(player);
-        // 2026-10：合併成一個總數（自己的＋全服加倍，實際就是加起來算），全服加倍開著時括號寫出含多少
-        final double ownQuantity = sheet.increased(StatKeys.DROP_QUANTITY, Set.of()) * 100;
-        final double ownRarity = sheet.increased(StatKeys.DROP_RARITY, Set.of()) * 100;
-        // 2026-10-18：全服的部分用跟掉落一樣的總數（drops.yml 的全服加成＋贊助的全服加倍＋在線人數加成），以前只算贊助的全服加倍
-        final boolean hasDrops = plugin.monsterModule() != null && plugin.monsterModule().drops() != null;
-        final double serverQuantity = (hasDrops ? plugin.monsterModule().drops().serverQuantity() : tw.exilecore.sponsor.Boosts.quantity()) * 100;
-        final double serverRarity = (hasDrops ? plugin.monsterModule().drops().serverRarity() : tw.exilecore.sponsor.Boosts.rarity()) * 100;
-        // 2026-10-16：個人加倍藥（在屬性表裡，已經算在自己的裡面）也寫出含多少
-        double personalQuantity = 0;
-        double personalRarity = 0;
-        if (plugin.sponsors() != null) {
-            for (final tw.exilecore.sponsor.SponsorConfig.BoostType type : plugin.sponsors().personalBoosts(player)) {
-                personalQuantity += type.quantity() * 100;
-                personalRarity += type.rarity() * 100;
-            }
-        }
-        lines.add(String.format(Locale.ROOT, "<gray>物品掉落數量 <white>%+.0f%%%s" + SEP + "<gray>物品稀有度 <white>%+.0f%%%s",
-                ownQuantity + serverQuantity, included(serverQuantity, personalQuantity),
-                ownRarity + serverRarity, included(serverRarity, personalRarity)));
-        // 2026-10-18：打怪經驗（全部加起來的結果；括號寫含個人加倍多少），放在怪物掉落金幣前面
-        final double experience = experienceMultiplier(plugin, player);
-        if (Math.abs(experience - 1) > 1e-9) {
-            final double personalExperience = plugin.sponsors() == null ? 0
-                    : plugin.sponsors().personalExperience(player) * plugin.players().config().experienceBonus() * 100;
-            lines.add("<gray>打怪經驗 <white>" + percentText(experience) + personalNote(personalExperience));
-        }
-        // 2026-10-18：怪物掉的金幣：全服＋累積贊助＋稱號等＋個人加倍藥，全部加起來（跟 MonsterListener 的算法一樣；物品數量不影響金幣）
-        final double serverGold = hasDrops ? plugin.monsterModule().drops().serverGold() : 1;
-        final double personalGold = plugin.sponsors() == null ? 0 : plugin.sponsors().personalGold(player) * serverGold;
-        final double goldMultiplier = serverGold + (plugin.sponsors() == null ? 0 : plugin.sponsors().goldBonus(player))
-                + sheet.increased(StatKeys.GOLD_FIND, Set.of()) + personalGold;
-        if (Math.abs(goldMultiplier - 1) > 1e-9) {
-            lines.add("<gray>怪物掉落金幣 <white>" + percentText(goldMultiplier) + personalNote(personalGold * 100));
-        }
+        final Bonuses b = bonuses(plugin, player);
+        lines.add("<gray>打怪經驗 <white>" + signed(b.total(b.experience)) + SEP + "<gray>怪物掉落金幣 <white>" + signed(b.total(b.gold)));
+        lines.add("<gray>物品掉落數量 <white>" + signed(b.total(b.quantity)) + SEP + "<gray>物品稀有度 <white>" + signed(b.total(b.rarity)));
         return lines;
     }
 
+    /** 2026-10-18：四種加成各自的來源（名稱 → 多少 %），加起來就是總數（跟 KillCredit、MonsterListener、掉落的算法一樣）。 */
+    private record Bonuses(java.util.LinkedHashMap<String, Double> experience, java.util.LinkedHashMap<String, Double> gold,
+                           java.util.LinkedHashMap<String, Double> quantity, java.util.LinkedHashMap<String, Double> rarity) {
+        double total(final java.util.Map<String, Double> parts) {
+            double sum = 0;
+            for (final double value : parts.values()) {
+                sum += value;
+            }
+            return sum;
+        }
+    }
+
+    private static Bonuses bonuses(final ExileCore plugin, final Player player) {
+        final StatSheet sheet = plugin.players().sheet(player);
+        final var sponsors = plugin.sponsors();
+        final boolean hasDrops = plugin.monsterModule() != null && plugin.monsterModule().drops() != null;
+        final var drops = hasDrops ? plugin.monsterModule().drops() : null;
+        // 擁有的稱號（功勳商店、限定）給的
+        final java.util.Map<String, Double> titleParts = new java.util.HashMap<>();
+        if (plugin.bounties() != null) {
+            for (final tw.exilecore.stats.Modifier modifier : plugin.bounties().titleModifiers(player)) {
+                if (modifier.type() == tw.exilecore.stats.ModType.INCREASED && modifier.tags().isEmpty()) {
+                    titleParts.merge(modifier.stat(), modifier.value(), Double::sum);
+                }
+            }
+        }
+        // 經驗：全服（config.yml＋全服加倍＋在線）＋累積贊助＋燃星者＋稱號等＋個人加倍
+        final java.util.LinkedHashMap<String, Double> experience = new java.util.LinkedHashMap<>();
+        final double server = plugin.players().config().experienceBonus();
+        put(experience, "全服設定", (plugin.players().config().baseExperienceBonus() - 1) * 100);
+        put(experience, "全服加倍", (tw.exilecore.sponsor.Boosts.experience() - 1) * 100);
+        put(experience, "在線加成", (OnlineBonus.experience() - 1) * 100);
+        put(experience, "全服下限", ((server - 1) * 100) - sum(experience)); // 設定太低時有下限
+        // 2026-10-18：累積贊助、燃星者也是稱號，跟功勳商店的稱號合成一項
+        put(experience, "稱號", sponsors == null ? 0 : sponsors.experienceBonus(player) * 100);
+        if (plugin.ascendancy() != null) {
+            put(experience, "稱號", plugin.ascendancy().race().experienceBonus(player) * 100);
+        }
+        splitSheet(experience, sheet.increased(StatKeys.EXPERIENCE_GAIN, Set.of()), titleParts.getOrDefault(StatKeys.EXPERIENCE_GAIN, 0.0));
+        put(experience, "個人加倍", sponsors == null ? 0 : sponsors.personalExperience(player) * server * 100);
+        // 金幣：全服（drops.yml＋全服加倍＋在線）＋累積贊助＋稱號等＋個人加倍（物品數量不影響金幣）
+        final java.util.LinkedHashMap<String, Double> gold = new java.util.LinkedHashMap<>();
+        final double serverGold = hasDrops ? drops.serverGold() : 1;
+        put(gold, "全服設定", ((hasDrops ? drops.baseServerGold() : 1) - 1) * 100);
+        put(gold, "全服加倍", (tw.exilecore.sponsor.Boosts.gold() - 1) * 100);
+        put(gold, "在線加成", (OnlineBonus.gold() - 1) * 100);
+        put(gold, "全服下限", ((serverGold - 1) * 100) - sum(gold));
+        put(gold, "稱號", sponsors == null ? 0 : sponsors.goldBonus(player) * 100); // 2026-10-18：累積贊助也算稱號
+        splitSheet(gold, sheet.increased(StatKeys.GOLD_FIND, Set.of()), titleParts.getOrDefault(StatKeys.GOLD_FIND, 0.0));
+        put(gold, "個人加倍", sponsors == null ? 0 : sponsors.personalGold(player) * serverGold * 100);
+        // 物品數量、稀有度：全服（drops.yml＋全服加倍＋在線）＋屬性表（稱號、個人加倍藥、裝備與其他）
+        final java.util.LinkedHashMap<String, Double> quantity = new java.util.LinkedHashMap<>();
+        final java.util.LinkedHashMap<String, Double> rarity = new java.util.LinkedHashMap<>();
+        put(quantity, "全服設定", (hasDrops ? drops.baseServerQuantity() : 0) * 100);
+        put(rarity, "全服設定", (hasDrops ? drops.baseServerRarity() : 0) * 100);
+        put(quantity, "全服加倍", tw.exilecore.sponsor.Boosts.quantity() * 100);
+        put(rarity, "全服加倍", tw.exilecore.sponsor.Boosts.rarity() * 100);
+        put(quantity, "在線加成", OnlineBonus.quantity() * 100);
+        put(rarity, "在線加成", OnlineBonus.rarity() * 100);
+        double personalQuantity = 0;
+        double personalRarity = 0;
+        if (sponsors != null) {
+            for (final tw.exilecore.sponsor.SponsorConfig.BoostType type : sponsors.personalBoosts(player)) {
+                personalQuantity += type.quantity();
+                personalRarity += type.rarity();
+            }
+        }
+        splitSheet(quantity, sheet.increased(StatKeys.DROP_QUANTITY, Set.of()) - personalQuantity, titleParts.getOrDefault(StatKeys.DROP_QUANTITY, 0.0));
+        splitSheet(rarity, sheet.increased(StatKeys.DROP_RARITY, Set.of()) - personalRarity, titleParts.getOrDefault(StatKeys.DROP_RARITY, 0.0));
+        put(quantity, "個人加倍", personalQuantity * 100);
+        put(rarity, "個人加倍", personalRarity * 100);
+        return new Bonuses(experience, gold, quantity, rarity);
+    }
+
+    /** 屬性表裡的那一份拆成「稱號」與「裝備等」（小數）。 */
+    private static void splitSheet(final java.util.Map<String, Double> parts, final double sheetTotal, final double fromTitles) {
+        put(parts, "稱號", fromTitles * 100);
+        put(parts, "裝備等", (sheetTotal - fromTitles) * 100);
+    }
+
+    private static void put(final java.util.Map<String, Double> parts, final String name, final double percent) {
+        if (Math.abs(percent) > 1e-6) {
+            parts.merge(name, percent, Double::sum);
+        }
+    }
+
+    private static double sum(final java.util.Map<String, Double> parts) {
+        double total = 0;
+        for (final double value : parts.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    /** 「+105%」「-20%」「+0%」。 */
+    private static String signed(final double percent) {
+        return (percent < -1e-9 ? "-" : "+") + number(Math.abs(percent)) + "%";
+    }
+
+    /** 「全服加倍 +100% ＋ 個人加倍 +100%」；都沒有寫「沒有加成」。 */
+    private static String breakdown(final java.util.Map<String, Double> parts) {
+        if (parts.isEmpty()) {
+            return "<dark_gray>沒有加成";
+        }
+        final List<String> out = new ArrayList<>();
+        for (final Map.Entry<String, Double> entry : parts.entrySet()) {
+            out.add("<gray>" + escape(entry.getKey()) + " <white>" + signed(entry.getValue()));
+        }
+        return String.join(" <dark_gray>＋ ", out);
+    }
+
     /**
-     * 稱號給的加成（2026-10-18）：擁有的稱號（不用戴，整個帳號都有）合起來的屬性、累積贊助稱號的經驗／金幣／死亡懲罰、
-     * 燃星者的經驗。都沒有（或沒有角色）是空的。
+     * 加倍詳細（2026-10-18，以前叫「稱號加成」）：打怪經驗、怪物掉落金幣、物品掉落數量、稀有度各是哪些加起來的（加起來就是上面的總數），
+     * 沒有角色是空的（稱號的其他屬性不列）。
      */
     public static List<String> titles(final ExileCore plugin, final Player player) {
         final List<String> lines = new ArrayList<>();
         if (plugin.players().get(player).character() == null) {
             return lines;
         }
-        if (plugin.sponsors() != null) {
-            final tw.exilecore.sponsor.SponsorConfig.Tier tier = plugin.sponsors().config().tierFor(plugin.sponsors().total(player));
-            final double experience = plugin.sponsors().experienceBonus(player) * 100;
-            final double gold = plugin.sponsors().goldBonus(player) * 100;
-            final List<String> parts = new ArrayList<>();
-            if (experience > 0) {
-                parts.add("經驗 +" + number(experience) + "%");
-            }
-            if (gold > 0) {
-                parts.add("金幣 +" + number(gold) + "%");
-            }
-            if (tier != null && tier.deathPenalty() >= 0) {
-                parts.add("死亡扣經驗 " + number(tier.deathPenalty()) + "%");
-            }
-            if (tier != null && !parts.isEmpty()) {
-                lines.add("<gray>" + escape(tier.title()) + "<dark_gray>（累積贊助）<gray>：<white>" + String.join("<gray>、<white>", parts));
-            }
-        }
-        if (plugin.ascendancy() != null) {
-            final double race = plugin.ascendancy().race().experienceBonus(player) * 100;
-            if (race > 0) {
-                lines.add("<gray>" + escape(plugin.ascendancy().race().reachTitleName()) + "<gray>：<white>經驗 +" + number(race) + "%");
-            }
-        }
-        if (plugin.bounties() != null) {
-            for (final String line : tw.exilecore.ascendancy.StatLines.describeAll(plugin.bounties().titleBonus(player))) {
-                lines.add("<white>" + escape(line));
-            }
-        }
-        if (!lines.isEmpty()) {
-            lines.add(0, "<#7fe07f>稱號加成<dark_gray>（擁有就有、不用戴）");
-        }
+        final Bonuses b = bonuses(plugin, player);
+        lines.add("<#7fe07f>加倍詳細<dark_gray>（加起來就是上面的總數）");
+        lines.add("<#ffd27f>打怪經驗 " + signed(b.total(b.experience)) + "<dark_gray>：" + breakdown(b.experience));
+        lines.add("<#ffd27f>怪物掉落金幣 " + signed(b.total(b.gold)) + "<dark_gray>：" + breakdown(b.gold));
+        lines.add("<#ffd27f>物品掉落數量 " + signed(b.total(b.quantity)) + "<dark_gray>：" + breakdown(b.quantity));
+        lines.add("<#ffd27f>物品稀有度 " + signed(b.total(b.rarity)) + "<dark_gray>：" + breakdown(b.rarity));
         return lines;
     }
 
     /** 2026-10-18：5 → 「5」、2.5 → 「2.5」。 */
     private static String number(final double value) {
         return java.math.BigDecimal.valueOf(value).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-    }
-
-    /** 2026-10-18：「（含個人加倍 +100%）」；沒有個人加倍是空的。value 是 %。 */
-    private static String personalNote(final double value) {
-        return value > 1e-6 ? " <#ffd27f>（含個人加倍 +" + number(value) + "%）" : "";
-    }
-
-    /** 「（含全服 +100%、個人加倍 +100%）」；都沒有是空的。 */
-    private static String included(final double server, final double personal) {
-        if (server <= 0 && personal <= 0) {
-            return "";
-        }
-        final List<String> parts = new ArrayList<>();
-        if (server > 0) {
-            parts.add(String.format(Locale.ROOT, "全服 %+.0f%%", server));
-        }
-        if (personal > 0) {
-            parts.add(String.format(Locale.ROOT, "個人加倍 %+.0f%%", personal));
-        }
-        return " <#ffd27f>（含" + String.join("、", parts) + "）";
     }
 
     /**

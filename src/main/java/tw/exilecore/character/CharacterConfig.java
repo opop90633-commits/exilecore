@@ -374,6 +374,11 @@ public final class CharacterConfig {
     public static final double MAX_EXPERIENCE_BONUS = 10;
 
     /** 全服經驗的倍數（打怪、委託的經驗再乘這個；1 = 不加倍）。 */
+    /** 2026-10-18：config.yml 寫的全服經驗倍數（不含全服加倍、在線加成；面板的加倍詳細用）。 */
+    public double baseExperienceBonus() {
+        return experienceBonus;
+    }
+
     public double experienceBonus() {
         // 2026-10：贊助的全服經驗加倍、在線人數加成
         // 2026-10-18：改成加起來（設定 ×2 ＋ 在線 +5% = +105%，以前乘起來變 +110%）

@@ -12,6 +12,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryCreativeEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.ServerListPingEvent;
@@ -185,6 +187,54 @@ public final class AdminModule implements Module, Listener {
         if (maintenanceKicked.remove(event.getPlayer().getUniqueId())) {
             event.quitMessage(null);
         }
+    }
+
+    // 2026-10-18：創造模式拿插件的物品（中鍵複製、從物品欄拖出來）原版不留痕跡：寫一筆操作紀錄（同一個人同一種東西一分鐘記一次）
+    private final java.util.Map<String, Long> creativeLogged = new java.util.HashMap<>();
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onCreative(final InventoryCreativeEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+        final ItemStack stack = event.getCursor();
+        if (stack == null || stack.getType().isAir()) {
+            return;
+        }
+        String id = null;
+        String what = null;
+        if (plugin.currencies() != null) {
+            final var type = plugin.currencies().read(stack);
+            if (type.isPresent()) {
+                id = type.get().id();
+                what = type.get().name() + "（" + id + "）×" + stack.getAmount();
+            }
+        }
+        if (id == null && plugin.items() != null) {
+            final var data = plugin.items().read(stack);
+            if (data.isPresent()) {
+                id = data.get().uuid();
+                what = data.get().name() + "（" + id + "）";
+            }
+        }
+        if (id == null) {
+            return;
+        }
+        final long now = System.currentTimeMillis();
+        final String key = player.getUniqueId() + ":" + id;
+        final Long last = creativeLogged.get(key);
+        if (last != null && now - last < 60_000L) {
+            return;
+        }
+        creativeLogged.put(key, now);
+        creativeLogged.values().removeIf(at -> now - at > 600_000L);
+        final String detail = player.getName() + " 在創造模式拿出或移動 " + what + "（" + player.getWorld().getName() + " "
+                + player.getLocation().getBlockX() + "," + player.getLocation().getBlockY() + "," + player.getLocation().getBlockZ() + "）";
+        plugin.getSLF4JLogger().info("[創造模式] {}", detail);
+        plugin.database().async(connection -> {
+            repository.log(connection, player.getName(), "創造模式物品", detail);
+            return null;
+        });
     }
 
     /** 伺服器列表：維護中。 */

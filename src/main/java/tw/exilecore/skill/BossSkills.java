@@ -137,8 +137,7 @@ public final class BossSkills implements Listener {
     private static final double HEIGHT = 3.0;
     /** 沒目標的怪幾 tick 找一次目標（錯開，不會同一個 tick 一起找）。 */
     private static final int SEARCH_EVERY = 4;
-    /** 齊射地上扇形警示的長度（格；2026-10：30 太大一片，改回 16）。 */
-    private static final double VOLLEY_MARK = 16;
+    // 2026-10-18：齊射地上扇形警示畫到實際射程（reach）；以前固定 16 格，站在 16 格外看不到警示卻會被打到
     /** 撲擊落地到震一下的 tick（0.7 秒：看到腳下變紅、走出去剛好來得及）。 */
     private static final int LAND_TICKS = 14;
     /** 2026-10-17：Boss 用沒有傷害的閃現（Boss 不普攻）：落地後一樣停一下再震一圈，傷害是普通一下的幾倍、半徑至少幾格。 */
@@ -1800,7 +1799,7 @@ public final class BossSkills implements Listener {
                 // 2026-10：警示留在地上直到彈都飛完（換一個代號，finish 收的是前搖那一個）
                 final String flying = boss.getUniqueId() + ":volley:" + now;
                 final Location from = cast.anchor != null ? cast.anchor : boss.getLocation();
-                danger.show(flying, from, DangerZones.sector(from, cast.facing, Math.min(VOLLEY_MARK, skill.reach()), Math.max(10, skill.spread() + 6)),
+                danger.show(flying, from, DangerZones.sector(from, cast.facing, skill.reach(), Math.max(10, skill.spread() + 6)),
                         DangerZones.FLASH);
                 danger.hide(cast.mark);
                 volley(brain, cast, flying);
@@ -1956,7 +1955,7 @@ public final class BossSkills implements Listener {
             case CURSE -> danger.show(cast.mark, feet, DangerZones.disc(feet, skill.radius()), Material.PURPLE_CONCRETE);
             case CONE -> danger.show(cast.mark, feet, DangerZones.sector(feet, cast.facing, skill.length(), skill.angle()), color);
             case CHARGE -> danger.show(cast.mark, feet, DangerZones.strip(feet, cast.facing, skill.reach(), skill.width()), color);
-            case VOLLEY -> danger.show(cast.mark, feet, DangerZones.sector(feet, cast.facing, Math.min(VOLLEY_MARK, skill.reach()), Math.max(10, skill.spread() + 6)), color);
+            case VOLLEY -> danger.show(cast.mark, feet, DangerZones.sector(feet, cast.facing, skill.reach(), Math.max(10, skill.spread() + 6)), color);
             case BEAM -> {
                 for (int i = 0; i < skill.count(); i++) {
                     final double angle = BossGeometry.beamAngle(cast.beamStart, i, skill.count(), 0, cast.beamSign, 0);

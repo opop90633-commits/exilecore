@@ -2843,6 +2843,76 @@ skills:
     at: cross
     slow: 2
     shout: "（牠身邊的海往四個方向裂開）"
+  # 2026-10-18：淵鯨獨有的招（第二批）：深淵渦流（一開始）、鯨尾拍浪與潮籠（第一階段起）、海嘯（第二階段起，帶著潮泡）
+  abyss_maelstrom:
+    name: 深淵渦流
+    hint: "潮柱從牠身邊螺旋轉出去：往旋轉的反方向跑"
+    kind: slam
+    damage: 1.9
+    type: cold
+    cooldown: 16
+    range: 22
+    telegraph: 1.2
+    delay: 0.9
+    radius: 2.6
+    count: 20
+    stagger: 0.08
+    reach: 18
+    at: spiral
+    slow: 2
+    shout: "（淵鯨在原地打轉，海水跟著捲了起來）"
+  abyss_tail_slap:
+    name: 鯨尾拍浪
+    hint: "大浪一直線朝你拍過來：往旁邊閃"
+    kind: slam
+    damage: 2.2
+    type: physical
+    convert: { cold: 0.4 }
+    cooldown: 12
+    range: 26
+    telegraph: 1.0
+    delay: 0.7
+    radius: 3
+    count: 12
+    stagger: 0.08
+    reach: 24
+    at: line
+    slow: 2
+    shout: "（巨大的尾鰭舉了起來）"
+  abyss_tide_cage:
+    name: 潮籠
+    hint: "潮柱在你身邊圍了一圈：待在圈裡別出去"
+    kind: slam
+    damage: 2.4
+    type: cold
+    cooldown: 18
+    range: 26
+    telegraph: 1.4
+    delay: 1.0
+    radius: 2.4
+    count: 12
+    stagger: 0.04
+    scatter: 6
+    at: cage
+    slow: 3
+    shout: "（海水在你四周立成一圈柱子）"
+  abyss_tsunami:
+    name: 海嘯
+    hint: "沒有缺口的海嘯：跑出去，或在浪碰到前翻滾"
+    kind: ring
+    damage: 1.8
+    type: cold
+    cooldown: 20
+    range: 14
+    telegraph: 1.4
+    radius: 1.5
+    reach: 14
+    speed: 0.3
+    width: 0.6
+    count: 2
+    stagger: 1.2
+    gaps: 0
+    shout: "（遠方的海面整片站了起來）"
   hazard_abyss_splash:
     name: 浪花
     kind: slam

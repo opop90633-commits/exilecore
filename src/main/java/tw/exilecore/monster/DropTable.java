@@ -224,6 +224,19 @@ public final class DropTable {
         return tw.exilecore.item.LootBias.fromStarter(repository, weapons, armour, shield, classMatch, classPartial);
     }
 
+    /** 2026-10-18：drops.yml 寫的全服加成（不含贊助的全服加倍、在線人數加成；面板的加倍詳細用）。 */
+    public double baseServerQuantity() {
+        return serverQuantity;
+    }
+
+    public double baseServerRarity() {
+        return serverRarity;
+    }
+
+    public double baseServerGold() {
+        return serverGold;
+    }
+
     public double serverQuantity() {
         return serverQuantity + tw.exilecore.sponsor.Boosts.quantity() + tw.exilecore.character.OnlineBonus.quantity(); // 2026-10：加上贊助的全服加倍、在線人數加成
     }
