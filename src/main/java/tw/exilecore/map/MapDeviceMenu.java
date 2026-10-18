@@ -28,6 +28,8 @@ public final class MapDeviceMenu extends Menu {
     private static final int SLOT_MAP = 13;
     /** 2026-10：地圖品質一鍵點滿（用背包＋通貨袋＋倉庫裡的星盤刻刀）。 */
     private static final int SLOT_QUALITY = 14;
+    /** 2026-10-18：地圖詞綴一鍵填滿（普通→星火石、魔法→豐饒石、稀有→至臻石，用背包＋通貨袋＋倉庫裡的）。 */
+    private static final int SLOT_AFFIX = 15;
     /** 2026-10：從倉庫的地圖頁挑一張地圖（拿到背包再選起來）。 */
     private static final int SLOT_FROM_STASH = 12;
     /** 挑倉庫地圖的畫面：一頁 45 張（最下面一排是按鈕）。 */
@@ -82,6 +84,7 @@ public final class MapDeviceMenu extends Menu {
             final ItemStack preview = plugin.items().toStack(selected);
             set(SLOT_MAP, preview);
             drawQuality();
+            drawAffix(); // 2026-10-18
             final MapConfig.MapDef map = config.byBase(selected.base());
             final List<String> lore = new ArrayList<>();
             boolean ok = true;
@@ -142,6 +145,7 @@ public final class MapDeviceMenu extends Menu {
                 "<gray>   還能進幾次就亮幾道，每走進去一次少一道",
                 "<gray>4. 殺死地圖 Boss 完成：星圖點亮、解鎖相鄰的地圖",
                 "<gray>起點房間西邊的門可以回營地（不扣次數）",
+                "<gray>放上地圖後，右邊的「品質點滿」「詞綴填滿」會用你的通貨一鍵處理", // 2026-10-18
                 "<gray>每張地圖都能開 T1–T" + config.tiers().max() + "（階級寫在地圖上）：",
                 "<gray>   階級越高怪物越強，掉的地圖與裝備越好",
                 "<dark_gray>地圖從霜頂山脈的 Boss 開始掉，之後地圖怪會掉地圖",
@@ -566,6 +570,7 @@ public final class MapDeviceMenu extends Menu {
                 }
             }
             case SLOT_QUALITY -> fillQuality();
+            case SLOT_AFFIX -> fillAffixes(); // 2026-10-18
             case SLOT_MAP -> {
                 selected = null;
                 selectedSlot = -1;
@@ -693,6 +698,129 @@ public final class MapDeviceMenu extends Menu {
         selected = plugin.items().read(target).orElse(selected);
         player.sendMessage(plugin.text().prefixed("<gray>用了 <white>" + used + "</white> 個" + ItemRenderer.escape(chisel.name())
                 + "：地圖品質 " + before + "% → <white>" + selected.quality() + "%"));
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_ANVIL_USE, 0.5f, 1.4f);
+        redraw();
+    }
+
+    // ---- 地圖詞綴一鍵填滿（2026-10-18） ----
+
+    /** currencies.yml 裡這種操作的第一個通貨（沒有 null）。 */
+    private CurrencyType currencyOf(final tw.exilecore.currency.CurrencyOperation operation) {
+        if (plugin.currencies() == null) {
+            return null;
+        }
+        for (final CurrencyType type : plugin.currencies().repository().all()) {
+            if (type.operation() == operation) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    /** 這張地圖現在下一步要用的通貨：普通→升稀有、魔法→魔法變稀有、稀有還有空位→加詞綴；滿了 null。 */
+    private CurrencyType affixStep(final ItemData data) {
+        return switch (data.rarity()) {
+            case NORMAL -> currencyOf(tw.exilecore.currency.CurrencyOperation.UPGRADE_TO_RARE);
+            case MAGIC -> currencyOf(tw.exilecore.currency.CurrencyOperation.MAGIC_TO_RARE);
+            case RARE -> affixesFull(data) ? null : currencyOf(tw.exilecore.currency.CurrencyOperation.ADD_AFFIX_RARE);
+            default -> null;
+        };
+    }
+
+    private boolean affixesFull(final ItemData data) {
+        final tw.exilecore.item.ItemGenerator generator = plugin.items().generator();
+        return !generator.canAddAffix(data, tw.exilecore.item.AffixType.PREFIX) && !generator.canAddAffix(data, tw.exilecore.item.AffixType.SUFFIX);
+    }
+
+    private void drawAffix() {
+        if (selected == null || plugin.currencies() == null) {
+            return;
+        }
+        final CurrencyType next = affixStep(selected);
+        if (next == null) {
+            set(SLOT_AFFIX, icon(Material.GRAY_DYE, selected.rarity() == tw.exilecore.item.Rarity.RARE ? "<gray>地圖詞綴已經滿了" : "<gray>這張地圖不能加詞綴",
+                    "<dark_gray>稀有地圖最多 3 條前綴、3 條後綴"));
+            return;
+        }
+        final CurrencyType spark = currencyOf(tw.exilecore.currency.CurrencyOperation.UPGRADE_TO_RARE);
+        final CurrencyType bounty = currencyOf(tw.exilecore.currency.CurrencyOperation.MAGIC_TO_RARE);
+        final CurrencyType zenith = currencyOf(tw.exilecore.currency.CurrencyOperation.ADD_AFFIX_RARE);
+        final int have = service.countCurrency(player, next);
+        final List<String> lore = new ArrayList<>();
+        lore.add("<gray>把這張地圖的詞綴填到滿（稀有、3 前綴＋3 後綴）");
+        lore.add("<gray>普通 → " + name(spark) + "<gray>、魔法 → " + name(bounty) + "<gray>、稀有補詞綴 → " + name(zenith));
+        lore.add("<gray>下一步要用：<white>" + ItemRenderer.escape(next.name()) + "</white>（你有 <white>" + have + "</white> 個，背包＋通貨袋＋倉庫）");
+        lore.add("<dark_gray>跟「品質點滿」分開；一顆一顆用到滿或通貨用完");
+        lore.add("");
+        lore.add(have > 0 ? "<yellow>左鍵：用通貨把詞綴填滿" : "<red>沒有" + ItemRenderer.escape(next.name()));
+        final Material material = next.material() == null ? null : Material.matchMaterial(next.material());
+        final ItemStack button = tw.exilecore.currency.CurrencyService.decorate(
+                icon(material == null || !material.isItem() ? Material.AMETHYST_SHARD : material, have > 0 ? "<#f5b942>詞綴填滿" : "<gray>詞綴填滿", lore), next);
+        set(SLOT_AFFIX, have > 0 ? glowing(button) : button);
+    }
+
+    private static String name(final CurrencyType type) {
+        return type == null ? "<red>（沒有這種通貨）" : "<white>" + ItemRenderer.escape(type.name());
+    }
+
+    /** 照 affixStep 一顆一顆用到詞綴滿、或下一顆要用的通貨沒了；每種用了幾顆就扣幾顆（apply 已記流水帳）。 */
+    private void fillAffixes() {
+        if (selected == null || plugin.currencies() == null) {
+            return;
+        }
+        final ItemStack target = selectedSlot < 0 ? null : player.getInventory().getItem(selectedSlot);
+        final Optional<ItemData> current = target == null ? Optional.empty() : plugin.items().read(target);
+        if (current.isEmpty() || !current.get().uuid().equals(selected.uuid())) {
+            player.sendMessage(plugin.text().prefixed("<red>那張地圖已經不在背包的那一格了，重新選一次"));
+            selected = null;
+            selectedSlot = -1;
+            redraw();
+            return;
+        }
+        final var character = plugin.players().get(player).character();
+        final Long characterId = character == null ? null : character.id();
+        final java.util.Map<CurrencyType, Integer> used = new java.util.LinkedHashMap<>();
+        final java.util.Map<CurrencyType, Integer> left = new java.util.HashMap<>();
+        ItemData data = current.get();
+        CurrencyType stopped = null;
+        for (int guard = 0; guard < 16; guard++) { // 最多：升稀有 1 ＋ 補到 6 條
+            final CurrencyType next = affixStep(data);
+            if (next == null) {
+                break;
+            }
+            final int have = left.computeIfAbsent(next, type -> service.countCurrency(player, type));
+            if (have <= 0) {
+                stopped = next;
+                break;
+            }
+            final var result = plugin.currencies().apply(plugin.currencies().create(next, 1), target, player.getName(), characterId);
+            if (result != tw.exilecore.currency.CurrencyService.Result.APPLIED) {
+                break; // 這顆用不上（例如沒有適用的詞綴了）
+            }
+            used.merge(next, 1, Integer::sum);
+            left.put(next, have - 1);
+            final Optional<ItemData> after = plugin.items().read(target);
+            if (after.isEmpty()) {
+                break;
+            }
+            data = after.get();
+        }
+        if (used.isEmpty()) {
+            player.sendMessage(plugin.text().prefixed(stopped != null ? "<red>你沒有" + ItemRenderer.escape(stopped.name()) : "<gray>這張地圖的詞綴已經滿了"));
+            return;
+        }
+        player.getInventory().setItem(selectedSlot, target);
+        final List<String> parts = new ArrayList<>();
+        for (final java.util.Map.Entry<CurrencyType, Integer> entry : used.entrySet()) {
+            service.takeCurrency(player, entry.getKey(), entry.getValue(), null); // apply 已經記了「做裝備、地圖」的消耗
+            parts.add(entry.getValue() + " 個" + ItemRenderer.escape(entry.getKey().name()));
+        }
+        selected = plugin.items().read(target).orElse(selected);
+        final int prefixes = selected.affixes().stream().filter(a -> plugin.items().repository().affix(a.id()) != null
+                && plugin.items().repository().affix(a.id()).type() == tw.exilecore.item.AffixType.PREFIX).toList().size();
+        final int suffixes = selected.affixes().size() - prefixes;
+        player.sendMessage(plugin.text().prefixed("<gray>用了 <white>" + String.join("<gray>、<white>", parts) + "</white>：地圖現在 "
+                + prefixes + " 前綴、" + suffixes + " 後綴" + (stopped != null ? "<gray>（" + ItemRenderer.escape(stopped.name()) + "用完了，還沒滿）" : "")));
         player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_ANVIL_USE, 0.5f, 1.4f);
         redraw();
     }
