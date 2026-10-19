@@ -21,11 +21,11 @@
 
 settings:
   chance:
-    normal: 0.003
-    magic: 0.008
-    rare: 0.03
-    unique: 0.03
-    boss: 0.25          # 一般地圖的 Boss
+    normal: 0.001       # 2026-10-19：整體約降到 1/3（以前 0.003／0.008／0.03／0.03／0.25；一張 T16 每人約 0.9 張 → 約 0.3 張）
+    magic: 0.003
+    rare: 0.01
+    unique: 0.01
+    boss: 0.1           # 一般地圖的 Boss
     final_boss: 0.4     # 終局、極境、巔峰、金庫之主（每人）
     event: 0.08         # 完成地圖事件（每人）
   item_level: 84        # 換到的傳奇的物品等級
@@ -81,10 +81,10 @@ cards:
     reward: { essence: 3 }
   card_miner_note:
     tier: mid            # 中階
-    set: 7
+    set: 10                # 2026-10-19：7 → 10、T4 → T12（深淵星核＝極境鑰匙，以前專刷約 8 張圖一顆）
     weight: 1000
     sources: [map:abyss_mine]
-    min_tier: 4
+    min_tier: 12
     reward: { currency: abyss_core, amount: 1 }
   card_tomb_oath:
     tier: mid            # 中階
@@ -108,25 +108,25 @@ cards:
     reward: { unique_pool: map_boss }
   card_tide_oracle:
     tier: mid            # 中階
-    set: 7
+    set: 10                # 2026-10-19：7 → 10、恩澤石 ×3 → ×2
     weight: 1000
     sources: [map:tide_temple]
     min_tier: 6
-    reward: { currency: blessing_orb, amount: 3 }
+    reward: { currency: blessing_orb, amount: 2 }
   card_red_caravan:
     tier: mid            # 中階
-    set: 6
+    set: 12                # 2026-10-19：6 → 12（大鑿星石專刷以前約 7 張圖一顆）
     weight: 1000
     sources: [map:red_sands]
     min_tier: 6
     reward: { currency: greater_socket_orb, amount: 1 }
   card_fallen_page:
     tier: mid            # 中階
-    set: 9
+    set: 12                # 2026-10-19：9 → 12、天啟石 ×2 → ×1（專刷以前約 5 張圖一顆，正常掉落約 114 張）
     weight: 1000
     sources: [map:starfall_tundra]
     min_tier: 10
-    reward: { currency: oracle_orb, amount: 2 }
+    reward: { currency: oracle_orb, amount: 1 }
   card_stargazer:
     tier: mid            # 中階
     set: 8

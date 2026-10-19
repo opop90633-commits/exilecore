@@ -1203,7 +1203,7 @@ card_miner_note:
   stack: 50
   operation: NONE
   drop_weight: 0
-  description: "集滿 7 張換：深淵星核 ×1｜深淵礦坑 T4+掉落"
+  description: "集滿 10 張換：深淵星核 ×1｜深淵礦坑 T12+掉落"
   flavor: "「再往下挖一尺就好。」——最後一行。"
 card_tomb_oath:
   name: 守陵誓詞
@@ -1235,7 +1235,7 @@ card_tide_oracle:
   stack: 50
   operation: NONE
   drop_weight: 0
-  description: "集滿 7 張換：恩澤石 ×3｜潮汐神殿 T6+掉落"
+  description: "集滿 10 張換：恩澤石 ×2｜潮汐神殿 T6+掉落"
   flavor: "神諭只說一次，潮水會把它帶走。"
 card_red_caravan:
   name: 赤沙商隊
@@ -1243,7 +1243,7 @@ card_red_caravan:
   stack: 50
   operation: NONE
   drop_weight: 0
-  description: "集滿 6 張換：大鑿星石 ×1｜赤沙古道 T6+掉落"
+  description: "集滿 12 張換：大鑿星石 ×1｜赤沙古道 T6+掉落"
   flavor: "駱駝背上的箱子，從來沒人打開過。"
 card_fallen_page:
   name: 星墜殘頁
@@ -1251,7 +1251,7 @@ card_fallen_page:
   stack: 50
   operation: NONE
   drop_weight: 0
-  description: "集滿 9 張換：天啟石 ×2｜星墜冰原 T10+掉落"
+  description: "集滿 12 張換：天啟石 ×1｜星墜冰原 T10+掉落"
   flavor: "書的其他頁，散在整片冰原上。"
 card_stargazer:
   name: 觀星者手記
