@@ -64,7 +64,7 @@ class RetentionReportTest {
         assertEquals(2L, d30.get("eligible"));
         assertEquals(1L, d30.get("kept"));
         assertNull(RetentionReport.retention(List.of(account(2, 0, RetentionReport.Stage.MAPS_1, 1)), 7, NOW), "沒有分母是 null");
-        assertEquals(2L, summary.get("active7"));
+        assertEquals(3L, summary.get("active7"), "今天、昨天、3 天前（建立當天之後就沒來的那個也是 3 天前）");
     }
 
     @Test
