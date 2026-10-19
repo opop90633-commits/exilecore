@@ -1386,7 +1386,7 @@ stacked_deck:
   material: BOOK
   stack: 20
   operation: NONE
-  drop_weight: 30
+  drop_weight: 10       # 2026-10-19：30 → 10（直接掉卡降到 1/3 之後，牌堆差不多跟直接掉一樣多；降成約佔全部卡片的 1/4）
   drop_level: 60
   description: "右鍵打開：隨機變成一張星諭卡（照每張卡的權重抽；Shift＋右鍵全部打開）"
   flavor: "洗牌的人不見了，牌還在。"
