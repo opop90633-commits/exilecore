@@ -111,4 +111,22 @@ class EconomyReportJsonTest {
         assertTrue(root.getAsJsonObject("gold").getAsJsonObject("sources").has("7"));
         assertTrue(root.getAsJsonObject("gold").getAsJsonObject("sources").has("30"));
     }
+
+    /** 2026-10-19：管理員發放、扣除不列在市場報告（不算產出、消耗，也不在來源、用途裡）。 */
+    @Test
+    void adminFlowsAreHidden() {
+        final List<String> days = List.of("2026-10-19");
+        final List<EconomyReportJson.CurrencyMeta> currencies = List.of(new EconomyReportJson.CurrencyMeta("card_star_chaser", "追星者", 0, false));
+        final List<EconomyRepository.Flow> flows = List.of(
+                new EconomyRepository.Flow("2026-10-19", "card_star_chaser", EconomySources.DROP, 5),
+                new EconomyRepository.Flow("2026-10-19", "card_star_chaser", EconomySources.ADMIN, 100),
+                new EconomyRepository.Flow("2026-10-19", "card_star_chaser", EconomySources.ADMIN_TAKE, -5));
+        final byte[] bytes = EconomyReportJson.build(days, currencies, flows, List.of(), List.of(), Map.of(), false, "zenith_orb", "2026-10-19 21:00");
+        final JsonObject card = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8)).getAsJsonObject()
+                .getAsJsonArray("currencies").get(0).getAsJsonObject();
+        assertEquals(5, card.getAsJsonArray("produced").get(0).getAsLong(), "只算掉落的 5，管理員發的 100 不算");
+        assertEquals(0, card.getAsJsonArray("consumed").get(0).getAsLong(), "管理員扣除不算消耗");
+        assertFalse(card.getAsJsonObject("sources").getAsJsonObject("7").has(EconomySources.ADMIN));
+        assertFalse(card.getAsJsonObject("sinks").getAsJsonObject("7").has(EconomySources.ADMIN_TAKE));
+    }
 }

@@ -34,6 +34,9 @@ public final class EconomyReportJson {
     }
 
     /** 組網頁的 JSON。 */
+    /** 2026-10-19：市場報告不列的來源（管理員發放、管理員扣除）：不算進產出、消耗，也不列在來源、用途。 */
+    static final java.util.Set<String> HIDDEN_SOURCES = java.util.Set.of(EconomySources.ADMIN, EconomySources.ADMIN_TAKE);
+
     static byte[] build(final List<String> days, final List<CurrencyMeta> currencies, final List<EconomyRepository.Flow> flows,
                         final List<EconomyRepository.DayValue> stock, final List<EconomyRepository.DayValue> values,
                         final Map<String, Integer> active, final boolean follow, final String anchor, final String generated) {
@@ -54,6 +57,9 @@ public final class EconomyReportJson {
             final Integer i = index.get(flow.day());
             if (i == null || flow.amount() == 0) {
                 continue;
+            }
+            if (HIDDEN_SOURCES.contains(flow.source())) {
+                continue; // 2026-10-19：管理員發放、扣除不列在公開的市場報告（資料庫裡照記，存量照實際）
             }
             if (flow.amount() > 0) {
                 produced.computeIfAbsent(flow.kind(), kind -> new long[days.size()])[i] += flow.amount();
