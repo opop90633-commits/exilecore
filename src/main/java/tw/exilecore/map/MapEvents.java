@@ -828,9 +828,9 @@ final class MapEvents implements Listener {
             final StatSheet sheet = plugin.players().sheet(player);
             final double month = plugin.events() == null ? 0 : plugin.events().quantityBonus(); // 2026-10：這個月的主題是全域的
             final double monthRarity = plugin.events() == null ? 0 : plugin.events().rarityBonus();
-            final double quantity = box.quantityBonus() + instance.stats().quantity() / 100.0 + sheet.increased(StatKeys.DROP_QUANTITY, java.util.Set.of())
+            final double quantity = box.quantityBonus() + instance.stats().quantity() / 100.0 + tw.exilecore.loot.LootBonus.personalQuantity(plugin, player)
                     + instance.atlas().increased("atlas.strongbox.quantity") + month; // 星圖天賦：寶箱的物品數量
-            final double rarity = box.rarityBonus() + instance.stats().rarity() / 100.0 + sheet.increased(StatKeys.DROP_RARITY, java.util.Set.of())
+            final double rarity = box.rarityBonus() + instance.stats().rarity() / 100.0 + tw.exilecore.loot.LootBonus.personalRarity(plugin, player)
                     + monthRarity;
             final List<DropTable.Drop> rolled = new ArrayList<>();
             for (int i = 0; i < box.rolls(); i++) {
@@ -1463,8 +1463,8 @@ final class MapEvents implements Listener {
             final StatSheet sheet = plugin.players().sheet(player);
             final double month = plugin.events() == null ? 0 : plugin.events().quantityBonus();
             final double monthRarity = plugin.events() == null ? 0 : plugin.events().rarityBonus();
-            final double quantity = settings.chestQuantity() + instance.stats().quantity() / 100.0 + sheet.increased(StatKeys.DROP_QUANTITY, java.util.Set.of()) + month;
-            final double rarity = settings.chestRarity() + instance.stats().rarity() / 100.0 + sheet.increased(StatKeys.DROP_RARITY, java.util.Set.of()) + monthRarity;
+            final double quantity = settings.chestQuantity() + instance.stats().quantity() / 100.0 + tw.exilecore.loot.LootBonus.personalQuantity(plugin, player) + month;
+            final double rarity = settings.chestRarity() + instance.stats().rarity() / 100.0 + tw.exilecore.loot.LootBonus.personalRarity(plugin, player) + monthRarity;
             final List<DropTable.Drop> rolled = new ArrayList<>();
             for (int i = 0; i < settings.rolls(); i++) {
                 rolled.addAll(drops.roll(level, MonsterRarity.RARE, quantity + drops.serverQuantity(), rarity + drops.serverRarity(),
@@ -1505,6 +1505,7 @@ final class MapEvents implements Listener {
 
     /** 同上，用事件的來源代號（祭壇 "ritual"、幻霧 "delirium" 不是 {@link MapEventConfig.Kind}）。 */
     void rollTicket(final String source, final Player player, final Location at) {
+        rollCard(source, player, at); // 2026-10-19 星諭卡：完成事件也擲一次（跟入場券分開擲）
         final MapEventConfig.Ticket ticket = config.ticket(source);
         if (ticket == null || ticket.chance() <= 0 || plugin.currencies() == null || player == null || !player.isConnected()) {
             return;
@@ -1526,6 +1527,22 @@ final class MapEvents implements Listener {
                 + "<gray>（地圖裝置的「事件巔峰」用它開 Boss）"));
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.6f, 1.4f);
         plugin.getSLF4JLogger().info("[入場券] {} 完成{}事件掉了 {}", player.getName(), MapEventConfig.sourceName(source), type.name());
+    }
+
+    /** 2026-10-19：完成地圖事件時擲一張那個事件的星諭卡（cards.yml 的 event:）；擲到照一般掉落交給他。 */
+    private void rollCard(final String source, final Player player, final Location at) {
+        if (plugin.cards() == null || player == null || !player.isConnected()) {
+            return;
+        }
+        final tw.exilecore.currency.CurrencyType card = plugin.cards().rollEvent(source, tw.exilecore.card.CardService.tierAt(plugin, at));
+        if (card == null) {
+            return;
+        }
+        final MapInstance instance = service.instanceAt(at);
+        final int level = instance != null ? instance.level() : plugin.players().get(player).level();
+        final List<DropTable.Drop> rolled = new java.util.ArrayList<>();
+        rolled.add(DropTable.Drop.currency(card));
+        deliver(player, at, new MonsterData(level, MonsterRarity.RARE, List.of(), MapEventConfig.sourceName(source)), rolled, 0);
     }
 
     /** 事件結束 linger 秒後（或實例關閉時）：縫的方塊還原、寶箱收掉。 */
@@ -1718,8 +1735,8 @@ final class MapEvents implements Listener {
             final StatSheet sheet = plugin.players().sheet(player);
             final double month = plugin.events() == null ? 0 : plugin.events().quantityBonus();
             final double monthRarity = plugin.events() == null ? 0 : plugin.events().rarityBonus();
-            final double quantity = settings.quantityBonus() + instance.stats().quantity() / 100.0 + sheet.increased(StatKeys.DROP_QUANTITY, java.util.Set.of()) + month;
-            final double rarity = settings.rarityBonus() + instance.stats().rarity() / 100.0 + sheet.increased(StatKeys.DROP_RARITY, java.util.Set.of()) + monthRarity;
+            final double quantity = settings.quantityBonus() + instance.stats().quantity() / 100.0 + tw.exilecore.loot.LootBonus.personalQuantity(plugin, player) + month;
+            final double rarity = settings.rarityBonus() + instance.stats().rarity() / 100.0 + tw.exilecore.loot.LootBonus.personalRarity(plugin, player) + monthRarity;
             final List<DropTable.Drop> rolled = new ArrayList<>();
             final int rolls = settings.minRolls() + (settings.maxRolls() > settings.minRolls() ? random.nextInt(settings.maxRolls() - settings.minRolls() + 1) : 0);
             for (int i = 0; i < rolls; i++) {

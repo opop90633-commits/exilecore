@@ -137,6 +137,7 @@ public final class ExileCore extends JavaPlugin {
     private tw.exilecore.event.EventModule eventModule;
     private tw.exilecore.worldevent.WorldEventModule worldEventModule;
     private tw.exilecore.festival.FestivalModule festivalModule;
+    private tw.exilecore.card.CardModule cardModule; // 2026-10-19 星諭卡
     private tw.exilecore.life.LifeModule lifeModule;
     private tw.exilecore.ascendancy.AscendancyModule ascendancyModule;
     private final Perf perf = new Perf();
@@ -183,6 +184,7 @@ public final class ExileCore extends JavaPlugin {
             }
             event.registrar().register(StashModule.command(this), "ExileCore 倉庫");
             event.registrar().register(tw.exilecore.salvage.SalvageModule.lockCommand(this), "ExileCore 鎖定裝備（防止誤拆）");
+            event.registrar().register(tw.exilecore.currency.CraftBenchMenu.command(this), "ExileCore 洗裝台（左邊星籤、右邊通貨、中間裝備）"); // 2026-10-19
             event.registrar().register(tw.exilecore.combat.DeathRecap.command(this), "ExileCore 死亡回顧（上一次是被誰打死的）");
             event.registrar().register(tw.exilecore.combat.CombatHud.command(this), "ExileCore 這一段戰鬥每個技能打了多少（分傷害類型）");
             event.registrar().register(tw.exilecore.ladder.LadderModule.command(this), "ExileCore 排行榜（等級、地圖、不死）");
@@ -305,6 +307,7 @@ public final class ExileCore extends JavaPlugin {
         this.guideModule = new tw.exilecore.guide.GuideModule(this);
         this.pvpModule = new tw.exilecore.pvp.PvpModule(this);
         this.heistModule = new tw.exilecore.heist.HeistModule(this);
+        this.cardModule = new tw.exilecore.card.CardModule(this);
         this.antiCheatModule = new tw.exilecore.anticheat.AntiCheatModule(this);
         this.adminModule = new tw.exilecore.admin.AdminModule(this);
 
@@ -344,7 +347,8 @@ public final class ExileCore extends JavaPlugin {
         modules.register(ladderModule);                     // 排行榜（等級、地圖、不死）
         modules.register(guideModule);                      // 新手引導（側欄最上面；要在任務、技能、藥劑之後）
         modules.register(pvpModule);                        // PvP 競技場（世界、角色、戰鬥、隊伍之後）
-        modules.register(heistModule);                      // 劫盜：合約、大劫盜、隱匿詞綴的揭露（地圖、怪物、物品、通貨之後）
+        modules.register(heistModule);
+        modules.register(cardModule);                       // 星諭卡（2026-10-19）：集滿一套換獎勵、星諭牌堆、賭卡（通貨、物品、倉庫、掉落、地圖之後）                      // 劫盜：合約、大劫盜、隱匿詞綴的揭露（地圖、怪物、物品、通貨之後）
         modules.register(antiCheatModule);                  // 防作弊：移動速度、飛行、懸空、瞬移（只管改遊戲數值那一類）
         modules.register(opsModule);                        // 維運：效能、備份、物品追查
         modules.register(webModule);                        // 內建網頁伺服器：介面資源包、網頁天賦規劃器
@@ -666,6 +670,11 @@ public final class ExileCore extends JavaPlugin {
     }
 
     /** 節慶活動（2026-10 萬燈夜）；模組沒啟用時為 null。 */
+    /** 星諭卡（2026-10-19）；模組沒啟用時為 null。 */
+    public tw.exilecore.card.CardService cards() {
+        return cardModule == null ? null : cardModule.service();
+    }
+
     public tw.exilecore.festival.FestivalService festival() {
         return festivalModule == null ? null : festivalModule.service();
     }

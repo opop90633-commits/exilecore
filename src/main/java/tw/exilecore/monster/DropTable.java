@@ -108,6 +108,43 @@ public final class DropTable {
     private double serverRarity;
     private double serverGold = 1;
 
+    /**
+     * 2026-10-19 玩家自己的物品稀有度遞減（drops.yml 的 rarity_curve；像 PoE2，堆越多每 1% 越不值）：
+     * 裝備、天賦、稱號這些屬性表上的稀有度（不含個人加倍藥）先照分段換算，地圖、全服、主題、怪物本身的照原本相加。
+     * 每一段：從 from（小數，1.0 = +100%）開始，超過的部分只算 rate。沒寫 = 預設；寫空的清單 = 不遞減。
+     */
+    public record CurveTier(double from, double rate) {
+    }
+
+    /** 預設：+75% 以內照算，75～175% 的部分算一半，175% 以上算四分之一。 */
+    public static final List<CurveTier> DEFAULT_RARITY_CURVE = List.of(new CurveTier(0.75, 0.5), new CurveTier(1.75, 0.25));
+    private List<CurveTier> rarityCurve = DEFAULT_RARITY_CURVE;
+
+    /** 照分段換算（raw ≤ 第一段的 from 不變；負的不變）。純計算。 */
+    public static double diminish(final double raw, final List<CurveTier> curve) {
+        if (curve.isEmpty() || raw <= curve.getFirst().from()) {
+            return raw;
+        }
+        double total = curve.getFirst().from();
+        for (int i = 0; i < curve.size(); i++) {
+            final double low = curve.get(i).from();
+            final double high = i + 1 < curve.size() ? curve.get(i + 1).from() : Double.MAX_VALUE;
+            if (raw > low) {
+                total += (Math.min(raw, high) - low) * curve.get(i).rate();
+            }
+        }
+        return total;
+    }
+
+    /** 玩家自己的物品稀有度（屬性表的，小數）遞減之後算多少。 */
+    public double diminishRarity(final double raw) {
+        return diminish(raw, rarityCurve);
+    }
+
+    public List<CurveTier> rarityCurve() {
+        return rarityCurve;
+    }
+
     /** 全服掉落加成的範圍（百分比；金幣是倍數）。 */
     public static final double MAX_SERVER_BONUS = 500;
     public static final double MIN_SERVER_GOLD = 0.1;
@@ -183,6 +220,8 @@ public final class DropTable {
         serverQuantity = clamp(bonus.decimal("quantity", 0), 0, MAX_SERVER_BONUS) / 100.0;
         serverRarity = clamp(bonus.decimal("rarity", 0), 0, MAX_SERVER_BONUS) / 100.0;
         serverGold = clamp(bonus.decimal("gold", 1), MIN_SERVER_GOLD, MAX_SERVER_GOLD);
+        rarityCurve = root.has("rarity_curve") ? parseCurve(root.list("rarity_curve")) : DEFAULT_RARITY_CURVE; // 2026-10-19
+        tw.exilecore.loot.SwapGuard.setHoldSeconds(clamp(root.decimal("swap_hold_seconds", 10), 0, 120)); // 2026-10-19 防最後一下換裝
         if (root.has("gold")) {
             final YamlNode gold = root.node("gold");
             final YamlNode chance = gold.node("chance");
@@ -207,6 +246,22 @@ public final class DropTable {
                 goldAmount.putAll(parsed);
             }
         }
+    }
+
+    /** rarity_curve：[{ from: 百分比, rate: 0～1 }]，from 要由小排到大。 */
+    static List<CurveTier> parseCurve(final List<YamlNode> nodes) {
+        final List<CurveTier> curve = new ArrayList<>();
+        double last = -1;
+        for (final YamlNode node : nodes) {
+            final double from = node.decimal("from", 0) / 100.0;
+            final double rate = node.decimal("rate", 1);
+            if (from <= last || from < 0 || rate < 0 || rate > 1) {
+                throw new IllegalArgumentException(node.path() + "：from 要由小排到大（≥ 0）、rate 要在 0～1，卻是 from " + from * 100 + "、rate " + rate);
+            }
+            curve.add(new CurveTier(from, rate));
+            last = from;
+        }
+        return List.copyOf(curve);
     }
 
     private static double clamp(final double value, final double min, final double max) {
@@ -243,7 +298,8 @@ public final class DropTable {
 
     /** 全服的物品稀有度加成（小數）。 */
     public double serverRarity() {
-        return serverRarity + tw.exilecore.sponsor.Boosts.rarity() + tw.exilecore.character.OnlineBonus.rarity(); // 2026-10：加上贊助的全服加倍、在線人數加成
+        // 2026-10：加上贊助的全服加倍、在線人數加成。2026-10-19：全服的稀有度一律跟自己的「相加」（不相乘），自己的先遞減再加
+        return serverRarity + tw.exilecore.sponsor.Boosts.rarity() + tw.exilecore.character.OnlineBonus.rarity();
     }
 
     /** 全服的金幣倍數。 */

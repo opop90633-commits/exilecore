@@ -96,6 +96,10 @@ public final class StashMenu extends Menu {
     private int mapBatch;
     /** 地圖頁畫面上每一格對應 stash.maps() 的第幾張。 */
     private final List<Integer> mapView = new ArrayList<>();
+    /** 2026-10-19 賭卡：第一次按 Q 記下哪一種卡、什麼時候；{@link #GAMBLE_CONFIRM_MILLIS} 內再按一次才真的賭。 */
+    private String gambleArmed;
+    private long gambleArmedAt;
+    private static final long GAMBLE_CONFIRM_MILLIS = 3000;
 
     StashMenu(final ExileCore plugin, final Player player, final StashService service, final Stash stash) {
         this(plugin, player, service, stash, null);
@@ -369,7 +373,10 @@ public final class StashMenu extends Menu {
             }
             lore.add("<dark_gray>" + ItemRenderer.escape(type.description()));
             lore.add("");
-            if (amount > 0) {
+            final tw.exilecore.card.CardService cards = plugin.cards();
+            if (cards != null && cards.goesToStash(type)) {
+                cardLore(lore, cards, type, amount); // 2026-10-19 星諭卡：兌換、打開、賭卡
+            } else if (amount > 0) {
                 lore.add("<yellow>左鍵：拿一疊（" + Math.min(amount, type.stack()) + " 個）");
                 lore.add("<yellow>右鍵：拿 1 個　Shift＋左鍵：能拿的全部拿");
             } else {
@@ -826,6 +833,11 @@ public final class StashMenu extends Menu {
             return;
         }
         final CurrencyType type = currencyOrder.get(slot);
+        if (plugin.cards() != null && plugin.cards().goesToStash(type)
+                && (click == ClickType.RIGHT || click == ClickType.SHIFT_RIGHT || click == ClickType.DROP || click == ClickType.CONTROL_DROP)) {
+            cardClick(type, click); // 2026-10-19 星諭卡
+            return;
+        }
         final int have = stash.currency(type.id());
         if (have <= 0) {
             return;
@@ -862,6 +874,74 @@ public final class StashMenu extends Menu {
         stash.setCurrency(type.id(), have - given);
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.3f);
         redraw();
+    }
+
+    // ---- 星諭卡（2026-10-19）----
+
+    /** 倉庫裡星諭卡、牌堆的說明：有幾張、一套幾張、怎麼兌換、賭卡要多少金幣。 */
+    private void cardLore(final List<String> lore, final tw.exilecore.card.CardService cards, final CurrencyType type, final int amount) {
+        if (tw.exilecore.card.CardService.isDeck(type)) {
+            if (amount > 0) {
+                lore.add("<#c9a0ff>右鍵：打開一個　Shift＋右鍵：全部打開<dark_gray>（開出的卡留在這一頁）");
+                lore.add("<yellow>左鍵：拿一疊　Shift＋左鍵：全部拿");
+            } else {
+                lore.add("<dark_gray>地圖裡的怪會掉；撿起來直接放這裡");
+            }
+            return;
+        }
+        final tw.exilecore.card.CardConfig.Card card = cards.config().card(type.id());
+        if (card == null) {
+            return;
+        }
+        lore.add("<gray>" + card.tier().displayName() + "・一套 <white>" + card.set() + "</white> 張・可以換 <white>" + amount / card.set() + "</white> 套");
+        if (amount > 0) {
+            lore.add(amount >= card.set() ? "<#c9a0ff>右鍵：兌換一套　Shift＋右鍵：全部兌換" : "<dark_gray>還差 " + (card.set() - amount % card.set()) + " 張才能兌換");
+            final int bet = cards.gambleCount(type, amount); // 一次賭一疊（最多一套的張數）
+            lore.add(String.format(Locale.ROOT, "<#ffb347>Q：賭卡<gray>（一次一疊：花 %s 金幣，%,d 張變成 0～%,d 張）",
+                    tw.exilecore.economy.GoldService.format(cards.gambleCost(type, bet)), bet, bet * 2));
+            lore.add("<yellow>左鍵：拿一疊　Shift＋左鍵：全部拿");
+        } else {
+            lore.add("<dark_gray>撿起來直接放這裡");
+        }
+    }
+
+    private void cardClick(final CurrencyType type, final ClickType click) {
+        final tw.exilecore.card.CardService cards = plugin.cards();
+        final boolean all = click == ClickType.SHIFT_RIGHT;
+        if (tw.exilecore.card.CardService.isDeck(type)) {
+            if (click == ClickType.RIGHT || click == ClickType.SHIFT_RIGHT) {
+                cards.openStash(player, stash, all);
+                redraw();
+            }
+            return;
+        }
+        if (click == ClickType.RIGHT || click == ClickType.SHIFT_RIGHT) {
+            if (cards.exchangeStash(player, stash, type, all) > 0) {
+                plugin.characters().save(player);
+                redraw();
+            }
+            return;
+        }
+        // Q：賭卡（3 秒內再按一次確定）
+        final int have = cards.gambleCount(type, stash.currency(type.id())); // 一次一疊
+        if (have <= 0) {
+            return;
+        }
+        final long now = System.currentTimeMillis();
+        if (!type.id().equals(gambleArmed) || now - gambleArmedAt > GAMBLE_CONFIRM_MILLIS) {
+            gambleArmed = type.id();
+            gambleArmedAt = now;
+            player.sendActionBar(plugin.text().parse(String.format(Locale.ROOT,
+                    "<#ffb347>再按一次 Q 確定賭卡：<white>%,d 張%s<gray>，花 <white>%s<gray> 金幣，變成 0～%,d 張", have,
+                    ItemRenderer.escape(type.name()), tw.exilecore.economy.GoldService.format(cards.gambleCost(type, have)), have * 2)));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.6f, 1.4f);
+            return;
+        }
+        gambleArmed = null;
+        if (cards.gamble(player, stash, type).isPresent()) {
+            plugin.characters().save(player);
+            redraw();
+        }
     }
 
     private void deposit(final PlayerInventory inventory, final int slot) {

@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 public final class LootModule implements Module {
 
     private final ExileCore plugin;
+    private org.bukkit.scheduler.BukkitTask swapTask;
     private final LootConfig config = new LootConfig();
     private LootService service;
 
@@ -45,6 +46,8 @@ public final class LootModule implements Module {
         plugin.getServer().getPluginManager().registerEvents(new LootListener(plugin, created), plugin);
         plugin.characters().addBeforeSave(created::syncOpenBag);
         service = created;
+        // 2026-10-19 防最後一下換裝：每秒記一次每個人的物品稀有度、數量（SwapGuard）
+        swapTask = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> SwapGuard.sample(plugin), 20L, 20L);
         warnUnknownCurrencies();
         plugin.getSLF4JLogger().info("掉落：自動撿取{}，過濾器預設「{}」（{}）", config.autoPickup() ? "開" : "關",
                 config.preset(config.defaultPresetId()).name(), String.join("、", config.presetNames()));
@@ -58,6 +61,10 @@ public final class LootModule implements Module {
 
     @Override
     public void disable() {
+        if (swapTask != null) {
+            swapTask.cancel();
+            swapTask = null;
+        }
         if (service != null) {
             service.closeAll();
         }

@@ -19,7 +19,8 @@ public final class CurrencyGroups {
         GEM("未切割寶石", "右鍵雕成技能寶石、切成輔助寶石，或幫技能升級"),
         ESSENCE("星魄", "保證加上某一條詞綴"),
         MECHANIC("催化劑・星籤・蒸餾情緒", "飾品品質、改變下一次改造、項鍊注入"),
-        KEYS("Boss 門票", "開終局、極境、巔峰、事件巔峰、金庫之主的碎片與入場券"); // 2026-10-18
+        KEYS("Boss 門票", "開終局、極境、巔峰、事件巔峰、金庫之主的碎片與入場券"), // 2026-10-18
+        CARDS("星諭卡", "集滿一套換獎勵；右鍵兌換一套、Shift＋右鍵全部兌換、Q 花金幣賭卡"); // 2026-10-19
 
         private final String displayName;
         private final String about;
@@ -78,8 +79,20 @@ public final class CurrencyGroups {
         return problems;
     }
 
+    /** 2026-10-19：星諭卡的代號前綴（card_<名稱>）與星諭牌堆。 */
+    public static final String CARD_PREFIX = "card_";
+    public static final String DECK = "stacked_deck";
+
+    /** 2026-10-19：這種通貨是星諭卡或星諭牌堆。 */
+    public static boolean card(final CurrencyType type) {
+        return type.id().startsWith(CARD_PREFIX) || DECK.equals(type.id());
+    }
+
     /** 這種通貨在哪一組。 */
     public static Group of(final CurrencyType type) {
+        if (card(type)) {
+            return Group.CARDS; // 2026-10-19
+        }
         if (type.uncutGem()) {
             return Group.GEM;
         }

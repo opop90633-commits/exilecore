@@ -63,9 +63,12 @@ public enum Catalyst {
             // 2026-10：受到的傷害回復為生命（life.recoup）、擊中／擊殺回復生命也算生命詞綴
             case LIFE -> stat.equals(StatKeys.LIFE_MAX) || stat.equals(StatKeys.LIFE_REGEN) || stat.equals(StatKeys.LIFE_REGEN_PERCENT)
                     || stat.equals(StatKeys.MANA_MAX) || stat.equals(StatKeys.MANA_REGEN) || stat.equals(StatKeys.LIFE_RECOUP)
-                    || stat.equals(StatKeys.LIFE_ON_HIT) || stat.equals(StatKeys.LIFE_ON_KILL);
+                    || stat.equals(StatKeys.LIFE_ON_HIT) || stat.equals(StatKeys.LIFE_ON_KILL)
+                    || stat.equals(StatKeys.LEECH_LIFE) || stat.equals(StatKeys.LEECH_MANA); // 2026-10-19：偷取為生命／魔力（PoE2 的標籤有生命）
             // 攻擊：攻擊專用的（tags 有 attack）與陷阱、手雷的傷害類；通用的元素、混沌傷害不算；攻速歸速度、暴擊歸暴擊（2026-10）
-            case ATTACK -> damage(mod) && (mod.tags().contains("attack") || mod.tags().contains("trap") || mod.tags().contains("grenade"));
+            // 2026-10-19：攻擊造成的物理傷害偷取為生命／魔力也算（PoE2 的標籤有攻擊）
+            case ATTACK -> damage(mod) && (mod.tags().contains("attack") || mod.tags().contains("trap") || mod.tags().contains("grenade"))
+                    || leech(mod) && mod.tags().contains("attack");
             // 法術：法術專用的（tags 有 spell）傷害類；施法速度歸速度、法術暴擊歸暴擊
             case CASTER -> damage(mod) && spell;
             // 2026-10-16：「增加 x% 暴擊傷害加成」（crit.bonus，飾品上的暴傷詞綴都是這個）也算——以前只認 crit.multi，暴傷詞綴吃不到
@@ -81,6 +84,11 @@ public enum Catalyst {
             case SPEED -> stat.equals(StatKeys.ATTACK_SPEED) || stat.equals(StatKeys.CAST_SPEED) || stat.equals(StatKeys.MOVEMENT_SPEED);
             case DEFENCE -> stat.equals(StatKeys.ARMOUR) || stat.equals(StatKeys.EVASION) || stat.equals(StatKeys.ES_MAX) || stat.equals(StatKeys.BLOCK_CHANCE);
         };
+    }
+
+    /** 2026-10-19：偷取為生命／魔力。 */
+    private static boolean leech(final Modifier mod) {
+        return mod.stat().equals(StatKeys.LEECH_LIFE) || mod.stat().equals(StatKeys.LEECH_MANA);
     }
 
     /** 傷害類的修飾器：附加傷害、增加／更多傷害（固定值的「傷害」不算）。 */

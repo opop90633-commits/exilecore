@@ -475,7 +475,7 @@ public final class HeistService implements Listener {
 
     private double quantity(final Player player) {
         final StatSheet sheet = plugin.players().sheet(player);
-        return config.settings().quantity() / 100.0 + sheet.increased(StatKeys.DROP_QUANTITY, Set.of())
+        return config.settings().quantity() / 100.0 + tw.exilecore.loot.LootBonus.personalQuantity(plugin, player)
                 + (plugin.events() == null ? 0 : plugin.events().quantityBonus()); // 2026-10：這個月的主題是全域的
     }
 
@@ -489,7 +489,7 @@ public final class HeistService implements Listener {
         final DropTable drops = plugin.monsterModule().drops();
         final StatSheet sheet = plugin.players().sheet(player);
         final double quantity = quantity(player) + drops.serverQuantity();
-        final double rarity = config.settings().rarity() / 100.0 + sheet.increased(StatKeys.DROP_RARITY, Set.of()) + drops.serverRarity()
+        final double rarity = config.settings().rarity() / 100.0 + tw.exilecore.loot.LootBonus.personalRarity(plugin, player) + drops.serverRarity()
                 + (plugin.events() == null ? 0 : plugin.events().rarityBonus()); // 2026-10：這個月的主題是全域的
         final List<DropTable.Drop> rolled = new ArrayList<>();
         final int times = scaled(rolls, scale);

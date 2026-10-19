@@ -42,12 +42,27 @@ public final class DpsRecords {
     private static final Gson GSON = new Gson();
     private static DpsRecords instance;
 
-    /** 一筆：kind = boss／dummy。 */
+    /**
+     * 一筆：kind = boss／dummy。
+     * <p>
+     * 2026-10-19 配裝快照（流派平衡用；這之前的紀錄這幾欄是空的）：
+     * ascendancy 昇華職業、mainSkill 這一段打最多傷害的技能（持續傷害不算）、mainShare 它佔這一段總傷害的比例、
+     * dotShare 持續傷害（點燃、流血、中毒）佔的比例、supports 主技能插的輔助、uniques 身上穿的傳奇、
+     * types 各傷害類型的比例（physical、fire、cold、lightning、chaos）。
+     */
     public record Entry(long at, String kind, String player, String uuid, String character, String className, int level,
-                        String target, String where, int players, double damage, double seconds, double share) {
+                        String target, String where, int players, double damage, double seconds, double share,
+                        String ascendancy, String mainSkill, double mainShare, double dotShare, List<String> supports,
+                        List<String> uniques, Map<String, Double> types) {
         public double dps() {
             return seconds <= 0 ? 0 : damage / seconds;
         }
+    }
+
+    /** 配裝快照（見 {@link Entry}）。 */
+    record Build(String ascendancy, String mainSkill, double mainShare, double dotShare, List<String> supports, List<String> uniques,
+                 Map<String, Double> types) {
+        static final Build NONE = new Build(null, null, 0, 0, List.of(), List.of(), Map.of());
     }
 
     private final ExileCore plugin;
@@ -181,8 +196,96 @@ public final class DpsRecords {
         } else {
             name = plugin.getServer().getOfflinePlayer(uuid).getName();
         }
+        Build build = Build.NONE;
+        if (player != null) {
+            try {
+                build = build(player);
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("記錄 {} 的配裝快照時出錯（這筆照記，只是沒有配裝）", name, e);
+            }
+        }
         return new Entry(at, kind, name == null ? uuid.toString() : name, uuid.toString(), character, className, level, target, where,
-                players, Math.round(damage), Math.round(seconds * 10) / 10.0, Math.round(share * 1000) / 1000.0);
+                players, Math.round(damage), Math.round(seconds * 10) / 10.0, Math.round(share * 1000) / 1000.0,
+                build.ascendancy(), build.mainSkill(), build.mainShare(), build.dotShare(), build.supports(), build.uniques(), build.types());
+    }
+
+    /**
+     * 2026-10-19：這個人現在的配裝快照。主技能照戰鬥數據（/dps）這一段每個技能打了多少：Boss 倒下、假人那一段結束時剛好就是這場。
+     * 持續傷害（「點燃（持續）」這種）不當主技能，另外算佔比。輔助照技能面板上那個技能插的（同名的第一個）。
+     */
+    private Build build(final Player player) {
+        final PlayerState state = plugin.players() == null ? null : plugin.players().get(player);
+        if (state == null || !state.hasCharacter()) {
+            return Build.NONE;
+        }
+        String ascendancy = null;
+        if (plugin.ascendancy() != null) {
+            final tw.exilecore.ascendancy.AscendancyConfig.Ascendancy chosen = plugin.ascendancy().ascension(state).chosen();
+            ascendancy = chosen == null ? null : chosen.name();
+        }
+        String mainSkill = null;
+        double mainShare = 0;
+        double dotShare = 0;
+        final Map<String, Double> types = new LinkedHashMap<>();
+        final CombatMeter.Fight fight = plugin.combat() == null || plugin.combat().hud() == null ? null : plugin.combat().hud().fight(player);
+        if (fight != null && fight.total() > 0) {
+            final double total = fight.total();
+            final tw.exilecore.stats.DamageType[] all = tw.exilecore.stats.DamageType.values();
+            final double[] byType = new double[all.length];
+            for (final CombatMeter.SkillRow row : fight.skills()) {
+                if (row.name().endsWith("（持續）")) {
+                    dotShare += row.total() / total;
+                } else if (mainSkill == null) {
+                    mainSkill = row.name(); // 由多到少排好了
+                    mainShare = row.total() / total;
+                }
+                for (int i = 0; i < all.length && i < row.amounts().length; i++) {
+                    byType[i] += row.amounts()[i];
+                }
+            }
+            for (int i = 0; i < all.length; i++) {
+                if (byType[i] > 0) {
+                    types.put(all[i].tag(), Math.round(byType[i] / total * 1000) / 1000.0);
+                }
+            }
+        }
+        final List<String> supports = new ArrayList<>();
+        if (mainSkill != null && plugin.skills() != null && state.skills() != null) {
+            for (final tw.exilecore.character.SkillLoadout.Entry slot : state.skills().entries()) {
+                if (slot == null || slot.skillId() == null) {
+                    continue;
+                }
+                final tw.exilecore.skill.SkillDefinition definition = plugin.skills().config().skill(slot.skillId());
+                if (definition == null || !mainSkill.equals(definition.name())) {
+                    continue;
+                }
+                for (final String raw : slot.supports() == null ? List.<String>of() : slot.supports()) {
+                    if (raw == null || raw.isBlank()) {
+                        continue;
+                    }
+                    final String id = raw.endsWith("~") ? raw.substring(0, raw.length() - 1) : raw; // 共鳴石嵌的專屬輔助存成代號加 ~
+                    final tw.exilecore.skill.SupportDefinition support = plugin.skills().config().support(id);
+                    supports.add(support == null ? id : support.name());
+                }
+                break;
+            }
+        }
+        final List<String> uniques = new ArrayList<>();
+        if (plugin.items() != null) {
+            for (final org.bukkit.inventory.ItemStack stack : tw.exilecore.character.Gear.equipped(state).values()) {
+                if (stack == null || stack.isEmpty()) {
+                    continue;
+                }
+                plugin.items().read(stack).ifPresent(data -> {
+                    if (data.unique() != null) {
+                        final tw.exilecore.item.UniqueItem unique = plugin.items().repository().unique(data.unique());
+                        uniques.add(unique == null ? data.unique() : unique.name());
+                    }
+                });
+            }
+        }
+        return new Build(ascendancy, mainSkill, Math.round(mainShare * 1000) / 1000.0, Math.round(dotShare * 1000) / 1000.0,
+                List.copyOf(supports), List.copyOf(uniques), types);
     }
 
     /** Boss 在哪：地圖的名稱（「沉船灣 T13」「天穹熔爐・極境」）、世界 Boss、區域。 */
@@ -200,6 +303,28 @@ public final class DpsRecords {
     }
 
     // ---- 管理網頁 ----
+
+    /** 排好的數字取第 p 分位（0.5 = 中位數；線性內插）。 */
+    static double percentile(final List<Double> sorted, final double p) {
+        if (sorted.isEmpty()) {
+            return 0;
+        }
+        final double index = p * (sorted.size() - 1);
+        final int low = (int) Math.floor(index);
+        final int high = Math.min(sorted.size() - 1, low + 1);
+        return sorted.get(low) + (sorted.get(high) - sorted.get(low)) * (index - low);
+    }
+
+    /** 最常見的幾個：「血肉之軀 12、狂戰士 3」。 */
+    static String top(final Map<String, Integer> counts, final int limit) {
+        final List<Map.Entry<String, Integer>> list = new ArrayList<>(counts.entrySet());
+        list.sort((a, b) -> b.getValue() - a.getValue());
+        final List<String> parts = new ArrayList<>();
+        for (int i = 0; i < list.size() && i < limit; i++) {
+            parts.add(list.get(i).getKey() + " " + list.get(i).getValue());
+        }
+        return String.join("、", parts);
+    }
 
     /**
      * 打這隻假人的每秒傷害換成打「訓練假人・一般」的倍率（2026-10-17）：兩隻的 boss_factor 相除
@@ -294,7 +419,52 @@ public final class DpsRecords {
             }
             players.add(row);
         }
+        // 2026-10-19：依主技能分組（流派平衡）：只算 Boss、有配裝快照的紀錄；中位數比平均不怕少數幾個特別強的人
+        final Map<String, List<Entry>> bySkill = new LinkedHashMap<>();
+        for (final Entry entry : list) {
+            if (entry.at() >= since && "boss".equals(entry.kind()) && entry.mainSkill() != null) {
+                bySkill.computeIfAbsent(entry.mainSkill(), key -> new ArrayList<>()).add(entry);
+            }
+        }
+        final JsonArray skills = new JsonArray();
+        for (final Map.Entry<String, List<Entry>> group : bySkill.entrySet()) {
+            final List<Entry> fights = group.getValue();
+            final List<Double> dps = new ArrayList<>();
+            final java.util.Set<String> people = new java.util.HashSet<>();
+            final Map<String, Integer> ascendancies = new HashMap<>();
+            final Map<String, Integer> supports = new HashMap<>();
+            double share = 0;
+            double dot = 0;
+            for (final Entry entry : fights) {
+                dps.add(entry.dps());
+                people.add(entry.uuid());
+                share += entry.mainShare();
+                dot += entry.dotShare();
+                if (entry.ascendancy() != null) {
+                    ascendancies.merge(entry.ascendancy(), 1, Integer::sum);
+                }
+                if (entry.supports() != null) {
+                    for (final String support : entry.supports()) {
+                        supports.merge(support, 1, Integer::sum);
+                    }
+                }
+            }
+            dps.sort(Double::compare);
+            final JsonObject row = new JsonObject();
+            row.addProperty("skill", group.getKey());
+            row.addProperty("fights", fights.size());
+            row.addProperty("players", people.size());
+            row.addProperty("median", Math.round(percentile(dps, 0.5)));
+            row.addProperty("p90", Math.round(percentile(dps, 0.9)));
+            row.addProperty("best", Math.round(dps.getLast()));
+            row.addProperty("mainShare", Math.round(share / fights.size() * 1000) / 1000.0);
+            row.addProperty("dotShare", Math.round(dot / fights.size() * 1000) / 1000.0);
+            row.addProperty("ascendancies", top(ascendancies, 3));
+            row.addProperty("supports", top(supports, 5));
+            skills.add(row);
+        }
         final JsonObject root = new JsonObject();
+        root.add("skills", skills);
         root.add("players", players);
         root.add("rows", rows);
         root.addProperty("total", list.size());

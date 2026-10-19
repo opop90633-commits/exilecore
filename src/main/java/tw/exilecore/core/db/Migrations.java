@@ -464,6 +464,16 @@ public final class Migrations {
                         note VARCHAR(255) NULL
                     )""",
                     "CREATE INDEX IF NOT EXISTS idx_shop_orders_account ON shop_orders (account_uuid)"
+            )),
+            // 2026-10-19：每個帳號哪幾天有上線（管理網頁的「玩家留存」：每天上線人數）。登入、存檔時記，一天一筆
+            new Migration(26, "每日上線紀錄（留存報表）", List.of(
+                    """
+                    CREATE TABLE IF NOT EXISTS account_days (
+                        account_uuid VARCHAR(36) NOT NULL,
+                        active_day VARCHAR(10) NOT NULL,
+                        PRIMARY KEY (account_uuid, active_day)
+                    )""",
+                    "CREATE INDEX IF NOT EXISTS idx_account_days_day ON account_days (active_day)"
             ))
     );
 
@@ -474,7 +484,8 @@ public final class Migrations {
             "trade_log", "market_listings", "market_proceeds", "exchange_orders", "exchange_fills", "stash_tabs",
             "economy_flow", "economy_stock", "economy_income", "exchange_trades", "currency_values", "account_progress",
             "admin_deliveries", "admin_log", "star_vouchers", "character_profiles",
-            "guilds", "guild_members", "guild_stash", "guild_log", "guild_applications", "level_race", "shop_orders");
+            "guilds", "guild_members", "guild_stash", "guild_log", "guild_applications", "level_race", "shop_orders",
+            "account_days");
 
     private Migrations() {
     }

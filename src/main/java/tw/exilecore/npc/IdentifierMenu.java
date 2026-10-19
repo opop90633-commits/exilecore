@@ -12,12 +12,13 @@ import tw.exilecore.item.ItemRenderer;
 import java.util.Optional;
 
 /**
- * 鑑定師的選單（PoE2 的 NPC 對話選項）：鑑定所有物品、免費領鑑定卷軸。
+ * 鑑定師的選單（PoE2 的 NPC 對話選項）：鑑定所有物品、免費領鑑定卷軸、洗裝台（2026-10-19）。
  */
 public final class IdentifierMenu extends Menu {
 
     private static final int SLOT_IDENTIFY = 11;
     private static final int SLOT_SCROLLS = 15;
+    private static final int SLOT_CRAFT = 13; // 2026-10-19 洗裝台
     private static final int SLOT_CLOSE = 22;
 
     public IdentifierMenu(final ExileCore plugin, final Player player) {
@@ -54,6 +55,12 @@ public final class IdentifierMenu extends Menu {
                     "",
                     give > 0 ? "<yellow>左鍵：領 " + give + " 張" : "<gray>已經滿了"));
         }
+        set(SLOT_CRAFT, glowing(icon(Material.SMITHING_TABLE, "<#f5b942>洗裝台",
+                "<gray>左邊選星籤、右邊選通貨、中間放裝備，",
+                "<gray>按「使用」先掛星籤再用通貨，可以一直按",
+                "<dark_gray>也可以打 /craft",
+                "",
+                "<yellow>左鍵：打開")));
         set(SLOT_CLOSE, closeButton());
     }
 
@@ -69,6 +76,8 @@ public final class IdentifierMenu extends Menu {
                 plugin.npcs().claimScrolls(player);
                 redraw();
             }
+            case SLOT_CRAFT -> new tw.exilecore.currency.CraftBenchMenu(plugin, player,
+                    "鑑定師", () -> new IdentifierMenu(plugin, player).open()).open(); // 2026-10-19
             case SLOT_CLOSE -> goBack();
             default -> {
             }

@@ -3,7 +3,6 @@ package tw.exilecore.loot;
 import org.bukkit.entity.Player;
 import tw.exilecore.ExileCore;
 import tw.exilecore.stats.StatKeys;
-import tw.exilecore.stats.StatSheet;
 
 import java.util.Set;
 import java.util.random.RandomGenerator;
@@ -69,13 +68,49 @@ public final class LootBonus {
         return new Bonus(quantity, rarity);
     }
 
-    /** 這個人的物品數量、稀有度（自己的屬性表，不含全服與主題）。 */
+    /** 這個人的物品數量、稀有度（自己的屬性表，不含全服與主題；稀有度照 {@link #personalRarity} 遞減）。 */
     public static Bonus personal(final ExileCore plugin, final Player player) {
         if (player == null || plugin.players() == null) {
             return Bonus.NONE;
         }
-        final StatSheet sheet = plugin.players().sheet(player);
-        return new Bonus(sheet.increased(StatKeys.DROP_QUANTITY, Set.of()), sheet.increased(StatKeys.DROP_RARITY, Set.of()));
+        return new Bonus(personalQuantity(plugin, player), personalRarity(plugin, player));
+    }
+
+    /** 2026-10-19：這個人自己的物品數量（小數）；剛換上去不到 {@link SwapGuard} 的秒數不算。 */
+    public static double personalQuantity(final ExileCore plugin, final Player player) {
+        if (player == null || plugin.players() == null) {
+            return 0;
+        }
+        return SwapGuard.quantity(player.getUniqueId(), plugin.players().sheet(player).increased(StatKeys.DROP_QUANTITY, Set.of()));
+    }
+
+    /**
+     * 2026-10-19：這個人自己的物品稀有度（小數），照 drops.yml 的 rarity_curve 遞減。
+     * 遞減的是裝備、天賦、稱號這些；個人加倍（贊助的加倍藥）不遞減，直接加在後面。
+     */
+    public static double personalRarity(final ExileCore plugin, final Player player) {
+        if (player == null || plugin.players() == null) {
+            return 0;
+        }
+        // 2026-10-19：剛換上去的稀有度裝要穿滿 SwapGuard 的秒數才算（防打 Boss 最後一下換裝）
+        final double raw = SwapGuard.rarity(player.getUniqueId(), plugin.players().sheet(player).increased(StatKeys.DROP_RARITY, Set.of()));
+        final double boost = boostRarity(plugin, player);
+        if (plugin.monsterModule() == null || plugin.monsterModule().drops() == null) {
+            return raw;
+        }
+        return plugin.monsterModule().drops().diminishRarity(raw - boost) + boost;
+    }
+
+    /** 個人加倍藥給的物品稀有度（小數；屬性表裡已經含這個）。 */
+    public static double boostRarity(final ExileCore plugin, final Player player) {
+        if (plugin.sponsors() == null) {
+            return 0;
+        }
+        double boost = 0;
+        for (final tw.exilecore.sponsor.SponsorConfig.BoostType type : plugin.sponsors().personalBoosts(player)) {
+            boost += type.rarity();
+        }
+        return boost;
     }
 
     /** 這個人拿獎勵時的全部加成：自己的＋全服＋主題（player 是 null 就只有全服＋主題）。 */

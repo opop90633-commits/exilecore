@@ -52,3 +52,4 @@ data/festival.yml
 data/life.yml
 data/guilds.yml
 data/anticheat.yml
+data/cards.yml

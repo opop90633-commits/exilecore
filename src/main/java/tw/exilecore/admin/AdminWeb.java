@@ -67,6 +67,7 @@ import java.util.concurrent.TimeoutException;
  * POST /admin/api/restart      重新啟動：{ action: schedule, minutes, reason }、{ action: shutdown, minutes, reason }（倒數關服）、
  *                              { action: cancel }、{ action: daily, times: ["05:30"] }
  * POST /admin/api/broadcast    全服公告
+ * GET  /admin/api/retention    玩家留存（2026-10-19）
  * </pre>
  * 每個 API 都要登入；POST 另外要帶 X-EC-CSRF 標頭（登入時給的代碼）。回應一律不快取、不能被別的網站嵌入。
  */
@@ -132,6 +133,9 @@ final class AdminWeb {
         // 2026-10：輸出紀錄（每場 Boss、每段假人：每個人打了多少、幾秒）
         server.endpoint("/admin/api/dps", request -> api(request, false, session -> tw.exilecore.combat.DpsRecords.get(plugin)
                 .json(parseDays(request.param("days")))), "GET");
+        // 2026-10-19：玩家留存（新玩家第 1、7、30 天還有沒有回來、每週新玩家、每天上線、流失的人停在哪）
+        server.endpoint("/admin/api/retention", request -> api(request, false, session -> onDatabase(connection ->
+                RetentionReport.load(connection, Instant.now(), java.time.ZoneId.of("Asia/Taipei")))), "GET");
         server.endpoint("/admin/api/deliver", request -> api(request, true, session -> deliver(session, body(request))), "POST");
         server.endpoint("/admin/api/cancel", request -> api(request, true, session -> cancel(session, body(request))), "POST");
         server.endpoint("/admin/api/setting", request -> api(request, true, session -> setting(session, body(request))), "POST");

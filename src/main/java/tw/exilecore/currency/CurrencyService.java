@@ -123,7 +123,13 @@ public final class CurrencyService {
             }
             lore.add(Component.empty());
             // 2026-10-17：不改物品的（碎片、鑰匙、入場券、活動素材…）不寫「點擊裝備來使用」
-            if (type.isSkillCurrency()) {
+            if (CurrencyGroups.card(type)) {
+                // 2026-10-19 星諭卡：右鍵用（手上、背包裡）
+                lore.add(ItemRenderer.line(CurrencyGroups.DECK.equals(type.id())
+                        ? "<#c9a0ff>右鍵：打開一個　Shift＋右鍵：整疊打開"
+                        : "<#c9a0ff>右鍵：兌換一套　Shift＋右鍵：這種卡全部兌換"));
+                lore.add(ItemRenderer.line("<dark_gray>撿起來直接進倉庫通貨頁的「星諭卡」；在那裡按 Q 可以花金幣賭卡"));
+            } else if (type.isSkillCurrency()) {
                 lore.add(ItemRenderer.line("<dark_gray>打開技能面板（/skills），拿在游標上點技能來使用"));
             } else if (type.operation() == CurrencyOperation.RESONANCE) {
                 // 2026-10-18：共鳴石用在專屬輔助寶石上（背包裡的寶石，或技能面板上掛著的）

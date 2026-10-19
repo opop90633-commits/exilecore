@@ -808,7 +808,7 @@ omen_whittling:
   material: BOOK
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: REMOVE_LOWEST, weight: 25 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——去劣籤：最好用、消耗 72%
+  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: REMOVE_LOWEST, weight: 12 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——去劣籤：最好用、消耗 72%；2026-10-19：25 → 12（市場價只剩設定的 1/4、消耗 80%）
   applies_to: { rarity: [MAGIC, RARE] }
   drop_weight: 0
   description: "下一顆湮滅石／亂流石移除的是階級最差的那條"
@@ -818,7 +818,7 @@ omen_sinistral_guard:
   material: BOOK
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_PREFIXES, weight: 40 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——保前綴籤
+  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_PREFIXES, weight: 25 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——保前綴籤；2026-10-19：40 → 25（市場價只剩設定的 1/3、消耗 63%）
   applies_to: { rarity: [MAGIC, RARE] }
   drop_weight: 0
   description: "下一顆湮滅石／亂流石不動前綴（只拿後綴）"
@@ -828,7 +828,7 @@ omen_dextral_guard:
   material: BOOK
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_SUFFIXES, weight: 40 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——保後綴籤
+  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_SUFFIXES, weight: 25 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——保後綴籤；2026-10-19：40 → 25（市場價只剩設定的 1/3、消耗 60%）
   applies_to: { rarity: [MAGIC, RARE] }
   drop_weight: 0
   description: "下一顆湮滅石／亂流石不動後綴（只拿前綴）"
@@ -1147,3 +1147,246 @@ ticket_abyss:
   drop_weight: 0
   description: "完成深淵裂縫事件時有份的人各 2% 掉落；在地圖裝置的「事件巔峰」用它開淵底之王・骨潮"
   flavor: "從縫的最底下撈上來的，還是冰的。"
+
+# ---- 2026-10-19 星諭卡（cards.yml 寫兌換規則；這裡只是通貨的外觀與說明，card_ 開頭的自動進「星諭卡」那一組）----
+card_tide_mark:
+  name: 潮痕
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 5 張換：至臻石 ×3｜沉船灣掉落"
+  flavor: "退潮之後，沙上只剩下這一道。"
+card_moss_whisper:
+  name: 苔語
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 4 張換：亂流石 ×3｜苔石林掉落"
+  flavor: "石頭上的苔，記得每一個走過的人。"
+card_ash_ledger:
+  name: 灰燼帳本
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：星火石 ×10｜灰燼街掉落"
+  flavor: "燒掉一半的帳，欠的還是要還。"
+card_ferry_ticket:
+  name: 渡口船票
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 5 張換：星盤刻刀 ×8｜霧沼渡口掉落"
+  flavor: "單程。老婦說，回程的票不賣。"
+card_wanted_poster:
+  name: 曜京通緝令
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：劫盜合約 ×3｜曜京外城掉落"
+  flavor: "懸賞金額被人用刀刮掉了。"
+card_pine_hunter:
+  name: 寒松獵人
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 4 張換：隨機星魄 ×3｜寒松嶺掉落"
+  flavor: "他只追有星光的獵物。"
+card_miner_note:
+  name: 礦工的遺書
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 7 張換：深淵星核 ×1｜深淵礦坑 T4+掉落"
+  flavor: "「再往下挖一尺就好。」——最後一行。"
+card_tomb_oath:
+  name: 守陵誓詞
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：守墓巨鎚｜王陵地宮的 Boss掉落"
+  flavor: "守了三百年的誓，還沒有人來解。"
+card_spore_sac:
+  name: 菌光孢囊
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：未切割輔助寶石 第 3 階｜菌光洞窟 T4+掉落"
+  flavor: "一捏就亮，亮完就碎。"
+card_war_banner:
+  name: 燎原戰旗
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 8 張換：隨機一件地圖 Boss 傳奇｜燎原古戰場 T6+掉落"
+  flavor: "旗還在燒，人早就散了。"
+card_tide_oracle:
+  name: 潮汐神諭
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 7 張換：恩澤石 ×3｜潮汐神殿 T6+掉落"
+  flavor: "神諭只說一次，潮水會把它帶走。"
+card_red_caravan:
+  name: 赤沙商隊
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：大鑿星石 ×1｜赤沙古道 T6+掉落"
+  flavor: "駱駝背上的箱子，從來沒人打開過。"
+card_fallen_page:
+  name: 星墜殘頁
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 9 張換：天啟石 ×2｜星墜冰原 T10+掉落"
+  flavor: "書的其他頁，散在整片冰原上。"
+card_stargazer:
+  name: 觀星者手記
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 8 張換：星軌魔杖｜天文台遺跡的 Boss掉落"
+  flavor: "他算準了每一顆星，除了落下來的那顆。"
+card_shrine_ash:
+  name: 神龕香灰
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：神龕的傳奇隨機一件｜完成神龕事件掉落"
+  flavor: "香燒完了，祈的願還在。"
+card_key_mould:
+  name: 鑰模
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：寶匣的傳奇隨機一件｜完成寶匣事件掉落"
+  flavor: "有了模，就沒有打不開的鎖。"
+card_rift_whisper:
+  name: 裂隙碎語
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：裂隙的傳奇隨機一件｜完成裂隙事件掉落"
+  flavor: "縫的另一邊，有人在說話。"
+card_exile_bounty:
+  name: 流寇的懸賞單
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：流寇的傳奇隨機一件｜完成流寇事件掉落"
+  flavor: "上面畫的臉，跟你有點像。"
+card_blood_page:
+  name: 血契殘頁
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：祭壇的傳奇隨機一件｜完成祭壇事件掉落"
+  flavor: "簽名的地方，墨水是紅的。"
+card_fog_reflection:
+  name: 霧中倒影
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：幻霧的傳奇隨機一件｜完成幻霧事件掉落"
+  flavor: "倒影對你笑了，你沒有。"
+card_rift_echo:
+  name: 深縫回聲
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 6 張換：深淵的傳奇隨機一件｜完成深淵裂縫事件掉落"
+  flavor: "喊了一聲，回來的是別人的聲音。"
+card_frost_mirror:
+  name: 霜心的鏡子
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 4 張換：霜環｜永凍王座的 Boss掉落"
+  flavor: "照久了，連呼吸都會結霜。"
+card_styx_fare:
+  name: 冥河渡資
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 4 張換：骸骨束帶｜冥河渡口的 Boss掉落"
+  flavor: "一枚銅板，換一趟不回頭的船。"
+card_ember_order:
+  name: 焚天的軍令
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 4 張換：熔鑄壁鎧｜餘燼堡壘的 Boss掉落"
+  flavor: "「不許退。」紙的邊緣還在冒煙。"
+card_starbody_shade:
+  name: 星骸碎影
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 5 張換：終局傳奇隨機一件｜天穹熔爐的 Boss掉落"
+  flavor: "曜帝倒下時，影子碎成了好幾片。"
+card_void_resonance:
+  name: 虛星殘響
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 4 張換：至臻石 ×6｜萬界之巔的 Boss掉落"
+  flavor: "萬界安靜下來之後，還聽得到一點點。"
+card_awakener_echo:
+  name: 萬界的回音
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 5 張換：共鳴石 ×1｜萬界之巔的 Boss掉落"
+  flavor: "祂說的最後一句話，在每個世界都響了一次。"
+card_star_chaser:
+  name: 追星者
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 12 張換：追逐級傳奇隨機一件｜任何 T16 以上的地圖掉落"
+  flavor: "他追的那顆星，從來沒有停下來過。"
+card_mirror_star:
+  name: 鏡中星
+  material: PAPER
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "集滿 30 張換：映星鏡 ×1｜任何 T16 以上的地圖掉落"
+  flavor: "鏡子裡的星，比天上的還多一顆。"
+stacked_deck:
+  name: 星諭牌堆
+  material: BOOK
+  stack: 20
+  operation: NONE
+  drop_weight: 30
+  drop_level: 60
+  description: "右鍵打開：隨機變成一張星諭卡（照每張卡的權重抽；Shift＋右鍵全部打開）"
+  flavor: "洗牌的人不見了，牌還在。"

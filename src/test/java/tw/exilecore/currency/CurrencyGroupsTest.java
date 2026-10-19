@@ -46,9 +46,12 @@ class CurrencyGroupsTest {
         assertEquals(CurrencyGroups.Group.MECHANIC, CurrencyGroups.first(currencies.all(), type -> held.getOrDefault(type.id(), 0)));
         assertEquals(CurrencyGroups.Group.BASIC, CurrencyGroups.first(currencies.all(), type -> 0));
         final int[] counts = CurrencyGroups.kindsHeld(currencies.all(), type -> held.getOrDefault(type.id(), 0));
-        assertEquals("一般通貨 0 種・未切割寶石 0 種・星魄 0 種・催化劑・星籤・蒸餾情緒 1 種・Boss 門票 0 種", CurrencyGroups.summary(counts));
+        assertEquals("一般通貨 0 種・未切割寶石 0 種・星魄 0 種・催化劑・星籤・蒸餾情緒 1 種・Boss 門票 0 種・星諭卡 0 種", CurrencyGroups.summary(counts));
         assertEquals(CurrencyGroups.Group.GEM, CurrencyGroups.Group.BASIC.next());
-        assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.Group.BASIC.previous()); // 2026-10-18：Boss 門票在最後
+        assertEquals(CurrencyGroups.Group.CARDS, CurrencyGroups.Group.BASIC.previous()); // 2026-10-19：星諭卡在最後
+        assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.Group.CARDS.previous());
+        assertEquals(CurrencyGroups.Group.CARDS, CurrencyGroups.of(currencies.get("card_tide_mark")));
+        assertEquals(CurrencyGroups.Group.CARDS, CurrencyGroups.of(currencies.get("stacked_deck")));
         assertEquals(CurrencyGroups.Group.MECHANIC, CurrencyGroups.Group.KEYS.previous());
         assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.Group.MECHANIC.next());
     }

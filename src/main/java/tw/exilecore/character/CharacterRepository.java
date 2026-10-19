@@ -105,6 +105,7 @@ public final class CharacterRepository {
                         update.setString(3, uuid.toString());
                         update.executeUpdate();
                     }
+                    markActiveDay(connection, uuid); // 2026-10-19 留存報表
                     return new Account(uuid, name, activeOrNull, gold);
                 }
             }
@@ -117,7 +118,46 @@ public final class CharacterRepository {
             insert.setTimestamp(4, now());
             insert.executeUpdate();
         }
+        markActiveDay(connection, uuid); // 2026-10-19 留存報表
         return new Account(uuid, name, null, 0);
+    }
+
+    /** 2026-10-19 留存報表：每個帳號這次記到哪一天（同一天不再查資料庫）。 */
+    private final Map<UUID, String> markedDay = new java.util.concurrent.ConcurrentHashMap<>();
+    /** 「哪一天」照台灣時間算（跟管理網頁一樣）。 */
+    static final java.time.ZoneId DAY_ZONE = java.time.ZoneId.of("Asia/Taipei");
+
+    /**
+     * 2026-10-19 留存報表：記下這個帳號今天有上線（account_days 一天一筆）。登入、存檔時呼叫；
+     * 寫不進去（資料表還沒建、同時兩筆撞到）就算了，不影響登入與存檔。
+     */
+    public void markActiveDay(final Connection connection, final UUID uuid) {
+        final String day = java.time.LocalDate.now(DAY_ZONE).toString();
+        if (uuid == null || day.equals(markedDay.get(uuid))) {
+            return;
+        }
+        try {
+            boolean exists;
+            try (PreparedStatement select = connection.prepareStatement(
+                    "SELECT 1 FROM account_days WHERE account_uuid = ? AND active_day = ?")) {
+                select.setString(1, uuid.toString());
+                select.setString(2, day);
+                try (ResultSet result = select.executeQuery()) {
+                    exists = result.next();
+                }
+            }
+            if (!exists) {
+                try (PreparedStatement insert = connection.prepareStatement(
+                        "INSERT INTO account_days (account_uuid, active_day) VALUES (?, ?)")) {
+                    insert.setString(1, uuid.toString());
+                    insert.setString(2, day);
+                    insert.executeUpdate();
+                }
+            }
+            markedDay.put(uuid, day);
+        } catch (final SQLException ignored) {
+            // 留存報表少一筆而已
+        }
     }
 
     /** 寫帳號的金幣。 */
@@ -585,6 +625,7 @@ public final class CharacterRepository {
         if (job.gold() != null) {
             updateAccountGold(connection, job.account(), job.gold());
         }
+        markActiveDay(connection, job.account()); // 2026-10-19 留存報表：一直在線跨日的人也記到
         if (job.extra() != null) {
             job.extra().run(connection);
         }

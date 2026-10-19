@@ -49,6 +49,8 @@ public final class EconomyLedger {
     public static final String EVENT_SHOP = EconomySources.EVENT_SHOP;
     public static final String ADMIN_TAKE = EconomySources.ADMIN_TAKE;
     public static final String SALVAGE_COST = EconomySources.SALVAGE_COST;
+    public static final String CARDS = EconomySources.CARDS; // 2026-10-19 星諭卡
+    public static final String CARD_GAMBLE = EconomySources.CARD_GAMBLE;
 
     /** 來源給人看的名字。 */
     public static String sourceName(final String source) {

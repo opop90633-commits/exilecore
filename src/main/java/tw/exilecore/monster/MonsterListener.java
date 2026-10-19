@@ -174,8 +174,8 @@ public final class MonsterListener implements Listener {
         } else {
             for (final Player player : sharers) {
                 final StatSheet sheet = plugin.players().sheet(player);
-                rollAndDeliver(entity, data, player, quantityBonus + (flat ? 0 : sheet.increased(StatKeys.DROP_QUANTITY, java.util.Set.of())),
-                        rarityBonus + (flat ? 0 : sheet.increased(StatKeys.DROP_RARITY, java.util.Set.of())), location, flat);
+                rollAndDeliver(entity, data, player, quantityBonus + (flat ? 0 : tw.exilecore.loot.LootBonus.personalQuantity(plugin, player)),
+                        rarityBonus + (flat ? 0 : tw.exilecore.loot.LootBonus.personalRarity(plugin, player)), location, flat); // 2026-10-19：自己的稀有度遞減
                 if (plugin.quests() != null) {
                     plugin.quests().onKill(player, location, data.rarity()); // 任務：擊殺、撿任務物品
                 }
@@ -230,6 +230,9 @@ public final class MonsterListener implements Listener {
             plugin.maps().rollLoot(entity, data, owner, quantityBonus, rolled);
         }
         rollMirror(owner, rolled, fatigue);
+        if (plugin.cards() != null) {
+            plugin.cards().rollKill(owner, entity, data, rolled); // 2026-10-19 星諭卡（地圖怪）
+        }
         // 2026-10：累積贊助的金幣加成（只算掉給這個人的那份）
         // 個人金幣加倍藥：跟全服加倍加起來（全服 ×2、個人 ×2 → ×3）
         // 2026-10-18：全部加起來：全服（已經在 rollGold 裡）＋累積贊助＋稱號等＋個人加倍。personalGold 已經除過全服倍數；

@@ -65,6 +65,11 @@ public final class EconomySources {
     public static final String ADMIN_TAKE = "admin_take";
     /** 拆解時被拆掉的通貨。 */
     public static final String SALVAGE_COST = "salvage_cost";
+    // 2026-10-19 星諭卡
+    /** 星諭卡：交出的卡、打開的牌堆（消耗），換到的獎勵、牌堆開出的卡（產出）。 */
+    public static final String CARDS = "cards";
+    /** 賭卡：花掉的金幣、賭掉與賭到的卡。 */
+    public static final String CARD_GAMBLE = "card_gamble";
 
     /** 來源給人看的名字。 */
     public static String sourceName(final String source) {
@@ -95,6 +100,8 @@ public final class EconomySources {
             case EVENT_SHOP -> "活動兌換";
             case ADMIN_TAKE -> "管理員扣除";
             case SALVAGE_COST -> "拆解用掉";
+            case CARDS -> "星諭卡兌換";
+            case CARD_GAMBLE -> "賭卡";
             default -> source;
         };
     }
@@ -102,7 +109,8 @@ public final class EconomySources {
     /** 全部的來源（網頁的名稱表照這個順序）。 */
     public static final List<String> ALL = List.of(DROP, FILTER, SALVAGE, NPC, ADMIN, MERITS, EVENT, CRAFT, SKILL, MAP_DEVICE, HEIST, TRASH, DELETE, VENDOR, VENDOR_REFRESH,
             GAMBLE, SHOP, RESPEC, FEE_TRADE, FEE_LIST, FEE_BUY, FEE_EXCHANGE, GUILD,
-            EVENT_SHOP, ADMIN_TAKE, SALVAGE_COST); // 2026-10-18：加上活動兌換、管理員扣除、拆解用掉
+            EVENT_SHOP, ADMIN_TAKE, SALVAGE_COST, // 2026-10-18：加上活動兌換、管理員扣除、拆解用掉
+            CARDS, CARD_GAMBLE); // 2026-10-19 星諭卡
 
     private EconomySources() {
     }

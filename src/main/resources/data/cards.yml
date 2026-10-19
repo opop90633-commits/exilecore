@@ -1,0 +1,225 @@
+# 星諭卡（2026-10-19）：集滿一套換獎勵。卡本身是通貨（currencies.yml 的 card_ 開頭，外觀與說明在那邊），這裡寫規則。
+# 改完 /ec reload。
+#
+# 掉落：每殺一隻地圖怪（每個有份的人各擲一次）先照 chance 擲「有沒有卡」，有的話從「這個地點能掉的卡」照 weight 抽一張；
+#   完成地圖事件時（每個有份的人）照 chance.event 擲一次，從那個事件的卡裡抽。卡走一般的掉落（物品數量、掉落過濾、掉落倍率都照算）。
+# 撿到的卡（含星諭牌堆）直接進倉庫通貨頁的「星諭卡」那一組；倉庫滿了才進通貨袋、背包。
+#
+# 每張卡：
+#   tier     common 常見／mid 中階／rare 稀有／chase 追逐（賭卡的金幣照這個；chase、rare 兌換時全服公告）
+#   set      幾張換一次
+#   weight   同一個地點能掉好幾種卡時的權重
+#   sources  map:地圖代號（那張圖的任何怪）、boss:地圖或終局代號（那張圖的 Boss）、event:事件（shrine、strongbox、breach、exile、
+#            ritual、delirium、abyss；完成事件時擲）、any（任何地圖的怪，配 min_tier）
+#   min_tier 地圖至少幾階（沒寫 = 1）
+#   reward   currency + amount／unique（指定一件）／unique_pool（某個來源的傳奇隨機一件：map_boss、final、chase、shrine…）／
+#            essence（隨機星魄幾顆）
+#
+# 星諭牌堆（stacked_deck）：一般掉落表裡的通貨（currencies.yml 的 drop_weight），右鍵打開照 weight × settings.deck 的倍數隨機變成一張卡（任何卡都可能）。
+# 賭卡（PoE 花園的「把一疊卡變成 0～2 倍」）：倉庫「星諭卡」那一組，對一種卡按 Q：花 gamble 的金幣 × 張數，
+#   這一疊變成 0 到 2 倍（每個整數一樣機率）的同一種卡。
+
+settings:
+  chance:
+    normal: 0.003
+    magic: 0.008
+    rare: 0.03
+    unique: 0.03
+    boss: 0.25          # 一般地圖的 Boss
+    final_boss: 0.4     # 終局、極境、巔峰、金庫之主（每人）
+    event: 0.08         # 完成地圖事件（每人）
+  item_level: 84        # 換到的傳奇的物品等級
+  deck:                 # 2026-10-19 星諭牌堆：開出來的卡照 weight × 這個倍數抽（稀有卡不要跟常見卡一樣常見）
+    common: 1           #   常見約 49%、中階約 37%、稀有約 14%；
+    mid: 0.5            #   追逐 0.47：總權重變小了，乘 0.47 讓追逐卡維持原本的機率（約 0.08%：萬界的回音約 1,500 個牌堆一張）
+    rare: 0.15
+    chase: 0.47
+  gamble:               # 賭卡：每張卡花多少金幣（照卡的等級）
+    common: 600         # 2026-10-19：全部 ×2（原本 300／1500／6000／40000）
+    mid: 3000
+    rare: 12000
+    chase: 80000
+
+cards:
+  card_tide_mark:
+    tier: common            # 常見
+    set: 5
+    weight: 1000
+    sources: [map:wreck_bay]
+    reward: { currency: zenith_orb, amount: 3 }
+  card_moss_whisper:
+    tier: common            # 常見
+    set: 4
+    weight: 1000
+    sources: [map:moss_grove]
+    reward: { currency: turmoil_orb, amount: 3 }
+  card_ash_ledger:
+    tier: common            # 常見
+    set: 6
+    weight: 1000
+    sources: [map:ash_street]
+    reward: { currency: spark_orb, amount: 10 }
+  card_ferry_ticket:
+    tier: common            # 常見
+    set: 5
+    weight: 1000
+    sources: [map:mist_ferry]
+    reward: { currency: chisel, amount: 8 }
+  card_wanted_poster:
+    tier: common            # 常見
+    set: 6
+    weight: 1000
+    sources: [map:outer_city]
+    reward: { currency: heist_contract, amount: 3 }
+  card_pine_hunter:
+    tier: common            # 常見
+    set: 4
+    weight: 1000
+    sources: [map:frost_pines]
+    reward: { essence: 3 }
+  card_miner_note:
+    tier: mid            # 中階
+    set: 7
+    weight: 1000
+    sources: [map:abyss_mine]
+    min_tier: 4
+    reward: { currency: abyss_core, amount: 1 }
+  card_tomb_oath:
+    tier: mid            # 中階
+    set: 6
+    weight: 1000
+    sources: [boss:royal_tomb]
+    reward: { unique: gravewarden_maul }
+  card_spore_sac:
+    tier: mid            # 中階
+    set: 6
+    weight: 1000
+    sources: [map:glow_grotto]
+    min_tier: 4
+    reward: { currency: uncut_support_3, amount: 1 }
+  card_war_banner:
+    tier: mid            # 中階
+    set: 8
+    weight: 1000
+    sources: [map:burning_field]
+    min_tier: 6
+    reward: { unique_pool: map_boss }
+  card_tide_oracle:
+    tier: mid            # 中階
+    set: 7
+    weight: 1000
+    sources: [map:tide_temple]
+    min_tier: 6
+    reward: { currency: blessing_orb, amount: 3 }
+  card_red_caravan:
+    tier: mid            # 中階
+    set: 6
+    weight: 1000
+    sources: [map:red_sands]
+    min_tier: 6
+    reward: { currency: greater_socket_orb, amount: 1 }
+  card_fallen_page:
+    tier: mid            # 中階
+    set: 9
+    weight: 1000
+    sources: [map:starfall_tundra]
+    min_tier: 10
+    reward: { currency: oracle_orb, amount: 2 }
+  card_stargazer:
+    tier: mid            # 中階
+    set: 8
+    weight: 1000
+    sources: [boss:observatory]
+    reward: { unique: astrolabe_wand }
+  card_shrine_ash:
+    tier: rare            # 稀有
+    set: 6
+    weight: 1000
+    sources: [event:shrine, boss:shrine_warden]   # 2026-10-19：事件巔峰的 Boss 也掉（不然只剩追逐卡可以抽）
+    reward: { unique_pool: shrine }
+  card_key_mould:
+    tier: rare            # 稀有
+    set: 6
+    weight: 1000
+    sources: [event:strongbox, boss:strongbox_mimic]   # 2026-10-19：事件巔峰的 Boss 也掉（不然只剩追逐卡可以抽）
+    reward: { unique_pool: strongbox }
+  card_rift_whisper:
+    tier: rare            # 稀有
+    set: 6
+    weight: 1000
+    sources: [event:breach, boss:breach_lord]   # 2026-10-19：事件巔峰的 Boss 也掉（不然只剩追逐卡可以抽）
+    reward: { unique_pool: breach }
+  card_exile_bounty:
+    tier: rare            # 稀有
+    set: 6
+    weight: 1000
+    sources: [event:exile, boss:exile_king]   # 2026-10-19：事件巔峰的 Boss 也掉（不然只剩追逐卡可以抽）
+    reward: { unique_pool: exile }
+  card_blood_page:
+    tier: rare            # 稀有
+    set: 6
+    weight: 1000
+    sources: [event:ritual, boss:ritual_priest]   # 2026-10-19：事件巔峰的 Boss 也掉（不然只剩追逐卡可以抽）
+    reward: { unique_pool: ritual }
+  card_fog_reflection:
+    tier: rare            # 稀有
+    set: 6
+    weight: 1000
+    sources: [event:delirium, boss:delirium_mirror]   # 2026-10-19：事件巔峰的 Boss 也掉（不然只剩追逐卡可以抽）
+    reward: { unique_pool: delirium }
+  card_rift_echo:
+    tier: rare            # 稀有
+    set: 6
+    weight: 1000
+    sources: [event:abyss, boss:abyss_lich]   # 2026-10-19：事件巔峰的 Boss 也掉（不然只剩追逐卡可以抽）
+    reward: { unique_pool: abyss }
+  card_frost_mirror:
+    tier: rare            # 稀有
+    set: 4
+    weight: 1000
+    sources: [boss:frost_throne]
+    reward: { unique: rime_halo }
+  card_styx_fare:
+    tier: rare            # 稀有
+    set: 4
+    weight: 1000
+    sources: [boss:bone_throne]
+    reward: { unique: bone_cinch }
+  card_ember_order:
+    tier: rare            # 稀有
+    set: 4
+    weight: 1000
+    sources: [boss:ember_citadel]
+    reward: { unique: molten_aegis }
+  card_starbody_shade:
+    tier: rare            # 稀有
+    set: 5
+    weight: 1000
+    sources: [boss:sky_crucible]
+    reward: { unique_pool: final }
+  card_void_resonance:
+    tier: mid            # 中階
+    set: 4
+    weight: 1000
+    sources: [boss:awakener]
+    reward: { currency: zenith_orb, amount: 6 }
+  card_awakener_echo:
+    tier: chase            # 追逐
+    set: 5                 # 2026-10-19：3 → 5，權重 10 → 17（集滿一套平均約 750 次擊殺不變）
+    weight: 17
+    sources: [boss:awakener]
+    reward: { currency: resonance_orb, amount: 1 }
+  card_star_chaser:
+    tier: chase            # 追逐
+    set: 12                # 2026-10-19：8 → 12（約 4,500 張 T16 一套，追逐級傳奇總量約多 45%）
+    weight: 3
+    sources: [any]
+    min_tier: 16
+    reward: { unique_pool: chase }
+  card_mirror_star:
+    tier: chase            # 追逐
+    set: 30                # 2026-10-19：10 → 30、T14 → T16（約 33,000 張 T16 一套，映星鏡總量約多 6 成；原本會變成近 3 倍）
+    weight: 1
+    sources: [any]
+    min_tier: 16
+    reward: { currency: star_mirror, amount: 1 }

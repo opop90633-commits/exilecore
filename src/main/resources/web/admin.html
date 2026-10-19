@@ -127,6 +127,9 @@
   .status.mismatch { background: var(--bad-bg); color: var(--bad); }
   .totals { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 4px 0 12px; }
   .totals b { font-size: 18px; font-variant-numeric: tabular-nums; }
+  .ret-bar { display: inline-block; height: 8px; border-radius: 2px; background: var(--gold-fill); vertical-align: middle; margin-right: 6px; min-width: 1px; }
+  .ret-bar.off { background: var(--text-muted); }
+  td.bar-cell { white-space: nowrap; font-variant-numeric: tabular-nums; }
   .badge { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; background: var(--warn-bg); color: var(--warn-text); margin-left: 6px; vertical-align: 1px; font-weight: 500; }
   .badge.admin { background: var(--surface-2); color: var(--text-secondary); }
   .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
@@ -201,6 +204,7 @@
     <button type="button" role="tab" data-tab="trace" aria-selected="false">物品追查</button>
     <button type="button" role="tab" data-tab="transfer" aria-selected="false">帳號轉移</button>
     <button type="button" role="tab" data-tab="dps" aria-selected="false">輸出紀錄</button>
+    <button type="button" role="tab" data-tab="retention" aria-selected="false">玩家留存</button>
     <button type="button" role="tab" data-tab="log" aria-selected="false">操作紀錄</button>
   </nav>
 
@@ -399,6 +403,16 @@
         <label>每一筆 <select id="dps-view"><option value="best" selected>每個人最高</option><option value="all">全部紀錄</option></select></label>
         <button type="button" id="dps-refresh">重新整理</button>
       </div>
+      <h3>依主技能（流派平衡用；只算 Boss，照上面選的範圍）</h3>
+      <p class="note">主技能＝那一場打最多傷害的技能（點燃、流血、中毒不算，另外列「持續佔比」）。<b>中位數</b>比平均可靠：不會被一兩個特別強的人拉高。
+        「主技能佔比」低代表這套靠很多技能一起打；「持續佔比」高代表主要傷害是異常。2026-10-19 之前的紀錄沒有配裝，不會出現在這裡。</p>
+      <div class="scroll"><table id="dps-skills">
+        <thead><tr><th>主技能</th><th class="num">人數</th><th class="num">場數</th><th class="num">中位數每秒</th>
+          <th class="num">前 10% 每秒</th><th class="num">最高每秒</th><th class="num">主技能佔比</th><th class="num">持續佔比</th>
+          <th>昇華（最常見）</th><th>輔助（最常見）</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty" id="dps-skills-empty" hidden>還沒有配裝快照（更新之後打倒的 Boss 才有）。</p>
       <h3>每個人（點標題排序）</h3>
       <div class="scroll"><table id="dps-players">
         <thead><tr><th data-sort="player">玩家</th><th data-sort="character">角色</th><th data-sort="className">職業</th>
@@ -412,10 +426,44 @@
         <thead><tr><th data-sort="at">時間</th><th data-sort="kind">種類</th><th data-sort="player">玩家</th><th data-sort="character">角色</th>
           <th class="num" data-sort="level">等級</th><th data-sort="target">對象</th><th data-sort="where">地點</th>
           <th class="num" data-sort="players">人數</th><th class="num" data-sort="damage">傷害</th><th class="num" data-sort="seconds">秒</th>
-          <th class="num" data-sort="dps">每秒</th><th class="num" data-sort="share">佔比</th></tr></thead>
+          <th class="num" data-sort="dps">每秒</th><th class="num" data-sort="share">佔比</th><th data-sort="mainSkill">主技能</th><th>配裝</th></tr></thead>
         <tbody></tbody>
       </table></div>
       <p class="empty" id="dps-empty" hidden>還沒有紀錄（更新之後打倒的 Boss、打假人才會記）。</p>
+    </div>
+  </section>
+
+  <section id="tab-retention" role="tabpanel" hidden>
+    <div class="card">
+      <h2>玩家留存</h2>
+      <p class="note">「第 N 天留存」＝建立帳號超過 N 天的人裡，最後一次上線距離建立帳號至少 N 天的比例（之後還有回來玩）。
+        分母只算建立超過 N 天的帳號，所以最近一週的新玩家還沒有第 7、30 天的數字。<br>
+        「還在玩」＝最近 <span id="ret-inactive-days">7</span> 天有上線；「沒在玩」＝超過這麼久沒上線。進度看帳號裡最遠的那個角色。</p>
+      <div class="filters"><button type="button" id="ret-refresh">重新整理</button></div>
+      <div class="totals" id="ret-summary"></div>
+      <h3>每週新玩家（週一開始）</h3>
+      <div class="scroll"><table id="ret-cohorts">
+        <thead><tr><th>那一週</th><th class="num">新帳號</th><th class="num">第 1 天</th><th class="num">第 7 天</th><th class="num">第 30 天</th>
+          <th class="num">現在還在玩</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <h3>停在哪個進度</h3>
+      <p class="note">「沒在玩」的人集中在哪一段，就是那一段最需要補：劇情前段＝新手體驗、地圖低階＝進地圖的門檻、T16＝終局目標不夠。</p>
+      <div class="scroll"><table id="ret-stages">
+        <thead><tr><th>進度</th><th class="num">還在玩</th><th class="num">沒在玩</th><th>沒在玩的比例</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <h3>沒在玩的人總共玩了多久（所有角色加起來）</h3>
+      <div class="scroll"><table id="ret-playtime">
+        <thead><tr><th>遊玩時間</th><th class="num">人數</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <h3>每天上線的帳號（最近 30 天）</h3>
+      <p class="note" id="ret-tracked"></p>
+      <div class="scroll"><table id="ret-daily">
+        <thead><tr><th>日期</th><th class="num">上線帳號</th><th class="num">新帳號</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
     </div>
   </section>
 
@@ -1713,9 +1761,32 @@
         h('td', { cls: 'num', text: wan(r.damage) }), h('td', { cls: 'num', text: Number(r.seconds).toFixed(1) }),
         h('td', { cls: 'num', text: wan(r.seconds > 0 ? r.damage / r.seconds : 0)
           + (r.kind !== 'boss' && r.normal !== undefined && Math.abs(r.normal - (r.seconds > 0 ? r.damage / r.seconds : 0)) >= 1 ? '（一般靶 ' + wan(r.normal) + '）' : '') }),
-        h('td', { cls: 'num', text: r.kind === 'boss' ? Math.round(r.share * 100) + '%' : '' })));
+        h('td', { cls: 'num', text: r.kind === 'boss' ? Math.round(r.share * 100) + '%' : '' }),
+        h('td', { text: r.mainSkill ? r.mainSkill + (r.mainShare ? '（' + Math.round(r.mainShare * 100) + '%）' : '') : '' }),
+        h('td', { cls: 'muted', text: dpsBuild(r) })));
     });
     $('dps-empty').hidden = shown.length > 0;
+  }
+  /** 2026-10-19：一筆紀錄的配裝（昇華、輔助、傳奇、持續佔比）。 */
+  function dpsBuild(r) {
+    var parts = [];
+    if (r.ascendancy) { parts.push(r.ascendancy); }
+    if (r.supports && r.supports.length) { parts.push('輔助：' + r.supports.join('、')); }
+    if (r.uniques && r.uniques.length) { parts.push('傳奇：' + r.uniques.join('、')); }
+    if (r.dotShare) { parts.push('持續 ' + Math.round(r.dotShare * 100) + '%'); }
+    return parts.join('｜');
+  }
+  /** 2026-10-19：依主技能分組（伺服器算好的，照選的天數）。 */
+  function renderDpsSkills() {
+    var body = clear($('dps-skills').querySelector('tbody'));
+    var rows = (dpsData && dpsData.skills) || [];
+    rows.slice().sort(function (a, b) { return b.median - a.median; }).forEach(function (s) {
+      body.appendChild(h('tr', null, h('td', { text: s.skill }), h('td', { cls: 'num', text: s.players }), h('td', { cls: 'num', text: s.fights }),
+        h('td', { cls: 'num', text: wan(s.median) }), h('td', { cls: 'num', text: wan(s.p90) }), h('td', { cls: 'num', text: wan(s.best) }),
+        h('td', { cls: 'num', text: Math.round(s.mainShare * 100) + '%' }), h('td', { cls: 'num', text: Math.round(s.dotShare * 100) + '%' }),
+        h('td', { text: s.ascendancies || '' }), h('td', { text: s.supports || '' })));
+    });
+    $('dps-skills-empty').hidden = rows.length > 0;
   }
   /** 地點的選單：照這次抓到的紀錄裡出現過的地點（Boss 的地圖名稱、世界 Boss、區域 Boss、訓練假人），選過的留著。 */
   function fillDpsPlaces() {
@@ -1733,7 +1804,67 @@
     return api('GET', 'admin/api/dps?days=' + encodeURIComponent($('dps-days').value)).then(function (json) {
       dpsData = json;
       fillDpsPlaces();
+      renderDpsSkills();
       renderDps();
+    }).catch(fail);
+  }
+
+  // ---- 玩家留存（2026-10-19）----
+  var retentionData = null;
+  function pct(r) { return r ? Math.round(r.rate * 100) + '%' : '—'; }
+  function pctTitle(r) { return r ? r.kept + ' / ' + r.eligible + ' 人' : '還沒有建立超過這麼多天的帳號'; }
+  function retBar(value, max, off) {
+    var bar = h('span', { cls: 'ret-bar' + (off ? ' off' : '') });
+    bar.style.width = (max > 0 ? Math.max(1, Math.round(value / max * 160)) : 1) + 'px';
+    return bar;
+  }
+  function renderRetention() {
+    var d = retentionData;
+    if (!d) { return; }
+    $('ret-inactive-days').textContent = d.inactiveDays;
+    var s = d.summary;
+    var summary = clear($('ret-summary'));
+    [['帳號', num(s.accounts)], ['7 天內新帳號', num(s.new7)], ['30 天內新帳號', num(s.new30)],
+      ['24 小時內上線', num(s.active1)], ['7 天內上線', num(s.active7)], ['30 天內上線', num(s.active30)],
+      ['第 1 天留存', pct(s.d1), pctTitle(s.d1)], ['第 7 天留存', pct(s.d7), pctTitle(s.d7)], ['第 30 天留存', pct(s.d30), pctTitle(s.d30)]
+    ].forEach(function (x) {
+      summary.appendChild(h('div', { title: x[2] || null }, h('div', { cls: 'muted', text: x[0] }), h('b', { text: x[1] })));
+    });
+    var cohorts = clear($('ret-cohorts').querySelector('tbody'));
+    d.cohorts.slice().reverse().forEach(function (c) {
+      cohorts.appendChild(h('tr', null, h('td', { cls: 'time', text: c.week + ' 起' }), h('td', { cls: 'num', text: num(c.accounts) }),
+        h('td', { cls: 'num', text: pct(c.d1), title: pctTitle(c.d1) }), h('td', { cls: 'num', text: pct(c.d7), title: pctTitle(c.d7) }),
+        h('td', { cls: 'num', text: pct(c.d30), title: pctTitle(c.d30) }), h('td', { cls: 'num', text: num(c.activeNow) })));
+    });
+    var stages = clear($('ret-stages').querySelector('tbody'));
+    d.stages.forEach(function (st) {
+      var total = st.active + st.inactive;
+      var share = total > 0 ? st.inactive / total : 0;
+      stages.appendChild(h('tr', null, h('td', { text: st.label }), h('td', { cls: 'num', text: num(st.active) }),
+        h('td', { cls: 'num', text: num(st.inactive) }),
+        h('td', { cls: 'bar-cell' }, total > 0 ? retBar(share, 1, true) : null, total > 0 ? Math.round(share * 100) + '%' : '')));
+    });
+    var maxPlay = Math.max.apply(null, d.playtime.map(function (p) { return p.inactive; }).concat([0]));
+    var play = clear($('ret-playtime').querySelector('tbody'));
+    d.playtime.forEach(function (p) {
+      play.appendChild(h('tr', null, h('td', { text: p.label }), h('td', { cls: 'num', text: num(p.inactive) }),
+        h('td', { cls: 'bar-cell' }, retBar(p.inactive, maxPlay, true))));
+    });
+    $('ret-tracked').textContent = d.trackedSince
+      ? '上線帳號從 ' + d.trackedSince + ' 開始記（登入、存檔時記一天一筆）；之前的日子只有新帳號數。'
+      : '上線帳號從這次更新之後才開始記（登入、存檔時記一天一筆），目前只有新帳號數。';
+    var maxDay = Math.max.apply(null, d.daily.map(function (x) { return x.active || 0; }).concat([0]));
+    var daily = clear($('ret-daily').querySelector('tbody'));
+    d.daily.slice().reverse().forEach(function (x) {
+      daily.appendChild(h('tr', null, h('td', { cls: 'time', text: x.day }),
+        h('td', { cls: 'num', text: x.active === null ? '—' : num(x.active) }), h('td', { cls: 'num', text: num(x['new']) }),
+        h('td', { cls: 'bar-cell' }, x.active === null ? null : retBar(x.active, maxDay, false))));
+    });
+  }
+  function loadRetention() {
+    return api('GET', 'admin/api/retention').then(function (json) {
+      retentionData = json;
+      renderRetention();
     }).catch(fail);
   }
 
@@ -1776,9 +1907,10 @@
     Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
       b.setAttribute('aria-selected', b.getAttribute('data-tab') === tab ? 'true' : 'false');
     });
-    ['give', 'records', 'orders', 'settings', 'players', 'guilds', 'trace', 'transfer', 'dps', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    ['give', 'records', 'orders', 'settings', 'players', 'guilds', 'trace', 'transfer', 'dps', 'retention', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
     if (tab === 'transfer') { loadTransfers(); }
     if (tab === 'dps' && !dpsData) { loadDps(); } // 2026-10-17：切回來不重抓（要新的按「重新整理」）
+    if (tab === 'retention' && !retentionData) { loadRetention(); } // 2026-10-19
     if (tab === 'records') { loadRecords(); }
     if (tab === 'orders') { loadOrders(); }
     if (tab === 'guilds') { loadGuilds(); }
@@ -1793,6 +1925,7 @@
   Array.prototype.forEach.call(document.querySelectorAll('#target-mode button'), function (b) {
     b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); });
   });
+  $('ret-refresh').addEventListener('click', function () { loadRetention(); });
   $('pick-all').addEventListener('click', function () { state.players.forEach(function (p) { picked[p.uuid] = p.name; }); renderPick(); });
   $('pick-none').addEventListener('click', function () { picked = {}; renderPick(); });
   $('search').addEventListener('input', function () { clearTimeout(searchTimer); searchTimer = setTimeout(search, 300); });
