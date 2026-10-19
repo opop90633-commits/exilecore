@@ -82,6 +82,26 @@ class CardConfigTest {
         }
     }
 
+    /** 2026-10-19：沒有自己的卡的地方（王陵路上的怪、終局的小怪）追逐卡不能變常見：補「什麼都沒有」。 */
+    @Test
+    void placesWithoutTheirOwnCardDoNotFavourChaseCards() {
+        final Random random = new Random(5);
+        for (final String place : List.of("royal_tomb", "sky_crucible", "frost_throne", "awakener")) {
+            final List<CardConfig.Card> pool = config.forKill(place, 16, false);
+            int chase = 0;
+            final int n = 100_000;
+            for (int i = 0; i < n; i++) {
+                final CardConfig.Card card = config.pickKill(pool, random);
+                if (card != null && card.tier() == CardConfig.Tier.CHASE) {
+                    chase++;
+                }
+            }
+            assertTrue(chase < n / 100, place + "：擲到卡時追逐卡不到 1%，實際 " + chase + " / " + n);
+        }
+        final List<CardConfig.Card> wreck = config.forKill("wreck_bay", 16, false);
+        assertTrue(config.pickKill(wreck, new Random(1)) != null, "有自己的卡的地圖照舊一定抽到一張");
+    }
+
     @Test
     void chaseCardsNeedHighTiersAndAreRare() {
         assertTrue(config.forKill("wreck_bay", 13, false).stream().noneMatch(card -> card.tier() == CardConfig.Tier.CHASE),

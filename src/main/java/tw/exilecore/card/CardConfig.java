@@ -80,6 +80,11 @@ public final class CardConfig {
         }
 
         /** 地圖裡殺怪時能不能掉（boss = 這隻是那張圖的 Boss）。 */
+        /** 2026-10-19：只從「任何地圖」掉（sources 全是 any）。 */
+        public boolean anywhere() {
+            return sources.stream().allMatch(source -> source.kind().equals("any"));
+        }
+
         public boolean dropsFromKill(final String mapId, final int tier, final boolean boss) {
             if (tier < minTier) {
                 return false;
@@ -131,6 +136,11 @@ public final class CardConfig {
     private Map<Tier, Long> gamble = Map.of();
     /** 2026-10-19 星諭牌堆：每個等級的卡權重再乘幾倍（settings.deck；沒寫 = 1）。 */
     private Map<Tier, Double> deck = Map.of();
+    /**
+     * 2026-10-19：殺怪時這個地方沒有自己的卡（王陵、觀星台、終局、巔峰的路上的怪、Boss 叫出來的小怪）只剩「任何地圖」的追逐卡可以抽，
+     * 擲到卡就幾乎一定是追逐卡（開系統就有人拿到 5 張追星者）。補一個這麼重的「什麼都沒有」，追逐卡的機率跟其他地圖一樣。
+     */
+    private int blankWeight = 1000;
 
     public void load(final Path dataFolder) throws IOException {
         final Path file = dataFolder.resolve(FILE);
@@ -197,6 +207,30 @@ public final class CardConfig {
         itemLevel = Math.max(1, Math.min(100, settings.integer("item_level", 84)));
         gamble = Collections.unmodifiableMap(parsedGamble);
         deck = Collections.unmodifiableMap(parsedDeck);
+        blankWeight = Math.max(0, settings.integer("blank_weight", 1000));
+    }
+
+    /**
+     * 2026-10-19 殺怪擲到卡時抽哪一張：這些卡裡沒有「這個地方自己的卡」（全是 any 的）時，多一份 {@link #blankWeight} 的「什麼都沒有」，
+     * 追逐卡在哪裡都一樣稀有。回傳 null = 沒掉。
+     */
+    public Card pickKill(final List<Card> candidates, final RandomGenerator random) {
+        final boolean onlyAny = candidates.stream().allMatch(Card::anywhere);
+        if (!onlyAny || blankWeight <= 0) {
+            return pick(candidates, random);
+        }
+        long total = blankWeight;
+        for (final Card card : candidates) {
+            total += card.weight();
+        }
+        long roll = (long) (random.nextDouble() * total);
+        for (final Card card : candidates) {
+            roll -= card.weight();
+            if (roll < 0) {
+                return card;
+            }
+        }
+        return null; // 抽到「什麼都沒有」
     }
 
     /** 2026-10-19：星諭牌堆裡這張卡的權重（weight × 這個等級的倍數）。 */

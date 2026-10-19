@@ -92,7 +92,7 @@ public final class CardService {
             return;
         }
         final int tier = Math.max(1, instance.stats().tier());
-        final CardConfig.Card card = CardConfig.pick(config.forKill(instance.map().id(), tier, boss), random());
+        final CardConfig.Card card = config.pickKill(config.forKill(instance.map().id(), tier, boss), random()); // 2026-10-19：沒有自己的卡的地方補「什麼都沒有」
         final CurrencyType type = card == null ? null : plugin.currencies().repository().get(card.id());
         if (type != null) {
             rolled.add(DropTable.Drop.currency(type));

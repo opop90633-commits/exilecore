@@ -28,7 +28,7 @@ import java.util.Set;
  *   <li>裝備：點自己背包裡的一件（不會拿進選單，直接改背包裡那一件；換了格子或拿走就要重選）。</li>
  *   <li>星籤、通貨：列出通貨袋＋背包＋倉庫通貨頁裡有的（{@link tw.exilecore.economy.Wallet}），扣的時候也照這個順序扣。</li>
  *   <li>先檢查整套能不能做（星籤會不會被這顆通貨觸發、掛上去之後通貨用不用得上去），不行的話什麼都不扣。</li>
- *   <li>不收的通貨：僥倖石（會碎掉）、符文（孔滿要選覆蓋哪顆）、映星鏡、蒸餾情緒、揭露、共鳴石、技能用的，照原本拿在游標上點。</li>
+ *   <li>不收的通貨：僥倖石（會碎掉）、符文（孔滿要選覆蓋哪顆）、映星鏡、蒸餾情緒、共鳴石、技能用的，照原本拿在游標上點。</li>
  * </ul>
  */
 public final class CraftBenchMenu extends Menu {
@@ -39,7 +39,8 @@ public final class CraftBenchMenu extends Menu {
             CurrencyOperation.MAGIC_TO_RARE, CurrencyOperation.UPGRADE_TO_RARE, CurrencyOperation.REMOVE_AND_ADD, CurrencyOperation.REMOVE_AFFIX,
             CurrencyOperation.REROLL_RARE, CurrencyOperation.ADD_AFFIX_RARE, CurrencyOperation.SCOUR, CurrencyOperation.REROLL_VALUES,
             CurrencyOperation.REROLL_IMPLICIT, CurrencyOperation.CORRUPT, CurrencyOperation.QUALITY_WEAPON, CurrencyOperation.QUALITY_ARMOUR,
-            CurrencyOperation.QUALITY_MAP, CurrencyOperation.ESSENCE, CurrencyOperation.CATALYST);
+            CurrencyOperation.QUALITY_MAP, CurrencyOperation.ESSENCE, CurrencyOperation.CATALYST,
+            CurrencyOperation.UNVEIL); // 2026-10-19：揭露石（加一條隱匿詞綴，之後找盜賊首領揭露）
 
     /** 左邊星籤（第 2～5 排的第 1～3 格）、右邊通貨（第 2～5 排的第 7～9 格）。 */
     private static final int[] OMEN_SLOTS = grid(0);
