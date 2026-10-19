@@ -101,6 +101,9 @@ final class CardListener implements Listener {
     /** 撿起卡：不進背包，直接進倉庫。 */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPickup(final PlayerAttemptPickupItemEvent event) {
+        if (!event.getItem().isValid()) {
+            return; // 2026-10-19：同一個 tick 已經被別人撿走（移除）了：不要再存一次
+        }
         final ItemStack stack = event.getItem().getItemStack();
         final CurrencyType type = typeOf(stack);
         if (type == null) {
