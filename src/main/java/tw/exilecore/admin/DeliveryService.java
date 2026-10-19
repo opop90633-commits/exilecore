@@ -1032,6 +1032,10 @@ public final class DeliveryService {
                 if (type == null) {
                     return Given.MISSING;
                 }
+                if (plugin.stash() != null && plugin.stash().stash(player).isEmpty()) {
+                    // 2026-10-19：倉庫還沒載入（剛登入時倉庫是另外讀的）：等載入了再收，不然倉庫裡的（星諭卡都在倉庫）收不到、這筆卻算收完了
+                    return Given.WAIT;
+                }
                 final int taken = (int) Math.min(amount, wallet.available(player, type.id()));
                 if (taken > 0 && wallet.take(player, type.id(), taken)) {
                     plugin.economy().ledger().consumed(type.id(), EconomyLedger.ADMIN_TAKE, taken); // 2026-10-18：收回另記一列，不跟發放抵掉
