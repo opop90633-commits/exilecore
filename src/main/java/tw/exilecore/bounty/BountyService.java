@@ -1502,6 +1502,20 @@ public final class BountyService {
     }
 
     /** 打開委託板。 */
+    /** 打開過委託板（今天的每日委託產生過；2026-10-20 新手教學「看看委託板」）。 */
+    public boolean boardSeen(final Player player) {
+        final Account account = accounts.get(player.getUniqueId());
+        if (account == null) {
+            return false;
+        }
+        for (final String key : account.progress.keySet()) {
+            if (key.startsWith(BountyBoard.SLOT_PREFIX)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void open(final Player player) {
         if (!plugin.players().get(player).hasCharacter()) {
             player.sendMessage(plugin.text().prefixed("<red>先選一個角色（/char）"));

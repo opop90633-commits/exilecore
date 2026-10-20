@@ -473,6 +473,9 @@ public final class CraftBenchMenu extends Menu {
         final CurrencyType fired = currencies().takeFiredOmen();
         switch (result) {
             case APPLIED -> {
+                if (plugin.guide() != null) {
+                    plugin.guide().milestone(player, "currency"); // 2026-10-20 新手教學
+                }
                 player.getInventory().setItem(itemSlot, stack);
                 if (fired != null) {
                     player.sendActionBar(plugin.text().parse("<#c48bff>" + ItemRenderer.escape(fired.name()) + "生效<gray>，用了"

@@ -42,6 +42,14 @@ public final class GuideModule implements Module, Listener {
         return service;
     }
 
+    /** 2026-10-20：第一次死亡的提示。 */
+    @EventHandler
+    public void onDeath(final org.bukkit.event.entity.PlayerDeathEvent event) {
+        if (service != null) {
+            service.onDeath(event.getEntity());
+        }
+    }
+
     @EventHandler
     public void onQuit(final PlayerQuitEvent event) {
         if (service != null) {

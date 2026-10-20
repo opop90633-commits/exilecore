@@ -29,6 +29,10 @@ public final class GuideService {
     public static final String PROGRESS_DONE = "guide.done";
     /** 角色進度：打開過選單（蹲下＋F）。 */
     public static final String PROGRESS_MENU = "guide.menu";
+    /** 角色進度前綴：做過的事（{@link #milestone}）：guide.m.currency、guide.m.salvage。 */
+    public static final String PROGRESS_MILESTONE = "guide.m.";
+    /** 角色進度前綴：第一次遇到的提示已經說過（{@link Hints}）。 */
+    public static final String PROGRESS_HINT = "hint.";
     private static final int HOTBAR_SLOTS = 9;
 
     private final ExileCore plugin;
@@ -71,8 +75,142 @@ public final class GuideService {
                         && plugin.flasks().read(player.getInventory().getItem(slot)).isPresent();
             }
         }
-        return new Guide.Snapshot(state.hasCharacter(), state.progress().containsKey(PROGRESS_MENU), questStarted, skillBound, flasks,
-                state.progress().containsKey(ZoneService.PROGRESS_LAST), !state.passives().isEmpty(), state.level());
+        final Map<String, String> progress = state.progress();
+        // ---- 第二階段（2026-10-20）----
+        int storyStarted = -1;
+        int storyDone = -1;
+        for (int i = 0; i < Guide.MAIN_QUESTS.size(); i++) {
+            final QuestLog.State quest = QuestLog.parse(progress.get(QuestLog.key(Guide.MAIN_QUESTS.get(i))));
+            if (quest.started()) {
+                storyStarted = i;
+            }
+            if (quest.phase() == QuestLog.Phase.DONE) {
+                storyDone = i;
+            }
+        }
+        boolean supportSocketed = false;
+        for (int position = 0; position < SkillLoadout.MAX_SKILLS && !supportSocketed; position++) {
+            final SkillLoadout.Entry entry = state.skills().skill(position);
+            supportSocketed = entry != null && !entry.supportIds().isEmpty();
+        }
+        boolean stashUsed = false;
+        if (plugin.stash() != null) {
+            final tw.exilecore.stash.Stash stash = plugin.stash().stash(player).orElse(null);
+            if (stash != null) {
+                stashUsed = !stash.currencies().isEmpty() || stash.mapCount() > 0;
+                for (int page = 0; page < stash.pageCount() && !stashUsed; page++) {
+                    stashUsed = stash.itemCount(page) > 0;
+                }
+            }
+        }
+        int flaskLevel = 0;
+        if (plugin.flasks() != null) {
+            for (int slot = 0; slot < HOTBAR_SLOTS; slot++) {
+                final tw.exilecore.flask.FlaskService.FlaskData data = plugin.flasks().read(player.getInventory().getItem(slot)).orElse(null);
+                final tw.exilecore.flask.FlaskBase base = data == null ? null : plugin.flasks().config().base(data.base());
+                if (base != null) {
+                    flaskLevel = Math.max(flaskLevel, base.level());
+                }
+            }
+        }
+        boolean trialDone = false;
+        int mapsDone = 0;
+        for (final String key : progress.keySet()) {
+            if (key.startsWith(tw.exilecore.ascendancy.Ascension.TRIAL_PREFIX)) {
+                trialDone = true;
+            } else if (key.startsWith("atlas.")) {
+                mapsDone++; // 跟任務的 maps 目標同一個算法（QuestLog.mapsCompleted）
+            }
+        }
+        final String atlas = progress.get(tw.exilecore.map.AtlasTree.PROGRESS_KEY);
+        return new Guide.Snapshot(state.hasCharacter(), progress.containsKey(PROGRESS_MENU), questStarted, skillBound, flasks,
+                progress.containsKey(ZoneService.PROGRESS_LAST), !state.passives().isEmpty(), state.level(),
+                storyStarted, storyDone, state.skills().size(), supportSocketed, progress.containsKey(PROGRESS_MILESTONE + "currency"),
+                stashUsed, progress.containsKey(PROGRESS_MILESTONE + "salvage"), flaskLevel,
+                plugin.bounties() != null && plugin.bounties().boardSeen(player), trialDone,
+                progress.containsKey(tw.exilecore.ascendancy.Ascension.CHOSEN), atlas != null && !atlas.isBlank(), mapsDone);
+    }
+
+    /** 做過某件事（用通貨、拆解）：別的模組叫，記在角色進度；沒角色不記。 */
+    public void milestone(final Player player, final String id) {
+        final PlayerState state = plugin.players().get(player);
+        if (state.hasCharacter() && !state.progress().containsKey(PROGRESS_MILESTONE + id)) {
+            plugin.characters().setProgress(player, PROGRESS_MILESTONE + id, "1");
+        }
+    }
+
+    // ---- 第一次遇到就提示（2026-10-20）----
+
+    /**
+     * 第一次遇到某樣東西的提示：聊天欄一行，每個角色每種只說一次（角色進度 hint.代號）。
+     * 分身（帳號上有老角色）跟關掉引導的人不提示。
+     */
+    public void hint(final Player player, final String id) {
+        final PlayerState state = plugin.players().get(player);
+        if (!state.hasCharacter() || !wants(player, state)) {
+            return;
+        }
+        final String message = Hints.MESSAGES.get(id);
+        if (message == null || state.progress().containsKey(PROGRESS_HINT + id)) {
+            return;
+        }
+        plugin.characters().setProgress(player, PROGRESS_HINT + id, "1");
+        player.sendMessage(plugin.text().prefixed("<#9fe8c8>提示　<gray>" + message));
+        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.6f, 1.4f);
+    }
+
+    /** 死亡：第一次死的提示（GuideModule 的事件）。 */
+    public void onDeath(final Player player) {
+        hint(player, Hints.DEATH);
+    }
+
+    /** 每 2 秒：看背包、通貨袋裡有沒有第一次出現的東西；等級到 10、20 也提示。 */
+    private void scanHints(final Player player, final PlayerState state) {
+        if (state.level() >= 10) {
+            hint(player, Hints.LEVEL10);
+        }
+        if (state.level() >= 20) {
+            hint(player, Hints.LEVEL20);
+        }
+        final java.util.Set<String> found = new java.util.HashSet<>();
+        for (final org.bukkit.inventory.ItemStack stack : player.getInventory().getStorageContents()) {
+            if (stack == null || stack.isEmpty()) {
+                continue;
+            }
+            final tw.exilecore.currency.CurrencyType currency = plugin.currencies() == null ? null : plugin.currencies().read(stack).orElse(null);
+            if (currency != null) {
+                found.add(Hints.forCurrency(currency));
+                continue;
+            }
+            if (plugin.flasks() != null && plugin.flasks().isFlask(stack)) {
+                found.add(Hints.FLASK);
+                continue;
+            }
+            final tw.exilecore.item.ItemData data = plugin.items() == null ? null : plugin.items().read(stack).orElse(null);
+            final tw.exilecore.item.ItemBase base = data == null ? null : plugin.items().repository().base(data.base());
+            if (base == null) {
+                continue;
+            }
+            if (base.isMap()) {
+                found.add(Hints.MAP);
+            } else if (base.isJewel()) {
+                found.add(Hints.JEWEL);
+            } else if (!data.identified()) {
+                found.add(Hints.UNIDENTIFIED);
+            }
+        }
+        if (plugin.currencies() != null) {
+            for (final String id : state.bag().pouch().all().keySet()) {
+                final tw.exilecore.currency.CurrencyType currency = plugin.currencies().repository().get(id);
+                if (currency != null) {
+                    found.add(Hints.forCurrency(currency));
+                }
+            }
+        }
+        found.remove(null);
+        for (final String id : found) {
+            hint(player, id);
+        }
     }
 
     /** 打開了主選單（新手教學的「打開選單」那一步）。 */
@@ -114,6 +252,9 @@ public final class GuideService {
             }
             return;
         }
+        if (state.hasCharacter()) {
+            scanHints(player, state); // 2026-10-20：第一次遇到就提示
+        }
         final Guide.Snapshot snapshot = snapshot(player, state);
         final int current = Guide.current(snapshot);
         final Integer before = shown.put(player.getUniqueId(), current);
@@ -123,9 +264,11 @@ public final class GuideService {
             if (current < Guide.STEPS.size()) {
                 player.sendMessage(plugin.text().prefixed(Guide.hintLine(Guide.STEPS.get(current))));
                 title(player, "<#9fe8c8>下一步：" + Guide.STEPS.get(current).title(), "<gray>" + Guide.STEPS.get(current).hint());
-            } else {
+            } else if (Guide.allDone(snapshot)) {
                 player.sendMessage(plugin.text().prefixed("<gray>新手教學完成！接下來照側欄的任務走；/guide 可以再看一次"));
                 title(player, "<green>新手教學完成！", "<gray>照側欄的任務繼續冒險");
+            } else {
+                player.sendMessage(plugin.text().prefixed("<gray>這一階段的教學做完了，主線再往前走會有下一步；/guide 可以看全部"));
             }
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.6f);
         } else if (before == null && current < Guide.STEPS.size()) {
@@ -137,7 +280,8 @@ public final class GuideService {
             }
         }
         if (current >= Guide.STEPS.size()) {
-            if (state.hasCharacter()) {
+            // 2026-10-20：第二階段跟主線連動——剩下的步驟都還沒解鎖時先收起來，等主線往前走再出現；真的全做完才記 done
+            if (state.hasCharacter() && Guide.allDone(snapshot)) {
                 plugin.characters().setProgress(player, PROGRESS_DONE, "1");
             }
             plugin.sidebar().guide(player, List.of());

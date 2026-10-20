@@ -85,6 +85,9 @@ public final class CurrencyListener implements Listener {
         final boolean chance = used != null && used.operation() == CurrencyOperation.CHANCE;
         switch (result) {
             case APPLIED -> {
+                if (plugin.guide() != null) {
+                    plugin.guide().milestone(player, "currency"); // 2026-10-20 新手教學
+                }
                 cursor.setAmount(cursor.getAmount() - 1);
                 event.getView().setCursor(cursor.getAmount() <= 0 ? ItemStack.empty() : cursor);
                 event.setCurrentItem(target);

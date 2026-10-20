@@ -866,6 +866,9 @@ public final class SalvageMenu extends Menu {
             parts.add(ItemRenderer.escape(type.name()) + " ×" + entry.getValue());
         }
         player.sendMessage(plugin.text().prefixed("<gray>拆解了 <white>" + count + "</white> 件：" + String.join("<gray>、", parts)));
+        if (plugin.guide() != null) {
+            plugin.guide().milestone(player, "salvage"); // 2026-10-20 新手教學
+        }
         player.playSound(player.getLocation(), Sound.BLOCK_GRINDSTONE_USE, 0.8f, 1.0f);
         plugin.players().markDirty(player);
         plugin.characters().save(player);
