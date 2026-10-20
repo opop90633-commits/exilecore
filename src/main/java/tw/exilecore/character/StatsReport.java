@@ -113,14 +113,11 @@ public final class StatsReport {
         final java.util.LinkedHashMap<String, Double> quantity = new java.util.LinkedHashMap<>();
         final java.util.LinkedHashMap<String, Double> rarity = new java.util.LinkedHashMap<>();
         put(quantity, "全服設定", (hasDrops ? drops.baseServerQuantity() : 0) * 100);
-        final double toQuantity = hasDrops ? drops.globalRarityToQuantity() : 0; // 2026-10-19：全服稀有度換成數量的比例
-        put(rarity, "全服設定", (hasDrops ? drops.baseServerRarity() : 0) * (1 - toQuantity) * 100);
-        put(quantity, "全服設定（稀有度換算）", (hasDrops ? drops.baseServerRarity() : 0) * toQuantity * 100);
+        put(rarity, "全服設定", (hasDrops ? drops.baseServerRarity() : 0) * 100);
         put(quantity, "全服加倍", tw.exilecore.sponsor.Boosts.quantity() * 100);
         put(rarity, "全服加倍", tw.exilecore.sponsor.Boosts.rarity() * 100);
         put(quantity, "在線加成", OnlineBonus.quantity() * 100);
-        put(rarity, "在線加成", OnlineBonus.rarity() * (1 - toQuantity) * 100);
-        put(quantity, "在線加成（稀有度換算）", OnlineBonus.rarity() * toQuantity * 100);
+        put(rarity, "在線加成", OnlineBonus.rarity() * 100);
         double personalQuantity = 0;
         double personalRarity = 0;
         if (sponsors != null) {

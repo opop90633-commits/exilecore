@@ -202,16 +202,16 @@ class AilmentTest {
         assertEquals(5, config.bleedDuration(), 1e-9);
         assertEquals(2.0, config.bleedMovingMultiplier(), 1e-9);
         assertEquals(2, config.poisonDuration(), 1e-9);
-        assertEquals(8, config.poisonMaxStacks());
+        assertEquals(12, config.poisonMaxStacks());
         // 預設不靠傷害比例：沒有機率來源就不會流血、中毒
         assertEquals(0, config.bleedChance(1000, 100, 0, 0), 1e-9);
         assertEquals(0, config.poisonChance(1000, 100, 0, 0), 1e-9);
         assertEquals(0.3, config.bleedChance(50, 100, 30, 0), 1e-9, "流血機率 +30%");
         assertEquals(0.45, config.poisonChance(50, 100, 30, 0.5), 1e-9, "中毒機率 +30%，增加 50%");
-        // 每秒傷害：那一擊的 15%／20%
+        // 每秒傷害：那一擊的 15%／30%
         assertEquals(15, config.bleedDps(100, 0, 1.0), 1e-9);
         assertEquals(15 * 1.5 * 1.4, config.bleedDps(100, 0.5, 1.4), 1e-9);
-        assertEquals(20, config.poisonDps(100, 0, 1.0), 1e-9);
+        assertEquals(30, config.poisonDps(100, 0, 1.0), 1e-9);
     }
 
     @Test

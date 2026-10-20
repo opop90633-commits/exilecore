@@ -19,7 +19,7 @@ import java.util.Map;
  *   <li>凍結：冰冷傷害累積凍結值，滿 100% 凍結；一陣子沒被打到會消退。</li>
  *   <li>感電：機率跟點燃一樣算；目標受到的傷害增加 20%。</li>
  *   <li>流血（物理，只有攻擊）：機率只看加成（每門檻機率預設 0）；每秒造成那一擊物理傷害的 15%，5 秒，目標移動時 2 倍；只有最強的在流。</li>
- *   <li>中毒（物理＋混沌）：每秒造成那一擊傷害的 20%，2 秒，可以疊加（上限 8 個）。</li>
+ *   <li>中毒（物理＋混沌）：每秒造成那一擊傷害的 30%，2 秒，可以疊加（每個來源上限 12 個）。</li>
  * </ul>
  */
 public final class AilmentConfig {
@@ -154,9 +154,9 @@ public final class AilmentConfig {
         bleedMovingMultiplier = 2.0;
         bleedDuration = 5;
         poisonChancePerThreshold = 0;
-        poisonDamagePerSecond = 20;
+        poisonDamagePerSecond = 30;
         poisonDuration = 2;
-        poisonMaxStacks = 8;
+        poisonMaxStacks = 12;
         stun = new MeterSettings(120, 1.5, 0.8, 1.5, 40, 3, 40, 8);
         stunElementalMultiplier = 0.5;
         electrocute = new MeterSettings(150, 3, 1.5, 2, 50, 3, 50, 8);
@@ -407,7 +407,7 @@ public final class AilmentConfig {
         return Math.max(0, physical) * bleedDamagePerSecond / 100.0 * Math.max(0, 1 + increased) * Math.max(0, more);
     }
 
-    /** 中毒每秒的傷害：那一擊（物理＋混沌）傷害 × 20% ×（1 ＋ 增加）× 更多。 */
+    /** 中毒每秒的傷害：那一擊（物理＋混沌）傷害 × 30% ×（1 ＋ 增加）× 更多。 */
     public double poisonDps(final double physicalAndChaos, final double increased, final double more) {
         return Math.max(0, physicalAndChaos) * poisonDamagePerSecond / 100.0 * Math.max(0, 1 + increased) * Math.max(0, more);
     }

@@ -16488,12 +16488,19 @@
      "type": "INCREASED",
      "value": 0.1,
      "tags": []
+    },
+    {
+     "stat": "poison.chance",
+     "type": "FLAT",
+     "value": 5.0,
+     "tags": []
     }
    ],
    "description": [
-    "增加 10% 中毒傷害"
+    "增加 10% 中毒傷害",
+    "擊中時 5% 機率造成中毒"
    ],
-   "name": "增加 10% 中毒傷害"
+   "name": "毒腺"
   },
   {
    "id": "n20_9",
@@ -16592,12 +16599,19 @@
      "type": "INCREASED",
      "value": 0.1,
      "tags": []
+    },
+    {
+     "stat": "poison.chance",
+     "type": "FLAT",
+     "value": 5.0,
+     "tags": []
     }
    ],
    "description": [
-    "增加 10% 中毒傷害"
+    "增加 10% 中毒傷害",
+    "擊中時 5% 機率造成中毒"
    ],
-   "name": "增加 10% 中毒傷害"
+   "name": "毒腺"
   },
   {
    "id": "nm4_m21",
