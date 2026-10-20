@@ -263,7 +263,16 @@ public final class Nameplates implements Listener {
      * 而且所有在線的人都要在隊伍裡。
      */
     private void hideVanillaFor(final Player viewer) {
-        final Scoreboard board = viewer.getScoreboard();
+        fillTeam(viewer.getScoreboard());
+        // 2026-10-20：伺服器算推擠用的是主計分板的隊伍（客戶端用自己看的那張）：主計分板也要有、也要設不推擠
+        final Scoreboard main = plugin.getServer().getScoreboardManager().getMainScoreboard();
+        if (main != viewer.getScoreboard()) {
+            fillTeam(main);
+        }
+    }
+
+    /** 這張計分板上的名牌隊伍：藏名牌、玩家之間不推擠、所有在線的人都在裡面。 */
+    private void fillTeam(final Scoreboard board) {
         Team team = board.getTeam(TEAM);
         if (team == null) {
             team = board.registerNewTeam(TEAM);

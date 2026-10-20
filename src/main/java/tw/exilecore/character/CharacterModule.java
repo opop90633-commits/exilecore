@@ -22,7 +22,6 @@ public final class CharacterModule implements Module {
     /** 每幾 tick 跑一次回復與顯示。 */
     private static final int TICK_PERIOD = 10;
     /** 自動存檔間隔（tick）：5 分鐘。 */
-    private static final long AUTOSAVE_PERIOD = 20L * 60 * 5;
 
     private final ExileCore plugin;
     private final CharacterConfig config;
@@ -118,7 +117,7 @@ public final class CharacterModule implements Module {
                 characters.gear().cooldowns(player);
             }
         }, 4L, 4L);
-        autosaveTask = plugin.getServer().getScheduler().runTaskTimer(plugin, characters::saveAll, AUTOSAVE_PERIOD, AUTOSAVE_PERIOD);
+        autosaveTask = plugin.repeat("autosave", characters::saveSlice, 200L, 10L); // 2026-10-20：攤開存（CharacterService.AUTOSAVE_SLOTS × 10 tick = 5 分鐘一輪）
         // 插件重載時已經在線的玩家：像剛登入一樣載入
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             states.get(player);

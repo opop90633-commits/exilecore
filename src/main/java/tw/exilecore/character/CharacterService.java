@@ -1269,7 +1269,28 @@ public final class CharacterService {
         return blocked.contains(player.getUniqueId());
     }
 
-    /** 所有在線玩家存檔（定時自動存檔、關伺服器前）；有卡住的交易時順便重試。 */
+    /** 自動存檔攤開來做（2026-10-20）：每 10 tick 叫一次、5 分鐘一輪（以前 5 分鐘一次全部存，100 人時卡 1.6 秒）。 */
+    public static final int AUTOSAVE_SLOTS = 600;
+    private final tw.exilecore.core.Staggered autosave = new tw.exilecore.core.Staggered(AUTOSAVE_SLOTS);
+
+    /** 定時自動存檔的一小批（每 10 tick）：一輪下來每個在線的人存一次；新的一輪開始時順便重試卡住的交易。 */
+    public void saveSlice() {
+        final List<UUID> online = new ArrayList<>();
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            online.add(player.getUniqueId());
+        }
+        for (final UUID id : autosave.next(online)) {
+            final Player player = plugin.getServer().getPlayer(id);
+            if (player != null && player.isOnline()) {
+                save(player);
+            }
+        }
+        if (autosave.newRound() && economyFrozen) {
+            retryDeferred();
+        }
+    }
+
+    /** 所有在線玩家存檔（關伺服器前、管理員指令）；有卡住的交易時順便重試。 */
     public void saveAll() {
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             save(player);

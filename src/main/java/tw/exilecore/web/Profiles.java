@@ -68,7 +68,7 @@ public final class Profiles implements Listener {
 
     void start() {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        task = plugin.repeat("web.profiles", this::snapshotAll, 20L * 60, 20L * 300);
+        task = plugin.repeat("web.profiles", this::snapshotSlice, 20L * 60, 20L); // 2026-10-20：攤開做，5 分鐘一輪（以前一次全做，100 人時卡一下）
     }
 
     void stop() {
@@ -86,6 +86,22 @@ public final class Profiles implements Listener {
     /** 關服：在線的人都做一次（資料庫還在的時候）。 */
     void snapshotOnline() {
         snapshotAll();
+    }
+
+    /** 每秒一小批，300 秒一輪：每個在線的人一輪快照一次。 */
+    private final tw.exilecore.core.Staggered rounds = new tw.exilecore.core.Staggered(300);
+
+    private void snapshotSlice() {
+        final List<java.util.UUID> online = new ArrayList<>();
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            online.add(player.getUniqueId());
+        }
+        for (final java.util.UUID id : rounds.next(online)) {
+            final Player player = plugin.getServer().getPlayer(id);
+            if (player != null && player.isOnline()) {
+                snapshot(player);
+            }
+        }
     }
 
     private void snapshotAll() {
