@@ -2133,10 +2133,9 @@ public final class SkillService {
                 expected.total() * critFactor, hitRate, crit, multi);
     }
 
-    /** 2026-10-18：一根英靈圖騰每秒叫幾次英靈（跟 {@link SkillDeployables} 一樣：錘子技能攻擊時間 ×1.5，最少 4 tick）。 */
-    /** 英靈每秒叫幾次（2026-10-20）：英靈圖騰的 interval ÷ 攻速（英靈圖騰的輔助算，錘子技能自己的攻速不算）。 */
-    static double ancestorCallsPerSecond(final SkillBuild totem, final StatSheet sheet) {
-        return 20.0 / SkillDeployables.totemTicks(totem.deploy().interval(), SkillDeployables.totemSpeed(totem, sheet, true));
+    /** 一根英靈圖騰每秒叫幾次英靈（2026-10-21，跟 {@link SkillDeployables#ancestorTicks} 一樣：錘子技能攻擊時間 ×1.5 ÷ 攻速）。 */
+    static double ancestorCallsPerSecond(final SkillBuild totem, final SkillBuild linked, final StatSheet sheet) {
+        return 20.0 / SkillDeployables.ancestorTicks(totem, linked, sheet);
     }
 
     /** 2026-10-18：同時立著幾根圖騰：上限與「持續時間 ÷ 放一根要多久（施放間隔與冷卻較長的）」比較小的那個，至少 1。 */
@@ -2153,9 +2152,10 @@ public final class SkillService {
     private DpsRow ancestralDps(final PlayerState state, final StatSheet sheet, final StatSheet fullSheet, final FullOn full,
                                 final int slot, final int position, final Resolved resolved) {
         final SkillDefinition definition = resolved.definition();
-        if (!(linkedMace(state, sheet, definition) instanceof SkillBuild linked)) {
+        if (!(linkedMace(state, sheet, definition) instanceof SkillBuild rawLinked)) {
             return null;
         }
+        final SkillBuild linked = SkillDeployables.ancestorHits(rawLinked); // 2026-10-21：英靈的那一下吃圖騰傷害
         final SkillBuild totem = build(state, sheet, resolved);
         if (totem.deploy() == null) {
             return null;
@@ -2166,7 +2166,7 @@ public final class SkillService {
         final double multi = DamageCalculator.critMultiplier(linked.profile().effective(sheet), linked.profile().tags(), null) * 100;
         final double critFactor = 1 + crit * (multi / 100.0 - 1);
         final SkillParams params = linked.params();
-        final double hitRate = ancestorCallsPerSecond(totem, sheet) * up
+        final double hitRate = ancestorCallsPerSecond(totem, linked, sheet) * up
                 * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
                         params.aftershock() == null ? 0 : params.aftershock().more());
         double dps = expected.total() * critFactor * hitRate;
@@ -2174,7 +2174,8 @@ public final class SkillService {
             dps = plugin.ailments().estimateDps(sheet, linked.profile(), expected, critFactor, hitRate, state.level(), dps);
         }
         double fullDps = dps;
-        if (!full.isEmpty() && linkedMace(state, fullSheet, definition) instanceof SkillBuild fullLinked) {
+        if (!full.isEmpty() && linkedMace(state, fullSheet, definition) instanceof SkillBuild rawFullLinked) {
+            final SkillBuild fullLinked = SkillDeployables.ancestorHits(rawFullLinked);
             // 全開：同 dpsOf，用疊上戰吼增益的屬性表重算（攻速變快英靈也叫得快），再算抗性降低、受到的傷害增加；英靈不吃強化
             final SkillBuild fullTotem = build(state, fullSheet, resolved);
             final double fullUp = totemsUp(fullTotem.totems(), fullTotem.durationTicks(totem.deploy().duration()),
@@ -2184,7 +2185,7 @@ public final class SkillService {
             final double fullMulti = DamageCalculator.critMultiplier(fullLinked.profile().effective(fullSheet), fullLinked.profile().tags(), null) * 100;
             final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
             final SkillParams fullParams = fullLinked.params();
-            final double fullRate = ancestorCallsPerSecond(fullTotem, fullSheet) * fullUp
+            final double fullRate = ancestorCallsPerSecond(fullTotem, fullLinked, fullSheet) * fullUp
                     * castHits(fullParams.burst() == null ? 1 : fullParams.burst().count(), fullParams.aftershock() != null,
                             fullParams.aftershock() == null ? 0 : fullParams.aftershock().more());
             fullDps = fullExpected.total() * fullCritFactor * fullRate;
@@ -2615,11 +2616,14 @@ public final class SkillService {
                 lines.add(String.format(Locale.ROOT, "<gray>放圖騰：每秒最多 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(sheet)));
                 if (deploy.interval() > 0) {
                     final boolean linked = SkillExecutor.hasFlag(definition, StatKeys.FLAG_TOTEM_LINKED);
+                    final SkillBuild ancestor = linked && linkedMace(state, sheet, definition) instanceof SkillBuild found ? found : null;
                     final double speed = SkillDeployables.totemSpeed(build, sheet, linked);
-                    final double rate = 20.0 / SkillDeployables.totemTicks(deploy.interval(), speed);
+                    final double rate = ancestor != null ? 20.0 / SkillDeployables.ancestorTicks(build, ancestor, sheet)
+                            : 20.0 / SkillDeployables.totemTicks(deploy.interval(), speed);
                     lines.add(String.format(Locale.ROOT, "<gray>每個圖騰每秒 <white>%.2f<gray> 次（滿 %d 個合計 <white>%.2f<gray> 次）%s",
                             rate, build.totems(), build.totems() * rate,
-                            linked ? "　<dark_gray>（叫英靈的頻率吃你的攻速；英靈用的技能本身的攻速不算）"
+                            linked ? "　<dark_gray>（" + (ancestor == null ? "後面那一格沒有能連的錘子技能" : ItemRenderer.escape(ancestor.definition().name()) + "的攻擊時間 ×1.5")
+                                    + " ÷ 你的攻速；那個技能自己的輔助不算）"
                                     : build.isAttack() ? "　<dark_gray>（吃你的攻擊速度）" : "　<dark_gray>（吃你的施法速度）"));
                 }
             } else {

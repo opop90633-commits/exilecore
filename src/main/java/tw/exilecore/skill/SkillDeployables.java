@@ -107,12 +107,28 @@ final class SkillDeployables implements Listener {
     /**
      * 圖騰下一次攻擊隔幾 tick（2026-10-20，照 PoE）：技能的 interval ÷ 放圖騰的人的速度倍率——攻擊技能看攻擊速度、
      * 法術看施法速度（增加 × 更多，含這個技能的輔助寶石）；不含武器本身的攻速（interval 已經是圖騰自己的節奏）。
-     * 英靈圖騰（2026-10-20）：叫英靈的頻率也照這個算（英靈圖騰自己的 interval ÷ 攻速，含英靈圖騰的輔助），
-     * 但英靈用的那個錘子技能自己的攻速（它的輔助寶石、武器攻速）不算。
+     * 英靈圖騰另外算（{@link #ancestorTicks}，2026-10-21）。
      */
     static long totemTicks(final double intervalSeconds, final double speedMultiplier) {
         final double speed = Math.max(0.1, speedMultiplier);
         return Math.max(TOTEM_MIN_TICKS, Math.round(intervalSeconds * 20 / speed));
+    }
+
+    /** 英靈（2026-10-21）：叫一次英靈要等那個錘子技能攻擊時間的幾倍。 */
+    static final double ANCESTOR_ATTACK_TIMES = 1.5;
+
+    /**
+     * 英靈圖騰叫英靈的間隔（2026-10-21）：那個錘子技能的攻擊時間（武器基礎攻速 × 技能自己的攻擊速度，例如千鈞砸 45%）× 1.5，
+     * 再除以放圖騰的人的攻速（{@link #totemSpeed}：英靈圖騰的輔助算，錘子技能自己的輔助不算）。越慢越重的技能叫得越慢。
+     */
+    static long ancestorTicks(final double weaponAps, final double skillAttackSpeed, final double totemSpeed) {
+        final double aps = (weaponAps <= 0 ? 1.0 : weaponAps) * Math.max(0.05, skillAttackSpeed);
+        return totemTicks(ANCESTOR_ATTACK_TIMES / aps, totemSpeed);
+    }
+
+    static long ancestorTicks(final SkillBuild totem, final SkillBuild linked, final tw.exilecore.stats.StatSheet sheet) {
+        final double weaponAps = linked.profile().effective(sheet).flat(tw.exilecore.stats.StatKeys.WEAPON_APS, linked.profile().tags());
+        return ancestorTicks(weaponAps, linked.definition().attackSpeed(), totemSpeed(totem, sheet, true));
     }
 
     private double totemSpeed(final Deployed item, final Player owner) {
@@ -231,7 +247,7 @@ final class SkillDeployables implements Listener {
         final boolean totem = spec.kind() == DeploySpec.Kind.TOTEM;
         final Deployed item = new Deployed(player.getUniqueId(), totem ? totemHits(build) : build, spec, stand, at, now,
                 now + build.durationTicks(spec.duration()), label);
-        item.linked = totem ? totemHits(linked) : linked;
+        item.linked = totem ? ancestorHits(linked) : linked;
         item.linkedTicks = Math.max(4, linkedTicks);
         if (spec.kind() == DeploySpec.Kind.TOTEM) {
             final tw.exilecore.stats.StatSheet effective = build.profile().effective(plugin.players().sheet(player));
@@ -274,6 +290,22 @@ final class SkillDeployables implements Listener {
      * 2026-10-18：圖騰（與英靈）放的技能標上 {@link tw.exilecore.stats.Tags#TOTEM_HIT}：照 PoE，圖騰打中的擊中回復生命、偷取不回給玩家。
      * 引爆、焚鏈都從 item.build 的技能描述衍生，一起帶著。
      */
+    /**
+     * 英靈（2026-10-21）：英靈用的錘子技能算「圖騰使用的技能」（照 PoE2）：加上圖騰標籤，吃得到全身的「圖騰傷害」；
+     * 裝在英靈圖騰上的輔助照舊不套（只照那個技能與它自己的輔助）。也標上 {@link tw.exilecore.stats.Tags#TOTEM_HIT}。
+     */
+    static SkillBuild ancestorHits(final SkillBuild build) {
+        if (build == null) {
+            return null;
+        }
+        final Set<String> tags = build.profile().tags();
+        if (tags.contains(tw.exilecore.stats.Tags.TOTEM) && tags.contains(tw.exilecore.stats.Tags.TOTEM_HIT)) {
+            return build;
+        }
+        return build.withProfile(build.profile().derive(build.profile().id(),
+                Set.of(tw.exilecore.stats.Tags.TOTEM, tw.exilecore.stats.Tags.TOTEM_HIT), Set.of()));
+    }
+
     private static SkillBuild totemHits(final SkillBuild build) {
         if (build == null || build.profile().tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) {
             return build;
@@ -589,7 +621,7 @@ final class SkillDeployables implements Listener {
         }
         if (item.linked != null) {
             // 英靈圖騰：在敵人旁邊（往圖騰那邊 1.5 格）叫出英靈，用連著的錘子技能打一下
-            item.nextTick = now + totemTicks(item.spec.interval(), totemSpeed(item, owner)); // 2026-10-20：吃攻速（錘子技能自己的不算）
+            item.nextTick = now + ancestorTicks(item.build, item.linked, plugin.players().sheet(owner)); // 2026-10-21：錘子技能攻擊時間 ×1.5 ÷ 攻速
             final org.bukkit.util.Vector back = item.feet.toVector().subtract(target.getLocation().toVector()).setY(0);
             final Location spot = target.getLocation().clone();
             if (back.lengthSquared() > 1e-4) {
