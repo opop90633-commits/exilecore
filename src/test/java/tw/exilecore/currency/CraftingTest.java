@@ -222,6 +222,18 @@ class CraftingTest {
     }
 
     @Test
+    void forcePrefixAndSuffixOmensIgnoreTurmoil() {
+        // 2026-10-20：加前綴／加後綴籤不再被亂流石觸發（配亂流石等於只重洗那一型，比 PoE2 強）
+        final CurrencyType turmoil = currencies.firstWith(CurrencyOperation.REMOVE_AND_ADD).orElseThrow();
+        final CurrencyType zenith = currencies.firstWith(CurrencyOperation.ADD_AFFIX_RARE).orElseThrow();
+        for (final String id : List.of("omen_sinistral", "omen_dextral")) {
+            assertFalse(Crafting.triggers(currencies.get(id), turmoil), id + " 不該被亂流石觸發");
+            assertTrue(Crafting.triggers(currencies.get(id), zenith), id + " 還是被至臻石觸發");
+        }
+    }
+
+    /** 程式本身還支援（設定檔加回 REMOVE_AND_ADD 時照這樣做）。 */
+    @Test
     void forcePrefixWithTurmoilOnAFullJewelSwapsAPrefix() {
         final CurrencyType sinistral = currencies.get("omen_sinistral");
         final CurrencyType turmoil = currencies.firstWith(CurrencyOperation.REMOVE_AND_ADD).orElseThrow();
