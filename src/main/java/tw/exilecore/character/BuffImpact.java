@@ -117,7 +117,7 @@ public final class BuffImpact {
     }
 
     private static double resist(final StatSheet sheet, final DamageType type) {
-        return Math.min(sheet.get(type.mitigationStat()), sheet.get(StatKeys.RESIST_MAX));
+        return Math.min(sheet.get(type.mitigationStat()), DamageCalculator.resistCap(sheet, type)); // 2026-10-20：含這一種自己的上限
     }
 
     // ---- 攻擊 ----

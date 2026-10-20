@@ -56,6 +56,11 @@ final class LifeWhale {
 
     static final String HORN_ITEM = "abyss_horn";
     static final int RADIUS = 15;
+    /**
+     * 場地的地面（站的高度）比海平面高幾格（2026-10-20：2 → 1：場地的頂面跟海面齊平，掉進海裡游到邊上就走得上來；
+     * 以前頂面高出水面一格，水裡跳不上去，只能等死或回筏）。
+     */
+    static final int ARENA_TOP = 1;
     private static final String TAG = "whale:";
 
     private final class Fight {
@@ -90,7 +95,7 @@ final class LifeWhale {
         }
 
         Location center() {
-            return new Location(world(), cx + 0.5, service.config().seaLevel() + 2, cz + 0.5);
+            return new Location(world(), cx + 0.5, service.config().seaLevel() + ARENA_TOP, cz + 0.5);
         }
     }
 
@@ -254,7 +259,7 @@ final class LifeWhale {
             meta.displayName(ItemRenderer.line("<#5fd3ff>" + ItemRenderer.escape(def == null ? "深淵號角" : def.hornName())));
             meta.lore(List.of(ItemRenderer.line("<gray>在" + ItemRenderer.escape(config().name()) + "自己的筏上右鍵吹響："),
                     ItemRenderer.line("<gray>" + ItemRenderer.escape(def == null ? "淵鯨" : def.name()) + "會從筏的東邊浮上來"),
-                    ItemRenderer.line("<red>巔峰級的 Boss：倒下 " + (def == null ? 2 : def.attempts()) + " 次就失敗（號角吹了就沒了）"),
+                    ItemRenderer.line("<red>巔峰級的 Boss：全隊合計倒下 " + (def == null ? 2 : def.attempts()) + " 次就失敗（號角吹了就沒了）"),
                     ItemRenderer.line("<dark_gray>可以交易")));
             meta.getPersistentDataContainer().set(service.itemKey(), PersistentDataType.STRING, HORN_ITEM);
         });
@@ -351,7 +356,7 @@ final class LifeWhale {
         final MapStats stats = like();
         fight.level = stats != null ? stats.monsterLevel() : Math.max(90, plugin.players().get(player).level() + 5);
         // 貼著場地（招式從牠的位置放：飄太高的話地上的圈、光束打不到人）
-        final LivingEntity boss = spawn(def.type(), new Location(world(), fight.cx + 0.5, config().seaLevel() + 2, fight.cz + 0.5));
+        final LivingEntity boss = spawn(def.type(), new Location(world(), fight.cx + 0.5, config().seaLevel() + ARENA_TOP, fight.cz + 0.5));
         if (boss == null) {
             clearArena(fight);
             LifeService.holdChunks(plugin, world(), fight.cx, fight.cz, RADIUS, false);
@@ -389,7 +394,7 @@ final class LifeWhale {
         int slot = 0;
         for (final Player member : audience(fight)) {
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.players().markDirty(member), 10L); // 巔峰的玩家詞綴
-            member.teleportAsync(new Location(world(), fight.cx - RADIUS + 3.5, config().seaLevel() + 2.1, fight.cz + 0.5 + (slot++ % 5 - 2), -90, 0));
+            member.teleportAsync(new Location(world(), fight.cx - RADIUS + 3.5, config().seaLevel() + ARENA_TOP + 0.1, fight.cz + 0.5 + (slot++ % 5 - 2), -90, 0));
             member.showBossBar(fight.bar);
             member.showTitle(Title.title(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(def.name())), plugin.text().parse("<gray>深淵巨獸"),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2400), Duration.ofMillis(600))));
@@ -535,7 +540,7 @@ final class LifeWhale {
             return;
         }
         // 淵鯨不亂飄：拉回場地中間的上空
-        final Location home = new Location(world(), fight.cx + 0.5, config().seaLevel() + 2, fight.cz + 0.5);
+        final Location home = new Location(world(), fight.cx + 0.5, config().seaLevel() + ARENA_TOP, fight.cz + 0.5);
         if (boss.getLocation().distanceSquared(home) > 7 * 7 || Math.abs(boss.getLocation().getY() - home.getY()) > 2) {
             boss.teleport(home.setDirection(at.toVector().subtract(home.toVector())));
         }
@@ -624,7 +629,7 @@ final class LifeWhale {
         final int count = Math.max(1, phase.shieldCount() * Math.max(1, Math.min(6, onArena(fight).size())));
         for (int i = 0; i < count; i++) {
             final double angle = offset + Math.PI * 2 * i / count;
-            final Location spot = new Location(world(), fight.cx + 0.5 + Math.cos(angle) * 8, config().seaLevel() + 2, fight.cz + 0.5 + Math.sin(angle) * 8);
+            final Location spot = new Location(world(), fight.cx + 0.5 + Math.cos(angle) * 8, config().seaLevel() + ARENA_TOP, fight.cz + 0.5 + Math.sin(angle) * 8);
             final LivingEntity core = spawn("SHULKER", spot);
             if (core == null) {
                 continue;
@@ -697,20 +702,27 @@ final class LifeWhale {
 
     // ---- 倒下、打倒 ----
 
-    /** 挑戰的人倒下（LifeModule）：還有機會就淵鯨回滿重來，沒有就失敗。 */
+    /**
+     * 挑戰的人倒下（LifeModule）：2026-10-20 一起打的人倒下也算（以前只算吹號角的人，隊友死幾次都沒差）。
+     * 全隊共用倒下次數，到了就失敗；還有機會時，場上沒有人站著才讓淵鯨回滿重來（還有人在打就繼續打）。
+     */
     void ownerDied(final Player player) {
-        final Fight fight = fights.get(player.getUniqueId());
+        final Fight fight = fightOf(player.getUniqueId());
         final LifeConfig.Whale def = config().whale();
         if (fight == null || def == null || fight.done) {
             return;
         }
         fight.deaths++;
         if (fight.deaths >= def.attempts()) {
-            plugin.getServer().getScheduler().runTask(plugin, () -> end(fight, "你倒下了 " + fight.deaths + " 次，" + def.name() + "沉回了深海"));
+            plugin.getServer().getScheduler().runTask(plugin, () -> end(fight, ItemRenderer.escape(player.getName()) + " 倒下了，全隊倒下 "
+                    + fight.deaths + " 次，" + def.name() + "沉回了深海"));
             return;
         }
-        // 重來：回滿、回到第一個階段、護盾收掉
-        if (fight.boss != null && fight.boss.isValid()) {
+        final List<Player> standing = new ArrayList<>(onArena(fight));
+        standing.remove(player); // 死亡事件時這個人可能還沒算死
+        final boolean wipe = standing.isEmpty();
+        if (wipe && fight.boss != null && fight.boss.isValid()) {
+            // 全滅：回滿、回到第一個階段、護盾收掉
             removeCores(fight);
             fight.shieldUntil = 0;
             fight.boss.setInvulnerable(false);
@@ -731,8 +743,12 @@ final class LifeWhale {
                 plugin.skills().bossSkills().reset(fight.boss.getUniqueId());
             }
         }
-        player.sendMessage(plugin.text().prefixed("<#5fd3ff>" + ItemRenderer.escape(def.name()) + "回滿了。<gray>還有 " + (def.attempts() - fight.deaths)
-                + " 次機會（重生在場地邊上）"));
+        final String text = "<#5fd3ff>" + ItemRenderer.escape(player.getName()) + " 倒下了（全隊 " + fight.deaths + "／" + def.attempts() + "）"
+                + (wipe ? "，" + ItemRenderer.escape(def.name()) + "回滿了" : "") + "<gray>　還有 " + (def.attempts() - fight.deaths)
+                + " 次機會（重生在場地邊上）";
+        for (final Player member : audience(fight)) {
+            member.sendMessage(plugin.text().prefixed(text));
+        }
     }
 
     /** 淵鯨或牠的東西死了（LifeModule 的死亡事件）。 */
@@ -863,7 +879,7 @@ final class LifeWhale {
         if (fight == null || fight.done) {
             return null;
         }
-        return new Location(world(), fight.cx - RADIUS + 3.5, config().seaLevel() + 2.1, fight.cz + 0.5, -90, 0);
+        return new Location(world(), fight.cx - RADIUS + 3.5, config().seaLevel() + ARENA_TOP + 0.1, fight.cz + 0.5, -90, 0);
     }
 
     // ---- 收掉 ----
@@ -941,13 +957,13 @@ final class LifeWhale {
                 }
                 final int x = fight.cx + dx;
                 final int z = fight.cz + dz;
-                for (int y = sea - 3; y <= sea; y++) {
+                for (int y = sea - 4; y < sea + ARENA_TOP - 1; y++) {
                     world().getBlockAt(x, y, z).setType(Material.PRISMARINE, false);
                 }
                 final Material top = d > RADIUS - 0.8 ? Material.DARK_PRISMARINE
                         : Math.abs(d - 10) < 0.5 || Math.abs(d - 5) < 0.5 ? Material.PRISMARINE_BRICKS
                         : (dx * 7 + dz * 13 & 15) == 0 ? Material.SEA_LANTERN : Material.DARK_PRISMARINE;
-                world().getBlockAt(x, sea + 1, z).setType(top, false);
+                world().getBlockAt(x, sea + ARENA_TOP - 1, z).setType(top, false); // 頂面那一層（跟海面同一層）
             }
         }
     }

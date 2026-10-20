@@ -51,7 +51,9 @@ class EventPinnacleTest {
         for (final Map.Entry<String, MapEventConfig.Ticket> entry : events.tickets().entrySet()) {
             final MapEventConfig.Ticket ticket = entry.getValue();
             assertEquals("ticket_" + entry.getKey(), ticket.currency(), entry.getKey());
-            assertEquals(0.02, ticket.chance(), 1e-9, entry.getKey() + "：固定 2%");
+            // 2026-10-20：照事件出現的頻率調（7 種都約 60 張圖 1 張）
+            assertEquals(Map.of("shrine", 0.022, "strongbox", 0.022, "breach", 0.044, "abyss", 0.044, "ritual", 0.056, "delirium", 0.056,
+                    "exile", 0.067).get(entry.getKey()), ticket.chance(), 1e-9, entry.getKey());
             assertEquals(entry.getKey(), events.ticketSource(ticket.currency()), "券 → 事件");
         }
         assertNull(events.ticket(MapEventConfig.Kind.SAFE), "保險箱沒有入場券");

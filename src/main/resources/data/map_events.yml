@@ -22,8 +22,10 @@
 # 另外兩個 PoE2 的機制（最下面的 ritual、delirium）：跟上面的事件可以同時出現，各自照 chance 決定這張圖有沒有。
 #
 # 2026-10-18：事件巔峰的入場券——每種事件（保險箱除外）的 ticket: { currency, chance }：完成事件時「有份的人」（跟 unique_chance 同一群人）
-#   各擲一次 chance（2%）掉一張 currency（currencies.yml 的 ticket_*）；固定機率，不吃稀有度、星圖天賦、每月加成。
+#   各擲一次 chance 掉一張 currency（currencies.yml 的 ticket_*）；固定機率，不吃稀有度、星圖天賦、每月加成。
 #   一張券在地圖裝置的「事件巔峰」開那隻 Boss 一次（maps.yml finals 底下 pinnacle.ticket）。沒寫照預設 ticket_<事件> 2%；chance 0 = 不掉。
+#   2026-10-20：照事件出現的頻率調，7 種都約 60 張圖掉 1 張（神龕、寶匣 2.2%，裂隙、深淵 4.4%，祭壇、幻霧 5.6%，流寇 6.7%）；
+#   以前全部 2%，流寇的券比神龕難拿 3 倍。
 
 settings:
   per_map: [2, 3]                  # 每張地圖放幾個事件（最多一個房間一個，起點與 Boss 房不放）
@@ -36,7 +38,7 @@ shrine:
   guards: [3, 5]                   # 守衛幾隻（照地圖的怪物種類，一隻魔法怪帶一群普通怪）
   reach: 12                        # 啟動時幾格內的人一起拿
   unique_chance: 0.01              # 拿到增益的人各擲一次：掉神龕的專屬傳奇
-  ticket: { currency: ticket_shrine, chance: 0.02 }       # 2026-10-18：事件巔峰的入場券（同一群人各擲一次；固定機率、不吃加成）
+  ticket: { currency: ticket_shrine, chance: 0.022 }       # 2026-10-18：事件巔峰的入場券（同一群人各擲一次；固定機率、不吃加成）
   # 種類：name 顯示名稱、color 顏色、mods 增益（stat 屬性鍵、type FLAT／INCREASED／MORE、value 數值；INCREASED／MORE 是百分比）
   kinds:
     acceleration:
@@ -74,7 +76,7 @@ strongbox:
   ambush: [6, 9]                   # 跳出幾隻
   radius: 20                       # 打開時幾格內的人有份
   unique_chance: 0.01              # 有份的人各擲一次：掉寶箱的專屬傳奇
-  ticket: { currency: ticket_strongbox, chance: 0.02 }    # 2026-10-18：入場券
+  ticket: { currency: ticket_strongbox, chance: 0.022 }    # 2026-10-18：入場券
   # 種類：weight 出現權重；rolls 像殺幾隻稀有怪那樣擲掉落表（quantity_bonus／rarity_bonus 是百分比）；
   # currency 另外掉幾個通貨（照掉落權重抽、等級夠的才會）；maps 另外掉幾張地圖（照開箱的人的星圖）；
   # essences 掉幾顆星魄（currencies.yml 裡 operation: ESSENCE 的，隨機一種；星魄是寶箱的招牌）
@@ -92,7 +94,7 @@ breach:
   quantity_bonus: 50               # 裂隙怪的物品數量 +%
   catalyst_chance: 0.06            # 每隻裂隙怪死掉時掉一顆催化劑（currencies.yml 裡 operation: CATALYST 的，隨機一種）的機率
   unique_chance: 0.01              # 裂隙關上時 30 格內的人各擲一次：掉裂隙的專屬傳奇
-  ticket: { currency: ticket_breach, chance: 0.02 }       # 2026-10-18：入場券
+  ticket: { currency: ticket_breach, chance: 0.044 }       # 2026-10-18：入場券
 
 exile:
   life: 4.0                        # 生命是同等級稀有怪的幾倍
@@ -101,7 +103,7 @@ exile:
   drops: 2                         # 殺了另外掉幾件稀有裝備（物品等級 = 地圖等級）
   omens: [1, 1]                    # 殺了掉幾個星籤（currencies.yml 裡 operation: OMEN 的，隨機一種；有份的人各拿）
   unique_chance: 0.01              # 有份的人各擲一次：掉流寇的專屬傳奇
-  ticket: { currency: ticket_exile, chance: 0.02 }        # 2026-10-18：入場券
+  ticket: { currency: ticket_exile, chance: 0.067 }        # 2026-10-18：入場券
   names: [伊薇特, 柯林, 瑞瓦, 托爾加, 安雅, 莫瑟, 迦南, 希爾達, 奧倫, 薇拉, 迪倫, 娜塔]
 
 # ---- 深淵裂縫（2026-10-18）----
@@ -128,7 +130,7 @@ abyss:
   shards: [1, 1]               # 2026-10-18：擁有者決定先給 1 顆
   radius: 20
   unique_chance: 0.01              # 寶箱打開時 radius 內的人各擲一次：掉深淵裂縫的專屬傳奇
-  ticket: { currency: ticket_abyss, chance: 0.02 }        # 2026-10-18：入場券
+  ticket: { currency: ticket_abyss, chance: 0.044 }        # 2026-10-18：入場券
   linger: 20
 
 # ---- 地圖保險箱（2026-10-18）----
@@ -170,7 +172,7 @@ ritual:
   reroll: { cost: 0.2, growth: 1.5 }   # 重擲花「總共拿到的貢品」的幾成，每次乘 growth
   reward_weights: { omen: 30, currency: 25, rare: 15, essence: 10, jewel: 8, map: 6, catalyst: 4, unique: 1 }   # unique：祭壇的專屬傳奇（2026-10：2 → 1）
   prices: { omen: [260, 420], currency: [40, 160], rare: [140, 260], essence: [110, 190], jewel: [180, 320], map: [150, 260], catalyst: [120, 200], unique: [520, 880] }
-  ticket: { currency: ticket_ritual, chance: 0.02 }       # 2026-10-18：入場券（祭壇全部完成時，這張圖裡的每個人各擲一次）
+  ticket: { currency: ticket_ritual, chance: 0.056 }       # 2026-10-18：入場券（祭壇全部完成時，這張圖裡的每個人各擲一次）
 
 # ---- 幻霧（PoE2 的 Delirium）----
 # 地圖裡放一面鏡子（染色玻璃）。走過去，霧就跟著這張圖裡的每個人 duration 秒：越久越難（之後刷出來的怪與幻霧怪的生命、傷害
@@ -190,7 +192,7 @@ delirium:
   reward_weights: { emotion: 40, currency: 25, essence: 10, jewel: 10, map: 10, catalyst: 5, unique: 1 }   # unique：幻霧的專屬傳奇（2026-10：2 → 1）
   emotions: [distilled_ire, distilled_guilt, distilled_greed, distilled_paranoia]
   emotion_weights: [50, 30, 15, 5]
-  ticket: { currency: ticket_delirium, chance: 0.02 }     # 2026-10-18：入場券（幻霧結束時拿到獎勵的人各擲一次）
+  ticket: { currency: ticket_delirium, chance: 0.056 }     # 2026-10-18：入場券（幻霧結束時拿到獎勵的人各擲一次）
 
 # 地圖變化（2026-10）：讓同一張圖每次打起來不一樣。每一種各自照機率出現，機率寫 0 就關掉。
 # 只放在一般的地圖（回響、試煉、極境、巔峰不放）；終局 Boss 不會有 Boss 變體與 Boss 房干擾。/ec map 的狀態會列出這張圖有哪些變化。

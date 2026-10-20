@@ -772,7 +772,7 @@ final class AuraService implements Listener {
     double selfBurnPerSecond(final Player player, final AuraSpec spec) {
         final PlayerState state = plugin.players().get(player);
         final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
-        final double resist = tw.exilecore.stats.Formulas.resistReduction(sheet.get(StatKeys.RESIST_FIRE), sheet.get(StatKeys.RESIST_MAX));
+        final double resist = tw.exilecore.stats.Formulas.resistReduction(sheet.get(StatKeys.RESIST_FIRE), tw.exilecore.stats.DamageCalculator.resistCap(sheet, tw.exilecore.stats.DamageType.FIRE));
         return (state.maxLife() + Math.max(0, state.maxEnergyShield())) * spec.selfBurn() / 100.0 * (1 - resist);
     }
 
@@ -851,7 +851,7 @@ final class AuraService implements Listener {
             return;
         }
         final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
-        final double resist = tw.exilecore.stats.Formulas.resistReduction(sheet.get(StatKeys.RESIST_FIRE), sheet.get(StatKeys.RESIST_MAX));
+        final double resist = tw.exilecore.stats.Formulas.resistReduction(sheet.get(StatKeys.RESIST_FIRE), tw.exilecore.stats.DamageCalculator.resistCap(sheet, tw.exilecore.stats.DamageType.FIRE));
         double rest = (state.maxLife() + Math.max(0, state.maxEnergyShield())) * spec.selfBurn() / 100.0 / 2.0 * (1 - resist);
         if (rest <= 0) {
             return;

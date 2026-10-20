@@ -113,11 +113,14 @@ public final class StatsReport {
         final java.util.LinkedHashMap<String, Double> quantity = new java.util.LinkedHashMap<>();
         final java.util.LinkedHashMap<String, Double> rarity = new java.util.LinkedHashMap<>();
         put(quantity, "全服設定", (hasDrops ? drops.baseServerQuantity() : 0) * 100);
-        put(rarity, "全服設定", (hasDrops ? drops.baseServerRarity() : 0) * 100);
+        final double toQuantity = hasDrops ? drops.globalRarityToQuantity() : 0; // 2026-10-19：全服稀有度換成數量的比例
+        put(rarity, "全服設定", (hasDrops ? drops.baseServerRarity() : 0) * (1 - toQuantity) * 100);
+        put(quantity, "全服設定（稀有度換算）", (hasDrops ? drops.baseServerRarity() : 0) * toQuantity * 100);
         put(quantity, "全服加倍", tw.exilecore.sponsor.Boosts.quantity() * 100);
         put(rarity, "全服加倍", tw.exilecore.sponsor.Boosts.rarity() * 100);
         put(quantity, "在線加成", OnlineBonus.quantity() * 100);
-        put(rarity, "在線加成", OnlineBonus.rarity() * 100);
+        put(rarity, "在線加成", OnlineBonus.rarity() * (1 - toQuantity) * 100);
+        put(quantity, "在線加成（稀有度換算）", OnlineBonus.rarity() * toQuantity * 100);
         double personalQuantity = 0;
         double personalRarity = 0;
         if (sponsors != null) {
@@ -310,9 +313,9 @@ public final class StatsReport {
                     Math.round(deflection), Math.round(tw.exilecore.stats.DamageCalculator.deflectChance(accuracy, deflection) * 100),
                     Math.round(StatKeys.DEFLECT_LESS * 100)));
         }
-        lines.add(String.format(Locale.ROOT, "<gray>抗性 %s %s %s %s <dark_gray>（上限 %d%%）",
+        lines.add(String.format(Locale.ROOT, "<gray>抗性 %s %s %s %s <dark_gray>（%s）",
                 resist(sheet, DamageType.FIRE), resist(sheet, DamageType.COLD), resist(sheet, DamageType.LIGHTNING), resist(sheet, DamageType.CHAOS),
-                Math.round(sheet.get(StatKeys.RESIST_MAX))));
+                capText(sheet)));
         // 2026-10：最大承受一擊（生命＋能量護盾，扣掉抗性、護甲；沒算格擋、閃避、受到傷害的增減）
         final List<String> hits = new ArrayList<>();
         for (final DamageType type : DamageType.values()) {
@@ -394,10 +397,24 @@ public final class StatsReport {
         return (value >= 0 ? "+" : "−") + Math.abs(value) + "%";
     }
 
-    /** 一種抗性：元素色的名字＋數值；到上限時數值變綠（超過的寫「堆了多少」）、負的變紅。 */
+    /** 抗性上限的說明（2026-10-20）：四種一樣寫「上限 75%」；有「+x% 某種抗性上限」時分開寫。 */
+    private static String capText(final StatSheet sheet) {
+        final DamageType[] types = {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING, DamageType.CHAOS};
+        final long base = Math.round(sheet.get(StatKeys.RESIST_MAX));
+        boolean same = true;
+        final StringBuilder parts = new StringBuilder();
+        for (final DamageType type : types) {
+            final long cap = Math.round(tw.exilecore.stats.DamageCalculator.resistCap(sheet, type));
+            same &= cap == base;
+            parts.append(parts.isEmpty() ? "" : " ").append(shortName(type)).append(cap);
+        }
+        return same ? "上限 " + base + "%" : "上限 " + parts + "%";
+    }
+
+    /** 一種抗性：元素色的名字＋數值；到上限時數值變綠（超過的寫「堆了多少」）、負的變紅。上限含這一種自己的上限。 */
     private static String resist(final StatSheet sheet, final DamageType type) {
         final long value = Math.round(sheet.get(type.mitigationStat()));
-        final long max = Math.round(sheet.get(StatKeys.RESIST_MAX));
+        final long max = Math.round(tw.exilecore.stats.DamageCalculator.resistCap(sheet, type));
         final String color = value < 0 ? "<red>" : value >= max ? "<green>" : "<white>";
         return String.format(Locale.ROOT, "<%s>%s %s%d%%", DamageNumbers.color(type), shortName(type), color, Math.min(value, max))
                 + (value > max ? String.format(Locale.ROOT, "<dark_gray>(堆%d)", value) : "");
@@ -470,8 +487,10 @@ public final class StatsReport {
         for (final DamageType type : new DamageType[] {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING, DamageType.CHAOS}) {
             final String key = "resist." + shortKey(type);
             final double raw = sheet.get(type.mitigationStat());
-            out.put(key, Math.min(raw, max));
+            final double cap = tw.exilecore.stats.DamageCalculator.resistCap(sheet, type); // 2026-10-20：含這一種自己的上限
+            out.put(key, Math.min(raw, cap));
             out.put(key + ".raw", raw);
+            out.put(key + ".max", cap);
         }
         final DefenceEstimates estimates = plugin == null ? null : estimatesAt(plugin, level, sheet);
         if (estimates != null) {

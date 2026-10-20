@@ -56,34 +56,55 @@ public enum Catalyst {
 
     /** 這條修飾器算不算這一類。 */
     public boolean matches(final Modifier mod) {
-        final String stat = mod.stat();
-        final boolean spell = mod.tags().contains("spell");
+        // 2026-10-20：有條件的版本（evasion@nohit、life.regen_percent@hit）照本來的屬性算
+        final String full = mod.stat();
+        final int at = full.indexOf('@');
+        final String stat = at < 0 ? full : full.substring(0, at);
+        final java.util.Set<String> tags = mod.tags();
+        final boolean spell = tags.contains("spell");
+        final boolean elementTag = tags.contains("elemental") || tags.contains("fire") || tags.contains("cold") || tags.contains("lightning");
         return switch (this) {
             case RESIST -> stat.startsWith("resist.");
             // 2026-10：受到的傷害回復為生命（life.recoup）、擊中／擊殺回復生命也算生命詞綴
+            // 2026-10-20：每擊殺回復生命／魔力（life.per_kill、mana.per_kill、mana.on_kill）也算
             case LIFE -> stat.equals(StatKeys.LIFE_MAX) || stat.equals(StatKeys.LIFE_REGEN) || stat.equals(StatKeys.LIFE_REGEN_PERCENT)
                     || stat.equals(StatKeys.MANA_MAX) || stat.equals(StatKeys.MANA_REGEN) || stat.equals(StatKeys.LIFE_RECOUP)
-                    || stat.equals(StatKeys.LIFE_ON_HIT) || stat.equals(StatKeys.LIFE_ON_KILL)
+                    || stat.equals(StatKeys.LIFE_ON_HIT) || stat.equals(StatKeys.LIFE_ON_KILL) || stat.equals(StatKeys.MANA_ON_KILL)
+                    || stat.equals(StatKeys.LIFE_PER_KILL) || stat.equals(StatKeys.MANA_PER_KILL)
                     || stat.equals(StatKeys.LEECH_LIFE) || stat.equals(StatKeys.LEECH_MANA); // 2026-10-19：偷取為生命／魔力（PoE2 的標籤有生命）
             // 攻擊：攻擊專用的（tags 有 attack）與陷阱、手雷的傷害類；通用的元素、混沌傷害不算；攻速歸速度、暴擊歸暴擊（2026-10）
-            // 2026-10-19：攻擊造成的物理傷害偷取為生命／魔力也算（PoE2 的標籤有攻擊）
-            case ATTACK -> damage(mod) && (mod.tags().contains("attack") || mod.tags().contains("trap") || mod.tags().contains("grenade"))
-                    || leech(mod) && mod.tags().contains("attack");
+            // 2026-10-19：攻擊造成的物理傷害偷取為生命／魔力也算（PoE2 的標籤有攻擊）；2026-10-20：命中（PoE2 的標籤是攻擊）
+            case ATTACK -> damage(mod) && (tags.contains("attack") || tags.contains("trap") || tags.contains("grenade"))
+                    || leech(mod) && tags.contains("attack") || stat.equals(StatKeys.ACCURACY);
             // 法術：法術專用的（tags 有 spell）傷害類；施法速度歸速度、法術暴擊歸暴擊
             case CASTER -> damage(mod) && spell;
             // 2026-10-16：「增加 x% 暴擊傷害加成」（crit.bonus，飾品上的暴傷詞綴都是這個）也算——以前只認 crit.multi，暴傷詞綴吃不到
             case CRIT -> stat.equals(StatKeys.CRIT_CHANCE) || stat.equals(StatKeys.CRIT_MULTI) || stat.equals(StatKeys.CRIT_BONUS);
             // 元素、物理與混沌：看傷害種類（攻擊、法術都算）；「額外火焰傷害」（damage.gain.火焰）也算
-            case ELEMENTAL -> damage(mod) && (mod.tags().contains("elemental") || mod.tags().contains("fire")
-                    || mod.tags().contains("cold") || mod.tags().contains("lightning"))
-                    || stat.equals(StatKeys.DAMAGE_GAIN + "fire") || stat.equals(StatKeys.DAMAGE_GAIN + "cold")
-                    || stat.equals(StatKeys.DAMAGE_GAIN + "lightning");
-            case PHYS_CHAOS -> damage(mod) && (mod.tags().contains("physical") || mod.tags().contains("chaos"))
-                    || stat.equals(StatKeys.DAMAGE_GAIN + "chaos");
+            // 2026-10-20：「獲得 x% 傷害為額外的冰冷傷害」（damage.extra.cold，傳奇上的寫法）以前漏了；元素穿透、
+            // 點燃／冰緩／凍結／感電／電擊的機率與效果（PoE2 的標籤有那種元素）也算
+            case ELEMENTAL -> damage(mod) && elementTag
+                    || element(stat, StatKeys.DAMAGE_GAIN) || element(stat, "damage.extra.")
+                    || stat.equals(StatKeys.PENETRATION) && elementTag
+                    || stat.startsWith("ignite.") || stat.startsWith("chill.") || stat.startsWith("freeze.") || stat.startsWith("shock.")
+                    || stat.startsWith("electrocute.");
+            // 2026-10-20：「獲得 x% 傷害為額外的混沌傷害」（damage.extra.chaos）以前漏了；混沌穿透、流血與中毒的機率與幅度、荊棘（物理）也算
+            case PHYS_CHAOS -> damage(mod) && (tags.contains("physical") || tags.contains("chaos"))
+                    || stat.equals(StatKeys.DAMAGE_GAIN + "chaos") || stat.equals("damage.extra.chaos") || stat.equals("damage.extra.physical")
+                    || stat.equals(StatKeys.PENETRATION) && tags.contains("chaos")
+                    || stat.startsWith("bleed.") || stat.startsWith("poison.") || stat.equals("thorns.min") || stat.equals("thorns.max");
             case ATTRIBUTE -> stat.startsWith("attr.");
             case SPEED -> stat.equals(StatKeys.ATTACK_SPEED) || stat.equals(StatKeys.CAST_SPEED) || stat.equals(StatKeys.MOVEMENT_SPEED);
-            case DEFENCE -> stat.equals(StatKeys.ARMOUR) || stat.equals(StatKeys.EVASION) || stat.equals(StatKeys.ES_MAX) || stat.equals(StatKeys.BLOCK_CHANCE);
+            // 2026-10-20：能量護盾回充、護甲也擋元素、偏斜、物理傷害減免也算防禦
+            case DEFENCE -> stat.equals(StatKeys.ARMOUR) || stat.equals(StatKeys.EVASION) || stat.equals(StatKeys.ES_MAX) || stat.equals(StatKeys.BLOCK_CHANCE)
+                    || stat.equals(StatKeys.ES_RECHARGE) || stat.equals(StatKeys.ARMOUR_ELEMENTAL) || stat.equals(StatKeys.DEFLECTION)
+                    || stat.equals(StatKeys.PHYS_REDUCTION);
         };
+    }
+
+    /** prefix 後面接火焰、冰冷、閃電（damage.gain.fire、damage.extra.cold…）。 */
+    private static boolean element(final String stat, final String prefix) {
+        return stat.equals(prefix + "fire") || stat.equals(prefix + "cold") || stat.equals(prefix + "lightning");
     }
 
     /** 2026-10-19：偷取為生命／魔力。 */

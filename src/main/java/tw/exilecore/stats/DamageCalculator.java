@@ -193,6 +193,15 @@ public final class DamageCalculator {
         return mitigate(outgoing, defender, null, Set.of());
     }
 
+    /**
+     * 這一種傷害的抗性上限（2026-10-20）：全部抗性的上限（resist.max，預設 75）加上這一種自己的上限（resist.max.cold 這種，
+     * 「+3% 冰冷抗性上限」）。物理沒有抗性，回傳 resist.max。傷害計算、角色面板、網頁都用這個（以前面板只看 resist.max）。
+     */
+    public static double resistCap(final StatSheet sheet, final DamageType type) {
+        final double max = sheet.get(StatKeys.RESIST_MAX);
+        return type == DamageType.PHYSICAL ? max : max + sheet.flat(StatKeys.resistMax(type), Set.of());
+    }
+
     /** 同上，攻擊方的穿透（penetration，tags 限定類型）在抗性上限之後扣。 */
     public static DamagePacket mitigate(final DamagePacket outgoing, final StatSheet defender, final StatSheet attacker, final Set<String> skillTags) {
         final DamagePacket dealt = new DamagePacket();
@@ -206,7 +215,7 @@ public final class DamageCalculator {
             if (type == DamageType.CHAOS && chaosImmune) {
                 continue;
             }
-            final double typeMax = type == DamageType.PHYSICAL ? maxResist : maxResist + defender.flat(StatKeys.resistMax(type), Set.of());
+            final double typeMax = type == DamageType.PHYSICAL ? maxResist : resistCap(defender, type);
             double rawResist = type == DamageType.PHYSICAL ? 0 : defender.get(type.mitigationStat());
             if (type == DamageType.CHAOS && StatKeys.flag(defender, StatKeys.FLAG_CHAOS_RES_DOUBLE)) {
                 rawResist *= 2; // 夏烏拉的禮物：混沌抗性加倍
