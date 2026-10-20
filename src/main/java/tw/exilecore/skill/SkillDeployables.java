@@ -101,6 +101,32 @@ final class SkillDeployables implements Listener {
         long linkedTicks;
     }
 
+    /** 圖騰攻擊間隔的下限（tick）：攻速再高也不會比這個快。 */
+    static final int TOTEM_MIN_TICKS = 4;
+
+    /**
+     * 圖騰下一次攻擊隔幾 tick（2026-10-20，照 PoE）：技能的 interval ÷ 放圖騰的人的速度倍率——攻擊技能看攻擊速度、
+     * 法術看施法速度（增加 × 更多，含這個技能的輔助寶石）；不含武器本身的攻速（interval 已經是圖騰自己的節奏）。
+     * 英靈圖騰（2026-10-20）：叫英靈的頻率也照這個算（英靈圖騰自己的 interval ÷ 攻速，含英靈圖騰的輔助），
+     * 但英靈用的那個錘子技能自己的攻速（它的輔助寶石、武器攻速）不算。
+     */
+    static long totemTicks(final double intervalSeconds, final double speedMultiplier) {
+        final double speed = Math.max(0.1, speedMultiplier);
+        return Math.max(TOTEM_MIN_TICKS, Math.round(intervalSeconds * 20 / speed));
+    }
+
+    private double totemSpeed(final Deployed item, final Player owner) {
+        return totemSpeed(item.build, plugin.players().sheet(owner), item.linked != null);
+    }
+
+    /** 圖騰的速度倍率：攻擊（含英靈圖騰）看攻擊速度、法術看施法速度；用圖騰那個技能自己的輔助。 */
+    static double totemSpeed(final SkillBuild totem, final tw.exilecore.stats.StatSheet sheet, final boolean linked) {
+        final tw.exilecore.stats.StatSheet effective = totem.profile().effective(sheet);
+        final Set<String> tags = totem.profile().tags();
+        return effective.apply(linked || totem.isAttack() ? tw.exilecore.stats.StatKeys.ATTACK_SPEED : tw.exilecore.stats.StatKeys.CAST_SPEED,
+                1.0, tags);
+    }
+
     private final ExileCore plugin;
     private final SkillTargets targets;
     private final SkillVisuals visuals;
@@ -563,7 +589,7 @@ final class SkillDeployables implements Listener {
         }
         if (item.linked != null) {
             // 英靈圖騰：在敵人旁邊（往圖騰那邊 1.5 格）叫出英靈，用連著的錘子技能打一下
-            item.nextTick = now + item.linkedTicks;
+            item.nextTick = now + totemTicks(item.spec.interval(), totemSpeed(item, owner)); // 2026-10-20：吃攻速（錘子技能自己的不算）
             final org.bukkit.util.Vector back = item.feet.toVector().subtract(target.getLocation().toVector()).setY(0);
             final Location spot = target.getLocation().clone();
             if (back.lengthSquared() > 1e-4) {
@@ -574,7 +600,7 @@ final class SkillDeployables implements Listener {
             executor.executeFrom(Origin.towards(owner, spot, target), item.linked, target);
             return;
         }
-        item.nextTick = now + Math.max(4, Math.round(item.spec.interval() * 20));
+        item.nextTick = now + totemTicks(item.spec.interval(), totemSpeed(item, owner)); // 2026-10-20：吃攻速／施法速度
         final Origin origin = Origin.towards(owner, item.feet, target);
         visuals.deployCast(item.build.definition().visual(), item.feet);
         executor.executeFrom(origin, item.build, target);

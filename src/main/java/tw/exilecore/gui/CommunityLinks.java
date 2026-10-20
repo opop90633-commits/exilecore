@@ -58,8 +58,8 @@ public final class CommunityLinks {
         return trimmed;
     }
 
-    /** 換掉的舊網址（2026-10：新手教學改成新的 Google Drive 檔案）。 */
-    private static final List<String> RETIRED = List.of("1xOcljxPEcDzPjPnLUeOWBXpvxUdeeMCh");
+    /** 換掉的舊網址（2026-10：新手教學改成新的 Google Drive 檔案；2026-10-20：Discord 換新的邀請連結）。 */
+    private static final List<String> RETIRED = List.of("1xOcljxPEcDzPjPnLUeOWBXpvxUdeeMCh", "S6FZuGFR93");
 
     static boolean retired(final String url) {
         for (final String old : RETIRED) {

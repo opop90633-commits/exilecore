@@ -1175,7 +1175,7 @@ public final class SkillService {
         showCooldown(player, definition.id(), build.cooldownTicks());
         if (build.deploy() != null) {
             if (linked != null) {
-                deployables.place(player, build, linked, Math.round(linked.intervalTicks(sheet) * 1.5)); // 英靈：錘子技能的攻擊時間 ×1.5 叫一次
+                deployables.place(player, build, linked, 0); // 英靈（2026-10-20）：照英靈圖騰的 interval ÷ 攻速叫（SkillDeployables.totemTicks）
             } else {
                 deployables.place(player, build); // 圖騰、陷阱、鐘：放下去，由它們放技能
             }
@@ -2134,8 +2134,9 @@ public final class SkillService {
     }
 
     /** 2026-10-18：一根英靈圖騰每秒叫幾次英靈（跟 {@link SkillDeployables} 一樣：錘子技能攻擊時間 ×1.5，最少 4 tick）。 */
-    static double ancestorCallsPerSecond(final double linkedIntervalTicks) {
-        return 20.0 / Math.max(4, Math.round(linkedIntervalTicks * 1.5));
+    /** 英靈每秒叫幾次（2026-10-20）：英靈圖騰的 interval ÷ 攻速（英靈圖騰的輔助算，錘子技能自己的攻速不算）。 */
+    static double ancestorCallsPerSecond(final SkillBuild totem, final StatSheet sheet) {
+        return 20.0 / SkillDeployables.totemTicks(totem.deploy().interval(), SkillDeployables.totemSpeed(totem, sheet, true));
     }
 
     /** 2026-10-18：同時立著幾根圖騰：上限與「持續時間 ÷ 放一根要多久（施放間隔與冷卻較長的）」比較小的那個，至少 1。 */
@@ -2165,7 +2166,7 @@ public final class SkillService {
         final double multi = DamageCalculator.critMultiplier(linked.profile().effective(sheet), linked.profile().tags(), null) * 100;
         final double critFactor = 1 + crit * (multi / 100.0 - 1);
         final SkillParams params = linked.params();
-        final double hitRate = ancestorCallsPerSecond(linked.intervalTicks(sheet)) * up
+        final double hitRate = ancestorCallsPerSecond(totem, sheet) * up
                 * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
                         params.aftershock() == null ? 0 : params.aftershock().more());
         double dps = expected.total() * critFactor * hitRate;
@@ -2183,7 +2184,7 @@ public final class SkillService {
             final double fullMulti = DamageCalculator.critMultiplier(fullLinked.profile().effective(fullSheet), fullLinked.profile().tags(), null) * 100;
             final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
             final SkillParams fullParams = fullLinked.params();
-            final double fullRate = ancestorCallsPerSecond(fullLinked.intervalTicks(fullSheet)) * fullUp
+            final double fullRate = ancestorCallsPerSecond(fullTotem, fullSheet) * fullUp
                     * castHits(fullParams.burst() == null ? 1 : fullParams.burst().count(), fullParams.aftershock() != null,
                             fullParams.aftershock() == null ? 0 : fullParams.aftershock().more());
             fullDps = fullExpected.total() * fullCritFactor * fullRate;
@@ -2610,12 +2611,16 @@ public final class SkillService {
         if (definition.mechanic() != Mechanic.AURA) {
             final DeploySpec deploy = build.deploy();
             if (deploy != null && deploy.kind() == DeploySpec.Kind.TOTEM) {
-                // 2026-10：圖騰：你的攻速／施法速度只影響「放圖騰」多快；圖騰自己照固定間隔放（上面那行），不吃你的速度
-                lines.add(String.format(Locale.ROOT, "<gray>放圖騰：每秒最多 <white>%.2f<gray> 次　<dark_gray>（攻速、施法速度只影響放圖騰）",
-                        20.0 / build.intervalTicks(sheet)));
+                // 2026-10-20（照 PoE）：圖騰攻擊吃你的攻速（法術圖騰吃施法速度）；英靈圖騰叫出的英靈照固定間隔，不吃
+                lines.add(String.format(Locale.ROOT, "<gray>放圖騰：每秒最多 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(sheet)));
                 if (deploy.interval() > 0) {
-                    lines.add(String.format(Locale.ROOT, "<gray>每個圖騰每秒 <white>%.2f<gray> 次（滿 %d 個合計 <white>%.2f<gray> 次）",
-                            1.0 / deploy.interval(), build.totems(), build.totems() / deploy.interval()));
+                    final boolean linked = SkillExecutor.hasFlag(definition, StatKeys.FLAG_TOTEM_LINKED);
+                    final double speed = SkillDeployables.totemSpeed(build, sheet, linked);
+                    final double rate = 20.0 / SkillDeployables.totemTicks(deploy.interval(), speed);
+                    lines.add(String.format(Locale.ROOT, "<gray>每個圖騰每秒 <white>%.2f<gray> 次（滿 %d 個合計 <white>%.2f<gray> 次）%s",
+                            rate, build.totems(), build.totems() * rate,
+                            linked ? "　<dark_gray>（叫英靈的頻率吃你的攻速；英靈用的技能本身的攻速不算）"
+                                    : build.isAttack() ? "　<dark_gray>（吃你的攻擊速度）" : "　<dark_gray>（吃你的施法速度）"));
                 }
             } else {
                 lines.add(String.format(Locale.ROOT, "<gray>每秒 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(sheet)));

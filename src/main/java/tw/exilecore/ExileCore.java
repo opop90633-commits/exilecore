@@ -166,6 +166,8 @@ public final class ExileCore extends JavaPlugin {
         this.modules = new ModuleRegistry(getSLF4JLogger());
         registerModules();
         modules.enableAll();
+        // 2026-10-20 效能：實體消失時清掉玩家身上「看得到／看不到它」的紀錄（spark 上 canSee 佔 6～9%）
+        getServer().getPluginManager().registerEvents(new tw.exilecore.core.VisibilityJanitor(this), this);
         if (!modules.isEnabled("core")) {
             // 資料庫沒連上或資料表遷移失敗：讀寫不了存檔，讓玩家進來只會用到舊的或半套的資料（例如沒換算的等級）
             getSLF4JLogger().error("核心模組（資料庫）啟用失敗，ExileCore 先停用：看上面的錯誤，修好後重開伺服器");

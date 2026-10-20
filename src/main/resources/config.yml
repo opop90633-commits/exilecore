@@ -38,7 +38,7 @@ tab:
 
 # 選單的 Discord、贊助商城、新手教學按鈕（也可以打 /discord、/store、/tutorial）。空字串 = 按鈕寫「即將開放」。改完 /ec reload
 links:
-  discord: "https://discord.gg/S6FZuGFR93"
+  discord: "https://discord.gg/wKpcGqzJYa"   # 2026-10-20 換新的邀請連結
   store: ""
   tutorial: "https://drive.google.com/file/d/1NhlPB1UTjmRL-8fXUdklSOpURGw2aJs2/view?usp=drivesdk"
 
