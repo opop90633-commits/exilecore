@@ -143,6 +143,15 @@ public final class CharmService implements Listener {
         }
     }
 
+    /** 所有護符的名稱（2026-10-20：快捷欄的增益倒數要把字收進資源包）。 */
+    public java.util.List<String> names() {
+        final java.util.List<String> names = new java.util.ArrayList<>();
+        for (final CharmBase base : bases.values()) {
+            names.add(base.name());
+        }
+        return names;
+    }
+
     public boolean isCharm(final ItemStack stack) {
         return read(stack).isPresent();
     }

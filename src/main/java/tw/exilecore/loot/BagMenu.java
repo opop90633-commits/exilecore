@@ -419,6 +419,15 @@ public final class BagMenu extends Menu {
                 if (gem) {
                     lore.add("<yellow>Shift＋右鍵：直接" + (type.id().startsWith(CurrencyType.UNCUT_SKILL_PREFIX) ? "雕琢、升級技能" : "切輔助寶石"));
                     lore.add("<yellow>左鍵：拿一疊　右鍵：拿 1 個　Shift＋左鍵：放進背包");
+                } else if (plugin.cards() != null && plugin.cards().goesToStash(type)) {
+                    // 2026-10-19 晚：星諭卡、牌堆在通貨袋裡也能直接用
+                    final tw.exilecore.card.CardConfig.Card card = plugin.cards().config().card(type.id());
+                    if (card != null) {
+                        lore.add("<gray>一套 <white>" + card.set() + "</white> 張・可以換 <white>" + amount / card.set() + "</white> 套");
+                    }
+                    lore.add("<#c9a0ff>Shift＋右鍵：" + (tw.exilecore.card.CardService.isDeck(type) ? "全部打開" : "全部兌換"));
+                    lore.add("<yellow>左鍵：拿一疊　右鍵：拿 1 個　Shift＋左鍵：放進背包");
+                    lore.add("<dark_gray>賭卡要先存進倉庫");
                 } else {
                     lore.add("<yellow>左鍵：拿一疊到游標上（直接點裝備使用）");
                     lore.add("<yellow>右鍵：拿 1 個　Shift＋左鍵：放進背包");
@@ -832,6 +841,11 @@ public final class BagMenu extends Menu {
         final CurrencyType type = currencyOrder.get(slot);
         final int have = bag.pouch().amount(type.id());
         if (have <= 0) {
+            return;
+        }
+        if (click == ClickType.SHIFT_RIGHT && plugin.cards() != null && plugin.cards().goesToStash(type)) {
+            plugin.cards().usePouch(player, bag.pouch(), type, true); // 2026-10-19 晚：星諭卡全部兌換、牌堆全部打開
+            redraw();
             return;
         }
         if (click == ClickType.SHIFT_RIGHT && type.uncutGem() && plugin.skills() != null) {

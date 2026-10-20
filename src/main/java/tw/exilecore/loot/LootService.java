@@ -606,12 +606,7 @@ public final class LootService {
 
     /** 通貨：先進通貨袋（每種最多 5000 個），滿了照一般物品收。 */
     public ItemStack stowCurrency(final Player player, final PlayerState state, final CurrencyType type, final ItemStack stack) {
-        // 2026-10-19 星諭卡、星諭牌堆：直接進倉庫通貨頁的「星諭卡」（倉庫滿了才進通貨袋、背包）
-        if (plugin.cards() != null && plugin.cards().goesToStash(type) && plugin.stash() != null && plugin.stash().stash(player).isPresent()) {
-            final int rest = plugin.economy().wallet().deposit(player, type.id(), stack.getAmount());
-            plugin.players().markDirty(player);
-            return rest <= 0 ? null : stack.asQuantity(rest);
-        }
+        // 星諭卡、星諭牌堆：2026-10-19 晚改回跟一般通貨一樣進通貨袋（隨身帶著，回營地再存倉庫）
         if (!state.bag().usable()) {
             return stow(player, state, stack); // 隨身背包打不開：通貨也放背包，不然拿不出來
         }

@@ -78,7 +78,10 @@ public final class CharacterModule implements Module {
             bonusBar.tick(); // 全服加成的公告（畫面最上面的金色血條）
             tabList.tick(); // TAB 列表的伺服器名稱、在線人數、PING、TPS
         }, 40, 40);
-        sidebarTask = plugin.repeat("sidebar", plugin.sidebar()::tick, tw.exilecore.gui.Sidebar.TICK_PERIOD, tw.exilecore.gui.Sidebar.TICK_PERIOD);
+        sidebarTask = plugin.repeat("sidebar", () -> {
+            plugin.sidebar().tick();
+            tabList.refresh(); // 2026-10-20：TAB 下面的增益倒數（每半秒）
+        }, tw.exilecore.gui.Sidebar.TICK_PERIOD, tw.exilecore.gui.Sidebar.TICK_PERIOD);
         tickTask = plugin.repeat("character", () -> {
             final long currentTick = plugin.getServer().getCurrentTick();
             for (final Map.Entry<UUID, PlayerState> entry : states.all().entrySet()) {

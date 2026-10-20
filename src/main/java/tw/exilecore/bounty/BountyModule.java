@@ -31,6 +31,7 @@ public final class BountyModule implements Module, Listener {
     private BountyService service;
     private BukkitTask dayTask;
     private BukkitTask flushTask;
+    private BukkitTask repelTask;
 
     public BountyModule(final ExileCore plugin) {
         this.plugin = plugin;
@@ -59,6 +60,7 @@ public final class BountyModule implements Module, Listener {
         plugin.players().addModifierSource(player -> service == null ? List.of() : service.titleModifiers(player));
         dayTask = plugin.repeat("bounty.day", service::tick, DAY_TICKS, DAY_TICKS);
         flushTask = plugin.repeat("bounty.flush", service::flushAll, FLUSH_TICKS, FLUSH_TICKS);
+        repelTask = plugin.repeat("bounty.builder", service::repelForBuilders, 10, 10); // 2026-10-20 建築師稱號
         // 已經在線上的玩家（/reload）
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             service.load(player);
@@ -77,13 +79,14 @@ public final class BountyModule implements Module, Listener {
 
     @Override
     public void disable() {
-        for (final BukkitTask task : new BukkitTask[] {dayTask, flushTask}) {
+        for (final BukkitTask task : new BukkitTask[] {dayTask, flushTask, repelTask}) {
             if (task != null) {
                 task.cancel();
             }
         }
         dayTask = null;
         flushTask = null;
+        repelTask = null;
         if (service != null) {
             service.flushAll();
         }

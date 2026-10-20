@@ -9,7 +9,8 @@ import java.util.UUID;
  * 一隻怪物（或一個玩家）身上的異常狀態。時間都用伺服器 tick。純資料，不依賴 Bukkit。
  * <ul>
  *   <li>點燃：可以同時有好幾個，但只有傷害最高的那個在燒（PoE2）；它結束後下一個接著燒。流血一樣（只有最強的在流）。</li>
- *   <li>中毒：全部一起算（可以疊加），最多 {@link #MAX_POISONS} 個，太多時丟掉最弱的。</li>
+ *   <li>中毒：全部一起算（可以疊加）。疊加上限<b>每個來源各自算</b>（2026-10-19：組隊時不會互相擠掉），
+ *   同一個來源最多 {@link #MAX_POISONS} 個、整隻最多 {@link #MAX_POISONS_TOTAL} 個，太多時丟掉最弱的。</li>
  *   <li>冰緩、感電：只留最強的；比較弱的新效果不會蓋掉還沒結束的強效果。</li>
  *   <li>凍結：冰冷傷害累積到 100% 就凍結；凍結中不累積，傳奇怪凍結結束後還有一段時間不能累積。</li>
  *   <li>暈眩、電擊（PoE2）：跟凍結一樣是累積條（{@link Meter}）：滿了就暈眩／電擊一段時間，之後一段時間免疫。</li>
@@ -105,6 +106,8 @@ public final class AilmentState {
     static final int MAX_BLEEDS = 8;
     /** 中毒疊加上限（設定檔可以改小）。 */
     public static final int MAX_POISONS = 20;
+    /** 一隻身上全部來源加起來最多記幾個中毒（保險，避免一大隊人無限疊）。 */
+    public static final int MAX_POISONS_TOTAL = 64;
 
     /**
      * 一個持續傷害（點燃、流血、中毒）。
@@ -196,16 +199,38 @@ public final class AilmentState {
 
     // ---- 中毒 ----
 
-    /** 加一個中毒；超過上限時丟掉最弱的。 */
+    /**
+     * 加一個中毒。上限是<b>同一個來源</b>的（2026-10-19：以前全部來源共用，組隊時強的把弱的毒全部擠掉）：
+     * 同一個來源超過 maxStacks 時丟掉他自己最弱的那個；全部加起來超過 {@link #MAX_POISONS_TOTAL} 時丟掉最弱的。
+     */
     public void addPoison(final double dps, final long endTick, final UUID source, final int maxStacks) {
         if (dps <= 0) {
             return;
         }
         poisons.add(new Ignite(dps, endTick, source));
         final int cap = Math.max(1, Math.min(MAX_POISONS, maxStacks));
-        while (poisons.size() > cap) {
+        while (poisons.stream().filter(poison -> java.util.Objects.equals(poison.source(), source)).count() > cap) {
+            poisons.remove(poisons.stream().filter(poison -> java.util.Objects.equals(poison.source(), source))
+                    .min(Comparator.comparingDouble(Ignite::dps)).orElseThrow());
+        }
+        while (poisons.size() > MAX_POISONS_TOTAL) {
             poisons.remove(poisons.stream().min(Comparator.comparingDouble(Ignite::dps)).orElseThrow());
         }
+    }
+
+    /**
+     * 中毒照來源分開的每秒傷害（2026-10-19）：每個人的毒算他自己的（傷害紀錄、掉落分份、Boss 上限、傷害顯示）。
+     * 照每秒傷害由小到大排，最強的在最後（毒死的那一下比較會落在毒最強的人身上）。沒有玩家來源的 key 是 null。
+     */
+    public java.util.Map<UUID, Double> poisonBySource(final long now) {
+        final java.util.Map<UUID, Double> totals = new java.util.HashMap<>();
+        for (final Ignite poison : poisons(now)) {
+            totals.merge(poison.source(), poison.dps(), Double::sum);
+        }
+        final java.util.Map<UUID, Double> sorted = new java.util.LinkedHashMap<>();
+        totals.entrySet().stream().sorted(java.util.Map.Entry.comparingByValue())
+                .forEach(share -> sorted.put(share.getKey(), share.getValue()));
+        return sorted;
     }
 
     /** 還在的中毒（丟掉結束的）。 */

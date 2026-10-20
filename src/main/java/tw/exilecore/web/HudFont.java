@@ -60,6 +60,20 @@ public final class HudFont {
     private HudFont() {
     }
 
+    /** 2026-10-20 增益倒數：技能格上方那一排的字型（只有數字、「s」「.」「:」與 {@link #SLOT_MISSING}）。 */
+    public static final String SLOT_FONT = "exilecore:hud_slot";
+    /** 技能格上方的字往上移幾格（快捷欄的上緣附近）。 */
+    static final int SLOT_LIFT = 13;
+    /** 增益沒了的記號。 */
+    public static final char SLOT_MISSING = '●';
+    /** 快捷欄左邊的增益用幾排（第 0 排是光環那一排；2026-10-20 只佔光環上面那一排）。 */
+    public static final int BUFF_ROWS = 1;
+
+    /** 快捷欄左邊第 row 排的增益用的字型（0 = 光環那一排）。 */
+    public static String buffFont(final int row) {
+        return row <= 0 ? FONT : FONT.replace("hud", "hud_b") + Math.min(BUFF_ROWS, row);
+    }
+
     /** 第 row 行用的字型（0 = 快捷欄那一排，越大越上面）。 */
     public static String font(final int row) {
         return row <= 0 ? FONT : FONT + "_r" + Math.min(ROWS - 1, row);
@@ -232,9 +246,10 @@ public final class HudFont {
     /** 把 texts 裡用到的字畫進字型（assets/exilecore/font/hud.json）。 */
     static void build(final Map<String, byte[]> files, final Collection<String> texts) throws IOException {
         final TreeSet<Character> wanted = new TreeSet<>();
-        for (final char c : "0123456789/+×-".toCharArray()) {
+        for (final char c : "0123456789/+×-.:s".toCharArray()) {
             wanted.add(c);
         }
+        wanted.add(SLOT_MISSING); // 2026-10-20：技能格上方的「增益沒了」
         for (final String text : texts) {
             if (text == null) {
                 continue;
@@ -399,8 +414,70 @@ public final class HudFont {
             rowRoot.add("providers", rowProviders);
             files.put("assets/exilecore/font/hud_r" + r + ".json", rowRoot.toString().getBytes(StandardCharsets.UTF_8));
         }
+        // 2026-10-20 增益倒數：技能格上方的秒數（只收數字），快捷欄左邊往上疊的增益（收全部的字）
+        final java.util.List<Character> slotChars = new java.util.ArrayList<>();
+        for (final char c : ("0123456789.:s" + SLOT_MISSING).toCharArray()) {
+            if (map.containsKey(c)) {
+                slotChars.add(c);
+            }
+        }
+        liftedFont(files, space, sheet, list, map, slotChars, "hud_slot", SLOT_LIFT);
+        for (int r = 1; r <= BUFF_ROWS; r++) {
+            liftedFont(files, space, sheet, list, map, list, "hud_b" + r, r * ROW_HEIGHT);
+        }
         glyphs = Map.copyOf(map);
         unifontGlyphs = null; // 只有產生資源包時用：放掉（約 1 MB）
+    }
+
+    /**
+     * 一份往上移 lift 格（顯示格數）的字型（2026-10-20）：用主字型同一個字碼（{@link #encode} 不用分開），只收 chars 這些字。
+     * 字型規定 ascent 不能比 height 大，所以每一格下面補透明的空間。
+     */
+    private static void liftedFont(final Map<String, byte[]> files, final JsonObject space, final BufferedImage sheet,
+                                   final java.util.List<Character> list, final Map<Character, Glyph> map,
+                                   final java.util.List<Character> chars, final String name, final int lift) throws IOException {
+        final JsonArray providers = new JsonArray();
+        providers.add(space.deepCopy());
+        if (!chars.isEmpty()) {
+            final int columns = 16;
+            final int cellH = CELL + lift * 2; // 貼圖是兩倍解析度
+            final int rows = (chars.size() + columns - 1) / columns;
+            final BufferedImage padded = new BufferedImage(columns * CELL, rows * cellH, BufferedImage.TYPE_INT_ARGB);
+            final Graphics2D g = padded.createGraphics();
+            final JsonArray lines = new JsonArray();
+            StringBuilder line = new StringBuilder();
+            for (int i = 0; i < chars.size(); i++) {
+                final int index = list.indexOf(chars.get(i));
+                final int sx = (index % 16) * CELL;
+                final int sy = (index / 16) * CELL;
+                final int dx = (i % columns) * CELL;
+                final int dy = (i / columns) * cellH;
+                g.drawImage(sheet, dx, dy, dx + CELL, dy + CELL, sx, sy, sx + CELL, sy + CELL, null);
+                line.append(map.get(chars.get(i)).code);
+                if (line.length() == columns) {
+                    lines.add(line.toString());
+                    line = new StringBuilder();
+                }
+            }
+            g.dispose();
+            if (!line.isEmpty()) {
+                while (line.length() < columns) {
+                    line.append('\u0000');
+                }
+                lines.add(line.toString());
+            }
+            files.put("assets/exilecore/textures/font/" + name + ".png", png(padded));
+            final JsonObject bitmap = new JsonObject();
+            bitmap.addProperty("type", "bitmap");
+            bitmap.addProperty("file", "exilecore:font/" + name + ".png");
+            bitmap.addProperty("ascent", ASCENT + lift);
+            bitmap.addProperty("height", 8 + lift);
+            bitmap.add("chars", lines);
+            providers.add(bitmap);
+        }
+        final JsonObject root = new JsonObject();
+        root.add("providers", providers);
+        files.put("assets/exilecore/font/" + name + ".json", root.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     /** 要收進字型的字（技能名稱…）：產生資源包之前由 {@link WebModule} 給。 */

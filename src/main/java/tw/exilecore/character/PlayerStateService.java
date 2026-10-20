@@ -1276,10 +1276,15 @@ public final class PlayerStateService {
         // 2026-10：開著的光環（快捷欄左邊）、召喚物數量（快捷欄右邊）；沒套資源包的人照舊寫在這一行
         final List<String> auraNames = plugin.skills() == null ? List.of() : plugin.skills().auraNames(player);
         final List<tw.exilecore.skill.MinionService.HudCount> pets = plugin.skills() == null ? List.of() : plugin.skills().minionCounts(player);
-        final boolean sides = (!auraNames.isEmpty() || !pets.isEmpty()) && tw.exilecore.web.HudFont.ready()
+        // 2026-10-20：增益倒數（技能格上方、快捷欄左邊）
+        final tw.exilecore.skill.SkillService.HudBuffs hudBuffs = plugin.skills() == null
+                ? tw.exilecore.skill.SkillService.HudBuffs.EMPTY
+                : plugin.skills().hudBuffs(player, plugin.combat() != null && plugin.combat().hud() != null
+                        && plugin.combat().hud().fighting(player.getUniqueId()));
+        final boolean sides = (!auraNames.isEmpty() || !pets.isEmpty() || !hudBuffs.isEmpty()) && tw.exilecore.web.HudFont.ready()
                 && plugin.web() != null && plugin.web().hasPack(player);
         if (!sides) {
-            final String inline = HotbarSides.inline(auraNames, pets);
+            final String inline = HotbarSides.inline(auraNames, pets, hudBuffs);
             if (!inline.isEmpty()) {
                 text.append("  ").append(inline);
             }
@@ -1294,11 +1299,11 @@ public final class PlayerStateService {
         }
         final String mainPlain = cachedPlain(player, text.toString());
         if (sides) {
-            final String side = HotbarSides.render(auraNames, pets, mainPlain);
+            final String side = HotbarSides.render(auraNames, pets, hudBuffs, mainPlain);
             if (side != null) {
                 text.append(side);
             } else {
-                text.append("  ").append(HotbarSides.inline(auraNames, pets)); // 有字沒收進字型（新加的技能名稱）：照舊
+                text.append("  ").append(HotbarSides.inline(auraNames, pets, hudBuffs)); // 有字沒收進字型（新加的技能名稱）：照舊
             }
         }
         // 2026-10：撿到東西的角落提示（快捷欄右邊往上疊；有召喚物時疊在召喚物上面）

@@ -787,9 +787,9 @@ public final class AilmentService {
                 return;
             }
         }
-        final double poisonDps = entry.state.poisonDps(now);
-        if (poisonDps > 0) {
-            damageOverTime(living, entry, poisonDps, entry.state.poisonSource(now), AilmentType.POISON, now);
+        // 中毒（2026-10-19）：每個人的毒分開算給他自己（以前全部算給毒最強的那個人：組隊時其他人的傷害紀錄、掉落分份都是 0）
+        for (final java.util.Map.Entry<UUID, Double> share : entry.state.poisonBySource(now).entrySet()) {
+            damageOverTime(living, entry, share.getValue(), share.getKey(), AilmentType.POISON, now);
             if (tracked.get(uuid) != entry || !living.isValid() || living.isDead()) {
                 return;
             }

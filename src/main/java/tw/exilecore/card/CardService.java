@@ -182,6 +182,35 @@ public final class CardService {
         return sets;
     }
 
+    /**
+     * 通貨袋（/bag）裡的卡、牌堆直接用（2026-10-19 晚：卡改成進通貨袋）：卡兌換、牌堆打開。all = 全部，不然一套／一個。
+     * 回傳換了幾套（牌堆：開了幾個）。
+     */
+    public int usePouch(final Player player, final tw.exilecore.character.CurrencyPouch pouch, final CurrencyType type, final boolean all) {
+        final int have = pouch.amount(type.id());
+        if (isDeck(type)) {
+            final int count = pouch.withdraw(type.id(), all ? have : Math.min(1, have));
+            if (count > 0) {
+                plugin.players().markDirty(player);
+                openDecks(player, count);
+            }
+            return Math.max(0, count);
+        }
+        final CardConfig.Card card = config.card(type.id());
+        if (card == null) {
+            return 0;
+        }
+        final int sets = all ? have / card.set() : Math.min(1, have / card.set());
+        if (sets <= 0) {
+            notEnough(player, type, card, have);
+            return 0;
+        }
+        pouch.withdraw(type.id(), sets * card.set());
+        plugin.players().markDirty(player);
+        reward(player, type, card, sets);
+        return sets;
+    }
+
     private void notEnough(final Player player, final CurrencyType type, final CardConfig.Card card, final int have) {
         player.sendActionBar(plugin.text().parse("<gray>" + ItemRenderer.escape(type.name()) + "：<white>" + have + " / " + card.set()
                 + "<gray> 張，還差 " + Math.max(0, card.set() - have) + " 張"));
@@ -307,7 +336,7 @@ public final class CardService {
     // ---- 星諭牌堆 ----
 
     /**
-     * 打開 count 個牌堆（已經扣掉了），每個照權重變成一張卡，直接進倉庫（倉庫滿了進通貨袋、背包）。回傳開到的卡（名稱 → 張數）。
+     * 打開 count 個牌堆（已經扣掉了），每個照權重變成一張卡，進通貨袋（{@link #deposit}）。回傳開到的卡（名稱 → 張數）。
      */
     public Map<String, Integer> openDecks(final Player player, final int count) {
         final Map<String, Integer> got = new LinkedHashMap<>();
@@ -334,7 +363,7 @@ public final class CardService {
         final List<String> parts = new ArrayList<>();
         got.forEach((name, amount) -> parts.add(amount > 1 ? name + " ×" + amount : name));
         player.sendMessage(plugin.text().prefixed("<#c9a0ff>✦ 打開 " + count + " 個星諭牌堆：<white>" + ItemRenderer.escape(String.join("、", parts))
-                + "<gray>（放進倉庫的「星諭卡」）"));
+                + "<gray>（放進通貨袋）"));
         player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.8f, 1.3f);
         return got;
     }
@@ -418,11 +447,23 @@ public final class CardService {
 
     // ---- 共用 ----
 
-    /** 卡、牌堆放進倉庫（滿了進通貨袋、背包，再滿掉在腳下只有他撿得到）。 */
+    /**
+     * 卡、牌堆放進隨身的通貨袋（2026-10-19 晚：以前直接進倉庫）。通貨袋打不開或滿了進背包，
+     * 再滿進倉庫，都滿了掉在腳下只有他撿得到。
+     */
     public void deposit(final Player player, final CurrencyType type, final int amount) {
-        final int rest = plugin.economy().wallet().deposit(player, type.id(), amount);
-        if (rest > 0) {
-            plugin.economy().wallet().dropFor(player, plugin.currencies().create(type, rest));
+        if (amount <= 0) {
+            return;
+        }
+        ItemStack rest = plugin.currencies().create(type, amount);
+        if (plugin.loot() != null) {
+            rest = plugin.loot().stowCurrency(player, plugin.players().get(player), type, rest);
+        }
+        if (rest != null && !rest.isEmpty()) {
+            final int left = plugin.economy().wallet().deposit(player, type.id(), rest.getAmount());
+            if (left > 0) {
+                plugin.economy().wallet().dropFor(player, rest.asQuantity(left));
+            }
         }
         plugin.players().markDirty(player);
     }

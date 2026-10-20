@@ -94,10 +94,15 @@ public final class BountyService {
 
     /** 新手指導員（2026-10-17）：管理員用指令發給帶新人的玩家（/ec bounty title mentor 玩家）。沒有加成，只是名牌。 */
     public static final String MENTOR_TITLE = "mentor";
+    /** 建築師（2026-10-20）：管理員發給蓋地圖、蓋營地的人（/ec bounty title builder 玩家）。戴著時靠近的怪會被彈開（沒有傷害）。 */
+    public static final String BUILDER_TITLE = "builder";
+    /** 管理員發的稱號（沒有的人不列）。 */
+    private static final Set<String> GRANTED_TITLES = Set.of(MENTOR_TITLE, BUILDER_TITLE);
 
     private void registerAdminTitle() {
         registerTitles(Map.of(ADMIN_TITLE, new BountyConfig.Title(ADMIN_TITLE, "管理員", "gradient:#ff5555:#ffaa00", 0),
-                MENTOR_TITLE, new BountyConfig.Title(MENTOR_TITLE, "新手指導員", "gradient:#7fe0a8:#5fb4ff", 0)));
+                MENTOR_TITLE, new BountyConfig.Title(MENTOR_TITLE, "新手指導員", "gradient:#7fe0a8:#5fb4ff", 0),
+                BUILDER_TITLE, new BountyConfig.Title(BUILDER_TITLE, "建築師", "gradient:#ffd27f:#c9a26b", 0)));
         setTitleSource("mentor", new TitleSource() {
             @Override
             public Set<String> owned(final Map<String, String> progress) {
@@ -106,17 +111,20 @@ public final class BountyService {
 
             @Override
             public List<String> howTo(final Player player, final String id) {
+                if (BUILDER_TITLE.equals(id)) {
+                    return List.of("<gray>管理員發給幫忙蓋地圖、營地的玩家", "<#ffd27f>戴著時：身邊 " + (int) REPEL_RADIUS + " 格內的怪會被彈開（沒有傷害，Boss 除外）");
+                }
                 return MENTOR_TITLE.equals(id) ? List.of("<gray>管理員發給幫忙帶新人的玩家") : null;
             }
 
             @Override
             public boolean listed(final Player player, final String id) {
-                return !MENTOR_TITLE.equals(id); // 沒有的人不列
+                return !GRANTED_TITLES.contains(id); // 沒有的人不列
             }
 
             @Override
             public String sourceName(final String id) {
-                return MENTOR_TITLE.equals(id) ? "管理員發放" : null;
+                return GRANTED_TITLES.contains(id) ? "管理員發放" : null;
             }
         });
         setTitleSource("admin", new TitleSource() {
@@ -1083,6 +1091,49 @@ public final class BountyService {
             return problem;
         }
         return accounts.containsKey(player.getUniqueId()) ? null : "帳號資料載入中，請稍等";
+    }
+
+    /** 建築師彈開怪物的範圍（格）與力道（2026-10-20）。 */
+    static final double REPEL_RADIUS = 5.0;
+    private static final double REPEL_SPEED = 1.2;
+
+    /**
+     * 每半秒：戴著「建築師」的人，身邊 {@link #REPEL_RADIUS} 格內的怪往外彈開（只推，不扣血、不算打到；
+     * Boss〔傳奇〕不推，免得拿來把 Boss 推出場地）。召喚物、玩家不推。
+     */
+    public void repelForBuilders() {
+        if (plugin.monsters() == null) {
+            return;
+        }
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            if (player.getGameMode() == org.bukkit.GameMode.SPECTATOR || !BUILDER_TITLE.equals(wornTitle(player))) {
+                continue;
+            }
+            final org.bukkit.Location at = player.getLocation();
+            for (final org.bukkit.entity.Entity entity : player.getNearbyEntities(REPEL_RADIUS, REPEL_RADIUS, REPEL_RADIUS)) {
+                if (!(entity instanceof org.bukkit.entity.LivingEntity living) || entity instanceof Player || living.isDead()) {
+                    continue;
+                }
+                if (plugin.skills() != null && plugin.skills().minions() != null && plugin.skills().minions().isMinion(living)) {
+                    continue;
+                }
+                final tw.exilecore.monster.MonsterData data = plugin.monsters().data(living).orElse(null);
+                if (data == null || data.rarity() == MonsterRarity.UNIQUE) {
+                    continue;
+                }
+                final org.bukkit.util.Vector away = living.getLocation().toVector().subtract(at.toVector()).setY(0);
+                if (away.lengthSquared() > REPEL_RADIUS * REPEL_RADIUS) {
+                    continue;
+                }
+                if (away.lengthSquared() < 1e-4) {
+                    away.setX(at.getDirection().getX()).setZ(at.getDirection().getZ()); // 疊在身上：往面前推
+                }
+                if (away.lengthSquared() < 1e-4) {
+                    away.setX(1);
+                }
+                living.setVelocity(away.normalize().multiply(REPEL_SPEED).setY(0.45));
+            }
+        }
     }
 
     /** 戴著的稱號代號（沒戴 null）。 */

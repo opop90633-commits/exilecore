@@ -108,6 +108,16 @@ public final class WebModule implements Module, Listener {
             for (final tw.exilecore.skill.SkillDefinition definition : plugin.skills().config().all()) {
                 names.add(definition.name());
             }
+            // 2026-10-20：快捷欄左邊的增益倒數（護符、神龕、擊殺後、疾速……）
+            names.addAll(tw.exilecore.skill.SkillService.HUD_BUFF_TEXTS);
+            if (plugin.flasks() != null && plugin.flasks().charms() != null) {
+                names.addAll(plugin.flasks().charms().names());
+            }
+            if (plugin.maps() != null) {
+                for (final tw.exilecore.map.MapEventConfig.Shrine shrine : plugin.maps().eventConfig().shrines()) {
+                    names.add(shrine.name());
+                }
+            }
             HudFont.useTexts(names);
             final java.util.List<String> summons = new java.util.ArrayList<>();
             for (final tw.exilecore.skill.SkillDefinition definition : plugin.skills().config().all()) {

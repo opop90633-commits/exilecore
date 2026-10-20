@@ -24,7 +24,7 @@ import java.util.UUID;
  * <ul>
  *   <li>拿在手上右鍵：兌換一套（牌堆：打開一個）；蹲著（Shift）右鍵：這種卡全部兌換（牌堆：整疊打開）。</li>
  *   <li>背包裡對卡按右鍵：兌換一套；Shift＋右鍵：背包裡這種卡全部兌換。牌堆一樣（打開一個／整疊）。</li>
- *   <li>撿起地上的卡、牌堆：直接進倉庫通貨頁的「星諭卡」（倉庫滿了才進通貨袋、背包）。</li>
+ *   <li>撿起地上的卡、牌堆：進隨身的通貨袋（2026-10-19 晚：以前直接進倉庫）。</li>
  * </ul>
  * 倉庫裡的兌換、賭卡在倉庫選單（StashMenu）。
  */
@@ -98,7 +98,7 @@ final class CardListener implements Listener {
         }
     }
 
-    /** 撿起卡：不進背包，直接進倉庫。 */
+    /** 撿起卡：進通貨袋（跟擊殺自動拾取一樣）。 */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPickup(final PlayerAttemptPickupItemEvent event) {
         if (!event.getItem().isValid()) {
@@ -114,14 +114,14 @@ final class CardListener implements Listener {
         if (owner != null && !owner.equals(player.getUniqueId())) {
             return; // 別人的：照原本的規則
         }
-        if (!plugin.players().get(player).hasCharacter() || plugin.stash() == null || plugin.stash().stash(player).isEmpty()) {
-            return; // 倉庫還沒載入：照一般通貨撿
+        if (!plugin.players().get(player).hasCharacter() || plugin.loot() == null) {
+            return; // 照一般通貨撿
         }
         event.setCancelled(true);
         event.getItem().remove();
         service.deposit(player, type, stack.getAmount());
         player.sendActionBar(plugin.text().parse("<#c9a0ff>" + tw.exilecore.item.ItemRenderer.escape(type.name()) + " ×" + stack.getAmount()
-                + "<gray> 放進倉庫的「星諭卡」"));
+                + "<gray> 放進通貨袋"));
         player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.5f, 1.6f);
     }
 }

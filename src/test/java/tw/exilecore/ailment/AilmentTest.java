@@ -273,6 +273,29 @@ class AilmentTest {
         assertEquals("25% 機率避免中毒", ModifierText.describe(new Modifier(StatKeys.AVOID_POISON, ModType.FLAT, 25, Set.of(), "x")));
     }
 
+    @Test
+    void poisonCapAndCreditArePerSource() {
+        final AilmentState state = new AilmentState();
+        final UUID strong = UUID.randomUUID();
+        final UUID weak = UUID.randomUUID();
+        for (int i = 0; i < 8; i++) {
+            state.addPoison(100, 200, strong, 8);
+        }
+        state.addPoison(5, 200, weak, 8);
+        state.addPoison(5, 200, weak, 8);
+        assertEquals(10, state.poisons(0).size(), "弱的人的毒不會被強的人擠掉");
+        state.addPoison(200, 200, strong, 8);
+        assertEquals(10, state.poisons(0).size(), "超過自己的上限只丟自己最弱的");
+        final java.util.Map<UUID, Double> shares = state.poisonBySource(0);
+        assertEquals(10, shares.get(weak), 1e-9, "弱的人的傷害算他自己的");
+        assertEquals(900, shares.get(strong), 1e-9);
+        assertEquals(List.of(weak, strong), List.copyOf(shares.keySet()), "最強的排最後");
+        for (int i = 0; i < 100; i++) {
+            state.addPoison(1, 200, UUID.randomUUID(), 8);
+        }
+        assertEquals(AilmentState.MAX_POISONS_TOTAL, state.poisons(0).size(), "整隻的保險上限");
+    }
+
     // ---- 暈眩與電擊（PoE2）----
 
     @Test

@@ -66,6 +66,12 @@ public final class KillEffects implements Listener {
                 Modifier.increased(StatKeys.MOVEMENT_SPEED, ONSLAUGHT_SPEED, "疾速"));
     }
 
+    /** 疾速還剩幾 tick（沒有是 0；2026-10-20 側欄的增益倒數）。 */
+    public long onslaughtLeft(final Player player) {
+        final Long until = onslaught.get(player.getUniqueId());
+        return until == null ? 0 : Math.max(0, until - plugin.getServer().getCurrentTick());
+    }
+
     /** 疾速中嗎。 */
     public boolean hasOnslaught(final Player player) {
         final Long until = onslaught.get(player.getUniqueId());

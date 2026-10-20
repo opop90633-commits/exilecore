@@ -52,6 +52,12 @@ public final class CombatHud {
         meter(player.getUniqueId()).dealt(now(), skill, parts);
     }
 
+    /** 正在戰鬥中嗎（戰鬥數據這一段還沒結束；2026-10-20 快捷欄的戰吼提醒）。 */
+    public boolean fighting(final UUID player) {
+        final CombatMeter meter = meters.get(player);
+        return meter != null && meter.active(now());
+    }
+
     /** /dps：正在打的這一段（沒在打就是上一段）每個技能打了多少；都沒有回傳 null。 */
     public CombatMeter.Fight fight(final Player player) {
         final CombatMeter meter = meters.get(player.getUniqueId());

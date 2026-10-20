@@ -444,6 +444,97 @@ public final class SkillService {
         return lines;
     }
 
+    /** 快捷欄上的增益倒數（2026-10-20）：沒綁在技能格上的增益（神龕、護符、擊殺後、滑鼠鍵的戰吼……）。 */
+    public record BuffTimer(String name, long ticks) {
+    }
+
+    /** 技能格上方的倒數：hotbarSlot 是快捷列第幾格（0 起算）；missing = 增益沒了（戰鬥中提醒補放）。 */
+    public record SlotTimer(int hotbarSlot, String name, long ticks, boolean missing) {
+    }
+
+    public record HudBuffs(List<SlotTimer> slots, List<BuffTimer> others) {
+        public static final HudBuffs EMPTY = new HudBuffs(List.of(), List.of());
+
+        public boolean isEmpty() {
+            return slots.isEmpty() && others.isEmpty();
+        }
+    }
+
+    /** 不列的增益：一直刷新、沒有真正倒數的（踏骸之履）。 */
+    private static final java.util.Set<String> UNTIMED_BUFFS = java.util.Set.of("corpsewalker");
+
+    /**
+     * 快捷欄的增益倒數（2026-10-20）：技能格上的技能自己給的增益（戰吼、舉盾、連發）畫在那一格上方；
+     * 戰吼沒了而且在戰鬥中，那一格畫提醒。其他的增益照快結束的排前面。
+     */
+    public HudBuffs hudBuffs(final Player player, final boolean fighting) {
+        final long now = now();
+        final java.util.Map<String, SkillBuffs.Buff> active = new java.util.LinkedHashMap<>();
+        for (final SkillBuffs.Buff buff : buffs.active(player.getUniqueId())) {
+            if (!UNTIMED_BUFFS.contains(buff.id())) {
+                active.put(buff.id(), buff);
+            }
+        }
+        final SkillRuntime runtime = runtimes.get(player.getUniqueId());
+        final SkillRuntime.Barrage barrage = runtime != null && runtime.barrage != null && runtime.barrage.active(now) ? runtime.barrage : null;
+        final List<SlotTimer> slots = new ArrayList<>();
+        final java.util.Set<String> onSlot = new java.util.HashSet<>();
+        boolean barrageOnSlot = false;
+        final PlayerState state = plugin.players().get(player);
+        if (state.hasCharacter()) {
+            final tw.exilecore.character.HotbarLayout layout = tw.exilecore.character.HotbarLayout.of(state);
+            for (int index = 0; index < layout.skillKeys(); index++) {
+                final SkillLoadout.Entry entry = state.skills().boundSkill(SkillLoadout.KEYS + index);
+                final SkillDefinition definition = entry == null ? null : config.skill(entry.skillId());
+                if (definition == null || definition.hidden()) {
+                    continue;
+                }
+                final int hotbar = layout.skillSlot(index);
+                long left = -1;
+                for (final String id : List.of(definition.id(), "guard." + definition.id())) {
+                    final SkillBuffs.Buff buff = active.get(id);
+                    if (buff != null) {
+                        left = Math.max(left, buff.untilTick() - now);
+                        onSlot.add(id);
+                    }
+                }
+                if (barrage != null && barrage.skillId().equals(definition.id())) {
+                    left = Math.max(left, barrage.untilTick() - now);
+                    barrageOnSlot = true;
+                }
+                if (left > 0) {
+                    slots.add(new SlotTimer(hotbar, definition.name(), left, false));
+                } else if (fighting && definition.mechanic() == Mechanic.WARCRY && definition.warcry() != null
+                        && !definition.warcry().buff().isEmpty()) {
+                    slots.add(new SlotTimer(hotbar, definition.name(), 0, true)); // 戰吼的增益沒了：提醒補放
+                }
+            }
+        }
+        final List<BuffTimer> others = new ArrayList<>();
+        for (final SkillBuffs.Buff buff : active.values()) {
+            if (!onSlot.contains(buff.id())) {
+                others.add(new BuffTimer(buff.name(), buff.untilTick() - now));
+            }
+        }
+        if (barrage != null && !barrageOnSlot) {
+            others.add(new BuffTimer(barrage.name(), barrage.untilTick() - now));
+        }
+        if (plugin.combat() != null && plugin.combat().killEffects() != null) {
+            final long onslaught = plugin.combat().killEffects().onslaughtLeft(player);
+            if (onslaught > 0) {
+                others.add(new BuffTimer("疾速", onslaught));
+            }
+        }
+        if (slots.isEmpty() && others.isEmpty()) {
+            return HudBuffs.EMPTY;
+        }
+        others.sort(java.util.Comparator.comparingLong(BuffTimer::ticks));
+        return new HudBuffs(slots, others);
+    }
+
+    /** 增益名稱用到的字（資源包的快捷欄字型要收進去）：護符、神龕以外固定的幾個。 */
+    public static final List<String> HUD_BUFF_TEXTS = List.of("擊殺後", "疾速", "增益", "熊形態", "狼人形態", "飛龍形態", "斬獲腰環（）");
+
     SkillExecutor executor() {
         return executor;
     }

@@ -55,9 +55,70 @@ final class HotbarSides {
         return out.toString();
     }
 
+    /** 快捷列第 slot 格（0–8）的中心，相對畫面中間（GUI 像素）。 */
+    static int slotCenter(final int slot) {
+        return -80 + 20 * slot;
+    }
+
+    /** 增益的顏色：還在、快結束（5 秒內）、沒了（2026-10-20）。 */
+    private static final String BUFF_COLOR = "#f5b942";
+    private static final String BUFF_ENDING = "#ff9a3c";
+    private static final String BUFF_MISSING = "#ff4a4a";
+    /** 快捷欄左邊那一排最多寫幾個增益（其他的寫 +N）。 */
+    private static final int SIDE_BUFFS = 2;
+    /** 沒套資源包時動作列最多寫幾個增益。 */
+    private static final int INLINE_BUFFS = 3;
+
+    /** 剩幾 tick → 「12s」「3.5s」（每半秒一格）「2:05」。 */
+    static String timeText(final long ticks) {
+        final long t = Math.max(0, ticks);
+        if (t >= 1200) {
+            final long seconds = (t + 19) / 20;
+            return String.format(java.util.Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60);
+        }
+        if (t >= 200) {
+            return ((t + 19) / 20) + "s";
+        }
+        return String.format(java.util.Locale.ROOT, "%.1fs", ((t + 9) / 10) / 2.0);
+    }
+
+    private static String timeColor(final long ticks) {
+        return ticks <= 100 ? BUFF_ENDING : "white";
+    }
+
     /** 沒套資源包：接在動作列後面的那段（MiniMessage）；都沒有是空字串。 */
     static String inline(final List<String> auras, final List<MinionService.HudCount> pets) {
+        return inline(auras, pets, tw.exilecore.skill.SkillService.HudBuffs.EMPTY);
+    }
+
+    static String inline(final List<String> auras, final List<MinionService.HudCount> pets, final tw.exilecore.skill.SkillService.HudBuffs buffs) {
         final StringBuilder text = new StringBuilder();
+        // 2026-10-20 增益倒數：技能格的先寫（沒了的寫紅色），其他的照快結束排
+        int written = 0;
+        for (final tw.exilecore.skill.SkillService.SlotTimer slot : buffs.slots()) {
+            if (written >= INLINE_BUFFS) {
+                break;
+            }
+            text.append(text.isEmpty() ? "" : " ");
+            if (slot.missing()) {
+                text.append("<").append(BUFF_MISSING).append(">⌛").append(ItemRenderer.escape(slot.name())).append(" 沒了");
+            } else {
+                text.append("<").append(BUFF_COLOR).append(">⌛").append(ItemRenderer.escape(slot.name()))
+                        .append(" <").append(timeColor(slot.ticks())).append(">").append(timeText(slot.ticks()));
+            }
+            written++;
+        }
+        for (final tw.exilecore.skill.SkillService.BuffTimer buff : buffs.others()) {
+            if (written >= INLINE_BUFFS) {
+                break;
+            }
+            text.append(text.isEmpty() ? "" : " ").append("<").append(BUFF_COLOR).append(">⌛").append(ItemRenderer.escape(buff.name()))
+                    .append(" <").append(timeColor(buff.ticks())).append(">").append(timeText(buff.ticks()));
+            written++;
+        }
+        if (!text.isEmpty() && !auras.isEmpty()) {
+            text.append(" "); // 召喚物那段自己會補空白
+        }
         if (!auras.isEmpty()) {
             text.append("<").append(COLOR).append(">✦");
             int shown = 0;
@@ -86,6 +147,11 @@ final class HotbarSides {
      * @param mainPlain 動作列主要那段的純文字（估寬度用：整段置中，兩側照它的一半往回推）
      */
     static String render(final List<String> auras, final List<MinionService.HudCount> pets, final String mainPlain) {
+        return render(auras, pets, tw.exilecore.skill.SkillService.HudBuffs.EMPTY, mainPlain);
+    }
+
+    static String render(final List<String> auras, final List<MinionService.HudCount> pets,
+                         final tw.exilecore.skill.SkillService.HudBuffs buffs, final String mainPlain) {
         final int half = (int) Math.round(HudFont.estimateVanilla(mainPlain) / 2.0);
         final StringBuilder out = new StringBuilder("<reset><font:").append(HudFont.FONT).append(">");
         if (!auras.isEmpty()) {
@@ -111,6 +177,47 @@ final class HotbarSides {
                     .append("<").append(COLOR).append(">").append(HudFont.encode(icon))
                     .append("<white>").append(HudFont.encode(names.toString()))
                     .append(HudFont.shift(LEFT_EDGE + half));
+        }
+        // 2026-10-20 增益倒數：技能格上方畫秒數（增益沒了、在戰鬥中畫紅點）
+        for (final tw.exilecore.skill.SkillService.SlotTimer slot : buffs.slots()) {
+            final String text = slot.missing() ? String.valueOf(HudFont.SLOT_MISSING) : timeText(slot.ticks());
+            final int w = HudFont.width(text);
+            if (w < 0) {
+                return null;
+            }
+            final int start = slotCenter(slot.hotbarSlot()) - w / 2;
+            out.append("</font><font:").append(HudFont.SLOT_FONT).append(">")
+                    .append(HudFont.shift(start - half))
+                    .append("<").append(slot.missing() ? BUFF_MISSING : slot.ticks() <= 100 ? BUFF_ENDING : BUFF_COLOR).append(">")
+                    .append(HudFont.encode(text))
+                    .append(HudFont.shift(half - start - w));
+        }
+        // 其他的增益（神龕、護符、擊殺後……）：快捷欄左邊只佔一排（光環那一排的上面；沒有光環就在光環那排），
+        // 橫著寫最快結束的 {@value #SIDE_BUFFS} 個，其他的寫 +N
+        if (!buffs.others().isEmpty()) {
+            final StringBuilder segment = new StringBuilder();
+            final StringBuilder plain = new StringBuilder();
+            final int shown = Math.min(SIDE_BUFFS, buffs.others().size());
+            for (int i = 0; i < shown; i++) {
+                final tw.exilecore.skill.SkillService.BuffTimer buff = buffs.others().get(i);
+                final String name = HudFont.width(buff.name()) >= 0 ? buff.name() : "增益"; // 沒收進字型的名稱（新加的）
+                final String time = timeText(buff.ticks());
+                final String gap = i == 0 ? "" : "  ";
+                segment.append("<").append(BUFF_COLOR).append(">").append(HudFont.encode(gap + name + " "))
+                        .append("<").append(timeColor(buff.ticks())).append(">").append(HudFont.encode(time));
+                plain.append(gap).append(name).append(' ').append(time);
+            }
+            if (buffs.others().size() > shown) {
+                final String more = "  +" + (buffs.others().size() - shown);
+                segment.append("<gray>").append(HudFont.encode(more));
+                plain.append(more);
+            }
+            final int w = HudFont.width(plain.toString());
+            if (w < 0) {
+                return null;
+            }
+            out.append("</font><font:").append(HudFont.buffFont(auras.isEmpty() ? 0 : 1)).append(">")
+                    .append(HudFont.shift(-(half + LEFT_EDGE + w))).append(segment).append(HudFont.shift(LEFT_EDGE + half));
         }
         if (!pets.isEmpty()) {
             // 2026-10：召喚物一行一種，從快捷欄那一排往上疊（超過 32 種才在最後一行寫 +N）
