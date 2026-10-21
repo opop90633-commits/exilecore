@@ -167,7 +167,11 @@ public final class ExileCore extends JavaPlugin {
         registerModules();
         modules.enableAll();
         // 2026-10-20 效能：實體消失時清掉玩家身上「看得到／看不到它」的紀錄（spark 上 canSee 佔 6～9%）
-        getServer().getPluginManager().registerEvents(new tw.exilecore.core.VisibilityJanitor(this), this);
+        final tw.exilecore.core.VisibilityJanitor janitor = new tw.exilecore.core.VisibilityJanitor(this);
+        getServer().getPluginManager().registerEvents(janitor, this);
+        repeat("visibility.sweep", janitor::sweep, 200, 10); // 2026-10-21：事件漏掉的紀錄每 10 tick 掃一個玩家
+        // 2026-10-21 效能：怪物射出去沒打中的旋風彈會一直飛、一直存著（spark：一次 299 個）
+        getServer().getPluginManager().registerEvents(new tw.exilecore.core.StrayProjectiles(this), this);
         if (!modules.isEnabled("core")) {
             // 資料庫沒連上或資料表遷移失敗：讀寫不了存檔，讓玩家進來只會用到舊的或半套的資料（例如沒換算的等級）
             getSLF4JLogger().error("核心模組（資料庫）啟用失敗，ExileCore 先停用：看上面的錯誤，修好後重開伺服器");
