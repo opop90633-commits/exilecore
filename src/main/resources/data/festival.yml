@@ -46,7 +46,7 @@ boss:
   duration_minutes: 15
   empty_close_seconds: 180
   level: 88
-  life: 300                 # 一個人的份（比照開天者的 440 低一點：一天三場）
+  life: 44000               # 一個人的份（2026-10-21：跟開天者一樣照打 Boss 每秒 600 萬、單人 3 分半，約 12.6 億生命；不遞減。原 300）
   life_per_player: 1.0
   count_level: 80
   max_counted_players: 0

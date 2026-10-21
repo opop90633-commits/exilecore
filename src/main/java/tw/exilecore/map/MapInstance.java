@@ -78,6 +78,13 @@ public final class MapInstance {
     private MapConfig.Pinnacle pinnacle;
     /** 開圖的人點的星圖天賦（開圖時算一次；地圖本身的部分已經加進 {@link #stats}）。 */
     private AtlasBonus atlas = AtlasBonus.NONE;
+    /** 2026-10-21：這張圖對應開圖的人星圖上的哪一格（別人給的、沒解鎖種類的地圖是 null）。 */
+    private AtlasGrid.Cell atlasCell;
+    /** 2026-10-21：這張圖照 Boss 格掉（Boss 格、首領石板；第一次完成那格才有）。 */
+    private boolean atlasBossCell;
+    /** 2026-10-21：第一次完成的腐化區（Boss 有機率掉蝕變石）／淨化區（有機率掉定星石）。 */
+    private boolean firstCorrupted;
+    private boolean firstPurified;
     /** Boss 實際的定義（Uber 合併過的）；null = 地圖原本的。 */
     private MapConfig.Boss bossOverride;
     /** Uber：走進來過的人（每個人只能進一次）。 */
@@ -602,6 +609,39 @@ public final class MapInstance {
     /** 這張地圖吃到的星圖天賦（開圖的人點的；特別的實例、極境是空的）。 */
     public AtlasBonus atlas() {
         return atlas;
+    }
+
+    /** 2026-10-21：對應星圖的哪一格；沒有是 null。 */
+    public AtlasGrid.Cell atlasCell() {
+        return atlasCell;
+    }
+
+    void setAtlasCell(final AtlasGrid.Cell cell) {
+        this.atlasCell = cell;
+    }
+
+    public boolean atlasBossCell() {
+        return atlasBossCell;
+    }
+
+    public boolean firstCorrupted() {
+        return firstCorrupted;
+    }
+
+    void setFirstCorrupted(final boolean value) {
+        this.firstCorrupted = value;
+    }
+
+    public boolean firstPurified() {
+        return firstPurified;
+    }
+
+    void setFirstPurified(final boolean value) {
+        this.firstPurified = value;
+    }
+
+    void setAtlasBossCell(final boolean value) {
+        this.atlasBossCell = value;
     }
 
     void setAtlas(final AtlasBonus atlas) {

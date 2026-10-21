@@ -34,6 +34,10 @@ settings:
   #   伺服器紀錄：T14–T16 的地圖 Boss 中位數 22 秒就倒（T12–T13 約 40 秒），高階加厚一點、低階不動
   # 2026-10：照人均單體 15 萬 DPS 重調：T16 一般地圖 Boss 約 20 秒（原 from 12、max 1.6）
   boss_tier_life: { from: 10, max: 5.8 }      # 2026-10：改照人均單體 10 萬 DPS（15 萬時是 8.7）
+  # 2026-10-21：地圖裡的一般怪物（普通、魔法、稀有、事件怪；不含 Boss 和 Boss 叫出來的小怪）的生命、傷害照階級再乘：
+  #   這一階（含）以下 ×1，到 T16 ×life／×damage，中間每階等量增加。以前 T1 到 T16 只差怪物等級（生命 ×2.1、傷害 ×1.75），高低階打起來差不多。
+  #   加上等級的成長，T16 比 T1：生命約 ×4.7、傷害約 ×2.3（T10 約 ×2.5／×1.6）。特別的實例（回響、試煉、劫盜）不乘
+  monster_tier: { from: 5, life: 2.2, damage: 1.3 }
   # 護盾結晶（終局、極境、劫盜終局的護盾階段）跟著階級變硬的程度（2026-10）：Boss 的階級倍率多出來的部分，結晶吃幾成。
   #   0 = 不變硬（T16 跟 T5 一樣，兩三秒就破）、1 = 跟 Boss 一樣（T16 終局大約要 2.4 萬 DPS 才來得及）、
   #   0.5 = 一半（T16 的 Boss ×7.8、結晶 ×4.4：終局大約要 1.3 萬 DPS、極境大約 2 萬）
@@ -90,18 +94,34 @@ drops:
   campaign_boss_daily_maps: 3    # 首殺以後，每個角色每天只有前幾次打倒它會掉地圖（Boss 90 秒就重生，不然可以站著一直刷）
 
 # 一般終局 Boss（不含極境、巔峰）的每秒傷害上限（2026-10）：每個人對 Boss 每秒傷害超過 dps_cap 的部分照 dps_over 遞減
-# （每秒傷害取打訓練假人的紀錄與這場實際打出來的較高者；極境、巔峰寫在自己的區塊；2026-10 起三種都是 15 萬）
+# （開打的 4 秒取打訓練假人的紀錄與這場實際打出來的較高者，之後只看實際的；極境、巔峰寫在自己的區塊）
+# 2026-10-21：終局、極境、巔峰的血量改照「打 Boss 每秒 150 萬／300 萬／600 萬、單人 3 分半」，上限拉到目標的 2 倍，只擋極端的爆發
 final_dps:
-  dps_cap: 150000   # 2026-10：上限統一 15 萬（血量照打白怪假人每秒 5 萬打 3 分半設定）
+  dps_cap: 3000000   # 2026-10-21：血量照「打 Boss 每秒 150 萬、3 分半」（T16）；上限是目標的 2 倍，只擋極端的爆發
   dps_over:
-    - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-    - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-    - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-    - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-    - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-    - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-    - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-    - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+    - { from: 3000000, rate: 0.3 }   # 300 萬–600 萬的部分算 30%
+    - { from: 6000000, rate: 0.1 }   # 600 萬–1200 萬的部分算 10%
+    - { from: 12000000, rate: 0.03 }   # 1200 萬–2400 萬的部分算 3%
+    - { from: 24000000, rate: 0.01 }   # 2400 萬以上的部分算 1%
+
+# 金庫之主的每秒傷害上限（2026-10-21：照打 Boss 每秒 300 萬、單人 3 分半，上限是目標的 2 倍）
+heist_dps:
+  dps_cap: 6000000
+  dps_over:
+    - { from: 6000000, rate: 0.3 }   # 600 萬–1200 萬的部分算 30%
+    - { from: 12000000, rate: 0.1 }   # 1200 萬–2400 萬的部分算 10%
+    - { from: 24000000, rate: 0.03 }   # 2400 萬–4800 萬的部分算 3%
+    - { from: 48000000, rate: 0.01 }   # 4800 萬以上的部分算 1%
+
+# 星骸之海的淵鯨（life.yml 的 whale）的每秒傷害上限（2026-10-21：照打 Boss 每秒 600 萬、單人 3 分半，上限是目標的 2 倍）
+# 開天者、南瓜王、潮汐統帥不遞減（沒有上限）
+whale_dps:
+  dps_cap: 12000000
+  dps_over:
+    - { from: 12000000, rate: 0.3 }   # 1200 萬–2400 萬的部分算 30%
+    - { from: 24000000, rate: 0.1 }   # 2400 萬–4800 萬的部分算 10%
+    - { from: 48000000, rate: 0.03 }   # 4800 萬–9600 萬的部分算 3%
+    - { from: 96000000, rate: 0.01 }   # 9600 萬以上的部分算 1%
 
 first_kill:                      # 首殺獎勵（存在角色資料裡）：天賦點
   map_points: 0
@@ -131,7 +151,7 @@ first_kill:                      # 首殺獎勵（存在角色資料裡）：天
 #             → 進入這個階段時 Boss 無敵，Boss 房裡出現 count 顆結晶（type 原版生物、不會動不會打人，生命是同等級普通怪的 life 倍，
 #               2026-10：再乘一部分的階級倍率——見 settings.shield_tier_share），
 #               duration 秒內全部打掉護盾就破；來不及的話 Boss 回 heal% 最大生命、剩下的結晶消失
-#     enrage: { after: 360, damage: 100, speed: 0.3, message: "…" }
+#     enrage: { after: 300, damage: 100, speed: 0.3, message: "…" }
 #             → 開打 after 秒還沒打倒就狂暴：傷害更多 damage%、移動快 speed（一場一次；血條上有倒數）
 #     hazards: [ { skill: hazard_star_meteor, every: 10, phase: 1 } ]
 #             → 場地危害：每 every 秒在某個玩家附近落一次（boss_skills.yml 的 slam、zone、orbs），phase 幾起；
@@ -419,6 +439,11 @@ final:
   #   剛進終局的人照原本的時間打低階，練好的人 T16 大約 40～65 秒，中等裝備的人 T16 約 4.5～5 分鐘（狂暴在 6 分鐘）。
   # 2026-10：照人均單體 15 萬 DPS 重調：T16 終局約 40 秒（原 max 2.5；劫盜、極境也吃這個）
   tier_life: { from: 5, max: 11.7 }     # 2026-10：改回照頂裝單體 15 萬 DPS（T16 終局約 40 秒、極境約 2 分鐘；10 萬時是 7.8；劫盜終局、極境也吃這個；一般地圖 Boss 的 boss_tier_life 沒動）
+  # 2026-10-21：一般終局（不含極境、巔峰、金庫之主——它們照上面的 tier_life）每一階的生命倍率，取代 tier_life（T1 … T16）：
+  #   T10 以下跟 tier_life 一樣；T11 起照「單人 3 分半打完要打 Boss 每秒多少」等比例往上：
+  #   T11 2.7 萬、T12 6 萬、T13 13.4 萬、T14 30 萬、T15 67 萬、T16 150 萬（T16 約 3.15 億生命）。
+  #   不寫這一行 = 照 tier_life。
+  tier_life_table: [1, 1, 1, 1, 1, 1.97, 2.95, 3.92, 4.89, 5.86, 12.27, 25.67, 56.64, 123.35, 268.63, 585]
   theme: star
   atlas: [8, 2]
   links: [starfall_tundra, observatory]
@@ -438,7 +463,7 @@ final:
     # 招式分三階段加：一開始音爆、兩波重踏、八顆星骸碎片、四塊裂隙、天穹環（擴散環，站進綠色缺口）；
     # 第一階段起多天穹墜落（大圈）、九發星槍、衝鋒、叫火靈、星骸光束（兩道光束掃大半圈），而且開始下墜星（場地危害）；
     # 第二階段起多超新星（半徑 14，前搖 2.2 秒）、十二顆隕落、全場詛咒、星核引力（漩渦，往外跑）、天穹審判（全場大招，躲進綠色安全區）。
-    # 進入第一階段時張開護盾：25 秒內打掉三顆星骸結晶，不然回 25% 生命。開打 6 分鐘還沒打倒就狂暴
+    # 進入第一階段時張開護盾：25 秒內打掉三顆星骸結晶，不然回 25% 生命。開打 5 分鐘還沒打倒就狂暴（2026-10-21：全部 5 分鐘）
     skills:
       - emperor_sonic_boom
       - emperor_quake
@@ -470,7 +495,7 @@ final:
         summon: { type: WITHER_SKELETON, count: 3 }
     hazards:
       - { skill: hazard_star_meteor, every: 10, phase: 1 }
-    enrage: { after: 420, damage: 100, speed: 0.3, message: "「夠了。朕不再陪你玩。」" }
+    enrage: { after: 300, damage: 100, speed: 0.3, message: "「夠了。朕不再陪你玩。」" }
   # 極境（Uber）：終局 Boss 的最強版本。用一般終局 Boss 掉的深淵星核開（地圖裝置的「極境」），要先打贏過一般的版本；
   # 固定開在最高階＋level_bonus 級，Boss 生命×life、傷害×damage，所有怪物的招式冷卻×cooldown；沒有路上的怪，直接打 Boss；
   # 每個人只能走進去一次（死了或離開就不能再進）。寫法：
@@ -488,18 +513,14 @@ final:
   #                         common_chance 共通傳奇（map_boss 池）擲一次、中了抽一件（沒寫照 drops.final_common_chance）、
   #                         extra 額外掉落 [{ currency: 代號, amount: 幾個, chance: 機率 }、{ support: 輔助寶石代號, chance: 機率 }]
   uber:
-    dps_cap: 150000    # 2026-10：每個人對極境 Boss 每秒傷害的上限（終局、極境、巔峰統一 15 萬；血量照打白怪假人每秒 10 萬打 3 分半）；超過的部分照 dps_over 遞減
+    dps_cap: 6000000   # 2026-10-21：極境照「打 Boss 每秒 300 萬、3 分半」，上限是目標的 2 倍
     dps_over:
-      - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-      - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-      - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-      - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-      - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-      - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-      - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-      - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+      - { from: 6000000, rate: 0.3 }   # 600 萬–1200 萬的部分算 30%
+      - { from: 12000000, rate: 0.1 }   # 1200 萬–2400 萬的部分算 10%
+      - { from: 24000000, rate: 0.03 }   # 2400 萬–4800 萬的部分算 3%
+      - { from: 48000000, rate: 0.01 }   # 4800 萬以上的部分算 1%
     intro: "「又是你。這一次，朕不會留手。」"
-    life: 1.9         # 2026-10：照打白怪假人每秒 10 萬（打 Boss 6 萬）單人打 3 分半鐘算的（終局的 19.1 × 1.9，T16 之後約 1,260 萬生命）
+    life: 95.1        # 2026-10-21：照打 Boss 每秒 300 萬、單人 3 分半算的（終局的 19.1 × 95.1 × T16 的 11.7，約 6.3 億生命；原 1.9 = 每秒 6 萬）
     damage: 1.5
     cooldown: 0.75
     level_bonus: 4
@@ -528,7 +549,7 @@ final:
         shield: { count: 3, type: BLAZE, name: 熔爐之心, life: 6, duration: 25, heal: 40 }
     hazards:
       - { skill: hazard_star_orbs, every: 14, phase: 1 }
-    enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。熔爐要吞掉你。」" }
+    enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。熔爐要吞掉你。」" }
     key: abyss_core
     key_cost: 1
     key_chance: 0.25   # 2026-10：10% → 25%
@@ -574,7 +595,7 @@ finals:
       defeat: "王座裂開了。三百年的冬天，開始融化。"
       # 冰冷：圈越大越冷。一開始冰環、冰槍、暴風雪、冰棱突刺、叫冰鬼、冰環擴散（三個缺口）；第一階段起雪崩、霜影撲擊、寒噬詛咒、
       # 冰魄（追人的冰球）、霜光（三道光束），而且開始掉冰柱（場地危害）；第二階段起絕對零度（半徑 15，前搖 2.4 秒）、碎冰、白霧（全場大招）。
-      # 進入第一階段時張開護盾：三座霜心冰像。開打 6 分鐘還沒打倒就狂暴
+      # 進入第一階段時張開護盾：三座霜心冰像。開打 5 分鐘還沒打倒就狂暴（2026-10-21：全部 5 分鐘）
       skills:
         - queen_frost_nova
         - queen_ice_lances
@@ -605,20 +626,16 @@ finals:
           summon: { type: POLAR_BEAR, count: 2 }
       hazards:
         - { skill: hazard_frost_spike, every: 8, phase: 1 }
-      enrage: { after: 420, damage: 100, speed: 0.3, message: "「我累了。讓冬天結束這一切。」" }
+      enrage: { after: 300, damage: 100, speed: 0.3, message: "「我累了。讓冬天結束這一切。」" }
     uber:
-      dps_cap: 150000    # 2026-10：每個人對極境 Boss 每秒傷害的上限（終局、極境、巔峰統一 15 萬；血量照打白怪假人每秒 10 萬打 3 分半）；超過的部分照 dps_over 遞減
+      dps_cap: 6000000   # 2026-10-21：極境照「打 Boss 每秒 300 萬、3 分半」，上限是目標的 2 倍
       dps_over:
-        - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-        - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-        - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-        - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-        - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-        - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-        - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-        - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+        - { from: 6000000, rate: 0.3 }   # 600 萬–1200 萬的部分算 30%
+        - { from: 12000000, rate: 0.1 }   # 1200 萬–2400 萬的部分算 10%
+        - { from: 24000000, rate: 0.03 }   # 2400 萬–4800 萬的部分算 3%
+        - { from: 48000000, rate: 0.01 }   # 4800 萬以上的部分算 1%
       intro: "「你把冬天弄醒了。現在，它不會再睡。」"
-      life: 1.9         # 2026-10：照打白怪假人每秒 10 萬（打 Boss 6 萬）單人打 3 分半鐘算的（終局的 19.1 × 1.9，T16 之後約 1,260 萬生命）
+      life: 95.1        # 2026-10-21：照打 Boss 每秒 300 萬、單人 3 分半算的（終局的 19.1 × 95.1 × T16 的 11.7，約 6.3 億生命；原 1.9 = 每秒 6 萬）
       damage: 1.5
       cooldown: 0.75
       level_bonus: 4
@@ -647,7 +664,7 @@ finals:
           shield: { count: 3, type: STRAY, name: 永凍冰像, life: 6, duration: 25, heal: 40 }
       hazards:
         - { skill: hazard_ice_orbs, every: 12, phase: 1 }
-      enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。永遠留在這裡吧。」" }
+      enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。永遠留在這裡吧。」" }
       key: abyss_core
       key_cost: 1
       key_chance: 0.25   # 2026-10：10% → 25%
@@ -688,7 +705,7 @@ finals:
       defeat: "渡船沉了。河面上浮起三百年份的骨頭，然後慢慢散開。"
       # 物理與混沌：貼身的割魂最痛。一開始骨矢、瘟疫池、墓碑猛擊、叫亡者、蝕骨詛咒、骨潮（擴散環）、哭嚎亡魂（追人的魂）；
       # 第一階段起割魂（扇形 120 度）、冥河渡步、骨雨、冥河漩渦（往外跑），而且地上開始冒冥河之手（場地危害）；
-      # 第二階段起魂收（半徑 14）、叫凋零骷髏、最後的渡船（全場大招）。進入第二階段時張開護盾：三盞渡魂骨燈。開打 6 分鐘還沒打倒就狂暴
+      # 第二階段起魂收（半徑 14）、叫凋零骷髏、最後的渡船（全場大招）。進入第二階段時張開護盾：三盞渡魂骨燈。開打 5 分鐘還沒打倒就狂暴（2026-10-21：全部 5 分鐘）
       skills:
         - king_bone_volley
         - king_plague_pool
@@ -719,20 +736,16 @@ finals:
           shield: { count: 3, type: SKELETON, name: 渡魂骨燈, life: 4, duration: 25, heal: 30 }
       hazards:
         - { skill: hazard_grave_hands, every: 9, phase: 1 }
-      enrage: { after: 420, damage: 100, speed: 0.3, message: "「渡船不等人。」" }
+      enrage: { after: 300, damage: 100, speed: 0.3, message: "「渡船不等人。」" }
     uber:
-      dps_cap: 150000    # 2026-10：每個人對極境 Boss 每秒傷害的上限（終局、極境、巔峰統一 15 萬；血量照打白怪假人每秒 10 萬打 3 分半）；超過的部分照 dps_over 遞減
+      dps_cap: 6000000   # 2026-10-21：極境照「打 Boss 每秒 300 萬、3 分半」，上限是目標的 2 倍
       dps_over:
-        - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-        - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-        - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-        - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-        - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-        - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-        - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-        - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+        - { from: 6000000, rate: 0.3 }   # 600 萬–1200 萬的部分算 30%
+        - { from: 12000000, rate: 0.1 }   # 1200 萬–2400 萬的部分算 10%
+        - { from: 24000000, rate: 0.03 }   # 2400 萬–4800 萬的部分算 3%
+        - { from: 48000000, rate: 0.01 }   # 4800 萬以上的部分算 1%
       intro: "「你的骨頭我記得。這一次，全部留下。」"
-      life: 1.9         # 2026-10：照打白怪假人每秒 10 萬（打 Boss 6 萬）單人打 3 分半鐘算的（終局的 19.1 × 1.9，T16 之後約 1,260 萬生命）
+      life: 95.1        # 2026-10-21：照打 Boss 每秒 300 萬、單人 3 分半算的（終局的 19.1 × 95.1 × T16 的 11.7，約 6.3 億生命；原 1.9 = 每秒 6 萬）
       damage: 1.5
       cooldown: 0.75
       level_bonus: 4
@@ -761,7 +774,7 @@ finals:
           shield: { count: 3, type: SKELETON, name: 冥河骨燈, life: 6, duration: 25, heal: 40 }
       hazards:
         - { skill: hazard_grave_hands, every: 6, phase: 0 }
-      enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。河底很安靜。」" }
+      enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。河底很安靜。」" }
       key: abyss_core
       key_cost: 1
       key_chance: 0.25   # 2026-10：10% → 25%
@@ -802,7 +815,7 @@ finals:
       defeat: "鎧甲冷了下來。他終於可以不用再等命令。"
       # 火焰：吐息、岩漿、隕石，衝鋒撞人。一開始吐息、餘燼雨、岩漿足跡、衝鋒、叫岩漿怪、火環（擴散環）；
       # 第一階段起噴發（半徑 7，前搖 2 秒）、烈焰齊射、燃燒的恐懼、焚天橫掃（一道火焰掃四分之三圈）、餘燼火球（追人），而且開始落燼（場地危害）；
-      # 第二階段起焚天（半徑 15）、隕石雨、燎原（全場大招）。進入第二階段時張開護盾：三顆餘燼核心。開打 6 分鐘還沒打倒就狂暴
+      # 第二階段起焚天（半徑 15）、隕石雨、燎原（全場大招）。進入第二階段時張開護盾：三顆餘燼核心。開打 5 分鐘還沒打倒就狂暴（2026-10-21：全部 5 分鐘）
       skills:
         - general_flame_breath
         - general_ember_rain
@@ -833,20 +846,16 @@ finals:
           shield: { count: 3, type: BLAZE, name: 餘燼核心, life: 4, duration: 25, heal: 30 }
       hazards:
         - { skill: hazard_ember_fall, every: 9, phase: 1 }
-      enrage: { after: 420, damage: 100, speed: 0.3, message: "「命令就是命令。全部燒掉。」" }
+      enrage: { after: 300, damage: 100, speed: 0.3, message: "「命令就是命令。全部燒掉。」" }
     uber:
-      dps_cap: 150000    # 2026-10：每個人對極境 Boss 每秒傷害的上限（終局、極境、巔峰統一 15 萬；血量照打白怪假人每秒 10 萬打 3 分半）；超過的部分照 dps_over 遞減
+      dps_cap: 6000000   # 2026-10-21：極境照「打 Boss 每秒 300 萬、3 分半」，上限是目標的 2 倍
       dps_over:
-        - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-        - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-        - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-        - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-        - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-        - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-        - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-        - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+        - { from: 6000000, rate: 0.3 }   # 600 萬–1200 萬的部分算 30%
+        - { from: 12000000, rate: 0.1 }   # 1200 萬–2400 萬的部分算 10%
+        - { from: 24000000, rate: 0.03 }   # 2400 萬–4800 萬的部分算 3%
+        - { from: 48000000, rate: 0.01 }   # 4800 萬以上的部分算 1%
       intro: "「陛下的命令到了：一個都不留。」"
-      life: 1.9         # 2026-10：照打白怪假人每秒 10 萬（打 Boss 6 萬）單人打 3 分半鐘算的（終局的 19.1 × 1.9，T16 之後約 1,260 萬生命）
+      life: 95.1        # 2026-10-21：照打 Boss 每秒 300 萬、單人 3 分半算的（終局的 19.1 × 95.1 × T16 的 11.7，約 6.3 億生命；原 1.9 = 每秒 6 萬）
       damage: 1.5
       cooldown: 0.75
       level_bonus: 4
@@ -875,7 +884,7 @@ finals:
           shield: { count: 3, type: BLAZE, name: 焚城核心, life: 6, duration: 25, heal: 40 }
       hazards:
         - { skill: hazard_ember_orbs, every: 12, phase: 1 }
-      enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。命令就是命令。」" }
+      enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。命令就是命令。」" }
       key: abyss_core
       key_cost: 1
       key_chance: 0.25   # 2026-10：10% → 25%
@@ -923,7 +932,7 @@ finals:
       type: WITHER_SKELETON
       mythic: ExileCore_Awakener
       named: true
-      life: 53.8        # 2026-10：照打白怪假人每秒 15 萬（打 Boss 9 萬）單人打 3 分半鐘算的（T16 ×11.7 之後約 1,890 萬生命）
+      life: 3587        # 2026-10-21：照打 Boss 每秒 600 萬、單人 3 分半算的（×11.7 之後約 12.6 億生命；原 53.8 = 每秒 9 萬）
       damage: 2.9       # 2026-10-15：2.4 → 3.4 → 2.9（第二、三階段再更多 30%、40%）
       scale: 1.6
       mods: [resistant, swift]
@@ -972,19 +981,15 @@ finals:
           shield: { count: 3, type: ENDERMAN, name: 終末之核, life: 6, duration: 25, heal: 35 }
       hazards:
         - { skill: hazard_awakener_storm, every: 9, phase: 1 }
-      enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到了。這個世界，不需要你。」" }   # 本體約 3 分半＋換階段、護盾
+      enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。這個世界，不需要你。」" }   # 本體約 3 分半＋換階段、護盾
     pinnacle:
       attempts: 2        # 2026-10：幾道門（一門一次挑戰；全部倒下才能走下一門，Boss 回滿重來；打倒 Boss 門全部關掉）
-      dps_cap: 150000    # 2026-10：每個人對 Boss 每秒傷害的上限（每秒傷害取打訓練假人的紀錄與實際打出來的較高者；0 = 不限）
-      dps_over:          # 超過上限的部分分段遞減（2026-10-21 第四版：每翻一倍一段）：30 萬 → 等效 16.2 萬、60 萬 → 17.6 萬、120 萬 → 19 萬、500 萬 → 22.4 萬、2000 萬 → 26.2 萬（萬界 15 萬打 3 分半、2000 萬約 2 分）
-        - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-        - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-        - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-        - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-        - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-        - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-        - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-        - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+      dps_cap: 12000000   # 2026-10-21：巔峰照「打 Boss 每秒 600 萬、3 分半」，上限是目標的 2 倍
+      dps_over:
+        - { from: 12000000, rate: 0.3 }   # 1200 萬–2400 萬的部分算 30%
+        - { from: 24000000, rate: 0.1 }   # 2400 萬–4800 萬的部分算 10%
+        - { from: 48000000, rate: 0.03 }   # 4800 萬–9600 萬的部分算 3%
+        - { from: 96000000, rate: 0.01 }   # 9600 萬以上的部分算 1%
       level_bonus: 5
       cooldown: 0.65
       fragments:
@@ -1041,7 +1046,7 @@ finals:
       name: 神龕守望・晨曦
       type: IRON_GOLEM
       named: true
-      life: 57.2   # 2026-10-18：難度提高（原 52）
+      life: 3813   # 2026-10-21：巔峰照打 Boss 每秒 600 萬、3 分半（原 57.2，×66.7；跟虛星一樣的比例）
       damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.4
       mods: [resistant, swift]
@@ -1083,19 +1088,15 @@ finals:
           shield: { count: 3, type: VINDICATOR, name: 晨曦結晶, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_shrine_ray, every: 7, phase: 1 }
-      enrage: { after: 360, damage: 150, speed: 0.4, message: "「夠了。全部，燒乾淨。」" }
+      enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠了。全部，燒乾淨。」" }
     pinnacle:
       attempts: 2
-      dps_cap: 150000
+      dps_cap: 12000000   # 2026-10-21：巔峰照「打 Boss 每秒 600 萬、3 分半」，上限是目標的 2 倍
       dps_over:
-        - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-        - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-        - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-        - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-        - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-        - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-        - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-        - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+        - { from: 12000000, rate: 0.3 }   # 1200 萬–2400 萬的部分算 30%
+        - { from: 24000000, rate: 0.1 }   # 2400 萬–4800 萬的部分算 10%
+        - { from: 48000000, rate: 0.03 }   # 4800 萬–9600 萬的部分算 3%
+        - { from: 96000000, rate: 0.01 }   # 9600 萬以上的部分算 1%
       level_bonus: 5
       cooldown: 0.65
       ticket: ticket_shrine
@@ -1126,7 +1127,7 @@ finals:
       name: 貪匣・千鎖之主
       type: RAVAGER
       named: true
-      life: 60.5   # 2026-10-18：難度提高（原 55）
+      life: 4033   # 2026-10-21：巔峰照打 Boss 每秒 600 萬、3 分半（原 60.5，×66.7；跟虛星一樣的比例）
       damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.3
       mods: [armoured, swift]
@@ -1168,19 +1169,15 @@ finals:
           shield: { count: 3, type: SILVERFISH, name: 千鎖之核, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_box_coins, every: 7, phase: 1 }
-      enrage: { after: 360, damage: 150, speed: 0.4, message: "「時間到。這座寶庫，連你一起鎖起來。」" }
+      enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到。這座寶庫，連你一起鎖起來。」" }
     pinnacle:
       attempts: 2
-      dps_cap: 150000
+      dps_cap: 12000000   # 2026-10-21：巔峰照「打 Boss 每秒 600 萬、3 分半」，上限是目標的 2 倍
       dps_over:
-        - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-        - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-        - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-        - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-        - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-        - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-        - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-        - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+        - { from: 12000000, rate: 0.3 }   # 1200 萬–2400 萬的部分算 30%
+        - { from: 24000000, rate: 0.1 }   # 2400 萬–4800 萬的部分算 10%
+        - { from: 48000000, rate: 0.03 }   # 4800 萬–9600 萬的部分算 3%
+        - { from: 96000000, rate: 0.01 }   # 9600 萬以上的部分算 1%
       level_bonus: 5
       cooldown: 0.65
       ticket: ticket_strongbox
@@ -1211,7 +1208,7 @@ finals:
       name: 裂隙之主・穿界者
       type: ENDERMAN
       named: true
-      life: 55   # 2026-10-18：難度提高（原 50）
+      life: 3667   # 2026-10-21：巔峰照打 Boss 每秒 600 萬、3 分半（原 55，×66.7；跟虛星一樣的比例）
       damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.6
       mods: [evasive, swift]
@@ -1253,19 +1250,15 @@ finals:
           shield: { count: 3, type: ENDERMITE, name: 界縫之核, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_breach_rift, every: 6, phase: 1 }
-      enrage: { after: 360, damage: 150, speed: 0.4, message: "「夠久了。整片空間，一起撕開。」" }
+      enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠久了。整片空間，一起撕開。」" }
     pinnacle:
       attempts: 2
-      dps_cap: 150000
+      dps_cap: 12000000   # 2026-10-21：巔峰照「打 Boss 每秒 600 萬、3 分半」，上限是目標的 2 倍
       dps_over:
-        - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-        - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-        - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-        - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-        - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-        - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-        - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-        - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+        - { from: 12000000, rate: 0.3 }   # 1200 萬–2400 萬的部分算 30%
+        - { from: 24000000, rate: 0.1 }   # 2400 萬–4800 萬的部分算 10%
+        - { from: 48000000, rate: 0.03 }   # 4800 萬–9600 萬的部分算 3%
+        - { from: 96000000, rate: 0.01 }   # 9600 萬以上的部分算 1%
       level_bonus: 5
       cooldown: 0.65
       ticket: ticket_breach
@@ -1296,7 +1289,7 @@ finals:
       name: 流寇之王・無名者
       type: VINDICATOR
       named: true
-      life: 55   # 2026-10-18：難度提高（原 50）
+      life: 3667   # 2026-10-21：巔峰照打 Boss 每秒 600 萬、3 分半（原 55，×66.7；跟虛星一樣的比例）
       damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.3
       mods: [deadly, swift]
@@ -1338,19 +1331,15 @@ finals:
           shield: { count: 3, type: PILLAGER, name: 無名之誓, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_exile_knives, every: 6, phase: 1 }
-      enrage: { after: 360, damage: 150, speed: 0.4, message: "「拖太久了。結束吧。」" }
+      enrage: { after: 300, damage: 150, speed: 0.4, message: "「拖太久了。結束吧。」" }
     pinnacle:
       attempts: 2
-      dps_cap: 150000
+      dps_cap: 12000000   # 2026-10-21：巔峰照「打 Boss 每秒 600 萬、3 分半」，上限是目標的 2 倍
       dps_over:
-        - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-        - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-        - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-        - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-        - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-        - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-        - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-        - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+        - { from: 12000000, rate: 0.3 }   # 1200 萬–2400 萬的部分算 30%
+        - { from: 24000000, rate: 0.1 }   # 2400 萬–4800 萬的部分算 10%
+        - { from: 48000000, rate: 0.03 }   # 4800 萬–9600 萬的部分算 3%
+        - { from: 96000000, rate: 0.01 }   # 9600 萬以上的部分算 1%
       level_bonus: 5
       cooldown: 0.65
       ticket: ticket_exile
@@ -1381,7 +1370,7 @@ finals:
       name: 祭司・血契
       type: EVOKER
       named: true
-      life: 57.2   # 2026-10-18：難度提高（原 52）
+      life: 3813   # 2026-10-21：巔峰照打 Boss 每秒 600 萬、3 分半（原 57.2，×66.7；跟虛星一樣的比例）
       damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.5
       mods: [resistant, swift]
@@ -1423,19 +1412,15 @@ finals:
           shield: { count: 3, type: HUSK, name: 血契之核, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_ritual_blood, every: 6, phase: 1 }
-      enrage: { after: 360, damage: 150, speed: 0.4, message: "「祭壇等不下去了。全部，燒。」" }
+      enrage: { after: 300, damage: 150, speed: 0.4, message: "「祭壇等不下去了。全部，燒。」" }
     pinnacle:
       attempts: 2
-      dps_cap: 150000
+      dps_cap: 12000000   # 2026-10-21：巔峰照「打 Boss 每秒 600 萬、3 分半」，上限是目標的 2 倍
       dps_over:
-        - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-        - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-        - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-        - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-        - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-        - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-        - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-        - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+        - { from: 12000000, rate: 0.3 }   # 1200 萬–2400 萬的部分算 30%
+        - { from: 24000000, rate: 0.1 }   # 2400 萬–4800 萬的部分算 10%
+        - { from: 48000000, rate: 0.03 }   # 4800 萬–9600 萬的部分算 3%
+        - { from: 96000000, rate: 0.01 }   # 9600 萬以上的部分算 1%
       level_bonus: 5
       cooldown: 0.65
       ticket: ticket_ritual
@@ -1466,7 +1451,7 @@ finals:
       name: 幻霧之鏡・妄念
       type: STRAY
       named: true
-      life: 55   # 2026-10-18：難度提高（原 50）
+      life: 3667   # 2026-10-21：巔峰照打 Boss 每秒 600 萬、3 分半（原 55，×66.7；跟虛星一樣的比例）
       damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.5
       mods: [evasive, swift]
@@ -1508,19 +1493,15 @@ finals:
           shield: { count: 3, type: VEX, name: 妄念之核, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_mist_orb, every: 7, phase: 1 }
-      enrage: { after: 360, damage: 150, speed: 0.4, message: "「霧要散了。在那之前，你得留下來。」" }
+      enrage: { after: 300, damage: 150, speed: 0.4, message: "「霧要散了。在那之前，你得留下來。」" }
     pinnacle:
       attempts: 2
-      dps_cap: 150000
+      dps_cap: 12000000   # 2026-10-21：巔峰照「打 Boss 每秒 600 萬、3 分半」，上限是目標的 2 倍
       dps_over:
-        - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-        - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-        - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-        - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-        - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-        - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-        - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-        - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+        - { from: 12000000, rate: 0.3 }   # 1200 萬–2400 萬的部分算 30%
+        - { from: 24000000, rate: 0.1 }   # 2400 萬–4800 萬的部分算 10%
+        - { from: 48000000, rate: 0.03 }   # 4800 萬–9600 萬的部分算 3%
+        - { from: 96000000, rate: 0.01 }   # 9600 萬以上的部分算 1%
       level_bonus: 5
       cooldown: 0.65
       ticket: ticket_delirium
@@ -1551,7 +1532,7 @@ finals:
       name: 淵底之王・骨潮
       type: WITHER_SKELETON
       named: true
-      life: 60.5   # 2026-10-18：難度提高（原 55）
+      life: 4033   # 2026-10-21：巔峰照打 Boss 每秒 600 萬、3 分半（原 60.5，×66.7；跟虛星一樣的比例）
       damage: 3.2   # 2026-10-18：2.9 → 3.2
       scale: 1.7
       mods: [armoured, resistant]
@@ -1593,19 +1574,15 @@ finals:
           shield: { count: 3, type: SKELETON, name: 淵底之核, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_abyssal_spike, every: 6, phase: 1 }
-      enrage: { after: 360, damage: 150, speed: 0.4, message: "「夠了。骨潮，滅頂。」" }
+      enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠了。骨潮，滅頂。」" }
     pinnacle:
       attempts: 2
-      dps_cap: 150000
+      dps_cap: 12000000   # 2026-10-21：巔峰照「打 Boss 每秒 600 萬、3 分半」，上限是目標的 2 倍
       dps_over:
-        - { from: 150000, rate: 0.08 }      # 15–30 萬的部分算 8%
-        - { from: 300000, rate: 0.045 }     # 30–60 萬的部分算 4.5%
-        - { from: 600000, rate: 0.024 }     # 60–120 萬的部分算 2.4%
-        - { from: 1200000, rate: 0.013 }    # 120–250 萬的部分算 1.3%
-        - { from: 2500000, rate: 0.007 }    # 250–500 萬的部分算 0.7%
-        - { from: 5000000, rate: 0.004 }    # 500–1000 萬的部分算 0.4%
-        - { from: 10000000, rate: 0.002 }   # 1000–2000 萬的部分算 0.2%
-        - { from: 20000000, rate: 0.001 }   # 2000 萬以上的部分算 0.1%
+        - { from: 12000000, rate: 0.3 }   # 1200 萬–2400 萬的部分算 30%
+        - { from: 24000000, rate: 0.1 }   # 2400 萬–4800 萬的部分算 10%
+        - { from: 48000000, rate: 0.03 }   # 4800 萬–9600 萬的部分算 3%
+        - { from: 96000000, rate: 0.01 }   # 9600 萬以上的部分算 1%
       level_bonus: 5
       cooldown: 0.65
       ticket: ticket_abyss

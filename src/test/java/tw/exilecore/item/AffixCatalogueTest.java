@@ -166,10 +166,12 @@ class AffixCatalogueTest {
                 if (stat.startsWith(StatKeys.DAMAGE_GAIN) || stat.startsWith(StatKeys.CHARGE_CHANCE) || stat.startsWith(StatKeys.CHARGE_MAX)
                         || stat.equals(StatKeys.SKILL_LEVEL) || stat.startsWith("thorns.") && !stat.equals(StatKeys.THORNS_DAMAGE)
                         // 荊棘傷害、偷取的量、最大偷取速度是 INCREASED（StatKeys.THORNS_DAMAGE／LEECH_EFFECT／LEECH_RATE），其他是百分比點數
-                        || stat.startsWith("leech.") && !stat.equals(StatKeys.LEECH_EFFECT) && !stat.equals(StatKeys.LEECH_RATE)) {
+                        || stat.startsWith("leech.") && !stat.equals(StatKeys.LEECH_EFFECT) && !stat.equals(StatKeys.LEECH_RATE)
+                        && !stat.equals(StatKeys.LEECH_MANA_EFFECT)) {
                     assertEquals(ModType.FLAT, mod.type(), where + "：" + stat + " 是百分比點數／固定值，要用 FLAT");
                 }
-                if (mod.variable() != null) {
+                if (mod.variable() != null && !fixedValue(affix, mod.variable())) {
+                    // 每一階都是固定值的（腐化「這把武器沒有物理傷害」= -100%）文字可以不寫數字
                     assertTrue(affix.text().contains("{" + mod.variable() + "}") || affix.text().contains("{" + mod.variable() + "/"),
                             where + " 的文字沒有 {" + mod.variable() + "}");
                     if (mod.divisor() > 1) {
@@ -621,5 +623,16 @@ class AffixCatalogueTest {
                 "stun_threshold_flat", "ignite_chance", "flask_life_recovery")) {
             assertTrue(seen.contains(id), "3000 件稀有裡應該看得到 " + id);
         }
+    }
+
+    /** 這個變數在每一階都只有一個值（min = max）。 */
+    private static boolean fixedValue(final Affix affix, final String variable) {
+        for (final AffixTier tier : affix.tiers()) {
+            final int[] range = tier.vars().get(variable);
+            if (range == null || range[0] != range[1]) {
+                return false;
+            }
+        }
+        return !affix.tiers().isEmpty();
     }
 }

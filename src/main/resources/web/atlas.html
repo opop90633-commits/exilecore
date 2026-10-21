@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>星骸 星圖天賦規劃器</title>
+<style>
+  :root {
+    --bg: #0a0d1a; --panel: #121628; --panel-2: #1a1f36; --line: #2b3150; --text: #e6e6f0; --quiet: #9a9cb4;
+    --gold: #f5c04a; --gold-edge: #e6a82e; --bright: #e8e8f2; --lit: #9c9cb8; --dim: #5e5e74; --dim-edge: #33354a;
+    --blue: #6fa8ff; --red: #ff6a6a; --cyan: #55ffff; --keystone: #c48bff; --green: #7ee07e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; font-size: 14px; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  header h1 { margin: 0; font-size: 17px; font-weight: 600; color: var(--gold); white-space: nowrap; }
+  header a { color: var(--blue); }
+  .points { display: flex; align-items: center; gap: 8px; }
+  .points input { width: 64px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font: inherit; }
+  button { border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 5px 12px; border-radius: 6px; cursor: pointer; font: inherit; }
+  button:hover { border-color: var(--gold-edge); }
+  main { flex: 1; display: flex; min-height: 0; }
+  #stage { flex: 1; position: relative; overflow: hidden; cursor: grab; }
+  #stage.dragging { cursor: grabbing; }
+  canvas { display: block; width: 100%; height: 100%; }
+  aside { width: 320px; background: var(--panel); border-left: 1px solid var(--line); overflow: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+  @media (max-width: 800px) { main { flex-direction: column; } aside { width: auto; max-height: 45%; border-left: 0; border-top: 1px solid var(--line); } }
+  h2 { margin: 0 0 6px; font-size: 14px; color: var(--gold); }
+  .box { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .quiet { color: var(--quiet); font-size: 12px; }
+  .mods li { margin: 2px 0; }
+  .mods .drawback { color: var(--red); }
+  .effects { margin: 0; padding-left: 18px; }
+  #tip { position: absolute; pointer-events: none; background: rgba(10,13,26,.96); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; max-width: 280px; display: none; z-index: 2; }
+  #tip b { display: block; margin-bottom: 4px; }
+  #tip .cost { color: var(--quiet); font-size: 12px; }
+  textarea { width: 100%; height: 64px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; padding: 6px; resize: vertical; }
+  .legend span { display: inline-block; margin-right: 10px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .trunks { display: flex; flex-wrap: wrap; gap: 4px; }
+  .trunks button { padding: 3px 8px; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>星骸 星圖天賦規劃器</h1>
+  <div class="points">天賦點 <input id="budget" type="number" min="0" max="500" value="67"> <span class="quiet">已用 <b id="spent">0</b></span></div>
+  <button id="copy">複製代碼</button>
+  <button id="clear">全部清掉</button>
+  <a href="tree">天賦規劃器</a>
+  <a href="./">首頁</a>
+</header>
+<main>
+  <div id="stage"><canvas id="c"></canvas><div id="tip"></div></div>
+  <aside>
+    <div class="box">
+      <h2>怎麼用</h2>
+      <div class="quiet">左鍵點節點：點／退（點不到的會把路上的一起點；退掉連不回中心的一起退）。拖曳移動、滾輪縮放。<br>
+        規劃好按「複製代碼」，回遊戲輸入 <b>/atlas import 代碼</b>；在遊戲的星圖天賦點右鍵「天賦點」會帶著現在的配點開這一頁。</div>
+      <div class="legend quiet" style="margin-top:6px"><span><i style="background:var(--gold)"></i>已點</span><span><i style="background:var(--bright)"></i>可以點</span><span><i style="background:var(--dim)"></i>還連不到</span><span><i style="background:var(--keystone)"></i>核心</span></div>
+    </div>
+    <div class="box">
+      <h2>主幹</h2>
+      <div class="trunks" id="trunks"></div>
+    </div>
+    <div class="box">
+      <h2>你開的地圖</h2>
+      <ul class="effects mods" id="effects"><li class="quiet">還沒點任何天賦</li></ul>
+    </div>
+    <div class="box">
+      <h2>代碼</h2>
+      <textarea id="code" readonly></textarea>
+      <div class="quiet">也可以把整個網址貼給 /atlas import</div>
+    </div>
+  </aside>
+</main>
+<script>
+(() => {
+  const canvas = document.getElementById("c"), ctx = canvas.getContext("2d"), stage = document.getElementById("stage"), tip = document.getElementById("tip");
+  const budgetInput = document.getElementById("budget"), spentEl = document.getElementById("spent"), codeEl = document.getElementById("code");
+  const effectsEl = document.getElementById("effects"), trunksEl = document.getElementById("trunks");
+  let data = null, nodes = new Map(), byPos = new Map(), allocated = new Set();
+  let scale = 36, offsetX = 0, offsetY = 0, hover = null, dragging = false, dragMoved = false, lastX = 0, lastY = 0;
+  const DIRS = [[0,-1],[1,0],[0,1],[-1,0]];
+  const key = (x, y) => x + "," + y;
+
+  function neighbours(n) { return DIRS.map(d => byPos.get(key(n.x + d[0], n.y + d[1]))).filter(Boolean); }
+  function touchesRoot(n) { return Math.abs(n.x - data.rootX) + Math.abs(n.y - data.rootY) === 1; }
+  function connected(n) { return touchesRoot(n) || neighbours(n).some(o => allocated.has(o.id)); }
+  function reachable(set) {
+    const seen = new Set(), queue = [];
+    for (const d of DIRS) { const n = byPos.get(key(data.rootX + d[0], data.rootY + d[1])); if (n && set.has(n.id) && !seen.has(n.id)) { seen.add(n.id); queue.push(n); } }
+    while (queue.length) { const c = queue.shift(); for (const o of neighbours(c)) if (set.has(o.id) && !seen.has(o.id)) { seen.add(o.id); queue.push(o); } }
+    return seen;
+  }
+  function spent() { let s = 0; for (const id of allocated) s += nodes.get(id).cost; return s; }
+  function pathTo(target) {
+    // Dijkstra（權重 = 點數），從起點與已點的出發
+    const dist = new Map(), parent = new Map(), done = new Set();
+    for (const d of DIRS) { const n = byPos.get(key(data.rootX + d[0], data.rootY + d[1])); if (n) dist.set(n.id, allocated.has(n.id) ? 0 : n.cost); }
+    for (const id of allocated) { dist.set(id, 0); const n = nodes.get(id); for (const o of neighbours(n)) if (!allocated.has(o.id) && o.cost < (dist.get(o.id) ?? 1e9)) { dist.set(o.id, o.cost); parent.set(o.id, n); } }
+    while (true) {
+      let best = null, bd = 1e9; for (const [id, d] of dist) if (!done.has(id) && d < bd) { best = id; bd = d; }
+      if (best === null) return [];
+      done.add(best); if (best === target.id) break;
+      const c = nodes.get(best);
+      for (const o of neighbours(c)) { if (done.has(o.id)) continue; const d = bd + (allocated.has(o.id) ? 0 : o.cost); if (d < (dist.get(o.id) ?? 1e9)) { dist.set(o.id, d); parent.set(o.id, c); } }
+    }
+    const path = []; let step = target; while (step && !allocated.has(step.id)) { path.push(step); step = parent.get(step.id); }
+    return path.reverse();
+  }
+  function orderFromRoot(ids) {
+    const want = new Set(ids.filter(id => nodes.has(id))), out = [], placed = new Set(), queue = [];
+    for (const d of DIRS) { const n = byPos.get(key(data.rootX + d[0], data.rootY + d[1])); if (n && want.has(n.id) && !placed.has(n.id)) { placed.add(n.id); queue.push(n); out.push(n.id); } }
+    while (queue.length) { const c = queue.shift(); for (const o of neighbours(c)) if (want.has(o.id) && !placed.has(o.id)) { placed.add(o.id); queue.push(o); out.push(o.id); } }
+    return out;
+  }
+
+  function fromScreen(px, py) { return [Math.round((px - stage.clientWidth / 2 - offsetX) / scale + data.rootX), Math.round((py - stage.clientHeight / 2 - offsetY) / scale + data.rootY)]; }
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  function draw() {
+    const w = stage.clientWidth, h = stage.clientHeight, dpr = window.devicePixelRatio || 1;
+    if (canvas.width !== w * dpr || canvas.height !== h * dpr) { canvas.width = w * dpr; canvas.height = h * dpr; }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = css("--bg"); ctx.fillRect(0, 0, w, h);
+    const toS = (x, y) => [w / 2 + (x - data.rootX) * scale + offsetX, h / 2 + (y - data.rootY) * scale + offsetY];
+    // 連線
+    for (const n of nodes.values()) {
+      for (const d of [[1,0],[0,1]]) {
+        const o = byPos.get(key(n.x + d[0], n.y + d[1])); if (!o) continue;
+        const a = allocated.has(n.id), b = allocated.has(o.id);
+        ctx.strokeStyle = a && b ? css("--gold-edge") : (a || b) ? css("--lit") : css("--dim-edge");
+        ctx.lineWidth = a && b ? 3 : 1.5;
+        const [x1, y1] = toS(n.x, n.y), [x2, y2] = toS(o.x, o.y);
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      }
+    }
+    for (const d of DIRS) { const o = byPos.get(key(data.rootX + d[0], data.rootY + d[1])); if (!o) continue;
+      const [x1, y1] = toS(data.rootX, data.rootY), [x2, y2] = toS(o.x, o.y);
+      ctx.strokeStyle = allocated.has(o.id) ? css("--gold-edge") : css("--lit"); ctx.lineWidth = allocated.has(o.id) ? 3 : 1.5;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+    // 節點
+    for (const n of nodes.values()) {
+      const [x, y] = toS(n.x, n.y);
+      const owned = allocated.has(n.id), avail = !owned && connected(n);
+      const r = n.keystone ? scale * 0.42 : n.notable ? scale * 0.34 : scale * 0.22;
+      const trunk = data.trunks[n.trunk] || {};
+      ctx.beginPath();
+      if (n.keystone) { for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } ctx.closePath(); }
+      else ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = owned ? css("--gold") : avail ? css("--bright") : css("--dim");
+      if (owned && n.keystone) ctx.fillStyle = css("--keystone");
+      ctx.fill();
+      ctx.lineWidth = n.notable || n.keystone ? 2.5 : 1.5;
+      ctx.strokeStyle = (n.notable || n.keystone) ? (trunk.color || "#f5c04a") : "#101018";
+      ctx.stroke();
+      if (hover === n) { ctx.strokeStyle = css("--cyan"); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.stroke(); }
+      if (scale >= 30 && (n.notable || n.keystone)) { ctx.fillStyle = css("--text"); ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.fillText(n.name, x, y + r + 12); }
+    }
+    // 起點
+    const [rx, ry] = toS(data.rootX, data.rootY);
+    ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = -Math.PI / 2 + i * Math.PI / 4, rr = i % 2 ? scale * 0.18 : scale * 0.42; ctx.lineTo(rx + Math.cos(a) * rr, ry + Math.sin(a) * rr); } ctx.closePath();
+    ctx.fillStyle = css("--bright"); ctx.fill(); ctx.strokeStyle = css("--gold-edge"); ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = css("--text"); ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.fillText("星核", rx, ry + scale * 0.42 + 12);
+  }
+
+  function nodeAt(px, py) {
+    const [x, y] = fromScreen(px, py);
+    return byPos.get(key(x, y)) || null;
+  }
+  function summarise() {
+    const totals = new Map();
+    for (const id of allocated) for (const s of nodes.get(id).stats) { const cur = totals.get(s.stat) || { value: 0, drawback: !!s.drawback }; cur.value += s.value; totals.set(s.stat, cur); }
+    effectsEl.innerHTML = "";
+    if (!totals.size) { effectsEl.innerHTML = '<li class="quiet">還沒點任何天賦</li>'; }
+    for (const [stat, t] of totals) { const li = document.createElement("li"); li.textContent = describe(stat, t.value); if (t.drawback) li.className = "drawback"; effectsEl.appendChild(li); }
+    spentEl.textContent = spent();
+    const code = orderFromRoot([...allocated]).join(",");
+    codeEl.value = code; history.replaceState(null, "", code ? "#" + code : location.pathname);
+  }
+  function describe(stat, value) {
+    // 從節點的說明找同一個效果鍵的文字，把數字換掉（說明裡的數字是那個節點的數值）
+    for (const n of nodes.values()) { const i = n.stats.findIndex(s => s.stat === stat); if (i >= 0) { const text = i < n.mods.length ? n.mods[i] : n.drawbacks[i - n.mods.length]; const num = String(n.stats[i].value).replace(/\.0$/, ""); return text.replace(num, String(Math.round(value * 10) / 10)); } }
+    return stat + " " + value;
+  }
+  function click(n) {
+    const budget = +budgetInput.value || 0;
+    if (allocated.has(n.id)) {
+      const rest = new Set(allocated); rest.delete(n.id); const keep = reachable(rest); allocated = new Set([...rest].filter(id => keep.has(id)));
+    } else {
+      const path = connected(n) ? [n] : pathTo(n);
+      if (!path.length) { flash("連不到中心"); return; }
+      const cost = path.reduce((s, p) => s + p.cost, 0);
+      if (spent() + cost > budget) { flash("天賦點不夠：要 " + cost + " 點，還有 " + (budget - spent()) + " 點"); return; }
+      for (const p of path) allocated.add(p.id);
+    }
+    summarise(); draw();
+  }
+  function flash(text) { tip.style.display = "block"; tip.innerHTML = "<span style='color:var(--red)'>" + text + "</span>"; setTimeout(() => { if (!hover) tip.style.display = "none"; }, 1200); }
+  function showTip(n, px, py) {
+    const trunk = data.trunks[n.trunk] || {};
+    let html = "<b style='color:" + (n.keystone ? "var(--keystone)" : trunk.color || "var(--gold)") + "'>" + n.name + (n.keystone ? " ✦" : n.notable ? " ★" : "") + "</b>";
+    html += "<div class='quiet'>" + (trunk.name || "") + "・" + (n.keystone ? "核心・" : n.notable ? "大天賦・" : "") + n.cost + " 點　(" + n.x + ", " + n.y + ")</div><ul class='mods' style='margin:4px 0;padding-left:16px'>";
+    for (const m of n.mods) html += "<li>" + m + "</li>"; for (const m of n.drawbacks) html += "<li class='drawback'>" + m + "</li>";
+    html += "</ul>";
+    if (!allocated.has(n.id) && !connected(n)) { const path = pathTo(n); if (path.length) html += "<div class='quiet'>左鍵把路上的 " + path.length + " 個一起點（共 " + path.reduce((s, p) => s + p.cost, 0) + " 點）</div>"; }
+    tip.innerHTML = html; tip.style.display = "block";
+    tip.style.left = Math.min(px + 14, stage.clientWidth - 290) + "px"; tip.style.top = Math.min(py + 14, stage.clientHeight - 160) + "px";
+  }
+
+  stage.addEventListener("mousedown", e => { dragging = true; dragMoved = false; lastX = e.clientX; lastY = e.clientY; stage.classList.add("dragging"); });
+  window.addEventListener("mouseup", e => { if (dragging && !dragMoved) { const rect = stage.getBoundingClientRect(); const n = nodeAt(e.clientX - rect.left, e.clientY - rect.top); if (n) click(n); } dragging = false; stage.classList.remove("dragging"); });
+  window.addEventListener("mousemove", e => {
+    const rect = stage.getBoundingClientRect(), px = e.clientX - rect.left, py = e.clientY - rect.top;
+    if (dragging) { const dx = e.clientX - lastX, dy = e.clientY - lastY; if (Math.abs(dx) + Math.abs(dy) > 2) dragMoved = true; offsetX += dx; offsetY += dy; lastX = e.clientX; lastY = e.clientY; draw(); return; }
+    const n = nodeAt(px, py); if (n !== hover) { hover = n; draw(); } if (n) showTip(n, px, py); else tip.style.display = "none";
+  });
+  stage.addEventListener("wheel", e => { e.preventDefault(); const factor = e.deltaY < 0 ? 1.1 : 0.9; scale = Math.max(14, Math.min(80, scale * factor)); draw(); }, { passive: false });
+  let touch = null;
+  stage.addEventListener("touchstart", e => { if (e.touches.length === 1) { touch = { x: e.touches[0].clientX, y: e.touches[0].clientY, moved: false }; } }, { passive: true });
+  stage.addEventListener("touchmove", e => { if (!touch || e.touches.length !== 1) return; const dx = e.touches[0].clientX - touch.x, dy = e.touches[0].clientY - touch.y; if (Math.abs(dx) + Math.abs(dy) > 3) touch.moved = true; offsetX += dx; offsetY += dy; touch.x = e.touches[0].clientX; touch.y = e.touches[0].clientY; draw(); }, { passive: true });
+  stage.addEventListener("touchend", e => { if (touch && !touch.moved) { const rect = stage.getBoundingClientRect(); const n = nodeAt(touch.x - rect.left, touch.y - rect.top); if (n) click(n); } touch = null; });
+  window.addEventListener("resize", draw);
+  budgetInput.addEventListener("change", () => { summarise(); draw(); });
+  document.getElementById("copy").addEventListener("click", () => { codeEl.select(); navigator.clipboard?.writeText(codeEl.value); flash("複製了：回遊戲輸入 /atlas import 代碼"); });
+  document.getElementById("clear").addEventListener("click", () => { allocated = new Set(); summarise(); draw(); });
+
+  fetch("atlas/data.json", { cache: "no-cache" }).then(r => r.json()).then(json => {
+    data = json;
+    for (const n of json.nodes) { nodes.set(n.id, n); byPos.set(key(n.x, n.y), n); }
+    for (const [id, t] of Object.entries(json.trunks)) { if (id === "core") continue; const b = document.createElement("button"); b.textContent = t.name; b.style.borderColor = t.color; b.title = t.description; b.addEventListener("click", () => { const first = json.nodes.find(n => n.trunk === id); if (first) { offsetX = -(first.x - json.rootX) * scale; offsetY = -(first.y - json.rootY) * scale; draw(); } }); trunksEl.appendChild(b); }
+    const hash = decodeURIComponent(location.hash.slice(1));
+    if (hash) { const ids = orderFromRoot(hash.split(",").map(s => s.trim()).filter(Boolean)); allocated = new Set(ids); const need = spent(); if (need > +budgetInput.value) budgetInput.value = need; }
+    summarise(); draw();
+  }).catch(e => { document.getElementById("effects").innerHTML = "<li class='quiet'>讀不到星圖天賦的資料：" + e + "</li>"; });
+})();
+</script>
+</body>
+</html>

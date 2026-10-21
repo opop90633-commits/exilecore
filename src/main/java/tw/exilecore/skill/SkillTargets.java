@@ -238,6 +238,28 @@ final class SkillTargets {
         return best;
     }
 
+    /** 2026-10-21：某個位置（投射物碰到牆的地方）附近最近、還沒打過、從那裡看得到的敵人（從地形連鎖用）。 */
+    LivingEntity nearest(final Location from, final double radius, final Set<UUID> exclude, final Player owner) {
+        LivingEntity best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (final LivingEntity living : around(from, radius, owner)) {
+            if (exclude.contains(living.getUniqueId())) {
+                continue;
+            }
+            final Location target = center(living);
+            final double distance = target.distanceSquared(from);
+            if (distance >= bestDistance || distance < 1e-6) {
+                continue;
+            }
+            final org.bukkit.util.Vector direction = target.toVector().subtract(from.toVector());
+            if (from.getWorld().rayTraceBlocks(from, direction, Math.sqrt(distance), org.bukkit.FluidCollisionMode.NEVER, true) == null) {
+                best = living;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
     /** 身體中間的位置（畫線、爆炸用）。 */
     static Location center(final LivingEntity entity) {
         return entity.getLocation().add(0, entity.getHeight() / 2, 0);

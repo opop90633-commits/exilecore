@@ -67,11 +67,44 @@ public final class Debuffs {
         double increased = 0;
         for (final Debuff debuff : list) {
             if (debuff.active(now) && (!debuff.selfOnly() || debuff.source().equals(attacker))
+                    && !isDamageType(debuff.tag()) // 2026-10-21：傷害類型的（凋息、縛根）只加那一種傷害，見 typedTaken
                     && (debuff.tag() == null || hitTags.contains(debuff.tag()))) {
                 increased += debuff.taken();
             }
         }
         return 1.0 + increased;
+    }
+
+    /** 這個標籤是不是一種傷害類型（physical、fire、cold、lightning、chaos）。 */
+    static boolean isDamageType(final String tag) {
+        if (tag == null) {
+            return false;
+        }
+        for (final tw.exilecore.stats.DamageType type : tw.exilecore.stats.DamageType.values()) {
+            if (type.tag().equals(tag)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 2026-10-21：只加某一種傷害的減益（凋息「受到的混沌傷害增加」、縛根「受到的物理傷害增加」）：這種傷害增加幾（0.22 = 22%）。
+     * 擊中只加那一種傷害的部分（不管技能本身有沒有那個標籤），持續傷害（中毒、流血、點燃）也算。
+     */
+    public double typedTaken(final UUID target, final UUID attacker, final long now, final tw.exilecore.stats.DamageType type) {
+        final List<Debuff> list = entries.get(target);
+        if (list == null) {
+            return 0;
+        }
+        double increased = 0;
+        for (final Debuff debuff : list) {
+            if (debuff.active(now) && type.tag().equals(debuff.tag())
+                    && (!debuff.selfOnly() || attacker != null && debuff.source().equals(attacker))) {
+                increased += debuff.taken();
+            }
+        }
+        return increased;
     }
 
     /**

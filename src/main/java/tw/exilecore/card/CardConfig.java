@@ -238,6 +238,12 @@ public final class CardConfig {
         return card.weight() * deck.getOrDefault(card.tier(), 1.0);
     }
 
+    /** 同上，稀有、追逐卡的權重再乘 1 + rareBonus。 */
+    public double deckWeight(final Card card, final double rareBonus) {
+        final boolean rare = card.tier() == Tier.RARE || card.tier() == Tier.CHASE;
+        return deckWeight(card) * (rare ? 1 + Math.max(0, rareBonus) : 1);
+    }
+
     private static double probability(final YamlNode node, final String key, final double def) {
         return Math.max(0, Math.min(1, node.decimal(key, def)));
     }
@@ -362,9 +368,14 @@ public final class CardConfig {
 
     /** 星諭牌堆：從全部的卡照 {@link #deckWeight}（weight × 等級的倍數）抽一張；都是 0 回傳 null。 */
     public Card pickAny(final RandomGenerator random) {
+        return pickAny(random, 0);
+    }
+
+    /** 同上，稀有卡（稀有、追逐）的權重再增加 rareBonus（小數；2026-10-21 星圖天賦 atlas.card.deck）。 */
+    public Card pickAny(final RandomGenerator random, final double rareBonus) {
         double total = 0;
         for (final Card card : cards.values()) {
-            total += deckWeight(card);
+            total += deckWeight(card, rareBonus);
         }
         if (total <= 0) {
             return null;
@@ -372,7 +383,7 @@ public final class CardConfig {
         double roll = random.nextDouble() * total;
         Card last = null;
         for (final Card card : cards.values()) {
-            final double weight = deckWeight(card);
+            final double weight = deckWeight(card, rareBonus);
             if (weight <= 0) {
                 continue;
             }

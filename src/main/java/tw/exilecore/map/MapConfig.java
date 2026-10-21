@@ -248,6 +248,13 @@ public final class MapConfig {
     /** 一般終局 Boss 的每秒傷害上限（2026-10，maps.yml 的 final_dps；極境、巔峰寫在自己的區塊）。 */
     private double finalDpsCap;
     private List<DpsTier> finalDpsOver = List.of();
+    /** 金庫之主、淵鯨的每秒傷害上限（2026-10-21，maps.yml 的 heist_dps、whale_dps；沒寫照 final_dps）。開天者、南瓜王、潮汐統帥不遞減。 */
+    private double heistDpsCap;
+    private List<DpsTier> heistDpsOver = List.of();
+    private double whaleDpsCap;
+    private List<DpsTier> whaleDpsOver = List.of();
+    /** 一般終局每一階的生命倍率（2026-10-21，final.tier_life_table；null = 照 tier_life）。 */
+    private double[] finalTierLifeTable;
     private final Map<String, MapDef> maps = new LinkedHashMap<>();
     private MapDef finalMap;
     private int finalLevelBonus = DEFAULT_FINAL_LEVEL_BONUS;
@@ -256,6 +263,10 @@ public final class MapConfig {
     /** 一般地圖 Boss 的生命照階級再乘（maps.yml 的 settings.boss_tier_life；2026-10）：這一階（含）以下 ×1、最高階 ×max。 */
     private int bossTierLifeFrom = 16;
     private double bossTierLifeMax = 1.0;
+    /** 地圖裡一般怪物（不是 Boss）的生命、傷害照階級再乘（maps.yml 的 settings.monster_tier；2026-10-21）：這一階（含）以下 ×1、最高階 ×life／×damage。 */
+    private int monsterTierFrom = 16;
+    private double monsterTierLifeMax = 1.0;
+    private double monsterTierDamageMax = 1.0;
     /** 護盾結晶吃幾成的階級倍率（maps.yml 的 settings.shield_tier_share；2026-10）。 */
     public static final double DEFAULT_SHIELD_TIER_SHARE = 0.5;
     private double shieldTierShare = DEFAULT_SHIELD_TIER_SHARE;
@@ -549,6 +560,11 @@ public final class MapConfig {
         firstKill = fresh.firstKill;
         finalDpsCap = fresh.finalDpsCap;
         finalDpsOver = fresh.finalDpsOver;
+        heistDpsCap = fresh.heistDpsCap;
+        heistDpsOver = fresh.heistDpsOver;
+        whaleDpsCap = fresh.whaleDpsCap;
+        whaleDpsOver = fresh.whaleDpsOver;
+        finalTierLifeTable = fresh.finalTierLifeTable;
         maps.clear();
         maps.putAll(fresh.maps);
         finalMap = fresh.finalMap;
@@ -557,6 +573,9 @@ public final class MapConfig {
         finalTierLifeMax = fresh.finalTierLifeMax;
         bossTierLifeFrom = fresh.bossTierLifeFrom;
         bossTierLifeMax = fresh.bossTierLifeMax;
+        monsterTierFrom = fresh.monsterTierFrom;
+        monsterTierLifeMax = fresh.monsterTierLifeMax;
+        monsterTierDamageMax = fresh.monsterTierDamageMax;
         shieldTierShare = fresh.shieldTierShare;
         extraFinals.clear();
         extraFinals.putAll(fresh.extraFinals);
@@ -579,6 +598,11 @@ public final class MapConfig {
         firstKill = new FirstKill(0, 1, 2);
         finalDpsCap = 0;
         finalDpsOver = List.of();
+        heistDpsCap = 0;
+        heistDpsOver = List.of();
+        whaleDpsCap = 0;
+        whaleDpsOver = List.of();
+        finalTierLifeTable = null;
         final Path file = dataFolder.resolve("maps.yml");
         if (!Files.exists(file)) {
             MapStats.setTiers(settings.tiers());
@@ -589,6 +613,10 @@ public final class MapConfig {
         final YamlNode bossTierLife = s.node("boss_tier_life");
         bossTierLifeFrom = Math.max(1, bossTierLife.integer("from", 16));
         bossTierLifeMax = Math.max(1, Math.min(10, bossTierLife.decimal("max", 1.0)));
+        final YamlNode monsterTier = s.node("monster_tier");
+        monsterTierFrom = Math.max(1, monsterTier.integer("from", 16));
+        monsterTierLifeMax = Math.max(1, Math.min(10, monsterTier.decimal("life", 1.0)));
+        monsterTierDamageMax = Math.max(1, Math.min(5, monsterTier.decimal("damage", 1.0)));
         shieldTierShare = Math.max(0, Math.min(1, s.decimal("shield_tier_share", DEFAULT_SHIELD_TIER_SHARE)));
         final YamlNode packs = s.node("packs");
         settings = new Settings(parseTiers(s), Math.max(1, s.integer("instance_cap", 20)),
@@ -630,6 +658,22 @@ public final class MapConfig {
         final YamlNode finalDps = root.node("final_dps");
         finalDpsCap = Math.max(0, finalDps.decimal("dps_cap", 0));
         finalDpsOver = List.copyOf(parseDpsOver(finalDps, finalDpsCap));
+        if (root.has("heist_dps")) {
+            final YamlNode heistDps = root.node("heist_dps");
+            heistDpsCap = Math.max(0, heistDps.decimal("dps_cap", 0));
+            heistDpsOver = List.copyOf(parseDpsOver(heistDps, heistDpsCap));
+        } else {
+            heistDpsCap = finalDpsCap;
+            heistDpsOver = finalDpsOver;
+        }
+        if (root.has("whale_dps")) {
+            final YamlNode whaleDps = root.node("whale_dps");
+            whaleDpsCap = Math.max(0, whaleDps.decimal("dps_cap", 0));
+            whaleDpsOver = List.copyOf(parseDpsOver(whaleDps, whaleDpsCap));
+        } else {
+            whaleDpsCap = finalDpsCap;
+            whaleDpsOver = finalDpsOver;
+        }
         final YamlNode f = root.node("first_kill");
         firstKill = new FirstKill(Math.max(0, f.integer("map_points", 0)), Math.max(0, f.integer("named_points", 1)),
                 Math.max(0, f.integer("final_points", 2)));
@@ -645,6 +689,7 @@ public final class MapConfig {
             final YamlNode tierLife = node.node("tier_life");
             finalTierLifeFrom = Math.max(1, tierLife.integer("from", DEFAULT_FINAL_TIER_LIFE_FROM));
             finalTierLifeMax = Math.max(1, Math.min(20, tierLife.decimal("max", DEFAULT_FINAL_TIER_LIFE_MAX)));
+            finalTierLifeTable = parseTierTable(node, "tier_life_table");
             finalInfos.put(finalMap.id(), new FinalInfo(finalMap.id(), List.of(), firstKill.finalPoints(), finalLevelBonus,
                     node.has("uber") ? parseUber(node.node("uber")) : null));
             noteUberChase(node);
@@ -856,7 +901,7 @@ public final class MapConfig {
             throw new IllegalArgumentException(node.path() + ".cooldown：要在 0.25 到 1.5 之間（招式冷卻的倍率）");
         }
         final double dpsCap = Math.max(0, node.decimal("dps_cap", 0));
-        return new Uber(node.string("name", null), Math.max(1, Math.min(50, node.decimal("life", 4))),
+        return new Uber(node.string("name", null), Math.max(1, Math.min(500, node.decimal("life", 4))) /* 2026-10-21：50 → 500（極境照每秒 300 萬調） */,
                 Math.max(1, Math.min(10, node.decimal("damage", 1.5))), cooldown, Math.max(0, Math.min(30, node.integer("level_bonus", 4))),
                 BossSkillUse.parseList(node, "skills"), phases, node.has("enrage") ? parseEnrage(node.node("enrage")) : null,
                 BossHazard.parseList(node, "hazards"), node.strings("mods"), node.string("intro", null), monster, player,
@@ -1186,9 +1231,67 @@ public final class MapConfig {
         return finalLifeMultiplier(tier, finalTierLifeFrom, finalTierLifeMax, tiers().max());
     }
 
+    /** final.tier_life_table：每一階一個倍率（1–1000），數量要跟 settings.tiers 一樣；沒寫回傳 null。 */
+    private double[] parseTierTable(final YamlNode node, final String key) {
+        if (!node.has(key)) {
+            return null;
+        }
+        if (!(node.raw(key) instanceof List<?> list) || list.size() != tiers().max()) {
+            throw new IllegalArgumentException(node.path() + "." + key + "：要寫 " + tiers().max() + " 個數字（T1 … T" + tiers().max() + "）");
+        }
+        final double[] table = new double[list.size()];
+        for (int i = 0; i < table.length; i++) {
+            if (!(list.get(i) instanceof Number number) || number.doubleValue() < 1 || number.doubleValue() > 1000) {
+                throw new IllegalArgumentException(node.path() + "." + key + " 第 " + (i + 1) + " 個：要是 1 到 1000 的數字");
+            }
+            table[i] = number.doubleValue();
+        }
+        return table;
+    }
+
+    /**
+     * 一般終局 Boss（不是極境、巔峰、金庫之主）的生命照階級再乘幾倍（2026-10-21）：有 final.tier_life_table 照表，
+     * 沒有照 tier_life（{@link #finalLifeMultiplier}）。
+     */
+    public double finalBossLifeMultiplier(final int tier) {
+        final double[] table = finalTierLifeTable;
+        if (table == null || table.length == 0) {
+            return finalLifeMultiplier(tier);
+        }
+        return table[Math.max(1, Math.min(table.length, tier)) - 1];
+    }
+
+    /** 金庫之主的每秒傷害上限（2026-10-21，heist_dps）。 */
+    public double heistDpsCap() {
+        return heistDpsCap;
+    }
+
+    public List<DpsTier> heistDpsOver() {
+        return heistDpsOver;
+    }
+
+    /** 淵鯨的每秒傷害上限（2026-10-21，whale_dps）。 */
+    public double whaleDpsCap() {
+        return whaleDpsCap;
+    }
+
+    public List<DpsTier> whaleDpsOver() {
+        return whaleDpsOver;
+    }
+
     /** 一般地圖 Boss（不是終局）的生命照階級再乘幾倍（maps.yml 的 settings.boss_tier_life）。 */
     public double bossLifeMultiplier(final int tier) {
         return finalLifeMultiplier(tier, bossTierLifeFrom, bossTierLifeMax, tiers().max());
+    }
+
+    /** 地圖裡一般怪物（不是 Boss）的生命照階級再乘幾倍（maps.yml 的 settings.monster_tier.life；2026-10-21）。 */
+    public double monsterLifeMultiplier(final int tier) {
+        return finalLifeMultiplier(tier, monsterTierFrom, monsterTierLifeMax, tiers().max());
+    }
+
+    /** 地圖裡一般怪物（不是 Boss）的傷害照階級再乘幾倍（maps.yml 的 settings.monster_tier.damage；2026-10-21）。 */
+    public double monsterDamageMultiplier(final int tier) {
+        return finalLifeMultiplier(tier, monsterTierFrom, monsterTierDamageMax, tiers().max());
     }
 
     /**

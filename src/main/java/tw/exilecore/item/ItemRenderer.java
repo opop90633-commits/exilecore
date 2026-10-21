@@ -37,7 +37,7 @@ public final class ItemRenderer {
      * 5 = 傳奇的專屬外觀等後來的外觀調整。
      * 6 = 武器本身的詞綴（本地加成）：武器數值改過的畫成藍色、暴擊率顯示兩位小數。
      */
-    public static final int RENDER_VERSION = 26; // 26：飾品上的偷取吃攻擊、生命催化劑（2026-10-19）；25：其他標籤也照 PoE2 的資料對過（93 條）；24：攻擊、法術標籤照 PoE2 的資料對過一輪（50 條），遺時珠寶的詞綴也有標籤；23：箭袋「弓技能傷害」的標籤照 PoE2（只有傷害）；22：詞綴後來多的變數補上（AffixUpgrade），舊物品重畫一次把補好的寫回去；21：暴擊率那一行漏了數字與「每秒攻擊」、傳奇武器的基底傷害照物品等級；20：催化劑品質只寫「攻擊詞綴」、固定詞綴有標籤；19：靈盾改名法器、不能格擋；18：基礎暴擊率改過也變色；17：權杖顯示精魂；16：符文孔；15：催化劑的說明改字；14：說明排版（分隔線、前後綴顏色）；13：鎖定的小鎖頭；8：武器上的物理增加與攻擊附加改成本地；9：魔法、稀有裝備的外框標記；10：傳奇也有外框；11：飾品品質（催化劑）加成後的數值；12：47 件傳奇補上專屬圖
+    public static final int RENDER_VERSION = 27; // 27：一般裝備、地圖、藥劑、護符、珠寶的圖（base:基底代號，2026-10-21）；26：飾品上的偷取吃攻擊、生命催化劑（2026-10-19）；25：其他標籤也照 PoE2 的資料對過（93 條）；24：攻擊、法術標籤照 PoE2 的資料對過一輪（50 條），遺時珠寶的詞綴也有標籤；23：箭袋「弓技能傷害」的標籤照 PoE2（只有傷害）；22：詞綴後來多的變數補上（AffixUpgrade），舊物品重畫一次把補好的寫回去；21：暴擊率那一行漏了數字與「每秒攻擊」、傳奇武器的基底傷害照物品等級；20：催化劑品質只寫「攻擊詞綴」、固定詞綴有標籤；19：靈盾改名法器、不能格擋；18：基礎暴擊率改過也變色；17：權杖顯示精魂；16：符文孔；15：催化劑的說明改字；14：說明排版（分隔線、前後綴顏色）；13：鎖定的小鎖頭；8：武器上的物理增加與攻擊附加改成本地；9：魔法、稀有裝備的外框標記；10：傳奇也有外框；11：飾品品質（催化劑）加成後的數值；12：47 件傳奇補上專屬圖
     /** 物品上記的外觀版本（PDC）。 */
     public static final NamespacedKey RENDER_KEY = new NamespacedKey("exilecore", "render");
 
@@ -132,6 +132,13 @@ public final class ItemRenderer {
             // 傳奇的專屬外觀：資源包用 custom_model_data 的字串選圖；沒套資源包的看到原本的物品，所以不用管 resource-pack.enabled
             stack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelData.customModelData().addString(UniqueArt.modelKey(data.unique()))
                     .addFlag(lockFlag).build());
+        } else if (BaseArt.has(data.base())) {
+            // 2026-10-21：一般裝備、地圖、藥劑、護符、珠寶的圖（web/base_art.txt）：字串 0 是 base:基底代號，字串 1 是外框的稀有度
+            final CustomModelData.Builder model = CustomModelData.customModelData().addString(BaseArt.modelKey(data.base()));
+            if (data.rarity() == Rarity.MAGIC || data.rarity() == Rarity.RARE || data.rarity() == Rarity.UNIQUE) {
+                model.addString(data.rarity() == Rarity.MAGIC ? "rarity:magic" : data.rarity() == Rarity.RARE ? "rarity:rare" : "rarity:unique");
+            }
+            stack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, model.addFlag(lockFlag).build());
         } else if (data.rarity() == Rarity.MAGIC || data.rarity() == Rarity.RARE || data.rarity() == Rarity.UNIQUE) {
             // 2026-10：魔法、稀有、傳奇裝備在格子裡有淺淺的同色漸層外框（資源包的原版物品定義照這個字串挑；沒套資源包的看到原本的樣子）。
             // 有專屬外觀的傳奇走上面那條（unique:代號），外框畫在專屬外觀的挑選裡
@@ -322,6 +329,18 @@ public final class ItemRenderer {
                 final List<ItemStats.AffixLine> affixLines = new ArrayList<>(ItemStats.affixLines(repository, data));
                 // 2026-10：前綴排前面、後綴排後面（同一種排在一起比較好看）
                 affixLines.sort(java.util.Comparator.comparingInt(each -> each.type() == AffixType.PREFIX ? 0 : 1));
+                // 2026-10-21：蝕變石的腐化詞綴排最前面、紅色，不算前綴、後綴的位子
+                final List<ItemStats.AffixLine> enchants = new ArrayList<>();
+                affixLines.removeIf(each -> {
+                    if (ItemStats.AffixLine.ENCHANT.equals(each.mark())) {
+                        enchants.add(each);
+                        return true;
+                    }
+                    return false;
+                });
+                for (final ItemStats.AffixLine enchant : enchants) {
+                    lore.add(line("<#d20000>腐化：" + enchant.ranged() + AffixChips.miniMessage(enchant.chips())));
+                }
                 if (!unique) {
                     // 前綴、後綴各用了幾個位子（改造時一看就知道還能加哪種）
                     lore.add(line(affixSlots(data, affixLines)));
@@ -329,9 +348,11 @@ public final class ItemRenderer {
                 for (final ItemStats.AffixLine affixLine : affixLines) {
                     // 被催化劑加強的詞綴：數值已經是加成後的，用亮藍色、後面標「催化」
                     // 被「增加 x% 已揭露詞綴的幅度」加強的揭露詞綴（2026-10）：數值已經是加成後的，用紫色、後面標「揭露 +x%」
+                    final boolean fractured = ItemStats.AffixLine.FRACTURED.equals(affixLine.mark()); // 2026-10-21：定星石
                     final String catalysedMark = (affixLine.catalysed() ? " <#7fd4ff>✦催化" : "")
-                            + (affixLine.unveiled() ? " <#d69bff>✦揭露 +" + affixLine.unveiledBoost() + "%" : "");
-                    final String boostColor = affixLine.unveiled() ? "#d69bff" : affixLine.catalysed() ? "#7fd4ff" : null;
+                            + (affixLine.unveiled() ? " <#d69bff>✦揭露 +" + affixLine.unveiledBoost() + "%" : "")
+                            + (fractured ? " <#c9a66b>✦破裂" : "");
+                    final String boostColor = affixLine.unveiled() ? "#d69bff" : affixLine.catalysed() ? "#7fd4ff" : fractured ? "#c9a66b" : null;
                     final String chips = AffixChips.miniMessage(affixLine.chips()); // 2026-10：詞綴標籤（傷害、火焰、攻擊…）
                     lore.add(line(unique ? "<" + (boostColor != null ? boostColor : "#8888ff") + ">" + affixLine.ranged() + catalysedMark + chips
                             : affixTag(affixLine.type()) + "<" + (boostColor != null ? boostColor
@@ -388,7 +409,10 @@ public final class ItemRenderer {
         lore.add(line(SEPARATOR));
         lore.add(line("<dark_gray>物品等級 " + data.ilvl() + (data.starter() ? "・新手裝備（拆解沒有東西）" : "")));
         if (data.corrupted()) {
-            lore.add(line("<#d20000>已腐化 <dark_gray>（不能再用通貨改造）"));
+            lore.add(line("<#d20000>已腐化 <dark_gray>（不能再用通貨改造；空的符文孔還能嵌符文）"));
+        }
+        if (data.fractured() != null) {
+            lore.add(line("<#c9a66b>✦破裂 <dark_gray>（那一條詞綴通貨動不到，會一直留著）"));
         }
         if (data.mirrored()) {
             lore.add(line("<#9fd8ff>鏡像複製品 <dark_gray>（不能再改造、不能再複製）"));

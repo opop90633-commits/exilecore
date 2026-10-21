@@ -27,6 +27,8 @@ values:
   abyss_core: 150000              # 深淵星核：開極境的鑰匙（T12 以上的終局 Boss 才有機率掉）
   oracle_orb: 150000
   greater_socket_orb: 150000
+  corrupt_orb: 3000               # 2026-10-21：蝕變石（PoE2 的瓦爾寶珠）：腐化區第一次打倒 Boss 才掉
+  fracture_orb: 150000            # 2026-10-21：定星石（PoE2 的破裂石）：淨化區第一次打倒 Boss 才掉，很少
   # 地圖機制的特殊通貨（寶箱的星魄、裂隙的催化劑、流寇的星籤）
   essence_body: 60
   essence_mind: 50

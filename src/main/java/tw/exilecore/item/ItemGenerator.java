@@ -224,10 +224,17 @@ public final class ItemGenerator {
 
     /** 隨機移除一條詞綴（湮滅石；亂流石的前半）。沒有詞綴回傳 false；稀有度不變。 */
     public boolean removeRandomAffix(final ItemData data, final RandomGenerator random) {
-        if (data.affixes().isEmpty()) {
+        // 2026-10-21：破裂的詞綴（定星石）移除不掉
+        final List<RolledAffix> removable = new ArrayList<>();
+        for (final RolledAffix rolled : data.affixes()) {
+            if (!data.isFractured(rolled)) {
+                removable.add(rolled);
+            }
+        }
+        if (removable.isEmpty()) {
             return false;
         }
-        data.affixes().remove(random.nextInt(data.affixes().size()));
+        data.affixes().remove(removable.get(random.nextInt(removable.size())));
         return true;
     }
 
@@ -249,7 +256,7 @@ public final class ItemGenerator {
     public void rerollValues(final ItemData data, final RandomGenerator random) {
         for (final RolledAffix rolled : data.affixes()) {
             final Affix affix = repository.affix(rolled.id());
-            if (affix == null) {
+            if (affix == null || data.isFractured(rolled)) { // 2026-10-21：破裂的詞綴數值也不變
                 continue;
             }
             // 2026-10：詞綴照 PoE2 重做過，舊物品的階級代號可能已經不在了：照排名換成最接近的階級
@@ -257,6 +264,65 @@ public final class ItemGenerator {
                     .orElse(affix.tiers().get(Math.min(affix.tiers().size(), Math.max(1, rolled.tier())) - 1));
             rolled.setVars(tier.roll(random));
         }
+    }
+
+    /**
+     * 蝕變石的「腐化詞綴」（2026-10-21，affixes/corrupted.yml，照 PoE2 的腐化附魔）：spawn_tags 寫 corruption 加上出在哪些裝備
+     * （任一個標籤符合就行，跟一般詞綴一樣）、require_tags 全部都要有、exclude_tags 不能有。
+     * 隨機挑一條這件裝備能有的加上去（照權重）；已經有一條就換掉（一件只會有一條）。沒有能加的回傳 false。
+     */
+    public boolean addCorruptionEnchant(final ItemData data, final RandomGenerator random) {
+        final ItemBase base = repository.base(data.base());
+        if (base == null) {
+            return false;
+        }
+        final List<Affix> pool = new ArrayList<>();
+        int total = 0;
+        for (final Affix affix : repository.affixes()) {
+            if (isCorruptionEnchant(affix.id()) && corruptionFits(affix, base) && !affix.tiers().isEmpty()) {
+                pool.add(affix);
+                total += Math.max(1, affix.tiers().getFirst().weight());
+            }
+        }
+        if (pool.isEmpty()) {
+            return false;
+        }
+        int pick = random.nextInt(total);
+        Affix chosen = pool.getLast();
+        for (final Affix affix : pool) {
+            pick -= Math.max(1, affix.tiers().getFirst().weight());
+            if (pick < 0) {
+                chosen = affix;
+                break;
+            }
+        }
+        data.affixes().removeIf(rolled -> isCorruptionEnchant(rolled.id()));
+        data.affixes().add(new RolledAffix(chosen.id(), chosen.tiers().getFirst().tier(), chosen.tiers().getFirst().roll(random)));
+        return true;
+    }
+
+    /** 這條是不是蝕變石加的腐化詞綴。 */
+    public boolean isCorruptionEnchant(final String affixId) {
+        final Affix affix = repository.affix(affixId);
+        return affix != null && affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG);
+    }
+
+    /** 腐化詞綴出不出在這個基底上：spawn_tags（corruption 以外）任一個符合、require_tags 全有、exclude_tags 都沒有。 */
+    public static boolean corruptionFits(final Affix affix, final ItemBase base) {
+        if (!base.tags().containsAll(affix.requireTags())) {
+            return false;
+        }
+        for (final String tag : base.tags()) {
+            if (affix.excludeTags().contains(tag)) {
+                return false;
+            }
+        }
+        for (final String tag : affix.spawnTags()) {
+            if (!tag.equals(ItemRepository.CORRUPTION_TAG) && base.tags().contains(tag)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 重擲固定詞綴的數值。 */
@@ -307,16 +373,21 @@ public final class ItemGenerator {
      * @return 有沒有真的加上（沒空位或池子是空的就是 false）
      */
     public boolean addAffix(final ItemData data, final AffixType type, final RandomGenerator random) {
+        return addAffix(data, type, random, false);
+    }
+
+    /** 同上；ignoreLimit = 不管前綴、後綴的上限（2026-10-21：蝕變石腐化珠寶時「多一條詞綴」，照 PoE2 可以超過上限）。 */
+    public boolean addAffix(final ItemData data, final AffixType type, final RandomGenerator random, final boolean ignoreLimit) {
         AffixType chosen = type;
         if (chosen == null) {
-            final boolean prefixOk = canAddAffix(data, AffixType.PREFIX);
-            final boolean suffixOk = canAddAffix(data, AffixType.SUFFIX);
+            final boolean prefixOk = ignoreLimit || canAddAffix(data, AffixType.PREFIX);
+            final boolean suffixOk = ignoreLimit || canAddAffix(data, AffixType.SUFFIX);
             if (!prefixOk && !suffixOk) {
                 return false;
             }
             chosen = prefixOk && suffixOk ? (random.nextBoolean() ? AffixType.PREFIX : AffixType.SUFFIX)
                     : prefixOk ? AffixType.PREFIX : AffixType.SUFFIX;
-        } else if (!canAddAffix(data, chosen)) {
+        } else if (!ignoreLimit && !canAddAffix(data, chosen)) {
             return false;
         }
 
@@ -427,6 +498,12 @@ public final class ItemGenerator {
             }
             if (tier == null) {
                 return affix.id() + " 沒有階級代號 " + tierCode + "（有：" + String.join("、", codes) + "；越小越強）";
+            }
+        }
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix other = repository.affix(rolled.id());
+            if (data.isFractured(rolled) && other != null && other.group().equals(affix.group())) {
+                return "同一群組的 " + rolled.id() + " 是破裂的詞綴，換不掉"; // 2026-10-21
             }
         }
         data.affixes().removeIf(rolled -> {

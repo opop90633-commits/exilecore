@@ -1,0 +1,63 @@
+# 星圖（2026-10-21：照 PoE2 改成程序生成、無限延伸的六角格）。改完 /ec reload：之後看到的星圖照新的（已完成的格子不變）。
+#
+# 每個角色一個種子（建角色、第一次登入時隨機），格子的內容由「種子 + 座標」算出來，不存整張圖，只存走過的格子。
+# 六角格用軸座標 (q, r)，起點 (0, 0) 是營地；距離 d = max(|q|, |r|, |q+r|)。
+# 探索：起點周圍 start_radius 格一開始就解鎖；完成一格（打倒 Boss）解鎖相鄰 on_complete 格；完成塔解鎖半徑 on_tower。
+# 地圖還是物品：裝置放進地圖物品時選一個「已解鎖、種類相同」的格子（預設最近的未完成格），打完那格算完成。
+# 同一格可以再開，但完成的獎勵（天賦點、解鎖）只給一次。別人給的、沒解鎖種類的地圖可以開，只是不算任何格子完成。
+#
+# empty_threshold   空格（星際的空隙）的比例；相鄰的兩格不會同時是空的，所以星圖一定連通
+# region_scale      同一種地圖聚成小片的粗細（幾格一區）
+# tiers             距離 → 階級範圍 [最近距離, 最低階, 最高階]（由近到遠；超過最後一列的照最後一列）
+# boss_chance       Boss 格的比例（Boss 生命 ×boss_life、必掉 boss_maps 張地圖、傳奇機率 ×boss_unique）
+# hidden_chance     隱藏格的比例（開了才知道：保證一個隨機的地圖事件）
+# tower             塔：every 大約每幾格一座、min_distance 幾格以外才有、radius 石板罩的半徑、points 完成給幾點
+# citadels          城塞：四種終局（照 maps.yml 的 requires 順序）各自大約每幾格一座、min_distance 幾格以外才有、points 完成給幾點
+# corruption        腐化區：min_distance 幾格以外才有、chance 每片區域腐化的機率、patch 一片大約幾格、
+#                   monster_level 怪物等級加成、pack 怪物群 +%、rare 稀有怪 +%、quantity 物品數量 +%、rarity 稀有度 +%
+#                   vaal_chance 第一次打倒 Boss 時每個有份的人掉一顆蝕變石（PoE2 的瓦爾寶珠）的機率（2026-10-21）
+# purification      淨化區（2026-10-21）：跟腐化區一樣一片一片長，不會跟腐化區重疊；難度不變。min_distance、chance、patch 同腐化區，
+#                   fracture_chance 第一次打倒 Boss 時每個有份的人掉一顆定星石（PoE2 的破裂石）的機率
+#                   （兩種石頭都只在「第一次」完成那一格時擲：打過的格子再開就是普通的圖，刷不到）
+# unlock            start_radius 起點周圍幾格一開始解鎖、on_complete 完成一格解鎖幾格、on_tower 完成塔解鎖幾格
+# points            天賦點：per_cell 每完成一格、soft_cap 完成幾格之後、after_cap_every 每幾格才 1 點、
+#                   per_tower 每座塔、per_citadel 每座城塞；終局、極境、階級的點數照 atlas_tree.yml 的 points
+# drop_cap          掉落的地圖最高幾階：start 一開始、per_cells 每完成幾格高一階（到 T16 要 (16 - start) × per_cells 格）
+# maps              每一種地圖在星圖上的規則：min_distance 幾格以外才會出現（沒寫：照它以前的圈數換算 2×圈 − 1）、weight 抽到的權重（沒寫 100）
+
+empty_threshold: 0.25
+region_scale: 3
+tiers:
+  - [1, 1, 2]
+  - [3, 3, 5]
+  - [5, 6, 9]
+  - [8, 10, 13]
+  - [11, 14, 16]
+boss_chance: 0.15
+boss_life: 1.5
+boss_maps: 2
+boss_unique: 2.0
+hidden_chance: 0.03
+tower: { every: 35, min_distance: 3, radius: 3, points: 2 }
+citadels: { every: 150, min_distance: 8, points: 2 }
+corruption: { min_distance: 6, chance: 0.2, patch: 12, monster_level: 1, pack: 30, rare: 50, quantity: 20, rarity: 30, vaal_chance: 0.35 }
+purification: { min_distance: 6, chance: 0.12, patch: 12, fracture_chance: 0.08 }
+unlock: { start_radius: 1, on_complete: 1, on_tower: 3 }
+points: { per_cell: 1, soft_cap: 60, after_cap_every: 3, per_tower: 2, per_citadel: 2 }
+drop_cap: { start: 4, per_cells: 2 }
+
+maps:
+  wreck_bay:       { min_distance: 1, weight: 100 }
+  moss_grove:      { min_distance: 1, weight: 100 }
+  ash_street:      { min_distance: 1, weight: 100 }
+  mist_ferry:      { min_distance: 3, weight: 100 }
+  outer_city:      { min_distance: 3, weight: 100 }
+  frost_pines:     { min_distance: 3, weight: 100 }
+  abyss_mine:      { min_distance: 5, weight: 100 }
+  royal_tomb:      { min_distance: 5, weight: 100 }
+  glow_grotto:     { min_distance: 5, weight: 100 }
+  burning_field:   { min_distance: 7, weight: 100 }
+  tide_temple:     { min_distance: 7, weight: 100 }
+  red_sands:       { min_distance: 7, weight: 100 }
+  starfall_tundra: { min_distance: 9, weight: 100 }
+  observatory:     { min_distance: 9, weight: 100 }

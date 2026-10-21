@@ -50,9 +50,9 @@ public final class CombatListener implements Listener {
 
     /**
      * 算好但還沒套用到玩家身上的傷害：等事件確定沒被其他插件取消（MONITOR）再扣。
-     * manaDamage：傳奇「受到的傷害先從魔力扣」那一份；recoup：之後慢慢回成生命的量。
+     * manaDamage：傳奇「受到的傷害先從魔力扣」那一份；recoup：之後慢慢回成生命的量；manaRecoup：之後慢慢回成魔力的量（2026-10-21）。
      */
-    private record Pending(double esDamage, double lifeDamage, double manaDamage, double recoup,
+    private record Pending(double esDamage, double lifeDamage, double manaDamage, double recoup, double manaRecoup,
                            String source, String skill, DamagePacket dealt, DamagePacket outgoing, LivingEntity thornsTarget,
                            boolean byEnemy, Player pvpAttacker) {
     }
@@ -63,14 +63,16 @@ public final class CombatListener implements Listener {
 
     /** 算好、等傷害事件確定沒被取消（MONITOR）才套用的元素異常。 */
     private record PendingAilment(LivingEntity attacker, SkillProfile skill, StatSheet attackerSheet, StatSheet defenderSheet,
-                                  HitResult result, double taken, MonsterData defenderMonster, double stunScale) {
+                                  HitResult result, double taken, MonsterData defenderMonster, double stunScale,
+                                  java.util.Map<tw.exilecore.stats.DamageType, Double> typeTaken) {
         PendingAilment(final LivingEntity attacker, final SkillProfile skill, final StatSheet attackerSheet, final StatSheet defenderSheet,
-                       final HitResult result, final double taken, final MonsterData defenderMonster) {
-            this(attacker, skill, attackerSheet, defenderSheet, result, taken, defenderMonster, 1.0);
+                       final HitResult result, final double taken, final MonsterData defenderMonster,
+                       final java.util.Map<tw.exilecore.stats.DamageType, Double> typeTaken) {
+            this(attacker, skill, attackerSheet, defenderSheet, result, taken, defenderMonster, 1.0, typeTaken);
         }
 
         PendingAilment withStunScale(final double scale) {
-            return new PendingAilment(attacker, skill, attackerSheet, defenderSheet, result, taken, defenderMonster, scale);
+            return new PendingAilment(attacker, skill, attackerSheet, defenderSheet, result, taken, defenderMonster, scale, typeTaken);
         }
     }
 
@@ -584,6 +586,19 @@ public final class CombatListener implements Listener {
         final boolean evadable = (skill.isAttack() || defenderIsPlayer && !isBoss(attacker))
                 && !skill.tags().contains(DodgeRoll.UNDODGEABLE_TAG); // 2026-10：全場大招閃避也躲不掉，要站安全區
         final java.util.UUID entropyKey = defender.getUniqueId();
+        // 2026-10-21：只加某一種傷害的減益（凋息加混沌、縛根加物理）：疊在挨打的那一方，只乘那一種傷害的部分
+        final java.util.Map<tw.exilecore.stats.DamageType, Double> typeTaken = new java.util.EnumMap<>(tw.exilecore.stats.DamageType.class);
+        final java.util.List<Modifier> typedMods = new java.util.ArrayList<>();
+        for (final tw.exilecore.stats.DamageType type : tw.exilecore.stats.DamageType.values()) {
+            final double increased = debuffs.typedTaken(defender.getUniqueId(), attacker.getUniqueId(), hitTick, type);
+            if (increased > 0) {
+                typeTaken.put(type, 1 + increased);
+                typedMods.add(Modifier.flat(StatKeys.DEBUFF_TAKEN + type.tag(), increased * 100, "減益"));
+            }
+        }
+        if (!typedMods.isEmpty()) {
+            hitDefender = hitDefender.overlay(typedMods);
+        }
         final HitResult result = DamageCalculator.calculate(hitSheet, skill, hitDefender, defenderEs, taken * pvpScale * signature,
                 plugin.items().random(), chance -> entropy.hits(entropyKey, chance, hitTick, plugin.items().random()), evadable);
         // 獰笑焚身（煉獄使者）：暴擊時自己著火
@@ -638,6 +653,7 @@ public final class CombatListener implements Listener {
                 numbers.takenWord((Player) defender, result.blocked() ? "格擋" : "閃避"); // 自己閃掉、擋掉
                 if (result.blocked()) {
                     plugin.players().get((Player) defender).markRecent(tw.exilecore.stats.Recently.BLOCK, plugin.getServer().getCurrentTick());
+                    gainOnBlock((Player) defender, defenderSheet); // 2026-10-21：腐化「格擋時回復生命／魔力」
                     // 2026-10-15（蛛巢壁壘）：格擋時讓攻擊者中毒，視同造成這麼多基礎混沌傷害
                     final double blockPoison = defenderSheet.flat(StatKeys.BLOCK_POISON, java.util.Set.of());
                     if (blockPoison > 0 && ailments != null && !(attacker instanceof Player)) {
@@ -665,7 +681,8 @@ public final class CombatListener implements Listener {
                 ailments.noteFullLife(defender); // 2026-10：重暈滿血的敵人（傷害寫進去之前先看）
             }
             pendingAilments.put(defender.getUniqueId(),
-                    new PendingAilment(credit != null ? credit : attacker, skill, attackerSheet, defenderSheet, result, taken, defenderMonster));
+                    new PendingAilment(credit != null ? credit : attacker, skill, attackerSheet, defenderSheet, result, taken, defenderMonster,
+                            typeTaken));
         }
 
         if (defenderIsPlayer) {
@@ -866,7 +883,7 @@ public final class CombatListener implements Listener {
         }
         final double scale = Math.max(0, effective.apply(StatKeys.LEECH_EFFECT, 1.0, java.util.Set.of())) * Math.max(0, Math.min(1, capScale));
         life *= scale;
-        mana *= scale;
+        mana *= scale * Math.max(0, 1 + effective.increased(StatKeys.LEECH_MANA_EFFECT, java.util.Set.of())); // 2026-10-21：只加魔力偷取量的
         // 立即偷取（2026-10，照 PoE）：x% 立即生效，其餘照常存起來慢慢回；一下最多立即回 {@value #INSTANT_LEECH_CAP} 的最大生命／魔力
         final double instant = StatKeys.flag(effective, StatKeys.FLAG_INSTANT_LEECH) ? 1.0
                 : Math.max(0, Math.min(1, effective.flat(StatKeys.LEECH_INSTANT, java.util.Set.of()) / 100.0));
@@ -1058,7 +1075,9 @@ public final class CombatListener implements Listener {
                 sheet.flat(StatKeys.DAMAGE_FROM_MANA, java.util.Set.of()), sheet.flat(StatKeys.LIFE_RECOUP, java.util.Set.of()));
         final boolean lethal = state.life() - split.life() <= 0;
         event.setDamage(lethal ? LETHAL : 0);
-        pending.put(player.getUniqueId(), new Pending(split.es(), split.life(), split.mana(), split.recoup(), source, skillName, dealt, outgoing,
+        final double manaRecoup = (split.es() + split.life() + split.mana())
+                * Math.max(0, Math.min(100, sheet.flat(StatKeys.MANA_RECOUP, java.util.Set.of()))) / 100.0; // 2026-10-21：腐化「受到的傷害回復為魔力」
+        pending.put(player.getUniqueId(), new Pending(split.es(), split.life(), split.mana(), split.recoup(), manaRecoup, source, skillName, dealt, outgoing,
                 thornsTarget, byEnemy, pvpAttacker));
     }
 
@@ -1233,6 +1252,9 @@ public final class CombatListener implements Listener {
                     if (damage.recoup() > 0 && !state.ruined(plugin.getServer().getCurrentTick())) { // 2026-10-18：禁療中不存
                         state.addLeech(damage.recoup());
                     }
+                    if (damage.manaRecoup() > 0) {
+                        state.addManaLeech(damage.manaRecoup());
+                    }
                     plugin.players().display(player, state);
                     if (damage.byEnemy() && charges != null) {
                         charges.onHit(player); // 磐星
@@ -1245,7 +1267,7 @@ public final class CombatListener implements Listener {
         }
         if (ailment != null && !event.isCancelled() && plugin.ailments() != null && event.getEntity() instanceof LivingEntity defender) {
             plugin.ailments().onHit(ailment.attacker(), defender, ailment.skill(), ailment.attackerSheet(), ailment.defenderSheet(),
-                    ailment.result(), ailment.taken(), ailment.defenderMonster(), ailment.stunScale());
+                    ailment.result(), ailment.taken(), ailment.defenderMonster(), ailment.stunScale(), ailment.typeTaken());
         }
     }
 
@@ -1278,6 +1300,28 @@ public final class CombatListener implements Listener {
     }
 
     /** 除錯訊息（/ec debug 開啟時）。 */
+    /** 2026-10-21（PoE2 腐化）：格擋時回復 x 生命／魔力（直接回，禁療中生命不回）。 */
+    private void gainOnBlock(final Player player, final StatSheet sheet) {
+        final PlayerState state = plugin.players().get(player);
+        if (state == null || !state.hasCharacter() || state.isDead()) {
+            return;
+        }
+        final double life = sheet.flat(StatKeys.LIFE_ON_BLOCK, java.util.Set.of());
+        final double mana = sheet.flat(StatKeys.MANA_ON_BLOCK, java.util.Set.of());
+        boolean changed = false;
+        if (life > 0 && state.life() < state.maxLife() && !state.ruined(plugin.getServer().getCurrentTick())) {
+            state.setLife(Math.min(state.maxLife(), state.life() + life));
+            changed = true;
+        }
+        if (mana > 0 && state.mana() < state.maxMana()) {
+            state.setMana(Math.min(state.maxMana(), state.mana() + mana));
+            changed = true;
+        }
+        if (changed) {
+            plugin.players().display(player, state);
+        }
+    }
+
     private void feedback(final LivingEntity attacker, final LivingEntity defender, final HitResult result) {
         if (attacker instanceof Player player) {
             final PlayerState state = plugin.players().get(player);

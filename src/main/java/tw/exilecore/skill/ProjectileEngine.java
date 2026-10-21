@@ -82,6 +82,8 @@ final class ProjectileEngine implements Listener {
         boolean resting;
         /** 黏彈（2026-10 輔助）：碰到方塊就黏住，不彈跳。 */
         boolean sticky;
+        /** 2026-10-21（PoE2 腐化箭袋）：碰到地形還能連鎖幾次（射出時照機率擲好）。 */
+        int terrainChains;
 
         Shot(final long id, final UUID owner, final SkillBuild build, final SkillProfile profile, final World world, final Vector position,
              final Vector direction, final double speed, final double range, final Arrow arrow, final Set<UUID> hit, final boolean secondary) {
@@ -222,6 +224,17 @@ final class ProjectileEngine implements Listener {
             arrows.put(arrow.getUniqueId(), id);
         } else {
             shot = new Shot(id, owner.getUniqueId(), build, profile, world, start, direction, speed, range, null, volley, secondary);
+        }
+        if (shot.fuseLeft < 0) {
+            // 2026-10-21：射出時擲的機率：x% 機率穿透（箭袋）、x% 機率從地形連鎖（腐化箭袋；分裂、散射出來的不擲）
+            final tw.exilecore.stats.StatSheet effective = profile.effective(plugin.players().sheet(owner));
+            shot.pierceLeft += extraFromChance(effective.flat(tw.exilecore.stats.StatKeys.PIERCE_CHANCE, profile.tags()), random);
+            if (!secondary) {
+                final double terrain = effective.flat(tw.exilecore.stats.StatKeys.CHAIN_TERRAIN, profile.tags());
+                if (terrain > 0 && (terrain >= 100 || random.nextDouble() * 100 < terrain)) {
+                    shot.terrainChains = 1;
+                }
+            }
         }
         if (shot.fuseLeft > 0) {
             // 2026-10：引信時間（長引信、短引信）、黏彈
@@ -448,6 +461,22 @@ final class ProjectileEngine implements Listener {
                 shot.position = at.add(shot.direction.clone().multiply(0.6));
                 return;
             }
+            if (shot.terrainChains > 0) {
+                // 2026-10-21：從地形連鎖：轉向附近最近、還沒打過的敵人
+                final LivingEntity next = targets.nearest(at.toLocation(shot.world), SkillBuild.PROJECTILE_CHAIN_RANGE, shot.hit, owner);
+                if (next != null) {
+                    shot.terrainChains--;
+                    final Vector direction = SkillTargets.center(next).toVector().subtract(at);
+                    final double distance = direction.length();
+                    if (distance > 1e-6) {
+                        shot.position = at;
+                        shot.direction = direction.multiply(1 / distance);
+                        shot.ticksLeft = (int) Math.ceil((distance + 3) / Math.max(0.1, shot.speed)) + 2;
+                        visuals.impact(shot.visual(), at.toLocation(shot.world));
+                        return;
+                    }
+                }
+            }
             stop(shot, owner, at.toLocation(shot.world));
             return;
         }
@@ -474,6 +503,19 @@ final class ProjectileEngine implements Listener {
             stopEffects(shot, owner, next.toLocation(shot.world), false);
             remove(shot);
         }
+    }
+
+    /** x% 機率多一次：每 100% 必定多一次，剩下的擲一次（PoE2 的「超越」算法）。 */
+    static int extraFromChance(final double percent, final RandomGenerator random) {
+        if (percent <= 0) {
+            return 0;
+        }
+        int extra = (int) (percent / 100);
+        final double rest = percent - extra * 100;
+        if (rest > 0 && random.nextDouble() * 100 < rest) {
+            extra++;
+        }
+        return extra;
     }
 
     /** 矮的怪比照這個高度算（大約一個人高）：投射物從腰的高度飛出去，蜘蛛、蠹魚只有半格高，從牠頭上飛過去。 */

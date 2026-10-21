@@ -1,204 +1,169 @@
 # 星圖天賦（地圖天賦樹，PoE2 的 Atlas Passive Tree）：完成地圖拿天賦點，點了之後「自己開的地圖」更好。
-# 玩家用 /atlas tree（或星圖、地圖裝置上的「星圖天賦」）打開：左鍵點、右鍵退（免費，同一條下面點了的一起退）。
-# 改完 /ec reload：之後開的地圖照新的（已經開著的不變）。
+# 2026-10-21：從 9 欄直線改成一棵樹（方格座標，上下左右相鄰＝相連；中心 (0,0) 是起點，不用點）。
+# 由 tools/gen_atlas_tree.py 產生（改節點請改那支程式再跑一次）；改完 /ec reload：之後開的地圖照新的。
 #
-# 天賦點（points）：每個角色自己的，跟星圖一樣算
-#   per_map           每完成一張不同的地圖（不含終局）幾點
-#   per_final         每打贏一個終局幾點
-#   per_uber          每打贏一個極境幾點
-#   tier_milestones   最高完成階級到這幾階，各 +1 點
-#   出貨的設定：14 張地圖 + 4 個終局 + 4 個極境 + 5 個階級 = 最多 27 點；全部天賦點滿要 45 點，所以要挑。
-#
-# 效果算「開地圖的那個人」點的：整張地圖、整個隊伍都吃。終局吃得到地圖本身與 Boss 的效果（傳奇機率除外）；
-# 極境、每週回響、昇華試煉這些特別的實例不吃星圖天賦。
-#
-# 分支（branches）：最多 9 條（介面上一條一欄），每條最多 4 個節點，要從上往下點。
-#   name／description／icon（原版物品）／color（#rrggbb）：介面上分支的樣子
-#   nodes：
-#     id       代號（存在角色進度裡；改了代號，點過的人要重點）。點了的代號用逗號串起來存在一格（最多 255 字），代號盡量短
-#     name     名稱
-#     notable  大天賦（介面上用自己的 icon；預設 2 點）
-#     cost     要幾點（沒寫：一般 1 點、大天賦 2 點；1–5）
-#     mods     效果 [{ stat: 效果鍵, value: 數值 }]，同一種可以疊
-#
-# 效果鍵（百分比都是百分比點數：20 = 20%）：
-#   map.quantity / map.rarity                 地圖的物品數量、物品稀有度 +x%（跟地圖詞綴加在一起）
-#   map.pack_size                             怪物群大小 +x%
-#   map.magic_packs / map.rare_packs          魔法、稀有怪物群增加 x%
-#   atlas.experience                          地圖裡的怪給的經驗 +x%
-#   atlas.map_drop                            地圖怪掉地圖的機率增加 x%
-#   atlas.tier_up                             掉落的地圖高一階的機率 +x%（加在 maps.yml 的 tier_up_chance 上）
-#   atlas.boss_maps                           地圖 Boss（含終局）多掉幾張地圖
-#   atlas.boss_quantity / atlas.boss_rarity   地圖 Boss 的物品數量、稀有度 +x%
-#   atlas.boss_unique                         地圖 Boss 掉傳奇的機率增加 x%（一般地圖的 Boss 與具名 Boss；終局照 maps.yml 不變；
-#                                             追逐級傳奇是另外的固定機率，不受影響）
-#   atlas.uber_key                            終局 Boss 掉極境鑰匙的機率增加 x%
-#   atlas.<事件>.weight                       神龕／寶箱／裂隙／流寇（shrine／strongbox／breach／exile）出現的機會增加 x%
-#   atlas.<事件>.extra                        每張地圖保證多幾個這種事件（有空房間的話）
-#   atlas.<事件>.unique                       這種事件掉專屬傳奇的機率增加 x%（1% → 增加 25% 是 1.25%）
-#   atlas.shrine.duration                     神龕增益的持續時間 +x%
-#   atlas.strongbox.quantity                  寶箱的物品數量 +x%
-#   atlas.breach.duration                     裂隙開著的時間 +x%（怪多幾波）
-#   atlas.exile.drops                         流寇多掉幾件稀有裝備
-#   atlas.ritual.chance / atlas.ritual.tribute         祭壇出現的機率增加 x%、貢品 +x%
-#   atlas.delirium.chance / atlas.delirium.progress    幻霧出現的機率增加 x%、獎勵進度 +x%
+# version       改了的話舊角色登入時星圖天賦全部退回（節點代號或位置大改時用）
+# points        天賦點怎麼來（每個角色自己的）：per_map 星圖格子算出來的點數（atlas.yml 的 points：每完成一格 1 點、60 格之後每 3 格 1 點、
+#               塔與城塞各 2 點）乘幾倍、per_final 每打贏一個終局、per_uber 每打贏一個極境、tier_milestones 最高完成階級到這幾階各 +1。
+#               出貨：認真玩到 T16 大約 60–80 格 + 5×2 + 5×2 + 5 ≈ 85–105 點；全部點滿要 166 點，所以要挑。
+# trunks        主幹（介面上的分組與顏色）；core 是中心的輻條、內環與橋
+# nodes         每個節點：id（存在角色進度裡；改了代號點過的人要重點）、name、x/y 座標、trunk、cost（1–5）、
+#               notable 大天賦、keystone 核心（有 drawbacks 代價）、icon（原版物品；小天賦不用）、mods 效果
+# 效果鍵見 AtlasTree.STATS（百分比都是百分比點數：20 = 20%）：
+#   map.quantity / map.rarity / map.pack_size / map.magic_packs / map.rare_packs   地圖本身
+#   atlas.experience / atlas.map_drop / atlas.tier_up / atlas.boss_maps / atlas.boss_quantity / atlas.boss_rarity / atlas.boss_unique / atlas.uber_key
+#   atlas.<事件>.weight / .extra / .unique，atlas.shrine.duration、atlas.strongbox.quantity、atlas.breach.duration、atlas.exile.drops、
+#   atlas.ritual.chance / .tribute、atlas.delirium.chance / .progress
+#   2026-10-21 新：atlas.tower.radius 塔罩的半徑、atlas.tablet.effect 石板效果、atlas.tablet.drop 石板掉落、
+#   atlas.corrupt.chance / .bonus 腐化區、atlas.card.chance / .deck / .gamble 星諭卡、atlas.chase_unique 追逐級傳奇機率
+#   核心的代價（drawbacks）：atlas.map_drop_less、atlas.unique_less、atlas.experience_less、atlas.monster_damage_more、
+#   atlas.no_monster_currency、atlas.other_events_off；核心的旗標：atlas.boss_double、atlas.rare_only、atlas.all_corrupt、atlas.chosen_event
+
+version: 2
 
 points:
   per_map: 1
-  per_final: 1
-  per_uber: 1
+  per_final: 2
+  per_uber: 2
   tier_milestones: [4, 7, 10, 13, 16]
 
-branches:
-  sustain:
-    name: 地圖續航
-    description: 地圖掉得更多、階級更高
-    icon: FILLED_MAP
-    color: "#9fd3ff"
-    nodes:
-      - { id: sustain_1, name: 尋路, mods: [{ stat: atlas.map_drop, value: 20 }] }
-      - { id: sustain_2, name: 星階, mods: [{ stat: atlas.tier_up, value: 10 }] }
-      - { id: sustain_3, name: 拓荒, mods: [{ stat: atlas.map_drop, value: 20 }] }
-      - id: sustain_4
-        name: 星圖之主
-        notable: true
-        icon: COMPASS
-        mods:
-          - { stat: atlas.boss_maps, value: 1 }
-          - { stat: atlas.tier_up, value: 10 }
+trunks:
+  core: { name: 星核, color: "#e8e8f2", icon: NETHER_STAR, description: 中心的輻條、內環與橋：小小的通用加成 }
+  sustain: { name: 地圖續航, color: "#9fd3ff", icon: FILLED_MAP, description: 地圖掉得更多、階級更高 }
+  wealth: { name: 豐饒, color: "#f5b942", icon: GOLD_INGOT, description: 地圖的物品數量與稀有度 }
+  packs: { name: 群聚, color: "#ff8c69", icon: ZOMBIE_HEAD, description: 更多、更強的怪物群（掉落與經驗跟著變多） }
+  bosses: { name: 首領, color: "#af6025", icon: DRAGON_HEAD, description: 地圖 Boss 掉得更好 }
+  shrine: { name: 神龕, color: "#9fe8c8", icon: SEA_LANTERN, description: 更多神龕、增益更久 }
+  strongbox: { name: 寶箱, color: "#e0b050", icon: CHEST, description: 更多寶箱、箱子裡更多東西 }
+  breach: { name: 裂隙, color: "#c48bff", icon: CRYING_OBSIDIAN, description: 更多裂隙、開得更久 }
+  exile: { name: 流寇, color: "#ffff77", icon: IRON_HELMET, description: 更多流寇、掉更多裝備 }
+  rites: { name: 祭儀與迷霧, color: "#ff5c6a", icon: RED_CANDLE, description: 祭壇與幻霧更常出現、獎勵更多 }
+  tower: { name: 塔與石板, color: "#d8c8a0", icon: LODESTONE, description: 塔罩得更廣、先驅石板更有效 }
+  corrupt: { name: 腐化, color: "#b07aff", icon: SCULK_CATALYST, description: 腐化區更常出現、加成更強、掉得更多 }
+  cards: { name: 星諭卡, color: "#c9a0ff", icon: PAPER, description: 星諭卡掉得更多、牌堆更好 }
 
-  wealth:
-    name: 豐饒
-    description: 地圖的物品數量與稀有度
-    icon: GOLD_INGOT
-    color: "#f5b942"
-    nodes:
-      - { id: wealth_1, name: 拾荒, mods: [{ stat: map.quantity, value: 3 }] }
-      - { id: wealth_2, name: 鑑寶, mods: [{ stat: map.rarity, value: 6 }] }
-      - { id: wealth_3, name: 豐收, mods: [{ stat: map.quantity, value: 3 }] }
-      - id: wealth_4
-        name: 星骸的饋贈
-        notable: true
-        icon: GOLD_BLOCK
-        mods:
-          - { stat: map.quantity, value: 4 }
-          - { stat: map.rarity, value: 8 }
-
-  packs:
-    name: 群聚
-    description: 更多、更強的怪物群（掉落與經驗跟著變多）
-    icon: ZOMBIE_HEAD
-    color: "#ff8c69"
-    nodes:
-      - { id: packs_1, name: 蜂擁, mods: [{ stat: map.pack_size, value: 5 }] }
-      - { id: packs_2, name: 魔染, mods: [{ stat: map.magic_packs, value: 15 }] }
-      - { id: packs_3, name: 梟雄, mods: [{ stat: map.rare_packs, value: 15 }] }
-      - id: packs_4
-        name: 萬物歸巢
-        notable: true
-        icon: WITHER_SKELETON_SKULL
-        mods:
-          - { stat: map.pack_size, value: 8 }
-          - { stat: atlas.experience, value: 5 }
-
-  bosses:
-    name: 首領
-    description: 地圖 Boss 掉得更好
-    icon: DRAGON_HEAD
-    color: "#af6025"
-    nodes:
-      - { id: bosses_1, name: 討伐, mods: [{ stat: atlas.boss_quantity, value: 20 }] }
-      - { id: bosses_2, name: 戰利品, mods: [{ stat: atlas.boss_unique, value: 25 }] }
-      - { id: bosses_3, name: 深淵回響, mods: [{ stat: atlas.uber_key, value: 50 }] }
-      - id: bosses_4
-        name: 弒王者
-        notable: true
-        icon: NETHERITE_SWORD
-        mods:
-          - { stat: atlas.boss_rarity, value: 30 }
-          - { stat: atlas.boss_unique, value: 25 }
-
-  shrine:
-    name: 神龕
-    description: 更多神龕、增益更久
-    icon: SEA_LANTERN
-    color: "#9fe8c8"
-    nodes:
-      - { id: shrine_1, name: 虔誠, mods: [{ stat: atlas.shrine.weight, value: 50 }] }
-      - { id: shrine_2, name: 長明, mods: [{ stat: atlas.shrine.duration, value: 25 }] }
-      - { id: shrine_3, name: 天機, mods: [{ stat: atlas.shrine.unique, value: 25 }] }      # 2026-10：50 → 25（事件的專屬傳奇 2% → 1%）
-      - id: shrine_4
-        name: 眾神垂憐
-        notable: true
-        icon: BEACON
-        mods:
-          - { stat: atlas.shrine.extra, value: 1 }
-          - { stat: atlas.shrine.duration, value: 25 }
-
-  strongbox:
-    name: 寶箱
-    description: 更多寶箱、箱子裡更多東西
-    icon: CHEST
-    color: "#e0b050"
-    nodes:
-      - { id: strongbox_1, name: 藏寶圖, mods: [{ stat: atlas.strongbox.weight, value: 50 }] }
-      - { id: strongbox_2, name: 滿載, mods: [{ stat: atlas.strongbox.quantity, value: 25 }] }
-      - { id: strongbox_3, name: 秘藏, mods: [{ stat: atlas.strongbox.unique, value: 25 }] }   # 2026-10：50 → 25
-      - id: strongbox_4
-        name: 寶庫之鑰
-        notable: true
-        icon: ENDER_CHEST
-        mods:
-          - { stat: atlas.strongbox.extra, value: 1 }
-          - { stat: atlas.strongbox.quantity, value: 25 }
-
-  breach:
-    name: 裂隙
-    description: 更多裂隙、開得更久
-    icon: CRYING_OBSIDIAN
-    color: "#c48bff"
-    nodes:
-      - { id: breach_1, name: 裂縫, mods: [{ stat: atlas.breach.weight, value: 50 }] }
-      - { id: breach_2, name: 延宕, mods: [{ stat: atlas.breach.duration, value: 20 }] }
-      - { id: breach_3, name: 虛空之觸, mods: [{ stat: atlas.breach.unique, value: 25 }] }   # 2026-10：50 → 25
-      - id: breach_4
-        name: 裂界洪流
-        notable: true
-        icon: END_PORTAL_FRAME
-        mods:
-          - { stat: atlas.breach.extra, value: 1 }
-          - { stat: atlas.breach.duration, value: 20 }
-
-  exile:
-    name: 流寇
-    description: 更多流寇、掉更多裝備
-    icon: IRON_HELMET
-    color: "#ffff77"
-    nodes:
-      - { id: exile_1, name: 通緝令, mods: [{ stat: atlas.exile.weight, value: 50 }] }
-      - { id: exile_2, name: 搜刮, mods: [{ stat: atlas.exile.drops, value: 1 }] }
-      - { id: exile_3, name: 懸賞, mods: [{ stat: atlas.exile.unique, value: 25 }] }       # 2026-10：50 → 25
-      - id: exile_4
-        name: 流寇之王
-        notable: true
-        icon: NETHERITE_HELMET
-        mods:
-          - { stat: atlas.exile.extra, value: 1 }
-          - { stat: atlas.exile.drops, value: 1 }
-
-  rites:
-    name: 祭儀與迷霧
-    description: 祭壇與幻霧更常出現、獎勵更多
-    icon: RED_CANDLE
-    color: "#ff5c6a"
-    nodes:
-      - { id: rites_1, name: 血燭, mods: [{ stat: atlas.ritual.chance, value: 50 }] }
-      - { id: rites_2, name: 奉牲, mods: [{ stat: atlas.ritual.tribute, value: 25 }] }
-      - { id: rites_3, name: 霧鏡, mods: [{ stat: atlas.delirium.chance, value: 50 }] }
-      - id: rites_4
-        name: 瘋狂之宴
-        notable: true
-        icon: TINTED_GLASS
-        mods:
-          - { stat: atlas.delirium.progress, value: 25 }
-          - { stat: atlas.ritual.tribute, value: 25 }
+nodes:
+  - { id: sp_n1, name: 引路, x: 0, y: -1, trunk: core, cost: 1, mods: [{ stat: atlas.map_drop, value: 5 }] }
+  - { id: sp_n2, name: 拾穗, x: 0, y: -2, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: sp_e1, name: 引路, x: 1, y: 0, trunk: core, cost: 1, mods: [{ stat: atlas.map_drop, value: 5 }] }
+  - { id: sp_e2, name: 拾穗, x: 2, y: 0, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: sp_s1, name: 引路, x: 0, y: 1, trunk: core, cost: 1, mods: [{ stat: atlas.map_drop, value: 5 }] }
+  - { id: sp_s2, name: 拾穗, x: 0, y: 2, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: sp_w1, name: 引路, x: -1, y: 0, trunk: core, cost: 1, mods: [{ stat: atlas.map_drop, value: 5 }] }
+  - { id: sp_w2, name: 拾穗, x: -2, y: 0, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_1, name: 星塵, x: -3, y: -3, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_2, name: 星輝, x: -2, y: -3, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
+  - { id: ring_3, name: 星潮, x: -1, y: -3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
+  - { id: ring_4, name: 星識, x: 0, y: -3, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
+  - { id: ring_5, name: 星塵, x: 1, y: -3, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_6, name: 星輝, x: 2, y: -3, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
+  - { id: ring_7, name: 星潮, x: 3, y: -3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
+  - { id: ring_8, name: 星識, x: 3, y: -2, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
+  - { id: ring_9, name: 星塵, x: 3, y: -1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_10, name: 星輝, x: 3, y: 0, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
+  - { id: ring_11, name: 星潮, x: 3, y: 1, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
+  - { id: ring_12, name: 星識, x: 3, y: 2, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
+  - { id: ring_13, name: 星塵, x: 3, y: 3, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_14, name: 星輝, x: 2, y: 3, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
+  - { id: ring_15, name: 星潮, x: 1, y: 3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
+  - { id: ring_16, name: 星識, x: 0, y: 3, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
+  - { id: ring_17, name: 星塵, x: -1, y: 3, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_18, name: 星輝, x: -2, y: 3, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
+  - { id: ring_19, name: 星潮, x: -3, y: 3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
+  - { id: ring_20, name: 星識, x: -3, y: 2, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
+  - { id: ring_21, name: 星塵, x: -3, y: 1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_22, name: 星輝, x: -3, y: 0, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
+  - { id: ring_23, name: 星潮, x: -3, y: -1, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
+  - { id: ring_24, name: 星識, x: -3, y: -2, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
+  - { id: sustain_1, name: 尋路, x: -2, y: -4, trunk: sustain, cost: 1, mods: [{ stat: atlas.map_drop, value: 15 }] }
+  - { id: sustain_2, name: 星階, x: -2, y: -5, trunk: sustain, cost: 1, mods: [{ stat: atlas.tier_up, value: 8 }] }
+  - { id: sustain_3, name: 拓荒, x: -2, y: -6, trunk: sustain, cost: 2, notable: true, icon: COMPASS, mods: [{ stat: atlas.map_drop, value: 20 }, { stat: atlas.tier_up, value: 6 }] }
+  - { id: sustain_4, name: 航線, x: -2, y: -7, trunk: sustain, cost: 1, mods: [{ stat: atlas.map_drop, value: 15 }] }
+  - { id: sustain_5, name: 遠征, x: -2, y: -8, trunk: sustain, cost: 1, mods: [{ stat: atlas.boss_maps, value: 1 }] }
+  - { id: sustain_6, name: 星圖之主, x: -2, y: -9, trunk: sustain, cost: 2, notable: true, icon: RECOVERY_COMPASS, mods: [{ stat: atlas.boss_maps, value: 1 }, { stat: atlas.tier_up, value: 12 }] }
+  - { id: sustain_7, name: 尋星者, x: -2, y: -10, trunk: sustain, cost: 3, keystone: true, icon: NETHER_STAR, mods: [{ stat: atlas.chase_unique, value: 100 }], drawbacks: [{ stat: atlas.unique_less, value: 50 }] }
+  - { id: wealth_1, name: 拾荒, x: 0, y: -4, trunk: wealth, cost: 1, mods: [{ stat: map.quantity, value: 3 }] }
+  - { id: wealth_2, name: 鑑寶, x: 0, y: -5, trunk: wealth, cost: 1, mods: [{ stat: map.rarity, value: 6 }] }
+  - { id: wealth_3, name: 豐收, x: 0, y: -6, trunk: wealth, cost: 2, notable: true, icon: GOLD_BLOCK, mods: [{ stat: map.quantity, value: 4 }, { stat: map.rarity, value: 6 }] }
+  - { id: wealth_4, name: 囤積, x: 0, y: -7, trunk: wealth, cost: 1, mods: [{ stat: map.quantity, value: 3 }] }
+  - { id: wealth_5, name: 慧眼, x: 0, y: -8, trunk: wealth, cost: 1, mods: [{ stat: map.rarity, value: 8 }] }
+  - { id: wealth_6, name: 星骸的饋贈, x: 0, y: -9, trunk: wealth, cost: 2, notable: true, icon: RAW_GOLD_BLOCK, mods: [{ stat: map.quantity, value: 5 }, { stat: map.rarity, value: 10 }] }
+  - { id: wealth_7, name: 孤注一擲, x: 0, y: -10, trunk: wealth, cost: 3, keystone: true, icon: TOTEM_OF_UNDYING, mods: [{ stat: map.quantity, value: 50 }], drawbacks: [{ stat: atlas.map_drop_less, value: 50 }] }
+  - { id: packs_1, name: 蜂擁, x: 2, y: -4, trunk: packs, cost: 1, mods: [{ stat: map.pack_size, value: 5 }] }
+  - { id: packs_2, name: 魔染, x: 2, y: -5, trunk: packs, cost: 1, mods: [{ stat: map.magic_packs, value: 15 }] }
+  - { id: packs_3, name: 獸潮, x: 2, y: -6, trunk: packs, cost: 2, notable: true, icon: SKELETON_SKULL, mods: [{ stat: map.pack_size, value: 6 }, { stat: map.magic_packs, value: 10 }] }
+  - { id: packs_4, name: 梟雄, x: 2, y: -7, trunk: packs, cost: 1, mods: [{ stat: map.rare_packs, value: 15 }] }
+  - { id: packs_5, name: 歷練, x: 2, y: -8, trunk: packs, cost: 1, mods: [{ stat: atlas.experience, value: 6 }] }
+  - { id: packs_6, name: 萬物歸巢, x: 2, y: -9, trunk: packs, cost: 2, notable: true, icon: WITHER_SKELETON_SKULL, mods: [{ stat: map.pack_size, value: 8 }, { stat: map.rare_packs, value: 15 }, { stat: atlas.experience, value: 5 }] }
+  - { id: packs_7, name: 無人之地, x: 2, y: -10, trunk: packs, cost: 3, keystone: true, icon: CREEPER_HEAD, mods: [{ stat: atlas.rare_only, value: 1 }, { stat: map.rare_packs, value: 200 }], drawbacks: [{ stat: atlas.experience_less, value: 30 }] }
+  - { id: bosses_1, name: 討伐, x: 4, y: -2, trunk: bosses, cost: 1, mods: [{ stat: atlas.boss_quantity, value: 15 }] }
+  - { id: bosses_2, name: 戰利品, x: 5, y: -2, trunk: bosses, cost: 1, mods: [{ stat: atlas.boss_unique, value: 20 }] }
+  - { id: bosses_3, name: 斬首令, x: 6, y: -2, trunk: bosses, cost: 2, notable: true, icon: IRON_SWORD, mods: [{ stat: atlas.boss_quantity, value: 20 }, { stat: atlas.boss_rarity, value: 20 }] }
+  - { id: bosses_4, name: 深淵回響, x: 7, y: -2, trunk: bosses, cost: 1, mods: [{ stat: atlas.uber_key, value: 40 }] }
+  - { id: bosses_5, name: 王冠, x: 8, y: -2, trunk: bosses, cost: 1, mods: [{ stat: atlas.boss_unique, value: 20 }] }
+  - { id: bosses_6, name: 弒王者, x: 9, y: -2, trunk: bosses, cost: 2, notable: true, icon: NETHERITE_SWORD, mods: [{ stat: atlas.boss_rarity, value: 30 }, { stat: atlas.boss_unique, value: 30 }, { stat: atlas.uber_key, value: 30 }] }
+  - { id: bosses_7, name: 魔王的宴席, x: 10, y: -2, trunk: bosses, cost: 3, keystone: true, icon: GOLDEN_APPLE, mods: [{ stat: atlas.boss_double, value: 1 }], drawbacks: [{ stat: atlas.no_monster_currency, value: 1 }] }
+  - { id: shrine_1, name: 虔誠, x: 4, y: 0, trunk: shrine, cost: 1, mods: [{ stat: atlas.shrine.weight, value: 40 }] }
+  - { id: shrine_2, name: 長明, x: 5, y: 0, trunk: shrine, cost: 1, mods: [{ stat: atlas.shrine.duration, value: 20 }] }
+  - { id: shrine_3, name: 天機, x: 6, y: 0, trunk: shrine, cost: 2, notable: true, icon: LANTERN, mods: [{ stat: atlas.shrine.unique, value: 25 }, { stat: atlas.shrine.weight, value: 30 }] }
+  - { id: shrine_4, name: 祈願, x: 7, y: 0, trunk: shrine, cost: 1, mods: [{ stat: atlas.shrine.duration, value: 20 }] }
+  - { id: shrine_5, name: 聖域, x: 8, y: 0, trunk: shrine, cost: 1, mods: [{ stat: atlas.shrine.weight, value: 40 }] }
+  - { id: shrine_6, name: 眾神垂憐, x: 9, y: 0, trunk: shrine, cost: 2, notable: true, icon: BEACON, mods: [{ stat: atlas.shrine.extra, value: 1 }, { stat: atlas.shrine.duration, value: 30 }] }
+  - { id: shrine_7, name: 神恩, x: 10, y: 0, trunk: shrine, cost: 2, notable: true, icon: END_CRYSTAL, mods: [{ stat: atlas.shrine.extra, value: 1 }, { stat: atlas.shrine.unique, value: 50 }] }
+  - { id: strongbox_1, name: 藏寶圖, x: 4, y: 2, trunk: strongbox, cost: 1, mods: [{ stat: atlas.strongbox.weight, value: 40 }] }
+  - { id: strongbox_2, name: 滿載, x: 5, y: 2, trunk: strongbox, cost: 1, mods: [{ stat: atlas.strongbox.quantity, value: 20 }] }
+  - { id: strongbox_3, name: 秘藏, x: 6, y: 2, trunk: strongbox, cost: 2, notable: true, icon: TRAPPED_CHEST, mods: [{ stat: atlas.strongbox.unique, value: 25 }, { stat: atlas.strongbox.weight, value: 30 }] }
+  - { id: strongbox_4, name: 重鎖, x: 7, y: 2, trunk: strongbox, cost: 1, mods: [{ stat: atlas.strongbox.quantity, value: 20 }] }
+  - { id: strongbox_5, name: 藏匿, x: 8, y: 2, trunk: strongbox, cost: 1, mods: [{ stat: atlas.strongbox.weight, value: 40 }] }
+  - { id: strongbox_6, name: 寶庫之鑰, x: 9, y: 2, trunk: strongbox, cost: 2, notable: true, icon: ENDER_CHEST, mods: [{ stat: atlas.strongbox.extra, value: 1 }, { stat: atlas.strongbox.quantity, value: 30 }] }
+  - { id: strongbox_7, name: 金庫, x: 10, y: 2, trunk: strongbox, cost: 2, notable: true, icon: GOLD_BLOCK, mods: [{ stat: atlas.strongbox.extra, value: 1 }, { stat: atlas.strongbox.unique, value: 50 }] }
+  - { id: breach_1, name: 裂縫, x: -2, y: 4, trunk: breach, cost: 1, mods: [{ stat: atlas.breach.weight, value: 40 }] }
+  - { id: breach_2, name: 延宕, x: -2, y: 5, trunk: breach, cost: 1, mods: [{ stat: atlas.breach.duration, value: 15 }] }
+  - { id: breach_3, name: 虛空之觸, x: -2, y: 6, trunk: breach, cost: 2, notable: true, icon: OBSIDIAN, mods: [{ stat: atlas.breach.unique, value: 25 }, { stat: atlas.breach.weight, value: 30 }] }
+  - { id: breach_4, name: 裂痕, x: -2, y: 7, trunk: breach, cost: 1, mods: [{ stat: atlas.breach.duration, value: 15 }] }
+  - { id: breach_5, name: 穿界, x: -2, y: 8, trunk: breach, cost: 1, mods: [{ stat: atlas.breach.weight, value: 40 }] }
+  - { id: breach_6, name: 裂界洪流, x: -2, y: 9, trunk: breach, cost: 2, notable: true, icon: END_PORTAL_FRAME, mods: [{ stat: atlas.breach.extra, value: 1 }, { stat: atlas.breach.duration, value: 25 }] }
+  - { id: breach_7, name: 界縫, x: -2, y: 10, trunk: breach, cost: 2, notable: true, icon: ECHO_SHARD, mods: [{ stat: atlas.breach.extra, value: 1 }, { stat: atlas.breach.unique, value: 50 }] }
+  - { id: exile_1, name: 通緝令, x: 0, y: 4, trunk: exile, cost: 1, mods: [{ stat: atlas.exile.weight, value: 40 }] }
+  - { id: exile_2, name: 搜刮, x: 0, y: 5, trunk: exile, cost: 1, mods: [{ stat: atlas.exile.drops, value: 1 }] }
+  - { id: exile_3, name: 懸賞, x: 0, y: 6, trunk: exile, cost: 2, notable: true, icon: CHAINMAIL_HELMET, mods: [{ stat: atlas.exile.unique, value: 25 }, { stat: atlas.exile.weight, value: 30 }] }
+  - { id: exile_4, name: 追緝, x: 0, y: 7, trunk: exile, cost: 1, mods: [{ stat: atlas.exile.weight, value: 40 }] }
+  - { id: exile_5, name: 繳械, x: 0, y: 8, trunk: exile, cost: 1, mods: [{ stat: atlas.exile.drops, value: 1 }] }
+  - { id: exile_6, name: 流寇之王, x: 0, y: 9, trunk: exile, cost: 2, notable: true, icon: NETHERITE_HELMET, mods: [{ stat: atlas.exile.extra, value: 1 }, { stat: atlas.exile.drops, value: 1 }] }
+  - { id: exile_7, name: 單一信仰, x: 0, y: 10, trunk: exile, cost: 3, keystone: true, icon: GOLDEN_HELMET, mods: [{ stat: atlas.chosen_event, value: 2 }], drawbacks: [{ stat: atlas.other_events_off, value: 1 }] }
+  - { id: rites_1, name: 血燭, x: 2, y: 4, trunk: rites, cost: 1, mods: [{ stat: atlas.ritual.chance, value: 40 }] }
+  - { id: rites_2, name: 奉牲, x: 2, y: 5, trunk: rites, cost: 1, mods: [{ stat: atlas.ritual.tribute, value: 20 }] }
+  - { id: rites_3, name: 霧鏡, x: 2, y: 6, trunk: rites, cost: 2, notable: true, icon: TINTED_GLASS, mods: [{ stat: atlas.delirium.chance, value: 40 }, { stat: atlas.delirium.progress, value: 15 }] }
+  - { id: rites_4, name: 血償, x: 2, y: 7, trunk: rites, cost: 1, mods: [{ stat: atlas.ritual.tribute, value: 20 }] }
+  - { id: rites_5, name: 夢魘, x: 2, y: 8, trunk: rites, cost: 1, mods: [{ stat: atlas.delirium.chance, value: 40 }] }
+  - { id: rites_6, name: 瘋狂之宴, x: 2, y: 9, trunk: rites, cost: 2, notable: true, icon: SOUL_LANTERN, mods: [{ stat: atlas.delirium.progress, value: 30 }, { stat: atlas.ritual.tribute, value: 30 }] }
+  - { id: rites_7, name: 深淵裂縫, x: 2, y: 10, trunk: rites, cost: 2, notable: true, icon: SCULK, mods: [{ stat: atlas.abyss.weight, value: 60 }, { stat: atlas.abyss.extra, value: 1 }, { stat: atlas.abyss.unique, value: 50 }] }
+  - { id: tower_1, name: 瞭望, x: -4, y: -2, trunk: tower, cost: 1, mods: [{ stat: atlas.tablet.effect, value: 10 }] }
+  - { id: tower_2, name: 築基, x: -5, y: -2, trunk: tower, cost: 1, mods: [{ stat: atlas.tablet.drop, value: 25 }] }
+  - { id: tower_3, name: 燈塔, x: -6, y: -2, trunk: tower, cost: 2, notable: true, icon: LANTERN, mods: [{ stat: atlas.tower.radius, value: 1 }] }
+  - { id: tower_4, name: 鐫刻, x: -7, y: -2, trunk: tower, cost: 1, mods: [{ stat: atlas.tablet.effect, value: 15 }] }
+  - { id: tower_5, name: 採石, x: -8, y: -2, trunk: tower, cost: 1, mods: [{ stat: atlas.tablet.drop, value: 25 }] }
+  - { id: tower_6, name: 先驅之印, x: -9, y: -2, trunk: tower, cost: 2, notable: true, icon: LODESTONE, mods: [{ stat: atlas.tablet.effect, value: 25 }, { stat: atlas.tablet.drop, value: 50 }] }
+  - { id: tower_7, name: 群塔, x: -10, y: -2, trunk: tower, cost: 2, notable: true, icon: CONDUIT, mods: [{ stat: atlas.tower.radius, value: 1 }, { stat: atlas.tablet.effect, value: 25 }] }
+  - { id: corrupt_1, name: 侵蝕, x: -4, y: 0, trunk: corrupt, cost: 1, mods: [{ stat: atlas.corrupt.chance, value: 20 }] }
+  - { id: corrupt_2, name: 蔓延, x: -5, y: 0, trunk: corrupt, cost: 1, mods: [{ stat: atlas.corrupt.bonus, value: 15 }] }
+  - { id: corrupt_3, name: 污穢, x: -6, y: 0, trunk: corrupt, cost: 2, notable: true, icon: SCULK_SENSOR, mods: [{ stat: atlas.corrupt.chance, value: 25 }, { stat: atlas.corrupt.bonus, value: 15 }] }
+  - { id: corrupt_4, name: 深染, x: -7, y: 0, trunk: corrupt, cost: 1, mods: [{ stat: atlas.corrupt.bonus, value: 20 }] }
+  - { id: corrupt_5, name: 腐土, x: -8, y: 0, trunk: corrupt, cost: 1, mods: [{ stat: atlas.corrupt.chance, value: 25 }] }
+  - { id: corrupt_6, name: 腐化之種, x: -9, y: 0, trunk: corrupt, cost: 2, notable: true, icon: SCULK_SHRIEKER, mods: [{ stat: atlas.corrupt.bonus, value: 30 }, { stat: atlas.corrupt.chance, value: 30 }] }
+  - { id: corrupt_7, name: 腐化之心, x: -10, y: 0, trunk: corrupt, cost: 3, keystone: true, icon: SCULK_CATALYST, mods: [{ stat: atlas.all_corrupt, value: 1 }], drawbacks: [{ stat: atlas.monster_damage_more, value: 20 }] }
+  - { id: cards_1, name: 占卜, x: -4, y: 2, trunk: cards, cost: 1, mods: [{ stat: atlas.card.chance, value: 20 }] }
+  - { id: cards_2, name: 洗牌, x: -5, y: 2, trunk: cards, cost: 1, mods: [{ stat: atlas.card.deck, value: 10 }] }
+  - { id: cards_3, name: 星諭, x: -6, y: 2, trunk: cards, cost: 2, notable: true, icon: MAP, mods: [{ stat: atlas.card.chance, value: 25 }, { stat: atlas.card.deck, value: 10 }] }
+  - { id: cards_4, name: 抽牌, x: -7, y: 2, trunk: cards, cost: 1, mods: [{ stat: atlas.card.chance, value: 20 }] }
+  - { id: cards_5, name: 賭局, x: -8, y: 2, trunk: cards, cost: 1, mods: [{ stat: atlas.card.gamble, value: 10 }] }
+  - { id: cards_6, name: 命運之輪, x: -9, y: 2, trunk: cards, cost: 2, notable: true, icon: RECOVERY_COMPASS, mods: [{ stat: atlas.card.chance, value: 40 }, { stat: atlas.card.deck, value: 20 }] }
+  - { id: cards_7, name: 星牌師, x: -10, y: 2, trunk: cards, cost: 2, notable: true, icon: BOOK, mods: [{ stat: atlas.card.chance, value: 30 }, { stat: atlas.card.gamble, value: 20 }] }
+  - { id: bridge_nl, name: 星橋, x: -1, y: -9, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
+  - { id: bridge_nr, name: 星橋, x: 1, y: -9, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
+  - { id: bridge_el, name: 星橋, x: 9, y: -1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
+  - { id: bridge_er, name: 星橋, x: 9, y: 1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
+  - { id: bridge_sl, name: 星橋, x: -1, y: 9, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
+  - { id: bridge_sr, name: 星橋, x: 1, y: 9, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
+  - { id: bridge_wl, name: 星橋, x: -9, y: -1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
+  - { id: bridge_wr, name: 星橋, x: -9, y: 1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }

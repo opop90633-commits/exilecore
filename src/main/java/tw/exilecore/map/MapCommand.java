@@ -49,7 +49,46 @@ public final class MapCommand {
         return Commands.literal("atlas")
                 .executes(context -> openAtlas(plugin, context, false))
                 .then(Commands.literal("tree").executes(context -> openAtlas(plugin, context, true)))
+                // 2026-10-21：網頁規劃器（/atlas web 給連結、/atlas import <代碼> 匯入）
+                .then(Commands.literal("web").executes(context -> atlasWeb(plugin, context)))
+                .then(Commands.literal("import")
+                        .then(Commands.argument("code", StringArgumentType.greedyString())
+                                .executes(context -> atlasImport(plugin, context, StringArgumentType.getString(context, "code")))))
                 .build();
+    }
+
+    private static int atlasWeb(final ExileCore plugin, final CommandContext<CommandSourceStack> context) {
+        final Player player = player(plugin, context);
+        if (player == null) {
+            return Command.SINGLE_SUCCESS;
+        }
+        if (plugin.maps() == null || !plugin.players().get(player).hasCharacter()) {
+            player.sendMessage(plugin.text().prefixed("<red>先建立角色（/char）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final String url = plugin.maps().atlasPlannerUrl(player);
+        if (url == null) {
+            player.sendMessage(plugin.text().prefixed("<red>網頁沒有開（config.yml 的 web）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        player.sendMessage(plugin.text().prefixed("<#77ccff><click:open_url:'" + url + "'><u>打開星圖天賦的網頁規劃器</u></click><gray>（帶著你現在的配點；"
+                + "規劃好按「複製代碼」，回來輸入 /atlas import <代碼>）"));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int atlasImport(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final String code) {
+        final Player player = player(plugin, context);
+        if (player == null) {
+            return Command.SINGLE_SUCCESS;
+        }
+        if (plugin.maps() == null || !plugin.players().get(player).hasCharacter()) {
+            player.sendMessage(plugin.text().prefixed("<red>先建立角色（/char）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final String trimmed = code.trim();
+        final String body = trimmed.contains("#") ? trimmed.substring(trimmed.indexOf('#') + 1) : trimmed; // 貼整個網址也可以
+        player.sendMessage(plugin.text().prefixed("<#9fd3ff>" + tw.exilecore.item.ItemRenderer.escape(plugin.maps().importAtlas(player, body))));
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int openAtlas(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final boolean tree) {
@@ -106,6 +145,14 @@ public final class MapCommand {
                         .then(Commands.argument("map", StringArgumentType.word()).suggests(maps(plugin, true, true))
                                 .executes(context -> complete(plugin, context, true))))
                 .then(Commands.literal("reset").executes(context -> complete(plugin, context, false)))
+                // 2026-10-21：新星圖的測試指令
+                .then(Commands.literal("seed")
+                        .executes(context -> seed(plugin, context, 0))
+                        .then(Commands.argument("seed", com.mojang.brigadier.arguments.LongArgumentType.longArg())
+                                .executes(context -> seed(plugin, context, com.mojang.brigadier.arguments.LongArgumentType.getLong(context, "seed")))))
+                .then(Commands.literal("reveal")
+                        .then(Commands.argument("radius", IntegerArgumentType.integer(1, 30))
+                                .executes(context -> reveal(plugin, context, IntegerArgumentType.getInteger(context, "radius")))))
                 .then(Commands.literal("fragments")
                         .executes(context -> fragments(plugin, context, 2))
                         .then(Commands.argument("amount", IntegerArgumentType.integer(1, 64))
@@ -397,8 +444,41 @@ public final class MapCommand {
             service.setBest(player, 0);
             service.resetUber(player); // 極境首殺的紀錄也清掉（可以重測）
             service.resetAtlas(player); // 星圖天賦也退掉（天賦點跟著星圖歸零）
+            service.resetAtlasProgress(player); // 2026-10-21：新星圖的格子也清掉
         }
         player.sendMessage(plugin.text().prefixed(complete ? "<gray>星圖標成完成：" + targets.size() + " 張" : "<gray>星圖進度清掉了"));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** 2026-10-21：/ec map seed [種子]：換星圖的種子（完成的格子清掉）。 */
+    private static int seed(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final long seed) {
+        final Player player = player(plugin, context);
+        final MapService service = player == null ? null : service(plugin, player);
+        if (service == null) {
+            return Command.SINGLE_SUCCESS;
+        }
+        if (!plugin.players().get(player).hasCharacter()) {
+            player.sendMessage(plugin.text().prefixed("<red>先建立角色"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final long value = service.reseedAtlas(player, seed);
+        player.sendMessage(plugin.text().prefixed("<gray>星圖的種子換成 <white>" + value + "<gray>，完成的格子清掉了（/atlas 看看）"));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** 2026-10-21：/ec map reveal <半徑>：把起點周圍標成完成（測試用）。 */
+    private static int reveal(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final int radius) {
+        final Player player = player(plugin, context);
+        final MapService service = player == null ? null : service(plugin, player);
+        if (service == null) {
+            return Command.SINGLE_SUCCESS;
+        }
+        if (!plugin.players().get(player).hasCharacter()) {
+            player.sendMessage(plugin.text().prefixed("<red>先建立角色"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final int added = service.revealAtlas(player, radius);
+        player.sendMessage(plugin.text().prefixed("<gray>星圖：起點周圍 " + radius + " 格標成完成（新完成 " + added + " 格）"));
         return Command.SINGLE_SUCCESS;
     }
 

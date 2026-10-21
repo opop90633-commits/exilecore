@@ -33,6 +33,7 @@ public final class SkillResources implements Listener {
         double rage;
         long rageTick;
         long lastRageHit;
+        long lastRageTaken;
         int combo;
         long comboTick;
         long lastComboHit;
@@ -131,6 +132,28 @@ public final class SkillResources implements Listener {
             return; // 同一下打中好幾個只算一次
         }
         s.lastRageHit = now;
+        s.rage = Math.min(rageMax(sheet), s.rage + gain);
+        s.rageTick = now;
+    }
+
+    /** 2026-10-21（PoE2 珠寶）：被敵人擊中時獲得怒氣（rage.when_hit；被格擋、閃掉的不算；同一 tick 只算一次）。 */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onHitTaken(final HitEvent event) {
+        if (!(event.defender() instanceof Player player) || event.attacker() instanceof Player || !event.result().hit() || event.result().blocked()) {
+            return;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        final double gain = sheet.flat(StatKeys.RAGE_WHEN_HIT, Set.of());
+        if (gain <= 0) {
+            return;
+        }
+        final long now = now();
+        final State s = state(player.getUniqueId());
+        decay(s, now);
+        if (now - s.lastRageTaken < 4) {
+            return;
+        }
+        s.lastRageTaken = now;
         s.rage = Math.min(rageMax(sheet), s.rage + gain);
         s.rageTick = now;
     }

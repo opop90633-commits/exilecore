@@ -44,6 +44,10 @@ public final class WebModule implements Module, Listener {
 
     /** 資源包的代號（固定：重送時取代同一個，不會疊好幾份）。 */
     private static final UUID PACK_ID = UUID.nameUUIDFromBytes("exilecore-ui-pack".getBytes(StandardCharsets.UTF_8));
+    /** 背景音樂那包的代號（2026-10-21：音樂拆成另一包，更新插件時不用重新下載）。 */
+    private static final UUID MUSIC_ID = UUID.nameUUIDFromBytes("exilecore-music-pack".getBytes(StandardCharsets.UTF_8));
+    /** 開服後最多等 BetterModel 的資源包多久（tick）才送資源包（2026-10-21）。 */
+    private static final long PACK_WAIT_TICKS = 20L * 60;
 
     private final ExileCore plugin;
     private WebServer server;
@@ -58,8 +62,21 @@ public final class WebModule implements Module, Listener {
     private String writtenSha1;
     private boolean warnedStale;
     private UiPack.Built pack;
-    /** 我們自己的資源包（還沒併別的插件的）。 */
+    /** 我們自己的資源包（還沒併別的插件的；拆掉音樂的）。 */
     private UiPack.Built ownPack;
+    /** 我們自己的資源包，含音樂（2026-10-21：外部空間只給一個網址時用這包，跟以前一樣）。 */
+    private UiPack.Built ownFull;
+    /** 背景音樂那包（2026-10-21）；沒有音樂時是 null。 */
+    private UiPack.Built musicPack;
+    /** 音樂那包放在外部空間的網址（2026-10-21）。外部空間開著、這個沒填時音樂併回介面那包（跟以前一樣一包）。 */
+    private String externalMusicUrl = "";
+    /** 現在的 pack 有沒有把音樂拆出去。 */
+    private boolean packSplit;
+    private String writtenMusicSha1;
+    /** 2026-10-21：開服後等 BetterModel 的資源包併進來才送（以前這段時間登入的人會先下載一次、併完又重下載一次）。 */
+    private boolean packReady = true;
+    /** 等資源包的時候登入的人（主執行緒）。 */
+    private final Set<UUID> waitingPack = ConcurrentHashMap.newKeySet();
     /** 別的插件產生、要併進來的資源包檔案（2026-10：BetterModel）。 */
     private final Map<String, Map<String, byte[]>> externalPacks = new java.util.TreeMap<>();
     /** 這次啟動的代號（網頁與資料對版本用）。 */
@@ -83,6 +100,9 @@ public final class WebModule implements Module, Listener {
     private volatile byte[] shopJson = "{}".getBytes(StandardCharsets.UTF_8);
     private volatile byte[] codexPage = new byte[0];
     private volatile byte[] codexData = "{}".getBytes(StandardCharsets.UTF_8);
+    /** 2026-10-21：星圖天賦的網頁規劃器（web/atlas.html）與它的資料（atlas_tree.yml 轉成 JSON）。 */
+    private volatile byte[] atlasPage = new byte[0];
+    private volatile byte[] atlasData = "{}".getBytes(StandardCharsets.UTF_8);
     private volatile byte[] economyPage = new byte[0];
     private volatile byte[] ladderPage = new byte[0];
     private boolean economyEnabled = false;
@@ -137,10 +157,24 @@ public final class WebModule implements Module, Listener {
             plugin.getSLF4JLogger().warn("撿到東西的角落提示：讀不到資料檔的字（{}）", e.getMessage());
         }
         LootHud.useTexts(lootTexts);
-        ownPack = UiPack.build(plugin.items() == null ? List.of() : UiPack.skins(plugin.items().repository()),
+        ownFull = UiPack.build(plugin.items() == null ? List.of() : UiPack.skins(plugin.items().repository()),
                 gemSkins(plugin.currencies() == null ? List.of() : UiPack.currencySkins(plugin.currencies().repository()), skillSkins()),
-                plugin.items() == null ? java.util.Set.of() : UiPack.gearItems(plugin.items().repository()));
-        mergePacks();
+                plugin.items() == null ? java.util.Set.of() : UiPack.gearItems(plugin.items().repository()),
+                plugin.items() == null ? List.of() : UiPack.baseSkins(plugin.items().repository())); // 2026-10-21：一般裝備、地圖、藥劑、護符、珠寶的圖
+        final UiPack.Split split = UiPack.splitMusic(ownFull);
+        ownPack = split.ui();
+        musicPack = split.music();
+        // 2026-10-21：有裝 BetterModel：等它的資源包併進來（最多 PACK_WAIT_TICKS）才送資源包
+        final org.bukkit.plugin.Plugin betterModel = plugin.getServer().getPluginManager().getPlugin("BetterModel");
+        packReady = betterModel == null || !betterModel.isEnabled();
+        if (!packReady) {
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (!packReady) {
+                    plugin.getSLF4JLogger().info("介面資源包：等了 {} 秒沒等到 BetterModel 的資源包，先送現在的", PACK_WAIT_TICKS / 20);
+                    markPackReady();
+                }
+            }, PACK_WAIT_TICKS);
+        }
         // 2026-10：頁面上寫這次啟動的代號，跟資料的代號對不上（分頁在更新前就開著）頁面會自己提醒重新整理
         plannerPage = new String(loadResource("web/planner.html"), java.nio.charset.StandardCharsets.UTF_8)
                 .replace("__BUILD__", BUILD).getBytes(java.nio.charset.StandardCharsets.UTF_8);
@@ -150,11 +184,18 @@ public final class WebModule implements Module, Listener {
         homePage = loadResource("web/home.html");
         shopPage = loadResource("web/shop.html");
         codexPage = loadResource("web/codex.html");
+        atlasPage = loadResource("web/atlas.html"); // 2026-10-21
         if (profiles == null) {
             profiles = new Profiles(plugin);
             profiles.start();
         }
         readConfig();
+        mergePacks(); // 2026-10-21：要先讀設定（外部空間有沒有給音樂的網址）才知道音樂要不要拆
+        if (!externalUrl.isEmpty() && pack != null) {
+            plugin.getSLF4JLogger().info("介面資源包改從外部空間下載：{}（要上傳的檔案是 plugins/ExileCore/exilecore-ui.zip，SHA1 {}）{}",
+                    externalUrl, pack.sha1(), packSplit ? "；背景音樂：" + externalMusicUrl + "（plugins/ExileCore/exilecore-music.zip）"
+                            : "；背景音樂併在同一包（要拆開就填 resource-pack.external-music-url）");
+        }
         refreshPlannerData();
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         startIfEnabled();
@@ -182,6 +223,7 @@ public final class WebModule implements Module, Listener {
         }
         stopServer();
         packLoaded.clear();
+        waitingPack.clear();
     }
 
     private void readConfig() {
@@ -199,6 +241,10 @@ public final class WebModule implements Module, Listener {
         send = plugin.getConfig().getBoolean("resource-pack.send", true);
         required = plugin.getConfig().getBoolean("resource-pack.required", false);
         externalUrl = plugin.getConfig().getString("resource-pack.external-url", "").trim();
+        externalMusicUrl = plugin.getConfig().getString("resource-pack.external-music-url", "").trim();
+        if (pack != null && splitMusic() != packSplit) {
+            mergePacks(); // 外部空間的設定改了：音樂改拆開或併回去
+        }
         if (!externalUrl.isEmpty() && pack != null) {
             plugin.getSLF4JLogger().info("介面資源包改從外部空間下載：{}（要上傳的檔案是 plugins/ExileCore/exilecore-ui.zip，SHA1 {}）",
                     externalUrl, pack.sha1());
@@ -220,6 +266,11 @@ public final class WebModule implements Module, Listener {
         // 2026-10：首頁（在線人數、各頁的入口、排行前幾名）與圖鑑（技能、輔助寶石、通貨、傳奇）；以前 / 直接跳到天賦規劃器
         server.route("/", path -> WebServer.Response.of("text/html; charset=utf-8", homePage));
         server.route("/home/status.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", statusJson(),
+                java.util.Map.of("Cache-Control", "no-cache")));
+        // 2026-10-21：星圖天賦的網頁規劃器
+        server.route("/atlas", path -> WebServer.Response.of("text/html; charset=utf-8", atlasPage));
+        server.route("/atlas/", path -> WebServer.Response.redirect("../atlas"));
+        server.route("/atlas/data.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", atlasData,
                 java.util.Map.of("Cache-Control", "no-cache")));
         server.route("/codex", path -> WebServer.Response.of("text/html; charset=utf-8", codexPage));
         server.route("/codex/", path -> WebServer.Response.redirect("../codex"));
@@ -315,14 +366,20 @@ public final class WebModule implements Module, Listener {
         // 帶雜湊的網址：照現在的資源包（併了 BetterModel 之後雜湊會變，所以用前綴，什麼雜湊都回現在的）
         server.prefix("/pack/", path -> new WebServer.Response(200, "application/zip", pack.zip(),
                 java.util.Map.of("Cache-Control", "no-cache")));
+        // 2026-10-21：背景音樂那包（帶雜湊的網址給玩家，固定的給管理員）
+        server.prefix("/music/", path -> musicPack == null ? null : new WebServer.Response(200, "application/zip", musicPack.zip(),
+                java.util.Map.of("Cache-Control", "no-cache")));
+        server.route("/music.zip", path -> musicPack == null ? null : new WebServer.Response(200, "application/zip", musicPack.zip(),
+                java.util.Map.of("Cache-Control", "no-cache", "Content-Disposition", "attachment; filename=\"exilecore-music.zip\"")));
         // 固定的下載網址（管理員自己看、放進資源包資料夾用；玩家登入時收到的是上面那個帶雜湊的）
         server.route("/pack.zip", path -> new WebServer.Response(200, "application/zip", pack.zip(),
                 java.util.Map.of("Cache-Control", "no-cache", "Content-Disposition", "attachment; filename=\"exilecore-ui.zip\"")));
         for (final java.util.function.Consumer<WebServer> extension : extensions) {
             extension.accept(server);
         }
-        plugin.getSLF4JLogger().info("網頁伺服器：{}（天賦規劃器 {}/tree{}，介面資源包 {}/pack.zip，{} KB）", publicUrl(), publicUrl(),
-                economyEnabled ? "，市場報告 " + publicUrl() + "/economy" : "", publicUrl(), (pack.zip().length + 1023) / 1024);
+        plugin.getSLF4JLogger().info("網頁伺服器：{}（天賦規劃器 {}/tree{}，介面資源包 {}/pack.zip，{} KB{}）", publicUrl(), publicUrl(),
+                economyEnabled ? "，市場報告 " + publicUrl() + "/economy" : "", publicUrl(), (pack.zip().length + 1023) / 1024,
+                packSplit ? "；背景音樂 " + publicUrl() + "/music.zip，" + (musicPack.zip().length + 1023) / 1024 + " KB" : "");
         if (localOnly()) {
             plugin.getSLF4JLogger().warn("config.yml 的 web.public-url 沒填：介面資源包與網頁規劃器只給在這台電腦上連線的玩家。"
                     + "開放給別人玩之前，填上玩家連得到的網址（例如 http://你的IP或網域:{}），並開放這個埠", port);
@@ -365,6 +422,13 @@ public final class WebModule implements Module, Listener {
             codexData = CodexData.json(plugin); // 2026-10：圖鑑（技能、輔助寶石、通貨）
         } catch (final RuntimeException e) {
             plugin.getSLF4JLogger().warn("圖鑑的資料做不出來：{}", e.toString());
+        }
+        try {
+            if (plugin.maps() != null) {
+                atlasData = AtlasPlannerData.json(plugin.maps().tree()); // 2026-10-21：星圖天賦樹
+            }
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("星圖天賦的網頁資料做不出來：{}", e.toString());
         }
         final PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
         if (tree == null) {
@@ -553,6 +617,10 @@ public final class WebModule implements Module, Listener {
         }
         final String before = pack == null ? null : pack.sha1();
         mergePacks();
+        if (!packReady) {
+            markPackReady(); // 2026-10-21：開服後第一次併完：送給等著的人（他們還沒下載過，不用重送）
+            return;
+        }
         if (pack != null && !pack.sha1().equals(before)) {
             for (final Player player : plugin.getServer().getOnlinePlayers()) {
                 if (packLoaded.contains(player.getUniqueId()) || required) {
@@ -562,16 +630,39 @@ public final class WebModule implements Module, Listener {
         }
     }
 
+    /** 音樂要不要拆成另一包：有音樂，而且不是「外部空間只給了一個網址」。 */
+    private boolean splitMusic() {
+        return musicPack != null && (externalUrl == null || externalUrl.isEmpty() || !externalMusicUrl.isEmpty());
+    }
+
+    /** 開服後可以送資源包了：送給等著的人（2026-10-21）。 */
+    private void markPackReady() {
+        if (packReady) {
+            return;
+        }
+        packReady = true;
+        for (final UUID id : List.copyOf(waitingPack)) {
+            final Player player = plugin.getServer().getPlayer(id);
+            if (player != null && player.isConnected()) {
+                sendPack(player);
+            }
+        }
+        waitingPack.clear();
+    }
+
     private void mergePacks() {
         if (ownPack == null) {
             return;
         }
+        packSplit = splitMusic();
+        final UiPack.Built base = packSplit ? ownPack : ownFull;
         final List<String> conflicts = new ArrayList<>();
         try {
-            pack = UiPack.merge(ownPack, externalPacks, conflicts);
+            pack = UiPack.merge(base, externalPacks, conflicts);
         } catch (final IOException | RuntimeException e) {
             plugin.getSLF4JLogger().warn("介面資源包：併不進 {}：{}", externalPacks.keySet(), e.toString());
-            pack = ownPack;
+            pack = base;
+            writePackFile();
             return;
         }
         if (!conflicts.isEmpty()) {
@@ -598,6 +689,7 @@ public final class WebModule implements Module, Listener {
     private long writeToken;
 
     private void writePackFileNow() {
+        writeMusicFileNow();
         if (pack == null || pack.sha1().equals(writtenSha1)) {
             return;
         }
@@ -619,6 +711,28 @@ public final class WebModule implements Module, Listener {
         }
     }
 
+    /** 背景音樂那包寫到 plugins/ExileCore/exilecore-music.zip（2026-10-21；放外部空間的人上傳這個檔案到 external-music-url）。 */
+    private void writeMusicFileNow() {
+        if (musicPack == null || musicPack.sha1().equals(writtenMusicSha1)) {
+            return;
+        }
+        try {
+            final java.nio.file.Path file = plugin.getDataFolder().toPath().resolve("exilecore-music.zip");
+            writtenMusicSha1 = musicPack.sha1();
+            if (java.nio.file.Files.isRegularFile(file) && java.util.Arrays.equals(java.nio.file.Files.readAllBytes(file), musicPack.zip())) {
+                return;
+            }
+            java.nio.file.Files.createDirectories(file.getParent());
+            java.nio.file.Files.write(file, musicPack.zip());
+            if (!externalMusicUrl.isEmpty()) {
+                plugin.getSLF4JLogger().warn("背景音樂資源包更新了（SHA1 {}）：請把 plugins/ExileCore/exilecore-music.zip 重新上傳到 {}",
+                        musicPack.sha1(), externalMusicUrl);
+            }
+        } catch (final IOException e) {
+            plugin.getSLF4JLogger().warn("背景音樂資源包寫不出 exilecore-music.zip：{}", e.toString());
+        }
+    }
+
     /** 這個玩家有沒有套用介面資源包（有的話天賦樹畫成星盤）。 */
     public boolean hasPack(final Player player) {
         return packLoaded.contains(player.getUniqueId());
@@ -637,18 +751,35 @@ public final class WebModule implements Module, Listener {
             plugin.getSLF4JLogger().warn("config.yml 的 resource-pack.external-url 不是正確的網址：{}", externalUrl);
             return;
         }
-        player.sendResourcePacks(ResourcePackRequest.resourcePackRequest()
-                .packs(ResourcePackInfo.resourcePackInfo(PACK_ID, uri, pack.sha1()))
+        final ResourcePackInfo ui = ResourcePackInfo.resourcePackInfo(PACK_ID, uri, pack.sha1());
+        // 2026-10-21：背景音樂另外一包（各自的雜湊，客戶端各自快取：更新插件時只重新下載介面那包；一次問、一起套用）
+        ResourcePackInfo music = null;
+        if (packSplit && musicPack != null) {
+            try {
+                music = ResourcePackInfo.resourcePackInfo(MUSIC_ID,
+                        URI.create(external ? externalMusicUrl : publicUrl() + "/music/" + musicPack.sha1() + ".zip"), musicPack.sha1());
+            } catch (final IllegalArgumentException e) {
+                plugin.getSLF4JLogger().warn("config.yml 的 resource-pack.external-music-url 不是正確的網址：{}", externalMusicUrl);
+            }
+        }
+        final long size = pack.zip().length + (music == null ? 0 : musicPack.zip().length);
+        final ResourcePackRequest.Builder request = ResourcePackRequest.resourcePackRequest();
+        if (music == null) {
+            request.packs(ui);
+        } else {
+            request.packs(ui, music);
+        }
+        player.sendResourcePacks(request
                 .required(required)
                 .replace(false)
-                .prompt(plugin.text().parse("<#f5b942>《星骸》介面資源包<gray>：星盤式的天賦樹、介面圖示、Boss 招式的地面警告（比較不卡）、按住左鍵施放時消掉敲方塊的聲音（約 "
-                        + (pack.zip().length + 1023) / 1024 + " KB）。不套用也能玩，下次登入會再問一次。"))
+                .prompt(plugin.text().parse("<#f5b942>《星骸》介面資源包<gray>：星盤式的天賦樹、介面圖示、Boss 招式的地面警告（比較不卡）、背景音樂、按住左鍵施放時消掉敲方塊的聲音（約 "
+                        + (size + 1023) / 1024 + " KB，第一次下載後會記住，之後更新只重新下載有改的部分）。不套用也能玩，下次登入會再問一次。"))
                 .build());
     }
 
     /** 拿掉介面資源包（設定裡關掉時）。 */
     public void removePack(final Player player) {
-        player.removeResourcePacks(PACK_ID);
+        player.removeResourcePacks(PACK_ID, MUSIC_ID);
         packLoaded.remove(player.getUniqueId());
     }
 
@@ -658,6 +789,10 @@ public final class WebModule implements Module, Listener {
     public void onJoin(final PlayerJoinEvent event) {
         final Player player = event.getPlayer();
         if (!send) {
+            return;
+        }
+        if (!packReady) {
+            waitingPack.add(player.getUniqueId()); // 2026-10-21：開服後還在等 BetterModel 的資源包：併完一起送
             return;
         }
         // 2026-10：設定裡的開關拿掉了，登入一律送（以前關掉的人也會再被問一次；不要的在客戶端拒絕就好）
@@ -670,7 +805,11 @@ public final class WebModule implements Module, Listener {
 
     @EventHandler
     public void onStatus(final PlayerResourcePackStatusEvent event) {
-        // 2026-10：走 Velocity（LimboAPI）時代理可能把資源包的代號換掉；我們只送這一包，代號對不上也當成是它
+        if (MUSIC_ID.equals(event.getID())) {
+            return; // 2026-10-21：背景音樂那包：套不套用都不影響介面
+        }
+        // 2026-10：走 Velocity（LimboAPI）時代理可能把資源包的代號換掉；代號對不上的當成介面那包
+        //   （2026-10-21 起音樂另外一包、一起送，代號被換掉時音樂那包的狀態也會算到這裡）
         if (!PACK_ID.equals(event.getID())) {
             plugin.getSLF4JLogger().info("玩家 {} 的資源包狀態 {} 代號不是介面資源包的（{}），當成介面資源包處理",
                     event.getPlayer().getName(), event.getStatus(), event.getID());
@@ -697,6 +836,7 @@ public final class WebModule implements Module, Listener {
     @EventHandler
     public void onQuit(final PlayerQuitEvent event) {
         packLoaded.remove(event.getPlayer().getUniqueId());
+        waitingPack.remove(event.getPlayer().getUniqueId());
     }
 
     /** 技能圖示（2026-10）：掛在技能寶石、選單裡技能的原版物品（skills.yml 的 icon）上。 */

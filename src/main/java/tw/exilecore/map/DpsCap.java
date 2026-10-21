@@ -8,16 +8,21 @@ import java.util.Map;
  * 巔峰的每秒傷害上限（2026-10，maps.yml 的 pinnacle.dps_cap、dps_over）：每個玩家（連他的召喚物、持續傷害）對巔峰 Boss
  * 每秒傷害超過上限的部分大幅減傷（分段：例如 15–30 萬的部分算 30%，30 萬以上算 10%）。
  * <p>
- * 這個人的每秒傷害取兩個的較高者：打訓練假人的實測紀錄、這場實際打出來的（最近約 {@link #WINDOW_SECONDS} 秒）。
- * 沒打過假人、或打出來比紀錄高，照樣減得到。每一下都乘同一個比例 = 分段算出來的等效每秒傷害 ÷ 每秒傷害。
+ * 這個人的每秒傷害：剛開打的 {@link #WARMUP_SECONDS} 秒取「打訓練假人的紀錄」與「這場實際打出來的（最近約 {@link #WINDOW_SECONDS} 秒）」
+ * 的較高者（實際的還沒累積起來，免得開場的爆發不受限）；之後只看實際打出來的。每一下都乘同一個比例 = 分段算出來的等效每秒傷害 ÷ 每秒傷害。
+ * <p>
+ * 2026-10-21：以前一直拿假人紀錄當下限：紀錄是打沒有防禦的白怪、而且是那個人打過的最高紀錄（可能是別的技能、別套裝備），
+ * 打 Boss 實際每秒 14 萬、紀錄換算 47 萬的人，每一下都被乘 0.36，實際只剩 5 萬——比上限 15 萬還低很多。
  * 純邏輯，不依賴 Bukkit。
  */
 final class DpsCap {
 
     /** 實際打出來的每秒傷害看最近幾秒（衰減的時間常數）。 */
     static final double WINDOW_SECONDS = 2;
+    /** 剛開打的幾秒內，假人紀錄還算數（實際打出來的還沒累積起來）。 */
+    static final double WARMUP_SECONDS = 4;
 
-    /** 每個人：[最近的累積傷害（會衰減）, 上次更新的 tick]。 */
+    /** 每個人：[最近的累積傷害（會衰減）, 上次更新的 tick, 開打的 tick, 這場原本的總傷害, 這場遞減後的總傷害]。 */
     private final Map<String, double[]> recent = new HashMap<>();
 
     /**
@@ -39,12 +44,20 @@ final class DpsCap {
             // 2026-10-17：世界 Boss 的紀錄（world:玩家）不跟實例一起清：太多筆時把一分鐘沒更新的丟掉
             recent.values().removeIf(old -> tick - old[1] > 60 * 20);
         }
-        final double[] state = recent.computeIfAbsent(key, k -> new double[] {0, tick});
+        final double[] state = recent.computeIfAbsent(key, k -> new double[] {0, tick, tick, 0, 0});
         final double elapsed = Math.max(0, tick - state[1]) / 20.0;
+        if (elapsed > WINDOW_SECONDS * 5) {
+            state[2] = tick; // 停手好一陣子（離開、換階段）再打：重新算開場
+        }
         state[0] = state[0] * Math.exp(-elapsed / WINDOW_SECONDS) + amount;
         state[1] = tick;
-        final double dps = Math.max(recordDps, state[0] / WINDOW_SECONDS);
-        return dps <= cap ? amount : amount * effective(dps, cap, over) / dps;
+        final double actual = state[0] / WINDOW_SECONDS;
+        final boolean warmup = (tick - state[2]) / 20.0 < WARMUP_SECONDS;
+        final double dps = warmup ? Math.max(recordDps, actual) : actual;
+        final double result = dps <= cap ? amount : amount * effective(dps, cap, over) / dps;
+        state[3] += amount; // 2026-10-21：/ec bossdps 的統計（這場每個人原本、遞減後各打了多少）
+        state[4] += result;
+        return result;
     }
 
     /** 每秒傷害 dps 換成等效的每秒傷害：上限以內照算，超過的部分照分段的比例。 */
@@ -61,6 +74,23 @@ final class DpsCap {
             }
         }
         return total;
+    }
+
+    /** 這張圖每個人這場的總傷害：玩家 → [原本的, 遞減後的]（2026-10-21，Boss 倒下時記進 /ec bossdps 的統計）。 */
+    Map<java.util.UUID, double[]> totals(final int instanceId) {
+        final String prefix = instanceId + ":";
+        final Map<java.util.UUID, double[]> result = new HashMap<>();
+        for (final Map.Entry<String, double[]> entry : recent.entrySet()) {
+            if (entry.getKey().startsWith(prefix)) {
+                try {
+                    result.put(java.util.UUID.fromString(entry.getKey().substring(prefix.length())),
+                            new double[] {entry.getValue()[3], entry.getValue()[4]});
+                } catch (final IllegalArgumentException ignored) {
+                    // 不是玩家的鍵
+                }
+            }
+        }
+        return result;
     }
 
     /** 實例關掉：那張圖的紀錄都清掉。 */

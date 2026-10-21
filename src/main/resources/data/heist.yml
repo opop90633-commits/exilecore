@@ -156,7 +156,7 @@ finale:
     name: 金庫之主・萬鎖
     type: VINDICATOR
     named: true
-    life: 36.3           # 2026-10：比照極境——照打白怪假人每秒 10 萬（打 Boss 6 萬）單人打 3 分半（T16 Lv.91 再乘 final.tier_life ×11.7 之後約 1,260 萬生命）
+    life: 1815           # 2026-10-21：照打 Boss 每秒 300 萬、單人 3 分半（T16 Lv.91 再乘 final.tier_life ×11.7 之後約 6.3 億生命）；600 萬起遞減（maps.yml 的 heist_dps）。原 36.3
     damage: 3.1          # 2026-10：3.1 → 2.4 → 3.1（改回）
     scale: 2.2
     mods: [armoured, resistant]   # 2026-10：拿掉迅捷
@@ -196,4 +196,4 @@ finale:
         shield: { count: 3, type: PILLAGER, name: 鎖匠, life: 6, duration: 25, heal: 30 }   # 2026-10：heal 40 → 30
     hazards:
       - { skill: hazard_vault_coins, every: 12, phase: 1 }   # 2026-10：9 → 12 → 15 → 12
-    enrage: { after: 270, damage: 150, speed: 0.4, message: "「時間到了。你們永遠是這座金庫的一部分。」" }
+    enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。你們永遠是這座金庫的一部分。」" }

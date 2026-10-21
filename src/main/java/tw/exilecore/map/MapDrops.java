@@ -58,7 +58,9 @@ public final class MapDrops {
         int total = 0;
         for (final MapConfig.MapDef map : config.maps()) {
             if (completed == null || Atlas.unlocked(config, map, completed)) {
-                final int weight = completed != null && !completed.contains(map.id()) ? config.drops().frontierWeight() : 1;
+                // 2026-10-21：新星圖的前線是「解鎖了還沒完成的格子的種類」（frontier: 記號）；舊的是解鎖了還沒完成的地圖
+                final boolean frontier = completed != null && (Atlas.isGrid(completed) ? Atlas.frontier(completed, map.id()) : !completed.contains(map.id()));
+                final int weight = frontier ? config.drops().frontierWeight() : 1;
                 options.add(map);
                 weights.add(weight);
                 total += weight;

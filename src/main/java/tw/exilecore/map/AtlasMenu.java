@@ -1,13 +1,18 @@
 package tw.exilecore.map;
 
+import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import tw.exilecore.ExileCore;
 import tw.exilecore.gui.Menu;
 import tw.exilecore.item.ItemRenderer;
+import tw.exilecore.web.UiPack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +20,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 星圖（Atlas）：跟天賦樹一樣的格點視窗——地圖是節點、相連是連線；完成的節點發光，
- * 解鎖的可以開、鎖住的是灰的。最下面一排是完成度、掉落的階級上限、最高完成階級與終局的狀態。
- * 地圖本身沒有階級（階級寫在地圖物品上，T1–T16 都能開），節點上寫的是第幾圈。
+ * 星圖（2026-10-21：程序生成的六角格，照 PoE2）：上面 5 排是 9×5 的視窗，每格一張地圖；六角格用「奇數列往右半格」的方式擺
+ * （跟棋盤遊戲一樣：奇數列的格子跟上下兩列的「同一欄」與「右邊一欄」相鄰）。起點是營地，完成的格子發光，解鎖的可以開，
+ * 還沒走到的是迷霧。最下面一排：地圖裝置、上下左右捲動、回到營地、星圖天賦、進度、關閉。
+ * <p>
+ * 左鍵一格已解鎖的地圖：設成「下次開這種地圖用這一格」；右鍵取消。塔、城塞從地圖裝置開。
  */
 public final class AtlasMenu extends Menu {
 
@@ -25,89 +32,317 @@ public final class AtlasMenu extends Menu {
     public static final Map<String, String> THEME_NAMES = Map.ofEntries(Map.entry("beach", "海岸"), Map.entry("forest", "森林"),
             Map.entry("ruins", "廢墟"), Map.entry("swamp", "沼澤"), Map.entry("snow", "雪原"), Map.entry("cave", "礦洞"),
             Map.entry("crypt", "墓穴"), Map.entry("star", "星殿"), Map.entry("desert", "沙漠"), Map.entry("volcano", "火山"),
-            Map.entry("fungal", "菌窟"));
+            Map.entry("fungal", "菌窟"), Map.entry("void", "虛空"));
+    private static final int VIEW_WIDTH = 9;
+    private static final int VIEW_HEIGHT = 5;
     private static final int SLOT_DEVICE = 45;
-    private static final int SLOT_TREE = 47;
-    private static final int SLOT_INFO = 49;
-    private static final int SLOT_NEXT = 51;
-    private static final int SLOT_HELP = 50;
+    private static final int SLOT_UP = 46;
+    private static final int SLOT_DOWN = 47;
+    private static final int SLOT_LEFT = 48;
+    private static final int SLOT_RIGHT = 49;
+    private static final int SLOT_HOME = 50;
+    private static final int SLOT_TREE = 51;
+    private static final int SLOT_INFO = 52;
     private static final int SLOT_CLOSE = 53;
-    /** 格子 → 地圖（點節點時用）。 */
-    private final Map<Integer, MapConfig.MapDef> shown = new java.util.HashMap<>();
+    private static final int SCROLL = 3;
 
     private final MapService service;
+    /** 視窗中心（六角格的軸座標）。 */
+    private int centerQ;
+    private int centerR;
+    /** 這次畫的格子：slot → 軸座標。 */
+    private final Map<Integer, long[]> shown = new java.util.HashMap<>();
 
     public AtlasMenu(final ExileCore plugin, final Player player, final MapService service) {
         super(plugin, player, 6, "<#f5b942>星圖");
         this.service = service;
     }
 
+    // ---- 座標（偏移座標 ↔ 軸座標：奇數列往右半格）----
+
+    private static int colOf(final int q, final int r) {
+        return q + (r - (r & 1)) / 2;
+    }
+
+    private static int qOf(final int col, final int row) {
+        return col - (row - (row & 1)) / 2;
+    }
+
     @Override
     protected void draw() {
-        for (int i = 0; i < 54; i++) {
-            set(i, filler());
-        }
         shown.clear();
-        final MapConfig config = service.config();
-        final Set<String> completed = service.completed(player);
-        // 2026-10：連線的顏色＝路的狀態——金色：兩頭都完成；綠色：一頭完成（可以往這邊走）；深灰：還沒走到
-        for (final Atlas.Connector connector : Atlas.connectors(config)) {
-            final boolean a = completed.contains(connector.from());
-            final boolean b = completed.contains(connector.to());
-            final Material pane = a && b ? Material.YELLOW_STAINED_GLASS_PANE : a || b ? Material.LIME_STAINED_GLASS_PANE
-                    : Material.GRAY_STAINED_GLASS_PANE;
-            final ItemStack line = new ItemStack(pane);
-            line.editMeta(meta -> meta.setHideTooltip(true));
-            set(connector.row() * 9 + connector.col(), line);
-        }
-        final List<String> next = new ArrayList<>();
-        for (final MapConfig.MapDef map : config.all()) {
-            if (!map.onAtlas()) {
-                continue; // 2026-10-18：事件巔峰不在星圖上（地圖裝置的「事件巔峰」按鈕）
-            }
-            final int slot = map.row() * 9 + map.col();
-            shown.put(slot, map);
-            set(slot, node(config, map, completed));
-            if (!completed.contains(map.id()) && Atlas.unlocked(config, map, completed)) {
-                next.add((map.isFinal() ? "<#f5b942>" : "<green>") + ItemRenderer.escape(map.name()) + "<dark_gray>（" + (map.isFinal() ? "終局" : "第 " + map.ring() + " 圈") + "）");
+        final AtlasProgress atlas = service.atlasProgress(player);
+        final AtlasGrid grid = atlas.grid();
+        final Set<Long> unlocked = atlas.unlocked();
+        final AtlasGrid.Cell chosen = chosenCell(atlas);
+        final int col0 = colOf(centerQ, centerR) - VIEW_WIDTH / 2;
+        final int row0 = centerR - VIEW_HEIGHT / 2;
+        final boolean pack = plugin.web() != null && plugin.web().hasPack(player); // 2026-10-21：有資源包：畫成六角格
+        for (int y = 0; y < VIEW_HEIGHT; y++) {
+            for (int x = 0; x < VIEW_WIDTH; x++) {
+                final int row = row0 + y;
+                final int col = col0 + x;
+                final int q = qOf(col, row);
+                final int slot = y * 9 + x;
+                shown.put(slot, new long[] {q, row});
+                final ItemStack plain = tile(atlas, grid, unlocked, chosen, q, row);
+                set(slot, pack ? packTile(plain, atlas, grid, unlocked, chosen, q, row) : plain);
             }
         }
-        final List<String> nextLore = new ArrayList<>();
-        nextLore.add("<gray>已經解鎖、還沒完成的地圖（金框標出來的）：");
-        if (next.isEmpty()) {
-            nextLore.add("<dark_gray>　沒有——全部完成了");
-        } else {
-            for (int i = 0; i < Math.min(8, next.size()); i++) {
-                nextLore.add("<gray>　• " + next.get(i));
-            }
-            if (next.size() > 8) {
-                nextLore.add("<dark_gray>　…還有 " + (next.size() - 8) + " 張");
-            }
-        }
-        nextLore.add("");
-        nextLore.add("<gray>完成一張不同的地圖，相連的就會解鎖、掉落的地圖也會高一階");
-        set(SLOT_NEXT, next.isEmpty() ? icon(Material.FILLED_MAP, "<white>下一張", nextLore) : glowing(icon(Material.FILLED_MAP, "<green>下一張（" + next.size() + " 張可以開）", nextLore)));
-        set(SLOT_HELP, helpButton(List.of(
-                "<gray>每個格子是一張地圖，右下角的數字是第幾圈；連線是走法",
-                "<#f5b942>金色發光<gray>＝已完成　<green>金框<gray>＝已解鎖、可以開　<dark_gray>空白地圖＝還沒解鎖",
-                "<gray>連線：<#f5b942>金<gray>＝兩頭都完成　<green>綠<gray>＝可以往這邊走　<dark_gray>灰＝還沒走到",
-                "<gray>滑鼠移到地圖上看主題、Boss、相連的地圖；點一下在聊天欄列出來",
-                "<gray>地圖本身沒有階級：階級寫在地圖物品上（T1–T16），任何一張都能開")));
-        set(SLOT_DEVICE, icon(Material.LODESTONE, "<#9fd3ff>地圖裝置", "<gray>在營地：地圖裝置 NPC 右鍵開地圖",
-                "<dark_gray>（/town 回營地）"));
-        final int done = Atlas.completedMaps(config, completed);
-        final int best = service.bestTier(player);
-        final int cap = Atlas.dropTierCap(config, done);
-        set(SLOT_INFO, icon(Material.FILLED_MAP, "<#f5b942>完成 " + done + " / " + config.maps().size() + " 張",
-                "<gray>掉落的地圖最高 <white>T" + cap + "<gray>／T" + config.tiers().max()
-                        + (cap < config.tiers().max() ? "<dark_gray>（每完成一張不同的地圖高一階）" : ""),
-                "<gray>掉落的地圖階級 +1 的機率：<white>" + Math.round(Atlas.tierUpChance(config, done) * 100) + "%",
-                "<gray>最高完成階級：<white>" + (best > 0 ? "T" + best : "還沒有") + "<dark_gray>（終局可以開到這一階）",
-                "<gray>只會掉你已經解鎖的地圖，還沒完成的比較常掉",
-                Atlas.finalUnlocked(config, completed) ? "<#f5b942>終局已解鎖"
-                        : "<dark_gray>完成最外圈的地圖（" + ItemRenderer.escape(service.ringNames(config.maxRing())) + "）解鎖終局"));
+        set(SLOT_DEVICE, icon(Material.LODESTONE, "<#9fd3ff>地圖裝置", "<gray>在營地：地圖裝置 NPC 右鍵開地圖", "<dark_gray>（/town 回營地）"));
+        set(SLOT_UP, icon(Material.ARROW, "<white>↑ 往上", "<gray>捲 " + SCROLL + " 格（Shift 一格）"));
+        set(SLOT_DOWN, icon(Material.ARROW, "<white>↓ 往下", "<gray>捲 " + SCROLL + " 格（Shift 一格）"));
+        set(SLOT_LEFT, icon(Material.ARROW, "<white>← 往左", "<gray>捲 " + SCROLL + " 格（Shift 一格）"));
+        set(SLOT_RIGHT, icon(Material.ARROW, "<white>→ 往右", "<gray>捲 " + SCROLL + " 格（Shift 一格）"));
+        set(SLOT_HOME, icon(Material.NETHER_STAR, "<white>回到營地", "<gray>視窗中心現在在 (" + centerQ + ", " + centerR + ")",
+                "<dark_gray>六角格：奇數列往右半格，所以奇數列的格子跟上下列的同一欄、右邊一欄相鄰"));
         set(SLOT_TREE, treeButton(player, service));
+        set(SLOT_INFO, info(atlas, chosen));
         set(SLOT_CLOSE, closeButton());
+    }
+
+    private AtlasGrid.Cell chosenCell(final AtlasProgress atlas) {
+        final long[] at = AtlasProgress.decodeOne(plugin.players().get(player).progress().get(AtlasProgress.CHOSEN_KEY));
+        if (at == null) {
+            return null;
+        }
+        final AtlasGrid.Cell cell = atlas.grid().cell((int) at[0], (int) at[1]);
+        return atlas.isUnlocked(cell.q(), cell.r()) ? cell : null;
+    }
+
+    private ItemStack tile(final AtlasProgress atlas, final AtlasGrid grid, final Set<Long> unlocked, final AtlasGrid.Cell chosen,
+                           final int q, final int r) {
+        if (q == 0 && r == 0) {
+            return glowing(icon(Material.NETHER_STAR, "<#e8e8f2>營地", "<gray>星圖的起點 (0, 0)", "<gray>周圍的格子一開始就解鎖"));
+        }
+        final long key = AtlasGrid.key(q, r);
+        final AtlasGrid.Cell cell = grid.cell(q, r);
+        if (cell.isEmpty()) {
+            return icon(Material.BLACK_STAINED_GLASS_PANE, " ");
+        }
+        final boolean isUnlocked = unlocked.contains(key);
+        if (!isUnlocked) {
+            boolean nearby = false;
+            for (final int[] direction : AtlasGrid.DIRECTIONS) {
+                if (unlocked.contains(AtlasGrid.key(q + direction[0], r + direction[1]))) {
+                    nearby = true;
+                    break;
+                }
+            }
+            return nearby ? icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>迷霧 (" + q + ", " + r + ")", "<gray>完成旁邊的格子就會看到")
+                    : icon(Material.BLACK_STAINED_GLASS_PANE, " ");
+        }
+        final boolean done = atlas.isCompleted(q, r);
+        final MapConfig config = service.config();
+        final List<String> lore = new ArrayList<>();
+        final String where = "<dark_gray>(" + q + ", " + r + ")・距離 " + cell.distance() + "・預設 T" + cell.tier();
+        ItemStack icon;
+        switch (cell.kind()) {
+            case TOWER -> {
+                lore.add("<gray>塔：爬到頂、守 3 波；完成後解鎖周圍 " + grid.config().unlock().onTower() + " 格、天賦點 +" + grid.config().tower().points());
+                lore.add("<gray>完成後可以插一片先驅石板，加成罩到周圍 " + grid.config().tower().radius() + " 格的地圖");
+                lore.add(where);
+                lore.add("");
+                lore.add(done ? "<#f5b942>✔ 已完成" : "<green>從地圖裝置的「塔」按鈕開（不用地圖物品）");
+                icon = icon(Material.LANTERN, (done ? "<#f5b942>" : "<green>") + "塔", lore);
+            }
+            case CITADEL -> {
+                final MapConfig.MapDef finalMap = config.find(cell.citadelFinal());
+                final String name = finalMap == null ? cell.citadelFinal() : finalMap.name();
+                lore.add("<gray>城塞：" + ItemRenderer.escape(name) + " 的入口");
+                lore.add("<gray>第一次從這裡打，攻破後那個終局就能在地圖裝置用天穹碎片打開");
+                lore.add(where);
+                lore.add("");
+                lore.add(done ? "<#f5b942>✔ 已攻破" : "<green>從地圖裝置的終局按鈕開（第一次不用碎片）");
+                icon = icon(Material.END_CRYSTAL, (done ? "<#f5b942>" : "<#c48bff>") + "城塞・" + ItemRenderer.escape(name), lore);
+            }
+            default -> {
+                final MapConfig.MapDef map = config.find(cell.mapId());
+                final String name = map == null ? String.valueOf(cell.mapId()) : map.name();
+                if (map != null) {
+                    lore.add("<gray>" + THEME_NAMES.getOrDefault(map.theme(), map.theme()) + "・" + map.layout().displayName()
+                            + "・Boss：<#af6025>" + ItemRenderer.escape(map.boss().name()));
+                }
+                if (cell.kind() == AtlasGrid.Kind.BOSS) {
+                    lore.add("<#af6025>☠ Boss 格：Boss 生命 ×" + AtlasTree.number(grid.config().bossLife()) + "、必掉 " + grid.config().bossMaps()
+                            + " 張地圖、傳奇機率 ×" + AtlasTree.number(grid.config().bossUnique()));
+                }
+                if (cell.corrupted()) {
+                    final AtlasConfig.Corruption k = grid.config().corruption();
+                    lore.add("<#b07aff>腐化區：怪物等級 +" + k.monsterLevel() + "、怪物群 +" + AtlasTree.number(k.pack()) + "%、物品數量 +"
+                            + AtlasTree.number(k.quantity()) + "%、稀有度 +" + AtlasTree.number(k.rarity()) + "%");
+                    lore.add("<#b07aff>　第一次打倒 Boss：每個人 " + Math.round(grid.config().vaalChance() * 100) + "% 掉一顆蝕變石");
+                }
+                if (cell.purified()) {
+                    lore.add("<#fff1b8>淨化區：難度不變；第一次打倒 Boss：每個人 "
+                            + Math.round(grid.config().purification().fractureChance() * 100) + "% 掉一顆定星石"); // 2026-10-21
+                }
+                lore.add(where);
+                lore.add("");
+                if (done) {
+                    lore.add("<#f5b942>✔ 已完成<gray>（可以再開，不再給天賦點）");
+                } else {
+                    lore.add("<green>已解鎖：把這種地圖放進地圖裝置就會打這一格");
+                }
+                final boolean isChosen = chosen != null && chosen.q() == q && chosen.r() == r;
+                lore.add(isChosen ? "<yellow>✔ 下次開 " + ItemRenderer.escape(name) + " 用這一格<gray>（右鍵取消）" : "<gray>左鍵：下次開 " + ItemRenderer.escape(name) + " 用這一格");
+                final Material material;
+                if (done) {
+                    material = Material.FILLED_MAP;
+                } else {
+                    final var base = map == null ? null : plugin.items().repository().base(map.base());
+                    material = base == null ? Material.PAPER : material(base.material(), Material.PAPER);
+                }
+                final String color = done ? "<#f5b942>" : cell.corrupted() ? "<#b07aff>" : cell.purified() ? "<#fff1b8>" : "<green>";
+                icon = icon(material, color + (cell.kind() == AtlasGrid.Kind.BOSS ? "☠ " : "") + ItemRenderer.escape(name) + " <dark_gray>T" + cell.tier(), lore);
+                icon.setAmount(Math.max(1, Math.min(64, cell.tier())));
+                if (isChosen) {
+                    return targetHighlight(done ? glowing(icon) : icon);
+                }
+            }
+        }
+        return done ? glowing(icon) : highlight(icon);
+    }
+
+    // ---- 資源包：六角格的貼圖（UiPack.ATLAS_CELL）----
+
+    private static final NamespacedKey ATLAS_CELL = NamespacedKey.fromString(UiPack.ATLAS_CELL);
+    private static final Color GOLD = Color.fromRGB(0xF5C04A);
+    private static final Color BRIGHT = Color.fromRGB(0xE8E8F2);
+    private static final Color DIM = Color.fromRGB(0x5E5E74);
+    private static final Color EDGE_LIT = Color.fromRGB(0x9C9CB8);
+    private static final Color EDGE_DIM = Color.fromRGB(0x33354A);
+    private static final Color TOWER = Color.fromRGB(0xD8C8A0);
+    private static final Color CITADEL = Color.fromRGB(0xC48BFF);
+    private static final Color BOSS = Color.fromRGB(0xFFA060);
+    private static final Color CORRUPT = Color.fromRGB(0xB07AFF);
+    /** 淨化區的圈（2026-10-21，跟腐化區同一張圖，換成淡金白）。 */
+    private static final Color PURIFY = Color.fromRGB(0xFFF1B8);
+    private static final Color CYAN = Color.fromRGB(0x55FFFF);
+
+    /**
+     * 有資源包的人看到的格子：同一個物品模型，用 custom_model_data 決定畫哪幾層（背景星空、往鄰居的連線、六角形、光暈、腐化圈、外框）。
+     * 名字與說明照沒資源包的那一份（滑鼠移上去一樣看得到）。
+     */
+    private ItemStack packTile(final ItemStack plain, final AtlasProgress atlas, final AtlasGrid grid, final Set<Long> unlocked,
+                               final AtlasGrid.Cell chosen, final int q, final int r) {
+        final long key = AtlasGrid.key(q, r);
+        final boolean camp = q == 0 && r == 0;
+        final AtlasGrid.Cell cell = grid.cell(q, r);
+        final boolean isUnlocked = camp || unlocked.contains(key);
+        boolean fog = false;
+        if (!camp && !cell.isEmpty() && !isUnlocked) {
+            for (final int[] direction : AtlasGrid.DIRECTIONS) {
+                if (unlocked.contains(AtlasGrid.key(q + direction[0], r + direction[1]))) {
+                    fog = true;
+                    break;
+                }
+            }
+        }
+        final boolean empty = cell.isEmpty() || !camp && !isUnlocked && !fog;
+        final ItemStack stack = empty ? new ItemStack(Material.PAPER) : plain.withType(Material.PAPER); // setType 在 Paper 已經棄用
+        if (!empty) {
+            stack.setAmount(1);
+        }
+        final boolean done = camp || atlas.isCompleted(q, r);
+        final boolean isChosen = chosen != null && chosen.q() == q && chosen.r() == r;
+        final boolean fogFinal = fog;
+        stack.editMeta(meta -> {
+            meta.setItemModel(ATLAS_CELL);
+            if (empty) {
+                meta.setHideTooltip(true);
+            }
+            final CustomModelDataComponent data = meta.getCustomModelDataComponent();
+            final List<String> strings = new ArrayList<>(List.of(Integer.toString(Math.floorMod(q * 7 + r * 13 + q * r, UiPack.BACKGROUNDS)), "", "", "", ""));
+            final List<Boolean> flags = new ArrayList<>(List.of(false, false, false, false, false, false));
+            final List<Color> colors = new ArrayList<>(List.of(EDGE_DIM, EDGE_DIM, EDGE_DIM, EDGE_DIM, EDGE_DIM, EDGE_DIM, DIM, GOLD, CYAN, CORRUPT));
+            if (!empty) {
+                if (isUnlocked) {
+                    // 往鄰居的連線：鄰居也解鎖了才畫；兩頭都完成是金色
+                    for (int i = 0; i < AtlasGrid.DIRECTIONS.length; i++) {
+                        final int nq = q + AtlasGrid.DIRECTIONS[i][0];
+                        final int nr = r + AtlasGrid.DIRECTIONS[i][1];
+                        final boolean neighbourUnlocked = (nq == 0 && nr == 0) || unlocked.contains(AtlasGrid.key(nq, nr));
+                        if (neighbourUnlocked) {
+                            flags.set(i, true);
+                            final boolean neighbourDone = (nq == 0 && nr == 0) || atlas.isCompleted(nq, nr);
+                            colors.set(i, done && neighbourDone ? GOLD : EDGE_LIT);
+                        }
+                    }
+                }
+                final String kind = camp ? "camp" : fogFinal ? "fog" : switch (cell.kind()) {
+                    case BOSS -> "boss";
+                    case TOWER -> "tower";
+                    case CITADEL -> "citadel";
+                    default -> "map";
+                };
+                strings.set(UiPack.AtlasCell.STRING_KIND, kind);
+                final Color kindColor = fogFinal ? DIM : done ? GOLD : switch (cell.kind()) {
+                    case TOWER -> TOWER;
+                    case CITADEL -> CITADEL;
+                    case BOSS -> BOSS;
+                    default -> BRIGHT;
+                };
+                colors.set(UiPack.AtlasCell.COLOR_KIND, camp ? BRIGHT : kindColor);
+                if (done) {
+                    strings.set(UiPack.AtlasCell.STRING_GLOW, "glow");
+                    colors.set(UiPack.AtlasCell.COLOR_GLOW, GOLD);
+                }
+                if (!fogFinal && cell.corrupted()) {
+                    strings.set(UiPack.AtlasCell.STRING_CORRUPT, "corrupt");
+                } else if (!fogFinal && cell.purified()) {
+                    strings.set(UiPack.AtlasCell.STRING_CORRUPT, "corrupt"); // 2026-10-21：淨化區用同一個圈、換顏色
+                    colors.set(UiPack.AtlasCell.COLOR_CORRUPT, PURIFY);
+                }
+                if (isChosen) {
+                    strings.set(UiPack.AtlasCell.STRING_RING, "ring");
+                    colors.set(UiPack.AtlasCell.COLOR_RING, CYAN);
+                }
+            }
+            data.setStrings(strings);
+            data.setFlags(flags);
+            data.setColors(colors);
+            meta.setCustomModelDataComponent(data);
+        });
+        return stack;
+    }
+
+    /** 進度：完成幾格、最遠、掉落上限、最高完成階級、城塞。 */
+    private ItemStack info(final AtlasProgress atlas, final AtlasGrid.Cell chosen) {
+        final MapConfig config = service.config();
+        final List<String> lore = new ArrayList<>();
+        final int cap = Atlas.dropTierCap(config, atlas.capUnits());
+        final int best = service.bestTier(player);
+        lore.add("<gray>完成 <white>" + atlas.completed().size() + "<gray> 格（一般 " + atlas.completedMapCells() + "、塔 " + atlas.completedTowerCount()
+                + "、城塞 " + atlas.completedCitadelCount() + "）・最遠 <white>" + atlas.farthest() + "<gray> 格");
+        lore.add("<gray>解鎖了 <white>" + atlas.unlockedSpecies().size() + "<gray> / " + config.maps().size() + " 種地圖");
+        lore.add("<gray>掉落的地圖最高 <white>T" + cap + "<gray>／T" + config.tiers().max()
+                + (cap < config.tiers().max() ? "<dark_gray>（每完成 " + atlas.grid().config().dropCap().perCells() + " 格高一階）" : ""));
+        lore.add("<gray>掉落的地圖階級 +1 的機率：<white>" + Math.round(Atlas.tierUpChance(config, atlas.capUnits()) * 100) + "%");
+        lore.add("<gray>最高完成階級：<white>" + (best > 0 ? "T" + best : "還沒有") + "<dark_gray>（終局可以開到這一階）");
+        final Set<String> completed = service.completed(player);
+        final List<String> citadels = new ArrayList<>();
+        for (final String finalId : service.citadelFinals()) {
+            final MapConfig.MapDef map = config.find(finalId);
+            citadels.add((Atlas.citadelBreached(completed, finalId) ? "<#f5b942>" : "<dark_gray>") + ItemRenderer.escape(map == null ? finalId : map.name()));
+        }
+        if (!citadels.isEmpty()) {
+            lore.add("<gray>城塞：" + String.join("<gray>、", citadels) + "<dark_gray>（金色＝攻破，可以用碎片開）");
+        }
+        final List<AtlasGrid.Cell> towers = atlas.openTowers();
+        final List<AtlasGrid.Cell> openCitadels = atlas.openCitadels();
+        if (!towers.isEmpty() || !openCitadels.isEmpty()) {
+            lore.add("<gray>看得到、還沒打的：塔 <white>" + towers.size() + "<gray>、城塞 <white>" + openCitadels.size());
+        }
+        if (chosen != null) {
+            final MapConfig.MapDef map = config.find(chosen.mapId());
+            lore.add("<yellow>下次開 " + ItemRenderer.escape(map == null ? String.valueOf(chosen.mapId()) : map.name()) + " 用 (" + chosen.q() + ", " + chosen.r() + ")");
+        }
+        lore.add("");
+        lore.add("<gray>完成一格解鎖周圍、拿天賦點；走得越遠格子的階級越高");
+        lore.add("<gray>只會掉你已經解鎖的地圖種類，前線（解鎖還沒完成）比較常掉");
+        lore.add("<dark_gray>種子 " + Long.toHexString(atlas.grid().seed()));
+        return icon(Material.FILLED_MAP, "<#f5b942>星圖進度", lore);
     }
 
     /** 星圖天賦的按鈕（星圖、地圖裝置共用）：還沒用的天賦點、目前的效果；有點數沒用時發光。 */
@@ -129,89 +364,63 @@ public final class AtlasMenu extends Menu {
         return left > 0 ? glowing(icon) : icon;
     }
 
-    private ItemStack node(final MapConfig config, final MapConfig.MapDef map, final Set<String> completed) {
-        final boolean done = completed.contains(map.id());
-        final boolean unlocked = Atlas.unlocked(config, map, completed);
-        final List<String> lore = new ArrayList<>();
-        final MapStats.Tiers tiers = config.tiers();
-        final String tier = map.isFinal() ? "終局" : "第 " + map.ring() + " 圈";
-        lore.add("<gray>" + tier + "・" + THEME_NAMES.getOrDefault(map.theme(), map.theme()) + "・" + map.layout().displayName()
-                + " <dark_gray>（" + map.layout().description() + "）");
-        if (map.isFinal()) {
-            lore.addAll(service.finalTierLines(player));
-        } else {
-            lore.add("<gray>可以開 T1–T" + tiers.max() + "<gray>・怪物等級 <white>" + tiers.level(1) + "–" + tiers.level(tiers.max())
-                    + "<dark_gray>（階級寫在地圖上）");
-        }
-        if (!map.lore().isBlank()) {
-            lore.add("<gray><i>" + ItemRenderer.escape(map.lore()));
-        }
-        lore.add("<gray>Boss：<#af6025>" + ItemRenderer.escape(map.boss().name()) + (map.boss().named() ? " <dark_purple>(具名)" : ""));
-        final List<String> links = new ArrayList<>();
-        for (final String link : map.links()) {
-            final MapConfig.MapDef other = config.find(link);
-            if (other != null) {
-                links.add(other.name());
-            }
-        }
-        if (!links.isEmpty()) {
-            lore.add("<dark_gray>相連：" + ItemRenderer.escape(String.join("、", links)));
-        }
-        if (done) {
-            lore.add("<#f5b942>✔ 已完成");
-        } else if (unlocked) {
-            lore.add(map.isFinal() ? "<green>已解鎖：在地圖裝置用天穹碎片打開" : "<green>已解鎖：把這張地圖放進地圖裝置");
-        } else {
-            final String missing = map.isFinal() ? Atlas.missingRequirements(config, map, completed) : "";
-            lore.add(map.isFinal() ? !missing.isEmpty() ? "<red>先打贏 " + ItemRenderer.escape(missing) + " 才能開" : "<red>完成最外圈的地圖解鎖"
-                    : "<red>未解鎖：先完成相連的地圖");
-        }
-        final Material material;
-        if (map.isFinal()) {
-            material = unlocked ? Material.NETHER_STAR : Material.FIREWORK_STAR;
-        } else if (!unlocked) {
-            material = Material.MAP; // 2026-10：還沒解鎖畫成空白地圖（原本的灰色染料看起來像一團雜物）
-        } else {
-            final var base = plugin.items().repository().base(map.base());
-            material = done ? Material.FILLED_MAP : base == null ? Material.PAPER : material(base.material(), Material.PAPER);
-        }
-        final String color = done ? "<#f5b942>" : unlocked ? "<green>" : "<gray>";
-        final String ring = map.isFinal() ? " <dark_gray>終局" : " <dark_gray>第 " + map.ring() + " 圈";
-        final ItemStack icon = icon(material, color + ItemRenderer.escape(map.name()) + ring, lore);
-        if (!map.isFinal()) {
-            icon.setAmount(Math.max(1, Math.min(64, map.ring()))); // 右下角的數字＝第幾圈
-        }
-        if (done) {
-            return glowing(icon);
-        }
-        return unlocked ? highlight(icon) : icon; // 2026-10：已解鎖、還沒完成的用金框標出來（沒資源包的人看到發光）
-    }
-
     @Override
     protected void onClick(final int slot, final ClickType click, final InventoryClickEvent event) {
-        if (slot == SLOT_CLOSE) {
-            goBack();
-        } else if (slot == SLOT_TREE) {
-            new AtlasTreeMenu(plugin, player, service).open();
-        } else if (shown.containsKey(slot)) {
-            // 2026-10：點地圖：把狀態、相連的地圖列在聊天欄（滑鼠移開也看得到）
-            final MapConfig.MapDef map = shown.get(slot);
-            final Set<String> completed = service.completed(player);
-            final boolean done = completed.contains(map.id());
-            final boolean unlocked = Atlas.unlocked(service.config(), map, completed);
-            final List<String> links = new ArrayList<>();
-            for (final String link : map.links()) {
-                final MapConfig.MapDef other = service.config().find(link);
-                if (other != null) {
-                    links.add((completed.contains(other.id()) ? "<#f5b942>" : Atlas.unlocked(service.config(), other, completed) ? "<green>" : "<gray>")
-                            + ItemRenderer.escape(other.name()) + "</" + (completed.contains(other.id()) ? "#f5b942" : Atlas.unlocked(service.config(), other, completed) ? "green" : "gray") + ">");
+        switch (slot) {
+            case SLOT_CLOSE -> goBack();
+            case SLOT_TREE -> new AtlasTreeMenu(plugin, player, service).open();
+            case SLOT_UP -> scroll(0, -1, click);
+            case SLOT_DOWN -> scroll(0, 1, click);
+            case SLOT_LEFT -> scroll(-1, 0, click);
+            case SLOT_RIGHT -> scroll(1, 0, click);
+            case SLOT_HOME -> {
+                centerQ = 0;
+                centerR = 0;
+                redraw();
+            }
+            default -> {
+                final long[] at = shown.get(slot);
+                if (at != null) {
+                    clickCell((int) at[0], (int) at[1], click);
                 }
             }
-            player.sendMessage(plugin.text().prefixed("<white>" + ItemRenderer.escape(map.name()) + "<gray>（" + (map.isFinal() ? "終局" : "第 " + map.ring() + " 圈")
-                    + "・" + THEME_NAMES.getOrDefault(map.theme(), map.theme()) + "）"
-                    + (done ? "<#f5b942>已完成" : unlocked ? "<green>已解鎖，可以開" : "<gray>還沒解鎖")
-                    + (links.isEmpty() ? "" : "<gray>　相連：" + String.join("<gray>、", links))));
-            player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.4f, 1.5f);
         }
+    }
+
+    private void scroll(final int dx, final int dy, final ClickType click) {
+        final int step = click.isShiftClick() ? 1 : SCROLL;
+        // 左右：偏移座標的欄；上下：列（軸座標的 r）
+        final int col = colOf(centerQ, centerR) + dx * step;
+        final int row = centerR + dy * step;
+        centerQ = qOf(col, row);
+        centerR = row;
+        redraw();
+    }
+
+    private void clickCell(final int q, final int r, final ClickType click) {
+        if (!acceptAction(click)) {
+            return;
+        }
+        final AtlasProgress atlas = service.atlasProgress(player);
+        if (!atlas.isUnlocked(q, r)) {
+            return;
+        }
+        final AtlasGrid.Cell cell = atlas.grid().cell(q, r);
+        if (!cell.isMap()) {
+            player.sendActionBar(plugin.text().parse(cell.kind() == AtlasGrid.Kind.TOWER ? "<gray>塔從地圖裝置的「塔」按鈕開"
+                    : "<gray>城塞從地圖裝置的終局按鈕開"));
+            return;
+        }
+        final MapConfig.MapDef map = service.config().find(cell.mapId());
+        final String name = map == null ? String.valueOf(cell.mapId()) : map.name();
+        if (click.isRightClick()) {
+            service.chooseCell(player, null);
+            player.sendActionBar(plugin.text().parse("<gray>取消指定：開圖時自動選最近的未完成格"));
+        } else {
+            service.chooseCell(player, cell);
+            player.sendActionBar(plugin.text().parse("<yellow>下次開 " + ItemRenderer.escape(name) + " 用 (" + q + ", " + r + ")"));
+        }
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.5f);
+        redraw();
     }
 }

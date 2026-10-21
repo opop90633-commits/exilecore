@@ -49,6 +49,10 @@ public final class ItemData {
     private List<String> runes;
     /** 映星鏡照出來的複製品（2026-10）：不能再改造、不能再複製；null = 不是（不寫進 JSON）。 */
     private Boolean mirrored;
+    /** 破裂的詞綴（2026-10-21，定星石，PoE2 的破裂石）：這條詞綴的代號，通貨移除、重骰都動不到它；null = 沒有（不寫進 JSON）。 */
+    private String fractured;
+    /** 蝕變石多開的符文孔（2026-10-21，PoE2 的瓦爾寶珠：可以超過上限）；null = 沒有（不寫進 JSON）。 */
+    private Integer corruptSockets;
 
     public ItemData() {
     }
@@ -159,6 +163,29 @@ public final class ItemData {
         this.mirrored = mirrored ? Boolean.TRUE : null;
     }
 
+    /** 破裂的詞綴代號（定星石）；沒有回傳 null。 */
+    public String fractured() {
+        return fractured;
+    }
+
+    public void setFractured(final String affixId) {
+        this.fractured = affixId == null || affixId.isBlank() ? null : affixId;
+    }
+
+    /** 這條詞綴是不是破裂的（通貨移除、重骰都不能動）。 */
+    public boolean isFractured(final RolledAffix rolled) {
+        return fractured != null && rolled != null && fractured.equals(rolled.id());
+    }
+
+    /** 蝕變石多開的符文孔。 */
+    public int corruptSockets() {
+        return corruptSockets == null ? 0 : corruptSockets;
+    }
+
+    public void setCorruptSockets(final int count) {
+        this.corruptSockets = count <= 0 ? null : count;
+    }
+
     public void setLocked(final boolean locked) {
         this.locked = locked ? Boolean.TRUE : null;
     }
@@ -267,6 +294,8 @@ public final class ItemData {
         copy.instilled = instilled;
         copy.runes = runes == null ? null : new ArrayList<>(runes);
         copy.mirrored = mirrored;
+        copy.fractured = fractured;
+        copy.corruptSockets = corruptSockets;
         return copy;
     }
 }

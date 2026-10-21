@@ -95,7 +95,7 @@ public final class Veiled {
             if (affix == null || isVeiled(rolled.id())) {
                 continue;
             }
-            if (seen.add(affix.group()) || !isUnveiled(rolled.id())) {
+            if (seen.add(affix.group()) || !isUnveiled(rolled.id()) || data.isFractured(rolled)) { // 2026-10-21：破裂的不換
                 continue;
             }
             final String id = affix.type() == AffixType.PREFIX ? VEILED_PREFIX : VEILED_SUFFIX;
@@ -161,7 +161,7 @@ public final class Veiled {
             final List<RolledAffix> same = new ArrayList<>();
             for (final RolledAffix rolled : data.affixes()) {
                 final Affix affix = generator.repository().affix(rolled.id());
-                if (affix != null && affix.type() == type && !isVeiled(rolled.id())) {
+                if (affix != null && affix.type() == type && !isVeiled(rolled.id()) && !data.isFractured(rolled)) { // 2026-10-21：破裂的不拿
                     same.add(rolled);
                 }
             }

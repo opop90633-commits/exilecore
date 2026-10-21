@@ -336,6 +336,8 @@ public final class StatKeys {
     public static final String FLAG_STONE_SKIN = "flag.stone_skin";             // 泰坦：胸甲的護甲更多 50%
     public static final String FLAG_HULKING_FORM = "flag.hulking_form";         // 泰坦：天賦樹小點效果增加 50%
     public static final String DAMAGE_VS_STUNNED = "damage.vs_stunned";         // MORE：對重暈中的敵人
+    /** 2026-10-21：受到的那一種傷害增加 x%（減益：凋息、枯蝕、縛根）；後面接傷害類型的標籤（physical、chaos…）。只在算擊中時疊上去。 */
+    public static final String DEBUFF_TAKEN = "debuff.taken.";
     public static final String DAMAGE_VS_LOW_LIFE = "damage.vs_low_life";       // INCREASED：對低血（35% 以下）的敵人
     public static final String FLAG_IMPLODING = "flag.imploding_impacts";       // 戰爭使者：完全破甲讓所有擊中傷害都增加
     public static final String BLOCK_MAX = "block.max";                         // FLAT：格擋上限（加在 50 上）
@@ -663,6 +665,31 @@ public final class StatKeys {
     public static final String RADIUS_PREFIX = "radius:";
     /** FLAT：弓攻擊 x% 機率多射一發（超過 100% 的部分是必定多一發再擲剩下的；PoE2 0.5）。 */
     public static final String PROJECTILE_CHANCE = "skill.projectile_chance";
+
+    // ---- 2026-10-21：PoE2 腐化詞綴補齊的機制 ----
+    /** INCREASED：你造成的減速（冰緩、癱瘓、臨在的減速）幅度。 */
+    public static final String SLOW_MAGNITUDE = "slow.magnitude";
+    /** INCREASED：你身上減速（冰緩、Boss 的減速）的幅度（負的 = 減少）。 */
+    public static final String SLOW_TAKEN = "slow.taken";
+    /** FLAT：受到的傷害 x% 之後慢慢回成魔力（跟魔力偷取一起回）。 */
+    public static final String MANA_RECOUP = "mana.recoup";
+    /** FLAT：擊中 x% 機率致盲（{@link tw.exilecore.combat.HitEffects}：4 秒內命中與閃避更少 20%）。 */
+    public static final String BLIND_CHANCE = "blind.chance";
+    /** FLAT：擊中 x% 機率癱瘓（4 秒內移動速度變慢 30%，吃減速幅度）。 */
+    public static final String MAIM_CHANCE = "maim.chance";
+    /** FLAT：投射物射出時 x% 機率多穿透一個敵人（PoE2 箭袋的「x% 機率穿透」；超過 100% 的部分必定再多一個）。 */
+    public static final String PIERCE_CHANCE = "skill.pierce_chance";
+    /** FLAT：投射物碰到地形 x% 機率再連鎖一次（彈向最近的敵人）。 */
+    public static final String CHAIN_TERRAIN = "skill.chain_terrain";
+    /** FLAT：格擋時回復 x 生命／魔力。 */
+    public static final String LIFE_ON_BLOCK = "life.on_block";
+    public static final String MANA_ON_BLOCK = "mana.on_block";
+    /** INCREASED：近戰打擊（打擊、扇形）的距離。 */
+    public static final String MELEE_RANGE = "melee.range";
+    /** INCREASED：只有魔力偷取的量（PoE2 珠寶「增加 x% 魔力偷取量」；leech.effect 是生命、魔力都算）。 */
+    public static final String LEECH_MANA_EFFECT = "leech.mana_effect";
+    /** FLAT：被敵人擊中時獲得幾點怒氣（PoE2 珠寶）。 */
+    public static final String RAGE_WHEN_HIT = "rage.when_hit";
 
     public static boolean flag(final StatSheet sheet, final String flag) {
         return sheet.get(flag) > 0;

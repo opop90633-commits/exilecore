@@ -284,8 +284,10 @@ class UiPackTest {
         assertEquals(smallIcons + 1, small, "空裝備欄的剪影、社群按鈕、鎖頭");
         assertEquals(2 * transmogArmourThemes(), armour, "每一套幻化：身上、腿上各一張");
         assertEquals(UiPack.BACKGROUNDS + 4 + 1 + UiPack.Cell.NODES.size() + 1 + UiPack.ICONS.size() - smallIcons + 1 + UiPack.FLASK_SLOTS.size()
-                        + 3 + transmogItemTextures(), count,
-                "背景、四條線、發光、節點（含珠寶孔兩種）、標記、按鍵圖示、選取外框、藥劑欄的空瓶輪廓、稀有度與追逐級的外框、專屬寶石的實線外框、幻化的物品圖");
+                        + 3 + transmogItemTextures()
+                        + UiPack.AtlasCell.EDGES.size() + UiPack.AtlasCell.KINDS.size() + 1, count,
+                "背景、四條線、發光、節點（含珠寶孔兩種）、標記、按鍵圖示、選取外框、藥劑欄的空瓶輪廓、稀有度與追逐級的外框、專屬寶石的實線外框、幻化的物品圖、"
+                        + "星圖格子的六條連線、六種格子、腐化圈（2026-10-21）");
     }
 
     /** web/skins/index.txt 列的圖（tools/gen_skin_art.py 產生）。 */
@@ -551,5 +553,27 @@ class UiPackTest {
             assertTrue(files.containsKey("assets/exilecore/models/item/currency/" + id + ".json"), id + " 的模型");
             assertTrue(files.containsKey("assets/exilecore/textures/item/currency/" + id + ".png"), id + " 的貼圖");
         }
+    }
+
+    /** 2026-10-21：背景音樂拆成另一包：介面那包沒有音樂，音樂那包只有音樂和 pack.mcmeta，拆兩次一模一樣（雜湊不變）。 */
+    @Test
+    void splitsMusicIntoItsOwnPack() throws IOException {
+        final UiPack.Split split = UiPack.splitMusic(pack);
+        final Map<String, byte[]> ui = unzip(split.ui().zip());
+        assertTrue(ui.containsKey("pack.mcmeta"));
+        for (final String path : ui.keySet()) {
+            assertTrue(!UiPack.isMusicFile(path), "介面那包不該有 " + path);
+        }
+        if (split.music() == null) {
+            return; // 測試的 classpath 沒有音樂
+        }
+        final Map<String, byte[]> music = unzip(split.music().zip());
+        assertTrue(music.containsKey("pack.mcmeta"));
+        assertTrue(music.containsKey("assets/exilecore/sounds.json"));
+        for (final String path : music.keySet()) {
+            assertTrue(path.equals("pack.mcmeta") || UiPack.isMusicFile(path), "音樂那包不該有 " + path);
+        }
+        assertEquals(files.size() + 1, ui.size() + music.size());
+        assertEquals(split.ui().sha1(), UiPack.splitMusic(pack).ui().sha1());
     }
 }

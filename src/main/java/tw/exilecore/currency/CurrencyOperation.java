@@ -97,7 +97,7 @@ public enum CurrencyOperation {
     REMOVE_AND_ADD {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
-            return data.rarity() == Rarity.RARE && data.identified() && !data.affixes().isEmpty();
+            return data.rarity() == Rarity.RARE && data.identified() && hasRemovable(data); // 2026-10-21：只剩破裂的詞綴不能用
         }
 
         @Override
@@ -111,7 +111,7 @@ public enum CurrencyOperation {
     REMOVE_AFFIX {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
-            return (data.rarity() == Rarity.MAGIC || data.rarity() == Rarity.RARE) && data.identified() && !data.affixes().isEmpty();
+            return (data.rarity() == Rarity.MAGIC || data.rarity() == Rarity.RARE) && data.identified() && hasRemovable(data); // 2026-10-21
         }
 
         @Override
@@ -124,7 +124,7 @@ public enum CurrencyOperation {
     REROLL_RARE {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
-            return data.rarity() == Rarity.RARE && data.identified();
+            return data.rarity() == Rarity.RARE && data.identified() && data.fractured() == null; // 2026-10-21：破裂的物品不能整個重骰
         }
 
         @Override
@@ -151,7 +151,8 @@ public enum CurrencyOperation {
     SCOUR {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
-            return (data.rarity() == Rarity.MAGIC || data.rarity() == Rarity.RARE) && data.identified();
+            // 2026-10-21：破裂的物品不能洗掉（PoE 的規則：破裂的詞綴永遠留著）
+            return (data.rarity() == Rarity.MAGIC || data.rarity() == Rarity.RARE) && data.identified() && data.fractured() == null;
         }
 
         @Override
@@ -188,31 +189,73 @@ public enum CurrencyOperation {
     },
 
     /**
-     * 腐化（2026-10，蝕變石）：物品變成已腐化（之後不能再改造），另外隨機一種結果：
-     * 40% 沒有變化、30% 重骰所有詞綴的數值、30% 品質變成 21～25（武器、防具；超過一般的上限 20）。
+     * 腐化（蝕變石，2026-10-21 照 PoE2 的瓦爾寶珠）：物品變成已腐化（之後只能鑑定、把符文嵌進空的孔），另外各 25% 一種結果：
+     * 沒有變化、加一條腐化詞綴（affixes/corrupted.yml，照 PoE2 的腐化附魔；已經有就換一條）、多一個符文孔（可以超過上限；
+     * 飾品這種沒有孔的改成加腐化詞綴）、重骰所有詞綴的數值（破裂的不變）。
+     * 珠寶照 PoE2：沒有變化、重骰數值、多一條詞綴（可以超過上限）、少一條詞綴，各 25%。藥劑、護符、地圖不能用。
      */
     CORRUPT {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
             final var base = generator.repository().base(data.base());
-            return base != null && !base.isMap() && data.identified() && !data.corrupted() && !data.starter();
+            return base != null && !base.isMap() && !base.isFlaskLike() && data.identified() && !data.corrupted() && !data.starter()
+                    && !data.mirrored();
         }
 
         @Override
         public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
             data.setCorrupted(true);
-            final double roll = random.nextDouble();
+            final int outcome = random.nextInt(4);
             final var base = generator.repository().base(data.base());
-            if (roll < 0.4) {
-                return;
-            }
-            if (roll < 0.7 || base == null || !base.isWearable()) {
-                if (!data.affixes().isEmpty()) {
-                    generator.rerollValues(data, random);
+            if (base != null && base.isJewel()) {
+                switch (outcome) {
+                    case 0 -> {
+                        // 沒有變化
+                    }
+                    case 1 -> generator.rerollValues(data, random);
+                    case 2 -> {
+                        if (data.rarity() == Rarity.NORMAL) {
+                            data.setRarity(Rarity.MAGIC);
+                        }
+                        generator.addAffix(data, null, random, true);
+                    }
+                    default -> generator.removeRandomAffix(data, random);
                 }
                 return;
             }
-            data.setQuality(Math.max(data.quality(), 20) + 1 + random.nextInt(5));
+            switch (outcome) {
+                case 0 -> {
+                    // 沒有變化
+                }
+                case 1 -> generator.addCorruptionEnchant(data, random);
+                case 2 -> {
+                    if (base != null && tw.exilecore.item.Runes.slots(generator.repository(), base, data) > 0) {
+                        data.setCorruptSockets(data.corruptSockets() + 1);
+                    } else {
+                        generator.addCorruptionEnchant(data, random);
+                    }
+                }
+                default -> generator.rerollValues(data, random);
+            }
+        }
+    },
+
+    /**
+     * 定星石（2026-10-21，PoE2 的破裂石）：有 4 條以上詞綴的稀有物品，隨機一條詞綴變成「破裂」：
+     * 之後亂流石、湮滅石、神聖石、星籤、星魄、揭露石、蝕變石都動不到它（它會一直留著），物品還是可以繼續改造。一件只能有一條。
+     * 隱匿詞綴不會被選到。
+     */
+    FRACTURE {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return data.rarity() == Rarity.RARE && data.identified() && !data.corrupted() && !data.mirrored() && !data.starter()
+                    && data.fractured() == null && !fracturable(data).isEmpty() && data.affixes().size() >= MIN_FRACTURE_AFFIXES;
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            final java.util.List<tw.exilecore.item.RolledAffix> candidates = fracturable(data);
+            data.setFractured(candidates.get(random.nextInt(candidates.size())).id());
         }
     },
 
@@ -438,6 +481,35 @@ public enum CurrencyOperation {
 
     /** 執行。呼叫前必須先確認 {@link #canApply}。 */
     public abstract void apply(ItemData data, ItemGenerator generator, RandomGenerator random);
+
+    /** 定星石至少要幾條詞綴（PoE2：4 條）。 */
+    public static final int MIN_FRACTURE_AFFIXES = 4;
+
+    /** 有沒有通貨拿得掉的詞綴（破裂的不算；2026-10-21）。 */
+    static boolean hasRemovable(final ItemData data) {
+        for (final tw.exilecore.item.RolledAffix rolled : data.affixes()) {
+            if (!data.isFractured(rolled)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 可以被定星石選到的詞綴（隱匿詞綴不算）。 */
+    static java.util.List<tw.exilecore.item.RolledAffix> fracturable(final ItemData data) {
+        final java.util.List<tw.exilecore.item.RolledAffix> list = new java.util.ArrayList<>();
+        for (final tw.exilecore.item.RolledAffix rolled : data.affixes()) {
+            if (!tw.exilecore.item.Veiled.isVeiled(rolled.id())) {
+                list.add(rolled);
+            }
+        }
+        return list;
+    }
+
+    /** 已腐化的物品還能用的（2026-10-21：鑑定、把符文嵌進空的符文孔——PoE2 的腐化物品也能嵌符文）。 */
+    public boolean allowedOnCorrupted() {
+        return this == IDENTIFY || this == RUNE;
+    }
 
     /** 傳奇的掉落來源：可以用僥倖石做出來（uniques.yml 的 sources 寫 chance）。 */
     public static final String CHANCE_SOURCE = "chance";

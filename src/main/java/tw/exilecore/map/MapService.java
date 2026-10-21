@@ -107,6 +107,13 @@ public final class MapService {
     private final MapEvents events;
     /** 星圖天賦（atlas_tree.yml）。 */
     private final AtlasTree tree = new AtlasTree();
+    /** 星圖的生成規則（atlas.yml，2026-10-21）。 */
+    private final AtlasConfig atlasConfig = new AtlasConfig();
+    /** 每個角色的星圖進度（照存的字串快取；存的字串變了就重讀）。 */
+    private final Map<UUID, CachedAtlas> atlasCache = new HashMap<>();
+
+    private record CachedAtlas(long seed, String cells, AtlasProgress progress) {
+    }
     private final NamespacedKey instanceKey;
     private final NamespacedKey bossKey;
     private final Path cellsFile;
@@ -172,6 +179,15 @@ public final class MapService {
     /** 重讀 atlas_tree.yml（之後開的地圖照新的）；設定的問題記在主控台。 */
     void reloadTree() {
         try {
+            atlasConfig.load(plugin.dataFolder().resolve("data")); // 2026-10-21：星圖的生成規則
+            atlasCache.clear();
+        } catch (final Exception e) {
+            plugin.getSLF4JLogger().error("atlas.yml 讀取失敗，星圖的生成規則照上一次讀到的", e);
+        }
+        for (final String problem : atlasConfig.problems()) {
+            plugin.getSLF4JLogger().warn(problem);
+        }
+        try {
             tree.load(plugin.dataFolder().resolve("data"));
         } catch (final Exception e) {
             plugin.getSLF4JLogger().error("atlas_tree.yml 讀取失敗，星圖天賦照上一次讀到的", e);
@@ -180,6 +196,530 @@ public final class MapService {
         for (final String problem : tree.problems()) {
             plugin.getSLF4JLogger().warn(problem);
         }
+    }
+
+    /** 星圖的生成規則。 */
+    public AtlasConfig atlasConfig() {
+        return atlasConfig;
+    }
+
+    // ---- 星圖（程序生成的六角格，2026-10-21）----
+
+    /** 一般地圖在星圖上的規則（atlas.yml 的 maps；沒寫 min_distance 的照以前的圈數換算 2×圈 − 1）。 */
+    List<AtlasGrid.Species> species() {
+        final List<AtlasGrid.Species> list = new ArrayList<>();
+        for (final MapConfig.MapDef map : config.maps()) {
+            final AtlasConfig.MapRule rule = atlasConfig.rule(map.id());
+            final int minDistance = rule.minDistance() >= 0 ? rule.minDistance() : Math.max(1, map.ring() * 2 - 1);
+            list.add(new AtlasGrid.Species(map.id(), minDistance, rule.weight()));
+        }
+        return list;
+    }
+
+    /** 有城塞的終局（一般終局，不含巔峰、事件巔峰），照 requires 的先後排。 */
+    List<String> citadelFinals() {
+        final List<String> list = new ArrayList<>();
+        for (final MapConfig.MapDef map : config.finals()) {
+            if (config.pinnacle(map.id()) == null && !config.isEventPinnacle(map.id())) {
+                list.add(map.id());
+            }
+        }
+        return list;
+    }
+
+    /** 這個角色的星圖（照他的種子生成）。 */
+    public AtlasGrid grid(final Player player) {
+        return atlasProgress(player).grid();
+    }
+
+    /**
+     * 這個角色的星圖進度：沒有種子的（舊角色、新角色）先給種子，舊的星圖進度（完成過哪些地圖）轉成格子。
+     * 照存的字串快取，存的變了才重讀。
+     */
+    public AtlasProgress atlasProgress(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        final Map<String, String> progress = state.progress();
+        long seed = Atlas.parseLong(progress.get(AtlasProgress.SEED_KEY));
+        final boolean fresh = seed == 0;
+        if (fresh) {
+            seed = random().nextLong() | 1L;
+        }
+        final StringBuilder raw = new StringBuilder();
+        for (int i = 1; i < 1000; i++) {
+            final String chunk = progress.get(AtlasProgress.cellsKey(i));
+            if (chunk == null) {
+                break;
+            }
+            raw.append(chunk).append('|');
+        }
+        final CachedAtlas cached = atlasCache.get(player.getUniqueId());
+        if (!fresh && cached != null && cached.seed() == seed && cached.cells().contentEquals(raw)) {
+            return cached.progress();
+        }
+        final AtlasGrid grid = new AtlasGrid(atlasConfig, seed, species(), citadelFinals());
+        final AtlasProgress atlas = new AtlasProgress(grid, AtlasProgress.readCells(progress));
+        if (fresh && state.hasCharacter()) {
+            // 轉檔：以前完成過的地圖 → 最近的那種格子（連同路上的）；以前解鎖過終局的，所有城塞當作攻破
+            final Set<String> legacy = Atlas.completed(config, progress);
+            final List<String> species = new ArrayList<>();
+            for (final MapConfig.MapDef map : config.maps()) {
+                if (legacy.contains(map.id())) {
+                    species.add(map.id());
+                }
+            }
+            for (final long key : AtlasProgress.migrate(grid, species)) {
+                atlas.complete(AtlasGrid.qOf(key), AtlasGrid.rOf(key));
+            }
+            if (Atlas.legacyFinalUnlocked(config, legacy)) {
+                for (final String finalId : citadelFinals()) {
+                    plugin.characters().setProgress(player, AtlasProgress.CITADEL_PREFIX + finalId, "legacy");
+                }
+            }
+            plugin.characters().setProgress(player, AtlasProgress.SEED_KEY, String.valueOf(seed));
+            saveAtlasProgress(player, atlas);
+            if (!species.isEmpty()) {
+                player.sendMessage(plugin.text().prefixed("<#9fd3ff>星圖改版了：以前完成的 " + species.size() + " 種地圖已經轉成新星圖上的 "
+                        + atlas.completed().size() + " 格（/atlas 看看）"));
+            }
+        }
+        atlasCache.put(player.getUniqueId(), new CachedAtlas(seed, raw.toString(), atlas));
+        return atlas;
+    }
+
+    /**
+     * 這張圖對應星圖的哪一格（開圖時）：記在實例上、套這一格的加成。
+     * Boss 格：Boss 生命 ×boss_life、Boss 掉落多幾成；腐化：怪物等級 +monster_level（算在怪物強度上）、怪物群、物品數量、稀有度；
+     * 隱藏格：保證一個隨機的地圖事件（MapEvents.place 看 {@link MapInstance#atlasCell}）。
+     */
+    private void applyCell(final Player player, final MapInstance instance, final AtlasGrid.Cell cell) {
+        instance.setAtlasCell(cell);
+        final AtlasProgress atlas = atlasProgress(player);
+        // 2026-10-21 漏洞修正：同一個人同一格還有一張沒打完的圖（傳送門關了、隊友還在裡面）時，這張當作打過的——
+        //   不然開兩張同一格的圖，第一次完成的加成（Boss 格、腐化的蝕變石、淨化的定星石）會拿兩次
+        boolean twin = false;
+        for (final MapInstance other : instances.values()) {
+            if (other != instance && player.getUniqueId().equals(other.owner()) && !other.bossKilled() && other.atlasCell() != null
+                    && other.atlasCell().q() == cell.q() && other.atlasCell().r() == cell.r()) {
+                twin = true;
+                break;
+            }
+        }
+        // 2026-10-21 漏洞修正：格子要打倒 Boss（開圖的人在旁邊）才算完成；以前不打 Boss、或站遠讓隊友打，
+        //   這格就永遠沒完成，每張同種地圖都能再吃一次第一次的加成。現在每格的加成最多給 CELL_TRIES 次（開圖就算一次）
+        final boolean completedCell = atlas.isCompleted(cell.q(), cell.r());
+        final String cellTry = "celltry." + cell.q() + ":" + cell.r();
+        final int cellTries = (int) Atlas.parseLong(plugin.players().get(player).progress().get(cellTry));
+        final boolean exhausted = !completedCell && cellTries >= CELL_TRIES;
+        final boolean done = twin || completedCell || exhausted;
+        if (!done) {
+            plugin.characters().setProgress(player, cellTry, String.valueOf(cellTries + 1));
+        }
+        final List<String> notes = new ArrayList<>();
+        // 核心天賦的效果（不是格子的加成）：完成過的格子也照樣吃
+        if (instance.atlas().get("atlas.chosen_event") > 0) { // 核心「單一信仰」：選的那種事件每張圖保證幾個，其他事件不出現（祭壇、幻霧不受影響）
+            final MapEventConfig.Kind faith = faithKind(player);
+            instance.setAtlas(instance.atlas().plus(AtlasBonus.kindKey(faith, "extra"), instance.atlas().count("atlas.chosen_event"))
+                    .plus(AtlasBonus.faithKey(faith), 1));
+            notes.add("單一信仰：" + MapEventConfig.sourceName(MapEventConfig.uniqueSource(faith)));
+        }
+        final boolean allCorrupt = instance.atlas().get("atlas.all_corrupt") > 0; // 核心「腐化之心」
+        if (done && allCorrupt) {
+            applyCorruption(instance);
+            notes.add("腐化之心：當作腐化區");
+        }
+        if (done) {
+            // 2026-10-21 漏洞修正：完成過的格子再開就是一張普通的圖（Boss 格、隱藏格、腐化、石板的加成只給第一次），
+            // 不然大家只會挑一格最好的（腐化＋Boss＋好幾片石板）一直刷
+            player.sendMessage(plugin.text().parse("<gray>  星圖：<white>(" + cell.q() + ", " + cell.r() + ")<gray> "
+                    + (exhausted ? "已經開了 " + cellTries + " 次都沒打完：格子的加成最多給 " + CELL_TRIES + " 次（打倒 Boss 照樣完成這格）"
+                            : "已完成過：格子的加成只給第一次（往外走找新的格子）")
+                    + (notes.isEmpty() ? "" : "　" + String.join("、", notes))));
+            return;
+        }
+        if (cell.kind() == AtlasGrid.Kind.BOSS) {
+            instance.twist().bossPower += Math.max(0, atlasConfig.bossLife() - 1);
+            instance.twist().bossLoot += 0.5;
+            instance.setAtlasBossCell(true);
+            notes.add("Boss 格：Boss 更強、掉得更多");
+        }
+        if (cell.kind() == AtlasGrid.Kind.HIDDEN) {
+            final MapEventConfig.Kind[] kinds = {MapEventConfig.Kind.SHRINE, MapEventConfig.Kind.STRONGBOX, MapEventConfig.Kind.BREACH,
+                    MapEventConfig.Kind.EXILE, MapEventConfig.Kind.ABYSS};
+            final MapEventConfig.Kind kind = kinds[random().nextInt(kinds.length)];
+            instance.setAtlas(instance.atlas().plus(AtlasBonus.kindKey(kind, "extra"), 1));
+            notes.add("隱藏格：保證一個地圖事件");
+        }
+        // 星圖天賦 atlas.corrupt.chance：沒腐化的格子開圖時也有機會算腐化（基本機率 × 增加的）；淨化區不會被腐化（2026-10-21）
+        final boolean extraCorrupt = !cell.corrupted() && !cell.purified() && cell.distance() >= atlasConfig.corruption().minDistance()
+                && random().nextDouble() < atlasConfig.corruption().chance() * instance.atlas().increased("atlas.corrupt.chance");
+        if (cell.corrupted() || extraCorrupt || allCorrupt && !cell.purified()) {
+            applyCorruption(instance);
+            instance.setFirstCorrupted(true); // 2026-10-21：第一次完成這格：Boss 有機率掉蝕變石
+            notes.add("腐化區：怪更強、掉得更多、Boss 可能掉蝕變石");
+        }
+        if (cell.purified()) {
+            instance.setFirstPurified(true); // 2026-10-21：第一次完成這格：Boss 有機率掉定星石
+            notes.add("淨化區：Boss 可能掉定星石");
+        }
+        // 先驅石板：罩到這格的每座塔（半徑照 atlas.yml 的 tower.radius + 星圖天賦）
+        final List<AtlasTablets.Kind> covering = tabletsCovering(player, atlas, cell.q(), cell.r());
+        if (!covering.isEmpty()) {
+            final double effect = 1 + instance.atlas().increased("atlas.tablet.effect");
+            final AtlasTablets.Applied applied = AtlasTablets.apply(instance.atlas(), covering, effect);
+            instance.setAtlas(applied.bonus());
+            if (applied.bossTablets() > 0 && cell.kind() == AtlasGrid.Kind.NORMAL) {
+                instance.twist().bossPower += Math.max(0, atlasConfig.bossLife() - 1);
+                instance.twist().bossLoot += 0.5;
+                instance.setAtlasBossCell(true);
+            }
+            instance.twist().quantity += applied.bountyQuantity() / 100.0;
+            instance.twist().bossLoot += applied.bountyRarity() / 100.0;
+            final List<String> names = new ArrayList<>();
+            for (final AtlasTablets.Kind kind : covering) {
+                names.add(kind.displayName());
+            }
+            notes.add("石板 ×" + covering.size() + "（" + String.join("、", names) + "）");
+        }
+        player.sendMessage(plugin.text().parse("<gray>  星圖：<white>(" + cell.q() + ", " + cell.r() + ")<gray> 距離 " + cell.distance()
+                + (done ? "・已完成過（再打不給點數）" : "・完成後 +天賦點、解鎖周圍")
+                + (notes.isEmpty() ? "" : "　" + String.join("、", notes))));
+    }
+
+    /** 一座塔最多開幾次（2026-10-21 漏洞修正：塔不用地圖物品，不能無限免費開）。 */
+    static final int TOWER_TRIES = 3;
+
+    /** 一格的加成（Boss 格、腐化、隱藏格、石板）最多給幾次（2026-10-21 漏洞修正：開圖就算一次，打倒 Boss 完成這格）。 */
+    static final int CELL_TRIES = 2;
+
+    /** 角色進度：核心「單一信仰」選的事件。 */
+    public static final String FAITH_KEY = "atlasfaith";
+
+    /** 核心「單一信仰」選的事件（沒選是神龕）。 */
+    public MapEventConfig.Kind faithKind(final Player player) {
+        final String stored = plugin.players().get(player).progress().get(FAITH_KEY);
+        if (stored != null) {
+            for (final MapEventConfig.Kind kind : MapEventConfig.Kind.values()) {
+                if (kind.name().equalsIgnoreCase(stored.trim()) && kind != MapEventConfig.Kind.SAFE) {
+                    return kind;
+                }
+            }
+        }
+        return MapEventConfig.Kind.SHRINE;
+    }
+
+    /** 核心「單一信仰」：換成下一種事件（神龕 → 寶箱 → 裂隙 → 流寇 → 深淵 → 神龕）。 */
+    public MapEventConfig.Kind cycleFaith(final Player player) {
+        final MapEventConfig.Kind[] kinds = {MapEventConfig.Kind.SHRINE, MapEventConfig.Kind.STRONGBOX, MapEventConfig.Kind.BREACH,
+                MapEventConfig.Kind.EXILE, MapEventConfig.Kind.ABYSS};
+        final MapEventConfig.Kind current = faithKind(player);
+        MapEventConfig.Kind next = kinds[0];
+        for (int i = 0; i < kinds.length; i++) {
+            if (kinds[i] == current) {
+                next = kinds[(i + 1) % kinds.length];
+            }
+        }
+        plugin.characters().setProgress(player, FAITH_KEY, next.name());
+        return next;
+    }
+
+    /** 腐化區的加成（atlas.yml 的 corruption；星圖天賦 atlas.corrupt.bonus 加強；核心「腐化之心」的代價怪物更痛）。 */
+    private void applyCorruption(final MapInstance instance) {
+        final AtlasConfig.Corruption corruption = atlasConfig.corruption();
+        final double more = 1 + instance.atlas().increased("atlas.corrupt.bonus");
+        instance.twist().monsterPower += 0.08 * corruption.monsterLevel();
+        instance.twist().packSize += corruption.pack() / 100.0 * more;
+        instance.twist().quantity += corruption.quantity() / 100.0 * more;
+        instance.twist().bossLoot += corruption.rarity() / 100.0 * more;
+        if (instance.atlas().get("atlas.monster_damage_more") > 0) {
+            instance.twist().monsterPower += instance.atlas().increased("atlas.monster_damage_more");
+        }
+    }
+
+    /** 這座塔插的石板（角色進度 tablet.q:r）；沒插回傳 null。 */
+    public AtlasTablets.Kind tabletAt(final Player player, final int q, final int r) {
+        return AtlasTablets.Kind.ofCurrency(plugin.players().get(player).progress().get(AtlasTablets.key(q, r)));
+    }
+
+    /** 罩到這一格的石板（每座完成的塔，半徑 = tower.radius + 星圖天賦 atlas.tower.radius）。 */
+    List<AtlasTablets.Kind> tabletsCovering(final Player player, final AtlasProgress atlas, final int q, final int r) {
+        final List<AtlasTablets.Kind> list = new ArrayList<>();
+        final int radius = atlasConfig.tower().radius() + atlasBonus(player).count("atlas.tower.radius");
+        for (final AtlasGrid.Cell tower : atlas.completedTowers()) {
+            if (AtlasGrid.distance(tower.q(), tower.r(), q, r) > radius) {
+                continue;
+            }
+            final AtlasTablets.Kind kind = tabletAt(player, tower.q(), tower.r());
+            if (kind != null) {
+                list.add(kind);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 把一片石板插進完成的塔：扣一片通貨（背包或通貨袋）、記在角色進度。回傳問題（null = 插好了）。
+     */
+    public String insertTablet(final Player player, final AtlasGrid.Cell tower, final AtlasTablets.Kind kind) {
+        final AtlasProgress atlas = atlasProgress(player);
+        if (tower == null || tower.kind() != AtlasGrid.Kind.TOWER) {
+            return "這不是塔";
+        }
+        if (!atlas.isCompleted(tower.q(), tower.r())) {
+            return "先完成這座塔";
+        }
+        if (tabletAt(player, tower.q(), tower.r()) != null) {
+            return "這座塔已經插了石板（拿不回來）";
+        }
+        final CurrencyType type = plugin.currencies() == null ? null : plugin.currencies().repository().get(kind.currencyId());
+        if (type == null) {
+            return "currencies.yml 沒有 " + kind.currencyId();
+        }
+        if (countCurrency(player, type) < 1) {
+            return "你沒有" + kind.displayName();
+        }
+        takeCurrency(player, type, 1);
+        plugin.characters().setProgress(player, AtlasTablets.key(tower.q(), tower.r()), kind.currencyId());
+        player.sendMessage(plugin.text().prefixed("<#d8c8a0>插上" + kind.displayName() + "：" + kind.description()
+                + "<gray>（塔 (" + tower.q() + ", " + tower.r() + ") 周圍 " + (atlasConfig.tower().radius() + atlasBonus(player).count("atlas.tower.radius")) + " 格）"));
+        return null;
+    }
+
+    /** 擲一片隨機的先驅石板給這個人（塔完成時）。 */
+    private void giveTablet(final Player player, final AtlasTablets.Kind kind) {
+        if (plugin.currencies() == null) {
+            return;
+        }
+        final CurrencyType type = plugin.currencies().repository().get(kind.currencyId());
+        if (type == null) {
+            plugin.getSLF4JLogger().warn("currencies.yml 沒有 {}，塔沒有掉石板", kind.currencyId());
+            return;
+        }
+        final ItemStack stack = plugin.currencies().create(type, 1);
+        plugin.economy().ledger().produced(type.id(), "tower", 1);
+        plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, stack));
+        player.sendMessage(plugin.text().prefixed("<#d8c8a0>✦ 掉落：<white>" + ItemRenderer.escape(type.name()) + "<gray>（插進完成的塔：地圖裝置的「塔與城塞」）"));
+    }
+
+    // ---- 塔（2026-10-21）----
+
+    /** 塔的「地圖」：旁邊那種地圖的怪、城區版面、一隻塔守（比地圖 Boss 弱）；爬到頂打倒塔守就完成。 */
+    MapConfig.MapDef towerMap(final AtlasGrid grid, final AtlasGrid.Cell tower) {
+        MapConfig.MapDef nearby = null;
+        for (final AtlasGrid.Cell neighbour : grid.neighbours(tower.q(), tower.r())) {
+            if (neighbour.isMap() && neighbour.mapId() != null) {
+                nearby = config.find(neighbour.mapId());
+                if (nearby != null) {
+                    break;
+                }
+            }
+        }
+        if (nearby == null) {
+            nearby = config.maps().iterator().next();
+        }
+        final MapConfig.Boss base = nearby.boss();
+        final MapConfig.Boss keeper = new MapConfig.Boss("塔守・" + base.name(), base.type(), base.mythic(), false, base.life() * 0.6,
+                base.damage() * 0.8, base.scale(), base.mods(), "「這座塔，不歡迎任何人。」", "塔頂的石板座亮了起來。", List.of(), base.skills());
+        return new MapConfig.MapDef("tower", "塔（" + nearby.name() + "）", null, 0, config.tiers().level(config.tiers().clamp(tower.tier())), "ruins",
+                -1, -1, List.of(), false, nearby.monsters(), keeper, "先驅留下的瞭望塔。爬到頂，插上石板，附近的地圖就聽你的。", false,
+                MapLayout.Style.CITY);
+    }
+
+    /** 開一座塔（不用地圖物品；要解鎖、還沒完成）。回傳問題（null = 開了）。 */
+    public String openTower(final Player player, final AtlasGrid.Cell tower) {
+        if (!plugin.players().get(player).hasCharacter()) {
+            return "先建立角色";
+        }
+        final AtlasProgress atlas = atlasProgress(player);
+        if (tower == null || tower.kind() != AtlasGrid.Kind.TOWER || !atlas.isUnlocked(tower.q(), tower.r())) {
+            return "這座塔還沒解鎖";
+        }
+        if (atlas.isCompleted(tower.q(), tower.r())) {
+            return "這座塔已經完成了（塔只能打一次）";
+        }
+        // 2026-10-21 漏洞修正：塔不用地圖物品，開圖的人不進去、讓隊友只刷怪不打塔守，就能一直免費開。每座塔最多開 TOWER_TRIES 次
+        final String tries = "towertry." + tower.q() + ":" + tower.r();
+        final int used = (int) Atlas.parseLong(plugin.players().get(player).progress().get(tries));
+        if (used >= TOWER_TRIES) {
+            return "這座塔已經開了 " + used + " 次都沒打完（每座最多 " + TOWER_TRIES + " 次）：往外找別的塔";
+        }
+        final MapConfig.MapDef map = towerMap(atlas.grid(), tower);
+        final MapStats stats = MapStats.forTier(config.tiers(), tower.tier(), 0);
+        final Special special = new Special("tower", 0xd8c8a0, (instance, players) -> {
+            // 2026-10-21 漏洞修正：只有開塔的人完成這座塔（在不在裡面都算）；隊友不會順便完成自己星圖上的塔
+            final Player owner = plugin.getServer().getPlayer(instance.owner());
+            final AtlasGrid.Cell cell = instance.atlasCell();
+            if (owner != null && cell != null && plugin.players().get(owner).hasCharacter() && completeCell(owner, cell)) {
+                final AtlasTablets.Kind[] kinds = AtlasTablets.Kind.values();
+                giveTablet(owner, kinds[random().nextInt(kinds.length)]);
+            }
+        });
+        // 2026-10-21 漏洞修正：重開的塔只有起點跟塔守那一間（以前前兩次可以只清怪不打塔守，等於免費多刷兩張圖）
+        final MapInstance opened = openSpecialInstance(player, map, stats, used > 0 ? 2 : 4, special);
+        if (opened == null) {
+            return lastSpecialProblem == null ? "塔開不起來" : lastSpecialProblem;
+        }
+        plugin.characters().setProgress(player, tries, String.valueOf(used + 1));
+        opened.setAtlasCell(tower);
+        if (used > 0) {
+            player.sendMessage(plugin.text().parse("<gray>  重開的塔：只剩塔守那一間（第 " + (used + 1) + "／" + TOWER_TRIES + " 次）"));
+        }
+        player.sendMessage(plugin.text().parse("<gray>  星圖：塔 <white>(" + tower.q() + ", " + tower.r() + ")<gray>，完成後解鎖周圍 "
+                + atlasConfig.unlock().onTower() + " 格、天賦點 +" + atlasConfig.tower().points() + "、掉 1 片先驅石板"));
+        return null;
+    }
+
+    // ---- 城塞（2026-10-21）----
+
+    /**
+     * 從城塞開那個終局（第一次不用天穹碎片）：要解鎖、還沒攻破、requires 的終局打贏過。階級最高到完成過的最高階（至少 1）。
+     * 回傳問題（null = 開了）。
+     */
+    public String activateCitadel(final Player player, final AtlasGrid.Cell citadel, final int tier) {
+        if (!plugin.players().get(player).hasCharacter()) {
+            return "先建立角色";
+        }
+        final AtlasProgress atlas = atlasProgress(player);
+        if (citadel == null || citadel.kind() != AtlasGrid.Kind.CITADEL || !atlas.isUnlocked(citadel.q(), citadel.r())) {
+            return "這座城塞還沒解鎖";
+        }
+        if (atlas.isCompleted(citadel.q(), citadel.r())) {
+            return "這座城塞已經攻破了：那個終局在地圖裝置用天穹碎片開";
+        }
+        final MapConfig.MapDef map = config.find(citadel.citadelFinal());
+        if (map == null || !map.isFinal()) {
+            return "maps.yml 沒有終局 " + citadel.citadelFinal();
+        }
+        final Set<String> completed = completed(player);
+        if (!Atlas.finalRequirementsMet(config, map, completed)) {
+            return "要先打贏 " + Atlas.missingRequirements(config, map, completed) + " 才能開" + map.name();
+        }
+        final int best = Math.max(1, bestTier(player));
+        final int chosen = Math.max(1, Math.min(best, tier <= 0 ? Math.min(best, citadel.tier()) : tier));
+        String problem = capacityProblem();
+        if (problem == null) {
+            problem = endgameProblem(player);
+        }
+        if (problem != null) {
+            return problem;
+        }
+        // 2026-10-21 漏洞修正：第一次從城塞開不用碎片；之後（第一次沒打完）照一般終局扣碎片，不然可以讓隊友一直免費打終局
+        // 2026-10-21 漏洞修正：免費那一次照終局算（以前照城塞那一格算：已經攻破過的終局，在別座城塞又能免費打一次）
+        final String tryKey = "citadelfree." + map.id();
+        final boolean free = !plugin.players().get(player).progress().containsKey(tryKey)
+                && !plugin.players().get(player).progress().containsKey("citadeltry." + citadel.q() + ":" + citadel.r());
+        final CurrencyType fragment = plugin.currencies() == null ? null : plugin.currencies().repository().get(config.drops().fragment());
+        if (!free) {
+            if (fragment == null || countCurrency(player, fragment) < config.drops().fragmentCost()) {
+                return "這座城塞的免費那一次用掉了：要 " + config.drops().fragmentCost() + " 片" + (fragment == null ? "天穹碎片" : fragment.name());
+            }
+            takeCurrency(player, fragment, config.drops().fragmentCost());
+        }
+        final UUID ownerId = player.getUniqueId();
+        try {
+            final MapInstance opened = open(player, map, MapStats.forTier(config.tiers(), chosen, config.finalLevelBonus(map.id())));
+            if (free) {
+                plugin.characters().setProgress(player, tryKey, "1");
+            } else if (fragment != null) {
+                opened.paidRefund(() -> refundLater(ownerId, fragment, config.drops().fragmentCost()));
+            }
+            opened.setAtlasCell(citadel);
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().error("從城塞開終局 {} 失敗", map.id(), e);
+            if (!free && fragment != null) {
+                refundLater(ownerId, fragment, config.drops().fragmentCost());
+            }
+            return "這座城塞開不起來（設定有問題，已經記在主控台）";
+        }
+        player.sendMessage(plugin.text().parse("<gray>  星圖：城塞 <white>(" + citadel.q() + ", " + citadel.r() + ")<gray>，攻破後 " + map.name()
+                + " 可以在地圖裝置用天穹碎片打開（T" + chosen + "）"));
+        return null;
+    }
+
+    /** 把星圖進度寫回角色（完成的格子分段存；多出來的舊段落刪掉）。 */
+    private void saveAtlasProgress(final Player player, final AtlasProgress atlas) {
+        final List<String> chunks = AtlasProgress.chunks(atlas.completed());
+        for (int i = 0; i < chunks.size(); i++) {
+            plugin.characters().setProgress(player, AtlasProgress.cellsKey(i + 1), chunks.get(i));
+        }
+        final Map<String, String> progress = plugin.players().get(player).progress();
+        for (int i = chunks.size() + 1; i < 1000; i++) {
+            if (!progress.containsKey(AtlasProgress.cellsKey(i))) {
+                break;
+            }
+            plugin.characters().removeProgress(player, AtlasProgress.cellsKey(i));
+        }
+        atlasCache.remove(player.getUniqueId());
+    }
+
+    /** 玩家在星圖上選的「下次開圖用這一格」（q:r）；沒有或已經不能用回傳 null。 */
+    public AtlasGrid.Cell chosenCell(final Player player, final String mapId) {
+        final long[] at = AtlasProgress.decodeOne(plugin.players().get(player).progress().get(AtlasProgress.CHOSEN_KEY));
+        if (at == null) {
+            return null;
+        }
+        final AtlasProgress atlas = atlasProgress(player);
+        final AtlasGrid.Cell cell = atlas.grid().cell((int) at[0], (int) at[1]);
+        return cell.isMap() && mapId.equals(cell.mapId()) && atlas.isUnlocked(cell.q(), cell.r()) ? cell : null;
+    }
+
+    /** 記住下次開圖用哪一格（null = 清掉、自動選）。 */
+    public void chooseCell(final Player player, final AtlasGrid.Cell cell) {
+        if (cell == null) {
+            plugin.characters().removeProgress(player, AtlasProgress.CHOSEN_KEY);
+        } else {
+            plugin.characters().setProgress(player, AtlasProgress.CHOSEN_KEY, AtlasProgress.encodeOne(cell.q(), cell.r()));
+        }
+    }
+
+    /** 開這種地圖會用哪一格：玩家選的，不然最近的未完成格；沒解鎖這種地圖回傳 null。 */
+    public AtlasGrid.Cell cellFor(final Player player, final String mapId) {
+        final AtlasGrid.Cell chosen = chosenCell(player, mapId);
+        return chosen != null ? chosen : atlasProgress(player).defaultCell(mapId);
+    }
+
+    /**
+     * 完成一格（打倒這格的 Boss）：記進度、解鎖周圍、天賦點與掉落上限的訊息。本來就完成過的只回傳 false。
+     */
+    boolean completeCell(final Player player, final AtlasGrid.Cell cell) {
+        final AtlasProgress atlas = atlasProgress(player);
+        final Set<String> speciesBefore = atlas.unlockedSpecies();
+        final int capBefore = Atlas.dropTierCap(config, atlas.capUnits());
+        final int pointsBefore = atlas.cellPoints();
+        if (!atlas.complete(cell.q(), cell.r())) {
+            return false;
+        }
+        saveAtlasProgress(player, atlas);
+        final AtlasProgress after = atlasProgress(player);
+        final List<String> unlocked = new ArrayList<>();
+        for (final String id : after.unlockedSpecies()) {
+            if (!speciesBefore.contains(id)) {
+                final MapConfig.MapDef map = config.find(id);
+                unlocked.add(map == null ? id : map.name());
+            }
+        }
+        final int points = after.cellPoints() - pointsBefore;
+        player.sendMessage(plugin.text().prefixed("<#9fd3ff>星圖：完成 (" + cell.q() + ", " + cell.r() + ")"
+                + (cell.kind() == AtlasGrid.Kind.TOWER ? " 塔" : cell.kind() == AtlasGrid.Kind.CITADEL ? " 城塞" : "")
+                + "<gray>，共 " + after.completed().size() + " 格、最遠 " + after.farthest() + " 格"
+                + (points > 0 ? "<gray>，星圖天賦點 +" + points : "")));
+        if (!unlocked.isEmpty()) {
+            player.sendMessage(plugin.text().parse("<gray>  解鎖了新的地圖：<white>" + ItemRenderer.escape(String.join("、", unlocked))));
+        }
+        final int capAfter = Atlas.dropTierCap(config, after.capUnits());
+        if (capAfter > capBefore) {
+            player.sendMessage(plugin.text().parse("<gray>  掉落的地圖最高 <white>T" + capAfter + "<gray>（星圖每完成 "
+                    + atlasConfig.dropCap().perCells() + " 格，高一階）"));
+        }
+        if (cell.kind() == AtlasGrid.Kind.CITADEL && cell.citadelFinal() != null) {
+            plugin.characters().setProgress(player, AtlasProgress.CITADEL_PREFIX + cell.citadelFinal(), String.valueOf(System.currentTimeMillis() / 1000));
+            final MapConfig.MapDef finalMap = config.find(cell.citadelFinal());
+            player.sendMessage(plugin.text().parse("<#f5b942>  攻破城塞：" + ItemRenderer.escape(finalMap == null ? cell.citadelFinal() : finalMap.name())
+                    + "<gray> 之後可以在地圖裝置用天穹碎片打開"));
+        }
+        if (plugin.quests() != null) {
+            plugin.quests().refresh(player);
+        }
+        return true;
     }
 
     /** 星圖天賦的設定。 */
@@ -350,6 +890,56 @@ public final class MapService {
     private final DpsCap dpsCap = new DpsCap();
 
     /**
+     * 一場終局、極境、巔峰、金庫之主的紀錄（2026-10-21，/ec bossdps）：沒有玩家名字。
+     *
+     * @param kind      終局／極境／巔峰／金庫之主
+     * @param seconds   開打到倒下幾秒（含換階段、護盾）
+     * @param perPlayer 每個有打的人：[原本的每秒傷害, 遞減後的每秒傷害]（照整場的秒數平均）
+     */
+    public record BossFight(String kind, String boss, int tier, double seconds, List<double[]> perPlayer, long at) {
+    }
+
+    /** 重開伺服器之後最近的幾場（最多 {@value #FIGHT_LOG} 場）。 */
+    private final java.util.ArrayDeque<BossFight> fights = new java.util.ArrayDeque<>();
+    static final int FIGHT_LOG = 500;
+
+    /** Boss 倒下時記一場（MapBosses.killed）：主控台也寫一行，重開伺服器之後還能從紀錄檔查。 */
+    void recordFight(final MapInstance instance) {
+        if (!(instance.usesAttempts() || instance.isUber() || instance.isPinnacle()) || instance.fightStartTick() < 0) {
+            return;
+        }
+        final double seconds = Math.max(1, (plugin.getServer().getCurrentTick() - instance.fightStartTick()) / 20.0);
+        final List<double[]> perPlayer = new ArrayList<>();
+        for (final double[] total : dpsCap.totals(instance.id()).values()) {
+            if (total[0] > 0) {
+                perPlayer.add(new double[] {total[0] / seconds, total[1] / seconds});
+            }
+        }
+        if (perPlayer.isEmpty()) {
+            return;
+        }
+        final String kind = instance.isPinnacle() ? "巔峰" : instance.isUber() ? "極境" : instance.isHeistFinale() ? "金庫之主" : "終局";
+        final BossFight fight = new BossFight(kind, instance.bossDef().name(), instance.stats().tier(), seconds, List.copyOf(perPlayer),
+                System.currentTimeMillis());
+        fights.addLast(fight);
+        while (fights.size() > FIGHT_LOG) {
+            fights.removeFirst();
+        }
+        final StringBuilder each = new StringBuilder();
+        for (final double[] one : perPlayer) {
+            each.append(each.isEmpty() ? "" : "、").append(BossDpsCommand.wan(one[0]))
+                    .append(one[1] < one[0] - 1 ? "（遞減後 " + BossDpsCommand.wan(one[1]) + "）" : "");
+        }
+        plugin.getSLF4JLogger().info("Boss 戰紀錄：{} T{} {} {} 人 {} 秒；每人打 Boss 每秒 {}", kind, fight.tier(), fight.boss(), perPlayer.size(),
+                Math.round(seconds), each);
+    }
+
+    /** 重開伺服器之後最近的 Boss 戰（舊的在前）。 */
+    public List<BossFight> recentFights() {
+        return List.copyOf(fights);
+    }
+
+    /**
      * 打終局、極境、巔峰 Boss 的傷害照 maps.yml 的每秒上限限制（2026-10）：每秒傷害超過上限的部分照 dps_over 遞減
      * （每秒傷害取打訓練假人的紀錄與實際打出來的較高者，見 {@link DpsCap}）。
      * 不是巔峰 Boss、沒有上限的照原本的回傳。
@@ -358,13 +948,14 @@ public final class MapService {
      */
     public double capBossDamage(final LivingEntity defender, final UUID source, final double amount) {
         final String worldRole = plugin.worldEvents() == null ? null : plugin.worldEvents().role(defender);
-        if (amount > 0 && source != null && ("boss".equals(worldRole) || "commander".equals(worldRole)
-                || plugin.festival() != null && plugin.festival().isKing(defender)
-                || plugin.life() != null && plugin.life().isWhale(defender))) {
-            // 2026-10：世界 Boss（開天者、萬燈夜的南瓜王）、入侵怪潮的潮汐統帥、星骸之海的淵鯨比照極境：每秒傷害上限與分段遞減照 maps.yml 的 final_dps（15 萬）
+        if ("boss".equals(worldRole) || "commander".equals(worldRole) || plugin.festival() != null && plugin.festival().isKing(defender)) {
+            return amount; // 2026-10-21：開天者、南瓜王、潮汐統帥不遞減（血量改照打 Boss 每秒 300／600／150 萬、3 分半）
+        }
+        if (amount > 0 && source != null && plugin.life() != null && plugin.life().isWhale(defender)) {
+            // 星骸之海的淵鯨：照 maps.yml 的 whale_dps（2026-10-21：打 Boss 每秒 600 萬打 3 分半，1200 萬起遞減）
             final Player player = plugin.getServer().getPlayer(source);
             final double record = player == null || plugin.training() == null ? 0 : plugin.training().bossDps(player);
-            return dpsCap.apply("world:" + source, amount, config.finalDpsCap(), config.finalDpsOver(),
+            return dpsCap.apply("world:" + source, amount, config.whaleDpsCap(), config.whaleDpsOver(),
                     plugin.getServer().getCurrentTick(), record);
         }
         if (amount <= 0 || source == null || !defender.getPersistentDataContainer().has(bossKey())) {
@@ -375,13 +966,14 @@ public final class MapService {
         if (instance == null || !instance.usesAttempts()) {
             return amount;
         }
+        // 2026-10-21：金庫之主照 heist_dps
         final double cap = instance.isPinnacle() ? instance.pinnacle().dpsCap()
-                : instance.isUber() ? instance.uber().dpsCap() : config.finalDpsCap();
+                : instance.isUber() ? instance.uber().dpsCap() : instance.isHeistFinale() ? config.heistDpsCap() : config.finalDpsCap();
         if (cap <= 0) {
             return amount;
         }
         final List<MapConfig.DpsTier> over = instance.isPinnacle() ? instance.pinnacle().dpsOver()
-                : instance.isUber() ? instance.uber().dpsOver() : config.finalDpsOver();
+                : instance.isUber() ? instance.uber().dpsOver() : instance.isHeistFinale() ? config.heistDpsOver() : config.finalDpsOver();
         // 打假人的紀錄換成打 Boss 的每秒傷害（dummies.yml 的 boss_factor：打無防禦的白怪假人比打首領高很多）
         final Player player = plugin.getServer().getPlayer(source);
         final double record = player == null || plugin.training() == null ? 0 : plugin.training().bossDps(player);
@@ -430,9 +1022,16 @@ public final class MapService {
         return id == null ? null : instances.get(id);
     }
 
-    /** 角色完成過的地圖。 */
+    /**
+     * 角色完成過的地圖（含新星圖的記號：解鎖的種類、前線、城塞、掉落上限；見 {@link Atlas#view}）。
+     * 沒有角色的人是空的。
+     */
     public Set<String> completed(final Player player) {
-        return Atlas.completed(config, plugin.players().get(player).progress());
+        final PlayerState state = plugin.players().get(player);
+        if (!state.hasCharacter()) {
+            return Atlas.completed(config, state.progress());
+        }
+        return Atlas.view(config, state.progress(), atlasProgress(player));
     }
 
     /** 角色完成過的最高階（終局能開到這一階）；沒完成過是 0。 */
@@ -442,6 +1041,42 @@ public final class MapService {
     }
 
     /** 終局開在某一階時的怪物等級。 */
+    /** 建議每秒傷害照「單人幾秒打完」算（2026-10-21：3 分半；換階段、護盾的時間另外算）。 */
+    public static final double RECOMMENDED_SECONDS = 210;
+
+    /** 這隻 Boss 在這個等級的生命（一個人打）：怪物等級的生命 × 傳奇怪物的倍率 × Boss 的倍率 × 階級倍率。 */
+    private double bossLife(final MapConfig.MapDef map, final int level, final double multiplier) {
+        if (plugin.monsters() == null || map.boss() == null) {
+            return 0;
+        }
+        final tw.exilecore.monster.MonsterConfig monsters = plugin.monsters().config();
+        return monsters.lifeAt(level) * monsters.rarity(tw.exilecore.monster.MonsterRarity.UNIQUE).lifeMultiplier() * map.boss().life() * multiplier;
+    }
+
+    /** 終局開在這一階：建議打 Boss 的每秒傷害（單人約 3 分半打完；2026-10-21）。 */
+    public double finalRecommendedDps(final MapConfig.MapDef map, final int tier) {
+        return bossLife(map, finalLevel(tier), config.finalBossLifeMultiplier(tier)) / RECOMMENDED_SECONDS;
+    }
+
+    /** 極境：建議打 Boss 的每秒傷害（單人約 3 分半打完）。 */
+    public double uberRecommendedDps(final MapConfig.MapDef map) {
+        final MapConfig.Uber uber = config.uber(map.id());
+        return uber == null ? 0 : bossLife(map, config.uberStats(map.id(), uber).monsterLevel(),
+                uber.life() * config.finalLifeMultiplier(config.tiers().max())) / RECOMMENDED_SECONDS;
+    }
+
+    /** 巔峰（含事件巔峰）：建議打 Boss 的每秒傷害（單人約 3 分半打完）。 */
+    public double pinnacleRecommendedDps(final MapConfig.MapDef map) {
+        final MapConfig.Pinnacle pinnacle = config.pinnacle(map.id());
+        return pinnacle == null ? 0 : bossLife(map, config.pinnacleStats(map.id(), pinnacle).monsterLevel(),
+                config.finalLifeMultiplier(config.tiers().max())) / RECOMMENDED_SECONDS;
+    }
+
+    /** 「建議打 Boss 每秒 150 萬」的那一行（MiniMessage）。 */
+    public static String recommendedText(final double dps) {
+        return dps <= 0 ? "" : "<gray>建議打 Boss 每秒 <gold>" + BossDpsCommand.wan(dps) + "</gold><dark_gray>（單人約 3 分半打完；組隊血量照人數加）";
+    }
+
     public int finalLevel(final int tier) {
         return config.tiers().level(tier) + config.finalLevelBonus();
     }
@@ -456,10 +1091,10 @@ public final class MapService {
         final List<String> lines = new ArrayList<>();
         lines.add("<gray>階級 T1–T" + max + "・怪物等級 <white>" + finalLevel(1) + "–" + finalLevel(max)
                 + "<dark_gray>（地圖的怪物等級 +" + config.finalLevelBonus() + "）");
-        final double top = config.finalLifeMultiplier(max);
+        final double top = config.finalBossLifeMultiplier(max);
         if (top > 1.0) {
             int from = 1;
-            while (from < max && config.finalLifeMultiplier(from + 1) <= 1.0) {
+            while (from < max && config.finalBossLifeMultiplier(from + 1) <= 1.0) {
                 from++;
             }
             lines.add("<gray>T" + (from + 1) + " 起 Boss 生命越來越多：T" + max + " <white>×" + MapDeviceMenu.number(top)
@@ -589,6 +1224,9 @@ public final class MapService {
         }
         // 劫盜合約：只有星圖（一般的地圖）裡的怪物掉（heist.yml 的 contract_chance；吃物品數量）
         final boolean boss = entity.getPersistentDataContainer().has(bossKey);
+        if (!boss && instance.atlas().get("atlas.no_monster_currency") > 0) {
+            drops.removeIf(drop -> drop.currency() != null); // 2026-10-21 核心「魔王的宴席」的代價：一般怪不掉通貨
+        }
         if (plugin.heists() != null) {
             final double[] contract = plugin.heists().config().settings().contractChance();
             final double base = boss ? contract[3] : switch (data.rarity()) {
@@ -623,7 +1261,7 @@ public final class MapService {
         }
         // 星圖天賦：地圖怪掉地圖的機率增加、高一階的機率增加
         final double chance = config.drops().mapChance().getOrDefault(data.rarity(), 0.0) * (1 + Math.max(0, quantityBonus))
-                * (1 + instance.atlas().mapDrop());
+                * (1 + instance.atlas().mapDrop()) * Math.max(0, 1 - instance.atlas().increased("atlas.map_drop_less")); // 2026-10-21 核心「孤注一擲」的代價
         if (random().nextDouble() < chance) {
             final ItemData map = MapDrops.roll(config, plugin.items().generator(), Math.max(1, instance.stats().tier()),
                     player == null ? null : completed(player), random(), instance.atlas().tierUp());
@@ -648,7 +1286,7 @@ public final class MapService {
     /** 地圖怪多給的經驗（星圖天賦，小數；不是地圖怪是 0）。 */
     public double experienceBonus(final LivingEntity entity) {
         final MapInstance instance = instanceOf(entity);
-        return instance == null ? 0 : instance.atlas().experience();
+        return instance == null ? 0 : instance.atlas().experience() - instance.atlas().increased("atlas.experience_less"); // 2026-10-21 核心「無人之地」的代價
     }
 
     /** 終局以上的 Boss（2026-10-15）：Boss 生命掉到 75% 以下才進來的人沒有掉落；其他怪物、其他地圖都有。 */
@@ -743,9 +1381,13 @@ public final class MapService {
         if (map == null) {
             return "這不是能開的地圖（maps.yml 沒有這個基底）";
         }
-        if (!Atlas.unlocked(config, map, completed(player))) {
+        final Set<String> completed = completed(player);
+        // 2026-10-21：新星圖：沒解鎖的種類也能開（別人給的地圖），只是不算任何格子完成、吃不到格子的加成
+        final boolean grid = Atlas.isGrid(completed);
+        if (!grid && !Atlas.unlocked(config, map, completed)) {
             return map.name() + " 還沒在星圖上解鎖：先完成跟它相連的地圖";
         }
+        final AtlasGrid.Cell cell = grid && !map.isFinal() ? cellFor(player, map.id()) : null;
         String problem = capacityProblem();
         if (problem == null) {
             problem = endgameProblem(player);
@@ -765,6 +1407,11 @@ public final class MapService {
             final MapInstance opened = open(player, map, stats);
             final UUID ownerId = player.getUniqueId();
             opened.paidRefund(() -> giveBackLater(ownerId, one, "地圖"));
+            if (cell != null) {
+                applyCell(player, opened, cell);
+            } else if (grid && !map.isFinal()) {
+                player.sendMessage(plugin.text().parse("<gray>  這種地圖還沒在你的星圖上解鎖：打完不算星圖的格子"));
+            }
         } catch (final RuntimeException e) {
             // 2026-10：生成地圖出錯（設定有問題）：地圖還給他，不會不見
             plugin.getSLF4JLogger().error("開地圖 {} 失敗，地圖還給 {}", map.id(), player.getName(), e);
@@ -790,6 +1437,9 @@ public final class MapService {
             return "先建立角色";
         }
         final Set<String> completed = completed(player);
+        if (Atlas.isGrid(completed) && !Atlas.unlocked(config, map, completed) && Atlas.finalRequirementsMet(config, map, completed)) {
+            return "先在星圖上找到" + map.name() + "的城塞並攻破（/atlas）"; // 2026-10-21
+        }
         if (!Atlas.finalUnlocked(config, completed)) {
             return "先完成星圖最外圈的地圖（" + ringNames(config.maxRing()) + "）";
         }
@@ -2223,6 +2873,14 @@ public final class MapService {
      * （回響、試煉、劫盜終局的獎勵也一樣只給這些人）。boss 是 null（Boss 生不出來）時在裡面的人都算。
      */
     void complete(final MapInstance instance, final Location boss) {
+        complete(instance, boss, null);
+    }
+
+    /**
+     * 同上；damagers：對 Boss 打到傷害門檻的人（2026-10-21：隊友要在裡面才完成自己星圖上的格子、攻破自己的城塞；
+     * null 或空的 = 不檢查，例如 Boss 生不出來、沒有傷害紀錄）。
+     */
+    void complete(final MapInstance instance, final Location boss, final Set<UUID> damagers) {
         final MapConfig.MapDef map = instance.map();
         final Set<UUID> players = new LinkedHashSet<>(instance.inside());
         for (final UUID uuid : instance.visitors()) {
@@ -2271,13 +2929,13 @@ public final class MapService {
                 continue;
             }
             final int pointsBefore = atlasEarned(player).total();
-            completeFor(player, instance);
+            completeFor(player, instance, damagers == null || damagers.isEmpty() || damagers.contains(uuid));
             announceAtlasPoints(player, pointsBefore); // 星圖天賦點：新的地圖、終局、極境、最高階里程碑
         }
     }
 
     /** 一個在裡面的人完成這張地圖：委託、每月挑戰；星圖點亮、首殺獎勵、最高完成階級（極境另外算）。 */
-    private void completeFor(final Player player, final MapInstance instance) {
+    private void completeFor(final Player player, final MapInstance instance, final boolean contributed) {
         final MapConfig.MapDef map = instance.map();
         final PlayerState state = plugin.players().get(player);
         if (plugin.bounties() != null) {
@@ -2297,6 +2955,30 @@ public final class MapService {
         final Set<String> before = completed(player);
         final boolean newBest = recordBest(player, before, map, instance.stats().tier());
         final boolean first = !before.contains(map.id());
+        // 2026-10-21：從城塞開的終局：攻破城塞（開圖的人那一格；隊友是自己星圖上已經解鎖、最近的那個終局的城塞）
+        if (map.isFinal() && instance.atlasCell() != null && instance.atlasCell().kind() == AtlasGrid.Kind.CITADEL && state.hasCharacter()) {
+            AtlasGrid.Cell mine = player.getUniqueId().equals(instance.owner()) ? instance.atlasCell() : null;
+            if (mine == null && contributed) { // 2026-10-21 漏洞修正：隊友要對 Boss 打到傷害才攻破自己的城塞
+                for (final AtlasGrid.Cell open : atlasProgress(player).openCitadels()) {
+                    if (map.id().equals(open.citadelFinal())) {
+                        mine = open;
+                        break;
+                    }
+                }
+            }
+            if (mine != null && !atlasProgress(player).isCompleted(mine.q(), mine.r())) {
+                completeCell(player, mine);
+            }
+        }
+        // 2026-10-21：新星圖：開圖的人完成他選的那一格；隊友完成自己星圖上最近的同種類已解鎖格（沒解鎖就不算）
+        if (!map.isFinal() && instance.atlasCell() != null && state.hasCharacter()) {
+            // 2026-10-21 漏洞修正：隊友要對 Boss 打到傷害才完成自己的格子（以前分身站在旁邊就能一直推星圖）
+            final AtlasGrid.Cell mine = player.getUniqueId().equals(instance.owner()) ? instance.atlasCell()
+                    : contributed ? atlasProgress(player).defaultCell(map.id()) : null;
+            if (mine != null && !atlasProgress(player).isCompleted(mine.q(), mine.r())) {
+                completeCell(player, mine);
+            }
+        }
         if (!first) {
             player.sendMessage(plugin.text().prefixed("<gray>完成 " + ItemRenderer.escape(instance.label())
                     + (newBest ? "<gray>・<#f5b942>最高完成階級 T" + instance.stats().tier()
@@ -2315,12 +2997,14 @@ public final class MapService {
         final Set<String> after = new LinkedHashSet<>(before);
         after.add(map.id());
         final List<String> unlocked = new ArrayList<>();
-        for (final MapConfig.MapDef other : config.all()) {
-            if (config.isEventPinnacle(other.id())) {
-                continue; // 2026-10-18：事件巔峰不在星圖上，不算「解鎖了」
-            }
-            if (!Atlas.unlocked(config, other, before) && Atlas.unlocked(config, other, after)) {
-                unlocked.add(other.name());
+        if (!Atlas.isGrid(before)) { // 2026-10-21：新星圖的解鎖在 completeCell 裡算
+            for (final MapConfig.MapDef other : config.all()) {
+                if (config.isEventPinnacle(other.id())) {
+                    continue; // 2026-10-18：事件巔峰不在星圖上，不算「解鎖了」
+                }
+                if (!Atlas.unlocked(config, other, before) && Atlas.unlocked(config, other, after)) {
+                    unlocked.add(other.name());
+                }
             }
         }
         player.showTitle(Title.title(plugin.text().parse("<#f5b942>星圖點亮：" + ItemRenderer.escape(instance.label())),
@@ -2335,7 +3019,7 @@ public final class MapService {
         }
         final int capBefore = Atlas.dropTierCap(config, Atlas.completedMaps(config, before));
         final int capAfter = Atlas.dropTierCap(config, Atlas.completedMaps(config, after));
-        if (capAfter > capBefore) {
+        if (!Atlas.isGrid(before) && capAfter > capBefore) { // 2026-10-21：新星圖的掉落上限訊息在 completeCell 裡
             player.sendMessage(plugin.text().parse("<gray>  掉落的地圖最高 <white>T" + capAfter + "<gray>（星圖每完成一張不同的地圖，高一階）"));
         }
         if (newBest && !map.isFinal()) {
@@ -2502,13 +3186,22 @@ public final class MapService {
                 finals++;
             }
         }
-        return tree.earned(Atlas.completedMaps(config, completed), finals, uberDefeated(player).size(),
-                Atlas.bestTier(config, progress, completed));
+        // 2026-10-21：一般地圖的點數照新星圖完成的格子（atlas.yml 的 points）；終局、極境、階級照 atlas_tree.yml
+        final int cellPoints = plugin.players().get(player).hasCharacter() ? atlasProgress(player).cellPoints() : 0;
+        return tree.earned(cellPoints, finals, uberDefeated(player).size(), Atlas.bestTier(config, progress, completed));
     }
 
     /** 這個角色有效的星圖天賦（照點的順序；點數不夠的從最後點的開始不算）。 */
     public List<String> atlasAllocated(final Player player) {
-        final String stored = plugin.players().get(player).progress().get(AtlasTree.PROGRESS_KEY);
+        final Map<String, String> progress = plugin.players().get(player).progress();
+        final String stored = progress.get(AtlasTree.PROGRESS_KEY);
+        if (stored != null && !stored.isBlank() && !String.valueOf(tree.version()).equals(progress.get(AtlasTree.VERSION_KEY))) {
+            // 2026-10-21：樹的版本變了（節點代號或位置大改）：全部退點（跟被動天賦樹一樣），點數照新規則重算
+            plugin.characters().removeProgress(player, AtlasTree.PROGRESS_KEY);
+            plugin.characters().setProgress(player, AtlasTree.VERSION_KEY, String.valueOf(tree.version()));
+            player.sendMessage(plugin.text().prefixed("<yellow>星圖天賦樹改版了，你的星圖天賦全部退回（免費），請重新配點：/atlas tree"));
+            return List.of();
+        }
         return tree.effective(AtlasTree.parseAllocation(stored), atlasEarned(player).total());
     }
 
@@ -2542,7 +3235,7 @@ public final class MapService {
         return null;
     }
 
-    /** 退掉一個星圖天賦（同一條下面點了的一起退，免費）；回傳退掉的（空的 = 沒點這個）。 */
+    /** 退掉一個星圖天賦（連不回中心的一起退，免費）；回傳退掉的（空的 = 沒點這個）。 */
     public List<String> refundAtlas(final Player player, final String id) {
         final List<String> allocated = atlasAllocated(player);
         final List<String> removed = tree.refund(allocated, id);
@@ -2552,6 +3245,41 @@ public final class MapService {
             saveAtlas(player, next);
         }
         return removed;
+    }
+
+    /**
+     * 2026-10-21：匯入網頁規劃器的配點（代號用逗號隔開）：照「從起點往外」排好、點數不夠的從外面開始不算，整組換掉現在的（免費）。
+     * 回傳給玩家看的結果。
+     */
+    public String importAtlas(final Player player, final String code) {
+        if (!plugin.players().get(player).hasCharacter()) {
+            return "先建立角色";
+        }
+        final List<String> planned = AtlasTree.parseAllocation(code);
+        if (planned.isEmpty()) {
+            return "代碼是空的";
+        }
+        final List<String> ordered = tree.orderFromRoot(planned);
+        final List<String> effective = tree.effective(ordered, atlasEarned(player).total());
+        saveAtlas(player, effective);
+        final int unknown = planned.size() - ordered.size();
+        return "星圖天賦換成規劃的 " + effective.size() + " 個（" + tree.spent(effective) + " 點）"
+                + (effective.size() < ordered.size() ? "；" + (ordered.size() - effective.size()) + " 個點數不夠，升級後再匯入一次" : "")
+                + (unknown > 0 ? "；" + unknown + " 個代號不認得或連不到中心" : "");
+    }
+
+    /** 2026-10-21：網頁規劃器的網址（帶著現在的配點）；網頁沒開回傳 null。 */
+    public String atlasPlannerUrl(final Player player) {
+        if (plugin.web() == null || !plugin.web().available(player)) {
+            return null;
+        }
+        final List<String> allocated = atlasAllocated(player);
+        return plugin.web().publicUrl() + "/atlas" + (allocated.isEmpty() ? "" : "#" + AtlasTree.joinAllocation(allocated));
+    }
+
+    /** 2026-10-21：整組換掉（星圖天賦組切換）：照這份配點存（已經是有效的順序）。 */
+    public void replaceAtlas(final Player player, final List<String> allocated) {
+        saveAtlas(player, allocated);
     }
 
     /** 全部退回（免費）；回傳退了幾個。 */
@@ -2566,6 +3294,7 @@ public final class MapService {
             plugin.characters().removeProgress(player, AtlasTree.PROGRESS_KEY);
         } else {
             plugin.characters().setProgress(player, AtlasTree.PROGRESS_KEY, AtlasTree.joinAllocation(allocated));
+            plugin.characters().setProgress(player, AtlasTree.VERSION_KEY, String.valueOf(tree.version()));
         }
     }
 
@@ -2731,12 +3460,60 @@ public final class MapService {
     public void setCompleted(final Player player, final MapConfig.MapDef map, final boolean completed) {
         if (completed) {
             plugin.characters().setProgress(player, Atlas.key(map.id()), String.valueOf(System.currentTimeMillis() / 1000));
+            if (!map.isFinal() && plugin.players().get(player).hasCharacter()) {
+                // 2026-10-21：新星圖：把最近的那種格子（連同路上的）標成完成
+                final AtlasProgress atlas = atlasProgress(player);
+                for (final long key : AtlasProgress.migrate(atlas.grid(), List.of(map.id()))) {
+                    atlas.complete(AtlasGrid.qOf(key), AtlasGrid.rOf(key));
+                }
+                saveAtlasProgress(player, atlas);
+            }
         } else {
             plugin.characters().removeProgress(player, Atlas.key(map.id()));
         }
         if (plugin.quests() != null) {
             plugin.quests().refresh(player);
         }
+    }
+
+    /** 2026-10-21：清掉新星圖的進度（完成的格子、選的格子、攻破的城塞；種子留著）。 */
+    public void resetAtlasProgress(final Player player) {
+        final Map<String, String> progress = plugin.players().get(player).progress();
+        for (int i = 1; i < 1000; i++) {
+            if (!progress.containsKey(AtlasProgress.cellsKey(i))) {
+                break;
+            }
+            plugin.characters().removeProgress(player, AtlasProgress.cellsKey(i));
+        }
+        plugin.characters().removeProgress(player, AtlasProgress.CHOSEN_KEY);
+        for (final String finalId : citadelFinals()) {
+            plugin.characters().removeProgress(player, AtlasProgress.CITADEL_PREFIX + finalId);
+        }
+        atlasCache.remove(player.getUniqueId());
+    }
+
+    /** 2026-10-21：換一個種子（星圖重新生成；完成的格子清掉）。 */
+    public long reseedAtlas(final Player player, final long seed) {
+        resetAtlasProgress(player);
+        final long value = seed == 0 ? random().nextLong() | 1L : seed;
+        plugin.characters().setProgress(player, AtlasProgress.SEED_KEY, String.valueOf(value));
+        atlasCache.remove(player.getUniqueId());
+        return value;
+    }
+
+    /** 2026-10-21：把起點周圍 radius 格全部標成完成（測試用）。 */
+    public int revealAtlas(final Player player, final int radius) {
+        final AtlasProgress atlas = atlasProgress(player);
+        int added = 0;
+        for (final long[] at : AtlasGrid.within(0, 0, radius)) {
+            final int q = (int) at[0];
+            final int r = (int) at[1];
+            if ((q != 0 || r != 0) && !atlas.grid().isEmpty(q, r) && atlas.complete(q, r)) {
+                added++;
+            }
+        }
+        saveAtlasProgress(player, atlas);
+        return added;
     }
 
     /** 給怪物加上實例標記（刷怪、召喚時用）。 */

@@ -459,6 +459,11 @@ public final class MarketService {
         if (plugin.items().read(current).map(ItemData::locked).orElse(false)) {
             return "這件鎖定了（/lock 解除後才能上架）";
         }
+        if (current.hasData(io.papermc.paper.datacomponent.DataComponentTypes.BUNDLE_CONTENTS)
+                || current.hasData(io.papermc.paper.datacomponent.DataComponentTypes.CONTAINER)) {
+            // 2026-10-21 漏洞修正（照面對面交易）：容器裡的東西估不到價，手續費變最低；裡面鎖定的東西也會被賣掉
+            return "收納袋、界伏盒這類容器不能上架（把裡面的東西拿出來再上架）";
+        }
         final long fee = listingFee(player, current);
         if (!plugin.gold().take(player, fee, tw.exilecore.economy.EconomyLedger.FEE_LIST)) {
             return String.format(Locale.ROOT, "金幣不夠：上架手續費 %,d", fee);

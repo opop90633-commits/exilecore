@@ -40,7 +40,8 @@ public final class CraftBenchMenu extends Menu {
             CurrencyOperation.REROLL_RARE, CurrencyOperation.ADD_AFFIX_RARE, CurrencyOperation.SCOUR, CurrencyOperation.REROLL_VALUES,
             CurrencyOperation.REROLL_IMPLICIT, CurrencyOperation.CORRUPT, CurrencyOperation.QUALITY_WEAPON, CurrencyOperation.QUALITY_ARMOUR,
             CurrencyOperation.QUALITY_MAP, CurrencyOperation.ESSENCE, CurrencyOperation.CATALYST,
-            CurrencyOperation.UNVEIL); // 2026-10-19：揭露石（加一條隱匿詞綴，之後找盜賊首領揭露）
+            CurrencyOperation.UNVEIL, // 2026-10-19：揭露石（加一條隱匿詞綴，之後找盜賊首領揭露）
+            CurrencyOperation.FRACTURE); // 2026-10-21：定星石（PoE2 的破裂石）
 
     /** 左邊星籤（第 2～5 排的第 1～3 格）、右邊通貨（第 2～5 排的第 7～9 格）。 */
     private static final int[] OMEN_SLOTS = grid(0);
@@ -193,7 +194,7 @@ public final class CraftBenchMenu extends Menu {
                 after.setOmen(omen.id());
             }
         }
-        if (after.corrupted() && currency.operation() != CurrencyOperation.IDENTIFY) {
+        if (after.corrupted() && !currency.operation().allowedOnCorrupted()) {
             return "已腐化的物品不能再改造";
         }
         if (!currency.canApply(after, plugin.items().generator())) {

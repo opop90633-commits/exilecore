@@ -101,6 +101,11 @@ final class MapSpawner {
             magic *= 1.5;
             rare *= 3;
         }
+        if (instance.atlas().get("atlas.rare_only") > 0) { // 2026-10-21 星圖核心「無人之地」：只有稀有怪與 Boss
+            normal = 0;
+            magic = 0;
+            rare = Math.max(1, rare);
+        }
         final double roll = random.nextDouble() * (normal + magic + rare);
         final double sizeFactor = 1 + (stats.packSize() + instance.twist().packSize) / 100.0;
         final MapLayout.Spot spot = instance.layout().packSpots().get(index);
@@ -196,11 +201,16 @@ final class MapSpawner {
         service.freeFromWalls(instance, entity); // 刷在柱子、道具上，或體型大的貼著牆刷出來：馬上挪到旁邊的空地（2026-10-15）
         final MonsterData data = plugin.monsters().decorate(entity, instance.level(), rarity, mods, baseName);
         final double power = instance.twist().monsterPower;
-        if ((instance.delirium() > 0 || power > 0) && data != null) {
+        // 2026-10-21：一般怪物照地圖階級再乘（settings.monster_tier；以前 T1 到 T16 只差怪物等級，生命 ×2.1、傷害 ×1.75，打起來差不多）。
+        //   特別的實例（回響、試煉、劫盜…）階級是 0，不乘；Boss 不走這裡（Boss 照 boss_tier_life）
+        final int tier = instance.special() == null ? instance.stats().tier() : 0;
+        final double tierLife = tier > 0 ? service.config().monsterLifeMultiplier(tier) : 1.0;
+        final double tierDamage = tier > 0 ? service.config().monsterDamageMultiplier(tier) : 1.0;
+        if ((instance.delirium() > 0 || power > 0 || tierLife > 1 || tierDamage > 1) && data != null) {
             // 幻霧中：之後刷出來的怪都更硬（生命與傷害乘 1 + 難度）；詛咒寶匣再乘 1 + 詛咒
             final double factor = (1 + instance.delirium()) * (1 + power);
             plugin.monsters().decorateData(entity, new MonsterData(data.level(), data.rarity(), data.mods(), data.name(),
-                    data.lifeMultiplier() * factor, data.damageMultiplier() * factor, data.boss()));
+                    data.lifeMultiplier() * factor * tierLife, data.damageMultiplier() * factor * tierDamage, data.boss()));
         }
         prepare(entity);
         return entity;

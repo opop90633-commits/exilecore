@@ -88,7 +88,9 @@ public final class CardService {
             case RARE -> chances.rare();
             case UNIQUE -> chances.unique();
         };
-        if (chance <= 0 || random().nextDouble() >= chance) {
+        // 2026-10-21 星圖天賦：卡的掉落機率增加；核心「魔王的宴席」地圖 Boss ×2
+        final double atlasChance = chance * (1 + instance.atlas().increased("atlas.card.chance")) * (boss && instance.atlas().get("atlas.boss_double") > 0 ? 2 : 1);
+        if (chance <= 0 || random().nextDouble() >= atlasChance) {
             return;
         }
         final int tier = Math.max(1, instance.stats().tier());
@@ -345,8 +347,9 @@ public final class CardService {
         }
         ledger().consumed(CardConfig.DECK, EconomyLedger.CARDS, count);
         final Map<String, Integer> byId = new LinkedHashMap<>();
+        final double rareBonus = plugin.maps() == null ? 0 : plugin.maps().atlasBonus(player).increased("atlas.card.deck"); // 2026-10-21 星圖天賦
         for (int i = 0; i < count; i++) {
-            final CardConfig.Card card = config.pickAny(random());
+            final CardConfig.Card card = config.pickAny(random(), rareBonus);
             if (card != null) {
                 byId.merge(card.id(), 1, Integer::sum);
             }
@@ -395,6 +398,12 @@ public final class CardService {
     // ---- 賭卡 ----
 
     /** 賭這一疊（倉庫裡這種卡的全部）要多少金幣。 */
+    /** 2026-10-21：這個人賭卡的價格（星圖天賦 atlas.card.gamble 便宜幾 %）。 */
+    public long gambleCost(final Player player, final CurrencyType type, final int count) {
+        final double cheaper = plugin.maps() == null ? 0 : plugin.maps().atlasBonus(player).increased("atlas.card.gamble");
+        return Math.round(gambleCost(type, count) * Math.max(0.1, 1 - cheaper));
+    }
+
     public long gambleCost(final CurrencyType type, final int count) {
         final CardConfig.Card card = config.card(type.id());
         return card == null ? 0 : config.gambleCost(card.tier()) * Math.max(0, count);
@@ -418,7 +427,7 @@ public final class CardService {
         if (card == null || have <= 0) {
             return Optional.empty();
         }
-        final long cost = gambleCost(type, have);
+        final long cost = gambleCost(player, type, have); // 2026-10-21：星圖天賦可以便宜
         if (!plugin.gold().take(player, cost, EconomyLedger.CARD_GAMBLE)) {
             player.sendMessage(plugin.text().prefixed("<red>金幣不夠：賭 " + have + " 張" + ItemRenderer.escape(type.name()) + "要 "
                     + tw.exilecore.economy.GoldService.format(cost) + " 金幣"));
@@ -455,14 +464,21 @@ public final class CardService {
         if (amount <= 0) {
             return;
         }
-        ItemStack rest = plugin.currencies().create(type, amount);
-        if (plugin.loot() != null) {
-            rest = plugin.loot().stowCurrency(player, plugin.players().get(player), type, rest);
-        }
-        if (rest != null && !rest.isEmpty()) {
-            final int left = plugin.economy().wallet().deposit(player, type.id(), rest.getAmount());
-            if (left > 0) {
-                plugin.economy().wallet().dropFor(player, rest.asQuantity(left));
+        // 2026-10-21 修正：create 一次最多一疊（卡 50 張）；一次開很多牌堆拿到超過一疊的，多的會不見——分成一疊一疊放
+        int remaining = amount;
+        final int stack = Math.max(1, type.stack());
+        while (remaining > 0) {
+            final int chunk = Math.min(stack, remaining);
+            remaining -= chunk;
+            ItemStack rest = plugin.currencies().create(type, chunk);
+            if (plugin.loot() != null) {
+                rest = plugin.loot().stowCurrency(player, plugin.players().get(player), type, rest);
+            }
+            if (rest != null && !rest.isEmpty()) {
+                final int left = plugin.economy().wallet().deposit(player, type.id(), rest.getAmount());
+                if (left > 0) {
+                    plugin.economy().wallet().dropFor(player, rest.asQuantity(left));
+                }
             }
         }
         plugin.players().markDirty(player);

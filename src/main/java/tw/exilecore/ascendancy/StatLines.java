@@ -257,6 +257,7 @@ public final class StatLines {
     /** 這條屬性這裡認不認得（2026-10：ModifierText 不認得的交給這裡，護符、增益的說明才不會出現英文代號）。 */
     public static boolean knows(final String stat) {
         return STATS.containsKey(stat) || tw.exilecore.stats.SignatureText.TEXT.containsKey(stat) || ChargeText.isChargeStat(stat)
+                || stat.equals(StatKeys.DAMAGE_VS_LOW_LIFE)
                 || stat.startsWith(StatKeys.DAMAGE_GAIN) && GAINS.containsKey(stat.substring(StatKeys.DAMAGE_GAIN.length()));
     }
 
@@ -318,6 +319,13 @@ public final class StatLines {
             }
             return modifier.tags().isEmpty() ? null : stat + " 不能加標籤";
         }
+        if (stat.equals(StatKeys.DAMAGE_VS_LOW_LIFE)) {
+            // 2026-10-21：對低血的敵人增加 x%（補刀、斬首）；說明另外寫（describe），這裡也要認得，不然昇華檔驗證會說不支援
+            if (modifier.type() != ModType.FLAT) {
+                return stat + " 要用 FLAT（增加幾 %）";
+            }
+            return modifier.tags().isEmpty() ? null : stat + " 不能加標籤";
+        }
         final Entry entry = STATS.get(stat);
         if (entry == null) {
             return "不支援的屬性 " + stat;
@@ -363,6 +371,10 @@ public final class StatLines {
         if (stat.startsWith(StatKeys.DAMAGE_GAIN)) {
             final String type = GAINS.getOrDefault(stat.substring(StatKeys.DAMAGE_GAIN.length()), stat);
             return "物理傷害的 " + number(value) + "% 額外附加為" + type + "傷害";
+        }
+        if (stat.equals(StatKeys.DAMAGE_VS_LOW_LIFE)) {
+            // 2026-10-21：以前寫死「增加 35%」，兩個節點（補刀、斬首）加起來 70% 也只顯示 35%
+            return "對低血（35% 以下）的敵人增加 " + number(value) + "% 擊中傷害";
         }
         final String signature = tw.exilecore.stats.SignatureText.TEXT.get(stat);
         if (signature != null) {

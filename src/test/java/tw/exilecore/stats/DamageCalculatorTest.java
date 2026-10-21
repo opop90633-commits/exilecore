@@ -65,6 +65,27 @@ class DamageCalculatorTest {
         assertEquals(50, thin.lifeDamage(), 1e-9);                        // 混沌剩 50
     }
 
+    /** 2026-10-21：凋息這種「受到的混沌傷害增加」只乘混沌的部分（物理攻擊附加混沌也算），物理、火焰不變。 */
+    @Test
+    void typedDebuffOnlyScalesItsDamageType() {
+        final StatSheet attacker = attackerWithSword()
+                .add(new Modifier(StatKeys.DAMAGE_ADDED_MIN, ModType.FLAT, 100, Set.of(Tags.ATTACK, Tags.FIRE), "戒指"))
+                .add(new Modifier(StatKeys.DAMAGE_ADDED_MAX, ModType.FLAT, 100, Set.of(Tags.ATTACK, Tags.FIRE), "戒指"))
+                .add(new Modifier(StatKeys.DAMAGE_ADDED_MIN, ModType.FLAT, 50, Set.of(Tags.ATTACK, Tags.CHAOS), "戒指"))
+                .add(new Modifier(StatKeys.DAMAGE_ADDED_MAX, ModType.FLAT, 50, Set.of(Tags.ATTACK, Tags.CHAOS), "戒指"));
+        final StatSheet defender = new StatSheet()
+                .setBase(StatKeys.RESIST_FIRE, 90)
+                .setBase(StatKeys.RESIST_CHAOS, -20)
+                .setBase(StatKeys.RESIST_MAX, 75)
+                .add(new Modifier(StatKeys.DEBUFF_TAKEN + Tags.CHAOS, ModType.FLAT, 22, Set.of(), "凋息"));
+
+        final HitResult result = DamageCalculator.calculate(attacker, SkillProfile.defaultAttack(Set.of()), defender, 1000, new Random(2));
+
+        assertEquals(25, result.dealt().get(DamageType.FIRE), 1e-9);
+        assertEquals(60 * 1.22, result.dealt().get(DamageType.CHAOS), 1e-9);
+        assertEquals(10, result.dealt().get(DamageType.PHYSICAL), 1e-9);
+    }
+
     @Test
     void attacksMissAgainstOverwhelmingEvasionAtTheFivePercentFloor() {
         final StatSheet attacker = attackerWithSword().setBase(StatKeys.ACCURACY, 1);

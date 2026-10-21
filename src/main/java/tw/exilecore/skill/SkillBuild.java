@@ -234,7 +234,11 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             case PROJECTILE -> extraChains;
             default -> 0;
         };
-        final double reach = definition.mechanic() == Mechanic.STRIKE && area ? params.reach() * areaScale : params.reach();
+        // 2026-10-21：近戰打擊範圍（腐化武器「增加 x% 近戰打擊範圍」）：打擊、扇形的近戰攻擊距離
+        final double meleeRange = definition.isAttack() && definition.tags().contains(Tags.MELEE)
+                && (definition.mechanic() == Mechanic.STRIKE || definition.mechanic() == Mechanic.CONE)
+                ? Math.max(0.5, Math.min(2.0, 1 + effective.increased(StatKeys.MELEE_RANGE, context))) : 1.0;
+        final double reach = (definition.mechanic() == Mechanic.STRIKE && area ? params.reach() * areaScale : params.reach()) * meleeRange;
         final int manaCost = (int) Math.round((definition.mana().at(level) + extraManaCost(definition.mana().at(level), effective, context))
                 * Math.max(0, effective.apply(StatKeys.SKILL_COST, 1.0, context)));
         final double baseCooldown = definition.cooldown() > 0 ? definition.cooldown()

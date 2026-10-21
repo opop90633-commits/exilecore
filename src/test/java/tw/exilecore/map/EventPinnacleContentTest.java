@@ -151,7 +151,7 @@ class EventPinnacleContentTest {
             final MapConfig.Boss boss = map.boss();
             assertTrue(boss.named(), id);
             assertEquals(3, boss.phases().size(), id);
-            assertTrue(boss.life() >= 50 && boss.life() <= 61, id + "：巔峰級生命（2026-10-18 提高難度後 55–60.5）");
+            assertTrue(boss.life() >= 3500 && boss.life() <= 4100, id + "：巔峰級生命（2026-10-21：照打 Boss 每秒 600 萬，跟虛星同一級）");
             assertTrue(boss.damage() >= 2.8 && boss.damage() <= 3.3, id + "：巔峰級傷害（2026-10-18 提高到 3.2）");
             assertNotNull(boss.enrage(), id);
             assertEquals(1, boss.hazards().size(), id);
@@ -170,7 +170,7 @@ class EventPinnacleContentTest {
             final MapConfig.Pinnacle pinnacle = maps.pinnacle(id);
             assertNotNull(pinnacle, id + "：是巔峰");
             assertEquals(2, pinnacle.attempts(), id);
-            assertEquals(150000, pinnacle.dpsCap(), 1e-9, id);
+            assertEquals(12000000, pinnacle.dpsCap(), 1e-9, id);
             assertEquals(2, pinnacle.drops().maps(), id);
             assertEquals(0.02, pinnacle.drops().uniqueChance(), 1e-9, id);
             int own = 0;

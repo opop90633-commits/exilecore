@@ -1,0 +1,1196 @@
+# 腐化詞綴（2026-10-21，照 PoE2 0.5.5 的腐化附魔，資料來源 RePoE poe2 mods.json 的 generation_type corrupted；數值照 PoE2）：
+# 蝕變石腐化一件裝備時，25% 機率加上一條（已經有就換一條）。spawn_tags 寫 [corruption, 出在哪些裝備…]（任一個符合，跟一般詞綴一樣），
+# require_tags 全部都要有、exclude_tags 不能有；不會自然擲出、通貨也加不上。一件只會有一條；顯示在詞綴最前面（紅色「腐化：」），
+# 不佔前綴、後綴的位子。這裡沒有手套（PoE2 的手套詞綴出在褲子）、沒有劍斧連枷匕首戰杖（出在錘、獸符、矛、長棍）。
+# （PoE2 有、這裡沒有做）武器交換速度（沒有武器交換）；減益的緩速幅度（PoE2 自己也擲不出來：所有部位權重 0，引擎有 slow.magnitude 留給傳奇用）；
+# 權杖「臨在內的盟友施法速度」（召喚物不會施法，同 suffixes.yml 停用的 minion_cast_speed）。
+# 權杖的「臨在內的盟友…」照 prefixes.yml／suffixes.yml 一直以來的做法翻成「召喚物…」。
+# 格式同 prefixes.yml（type 只是存檔用，寫 suffix）。
+
+corrupt_es_delay:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, armour, focus]
+  names: [蝕變的]
+  text: "能量護盾提前 {value}% 開始充能"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: es.delay, type: INCREASED, value: "-{value}" }
+
+corrupt_trap_level:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, armour, jewellery, weapon]
+  names: [蝕變的]
+  text: "+{value} 全部陷阱技能等級"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [trap] }
+
+corrupt_life_regen_percent:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, armour, jewellery]
+  names: [蝕變的]
+  text: "每秒回復 {value/10}% 最大生命"   # PoE2：每分鐘 60–120%
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 20] }
+  mods:
+    - { stat: life.regen_percent, type: FLAT, value: "{value/10}" }
+
+corrupt_amulet_charm_charges:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, amulet]
+  names: [蝕變的]
+  text: "護符每分鐘自動拿到 {value} 點充能"   # PoE2：每秒 5–10
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [300, 600] }
+  mods:
+    - { stat: charm.charges_per_minute, type: FLAT, value: "{value}" }
+
+corrupt_amulet_skill_level:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, amulet]
+  names: [蝕變的]
+  text: "+{value} 全部技能等級"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}" }
+
+corrupt_amulet_life_flask_charges:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, amulet]
+  names: [蝕變的]
+  text: "生命藥劑每分鐘自動拿到 {value} 點充能"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [300, 600] }
+  mods:
+    - { stat: flask.charges_per_minute.life, type: FLAT, value: "{value}" }
+
+corrupt_amulet_mana_flask_charges:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, amulet]
+  names: [蝕變的]
+  text: "魔力藥劑每分鐘自動拿到 {value} 點充能"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [300, 600] }
+  mods:
+    - { stat: flask.charges_per_minute.mana, type: FLAT, value: "{value}" }
+
+corrupt_amulet_life_leech:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, amulet]
+  names: [蝕變的]
+  text: "物理攻擊傷害的 {value}% 偷取為生命"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [3, 3] }
+  mods:
+    - { stat: leech.life, type: FLAT, value: "{value}", tags: [attack, physical] }
+
+corrupt_amulet_mana_leech:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, amulet]
+  names: [蝕變的]
+  text: "物理攻擊傷害的 {value}% 偷取為魔力"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [2, 2] }
+  mods:
+    - { stat: leech.mana, type: FLAT, value: "{value}", tags: [attack, physical] }
+
+corrupt_belt_es_inc:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, belt]
+  names: [蝕變的]
+  text: "增加 {value}% 最大能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+
+corrupt_belt_evasion_inc:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, belt]
+  names: [蝕變的]
+  text: "增加 {value}% 閃避"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+
+corrupt_belt_armour_inc:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, belt]
+  names: [蝕變的]
+  text: "增加 {value}% 護甲"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+
+corrupt_belt_endurance:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, belt]
+  names: [蝕變的]
+  text: "+{value} 磐星上限"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: charge.max.endurance, type: FLAT, value: "{value}" }
+
+corrupt_belt_max_fire:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, belt]
+  names: [蝕變的]
+  text: "+{value}% 最大火焰抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 3] }
+  mods:
+    - { stat: resist.max.fire, type: FLAT, value: "{value}" }
+
+corrupt_jewellery_str:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, belt, ring, amulet]
+  names: [蝕變的]
+  text: "+{value} 力量"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+
+corrupt_jewellery_dex:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, belt, ring, amulet]
+  names: [蝕變的]
+  text: "+{value} 敏捷"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+
+corrupt_jewellery_int:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, belt, ring, amulet]
+  names: [蝕變的]
+  text: "+{value} 智慧"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+corrupt_body_phys_reduction:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, body]
+  names: [蝕變的]
+  text: "{value}% 額外物理傷害減免"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [3, 5] }
+  mods:
+    - { stat: physical.reduction, type: FLAT, value: "{value}" }
+
+corrupt_body_recoup_life:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, body]
+  names: [蝕變的]
+  text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 20] }
+  mods:
+    - { stat: life.recoup, type: FLAT, value: "{value}" }
+
+corrupt_body_max_ele:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, body, amulet]
+  names: [蝕變的]
+  text: "+{value}% 全部元素抗性上限"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: resist.max.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.max.cold, type: FLAT, value: "{value}" }
+    - { stat: resist.max.lightning, type: FLAT, value: "{value}" }
+
+corrupt_body_life:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, body, belt]
+  names: [蝕變的]
+  text: "+{value} 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [30, 40] }
+  mods:
+    - { stat: life.max, type: FLAT, value: "{value}" }
+
+corrupt_body_chaos_res:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, body, ring]
+  names: [蝕變的]
+  text: "+{value}% 混沌抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [13, 19] }
+  mods:
+    - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+corrupt_body_thorns:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, body, shield]
+  names: [蝕變的]
+  text: "增加 {value}% 荊棘傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [40, 50] }
+  mods:
+    - { stat: thorns.damage, type: INCREASED, value: "{value}" }
+
+corrupt_boots_freeze_threshold:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, boots]
+  names: [蝕變的]
+  text: "增加 {value}% 元素異常門檻"   # PoE2：凍結門檻；這裡沒有單獨的凍結門檻
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: ailment.threshold, type: INCREASED, value: "{value}" }
+
+corrupt_boots_stun_threshold:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, boots]
+  names: [蝕變的]
+  text: "增加 {value}% 暈眩門檻"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: stun.threshold, type: INCREASED, value: "{value}" }
+
+corrupt_boots_max_lightning:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, boots]
+  names: [蝕變的]
+  text: "+{value}% 最大閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 3] }
+  mods:
+    - { stat: resist.max.lightning, type: FLAT, value: "{value}" }
+
+corrupt_boots_movement:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, boots]
+  names: [蝕變的]
+  text: "增加 {value}% 移動速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [3, 5] }
+  mods:
+    - { stat: movement.speed, type: INCREASED, value: "{value}" }
+
+corrupt_boots_cold_res:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, boots, belt]
+  names: [蝕變的]
+  text: "+{value}% 冰冷抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 25] }
+  mods:
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+corrupt_boots_fire_res:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, boots, belt]
+  names: [蝕變的]
+  text: "+{value}% 火焰抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 25] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+
+corrupt_boots_lightning_res:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, boots, belt]
+  names: [蝕變的]
+  text: "+{value}% 閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 25] }
+  mods:
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+corrupt_bow_arrow:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, bow]
+  names: [蝕變的]
+  text: "弓的攻擊多射 {value} 支箭"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: skill.projectiles, type: FLAT, value: "{value}", tags: [bow] }
+
+corrupt_crossbow_bolt:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, crossbow]
+  names: [蝕變的]
+  text: "+{value} 弩的彈匣容量"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: crossbow.clip, type: FLAT, value: "{value}" }
+
+corrupt_1h_added_chaos:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, one_hand, bow]
+  names: [蝕變的]
+  text: "攻擊附加 {min} 到 {max} 混沌傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, min: [7, 11], max: [12, 18] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, chaos] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, chaos] }
+
+corrupt_1h_added_cold:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, one_hand, bow]
+  names: [蝕變的]
+  text: "攻擊附加 {min} 到 {max} 冰冷傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, min: [8, 12], max: [13, 19] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, cold] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, cold] }
+
+corrupt_1h_added_fire:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, one_hand, bow]
+  names: [蝕變的]
+  text: "攻擊附加 {min} 到 {max} 火焰傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, min: [9, 14], max: [15, 22] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, fire] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, fire] }
+
+corrupt_1h_added_lightning:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, one_hand, bow]
+  names: [蝕變的]
+  text: "攻擊附加 {min} 到 {max} 閃電傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, min: [1, 2], max: [29, 43] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, lightning] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
+
+corrupt_1h_ele_attack:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, one_hand, bow]
+  names: [蝕變的]
+  text: "增加 {value}% 攻擊的元素傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, elemental] }
+
+corrupt_2h_added_chaos:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, two_hand]
+  exclude_tags: [bow, caster]
+  names: [蝕變的]
+  text: "攻擊附加 {min} 到 {max} 混沌傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, min: [10, 16], max: [17, 25] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, chaos] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, chaos] }
+
+corrupt_2h_added_cold:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, two_hand]
+  exclude_tags: [bow, caster]
+  names: [蝕變的]
+  text: "攻擊附加 {min} 到 {max} 冰冷傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, min: [11, 17], max: [18, 26] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, cold] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, cold] }
+
+corrupt_2h_added_fire:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, two_hand]
+  exclude_tags: [bow, caster]
+  names: [蝕變的]
+  text: "攻擊附加 {min} 到 {max} 火焰傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, min: [13, 20], max: [21, 31] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, fire] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, fire] }
+
+corrupt_2h_added_lightning:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, two_hand]
+  exclude_tags: [bow, caster]
+  names: [蝕變的]
+  text: "攻擊附加 {min} 到 {max} 閃電傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, min: [1, 3], max: [41, 61] }
+  mods:
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, lightning] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
+
+corrupt_2h_ele_attack:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, two_hand]
+  exclude_tags: [bow, caster]
+  names: [蝕變的]
+  text: "增加 {value}% 攻擊的元素傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [40, 50] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, elemental] }
+
+corrupt_armour_evasion_local:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, dex_armour]
+  require_tags: [dex_only]
+  names: [蝕變的]
+  text: "增加 {value}% 閃避"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+
+corrupt_armour_armour_local:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, str_armour]
+  require_tags: [str_only]
+  names: [蝕變的]
+  text: "增加 {value}% 護甲"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+
+corrupt_armour_es_local:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, int_armour]
+  require_tags: [int_only]
+  names: [蝕變的]
+  text: "增加 {value}% 能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
+  mods:
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+
+corrupt_armour_ar_ev:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, str_dex_armour]
+  names: [蝕變的]
+  text: "增加 {value}% 護甲與閃避"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+
+corrupt_armour_ar_es:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, str_int_armour]
+  names: [蝕變的]
+  text: "增加 {value}% 護甲與能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+
+corrupt_armour_ev_es:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, dex_int_armour]
+  names: [蝕變的]
+  text: "增加 {value}% 閃避與能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
+  mods:
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+
+corrupt_mana_flat:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, focus, quiver, ring]
+  names: [蝕變的]
+  text: "+{value} 最大魔力"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 25] }
+  mods:
+    - { stat: mana.max, type: FLAT, value: "{value}" }
+
+corrupt_leggings_armour_break:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, leggings]
+  names: [蝕變的]
+  text: "增加 {value}% 破甲"   # PoE2 的手套；這裡沒有手套，出在褲子
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: armour.break, type: INCREASED, value: "{value}" }
+
+corrupt_leggings_pen_cold:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, leggings]
+  names: [蝕變的]
+  text: "傷害穿透 {value}% 冰冷抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: penetration, type: FLAT, value: "{value}", tags: [cold] }
+
+corrupt_leggings_pen_fire:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, leggings]
+  names: [蝕變的]
+  text: "傷害穿透 {value}% 火焰抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: penetration, type: FLAT, value: "{value}", tags: [fire] }
+
+corrupt_leggings_pen_lightning:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, leggings]
+  names: [蝕變的]
+  text: "傷害穿透 {value}% 閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: penetration, type: FLAT, value: "{value}", tags: [lightning] }
+
+corrupt_leggings_melee_level:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, leggings]
+  names: [蝕變的]
+  text: "+{value} 全部近戰攻擊技能等級"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [attack, melee] }
+
+corrupt_leggings_gold:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, leggings]
+  names: [蝕變的]
+  text: "增加 {value}% 怪物掉落的金幣"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }
+  mods:
+    - { stat: gold.find, type: INCREASED, value: "{value}" }
+
+corrupt_leggings_frenzy:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, leggings]
+  names: [蝕變的]
+  text: "+{value} 怒星上限"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: charge.max.frenzy, type: FLAT, value: "{value}" }
+
+corrupt_helmet_minion_level:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, helmet]
+  names: [蝕變的]
+  text: "+{value} 全部召喚物技能等級"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
+
+corrupt_helmet_spirit:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, helmet]
+  names: [蝕變的]
+  text: "+{value} 最大精魂"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+corrupt_helmet_max_cold:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, helmet]
+  names: [蝕變的]
+  text: "+{value}% 最大冰冷抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 3] }
+  mods:
+    - { stat: resist.max.cold, type: FLAT, value: "{value}" }
+
+corrupt_helmet_power:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, helmet]
+  names: [蝕變的]
+  text: "+{value} 銳星上限"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: charge.max.power, type: FLAT, value: "{value}" }
+
+corrupt_accuracy:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, helmet, quiver]
+  names: [蝕變的]
+  text: "+{value} 命中"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [50, 100] }
+  mods:
+    - { stat: accuracy, type: FLAT, value: "{value}" }
+
+corrupt_life_regen_rate:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, helmet, ring]
+  names: [蝕變的]
+  text: "增加 {value}% 生命回復速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
+  mods:
+    - { stat: life.regen, type: INCREASED, value: "{value}" }
+
+corrupt_mana_regen_rate:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, helmet, ring]
+  names: [蝕變的]
+  text: "增加 {value}% 魔力回復速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+corrupt_melee_bleed:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, mace, talisman]
+  names: [蝕變的]
+  text: "攻擊擊中時 {value}% 機率造成流血"   # PoE2：錘、劍、斧、連枷
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+corrupt_melee_rage:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, melee]
+  exclude_tags: [caster, ranged]
+  names: [蝕變的]
+  text: "近戰擊中時獲得 {value} 點怒氣"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: rage.on_hit, type: FLAT, value: "{value}", tags: [melee] }
+
+corrupt_melee_stun:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, melee]
+  exclude_tags: [caster, ranged]
+  names: [蝕變的]
+  text: "增加 {value}% 暈眩累積"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+
+corrupt_melee_poison:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, spear, quarterstaff]
+  names: [蝕變的]
+  text: "攻擊擊中時 {value}% 機率造成中毒"   # PoE2：劍、矛、匕首、戰杖
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: poison.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+corrupt_quiver_pierce:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, quiver]
+  names: [蝕變的]
+  text: "投射物有 {value}% 機率穿透敵人"   # 2026-10-21：引擎有機率制的穿透了，照 PoE2
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: skill.pierce_chance, type: FLAT, value: "{value}", tags: [projectile] }
+
+corrupt_all_res:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ring, amulet]
+  names: [蝕變的]
+  text: "+{value}% 全部元素抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+corrupt_rarity:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ring, amulet]
+  names: [蝕變的]
+  text: "增加 {value}% 物品掉落稀有度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: drop.rarity, type: INCREASED, value: "{value}" }
+
+corrupt_all_damage:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ring, quiver]
+  names: [蝕變的]
+  text: "增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}" }
+
+corrupt_crit_bonus:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ring, quiver]
+  names: [蝕變的]
+  text: "增加 {value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 20] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}" }
+
+corrupt_skill_speed:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ring, quiver]
+  names: [蝕變的]
+  text: "增加 {value}% 攻擊速度與施放速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [4, 6] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+corrupt_sceptre_spirit:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, sceptre]
+  names: [蝕變的]
+  text: "增加 {value}% 精魂"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
+  mods:
+    - { stat: spirit.max, type: INCREASED, value: "{value}" }
+
+corrupt_shield_block:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, shield]
+  exclude_tags: [focus]
+  names: [蝕變的]
+  text: "增加 {value}% 格擋率"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: block.chance, type: INCREASED, value: "{value}" }
+
+corrupt_shield_max_block:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, shield]
+  exclude_tags: [focus]
+  names: [蝕變的]
+  text: "+{value}% 格擋上限"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [3, 3] }
+  mods:
+    - { stat: block.max, type: FLAT, value: "{value}" }
+
+corrupt_staff_spell_damage:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, staff]
+  names: [蝕變的]
+  text: "增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [40, 60] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+corrupt_wand_spell_damage:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, focus]
+  names: [蝕變的]
+  text: "增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+
+corrupt_caster_freeze:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff]
+  names: [蝕變的]
+  text: "增加 {value}% 凍結累積"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+
+corrupt_caster_level_chaos:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff]
+  names: [蝕變的]
+  text: "+{value} 全部混沌法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, chaos] }
+
+corrupt_caster_level_cold:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff]
+  names: [蝕變的]
+  text: "+{value} 全部冰冷法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, cold] }
+
+corrupt_caster_level_fire:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff]
+  names: [蝕變的]
+  text: "+{value} 全部火焰法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, fire] }
+
+corrupt_caster_level_lightning:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff]
+  names: [蝕變的]
+  text: "+{value} 全部閃電法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, lightning] }
+
+corrupt_caster_level_physical:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff]
+  names: [蝕變的]
+  text: "+{value} 全部物理法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, physical] }
+
+corrupt_caster_ignite:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff]
+  names: [蝕變的]
+  text: "增加 {value}% 點燃強度"   # PoE2：易燃強度
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+
+corrupt_caster_cast_speed:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff]
+  names: [蝕變的]
+  text: "增加 {value}% 施放速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: cast.speed, type: INCREASED, value: "{value}" }
+
+corrupt_caster_shock:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff]
+  names: [蝕變的]
+  text: "增加 {value}% 感電機率"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: shock.chance, type: INCREASED, value: "{value}" }
+
+corrupt_caster_spell_crit:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff]
+  names: [蝕變的]
+  text: "增加 {value}% 法術暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
+
+corrupt_life_per_kill:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff, quiver]
+  names: [蝕變的]
+  text: "擊殺時回復 {value} 生命"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 25] }
+  mods:
+    - { stat: life.per_kill, type: FLAT, value: "{value}" }
+
+corrupt_mana_per_kill:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, wand, staff, quiver]
+  names: [蝕變的]
+  text: "擊殺時回復 {value} 魔力"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: mana.per_kill, type: FLAT, value: "{value}" }
+
+corrupt_weapon_crit_bonus:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, weapon]
+  names: [蝕變的]
+  text: "+{value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }
+  mods:
+    - { stat: crit.multi, type: FLAT, value: "{value}" }
+
+corrupt_weapon_attack_speed:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, weapon]
+  exclude_tags: [caster]
+  names: [蝕變的]
+  text: "增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [6, 8] }
+  mods:
+    - { stat: local.attack_speed, type: INCREASED, value: "{value}" }
+
+corrupt_weapon_no_physical:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, weapon]
+  exclude_tags: [caster]
+  names: [蝕變的]
+  text: "這把武器沒有物理傷害"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [100, 100] }
+  mods:
+    - { stat: local.physical, type: INCREASED, value: "-{value}" }
+
+# ---- 2026-10-21 補齊：原本沒有對應屬性的那幾條（引擎加了 slow.taken、local.requirements、mana.recoup、blind.chance、maim.chance、skill.chain_terrain、life/mana.on_block、melee.range）----
+
+corrupt_boots_slow_taken:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, boots]
+  names: [蝕變的]
+  text: "你身上減益的緩速幅度減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: slow.taken, type: INCREASED, value: "-{value}" }
+
+corrupt_requirements:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, armour, shield, weapon]
+  names: [蝕變的]
+  text: "減少 {value}% 屬性需求"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 20] }
+  mods:
+    - { stat: local.requirements, type: INCREASED, value: "-{value}" }
+
+corrupt_body_recoup_mana:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, body]
+  names: [蝕變的]
+  text: "受到的傷害有 {value}% 回復為魔力"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 20] }
+  mods:
+    - { stat: mana.recoup, type: FLAT, value: "{value}" }
+
+corrupt_bow_blind:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, bow, crossbow]
+  names: [蝕變的]
+  text: "擊中時 {value}% 機率致盲敵人"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }
+  mods:
+    - { stat: blind.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+corrupt_bow_maim:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, bow, crossbow]
+  names: [蝕變的]
+  text: "擊中時 {value}% 機率癱瘓"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: maim.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+corrupt_quiver_chain_terrain:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, quiver]
+  names: [蝕變的]
+  text: "投射物有 {value}% 機率從地形額外連鎖一次"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 20] }
+  mods:
+    - { stat: skill.chain_terrain, type: FLAT, value: "{value}", tags: [projectile] }
+
+corrupt_shield_life_on_block:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, shield]
+  names: [蝕變的]
+  text: "格擋時回復 {value} 生命"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 25] }
+  mods:
+    - { stat: life.on_block, type: FLAT, value: "{value}" }
+
+corrupt_shield_mana_on_block:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, shield]
+  names: [蝕變的]
+  text: "格擋時回復 {value} 魔力"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: mana.on_block, type: FLAT, value: "{value}" }
+
+corrupt_melee_range:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, mace, talisman, spear, quarterstaff]
+  exclude_tags: [sceptre]
+  names: [蝕變的]
+  text: "這把武器的近戰打擊範圍增加 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 20] }
+  mods:
+    - { stat: melee.range, type: INCREASED, value: "{value}" }
+
+corrupt_sceptre_minion_damage:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, sceptre]
+  names: [蝕變的]
+  text: "增加 {value}% 召喚物傷害"   # PoE2：臨在內的盟友增加傷害
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+
+corrupt_sceptre_minion_crit_bonus:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, sceptre]
+  names: [蝕變的]
+  text: "增加 {value}% 召喚物暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [minion] }
+
+corrupt_sceptre_minion_attack_speed:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, sceptre]
+  names: [蝕變的]
+  text: "增加 {value}% 召喚物攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }
+  mods:
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion] }

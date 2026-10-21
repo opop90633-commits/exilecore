@@ -71,7 +71,8 @@ public final class Presence {
                 mods.add(Modifier.more(StatKeys.DAMAGE, -Math.min(90, weaken) / 100.0, "臨在"));
             }
             final double taken = Math.max(0, sheet.flat(StatKeys.PRESENCE_TAKEN, Set.of())) / 100.0;
-            final double slow = Math.max(0, Math.min(90, sheet.flat(StatKeys.PRESENCE_SLOW, Set.of()))) / 100.0;
+            final double slow = Math.max(0, Math.min(90, sheet.flat(StatKeys.PRESENCE_SLOW, Set.of())
+                    * Math.max(0, 1 + sheet.increased(StatKeys.SLOW_MAGNITUDE, Set.of())))) / 100.0; // 2026-10-21：吃減速幅度
             final double burn = sheet.flat(StatKeys.PRESENCE_BURN, Set.of());
             if (mods.isEmpty() && taken <= 0 && slow <= 0 && burn <= 0) {
                 continue;

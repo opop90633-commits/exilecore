@@ -52,15 +52,16 @@ public final class Runes {
         return base.slot() == ItemSlot.CHEST ? 2 : 1;
     }
 
-    /** 這件物品有幾個符文孔：傳奇寫了 rune_sockets 照傳奇（2026-10），不然照基底。 */
+    /** 這件物品有幾個符文孔：傳奇寫了 rune_sockets 照傳奇（2026-10），不然照基底；再加蝕變石多開的（2026-10-21，可以超過上限）。 */
     public static int slots(final ItemRepository repository, final ItemBase base, final ItemData data) {
+        final int extra = data == null ? 0 : data.corruptSockets();
         if (repository != null && data != null && data.unique() != null) {
             final int own = repository.uniqueRuneSockets(data.unique());
             if (own >= 0) {
-                return own;
+                return own + extra;
             }
         }
-        return slots(base);
+        return slots(base) + extra;
     }
 
     static Map<String, Rune> load(final Path dataFolder) throws IOException {

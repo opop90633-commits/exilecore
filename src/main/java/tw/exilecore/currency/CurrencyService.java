@@ -265,8 +265,8 @@ public final class CurrencyService {
         }
         final ItemData data = dataOptional.get();
         final CurrencyType type = currency.get();
-        if (data.corrupted() && type.operation() != CurrencyOperation.IDENTIFY) {
-            return Result.NOT_APPLICABLE; // 已腐化：不能再改造（2026-10）
+        if (data.corrupted() && !type.operation().allowedOnCorrupted()) {
+            return Result.NOT_APPLICABLE; // 已腐化：不能再改造（2026-10；鑑定、嵌符文到空孔除外）
         }
         if (type.operation() == CurrencyOperation.MIRROR) {
             return Result.NOT_APPLICABLE; // 映星鏡會多出一件物品：走 mirror()（呼叫端要接住複製品），不能當成一般通貨用
@@ -363,7 +363,7 @@ public final class CurrencyService {
         if (type.isEmpty() || data.isEmpty()) {
             return null;
         }
-        if (data.get().corrupted() && type.get().operation() != CurrencyOperation.IDENTIFY) {
+        if (data.get().corrupted() && !type.get().operation().allowedOnCorrupted()) {
             return type.get().operation() == CurrencyOperation.MIRROR ? "已腐化的物品不能複製" : "已腐化的物品不能再改造";
         }
         final String problem = Crafting.problem(type.get(), data.get(), items.generator());

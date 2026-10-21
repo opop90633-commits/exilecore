@@ -28,6 +28,13 @@ public record AtlasBonus(Map<String, Double> values) {
         return values.isEmpty();
     }
 
+    /** 多一條效果（加在原本的上面）；回傳新的。 */
+    public AtlasBonus plus(final String stat, final double value) {
+        final Map<String, Double> next = new java.util.LinkedHashMap<>(values);
+        next.merge(stat, value, Double::sum);
+        return new AtlasBonus(next);
+    }
+
     /** 「增加 x%」→ 小數（20 → 0.2）。 */
     public double increased(final String stat) {
         return Math.max(0, get(stat)) / 100.0;
@@ -65,6 +72,11 @@ public record AtlasBonus(Map<String, Double> values) {
         return "atlas." + kind.name().toLowerCase(Locale.ROOT) + "." + what;
     }
 
+    /** 2026-10-21 核心「單一信仰」選的事件的記號鍵（atlas.faith.shrine…；值 1 = 選了這種）。 */
+    public static String faithKey(final MapEventConfig.Kind kind) {
+        return "atlas.faith." + kind.name().toLowerCase(Locale.ROOT);
+    }
+
     /** 這種事件出現的權重乘上 1 + 這個。 */
     public double eventWeight(final MapEventConfig.Kind kind) {
         return increased(kindKey(kind, "weight"));
@@ -84,6 +96,12 @@ public record AtlasBonus(Map<String, Double> values) {
     public List<String> describe() {
         final List<String> lines = new ArrayList<>();
         for (final String stat : AtlasTree.STATS.keySet()) {
+            final double value = get(stat);
+            if (value > 0) {
+                lines.add(AtlasTree.describe(stat, value));
+            }
+        }
+        for (final String stat : AtlasTree.DRAWBACKS.keySet()) { // 2026-10-21：核心的代價
             final double value = get(stat);
             if (value > 0) {
                 lines.add(AtlasTree.describe(stat, value));

@@ -40,7 +40,8 @@ class CurrencyGroupsTest {
         for (final String id : List.of("ticket_shrine", "fragment_crucible", "sky_fragment", "abyss_core", "heist_finale_key")) {
             assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get(id)), id);
         }
-        assertEquals(7 + 4 + 3, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.KEYS).size());
+        assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get("tablet_shrine")), "2026-10-21：星圖石板跟門票同一組");
+        assertEquals(7 + 4 + 3 + 9, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.KEYS).size());
         // 一打開先看有東西的那組；都沒有看一般通貨
         final Map<String, Integer> held = Map.of("distilled_guilt", 3);
         assertEquals(CurrencyGroups.Group.MECHANIC, CurrencyGroups.first(currencies.all(), type -> held.getOrDefault(type.id(), 0)));

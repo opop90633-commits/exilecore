@@ -227,6 +227,17 @@ public final class AilmentService {
     public void onHit(final LivingEntity attacker, final LivingEntity defender, final SkillProfile skill,
                       final StatSheet attackerSheet, final StatSheet defenderSheet, final HitResult result,
                       final double takenMultiplier, final MonsterData defenderMonster, final double stunScale) {
+        onHit(attacker, defender, skill, attackerSheet, defenderSheet, result, takenMultiplier, defenderMonster, stunScale, java.util.Map.of());
+    }
+
+    /**
+     * 同上；typeTaken：這一擊每種傷害另外乘的「受到的這種傷害增加」（2026-10-21：凋息、縛根）。異常一樣用乘之前的傷害算
+     * （中毒、流血、點燃每一跳另外照減益乘，不然會乘兩次）。
+     */
+    public void onHit(final LivingEntity attacker, final LivingEntity defender, final SkillProfile skill,
+                      final StatSheet attackerSheet, final StatSheet defenderSheet, final HitResult result,
+                      final double takenMultiplier, final MonsterData defenderMonster, final double stunScale,
+                      final java.util.Map<DamageType, Double> typeTaken) {
         if (!result.hit() || result.blocked() || !defender.isValid() || defender.isDead()) {
             return;
         }
@@ -243,11 +254,11 @@ public final class AilmentService {
             return;
         }
         final double taken = takenMultiplier <= 0 ? 1.0 : takenMultiplier;
-        final double fire = result.dealt().get(DamageType.FIRE) / taken;
-        final double cold = result.dealt().get(DamageType.COLD) / taken;
-        final double lightning = result.dealt().get(DamageType.LIGHTNING) / taken;
-        final double physical = result.dealt().get(DamageType.PHYSICAL) / taken;
-        final double chaos = result.dealt().get(DamageType.CHAOS) / taken;
+        final double fire = result.dealt().get(DamageType.FIRE) / taken / typeTaken.getOrDefault(DamageType.FIRE, 1.0);
+        final double cold = result.dealt().get(DamageType.COLD) / taken / typeTaken.getOrDefault(DamageType.COLD, 1.0);
+        final double lightning = result.dealt().get(DamageType.LIGHTNING) / taken / typeTaken.getOrDefault(DamageType.LIGHTNING, 1.0);
+        final double physical = result.dealt().get(DamageType.PHYSICAL) / taken / typeTaken.getOrDefault(DamageType.PHYSICAL, 1.0);
+        final double chaos = result.dealt().get(DamageType.CHAOS) / taken / typeTaken.getOrDefault(DamageType.CHAOS, 1.0);
         if (fire <= 0 && cold <= 0 && lightning <= 0 && physical <= 0 && chaos <= 0) {
             return;
         }
@@ -287,7 +298,10 @@ public final class AilmentService {
         }
         if (chillBase > 0) {
             final Set<String> context = skill.contextFor(DamageType.COLD);
-            final double magnitude = config.chillMagnitude(chillBase, threshold, attack.apply(StatKeys.CHILL_EFFECT, 1.0, context) - 1); // 2026-10：「更多」的冰緩效果也算
+            // 2026-10：「更多」的冰緩效果也算；2026-10-21：攻擊方的減速幅度（slow.magnitude）、玩家身上的減速幅度（slow.taken）也乘進去
+            final double slowScale = Math.max(0, 1 + attack.increased(StatKeys.SLOW_MAGNITUDE, context))
+                    * (playerTarget ? Math.max(0, 1 + defenderSheet.increased(StatKeys.SLOW_TAKEN, Set.of())) : 1);
+            final double magnitude = config.chillMagnitude(chillBase, threshold, attack.apply(StatKeys.CHILL_EFFECT, 1.0, context) * slowScale - 1);
             if (magnitude > 0 && !StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) && !avoided(defenderSheet, StatKeys.AVOID_CHILL, random)) {
                 final double seconds = AilmentConfig.duration(config.chillDuration(playerTarget),
                         attack.increased(StatKeys.CHILL_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
@@ -846,11 +860,12 @@ public final class AilmentService {
      */
     private void damageOverTime(final LivingEntity living, final Tracked entry, final double dps, final UUID source,
                                 final AilmentType type, final long now) {
-        final double amount = dps * TICK_INTERVAL / 20.0 * (1 + entry.state.shock(now));
-        if (amount <= 0 || living.isInvulnerable()) {
+        final double base = dps * TICK_INTERVAL / 20.0 * (1 + entry.state.shock(now));
+        if (base <= 0 || living.isInvulnerable()) {
             return;
         }
         if (living instanceof Player player) {
+            final double amount = base;
             double taken = amount;
             if (source != null && !source.equals(player.getUniqueId()) && plugin.pvp() != null && plugin.pvp().inArena(player)) {
                 // PvP 保底（2026-10）：別的玩家造成的持續傷害也算進「每秒最多打掉總血量的幾 %」
@@ -864,6 +879,10 @@ public final class AilmentService {
             }
             return;
         }
+        // 2026-10-21：只加某一種傷害的減益（凋息：受到的混沌傷害增加）也加在持續傷害上（中毒是混沌、流血是物理、點燃是火焰）
+        final double typed = plugin.combat() == null ? 0
+                : plugin.combat().debuffs().typedTaken(living.getUniqueId(), source, plugin.getServer().getCurrentTick(), dotType(type));
+        final double amount = typed > 0 ? base * (1 + typed) : base;
         if (plugin.training() != null && plugin.training().absorbDot(living, source, amount)) {
             credit(source, living, type, amount);
             return; // 營地的訓練假人：記給造成的人，不扣血

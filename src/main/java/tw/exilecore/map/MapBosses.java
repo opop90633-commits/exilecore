@@ -524,6 +524,9 @@ final class MapBosses {
      */
     private double tierLife(final MapInstance instance) {
         final boolean heistFinale = instance.special() != null && "heist_finale".equals(instance.special().kind());
+        if (instance.map().isFinal() && instance.special() == null && !instance.isUber() && !instance.isPinnacle()) {
+            return service.config().finalBossLifeMultiplier(instance.stats().tier()); // 2026-10-21：一般終局照 tier_life_table
+        }
         return instance.map().isFinal() && instance.special() == null || heistFinale
                 ? service.config().finalLifeMultiplier(instance.stats().tier())
                 : instance.special() == null && !instance.isUber() ? service.config().bossLifeMultiplier(instance.stats().tier()) : 1.0;
@@ -772,7 +775,35 @@ final class MapBosses {
         // 地圖：跟這張圖同一階（終局是開的那一階），有機率高一階；星圖天賦可以多掉幾張、高一階的機率更高
         final AtlasBonus atlas = instance.atlas();
         final int tier = Math.max(1, instance.stats().tier());
-        final int mapCount = bonus.amount(config.drops().bossMaps() + atlas.bossMaps(), random); // 2026-10：吃物品數量
+        // 2026-10-21：新星圖的 Boss 格（或首領石板罩到的格子）：必掉 atlas.yml 的 boss_maps 張、傳奇機率 ×boss_unique；核心「魔王的宴席」再 ×2
+        final AtlasGrid.Cell cell = instance.atlasCell();
+        final boolean bossCell = instance.atlasBossCell(); // 2026-10-21 修正：以前看 bossPower > 0，岔路「王道」、詛咒寶匣也會被當成 Boss 格
+        final double cellUnique = (bossCell ? service.atlasConfig().bossUnique() : 1.0) * (atlas.get("atlas.boss_double") > 0 ? 2.0 : 1.0)
+                * Math.max(0, 1 - atlas.increased("atlas.unique_less")); // 核心「尋星者」的代價：其他傳奇少
+        final int baseMaps = bossCell ? Math.max(config.drops().bossMaps(), service.atlasConfig().bossMaps()) : config.drops().bossMaps();
+        final int mapCount = bonus.amount((int) Math.round((baseMaps + atlas.bossMaps()) * (atlas.get("atlas.boss_double") > 0 ? 2 : 1)), random); // 2026-10：吃物品數量
+        if (cell != null && !instance.map().isFinal() && instance.special() == null && plugin.currencies() != null
+                && random.nextDouble() < AtlasTablets.BOSS_DROP_CHANCE * (1 + atlas.increased("atlas.tablet.drop"))) {
+            final tw.exilecore.currency.CurrencyType tablet = plugin.currencies().repository().get(AtlasTablets.Kind.BOSS.currencyId());
+            if (tablet != null) {
+                drops.add(DropTable.Drop.currency(tablet)); // 首領石板
+            }
+        }
+        // 2026-10-21：第一次完成的腐化區、淨化區：蝕變石、定星石（每個有份的人各擲一次；吃物品數量）
+        if (plugin.currencies() != null && instance.special() == null && !instance.map().isFinal()) {
+            if (instance.firstCorrupted() && random.nextDouble() < bonus.more(service.atlasConfig().vaalChance())) {
+                final CurrencyType vaal = plugin.currencies().repository().get(CORRUPT_ORB);
+                if (vaal != null) {
+                    drops.add(DropTable.Drop.currency(vaal));
+                }
+            }
+            if (instance.firstPurified() && random.nextDouble() < bonus.more(service.atlasConfig().purification().fractureChance())) {
+                final CurrencyType fracture = plugin.currencies().repository().get(FRACTURE_ORB);
+                if (fracture != null) {
+                    drops.add(DropTable.Drop.currency(fracture));
+                }
+            }
+        }
         for (int i = 0; i < mapCount; i++) {
             final ItemData map = MapDrops.roll(config, generator, tier, completed, random, atlas.tierUp());
             if (map != null) {
@@ -786,17 +817,17 @@ final class MapBosses {
         if (instance.map().isFinal()) {
             // 終局：寫著這個終局代號的傳奇（其他終局 Boss 各自的），沒有就用 final（天穹熔爐的）——2026-10-16：每一件各自擲
             eachUnique(drops, ownFinalPool(instance.map().id(), itemLevel), config.drops().finalUniqueChance(), itemLevel, random, bonus);
-        } else if (definition.named() && random.nextDouble() < bonus.rare(config.drops().namedUniqueChance() * (1 + atlas.increased("atlas.boss_unique")))) {
+        } else if (definition.named() && random.nextDouble() < bonus.rare(config.drops().namedUniqueChance() * cellUnique * (1 + atlas.increased("atlas.boss_unique")))) {
             addUnique(drops, MapDrops.unique(generator, instance.map().id(), itemLevel, random));
         }
         // 共通傳奇（map_boss 池，賭博也賭得到）：擲一次、中了抽一件。一般地圖 Boss（含具名）照 boss_unique_chance（5%，星圖天賦可以增加；
         // 跟賭博一起校準，2026-10-16 維持擲一次），終局照 final_common_chance
         final double common = instance.map().isFinal() ? config.drops().finalCommonChance()
-                : config.drops().bossUniqueChance() * (1 + atlas.increased("atlas.boss_unique"));
+                : config.drops().bossUniqueChance() * cellUnique * (1 + atlas.increased("atlas.boss_unique"));
         if (random.nextDouble() < bonus.rare(common)) {
             addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
         }
-        rollChase(drops, itemLevel, random); // 追逐級傳奇：所有地圖 Boss 一樣的固定機率
+        rollChase(drops, itemLevel, random, 1 + atlas.increased("atlas.chase_unique")); // 追逐級傳奇：所有地圖 Boss 一樣的固定機率（核心「尋星者」×2）
         if (instance.map().isFinal() && plugin.skills() != null) {
             // 終局 Boss 的專屬輔助寶石（supports.yml 的 source 寫這個終局的代號）：每一顆各自擲 final_support_chance（2026-10-16）
             for (final tw.exilecore.skill.SupportDefinition support : plugin.skills().config().supportsFrom(instance.map().id())) {
@@ -845,7 +876,11 @@ final class MapBosses {
      * maps.yml 的 drops.chase_chance（0.034%）。故意不吃任何加成（星圖天賦、物品數量、稀有度）；物品等級不到 75 時池子是空的。
      */
     private void rollChase(final List<DropTable.Drop> drops, final int itemLevel, final java.util.random.RandomGenerator random) {
-        if (random.nextDouble() < service.config().drops().chaseChance()) {
+        rollChase(drops, itemLevel, random, 1.0);
+    }
+
+    private void rollChase(final List<DropTable.Drop> drops, final int itemLevel, final java.util.random.RandomGenerator random, final double multiplier) {
+        if (random.nextDouble() < service.config().drops().chaseChance() * multiplier) {
             addUnique(drops, MapDrops.unique(plugin.items().generator(), "chase", itemLevel, random));
         }
         // 映星鏡（2026-10）：另外擲一次 maps.yml 的 drops.mirror_chance（追逐級的十分之一；不看物品等級；一般怪物的那一份在 MonsterListener.rollMirror）
@@ -1052,12 +1087,17 @@ final class MapBosses {
         }
     }
 
+    /** 蝕變石、定星石的通貨代號（2026-10-21，currencies.yml）。 */
+    static final String CORRUPT_ORB = "corrupt_orb";
+    static final String FRACTURE_ORB = "fracture_orb";
+
     /** Boss 倒下（一次）：台詞、收掉血條、完成地圖（星圖、首殺），每個人的那份掉落已經擲完了。 */
     void killed(final MapInstance instance, final LivingEntity boss) {
         if (instance.bossKilled()) {
             return;
         }
         instance.setBossKilled(true);
+        service.recordFight(instance); // 2026-10-21：/ec bossdps 的統計
         if (instance.usesAttempts()) {
             instance.closePortals(); // 2026-10：通關了，門全部關起來（裡面的人照樣可以撿完再出來）
         }
@@ -1069,7 +1109,11 @@ final class MapBosses {
         }
         end(instance);
         final org.bukkit.Location at = boss.getLocation();
-        service.complete(instance, at);
+        // 2026-10-21：對 Boss 打到傷害門檻的人（隊友要在裡面才推進自己的星圖）；Boss 還在世界上，傷害紀錄還沒清
+        final java.util.Set<java.util.UUID> damagers = new java.util.HashSet<>(tw.exilecore.monster.DamageLedger.qualifying(
+                plugin.monsters().ledger().damageTo(boss.getUniqueId()),
+                plugin.party() == null ? new tw.exilecore.party.PartyConfig().shareThreshold() : plugin.party().config().shareThreshold()));
+        service.complete(instance, at, damagers);
         boss.getWorld().playSound(boss.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
         // 擊殺稱號（2026-10）：極境 Boss（照終局代號）與金庫之主，倒下時在 Boss 32 格內、活著、不是觀戰的人各記一次
         final String killKey = instance.special() != null && "heist_finale".equals(instance.special().kind()) ? "heist_finale"

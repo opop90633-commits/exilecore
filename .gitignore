@@ -37,3 +37,5 @@ tools/deploy.local.json
 
 # 從雲端抓回來的紀錄與資料庫備份（tools/fetch_cloud.py）：有玩家資料，不進版控
 cloud/
+__pycache__/
+javac.*.args

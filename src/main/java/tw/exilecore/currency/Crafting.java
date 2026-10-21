@@ -420,7 +420,7 @@ public final class Crafting {
         final List<RolledAffix> same = new ArrayList<>();
         for (final RolledAffix rolled : data.affixes()) {
             final Affix affix = generator.repository().affix(rolled.id());
-            if (affix != null && affix.type() == type) {
+            if (affix != null && affix.type() == type && !data.isFractured(rolled)) { // 2026-10-21：破裂的不拿
                 same.add(rolled);
             }
         }
@@ -452,6 +452,9 @@ public final class Crafting {
                 int worstRank = -1;
                 int worstLevel = Integer.MAX_VALUE;
                 for (final RolledAffix rolled : data.affixes()) {
+                    if (data.isFractured(rolled)) {
+                        continue; // 2026-10-21：破裂的詞綴拿不掉
+                    }
                     final Affix affix = generator.repository().affix(rolled.id());
                     final int rank = affix == null ? 99 : affix.rank(rolled.tier());
                     final int level = affix == null ? 0 : tierLevel(affix, rolled.tier());
@@ -474,7 +477,7 @@ public final class Crafting {
                 final AffixType removable = effect == CurrencyType.Omen.Effect.KEEP_PREFIXES ? AffixType.SUFFIX : AffixType.PREFIX;
                 for (final RolledAffix rolled : data.affixes()) {
                     final Affix affix = generator.repository().affix(rolled.id());
-                    if (affix != null && affix.type() == removable) {
+                    if (affix != null && affix.type() == removable && !data.isFractured(rolled)) { // 2026-10-21：破裂的不拿
                         candidates.add(rolled);
                     }
                 }

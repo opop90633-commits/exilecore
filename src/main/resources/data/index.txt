@@ -17,6 +17,7 @@ data/affixes/veiled.yml
 data/affixes/unveiled.yml
 data/affixes/flasks.yml
 data/affixes/jewels_radius.yml
+data/affixes/corrupted.yml
 data/character.yml
 data/passives/tree.json
 data/zones.yml
@@ -36,6 +37,7 @@ data/uniques.yml
 data/maps.yml
 data/map_events.yml
 data/atlas_tree.yml
+data/atlas.yml
 data/pvp.yml
 data/party.yml
 data/economy.yml

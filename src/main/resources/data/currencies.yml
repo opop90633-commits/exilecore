@@ -224,19 +224,33 @@ chance_orb:
   description: "普通物品有機會變成這個基底的傳奇（機率跟商人賭博賭到傳奇一樣），不然就碎掉"
   flavor: "一半是星骸、一半是賭徒的運氣；握在手裡會微微發熱。"
 
-# 2026-10：腐化（照 PoE2 的瓦爾寶珠，名稱是自己的）。用了就變成「已腐化」，之後不能再用任何通貨改造；
-#   另外隨機一種結果：40% 沒變化、30% 重骰全部詞綴的數值、30% 品質變成 21～25（超過一般的上限 20）。
-# 2026-10：先不開放（之後要開把下面整段的 # 拿掉）
-# corrupt_orb:
-#   name: 蝕變石
-#   material: FERMENTED_SPIDER_EYE
-#   stack: 20
-#   operation: CORRUPT
-#   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
-#   drop_weight: 20
-#   drop_level: 20
-#   description: "腐化一件物品：可能沒變化、重骰全部數值，或品質超過上限；腐化後不能再改造"
-#   flavor: "被深淵浸過的星骸，碰到的東西都回不去了。"
+# 2026-10-21：腐化（照 PoE2 的瓦爾寶珠，名稱是自己的）。用了就變成「已腐化」，之後只能鑑定、把符文嵌進空的符文孔；
+#   另外各 25% 一種結果：沒變化、加一條腐化詞綴（affixes/corrupted.yml）、多一個符文孔（可以超過上限）、重骰全部詞綴的數值（破裂的不變）。
+#   不會一般掉落（drop_weight 0）：星圖的腐化區第一次打倒 Boss 時掉（atlas.yml 的 corruption.vaal_chance）。
+corrupt_orb:
+  name: 蝕變石
+  material: FERMENTED_SPIDER_EYE
+  stack: 20
+  operation: CORRUPT
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 20
+  description: "腐化一件裝備：沒變化、加一條腐化詞綴、多一個符文孔（可以超過上限），或重骰全部數值（各 25%）；腐化後只能再嵌符文"
+  flavor: "被深淵浸過的星骸，碰到的東西都回不去了。"
+
+# 2026-10-21：破裂（照 PoE2 的破裂石，名稱是自己的）：4 條以上詞綴的稀有裝備，隨機一條詞綴變成「破裂」，
+#   之後任何通貨都移除不了、重骰不了它；物品還能繼續改造。一件只能有一條。
+#   不會一般掉落（drop_weight 0）：星圖的淨化區第一次打倒 Boss 時掉（atlas.yml 的 purification.fracture_chance）。
+fracture_orb:
+  name: 定星石
+  material: QUARTZ
+  stack: 20
+  operation: FRACTURE
+  applies_to: { rarity: [RARE] }
+  drop_weight: 0
+  drop_level: 40
+  description: "4 條以上詞綴的稀有裝備：隨機一條詞綴變成破裂（之後通貨移除、重骰都動不到它），一件只能有一條"
+  flavor: "把一顆星釘在天上，它就不會再落下來。"
 
 # ---- 2026-10：符文（嵌進武器、防具的符文孔；效果寫在 runes.yml）----
 rune_iron:
@@ -1147,6 +1161,90 @@ ticket_abyss:
   drop_weight: 0
   description: "完成深淵裂縫事件時有份的人各 2% 掉落；在地圖裝置的「事件巔峰」用它開淵底之王・骨潮"
   flavor: "從縫的最底下撈上來的，還是冰的。"
+
+# ---- 2026-10-21 先驅石板（PoE2 的 Precursor Tablet；AtlasTablets）：完成星圖上的塔之後，在地圖裝置的「塔與城塞」插一片，
+#   效果罩到塔周圍（atlas.yml 的 tower.radius，星圖天賦可以加）的所有地圖。塔必掉 1 片隨機的；事件完成時 3% 掉那種事件的、地圖 Boss 2% 掉首領石板 ----
+tablet_shrine:
+  name: 神龕石板
+  material: SMOOTH_STONE_SLAB
+  model: exilecore:currency/tablet_shrine
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "罩到的地圖保證多 1 座神龕、神龕的機會 +100%｜完成神龕事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  flavor: "刻著一盞長明的燈。"
+tablet_strongbox:
+  name: 寶箱石板
+  material: SMOOTH_STONE_SLAB
+  model: exilecore:currency/tablet_strongbox
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "罩到的地圖保證多 1 個寶箱、寶箱的機會 +100%｜完成寶箱事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  flavor: "刻著一把沒有鎖的鎖。"
+tablet_breach:
+  name: 裂隙石板
+  material: SMOOTH_STONE_SLAB
+  model: exilecore:currency/tablet_breach
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "罩到的地圖保證多 1 個裂隙、裂隙的機會 +100%｜完成裂隙事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  flavor: "石板本身裂了一道縫，縫裡是黑的。"
+tablet_exile:
+  name: 流寇石板
+  material: SMOOTH_STONE_SLAB
+  model: exilecore:currency/tablet_exile
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "罩到的地圖保證多 1 個流寇、流寇的機會 +100%｜完成流寇事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  flavor: "刻著一張被劃掉的臉。"
+tablet_abyss:
+  name: 深淵石板
+  material: SMOOTH_STONE_SLAB
+  model: exilecore:currency/tablet_abyss
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "罩到的地圖保證多 1 條深淵裂縫、深淵的機會 +100%｜完成深淵裂縫事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  flavor: "摸起來是濕的，不管放多久。"
+tablet_ritual:
+  name: 祭壇石板
+  material: SMOOTH_STONE_SLAB
+  model: exilecore:currency/tablet_ritual
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "罩到的地圖祭壇出現的機率 +100%、貢品 +25%｜完成祭壇事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  flavor: "刻痕裡填的是血。"
+tablet_delirium:
+  name: 幻霧石板
+  material: SMOOTH_STONE_SLAB
+  model: exilecore:currency/tablet_delirium
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "罩到的地圖幻霧出現的機率 +100%、獎勵進度 +25%｜完成幻霧事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  flavor: "看久了字會動。"
+tablet_boss:
+  name: 首領石板
+  material: SMOOTH_STONE_SLAB
+  model: exilecore:currency/tablet_boss
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "罩到的一般格子當作 Boss 格（Boss 更強、掉得更多）｜地圖 Boss 2%；在地圖裝置的「塔與城塞」插進完成的塔"
+  flavor: "刻著一頂王冠，王冠下面沒有頭。"
+tablet_bounty:
+  name: 豐饒石板
+  material: SMOOTH_STONE_SLAB
+  model: exilecore:currency/tablet_bounty
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "罩到的地圖物品數量 +15%、稀有度 +15%｜塔必掉；在地圖裝置的「塔與城塞」插進完成的塔"
+  flavor: "刻著一棵結滿果子的樹。"
 
 # ---- 2026-10-19 星諭卡（cards.yml 寫兌換規則；這裡只是通貨的外觀與說明，card_ 開頭的自動進「星諭卡」那一組）----
 card_tide_mark:

@@ -298,6 +298,54 @@ crit_bonus_amulet:
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}" }
 
+# 2026-10-21：PoE2 的項鍊「受到的傷害回復為魔力」（of Reprieve…of Zen）
+mana_recoup:
+  type: suffix
+  group: damage_taken_gained_as_mana
+  spawn_tags: [amulet]
+  names: [之星骸, 之禪定, 之寧靜, 之安詳, 之慰藉]
+  text: "受到的傷害有 {value}% 在 4 秒內回復為魔力"
+  tiers:
+    - { tier: 1, ilvl: 80, weight: 410, value: [22, 24] }
+    - { tier: 2, ilvl: 69, weight: 512, value: [19, 21] }
+    - { tier: 3, ilvl: 57, weight: 640, value: [16, 18] }
+    - { tier: 4, ilvl: 45, weight: 800, value: [13, 15] }
+    - { tier: 5, ilvl: 31, weight: 1000, value: [10, 12] }
+  mods:
+    - { stat: mana.recoup, type: FLAT, value: "{value}" }
+
+# 2026-10-21：PoE2 的「減少 x% 屬性需求」（of the Worthy…of the Proficient；武器、胸甲、頭盔、盾、法器、褲子、鞋子；本地，不進屬性表）
+requirements_reduced:
+  type: suffix
+  group: local_attribute_requirements
+  spawn_tags: [weapon, body, helmet, shield, leggings, boots]
+  names: [之星骸, 之嫻熟, 之精通, 之天賦, 之才幹]
+  text: "減少 {value}% 屬性需求"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 410, value: [35, 35] }
+    - { tier: 2, ilvl: 52, weight: 512, value: [30, 30] }
+    - { tier: 3, ilvl: 40, weight: 640, value: [25, 25] }
+    - { tier: 4, ilvl: 32, weight: 800, value: [20, 20] }
+    - { tier: 5, ilvl: 24, weight: 1000, value: [15, 15] }
+  mods:
+    - { stat: local.requirements, type: INCREASED, value: "-{value}" }
+
+# 2026-10-21：PoE2 的箭袋「x% 機率穿透敵人」（of Piercing…of Penetrating）：每一發射出時擲，中了多穿透一個敵人
+pierce_chance:
+  type: suffix
+  group: arrow_pierce_chance
+  spawn_tags: [quiver]
+  names: [之星骸, 之貫穿, 之穿刺, 之鑽透, 之刺穿]
+  text: "投射物有 {value}% 機率穿透敵人"
+  tiers:
+    - { tier: 1, ilvl: 77, weight: 410, value: [24, 26] }
+    - { tier: 2, ilvl: 61, weight: 512, value: [21, 23] }
+    - { tier: 3, ilvl: 44, weight: 640, value: [18, 20] }
+    - { tier: 4, ilvl: 26, weight: 800, value: [15, 17] }
+    - { tier: 5, ilvl: 11, weight: 1000, value: [12, 14] }
+  mods:
+    - { stat: skill.pierce_chance, type: FLAT, value: "{value}", tags: [projectile] }
+
 life_recoup:
   type: suffix
   group: damage_taken_gained_as_life

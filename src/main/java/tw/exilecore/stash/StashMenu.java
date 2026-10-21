@@ -898,7 +898,7 @@ public final class StashMenu extends Menu {
             lore.add(amount >= card.set() ? "<#c9a0ff>右鍵：兌換一套　Shift＋右鍵：全部兌換" : "<dark_gray>還差 " + (card.set() - amount % card.set()) + " 張才能兌換");
             final int bet = cards.gambleCount(type, amount); // 一次賭一疊（最多一套的張數）
             lore.add(String.format(Locale.ROOT, "<#ffb347>Q：賭卡<gray>（一次一疊：花 %s 金幣，%,d 張變成 0～%,d 張）",
-                    tw.exilecore.economy.GoldService.format(cards.gambleCost(type, bet)), bet, bet * 2));
+                    tw.exilecore.economy.GoldService.format(cards.gambleCost(player, type, bet)), bet, bet * 2));
             lore.add("<yellow>左鍵：拿一疊　Shift＋左鍵：全部拿");
         } else {
             lore.add("<dark_gray>撿起來直接放這裡");
@@ -933,7 +933,7 @@ public final class StashMenu extends Menu {
             gambleArmedAt = now;
             player.sendActionBar(plugin.text().parse(String.format(Locale.ROOT,
                     "<#ffb347>再按一次 Q 確定賭卡：<white>%,d 張%s<gray>，花 <white>%s<gray> 金幣，變成 0～%,d 張", have,
-                    ItemRenderer.escape(type.name()), tw.exilecore.economy.GoldService.format(cards.gambleCost(type, have)), have * 2)));
+                    ItemRenderer.escape(type.name()), tw.exilecore.economy.GoldService.format(cards.gambleCost(player, type, have)), have * 2)));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.6f, 1.4f);
             return;
         }

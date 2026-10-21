@@ -213,11 +213,19 @@ class UberTest {
         }
         // 極境開在最高階（也吃 ×11.7），再乘自己的倍率（2026-10 每個極境各自重調，原本都是 ×4）：比 T16 終局更硬
         final java.util.Map<String, Double> uberLife = java.util.Map.of(
-                "sky_crucible", 1.9, "frost_throne", 1.9, "bone_throne", 1.9, "ember_citadel", 1.9); // 2026-10：照每秒 10 萬打 3 分半
+                "sky_crucible", 95.1, "frost_throne", 95.1, "bone_throne", 95.1, "ember_citadel", 95.1); // 2026-10-21：照打 Boss 每秒 300 萬打 3 分半
+        // 2026-10-21：一般終局照 tier_life_table（T16 ×585 = 打 Boss 每秒 150 萬打 3 分半），T10 以下跟 tier_life 一樣
+        assertEquals(585, config.finalBossLifeMultiplier(max), 1e-9);
+        for (int tier = 1; tier <= 10; tier++) {
+            assertEquals(config.finalLifeMultiplier(tier), config.finalBossLifeMultiplier(tier), 0.01, "T" + tier);
+        }
+        for (int tier = 11; tier <= max; tier++) {
+            assertTrue(config.finalBossLifeMultiplier(tier) > config.finalBossLifeMultiplier(tier - 1), "T" + tier + " 比前一階多");
+        }
         for (final MapConfig.MapDef map : config.regularFinals()) {
             final MapConfig.Uber uber = config.uber(map.id());
             assertEquals(uberLife.get(map.id()), uber.life(), 1e-9, map.id() + "：極境的生命倍率");
-            assertTrue(uber.life() > 1, map.id() + "：極境比 T16 終局硬");
+            assertTrue(uber.life() * config.finalLifeMultiplier(max) > config.finalBossLifeMultiplier(max), map.id() + "：極境比 T16 終局硬");
             assertEquals(max, config.uberStats(map.id(), uber).tier(), map.id() + "：極境開在最高階");
         }
     }
@@ -283,7 +291,7 @@ class UberTest {
                         + " 階段，但只有 " + merged.phases().size() + " 個階段（永遠用不到）");
             }
             assertTrue(merged.phases().stream().filter(phase -> phase.shield() != null).count() >= 2, map.id() + "：極境張兩次護盾");
-            assertTrue(merged.enrage().after() < boss.enrage().after(), map.id() + "：極境的狂暴來得比較早");
+            assertTrue(merged.enrage().after() <= boss.enrage().after(), map.id() + "：極境的狂暴不會比較晚（2026-10-21：都是 5 分鐘）");
             final CurrencyType key = currencies.get(uber.key());
             assertNotNull(key, map.id() + "：開門的通貨要存在");
             assertTrue(uber.keyMinTier() <= config.tiers().max(), map.id() + "：一般版本開得到會掉鑰匙的階級");
@@ -343,17 +351,23 @@ class UberTest {
         // 2026-10：每秒傷害上限統一 15 萬（血量照終局 5 萬、極境 10 萬、巔峰 15 萬打 3 分半）；超過的部分遞減（上限～2 倍算 30%、2～3 倍算 10%、3～4 倍算 5%、4 倍以上算 1%）
         for (final MapConfig.MapDef map : config.regularFinals()) {
             final MapConfig.Uber uber = config.uber(map.id());
-            assertEquals(150000, uber.dpsCap(), 1e-9, map.id());
-            assertEquals(List.of(new MapConfig.DpsTier(150000, 0.08), new MapConfig.DpsTier(300000, 0.045), new MapConfig.DpsTier(600000, 0.024), new MapConfig.DpsTier(1200000, 0.013), new MapConfig.DpsTier(2500000, 0.007), new MapConfig.DpsTier(5000000, 0.004), new MapConfig.DpsTier(10000000, 0.002), new MapConfig.DpsTier(20000000, 0.001)), uber.dpsOver(), map.id());
+            assertEquals(6000000, uber.dpsCap(), 1e-9, map.id());
+            assertEquals(List.of(new MapConfig.DpsTier(6000000, 0.3), new MapConfig.DpsTier(12000000, 0.1), new MapConfig.DpsTier(24000000, 0.03), new MapConfig.DpsTier(48000000, 0.01)), uber.dpsOver(), map.id());
         }
-        assertEquals(150000, config.finalDpsCap(), 1e-9, "一般終局（2026-10：上限統一 15 萬）");
-        assertEquals(List.of(new MapConfig.DpsTier(150000, 0.08), new MapConfig.DpsTier(300000, 0.045), new MapConfig.DpsTier(600000, 0.024), new MapConfig.DpsTier(1200000, 0.013), new MapConfig.DpsTier(2500000, 0.007), new MapConfig.DpsTier(5000000, 0.004), new MapConfig.DpsTier(10000000, 0.002), new MapConfig.DpsTier(20000000, 0.001)), config.finalDpsOver());
-        assertEquals(150000, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
-        // 打白怪假人 5／10／15 萬（打 Boss ×0.6）剛好 3 分半：終局 19.1、極境再 ×1.9、巔峰 53.8（T16 的 ×11.7 與等級差另外算）
+        // 2026-10-21：上限拉到目標的 2 倍（終局 150 萬 → 300 萬、極境 300 萬 → 600 萬、巔峰 600 萬 → 1200 萬）
+        assertEquals(3000000, config.finalDpsCap(), 1e-9, "一般終局");
+        assertEquals(List.of(new MapConfig.DpsTier(3000000, 0.3), new MapConfig.DpsTier(6000000, 0.1), new MapConfig.DpsTier(12000000, 0.03), new MapConfig.DpsTier(24000000, 0.01)), config.finalDpsOver());
+        assertEquals(12000000, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
+        // 金庫之主 300 萬、淵鯨 600 萬打 3 分半：都從目標的 2 倍開始遞減（開天者、南瓜王、潮汐統帥不遞減）
+        assertEquals(6000000, config.heistDpsCap(), 1e-9, "金庫之主");
+        assertEquals(List.of(new MapConfig.DpsTier(6000000, 0.3), new MapConfig.DpsTier(12000000, 0.1), new MapConfig.DpsTier(24000000, 0.03), new MapConfig.DpsTier(48000000, 0.01)), config.heistDpsOver());
+        assertEquals(12000000, config.whaleDpsCap(), 1e-9, "淵鯨");
+        assertEquals(List.of(new MapConfig.DpsTier(12000000, 0.3), new MapConfig.DpsTier(24000000, 0.1), new MapConfig.DpsTier(48000000, 0.03), new MapConfig.DpsTier(96000000, 0.01)), config.whaleDpsOver());
+        // 終局 19.1（T16 再 ×585）、極境再 ×95.1、巔峰 3587（再 ×11.7）：打 Boss 每秒 150／300／600 萬打 3 分半
         for (final MapConfig.MapDef map : config.regularFinals()) {
             assertEquals(19.1, map.boss().life(), 1e-9, map.id());
         }
-        assertEquals(53.8, config.find("awakener").boss().life(), 1e-9);
+        assertEquals(3587, config.find("awakener").boss().life(), 1e-9);
         final MapConfig.Uber bare = MapConfig.parseUber(YamlNode.load("test.yml", new java.io.StringReader("name: x\n")));
         assertEquals(0, bare.dpsCap(), 1e-9, "沒寫就不限");
     }

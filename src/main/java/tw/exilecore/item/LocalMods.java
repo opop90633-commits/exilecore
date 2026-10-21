@@ -39,11 +39,13 @@ public record LocalMods(double physical, double attackSpeed, double crit, Map<Da
     public static final String CRIT = "local.crit";
     /** FLAT：武器的基礎暴擊率 +x%（PoE2「+x% 暴擊率」）。 */
     public static final String CRIT_BASE = "local.crit_base";
+    /** INCREASED：這件物品的屬性需求（2026-10-21，PoE2 腐化「減少 x% 屬性需求」；武器、防具都可以）。 */
+    public static final String REQUIREMENTS = "local.requirements";
 
     private static final String ATTACK_TAG = "attack";
 
     /** 認得的本地屬性（資料檢查用）。 */
-    public static final Set<String> KNOWN = Set.of(PHYSICAL, ATTACK_SPEED, CRIT, CRIT_BASE);
+    public static final Set<String> KNOWN = Set.of(PHYSICAL, ATTACK_SPEED, CRIT, CRIT_BASE, REQUIREMENTS);
 
     public static final LocalMods NONE = new LocalMods(0, 0, 0, Map.of());
 

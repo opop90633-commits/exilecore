@@ -2483,3 +2483,131 @@ j2_stun_threshold_nostun:
     - { tier: 2, ilvl: 1, weight: 1000, value: [15, 18] }
   mods:
     - { stat: stun.threshold@nostun, type: INCREASED, value: "{value}" }
+
+# ---- 2026-10-21：對照 PoE2 0.5.5 珠寶詞綴補的（引擎同一天補了 blind.chance、skill.pierce_chance、slow.taken、skill.chain_terrain、leech.mana_effect、rage.when_hit）----
+
+j2_blind_chance:
+  type: suffix
+  group: j2_blind_chance
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "攻擊擊中時 {value}% 機率致盲敵人"
+  chips: [attack]   # PoE2 的標籤（jewel AttacksChanceToBlind）
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [6, 7] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [5, 5] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 4] }
+  mods:
+    - { stat: blind.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+j2_pierce_chance:
+  type: suffix
+  group: j2_pierce_chance
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "投射物有 {value}% 機率穿透敵人"
+  chips: [projectile]   # PoE2 的標籤（jewel ArrowPierceChance）
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 13] }
+  mods:
+    - { stat: skill.pierce_chance, type: FLAT, value: "{value}", tags: [projectile] }
+
+j2_slow_taken:
+  type: suffix
+  group: j2_slow_taken
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "你身上減益的緩速幅度減少 {value}%"
+  chips: []   # PoE2 的標籤（jewel SlowPotency）
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+  mods:
+    - { stat: slow.taken, type: INCREASED, value: "-{value}" }
+
+j2_chain_terrain:
+  type: suffix
+  group: j2_chain_terrain
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "投射物有 {value}% 機率從地形額外連鎖一次"
+  chips: [projectile]   # PoE2 的標籤（jewel ChainFromTerrain）
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [5, 5] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [4, 4] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 3] }
+  mods:
+    - { stat: skill.chain_terrain, type: FLAT, value: "{value}", tags: [projectile] }
+
+j2_mana_leech_amount:
+  type: suffix
+  group: j2_mana_leech_amount
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 魔力偷取量"
+  chips: []   # PoE2 的標籤（jewel ManaLeechAmount）
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: leech.mana_effect, type: INCREASED, value: "{value}" }
+
+j2_knockback_distance:
+  type: suffix
+  group: j2_knockback_distance
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 擊退距離"
+  chips: []   # PoE2 的標籤（jewel KnockbackDistance）
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 15] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [9, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 8] }
+  mods:
+    - { stat: skill.knockback, type: INCREASED, value: "{value}" }
+
+j2_rage_when_hit:
+  type: suffix
+  group: j2_rage_when_hit
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "被敵人擊中時獲得 {value} 點怒氣"
+  chips: []   # PoE2 的標籤（jewel RageWhenHit）
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [3, 3] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [2, 2] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: rage.when_hit, type: FLAT, value: "{value}" }
+
+j2_minion_physical_reduction:
+  type: suffix
+  group: j2_minion_physical_reduction
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "召喚物 {value}% 額外物理傷害減免"
+  chips: [minion]   # PoE2 的標籤（jewel MinionPhysicalDamageReduction）
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [13, 16] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 9] }
+  mods:
+    - { stat: physical.reduction, type: FLAT, value: "{value}", tags: [minion] }
+
+j2_minion_chaos_resistance:
+  type: suffix
+  group: j2_minion_chaos_resistance
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "召喚物 +{value}% 混沌抗性"
+  chips: [minion]   # PoE2 的標籤（jewel MinionChaosResistance）
+  tiers:
+    - { tier: 0, ilvl: 75, weight: 150, value: [12, 13] }
+    - { tier: 1, ilvl: 50, weight: 400, value: [10, 11] }
+    - { tier: 2, ilvl: 1, weight: 1000, value: [7, 9] }
+  mods:
+    - { stat: resist.chaos, type: FLAT, value: "{value}", tags: [minion] }

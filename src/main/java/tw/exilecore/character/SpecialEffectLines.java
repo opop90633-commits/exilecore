@@ -24,7 +24,7 @@ public final class SpecialEffectLines {
     public static final List<String> STATS = List.of(StatKeys.SKILL_LEVEL, StatKeys.DAMAGE_DOUBLE, StatKeys.LIFE_ON_HIT,
             StatKeys.LIFE_ON_KILL, StatKeys.MANA_ON_KILL, StatKeys.ES_ON_KILL, StatKeys.ONSLAUGHT_ON_KILL,
             StatKeys.KILL_EXPLODE, StatKeys.DAMAGE_FROM_MANA, StatKeys.LIFE_RECOUP, StatKeys.LEECH_LIFE, StatKeys.LEECH_MANA,
-            StatKeys.LEECH_LIFE_ELEMENTAL, StatKeys.LEECH_INSTANT);
+            StatKeys.LEECH_LIFE_ELEMENTAL, StatKeys.LEECH_INSTANT, StatKeys.DAMAGE_VS_LOW_LIFE); // 2026-10-21：對低血照加總寫
 
     /** 開關（基石，或給基石的傳奇）→ 說明。 */
     private static final Map<String, String> FLAGS = new LinkedHashMap<>();

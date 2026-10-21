@@ -28,7 +28,7 @@ public final class SignatureText {
         TEXT.put(StatKeys.FLAG_THORNS_ANY_HIT, "荊棘也會被遠程攻擊與法術擊中觸發（反彈給出手的怪物）");
         TEXT.put(StatKeys.FLAG_HULKING_FORM, "天賦樹小點的效果增加 50%");
         TEXT.put(StatKeys.DAMAGE_VS_STUNNED, "對重暈中的敵人傷害更多 25%");
-        TEXT.put(StatKeys.DAMAGE_VS_LOW_LIFE, "對低血（35% 以下）的敵人增加 35% 擊中傷害");
+        // 2026-10-21：對低血的敵人（damage.vs_low_life）是數值，不是開關：改在 StatLines 照加總寫（補刀＋斬首＝70%）
         TEXT.put(StatKeys.FLAG_IMPLODING, "你造成的完全破甲讓敵人受到的所有擊中傷害增加（不只物理）");
         TEXT.put(StatKeys.BLOCK_MAX, "格擋上限 75%");
         TEXT.put(StatKeys.BLOCK_TAKEN, "被格擋的擊中，你仍受到 20% 傷害");

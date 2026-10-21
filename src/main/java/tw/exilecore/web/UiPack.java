@@ -8,6 +8,7 @@ import com.google.gson.JsonParser;
 import tw.exilecore.currency.CurrencyArt;
 import tw.exilecore.currency.CurrencyRepository;
 import tw.exilecore.currency.CurrencyType;
+import tw.exilecore.item.BaseArt;
 import tw.exilecore.item.ItemBase;
 import tw.exilecore.item.ItemRepository;
 import tw.exilecore.item.UniqueArt;
@@ -58,6 +59,8 @@ public final class UiPack {
 
     /** 天賦樹格子的物品模型。 */
     public static final String TREE_CELL = "exilecore:tree_cell";
+    /** 2026-10-21：星圖（六角格）格子的物品模型；哪幾層要畫見 {@link AtlasCell}。 */
+    public static final String ATLAS_CELL = "exilecore:atlas_cell";
     /** 介面小圖示的物品模型（custom_model_data 的字串 0 選哪一個，見 {@link #ICONS}）。 */
     public static final String UI_ICON = "exilecore:ui_icon";
     /** 選取外框的物品模型（見類別說明）。 */
@@ -107,6 +110,31 @@ public final class UiPack {
      *   <li>顏色 0～3：四條連線的顏色；4：節點；5：發光；6：搜尋標記</li>
      * </ul>
      */
+    /**
+     * 星圖格子（2026-10-21）的 custom_model_data：
+     * 字串 0 背景（跟天賦樹同一套星空）、1 格子種類（{@link #KINDS}：空的不畫）、2 "glow" 完成的光暈、3 "ring" 選到的外框、4 "corrupt" 腐化的紫圈；
+     * 旗標 0–5 往六個鄰居（E、NE、NW、W、SW、SE）的連線；顏色 0–5 連線的顏色、6 格子的顏色、7 光暈、8 外框、9 腐化圈。
+     * 六角格畫成尖頂的六邊形，奇數列的格子在選單裡往右半格這件事畫不出來（箱子的格子排不了），靠往鄰居的連線看方向。
+     */
+    public static final class AtlasCell {
+        public static final int STRING_BACKGROUND = 0;
+        public static final int STRING_KIND = 1;
+        public static final int STRING_GLOW = 2;
+        public static final int STRING_RING = 3;
+        public static final int STRING_CORRUPT = 4;
+        public static final int COLOR_KIND = 6;
+        public static final int COLOR_GLOW = 7;
+        public static final int COLOR_RING = 8;
+        public static final int COLOR_CORRUPT = 9;
+        /** 六個方向（跟 AtlasGrid.DIRECTIONS 同順序：E、NE、NW、W、SW、SE）。 */
+        public static final List<String> EDGES = List.of("e", "ne", "nw", "w", "sw", "se");
+        /** 格子的種類：迷霧（旁邊有解鎖的）、一般地圖、Boss 格、塔、城塞、營地。 */
+        public static final List<String> KINDS = List.of("fog", "map", "boss", "tower", "citadel", "camp");
+
+        private AtlasCell() {
+        }
+    }
+
     public static final class Cell {
         public static final int STRING_BACKGROUND = 0;
         public static final int STRING_NODE = 1;
@@ -230,6 +258,32 @@ public final class UiPack {
     /**
      * 裝備會用到的原版物品（基底的 material，或基底寫的 minecraft: 模型）：魔法、稀有裝備在格子裡畫淺淺的同色漸層外框（{@link #RARITY_KEYS}）。
      */
+    /**
+     * 一個基底的圖（2026-10-21，{@code web/base_art.txt}）掛在哪個原版物品上、用哪種畫法（跟傳奇的 {@link UniqueSkin} 一樣）。
+     * 物品上的標記是 custom_model_data 字串 0 {@code base:基底代號}、字串 1 是外框的稀有度。
+     */
+    public record BaseSkin(String id, String vanillaItem, UniqueSkin.Kind kind) {
+    }
+
+    /** 有圖的基底（一般裝備、地圖、藥劑、護符、珠寶）。 */
+    public static List<BaseSkin> baseSkins(final tw.exilecore.item.ItemRepository repository) {
+        final List<BaseSkin> skins = new java.util.ArrayList<>();
+        for (final tw.exilecore.item.ItemBase base : repository.bases()) {
+            if (!BaseArt.has(base.id()) || base.material() == null) {
+                continue;
+            }
+            final String vanillaItem = base.model() != null && base.model().startsWith("minecraft:")
+                    ? base.model().substring("minecraft:".length()) : base.material().toLowerCase(Locale.ROOT);
+            final UniqueSkin.Kind kind = vanillaItem.equals("bow") ? UniqueSkin.Kind.BOW
+                    : vanillaItem.equals("crossbow") ? UniqueSkin.Kind.CROSSBOW
+                    : vanillaItem.endsWith("_spear") ? UniqueSkin.Kind.SPEAR
+                    : base.isWeapon() ? UniqueSkin.Kind.HANDHELD : UniqueSkin.Kind.GENERATED;
+            skins.add(new BaseSkin(base.id(), vanillaItem, kind));
+        }
+        skins.sort(java.util.Comparator.comparing(BaseSkin::id));
+        return skins;
+    }
+
     public static java.util.Set<String> gearItems(final tw.exilecore.item.ItemRepository repository) {
         final java.util.Set<String> items = new java.util.TreeSet<>();
         for (final tw.exilecore.item.ItemBase base : repository.bases()) {
@@ -252,6 +306,11 @@ public final class UiPack {
 
     public static Built build(final List<UniqueSkin> skins, final List<CurrencySkin> currencySkins, final java.util.Set<String> gearItems)
             throws IOException {
+        return build(skins, currencySkins, gearItems, List.of());
+    }
+
+    public static Built build(final List<UniqueSkin> skins, final List<CurrencySkin> currencySkins, final java.util.Set<String> gearItems,
+                              final List<BaseSkin> baseSkins) throws IOException {
         final Map<String, byte[]> files = new TreeMap<>();
         // 原版物品定義的挑選：同一個原版物品（例如玻璃瓶）上的傳奇、通貨、空藥劑欄合在一份，最後一起寫出去，不會互相蓋掉
         final Map<String, JsonArray> cases = new TreeMap<>();
@@ -281,6 +340,16 @@ public final class UiPack {
         texture(files, "ring", ring(), "layer_4");
 
         files.put("assets/exilecore/items/tree_cell.json", json(treeCellDefinition()));
+
+        // 2026-10-21：星圖的六角格（背景、光暈、外框跟天賦樹共用貼圖）
+        for (final String edge : AtlasCell.EDGES) {
+            texture(files, "aray_" + edge, hexRay(edge), "layer_1");
+        }
+        for (final String kind : AtlasCell.KINDS) {
+            texture(files, "ahex_" + kind, hexCell(kind), "layer_3");
+        }
+        texture(files, "acorrupt", hexCorrupt(), "layer_4");
+        files.put("assets/exilecore/items/atlas_cell.json", json(atlasCellDefinition()));
 
         // 介面小圖示：一般的平面物品（item/generated），16×16 的格子裡
         for (final String icon : ICONS) {
@@ -322,7 +391,7 @@ public final class UiPack {
         frameTextures.addProperty("t", "exilecore:item/ui/highlight");
         frame.add("textures", frameTextures);
         files.put("assets/exilecore/models/item/ui/highlight.json", json(frame));
-        files.put("assets/exilecore/items/highlight.json", json(highlightDefinition(skins, currencySkins)));
+        files.put("assets/exilecore/items/highlight.json", json(highlightDefinition(skins, currencySkins, baseSkins)));
 
         // 空的藥劑欄的空瓶提示：原版空玻璃瓶的定義加上「custom_model_data 字串 0 是 life／mana 就畫紅色／藍色的瓶子輪廓」
         for (final String kind : FLASK_SLOTS.keySet()) {
@@ -353,6 +422,7 @@ public final class UiPack {
         lootFont(files);
         rarityFrameModel(files);
         uniques(files, skins, cases);
+        final java.util.Set<String> baseItems = bases(files, baseSkins, cases); // 2026-10-21：一般裝備、地圖、藥劑、護符、珠寶的圖
         transmogSkins(files); // 2026-10：裝備幻化的美術（web/skins/）
         pack3d(files); // 2026-10：3D 時裝（web/pack3d.zip，tools/gen_models3d.py 產生）
         currencies(files, currencySkins, cases);
@@ -364,7 +434,7 @@ public final class UiPack {
         final java.util.Set<String> framed = rarityFrames(files, gearItems, cases);
         for (final Map.Entry<String, JsonArray> entry : cases.entrySet()) {
             final JsonObject root = vanillaOverride(entry.getKey(), entry.getValue());
-            if (framed.contains(entry.getKey()) || UNIQUE_ITEMS.contains(entry.getKey())) {
+            if (framed.contains(entry.getKey()) || UNIQUE_ITEMS.contains(entry.getKey()) || baseItems.contains(entry.getKey())) {
                 // 外框比格子大一點（18×18 蓋住格子的框線）
                 root.addProperty("oversized_in_gui", true);
             }
@@ -821,6 +891,76 @@ public final class UiPack {
         }
     }
 
+    // ---- 一般裝備、地圖、藥劑、護符、珠寶的圖（2026-10-21，tools/gen_base_art.py 畫的 web/base_art.txt）----
+
+    private static final String BASE_TEX = "exilecore:item/base/";
+
+    /**
+     * 每個有圖的基底：貼圖、模型；它掛的原版物品加一個挑選「字串 0 是 base:基底代號」，裡面再照字串 1（rarity:magic／rare／unique）
+     * 在格子裡畫外框。拿在手上、掉在地上照這張圖（弓、弩有拉弓的那幾張，矛拿在手上是放大的）。
+     *
+     * @return 加了挑選的原版物品（格子裡的外框比格子大，要 oversized_in_gui）
+     */
+    static java.util.Set<String> bases(final Map<String, byte[]> files, final List<BaseSkin> skins, final Map<String, JsonArray> cases)
+            throws IOException {
+        final java.util.Set<String> items = new java.util.TreeSet<>();
+        final Map<String, UniqueArt.Sprite> sprites = BaseArt.sprites();
+        for (final BaseSkin skin : skins) {
+            final UniqueArt.Sprite sprite = sprites.get(skin.id());
+            if (sprite == null) {
+                continue;
+            }
+            final JsonObject model = switch (skin.kind()) {
+                case HANDHELD -> {
+                    baseModel(files, skin.id(), sprite, "minecraft:item/handheld");
+                    yield plain(BASE_TEX + skin.id());
+                }
+                case GENERATED -> {
+                    baseModel(files, skin.id(), sprite, "minecraft:item/generated");
+                    yield plain(BASE_TEX + skin.id());
+                }
+                case BOW -> {
+                    baseModel(files, skin.id(), sprite, "minecraft:item/bow");
+                    for (int i = 0; i < 3; i++) {
+                        baseModel(files, skin.id() + "_pulling_" + i, sprites.getOrDefault(skin.id() + "_pulling_" + i, sprite), "minecraft:item/bow");
+                    }
+                    yield bowModel(BASE_TEX, skin.id());
+                }
+                case CROSSBOW -> {
+                    baseModel(files, skin.id(), sprite, "minecraft:item/crossbow");
+                    for (int i = 0; i < 3; i++) {
+                        baseModel(files, skin.id() + "_pulling_" + i, sprites.getOrDefault(skin.id() + "_pulling_" + i, sprite), "minecraft:item/crossbow");
+                    }
+                    baseModel(files, skin.id() + "_arrow", sprites.getOrDefault(skin.id() + "_arrow", sprite), "minecraft:item/crossbow");
+                    yield crossbowModel(BASE_TEX, skin.id());
+                }
+                case SPEAR -> {
+                    baseModel(files, skin.id(), sprite, "minecraft:item/generated");
+                    baseModel(files, skin.id() + "_in_hand", sprite.scaled(2), "minecraft:item/spear_in_hand");
+                    yield spearModel(BASE_TEX, skin.id());
+                }
+            };
+            final JsonArray rarities = new JsonArray();
+            for (final Map.Entry<String, Integer> rarity : new TreeMap<>(RARITY_KEYS).entrySet()) {
+                rarities.add(selectCase(rarity.getKey(), framedInGui(rarity.getValue(), plain(BASE_TEX + skin.id()), model)));
+            }
+            cases.computeIfAbsent(skin.vanillaItem(), key -> new JsonArray())
+                    .add(selectCase(BaseArt.modelKey(skin.id()), select(1, rarities, model)));
+            items.add(skin.vanillaItem());
+        }
+        return items;
+    }
+
+    private static void baseModel(final Map<String, byte[]> files, final String name, final UniqueArt.Sprite sprite, final String parent) throws IOException {
+        files.put("assets/exilecore/textures/item/base/" + name + ".png", png(spriteImage(sprite)));
+        final JsonObject model = new JsonObject();
+        model.addProperty("parent", parent);
+        final JsonObject textures = new JsonObject();
+        textures.addProperty("layer0", BASE_TEX + name);
+        model.add("textures", textures);
+        files.put("assets/exilecore/models/item/base/" + name + ".json", json(model));
+    }
+
     // ---- 裝備幻化（2026-10，tools/gen_skin_art.py 畫的 web/skins/）----
 
     private static final String SKIN_TEX = "exilecore:item/skin/";
@@ -985,20 +1125,24 @@ public final class UiPack {
 
     /** 矛：介面、地上、展示框用平的那張，拿在手上用 32×32 的（跟原版 iron_spear 的定義一樣）。 */
     private static JsonObject spearModel(final String id) {
+        return spearModel(UNIQUE_TEX, id);
+    }
+
+    private static JsonObject spearModel(final String tex, final String id) {
         final JsonArray contexts = new JsonArray();
         for (final String context : List.of("gui", "ground", "fixed", "on_shelf")) {
             contexts.add(context);
         }
         final JsonObject gui = new JsonObject();
         gui.add("when", contexts);
-        gui.add("model", plain(UNIQUE_TEX + id));
+        gui.add("model", plain(tex + id));
         final JsonArray cases = new JsonArray();
         cases.add(gui);
         final JsonObject select = new JsonObject();
         select.addProperty("type", "minecraft:select");
         select.addProperty("property", "minecraft:display_context");
         select.add("cases", cases);
-        select.add("fallback", plain(UNIQUE_TEX + id + "_in_hand"));
+        select.add("fallback", plain(tex + id + "_in_hand"));
         return select;
     }
 
@@ -1479,7 +1623,7 @@ public final class UiPack {
      * 選取外框裡畫的是那張圖（外框的物品定義有對應的挑選），不是原版物品的樣子。
      */
     public static boolean isArtKey(final String key) {
-        return key != null && (key.startsWith(UniqueArt.KEY_PREFIX) || key.startsWith(CurrencyArt.KEY_PREFIX));
+        return key != null && (key.startsWith(UniqueArt.KEY_PREFIX) || key.startsWith(CurrencyArt.KEY_PREFIX) || key.startsWith(BaseArt.KEY_PREFIX));
     }
 
     /** 畫得出外框的原版物品有幾種（測試用）。 */
@@ -1632,7 +1776,8 @@ public final class UiPack {
      * 選取外框的物品定義：框（顏色 0 著色）＋照字串 0 畫原本的物品。字串 0 是原版物品名稱，
      * 或專屬貼圖的標記（傳奇 unique:代號、通貨 currency:代號）：框裡畫那張圖，不會因為被選到就變回原版的樣子。
      */
-    private static JsonObject highlightDefinition(final List<UniqueSkin> skins, final List<CurrencySkin> currencySkins) {
+    private static JsonObject highlightDefinition(final List<UniqueSkin> skins, final List<CurrencySkin> currencySkins,
+                                                  final List<BaseSkin> baseSkins) {
         final JsonObject frame = new JsonObject();
         frame.addProperty("type", "minecraft:model");
         frame.addProperty("model", "exilecore:item/ui/highlight");
@@ -1662,6 +1807,11 @@ public final class UiPack {
         }
         for (final String art : arts) {
             cases.add(selectCase(CurrencyArt.modelKey(art), plain("exilecore:item/currency/" + art)));
+        }
+        for (final BaseSkin skin : baseSkins) { // 2026-10-21
+            if (BaseArt.sprites().containsKey(skin.id())) {
+                cases.add(selectCase(BaseArt.modelKey(skin.id()), plain(BASE_TEX + skin.id())));
+            }
         }
         final JsonArray models = new JsonArray();
         models.add(frame);
@@ -1803,6 +1953,52 @@ public final class UiPack {
         final JsonObject root = new JsonObject();
         root.add("model", composite);
         // 1.21.6 起物品預設不能畫出 16×16 的格子；兩種寫法都放，認得哪一種就用哪一種
+        root.addProperty("oversized_in_gui", true);
+        root.addProperty("hand_animation_on_swap", false);
+        final JsonObject properties = new JsonObject();
+        properties.addProperty("oversized_in_gui", true);
+        properties.addProperty("hand_animation_on_swap", false);
+        root.add("properties", properties);
+        return root;
+    }
+
+    /** 2026-10-21：星圖格子的模型：背景、六條連線、光暈、六角形、腐化圈、外框。 */
+    private static JsonObject atlasCellDefinition() {
+        final JsonArray models = new JsonArray();
+        final JsonArray backgrounds = new JsonArray();
+        for (int i = 1; i < BACKGROUNDS; i++) {
+            backgrounds.add(selectCase(Integer.toString(i), model("bg_" + i, -1)));
+        }
+        models.add(select(AtlasCell.STRING_BACKGROUND, backgrounds, model("bg_0", -1)));
+        for (int i = 0; i < AtlasCell.EDGES.size(); i++) {
+            final JsonObject condition = new JsonObject();
+            condition.addProperty("type", "minecraft:condition");
+            condition.addProperty("property", "minecraft:custom_model_data");
+            condition.addProperty("index", i);
+            condition.add("on_true", model("aray_" + AtlasCell.EDGES.get(i), i));
+            condition.add("on_false", empty());
+            models.add(condition);
+        }
+        final JsonArray glow = new JsonArray();
+        glow.add(selectCase("glow", model("glow", AtlasCell.COLOR_GLOW)));
+        models.add(select(AtlasCell.STRING_GLOW, glow, empty()));
+        final JsonArray kinds = new JsonArray();
+        for (final String kind : AtlasCell.KINDS) {
+            kinds.add(selectCase(kind, model("ahex_" + kind, AtlasCell.COLOR_KIND)));
+        }
+        models.add(select(AtlasCell.STRING_KIND, kinds, empty()));
+        final JsonArray corrupt = new JsonArray();
+        corrupt.add(selectCase("corrupt", model("acorrupt", AtlasCell.COLOR_CORRUPT)));
+        models.add(select(AtlasCell.STRING_CORRUPT, corrupt, empty()));
+        final JsonArray ring = new JsonArray();
+        ring.add(selectCase("ring", model("ring", AtlasCell.COLOR_RING)));
+        models.add(select(AtlasCell.STRING_RING, ring, empty()));
+
+        final JsonObject composite = new JsonObject();
+        composite.addProperty("type", "minecraft:composite");
+        composite.add("models", models);
+        final JsonObject root = new JsonObject();
+        root.add("model", composite);
         root.addProperty("oversized_in_gui", true);
         root.addProperty("hand_animation_on_swap", false);
         final JsonObject properties = new JsonObject();
@@ -2147,6 +2343,132 @@ public final class UiPack {
         g.draw(new Ellipse2D.Double(c - 14, c - 14, 28, 28));
         g.dispose();
         return image;
+    }
+
+    // ---- 星圖的六角格（2026-10-21）----
+
+    /** 尖頂六邊形的六個鄰居的角度（E、NE、NW、W、SW、SE；畫面的 y 往下）。 */
+    private static double hexAngle(final String direction) {
+        return switch (direction) {
+            case "e" -> 0;
+            case "ne" -> -Math.PI / 3;
+            case "nw" -> -2 * Math.PI / 3;
+            case "w" -> Math.PI;
+            case "sw" -> 2 * Math.PI / 3;
+            default -> Math.PI / 3; // se
+        };
+    }
+
+    /** 從六角形中心往一個鄰居的短線（白色，著色後變金、綠、灰）。 */
+    static BufferedImage hexRay(final String direction) {
+        final BufferedImage image = canvas();
+        final Graphics2D g = smooth(image);
+        final double c = SIZE / 2.0;
+        final double angle = hexAngle(direction);
+        g.setPaint(new Color(255, 255, 255, 230));
+        g.setStroke(new BasicStroke(2.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g.draw(new java.awt.geom.Line2D.Double(c + Math.cos(angle) * 9, c + Math.sin(angle) * 9, c + Math.cos(angle) * 16.5, c + Math.sin(angle) * 16.5));
+        g.dispose();
+        return image;
+    }
+
+    /** 尖頂六邊形的格子：種類不同畫法不同（白色，著色決定狀態）。 */
+    static BufferedImage hexCell(final String kind) {
+        final BufferedImage image = canvas();
+        final Graphics2D g = smooth(image);
+        final Path2D hex = polygon(6, 11.5, -Math.PI / 2);
+        switch (kind) {
+            case "fog" -> {
+                g.setPaint(new Color(255, 255, 255, 60));
+                g.fill(hex);
+                g.setPaint(new Color(255, 255, 255, 110));
+                g.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1f, new float[] {2f, 2f}, 0f));
+                g.draw(hex);
+            }
+            case "map" -> {
+                g.setPaint(new Color(0xE8E8E8));
+                g.fill(hex);
+                g.setPaint(new Color(0x101018));
+                g.setStroke(new BasicStroke(2f));
+                g.draw(hex);
+                disc(g, 3.2, new Color(0xFFFFFF), new Color(0x606060), 1f);
+            }
+            case "boss" -> {
+                g.setPaint(new Color(0xE0E0E0));
+                g.fill(hex);
+                g.setPaint(new Color(0x101018));
+                g.setStroke(new BasicStroke(2.2f));
+                g.draw(hex);
+                final Path2D skull = polygon(4, 6.5, -Math.PI / 2);
+                g.setPaint(new Color(0x202028));
+                g.fill(skull);
+                disc(g, 2.2, new Color(0xFFFFFF), null, 0f);
+            }
+            case "tower" -> {
+                g.setPaint(new Color(0xDADADA));
+                g.fill(hex);
+                g.setPaint(new Color(0x101018));
+                g.setStroke(new BasicStroke(2.2f));
+                g.draw(hex);
+                final Path2D tower = polygon(3, 7.5, -Math.PI / 2);
+                g.setPaint(new Color(0x202028));
+                g.fill(tower);
+                g.setPaint(new Color(0xFFFFFF));
+                g.fill(polygon(3, 3.5, -Math.PI / 2));
+            }
+            case "citadel" -> {
+                g.setPaint(new Color(0xD0D0D0));
+                g.fill(hex);
+                g.setPaint(new Color(0x101018));
+                g.setStroke(new BasicStroke(2.5f));
+                g.draw(hex);
+                final Path2D star = star(5, 8, 3.5);
+                g.setPaint(new Color(0x202028));
+                g.fill(star);
+                g.setPaint(new Color(0xFFFFFF));
+                g.fill(star(5, 5, 2.2));
+            }
+            default -> { // camp
+                g.setPaint(new Color(0xFFFFFF));
+                g.fill(hex);
+                g.setPaint(new Color(0x101018));
+                g.setStroke(new BasicStroke(2.5f));
+                g.draw(hex);
+                g.setPaint(new Color(0x404048));
+                g.fill(star(4, 7, 2.5));
+            }
+        }
+        g.dispose();
+        return image;
+    }
+
+    /** 腐化：六角形外一圈虛線（著色成紫色）。 */
+    static BufferedImage hexCorrupt() {
+        final BufferedImage image = canvas();
+        final Graphics2D g = smooth(image);
+        g.setPaint(Color.WHITE);
+        g.setStroke(new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1f, new float[] {3f, 2f}, 0f));
+        g.draw(polygon(6, 14.2, -Math.PI / 2));
+        g.dispose();
+        return image;
+    }
+
+    private static Path2D star(final int points, final double outer, final double inner) {
+        final Path2D path = new Path2D.Double();
+        final double c = SIZE / 2.0;
+        for (int i = 0; i < points * 2; i++) {
+            final double radius = i % 2 == 0 ? outer : inner;
+            final double angle = -Math.PI / 2 + i * Math.PI / points;
+            final double x = c + Math.cos(angle) * radius;
+            final double y = c + Math.sin(angle) * radius;
+            if (i == 0) {
+                path.moveTo(x, y);
+            } else {
+                path.lineTo(x, y);
+            }
+        }
+        path.closePath();
+        return path;
     }
 
     private static Path2D polygon(final int sides, final double radius, final double rotation) {
@@ -2846,6 +3168,41 @@ public final class UiPack {
         }
         files.put("pack.mcmeta", json(meta));
         return zip(files);
+    }
+
+    /** 拆開的資源包（2026-10-21）：介面那包，和背景音樂那包（沒有音樂時是 null）。 */
+    public record Split(Built ui, Built music) {
+    }
+
+    /** 背景音樂的檔案（assets/exilecore/sounds.json 只放音樂的事件，見 {@link #music}）。 */
+    static boolean isMusicFile(final String path) {
+        return path.startsWith("assets/exilecore/sounds/") || path.equals("assets/exilecore/sounds.json");
+    }
+
+    /**
+     * 把背景音樂拆成另一包（2026-10-21）：音樂大約 6 MB、很少換，介面常常跟著插件更新。
+     * 分成兩包、各自有雜湊，客戶端各自快取：更新插件時玩家只重新下載介面那包。
+     */
+    public static Split splitMusic(final Built full) throws IOException {
+        final Map<String, byte[]> ui = new TreeMap<>();
+        final Map<String, byte[]> music = new TreeMap<>();
+        try (java.util.zip.ZipInputStream in = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(full.zip()))) {
+            java.util.zip.ZipEntry entry;
+            while ((entry = in.getNextEntry()) != null) {
+                (isMusicFile(entry.getName()) ? music : ui).put(entry.getName(), in.readAllBytes());
+            }
+        }
+        if (music.isEmpty() || !ui.containsKey("pack.mcmeta")) {
+            return new Split(full, null);
+        }
+        final JsonObject meta = com.google.gson.JsonParser.parseString(new String(ui.get("pack.mcmeta"), java.nio.charset.StandardCharsets.UTF_8))
+                .getAsJsonObject();
+        final JsonObject pack = meta.getAsJsonObject("pack").deepCopy();
+        pack.addProperty("description", "《星骸》背景音樂");
+        final JsonObject musicMeta = new JsonObject();
+        musicMeta.add("pack", pack);
+        music.put("pack.mcmeta", json(musicMeta));
+        return new Split(zip(ui), zip(music));
     }
 
     /** 檔名照字母排序、時間固定：內容一樣，zip 就一模一樣。 */

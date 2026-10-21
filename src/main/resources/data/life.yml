@@ -396,7 +396,7 @@ whale:
   name: 淵鯨
   type: HAPPY_GHAST
   like: awakener
-  life: 53.8
+  life: 3587        # 2026-10-21：照打 Boss 每秒 600 萬、單人 3 分半（跟虛星一樣的算法；×11.7 之後約 12.6 億生命）；1200 萬起遞減（maps.yml 的 whale_dps）。原 53.8
   damage: 2.9
   scale: 1.0
   mods: [resistant, swift]

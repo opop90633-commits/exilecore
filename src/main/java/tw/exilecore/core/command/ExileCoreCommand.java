@@ -75,6 +75,7 @@ import java.util.function.Supplier;
  * /ec gem ...                       給自己寶石：未切割、技能、輔助（見 {@link SkillCommands}）
  * /ec flask ...                     給自己藥劑、補滿藥劑（見 {@link FlaskCommands}）
  * /ec balance [等級]                平衡報表：參考角色的輸出、擊殺秒數、被打一下扣幾 %、建議的錨點（見 {@link BalanceCommand}）
+ * /ec bossdps                       全服的傷害分佈：假人紀錄、重開之後的終局／極境／巔峰實際每秒傷害（沒有名字，見 {@link tw.exilecore.map.BossDpsCommand}）
  * /ec world ...                     劇情世界：狀態、傳送到營地、重擺版面與 NPC（見 {@link WorldCommand}）
  * /ec map ...                       地圖：給地圖、直接開、列出／進入／關閉實例、星圖進度、天穹碎片（見 {@link MapCommand}）
  * /ec perf                          效能：TPS、各部分花多少時間、資料庫排隊、實體數
@@ -274,6 +275,7 @@ public final class ExileCoreCommand {
                 .then(SkillCommands.gemNode(plugin))
                 .then(FlaskCommands.node(plugin))
                 .then(BalanceCommand.node(plugin))
+                .then(tw.exilecore.map.BossDpsCommand.node(plugin)) // 2026-10-21：全服的傷害分佈
                 .then(WorldCommand.node(plugin))
                 .then(MapCommand.node(plugin))
                 .then(tw.exilecore.quest.QuestCommand.adminNode(plugin))

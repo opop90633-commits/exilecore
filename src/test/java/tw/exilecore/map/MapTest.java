@@ -757,9 +757,11 @@ class MapTest {
     void pinnacleDamageAboveTheCapIsHeavilyReduced() {
         // 2026-10-21 第四版：每翻一倍一段，比例逐段遞減（2000 萬 → 等效 26.43 萬）
         final MapConfig.Pinnacle pinnacle = config.pinnacle("awakener");
-        assertEquals(150000, pinnacle.dpsCap(), 1e-9);
-        assertEquals(List.of(new MapConfig.DpsTier(150000, 0.08), new MapConfig.DpsTier(300000, 0.045), new MapConfig.DpsTier(600000, 0.024), new MapConfig.DpsTier(1200000, 0.013), new MapConfig.DpsTier(2500000, 0.007), new MapConfig.DpsTier(5000000, 0.004), new MapConfig.DpsTier(10000000, 0.002), new MapConfig.DpsTier(20000000, 0.001)), pinnacle.dpsOver());
-        final List<MapConfig.DpsTier> over = pinnacle.dpsOver();
+        // 2026-10-21：巔峰照打 Boss 每秒 600 萬打 3 分半，上限拉到 1200 萬（每翻一倍 30%／10%／3%／1%）
+        assertEquals(12000000, pinnacle.dpsCap(), 1e-9);
+        assertEquals(List.of(new MapConfig.DpsTier(12000000, 0.3), new MapConfig.DpsTier(24000000, 0.1), new MapConfig.DpsTier(48000000, 0.03), new MapConfig.DpsTier(96000000, 0.01)), pinnacle.dpsOver());
+        // 遞減的算法照舊（用以前 15 萬那一組分段驗算）
+        final List<MapConfig.DpsTier> over = List.of(new MapConfig.DpsTier(150000, 0.08), new MapConfig.DpsTier(300000, 0.045), new MapConfig.DpsTier(600000, 0.024), new MapConfig.DpsTier(1200000, 0.013), new MapConfig.DpsTier(2500000, 0.007), new MapConfig.DpsTier(5000000, 0.004), new MapConfig.DpsTier(10000000, 0.002), new MapConfig.DpsTier(20000000, 0.001));
         assertEquals(100000, DpsCap.effective(100000, 150000, over), 1e-6, "上限以內照算");
         assertEquals(162000, DpsCap.effective(300000, 150000, over), 1e-6);
         assertEquals(171000, DpsCap.effective(500000, 150000, over), 1e-6);
@@ -783,6 +785,12 @@ class MapTest {
         }
         assertEquals(171000, dealt / 10, 5000, "後 10 秒平均每秒");
         assertEquals(10, cap.apply("x", 10, 0, over, 0, 999999), 1e-9, "上限 0 = 不限");
+        // 2026-10-21：開場 4 秒後只看實際打出來的：紀錄 47 萬、實際每秒 10 萬（每 2 tick 1 萬）的人不被減
+        double last = 0;
+        for (long tick = 0; tick <= 200; tick += 2) {
+            last = cap.apply("c", 10000, 150000, over, tick, 470000);
+        }
+        assertEquals(10000, last, 1e-6, "實際每秒 10 萬，沒超過 15 萬：照算");
         cap.forget(0);
     }
 }

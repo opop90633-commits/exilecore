@@ -36,6 +36,8 @@ import java.util.UUID;
  *   <li>曝露（exposure.chance）：這一下打出的火焰／冰冷／閃電，那幾種抗性 −20%（曝露效果可以加），4 秒。</li>
  *   <li>定身（pin.chance，只有投射物攻擊）：不能移動、照樣能攻擊；普通與魔法 2 秒、稀有 1.5 秒、傳奇與 Boss 1 秒，之後 4 秒不會再被定身。</li>
  *   <li>眩暈（daze.chance）：4 秒內造成的傷害更少 15%、暈眩門檻減少 30%。</li>
+ *   <li>致盲（blind.chance，2026-10-21 PoE2 腐化）：4 秒內命中與閃避更少 20%。</li>
+ *   <li>癱瘓（maim.chance，2026-10-21 PoE2 腐化）：4 秒內移動速度變慢 30%（吃減速幅度 slow.magnitude）。</li>
  * </ul>
  * 減益的修飾器由 {@link CombatListener} 疊進屬性表；移動變慢（詛咒、定身）每 2 tick 在這裡套到原版的移動速度。
  */
@@ -44,6 +46,11 @@ public final class HitEffects implements Listener {
     public static final double EXPOSURE = 20;
     static final long EXPOSURE_TICKS = 80;
     static final long DAZE_TICKS = 80;
+    static final long BLIND_TICKS = 80;
+    static final long MAIM_TICKS = 80;
+    /** 癱瘓的減速（PoE2：30%）；致盲的命中、閃避更少（PoE2：20%）。 */
+    public static final double MAIM_SLOW = 0.3;
+    public static final double BLIND_LESS = 0.2;
     static final long PIN_IMMUNE_TICKS = 80;
 
     private final ExileCore plugin;
@@ -118,6 +125,23 @@ public final class HitEffects implements Listener {
                     List.of(Modifier.more(StatKeys.DAMAGE, -0.15, "眩暈"), Modifier.increased(StatKeys.STUN_THRESHOLD, -0.3, "眩暈")), 0));
             feedback(viewer, defender, "眩暈", Particle.WAX_OFF);
         }
+        final double blind = effective.flat(StatKeys.BLIND_CHANCE, tags);
+        if (blind > 0 && roll(blind)) {
+            debuffs.apply(target, new Debuffs.Debuff("blind", source, now + BLIND_TICKS, 0, false, null,
+                    List.of(Modifier.more(StatKeys.ACCURACY, -BLIND_LESS, "致盲"), Modifier.more(StatKeys.EVASION, -BLIND_LESS, "致盲")), 0));
+            feedback(viewer, defender, "致盲", Particle.SMOKE);
+        }
+        final double maim = effective.flat(StatKeys.MAIM_CHANCE, tags);
+        if (maim > 0 && roll(maim)) {
+            debuffs.apply(target, new Debuffs.Debuff("maim", source, now + MAIM_TICKS, 0, false, null, List.of(),
+                    maimSlow(effective.increased(StatKeys.SLOW_MAGNITUDE, tags))));
+            feedback(viewer, defender, "癱瘓", Particle.DAMAGE_INDICATOR);
+        }
+    }
+
+    /** 癱瘓慢多少：30% 乘上減速幅度（最多 90%）。 */
+    static double maimSlow(final double slowMagnitudeIncreased) {
+        return Math.min(0.9, MAIM_SLOW * Math.max(0, 1 + slowMagnitudeIncreased));
     }
 
     /** 擊殺後的增益（2026-10）：onkill.speed、onkill.damage（打死敵人的那個技能的輔助寶石，4 秒）。 */

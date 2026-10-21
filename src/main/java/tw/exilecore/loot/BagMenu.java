@@ -607,6 +607,9 @@ public final class BagMenu extends Menu {
     }
 
     private void applyFilter(final Filter value) {
+        // 2026-10-21 漏洞修正：開過濾前先把畫面寫回背包。以前直接照記憶體重畫：剛拿出來的東西又畫回來，
+        // 再取消過濾就變成真的、可以再拿一次（複製）；過濾中關掉也不會寫回（syncToModel 過濾中不寫）
+        syncToModel();
         setFilter(value);
         if (filtering() && matchesOn(page) == 0) {
             for (int p = 0; p < bag.viewPages(); p++) {

@@ -3169,7 +3169,9 @@ public final class BossSkills implements Listener {
             plugin.players().get(player).ruin(now() + Math.round(skill.ruin() * 20)); // 2026-10：荒蕪（黑水）——禁療
         }
         if (skill.slow() > 0 && victim.isValid()) {
-            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, (int) Math.round(skill.slow() * 20), 1, false, true, true));
+            // 2026-10-21：玩家身上的減速幅度（slow.taken，腐化鞋子）：減速 II（30%）照幅度換算成 I 或 II
+            final double taken = victim instanceof Player slowed ? plugin.players().sheet(slowed).increased(tw.exilecore.stats.StatKeys.SLOW_TAKEN, java.util.Set.of()) : 0;
+            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, (int) Math.round(skill.slow() * 20), slowAmplifier(taken), false, true, true));
         }
     }
 
@@ -3190,5 +3192,11 @@ public final class BossSkills implements Listener {
 
     private long now() {
         return plugin.getServer().getCurrentTick();
+    }
+
+    /** 減速 II（30%）乘上玩家身上的減速幅度之後，換成最接近的藥水等級（0 = 15%、1 = 30%；最低 0）。 */
+    static int slowAmplifier(final double slowTakenIncreased) {
+        final double effective = 0.30 * Math.max(0, 1 + slowTakenIncreased);
+        return Math.max(0, (int) Math.round(effective / 0.15) - 1);
     }
 }

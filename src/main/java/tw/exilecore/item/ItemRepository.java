@@ -229,6 +229,9 @@ public final class ItemRepository {
      */
     public static final String RETIRED_TAG = "retired";
 
+    /** 蝕變石的腐化詞綴（2026-10-21，affixes/corrupted.yml）：不會自然擲出，只有腐化時加上。 */
+    public static final String CORRUPTION_TAG = "corruption";
+
     /**
      * 交叉檢查：每條詞綴至少能出現在一個基底上，否則多半是標籤打錯；
      * 本地詞綴（stat 以 local. 開頭，見 {@link LocalMods}）只能用認得的屬性、只能是 INCREASED、只能出在武器上（防具上不會生效）。
@@ -238,6 +241,13 @@ public final class ItemRepository {
             final boolean local = checkLocal("詞綴 " + affix.id(), affix.mods());
             if (affix.spawnTags().contains(UniqueItem.SPAWN_TAG) || affix.spawnTags().contains(RETIRED_TAG)) {
                 continue; // 傳奇詞綴只在那件傳奇上；停用的詞綴不會再擲出來（只留給舊物品）
+            }
+            if (affix.spawnTags().contains(CORRUPTION_TAG)) {
+                // 2026-10-21：腐化詞綴：spawn_tags（corruption 以外）、require_tags 要對得到至少一個基底（蝕變石照這些挑）
+                if (bases.values().stream().noneMatch(base -> ItemGenerator.corruptionFits(affix, base))) {
+                    throw new IllegalArgumentException("腐化詞綴 " + affix.id() + " 的 spawn_tags " + affix.spawnTags() + " 對不到任何基底");
+                }
+                continue;
             }
             boolean anyBase = false;
             for (final ItemBase base : bases.values()) {
@@ -267,8 +277,8 @@ public final class ItemRepository {
     private static boolean checkLocal(final String where, final List<AffixMod> mods) {
         boolean any = false;
         for (final AffixMod mod : mods) {
-            if (!mod.isLocal() || ItemStats.UNVEILED_MAGNITUDE.equals(mod.stat())) {
-                continue; // 「增加 x% 已揭露詞綴的幅度」：不是武器本身的數值，ItemStats／LocalMods 自己處理
+            if (!mod.isLocal() || ItemStats.UNVEILED_MAGNITUDE.equals(mod.stat()) || LocalMods.REQUIREMENTS.equals(mod.stat())) {
+                continue; // 「增加 x% 已揭露詞綴的幅度」「減少屬性需求」：不是武器本身的數值（防具也能出），ItemStats 自己處理
             }
             any = true;
             if (!LocalMods.KNOWN.contains(mod.stat())) {

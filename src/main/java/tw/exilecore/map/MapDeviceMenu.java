@@ -46,6 +46,8 @@ public final class MapDeviceMenu extends Menu {
     /** 2026-10-18：事件巔峰——用地圖事件的入場券開的七隻 Boss（子選單 {@link EventPinnacleMenu}）。 */
     private static final int SLOT_EVENT_PINNACLE = 44;
     private static final int SLOT_TREE = 38;
+    /** 2026-10-21：星圖上的塔與城塞（{@link AtlasSitesMenu}）。 */
+    private static final int SLOT_SITES = 36;
     private static final int SLOT_CLOSE = 53;
     private static final int SLOT_STATUS = 49;
 
@@ -91,12 +93,23 @@ public final class MapDeviceMenu extends Menu {
             if (map == null) {
                 lore.add("<red>maps.yml 沒有這張地圖，不能開");
                 ok = false;
-            } else if (!Atlas.unlocked(config, map, completed)) {
+            } else if (!Atlas.isGrid(completed) && !Atlas.unlocked(config, map, completed)) {
                 lore.add("<red>星圖上還沒解鎖：先完成跟它相連的地圖");
                 ok = false;
             } else {
                 final MapStats stats = MapStats.of(plugin.items().repository(), selected, config.tiers());
                 lore.add("<gray>T" + stats.tier() + "・怪物等級 <white>" + stats.monsterLevel() + "<gray>・" + ItemRenderer.escape(stats.summary()));
+                if (Atlas.isGrid(completed)) { // 2026-10-21：新星圖：這張圖會打星圖的哪一格
+                    final AtlasGrid.Cell cell = service.cellFor(player, map.id());
+                    if (cell == null) {
+                        lore.add("<yellow>這種地圖還沒在你的星圖上解鎖：可以開，但不算星圖的格子");
+                    } else {
+                        final boolean done = service.atlasProgress(player).isCompleted(cell.q(), cell.r());
+                        lore.add("<#9fd3ff>星圖<gray>：(" + cell.q() + ", " + cell.r() + ") 距離 " + cell.distance()
+                                + (cell.kind() == AtlasGrid.Kind.BOSS ? "・<#af6025>Boss 格" : "") + (cell.corrupted() ? "・<#b07aff>腐化區" : "") + (cell.purified() ? "・<#fff1b8>淨化區" : "")
+                                + (done ? "<gray>・已完成過" : "<gray>・完成後解鎖周圍、+天賦點") + "<dark_gray>（/atlas 可以改選格子）");
+                    }
+                }
                 // 高等級：等級差懲罰與高等級的經驗減少，選地圖前就看得到
                 final String penalty = LevelPace.penaltyNote(plugin.players().config(), plugin.players().get(player).level(),
                         stats.monsterLevel());
@@ -129,11 +142,36 @@ public final class MapDeviceMenu extends Menu {
                     + MapStats.of(plugin.items().repository(), selected, config.tiers()).tier()), lore))
                     : icon(Material.RED_DYE, "<red>不能開啟", lore));
         }
-        set(SLOT_ATLAS, icon(Material.FILLED_MAP, "<#f5b942>星圖",
-                "<gray>完成 <white>" + Atlas.completedMaps(config, completed) + "<gray> / " + config.maps().size() + " 張",
-                "<gray>完成一張地圖（殺死 Boss）就解鎖跟它相連的地圖",
-                "<dark_gray>點一下打開（也可以輸入 /atlas）"));
+        if (Atlas.isGrid(completed)) { // 2026-10-21：新星圖
+            final AtlasProgress atlas = service.atlasProgress(player);
+            set(SLOT_ATLAS, icon(Material.FILLED_MAP, "<#f5b942>星圖",
+                    "<gray>完成 <white>" + atlas.completed().size() + "<gray> 格・最遠 " + atlas.farthest() + " 格・解鎖 "
+                            + atlas.unlockedSpecies().size() + " / " + config.maps().size() + " 種地圖",
+                    "<gray>完成一格（殺死 Boss）就解鎖周圍的格子；走得越遠階級越高",
+                    "<dark_gray>點一下打開（也可以輸入 /atlas）"));
+        } else {
+            set(SLOT_ATLAS, icon(Material.FILLED_MAP, "<#f5b942>星圖",
+                    "<gray>完成 <white>" + Atlas.completedSpecies(config, completed) + "<gray> / " + config.maps().size() + " 張",
+                    "<gray>完成一張地圖（殺死 Boss）就解鎖跟它相連的地圖",
+                    "<dark_gray>點一下打開（也可以輸入 /atlas）"));
+        }
         set(SLOT_TREE, AtlasMenu.treeButton(player, service));
+        if (Atlas.isGrid(completed)) { // 2026-10-21
+            final AtlasProgress atlas = service.atlasProgress(player);
+            final int towers = atlas.openTowers().size();
+            final int citadels = atlas.openCitadels().size();
+            int unfilled = 0;
+            for (final AtlasGrid.Cell tower : atlas.completedTowers()) {
+                if (service.tabletAt(player, tower.q(), tower.r()) == null) {
+                    unfilled++;
+                }
+            }
+            final ItemStack sites = icon(Material.LANTERN, "<#d8c8a0>塔與城塞",
+                    "<gray>可以打的塔 <white>" + towers + "<gray>・可以攻的城塞 <white>" + citadels + "<gray>・還沒插石板的塔 <white>" + unfilled,
+                    "<gray>塔不用地圖物品；城塞第一次不用碎片",
+                    "<dark_gray>點一下打開");
+            set(SLOT_SITES, towers + citadels + unfilled > 0 ? glowing(sites) : sites);
+        }
         drawFinal(config, completed);
         drawUber(config, completed);
         drawPinnacle(config, completed);
@@ -184,7 +222,8 @@ public final class MapDeviceMenu extends Menu {
         lore.addAll(service.finalTierLines(player));
         lore.add("<dark_gray>階級越高 Boss 越強，掉的地圖與裝備越好");
         if (!unlocked) {
-            lore.add("<red>先完成星圖最外圈的地圖（" + ItemRenderer.escape(service.ringNames(config.maxRing())) + "）");
+            lore.add(Atlas.isGrid(completed) ? "<red>先在星圖上找到城塞並攻破（距離 " + service.atlasConfig().citadels().minDistance() + " 格以外）"
+                    : "<red>先完成星圖最外圈的地圖（" + ItemRenderer.escape(service.ringNames(config.maxRing())) + "）");
         }
         lore.add((have >= cost ? "<green>" : "<red>") + "需要 " + cost + " 片" + (fragment == null ? "天穹碎片" : ItemRenderer.escape(fragment.name()))
                 + "（你有 " + have + " 片）");
@@ -217,9 +256,11 @@ public final class MapDeviceMenu extends Menu {
         final int best = Math.max(1, service.bestTier(player));
         final List<Dialogs.Option> tiers = new ArrayList<>();
         for (int tier = best; tier >= 1; tier--) {
-            final double life = config.finalLifeMultiplier(tier);
+            final double life = config.finalBossLifeMultiplier(tier); // 2026-10-21
+            final double recommended = openable.isEmpty() ? 0 : service.finalRecommendedDps(openable.getFirst(), tier); // 2026-10-21
             tiers.add(new Dialogs.Option(String.valueOf(tier), "T" + tier + " <gray>（怪物等級 " + service.finalLevel(tier)
-                    + (life > 1.0 ? "・Boss 生命 ×" + number(life) : "") + "）"));
+                    + (life > 1.0 ? "・Boss 生命 ×" + number(life) : "")
+                    + (recommended > 0 ? "・建議每秒 " + BossDpsCommand.wan(recommended) : "") + "）"));
         }
         final List<Dialogs.Field> fields = new ArrayList<>();
         if (openable.size() > 1 || finals.size() > 1) {
@@ -283,6 +324,7 @@ public final class MapDeviceMenu extends Menu {
         lore.add("<gray>固定開在 T" + config.tiers().max() + " 再高幾級（怪物等級 <white>"
                 + config.pinnacleStats(map.id(), pinnacle).monsterLevel() + "<gray>），只有 Boss 房");
         lore.add("<red>每一門每個人只能走進去一次<dark_gray>（死了或離開要等這一門結束、走下一門）");
+        lore.add(MapService.recommendedText(service.pinnacleRecommendedDps(map))); // 2026-10-21
         lore.add("");
         final String missing = Atlas.missingRequirements(config, map, completed);
         if (!missing.isEmpty()) {
@@ -339,8 +381,10 @@ public final class MapDeviceMenu extends Menu {
             openable += ready ? 1 : 0;
             tickets += have;
             defeated += done ? 1 : 0;
+            final double recommended = service.pinnacleRecommendedDps(map); // 2026-10-21
             lore.add((done ? "<green>✔ " : ready ? "<white>・" : "<dark_gray>・") + (ready || done ? "<#c77dff>" : "<dark_gray>")
-                    + ItemRenderer.escape(map.boss().name()) + " <dark_gray>" + ItemRenderer.escape(ticket == null ? pinnacle.ticket() : ticket.name())
+                    + ItemRenderer.escape(map.boss().name()) + (recommended > 0 ? " <gold>建議每秒 " + BossDpsCommand.wan(recommended) : "")
+                    + " <dark_gray>" + ItemRenderer.escape(ticket == null ? pinnacle.ticket() : ticket.name())
                     + " ×" + have + (done ? " <green>已打贏" : ""));
         }
         lore.add("");
@@ -419,8 +463,10 @@ public final class MapDeviceMenu extends Menu {
             final boolean ready = problem == null;
             any |= ready;
             final String bossName = uber.name() != null ? uber.name() : map.boss().name() + "・極境";
+            final double recommended = service.uberRecommendedDps(map); // 2026-10-21
             lore.add((done ? "<green>✔ " : ready ? "<white>・" : "<dark_gray>・") + (ready || done ? "<#ff5f5f>" : "<dark_gray>")
-                    + ItemRenderer.escape(bossName) + (done ? " <green>已打贏" : "")
+                    + ItemRenderer.escape(bossName) + (recommended > 0 ? " <gold>建議每秒 " + BossDpsCommand.wan(recommended) : "")
+                    + (done ? " <green>已打贏" : "")
                     + (!completed.contains(map.id()) ? " <dark_gray>先打贏一般的" + ItemRenderer.escape(map.boss().name()) : "")
                     + (sameKey ? "" : " <dark_gray>" + keyText(uber)));
         }
@@ -592,6 +638,11 @@ public final class MapDeviceMenu extends Menu {
             }
             case SLOT_ATLAS -> new AtlasMenu(plugin, player, service).open();
             case SLOT_TREE -> new AtlasTreeMenu(plugin, player, service).open();
+            case SLOT_SITES -> {
+                if (Atlas.isGrid(service.completed(player))) {
+                    new AtlasSitesMenu(plugin, player, service).open(); // 2026-10-21
+                }
+            }
             case SLOT_FINAL -> chooseFinalTier();
             case SLOT_PINNACLE -> {
                 if (!service.config().fragmentPinnacles().isEmpty()) {

@@ -94,6 +94,11 @@ public final class TrainingService {
         return state == null ? 0 : config().bossDps(DummyRecord.decode(state.progress().get(DummyRecord.KEY)));
     }
 
+    /** 一筆假人紀錄換成打 Boss 的每秒傷害（2026-10-21，/ec bossdps 用；沒有紀錄 0）。 */
+    public double bossDps(final DummyRecord record) {
+        return config().bossDps(record);
+    }
+
     DummyConfig config() {
         return config;
     }

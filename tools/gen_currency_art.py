@@ -250,6 +250,8 @@ ORBS = {
     'bounty_orb':         (shades('2f5a2a', '5fae4a', '9fe08a'), 'star',     'fff7a0', 'ffffff'),
     'spark_orb':          (shades('6a2a10', 'e06a1a', 'ffb060'), 'cross',    'fff3c0', None),
     'turmoil_orb':        (shades('2a2a5a', '5a5ac8', '9a9aff'), 'swirl',    'e8e8ff', 'ffffff'),
+    'corrupt_orb':        (shades('2a0808', '9a1818', 'e04848'), 'eye',      'ffd0d0', 'ffffff'),   # 2026-10-21：蝕變石（瓦爾寶珠）
+    'fracture_orb':       (shades('4a3a20', 'b08850', 'ecd09a'), 'cross',    'fff6e0', '5a3a10'),   # 2026-10-21：定星石（破裂石）
     'annul_orb':          (shades('101014', '2a2a36', '4a4a5e'), 'ring',     '9a9ad0', None),
     'zenith_orb':         (shades('5a3a00', 'e0a010', 'ffd861'), 'star',     'ffffff', 'fff3c0'),
     'resonance_orb':      (shades('0a2a30', '1aa0b0', '7af0ff'), 'ring',     'ffd861', 'fff3c0'),   # 2026-10-18：共鳴石（青色球、金色環）
@@ -262,7 +264,33 @@ ORBS = {
 }
 
 # 其他（直接畫）：palette 字母 → 顏色，接著 16 行
+def _deck_rows():
+    """2026-10-21：星諭牌堆：三張疊著的牌背（深藍底、金框、正面那張中間一顆星）。"""
+    grid = [['.'] * 16 for _ in range(16)]
+
+    def card(x0, y0, star):
+        for y in range(y0, y0 + 12):
+            for x in range(x0, x0 + 9):
+                edge = x in (x0, x0 + 8) or y in (y0, y0 + 11)
+                frame = x in (x0 + 1, x0 + 7) or y in (y0 + 1, y0 + 10)
+                grid[y][x] = 'O' if edge else ('G' if x == x0 + 7 or y == y0 + 10 else 'F') if frame else \
+                    ('b' if (x + y) % 3 == 0 else 'B')
+        if star:
+            cx, cy = x0 + 4, y0 + 5
+            for (dx, dy) in ((0, -2), (-2, 0), (2, 0), (0, 2)):
+                grid[cy + dy][cx + dx] = 's'
+            for (dx, dy) in ((0, -1), (-1, 0), (1, 0), (0, 1), (0, 0)):
+                grid[cy + dy][cx + dx] = 'S'
+
+    card(6, 1, False)
+    card(4, 2, False)
+    card(2, 3, True)
+    return [''.join(r) for r in grid]
+
+
 OTHERS = {
+    'stacked_deck': ({'O': '141418', 'F': 'c8a04a', 'G': '7a5a24', 'B': '1e2a5a', 'b': '2e4290', 'S': 'fff0b0', 's': 'd0a850'},
+                     _deck_rows()),
     'identify_scroll': ({'a': 'e8d8a8', 'b': 'c8b078', 'c': '8a6a3a', 'd': 'fff6d8', 'e': '5a3a1a'}, [
         '................',
         '....cccccccc....',
@@ -666,16 +694,19 @@ CATALYSTS = {  # 代號: 液體顏色（瓶子固定淡藍玻璃）
     'catalyst_crit': 'f0d82a', 'catalyst_elemental': '3ab0e0', 'catalyst_phys_chaos': '8a3ac8', 'catalyst_attribute': '5fbf5f',
     'catalyst_speed': '3ac0a0', 'catalyst_defence': '8a8aa0',
 }
-OMEN = [  # 刻了符文的石板
+# 2026-10-21：星籤每一種一個記號（以前只有符文顏色不同，祭壇的獎勵裡分不出來）。
+#   石板顏色分兩家：加詞綴的（加前綴、加後綴、雙詞綴）是藍灰石板，移除時用的（去劣、保前綴、保後綴）是暗紅石板；
+#   記號：← 加前綴、→ 加後綴、大小兩個＋ 雙詞綴、✕ 去劣、左半邊塗滿的盾 保前綴、右半邊塗滿的盾 保後綴。
+OMEN = [  # 石板（記號另外蓋在中間 8×8）
     '................',
     '................',
     '....oooooooo....',
     '...ollllllmmo...',
-    '...olhllrlmmo...',
-    '...ollrrrlmmo...',
-    '...olllrllmmo...',
-    '...ollrlrlmdo...',
-    '...olrlllrmdo...',
+    '...olhllllmmo...',
+    '...ollllllmmo...',
+    '...ollllllmmo...',
+    '...ollllllmdo...',
+    '...ollllllmdo...',
     '...olllllmmdo...',
     '...ollmmmmddo...',
     '...olmmmmdddo...',
@@ -684,14 +715,61 @@ OMEN = [  # 刻了符文的石板
     '................',
     '................',
 ]
-OMENS = {
-    'omen_sinistral': ('1a1a2a', '3a3a5a', '5a5a80', '8a8ab0', 'c0c0e0', 'c77dff'),
-    'omen_dextral': ('1a1a2a', '3a3a5a', '5a5a80', '8a8ab0', 'c0c0e0', 'ffd24a'),
-    'omen_abundance': ('1a1a2a', '3a3a5a', '5a5a80', '8a8ab0', 'c0c0e0', '6ae08a'),
-    'omen_whittling': ('1a1a2a', '3a3a5a', '5a5a80', '8a8ab0', 'c0c0e0', 'ff6a5a'),
-    'omen_sinistral_guard': ('1a1a2a', '3a3a5a', '5a5a80', '8a8ab0', 'c0c0e0', '7fd4ff'),
-    'omen_dextral_guard': ('1a1a2a', '3a3a5a', '5a5a80', '8a8ab0', 'c0c0e0', 'ffffff'),
+OMEN_GLYPHS = {  # 8×8，蓋在第 4–11 列、第 4–11 行（r = 記號）
+    'left': ['...r....', '..rr....', '.rrrrrrr', 'rrrrrrrr', 'rrrrrrrr', '.rrrrrrr', '..rr....', '...r....'],
+    'right': ['....r...', '....rr..', 'rrrrrrr.', 'rrrrrrrr', 'rrrrrrrr', 'rrrrrrr.', '....rr..', '....r...'],
+    'double': ['.....r..', '....rrr.', '..r..r..', '..r.....', 'rrrrr...', '..r.....', '..r.....', '........'],
+    'cross': ['rr....rr', 'rrr..rrr', '.rrrrrr.', '..rrrr..', '..rrrr..', '.rrrrrr.', 'rrr..rrr', 'rr....rr'],
+    'guard_left': ['rrrrrrrr', 'rrrr...r', 'rrrr...r', 'rrrr...r', 'rrrr...r', '.rrr..r.', '..rr.r..', '...rr...'],
+    'guard_right': ['rrrrrrrr', 'r...rrrr', 'r...rrrr', 'r...rrrr', 'r...rrrr', '.r..rrr.', '..r.rr..', '...rr...'],
 }
+_ADD_SLAB = ('10101c', '1e1e30', '2c2c46', '3a3a5c', '5a5a80')      # 藍灰石板（加詞綴）
+_REMOVE_SLAB = ('1c0c0c', '301414', '45201f', '5a2a28', '7a4440')   # 暗紅石板（移除時用）
+OMENS = {  # 代號: (石板, 記號, 記號顏色)
+    'omen_sinistral': (_ADD_SLAB, 'left', 'c77dff'),
+    'omen_dextral': (_ADD_SLAB, 'right', 'ffd24a'),
+    'omen_abundance': (_ADD_SLAB, 'double', '6ae08a'),
+    'omen_whittling': (_REMOVE_SLAB, 'cross', 'ff6a5a'),
+    'omen_sinistral_guard': (_REMOVE_SLAB, 'guard_left', 'c77dff'),
+    'omen_dextral_guard': (_REMOVE_SLAB, 'guard_right', 'ffd24a'),
+}
+
+
+# 2026-10-21：先驅石板（AtlasTablets）：同一塊石板，底色一律青灰，記號照種類
+TABLET_GLYPHS = {
+    'shrine': ['...rr...', '..rrrr..', '...rr...', '...rr...', '...rr...', '..rrrr..', '.rrrrrr.', '........'],
+    'strongbox': ['........', '.rrrrrr.', '.r....r.', '.rrrrrr.', '.r.rr.r.', '.r....r.', '.rrrrrr.', '........'],
+    'breach': ['...r....', '...r....', '..r.....', '..r.....', '...r....', '....r...', '....r...', '...r....'],
+    'exile': ['..rrrr..', '.r....r.', '.r.rr.r.', '.r....r.', '..rrrr..', '...rr...', '..rrrr..', '.rrrrrr.'],
+    'abyss': ['........', 'r......r', 'rr....rr', '.rr..rr.', '..rrrr..', '...rr...', '........', '........'],
+    'ritual': ['...rr...', '..r..r..', '.r....r.', '.r....r.', '..r..r..', '...rr...', '...rr...', '..rrrr..'],
+    'delirium': ['rr....rr', '.rr..rr.', '..rrrr..', '...rr...', '..rrrr..', '.rr..rr.', 'rr....rr', '........'],
+    'boss': ['r..rr..r', 'r.rrrr.r', 'rrrrrrrr', 'rrrrrrrr', '.rrrrrr.', '.rrrrrr.', '........', '........'],
+    'bounty': ['...rr...', '..rrrr..', '.rrrrrr.', '.rrrrrr.', '..rrrr..', '...rr...', '...rr...', '..rrrr..'],
+}
+_TABLET_SLAB = ('14201c', '203428', '2c4838', '3a5c48', '5a8068')
+TABLET_COLOURS = {'shrine': 'ffe9a0', 'strongbox': 'ffd24a', 'breach': 'c77dff', 'exile': 'ffff77', 'abyss': '5ad0c8',
+                  'ritual': 'ff6a5a', 'delirium': 'c8d0e0', 'boss': 'ff9a4a', 'bounty': '8af08a'}
+
+
+def tablet_rows(glyph):
+    rows = [list(r) for r in OMEN]
+    for y, line in enumerate(TABLET_GLYPHS[glyph]):
+        for x, c in enumerate(line):
+            if c == 'r':
+                rows[4 + y][4 + x] = 'r'
+    return [''.join(r) for r in rows]
+
+
+def omen_rows(glyph):
+    rows = [list(r) for r in OMEN]
+    for y, line in enumerate(OMEN_GLYPHS[glyph]):
+        for x, c in enumerate(line):
+            if c == 'r':
+                rows[4 + y][4 + x] = 'r'
+    return [''.join(r) for r in rows]
+
+
 SCROLL = [  # 捲起來的契約
     '................',
     '..oooooooooooo..',
@@ -881,6 +959,169 @@ VOUCHER = [  # 蓋了火漆印的券
 ]
 
 
+# ---- 2026-10-21 星諭卡：卡框照稀有度上色（跟裝備的稀有度同色：常見＝普通白、中階＝魔法藍、稀有＝稀有黃、追逐＝傳奇橘），
+#   中間 10×9 是每張卡自己的圖，下面一條是卡名的紙條。卡的等級從 data/cards.yml 讀（改了等級重跑就會換框）。
+CARD_FRAME = [  # O 外框、F 卡框（稀有度色）、G 卡框暗面、* 卡圖（10×9）、S 紙條、s 紙條上的字、h 追逐卡的角
+    '..OOOOOOOOOOOO..',
+    '.OFFFFFFFFFFFFO.',
+    '.OF**********GO.',
+    '.OF**********GO.',
+    '.OF**********GO.',
+    '.OF**********GO.',
+    '.OF**********GO.',
+    '.OF**********GO.',
+    '.OF**********GO.',
+    '.OF**********GO.',
+    '.OF**********GO.',
+    '.OFGGGGGGGGGGGO.',
+    '.OFSSsSsssSsSGO.',
+    '.OFSSSSSSSSSSGO.',
+    '.OGGGGGGGGGGGGO.',
+    '..OOOOOOOOOOOO..',
+]
+CARD_RARITY = {  # cards.yml 的 tier → (卡框, 卡框暗面)；顏色同 Rarity.java
+    'common': ('ffffff', '9a9a9a'),
+    'mid': ('8888ff', '4a4aa8'),
+    'rare': ('ffff77', 'a8a830'),
+    'chase': ('af6025', '6a3410'),
+}
+CARD_ART = {  # 代號: (底色, {a: 色, b: 色, c: 色, d: 色}, 10×9 的圖；. = 底色)
+    'card_tide_mark': ('16324e', {'a': '9ad8ff', 'b': 'd8c08a', 'c': 'a8905a'}, [
+        '..........', '.aaa...aaa', 'a...a.a...', '.....a....', '..........',
+        '.aaa...aaa', 'a...a.a...', 'bbbbbbbbbb', 'bcbbbbcbbb']),
+    'card_moss_whisper': ('14261a', {'a': '6ad05a', 'b': '3a8a3a', 'c': '8a8a90', 'd': '5a5a62'}, [
+        '..........', '....aa....', '..aabbaa..', '.abaaaaba.', '.cccccccc.',
+        'cccdcccccc', 'cccccccdcc', 'ccdccccccc', 'dddddddddd']),
+    'card_ash_ledger': ('241612', {'a': 'e8dcc0', 'b': '6a5a4a', 'c': 'ff8a2a', 'd': '5a5050'}, [
+        '..........', 'aaaaa.aadd', 'abbba.addc', 'aaaaa.aadd', 'abbba.adcd',
+        'aaaaa.addd', 'abbba.addc', 'aaaaa.aadd', '..........']),
+    'card_ferry_ticket': ('1a3a3a', {'a': 'f0e6c8', 'b': '7a6a50', 'c': 'c8303a'}, [
+        '..........', 'aaaaaaaaaa', 'abbbbbaaca', 'aaaaaaacca', '.abbbbacc.',
+        'aaaaaaacca', 'abbbbbaaca', 'aaaaaaaaaa', '..........']),
+    'card_wanted_poster': ('2a1e14', {'a': 'e0cc98', 'b': 'd8a878', 'c': '3a2a1a', 'd': 'a83030'}, [
+        'aaaaaaaaaa', 'aaaccccaaa', 'aacbbbbcaa', 'aabcbbcbaa', 'aabbbbbbaa',
+        'aaabddbaaa', 'aaaaaaaaaa', 'adddddddda', 'aaaaaaaaaa']),
+    'card_pine_hunter': ('0e1a2e', {'a': '2a8a4a', 'b': '6a4a2a', 'c': 'ffe07a'}, [
+        '.......c..', '....a.ccc.', '...aaa.c..', '..aaaaa...', '...aaa....',
+        '.aaaaaaa..', 'aaaaaaaaa.', '....b.....', '....b.....']),
+    'card_miner_note': ('1e1a18', {'a': 'e8dcc0', 'b': '8a5a2a', 'c': 'a8b0b8', 'd': '6a5a4a'}, [
+        'cccccc....', '.c..b.....', '.....b....', '......b...', '..aaaa.b..',
+        '..adda..b.', '..aaaa....', '..adda....', '..aaaa....']),
+    'card_tomb_oath': ('181820', {'a': 'ffe07a', 'b': '3a3a2a', 'c': '8a8a98'}, [
+        '...cccc...', '..cccccc..', '.cccaaccc.', '.caaaaaac.', '.cccaaccc.',
+        '.cccaaccc.', '.cccccccc.', '.cccccccc.', 'bbbbbbbbbb']),
+    'card_spore_sac': ('10202a', {'a': '5af0e0', 'b': 'c8e8d8', 'c': 'b0ff8a'}, [
+        '.c.....c..', '....c.....', '..aaaaaa..', '.aaacaaaa.', 'aaaaaacaaa',
+        '....bb....', '.c..bb..c.', '....bb....', '...bbbb...']),
+    'card_war_banner': ('2a1410', {'a': 'c8303a', 'b': '8a6a4a', 'c': 'ffa02a'}, [
+        'b...c.....', 'baaaacc...', 'baaaaacc..', 'baacaaaa..', 'baaaaaa...',
+        'baaaa.....', 'b.........', 'b.........', 'b.........']),
+    'card_tide_oracle': ('102a40', {'a': 'f0f6ff', 'b': '6ac8ff', 'c': '2a5aa0'}, [
+        '..........', '...aaaa...', '.aa.cc.aa.', 'a..cccc..a', '.aa.cc.aa.',
+        '...aaaa...', '..........', 'bb..bb..bb', '..bb..bb..']),
+    'card_red_caravan': ('3a1a10', {'a': '8a5a2a', 'b': 'c85a3a', 'c': 'ffd24a'}, [
+        '..........', '..aaaaaa..', '..acccca..', '..aaaaaa..', '..acaaca..',
+        '..aaaaaa..', '..........', '.bbb...bb.', 'bbbbbbbbbb']),
+    'card_fallen_page': ('142030', {'a': 'e8e0d0', 'b': '6a6a7a', 'c': 'ffe07a', 'd': 'd8f0ff'}, [
+        '.......c..', '......cc..', '.....cc...', '.aaaaa....', '.abbaa....',
+        '.aaaaa..d.', '.abbba....', '.aaaaa.d..', 'd...d...d.']),
+    'card_stargazer': ('0c1028', {'a': '8a6a4a', 'b': 'c8a050', 'c': 'fff0b0'}, [
+        'c.......c.', '.....c....', '..c.....bb', '.......bbb', '.....bbb..',
+        '...bbb....', '....a.....', '...a.a....', '..a...a...']),
+    'card_shrine_ash': ('1e1a14', {'a': 'b0b0b8', 'b': '8a6a30', 'c': 'ff8a3a'}, [
+        '...a......', '....a.....', '...a..a...', '..a..a....', '...a..a...',
+        '....c.c...', '.bbbbbbbb.', '..bbbbbb..', '...bbbb...']),
+    'card_key_mould': ('1a1810', {'a': '6a5a30', 'c': 'ffd24a'}, [
+        '..........', '.ccc......', 'c...c.....', 'c...cccccc', 'c...c..c.c',
+        '.ccc...c.c', '..........', 'aaaaaaaaaa', '..........']),
+    'card_rift_whisper': ('120a20', {'a': 'e0a0ff', 'b': '8a3ad0'}, [
+        '.....a....', '....aa....', '...bab....', '...aab....', '..baa.....',
+        '...aab....', '....ab....', '...aa.....', '...a......']),
+    'card_exile_bounty': ('1a1414', {'a': 'ffd24a', 'b': '6a4a2a', 'c': 'd0d8e0'}, [
+        'c........c', '.c......c.', '..c....c..', '...c..c...', '....cc....',
+        '...b..b...', '..b.aa.b..', '....aa....', '..........']),
+    'card_blood_page': ('1a0c0c', {'a': 'e8dcc0', 'b': '6a5a4a', 'c': 'c8202a'}, [
+        '.aaaaaaa..', '.abbbbba..', '.aaaaaaa..', '.abbbaaa..', '.aaaaccc..',
+        '.abbcccc..', '.aaaacca..', '.aaaaaca..', '......c...']),
+    'card_fog_reflection': ('1a1a22', {'a': 'b8c0d0', 'b': '8a8aa8', 'c': '2a2a3a', 'd': '5a5a6a'}, [
+        '...bbbb...', '..baaaab..', '.bacaacab.', '.baaaaaab.', '.bacaacab.',
+        '.baaccaab.', '..baaaab..', '...bbbb...', 'dd.dddd.dd']),
+    'card_rift_echo': ('0a0a14', {'a': '5ad0c8', 'c': '000000'}, [
+        '.a......a.', '..a....a..', '.a..aa..a.', 'a..a..a..a', 'a..acca..a',
+        'a..a..a..a', '.a..aa..a.', '..a....a..', '.a......a.']),
+    'card_frost_mirror': ('0e1e30', {'a': 'b8ecff', 'b': 'c8d0e0', 'c': 'ffffff'}, [
+        '...bbbb...', '..baaaab..', '.baacaaab.', '.bacccaab.', '.baacaaab.',
+        '..baaaab..', '...bbbb...', '....bb....', '....bb....']),
+    'card_styx_fare': ('0e1418', {'a': 'e0b040', 'b': '1a3a3a', 'c': '8a6a20'}, [
+        '..........', '...aaaa...', '..acccca..', '.acaaaaca.', '.acaccaca.',
+        '.acaaaaca.', '..acccca..', '...aaaa...', 'bbbbbbbbbb']),
+    'card_ember_order': ('2a1008', {'a': 'e8d8b8', 'b': '6a5040', 'c': 'ff7a2a', 'd': 'c8202a'}, [
+        '.c..c..c..', 'aaaaaaaaaa', 'abbbbbbbba', 'aaaaaaaaaa', 'abbbbbaaaa',
+        'aaaaaaaaaa', 'abbbbddaaa', 'aaaaaddaaa', '.c.c..c.c.']),
+    'card_starbody_shade': ('140c22', {'a': 'ffd24a', 'b': 'b07aff', 'c': 'c8303a'}, [
+        '..........', '.a..a..a..', '.aa.a.aa..', '.aaaaaaa..', '.acaacaa..',
+        '.aaaaaaa..', '..........', 'b..b...b..', '.b...b...b']),
+    'card_void_resonance': ('0c0818', {'a': 'b07aff', 'c': '000000'}, [
+        '....aa....', '..a....a..', '.a.cccc.a.', 'a.cccccc.a', 'a.cccccc.a',
+        '.a.cccc.a.', '..a....a..', '....aa....', '..........']),
+    'card_awakener_echo': ('100820', {'a': 'ffffff', 'b': 'b07aff', 'c': 'ffd24a'}, [
+        '....a.....', '....a.....', '..b.a.b...', '...bab....', 'aaaacaaaa.',
+        '...bab....', '..b.a.b...', '....a.....', '....a.....']),
+    'card_star_chaser': ('0c1430', {'a': 'ffe8a0', 'b': 'c8d0e0', 'c': 'ffffff'}, [
+        '........cc', '.......ccc', '.....aac..', '...aaa....', '.aaa......',
+        'a.........', '..b.......', '.bbb......', 'b.b.......']),
+    'card_mirror_star': ('140c22', {'a': '3a2a5a', 'b': 'c8a050', 'c': 'fff0b0'}, [
+        '..bbbbbb..', '.baaaaaab.', '.baacaaab.', '.bacccaab.', '.baacacab.',
+        '.baaacccb.', '.baaaacab.', '..bbbbbb..', '....bb....']),
+}
+
+
+def card_tiers():
+    """data/cards.yml 的每張卡是哪一個等級（不裝 yaml 套件：照縮排找 card_ 開頭的鍵與底下的 tier:）。"""
+    tiers = {}
+    current = None
+    path = ROOT / 'src/main/resources/data/cards.yml'
+    for line in path.read_text(encoding='utf-8').split('\n'):
+        stripped = line.split('#', 1)[0].rstrip()
+        if stripped.startswith('  card_') and stripped.endswith(':') and not stripped.startswith('   '):
+            current = stripped.strip()[:-1]
+        elif current and stripped.strip().startswith('tier:'):
+            tiers[current] = stripped.split(':', 1)[1].strip()
+            current = None
+    return tiers
+
+
+def cards():
+    items = []
+    tiers = card_tiers()
+    missing = sorted(set(tiers) - set(CARD_ART))
+    if missing:
+        print('沒有畫的星諭卡（照原本的紙）：', ', '.join(missing))
+    for cid, (bg, colours, art) in CARD_ART.items():
+        frame, frame_dark = CARD_RARITY.get(tiers.get(cid, 'common'), CARD_RARITY['common'])
+        palette = {'O': '141418', 'F': frame, 'G': frame_dark, 'S': 'e8dcc0', 's': '8a7a60', 'B': bg}
+        palette.update(colours)
+        assert len(art) == 9 and all(len(r) == 10 for r in art), cid
+        rows = []
+        for y, line in enumerate(CARD_FRAME):
+            out = ''
+            for x, c in enumerate(line):
+                if c == '*':
+                    a = art[y - 2][x - 3]
+                    out += 'B' if a == '.' else a
+                else:
+                    out += c
+            rows.append(out)
+        if tiers.get(cid) == 'chase':  # 追逐卡：四個角亮一點
+            palette['h'] = 'ffd8a0'
+            for (y, x) in ((1, 2), (1, 13), (14, 2), (14, 13)):
+                rows[y] = rows[y][:x] + 'h' + rows[y][x + 1:]
+        # 調色盤的字母要跟其他圖一樣是單一字元；這裡用到的：O F G S s B h a b c d
+        used = set(''.join(rows)) - {'.'}
+        items.append((cid, {k: v for k, v in palette.items() if k in used}, rows))
+    return items
+
+
 def runes():
     items = []
     for rid, glyph in RUNE_GLYPHS.items():
@@ -903,8 +1144,10 @@ def extras():
         items.append((cid, *shaded(ESSENCE, colours)))
     for cid, liquid in CATALYSTS.items():
         items.append((cid, *shaded(CATALYST, ('2a3440', mix(liquid, '000000', 0.45), 'a8c8d8', 'd8ecf4', 'ffffff', liquid))))
-    for cid, colours in OMENS.items():
-        items.append((cid, *shaded(OMEN, colours)))
+    for cid, (slab, glyph, colour) in OMENS.items():
+        items.append((cid, *shaded(omen_rows(glyph), slab + (colour,))))
+    for kind, colour in TABLET_COLOURS.items():   # 2026-10-21：先驅石板
+        items.append(('tablet_' + kind, *shaded(tablet_rows(kind), _TABLET_SLAB + (colour,))))
     for cid, (template, colours) in list(EXTRA.items()) + list(GEMS_CUT.items()):
         items.append((cid, *shaded(template, colours)))
     for cid, colours in TICKETS.items():   # 2026-10-18：入場券
@@ -926,6 +1169,7 @@ def main():
     items.extend(gems())
     items.extend(extras())
     items.extend(runes())
+    items.extend(cards())
     for cid, palette, rows in items:
         out.append('item ' + cid)
         for k, v in palette.items():

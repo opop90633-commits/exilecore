@@ -397,7 +397,10 @@ final class MapEvents implements Listener {
         double total = 0;
         for (final Map.Entry<MapEventConfig.Kind, Integer> entry : config.weights().entrySet()) {
             final int boost = plugin.events() == null ? 0 : plugin.events().eventBoost(entry.getKey().name().toLowerCase(java.util.Locale.ROOT));
-            final double weight = (Math.max(0, entry.getValue()) + (entry.getValue() > 0 ? boost : 0)) * (1 + atlas.eventWeight(entry.getKey()));
+            double weight = (Math.max(0, entry.getValue()) + (entry.getValue() > 0 ? boost : 0)) * (1 + atlas.eventWeight(entry.getKey()));
+            if (atlas.get("atlas.other_events_off") > 0 && atlas.get(AtlasBonus.faithKey(entry.getKey())) <= 0) {
+                weight = 0; // 2026-10-21 星圖核心「單一信仰」：只有選的那種事件
+            }
             weights.put(entry.getKey(), weight);
             total += weight;
         }
@@ -1506,6 +1509,7 @@ final class MapEvents implements Listener {
     /** 同上，用事件的來源代號（祭壇 "ritual"、幻霧 "delirium" 不是 {@link MapEventConfig.Kind}）。 */
     void rollTicket(final String source, final Player player, final Location at) {
         rollCard(source, player, at); // 2026-10-19 星諭卡：完成事件也擲一次（跟入場券分開擲）
+        rollTablet(source, player, at); // 2026-10-21 先驅石板：完成事件 3%（星圖天賦可以加）掉那種事件的石板
         final MapEventConfig.Ticket ticket = config.ticket(source);
         if (ticket == null || ticket.chance() <= 0 || plugin.currencies() == null || player == null || !player.isConnected()) {
             return;
@@ -1527,6 +1531,29 @@ final class MapEvents implements Listener {
                 + "<gray>（地圖裝置的「事件巔峰」用它開 Boss）"));
         player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.6f, 1.4f);
         plugin.getSLF4JLogger().info("[入場券] {} 完成{}事件掉了 {}", player.getName(), MapEventConfig.sourceName(source), type.name());
+    }
+
+    /** 2026-10-21：完成地圖事件時擲一片那種事件的先驅石板（AtlasTablets）：固定 3%，星圖天賦 atlas.tablet.drop 加成。 */
+    private void rollTablet(final String source, final Player player, final Location at) {
+        final AtlasTablets.Kind kind = AtlasTablets.Kind.ofSource(source);
+        if (kind == null || plugin.currencies() == null || player == null || !player.isConnected()) {
+            return;
+        }
+        final MapInstance instance = service.instanceAt(at);
+        final double bonus = instance == null ? 0 : instance.atlas().increased("atlas.tablet.drop");
+        if (service.random().nextDouble() >= AtlasTablets.EVENT_DROP_CHANCE * (1 + bonus)) {
+            return;
+        }
+        final tw.exilecore.currency.CurrencyType type = plugin.currencies().repository().get(kind.currencyId());
+        if (type == null) {
+            return;
+        }
+        final int level = instance != null ? instance.level() : plugin.players().get(player).level();
+        final List<DropTable.Drop> rolled = new java.util.ArrayList<>();
+        rolled.add(DropTable.Drop.currency(type));
+        deliver(player, at, new MonsterData(level, MonsterRarity.RARE, List.of(), MapEventConfig.sourceName(source)), rolled, 0);
+        player.sendMessage(plugin.text().prefixed("<#d8c8a0>✦ 掉落：<white>" + ItemRenderer.escape(type.name()) + "<gray>（插進星圖上完成的塔）"));
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.6f, 1.3f);
     }
 
     /** 2026-10-19：完成地圖事件時擲一張那個事件的星諭卡（cards.yml 的 event:）；擲到照一般掉落交給他。 */

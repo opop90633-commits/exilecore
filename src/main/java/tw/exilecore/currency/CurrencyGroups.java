@@ -19,7 +19,7 @@ public final class CurrencyGroups {
         GEM("未切割寶石", "右鍵雕成技能寶石、切成輔助寶石，或幫技能升級"),
         ESSENCE("星魄", "保證加上某一條詞綴"),
         MECHANIC("催化劑・星籤・蒸餾情緒", "飾品品質、改變下一次改造、項鍊注入"),
-        KEYS("Boss 門票", "開終局、極境、巔峰、事件巔峰、金庫之主的碎片與入場券"), // 2026-10-18
+        KEYS("Boss 門票", "開終局、極境、巔峰、事件巔峰、金庫之主的碎片與入場券，還有插在星圖塔上的先驅石板"), // 2026-10-18；2026-10-21 加先驅石板
         CARDS("星諭卡", "集滿一套換獎勵；右鍵兌換一套、Shift＋右鍵全部兌換、Q 花金幣賭卡"); // 2026-10-19
 
         private final String displayName;
@@ -59,6 +59,9 @@ public final class CurrencyGroups {
     /** 2026-10-18：其他開 Boss 用的門票：終局的天穹碎片、極境的深淵星核、金庫之主的鑰印。 */
     public static final java.util.Set<String> BOSS_KEYS = java.util.Set.of("sky_fragment", "abyss_core", "heist_finale_key");
 
+    /** 2026-10-21：星圖的先驅石板（tablet_<種類>）：插在塔上，跟門票放同一組（一般通貨那組放不下了）。 */
+    public static final String TABLET_PREFIX = "tablet_";
+
     /** 2026-10-18：這種通貨是不是開 Boss 用的門票。 */
     public static boolean bossKey(final CurrencyType type) {
         return type.id().startsWith(TICKET_PREFIX) || type.id().startsWith(FRAGMENT_PREFIX) || BOSS_KEYS.contains(type.id());
@@ -96,8 +99,8 @@ public final class CurrencyGroups {
         if (type.uncutGem()) {
             return Group.GEM;
         }
-        if (bossKey(type)) {
-            return Group.KEYS; // 2026-10-18：Boss 門票（共鳴石算一般通貨）
+        if (bossKey(type) || type.id().startsWith(TABLET_PREFIX)) {
+            return Group.KEYS; // 2026-10-18：Boss 門票（共鳴石算一般通貨）；2026-10-21：星圖石板也放這組
         }
         return switch (type.operation()) {
             case ESSENCE -> Group.ESSENCE;
