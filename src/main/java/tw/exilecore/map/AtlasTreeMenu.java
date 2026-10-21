@@ -1,14 +1,18 @@
 package tw.exilecore.map;
 
+import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import tw.exilecore.ExileCore;
 import tw.exilecore.gui.Menu;
 import tw.exilecore.item.ItemRenderer;
+import tw.exilecore.web.UiPack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +44,20 @@ public final class AtlasTreeMenu extends Menu {
     private static final long RESET_CONFIRM_MILLIS = 5000;
 
     private enum State { TAKEN, AVAILABLE, POOR, LOCKED }
+
+    // 2026-10-21：有套用介面資源包的玩家看到星盤（跟天賦樹同一套：星空背景、上下左右的連線、節點、發光；UiPack.TREE_CELL）
+    private static final NamespacedKey TREE_CELL = NamespacedKey.fromString(UiPack.TREE_CELL);
+    private static final Color GOLD = Color.fromRGB(0xF5C04A);
+    private static final Color EDGE_GOLD = Color.fromRGB(0xE6A82E);
+    private static final Color BRIGHT = Color.fromRGB(0xE8E8F2);
+    private static final Color EDGE_LIT = Color.fromRGB(0x9C9CB8);
+    private static final Color DIM = Color.fromRGB(0x5E5E74);
+    private static final Color EDGE_DIM = Color.fromRGB(0x33354A);
+    private static final Color ORANGE = Color.fromRGB(0xFFAA55);
+    private static final Color CYAN = Color.fromRGB(0x55FFFF);
+    private static final Color WHITE = Color.fromRGB(0xFFFFFF);
+    /** 往上、右、下、左（跟 UiPack.Cell 的旗標同順序；畫面的 y 往下變大）。 */
+    private static final int[][] SIDES = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
     private final MapService service;
     private int viewX;
@@ -75,17 +93,23 @@ public final class AtlasTreeMenu extends Menu {
         final AtlasTree.Earned earned = service.atlasEarned(player);
         final List<String> allocated = service.atlasAllocated(player);
         final int left = Math.max(0, earned.total() - tree.spent(allocated));
+        final boolean pack = plugin.web() != null && plugin.web().hasPack(player);
         for (int row = 0; row < VIEW_HEIGHT; row++) {
             for (int column = 0; column < VIEW_WIDTH; column++) {
                 final int x = viewX + column;
                 final int y = viewY + row;
                 final int slot = row * 9 + column;
                 if (x == AtlasTree.ROOT_X && y == AtlasTree.ROOT_Y) {
-                    set(slot, glowing(icon(Material.NETHER_STAR, "<#e8e8f2>星核", "<gray>起點：從這裡往外點", "<dark_gray>(0, 0)")));
+                    set(slot, pack ? cell(tree, x, y, null, allocated, left, "<#e8e8f2>星核", List.of("<gray>起點：從這裡往外點", "<dark_gray>(0, 0)"))
+                            : glowing(icon(Material.NETHER_STAR, "<#e8e8f2>星核", "<gray>起點：從這裡往外點", "<dark_gray>(0, 0)")));
                     continue;
                 }
                 final AtlasTree.Node node = tree.at(x, y);
-                set(slot, node == null ? empty(x, y) : node(tree, node, allocated, left));
+                if (pack) {
+                    set(slot, node == null ? cell(tree, x, y, null, allocated, left, null, List.of()) : node(tree, node, allocated, left, true));
+                } else {
+                    set(slot, node == null ? empty(x, y) : node(tree, node, allocated, left, false));
+                }
             }
         }
         set(SLOT_ATLAS, icon(Material.FILLED_MAP, "<#f5b942>← 星圖", "<gray>左鍵：回到星圖（地圖的解鎖進度）",
@@ -111,7 +135,7 @@ public final class AtlasTreeMenu extends Menu {
         return icon(material, " ");
     }
 
-    private ItemStack node(final AtlasTree tree, final AtlasTree.Node node, final List<String> allocated, final int left) {
+    private ItemStack node(final AtlasTree tree, final AtlasTree.Node node, final List<String> allocated, final int left, final boolean pack) {
         final State state = state(tree, node, allocated, left);
         final AtlasTree.Trunk trunk = tree.trunk(node.trunk());
         final String trunkColor = trunk == null ? "#f5b942" : trunk.color();
@@ -162,6 +186,9 @@ public final class AtlasTreeMenu extends Menu {
         };
         final String name = color + (state == State.TAKEN ? "✔ " : "") + ItemRenderer.escape(node.name())
                 + (node.keystone() ? " <#c48bff>✦" : node.notable() ? " <" + trunkColor + ">★" : "");
+        if (pack) {
+            return cell(tree, node.x(), node.y(), node, allocated, left, name, lore);
+        }
         final Material material;
         if (node.notable() || node.keystone()) {
             material = material(node.icon().isBlank() ? (trunk == null ? "" : trunk.icon()) : node.icon(), Material.NETHER_STAR);
@@ -175,6 +202,77 @@ public final class AtlasTreeMenu extends Menu {
         }
         final ItemStack icon = icon(material, name, lore);
         return state == State.TAKEN ? glowing(icon) : icon;
+    }
+
+    /** 這個座標是不是點了（星核一律算點了）。 */
+    private static boolean takenAt(final AtlasTree tree, final int x, final int y, final List<String> allocated) {
+        if (x == AtlasTree.ROOT_X && y == AtlasTree.ROOT_Y) {
+            return true;
+        }
+        final AtlasTree.Node node = tree.at(x, y);
+        return node != null && allocated.contains(node.id());
+    }
+
+    private static boolean existsAt(final AtlasTree tree, final int x, final int y) {
+        return x == AtlasTree.ROOT_X && y == AtlasTree.ROOT_Y || tree.at(x, y) != null;
+    }
+
+    /**
+     * 有資源包：星盤的一格（2026-10-21）。node 是 null 而且不是星核＝空格（只有背景、不顯示說明）。
+     * 連線：兩邊都點了＝金色，一邊點了＝亮，都沒點＝暗；節點：點了金色＋發光、可以點亮白、點數不夠橘、連不到暗。
+     */
+    private ItemStack cell(final AtlasTree tree, final int x, final int y, final AtlasTree.Node node, final List<String> allocated,
+                           final int left, final String name, final List<String> lore) {
+        final boolean root = x == AtlasTree.ROOT_X && y == AtlasTree.ROOT_Y;
+        final ItemStack stack = name == null ? new ItemStack(Material.PAPER) : icon(Material.PAPER, name, lore);
+        stack.editMeta(meta -> {
+            meta.setItemModel(TREE_CELL);
+            if (name == null) {
+                meta.setHideTooltip(true);
+            }
+            final CustomModelDataComponent data = meta.getCustomModelDataComponent();
+            final int background = Math.floorMod(x * 7 + y * 13 + x * y, UiPack.BACKGROUNDS);
+            final List<String> strings = new ArrayList<>(List.of(Integer.toString(background), "", "", ""));
+            final List<Boolean> flags = new ArrayList<>(List.of(false, false, false, false));
+            final List<Color> colors = new ArrayList<>(List.of(EDGE_DIM, EDGE_DIM, EDGE_DIM, EDGE_DIM, WHITE, GOLD, CYAN));
+            if (root || node != null) {
+                final boolean here = takenAt(tree, x, y, allocated);
+                for (int i = 0; i < SIDES.length; i++) {
+                    final int nx = x + SIDES[i][0];
+                    final int ny = y + SIDES[i][1];
+                    if (!existsAt(tree, nx, ny)) {
+                        continue;
+                    }
+                    final boolean there = takenAt(tree, nx, ny, allocated);
+                    flags.set(i, true);
+                    colors.set(i, here && there ? EDGE_GOLD : here || there ? EDGE_LIT : EDGE_DIM);
+                }
+                if (root) {
+                    strings.set(UiPack.Cell.STRING_NODE, "start");
+                    colors.set(UiPack.Cell.COLOR_NODE, GOLD);
+                    strings.set(UiPack.Cell.STRING_GLOW, "glow");
+                    colors.set(UiPack.Cell.COLOR_GLOW, GOLD);
+                } else {
+                    final State state = state(tree, node, allocated, left);
+                    strings.set(UiPack.Cell.STRING_NODE, node.keystone() ? "keystone" : node.notable() ? "notable" : "small");
+                    colors.set(UiPack.Cell.COLOR_NODE, switch (state) {
+                        case TAKEN -> GOLD;
+                        case AVAILABLE -> BRIGHT;
+                        case POOR -> ORANGE;
+                        case LOCKED -> DIM;
+                    });
+                    if (state == State.TAKEN) {
+                        strings.set(UiPack.Cell.STRING_GLOW, "glow");
+                        colors.set(UiPack.Cell.COLOR_GLOW, GOLD);
+                    }
+                }
+            }
+            data.setStrings(strings);
+            data.setFlags(flags);
+            data.setColors(colors);
+            meta.setCustomModelDataComponent(data);
+        });
+        return stack;
     }
 
     private static boolean hasStat(final AtlasTree.Node node, final String stat) {

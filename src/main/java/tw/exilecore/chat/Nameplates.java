@@ -279,9 +279,11 @@ public final class Nameplates implements Listener {
             team.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER);
             team.setCanSeeFriendlyInvisibles(false);
         }
-        // 2026-10-20：玩家之間不推擠（所有玩家都在這一隊：只跟別隊的——怪物——碰撞）；舊的計分板上是 ALWAYS，這裡補改
-        if (team.getOption(Team.Option.COLLISION_RULE) != Team.OptionStatus.FOR_OTHER_TEAMS) {
-            team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.FOR_OTHER_TEAMS);
+        // 2026-10-20：玩家之間不推擠（所有玩家都在這一隊）。2026-10-21 修正：原版的名稱是反的——
+        //   pushOtherTeams（FOR_OTHER_TEAMS）實際上是「只跟同隊推擠」，所以玩家之間照樣推、怪物反而推不動；
+        //   pushOwnTeam（FOR_OWN_TEAM）才是「同隊不推擠、跟別隊（怪物）照常推」
+        if (team.getOption(Team.Option.COLLISION_RULE) != Team.OptionStatus.FOR_OWN_TEAM) {
+            team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.FOR_OWN_TEAM);
         }
         final Set<String> names = new HashSet<>();
         for (final Player online : plugin.getServer().getOnlinePlayers()) {
