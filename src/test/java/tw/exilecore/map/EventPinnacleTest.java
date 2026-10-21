@@ -110,7 +110,7 @@ class EventPinnacleTest {
             assertTrue(map.isFinal());
             assertTrue(map.boss().named(), map.id());
             assertEquals(2, pinnacle.attempts(), map.id());
-            assertEquals(12000000, pinnacle.dpsCap(), 1e-9, map.id());
+            assertEquals(4000000, pinnacle.dpsCap(), 1e-9, map.id());
             assertFalse(pinnacle.dpsOver().isEmpty(), map.id());
             assertEquals(0.65, pinnacle.cooldown(), 1e-9, map.id());
             assertEquals(maps.tiers().max(), maps.pinnacleStats(map.id(), pinnacle).tier(), map.id());

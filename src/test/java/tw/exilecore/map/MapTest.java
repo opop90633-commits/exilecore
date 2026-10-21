@@ -757,9 +757,9 @@ class MapTest {
     void pinnacleDamageAboveTheCapIsHeavilyReduced() {
         // 2026-10-21 第四版：每翻一倍一段，比例逐段遞減（2000 萬 → 等效 26.43 萬）
         final MapConfig.Pinnacle pinnacle = config.pinnacle("awakener");
-        // 2026-10-21：巔峰照打 Boss 每秒 600 萬打 3 分半，上限拉到 1200 萬（每翻一倍 30%／10%／3%／1%）
-        assertEquals(12000000, pinnacle.dpsCap(), 1e-9);
-        assertEquals(List.of(new MapConfig.DpsTier(12000000, 0.3), new MapConfig.DpsTier(24000000, 0.1), new MapConfig.DpsTier(48000000, 0.03), new MapConfig.DpsTier(96000000, 0.01)), pinnacle.dpsOver());
+        // 2026-10-21 晚：巔峰照打 Boss 每秒 200 萬打 3 分半，400 萬起遞減
+        assertEquals(4000000, pinnacle.dpsCap(), 1e-9);
+        assertEquals(List.of(new MapConfig.DpsTier(4000000, 0.8), new MapConfig.DpsTier(7000000, 0.55), new MapConfig.DpsTier(10000000, 0.3), new MapConfig.DpsTier(13000000, 0.15), new MapConfig.DpsTier(16000000, 0.05)), pinnacle.dpsOver());
         // 遞減的算法照舊（用以前 15 萬那一組分段驗算）
         final List<MapConfig.DpsTier> over = List.of(new MapConfig.DpsTier(150000, 0.08), new MapConfig.DpsTier(300000, 0.045), new MapConfig.DpsTier(600000, 0.024), new MapConfig.DpsTier(1200000, 0.013), new MapConfig.DpsTier(2500000, 0.007), new MapConfig.DpsTier(5000000, 0.004), new MapConfig.DpsTier(10000000, 0.002), new MapConfig.DpsTier(20000000, 0.001));
         assertEquals(100000, DpsCap.effective(100000, 150000, over), 1e-6, "上限以內照算");

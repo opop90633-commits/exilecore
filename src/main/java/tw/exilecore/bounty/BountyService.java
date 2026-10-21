@@ -977,6 +977,11 @@ public final class BountyService {
         default String sourceName(final String id) {
             return null;
         }
+
+        /** 2026-10-21：不是寫在稱號修飾器裡、由這個模組另外算的加成（燃星者的經驗 +5%）；沒有回傳 null。 */
+        default String bonusText(final String id) {
+            return null;
+        }
     }
 
     private final Map<String, TitleSource> titleSources = new LinkedHashMap<>();
@@ -1025,6 +1030,17 @@ public final class BountyService {
             final String name = source.sourceName(id);
             if (name != null) {
                 return name;
+            }
+        }
+        return null;
+    }
+
+    /** 別的模組另外算的稱號加成文字；沒有 null。 */
+    String sourceBonus(final String id) {
+        for (final TitleSource source : titleSources.values()) {
+            final String text = source.bonusText(id);
+            if (text != null) {
+                return text;
             }
         }
         return null;

@@ -156,7 +156,7 @@ finale:
     name: 金庫之主・萬鎖
     type: VINDICATOR
     named: true
-    life: 1815           # 2026-10-21：照打 Boss 每秒 300 萬、單人 3 分半（T16 Lv.91 再乘 final.tier_life ×11.7 之後約 6.3 億生命）；600 萬起遞減（maps.yml 的 heist_dps）。原 36.3
+    life: 605            # 2026-10-21 晚：照打 Boss 每秒 100 萬、單人 3 分半（約 2.1 億生命）；400 萬起遞減（maps.yml 的 heist_dps）。早上 300 萬時是 1815
     damage: 3.1          # 2026-10：3.1 → 2.4 → 3.1（改回）
     scale: 2.2
     mods: [armoured, resistant]   # 2026-10：拿掉迅捷

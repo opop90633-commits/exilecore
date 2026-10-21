@@ -1597,8 +1597,22 @@ public final class SkillService {
         if (definition.cooldown() > 0 || SkillExecutor.hasFlag(definition, StatKeys.CHANNEL_STAGES) || !SkillBuild.deployable(definition)) {
             return hint + "（不能是有冷卻、蓄力、位移的技能）";
         }
-        return build(state, sheet, definition, next);
+        // 2026-10-21：英靈不吃會加冷卻的輔助（蓄鋒、蓄疾…）：英靈不等冷卻，以前白拿那顆輔助的加成（暴擊率更多 40%、異常機率加倍）
+        final List<SupportDefinition> supports = supportsOf(next);
+        supports.removeIf(SkillService::addsCooldown);
+        return SkillBuild.of(config, definition, next.level(), state.level(), false, supports, state.weaponTags(), sheet, resonantOf(next));
     }
+
+    /** 這顆輔助會讓技能多冷卻時間（蓄鋒、蓄疾這種）。 */
+    static boolean addsCooldown(final SupportDefinition support) {
+        for (final tw.exilecore.stats.Modifier modifier : support.modifiers()) {
+            if (StatKeys.SKILL_ADDED_COOLDOWN.equals(modifier.stat()) && modifier.value() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /** 舉盾：副手要是盾。 */
     private String guardProblem(final PlayerState state) {
@@ -1955,8 +1969,9 @@ public final class SkillService {
         DpsRow main = null;
         for (final DpsRow row : rows) {
             final SkillDefinition rowDefinition = config.skill(row.skillId());
-            if (rowDefinition != null && SkillExecutor.hasFlag(rowDefinition, StatKeys.FLAG_TOTEM_LINKED)) {
-                continue; // 2026-10-18：英靈圖騰那行是英靈打的（含好幾根），不當成你自己打的能量來源
+            if (rowDefinition != null && (SkillExecutor.hasFlag(rowDefinition, StatKeys.FLAG_TOTEM_LINKED)
+                    || config.meta(rowDefinition.id()) instanceof MetaSpec rowMeta && rowMeta.totem())) {
+                continue; // 2026-10-18：英靈圖騰、法術圖騰那行是圖騰打的（含好幾根），不當成你自己打的能量來源
             }
             if (row.minions() == 0 && row.rate() > 0 && (main == null || row.dps() > main.dps())) {
                 main = row;
@@ -2082,6 +2097,10 @@ public final class SkillService {
                 return ancestors;
             }
         }
+        if (!resolved.isDefault() && config.meta(definition.id()) instanceof MetaSpec metaSpec && metaSpec.totem()) {
+            // 2026-10-21：法術圖騰（星咒圖騰）自己不打，算圖騰替你放插槽法術的（以前整行沒有，面板少了好幾十倍）
+            return spellTotemDps(state, sheet, full, slot, position, resolved, metaSpec);
+        }
         if (!definition.dealsDamage() || definition.mechanic() == Mechanic.AURA) {
             return null;
         }
@@ -2130,6 +2149,44 @@ public final class SkillService {
             fullDps *= 1 + full.taken();
         }
         return new DpsRow(slot, position, definition.id(), definition.name(), dps, Math.max(dps, fullDps), 0,
+                expected.total() * critFactor, hitRate, crit, multi);
+    }
+
+    /**
+     * 法術圖騰的估計每秒傷害（2026-10-21，照英靈圖騰的算法）：插槽法術（含它自己的輔助、帶到圖騰施法上的輔助、施法速度更少）平均一下
+     * × 每根每秒放幾次 × 同時幾根。銳星照全用來算（每顆更多傷害）；對異常敵人的更多傷害、詛咒、共鳴這類看戰況的不算。
+     * 插槽沒放法術、或插槽法術不能交給圖騰的回傳 null。
+     */
+    private DpsRow spellTotemDps(final PlayerState state, final StatSheet sheet, final FullOn full, final int slot, final int position,
+                                 final Resolved resolved, final MetaSpec spec) {
+        final int at = position >= 0 ? position : state.skills().find(resolved.definition().id());
+        final MetaGems.Socket socket = at < 0 ? null : metas.socket(state, at);
+        if (socket == null || !socket.spell().dealsDamage()) {
+            return null;
+        }
+        final SkillBuild metaBuild = build(state, sheet, resolved);
+        final SkillBuild totem = metas.totemBuild(state, sheet, socket, metaBuild.level(), spec.charges(), 0);
+        if (totem.deploy() == null || totem.deploy().interval() <= 0) {
+            return null;
+        }
+        final double perTotem = 20.0 / SkillDeployables.totemTicks(totem.deploy().interval(), SkillDeployables.totemSpeed(totem, sheet, false));
+        final double up = totemsUp(totem.totems(), totem.durationTicks(totem.deploy().duration()), metaBuild.intervalTicks(sheet),
+                metaBuild.cooldownTicks());
+        final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, totem.profile());
+        final double crit = DamageCalculator.critChance(sheet, totem.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
+        final double multi = DamageCalculator.critMultiplier(totem.profile().effective(sheet), totem.profile().tags(), null) * 100;
+        final double critFactor = 1 + crit * (multi / 100.0 - 1);
+        final SkillParams params = totem.params();
+        final double hitRate = perTotem * up * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
+                params.aftershock() == null ? 0 : params.aftershock().more());
+        double dps = expected.total() * critFactor * hitRate;
+        if (plugin.ailments() != null) {
+            dps = plugin.ailments().estimateDps(sheet, totem.profile(), expected, critFactor, hitRate, state.level(), dps);
+        }
+        final double fullDps = expected.total() <= 0 ? dps
+                : afterResist(expected, full.resist()).total() / expected.total() * dps * (1 + full.taken());
+        final String name = resolved.definition().name() + "（圖騰放" + socket.spell().name() + " ×" + ModifierText.number(up) + " 根）";
+        return new DpsRow(slot, position, resolved.definition().id(), name, dps, Math.max(dps, fullDps), 0,
                 expected.total() * critFactor, hitRate, crit, multi);
     }
 

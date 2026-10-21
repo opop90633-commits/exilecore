@@ -94,10 +94,10 @@ public final class AtlasMenu extends Menu {
             }
         }
         set(SLOT_DEVICE, icon(Material.LODESTONE, "<#9fd3ff>地圖裝置", "<gray>在營地：地圖裝置 NPC 右鍵開地圖", "<dark_gray>（/town 回營地）"));
-        set(SLOT_UP, icon(Material.ARROW, "<white>↑ 往上", "<gray>捲 " + SCROLL + " 格（Shift 一格）"));
-        set(SLOT_DOWN, icon(Material.ARROW, "<white>↓ 往下", "<gray>捲 " + SCROLL + " 格（Shift 一格）"));
-        set(SLOT_LEFT, icon(Material.ARROW, "<white>← 往左", "<gray>捲 " + SCROLL + " 格（Shift 一格）"));
-        set(SLOT_RIGHT, icon(Material.ARROW, "<white>→ 往右", "<gray>捲 " + SCROLL + " 格（Shift 一格）"));
+        set(SLOT_UP, uiIcon("arrow_up", Material.ARROW, "<white>↑ 往上", "<gray>捲 " + SCROLL + " 格（Shift 一格）")); // 2026-10-21：資源包的箭頭圖示
+        set(SLOT_DOWN, uiIcon("arrow_down", Material.ARROW, "<white>↓ 往下", "<gray>捲 " + SCROLL + " 格（Shift 一格）")); // 2026-10-21：資源包的箭頭圖示
+        set(SLOT_LEFT, uiIcon("arrow_left", Material.ARROW, "<white>← 往左", "<gray>捲 " + SCROLL + " 格（Shift 一格）")); // 2026-10-21：資源包的箭頭圖示
+        set(SLOT_RIGHT, uiIcon("arrow_right", Material.ARROW, "<white>→ 往右", "<gray>捲 " + SCROLL + " 格（Shift 一格）")); // 2026-10-21：資源包的箭頭圖示
         set(SLOT_HOME, icon(Material.NETHER_STAR, "<white>回到營地", "<gray>視窗中心現在在 (" + centerQ + ", " + centerR + ")",
                 "<dark_gray>六角格：奇數列往右半格，所以奇數列的格子跟上下列的同一欄、右邊一欄相鄰"));
         set(SLOT_TREE, treeButton(player, service));

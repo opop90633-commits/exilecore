@@ -81,7 +81,13 @@ final class TitleMenu extends Menu {
         // 稱號的永久加成：擁有就有（不用戴），整個帳號的角色都吃得到
         header.add("");
         header.add("<#7fe07f>稱號加成<gray>（擁有就有、不用戴，帳號裡每個角色都有）：");
-        final List<String> bonus = tw.exilecore.ascendancy.StatLines.describeAll(service.titleBonus(player));
+        final List<String> bonus = new ArrayList<>(tw.exilecore.ascendancy.StatLines.describeAll(service.titleBonus(player)));
+        for (final String id : owned) {
+            final String extra = service.sourceBonus(id); // 2026-10-21：燃星者的經驗加成另外算，也列進來
+            if (extra != null) {
+                bonus.add(extra + "（" + service.title(id).name() + "）");
+            }
+        }
         if (bonus.isEmpty()) {
             header.add("<dark_gray>  還沒有（拿到稱號就會有）");
         }
@@ -127,7 +133,9 @@ final class TitleMenu extends Menu {
         final List<String> lore = new ArrayList<>();
         final boolean shop = service.isShopTitle(title.id());
         final EventConfig.Theme theme = shop ? null : eventTheme(title.id());
-        final String bonus = MeritShop.bonusText(title);
+        final String own = MeritShop.bonusText(title);
+        final String extra = service.sourceBonus(title.id()); // 2026-10-21：燃星者的經驗加成不是修飾器，另外問來源
+        final String bonus = own == null ? extra : extra == null ? own : own + "、" + extra;
         if (owned) {
             lore.add(worn ? "<green>戴著" : "<gray>擁有");
             lore.add("<gray>來源：" + sourceOf(title, shop, theme));
@@ -140,8 +148,8 @@ final class TitleMenu extends Menu {
             return worn ? highlight(icon) : icon;
         }
         lore.add("<dark_gray>還沒有");
-        if (bonus != null) {
-            lore.add("<gray>拿到就有的永久加成：<white>" + bonus);
+        if (own != null) {
+            lore.add("<gray>拿到就有的永久加成：<white>" + own);
         }
         final List<String> howTo = shop ? null : service.sourceHowTo(player, title.id());
         if (howTo != null) {

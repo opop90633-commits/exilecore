@@ -82,7 +82,7 @@ final class EventPinnacleMenu extends Menu {
         lore.add("<gray>" + ItemRenderer.escape(map.lore()));
         lore.add("<gray>Boss：<#c77dff>" + ItemRenderer.escape(boss.name()) + (done ? " <green>✔ 已打贏" : ""));
         lore.add("<gray>怪物等級 <white>" + config.pinnacleStats(map.id(), pinnacle).monsterLevel() + "<gray>・" + pinnacle.attempts() + " 道門（" + pinnacle.attempts() + " 次挑戰）");
-        lore.add(MapService.recommendedText(service.pinnacleRecommendedDps(map))); // 2026-10-21
+        lore.add(MapService.recommendedText(service.pinnacleRecommendedDps(map), pinnacle.dpsCap())); // 2026-10-21
         lore.add("");
         final String ticketName = ticket == null ? pinnacle.ticket() : ticket.name();
         lore.add((have >= 1 ? "<green>" : "<red>") + "入場券：" + ItemRenderer.escape(ticketName) + " ×" + have + "<gray>（開一次用 1 張）");

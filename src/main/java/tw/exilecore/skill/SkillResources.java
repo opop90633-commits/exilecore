@@ -116,7 +116,8 @@ public final class SkillResources implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onHit(final HitEvent event) {
         if (!(event.attacker() instanceof Player player) || !event.result().hit() || event.result().blocked()
-                || event.skill() == null || !event.skill().isAttack() || !event.skill().tags().contains(Tags.MELEE)) {
+                || event.skill() == null || !event.skill().isAttack() || !event.skill().tags().contains(Tags.MELEE)
+                || event.skill().tags().contains(Tags.TOTEM_HIT)) { // 2026-10-21：圖騰、英靈打中的不給你怒氣、連擊（照 PoE）
             return;
         }
         final StatSheet sheet = plugin.players().sheet(player);

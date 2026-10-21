@@ -54,6 +54,33 @@ class RadiusJewelTest {
         assertFalse(JewelSockets.radiusModifiers(tree, socket, Set.of("far"), jewel).stream().anyMatch(m -> m.stat().equals("attr.str")));
     }
 
+    /** 2026-10-21：「也各給」最多算 {@link JewelSockets#MAX_RADIUS_SMALLS} 個小天賦（天賦樹比 PoE2 密，半徑 4 會到 30 幾個）。 */
+    @Test
+    void radiusGrantIsCappedAtMaxSmalls() {
+        final StringBuilder json = new StringBuilder("{\"version\": 1, \"starts\": {\"warrior\": \"s\"}, \"nodes\": ["
+                + "{\"id\": \"s\", \"type\": \"start\", \"x\": -9, \"y\": -9},"
+                + "{\"id\": \"sock\", \"type\": \"socket\", \"x\": 0, \"y\": 0}");
+        final java.util.Set<String> allocated = new java.util.HashSet<>();
+        for (int x = -4; x <= 4; x++) {
+            for (int y = -4; y <= 4; y++) {
+                if (x == 0 && y == 0) {
+                    continue;
+                }
+                json.append(",{\"id\": \"n").append(x).append('_').append(y).append("\", \"type\": \"small\", \"x\": ").append(x)
+                        .append(", \"y\": ").append(y).append('}');
+                allocated.add("n" + x + "_" + y);
+            }
+        }
+        json.append("]}");
+        final PassiveTree tree = PassiveTree.load(new StringReader(json.toString()));
+        final List<Modifier> jewel = List.of(
+                new Modifier(StatKeys.RADIUS_PREFIX + "crit.bonus", ModType.INCREASED, 0.1, Set.of(), "珠寶"),
+                new Modifier(StatKeys.JEWEL_LOCAL_RADIUS, ModType.FLAT, 2, Set.of(), "珠寶"));
+        final List<Modifier> out = JewelSockets.radiusModifiers(tree, tree.node("sock"), allocated, jewel);
+        final Modifier crit = out.stream().filter(m -> m.stat().equals("crit.bonus")).findFirst().orElseThrow();
+        assertEquals(0.1 * JewelSockets.MAX_RADIUS_SMALLS, crit.value(), 1e-9, "範圍內 60 個小天賦也只算 " + JewelSockets.MAX_RADIUS_SMALLS + " 個");
+    }
+
     @Test
     void biggerRadiusReachesFurtherAndEffectScalesNodes() {
         final PassiveTree tree = tree();

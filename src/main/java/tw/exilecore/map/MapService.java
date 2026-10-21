@@ -1106,9 +1106,20 @@ public final class MapService {
                 config.finalLifeMultiplier(config.tiers().max())) / RECOMMENDED_SECONDS;
     }
 
-    /** 「建議打 Boss 每秒 150 萬」的那一行（MiniMessage）。 */
+    /** 「建議打 Boss 每秒 50 萬」的那一行（MiniMessage）。 */
     public static String recommendedText(final double dps) {
-        return dps <= 0 ? "" : "<gray>建議打 Boss 每秒 <gold>" + BossDpsCommand.wan(dps) + "</gold><dark_gray>（單人約 3 分半打完；組隊血量照人數加）";
+        return recommendedText(dps, 0);
+    }
+
+    /** 同上，再寫每秒傷害從多少開始遞減（2026-10-21 晚；cap ≤ 0 = 不遞減，不寫）。 */
+    public static String recommendedText(final double dps, final double cap) {
+        return dps <= 0 ? "" : "<gray>建議打 Boss 每秒 <gold>" + BossDpsCommand.wan(dps) + "</gold><dark_gray>（單人約 3 分半打完；組隊血量照人數加"
+                + (cap > 0 ? "；每秒超過 " + BossDpsCommand.wan(cap) + " 的部分會遞減" : "") + "）";
+    }
+
+    /** 終局、極境、巔峰的列表底下那一行：建議每秒是什麼意思、從多少開始遞減（2026-10-21 晚）。 */
+    public static String recommendedNote(final double cap) {
+        return "<dark_gray>建議每秒＝單人約 3 分半打完" + (cap > 0 ? "；每秒超過 " + BossDpsCommand.wan(cap) + " 的部分會遞減" : "");
     }
 
     public int finalLevel(final int tier) {

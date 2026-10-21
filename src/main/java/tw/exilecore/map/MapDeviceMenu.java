@@ -279,7 +279,8 @@ public final class MapDeviceMenu extends Menu {
                 List.of("<gray>要用掉 " + config.drops().fragmentCost() + " 片" + (fragment == null ? "天穹碎片" : ItemRenderer.escape(fragment.name())),
                         "<gray>最高能開到你完成過的最高階（T" + best + "）",
                         "<dark_gray>階級越高 Boss 越強，掉的地圖與裝備越好"
-                                + (finals.size() > openable.size() ? "；還沒解鎖的 Boss 不在清單裡（地圖裝置的終局按鈕寫著要先打贏誰）" : "")),
+                                + (finals.size() > openable.size() ? "；還沒解鎖的 Boss 不在清單裡（地圖裝置的終局按鈕寫著要先打贏誰）" : ""),
+                        MapService.recommendedNote(config.finalDpsCap())), // 2026-10-21 晚
                 fields, "打開傳送門",
                 answers -> {
                     final int tier;
@@ -324,7 +325,7 @@ public final class MapDeviceMenu extends Menu {
         lore.add("<gray>固定開在 T" + config.tiers().max() + " 再高幾級（怪物等級 <white>"
                 + config.pinnacleStats(map.id(), pinnacle).monsterLevel() + "<gray>），只有 Boss 房");
         lore.add("<red>每一門每個人只能走進去一次<dark_gray>（死了或離開要等這一門結束、走下一門）");
-        lore.add(MapService.recommendedText(service.pinnacleRecommendedDps(map))); // 2026-10-21
+        lore.add(MapService.recommendedText(service.pinnacleRecommendedDps(map), pinnacle.dpsCap())); // 2026-10-21
         lore.add("");
         final String missing = Atlas.missingRequirements(config, map, completed);
         if (!missing.isEmpty()) {
@@ -387,6 +388,7 @@ public final class MapDeviceMenu extends Menu {
                     + " <dark_gray>" + ItemRenderer.escape(ticket == null ? pinnacle.ticket() : ticket.name())
                     + " ×" + have + (done ? " <green>已打贏" : ""));
         }
+        lore.add(MapService.recommendedNote(config.pinnacle(pinnacles.getFirst().id()).dpsCap())); // 2026-10-21 晚
         lore.add("");
         lore.add("<gray>打贏過 <white>" + defeated + "<gray> / " + pinnacles.size() + "・入場券共 <white>" + tickets + "<gray> 張");
         if (openable > 0) {
@@ -470,6 +472,7 @@ public final class MapDeviceMenu extends Menu {
                     + (!completed.contains(map.id()) ? " <dark_gray>先打贏一般的" + ItemRenderer.escape(map.boss().name()) : "")
                     + (sameKey ? "" : " <dark_gray>" + keyText(uber)));
         }
+        lore.add(MapService.recommendedNote(first.dpsCap())); // 2026-10-21 晚
         lore.add("");
         if (sameKey) {
             lore.add((have >= first.keyCost() ? "<green>" : "<red>") + "需要 " + first.keyCost() + " 個" + ItemRenderer.escape(keyName)

@@ -180,6 +180,12 @@ public final class LevelRaceService {
             }
 
             @Override
+            public String bonusText(final String id) {
+                return AscendancyConfig.LevelRace.REACH_TITLE_ID.equals(id) && race().reachExperience() > 0
+                        ? "經驗 +" + number(race().reachExperience()) + "%" : null;
+            }
+
+            @Override
             public String sourceName(final String id) {
                 if (AscendancyConfig.LevelRace.FIRST_TITLE_ID.equals(id)) {
                     return "全服第一個 " + race().level() + " 級";

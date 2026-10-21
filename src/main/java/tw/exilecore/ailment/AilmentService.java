@@ -290,7 +290,7 @@ public final class AilmentService {
                 entry.state.addIgnite(dps, now + ticks(seconds), attacker instanceof Player ? attacker.getUniqueId() : null);
                 feedback(defender, AilmentType.IGNITE);
                 if (attacker instanceof Player triggerer && plugin.skills() != null) {
-                    plugin.skills().triggers().ailment(triggerer, defender, AilmentType.IGNITE, skill.id()); // 主要寶石：元素異常時施放（2026-10）
+                    if (!skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) plugin.skills().triggers().ailment(triggerer, defender, AilmentType.IGNITE, skill.id()); // 主要寶石：元素異常時施放（2026-10）
                 }
                 chargeEvent(attacker, "ignite", attack, context, defender); // 戰星（2026-10）
                 changed = true;
@@ -325,7 +325,7 @@ public final class AilmentService {
                         refreshAt(defender, entry, entry.state.frozenUntil() - now); // 解凍準時（不用等下一次半秒更新）
                         feedback(defender, AilmentType.FREEZE);
                         if (attacker instanceof Player triggerer && plugin.skills() != null) {
-                            plugin.skills().triggers().ailment(triggerer, defender, AilmentType.FREEZE, skill.id()); // 主要寶石（2026-10）
+                            if (!skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) plugin.skills().triggers().ailment(triggerer, defender, AilmentType.FREEZE, skill.id()); // 主要寶石（2026-10）
                             plugin.skills().procEvent(triggerer, skill.id(), "freeze", null, defender); // 輔助：凍結時
                         }
                         chargeEvent(attacker, "freeze", attack, context, defender); // 戰星（2026-10）
@@ -348,7 +348,7 @@ public final class AilmentService {
                 if (entry.state.applyShock(effect, now + ticks(seconds), now)) {
                     feedback(defender, AilmentType.SHOCK);
                     if (attacker instanceof Player triggerer && plugin.skills() != null) {
-                        plugin.skills().triggers().ailment(triggerer, defender, AilmentType.SHOCK, skill.id()); // 主要寶石（2026-10）
+                        if (!skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) plugin.skills().triggers().ailment(triggerer, defender, AilmentType.SHOCK, skill.id()); // 主要寶石（2026-10）
                     }
                     chargeEvent(attacker, "shock", attack, context, defender); // 戰星（2026-10）
                     changed = true;
@@ -1106,7 +1106,9 @@ public final class AilmentService {
     /** 異常、重暈給的戰星（2026-10）：只算玩家自己打的（召喚物的不算）；attack 是那一下技能的屬性表。 */
     private void chargeEvent(final LivingEntity attacker, final String event, final StatSheet attack, final Set<String> context,
                              final LivingEntity defender) {
-        if (attacker instanceof Player player && plugin.combat() != null && plugin.combat().charges() != null) {
+        // 2026-10-21：圖騰、英靈造成的（點燃、凍結、感電、重暈）不給你戰星（照 PoE：圖騰的擊中不算你的）
+        if (attacker instanceof Player player && plugin.combat() != null && plugin.combat().charges() != null
+                && !context.contains(tw.exilecore.stats.Tags.TOTEM_HIT)) {
             plugin.combat().charges().onEvent(player, event, attack, context, defender);
         }
     }

@@ -158,7 +158,8 @@ public final class CombatListener implements Listener {
     }
 
     private java.util.Map<String, Double> chargeChances(final boolean own, final SkillProfile skill, final StatSheet attackerSheet) {
-        if (!own || charges == null || Thorns.ID.equals(skill.id()) || KillEffects.EXPLOSION.equals(skill.id()) || Presence.BURN_ID.equals(skill.id())) {
+        if (!own || charges == null || Thorns.ID.equals(skill.id()) || KillEffects.EXPLOSION.equals(skill.id()) || Presence.BURN_ID.equals(skill.id())
+                || totemHit(skill)) { // 2026-10-21：圖騰、英靈打中的不給你戰星（照 PoE：圖騰的擊中不算你的）
             return java.util.Map.of();
         }
         return charges.hitChances(skill.effective(attackerSheet), skill.tags());
@@ -632,13 +633,13 @@ public final class CombatListener implements Listener {
                 if (ailments.breakArmour(defender, defenderMonster, result.outgoing().get(DamageType.PHYSICAL), breakPercent, rawArmour)
                         && plugin.skills() != null) {
                     plugin.skills().procEvent((Player) attacker, skill.id(), "armour_broken", null, defender); // 輔助：完全破甲時（2026-10）
-                    if (charges != null) {
+                    if (charges != null && !totemHit(skill)) { // 2026-10-21：圖騰、英靈造成的完全破甲不給你戰星
                         charges.onEvent((Player) attacker, "armour_broken", breakSheet, skill.tags(), defender); // 戰星：完全破甲時（2026-10）
                     }
                 }
             }
         }
-        if (trinityHit && result.hit() && !result.blocked()) {
+        if (trinityHit && result.hit() && !result.blocked() && !totemHit(skill)) { // 2026-10-21：圖騰、英靈打中的不疊共鳴（加成照吃）
             trinity.hit(attacker.getUniqueId(), result.dealt(), hitTick);
         }
         final HitEvent hitEvent = new HitEvent(attacker, defender, skill, result, credit);
@@ -668,7 +669,7 @@ public final class CombatListener implements Listener {
         }
         // 2026-10-17：真的打中了才用掉虛步、啟動背水（以前算倍率時就用掉，被閃掉、擋掉也一樣）
         if (signatures != null) {
-            if (attackerIsPlayer) {
+            if (attackerIsPlayer && !totemHit(skill)) { // 2026-10-21：圖騰、英靈打中的不用掉你的虛步
                 signatures.hitLanded((Player) attacker, attackerSheet, defender);
             }
             if (defenderIsPlayer) {
@@ -768,7 +769,7 @@ public final class CombatListener implements Listener {
                 // 2026-10：戰鬥數據（側欄的「輸出」）也照 Boss 每秒傷害上限之後的算：以前是上限前的，跟傷害排行、實際扣的血對不起來
                 final tw.exilecore.stats.DamagePacket shown = total < result.total() && result.total() > 0
                         ? new tw.exilecore.stats.DamagePacket(result.dealt()).scale(total / result.total()) : result.dealt();
-                pendingNumbers.put(defender.getUniqueId(), new PendingNumber(credit, total, result.crit(), shown, attackerIsPlayer,
+                pendingNumbers.put(defender.getUniqueId(), new PendingNumber(credit, total, result.crit(), shown, attackerIsPlayer && !totemHit(skill), // 2026-10-21：圖騰的暴擊不給你銳星
                         chargeChances(attackerIsPlayer, skill, attackerSheet), meterName(skill)));
             }
         }
@@ -780,7 +781,7 @@ public final class CombatListener implements Listener {
                 plugin.maps().phaseLocked(defender);
             }
         }
-        if (signatures != null && attackerIsPlayer) {
+        if (signatures != null && attackerIsPlayer && !totemHit(skill)) { // 2026-10-21：圖騰、英靈打中的不觸發血宴、雷魂（照 PoE）
             signatures.dealt((Player) attacker, attackerSheet, skill, result); // 雷魂、血宴
         }
         feedback(attacker, defender, result);
@@ -941,7 +942,7 @@ public final class CombatListener implements Listener {
         if (credit == null) {
             return;
         }
-        pendingNumbers.put(defender.getUniqueId(), new PendingNumber(credit, result.total(), result.crit(), result.dealt(), attackerIsPlayer,
+        pendingNumbers.put(defender.getUniqueId(), new PendingNumber(credit, result.total(), result.crit(), result.dealt(), attackerIsPlayer && !totemHit(skill),
                 chargeChances(attackerIsPlayer, skill, attackerSheet), meterName(skill)));
         if (!attackerIsPlayer || totemHit(skill)) {
             return; // 2026-10-18：圖騰打的不給玩家偷取、擊中回復生命（照 PoE）

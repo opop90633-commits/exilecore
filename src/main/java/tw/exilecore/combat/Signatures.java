@@ -172,7 +172,8 @@ public final class Signatures {
         if (has(sheet, StatKeys.SIG_LEGION)) {
             more *= 1 + 0.06 * allies.getOrDefault(id, 0);
         }
-        if (has(sheet, StatKeys.SIG_VOID_STEP) && voidStepUntil.getOrDefault(id, 0L) >= now) {
+        if (has(sheet, StatKeys.SIG_VOID_STEP) && voidStepUntil.getOrDefault(id, 0L) >= now
+                && !skill.tags().contains(Tags.TOTEM_HIT)) { // 2026-10-21：虛步只給你自己打的那一下
             more *= 1.60; // 2026-10-17：這裡只看，真的打中才用掉（hitLanded）——以前被閃掉、擋掉也用掉
         }
         if (has(sheet, StatKeys.SIG_GODSLAYER) && targetMonster != null) {

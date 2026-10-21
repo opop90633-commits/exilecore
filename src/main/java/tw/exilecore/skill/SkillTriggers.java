@@ -38,11 +38,13 @@ public final class SkillTriggers implements Listener {
         if (!event.result().hit() || event.result().blocked()) {
             return;
         }
-        if (event.attacker() instanceof Player player && event.result().crit() && event.skill() != null
+        // 2026-10-21：圖騰、英靈打中的不給主要寶石能量、不用掉狙擊印記（照 PoE：圖騰的擊中不算你的）；引爆毒霧照樣
+        final boolean totem = event.skill() != null && event.skill().tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT);
+        if (!totem && event.attacker() instanceof Player player && event.result().crit() && event.skill() != null
                 && !event.skill().id().contains(MetaGems.TRIGGERED_SUFFIX)) {
             service.metas().gain(player, MetaSpec.Kind.CRIT, service.metas().power(event.defender()), event.defender());
         }
-        if (event.attacker() instanceof Player player && event.result().crit() && plugin.combat() != null
+        if (!totem && event.attacker() instanceof Player player && event.result().crit() && plugin.combat() != null
                 && plugin.combat().debuffs().remove(event.defender().getUniqueId(), "hunters_mark", player.getUniqueId(),
                 plugin.getServer().getCurrentTick())) {
             // 狙擊印記（2026-10 PoE2）：暴擊用掉印記，給一顆怒星

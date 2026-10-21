@@ -218,6 +218,13 @@ public final class JewelSockets {
     /** 半徑珠寶的基本半徑（格）。 */
     public static final double BASE_RADIUS = 2;
 
+    /**
+     * 2026-10-21：「範圍內的小天賦也各給」最多算幾個小天賦。天賦樹是格子排的、比 PoE2 密：半徑 2 大約 11 個小天賦，
+     * 「巨大」（半徑 4）會到 36 個，每顆給的量是 PoE2 的三倍。半徑大一點還是有用（比較好湊滿），但最多算這麼多。
+     * 「範圍內小天賦／核心效果增加 x%」不受影響（那是放大已經配的天賦）。
+     */
+    public static final int MAX_RADIUS_SMALLS = 15;
+
     /** 珠寶孔周圍半徑內（含對角）的節點。 */
     public static List<PassiveNode> nodesInRadius(final PassiveTree tree, final PassiveNode socket, final double radius) {
         final List<PassiveNode> list = new ArrayList<>();
@@ -277,7 +284,7 @@ public final class JewelSockets {
             if (mod.stat().startsWith(tw.exilecore.stats.StatKeys.RADIUS_PREFIX)) {
                 if (smalls > 0) {
                     list.add(new Modifier(mod.stat().substring(tw.exilecore.stats.StatKeys.RADIUS_PREFIX.length()), mod.type(),
-                            mod.value() * smalls, mod.tags(), mod.source()));
+                            mod.value() * Math.min(smalls, MAX_RADIUS_SMALLS), mod.tags(), mod.source()));
                 }
             } else if (!mod.stat().startsWith("jewel.local.")) {
                 list.add(mod);

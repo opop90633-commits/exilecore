@@ -213,9 +213,9 @@ class UberTest {
         }
         // 極境開在最高階（也吃 ×11.7），再乘自己的倍率（2026-10 每個極境各自重調，原本都是 ×4）：比 T16 終局更硬
         final java.util.Map<String, Double> uberLife = java.util.Map.of(
-                "sky_crucible", 95.1, "frost_throne", 95.1, "bone_throne", 95.1, "ember_citadel", 95.1); // 2026-10-21：照打 Boss 每秒 300 萬打 3 分半
-        // 2026-10-21：一般終局照 tier_life_table（T16 ×585 = 打 Boss 每秒 150 萬打 3 分半），T10 以下跟 tier_life 一樣
-        assertEquals(585, config.finalBossLifeMultiplier(max), 1e-9);
+                "sky_crucible", 31.7, "frost_throne", 31.7, "bone_throne", 31.7, "ember_citadel", 31.7); // 2026-10-21 晚：照打 Boss 每秒 100 萬打 3 分半
+        // 2026-10-21 晚：一般終局照 tier_life_table（T16 ×195 = 打 Boss 每秒 50 萬打 3 分半），T10 以下跟 tier_life 一樣
+        assertEquals(195, config.finalBossLifeMultiplier(max), 1e-9);
         for (int tier = 1; tier <= 10; tier++) {
             assertEquals(config.finalLifeMultiplier(tier), config.finalBossLifeMultiplier(tier), 0.01, "T" + tier);
         }
@@ -351,23 +351,22 @@ class UberTest {
         // 2026-10：每秒傷害上限統一 15 萬（血量照終局 5 萬、極境 10 萬、巔峰 15 萬打 3 分半）；超過的部分遞減（上限～2 倍算 30%、2～3 倍算 10%、3～4 倍算 5%、4 倍以上算 1%）
         for (final MapConfig.MapDef map : config.regularFinals()) {
             final MapConfig.Uber uber = config.uber(map.id());
-            assertEquals(12000000, uber.dpsCap(), 1e-9, map.id()); // 2026-10-21：1200 萬起線性遞減
-            assertEquals(List.of(new MapConfig.DpsTier(12000000, 0.8), new MapConfig.DpsTier(15000000, 0.55), new MapConfig.DpsTier(18000000, 0.3), new MapConfig.DpsTier(21000000, 0.15), new MapConfig.DpsTier(24000000, 0.05)), uber.dpsOver(), map.id());
+            assertEquals(4000000, uber.dpsCap(), 1e-9, map.id()); // 2026-10-21 晚：一律 400 萬起遞減
+            assertEquals(List.of(new MapConfig.DpsTier(4000000, 0.8), new MapConfig.DpsTier(7000000, 0.55), new MapConfig.DpsTier(10000000, 0.3), new MapConfig.DpsTier(13000000, 0.15), new MapConfig.DpsTier(16000000, 0.05)), uber.dpsOver(), map.id());
         }
-        // 2026-10-21：上限拉到目標的 2 倍（終局 150 萬 → 300 萬、極境 300 萬 → 600 萬、巔峰 600 萬 → 1200 萬）
-        assertEquals(12000000, config.finalDpsCap(), 1e-9, "一般終局");
-        assertEquals(List.of(new MapConfig.DpsTier(12000000, 0.8), new MapConfig.DpsTier(15000000, 0.55), new MapConfig.DpsTier(18000000, 0.3), new MapConfig.DpsTier(21000000, 0.15), new MapConfig.DpsTier(24000000, 0.05)), config.finalDpsOver());
-        assertEquals(12000000, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
-        // 金庫之主 300 萬、淵鯨 600 萬打 3 分半：都從目標的 2 倍開始遞減（開天者、南瓜王、潮汐統帥不遞減）
-        assertEquals(6000000, config.heistDpsCap(), 1e-9, "金庫之主");
-        assertEquals(List.of(new MapConfig.DpsTier(6000000, 0.3), new MapConfig.DpsTier(12000000, 0.1), new MapConfig.DpsTier(24000000, 0.03), new MapConfig.DpsTier(48000000, 0.01)), config.heistDpsOver());
-        assertEquals(12000000, config.whaleDpsCap(), 1e-9, "淵鯨");
-        assertEquals(List.of(new MapConfig.DpsTier(12000000, 0.3), new MapConfig.DpsTier(24000000, 0.1), new MapConfig.DpsTier(48000000, 0.03), new MapConfig.DpsTier(96000000, 0.01)), config.whaleDpsOver());
-        // 終局 19.1（T16 再 ×585）、極境再 ×95.1、巔峰 3587（再 ×11.7）：打 Boss 每秒 150／300／600 萬打 3 分半
+        // 2026-10-21 晚：終局、極境、巔峰、金庫之主、淵鯨一律 400 萬起遞減（開天者、南瓜王、潮汐統帥不遞減）
+        assertEquals(4000000, config.finalDpsCap(), 1e-9, "一般終局");
+        assertEquals(List.of(new MapConfig.DpsTier(4000000, 0.8), new MapConfig.DpsTier(7000000, 0.55), new MapConfig.DpsTier(10000000, 0.3), new MapConfig.DpsTier(13000000, 0.15), new MapConfig.DpsTier(16000000, 0.05)), config.finalDpsOver());
+        assertEquals(4000000, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
+        assertEquals(4000000, config.heistDpsCap(), 1e-9, "金庫之主");
+        assertEquals(List.of(new MapConfig.DpsTier(4000000, 0.8), new MapConfig.DpsTier(7000000, 0.55), new MapConfig.DpsTier(10000000, 0.3), new MapConfig.DpsTier(13000000, 0.15), new MapConfig.DpsTier(16000000, 0.05)), config.heistDpsOver());
+        assertEquals(4000000, config.whaleDpsCap(), 1e-9, "淵鯨");
+        assertEquals(List.of(new MapConfig.DpsTier(4000000, 0.8), new MapConfig.DpsTier(7000000, 0.55), new MapConfig.DpsTier(10000000, 0.3), new MapConfig.DpsTier(13000000, 0.15), new MapConfig.DpsTier(16000000, 0.05)), config.whaleDpsOver());
+        // 終局 19.1（T16 再 ×195）、極境再 ×31.7、巔峰 1195.7（再 ×11.7）：打 Boss 每秒 50／100／200 萬打 3 分半
         for (final MapConfig.MapDef map : config.regularFinals()) {
             assertEquals(19.1, map.boss().life(), 1e-9, map.id());
         }
-        assertEquals(3587, config.find("awakener").boss().life(), 1e-9);
+        assertEquals(1195.7, config.find("awakener").boss().life(), 1e-9);
         final MapConfig.Uber bare = MapConfig.parseUber(YamlNode.load("test.yml", new java.io.StringReader("name: x\n")));
         assertEquals(0, bare.dpsCap(), 1e-9, "沒寫就不限");
     }
