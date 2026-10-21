@@ -50,6 +50,11 @@ public record DeploySpec(Kind kind, double duration, double interval, double ran
         buff = buff == null ? List.of() : List.copyOf(buff);
     }
 
+    /** 2026-10-22：換一個持續時間（星咒圖騰上的持久、久地只讓圖騰撐更久）。 */
+    public DeploySpec withDuration(final double seconds) {
+        return new DeploySpec(kind, seconds, interval, range, max, arm, trigger, root, rings, head, buff);
+    }
+
     /** 圖騰施法輔助套在一般法術上的預設值。 */
     public static DeploySpec spellTotem(final double castTime) {
         return new DeploySpec(Kind.TOTEM, 8, Math.max(0.4, castTime), 12, 1, 0, 0, 0, 0, "TOTEM_OF_UNDYING", List.of());

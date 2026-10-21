@@ -53,6 +53,26 @@ public final class Debuffs {
         list.add(debuff);
     }
 
+    /** 放過的印記代號（2026-10-22：同一個玩家同時只能有一個印記）。 */
+    private final java.util.Set<String> markIds = new java.util.HashSet<>();
+
+    /**
+     * 2026-10-22：照 PoE2，一個玩家同時只能有一個印記（引雷印、霜縛印、血嗅印、獵殺印記、處決印記…）：
+     * 放新的印記時，這個玩家放在任何敵人身上的其他印記（包括同一種放在別隻身上的）都拿掉。詛咒、其他減益不受影響。
+     */
+    public void applyMark(final UUID target, final Debuff mark) {
+        markIds.add(mark.id());
+        final Iterator<Map.Entry<UUID, List<Debuff>>> iterator = entries.entrySet().iterator();
+        while (iterator.hasNext()) {
+            final List<Debuff> list = iterator.next().getValue();
+            list.removeIf(existing -> markIds.contains(existing.id()) && existing.source().equals(mark.source()));
+            if (list.isEmpty()) {
+                iterator.remove();
+            }
+        }
+        apply(target, mark);
+    }
+
     /** 攻擊方打這個目標時，受到的傷害倍率（1.25 = 增加 25%；好幾條相加）。 */
     public double takenMultiplier(final UUID target, final UUID attacker, final long now) {
         return takenMultiplier(target, attacker, now, java.util.Set.of());

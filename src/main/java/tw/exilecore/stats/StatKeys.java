@@ -303,8 +303,9 @@ public final class StatKeys {
     }
     /** FLAT：把「全部」傷害的 x% 額外獲得為這個類型（PoE2「獲得 x% 傷害為額外火焰傷害」；跟只算物理的 damage.gain 不同）。 */
     public static String damageExtra(final tw.exilecore.stats.DamageType type) {
-        return "damage.extra." + type.tag();
+        return DAMAGE_EXTRA + type.tag();
     }
+    public static final String DAMAGE_EXTRA = "damage.extra.";
     /**
      * FLAT：每 100 點最大魔力，把「全部」傷害的 x% 額外獲得為這個類型（2026-10，照 PoE2 的 Archmage：祕法之心）。
      * 算法跟 {@link #damageExtra} 一樣，只是百分比 = x × 最大魔力 ÷ 100；引導技能不算。

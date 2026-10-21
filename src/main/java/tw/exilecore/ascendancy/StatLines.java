@@ -82,6 +82,11 @@ public final class StatLines {
         for (final String signature : tw.exilecore.stats.SignatureText.TEXT.keySet()) {
             put(signature, "招牌天賦", FLAT, false);
         }
+        // 2026-10-22：獲得 x% 傷害為額外的某元素傷害、某元素的抗性上限（以前是招牌天賦的寫死說明）
+        for (final String type : List.of(Tags.FIRE, Tags.COLD, Tags.LIGHTNING, Tags.CHAOS)) {
+            put(StatKeys.DAMAGE_EXTRA + type, "額外" + type, FLAT, false);
+            put(StatKeys.RESIST_MAX + "." + type, "抗性上限", FLAT, false);
+        }
         put(StatKeys.SKILL_PROJECTILES, "投射物", FLAT, false);
         put(StatKeys.SKILL_PROJECTILE_SPEED, "投射物速度", SCALED, false);
         put(StatKeys.SKILL_PIERCE, "穿透", FLAT, false);
@@ -376,6 +381,18 @@ public final class StatLines {
             // 2026-10-21：以前寫死「增加 35%」，兩個節點（補刀、斬首）加起來 70% 也只顯示 35%
             return "對低血（35% 以下）的敵人增加 " + number(value) + "% 擊中傷害";
         }
+        if (stat.startsWith(StatKeys.DAMAGE_EXTRA) && !stat.startsWith(StatKeys.DAMAGE_EXTRA_PER_MANA)) {
+            final String type = elementWord(stat.substring(StatKeys.DAMAGE_EXTRA.length()));
+            if (type != null) {
+                return "獲得 " + number(value) + "% 傷害為額外的" + type + "傷害";
+            }
+        }
+        if (stat.startsWith(StatKeys.RESIST_MAX + ".")) {
+            final String type = elementWord(stat.substring(StatKeys.RESIST_MAX.length() + 1));
+            if (type != null) {
+                return signed(value) + "% 最大" + type + "抗性";
+            }
+        }
         final String signature = tw.exilecore.stats.SignatureText.TEXT.get(stat);
         if (signature != null) {
             return signature;
@@ -549,6 +566,11 @@ public final class StatLines {
     }
 
     /** 整數不帶小數點，其他留一位。 */
+    /** fire／cold／lightning／chaos → 火焰／冰冷／閃電／混沌（其他回傳 null）。 */
+    private static String elementWord(final String type) {
+        return GAINS.get(type);
+    }
+
     static String number(final double value) {
         final double rounded = Math.round(value * 10) / 10.0;
         return rounded == Math.rint(rounded) ? Long.toString(Math.round(rounded)) : String.format(Locale.ROOT, "%.1f", rounded);

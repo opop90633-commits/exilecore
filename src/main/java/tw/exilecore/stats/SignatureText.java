@@ -66,10 +66,8 @@ public final class SignatureText {
         TEXT.put(StatKeys.FLAG_ETERNAL_YOUTH, "生息輪迴：生命像能量護盾一樣回充，能量護盾不回充");
         TEXT.put(StatKeys.FLAG_ELDRITCH_BATTERY, "魂池逆流：能量護盾全部變成最大魔力");
         TEXT.put(StatKeys.FLAG_CHAOS_IMMUNE, "無垢之軀：免疫混沌傷害，最大生命變成 1");
-        TEXT.put("resist.max.chaos", "+10% 最大混沌抗性");
-        TEXT.put("damage.extra.lightning", "獲得 10% 傷害為額外閃電傷害");
-        TEXT.put("damage.extra.cold", "獲得 10% 傷害為額外冰冷傷害");
-        TEXT.put("damage.extra.chaos", "獲得 4% 傷害為額外混沌傷害");
+        // 2026-10-22：resist.max.chaos、damage.extra.* 以前寫死「10%」「4%」，戒指、觸媒再加上去也照樣顯示 10%；
+        // 改成照數值寫（StatLines.describe），不放在這裡
     }
 
     private SignatureText() {

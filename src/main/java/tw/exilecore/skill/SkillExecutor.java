@@ -867,7 +867,8 @@ final class SkillExecutor {
         for (final ScaledMod effect : params.effects()) {
             mods.add(effect.toModifier(build.level(), build.auraEffect(), build.definition().name()));
         }
-        plugin.combat().debuffs().apply(target.getUniqueId(), new Debuffs.Debuff(build.definition().id(), player.getUniqueId(), until,
+        // 2026-10-22：同時只能有一個印記，放新的會拿掉舊的（以前引雷印、霜縛印、血嗅印能同時掛在同一隻身上）
+        plugin.combat().debuffs().applyMark(target.getUniqueId(), new Debuffs.Debuff(build.definition().id(), player.getUniqueId(), until,
                 params.taken() / 100.0 * build.auraEffect(), params.selfOnly(), null, mods, 0));
         visuals.mark(build.definition().visual(), target);
     }

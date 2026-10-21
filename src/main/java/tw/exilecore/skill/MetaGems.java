@@ -241,8 +241,36 @@ public final class MetaGems {
         final List<SupportDefinition> supports = new ArrayList<>();
         supports.add(carrier); // 放第一個：圖騰施法優先（插槽法術自己掛了陷阱施法的話那顆不算）
         supports.addAll(service.supportsOf(socket.spellEntry()));
-        return SkillBuild.of(service.config(), socket.spell(), socket.spellEntry().level(), state.level(), false, supports,
+        final SkillBuild build = SkillBuild.of(service.config(), socket.spell(), socket.spellEntry().level(), state.level(), false, supports,
                 state.weaponTags(), sheet, SkillService.resonantOf(socket.spellEntry())); // 2026-10-18：共鳴的專屬輔助不佔名額
+        // 2026-10-22：主要寶石上加持續時間的輔助（持久、久地…）只讓圖騰撐更久，不改插槽法術自己的持續時間（以前完全沒作用）
+        final double factor = totemDurationFactor(service.supportsOf(socket.metaEntry()));
+        if (build.deploy() != null && Math.abs(factor - 1) > 1e-9) {
+            return build.withDeploy(build.deploy().withDuration(build.deploy().duration() * factor));
+        }
+        return build;
+    }
+
+    /** 主要寶石上沒帶到圖騰施法的輔助裡，持續時間的倍率（增加的相加、更多的相乘；最低 0.1）。 */
+    static double totemDurationFactor(final List<SupportDefinition> metaSupports) {
+        double increased = 0;
+        double more = 1;
+        for (final SupportDefinition support : metaSupports) {
+            if (support == null || carriesToTotem(support)) {
+                continue; // 帶到圖騰施法上的（繁置）已經算在插槽法術裡
+            }
+            for (final Modifier modifier : support.modifiers()) {
+                if (!modifier.stat().equals(StatKeys.SKILL_DURATION) || !modifier.tags().isEmpty()) {
+                    continue;
+                }
+                if (modifier.type() == tw.exilecore.stats.ModType.INCREASED) {
+                    increased += modifier.value();
+                } else if (modifier.type() == tw.exilecore.stats.ModType.MORE) {
+                    more *= 1 + modifier.value();
+                }
+            }
+        }
+        return Math.max(0.1, (1 + increased) * more);
     }
 
     /** 法術圖騰寶石上會帶到圖騰施法的輔助（要圖騰才能掛的；插槽法術已經有同一顆的不算）。 */
@@ -312,14 +340,28 @@ public final class MetaGems {
                     lines.add(String.format(Locale.ROOT, "<gray>圖騰施放%s：每根每秒 <white>%.2f</white> 次（最多 %d 根，合計 <white>%.2f</white> 次）",
                             ItemRenderer.escape(socket.spell().name()), rate, build.totems(), rate * build.totems()));
                 }
+                if (build.deploy() != null) {
+                    lines.add(String.format(Locale.ROOT, "<gray>圖騰持續 <white>%s</white> 秒", number(build.durationTicks(build.deploy().duration()) / 20.0)));
+                }
                 final List<String> carried = new ArrayList<>();
                 for (final SupportDefinition support : carriedToTotem(socket)) {
                     carried.add(support.name());
                 }
+                // 2026-10-22：以前掛得上去、卻沒作用的（現在掛不上去了；已經掛著的提醒拿下來）
+                final List<String> useless = new ArrayList<>();
+                for (final SupportDefinition support : service.supportsOf(socket.metaEntry())) {
+                    if (!support.worksOnSpellTotem()) {
+                        useless.add(support.name());
+                    }
+                }
+                if (!useless.isEmpty()) {
+                    lines.add("<#ffaa55>在" + ItemRenderer.escape(meta.name()) + "上沒有作用：" + ItemRenderer.escape(String.join("、", useless))
+                            + "（請改掛在插槽法術上）");
+                }
                 lines.add(carried.isEmpty()
-                        ? "<dark_gray>這裡的輔助只影響放圖騰；要圖騰才能掛的輔助（疾樁、繁置、樁怒…）會帶到圖騰施法上"
+                        ? "<dark_gray>要圖騰才能掛的輔助（疾樁、繁置、樁怒…）會帶到圖騰施法上；施法速度讓放圖騰更快、持續時間讓圖騰撐更久"
                         : "<gray>帶到圖騰施法上的輔助：<#8fd3ff>" + ItemRenderer.escape(String.join("、", carried))
-                                + "<dark_gray>（其他輔助只影響放圖騰）");
+                                + "<dark_gray>（施法速度讓放圖騰更快、持續時間讓圖騰撐更久）");
             } else {
                 lines.add(String.format(Locale.ROOT, "<gray>插槽：<white>%s</white>（能量 %s／%s）", ItemRenderer.escape(socket.spell().name()),
                         number(Math.floor(energyOf(player.getUniqueId(), meta.id(), socket.spell().id()))), number(MetaSpec.maxEnergy(socket.spell()))));

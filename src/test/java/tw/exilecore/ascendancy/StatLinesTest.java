@@ -132,4 +132,17 @@ class StatLinesTest {
         assertEquals("攻擊擊中時 20% 機率獲得一顆怒星",
                 tw.exilecore.skill.ModifierText.describe(flat(StatKeys.chargeOnHit("frenzy"), 20, Tags.ATTACK)));
     }
+
+    /** 2026-10-22：額外元素傷害、最大混沌抗性照數值寫（以前招牌天賦寫死 10%／4%，戒指再加也一樣）；負抗性不會變成「+-」。 */
+    @Test
+    void extraDamageAndMaxResistUseTheRealValue() {
+        assertEquals("獲得 18% 傷害為額外的冰冷傷害", StatLines.describe(flat(StatKeys.damageExtra(tw.exilecore.stats.DamageType.COLD), 18)));
+        assertEquals("獲得 56.4% 傷害為額外的混沌傷害", StatLines.describe(flat(StatKeys.damageExtra(tw.exilecore.stats.DamageType.CHAOS), 56.4)));
+        assertEquals("+13% 最大混沌抗性", StatLines.describe(flat(StatKeys.resistMax(tw.exilecore.stats.DamageType.CHAOS), 13)));
+        assertTrue(StatLines.knows("damage.extra.lightning"));
+        assertNull(StatLines.problem(flat("damage.extra.cold", 10)), "昇華檔還能用");
+        assertNull(StatLines.problem(flat("resist.max.chaos", 10)));
+        assertEquals("-33.6% 火焰抗性", tw.exilecore.skill.ModifierText.describe(flat(StatKeys.RESIST_FIRE, -33.6)));
+        assertEquals("+20% 火焰抗性", tw.exilecore.skill.ModifierText.describe(flat(StatKeys.RESIST_FIRE, 20)));
+    }
 }

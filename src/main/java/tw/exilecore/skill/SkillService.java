@@ -1766,6 +1766,9 @@ public final class SkillService {
         final List<double[]> exerts = new ArrayList<>();
         final java.util.Set<String> seen = new java.util.HashSet<>();
         final java.util.Set<String> grantSeen = new java.util.HashSet<>(); // 2026-10：同一顆輔助掛在好幾個戰吼上只算一次
+        double bestMarkScore = 0;
+        double bestMarkTaken = 0;
+        java.util.Map<tw.exilecore.stats.DamageType, Double> bestMarkResist = java.util.Map.of();
         for (int slot = 0; slot < SkillLoadout.BIND_SLOTS; slot++) {
             final Resolved resolved = resolve(state, slot);
             if (resolved.isDefault() || !seen.add(resolved.definition().id())) {
@@ -1788,18 +1791,36 @@ public final class SkillService {
             } else if (definition.mechanic() == Mechanic.MARK && definition.params().mark() != null) {
                 final SkillBuild build = build(state, sheet, resolved);
                 final SkillParams.Mark mark = definition.params().mark();
-                taken += mark.taken() / 100.0 * build.auraEffect();
+                final double markTaken = mark.taken() / 100.0 * build.auraEffect();
+                final java.util.Map<tw.exilecore.stats.DamageType, Double> markResist = new java.util.EnumMap<>(tw.exilecore.stats.DamageType.class);
                 for (final ScaledMod effect : mark.effects()) {
                     final tw.exilecore.stats.Modifier mod = effect.toModifier(build.level(), build.auraEffect(), definition.name());
                     if (mod.type() == tw.exilecore.stats.ModType.FLAT && mod.value() < 0 && mod.stat().startsWith("resist.")) {
                         final tw.exilecore.stats.DamageType type = tw.exilecore.stats.DamageType.fromTag(mod.stat().substring("resist.".length()));
                         if (type != null) {
-                            resist.merge(type, -mod.value(), Double::sum);
+                            markResist.merge(type, -mod.value(), Double::sum);
                         }
+                    }
+                }
+                if (mark.curse()) {
+                    taken += markTaken;
+                    markResist.forEach((type, value) -> resist.merge(type, value, Double::sum));
+                } else {
+                    // 2026-10-22：印記同時只能有一個：面板只算效果最大的那個（以前三個印記全部加起來）
+                    double score = markTaken;
+                    for (final double value : markResist.values()) {
+                        score += value / 100.0;
+                    }
+                    if (score > bestMarkScore) {
+                        bestMarkScore = score;
+                        bestMarkTaken = markTaken;
+                        bestMarkResist = markResist;
                     }
                 }
             }
         }
+        taken += bestMarkTaken;
+        bestMarkResist.forEach((type, value) -> resist.merge(type, value, Double::sum));
         return new FullOn(self, taken, resist, exerts);
     }
 
@@ -2695,7 +2716,14 @@ public final class SkillService {
                 // 2026-10-21：法術圖騰寶石的施放速度是「放圖騰」的速度（圖騰放插槽法術的速度寫在上面的主要寶石那幾行）
                 lines.add(String.format(Locale.ROOT, "<gray>放圖騰：每秒最多 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(sheet)));
             } else {
-                lines.add(String.format(Locale.ROOT, "<gray>每秒 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(sheet)));
+                // 2026-10-22：有冷卻的照冷卻算（以前只看施放時間：掠閃寫每秒 10 次、印記 4.98 次、千鈞砸 1.12 次，實際被冷卻卡住）
+                final double interval = build.intervalTicks(sheet);
+                if (build.cooldownTicks() > interval && definition.mechanic() != Mechanic.AURA) {
+                    lines.add(String.format(Locale.ROOT, "<gray>每秒 <white>%.2f<gray> 次 <dark_gray>（受冷卻限制；不算冷卻每秒 %.2f 次）",
+                            hitsPerSecond(interval, build.cooldownTicks(), build.repeats()), 20.0 / interval));
+                } else {
+                    lines.add(String.format(Locale.ROOT, "<gray>每秒 <white>%.2f<gray> 次", 20.0 / interval));
+                }
             }
         }
         if (build.repeats() > 0) {

@@ -302,6 +302,14 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 durationScale, forks, returning, echo, deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
     }
 
+    /** 2026-10-22：換掉放下去的東西的設定（星咒圖騰：主要寶石上的持續時間輔助只加圖騰的持續時間）。 */
+    public SkillBuild withDeploy(final DeploySpec newDeploy) {
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                newDeploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+    }
+
     /** 同一次施放換一個技能描述（戰吼強化的攻擊：傷害更多）。 */
     public SkillBuild withProfile(final SkillProfile newProfile) {
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, newProfile,

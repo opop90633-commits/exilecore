@@ -251,7 +251,7 @@ public final class ModifierText {
                     : scaled(modifier, "魔力回復", percent);
             case StatKeys.ES_RECHARGE -> scaled(modifier, "能量護盾回充速度", percent);
             case StatKeys.TOTEM_LIFE -> scaled(modifier, "圖騰生命", percent);
-            case StatKeys.SPIRIT_MAX -> modifier.type() == tw.exilecore.stats.ModType.FLAT ? "+" + number(value) + " 最大精魂"
+            case StatKeys.SPIRIT_MAX -> modifier.type() == tw.exilecore.stats.ModType.FLAT ? plus(value) + " 最大精魂"
                     : scaled(modifier, "精魂", percent);
             case StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE -> "免疫元素異常（點燃、冰緩、凍結、感電）";
             case StatKeys.TOTEM_VENGEFUL -> "圖騰被打（或你在圖騰 10 格內被打）時，往打的敵人丟一團怨燼：造成圖騰最大生命 " + number(value)
@@ -264,10 +264,10 @@ public final class ModifierText {
             case StatKeys.FLAG_CULLING -> "擊中後敵人生命低於一定比例直接倒下（普通 30%、魔法 20%、稀有 10%、傳奇與 Boss 5%）";
             case StatKeys.LIFE_REGEN -> "每秒回復 " + number(value) + " 生命";
             case StatKeys.ACCURACY -> scaled(modifier, "命中", percent);
-            case StatKeys.RESIST_FIRE -> "+" + number(value) + "% 火焰抗性";
-            case StatKeys.RESIST_COLD -> "+" + number(value) + "% 冰冷抗性";
-            case StatKeys.RESIST_LIGHTNING -> "+" + number(value) + "% 閃電抗性";
-            case StatKeys.RESIST_CHAOS -> "+" + number(value) + "% 混沌抗性";
+            case StatKeys.RESIST_FIRE -> plus(value) + "% 火焰抗性";
+            case StatKeys.RESIST_COLD -> plus(value) + "% 冰冷抗性";
+            case StatKeys.RESIST_LIGHTNING -> plus(value) + "% 閃電抗性";
+            case StatKeys.RESIST_CHAOS -> plus(value) + "% 混沌抗性";
             case StatKeys.AILMENT_THRESHOLD -> scaled(modifier, "異常門檻", percent);
             case StatKeys.DAMAGE_ADDED_MIN -> "附加至少 " + number(value) + " " + tagPrefix(modifier) + "傷害";
             case StatKeys.DAMAGE_ADDED_MAX -> "附加最多 " + number(value) + " " + tagPrefix(modifier) + "傷害";
@@ -278,7 +278,7 @@ public final class ModifierText {
             case StatKeys.CRIT_MULTI -> tagPrefix(modifier) + "暴擊傷害 +" + number(value) + "%";
             case StatKeys.LIFE_ON_HIT -> tagPrefix(modifier) + "每次擊中回復 " + number(value) + " 生命";
             case StatKeys.DAMAGE_DOUBLE -> "擊中時 " + number(value) + "% 機率造成雙倍傷害";
-            case StatKeys.SKILL_LEVEL -> "+" + number(value) + " " + tagPrefix(modifier) + "技能等級";
+            case StatKeys.SKILL_LEVEL -> plus(value) + " " + tagPrefix(modifier) + "技能等級";
             case StatKeys.IGNITE_CHANCE -> chance(modifier, "點燃機率", percent);
             case StatKeys.SHOCK_CHANCE -> chance(modifier, "感電機率", percent);
             case StatKeys.IGNITE_MAGNITUDE -> scaled(modifier, "點燃傷害", percent);
@@ -305,7 +305,7 @@ public final class ModifierText {
             case StatKeys.PHYS_REDUCTION -> number(value) + "% 額外物理傷害減免";
             case StatKeys.CRIT_BONUS_TAKEN -> "擊中你的暴擊傷害加成" + (value < 0 ? "減少 " : "增加 ") + percent + "%";
             case StatKeys.LIFE_PER_KILL -> "每擊殺一個敵人回復 " + number(value) + " 生命";
-            case StatKeys.ATTR_CHOICE -> "+" + number(value) + " 任一屬性";
+            case StatKeys.ATTR_CHOICE -> plus(value) + " 任一屬性";
             case StatKeys.MANA_PER_KILL -> "每擊殺一個敵人回復 " + number(value) + " 魔力";
             case StatKeys.STUN_THRESHOLD -> scaled(modifier, "暈眩門檻", percent);
             case StatKeys.STUN_DURATION -> scaled(modifier, "暈眩持續時間", percent);
@@ -335,7 +335,7 @@ public final class ModifierText {
             case StatKeys.PIN_CHANCE -> "投射物攻擊擊中時 " + number(value) + "% 機率定身敵人";
             case StatKeys.DAZE_CHANCE -> "擊中時 " + number(value) + "% 機率讓敵人眩暈（傷害更少 15%、暈眩門檻減少 30%，4 秒）";
             case StatKeys.RAGE_ON_HIT -> "近戰攻擊擊中時獲得 " + number(value) + " 點怒氣";
-            case StatKeys.RAGE_MAX -> "+" + number(value) + " 怒氣上限";
+            case StatKeys.RAGE_MAX -> plus(value) + " 怒氣上限";
             case StatKeys.RAGE_EFFECT -> scaled(modifier, "怒氣效果", percent);
             case StatKeys.DAMAGE_VS_RARE -> scaled(modifier, "對稀有與傳奇怪物的傷害", percent);
             case StatKeys.ONKILL_SPEED -> "擊殺後 4 秒內增加 " + number(value) + "% 攻擊與施法速度";
@@ -407,7 +407,7 @@ public final class ModifierText {
             case StatKeys.SPELL_BASE_CRIT -> "基礎暴擊率 " + number(value) + "%"; // 2026-10-15
             case StatKeys.DEFLECTION -> scaled(modifier, "偏斜值", percent);
             case StatKeys.DEFLECTION_FROM_EVASION -> "獲得閃避值 " + number(value) + "% 的偏斜值";
-            case "charm.slots" -> "+" + number(value) + " 護符欄位";
+            case "charm.slots" -> plus(value) + " 護符欄位";
             case "flag.freeze_immune" -> "免疫凍結";
             case "thorns.min" -> "荊棘：被近戰擊中時反彈至少 " + number(value) + " 物理傷害";
             case "thorns.max" -> "荊棘：被近戰擊中時反彈最多 " + number(value) + " 物理傷害";
@@ -481,6 +481,11 @@ public final class ModifierText {
             }
         }
         return String.join("", names);
+    }
+
+    /** 2026-10-22：正數前面加「+」、負數照原樣（以前寫死「+」，詛咒、印記的負抗性變成「+-33.6%」）。 */
+    static String plus(final double value) {
+        return (value < 0 ? "" : "+") + number(value);
     }
 
     /** 整數不帶小數點，其他留一位。 */

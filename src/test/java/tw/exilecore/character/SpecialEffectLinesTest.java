@@ -39,4 +39,15 @@ class SpecialEffectLinesTest {
         assertEquals(List.of("+1 銳星上限", "擊殺時 25% 機率獲得一顆怒星", "擊中時 8% 機率獲得一顆怒星"), SpecialEffectLines.of(sheet),
                 "照銳星、怒星、磐星的順序；同一種加在一起");
     }
+
+    /** 2026-10-22：「獲得 x% 傷害為額外…」照身上加總寫（以前只要有就寫死 10%、4%）。 */
+    @Test
+    void extraDamageLinesAddUp() {
+        final StatSheet sheet = new StatSheet()
+                .add(Modifier.flat("damage.extra.cold", 10, "昇華"))
+                .add(Modifier.flat("damage.extra.cold", 8, "戒指"))
+                .add(Modifier.flat("damage.extra.chaos", 47, "戒指"))
+                .add(Modifier.flat("resist.max.chaos", 10, "昇華"));
+        assertEquals(List.of("獲得 18% 傷害為額外的冰冷傷害", "獲得 47% 傷害為額外的混沌傷害", "+10% 最大混沌抗性"), SpecialEffectLines.of(sheet));
+    }
 }
