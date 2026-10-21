@@ -59,9 +59,19 @@ class GuideTest {
     @Test
     void sidebarAndChat() {
         final List<String> sidebar = Guide.sidebar(2);
-        assertEquals(3, sidebar.size());
+        assertTrue(sidebar.size() >= 3, "標題、步驟、提示（提示會斷成好幾行）");
         assertTrue(sidebar.get(0).contains("3/" + Guide.STEPS.size()));
         assertTrue(sidebar.get(1).contains("技能"));
+        // 2026-10-22：每一步的提示在側欄都斷成不超過側欄寬度的幾行，接起來就是原本那一句
+        for (int i = 0; i < Guide.STEPS.size(); i++) {
+            final List<String> lines = Guide.wrap(Guide.STEPS.get(i).hint(), Guide.SIDEBAR_WIDTH, 99);
+            assertTrue(lines.size() <= Guide.SIDEBAR_HINT_LINES, Guide.STEPS.get(i).id() + " 斷成 " + lines.size() + " 行：" + lines);
+            for (final String line : lines) {
+                assertTrue(line.codePoints().map(Guide::width).sum() <= Guide.SIDEBAR_WIDTH, Guide.STEPS.get(i).id() + "：" + line);
+            }
+            assertEquals(Guide.STEPS.get(i).hint().replace(" ", ""), String.join("", lines).replace(" ", ""), Guide.STEPS.get(i).id());
+        }
+        assertEquals(java.util.List.of("一二三四五六七八", "九十甲乙丙丁戊…"), Guide.wrap("一二三四五六七八九十甲乙丙丁戊己庚辛", 16, 2), "超過行數用…收尾");
         assertTrue(Guide.sidebar(Guide.STEPS.size()).isEmpty(), "做完了不顯示");
         final List<String> chat = Guide.chat(new Guide.Snapshot(true, true, false, false, false, false, false, 1), 2);
         assertEquals(Guide.STEPS.size() + 2, chat.size());

@@ -139,8 +139,82 @@ public final class Guide {
         final List<String> lines = new ArrayList<>();
         lines.add("<#9fe8c8><b>新手教學</b> <dark_gray>" + (current + 1) + "/" + STEPS.size());
         lines.add("<yellow>➜ <white>" + step.title());
-        lines.add("<gray>" + step.hint());
+        // 2026-10-22：提示照側欄的寬度斷行（以前整句一行，側欄被撐得很寬、右邊跑出螢幕）；完整的一句在聊天欄與標題
+        for (final String line : wrap(step.hint(), SIDEBAR_WIDTH, SIDEBAR_HINT_LINES)) {
+            lines.add("<gray>" + line);
+        }
         return lines;
+    }
+
+    /** 側欄一行最寬多少（全形字算 2、半形算 1：大約 16 個中文字，跟任務那幾行差不多寬）。 */
+    static final int SIDEBAR_WIDTH = 32;
+    /** 側欄的提示最多幾行（太長的最後一行用「…」收尾）。 */
+    static final int SIDEBAR_HINT_LINES = 4;
+
+    /** 一個字佔的寬度：半形（ASCII）1，其他（中文、全形符號、箭頭）2。 */
+    static int width(final int codePoint) {
+        return codePoint < 0x80 ? 1 : 2;
+    }
+
+    /** 這些字後面適合斷行（標點）；「→」前面適合斷行。 */
+    private static boolean breakAfter(final int codePoint) {
+        return "，、；：。）」！？ ".indexOf(codePoint) >= 0;
+    }
+
+    /**
+     * 照寬度斷行：每行不超過 width；行尾附近有標點就在標點後面斷（或「→」前面），沒有就硬斷。
+     * 超過 maxLines 行的話最後一行結尾換成「…」。
+     */
+    static List<String> wrap(final String text, final int width, final int maxLines) {
+        final List<String> lines = new ArrayList<>();
+        final int[] chars = text.codePoints().toArray();
+        int start = 0;
+        while (start < chars.length) {
+            int used = 0;
+            int end = start;
+            int lastBreak = -1;
+            while (end < chars.length && used + width(chars[end]) <= width) {
+                used += width(chars[end]);
+                if (breakAfter(chars[end])) {
+                    lastBreak = end + 1;
+                } else if (chars[end] == '→' && end > start) {
+                    lastBreak = end;
+                }
+                end++;
+            }
+            if (end < chars.length && lastBreak > start && used - widthOf(chars, lastBreak, end) >= width / 2) {
+                end = lastBreak; // 在標點斷（不要斷得太短：至少半行）
+            }
+            // 避頭尾：下一行不要用「，」「）」開頭、這一行不要用「（」「「」結尾（往前挪一個字）
+            while (end < chars.length && end - 1 > start && "，、；：。）」！？".indexOf(chars[end]) >= 0) {
+                end--;
+            }
+            while (end < chars.length && end - 1 > start && "（「".indexOf(chars[end - 1]) >= 0) {
+                end--;
+            }
+            lines.add(new String(chars, start, end - start).strip());
+            start = end;
+            while (start < chars.length && chars[start] == ' ') {
+                start++;
+            }
+        }
+        lines.removeIf(String::isEmpty);
+        if (lines.size() > maxLines) {
+            final List<String> cut = new ArrayList<>(lines.subList(0, maxLines));
+            final String last = cut.get(maxLines - 1);
+            final int[] lastChars = last.codePoints().toArray();
+            cut.set(maxLines - 1, new String(lastChars, 0, Math.max(0, lastChars.length - 1)) + "…");
+            return cut;
+        }
+        return lines;
+    }
+
+    private static int widthOf(final int[] chars, final int from, final int to) {
+        int total = 0;
+        for (int i = from; i < to; i++) {
+            total += width(chars[i]);
+        }
+        return total;
     }
 
     /** 這一步的提示（聊天欄一行，有指令的附一個可以點的按鈕）。 */
