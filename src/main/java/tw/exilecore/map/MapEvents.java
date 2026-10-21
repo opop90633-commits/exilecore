@@ -80,6 +80,8 @@ final class MapEvents implements Listener {
         final MapEventConfig.Shrine shrine;
         final MapEventConfig.Box box;
         final String exileName;
+        /** 星圖天賦、石板、單一信仰保證多出來的事件（2026-10-21：入場券機率只算 {@link #BONUS_TICKET}）。 */
+        boolean bonus;
         boolean revealed;
         boolean started;
         boolean done;
@@ -267,8 +269,13 @@ final class MapEvents implements Listener {
                 kinds.add(kind);
             }
         }
+        final List<Boolean> bonus = new ArrayList<>(); // 跟 kinds 一一對應：是不是保證多出來的
+        for (int i = 0; i < kinds.size(); i++) {
+            bonus.add(true);
+        }
         for (int i = 0; i < count; i++) {
             kinds.add(null); // 隨機
+            bonus.add(false);
         }
         final List<Event> events = new ArrayList<>();
         final List<String> placed = new ArrayList<>();
@@ -285,6 +292,7 @@ final class MapEvents implements Listener {
                 noSpot++;
                 if (rolled != null) {
                     kinds.add(i + 1, rolled); // 換下一個房間再放（隨機的保留抽到的那種）
+                    bonus.add(i + 1, bonus.get(i));
                 }
                 continue;
             }
@@ -296,6 +304,7 @@ final class MapEvents implements Listener {
             if (event == null) {
                 continue;
             }
+            event.bonus = bonus.get(i);
             events.add(event);
             placed.add(event.title() + "(" + event.center.getBlockX() + "," + event.center.getBlockZ() + ")");
             // 事件疊加：同一個房間再放一個不同種類的（離第一個至少 3 格）
@@ -400,6 +409,20 @@ final class MapEvents implements Listener {
             }
         }
         return null;
+    }
+
+    /**
+     * 起點房間裡的一個固定位置（相對起點房間中心 dx、dz）；不是地板、不在房間裡就回傳 null（2026-10-21：幻霧鏡、命運岔路、詛咒寶匣放在地圖開頭）。
+     * 起點房間 13×13：玩家出生在中心往東 2 格、回營地的門在西邊 4 格，所以用南北兩側 z ±4。
+     */
+    static MapLayout.Spot startSpot(final MapLayout layout, final int dx, final int dz) {
+        final MapLayout.Room start = layout.start();
+        if (start == null) {
+            return null;
+        }
+        final int x = start.cx() + dx;
+        final int z = start.cz() + dz;
+        return layout.isFloor(x, z) && start.contains(x, z) ? new MapLayout.Spot(x, z) : null;
     }
 
     /** 星圖核心「單一信仰」點了，而且這種不是選的那種（2026-10-21）。 */
@@ -724,7 +747,7 @@ final class MapEvents implements Listener {
             if (!uniques.isEmpty()) {
                 deliver(player, event.center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), shrine.name()), uniques, 0);
             }
-            rollTicket(MapEventConfig.Kind.SHRINE, player, event.center); // 2026-10-18：入場券
+            rollTicket(MapEventConfig.Kind.SHRINE, player, event.center, event.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券
         }
         event.center.getWorld().spawnParticle(Particle.END_ROD, event.center.getX(), event.center.getY() + 1.5, event.center.getZ(), 40, 0.8, 1.0, 0.8, 0.05);
         if (event.label != null && event.label.isValid()) {
@@ -886,7 +909,7 @@ final class MapEvents implements Listener {
             rolled.addAll(eventUniques(MapEventConfig.Kind.STRONGBOX, instance, player, random));
             final long gold = drops.rollGold(level, MonsterRarity.RARE, quantity, random) * Math.max(1, box.rolls());
             deliver(player, event.center, data, rolled, gold);
-            rollTicket(MapEventConfig.Kind.STRONGBOX, player, event.center); // 2026-10-18：入場券
+            rollTicket(MapEventConfig.Kind.STRONGBOX, player, event.center, event.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券
             takers++;
         }
         event.center.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, event.center.getX(), event.center.getY() + 1, event.center.getZ(), 40, 0.6, 0.6, 0.6, 0.15);
@@ -948,7 +971,7 @@ final class MapEvents implements Listener {
                     if (!uniques.isEmpty()) {
                         deliver(player, center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), "裂隙"), uniques, 0);
                     }
-                    rollTicket(MapEventConfig.Kind.BREACH, player, center); // 2026-10-18：入場券
+                    rollTicket(MapEventConfig.Kind.BREACH, player, center, event.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券
                 }
             }
             return;
@@ -1145,7 +1168,7 @@ final class MapEvents implements Listener {
             if (!rolled.isEmpty()) {
                 deliver(player, entity.getLocation(), data, rolled, 0);
             }
-            rollTicket(MapEventConfig.Kind.EXILE, player, entity.getLocation()); // 2026-10-18：入場券
+            rollTicket(MapEventConfig.Kind.EXILE, player, entity.getLocation(), found.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券
         }
     }
 
@@ -1507,7 +1530,7 @@ final class MapEvents implements Listener {
             rolled.addAll(eventUniques(MapEventConfig.Kind.ABYSS, instance, player, random));
             final long gold = drops.rollGold(level, MonsterRarity.RARE, quantity, random) * Math.max(1, settings.rolls());
             deliver(player, at, data, rolled, gold);
-            rollTicket(MapEventConfig.Kind.ABYSS, player, at); // 2026-10-18：入場券
+            rollTicket(MapEventConfig.Kind.ABYSS, player, at, event.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券
             takers++;
         }
         at.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, at.getX(), at.getY() + 1, at.getZ(), 40, 0.6, 0.6, 0.6, 0.15);
@@ -1524,11 +1547,26 @@ final class MapEvents implements Listener {
      * （撿取、通貨袋；流水帳由撿取那邊記）並在聊天室提醒一句。
      */
     void rollTicket(final MapEventConfig.Kind kind, final Player player, final Location at) {
-        rollTicket(MapEventConfig.uniqueSource(kind), player, at);
+        rollTicket(MapEventConfig.uniqueSource(kind), player, at, 1.0);
+    }
+
+    /** 同上；factor 乘在入場券機率上（保證多出來的事件 {@link #BONUS_TICKET}）。 */
+    void rollTicket(final MapEventConfig.Kind kind, final Player player, final Location at, final double factor) {
+        rollTicket(MapEventConfig.uniqueSource(kind), player, at, factor);
     }
 
     /** 同上，用事件的來源代號（祭壇 "ritual"、幻霧 "delirium" 不是 {@link MapEventConfig.Kind}）。 */
     void rollTicket(final String source, final Player player, final Location at) {
+        rollTicket(source, player, at, 1.0);
+    }
+
+    /**
+     * 2026-10-21：星圖天賦、石板、單一信仰保證多出來的事件，入場券機率只算這個比例
+     * （以前點滿事件線一張圖多 8 個事件，入場券快 3～4 倍；流寇線＋單一信仰約 14 倍）。
+     */
+    static final double BONUS_TICKET = 0.3;
+
+    void rollTicket(final String source, final Player player, final Location at, final double factor) {
         rollCard(source, player, at); // 2026-10-19 星諭卡：完成事件也擲一次（跟入場券分開擲）
         rollTablet(source, player, at); // 2026-10-21 先驅石板：完成事件 3%（星圖天賦可以加）掉那種事件的石板
         final MapEventConfig.Ticket ticket = config.ticket(source);
@@ -1539,7 +1577,7 @@ final class MapEvents implements Listener {
         if (instance != null && ticketTaken.getOrDefault(instance.id(), java.util.Set.of()).contains(player.getUniqueId())) {
             return; // 2026-10-21：入場券每張圖每人最多 1 張
         }
-        if (service.random().nextDouble() >= ticket.chance()) {
+        if (service.random().nextDouble() >= ticket.chance() * factor) {
             return;
         }
         final tw.exilecore.currency.CurrencyType type = plugin.currencies().repository().get(ticket.currency());

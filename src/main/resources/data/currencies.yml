@@ -1163,7 +1163,7 @@ ticket_abyss:
   flavor: "從縫的最底下撈上來的，還是冰的。"
 
 # ---- 2026-10-21 先驅石板（PoE2 的 Precursor Tablet；AtlasTablets）：完成星圖上的塔之後，在地圖裝置的「塔與城塞」插一片，
-#   效果罩到塔周圍（atlas.yml 的 tower.radius，星圖天賦可以加）的所有地圖。塔必掉 1 片隨機的；事件完成時 3% 掉那種事件的、地圖 Boss 2% 掉首領石板 ----
+#   效果罩到塔周圍（atlas.yml 的 tower.radius，星圖天賦可以加）的所有地圖（2026-10-21：罩到的地圖每開一張用掉 1 次，3 次用完）。塔必掉 1 片隨機的；事件完成時 3% 掉那種事件的、地圖 Boss 2% 掉首領石板 ----
 tablet_shrine:
   name: 神龕石板
   material: SMOOTH_STONE_SLAB
@@ -1171,7 +1171,7 @@ tablet_shrine:
   stack: 20
   operation: NONE
   drop_weight: 0
-  description: "罩到的地圖保證多 1 座神龕、神龕的機會 +100%｜完成神龕事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  description: "罩到的地圖保證多 1 座神龕、神龕的機會 +100%｜完成神龕事件 3%；在地圖裝置的「塔與城塞」插進完成的塔（罩到的地圖每開一張用掉 1 次，共 3 次，用完可以再插）"
   flavor: "刻著一盞長明的燈。"
 tablet_strongbox:
   name: 寶箱石板
@@ -1180,7 +1180,7 @@ tablet_strongbox:
   stack: 20
   operation: NONE
   drop_weight: 0
-  description: "罩到的地圖保證多 1 個寶箱、寶箱的機會 +100%｜完成寶箱事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  description: "罩到的地圖保證多 1 個寶箱、寶箱的機會 +100%｜完成寶箱事件 3%；在地圖裝置的「塔與城塞」插進完成的塔（罩到的地圖每開一張用掉 1 次，共 3 次，用完可以再插）"
   flavor: "刻著一把沒有鎖的鎖。"
 tablet_breach:
   name: 裂隙石板
@@ -1189,7 +1189,7 @@ tablet_breach:
   stack: 20
   operation: NONE
   drop_weight: 0
-  description: "罩到的地圖保證多 1 個裂隙、裂隙的機會 +100%｜完成裂隙事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  description: "罩到的地圖保證多 1 個裂隙、裂隙的機會 +100%｜完成裂隙事件 3%；在地圖裝置的「塔與城塞」插進完成的塔（罩到的地圖每開一張用掉 1 次，共 3 次，用完可以再插）"
   flavor: "石板本身裂了一道縫，縫裡是黑的。"
 tablet_exile:
   name: 流寇石板
@@ -1198,7 +1198,7 @@ tablet_exile:
   stack: 20
   operation: NONE
   drop_weight: 0
-  description: "罩到的地圖保證多 1 個流寇、流寇的機會 +100%｜完成流寇事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  description: "罩到的地圖保證多 1 個流寇、流寇的機會 +100%｜完成流寇事件 3%；在地圖裝置的「塔與城塞」插進完成的塔（罩到的地圖每開一張用掉 1 次，共 3 次，用完可以再插）"
   flavor: "刻著一張被劃掉的臉。"
 tablet_abyss:
   name: 深淵石板
@@ -1207,7 +1207,7 @@ tablet_abyss:
   stack: 20
   operation: NONE
   drop_weight: 0
-  description: "罩到的地圖保證多 1 條深淵裂縫、深淵的機會 +100%｜完成深淵裂縫事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  description: "罩到的地圖保證多 1 條深淵裂縫、深淵的機會 +100%｜完成深淵裂縫事件 3%；在地圖裝置的「塔與城塞」插進完成的塔（罩到的地圖每開一張用掉 1 次，共 3 次，用完可以再插）"
   flavor: "摸起來是濕的，不管放多久。"
 tablet_ritual:
   name: 祭壇石板
@@ -1216,7 +1216,7 @@ tablet_ritual:
   stack: 20
   operation: NONE
   drop_weight: 0
-  description: "罩到的地圖祭壇出現的機率 +100%、貢品 +25%｜完成祭壇事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  description: "罩到的地圖祭壇出現的機率 +100%、貢品 +25%｜完成祭壇事件 3%；在地圖裝置的「塔與城塞」插進完成的塔（罩到的地圖每開一張用掉 1 次，共 3 次，用完可以再插）"
   flavor: "刻痕裡填的是血。"
 tablet_delirium:
   name: 幻霧石板
@@ -1225,7 +1225,7 @@ tablet_delirium:
   stack: 20
   operation: NONE
   drop_weight: 0
-  description: "罩到的地圖幻霧出現的機率 +100%、獎勵進度 +25%｜完成幻霧事件 3%；在地圖裝置的「塔與城塞」插進完成的塔"
+  description: "罩到的地圖幻霧出現的機率 +100%、獎勵進度 +25%｜完成幻霧事件 3%；在地圖裝置的「塔與城塞」插進完成的塔（罩到的地圖每開一張用掉 1 次，共 3 次，用完可以再插）"
   flavor: "看久了字會動。"
 tablet_boss:
   name: 首領石板
@@ -1234,7 +1234,7 @@ tablet_boss:
   stack: 20
   operation: NONE
   drop_weight: 0
-  description: "罩到的一般格子當作 Boss 格（Boss 更強、掉得更多）｜地圖 Boss 2%；在地圖裝置的「塔與城塞」插進完成的塔"
+  description: "罩到的一般格子當作 Boss 格（Boss 更強、掉得更多）｜地圖 Boss 2%；在地圖裝置的「塔與城塞」插進完成的塔（罩到的地圖每開一張用掉 1 次，共 3 次，用完可以再插）"
   flavor: "刻著一頂王冠，王冠下面沒有頭。"
 tablet_bounty:
   name: 豐饒石板
@@ -1243,7 +1243,7 @@ tablet_bounty:
   stack: 20
   operation: NONE
   drop_weight: 0
-  description: "罩到的地圖物品數量 +15%、稀有度 +15%｜塔必掉；在地圖裝置的「塔與城塞」插進完成的塔"
+  description: "罩到的地圖物品數量 +15%、稀有度 +15%｜塔必掉；在地圖裝置的「塔與城塞」插進完成的塔（罩到的地圖每開一張用掉 1 次，共 3 次，用完可以再插）"
   flavor: "刻著一棵結滿果子的樹。"
 
 # ---- 2026-10-19 星諭卡（cards.yml 寫兌換規則；這裡只是通貨的外觀與說明，card_ 開頭的自動進「星諭卡」那一組）----

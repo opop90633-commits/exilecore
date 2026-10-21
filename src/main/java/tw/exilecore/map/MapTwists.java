@@ -326,19 +326,29 @@ final class MapTwists implements Listener {
         }
         // 命運岔路：一間主路上的普通房間（先挑前半段的）
         if (random.nextDouble() < settings.forkChance()) {
-            final MapLayout.Room room = pickMainRoom(free, rooms, random);
-            if (room != null && placeFork(state, room)) {
+            // 2026-10-21：放在地圖開頭（起點房間南北兩側各一根）；放不下才照舊放在前半段的房間
+            final MapLayout.Spot blood = MapEvents.startSpot(instance.layout(), -1, -4);
+            final MapLayout.Spot king = MapEvents.startSpot(instance.layout(), -1, 4);
+            final MapLayout.Room room = blood != null && king != null ? null : pickMainRoom(free, rooms, random);
+            if (room == null && blood != null && king != null) {
+                placeFork(state, blood, king);
+                notes.add("命運岔路");
+            } else if (room != null && placeFork(state, room)) {
                 free.remove(room);
                 notes.add("命運岔路");
             }
         }
         // 詛咒寶匣
-        if (random.nextDouble() < settings.cursedChance() && !free.isEmpty()) {
-            final MapLayout.Room early = pickMainRoom(free, rooms, random); // 前半段的房間（要早點決定）
-            final MapLayout.Room room = early != null ? early : free.get(random.nextInt(free.size()));
-            final MapLayout.Spot spot = MapEvents.spotIn(instance.layout(), room);
+        final MapLayout.Spot start = MapEvents.startSpot(instance.layout(), 3, 4);
+        if (random.nextDouble() < settings.cursedChance() && (start != null || !free.isEmpty())) {
+            // 2026-10-21：放在地圖開頭（起點房間南側）；放不下才照舊放在前半段的房間
+            final MapLayout.Room early = start != null ? null : pickMainRoom(free, rooms, random); // 前半段的房間（要早點決定）
+            final MapLayout.Room room = start != null ? null : early != null ? early : free.get(random.nextInt(free.size()));
+            final MapLayout.Spot spot = start != null ? start : MapEvents.spotIn(instance.layout(), room);
             if (spot != null) {
-                free.remove(room);
+                if (room != null) {
+                    free.remove(room);
+                }
                 placeCursed(state, spot);
                 notes.add("詛咒寶匣");
             }
@@ -989,11 +999,16 @@ final class MapTwists implements Listener {
         if (left == null) {
             return false;
         }
+        placeFork(state, left, right);
+        return true;
+    }
+
+    /** 兩根石碑放在 left（血路）、right（王道）。 */
+    private void placeFork(final State state, final MapLayout.Spot left, final MapLayout.Spot right) {
         state.forkBlood = pillar(state, left, Material.REDSTONE_BLOCK,
                 "<#ff5c5c>血路<newline><gray>這張圖剩下的怪物群 +50%<newline><gray>物品數量 +30%<newline><yellow>右鍵選這條");
         state.forkKing = pillar(state, right, Material.GOLD_BLOCK,
                 "<#f5b942>王道<newline><gray>Boss 生命與傷害 +30%<newline><gray>Boss 掉落的數量與稀有度 +50%<newline><yellow>右鍵選這條");
-        return true;
     }
 
     /** 一根石碑（底座＋發光的方塊）與上面的說明；回傳底座的位置。 */

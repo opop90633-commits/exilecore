@@ -103,9 +103,10 @@ final class DeliriumEvents implements Listener {
         if (instance.special() != null || chance <= 0 || random.nextDouble() >= chance || rooms.isEmpty()) {
             return;
         }
-        for (int attempt = 0; attempt < 3 && !rooms.isEmpty(); attempt++) {
-            final MapLayout.Room room = rooms.remove(random.nextInt(rooms.size()));
-            final MapLayout.Spot spot = MapEvents.spotIn(instance.layout(), room);
+        // 2026-10-21：鏡子放在地圖開頭（起點房間北側）；放不下才照舊找一個房間
+        final MapLayout.Spot early = MapEvents.startSpot(instance.layout(), 3, -4);
+        for (int attempt = 0; attempt < 3 && (early != null || !rooms.isEmpty()); attempt++) {
+            final MapLayout.Spot spot = early != null ? early : MapEvents.spotIn(instance.layout(), rooms.remove(random.nextInt(rooms.size())));
             if (spot == null) {
                 continue;
             }

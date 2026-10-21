@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * 先驅石板（2026-10-21，PoE2 的 Precursor Tablet）：完成一座塔之後插一片，效果罩到塔周圍（atlas.yml 的 tower.radius，星圖天賦可以加）
- * 的所有地圖。純資料：種類、通貨代號、效果；插了哪片存在角色進度 {@code tablet.q:r} → 通貨代號。
+ * 的所有地圖；2026-10-21：罩到的地圖每開一張用掉 1 次，{@link #USES} 次用完塔空出來可以再插。純資料：種類、通貨代號、效果；插了哪片存在角色進度 {@code tablet.q:r} → 通貨代號。
  */
 public final class AtlasTablets {
 
@@ -16,6 +16,10 @@ public final class AtlasTablets {
     public static final String CURRENCY_PREFIX = "tablet_";
     /** 事件完成時掉那種事件的石板的基本機率。 */
     public static final double EVENT_DROP_CHANCE = 0.03;
+    /** 2026-10-21：一片石板能用幾次（罩到的地圖每開一張用掉 1 次，用完塔空出來可以再插）。 */
+    public static final int USES = 3;
+    /** 角色進度的鍵：tabletuses.q:r → 剩幾次（沒有 = 還沒用過，{@link #USES}）。 */
+    public static final String USES_PREFIX = "tabletuses.";
     /** 地圖 Boss 掉 Boss 石板的機率。 */
     public static final double BOSS_DROP_CHANCE = 0.02;
 
@@ -90,6 +94,23 @@ public final class AtlasTablets {
     /** 角色進度裡這座塔的鍵。 */
     public static String key(final int q, final int r) {
         return PROGRESS_PREFIX + q + ":" + r;
+    }
+
+    /** 角色進度裡這座塔的石板剩幾次的鍵。 */
+    public static String usesKey(final int q, final int r) {
+        return USES_PREFIX + q + ":" + r;
+    }
+
+    /** 剩幾次（沒記錄或看不懂當作全新的 {@link #USES}，最少 1）。 */
+    public static int parseUses(final String value) {
+        if (value == null) {
+            return USES;
+        }
+        try {
+            return Math.max(1, Math.min(USES, Integer.parseInt(value.strip())));
+        } catch (final NumberFormatException e) {
+            return USES;
+        }
     }
 
     /**

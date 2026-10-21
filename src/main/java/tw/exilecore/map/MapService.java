@@ -379,6 +379,7 @@ public final class MapService {
                 names.add(kind.displayName());
             }
             notes.add("石板 ×" + covering.size() + "（" + String.join("、", names) + "）");
+            consumeTablets(player, atlas, cell.q(), cell.r()); // 2026-10-21：每開一張用掉 1 次
         }
         player.sendMessage(plugin.text().parse("<gray>  星圖：<white>(" + cell.q() + ", " + cell.r() + ")<gray> 距離 " + cell.distance()
                 + (done ? "・已完成過（再打不給點數）" : "・完成後 +天賦點、解鎖周圍")
@@ -440,6 +441,37 @@ public final class MapService {
         return AtlasTablets.Kind.ofCurrency(plugin.players().get(player).progress().get(AtlasTablets.key(q, r)));
     }
 
+    /** 這座塔的石板還能用幾次（沒插回傳 0）。 */
+    public int tabletUses(final Player player, final int q, final int r) {
+        if (tabletAt(player, q, r) == null) {
+            return 0;
+        }
+        return AtlasTablets.parseUses(plugin.players().get(player).progress().get(AtlasTablets.usesKey(q, r)));
+    }
+
+    /** 罩到這一格的每片石板用掉 1 次；用完的拿掉（塔空出來可以再插）。 */
+    private void consumeTablets(final Player player, final AtlasProgress atlas, final int q, final int r) {
+        final int radius = atlasConfig.tower().radius() + atlasBonus(player).count("atlas.tower.radius");
+        for (final AtlasGrid.Cell tower : atlas.completedTowers()) {
+            if (AtlasGrid.distance(tower.q(), tower.r(), q, r) > radius) {
+                continue;
+            }
+            final AtlasTablets.Kind kind = tabletAt(player, tower.q(), tower.r());
+            if (kind == null) {
+                continue;
+            }
+            final int left = tabletUses(player, tower.q(), tower.r()) - 1;
+            if (left <= 0) {
+                plugin.characters().removeProgress(player, AtlasTablets.key(tower.q(), tower.r()));
+                plugin.characters().removeProgress(player, AtlasTablets.usesKey(tower.q(), tower.r()));
+                player.sendMessage(plugin.text().prefixed("<#d8c8a0>塔 (" + tower.q() + ", " + tower.r() + ") 的" + kind.displayName()
+                        + "用完了<gray>（這張還有效；在地圖裝置的「塔與城塞」可以再插一片）"));
+            } else {
+                plugin.characters().setProgress(player, AtlasTablets.usesKey(tower.q(), tower.r()), Integer.toString(left));
+            }
+        }
+    }
+
     /** 罩到這一格的石板（每座完成的塔，半徑 = tower.radius + 星圖天賦 atlas.tower.radius）。 */
     List<AtlasTablets.Kind> tabletsCovering(final Player player, final AtlasProgress atlas, final int q, final int r) {
         final List<AtlasTablets.Kind> list = new ArrayList<>();
@@ -468,7 +500,7 @@ public final class MapService {
             return "先完成這座塔";
         }
         if (tabletAt(player, tower.q(), tower.r()) != null) {
-            return "這座塔已經插了石板（拿不回來）";
+            return "這座塔已經插了石板（用完才能再插）";
         }
         final CurrencyType type = plugin.currencies() == null ? null : plugin.currencies().repository().get(kind.currencyId());
         if (type == null) {
@@ -479,8 +511,10 @@ public final class MapService {
         }
         takeCurrency(player, type, 1);
         plugin.characters().setProgress(player, AtlasTablets.key(tower.q(), tower.r()), kind.currencyId());
+        plugin.characters().setProgress(player, AtlasTablets.usesKey(tower.q(), tower.r()), Integer.toString(AtlasTablets.USES));
         player.sendMessage(plugin.text().prefixed("<#d8c8a0>插上" + kind.displayName() + "：" + kind.description()
-                + "<gray>（塔 (" + tower.q() + ", " + tower.r() + ") 周圍 " + (atlasConfig.tower().radius() + atlasBonus(player).count("atlas.tower.radius")) + " 格）"));
+                + "<gray>（塔 (" + tower.q() + ", " + tower.r() + ") 周圍 " + (atlasConfig.tower().radius() + atlasBonus(player).count("atlas.tower.radius")) + " 格；罩到的地圖可以開 "
+                + AtlasTablets.USES + " 張）"));
         return null;
     }
 

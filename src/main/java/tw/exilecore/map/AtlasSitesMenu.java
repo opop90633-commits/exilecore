@@ -72,7 +72,9 @@ public final class AtlasSitesMenu extends Menu {
                         "<yellow>點一下選石板"));
             } else {
                 items.add(icon(Material.SOUL_LANTERN, "<#d8c8a0>塔 (" + tower.q() + ", " + tower.r() + ")<gray> " + kind.displayName(),
-                        "<gray>" + ItemRenderer.escape(kind.description()), "<dark_gray>罩到周圍 " + radius + " 格；插了拿不回來"));
+                        "<gray>" + ItemRenderer.escape(kind.description()),
+                        "<gray>還能用 <white>" + service.tabletUses(player, tower.q(), tower.r()) + "<gray> / " + AtlasTablets.USES + " 張地圖",
+                        "<dark_gray>罩到周圍 " + radius + " 格；罩到的地圖每開一張用掉 1 次，用完可以再插"));
             }
             cells.add(tower);
         }
@@ -125,7 +127,7 @@ public final class AtlasSitesMenu extends Menu {
             slot++;
         }
         set(SLOT_BACK, icon(Material.ARROW, "<white>← 回塔與城塞"));
-        set(SLOT_HELP, helpButton(List.of("<gray>選一片石板插進塔 (" + picking.q() + ", " + picking.r() + ")", "<gray>插了拿不回來，效果永久罩到周圍的地圖")));
+        set(SLOT_HELP, helpButton(List.of("<gray>選一片石板插進塔 (" + picking.q() + ", " + picking.r() + ")", "<gray>插了拿不回來；罩到的地圖每開一張用掉 1 次，" + AtlasTablets.USES + " 次用完可以再插")));
         set(SLOT_CLOSE, closeButton());
     }
 
