@@ -77,13 +77,16 @@ final class ModelCosmetics {
         Location sentPet;
     }
 
-    /** 跟上次送出去的位置一樣（差不到 1/100 格、身體方向差不到 1 度）就不用再傳送。 */
+    /**
+     * 跟上次送出去的位置幾乎一模一樣（真的站著不動）才不傳送。
+     * 2026-10-21 晚：原本門檻是 1/100 格、1 度，身體慢慢轉的時候翅膀會一格一格跳（不順）；改成只略過完全沒動的。
+     */
     static boolean same(final Location sent, final Location now) {
         if (sent == null || sent.getWorld() != now.getWorld()) {
             return false;
         }
         final double yaw = Math.abs(((sent.getYaw() - now.getYaw()) % 360 + 540) % 360 - 180);
-        return sent.distanceSquared(now) < 1.0e-4 && yaw < 1.0;
+        return sent.distanceSquared(now) < 1.0e-8 && yaw < 0.05;
     }
 
     private final ExileCore plugin;
