@@ -65,12 +65,19 @@ npc_skins:
 online_bonus:
   enabled: true
   tiers:
-    - { players: 10,  experience: 5 }
-    - { players: 20,  experience: 5,  quantity: 5 }
-    - { players: 30,  experience: 5,  quantity: 5,  rarity: 5 }
-    - { players: 50,  experience: 10, quantity: 10, rarity: 10, gold: 10 }
-    - { players: 70,  experience: 15, quantity: 15, rarity: 15, gold: 15 }
+  # 2026-10-21：改成每 10 人一階，每階四種各 +2%（100 人 20%，跟以前一樣；滿 120 人 24%）
+    - { players: 10, experience: 2, quantity: 2, rarity: 2, gold: 2 }
+    - { players: 20, experience: 4, quantity: 4, rarity: 4, gold: 4 }
+    - { players: 30, experience: 6, quantity: 6, rarity: 6, gold: 6 }
+    - { players: 40, experience: 8, quantity: 8, rarity: 8, gold: 8 }
+    - { players: 50, experience: 10, quantity: 10, rarity: 10, gold: 10 }
+    - { players: 60, experience: 12, quantity: 12, rarity: 12, gold: 12 }
+    - { players: 70, experience: 14, quantity: 14, rarity: 14, gold: 14 }
+    - { players: 80, experience: 16, quantity: 16, rarity: 16, gold: 16 }
+    - { players: 90, experience: 18, quantity: 18, rarity: 18, gold: 18 }
     - { players: 100, experience: 20, quantity: 20, rarity: 20, gold: 20 }
+    - { players: 110, experience: 22, quantity: 22, rarity: 22, gold: 22 }
+    - { players: 120, experience: 24, quantity: 24, rarity: 24, gold: 24 }
 
 resource-pack:
   # 介面資源包（星盤式的天賦樹、傳奇裝備的專屬外觀）：插件自己產生、透過下面的 web 網頁伺服器提供下載，玩家登入時會被問要不要套用。
