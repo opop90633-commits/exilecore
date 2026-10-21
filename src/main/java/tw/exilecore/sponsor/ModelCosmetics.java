@@ -48,6 +48,8 @@ final class ModelCosmetics {
     private static final double PET_SIDE = 0.85;
     private static final double PET_BEHIND = 0.7;
     private static final double PET_HEIGHT = 1.35;
+    /** 寵物幾 tick 動一次（2026-10-21 效能）。 */
+    private static final int PET_EVERY = 2;
     /** 寵物離目標點超過這麼遠就直接跳過去。 */
     private static final double PET_SNAP = 10;
     /** 動畫多久更新一次（tick）。 */
@@ -69,6 +71,19 @@ final class ModelCosmetics {
         final List<ItemDisplay> shoulders = new ArrayList<>();
         ItemDisplay pet;
         Location petAt;
+        /** 2026-10-21 效能：上次送出去的位置（沒動就不再傳送；主城站著不動的人很多）。 */
+        Location sentBack;
+        Location sentOwn;
+        Location sentPet;
+    }
+
+    /** 跟上次送出去的位置一樣（差不到 1/100 格、身體方向差不到 1 度）就不用再傳送。 */
+    static boolean same(final Location sent, final Location now) {
+        if (sent == null || sent.getWorld() != now.getWorld()) {
+            return false;
+        }
+        final double yaw = Math.abs(((sent.getYaw() - now.getYaw()) % 360 + 540) % 360 - 180);
+        return sent.distanceSquared(now) < 1.0e-4 && yaw < 1.0;
     }
 
     private final ExileCore plugin;
@@ -136,6 +151,8 @@ final class ModelCosmetics {
         entry.back.clear();
         entry.backOwn.clear();
         entry.backArt = null;
+        entry.sentBack = null;
+        entry.sentOwn = null;
     }
 
     private static void clearPet(final Worn entry) {
@@ -145,6 +162,7 @@ final class ModelCosmetics {
         entry.pet = null;
         entry.petArt = null;
         entry.petAt = null;
+        entry.sentPet = null;
     }
 
     /** 每 tick。 */
@@ -232,13 +250,19 @@ final class ModelCosmetics {
         at.setYaw(player.getBodyYaw());
         at.setPitch(0);
         final float height = player.isSneaking() ? BACK_HEIGHT - 0.3f : player.isSwimming() || player.isGliding() ? 0.4f : BACK_HEIGHT;
-        for (final ItemDisplay display : entry.back) {
-            display.teleport(at);
+        if (!same(entry.sentBack, at)) { // 2026-10-21 效能：站著不動就不送
+            for (final ItemDisplay display : entry.back) {
+                display.teleport(at);
+            }
+            entry.sentBack = at.clone();
         }
         own.setYaw(player.getBodyYaw());
         own.setPitch(0);
-        for (final ItemDisplay display : entry.backOwn) {
-            display.teleport(own);
+        if (!same(entry.sentOwn, own)) {
+            for (final ItemDisplay display : entry.backOwn) {
+                display.teleport(own);
+            }
+            entry.sentOwn = own.clone();
         }
         if (tick % ANIMATE != 0) {
             return;
@@ -360,19 +384,25 @@ final class ModelCosmetics {
             entry.petAt = target.clone();
             set(entry.pet, new Vector3f(), new Quaternionf(), PET_SCALE);
         }
+        if (tick % PET_EVERY != 0 && entry.sentPet != null) {
+            return; // 2026-10-21 效能：寵物 2 tick 動一次（補間 2 tick，看起來一樣順）
+        }
         final Location now = entry.petAt;
         if (now.getWorld() != target.getWorld() || now.distanceSquared(target) > PET_SNAP * PET_SNAP) {
             entry.petAt = target.clone();
         } else {
             // 慢慢跟上（離越遠跟得越快）
-            final Vector step = target.toVector().subtract(now.toVector()).multiply(0.22);
+            final Vector step = target.toVector().subtract(now.toVector()).multiply(0.4); // 2 tick 一次：0.22 → 0.4
             now.add(step);
         }
         final double bob = Math.sin(tick / 20.0 * 2.2) * 0.08;
         final Location place = entry.petAt.clone().add(0, bob, 0);
         place.setYaw(player.getLocation().getYaw());
         place.setPitch(0);
-        entry.pet.teleport(place);
+        if (!same(entry.sentPet, place)) {
+            entry.pet.teleport(place);
+            entry.sentPet = place.clone();
+        }
     }
 
     /** 寵物要飄去的地方：玩家左後方、肩膀的高度。 */
