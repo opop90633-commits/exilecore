@@ -2626,6 +2626,9 @@ public final class SkillService {
                                     + " ÷ 你的攻速；那個技能自己的輔助不算）"
                                     : build.isAttack() ? "　<dark_gray>（吃你的攻擊速度）" : "　<dark_gray>（吃你的施法速度）"));
                 }
+            } else if (config.meta(definition.id()) != null && config.meta(definition.id()).totem()) {
+                // 2026-10-21：法術圖騰寶石的施放速度是「放圖騰」的速度（圖騰放插槽法術的速度寫在上面的主要寶石那幾行）
+                lines.add(String.format(Locale.ROOT, "<gray>放圖騰：每秒最多 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(sheet)));
             } else {
                 lines.add(String.format(Locale.ROOT, "<gray>每秒 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(sheet)));
             }

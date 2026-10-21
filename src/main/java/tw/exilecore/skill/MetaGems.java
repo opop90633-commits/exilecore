@@ -231,6 +231,11 @@ public final class MetaGems {
         if (extraTotems > 0) {
             mods.add(Modifier.flat(StatKeys.SKILL_TOTEMS, extraTotems, source));
         }
+        // 2026-10-21：裝在法術圖騰寶石上、跟圖騰有關的輔助（要圖騰才能掛的：疾樁、繁置、樁怒、堅樁、厚樁、怨燼）也套到圖騰施法上
+        //（照 PoE2）；插槽法術自己也掛了同一顆的不重複算。其他輔助（疾詠、湧詠…）照舊只影響放圖騰這個動作。魔力倍率不算（放圖騰才花魔力）
+        for (final SupportDefinition support : carriedToTotem(socket)) {
+            mods.addAll(support.modifiers());
+        }
         final SupportDefinition carrier = new SupportDefinition("meta." + socket.metaEntry().skillId(), source, "", "PAPER", 1,
                 java.util.Set.of(), java.util.Set.of(), 1.0, mods, List.of());
         final List<SupportDefinition> supports = new ArrayList<>();
@@ -238,6 +243,27 @@ public final class MetaGems {
         supports.addAll(service.supportsOf(socket.spellEntry()));
         return SkillBuild.of(service.config(), socket.spell(), socket.spellEntry().level(), state.level(), false, supports,
                 state.weaponTags(), sheet, SkillService.resonantOf(socket.spellEntry())); // 2026-10-18：共鳴的專屬輔助不佔名額
+    }
+
+    /** 法術圖騰寶石上會帶到圖騰施法的輔助（要圖騰才能掛的；插槽法術已經有同一顆的不算）。 */
+    List<SupportDefinition> carriedToTotem(final Socket socket) {
+        final java.util.Set<String> spellSupports = new java.util.HashSet<>();
+        for (final SupportDefinition support : service.supportsOf(socket.spellEntry())) {
+            if (support != null) {
+                spellSupports.add(support.id());
+            }
+        }
+        final List<SupportDefinition> carried = new ArrayList<>();
+        for (final SupportDefinition support : service.supportsOf(socket.metaEntry())) {
+            if (carriesToTotem(support) && !spellSupports.contains(support.id())) {
+                carried.add(support);
+            }
+        }
+        return carried;
+    }
+
+    static boolean carriesToTotem(final SupportDefinition support) {
+        return support != null && support.requires().contains(tw.exilecore.stats.Tags.TOTEM);
     }
 
     // ---- 說明 ----
@@ -277,6 +303,23 @@ public final class MetaGems {
         if (socket != null) {
             if (spec.totem()) {
                 lines.add("<gray>插槽：<white>" + ItemRenderer.escape(socket.spell().name()));
+                // 2026-10-21：圖騰替你放插槽法術的速度（以前只寫放圖騰的速度，看不出圖騰放得多快）
+                final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+                final SkillBuild metaBuild = service.build(state, sheet, meta, socket.metaEntry()); // 跟真的放的時候一樣用實際等級（含裝備加的）
+                final SkillBuild build = totemBuild(state, sheet, socket, metaBuild.level(), spec.charges(), 0);
+                if (build.deploy() != null && build.deploy().interval() > 0) {
+                    final double rate = 20.0 / SkillDeployables.totemTicks(build.deploy().interval(), SkillDeployables.totemSpeed(build, sheet, false));
+                    lines.add(String.format(Locale.ROOT, "<gray>圖騰施放%s：每根每秒 <white>%.2f</white> 次（最多 %d 根，合計 <white>%.2f</white> 次）",
+                            ItemRenderer.escape(socket.spell().name()), rate, build.totems(), rate * build.totems()));
+                }
+                final List<String> carried = new ArrayList<>();
+                for (final SupportDefinition support : carriedToTotem(socket)) {
+                    carried.add(support.name());
+                }
+                lines.add(carried.isEmpty()
+                        ? "<dark_gray>這裡的輔助只影響放圖騰；要圖騰才能掛的輔助（疾樁、繁置、樁怒…）會帶到圖騰施法上"
+                        : "<gray>帶到圖騰施法上的輔助：<#8fd3ff>" + ItemRenderer.escape(String.join("、", carried))
+                                + "<dark_gray>（其他輔助只影響放圖騰）");
             } else {
                 lines.add(String.format(Locale.ROOT, "<gray>插槽：<white>%s</white>（能量 %s／%s）", ItemRenderer.escape(socket.spell().name()),
                         number(Math.floor(energyOf(player.getUniqueId(), meta.id(), socket.spell().id()))), number(MetaSpec.maxEnergy(socket.spell()))));

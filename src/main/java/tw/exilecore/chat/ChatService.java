@@ -417,7 +417,13 @@ public final class ChatService {
                 .append(Component.text("："))
                 .append(body)
                 .build());
-        to.playSound(to.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 0.5f, 1.4f);
+        // 2026-10-21：私訊提示音加大聲、改成「叮咚」兩聲（以前一聲小小的鐘琴常常沒注意到）；聲音跟著人、走 UI 類別不受距離影響
+        to.playSound(to, Sound.BLOCK_NOTE_BLOCK_BELL, org.bukkit.SoundCategory.MASTER, 1.0f, 1.5f);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (to.isOnline()) {
+                to.playSound(to, Sound.BLOCK_NOTE_BLOCK_BELL, org.bukkit.SoundCategory.MASTER, 1.0f, 1.0f);
+            }
+        }, 3L);
         if (sender != null) {
             replies.put(to.getUniqueId(), sender.getUniqueId());
             replies.put(sender.getUniqueId(), to.getUniqueId());
