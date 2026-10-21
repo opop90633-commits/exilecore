@@ -151,6 +151,10 @@ final class RitualEvents implements Listener {
         final double monthly = plugin.events() == null ? -1 : plugin.events().ritualChance();
         // 每月活動可以改這個月的機率；星圖天賦再增加 x%
         final double chance = Math.min(1.0, (monthly >= 0 ? monthly : ritual.chance()) * (1 + instance.atlas().increased("atlas.ritual.chance")));
+        // 2026-10-21 修正：星圖核心「單一信仰」：其他事件不出現（祭壇、幻霧也算）
+        if (instance.atlas().get("atlas.other_events_off") > 0) {
+            return;
+        }
         if (instance.special() != null || chance <= 0 || random.nextDouble() >= chance || rooms.isEmpty()) {
             return;
         }

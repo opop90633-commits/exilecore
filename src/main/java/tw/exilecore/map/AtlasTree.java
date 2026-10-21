@@ -499,6 +499,45 @@ public final class AtlasTree {
         return String.join(",", allocated);
     }
 
+    /** 短代碼的開頭（2026-10-21）。 */
+    public static final String CODE_PREFIX = "A";
+    private static final Pattern SHORT_CODE = Pattern.compile("A[A-Za-z0-9_-]+");
+
+    /**
+     * 網頁規劃器、/atlas import 用的短代碼（2026-10-21）：「A」＋每個節點一個位元（照檔案裡的順序）的 base64url，全部點滿也只有 22 字。
+     * 以前是「代號,代號,…」，點了 30 個左右就超過聊天框一行 256 字，後面的被截掉。順序不重要（匯入時照 {@link #orderFromRoot} 排）。
+     */
+    public String encodeCode(final Collection<String> ids) {
+        final byte[] bytes = new byte[(ordered.size() + 7) / 8];
+        for (int i = 0; i < ordered.size(); i++) {
+            if (ids.contains(ordered.get(i).id())) {
+                bytes[i >> 3] |= (byte) (1 << (i & 7));
+            }
+        }
+        return CODE_PREFIX + java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    /** 短代碼或舊的「代號,代號」都讀得懂；讀不懂回傳空的。 */
+    public List<String> decodeCode(final String code) {
+        final String trimmed = code == null ? "" : code.trim();
+        if (!SHORT_CODE.matcher(trimmed).matches()) {
+            return parseAllocation(trimmed);
+        }
+        final byte[] bytes;
+        try {
+            bytes = java.util.Base64.getUrlDecoder().decode(trimmed.substring(CODE_PREFIX.length()));
+        } catch (final IllegalArgumentException e) {
+            return List.of();
+        }
+        final List<String> ids = new ArrayList<>();
+        for (int i = 0; i < ordered.size() && (i >> 3) < bytes.length; i++) {
+            if ((bytes[i >> 3] >> (i & 7) & 1) != 0) {
+                ids.add(ordered.get(i).id());
+            }
+        }
+        return ids;
+    }
+
     /**
      * 實際有效的天賦：照點的順序一個一個看，這個天賦還在、跟起點或已經有效的天賦相鄰、點數還夠才算。
      * 設定改了、點數變少（管理指令清掉星圖）時，從最後點的開始不算；存的字串不用改。

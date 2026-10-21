@@ -1005,6 +1005,14 @@ public final class MapDeviceMenu extends Menu {
         redraw();
     }
 
+    /** 2026-10-21：從星圖挑好的地圖：一打開就選在裝置上（背包的第幾格、那張地圖）。 */
+    public void preselect(final int inventorySlot, final ItemData data) {
+        if (data != null && service.isMap(data)) {
+            selected = data;
+            selectedSlot = inventorySlot;
+        }
+    }
+
     /** 點背包裡的地圖：選起來（東西不動）。 */
     @Override
     protected void onBottomClick(final int slot, final ClickType click, final InventoryClickEvent event) {

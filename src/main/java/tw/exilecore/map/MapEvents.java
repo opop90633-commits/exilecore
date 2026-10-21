@@ -260,6 +260,9 @@ final class MapEvents implements Listener {
             if (kind == MapEventConfig.Kind.SAFE) {
                 continue; // 2026-10-18：保險箱一張圖最多一個，照 safe_chance 另外放（下面）
             }
+            if (faithBlocks(atlas, kind)) {
+                continue; // 2026-10-21 修正：單一信仰：其他種類的保證事件（天賦、石板、隱藏格）也不放
+            }
             for (int i = 0; i < atlas.extraEvents(kind); i++) {
                 kinds.add(kind);
             }
@@ -302,7 +305,7 @@ final class MapEvents implements Listener {
             }
         }
         // 2026-10-18：保險箱：per_map 之外另外算，一張圖最多一個，放在剩下的房間
-        if (!rooms.isEmpty() && random.nextDouble() < config.safe().chance()) {
+        if (!rooms.isEmpty() && !faithBlocks(atlas, MapEventConfig.Kind.SAFE) && random.nextDouble() < config.safe().chance()) {
             final MapLayout.Room room = rooms.remove(random.nextInt(rooms.size()));
             final MapLayout.Spot spot = spotIn(instance.layout(), room);
             final Event safe = spot == null ? null : create(instance, MapEventConfig.Kind.SAFE, spot, random);
@@ -320,6 +323,9 @@ final class MapEvents implements Listener {
 
     /** 在這個房間放一個事件（地圖變化用：寶庫、隱藏房的寶箱）；放不下回傳 false。 */
     boolean placeIn(final MapInstance instance, final MapLayout.Room room, final MapEventConfig.Kind kind, final RandomGenerator random) {
+        if (faithBlocks(instance.atlas(), kind)) {
+            return false; // 2026-10-21：單一信仰：地圖變化的寶庫、隱藏房也不放別種事件
+        }
         final MapLayout.Spot spot = spotIn(instance.layout(), room);
         final Event event = spot == null ? null : create(instance, kind, spot, random);
         if (event == null) {
@@ -391,6 +397,11 @@ final class MapEvents implements Listener {
         return null;
     }
 
+    /** 星圖核心「單一信仰」點了，而且這種不是選的那種（2026-10-21）。 */
+    static boolean faithBlocks(final AtlasBonus atlas, final MapEventConfig.Kind kind) {
+        return atlas.get("atlas.other_events_off") > 0 && atlas.get(AtlasBonus.faithKey(kind)) <= 0;
+    }
+
     private MapEventConfig.Kind pickKind(final RandomGenerator random, final AtlasBonus atlas) {
         // 每月活動的主題可以讓某種事件更常出現（權重直接加上去）；星圖天賦再乘上 1 + 增加的
         final Map<MapEventConfig.Kind, Double> weights = new java.util.LinkedHashMap<>();
@@ -398,7 +409,7 @@ final class MapEvents implements Listener {
         for (final Map.Entry<MapEventConfig.Kind, Integer> entry : config.weights().entrySet()) {
             final int boost = plugin.events() == null ? 0 : plugin.events().eventBoost(entry.getKey().name().toLowerCase(java.util.Locale.ROOT));
             double weight = (Math.max(0, entry.getValue()) + (entry.getValue() > 0 ? boost : 0)) * (1 + atlas.eventWeight(entry.getKey()));
-            if (atlas.get("atlas.other_events_off") > 0 && atlas.get(AtlasBonus.faithKey(entry.getKey())) <= 0) {
+            if (faithBlocks(atlas, entry.getKey())) {
                 weight = 0; // 2026-10-21 星圖核心「單一信仰」：只有選的那種事件
             }
             weights.put(entry.getKey(), weight);

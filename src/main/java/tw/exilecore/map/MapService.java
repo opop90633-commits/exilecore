@@ -316,7 +316,7 @@ public final class MapService {
         }
         final List<String> notes = new ArrayList<>();
         // 核心天賦的效果（不是格子的加成）：完成過的格子也照樣吃
-        if (instance.atlas().get("atlas.chosen_event") > 0) { // 核心「單一信仰」：選的那種事件每張圖保證幾個，其他事件不出現（祭壇、幻霧不受影響）
+        if (instance.atlas().get("atlas.chosen_event") > 0) { // 核心「單一信仰」：選的那種事件每張圖保證幾個，其他事件不出現（2026-10-21：祭壇、幻霧、保險箱也不出現）
             final MapEventConfig.Kind faith = faithKind(player);
             instance.setAtlas(instance.atlas().plus(AtlasBonus.kindKey(faith, "extra"), instance.atlas().count("atlas.chosen_event"))
                     .plus(AtlasBonus.faithKey(faith), 1));
@@ -3255,7 +3255,7 @@ public final class MapService {
         if (!plugin.players().get(player).hasCharacter()) {
             return "先建立角色";
         }
-        final List<String> planned = AtlasTree.parseAllocation(code);
+        final List<String> planned = tree.decodeCode(code); // 2026-10-21：短代碼（舊的「代號,代號」也讀得懂）
         if (planned.isEmpty()) {
             return "代碼是空的";
         }
@@ -3274,7 +3274,7 @@ public final class MapService {
             return null;
         }
         final List<String> allocated = atlasAllocated(player);
-        return plugin.web().publicUrl() + "/atlas" + (allocated.isEmpty() ? "" : "#" + AtlasTree.joinAllocation(allocated));
+        return plugin.web().publicUrl() + "/atlas" + (allocated.isEmpty() ? "" : "#" + tree.encodeCode(allocated)); // 2026-10-21：短代碼
     }
 
     /** 2026-10-21：整組換掉（星圖天賦組切換）：照這份配點存（已經是有效的順序）。 */

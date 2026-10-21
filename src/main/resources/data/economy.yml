@@ -121,6 +121,16 @@ values:
   ticket_ritual: 15000
   ticket_delirium: 15000
   ticket_abyss: 15000
+  # 2026-10-21：先驅石板（插在完成的塔上）：完成塔必掉 1 片、地圖事件 3%、地圖 Boss 2%；以前沒寫價值，拆解只有 0 金幣
+  tablet_shrine: 4500
+  tablet_strongbox: 4500
+  tablet_breach: 4500
+  tablet_exile: 4500
+  tablet_abyss: 4500
+  tablet_ritual: 4500
+  tablet_delirium: 4500
+  tablet_boss: 4500
+  tablet_bounty: 4500
 
 # 參考價值跟著市價走：每天換日後，用通貨交易所最近 days 天的成交重算上面這些價值（手續費、市集排序、交易估價都用新的）。
 # 金幣不能交易，市場只看得到「通貨之間」的比例，所以要一個基準：anchor 的價值固定（照上面），其他照成交比例換算。

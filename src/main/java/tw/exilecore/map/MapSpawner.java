@@ -119,7 +119,8 @@ final class MapSpawner {
             }
             return;
         }
-        if (theme == MapTwists.Theme.SWARM) {
+        final boolean rareOnly = instance.atlas().get("atlas.rare_only") > 0;
+        if (theme == MapTwists.Theme.SWARM && !rareOnly) { // 2026-10-21：無人之地：怪物潮也不出普通怪（照下面的稀有怪群）
             // 怪物潮：一大群普通怪
             final int size = size(settings.normal(), sizeFactor * twists.swarmSize(), random);
             for (int i = 0; i < size; i++) {
@@ -142,7 +143,8 @@ final class MapSpawner {
             // 每月活動的主題：稀有怪一定帶那一條詞綴（沒有活動照一般抽）
             final List<String> rareMods = plugin.events() == null ? null : plugin.events().rareMods(instance.level(), random);
             add(pack, spawn(instance, entry, around(instance, spot, true, random), MonsterRarity.RARE, rareMods));
-            final int minions = size(settings.rare(), sizeFactor, random);
+            // 2026-10-21 修正：無人之地「只有稀有怪與 Boss」：稀有怪不帶普通怪小弟
+            final int minions = rareOnly ? 0 : size(settings.rare(), sizeFactor, random);
             for (int i = 0; i < minions; i++) {
                 add(pack, spawn(instance, entry, around(instance, spot, false, random), MonsterRarity.NORMAL, List.of()));
             }

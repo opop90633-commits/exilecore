@@ -24,7 +24,8 @@ import java.util.Set;
  * （跟棋盤遊戲一樣：奇數列的格子跟上下兩列的「同一欄」與「右邊一欄」相鄰）。起點是營地，完成的格子發光，解鎖的可以開，
  * 還沒走到的是迷霧。最下面一排：地圖裝置、上下左右捲動、回到營地、星圖天賦、進度、關閉。
  * <p>
- * 左鍵一格已解鎖的地圖：設成「下次開這種地圖用這一格」；右鍵取消。塔、城塞從地圖裝置開。
+ * 左鍵一格已解鎖的地圖：直接開這一格（用背包、倉庫地圖頁裡最高階的那種地圖；2026-10-21）；Shift＋左鍵：只設成「下次開這種地圖用這一格」；
+ * 右鍵取消。塔、城塞從地圖裝置開。
  */
 public final class AtlasMenu extends Menu {
 
@@ -47,6 +48,8 @@ public final class AtlasMenu extends Menu {
     private static final int SCROLL = 3;
 
     private final MapService service;
+    /** 2026-10-21：核心「腐化之心」點了：所有地圖格（淨化區以外）都當作腐化區，星圖上也畫成腐化的。 */
+    private boolean allCorrupt;
     /** 視窗中心（六角格的軸座標）。 */
     private int centerQ;
     private int centerR;
@@ -71,6 +74,7 @@ public final class AtlasMenu extends Menu {
     @Override
     protected void draw() {
         shown.clear();
+        allCorrupt = service.atlasBonus(player).get("atlas.all_corrupt") > 0;
         final AtlasProgress atlas = service.atlasProgress(player);
         final AtlasGrid grid = atlas.grid();
         final Set<Long> unlocked = atlas.unlocked();
@@ -167,9 +171,9 @@ public final class AtlasMenu extends Menu {
                     lore.add("<#af6025>☠ Boss 格：Boss 生命 ×" + AtlasTree.number(grid.config().bossLife()) + "、必掉 " + grid.config().bossMaps()
                             + " 張地圖、傳奇機率 ×" + AtlasTree.number(grid.config().bossUnique()));
                 }
-                if (cell.corrupted()) {
+                if (corrupted(cell)) {
                     final AtlasConfig.Corruption k = grid.config().corruption();
-                    lore.add("<#b07aff>腐化區：怪物等級 +" + k.monsterLevel() + "、怪物群 +" + AtlasTree.number(k.pack()) + "%、物品數量 +"
+                    lore.add("<#b07aff>腐化區" + (cell.corrupted() ? "" : "（腐化之心）") + "：怪物等級 +" + k.monsterLevel() + "、怪物群 +" + AtlasTree.number(k.pack()) + "%、物品數量 +"
                             + AtlasTree.number(k.quantity()) + "%、稀有度 +" + AtlasTree.number(k.rarity()) + "%");
                     lore.add("<#b07aff>　第一次打倒 Boss：每個人 " + Math.round(grid.config().vaalChance() * 100) + "% 掉一顆蝕變石");
                 }
@@ -185,7 +189,8 @@ public final class AtlasMenu extends Menu {
                     lore.add("<green>已解鎖：把這種地圖放進地圖裝置就會打這一格");
                 }
                 final boolean isChosen = chosen != null && chosen.q() == q && chosen.r() == r;
-                lore.add(isChosen ? "<yellow>✔ 下次開 " + ItemRenderer.escape(name) + " 用這一格<gray>（右鍵取消）" : "<gray>左鍵：下次開 " + ItemRenderer.escape(name) + " 用這一格");
+                lore.add("<yellow>左鍵：直接開這一格<gray>（用背包或倉庫裡最高階的 " + ItemRenderer.escape(name) + "）");
+                lore.add(isChosen ? "<yellow>✔ 下次開 " + ItemRenderer.escape(name) + " 用這一格<gray>（右鍵取消）" : "<gray>Shift＋左鍵：只指定下次開 " + ItemRenderer.escape(name) + " 用這一格");
                 final Material material;
                 if (done) {
                     material = Material.FILLED_MAP;
@@ -193,7 +198,7 @@ public final class AtlasMenu extends Menu {
                     final var base = map == null ? null : plugin.items().repository().base(map.base());
                     material = base == null ? Material.PAPER : material(base.material(), Material.PAPER);
                 }
-                final String color = done ? "<#f5b942>" : cell.corrupted() ? "<#b07aff>" : cell.purified() ? "<#fff1b8>" : "<green>";
+                final String color = done ? "<#f5b942>" : corrupted(cell) ? "<#b07aff>" : cell.purified() ? "<#fff1b8>" : "<green>";
                 icon = icon(material, color + (cell.kind() == AtlasGrid.Kind.BOSS ? "☠ " : "") + ItemRenderer.escape(name) + " <dark_gray>T" + cell.tier(), lore);
                 icon.setAmount(Math.max(1, Math.min(64, cell.tier())));
                 if (isChosen) {
@@ -288,7 +293,7 @@ public final class AtlasMenu extends Menu {
                     strings.set(UiPack.AtlasCell.STRING_GLOW, "glow");
                     colors.set(UiPack.AtlasCell.COLOR_GLOW, GOLD);
                 }
-                if (!fogFinal && cell.corrupted()) {
+                if (!fogFinal && corrupted(cell)) {
                     strings.set(UiPack.AtlasCell.STRING_CORRUPT, "corrupt");
                 } else if (!fogFinal && cell.purified()) {
                     strings.set(UiPack.AtlasCell.STRING_CORRUPT, "corrupt"); // 2026-10-21：淨化區用同一個圈、換顏色
@@ -418,9 +423,98 @@ public final class AtlasMenu extends Menu {
             player.sendActionBar(plugin.text().parse("<gray>取消指定：開圖時自動選最近的未完成格"));
         } else {
             service.chooseCell(player, cell);
+            if (!click.isShiftClick() && map != null) {
+                openHere(map); // 2026-10-21：左鍵直接開
+                return;
+            }
             player.sendActionBar(plugin.text().parse("<yellow>下次開 " + ItemRenderer.escape(name) + " 用 (" + q + ", " + r + ")"));
         }
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.5f);
         redraw();
+    }
+
+    /** 這格開圖時算不算腐化區：本來就是，或點了「腐化之心」（淨化區、塔、城塞除外）。 */
+    private boolean corrupted(final AtlasGrid.Cell cell) {
+        return cell.corrupted() || allCorrupt && !cell.purified() && cell.isMap();
+    }
+
+    /**
+     * 直接開這種地圖（2026-10-21）：先找背包，沒有再從倉庫的地圖頁拿一張到背包（都挑最高階、同階稀有度高的），
+     * 然後照地圖裝置的「開啟」開（格子已經用 chooseCell 指定好了）。
+     */
+    private void openHere(final MapConfig.MapDef map) {
+        int slot = -1;
+        tw.exilecore.item.ItemData best = null;
+        int bestRank = Integer.MIN_VALUE;
+        for (int i = 0; i < 36; i++) {
+            final tw.exilecore.item.ItemData data = mapOf(player.getInventory().getItem(i), map);
+            if (data != null && rank(data) > bestRank) {
+                best = data;
+                bestRank = rank(data);
+                slot = i;
+            }
+        }
+        if (best == null) {
+            final tw.exilecore.stash.Stash stash = plugin.stash() == null ? null : plugin.stash().stash(player).orElse(null);
+            int index = -1;
+            if (stash != null) {
+                for (int i = 0; i < stash.maps().size(); i++) {
+                    final tw.exilecore.item.ItemData data = mapOf(stash.maps().get(i), map);
+                    if (data != null && rank(data) > bestRank) {
+                        bestRank = rank(data);
+                        index = i;
+                    }
+                }
+            }
+            if (index < 0) {
+                player.sendActionBar(plugin.text().parse("<red>背包和倉庫都沒有 " + ItemRenderer.escape(map.name())
+                        + "<gray>（已經指定這一格：拿到這種地圖後從地圖裝置開）"));
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f, 0.8f);
+                redraw();
+                return;
+            }
+            final int free = player.getInventory().firstEmpty();
+            if (free < 0 || free >= 36) {
+                player.sendActionBar(plugin.text().parse("<red>背包沒有空格：先空出一格才能從倉庫拿地圖"));
+                redraw();
+                return;
+            }
+            final ItemStack taken = stash.takeMap(index);
+            if (taken == null) {
+                redraw();
+                return;
+            }
+            player.getInventory().setItem(free, taken);
+            plugin.players().markDirty(player);
+            slot = free;
+            best = plugin.items().read(taken).orElse(null);
+        }
+        final String problem = service.activate(player, slot, best);
+        if (problem != null) {
+            player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
+            redraw();
+            return;
+        }
+        player.closeInventory();
+    }
+
+    /** 這個物品是不是這種地圖；是的話回傳它的資料。 */
+    private tw.exilecore.item.ItemData mapOf(final ItemStack stack, final MapConfig.MapDef map) {
+        if (stack == null || stack.isEmpty()) {
+            return null;
+        }
+        final tw.exilecore.item.ItemData data = plugin.items().read(stack).orElse(null);
+        if (data == null || !service.isMap(data)) {
+            return null;
+        }
+        final MapConfig.MapDef def = service.config().byBase(data.base());
+        return def != null && def.id().equals(map.id()) ? data : null;
+    }
+
+    /** 挑哪一張：階級高的先，同階稀有度高的先。 */
+    private int rank(final tw.exilecore.item.ItemData data) {
+        final tw.exilecore.item.ItemBase base = plugin.items().repository().base(data.base());
+        final int tier = base == null ? 0 : tw.exilecore.item.ItemStats.mapTier(base, data);
+        return tier * 10 + data.rarity().ordinal();
     }
 }
