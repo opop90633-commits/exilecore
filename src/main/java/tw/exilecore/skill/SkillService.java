@@ -1769,6 +1769,9 @@ public final class SkillService {
         double bestMarkScore = 0;
         double bestMarkTaken = 0;
         java.util.Map<tw.exilecore.stats.DamageType, Double> bestMarkResist = java.util.Map.of();
+        double bestCurseScore = -1;
+        double bestCurseTaken = 0;
+        java.util.Map<tw.exilecore.stats.DamageType, Double> bestCurseResist = java.util.Map.of();
         for (int slot = 0; slot < SkillLoadout.BIND_SLOTS; slot++) {
             final Resolved resolved = resolve(state, slot);
             if (resolved.isDefault() || !seen.add(resolved.definition().id())) {
@@ -1802,15 +1805,19 @@ public final class SkillService {
                         }
                     }
                 }
+                double score = markTaken;
+                for (final double value : markResist.values()) {
+                    score += value / 100.0;
+                }
                 if (mark.curse()) {
-                    taken += markTaken;
-                    markResist.forEach((type, value) -> resist.merge(type, value, Double::sum));
+                    // 2026-10-22：詛咒一隻敵人同時只能有一個：面板只算效果最大的那個（以前四個詛咒全部加起來）
+                    if (score > bestCurseScore) {
+                        bestCurseScore = score;
+                        bestCurseTaken = markTaken;
+                        bestCurseResist = markResist;
+                    }
                 } else {
                     // 2026-10-22：印記同時只能有一個：面板只算效果最大的那個（以前三個印記全部加起來）
-                    double score = markTaken;
-                    for (final double value : markResist.values()) {
-                        score += value / 100.0;
-                    }
                     if (score > bestMarkScore) {
                         bestMarkScore = score;
                         bestMarkTaken = markTaken;
@@ -1819,8 +1826,9 @@ public final class SkillService {
                 }
             }
         }
-        taken += bestMarkTaken;
+        taken += bestMarkTaken + bestCurseTaken;
         bestMarkResist.forEach((type, value) -> resist.merge(type, value, Double::sum));
+        bestCurseResist.forEach((type, value) -> resist.merge(type, value, Double::sum));
         return new FullOn(self, taken, resist, exerts);
     }
 

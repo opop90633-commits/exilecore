@@ -1174,7 +1174,7 @@ skills:
 
   vulnerability_curse:
     name: 創痕詛咒
-    description: 詛咒準心指的地方一圈的敵人，六秒內護甲大幅變少，物理傷害更打得進去。
+    description: 詛咒準心指的地方一圈的敵人，六秒內護甲大幅變少，物理傷害更打得進去。一隻敵人身上同時只能有你的一個詛咒：放新的詛咒會拿掉舊的。
     icon: BONE
     type: spell
     tier: 3
@@ -1190,7 +1190,7 @@ skills:
 
   despair_curse:
     name: 凋魂詛咒
-    description: 詛咒準心指的地方一圈的敵人，六秒內混沌抗性大幅降低。
+    description: 詛咒準心指的地方一圈的敵人，六秒內混沌抗性大幅降低。一隻敵人身上同時只能有你的一個詛咒：放新的詛咒會拿掉舊的。
     icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
@@ -1203,7 +1203,7 @@ skills:
 
   elemental_weakness_curse:
     name: 三元詛咒
-    description: 詛咒準心指的地方一圈的敵人，六秒內火焰、冰冷、閃電抗性都降低。
+    description: 詛咒準心指的地方一圈的敵人，六秒內火焰、冰冷、閃電抗性都降低。一隻敵人身上同時只能有你的一個詛咒：放新的詛咒會拿掉舊的。
     icon: PRISMARINE_CRYSTALS
     type: spell
     tier: 9
@@ -1217,7 +1217,7 @@ skills:
   # 2026-10：削弱與遲滯（照 PoE2 的詛咒機制，名稱是自己的）
   enfeeble_curse:
     name: 萎力詛咒
-    description: 詛咒準心指的地方一圈的敵人，六秒內造成的傷害變少。Boss 一樣吃。
+    description: 詛咒準心指的地方一圈的敵人，六秒內造成的傷害變少。Boss 一樣吃。一隻敵人身上同時只能有你的一個詛咒：放新的詛咒會拿掉舊的。
     icon: FERMENTED_SPIDER_EYE
     type: spell
     tier: 5
@@ -1235,7 +1235,7 @@ skills:
 
   temporal_curse:
     name: 遲滯詛咒
-    description: 詛咒準心指的地方一圈的敵人，八秒內移動變慢、招式的冷卻變長。
+    description: 詛咒準心指的地方一圈的敵人，八秒內移動變慢、招式的冷卻變長。一隻敵人身上同時只能有你的一個詛咒：放新的詛咒會拿掉舊的。
     icon: CLOCK
     type: spell
     tier: 7
@@ -3650,7 +3650,7 @@ skills:
       - { stat: ignite.chance, type: FLAT, value: 25 }
   entangle:
     name: 縛根
-    description: 詛咒準心指的地方一圈的敵人：藤蔓纏住他們六秒，移動大幅變慢，受到的物理傷害增加。
+    description: 詛咒準心指的地方一圈的敵人：藤蔓纏住他們六秒，移動大幅變慢，受到的物理傷害增加。一隻敵人身上同時只能有你的一個詛咒：放新的詛咒會拿掉舊的。
     icon: STICK   # 2026-10：原本 TWISTING_VINES（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3

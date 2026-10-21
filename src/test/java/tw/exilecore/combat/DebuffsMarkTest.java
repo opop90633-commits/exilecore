@@ -31,4 +31,26 @@ class DebuffsMarkTest {
         assertTrue(debuffs.has(add, "freezing_mark", 10));
         assertEquals(2, debuffs.active(boss, 10).size());
     }
+
+    /** 2026-10-22：一隻敵人身上同時只能有你的一個詛咒；縛根一次放好幾條算同一個；別人的詛咒、印記不受影響。 */
+    @Test
+    void onlyOneCursePerPlayerPerEnemy() {
+        final Debuffs debuffs = new Debuffs();
+        final UUID boss = UUID.randomUUID();
+        final UUID other = UUID.randomUUID();
+        final UUID me = UUID.randomUUID();
+        final UUID friend = UUID.randomUUID();
+        debuffs.applyMark(boss, new Debuffs.Debuff("voltaic_mark", me, 100, 0.1, true));
+        debuffs.applyCurse(boss, new Debuffs.Debuff("despair_curse", friend, 100, 0, false), "despair_curse");
+        debuffs.applyCurse(boss, new Debuffs.Debuff("vulnerability_curse", me, 100, 0, false), "vulnerability_curse");
+        debuffs.applyCurse(other, new Debuffs.Debuff("enfeeble_curse", me, 100, 0, false), "enfeeble_curse");
+        debuffs.applyCurse(boss, new Debuffs.Debuff("entangle.physical", me, 100, 0.19, false, "physical"), "entangle");
+        debuffs.applyCurse(boss, new Debuffs.Debuff("entangle", me, 100, 0, false), "entangle");
+        assertFalse(debuffs.has(boss, "vulnerability_curse", 10), "創痕被縛根換掉");
+        assertTrue(debuffs.has(boss, "entangle.physical", 10), "縛根的兩條都在");
+        assertTrue(debuffs.has(boss, "entangle", 10));
+        assertTrue(debuffs.has(boss, "despair_curse", 10), "別人的詛咒不受影響");
+        assertTrue(debuffs.has(boss, "voltaic_mark", 10), "印記不受影響");
+        assertTrue(debuffs.has(other, "enfeeble_curse", 10), "別隻身上的詛咒不受影響");
+    }
 }

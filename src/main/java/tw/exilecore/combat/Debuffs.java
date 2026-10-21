@@ -73,6 +73,25 @@ public final class Debuffs {
         apply(target, mark);
     }
 
+    /** 詛咒的減益代號 → 哪個詛咒技能（縛根一次放好幾條：entangle.physical…）。 */
+    private final Map<String, String> curseSkills = new HashMap<>();
+
+    /**
+     * 2026-10-22：照 PoE2，一隻敵人身上同時只能有你的一個詛咒（創痕、凋魂、三元、萎力、遲滯、縛根…）：
+     * 放新的詛咒時，你放在這隻身上的其他詛咒拿掉；同一個詛咒重放照舊刷新。別人的詛咒、印記、輔助觸發的減益（殘肢、目眩…）不受影響。
+     *
+     * @param skill 這個詛咒的技能代號（同一次施放的幾條減益用同一個）
+     */
+    public void applyCurse(final UUID target, final Debuff curse, final String skill) {
+        curseSkills.put(curse.id(), skill);
+        final List<Debuff> list = entries.get(target);
+        if (list != null) {
+            list.removeIf(existing -> existing.source().equals(curse.source()) && curseSkills.containsKey(existing.id())
+                    && !curseSkills.get(existing.id()).equals(skill));
+        }
+        apply(target, curse);
+    }
+
     /** 攻擊方打這個目標時，受到的傷害倍率（1.25 = 增加 25%；好幾條相加）。 */
     public double takenMultiplier(final UUID target, final UUID attacker, final long now) {
         return takenMultiplier(target, attacker, now, java.util.Set.of());

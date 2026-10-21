@@ -218,8 +218,13 @@ public record Affix(String id, AffixType type, String group, Set<String> spawnTa
                 out.append(number(value, divisor));
                 final int[] range = ranges.get(matcher.group(1));
                 if (range != null && range.length == 2 && range[0] != range[1]) {
-                    out.append('<').append(RANGE_COLOR).append(">(").append(number(Math.min(range[0], range[1]), divisor)).append('–')
-                            .append(number(Math.max(range[0], range[1]), divisor)).append(")</").append(RANGE_COLOR).append('>');
+                    // 2026-10-22：模板寫「-{value}%」的（石衛鎧的 -x% 抗性上限）範圍也帶負號：-1(-1～-5)%，以前寫成 -1(1–5)% 像是正的
+                    final boolean negative = matcher.start() > 0 && template.charAt(matcher.start() - 1) == '-';
+                    final String low = number(Math.min(range[0], range[1]), divisor);
+                    final String high = number(Math.max(range[0], range[1]), divisor);
+                    out.append('<').append(RANGE_COLOR).append(">(")
+                            .append(negative ? "-" + low + "～-" + high : low + "–" + high)
+                            .append(")</").append(RANGE_COLOR).append('>');
                 }
             }
             last = matcher.end();

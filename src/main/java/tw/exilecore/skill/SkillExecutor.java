@@ -828,10 +828,17 @@ final class SkillExecutor {
             effects.add(effect.toModifier(build.level(), scale, build.definition().name()));
         }
         final double slow = spec.slow().at(build.level()) / 100.0 * scale;
+        // 2026-10-22：真正的詛咒（不是輔助觸發的殘肢、目眩這些隱藏技能）一隻敵人身上同時只能有你的一個，放新的拿掉舊的
+        final boolean exclusive = !build.definition().hidden();
         for (final LivingEntity target : targets.around(center, radius, player)) {
             for (final String tag : tags) {
-                plugin.combat().debuffs().apply(target.getUniqueId(), new Debuffs.Debuff(build.definition().id() + (tag == null ? "" : "." + tag),
-                        player.getUniqueId(), until, spec.taken() / 100.0 * scale, spec.selfOnly(), tag, effects, slow));
+                final Debuffs.Debuff debuff = new Debuffs.Debuff(build.definition().id() + (tag == null ? "" : "." + tag),
+                        player.getUniqueId(), until, spec.taken() / 100.0 * scale, spec.selfOnly(), tag, effects, slow);
+                if (exclusive) {
+                    plugin.combat().debuffs().applyCurse(target.getUniqueId(), debuff, build.definition().id());
+                } else {
+                    plugin.combat().debuffs().apply(target.getUniqueId(), debuff);
+                }
             }
             visuals.mark(build.definition().visual(), target);
         }

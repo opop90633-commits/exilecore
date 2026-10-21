@@ -43,6 +43,9 @@ class AffixRangeTest {
                 "上下限一樣：不接範圍");
         assertEquals("玩家 -23" + range(-25, -21) + "% 抗性",
                 Affix.substituteWithRanges("玩家 {value}% 抗性", Map.of("value", -23), Map.of("value", new int[]{-21, -25})), "反過來寫也照大小排");
+        // 2026-10-22：模板寫「-{value}」的（石衛鎧：-x% 全部元素抗性上限），範圍也帶負號
+        assertEquals("-1<" + Affix.RANGE_COLOR + ">(-1～-5)</" + Affix.RANGE_COLOR + ">% 全部元素抗性上限",
+                Affix.substituteWithRanges("-{value}% 全部元素抗性上限", Map.of("value", 1), Map.of("value", new int[]{1, 5})));
         assertEquals("+7 力量", Affix.substituteWithRanges("+{value} 力量", Map.of("value", 7), Map.of()), "階級被刪掉了：只有數值");
         assertEquals("{x} 跟 \\<b>", Affix.substituteWithRanges("{x} 跟 <b>", Map.of(), Map.of()), "沒有的變數照原樣、標籤字元跳脫");
     }
@@ -110,7 +113,7 @@ class AffixRangeTest {
                 final String ranged = Affix.substituteWithRanges(affix.text(), middle, affix.ranges(tier.tier()));
                 assertFalse(ranged.contains("{"), affix.id() + " T" + tier.tier() + " 有沒換掉的變數：" + ranged);
                 // 範圍可能是小數（{value/10} 的詞綴：「0.5(0.5–0.6)%」）
-                final String plain = ranged.replaceAll("<[^>]+>", "").replaceAll("\\(-?\\d+(?:\\.\\d+)?–-?\\d+(?:\\.\\d+)?\\)", "");
+                final String plain = ranged.replaceAll("<[^>]+>", "").replaceAll("\\(-?\\d+(?:\\.\\d+)?[–～]-?\\d+(?:\\.\\d+)?\\)", "");
                 assertEquals(affix.render(middle).replace("<", "\\<"), plain, affix.id() + "：拿掉範圍就是原本的文字");
                 checked++;
             }
