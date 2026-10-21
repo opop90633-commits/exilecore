@@ -227,7 +227,7 @@ class AtlasTreeTest {
     @Test
     void keystoneDrawbacksAreCountedAndDescribed() {
         final AtlasBonus bonus = tree.bonus(List.of("wealth_7"));
-        assertEquals(50, bonus.get("map.quantity"), 1e-9);
+        assertEquals(30, bonus.get("map.quantity"), 1e-9); // 2026-10-21：孤注一擲 50 → 30
         assertEquals(50, bonus.get("atlas.map_drop_less"), 1e-9);
         assertTrue(bonus.describe().contains("地圖怪掉地圖的機率減少 50%"), bonus.describe().toString());
         assertTrue(AtlasTree.isDrawback("atlas.map_drop_less"));

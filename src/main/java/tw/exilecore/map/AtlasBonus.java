@@ -12,6 +12,9 @@ import java.util.Map;
 public record AtlasBonus(Map<String, Double> values) {
 
     /** 沒有任何天賦（特別的實例、極境、沒點天賦的人開的地圖）。 */
+    /** 核心「魔王的宴席」：地圖 Boss 的掉落（傳奇機率、地圖、星諭卡）的倍率（2026-10-21：×2 → ×1.5）。 */
+    public static final double BOSS_FEAST = 1.5;
+
     public static final AtlasBonus NONE = new AtlasBonus(Map.of());
 
     public AtlasBonus {

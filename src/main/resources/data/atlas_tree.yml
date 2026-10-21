@@ -81,21 +81,21 @@ nodes:
   - { id: sustain_4, name: 航線, x: -2, y: -7, trunk: sustain, cost: 1, mods: [{ stat: atlas.map_drop, value: 15 }] }
   - { id: sustain_5, name: 遠征, x: -2, y: -8, trunk: sustain, cost: 1, mods: [{ stat: atlas.boss_maps, value: 1 }] }
   - { id: sustain_6, name: 星圖之主, x: -2, y: -9, trunk: sustain, cost: 2, notable: true, icon: RECOVERY_COMPASS, mods: [{ stat: atlas.boss_maps, value: 1 }, { stat: atlas.tier_up, value: 12 }] }
-  - { id: sustain_7, name: 尋星者, x: -2, y: -10, trunk: sustain, cost: 3, keystone: true, icon: NETHER_STAR, mods: [{ stat: atlas.chase_unique, value: 100 }], drawbacks: [{ stat: atlas.unique_less, value: 50 }] }
+  - { id: sustain_7, name: 尋星者, x: -2, y: -10, trunk: sustain, cost: 3, keystone: true, icon: NETHER_STAR, mods: [{ stat: atlas.chase_unique, value: 50 }], drawbacks: [{ stat: atlas.unique_less, value: 50 }] }
   - { id: wealth_1, name: 拾荒, x: 0, y: -4, trunk: wealth, cost: 1, mods: [{ stat: map.quantity, value: 3 }] }
   - { id: wealth_2, name: 鑑寶, x: 0, y: -5, trunk: wealth, cost: 1, mods: [{ stat: map.rarity, value: 6 }] }
   - { id: wealth_3, name: 豐收, x: 0, y: -6, trunk: wealth, cost: 2, notable: true, icon: GOLD_BLOCK, mods: [{ stat: map.quantity, value: 4 }, { stat: map.rarity, value: 6 }] }
   - { id: wealth_4, name: 囤積, x: 0, y: -7, trunk: wealth, cost: 1, mods: [{ stat: map.quantity, value: 3 }] }
   - { id: wealth_5, name: 慧眼, x: 0, y: -8, trunk: wealth, cost: 1, mods: [{ stat: map.rarity, value: 8 }] }
   - { id: wealth_6, name: 星骸的饋贈, x: 0, y: -9, trunk: wealth, cost: 2, notable: true, icon: RAW_GOLD_BLOCK, mods: [{ stat: map.quantity, value: 5 }, { stat: map.rarity, value: 10 }] }
-  - { id: wealth_7, name: 孤注一擲, x: 0, y: -10, trunk: wealth, cost: 3, keystone: true, icon: TOTEM_OF_UNDYING, mods: [{ stat: map.quantity, value: 50 }], drawbacks: [{ stat: atlas.map_drop_less, value: 50 }] }
+  - { id: wealth_7, name: 孤注一擲, x: 0, y: -10, trunk: wealth, cost: 3, keystone: true, icon: TOTEM_OF_UNDYING, mods: [{ stat: map.quantity, value: 30 }], drawbacks: [{ stat: atlas.map_drop_less, value: 50 }] }
   - { id: packs_1, name: 蜂擁, x: 2, y: -4, trunk: packs, cost: 1, mods: [{ stat: map.pack_size, value: 5 }] }
   - { id: packs_2, name: 魔染, x: 2, y: -5, trunk: packs, cost: 1, mods: [{ stat: map.magic_packs, value: 15 }] }
   - { id: packs_3, name: 獸潮, x: 2, y: -6, trunk: packs, cost: 2, notable: true, icon: SKELETON_SKULL, mods: [{ stat: map.pack_size, value: 6 }, { stat: map.magic_packs, value: 10 }] }
   - { id: packs_4, name: 梟雄, x: 2, y: -7, trunk: packs, cost: 1, mods: [{ stat: map.rare_packs, value: 15 }] }
   - { id: packs_5, name: 歷練, x: 2, y: -8, trunk: packs, cost: 1, mods: [{ stat: atlas.experience, value: 6 }] }
   - { id: packs_6, name: 萬物歸巢, x: 2, y: -9, trunk: packs, cost: 2, notable: true, icon: WITHER_SKELETON_SKULL, mods: [{ stat: map.pack_size, value: 8 }, { stat: map.rare_packs, value: 15 }, { stat: atlas.experience, value: 5 }] }
-  - { id: packs_7, name: 無人之地, x: 2, y: -10, trunk: packs, cost: 3, keystone: true, icon: CREEPER_HEAD, mods: [{ stat: atlas.rare_only, value: 1 }, { stat: map.rare_packs, value: 200 }], drawbacks: [{ stat: atlas.experience_less, value: 30 }] }
+  - { id: packs_7, name: 無人之地, x: 2, y: -10, trunk: packs, cost: 3, keystone: true, icon: CREEPER_HEAD, mods: [{ stat: atlas.rare_only, value: 1 }, { stat: map.rare_packs, value: 100 }], drawbacks: [{ stat: atlas.experience_less, value: 30 }] }
   - { id: bosses_1, name: 討伐, x: 4, y: -2, trunk: bosses, cost: 1, mods: [{ stat: atlas.boss_quantity, value: 15 }] }
   - { id: bosses_2, name: 戰利品, x: 5, y: -2, trunk: bosses, cost: 1, mods: [{ stat: atlas.boss_unique, value: 20 }] }
   - { id: bosses_3, name: 斬首令, x: 6, y: -2, trunk: bosses, cost: 2, notable: true, icon: IRON_SWORD, mods: [{ stat: atlas.boss_quantity, value: 20 }, { stat: atlas.boss_rarity, value: 20 }] }
@@ -140,11 +140,11 @@ nodes:
   - { id: rites_7, name: 深淵裂縫, x: 2, y: 10, trunk: rites, cost: 2, notable: true, icon: SCULK, mods: [{ stat: atlas.abyss.weight, value: 60 }, { stat: atlas.abyss.extra, value: 1 }, { stat: atlas.abyss.unique, value: 50 }] }
   - { id: tower_1, name: 瞭望, x: -4, y: -2, trunk: tower, cost: 1, mods: [{ stat: atlas.tablet.effect, value: 10 }] }
   - { id: tower_2, name: 築基, x: -5, y: -2, trunk: tower, cost: 1, mods: [{ stat: atlas.tablet.drop, value: 25 }] }
-  - { id: tower_3, name: 燈塔, x: -6, y: -2, trunk: tower, cost: 2, notable: true, icon: LANTERN, mods: [{ stat: atlas.tower.radius, value: 1 }] }
+  - { id: tower_3, name: 燈塔, x: -6, y: -2, trunk: tower, cost: 2, notable: true, icon: LANTERN, mods: [{ stat: atlas.tablet.drop, value: 25 }, { stat: atlas.tablet.effect, value: 10 }] }
   - { id: tower_4, name: 鐫刻, x: -7, y: -2, trunk: tower, cost: 1, mods: [{ stat: atlas.tablet.effect, value: 15 }] }
   - { id: tower_5, name: 採石, x: -8, y: -2, trunk: tower, cost: 1, mods: [{ stat: atlas.tablet.drop, value: 25 }] }
-  - { id: tower_6, name: 先驅之印, x: -9, y: -2, trunk: tower, cost: 2, notable: true, icon: LODESTONE, mods: [{ stat: atlas.tablet.effect, value: 25 }, { stat: atlas.tablet.drop, value: 50 }] }
-  - { id: tower_7, name: 群塔, x: -10, y: -2, trunk: tower, cost: 2, notable: true, icon: CONDUIT, mods: [{ stat: atlas.tower.radius, value: 1 }, { stat: atlas.tablet.effect, value: 25 }] }
+  - { id: tower_6, name: 先驅之印, x: -9, y: -2, trunk: tower, cost: 2, notable: true, icon: LODESTONE, mods: [{ stat: atlas.tablet.effect, value: 15 }, { stat: atlas.tablet.drop, value: 50 }] }
+  - { id: tower_7, name: 群塔, x: -10, y: -2, trunk: tower, cost: 2, notable: true, icon: CONDUIT, mods: [{ stat: atlas.tower.radius, value: 1 }, { stat: atlas.tablet.effect, value: 10 }] }
   - { id: corrupt_1, name: 侵蝕, x: -4, y: 0, trunk: corrupt, cost: 1, mods: [{ stat: atlas.corrupt.chance, value: 20 }] }
   - { id: corrupt_2, name: 蔓延, x: -5, y: 0, trunk: corrupt, cost: 1, mods: [{ stat: atlas.corrupt.bonus, value: 15 }] }
   - { id: corrupt_3, name: 污穢, x: -6, y: 0, trunk: corrupt, cost: 2, notable: true, icon: SCULK_SENSOR, mods: [{ stat: atlas.corrupt.chance, value: 25 }, { stat: atlas.corrupt.bonus, value: 15 }] }

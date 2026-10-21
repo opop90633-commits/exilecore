@@ -775,13 +775,16 @@ final class MapBosses {
         // 地圖：跟這張圖同一階（終局是開的那一階），有機率高一階；星圖天賦可以多掉幾張、高一階的機率更高
         final AtlasBonus atlas = instance.atlas();
         final int tier = Math.max(1, instance.stats().tier());
-        // 2026-10-21：新星圖的 Boss 格（或首領石板罩到的格子）：必掉 atlas.yml 的 boss_maps 張、傳奇機率 ×boss_unique；核心「魔王的宴席」再 ×2
+        // 2026-10-21：新星圖的 Boss 格（或首領石板罩到的格子）：必掉 atlas.yml 的 boss_maps 張、傳奇機率 ×boss_unique；核心「魔王的宴席」再 ×1.5
         final AtlasGrid.Cell cell = instance.atlasCell();
         final boolean bossCell = instance.atlasBossCell(); // 2026-10-21 修正：以前看 bossPower > 0，岔路「王道」、詛咒寶匣也會被當成 Boss 格
-        final double cellUnique = (bossCell ? service.atlasConfig().bossUnique() : 1.0) * (atlas.get("atlas.boss_double") > 0 ? 2.0 : 1.0)
+        final double cellUnique = (bossCell ? service.atlasConfig().bossUnique() : 1.0) * (atlas.get("atlas.boss_double") > 0 ? AtlasBonus.BOSS_FEAST : 1.0)
                 * Math.max(0, 1 - atlas.increased("atlas.unique_less")); // 核心「尋星者」的代價：其他傳奇少
         final int baseMaps = bossCell ? Math.max(config.drops().bossMaps(), service.atlasConfig().bossMaps()) : config.drops().bossMaps();
-        final int mapCount = bonus.amount((int) Math.round((baseMaps + atlas.bossMaps()) * (atlas.get("atlas.boss_double") > 0 ? 2 : 1)), random); // 2026-10：吃物品數量
+        // 2026-10-21：魔王的宴席 ×1.5：小數的部分照機率（1 張 → 50% 機率 2 張）
+        final double feastMaps = (baseMaps + atlas.bossMaps()) * (atlas.get("atlas.boss_double") > 0 ? AtlasBonus.BOSS_FEAST : 1.0);
+        final int wholeMaps = (int) Math.floor(feastMaps) + (random.nextDouble() < feastMaps - Math.floor(feastMaps) ? 1 : 0);
+        final int mapCount = bonus.amount(wholeMaps, random); // 2026-10：吃物品數量
         if (cell != null && !instance.map().isFinal() && instance.special() == null && plugin.currencies() != null
                 && random.nextDouble() < AtlasTablets.BOSS_DROP_CHANCE * (1 + atlas.increased("atlas.tablet.drop"))) {
             final tw.exilecore.currency.CurrencyType tablet = plugin.currencies().repository().get(AtlasTablets.Kind.BOSS.currencyId());

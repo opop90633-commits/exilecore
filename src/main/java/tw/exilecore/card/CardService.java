@@ -89,7 +89,7 @@ public final class CardService {
             case UNIQUE -> chances.unique();
         };
         // 2026-10-21 星圖天賦：卡的掉落機率增加；核心「魔王的宴席」地圖 Boss ×2
-        final double atlasChance = chance * (1 + instance.atlas().increased("atlas.card.chance")) * (boss && instance.atlas().get("atlas.boss_double") > 0 ? 2 : 1);
+        final double atlasChance = chance * (1 + instance.atlas().increased("atlas.card.chance")) * (boss && instance.atlas().get("atlas.boss_double") > 0 ? tw.exilecore.map.AtlasBonus.BOSS_FEAST : 1);
         if (chance <= 0 || random().nextDouble() >= atlasChance) {
             return;
         }

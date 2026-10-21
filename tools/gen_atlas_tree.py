@@ -41,7 +41,7 @@ TRUNKS = [
              ('航線', [('atlas.map_drop', 15)]),
              ('遠征', [('atlas.boss_maps', 1)]),
              ('星圖之主', [('atlas.boss_maps', 1), ('atlas.tier_up', 12)], 'RECOVERY_COMPASS'),
-             ('尋星者', [('atlas.chase_unique', 100)], 'NETHER_STAR', [('atlas.unique_less', 50)]),
+             ('尋星者', [('atlas.chase_unique', 50)], 'NETHER_STAR', [('atlas.unique_less', 50)]),
          ]),
     dict(id='wealth', name='豐饒', color='#f5b942', icon='GOLD_INGOT', description='地圖的物品數量與稀有度',
          nodes=[
@@ -51,7 +51,7 @@ TRUNKS = [
              ('囤積', [('map.quantity', 3)]),
              ('慧眼', [('map.rarity', 8)]),
              ('星骸的饋贈', [('map.quantity', 5), ('map.rarity', 10)], 'RAW_GOLD_BLOCK'),
-             ('孤注一擲', [('map.quantity', 50)], 'TOTEM_OF_UNDYING', [('atlas.map_drop_less', 50)]),
+             ('孤注一擲', [('map.quantity', 30)], 'TOTEM_OF_UNDYING', [('atlas.map_drop_less', 50)]),
          ]),
     dict(id='packs', name='群聚', color='#ff8c69', icon='ZOMBIE_HEAD', description='更多、更強的怪物群（掉落與經驗跟著變多）',
          nodes=[
@@ -61,7 +61,7 @@ TRUNKS = [
              ('梟雄', [('map.rare_packs', 15)]),
              ('歷練', [('atlas.experience', 6)]),
              ('萬物歸巢', [('map.pack_size', 8), ('map.rare_packs', 15), ('atlas.experience', 5)], 'WITHER_SKELETON_SKULL'),
-             ('無人之地', [('atlas.rare_only', 1), ('map.rare_packs', 200)], 'CREEPER_HEAD', [('atlas.experience_less', 30)]),
+             ('無人之地', [('atlas.rare_only', 1), ('map.rare_packs', 100)], 'CREEPER_HEAD', [('atlas.experience_less', 30)]),
          ]),
     # ---- 東 ----
     dict(id='bosses', name='首領', color='#af6025', icon='DRAGON_HEAD', description='地圖 Boss 掉得更好',
@@ -130,11 +130,11 @@ TRUNKS = [
          nodes=[
              ('瞭望', [('atlas.tablet.effect', 10)]),
              ('築基', [('atlas.tablet.drop', 25)]),
-             ('燈塔', [('atlas.tower.radius', 1)], 'LANTERN'),
+             ('燈塔', [('atlas.tablet.drop', 25), ('atlas.tablet.effect', 10)], 'LANTERN'),
              ('鐫刻', [('atlas.tablet.effect', 15)]),
              ('採石', [('atlas.tablet.drop', 25)]),
-             ('先驅之印', [('atlas.tablet.effect', 25), ('atlas.tablet.drop', 50)], 'LODESTONE'),
-             ('群塔', [('atlas.tower.radius', 1), ('atlas.tablet.effect', 25)], 'CONDUIT'),
+             ('先驅之印', [('atlas.tablet.effect', 15), ('atlas.tablet.drop', 50)], 'LODESTONE'),
+             ('群塔', [('atlas.tower.radius', 1), ('atlas.tablet.effect', 10)], 'CONDUIT'),
          ]),
     dict(id='corrupt', name='腐化', color='#b07aff', icon='SCULK_CATALYST', description='腐化區更常出現、加成更強、掉得更多',
          nodes=[

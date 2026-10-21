@@ -156,7 +156,7 @@ public final class AtlasTree {
         stats.put("atlas.card.deck", "星諭牌堆開出稀有卡的權重增加 {v}%");
         stats.put("atlas.card.gamble", "賭卡便宜 {v}%");
         // 核心的旗標（1 = 有）
-        stats.put("atlas.boss_double", "地圖 Boss 的掉落全部 ×2（傳奇機率、地圖、星諭卡）");
+        stats.put("atlas.boss_double", "地圖 Boss 的掉落全部 ×1.5（傳奇機率、地圖、星諭卡）");
         stats.put("atlas.rare_only", "地圖裡只有稀有怪與 Boss");
         stats.put("atlas.all_corrupt", "所有格子當作腐化區");
         stats.put("atlas.chosen_event", "選一種事件：每張地圖保證 {v} 個");
