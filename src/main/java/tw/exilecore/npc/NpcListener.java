@@ -21,7 +21,15 @@ public final class NpcListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInteract(final PlayerInteractEntityEvent event) {
-        final Optional<NpcType> type = npcs.type(event.getRightClicked());
+        org.bukkit.entity.Entity clicked = event.getRightClicked();
+        if (clicked instanceof org.bukkit.entity.Player && !event.getPlayer().isSneaking()) {
+            // 2026-10-21：點到擋在 NPC 前面的玩家：準心後面有 NPC 就當作點 NPC（蹲下右鍵是邀請交易，照舊）
+            final org.bukkit.entity.Entity behind = npcs.npcBehind(event.getPlayer());
+            if (behind != null) {
+                clicked = behind;
+            }
+        }
+        final Optional<NpcType> type = npcs.type(clicked);
         if (type.isEmpty()) {
             return;
         }
@@ -30,7 +38,7 @@ public final class NpcListener implements Listener {
         if (event.getHand() != EquipmentSlot.HAND) {
             return;
         }
-        npcs.interact(event.getPlayer(), type.get(), event.getRightClicked());
+        npcs.interact(event.getPlayer(), type.get(), clicked);
     }
 
     /** 區塊載入時：還沒有皮膚的舊 NPC 隨機套一個（見 NpcService.ensureSkin）。 */

@@ -316,7 +316,7 @@ public final class MapService {
         }
         final List<String> notes = new ArrayList<>();
         // 核心天賦的效果（不是格子的加成）：完成過的格子也照樣吃
-        if (instance.atlas().get("atlas.chosen_event") > 0) { // 核心「單一信仰」：選的那種事件每張圖保證幾個，其他事件不出現（2026-10-21：祭壇、幻霧、保險箱也不出現）
+        if (instance.atlas().get("atlas.chosen_event") > 0) { // 核心「單一信仰」：選的那種事件每張圖額外保證幾個，其他事件不出現（2026-10-21：祭壇、幻霧、保險箱也不出現；隨機抽到別種是空房，不換成選的那種）
             final MapEventConfig.Kind faith = faithKind(player);
             instance.setAtlas(instance.atlas().plus(AtlasBonus.kindKey(faith, "extra"), instance.atlas().count("atlas.chosen_event"))
                     .plus(AtlasBonus.faithKey(faith), 1));

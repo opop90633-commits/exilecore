@@ -274,16 +274,21 @@ final class MapEvents implements Listener {
         final List<String> placed = new ArrayList<>();
         int noSpot = 0;
         for (int i = 0; i < kinds.size() && !rooms.isEmpty(); i++) {
+            // 2026-10-21 單一信仰改：隨機的照原本的權重抽，抽到別種就不放（不是換成選的那種）
+            final MapEventConfig.Kind rolled = kinds.get(i) != null ? kinds.get(i) : pickKind(random, atlas, false);
+            if (kinds.get(i) == null && rolled != null && faithBlocks(atlas, rolled)) {
+                continue;
+            }
             final MapLayout.Room room = rooms.remove(random.nextInt(rooms.size()));
             final MapLayout.Spot spot = spotIn(instance.layout(), room);
             if (spot == null) {
                 noSpot++;
-                if (kinds.get(i) != null) {
-                    kinds.add(i + 1, kinds.get(i)); // 保證的事件換下一個房間再放
+                if (rolled != null) {
+                    kinds.add(i + 1, rolled); // 換下一個房間再放（隨機的保留抽到的那種）
                 }
                 continue;
             }
-            final MapEventConfig.Kind kind = kinds.get(i) != null ? kinds.get(i) : pickKind(random, atlas);
+            final MapEventConfig.Kind kind = rolled;
             if (kind == null) {
                 continue; // 權重全是 0：隨機的不放，保證的照放
             }
@@ -359,9 +364,9 @@ final class MapEvents implements Listener {
     /** 疊加用：抽一種跟 first 不一樣的事件（試幾次都一樣就不疊）。 */
     private MapEventConfig.Kind pickOther(final MapEventConfig.Kind first, final RandomGenerator random, final AtlasBonus atlas) {
         for (int attempt = 0; attempt < 6; attempt++) {
-            final MapEventConfig.Kind kind = pickKind(random, atlas);
+            final MapEventConfig.Kind kind = pickKind(random, atlas, false);
             if (kind != null && kind != first) {
-                return kind;
+                return faithBlocks(atlas, kind) ? null : kind; // 單一信仰：抽到別種就不疊
             }
         }
         return null;
@@ -402,14 +407,15 @@ final class MapEvents implements Listener {
         return atlas.get("atlas.other_events_off") > 0 && atlas.get(AtlasBonus.faithKey(kind)) <= 0;
     }
 
-    private MapEventConfig.Kind pickKind(final RandomGenerator random, final AtlasBonus atlas) {
+    /** faith = false：不管單一信仰，照原本的權重抽（2026-10-21：抽到別種由呼叫的人決定不放，不換成選的那種）。 */
+    private MapEventConfig.Kind pickKind(final RandomGenerator random, final AtlasBonus atlas, final boolean faith) {
         // 每月活動的主題可以讓某種事件更常出現（權重直接加上去）；星圖天賦再乘上 1 + 增加的
         final Map<MapEventConfig.Kind, Double> weights = new java.util.LinkedHashMap<>();
         double total = 0;
         for (final Map.Entry<MapEventConfig.Kind, Integer> entry : config.weights().entrySet()) {
             final int boost = plugin.events() == null ? 0 : plugin.events().eventBoost(entry.getKey().name().toLowerCase(java.util.Locale.ROOT));
             double weight = (Math.max(0, entry.getValue()) + (entry.getValue() > 0 ? boost : 0)) * (1 + atlas.eventWeight(entry.getKey()));
-            if (faithBlocks(atlas, entry.getKey())) {
+            if (faith && faithBlocks(atlas, entry.getKey())) {
                 weight = 0; // 2026-10-21 星圖核心「單一信仰」：只有選的那種事件
             }
             weights.put(entry.getKey(), weight);
@@ -1122,8 +1128,12 @@ final class MapEvents implements Listener {
                 }
                 rolled.add(DropTable.Drop.equipment(plugin.items().generator().generate(base, Rarity.RARE, level, random)));
             }
-            // 流寇的招牌：星籤
-            final int omens = bonus.amount(config.minOmens() + (config.maxOmens() > config.minOmens() ? random.nextInt(config.maxOmens() - config.minOmens() + 1) : 0), random);
+            // 流寇的招牌：星籤。2026-10-21：同一張圖每個人只有第一個流寇保證掉，之後的每個 EXILE_OMEN_LATER 機率
+            //（星圖的流寇天賦、單一信仰、石板疊起來一張圖會有 5、6 個流寇，籤會變成以前的 20 倍）
+            final int nth = exileKills.computeIfAbsent(found.instance.id(), id -> new java.util.HashMap<>())
+                    .merge(player.getUniqueId(), 1, Integer::sum);
+            final boolean omenRoll = nth <= 1 || random.nextDouble() < EXILE_OMEN_LATER;
+            final int omens = !omenRoll ? 0 : bonus.amount(config.minOmens() + (config.maxOmens() > config.minOmens() ? random.nextInt(config.maxOmens() - config.minOmens() + 1) : 0), random);
             for (int i = 0; i < omens; i++) {
                 final tw.exilecore.currency.CurrencyType omen = pickCurrency(tw.exilecore.currency.CurrencyOperation.OMEN, level, random);
                 if (omen != null) {
@@ -1525,6 +1535,10 @@ final class MapEvents implements Listener {
         if (ticket == null || ticket.chance() <= 0 || plugin.currencies() == null || player == null || !player.isConnected()) {
             return;
         }
+        final MapInstance instance = service.instanceAt(at);
+        if (instance != null && ticketTaken.getOrDefault(instance.id(), java.util.Set.of()).contains(player.getUniqueId())) {
+            return; // 2026-10-21：入場券每張圖每人最多 1 張
+        }
         if (service.random().nextDouble() >= ticket.chance()) {
             return;
         }
@@ -1533,7 +1547,9 @@ final class MapEvents implements Listener {
             plugin.getSLF4JLogger().warn("map_events.yml：{} 的入場券 {} 不在 currencies.yml 裡，沒有掉", source, ticket.currency());
             return;
         }
-        final MapInstance instance = service.instanceAt(at);
+        if (instance != null) {
+            ticketTaken.computeIfAbsent(instance.id(), id -> new java.util.HashSet<>()).add(player.getUniqueId());
+        }
         final int level = instance != null ? instance.level() : plugin.players().get(player).level();
         final List<DropTable.Drop> rolled = new java.util.ArrayList<>();
         rolled.add(DropTable.Drop.currency(type));
@@ -1874,8 +1890,17 @@ final class MapEvents implements Listener {
         blocks.values().removeIf(other -> other == event);
     }
 
+    /** 同一張圖第二個以後的流寇掉星籤的機率（2026-10-21）。 */
+    static final double EXILE_OMEN_LATER = 0.2;
+    /** 每張圖每個人殺了幾個流寇（實例 → 玩家 → 個數；實例關閉時清掉）。 */
+    private final Map<Integer, Map<java.util.UUID, Integer>> exileKills = new java.util.HashMap<>();
+    /** 這張圖已經拿過入場券的人（實例 → 玩家；2026-10-21 每張圖每人最多 1 張）。 */
+    private final Map<Integer, java.util.Set<java.util.UUID>> ticketTaken = new java.util.HashMap<>();
+
     /** 實例關閉：標籤、刷出來的怪都收掉（方塊由清格子的人清）。 */
     void clear(final MapInstance instance) {
+        exileKills.remove(instance.id());
+        ticketTaken.remove(instance.id());
         rituals.clear(instance);
         delirium.clear(instance);
         twists.clear(instance);
@@ -1888,6 +1913,8 @@ final class MapEvents implements Listener {
     }
 
     void clearAll() {
+        exileKills.clear();
+        ticketTaken.clear();
         rituals.clearAll();
         delirium.clearAll();
         twists.clearAll();

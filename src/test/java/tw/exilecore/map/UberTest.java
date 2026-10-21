@@ -351,12 +351,12 @@ class UberTest {
         // 2026-10：每秒傷害上限統一 15 萬（血量照終局 5 萬、極境 10 萬、巔峰 15 萬打 3 分半）；超過的部分遞減（上限～2 倍算 30%、2～3 倍算 10%、3～4 倍算 5%、4 倍以上算 1%）
         for (final MapConfig.MapDef map : config.regularFinals()) {
             final MapConfig.Uber uber = config.uber(map.id());
-            assertEquals(6000000, uber.dpsCap(), 1e-9, map.id());
-            assertEquals(List.of(new MapConfig.DpsTier(6000000, 0.3), new MapConfig.DpsTier(12000000, 0.1), new MapConfig.DpsTier(24000000, 0.03), new MapConfig.DpsTier(48000000, 0.01)), uber.dpsOver(), map.id());
+            assertEquals(12000000, uber.dpsCap(), 1e-9, map.id()); // 2026-10-21：1200 萬起線性遞減
+            assertEquals(List.of(new MapConfig.DpsTier(12000000, 0.8), new MapConfig.DpsTier(15000000, 0.55), new MapConfig.DpsTier(18000000, 0.3), new MapConfig.DpsTier(21000000, 0.15), new MapConfig.DpsTier(24000000, 0.05)), uber.dpsOver(), map.id());
         }
         // 2026-10-21：上限拉到目標的 2 倍（終局 150 萬 → 300 萬、極境 300 萬 → 600 萬、巔峰 600 萬 → 1200 萬）
-        assertEquals(3000000, config.finalDpsCap(), 1e-9, "一般終局");
-        assertEquals(List.of(new MapConfig.DpsTier(3000000, 0.3), new MapConfig.DpsTier(6000000, 0.1), new MapConfig.DpsTier(12000000, 0.03), new MapConfig.DpsTier(24000000, 0.01)), config.finalDpsOver());
+        assertEquals(12000000, config.finalDpsCap(), 1e-9, "一般終局");
+        assertEquals(List.of(new MapConfig.DpsTier(12000000, 0.8), new MapConfig.DpsTier(15000000, 0.55), new MapConfig.DpsTier(18000000, 0.3), new MapConfig.DpsTier(21000000, 0.15), new MapConfig.DpsTier(24000000, 0.05)), config.finalDpsOver());
         assertEquals(12000000, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
         // 金庫之主 300 萬、淵鯨 600 萬打 3 分半：都從目標的 2 倍開始遞減（開天者、南瓜王、潮汐統帥不遞減）
         assertEquals(6000000, config.heistDpsCap(), 1e-9, "金庫之主");

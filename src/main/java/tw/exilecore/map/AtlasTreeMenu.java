@@ -112,20 +112,21 @@ public final class AtlasTreeMenu extends Menu {
                 }
             }
         }
-        set(SLOT_ATLAS, icon(Material.FILLED_MAP, "<#f5b942>← 星圖", "<gray>左鍵：回到星圖（地圖的解鎖進度）",
+        set(SLOT_ATLAS, uiIcon("nav_back", Material.FILLED_MAP, "<#f5b942>← 星圖", "<gray>左鍵：回到星圖（地圖的解鎖進度）",
                 "<#bcd4ff>右鍵：星圖天賦組（月卡）<gray>：第 " + (AtlasSetMenu.activeSet(plugin.players().get(player)) + 1) + " 組使用中"));
-        set(SLOT_UP, arrow("↑ 往上", 0, -1));
-        set(SLOT_DOWN, arrow("↓ 往下", 0, 1));
-        set(SLOT_LEFT, arrow("← 往左", -1, 0));
-        set(SLOT_RIGHT, arrow("→ 往右", 1, 0));
+        set(SLOT_UP, arrow("arrow_up", "↑ 往上"));
+        set(SLOT_DOWN, arrow("arrow_down", "↓ 往下"));
+        set(SLOT_LEFT, arrow("arrow_left", "← 往左"));
+        set(SLOT_RIGHT, arrow("arrow_right", "→ 往右"));
         set(SLOT_HOME, icon(Material.NETHER_STAR, "<white>回到中心", "<gray>視窗現在在 (" + viewX + ", " + viewY + ")"));
         set(SLOT_POINTS, points(tree, earned, allocated, left));
         set(SLOT_RESET, reset(allocated));
         set(SLOT_CLOSE, closeButton());
     }
 
-    private ItemStack arrow(final String name, final int dx, final int dy) {
-        return icon(Material.ARROW, "<white>" + name, "<gray>捲 " + SCROLL + " 格（Shift 一格）");
+    /** 捲動的箭頭（2026-10-21：有資源包的人看到跟天賦樹一樣的箭頭圖示）。 */
+    private ItemStack arrow(final String icon, final String name) {
+        return uiIcon(icon, Material.ARROW, "<white>" + name, "<gray>捲 " + SCROLL + " 格（Shift 一格）");
     }
 
     /** 空格：深色玻璃，背景照座標有一點點變化（看得出在捲動）。 */

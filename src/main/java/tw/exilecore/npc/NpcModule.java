@@ -8,6 +8,7 @@ public final class NpcModule implements Module {
 
     private final ExileCore plugin;
     private NpcService service;
+    private org.bukkit.scheduler.BukkitTask spaceTask;
 
     public NpcModule(final ExileCore plugin) {
         this.plugin = plugin;
@@ -22,6 +23,8 @@ public final class NpcModule implements Module {
     public void enable() {
         service = new NpcService(plugin);
         plugin.getServer().getPluginManager().registerEvents(new NpcListener(service), plugin);
+        // 2026-10-21：NPC 旁邊不能擠人（人多時點不到 NPC）：每 5 tick 把貼在 NPC 身邊的玩家輕輕推開
+        spaceTask = plugin.repeat("npc.space", service::keepSpace, 20L, 5L);
         // 已經載入的 NPC（插件重載）：還沒有皮膚的套一個
         for (final org.bukkit.World world : plugin.getServer().getWorlds()) {
             for (final org.bukkit.entity.Mannequin mannequin : world.getEntitiesByClass(org.bukkit.entity.Mannequin.class)) {
@@ -45,6 +48,10 @@ public final class NpcModule implements Module {
 
     @Override
     public void disable() {
+        if (spaceTask != null) {
+            spaceTask.cancel();
+            spaceTask = null;
+        }
     }
 
     public NpcService service() {

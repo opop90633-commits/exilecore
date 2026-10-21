@@ -246,6 +246,51 @@ public final class NpcService {
         return entity != null && entity.getPersistentDataContainer().has(typeKey);
     }
 
+    /** 2026-10-21：NPC 身邊保留多大（格，水平距離）；玩家站進來會被輕輕推出去。照樣點得到（互動距離 3 格）。 */
+    static final double NPC_SPACE = 1.6;
+    private static final double NPC_PUSH = 0.28;
+
+    /** 每 5 tick：貼在 NPC 身邊的玩家往外推一點（人多時才點得到 NPC，不會整個被擋住）。 */
+    void keepSpace() {
+        for (final org.bukkit.entity.Player player : plugin.getServer().getOnlinePlayers()) {
+            if (player.getGameMode() == org.bukkit.GameMode.SPECTATOR || player.isFlying() || player.isInsideVehicle()) {
+                continue;
+            }
+            final org.bukkit.Location at = player.getLocation();
+            for (final Entity entity : player.getNearbyEntities(NPC_SPACE, 2, NPC_SPACE)) {
+                if (!isNpc(entity)) {
+                    continue;
+                }
+                final org.bukkit.util.Vector away = at.toVector().subtract(entity.getLocation().toVector()).setY(0);
+                final double distance = away.length();
+                if (distance >= NPC_SPACE) {
+                    continue;
+                }
+                if (distance < 1e-3) {
+                    away.setX(-at.getDirection().getX()).setZ(-at.getDirection().getZ()); // 疊在 NPC 身上：往後推
+                    if (away.lengthSquared() < 1e-6) {
+                        away.setX(1);
+                    }
+                }
+                final org.bukkit.util.Vector push = away.normalize().multiply(NPC_PUSH * (1 - distance / NPC_SPACE) + 0.08);
+                final org.bukkit.util.Vector velocity = player.getVelocity();
+                player.setVelocity(new org.bukkit.util.Vector(push.getX(), Math.min(velocity.getY(), 0.0), push.getZ()));
+                break;
+            }
+        }
+    }
+
+    /**
+     * 2026-10-21：右鍵點到別的玩家，但準心後面（互動距離內）有 NPC：當作點 NPC（人擠在 NPC 前面時也點得到）。
+     * 找不到回傳 null。
+     */
+    Entity npcBehind(final org.bukkit.entity.Player player) {
+        final org.bukkit.Location eye = player.getEyeLocation();
+        final org.bukkit.util.RayTraceResult hit = player.getWorld().rayTraceEntities(eye, eye.getDirection(), 4.0, 0.25,
+                entity -> entity != player && isNpc(entity));
+        return hit == null ? null : hit.getHitEntity();
+    }
+
     /** 劇情人物的代號（不是劇情人物回傳 null）。 */
     public String storyId(final Entity entity) {
         return entity == null ? null : entity.getPersistentDataContainer().get(storyKey, PersistentDataType.STRING);

@@ -159,7 +159,7 @@ public final class AtlasTree {
         stats.put("atlas.boss_double", "地圖 Boss 的掉落全部 ×1.5（傳奇機率、地圖、星諭卡）");
         stats.put("atlas.rare_only", "地圖裡只有稀有怪與 Boss");
         stats.put("atlas.all_corrupt", "所有格子當作腐化區");
-        stats.put("atlas.chosen_event", "選一種事件：每張地圖保證 {v} 個");
+        stats.put("atlas.chosen_event", "選一種事件：每張地圖額外保證 {v} 個");
         STATS = Collections.unmodifiableMap(stats);
 
         final Map<String, String> drawbacks = new LinkedHashMap<>();
@@ -168,7 +168,7 @@ public final class AtlasTree {
         drawbacks.put("atlas.experience_less", "地圖裡的怪給的經驗減少 {v}%");
         drawbacks.put("atlas.monster_damage_more", "怪物傷害更多 {v}%");
         drawbacks.put("atlas.no_monster_currency", "地圖裡的一般怪不掉通貨");
-        drawbacks.put("atlas.other_events_off", "其他事件不出現");
+        drawbacks.put("atlas.other_events_off", "其他事件不出現（隨機抽到別種的房間就空著；祭壇、幻霧、保險箱也沒有）");
         DRAWBACKS = Collections.unmodifiableMap(drawbacks);
     }
 
