@@ -232,12 +232,9 @@ final class ModelCosmetics {
             entry.backArt = art;
             final List<String> models = paired ? List.of(art + "_back_r", art + "_back_l") : List.of(art + "_back");
             for (final String model : models) {
-                final ItemDisplay shared = spawn(player.getLocation(), model);
-                player.hideEntity(plugin, shared); // 別人看的這份本人看不到
-                entry.back.add(shared);
-                final ItemDisplay own = spawn(player.getLocation(), model, false);
-                player.showEntity(plugin, own); // 只有本人看得到
-                entry.backOwn.add(own);
+                // 2026-10-21 效能：只放一份，本人與別人看同一份（以前本人另外一份：每片背飾多一個實體，
+                // 伺服器每刻還要對主城每個人檢查一次看不看得到）。本人第三人稱高速倒退時翅膀會稍微跑前面一點
+                entry.back.add(spawn(player.getLocation(), model));
             }
             for (final ItemDisplay display : entry.back) {
                 display.setTeleportDuration(1); // 背飾：補間 1 tick（2 tick 會拖在後面）
@@ -247,9 +244,7 @@ final class ModelCosmetics {
             }
         }
         // 2026-10：跟得更緊——往這一 tick 的移動方向多推一點（別人看你時有一點延遲），展示實體的移動補間只用 1 tick
-        final Location before = entry.lastAt;
         final Location at = leading(player, entry);
-        final Location own = ownLeading(player, before);
         at.setYaw(player.getBodyYaw());
         at.setPitch(0);
         final float height = player.isSneaking() ? BACK_HEIGHT - 0.3f : player.isSwimming() || player.isGliding() ? 0.4f : BACK_HEIGHT;
@@ -259,14 +254,7 @@ final class ModelCosmetics {
             }
             entry.sentBack = at.clone();
         }
-        own.setYaw(player.getBodyYaw());
-        own.setPitch(0);
-        if (!same(entry.sentOwn, own)) {
-            for (final ItemDisplay display : entry.backOwn) {
-                display.teleport(own);
-            }
-            entry.sentOwn = own.clone();
-        }
+
         if (tick % ANIMATE != 0) {
             return;
         }
@@ -351,19 +339,6 @@ final class ModelCosmetics {
             return now; // 剛出現、傳送、換世界：不推
         }
         return now.clone().add(now.toVector().subtract(before.toVector()).multiply(LEAD));
-    }
-
-    /**
-     * 本人看的那份背飾放哪：往移動方向推「延遲＋2 tick」的距離（伺服器收到位置、送回展示實體、補間各要一點時間），
-     * 最多推 8 tick；沒在動、剛傳送就放在原地。
-     */
-    private static Location ownLeading(final Player player, final Location before) {
-        final Location now = player.getLocation();
-        if (before == null || before.getWorld() != now.getWorld() || before.distanceSquared(now) > 4) {
-            return now;
-        }
-        final double ticks = Math.min(8, Math.max(0, player.getPing()) / 50.0 + 2);
-        return now.clone().add(now.toVector().subtract(before.toVector()).multiply(ticks));
     }
 
     /** 往移動方向多推幾 tick 的距離。 */
