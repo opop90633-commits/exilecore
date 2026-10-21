@@ -836,7 +836,7 @@
     } else {
       const jb = items.baseById.get(g.base);
       body.append(node("div", { cls: "hint", style: "margin:0", text: (g.raw ? "遊戲裡的珠寶。" : "")
-        + (jb && jb.radius ? "遺時星晶：「範圍內的小天賦也各給」的詞綴，照孔位範圍內已配的小點數量算（完成後天賦樹上會畫出範圍）。" : "珠寶的詞綴直接加在角色身上。") }));
+        + (jb && jb.radius ? "遺時星晶：「範圍內的小天賦也各給」的詞綴，照孔位範圍內已配的小點數量算，最多算 15 個（完成後天賦樹上會畫出範圍）。" : "珠寶的詞綴直接加在角色身上。") }));
     }
     if (slot === "amulet") body.append(instilSection(g));
     const previewBox = node("div", { id: "itemPreview" });
@@ -1725,7 +1725,8 @@
     if (isRadiusJewel(g)) {
       let smalls = 0;
       for (const id of fx.inRange) if (byId.get(id) && byId.get(id).type === "small") smalls++;
-      html += "<div style='margin-top:4px;color:var(--gold)'>範圍 " + format(fx.radius) + " 格：已配 " + fx.inRange.size + " 點（小點 " + smalls + " 個）</div>";
+      html += "<div style='margin-top:4px;color:var(--gold)'>範圍 " + format(fx.radius) + " 格：已配 " + fx.inRange.size + " 點（小點 " + smalls + " 個"
+        + (smalls > 15 ? "，「也各給」最多算 15 個" : "") + "）</div>";
     }
     html += "<div style='margin-top:4px;color:var(--gold)'>實際加在角色身上：</div>"
       + (fx.lines.length ? fx.lines.map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("") : "<div class='line' style='color:var(--quiet)'>（沒有）</div>");

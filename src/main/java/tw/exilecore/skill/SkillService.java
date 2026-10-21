@@ -1597,10 +1597,18 @@ public final class SkillService {
         if (definition.cooldown() > 0 || SkillExecutor.hasFlag(definition, StatKeys.CHANNEL_STAGES) || !SkillBuild.deployable(definition)) {
             return hint + "（不能是有冷卻、蓄力、位移的技能）";
         }
-        // 2026-10-21：英靈不吃會加冷卻的輔助（蓄鋒、蓄疾…）：英靈不等冷卻，以前白拿那顆輔助的加成（暴擊率更多 40%、異常機率加倍）
-        final List<SupportDefinition> supports = supportsOf(next);
-        supports.removeIf(SkillService::addsCooldown);
-        return SkillBuild.of(config, definition, next.level(), state.level(), false, supports, state.weaponTags(), sheet, resonantOf(next));
+        // 2026-10-21：輔助寶石加的冷卻也算（蓄鋒、蓄疾…）：英靈不等冷卻，以前白拿那顆輔助的加成（暴擊率更多 40%、異常機率加倍）
+        final SkillBuild built = build(state, sheet, definition, next);
+        if (built.cooldownTicks() > 0) {
+            final List<String> names = new ArrayList<>();
+            for (final SupportDefinition support : supportsOf(next)) {
+                if (addsCooldown(support)) {
+                    names.add(support.name());
+                }
+            }
+            return hint + "（不能有冷卻：" + (names.isEmpty() ? "輔助寶石加的冷卻也算" : String.join("、", names) + "會加冷卻，拿掉才能放圖騰") + "）";
+        }
+        return built;
     }
 
     /** 這顆輔助會讓技能多冷卻時間（蓄鋒、蓄疾這種）。 */
