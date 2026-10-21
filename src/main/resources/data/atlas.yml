@@ -41,7 +41,7 @@ hidden_chance: 0.03
 tower: { every: 35, min_distance: 3, radius: 3, points: 2 }
 citadels: { every: 150, min_distance: 8, points: 2 }
 corruption: { min_distance: 6, chance: 0.2, patch: 12, monster_level: 1, pack: 30, rare: 50, quantity: 20, rarity: 30, vaal_chance: 0.35 }
-purification: { min_distance: 6, chance: 0.12, patch: 12, fracture_chance: 0.08 }
+purification: { min_distance: 6, chance: 0.12, patch: 12, fracture_chance: 0.04 }   # 2026-10-21：定星石 8% → 4%（約 250 張圖 1 顆，跟神諭石同等級）
 unlock: { start_radius: 1, on_complete: 1, on_tower: 3 }
 points: { per_cell: 1, soft_cap: 60, after_cap_every: 3, per_tower: 2, per_citadel: 2 }
 drop_cap: { start: 4, per_cells: 2 }
