@@ -21,6 +21,18 @@ public final class UniqueUpgrade {
     }
 
     /** 這件是舊版的傳奇（版本舊、或跟目前的定義對不上）。不是傳奇、或那件傳奇已經從設定檔拿掉了：false（不動）。 */
+    /**
+     * 不是傳奇定義裡的詞綴、要原樣留著的：隱匿、揭露詞綴，還有蝕變石的腐化詞綴
+     * （2026-10-21 修正：以前腐化過的傳奇每次讀出來都被當成舊版補正，腐化詞綴被拿掉，穿上去屬性沒算、說明那行也不見）。
+     */
+    private static boolean preserved(final ItemRepository repository, final String affixId) {
+        if (Veiled.isSpecial(affixId)) {
+            return true;
+        }
+        final Affix affix = repository.affix(affixId);
+        return affix != null && affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG);
+    }
+
     public static boolean outdated(final ItemRepository repository, final ItemData data) {
         final UniqueItem unique = definition(repository, data);
         return unique != null && outdated(repository, data, unique);
@@ -45,7 +57,7 @@ public final class UniqueUpgrade {
         // 隱匿、揭露詞綴（隱匿傳奇）不是傳奇定義裡的詞綴：原樣留著，接在後面
         final List<RolledAffix> special = new ArrayList<>();
         for (final RolledAffix rolled : data.affixes()) {
-            if (Veiled.isSpecial(rolled.id())) {
+            if (preserved(repository, rolled.id())) {
                 special.add(rolled);
             }
         }
@@ -93,7 +105,7 @@ public final class UniqueUpgrade {
         }
         final List<RolledAffix> affixes = new ArrayList<>();
         for (final RolledAffix rolled : data.affixes()) {
-            if (!Veiled.isSpecial(rolled.id())) {
+            if (!preserved(repository, rolled.id())) {
                 affixes.add(rolled);
             }
         }

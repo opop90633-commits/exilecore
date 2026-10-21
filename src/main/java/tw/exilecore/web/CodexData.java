@@ -132,13 +132,14 @@ public final class CodexData {
         for (final tw.exilecore.item.Affix affix : repository.affixes()) {
             final boolean normal = tw.exilecore.gui.CodexMenu.normalAffix(affix);
             final boolean unveiled = !normal && tw.exilecore.gui.CodexMenu.unveiledAffix(affix);
-            if (!normal && !unveiled) {
+            final boolean corrupted = !normal && !unveiled && tw.exilecore.gui.CodexMenu.corruptionAffix(affix); // 2026-10-21
+            if (!normal && !unveiled && !corrupted) {
                 continue;
             }
             final java.util.Set<String> slots = new java.util.LinkedHashSet<>();
             final JsonArray baseNames = new JsonArray();
             for (final tw.exilecore.item.ItemBase base : bases) {
-                if (affix.canSpawnOn(base)) {
+                if (corrupted ? tw.exilecore.item.ItemGenerator.corruptionFits(affix, base) : affix.canSpawnOn(base)) {
                     slots.add(base.slot().name().toLowerCase(Locale.ROOT));
                     baseNames.add(base.name());
                 }
@@ -150,7 +151,7 @@ public final class CodexData {
             a.addProperty("id", affix.id());
             final List<tw.exilecore.item.AffixTier> tiers = affix.tiers();
             a.addProperty("name", plain(affix.rangeText(tiers.getFirst().tier())));
-            a.addProperty("type", unveiled ? "unveiled" : affix.type() == tw.exilecore.item.AffixType.PREFIX ? "prefix" : "suffix");
+            a.addProperty("type", corrupted ? "corrupted" : unveiled ? "unveiled" : affix.type() == tw.exilecore.item.AffixType.PREFIX ? "prefix" : "suffix");
             a.addProperty("affixType", affix.type() == tw.exilecore.item.AffixType.PREFIX ? "prefix" : "suffix");
             final JsonArray slotArray = new JsonArray();
             slots.forEach(slotArray::add);

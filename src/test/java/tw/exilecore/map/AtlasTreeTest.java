@@ -120,6 +120,14 @@ class AtlasTreeTest {
         assertEquals(0, tree.nextMilestone(16), "都拿了");
         final AtlasTree.Earned late = tree.earned(14, 2, 1, 13);
         assertEquals(14 + 2 * 2 + 1 * 2 + 4, late.total());
+        assertFalse(late.capped());
+        // 2026-10-21：總點數上限 120（約整棵樹的 7 成）
+        final AtlasTree.Earned far = tree.earned(500, 5, 4, 16);
+        assertEquals(120, far.total(), "超過上限的不算");
+        assertEquals(500 + 5 * 2 + 4 * 2 + 5, far.raw());
+        assertTrue(far.capped());
+        assertTrue(tree.points().max() < tree.totalCost(), "上限點不滿整棵樹：要挑");
+        assertTrue(tree.points().max() * 10 >= tree.totalCost() * 6, "上限至少點得滿六成：" + tree.points().max() + " / " + tree.totalCost());
     }
 
     // ---- 配點 ----

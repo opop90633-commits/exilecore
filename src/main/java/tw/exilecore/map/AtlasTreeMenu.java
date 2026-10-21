@@ -301,6 +301,11 @@ public final class AtlasTreeMenu extends Menu {
         final MapConfig config = service.config();
         final List<String> lore = new ArrayList<>();
         lore.add("<gray>還沒用 <white>" + left + "<gray>・總共 " + earned.total() + "<dark_gray>（全部點滿要 " + tree.totalCost() + "）");
+        if (rules.max() > 0) { // 2026-10-21：總點數上限
+            lore.add(earned.capped()
+                    ? "<#f5b942>已經到上限 " + rules.max() + " 點<gray>（拿到的共 " + earned.raw() + "；點不滿整棵樹，要挑方向）"
+                    : "<dark_gray>總點數上限 " + rules.max() + " 點（點不滿整棵樹，要挑方向）");
+        }
         lore.add("");
         if (rules.perMap() > 0) {
             final AtlasProgress atlas = service.atlasProgress(player);

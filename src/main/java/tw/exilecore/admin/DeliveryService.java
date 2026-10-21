@@ -282,7 +282,7 @@ public final class DeliveryService {
                 }
                 checkLevel(spec.level(), 100, "物品等級");
                 final List<AffixSpec.Entry> affixes = AffixSpec.parse(spec.affixes());
-                if (!affixes.isEmpty()) {
+                if (!AffixSpec.affixesOf(affixes).isEmpty()) {
                     // 先試做一件（物品等級照填的；0 = 照角色，用 100 試）：詞綴出不出得了、放不放得下
                     final ItemData trial = plugin.items().generator().generate(base, Rarity.NORMAL, spec.level() > 0 ? spec.level() : 100,
                             plugin.items().random());
@@ -296,7 +296,8 @@ public final class DeliveryService {
                     return trial.rarity().displayName() + " " + base.name() + levelText(spec.level(), "物品等級") + count
                             + "［" + AffixSpec.describe(plugin.items().repository(), affixes, false) + "］";
                 }
-                return rarity.displayName() + " " + base.name() + levelText(spec.level(), "物品等級") + count;
+                return rarity.displayName() + " " + base.name() + levelText(spec.level(), "物品等級") + count
+                        + (affixes.isEmpty() ? "" : "［" + AffixSpec.describe(plugin.items().repository(), affixes, false) + "］"); // 2026-10-21：已腐化、已複製
             }
             case UNIQUE -> {
                 final UniqueItem unique = plugin.items().repository().unique(ref(spec));
@@ -1197,8 +1198,11 @@ public final class DeliveryService {
                 final Rarity rarity = base.isJewel() && parsed == Rarity.NORMAL ? Rarity.MAGIC : parsed; // 普通的珠寶什麼都沒有
                 final int level = spec.level() > 0 ? spec.level() : characterLevel;
                 final List<AffixSpec.Entry> affixes = AffixSpec.parse(spec.affixes());
-                if (affixes.isEmpty()) {
-                    return plugin.items().create(base, rarity, level);
+                if (AffixSpec.affixesOf(affixes).isEmpty()) {
+                    // 沒指定詞綴：照常隨機擲（2026-10-21：已腐化、已複製的旗標照勾的）
+                    final ItemData rolled = plugin.items().generator().generate(base, rarity, level, plugin.items().random());
+                    AffixSpec.applyFlags(rolled, affixes);
+                    return plugin.items().toStack(rolled);
                 }
                 // 指定詞綴（2026-10）：照填的做，不再隨機擲別的
                 final ItemData data = plugin.items().generator().generate(base, Rarity.NORMAL, level, plugin.items().random());

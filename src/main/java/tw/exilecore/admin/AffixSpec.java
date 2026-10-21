@@ -31,6 +31,9 @@ import java.util.regex.Pattern;
  *   <li>傳奇：只改數值（詞綴是傳奇本身的，階級不用寫）；沒寫的照常擲。</li>
  * </ul>
  * 數值可以超出範圍（補償、測試用），說明裡會標出來。
+ * <p>
+ * 2026-10-21：可以選揭露詞綴、蝕變石的腐化詞綴（一件最多一條，不佔前綴、後綴的位子，有的話物品也是已腐化）；
+ * 另外兩個旗標也寫在這一格：{@link #FLAG_CORRUPTED}（已腐化）、{@link #FLAG_MIRRORED}（已複製），裝備、傳奇都能用。
  */
 public final class AffixSpec {
 
@@ -38,7 +41,50 @@ public final class AffixSpec {
     public record Entry(String id, Integer tier, Map<String, Integer> vars) {
     }
 
-    public static final int MAX_ENTRIES = 12;
+    public static final int MAX_ENTRIES = 15;
+    /** 旗標（2026-10-21）：已腐化、已複製。寫法跟詞綴一樣（沒有階級、數值）。 */
+    public static final String FLAG_CORRUPTED = "flag.corrupted";
+    public static final String FLAG_MIRRORED = "flag.mirrored";
+
+    /** 這一條是旗標（不是詞綴）。 */
+    public static boolean isFlag(final Entry entry) {
+        return FLAG_CORRUPTED.equals(entry.id()) || FLAG_MIRRORED.equals(entry.id());
+    }
+
+    /** 拿掉旗標，只剩詞綴。 */
+    public static List<Entry> affixesOf(final List<Entry> entries) {
+        final List<Entry> list = new ArrayList<>();
+        for (final Entry entry : entries) {
+            if (!isFlag(entry)) {
+                list.add(entry);
+            }
+        }
+        return list;
+    }
+
+    public static boolean has(final List<Entry> entries, final String flag) {
+        for (final Entry entry : entries) {
+            if (flag.equals(entry.id())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 把旗標寫進物品（已腐化、已複製）。 */
+    public static void applyFlags(final ItemData data, final List<Entry> entries) {
+        if (has(entries, FLAG_CORRUPTED)) {
+            data.setCorrupted(true);
+        }
+        if (has(entries, FLAG_MIRRORED)) {
+            data.setMirrored(true);
+        }
+    }
+
+    /** 蝕變石的腐化詞綴。 */
+    static boolean corruption(final Affix affix) {
+        return affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG);
+    }
     public static final int MAX_LENGTH = 2000;
     private static final int VALUE_LIMIT = 100_000_000;
     private static final Pattern ID = Pattern.compile("[A-Za-z0-9_.\\-]+");
@@ -152,13 +198,21 @@ public final class AffixSpec {
                                      final List<Entry> entries, final RandomGenerator random) {
         data.affixes().clear();
         final Set<String> groups = new HashSet<>();
+        final List<Entry> corrupted = new ArrayList<>();
         for (final Entry entry : entries) {
+            if (isFlag(entry)) {
+                continue;
+            }
             final Affix affix = repository.affix(entry.id());
             if (affix == null) {
                 return "沒有這條詞綴：" + entry.id();
             }
             if (!groups.add(affix.group())) {
                 return "「" + plain(affix.text()) + "」跟前面的詞綴是同一類（同一類只能有一條）";
+            }
+            if (corruption(affix)) {
+                corrupted.add(entry); // 腐化詞綴最後加（不佔前綴、後綴的位子）
+                continue;
             }
             final String problem = generator.forceAffix(data, affix.id(), entry.tier(), random);
             if (problem != null) {
@@ -173,10 +227,35 @@ public final class AffixSpec {
             vars.putAll(entry.vars());
             rolled.setVars(vars);
         }
+        // 2026-10-21：蝕變石的腐化詞綴（一件最多一條，有的話物品也是已腐化）
+        for (final Entry entry : corrupted) {
+            final Affix affix = repository.affix(entry.id());
+            final ItemBase base = repository.base(data.base());
+            if (base == null || !ItemGenerator.corruptionFits(affix, base)) {
+                return "腐化詞綴「" + plain(affix.text()) + "」不會出在" + (base == null ? data.base() : "「" + base.name() + "」") + "上";
+            }
+            AffixTier tier = affix.tiers().getFirst();
+            if (entry.tier() != null) {
+                for (final AffixTier candidate : affix.tiers()) {
+                    if (candidate.tier() == entry.tier()) {
+                        tier = candidate;
+                    }
+                }
+            }
+            final String bad = checkVars(affix, tier.tier(), entry.vars());
+            if (bad != null) {
+                return bad;
+            }
+            final Map<String, Integer> vars = new LinkedHashMap<>(tier.roll(random));
+            vars.putAll(entry.vars());
+            data.affixes().add(new RolledAffix(affix.id(), tier.tier(), vars));
+            data.setCorrupted(true);
+        }
         if (data.rarity() == Rarity.RARE) {
             generator.ensureRareName(data, random);
         }
         data.setIdentified(true);
+        applyFlags(data, entries);
         return null;
     }
 
@@ -196,6 +275,9 @@ public final class AffixSpec {
     public static String checkUnique(final ItemRepository repository, final UniqueItem unique, final List<Entry> entries) {
         final Set<String> seen = new HashSet<>();
         for (final Entry entry : entries) {
+            if (isFlag(entry)) {
+                continue;
+            }
             if (!unique.affixIds().contains(entry.id())) {
                 return unique.name() + " 沒有這條詞綴：" + entry.id();
             }
@@ -216,6 +298,7 @@ public final class AffixSpec {
 
     /** 把指定的數值寫進剛做好的傳奇。 */
     public static void applyToUnique(final ItemData data, final List<Entry> entries) {
+        applyFlags(data, entries);
         for (final Entry entry : entries) {
             for (final RolledAffix rolled : data.affixes()) {
                 if (rolled.id().equals(entry.id())) {
@@ -233,6 +316,9 @@ public final class AffixSpec {
     public static String describe(final ItemRepository repository, final List<Entry> entries, final boolean unique) {
         final List<String> parts = new ArrayList<>();
         for (final Entry entry : entries) {
+            if (isFlag(entry)) {
+                continue;
+            }
             final Affix affix = repository.affix(entry.id());
             if (affix == null) {
                 parts.add(entry.id());
@@ -241,12 +327,18 @@ public final class AffixSpec {
             final int tierId = unique || entry.tier() == null ? affix.tiers().getFirst().tier() : entry.tier();
             String text = plain(Affix.substitute(affix.text(), entry.vars())).replaceAll("\\{[^}]*}", "?");
             if (!unique) {
-                text = "T" + affix.rank(tierId) + " " + text;
+                text = (corruption(affix) ? "腐化：" : "") + "T" + affix.rank(tierId) + " " + text;
             }
             if (outOfRange(affix.ranges(tierId), entry.vars())) {
                 text += "（超出範圍）";
             }
             parts.add(text);
+        }
+        if (has(entries, FLAG_CORRUPTED)) {
+            parts.add("已腐化");
+        }
+        if (has(entries, FLAG_MIRRORED)) {
+            parts.add("已複製");
         }
         return String.join("、", parts);
     }
@@ -279,15 +371,32 @@ public final class AffixSpec {
 
     // ---- 網頁用的清單 ----
 
-    /** 這個基底能出的詞綴（前綴在前），每條：代號、類型、文字、各階的範圍與變數的除數。 */
+    /**
+     * 這個基底能出的詞綴，每條：代號、類型、種類（kind：normal 一般、unveiled 揭露、corrupted 腐化）、文字、各階的範圍與變數的除數。
+     * 一般的前綴、後綴在前，再來揭露，最後腐化（2026-10-21）。隱匿詞綴（佔位用的）、停用的不列。
+     */
     public static List<Map<String, Object>> catalogFor(final ItemRepository repository, final ItemBase base) {
         final List<Map<String, Object>> list = new ArrayList<>();
-        for (final AffixType type : AffixType.values()) {
-            for (final Affix affix : repository.affixes()) {
-                if (affix.type() != type || affix.spawnTags().contains(UniqueItem.SPAWN_TAG) || !affix.canSpawnOn(base)) {
-                    continue;
+        for (final String kind : List.of("normal", "unveiled", "corrupted")) {
+            for (final AffixType type : AffixType.values()) {
+                for (final Affix affix : repository.affixes()) {
+                    if (affix.type() != type || affix.spawnTags().contains(UniqueItem.SPAWN_TAG)
+                            || affix.spawnTags().contains(ItemRepository.RETIRED_TAG) || affix.tiers().isEmpty()
+                            || tw.exilecore.item.Veiled.isVeiled(affix.id())) {
+                        continue;
+                    }
+                    final String what = corruption(affix) ? "corrupted" : tw.exilecore.item.Veiled.isUnveiled(affix.id()) ? "unveiled" : "normal";
+                    if (!what.equals(kind)) {
+                        continue;
+                    }
+                    final boolean fits = corruption(affix) ? ItemGenerator.corruptionFits(affix, base) : affix.canSpawnOn(base);
+                    if (!fits) {
+                        continue;
+                    }
+                    final Map<String, Object> row = describeAffix(affix, true);
+                    row.put("kind", kind);
+                    list.add(row);
                 }
-                list.add(describeAffix(affix, true));
             }
         }
         return list;

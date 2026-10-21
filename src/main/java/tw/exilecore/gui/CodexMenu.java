@@ -840,10 +840,28 @@ public final class CodexMenu extends Menu {
         return list;
     }
 
-    /** 一般掉落、通貨擲得到的詞綴（傳奇專屬、隱匿、揭露、停用的不算）。網頁圖鑑也用。 */
+    /** 一般掉落、通貨擲得到的詞綴（傳奇專屬、隱匿、揭露、腐化、停用的不算）。網頁圖鑑也用。 */
     public static boolean normalAffix(final Affix affix) {
         return !affix.id().startsWith(UniqueItem.AFFIX_PREFIX) && !Veiled.isUnveiled(affix.id()) && !Veiled.isVeiled(affix.id())
-                && !affix.spawnTags().contains(ItemRepository.RETIRED_TAG) && !affix.tiers().isEmpty();
+                && !affix.spawnTags().contains(ItemRepository.RETIRED_TAG) && !affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG)
+                && !affix.tiers().isEmpty();
+    }
+
+    /** 蝕變石的腐化詞綴（2026-10-21，affixes/corrupted.yml）。網頁圖鑑也用。 */
+    public static boolean corruptionAffix(final Affix affix) {
+        return affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG) && !affix.spawnTags().contains(ItemRepository.RETIRED_TAG)
+                && !affix.tiers().isEmpty();
+    }
+
+    /** 這個基底腐化時可能加上的腐化詞綴。 */
+    private List<Affix> corruptionPool(final ItemBase itemBase) {
+        final List<Affix> list = new ArrayList<>();
+        for (final Affix affix : plugin.items().repository().affixes()) {
+            if (corruptionAffix(affix) && tw.exilecore.item.ItemGenerator.corruptionFits(affix, itemBase)) {
+                list.add(affix);
+            }
+        }
+        return list;
     }
 
     /** 揭露才拿得到的詞綴（隱匿詞綴找盜賊首領）。網頁圖鑑也用。 */
@@ -933,12 +951,17 @@ public final class CodexMenu extends Menu {
         final List<ItemStack> stacks = new ArrayList<>();
         final List<Affix> all = new ArrayList<>(pool(chosen));
         all.addAll(unveiledPool(chosen, null));
+        all.addAll(corruptionPool(chosen)); // 2026-10-21：蝕變石的腐化詞綴
         for (final Affix affix : all) {
             final boolean prefix = affix.type() == AffixType.PREFIX;
             final boolean unveiled = Veiled.isUnveiled(affix.id());
             final List<AffixTier> tiers = affix.tiers();
             final List<String> lore = new ArrayList<>();
-            lore.add(unveiled ? "<#c48bff>揭露" + (prefix ? "前綴" : "後綴") : prefix ? "<#8888ff>前綴" : "<#ffd27f>後綴");
+            lore.add(kindLabel(affix));
+            if (corruptionAffix(affix)) {
+                lore.add("<gray>一般掉落、通貨擲不到：用<white>蝕變石</white>腐化時約 25% 加上一條");
+                lore.add("<gray>（不能再開符文孔的裝備約 50%）；一件只會有一條，不佔前綴、後綴的位子");
+            }
             if (unveiled) {
                 lore.add("<gray>一般掉落、通貨擲不到：裝備上的<white>隱匿" + (prefix ? "前綴" : "後綴") + "</white>帶去營地找盜賊首領，");
                 lore.add("<gray>三個選項選一個（隱匿詞綴從劫盜來，揭露石也能加一條）");
@@ -955,10 +978,28 @@ public final class CodexMenu extends Menu {
                 lore.add("<#f5b942>T" + (i + 1) + " <dark_gray>ilvl " + tier.ilvl() + (name.isBlank() ? "" : "・" + ItemRenderer.escape(name))
                         + " <white>" + affix.rangeText(tier.tier()));
             }
-            stacks.add(icon(unveiled ? Material.ECHO_SHARD : prefix ? Material.MAP : Material.PAPER,
-                    (unveiled ? "<#c48bff>" : prefix ? "<#8888ff>" : "<#ffd27f>") + affix.rangeText(tiers.getFirst().tier()), lore));
+            stacks.add(icon(kindIcon(affix), kindColor(affix) + affix.rangeText(tiers.getFirst().tier()), lore));
         }
         return stacks;
+    }
+
+    /** 詞綴種類的標題（腐化、揭露、前綴、後綴）。 */
+    private static String kindLabel(final Affix affix) {
+        final boolean prefix = affix.type() == AffixType.PREFIX;
+        if (corruptionAffix(affix)) {
+            return "<#d20000>腐化詞綴（蝕變石）";
+        }
+        return Veiled.isUnveiled(affix.id()) ? "<#c48bff>揭露" + (prefix ? "前綴" : "後綴") : prefix ? "<#8888ff>前綴" : "<#ffd27f>後綴";
+    }
+
+    private static String kindColor(final Affix affix) {
+        return corruptionAffix(affix) ? "<#d20000>" : Veiled.isUnveiled(affix.id()) ? "<#c48bff>"
+                : affix.type() == AffixType.PREFIX ? "<#8888ff>" : "<#ffd27f>";
+    }
+
+    private static Material kindIcon(final Affix affix) {
+        return corruptionAffix(affix) ? Material.REDSTONE : Veiled.isUnveiled(affix.id()) ? Material.ECHO_SHARD
+                : affix.type() == AffixType.PREFIX ? Material.MAP : Material.PAPER;
     }
 
     /** 搜尋詞綴的結果：符合的詞綴（每一種一格，寫哪些基底擲得到），再來是詞綴裡有這段字的傳奇。 */
@@ -970,6 +1011,7 @@ public final class CodexMenu extends Menu {
         for (final ItemBase each : bases()) {
             final List<Affix> all = new ArrayList<>(pool(each));
             all.addAll(unveiledPool(each, null));
+            all.addAll(corruptionPool(each)); // 2026-10-21
             for (final Affix affix : all) {
                 if (!matches(affix, key)) {
                     continue;
@@ -984,7 +1026,7 @@ public final class CodexMenu extends Menu {
             final boolean unveiled = Veiled.isUnveiled(affix.id());
             final List<AffixTier> tiers = affix.tiers();
             final List<String> lore = new ArrayList<>();
-            lore.add(unveiled ? "<#c48bff>揭露" + (prefix ? "前綴" : "後綴") : prefix ? "<#8888ff>前綴" : "<#ffd27f>後綴");
+            lore.add(kindLabel(affix));
             lore.add("<gray>最高 T1：<white>" + affix.rangeText(tiers.getFirst().tier()));
             lore.add("<gray>最低：<white>" + affix.rangeText(tiers.getLast().tier()));
             lore.add("");
@@ -1004,8 +1046,7 @@ public final class CodexMenu extends Menu {
                 lore.add("<white>　" + entry.getKey() + "<gray>：" + ItemRenderer.escape(String.join("、", names.subList(0, Math.min(4, names.size()))))
                         + (names.size() > 4 ? "<dark_gray> 等 " + names.size() + " 種" : ""));
             }
-            stacks.add(icon(unveiled ? Material.ECHO_SHARD : prefix ? Material.MAP : Material.PAPER,
-                    (unveiled ? "<#c48bff>" : prefix ? "<#8888ff>" : "<#ffd27f>") + affix.rangeText(tiers.getFirst().tier()), lore));
+            stacks.add(icon(kindIcon(affix), kindColor(affix) + affix.rangeText(tiers.getFirst().tier()), lore));
         }
         // 詞綴裡有這段字的傳奇
         final net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer plain =

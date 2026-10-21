@@ -452,6 +452,9 @@ public final class ItemGenerator {
             if (Veiled.isUnveiled(affix.id())) {
                 continue; // 揭露詞綴只能靠揭露（盜賊首領）或揭露石，一般的掉落與通貨擲不到
             }
+            if (affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG) || affix.spawnTags().contains(ItemRepository.RETIRED_TAG)) {
+                continue; // 2026-10-21 修正：腐化詞綴只有蝕變石加得上（以前掉落、通貨會當成一般的後綴擲出來）
+            }
             if (affix.tiersFor(data.ilvl()).isEmpty()) {
                 continue;
             }

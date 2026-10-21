@@ -88,17 +88,29 @@ public final class AtlasTree {
      * @param perFinal       每打贏一個終局
      * @param perUber        每打贏一個極境
      * @param tierMilestones 最高完成階級到這幾階，各 +1（由小到大）
+     * @param max            總點數上限（2026-10-21：120，約整棵樹的 7 成，要挑方向；0 = 沒有上限）
      */
-    public record Points(int perMap, int perFinal, int perUber, List<Integer> tierMilestones) {
+    public record Points(int perMap, int perFinal, int perUber, List<Integer> tierMilestones, int max) {
         public Points {
             tierMilestones = List.copyOf(tierMilestones);
         }
     }
 
     /** 一個角色拿到的天賦點：各來源幾點。 */
-    public record Earned(int maps, int finals, int ubers, int milestones) {
+    public record Earned(int maps, int finals, int ubers, int milestones, int cap) {
+        /** 能用的點數（超過上限的不算）。 */
         public int total() {
+            return cap > 0 ? Math.min(raw(), cap) : raw();
+        }
+
+        /** 各來源加起來（不管上限）。 */
+        public int raw() {
             return maps + finals + ubers + milestones;
+        }
+
+        /** 拿到的已經超過上限。 */
+        public boolean capped() {
+            return cap > 0 && raw() >= cap;
         }
     }
 
@@ -173,7 +185,7 @@ public final class AtlasTree {
     }
 
     /** 沒寫 points 時：星圖格子的點數 ×1、終局 2、極境 2 點，最高完成階級 T4、T7、T10、T13、T16 各 1 點。 */
-    public static final Points DEFAULT_POINTS = new Points(1, 2, 2, List.of(4, 7, 10, 13, 16));
+    public static final Points DEFAULT_POINTS = new Points(1, 2, 2, List.of(4, 7, 10, 13, 16), 120);
 
     private int version = 1;
     private Points points = DEFAULT_POINTS;
@@ -227,7 +239,8 @@ public final class AtlasTree {
         }
         final Points readPoints = new Points(Math.max(0, pointNode.integer("per_map", DEFAULT_POINTS.perMap())),
                 Math.max(0, pointNode.integer("per_final", DEFAULT_POINTS.perFinal())),
-                Math.max(0, pointNode.integer("per_uber", DEFAULT_POINTS.perUber())), new ArrayList<>(milestones));
+                Math.max(0, pointNode.integer("per_uber", DEFAULT_POINTS.perUber())), new ArrayList<>(milestones),
+                Math.max(0, pointNode.integer("max", DEFAULT_POINTS.max())));
 
         final Map<String, Trunk> readTrunks = new LinkedHashMap<>();
         final YamlNode trunkNodes = root.node("trunks");
@@ -464,7 +477,7 @@ public final class AtlasTree {
             }
         }
         return new Earned(Math.max(0, completedMaps) * points.perMap(), Math.max(0, completedFinals) * points.perFinal(),
-                Math.max(0, ubersDefeated) * points.perUber(), milestones);
+                Math.max(0, ubersDefeated) * points.perUber(), milestones, points.max());
     }
 
     /** 下一個階級里程碑（最高完成階級到幾階再拿一點）；都拿了回傳 0。 */

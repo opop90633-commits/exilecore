@@ -26,6 +26,7 @@ points:
   per_final: 2
   per_uber: 2
   tier_milestones: [4, 7, 10, 13, 16]
+  max: 120                          # 2026-10-21：總點數上限（約整棵樹的 7 成：點不滿，要挑方向；0 = 沒有上限）
 
 trunks:
   core: { name: 星核, color: "#e8e8f2", icon: NETHER_STAR, description: 中心的輻條、內環與橋：小小的通用加成 }

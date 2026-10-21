@@ -879,6 +879,13 @@
       useAffix.checked = !!item.useAffix;
       useAffix.addEventListener('change', function () { item.useAffix = useAffix.checked; renderItems(); });
       row.appendChild(h('label', { cls: 'check' }, useAffix, item.kind === 'unique' ? '指定數值' : '指定詞綴'));
+      // 2026-10-21：已腐化、已複製
+      [['corrupted', '已腐化'], ['mirrored', '已複製']].forEach(function (pair) {
+        var flag = h('input', { type: 'checkbox', 'aria-label': pair[1] });
+        flag.checked = !!item[pair[0]];
+        flag.addEventListener('change', function () { item[pair[0]] = flag.checked; renderSummary(); });
+        row.appendChild(h('label', { cls: 'check' }, flag, pair[1]));
+      });
     }
     if (item.kind === 'map') {
       if (!item.level) { item.level = 1; }
@@ -979,8 +986,12 @@
       return box;
     }
     box.appendChild(h('span', { cls: 'hint', text: '照填的詞綴做（不再隨機擲別的）；稀有度放不下會自動往上升。數值空的在那一階的範圍裡隨機，可以超出範圍（紅框提醒）'
-      + (info.jewel ? '。珠寶前綴、後綴各最多 2 條' : '。稀有最多 3 前綴 3 後綴') }));
-    var choices = info.affixes.map(function (a) { return { id: a.id, text: (a.type === 'prefix' ? '前綴　' : '後綴　') + a.text, slot: a.type === 'prefix' ? '前綴' : '後綴' }; });
+      + (info.jewel ? '。珠寶前綴、後綴各最多 2 條' : '。稀有最多 3 前綴 3 後綴') + '；腐化詞綴最多 1 條（不佔位子）' }));
+    // 2026-10-21：揭露詞綴、蝕變石的腐化詞綴也能選（腐化一件最多一條、不佔前綴後綴的位子，選了物品也會是已腐化）
+    var choices = info.affixes.map(function (a) {
+      var slot = a.kind === 'corrupted' ? '腐化' : (a.kind === 'unveiled' ? '揭露' : '') + (a.type === 'prefix' ? '前綴' : '後綴');
+      return { id: a.id, text: slot + '　' + a.text, slot: slot };
+    });
     item.affixList.forEach(function (entry, index) {
       var affix = findAffix(info, entry.id);
       if (!affix) { return; }
@@ -995,7 +1006,7 @@
       line.appendChild(h('button', { type: 'button', cls: 'small', text: '拿掉', onclick: function () { item.affixList.splice(index, 1); renderItems(); } }));
       box.appendChild(line);
     });
-    if (item.affixList.length < 12 && info.affixes.length) {
+    if (item.affixList.length < 13 && info.affixes.length) {
       box.appendChild(h('div', null, h('button', { type: 'button', cls: 'small', text: '＋ 加一條詞綴', onclick: function () {
         var used = {};
         item.affixList.forEach(function (e) { var a = findAffix(info, e.id); if (a) { used[a.group] = true; } });
@@ -1010,8 +1021,10 @@
   /** 送給伺服器的寫法：代號[@階級][:變數=值,…]，分號隔開（值換成物品上存的整數）。 */
   function affixSpec(item) {
     var info = affixInfo(item);
-    if (!item.useAffix || !info || !item.affixList) { return null; }
     var parts = [];
+    if (item.corrupted) { parts.push('flag.corrupted'); }
+    if (item.mirrored) { parts.push('flag.mirrored'); }
+    if (!item.useAffix || !info || !item.affixList) { return parts.length ? parts.join(';') : null; }
     item.affixList.forEach(function (entry) {
       var affix = findAffix(info, entry.id);
       if (!affix) { return; }
@@ -1026,15 +1039,17 @@
   }
   function affixSummary(item) {
     var info = affixInfo(item);
-    if (!item.useAffix || !info || !item.affixList) { return ''; }
     var texts = [];
+    var flags = (item.corrupted ? ['已腐化'] : []).concat(item.mirrored ? ['已複製'] : []);
+    if (!item.useAffix || !info || !item.affixList) { return flags.length ? '［' + flags.join('、') + '］' : ''; }
     item.affixList.forEach(function (entry) {
       var affix = findAffix(info, entry.id);
       if (!affix || (item.kind === 'unique' && !Object.keys(entry.vals).length)) { return; }
       var tier = item.kind === 'item' ? tierOf(affix, entry.tier) : affix.tiers[0];
       var text = affix.text.replace(/\{([A-Za-z0-9_]+)(?:\/\d+)?\}/g, function (m, name) { return entry.vals[name] !== undefined ? entry.vals[name] : '?'; });
-      texts.push((item.kind === 'item' ? 'T' + tier.rank + ' ' : '') + text);
+      texts.push((affix.kind === 'corrupted' ? '腐化：' : '') + (item.kind === 'item' ? 'T' + tier.rank + ' ' : '') + text);
     });
+    texts = texts.concat(flags);
     return texts.length ? '［' + texts.join('、') + '］' : '';
   }
   function specOf(item) {

@@ -127,7 +127,7 @@
   var KIND = { summon: '召喚', aura: '常駐', warcry: '戰吼' };
   var SLOT = { ring: '戒指', amulet: '項鍊', belt: '腰帶', main_hand: '主手', off_hand: '副手', head: '頭部', chest: '身體', legs: '腿部', feet: '腳部',
     jewel: '珠寶', flask: '藥劑', charm: '護符' };
-  var AFFIX_TYPE = { prefix: '前綴', suffix: '後綴', unveiled: '揭露' };
+  var AFFIX_TYPE = { prefix: '前綴', suffix: '後綴', unveiled: '揭露', corrupted: '腐化' };
   var data = null, items = null, tab = 'skills', query = '', pick = '';
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -288,7 +288,7 @@
       Object.keys(SLOT).forEach(function (s) { options.push(['s:' + s, SLOT[s]]); });
     } else if (tab === 'affixes') {
       Object.keys(SLOT).forEach(function (s) { options.push(['a:' + s, '部位：' + SLOT[s]]); });
-      options.push(['y:prefix', '前綴'], ['y:suffix', '後綴'], ['y:unveiled', '揭露（隱匿詞綴找盜賊首領）']);
+      options.push(['y:prefix', '前綴'], ['y:suffix', '後綴'], ['y:unveiled', '揭露（隱匿詞綴找盜賊首領）'], ['y:corrupted', '腐化（蝕變石）']);
     }
     select.textContent = '';
     options.forEach(function (o) { var opt = el('option', null, o[1]); opt.value = o[0]; select.appendChild(opt); });
@@ -352,6 +352,7 @@
       box.appendChild(el('div', 'meta', AFFIX_TYPE[e.type] + (e.type === 'unveiled' ? '（' + (e.affixType === 'prefix' ? '前綴' : '後綴') + '）' : '')
         + '　' + e.slots.map(function (x) { return SLOT[x] || x; }).join('、') + '　物品等級 ' + lowest + ' 以上'));
       if (e.type === 'unveiled') { box.appendChild(el('div', 'muted', '一般掉落、通貨擲不到：裝備上的隱匿詞綴帶去營地找盜賊首領三選一（揭露石也能加一條）')); }
+      if (e.type === 'corrupted') { box.appendChild(el('div', 'muted', '一般掉落、通貨擲不到：用蝕變石腐化時約 25% 加上一條（不能再開符文孔的裝備約 50%）；一件只會有一條，不佔前綴、後綴的位子')); }
       var table = el('ul', 'fx');
       e.tiers.forEach(function (t) { table.appendChild(el('li', null, 'T' + t.t + '　ilvl ' + t.ilvl + (t.name ? '・' + t.name : '') + '　' + t.text)); });
       box.appendChild(table);
