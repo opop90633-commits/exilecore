@@ -20,7 +20,8 @@ import java.util.UUID;
 /**
  * 主要寶石的執行期（2026-10，照 PoE2 的 Meta Gem；設定見 {@link MetaSpec}）。
  * <ul>
- *   <li>插槽：技能面板上主要寶石「後面那一格」的法術（跟英靈圖騰用下一格的錘子技能一樣的做法）。插在插槽裡的法術不能自己按。</li>
+ *   <li>插槽（2026-10-22）：主要寶石自己的第 1 孔放一顆法術的技能寶石（{@link SkillLoadout.Entry#inner}），第 2～5 孔的輔助都套在那個法術上
+ *       （跟英靈圖騰放錘子技能一樣的做法）。以前是「面板上它後面那一格」。</li>
  *   <li>能量：常駐的主要寶石（暴擊時施放這類）開著（綁在按鍵格、精魂付得起）時，條件成立就累積能量；
  *       到插槽法術的上限（基礎施法時間每 0.1 秒 10 點）就觸發一次、扣掉上限。能量不存檔（登出、換角色歸零）。</li>
  *   <li>被觸發的法術不花魔力；它打出來的暴擊不會再幫暴擊時施放充能（避免自己觸發自己）。</li>
@@ -57,7 +58,7 @@ public final class MetaGems {
         if (spec == null) {
             return null;
         }
-        final SkillLoadout.Entry spellEntry = loadout.skill(position + 1);
+        final SkillLoadout.Entry spellEntry = SkillService.innerEntry(metaEntry); // 2026-10-22：第 1 孔裡的技能寶石
         final SkillDefinition spell = spellEntry == null ? null : service.config().skill(spellEntry.skillId());
         return spell != null && problem(spec, spell) == null ? new Socket(position, metaEntry, spec, spellEntry, spell) : null;
     }
@@ -70,12 +71,12 @@ public final class MetaGems {
         if (spec == null) {
             return null;
         }
-        final SkillLoadout.Entry spellEntry = loadout.skill(position + 1);
+        final SkillLoadout.Entry spellEntry = SkillService.innerEntry(metaEntry);
         final SkillDefinition spell = spellEntry == null ? null : service.config().skill(spellEntry.skillId());
         final SkillDefinition metaDefinition = service.config().skill(metaEntry.skillId());
         final String name = metaDefinition == null ? metaEntry.skillId() : metaDefinition.name();
         if (spell == null) {
-            return name + "：技能面板上它後面那一格要放一個法術（那一格就是它的插槽）";
+            return name + "：第 1 孔要放一個法術的技能寶石（/skills 點它，拿技能寶石點第 1 孔）";
         }
         final String why = problem(spec, spell);
         return why == null ? null : name + "：插槽裡的" + spell.name() + why;
@@ -99,12 +100,6 @@ public final class MetaGems {
             return "不能交給法術圖騰放（有冷卻、本來就是圖騰／陷阱的不行）";
         }
         return null;
-    }
-
-    /** 面板上這一格的法術是不是插在某個主要寶石的插槽裡（是的話不能自己按）。 */
-    boolean socketed(final PlayerState state, final SkillLoadout.Entry entry) {
-        final int position = state.skills().find(entry.skillId());
-        return position > 0 && socket(state, position - 1) != null;
     }
 
     // ---- 能量 ----
@@ -208,7 +203,7 @@ public final class MetaGems {
 
     /**
      * 法術圖騰放下去的那個法術的數值：插槽法術（含它自己的輔助）加上法術圖騰的效果——
-     * 由圖騰施放、每消耗一顆銳星更多傷害、每消耗一顆磐星圖騰更多生命與持續時間、施法速度更少、圖騰上限照寶石等級。
+     * 由圖騰施放、每消耗一顆銳星增加傷害、每消耗一顆磐星圖騰更多生命與持續時間、施法速度更少、圖騰上限照寶石等級。
      */
     SkillBuild totemBuild(final PlayerState state, final tw.exilecore.stats.StatSheet sheet, final Socket socket, final int metaLevel,
                           final int powerUsed, final int enduranceUsed) {
@@ -218,7 +213,8 @@ public final class MetaGems {
         final List<Modifier> mods = new ArrayList<>();
         mods.add(Modifier.flat(StatKeys.FLAG_SPELL_TOTEM, 1, source));
         if (powerUsed > 0 && spec.perPower() > 0) {
-            mods.add(Modifier.more(StatKeys.DAMAGE, spec.perPower() * powerUsed / 100.0, source));
+            // 2026-10-22：照 PoE2 改成「增加」（以前是更多，3 顆 = ×1.3，比 PoE2 強很多）
+            mods.add(Modifier.increased(StatKeys.DAMAGE, spec.perPower() * powerUsed / 100.0, source));
         }
         if (enduranceUsed > 0 && spec.perEndurance() > 0) {
             mods.add(Modifier.more(StatKeys.TOTEM_LIFE, spec.perEndurance() * enduranceUsed / 100.0, source));
@@ -231,67 +227,14 @@ public final class MetaGems {
         if (extraTotems > 0) {
             mods.add(Modifier.flat(StatKeys.SKILL_TOTEMS, extraTotems, source));
         }
-        // 2026-10-21：裝在法術圖騰寶石上、跟圖騰有關的輔助（要圖騰才能掛的：疾樁、繁置、樁怒、堅樁、厚樁、怨燼）也套到圖騰施法上
-        //（照 PoE2）；插槽法術自己也掛了同一顆的不重複算。其他輔助（疾詠、湧詠…）照舊只影響放圖騰這個動作。魔力倍率不算（放圖騰才花魔力）
-        for (final SupportDefinition support : carriedToTotem(socket)) {
-            mods.addAll(support.modifiers());
-        }
+        // 2026-10-22：寶石第 2～5 孔的輔助全部套在插槽法術上（spellEntry 的輔助就是它們；要圖騰的疾樁、樁怒也在裡面）
         final SupportDefinition carrier = new SupportDefinition("meta." + socket.metaEntry().skillId(), source, "", "PAPER", 1,
                 java.util.Set.of(), java.util.Set.of(), 1.0, mods, List.of());
         final List<SupportDefinition> supports = new ArrayList<>();
         supports.add(carrier); // 放第一個：圖騰施法優先（插槽法術自己掛了陷阱施法的話那顆不算）
         supports.addAll(service.supportsOf(socket.spellEntry()));
-        final SkillBuild build = SkillBuild.of(service.config(), socket.spell(), socket.spellEntry().level(), state.level(), false, supports,
+        return SkillBuild.of(service.config(), socket.spell(), socket.spellEntry().level(), state.level(), false, supports,
                 state.weaponTags(), sheet, SkillService.resonantOf(socket.spellEntry())); // 2026-10-18：共鳴的專屬輔助不佔名額
-        // 2026-10-22：主要寶石上加持續時間的輔助（持久、久地…）只讓圖騰撐更久，不改插槽法術自己的持續時間（以前完全沒作用）
-        final double factor = totemDurationFactor(service.supportsOf(socket.metaEntry()));
-        if (build.deploy() != null && Math.abs(factor - 1) > 1e-9) {
-            return build.withDeploy(build.deploy().withDuration(build.deploy().duration() * factor));
-        }
-        return build;
-    }
-
-    /** 主要寶石上沒帶到圖騰施法的輔助裡，持續時間的倍率（增加的相加、更多的相乘；最低 0.1）。 */
-    static double totemDurationFactor(final List<SupportDefinition> metaSupports) {
-        double increased = 0;
-        double more = 1;
-        for (final SupportDefinition support : metaSupports) {
-            if (support == null || carriesToTotem(support)) {
-                continue; // 帶到圖騰施法上的（繁置）已經算在插槽法術裡
-            }
-            for (final Modifier modifier : support.modifiers()) {
-                if (!modifier.stat().equals(StatKeys.SKILL_DURATION) || !modifier.tags().isEmpty()) {
-                    continue;
-                }
-                if (modifier.type() == tw.exilecore.stats.ModType.INCREASED) {
-                    increased += modifier.value();
-                } else if (modifier.type() == tw.exilecore.stats.ModType.MORE) {
-                    more *= 1 + modifier.value();
-                }
-            }
-        }
-        return Math.max(0.1, (1 + increased) * more);
-    }
-
-    /** 法術圖騰寶石上會帶到圖騰施法的輔助（要圖騰才能掛的；插槽法術已經有同一顆的不算）。 */
-    List<SupportDefinition> carriedToTotem(final Socket socket) {
-        final java.util.Set<String> spellSupports = new java.util.HashSet<>();
-        for (final SupportDefinition support : service.supportsOf(socket.spellEntry())) {
-            if (support != null) {
-                spellSupports.add(support.id());
-            }
-        }
-        final List<SupportDefinition> carried = new ArrayList<>();
-        for (final SupportDefinition support : service.supportsOf(socket.metaEntry())) {
-            if (carriesToTotem(support) && !spellSupports.contains(support.id())) {
-                carried.add(support);
-            }
-        }
-        return carried;
-    }
-
-    static boolean carriesToTotem(final SupportDefinition support) {
-        return support != null && support.requires().contains(tw.exilecore.stats.Tags.TOTEM);
     }
 
     // ---- 說明 ----
@@ -305,9 +248,9 @@ public final class MetaGems {
         final List<String> lines = new ArrayList<>();
         final PlayerState state = plugin.players().get(player);
         final int position = state.skills().find(meta.id());
-        lines.add("<#c9a7ff>主要寶石<gray>：技能面板上它<white>後面那一格</white>的法術就是它的插槽（那個法術不能自己按）");
+        lines.add("<#c9a7ff>主要寶石<gray>：把法術的技能寶石放進它的<white>第 1 孔</white>，第 2～5 孔的輔助都套在那個法術上");
         if (spec.totem()) {
-            lines.add(String.format(Locale.ROOT, "<gray>放的時候消耗 <white>%d</white> 顆銳星或磐星（銳星先用）：每顆銳星插槽法術更多 <white>%s%%</white> 傷害、"
+            lines.add(String.format(Locale.ROOT, "<gray>放的時候消耗 <white>%d</white> 顆銳星或磐星（銳星先用）：每顆銳星插槽法術增加 <white>%s%%</white> 傷害、"
                     + "每顆磐星圖騰更多 <white>%s%%</white> 生命與持續時間", spec.charges(), number(spec.perPower()), number(spec.perEndurance())));
             lines.add("<gray>插槽法術施法速度更少 <white>" + number(spec.lessCastSpeed()) + "%</white>；不能插有冷卻的法術");
         } else {
@@ -343,25 +286,7 @@ public final class MetaGems {
                 if (build.deploy() != null) {
                     lines.add(String.format(Locale.ROOT, "<gray>圖騰持續 <white>%s</white> 秒", number(build.durationTicks(build.deploy().duration()) / 20.0)));
                 }
-                final List<String> carried = new ArrayList<>();
-                for (final SupportDefinition support : carriedToTotem(socket)) {
-                    carried.add(support.name());
-                }
-                // 2026-10-22：以前掛得上去、卻沒作用的（現在掛不上去了；已經掛著的提醒拿下來）
-                final List<String> useless = new ArrayList<>();
-                for (final SupportDefinition support : service.supportsOf(socket.metaEntry())) {
-                    if (!support.worksOnSpellTotem()) {
-                        useless.add(support.name());
-                    }
-                }
-                if (!useless.isEmpty()) {
-                    lines.add("<#ffaa55>在" + ItemRenderer.escape(meta.name()) + "上沒有作用：" + ItemRenderer.escape(String.join("、", useless))
-                            + "（請改掛在插槽法術上）");
-                }
-                lines.add(carried.isEmpty()
-                        ? "<dark_gray>要圖騰才能掛的輔助（疾樁、繁置、樁怒…）會帶到圖騰施法上；施法速度讓放圖騰更快、持續時間讓圖騰撐更久"
-                        : "<gray>帶到圖騰施法上的輔助：<#8fd3ff>" + ItemRenderer.escape(String.join("、", carried))
-                                + "<dark_gray>（施法速度讓放圖騰更快、持續時間讓圖騰撐更久）");
+                lines.add("<dark_gray>第 2～5 孔的輔助都套在插槽法術上；要圖騰的（疾樁、繁置、樁怒…）、加施法速度與持續時間的也套到圖騰本身");
             } else {
                 lines.add(String.format(Locale.ROOT, "<gray>插槽：<white>%s</white>（能量 %s／%s）", ItemRenderer.escape(socket.spell().name()),
                         number(Math.floor(energyOf(player.getUniqueId(), meta.id(), socket.spell().id()))), number(MetaSpec.maxEnergy(socket.spell()))));

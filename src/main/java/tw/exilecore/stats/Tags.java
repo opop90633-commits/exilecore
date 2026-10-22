@@ -50,6 +50,8 @@ public final class Tags {
     public static final String THORNS = "thorns";
 
     public static final String PHYSICAL = "physical";
+    /** 2026-10-22：主要寶石（有 meta 區塊的技能：星咒圖騰、暴擊引星…）；輔助的 requires／excludes 不會寫它。 */
+    public static final String META = "meta";
     public static final String FIRE = "fire";
     public static final String COLD = "cold";
     public static final String LIGHTNING = "lightning";

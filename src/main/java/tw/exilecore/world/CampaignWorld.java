@@ -62,12 +62,20 @@ public final class CampaignWorld {
     private World arena;
     private World event;
     private boolean createdCampaign;
+    /** 2026-10-22 主城分流：營地的每一條線（第 1 線是劇情世界）。 */
+    private final TownChannels channels;
     private BukkitTask guardTask;
     private final Map<UUID, Integer> outside = new HashMap<>();
 
     public CampaignWorld(final ExileCore plugin, final WorldLore lore) {
         this.plugin = plugin;
         this.lore = lore;
+        this.channels = new TownChannels(plugin);
+    }
+
+    /** 主城分流（沒有劇情世界時只有空的清單）。 */
+    public TownChannels channels() {
+        return channels;
     }
 
     // ---- 啟動 ----
@@ -90,6 +98,7 @@ public final class CampaignWorld {
                     }
                 }
                 plugin.getSLF4JLogger().info("劇情世界：{}{}", campaign.getName(), createdCampaign ? "（新產生的世界）" : "");
+                loadChannels(spawn);
             }
         }
         maps = load(MAPS_KEY, new VoidGenerator(), lore.mapTime());
@@ -116,6 +125,29 @@ public final class CampaignWorld {
             if (world != null) {
                 applyTime(world, world == campaign ? lore.campaignTime() : lore.mapTime());
             }
+        }
+        for (final World town : channels.towns()) {
+            if (town != campaign) {
+                applyTime(town, lore.campaignTime());
+            }
+        }
+    }
+
+    /**
+     * 2026-10-22 主城分流：劇情世界之外再載入幾條線的營地世界（data/world.yml 的 campaign.channels）。
+     * 新的從劇情世界複製營地那一帶的區塊檔（{@link TownChannels#prepare}），用同一個產生器（沒複製到的區塊長得一樣）。
+     */
+    private void loadChannels(final CampaignLayout.Spot spawn) {
+        final List<Integer> wanted = channels.prepare(campaign, lore.campaignChannels());
+        plugin.getServer().getPluginManager().registerEvents(channels, plugin);
+        for (final int channel : wanted) {
+            final World town = load(TownChannels.key(channel), new CampaignGenerator(), lore.campaignTime());
+            if (town == null) {
+                continue;
+            }
+            town.setSpawnLocation(new Location(town, spawn.x(), spawn.y(), spawn.z(), spawn.yaw(), 0f));
+            channels.add(town, channel);
+            plugin.getSLF4JLogger().info("主城分流：第 {} 線 {}", channel, town.getName());
         }
     }
 
@@ -214,9 +246,15 @@ public final class CampaignWorld {
             setup(plugin.getServer().getConsoleSender());
         } else if (!CampaignSetup.applied(plugin.zones().layout(), campaign.getName(), campId)) {
             plugin.getSLF4JLogger().warn("區域版面不在劇情世界 {}：要用劇情世界的話在遊戲內輸入 /ec world setup", campaign.getName());
-        } else if (!campUpToDate()) {
+        } else if (!campUpToDate(campaign)) {
             plugin.getSLF4JLogger().info("營地升級：補蓋商人、市集掌櫃、盜賊首領的攤位、NPC 移到現在的位置（盜賊首領在黃色攤位）");
-            placeNpcs(plugin.getServer().getConsoleSender());
+            placeNpcs(plugin.getServer().getConsoleSender(), campaign);
+        }
+        // 2026-10-22 主城分流：每條線的 NPC 也要對（複製來的照劇情世界當時的版本；新產生的要放）
+        for (final World town : channels.towns()) {
+            if (town != campaign && !campUpToDate(town)) {
+                placeNpcs(plugin.getServer().getConsoleSender(), town);
+            }
         }
     }
 
@@ -258,18 +296,35 @@ public final class CampaignWorld {
         sender.sendMessage(plugin.text().prefixed("<green>區域版面已擺到劇情世界：營地" + (campId == null ? "（zones.yml 沒有城鎮）" : "")
                 + "＋" + placed + " 個區域" + (combat.size() > placed ? "（zones.yml 多出來的 " + (combat.size() - placed) + " 個區域沒擺）" : "")
                 + "<gray>；舊版面備份成 " + backup.getFileName()));
-        placeNpcs(sender);
+        for (final World town : channels.towns()) {
+            placeNpcs(sender, town);
+        }
+    }
+
+    /** 2026-10-22 主城分流：把每條分流線的 NPC 對齊第 1 線（位置、有沒有）；/ec world channels sync。 */
+    public int syncChannels(final CommandSender sender) {
+        int count = 0;
+        for (final World town : channels.towns()) {
+            if (town != campaign) {
+                placeNpcs(sender, town);
+                count++;
+            }
+        }
+        return count;
     }
 
     /** 營地的 NPC：先載入營地的區塊，等實體也載入後，同種類已經有就移到正確位置，沒有就放一個新的。 */
-    private void placeNpcs(final CommandSender sender) {
+    private void placeNpcs(final CommandSender sender, final World town) {
         if (plugin.npcs() == null) {
             return;
         }
         final List<CompletableFuture<Chunk>> futures = new ArrayList<>();
         for (int cx = -3; cx <= 2; cx++) {
             for (int cz = -3; cz <= 2; cz++) {
-                futures.add(campaign.getChunkAtAsync(cx, cz));
+                futures.add(town.getChunkAtAsync(cx, cz));
+                if (campaign != null && !town.equals(campaign)) {
+                    futures.add(campaign.getChunkAtAsync(cx, cz)); // 分流線要照第 1 線擺，第 1 線的營地也先載入
+                }
             }
         }
         CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0])).whenComplete((ignored, error) ->
@@ -285,20 +340,21 @@ public final class CampaignWorld {
                         chunks.add(chunk);
                     }
                     // 後來才加的攤位（舊世界生成時還沒有）：直接蓋進世界；新世界生成時已經蓋了，再蓋一次一模一樣
-                    final int blocks = buildAddedStalls();
+                    final int blocks = buildAddedStalls(town);
                     // 實體是跟區塊分開載入的：等兩秒再找舊的 NPC，免得重複放
                     plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                        final int moved = spawnNpcs();
+                        final int moved = spawnNpcs(town);
                         for (final Chunk chunk : chunks) {
                             chunk.removePluginChunkTicket(plugin);
                         }
                         try {
-                            Files.writeString(campaign.getWorldPath().resolve(CAMP_MARKER),
+                            Files.writeString(town.getWorldPath().resolve(CAMP_MARKER),
                                     "ExileCore 營地版本 " + CAMP_VERSION + "（商人、市集掌櫃、盜賊首領；盜賊首領在黃色攤位）。刪掉這個檔，下次啟動會再補蓋一次攤位與 NPC\n");
                         } catch (final IOException e) {
                             plugin.getSLF4JLogger().warn("寫入營地版本記號失敗", e);
                         }
-                        sender.sendMessage(plugin.text().prefixed("<green>營地 NPC 已就位（新放 " + moved + " 個；攤位 " + blocks + " 格方塊）"));
+                        sender.sendMessage(plugin.text().prefixed("<green>營地 NPC 已就位（新放 " + moved + " 個；攤位 " + blocks + " 格方塊"
+                                + (channels.enabled() ? "；第 " + channels.channelOf(town) + " 線" : "") + "）"));
                     }, 40);
                 }));
     }
@@ -309,9 +365,9 @@ public final class CampaignWorld {
      */
     private static final int CAMP_VERSION = 4;
 
-    private boolean campUpToDate() {
+    private boolean campUpToDate(final World town) {
         try {
-            final Path marker = campaign.getWorldPath().resolve(CAMP_MARKER);
+            final Path marker = town.getWorldPath().resolve(CAMP_MARKER);
             return Files.exists(marker) && Files.readString(marker).contains("營地版本 " + CAMP_VERSION);
         } catch (final IOException e) {
             return true; // 讀不到就不動
@@ -319,24 +375,24 @@ public final class CampaignWorld {
     }
 
     /** 把後來才加的 NPC 攤位蓋進劇情世界（區塊要已經載入）；回傳放了幾格方塊。 */
-    private int buildAddedStalls() {
+    private int buildAddedStalls(final World town) {
         final BufferSink sink = new BufferSink();
         for (final CampaignStructures.Npc npc : CampaignStructures.ADDED_LATER) {
             CampaignStructures.stallFor(npc, sink);
         }
         sink.compact();
         for (int i = 0; i < sink.size(); i++) {
-            campaign.getBlockAt(sink.x(i), sink.y(i), sink.z(i)).setBlockData(BlockPalette.get(sink.block(i)), false);
+            town.getBlockAt(sink.x(i), sink.y(i), sink.z(i)).setBlockData(BlockPalette.get(sink.block(i)), false);
         }
         return sink.size();
     }
 
     /** @return 新放了幾個 */
-    private int spawnNpcs() {
+    private int spawnNpcs(final World town) {
         final Map<NpcType, Entity> existing = new HashMap<>();
-        final Location center = new Location(campaign, 0, CampaignLayout.CAMP_Y, 0);
+        final Location center = new Location(town, 0, CampaignLayout.CAMP_Y, 0);
         for (final Entity entity : plugin.npcs().loaded()) {
-            if (!entity.getWorld().equals(campaign) || entity.getLocation().distanceSquared(center) > 60 * 60) {
+            if (!entity.getWorld().equals(town) || entity.getLocation().distanceSquared(center) > 60 * 60) {
                 continue;
             }
             final NpcType type = plugin.npcs().type(entity).orElse(null);
@@ -349,12 +405,44 @@ public final class CampaignWorld {
                 existing.put(type, entity);
             }
         }
+        // 2026-10-22 主城分流：分流世界的 NPC 跟第 1 線（劇情世界）一樣——第 1 線手動搬過的照搬、第 1 線刪掉的這裡也不放
+        final Map<NpcType, Location> lineOne = new HashMap<>();
+        boolean followLineOne = false;
+        if (campaign != null && !town.equals(campaign)) {
+            followLineOne = true;
+            for (int cx = -3; cx <= 2 && followLineOne; cx++) {
+                for (int cz = -3; cz <= 2; cz++) {
+                    if (!campaign.isChunkLoaded(cx, cz) || !campaign.getChunkAt(cx, cz).isEntitiesLoaded()) {
+                        followLineOne = false; // 第 1 線的營地沒載入完就不知道它有哪些，照預設擺
+                        break;
+                    }
+                }
+            }
+            final Location campaignCenter = new Location(campaign, 0, CampaignLayout.CAMP_Y, 0);
+            for (final Entity entity : plugin.npcs().loaded()) {
+                if (!entity.getWorld().equals(campaign) || entity.getLocation().distanceSquared(campaignCenter) > 60 * 60) {
+                    continue;
+                }
+                final NpcType type = plugin.npcs().type(entity).orElse(null);
+                if (type != null && type != NpcType.STORY) {
+                    lineOne.putIfAbsent(type, TownChannels.mapTo(entity.getLocation(), town));
+                }
+            }
+        }
         int spawned = 0;
         for (final CampaignStructures.Npc npc : CampaignStructures.Npc.values()) {
             final NpcType type = NpcType.valueOf(npc.name());
             final CampaignLayout.Spot spot = CampaignStructures.npcSpot(npc);
-            final Location location = new Location(campaign, spot.x(), spot.y(), spot.z(), spot.yaw(), 0f);
+            final Location fromLineOne = lineOne.get(type);
             final Entity current = existing.get(type);
+            if (followLineOne && fromLineOne == null) {
+                if (current != null) {
+                    current.remove(); // 第 1 線沒有這種 NPC（刪掉了）：這條線也拿掉
+                }
+                continue;
+            }
+            final Location location = fromLineOne != null ? fromLineOne
+                    : new Location(town, spot.x(), spot.y(), spot.z(), spot.yaw(), 0f);
             if (current != null) {
                 current.teleport(location);
                 plugin.npcs().dress(current, type); // 名字跟上（2026-10：倉庫、拆解、傳送、市集只是擺設，沒有名字）
@@ -394,9 +482,10 @@ public final class CampaignWorld {
             }
             final World world = player.getWorld();
             final boolean inCampaign = world.equals(campaign);
+            final boolean inChannel = channels.isChannel(world); // 2026-10-22 主城分流：分流世界只有營地，走出去就帶回這條線的營地
             // 管理員在劇情世界裡可以到處走（看懸崖、海上）；還在大廳的話一樣送去營地
             final boolean roamingAdmin = inCampaign && player.hasPermission(ExileCore.PERMISSION_ADMIN);
-            if ((!inCampaign && !world.equals(lobby)) || roamingAdmin || zones.zoneAt(player.getLocation()).isPresent()) {
+            if ((!inCampaign && !inChannel && !world.equals(lobby)) || roamingAdmin || zones.zoneAt(player.getLocation()).isPresent()) {
                 outside.remove(player.getUniqueId());
                 continue;
             }
@@ -405,11 +494,19 @@ public final class CampaignWorld {
                 continue;
             }
             outside.remove(player.getUniqueId());
+            if (inChannel) {
+                final Location back = TownChannels.mapTo(zones.campLocation(), world);
+                if (back != null) {
+                    player.teleportAsync(back);
+                    player.sendMessage(plugin.text().prefixed("<gray>那邊是走不過去的懸崖與深海，帶你回去"));
+                }
+                continue;
+            }
             Location back = inCampaign && player.getLocation().getX() >= CampaignLayout.ZONE_START_X ? zones.respawnLocation(player) : null;
             if (back == null || back.getWorld() == null || !back.getWorld().equals(campaign)) {
-                back = zones.campLocation();
+                back = zones.campLocationFor(player);
             }
-            if (back != null && back.getWorld() != null && back.getWorld().equals(campaign)) {
+            if (back != null && back.getWorld() != null && channels.isTown(back.getWorld())) {
                 player.teleportAsync(back);
                 player.sendMessage(plugin.text().prefixed(inCampaign ? "<gray>那邊是走不過去的懸崖與深海，帶你回去"
                         : "<gray>押送船靠岸了：送你到流放者營地"));

@@ -81,10 +81,11 @@ strongbox:
   # currency 另外掉幾個通貨（照掉落權重抽、等級夠的才會）；maps 另外掉幾張地圖（照開箱的人的星圖）；
   # essences 掉幾顆星魄（currencies.yml 裡 operation: ESSENCE 的，隨機一種；星魄是寶箱的招牌）
   kinds:
-    plain:        { name: 寶箱, weight: 60, rolls: 3, quantity_bonus: 50, rarity_bonus: 100, essences: [1, 1] }
+    # 2026-10-22（照市場報告：星魄每種每週掉 4 千、只用掉 0～4%）：星魄 1 → 0–1、2–3 → 1–2（約少 45%）
+    plain:        { name: 寶箱, weight: 60, rolls: 3, quantity_bonus: 50, rarity_bonus: 100, essences: [0, 1] }
     # 2026-10：匠心寶箱多給的通貨 3–6 → 2–4 顆（低階通貨的權重減半，抽到好通貨的機會變高；這樣好通貨的數量跟以前差不多，低階的少一半）
-    artisan:      { name: 匠心寶箱, weight: 25, rolls: 1, quantity_bonus: 0, rarity_bonus: 50, currency: [2, 4], essences: [2, 3] }
-    cartographer: { name: 星圖寶箱, weight: 15, rolls: 1, quantity_bonus: 0, rarity_bonus: 50, maps: [1, 2], essences: [1, 1] }
+    artisan:      { name: 匠心寶箱, weight: 25, rolls: 1, quantity_bonus: 0, rarity_bonus: 50, currency: [2, 4], essences: [1, 2] }
+    cartographer: { name: 星圖寶箱, weight: 15, rolls: 1, quantity_bonus: 0, rarity_bonus: 50, maps: [1, 2], essences: [0, 1] }
 
 breach:
   duration: 25                     # 開幾秒
@@ -92,7 +93,7 @@ breach:
   wave: [3, 4]                     # 一波幾隻（照地圖的魔法群比例，有時整波是魔法怪）
   radius: [4, 14]                  # 邊緣從幾格長到幾格（怪從邊緣湧出）
   quantity_bonus: 50               # 裂隙怪的物品數量 +%
-  catalyst_chance: 0.06            # 每隻裂隙怪死掉時掉一顆催化劑（currencies.yml 裡 operation: CATALYST 的，隨機一種）的機率
+  catalyst_chance: 0.03            # 2026-10-22：0.06 → 0.03（催化劑每種每週 2 千、只用掉 1～16%）。每隻裂隙怪死掉時掉一顆催化劑（currencies.yml 裡 operation: CATALYST 的，隨機一種）的機率
   unique_chance: 0.01              # 裂隙關上時 30 格內的人各擲一次：掉裂隙的專屬傳奇
   ticket: { currency: ticket_breach, chance: 0.044 }       # 2026-10-18：入場券
 

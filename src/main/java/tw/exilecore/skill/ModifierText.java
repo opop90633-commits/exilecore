@@ -65,6 +65,7 @@ public final class ModifierText {
             case Tags.HERALD -> "捷光環";
             case Tags.WARCRY -> "戰吼";
             case Tags.PERSISTENT -> "常駐";
+            case Tags.META -> "主要寶石"; // 2026-10-22
             case Tags.SWORD -> "劍";
             case Tags.AXE -> "斧";
             case Tags.MACE -> "錘";

@@ -198,7 +198,14 @@ public final class TradeService {
 
     private boolean near(final Player a, final Player b) {
         if (!a.getWorld().equals(b.getWorld())) {
-            return false;
+            // 2026-10-22 主城分流：兩個人都在營地（不同線）也可以交易——看不到對方，距離照營地的座標算
+            if (plugin.zones() == null || !plugin.zones().inTown(a.getLocation()) || !plugin.zones().inTown(b.getLocation())) {
+                return false;
+            }
+            final double range = config().tradeRange();
+            final double dx = a.getLocation().getX() - b.getLocation().getX();
+            final double dz = a.getLocation().getZ() - b.getLocation().getZ();
+            return dx * dx + dz * dz <= Math.max(range * range, 48 * 48);
         }
         final double range = config().tradeRange();
         return a.getLocation().distanceSquared(b.getLocation()) <= range * range;

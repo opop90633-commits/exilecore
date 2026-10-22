@@ -8,7 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-/** 公開聊天的物品連結（[i]）；死亡訊息寫角色名稱；下線時忘掉名字。 */
+/** 公開聊天的物品連結（[i]）；死亡訊息寫角色名稱；過濾死亡、加入離開訊息（設定）；下線時忘掉名字。 */
 final class ChatListener implements Listener {
 
     private final ChatService chat;
@@ -80,8 +80,54 @@ final class ChatListener implements Listener {
         }
     }
 
+    /**
+     * 2026-10-22：設定的「過濾死亡訊息」：伺服器原本廣播給所有人的死亡訊息改成自己一個一個送，開了過濾的人收不到別人的
+     * （自己的照樣看得到；控制台照寫）。競技場裡已經拿掉的（null）就不管。
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDeathFilter(final PlayerDeathEvent event) {
+        final net.kyori.adventure.text.Component message = event.deathMessage();
+        if (message == null) {
+            return;
+        }
+        event.deathMessage(null);
+        deliver(message, tw.exilecore.character.PlayerSettings.HIDE_DEATHS, event.getEntity(), event.getEntity());
+    }
+
+    /** 2026-10-22：設定的「過濾加入離開訊息」：開了的人收不到誰上線（自己上線不受影響，原版本來也是發給所有人）。 */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onJoinFilter(final org.bukkit.event.player.PlayerJoinEvent event) {
+        final net.kyori.adventure.text.Component message = event.joinMessage();
+        if (message == null) {
+            return;
+        }
+        event.joinMessage(null);
+        deliver(message, tw.exilecore.character.PlayerSettings.HIDE_JOIN_LEAVE, event.getPlayer(), null);
+    }
+
+    /** 送給在線、沒開這個過濾的人；always 不管設定一定送（自己的死亡訊息），skip 不送（剛下線的人）。 */
+    private void deliver(final net.kyori.adventure.text.Component message, final String filter, final org.bukkit.entity.Player always,
+                         final org.bukkit.entity.Player skip) {
+        chat.plugin().getServer().getConsoleSender().sendMessage(message);
+        for (final org.bukkit.entity.Player viewer : chat.plugin().getServer().getOnlinePlayers()) {
+            if (viewer.equals(skip)) {
+                continue;
+            }
+            if (!viewer.equals(always) && tw.exilecore.character.PlayerSettings.on(chat.plugin().players().find(viewer.getUniqueId()).orElse(null), filter)) {
+                continue;
+            }
+            viewer.sendMessage(message);
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(final PlayerQuitEvent event) {
+        // 2026-10-22：設定的「過濾加入離開訊息」
+        final net.kyori.adventure.text.Component left = event.quitMessage();
+        if (left != null) {
+            event.quitMessage(null);
+            deliver(left, tw.exilecore.character.PlayerSettings.HIDE_JOIN_LEAVE, null, event.getPlayer());
+        }
         chat.forget(event.getPlayer().getUniqueId());
     }
 

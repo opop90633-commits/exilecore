@@ -105,6 +105,8 @@ public final class SponsorService {
     private final Map<String, Boosts.Active> boosts = new LinkedHashMap<>();
     /** 2026-10 個人加倍藥：帳號進度的鍵（後面接加倍的代號），值是什麼時候結束（毫秒）。 */
     static final String PERSONAL_BOOST = "sp.pboost.";
+    /** 2026-10-22：個人加倍「存著、還沒開」的時間（毫秒）：買了先存起來，自己開、自己關，下線自動關（剩的時間存回來）。 */
+    static final String PERSONAL_BANK = "sp.pbank.";
     /** 線上玩家正在吃的個人加倍（玩家:代號）：結束的時候重算屬性表、通知。 */
     private final Set<String> personalSeen = new HashSet<>();
     private long lastDay = -1;
@@ -263,32 +265,128 @@ public final class SponsorService {
         return type.name().startsWith("全服") ? "個人" + type.name().substring(2) : "個人" + type.name();
     }
 
+    /** 存著還沒開的時間（毫秒）。 */
+    public long personalBoostBank(final Player player, final String typeId) {
+        return number(player, PERSONAL_BANK + typeId);
+    }
+
+    /** 正在跑的剩幾毫秒（沒開 0）。 */
+    public long personalBoostLeft(final Player player, final String typeId) {
+        return Math.max(0, personalBoostUntil(player, typeId) - System.currentTimeMillis());
+    }
+
+    /**
+     * 買一罐（2026-10-22 改）：正在開著就接著延長；沒開就存起來（到贊助選單右鍵開）。
+     * 存著的加上正在跑的，最多 max_minutes。
+     */
     String buyPersonalBoost(final Player player, final String typeId) {
         final SponsorConfig.BoostType type = config.boosts().get(typeId);
         if (type == null) {
             return "沒有這種加倍";
         }
         final long now = System.currentTimeMillis();
-        final long current = personalBoostUntil(player, type.id());
-        final long start = Math.max(now, current);
-        final long until = start + config.personalBoostMinutes() * 60_000L;
-        if (until - now > config.personalBoostMaxMinutes() * 60_000L) {
-            return personalName(type) + "已經排到 " + config.personalBoostMaxMinutes() + " 分鐘了，等一下再買";
+        final long running = personalBoostLeft(player, type.id());
+        final long bank = personalBoostBank(player, type.id());
+        final long add = config.personalBoostMinutes() * 60_000L;
+        if (running + bank + add > config.personalBoostMaxMinutes() * 60_000L) {
+            return personalName(type) + "最多存 " + config.personalBoostMaxMinutes() + " 分鐘，先用掉一些再買";
         }
-        final String problem = spend(player, config.personalBoostPrice(), Map.of(PERSONAL_BOOST + type.id(), String.valueOf(until)),
-                personalName(type) + " " + config.personalBoostMinutes() + " 分鐘");
+        final Map<String, String> values = running > 0
+                ? Map.of(PERSONAL_BOOST + type.id(), String.valueOf(now + running + add))
+                : Map.of(PERSONAL_BANK + type.id(), String.valueOf(bank + add));
+        final String problem = spend(player, config.personalBoostPrice(), values, personalName(type) + " " + config.personalBoostMinutes() + " 分鐘");
         if (problem != null) {
             return problem;
         }
-        personalSeen.add(player.getUniqueId() + ":" + type.id());
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.4f);
+        if (running > 0) {
+            final long minutes = (running + add + 30_000) / 60_000;
+            player.sendMessage(plugin.text().prefixed("<#ffd27f>" + ItemRenderer.escape(personalName(type)) + "<gray>：延長，剩 <white>" + minutes
+                    + "</white> 分鐘<dark_gray>（只有你自己；跟全服加倍加起來算）"));
+        } else {
+            final long minutes = (bank + add + 30_000) / 60_000;
+            player.sendMessage(plugin.text().prefixed("<#ffd27f>" + ItemRenderer.escape(personalName(type)) + "<gray>：存起來了，共 <white>" + minutes
+                    + "</white> 分鐘<dark_gray>（贊助選單右鍵開啟；不用時再右鍵關掉，下線自動關，剩的時間留著）"));
+        }
+        return null;
+    }
+
+    /** 開、關個人加倍（2026-10-22）：開 = 存著的時間開始跑；關 = 剩的時間存回去。 */
+    String togglePersonalBoost(final Player player, final String typeId) {
+        final SponsorConfig.BoostType type = config.boosts().get(typeId);
+        if (type == null) {
+            return "沒有這種加倍";
+        }
+        if (accounts() == null || !accounts().accountLoaded(player)) {
+            return "帳號資料載入中，請稍等";
+        }
+        final long now = System.currentTimeMillis();
+        final long running = personalBoostLeft(player, type.id());
+        final long bank = personalBoostBank(player, type.id());
+        final String key = player.getUniqueId() + ":" + type.id();
+        if (running > 0) {
+            final Map<String, String> values = new LinkedHashMap<>();
+            values.put(PERSONAL_BOOST + type.id(), null);
+            values.put(PERSONAL_BANK + type.id(), String.valueOf(bank + running));
+            accounts().commitAccount(player, values, "贊助：" + personalName(type) + "暫停");
+            personalSeen.remove(key);
+            plugin.players().markDirty(player);
+            player.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(personalName(type)) + "關掉了，剩 <white>"
+                    + minutesText(bank + running) + "</white> 存著"));
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.6f, 0.8f);
+            return null;
+        }
+        if (bank <= 0) {
+            return "你沒有存著的" + personalName(type) + "，先買一罐（左鍵）";
+        }
+        final Map<String, String> values = new LinkedHashMap<>();
+        values.put(PERSONAL_BOOST + type.id(), String.valueOf(now + bank));
+        values.put(PERSONAL_BANK + type.id(), null);
+        accounts().commitAccount(player, values, "贊助：" + personalName(type) + "開啟");
+        personalSeen.add(key);
         plugin.players().markDirty(player); // 掉落數量、稀有度進屬性表
-        final long minutes = (until - now + 30_000) / 60_000;
-        player.sendMessage(plugin.text().prefixed("<#ffd27f>" + ItemRenderer.escape(personalName(type)) + "<gray>：" + (current > now ? "延長，" : "")
-                + "剩 <white>" + minutes + "</white> 分鐘<dark_gray>（只有你自己；跟全服加倍加起來算）"));
+        player.sendMessage(plugin.text().prefixed("<#ffd27f>" + ItemRenderer.escape(personalName(type)) + "<gray>開啟：剩 <white>" + minutesText(bank)
+                + "</white><dark_gray>（只有你自己；跟全服加倍加起來算；下線自動關）"));
         player.showTitle(Title.title(plugin.text().parse("<#ffd27f>" + ItemRenderer.escape(personalName(type))),
-                plugin.text().parse("<gray>" + minutes + " 分鐘"), Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1800), Duration.ofMillis(400))));
+                plugin.text().parse("<gray>" + minutesText(bank)), Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1800), Duration.ofMillis(400))));
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.4f);
         return null;
+    }
+
+    /** 下線（或登入時發現還開著：當機、沒存到）：開著的全部關掉，剩的時間存回去。 */
+    void pausePersonalBoosts(final Player player) {
+        pausePersonalBoosts(player, false);
+    }
+
+    /** onlyStale：只關「這次上線還沒開過」的（登入時用；換角色時開著的照開著）。 */
+    private void pausePersonalBoosts(final Player player, final boolean onlyStale) {
+        if (accounts() == null || !accounts().accountLoaded(player)) {
+            return;
+        }
+        final long now = System.currentTimeMillis();
+        final Map<String, String> values = new LinkedHashMap<>();
+        for (final SponsorConfig.BoostType type : config.boosts().values()) {
+            final long until = personalBoostUntil(player, type.id());
+            if (until <= 0 || onlyStale && personalSeen.contains(player.getUniqueId() + ":" + type.id())) {
+                continue;
+            }
+            values.put(PERSONAL_BOOST + type.id(), null);
+            if (until > now) {
+                values.put(PERSONAL_BANK + type.id(), String.valueOf(personalBoostBank(player, type.id()) + until - now));
+            }
+        }
+        if (!values.isEmpty()) {
+            accounts().commitAccount(player, values, "贊助：個人加倍下線暫停");
+        }
+        if (!onlyStale) {
+            final String prefix = player.getUniqueId() + ":";
+            personalSeen.removeIf(key -> key.startsWith(prefix)); // 下線：下次登入一律從關著開始
+        }
+    }
+
+    private static String minutesText(final long millis) {
+        final long seconds = Math.max(0, millis / 1000);
+        return seconds >= 60 ? (seconds + 30) / 60 + " 分鐘" : seconds + " 秒";
     }
 
     /** 每秒：個人加倍開始（登入時）、結束——重算屬性表，結束時通知。 */
@@ -452,6 +550,7 @@ public final class SponsorService {
         if (!config.enabled()) {
             return;
         }
+        pausePersonalBoosts(player, true); // 2026-10-22：上線時個人加倍一律是關著的（上次下線沒存到、當機也一樣），要用自己開
         applyPouch(player);
         if (vouchers != null) {
             vouchers.onReady(player); // 星幣券：下線時開的券、兌換了還沒加的星幣，上線補上

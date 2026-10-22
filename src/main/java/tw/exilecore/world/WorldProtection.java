@@ -56,10 +56,14 @@ public final class WorldProtection implements Listener {
 
     private boolean protectedWorld(final World world) {
         return world != null && (world.equals(worlds.campaign()) || world.equals(worlds.maps()) || world.equals(worlds.arena())
-                || world.equals(worlds.event()));
+                || world.equals(worlds.event()) || worlds.channels().isChannel(world)); // 2026-10-22：主城分流的世界也保護
     }
 
     private boolean builder(final Player player) {
+        // 2026-10-22 主城分流：線 2、3 是從第 1 線複製的，創造模式也不能改——要改去第 1 線改，再 /ec world channels rebuild
+        if (worlds.channels().isChannel(player.getWorld())) {
+            return false;
+        }
         return player.getGameMode() == GameMode.CREATIVE && player.hasPermission(ExileCore.PERMISSION_ADMIN);
     }
 

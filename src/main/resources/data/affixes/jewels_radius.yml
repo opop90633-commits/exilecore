@@ -3,6 +3,7 @@
 # radius:屬性 = 「範圍內的小天賦也各給」：珠寶孔周圍半徑內（基本 2 格）每一個已配置的小天賦都多給一次（JewelSockets.radiusModifiers）。
 # jewel.local.radius：半徑多幾格；jewel.local.small_effect／notable_effect：範圍內已配置的小天賦／核心的數值再加 x%。
 # unveiled_jr_*：PoE2 的褻瀆半徑珠寶詞綴 → 隱匿（揭露）。
+# 2026-10-22：高階更難出——每高一階的權重相對再 ×0.875（跟裝備詞綴的「×0.8 → ×0.7」同一個比例）；每條詞綴的權重總和不變（出現哪一條的機率不變，只改出哪一階）。
 
 jr_medium_size:
   type: prefix
@@ -1347,8 +1348,8 @@ unveiled_jr_damage_taken_recoup_life:
   names: [淵痕的, 黯痕的]
   text: "範圍內的小天賦也各給：受到的傷害有 {value}% 在 4 秒內回復為生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [1, 1] }
   mods:
     - { stat: radius:life.recoup, type: FLAT, value: "{value}" }
 
@@ -1359,8 +1360,8 @@ unveiled_jr_percent_maximum_mana:
   names: [淵痕的, 黯痕的]
   text: "範圍內的小天賦也各給：增加 {value}% 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [1, 1] }
   mods:
     - { stat: radius:mana.max, type: INCREASED, value: "{value}" }
 
@@ -1371,8 +1372,8 @@ unveiled_jr_percent_maximum_life:
   names: [淵痕的, 黯痕的]
   text: "範圍內的小天賦也各給：增加 {value}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [1, 1] }
   mods:
     - { stat: radius:life.max, type: INCREASED, value: "{value}" }
 
@@ -1383,8 +1384,8 @@ unveiled_jr_global_defences:
   names: [淵痕的, 黯痕的]
   text: "範圍內的小天賦也各給：增加 {value}% 護甲、閃避值與最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [2, 2] }
   mods:
     - { stat: radius:armour, type: INCREASED, value: "{value}" }
     - { stat: radius:evasion, type: INCREASED, value: "{value}" }
@@ -1397,8 +1398,8 @@ unveiled_jr_damage_taken_from_mana_before_life:
   names: [淵痕的, 黯痕的]
   text: "範圍內的小天賦也各給：受到的傷害有 {value}% 先從魔力扣除"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [1, 1] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [1, 1] }
   mods:
     - { stat: radius:damage.from_mana, type: FLAT, value: "{value}" }
 
@@ -1411,8 +1412,8 @@ unveiled_jr_regenerate_percent_life_per_second:
   # 舊物品沒有 regen，讀的時候 AffixUpgrade 照那一階補上（第 1 階 0.1% 不變，第 2 階從 0% 變 0.05%）
   text: "範圍內的小天賦也各給：每秒回復 {regen/100}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, regen: [10, 10] }
-    - { tier: 2, ilvl: 1, weight: 700, regen: [5, 5] }
+    - { tier: 1, ilvl: 60, weight: 273, regen: [10, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, regen: [5, 5] }
   mods:
     - { stat: radius:life.regen_percent, type: FLAT, value: "{regen/100}" }
 
@@ -1423,8 +1424,8 @@ unveiled_jr_mana_cost_efficiency:
   names: [淵痕之, 黯痕之]
   text: "範圍內的小天賦也各給：減少 {value}% 技能魔力消耗"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [2, 2] }
   mods:
     - { stat: radius:skill.cost, type: INCREASED, value: "-{value}" }
 
@@ -1435,8 +1436,8 @@ unveiled_jr_mana_flask_charges_per_second:
   names: [淵痕之, 黯痕之]
   text: "範圍內的小天賦也各給：魔力藥劑每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 6] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [6, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 6] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [6, 6] }
   mods:
     - { stat: radius:flask.charges_per_minute.mana, type: FLAT, value: "{value}" }
 
@@ -1447,8 +1448,8 @@ unveiled_jr_life_flask_charges_per_second:
   names: [淵痕之, 黯痕之]
   text: "範圍內的小天賦也各給：生命藥劑每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 6] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [6, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 6] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [6, 6] }
   mods:
     - { stat: radius:flask.charges_per_minute.life, type: FLAT, value: "{value}" }
 
@@ -1459,8 +1460,8 @@ unveiled_jr_charm_charges_per_second:
   names: [淵痕之, 黯痕之]
   text: "範圍內的小天賦也各給：護符每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 6] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [6, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 6] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [6, 6] }
   mods:
     - { stat: radius:charm.charges_per_minute, type: FLAT, value: "{value}" }
 

@@ -14,6 +14,7 @@
 # PoE2 的「怪物威力」（monster potency）這裡沒有對應的東西，換成稀有怪物群（map.rare_packs）。
 # PoE2 還有 3 條地面效果（燃燒／冰緩／感電地面）、「玩家獲得戰星機率減少」、「怪物受到的詛咒效果減少」，引擎沒有對應的屬性，先沒做。
 # 原本自己設計的詞綴改成 spawn_tags: [retired]：不會再擲出來，已經在地圖上的照常生效。
+# 2026-10-22：高階詞綴更難出——每高一階的權重相對再 ×0.875（跟裝備詞綴同一個比例）；每條詞綴的權重總和不變。
 
 
 # ---- 前綴：讓怪物變強（PoE2） ----
@@ -25,10 +26,10 @@ map_monster_fire:
   names: [焚天的, 焚燒的, 灼熱的, 溫熱的]
   text: "怪物獲得 {value}% 傷害為額外火焰傷害"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [20, 24] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [15, 19] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [10, 14] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 9] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [20, 24] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [15, 19] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 9] }
   mods:
     - { stat: "monster:damage.gain.fire", type: FLAT, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 15 }
@@ -41,10 +42,10 @@ map_monster_cold:
   names: [冰獄的, 冰封的, 霜凍的, 微寒的]
   text: "怪物獲得 {value}% 傷害為額外冰冷傷害"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [20, 24] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [15, 19] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [10, 14] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 9] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [20, 24] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [15, 19] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 9] }
   mods:
     - { stat: "monster:damage.gain.cold", type: FLAT, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 15 }
@@ -57,10 +58,10 @@ map_monster_lightning:
   names: [雷獄的, 雷鳴的, 帶電的, 微電的]
   text: "怪物獲得 {value}% 傷害為額外閃電傷害"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [20, 24] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [15, 19] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [10, 14] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 9] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [20, 24] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [15, 19] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 9] }
   mods:
     - { stat: "monster:damage.gain.lightning", type: FLAT, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 15 }
@@ -74,10 +75,10 @@ map_monster_chaos:
   names: [深淵的, 腐蝕的, 蝕化的, 微蝕的]
   text: "怪物獲得 {value}% 傷害為額外混沌傷害"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [20, 24] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [15, 19] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [10, 14] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 9] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [20, 24] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [15, 19] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 9] }
   mods:
     - { stat: "monster:damage.gain.chaos", type: FLAT, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 15 }
@@ -90,10 +91,10 @@ map_monster_damage:
   names: [嗜血的, 兇殘的, 粗暴的, 好鬥的]
   text: "怪物傷害增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [20, 24] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [15, 19] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [10, 14] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 9] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [20, 24] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [15, 19] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 9] }
   mods:
     - { stat: "monster:damage", type: INCREASED, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 20 }
@@ -108,8 +109,8 @@ map_monster_speed:
   names: [迅猛的, 狂奔的]
   text: "怪物攻擊、施法與移動速度增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [10, 15] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [10, 15] }
+    - { tier: 0, ilvl: 84, weight: 276, value: [10, 15] }
+    - { tier: 1, ilvl: 75, weight: 474, value: [10, 15] }
   mods:
     - { stat: "monster:attack.speed", type: INCREASED, value: "{value}" }
     - { stat: "monster:cast.speed", type: INCREASED, value: "{value}" }
@@ -124,10 +125,10 @@ map_monster_crit:
   names: [必殺的, 精準的, 致命的, 銳利的]
   text: "怪物暴擊率增加 {value}%，暴擊傷害加成 +{multi}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [260, 300], multi: [26, 30] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [200, 240], multi: [21, 25] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [140, 180], multi: [16, 20] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [80, 120], multi: [11, 15] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [260, 300], multi: [26, 30] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [200, 240], multi: [21, 25] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [140, 180], multi: [16, 20] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [80, 120], multi: [11, 15] }
   mods:
     - { stat: "monster:crit.chance", type: INCREASED, value: "{value}" }
     - { stat: "monster:crit.multi", type: FLAT, value: "{multi}" }
@@ -141,10 +142,10 @@ map_monster_life:
   names: [不滅的, 強韌的, 堅實的, 結實的]
   text: "怪物生命增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [26, 30] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [20, 25] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [15, 19] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [26, 30] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [20, 25] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [15, 19] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [10, 14] }
   mods:
     - { stat: "monster:life.max", type: MORE, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 15 }
@@ -158,10 +159,10 @@ map_monster_poison:
   names: [劇毒的, 毒性的, 腐臭的, 帶毒的]
   text: "怪物擊中時 {value}% 機率造成中毒"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [34, 40] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [27, 33] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [20, 26] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [13, 19] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [34, 40] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [27, 33] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [20, 26] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [13, 19] }
   mods:
     - { stat: "monster:poison.chance", type: FLAT, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 10 }
@@ -174,10 +175,10 @@ map_monster_bleed:
   names: [血腥的, 撕裂的, 割裂的, 見血的]
   text: "怪物擊中時 {value}% 機率造成流血"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [20, 25] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [15, 20] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [10, 15] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [20, 25] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [15, 20] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [10, 15] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 10] }
   mods:
     - { stat: "monster:bleed.chance", type: FLAT, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 10 }
@@ -191,10 +192,10 @@ map_monster_armour_break:
   names: [碎甲的, 裂甲的, 破甲的, 鑿甲的]
   text: "怪物造成的物理傷害有 {value}% 作為破甲"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [30, 45] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [25, 30] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [20, 25] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 20] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [30, 45] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [25, 30] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [20, 25] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [15, 20] }
   mods:
     - { stat: "monster:armour.break", type: FLAT, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 10 }
@@ -208,10 +209,10 @@ map_monster_accuracy:
   names: [神射的, 精準的, 銳眼的, 明目的]
   text: "怪物命中值增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [40, 50] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [30, 40] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [20, 30] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [40, 50] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [30, 40] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [20, 30] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [10, 20] }
   mods:
     - { stat: "monster:accuracy", type: INCREASED, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 10 }
@@ -225,10 +226,10 @@ map_monster_stun:
   names: [震擊的, 重擊的, 猛擊的, 撞擊的]
   text: "怪物擊中造成的暈眩累積增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [100, 110] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [90, 100] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [70, 80] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [50, 60] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [100, 110] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [90, 100] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [70, 80] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [50, 60] }
   mods:
     - { stat: "monster:stun.buildup", type: INCREASED, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 15 }
@@ -242,10 +243,10 @@ map_monster_penetration:
   names: [穿透的, 貫穿的, 透甲的, 滲透的]
   text: "怪物的元素傷害穿透 {value}% 元素抗性"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [14, 16] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [12, 14] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [9, 11] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [6, 8] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [14, 16] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [12, 14] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [9, 11] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [6, 8] }
   mods:
     - { stat: "monster:penetration", type: FLAT, value: "{value}", tags: [fire] }
     - { stat: "monster:penetration", type: FLAT, value: "{value}", tags: [cold] }
@@ -263,10 +264,10 @@ map_monster_resist:
   names: [之不屈, 之抗性, 之堅守, 之防護]
   text: "怪物 +{value}% 全部元素抗性"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [35, 40] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [30, 34] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [25, 29] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [20, 24] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [35, 40] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [30, 34] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [25, 29] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [20, 24] }
   mods:
     - { stat: "monster:resist.fire", type: FLAT, value: "{value}" }
     - { stat: "monster:resist.cold", type: FLAT, value: "{value}" }
@@ -281,10 +282,10 @@ map_monster_ailment_threshold:
   names: [之冷靜, 之沉著, 之穩重, 之鎮定]
   text: "怪物的暈眩門檻增加 {stun}%，元素異常門檻增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [70, 79], stun: [70, 79] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [70, 79], stun: [60, 69] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [50, 59], stun: [40, 49] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [30, 39], stun: [30, 39] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [70, 79], stun: [70, 79] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [70, 79], stun: [60, 69] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [50, 59], stun: [40, 49] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [30, 39], stun: [30, 39] }
   mods:
     - { stat: "monster:stun.threshold", type: INCREASED, value: "{stun}" }
     - { stat: "monster:ailment.threshold", type: INCREASED, value: "{value}" }
@@ -298,10 +299,10 @@ map_monster_elemental_ailments:
   names: [之元素暴走, 之元素紊亂, 之元素躁動, 之元素不穩]
   text: "怪物的點燃、感電機率與凍結累積增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [120, 130] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [100, 119] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [80, 99] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [60, 79] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [120, 130] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [100, 119] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [80, 99] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [60, 79] }
   mods:
     - { stat: "monster:ignite.chance", type: INCREASED, value: "{value}" }
     - { stat: "monster:shock.chance", type: INCREASED, value: "{value}" }
@@ -317,10 +318,10 @@ map_monster_crit_taken:
   names: [之鐵骨, 之硬頸, 之厚皮, 之韌肉]
   text: "怪物受到的暴擊傷害加成減少 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [26, 30] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [26, 30] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [20, 25] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 19] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [26, 30] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [26, 30] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [20, 25] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [15, 19] }
   mods:
     - { stat: "monster:crit.bonus_taken", type: INCREASED, value: "-{value}" }
     - { stat: map.quantity, type: FLAT, value: 10 }
@@ -334,10 +335,10 @@ map_player_max_resist:
   names: [之末日, 之詛咒, 之衰弱, 之削減]
   text: "玩家 {value}% 抗性上限"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [-10, -8] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [-8, -6] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [-6, -4] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [-4, -3] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [-10, -8] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [-8, -6] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [-6, -4] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [-4, -3] }
   mods:
     - { stat: "player:resist.max", type: FLAT, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 25 }
@@ -351,10 +352,10 @@ map_player_regen:
   names: [之焦土, 之枯萎, 之乾涸, 之乾燥]
   text: "玩家的生命與能量護盾回復速度更少 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [36, 40] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [36, 40] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [30, 35] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [20, 29] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [36, 40] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [36, 40] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [30, 35] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [20, 29] }
   mods:
     - { stat: "player:life.regen", type: MORE, value: "-{value}" }
     - { stat: "player:es.recharge", type: MORE, value: "-{value}" }
@@ -370,10 +371,10 @@ map_player_cooldown:
   names: [之遲鈍, 之停滯, 之凝固, 之緩慢]
   text: "玩家技能冷卻時間增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 300, value: [25, 30] }
-    - { tier: 1, ilvl: 75, weight: 450, value: [25, 30] }
-    - { tier: 2, ilvl: 66, weight: 650, value: [20, 25] }
-    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 20] }
+    - { tier: 0, ilvl: 84, weight: 228, value: [25, 30] }
+    - { tier: 1, ilvl: 75, weight: 391, value: [25, 30] }
+    - { tier: 2, ilvl: 66, weight: 646, value: [20, 25] }
+    - { tier: 3, ilvl: 1, weight: 1135, value: [15, 20] }
   mods:
     - { stat: "player:skill.cooldown", type: INCREASED, value: "{value}" }
     - { stat: map.quantity, type: FLAT, value: 15 }

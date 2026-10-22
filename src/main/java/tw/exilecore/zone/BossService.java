@@ -240,7 +240,7 @@ final class BossService implements Listener {
                     plugin.text().parse("<gray>" + ItemRenderer.escape(zone.name()) + "的區域 Boss"),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
             player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.5f, 1.2f);
-            if (definition.intro() != null && !definition.intro().isBlank()) {
+            if (definition.intro() != null && !definition.intro().isBlank() && !plugin.players().hidesMonsterTalk(player)) {
                 player.sendMessage(plugin.text().parse(Zone.loreLine(definition.name(), definition.intro())));
             }
             fight.viewers.add(player.getUniqueId());
@@ -413,7 +413,7 @@ final class BossService implements Listener {
             audience.addAll(fight.damagers);
             for (final UUID uuid : audience) {
                 final Player player = plugin.getServer().getPlayer(uuid);
-                if (player != null) {
+                if (player != null && !plugin.players().hidesMonsterTalk(player)) {
                     player.sendMessage(plugin.text().parse(Zone.loreLine(fight.zone.boss().name(), defeat)));
                 }
             }

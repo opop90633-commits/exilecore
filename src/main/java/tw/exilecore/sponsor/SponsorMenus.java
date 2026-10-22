@@ -509,13 +509,19 @@ final class SponsorMenus {
                 }
                 final int slot = SLOT_PERSONAL[index++];
                 personalSlots.put(slot, type.id());
-                final long seconds = Math.max(0, (service.personalBoostUntil(player, type.id()) - System.currentTimeMillis()) / 1000);
+                final long seconds = service.personalBoostLeft(player, type.id()) / 1000;
+                final long banked = service.personalBoostBank(player, type.id()) / 1000;
+                // 2026-10-22：買了先存著，右鍵開、再右鍵關；下線自動關（剩的時間留著）
                 final ItemStack stack = icon(material(type.icon(), Material.EXPERIENCE_BOTTLE), "<#9fe8ff>" + ItemRenderer.escape(SponsorService.personalName(type)),
-                        "<gray>" + config.personalBoostMinutes() + " 分鐘，<white>只有你自己<gray>：" + Main.boostText(type),
+                        "<gray>一罐 " + config.personalBoostMinutes() + " 分鐘，<white>只有你自己<gray>：" + Main.boostText(type),
                         "<gray>跟全服加倍加起來算（全服 2 倍＋個人 2 倍 = 3 倍）",
-                        "<gray>同一種再買接著延長（最多 " + config.personalBoostMaxMinutes() + " 分鐘；下線也在計時）",
-                        seconds <= 0 ? "<dark_gray>現在沒有" : String.format(java.util.Locale.ROOT, "<green>進行中：剩 %d:%02d", seconds / 60, seconds % 60),
-                        "<gray>價格：" + COIN + format(config.personalBoostPrice()) + " 星幣", "", "<yellow>左鍵：購買");
+                        "<gray>買了先存著，要用再開；關掉、下線時停止計時（最多存 " + config.personalBoostMaxMinutes() + " 分鐘）",
+                        seconds > 0 ? String.format(java.util.Locale.ROOT, "<green>使用中：剩 %d:%02d", seconds / 60, seconds % 60)
+                                : banked > 0 ? String.format(java.util.Locale.ROOT, "<#ffd27f>存著：%d:%02d（關著）", banked / 60, banked % 60)
+                                : "<dark_gray>現在沒有",
+                        "<gray>價格：" + COIN + format(config.personalBoostPrice()) + " 星幣", "",
+                        "<yellow>左鍵：購買（存起來；開著的話接著延長）",
+                        seconds > 0 ? "<yellow>右鍵：關掉（剩的存著）" : banked > 0 ? "<yellow>右鍵：開啟" : "<dark_gray>右鍵：開啟（要先買）");
                 set(slot, confirmable(slot, seconds <= 0 ? stack : glowing(stack)));
             }
             set(SLOT_CHAR, confirmable(SLOT_CHAR, icon(Material.ARMOR_STAND, "<white>角色欄位 +1",
@@ -626,7 +632,9 @@ final class SponsorMenus {
                         result(service.buyBoost(player, boost));
                     }
                     final String personal = personalSlots.get(slot);
-                    if (personal != null && confirm(slot)) {
+                    if (personal != null && click.isRightClick()) {
+                        result(service.togglePersonalBoost(player, personal)); // 2026-10-22：開、關不用確認（不花錢）
+                    } else if (personal != null && confirm(slot)) {
                         result(service.buyPersonalBoost(player, personal));
                     }
                 }

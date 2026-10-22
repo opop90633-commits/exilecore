@@ -68,10 +68,16 @@ public final class SupportProcs implements Listener {
         return plugin.getServer().getCurrentTick();
     }
 
+    /** 2026-10-22：技能在面板上的位置；放在英靈圖騰、星咒圖騰、暴擊引星第 1 孔裡的技能用宿主那一格（宿主孔裡的輔助就是它的）。 */
+    private static int positionOf(final PlayerState state, final String skillId) {
+        final int position = state.skills().find(skillId);
+        return position >= 0 ? position : state.skills().findInner(skillId);
+    }
+
     /** 這個技能（面板上的）掛的輔助裡，事件符合的 proc 修飾器。 */
     private List<Modifier> procs(final Player player, final String skillId, final String event) {
         final PlayerState state = plugin.players().get(player);
-        final int position = state.skills().find(skillId);
+        final int position = positionOf(state, skillId);
         if (position < 0) {
             return List.of();
         }
@@ -98,7 +104,7 @@ public final class SupportProcs implements Listener {
 
     private boolean hasFlag(final Player player, final String skillId, final String stat) {
         final PlayerState state = plugin.players().get(player);
-        final int position = state.skills().find(skillId);
+        final int position = positionOf(state, skillId);
         if (position < 0) {
             return false;
         }
@@ -128,7 +134,7 @@ public final class SupportProcs implements Listener {
     /** 這個技能掛的輔助裡某個屬性的 FLAT 加總。 */
     double supportFlat(final Player player, final String skillId, final String stat) {
         final PlayerState state = plugin.players().get(player);
-        final int position = state.skills().find(baseId(skillId));
+        final int position = positionOf(state, baseId(skillId));
         if (position < 0) {
             return 0;
         }
@@ -302,7 +308,7 @@ public final class SupportProcs implements Listener {
             return false;
         }
         final PlayerState state = plugin.players().get(player);
-        final int position = state.skills().find(skillId);
+        final int position = positionOf(state, skillId);
         final SkillLoadout.Entry entry = state.skills().skill(position);
         final Map<String, Long> mine = ready.computeIfAbsent(player.getUniqueId(), uuid -> new HashMap<>());
         boolean fired = false;

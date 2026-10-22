@@ -183,6 +183,9 @@ public record SkillDefinition(String id, String name, String description, String
         final SkillType type = SkillType.parse(where, node.requireString("type"));
         final Set<String> tags = new LinkedHashSet<>(lower(node.strings("tags")));
         tags.add(type == SkillType.ATTACK ? Tags.ATTACK : Tags.SPELL);
+        if (node.has("meta")) {
+            tags.add(Tags.META); // 2026-10-22：主要寶石（星咒圖騰、暴擊引星…）：技能寶石放在它自己的第 1 孔
+        }
         tags.remove(type == SkillType.ATTACK ? Tags.SPELL : Tags.ATTACK);
         // 2026-10 標籤統一：沒有轉成元素、混沌的攻擊打的就是武器的物理傷害，一律算物理技能（以前有的有寫、有的沒寫）
         if (type == SkillType.ATTACK && java.util.Collections.disjoint(tags,

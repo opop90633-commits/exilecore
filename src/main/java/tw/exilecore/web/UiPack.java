@@ -77,7 +77,9 @@ public final class UiPack {
                     // 2026-10：護符欄、技能面板的空格、輔助孔、空的角色格（_locked = 還沒開：暗一點、右下角一個鎖）
                     "slot_charm", "slot_charm_locked", "slot_skill", "slot_support", "slot_support_locked", "slot_character"),
             // 倉庫地圖頁的階級頁籤（2026-10）：格子上直接寫 T1–T16
-            java.util.stream.IntStream.rangeClosed(1, 16).mapToObj(tier -> "map_t" + tier)).toList();
+            java.util.stream.Stream.concat(java.util.stream.IntStream.rangeClosed(1, 16).mapToObj(tier -> "map_t" + tier),
+                    // 2026-10-22：技能面板的換頁鍵（第 1／2／3 頁，各一個顏色）
+                    java.util.stream.IntStream.rangeClosed(1, 3).mapToObj(page -> "skill_page_" + page))).toList();
     /** Minecraft 26.2 的資源包格式。 */
     static final int PACK_FORMAT = 88;
     /** 背景有幾種（依格子座標挑，捲動時星星跟著樹走）。 */
@@ -371,6 +373,7 @@ public final class UiPack {
             }
             files.put("assets/exilecore/textures/item/ui/icon/" + icon + ".png", png(icon.startsWith("arrow_") ? arrowIcon(icon)
                     : icon.startsWith("map_t") ? mapTierIcon(Integer.parseInt(icon.substring(5)))
+                    : icon.startsWith("skill_page_") ? skillPageIcon(Integer.parseInt(icon.substring(11)))
                     : icon.startsWith("slot_") ? slotIcon(icon)
                     : icon.startsWith("nav_") || icon.equals("help") ? navIcon(icon) : keyIcon(icon)));
             final JsonObject model = new JsonObject();
@@ -2557,6 +2560,63 @@ public final class UiPack {
      * 地圖頁的階級頁籤：一張羊皮紙，中間寫「T 幾」（點陣字放大 2 倍，跟原版的像素風一致）。
      * 邊框照階級分色：T1–T5 白、T6–T10 黃、T11–T16 紅（跟地圖本身的階級顏色一樣）。
      */
+    /**
+     * 技能面板的換頁鍵（2026-10-22）：兩張疊起來的紙，前面那張寫頁碼（點陣字放大 2 倍），右下角一個金色的 ▶（點了到下一頁）。
+     * 紙的顏色照頁數：第 1 頁綠、第 2 頁淺藍、第 3 頁洋紅（跟原本用的染料一樣，換頁一眼看得出來）。
+     */
+    static BufferedImage skillPageIcon(final int page) {
+        final int[][] colors = {
+            {0x7BD93A, 0x4E9A1E, 0x2C5A10}, // 綠
+            {0x5EC8F2, 0x2E8CC0, 0x15506E}, // 淺藍
+            {0xE068D8, 0xA53A9E, 0x5E1E5A}, // 洋紅
+        };
+        final int[] c = colors[Math.floorMod(page - 1, colors.length)];
+        final BufferedImage image = canvas();
+        final Graphics2D g = image.createGraphics();
+        final Color outline = new Color(0x15151F);
+        // 後面那張（往右上錯開）
+        g.setColor(outline);
+        g.fillRect(9, 2, 19, 23);
+        g.setColor(new Color(c[1]));
+        g.fillRect(10, 3, 17, 21);
+        // 前面那張
+        g.setColor(outline);
+        g.fillRect(3, 7, 19, 23);
+        g.setColor(new Color(c[0]));
+        g.fillRect(4, 8, 17, 21);
+        g.setColor(new Color(c[1]));
+        g.fillRect(4, 27, 17, 2); // 下緣陰影
+        // 頁碼
+        final int[] rows = PIXEL_FONT.get((char) ('0' + page));
+        final int scale = 2;
+        final int x0 = 4 + (17 - 3 * scale) / 2 - 1;
+        final int y0 = 8 + (21 - 5 * scale) / 2;
+        g.setColor(new Color(c[2]));
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 3; col++) {
+                if ((rows[row] >> (2 - col) & 1) == 1) {
+                    g.fillRect(x0 + col * scale, y0 + row * scale, scale, scale);
+                }
+            }
+        }
+        // 右下角的 ▶（下一頁）：一格一格畫，像素邊緣乾淨
+        for (int i = 0; i <= 6; i++) {
+            final int half = 6 - i; // 第 i 欄的半高
+            g.setColor(outline);
+            g.fillRect(21 + i, 24 - half - 1, 1, half * 2 + 3);
+        }
+        g.fillRect(28, 23, 1, 3);
+        g.setColor(new Color(0xF5B942));
+        for (int i = 0; i <= 5; i++) {
+            final int half = 5 - i;
+            g.fillRect(22 + i, 24 - half, 1, half * 2 + 1);
+        }
+        g.setColor(new Color(0xFFE08A));
+        g.fillRect(22, 20, 1, 4); // 亮邊
+        g.dispose();
+        return image;
+    }
+
     static BufferedImage mapTierIcon(final int tier) {
         final BufferedImage image = canvas();
         final Graphics2D g = image.createGraphics();

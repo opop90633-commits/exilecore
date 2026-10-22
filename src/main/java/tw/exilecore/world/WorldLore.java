@@ -23,6 +23,8 @@ public final class WorldLore {
     private boolean campaignEnabled = true;
     private boolean campaignAutoSetup = true;
     private long campaignTime = 4000;
+    /** 2026-10-22 主城分流：營地分幾條線（1 = 不分流）。 */
+    private int campaignChannels = 1;
     private long mapTime = 6000;
 
     public void load(final Path dataFolder) throws IOException {
@@ -35,6 +37,7 @@ public final class WorldLore {
         campaignEnabled = true;
         campaignAutoSetup = true;
         campaignTime = 4000;
+        campaignChannels = 1;
         mapTime = 6000;
         if (!Files.exists(file)) {
             return;
@@ -50,6 +53,7 @@ public final class WorldLore {
         campaignEnabled = campaign.bool("enabled", true);
         campaignAutoSetup = campaign.bool("auto_setup", true);
         campaignTime = campaign.integer("time", 4000);
+        campaignChannels = Math.max(1, Math.min(TownChannels.MAX_CHANNELS, campaign.integer("channels", 1)));
         mapTime = root.node("maps").integer("time", 6000);
     }
 
@@ -66,6 +70,11 @@ public final class WorldLore {
     /** 劇情世界固定的時間（−1 = 照常日夜循環）。 */
     public long campaignTime() {
         return campaignTime;
+    }
+
+    /** 主城分流：營地分幾條線（1 = 不分流）。 */
+    public int campaignChannels() {
+        return campaignChannels;
     }
 
     /** 地圖世界固定的時間（−1 = 照常日夜循環）。 */

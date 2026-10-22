@@ -672,7 +672,7 @@ public final class WorldEventService {
         for (final Player player : nearPlayers(event, eventRadius() + 24)) {
             player.showTitle(Title.title(plugin.text().parse("<#ffb347>" + ItemRenderer.escape(def.name())),
                     plugin.text().parse("<gray>世界 Boss"), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
-            if (!def.intro().isBlank()) {
+            if (!def.intro().isBlank() && !plugin.players().hidesMonsterTalk(player)) {
                 player.sendMessage(plugin.text().parse("<#ffb347>" + ItemRenderer.escape(def.name()) + "<white>：" + ItemRenderer.escape(def.intro())));
             }
         }
@@ -1031,7 +1031,7 @@ public final class WorldEventService {
                 player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1f);
             }
             if (!def.defeat().isBlank()) {
-                broadcast("<#ffb347>" + ItemRenderer.escape(def.defeat()));
+                talk("<#ffb347>" + ItemRenderer.escape(def.defeat())); // 2026-10-22：Boss 倒下的台詞，開了「隱藏怪物對話」的不送
             }
         } else {
             for (final Player player : players) {
@@ -1086,6 +1086,16 @@ public final class WorldEventService {
     void give(final Player player, final ItemStack stack) {
         final tw.exilecore.economy.Wallet wallet = plugin.economy().wallet();
         wallet.dropFor(player, wallet.give(player, stack));
+    }
+
+    /** 2026-10-22：Boss 的台詞送給全服（開了「隱藏怪物對話」的不送；不進 Discord）。 */
+    private void talk(final String text) {
+        final net.kyori.adventure.text.Component message = plugin.text().prefixed(text);
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            if (!plugin.players().hidesMonsterTalk(player)) {
+                player.sendMessage(message);
+            }
+        }
     }
 
     private void broadcast(final String text) {

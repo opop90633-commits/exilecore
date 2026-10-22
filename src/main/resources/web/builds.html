@@ -469,6 +469,7 @@
       skills.append(el("div", { cls: "skill" },
         hoverTip(el("span", { cls: "s", text: s.name }), s.name + "　Lv." + s.level, "#ffd27f", s.lines),
         el("span", { cls: "muted", text: "Lv." + s.level }),
+        ...(s.inner ? [el("span", { cls: "chip", text: "⚙ " + s.inner, title: "放在第 1 孔裡的技能" })] : []),
         ...s.supports.map(x => hoverTip(el("span", { cls: "chip", text: x }), x + "（輔助寶石）", "#9fd0ff", info.get(x)))));
     }
     const skillCard = el("div", { cls: "card" }, el("h3", { text: "技能" }), skills);

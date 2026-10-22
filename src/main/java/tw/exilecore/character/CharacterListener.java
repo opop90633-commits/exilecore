@@ -371,7 +371,7 @@ public final class CharacterListener implements Listener {
     }
 
     /**
-     * 2026-10：設定開著「星圖直接進倉庫」時，走過地上的星圖也直接收進倉庫的地圖頁（背包滿了也收得到）；
+     * 走過地上的星圖直接收進倉庫的地圖頁（2026-10-22 起一律開著）（背包滿了也收得到）；
      * 地圖頁滿了、倉庫沒載入就照原版撿進背包。有主人的、交易存檔重試中的不收（上面的監聽器先擋掉）。
      */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

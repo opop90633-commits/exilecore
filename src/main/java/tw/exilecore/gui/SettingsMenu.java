@@ -32,10 +32,14 @@ public final class SettingsMenu extends Menu {
     private static final int SLOT_TRADE = 19;
     /** 網頁角色頁公不公開（2026-10）。 */
     private static final int SLOT_PROFILE = 20;
-    /** 撿到的星圖直接進倉庫的地圖頁（2026-10；預設關）。 */
-    private static final int SLOT_MAP_STASH = 21;
+    /** 過濾死亡訊息（2026-10-22；預設關）。以前這格是「星圖直接進倉庫」，現在一律開著。 */
+    private static final int SLOT_HIDE_DEATHS = 21;
     /** 畫面左邊的隊伍框（2026-10-18）。 */
     private static final int SLOT_PARTY_FRAMES = 22;
+    /** 過濾加入、離開訊息（2026-10-22；預設關）。 */
+    private static final int SLOT_HIDE_JOIN_LEAVE = 23;
+    /** 隱藏怪物對話（2026-10-22；預設關）。 */
+    private static final int SLOT_HIDE_MONSTER_TALK = 24;
     /** 按鍵（2026-10）：生命、魔力藥劑各放 1–8 的哪一格。 */
     private static final int ROW_KEYS = 3;
     private static final int SLOT_LIFE_FLASK = 28;
@@ -73,11 +77,12 @@ public final class SettingsMenu extends Menu {
         set(slot(ROW_OTHER, 0), rowLabel(Material.EMERALD, "其他", "跟別的玩家有關的"));
         set(SLOT_TRADE, toggle(Material.EMERALD, "交易邀請", PlayerSettings.enabled(state, PlayerSettings.TRADE_REQUESTS),
                 "別人可以邀請你面對面交易（/trade）"));
-        if (plugin.stash() != null) {
-            set(SLOT_MAP_STASH, toggle(Material.FILLED_MAP, "星圖直接進倉庫", PlayerSettings.on(state, PlayerSettings.MAP_TO_STASH),
-                    "撿到的星圖直接收進倉庫的地圖頁，不佔背包（地圖頁滿了才放背包）；"
-                            + "地圖裝置可以直接從地圖頁挑地圖"));
-        }
+        set(SLOT_HIDE_DEATHS, toggle(Material.SKELETON_SKULL, "過濾死亡訊息", PlayerSettings.on(state, PlayerSettings.HIDE_DEATHS),
+                "聊天欄不顯示別的玩家的死亡訊息（自己死掉的還是會顯示）"));
+        set(SLOT_HIDE_JOIN_LEAVE, toggle(Material.OAK_DOOR, "過濾加入離開訊息", PlayerSettings.on(state, PlayerSettings.HIDE_JOIN_LEAVE),
+                "聊天欄不顯示誰加入、離開伺服器"));
+        set(SLOT_HIDE_MONSTER_TALK, toggle(Material.ZOMBIE_HEAD, "隱藏怪物對話", PlayerSettings.on(state, PlayerSettings.HIDE_MONSTER_TALK),
+                "聊天欄不顯示 Boss 的喊話、登場與倒下的台詞（招式的警告、畫面中間的大字照常）"));
         set(SLOT_PARTY_FRAMES, toggle(Material.PLAYER_HEAD, "隊伍框", PlayerSettings.enabled(state, PlayerSettings.PARTY_FRAMES),
                 "組隊時畫面左上角列出隊友：頭像、名字、等級、生命（護盾是血條上面薄薄的一層）、魔力；"
                         + "死了名字變紅、離線變灰（要套用介面資源包）"));
@@ -127,11 +132,9 @@ public final class SettingsMenu extends Menu {
             case SLOT_PARTY_FRAMES -> flip(PlayerSettings.PARTY_FRAMES);
             case SLOT_SKILL_SOUNDS -> flip(PlayerSettings.SKILL_SOUNDS);
             case SLOT_COMBAT_SKILLS -> flipOff(PlayerSettings.COMBAT_SKILLS);
-            case SLOT_MAP_STASH -> {
-                if (plugin.stash() != null) {
-                    flipOff(PlayerSettings.MAP_TO_STASH);
-                }
-            }
+            case SLOT_HIDE_DEATHS -> flipOff(PlayerSettings.HIDE_DEATHS);
+            case SLOT_HIDE_JOIN_LEAVE -> flipOff(PlayerSettings.HIDE_JOIN_LEAVE);
+            case SLOT_HIDE_MONSTER_TALK -> flipOff(PlayerSettings.HIDE_MONSTER_TALK);
             case SLOT_OTHERS_FX -> {
                 if (flip(PlayerSettings.OTHERS_FX) && plugin.skills() != null) {
                     plugin.skills().refreshDeployableVisibility(player); // 圖騰、陷阱馬上藏起來／顯示

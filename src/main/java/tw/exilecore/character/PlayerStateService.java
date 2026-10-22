@@ -135,6 +135,11 @@ public final class PlayerStateService {
         });
     }
 
+    /** 2026-10-22：這個玩家開了「隱藏怪物對話」（Boss 的台詞不送給他）。 */
+    public boolean hidesMonsterTalk(final Player player) {
+        return PlayerSettings.on(states.get(player.getUniqueId()), PlayerSettings.HIDE_MONSTER_TALK);
+    }
+
     public Optional<PlayerState> find(final UUID uuid) {
         return Optional.ofNullable(states.get(uuid));
     }

@@ -748,7 +748,7 @@ public final class FestivalService {
         for (final Player player : arenaPlayers()) {
             player.showTitle(Title.title(plugin.text().parse("<" + config.color() + ">" + ItemRenderer.escape(def.name())),
                     plugin.text().parse("<gray>萬燈夜的世界 Boss"), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
-            if (!def.intro().isBlank()) {
+            if (!def.intro().isBlank() && !plugin.players().hidesMonsterTalk(player)) {
                 player.sendMessage(plugin.text().parse("<" + config.color() + ">" + ItemRenderer.escape(def.name()) + "<white>："
                         + ItemRenderer.escape(def.intro())));
             }
@@ -929,7 +929,7 @@ public final class FestivalService {
         }
         cleanupKing(event);
         if (!def.defeat().isBlank()) {
-            broadcast("<" + config.color() + ">" + ItemRenderer.escape(def.defeat()));
+            talk("<" + config.color() + ">" + ItemRenderer.escape(def.defeat())); // 2026-10-22：開了「隱藏怪物對話」的不送
         }
         broadcast("<" + config.color() + ">🎃 " + ItemRenderer.escape(config.name()) + "<white>：" + ItemRenderer.escape(def.name()) + " 倒下了！<gray>"
                 + players.size() + " 位冒險者拿到了燈芯與糖果");
@@ -1451,6 +1451,16 @@ public final class FestivalService {
 
     String role(final Entity entity) {
         return entity.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+    }
+
+    /** 2026-10-22：Boss 的台詞送給全服（開了「隱藏怪物對話」的不送；不進 Discord）。 */
+    private void talk(final String text) {
+        final net.kyori.adventure.text.Component message = plugin.text().prefixed(text);
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            if (!plugin.players().hidesMonsterTalk(player)) {
+                player.sendMessage(message);
+            }
+        }
     }
 
     private void broadcast(final String text) {

@@ -29,6 +29,8 @@ level_race:
   first_title: 百星之首
   reach_title: 燃星者
   reach_experience: 5
+  # 2026-10-22 燃星者進化：帳號裡每一隻到 level 級的角色各 +reach_experience%（第 2 隻 10%……），最多算 reach_max_characters 隻（7 隻 = 35%）
+  reach_max_characters: 7
   # 升到這些等級時全服廣播（Discord 也發）
   announce_levels: [100, 110, 120]
   titles:

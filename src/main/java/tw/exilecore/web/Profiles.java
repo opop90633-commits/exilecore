@@ -302,6 +302,10 @@ public final class Profiles implements Listener {
                 skill.addProperty("name", definition.name());
                 skill.addProperty("level", entry.level());
                 skill.addProperty("sockets", entry.sockets());
+                if (entry.inner() != null) { // 2026-10-22：放在英靈圖騰、星咒圖騰、暴擊引星第 1 孔裡的技能
+                    final var inner = plugin.skills().config().skill(entry.inner().skillId());
+                    skill.addProperty("inner", (inner == null ? entry.inner().skillId() : inner.name()) + " Lv." + entry.inner().level());
+                }
                 final JsonArray supports = new JsonArray();
                 for (final String supportId : entry.supportIds()) {
                     final var support = plugin.skills().config().support(supportId);
@@ -466,6 +470,11 @@ public final class Profiles implements Listener {
                 final JsonArray supports = new JsonArray();
                 for (int i = 0; i < entry.sockets(); i++) {
                     // 2026-10-18：共鳴的寶石要帶 ~，BuildCalc 才會算成共鳴（跟存檔格式一樣）
+                    // 2026-10-22：宿主第 1 孔裡的技能寫成 @代號/等級/孔數（跟存檔格式一樣，Entry 認得）
+                    if (i == SkillLoadout.Entry.INNER_SOCKET && entry.inner() != null) {
+                        supports.add(SkillLoadout.Entry.INNER_PREFIX + entry.inner().skillId() + "/" + entry.inner().level() + "/" + entry.inner().sockets());
+                        continue;
+                    }
                     supports.add(entry.support(i) + (entry.resonant(i) ? SkillLoadout.Entry.RESONANT_SUFFIX : ""));
                 }
                 skill.add("supports", supports);

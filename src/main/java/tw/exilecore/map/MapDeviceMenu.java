@@ -893,7 +893,7 @@ public final class MapDeviceMenu extends Menu {
         final int count = stash.mapCount();
         set(SLOT_FROM_STASH, count == 0
                 ? icon(Material.PAPER, "<gray>倉庫的地圖頁", "<dark_gray>地圖頁裡沒有地圖",
-                        "<dark_gray>設定開「星圖直接進倉庫」，撿到的星圖會直接放進去")
+                        "<dark_gray>撿到的星圖會直接放進去（地圖頁滿了才放背包）")
                 : icon(Material.FILLED_MAP, "<#9fd3ff>從倉庫挑地圖",
                         "<gray>地圖頁有 <white>" + count + "</white> 張",
                         "<gray>點一張：拿到背包並放上裝置", "",

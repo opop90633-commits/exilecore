@@ -34,6 +34,35 @@ public final class WorldCommand {
                 .executes(context -> status(plugin, context.getSource().getSender()))
                 .then(Commands.literal("tp").executes(context -> teleport(plugin, context.getSource().getSender(), false)))
                 .then(Commands.literal("device").executes(context -> teleport(plugin, context.getSource().getSender(), true)))
+                // 2026-10-22 主城分流：看每條線幾個人；rebuild = 下次啟動時從劇情世界重新複製
+                .then(Commands.literal("channels")
+                        .executes(context -> channels(plugin, context.getSource().getSender()))
+                        .then(Commands.literal("sync").executes(context -> {
+                            final CampaignWorld worlds = plugin.world().worlds();
+                            if (worlds == null) {
+                                context.getSource().getSender().sendMessage(plugin.text().prefixed("<red>世界模組沒有啟用"));
+                                return Command.SINGLE_SUCCESS;
+                            }
+                            final int lines = worlds.syncChannels(context.getSource().getSender());
+                            context.getSource().getSender().sendMessage(plugin.text().prefixed(lines == 0 ? "<gray>沒有分流線"
+                                    : "<green>把 " + lines + " 條分流線的 NPC 對齊第 1 線（位置、有沒有）…等幾秒"));
+                            return Command.SINGLE_SUCCESS;
+                        }))
+                        .then(Commands.literal("rebuild").executes(context -> {
+                            final CampaignWorld worlds = plugin.world().worlds();
+                            if (worlds == null) {
+                                context.getSource().getSender().sendMessage(plugin.text().prefixed("<red>世界模組沒有啟用"));
+                                return Command.SINGLE_SUCCESS;
+                            }
+                            try {
+                                worlds.channels().markRebuild();
+                                context.getSource().getSender().sendMessage(plugin.text().prefixed(
+                                        "<green>記下來了：下次啟動時刪掉分流世界（exilecore_town_2…），從劇情世界重新複製營地<gray>（分流世界裡手動改的東西會不見）"));
+                            } catch (final java.io.IOException e) {
+                                context.getSource().getSender().sendMessage(plugin.text().prefixed("<red>寫記號檔失敗：" + e.getMessage()));
+                            }
+                            return Command.SINGLE_SUCCESS;
+                        })))
                 .then(Commands.literal("setup").executes(context -> {
                     final CampaignWorld worlds = plugin.world().worlds();
                     if (worlds == null) {
@@ -63,6 +92,25 @@ public final class WorldCommand {
         }
         sender.sendMessage(plugin.text().parse("<gray>營地在 (0, " + (CampaignLayout.CAMP_Y + 1) + ", 7)，五個區域往東各 "
                 + CampaignLayout.ZONE_LENGTH + " 格；/ec world tp 過去、/ec world setup 重擺版面與 NPC"));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int channels(final ExileCore plugin, final CommandSender sender) {
+        final CampaignWorld worlds = plugin.world().worlds();
+        if (worlds == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>世界模組沒有啟用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final TownChannels channels = worlds.channels();
+        if (!channels.enabled()) {
+            sender.sendMessage(plugin.text().prefixed("<gray>主城沒有分流（data/world.yml 的 campaign.channels = 1）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        sender.sendMessage(plugin.text().prefixed("<gray>主城分流：" + channels.towns().size() + " 條線"));
+        for (final World town : channels.towns()) {
+            sender.sendMessage(plugin.text().parse("<gray>  第 <white>" + channels.channelOf(town) + "</white> 線：<white>" + channels.population(town)
+                    + "</white> 人在營地 <dark_gray>（" + town.getName() + "，已載入 " + town.getLoadedChunks().length + " 個區塊）"));
+        }
         return Command.SINGLE_SUCCESS;
     }
 

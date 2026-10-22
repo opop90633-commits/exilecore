@@ -961,11 +961,11 @@ public final class LootService {
     }
 
     /**
-     * 2026-10：設定開著「星圖直接進倉庫」就把撿到的星圖收進倉庫的地圖頁。
+     * 撿到的星圖收進倉庫的地圖頁（2026-10-22 起一律開著，不再是設定）。
      * 倉庫沒載入、地圖頁滿了回傳 false（照舊放背包）。
      */
     public boolean stashMap(final Player player, final PlayerState state, final ItemStack stack) {
-        if (plugin.stash() == null || !tw.exilecore.character.PlayerSettings.on(state, tw.exilecore.character.PlayerSettings.MAP_TO_STASH)) {
+        if (plugin.stash() == null) {
             return false;
         }
         final tw.exilecore.stash.Stash stash = plugin.stash().stash(player).orElse(null);

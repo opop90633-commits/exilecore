@@ -98,15 +98,25 @@ public record SupportDefinition(String id, String name, String description, Stri
         return source != null && source.equals(from);
     }
 
-    /**
-     * 2026-10-22：掛在星咒圖騰（主要寶石）上有沒有作用：要圖騰才能掛的（帶到圖騰施法上），
-     * 或只加施法速度（放圖騰更快）、持續時間（圖騰撐更久）的。
-     */
-    static boolean spellTotemMeta(final SkillDefinition skill) {
-        return skill.mechanic() == Mechanic.META && skill.tags().contains(Tags.TOTEM);
+    /** 2026-10-22：技能放在自己第 1 孔裡的宿主寶石（英靈圖騰、星咒圖騰、暴擊引星）。 */
+    public static boolean hostsSkill(final SkillDefinition skill) {
+        return skill != null && (skill.tags().contains(Tags.META) || flagged(skill, StatKeys.FLAG_TOTEM_LINKED));
     }
 
-    public boolean worksOnSpellTotem() {
+    private static boolean flagged(final SkillDefinition skill, final String flag) {
+        for (final Modifier modifier : skill.modifiers()) {
+            if (modifier.stat().equals(flag) && modifier.value() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 2026-10-22：宿主寶石第 2～5 孔的輔助全部套在放進去的技能上；其中這幾種也套到宿主本身
+     * （放圖騰、圖騰生命、叫英靈的速度）：要圖騰才能掛的、只加攻擊／施法速度或持續時間的。
+     */
+    public boolean worksOnHost() {
         if (requires.contains(Tags.TOTEM)) {
             return true;
         }
@@ -114,11 +124,31 @@ public record SupportDefinition(String id, String name, String description, Stri
             return false;
         }
         for (final Modifier modifier : modifiers) {
-            if (!modifier.stat().equals(StatKeys.CAST_SPEED) && !modifier.stat().equals(StatKeys.SKILL_DURATION)) {
+            if (!modifier.stat().equals(StatKeys.CAST_SPEED) && !modifier.stat().equals(StatKeys.ATTACK_SPEED)
+                    && !modifier.stat().equals(StatKeys.SKILL_DURATION)) {
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * 2026-10-22：能不能掛在宿主寶石上給放進去的技能用：照那顆技能驗（{@link #refusal}），
+     * 要圖騰才能掛的輔助（疾樁、樁怒…）因為技能是圖騰放的所以也可以；觸發輔助、圖騰施法／陷阱施法不行（已經是宿主在放）。
+     * 可以回傳 null。
+     */
+    public String hostRefusal(final SkillDefinition host, final SkillDefinition inner) {
+        if (triggers() || flags(StatKeys.FLAG_SPELL_TOTEM) || flags(StatKeys.FLAG_TRAP)) {
+            return "觸發、圖騰施法、陷阱施法的輔助不能掛在" + host.name() + "上";
+        }
+        if (inner == null) {
+            return "先把技能寶石放進第 1 孔";
+        }
+        if (requires.contains(Tags.TOTEM) && host.tags().contains(Tags.TOTEM)) {
+            return null;
+        }
+        final String why = refusal(inner);
+        return why == null ? null : name + "不能輔助" + inner.name() + "（" + why + "）";
     }
 
     /** 能不能掛在這個技能上（看技能自己的標籤）。普攻（隱藏的攻擊）不能掛；捷的擊殺效果（隱藏的法術）照標籤算。 */
@@ -133,11 +163,6 @@ public record SupportDefinition(String id, String name, String description, Stri
     public String refusal(final SkillDefinition skill) {
         if (skill.hidden() && skill.isAttack()) {
             return "普攻不能掛輔助寶石";
-        }
-        // 2026-10-22：星咒圖騰（主要寶石）本身只負責放圖騰：只收會帶到圖騰施法的（要圖騰才能掛的）、加施法速度的（放得快）、
-        // 加持續時間的（圖騰撐更久）。以前持久、久地、灌元這些都掛得上去，卻什麼都沒做
-        if (spellTotemMeta(skill) && !worksOnSpellTotem()) {
-            return "星咒圖騰上只能掛要圖騰的、加施法速度或持續時間的輔助，其他的請掛在插槽法術上";
         }
         for (final String tag : excludes) {
             if (skill.tags().contains(tag)) {
@@ -177,9 +202,7 @@ public record SupportDefinition(String id, String name, String description, Stri
         }
         // 2026-10：光環、詛咒、印記、護體、戰吼、純位移、召喚本身不會打到敵人：只有擊中才有用的輔助（引火、致命、各種穿透、趁 X…）
         // 以前掛得上去，一條都不生效還白付魔力倍率。捷的輔助會傳給擊殺效果（隱藏的法術），所以照算
-        // 2026-10-22：星咒圖騰本身不打人，但要圖騰才能掛的輔助（樁怒、堅樁、厚樁、怨燼）會帶到圖騰施法上：以前被這條擋掉
-        final boolean carriedToTotem = spellTotemMeta(skill) && requires.contains(Tags.TOTEM);
-        if (!skill.dealsDamage() && !skill.tags().contains(Tags.HERALD) && !carriedToTotem && !worksWithoutHits(skill)) {
+        if (!skill.dealsDamage() && !skill.tags().contains(Tags.HERALD) && !worksWithoutHits(skill)) {
             return "不會造成傷害的技能不行";
         }
         // 2026-10：投射物的機制（多射幾發、穿透、分裂、連鎖、飛行速度…）只有真的射出投射物的技能才吃得到：

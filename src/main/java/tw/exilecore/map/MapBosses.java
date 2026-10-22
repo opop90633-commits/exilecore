@@ -304,7 +304,7 @@ final class MapBosses {
                 BossBar.Overlay.NOTCHED_12); // 2026-10：資源包把 12 格的刻度換成 75%、50%、25% 三條（換階段的位置）
         instance.setBossBar(bar);
         if (definition.intro() != null && !definition.intro().isBlank()) {
-            broadcast(instance, Zone.loreLine(definition.name(), definition.intro()));
+            talk(instance, Zone.loreLine(definition.name(), definition.intro()));
         }
         if (variant == MapTwists.BossVariant.EMPOWERED) {
             broadcast(instance, "<#ff7070>⚠ 這次的 Boss 是強化的：生命 ×1.5、傷害 ×1.25，掉落 +" + Math.round(variant.loot * 100) + "%");
@@ -466,7 +466,7 @@ final class MapBosses {
         at.getWorld().playSound(at, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.7f, 1.2f);
         at.getWorld().spawnParticle(Particle.EXPLOSION, at, 3, 1, 1, 1, 0);
         if (phase.message() != null && !phase.message().isBlank()) {
-            broadcast(instance, Zone.loreLine(instance.bossDef().name(), phase.message()));
+            talk(instance, Zone.loreLine(instance.bossDef().name(), phase.message()));
         }
         // 畫面中間大字「第 N 階段・名稱」＋最要緊的一件事（護盾優先），聊天室列出這個階段的全部變化
         final int number = instance.bossPhase();
@@ -693,7 +693,7 @@ final class MapBosses {
             speed.addModifier(new AttributeModifier(enrageKey, enrage.speed(), AttributeModifier.Operation.MULTIPLY_SCALAR_1));
         }
         if (enrage.message() != null && !enrage.message().isBlank()) {
-            broadcast(instance, Zone.loreLine(instance.bossDef().name(), enrage.message()));
+            talk(instance, Zone.loreLine(instance.bossDef().name(), enrage.message()));
         }
         broadcast(instance, "<red>☠ " + ItemRenderer.escape(instance.bossDef().name()) + " 狂暴了：傷害更多 " + Math.round(enrage.damage()) + "%");
         broadcastAlert(instance, BossMechanicText.enraged(enrage));
@@ -1108,7 +1108,7 @@ final class MapBosses {
         detachSkills(boss);
         final MapConfig.Boss definition = instance.bossDef();
         if (definition.defeat() != null && !definition.defeat().isBlank()) {
-            broadcast(instance, Zone.loreLine(definition.name(), definition.defeat()));
+            talk(instance, Zone.loreLine(definition.name(), definition.defeat()));
         }
         end(instance);
         final org.bukkit.Location at = boss.getLocation();
@@ -1291,6 +1291,16 @@ final class MapBosses {
     private void detachSkills(final LivingEntity boss) {
         if (plugin.skills() != null) {
             plugin.skills().bossSkills().detach(boss.getUniqueId());
+        }
+    }
+
+    /** 2026-10-22：Boss 的台詞（登場、換階段、狂暴、倒下）：開了「隱藏怪物對話」的人不送。 */
+    private void talk(final MapInstance instance, final String miniMessage) {
+        for (final UUID uuid : instance.inside()) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            if (player != null && !plugin.players().hidesMonsterTalk(player)) {
+                player.sendMessage(plugin.text().parse(miniMessage));
+            }
         }
     }
 

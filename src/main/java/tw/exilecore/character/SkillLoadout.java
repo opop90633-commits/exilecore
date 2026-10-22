@@ -46,11 +46,21 @@ public final class SkillLoadout {
      * 每一孔的輔助有沒有共鳴（2026-10-18：用過共鳴石的專屬輔助不佔專屬名額；長度也固定 {@link #MAX_SOCKETS}）。
      * 存檔裡共鳴的寶石代號後面接一個 {@value #RESONANT_SUFFIX}（例如 3:rift_echo~,,pierce）；建構式會把它剝掉放進 resonant，
      * {@link #support(int)} 永遠回傳乾淨的代號，舊資料沒有 ~ 就全是 false。
+     * <p>
+     * 2026-10-22：英靈圖騰與主要寶石（星咒圖騰、暴擊引星）把技能寶石放在自己的第 1 孔（{@link #inner}），
+     * 第 2～5 孔的輔助都套在那顆技能上。存檔裡第 1 孔寫成 {@value #INNER_PREFIX}代號/等級/孔數（例如 5:@fireball/18/4,added_fire,,）；
+     * 舊版的宿主寶石第 1 孔放的是輔助，載入後由 SkillService.migrateRemoved 往後挪一孔。
+     *
+     * @param inner 放在第 1 孔的技能寶石（代號、等級、它自己的孔數；輔助一律空的）；沒有或不是宿主寶石為 null
      */
-    public record Entry(String skillId, int level, int sockets, List<String> supports, List<Boolean> resonant) {
+    public record Entry(String skillId, int level, int sockets, List<String> supports, List<Boolean> resonant, Entry inner) {
 
         /** 2026-10-18：存檔文字裡標「這顆輔助已共鳴」的字尾。 */
         public static final String RESONANT_SUFFIX = "~";
+        /** 2026-10-22：存檔文字裡第 1 孔「放著技能寶石」的字首。 */
+        public static final String INNER_PREFIX = "@";
+        /** 放技能寶石的那一孔（宿主寶石的第 1 孔）。 */
+        public static final int INNER_SOCKET = 0;
 
         public Entry {
             if (skillId == null || skillId.isBlank()) {
@@ -65,6 +75,12 @@ public final class SkillLoadout {
             if (supports != null) {
                 for (int i = 0; i < Math.min(sockets, supports.size()); i++) {
                     String id = supports.get(i) == null ? "" : supports.get(i).trim();
+                    if (i == INNER_SOCKET && id.startsWith(INNER_PREFIX)) { // 2026-10-22：第 1 孔放著技能寶石
+                        if (inner == null) {
+                            inner = decodeInner(id.substring(INNER_PREFIX.length()));
+                        }
+                        continue;
+                    }
                     if (id.endsWith(RESONANT_SUFFIX)) { // 2026-10-18：存檔裡的 ~ 剝掉，記成共鳴
                         id = id.substring(0, id.length() - RESONANT_SUFFIX.length()).trim();
                         marks[i] = Boolean.TRUE;
@@ -78,13 +94,50 @@ public final class SkillLoadout {
                     }
                 }
             }
+            if (inner != null) {
+                filled[INNER_SOCKET] = ""; // 放著技能寶石的那一孔不會同時有輔助
+                marks[INNER_SOCKET] = Boolean.FALSE;
+                if (!inner.supports().stream().allMatch(String::isEmpty) || inner.inner() != null) {
+                    inner = new Entry(inner.skillId(), inner.level(), inner.sockets(), List.of(), null, null); // 裡面的技能自己沒有輔助
+                }
+            }
             supports = List.of(filled);
             resonant = List.of(marks);
         }
 
+        /** 2026-10-22：舊的五個欄位的建構式（第 1 孔沒有技能寶石；supports 裡寫 @ 開頭的照樣認得）。 */
+        public Entry(final String skillId, final int level, final int sockets, final List<String> supports, final List<Boolean> resonant) {
+            this(skillId, level, sockets, supports, resonant, null);
+        }
+
         /** 沒有共鳴資訊的建構式（代號裡可以帶 ~）。 */
         public Entry(final String skillId, final int level, final int sockets, final List<String> supports) {
-            this(skillId, level, sockets, supports, null);
+            this(skillId, level, sockets, supports, null, null);
+        }
+
+        /** 存檔裡「@代號/等級/孔數」後面那段；壞掉的回傳 null。 */
+        private static Entry decodeInner(final String text) {
+            final String[] parts = text.split("/", -1);
+            if (parts.length < 1 || parts[0].isBlank()) {
+                return null;
+            }
+            try {
+                final int level = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : 1;
+                final int sockets = parts.length > 2 ? Integer.parseInt(parts[2].trim()) : BASE_SOCKETS;
+                return new Entry(parts[0].trim(), level, sockets, List.of(), null, null);
+            } catch (final NumberFormatException e) {
+                return null;
+            }
+        }
+
+        /** 2026-10-22：換掉第 1 孔的技能寶石（null = 拿掉）。 */
+        public Entry withInner(final Entry newInner) {
+            return new Entry(skillId, level, sockets, supports, resonant, newInner);
+        }
+
+        /** 2026-10-22：第 1 孔放著技能寶石時，第 1 孔不算輔助孔：第一個能放輔助的孔。 */
+        public int firstSupportSocket() {
+            return inner != null ? INNER_SOCKET + 1 : 0;
         }
 
         /** 新做出來的技能：2 個空的輔助孔。 */
@@ -103,11 +156,11 @@ public final class SkillLoadout {
         }
 
         public Entry withLevel(final int newLevel) {
-            return new Entry(skillId, newLevel, sockets, supports, resonant);
+            return new Entry(skillId, newLevel, sockets, supports, resonant, inner);
         }
 
         public Entry withSockets(final int newSockets) {
-            return new Entry(skillId, level, newSockets, supports, resonant);
+            return new Entry(skillId, level, newSockets, supports, resonant, inner);
         }
 
         /** 換掉一個輔助孔的內容（null 或空字串 = 拿掉）；沒有共鳴。 */
@@ -124,7 +177,7 @@ public final class SkillLoadout {
             final List<Boolean> marks = new ArrayList<>(resonant);
             list.set(index, supportId == null ? "" : supportId);
             marks.set(index, isResonant);
-            return new Entry(skillId, level, sockets, list, marks);
+            return new Entry(skillId, level, sockets, list, marks, inner);
         }
 
         /** 2026-10-18：只改一孔的共鳴旗標（孔裡要有輔助）。 */
@@ -132,9 +185,9 @@ public final class SkillLoadout {
             return withSupport(index, support(index), isResonant);
         }
 
-        /** 第一個空的輔助孔；沒有回傳 -1。 */
+        /** 第一個空的輔助孔（放著技能寶石的第 1 孔不算）；沒有回傳 -1。 */
         public int freeSocket() {
-            for (int i = 0; i < sockets; i++) {
+            for (int i = firstSupportSocket(); i < sockets; i++) {
                 if (supports.get(i).isEmpty()) {
                     return i;
                 }
@@ -163,6 +216,10 @@ public final class SkillLoadout {
             for (int i = 0; i < sockets; i++) {
                 if (i > 0) {
                     text.append(',');
+                }
+                if (i == INNER_SOCKET && inner != null) { // 2026-10-22：第 1 孔的技能寶石
+                    text.append(INNER_PREFIX).append(inner.skillId()).append('/').append(inner.level()).append('/').append(inner.sockets());
+                    continue;
                 }
                 text.append(supports.get(i));
                 if (resonant.get(i) && !supports.get(i).isEmpty()) {
@@ -244,6 +301,16 @@ public final class SkillLoadout {
     public int find(final String skillId) {
         for (int i = 0; i < MAX_SKILLS; i++) {
             if (skills[i] != null && skills[i].skillId().equals(skillId)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** 2026-10-22：放在某個宿主寶石第 1 孔裡的技能；那個宿主在面板上的位置，沒有回傳 -1。 */
+    public int findInner(final String skillId) {
+        for (int i = 0; i < MAX_SKILLS; i++) {
+            if (skills[i] != null && skills[i].inner() != null && skills[i].inner().skillId().equals(skillId)) {
                 return i;
             }
         }

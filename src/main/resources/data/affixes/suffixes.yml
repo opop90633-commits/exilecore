@@ -1,6 +1,8 @@
 # 後綴詞綴。格式同 prefixes.yml。
 #
 # 2026-10 PoE2 改版：可以擲出的詞綴全部照 PoE2（0.5）的詞綴池、部位與數值；原本的改成 [retired]（舊物品照常生效）。
+# 2026-10-22：階級權重從「每高一階 ×0.8」改成「×0.7」（高階更難出：9 階的 T1 從約 3.9% 降到約 1.8%）；每條詞綴的權重總和不變（出現哪一條的機率不變，只改出哪一階）。
+# 2026-10-22：只有一階的詞綴（能量護盾回充、投射物技能等級）權重減半。
 
 # ======== PoE2 詞綴 ========
 
@@ -11,15 +13,15 @@ all_attr:
   names: [之星骸, 之完美, 之全能, 之均衡, 之和諧, 之平衡, 之調和, 之初衡, 之平凡]
   text: "+{value} 全部屬性"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 168, value: [23, 24] }
-    - { tier: 2, ilvl: 75, weight: 210, value: [21, 22] }
-    - { tier: 3, ilvl: 66, weight: 262, value: [19, 20] }
-    - { tier: 4, ilvl: 55, weight: 328, value: [17, 18] }
-    - { tier: 5, ilvl: 44, weight: 410, value: [14, 16] }
-    - { tier: 6, ilvl: 33, weight: 512, value: [11, 13] }
-    - { tier: 7, ilvl: 22, weight: 640, value: [8, 10] }
-    - { tier: 8, ilvl: 11, weight: 800, value: [5, 7] }
-    - { tier: 9, ilvl: 1, weight: 1000, value: [2, 4] }
+    - { tier: 1, ilvl: 82, weight: 78, value: [23, 24] }
+    - { tier: 2, ilvl: 75, weight: 111, value: [21, 22] }
+    - { tier: 3, ilvl: 66, weight: 159, value: [19, 20] }
+    - { tier: 4, ilvl: 55, weight: 228, value: [17, 18] }
+    - { tier: 5, ilvl: 44, weight: 325, value: [14, 16] }
+    - { tier: 6, ilvl: 33, weight: 464, value: [11, 13] }
+    - { tier: 7, ilvl: 22, weight: 663, value: [8, 10] }
+    - { tier: 8, ilvl: 11, weight: 948, value: [5, 7] }
+    - { tier: 9, ilvl: 1, weight: 1354, value: [2, 4] }
   mods:
     - { stat: attr.str, type: FLAT, value: "{value}" }
     - { stat: attr.dex, type: FLAT, value: "{value}" }
@@ -32,10 +34,10 @@ all_attr_ring:
   names: [之星骸, 之完美, 之全能, 之均衡]
   text: "+{value} 全部屬性"
   tiers:
-    - { tier: 1, ilvl: 33, weight: 512, value: [11, 13] }
-    - { tier: 2, ilvl: 22, weight: 640, value: [8, 10] }
-    - { tier: 3, ilvl: 11, weight: 800, value: [5, 7] }
-    - { tier: 4, ilvl: 1, weight: 1000, value: [2, 4] }
+    - { tier: 1, ilvl: 33, weight: 400, value: [11, 13] }
+    - { tier: 2, ilvl: 22, weight: 571, value: [8, 10] }
+    - { tier: 3, ilvl: 11, weight: 816, value: [5, 7] }
+    - { tier: 4, ilvl: 1, weight: 1165, value: [2, 4] }
   mods:
     - { stat: attr.str, type: FLAT, value: "{value}" }
     - { stat: attr.dex, type: FLAT, value: "{value}" }
@@ -48,12 +50,12 @@ resist_all:
   names: [之星骸, 之元素, 之三相, 之稜鏡, 之虹光, 之多彩]
   text: "+{value}% 全部元素抗性"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 328, value: [17, 18] }
-    - { tier: 2, ilvl: 68, weight: 410, value: [15, 16] }
-    - { tier: 3, ilvl: 54, weight: 512, value: [12, 14] }
-    - { tier: 4, ilvl: 40, weight: 640, value: [9, 11] }
-    - { tier: 5, ilvl: 26, weight: 800, value: [6, 8] }
-    - { tier: 6, ilvl: 12, weight: 1000, value: [3, 5] }
+    - { tier: 1, ilvl: 80, weight: 211, value: [17, 18] }
+    - { tier: 2, ilvl: 68, weight: 301, value: [15, 16] }
+    - { tier: 3, ilvl: 54, weight: 430, value: [12, 14] }
+    - { tier: 4, ilvl: 40, weight: 615, value: [9, 11] }
+    - { tier: 5, ilvl: 26, weight: 878, value: [6, 8] }
+    - { tier: 6, ilvl: 12, weight: 1255, value: [3, 5] }
   mods:
     - { stat: resist.fire, type: FLAT, value: "{value}" }
     - { stat: resist.cold, type: FLAT, value: "{value}" }
@@ -66,11 +68,11 @@ resist_all_ring:
   names: [之星骸, 之元素, 之三相, 之稜鏡, 之虹光]
   text: "+{value}% 全部元素抗性"
   tiers:
-    - { tier: 1, ilvl: 68, weight: 410, value: [15, 16] }
-    - { tier: 2, ilvl: 54, weight: 512, value: [12, 14] }
-    - { tier: 3, ilvl: 40, weight: 640, value: [9, 11] }
-    - { tier: 4, ilvl: 26, weight: 800, value: [6, 8] }
-    - { tier: 5, ilvl: 12, weight: 1000, value: [3, 5] }
+    - { tier: 1, ilvl: 68, weight: 291, value: [15, 16] }
+    - { tier: 2, ilvl: 54, weight: 416, value: [12, 14] }
+    - { tier: 3, ilvl: 40, weight: 594, value: [9, 11] }
+    - { tier: 4, ilvl: 26, weight: 849, value: [6, 8] }
+    - { tier: 5, ilvl: 12, weight: 1212, value: [3, 5] }
   mods:
     - { stat: resist.fire, type: FLAT, value: "{value}" }
     - { stat: resist.cold, type: FLAT, value: "{value}" }
@@ -83,12 +85,12 @@ minion_crit:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "增加 {value}% 召喚物暴擊率"
   tiers:
-    - { tier: 1, ilvl: 76, weight: 328, value: [35, 38] }
-    - { tier: 2, ilvl: 59, weight: 410, value: [30, 34] }
-    - { tier: 3, ilvl: 41, weight: 512, value: [25, 29] }
-    - { tier: 4, ilvl: 28, weight: 640, value: [20, 24] }
-    - { tier: 5, ilvl: 21, weight: 800, value: [15, 19] }
-    - { tier: 6, ilvl: 11, weight: 1000, value: [10, 14] }
+    - { tier: 1, ilvl: 76, weight: 211, value: [35, 38] }
+    - { tier: 2, ilvl: 59, weight: 301, value: [30, 34] }
+    - { tier: 3, ilvl: 41, weight: 430, value: [25, 29] }
+    - { tier: 4, ilvl: 28, weight: 615, value: [20, 24] }
+    - { tier: 5, ilvl: 21, weight: 878, value: [15, 19] }
+    - { tier: 6, ilvl: 11, weight: 1255, value: [10, 14] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -99,12 +101,12 @@ minion_crit_bonus:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "增加 {value}% 召喚物暴擊傷害加成"
   tiers:
-    - { tier: 1, ilvl: 73, weight: 328, value: [35, 39] }
-    - { tier: 2, ilvl: 59, weight: 410, value: [30, 34] }
-    - { tier: 3, ilvl: 44, weight: 512, value: [25, 29] }
-    - { tier: 4, ilvl: 30, weight: 640, value: [20, 24] }
-    - { tier: 5, ilvl: 21, weight: 800, value: [15, 19] }
-    - { tier: 6, ilvl: 8, weight: 1000, value: [10, 14] }
+    - { tier: 1, ilvl: 73, weight: 211, value: [35, 39] }
+    - { tier: 2, ilvl: 59, weight: 301, value: [30, 34] }
+    - { tier: 3, ilvl: 44, weight: 430, value: [25, 29] }
+    - { tier: 4, ilvl: 30, weight: 615, value: [20, 24] }
+    - { tier: 5, ilvl: 21, weight: 878, value: [15, 19] }
+    - { tier: 6, ilvl: 8, weight: 1255, value: [10, 14] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -115,10 +117,10 @@ minion_speed:
   names: [之星骸, 之神速, 之疾風, 之迅捷]
   text: "增加 {value}% 召喚物攻擊速度"
   tiers:
-    - { tier: 1, ilvl: 55, weight: 512, value: [14, 16] }
-    - { tier: 2, ilvl: 35, weight: 640, value: [11, 13] }
-    - { tier: 3, ilvl: 20, weight: 800, value: [8, 10] }
-    - { tier: 4, ilvl: 5, weight: 1000, value: [5, 7] }
+    - { tier: 1, ilvl: 55, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 35, weight: 571, value: [11, 13] }
+    - { tier: 3, ilvl: 20, weight: 816, value: [8, 10] }
+    - { tier: 4, ilvl: 5, weight: 1165, value: [5, 7] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -145,11 +147,11 @@ armour_elemental:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "護甲的 {value}% 也套用在元素傷害上"
   tiers:
-    - { tier: 1, ilvl: 66, weight: 410, value: [38, 43] }
-    - { tier: 2, ilvl: 48, weight: 512, value: [32, 37] }
-    - { tier: 3, ilvl: 36, weight: 640, value: [26, 31] }
-    - { tier: 4, ilvl: 16, weight: 800, value: [20, 25] }
-    - { tier: 5, ilvl: 1, weight: 1000, value: [14, 19] }
+    - { tier: 1, ilvl: 66, weight: 291, value: [38, 43] }
+    - { tier: 2, ilvl: 48, weight: 416, value: [32, 37] }
+    - { tier: 3, ilvl: 36, weight: 594, value: [26, 31] }
+    - { tier: 4, ilvl: 16, weight: 849, value: [20, 25] }
+    - { tier: 5, ilvl: 1, weight: 1212, value: [14, 19] }
   mods:
     - { stat: armour.elemental, type: FLAT, value: "{value}" }
 
@@ -161,12 +163,12 @@ armour_elemental_body:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良, 之優質]
   text: "護甲的 {value}% 也套用在元素傷害上"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 328, value: [44, 50] }
-    - { tier: 2, ilvl: 66, weight: 410, value: [38, 43] }
-    - { tier: 3, ilvl: 48, weight: 512, value: [32, 37] }
-    - { tier: 4, ilvl: 36, weight: 640, value: [26, 31] }
-    - { tier: 5, ilvl: 16, weight: 800, value: [20, 25] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [14, 19] }
+    - { tier: 1, ilvl: 81, weight: 211, value: [44, 50] }
+    - { tier: 2, ilvl: 66, weight: 301, value: [38, 43] }
+    - { tier: 3, ilvl: 48, weight: 430, value: [32, 37] }
+    - { tier: 4, ilvl: 36, weight: 615, value: [26, 31] }
+    - { tier: 5, ilvl: 16, weight: 878, value: [20, 25] }
+    - { tier: 6, ilvl: 1, weight: 1255, value: [14, 19] }
   mods:
     - { stat: armour.elemental, type: FLAT, value: "{value}" }
 
@@ -177,12 +179,12 @@ attack_crit_chance:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "增加 {value}% 攻擊暴擊率"
   tiers:
-    - { tier: 1, ilvl: 72, weight: 328, value: [35, 38] }
-    - { tier: 2, ilvl: 58, weight: 410, value: [30, 34] }
-    - { tier: 3, ilvl: 44, weight: 512, value: [25, 29] }
-    - { tier: 4, ilvl: 30, weight: 640, value: [20, 24] }
-    - { tier: 5, ilvl: 20, weight: 800, value: [15, 19] }
-    - { tier: 6, ilvl: 5, weight: 1000, value: [10, 14] }
+    - { tier: 1, ilvl: 72, weight: 211, value: [35, 38] }
+    - { tier: 2, ilvl: 58, weight: 301, value: [30, 34] }
+    - { tier: 3, ilvl: 44, weight: 430, value: [25, 29] }
+    - { tier: 4, ilvl: 30, weight: 615, value: [20, 24] }
+    - { tier: 5, ilvl: 20, weight: 878, value: [15, 19] }
+    - { tier: 6, ilvl: 5, weight: 1255, value: [10, 14] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
 
@@ -193,12 +195,12 @@ attack_crit_bonus:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "增加 {value}% 攻擊暴擊傷害加成"
   tiers:
-    - { tier: 1, ilvl: 74, weight: 328, value: [35, 39] }
-    - { tier: 2, ilvl: 59, weight: 410, value: [30, 34] }
-    - { tier: 3, ilvl: 45, weight: 512, value: [25, 29] }
-    - { tier: 4, ilvl: 31, weight: 640, value: [20, 24] }
-    - { tier: 5, ilvl: 21, weight: 800, value: [15, 19] }
-    - { tier: 6, ilvl: 8, weight: 1000, value: [10, 14] }
+    - { tier: 1, ilvl: 74, weight: 211, value: [35, 39] }
+    - { tier: 2, ilvl: 59, weight: 301, value: [30, 34] }
+    - { tier: 3, ilvl: 45, weight: 430, value: [25, 29] }
+    - { tier: 4, ilvl: 31, weight: 615, value: [20, 24] }
+    - { tier: 5, ilvl: 21, weight: 878, value: [15, 19] }
+    - { tier: 6, ilvl: 8, weight: 1255, value: [10, 14] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [attack] }
 
@@ -209,12 +211,12 @@ resist_chaos:
   names: [之星蝕, 之淨化, 之抗蝕, 之解毒, 之清明, 之潔淨]
   text: "+{value}% 混沌抗性"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 328, value: [24, 27] }
-    - { tier: 2, ilvl: 68, weight: 410, value: [20, 23] }
-    - { tier: 3, ilvl: 56, weight: 512, value: [16, 19] }
-    - { tier: 4, ilvl: 44, weight: 640, value: [12, 15] }
-    - { tier: 5, ilvl: 30, weight: 800, value: [8, 11] }
-    - { tier: 6, ilvl: 16, weight: 1000, value: [4, 7] }
+    - { tier: 1, ilvl: 81, weight: 211, value: [24, 27] }
+    - { tier: 2, ilvl: 68, weight: 301, value: [20, 23] }
+    - { tier: 3, ilvl: 56, weight: 430, value: [16, 19] }
+    - { tier: 4, ilvl: 44, weight: 615, value: [12, 15] }
+    - { tier: 5, ilvl: 30, weight: 878, value: [8, 11] }
+    - { tier: 6, ilvl: 16, weight: 1255, value: [4, 7] }
   mods:
     - { stat: resist.chaos, type: FLAT, value: "{value}" }
 
@@ -225,14 +227,14 @@ resist_cold:
   names: [之星霜, 之冰心, 之霜盾, 之耐寒, 之冰紋, 之冬衣, 之雪痕, 之涼意]
   text: "+{value}% 冰冷抗性"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 210, value: [41, 45] }
-    - { tier: 2, ilvl: 71, weight: 262, value: [36, 40] }
-    - { tier: 3, ilvl: 60, weight: 328, value: [31, 35] }
-    - { tier: 4, ilvl: 50, weight: 410, value: [26, 30] }
-    - { tier: 5, ilvl: 38, weight: 512, value: [21, 25] }
-    - { tier: 6, ilvl: 26, weight: 640, value: [16, 20] }
-    - { tier: 7, ilvl: 14, weight: 800, value: [11, 15] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [6, 10] }
+    - { tier: 1, ilvl: 82, weight: 109, value: [41, 45] }
+    - { tier: 2, ilvl: 71, weight: 156, value: [36, 40] }
+    - { tier: 3, ilvl: 60, weight: 223, value: [31, 35] }
+    - { tier: 4, ilvl: 50, weight: 318, value: [26, 30] }
+    - { tier: 5, ilvl: 38, weight: 454, value: [21, 25] }
+    - { tier: 6, ilvl: 26, weight: 649, value: [16, 20] }
+    - { tier: 7, ilvl: 14, weight: 927, value: [11, 15] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [6, 10] }
   mods:
     - { stat: resist.cold, type: FLAT, value: "{value}" }
 
@@ -243,11 +245,11 @@ crit_chance:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意]
   text: "增加 {value}% 暴擊率"
   tiers:
-    - { tier: 1, ilvl: 58, weight: 410, value: [30, 34] }
-    - { tier: 2, ilvl: 44, weight: 512, value: [25, 29] }
-    - { tier: 3, ilvl: 30, weight: 640, value: [20, 24] }
-    - { tier: 4, ilvl: 20, weight: 800, value: [15, 19] }
-    - { tier: 5, ilvl: 5, weight: 1000, value: [10, 14] }
+    - { tier: 1, ilvl: 58, weight: 291, value: [30, 34] }
+    - { tier: 2, ilvl: 44, weight: 416, value: [25, 29] }
+    - { tier: 3, ilvl: 30, weight: 594, value: [20, 24] }
+    - { tier: 4, ilvl: 20, weight: 849, value: [15, 19] }
+    - { tier: 5, ilvl: 5, weight: 1212, value: [10, 14] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}" }
 
@@ -258,12 +260,12 @@ crit_chance_amulet:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "增加 {value}% 暴擊率"
   tiers:
-    - { tier: 1, ilvl: 72, weight: 328, value: [35, 38] }
-    - { tier: 2, ilvl: 58, weight: 410, value: [30, 34] }
-    - { tier: 3, ilvl: 44, weight: 512, value: [25, 29] }
-    - { tier: 4, ilvl: 30, weight: 640, value: [20, 24] }
-    - { tier: 5, ilvl: 20, weight: 800, value: [15, 19] }
-    - { tier: 6, ilvl: 5, weight: 1000, value: [10, 14] }
+    - { tier: 1, ilvl: 72, weight: 211, value: [35, 38] }
+    - { tier: 2, ilvl: 58, weight: 301, value: [30, 34] }
+    - { tier: 3, ilvl: 44, weight: 430, value: [25, 29] }
+    - { tier: 4, ilvl: 30, weight: 615, value: [20, 24] }
+    - { tier: 5, ilvl: 20, weight: 878, value: [15, 19] }
+    - { tier: 6, ilvl: 5, weight: 1255, value: [10, 14] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}" }
 
@@ -274,11 +276,11 @@ crit_bonus:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意]
   text: "增加 {value}% 暴擊傷害加成"
   tiers:
-    - { tier: 1, ilvl: 59, weight: 410, value: [30, 34] }
-    - { tier: 2, ilvl: 45, weight: 512, value: [25, 29] }
-    - { tier: 3, ilvl: 31, weight: 640, value: [20, 24] }
-    - { tier: 4, ilvl: 21, weight: 800, value: [15, 19] }
-    - { tier: 5, ilvl: 8, weight: 1000, value: [10, 14] }
+    - { tier: 1, ilvl: 59, weight: 291, value: [30, 34] }
+    - { tier: 2, ilvl: 45, weight: 416, value: [25, 29] }
+    - { tier: 3, ilvl: 31, weight: 594, value: [20, 24] }
+    - { tier: 4, ilvl: 21, weight: 849, value: [15, 19] }
+    - { tier: 5, ilvl: 8, weight: 1212, value: [10, 14] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}" }
 
@@ -289,12 +291,12 @@ crit_bonus_amulet:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "增加 {value}% 暴擊傷害加成"
   tiers:
-    - { tier: 1, ilvl: 74, weight: 328, value: [35, 39] }
-    - { tier: 2, ilvl: 59, weight: 410, value: [30, 34] }
-    - { tier: 3, ilvl: 45, weight: 512, value: [25, 29] }
-    - { tier: 4, ilvl: 31, weight: 640, value: [20, 24] }
-    - { tier: 5, ilvl: 21, weight: 800, value: [15, 19] }
-    - { tier: 6, ilvl: 8, weight: 1000, value: [10, 14] }
+    - { tier: 1, ilvl: 74, weight: 211, value: [35, 39] }
+    - { tier: 2, ilvl: 59, weight: 301, value: [30, 34] }
+    - { tier: 3, ilvl: 45, weight: 430, value: [25, 29] }
+    - { tier: 4, ilvl: 31, weight: 615, value: [20, 24] }
+    - { tier: 5, ilvl: 21, weight: 878, value: [15, 19] }
+    - { tier: 6, ilvl: 8, weight: 1255, value: [10, 14] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}" }
 
@@ -306,11 +308,11 @@ mana_recoup:
   names: [之星骸, 之禪定, 之寧靜, 之安詳, 之慰藉]
   text: "受到的傷害有 {value}% 在 4 秒內回復為魔力"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 410, value: [22, 24] }
-    - { tier: 2, ilvl: 69, weight: 512, value: [19, 21] }
-    - { tier: 3, ilvl: 57, weight: 640, value: [16, 18] }
-    - { tier: 4, ilvl: 45, weight: 800, value: [13, 15] }
-    - { tier: 5, ilvl: 31, weight: 1000, value: [10, 12] }
+    - { tier: 1, ilvl: 80, weight: 291, value: [22, 24] }
+    - { tier: 2, ilvl: 69, weight: 416, value: [19, 21] }
+    - { tier: 3, ilvl: 57, weight: 594, value: [16, 18] }
+    - { tier: 4, ilvl: 45, weight: 849, value: [13, 15] }
+    - { tier: 5, ilvl: 31, weight: 1212, value: [10, 12] }
   mods:
     - { stat: mana.recoup, type: FLAT, value: "{value}" }
 
@@ -322,11 +324,11 @@ requirements_reduced:
   names: [之星骸, 之嫻熟, 之精通, 之天賦, 之才幹]
   text: "減少 {value}% 屬性需求"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 410, value: [35, 35] }
-    - { tier: 2, ilvl: 52, weight: 512, value: [30, 30] }
-    - { tier: 3, ilvl: 40, weight: 640, value: [25, 25] }
-    - { tier: 4, ilvl: 32, weight: 800, value: [20, 20] }
-    - { tier: 5, ilvl: 24, weight: 1000, value: [15, 15] }
+    - { tier: 1, ilvl: 60, weight: 291, value: [35, 35] }
+    - { tier: 2, ilvl: 52, weight: 416, value: [30, 30] }
+    - { tier: 3, ilvl: 40, weight: 594, value: [25, 25] }
+    - { tier: 4, ilvl: 32, weight: 849, value: [20, 20] }
+    - { tier: 5, ilvl: 24, weight: 1212, value: [15, 15] }
   mods:
     - { stat: local.requirements, type: INCREASED, value: "-{value}" }
 
@@ -338,11 +340,11 @@ pierce_chance:
   names: [之星骸, 之貫穿, 之穿刺, 之鑽透, 之刺穿]
   text: "投射物有 {value}% 機率穿透敵人"
   tiers:
-    - { tier: 1, ilvl: 77, weight: 410, value: [24, 26] }
-    - { tier: 2, ilvl: 61, weight: 512, value: [21, 23] }
-    - { tier: 3, ilvl: 44, weight: 640, value: [18, 20] }
-    - { tier: 4, ilvl: 26, weight: 800, value: [15, 17] }
-    - { tier: 5, ilvl: 11, weight: 1000, value: [12, 14] }
+    - { tier: 1, ilvl: 77, weight: 291, value: [24, 26] }
+    - { tier: 2, ilvl: 61, weight: 416, value: [21, 23] }
+    - { tier: 3, ilvl: 44, weight: 594, value: [18, 20] }
+    - { tier: 4, ilvl: 26, weight: 849, value: [15, 17] }
+    - { tier: 5, ilvl: 11, weight: 1212, value: [12, 14] }
   mods:
     - { stat: skill.pierce_chance, type: FLAT, value: "{value}", tags: [projectile] }
 
@@ -353,11 +355,11 @@ life_recoup:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合]
   text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
   tiers:
-    - { tier: 1, ilvl: 79, weight: 410, value: [22, 24] }
-    - { tier: 2, ilvl: 68, weight: 512, value: [19, 21] }
-    - { tier: 3, ilvl: 56, weight: 640, value: [16, 18] }
-    - { tier: 4, ilvl: 44, weight: 800, value: [13, 15] }
-    - { tier: 5, ilvl: 30, weight: 1000, value: [10, 12] }
+    - { tier: 1, ilvl: 79, weight: 291, value: [22, 24] }
+    - { tier: 2, ilvl: 68, weight: 416, value: [19, 21] }
+    - { tier: 3, ilvl: 56, weight: 594, value: [16, 18] }
+    - { tier: 4, ilvl: 44, weight: 849, value: [13, 15] }
+    - { tier: 5, ilvl: 30, weight: 1212, value: [10, 12] }
   mods:
     - { stat: life.recoup, type: FLAT, value: "{value}" }
 
@@ -369,14 +371,14 @@ dex_flat:
   names: [之星骸飛鷹, 之風, 之獵豹, 之狐, 之猞猁, 之貓, 之鼠, 之兔]
   text: "+{value} 敏捷"
   tiers:
-    - { tier: 1, ilvl: 74, weight: 210, value: [31, 33] }
-    - { tier: 2, ilvl: 66, weight: 262, value: [28, 30] }
-    - { tier: 3, ilvl: 55, weight: 328, value: [25, 27] }
-    - { tier: 4, ilvl: 44, weight: 410, value: [21, 24] }
-    - { tier: 5, ilvl: 33, weight: 512, value: [17, 20] }
-    - { tier: 6, ilvl: 22, weight: 640, value: [13, 16] }
-    - { tier: 7, ilvl: 11, weight: 800, value: [9, 12] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [5, 8] }
+    - { tier: 1, ilvl: 74, weight: 109, value: [31, 33] }
+    - { tier: 2, ilvl: 66, weight: 156, value: [28, 30] }
+    - { tier: 3, ilvl: 55, weight: 223, value: [25, 27] }
+    - { tier: 4, ilvl: 44, weight: 318, value: [21, 24] }
+    - { tier: 5, ilvl: 33, weight: 454, value: [17, 20] }
+    - { tier: 6, ilvl: 22, weight: 649, value: [13, 16] }
+    - { tier: 7, ilvl: 11, weight: 927, value: [9, 12] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [5, 8] }
   mods:
     - { stat: attr.dex, type: FLAT, value: "{value}" }
 
@@ -387,15 +389,15 @@ dex_flat_legs:
   names: [之星骸飛鷹, 之風, 之獵豹, 之狐, 之猞猁, 之貓, 之鼠, 之兔, 之平凡]
   text: "+{value} 敏捷"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 168, value: [34, 36] }
-    - { tier: 2, ilvl: 74, weight: 210, value: [31, 33] }
-    - { tier: 3, ilvl: 66, weight: 262, value: [28, 30] }
-    - { tier: 4, ilvl: 55, weight: 328, value: [25, 27] }
-    - { tier: 5, ilvl: 44, weight: 410, value: [21, 24] }
-    - { tier: 6, ilvl: 33, weight: 512, value: [17, 20] }
-    - { tier: 7, ilvl: 22, weight: 640, value: [13, 16] }
-    - { tier: 8, ilvl: 11, weight: 800, value: [9, 12] }
-    - { tier: 9, ilvl: 1, weight: 1000, value: [5, 8] }
+    - { tier: 1, ilvl: 81, weight: 78, value: [34, 36] }
+    - { tier: 2, ilvl: 74, weight: 111, value: [31, 33] }
+    - { tier: 3, ilvl: 66, weight: 159, value: [28, 30] }
+    - { tier: 4, ilvl: 55, weight: 228, value: [25, 27] }
+    - { tier: 5, ilvl: 44, weight: 325, value: [21, 24] }
+    - { tier: 6, ilvl: 33, weight: 464, value: [17, 20] }
+    - { tier: 7, ilvl: 22, weight: 663, value: [13, 16] }
+    - { tier: 8, ilvl: 11, weight: 948, value: [9, 12] }
+    - { tier: 9, ilvl: 1, weight: 1354, value: [5, 8] }
   mods:
     - { stat: attr.dex, type: FLAT, value: "{value}" }
 
@@ -407,7 +409,7 @@ es_recharge:
   names: [之星骸]
   text: "增加 {value}% 能量護盾回充速度"
   tiers:
-    - { tier: 1, ilvl: 48, weight: 1000, value: [16, 19] }
+    - { tier: 1, ilvl: 48, weight: 500, value: [16, 19] }
   mods:
     - { stat: es.recharge, type: INCREASED, value: "{value}" }
 
@@ -419,9 +421,9 @@ es_recharge_body:
   names: [之星骸, 之永生, 之再生]
   text: "增加 {value}% 能量護盾回充速度"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 640, value: [24, 27] }
-    - { tier: 2, ilvl: 66, weight: 800, value: [20, 23] }
-    - { tier: 3, ilvl: 48, weight: 1000, value: [16, 19] }
+    - { tier: 1, ilvl: 81, weight: 546, value: [24, 27] }
+    - { tier: 2, ilvl: 66, weight: 780, value: [20, 23] }
+    - { tier: 3, ilvl: 48, weight: 1114, value: [16, 19] }
   mods:
     - { stat: es.recharge, type: INCREASED, value: "{value}" }
 
@@ -432,14 +434,14 @@ resist_fire:
   names: [之星焰, 之熔心, 之焰盾, 之耐火, 之火紋, 之焦土, 之炭痕, 之暖意]
   text: "+{value}% 火焰抗性"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 210, value: [41, 45] }
-    - { tier: 2, ilvl: 71, weight: 262, value: [36, 40] }
-    - { tier: 3, ilvl: 60, weight: 328, value: [31, 35] }
-    - { tier: 4, ilvl: 48, weight: 410, value: [26, 30] }
-    - { tier: 5, ilvl: 36, weight: 512, value: [21, 25] }
-    - { tier: 6, ilvl: 24, weight: 640, value: [16, 20] }
-    - { tier: 7, ilvl: 12, weight: 800, value: [11, 15] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [6, 10] }
+    - { tier: 1, ilvl: 82, weight: 109, value: [41, 45] }
+    - { tier: 2, ilvl: 71, weight: 156, value: [36, 40] }
+    - { tier: 3, ilvl: 60, weight: 223, value: [31, 35] }
+    - { tier: 4, ilvl: 48, weight: 318, value: [26, 30] }
+    - { tier: 5, ilvl: 36, weight: 454, value: [21, 25] }
+    - { tier: 6, ilvl: 24, weight: 649, value: [16, 20] }
+    - { tier: 7, ilvl: 12, weight: 927, value: [11, 15] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [6, 10] }
   mods:
     - { stat: resist.fire, type: FLAT, value: "{value}" }
 
@@ -451,11 +453,11 @@ freeze_buildup:
   text: "增加 {value}% 凍結累積"
   chips: [elemental, cold, ailment]   # PoE2 的標籤（FreezeDamageIncrease）
   tiers:
-    - { tier: 1, ilvl: 75, weight: 410, value: [71, 80] }
-    - { tier: 2, ilvl: 60, weight: 512, value: [61, 70] }
-    - { tier: 3, ilvl: 45, weight: 640, value: [51, 60] }
-    - { tier: 4, ilvl: 30, weight: 800, value: [41, 50] }
-    - { tier: 5, ilvl: 15, weight: 1000, value: [31, 40] }
+    - { tier: 1, ilvl: 75, weight: 291, value: [71, 80] }
+    - { tier: 2, ilvl: 60, weight: 416, value: [61, 70] }
+    - { tier: 3, ilvl: 45, weight: 594, value: [51, 60] }
+    - { tier: 4, ilvl: 30, weight: 849, value: [41, 50] }
+    - { tier: 5, ilvl: 15, weight: 1212, value: [31, 40] }
   mods:
     - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
 
@@ -466,11 +468,11 @@ skill_level_chaos:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "+{value} 全部混沌法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [5, 5] }
-    - { tier: 2, ilvl: 55, weight: 512, value: [4, 4] }
-    - { tier: 3, ilvl: 36, weight: 640, value: [3, 3] }
-    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 416, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 594, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 849, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, chaos] }
 
@@ -481,11 +483,11 @@ skill_level_chaos_staff:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "+{value} 全部混沌法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [7, 7] }
-    - { tier: 2, ilvl: 55, weight: 512, value: [5, 6] }
-    - { tier: 3, ilvl: 36, weight: 640, value: [3, 4] }
-    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [7, 7] }
+    - { tier: 2, ilvl: 55, weight: 416, value: [5, 6] }
+    - { tier: 3, ilvl: 36, weight: 594, value: [3, 4] }
+    - { tier: 4, ilvl: 18, weight: 849, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, chaos] }
 
@@ -496,11 +498,11 @@ skill_level_cold:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "+{value} 全部冰冷法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [5, 5] }
-    - { tier: 2, ilvl: 55, weight: 512, value: [4, 4] }
-    - { tier: 3, ilvl: 36, weight: 640, value: [3, 3] }
-    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 416, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 594, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 849, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, cold] }
 
@@ -511,11 +513,11 @@ skill_level_cold_staff:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "+{value} 全部冰冷法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [7, 7] }
-    - { tier: 2, ilvl: 55, weight: 512, value: [5, 6] }
-    - { tier: 3, ilvl: 36, weight: 640, value: [3, 4] }
-    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [7, 7] }
+    - { tier: 2, ilvl: 55, weight: 416, value: [5, 6] }
+    - { tier: 3, ilvl: 36, weight: 594, value: [3, 4] }
+    - { tier: 4, ilvl: 18, weight: 849, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, cold] }
 
@@ -526,11 +528,11 @@ skill_level_fire:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "+{value} 全部火焰法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [5, 5] }
-    - { tier: 2, ilvl: 55, weight: 512, value: [4, 4] }
-    - { tier: 3, ilvl: 36, weight: 640, value: [3, 3] }
-    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 416, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 594, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 849, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, fire] }
 
@@ -541,11 +543,11 @@ skill_level_fire_staff:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "+{value} 全部火焰法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [7, 7] }
-    - { tier: 2, ilvl: 55, weight: 512, value: [5, 6] }
-    - { tier: 3, ilvl: 36, weight: 640, value: [3, 4] }
-    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [7, 7] }
+    - { tier: 2, ilvl: 55, weight: 416, value: [5, 6] }
+    - { tier: 3, ilvl: 36, weight: 594, value: [3, 4] }
+    - { tier: 4, ilvl: 18, weight: 849, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, fire] }
 
@@ -556,11 +558,11 @@ skill_level_lightning:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "+{value} 全部閃電法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [5, 5] }
-    - { tier: 2, ilvl: 55, weight: 512, value: [4, 4] }
-    - { tier: 3, ilvl: 36, weight: 640, value: [3, 3] }
-    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 416, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 594, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 849, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, lightning] }
 
@@ -571,11 +573,11 @@ skill_level_lightning_staff:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "+{value} 全部閃電法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [7, 7] }
-    - { tier: 2, ilvl: 55, weight: 512, value: [5, 6] }
-    - { tier: 3, ilvl: 36, weight: 640, value: [3, 4] }
-    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [7, 7] }
+    - { tier: 2, ilvl: 55, weight: 416, value: [5, 6] }
+    - { tier: 3, ilvl: 36, weight: 594, value: [3, 4] }
+    - { tier: 4, ilvl: 18, weight: 849, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, lightning] }
 
@@ -586,8 +588,8 @@ skill_level_melee_amulet:
   names: [之星骸, 之神匠]
   text: "+{value} 全部近戰攻擊技能等級"
   tiers:
-    - { tier: 1, ilvl: 41, weight: 800, value: [2, 2] }
-    - { tier: 2, ilvl: 5, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 41, weight: 741, value: [2, 2] }
+    - { tier: 2, ilvl: 5, weight: 1059, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [attack, melee] }
 
@@ -598,10 +600,10 @@ skill_level_melee_amulet_1h:
   names: [之星骸, 之神匠, 之大師, 之名家]
   text: "+{value} 全部近戰攻擊技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 512, value: [4, 4] }
-    - { tier: 2, ilvl: 55, weight: 640, value: [3, 3] }
-    - { tier: 3, ilvl: 36, weight: 800, value: [2, 2] }
-    - { tier: 4, ilvl: 18, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 400, value: [4, 4] }
+    - { tier: 2, ilvl: 55, weight: 571, value: [3, 3] }
+    - { tier: 3, ilvl: 36, weight: 816, value: [2, 2] }
+    - { tier: 4, ilvl: 18, weight: 1165, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [attack, melee] }
 
@@ -612,9 +614,9 @@ skill_level_melee_amulet_amulet:
   names: [之星骸, 之神匠, 之大師]
   text: "+{value} 全部近戰攻擊技能等級"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 640, value: [3, 3] }
-    - { tier: 2, ilvl: 41, weight: 800, value: [2, 2] }
-    - { tier: 3, ilvl: 5, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 75, weight: 546, value: [3, 3] }
+    - { tier: 2, ilvl: 41, weight: 780, value: [2, 2] }
+    - { tier: 3, ilvl: 5, weight: 1114, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [attack, melee] }
 
@@ -625,10 +627,10 @@ skill_level_melee_2h:
   names: [之星骸, 之神匠, 之大師, 之名家]
   text: "+{value} 全部近戰攻擊技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 512, value: [5, 5] }
-    - { tier: 2, ilvl: 55, weight: 640, value: [4, 4] }
-    - { tier: 3, ilvl: 36, weight: 800, value: [3, 3] }
-    - { tier: 4, ilvl: 18, weight: 1000, value: [2, 2] }
+    - { tier: 1, ilvl: 81, weight: 400, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 571, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 816, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 1165, value: [2, 2] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [attack, melee] }
 
@@ -639,8 +641,8 @@ skill_level_minion_amulet:
   names: [之星骸, 之神匠]
   text: "+{value} 全部召喚物技能等級"
   tiers:
-    - { tier: 1, ilvl: 41, weight: 800, value: [2, 2] }
-    - { tier: 2, ilvl: 5, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 41, weight: 741, value: [2, 2] }
+    - { tier: 2, ilvl: 5, weight: 1059, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
 
@@ -651,9 +653,9 @@ skill_level_minion_amulet_amulet:
   names: [之星骸, 之神匠, 之大師]
   text: "+{value} 全部召喚物技能等級"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 640, value: [3, 3] }
-    - { tier: 2, ilvl: 41, weight: 800, value: [2, 2] }
-    - { tier: 3, ilvl: 5, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 75, weight: 546, value: [3, 3] }
+    - { tier: 2, ilvl: 41, weight: 780, value: [2, 2] }
+    - { tier: 3, ilvl: 5, weight: 1114, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
 
@@ -664,10 +666,10 @@ skill_level_minion:
   names: [之星骸, 之神匠, 之大師, 之名家]
   text: "+{value} 全部召喚物技能等級"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 512, value: [4, 4] }
-    - { tier: 2, ilvl: 55, weight: 640, value: [3, 3] }
-    - { tier: 3, ilvl: 25, weight: 800, value: [2, 2] }
-    - { tier: 4, ilvl: 2, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 78, weight: 400, value: [4, 4] }
+    - { tier: 2, ilvl: 55, weight: 571, value: [3, 3] }
+    - { tier: 3, ilvl: 25, weight: 816, value: [2, 2] }
+    - { tier: 4, ilvl: 2, weight: 1165, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
 
@@ -678,11 +680,11 @@ level_physical_spell:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "+{value} 全部物理法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [5, 5] }
-    - { tier: 2, ilvl: 55, weight: 512, value: [4, 4] }
-    - { tier: 3, ilvl: 36, weight: 640, value: [3, 3] }
-    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 416, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 594, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 849, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, physical] }
 
@@ -693,11 +695,11 @@ level_physical_spell_staff:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "+{value} 全部物理法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [7, 7] }
-    - { tier: 2, ilvl: 55, weight: 512, value: [5, 6] }
-    - { tier: 3, ilvl: 36, weight: 640, value: [3, 4] }
-    - { tier: 4, ilvl: 18, weight: 800, value: [2, 2] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [7, 7] }
+    - { tier: 2, ilvl: 55, weight: 416, value: [5, 6] }
+    - { tier: 3, ilvl: 36, weight: 594, value: [3, 4] }
+    - { tier: 4, ilvl: 18, weight: 849, value: [2, 2] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell, physical] }
 
@@ -708,9 +710,9 @@ skill_level_projectile_amulet:
   names: [之星骸, 之神匠, 之大師]
   text: "+{value} 全部投射物技能等級"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 640, value: [3, 3] }
-    - { tier: 2, ilvl: 41, weight: 800, value: [2, 2] }
-    - { tier: 3, ilvl: 5, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 75, weight: 546, value: [3, 3] }
+    - { tier: 2, ilvl: 41, weight: 780, value: [2, 2] }
+    - { tier: 3, ilvl: 5, weight: 1114, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [projectile] }
 
@@ -721,7 +723,7 @@ skill_level_projectile_amulet_quiver:
   names: [之星骸]
   text: "+{value} 全部投射物技能等級"
   tiers:
-    - { tier: 1, ilvl: 5, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 5, weight: 500, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [projectile] }
 
@@ -732,10 +734,10 @@ skill_level_projectile:
   names: [之星骸, 之神匠, 之大師, 之名家]
   text: "+{value} 全部投射物技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 512, value: [4, 4] }
-    - { tier: 2, ilvl: 55, weight: 640, value: [3, 3] }
-    - { tier: 3, ilvl: 36, weight: 800, value: [2, 2] }
-    - { tier: 4, ilvl: 18, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 400, value: [4, 4] }
+    - { tier: 2, ilvl: 55, weight: 571, value: [3, 3] }
+    - { tier: 3, ilvl: 36, weight: 816, value: [2, 2] }
+    - { tier: 4, ilvl: 18, weight: 1165, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [projectile] }
 
@@ -746,10 +748,10 @@ skill_level_projectile_crossbow:
   names: [之星骸, 之神匠, 之大師, 之名家]
   text: "+{value} 全部投射物技能等級"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 512, value: [5, 5] }
-    - { tier: 2, ilvl: 55, weight: 640, value: [4, 4] }
-    - { tier: 3, ilvl: 36, weight: 800, value: [3, 3] }
-    - { tier: 4, ilvl: 18, weight: 1000, value: [2, 2] }
+    - { tier: 1, ilvl: 81, weight: 400, value: [5, 5] }
+    - { tier: 2, ilvl: 55, weight: 571, value: [4, 4] }
+    - { tier: 3, ilvl: 36, weight: 816, value: [3, 3] }
+    - { tier: 4, ilvl: 18, weight: 1165, value: [2, 2] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [projectile] }
 
@@ -761,8 +763,8 @@ skill_level_spell_amulet:
   names: [之星骸, 之神匠]
   text: "+{value} 全部法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 41, weight: 800, value: [2, 2] }
-    - { tier: 2, ilvl: 10, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 41, weight: 741, value: [2, 2] }
+    - { tier: 2, ilvl: 10, weight: 1059, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell] }
 
@@ -773,9 +775,9 @@ skill_level_spell_amulet_amulet:
   names: [之星骸, 之神匠, 之大師]
   text: "+{value} 全部法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 640, value: [3, 3] }
-    - { tier: 2, ilvl: 41, weight: 800, value: [2, 2] }
-    - { tier: 3, ilvl: 10, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 75, weight: 546, value: [3, 3] }
+    - { tier: 2, ilvl: 41, weight: 780, value: [2, 2] }
+    - { tier: 3, ilvl: 10, weight: 1114, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell] }
 
@@ -786,10 +788,10 @@ skill_level_spell:
   names: [之星骸, 之神匠, 之大師, 之名家]
   text: "+{value} 全部法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 512, value: [4, 4] }
-    - { tier: 2, ilvl: 55, weight: 640, value: [3, 3] }
-    - { tier: 3, ilvl: 25, weight: 800, value: [2, 2] }
-    - { tier: 4, ilvl: 5, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 78, weight: 400, value: [4, 4] }
+    - { tier: 2, ilvl: 55, weight: 571, value: [3, 3] }
+    - { tier: 3, ilvl: 25, weight: 816, value: [2, 2] }
+    - { tier: 4, ilvl: 5, weight: 1165, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell] }
 
@@ -800,10 +802,10 @@ skill_level_spell_staff:
   names: [之星骸, 之神匠, 之大師, 之名家]
   text: "+{value} 全部法術技能等級"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 512, value: [5, 6] }
-    - { tier: 2, ilvl: 55, weight: 640, value: [4, 4] }
-    - { tier: 3, ilvl: 25, weight: 800, value: [3, 3] }
-    - { tier: 4, ilvl: 5, weight: 1000, value: [2, 2] }
+    - { tier: 1, ilvl: 78, weight: 400, value: [5, 6] }
+    - { tier: 2, ilvl: 55, weight: 571, value: [4, 4] }
+    - { tier: 3, ilvl: 25, weight: 816, value: [3, 3] }
+    - { tier: 4, ilvl: 5, weight: 1165, value: [2, 2] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell] }
 
@@ -814,11 +816,11 @@ ignite_chance:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "增加 {value}% 點燃機率"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 410, value: [91, 100] }
-    - { tier: 2, ilvl: 60, weight: 512, value: [81, 90] }
-    - { tier: 3, ilvl: 45, weight: 640, value: [71, 80] }
-    - { tier: 4, ilvl: 30, weight: 800, value: [61, 70] }
-    - { tier: 5, ilvl: 15, weight: 1000, value: [51, 60] }
+    - { tier: 1, ilvl: 75, weight: 291, value: [91, 100] }
+    - { tier: 2, ilvl: 60, weight: 416, value: [81, 90] }
+    - { tier: 3, ilvl: 45, weight: 594, value: [71, 80] }
+    - { tier: 4, ilvl: 30, weight: 849, value: [61, 70] }
+    - { tier: 5, ilvl: 15, weight: 1212, value: [51, 60] }
   mods:
     - { stat: ignite.chance, type: INCREASED, value: "{value}" }
 
@@ -829,10 +831,10 @@ attack_speed:
   names: [之星骸, 之神速, 之疾風, 之迅捷]
   text: "增加 {value}% 攻擊速度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 512, value: [14, 16] }
-    - { tier: 2, ilvl: 37, weight: 640, value: [11, 13] }
-    - { tier: 3, ilvl: 22, weight: 800, value: [8, 10] }
-    - { tier: 4, ilvl: 1, weight: 1000, value: [5, 7] }
+    - { tier: 1, ilvl: 60, weight: 400, value: [14, 16] }
+    - { tier: 2, ilvl: 37, weight: 571, value: [11, 13] }
+    - { tier: 3, ilvl: 22, weight: 816, value: [8, 10] }
+    - { tier: 4, ilvl: 1, weight: 1165, value: [5, 7] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}" }
 
@@ -844,12 +846,12 @@ cast_speed:
   names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷, 之快手]
   text: "增加 {value}% 施法速度"
   tiers:
-    - { tier: 1, ilvl: 70, weight: 328, value: [29, 32] }
-    - { tier: 2, ilvl: 60, weight: 410, value: [25, 28] }
-    - { tier: 3, ilvl: 45, weight: 512, value: [21, 24] }
-    - { tier: 4, ilvl: 30, weight: 640, value: [17, 20] }
-    - { tier: 5, ilvl: 15, weight: 800, value: [13, 16] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [9, 12] }
+    - { tier: 1, ilvl: 70, weight: 211, value: [29, 32] }
+    - { tier: 2, ilvl: 60, weight: 301, value: [25, 28] }
+    - { tier: 3, ilvl: 45, weight: 430, value: [21, 24] }
+    - { tier: 4, ilvl: 30, weight: 615, value: [17, 20] }
+    - { tier: 5, ilvl: 15, weight: 878, value: [13, 16] }
+    - { tier: 6, ilvl: 1, weight: 1255, value: [9, 12] }
   mods:
     - { stat: cast.speed, type: INCREASED, value: "{value}" }
 
@@ -860,12 +862,12 @@ cast_speed_amulet:
   names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷, 之快手]
   text: "增加 {value}% 施法速度"
   tiers:
-    - { tier: 1, ilvl: 66, weight: 328, value: [25, 28] }
-    - { tier: 2, ilvl: 60, weight: 410, value: [22, 24] }
-    - { tier: 3, ilvl: 51, weight: 512, value: [19, 21] }
-    - { tier: 4, ilvl: 35, weight: 640, value: [16, 18] }
-    - { tier: 5, ilvl: 18, weight: 800, value: [13, 15] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [9, 12] }
+    - { tier: 1, ilvl: 66, weight: 211, value: [25, 28] }
+    - { tier: 2, ilvl: 60, weight: 301, value: [22, 24] }
+    - { tier: 3, ilvl: 51, weight: 430, value: [19, 21] }
+    - { tier: 4, ilvl: 35, weight: 615, value: [16, 18] }
+    - { tier: 5, ilvl: 18, weight: 878, value: [13, 15] }
+    - { tier: 6, ilvl: 1, weight: 1255, value: [9, 12] }
   mods:
     - { stat: cast.speed, type: INCREASED, value: "{value}" }
 
@@ -876,11 +878,11 @@ cast_speed_ring:
   names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷]
   text: "增加 {value}% 施法速度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 410, value: [22, 24] }
-    - { tier: 2, ilvl: 51, weight: 512, value: [19, 21] }
-    - { tier: 3, ilvl: 35, weight: 640, value: [16, 18] }
-    - { tier: 4, ilvl: 18, weight: 800, value: [13, 15] }
-    - { tier: 5, ilvl: 1, weight: 1000, value: [9, 12] }
+    - { tier: 1, ilvl: 60, weight: 291, value: [22, 24] }
+    - { tier: 2, ilvl: 51, weight: 416, value: [19, 21] }
+    - { tier: 3, ilvl: 35, weight: 594, value: [16, 18] }
+    - { tier: 4, ilvl: 18, weight: 849, value: [13, 15] }
+    - { tier: 5, ilvl: 1, weight: 1212, value: [9, 12] }
   mods:
     - { stat: cast.speed, type: INCREASED, value: "{value}" }
 
@@ -891,13 +893,13 @@ cast_speed_wand:
   names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷, 之快手, 之靈巧]
   text: "增加 {value}% 施法速度"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 262, value: [33, 35] }
-    - { tier: 2, ilvl: 70, weight: 328, value: [29, 32] }
-    - { tier: 3, ilvl: 60, weight: 410, value: [25, 28] }
-    - { tier: 4, ilvl: 45, weight: 512, value: [21, 24] }
-    - { tier: 5, ilvl: 30, weight: 640, value: [17, 20] }
-    - { tier: 6, ilvl: 15, weight: 800, value: [13, 16] }
-    - { tier: 7, ilvl: 1, weight: 1000, value: [9, 12] }
+    - { tier: 1, ilvl: 80, weight: 152, value: [33, 35] }
+    - { tier: 2, ilvl: 70, weight: 217, value: [29, 32] }
+    - { tier: 3, ilvl: 60, weight: 310, value: [25, 28] }
+    - { tier: 4, ilvl: 45, weight: 443, value: [21, 24] }
+    - { tier: 5, ilvl: 30, weight: 633, value: [17, 20] }
+    - { tier: 6, ilvl: 15, weight: 904, value: [13, 16] }
+    - { tier: 7, ilvl: 1, weight: 1292, value: [9, 12] }
   mods:
     - { stat: cast.speed, type: INCREASED, value: "{value}" }
 
@@ -908,13 +910,13 @@ cast_speed_staff:
   names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷, 之快手, 之靈巧]
   text: "增加 {value}% 施法速度"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 262, value: [50, 52] }
-    - { tier: 2, ilvl: 70, weight: 328, value: [44, 49] }
-    - { tier: 3, ilvl: 60, weight: 410, value: [38, 43] }
-    - { tier: 4, ilvl: 45, weight: 512, value: [32, 37] }
-    - { tier: 5, ilvl: 30, weight: 640, value: [26, 31] }
-    - { tier: 6, ilvl: 15, weight: 800, value: [20, 25] }
-    - { tier: 7, ilvl: 1, weight: 1000, value: [14, 19] }
+    - { tier: 1, ilvl: 80, weight: 152, value: [50, 52] }
+    - { tier: 2, ilvl: 70, weight: 217, value: [44, 49] }
+    - { tier: 3, ilvl: 60, weight: 310, value: [38, 43] }
+    - { tier: 4, ilvl: 45, weight: 443, value: [32, 37] }
+    - { tier: 5, ilvl: 30, weight: 633, value: [26, 31] }
+    - { tier: 6, ilvl: 15, weight: 904, value: [20, 25] }
+    - { tier: 7, ilvl: 1, weight: 1292, value: [14, 19] }
   mods:
     - { stat: cast.speed, type: INCREASED, value: "{value}" }
 
@@ -926,14 +928,14 @@ int_flat:
   names: [之星骸賢者, 之天才, 之博學, 之智者, 之學者, 之書生, 之學徒, 之初學]
   text: "+{value} 智慧"
   tiers:
-    - { tier: 1, ilvl: 74, weight: 210, value: [31, 33] }
-    - { tier: 2, ilvl: 66, weight: 262, value: [28, 30] }
-    - { tier: 3, ilvl: 55, weight: 328, value: [25, 27] }
-    - { tier: 4, ilvl: 44, weight: 410, value: [21, 24] }
-    - { tier: 5, ilvl: 33, weight: 512, value: [17, 20] }
-    - { tier: 6, ilvl: 22, weight: 640, value: [13, 16] }
-    - { tier: 7, ilvl: 11, weight: 800, value: [9, 12] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [5, 8] }
+    - { tier: 1, ilvl: 74, weight: 109, value: [31, 33] }
+    - { tier: 2, ilvl: 66, weight: 156, value: [28, 30] }
+    - { tier: 3, ilvl: 55, weight: 223, value: [25, 27] }
+    - { tier: 4, ilvl: 44, weight: 318, value: [21, 24] }
+    - { tier: 5, ilvl: 33, weight: 454, value: [17, 20] }
+    - { tier: 6, ilvl: 22, weight: 649, value: [13, 16] }
+    - { tier: 7, ilvl: 11, weight: 927, value: [9, 12] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [5, 8] }
   mods:
     - { stat: attr.int, type: FLAT, value: "{value}" }
 
@@ -944,15 +946,15 @@ int_flat_helmet:
   names: [之星骸賢者, 之天才, 之博學, 之智者, 之學者, 之書生, 之學徒, 之初學, 之平凡]
   text: "+{value} 智慧"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 168, value: [34, 36] }
-    - { tier: 2, ilvl: 74, weight: 210, value: [31, 33] }
-    - { tier: 3, ilvl: 66, weight: 262, value: [28, 30] }
-    - { tier: 4, ilvl: 55, weight: 328, value: [25, 27] }
-    - { tier: 5, ilvl: 44, weight: 410, value: [21, 24] }
-    - { tier: 6, ilvl: 33, weight: 512, value: [17, 20] }
-    - { tier: 7, ilvl: 22, weight: 640, value: [13, 16] }
-    - { tier: 8, ilvl: 11, weight: 800, value: [9, 12] }
-    - { tier: 9, ilvl: 1, weight: 1000, value: [5, 8] }
+    - { tier: 1, ilvl: 81, weight: 78, value: [34, 36] }
+    - { tier: 2, ilvl: 74, weight: 111, value: [31, 33] }
+    - { tier: 3, ilvl: 66, weight: 159, value: [28, 30] }
+    - { tier: 4, ilvl: 55, weight: 228, value: [25, 27] }
+    - { tier: 5, ilvl: 44, weight: 325, value: [21, 24] }
+    - { tier: 6, ilvl: 33, weight: 464, value: [17, 20] }
+    - { tier: 7, ilvl: 22, weight: 663, value: [13, 16] }
+    - { tier: 8, ilvl: 11, weight: 948, value: [9, 12] }
+    - { tier: 9, ilvl: 1, weight: 1354, value: [5, 8] }
   mods:
     - { stat: attr.int, type: FLAT, value: "{value}" }
 
@@ -963,9 +965,9 @@ rarity_suffix:
   names: [之星骸, 之神匠, 之大師]
   text: "增加 {value}% 物品掉落稀有度"
   tiers:
-    - { tier: 1, ilvl: 40, weight: 640, value: [15, 18] }
-    - { tier: 2, ilvl: 24, weight: 800, value: [11, 14] }
-    - { tier: 3, ilvl: 3, weight: 1000, value: [6, 10] }
+    - { tier: 1, ilvl: 40, weight: 546, value: [15, 18] }
+    - { tier: 2, ilvl: 24, weight: 780, value: [11, 14] }
+    - { tier: 3, ilvl: 3, weight: 1114, value: [6, 10] }
   mods:
     - { stat: drop.rarity, type: INCREASED, value: "{value}" }
 
@@ -976,10 +978,10 @@ life_on_hit:
   names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
   text: "攻擊每擊中一個敵人回復 {value} 生命"
   tiers:
-    - { tier: 1, ilvl: 40, weight: 512, value: [5, 5] }
-    - { tier: 2, ilvl: 30, weight: 640, value: [4, 4] }
-    - { tier: 3, ilvl: 20, weight: 800, value: [3, 3] }
-    - { tier: 4, ilvl: 8, weight: 1000, value: [2, 2] }
+    - { tier: 1, ilvl: 40, weight: 400, value: [5, 5] }
+    - { tier: 2, ilvl: 30, weight: 571, value: [4, 4] }
+    - { tier: 3, ilvl: 20, weight: 816, value: [3, 3] }
+    - { tier: 4, ilvl: 8, weight: 1165, value: [2, 2] }
   mods:
     - { stat: life.on_hit, type: FLAT, value: "{value}", tags: [attack] }
 
@@ -990,10 +992,10 @@ life_on_hit_local:
   names: [之星骸, 之吸血鬼, 之噬血, 之汲取]
   text: "每擊中一個敵人回復 {value} 生命"
   tiers:
-    - { tier: 1, ilvl: 40, weight: 512, value: [5, 5] }
-    - { tier: 2, ilvl: 30, weight: 640, value: [4, 4] }
-    - { tier: 3, ilvl: 20, weight: 800, value: [3, 3] }
-    - { tier: 4, ilvl: 8, weight: 1000, value: [2, 2] }
+    - { tier: 1, ilvl: 40, weight: 400, value: [5, 5] }
+    - { tier: 2, ilvl: 30, weight: 571, value: [4, 4] }
+    - { tier: 3, ilvl: 20, weight: 816, value: [3, 3] }
+    - { tier: 4, ilvl: 8, weight: 1165, value: [2, 2] }
   mods:
     - { stat: life.on_hit, type: FLAT, value: "{value}", tags: [attack] }
 
@@ -1004,14 +1006,14 @@ life_per_kill:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息]
   text: "每擊殺一個敵人回復 {value} 生命"
   tiers:
-    - { tier: 1, ilvl: 77, weight: 210, value: [69, 84] }
-    - { tier: 2, ilvl: 66, weight: 262, value: [54, 68] }
-    - { tier: 3, ilvl: 55, weight: 328, value: [41, 53] }
-    - { tier: 4, ilvl: 44, weight: 410, value: [29, 40] }
-    - { tier: 5, ilvl: 33, weight: 512, value: [19, 28] }
-    - { tier: 6, ilvl: 22, weight: 640, value: [10, 18] }
-    - { tier: 7, ilvl: 11, weight: 800, value: [7, 9] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [4, 6] }
+    - { tier: 1, ilvl: 77, weight: 109, value: [69, 84] }
+    - { tier: 2, ilvl: 66, weight: 156, value: [54, 68] }
+    - { tier: 3, ilvl: 55, weight: 223, value: [41, 53] }
+    - { tier: 4, ilvl: 44, weight: 318, value: [29, 40] }
+    - { tier: 5, ilvl: 33, weight: 454, value: [19, 28] }
+    - { tier: 6, ilvl: 22, weight: 649, value: [10, 18] }
+    - { tier: 7, ilvl: 11, weight: 927, value: [7, 9] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [4, 6] }
   mods:
     - { stat: life.per_kill, type: FLAT, value: "{value}" }
 
@@ -1022,12 +1024,12 @@ life_per_kill_quiver:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復]
   text: "每擊殺一個敵人回復 {value} 生命"
   tiers:
-    - { tier: 1, ilvl: 55, weight: 328, value: [41, 53] }
-    - { tier: 2, ilvl: 44, weight: 410, value: [29, 40] }
-    - { tier: 3, ilvl: 33, weight: 512, value: [19, 28] }
-    - { tier: 4, ilvl: 22, weight: 640, value: [10, 18] }
-    - { tier: 5, ilvl: 11, weight: 800, value: [7, 9] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [4, 6] }
+    - { tier: 1, ilvl: 55, weight: 211, value: [41, 53] }
+    - { tier: 2, ilvl: 44, weight: 301, value: [29, 40] }
+    - { tier: 3, ilvl: 33, weight: 430, value: [19, 28] }
+    - { tier: 4, ilvl: 22, weight: 615, value: [10, 18] }
+    - { tier: 5, ilvl: 11, weight: 878, value: [7, 9] }
+    - { tier: 6, ilvl: 1, weight: 1255, value: [4, 6] }
   mods:
     - { stat: life.per_kill, type: FLAT, value: "{value}" }
 
@@ -1039,10 +1041,10 @@ leech_life_local:
   text: "造成的物理傷害有 {value/100}% 偷取為生命"
   chips: [physical, attack, life]   # PoE2 的標籤（LifeLeechPermyriad）
   tiers:
-    - { tier: 1, ilvl: 65, weight: 512, value: [900, 990] }
-    - { tier: 2, ilvl: 54, weight: 640, value: [800, 890] }
-    - { tier: 3, ilvl: 38, weight: 800, value: [700, 790] }
-    - { tier: 4, ilvl: 21, weight: 1000, value: [600, 690] }
+    - { tier: 1, ilvl: 65, weight: 400, value: [900, 990] }
+    - { tier: 2, ilvl: 54, weight: 571, value: [800, 890] }
+    - { tier: 3, ilvl: 38, weight: 816, value: [700, 790] }
+    - { tier: 4, ilvl: 21, weight: 1165, value: [600, 690] }
   mods:
     - { stat: leech.life, type: FLAT, value: "{value/100}", tags: [attack] }
 
@@ -1054,10 +1056,10 @@ leech_life:
   text: "攻擊造成的物理傷害有 {value/100}% 偷取為生命"
   chips: [physical, attack, life]   # PoE2 的標籤（LifeLeechPermyriad）
   tiers:
-    - { tier: 1, ilvl: 65, weight: 512, value: [900, 990] }
-    - { tier: 2, ilvl: 54, weight: 640, value: [800, 890] }
-    - { tier: 3, ilvl: 38, weight: 800, value: [700, 790] }
-    - { tier: 4, ilvl: 21, weight: 1000, value: [600, 690] }
+    - { tier: 1, ilvl: 65, weight: 400, value: [900, 990] }
+    - { tier: 2, ilvl: 54, weight: 571, value: [800, 890] }
+    - { tier: 3, ilvl: 38, weight: 816, value: [700, 790] }
+    - { tier: 4, ilvl: 21, weight: 1165, value: [600, 690] }
   mods:
     - { stat: leech.life, type: FLAT, value: "{value/100}", tags: [attack] }
 
@@ -1068,8 +1070,8 @@ leech_life_ring:
   names: [之星骸, 之吸血鬼]
   text: "攻擊造成的物理傷害有 {value/100}% 偷取為生命"
   tiers:
-    - { tier: 1, ilvl: 38, weight: 800, value: [700, 790] }
-    - { tier: 2, ilvl: 21, weight: 1000, value: [600, 690] }
+    - { tier: 1, ilvl: 38, weight: 741, value: [700, 790] }
+    - { tier: 2, ilvl: 21, weight: 1059, value: [600, 690] }
   mods:
     - { stat: leech.life, type: FLAT, value: "{value/100}", tags: [attack] }
 
@@ -1080,14 +1082,14 @@ life_regen2:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息]
   text: "每秒回復 {value/10} 生命"
   tiers:
-    - { tier: 1, ilvl: 58, weight: 210, value: [181, 230] }
-    - { tier: 2, ilvl: 47, weight: 262, value: [131, 180] }
-    - { tier: 3, ilvl: 35, weight: 328, value: [91, 130] }
-    - { tier: 4, ilvl: 26, weight: 410, value: [61, 90] }
-    - { tier: 5, ilvl: 17, weight: 512, value: [41, 60] }
-    - { tier: 6, ilvl: 11, weight: 640, value: [31, 40] }
-    - { tier: 7, ilvl: 5, weight: 800, value: [21, 30] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [10, 20] }
+    - { tier: 1, ilvl: 58, weight: 109, value: [181, 230] }
+    - { tier: 2, ilvl: 47, weight: 156, value: [131, 180] }
+    - { tier: 3, ilvl: 35, weight: 223, value: [91, 130] }
+    - { tier: 4, ilvl: 26, weight: 318, value: [61, 90] }
+    - { tier: 5, ilvl: 17, weight: 454, value: [41, 60] }
+    - { tier: 6, ilvl: 11, weight: 649, value: [31, 40] }
+    - { tier: 7, ilvl: 5, weight: 927, value: [21, 30] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [10, 20] }
   mods:
     - { stat: life.regen, type: FLAT, value: "{value/10}" }
 
@@ -1098,17 +1100,17 @@ life_regen2_body:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息, 之喘息, 之平凡, 之粗糙]
   text: "每秒回復 {value/10} 生命"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 107, value: [331, 360] }
-    - { tier: 2, ilvl: 75, weight: 134, value: [291, 330] }
-    - { tier: 3, ilvl: 68, weight: 168, value: [231, 290] }
-    - { tier: 4, ilvl: 58, weight: 210, value: [181, 230] }
-    - { tier: 5, ilvl: 47, weight: 262, value: [131, 180] }
-    - { tier: 6, ilvl: 35, weight: 328, value: [91, 130] }
-    - { tier: 7, ilvl: 26, weight: 410, value: [61, 90] }
-    - { tier: 8, ilvl: 17, weight: 512, value: [41, 60] }
-    - { tier: 9, ilvl: 11, weight: 640, value: [31, 40] }
-    - { tier: 10, ilvl: 5, weight: 800, value: [21, 30] }
-    - { tier: 11, ilvl: 1, weight: 1000, value: [10, 20] }
+    - { tier: 1, ilvl: 81, weight: 40, value: [331, 360] }
+    - { tier: 2, ilvl: 75, weight: 56, value: [291, 330] }
+    - { tier: 3, ilvl: 68, weight: 81, value: [231, 290] }
+    - { tier: 4, ilvl: 58, weight: 115, value: [181, 230] }
+    - { tier: 5, ilvl: 47, weight: 165, value: [131, 180] }
+    - { tier: 6, ilvl: 35, weight: 235, value: [91, 130] }
+    - { tier: 7, ilvl: 26, weight: 336, value: [61, 90] }
+    - { tier: 8, ilvl: 17, weight: 480, value: [41, 60] }
+    - { tier: 9, ilvl: 11, weight: 685, value: [31, 40] }
+    - { tier: 10, ilvl: 5, weight: 979, value: [21, 30] }
+    - { tier: 11, ilvl: 1, weight: 1399, value: [10, 20] }
   mods:
     - { stat: life.regen, type: FLAT, value: "{value/10}" }
 
@@ -1119,16 +1121,16 @@ life_regen2_amulet:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息, 之喘息, 之平凡]
   text: "每秒回復 {value/10} 生命"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 134, value: [291, 330] }
-    - { tier: 2, ilvl: 68, weight: 168, value: [231, 290] }
-    - { tier: 3, ilvl: 58, weight: 210, value: [181, 230] }
-    - { tier: 4, ilvl: 47, weight: 262, value: [131, 180] }
-    - { tier: 5, ilvl: 35, weight: 328, value: [91, 130] }
-    - { tier: 6, ilvl: 26, weight: 410, value: [61, 90] }
-    - { tier: 7, ilvl: 17, weight: 512, value: [41, 60] }
-    - { tier: 8, ilvl: 11, weight: 640, value: [31, 40] }
-    - { tier: 9, ilvl: 5, weight: 800, value: [21, 30] }
-    - { tier: 10, ilvl: 1, weight: 1000, value: [10, 20] }
+    - { tier: 1, ilvl: 75, weight: 56, value: [291, 330] }
+    - { tier: 2, ilvl: 68, weight: 79, value: [231, 290] }
+    - { tier: 3, ilvl: 58, weight: 113, value: [181, 230] }
+    - { tier: 4, ilvl: 47, weight: 162, value: [131, 180] }
+    - { tier: 5, ilvl: 35, weight: 232, value: [91, 130] }
+    - { tier: 6, ilvl: 26, weight: 331, value: [61, 90] }
+    - { tier: 7, ilvl: 17, weight: 473, value: [41, 60] }
+    - { tier: 8, ilvl: 11, weight: 675, value: [31, 40] }
+    - { tier: 9, ilvl: 5, weight: 965, value: [21, 30] }
+    - { tier: 10, ilvl: 1, weight: 1378, value: [10, 20] }
   mods:
     - { stat: life.regen, type: FLAT, value: "{value/10}" }
 
@@ -1139,13 +1141,13 @@ life_regen2_ring:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養]
   text: "每秒回復 {value/10} 生命"
   tiers:
-    - { tier: 1, ilvl: 47, weight: 262, value: [131, 180] }
-    - { tier: 2, ilvl: 35, weight: 328, value: [91, 130] }
-    - { tier: 3, ilvl: 26, weight: 410, value: [61, 90] }
-    - { tier: 4, ilvl: 17, weight: 512, value: [41, 60] }
-    - { tier: 5, ilvl: 11, weight: 640, value: [31, 40] }
-    - { tier: 6, ilvl: 5, weight: 800, value: [21, 30] }
-    - { tier: 7, ilvl: 1, weight: 1000, value: [10, 20] }
+    - { tier: 1, ilvl: 47, weight: 152, value: [131, 180] }
+    - { tier: 2, ilvl: 35, weight: 217, value: [91, 130] }
+    - { tier: 3, ilvl: 26, weight: 310, value: [61, 90] }
+    - { tier: 4, ilvl: 17, weight: 443, value: [41, 60] }
+    - { tier: 5, ilvl: 11, weight: 633, value: [31, 40] }
+    - { tier: 6, ilvl: 5, weight: 904, value: [21, 30] }
+    - { tier: 7, ilvl: 1, weight: 1292, value: [10, 20] }
   mods:
     - { stat: life.regen, type: FLAT, value: "{value/10}" }
 
@@ -1156,15 +1158,15 @@ life_regen2_belt:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息, 之喘息]
   text: "每秒回復 {value/10} 生命"
   tiers:
-    - { tier: 1, ilvl: 68, weight: 168, value: [231, 290] }
-    - { tier: 2, ilvl: 58, weight: 210, value: [181, 230] }
-    - { tier: 3, ilvl: 47, weight: 262, value: [131, 180] }
-    - { tier: 4, ilvl: 35, weight: 328, value: [91, 130] }
-    - { tier: 5, ilvl: 26, weight: 410, value: [61, 90] }
-    - { tier: 6, ilvl: 17, weight: 512, value: [41, 60] }
-    - { tier: 7, ilvl: 11, weight: 640, value: [31, 40] }
-    - { tier: 8, ilvl: 5, weight: 800, value: [21, 30] }
-    - { tier: 9, ilvl: 1, weight: 1000, value: [10, 20] }
+    - { tier: 1, ilvl: 68, weight: 78, value: [231, 290] }
+    - { tier: 2, ilvl: 58, weight: 111, value: [181, 230] }
+    - { tier: 3, ilvl: 47, weight: 159, value: [131, 180] }
+    - { tier: 4, ilvl: 35, weight: 228, value: [91, 130] }
+    - { tier: 5, ilvl: 26, weight: 325, value: [61, 90] }
+    - { tier: 6, ilvl: 17, weight: 464, value: [41, 60] }
+    - { tier: 7, ilvl: 11, weight: 663, value: [31, 40] }
+    - { tier: 8, ilvl: 5, weight: 948, value: [21, 30] }
+    - { tier: 9, ilvl: 1, weight: 1354, value: [10, 20] }
   mods:
     - { stat: life.regen, type: FLAT, value: "{value/10}" }
 
@@ -1175,9 +1177,9 @@ accuracy_light:          # 2026-10：PoE2 的 of Shining／Light／Radiance（�
   names: [之星骸, 之神匠, 之大師]
   text: "+{value} 命中、增加 {b}% 命中"
   tiers:
-    - { tier: 1, ilvl: 30, weight: 640, value: [41, 60], b: [15, 15] }
-    - { tier: 2, ilvl: 15, weight: 800, value: [21, 40], b: [10, 10] }
-    - { tier: 3, ilvl: 8, weight: 1000, value: [10, 20], b: [5, 5] }
+    - { tier: 1, ilvl: 30, weight: 78, value: [41, 60], b: [15, 15] }
+    - { tier: 2, ilvl: 15, weight: 111, value: [21, 40], b: [10, 10] }
+    - { tier: 3, ilvl: 8, weight: 159, value: [10, 20], b: [5, 5] }
   mods:
     - { stat: accuracy, type: FLAT, value: "{value}" }
     - { stat: accuracy, type: INCREASED, value: "{b}" }
@@ -1189,9 +1191,9 @@ mana_regen_light:        # 2026-10：PoE2 的 of Warmth／Kindling／the Hearth�
   names: [之星骸, 之永生, 之再生]
   text: "增加 {value}% 魔力回復速度、+{b} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 30, weight: 640, value: [18, 22], b: [8, 8] }
-    - { tier: 2, ilvl: 15, weight: 800, value: [13, 17], b: [5, 5] }
-    - { tier: 3, ilvl: 8, weight: 1000, value: [8, 12], b: [3, 3] }
+    - { tier: 1, ilvl: 30, weight: 78, value: [18, 22], b: [8, 8] }
+    - { tier: 2, ilvl: 15, weight: 111, value: [13, 17], b: [5, 5] }
+    - { tier: 3, ilvl: 8, weight: 159, value: [8, 12], b: [3, 3] }
   mods:
     - { stat: mana.regen, type: INCREASED, value: "{value}" }
     - { stat: mana.max, type: FLAT, value: "{b}" }
@@ -1203,14 +1205,14 @@ resist_lightning:
   names: [之星雷, 之雷心, 之雷盾, 之絕緣, 之電紋, 之避雷, 之靜電, 之微麻]
   text: "+{value}% 閃電抗性"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 210, value: [41, 45] }
-    - { tier: 2, ilvl: 71, weight: 262, value: [36, 40] }
-    - { tier: 3, ilvl: 60, weight: 328, value: [31, 35] }
-    - { tier: 4, ilvl: 49, weight: 410, value: [26, 30] }
-    - { tier: 5, ilvl: 37, weight: 512, value: [21, 25] }
-    - { tier: 6, ilvl: 25, weight: 640, value: [16, 20] }
-    - { tier: 7, ilvl: 13, weight: 800, value: [11, 15] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [6, 10] }
+    - { tier: 1, ilvl: 82, weight: 109, value: [41, 45] }
+    - { tier: 2, ilvl: 71, weight: 156, value: [36, 40] }
+    - { tier: 3, ilvl: 60, weight: 223, value: [31, 35] }
+    - { tier: 4, ilvl: 49, weight: 318, value: [26, 30] }
+    - { tier: 5, ilvl: 37, weight: 454, value: [21, 25] }
+    - { tier: 6, ilvl: 25, weight: 649, value: [16, 20] }
+    - { tier: 7, ilvl: 13, weight: 927, value: [11, 15] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [6, 10] }
   mods:
     - { stat: resist.lightning, type: FLAT, value: "{value}" }
 
@@ -1221,12 +1223,12 @@ local_crit_base:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "+{value/100}% 暴擊率"
   tiers:
-    - { tier: 1, ilvl: 73, weight: 328, value: [441, 500] }
-    - { tier: 2, ilvl: 59, weight: 410, value: [381, 440] }
-    - { tier: 3, ilvl: 44, weight: 512, value: [311, 380] }
-    - { tier: 4, ilvl: 30, weight: 640, value: [211, 270] }
-    - { tier: 5, ilvl: 20, weight: 800, value: [151, 210] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [101, 150] }
+    - { tier: 1, ilvl: 73, weight: 211, value: [441, 500] }
+    - { tier: 2, ilvl: 59, weight: 301, value: [381, 440] }
+    - { tier: 3, ilvl: 44, weight: 430, value: [311, 380] }
+    - { tier: 4, ilvl: 30, weight: 615, value: [211, 270] }
+    - { tier: 5, ilvl: 20, weight: 878, value: [151, 210] }
+    - { tier: 6, ilvl: 1, weight: 1255, value: [101, 150] }
   mods:
     - { stat: local.crit_base, type: FLAT, value: "{value/100}" }
 
@@ -1238,12 +1240,12 @@ local_crit_bonus:
   text: "+{value}% 暴擊傷害加成"
   chips: [damage, attack, critical]   # PoE2 的標籤（LocalCriticalStrikeMultiplier）
   tiers:
-    - { tier: 1, ilvl: 73, weight: 328, value: [23, 25] }
-    - { tier: 2, ilvl: 59, weight: 410, value: [20, 22] }
-    - { tier: 3, ilvl: 44, weight: 512, value: [17, 19] }
-    - { tier: 4, ilvl: 30, weight: 640, value: [14, 16] }
-    - { tier: 5, ilvl: 21, weight: 800, value: [12, 13] }
-    - { tier: 6, ilvl: 8, weight: 1000, value: [10, 11] }
+    - { tier: 1, ilvl: 73, weight: 211, value: [23, 25] }
+    - { tier: 2, ilvl: 59, weight: 301, value: [20, 22] }
+    - { tier: 3, ilvl: 44, weight: 430, value: [17, 19] }
+    - { tier: 4, ilvl: 30, weight: 615, value: [14, 16] }
+    - { tier: 5, ilvl: 21, weight: 878, value: [12, 13] }
+    - { tier: 6, ilvl: 8, weight: 1255, value: [10, 11] }
   mods:
     - { stat: crit.multi, type: FLAT, value: "{value}" }
 
@@ -1254,14 +1256,14 @@ local_attack_speed:
   names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷, 之快手, 之靈巧, 之加速]
   text: "增加 {value}% 攻擊速度"
   tiers:
-    - { tier: 1, ilvl: 77, weight: 210, value: [26, 28] }
-    - { tier: 2, ilvl: 60, weight: 262, value: [23, 25] }
-    - { tier: 3, ilvl: 45, weight: 328, value: [20, 22] }
-    - { tier: 4, ilvl: 37, weight: 410, value: [17, 19] }
-    - { tier: 5, ilvl: 30, weight: 512, value: [14, 16] }
-    - { tier: 6, ilvl: 22, weight: 640, value: [11, 13] }
-    - { tier: 7, ilvl: 11, weight: 800, value: [8, 10] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [5, 7] }
+    - { tier: 1, ilvl: 77, weight: 109, value: [26, 28] }
+    - { tier: 2, ilvl: 60, weight: 156, value: [23, 25] }
+    - { tier: 3, ilvl: 45, weight: 223, value: [20, 22] }
+    - { tier: 4, ilvl: 37, weight: 318, value: [17, 19] }
+    - { tier: 5, ilvl: 30, weight: 454, value: [14, 16] }
+    - { tier: 6, ilvl: 22, weight: 649, value: [11, 13] }
+    - { tier: 7, ilvl: 11, weight: 927, value: [8, 10] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [5, 7] }
   mods:
     - { stat: local.attack_speed, type: INCREASED, value: "{value}" }
 
@@ -1272,11 +1274,11 @@ local_attack_speed_bow:
   names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷]
   text: "增加 {value}% 攻擊速度"
   tiers:
-    - { tier: 1, ilvl: 37, weight: 410, value: [17, 19] }
-    - { tier: 2, ilvl: 30, weight: 512, value: [14, 16] }
-    - { tier: 3, ilvl: 22, weight: 640, value: [11, 13] }
-    - { tier: 4, ilvl: 11, weight: 800, value: [8, 10] }
-    - { tier: 5, ilvl: 1, weight: 1000, value: [5, 7] }
+    - { tier: 1, ilvl: 37, weight: 291, value: [17, 19] }
+    - { tier: 2, ilvl: 30, weight: 416, value: [14, 16] }
+    - { tier: 3, ilvl: 22, weight: 594, value: [11, 13] }
+    - { tier: 4, ilvl: 11, weight: 849, value: [8, 10] }
+    - { tier: 5, ilvl: 1, weight: 1212, value: [5, 7] }
   mods:
     - { stat: local.attack_speed, type: INCREASED, value: "{value}" }
 
@@ -1287,9 +1289,9 @@ accuracy_light_weapon:   # 2026-10：同上，武器版
   names: [之星骸, 之神匠, 之大師]
   text: "+{value} 命中、增加 {b}% 命中"
   tiers:
-    - { tier: 1, ilvl: 30, weight: 640, value: [41, 60], b: [15, 15] }
-    - { tier: 2, ilvl: 15, weight: 800, value: [21, 40], b: [10, 10] }
-    - { tier: 3, ilvl: 8, weight: 1000, value: [10, 20], b: [5, 5] }
+    - { tier: 1, ilvl: 30, weight: 291, value: [41, 60], b: [15, 15] }
+    - { tier: 2, ilvl: 15, weight: 416, value: [21, 40], b: [10, 10] }
+    - { tier: 3, ilvl: 8, weight: 594, value: [10, 20], b: [5, 5] }
   mods:
     - { stat: accuracy, type: FLAT, value: "{value}" }
     - { stat: accuracy, type: INCREASED, value: "{b}" }
@@ -1302,12 +1304,12 @@ stun_buildup:
   text: "增加 {value}% 暈眩累積"
   chips: []   # PoE2 的標籤（LocalStunDamageIncrease）
   tiers:
-    - { tier: 1, ilvl: 74, weight: 328, value: [71, 80] }
-    - { tier: 2, ilvl: 58, weight: 410, value: [61, 70] }
-    - { tier: 3, ilvl: 44, weight: 512, value: [51, 60] }
-    - { tier: 4, ilvl: 30, weight: 640, value: [41, 50] }
-    - { tier: 5, ilvl: 20, weight: 800, value: [31, 40] }
-    - { tier: 6, ilvl: 5, weight: 1000, value: [21, 30] }
+    - { tier: 1, ilvl: 74, weight: 211, value: [71, 80] }
+    - { tier: 2, ilvl: 58, weight: 301, value: [61, 70] }
+    - { tier: 3, ilvl: 44, weight: 430, value: [51, 60] }
+    - { tier: 4, ilvl: 30, weight: 615, value: [41, 50] }
+    - { tier: 5, ilvl: 20, weight: 878, value: [31, 40] }
+    - { tier: 6, ilvl: 5, weight: 1255, value: [21, 30] }
   mods:
     - { stat: stun.buildup, type: INCREASED, value: "{value}" }
 
@@ -1319,12 +1321,12 @@ stun_duration:
   text: "增加 {value}% 暈眩持續時間"
   chips: []   # PoE2 的標籤（LocalStunDuration）
   tiers:
-    - { tier: 1, ilvl: 71, weight: 328, value: [27, 30] }
-    - { tier: 2, ilvl: 58, weight: 410, value: [23, 26] }
-    - { tier: 3, ilvl: 44, weight: 512, value: [20, 22] }
-    - { tier: 4, ilvl: 30, weight: 640, value: [17, 19] }
-    - { tier: 5, ilvl: 18, weight: 800, value: [14, 16] }
-    - { tier: 6, ilvl: 5, weight: 1000, value: [11, 13] }
+    - { tier: 1, ilvl: 71, weight: 211, value: [27, 30] }
+    - { tier: 2, ilvl: 58, weight: 301, value: [23, 26] }
+    - { tier: 3, ilvl: 44, weight: 430, value: [20, 22] }
+    - { tier: 4, ilvl: 30, weight: 615, value: [17, 19] }
+    - { tier: 5, ilvl: 18, weight: 878, value: [14, 16] }
+    - { tier: 6, ilvl: 5, weight: 1255, value: [11, 13] }
   mods:
     - { stat: stun.duration, type: INCREASED, value: "{value}" }
 
@@ -1335,14 +1337,14 @@ mana_per_kill:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復, 之調養, 之休息]
   text: "每擊殺一個敵人回復 {value} 魔力"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 210, value: [36, 45] }
-    - { tier: 2, ilvl: 67, weight: 262, value: [28, 35] }
-    - { tier: 3, ilvl: 56, weight: 328, value: [21, 27] }
-    - { tier: 4, ilvl: 45, weight: 410, value: [15, 20] }
-    - { tier: 5, ilvl: 34, weight: 512, value: [10, 14] }
-    - { tier: 6, ilvl: 23, weight: 640, value: [6, 9] }
-    - { tier: 7, ilvl: 12, weight: 800, value: [4, 5] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [2, 3] }
+    - { tier: 1, ilvl: 78, weight: 109, value: [36, 45] }
+    - { tier: 2, ilvl: 67, weight: 156, value: [28, 35] }
+    - { tier: 3, ilvl: 56, weight: 223, value: [21, 27] }
+    - { tier: 4, ilvl: 45, weight: 318, value: [15, 20] }
+    - { tier: 5, ilvl: 34, weight: 454, value: [10, 14] }
+    - { tier: 6, ilvl: 23, weight: 649, value: [6, 9] }
+    - { tier: 7, ilvl: 12, weight: 927, value: [4, 5] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [2, 3] }
   mods:
     - { stat: mana.per_kill, type: FLAT, value: "{value}" }
 
@@ -1353,12 +1355,12 @@ mana_per_kill_quiver:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復]
   text: "每擊殺一個敵人回復 {value} 魔力"
   tiers:
-    - { tier: 1, ilvl: 56, weight: 328, value: [21, 27] }
-    - { tier: 2, ilvl: 45, weight: 410, value: [15, 20] }
-    - { tier: 3, ilvl: 34, weight: 512, value: [10, 14] }
-    - { tier: 4, ilvl: 23, weight: 640, value: [6, 9] }
-    - { tier: 5, ilvl: 12, weight: 800, value: [4, 5] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [2, 3] }
+    - { tier: 1, ilvl: 56, weight: 211, value: [21, 27] }
+    - { tier: 2, ilvl: 45, weight: 301, value: [15, 20] }
+    - { tier: 3, ilvl: 34, weight: 430, value: [10, 14] }
+    - { tier: 4, ilvl: 23, weight: 615, value: [6, 9] }
+    - { tier: 5, ilvl: 12, weight: 878, value: [4, 5] }
+    - { tier: 6, ilvl: 1, weight: 1255, value: [2, 3] }
   mods:
     - { stat: mana.per_kill, type: FLAT, value: "{value}" }
 
@@ -1370,10 +1372,10 @@ leech_mana_local:
   text: "造成的物理傷害有 {value/100}% 偷取為魔力"
   chips: [physical, attack, mana]   # PoE2 的標籤（ManaLeechPermyriad）
   tiers:
-    - { tier: 1, ilvl: 65, weight: 512, value: [800, 890] }
-    - { tier: 2, ilvl: 54, weight: 640, value: [700, 790] }
-    - { tier: 3, ilvl: 38, weight: 800, value: [600, 690] }
-    - { tier: 4, ilvl: 21, weight: 1000, value: [500, 590] }
+    - { tier: 1, ilvl: 65, weight: 400, value: [800, 890] }
+    - { tier: 2, ilvl: 54, weight: 571, value: [700, 790] }
+    - { tier: 3, ilvl: 38, weight: 816, value: [600, 690] }
+    - { tier: 4, ilvl: 21, weight: 1165, value: [500, 590] }
   mods:
     - { stat: leech.mana, type: FLAT, value: "{value/100}", tags: [attack] }
 
@@ -1385,10 +1387,10 @@ leech_mana:
   text: "攻擊造成的物理傷害有 {value/100}% 偷取為魔力"
   chips: [physical, attack, mana]   # PoE2 的標籤（ManaLeechPermyriad）
   tiers:
-    - { tier: 1, ilvl: 65, weight: 512, value: [800, 890] }
-    - { tier: 2, ilvl: 54, weight: 640, value: [700, 790] }
-    - { tier: 3, ilvl: 38, weight: 800, value: [600, 690] }
-    - { tier: 4, ilvl: 21, weight: 1000, value: [500, 590] }
+    - { tier: 1, ilvl: 65, weight: 400, value: [800, 890] }
+    - { tier: 2, ilvl: 54, weight: 571, value: [700, 790] }
+    - { tier: 3, ilvl: 38, weight: 816, value: [600, 690] }
+    - { tier: 4, ilvl: 21, weight: 1165, value: [500, 590] }
   mods:
     - { stat: leech.mana, type: FLAT, value: "{value/100}", tags: [attack] }
 
@@ -1399,8 +1401,8 @@ leech_mana_ring:
   names: [之星骸, 之吸血鬼]
   text: "攻擊造成的物理傷害有 {value/100}% 偷取為魔力"
   tiers:
-    - { tier: 1, ilvl: 38, weight: 800, value: [600, 690] }
-    - { tier: 2, ilvl: 21, weight: 1000, value: [500, 590] }
+    - { tier: 1, ilvl: 38, weight: 741, value: [600, 690] }
+    - { tier: 2, ilvl: 21, weight: 1059, value: [500, 590] }
   mods:
     - { stat: leech.mana, type: FLAT, value: "{value/100}", tags: [attack] }
 
@@ -1412,12 +1414,12 @@ mana_regen:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復]
   text: "增加 {value}% 魔力回復速度"
   tiers:
-    - { tier: 1, ilvl: 79, weight: 328, value: [60, 69] }
-    - { tier: 2, ilvl: 55, weight: 410, value: [50, 59] }
-    - { tier: 3, ilvl: 42, weight: 512, value: [40, 49] }
-    - { tier: 4, ilvl: 29, weight: 640, value: [30, 39] }
-    - { tier: 5, ilvl: 18, weight: 800, value: [20, 29] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [10, 19] }
+    - { tier: 1, ilvl: 79, weight: 211, value: [60, 69] }
+    - { tier: 2, ilvl: 55, weight: 301, value: [50, 59] }
+    - { tier: 3, ilvl: 42, weight: 430, value: [40, 49] }
+    - { tier: 4, ilvl: 29, weight: 615, value: [30, 39] }
+    - { tier: 5, ilvl: 18, weight: 878, value: [20, 29] }
+    - { tier: 6, ilvl: 1, weight: 1255, value: [10, 19] }
   mods:
     - { stat: mana.regen, type: INCREASED, value: "{value}" }
 
@@ -1428,12 +1430,12 @@ mana_regen_staff:
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復]
   text: "增加 {value}% 魔力回復速度"
   tiers:
-    - { tier: 1, ilvl: 79, weight: 328, value: [90, 104] }
-    - { tier: 2, ilvl: 55, weight: 410, value: [75, 89] }
-    - { tier: 3, ilvl: 42, weight: 512, value: [60, 74] }
-    - { tier: 4, ilvl: 29, weight: 640, value: [45, 59] }
-    - { tier: 5, ilvl: 18, weight: 800, value: [30, 44] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [15, 29] }
+    - { tier: 1, ilvl: 79, weight: 211, value: [90, 104] }
+    - { tier: 2, ilvl: 55, weight: 301, value: [75, 89] }
+    - { tier: 3, ilvl: 42, weight: 430, value: [60, 74] }
+    - { tier: 4, ilvl: 29, weight: 615, value: [45, 59] }
+    - { tier: 5, ilvl: 18, weight: 878, value: [30, 44] }
+    - { tier: 6, ilvl: 1, weight: 1255, value: [15, 29] }
   mods:
     - { stat: mana.regen, type: INCREASED, value: "{value}" }
 
@@ -1445,9 +1447,9 @@ max_resist_chaos:
   names: [之星蝕, 之淨化, 之抗蝕]
   text: "+{value}% 最大混沌抗性"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 640, value: [3, 3] }
-    - { tier: 2, ilvl: 75, weight: 800, value: [2, 2] }
-    - { tier: 3, ilvl: 68, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 546, value: [3, 3] }
+    - { tier: 2, ilvl: 75, weight: 780, value: [2, 2] }
+    - { tier: 3, ilvl: 68, weight: 1114, value: [1, 1] }
   mods:
     - { stat: resist.max.chaos, type: FLAT, value: "{value}" }
 
@@ -1459,9 +1461,9 @@ max_resist_cold:
   names: [之星霜, 之冰心, 之霜盾]
   text: "+{value}% 最大冰冷抗性"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 640, value: [3, 3] }
-    - { tier: 2, ilvl: 75, weight: 800, value: [2, 2] }
-    - { tier: 3, ilvl: 68, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 546, value: [3, 3] }
+    - { tier: 2, ilvl: 75, weight: 780, value: [2, 2] }
+    - { tier: 3, ilvl: 68, weight: 1114, value: [1, 1] }
   mods:
     - { stat: resist.max.cold, type: FLAT, value: "{value}" }
 
@@ -1473,8 +1475,8 @@ max_resist_all:
   names: [之星骸, 之元素]
   text: "+{value}% 全部最大元素抗性"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 800, value: [2, 2] }
-    - { tier: 2, ilvl: 75, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 741, value: [2, 2] }
+    - { tier: 2, ilvl: 75, weight: 1059, value: [1, 1] }
   mods:
     - { stat: resist.max.fire, type: FLAT, value: "{value}" }
     - { stat: resist.max.cold, type: FLAT, value: "{value}" }
@@ -1488,9 +1490,9 @@ max_resist_fire:
   names: [之星焰, 之熔心, 之焰盾]
   text: "+{value}% 最大火焰抗性"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 640, value: [3, 3] }
-    - { tier: 2, ilvl: 75, weight: 800, value: [2, 2] }
-    - { tier: 3, ilvl: 68, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 546, value: [3, 3] }
+    - { tier: 2, ilvl: 75, weight: 780, value: [2, 2] }
+    - { tier: 3, ilvl: 68, weight: 1114, value: [1, 1] }
   mods:
     - { stat: resist.max.fire, type: FLAT, value: "{value}" }
 
@@ -1502,9 +1504,9 @@ max_resist_lightning:
   names: [之星雷, 之雷心, 之雷盾]
   text: "+{value}% 最大閃電抗性"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 640, value: [3, 3] }
-    - { tier: 2, ilvl: 75, weight: 800, value: [2, 2] }
-    - { tier: 3, ilvl: 68, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 81, weight: 546, value: [3, 3] }
+    - { tier: 2, ilvl: 75, weight: 780, value: [2, 2] }
+    - { tier: 3, ilvl: 68, weight: 1114, value: [1, 1] }
   mods:
     - { stat: resist.max.lightning, type: FLAT, value: "{value}" }
 
@@ -1515,12 +1517,12 @@ minion_life:
   names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的]
   text: "增加 {value}% 召喚物最大生命"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 328, value: [46, 50] }
-    - { tier: 2, ilvl: 64, weight: 410, value: [41, 45] }
-    - { tier: 3, ilvl: 48, weight: 512, value: [36, 40] }
-    - { tier: 4, ilvl: 32, weight: 640, value: [31, 35] }
-    - { tier: 5, ilvl: 16, weight: 800, value: [26, 30] }
-    - { tier: 6, ilvl: 2, weight: 1000, value: [21, 25] }
+    - { tier: 1, ilvl: 80, weight: 211, value: [46, 50] }
+    - { tier: 2, ilvl: 64, weight: 301, value: [41, 45] }
+    - { tier: 3, ilvl: 48, weight: 430, value: [36, 40] }
+    - { tier: 4, ilvl: 32, weight: 615, value: [31, 35] }
+    - { tier: 5, ilvl: 16, weight: 878, value: [26, 30] }
+    - { tier: 6, ilvl: 2, weight: 1255, value: [21, 25] }
   mods:
     - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -1531,11 +1533,11 @@ self_bleed:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "你身上的流血持續時間減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 76, weight: 410, value: [56, 60] }
-    - { tier: 2, ilvl: 64, weight: 512, value: [51, 55] }
-    - { tier: 3, ilvl: 50, weight: 640, value: [46, 50] }
-    - { tier: 4, ilvl: 37, weight: 800, value: [41, 45] }
-    - { tier: 5, ilvl: 21, weight: 1000, value: [36, 40] }
+    - { tier: 1, ilvl: 76, weight: 291, value: [56, 60] }
+    - { tier: 2, ilvl: 64, weight: 416, value: [51, 55] }
+    - { tier: 3, ilvl: 50, weight: 594, value: [46, 50] }
+    - { tier: 4, ilvl: 37, weight: 849, value: [41, 45] }
+    - { tier: 5, ilvl: 21, weight: 1212, value: [36, 40] }
   mods:
     - { stat: ailment.self_duration.bleed, type: INCREASED, value: "-{value}" }
 
@@ -1547,11 +1549,11 @@ self_ignite:
   text: "你身上的點燃持續時間減少 {value}%"
   chips: [elemental, fire, ailment]   # PoE2 的標籤（ReducedBurnDuration）
   tiers:
-    - { tier: 1, ilvl: 76, weight: 410, value: [56, 60] }
-    - { tier: 2, ilvl: 64, weight: 512, value: [51, 55] }
-    - { tier: 3, ilvl: 50, weight: 640, value: [46, 50] }
-    - { tier: 4, ilvl: 37, weight: 800, value: [41, 45] }
-    - { tier: 5, ilvl: 21, weight: 1000, value: [36, 40] }
+    - { tier: 1, ilvl: 76, weight: 291, value: [56, 60] }
+    - { tier: 2, ilvl: 64, weight: 416, value: [51, 55] }
+    - { tier: 3, ilvl: 50, weight: 594, value: [46, 50] }
+    - { tier: 4, ilvl: 37, weight: 849, value: [41, 45] }
+    - { tier: 5, ilvl: 21, weight: 1212, value: [36, 40] }
   mods:
     - { stat: ailment.self_duration.ignite, type: INCREASED, value: "-{value}" }
 
@@ -1562,11 +1564,11 @@ self_chill:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "你身上的冰緩持續時間減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 410, value: [56, 60] }
-    - { tier: 2, ilvl: 63, weight: 512, value: [51, 55] }
-    - { tier: 3, ilvl: 49, weight: 640, value: [46, 50] }
-    - { tier: 4, ilvl: 36, weight: 800, value: [41, 45] }
-    - { tier: 5, ilvl: 20, weight: 1000, value: [36, 40] }
+    - { tier: 1, ilvl: 75, weight: 291, value: [56, 60] }
+    - { tier: 2, ilvl: 63, weight: 416, value: [51, 55] }
+    - { tier: 3, ilvl: 49, weight: 594, value: [46, 50] }
+    - { tier: 4, ilvl: 36, weight: 849, value: [41, 45] }
+    - { tier: 5, ilvl: 20, weight: 1212, value: [36, 40] }
   mods:
     - { stat: ailment.self_duration.chill, type: INCREASED, value: "-{value}" }
 
@@ -1579,11 +1581,11 @@ crit_taken:
   text: "擊中你的暴擊傷害加成減少 {value}%"
   chips: [damage, critical]   # PoE2 的標籤（ReducedExtraDamageFromCrits）
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [48, 54] }
-    - { tier: 2, ilvl: 69, weight: 512, value: [42, 47] }
-    - { tier: 3, ilvl: 58, weight: 640, value: [35, 41] }
-    - { tier: 4, ilvl: 45, weight: 800, value: [28, 34] }
-    - { tier: 5, ilvl: 33, weight: 1000, value: [21, 27] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [48, 54] }
+    - { tier: 2, ilvl: 69, weight: 416, value: [42, 47] }
+    - { tier: 3, ilvl: 58, weight: 594, value: [35, 41] }
+    - { tier: 4, ilvl: 45, weight: 849, value: [28, 34] }
+    - { tier: 5, ilvl: 33, weight: 1212, value: [21, 27] }
   mods:
     - { stat: crit.bonus_taken, type: INCREASED, value: "-{value}" }
 
@@ -1594,11 +1596,11 @@ self_freeze:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "你身上的凍結持續時間減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 410, value: [56, 60] }
-    - { tier: 2, ilvl: 63, weight: 512, value: [51, 55] }
-    - { tier: 3, ilvl: 49, weight: 640, value: [46, 50] }
-    - { tier: 4, ilvl: 36, weight: 800, value: [41, 45] }
-    - { tier: 5, ilvl: 20, weight: 1000, value: [36, 40] }
+    - { tier: 1, ilvl: 75, weight: 291, value: [56, 60] }
+    - { tier: 2, ilvl: 63, weight: 416, value: [51, 55] }
+    - { tier: 3, ilvl: 49, weight: 594, value: [46, 50] }
+    - { tier: 4, ilvl: 36, weight: 849, value: [41, 45] }
+    - { tier: 5, ilvl: 20, weight: 1212, value: [36, 40] }
   mods:
     - { stat: ailment.self_duration.freeze, type: INCREASED, value: "-{value}" }
 
@@ -1610,11 +1612,11 @@ phys_reduction:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "{value}% 額外物理傷害減免"
   tiers:
-    - { tier: 1, ilvl: 77, weight: 410, value: [8, 8] }
-    - { tier: 2, ilvl: 66, weight: 512, value: [7, 7] }
-    - { tier: 3, ilvl: 53, weight: 640, value: [6, 6] }
-    - { tier: 4, ilvl: 41, weight: 800, value: [5, 5] }
-    - { tier: 5, ilvl: 32, weight: 1000, value: [4, 4] }
+    - { tier: 1, ilvl: 77, weight: 291, value: [8, 8] }
+    - { tier: 2, ilvl: 66, weight: 416, value: [7, 7] }
+    - { tier: 3, ilvl: 53, weight: 594, value: [6, 6] }
+    - { tier: 4, ilvl: 41, weight: 849, value: [5, 5] }
+    - { tier: 5, ilvl: 32, weight: 1212, value: [4, 4] }
   mods:
     - { stat: physical.reduction, type: FLAT, value: "{value}" }
 
@@ -1626,11 +1628,11 @@ self_poison:
   text: "你身上的中毒持續時間減少 {value}%"
   chips: [chaos, ailment]   # PoE2 的標籤（ReducedPoisonDuration）
   tiers:
-    - { tier: 1, ilvl: 76, weight: 410, value: [56, 60] }
-    - { tier: 2, ilvl: 64, weight: 512, value: [51, 55] }
-    - { tier: 3, ilvl: 50, weight: 640, value: [46, 50] }
-    - { tier: 4, ilvl: 37, weight: 800, value: [41, 45] }
-    - { tier: 5, ilvl: 21, weight: 1000, value: [36, 40] }
+    - { tier: 1, ilvl: 76, weight: 291, value: [56, 60] }
+    - { tier: 2, ilvl: 64, weight: 416, value: [51, 55] }
+    - { tier: 3, ilvl: 50, weight: 594, value: [46, 50] }
+    - { tier: 4, ilvl: 37, weight: 849, value: [41, 45] }
+    - { tier: 5, ilvl: 21, weight: 1212, value: [36, 40] }
   mods:
     - { stat: ailment.self_duration.poison, type: INCREASED, value: "-{value}" }
 
@@ -1641,11 +1643,11 @@ self_shock:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "你身上的感電持續時間減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 410, value: [56, 60] }
-    - { tier: 2, ilvl: 63, weight: 512, value: [51, 55] }
-    - { tier: 3, ilvl: 49, weight: 640, value: [46, 50] }
-    - { tier: 4, ilvl: 36, weight: 800, value: [41, 45] }
-    - { tier: 5, ilvl: 20, weight: 1000, value: [36, 40] }
+    - { tier: 1, ilvl: 75, weight: 291, value: [56, 60] }
+    - { tier: 2, ilvl: 63, weight: 416, value: [51, 55] }
+    - { tier: 3, ilvl: 49, weight: 594, value: [46, 50] }
+    - { tier: 4, ilvl: 36, weight: 849, value: [41, 45] }
+    - { tier: 5, ilvl: 20, weight: 1212, value: [36, 40] }
   mods:
     - { stat: ailment.self_duration.shock, type: INCREASED, value: "-{value}" }
 
@@ -1656,11 +1658,11 @@ shock_chance:
   names: [之星骸, 之神匠, 之大師, 之名家, 之精良]
   text: "增加 {value}% 感電機率"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 410, value: [91, 100] }
-    - { tier: 2, ilvl: 60, weight: 512, value: [81, 90] }
-    - { tier: 3, ilvl: 45, weight: 640, value: [71, 80] }
-    - { tier: 4, ilvl: 30, weight: 800, value: [61, 70] }
-    - { tier: 5, ilvl: 15, weight: 1000, value: [51, 60] }
+    - { tier: 1, ilvl: 75, weight: 291, value: [91, 100] }
+    - { tier: 2, ilvl: 60, weight: 416, value: [81, 90] }
+    - { tier: 3, ilvl: 45, weight: 594, value: [71, 80] }
+    - { tier: 4, ilvl: 30, weight: 849, value: [61, 70] }
+    - { tier: 5, ilvl: 15, weight: 1212, value: [51, 60] }
   mods:
     - { stat: shock.chance, type: INCREASED, value: "{value}" }
 
@@ -1672,11 +1674,11 @@ spell_crit_chance:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意]
   text: "增加 {value}% 法術暴擊率"
   tiers:
-    - { tier: 1, ilvl: 59, weight: 410, value: [54, 59] }
-    - { tier: 2, ilvl: 41, weight: 512, value: [47, 53] }
-    - { tier: 3, ilvl: 28, weight: 640, value: [40, 46] }
-    - { tier: 4, ilvl: 21, weight: 800, value: [34, 39] }
-    - { tier: 5, ilvl: 11, weight: 1000, value: [27, 33] }
+    - { tier: 1, ilvl: 59, weight: 291, value: [54, 59] }
+    - { tier: 2, ilvl: 41, weight: 416, value: [47, 53] }
+    - { tier: 3, ilvl: 28, weight: 594, value: [40, 46] }
+    - { tier: 4, ilvl: 21, weight: 849, value: [34, 39] }
+    - { tier: 5, ilvl: 11, weight: 1212, value: [27, 33] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -1687,12 +1689,12 @@ spell_crit_chance_wand:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "增加 {value}% 法術暴擊率"
   tiers:
-    - { tier: 1, ilvl: 76, weight: 328, value: [60, 73] }
-    - { tier: 2, ilvl: 59, weight: 410, value: [54, 59] }
-    - { tier: 3, ilvl: 41, weight: 512, value: [47, 53] }
-    - { tier: 4, ilvl: 28, weight: 640, value: [40, 46] }
-    - { tier: 5, ilvl: 21, weight: 800, value: [34, 39] }
-    - { tier: 6, ilvl: 11, weight: 1000, value: [27, 33] }
+    - { tier: 1, ilvl: 76, weight: 211, value: [60, 73] }
+    - { tier: 2, ilvl: 59, weight: 301, value: [54, 59] }
+    - { tier: 3, ilvl: 41, weight: 430, value: [47, 53] }
+    - { tier: 4, ilvl: 28, weight: 615, value: [40, 46] }
+    - { tier: 5, ilvl: 21, weight: 878, value: [34, 39] }
+    - { tier: 6, ilvl: 11, weight: 1255, value: [27, 33] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -1703,12 +1705,12 @@ spell_crit_chance_staff:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "增加 {value}% 法術暴擊率"
   tiers:
-    - { tier: 1, ilvl: 76, weight: 328, value: [90, 109] }
-    - { tier: 2, ilvl: 59, weight: 410, value: [80, 89] }
-    - { tier: 3, ilvl: 41, weight: 512, value: [70, 79] }
-    - { tier: 4, ilvl: 28, weight: 640, value: [60, 69] }
-    - { tier: 5, ilvl: 21, weight: 800, value: [50, 59] }
-    - { tier: 6, ilvl: 11, weight: 1000, value: [40, 49] }
+    - { tier: 1, ilvl: 76, weight: 211, value: [90, 109] }
+    - { tier: 2, ilvl: 59, weight: 301, value: [80, 89] }
+    - { tier: 3, ilvl: 41, weight: 430, value: [70, 79] }
+    - { tier: 4, ilvl: 28, weight: 615, value: [60, 69] }
+    - { tier: 5, ilvl: 21, weight: 878, value: [50, 59] }
+    - { tier: 6, ilvl: 11, weight: 1255, value: [40, 49] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -1720,11 +1722,11 @@ spell_crit_bonus:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意]
   text: "增加 {value}% 法術暴擊傷害加成"
   tiers:
-    - { tier: 1, ilvl: 59, weight: 410, value: [30, 34] }
-    - { tier: 2, ilvl: 44, weight: 512, value: [25, 29] }
-    - { tier: 3, ilvl: 30, weight: 640, value: [20, 24] }
-    - { tier: 4, ilvl: 21, weight: 800, value: [15, 19] }
-    - { tier: 5, ilvl: 8, weight: 1000, value: [10, 14] }
+    - { tier: 1, ilvl: 59, weight: 291, value: [30, 34] }
+    - { tier: 2, ilvl: 44, weight: 416, value: [25, 29] }
+    - { tier: 3, ilvl: 30, weight: 594, value: [20, 24] }
+    - { tier: 4, ilvl: 21, weight: 849, value: [15, 19] }
+    - { tier: 5, ilvl: 8, weight: 1212, value: [10, 14] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -1735,12 +1737,12 @@ spell_crit_bonus_wand:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "增加 {value}% 法術暴擊傷害加成"
   tiers:
-    - { tier: 1, ilvl: 73, weight: 328, value: [35, 39] }
-    - { tier: 2, ilvl: 59, weight: 410, value: [30, 34] }
-    - { tier: 3, ilvl: 44, weight: 512, value: [25, 29] }
-    - { tier: 4, ilvl: 30, weight: 640, value: [20, 24] }
-    - { tier: 5, ilvl: 21, weight: 800, value: [15, 19] }
-    - { tier: 6, ilvl: 8, weight: 1000, value: [10, 14] }
+    - { tier: 1, ilvl: 73, weight: 211, value: [35, 39] }
+    - { tier: 2, ilvl: 59, weight: 301, value: [30, 34] }
+    - { tier: 3, ilvl: 44, weight: 430, value: [25, 29] }
+    - { tier: 4, ilvl: 30, weight: 615, value: [20, 24] }
+    - { tier: 5, ilvl: 21, weight: 878, value: [15, 19] }
+    - { tier: 6, ilvl: 8, weight: 1255, value: [10, 14] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -1751,12 +1753,12 @@ spell_crit_bonus_staff:
   names: [之星骸, 之毀滅, 之破滅, 之致命, 之殺意, 之精準]
   text: "增加 {value}% 法術暴擊傷害加成"
   tiers:
-    - { tier: 1, ilvl: 73, weight: 328, value: [53, 59] }
-    - { tier: 2, ilvl: 59, weight: 410, value: [45, 51] }
-    - { tier: 3, ilvl: 44, weight: 512, value: [38, 44] }
-    - { tier: 4, ilvl: 30, weight: 640, value: [30, 36] }
-    - { tier: 5, ilvl: 21, weight: 800, value: [23, 29] }
-    - { tier: 6, ilvl: 8, weight: 1000, value: [15, 21] }
+    - { tier: 1, ilvl: 73, weight: 211, value: [53, 59] }
+    - { tier: 2, ilvl: 59, weight: 301, value: [45, 51] }
+    - { tier: 3, ilvl: 44, weight: 430, value: [38, 44] }
+    - { tier: 4, ilvl: 30, weight: 615, value: [30, 36] }
+    - { tier: 5, ilvl: 21, weight: 878, value: [23, 29] }
+    - { tier: 6, ilvl: 8, weight: 1255, value: [15, 21] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -1767,14 +1769,14 @@ str_flat:
   names: [之星骸巨人, 之泰坦, 之巨人, 之熊, 之野牛, 之摔角手, 之勇士, 之新兵]
   text: "+{value} 力量"
   tiers:
-    - { tier: 1, ilvl: 74, weight: 210, value: [31, 33] }
-    - { tier: 2, ilvl: 66, weight: 262, value: [28, 30] }
-    - { tier: 3, ilvl: 55, weight: 328, value: [25, 27] }
-    - { tier: 4, ilvl: 44, weight: 410, value: [21, 24] }
-    - { tier: 5, ilvl: 33, weight: 512, value: [17, 20] }
-    - { tier: 6, ilvl: 22, weight: 640, value: [13, 16] }
-    - { tier: 7, ilvl: 11, weight: 800, value: [9, 12] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [5, 8] }
+    - { tier: 1, ilvl: 74, weight: 109, value: [31, 33] }
+    - { tier: 2, ilvl: 66, weight: 156, value: [28, 30] }
+    - { tier: 3, ilvl: 55, weight: 223, value: [25, 27] }
+    - { tier: 4, ilvl: 44, weight: 318, value: [21, 24] }
+    - { tier: 5, ilvl: 33, weight: 454, value: [17, 20] }
+    - { tier: 6, ilvl: 22, weight: 649, value: [13, 16] }
+    - { tier: 7, ilvl: 11, weight: 927, value: [9, 12] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [5, 8] }
   mods:
     - { stat: attr.str, type: FLAT, value: "{value}" }
 
@@ -1785,15 +1787,15 @@ str_flat_belt:
   names: [之星骸巨人, 之泰坦, 之巨人, 之熊, 之野牛, 之摔角手, 之勇士, 之新兵, 之平凡]
   text: "+{value} 力量"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 168, value: [34, 36] }
-    - { tier: 2, ilvl: 74, weight: 210, value: [31, 33] }
-    - { tier: 3, ilvl: 66, weight: 262, value: [28, 30] }
-    - { tier: 4, ilvl: 55, weight: 328, value: [25, 27] }
-    - { tier: 5, ilvl: 44, weight: 410, value: [21, 24] }
-    - { tier: 6, ilvl: 33, weight: 512, value: [17, 20] }
-    - { tier: 7, ilvl: 22, weight: 640, value: [13, 16] }
-    - { tier: 8, ilvl: 11, weight: 800, value: [9, 12] }
-    - { tier: 9, ilvl: 1, weight: 1000, value: [5, 8] }
+    - { tier: 1, ilvl: 81, weight: 78, value: [34, 36] }
+    - { tier: 2, ilvl: 74, weight: 111, value: [31, 33] }
+    - { tier: 3, ilvl: 66, weight: 159, value: [28, 30] }
+    - { tier: 4, ilvl: 55, weight: 228, value: [25, 27] }
+    - { tier: 5, ilvl: 44, weight: 325, value: [21, 24] }
+    - { tier: 6, ilvl: 33, weight: 464, value: [17, 20] }
+    - { tier: 7, ilvl: 22, weight: 663, value: [13, 16] }
+    - { tier: 8, ilvl: 11, weight: 948, value: [9, 12] }
+    - { tier: 9, ilvl: 1, weight: 1354, value: [5, 8] }
   mods:
     - { stat: attr.str, type: FLAT, value: "{value}" }
 
@@ -1806,16 +1808,16 @@ stun_threshold_flat:
   text: "+{value} 暈眩門檻"
   chips: []   # PoE2 的標籤（StunThreshold）
   tiers:
-    - { tier: 1, ilvl: 72, weight: 134, value: [254, 304] }
-    - { tier: 2, ilvl: 63, weight: 168, value: [207, 253] }
-    - { tier: 3, ilvl: 54, weight: 210, value: [164, 206] }
-    - { tier: 4, ilvl: 45, weight: 262, value: [125, 163] }
-    - { tier: 5, ilvl: 36, weight: 328, value: [98, 124] }
-    - { tier: 6, ilvl: 29, weight: 410, value: [73, 97] }
-    - { tier: 7, ilvl: 22, weight: 512, value: [50, 72] }
-    - { tier: 8, ilvl: 15, weight: 640, value: [30, 49] }
-    - { tier: 9, ilvl: 8, weight: 800, value: [12, 29] }
-    - { tier: 10, ilvl: 1, weight: 1000, value: [6, 11] }
+    - { tier: 1, ilvl: 72, weight: 56, value: [254, 304] }
+    - { tier: 2, ilvl: 63, weight: 79, value: [207, 253] }
+    - { tier: 3, ilvl: 54, weight: 113, value: [164, 206] }
+    - { tier: 4, ilvl: 45, weight: 162, value: [125, 163] }
+    - { tier: 5, ilvl: 36, weight: 232, value: [98, 124] }
+    - { tier: 6, ilvl: 29, weight: 331, value: [73, 97] }
+    - { tier: 7, ilvl: 22, weight: 473, value: [50, 72] }
+    - { tier: 8, ilvl: 15, weight: 675, value: [30, 49] }
+    - { tier: 9, ilvl: 8, weight: 965, value: [12, 29] }
+    - { tier: 10, ilvl: 1, weight: 1378, value: [6, 11] }
   mods:
     - { stat: stun.threshold, type: FLAT, value: "{value}" }
 
@@ -1827,17 +1829,17 @@ stun_threshold_flat_boots:
   text: "+{value} 暈眩門檻"
   chips: []   # PoE2 的標籤（StunThreshold）
   tiers:
-    - { tier: 1, ilvl: 80, weight: 107, value: [305, 352] }
-    - { tier: 2, ilvl: 72, weight: 134, value: [254, 304] }
-    - { tier: 3, ilvl: 63, weight: 168, value: [207, 253] }
-    - { tier: 4, ilvl: 54, weight: 210, value: [164, 206] }
-    - { tier: 5, ilvl: 45, weight: 262, value: [125, 163] }
-    - { tier: 6, ilvl: 36, weight: 328, value: [98, 124] }
-    - { tier: 7, ilvl: 29, weight: 410, value: [73, 97] }
-    - { tier: 8, ilvl: 22, weight: 512, value: [50, 72] }
-    - { tier: 9, ilvl: 15, weight: 640, value: [30, 49] }
-    - { tier: 10, ilvl: 8, weight: 800, value: [12, 29] }
-    - { tier: 11, ilvl: 1, weight: 1000, value: [6, 11] }
+    - { tier: 1, ilvl: 80, weight: 40, value: [305, 352] }
+    - { tier: 2, ilvl: 72, weight: 56, value: [254, 304] }
+    - { tier: 3, ilvl: 63, weight: 81, value: [207, 253] }
+    - { tier: 4, ilvl: 54, weight: 115, value: [164, 206] }
+    - { tier: 5, ilvl: 45, weight: 165, value: [125, 163] }
+    - { tier: 6, ilvl: 36, weight: 235, value: [98, 124] }
+    - { tier: 7, ilvl: 29, weight: 336, value: [73, 97] }
+    - { tier: 8, ilvl: 22, weight: 480, value: [50, 72] }
+    - { tier: 9, ilvl: 15, weight: 685, value: [30, 49] }
+    - { tier: 10, ilvl: 8, weight: 979, value: [12, 29] }
+    - { tier: 11, ilvl: 1, weight: 1399, value: [6, 11] }
   mods:
     - { stat: stun.threshold, type: FLAT, value: "{value}" }
 
@@ -1850,12 +1852,12 @@ resist_all_shield:
   names: [之星骸, 之彩虹, 之斑斕, 之萬花, 之稜鏡, 之水晶]
   text: "+{value}% 全部元素抗性"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 328, value: [17, 18] }
-    - { tier: 2, ilvl: 68, weight: 410, value: [15, 16] }
-    - { tier: 3, ilvl: 54, weight: 512, value: [12, 14] }
-    - { tier: 4, ilvl: 40, weight: 640, value: [9, 11] }
-    - { tier: 5, ilvl: 26, weight: 800, value: [6, 8] }
-    - { tier: 6, ilvl: 12, weight: 1000, value: [3, 5] }
+    - { tier: 1, ilvl: 80, weight: 211, value: [17, 18] }
+    - { tier: 2, ilvl: 68, weight: 301, value: [15, 16] }
+    - { tier: 3, ilvl: 54, weight: 430, value: [12, 14] }
+    - { tier: 4, ilvl: 40, weight: 615, value: [9, 11] }
+    - { tier: 5, ilvl: 26, weight: 878, value: [6, 8] }
+    - { tier: 6, ilvl: 12, weight: 1255, value: [3, 5] }
   mods:
     - { stat: resist.fire, type: FLAT, value: "{value}" }
     - { stat: resist.cold, type: FLAT, value: "{value}" }
@@ -1869,12 +1871,12 @@ minion_resist_all:
   names: [之星骸, 之蛻變, 之演進, 之進化, 之適應, 之調適]
   text: "召喚物 +{value}% 全部元素抗性"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 328, value: [17, 18] }
-    - { tier: 2, ilvl: 68, weight: 410, value: [15, 16] }
-    - { tier: 3, ilvl: 54, weight: 512, value: [12, 14] }
-    - { tier: 4, ilvl: 40, weight: 640, value: [9, 11] }
-    - { tier: 5, ilvl: 26, weight: 800, value: [6, 8] }
-    - { tier: 6, ilvl: 12, weight: 1000, value: [3, 5] }
+    - { tier: 1, ilvl: 80, weight: 211, value: [17, 18] }
+    - { tier: 2, ilvl: 68, weight: 301, value: [15, 16] }
+    - { tier: 3, ilvl: 54, weight: 430, value: [12, 14] }
+    - { tier: 4, ilvl: 40, weight: 615, value: [9, 11] }
+    - { tier: 5, ilvl: 26, weight: 878, value: [6, 8] }
+    - { tier: 6, ilvl: 12, weight: 1255, value: [3, 5] }
   mods:
     - { stat: resist.fire, type: FLAT, value: "{value}", tags: [minion] }
     - { stat: resist.cold, type: FLAT, value: "{value}", tags: [minion] }
@@ -1888,16 +1890,16 @@ minion_regen:
   names: [之星骸, 之不死, 之復甦, 之康復, 之療養, 之巨魔, 之九頭蛇, 之海星, 之渦蟲, 之蜥蜴]
   text: "召喚物每秒回復 {value/10} 生命"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 134, value: [291, 330] }
-    - { tier: 2, ilvl: 68, weight: 168, value: [231, 290] }
-    - { tier: 3, ilvl: 58, weight: 210, value: [181, 230] }
-    - { tier: 4, ilvl: 47, weight: 262, value: [131, 180] }
-    - { tier: 5, ilvl: 35, weight: 328, value: [91, 130] }
-    - { tier: 6, ilvl: 26, weight: 410, value: [61, 90] }
-    - { tier: 7, ilvl: 17, weight: 512, value: [41, 60] }
-    - { tier: 8, ilvl: 11, weight: 640, value: [31, 40] }
-    - { tier: 9, ilvl: 5, weight: 800, value: [21, 30] }
-    - { tier: 10, ilvl: 1, weight: 1000, value: [10, 20] }
+    - { tier: 1, ilvl: 75, weight: 56, value: [291, 330] }
+    - { tier: 2, ilvl: 68, weight: 79, value: [231, 290] }
+    - { tier: 3, ilvl: 58, weight: 113, value: [181, 230] }
+    - { tier: 4, ilvl: 47, weight: 162, value: [131, 180] }
+    - { tier: 5, ilvl: 35, weight: 232, value: [91, 130] }
+    - { tier: 6, ilvl: 26, weight: 331, value: [61, 90] }
+    - { tier: 7, ilvl: 17, weight: 473, value: [41, 60] }
+    - { tier: 8, ilvl: 11, weight: 675, value: [31, 40] }
+    - { tier: 9, ilvl: 5, weight: 965, value: [21, 30] }
+    - { tier: 10, ilvl: 1, weight: 1378, value: [10, 20] }
   mods:
     - { stat: life.regen, type: FLAT, value: "{value/10}", tags: [minion] }
 
@@ -1910,10 +1912,10 @@ presence_area:
   text: "增加 {value}% 臨在範圍"
   chips: [aura]   # PoE2 的標籤（PresenceRadius）
   tiers:
-    - { tier: 1, ilvl: 72, weight: 512, value: [66, 80] }
-    - { tier: 2, ilvl: 56, weight: 640, value: [56, 65] }
-    - { tier: 3, ilvl: 40, weight: 800, value: [46, 55] }
-    - { tier: 4, ilvl: 23, weight: 1000, value: [36, 45] }
+    - { tier: 1, ilvl: 72, weight: 400, value: [66, 80] }
+    - { tier: 2, ilvl: 56, weight: 571, value: [56, 65] }
+    - { tier: 3, ilvl: 40, weight: 816, value: [46, 55] }
+    - { tier: 4, ilvl: 23, weight: 1165, value: [36, 45] }
   mods:
     - { stat: presence.area, type: INCREASED, value: "{value}" }
 
@@ -2914,12 +2916,12 @@ deflection_evasion:
   names: [之星骸, 之流轉, 之卸勁, 之斜擋, 之偏轉, 之側身]
   text: "獲得閃避值 {value}% 的偏斜值"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 328, value: [24, 26] }
-    - { tier: 2, ilvl: 66, weight: 410, value: [21, 23] }
-    - { tier: 3, ilvl: 48, weight: 512, value: [18, 20] }
-    - { tier: 4, ilvl: 36, weight: 640, value: [15, 17] }
-    - { tier: 5, ilvl: 16, weight: 800, value: [12, 14] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [8, 11] }
+    - { tier: 1, ilvl: 81, weight: 211, value: [24, 26] }
+    - { tier: 2, ilvl: 66, weight: 301, value: [21, 23] }
+    - { tier: 3, ilvl: 48, weight: 430, value: [18, 20] }
+    - { tier: 4, ilvl: 36, weight: 615, value: [15, 17] }
+    - { tier: 5, ilvl: 16, weight: 878, value: [12, 14] }
+    - { tier: 6, ilvl: 1, weight: 1255, value: [8, 11] }
   mods:
     - { stat: deflection.from_evasion, type: FLAT, value: "{value}" }
 
@@ -2932,8 +2934,8 @@ crossbow_bolts:
   text: "+{value} 弩的彈匣容量"
   chips: [attack]   # PoE2 的標籤（AdditionalAmmo）
   tiers:
-    - { tier: 1, ilvl: 82, weight: 400, value: [2, 2] }
-    - { tier: 2, ilvl: 55, weight: 1000, value: [1, 1] }
+    - { tier: 1, ilvl: 82, weight: 363, value: [2, 2] }
+    - { tier: 2, ilvl: 55, weight: 1037, value: [1, 1] }
   mods:
     - { stat: crossbow.clip, type: FLAT, value: "{value}" }
 
@@ -2946,12 +2948,12 @@ flask_charges_gained_belt:
   names: [之星骸, 之滿溢, 之泉湧, 之傾注, 之補給, 之續杯]
   text: "增加 {value}% 藥劑拿到的充能"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 328, value: [35, 40] }
-    - { tier: 2, ilvl: 70, weight: 410, value: [29, 34] }
-    - { tier: 3, ilvl: 48, weight: 512, value: [23, 28] }
-    - { tier: 4, ilvl: 32, weight: 640, value: [17, 22] }
-    - { tier: 5, ilvl: 16, weight: 800, value: [11, 16] }
-    - { tier: 6, ilvl: 2, weight: 1000, value: [5, 10] }
+    - { tier: 1, ilvl: 81, weight: 211, value: [35, 40] }
+    - { tier: 2, ilvl: 70, weight: 301, value: [29, 34] }
+    - { tier: 3, ilvl: 48, weight: 430, value: [23, 28] }
+    - { tier: 4, ilvl: 32, weight: 615, value: [17, 22] }
+    - { tier: 5, ilvl: 16, weight: 878, value: [11, 16] }
+    - { tier: 6, ilvl: 2, weight: 1255, value: [5, 10] }
   mods:
     - { stat: flask.charges_gained, type: INCREASED, value: "{value}" }
 
@@ -2962,12 +2964,12 @@ flask_charges_used_belt:
   names: [之星骸, 之細品, 之淺酌, 之回味, 之啜飲, 之小口]
   text: "減少 {value}% 藥劑每次用掉的充能"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 328, value: [23, 25] }
-    - { tier: 2, ilvl: 72, weight: 410, value: [20, 22] }
-    - { tier: 3, ilvl: 50, weight: 512, value: [17, 19] }
-    - { tier: 4, ilvl: 33, weight: 640, value: [14, 16] }
-    - { tier: 5, ilvl: 18, weight: 800, value: [11, 13] }
-    - { tier: 6, ilvl: 3, weight: 1000, value: [8, 10] }
+    - { tier: 1, ilvl: 81, weight: 211, value: [23, 25] }
+    - { tier: 2, ilvl: 72, weight: 301, value: [20, 22] }
+    - { tier: 3, ilvl: 50, weight: 430, value: [17, 19] }
+    - { tier: 4, ilvl: 33, weight: 615, value: [14, 16] }
+    - { tier: 5, ilvl: 18, weight: 878, value: [11, 13] }
+    - { tier: 6, ilvl: 3, weight: 1255, value: [8, 10] }
   mods:
     - { stat: flask.charges_used, type: INCREASED, value: "-{value}" }
 
@@ -2978,12 +2980,12 @@ charm_charges_gained_belt:
   names: [之星骸, 之豐饒, 之豐收, 之富足, 之盈餘, 之充裕]
   text: "增加 {value}% 護符拿到的充能"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 328, value: [35, 40] }
-    - { tier: 2, ilvl: 70, weight: 410, value: [29, 34] }
-    - { tier: 3, ilvl: 48, weight: 512, value: [23, 28] }
-    - { tier: 4, ilvl: 32, weight: 640, value: [17, 22] }
-    - { tier: 5, ilvl: 16, weight: 800, value: [11, 16] }
-    - { tier: 6, ilvl: 2, weight: 1000, value: [5, 10] }
+    - { tier: 1, ilvl: 81, weight: 211, value: [35, 40] }
+    - { tier: 2, ilvl: 70, weight: 301, value: [29, 34] }
+    - { tier: 3, ilvl: 48, weight: 430, value: [23, 28] }
+    - { tier: 4, ilvl: 32, weight: 615, value: [17, 22] }
+    - { tier: 5, ilvl: 16, weight: 878, value: [11, 16] }
+    - { tier: 6, ilvl: 2, weight: 1255, value: [5, 10] }
   mods:
     - { stat: charm.charges_gained, type: INCREASED, value: "{value}" }
 
@@ -2994,12 +2996,12 @@ charm_charges_used_belt:
   names: [之星骸, 之儉省, 之節制, 之克制, 之節儉, 之樸素]
   text: "減少 {value}% 護符每次用掉的充能"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 328, value: [23, 25] }
-    - { tier: 2, ilvl: 72, weight: 410, value: [20, 22] }
-    - { tier: 3, ilvl: 50, weight: 512, value: [17, 19] }
-    - { tier: 4, ilvl: 33, weight: 640, value: [14, 16] }
-    - { tier: 5, ilvl: 18, weight: 800, value: [11, 13] }
-    - { tier: 6, ilvl: 3, weight: 1000, value: [8, 10] }
+    - { tier: 1, ilvl: 81, weight: 211, value: [23, 25] }
+    - { tier: 2, ilvl: 72, weight: 301, value: [20, 22] }
+    - { tier: 3, ilvl: 50, weight: 430, value: [17, 19] }
+    - { tier: 4, ilvl: 33, weight: 615, value: [14, 16] }
+    - { tier: 5, ilvl: 18, weight: 878, value: [11, 13] }
+    - { tier: 6, ilvl: 3, weight: 1255, value: [8, 10] }
   mods:
     - { stat: charm.charges_used, type: INCREASED, value: "-{value}" }
 
@@ -3012,10 +3014,10 @@ extra_arrow_chance_bow:
   names: [之星骸, 之萬箭, 之碎片, 之裂矢]
   text: "弓攻擊 {value}% 機率多射一支箭"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 150, value: [175, 200] }
-    - { tier: 2, ilvl: 66, weight: 300, value: [125, 150] }
-    - { tier: 3, ilvl: 55, weight: 500, value: [75, 100] }
-    - { tier: 4, ilvl: 46, weight: 800, value: [25, 50] }
+    - { tier: 1, ilvl: 82, weight: 112, value: [175, 200] }
+    - { tier: 2, ilvl: 66, weight: 256, value: [125, 150] }
+    - { tier: 3, ilvl: 55, weight: 488, value: [75, 100] }
+    - { tier: 4, ilvl: 46, weight: 893, value: [25, 50] }
   mods:
     - { stat: skill.projectile_chance, type: FLAT, value: "{value}", tags: [attack, bow] }
 
@@ -3026,7 +3028,7 @@ extra_arrow_chance_quiver:
   names: [之星骸, 之碎片]
   text: "弓攻擊 {value}% 機率多射一支箭"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 300, value: [41, 60] }
-    - { tier: 2, ilvl: 46, weight: 700, value: [25, 40] }
+    - { tier: 1, ilvl: 80, weight: 273, value: [41, 60] }
+    - { tier: 2, ilvl: 46, weight: 727, value: [25, 40] }
   mods:
     - { stat: skill.projectile_chance, type: FLAT, value: "{value}", tags: [attack, bow] }

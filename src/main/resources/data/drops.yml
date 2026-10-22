@@ -13,11 +13,13 @@
 #   未切割技能寶石 40 → 20、輔助寶石 30 → 12（第 3 階與 Lv.17～18 掉太多，整類減半／減到 2/5）；分類權重合計 1270 → 1210，件數 × 1210/1270，
 #   裝備、藥劑與其他通貨的掉率不變。一樣要跟 currencies.yml 一起合併。
 drops_per_rarity:
-  normal: 0.2056
-  magic: 0.8804
-  rare: 1.7609
-  unique: 3.5218
+  normal: 0.2042
+  magic: 0.8746
+  rare: 1.7493
+  unique: 3.4985
 
+# 2026-10-22（第六次，照市場報告）：未切割技能寶石 20 → 12；件數 × 1202/1210（裝備、通貨、輔助寶石、藥劑的掉率不變）。
+#   另外 currency_scale：符文、大鑿星石的權重 × 0.4（下面）。
 # 每一件先抽分類：通貨、裝備、未切割技能寶石、未切割輔助寶石、藥劑
 # （寶石的等級與階級、藥劑的基底依怪物等級決定，見 skills.yml、supports.yml、flasks.yml）
 category_weights:
@@ -26,7 +28,7 @@ category_weights:
   #   權重合計 5731 → 5329），通貨的分類權重 613 → 570，讓其他通貨的掉率跟之前一樣。一樣要跟 currencies.yml 一起合併。
   currency: 548
   equipment: 600
-  skill_gem: 20
+  skill_gem: 12                 # 2026-10-22（照市場報告）：20 → 12（Lv.16～19 只用掉 3～17%）；分類權重合計 1210 → 1202，件數 × 1202/1210，其他不變
   support_gem: 12
   flask: 30
 
@@ -41,6 +43,17 @@ rarity_weights:
   rare: 5
   unique: 0.5
   boss_unique: 0.16
+
+# 個別通貨的掉落權重再乘幾倍（2026-10-22）：currencies.yml 的 drop_weight 是整數，要調到 1 以下或微調時寫在這裡（沒寫 = ×1）。
+#   怪物、地圖寶箱、劫盜這些「照掉落權重抽通貨」的地方都吃這個；固定給的（Boss 掉落表、星諭卡、活動）不受影響。
+currency_scale:
+  rune_iron: 0.4        # 2026-10-22：六種符文每週各掉 1.8 萬、只用掉 1～2%
+  rune_ember: 0.4
+  rune_frost: 0.4
+  rune_storm: 0.4
+  rune_mind: 0.4
+  rune_swift: 0.4
+  greater_socket_orb: 0.4   # 大鑿星石（開技能第五個輔助孔）：每週 2700 顆、只用掉 20%
 
 # 全服掉落加成（活動用）：所有怪物與地圖寶箱的掉落多幾 %、金幣乘幾倍。管理網頁（/ec web）的「全服加成」可以直接改，
 # 網頁改的值存在 plugins/ExileCore/admin-overrides.yml（蓋過這裡，這個檔不動）。

@@ -157,17 +157,54 @@ public final class TrainingService {
         return plugin.zones() == null ? null : plugin.zones().campLocation();
     }
 
-    /** 假人站的位置（營地落點加上偏移，高度找地面；區塊沒載入時是 null）。 */
+    /** 所有有營地的世界：劇情世界 + 分流的主城世界（2026-10-22 主城分流，每條線都有一組假人）。 */
+    private List<World> townWorlds() {
+        final List<World> worlds = new ArrayList<>();
+        final Location camp = camp();
+        if (camp == null || camp.getWorld() == null) {
+            return worlds;
+        }
+        worlds.add(camp.getWorld());
+        if (plugin.world() != null && plugin.world().worlds() != null) {
+            for (final World town : plugin.world().worlds().channels().towns()) {
+                if (!worlds.contains(town)) {
+                    worlds.add(town);
+                }
+            }
+        }
+        return worlds;
+    }
+
+    private boolean isTownWorld(final World world) {
+        return world != null && townWorlds().contains(world);
+    }
+
+    /** 這個世界的營地落點（分流世界用一樣的座標）。 */
+    private Location camp(final World world) {
+        final Location camp = camp();
+        if (camp == null || world == null) {
+            return null;
+        }
+        return tw.exilecore.world.TownChannels.mapTo(camp, world);
+    }
+
+    /** 假人站的位置（劇情世界的營地）。 */
     Location spot(final DummyConfig.Dummy dummy) {
-        final Location cached = spots.get(dummy.id());
+        final Location camp = camp();
+        return camp == null ? null : spot(dummy, camp.getWorld());
+    }
+
+    /** 假人在這個世界站的位置（營地落點加上偏移，高度找地面；區塊沒載入時是 null）。 */
+    Location spot(final DummyConfig.Dummy dummy, final World world) {
+        final String key = world.getName() + "/" + dummy.id();
+        final Location cached = spots.get(key);
         if (cached != null) {
             return cached.clone();
         }
-        final Location camp = camp();
-        if (camp == null || camp.getWorld() == null) {
+        final Location camp = camp(world);
+        if (camp == null) {
             return null;
         }
-        final World world = camp.getWorld();
         final double x = camp.getX() + dummy.offsetX();
         final double z = camp.getZ() + dummy.offsetZ();
         final int blockX = (int) Math.floor(x);
@@ -177,7 +214,7 @@ public final class TrainingService {
         }
         final int y = ground(world, blockX, (int) Math.floor(camp.getY()), blockZ);
         final Location spot = new Location(world, x, y, z, dummy.yaw(), 0f);
-        spots.put(dummy.id(), spot);
+        spots.put(key, spot);
         return spot.clone();
     }
 
@@ -216,9 +253,10 @@ public final class TrainingService {
         if (camp == null || camp.getWorld() == null) {
             return "找不到營地（區域模組沒有營地）";
         }
-        if (to.getWorld() == null || !to.getWorld().equals(camp.getWorld())) {
-            return "假人只能放在營地那個世界（" + camp.getWorld().getName() + "）";
+        if (to.getWorld() == null || !isTownWorld(to.getWorld())) {
+            return "假人只能放在營地那個世界（" + camp.getWorld().getName() + "）或分流的主城世界";
         }
+        final Location campHere = camp(to.getWorld()); // 2026-10-22：在分流世界搬，offset 照那個世界的營地算
         final java.nio.file.Path folder = plugin.dataFolder().resolve("data");
         final java.nio.file.Path file = folder.resolve(DummyConfig.FILE);
         try {
@@ -228,7 +266,7 @@ public final class TrainingService {
             final String text = java.nio.file.Files.readString(file);
             final float yaw = Math.round(Location.normalizeYaw(to.getYaw()));
             final String changed = tw.exilecore.core.config.YamlPatch.dummyPlacement(text, dummy.id(),
-                    to.getX() - camp.getX(), to.getZ() - camp.getZ(), yaw);
+                    to.getX() - campHere.getX(), to.getZ() - campHere.getZ(), yaw);
             if (changed == null) {
                 return "data/" + DummyConfig.FILE + " 的 dummies 裡找不到 " + dummy.id() + "（程式預設的假人要先寫進設定檔）";
             }
@@ -244,8 +282,11 @@ public final class TrainingService {
 
     /** 練習場（所有假人的外框往外 arena_margin 格）：在裡面可以施放技能。 */
     public boolean inArena(final Location location) {
-        final Location camp = camp();
-        if (camp == null || location.getWorld() == null || !location.getWorld().equals(camp.getWorld()) || config.dummies().isEmpty()) {
+        if (location.getWorld() == null || !isTownWorld(location.getWorld()) || config.dummies().isEmpty()) {
+            return false;
+        }
+        final Location camp = camp(location.getWorld());
+        if (camp == null) {
             return false;
         }
         double minX = Double.MAX_VALUE;
@@ -267,31 +308,35 @@ public final class TrainingService {
 
     /** 每 5 秒：每隻假人在不在、位置對不對、裝扮跟設定一樣；設定裡沒有的拿掉（只管已經載入的區塊）。 */
     void maintain() {
-        final Location camp = camp();
-        if (camp == null || camp.getWorld() == null) {
+        final List<World> worlds = townWorlds();
+        if (worlds.isEmpty()) {
             return;
         }
-        final Map<String, List<Mannequin>> found = new HashMap<>();
         final Map<UUID, Map<String, List<Mannequin>>> owned = new HashMap<>();
-        for (final Mannequin mannequin : camp.getWorld().getEntitiesByClass(Mannequin.class)) {
-            final String id = mannequin.getPersistentDataContainer().get(dummyKey, PersistentDataType.STRING);
-            if (id == null || !mannequin.isValid()) {
-                continue;
+        for (final World world : worlds) {
+            final Map<String, List<Mannequin>> found = new HashMap<>();
+            for (final Mannequin mannequin : world.getEntitiesByClass(Mannequin.class)) {
+                final String id = mannequin.getPersistentDataContainer().get(dummyKey, PersistentDataType.STRING);
+                if (id == null || !mannequin.isValid()) {
+                    continue;
+                }
+                final DummyConfig.Dummy dummy = config.dummy(id);
+                final UUID owner = ownerOf(mannequin);
+                final Player ownerPlayer = owner == null ? null : plugin.getServer().getPlayer(owner);
+                if (dummy == null || (owner != null && !personal.containsKey(owner))
+                        || (ownerPlayer != null && !ownerPlayer.getWorld().equals(world))) {
+                    mannequin.remove(); // 設定裡拿掉的假人；收掉了的人的那組（重開之後殘留的）；主人換線了留在舊線的那組
+                    continue;
+                }
+                (owner == null ? found : owned.computeIfAbsent(owner, key -> new HashMap<>()))
+                        .computeIfAbsent(dummy.id(), key -> new ArrayList<>()).add(mannequin);
             }
-            final DummyConfig.Dummy dummy = config.dummy(id);
-            final UUID owner = ownerOf(mannequin);
-            if (dummy == null || (owner != null && !personal.containsKey(owner))) {
-                mannequin.remove(); // 設定裡拿掉的假人；收掉了的人的那組（重開之後殘留的）
-                continue;
-            }
-            (owner == null ? found : owned.computeIfAbsent(owner, key -> new HashMap<>()))
-                    .computeIfAbsent(dummy.id(), key -> new ArrayList<>()).add(mannequin);
-        }
-        for (final DummyConfig.Dummy dummy : config.dummies()) {
-            try {
-                maintain(dummy, found.getOrDefault(dummy.id(), List.of()), null);
-            } catch (final RuntimeException e) {
-                plugin.getSLF4JLogger().warn("訓練假人 {} 放不出來", dummy.id(), e); // 一隻出錯不影響其他隻
+            for (final DummyConfig.Dummy dummy : config.dummies()) {
+                try {
+                    maintain(dummy, found.getOrDefault(dummy.id(), List.of()), null, world);
+                } catch (final RuntimeException e) {
+                    plugin.getSLF4JLogger().warn("訓練假人 {}（{}）放不出來", dummy.id(), world.getName(), e); // 一隻出錯不影響其他隻
+                }
             }
         }
         for (final UUID owner : List.copyOf(personal.keySet())) {
@@ -299,15 +344,15 @@ public final class TrainingService {
         }
     }
 
-    /** 這個人那一組：每隻在不在、對不對；共用的那組對他藏起來。 */
+    /** 這個人那一組（放在他所在的那條線）：每隻在不在、對不對；共用的那組對他藏起來。 */
     private void maintainPersonal(final UUID owner, final Map<String, List<Mannequin>> mine) {
         final Player player = plugin.getServer().getPlayer(owner);
-        if (player == null) {
+        if (player == null || !isTownWorld(player.getWorld())) {
             return;
         }
         for (final DummyConfig.Dummy dummy : config.dummies()) {
             try {
-                maintain(dummy, mine.getOrDefault(dummy.id(), List.of()), owner);
+                maintain(dummy, mine.getOrDefault(dummy.id(), List.of()), owner, player.getWorld());
             } catch (final RuntimeException e) {
                 plugin.getSLF4JLogger().warn("{} 的訓練假人 {} 放不出來", player.getName(), dummy.id(), e);
             }
@@ -326,10 +371,13 @@ public final class TrainingService {
 
     /** 每秒：在練習場裡的人給一組自己的（還有名額的話）；離開太久、下線的收掉。 */
     private void personalCheck() {
-        final Location camp = camp();
         final long now = System.currentTimeMillis();
-        if (camp != null && camp.getWorld() != null && config.personalMax() > 0 && !config.dummies().isEmpty()) {
-            for (final Player player : camp.getWorld().getPlayers()) {
+        if (config.personalMax() > 0 && !config.dummies().isEmpty()) {
+            final List<Player> inTowns = new ArrayList<>();
+            for (final World world : townWorlds()) {
+                inTowns.addAll(world.getPlayers());
+            }
+            for (final Player player : inTowns) {
                 if (!inArena(player.getLocation())) {
                     continue;
                 }
@@ -354,26 +402,24 @@ public final class TrainingService {
 
     /** 收掉這個人那一組；共用的那組給他看回來。 */
     private void removePersonal(final UUID owner, final Player player) {
-        final Location camp = camp();
-        if (camp == null || camp.getWorld() == null) {
-            return;
-        }
-        for (final Mannequin mannequin : camp.getWorld().getEntitiesByClass(Mannequin.class)) {
-            if (!isDummy(mannequin)) {
-                continue;
-            }
-            final UUID of = ownerOf(mannequin);
-            if (owner.equals(of)) {
-                plugin.monsters().ledger().forget(mannequin.getUniqueId());
-                mannequin.remove();
-            } else if (of == null && player != null) {
-                player.showEntity(plugin, mannequin);
+        for (final World world : townWorlds()) {
+            for (final Mannequin mannequin : world.getEntitiesByClass(Mannequin.class)) {
+                if (!isDummy(mannequin)) {
+                    continue;
+                }
+                final UUID of = ownerOf(mannequin);
+                if (owner.equals(of)) {
+                    plugin.monsters().ledger().forget(mannequin.getUniqueId());
+                    mannequin.remove();
+                } else if (of == null && player != null) {
+                    player.showEntity(plugin, mannequin);
+                }
             }
         }
     }
 
-    private void maintain(final DummyConfig.Dummy dummy, final List<Mannequin> mine, final UUID owner) {
-        final Location spot = spot(dummy);
+    private void maintain(final DummyConfig.Dummy dummy, final List<Mannequin> mine, final UUID owner, final World world) {
+        final Location spot = spot(dummy, world);
         if (spot == null) {
             return;
         }
@@ -718,9 +764,8 @@ public final class TrainingService {
     /** 重讀設定：位置重找、假人的屬性表重算（下一次維護時照新設定裝扮、移位置）。 */
     void reloaded() {
         spots.clear();
-        final Location camp = camp();
-        if (camp != null && camp.getWorld() != null) {
-            for (final Mannequin mannequin : camp.getWorld().getEntitiesByClass(Mannequin.class)) {
+        for (final World world : townWorlds()) {
+            for (final Mannequin mannequin : world.getEntitiesByClass(Mannequin.class)) {
                 if (isDummy(mannequin)) {
                     plugin.monsters().invalidate(mannequin.getUniqueId());
                 }

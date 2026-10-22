@@ -8,15 +8,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import tw.exilecore.ExileCore;
-import tw.exilecore.character.PlayerState;
-import tw.exilecore.character.SkillLoadout;
 import tw.exilecore.stats.HitEvent;
 import tw.exilecore.stats.StatKeys;
 
 
 /**
  * 觸發（2026-10 第二版，照 PoE2 的主要寶石 Cast on X；見 {@link MetaGems}）：條件成立時，開著的那種主要寶石累積能量，
- * 滿了就觸發插在它插槽（面板上它後面那一格）的法術。以前的觸發輔助（暴擊觸發、受擊觸發…）已經拿掉（supports.yml 的 retired）。
+ * 滿了就觸發插在它第 1 孔裡的法術。以前的觸發輔助（暴擊觸發、受擊觸發…）已經拿掉（supports.yml 的 retired）。
  * <ul>
  *   <li>暴擊時（crit）：你用技能暴擊敵人，能量 × 怪物強度（被觸發的法術自己的暴擊不算）。</li>
  *   <li>元素異常（ailment）：冰凍 ×3、感電與點燃 ×1，再乘怪物強度。</li>
@@ -121,10 +119,5 @@ public final class SkillTriggers implements Listener {
         }
         final double kind = type == tw.exilecore.ailment.AilmentType.FREEZE ? 3 : 1;
         service.metas().gain(player, MetaSpec.Kind.AILMENT, kind * service.metas().power(target), target);
-    }
-
-    /** 這個法術插在主要寶石的插槽裡（2026-10，照 PoE2）：只會被觸發／由圖騰放，不能自己按。 */
-    boolean triggeredOnly(final PlayerState state, final SkillLoadout.Entry entry) {
-        return service.metas().socketed(state, entry);
     }
 }

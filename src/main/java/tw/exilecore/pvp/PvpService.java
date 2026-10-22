@@ -217,8 +217,7 @@ public final class PvpService implements Listener {
         if (combat != null) {
             return combat;
         }
-        final World campaign = plugin.world().worlds().campaign();
-        if (campaign != null && player.getWorld().equals(campaign)) {
+        if (fromCampaign(player)) { // 2026-10-22 主城分流：分流世界的營地也算
             returnTo.put(player.getUniqueId(), player.getLocation().clone());
         } else {
             returnTo.remove(player.getUniqueId());
@@ -289,8 +288,7 @@ public final class PvpService implements Listener {
         if (problem != null) {
             return problem;
         }
-        final World campaign = plugin.world().worlds().campaign();
-        if (campaign != null && player.getWorld().equals(campaign)) {
+        if (fromCampaign(player)) {
             returnTo.put(player.getUniqueId(), player.getLocation().clone());
         } else if (!watching(player)) {
             returnTo.remove(player.getUniqueId()); // 從觀看席下場：離場時照樣回進觀看席之前的地方
@@ -310,9 +308,8 @@ public final class PvpService implements Listener {
             return "你不在競技場";
         }
         Location target = returnTo.remove(player.getUniqueId());
-        final World campaign = plugin.world() == null || plugin.world().worlds() == null ? null : plugin.world().worlds().campaign();
-        if (target == null || target.getWorld() == null || !target.getWorld().equals(campaign)) {
-            target = plugin.zones() == null ? null : plugin.zones().campLocation();
+        if (target == null || target.getWorld() == null || !campaignOrTown(target.getWorld())) {
+            target = plugin.zones() == null ? null : plugin.zones().campLocationFor(player); // 2026-10-22：回他那條線
         }
         if (target == null) {
             return "伺服器還沒設定營地，離不開（管理員：/ec zone autolayout）";
@@ -510,10 +507,23 @@ public final class PvpService implements Listener {
             event.setRespawnLocation(spawnFor(player));
             return;
         }
-        final Location camp = plugin.zones() == null ? null : plugin.zones().campLocation();
+        final Location camp = plugin.zones() == null ? null : plugin.zones().campLocationFor(player);
         if (camp != null) {
             event.setRespawnLocation(camp);
         }
+    }
+
+    /** 劇情世界或分流的營地世界（2026-10-22）。 */
+    private boolean campaignOrTown(final World world) {
+        final tw.exilecore.world.CampaignWorld worlds = plugin.world() == null ? null : plugin.world().worlds();
+        if (worlds == null || world == null) {
+            return false;
+        }
+        return world.equals(worlds.campaign()) || worlds.channels().isTown(world);
+    }
+
+    private boolean fromCampaign(final Player player) {
+        return campaignOrTown(player.getWorld());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

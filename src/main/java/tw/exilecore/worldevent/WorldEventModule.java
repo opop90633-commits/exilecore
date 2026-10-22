@@ -92,7 +92,7 @@ public final class WorldEventModule implements Module, Listener {
         if (!diedAtEvent.remove(event.getPlayer().getUniqueId())) {
             return;
         }
-        final org.bukkit.Location camp = plugin.zones() == null ? null : plugin.zones().campLocation();
+        final org.bukkit.Location camp = plugin.zones() == null ? null : plugin.zones().campLocationFor(event.getPlayer()); // 2026-10-22：回他那條線
         if (camp != null) {
             event.setRespawnLocation(camp);
         }

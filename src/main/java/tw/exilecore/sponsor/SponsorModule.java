@@ -158,6 +158,18 @@ public final class SponsorModule implements Module, Listener {
         }
     }
 
+    /** 2026-10-22：下線時個人加倍先暫停（LOWEST：在帳號資料卸下之前寫進去）。 */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onQuitEarly(final PlayerQuitEvent event) {
+        if (service != null) {
+            try {
+                service.pausePersonalBoosts(event.getPlayer());
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("下線暫停 {} 的個人加倍失敗：{}", event.getPlayer().getName(), e.toString());
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(final PlayerQuitEvent event) {
         if (models != null) {

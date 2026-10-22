@@ -2,14 +2,22 @@ package tw.exilecore.skill;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import tw.exilecore.character.SkillLoadout;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** 2026-10-22：星咒圖騰只收有作用的輔助：要圖騰的、只加施法速度或持續時間的；持久、久地讓圖騰撐更久；灌元、致命這些掛不上去。 */
+/**
+ * 2026-10-22：英靈圖騰、星咒圖騰、暴擊引星把技能寶石放在自己的第 1 孔，第 2～5 孔的輔助都套在那顆技能上：
+ * 輔助照放進去的技能驗（要圖騰的也可以）；宿主本身只吃要圖騰的、加速度與持續時間的。
+ */
 class SpellTotemSupportTest {
 
     static SkillConfig config;
@@ -21,16 +29,52 @@ class SpellTotemSupportTest {
     }
 
     @Test
-    void onlyUsefulSupportsFitTheSpellTotem() {
+    void hostsAreRecognised() {
+        assertTrue(SupportDefinition.hostsSkill(config.skill("totem_casting")));
+        assertTrue(SupportDefinition.hostsSkill(config.skill("meta_crit")));
+        assertTrue(SupportDefinition.hostsSkill(config.skill("ancestral_totem")));
+        assertFalse(SupportDefinition.hostsSkill(config.skill("fireball")));
+    }
+
+    @Test
+    void supportsOnAHostFollowTheInnerSkill() {
         final SkillDefinition totem = config.skill("totem_casting");
-        for (final String id : new String[] {"increased_duration", "persistent_ground", "faster_casting", "arcane_surge",
-                "urgent_totems", "overabundance", "totem_fury", "sturdy_totem"}) {
-            assertNull(config.support(id).refusal(totem), id);
+        final SkillDefinition fireball = config.skill("fireball");
+        for (final String id : new String[] {"increased_duration", "faster_casting", "urgent_totems", "overabundance", "totem_fury",
+                "sturdy_totem", "infusion_release", "critical_strikes", "added_fire", "considered_casting"}) {
+            assertNull(config.support(id).hostRefusal(totem, fireball), id);
         }
-        for (final String id : new String[] {"infusion_release", "critical_strikes", "added_fire", "considered_casting", "excise"}) {
-            assertNotNull(config.support(id).refusal(totem), id);
-        }
-        // 一般法術照舊
-        assertNull(config.support("infusion_release").refusal(config.skill("fireball")));
+        // 還沒放技能：只知道不能放哪些
+        assertNotNull(config.support("critical_strikes").hostRefusal(totem, null));
+        // 攻擊的輔助掛不到放了法術的宿主上
+        assertNotNull(config.support("faster_attacks").hostRefusal(totem, fireball));
+        // 宿主本身只吃這幾種
+        assertTrue(config.support("urgent_totems").worksOnHost());
+        assertTrue(config.support("faster_casting").worksOnHost());
+        assertTrue(config.support("persistent_ground").worksOnHost());
+        assertFalse(config.support("critical_strikes").worksOnHost());
+    }
+
+    @Test
+    void innerSkillRulesAndEncoding() {
+        assertNull(SkillService.linkedProblem(config.skill("supercharged_slam")), "錘子攻擊可以放進英靈圖騰");
+        assertNotNull(SkillService.linkedProblem(config.skill("fireball")));
+        final SkillLoadout.Entry inner = new SkillLoadout.Entry("fireball", 18, 4, List.of());
+        final SkillLoadout.Entry host = new SkillLoadout.Entry("totem_casting", 20, 5, List.of("", "added_fire", "", "critical_strikes~", ""))
+                .withInner(inner);
+        assertEquals("5:@fireball/18/4,added_fire,,critical_strikes~,", host.encodeSupports());
+        final SkillLoadout.Entry back = SkillLoadout.Entry.decode("totem_casting", 20, host.encodeSupports());
+        assertEquals("fireball", back.inner().skillId());
+        assertEquals(18, back.inner().level());
+        assertEquals(4, back.inner().sockets());
+        assertEquals(List.of("added_fire", "critical_strikes"), back.supportIds());
+        assertTrue(back.resonant(3));
+        assertEquals(1, back.firstSupportSocket());
+        assertEquals(2, back.freeSocket(), "第 1 孔放著技能不算空孔");
+        final SkillLoadout.Entry spell = SkillService.innerEntry(back);
+        assertEquals("fireball", spell.skillId());
+        assertEquals(List.of("added_fire", "critical_strikes"), spell.supportIds(), "宿主孔裡的輔助就是裡面技能的輔助");
+        assertNull(SkillLoadout.Entry.decode("fireball", 18, "3:added_fire,,").inner(), "一般技能沒有");
+        assertEquals("3:added_fire,,", SkillLoadout.Entry.decode("fireball", 18, "3:added_fire,,").encodeSupports());
     }
 }

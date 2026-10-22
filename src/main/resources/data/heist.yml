@@ -33,10 +33,10 @@ settings:
   time_lost_jewel_chance: 0.02 # 每個金庫箱、每個人掉一顆遺時珠寶的機率（合約與藍圖的金庫箱都算）
   time_lost_jewel_rare: 0.30   # 掉出來是稀有的機率（不然是魔法）
   contract_chance:         # 星圖（一般的地圖）裡的怪物掉劫盜合約的機率（吃物品數量）
-    normal: 0.002
-    magic: 0.006
-    rare: 0.025
-    boss: 0.25             # 地圖 Boss（每個有份的人各擲一次）
+    normal: 0.0007         # 2026-10-22（照市場報告：每週掉 9.3 萬張、只用掉 7%）：全部 × 約 0.35
+    magic: 0.002
+    rare: 0.009
+    boss: 0.09             # 地圖 Boss（每個有份的人各擲一次）
   vault:                   # 大金庫（最後的守衛倒下時，在裡面的每個人各一份）
     rolls: 6               # 擲幾次掉落表（大劫盜 ×grand_multiplier）
     currency: [4, 7]

@@ -23,7 +23,7 @@ import java.util.Locale;
  * （2026-10：拿掉每排最左邊不能按的分類名稱，每排置中）
  * 第 2 排【角色】：角色面板、天賦樹、技能、稱號、切換角色（2026-10：屬性改成點第 1 排的角色；昇華在天賦樹的總覽、鎖定在拆解台）
  * 第 3 排【物品】：隨身背包、倉庫、掉落過濾、拆解／垃圾桶（2026-10-17：左鍵拆解、右鍵垃圾桶）
- * 第 4 排【冒險】：傳送、回營地、任務、委託、每月固定活動、競技場（星圖在地圖裝置）
+ * 第 4 排【冒險】：傳送、回營地、任務、分流（2026-10-22，以前是委託）、每月固定活動、競技場（星圖在地圖裝置）
  * 第 5 排【多人】：公會、隊伍、市集、Discord、贊助商城（2026-10：交易、說明拿掉；交易改成蹲下右鍵對方或 /trade）
  * 第 6 排：圖鑑、設定、關閉
  * </pre>
@@ -177,7 +177,8 @@ public final class MainMenu extends Menu {
         put(SLOT_WAYPOINTS, button(Material.ENDER_PEARL, "傳送", "/wp", "營地、檢查點、回到剛才的位置"));
         put(SLOT_TOWN, button(Material.CAMPFIRE, "回營地", "/town", "免費、隨時都可以（被打也可以），/wp 可以傳回來"));
         put(SLOT_QUESTS, button(Material.WRITABLE_BOOK, "任務", "/quests", "主線、支線、任務給的永久加成"));
-        put(SLOT_BOUNTY, button(Material.TARGET, "委託", "/bounty", "每日委託、每週回響、功勳兌換"));
+        // 2026-10-22：「委託」換成「分流」（委託板還是 /bounty、營地的軍需官、任務日誌裡的委託板）
+        put(SLOT_BOUNTY, button(Material.LODESTONE, "分流", "/channel", channelSummary()));
         put(SLOT_EVENT, button(Material.CLOCK, "每月固定活動", "/event", eventSummary()));
         put(SLOT_PVP, button(Material.DIAMOND_SWORD, "競技場", "/pvp", pvpSummary()));
         put(SLOT_WORLD_EVENT, worldEventButton());
@@ -270,6 +271,18 @@ public final class MainMenu extends Menu {
                 "<gray>活動到 " + config.format(config.end()) + "：點燈、南瓜王、不給糖就搗蛋", king,
                 "<gray>糖果、燈芯兌換限定時裝與稱號", "", "<yellow>左鍵：打開<dark_gray>（/festival）");
         return festival.kingRunning() ? glowing(stack) : stack;
+    }
+
+    /** 2026-10-22：分流按鈕的說明：現在第幾線、幾個人。 */
+    private String channelSummary() {
+        final tw.exilecore.world.TownChannels channels = plugin.world() == null || plugin.world().worlds() == null ? null
+                : plugin.world().worlds().channels();
+        if (channels == null || !channels.enabled()) {
+            return "營地沒有分線";
+        }
+        final int here = channels.channelOf(player.getWorld());
+        return here > 0 ? "現在在第 " + here + " 線（" + channels.population(player.getWorld()) + " 人），點開換線"
+                : "營地分成 " + channels.towns().size() + " 條線，點開選要去哪一條";
     }
 
     private static org.bukkit.inventory.ItemStack button(final Material material, final String name, final String command,
@@ -397,15 +410,7 @@ public final class MainMenu extends Menu {
                     new tw.exilecore.event.EventMenu(plugin, player, plugin.events()).open();
                 }
             }
-            case SLOT_BOUNTY -> {
-                if (plugin.bounties() == null) {
-                    unavailable("委託");
-                } else if (!ready) {
-                    needCharacter();
-                } else {
-                    plugin.bounties().open(player);
-                }
-            }
+            case SLOT_BOUNTY -> new ChannelMenu(plugin, player).open(); // 2026-10-22：分流
             case SLOT_TITLES -> {
                 if (plugin.bounties() == null) {
                     unavailable("委託");

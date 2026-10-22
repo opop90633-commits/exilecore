@@ -104,21 +104,23 @@ public final class AscendancyConfig {
     /**
      * @param firstTitle      全服第一個到 level 級的稱號（2026-10，只有一個；空白 = 不發）
      * @param reachTitle      到 level 級就有的稱號（2026-10，不限量；空白 = 不發）
-     * @param reachExperience 擁有 reachTitle 的帳號經驗多幾 %
+     * @param reachExperience 擁有 reachTitle 的帳號經驗多幾 %（2026-10-22：帳號裡每一隻到 level 級的角色各算一次）
      * @param announceLevels  升到這些等級時全服廣播（2026-10）
+     * @param reachMaxCharacters 燃星者進化最多算幾隻角色（2026-10-22：7 隻 × 5% = 35%）
      */
     public record LevelRace(boolean enabled, int level, java.util.Map<String, String> titles, String firstTitle, String reachTitle,
-                            double reachExperience, List<Integer> announceLevels) {
+                            double reachExperience, List<Integer> announceLevels, int reachMaxCharacters) {
         public LevelRace {
             titles = java.util.Map.copyOf(titles);
             firstTitle = firstTitle == null ? "" : firstTitle.trim();
             reachTitle = reachTitle == null ? "" : reachTitle.trim();
             reachExperience = Math.max(0, reachExperience);
             announceLevels = announceLevels == null ? List.of() : List.copyOf(announceLevels);
+            reachMaxCharacters = Math.max(1, reachMaxCharacters);
         }
 
         public LevelRace(final boolean enabled, final int level, final java.util.Map<String, String> titles) {
-            this(enabled, level, titles, "百星之首", "燃星者", 5, List.of(100, 110, 120));
+            this(enabled, level, titles, "百星之首", "燃星者", 5, List.of(100, 110, 120), 7);
         }
 
         public static final String FIRST_TITLE_ID = "race_first";
@@ -256,7 +258,8 @@ public final class AscendancyConfig {
             announce.addAll(List.of(100, 110, 120));
         }
         levelRace = new LevelRace(race.bool("enabled", false), race.integer("level", 100), raceTitles,
-                race.string("first_title", "百星之首"), race.string("reach_title", "燃星者"), race.decimal("reach_experience", 5), announce);
+                race.string("first_title", "百星之首"), race.string("reach_title", "燃星者"), race.decimal("reach_experience", 5), announce,
+                race.integer("reach_max_characters", 7));
 
         final YamlNode trialsNode = root.node("trials");
         for (final String id : trialsNode.keys()) {

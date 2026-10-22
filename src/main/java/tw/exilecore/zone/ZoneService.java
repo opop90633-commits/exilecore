@@ -128,13 +128,24 @@ public final class ZoneService {
         if (location == null || location.getWorld() == null) {
             return Optional.empty();
         }
-        final String world = location.getWorld().getName();
+        // 2026-10-22 主城分流：分流世界（exilecore_town_2…）的座標跟劇情世界一樣，當作劇情世界查，但只認城鎮（那裡只有營地）
+        final tw.exilecore.world.TownChannels channels = channels();
+        final boolean channel = channels != null && channels.isChannel(location.getWorld());
+        final String world = channel ? channels.towns().getFirst().getName() : location.getWorld().getName();
         for (final Zone zone : zones.values()) {
+            if (channel && !zone.town()) {
+                continue;
+            }
             if (zone.contains(world, location.getX(), location.getY(), location.getZ())) {
                 return Optional.of(zone);
             }
         }
         return Optional.empty();
+    }
+
+    /** 主城分流（世界模組沒啟用時 null）。 */
+    private tw.exilecore.world.TownChannels channels() {
+        return plugin.world() == null || plugin.world().worlds() == null ? null : plugin.world().worlds().channels();
     }
 
     /** 這個位置在區域裡的怪物等級；不在任何區域回傳空（由呼叫端決定）。 */
@@ -210,6 +221,18 @@ public final class ZoneService {
         return camp().map(zone -> toLocation(zone.layout().entry())).orElse(null);
     }
 
+    /** 營地的落點，換到這條線的世界（2026-10-22 主城分流）。 */
+    public Location campLocation(final World town) {
+        final Location camp = campLocation();
+        return camp == null || town == null ? camp : tw.exilecore.world.TownChannels.mapTo(camp, town);
+    }
+
+    /** 這個玩家該回的那條線的營地落點（記得的那條、人最少的那條；沒有分流就是營地）。 */
+    public Location campLocationFor(final Player player) {
+        final tw.exilecore.world.TownChannels channels = channels();
+        return channels == null ? campLocation() : campLocation(channels.pick(player));
+    }
+
     /** 版面的點轉成 Bukkit 位置；世界不存在時回傳 null。 */
     public Location toLocation(final ZoneLayout.Point point) {
         if (point == null) {
@@ -255,7 +278,7 @@ public final class ZoneService {
         return plugin.players().get(player).progress().get(PROGRESS_LAST);
     }
 
-    /** 死亡後的重生點：最後碰到的檢查點，沒有就營地；都沒有回傳 null（照原版）。 */
+    /** 死亡後的重生點：最後碰到的檢查點，沒有就營地（記得的那條線）；都沒有回傳 null（照原版）。 */
     public Location respawnLocation(final Player player) {
         final String last = lastCheckpoint(player);
         if (last != null) {
@@ -273,7 +296,7 @@ public final class ZoneService {
                 }
             }
         }
-        return campLocation();
+        return campLocationFor(player);
     }
 
     // ---- 每 10 tick：玩家在哪個區域、有沒有碰到檢查點 ----
@@ -286,6 +309,12 @@ public final class ZoneService {
             final String previous = current.put(player.getUniqueId(), id);
             if (!id.equals(previous)) {
                 onEnter(player, zone);
+            }
+            if (zone != null && zone.town()) {
+                final tw.exilecore.world.TownChannels channels = channels();
+                if (channels != null) {
+                    channels.remember(player, location.getWorld()); // 2026-10-22 主城分流：記住在哪條線
+                }
             }
             if (zone != null && !player.isDead()) {
                 touchCheckpoints(player, zone, location);
@@ -411,7 +440,7 @@ public final class ZoneService {
     /** 新角色與切換角色後回到營地（有設定的話）。 */
     public void sendToCamp(final Player player, final boolean announce) {
         returnPoints.remove(player.getUniqueId()); // 換角色後不能用上一個角色的回程位置
-        final Location camp = campLocation();
+        final Location camp = campLocationFor(player);
         if (camp == null) {
             if (announce) {
                 player.sendMessage(plugin.text().prefixed("<red>伺服器還沒設定營地（管理員：/ec zone autolayout）"));
@@ -426,7 +455,7 @@ public final class ZoneService {
 
     /** /town：免費回營地，隨時都可以（被打也可以，照 PoE 的回城）；記住原本的位置，之後可以從傳送選單回去。 */
     public void goTown(final Player player) {
-        final Location camp = campLocation();
+        final Location camp = campLocationFor(player);
         if (camp == null) {
             player.sendMessage(plugin.text().prefixed("<red>伺服器還沒設定營地（管理員：/ec zone autolayout）"));
             return;
@@ -453,7 +482,7 @@ public final class ZoneService {
 
     /** 掛機太久（{@link AfkWatcher}）：不問直接傳回營地（極境也一樣），不記回程位置（/wp 傳不回去）。 */
     void afkToTown(final Player player) {
-        final Location camp = campLocation();
+        final Location camp = campLocationFor(player);
         if (camp == null || inTown(player.getLocation())) {
             return;
         }
@@ -540,6 +569,7 @@ public final class ZoneService {
     /** 每 40 tick：營地範圍內的敵對生物移除（管理員用 /ec spawn 生的、玩家的召喚物除外）。 */
     public void sweepTowns() {
         final tw.exilecore.combat.MinionHooks minions = plugin.combat() == null ? null : plugin.combat().minions();
+        final tw.exilecore.world.TownChannels channels = channels();
         for (final Zone zone : zones.values()) {
             if (!zone.town() || !zone.placed()) {
                 continue;
@@ -550,12 +580,66 @@ public final class ZoneService {
                 continue;
             }
             final BoundingBox bounds = new BoundingBox(box.minX(), box.minY(), box.minZ(), box.maxX() + 1, box.maxY() + 1, box.maxZ() + 1);
-            for (final Entity entity : world.getNearbyEntities(bounds, entity -> entity instanceof Enemy)) {
-                if (entity instanceof LivingEntity living && !(entity instanceof Player) && !plugin.monsters().isPinned(living)
-                        && !plugin.npcs().isNpc(entity) && (minions == null || !minions.isMinion(entity))) {
-                    entity.remove();
+            // 2026-10-22 主城分流：每條線的營地都掃
+            final List<World> worlds = channels != null && channels.isTown(world) ? channels.towns() : List.of(world);
+            for (final World town : worlds) {
+                for (final Entity entity : town.getNearbyEntities(bounds, entity -> entity instanceof Enemy)) {
+                    if (entity instanceof LivingEntity living && !(entity instanceof Player) && !plugin.monsters().isPinned(living)
+                            && !plugin.npcs().isNpc(entity) && (minions == null || !minions.isMinion(entity))) {
+                        entity.remove();
+                    }
                 }
             }
+        }
+    }
+
+    // ---- 主城分流（2026-10-22）：/channel 換線 ----
+
+    /** /channel：看現在在哪條線、每條線幾個人。 */
+    public void showChannels(final Player player) {
+        final tw.exilecore.world.TownChannels channels = channels();
+        if (channels == null || !channels.enabled()) {
+            player.sendMessage(plugin.text().prefixed("<gray>這個伺服器的營地沒有分線"));
+            return;
+        }
+        final int mine = channels.channelOf(player.getWorld());
+        final StringBuilder lines = new StringBuilder();
+        for (final World town : channels.towns()) {
+            final int channel = channels.channelOf(town);
+            lines.append(channel == mine ? "<#f5b942>" : "<gray>").append(" 第 ").append(channel).append(" 線 ")
+                    .append(channels.population(town)).append(" 人").append(channel == mine ? "（你在這裡）" : "");
+        }
+        player.sendMessage(plugin.text().prefixed("<gray>營地分線：" + lines + "<dark_gray>　/channel 2 換到第 2 線（要在營地裡）"));
+    }
+
+    /** /channel n：換到第 n 線的營地（同一個位置）。要在營地裡、剛被打不行。 */
+    public void switchChannel(final Player player, final int channel) {
+        final tw.exilecore.world.TownChannels channels = channels();
+        if (channels == null || !channels.enabled()) {
+            player.sendMessage(plugin.text().prefixed("<gray>這個伺服器的營地沒有分線"));
+            return;
+        }
+        final World target = channels.world(channel);
+        if (target == null) {
+            player.sendMessage(plugin.text().prefixed("<red>沒有第 " + channel + " 線（有 1～" + channels.towns().size() + " 線）"));
+            return;
+        }
+        if (!inTown(player.getLocation())) {
+            player.sendMessage(plugin.text().prefixed("<red>要在營地裡才能換線（/town 先回營地）"));
+            return;
+        }
+        if (target.equals(player.getWorld())) {
+            player.sendMessage(plugin.text().prefixed("<gray>你已經在第 " + channel + " 線了"));
+            return;
+        }
+        if (plugin.trade() != null && plugin.trade().inTrade(player)) {
+            player.sendMessage(plugin.text().prefixed("<red>交易中不能換線"));
+            return;
+        }
+        final Location to = tw.exilecore.world.TownChannels.mapTo(player.getLocation(), target);
+        if (teleport(player, to, "第 " + channel + " 線")) {
+            channels.remember(player, target);
+            player.sendMessage(plugin.text().prefixed("<gray>換到營地第 <white>" + channel + "</white> 線（" + channels.population(target) + " 人）"));
         }
     }
 

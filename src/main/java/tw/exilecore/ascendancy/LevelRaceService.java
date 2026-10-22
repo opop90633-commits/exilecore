@@ -182,7 +182,8 @@ public final class LevelRaceService {
             @Override
             public String bonusText(final String id) {
                 return AscendancyConfig.LevelRace.REACH_TITLE_ID.equals(id) && race().reachExperience() > 0
-                        ? "經驗 +" + number(race().reachExperience()) + "%" : null;
+                        ? "經驗 +" + number(race().reachExperience()) + "%／每隻 " + race().level() + " 級角色（最多 "
+                        + number(race().reachExperience() * race().reachMaxCharacters()) + "%）" : null;
             }
 
             @Override
@@ -228,6 +229,7 @@ public final class LevelRaceService {
         if (character.level() >= race().level()) {
             grantReach(player); // 燃星者：到了就有（不限量；已經有了什麼都不做）
         }
+        announceEvolution(player); // 2026-10-22：第 2 隻以後的 100 級角色：燃星者進化
         claimFirst(player, character);
         if (ascendancy == null) {
             return;
@@ -281,7 +283,61 @@ public final class LevelRaceService {
     private static final String REACH_COLOR = "#ff8a3d";
 
     private String reachBonusText() {
-        return race().reachExperience() > 0 ? "<#5bd65b>擁有就有效（不用戴）：經驗 +" + number(race().reachExperience()) + "%" : "<dark_gray>沒有加成";
+        return race().reachExperience() > 0 ? "<#5bd65b>擁有就有效（不用戴）：每一隻 " + race().level() + " 級的角色經驗 +" + number(race().reachExperience())
+                + "%<dark_gray>（最多 " + race().reachMaxCharacters() + " 隻 = " + number(race().reachExperience() * race().reachMaxCharacters()) + "%）"
+                : "<dark_gray>沒有加成";
+    }
+
+    /** 2026-10-22 燃星者進化：帳號裡到 level 級的角色有幾隻（最多 reach_max_characters）。正在玩的那隻照現在的等級。 */
+    public int reachCount(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        final CharacterRecord active = state.isLoaded() ? state.character() : null;
+        int count = 0;
+        boolean activeCounted = false;
+        for (final CharacterRecord record : plugin.characters().roster(player)) {
+            final boolean isActive = active != null && record.id() == active.id();
+            final int level = isActive ? active.level() : record.level();
+            if (isActive) {
+                activeCounted = true;
+            }
+            if (level >= race().level()) {
+                count++;
+            }
+        }
+        if (!activeCounted && active != null && active.level() >= race().level()) {
+            count++; // 名單還沒更新（剛建的角色）
+        }
+        return Math.min(race().reachMaxCharacters(), count);
+    }
+
+    /** 帳號進度：上次通知到第幾隻（燃星者進化只說一次）。 */
+    private static final String REACH_COUNT = "race.reach_count";
+
+    private void announceEvolution(final Player player) {
+        final BountyService bounties = plugin.bounties();
+        if (bounties == null || race().reachExperience() <= 0 || !bounties.ownedTitles(player).contains(AscendancyConfig.LevelRace.REACH_TITLE_ID)) {
+            return;
+        }
+        final int count = reachCount(player);
+        int seen = 0;
+        try {
+            final String stored = bounties.progressValue(player, REACH_COUNT);
+            seen = stored == null ? 0 : Integer.parseInt(stored.trim());
+        } catch (final NumberFormatException ignored) {
+            seen = 0;
+        }
+        if (count <= seen) {
+            return;
+        }
+        bounties.writeProgress(player, REACH_COUNT, String.valueOf(count));
+        plugin.players().markDirty(player);
+        if (count <= 1) {
+            return; // 第一隻：拿到稱號時已經說過了
+        }
+        player.sendMessage(plugin.text().prefixed("<" + REACH_COLOR + ">燃星者進化：<gray>帳號裡第 <white>" + count + "</white> 隻 " + race().level()
+                + " 級的角色，經驗 <#5bd65b>+" + number(race().reachExperience() * count) + "%</#5bd65b>"
+                + (count >= race().reachMaxCharacters() ? "<gray>（已經是最高）" : "<dark_gray>（最多 " + race().reachMaxCharacters() + " 隻）")));
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.4f);
     }
 
     private static String number(final double value) {
@@ -299,7 +355,9 @@ public final class LevelRaceService {
         if (bounties == null || race().reachTitle().isEmpty() || race().reachExperience() <= 0) {
             return 0;
         }
-        return bounties.ownedTitles(player).contains(AscendancyConfig.LevelRace.REACH_TITLE_ID) ? race().reachExperience() / 100.0 : 0;
+        // 2026-10-22 燃星者進化：每一隻 level 級的角色各算一次（最多 reach_max_characters 隻）
+        return bounties.ownedTitles(player).contains(AscendancyConfig.LevelRace.REACH_TITLE_ID)
+                ? race().reachExperience() * Math.max(1, reachCount(player)) / 100.0 : 0;
     }
 
     private void grantReach(final Player player) {

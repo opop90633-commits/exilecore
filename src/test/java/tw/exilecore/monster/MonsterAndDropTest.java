@@ -184,7 +184,8 @@ class MonsterAndDropTest {
         assertEquals(currencyBefore * 160 * 24 / 160, lesserSocket / per, 0.002, "小鑿星石 160 → 24");
         assertEquals(currencyBefore * 260, spark / per, 0.003, "星火石的掉率不變");
         // 2026-10 第五次（照市場報告）：未切割技能寶石的分類權重 40 → 20、輔助寶石 30 → 12
-        assertEquals(1.5 * 6 / 103 / 3 / 2, skill / per, 0.004, "未切割技能寶石是以前的 1/6（1/3 再減半）");
+        // 2026-10-22 第六次：未切割技能寶石 20 → 12
+        assertEquals(1.5 * 6 / 103 / 3 / 2 * 0.6, skill / per, 0.003, "未切割技能寶石是以前的 1/6 × 0.6");
         assertEquals(1.5 * 4 / 103 * 1.5 / 4 * 0.4, support / per, 0.003, "未切割輔助寶石是以前的 3/8 × 2/5");
         assertEquals(1.5 * 3 / 103 / 2, flask / per, 0.005, "藥劑是以前的一半");
         assertEquals(1.5 * 60 / 103 * 3000 / 10956 / 2, glimmer / per, 0.012, "微光石是以前的一半");

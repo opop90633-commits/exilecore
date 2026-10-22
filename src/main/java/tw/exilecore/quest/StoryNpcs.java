@@ -34,12 +34,21 @@ final class StoryNpcs implements Listener {
         this.campaign = campaign;
     }
 
-    /** 劇情人物 → 站的位置（只有擺得出來的）。 */
+    /** 劇情人物 → 站的位置（只有擺得出來的；劇情世界）。 */
     Map<String, Location> spots() {
+        return spots(campaign);
+    }
+
+    /**
+     * 劇情人物在這個世界的站位。分流的主城世界（2026-10-22）只擺營地（camp）的人物——
+     * 區域檢查點的人物只在劇情世界。座標照劇情世界的版面算，分流世界是整塊複製的所以一樣。
+     */
+    Map<String, Location> spots(final World world) {
         final Map<String, Location> spots = new LinkedHashMap<>();
-        if (plugin.zones() == null) {
+        if (plugin.zones() == null || world == null) {
             return spots;
         }
+        final boolean channel = !world.equals(campaign);
         for (final QuestConfig.Npc npc : service.config().npcs().values()) {
             final QuestConfig.Placement place = npc.placement();
             if (place == null) {
@@ -48,6 +57,8 @@ final class StoryNpcs implements Listener {
             final ZoneLayout.Point anchor;
             if (QuestConfig.CAMP.equals(place.zone())) {
                 anchor = plugin.zones().camp().map(zone -> zone.layout().entry()).orElse(null);
+            } else if (channel) {
+                continue;
             } else {
                 final Zone zone = plugin.zones().zone(place.zone()).orElse(null);
                 final ZoneLayout.Checkpoint checkpoint = zone == null ? null : zone.layout().checkpoint(place.checkpoint());
@@ -56,18 +67,35 @@ final class StoryNpcs implements Listener {
             if (anchor == null || !anchor.world().equals(campaign.getName())) {
                 continue;
             }
-            spots.put(npc.id(), new Location(campaign, anchor.x() + place.x(), anchor.y() + place.y(), anchor.z() + place.z(), place.yaw(), 0f));
+            spots.put(npc.id(), new Location(world, anchor.x() + place.x(), anchor.y() + place.y(), anchor.z() + place.z(), place.yaw(), 0f));
         }
         return spots;
     }
 
+    /** 劇情世界 + 分流的主城世界。 */
+    private List<World> worlds() {
+        final List<World> worlds = new ArrayList<>();
+        worlds.add(campaign);
+        if (plugin.world() != null && plugin.world().worlds() != null) {
+            worlds.addAll(plugin.world().worlds().channels().towns());
+        }
+        return worlds;
+    }
+
+    private boolean handles(final World world) {
+        if (world.equals(campaign)) {
+            return true;
+        }
+        return plugin.world() != null && plugin.world().worlds() != null && plugin.world().worlds().channels().isChannel(world);
+    }
+
     @EventHandler
     public void onEntitiesLoad(final EntitiesLoadEvent event) {
-        if (!event.getWorld().equals(campaign) || plugin.npcs() == null) {
+        if (plugin.npcs() == null || !handles(event.getWorld())) {
             return;
         }
         final Chunk chunk = event.getChunk();
-        final Map<String, Location> spots = spots();
+        final Map<String, Location> spots = spots(event.getWorld());
         final Map<String, Location> mine = new LinkedHashMap<>();
         for (final Map.Entry<String, Location> entry : spots.entrySet()) {
             if (inChunk(entry.getValue(), chunk)) {
@@ -110,16 +138,18 @@ final class StoryNpcs implements Listener {
 
     /** 啟動、重讀設定時：已經載入的區塊先做一次。 */
     void applyLoaded() {
-        for (final Map.Entry<String, Location> entry : spots().entrySet()) {
-            final Location spot = entry.getValue();
-            final int chunkX = spot.getBlockX() >> 4;
-            final int chunkZ = spot.getBlockZ() >> 4;
-            if (!campaign.isChunkLoaded(chunkX, chunkZ)) {
-                continue;
-            }
-            final Chunk chunk = campaign.getChunkAt(chunkX, chunkZ);
-            if (chunk.isEntitiesLoaded()) {
-                ensure(entry.getKey(), spot, List.of(chunk.getEntities()));
+        for (final World world : worlds()) {
+            for (final Map.Entry<String, Location> entry : spots(world).entrySet()) {
+                final Location spot = entry.getValue();
+                final int chunkX = spot.getBlockX() >> 4;
+                final int chunkZ = spot.getBlockZ() >> 4;
+                if (!world.isChunkLoaded(chunkX, chunkZ)) {
+                    continue;
+                }
+                final Chunk chunk = world.getChunkAt(chunkX, chunkZ);
+                if (chunk.isEntitiesLoaded()) {
+                    ensure(entry.getKey(), spot, List.of(chunk.getEntities()));
+                }
             }
         }
     }

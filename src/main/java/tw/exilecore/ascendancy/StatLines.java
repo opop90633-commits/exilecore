@@ -187,6 +187,7 @@ public final class StatLines {
         TAG_NAMES.put(Tags.HERALD, "捷光環");
         TAG_NAMES.put(Tags.WARCRY, "戰吼");
         TAG_NAMES.put(Tags.PERSISTENT, "常駐");
+        TAG_NAMES.put(Tags.META, "主要寶石"); // 2026-10-22
         TAG_NAMES.put(Tags.MARK, "印記");
         TAG_NAMES.put(Tags.SHAPESHIFT, "變身");
         TAG_NAMES.put(Tags.BEAR, "熊形態");

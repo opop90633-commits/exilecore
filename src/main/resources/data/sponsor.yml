@@ -57,7 +57,8 @@ boosts:
     quantity:   { name: 全服掉落數量加倍, label: 掉落數量, icon: CHEST,             quantity: 100 }
     rarity:     { name: 全服掉落稀有度加倍, label: 稀有度,  icon: AMETHYST_SHARD,    rarity: 100 }
     gold:       { name: 全服金幣加倍,   label: 金幣,   icon: GOLD_INGOT,        gold: 2.0 }
-  # 2026-10 個人加倍藥：同樣四種、效果同上，只有買的人自己吃；同一種再買接著延長（最多 max_minutes）。時間照現實時間算（下線也在走）
+  # 2026-10 個人加倍藥：同樣四種、效果同上，只有買的人自己吃。
+  # 2026-10-22：買了先存著，在贊助選單右鍵開、再右鍵關；下線自動關（剩的時間存回去）。存著的＋開著的最多 max_minutes；開著時再買接著延長
   # 跟全服加倍「加起來」不是乘起來：全服 2 倍＋個人 2 倍 = 3 倍（經驗、金幣各多 +100%；數量、稀有度各 +100%）
   personal:
     price: 10

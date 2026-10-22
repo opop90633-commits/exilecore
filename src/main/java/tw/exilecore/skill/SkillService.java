@@ -1050,14 +1050,6 @@ public final class SkillService {
             fail(player, runtime, state, "營地裡不能戰鬥", now); // 光環在營地也能開關
             return;
         }
-        if (pressed.entry() != null && definition.type() == SkillType.SPELL && triggers().triggeredOnly(state, pressed.entry())) {
-            // 2026-10（照 PoE2）：插在主要寶石插槽裡的法術只會被觸發（或由法術圖騰放），不能自己按
-            final int position = state.skills().find(definition.id());
-            final SkillDefinition owner = position > 0 ? config.skill(state.skills().skill(position - 1).skillId()) : null;
-            fail(player, runtime, state, definition.name() + "插在" + (owner == null ? "主要寶石" : owner.name())
-                    + "的插槽裡：只會由它施放，不能自己按", now);
-            return;
-        }
         if (plugin.ailments() != null && plugin.ailments().isIncapacitated(player)) {
             fail(player, runtime, state, "凍結中，不能施放", now);
             return;
@@ -1524,7 +1516,7 @@ public final class SkillService {
         final MetaGems.Socket socket = position < 0 ? null : metas.socket(state, position);
         if (socket == null) {
             final String problem = position < 0 ? null : metas.socketProblem(state, position);
-            fail(player, runtime, state, problem == null ? definition.name() + "：技能面板上它後面那一格要放一個法術" : problem, now);
+            fail(player, runtime, state, problem == null ? definition.name() + "：第 1 孔要放一個法術的寶石（/skills 點它）" : problem, now);
             return;
         }
         final tw.exilecore.charge.ChargeService charges = plugin.combat() == null ? null : plugin.combat().charges();
@@ -1588,14 +1580,16 @@ public final class SkillService {
                 break;
             }
         }
-        final SkillLoadout.Entry next = position < 0 ? null : loadout.skill(position + 1);
+        // 2026-10-22：英靈用的技能放在英靈圖騰自己的第 1 孔（以前是面板上它後面那一格）
+        final SkillLoadout.Entry next = position < 0 ? null : innerEntry(loadout.skill(position));
         final SkillDefinition definition = next == null ? null : config.skill(next.skillId());
-        final String hint = totem.name() + "：技能面板上它後面那一格要放錘子攻擊技能";
-        if (definition == null || !definition.isAttack() || !definition.weapons().contains("mace")) {
+        final String hint = totem.name() + "：第 1 孔要放錘子攻擊技能的寶石（/skills 點它）";
+        if (definition == null) {
             return hint;
         }
-        if (definition.cooldown() > 0 || SkillExecutor.hasFlag(definition, StatKeys.CHANNEL_STAGES) || !SkillBuild.deployable(definition)) {
-            return hint + "（不能是有冷卻、蓄力、位移的技能）";
+        final String why = linkedProblem(definition);
+        if (why != null) {
+            return hint + "（" + why + "）";
         }
         // 2026-10-21：輔助寶石加的冷卻也算（蓄鋒、蓄疾…）：英靈不等冷卻，以前白拿那顆輔助的加成（暴擊率更多 40%、異常機率加倍）
         final SkillBuild built = build(state, sheet, definition, next);
@@ -1609,6 +1603,17 @@ public final class SkillService {
             return hint + "（不能有冷卻：" + (names.isEmpty() ? "輔助寶石加的冷卻也算" : String.join("、", names) + "會加冷卻，拿掉才能放圖騰") + "）";
         }
         return built;
+    }
+
+    /** 2026-10-22：這個技能能不能放進英靈圖騰的第 1 孔；可以回傳 null，不行回傳原因。 */
+    static String linkedProblem(final SkillDefinition definition) {
+        if (definition == null || definition.hidden() || !definition.isAttack() || !definition.weapons().contains("mace")) {
+            return "要錘子的攻擊技能";
+        }
+        if (definition.cooldown() > 0 || SkillExecutor.hasFlag(definition, StatKeys.CHANNEL_STAGES) || !SkillBuild.deployable(definition)) {
+            return "不能是有冷卻、蓄力、位移的技能";
+        }
+        return null;
     }
 
     /** 這顆輔助會讓技能多冷卻時間（蓄鋒、蓄疾這種）。 */
@@ -2336,8 +2341,37 @@ public final class SkillService {
 
     /** 面板上（或寶石裡）的一個技能在這個角色身上的數值。 */
     SkillBuild build(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
-        return SkillBuild.of(config, definition, entry.level(), state.level(), false, supportsOf(entry), state.weaponTags(), sheet,
+        // 2026-10-22：宿主寶石（英靈圖騰、星咒圖騰、暴擊引星）孔裡的輔助是給放進去的技能的；宿主自己只吃其中要圖騰的、加速度與持續的
+        final List<SupportDefinition> supports = SupportDefinition.hostsSkill(definition) ? hostSupportsOf(entry) : supportsOf(entry);
+        return SkillBuild.of(config, definition, entry.level(), state.level(), false, supports, state.weaponTags(), sheet,
                 resonantOf(entry)); // 2026-10-18：共鳴的專屬輔助不佔名額
+    }
+
+    /** 2026-10-22：宿主寶石本身吃的輔助（孔裡要圖騰的、只加攻擊／施法速度或持續時間的）。 */
+    List<SupportDefinition> hostSupportsOf(final SkillLoadout.Entry entry) {
+        final List<SupportDefinition> list = new ArrayList<>();
+        for (final SupportDefinition support : supportsOf(entry)) {
+            if (support.worksOnHost()) {
+                list.add(support);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 2026-10-22：宿主寶石第 1 孔裡那顆技能的面板項目：代號、等級照放進去的寶石，輔助就是宿主第 2～5 孔的輔助
+     * （放進去的寶石自己沒有輔助）。宿主沒放技能回傳 null。
+     */
+    static SkillLoadout.Entry innerEntry(final SkillLoadout.Entry host) {
+        if (host == null || host.inner() == null) {
+            return null;
+        }
+        return new SkillLoadout.Entry(host.inner().skillId(), host.inner().level(), SkillLoadout.MAX_SOCKETS, host.supports(), host.resonant());
+    }
+
+    /** 2026-10-22：面板上這一格宿主寶石裡的技能（定義）；沒有或不認得回傳 null。 */
+    SkillDefinition innerSkill(final SkillLoadout.Entry host) {
+        return host == null || host.inner() == null ? null : config.skill(host.inner().skillId());
     }
 
     /** 2026-10-18：技能掛的輔助裡已共鳴（用過共鳴石）的代號。 */
@@ -2420,6 +2454,7 @@ public final class SkillService {
         final SkillLoadout loadout = state.skills();
         final List<org.bukkit.inventory.ItemStack> give = new ArrayList<>();
         final List<String> names = new ArrayList<>();
+        boolean hostChanged = false;
         for (int position = 0; position < SkillLoadout.MAX_SKILLS; position++) {
             final SkillLoadout.Entry original = loadout.skill(position);
             if (original == null) {
@@ -2435,6 +2470,11 @@ public final class SkillService {
                 continue;
             }
             SkillLoadout.Entry entry = original;
+            if (entry.inner() != null && config.skill(entry.inner().skillId()) == null) { // 2026-10-22：放在宿主裡的技能被拿掉
+                give.add(gems.create(GemData.uncutSkill(entry.inner().level()), 1));
+                names.add("技能 " + entry.inner().skillId() + " Lv." + entry.inner().level());
+                entry = entry.withInner(null);
+            }
             for (int i = 0; i < entry.sockets(); i++) {
                 final String support = entry.support(i);
                 if (!support.isEmpty() && config.support(support) == null) {
@@ -2443,9 +2483,35 @@ public final class SkillService {
                     names.add("輔助 " + support);
                 }
             }
+            // 2026-10-22：宿主寶石（英靈圖騰、星咒圖騰、暴擊引星）第 1 孔改放技能寶石：舊資料第 1 孔是輔助的往後挪一孔，
+            // 擠出去的最後一顆退還（放進去的技能留在原本那一格，玩家自己拖進第 1 孔）
+            if (SupportDefinition.hostsSkill(config.skill(entry.skillId())) && !entry.support(SkillLoadout.Entry.INNER_SOCKET).isEmpty()) {
+                final List<String> shifted = new ArrayList<>();
+                final List<Boolean> marks = new ArrayList<>();
+                shifted.add("");
+                marks.add(false);
+                for (int i = 0; i < entry.sockets(); i++) {
+                    shifted.add(entry.support(i));
+                    marks.add(entry.resonant(i));
+                }
+                final String last = shifted.get(entry.sockets());
+                if (!last.isEmpty()) {
+                    give.add(gems.create(GemData.support(last, marks.get(entry.sockets())), 1));
+                    names.add("輔助 " + gems.supportName(last) + "（" + gems.skillName(entry) + "第 1 孔改放技能寶石，擠出來）");
+                }
+                entry = new SkillLoadout.Entry(entry.skillId(), entry.level(), entry.sockets(), shifted.subList(0, entry.sockets()),
+                        marks.subList(0, entry.sockets()), entry.inner());
+                hostChanged = true;
+            }
             if (entry != original) {
                 loadout.set(position, entry);
             }
+        }
+        if (hostChanged) {
+            plugin.players().markDirty(player);
+            plugin.characters().save(player);
+            player.sendMessage(plugin.text().prefixed("<yellow>技能改版：英靈圖騰、星咒圖騰、暴擊引星改成把技能寶石放進自己的第 1 孔"
+                    + "（後面 4 孔的輔助套在那顆技能上）。請打開 <white>/skills</white>，把原本放在它後面那一格的技能拖進第 1 孔"));
         }
         if (give.isEmpty()) {
             return;
@@ -2454,7 +2520,7 @@ public final class SkillService {
         plugin.players().markDirty(player);
         plugin.characters().save(player);
         player.sendMessage(plugin.text().prefixed("<yellow>技能改版：技能面板上拿掉的 " + names.size()
-                + " 個技能／輔助已經換成同等級的未切割寶石放進背包（" + ItemRenderer.escape(String.join("、", names)) + "）"));
+                + " 個技能／輔助已經退還放進背包（" + ItemRenderer.escape(String.join("、", names)) + "）"));
     }
 
     /** 這個角色的起始技能：選新手武器時決定的優先，找不到（改過設定）就用職業的。 */
@@ -2716,8 +2782,8 @@ public final class SkillService {
                             : 20.0 / SkillDeployables.totemTicks(deploy.interval(), speed);
                     lines.add(String.format(Locale.ROOT, "<gray>每個圖騰每秒 <white>%.2f<gray> 次（滿 %d 個合計 <white>%.2f<gray> 次）%s",
                             rate, build.totems(), build.totems() * rate,
-                            linked ? "　<dark_gray>（" + (ancestor == null ? "後面那一格沒有能連的錘子技能" : ItemRenderer.escape(ancestor.definition().name()) + "的攻擊時間 ×1.5")
-                                    + " ÷ 你的攻速；那個技能自己的輔助不算）"
+                            linked ? "　<dark_gray>（" + (ancestor == null ? "第 1 孔沒有放能用的錘子技能" : ItemRenderer.escape(ancestor.definition().name()) + "的攻擊時間 ×1.5")
+                                    + " ÷ 你的攻速）"
                                     : build.isAttack() ? "　<dark_gray>（吃你的攻擊速度）" : "　<dark_gray>（吃你的施法速度）"));
                 }
             } else if (config.meta(definition.id()) != null && config.meta(definition.id()).totem()) {

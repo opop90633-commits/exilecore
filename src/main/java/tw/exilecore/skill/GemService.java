@@ -382,9 +382,13 @@ public final class GemService {
         lines.add("<gray>需要角色等級 <white>" + config().requiredLevel(entry.level()));
         lines.add("");
         lines.add("<gray>輔助孔：<white>" + entry.sockets() + "</white>／" + SkillLoadout.MAX_SOCKETS);
+        final boolean host = SupportDefinition.hostsSkill(definition); // 2026-10-22：第 1 孔放技能寶石
         for (int i = 0; i < entry.sockets(); i++) {
             final String id = entry.support(i);
-            if (id.isEmpty()) {
+            if (host && i == SkillLoadout.Entry.INNER_SOCKET) {
+                lines.add(entry.inner() == null ? "<dark_gray> ◇ 第 1 孔：放技能寶石（空）"
+                        : "<#ffd27f> ◆ " + ItemRenderer.escape(skillName(entry.inner())) + " <gray>Lv." + entry.inner().level() + "（放在裡面的技能）");
+            } else if (id.isEmpty()) {
                 lines.add("<dark_gray> ◇ 空");
             } else {
                 final SupportDefinition support = config().support(id);
@@ -829,9 +833,16 @@ public final class GemService {
         if (existing >= 0 && existing != target) {
             return Change.fail("面板上已經有" + definition.name() + "了");
         }
+        final int insideOf = loadout.findInner(entry.skillId()); // 2026-10-22
+        if (insideOf >= 0) {
+            return Change.fail(definition.name() + "已經放在" + skillName(loadout.skill(insideOf)) + "的第 1 孔裡了");
+        }
         final int sibling = config().familyConflict(loadout, entry.skillId(), target);
         if (sibling >= 0) {
             return Change.fail("面板上已經有" + skillName(loadout.skill(sibling)) + "（異質寶石跟原本的技能只能放一個）");
+        }
+        if (entry.inner() != null && !SupportDefinition.hostsSkill(definition)) {
+            return Change.fail("這顆寶石裡放著技能，但" + definition.name() + "不是英靈圖騰、星咒圖騰或暴擊引星"); // 不該發生
         }
         {
             for (final String supportId : entry.supportIds()) {
@@ -860,6 +871,88 @@ public final class GemService {
         return Change.ok(create(GemData.skill(entry), 1));
     }
 
+    /**
+     * 2026-10-22：把技能寶石放進宿主寶石（英靈圖騰、星咒圖騰、暴擊引星）的第 1 孔。
+     * 寶石自己掛的輔助拆下來放進背包（裡面的技能沒有自己的輔助：宿主第 2～5 孔的輔助就是它的）；
+     * 原本放著的技能換下來回傳；宿主孔裡跟新技能不合的輔助也拆下來放進背包。
+     */
+    Change placeInner(final Player player, final int position, final GemData gem) {
+        final PlayerState state = plugin.players().get(player);
+        final SkillLoadout loadout = state.skills();
+        final SkillLoadout.Entry host = loadout.skill(position);
+        final SkillDefinition hostDefinition = host == null ? null : config().skill(host.skillId());
+        if (hostDefinition == null || !SupportDefinition.hostsSkill(hostDefinition)) {
+            return Change.fail("只有英靈圖騰、星咒圖騰、暴擊引星的第 1 孔能放技能寶石");
+        }
+        final SkillLoadout.Entry entry = gem.entry();
+        if (gem.kind() != GemData.Kind.SKILL || entry == null) {
+            return Change.fail("這不是技能寶石");
+        }
+        final SkillDefinition definition = config().skill(entry.skillId());
+        if (definition == null || definition.hidden()) {
+            return Change.fail("不認得的技能：" + entry.skillId());
+        }
+        final String why = innerProblem(hostDefinition, definition);
+        if (why != null) {
+            return Change.fail(definition.name() + "不能放進" + hostDefinition.name() + "（" + why + "）");
+        }
+        if (loadout.find(entry.skillId()) >= 0) {
+            return Change.fail("面板上已經有" + definition.name() + "了，先取出來");
+        }
+        final int insideOf = loadout.findInner(entry.skillId());
+        if (insideOf >= 0 && insideOf != position) {
+            return Change.fail(definition.name() + "已經放在" + skillName(loadout.skill(insideOf)) + "的第 1 孔裡了");
+        }
+        if (entry.inner() != null) {
+            return Change.fail("這顆寶石裡還放著別的技能，先拿出來");
+        }
+        final List<ItemStack> extra = new ArrayList<>();
+        final List<String> names = new ArrayList<>();
+        for (int i = 0; i < entry.sockets(); i++) {
+            if (!entry.support(i).isEmpty()) { // 寶石自己的輔助拆下來
+                extra.add(create(GemData.support(entry.support(i), entry.resonant(i)), 1));
+                names.add(supportName(entry.support(i)));
+            }
+        }
+        SkillLoadout.Entry updated = host.withInner(new SkillLoadout.Entry(entry.skillId(), entry.level(), entry.sockets(), List.of()));
+        for (int i = SkillLoadout.Entry.INNER_SOCKET + 1; i < updated.sockets(); i++) {
+            final SupportDefinition support = config().support(updated.support(i));
+            if (support != null && support.hostRefusal(hostDefinition, definition) != null) { // 跟新技能不合的輔助拆下來
+                extra.add(create(GemData.support(updated.support(i), updated.resonant(i)), 1));
+                names.add(support.name() + "（不能輔助" + definition.name() + "）");
+                updated = updated.withSupport(i, "", false);
+            }
+        }
+        loadout.set(position, updated);
+        if (!extra.isEmpty()) {
+            giveAll(player, extra);
+            player.sendMessage(plugin.text().prefixed("<gray>拆下來放進背包：" + ItemRenderer.escape(String.join("、", names))
+                    + "（放進" + ItemRenderer.escape(hostDefinition.name()) + "裡的技能用的是它第 2～5 孔的輔助）"));
+        }
+        final SkillLoadout.Entry old = host.inner();
+        return Change.ok(old == null ? null : create(GemData.skill(old), 1));
+    }
+
+    /** 2026-10-22：把宿主寶石第 1 孔的技能寶石拿出來（帶著它自己的孔數，沒有輔助）。 */
+    Change takeInner(final Player player, final int position) {
+        final SkillLoadout loadout = plugin.players().get(player).skills();
+        final SkillLoadout.Entry host = loadout.skill(position);
+        if (host == null || host.inner() == null) {
+            return Change.fail("第 1 孔是空的");
+        }
+        loadout.set(position, host.withInner(null));
+        return Change.ok(create(GemData.skill(host.inner()), 1));
+    }
+
+    /** 2026-10-22：這個技能能不能放進這種宿主寶石的第 1 孔；可以回傳 null，不行回傳原因。 */
+    String innerProblem(final SkillDefinition host, final SkillDefinition inner) {
+        if (SkillExecutor.hasFlag(host, tw.exilecore.stats.StatKeys.FLAG_TOTEM_LINKED)) {
+            return SkillService.linkedProblem(inner);
+        }
+        final MetaSpec spec = config().meta(host.id());
+        return spec == null ? "不是宿主寶石" : MetaGems.problem(spec, inner);
+    }
+
     /** 把輔助寶石掛到技能的輔助孔（index = -1 掛第一個空孔）；孔裡原本有的換下來回傳。 */
     Change socket(final Player player, final int position, final int index, final String supportId) {
         return socket(player, position, index, supportId, false);
@@ -877,8 +970,17 @@ public final class GemService {
         if (definition == null || support == null) {
             return Change.fail("不認得的技能或輔助");
         }
-        if (!support.supports(definition)) {
+        final boolean host = SupportDefinition.hostsSkill(definition); // 2026-10-22：宿主寶石：第 1 孔放技能，輔助照裡面的技能驗
+        if (host) {
+            final String why = support.hostRefusal(definition, config().skill(entry.inner() == null ? "" : entry.inner().skillId()));
+            if (why != null) {
+                return Change.fail(why);
+            }
+        } else if (!support.supports(definition)) {
             return Change.fail(support.name() + "不能輔助" + definition.name() + "（" + support.refusal(definition) + "）");
+        }
+        if (host && index == SkillLoadout.Entry.INNER_SOCKET) {
+            return Change.fail(definition.name() + "的第 1 孔只放技能寶石，輔助請放第 2～5 孔");
         }
         final int socket = index >= 0 ? index : entry.freeSocket();
         if (socket < 0) {
@@ -988,7 +1090,7 @@ public final class GemService {
         return -1;
     }
 
-    private String skillName(final SkillLoadout.Entry entry) {
+    String skillName(final SkillLoadout.Entry entry) {
         if (entry == null) {
             return "別的技能";
         }
@@ -996,7 +1098,7 @@ public final class GemService {
         return definition == null ? entry.skillId() : definition.name();
     }
 
-    private String supportName(final String supportId) {
+    String supportName(final String supportId) {
         final SupportDefinition support = config().support(supportId);
         return support == null ? supportId : support.name();
     }

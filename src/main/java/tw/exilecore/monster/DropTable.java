@@ -85,6 +85,8 @@ public final class DropTable {
     private double uniqueWeight;
     private double bossUniqueWeight;
     private final Map<MonsterRarity, Double> dropsPerRarity = new EnumMap<>(MonsterRarity.class);
+    /** 2026-10-22：drops.yml 的 currency_scale——個別通貨的掉落權重再乘幾倍（權重是整數，要比 1 還少就用這個）。 */
+    private volatile Map<String, Double> currencyScale = Map.of();
     private int currencyWeight = 65;
     private int equipmentWeight = 35;
     private int skillGemWeight;
@@ -221,6 +223,14 @@ public final class DropTable {
         serverRarity = clamp(bonus.decimal("rarity", 0), 0, MAX_SERVER_BONUS) / 100.0;
         serverGold = clamp(bonus.decimal("gold", 1), MIN_SERVER_GOLD, MAX_SERVER_GOLD);
         rarityCurve = root.has("rarity_curve") ? parseCurve(root.list("rarity_curve")) : DEFAULT_RARITY_CURVE; // 2026-10-19
+        final Map<String, Double> scale = new java.util.HashMap<>();
+        if (root.has("currency_scale")) {
+            final YamlNode scaleNode = root.node("currency_scale");
+            for (final String key : scaleNode.keys()) {
+                scale.put(key.trim(), clamp(scaleNode.decimal(key, 1), 0, 10));
+            }
+        }
+        currencyScale = Map.copyOf(scale);
         tw.exilecore.loot.SwapGuard.setHoldSeconds(clamp(root.decimal("swap_hold_seconds", 10), 0, 120)); // 2026-10-19 防最後一下換裝
         if (root.has("gold")) {
             final YamlNode gold = root.node("gold");
@@ -455,7 +465,8 @@ public final class DropTable {
         }
         double total = 0;
         for (final CurrencyType currency : eligible) {
-            final double weight = currency.dropWeight() * (1 + Math.max(0, rarityBonus) * scarcity(currency.dropWeight(), min, max));
+            final double weight = currency.dropWeight() * (1 + Math.max(0, rarityBonus) * scarcity(currency.dropWeight(), min, max))
+                    * currencyScale.getOrDefault(currency.id(), 1.0); // 2026-10-22
             weights.add(weight);
             total += weight;
         }

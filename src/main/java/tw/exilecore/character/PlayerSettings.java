@@ -28,8 +28,12 @@ public final class PlayerSettings {
     /** 畫面左邊的隊伍框：隊友的頭像、名字、生命（護盾）、魔力（2026-10-18；要套資源包）。預設開。 */
     public static final String PARTY_FRAMES = "setting.party_frames";
 
-    /** 撿到的星圖直接收進倉庫的地圖頁（2026-10；地圖頁滿了或倉庫沒載入才放背包）。預設關（{@link #on}）。 */
-    public static final String MAP_TO_STASH = "setting.map_to_stash";
+    /** 過濾死亡訊息：聊天欄不顯示別的玩家的死亡訊息（2026-10-22）。預設關（{@link #on}）。 */
+    public static final String HIDE_DEATHS = "setting.hide_deaths";
+    /** 過濾加入、離開訊息：聊天欄不顯示誰上線、下線（2026-10-22）。預設關（{@link #on}）。 */
+    public static final String HIDE_JOIN_LEAVE = "setting.hide_join_leave";
+    /** 隱藏怪物對話：聊天欄不顯示 Boss 的喊話、登場與倒下的台詞（2026-10-22；招式警告、畫面中間的大字照常）。預設關（{@link #on}）。 */
+    public static final String HIDE_MONSTER_TALK = "setting.hide_monster_talk";
 
     private PlayerSettings() {
     }

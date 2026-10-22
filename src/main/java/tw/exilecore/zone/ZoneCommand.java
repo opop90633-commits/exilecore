@@ -17,6 +17,7 @@ import java.util.function.Consumer;
  * <pre>
  * /wp      傳送選單（營地、發現過的檢查點、回到剛才的位置）
  * /town    免費回營地（記住原本的位置，/wp 可以傳回去）
+ * /channel [n]  2026-10-22 主城分流：打開分流選單（每條線幾個人）、換到第 n 線（要在營地裡）
  * </pre>
  */
 public final class ZoneCommand {
@@ -31,7 +32,13 @@ public final class ZoneCommand {
         final LiteralCommandNode<CommandSourceStack> town = Commands.literal("town")
                 .executes(context -> run(plugin, context, player -> plugin.zones().goTown(player)))
                 .build();
-        return List.of(waypoint, town);
+        final LiteralCommandNode<CommandSourceStack> channel = Commands.literal("channel")
+                .executes(context -> run(plugin, context, player -> new tw.exilecore.gui.ChannelMenu(plugin, player).open())) // 2026-10-22：打開分流選單
+                .then(Commands.argument("line", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, tw.exilecore.world.TownChannels.MAX_CHANNELS))
+                        .executes(context -> run(plugin, context, player -> plugin.zones().switchChannel(player,
+                                com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "line")))))
+                .build();
+        return List.of(waypoint, town, channel);
     }
 
     private static int run(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final Consumer<Player> action) {

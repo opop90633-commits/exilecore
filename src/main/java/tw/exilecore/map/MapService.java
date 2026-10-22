@@ -45,6 +45,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -125,8 +126,10 @@ public final class MapService {
     /** 門上的字：沒有地圖的人看到的說明（預設看得到）、每張地圖一個（只有那個隊伍看得到）。 */
     /** 門上的字的底邊離地面多高（吊燈的石頭頂在 6，留一點空）。 */
     static final double LABEL_HEIGHT = 6.3;
-    private TextDisplay generalLabel;
-    private final Map<Integer, TextDisplay> groupLabels = new HashMap<>();
+    /** 門上的說明字：每條線的營地世界一個（2026-10-22 主城分流；世界名稱 → 字）。 */
+    private final Map<String, TextDisplay> generalLabels = new HashMap<>();
+    /** 每張開著的地圖的字：每條線一個（"實例編號@世界名稱" → 字）。 */
+    private final Map<String, TextDisplay> groupLabels = new HashMap<>();
     private final Map<UUID, Long> gateCooldown = new HashMap<>();
     /** 在地圖裡死掉的玩家（重生時送回營地）。 */
     private final Set<UUID> diedInMap = new LinkedHashSet<>();
@@ -719,6 +722,7 @@ public final class MapService {
         final Set<String> speciesBefore = atlas.unlockedSpecies();
         final int capBefore = Atlas.dropTierCap(config, atlas.capUnits());
         final int pointsBefore = atlas.cellPoints();
+        final int earnedBefore = atlasEarned(player).total(); // 2026-10-22：訊息照上限後的點數（滿 120 不再顯示 +1）
         if (!atlas.complete(cell.q(), cell.r())) {
             return false;
         }
@@ -731,11 +735,14 @@ public final class MapService {
                 unlocked.add(map == null ? id : map.name());
             }
         }
-        final int points = after.cellPoints() - pointsBefore;
+        final int rawPoints = after.cellPoints() - pointsBefore;
+        final AtlasTree.Earned earnedAfter = atlasEarned(player);
+        final int points = earnedAfter.total() - earnedBefore;
         player.sendMessage(plugin.text().prefixed("<#9fd3ff>星圖：完成 (" + cell.q() + ", " + cell.r() + ")"
                 + (cell.kind() == AtlasGrid.Kind.TOWER ? " 塔" : cell.kind() == AtlasGrid.Kind.CITADEL ? " 城塞" : "")
                 + "<gray>，共 " + after.completed().size() + " 格、最遠 " + after.farthest() + " 格"
-                + (points > 0 ? "<gray>，星圖天賦點 +" + points : "")));
+                + (points > 0 ? "<gray>，星圖天賦點 +" + points
+                : rawPoints > 0 && earnedAfter.capped() ? "<gray>，星圖天賦點已滿（" + earnedAfter.cap() + "）" : "")));
         if (!unlocked.isEmpty()) {
             player.sendMessage(plugin.text().parse("<gray>  解鎖了新的地圖：<white>" + ItemRenderer.escape(String.join("、", unlocked))));
         }
@@ -2075,7 +2082,29 @@ public final class MapService {
         return worlds == null ? null : worlds.campaign();
     }
 
-    /** 營地的地圖裝置前面（回來的落點）；沒有劇情世界就用營地的落點。 */
+    /** 主城分流（2026-10-22）；世界模組沒啟用時 null。 */
+    private tw.exilecore.world.TownChannels channels() {
+        final CampaignWorld worlds = plugin.world() == null ? null : plugin.world().worlds();
+        return worlds == null ? null : worlds.channels();
+    }
+
+    /** 所有營地世界（每條線一個；沒有分流就只有劇情世界）。 */
+    private List<World> towns() {
+        final tw.exilecore.world.TownChannels channels = channels();
+        if (channels != null && !channels.towns().isEmpty()) {
+            return channels.towns();
+        }
+        final World campaign = campaign();
+        return campaign == null ? List.of() : List.of(campaign);
+    }
+
+    /** 這個世界是營地（劇情世界或分流世界）。 */
+    private boolean isTown(final World world) {
+        final tw.exilecore.world.TownChannels channels = channels();
+        return channels != null ? channels.isTown(world) : world != null && world.equals(campaign());
+    }
+
+    /** 營地的地圖裝置前面（回來的落點；第 1 線）；沒有劇情世界就用營地的落點。 */
     public Location deviceReturn() {
         final World campaign = campaign();
         if (campaign != null) {
@@ -2083,6 +2112,16 @@ public final class MapService {
             return new Location(campaign, spot.x(), spot.y(), spot.z(), spot.yaw(), 0f);
         }
         return plugin.zones() == null ? null : plugin.zones().campLocation();
+    }
+
+    /** 同上，換到這個玩家該回的那條線（2026-10-22 主城分流：從地圖出來回到進去前那條線）。 */
+    public Location deviceReturn(final Player player) {
+        final Location at = deviceReturn();
+        final tw.exilecore.world.TownChannels channels = channels();
+        if (at == null || channels == null || !channels.enabled()) {
+            return at;
+        }
+        return tw.exilecore.world.TownChannels.mapTo(at, channels.pick(player));
     }
 
     // ---- 進出 ----
@@ -2166,7 +2205,7 @@ public final class MapService {
 
     /** 送回營地（地圖裝置前面）。 */
     public void sendToCamp(final Player player) {
-        final Location target = deviceReturn();
+        final Location target = deviceReturn(player);
         if (target != null) {
             player.teleport(target);
         }
@@ -2487,7 +2526,7 @@ public final class MapService {
                 continue;
             }
             final Location location = player.getLocation();
-            if (campaign != null && location.getWorld().equals(campaign)) {
+            if (campaign != null && isTown(location.getWorld())) { // 2026-10-22 主城分流：每條線的營地都有門
                 final int gate = gateAt(location);
                 if (gate >= 0) {
                     if (!plugin.players().get(player).hasCharacter()) {
@@ -2675,7 +2714,7 @@ public final class MapService {
         bosses.end(instance);
         spawner.removeAll(instance);
         events.clear(instance);
-        removeLabel(groupLabels.remove(instance.id()));
+        removeGroupLabels(instance.id());
         instances.remove(instance.id());
         cells.put(instance.cell(), -1);
         final MapLayout layout = instance.layout();
@@ -2705,43 +2744,68 @@ public final class MapService {
      * 用實體的「只給某些人看」：說明預設看得到、對有地圖的人藏起來；每張地圖的字預設看不到、只給那個隊伍看。
      */
     private void updateLabels() {
-        final World campaign = campaign();
-        if (campaign == null) {
+        for (final World town : towns()) {
+            updateLabels(town);
+        }
+    }
+
+    /** 一條線的營地：門上的字（2026-10-22 主城分流：每個營地世界各一套）。 */
+    private void updateLabels(final World town) {
+        final Location at = labelSpot(town);
+        if (!town.isChunkLoaded(at.getBlockX() >> 4, at.getBlockZ() >> 4)) {
             return;
         }
-        final Location at = labelSpot(campaign);
-        if (!campaign.isChunkLoaded(at.getBlockX() >> 4, at.getBlockZ() >> 4)) {
-            return;
-        }
-        if (generalLabel == null || !generalLabel.isValid()) {
-            generalLabel = spawnLabel(at, true);
-            generalLabel.text(plugin.text().parse("<#9fd3ff>地圖傳送門<newline><gray>在地圖裝置開一張地圖，門就會亮起來"
+        TextDisplay general = generalLabels.get(town.getName());
+        if (general == null || !general.isValid()) {
+            general = spawnLabel(at, true);
+            general.text(plugin.text().parse("<#9fd3ff>地圖傳送門<newline><gray>在地圖裝置開一張地圖，門就會亮起來"
                     + "<newline><dark_gray>每個人（隊伍）看到的是自己的地圖"));
+            generalLabels.put(town.getName(), general);
         }
-        keepAt(generalLabel, at);
+        keepAt(general, at);
         // 每張開著的地圖一個字（只有那個隊伍看得到）
         for (final MapInstance instance : instances.values()) {
+            final String key = groupKey(instance.id(), town);
             if (instance.state() == MapInstance.State.CLOSING || instance.portalsLeft() <= 0) {
-                removeLabel(groupLabels.remove(instance.id()));
+                removeLabel(groupLabels.remove(key));
                 continue;
             }
-            TextDisplay label = groupLabels.get(instance.id());
+            TextDisplay label = groupLabels.get(key);
             if (label == null || !label.isValid()) {
                 label = spawnLabel(at, false);
-                groupLabels.put(instance.id(), label);
+                groupLabels.put(key, label);
             }
             keepAt(label, at);
             label.text(label(instance));
         }
         // 誰看得到哪一個
-        for (final Player player : campaign.getPlayers()) {
+        for (final Player player : town.getPlayers()) {
             if (player.getLocation().distanceSquared(at) > 64 * 64) {
                 continue;
             }
             final MapInstance target = target(player);
-            setVisible(player, generalLabel, target == null);
-            for (final Map.Entry<Integer, TextDisplay> entry : groupLabels.entrySet()) {
-                setVisible(player, entry.getValue(), target != null && target.id() == entry.getKey());
+            setVisible(player, general, target == null);
+            for (final MapInstance instance : instances.values()) {
+                final TextDisplay label = groupLabels.get(groupKey(instance.id(), town));
+                if (label != null) {
+                    setVisible(player, label, target != null && target.id() == instance.id());
+                }
+            }
+        }
+    }
+
+    private static String groupKey(final int instanceId, final World town) {
+        return instanceId + "@" + town.getName();
+    }
+
+    /** 這張地圖在每條線的字都收掉。 */
+    private void removeGroupLabels(final int instanceId) {
+        final String prefix = instanceId + "@";
+        for (final Iterator<Map.Entry<String, TextDisplay>> it = groupLabels.entrySet().iterator(); it.hasNext(); ) {
+            final Map.Entry<String, TextDisplay> entry = it.next();
+            if (entry.getKey().startsWith(prefix)) {
+                removeLabel(entry.getValue());
+                it.remove();
             }
         }
     }
@@ -2785,8 +2849,10 @@ public final class MapService {
     }
 
     private void removeLabels() {
-        removeLabel(generalLabel);
-        generalLabel = null;
+        for (final TextDisplay label : generalLabels.values()) {
+            removeLabel(label);
+        }
+        generalLabels.clear();
         for (final TextDisplay label : groupLabels.values()) {
             removeLabel(label);
         }
@@ -2823,10 +2889,12 @@ public final class MapService {
      * 門洞裡的粒子：每個人只看得到自己（隊伍）那張地圖的門，還能進幾次就亮幾道（從最左邊數）；成形中的是淡淡的煙。
      */
     private void gateParticles() {
-        final World campaign = campaign();
-        if (campaign == null) {
-            return;
+        for (final World town : towns()) { // 2026-10-22 主城分流：每條線的營地
+            gateParticles(town);
         }
+    }
+
+    private void gateParticles(final World campaign) {
         final Location labelAt = labelSpot(campaign);
         for (final Player player : campaign.getPlayers()) {
             if (player.getLocation().distanceSquared(labelAt) > 40 * 40) {
@@ -2881,7 +2949,7 @@ public final class MapService {
             return watch;
         }
         gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
-        return deviceReturn();
+        return deviceReturn(player);
     }
 
     void forget(final Player player) {
@@ -3151,7 +3219,7 @@ public final class MapService {
         ItemStack rest = plugin.loot() != null ? plugin.loot().stowCurrency(owner, plugin.players().get(owner), type, stack)
                 : plugin.economy().wallet().give(owner, stack);
         if (rest != null && !rest.isEmpty()) {
-            final Location safe = deviceReturn();
+            final Location safe = deviceReturn(owner); // 2026-10-22 主城分流：掉在他那條線的營地
             if (safe != null) {
                 safe.getWorld().dropItem(safe, rest, item -> {
                     item.setOwner(owner.getUniqueId());

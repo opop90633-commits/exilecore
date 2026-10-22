@@ -1242,7 +1242,9 @@ public final class BossSkills implements Listener {
             // 特殊招式有畫面中間的大字與聊天室，其他的看地板的顏色）
             if (skill.shout() != null && !skill.shout().isBlank()) {
                 for (final Player player : playersNear(boss.getLocation(), settings().warnRange())) {
-                    player.sendMessage(plugin.text().parse(Zone.loreLine(brain.host.name(), skill.shout())));
+                    if (!plugin.players().hidesMonsterTalk(player)) { // 2026-10-22：設定的「隱藏怪物對話」
+                        player.sendMessage(plugin.text().parse(Zone.loreLine(brain.host.name(), skill.shout())));
+                    }
                 }
             }
             alert(brain, skill, now);

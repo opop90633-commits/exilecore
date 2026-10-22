@@ -171,8 +171,9 @@ public final class SkillMenu extends Menu {
         pageLore.add("");
         pageLore.add("<yellow>左鍵：換到第 " + (nextPage + 1) + " 頁　右鍵：上一頁");
         final Material[] pageDyes = {Material.LIME_DYE, Material.LIGHT_BLUE_DYE, Material.MAGENTA_DYE};
-        set(SLOT_PAGE, icon(pageDyes[page % pageDyes.length], "<white>技能第 " + (page + 1) + "／" + SkillLoadout.PAGES + " 頁",
-                pageLore.toArray(new String[0])));
+        // 2026-10-22：資源包有畫的話用畫的換頁鍵（疊起來的紙＋頁碼＋▶）；沒有資源包還是染料
+        set(SLOT_PAGE, uiIcon("skill_page_" + (page + 1), pageDyes[page % pageDyes.length],
+                "<white>技能第 " + (page + 1) + "／" + SkillLoadout.PAGES + " 頁", pageLore.toArray(new String[0])));
 
         drawSelected(state, loadout);
         for (int i = 0; i < SkillLoadout.PAGE_SIZE; i++) {
@@ -459,9 +460,12 @@ public final class SkillMenu extends Menu {
 
     private String supportSummary(final SkillLoadout.Entry entry) {
         final List<String> names = new ArrayList<>();
+        final boolean host = SupportDefinition.hostsSkill(service.config().skill(entry.skillId())); // 2026-10-22
         for (int i = 0; i < entry.sockets(); i++) {
             final String id = entry.support(i);
-            if (id.isEmpty()) {
+            if (host && i == SkillLoadout.Entry.INNER_SOCKET) {
+                names.add(entry.inner() == null ? "<dark_gray>（放技能）</dark_gray>" : "<#ffd27f>" + ItemRenderer.escape(skillNameOf(entry.inner())) + "</#ffd27f>");
+            } else if (id.isEmpty()) {
                 names.add("<dark_gray>空</dark_gray>");
             } else {
                 final SupportDefinition support = service.config().support(id);
@@ -486,6 +490,10 @@ public final class SkillMenu extends Menu {
         if (existing >= 0 && existing != target) {
             return "面板上已經有" + definition.name() + "了（放在那一格可以換）";
         }
+        final int insideOf = loadout.findInner(entry.skillId()); // 2026-10-22
+        if (insideOf >= 0) {
+            return definition.name() + "已經放在" + skillNameOf(loadout.skill(insideOf)) + "的第 1 孔裡了";
+        }
         final int sibling = service.config().familyConflict(loadout, entry.skillId(), target);
         if (sibling >= 0) {
             final SkillDefinition other = service.config().skill(loadout.skill(sibling).skillId());
@@ -509,9 +517,16 @@ public final class SkillMenu extends Menu {
         if (definition == null) {
             return support.name() + "不能輔助這個技能（要" + support.requiresText() + "）";
         }
-        final String refusal = support.refusal(definition);
-        if (refusal != null) {
-            return support.name() + "不能輔助這個技能（" + refusal + "）";
+        if (SupportDefinition.hostsSkill(definition)) { // 2026-10-22：宿主寶石：輔助照第 1 孔裡的技能驗
+            final String why = support.hostRefusal(definition, service.innerSkill(entry));
+            if (why != null) {
+                return why;
+            }
+        } else {
+            final String refusal = support.refusal(definition);
+            if (refusal != null) {
+                return support.name() + "不能輔助這個技能（" + refusal + "）";
+            }
         }
         if (service.config().oncePerCharacter(support.id())) {
             final int used = loadout.supportUsedBy(support.id());
@@ -554,9 +569,56 @@ public final class SkillMenu extends Menu {
         }
         final CurrencyType orb = holding == Holding.SOCKET_ORB || holding == Holding.RESONANCE_ORB
                 ? plugin.currencies().read(cursor).orElse(null) : null;
+        final boolean host = SupportDefinition.hostsSkill(definition); // 2026-10-22：第 1 孔放技能寶石
         for (int i = 0; i < SkillLoadout.MAX_SOCKETS; i++) {
-            set(SUPPORT_START + i, socketIcon(entry, definition, i, holding, held, heldResonant, problem, orb));
+            set(SUPPORT_START + i, host && i == SkillLoadout.Entry.INNER_SOCKET
+                    ? innerSocketIcon(entry, definition, holding, holding == Holding.SKILL_GEM ? gems.read(cursor).orElse(null) : null)
+                    : socketIcon(entry, definition, i, holding, held, heldResonant, problem, orb));
         }
+    }
+
+    /** 2026-10-22：宿主寶石（英靈圖騰、星咒圖騰、暴擊引星）的第 1 孔：放技能寶石。 */
+    private ItemStack innerSocketIcon(final SkillLoadout.Entry entry, final SkillDefinition definition, final Holding holding, final GemData heldGem) {
+        final boolean linked = SkillExecutor.hasFlag(definition, tw.exilecore.stats.StatKeys.FLAG_TOTEM_LINKED);
+        final String wants = linked ? "錘子的攻擊技能" : "法術";
+        final SkillLoadout.Entry inner = entry.inner();
+        if (holding == Holding.SKILL_GEM && heldGem != null && heldGem.entry() != null) {
+            final SkillDefinition held = service.config().skill(heldGem.entry().skillId());
+            final String why = held == null ? "不認得的技能" : gems.innerProblem(definition, held);
+            if (why == null) {
+                return targetHighlight(icon(Material.LIME_STAINED_GLASS_PANE, "<green>▶ 第 1 孔：放技能寶石",
+                        "<green>放這裡：" + ItemRenderer.escape(definition.name()) + "改用" + ItemRenderer.escape(held.name())
+                                + (inner == null ? "" : "（" + ItemRenderer.escape(skillNameOf(inner)) + "拿出來）"),
+                        "<gray>寶石自己掛的輔助會拆下來放進背包；第 2～5 孔的輔助套在它身上"));
+            }
+            return icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>第 1 孔：放技能寶石",
+                    "<red>" + ItemRenderer.escape(held == null ? why : held.name() + "不能放進來（" + why + "）"), "<dark_gray>（放下手上的東西就恢復）");
+        }
+        if (inner == null) {
+            return uiIcon("slot_support", Material.WHITE_STAINED_GLASS_PANE, "<gray>第 1 孔：放技能寶石",
+                    "<gray>拿" + wants + "的技能寶石點這裡放進去", "<gray>" + ItemRenderer.escape(definition.name()) + "會用它；第 2～5 孔的輔助都套在它身上",
+                    holding == Holding.SUPPORT_GEM ? "<red>這一孔不放輔助寶石" : "");
+        }
+        final SkillDefinition innerDefinition = service.config().skill(inner.skillId());
+        final List<String> lore = new ArrayList<>();
+        lore.add("<gray>等級 <white>" + inner.level() + "</white>　自己的輔助孔 <white>" + inner.sockets() + "</white>（放在這裡時不用）");
+        if (innerDefinition != null) {
+            final String why = gems.innerProblem(definition, innerDefinition);
+            if (why != null) {
+                lore.add("<red>" + ItemRenderer.escape(definition.name()) + "不能用它（" + ItemRenderer.escape(why) + "）");
+            }
+        }
+        lore.add("<gray>第 2～5 孔的輔助都套在它身上");
+        lore.add("");
+        lore.add(holding == Holding.SUPPORT_GEM ? "<red>這一孔不放輔助寶石" : "<yellow>點一下：拿出來");
+        final ItemStack stack = icon(innerDefinition == null ? Material.BARRIER : material(innerDefinition.icon(), Material.ECHO_SHARD),
+                "<#ffd27f>" + ItemRenderer.escape(skillNameOf(inner)) + " <gray>Lv." + inner.level(), lore);
+        return innerDefinition == null ? stack : SkillArt.decorate(stack, innerDefinition);
+    }
+
+    private String skillNameOf(final SkillLoadout.Entry entry) {
+        final SkillDefinition definition = service.config().skill(entry.skillId());
+        return definition == null ? entry.skillId() : definition.name();
     }
 
     /**
@@ -804,7 +866,10 @@ public final class SkillMenu extends Menu {
         }
         if (slot >= SUPPORT_START && slot < SUPPORT_START + SkillLoadout.MAX_SOCKETS) {
             if (selected >= 0) {
-                final GemService.Change change = gems.unsocket(player, selected, slot - SUPPORT_START);
+                final SkillLoadout.Entry host = loadout.skill(selected);
+                final boolean innerSocket = host != null && slot - SUPPORT_START == SkillLoadout.Entry.INNER_SOCKET
+                        && SupportDefinition.hostsSkill(service.config().skill(host.skillId())); // 2026-10-22：宿主寶石的第 1 孔
+                final GemService.Change change = innerSocket ? gems.takeInner(player, selected) : gems.unsocket(player, selected, slot - SUPPORT_START);
                 if (!change.failed()) {
                     event.getView().setCursor(change.returned());
                     changed();
@@ -865,7 +930,9 @@ public final class SkillMenu extends Menu {
             return;
         }
         final GemService.Change change = switch (gem.kind()) {
-            case SKILL -> skillSlot ? gems.place(player, position, gem) : GemService.Change.fail("技能寶石要點技能格");
+            case SKILL -> skillSlot ? gems.place(player, position, gem)
+                    : position >= 0 && slot - SUPPORT_START == SkillLoadout.Entry.INNER_SOCKET ? gems.placeInner(player, position, gem) // 2026-10-22
+                    : GemService.Change.fail("技能寶石要點技能格，或英靈圖騰、星咒圖騰、暴擊引星的第 1 孔");
             case SUPPORT -> position < 0 ? GemService.Change.fail("先點一個技能")
                     : gems.socket(player, position, socketSlot ? slot - SUPPORT_START : -1, gem.id(), gem.resonant()); // 2026-10-18：帶共鳴
             case UNCUT_SKILL -> position < 0 || !skillSlot ? GemService.Change.fail("拿未切割技能寶石點技能來升級")

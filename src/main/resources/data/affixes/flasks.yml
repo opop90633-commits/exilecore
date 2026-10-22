@@ -2,6 +2,8 @@
 # 藥劑、護符的基底由 flasks.yml 合成（ItemRepository）：spawn_tags 寫 flask（生命與魔力都出）、life_flask、mana_flask、charm。
 # 藥劑最多魔法（一前綴一後綴，PoE2）：只有鑑定、微光石、添輝石、重骰魔法、湮滅、洗白這幾種通貨能用（Crafting.problem）。
 # flask.local.*、charm.local.* 只在那一瓶／那一顆上生效（FlaskService、CharmService 讀），角色屬性表不讀。
+# 2026-10-22：高階更難出——每高一階的權重相對再 ×0.875（跟裝備詞綴的「×0.8 → ×0.7」同一個比例）；每條詞綴的權重總和不變（出現哪一條的機率不變，只改出哪一階）。
+# 2026-10-22：只有一階的詞綴（立即回復）權重減半。
 
 flask_charges_gained:
   type: suffix
@@ -10,12 +12,12 @@ flask_charges_gained:
   names: [之星骸, 之永恆, 之不竭, 之無底, 之無盡, 之連綿]
   text: "增加 {value}% 拿到的充能"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 328, value: [63, 70] }
-    - { tier: 2, ilvl: 63, weight: 410, value: [55, 62] }
-    - { tier: 3, ilvl: 48, weight: 512, value: [47, 54] }
-    - { tier: 4, ilvl: 33, weight: 640, value: [39, 46] }
-    - { tier: 5, ilvl: 13, weight: 800, value: [31, 38] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [23, 30] }
+    - { tier: 1, ilvl: 82, weight: 211, value: [63, 70] }
+    - { tier: 2, ilvl: 63, weight: 301, value: [55, 62] }
+    - { tier: 3, ilvl: 48, weight: 430, value: [47, 54] }
+    - { tier: 4, ilvl: 33, weight: 615, value: [39, 46] }
+    - { tier: 5, ilvl: 13, weight: 878, value: [31, 38] }
+    - { tier: 6, ilvl: 1, weight: 1254, value: [23, 30] }
   mods:
     - { stat: flask.local.charges_gained, type: INCREASED, value: "{value}" }
 
@@ -26,12 +28,12 @@ flask_max_charges:
   names: [之星骸, 之充裕, 之豐足, 之滿溢, 之充沛, 之豐富]
   text: "增加 {value}% 充能上限"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 328, value: [63, 70] }
-    - { tier: 2, ilvl: 62, weight: 410, value: [55, 62] }
-    - { tier: 3, ilvl: 47, weight: 512, value: [47, 54] }
-    - { tier: 4, ilvl: 32, weight: 640, value: [39, 46] }
-    - { tier: 5, ilvl: 12, weight: 800, value: [31, 38] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [23, 30] }
+    - { tier: 1, ilvl: 81, weight: 211, value: [63, 70] }
+    - { tier: 2, ilvl: 62, weight: 301, value: [55, 62] }
+    - { tier: 3, ilvl: 47, weight: 430, value: [47, 54] }
+    - { tier: 4, ilvl: 32, weight: 615, value: [39, 46] }
+    - { tier: 5, ilvl: 12, weight: 878, value: [31, 38] }
+    - { tier: 6, ilvl: 1, weight: 1254, value: [23, 30] }
   mods:
     - { stat: flask.local.max_charges, type: INCREASED, value: "{value}" }
 
@@ -42,12 +44,12 @@ flask_charges_used:
   names: [之星骸, 之藥劑師, 之釀造師, 之蒸餾師, 之調酒師, 之執業者]
   text: "減少 {value}% 每次用掉的充能"
   tiers:
-    - { tier: 1, ilvl: 83, weight: 328, value: [30, 32] }
-    - { tier: 2, ilvl: 64, weight: 410, value: [27, 29] }
-    - { tier: 3, ilvl: 49, weight: 512, value: [24, 26] }
-    - { tier: 4, ilvl: 34, weight: 640, value: [21, 23] }
-    - { tier: 5, ilvl: 14, weight: 800, value: [18, 20] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [15, 17] }
+    - { tier: 1, ilvl: 83, weight: 211, value: [30, 32] }
+    - { tier: 2, ilvl: 64, weight: 301, value: [27, 29] }
+    - { tier: 3, ilvl: 49, weight: 430, value: [24, 26] }
+    - { tier: 4, ilvl: 34, weight: 615, value: [21, 23] }
+    - { tier: 5, ilvl: 14, weight: 878, value: [18, 20] }
+    - { tier: 6, ilvl: 1, weight: 1254, value: [15, 17] }
   mods:
     - { stat: flask.local.charges_used, type: INCREASED, value: "-{value}" }
 
@@ -58,9 +60,9 @@ flask_charge_on_kill:
   names: [之星骸, 之外科, 之醫師]
   text: "殺怪時 {value}% 機率多拿 1 點充能"
   tiers:
-    - { tier: 1, ilvl: 45, weight: 640, value: [31, 35] }
-    - { tier: 2, ilvl: 26, weight: 800, value: [26, 30] }
-    - { tier: 3, ilvl: 8, weight: 1000, value: [21, 25] }
+    - { tier: 1, ilvl: 45, weight: 546, value: [31, 35] }
+    - { tier: 2, ilvl: 26, weight: 780, value: [26, 30] }
+    - { tier: 3, ilvl: 8, weight: 1114, value: [21, 25] }
   mods:
     - { stat: flask.local.charge_on_kill, type: FLAT, value: "{value}" }
 
@@ -71,9 +73,9 @@ flask_charges_per_minute:
   names: [之星骸, 之林木, 之青翠]
   text: "每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 45, weight: 640, value: [15, 15] }
-    - { tier: 2, ilvl: 26, weight: 800, value: [12, 12] }
-    - { tier: 3, ilvl: 8, weight: 1000, value: [9, 9] }
+    - { tier: 1, ilvl: 45, weight: 546, value: [15, 15] }
+    - { tier: 2, ilvl: 26, weight: 780, value: [12, 12] }
+    - { tier: 3, ilvl: 8, weight: 1114, value: [9, 9] }
   mods:
     - { stat: flask.local.charges_per_minute, type: FLAT, value: "{value}" }
 
@@ -84,12 +86,12 @@ flask_speed:
   names: [星骸的, 催化的, 凝縮的, 黏稠的, 豐盛的, 原液的]
   text: "增加 {value}% 回復速度"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 328, value: [66, 70] }
-    - { tier: 2, ilvl: 61, weight: 410, value: [61, 65] }
-    - { tier: 3, ilvl: 46, weight: 512, value: [56, 60] }
-    - { tier: 4, ilvl: 31, weight: 640, value: [51, 55] }
-    - { tier: 5, ilvl: 15, weight: 800, value: [46, 50] }
-    - { tier: 6, ilvl: 1, weight: 1000, value: [41, 45] }
+    - { tier: 1, ilvl: 81, weight: 211, value: [66, 70] }
+    - { tier: 2, ilvl: 61, weight: 301, value: [61, 65] }
+    - { tier: 3, ilvl: 46, weight: 430, value: [56, 60] }
+    - { tier: 4, ilvl: 31, weight: 615, value: [51, 55] }
+    - { tier: 5, ilvl: 15, weight: 878, value: [46, 50] }
+    - { tier: 6, ilvl: 1, weight: 1254, value: [41, 45] }
   mods:
     - { stat: flask.local.speed, type: INCREASED, value: "{value}" }
 
@@ -100,14 +102,14 @@ flask_recovery:
   names: [星骸的, 飽和的, 醇厚的, 濃縮的, 厚實的, 豐沛的, 充盈的, 紮實的]
   text: "增加 {value}% 回復量"
   tiers:
-    - { tier: 1, ilvl: 83, weight: 210, value: [76, 80] }
-    - { tier: 2, ilvl: 67, weight: 262, value: [71, 75] }
-    - { tier: 3, ilvl: 56, weight: 328, value: [66, 70] }
-    - { tier: 4, ilvl: 46, weight: 410, value: [61, 65] }
-    - { tier: 5, ilvl: 34, weight: 512, value: [56, 60] }
-    - { tier: 6, ilvl: 23, weight: 640, value: [51, 55] }
-    - { tier: 7, ilvl: 11, weight: 800, value: [46, 50] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [41, 45] }
+    - { tier: 1, ilvl: 83, weight: 109, value: [76, 80] }
+    - { tier: 2, ilvl: 67, weight: 156, value: [71, 75] }
+    - { tier: 3, ilvl: 56, weight: 223, value: [66, 70] }
+    - { tier: 4, ilvl: 46, weight: 318, value: [61, 65] }
+    - { tier: 5, ilvl: 34, weight: 454, value: [56, 60] }
+    - { tier: 6, ilvl: 23, weight: 649, value: [51, 55] }
+    - { tier: 7, ilvl: 11, weight: 927, value: [46, 50] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [41, 45] }
   mods:
     - { stat: flask.local.recovery, type: INCREASED, value: "{value}" }
 
@@ -118,11 +120,11 @@ flask_recovery_low_life:
   names: [星骸的, 謹慎的, 留心的, 戒備的, 備妥的]
   text: "生命低於 35% 時喝，增加 {value}% 回復量"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 410, value: [91, 100] }
-    - { tier: 2, ilvl: 63, weight: 512, value: [81, 90] }
-    - { tier: 3, ilvl: 44, weight: 640, value: [71, 80] }
-    - { tier: 4, ilvl: 25, weight: 800, value: [61, 70] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [51, 60] }
+    - { tier: 1, ilvl: 82, weight: 291, value: [91, 100] }
+    - { tier: 2, ilvl: 63, weight: 416, value: [81, 90] }
+    - { tier: 3, ilvl: 44, weight: 594, value: [71, 80] }
+    - { tier: 4, ilvl: 25, weight: 849, value: [61, 70] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [51, 60] }
   mods:
     - { stat: flask.local.recovery_low, type: INCREASED, value: "{value}" }
 
@@ -133,11 +135,11 @@ flask_recovery_low_mana:
   names: [星骸的, 綿延的, 持久的, 頑強的, 堅忍的]
   text: "魔力低於 35% 時喝，增加 {value}% 回復量"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 410, value: [91, 100] }
-    - { tier: 2, ilvl: 63, weight: 512, value: [81, 90] }
-    - { tier: 3, ilvl: 44, weight: 640, value: [71, 80] }
-    - { tier: 4, ilvl: 25, weight: 800, value: [61, 70] }
-    - { tier: 5, ilvl: 2, weight: 1000, value: [51, 60] }
+    - { tier: 1, ilvl: 82, weight: 291, value: [91, 100] }
+    - { tier: 2, ilvl: 63, weight: 416, value: [81, 90] }
+    - { tier: 3, ilvl: 44, weight: 594, value: [71, 80] }
+    - { tier: 4, ilvl: 25, weight: 849, value: [61, 70] }
+    - { tier: 5, ilvl: 2, weight: 1212, value: [51, 60] }
   mods:
     - { stat: flask.local.recovery_low, type: INCREASED, value: "{value}" }
 
@@ -148,11 +150,11 @@ flask_life_costs_mana:
   names: [星骸的, 榨取的, 耗損的, 消磨的, 暈眩的]
   text: "增加 {value}% 回復量，喝的時候扣掉回復量 {b}% 的魔力"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [93, 100], b: [15, 15] }
-    - { tier: 2, ilvl: 64, weight: 512, value: [85, 92], b: [15, 15] }
-    - { tier: 3, ilvl: 47, weight: 640, value: [77, 84], b: [15, 15] }
-    - { tier: 4, ilvl: 30, weight: 800, value: [69, 76], b: [15, 15] }
-    - { tier: 5, ilvl: 13, weight: 1000, value: [61, 68], b: [15, 15] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [93, 100], b: [15, 15] }
+    - { tier: 2, ilvl: 64, weight: 416, value: [85, 92], b: [15, 15] }
+    - { tier: 3, ilvl: 47, weight: 594, value: [77, 84], b: [15, 15] }
+    - { tier: 4, ilvl: 30, weight: 849, value: [69, 76], b: [15, 15] }
+    - { tier: 5, ilvl: 13, weight: 1212, value: [61, 68], b: [15, 15] }
   mods:
     - { stat: flask.local.recovery, type: INCREASED, value: "{value}" }
     - { stat: flask.local.cost_other, type: FLAT, value: "{b}" }
@@ -164,11 +166,11 @@ flask_mana_costs_life:
   names: [星骸的, 腐蝕的, 混濁的, 凝結的, 發酵的]
   text: "增加 {value}% 回復量，喝的時候扣掉回復量 {b}% 的生命"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 410, value: [93, 100], b: [15, 15] }
-    - { tier: 2, ilvl: 64, weight: 512, value: [85, 92], b: [15, 15] }
-    - { tier: 3, ilvl: 47, weight: 640, value: [77, 84], b: [15, 15] }
-    - { tier: 4, ilvl: 30, weight: 800, value: [69, 76], b: [15, 15] }
-    - { tier: 5, ilvl: 13, weight: 1000, value: [61, 68], b: [15, 15] }
+    - { tier: 1, ilvl: 81, weight: 291, value: [93, 100], b: [15, 15] }
+    - { tier: 2, ilvl: 64, weight: 416, value: [85, 92], b: [15, 15] }
+    - { tier: 3, ilvl: 47, weight: 594, value: [77, 84], b: [15, 15] }
+    - { tier: 4, ilvl: 30, weight: 849, value: [69, 76], b: [15, 15] }
+    - { tier: 5, ilvl: 13, weight: 1212, value: [61, 68], b: [15, 15] }
   mods:
     - { stat: flask.local.recovery, type: INCREASED, value: "{value}" }
     - { stat: flask.local.cost_other, type: FLAT, value: "{b}" }
@@ -180,9 +182,9 @@ flask_instant_part:
   names: [星骸的, 冒泡的, 起泡的]
   text: "回復量的 {value}% 立即回復"
   tiers:
-    - { tier: 1, ilvl: 46, weight: 640, value: [28, 30] }
-    - { tier: 2, ilvl: 27, weight: 800, value: [24, 27] }
-    - { tier: 3, ilvl: 3, weight: 1000, value: [20, 23] }
+    - { tier: 1, ilvl: 46, weight: 546, value: [28, 30] }
+    - { tier: 2, ilvl: 27, weight: 780, value: [24, 27] }
+    - { tier: 3, ilvl: 3, weight: 1114, value: [20, 23] }
   mods:
     - { stat: flask.local.instant, type: FLAT, value: "{value}" }
 
@@ -193,7 +195,7 @@ flask_instant_full:
   names: [沸騰的]
   text: "立即回復，回復量減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 42, weight: 1000, value: [50, 50] }
+    - { tier: 1, ilvl: 42, weight: 500, value: [50, 50] }
   mods:
     - { stat: flask.local.instant, type: FLAT, value: "100" }
     - { stat: flask.local.recovery, type: INCREASED, value: "-{value}" }
@@ -205,11 +207,11 @@ flask_minion_heal:
   names: [星骸的, 死靈的, 召喚師的, 術士的, 侍僧的]
   text: "你的召喚物也回復這瓶回復量的 {value}%"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 410, value: [75, 80] }
-    - { tier: 2, ilvl: 64, weight: 512, value: [69, 74] }
-    - { tier: 3, ilvl: 46, weight: 640, value: [63, 68] }
-    - { tier: 4, ilvl: 28, weight: 800, value: [57, 62] }
-    - { tier: 5, ilvl: 10, weight: 1000, value: [51, 56] }
+    - { tier: 1, ilvl: 82, weight: 291, value: [75, 80] }
+    - { tier: 2, ilvl: 64, weight: 416, value: [69, 74] }
+    - { tier: 3, ilvl: 46, weight: 594, value: [63, 68] }
+    - { tier: 4, ilvl: 28, weight: 849, value: [57, 62] }
+    - { tier: 5, ilvl: 10, weight: 1212, value: [51, 56] }
   mods:
     - { stat: flask.local.minion_heal, type: FLAT, value: "{value}" }
 
@@ -220,11 +222,11 @@ charm_duration:
   names: [星骸的, 實驗家的, 臨床家的, 審查者的, 分析者的]
   text: "增加 {value}% 效果持續時間"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 410, value: [36, 40] }
-    - { tier: 2, ilvl: 61, weight: 512, value: [31, 35] }
-    - { tier: 3, ilvl: 42, weight: 640, value: [26, 30] }
-    - { tier: 4, ilvl: 20, weight: 800, value: [21, 25] }
-    - { tier: 5, ilvl: 1, weight: 1000, value: [16, 20] }
+    - { tier: 1, ilvl: 78, weight: 291, value: [36, 40] }
+    - { tier: 2, ilvl: 61, weight: 416, value: [31, 35] }
+    - { tier: 3, ilvl: 42, weight: 594, value: [26, 30] }
+    - { tier: 4, ilvl: 20, weight: 849, value: [21, 25] }
+    - { tier: 5, ilvl: 1, weight: 1212, value: [16, 20] }
   mods:
     - { stat: charm.local.duration, type: INCREASED, value: "{value}" }
 
@@ -235,14 +237,14 @@ charm_life:
   names: [星骸的, 常青的, 天然的, 草本的, 花瓣的, 萌芽的, 綻放的, 花卉的]
   text: "觸發時回復 {value} 生命"
   tiers:
-    - { tier: 1, ilvl: 76, weight: 210, value: [285, 350] }
-    - { tier: 2, ilvl: 67, weight: 262, value: [235, 280] }
-    - { tier: 3, ilvl: 58, weight: 328, value: [185, 230] }
-    - { tier: 4, ilvl: 47, weight: 410, value: [134, 180] }
-    - { tier: 5, ilvl: 36, weight: 512, value: [96, 130] }
-    - { tier: 6, ilvl: 26, weight: 640, value: [63, 92] }
-    - { tier: 7, ilvl: 14, weight: 800, value: [35, 52] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 1, ilvl: 76, weight: 109, value: [285, 350] }
+    - { tier: 2, ilvl: 67, weight: 156, value: [235, 280] }
+    - { tier: 3, ilvl: 58, weight: 223, value: [185, 230] }
+    - { tier: 4, ilvl: 47, weight: 318, value: [134, 180] }
+    - { tier: 5, ilvl: 36, weight: 454, value: [96, 130] }
+    - { tier: 6, ilvl: 26, weight: 649, value: [63, 92] }
+    - { tier: 7, ilvl: 14, weight: 927, value: [35, 52] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [8, 12] }
   mods:
     - { stat: charm.local.life_on_use, type: FLAT, value: "{value}" }
 
@@ -253,14 +255,14 @@ charm_mana:
   names: [星骸的, 雨舞的, 海洋的, 泛濫的, 水澤的, 潮汐的, 霧繞的, 浸潤的]
   text: "觸發時回復 {value} 魔力"
   tiers:
-    - { tier: 1, ilvl: 76, weight: 210, value: [230, 300] }
-    - { tier: 2, ilvl: 67, weight: 262, value: [185, 225] }
-    - { tier: 3, ilvl: 58, weight: 328, value: [150, 180] }
-    - { tier: 4, ilvl: 47, weight: 410, value: [115, 145] }
-    - { tier: 5, ilvl: 36, weight: 512, value: [80, 110] }
-    - { tier: 6, ilvl: 26, weight: 640, value: [55, 75] }
-    - { tier: 7, ilvl: 14, weight: 800, value: [33, 50] }
-    - { tier: 8, ilvl: 1, weight: 1000, value: [16, 24] }
+    - { tier: 1, ilvl: 76, weight: 109, value: [230, 300] }
+    - { tier: 2, ilvl: 67, weight: 156, value: [185, 225] }
+    - { tier: 3, ilvl: 58, weight: 223, value: [150, 180] }
+    - { tier: 4, ilvl: 47, weight: 318, value: [115, 145] }
+    - { tier: 5, ilvl: 36, weight: 454, value: [80, 110] }
+    - { tier: 6, ilvl: 26, weight: 649, value: [55, 75] }
+    - { tier: 7, ilvl: 14, weight: 927, value: [33, 50] }
+    - { tier: 8, ilvl: 1, weight: 1325, value: [16, 24] }
   mods:
     - { stat: charm.local.mana_on_use, type: FLAT, value: "{value}" }
 
@@ -271,11 +273,11 @@ charm_guard:
   names: [星骸的, 曜日的, 燦亮的, 鮮明的, 明亮的, 曙光的]
   text: "觸發時獲得 {value} 點守護（效果期間先替你吃掉傷害）"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 328, value: [355, 500] }
-    - { tier: 2, ilvl: 60, weight: 410, value: [265, 350] }
-    - { tier: 3, ilvl: 48, weight: 512, value: [205, 260] }
-    - { tier: 4, ilvl: 36, weight: 640, value: [148, 200] }
-    - { tier: 5, ilvl: 21, weight: 800, value: [85, 128] }
-    - { tier: 6, ilvl: 10, weight: 1000, value: [44, 66] }
+    - { tier: 1, ilvl: 75, weight: 211, value: [355, 500] }
+    - { tier: 2, ilvl: 60, weight: 301, value: [265, 350] }
+    - { tier: 3, ilvl: 48, weight: 430, value: [205, 260] }
+    - { tier: 4, ilvl: 36, weight: 615, value: [148, 200] }
+    - { tier: 5, ilvl: 21, weight: 878, value: [85, 128] }
+    - { tier: 6, ilvl: 10, weight: 1254, value: [44, 66] }
   mods:
     - { stat: charm.local.guard, type: FLAT, value: "{value}" }

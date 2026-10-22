@@ -3,6 +3,8 @@
 # 第一階（物品等級 60）＝PoE2 褻瀆詞綴的數值；第二階（物品等級 1）低一點。PoE2 的手套詞綴放到護腿上。
 # 有條件的（「最近」「低血時」之類）拿掉條件時數值有往下調；引擎沒有的機制（灌注、執政官、同伴、餘燼……）不收。
 # 舊的 33 條（unveiled_life_mana 等）在檔案最後，spawn_tags 改成 [retired]：已經有的物品照常生效，不會再揭露出來。
+# 2026-10-22：高階更難出——每高一階的權重相對再 ×0.875（跟裝備詞綴的「×0.8 → ×0.7」同一個比例）；每條詞綴的權重總和不變（出現哪一條的機率不變，只改出哪一階）。
+# 2026-10-22：只有一階的揭露詞綴（全部技能等級、多連鎖、全部抗性上限）權重減半（150 → 75）。
 
 # ---- 前綴 ----
 
@@ -13,8 +15,8 @@ unveiled_d_focus_curse:
   names: [咒淵的, 黯咒的]
   text: "增加 {value}% 詛咒效果"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [12, 16] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 11] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [12, 16] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 11] }
   mods:
     - { stat: curse.effect, type: INCREASED, value: "{value}", tags: [curse] }
 
@@ -25,8 +27,8 @@ unveiled_d_focus_spell_area:
   names: [淵擴的, 黯漫的]
   text: "增加 {value}% 法術範圍"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [15, 20] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 14] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 14] }
   mods:
     - { stat: skill.area, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -37,8 +39,8 @@ unveiled_d_crossbow_grenade:
   names: [爆淵的, 裂匣的]
   text: "增加 {value}% 榴彈傷害、增加 {dur}% 榴彈持續時間"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [101, 121], dur: [25, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [70, 100], dur: [20, 24] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [101, 121], dur: [25, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [70, 100], dur: [20, 24] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [grenade] }
     - { stat: skill.duration, type: INCREASED, value: "{dur}", tags: [grenade] }
@@ -50,8 +52,8 @@ unveiled_d_close_projectile:
   names: [貼喉的, 抵心的]
   text: "近身時增加 {value}% 投射物傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [95, 109] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [85, 94] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [95, 109] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [85, 94] }
   mods:
     - { stat: damage.close, type: INCREASED, value: "{value}", tags: [projectile] }
 
@@ -62,8 +64,8 @@ unveiled_d_quarterstaff_cold:
   names: [霜淵的, 凜蝕的]
   text: "增加 {value}% 冰冷傷害、增加 {f}% 凍結累積"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [86, 99], f: [19, 23] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [60, 85], f: [14, 18] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [86, 99], f: [19, 23] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [60, 85], f: [14, 18] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
     - { stat: freeze.buildup, type: INCREASED, value: "{f}" }
@@ -75,8 +77,8 @@ unveiled_d_quarterstaff_fire:
   names: [焚淵的, 燼蝕的]
   text: "增加 {value}% 火焰傷害、增加 {f}% 點燃傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [86, 99], f: [19, 23] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [60, 85], f: [14, 18] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [86, 99], f: [19, 23] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [60, 85], f: [14, 18] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
     - { stat: ignite.magnitude, type: INCREASED, value: "{f}" }
@@ -88,8 +90,8 @@ unveiled_d_quarterstaff_lightning:
   names: [雷淵的, 霆蝕的]
   text: "增加 {value}% 閃電傷害、增加 {f}% 感電效果"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [86, 99], f: [19, 23] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [60, 85], f: [14, 18] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [86, 99], f: [19, 23] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [60, 85], f: [14, 18] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
     - { stat: shock.effect, type: INCREASED, value: "{f}" }
@@ -101,8 +103,8 @@ unveiled_d_weapon_fire_pen:
   names: [熾淵的, 焦蝕的]
   text: "傷害穿透 {value}% 火焰抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [15, 19] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [15, 19] }
   mods:
     - { stat: penetration, type: FLAT, value: "{value}", tags: [fire] }
 
@@ -113,8 +115,8 @@ unveiled_d_weapon_cold_pen:
   names: [寒淵的, 冽蝕的]
   text: "傷害穿透 {value}% 冰冷抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [15, 19] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [15, 19] }
   mods:
     - { stat: penetration, type: FLAT, value: "{value}", tags: [cold] }
 
@@ -125,8 +127,8 @@ unveiled_d_weapon_lightning_pen:
   names: [殛淵的, 電蝕的]
   text: "傷害穿透 {value}% 閃電抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [15, 19] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [15, 19] }
   mods:
     - { stat: penetration, type: FLAT, value: "{value}", tags: [lightning] }
 
@@ -138,8 +140,8 @@ unveiled_d_mace_crush:
   names: [碾骨的, 沉淵的]
   text: "增加 {value}% 物理傷害、減少 15% 攻擊速度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [132, 154] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [110, 131] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [132, 154] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [110, 131] }
   mods:
     - { stat: local.physical, type: INCREASED, value: "{value}" }
     - { stat: local.attack_speed, type: INCREASED, value: "-15" }
@@ -151,8 +153,8 @@ unveiled_d_wand_elemental:
   names: [異彩的, 淵輝的]
   text: "增加 {value}% 元素傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [80, 89] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [74, 79] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [80, 89] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [74, 79] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
 
@@ -163,8 +165,8 @@ unveiled_d_wand_minion_spell:
   names: [驅役的, 御淵的]
   text: "增加 {value}% 召喚物傷害、增加 {value}% 法術傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [60, 64] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [55, 59] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [60, 64] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [55, 59] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
@@ -176,8 +178,8 @@ unveiled_d_wand_bleed:
   names: [淌血的, 滲蝕的]
   text: "增加 {value}% 流血傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [33, 38] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [27, 32] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [33, 38] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [27, 32] }
   mods:
     - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
 
@@ -188,8 +190,8 @@ unveiled_d_staff_ailment:
   names: [惡疾的, 淵瘴的]
   text: "增加 {value}% 點燃、流血與中毒傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [52, 64] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [40, 51] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [52, 64] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [40, 51] }
   mods:
     - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
     - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
@@ -202,8 +204,8 @@ unveiled_d_staff_spirit:
   names: [魂淵的, 攝魄的]
   text: "+{value} 最大精魂"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [43, 50] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [35, 42] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [43, 50] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [35, 42] }
   mods:
     - { stat: spirit.max, type: FLAT, value: "{value}" }
 
@@ -214,8 +216,8 @@ unveiled_d_amulet_defences:
   names: [淵甲的, 黯衛的]
   text: "增加 {value}% 護甲、閃避值與最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [15, 19] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [15, 19] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -228,8 +230,8 @@ unveiled_d_amulet_deflection:
   names: [偏鋒的, 斜影的]
   text: "增加 {value}% 偏斜值"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [15, 20] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 14] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 14] }
   mods:
     - { stat: deflection, type: INCREASED, value: "{value}" }
 
@@ -240,8 +242,8 @@ unveiled_d_attack_area:
   names: [廣掠的, 掃淵的]
   text: "增加 {value}% 攻擊範圍"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [18, 23] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [12, 17] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [18, 23] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [12, 17] }
   mods:
     - { stat: skill.area, type: INCREASED, value: "{value}", tags: [attack] }
 
@@ -252,8 +254,8 @@ unveiled_d_ring_ignite:
   names: [燃誓的, 灼契的]
   text: "增加 {value}% 點燃傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [20, 25] }
   mods:
     - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
 
@@ -264,8 +266,8 @@ unveiled_d_ring_freeze:
   names: [凝誓的, 冰契的]
   text: "增加 {value}% 凍結累積"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [20, 25] }
   mods:
     - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
 
@@ -276,8 +278,8 @@ unveiled_d_ring_shock:
   names: [震誓的, 雷契的]
   text: "增加 {value}% 感電效果"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [20, 25] }
   mods:
     - { stat: shock.effect, type: INCREASED, value: "{value}" }
 
@@ -288,8 +290,8 @@ unveiled_d_belt_regen:
   names: [淵息的, 續命的]
   text: "增加 {value}% 生命回復速度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [20, 25] }
   mods:
     - { stat: life.regen, type: INCREASED, value: "{value}" }
 
@@ -300,8 +302,8 @@ unveiled_d_armour_attack:
   names: [淵鋒的, 蝕刃的]
   text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 攻擊傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20], dmg: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15], dmg: [8, 12] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [16, 20], dmg: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 15], dmg: [8, 12] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -315,8 +317,8 @@ unveiled_d_armour_spell:
   names: [淵咒的, 蝕言的]
   text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 法術傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20], dmg: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15], dmg: [8, 12] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [16, 20], dmg: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 15], dmg: [8, 12] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -330,8 +332,8 @@ unveiled_d_armour_minion:
   names: [淵僕的, 蝕役的]
   text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 召喚物傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20], dmg: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15], dmg: [8, 12] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [16, 20], dmg: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 15], dmg: [8, 12] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -345,8 +347,8 @@ unveiled_d_armour_thorns:
   names: [淵棘的, 蝕刺的]
   text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 荊棘傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20], dmg: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15], dmg: [8, 12] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [16, 20], dmg: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 15], dmg: [8, 12] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -360,8 +362,8 @@ unveiled_d_far_projectile:
   names: [遠襲的, 淵眺的]
   text: "增加 {value}% 投射物傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [44, 50] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [36, 43] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [44, 50] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [36, 43] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
 
@@ -372,8 +374,8 @@ unveiled_d_minion_damage:
   names: [驅淵的, 役蝕的]
   text: "增加 {value}% 召喚物傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [36, 42] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [28, 35] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [36, 42] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [28, 35] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -384,8 +386,8 @@ unveiled_d_belt_thorns:
   names: [棘淵的, 刺蝕的]
   text: "增加 {value}% 荊棘傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [35, 40] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [28, 34] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [35, 40] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [28, 34] }
   mods:
     - { stat: thorns.damage, type: INCREASED, value: "{value}" }
 
@@ -398,8 +400,8 @@ unveiled_d_ranged_crit:
   names: [之遠準, 之淵瞄]
   text: "增加 {value}% 攻擊暴擊率"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [22, 26] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [17, 21] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [22, 26] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [17, 21] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
 
@@ -410,8 +412,8 @@ unveiled_d_staff_cast:
   names: [之淵誦, 之急咒]
   text: "增加 {value}% 施放速度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [11, 13] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [14, 16] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [11, 13] }
   mods:
     - { stat: cast.speed, type: INCREASED, value: "{value}" }
 
@@ -422,8 +424,8 @@ unveiled_d_res_cold_chaos:
   names: [之凜淵, 之寒蝕]
   text: "+{value}% 冰冷與混沌抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [15, 17] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [13, 14] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [15, 17] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [13, 14] }
   mods:
     - { stat: resist.cold, type: FLAT, value: "{value}" }
     - { stat: resist.chaos, type: FLAT, value: "{value}" }
@@ -435,8 +437,8 @@ unveiled_d_res_fire_chaos:
   names: [之焚淵, 之焦蝕]
   text: "+{value}% 火焰與混沌抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [15, 17] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [13, 14] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [15, 17] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [13, 14] }
   mods:
     - { stat: resist.fire, type: FLAT, value: "{value}" }
     - { stat: resist.chaos, type: FLAT, value: "{value}" }
@@ -448,8 +450,8 @@ unveiled_d_res_lightning_chaos:
   names: [之殛淵, 之霆蝕]
   text: "+{value}% 閃電與混沌抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [15, 17] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [13, 14] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [15, 17] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [13, 14] }
   mods:
     - { stat: resist.lightning, type: FLAT, value: "{value}" }
     - { stat: resist.chaos, type: FLAT, value: "{value}" }
@@ -461,8 +463,8 @@ unveiled_d_attr_str_dex:
   names: [之蠻影, 之鬥步]
   text: "+{value} 力量與敏捷"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [12, 15] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [9, 11] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [12, 15] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [9, 11] }
   mods:
     - { stat: attr.str, type: FLAT, value: "{value}" }
     - { stat: attr.dex, type: FLAT, value: "{value}" }
@@ -474,8 +476,8 @@ unveiled_d_attr_str_int:
   names: [之蠻識, 之鐵誦]
   text: "+{value} 力量與智慧"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [12, 15] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [9, 11] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [12, 15] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [9, 11] }
   mods:
     - { stat: attr.str, type: FLAT, value: "{value}" }
     - { stat: attr.int, type: FLAT, value: "{value}" }
@@ -487,8 +489,8 @@ unveiled_d_attr_dex_int:
   names: [之影識, 之疾誦]
   text: "+{value} 敏捷與智慧"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [12, 15] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [9, 11] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [12, 15] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [9, 11] }
   mods:
     - { stat: attr.dex, type: FLAT, value: "{value}" }
     - { stat: attr.int, type: FLAT, value: "{value}" }
@@ -500,7 +502,7 @@ unveiled_d_amulet_skill_level:
   names: [之淵冕]
   text: "+{value} 全部技能等級"
   tiers:
-    - { tier: 1, ilvl: 40, weight: 150, value: [1, 1] }
+    - { tier: 1, ilvl: 40, weight: 75, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}" }
 
@@ -511,8 +513,8 @@ unveiled_d_amulet_aura:
   names: [之淵旗, 之黯號]
   text: "增加 {value}% 光環效果"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [12, 16] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 11] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [12, 16] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 11] }
   mods:
     - { stat: aura.effect, type: INCREASED, value: "{value}" }
 
@@ -523,8 +525,8 @@ unveiled_d_amulet_herald:
   names: [之淵令, 之黯宣]
   text: "捷光環的保留效率增加 {value}%"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [15, 20] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 14] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 14] }
   mods:
     - { stat: aura.reservation, type: INCREASED, value: "-{value}", tags: [herald] }
 
@@ -535,8 +537,8 @@ unveiled_d_mana_shield:
   names: [之淵幕, 之蝕障]
   text: "受到的傷害有 {value}% 先從魔力扣除"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [12, 16] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 11] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [12, 16] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 11] }
   mods:
     - { stat: damage.from_mana, type: FLAT, value: "{value}" }
 
@@ -548,8 +550,8 @@ unveiled_d_skill_speed:
   text: "增加 {value}% 攻擊速度與施放速度"
   chips: [speed]   # PoE2 的標籤（Skill Speed）
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 6] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 6] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 4] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}" }
     - { stat: cast.speed, type: INCREASED, value: "{value}" }
@@ -561,8 +563,8 @@ unveiled_d_cooldown:
   names: [之速返, 之輪淵]
   text: "冷卻時間減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [11, 12] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 10] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [11, 12] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 10] }
   mods:
     - { stat: skill.cooldown, type: INCREASED, value: "-{value}" }
 
@@ -573,8 +575,8 @@ unveiled_d_duration:
   names: [之久淵, 之長蝕]
   text: "增加 {value}% 技能持續時間"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [11, 12] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 10] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [11, 12] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 10] }
   mods:
     - { stat: skill.duration, type: INCREASED, value: "{value}" }
 
@@ -585,8 +587,8 @@ unveiled_d_life_kill:
   names: [之噬生, 之淵飲]
   text: "擊殺時回復 {value}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [2, 2] }
   mods:
     - { stat: life.on_kill, type: FLAT, value: "{value}" }
 
@@ -597,8 +599,8 @@ unveiled_d_mana_kill:
   names: [之噬識, 之淵汲]
   text: "擊殺時回復 {value}% 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [2, 2] }
   mods:
     - { stat: mana.on_kill, type: FLAT, value: "{value}" }
 
@@ -609,8 +611,8 @@ unveiled_d_exposure:
   names: [之裸淵, 之剝蝕]
   text: "增加 {value}% 曝露效果"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 12] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 12] }
   mods:
     - { stat: exposure.effect, type: INCREASED, value: "{value}" }
 
@@ -621,8 +623,8 @@ unveiled_d_ring_leech:
   names: [之吮淵, 之蝕飲]
   text: "增加 {value}% 生命偷取量"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [12, 15] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [16, 20] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [12, 15] }
   mods:
     - { stat: leech.effect, type: INCREASED, value: "{value}" }
 
@@ -633,8 +635,8 @@ unveiled_d_focus_minion_level:
   names: [之役淵, 之僕冕]
   text: "+{value} 召喚物技能等級"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [2, 2] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [2, 2] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [1, 1] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
 
@@ -645,8 +647,8 @@ unveiled_d_cost:
   names: [之省淵, 之節蝕]
   text: "技能的魔力消耗減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [9, 10] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [6, 8] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [9, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [6, 8] }
   mods:
     - { stat: skill.cost, type: INCREASED, value: "-{value}" }
 
@@ -657,8 +659,8 @@ unveiled_d_wand_spell_area:
   names: [之漫淵, 之擴蝕]
   text: "增加 {value}% 法術範圍"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 12] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [13, 16] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 12] }
   mods:
     - { stat: skill.area, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -670,8 +672,8 @@ unveiled_d_armour_break:
   names: [之碎甲, 之剖淵]
   text: "增加 {value}% 破甲"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [35, 39] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [31, 34] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [35, 39] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [31, 34] }
   mods:
     - { stat: armour.break, type: INCREASED, value: "{value}" }
 
@@ -682,8 +684,8 @@ unveiled_d_crossbow_reload:
   names: [之速匣, 之連膛]
   text: "增加 {value}% 弩的裝填速度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [21, 25] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [17, 20] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [21, 25] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [17, 20] }
   mods:
     - { stat: crossbow.reload_speed, type: INCREASED, value: "{value}" }
 
@@ -694,8 +696,8 @@ unveiled_d_crossbow_ammo:
   names: [之省矢, 之餘膛]
   text: "弩攻擊有 {value}% 機率不消耗弩箭"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [18, 20] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [15, 17] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [18, 20] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [15, 17] }
   mods:
     - { stat: crossbow.ammo_save, type: FLAT, value: "{value}" }
 
@@ -707,7 +709,7 @@ unveiled_d_crossbow_chain:
   text: "攻擊多連鎖 {value} 次"
   chips: [projectile]   # PoE2 的標籤（AttacksChainAdditionalTimes）
   tiers:
-    - { tier: 1, ilvl: 40, weight: 150, value: [1, 1] }
+    - { tier: 1, ilvl: 40, weight: 75, value: [1, 1] }
   mods:
     - { stat: skill.chains, type: FLAT, value: "{value}", tags: [attack] }
 
@@ -718,8 +720,8 @@ unveiled_d_quarterstaff_combo:
   names: [之連淵, 之疊蝕]
   text: "打中累積連擊時有 {value}% 機率多累積一層"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [33, 40] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [25, 32] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [33, 40] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [25, 32] }
   mods:
     - { stat: combo.extra_chance, type: FLAT, value: "{value}" }
 
@@ -731,8 +733,8 @@ unveiled_d_warcry_cooldown:
   names: [之吼淵, 之嘯蝕]
   text: "戰吼的冷卻時間減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [28, 31] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [25, 27] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [28, 31] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [25, 27] }
   mods:
     - { stat: skill.cooldown, type: INCREASED, value: "-{value}", tags: [warcry] }
 
@@ -743,8 +745,8 @@ unveiled_d_talisman_rage:
   names: [之狂淵, 之怒蝕]
   text: "近戰攻擊擊中時獲得 {value} 點怒氣"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [3, 3] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [2, 2] }
   mods:
     - { stat: rage.on_hit, type: FLAT, value: "{value}", tags: [melee] }
 
@@ -756,8 +758,8 @@ unveiled_d_attack_cost:
   names: [之儉鋒, 之淵省]
   text: "攻擊技能的魔力消耗減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [12, 15] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 11] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [12, 15] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 11] }
   mods:
     - { stat: skill.cost, type: INCREASED, value: "-{value}", tags: [attack] }
 
@@ -768,8 +770,8 @@ unveiled_d_spirit_efficiency:
   names: [之魂契, 之淵寄]
   text: "精魂的保留效率增加 {value}%"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [8, 10] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [5, 7] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [8, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [5, 7] }
   mods:
     - { stat: aura.reservation, type: INCREASED, value: "-{value}" }
 
@@ -780,8 +782,8 @@ unveiled_d_curse_area:
   names: [之咒漫, 之蝕域]
   text: "增加 {value}% 詛咒範圍"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [17, 20] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [12, 16] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [17, 20] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [12, 16] }
   mods:
     - { stat: skill.area, type: INCREASED, value: "{value}", tags: [curse] }
 
@@ -792,8 +794,8 @@ unveiled_d_bleed_chance:
   names: [之裂膚, 之淵創]
   text: "攻擊擊中時 {value}% 機率造成流血"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 12] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 12] }
   mods:
     - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
 
@@ -804,8 +806,8 @@ unveiled_d_poison_chance:
   names: [之淬毒, 之淵瘴]
   text: "擊中時 {value}% 機率造成中毒"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 12] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 12] }
   mods:
     - { stat: poison.chance, type: FLAT, value: "{value}" }
 
@@ -816,8 +818,8 @@ unveiled_d_ailment_effect:
   names: [之惡化, 之淵疾]
   text: "增加 {value}% 異常狀態效果（點燃、流血、中毒、感電、冰緩）"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [16, 20] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 15] }
   mods:
     - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
     - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
@@ -832,8 +834,8 @@ unveiled_d_daze:
   names: [之眩淵, 之昏蝕]
   text: "擊中時 {value}% 機率讓敵人眩暈"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [16, 20] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 15] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [16, 20] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 15] }
   mods:
     - { stat: daze.chance, type: FLAT, value: "{value}" }
 
@@ -844,8 +846,8 @@ unveiled_d_immobilise:
   names: [之縛淵, 之滯蝕]
   text: "增加 {value}% 暈眩累積與凍結累積"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [30, 34] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [25, 29] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [30, 34] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [25, 29] }
   mods:
     - { stat: stun.buildup, type: INCREASED, value: "{value}" }
     - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
@@ -857,8 +859,8 @@ unveiled_d_helmet_crit:
   names: [之淵斷, 之蝕決]
   text: "增加 {value}% 暴擊傷害加成"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [17, 20] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [13, 16] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [17, 20] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [13, 16] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}" }
 
@@ -869,7 +871,7 @@ unveiled_d_shield_max_res:
   names: [之淵壁]
   text: "+{value}% 全部抗性上限"
   tiers:
-    - { tier: 1, ilvl: 40, weight: 150, value: [1, 1] }
+    - { tier: 1, ilvl: 40, weight: 75, value: [1, 1] }
   mods:
     - { stat: resist.max.fire, type: FLAT, value: "{value}" }
     - { stat: resist.max.cold, type: FLAT, value: "{value}" }
@@ -883,8 +885,8 @@ unveiled_d_shield_max_block:
   names: [之淵擋, 之蝕盾]
   text: "+{value}% 格擋上限"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [2, 2] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [2, 2] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [1, 1] }
   mods:
     - { stat: block.max, type: FLAT, value: "{value}" }
 
@@ -895,8 +897,8 @@ unveiled_d_belt_mana_regen:
   names: [之淵泉, 之蝕流]
   text: "增加 {value}% 魔力回復速度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [35, 40] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [30, 34] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [35, 40] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [30, 34] }
   mods:
     - { stat: mana.regen, type: INCREASED, value: "{value}" }
 
@@ -907,8 +909,8 @@ unveiled_d_self_ignite:
   names: [之抗焚, 之淵涼]
   text: "你身上的點燃持續時間減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [20, 25] }
   mods:
     - { stat: ailment.self_duration.ignite, type: INCREASED, value: "-{value}" }
 
@@ -919,8 +921,8 @@ unveiled_d_self_bleed:
   names: [之凝淵, 之淵癒]
   text: "你身上的流血持續時間減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [20, 25] }
   mods:
     - { stat: ailment.self_duration.bleed, type: INCREASED, value: "-{value}" }
 
@@ -931,8 +933,8 @@ unveiled_d_self_poison:
   names: [之滌淵, 之淵淨]
   text: "你身上的中毒持續時間減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [20, 25] }
   mods:
     - { stat: ailment.self_duration.poison, type: INCREASED, value: "-{value}" }
 
@@ -943,8 +945,8 @@ unveiled_d_ranged_speed:
   names: [之掠淵, 之迅掠]
   text: "增加 {value}% 攻擊速度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [11, 13] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 10] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [11, 13] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 10] }
   mods:
     - { stat: local.attack_speed, type: INCREASED, value: "{value}" }
 
@@ -958,8 +960,8 @@ unveiled_d_amulet_armour:
   names: [淵甲的, 黯甲的]
   text: "增加 {value}% 護甲"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [20, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [14, 21] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [20, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [14, 21] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
 
@@ -971,8 +973,8 @@ unveiled_d_amulet_evasion:
   names: [淵影的, 黯影的]
   text: "增加 {value}% 閃避"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [20, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [14, 21] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [20, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [14, 21] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
 
@@ -984,8 +986,8 @@ unveiled_d_amulet_es:
   names: [淵盾的, 黯盾的]
   text: "增加 {value}% 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [20, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [14, 21] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [20, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [14, 21] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
 
@@ -997,8 +999,8 @@ unveiled_d_spear_melee:
   names: [淵刺的, 黯刺的]
   text: "最近用投射物攻擊擊中過敵人，則增加 {value}% 近戰傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [70, 79] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [60, 69] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [70, 79] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [60, 69] }
   mods:
     - { stat: damage@projhit, type: INCREASED, value: "{value}", tags: [melee] }
 
@@ -1010,8 +1012,8 @@ unveiled_d_staff_chaos:
   names: [淵蝕的, 黯蝕的]
   text: "獲得 {value}% 傷害為額外混沌傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [40, 50] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [28, 35] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [40, 50] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [28, 35] }
   mods:
     - { stat: damage.extra.chaos, type: FLAT, value: "{value}" }
 
@@ -1023,8 +1025,8 @@ unveiled_d_staff_block:
   names: [之淵擋, 之黯擋]
   text: "+{value}% 格擋率"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [20, 25] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [14, 18] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [20, 25] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [14, 18] }
   mods:
     - { stat: block.chance, type: FLAT, value: "{value}" }
 
@@ -1037,8 +1039,8 @@ unveiled_d_mace_armour_break:
   names: [之淵碎, 之黯碎]
   text: "造成的物理傷害有 {value}% 作為破甲"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [2, 4] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 3] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [2, 4] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [1, 3] }
   mods:
     - { stat: armour.break, type: FLAT, value: "{value}" }
 
@@ -1050,8 +1052,8 @@ unveiled_d_mace2h_armour_break:
   names: [之淵碎, 之黯碎]
   text: "造成的物理傷害有 {value}% 作為破甲"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [4, 7] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [4, 7] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 5] }
   mods:
     - { stat: armour.break, type: FLAT, value: "{value}" }
 
@@ -1064,8 +1066,8 @@ unveiled_d_recoup_str:
   names: [之淵癒, 之黯癒]
   text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [10, 20] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [7, 14] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [10, 20] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [7, 14] }
   mods:
     - { stat: life.recoup, type: FLAT, value: "{value}" }
 
@@ -1077,8 +1079,8 @@ unveiled_d_helmet_presence:
   names: [之淵臨, 之黯臨]
   text: "增加 {value}% 臨在範圍"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [25, 35] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [18, 24] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [25, 35] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [18, 24] }
   mods:
     - { stat: presence.area, type: INCREASED, value: "{value}" }
 
@@ -1090,8 +1092,8 @@ unveiled_j_armour_thorns:
   names: [淵棘的, 黯棘的]
   text: "增加 {value}% 護甲、增加 {b}% 荊棘傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [4, 7], b: [3, 6] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: thorns.damage, type: INCREASED, value: "{b}" }
@@ -1103,8 +1105,8 @@ unveiled_j_evasion_thorns:
   names: [淵棘的, 黯棘的]
   text: "增加 {value}% 閃避、增加 {b}% 荊棘傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [4, 7], b: [3, 6] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: thorns.damage, type: INCREASED, value: "{b}" }
@@ -1116,8 +1118,8 @@ unveiled_j_es_thorns:
   names: [淵棘的, 黯棘的]
   text: "增加 {value}% 最大能量護盾、增加 {b}% 荊棘傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [4, 7], b: [3, 6] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: thorns.damage, type: INCREASED, value: "{b}" }
@@ -1129,8 +1131,8 @@ unveiled_j_armour_totem:
   names: [淵樁的, 黯樁的]
   text: "增加 {value}% 護甲、增加 {b}% 圖騰傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [4, 7], b: [3, 6] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [totem] }
@@ -1142,8 +1144,8 @@ unveiled_j_evasion_totem:
   names: [淵樁的, 黯樁的]
   text: "增加 {value}% 閃避、增加 {b}% 圖騰傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [4, 7], b: [3, 6] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [totem] }
@@ -1155,8 +1157,8 @@ unveiled_j_es_totem:
   names: [淵樁的, 黯樁的]
   text: "增加 {value}% 最大能量護盾、增加 {b}% 圖騰傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 7], b: [3, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [4, 7], b: [3, 6] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [totem] }
@@ -1168,8 +1170,8 @@ unveiled_j_elemental_ailment:
   names: [淵元的, 黯元的]
   text: "增加 {value}% 元素傷害、增加 {b}% 異常狀態效果（點燃、流血、中毒、感電、冰緩）"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [4, 8], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 6], b: [3, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [4, 8], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 6], b: [3, 6] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
     - { stat: ignite.magnitude, type: INCREASED, value: "{b}" }
@@ -1185,8 +1187,8 @@ unveiled_j_minion_area_life:
   names: [淵僕的, 黯僕的]
   text: "增加 {value}% 召喚物範圍、增加 {b}% 召喚物最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [3, 6], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [2, 4], b: [3, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [3, 6], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [2, 4], b: [3, 6] }
   mods:
     - { stat: skill.area, type: INCREASED, value: "{value}", tags: [minion] }
     - { stat: life.max, type: INCREASED, value: "{b}", tags: [minion] }
@@ -1675,8 +1677,8 @@ unveiled_j_aura:
   names: [淵光的, 黯光的]
   text: "增加 {value}% 光環效果、增加 {b}% 臨在範圍"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [2, 4], b: [8, 15] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2], b: [5, 10] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [2, 4], b: [8, 15] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [1, 2], b: [5, 10] }
   mods:
     - { stat: aura.effect, type: INCREASED, value: "{value}" }
     - { stat: presence.area, type: INCREASED, value: "{b}" }   # 2026-10：PoE2 這條還帶臨在範圍
@@ -1688,8 +1690,8 @@ unveiled_j_bleed:
   names: [淵血的, 黯血的]
   text: "流血機率 +{value}%、增加 {b}% 流血強度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [15, 15], b: [6, 10] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 10], b: [3, 5] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [15, 15], b: [6, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 10], b: [3, 5] }
   mods:
     - { stat: bleed.chance, type: FLAT, value: "{value}" }
     - { stat: bleed.magnitude, type: INCREASED, value: "{b}" }
@@ -1701,8 +1703,8 @@ unveiled_j_chaos:
   names: [淵蝕的, 黯蝕的]
   text: "增加 {value}% 混沌傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 5] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [4, 5] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
 
@@ -1713,8 +1715,8 @@ unveiled_j_cold:
   names: [淵霜的, 黯霜的]
   text: "增加 {value}% 冰冷傷害、穿透 {b}% 冰冷抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 8], b: [3, 5] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [2, 2] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 8], b: [3, 5] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 4], b: [2, 2] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
     - { stat: penetration, type: FLAT, value: "{b}", tags: [cold] }
@@ -1726,8 +1728,8 @@ unveiled_j_fire:
   names: [淵焰的, 黯焰的]
   text: "增加 {value}% 火焰傷害、穿透 {b}% 火焰抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 8], b: [3, 5] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [2, 2] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 8], b: [3, 5] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 4], b: [2, 2] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
     - { stat: penetration, type: FLAT, value: "{b}", tags: [fire] }
@@ -1739,8 +1741,8 @@ unveiled_j_lightning:
   names: [淵霆的, 黯霆的]
   text: "增加 {value}% 閃電傷害、穿透 {b}% 閃電抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 8], b: [3, 5] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [2, 2] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 8], b: [3, 5] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 4], b: [2, 2] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
     - { stat: penetration, type: FLAT, value: "{b}", tags: [lightning] }
@@ -1752,8 +1754,8 @@ unveiled_j_elemental:
   names: [淵素的, 黯素的]
   text: "增加 {value}% 元素傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 5] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [4, 5] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
 
@@ -1764,8 +1766,8 @@ unveiled_j_evasion_attack:
   names: [淵影的, 黯影的]
   text: "增加 {value}% 閃避、增加 {b}% 攻擊傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 5], b: [2, 3] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [attack] }
@@ -1777,8 +1779,8 @@ unveiled_j_evasion_spell:
   names: [淵幻的, 黯幻的]
   text: "增加 {value}% 閃避、增加 {b}% 法術傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 5], b: [2, 3] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [spell] }
@@ -1790,8 +1792,8 @@ unveiled_j_evasion_minion:
   names: [淵伴的, 黯伴的]
   text: "增加 {value}% 閃避、增加 {b}% 召喚物傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 5], b: [2, 3] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [minion] }
@@ -1803,8 +1805,8 @@ unveiled_j_es_attack:
   names: [淵壁的, 黯壁的]
   text: "增加 {value}% 最大能量護盾、增加 {b}% 攻擊傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 5], b: [2, 3] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [attack] }
@@ -1816,8 +1818,8 @@ unveiled_j_es_spell:
   names: [淵咒的, 黯咒的]
   text: "增加 {value}% 最大能量護盾、增加 {b}% 法術傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 5], b: [2, 3] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [spell] }
@@ -1829,8 +1831,8 @@ unveiled_j_es_minion:
   names: [淵僕的, 黯僕的]
   text: "增加 {value}% 最大能量護盾、增加 {b}% 召喚物傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 5], b: [2, 3] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [minion] }
@@ -1842,8 +1844,8 @@ unveiled_j_armour_attack:
   names: [淵甲的, 黯甲的]
   text: "增加 {value}% 護甲、增加 {b}% 攻擊傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 5], b: [2, 3] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [attack] }
@@ -1855,8 +1857,8 @@ unveiled_j_armour_spell:
   names: [淵堡的, 黯堡的]
   text: "增加 {value}% 護甲、增加 {b}% 法術傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 5], b: [2, 3] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [spell] }
@@ -1868,8 +1870,8 @@ unveiled_j_armour_minion:
   names: [淵衛的, 黯衛的]
   text: "增加 {value}% 護甲、增加 {b}% 召喚物傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10], b: [4, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [2, 3] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10], b: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 5], b: [2, 3] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [minion] }
@@ -1881,8 +1883,8 @@ unveiled_j_physical:
   names: [淵裂的, 黯裂的]
   text: "增加 {value}% 物理傷害、增加 {b}% 破甲"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 8], b: [5, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [3, 4] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 8], b: [5, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 4], b: [3, 4] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
     - { stat: armour.break, type: INCREASED, value: "{b}" }
@@ -1894,8 +1896,8 @@ unveiled_j_poison:
   names: [淵毒的, 黯毒的]
   text: "中毒機率 +{value}%、增加 {b}% 中毒強度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [15, 15], b: [6, 10] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 10], b: [3, 5] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [15, 15], b: [6, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 10], b: [3, 5] }
   mods:
     - { stat: poison.chance, type: FLAT, value: "{value}" }
     - { stat: poison.magnitude, type: INCREASED, value: "{b}" }
@@ -1907,8 +1909,8 @@ unveiled_j_minion_life:
   names: [淵骸的, 黯骸的]
   text: "增加 {value}% 召喚物最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [6, 10] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 5] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [6, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [4, 5] }
   mods:
     - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -1919,8 +1921,8 @@ unveiled_j_warcry:
   names: [淵嘯的, 黯嘯的]
   text: "增加 {value}% 戰吼效果、戰吼增加 {b}% 傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [4, 8], b: [5, 10] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5], b: [3, 7] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [4, 8], b: [5, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 5], b: [3, 7] }
   mods:
     - { stat: warcry.effect, type: INCREASED, value: "{value}" }
     - { stat: damage, type: INCREASED, value: "{b}", tags: [warcry] }   # 2026-10：PoE2 這條還帶戰吼傷害
@@ -1932,8 +1934,8 @@ unveiled_j_exposure:
   names: [淵曝的, 黯曝的]
   text: "增加 {value}% 曝露效果"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [5, 8] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [5, 8] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [3, 4] }
   mods:
     - { stat: exposure.effect, type: INCREASED, value: "{value}" }
 
@@ -1944,8 +1946,8 @@ unveiled_j_attr_str:
   names: [淵力之, 黯力之]
   text: "增加 {value}% 力量"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [2, 3] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [2, 3] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [1, 2] }
   mods:
     - { stat: attr.str, type: INCREASED, value: "{value}" }
 
@@ -1956,8 +1958,8 @@ unveiled_j_attr_dex:
   names: [淵捷之, 黯捷之]
   text: "增加 {value}% 敏捷"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [2, 3] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [2, 3] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [1, 2] }
   mods:
     - { stat: attr.dex, type: INCREASED, value: "{value}" }
 
@@ -1968,8 +1970,8 @@ unveiled_j_attr_int:
   names: [淵智之, 黯智之]
   text: "增加 {value}% 智慧"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [2, 3] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [2, 3] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [1, 2] }
   mods:
     - { stat: attr.int, type: INCREASED, value: "{value}" }
 
@@ -1981,8 +1983,8 @@ unveiled_d_belt_life_flask_minute:
   names: [淵泉的, 黯泉的]
   text: "生命藥劑每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [6, 9] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [6, 9] }
   mods:
     - { stat: flask.charges_per_minute.life, type: FLAT, value: "{value}" }
 
@@ -1993,8 +1995,8 @@ unveiled_d_belt_mana_flask_minute:
   names: [淵湧的, 黯湧的]
   text: "魔力藥劑每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [6, 9] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [6, 9] }
   mods:
     - { stat: flask.charges_per_minute.mana, type: FLAT, value: "{value}" }
 
@@ -2005,8 +2007,8 @@ unveiled_d_belt_charm_minute:
   names: [淵符的, 黯符的]
   text: "護符每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [6, 9] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [10, 12] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [6, 9] }
   mods:
     - { stat: charm.charges_per_minute, type: FLAT, value: "{value}" }
 
@@ -2017,8 +2019,8 @@ unveiled_d_belt_flask_free:
   names: [淵酌的, 黯酌的]
   text: "藥劑 {value}% 機率不消耗充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [15, 18] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 14] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 14] }
   mods:
     - { stat: flask.free_chance, type: FLAT, value: "{value}" }
 
@@ -2029,8 +2031,8 @@ unveiled_d_belt_charm_free:
   names: [淵佑的, 黯佑的]
   text: "護符 {value}% 機率不消耗充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [15, 18] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [10, 14] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [15, 18] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [10, 14] }
   mods:
     - { stat: charm.free_chance, type: FLAT, value: "{value}" }
 
@@ -2042,8 +2044,8 @@ unveiled_d_boots_dodge:
   names: [淵躍之, 黯躍之]
   text: "增加 {value}% 翻滾距離"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [40, 50] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [25, 39] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [40, 50] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [25, 39] }
   mods:
     - { stat: dodge.distance, type: INCREASED, value: "{value}" }
 
@@ -2055,8 +2057,8 @@ unveiled_d_shield_recharge_block:
   names: [淵壁之, 黯壁之]
   text: "最近格擋過，則增加 {value}% 能量護盾回充速度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [46, 50] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [40, 45] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [46, 50] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [40, 45] }
   mods:
     - { stat: es.recharge@block, type: INCREASED, value: "{value}" }
 
@@ -2067,8 +2069,8 @@ unveiled_d_ring_freeze_power:
   names: [淵霜的, 黯霜的]
   text: "最近消耗過銳星，則增加 {value}% 凍結累積"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [20, 25] }
   mods:
     - { stat: freeze.buildup@power, type: INCREASED, value: "{value}" }
 
@@ -2079,8 +2081,8 @@ unveiled_d_ring_ignite_endurance:
   names: [淵焰的, 黯焰的]
   text: "最近消耗過磐星，則增加 {value}% 點燃效果"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [20, 25] }
   mods:
     - { stat: ignite.magnitude@endurance, type: INCREASED, value: "{value}" }
 
@@ -2091,8 +2093,8 @@ unveiled_d_ring_shock_frenzy:
   names: [淵雷的, 黯雷的]
   text: "最近消耗過怒星，則增加 {value}% 感電效果"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [20, 25] }
   mods:
     - { stat: shock.effect@frenzy, type: INCREASED, value: "{value}" }
 
@@ -2103,8 +2105,8 @@ unveiled_d_belt_regen_flask:
   names: [淵癒的, 黯癒的]
   text: "生命藥劑效果中，增加 {value}% 生命回復速度"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [26, 30] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [20, 25] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [26, 30] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [20, 25] }
   mods:
     - { stat: life.regen@lifeflask, type: INCREASED, value: "{value}" }
 
@@ -2115,8 +2117,8 @@ unveiled_d_boots_cost_dodge:
   names: [淵步之, 黯步之]
   text: "最近翻滾過，則減少 {value}% 技能魔力消耗"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [11, 12] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 10] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [11, 12] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 10] }
   mods:
     - { stat: skill.cost@dodge, type: INCREASED, value: "-{value}" }
 
@@ -2127,8 +2129,8 @@ unveiled_d_jewellery_minion_hit:
   names: [淵僕的, 黯僕的]
   text: "最近擊中過敵人，則增加 {value}% 召喚物傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [21, 25] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [15, 20] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [21, 25] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [15, 20] }
   mods:
     - { stat: damage@enemyhit, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -2139,8 +2141,8 @@ unveiled_d_talisman_minion_hit:
   names: [淵僕的, 黯僕的]
   text: "最近擊中過敵人，則增加 {value}% 召喚物傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [70, 79] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [60, 69] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [70, 79] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [60, 69] }
   mods:
     - { stat: damage@enemyhit, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -2152,8 +2154,8 @@ unveiled_d_gloves_speed_frenzy:
   text: "最近消耗過怒星，則增加 {value}% 攻擊速度與施放速度"
   chips: [speed]   # PoE2 的標籤（Skill Speed）
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [11, 12] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 10] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [11, 12] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 10] }
   mods:
     - { stat: attack.speed@frenzy, type: INCREASED, value: "{value}" }
     - { stat: cast.speed@frenzy, type: INCREASED, value: "{value}" }
@@ -2168,8 +2170,8 @@ unveiled_d_helmet_extra_power:
   names: [淵銳之, 黯芒之]
   text: "獲得一顆銳星時 {value}% 機率多獲得一顆"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 12] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 12] }
   mods:
     - { stat: charge.extra.power, type: FLAT, value: "{value}" }
 
@@ -2180,8 +2182,8 @@ unveiled_d_gloves_extra_frenzy:
   names: [淵怒之, 黯潮之]
   text: "獲得一顆怒星時 {value}% 機率多獲得一顆"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 12] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 12] }
   mods:
     - { stat: charge.extra.frenzy, type: FLAT, value: "{value}" }
 
@@ -2192,8 +2194,8 @@ unveiled_d_boots_extra_endurance:
   names: [淵磐之, 黯壁之]
   text: "獲得一顆磐星時 {value}% 機率多獲得一顆"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [13, 15] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 12] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [13, 15] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 12] }
   mods:
     - { stat: charge.extra.endurance, type: FLAT, value: "{value}" }
 
@@ -2204,8 +2206,8 @@ unveiled_d_amulet_rare_kill_charge:
   names: [淵獵之, 黯首之]
   text: "擊殺稀有或傳奇怪物時 {value}% 機率各獲得一顆銳星、怒星與磐星"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 200, value: [40, 50] }
-    - { tier: 2, ilvl: 1, weight: 500, value: [25, 35] }
+    - { tier: 1, ilvl: 60, weight: 181, value: [40, 50] }
+    - { tier: 2, ilvl: 1, weight: 519, value: [25, 35] }
   mods:
     - { stat: charge.event.kill_rare.power, type: FLAT, value: "{value}" }
     - { stat: charge.event.kill_rare.frenzy, type: FLAT, value: "{value}" }
@@ -2218,7 +2220,7 @@ unveiled_d_boots_dodge_frenzy:
   names: [淵影之, 黯步之]
   text: "翻滾時 {value}% 機率獲得一顆怒星"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 300, value: [15, 20] }
-    - { tier: 2, ilvl: 1, weight: 700, value: [8, 14] }
+    - { tier: 1, ilvl: 60, weight: 273, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 727, value: [8, 14] }
   mods:
     - { stat: charge.event.dodge.frenzy, type: FLAT, value: "{value}" }
