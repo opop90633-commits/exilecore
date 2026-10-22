@@ -3560,7 +3560,8 @@ skills:
     icon: BLAZE_POWDER
     type: attack
     tier: 13
-    tags: [attack, area, fire, shapeshift, wyvern]
+    # 2026-10-22：補上 melee（飛龍另外兩招鼓翼風、噬咬都是近戰；以前裝備的「+近戰技能等級」、近戰傷害加成都吃不到）
+    tags: [attack, melee, area, fire, shapeshift, wyvern]
     weapons: [talisman]
     mechanic: cone
     cone: { length: [6, 7], angle: 45 }
