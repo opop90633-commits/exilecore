@@ -540,6 +540,9 @@ public final class CharacterService {
         if (plugin.bounties() != null) {
             plugin.bounties().onCharacterApplied(player); // 今天的每日委託、稱號
         }
+        if (plugin.world() != null && plugin.world().worlds() != null) {
+            plugin.world().worlds().channels().rebalanceOnLogin(player); // 2026-10-22：高等級的派到第 2 線起（第 1 線留給低等級）
+        }
         // 裝備改版：舊角色手上、身上的裝備搬進角色面板（只做一次；新角色什麼都沒有，只記下來）
         gear.migrate(player, state);
         if (state.progress().containsKey(PROGRESS_STARTER_WEAPON) && !"1".equals(state.progress().get(PROGRESS_STARTER_KIT))) {

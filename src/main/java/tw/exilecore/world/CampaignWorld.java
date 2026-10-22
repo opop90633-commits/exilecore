@@ -138,7 +138,7 @@ public final class CampaignWorld {
      * 新的從劇情世界複製營地那一帶的區塊檔（{@link TownChannels#prepare}），用同一個產生器（沒複製到的區塊長得一樣）。
      */
     private void loadChannels(final CampaignLayout.Spot spawn) {
-        final List<Integer> wanted = channels.prepare(campaign, lore.campaignChannels());
+        final List<Integer> wanted = channels.prepare(campaign, lore.campaignChannels(), lore.campaignRefreshOnStart());
         plugin.getServer().getPluginManager().registerEvents(channels, plugin);
         for (final int channel : wanted) {
             final World town = load(TownChannels.key(channel), new CampaignGenerator(), lore.campaignTime());

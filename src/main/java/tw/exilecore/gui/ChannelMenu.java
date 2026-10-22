@@ -59,6 +59,7 @@ public final class ChannelMenu extends Menu {
         set(SLOT_HELP, helpButton(List.of("營地分成好幾條線，人比較分散、比較不卡",
                 "在營地裡點一條線馬上換過去；在外面點的話，下次回營地會到那一條",
                 "上次待的線會記住，人多也不會把你換走",
+                "70 級以上的角色每次登入、回營地會派到第 2 線起人最少的那條（第 1 線留給新手）",
                 "<dark_gray>指令：/channel、/channel 線")));
         set(SLOT_CLOSE, closeButton());
     }
