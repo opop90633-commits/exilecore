@@ -42,8 +42,24 @@ public final class SlotSyncHealer {
 
     private long healed;
 
+    /** 最近建立的那一個（/ec perf 顯示狀態用）。 */
+    private static volatile SlotSyncHealer current;
+
     public SlotSyncHealer(final Logger logger) {
         this.logger = logger;
+        current = this;
+    }
+
+    /** /ec perf 的一行：有沒有在運作、換掉幾格（數字一直長 = 有效；「關掉了」= 這個 Paper 版本對不上）。 */
+    public static String status() {
+        final SlotSyncHealer healer = current;
+        if (healer == null) {
+            return "沒有啟動";
+        }
+        if (healer.broken) {
+            return "關掉了（這個 Paper 版本對不上，看啟動紀錄）";
+        }
+        return healer.ready ? "運作中，換掉 " + healer.healed + " 格" : "還沒跑過";
     }
 
     /** 到目前為止換掉幾格（/ec perf 看得到效果用）。 */

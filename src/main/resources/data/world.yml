@@ -36,8 +36,8 @@ campaign:
   # 玩家回營地時分到人最少的那條線（記得上次在哪條就回那條）；/channel 可以換線。改完要重開伺服器。
   # 主城改過想重新複製：/ec world channels rebuild，下次啟動時重做。
   channels: 3
-  # 2026-10-22：第 1 線優先留給低等級：角色等級到 high_level 的玩家每次登入（以及回營地）都派到第 2 線起人最少的那條，
-  # 平均分配；低於 high_level 的留在第 1 線（自己用 /channel 換過的照換的）。管理員不管。0 = 關掉。
+  # 2026-10-22：第 1 線留給低等級：角色等級到 high_level 的玩家每次登入（以及回營地）都派到第 2 線起人最少的那條，
+  # 平均分配；低於 high_level 的只能在第 1 線（/channel 換不到第 2 線起，登入時在第 2 線起會搬回第 1 線）。管理員不管。0 = 關掉。
   high_level: 70
   # 2026-10-22：每次啟動都把第 2 線起的世界刪掉、從劇情世界重新複製營地（主城改了東西重開就同步到每條線；不用再打 rebuild）。
   # 分流世界裡只有營地的複本，沒有要保留的東西。關掉的話只有第一次建、或 /ec world channels rebuild 之後才複製。
@@ -46,3 +46,9 @@ campaign:
 # 地圖世界（異界，代號 exilecore:maps）：地圖實例蓋在這裡的格子裡
 maps:
   time: 6000
+
+# 2026-10-22 效能：每個世界的視距與模擬距離（區塊；蓋過 server.properties，啟動和 /ec reload 時套用到所有世界）。
+# 視距越大，伺服器要載入、同步的區塊越多（跟人數相乘）；模擬距離外的怪物、投射物會停住。0 = 照 server.properties。
+performance:
+  view_distance: 7
+  simulation_distance: 4

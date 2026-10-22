@@ -105,6 +105,34 @@ public final class AtlasMenu extends Menu {
         set(SLOT_CLOSE, closeButton());
     }
 
+    /** 2026-10-22：罩到這格的每片石板一行：「⬢ 神龕石板：…（塔 (q, r)，還能用 2 次）」。 */
+    private List<String> tabletLines(final AtlasProgress atlas, final int q, final int r) {
+        final List<String> lines = new ArrayList<>();
+        final int radius = service.atlasConfig().tower().radius() + service.atlasBonus(player).count("atlas.tower.radius");
+        for (final AtlasGrid.Cell tower : atlas.completedTowers()) {
+            if (AtlasGrid.distance(tower.q(), tower.r(), q, r) > radius) {
+                continue;
+            }
+            final AtlasTablets.Kind kind = service.tabletAt(player, tower.q(), tower.r());
+            if (kind != null) {
+                lines.add("<#d8c8a0>⬢ " + kind.displayName() + "<gray>：" + kind.description() + "<dark_gray>（塔 (" + tower.q() + ", " + tower.r()
+                        + ")，還能用 " + service.tabletUses(player, tower.q(), tower.r()) + " 次）");
+            }
+        }
+        return lines;
+    }
+
+    /** 2026-10-22：這格有沒有被石板罩到（資源包的格子畫一圈石板色）。 */
+    private boolean tabletCovered(final AtlasProgress atlas, final int q, final int r) {
+        final int radius = service.atlasConfig().tower().radius() + service.atlasBonus(player).count("atlas.tower.radius");
+        for (final AtlasGrid.Cell tower : atlas.completedTowers()) {
+            if (AtlasGrid.distance(tower.q(), tower.r(), q, r) <= radius && service.tabletAt(player, tower.q(), tower.r()) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private AtlasGrid.Cell chosenCell(final AtlasProgress atlas) {
         final long[] at = AtlasProgress.decodeOne(plugin.players().get(player).progress().get(AtlasProgress.CHOSEN_KEY));
         if (at == null) {
@@ -181,6 +209,14 @@ public final class AtlasMenu extends Menu {
                     lore.add("<#fff1b8>淨化區：難度不變；第一次打倒 Boss：每個人 "
                             + Math.round(grid.config().purification().fractureChance() * 100) + "% 掉一顆定星石"); // 2026-10-21
                 }
+                // 2026-10-22：罩到這格的先驅石板（以前完全看不出哪些格子被石板罩到）
+                final List<String> tablets = tabletLines(atlas, q, r);
+                if (!tablets.isEmpty()) {
+                    lore.addAll(tablets);
+                    if (done) {
+                        lore.add("<dark_gray>　（這格已完成：石板的加成只給第一次，再開不吃也不扣次數）");
+                    }
+                }
                 lore.add(where);
                 lore.add("");
                 if (done) {
@@ -224,6 +260,8 @@ public final class AtlasMenu extends Menu {
     /** 淨化區的圈（2026-10-21，跟腐化區同一張圖，換成淡金白）。 */
     private static final Color PURIFY = Color.fromRGB(0xFFF1B8);
     private static final Color CYAN = Color.fromRGB(0x55FFFF);
+    /** 2026-10-22：被先驅石板罩到的格子（跟腐化區同一個圈，換成石板的淡褐色）。 */
+    private static final Color TABLET = Color.fromRGB(0xD8C8A0);
 
     /**
      * 有資源包的人看到的格子：同一個物品模型，用 custom_model_data 決定畫哪幾層（背景星空、往鄰居的連線、六角形、光暈、腐化圈、外框）。
@@ -298,6 +336,10 @@ public final class AtlasMenu extends Menu {
                 } else if (!fogFinal && cell.purified()) {
                     strings.set(UiPack.AtlasCell.STRING_CORRUPT, "corrupt"); // 2026-10-21：淨化區用同一個圈、換顏色
                     colors.set(UiPack.AtlasCell.COLOR_CORRUPT, PURIFY);
+                } else if (!fogFinal && !done && cell.kind() != AtlasGrid.Kind.TOWER && cell.kind() != AtlasGrid.Kind.CITADEL
+                        && tabletCovered(atlas, q, r)) {
+                    strings.set(UiPack.AtlasCell.STRING_CORRUPT, "corrupt"); // 2026-10-22：石板罩到的格子：同一個圈、石板色（沒完成的才畫）
+                    colors.set(UiPack.AtlasCell.COLOR_CORRUPT, TABLET);
                 }
                 if (isChosen) {
                     strings.set(UiPack.AtlasCell.STRING_RING, "ring");

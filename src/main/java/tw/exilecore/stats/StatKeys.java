@@ -104,8 +104,10 @@ public final class StatKeys {
     public static final String LIFE_REGEN_PERCENT = "life.regen_percent";
     /** INCREASED／MORE：你放的光環的效果（光環的每一條數值都乘）。 */
     public static final String AURA_EFFECT = "aura.effect";
-    /** 2026-10：詛咒、印記效果（INCREASED／MORE；輔助寶石用）。 */
+    /** 2026-10：詛咒效果（INCREASED／MORE）。2026-10-22 照 PoE2：只給詛咒，印記改吃 {@link #MARK_EFFECT}。 */
     public static final String CURSE_EFFECT = "curse.effect";
+    /** 2026-10-22：印記效果（INCREASED／MORE；以前跟詛咒共用 curse.effect）。 */
+    public static final String MARK_EFFECT = "mark.effect";
     /** 2026-10：戰吼效果（增益、強化、敵人受到的傷害；INCREASED／MORE）。 */
     public static final String WARCRY_EFFECT = "warcry.effect";
     /** 2026-10：掛在精魂技能上的輔助多保留的精魂（FLAT）。 */

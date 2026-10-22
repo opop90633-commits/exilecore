@@ -8,6 +8,8 @@ import tw.exilecore.gui.MenuListener;
 import tw.exilecore.module.Module;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -100,17 +102,31 @@ public final class CharacterModule implements Module {
                 }
             }
         }, TICK_PERIOD, TICK_PERIOD);
-        // 裝備欄的顯示用格子：每秒對一次（別的插件、原版行為塞進去的東西收進裝備欄或放回背包）
+        // 裝備欄的顯示用格子：每秒對一次（別的插件、原版行為塞進去的東西收進裝備欄或放回背包）。
+        // 2026-10-22 效能：以前每秒在同一個 tick 把所有人做完（spark：100 人時每秒一個 15 毫秒的尖峰），現在每 tick 做 1/20 的人
+        final tw.exilecore.core.Staggered gearRound = new tw.exilecore.core.Staggered(20);
         gearTask = plugin.repeat("gear", () -> {
-            for (final Player player : plugin.getServer().getOnlinePlayers()) {
-                if (characters.gear().sync(player)) {
+            for (final UUID id : gearRound.next(onlineIds())) {
+                final Player player = plugin.getServer().getPlayer(id);
+                if (player != null && player.isOnline() && characters.gear().sync(player)) {
                     states.sheet(player);
                 }
             }
-        }, 20L, 20L);
-        // 2026-10 效能：原版比對背包「內容一樣但被重寫過」的格子每 tick 都要整段重比（spark 兩成）：每秒換成同一份
+        }, 20L, 1L);
+        // 2026-10 效能：原版比對背包「內容一樣但被重寫過」的格子每 tick 都要整段重比（spark 兩成）：換成同一份。
+        // 2026-10-22：每人從每秒一次改成每 5 tick 一次（攤在每個 tick 做）——被重寫的格子越早換掉，原版白比的 tick 越少（spark 還有 3.7%）
         final tw.exilecore.core.SlotSyncHealer healer = new tw.exilecore.core.SlotSyncHealer(plugin.getSLF4JLogger());
-        slotHealTask = plugin.repeat("slot_heal", () -> healer.tick(plugin.getServer().getOnlinePlayers()), 30L, 20L);
+        final tw.exilecore.core.Staggered healRound = new tw.exilecore.core.Staggered(5);
+        slotHealTask = plugin.repeat("slot_heal", () -> {
+            final List<Player> batch = new ArrayList<>();
+            for (final UUID id : healRound.next(onlineIds())) {
+                final Player player = plugin.getServer().getPlayer(id);
+                if (player != null && player.isOnline()) {
+                    batch.add(player);
+                }
+            }
+            healer.tick(batch);
+        }, 30L, 1L);
         // 2026-10：快捷列技能的冷卻倒數（圖示數量＝剩幾秒）
         cooldownTask = plugin.repeat("skill_cooldowns", () -> {
             for (final Player player : plugin.getServer().getOnlinePlayers()) {
@@ -193,5 +209,14 @@ public final class CharacterModule implements Module {
             player.closeInventory();
         }
         characters.saveAll();
+    }
+
+    /** 在線玩家的 UUID（給攤開做的工作排隊用）。 */
+    private List<UUID> onlineIds() {
+        final List<UUID> ids = new ArrayList<>();
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            ids.add(player.getUniqueId());
+        }
+        return ids;
     }
 }

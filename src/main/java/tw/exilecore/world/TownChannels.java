@@ -388,7 +388,7 @@ public final class TownChannels implements Listener {
      * <ul>
      *   <li>管理員：記得的那條，沒有就第 1 線（劇情世界，可以改建的那條）。</li>
      *   <li>角色等級到 world.yml 的 high_level（70）：第 2 線起人最少的那條（第 1 線留給低等級；每次登入、回營地都重新平均分配）。</li>
-     *   <li>其他：記得的那條（自己 /channel 換過的照換的，人再多也不拉走），沒記過就第 1 線。</li>
+     *   <li>其他（低等級）：一律第 1 線（2026-10-22 晚：第 1 線只給低等級，低等級也只能在第 1 線）。</li>
      * </ul>
      */
     public World assign(final Player player) {
@@ -400,7 +400,25 @@ public final class TownChannels implements Listener {
         if (highLevel(player)) {
             return leastCrowdedFrom(2);
         }
+        if (lockedToFirst(player)) {
+            return towns.getFirst();
+        }
         return wanted != null ? wanted : towns.getFirst();
+    }
+
+    /** 2026-10-22 晚：門檻開著（high_level > 0）時，低等級的玩家只能在第 1 線（/channel 換不到別條；管理員不算）。 */
+    public boolean lockedToFirst(final Player player) {
+        final int threshold = plugin.world() == null ? 0 : plugin.world().lore().campaignHighLevel();
+        return threshold > 0 && towns.size() > 1 && !player.hasPermission(ExileCore.PERMISSION_ADMIN) && !highLevel(player);
+    }
+
+    /** 2026-10-22：這個玩家能不能換到這條線；可以回傳 null，不行回傳原因。 */
+    public String switchProblem(final Player player, final World target) {
+        if (channelOf(target) > 1 && lockedToFirst(player)) {
+            final int threshold = plugin.world() == null ? 0 : plugin.world().lore().campaignHighLevel();
+            return "第 2 線起是給 " + threshold + " 級以上的角色用的（第 1 線留給 " + threshold + " 級以下）";
+        }
+        return null;
     }
 
     /** 2026-10-22：這個玩家的角色等級到了「派到第 2 線起」的門檻（world.yml 的 high_level；0 = 關掉）。 */
@@ -428,12 +446,15 @@ public final class TownChannels implements Listener {
     }
 
     /**
-     * 2026-10-22：登入（選好角色）時重新分線：高等級的派到第 2 線起人最少的那條。人在營地世界而且跟該去的那條不同才搬
+     * 2026-10-22：登入（選好角色）時重新分線：高等級的派到第 2 線起人最少的那條，低等級的在第 2 線起就搬回第 1 線。人在營地世界而且跟該去的那條不同才搬
      * （同一個座標換世界）；在地圖、區域裡的不動（回營地時 pick 會算）。
      */
     public void rebalanceOnLogin(final Player player) {
-        if (!enabled() || !isTown(player.getWorld()) || player.hasPermission(ExileCore.PERMISSION_ADMIN) || !highLevel(player)) {
+        if (!enabled() || !isTown(player.getWorld()) || player.hasPermission(ExileCore.PERMISSION_ADMIN)) {
             return;
+        }
+        if (!highLevel(player) && !(lockedToFirst(player) && isChannel(player.getWorld()))) {
+            return; // 低等級的只有「在第 2 線起」才要搬回第 1 線
         }
         if (!inCampBox(player.getLocation())) {
             return; // 劇情世界營地以外（區域裡）不動

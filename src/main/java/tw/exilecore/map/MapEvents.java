@@ -1077,7 +1077,7 @@ final class MapEvents implements Listener {
         exile.getWorld().playSound(exile.getLocation(), Sound.ENTITY_ZOMBIE_VILLAGER_CURE, 1.0f, 0.5f);
         exile.getWorld().spawnParticle(Particle.SOUL, exile.getLocation().add(0, 1, 0), 30, 0.6, 0.8, 0.6, 0.03);
         for (final Player player : players(instance)) {
-            if (player.getLocation().distanceSquared(event.center) <= 32 * 32) {
+            if (player.getLocation().distanceSquared(event.center) <= 32 * 32 && !plugin.players().hidesMonsterTalk(player)) { // 2026-10-22：隱藏怪物對話
                 player.sendMessage(plugin.text().prefixed("<#ffff77>流寇·" + ItemRenderer.escape(event.exileName) + "<gray>：「這張圖是我的。」"));
             }
         }

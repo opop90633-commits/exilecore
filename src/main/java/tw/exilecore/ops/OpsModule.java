@@ -122,7 +122,8 @@ public final class OpsModule implements Module, Listener {
 
     public static List<LiteralArgumentBuilder<CommandSourceStack>> nodes(final ExileCore plugin) {
         final List<LiteralArgumentBuilder<CommandSourceStack>> nodes = new ArrayList<>();
-        nodes.add(Commands.literal("perf").executes(context -> perf(plugin, context.getSource().getSender())));
+        nodes.add(Commands.literal("perf").executes(context -> perf(plugin, context.getSource().getSender()))
+                .then(Commands.literal("displays").executes(context -> displays(plugin, context.getSource().getSender()))));
         if (stress == null || stress.plugin() != plugin) {
             stress = new StressTest(plugin);
         }
@@ -259,6 +260,48 @@ public final class OpsModule implements Module, Listener {
         sender.sendMessage(plugin.text().parse("<dark_gray>還原資料庫：在主控台輸入 ec backup restore db-時間.json.gz（會踢所有人，還原完要重開）"));
     }
 
+    /**
+     * 2026-10-22：/ec perf displays——展示實體（名牌、標記、模型…）是哪些東西、各幾個（spark：全服將近一半的實體是展示實體，
+     * 實體同步佔主執行緒 8%）。物品展示照「物品＋模型代號」分，文字展示照標籤或開頭的字分。
+     */
+    static int displays(final ExileCore plugin, final CommandSender sender) {
+        final java.util.Map<String, Integer> counts = new java.util.HashMap<>();
+        int total = 0;
+        for (final World world : plugin.getServer().getWorlds()) {
+            for (final Entity entity : world.getEntities()) {
+                if (!(entity instanceof Display display)) {
+                    continue;
+                }
+                total++;
+                final String tag = display.getScoreboardTags().isEmpty() ? "" : " #" + String.join(",", new java.util.TreeSet<>(display.getScoreboardTags()));
+                final String kind;
+                if (display instanceof org.bukkit.entity.ItemDisplay item) {
+                    final org.bukkit.inventory.ItemStack stack = item.getItemStack();
+                    String model = "";
+                    if (stack != null && stack.hasData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA)) {
+                        final java.util.List<String> strings = stack.getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA).strings();
+                        model = strings.isEmpty() ? "" : " " + strings.getFirst();
+                    }
+                    kind = "物品 " + (stack == null ? "空" : stack.getType().getKey().getKey()) + model;
+                } else if (display instanceof org.bukkit.entity.TextDisplay text) {
+                    final String plain = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(text.text())
+                            .replace('\n', ' ').strip();
+                    kind = "文字 " + (tag.isEmpty() ? (plain.length() > 6 ? plain.substring(0, 6) + "…" : plain) : "");
+                } else {
+                    kind = "方塊 " + ((org.bukkit.entity.BlockDisplay) display).getBlock().getMaterial().getKey().getKey();
+                }
+                counts.merge(world.getName().replace("exilecore_", "") + "｜" + kind + tag, 1, Integer::sum);
+            }
+        }
+        final List<java.util.Map.Entry<String, Integer>> sorted = new ArrayList<>(counts.entrySet());
+        sorted.sort(java.util.Map.Entry.<String, Integer>comparingByValue().reversed());
+        sender.sendMessage(plugin.text().prefixed("<gray>展示實體共 <white>" + total + "</white> 個，最多的 20 種（世界｜種類 #標籤）："));
+        for (final java.util.Map.Entry<String, Integer> entry : sorted.subList(0, Math.min(20, sorted.size()))) {
+            sender.sendMessage(plugin.text().parse("  <white>" + entry.getValue() + "</white> <gray>" + entry.getKey().replace("<", "\\<")));
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
     static int perf(final ExileCore plugin, final CommandSender sender) {
         final double[] tps = plugin.getServer().getTPS();
         sender.sendMessage(plugin.text().prefixed(String.format(Locale.ROOT,
@@ -277,6 +320,7 @@ public final class OpsModule implements Module, Listener {
         sender.sendMessage(plugin.text().parse(String.format(Locale.ROOT,
                 "<gray>資料庫：排隊 <white>%d</white>　平均 <white>%.1f</white> 毫秒　最近最慢 <white>%.0f</white> 毫秒",
                 plugin.database().queued(), plugin.database().averageMillis(), plugin.database().slowestMillis())));
+        sender.sendMessage(plugin.text().parse("<gray>背包比對優化：<white>" + tw.exilecore.core.SlotSyncHealer.status()));
         for (final World world : plugin.getServer().getWorlds()) {
             int living = 0;
             int items = 0;
@@ -293,8 +337,9 @@ public final class OpsModule implements Module, Listener {
                 }
             }
             sender.sendMessage(plugin.text().parse(String.format(Locale.ROOT,
-                    "  <white>%s</white> <gray>實體 %d（生物 %d、掉落物 %d、顯示 %d）、區塊 %d、玩家 %d",
-                    world.getName(), total, living, items, displays, world.getLoadedChunks().length, world.getPlayers().size())));
+                    "  <white>%s</white> <gray>實體 %d（生物 %d、掉落物 %d、顯示 %d）、區塊 %d、玩家 %d、視距 %d／模擬 %d",
+                    world.getName(), total, living, items, displays, world.getLoadedChunks().length, world.getPlayers().size(),
+                    world.getViewDistance(), world.getSimulationDistance())));
         }
         sender.sendMessage(plugin.text().parse("<dark_gray>更細的剖析可以裝 spark（/spark profiler）"));
         return Command.SINGLE_SUCCESS;

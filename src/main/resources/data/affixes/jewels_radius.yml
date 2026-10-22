@@ -868,7 +868,7 @@ jr_mark_effect:
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
-    - { stat: radius:curse.effect, type: INCREASED, value: "{value}", tags: [mark] }
+    - { stat: radius:mark.effect, type: INCREASED, value: "{value}", tags: [mark] }   # 2026-10-22：印記效果跟詛咒效果分開
 
 jr_maximum_rage:
   type: prefix

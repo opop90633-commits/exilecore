@@ -189,13 +189,41 @@ public final class ItemRenderer {
             return;
         }
         try {
-            final ItemStack decoded = ItemStack.deserializeBytes(stack.serializeAsBytes());
-            stack.copyDataFrom(decoded, type -> type == DataComponentTypes.LORE || type == DataComponentTypes.CUSTOM_NAME
-                    || type == DataComponentTypes.ITEM_NAME);
+            // 2026-10-22 效能：以前整件物品（連詞綴資料）序列化成壓縮的位元組再讀回來（spark：掉落時做物品 0.8%）。
+            // 現在只把名稱、說明放到一張空白的紙上轉換；一模一樣的文字（通貨、同一種東西）直接用上次轉好的
+            final List<Object> key = new ArrayList<>(3);
+            key.add(stack.lore());
+            key.add(stack.getData(DataComponentTypes.CUSTOM_NAME));
+            key.add(stack.getData(DataComponentTypes.ITEM_NAME));
+            ItemStack decoded;
+            synchronized (NATIVE) {
+                decoded = NATIVE.get(key);
+            }
+            if (decoded == null) {
+                final ItemStack carrier = new ItemStack(Material.PAPER);
+                carrier.copyDataFrom(stack, ItemRenderer::isText);
+                decoded = ItemStack.deserializeBytes(carrier.serializeAsBytes());
+                synchronized (NATIVE) {
+                    NATIVE.put(key, decoded);
+                }
+            }
+            stack.copyDataFrom(decoded, ItemRenderer::isText);
         } catch (final RuntimeException | LinkageError ignored) {
             // 轉不了就照舊（只是比較慢；單元測試沒有伺服器）
         }
     }
+
+    private static boolean isText(final io.papermc.paper.datacomponent.DataComponentType type) {
+        return type == DataComponentTypes.LORE || type == DataComponentTypes.CUSTOM_NAME || type == DataComponentTypes.ITEM_NAME;
+    }
+
+    /** 轉好的原版文字（名稱＋說明 → 只帶這三樣的紙），最近用的 1024 種。 */
+    private static final Map<List<Object>, ItemStack> NATIVE = new java.util.LinkedHashMap<>(256, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry<List<Object>, ItemStack> eldest) {
+            return size() > 1024;
+        }
+    };
 
     /** 藥劑、護符：只畫詞綴那一段（前面的說明由 FlaskService 補）。 */
     private List<Component> buildFlaskLore(final ItemData data) {

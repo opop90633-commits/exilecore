@@ -79,6 +79,13 @@ public final class MonsterEffects implements Listener {
                 goals.addGoal(mob, 0, new ChaseGoal(plugin, mob));
             }
         }
+        // 2026-10-22 效能：骷髏類的射箭走位換成節流過的版本（原版每 tick 重新尋路）；優先權最高，原版的弓箭 AI 就不會跑
+        if (entity instanceof Mob mob && RangedGoal.applies(entity)) {
+            final MobGoals goals = plugin.getServer().getMobGoals();
+            if (!goals.hasGoal(mob, RangedGoal.key(plugin))) {
+                goals.addGoal(mob, 0, new RangedGoal(plugin, mob));
+            }
+        }
         attachSkills(entity, data);
         for (final String modId : data.mods()) {
             final MonsterConfig.MonsterMod mod = monsters.config().mod(modId);

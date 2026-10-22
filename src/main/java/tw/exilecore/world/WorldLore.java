@@ -30,6 +30,15 @@ public final class WorldLore {
     /** 2026-10-22：每次啟動都從劇情世界重新複製分流世界的營地。 */
     private boolean campaignRefreshOnStart = true;
     private long mapTime = 6000;
+    /** 2026-10-22 效能：每個世界的視距（區塊）；0 = 照 server.properties。 */
+    private int viewDistance = DEFAULT_VIEW_DISTANCE;
+    /** 2026-10-22 效能：每個世界的模擬距離（區塊）；0 = 照 server.properties。 */
+    private int simulationDistance = DEFAULT_SIMULATION_DISTANCE;
+
+    /** 預設視距：虛空地圖、營地都不大，7 就看得到整片場地（spark：區塊系統兩成多跟「人數 × 載入的區塊」成正比）。 */
+    public static final int DEFAULT_VIEW_DISTANCE = 7;
+    /** 預設模擬距離：怪物本來就只在 24 格內活動（entity-activation-range），4 區塊（64 格）綽綽有餘。 */
+    public static final int DEFAULT_SIMULATION_DISTANCE = 4;
 
     public void load(final Path dataFolder) throws IOException {
         final Path file = dataFolder.resolve("world.yml");
@@ -45,6 +54,8 @@ public final class WorldLore {
         campaignHighLevel = 70;
         campaignRefreshOnStart = true;
         mapTime = 6000;
+        viewDistance = DEFAULT_VIEW_DISTANCE;
+        simulationDistance = DEFAULT_SIMULATION_DISTANCE;
         if (!Files.exists(file)) {
             return;
         }
@@ -63,6 +74,24 @@ public final class WorldLore {
         campaignHighLevel = Math.max(0, campaign.integer("high_level", 70));
         campaignRefreshOnStart = campaign.bool("refresh_on_start", true);
         mapTime = root.node("maps").integer("time", 6000);
+        final YamlNode performance = root.node("performance");
+        viewDistance = distance(performance.integer("view_distance", DEFAULT_VIEW_DISTANCE));
+        simulationDistance = distance(performance.integer("simulation_distance", DEFAULT_SIMULATION_DISTANCE));
+    }
+
+    /** 0 = 不改；其他夾在原版允許的 2–32。 */
+    static int distance(final int value) {
+        return value <= 0 ? 0 : Math.max(2, Math.min(32, value));
+    }
+
+    /** 2026-10-22 效能：每個世界的視距（區塊）；0 = 照 server.properties。 */
+    public int viewDistance() {
+        return viewDistance;
+    }
+
+    /** 2026-10-22 效能：每個世界的模擬距離（區塊）；0 = 照 server.properties。 */
+    public int simulationDistance() {
+        return simulationDistance;
     }
 
     /** 要不要產生、載入劇情世界（海邊營地＋五個區域）。 */

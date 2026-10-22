@@ -85,6 +85,40 @@ public final class CodexData {
                 if (skill.cooldown() > 0) {
                     s.addProperty("cooldown", skill.cooldown());
                 }
+                // 2026-10-22（補齊遊戲裡圖鑑有的）：來源（未切割寶石雕得出來／專屬掉落）、施放時間、各等級的基礎數值
+                if (!skill.engravable()) {
+                    s.addProperty("source", plain(tw.exilecore.gui.CodexMenu.sourceLabel(plugin, skill.source())));
+                }
+                if (skill.isAttack()) {
+                    if (skill.attackSpeed() > 0 && Math.abs(skill.attackSpeed() - 1) > 1e-9) {
+                        s.addProperty("attackSpeed", Math.round(skill.attackSpeed() * 100));
+                    }
+                } else if (skill.castTime() > 0) {
+                    s.addProperty("castTime", skill.castTime());
+                }
+                final JsonArray levels = new JsonArray();
+                for (final int level : new int[] {1, 10, 20, 30, 40}) {
+                    try {
+                        final JsonObject row = new JsonObject();
+                        row.addProperty("lv", level);
+                        row.addProperty("mana", tw.exilecore.skill.SkillProfiles.manaCost(skill, level));
+                        if (skill.isAttack()) {
+                            row.addProperty("eff", Math.round(skill.effectiveness().at(level) * 100));
+                        } else if (skill.damage() != null) {
+                            final double[] range = tw.exilecore.skill.SkillProfiles.spellDamage(plugin.skills().config(), skill, level);
+                            row.addProperty("min", Math.round(range[0]));
+                            row.addProperty("max", Math.round(range[1]));
+                            final double eff = skill.effectiveness().at(level);
+                            if (Math.abs(eff - 1) > 1e-9) {
+                                row.addProperty("eff", Math.round(eff * 100));
+                            }
+                        }
+                        levels.add(row);
+                    } catch (final RuntimeException ignored) {
+                        // 算不出來的等級略過
+                    }
+                }
+                s.add("levels", levels);
                 skills.add(s);
             }
             for (final SupportDefinition support : gems) {
@@ -94,6 +128,18 @@ public final class CodexData {
                 s.addProperty("tier", support.tier());
                 s.addProperty("text", plain(support.descriptionText()));
                 s.addProperty("requires", plain(support.supportsText(plugin.skills().config().all()))); // 含「除外」：召喚物、光環…
+                if (!support.cuttable()) { // 2026-10-22：專屬掉落的寫來源
+                    s.addProperty("source", plain(tw.exilecore.gui.CodexMenu.sourceLabel(plugin, support.source())));
+                }
+                final JsonArray mods = new JsonArray(); // 2026-10-22：效果的數值（跟角色頁一樣的寫法）
+                try {
+                    for (final String line : ModifierText.describeAll(support.allModifiers())) {
+                        mods.add(plain(line));
+                    }
+                } catch (final RuntimeException ignored) {
+                    // 寫不出來的略過
+                }
+                s.add("mods", mods);
                 supports.add(s);
             }
         }
@@ -118,6 +164,7 @@ public final class CodexData {
         root.add("currencies", currencies);
         if (plugin.items() != null) {
             affixes(root, plugin.items().repository());
+            uniqueInfo(plugin, root, plugin.items().repository());
         }
         return GSON.toJson(root).getBytes(StandardCharsets.UTF_8);
     }
@@ -198,6 +245,54 @@ public final class CodexData {
             extra.add(u);
         }
         root.add("uniquesExtra", extra);
+    }
+
+    /**
+     * 2026-10-22：每件傳奇的圖鑑資訊（跟遊戲裡傳奇圖鑑一樣）：追逐級、哪裡會掉、隱匿詞綴（幾條、能揭露成哪些）。
+     * 傳奇的樣子用規劃器的 items.json，這裡照代號補上。
+     */
+    static void uniqueInfo(final ExileCore plugin, final JsonObject root, final tw.exilecore.item.ItemRepository repository) {
+        final JsonObject info = new JsonObject();
+        for (final tw.exilecore.item.UniqueItem unique : repository.uniques()) {
+            final JsonObject u = new JsonObject();
+            if (unique.chase()) {
+                u.addProperty("chase", true);
+            }
+            final JsonArray sources = new JsonArray();
+            final java.util.Set<String> seen = new java.util.LinkedHashSet<>();
+            for (final String source : unique.sources()) {
+                final String text = tw.exilecore.gui.CodexMenu.sourceLabel(plugin, source);
+                if (text != null && seen.add(text)) {
+                    sources.add(plain(text));
+                }
+            }
+            u.add("sources", sources);
+            final tw.exilecore.item.ItemBase base = repository.base(unique.base());
+            final JsonArray veiled = new JsonArray();
+            final List<tw.exilecore.item.AffixType> types = repository.uniqueVeiled(unique.id());
+            for (final tw.exilecore.item.AffixType type : new tw.exilecore.item.AffixType[] {tw.exilecore.item.AffixType.PREFIX, tw.exilecore.item.AffixType.SUFFIX}) {
+                final long count = types.stream().filter(type::equals).count();
+                if (count == 0) {
+                    continue;
+                }
+                final JsonObject v = new JsonObject();
+                v.addProperty("kind", type == tw.exilecore.item.AffixType.PREFIX ? "前綴" : "後綴");
+                v.addProperty("count", count);
+                final JsonArray options = new JsonArray();
+                if (base != null) {
+                    for (final tw.exilecore.item.Affix option : tw.exilecore.gui.CodexMenu.unveiledOptions(plugin, base, type)) {
+                        options.add(plain(option.rangeText(option.tiers().getFirst().tier())));
+                    }
+                }
+                v.add("options", options);
+                veiled.add(v);
+            }
+            if (!veiled.isEmpty()) {
+                u.add("veiled", veiled);
+            }
+            info.add(unique.id(), u);
+        }
+        root.add("uniqueInfo", info);
     }
 
     /** 拿掉 MiniMessage 標籤。 */

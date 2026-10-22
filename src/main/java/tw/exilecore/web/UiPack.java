@@ -1720,6 +1720,14 @@ public final class UiPack {
         final JsonObject head = special("minecraft:item/template_skull", "minecraft:player_head");
         head.add("transformation", transformation(new double[] {1, 0, 0, 0}, new double[] {1, 1, 1}, new double[] {0.5, 0, 0.5}));
         models.put("player_head", head);
+        // 怪物頭顱：跟玩家頭顱一樣的畫法，只是種類不同（設定選單的「隱藏怪物對話」用殭屍頭、「過濾死亡訊息」用骷髏頭）
+        for (final String[] mob : new String[][] {{"skeleton_skull", "skeleton"}, {"wither_skeleton_skull", "wither_skeleton"},
+                {"zombie_head", "zombie"}, {"creeper_head", "creeper"}, {"piglin_head", "piglin"}, {"dragon_head", "dragon"}}) {
+            final JsonObject skull = special("minecraft:item/template_skull", "minecraft:head");
+            skull.getAsJsonObject("model").addProperty("kind", mob[1]);
+            skull.add("transformation", transformation(new double[] {1, 0, 0, 0}, new double[] {1, 1, 1}, new double[] {0.5, 0, 0.5}));
+            models.put(mob[0], skull);
+        }
     }
 
     private static final List<String> DYES = List.of("white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",

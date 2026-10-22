@@ -653,6 +653,11 @@ public final class CodexMenu extends Menu {
 
     /** 掉落來源的說明；不用列的（chase：上面另外寫）回傳 null。 */
     private String sourceName(final String source) {
+        return sourceLabel(plugin, source);
+    }
+
+    /** 掉落來源的說明（網頁圖鑑也用，2026-10-22）；不用列的（chase）回傳 null。 */
+    public static String sourceLabel(final ExileCore plugin, final String source) {
         final String key = source.toLowerCase(Locale.ROOT);
         switch (key) {
             case "gamble":
@@ -689,12 +694,12 @@ public final class CodexMenu extends Menu {
                 break;
         }
         if (key.startsWith("uber_")) {
-            return mapName(key.substring("uber_".length())) + "（極境）專屬";
+            return mapName(plugin, key.substring("uber_".length())) + "（極境）專屬";
         }
-        return mapName(key) + "的 Boss";
+        return mapName(plugin, key) + "的 Boss";
     }
 
-    private String mapName(final String id) {
+    private static String mapName(final ExileCore plugin, final String id) {
         if (plugin.maps() != null) {
             final var map = plugin.maps().config().find(id);
             if (map != null) {
@@ -830,6 +835,11 @@ public final class CodexMenu extends Menu {
 
     /** 這個基底能揭露出的詞綴（隱匿詞綴找盜賊首領三選一、或揭露石；一般掉落擲不到）：前綴在前、後綴在後。 */
     private List<Affix> unveiledPool(final ItemBase itemBase, final AffixType only) {
+        return unveiledOptions(plugin, itemBase, only);
+    }
+
+    /** 這個基底能揭露出的詞綴（網頁圖鑑也用，2026-10-22）。 */
+    public static List<Affix> unveiledOptions(final ExileCore plugin, final ItemBase itemBase, final AffixType only) {
         final List<Affix> list = new ArrayList<>();
         for (final Affix affix : plugin.items().repository().affixes()) {
             if (unveiledAffix(affix) && affix.canSpawnOn(itemBase) && (only == null || affix.type() == only)) {

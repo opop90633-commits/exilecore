@@ -2860,7 +2860,7 @@ public final class SkillService {
     /** 「裝備加成」只列這些屬性（傷害、暴擊、速度、技能等級／範圍／投射物…、異常、穿透、光環／戰吼／詛咒效果）。 */
     private static final List<String> GEAR_STAT_PREFIXES = List.of("damage", "crit.", "attack.speed", "cast.speed", "accuracy", "skill.",
             "penetration", "ailment.duration", "bleed.", "ignite.", "poison.", "shock.", "chill.", "freeze.", "electrocute.", "stun.buildup",
-            "stun.duration", "daze.chance", "pin.chance", "armour.break", "exposure.", "curse.effect", "aura.effect", "herald.effect",
+            "stun.duration", "daze.chance", "pin.chance", "armour.break", "exposure.", "curse.effect", "mark.effect", "aura.effect", "herald.effect",
             "warcry.", "totem.", "infusion.", "minion.", "crossbow.", "grenade.", "seal.", "channel.", "combo.", "rage.effect");
 
     /** 沒寫條件標籤的速度、命中照技能種類分：法術不列攻速、命中，攻擊不列施法速度；不造成傷害的技能（光環、增益）不列傷害類。 */

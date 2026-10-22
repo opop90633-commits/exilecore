@@ -59,6 +59,8 @@ public final class PlayerStateService {
 
     /** 撿到東西的角落提示（2026-10）。 */
     private final LootFeed lootFeed = new LootFeed();
+    /** 2026-10-18：畫面左上角的隊伍框（接在動作列後面）。 */
+    private final tw.exilecore.party.PartyHud partyHud;
     /** 以前的常駐奔跑的移動速度加成（拿掉了；身上還有就清掉）。 */
     private final NamespacedKey oldRunKey;
 
@@ -115,6 +117,7 @@ public final class PlayerStateService {
         this.oldRunKey = new NamespacedKey(plugin, "always_run");
         this.grace = new EntryGrace(plugin, this);
         this.resourceBar = new ResourceBar(plugin);
+        this.partyHud = new tw.exilecore.party.PartyHud(plugin);
     }
 
     public CharacterConfig config() {
@@ -1259,19 +1262,29 @@ public final class PlayerStateService {
     }
 
     private Component actionBar(final Player player, final PlayerState state) {
-        final StringBuilder text = new StringBuilder();
-        text.append(String.format(Locale.ROOT, "<#ff5555>❤ %,d / %,d", Math.round(state.life()), Math.round(state.maxLife())));
+        // 2026-10-22 效能（spark：動作列 1.9%，大半是 MiniMessage 解析）：生命、護盾、魔力、等級這段數字幾乎每次都不一樣，
+        // 快取一直落空——改成直接組元件（不經過 MiniMessage、不用 String.format）；後面那段（異常、光環、通知…）才解析，而且很少變
+        final net.kyori.adventure.text.TextComponent.Builder stats = Component.text();
+        final StringBuilder statsPlain = new StringBuilder();
+        stat(stats, statsPlain, "", LIFE_COLOR, "❤ " + grouped(Math.round(state.life())) + " / " + grouped(Math.round(state.maxLife())));
         if (state.maxEnergyShield() > 0) {
-            text.append(String.format(Locale.ROOT, "  <#77ccff>⛨ %,d / %,d", Math.round(state.energyShield()), Math.round(state.maxEnergyShield())));
+            stat(stats, statsPlain, "  ", ES_COLOR, "⛨ " + grouped(Math.round(state.energyShield())) + " / " + grouped(Math.round(state.maxEnergyShield())));
         }
-        text.append(String.format(Locale.ROOT, "  <#5599ff>◆ %,d / %,d", Math.round(state.mana()), Math.round(state.maxMana())));
+        stat(stats, statsPlain, "  ", MANA_COLOR, "◆ " + grouped(Math.round(state.mana())) + " / " + grouped(Math.round(state.maxMana())));
         if (state.hasCharacter()) {
+            stat(stats, statsPlain, "  ", LEVEL_COLOR, "Lv." + state.level() + " ");
+            final String progress;
             if (state.level() >= config.levelCap()) {
-                text.append(String.format(Locale.ROOT, "  <#f5b942>Lv.%d <gray>滿級", state.level()));
+                progress = "滿級";
             } else {
-                text.append(String.format(Locale.ROOT, "  <#f5b942>Lv.%d <gray>%.1f%%", state.level(), experienceProgress(state) * 100));
+                final long tenths = Math.round(experienceProgress(state) * 1000);
+                progress = tenths / 10 + "." + tenths % 10 + "%";
             }
+            stats.append(Component.text(progress, net.kyori.adventure.text.format.NamedTextColor.GRAY));
+            statsPlain.append(progress);
         }
+        // 後面那段接在數字後面：以前整行一起解析時沒寫顏色的字會沿用前面的顏色（有角色是灰色，沒有是魔力的藍色）
+        final StringBuilder text = new StringBuilder(state.hasCharacter() ? "<gray>" : "<#5599ff>");
         if (plugin.ailments() != null) {
             final String ailments = plugin.ailments().statusText(player);
             if (!ailments.isEmpty()) {
@@ -1302,7 +1315,7 @@ public final class PlayerStateService {
         if (notice != null) {
             text.append("  ").append(notice);
         }
-        final String mainPlain = cachedPlain(player, text.toString());
+        final String mainPlain = statsPlain + cachedPlain(player, text.toString());
         if (sides) {
             final String side = HotbarSides.render(auraNames, pets, hudBuffs, mainPlain);
             if (side != null) {
@@ -1320,7 +1333,46 @@ public final class PlayerStateService {
                 text.append(HotbarSides.renderLoot(loot, start, mainPlain, now));
             }
         }
-        return cachedParse(player, text.toString());
+        final Component main = stats.append(cachedParse(player, text.toString())).build();
+        // 2026-10-22：畫面左上角的隊伍框（PartyHud，2026-10-18 做好了但一直沒接上動作列）：接在最後面，淨寬 0
+        if (plugin.web() != null && plugin.web().hasPack(player)) {
+            final Component frames = partyHud.render(player, state);
+            if (frames != null) {
+                return Component.text().append(main).append(frames).build();
+            }
+        }
+        return main;
+    }
+
+    private static final net.kyori.adventure.text.format.TextColor LIFE_COLOR = net.kyori.adventure.text.format.TextColor.color(0xff5555);
+    private static final net.kyori.adventure.text.format.TextColor ES_COLOR = net.kyori.adventure.text.format.TextColor.color(0x77ccff);
+    private static final net.kyori.adventure.text.format.TextColor MANA_COLOR = net.kyori.adventure.text.format.TextColor.color(0x5599ff);
+    private static final net.kyori.adventure.text.format.TextColor LEVEL_COLOR = net.kyori.adventure.text.format.TextColor.color(0xf5b942);
+
+    /** 動作列的一段數字（前面的空白沒有顏色，跟以前的 MiniMessage 一樣）。 */
+    private static void stat(final net.kyori.adventure.text.TextComponent.Builder out, final StringBuilder plain, final String gap,
+                             final net.kyori.adventure.text.format.TextColor color, final String body) {
+        if (!gap.isEmpty()) {
+            out.append(Component.text(gap));
+            plain.append(gap);
+        }
+        out.append(Component.text(body, color));
+        plain.append(body);
+    }
+
+    /** 千分位（跟 String.format 的 %,d 一樣，但不用 Formatter；spark 0.2%）。 */
+    static String grouped(final long value) {
+        final String digits = Long.toString(Math.abs(value));
+        final StringBuilder out = new StringBuilder(digits.length() + digits.length() / 3 + 1);
+        if (value < 0) {
+            out.append('-');
+        }
+        final int first = digits.length() % 3 == 0 ? 3 : digits.length() % 3;
+        out.append(digits, 0, first);
+        for (int i = first; i < digits.length(); i += 3) {
+            out.append(',').append(digits, i, i + 3);
+        }
+        return out.toString();
     }
 
     /** 2026-10 效能（spark：動作列每 tick 解析 MiniMessage 兩次）：字一樣就沿用上一次的結果。 */

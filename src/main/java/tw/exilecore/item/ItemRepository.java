@@ -46,6 +46,8 @@ public final class ItemRepository {
     private final Map<String, String> uniqueStatBases = new java.util.HashMap<>();
     private final Map<String, Double> uniqueRuneEffect = new java.util.HashMap<>();
     private final Map<String, Affix> affixes = new LinkedHashMap<>();
+    /** 2026-10-22：每次重讀加一（別人快取的詞綴池拿這個判斷要不要丟掉）。 */
+    private volatile int version;
     /** 詞綴代號 → 資料檔指定的標籤（chips:）；沒指定的照修飾器判斷。 */
     private final Map<String, java.util.Set<AffixChips.Chip>> affixChips = new java.util.HashMap<>();
     private final Map<String, UniqueItem> uniques = new LinkedHashMap<>();
@@ -85,6 +87,7 @@ public final class ItemRepository {
     }
 
     private void loadNow(final Path dataFolder) throws IOException {
+        version++;
         bases.clear();
         uniqueVeiled.clear();
         uniqueRuneSockets.clear();
@@ -373,6 +376,11 @@ public final class ItemRepository {
 
     public Affix affix(final String id) {
         return affixes.get(id);
+    }
+
+    /** 2026-10-22：資料的版本（每次重讀加一）。 */
+    public int version() {
+        return version;
     }
 
     public Collection<Affix> affixes() {

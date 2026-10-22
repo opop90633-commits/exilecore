@@ -220,7 +220,7 @@ public record SupportDefinition(String id, String name, String description, Stri
 
     /** 不用擊中敵人也有作用的屬性：消耗、等級、保留精魂、給予的增益、觸發、施法速度、灌注…（範圍、持續、冷卻另外看技能有沒有那個標籤；召喚物的看 minion 標籤）。 */
     private static final Set<String> UTILITY_STATS = Set.of(StatKeys.SKILL_ADDED_COOLDOWN, StatKeys.SKILL_COST, StatKeys.SKILL_LEVEL,
-            StatKeys.SKILL_MINIONS, StatKeys.SKILL_TOTEMS, StatKeys.SUPPORT_SPIRIT, StatKeys.CURSE_EFFECT, StatKeys.CAST_SPEED, StatKeys.FLAG_ECHO,
+            StatKeys.SKILL_MINIONS, StatKeys.SKILL_TOTEMS, StatKeys.SUPPORT_SPIRIT, StatKeys.CURSE_EFFECT, StatKeys.MARK_EFFECT, StatKeys.CAST_SPEED, StatKeys.FLAG_ECHO,
             StatKeys.FLAG_BLOOD_MAGIC, StatKeys.MANA_ON_MINION_DEATH, StatKeys.MINION_DEATH_HEAL);
     private static final List<String> UTILITY_PREFIXES = List.of(StatKeys.GRANT_PREFIX, "warcry.", "aura.", "herald.", "trigger.", "seal.",
             "infusion.", "proc.use", "proc.minion_death");

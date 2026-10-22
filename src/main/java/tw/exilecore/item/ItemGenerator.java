@@ -15,6 +15,9 @@ import java.util.random.RandomGenerator;
 public final class ItemGenerator {
 
     private final ItemRepository repository;
+    /** 2026-10-22 效能：基底＋型態 → 本來就擲得到的詞綴（{@link #pool}）。 */
+    private final java.util.Map<String, List<Affix>> pools = new java.util.concurrent.ConcurrentHashMap<>();
+    private volatile int poolVersion = Integer.MIN_VALUE;
 
     public ItemGenerator(final ItemRepository repository) {
         this.repository = repository;
@@ -444,9 +447,44 @@ public final class ItemGenerator {
                 usedGroups.add(affix.group());
             }
         }
+        final int ilvl = data.ilvl();
+        final List<Affix> list = new ArrayList<>();
+        for (final Affix affix : pool(base, type)) {
+            if (usedGroups.contains(affix.group()) || !hasTierFor(affix, ilvl)) {
+                continue;
+            }
+            list.add(affix);
+        }
+        return list;
+    }
+
+    private static boolean hasTierFor(final Affix affix, final int itemLevel) {
+        for (final AffixTier tier : affix.tiers()) {
+            if (tier.ilvl() <= itemLevel) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 2026-10-22 效能：這個基底、這種型態「本來就擲得到」的詞綴（型態、基底標籤、不是揭露／腐化／退役的），照基底快取。
+     * 以前每擲一條詞綴都把幾百條詞綴整個掃一遍、一條條比標籤（spark：打怪掉落佔主執行緒快 1%）。資料重讀就整個丟掉。
+     */
+    private List<Affix> pool(final ItemBase base, final AffixType type) {
+        final int version = repository.version();
+        if (version != poolVersion) {
+            pools.clear();
+            poolVersion = version;
+        }
+        final String key = base.id() + '|' + type.name();
+        final List<Affix> cached = pools.get(key);
+        if (cached != null) {
+            return cached;
+        }
         final List<Affix> list = new ArrayList<>();
         for (final Affix affix : repository.affixes()) {
-            if (affix.type() != type || usedGroups.contains(affix.group()) || !affix.canSpawnOn(base)) {
+            if (affix.type() != type || !affix.canSpawnOn(base)) {
                 continue;
             }
             if (Veiled.isUnveiled(affix.id())) {
@@ -455,12 +493,11 @@ public final class ItemGenerator {
             if (affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG) || affix.spawnTags().contains(ItemRepository.RETIRED_TAG)) {
                 continue; // 2026-10-21 修正：腐化詞綴只有蝕變石加得上（以前掉落、通貨會當成一般的後綴擲出來）
             }
-            if (affix.tiersFor(data.ilvl()).isEmpty()) {
-                continue;
-            }
             list.add(affix);
         }
-        return list;
+        final List<Affix> frozen = List.copyOf(list);
+        pools.put(key, frozen);
+        return frozen;
     }
 
     // ---- 管理員測試 ----

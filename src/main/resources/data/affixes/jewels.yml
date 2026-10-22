@@ -2050,7 +2050,7 @@ j2_mark_effect:
     - { tier: 1, ilvl: 50, weight: 370, value: [6, 6] }
     - { tier: 2, ilvl: 1, weight: 1058, value: [4, 5] }
   mods:
-    - { stat: curse.effect, type: INCREASED, value: "{value}", tags: [mark] }
+    - { stat: mark.effect, type: INCREASED, value: "{value}", tags: [mark] }   # 2026-10-22：印記效果跟詛咒效果分開
 j2_mark_duration:
   type: suffix
   group: j2_mark_duration

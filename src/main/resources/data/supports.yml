@@ -2214,7 +2214,7 @@ supports:
     requires: [mark]
     mana_multiplier: 1.2
     modifiers:
-      - { stat: curse.effect, type: MORE, value: 25 }
+      - { stat: mark.effect, type: MORE, value: 25 }   # 2026-10-22：印記效果（以前跟詛咒共用 curse.effect）
 
   echoing_cry:             # Echoing Cry（回聲兩次 → 戰吼效果更強、範圍變小）
     name: 震嘯

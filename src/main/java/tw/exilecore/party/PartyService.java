@@ -105,6 +105,9 @@ public final class PartyService {
      * 每秒：Boss 附近（地圖裡是整張地圖）的人數比 Boss 生出來時多，就照新的人數補生命，比例不變（2026-10：
      * 以前先一個人叫出 Boss、其他人再進去，Boss 一直是一人份的血）。最多算 max_players 人，只往上加。
      */
+    /** 營地裡照人數加血的 Boss（記一次 log 就好，2026-10-22 查營地一直跳「有人加入」用）。 */
+    private final java.util.Set<java.util.UUID> townBossLogged = new java.util.HashSet<>();
+
     private void rescaleBosses() {
         if (plugin.skills() == null || plugin.skills().bossSkills() == null) {
             return;
@@ -116,10 +119,22 @@ public final class PartyService {
             final int now = Math.min(config.maxCountedPlayers(), countPlayers(boss));
             final int before = plugin.monsters().playersAround(boss);
             if (now > Math.min(config.maxCountedPlayers(), before) && plugin.monsters().raisePlayers(boss, now)) {
+                // 2026-10-22：只告訴算進人數的人（count_radius 內、或同一張地圖），在營地（城鎮）裡的不說
+                //（以前 64 格內的人都會收到，營地附近有 Boss 時整個營地都在洗這行）
+                final boolean inMap = plugin.maps() != null && plugin.maps().playersIn(boss).isPresent();
+                final double radius = config.countRadius();
                 for (final Player player : boss.getWorld().getPlayers()) {
-                    if (player.getLocation().distanceSquared(boss.getLocation()) <= 64 * 64) {
+                    if (plugin.zones() != null && plugin.zones().inTown(player.getLocation())) {
+                        continue;
+                    }
+                    if (inMap ? plugin.maps().instanceAt(player.getLocation()) == plugin.maps().instanceOf(boss)
+                            : player.getLocation().distanceSquared(boss.getLocation()) <= radius * radius) {
                         player.sendMessage(plugin.text().prefixed("<#ffd27f>有人加入：Boss 的生命照 " + now + " 人重算（血量比例不變）"));
                     }
+                }
+                if (plugin.zones() != null && plugin.zones().inTown(boss.getLocation()) && townBossLogged.add(boss.getUniqueId())) {
+                    plugin.getSLF4JLogger().warn("營地裡有 Boss 在照人數加血：{}（{}）在 {} {},{},{}", boss.getName(), boss.getType(),
+                            boss.getWorld().getName(), boss.getLocation().getBlockX(), boss.getLocation().getBlockY(), boss.getLocation().getBlockZ());
                 }
             }
         }

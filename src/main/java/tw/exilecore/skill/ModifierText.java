@@ -233,7 +233,8 @@ public final class ModifierText {
             case StatKeys.SKILL_TOTEMS -> "同時最多多 " + number(value) + " 個圖騰";
             case StatKeys.SKILL_MINIONS -> "同時最多多 " + number(value) + " 隻召喚物";
             case StatKeys.AURA_EFFECT -> scaled(modifier, "光環效果", percent);
-            case StatKeys.CURSE_EFFECT -> scaled(modifier, "詛咒與印記效果", percent);
+            case StatKeys.CURSE_EFFECT -> scaled(modifier, "詛咒效果", percent);
+            case StatKeys.MARK_EFFECT -> scaled(modifier, "印記效果", percent);
             case StatKeys.THORNS_DAMAGE -> scaled(modifier, "荊棘傷害", percent);
             case StatKeys.WARCRY_EFFECT -> scaled(modifier, "戰吼效果", percent);
             case StatKeys.SKILL_KNOCKBACK -> modifier.type() == tw.exilecore.stats.ModType.FLAT ? "擊中時把敵人擊退（+" + number(value) + " 格）"

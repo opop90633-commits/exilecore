@@ -346,6 +346,8 @@ class UiPackTest {
         assertEquals("lime", cases.get("lime_banner").getAsJsonObject("model").get("color").getAsString());
         assertEquals("minecraft:ender", cases.get("ender_chest").getAsJsonObject("model").get("texture").getAsString());
         assertEquals("minecraft:player_head", cases.get("player_head").getAsJsonObject("model").get("type").getAsString());
+        assertEquals("zombie", cases.get("zombie_head").getAsJsonObject("model").get("kind").getAsString(), "怪物頭顱也畫得出框");
+        assertEquals("skeleton", cases.get("skeleton_skull").getAsJsonObject("model").get("kind").getAsString());
         for (final String id : List.of("emerald", "iron_sword", "lime_stained_glass_pane", "ender_eye", "chest", "lime_banner", "book")) {
             assertTrue(UiPack.framable(id), id);
         }

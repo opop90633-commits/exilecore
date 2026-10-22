@@ -601,7 +601,23 @@ public final class SkillMenu extends Menu {
         }
         final SkillDefinition innerDefinition = service.config().skill(inner.skillId());
         final List<String> lore = new ArrayList<>();
-        lore.add("<gray>等級 <white>" + inner.level() + "</white>　自己的輔助孔 <white>" + inner.sockets() + "</white>（放在這裡時不用）");
+        // 2026-10-22：裝備、輔助的「+技能等級」放在宿主裡一樣吃得到：寫出實際等級
+        int bonus = 0;
+        if (innerDefinition != null) {
+            final java.util.Set<String> levelTags = SkillBuild.levelTags(innerDefinition);
+            bonus += (int) Math.round(plugin.players().sheet(player).flat(tw.exilecore.stats.StatKeys.SKILL_LEVEL, levelTags));
+            for (final SupportDefinition support : service.supportsOf(entry)) {
+                if (support.hostRefusal(definition, innerDefinition) == null) {
+                    for (final tw.exilecore.stats.Modifier modifier : support.modifiers()) {
+                        if (modifier.stat().equals(tw.exilecore.stats.StatKeys.SKILL_LEVEL) && modifier.appliesTo(levelTags)) {
+                            bonus += (int) Math.round(modifier.value());
+                        }
+                    }
+                }
+            }
+        }
+        lore.add("<gray>等級 <white>" + inner.level() + "</white>" + (bonus > 0 ? "<green>（+" + bonus + " 裝備、輔助 → " + Math.min(SkillBuild.MAX_EFFECTIVE_LEVEL, inner.level() + bonus) + "）</green>" : "")
+                + "　自己的輔助孔 <white>" + inner.sockets() + "</white>（放在這裡時不用）");
         if (innerDefinition != null) {
             final String why = gems.innerProblem(definition, innerDefinition);
             if (why != null) {

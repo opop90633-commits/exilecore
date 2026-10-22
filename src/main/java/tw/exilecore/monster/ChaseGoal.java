@@ -31,6 +31,10 @@ final class ChaseGoal implements Goal<Mob> {
     private final Mob mob;
     private int cooldown;
     private int repath;
+    /** 2026-10-22 效能：上次尋路時目標的位置（目標沒走遠就不重算整條路，溺屍的水陸尋路特別貴）。 */
+    private org.bukkit.Location pathTarget;
+    /** 2026-10-22 效能：沒有目標時多久找一次人（原版每 tick 都問一次要不要啟用）。 */
+    private int scan;
 
     ChaseGoal(final Plugin plugin, final Mob mob) {
         this.key = GoalKey.of(Mob.class, new NamespacedKey(plugin, "chase"));
@@ -46,9 +50,13 @@ final class ChaseGoal implements Goal<Mob> {
     public boolean shouldActivate() {
         LivingEntity target = mob.getTarget();
         if (!valid(target, GIVE_UP)) {
+            if (--scan > 0) {
+                return false;
+            }
+            scan = 10; // 半秒找一次（地圖世界幾十個人，每隻怪每 tick 掃一遍太多）
             target = null;
             double best = SIGHT * SIGHT;
-            for (final Player player : mob.getWorld().getPlayers()) {
+            for (final Player player : mob.getLocation().getNearbyPlayers(SIGHT)) {
                 if (!valid(player, SIGHT)) {
                     continue;
                 }
@@ -85,6 +93,7 @@ final class ChaseGoal implements Goal<Mob> {
     @Override
     public void start() {
         repath = 0;
+        pathTarget = null;
     }
 
     @Override
@@ -99,8 +108,12 @@ final class ChaseGoal implements Goal<Mob> {
             return;
         }
         mob.lookAt(target);
-        if (--repath <= 0) {
-            repath = 10;
+        // 2026-10-22 效能：目標離上次尋路的位置超過 1.5 格、或滿一秒才重算（以前固定每半秒整條重算）
+        final org.bukkit.Location targetAt = target.getLocation();
+        if (--repath <= 0 || pathTarget == null || !pathTarget.getWorld().equals(targetAt.getWorld())
+                || pathTarget.distanceSquared(targetAt) > 2.25) {
+            repath = 20;
+            pathTarget = targetAt;
             mob.getPathfinder().moveTo(target, 1.2);
         }
         if (cooldown > 0) {

@@ -117,10 +117,13 @@ public final class CampaignWorld {
         }
         // 自動擺版面要等其他模組（區域、NPC）都啟用之後
         plugin.getServer().getScheduler().runTask(plugin, this::autoSetup);
+        // 視距、模擬距離：等其他模組的世界（海域）也載入了再一起套
+        plugin.getServer().getScheduler().runTask(plugin, this::applyDistances);
         guardTask = plugin.repeat("world.guard", this::guard, 40, 40);
     }
 
     public void reload() {
+        applyDistances();
         for (final World world : new World[] {campaign, maps, arena, event}) {
             if (world != null) {
                 applyTime(world, world == campaign ? lore.campaignTime() : lore.mapTime());
@@ -129,6 +132,27 @@ public final class CampaignWorld {
         for (final World town : channels.towns()) {
             if (town != campaign) {
                 applyTime(town, lore.campaignTime());
+            }
+        }
+    }
+
+    /**
+     * 2026-10-22 效能：所有世界套 data/world.yml 的視距與模擬距離（spark：區塊系統佔主執行緒兩成多，
+     * 掃可生怪區塊、區塊票、區塊載入都跟「人數 × 每人載入的區塊」成正比）。視距不能比模擬距離小。
+     */
+    public void applyDistances() {
+        final int simulation = lore.simulationDistance();
+        final int view = lore.viewDistance() == 0 ? 0 : Math.max(lore.viewDistance(), simulation);
+        for (final World world : plugin.getServer().getWorlds()) {
+            try {
+                if (simulation > 0 && world.getSimulationDistance() != simulation) {
+                    world.setSimulationDistance(simulation);
+                }
+                if (view > 0 && world.getViewDistance() != view) {
+                    world.setViewDistance(view);
+                }
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("設定 {} 的視距／模擬距離失敗", world.getName(), e);
             }
         }
     }

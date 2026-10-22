@@ -636,6 +636,11 @@ public final class ZoneService {
             player.sendMessage(plugin.text().prefixed("<red>交易中不能換線"));
             return;
         }
+        final String locked = channels.switchProblem(player, target); // 2026-10-22 晚：低等級只能在第 1 線
+        if (locked != null) {
+            player.sendMessage(plugin.text().prefixed("<red>" + locked));
+            return;
+        }
         final Location to = tw.exilecore.world.TownChannels.mapTo(player.getLocation(), target);
         if (teleport(player, to, "第 " + channel + " 線")) {
             channels.remember(player, target);

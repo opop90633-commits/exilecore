@@ -270,7 +270,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final double minionReserve = aura == null || aura.perMinion() == null ? 0 : Math.max(0.01, aura.perMinion().at(Math.min(level, tw.exilecore.character.SkillLoadout.MAX_LEVEL)) * reserveFactor);
         // 常駐技能（焚心業火）不算光環：光環效果的加成不吃
         final double auraEffect = aura == null
-                ? (definition.mechanic() == Mechanic.MARK ? Math.max(0, effective.apply(StatKeys.CURSE_EFFECT, 1.0, context)) // 2026-10：詛咒、印記效果
+                ? (definition.mechanic() == Mechanic.MARK ? Math.max(0, effective.apply(definition.tags().contains("curse") // 2026-10-22：詛咒吃詛咒效果、印記吃印記效果（照 PoE2 分開）
+                        ? StatKeys.CURSE_EFFECT : StatKeys.MARK_EFFECT, 1.0, context))
                 : definition.mechanic() == Mechanic.WARCRY ? Math.max(0, effective.apply(StatKeys.WARCRY_EFFECT, 1.0, context)) : 1) // 戰吼效果
                 : aura.herald() ? Math.max(0, effective.apply(StatKeys.HERALD_EFFECT, 1.0, context)) // 捷光環不吃光環效果，只吃捷光環效果（2026-10）
                 : aura.persistent() ? 1

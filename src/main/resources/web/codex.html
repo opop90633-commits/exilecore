@@ -65,6 +65,17 @@
   .entry.clickable { cursor: pointer; transition: border-color .12s; }
   .entry.clickable:hover { border-color: var(--gold); }
   .entry .more { margin-top: 8px; font-size: 12px; color: var(--gold); }
+  .entry .src, #dlg-extra .src { margin-top: 6px; font-size: 12px; color: var(--text-secondary); }
+  .entry .src b, #dlg-extra .src b { color: var(--gold); font-weight: 600; }
+  .entry .chase { color: #e5484d; font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .entry .veil { margin-top: 6px; font-size: 12px; color: #a678e0; }
+  .entry .veil summary { cursor: pointer; }
+  .entry .veil ul { margin: 4px 0 0; padding-left: 18px; line-height: 1.45; }
+  table.lv { border-collapse: collapse; margin-top: 6px; font-size: 12px; font-variant-numeric: tabular-nums; }
+  table.lv th, table.lv td { padding: 2px 10px 2px 0; text-align: right; white-space: nowrap; }
+  table.lv th { color: var(--text-muted); font-weight: 400; }
+  table.lv td:first-child, table.lv th:first-child { text-align: left; }
+  .lv-wrap { overflow-x: auto; max-width: 100%; }
   dialog { border: 1px solid var(--border); border-radius: 14px; padding: 0; background: var(--surface-1); color: var(--text-primary);
     width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
   dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
@@ -112,6 +123,7 @@
     <div class="meta" id="dlg-meta"></div>
     <div class="tags" id="dlg-tags"></div>
     <p id="dlg-text"></p>
+    <div id="dlg-extra"></div>
     <input type="search" class="dlg-filter" id="dlg-search" placeholder="在能用的輔助寶石裡找…" aria-label="搜尋輔助寶石">
     <button type="button" class="dlg-close" id="dlg-close" aria-label="關閉">×</button>
   </div>
@@ -159,12 +171,53 @@
     return data ? (data[tab] || []) : [];
   }
   function haystack(e) {
-    if (tab === 'uniques') { return (e.name + ' ' + (e.mods || []).map(fill).join(' ') + ' ' + (e.lines || []).join(' ')).toLowerCase(); }
+    if (tab === 'uniques') {
+      var ui = uniqueInfo(e);
+      return (e.name + ' ' + (e.mods || []).map(fill).join(' ') + ' ' + (e.lines || []).join(' ') + ' ' + (ui.sources || []).join(' ')
+        + (ui.chase ? ' 追逐級' : '')).toLowerCase();
+    }
     if (tab === 'affixes') {
       return (e.name + ' ' + e.tiers.map(function (t) { return t.text + ' ' + t.name; }).join(' ') + ' ' + (e.bases || []).join(' ')
         + ' ' + AFFIX_TYPE[e.type] + ' ' + e.slots.map(function (x) { return SLOT[x] || x; }).join(' ')).toLowerCase();
     }
-    return (e.name + ' ' + (e.text || '') + ' ' + (e.effects || []).join(' ') + ' ' + (e.requires || '') + ' ' + (e.flavor || '') + ' ' + (e.tags || []).map(tagName).join(' ')).toLowerCase();
+    return (e.name + ' ' + (e.text || '') + ' ' + (e.effects || []).join(' ') + ' ' + (e.requires || '') + ' ' + (e.flavor || '') + ' '
+      + (e.mods || []).join(' ') + ' ' + (e.source || '') + ' ' + (e.tags || []).map(tagName).join(' ')).toLowerCase();
+  }
+  /** 2026-10-22：傳奇的圖鑑資訊（追逐級、哪裡會掉、隱匿詞綴）。 */
+  function uniqueInfo(e) { return (data && data.uniqueInfo && data.uniqueInfo[e.id]) || {}; }
+  /** 來源一行：專屬掉落寫在哪裡掉，其他寫第幾階雕得出來。 */
+  function sourceLine(e, what) {
+    return e.source ? el('div', 'src', null) : el('div', 'src', '未切割' + what + '寶石' + (e.tier ? '（第 ' + e.tier + ' 階以上）' : '') + (what === '技能' ? '雕' : '切') + '得出來');
+  }
+  function sourceBox(e, what) {
+    var box = sourceLine(e, what);
+    if (e.source) { box.appendChild(el('b', null, '專屬掉落')); box.appendChild(document.createTextNode('：' + e.source + '（未切割' + what + '寶石' + (what === '技能' ? '雕' : '切') + '不出來）')); }
+    return box;
+  }
+  /** 技能各等級的基礎數值（沒有輔助、沒有角色屬性）。 */
+  function levelTable(e) {
+    var rows = e.levels || [];
+    if (!rows.length) { return null; }
+    var hasDmg = rows.some(function (r) { return r.max; }), hasEff = rows.some(function (r) { return r.eff; });
+    var table = el('table', 'lv'), head = el('tr');
+    head.appendChild(el('th', null, '等級'));
+    if (hasDmg) { head.appendChild(el('th', null, '基礎傷害')); }
+    if (hasEff) { head.appendChild(el('th', null, e.type === 'attack' ? '武器傷害' : '效益')); }
+    head.appendChild(el('th', null, '魔力'));
+    table.appendChild(head);
+    rows.forEach(function (r) {
+      var tr = el('tr');
+      tr.appendChild(el('td', null, 'Lv.' + r.lv));
+      if (hasDmg) { tr.appendChild(el('td', null, r.max ? r.min.toLocaleString() + '–' + r.max.toLocaleString() : '—')); }
+      if (hasEff) { tr.appendChild(el('td', null, r.eff ? r.eff + '%' : '—')); }
+      tr.appendChild(el('td', null, String(r.mana)));
+      table.appendChild(tr);
+    });
+    var wrap = el('div', 'lv-wrap');
+    wrap.appendChild(table);
+    wrap.appendChild(el('div', 'muted', 'Lv.30、40 = 20 級寶石再加裝備的 +技能等級；沒算輔助與角色屬性'));
+    wrap.lastChild.style.fontSize = '11px';
+    return wrap;
   }
   function tagName(t) { return (data && data.tagNames && data.tagNames[t]) || t; }
   /** 技能的標籤（小按鈕：點了就用這個標籤篩選）。 */
@@ -220,6 +273,8 @@
     if (e.weapons && e.weapons.length) { bits.push('要拿：' + e.weapons.map(weaponName).join('、')); }
     if (e.tier) { bits.push('第 ' + e.tier + ' 階'); }
     if (e.cooldown) { bits.push('冷卻 ' + e.cooldown + ' 秒'); }
+    if (e.castTime) { bits.push('施法 ' + e.castTime + ' 秒'); }
+    if (e.attackSpeed) { bits.push('攻速 ' + e.attackSpeed + '%'); }
     return bits.join('　');
   }
   /** 點技能：列出能掛的輔助寶石（照階級分組）。 */
@@ -231,6 +286,11 @@
     tags.replaceWith(tagRow(e.tags, function (t) { dialog.close(); pickTag(t); }));
     tagRowFix();
     $('dlg-text').textContent = e.text || '';
+    var extra = $('dlg-extra');
+    extra.textContent = '';
+    extra.appendChild(sourceBox(e, '技能'));
+    var lt = levelTable(e);
+    if (lt) { extra.appendChild(lt); }
     $('dlg-search').value = '';
     var fits = supportsOf(e);
     function list(q) {
@@ -245,8 +305,13 @@
       shown.forEach(function (s) {
         if (s.tier !== tier) { tier = s.tier; body.appendChild(el('h4', null, tier ? '第 ' + tier + ' 階' : '其他')); }
         var box = el('div', 'sup');
-        box.appendChild(el('b', null, s.name));
+        box.appendChild(el('b', null, s.name + (s.source ? '（專屬）' : '')));
         box.appendChild(el('p', null, s.text));
+        if (s.mods && s.mods.length) {
+          var ul = el('ul', 'fx');
+          s.mods.forEach(function (t) { ul.appendChild(el('li', null, t)); });
+          box.appendChild(ul);
+        }
         body.appendChild(box);
       });
     }
@@ -330,8 +395,9 @@
         box.appendChild(fx);
       }
       if (e.tags && e.tags.length) { box.appendChild(tagRow(e.tags, pickTag)); }
+      box.appendChild(sourceBox(e, '技能'));
       var count = (e.supports || []).length;
-      box.appendChild(el('div', 'more', count ? '能掛 ' + count + ' 種輔助寶石 →' : '不能掛輔助寶石'));
+      box.appendChild(el('div', 'more', (count ? '能掛 ' + count + ' 種輔助寶石' : '不能掛輔助寶石') + '・各等級數值 →'));
       box.className += ' clickable';
       box.tabIndex = 0;
       box.setAttribute('role', 'button');
@@ -343,6 +409,12 @@
     } else if (tab === 'supports') {
       box.appendChild(el('div', 'meta', (e.tier ? '第 ' + e.tier + ' 階　' : '') + (e.requires || '')));
       box.appendChild(el('p', null, e.text));
+      if (e.mods && e.mods.length) {
+        var sm = el('ul', 'fx');
+        e.mods.forEach(function (t) { sm.appendChild(el('li', null, t)); });
+        box.appendChild(sm);
+      }
+      box.appendChild(sourceBox(e, '輔助'));
     } else if (tab === 'currencies') {
       if (e.level > 1) { box.appendChild(el('div', 'meta', e.level + ' 級以上的怪物才會掉')); }
       box.appendChild(el('p', null, e.text));
@@ -362,15 +434,40 @@
     } else if (e.lines) {
       box.appendChild(el('div', 'meta', e.baseName + '　' + (SLOT[e.slot] || e.slot) + (e.level > 1 ? '　' + e.level + ' 級以上掉落' : '')));
       e.lines.forEach(function (t) { box.appendChild(el('div', 'mod', t)); });
+      uniqueExtra(box, e);
       if (e.flavour && e.flavour.length) { box.appendChild(el('div', 'flavour', e.flavour.join(' '))); }
     } else {
       var base = items && items.baseById[e.base];
       box.appendChild(el('div', 'meta', (base ? base.name + '　' : '') + (SLOT[e.slot] || e.slot) + (e.level > 1 ? '　' + e.level + ' 級以上掉落' : '')));
       if (base && base.implicit) { box.appendChild(el('div', 'mod', fill({ text: base.implicit, vars: base.implicitVars, div: base.implicitDiv }))); }
       (e.mods || []).forEach(function (m) { box.appendChild(el('div', 'mod', fill(m))); });
+      uniqueExtra(box, e);
       if (e.flavour && e.flavour.length) { box.appendChild(el('div', 'flavour', e.flavour.join(' '))); }
     }
     return box;
+  }
+  /** 2026-10-22：傳奇的隱匿詞綴、追逐級、哪裡會掉（跟遊戲裡的傳奇圖鑑一樣）。 */
+  function uniqueExtra(box, e) {
+    var ui = uniqueInfo(e);
+    (ui.veiled || []).forEach(function (v) {
+      var d = el('details', 'veil');
+      d.appendChild(el('summary', null, '隱匿' + v.kind + (v.count > 1 ? ' ×' + v.count : '') + '：找盜賊首領'
+        + (v.count > 1 ? '每一條各自' : '') + '從 ' + v.options.length + ' 種裡三選一揭露'));
+      var ul = el('ul');
+      v.options.forEach(function (t) { ul.appendChild(el('li', null, t)); });
+      d.appendChild(ul);
+      box.appendChild(d);
+    });
+    if (ui.chase) {
+      box.appendChild(el('div', 'chase', '✦ 追逐級：極稀有，掉落全服廣播'));
+      box.appendChild(el('div', 'src', '所有地圖 Boss 都有很小的機率；怪物等級 75 以上的一般怪物（約百萬分之一）；僥倖石用在它的基底上（物品等級 75 以上）'));
+    }
+    if (ui.sources && ui.sources.length) {
+      var src = el('div', 'src');
+      src.appendChild(el('b', null, '哪裡會掉'));
+      src.appendChild(document.createTextNode('：' + ui.sources.join('、')));
+      box.appendChild(src);
+    }
   }
   function render() {
     var list = $('list'), q = query.trim().toLowerCase();

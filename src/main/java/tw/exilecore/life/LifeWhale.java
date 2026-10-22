@@ -2,6 +2,7 @@ package tw.exilecore.life;
 
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.title.Title;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -77,7 +78,10 @@ final class LifeWhale {
         final Set<UUID> adds = new HashSet<>();
         LivingEntity boss;
         int phase;
-        int deaths;
+        /** 2026-10-22：第幾門（從 1 開始；照巔峰、極境：整隊算一門，有人倒下先觀戰，全隊倒下才換下一門）。 */
+        int door = 1;
+        /** 這一門倒下、在旁邊觀戰的人（倒下的地方、原本的模式）。 */
+        final Map<UUID, Down> down = new HashMap<>();
         boolean enraged;
         long shieldUntil;
         LifeConfig.WhalePhase shield;
@@ -97,6 +101,10 @@ final class LifeWhale {
         Location center() {
             return new Location(world(), cx + 0.5, service.config().seaLevel() + ARENA_TOP, cz + 0.5);
         }
+    }
+
+    /** 倒下觀戰的人：重生在哪、原本的遊戲模式。 */
+    private record Down(Location anchor, GameMode previous) {
     }
 
     private final ExileCore plugin;
@@ -173,11 +181,12 @@ final class LifeWhale {
         return list;
     }
 
-    /** 在場地上、沒倒下的人。 */
+    /** 在場地上、沒倒下的人（觀戰的不算）。 */
     private List<Player> onArena(final Fight fight) {
         final List<Player> list = new ArrayList<>();
         for (final Player player : audience(fight)) {
-            if (!player.isDead() && world().equals(player.getWorld()) && fight.contains(player.getLocation().getX(), player.getLocation().getZ())) {
+            if (!player.isDead() && !fight.down.containsKey(player.getUniqueId()) && player.getGameMode() != GameMode.SPECTATOR
+                    && world().equals(player.getWorld()) && fight.contains(player.getLocation().getX(), player.getLocation().getZ())) {
                 list.add(player);
             }
         }
@@ -259,7 +268,8 @@ final class LifeWhale {
             meta.displayName(ItemRenderer.line("<#5fd3ff>" + ItemRenderer.escape(def == null ? "深淵號角" : def.hornName())));
             meta.lore(List.of(ItemRenderer.line("<gray>在" + ItemRenderer.escape(config().name()) + "自己的筏上右鍵吹響："),
                     ItemRenderer.line("<gray>" + ItemRenderer.escape(def == null ? "淵鯨" : def.name()) + "會從筏的東邊浮上來"),
-                    ItemRenderer.line("<red>巔峰級的 Boss：全隊合計倒下 " + (def == null ? 2 : def.attempts()) + " 次就失敗（號角吹了就沒了）"),
+                    ItemRenderer.line("<red>巔峰級的 Boss：共 " + (def == null ? 2 : def.attempts()) + " 門，有人倒下先在旁邊觀戰，"),
+                    ItemRenderer.line("<red>全隊倒下才進下一門（" + (def == null ? "淵鯨" : def.name()) + "回滿）；門用完就失敗（號角吹了就沒了）"),
                     ItemRenderer.line("<dark_gray>可以交易")));
             meta.getPersistentDataContainer().set(service.itemKey(), PersistentDataType.STRING, HORN_ITEM);
         });
@@ -528,14 +538,15 @@ final class LifeWhale {
             end(fight, def.name() + "不見了");
             return;
         }
+        keepSpectators(fight);
         final long now = System.currentTimeMillis();
         if (now - fight.startMillis > def.minutes() * 60_000L) {
             end(fight, "時間到，" + def.name() + "沉回了深海");
             return;
         }
-        // 離開場地太遠（回筏、被沖回去）也算放棄——在筏上（場地西邊）還算在場
+        // 離開場地太遠（回筏、被沖回去）也算放棄——在筏上（場地西邊）還算在場；觀戰中的不算（keepSpectators 拉回來）
         final Location at = owner.getLocation();
-        if (!owner.isDead() && (Math.abs(at.getZ() - fight.cz) > 48 || at.getX() < fight.cx - LifeIslands.OFFSET - 24 || at.getX() > fight.cx + 40)) {
+        if (!owner.isDead() && !fight.down.containsKey(owner.getUniqueId()) && (Math.abs(at.getZ() - fight.cz) > 48 || at.getX() < fight.cx - LifeIslands.OFFSET - 24 || at.getX() > fight.cx + 40)) {
             end(fight, def.name() + "沉回了深海（離開了戰場）");
             return;
         }
@@ -612,7 +623,7 @@ final class LifeWhale {
         fight.bar.name(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(def.name()) + " <gray>Lv." + fight.level
                 + (fight.shieldUntil > 0 ? " <#ffd27f>⛨" : "") + (fight.enraged ? " <red>狂暴" : "")
                 + " <dark_gray>｜ <white>" + String.format(Locale.ROOT, "%d:%02d", left / 60, left % 60)
-                + " <dark_gray>｜ <gray>倒下 " + fight.deaths + "／" + def.attempts()));
+                + " <dark_gray>｜ <gray>第 " + fight.door + "／" + def.attempts() + " 門"));
         if (random.nextInt(4) == 0) {
             world().spawnParticle(Particle.DRIPPING_WATER, boss.getLocation().add(0, 1, 0), 30, 2, 1, 2, 0);
         }
@@ -703,26 +714,57 @@ final class LifeWhale {
     // ---- 倒下、打倒 ----
 
     /**
-     * 挑戰的人倒下（LifeModule）：2026-10-20 一起打的人倒下也算（以前只算吹號角的人，隊友死幾次都沒差）。
-     * 全隊共用倒下次數，到了就失敗；還有機會時，場上沒有人站著才讓淵鯨回滿重來（還有人在打就繼續打）。
+     * 挑戰的人倒下（LifeModule）。2026-10-22 照巔峰、極境改成「門」：整隊算一門，倒下的人重生在倒下的地方、變成觀戰
+     * （不算人數、不會被打、不分掉落）；場上還有人站著就繼續打。全隊都倒下這一門才結束：還有門就進下一門
+     * （淵鯨回滿、觀戰的人回到場地邊上一起重來），門用完就失敗。
      */
     void ownerDied(final Player player) {
         final Fight fight = fightOf(player.getUniqueId());
         final LifeConfig.Whale def = config().whale();
-        if (fight == null || def == null || fight.done) {
+        if (fight == null || def == null || fight.done || fight.down.containsKey(player.getUniqueId())) {
             return;
         }
-        fight.deaths++;
-        if (fight.deaths >= def.attempts()) {
-            plugin.getServer().getScheduler().runTask(plugin, () -> end(fight, ItemRenderer.escape(player.getName()) + " 倒下了，全隊倒下 "
-                    + fight.deaths + " 次，" + def.name() + "沉回了深海"));
-            return;
+        Location anchor = player.getLocation().clone().add(0, 1, 0);
+        if (!world().equals(anchor.getWorld()) || !fight.contains(anchor.getX(), anchor.getZ())) {
+            anchor = edge(fight, 0); // 死在場地外（掉進海裡）：在場地邊上看
         }
+        final GameMode previous = player.getGameMode() == GameMode.SPECTATOR ? GameMode.SURVIVAL : player.getGameMode();
+        fight.down.put(player.getUniqueId(), new Down(anchor, previous));
         final List<Player> standing = new ArrayList<>(onArena(fight));
         standing.remove(player); // 死亡事件時這個人可能還沒算死
-        final boolean wipe = standing.isEmpty();
-        if (wipe && fight.boss != null && fight.boss.isValid()) {
-            // 全滅：回滿、回到第一個階段、護盾收掉
+        if (standing.isEmpty()) {
+            final String name = player.getName();
+            plugin.getServer().getScheduler().runTask(plugin, () -> doorFailed(fight, name));
+            return;
+        }
+        final String text = "<#5fd3ff>" + ItemRenderer.escape(player.getName()) + " 倒下了<gray>：在旁邊觀戰（第 " + fight.door + "／" + def.attempts()
+                + " 門，場上還有 " + standing.size() + " 人）";
+        for (final Player member : audience(fight)) {
+            member.sendMessage(plugin.text().prefixed(text));
+        }
+    }
+
+    /** 場地西邊（筏那一側）的落點；slot 錯開站。 */
+    private Location edge(final Fight fight, final int slot) {
+        return new Location(world(), fight.cx - RADIUS + 3.5, config().seaLevel() + ARENA_TOP + 0.1, fight.cz + 0.5 + (slot % 5 - 2), -90, 0);
+    }
+
+    /** 這一門全隊倒下：還有門就進下一門（淵鯨回滿、觀戰的人回來），沒有就失敗。 */
+    private void doorFailed(final Fight fight, final String lastName) {
+        final LifeConfig.Whale def = config().whale();
+        if (def == null || fight.done || fights.get(fight.owner) != fight) {
+            return;
+        }
+        if (!onArena(fight).isEmpty()) {
+            return; // 這一 tick 之間有人回到場上（例如剛走進來的隊友）：繼續打
+        }
+        if (fight.door >= def.attempts()) {
+            end(fight, ItemRenderer.escape(lastName) + " 倒下了，全隊倒下；" + def.attempts() + " 門都用完了，" + def.name() + "沉回了深海");
+            return;
+        }
+        fight.door++;
+        if (fight.boss != null && fight.boss.isValid()) {
+            // 下一門：回滿、回到第一個階段、護盾收掉
             removeCores(fight);
             fight.shieldUntil = 0;
             fight.boss.setInvulnerable(false);
@@ -743,12 +785,62 @@ final class LifeWhale {
                 plugin.skills().bossSkills().reset(fight.boss.getUniqueId());
             }
         }
-        final String text = "<#5fd3ff>" + ItemRenderer.escape(player.getName()) + " 倒下了（全隊 " + fight.deaths + "／" + def.attempts() + "）"
-                + (wipe ? "，" + ItemRenderer.escape(def.name()) + "回滿了" : "") + "<gray>　還有 " + (def.attempts() - fight.deaths)
-                + " 次機會（重生在場地邊上）";
+        // 觀戰的人回來：模式改回去、站到場地邊上（還在死亡畫面的，重生時 respawn() 給場地邊上）
+        int slot = 0;
+        for (final Map.Entry<UUID, Down> entry : new ArrayList<>(fight.down.entrySet())) {
+            final Player member = plugin.getServer().getPlayer(entry.getKey());
+            if (member != null && member.isOnline() && !member.isDead()) {
+                restore(member, entry.getValue());
+                member.teleportAsync(edge(fight, slot++));
+            }
+        }
+        fight.down.clear();
+        final String text = "<#5fd3ff>全隊倒下：進入第 " + fight.door + "／" + def.attempts() + " 門<gray>，" + ItemRenderer.escape(def.name()) + "回滿了";
         for (final Player member : audience(fight)) {
             member.sendMessage(plugin.text().prefixed(text));
+            member.showTitle(Title.title(plugin.text().parse("<#5fd3ff>第 " + fight.door + " 門"),
+                    plugin.text().parse("<gray>" + ItemRenderer.escape(def.name()) + "回滿了，再來一次"),
+                    Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
         }
+    }
+
+    /** 觀戰中的人：出界（飛走、換世界）拉回來或還原；下線的拿掉。 */
+    private void keepSpectators(final Fight fight) {
+        for (final Map.Entry<UUID, Down> entry : new ArrayList<>(fight.down.entrySet())) {
+            final Player member = plugin.getServer().getPlayer(entry.getKey());
+            if (member == null || !member.isOnline()) {
+                continue; // 下線的在 leave() 處理
+            }
+            if (member.isDead() || member.getGameMode() != GameMode.SPECTATOR) {
+                continue; // 還在死亡畫面
+            }
+            if (!world().equals(member.getWorld())) {
+                // 觀戰中用指令離開海域：模式改回去，不再算這一場
+                restore(member, entry.getValue());
+                fight.down.remove(entry.getKey());
+                fight.crew.remove(entry.getKey());
+                member.hideBossBar(fight.bar);
+                continue;
+            }
+            final Location at = member.getLocation();
+            if (Math.abs(at.getX() - fight.cx) > RADIUS + 8 || Math.abs(at.getZ() - fight.cz) > RADIUS + 8
+                    || at.getY() < config().seaLevel() - 8 || at.getY() > config().seaLevel() + 30) {
+                member.teleport(entry.getValue().anchor());
+            }
+        }
+    }
+
+    /** 觀戰結束：模式改回去、拿掉標記。 */
+    private void restore(final Player player, final Down down) {
+        if (player.getGameMode() == GameMode.SPECTATOR) {
+            player.setGameMode(down.previous());
+        }
+        player.getPersistentDataContainer().remove(spectatingKey());
+    }
+
+    /** 跟地圖觀戰同一個標記：伺服器當掉沒還原時，下次登入改回原本的模式（MapListener.onJoin → MapSpectators.restoreStale）。 */
+    private org.bukkit.NamespacedKey spectatingKey() {
+        return new org.bukkit.NamespacedKey(plugin, "map_spectating");
     }
 
     /** 淵鯨或牠的東西死了（LifeModule 的死亡事件）。 */
@@ -763,6 +855,9 @@ final class LifeWhale {
                 // 一起打、還在場地或筏上的人每個人各拿一份（全服公告一次）
                 final List<Player> winners = new ArrayList<>();
                 for (final Player member : audience(fight)) {
+                    if (fight.down.containsKey(member.getUniqueId())) {
+                        continue; // 2026-10-22：觀戰的不分掉落（照巔峰、極境）
+                    }
                     if (world().equals(member.getWorld()) && (fight.contains(member.getLocation().getX(), member.getLocation().getZ())
                             || service.activePlot(member) == fight.plot)) {
                         winners.add(member);
@@ -860,7 +955,7 @@ final class LifeWhale {
             online.sendMessage(plugin.text().prefixed("<#5fd3ff>🐋 " + ItemRenderer.escape(announce) + " 在" + ItemRenderer.escape(config().name())
                     + "打倒了深淵巨獸「" + ItemRenderer.escape(def.name()) + "」！<gray>（" + String.format(Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60) + "）"));
         }
-        plugin.getSLF4JLogger().info("[Boss 紀錄] {}：{} 被 {} 打倒（{} 秒、倒下 {} 次）", config().name(), def.name(), player.getName(), seconds, fight.deaths);
+        plugin.getSLF4JLogger().info("[Boss 紀錄] {}：{} 被 {} 打倒（{} 秒、第 {} 門）", config().name(), def.name(), player.getName(), seconds, fight.door);
     }
 
     private void give(final Player player, final DropTable.Drop drop, final List<String> got) {
@@ -873,19 +968,48 @@ final class LifeWhale {
         got.add(name == null ? stack.getType().name() : net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(name));
     }
 
-    /** 挑戰中倒下：重生在場地邊上（不用從筏游過來）；不是 null。 */
+    /**
+     * 挑戰中倒下的重生點：這一門還在打 → 倒下的地方、變成觀戰；已經換到下一門 → 場地邊上；結束了 null（回筏）。
+     */
     Location respawn(final Player player) {
         final Fight fight = fightOf(player.getUniqueId());
         if (fight == null || fight.done) {
             return null;
         }
-        return new Location(world(), fight.cx - RADIUS + 3.5, config().seaLevel() + ARENA_TOP + 0.1, fight.cz + 0.5, -90, 0);
+        final Down down = fight.down.get(player.getUniqueId());
+        if (down == null) {
+            return edge(fight, 0);
+        }
+        final LifeConfig.Whale def = config().whale();
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline() || fight.done || fight.down.get(player.getUniqueId()) != down) {
+                return;
+            }
+            player.setGameMode(GameMode.SPECTATOR);
+            player.getPersistentDataContainer().set(spectatingKey(), PersistentDataType.STRING, down.previous().name());
+            if (plugin.skills() != null) {
+                plugin.skills().dismissSummons(player); // 召喚物、圖騰一起收掉
+            }
+            player.showTitle(Title.title(plugin.text().parse("<#ff5555>你倒下了"),
+                    plugin.text().parse("<gray>觀戰中：隊友全倒下才進下一門"),
+                    Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(3000), Duration.ofMillis(600))));
+            player.sendMessage(plugin.text().prefixed("<gray>你在旁邊觀戰（不算人數、不會被打、也不分掉落）；"
+                    + (def != null && fight.door < def.attempts() ? "全隊都倒下就一起進第 " + (fight.door + 1) + " 門" : "這是最後一門")
+                    + "，打倒或失敗後回到筏上"));
+        });
+        return down.anchor();
     }
 
     // ---- 收掉 ----
 
     /** 離開海域（下線、換世界）：放棄。 */
     void leave(final Player player) {
+        for (final Fight any : fights.values()) {
+            final Down down = any.down.remove(player.getUniqueId());
+            if (down != null) {
+                restore(player, down); // 觀戰中下線、換筏：模式改回去
+            }
+        }
         final Fight fight = fights.get(player.getUniqueId());
         if (fight != null && !fight.done) {
             end(fight, null);
@@ -919,6 +1043,17 @@ final class LifeWhale {
             }
         }
         fight.adds.clear();
+        // 觀戰的人：模式改回去、回到筏上（場地要收掉了）
+        for (final Map.Entry<UUID, Down> entry : fight.down.entrySet()) {
+            final Player member = plugin.getServer().getPlayer(entry.getKey());
+            if (member != null && member.isOnline() && !member.isDead()) {
+                restore(member, entry.getValue());
+                if (fight.plot >= 0 && world().equals(member.getWorld())) {
+                    member.teleportAsync(service.raftSpawn(fight.plot));
+                }
+            }
+        }
+        fight.down.clear();
         for (final Player owner : audience(fight)) {
             owner.hideBossBar(fight.bar);
             plugin.players().markDirty(owner);
