@@ -98,7 +98,6 @@ class LootTest {
         custom.toggleCurrency("whetstone"); // 標準本來隱藏，改成顯示
         custom.toggleSupportGems();
         custom.cycleFlasks(); // better → none
-        custom.toggleEquipment(Rarity.UNIQUE); // 傳奇不能隱藏
         assertEquals(LootFilter.CUSTOM, custom.preset());
         final String text = custom.encode();
         assertEquals("p=custom;eq=normal,magic;cur=armour_scrap,glimmer_orb;sg=0;ug=1;fl=none;wl=0;al=0;lg=20;gl=0;gt=0;mr=0", text,
@@ -110,6 +109,38 @@ class LootTest {
         assertFalse(back.hidesCurrency("whetstone"));
         assertFalse(back.hidesEquipment(Rarity.UNIQUE));
         assertTrue(text.length() < 1024, "要放得進資料庫欄位");
+    }
+
+    @Test
+    void topExclusiveUniquesAreProtected() {
+        final java.util.function.BiFunction<Integer, Set<String>, tw.exilecore.item.UniqueItem> unique = (level, sources) ->
+                new tw.exilecore.item.UniqueItem("u", "測試", "b", java.util.List.of(), java.util.List.of(), level, 100, sources);
+        assertTrue(LootService.protectedUnique(unique.apply(85, Set.of("shrine_warden"))), "巔峰專屬");
+        assertTrue(LootService.protectedUnique(unique.apply(80, Set.of("uber_frost_throne"))), "極境專屬");
+        assertFalse(LootService.protectedUnique(unique.apply(60, Set.of("map_boss", "chance", "gamble"))), "共通傳奇可以藏");
+        assertFalse(LootService.protectedUnique(unique.apply(60, Set.of("shrine"))), "一般事件傳奇可以藏");
+        assertFalse(LootService.protectedUnique(unique.apply(85, Set.of("gamble"))), "賭得到的不算專屬");
+    }
+
+    @Test
+    void uniquesCanBeHiddenButChaseUniquesAlwaysKept() {
+        final LootFilter filter = config.defaultFilter();
+        final LootFilter.Viewer viewer = new LootFilter.Viewer(70, Set.of(), Set.of());
+        assertFalse(filter.hides(equipment(Rarity.UNIQUE, 68, "armour", "body"), viewer), "預設傳奇會撿");
+        final String presetBefore = filter.preset();
+        filter.toggleEquipment(Rarity.UNIQUE);
+        assertTrue(filter.hidesEquipment(Rarity.UNIQUE));
+        assertEquals(presetBefore, filter.preset(), "傳奇是另外記的：預設組合不會變成自訂");
+        assertTrue(filter.hides(equipment(Rarity.UNIQUE, 68, "armour", "body"), viewer), "勾成隱藏：一般傳奇換成金幣");
+        assertFalse(filter.hides(equipment(Rarity.UNIQUE, 68, "armour", "body", LootFilter.ALWAYS_KEEP_TAG), viewer), "追逐級、頂級專屬永遠撿");
+        assertFalse(filter.hides(equipment(Rarity.UNIQUE, 68, "jewel", "ruby"), viewer), "傳奇珠寶照珠寶那一格（永遠撿）");
+        assertFalse(filter.hides(map(Rarity.UNIQUE, 1), viewer), "傳奇地圖永遠撿");
+        final LootFilter back = LootFilter.decode(filter.encode(), config);
+        assertTrue(back.hidesEquipment(Rarity.UNIQUE), "存檔讀回來還是隱藏");
+        // 換成預設組合：傳奇隱藏帶過去，只記代號的存檔也記得
+        final LootFilter preset = LootFilter.of(config.preset("strict")).withExtras(filter);
+        assertTrue(preset.hidesEquipment(Rarity.UNIQUE));
+        assertTrue(LootFilter.decode(preset.encode(), config).hidesEquipment(Rarity.UNIQUE), preset.encode());
     }
 
     @Test

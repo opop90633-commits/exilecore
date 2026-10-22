@@ -15,7 +15,7 @@ filter:
   # 還沒設定過過濾器的角色用哪一組
   default: standard
   # 預設組合（選單上的按鈕，照這裡的順序）：
-  #   hide_equipment     要隱藏的裝備稀有度：normal 普通、magic 魔法、rare 稀有（傳奇永遠顯示）
+  #   hide_equipment     要隱藏的裝備稀有度：normal 普通、magic 魔法、rare 稀有（預設組合不能藏傳奇；玩家可以自己在選單把傳奇勾成隱藏，追逐級與頂級專屬照撿）
   #   hide_currencies    要隱藏的通貨代號（currencies.yml）
   #   hide_skill_gems    隱藏未切割技能寶石
   #   hide_support_gems  隱藏未切割輔助寶石

@@ -114,5 +114,18 @@ shop:
   - { id: c_contract, kind: currency, currency: heist_contract,   amount: 1, cost: { event_swarm_shard: 25 } }
   - { id: c_blueprint, kind: currency, currency: heist_blueprint, amount: 1, cost: { event_swarm_shard: 70 } }
   - { id: c_finale,   kind: currency, currency: heist_finale_key, amount: 1, cost: { event_titan_core: 6, event_swarm_shard: 80 } }
+  # 2026-10-22：萬界之巔的四種入場碎片（終局 Boss T12 以上各 25% 掉；四種各一個才能開）
+  - { id: f_crucible, kind: currency, currency: fragment_crucible, amount: 1, cost: { event_titan_core: 6, event_swarm_shard: 50 } }
+  - { id: f_frost,    kind: currency, currency: fragment_frost,    amount: 1, cost: { event_titan_core: 6, event_swarm_shard: 50 } }
+  - { id: f_bone,     kind: currency, currency: fragment_bone,     amount: 1, cost: { event_titan_core: 6, event_swarm_shard: 50 } }
+  - { id: f_ember,    kind: currency, currency: fragment_ember,    amount: 1, cost: { event_titan_core: 6, event_swarm_shard: 50 } }
+  # 2026-10-22：七隻事件巔峰 Boss 的入場券（越難掉的越貴：神龕、寶匣 2.2%，裂隙、深淵 4.4%，祭壇、幻霧 5.6%，流寇 6.7%）
+  - { id: k_shrine,   kind: currency, currency: ticket_shrine,    amount: 1, cost: { event_titan_core: 15, event_swarm_shard: 120 } }
+  - { id: k_strongbox, kind: currency, currency: ticket_strongbox, amount: 1, cost: { event_titan_core: 15, event_swarm_shard: 120 } }
+  - { id: k_breach,   kind: currency, currency: ticket_breach,    amount: 1, cost: { event_titan_core: 12, event_swarm_shard: 100 } }
+  - { id: k_abyss,    kind: currency, currency: ticket_abyss,     amount: 1, cost: { event_titan_core: 12, event_swarm_shard: 100 } }
+  - { id: k_ritual,   kind: currency, currency: ticket_ritual,    amount: 1, cost: { event_titan_core: 10, event_swarm_shard: 90 } }
+  - { id: k_delirium, kind: currency, currency: ticket_delirium,  amount: 1, cost: { event_titan_core: 10, event_swarm_shard: 90 } }
+  - { id: k_exile,    kind: currency, currency: ticket_exile,     amount: 1, cost: { event_titan_core: 9, event_swarm_shard: 80 } }
   - { id: u_crown,    kind: unique, unique: genesis_crown, item_level: 84, cost: { event_titan_core: 60 } }
   - { id: u_sword,    kind: unique, unique: worldsplitter, item_level: 84, cost: { event_titan_core: 60 } }

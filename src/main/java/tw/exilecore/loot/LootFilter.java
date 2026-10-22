@@ -149,6 +149,9 @@ public final class LootFilter {
      * @param gemLevel     未切割技能寶石的等級／輔助寶石的階級（不知道 0）
      * @param bestAffixRank 裝備身上最好的詞綴是 T 幾（1 = T1；沒有詞綴或不知道 0）
      */
+    /** 2026-10-22：候選物的標籤裡有這個 = 永遠撿的傳奇（追逐級、頂級專屬；就算傳奇被勾成隱藏也一定撿）。 */
+    public static final String ALWAYS_KEEP_TAG = "exilecore:keep_unique";
+
     public record Candidate(DropTable.Kind kind, Rarity rarity, String currencyId, boolean flaskUpgrade, int itemLevel,
                             Set<String> tags, int mapTier, int gemLevel, int bestAffixRank, String baseId) {
         public Candidate {
@@ -398,9 +401,9 @@ public final class LootFilter {
 
     // ---- 查詢 ----
 
-    /** 這個稀有度的裝備要不要隱藏（傳奇永遠顯示）。 */
+    /** 這個稀有度的裝備要不要隱藏（2026-10-22：傳奇也能藏，追逐級傳奇另外永遠撿）。 */
     public boolean hidesEquipment(final Rarity rarity) {
-        return rarity != Rarity.UNIQUE && hiddenEquipment.contains(rarity);
+        return hiddenEquipment.contains(rarity);
     }
 
     public boolean hidesCurrency(final String id) {
@@ -527,7 +530,8 @@ public final class LootFilter {
     }
 
     /**
-     * 一件掉落要不要隱藏（含進階規則）。傳奇、珠寶永遠顯示；地圖只看「地圖依稀有度隱藏」。
+     * 一件掉落要不要隱藏（含進階規則）。傳奇裝備只看稀有度那一格（追逐級、頂級專屬永遠撿）；傳奇珠寶、傳奇地圖永遠撿；
+     * 地圖只看「地圖依稀有度隱藏」。
      *
      * @param viewer 看掉落的角色（進階規則用；不知道就 {@link Viewer#NONE}）
      */
@@ -562,7 +566,8 @@ public final class LootFilter {
             return hidesJewel(candidate.rarity()) && !keptByAffixTier(candidate);
         }
         if (candidate.rarity() == Rarity.UNIQUE) {
-            return false;
+            // 2026-10-22：傳奇裝備也能勾成隱藏（換成金幣）；追逐級、頂級專屬例外，永遠撿。只看稀有度，其他進階規則不管傳奇
+            return hiddenEquipment.contains(Rarity.UNIQUE) && !candidate.tags().contains(ALWAYS_KEEP_TAG);
         }
         // 2026-10：優先順序（由上往下，先符合的算數；以前各條規則互相蓋掉，開了「保留好詞綴」或「只撿的基底」幾乎什麼都不藏）
         //   1. 傳奇：永遠撿（上面）
@@ -711,13 +716,12 @@ public final class LootFilter {
     // ---- 修改（選單上點一下，變成自訂）----
 
     public void toggleEquipment(final Rarity rarity) {
-        if (rarity == Rarity.UNIQUE) {
-            return;
-        }
         if (!hiddenEquipment.remove(rarity)) {
             hiddenEquipment.add(rarity);
         }
-        preset = CUSTOM;
+        if (rarity != Rarity.UNIQUE) {
+            preset = CUSTOM; // 2026-10-22：傳奇是另外記的項目（跟護符一樣），不會讓預設組合變成自訂
+        }
     }
 
     public void toggleCurrency(final String id) {
@@ -749,6 +753,10 @@ public final class LootFilter {
     public LootFilter withExtras(final LootFilter from) {
         hideCharms = from.hideCharms;
         keepAffixLikeMine = from.keepAffixLikeMine;
+        // 2026-10-22：傳奇隱藏也帶過去（預設組合不會藏傳奇，換組合不能把玩家自己勾的重設）
+        if (from.hiddenEquipment.contains(Rarity.UNIQUE)) {
+            hiddenEquipment.add(Rarity.UNIQUE);
+        }
         return this;
     }
 
@@ -862,7 +870,8 @@ public final class LootFilter {
         }
         final String kept = (keepBases.isEmpty() ? "" : ";kb=" + String.join(",", keepBases)) + (jewelRarity > 0 ? ";jr=" + jewelRarity : "")
                 + (timeLostRarity > 0 ? ";tr=" + timeLostRarity : "") + (timeLostHidden.isEmpty() ? "" : ";th=" + String.join(",", timeLostHidden))
-                + (dropSounds ? "" : ";ds=0") + (hideCharms ? ";ch=1" : "") + (keepAffixLikeMine ? ";kl=1" : "");
+                + (dropSounds ? "" : ";ds=0") + (hideCharms ? ";ch=1" : "") + (keepAffixLikeMine ? ";kl=1" : "")
+                + (!CUSTOM.equals(preset) && hiddenEquipment.contains(Rarity.UNIQUE) ? ";hu=1" : ""); // 預設組合只記代號：傳奇隱藏另外記
         if (!CUSTOM.equals(preset)) {
             return "p=" + preset + kept;
         }
@@ -904,7 +913,7 @@ public final class LootFilter {
                 case "eq" -> {
                     for (final String name : list(value)) {
                         for (final Rarity rarity : Rarity.values()) {
-                            if (rarity != Rarity.UNIQUE && rarity.name().equalsIgnoreCase(name)) {
+                            if (rarity.name().equalsIgnoreCase(name)) { // 2026-10-22：傳奇也能藏
                                 filter.hiddenEquipment.add(rarity);
                             }
                         }
@@ -912,6 +921,11 @@ public final class LootFilter {
                 }
                 case "cur" -> filter.hiddenCurrencies.addAll(list(value));
                 case "sg" -> filter.hideSkillGems = "1".equals(value);
+                case "hu" -> {
+                    if ("1".equals(value)) {
+                        filter.hiddenEquipment.add(Rarity.UNIQUE); // 2026-10-22：預設組合＋傳奇隱藏
+                    }
+                }
                 case "ch" -> filter.hideCharms = "1".equals(value);
                 case "kl" -> filter.keepAffixLikeMine = "1".equals(value);
                 case "ug" -> filter.hideSupportGems = "1".equals(value);

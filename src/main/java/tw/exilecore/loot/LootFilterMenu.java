@@ -152,7 +152,7 @@ public final class LootFilterMenu extends Menu {
                 "你殺的怪物掉的東西：",
                 "<green>✔ 會撿<gray>：直接收進背包（通貨進通貨袋）",
                 "<red>✘ 隱藏<gray>：不會掉，自動換成一點金幣",
-                "傳奇永遠會撿（地圖、珠寶照自己那一格）；怪物的金幣直接加進角色",
+                "追逐級、頂級專屬傳奇永遠會撿（傳奇地圖、珠寶也是）；怪物的金幣直接加進角色",
                 "",
                 "上面的分頁切換要看的東西；點一下馬上生效",
                 "有好幾個選項的：左鍵下一個、右鍵上一個",
@@ -200,7 +200,7 @@ public final class LootFilterMenu extends Menu {
         final boolean sounds = filter.dropSounds();
         set(SLOT_SOUNDS, icon(sounds ? Material.JUKEBOX : Material.NOTE_BLOCK, "<white>稀有掉落音效：" + (sounds ? "<green>開" : "<red>關"),
                 "<gray>掉到這些東西時響不同的音效：",
-                "<#ffb347>　追逐級傳奇、映星鏡<gray>（最響）",
+                "<#ffb347>　追逐級傳奇、映星鏡、共鳴石<gray>（最響）",
                 "<#ff7a5a>　終局、極境、巔峰、金庫之主掉的傳奇與專屬寶石",
                 "<#af6025>　傳奇、專屬寶石",
                 "<#9fd8ff>　Boss 入場材料、劫盜藍圖、大鑿星石、Lv.21 技能寶石",
@@ -212,9 +212,9 @@ public final class LootFilterMenu extends Menu {
     private List<String> summary() {
         final List<String> lines = new ArrayList<>();
         final List<String> rarities = new ArrayList<>();
-        for (final Rarity rarity : new Rarity[] {Rarity.NORMAL, Rarity.MAGIC, Rarity.RARE}) {
+        for (final Rarity rarity : new Rarity[] {Rarity.NORMAL, Rarity.MAGIC, Rarity.RARE, Rarity.UNIQUE}) {
             if (filter.hidesEquipment(rarity)) {
-                rarities.add(rarity.displayName());
+                rarities.add(rarity == Rarity.UNIQUE ? "傳奇（追逐級、頂級專屬、珠寶、地圖照撿）" : rarity.displayName());
             }
         }
         if (!rarities.isEmpty()) {
@@ -314,6 +314,9 @@ public final class LootFilterMenu extends Menu {
                 hides.add("進階規則 " + sample.activeRuleCount() + " 項");
             }
             lore.add(hides.isEmpty() ? "<dark_gray>什麼都不藏" : "<dark_gray>隱藏：" + String.join("、", hides));
+            if (filter.hidesEquipment(Rarity.UNIQUE)) {
+                lore.add("<gray>你另外隱藏了傳奇，套用後會保留"); // 2026-10-22：傳奇隱藏換組合會帶過去
+            }
             lore.add("");
             lore.add(current ? "<green>目前使用中" : "<yellow>左鍵：套用");
             final ItemStack icon = icon(presetMaterial(column - 1), (current ? "<#f5b942>▶ " : "<white>") + ItemRenderer.escape(preset.name()), lore);
@@ -327,26 +330,23 @@ public final class LootFilterMenu extends Menu {
     // ---- 裝備 ----
 
     private void drawEquipment() {
-        set(slot(1, 0), rowLabel(Material.IRON_CHESTPLATE, "依稀有度", "整個稀有度的裝備撿或不撿", "傳奇永遠會撿"));
+        set(slot(1, 0), rowLabel(Material.IRON_CHESTPLATE, "依稀有度", "整個稀有度的裝備撿或不撿", "追逐級、頂級專屬傳奇永遠會撿"));
         for (final Map.Entry<Integer, Rarity> entry : RARITY_SLOTS.entrySet()) {
             final Rarity rarity = entry.getValue();
-            if (rarity == Rarity.UNIQUE) {
-                set(entry.getKey(), onMark(icon(Material.NETHERITE_SWORD, "<green>✔ <" + rarity.color() + ">" + rarity.displayName() + "裝備",
-                        "<green>會撿（不能改）", "<dark_gray>傳奇裝備永遠會撿（追逐級還會全服廣播）")));
-                continue;
-            }
             final boolean hidden = filter.hidesEquipment(rarity);
             final Material material = switch (rarity) {
                 case NORMAL -> Material.IRON_SWORD;
                 case MAGIC -> Material.DIAMOND_SWORD;
+                case UNIQUE -> Material.NETHERITE_SWORD;
                 default -> Material.GOLDEN_SWORD;
             };
             set(entry.getKey(), toggle(material, "<" + rarity.color() + ">" + rarity.displayName() + "裝備", hidden,
                     service.goldEstimate(player, DropTable.Kind.EQUIPMENT, rarity, 0),
-                    rarity == Rarity.RARE ? "<dark_gray>稀有掉出來未鑑定，隱藏前想清楚" : null));
+                    rarity == Rarity.RARE ? "<dark_gray>稀有掉出來未鑑定，隱藏前想清楚"
+                            : rarity == Rarity.UNIQUE ? "<#ffb347>追逐級、頂級專屬（巔峰、極境、覺醒者、世界 Boss 的）不管這格，永遠會撿\n<dark_gray>這格是另外記的：換預設組合也會保留" : null));
         }
         set(slot(2, 0), rowLabel(Material.COMPARATOR, "進階規則", "照你的等級、手上的武器、身上的防具藏東西",
-                "優先順序：傳奇一定撿 → 等級差、不同類、不在只撿的基底裡一定不撿", "→ 剩下的看稀有度；被稀有度藏起來的，有好詞綴就撿回來"));
+                "優先順序：傳奇只看稀有度（追逐級、頂級專屬一定撿）→ 等級差、不同類、不在只撿的基底裡一定不撿", "→ 剩下的看稀有度；被稀有度藏起來的，有好詞綴就撿回來"));
         final LootFilter.Rules rules = filter.rules();
         final int gap = rules.levelGap();
         set(SLOT_LEVEL_GAP, option(Material.EXPERIENCE_BOTTLE, "等級差", gap == 0 ? "關" : "低超過 " + gap + " 級就隱藏", gap > 0,
@@ -600,7 +600,7 @@ public final class LootFilterMenu extends Menu {
         final List<String> lore = new ArrayList<>();
         lore.add(hidden ? "<red>隱藏<gray>：不會掉，換成約 <#f5b942>" + String.format(Locale.ROOT, "%,d", gold) + "<gray> 金幣" : "<green>會撿<gray>：自動撿進背包");
         if (note != null) {
-            lore.add(note);
+            lore.addAll(List.of(note.split("\n"))); // 2026-10-22：一格可以寫好幾行
         }
         lore.add("");
         lore.add("<yellow>左鍵：" + (hidden ? "改成會撿" : "改成隱藏"));
@@ -722,7 +722,7 @@ public final class LootFilterMenu extends Menu {
             }
             case EQUIPMENT -> {
                 final Rarity rarity = RARITY_SLOTS.get(slot);
-                if (rarity != null && rarity != Rarity.UNIQUE) {
+                if (rarity != null) {
                     next.toggleEquipment(rarity);
                 } else if (slot == SLOT_LEVEL_GAP) {
                     next.cycleLevelGap(backwards);

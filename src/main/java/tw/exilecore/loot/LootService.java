@@ -114,6 +114,7 @@ public final class LootService {
         int soundTier = SOUND_NONE; // 2026-10：稀有掉落音效（取這次最高的那一級）
         final boolean endgameBoss = endgameBoss(location, data);
         final List<tw.exilecore.gui.SidebarLayout.Item> notable = new ArrayList<>();
+        boolean notableSound = false; // 2026-10-22：地圖不放進卡片，但提示音照舊（以前看卡片清單是不是空的，撿到地圖就沒聲音）
         for (final DropTable.Drop drop : drops) {
             final ItemStack stack = toStack.apply(drop);
             if (stack == null) {
@@ -126,7 +127,7 @@ public final class LootService {
             final CurrencyType asCurrency = currency != null ? currency : gemCurrency(drop, stack);
             final int weight = currency == null ? 0 : currency.dropWeight();
             final boolean upgrade = drop.kind() == DropTable.Kind.FLASK && isFlaskUpgrade(killer, stack);
-            // 傳奇與珠寶永遠不會被過濾掉；地圖只看「地圖依稀有度隱藏」（LootFilter 自己判斷）。地圖與珠寶都值得提示
+            // 傳奇裝備看稀有度那一格（追逐級、頂級專屬永遠撿）、傳奇珠寶與地圖永遠撿；地圖只看「地圖依稀有度隱藏」（LootFilter 自己判斷）。地圖與珠寶都值得提示
             final boolean map = drop.isEquipment() && (isMap(drop.item()) || isJewel(drop.item()));
             final boolean charm = drop.kind() == DropTable.Kind.FLASK && plugin.flasks() != null && plugin.flasks().charms() != null
                     && plugin.flasks().charms().isCharm(stack);
@@ -178,6 +179,7 @@ public final class LootService {
                                 stack.getItemMeta() != null && stack.getItemMeta().displayName() != null ? stack.getItemMeta().displayName()
                                         : net.kyori.adventure.text.Component.text(stack.getType().name())),
                         ground ? "背包和隨身背包都滿了，掉在地上（60 秒內只有他撿得到）"
+                                : asCurrency != null ? "收進通貨袋" // 2026-10-22：映星鏡、共鳴石走通貨袋（以前一律寫成身上的背包）
                                 : state.bag().freeSlots() < bagFreeBeforeThis ? "收進隨身背包" : "收進身上的背包",
                         location.getWorld().getName(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
             }
@@ -191,34 +193,40 @@ public final class LootService {
                 feedChanged = true;
             }
             if (worthNoting) {
+                notableSound = true;
                 if (!(drop.isEquipment() && isMap(drop.item()))) {
                     notable.add(name); // 2026-10：地圖不放進「最近撿到」的卡片（音效照舊）
                 }
             }
         }
-        if (filtered > 0) {
-            final long[] stats = filterStats.computeIfAbsent(killer.getUniqueId(), uuid -> new long[2]);
-            stats[0] += filtered;
-            stats[1] += filterGold;
-            addToday(killer, filtered, filterGold);
-        }
+        boolean goldDelivered = true;
         if (goldTotal > 0) {
             if (config.autoPickup()) {
                 if (plugin.gold().add(killer, goldTotal)) {
                     // 流水帳分開記：怪物的金幣、過濾器換的金幣
                     ledger.gold(tw.exilecore.economy.EconomyLedger.DROP, goldTotal - filterGold);
                     ledger.gold(tw.exilecore.economy.EconomyLedger.FILTER, filterGold);
+                } else {
+                    goldDelivered = false; // 2026-10-22：沒入帳就不算進過濾的統計（以前統計照加、金幣沒拿到）
                 }
             } else {
                 plugin.gold().drop(location, goldTotal, killer); // 撿起來的時候才記（GoldListener）
             }
+        }
+        if (filtered > 0 && goldDelivered) {
+            final long[] stats = filterStats.computeIfAbsent(killer.getUniqueId(), uuid -> new long[2]);
+            stats[0] += filtered;
+            stats[1] += filterGold;
+            addToday(killer, filtered, filterGold);
         }
         ledger.income(killer, 1, goldTotal, currencyValue);
         if (feedChanged) {
             plugin.players().display(killer, state); // 角落提示馬上出現
         }
         final boolean intoBag = state.bag().freeSlots() < bagFreeBefore;
-        announce(killer, state, picked, intoBag, onGround, filtered, config.autoPickup() ? goldTotal : 0, filterGold, new ArrayList<>(notable),
+        // 不自動撿（金幣掉在地上）時角落不寫「過濾換成金幣」（還沒拿到）
+        announce(killer, state, picked, intoBag, onGround, filtered, config.autoPickup() ? goldTotal : 0,
+                config.autoPickup() && goldDelivered ? filterGold : 0, new ArrayList<>(notable), notableSound,
                 filter.dropSounds() ? soundTier : SOUND_NONE);
         return true;
     }
@@ -242,8 +250,40 @@ public final class LootService {
             if (stack == null || stack.isEmpty()) {
                 continue;
             }
-            final boolean gem = plugin.skills() != null && plugin.skills().gems().read(stack).isPresent();
-            final CurrencyType currency = gem || plugin.currencies() == null ? null : plugin.currencies().read(stack).orElse(null);
+            final tw.exilecore.skill.GemData gemData = plugin.skills() == null ? null : plugin.skills().gems().read(stack).orElse(null);
+            final boolean gem = gemData != null;
+            if (gem) {
+                // 2026-10-22：未切割寶石照寶石的設定（以前寶石一律收下）；切好的寶石可能是專屬的，照舊不藏
+                final DropTable.Kind kind = gemData.kind() == tw.exilecore.skill.GemData.Kind.UNCUT_SKILL ? DropTable.Kind.SKILL_GEM
+                        : gemData.kind() == tw.exilecore.skill.GemData.Kind.UNCUT_SUPPORT ? DropTable.Kind.SUPPORT_GEM : null;
+                if (kind != null && filter.hides(new LootFilter.Candidate(kind, null, null, false, 0, java.util.Set.of(), 0, gemData.level()), viewer)) {
+                    gold += config.goldValue(kind, null, 0, averageGold);
+                    filtered++;
+                    continue;
+                }
+                kept.add(stack);
+                continue;
+            }
+            // 2026-10-22：護符、藥劑照自己的設定（以前沒處理）
+            if (plugin.flasks() != null && plugin.flasks().charms() != null && plugin.flasks().charms().isCharm(stack)) {
+                if (filter.hidesCharms()) {
+                    gold += config.goldValue(DropTable.Kind.FLASK, null, 0, averageGold);
+                    filtered++;
+                    continue;
+                }
+                kept.add(stack);
+                continue;
+            }
+            if (plugin.flasks() != null && plugin.flasks().isFlask(stack)) {
+                if (filter.hides(DropTable.Kind.FLASK, null, null, isFlaskUpgrade(player, stack))) {
+                    gold += config.goldValue(DropTable.Kind.FLASK, null, 0, averageGold);
+                    filtered++;
+                    continue;
+                }
+                kept.add(stack);
+                continue;
+            }
+            final CurrencyType currency = plugin.currencies() == null ? null : plugin.currencies().read(stack).orElse(null);
             if (currency != null) {
                 // 映星鏡永遠不會被過濾掉（跟 handleKill 一樣）；金幣照一疊算（2026-10）
                 if (currency.operation() != tw.exilecore.currency.CurrencyOperation.MIRROR
@@ -252,12 +292,12 @@ public final class LootService {
                     filtered++;
                     continue;
                 }
-            } else if (!gem) {
+            } else {
                 final tw.exilecore.item.ItemData item = plugin.items().read(stack).orElse(null);
                 final tw.exilecore.item.ItemBase base = item == null ? null : plugin.items().repository().base(item.base());
                 if (item != null && base != null) {
                     final LootFilter.Candidate candidate = new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, item.rarity(), null, false,
-                            item.ilvl(), base.tags(), base.isMap() ? tw.exilecore.item.ItemStats.mapTier(base, item) : 0, 0,
+                            item.ilvl(), withChase(base.tags(), item), base.isMap() ? tw.exilecore.item.ItemStats.mapTier(base, item) : 0, 0,
                             bestAffixRank(item), item.base());
                     if (filter.hides(candidate, viewer)) {
                         gold += config.goldValue(DropTable.Kind.EQUIPMENT, item.rarity(), 0, averageGold);
@@ -268,14 +308,15 @@ public final class LootService {
             }
             kept.add(stack);
         }
-        if (filtered > 0) {
-            // 2026-10：以前只算進「今天」，「這次登入」少算了獎勵被過濾的部分
+        final boolean paid = gold <= 0 || plugin.gold().add(player, gold);
+        if (filtered > 0 && paid) {
+            // 2026-10：以前只算進「今天」，「這次登入」少算了獎勵被過濾的部分（2026-10-22：金幣真的入帳才算）
             final long[] stats = filterStats.computeIfAbsent(player.getUniqueId(), uuid -> new long[2]);
             stats[0] += filtered;
             stats[1] += gold;
             addToday(player, filtered, gold);
         }
-        if (gold > 0 && plugin.gold().add(player, gold)) {
+        if (gold > 0 && paid) {
             plugin.economy().ledger().gold(tw.exilecore.economy.EconomyLedger.FILTER, gold);
             player.sendMessage(plugin.text().prefixed(String.format(Locale.ROOT, "<gray>掉落過濾：%d 件換成 <#f5b942>%,d 金幣", filtered, gold)));
         }
@@ -291,6 +332,34 @@ public final class LootService {
     }
 
     /** 動作列摘要、右邊側欄的「最近撿到」列出值得注意的東西、音效。 */
+    /**
+     * 2026-10-22：永遠撿的傳奇在過濾用的標籤裡加上記號（傳奇被勾成隱藏時照樣撿）：追逐級，
+     * 以及頂級專屬（巔峰、極境、覺醒者、世界 Boss 這些：掉落等級 {@value #PROTECTED_UNIQUE_LEVEL} 以上、賭博與機會石都拿不到的）。
+     */
+    private java.util.Set<String> withChase(final java.util.Set<String> tags, final tw.exilecore.item.ItemData item) {
+        if (item.unique() == null) {
+            return tags;
+        }
+        final tw.exilecore.item.UniqueItem unique = plugin.items().repository().unique(item.unique());
+        if (unique == null || !protectedUnique(unique)) {
+            return tags;
+        }
+        final java.util.Set<String> marked = new java.util.HashSet<>(tags);
+        marked.add(LootFilter.ALWAYS_KEEP_TAG);
+        return marked;
+    }
+
+    /** 頂級專屬傳奇的掉落等級門檻（巔峰、覺醒者 85，極境、世界 Boss 80）。 */
+    static final int PROTECTED_UNIQUE_LEVEL = 80;
+
+    /** 傳奇被勾成隱藏時還是要撿的：追逐級、頂級專屬（做不出來、賭不到）。 */
+    static boolean protectedUnique(final tw.exilecore.item.UniqueItem unique) {
+        if (unique.chase()) {
+            return true;
+        }
+        return unique.dropLevel() >= PROTECTED_UNIQUE_LEVEL && !unique.sources().contains("gamble") && !unique.sources().contains("chance");
+    }
+
     /** 這個掉落是不是追逐級傳奇。 */
     private boolean chase(final DropTable.Drop drop) {
         if (!drop.isEquipment() || drop.item().unique() == null) {
@@ -423,13 +492,13 @@ public final class LootService {
 
     private void announce(final Player player, final PlayerState state, final int picked, final boolean intoBag, final int onGround,
                           final int filtered, final long gold, final long filterGold, final List<tw.exilecore.gui.SidebarLayout.Item> notable,
-                          final int soundTier) {
+                          final boolean notableSound, final int soundTier) {
         // 2026-10：動作列不再寫「撿到幾件」「+金幣」（值得注意的東西在右邊的卡片；過濾換的金幣也寫在卡片上），只留要注意的警告
         final StringBuilder text = new StringBuilder();
         if (intoBag && picked > 0) {
             text.append("<gray>背包滿了，放進隨身背包");
         }
-        final boolean hadNotable = !notable.isEmpty();
+        final boolean hadNotable = notableSound || !notable.isEmpty();
         if (filtered > 0 && filterGold > 0) {
             // 過濾換的金幣：一張卡片一直累加（同一張卡片數量就是金幣，畫成「+N 金幣」）
             notable.add(new tw.exilecore.gui.SidebarLayout.Item("<#f5b942>過濾換成金幣", (int) Math.min(Integer.MAX_VALUE, filterGold),
@@ -874,9 +943,10 @@ public final class LootService {
     /** 今天（這個角色）過濾器隱藏了幾件（[0]）、換了多少金幣（[1]）；打開過濾器時順便存一次。 */
     long[] todayStats(final Player player) {
         final long[] entry = todayEntry(player);
-        if (entry[1] > 0) {
+        final long now = System.currentTimeMillis();
+        if (entry[1] > 0 && now - entry[3] > 60_000) { // 2026-10-22：跟 addToday 一樣一分鐘最多存一次（以前總覽每重畫一次就寫一次資料庫）
             saveToday(player, entry);
-            entry[3] = System.currentTimeMillis();
+            entry[3] = now;
         }
         return new long[] {entry[1], entry[2]};
     }
@@ -925,8 +995,8 @@ public final class LootService {
             final tw.exilecore.item.ItemBase base = plugin.items().repository().base(item.base());
             itemLevel = item.ilvl();
             bestAffixRank = bestAffixRank(item);
+            tags = withChase(base == null ? java.util.Set.of() : base.tags(), item); // 2026-10-22：基底查不到也要保護追逐級
             if (base != null) {
-                tags = base.tags();
                 mapTier = base.isMap() ? tw.exilecore.item.ItemStats.mapTier(base, item) : 0;
             }
         } else if ((drop.kind() == DropTable.Kind.SKILL_GEM || drop.kind() == DropTable.Kind.SUPPORT_GEM) && plugin.skills() != null && stack != null) {
