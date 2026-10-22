@@ -147,6 +147,11 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (requires.contains(Tags.TOTEM) && host.tags().contains(Tags.TOTEM)) {
             return null;
         }
+        // 2026-10-22：只加速度、持續時間的輔助也套到宿主本身（worksOnHost）：放進去的技能吃不到（例如持久配熾星彈），
+        // 宿主吃得到就可以掛——不然星咒圖騰放法術時，加圖騰持續時間的持久掛不上去
+        if (worksOnHost() && refusal(host) == null) {
+            return null;
+        }
         final String why = refusal(inner);
         return why == null ? null : name + "不能輔助" + inner.name() + "（" + why + "）";
     }

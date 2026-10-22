@@ -133,7 +133,9 @@ class MonsterAndDropTest {
         assertTrue(average > 0.83 && average < 0.93, "平均件數 " + average);
         // 通貨與裝備的分類權重 548：600（2026-10 第五次；以前 570：600、更早 126：120）
         assertEquals(548.0 / 600.0, currency / (double) equipment, 0.1, "通貨與裝備差不多：" + currency + "／" + equipment);
-        assertTrue(equipment > gems && gems > flasks && flasks > 0, "裝備 > 寶石 > 藥劑 > 0：" + equipment + "／" + gems + "／" + flasks);
+        // 2026-10-22（照市場報告）：技能、輔助寶石的分類權重各 20 → 12，寶石合計 24 比藥劑的 30 少了：照比例驗，不再要求寶石比藥劑多
+        assertTrue(equipment > flasks && gems > 0 && flasks > 0, "裝備 > 藥劑 > 0、寶石 > 0：" + equipment + "／" + gems + "／" + flasks);
+        assertEquals(24.0 / 30.0, gems / (double) flasks, 0.3, "寶石：藥劑 ≈ 24：30（" + gems + "／" + flasks + "）");
     }
 
     @Test

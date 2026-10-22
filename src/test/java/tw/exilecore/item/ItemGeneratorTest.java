@@ -192,7 +192,8 @@ class ItemGeneratorTest {
         final ItemBase base = repository.base("plate_body");
         int t1 = 0;
         int t6 = 0;
-        for (int i = 0; i < 2000; i++) {
+        // 2026-10-22：T1 的權重只有 20（T6 118）：2000 件裡 T1 期望只有 3 條，固定的種子剛好抽到 0 → 抽 10000 件
+        for (int i = 0; i < 10000; i++) {
             final ItemData data = generator.generate(base, Rarity.RARE, 80, random);
             for (final RolledAffix rolled : data.affixes()) {
                 if (rolled.id().equals("life_flat_body")) { // 2026-10 PoE2：胸甲的生命詞綴是 life_flat_body（13 階）
