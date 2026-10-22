@@ -232,7 +232,8 @@ public final class MetaGems {
                 java.util.Set.of(), java.util.Set.of(), 1.0, mods, List.of());
         final List<SupportDefinition> supports = new ArrayList<>();
         supports.add(carrier); // 放第一個：圖騰施法優先（插槽法術自己掛了陷阱施法的話那顆不算）
-        supports.addAll(service.supportsOf(socket.spellEntry()));
+        // 2026-10-22：要圖騰的輔助（疾樁、樁怒…）插槽法術本身沒有圖騰標籤，innerSupportsOf 把它們併成一顆不挑技能的
+        supports.addAll(service.innerSupportsOf(socket.metaEntry(), metaDefinition, socket.spell()));
         return SkillBuild.of(service.config(), socket.spell(), socket.spellEntry().level(), state.level(), false, supports,
                 state.weaponTags(), sheet, SkillService.resonantOf(socket.spellEntry())); // 2026-10-18：共鳴的專屬輔助不佔名額
     }

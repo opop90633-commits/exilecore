@@ -683,7 +683,15 @@ public final class SkillMenu extends Menu {
         }
         final boolean resonant = entry.resonant(index); // 2026-10-18
         final List<String> lore = new ArrayList<>(GemService.effectLines(support));
-        if (definition != null && !support.supports(definition)) {
+        final boolean host = SupportDefinition.hostsSkill(definition); // 2026-10-22：宿主寶石：照第 1 孔裡的技能驗
+        if (host) {
+            final String why = support.hostRefusal(definition, service.innerSkill(entry));
+            if (why != null) {
+                lore.add("<red>" + ItemRenderer.escape(why) + "（不會生效）");
+            } else if (support.requires().contains(tw.exilecore.stats.Tags.TOTEM)) {
+                lore.add("<gray>套在圖騰本身，也套到放進去的技能上");
+            }
+        } else if (definition != null && !support.supports(definition)) {
             lore.add("<red>不能輔助這個技能（" + ItemRenderer.escape(support.refusal(definition)) + "，不會生效）");
         }
         if (!support.cuttable()) {
@@ -692,7 +700,8 @@ public final class SkillMenu extends Menu {
             } else {
                 for (int j = 0; j < index; j++) {
                     final SupportDefinition before = service.config().support(entry.support(j));
-                    if (before != null && !before.cuttable() && !entry.resonant(j) && (definition == null || before.supports(definition))) {
+                    if (before != null && !before.cuttable() && !entry.resonant(j)
+                            && (definition == null || (host ? before.hostRefusal(definition, service.innerSkill(entry)) == null : before.supports(definition)))) {
                         lore.add("<red>不會生效：一個技能只能掛一顆沒有共鳴的專屬掉落輔助寶石（前面已經有" + ItemRenderer.escape(before.name()) + "）");
                         break;
                     }

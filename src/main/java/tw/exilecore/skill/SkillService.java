@@ -1581,7 +1581,8 @@ public final class SkillService {
             }
         }
         // 2026-10-22：英靈用的技能放在英靈圖騰自己的第 1 孔（以前是面板上它後面那一格）
-        final SkillLoadout.Entry next = position < 0 ? null : innerEntry(loadout.skill(position));
+        final SkillLoadout.Entry host = position < 0 ? null : loadout.skill(position);
+        final SkillLoadout.Entry next = innerEntry(host);
         final SkillDefinition definition = next == null ? null : config.skill(next.skillId());
         final String hint = totem.name() + "：第 1 孔要放錘子攻擊技能的寶石（/skills 點它）";
         if (definition == null) {
@@ -1592,7 +1593,9 @@ public final class SkillService {
             return hint + "（" + why + "）";
         }
         // 2026-10-21：輔助寶石加的冷卻也算（蓄鋒、蓄疾…）：英靈不等冷卻，以前白拿那顆輔助的加成（暴擊率更多 40%、異常機率加倍）
-        final SkillBuild built = build(state, sheet, definition, next);
+        // 2026-10-22：要圖騰的輔助（樁怒、疾樁…）也套到英靈的攻擊上（innerSupportsOf 併成一顆不挑技能的）
+        final SkillBuild built = SkillBuild.of(config, definition, next.level(), state.level(), false, innerSupportsOf(host, totem, definition),
+                state.weaponTags(), sheet, resonantOf(next));
         if (built.cooldownTicks() > 0) {
             final List<String> names = new ArrayList<>();
             for (final SupportDefinition support : supportsOf(next)) {
@@ -2367,6 +2370,28 @@ public final class SkillService {
             return null;
         }
         return new SkillLoadout.Entry(host.inner().skillId(), host.inner().level(), SkillLoadout.MAX_SOCKETS, host.supports(), host.resonant());
+    }
+
+    /**
+     * 2026-10-22：給放在宿主裡的技能用的輔助：宿主第 2～5 孔的輔助，其中「要圖騰才能掛的」（疾樁、樁怒、堅樁…）放進去的技能本身
+     * 沒有圖騰標籤、SkillBuild 會跳過，所以把它們的修飾器併成一顆不挑技能的輔助（名字用宿主的）；魔力倍率不算（放圖騰才花魔力）。
+     */
+    List<SupportDefinition> innerSupportsOf(final SkillLoadout.Entry host, final SkillDefinition hostDefinition, final SkillDefinition inner) {
+        final List<SupportDefinition> list = new ArrayList<>();
+        final List<tw.exilecore.stats.Modifier> carried = new ArrayList<>();
+        for (final SupportDefinition support : supportsOf(host)) {
+            if (support.requires().contains(Tags.TOTEM) && inner != null && !support.supports(inner)) {
+                carried.addAll(support.modifiers());
+            } else {
+                list.add(support);
+            }
+        }
+        if (!carried.isEmpty()) {
+            final String name = hostDefinition == null ? "圖騰" : hostDefinition.name();
+            list.addFirst(new SupportDefinition("host." + host.skillId(), name, "", "PAPER", 1, java.util.Set.of(), java.util.Set.of(), 1.0,
+                    carried, List.of()));
+        }
+        return list;
     }
 
     /** 2026-10-22：面板上這一格宿主寶石裡的技能（定義）；沒有或不認得回傳 null。 */
