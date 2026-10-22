@@ -110,6 +110,11 @@ public final class CombatModule implements Module {
         return charges;
     }
 
+    /** 三相輔助的元素共鳴（2026-10-22）；模組沒啟用時 null。 */
+    public Trinity trinity() {
+        return listener == null ? null : listener.trinity();
+    }
+
     /** 昇華的招牌天賦；模組沒啟用時 null。 */
     public Signatures signatures() {
         return signatures;

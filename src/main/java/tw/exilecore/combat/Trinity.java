@@ -95,6 +95,35 @@ public final class Trinity {
         }
     }
 
+    /**
+     * 2026-10-22：畫面上方戰鬥資源血條的一段（火、冰、電三種共鳴＋現在吃到的加成）；三種都是 0 就是空字串。
+     */
+    public String hudText(final UUID player, final long tick) {
+        final double[] res = resonance(player, tick);
+        if (res[0] <= 0 && res[1] <= 0 && res[2] <= 0) {
+            return "";
+        }
+        final double lowest = Math.min(res[0], Math.min(res[1], res[2]));
+        final int more = (int) (Math.floor(lowest / 5) * MORE_PER_STEP);
+        final StringBuilder text = new StringBuilder("<gray>共鳴 ")
+                .append("<#ff7043>火 ").append(level(res[0]))
+                .append(" <#7fd3ff>冰 ").append(level(res[1]))
+                .append(" <#ffe14d>電 ").append(level(res[2]));
+        if (more > 0) {
+            text.append(" <gray>元素傷害 <white>+").append(more).append('%');
+        }
+        if (lowest >= PENETRATION_AT) {
+            text.append(" <#c58fff>穿透 ").append((int) PENETRATION).append('%');
+        }
+        return text.toString();
+    }
+
+    /** 共鳴的數字（滿了是 MAX）。 */
+    private static String level(final double value) {
+        final int shown = (int) Math.floor(value);
+        return shown >= MAX ? "<b>" + shown + "</b>" : String.valueOf(shown);
+    }
+
     public void forget(final UUID player) {
         states.remove(player);
     }

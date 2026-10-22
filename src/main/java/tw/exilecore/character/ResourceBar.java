@@ -56,6 +56,13 @@ public final class ResourceBar {
                 parts.add(charges);
             }
         }
+        if (plugin.combat() != null && plugin.combat().trinity() != null) {
+            // 2026-10-22：三相（鼎元訣等）的火、冰、電共鳴
+            final String trinity = plugin.combat().trinity().hudText(player.getUniqueId(), plugin.getServer().getCurrentTick());
+            if (!trinity.isEmpty()) {
+                parts.add(trinity);
+            }
+        }
         if (parts.isEmpty()) {
             hide(player);
             return;

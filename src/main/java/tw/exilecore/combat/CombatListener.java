@@ -182,6 +182,11 @@ public final class CombatListener implements Listener {
     private final Debuffs debuffs;
     /** 三相輔助的元素共鳴（2026-10）。 */
     private final Trinity trinity = new Trinity();
+
+    /** 三相輔助的元素共鳴（2026-10-22：畫面上方的戰鬥資源血條要顯示）。 */
+    public Trinity trinity() {
+        return trinity;
+    }
     private DodgeRoll dodge;
 
     void setDodge(final DodgeRoll dodge) {
