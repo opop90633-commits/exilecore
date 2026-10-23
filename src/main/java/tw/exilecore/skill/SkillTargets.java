@@ -171,17 +171,38 @@ final class SkillTargets {
         return cone(Origin.of(player), length, angle);
     }
 
+    /** 2026-10-24：扇形往外每 1 格水平距離，高度多算幾格（約 30°；會飛的怪）。 */
+    static final double CONE_HEIGHT_SLOPE = 0.6;
+
     List<LivingEntity> cone(final Origin origin, final double length, final double angle) {
         final Location from = origin.feet();
         final Vector facing = origin.facing();
+        final Location eye = origin.eye();
+        final Vector look = origin.direction();
         final List<LivingEntity> list = new ArrayList<>();
-        for (final LivingEntity living : around(from, length, origin.owner())) {
-            final double dx = living.getLocation().getX() - from.getX();
-            final double dz = living.getLocation().getZ() - from.getZ();
-            if (SkillMath.inCone(facing.getX(), facing.getZ(), dx, dz, angle) && origin.canSee(living)) {
+        // 2026-10-24：以前只找腳底上下 2.5 格內的（around），會飛的怪打不到：
+        // 現在範圍內的都看——水平在扇形裡、高度在「腳邊 2.5 格、越遠張越開」內的算；照著視線抬頭（低頭）看過去的也算
+        final double reach = length + 3;
+        for (final Entity entity : from.getWorld().getNearbyEntities(from, reach, reach, reach, entity -> valid(entity, origin.owner()))) {
+            final LivingEntity living = (LivingEntity) entity;
+            final BoundingBox box = living.getBoundingBox();
+            if (boxDistanceSquared(from, box) > length * length && boxDistanceSquared(eye, box) > length * length) {
+                continue;
+            }
+            final double dx = box.getCenterX() - from.getX();
+            final double dz = box.getCenterZ() - from.getZ();
+            final double horizontal = Math.sqrt(dx * dx + dz * dz);
+            final double dyNearest = box.getMinY() > from.getY() ? box.getMinY() - from.getY()
+                    : box.getMaxY() < from.getY() ? box.getMaxY() - from.getY() : 0;
+            final boolean flat = SkillMath.inCone(facing.getX(), facing.getZ(), dx, dz, angle)
+                    && SkillMath.coneHeightOk(dyNearest, horizontal, HEIGHT, CONE_HEIGHT_SLOPE);
+            final boolean aimed = !flat && SkillMath.inAim(look.getX(), look.getY(), look.getZ(),
+                    box.getCenterX() - eye.getX(), box.getCenterY() - eye.getY(), box.getCenterZ() - eye.getZ(), angle);
+            if ((flat || aimed) && origin.canSee(living)) {
                 list.add(living);
             }
         }
+        list.sort(Comparator.comparingDouble((LivingEntity entity) -> boxDistanceSquared(from, entity.getBoundingBox())));
         return list;
     }
 

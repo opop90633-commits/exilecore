@@ -127,6 +127,25 @@ public final class SkillMath {
      * 目標是不是在水平扇形裡：面向 (fx, fz)，目標相對位置 (tx, tz)，扇形張角 angle 度。
      * 貼得很近（0.75 格內）的一律算在裡面。
      */
+    /**
+     * 2026-10-24：扇形的高度判定（會飛的怪以前打不到）：目標（碰撞箱最靠近的那一段）比腳底高或低多少還算得到——
+     * 腳邊 {@code base} 格，往外每 1 格水平距離多 {@code slope} 格（越遠扇形張越開）；照著視線看過去的另外算（{@link #inAim}）。
+     */
+    public static boolean coneHeightOk(final double dyNearest, final double horizontal, final double base, final double slope) {
+        return Math.abs(dyNearest) <= base + horizontal * slope;
+    }
+
+    /** 2026-10-24：目標在不在視線方向 (dx,dy,dz) 的圓錐裡（三維；抬頭打會飛的怪用）。 */
+    public static boolean inAim(final double fx, final double fy, final double fz, final double tx, final double ty, final double tz,
+                                final double angleDegrees) {
+        final double fl = Math.sqrt(fx * fx + fy * fy + fz * fz);
+        final double tl = Math.sqrt(tx * tx + ty * ty + tz * tz);
+        if (fl == 0 || tl < 0.75) {
+            return tl < 0.75;
+        }
+        return (fx * tx + fy * ty + fz * tz) / (fl * tl) >= Math.cos(Math.toRadians(angleDegrees / 2));
+    }
+
     public static boolean inCone(final double fx, final double fz, final double tx, final double tz, final double angleDegrees) {
         final double targetLength = Math.sqrt(tx * tx + tz * tz);
         if (targetLength < 0.75 || angleDegrees >= 360) {

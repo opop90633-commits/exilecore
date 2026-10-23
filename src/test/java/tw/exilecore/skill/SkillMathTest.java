@@ -86,4 +86,14 @@ class SkillMathTest {
         final double[] wrong = SkillMath.simulateLeap(air, SkillMath.leapTicks(9), true);
         assertTrue(wrong[2] < 7, "沒算地面摩擦會跳不到（" + wrong[2] + " 格）");
     }
+
+    @org.junit.jupiter.api.Test
+    void coneReachesFlyingEnemies() {
+        // 2026-10-24：扇形的高度：腳邊 2.5 格，越遠張越開（每格 0.6）；照視線看過去的也算
+        org.junit.jupiter.api.Assertions.assertTrue(SkillMath.coneHeightOk(2.0, 1, 2.5, 0.6));
+        org.junit.jupiter.api.Assertions.assertFalse(SkillMath.coneHeightOk(4.0, 1, 2.5, 0.6), "腳邊 4 格高還是打不到");
+        org.junit.jupiter.api.Assertions.assertTrue(SkillMath.coneHeightOk(4.0, 5, 2.5, 0.6), "5 格外 4 格高打得到");
+        org.junit.jupiter.api.Assertions.assertTrue(SkillMath.inAim(0, 0.7071, 0.7071, 0, 5, 5, 45), "抬頭 45° 看過去正中");
+        org.junit.jupiter.api.Assertions.assertFalse(SkillMath.inAim(0, 0, 1, 0, 5, 5, 45), "平視看不到頭上 45° 的");
+    }
 }
