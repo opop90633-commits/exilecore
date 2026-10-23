@@ -1406,13 +1406,12 @@ public final class PlayerStateService {
                 text.append("  ").append(HotbarSides.inline(auraNames, pets, hudBuffs)); // 有字沒收進字型（新加的技能名稱）：照舊
             }
         }
-        // 2026-10：撿到東西的角落提示（快捷欄右邊往上疊；有召喚物時疊在召喚物上面）
+        // 2026-10：撿到東西的角落提示（快捷欄右邊往上疊；2026-10-23：有召喚物時放在召喚物那一欄的右邊）
         if (tw.exilecore.web.LootHud.ready() && plugin.web() != null && plugin.web().hasPack(player)) {
             final long now = plugin.getServer().getCurrentTick();
             final List<LootFeed.Entry> loot = lootFeed.active(player.getUniqueId(), now);
             if (!loot.isEmpty()) {
-                final int start = sides && !pets.isEmpty() ? pets.size() : 0;
-                text.append(HotbarSides.renderLoot(loot, start, mainPlain, now));
+                text.append(HotbarSides.renderLoot(loot, HotbarSides.lootStart(pets, sides), mainPlain, now));
             }
         }
         final Component main = stats.append(cachedParse(player, text.toString())).build();

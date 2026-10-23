@@ -292,6 +292,7 @@ public final class ItemGenerator {
             if (isCorruptionEnchant(rolled.id())) {
                 continue;
             }
+            // 範圍要跟 UniqueUpgrade.CORRUPT_MIN／MAX 一樣（那邊照這個放寬，不然穿上去會被當成舊版重擲）
             final double factor = (78 + random.nextInt(45)) / 100.0;
             final java.util.Map<String, Integer> scaled = new java.util.LinkedHashMap<>();
             rolled.vars().forEach((key, value) -> scaled.put(key, (int) Math.round(value * factor)));

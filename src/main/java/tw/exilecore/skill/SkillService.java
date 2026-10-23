@@ -626,8 +626,53 @@ public final class SkillService {
             runtime.clearQueue();
             perform(player, runtime, key, preferred, now);
         } else {
+            // 2026-10-23：動作還沒做完時按的數字鍵：光環、戰吼、守護、印記直接插隊（不打斷手上那一招、也不用等）；
+            //   位移技能打斷手上那一招馬上放；其他的照舊排隊
+            final Interrupt mode = SkillLoadout.mouseKey(key) ? Interrupt.QUEUE : interruptMode(resolve(plugin.players().get(player), key).definition());
+            if (mode == Interrupt.INSTANT) {
+                final double saved = runtime.readyAt;
+                perform(player, runtime, key, preferred, now);
+                runtime.readyAt = saved; // 手上那一招照原本的時間做完（插隊的這招不另外佔動作時間）
+                return;
+            }
+            if (mode == Interrupt.MOVEMENT) {
+                final double saved = runtime.readyAt;
+                final SkillRuntime.Repeat pending = runtime.repeat;
+                runtime.readyAt = now;
+                runtime.repeat = null;
+                perform(player, runtime, key, preferred, now);
+                if (runtime.readyAt <= now + 1e-9 && runtime.leap == null) {
+                    // 沒放出去（冷卻中、魔力不夠、前方沒空間）：手上那一招照舊
+                    runtime.readyAt = saved;
+                    runtime.repeat = pending;
+                    return;
+                }
+                runtime.clearQueue();
+                if (pending != null) {
+                    // 複擊被打斷：剩下的不打了，照常開始冷卻（不能靠位移跳過冷卻）
+                    final SkillDefinition interrupted = pending.build().definition();
+                    runtime.startCooldown(interrupted.id(), now, pending.build().cooldownTicks());
+                    showCooldown(player, interrupted.id(), pending.build().cooldownTicks());
+                }
+                return;
+            }
             runtime.queue(key, preferred == null ? null : preferred.getUniqueId(), now);
         }
+    }
+
+    /** 2026-10-23：動作中按下去的技能怎麼處理。 */
+    enum Interrupt { QUEUE, INSTANT, MOVEMENT }
+
+    /** 光環、戰吼、守護、印記（含詛咒）：插隊；帶「位移」標籤的位移、跳躍：打斷；其他排隊。純函式（測試用）。 */
+    static Interrupt interruptMode(final SkillDefinition definition) {
+        if (definition == null) {
+            return Interrupt.QUEUE;
+        }
+        return switch (definition.mechanic()) {
+            case AURA, WARCRY, GUARD, MARK -> Interrupt.INSTANT;
+            case DASH, LEAP -> definition.tags().contains(Tags.MOVEMENT) ? Interrupt.MOVEMENT : Interrupt.QUEUE;
+            default -> Interrupt.QUEUE;
+        };
     }
 
     /** 綁了什麼（狀態列、提示用）：「｜左 熾星彈｜右 霜星爆｜3 怒雷」，都沒綁是「（都是普攻）」。 */
@@ -2786,7 +2831,25 @@ public final class SkillService {
     /** 面板上（或寶石裡）一個技能在這個玩家身上的說明。 */
     public List<String> describe(final Player player, final SkillDefinition definition, final SkillLoadout.Entry entry) {
         final PlayerState state = plugin.players().get(player);
-        return describe(player, build(state, plugin.players().sheet(player), definition, entry));
+        final List<String> lines = new ArrayList<>(describe(player, build(state, plugin.players().sheet(player), definition, entry)));
+        // 2026-10-23：品質、腐化放在標籤下面第一行（以前面板上看不到）
+        final List<String> top = new ArrayList<>();
+        final String quality = qualityText(definition, entry.quality());
+        if (quality != null) {
+            top.add("<#8888ff>◆ " + ItemRenderer.escape(quality));
+        }
+        if (entry.corrupted()) {
+            top.add("<#d20000>◆ 已腐化 <dark_gray>（不能再升級、開孔、加品質）");
+        }
+        if (!top.isEmpty() && !lines.isEmpty()) {
+            lines.addAll(1, top);
+        }
+        return lines;
+    }
+
+    /** 2026-10-23：名字後面的品質、腐化小標（技能面板的標題用）；都沒有回傳空字串。 */
+    public static String qualityTag(final SkillLoadout.Entry entry) {
+        return (entry.quality() > 0 ? " <#8888ff>品質 " + entry.quality() + "%" : "") + (entry.corrupted() ? " <#d20000>腐化" : "");
     }
 
     /** 圖鑑（2026-10）：看 Lv.30、Lv.40 這種超過寶石上限的數值——寶石當 20 級，多的當成「+x 技能等級」（再加上你裝備本來的）。 */
@@ -2826,7 +2889,11 @@ public final class SkillService {
                 lines.add(String.format(Locale.ROOT, "<gray>基礎傷害：<white>%d – %d", Math.round(range[0]), Math.round(range[1])));
             }
             if (definition.mechanic() != Mechanic.AURA) { // 2026-10：光環、精魂召喚綁著就開著，不用施放（沒有施法時間）
-                lines.add(String.format(Locale.ROOT, "<gray>施法時間：<white>%.2f 秒", definition.castTime()));
+                // 2026-10-23：寫實際的施法時間（吃施法速度、捷咒這些輔助）；以前只寫基礎的，看起來像沒變
+                final double actual = build.intervalTicks(sheet) / 20.0;
+                lines.add(Math.abs(actual - definition.castTime()) < 0.005
+                        ? String.format(Locale.ROOT, "<gray>施法時間：<white>%.2f 秒", definition.castTime())
+                        : String.format(Locale.ROOT, "<gray>施法時間：<white>%.2f 秒 <dark_gray>（基礎 %.2f 秒）", actual, definition.castTime()));
             }
             if (deals && definition.damage() != null && definition.mechanic() == Mechanic.WARCRY) {
                 // 2026-10（PoE2）：戰吼的傷害不算攻擊也不算法術

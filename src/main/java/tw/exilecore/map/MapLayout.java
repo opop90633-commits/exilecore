@@ -1045,6 +1045,44 @@ public final class MapLayout {
         return new Spot(start.cx() + 2, start.cz());
     }
 
+    /**
+     * 2026-10-23：進圖時面向哪裡（Minecraft 的 yaw）：朝主路第一段走道的方向（以前一律朝東，主路往別的方向走時一進來就對著牆）。
+     */
+    public float entranceYaw() {
+        for (final Link link : links) {
+            if (link.from() != start) {
+                continue;
+            }
+            // 沿著走道從房間中心一格一格走，走出起點房間的那一格就是出口：朝出口看
+            //（第一段可能只是一兩格的小轉折，只看第一個點會看錯方向）
+            int x = start.cx();
+            int z = start.cz();
+            final List<Spot> points = new ArrayList<>(link.points());
+            points.add(new Spot(link.to().cx(), link.to().cz()));
+            for (final Spot point : points) {
+                while (x != point.x() || z != point.z()) {
+                    x += Integer.signum(point.x() - x);
+                    if (x == point.x()) {
+                        z += Integer.signum(point.z() - z);
+                    }
+                    if (!start.contains(x, z)) {
+                        return yaw(x - start.cx(), z - start.cz());
+                    }
+                }
+            }
+            return yaw(link.to().cx() - start.cx(), link.to().cz() - start.cz());
+        }
+        return -90f; // 沒有主路（只有一個房間）：照舊朝東
+    }
+
+    /** 往 (dx, dz) 看的 yaw（東 −90、南 0、西 90、北 180）。 */
+    static float yaw(final int dx, final int dz) {
+        if (dx == 0 && dz == 0) {
+            return -90f;
+        }
+        return (float) Math.toDegrees(Math.atan2(-dx, dz));
+    }
+
     /** 回營地的傳送門：起點房間的西邊（門洞在 x = cx − 4，z 在 cz−1..cz+1）。 */
     public Spot exitPortal() {
         return new Spot(start.cx() - 4, start.cz());

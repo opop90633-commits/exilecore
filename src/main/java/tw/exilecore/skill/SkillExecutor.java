@@ -850,12 +850,8 @@ final class SkillExecutor {
         if (preferred != null && targets.valid(preferred, player) && preferred.getLocation().distance(player.getLocation()) <= build.range()) {
             return preferred;
         }
-        final LivingEntity aimed = targets.aimed(origin, build.range(), 1.2);
-        if (aimed != null) {
-            return aimed;
-        }
-        final List<LivingEntity> cone = targets.cone(origin, build.range(), 30);
-        return cone.isEmpty() ? null : cone.get(0);
+        // 2026-10-23：一定要準心指著敵人才放得出去（以前沒指到會自己挑前方 30° 內最近的一隻，常常點到不是想要的那隻）
+        return targets.aimed(origin, build.range(), 1.2);
     }
 
     private void mark(final Player player, final SkillBuild build, final LivingEntity preferred) {

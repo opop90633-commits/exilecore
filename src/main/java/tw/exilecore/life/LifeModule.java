@@ -113,6 +113,22 @@ public final class LifeModule implements Module, Listener {
                 if (number(progress.get(LifeService.WHALE)) > 0) {
                     owned.add("abyss_hunter");
                 }
+                // 2026-10-23
+                if (config.levelOf(number(progress.get(LifeService.XP))) >= MASTER_LEVEL) {
+                    owned.add("sea_master");
+                }
+                final int species = config.fishing().fish().size();
+                if (species > 0 && dexSpecies(progress.get(LifeService.DEX)) >= species) {
+                    owned.add("angler");
+                }
+                if (number(progress.get(LifeService.KING)) > 0) {
+                    owned.add("shark_slayer");
+                }
+                // 釣王：帳號進度記的「贏的那一週」要等於最近結算的那一週（下一週有人贏就換人）
+                final String champ = progress.get(LifeService.CHAMP);
+                if (service != null && champ != null && !champ.isBlank() && champ.trim().equals(service.extras().settledWeek())) {
+                    owned.add("fish_champion");
+                }
                 owned.retainAll(titles.keySet());
                 return owned;
             }
@@ -125,6 +141,12 @@ public final class LifeModule implements Module, Listener {
                     case "sea_wanderer" -> titles.containsKey(id) ? java.util.List.of("<gray>" + config.name() + "：生活等級 " + WANDERER_LEVEL) : null;
                     case "abyss_hunter" -> titles.containsKey(id) && config.whale() != null
                             ? java.util.List.of("<gray>" + config.name() + "：打倒深淵巨獸「" + config.whale().name() + "」") : null;
+                    case "sea_master" -> titles.containsKey(id) ? java.util.List.of("<gray>" + config.name() + "：生活等級 " + MASTER_LEVEL) : null;
+                    case "angler" -> titles.containsKey(id) ? java.util.List.of("<gray>" + config.name() + "：魚圖鑑每一種魚都釣過（" + config.fishing().fish().size() + " 種）") : null;
+                    case "fish_champion" -> titles.containsKey(id) ? java.util.List.of("<gray>" + config.name() + "：上一週釣魚大賽第一名（每週換人）"
+                            + (service == null || service.extras().championName().isEmpty() ? "" : "；現在是 " + service.extras().championName())) : null;
+                    case "shark_slayer" -> titles.containsKey(id) && config.sharkKing() != null
+                            ? java.util.List.of("<gray>" + config.name() + "：打倒「" + config.sharkKing().name() + "」（鯊王血餌叫出來）") : null;
                     default -> null;
                 };
             }
@@ -137,6 +159,13 @@ public final class LifeModule implements Module, Listener {
     }
 
     static final int WANDERER_LEVEL = 50;
+    /** 2026-10-23：稱號「星海船長」。 */
+    static final int MASTER_LEVEL = 80;
+
+    /** 圖鑑裡有幾種魚（帳號進度 life.dex：「魚:幾條:最長;…」）。 */
+    static int dexSpecies(final String text) {
+        return LifeExtras.decodeDex(text).size();
+    }
 
     private static long number(final String text) {
         if (text == null || text.isBlank()) {
@@ -207,6 +236,16 @@ public final class LifeModule implements Module, Listener {
             service.eat(player, event.getItem());
             return;
         }
+        if (LifeExtras.BAIT_ITEM.equals(service.itemId(event.getItem()))) {
+            // 2026-10-23：鯊王血餌
+            event.setCancelled(true);
+            event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+            final String problem = service.extras().useBait(player, event.getItem());
+            if (problem != null) {
+                player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
+            }
+            return;
+        }
         if (LifeWhale.HORN_ITEM.equals(service.itemId(event.getItem()))) {
             // 吹深淵號角叫出淵鯨（不甩原版的號角）
             event.setCancelled(true);
@@ -248,6 +287,8 @@ public final class LifeModule implements Module, Listener {
         if (problem != null) {
             event.setCancelled(true);
             tw.exilecore.gui.ActionBar.send(event.getPlayer(), plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+        } else {
+            service.placed(event.getBlockPlaced(), event.getItemInHand()); // 2026-10-23：魚籠開始計時
         }
     }
 
@@ -387,6 +428,7 @@ public final class LifeModule implements Module, Listener {
                 .then(Commands.literal("home").executes(context -> social(plugin, context.getSource(), "home", null)))
                 .then(Commands.literal("accept").executes(context -> social(plugin, context.getSource(), "accept", null)))
                 .then(Commands.literal("members").executes(context -> social(plugin, context.getSource(), "members", null)))
+                .then(Commands.literal("like").executes(context -> social(plugin, context.getSource(), "like", null))) // 2026-10-23
                 .then(Commands.literal("invite").then(onlineArgument(plugin)
                         .executes(context -> social(plugin, context.getSource(), "invite", com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player")))))
                 .then(Commands.literal("visit").then(onlineArgument(plugin)
@@ -480,6 +522,7 @@ public final class LifeModule implements Module, Listener {
         switch (action) {
             case "home" -> problem = life.travel(player, false);
             case "accept" -> problem = life.accept(player);
+            case "like" -> problem = life.extras().like(player); // 2026-10-23
             case "members" -> {
                 final LifeService.Profile profile = life.profile(player);
                 final java.util.Map<java.util.UUID, String> mine = profile == null || profile.plot < 0 ? java.util.Map.of() : life.membersOf(profile.plot);

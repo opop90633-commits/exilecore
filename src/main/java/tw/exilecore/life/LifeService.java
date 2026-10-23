@@ -60,6 +60,14 @@ public final class LifeService {
     static final String CROPS = "life.crops";
     static final String LETTERS = "life.letters";
     static final String WHALE = "life.whale";
+    // 2026-10-23
+    static final String DEX = "life.dex";
+    static final String ZONE = "life.zone";
+    static final String BED = "life.bed";
+    static final String ORDERS = "life.orders";
+    static final String LIKES = "life.likes";
+    static final String KING = "life.king";
+    static final String CHAMP = "life.champ";
     static final String HOOK_ITEM = "hook";
 
     /** 一個人的生活資料（帳號共用；記憶體裡改，定時寫進帳號進度）。 */
@@ -82,6 +90,20 @@ public final class LifeService {
         long letters;
         /** 打倒淵鯨幾次。 */
         int whaleKills;
+        // 2026-10-23
+        /** 魚圖鑑：魚 → {釣過幾條, 最長（0.1 公分）}。 */
+        final Map<String, long[]> dex = new LinkedHashMap<>();
+        /** 海域（海圖桌選）。 */
+        String zone = LifeConfig.DEFAULT_ZONE;
+        String bedDay = "";
+        String ordersDay = "";
+        int ordersDone;
+        String likesDay = "";
+        int likesCount;
+        final Set<Integer> likedPlots = new HashSet<>();
+        int kingKills;
+        /** 釣魚大賽贏的那一週（最近結算的那一週才有稱號）。 */
+        String champWeek = "";
         boolean dirty;
     }
 
@@ -148,6 +170,8 @@ public final class LifeService {
     /** 航行、小島、海象。 */
     private final LifeIslands islands;
     private final LifeWhale whale;
+    /** 2026-10-23：圖鑑、大賽、委託、魚籠、按讚、鯊王。 */
+    private final LifeExtras extras;
 
     LifeService(final ExileCore plugin, final LifeConfig config) {
         this.plugin = plugin;
@@ -157,6 +181,7 @@ public final class LifeService {
         this.random = plugin.items().random();
         this.islands = new LifeIslands(plugin, this);
         this.whale = new LifeWhale(plugin, this);
+        this.extras = new LifeExtras(plugin, this);
         loadAccess();
     }
 
@@ -262,6 +287,32 @@ public final class LifeService {
         return islands;
     }
 
+    LifeExtras extras() {
+        return extras;
+    }
+
+    int tickCount() {
+        return tickCount;
+    }
+
+    /** 2026-10-23：晚上（海域世界的時間）。 */
+    boolean night() {
+        if (world == null) {
+            return false;
+        }
+        final long time = world.getTime();
+        return time >= 13_000 && time <= 23_000;
+    }
+
+    /** 2026-10-23：鯊王在的筏也是戰鬥區（跟渦齒鯊一樣）。 */
+    void markCombat(final int plot, final boolean on) {
+        if (on) {
+            sharkPlots.add(plot);
+        } else {
+            sharkPlots.remove(plot);
+        }
+    }
+
     NamespacedKey driftKey() {
         return driftKey;
     }
@@ -306,6 +357,9 @@ public final class LifeService {
         loadPots(); // 2026-10-18
         loadMembers();
         loadPlotLevels();
+        extras.loadTraps(); // 2026-10-23
+        extras.loadTournament();
+        extras.loadLikes();
     }
 
     public World world() {
@@ -551,6 +605,33 @@ public final class LifeService {
     /** 筏主（2026-10-16，木筏管理選單用）；沒人 null。 */
     UUID ownerOf(final int plot) {
         return plotOwners.get(plot);
+    }
+
+    /** 2026-10-23：這塊筏的海域（筏主選的；筏主不在線就是一開始的海域）。 */
+    String zoneOf(final int plot) {
+        final UUID owner = plotOwners.get(plot);
+        final Profile profile = owner == null ? null : profiles.get(owner);
+        return profile == null ? LifeConfig.DEFAULT_ZONE : profile.zone;
+    }
+
+    /** 2026-10-23：選海域（海圖桌）；回傳問題，成功 null。 */
+    String chooseZone(final Player player, final LifeConfig.Zone zone) {
+        final Profile profile = profile(player);
+        if (profile == null) {
+            return "帳號資料載入中，請稍等";
+        }
+        if (config.levelOf(profile.xp) < zone.level()) {
+            return "要生活等級 " + zone.level();
+        }
+        if (zone.id().equals(profile.zone)) {
+            return "已經在" + zone.name() + "了";
+        }
+        profile.zone = zone.id();
+        profile.dirty = true;
+        flush(player);
+        player.sendMessage(plugin.text().prefixed("<" + config.color() + ">換到" + ItemRenderer.escape(zone.name()) + "<gray>：" + ItemRenderer.escape(zone.description())));
+        player.playSound(player.getLocation(), Sound.ENTITY_BOAT_PADDLE_WATER, 1f, 1f);
+        return null;
     }
 
     /** 這個人的筏（分過的；沒分過 -1）。 */
@@ -947,6 +1028,29 @@ public final class LifeService {
         profile.currencyCount = (int) parseLong(currency[1]);
         profile.letters = parseLong(value(player, LETTERS));
         profile.whaleKills = (int) parseLong(value(player, WHALE));
+        // 2026-10-23
+        profile.dex.putAll(LifeExtras.decodeDex(value(player, DEX)));
+        final String zone = value(player, ZONE);
+        profile.zone = zone == null || zone.isBlank() ? LifeConfig.DEFAULT_ZONE : zone.trim();
+        final String bed = value(player, BED);
+        profile.bedDay = bed == null ? "" : bed.trim();
+        final String[] orders = split(value(player, ORDERS));
+        profile.ordersDay = orders[0];
+        profile.ordersDone = (int) parseLong(orders[1]);
+        final String[] likes = split(value(player, LIKES));
+        profile.likesDay = likes[0];
+        final String[] likeBits = likes[1].split(":");
+        profile.likesCount = (int) parseLong(likeBits[0]);
+        if (likeBits.length > 1) {
+            for (final String plotText : likeBits[1].split(",")) {
+                if (!plotText.isBlank()) {
+                    profile.likedPlots.add((int) parseLong(plotText));
+                }
+            }
+        }
+        profile.kingKills = (int) parseLong(value(player, KING));
+        final String champ = value(player, CHAMP);
+        profile.champWeek = champ == null ? "" : champ.trim();
         for (final String id : config.materials().keySet()) {
             final long count = parseLong(value(player, MATERIAL + id));
             if (count > 0) {
@@ -956,6 +1060,7 @@ public final class LifeService {
         reconcilePots(player, profile); // 2026-10-18
         profiles.put(player.getUniqueId(), profile);
         rememberLevel(profile);
+        extras.claimAward(player); // 2026-10-23：釣魚大賽的獎
         return profile;
     }
 
@@ -1028,6 +1133,18 @@ public final class LifeService {
         values.put(CURRENCY, profile.currencyDay + ":" + profile.currencyCount);
         values.put(LETTERS, profile.letters == 0 ? null : String.valueOf(profile.letters));
         values.put(WHALE, profile.whaleKills == 0 ? null : String.valueOf(profile.whaleKills));
+        // 2026-10-23
+        values.put(DEX, LifeExtras.encodeDex(profile.dex));
+        values.put(ZONE, LifeConfig.DEFAULT_ZONE.equals(profile.zone) ? null : profile.zone);
+        values.put(BED, profile.bedDay.isEmpty() ? null : profile.bedDay);
+        values.put(ORDERS, profile.ordersDay.isEmpty() ? null : profile.ordersDay + ":" + profile.ordersDone);
+        final StringBuilder liked = new StringBuilder();
+        for (final int plot : profile.likedPlots) {
+            liked.append(liked.isEmpty() ? "" : ",").append(plot);
+        }
+        values.put(LIKES, profile.likesDay.isEmpty() ? null : profile.likesDay + ":" + profile.likesCount + ":" + liked);
+        values.put(KING, profile.kingKills == 0 ? null : String.valueOf(profile.kingKills));
+        values.put(CHAMP, profile.champWeek.isEmpty() ? null : profile.champWeek);
         for (final String id : config.materials().keySet()) {
             final int count = profile.materials.getOrDefault(id, 0);
             values.put(MATERIAL + id, count > 0 ? String.valueOf(count) : null);
@@ -1041,6 +1158,8 @@ public final class LifeService {
         }
         saveNets();
         savePots(); // 2026-10-18
+        extras.saveTraps(); // 2026-10-23
+        extras.settleIfNewWeek();
     }
 
     // ---- 盆被誰種了（2026-10-18）----
@@ -1490,6 +1609,9 @@ public final class LifeService {
         if (config.whale() != null) {
             out.add(new String[] {"horn", "道具・" + config.whale().hornName()});
         }
+        if (config.sharkKing() != null) {
+            out.add(new String[] {"bait", "道具・" + config.sharkKing().baitName()}); // 2026-10-23
+        }
         return out;
     }
 
@@ -1509,6 +1631,9 @@ public final class LifeService {
         if (ref.startsWith("food:")) {
             final LifeConfig.Food food = config.foods().get(ref.substring(5));
             return food == null ? null : food.name();
+        }
+        if ("bait".equals(ref) && config.sharkKing() != null) {
+            return config.sharkKing().baitName();
         }
         return "horn".equals(ref) && config.whale() != null ? config.whale().hornName() : null;
     }
@@ -1535,6 +1660,7 @@ public final class LifeService {
         while (left > 0) {
             final ItemStack one = ref.startsWith("item:") ? raftItem(config.items().get(ref.substring(5)), 1)
                     : ref.startsWith("food:") ? foodItem(config.foods().get(ref.substring(5)), 1)
+                    : "bait".equals(ref) ? extras.baitItem(1)
                     : whale.hornItem(1);
             final int stack = Math.min(left, Math.max(1, one.getMaxStackSize()));
             one.setAmount(stack);
@@ -1593,7 +1719,8 @@ public final class LifeService {
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.3f);
             player.sendMessage(plugin.text().prefixed("<" + config.color() + ">生活等級 " + after + "！<gray>精力上限 "
                     + config.staminaMax(after) + (afterSize > beforeSize ? "，木筏可以蓋到 " + afterSize + "×" + afterSize : "")));
-            if (before < LifeModule.WANDERER_LEVEL && after >= LifeModule.WANDERER_LEVEL) {
+            if (before < LifeModule.WANDERER_LEVEL && after >= LifeModule.WANDERER_LEVEL
+                    || before < LifeModule.MASTER_LEVEL && after >= LifeModule.MASTER_LEVEL) { // 2026-10-23：80 級「星海船長」
                 // 稱號「星海旅人」：從帳號進度算，馬上寫回去、重算屬性
                 flush(player);
                 plugin.players().markDirty(player);
@@ -1719,8 +1846,21 @@ public final class LifeService {
                 return "材料不夠：" + materialName(cost.getKey()) + " 要 " + need + "，你有 " + profile.materials.getOrDefault(cost.getKey(), 0);
             }
         }
+        if (recipe.currency() != null) {
+            // 2026-10-23：做通貨佔每天海上通貨的額度（跟瓶中信、寶箱共用）：先看額度夠不夠
+            final String today = config.day(System.currentTimeMillis());
+            final int used = today.equals(profile.currencyDay) ? profile.currencyCount : 0;
+            if (used + recipe.amount() * count > config.bottleDailyCurrency()) {
+                return "今天從海上拿通貨的額度不夠（每天 " + config.bottleDailyCurrency() + " 顆，已用 " + used + "）";
+            }
+        }
         if (!spendStamina(player, profile, recipe.stamina() * count)) {
             return "精力不夠（要 " + recipe.stamina() * count + "，剩 " + stamina(player) + "）";
+        }
+        if (recipe.currency() != null) {
+            for (int i = 0; i < recipe.amount() * count; i++) {
+                takeCurrencyQuota(profile);
+            }
         }
         for (final Map.Entry<String, Integer> cost : recipe.cost().entrySet()) {
             profile.materials.merge(cost.getKey(), -cost.getValue() * count, Integer::sum);
@@ -1735,6 +1875,10 @@ public final class LifeService {
                     + "<gray>：撈得到 " + trim(config.hook(profile.hook).range()) + " 格內的東西"));
         } else if (recipe.food() != null) {
             giveItem(player, foodItem(config.foods().get(recipe.food()), recipe.amount() * count));
+        } else if (recipe.currency() != null) {
+            giveCurrency(player, recipe.currency(), recipe.amount() * count); // 2026-10-23（額度在上面扣過了）
+        } else if (recipe.tool() != null) {
+            giveItem(player, extras.baitItem(recipe.amount() * count)); // 2026-10-23：現在只有鯊王血餌
         } else {
             final LifeConfig.Item item = config.items().get(recipe.item());
             giveItem(player, raftItem(item, recipe.amount() * count));
@@ -1829,6 +1973,7 @@ public final class LifeService {
                 it.remove();
             }
         }
+        extras.tickKings(); // 2026-10-23
         if (tickCount % 5 == 0) {
             whale.tick(); // 淵鯨（每 10 tick）
         }
@@ -1847,8 +1992,11 @@ public final class LifeService {
         // 生成
         if (--session.nextSpawn <= 0 && session.drifts.size() < config.maxDrifts()) {
             final double[] seconds = config.spawnSeconds();
-            session.nextSpawn = (int) Math.round((seconds[0] + random.nextDouble() * (seconds[1] - seconds[0])) * 10 / islands.driftFactor(player)); // 每 2 tick 一次 → ×10
-            final LifeConfig.Drift type = config.rollDrift(random.nextDouble(), "star_shard", islands.starShardBoost(player)); // 星潮：星骸碎片大量漂來
+            // 2026-10-23：海象、筏燈（晚上）、船帆、海域都影響漂流物（海域照筏主選的）
+            final double factor = islands.driftFactor(player) * extras.raftDrift(plot, night(), tickCount);
+            session.nextSpawn = (int) Math.round((seconds[0] + random.nextDouble() * (seconds[1] - seconds[0])) * 10 / factor); // 每 2 tick 一次 → ×10
+            final LifeConfig.Drift type = config.rollDrift(random.nextDouble(),
+                    LifeConfig.combine(islands.driftBoost(player), config.zone(zoneOf(plot)).boost())); // 星潮：星骸碎片大量漂來；海域
             final double x = center[0] + lane + 16;
             final double z = center[1] + (random.nextDouble() * 2 - 1) * lane;
             final double y = config.seaLevel() + 0.75;
@@ -1995,6 +2143,7 @@ public final class LifeService {
             if (got.isEmpty()) {
                 got.append("一封瓶中信");
             }
+            extras.rollTreasureMap(player, profile, false); // 2026-10-23
         } else if (type.crate()) {
             final int rolls = type.rolls()[0] + random.nextInt(Math.max(1, type.rolls()[1] - type.rolls()[0] + 1));
             final Map<String, Integer> sum = new LinkedHashMap<>();
@@ -2016,6 +2165,7 @@ public final class LifeService {
                 got.append(got.isEmpty() ? "漂流箱：" : "、").append(materialName(entry.getKey())).append(" +").append(entry.getValue());
             }
             player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 0.8f, 1.1f);
+            extras.rollTreasureMap(player, profile, true); // 2026-10-23
         } else {
             final boolean doubled = !fromNet && random.nextDouble() < config.hook(profile.hook).doubleChance();
             for (final Map.Entry<String, int[]> give : type.gives().entrySet()) {
@@ -2034,6 +2184,18 @@ public final class LifeService {
             }
         }
         addXp(player, profile, fromNet ? Math.max(1, type.xp() / 2) : type.xp());
+        if (!fromNet && config.crewXp() > 0) {
+            // 2026-10-23：同一塊筏上的其他人分到一部分生活經驗（一起玩）
+            final int share = (int) Math.round(type.xp() * config.crewXp());
+            if (share > 0) {
+                for (final Player other : crewOn(activePlot(player))) {
+                    final Profile theirs = other.equals(player) ? null : profiles.get(other.getUniqueId());
+                    if (theirs != null) {
+                        addXp(other, theirs, share);
+                    }
+                }
+            }
+        }
         if (!fromNet) {
             bar(player, "<" + config.color() + ">" + ItemRenderer.escape(got.toString())
                     + " <dark_gray>｜ <gray>精力 " + stamina(player), CATCH_TICKS);
@@ -2180,7 +2342,26 @@ public final class LifeService {
         if (world.getBlockAt(block.getX(), sea, block.getZ()).getType() != floorBlock()) {
             return "下面要有筏地板";
         }
+        if ("fish_trap".equals(item.station())) {
+            final String full = extras.canPlaceTrap(plot, tickCount); // 2026-10-23
+            if (full != null) {
+                return full;
+            }
+        }
         return null;
+    }
+
+    /** 2026-10-23：方塊放好了（LifeModule，事件沒被取消）：魚籠開始計時、筏上的設施重掃。 */
+    void placed(final Block block, final ItemStack hand) {
+        final LifeConfig.Item item = config.items().get(itemId(hand));
+        if (item == null) {
+            return;
+        }
+        if ("fish_trap".equals(item.station())) {
+            extras.trapPlaced(block);
+        } else if (item.station() != null || "raft_lamp".equals(item.id())) {
+            extras.forgetScan(plotAt(block.getX(), block.getZ()));
+        }
     }
 
     /** 拆方塊（LifeModule）；回傳問題（要取消），可以拆 null（拆下來的東西還給他）。 */
@@ -2217,6 +2398,11 @@ public final class LifeService {
         }
         giveItem(player, raftItem(item, count));
         clearPot(block); // 2026-10-18：下線的人種的也不算了（全域紀錄）
+        if ("fish_trap".equals(item.station())) {
+            extras.trapRemoved(block); // 2026-10-23（裡面的魚不給）
+        } else {
+            extras.forgetScan(plot);
+        }
         // 盆裡的作物（誰種的都清：共用成員種的也是）
         final String cropKey = key(block.getX(), block.getY(), block.getZ());
         boolean cropGone = false;
@@ -2320,9 +2506,12 @@ public final class LifeService {
             bar(player, ("<gray>收線了（太早了）"));
             return;
         }
-        final long time = world.getTime();
-        final boolean night = time >= 13_000 && time <= 23_000;
-        final String fish = config.rollFish(config.levelOf(profile.xp), night, random.nextDouble());
+        final boolean night = night();
+        // 2026-10-23：海象、海域、筏燈（夜光潮等於多兩盞燈）
+        final int plot = activePlot(player);
+        final String weatherId = islands.weatherId(player);
+        final int lamps = extras.scan(plot, tickCount).lamps() + ("glow_tide".equals(weatherId) ? 2 : 0);
+        final String fish = config.rollFish(config.levelOf(profile.xp), night, weatherId, zoneOf(plot), lamps, random.nextDouble());
         if (fish == null) {
             bar(player, "<gray>什麼都沒釣到（這個等級還沒有魚可以釣）"); // 2026-10-18：先抽再扣精力，沒魚不扣
             return;
@@ -2334,7 +2523,11 @@ public final class LifeService {
         feedMaterial(player, fish, 1);
         addXp(player, profile, config.fishing().xp());
         player.playSound(player.getLocation(), Sound.ENTITY_FISHING_BOBBER_RETRIEVE, 0.8f, 1.3f);
-        bar(player, "<#7fd4ff>釣到了 " + ItemRenderer.escape(materialName(fish)) + "！<dark_gray> ｜ <gray>精力 " + stamina(player), CATCH_TICKS);
+        final LifeConfig.Fish def = config.fish(fish);
+        final double size = def == null ? 0 : LifeConfig.fishSize(def, random.nextDouble());
+        bar(player, "<#7fd4ff>釣到了 " + ItemRenderer.escape(materialName(fish)) + (size > 0 ? String.format(Locale.ROOT, "（%.1f 公分）", size) : "")
+                + "！<dark_gray> ｜ <gray>精力 " + stamina(player), CATCH_TICKS);
+        extras.recordDex(player, profile, fish, (int) Math.round(size * 10), 1, true); // 2026-10-23：圖鑑、釣魚大賽
     }
 
     // -- 設施 --
@@ -2345,8 +2538,8 @@ public final class LifeService {
             return false;
         }
         final LifeConfig.Item item = config.itemByBlock(block.getType().name());
-        if (item == null || item.station() == null) {
-            return false;
+        if (item == null || item.station() == null || "lamp".equals(item.station()) || "sail".equals(item.station())) {
+            return false; // 2026-10-23：筏燈、船帆只是有加成的方塊，右鍵不做事
         }
         final Profile profile = profile(player);
         final int plot = plotAt(block.getX(), block.getZ());
@@ -2365,6 +2558,8 @@ public final class LifeService {
             case "grill", "kitchen" -> new LifeCookMenu(plugin, player, this, item.station()).open();
             case "planter_sea", "planter_soil" -> planter(player, profile, block, item.station().equals("planter_sea") ? "sea" : "soil");
             case "helm" -> new LifeVoyageMenu(plugin, player, this).open();
+            case "bed" -> extras.useBed(player, profile);          // 2026-10-23
+            case "fish_trap" -> extras.useTrap(player, profile, block);
             default -> bar(player, ("<gray>" + ItemRenderer.escape(item.description())));
         }
         return true;
@@ -2633,6 +2828,12 @@ public final class LifeService {
         if (recipe.food() != null) {
             final LifeConfig.Food food = config.foods().get(recipe.food());
             return food == null ? recipe.food() : food.name();
+        }
+        if (recipe.currency() != null) {
+            return currencyName(recipe.currency()); // 2026-10-23
+        }
+        if (recipe.tool() != null) {
+            return config.sharkKing() == null ? recipe.tool() : config.sharkKing().baitName();
         }
         if (recipe.hookUpgrade()) {
             return config.hook(recipe.hook()).name();
@@ -2934,7 +3135,7 @@ public final class LifeService {
             final int level = Math.max(1, Math.min(LifeIslands.ISLAND_LEVEL_CAP, plugin.players().get(player).level() - 10));
             plugin.monsters().decorate(shark, level, tw.exilecore.monster.MonsterRarity.MAGIC, List.of());
             plugin.monsters().markSummoned(shark); // 不掉一般的東西、不給經驗（獎勵是鯊魚材料）
-            plugin.monsters().setLifeMultiplier(shark, def.life());
+            plugin.monsters().setLifeMultiplier(shark, def.life() * config.zone(profile.zone).sharkLife()); // 2026-10-23：海域
         } catch (final RuntimeException e) {
             shark.remove();
             return;
@@ -2978,6 +3179,10 @@ public final class LifeService {
             whale.onDeath(entity);
             return;
         }
+        if (tag != null && tag.startsWith("king:")) {
+            extras.onKingDeath(entity, tag); // 2026-10-23
+            return;
+        }
         if (tag == null || !tag.startsWith("shark:")) {
             return;
         }
@@ -2998,8 +3203,10 @@ public final class LifeService {
             return;
         }
         final StringBuilder got = new StringBuilder();
+        final double zoneDrops = config.zone(profile.zone).sharkDrops(); // 2026-10-23：海域
         for (final Map.Entry<String, int[]> drop : def.drops().entrySet()) {
-            final int amount = drop.getValue()[0] + random.nextInt(Math.max(1, drop.getValue()[1] - drop.getValue()[0] + 1));
+            final int rolled = drop.getValue()[0] + random.nextInt(Math.max(1, drop.getValue()[1] - drop.getValue()[0] + 1));
+            final int amount = (int) Math.round(rolled * zoneDrops);
             if (amount > 0) {
                 addMaterial(profile, drop.getKey(), amount);
                 got.append(got.isEmpty() ? "" : "、").append(materialName(drop.getKey())).append(" +").append(amount);
@@ -3142,6 +3349,7 @@ public final class LifeService {
     void shutdown() {
         islands.shutdown();
         whale.shutdown();
+        extras.shutdown(); // 2026-10-23
         flushAll();
         for (final Session session : sessions.values()) {
             clearSession(session);

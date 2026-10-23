@@ -2223,7 +2223,7 @@ public final class MapService {
         }
         instance.visitors().add(player.getUniqueId());
         remember(player, instance);
-        final Location target = instance.at(instance.layout().entrance(), -90f);
+        final Location target = instance.at(instance.layout().entrance(), instance.layout().entranceYaw());
         player.teleport(target);
         gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
         plugin.players().markDirty(player); // 地圖詞綴（玩家的抗性、回復）
@@ -3585,7 +3585,7 @@ public final class MapService {
     public void adminEnter(final Player player, final MapInstance instance) {
         instance.visitors().add(player.getUniqueId());
         remember(player, instance);
-        player.teleport(instance.at(instance.layout().entrance(), -90f));
+        player.teleport(instance.at(instance.layout().entrance(), instance.layout().entranceYaw()));
         plugin.players().markDirty(player);
         plugin.players().grace().grant(player);
     }

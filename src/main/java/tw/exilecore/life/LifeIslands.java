@@ -202,6 +202,18 @@ final class LifeIslands {
         return weather == null ? 1 : weather.def().starShard();
     }
 
+    /** 2026-10-23：現在的海象給漂流物的權重倍數（星潮的星骸碎片、漩渦的漂流箱、海鳥群的瓶子）。 */
+    Map<String, Double> driftBoost(final Player player) {
+        final ActiveWeather weather = weathers.get(player.getUniqueId());
+        return weather == null ? Map.of() : weather.def().boost();
+    }
+
+    /** 2026-10-23：現在的海象代號（沒有 null）。 */
+    String weatherId(final Player player) {
+        final ActiveWeather weather = weathers.get(player.getUniqueId());
+        return weather == null ? null : weather.def().id();
+    }
+
     /** 暴風：攔截網攔不到東西。 */
     boolean storm(final Player player) {
         final ActiveWeather weather = weathers.get(player.getUniqueId());
@@ -267,13 +279,26 @@ final class LifeIslands {
         if (busyByOthers(plot, player.getUniqueId())) {
             return "這塊筏上別人開的島還沒打完（等他們打完、或島漂走）"; // 2026-10-17：以前會直接把別人正在打的島收掉
         }
+        if (service.extras().kingOn(plot)) {
+            return "鯊王還在，先打完"; // 2026-10-23
+        }
         final int[] center = service.plotCenter(plot);
         if (!hasSail(center, config().raftSize(service.plotLevel(plot)))) {
             return "筏上要有一面船帆";
         }
+        for (final Map.Entry<String, Integer> need : def.needs().entrySet()) { // 2026-10-23：藏寶圖
+            if (profile.materials.getOrDefault(need.getKey(), 0) < need.getValue()) {
+                return "要 " + service.materialName(need.getKey()) + " ×" + need.getValue();
+            }
+        }
         if (!service.spendStamina(player, profile, def.stamina())) {
             return "精力不夠（要 " + def.stamina() + "）";
         }
+        for (final Map.Entry<String, Integer> need : def.needs().entrySet()) {
+            profile.materials.merge(need.getKey(), -need.getValue(), Integer::sum);
+        }
+        profile.materials.values().removeIf(count -> count <= 0);
+        profile.dirty = true;
         // 這塊筏上的島（自己的、別人開的）先收掉：同一個位置
         for (final java.util.Iterator<Map.Entry<UUID, Island>> it = islands.entrySet().iterator(); it.hasNext(); ) {
             final Island old = it.next().getValue();
@@ -340,6 +365,9 @@ final class LifeIslands {
                 switch (active.def().id()) {
                     case "fog" -> player.spawnParticle(Particle.CLOUD, at.clone().add(0, 1, 0), 30, 8, 1.5, 8, 0);
                     case "star_tide" -> player.spawnParticle(Particle.END_ROD, at.clone().add(0, 0.5, 0), 20, 10, 0.3, 10, 0.01);
+                    case "glow_tide" -> player.spawnParticle(Particle.GLOW, at.clone().add(0, 0.2, 0), 25, 10, 0.2, 10, 0); // 2026-10-23
+                    case "whirlpool" -> player.spawnParticle(Particle.BUBBLE_COLUMN_UP, at.clone().add(6, -0.3, 0), 20, 2, 0.2, 2, 0.05);
+                    case "seabirds" -> player.spawnParticle(Particle.CLOUD, at.clone().add(0, 6, 0), 6, 6, 1, 6, 0);
                     default -> {
                     }
                 }
@@ -355,7 +383,7 @@ final class LifeIslands {
             return;
         }
         nextWeather.remove(id);
-        final LifeConfig.Weather def = config().rollWeather(random.nextDouble());
+        final LifeConfig.Weather def = config().rollWeather(random.nextDouble(), service.night()); // 2026-10-23：夜光潮只在晚上
         if (def == null) {
             return;
         }
@@ -364,12 +392,12 @@ final class LifeIslands {
             player.setPlayerWeather(WeatherType.DOWNFALL);
         }
         player.showTitle(Title.title(plugin.text().parse("<#bfe6ff>" + ItemRenderer.escape(def.name())),
-                plugin.text().parse("<gray>" + switch (def.id()) {
+                plugin.text().parse("<gray>" + (!def.description().isBlank() ? ItemRenderer.escape(def.description()) : switch (def.id()) {
                     case "fog" -> "霧裡漂來的東西變多了";
                     case "storm" -> "風浪太大，攔截網攔不住東西";
                     case "star_tide" -> "星骸碎片大量漂來";
                     default -> config().name();
-                }), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(1800), Duration.ofMillis(500))));
+                })), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(1800), Duration.ofMillis(500))));
     }
 
     /** 離開筏（下線、傳走）：自己開的島清掉、航行取消、天氣恢復；跟別人來的就只是不跟了。 */
@@ -436,7 +464,7 @@ final class LifeIslands {
         }
         LifeService.holdChunks(plugin, world(), island.cx, island.cz, RADIUS, true); // 島存在的時候區塊不卸載（怪不會被收掉）
         clearRegion(island);
-        switch (def.id()) {
+        switch (def.shape()) { // 2026-10-23：照形狀蓋（新的島沿用舊的形狀）
             case "reef" -> buildReef(island);
             case "ruin" -> buildRuin(island);
             case "wreck" -> buildWreck(island);
@@ -444,14 +472,14 @@ final class LifeIslands {
         }
         islands.put(player.getUniqueId(), island);
         final int level = islandLevel(player);
-        if (!"ruin".equals(def.id())) {
+        if (!"ruin".equals(def.shape())) {
             spawnWave(island, level);
         }
-        if ("wreck".equals(def.id())) {
+        if ("wreck".equals(def.shape())) {
             spawnCaptain(island, level, new Location(world(), island.cx - 1.5, config().seaLevel() + 3, island.cz + 0.5)); // 桅杆旁邊
         }
         // 送上島（西邊的岸上，面向東）；回筏：選單「前往我的木筏」
-        final double landing = switch (def.id()) {
+        final double landing = switch (def.shape()) {
             case "reef" -> 4;
             case "wreck" -> 7.5;
             case "atoll" -> 12;
@@ -471,7 +499,10 @@ final class LifeIslands {
     }
 
     private static String hint(final LifeConfig.Island def) {
-        return switch (def.id()) {
+        if (def.count()[1] <= 0 && def.captain() == null) {
+            return "沒有守衛：寶箱在水底的珊瑚旁邊，直接拿"; // 2026-10-23：補給島
+        }
+        return switch (def.shape()) {
             case "reef" -> "寶箱在水底的珊瑚旁邊，先打倒沉溺者";
             case "ruin" -> "右鍵點亮四根星柱（每根都會叫出守衛），中間的寶箱就會打開";
             case "wreck" -> "打倒船員和幽靈船長，船艙裡的寶箱就能開";
@@ -520,7 +551,7 @@ final class LifeIslands {
             }
         }
         // 環礁：第一波清完來第二波，第二波清完守衛出來
-        if ("atoll".equals(island.def.id()) && island.mobs.isEmpty() && !island.captainOut) {
+        if ("atoll".equals(island.def.shape()) && island.mobs.isEmpty() && !island.captainOut) {
             final int level = islandLevel(player);
             if (island.wave < 2) {
                 spawnWave(island, level);
@@ -529,7 +560,7 @@ final class LifeIslands {
                 spawnCaptain(island, level, new Location(world(), island.cx + 0.5, config().seaLevel() + 2, island.cz + 0.5));
             }
         }
-        if ("atoll".equals(island.def.id()) && island.captainOut && island.mobs.isEmpty() && island.chests.isEmpty() && !island.done) {
+        if ("atoll".equals(island.def.shape()) && island.captainOut && island.mobs.isEmpty() && island.chests.isEmpty() && !island.done) {
             final Location chest = new Location(world(), island.cx, config().seaLevel() + 2, island.cz);
             place(chest.getBlock(), Material.CHEST.createBlockData());
             island.chests.add(LifeService.key(chest.getBlockX(), chest.getBlockY(), chest.getBlockZ()));
@@ -554,12 +585,13 @@ final class LifeIslands {
             final MonsterRarity rarity = i < def.rare() ? MonsterRarity.RARE : i < def.rare() + def.magic() ? MonsterRarity.MAGIC : MonsterRarity.NORMAL;
             final double angle = random.nextDouble() * Math.PI * 2;
             final boolean guardian = "GUARDIAN".equals(typeName);
-            final double distance = "reef".equals(def.id()) ? 9 + random.nextDouble() * 2
-                    : "atoll".equals(def.id()) ? (guardian ? 5 + random.nextDouble() * 3 : 12)
-                    : "wreck".equals(def.id()) ? 7 + random.nextDouble() // 船身外面的沙灘上（船身最遠 6.3 格），不會卡在甲板裡
+            final boolean swimmer = "DOLPHIN".equals(typeName); // 2026-10-23：鯊巢礁的渦齒鯊在潟湖裡
+            final double distance = "reef".equals(def.shape()) ? 9 + random.nextDouble() * 2
+                    : "atoll".equals(def.shape()) ? (guardian || swimmer ? 5 + random.nextDouble() * 3 : 12)
+                    : "wreck".equals(def.shape()) ? 7 + random.nextDouble() // 船身外面的沙灘上（船身最遠 6.3 格），不會卡在甲板裡
                     : 2 + random.nextDouble() * 5;
             // 珊瑚礁的沉溺者在水裡；環礁的守護者在中間的潟湖
-            final boolean inWater = "reef".equals(def.id()) && "DROWNED".equals(typeName) || "atoll".equals(def.id()) && guardian;
+            final boolean inWater = "reef".equals(def.shape()) && "DROWNED".equals(typeName) || "atoll".equals(def.shape()) && (guardian || swimmer);
             final double y = inWater ? config().seaLevel() - 1.5 : config().seaLevel() + 2.2;
             final Location at = new Location(world(), island.cx + 0.5 + Math.cos(angle) * distance, y, island.cz + 0.5 + Math.sin(angle) * distance);
             final LivingEntity mob = spawn(typeName, at);
@@ -571,6 +603,10 @@ final class LifeIslands {
             } catch (final RuntimeException e) {
                 mob.remove();
                 continue;
+            }
+            if (swimmer) {
+                mob.customName(plugin.text().parse("<#ff6b6b>渦齒鯊"));
+                mob.setCustomNameVisible(true);
             }
             tag(mob, island);
             island.mobs.add(mob.getUniqueId());
@@ -723,7 +759,7 @@ final class LifeIslands {
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>先清掉守衛（還有 " + island.mobs.size() + " 隻）"));
             return true;
         }
-        if ("ruin".equals(island.def.id()) && island.lit < 4) {
+        if ("ruin".equals(island.def.shape()) && island.lit < 4) {
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>四根星柱還沒全部點亮（" + island.lit + "／4）"));
             return true;
         }
@@ -737,7 +773,7 @@ final class LifeIslands {
         for (final Player member : crew) {
             openChest(member, island);
         }
-        if (island.chests.isEmpty() && (!"atoll".equals(island.def.id()) || island.captainOut)) {
+        if (island.chests.isEmpty() && (!"atoll".equals(island.def.shape()) || island.captainOut)) {
             island.done = true;
             for (final Player member : crew) {
                 final LifeService.Profile profile = service.profile(member);

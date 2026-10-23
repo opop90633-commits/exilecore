@@ -54,7 +54,25 @@ public final class LifeConfig {
                        Map<String, int[]> harvest, int[] seedsBack, String sprout, String ripe, int xp, int level) {
     }
 
-    public record Fish(String material, double weight, int level, double nightWeight) {
+    /**
+     * 一種魚。2026-10-23：size 長度範圍（公分，圖鑑、釣魚大賽用）；weather 只在這種海象釣得到（null = 都可以）；
+     * zones 只在這些海域釣得到（空的 = 都可以）。
+     */
+    public record Fish(String material, double weight, int level, double nightWeight, int[] size, String weather, List<String> zones) {
+        public Fish(final String material, final double weight, final int level, final double nightWeight) {
+            this(material, weight, level, nightWeight, new int[] {20, 50}, null, List.of());
+        }
+
+        /** 這個時間、海象、海域釣不釣得到（不看等級）。 */
+        public boolean available(final boolean night, final String weatherId, final String zoneId) {
+            if (weather != null && !weather.equals(weatherId)) {
+                return false;
+            }
+            if (!zones.isEmpty() && !zones.contains(zoneId == null ? "" : zoneId)) {
+                return false;
+            }
+            return (night ? nightWeight : weight) > 0;
+        }
     }
 
     public record Fishing(double[] waitSeconds, int biteTicks, int stamina, int xp, List<Fish> fish) {
@@ -67,9 +85,17 @@ public final class LifeConfig {
                         Map<String, int[]> drops, int xp) {
     }
 
-    /** item（筏的方塊、設施）、hook（升級星索鉤）、food（料理，要在 station 做）三選一；research 要先研究。 */
+    /**
+     * item（筏的方塊、設施）、hook（升級星索鉤）、food（料理，要在 station 做）、currency（通貨，2026-10-23：佔每天海上通貨的額度）、
+     * tool（道具，2026-10-23：鯊王血餌）五選一；research 要先研究。
+     */
     public record Recipe(String id, String item, int hook, String food, int amount, Map<String, Integer> cost, int level, int stamina, int xp,
-                         String research, String station) {
+                         String research, String station, String currency, String tool) {
+        public Recipe(final String id, final String item, final int hook, final String food, final int amount, final Map<String, Integer> cost,
+                      final int level, final int stamina, final int xp, final String research, final String station) {
+            this(id, item, hook, food, amount, cost, level, stamina, xp, research, station, null, null);
+        }
+
         public boolean hookUpgrade() {
             return hook > 0;
         }
@@ -82,13 +108,49 @@ public final class LifeConfig {
     public record Captain(String name, String type, double life, double damage, List<String> skills) {
     }
 
-    /** 小島。 */
+    /**
+     * 小島。2026-10-23：shape 島的形狀（reef、ruin、wreck、atoll；新的島照舊的形狀蓋）；needs 出航要用掉的材料（藏寶圖）；
+     * description 海圖桌上的說明。
+     */
     public record Island(String id, String name, int level, int stamina, int travelSeconds, int minutes, List<String> monsterTypes,
                          int[] count, int magic, int rare, Captain captain, int chests, Map<String, int[]> loot, double currencyChance,
-                         List<String> currencies, double hornShard, boolean letter, int xp) {
+                         List<String> currencies, double hornShard, boolean letter, int xp, String shape, Map<String, Integer> needs,
+                         String description) {
+        public Island(final String id, final String name, final int level, final int stamina, final int travelSeconds, final int minutes,
+                      final List<String> monsterTypes, final int[] count, final int magic, final int rare, final Captain captain, final int chests,
+                      final Map<String, int[]> loot, final double currencyChance, final List<String> currencies, final double hornShard,
+                      final boolean letter, final int xp) {
+            this(id, name, level, stamina, travelSeconds, minutes, monsterTypes, count, magic, rare, captain, chests, loot, currencyChance,
+                    currencies, hornShard, letter, xp, id, Map.of(), "");
+        }
     }
 
-    public record Weather(String id, String name, double weight, int seconds, double drift, double starShard) {
+    /**
+     * 海象。2026-10-23：boost 漂流物的權重倍數（代號 → 倍數；星潮的星骸碎片也寫在這裡）；nightOnly 只在晚上來；
+     * description 來的時候畫面上寫的那一句。
+     */
+    public record Weather(String id, String name, double weight, int seconds, double drift, double starShard, Map<String, Double> boost,
+                          boolean nightOnly, String description) {
+        public Weather(final String id, final String name, final double weight, final int seconds, final double drift, final double starShard) {
+            this(id, name, weight, seconds, drift, starShard, starShard == 1 ? Map.of() : Map.of("star_shard", starShard), false, "");
+        }
+    }
+
+    /** 2026-10-23：海域（海圖桌選）：漂流物的權重倍數、渦齒鯊的生命與掉落倍數；要生活等級 level。 */
+    public record Zone(String id, String name, int level, Map<String, Double> boost, double sharkLife, double sharkDrops, String description) {
+    }
+
+    /** 2026-10-23：營地的生活委託（一張）：kind 是 food（交料理，背包裡的）或 material（交材料，帳號裡的）。 */
+    public record OrderDef(String id, String kind, String need, int[] amount, int level, int xp, long gold) {
+    }
+
+    /** 2026-10-23：釣魚大賽前三名的獎勵。 */
+    public record TournamentReward(int xp, Map<String, Integer> materials) {
+    }
+
+    /** 2026-10-23：渦齒鯊王（拿鯊王血餌在自己的筏上用）。 */
+    public record SharkKing(String name, String baitName, double life, double scale, int fleeSeconds, Map<String, int[]> drops, double hornShard,
+                            double currencyChance, List<String> currencies, int xp) {
     }
 
     public record Title(String id, String name, String color, List<tw.exilecore.stats.Modifier> stats) {
@@ -156,6 +218,28 @@ public final class LifeConfig {
     private List<Weather> weathers = List.of();
     private Map<String, Title> titles = Map.of();
     private Whale whale;
+    // 2026-10-23
+    private Map<String, Zone> zones = Map.of();
+    private int ordersPerDay = 3;
+    private double orderCurrencyChance = 0.25;
+    private List<OrderDef> orders = List.of();
+    private List<TournamentReward> tournamentRewards = List.of();
+    private int dexNewXp = 40;
+    private double treasureFromBottle = 0.1;
+    private double treasureFromCrate = 0.08;
+    private int bedStamina = 20;
+    private double lampDrift = 0.05;
+    private int lampMax = 4;
+    private double lampNightFish = 0.25;
+    private double sailDrift = 0.1;
+    private int trapMinutes = 20;
+    private int trapMax = 6;
+    private int trapPerRaft = 4;
+    private int trapXp = 3;
+    private Map<String, Double> trapFish = Map.of();
+    private int likesPerDay = 3;
+    private double crewXp = 0.3;
+    private SharkKing sharkKing;
 
     public void load(final Path dataFolder) throws IOException {
         final Path file = dataFolder.resolve(FILE);
@@ -215,6 +299,27 @@ public final class LifeConfig {
         weathers = o.weathers;
         titles = o.titles;
         whale = o.whale;
+        zones = o.zones;
+        ordersPerDay = o.ordersPerDay;
+        orderCurrencyChance = o.orderCurrencyChance;
+        orders = o.orders;
+        tournamentRewards = o.tournamentRewards;
+        dexNewXp = o.dexNewXp;
+        treasureFromBottle = o.treasureFromBottle;
+        treasureFromCrate = o.treasureFromCrate;
+        bedStamina = o.bedStamina;
+        lampDrift = o.lampDrift;
+        lampMax = o.lampMax;
+        lampNightFish = o.lampNightFish;
+        sailDrift = o.sailDrift;
+        trapMinutes = o.trapMinutes;
+        trapMax = o.trapMax;
+        trapPerRaft = o.trapPerRaft;
+        trapXp = o.trapXp;
+        trapFish = o.trapFish;
+        likesPerDay = o.likesPerDay;
+        crewXp = o.crewXp;
+        sharkKing = o.sharkKing;
     }
 
     void parse(final YamlNode root) {
@@ -363,8 +468,13 @@ public final class LifeConfig {
             final String item = node.string("item", null);
             final int hook = Math.max(0, node.integer("hook", 0));
             final String food = node.string("food", null);
-            if ((item == null ? 0 : 1) + (hook == 0 ? 0 : 1) + (food == null ? 0 : 1) != 1) {
-                throw new IllegalArgumentException(node.path() + "：配方要寫 item（做出什麼）、hook（升級星索鉤到第幾階）或 food（料理），只能寫一個");
+            final String currencyOut = node.string("currency", null); // 2026-10-23
+            final String tool = node.string("tool", null);            // 2026-10-23
+            if ((item == null ? 0 : 1) + (hook == 0 ? 0 : 1) + (food == null ? 0 : 1) + (currencyOut == null ? 0 : 1) + (tool == null ? 0 : 1) != 1) {
+                throw new IllegalArgumentException(node.path() + "：配方要寫 item（做出什麼）、hook（升級星索鉤到第幾階）、food（料理）、currency（通貨）或 tool（道具），只能寫一個");
+            }
+            if (tool != null && !TOOLS.contains(tool.trim())) {
+                throw new IllegalArgumentException(node.path() + ".tool：要寫 " + String.join("、", TOOLS));
             }
             if (item != null && !itemMap.containsKey(item.trim())) {
                 throw new IllegalArgumentException(node.path() + ".item：items 裡沒有 " + item);
@@ -382,17 +492,22 @@ public final class LifeConfig {
             final String need = node.string("research", "").trim();
             recipeList.add(new Recipe(id, item == null ? null : item.trim(), hook, food == null ? null : food.trim(), Math.max(1, node.integer("amount", 1)),
                     Collections.unmodifiableMap(cost), Math.max(1, node.integer("level", 1)), Math.max(0, node.integer("stamina", 0)),
-                    Math.max(0, node.integer("xp", 0)), need.isEmpty() ? null : need, station.isEmpty() ? null : station));
+                    Math.max(0, node.integer("xp", 0)), need.isEmpty() ? null : need, station.isEmpty() ? null : station,
+                    currencyOut == null ? null : currencyOut.trim(), tool == null ? null : tool.trim()));
         }
         recipes = List.copyOf(recipeList);
 
         parsePhaseTwo(root);
         parsePhaseThree(root);
+        parsePhaseFour(root);
     }
+
+    /** 2026-10-23：配方做得出來的道具。 */
+    public static final List<String> TOOLS = List.of("shark_bait");
 
     /** 設施（items 的 station）。 */
     public static final List<String> STATIONS = List.of("research", "purifier", "grill", "kitchen", "planter_sea", "planter_soil", "sprinkler",
-            "helm", "sail");
+            "helm", "sail", "lamp", "bed", "fish_trap"); // 2026-10-23：筏燈、吊床、魚籠
 
     /** 料理、研究、作物、釣魚、淨水、渦齒鯊、喝水。 */
     private void parsePhaseTwo(final YamlNode root) {
@@ -446,8 +561,16 @@ public final class LifeConfig {
         final YamlNode fi = root.node("fishing");
         final List<Fish> fishList = new ArrayList<>();
         for (final YamlNode node : fi.list("fish")) {
+            final int[] size = node.has("size") ? node.range("size") : new int[] {20, 50};
+            final List<String> fishZones = new ArrayList<>();
+            for (final String zone : node.strings("zones")) {
+                fishZones.add(zone.trim());
+            }
+            final String weatherOnly = node.string("weather", "").trim();
             fishList.add(new Fish(node.requireString("material").trim(), Math.max(0, node.decimal("weight", 1)), Math.max(1, node.integer("level", 1)),
-                    Math.max(0, node.decimal("night_weight", node.decimal("weight", 1)))));
+                    Math.max(0, node.decimal("night_weight", node.decimal("weight", 1))),
+                    new int[] {Math.max(1, size[0]), Math.max(Math.max(1, size[0]), size[1])}, weatherOnly.isEmpty() ? null : weatherOnly,
+                    List.copyOf(fishZones)));
         }
         double[] wait = {3, 8};
         if (fi.has("wait_seconds")) {
@@ -489,10 +612,16 @@ public final class LifeConfig {
         final Map<String, Island> islandMap = new LinkedHashMap<>();
         final YamlNode is = root.node("islands");
         for (final String id : is.keys()) {
-            if (!ISLAND_KINDS.contains(id)) {
-                throw new IllegalArgumentException(is.path() + "." + id + "：小島只有 " + String.join("、", ISLAND_KINDS) + "（形狀寫在程式裡）");
-            }
             final YamlNode node = is.node(id);
+            final String shape = node.string("shape", id).trim(); // 2026-10-23：新的島照舊的形狀蓋
+            if (!ISLAND_KINDS.contains(shape)) {
+                throw new IllegalArgumentException(is.path() + "." + id + "：島的形狀只有 " + String.join("、", ISLAND_KINDS) + "（寫在 shape；形狀寫在程式裡）");
+            }
+            final Map<String, Integer> islandNeeds = new LinkedHashMap<>();
+            final YamlNode needNode = node.node("needs");
+            for (final String mat : needNode.keys()) {
+                islandNeeds.put(mat, Math.max(1, needNode.integer(mat, 1)));
+            }
             final YamlNode m = node.node("monsters");
             final List<String> types = new ArrayList<>();
             for (final String type : m.strings("types")) {
@@ -519,7 +648,8 @@ public final class LifeConfig {
                     List.copyOf(types), m.has("count") ? m.range("count") : new int[] {4, 6}, Math.max(0, m.integer("magic", 1)),
                     Math.max(0, m.integer("rare", 0)), captain, Math.max(0, node.integer("chests", 1)), Collections.unmodifiableMap(loot),
                     Math.max(0, Math.min(1, cur.decimal("chance", 0))), List.copyOf(cur.strings("ids")),
-                    Math.max(0, Math.min(1, node.decimal("horn_shard", 0))), node.bool("letter", false), Math.max(0, node.integer("xp", 40))));
+                    Math.max(0, Math.min(1, node.decimal("horn_shard", 0))), node.bool("letter", false), Math.max(0, node.integer("xp", 40)),
+                    shape, Collections.unmodifiableMap(islandNeeds), node.string("description", "").trim()));
         }
         islands = Collections.unmodifiableMap(islandMap);
 
@@ -527,8 +657,14 @@ public final class LifeConfig {
         weatherInterval = w.has("interval_seconds") ? w.range("interval_seconds") : new int[] {600, 900};
         final List<Weather> list = new ArrayList<>();
         for (final YamlNode node : w.list("events")) {
+            final double star = Math.max(0, node.decimal("star_shard", 1));
+            final Map<String, Double> boost = new LinkedHashMap<>(boosts(node.node("boost")));
+            if (star != 1) {
+                boost.putIfAbsent("star_shard", star);
+            }
             list.add(new Weather(node.requireString("id").trim(), node.requireString("name").trim(), Math.max(0, node.decimal("weight", 1)),
-                    Math.max(10, node.integer("seconds", 120)), Math.max(0, node.decimal("drift", 1)), Math.max(0, node.decimal("star_shard", 1))));
+                    Math.max(10, node.integer("seconds", 120)), Math.max(0, node.decimal("drift", 1)), star, Collections.unmodifiableMap(boost),
+                    node.bool("night_only", false), node.string("description", "").trim()));
         }
         weathers = List.copyOf(list);
 
@@ -588,6 +724,112 @@ public final class LifeConfig {
                     List.copyOf(tw.exilecore.skill.BossSkillUse.parseList(wh, "skills")), List.copyOf(hazards), List.copyOf(phases), List.copyOf(drops));
         }
     }
+
+    private static Map<String, Double> boosts(final YamlNode node) {
+        final Map<String, Double> map = new LinkedHashMap<>();
+        for (final String key : node.keys()) {
+            map.put(key, Math.max(0, node.decimal(key, 1)));
+        }
+        return map;
+    }
+
+    private static Map<String, int[]> ranges(final YamlNode node) {
+        final Map<String, int[]> map = new LinkedHashMap<>();
+        for (final String key : node.keys()) {
+            final int[] r = node.range(key);
+            map.put(key, new int[] {Math.max(0, r[0]), Math.max(Math.max(0, r[0]), r[1])});
+        }
+        return Collections.unmodifiableMap(map);
+    }
+
+    private static Map<String, Integer> counts(final YamlNode node) {
+        final Map<String, Integer> map = new LinkedHashMap<>();
+        for (final String key : node.keys()) {
+            map.put(key, Math.max(1, node.integer(key, 1)));
+        }
+        return Collections.unmodifiableMap(map);
+    }
+
+    /** 2026-10-23：海域、生活委託、圖鑑、釣魚大賽、藏寶圖、筏的設施、魚籠、按讚、渦齒鯊王。 */
+    private void parsePhaseFour(final YamlNode root) {
+        final Map<String, Zone> zoneMap = new LinkedHashMap<>();
+        final YamlNode z = root.node("zones");
+        for (final String id : z.keys()) {
+            final YamlNode node = z.node(id);
+            zoneMap.put(id, new Zone(id, node.requireString("name").trim(), Math.max(1, node.integer("level", 1)),
+                    Collections.unmodifiableMap(boosts(node.node("boost"))), Math.max(0.1, node.decimal("shark_life", 1)),
+                    Math.max(0, node.decimal("shark_drops", 1)), node.string("description", "").trim()));
+        }
+        if (!zoneMap.isEmpty() && !zoneMap.containsKey(DEFAULT_ZONE)) {
+            throw new IllegalArgumentException("zones：要有 " + DEFAULT_ZONE + "（一開始的海域）");
+        }
+        zones = Collections.unmodifiableMap(zoneMap);
+
+        final YamlNode o = root.node("orders");
+        ordersPerDay = Math.max(0, Math.min(6, o.integer("per_day", ordersPerDay)));
+        orderCurrencyChance = Math.max(0, Math.min(1, o.decimal("currency_chance", orderCurrencyChance)));
+        final List<OrderDef> orderList = new ArrayList<>();
+        final java.util.Set<String> orderIds = new java.util.HashSet<>();
+        for (final YamlNode node : o.list("pool")) {
+            final String id = node.requireString("id").trim();
+            if (!orderIds.add(id)) {
+                throw new IllegalArgumentException(node.path() + ".id：重複的 " + id);
+            }
+            final String kind = node.string("kind", "material").trim();
+            if (!kind.equals("food") && !kind.equals("material")) {
+                throw new IllegalArgumentException(node.path() + ".kind：要寫 food 或 material");
+            }
+            final int[] amount = node.has("amount") ? node.range("amount") : new int[] {3, 5};
+            orderList.add(new OrderDef(id, kind, node.requireString("need").trim(), new int[] {Math.max(1, amount[0]), Math.max(Math.max(1, amount[0]), amount[1])},
+                    Math.max(1, node.integer("level", 1)), Math.max(0, node.integer("xp", 20)), Math.max(0, (long) node.decimal("gold", 0))));
+        }
+        orders = List.copyOf(orderList);
+
+        final YamlNode t = root.node("tournament");
+        final List<TournamentReward> rewards = new ArrayList<>();
+        for (final YamlNode node : t.list("rewards")) {
+            rewards.add(new TournamentReward(Math.max(0, node.integer("xp", 0)), counts(node.node("materials"))));
+        }
+        tournamentRewards = List.copyOf(rewards);
+
+        dexNewXp = Math.max(0, root.node("dex").integer("new_xp", dexNewXp));
+
+        final YamlNode tr = root.node("treasure");
+        treasureFromBottle = Math.max(0, Math.min(1, tr.decimal("bottle", treasureFromBottle)));
+        treasureFromCrate = Math.max(0, Math.min(1, tr.decimal("crate", treasureFromCrate)));
+
+        final YamlNode raft = root.node("raft_bonus");
+        bedStamina = Math.max(0, raft.node("bed").integer("stamina", bedStamina));
+        final YamlNode lamp = raft.node("lamp");
+        lampDrift = Math.max(0, lamp.decimal("drift", lampDrift));
+        lampMax = Math.max(0, lamp.integer("max", lampMax));
+        lampNightFish = Math.max(0, lamp.decimal("night_fish", lampNightFish));
+        sailDrift = Math.max(0, raft.node("sail").decimal("drift", sailDrift));
+
+        final YamlNode trap = root.node("fish_trap");
+        trapMinutes = Math.max(1, trap.integer("minutes", trapMinutes));
+        trapMax = Math.max(1, trap.integer("max", trapMax));
+        trapPerRaft = Math.max(1, trap.integer("per_raft", trapPerRaft));
+        trapXp = Math.max(0, trap.integer("xp", trapXp));
+        trapFish = Collections.unmodifiableMap(boosts(trap.node("fish")));
+
+        final YamlNode likes = root.node("likes");
+        likesPerDay = Math.max(1, likes.integer("per_day", likesPerDay));
+        crewXp = Math.max(0, Math.min(1, root.node("crew").decimal("xp", crewXp)));
+
+        sharkKing = null;
+        if (root.has("shark_king")) {
+            final YamlNode k = root.node("shark_king");
+            final YamlNode cur = k.node("currency");
+            sharkKing = new SharkKing(k.requireString("name").trim(), k.string("bait", "鯊王血餌").trim(), Math.max(0.1, k.decimal("life", 20)),
+                    Math.max(0.3, k.decimal("scale", 2.4)), Math.max(30, k.integer("flee_seconds", 240)), ranges(k.node("drops")),
+                    Math.max(0, Math.min(1, k.decimal("horn_shard", 0))), Math.max(0, Math.min(1, cur.decimal("chance", 0))),
+                    List.copyOf(cur.strings("ids")), Math.max(0, k.integer("xp", 200)));
+        }
+    }
+
+    /** 一開始的海域。 */
+    public static final String DEFAULT_ZONE = "shallow";
 
     /** 小島的種類（形狀寫在 LifeIslands）。 */
     public static final List<String> ISLAND_KINDS = List.of("reef", "ruin", "wreck", "atoll");
@@ -719,8 +961,84 @@ public final class LifeConfig {
                 }
             }
         }
+        // 2026-10-23
+        for (final Recipe recipe : recipes) {
+            if (recipe.currency() != null && !currencyExists.test(recipe.currency())) {
+                problems.add("recipes." + recipe.id() + ".currency：currencies.yml 沒有 " + recipe.currency());
+            }
+        }
+        for (final Island island : islands.values()) {
+            for (final String mat : island.needs().keySet()) {
+                if (!materials.containsKey(mat)) {
+                    problems.add("islands." + island.id() + ".needs：materials 裡沒有 " + mat);
+                }
+            }
+        }
+        final java.util.Set<String> driftIds = new java.util.HashSet<>();
+        for (final Drift drift : drifts) {
+            driftIds.add(drift.id());
+        }
+        for (final Weather weather : weathers) {
+            for (final String id : weather.boost().keySet()) {
+                if (!driftIds.contains(id)) {
+                    problems.add("weather." + weather.id() + ".boost：漂流物裡沒有 " + id);
+                }
+            }
+        }
+        for (final Zone zone : zones.values()) {
+            for (final String id : zone.boost().keySet()) {
+                if (!driftIds.contains(id)) {
+                    problems.add("zones." + zone.id() + ".boost：漂流物裡沒有 " + id);
+                }
+            }
+        }
+        for (final Fish fish : fishing.fish()) {
+            for (final String zone : fish.zones()) {
+                if (!zones.containsKey(zone)) {
+                    problems.add("fishing.fish." + fish.material() + ".zones：zones 裡沒有 " + zone);
+                }
+            }
+            if (fish.weather() != null && weathers.stream().noneMatch(w -> w.id().equals(fish.weather()))) {
+                problems.add("fishing.fish." + fish.material() + ".weather：weather 裡沒有 " + fish.weather());
+            }
+        }
+        for (final OrderDef order : orders) {
+            if ("food".equals(order.kind()) ? !foods.containsKey(order.need()) : !materials.containsKey(order.need())) {
+                problems.add("orders." + order.id() + ".need：" + ("food".equals(order.kind()) ? "foods" : "materials") + " 裡沒有 " + order.need());
+            }
+        }
+        for (final TournamentReward reward : tournamentRewards) {
+            for (final String mat : reward.materials().keySet()) {
+                if (!materials.containsKey(mat)) {
+                    problems.add("tournament.rewards：materials 裡沒有 " + mat);
+                }
+            }
+        }
+        for (final String fish : trapFish.keySet()) {
+            if (!materials.containsKey(fish)) {
+                problems.add("fish_trap.fish：materials 裡沒有 " + fish);
+            }
+        }
+        if ((treasureFromBottle > 0 || treasureFromCrate > 0) && !materials.containsKey(TREASURE_MAP)) {
+            problems.add("materials：有藏寶圖要有 " + TREASURE_MAP);
+        }
+        if (sharkKing != null) {
+            for (final String mat : sharkKing.drops().keySet()) {
+                if (!materials.containsKey(mat)) {
+                    problems.add("shark_king.drops：materials 裡沒有 " + mat);
+                }
+            }
+            for (final String currency : sharkKing.currencies()) {
+                if (!currencyExists.test(currency)) {
+                    problems.add("shark_king.currency：currencies.yml 沒有 " + currency);
+                }
+            }
+        }
         return problems;
     }
+
+    /** 藏寶圖的材料代號。 */
+    public static final String TREASURE_MAP = "treasure_map";
 
     // ---- 計算 ----
 
@@ -812,6 +1130,95 @@ public final class LifeConfig {
             }
         }
         return drifts.getLast();
+    }
+
+    /** 2026-10-23：抽一個漂流物，boost 是好幾個代號的權重倍數（海象、海域乘在一起）。 */
+    public Drift rollDrift(final double roll, final Map<String, Double> boost) {
+        double total = 0;
+        for (final Drift drift : drifts) {
+            total += drift.weight() * boost.getOrDefault(drift.id(), 1.0);
+        }
+        if (total <= 0) {
+            return drifts.getLast();
+        }
+        double at = roll * total;
+        for (final Drift drift : drifts) {
+            at -= drift.weight() * boost.getOrDefault(drift.id(), 1.0);
+            if (at < 0) {
+                return drift;
+            }
+        }
+        return drifts.getLast();
+    }
+
+    /** 2026-10-23：兩組倍數乘在一起。 */
+    public static Map<String, Double> combine(final Map<String, Double> a, final Map<String, Double> b) {
+        if (a.isEmpty()) {
+            return b;
+        }
+        if (b.isEmpty()) {
+            return a;
+        }
+        final Map<String, Double> out = new LinkedHashMap<>(a);
+        for (final Map.Entry<String, Double> entry : b.entrySet()) {
+            out.merge(entry.getKey(), entry.getValue(), (x, y) -> x * y);
+        }
+        return out;
+    }
+
+    /** 2026-10-23：照權重抽一種海象；白天不抽只在晚上來的。 */
+    public Weather rollWeather(final double roll, final boolean night) {
+        double total = 0;
+        for (final Weather weather : weathers) {
+            if (night || !weather.nightOnly()) {
+                total += weather.weight();
+            }
+        }
+        if (total <= 0) {
+            return null;
+        }
+        double at = roll * total;
+        Weather last = null;
+        for (final Weather weather : weathers) {
+            if (night || !weather.nightOnly()) {
+                last = weather;
+                at -= weather.weight();
+                if (at < 0) {
+                    return weather;
+                }
+            }
+        }
+        return last;
+    }
+
+    /** 2026-10-23：這一週（設定的時區、週一開始）的代號，例如 2026W43（釣魚大賽、人氣榜）。 */
+    public String week(final long millis) {
+        final java.time.LocalDate date = java.time.Instant.ofEpochMilli(millis).atZone(timezone).toLocalDate();
+        return date.get(java.time.temporal.IsoFields.WEEK_BASED_YEAR) + "W" + date.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+    }
+
+    /** 2026-10-23：一張今天的委託（要交幾個）。 */
+    public record OrderToday(OrderDef def, int amount) {
+    }
+
+    /**
+     * 2026-10-23：今天的委託：照「帳號＋日期」決定（同一天打開幾次都一樣），只抽生活等級夠的，不重複。
+     * seed 是帳號 UUID 的雜湊；day 是 {@link #day} 的代號。
+     */
+    public List<OrderToday> ordersFor(final long seed, final String day, final int level) {
+        final List<OrderDef> pool = new ArrayList<>();
+        for (final OrderDef order : orders) {
+            if (level >= order.level()) {
+                pool.add(order);
+            }
+        }
+        final java.util.SplittableRandom rng = new java.util.SplittableRandom(seed * 31 + day.hashCode());
+        final List<OrderToday> out = new ArrayList<>();
+        while (out.size() < ordersPerDay && !pool.isEmpty()) {
+            final OrderDef pick = pool.remove(rng.nextInt(pool.size()));
+            out.add(new OrderToday(pick, pick.amount()[0] + rng.nextInt(pick.amount()[1] - pick.amount()[0] + 1)));
+        }
+        return out;
     }
 
     public Drift rollDrift(final double roll) {
@@ -1016,6 +1423,150 @@ public final class LifeConfig {
 
     public int dailyRestore() {
         return dailyRestore;
+    }
+
+    // ---- 2026-10-23 ----
+
+    public Map<String, Zone> zones() {
+        return zones;
+    }
+
+    /** 海域（沒有這個代號就是一開始的海域；沒寫 zones 是 null）。 */
+    public Zone zone(final String id) {
+        final Zone zone = id == null ? null : zones.get(id);
+        return zone != null ? zone : zones.get(DEFAULT_ZONE);
+    }
+
+    public int ordersPerDay() {
+        return ordersPerDay;
+    }
+
+    public double orderCurrencyChance() {
+        return orderCurrencyChance;
+    }
+
+    public List<OrderDef> orders() {
+        return orders;
+    }
+
+    public List<TournamentReward> tournamentRewards() {
+        return tournamentRewards;
+    }
+
+    public int dexNewXp() {
+        return dexNewXp;
+    }
+
+    public double treasureFromBottle() {
+        return treasureFromBottle;
+    }
+
+    public double treasureFromCrate() {
+        return treasureFromCrate;
+    }
+
+    public int bedStamina() {
+        return bedStamina;
+    }
+
+    public double lampDrift() {
+        return lampDrift;
+    }
+
+    public int lampMax() {
+        return lampMax;
+    }
+
+    public double lampNightFish() {
+        return lampNightFish;
+    }
+
+    public double sailDrift() {
+        return sailDrift;
+    }
+
+    public int trapMinutes() {
+        return trapMinutes;
+    }
+
+    public int trapMax() {
+        return trapMax;
+    }
+
+    public int trapPerRaft() {
+        return trapPerRaft;
+    }
+
+    public int trapXp() {
+        return trapXp;
+    }
+
+    public Map<String, Double> trapFish() {
+        return trapFish;
+    }
+
+    public int likesPerDay() {
+        return likesPerDay;
+    }
+
+    public double crewXp() {
+        return crewXp;
+    }
+
+    public SharkKing sharkKing() {
+        return sharkKing;
+    }
+
+    public Fish fish(final String material) {
+        for (final Fish fish : fishing.fish()) {
+            if (fish.material().equals(material)) {
+                return fish;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 2026-10-23：照權重抽一條魚，看海象和海域；lamps 是筏上的燈（晚上的魚權重多 lampNightFish × 盞數，最多 lampMax 盞）。
+     * 只在晚上釣得到的魚（weight 0、night_weight &gt; 0）算晚上的魚。
+     */
+    public String rollFish(final int level, final boolean night, final String weatherId, final String zoneId, final int lamps, final double roll) {
+        final double lampBoost = night ? 1 + lampNightFish * Math.min(lampMax, Math.max(0, lamps)) : 1;
+        double total = 0;
+        for (final Fish fish : fishing.fish()) {
+            if (level >= fish.level() && fish.available(night, weatherId, zoneId)) {
+                total += fishWeight(fish, night, lampBoost);
+            }
+        }
+        if (total <= 0) {
+            return null;
+        }
+        double at = roll * total;
+        Fish last = null;
+        for (final Fish fish : fishing.fish()) {
+            if (level >= fish.level() && fish.available(night, weatherId, zoneId)) {
+                last = fish;
+                at -= fishWeight(fish, night, lampBoost);
+                if (at < 0) {
+                    return fish.material();
+                }
+            }
+        }
+        return last == null ? null : last.material();
+    }
+
+    private static double fishWeight(final Fish fish, final boolean night, final double lampBoost) {
+        if (!night) {
+            return fish.weight();
+        }
+        return fish.nightWeight() > fish.weight() ? fish.nightWeight() * lampBoost : fish.nightWeight();
+    }
+
+    /** 2026-10-23：魚的長度（公分，一位小數）：roll 0..1，大魚比較少（平方）。 */
+    public static double fishSize(final Fish fish, final double roll) {
+        final double t = roll * roll;
+        final double size = fish.size()[0] + (fish.size()[1] - fish.size()[0]) * t;
+        return Math.round(size * 10) / 10.0;
     }
 
     /** 照權重抽一條魚（level 是生活等級；night 晚上）。 */

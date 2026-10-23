@@ -72,7 +72,7 @@ public final class UniqueUpgrade {
             // 版本一樣（只是數值跑出範圍、或設定檔改了沒加版本）照序號找；版本不同照 legacy 對應表
             final int oldIndex = fromVersion == unique.version() ? index : unique.legacyIndex(fromVersion, index);
             final RolledAffix old = oldIndex <= 0 ? null : previous.get(UniqueItem.AFFIX_PREFIX + unique.id() + "." + oldIndex);
-            if (old != null && fits(tier, old.vars())) {
+            if (old != null && fits(tier, old.vars(), data.corrupted())) {
                 upgraded.add(new RolledAffix(affixId, 1, old.vars()));
             } else {
                 upgraded.add(new RolledAffix(affixId, 1, roll(tier, new SplittableRandom(seed(data, index)))));
@@ -114,7 +114,7 @@ public final class UniqueUpgrade {
         }
         for (int i = 0; i < affixes.size(); i++) {
             final RolledAffix rolled = affixes.get(i);
-            if (!expected.get(i).equals(rolled.id()) || !fits(repository.affix(rolled.id()).tiers().getFirst(), rolled.vars())) {
+            if (!expected.get(i).equals(rolled.id()) || !fits(repository.affix(rolled.id()).tiers().getFirst(), rolled.vars(), data.corrupted())) {
                 return true;
             }
         }
@@ -123,13 +123,29 @@ public final class UniqueUpgrade {
 
     /** 擲出來的變數跟這一階的變數一樣、每個都在範圍裡。 */
     static boolean fits(final AffixTier tier, final Map<String, Integer> vars) {
+        return fits(tier, vars, false);
+    }
+
+    /** 蝕變石對傳奇每條乘的倍數範圍（{@link ItemGenerator#corruptUniqueValues}）。 */
+    static final double CORRUPT_MIN = 0.78;
+    static final double CORRUPT_MAX = 1.22;
+
+    /**
+     * 2026-10-23 修正：腐化過的傳奇，數值可以超出原本範圍（蝕變石乘 0.78～1.22），範圍照著放寬；
+     * 以前超出範圍就被當成舊版重擲，腐化擲出來的 52% 一穿上去就變回 48%。
+     */
+    static boolean fits(final AffixTier tier, final Map<String, Integer> vars, final boolean corrupted) {
         if (vars == null || !tier.vars().keySet().equals(vars.keySet())) {
             return false;
         }
         for (final Map.Entry<String, int[]> entry : tier.vars().entrySet()) {
             final Integer value = vars.get(entry.getKey());
-            final int lo = Math.min(entry.getValue()[0], entry.getValue()[1]);
-            final int hi = Math.max(entry.getValue()[0], entry.getValue()[1]);
+            int lo = Math.min(entry.getValue()[0], entry.getValue()[1]);
+            int hi = Math.max(entry.getValue()[0], entry.getValue()[1]);
+            if (corrupted) {
+                lo = (int) Math.floor(Math.min(lo * CORRUPT_MIN, lo * CORRUPT_MAX));
+                hi = (int) Math.ceil(Math.max(hi * CORRUPT_MIN, hi * CORRUPT_MAX));
+            }
             if (value == null || value < lo || value > hi) {
                 return false;
             }

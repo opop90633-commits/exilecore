@@ -16,8 +16,12 @@ final class HotbarSides {
     private static final int LEFT_EDGE = 124;
     /** 右邊那段的左緣：快捷欄右緣（91）再空一點（攻擊冷卻的指示在快捷欄旁邊時也不會疊到太多）。 */
     private static final int RIGHT_START = 97;
-    /** 撿到東西的角落提示的左緣（2026-10）：比召喚物那排再往右 10 格，不壓到快捷欄最右邊那格。 */
-    private static final int LOOT_START = RIGHT_START + 10;
+    /** 撿到東西的角落提示的左緣（2026-10）：2026-10-23 再往右 20 格（以前 RIGHT_START + 10）。 */
+    static final int LOOT_START = RIGHT_START + 30;
+    /** 有召喚物時：撿到東西的提示放在召喚物那一欄的右邊，中間空這麼多（2026-10-23：以前疊在召喚物上面）。 */
+    private static final int LOOT_GAP = 14;
+    /** 撿到東西的提示左緣最多到這裡（太右邊會被畫面切掉）。 */
+    private static final int LOOT_MAX_START = 200;
     /** 光環最多寫幾個名字（其他的寫 +N）。 */
     private static final int MAX_AURAS = 4;
     private static final String COLOR = "#8fd3ff";
@@ -26,12 +30,15 @@ final class HotbarSides {
     }
 
     /**
-     * 撿到東西的角落提示（2026-10，{@link LootFeed}）：快捷欄右邊，從 startRow 那一排往上疊，最新的在最下面（MiniMessage，淨寬 0）。
+     * 撿到東西的角落提示（2026-10，{@link LootFeed}）：快捷欄右邊，從快捷欄那一排往上疊，最新的在最下面（MiniMessage，淨寬 0）。
+     * 2026-10-23：跟召喚物分開：有召喚物時放在召喚物那一欄的右邊（以前疊在召喚物上面）。
      *
-     * @param startRow  從第幾排開始（召喚物佔掉的排數）；放不下回傳空字串
+     * @param start     左緣（相對畫面中間，{@link #lootStart}）
      * @param mainPlain 動作列主要那段的純文字（估寬度用）
      */
-    static String renderLoot(final List<LootFeed.Entry> entries, final int startRow, final String mainPlain, final long now) {
+    static String renderLoot(final List<LootFeed.Entry> entries, final int start, final String mainPlain, final long now) {
+        final int startRow = 0;
+        final int lootStart = start;
         if (entries.isEmpty() || !tw.exilecore.web.LootHud.ready()) {
             return "";
         }
@@ -47,12 +54,30 @@ final class HotbarSides {
             final boolean faded = entry.until() - now <= LootFeed.FADE_TICKS;
             final int width = tw.exilecore.web.LootHud.cardWidth(text);
             out.append("<font:").append(tw.exilecore.web.LootHud.font(startRow + i)).append(">")
-                    .append(tw.exilecore.web.LootHud.shift(LOOT_START - half))
+                    .append(tw.exilecore.web.LootHud.shift(lootStart - half))
                     .append(tw.exilecore.web.LootHud.card(entry.color(), entry.icon(), text, faded))
-                    .append(tw.exilecore.web.LootHud.shift(half - LOOT_START - width))
+                    .append(tw.exilecore.web.LootHud.shift(half - lootStart - width))
                     .append("</font>");
         }
         return out.toString();
+    }
+
+    /**
+     * 撿到東西的提示的左緣：沒有召喚物（或沒畫在快捷欄旁邊）是 {@link #LOOT_START}；
+     * 有召喚物就放在召喚物那一欄最寬那行的右邊（最多到 {@link #LOOT_MAX_START}）。
+     */
+    static int lootStart(final List<MinionService.HudCount> pets, final boolean sides) {
+        if (!sides || pets.isEmpty()) {
+            return LOOT_START;
+        }
+        int widest = 0;
+        final int rows = Math.min(pets.size(), HudFont.ROWS);
+        for (int row = 0; row < rows; row++) {
+            final MinionService.HudCount pet = pets.get(row);
+            final int w = HudFont.width(HudFont.SKULL + pet.name() + " " + pet.count() + "/" + pet.limit());
+            widest = Math.max(widest, w < 0 ? 80 : w);
+        }
+        return Math.min(LOOT_MAX_START, Math.max(LOOT_START, RIGHT_START + widest + LOOT_GAP));
     }
 
     /** 快捷列第 slot 格（0–8）的中心，相對畫面中間（GUI 像素）。 */

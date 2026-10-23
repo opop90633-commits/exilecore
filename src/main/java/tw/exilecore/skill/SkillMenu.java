@@ -223,7 +223,7 @@ public final class SkillMenu extends Menu {
         lore.add("<yellow>點一下：取消選取");
         lore.add("<yellow>Shift＋右鍵：看裝備對這個技能的加成");
         set(SLOT_SELECTED, highlight(SkillArt.decorate(icon(material(definition.icon(), Material.BOOK),
-                "<green>選取中：<#e0c080>" + ItemRenderer.escape(definition.name()) + " <gray>Lv." + entry.level(), lore), definition)));
+                "<green>選取中：<#e0c080>" + ItemRenderer.escape(definition.name()) + " <gray>Lv." + entry.level() + SkillService.qualityTag(entry), lore), definition)));
         // 升一級：自動挑背包、通貨袋或倉庫裡夠用、等級最低的那顆
         final String problem = gems.levelUpProblem(state, entry, SkillLoadout.GEM_CAP);
         final GemService.UncutSource source = problem == null ? gems.bestForLevelUp(player, entry) : null;
@@ -392,7 +392,7 @@ public final class SkillMenu extends Menu {
         }
         final boolean auraOn = definition.mechanic() == Mechanic.AURA && service.auraActive(player, definition.id());
         final ItemStack stack = SkillArt.decorate(icon(material(definition.icon(), Material.BOOK),
-                (chosen || target ? "<green>▶ " : "") + (auraOn ? "<#8fd3ff>✦ " : "") + "<#e0c080>" + name + " <gray>Lv." + entry.level()
+                (chosen || target ? "<green>▶ " : "") + (auraOn ? "<#8fd3ff>✦ " : "") + "<#e0c080>" + name + " <gray>Lv." + entry.level() + SkillService.qualityTag(entry)
                         + (auraOn ? " <#8fd3ff>開啟中" : ""), lore), definition);
         final boolean framed = (chosen || target) && frames(stack);
         // 開著的光環一直發光，一眼看得出來
@@ -644,7 +644,7 @@ public final class SkillMenu extends Menu {
         lore.add("");
         lore.add(holding == Holding.SUPPORT_GEM ? "<red>這一孔不放輔助寶石" : "<yellow>點一下：拿出來");
         final ItemStack stack = icon(innerDefinition == null ? Material.BARRIER : material(innerDefinition.icon(), Material.ECHO_SHARD),
-                "<#ffd27f>" + ItemRenderer.escape(skillNameOf(inner)) + " <gray>Lv." + inner.level(), lore);
+                "<#ffd27f>" + ItemRenderer.escape(skillNameOf(inner)) + " <gray>Lv." + inner.level() + SkillService.qualityTag(inner), lore);
         return innerDefinition == null ? stack : SkillArt.decorate(stack, innerDefinition);
     }
 

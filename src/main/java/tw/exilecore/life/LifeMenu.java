@@ -28,9 +28,15 @@ public final class LifeMenu extends Menu {
     private static final int SLOT_DRINK = 22;
     private static final int SLOT_FOOD = 24;
     private static final int SLOT_RAFT = 20;   // 2026-10-16：木筏管理
+    // 2026-10-23
+    private static final int SLOT_DEX = 11;
+    private static final int SLOT_ORDERS = 13;
+    private static final int SLOT_BOARD = 15;
+    private static final int RECIPE_SLOTS = 18;
 
     private final LifeService service;
     private final Map<Integer, LifeConfig.Recipe> shown = new HashMap<>();
+    private int page;
 
     public LifeMenu(final ExileCore plugin, final Player player, final LifeService service) {
         super(plugin, player, 6, "<dark_gray>" + ItemRenderer.escape(service.config().name()));
@@ -63,6 +69,11 @@ public final class LifeMenu extends Menu {
         info.add("<gray>星索鉤：<white>" + ItemRenderer.escape(config.hook(service.hookTier(player)).name())
                 + "<gray>（" + LifeService.trim(config.hook(service.hookTier(player)).range()) + " 格）");
         info.add("<gray>瓶中信 <white>" + service.lettersRead(player) + "</white>／" + config.letters().size());
+        final LifeService.Profile me = service.profile(player);
+        if (me != null) {
+            info.add("<gray>海域：<white>" + ItemRenderer.escape(config.zone(me.zone).name()) + "<dark_gray>（海圖桌換）");
+            info.add("<gray>魚圖鑑 <white>" + service.extras().dexCount(me) + "</white>／" + config.fishing().fish().size());
+        }
         final String voyage = service.islands().status(player);
         if (voyage != null) {
             info.add("<" + color() + ">" + ItemRenderer.escape(voyage));
@@ -102,9 +113,44 @@ public final class LifeMenu extends Menu {
                 "<gray>6. 對著水面拋線可以釣魚；渦齒鯊來咬筏時可以放技能打牠",
                 "<gray>7. 研究「航海」做海圖桌和船帆，就能開到小島探索（島上可以放技能）",
                 "<gray>8. 環礁的號角碎片在海圖桌做成深淵號角，在筏上吹：深淵巨獸淵鯨",
+                "<gray>9. 筏燈（晚上）、船帆讓漂流物變多；吊床每天回精力；魚籠下線也會抓魚",
+                "<gray>10. 海圖桌換海域（深海、星墜）；瓶中信、漂流箱有機會掉藏寶圖",
+                "<gray>11. 魚圖鑑、每週釣魚大賽、營地的生活委託、拜訪別人的筏按讚（/sea like）",
                 "<dark_gray>做工具、種田、料理、出航花精力；撈東西、釣魚、做筏的方塊不花"));
 
         set(18, rowLabel(Material.CRAFTING_TABLE, "<#f5b942>製作", "左鍵做 1 次；Shift＋左鍵做 5 次（工具一次一個）"));
+        // 2026-10-23：圖鑑、委託、大賽與人氣榜
+        if (me != null) {
+            set(SLOT_DEX, icon(Material.BOOK, "<#7fd4ff>魚圖鑑", "<gray>釣過 <white>" + service.extras().dexCount(me) + "</white>／" + config.fishing().fish().size() + " 種",
+                    "<gray>每一種魚的紀錄、哪裡釣得到", "<gray>第一次釣到一種 +" + config.dexNewXp() + " 生活經驗；全部集齊有稱號", "", "<yellow>左鍵：打開"));
+            int done = 0;
+            final List<LifeConfig.OrderToday> orders = service.extras().ordersToday(player, me);
+            for (int i = 0; i < orders.size(); i++) {
+                if (service.extras().orderDone(me, i)) {
+                    done++;
+                }
+            }
+            set(SLOT_ORDERS, icon(Material.PAPER, "<#f5b942>生活委託", "<gray>今天 <white>" + done + "</white>／" + orders.size() + " 張交了",
+                    "<gray>交材料、料理換生活經驗、金幣，有機會附通貨", "<gray>只能在營地交", "", "<yellow>左鍵：打開"));
+            final LifeExtras.Entry mine = service.extras().myEntry(player.getUniqueId());
+            set(SLOT_BOARD, icon(Material.GOLDEN_APPLE, "<#ffd27f>釣魚大賽・人氣榜",
+                    "<gray>本週（" + service.extras().tournamentWeek() + "）釣到最大的魚，週一結算",
+                    mine == null ? "<dark_gray>你這週還沒有紀錄" : "<gray>你的紀錄：<white>" + ItemRenderer.escape(service.materialName(mine.fish())) + " "
+                            + String.format(Locale.ROOT, "%.1f", mine.sizeTenths() / 10.0) + " 公分",
+                    "<gray>拜訪別人的筏可以 <white>/sea like</white> 按讚（每天 " + config.likesPerDay() + " 個）", "", "<yellow>左鍵：打開"));
+        }
+        final List<LifeConfig.Recipe> all = new ArrayList<>();
+        for (final LifeConfig.Recipe recipe : config.recipes()) {
+            if (recipe.station() == null) {
+                all.add(recipe); // 料理在烤爐、料理台做
+            }
+        }
+        final int pages = Math.max(1, (all.size() + RECIPE_SLOTS - 1) / RECIPE_SLOTS);
+        page = Math.max(0, Math.min(pages - 1, page));
+        if (pages > 1) {
+            set(SLOT_PREV, pageButton(false, page, pages));
+            set(SLOT_NEXT, pageButton(true, page, pages));
+        }
         int slot = FIRST_RECIPE;
         final String food = service.foodStatus(player);
         set(SLOT_FOOD, icon(Material.COOKED_COD, "<#ffb46b>料理", food == null ? "<gray>現在沒有料理的效果" : "<green>" + ItemRenderer.escape(food),
@@ -114,13 +160,8 @@ public final class LifeMenu extends Menu {
                 "<gray>邀請、加共用成員、請人離開、去共用的筏", "", "<yellow>左鍵：打開"));
         set(SLOT_DRINK, icon(Material.POTION, "<#7fd4ff>喝一份淡水", "<gray>有 " + service.material(player, config.freshWater()) + " 份；精力 +"
                 + config.drinkStamina(), "<dark_gray>淡水、料理一天最多回 " + config.dailyRestore() + " 點精力", "", "<yellow>左鍵：喝"));
-        for (final LifeConfig.Recipe recipe : config.recipes()) {
-            if (recipe.station() != null) {
-                continue; // 料理在烤爐、料理台做
-            }
-            if (slot >= 45) {
-                break;
-            }
+        for (int i = page * RECIPE_SLOTS; i < Math.min(all.size(), (page + 1) * RECIPE_SLOTS); i++) {
+            final LifeConfig.Recipe recipe = all.get(i);
             shown.put(slot, recipe);
             set(slot, recipeIcon(recipe, level));
             slot++;
@@ -141,6 +182,20 @@ public final class LifeMenu extends Menu {
                     + (hook.doubleChance() > 0 ? String.format(Locale.ROOT, "、%.0f%% 多撈一份", hook.doubleChance() * 100) : ""));
             if (service.hookTier(player) >= recipe.hook()) {
                 lore.add("<green>✔ 已經升級了");
+            }
+        } else if (recipe.currency() != null) {
+            // 2026-10-23：通貨（佔每天海上通貨的額度）
+            final tw.exilecore.currency.CurrencyType type = plugin.currencies() == null ? null : plugin.currencies().repository().get(recipe.currency());
+            material = type == null ? Material.QUARTZ : Material.matchMaterial(type.material()) == null ? Material.QUARTZ : Material.matchMaterial(type.material());
+            name = "<#9be37f>" + ItemRenderer.escape(service.currencyName(recipe.currency())) + (recipe.amount() > 1 ? " ×" + recipe.amount() : "");
+            lore.add("<gray>做出來的通貨跟撿到的一樣（可以交易）");
+            lore.add("<gray>佔每天從海上拿通貨的額度（" + config.bottleDailyCurrency() + " 顆，跟瓶中信、寶箱共用）");
+        } else if (recipe.tool() != null) {
+            material = Material.RED_DYE;
+            name = "<#ff6b6b>" + ItemRenderer.escape(service.recipeName(recipe)) + (recipe.amount() > 1 ? " ×" + recipe.amount() : "");
+            if (config.sharkKing() != null) {
+                lore.add("<gray>在自己的筏上右鍵：叫出" + ItemRenderer.escape(config.sharkKing().name()) + "（" + config.sharkKing().fleeSeconds() + " 秒內打倒）");
+                lore.add("<gray>筏上每個人各拿一份：淵珠、鯊魚材料、號角碎片、通貨");
             }
         } else {
             final LifeConfig.Item item = config.items().get(recipe.item());
@@ -201,6 +256,23 @@ public final class LifeMenu extends Menu {
         }
         if (slot == SLOT_RAFT) {
             new LifeRaftMenu(plugin, player, service).open();
+            return;
+        }
+        if (slot == SLOT_DEX) {
+            new LifeDexMenu(plugin, player, service).open();
+            return;
+        }
+        if (slot == SLOT_ORDERS) {
+            new LifeOrderMenu(plugin, player, service).open();
+            return;
+        }
+        if (slot == SLOT_BOARD) {
+            new LifeBoardMenu(plugin, player, service).open();
+            return;
+        }
+        if (slot == SLOT_PREV || slot == SLOT_NEXT) {
+            page += slot == SLOT_NEXT ? 1 : -1;
+            redraw();
             return;
         }
         if (slot == SLOT_DRINK) {
