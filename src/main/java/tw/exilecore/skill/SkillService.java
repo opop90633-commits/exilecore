@@ -2852,6 +2852,29 @@ public final class SkillService {
         return lines;
     }
 
+    /**
+     * 2026-10-23：宿主寶石第 1 孔裡那顆技能的說明（技能面板的第 1 孔圖示用）：
+     * 英靈圖騰：英靈那一下的傷害、暴擊、輔助（吃圖騰傷害）；主要寶石（暴擊引星、法術圖騰…）：插槽法術吃著第 2～5 孔輔助的完整說明。
+     */
+    public List<String> innerLines(final Player player, final SkillDefinition host, final SkillLoadout.Entry hostEntry) {
+        final PlayerState state = plugin.players().get(player);
+        final StatSheet sheet = plugin.players().sheet(player);
+        if (SkillExecutor.hasFlag(host, StatKeys.FLAG_TOTEM_LINKED)) {
+            return linkedMace(state, sheet, host) instanceof SkillBuild found ? ancestorLines(state, sheet, found) : List.of();
+        }
+        final SkillLoadout.Entry inner = innerEntry(hostEntry);
+        final SkillDefinition spell = inner == null ? null : config.skill(inner.skillId());
+        if (spell == null) {
+            return List.of();
+        }
+        final List<String> lines = new ArrayList<>();
+        lines.add("<#e7c56b>" + ItemRenderer.escape(spell.name()) + "<gray>（由" + ItemRenderer.escape(host.name()) + "施放、吃第 2～5 孔的輔助）：");
+        for (final String line : describe(player, spell, inner)) {
+            lines.add("<gray>　" + line);
+        }
+        return lines;
+    }
+
     /** 2026-10-23：名字後面的品質、腐化小標（技能面板的標題用）；都沒有回傳空字串。 */
     public static String qualityTag(final SkillLoadout.Entry entry) {
         return (entry.quality() > 0 ? " <#8888ff>品質 " + entry.quality() + "%" : "") + (entry.corrupted() ? " <#d20000>腐化" : "");

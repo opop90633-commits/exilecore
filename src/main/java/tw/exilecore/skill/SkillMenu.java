@@ -641,6 +641,11 @@ public final class SkillMenu extends Menu {
             }
         }
         lore.add("<gray>第 2～5 孔的輔助都套在它身上");
+        final List<String> info = service.innerLines(player, definition, entry); // 2026-10-23：放進去的技能實際的數值
+        if (!info.isEmpty()) {
+            lore.add("");
+            lore.addAll(info);
+        }
         lore.add("");
         lore.add(holding == Holding.SUPPORT_GEM ? "<red>這一孔不放輔助寶石" : "<yellow>點一下：拿出來");
         final ItemStack stack = icon(innerDefinition == null ? Material.BARRIER : material(innerDefinition.icon(), Material.ECHO_SHARD),
