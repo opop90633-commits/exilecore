@@ -1457,7 +1457,7 @@ public final class SponsorService {
             if (allowed && !player.getAllowFlight()) {
                 player.setAllowFlight(true);
                 flying.add(uuid);
-                player.sendActionBar(plugin.text().parse("<#ffd27f>營地飛行：按兩下空白鍵起飛"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd27f>營地飛行：按兩下空白鍵起飛"));
             } else if (!allowed && flying.remove(uuid)) {
                 if (normal) {
                     final boolean wasFlying = player.isFlying();

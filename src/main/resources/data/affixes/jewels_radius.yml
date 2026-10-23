@@ -1346,36 +1346,42 @@ unveiled_jr_damage_taken_recoup_life:
   group: unveiled_jr_damage_taken_recoup_life
   spawn_tags: [r_emerald, r_ruby, r_sapphire]
   names: [淵痕的, 黯痕的]
-  text: "範圍內的小天賦也各給：受到的傷害有 {value}% 在 4 秒內回復為生命"
+  # 2026-10-23：兩階本來都是 1%（小數被捨成整數）：改成 {p/10}，第 1 階 1%、第 2 階 0.5%；
+  # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
+  text: "範圍內的小天賦也各給：受到的傷害有 {p/10}% 在 4 秒內回復為生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 727, value: [1, 1] }
+    - { tier: 1, ilvl: 60, weight: 273, p: [10, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, p: [5, 5] }
   mods:
-    - { stat: radius:life.recoup, type: FLAT, value: "{value}" }
+    - { stat: radius:life.recoup, type: FLAT, value: "{p/10}" }
 
 unveiled_jr_percent_maximum_mana:
   type: prefix
   group: unveiled_jr_percent_maximum_mana
   spawn_tags: [r_emerald, r_ruby, r_sapphire]
   names: [淵痕的, 黯痕的]
-  text: "範圍內的小天賦也各給：增加 {value}% 最大魔力"
+  # 2026-10-23：兩階本來都是 1%（小數被捨成整數）：改成 {p/10}，第 1 階 1%、第 2 階 0.5%；
+  # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
+  text: "範圍內的小天賦也各給：增加 {p/10}% 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 727, value: [1, 1] }
+    - { tier: 1, ilvl: 60, weight: 273, p: [10, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, p: [5, 5] }
   mods:
-    - { stat: radius:mana.max, type: INCREASED, value: "{value}" }
+    - { stat: radius:mana.max, type: INCREASED, value: "{p/10}" }
 
 unveiled_jr_percent_maximum_life:
   type: prefix
   group: unveiled_jr_percent_maximum_life
   spawn_tags: [r_emerald, r_ruby, r_sapphire]
   names: [淵痕的, 黯痕的]
-  text: "範圍內的小天賦也各給：增加 {value}% 最大生命"
+  # 2026-10-23：兩階本來都是 1%（小數被捨成整數）：改成 {p/10}，第 1 階 1%、第 2 階 0.5%；
+  # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
+  text: "範圍內的小天賦也各給：增加 {p/10}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 727, value: [1, 1] }
+    - { tier: 1, ilvl: 60, weight: 273, p: [10, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, p: [5, 5] }
   mods:
-    - { stat: radius:life.max, type: INCREASED, value: "{value}" }
+    - { stat: radius:life.max, type: INCREASED, value: "{p/10}" }
 
 unveiled_jr_global_defences:
   type: prefix
@@ -1396,12 +1402,14 @@ unveiled_jr_damage_taken_from_mana_before_life:
   group: unveiled_jr_damage_taken_from_mana_before_life
   spawn_tags: [r_emerald, r_ruby, r_sapphire]
   names: [淵痕的, 黯痕的]
-  text: "範圍內的小天賦也各給：受到的傷害有 {value}% 先從魔力扣除"
+  # 2026-10-23：兩階本來都是 1%（小數被捨成整數）：改成 {p/10}，第 1 階 1%、第 2 階 0.5%；
+  # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
+  text: "範圍內的小天賦也各給：受到的傷害有 {p/10}% 先從魔力扣除"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 727, value: [1, 1] }
+    - { tier: 1, ilvl: 60, weight: 273, p: [10, 10] }
+    - { tier: 2, ilvl: 1, weight: 727, p: [5, 5] }
   mods:
-    - { stat: radius:damage.from_mana, type: FLAT, value: "{value}" }
+    - { stat: radius:damage.from_mana, type: FLAT, value: "{p/10}" }
 
 unveiled_jr_regenerate_percent_life_per_second:
   type: suffix
@@ -1434,12 +1442,13 @@ unveiled_jr_mana_flask_charges_per_second:
   group: unveiled_jr_mana_flask_charges_per_second
   spawn_tags: [r_emerald, r_ruby, r_sapphire]
   names: [淵痕之, 黯痕之]
-  text: "範圍內的小天賦也各給：魔力藥劑每分鐘自動拿到 {value} 點充能"
+  # 2026-10-23：兩階本來都是 6：第 2 階改成 4。換成新變數 charges，舊物品讀的時候照那一階補上（第 2 階 6 → 4）
+  text: "範圍內的小天賦也各給：魔力藥劑每分鐘自動拿到 {charges} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, value: [6, 6] }
-    - { tier: 2, ilvl: 1, weight: 727, value: [6, 6] }
+    - { tier: 1, ilvl: 60, weight: 273, charges: [6, 6] }
+    - { tier: 2, ilvl: 1, weight: 727, charges: [4, 4] }
   mods:
-    - { stat: radius:flask.charges_per_minute.mana, type: FLAT, value: "{value}" }
+    - { stat: radius:flask.charges_per_minute.mana, type: FLAT, value: "{charges}" }
 
 unveiled_jr_life_flask_charges_per_second:
   type: suffix

@@ -432,10 +432,10 @@ public final class CharmService implements Listener {
         final String name = name(stack);
         final String problem = equip(player, player.getInventory().getHeldItemSlot());
         if (problem != null) {
-            player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
         } else {
-            player.sendActionBar(plugin.text().parse("<#c9a0ff>" + ItemRenderer.escape(name) + "<gray> 裝進護符欄（角色面板 /panel）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#c9a0ff>" + ItemRenderer.escape(name) + "<gray> 裝進護符欄（角色面板 /panel）"));
             player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, SoundCategory.PLAYERS, 0.8f, 1.2f);
         }
         return true;

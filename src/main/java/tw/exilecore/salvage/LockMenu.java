@@ -141,7 +141,7 @@ public final class LockMenu extends Menu {
             storeBack(inventorySlot(slot), stack);
             changed++;
         }
-        player.sendActionBar(plugin.text().parse(locked ? "<#ffd27f>🔒 鎖定了 " + changed + " 件" : "<gray>解除了 " + changed + " 件的鎖定"));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(locked ? "<#ffd27f>🔒 鎖定了 " + changed + " 件" : "<gray>解除了 " + changed + " 件的鎖定"));
         player.playSound(player.getLocation(), locked ? Sound.BLOCK_CHAIN_PLACE : Sound.BLOCK_CHAIN_BREAK, 0.6f, 1.0f);
     }
 }

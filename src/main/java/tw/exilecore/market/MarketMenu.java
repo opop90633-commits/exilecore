@@ -230,7 +230,7 @@ public final class MarketMenu extends Menu {
                 }
                 final String problem = service.collect(player);
                 if (problem != null) {
-                    player.sendActionBar(plugin.text().parse("<red>" + problem));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + problem));
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                 }
                 redraw();

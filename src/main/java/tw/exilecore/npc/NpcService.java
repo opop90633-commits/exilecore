@@ -624,7 +624,7 @@ public final class NpcService {
         final int have = countScrolls(player, scroll.get());
         final int want = scroll.get().stack() - have;
         if (want <= 0) {
-            player.sendActionBar(plugin.text().parse("<gray>你的" + scroll.get().name() + "已經滿了（" + have + " 張）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>你的" + scroll.get().name() + "已經滿了（" + have + " 張）"));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
@@ -636,11 +636,11 @@ public final class NpcService {
         final int given = want - notGiven;
         plugin.economy().ledger().produced(scroll.get().id(), tw.exilecore.economy.EconomyLedger.NPC, given);
         if (given <= 0) {
-            player.sendActionBar(plugin.text().parse("<red>背包滿了，放不下" + scroll.get().name()));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>背包滿了，放不下" + scroll.get().name()));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
-        player.sendActionBar(plugin.text().parse("<green>領了 " + given + " 張" + scroll.get().name()
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>領了 " + given + " 張" + scroll.get().name()
                 + (notGiven > 0 ? "<gray>（背包滿了，少給 " + notGiven + " 張）" : "")));
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 1.2f);
     }

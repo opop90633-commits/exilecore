@@ -88,6 +88,6 @@ final class LifePlantMenu extends Menu {
             return;
         }
         player.closeInventory();
-        player.sendActionBar(plugin.text().parse("<#9be37f>種下了" + ItemRenderer.escape(crop.name()) + "<gray>（" + crop.minutes() + " 分鐘後收成）"));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#9be37f>種下了" + ItemRenderer.escape(crop.name()) + "<gray>（" + crop.minutes() + " 分鐘後收成）"));
     }
 }

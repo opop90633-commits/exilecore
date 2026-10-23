@@ -374,11 +374,11 @@ public final class Gear {
             final String blocked = plugin.players().equipProblem(player, stack); // 2026-10-18：直接放進空欄也要檢查未鑑定、需求不夠
             if (blocked != null) {
                 stow(player, state, stack);
-                player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(blocked)));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(blocked)));
                 return false;
             }
             state.setJewellery(index, stack);
-            player.sendActionBar(plugin.text().parse("<green>裝上 " + ItemRenderer.escape(base.name()) + "<gray>（裝備在角色面板）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>裝上 " + ItemRenderer.escape(base.name()) + "<gray>（裝備在角色面板）"));
             return true;
         }
         stow(player, state, stack);

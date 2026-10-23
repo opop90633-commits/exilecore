@@ -120,7 +120,7 @@ final class CardListener implements Listener {
         event.setCancelled(true);
         event.getItem().remove();
         service.deposit(player, type, stack.getAmount());
-        player.sendActionBar(plugin.text().parse("<#c9a0ff>" + tw.exilecore.item.ItemRenderer.escape(type.name()) + " ×" + stack.getAmount()
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#c9a0ff>" + tw.exilecore.item.ItemRenderer.escape(type.name()) + " ×" + stack.getAmount()
                 + "<gray> 放進通貨袋"));
         player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.5f, 1.6f);
     }

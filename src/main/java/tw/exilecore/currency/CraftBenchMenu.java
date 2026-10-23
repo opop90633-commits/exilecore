@@ -479,10 +479,10 @@ public final class CraftBenchMenu extends Menu {
                 }
                 player.getInventory().setItem(itemSlot, stack);
                 if (fired != null) {
-                    player.sendActionBar(plugin.text().parse("<#c48bff>" + ItemRenderer.escape(fired.name()) + "生效<gray>，用了"
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#c48bff>" + ItemRenderer.escape(fired.name()) + "生效<gray>，用了"
                             + ItemRenderer.escape(currency.name())));
                 } else {
-                    player.sendActionBar(plugin.text().parse("<gray>用了" + ItemRenderer.escape(currency.name())));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>用了" + ItemRenderer.escape(currency.name())));
                 }
                 player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 0.6f, 1.4f);
             }
@@ -490,7 +490,7 @@ public final class CraftBenchMenu extends Menu {
                 player.getInventory().setItem(itemSlot, null);
                 itemSlot = -1;
                 itemUuid = null;
-                player.sendActionBar(plugin.text().parse("<red>物品碎掉了"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>物品碎掉了"));
                 player.playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 0.8f, 0.8f);
             }
             default -> {
@@ -504,6 +504,6 @@ public final class CraftBenchMenu extends Menu {
 
     private void fail(final String message) {
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
-        player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(message)));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(message)));
     }
 }

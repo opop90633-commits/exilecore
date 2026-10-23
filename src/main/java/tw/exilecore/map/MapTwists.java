@@ -915,7 +915,7 @@ final class MapTwists implements Listener {
         }
         for (final Player player : players) {
             if (player.getLocation().distanceSquared(wall) <= 36 && state.hiddenHinted.add(player.getUniqueId())) {
-                player.sendActionBar(plugin.text().parse("<gray>這面牆好像有裂縫……<yellow>左鍵敲幾下看看"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這面牆好像有裂縫……<yellow>左鍵敲幾下看看"));
             }
         }
     }
@@ -1183,7 +1183,7 @@ final class MapTwists implements Listener {
             if (state.hiddenHits >= HIDDEN_HITS) {
                 openHidden(state, player);
             } else {
-                player.sendActionBar(plugin.text().parse("<gray>牆裂得更開了（" + state.hiddenHits + "／" + HIDDEN_HITS + "）"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>牆裂得更開了（" + state.hiddenHits + "／" + HIDDEN_HITS + "）"));
             }
             return;
         }

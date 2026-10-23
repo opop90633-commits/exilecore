@@ -715,7 +715,7 @@ public final class LootFilterMenu extends Menu {
                     return;
                 }
                 if (click != ClickType.SHIFT_LEFT) {
-                    player.sendActionBar(plugin.text().parse("<gray>要清掉所有設定：Shift＋左鍵"));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>要清掉所有設定：Shift＋左鍵"));
                     return;
                 }
                 next.showEverything();

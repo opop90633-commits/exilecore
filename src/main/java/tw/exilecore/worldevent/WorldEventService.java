@@ -787,7 +787,7 @@ public final class WorldEventService {
                 event.waveStartMillis = now;
                 spawnWave(event, Math.max(1, near.size()));
                 for (final Player player : near) {
-                    player.sendActionBar(plugin.text().parse("<#3fc8ff>第 " + event.wave + "／" + invasion.waves() + " 波怪潮來了！"));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#3fc8ff>第 " + event.wave + "／" + invasion.waves() + " 波怪潮來了！"));
                     player.playSound(player.getLocation(), Sound.EVENT_RAID_HORN, 0.5f, 1.3f);
                 }
             }
@@ -1070,7 +1070,7 @@ public final class WorldEventService {
             }
             left -= stack;
         }
-        player.sendActionBar(plugin.text().parse("<#ffd060>+" + amount + " " + ItemRenderer.escape(type.name())));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd060>+" + amount + " " + ItemRenderer.escape(type.name())));
     }
 
     ItemData giveUnique(final Player player, final String uniqueId, final int itemLevel) {

@@ -229,7 +229,7 @@ public final class Signatures {
             lastStandReady.put(id, now + LAST_STAND_COOLDOWN);
             defender.getWorld().playSound(defender.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.8f, 0.6f);
             defender.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, defender.getLocation().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.2);
-            defender.sendActionBar(plugin.text().parse("<#d4a24c><bold>背水</bold> <gray>8 秒內受到的傷害減半"));
+            tw.exilecore.gui.ActionBar.send(defender, plugin.text().parse("<#d4a24c><bold>背水</bold> <gray>8 秒內受到的傷害減半"));
         }
     }
 

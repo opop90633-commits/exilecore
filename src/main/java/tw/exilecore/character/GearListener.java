@@ -84,7 +84,7 @@ final class GearListener implements Listener {
             }
             if (ownSlot && Gear.isDisplay(current) && Gear.indexAt(event.getSlot()) >= 0) {
                 if (held != null && plugin.currencies() != null && plugin.currencies().isCurrency(held)) {
-                    player.sendActionBar(plugin.text().parse("<red>通貨要用在背包裡的裝備<gray>：先在角色面板（Shift＋F → 角色）卸下"));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>通貨要用在背包裡的裝備<gray>：先在角色面板（Shift＋F → 角色）卸下"));
                 } else if (held != null) {
                     equipFromCursor(player, event.getView(), held); // 拿著裝備點顯示用的格子：直接裝上，換下來的放回游標
                 } else if (event.getClick().isLeftClick() || event.getClick().isRightClick()) {
@@ -106,12 +106,12 @@ final class GearListener implements Listener {
         final Optional<ItemData> data = plugin.items().read(stack);
         final ItemBase base = data.map(value -> plugin.items().repository().base(value.base())).orElse(null);
         if (base == null || !base.isWearable() || Gear.index(base.slot()) < 0) {
-            player.sendActionBar(plugin.text().parse("<red>這不是能裝備的東西"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>這不是能裝備的東西"));
             return;
         }
         final String blocked = plugin.players().equipProblem(player, stack); // 2026-10：未鑑定、需求不夠的穿不上
         if (blocked != null) {
-            player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(blocked)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(blocked)));
             return;
         }
         int index = Gear.index(base.slot());
@@ -124,7 +124,7 @@ final class GearListener implements Listener {
                     : plugin.items().read(main).map(value -> plugin.items().repository().base(value.base())).orElse(null);
             final String problem = Gear.pairProblem(mainBase, base);
             if (problem != null) {
-                player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
                 return;
             }
         }
@@ -137,7 +137,7 @@ final class GearListener implements Listener {
             }
             gear.sync(player);
             plugin.players().sheet(player);
-            player.sendActionBar(plugin.text().parse("<green>裝上 " + ItemRenderer.escape(base.name()) + "<gray>（裝備在角色面板）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>裝上 " + ItemRenderer.escape(base.name()) + "<gray>（裝備在角色面板）"));
         });
     }
 
@@ -206,9 +206,9 @@ final class GearListener implements Listener {
         event.setCancelled(true);
         final String problem = gear.equip(player, slot);
         if (problem != null) {
-            player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
         } else {
-            player.sendActionBar(plugin.text().parse("<green>裝上 " + ItemRenderer.escape(base.name()) + "<gray>（裝備在角色面板）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>裝上 " + ItemRenderer.escape(base.name()) + "<gray>（裝備在角色面板）"));
         }
     }
 

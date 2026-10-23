@@ -81,7 +81,7 @@ final class RitualMenu extends Menu {
             return;
         }
         if (!rituals.canShop(ritual, player)) {
-            player.sendActionBar(plugin.text().parse("<red>祭壇已經不在了（地圖關了或你離開了）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>祭壇已經不在了（地圖關了或你離開了）"));
             player.closeInventory();
             return;
         }
@@ -103,13 +103,13 @@ final class RitualMenu extends Menu {
             fail(problem);
         } else {
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.4f);
-            player.sendActionBar(plugin.text().parse("<green>換到了，剩 " + ritual.tributeOf(player) + " 貢品"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>換到了，剩 " + ritual.tributeOf(player) + " 貢品"));
         }
         redraw();
     }
 
     private void fail(final String message) {
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
-        player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(message)));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(message)));
     }
 }

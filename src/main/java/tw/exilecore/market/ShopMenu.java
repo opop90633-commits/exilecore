@@ -172,7 +172,7 @@ final class ShopMenu extends Menu {
     }
 
     private void fail(final String message) {
-        player.sendActionBar(plugin.text().parse("<red>" + message));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + message));
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
     }
 }

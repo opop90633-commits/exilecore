@@ -406,7 +406,7 @@ final class DeliriumEvents implements Listener {
             final int shares = config.delirium().sharesFor(total);
             final List<Integer> thresholds = config.delirium().thresholds();
             final String next = shares < thresholds.size() ? "，下一份 " + thresholds.get(shares) : "，滿了";
-            player.sendActionBar(plugin.text().parse("<white>幻霧進度 +" + points + " <gray>（" + total + "，" + shares + " 份" + next + "）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<white>幻霧進度 +" + points + " <gray>（" + total + "，" + shares + " 份" + next + "）"));
         }
     }
 

@@ -554,7 +554,7 @@ public final class StashMenu extends Menu {
             return;
         }
         if (given > 1 || full) {
-            player.sendActionBar(plugin.text().parse("<green>拿出 " + given + " 張地圖" + (full ? "<yellow>（背包滿了）" : "")));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>拿出 " + given + " 張地圖" + (full ? "<yellow>（背包滿了）" : "")));
         }
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.3f);
         redraw();
@@ -567,7 +567,7 @@ public final class StashMenu extends Menu {
             return;
         }
         if (tierOf(stack) == 0) {
-            player.sendActionBar(plugin.text().parse("<gray>地圖頁只能放地圖，其他東西請放在物品頁"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>地圖頁只能放地圖，其他東西請放在物品頁"));
             return;
         }
         if (!stash.depositMap(stack)) {
@@ -597,10 +597,10 @@ public final class StashMenu extends Menu {
             total++;
         }
         if (total > 0) {
-            player.sendActionBar(plugin.text().parse("<green>存入 " + total + " 張地圖" + (full ? "<yellow>（地圖頁滿了）" : "")));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>存入 " + total + " 張地圖" + (full ? "<yellow>（地圖頁滿了）" : "")));
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 0.9f);
         } else {
-            player.sendActionBar(plugin.text().parse(full ? "<red>地圖頁滿了" : "<gray>背包裡沒有地圖"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(full ? "<red>地圖頁滿了" : "<gray>背包裡沒有地圖"));
         }
         redraw();
     }
@@ -656,7 +656,7 @@ public final class StashMenu extends Menu {
         if (stash.locked(page) && !takesOutOnly(event, raw)) {
             // 收回的頁（2026-10）：只能拿出來
             event.setCancelled(true);
-            player.sendActionBar(plugin.text().parse("<yellow>這一頁已經收回：只能把東西拿出來"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>這一頁已經收回：只能把東西拿出來"));
             return;
         }
         // 其他（這一頁的 45 格、自己的背包）照原版操作
@@ -715,7 +715,7 @@ public final class StashMenu extends Menu {
                         return;
                     }
                 }
-                player.sendActionBar(plugin.text().parse("<red>其他頁都滿了"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>其他頁都滿了"));
             } else {
                 new StashTabsMenu(plugin, player, service, stash, page, query()).open();
             }
@@ -931,7 +931,7 @@ public final class StashMenu extends Menu {
         if (!type.id().equals(gambleArmed) || now - gambleArmedAt > GAMBLE_CONFIRM_MILLIS) {
             gambleArmed = type.id();
             gambleArmedAt = now;
-            player.sendActionBar(plugin.text().parse(String.format(Locale.ROOT,
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(String.format(Locale.ROOT,
                     "<#ffb347>再按一次 Q 確定賭卡：<white>%,d 張%s<gray>，花 <white>%s<gray> 金幣，變成 0～%,d 張", have,
                     ItemRenderer.escape(type.name()), tw.exilecore.economy.GoldService.format(cards.gambleCost(player, type, have)), have * 2)));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.6f, 1.4f);
@@ -951,7 +951,7 @@ public final class StashMenu extends Menu {
         }
         final Optional<CurrencyType> type = plugin.currencies().read(stack);
         if (type.isEmpty()) {
-            player.sendActionBar(plugin.text().parse("<gray>通貨頁只能放通貨，物品請放在物品頁"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>通貨頁只能放通貨，物品請放在物品頁"));
             return;
         }
         final int accepted = stash.depositCurrency(type.get().id(), stack.getAmount());
@@ -971,10 +971,10 @@ public final class StashMenu extends Menu {
         final int total = StashOrganizer.depositPouch(stash, pouch);
         final boolean capped = pouch.kinds() > 0; // 還有剩：那幾種在倉庫裡已經存滿
         if (total > 0) {
-            player.sendActionBar(plugin.text().parse("<green>存入 " + total + " 個通貨" + (capped ? "<gray>（有的已經存滿）" : "")));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>存入 " + total + " 個通貨" + (capped ? "<gray>（有的已經存滿）" : "")));
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 0.9f);
         } else {
-            player.sendActionBar(plugin.text().parse(capped ? "<red>倉庫裡這些通貨已經存滿" : "<gray>通貨袋是空的"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(capped ? "<red>倉庫裡這些通貨已經存滿" : "<gray>通貨袋是空的"));
         }
         redraw();
     }
@@ -985,7 +985,7 @@ public final class StashMenu extends Menu {
         organizer.sort(List.of(StashOrganizer.Slots.of(stash.page(page))));
         redraw();
         player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_LEATHER, 0.6f, 1.2f);
-        player.sendActionBar(plugin.text().parse("<green>這一頁整理好了"));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>這一頁整理好了"));
     }
 
     /** 這一頁（畫面上看到的）全部放進隨身背包（2026-10）：先疊到同樣的，再放空格；通貨進通貨袋；放不下的留在倉庫。 */
@@ -994,7 +994,7 @@ public final class StashMenu extends Menu {
         // 倉庫開著時隨身背包不會同時開著（一次只能開一個視窗），直接改隨身背包的資料
         final tw.exilecore.character.Bag bag = plugin.players().get(player).bag();
         if (!bag.usable()) {
-            player.sendActionBar(plugin.text().parse("<red>隨身背包讀不到，先不要搬"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>隨身背包讀不到，先不要搬"));
             return;
         }
         final ItemStack[] items = stash.page(page);
@@ -1027,10 +1027,10 @@ public final class StashMenu extends Menu {
         }
         redraw();
         if (moved > 0) {
-            player.sendActionBar(plugin.text().parse("<green>放進隨身背包 " + moved + " 格" + (full ? "<red>，隨身背包滿了，剩下的留在倉庫" : "")));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>放進隨身背包 " + moved + " 格" + (full ? "<red>，隨身背包滿了，剩下的留在倉庫" : "")));
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 1.1f);
         } else {
-            player.sendActionBar(plugin.text().parse(full ? "<red>隨身背包滿了" : "<gray>這一頁沒有東西"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(full ? "<red>隨身背包滿了" : "<gray>這一頁沒有東西"));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.8f);
         }
     }
@@ -1086,7 +1086,7 @@ public final class StashMenu extends Menu {
         redraw();
         final int currency = result.currency() + pouchCurrency;
         if (result.nothing() && pouchCurrency == 0) {
-            player.sendActionBar(plugin.text().parse(result.leftover() > 0 ? "<red>放不下：" + leftoverReason(result)
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(result.leftover() > 0 ? "<red>放不下：" + leftoverReason(result)
                     : fromBag ? "<gray>隨身背包是空的" : "<gray>背包上面三排沒有東西"));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.8f);
             return;
@@ -1101,7 +1101,7 @@ public final class StashMenu extends Menu {
         if (result.leftover() > 0) {
             text.append("<yellow>；").append(result.leftover()).append(" 格放不下（").append(leftoverReason(result)).append("）");
         }
-        player.sendActionBar(plugin.text().parse(text.toString()));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(text.toString()));
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 0.9f);
     }
 
@@ -1136,10 +1136,10 @@ public final class StashMenu extends Menu {
             }
         }
         if (total > 0) {
-            player.sendActionBar(plugin.text().parse("<green>存入 " + total + " 個通貨"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>存入 " + total + " 個通貨"));
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 0.9f);
         } else {
-            player.sendActionBar(plugin.text().parse("<gray>背包裡沒有可以存的通貨"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>背包裡沒有可以存的通貨"));
         }
         redraw();
     }

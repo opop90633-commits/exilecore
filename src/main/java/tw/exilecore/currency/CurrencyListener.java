@@ -99,10 +99,10 @@ public final class CurrencyListener implements Listener {
                     }
                     player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.2f);
                 } else if (used != null && used.operation() == CurrencyOperation.OMEN) {
-                    player.sendActionBar(plugin.text().parse("<#c48bff>掛上" + used.name() + "：" + used.description()));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#c48bff>掛上" + used.name() + "：" + used.description()));
                     player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.6f, 1.3f);
                 } else if (fired != null) {
-                    player.sendActionBar(plugin.text().parse("<#c48bff>" + fired.name() + "生效，用掉了"));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#c48bff>" + fired.name() + "生效，用掉了"));
                     player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 0.6f, 1.4f);
                 } else {
                     player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 0.6f, 1.4f);
@@ -112,12 +112,12 @@ public final class CurrencyListener implements Listener {
                 cursor.setAmount(cursor.getAmount() - 1);
                 event.getView().setCursor(cursor.getAmount() <= 0 ? ItemStack.empty() : cursor);
                 event.setCurrentItem(ItemStack.empty());
-                player.sendActionBar(plugin.text().parse("<red>僥倖石失敗：物品碎掉了"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>僥倖石失敗：物品碎掉了"));
                 player.playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 0.8f, 0.8f);
             }
             case NOT_APPLICABLE -> {
                 final String name = used == null ? "這顆通貨" : used.name();
-                player.sendActionBar(plugin.text().parse(used != null && used.isSkillCurrency()
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(used != null && used.isSkillCurrency()
                         ? "<red>" + name + "要用在技能上：打開技能面板（/skills），拿著它點技能"
                         : chance ? "<red>" + name + "只能用在普通物品上，而且這個基底要有能做出來的傳奇（物品等級也要夠）"
                         : why != null ? "<red>" + name + "：" + tw.exilecore.item.ItemRenderer.escape(why)
@@ -149,12 +149,12 @@ public final class CurrencyListener implements Listener {
             }
         }
         if (why != null) {
-            player.sendActionBar(plugin.text().parse("<red>" + orb.name() + "：" + tw.exilecore.item.ItemRenderer.escape(why)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + orb.name() + "：" + tw.exilecore.item.ItemRenderer.escape(why)));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
         if (target.getAmount() > 1 && event.getClickedInventory() != player.getInventory()) {
-            player.sendActionBar(plugin.text().parse("<red>一疊寶石只能共鳴一顆：先把寶石拿到自己的背包，或拆成一顆"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>一疊寶石只能共鳴一顆：先把寶石拿到自己的背包，或拆成一顆"));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
@@ -194,7 +194,7 @@ public final class CurrencyListener implements Listener {
     /** 符文點到孔都滿的裝備：問要覆蓋哪一顆。 */
     private void overwriteRune(final Player player, final InventoryClickEvent event, final CurrencyType rune, final ItemStack target) {
         if (event.getClickedInventory() != player.getInventory()) {
-            player.sendActionBar(plugin.text().parse("<red>符文孔滿了：先把裝備拿到自己的背包，再拿符文點它（可以選要覆蓋哪一顆）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>符文孔滿了：先把裝備拿到自己的背包，再拿符文點它（可以選要覆蓋哪一顆）"));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
@@ -253,7 +253,7 @@ public final class CurrencyListener implements Listener {
                             before, plugin.items().toJson(now));
                     plugin.players().markDirty(player);
                     player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 0.6f, 1.4f);
-                    player.sendActionBar(plugin.text().parse("<#7fe0c8>第 " + (index + 1) + " 孔換成了" + tw.exilecore.item.ItemRenderer.escape(rune.name())));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#7fe0c8>第 " + (index + 1) + " 孔換成了" + tw.exilecore.item.ItemRenderer.escape(rune.name())));
                 }, () -> { });
     }
 
@@ -347,24 +347,24 @@ public final class CurrencyListener implements Listener {
 
     private void fail(final Player player, final String message) {
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
-        player.sendActionBar(plugin.text().parse("<red>" + tw.exilecore.item.ItemRenderer.escape(message)));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + tw.exilecore.item.ItemRenderer.escape(message)));
     }
 
     /** 蒸餾情緒點項鍊：打開注入的選單。 */
     private void instil(final Player player, final InventoryClickEvent event, final CurrencyType emotion, final ItemStack target, final String why) {
         if (why != null) {
-            player.sendActionBar(plugin.text().parse("<red>" + emotion.name() + "：" + tw.exilecore.item.ItemRenderer.escape(why)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + emotion.name() + "：" + tw.exilecore.item.ItemRenderer.escape(why)));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
         if (event.getClickedInventory() != player.getInventory()) {
-            player.sendActionBar(plugin.text().parse("<red>先把項鍊拿到自己的背包再注入"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>先把項鍊拿到自己的背包再注入"));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
         final tw.exilecore.passive.PassiveTree tree = plugin.passives().tree();
         if (tree == null) {
-            player.sendActionBar(plugin.text().parse("<red>天賦樹沒有載入，不能注入"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>天賦樹沒有載入，不能注入"));
             return;
         }
         final String uuid = plugin.items().read(target).map(tw.exilecore.item.ItemData::uuid).orElse(null);

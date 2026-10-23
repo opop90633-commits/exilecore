@@ -1333,7 +1333,7 @@ final class MapBosses {
         for (final UUID uuid : instance.inside()) {
             final Player player = plugin.getServer().getPlayer(uuid);
             if (player != null) {
-                player.sendActionBar(plugin.text().parse(miniMessage));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(miniMessage));
             }
         }
     }

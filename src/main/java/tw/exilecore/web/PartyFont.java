@@ -40,7 +40,7 @@ public final class PartyFont {
     public static final int PRE_SHIFT = 8000;
     /** 框離畫面左邊、上面幾格；每個隊員往下幾格（跟著色器裡的一樣）。 */
     public static final int LEFT = 4;
-    public static final int TOP = 4;
+    public static final int TOP = 24; // 2026-10-23：4 → 24（最上面的全服加成血條（標題＋條）會蓋到第一個隊員）
     public static final int STEP = 26;
 
     // ---- 種類（顏色的 B 低 4 位）：y、高度、顏色寫在著色器的 KINDS ----

@@ -488,7 +488,7 @@ public final class BagMenu extends Menu {
         if (bag.locked(page) && !takesOutOnly(event, raw)) {
             // 收回的頁（2026-10）：只能拿出來
             event.setCancelled(true);
-            player.sendActionBar(plugin.text().parse("<yellow>這一頁已經收回：只能把東西拿出來"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>這一頁已經收回：只能把東西拿出來"));
             return;
         }
         if (raw >= 0 && raw < PAGE_SLOTS && event.getClick() == ClickType.RIGHT && event.getCursor().isEmpty()) {
@@ -623,7 +623,7 @@ public final class BagMenu extends Menu {
         redraw();
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.3f);
         if (filtering()) {
-            player.sendActionBar(plugin.text().parse("<#f5b942>過濾：" + ItemRenderer.escape(filter.describe()) + "<gray>（全部 " + totalMatches() + " 件符合）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#f5b942>過濾：" + ItemRenderer.escape(filter.describe()) + "<gray>（全部 " + totalMatches() + " 件符合）"));
         }
     }
 
@@ -690,7 +690,7 @@ public final class BagMenu extends Menu {
         top.setItem(raw, rest);
         syncToModel();
         if (rest != null && rest.getAmount() == stack.getAmount()) {
-            player.sendActionBar(plugin.text().parse("<red>主背包滿了"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>主背包滿了"));
         } else {
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.3f);
         }
@@ -741,10 +741,10 @@ public final class BagMenu extends Menu {
         }
         redraw();
         if (moved > 0) {
-            player.sendActionBar(plugin.text().parse("<green>拿出 " + moved + " 格" + (full ? "<red>，主背包滿了" : "")));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>拿出 " + moved + " 格" + (full ? "<red>，主背包滿了" : "")));
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 1.2f);
         } else {
-            player.sendActionBar(plugin.text().parse(full ? "<red>主背包滿了" : "<gray>這一頁沒有東西"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(full ? "<red>主背包滿了" : "<gray>這一頁沒有東西"));
         }
     }
 
@@ -781,10 +781,10 @@ public final class BagMenu extends Menu {
         }
         redraw();
         if (moved > 0) {
-            player.sendActionBar(plugin.text().parse("<green>收進 " + moved + " 格" + (full ? "<red>，隨身背包滿了" : "")));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>收進 " + moved + " 格" + (full ? "<red>，隨身背包滿了" : "")));
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 0.9f);
         } else {
-            player.sendActionBar(plugin.text().parse(full ? "<red>隨身背包滿了" : "<gray>背包上面三排沒有東西"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(full ? "<red>隨身背包滿了" : "<gray>背包上面三排沒有東西"));
         }
     }
 
@@ -854,7 +854,7 @@ public final class BagMenu extends Menu {
         if (click == ClickType.SHIFT_RIGHT && type.uncutGem() && plugin.skills() != null) {
             // 未切割寶石：直接用通貨袋裡的雕琢、切割（不用先拿出來）
             if (!plugin.skills().gems().openFromPouch(player, type.id())) {
-                player.sendActionBar(plugin.text().parse("<red>先選一個角色"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>先選一個角色"));
             }
             return;
         }
@@ -893,7 +893,7 @@ public final class BagMenu extends Menu {
             }
         }
         if (given <= 0) {
-            player.sendActionBar(plugin.text().parse("<red>背包滿了"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>背包滿了"));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
@@ -906,12 +906,12 @@ public final class BagMenu extends Menu {
     private void depositCursor(final InventoryClickEvent event, final ItemStack cursor) {
         final Optional<CurrencyType> type = plugin.currencies().read(cursor);
         if (type.isEmpty()) {
-            player.sendActionBar(plugin.text().parse("<gray>通貨袋只能放通貨，物品請放在第 1、2 頁"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>通貨袋只能放通貨，物品請放在第 1、2 頁"));
             return;
         }
         final int accepted = bag.pouch().deposit(type.get().id(), cursor.getAmount());
         if (accepted <= 0) {
-            player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(type.get().name()) + "已經裝滿 " + bag.pouch().cap() + " 個（贊助可以加大）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(type.get().name()) + "已經裝滿 " + bag.pouch().cap() + " 個（贊助可以加大）"));
             return;
         }
         final int left = cursor.getAmount() - accepted;
@@ -931,7 +931,7 @@ public final class BagMenu extends Menu {
         }
         final int accepted = bag.pouch().deposit(type.get().id(), stack.getAmount());
         if (accepted <= 0) {
-            player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(type.get().name()) + "已經裝滿 " + bag.pouch().cap() + " 個（贊助可以加大）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(type.get().name()) + "已經裝滿 " + bag.pouch().cap() + " 個（贊助可以加大）"));
             return;
         }
         final int left = stack.getAmount() - accepted;
@@ -960,10 +960,10 @@ public final class BagMenu extends Menu {
             }
         }
         if (total > 0) {
-            player.sendActionBar(plugin.text().parse("<green>收進 " + total + " 個通貨"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>收進 " + total + " 個通貨"));
             player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 0.9f);
         } else {
-            player.sendActionBar(plugin.text().parse("<gray>背包裡沒有通貨"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>背包裡沒有通貨"));
         }
         redraw();
     }

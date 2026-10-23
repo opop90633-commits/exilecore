@@ -289,6 +289,6 @@ public final class InstilMenu extends Menu {
 
     private void fail(final String message) {
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
-        player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(message)));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(message)));
     }
 }

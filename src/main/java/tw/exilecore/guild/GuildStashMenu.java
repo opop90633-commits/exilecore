@@ -286,7 +286,7 @@ public final class GuildStashMenu extends Menu {
             return; // 只收背包主要的 36 格（防具、副手不在這個畫面上）
         }
         if (searching()) {
-            player.sendActionBar(plugin.text().parse("<gray>搜尋中只能看：先按「結束搜尋」再放東西"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>搜尋中只能看：先按「結束搜尋」再放東西"));
             return;
         }
         if (acceptAction(click)) {

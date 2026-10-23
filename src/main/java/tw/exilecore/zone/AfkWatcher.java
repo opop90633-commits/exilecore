@@ -90,7 +90,7 @@ final class AfkWatcher implements org.bukkit.event.Listener {
                 player.sendMessage(plugin.text().prefixed("<#ffd27f>你已經 " + (WARN_SECONDS / 60) + " 分鐘沒有走動，視為掛機。<gray>再 "
                         + Math.max(1, Math.round(left / 60.0)) + " 分鐘不走動會把你傳回營地（走動一下就取消）"));
             } else if (watch.warned && KICK_SECONDS - idle <= 10 && (KICK_SECONDS - idle) % 5 == 0) {
-                player.sendActionBar(plugin.text().parse("<red>掛機：" + (KICK_SECONDS - idle) + " 秒後傳回營地（走動一下就取消）"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>掛機：" + (KICK_SECONDS - idle) + " 秒後傳回營地（走動一下就取消）"));
             }
         }
     }

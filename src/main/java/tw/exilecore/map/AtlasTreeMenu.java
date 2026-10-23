@@ -396,7 +396,7 @@ public final class AtlasTreeMenu extends Menu {
                 if (click.isRightClick()) { // 2026-10-21：網頁規劃器
                     final String url = service.atlasPlannerUrl(player);
                     if (url == null) {
-                        player.sendActionBar(plugin.text().parse("<red>網頁沒有開"));
+                        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>網頁沒有開"));
                     } else {
                         player.sendMessage(plugin.text().prefixed("<#77ccff><click:open_url:'" + url + "'><u>打開星圖天賦的網頁規劃器</u></click><gray>（帶著你現在的配點；規劃好按「複製代碼」，回來輸入 /atlas import <代碼>）"));
                     }
@@ -434,7 +434,7 @@ public final class AtlasTreeMenu extends Menu {
         final boolean taken = allocated.contains(node.id());
         if (click.isRightClick()) {
             if (!taken) {
-                player.sendActionBar(plugin.text().parse("<gray>「" + ItemRenderer.escape(node.name()) + "」還沒點（左鍵點）"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>「" + ItemRenderer.escape(node.name()) + "」還沒點（左鍵點）"));
                 return;
             }
             final List<String> removed = service.refundAtlas(player, node.id());
@@ -444,7 +444,7 @@ public final class AtlasTreeMenu extends Menu {
                 final AtlasTree.Node other = tree.node(id);
                 points += other == null ? 0 : other.cost();
             }
-            player.sendActionBar(plugin.text().parse("<yellow>退回「" + ItemRenderer.escape(node.name()) + "」"
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>退回「" + ItemRenderer.escape(node.name()) + "」"
                     + (removed.size() > 1 ? "（連同連不回中心的 " + (removed.size() - 1) + " 個）" : "") + "<gray>，拿回 " + points + " 點"));
             redraw();
             return;
@@ -453,18 +453,18 @@ public final class AtlasTreeMenu extends Menu {
             if (hasStat(node, "atlas.chosen_event")) { // 核心「單一信仰」：左鍵換選的事件
                 final MapEventConfig.Kind next = service.cycleFaith(player);
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.4f);
-                player.sendActionBar(plugin.text().parse("<yellow>單一信仰：改選 " + MapEventConfig.sourceName(MapEventConfig.uniqueSource(next))));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>單一信仰：改選 " + MapEventConfig.sourceName(MapEventConfig.uniqueSource(next))));
                 redraw();
                 return;
             }
-            player.sendActionBar(plugin.text().parse("<gray>「" + ItemRenderer.escape(node.name()) + "」已經點了（右鍵退回）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>「" + ItemRenderer.escape(node.name()) + "」已經點了（右鍵退回）"));
             return;
         }
         // 點不到的：自動把路上的一起點（點數要夠全部）
         final List<AtlasTree.Node> path = tree.connected(node, allocated) ? List.of(node) : tree.pathTo(allocated, node);
         if (path.isEmpty()) {
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.5f, 1.2f);
-            player.sendActionBar(plugin.text().parse("<red>連不到中心"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>連不到中心"));
             return;
         }
         int cost = 0;
@@ -474,7 +474,7 @@ public final class AtlasTreeMenu extends Menu {
         final int left = service.atlasUnspent(player);
         if (cost > left) {
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.5f, 1.2f);
-            player.sendActionBar(plugin.text().parse("<red>天賦點不夠：" + (path.size() > 1 ? "路上 " + path.size() + " 個共" : "要") + " " + cost
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>天賦點不夠：" + (path.size() > 1 ? "路上 " + path.size() + " 個共" : "要") + " " + cost
                     + " 點，你還有 " + left + " 點"));
             return;
         }
@@ -482,7 +482,7 @@ public final class AtlasTreeMenu extends Menu {
             final String problem = service.allocateAtlas(player, step.id());
             if (problem != null) {
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.5f, 1.2f);
-                player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
                 redraw();
                 return;
             }
@@ -492,7 +492,7 @@ public final class AtlasTreeMenu extends Menu {
         for (final AtlasTree.Mod mod : node.mods()) {
             effects.add(AtlasTree.describe(mod.stat(), mod.value()));
         }
-        player.sendActionBar(plugin.text().parse("<green>點了「" + ItemRenderer.escape(node.name()) + "」"
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>點了「" + ItemRenderer.escape(node.name()) + "」"
                 + (path.size() > 1 ? "<gray>（連同路上的 " + (path.size() - 1) + " 個）" : "") + "<gray>：" + ItemRenderer.escape(String.join("、", effects))));
         redraw();
     }
@@ -502,20 +502,20 @@ public final class AtlasTreeMenu extends Menu {
             return;
         }
         if (service.atlasAllocated(player).isEmpty()) {
-            player.sendActionBar(plugin.text().parse("<gray>還沒點任何天賦"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>還沒點任何天賦"));
             return;
         }
         if (!armed()) {
             resetArmedAt = System.currentTimeMillis();
             player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.0f);
-            player.sendActionBar(plugin.text().parse("<yellow>再點一次「全部退回」確認（5 秒內）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>再點一次「全部退回」確認（5 秒內）"));
             redraw();
             return;
         }
         resetArmedAt = 0;
         final int count = service.resetAtlas(player);
         player.playSound(player.getLocation(), Sound.BLOCK_GRINDSTONE_USE, 0.6f, 1.0f);
-        player.sendActionBar(plugin.text().parse("<yellow>退回了 " + count + " 個星圖天賦（免費）"));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>退回了 " + count + " 個星圖天賦（免費）"));
         redraw();
     }
 }

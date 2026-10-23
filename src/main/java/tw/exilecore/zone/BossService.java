@@ -165,7 +165,7 @@ final class BossService implements Listener {
             }
             tw.exilecore.skill.Fx.spawn(from.getWorld(), org.bukkit.Particle.REVERSE_PORTAL, from.add(0, 1, 0), 30, 0.6, 1.0, 0.6, 0.05);
             for (final Player player : near) {
-                player.sendActionBar(plugin.text().parse("<gray>" + tw.exilecore.item.ItemRenderer.escape(fight.zone.boss().name())
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>" + tw.exilecore.item.ItemRenderer.escape(fight.zone.boss().name())
                         + " 不再追了，退回自己的場地"));
             }
         }

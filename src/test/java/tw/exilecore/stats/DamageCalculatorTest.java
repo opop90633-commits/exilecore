@@ -134,6 +134,17 @@ class DamageCalculatorTest {
     }
 
     @Test
+    void extraDamageAlsoAppliesToTheSameType() {
+        // 2026-10-23：純混沌法術也吃「x% 傷害為額外的混沌傷害」（以前同類型被跳過）
+        final StatSheet attacker = new StatSheet().add(Modifier.flat(StatKeys.damageExtra(DamageType.CHAOS), 50, "詞綴"));
+        final StatSheet defender = new StatSheet().setBase(StatKeys.RESIST_MAX, 75);
+        final SkillProfile ritual = new SkillProfile("profane_ritual", Set.of(Tags.SPELL, Tags.CHAOS), 1.0,
+                new DamagePacket().set(DamageType.CHAOS, 100));
+        final HitResult result = DamageCalculator.calculate(attacker, ritual, defender, 0, new Random(1));
+        assertEquals(150, result.dealt().get(DamageType.CHAOS), 1e-6, "100 混沌 + 50% 額外混沌");
+    }
+
+    @Test
     void formulas() {
         assertEquals(0.5, Formulas.armourReduction(200, 20), 1e-9);
         assertEquals(Formulas.MAX_ARMOUR_REDUCTION, Formulas.armourReduction(1_000_000, 1), 1e-9);

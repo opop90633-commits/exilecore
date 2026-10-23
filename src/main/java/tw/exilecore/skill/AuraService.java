@@ -817,7 +817,7 @@ final class AuraService implements Listener {
             plugin.players().display(player, owner);
             if (pause && now() - aura.pauseNotice >= 200) {
                 aura.pauseNotice = now();
-                player.sendActionBar(plugin.text().parse("<gray>" + tw.exilecore.item.ItemRenderer.escape(aura.build.definition().name())
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>" + tw.exilecore.item.ItemRenderer.escape(aura.build.definition().name())
                         + " 暫停：生命只剩 1 點，回到 1 點以上自動繼續"));
             }
         }
@@ -1051,7 +1051,7 @@ final class AuraService implements Listener {
                 recalc(player, state);
                 if (now - aura.pauseNotice >= 200) {
                     aura.pauseNotice = now;
-                    player.sendActionBar(plugin.text().parse(String.format(Locale.ROOT, "<gray>%s 暫停：生命只剩 1 點，回到 %.0f%% 以上自動繼續",
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(String.format(Locale.ROOT, "<gray>%s 暫停：生命只剩 1 點，回到 %.0f%% 以上自動繼續",
                             tw.exilecore.item.ItemRenderer.escape(aura.name()), AuraSpec.LifeCost.RESUME_PERCENT)));
                 }
             }
@@ -1139,7 +1139,7 @@ final class AuraService implements Listener {
             if (fury.form() && !holdForm(player, now)) {
                 if (now - state.formNotice >= 200) {
                     state.formNotice = now;
-                    player.sendActionBar(plugin.text().parse("<gray>" + tw.exilecore.item.ItemRenderer.escape(aura.name())
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>" + tw.exilecore.item.ItemRenderer.escape(aura.name())
                             + "：獸性滿了，變成獸形（熊、狼人、飛龍）就會爆發"));
                 }
                 continue;
@@ -1171,7 +1171,7 @@ final class AuraService implements Listener {
         if (fury.form()) {
             holdForm(player, state.frenzyUntil);
         }
-        player.sendActionBar(plugin.text().parse(String.format(Locale.ROOT, "<#ff7a3a>✦ %s：狂暴 %.0f 秒",
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(String.format(Locale.ROOT, "<#ff7a3a>✦ %s：狂暴 %.0f 秒",
                 tw.exilecore.item.ItemRenderer.escape(name), ticks / 20.0)));
         player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_RAVAGER_ROAR, org.bukkit.SoundCategory.PLAYERS, 0.5f, 1.3f);
     }
@@ -1186,7 +1186,7 @@ final class AuraService implements Listener {
             service.buffs().remove(player, FURY_BUFF + state.skillId);
         }
         if (message != null) {
-            player.sendActionBar(plugin.text().parse(message));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(message));
         }
     }
 

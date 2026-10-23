@@ -60,6 +60,30 @@ public final class TownChannels implements Listener {
         this.channelKey = new NamespacedKey(plugin, "town_channel");
     }
 
+    /** 世界的 UUID 存在資料夾裡的這個檔（重新複製時留著，玩家存的位置才找得到這個世界）。 */
+    private static final String UID_FILE = "uid.dat";
+
+    /**
+     * 2026-10-22：登入時人在預設的虛空世界（大廳）——通常是存的世界找不到了（分流世界重建過、舊版的大廳）：
+     * 馬上送到營地（第 1 線的出生點；高等級的選好角色後會再分到第 2 線起），不要等每 2 秒的檢查（那時已經掉下去了）。
+     */
+    @EventHandler(priority = EventPriority.LOW)
+    public void onJoin(final org.bukkit.event.player.PlayerJoinEvent event) {
+        final Player player = event.getPlayer();
+        if (towns.isEmpty() || player.getGameMode() == org.bukkit.GameMode.CREATIVE || player.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
+            return;
+        }
+        final World world = player.getWorld();
+        if (isTown(world) || !world.equals(plugin.getServer().getRespawnWorld())) {
+            return;
+        }
+        final Location camp = towns.getFirst().getSpawnLocation();
+        player.setFallDistance(0);
+        player.setVelocity(new org.bukkit.util.Vector());
+        player.teleportAsync(camp).thenRun(() -> player.setFallDistance(0));
+        plugin.getSLF4JLogger().info("主城分流：{} 登入在大廳（{}），送回營地", player.getName(), world.getName());
+    }
+
     static NamespacedKey key(final int channel) {
         return new NamespacedKey("exilecore", "town_" + channel);
     }
@@ -93,13 +117,24 @@ public final class TownChannels implements Listener {
         for (int channel = 2; channel <= Math.min(MAX_CHANNELS, channels); channel++) {
             final Path folder = folder(campaign, channel);
             try {
+                byte[] uid = null;
                 if (rebuild && Files.exists(folder) && plugin.getServer().getWorld(key(channel)) == null) {
+                    // 2026-10-22 修正：世界的 UUID（uid.dat）要留著。以前整個資料夾刪掉，重開後這條線是「新的世界」，
+                    // 上次在這條線下線的人存的是舊的 UUID，伺服器找不到就把他放到預設的虛空世界同一個座標，直接掉下去
+                    final Path uidFile = folder.resolve(UID_FILE);
+                    if (Files.isRegularFile(uidFile)) {
+                        uid = Files.readAllBytes(uidFile);
+                    }
                     deleteTree(folder);
                     plugin.getSLF4JLogger().info("主城分流：第 {} 線的世界刪掉了，從劇情世界重新複製{}", channel, refreshEveryStart ? "（refresh_on_start）" : "");
                 }
                 if (!Files.exists(folder.resolve("level.dat"))) {
                     final int copied = copyRegions(campaign.getWorldPath(), folder);
                     plugin.getSLF4JLogger().info("主城分流：第 {} 線是新的，從劇情世界複製了 {} 個區塊檔", channel, copied);
+                }
+                if (uid != null) {
+                    Files.createDirectories(folder);
+                    Files.write(folder.resolve(UID_FILE), uid);
                 }
                 wanted.add(channel);
             } catch (final IOException e) {

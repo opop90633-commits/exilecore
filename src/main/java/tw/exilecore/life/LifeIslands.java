@@ -310,7 +310,7 @@ final class LifeIslands {
             final int left = (voyage.arriveTick() - tick) / 10;
             if (tick % 10 == 0) {
                 for (final Player member : service.crewOn(voyage.plot())) {
-                    member.sendActionBar(plugin.text().parse("<" + config().color() + ">⛵ 航向" + ItemRenderer.escape(voyage.def().name())
+                    tw.exilecore.gui.ActionBar.send(member, plugin.text().parse("<" + config().color() + ">⛵ 航向" + ItemRenderer.escape(voyage.def().name())
                             + " <white>" + Math.max(0, left) + " 秒"));
                 }
                 world().spawnParticle(Particle.SPLASH, player.getLocation().add(2, -0.5, 0), 20, 2, 0.1, 2, 0.1);
@@ -334,7 +334,7 @@ final class LifeIslands {
             if (tick >= active.untilTick()) {
                 weathers.remove(id);
                 player.resetPlayerWeather();
-                player.sendActionBar(plugin.text().parse("<gray>" + ItemRenderer.escape(active.def().name()) + "過去了"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>" + ItemRenderer.escape(active.def().name()) + "過去了"));
             } else if (tick % 10 == 0) {
                 final Location at = player.getLocation();
                 switch (active.def().id()) {
@@ -524,7 +524,7 @@ final class LifeIslands {
             final int level = islandLevel(player);
             if (island.wave < 2) {
                 spawnWave(island, level);
-                player.sendActionBar(plugin.text().parse("<#ff9b6b>第 " + island.wave + " 波！"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ff9b6b>第 " + island.wave + " 波！"));
             } else {
                 spawnCaptain(island, level, new Location(world(), island.cx + 0.5, config().seaLevel() + 2, island.cz + 0.5));
             }
@@ -696,11 +696,11 @@ final class LifeIslands {
         final String at = LifeService.key(block.getX(), block.getY(), block.getZ());
         if (island.pillars.contains(at)) {
             if (!island.crew.contains(player.getUniqueId())) {
-                player.sendActionBar(plugin.text().parse("<gray>這是別人的島"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這是別人的島"));
                 return true;
             }
             if (!island.mobs.isEmpty()) {
-                player.sendActionBar(plugin.text().parse("<red>先打倒守衛（還有 " + island.mobs.size() + " 隻）"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>先打倒守衛（還有 " + island.mobs.size() + " 隻）"));
                 return true;
             }
             island.pillars.remove(at);
@@ -708,7 +708,7 @@ final class LifeIslands {
             place(block, Material.SEA_LANTERN.createBlockData());
             world().playSound(block.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.4f);
             world().spawnParticle(Particle.END_ROD, block.getLocation().add(0.5, 1, 0.5), 30, 0.3, 1, 0.3, 0.05);
-            player.sendActionBar(plugin.text().parse("<#bfe6ff>星柱亮了 " + island.lit + "／4"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#bfe6ff>星柱亮了 " + island.lit + "／4"));
             spawnWave(island, islandLevel(player));
             return true;
         }
@@ -716,15 +716,15 @@ final class LifeIslands {
             return block.getType() == Material.CHEST;
         }
         if (!island.crew.contains(player.getUniqueId())) {
-            player.sendActionBar(plugin.text().parse("<gray>這是別人的島"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這是別人的島"));
             return true;
         }
         if (!island.mobs.isEmpty()) {
-            player.sendActionBar(plugin.text().parse("<red>先清掉守衛（還有 " + island.mobs.size() + " 隻）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>先清掉守衛（還有 " + island.mobs.size() + " 隻）"));
             return true;
         }
         if ("ruin".equals(island.def.id()) && island.lit < 4) {
-            player.sendActionBar(plugin.text().parse("<red>四根星柱還沒全部點亮（" + island.lit + "／4）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>四根星柱還沒全部點亮（" + island.lit + "／4）"));
             return true;
         }
         island.chests.remove(at);

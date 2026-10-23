@@ -172,7 +172,7 @@ public final class AtlasSitesMenu extends Menu {
         if (cell.kind() == AtlasGrid.Kind.TOWER) {
             if (atlas.isCompleted(cell.q(), cell.r())) {
                 if (service.tabletAt(player, cell.q(), cell.r()) != null) {
-                    player.sendActionBar(plugin.text().parse("<gray>這座塔已經插了石板"));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這座塔已經插了石板"));
                     return;
                 }
                 picking = cell;

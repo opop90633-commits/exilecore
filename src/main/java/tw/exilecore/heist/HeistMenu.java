@@ -48,12 +48,26 @@ public final class HeistMenu extends Menu {
                 List.of("<gray>三處據點連著打：打完一處直接送進下一處",
                         "<gray>警戒值一路帶著走，只有最後一處有大金庫",
                         "<gray>大金庫的獎勵 <white>×" + format(heists.config().settings().vault().grandMultiplier()) + "</white>")));
-        set(SLOT_FINALE, keyIcon(heists, HeistFinale.KEY, Material.TRIAL_KEY, "終局：金庫之主",
-                List.of("<gray>劫盜的終局 Boss（怪物等級 +" + heists.config().finaleLevelBonus() + "）",
-                        "<gray>打倒之後他的收藏擺在你面前：<white>" + heists.config().finaleChoices() + " 個寶箱</white>，",
-                        "<gray>每個寫著裡面是哪一件劫盜傳奇（有機率多一顆 Lv.21 未切割技能寶石）",
-                        "<red>只能挑一個<gray>，挑了其他的就封鎖",
-                        "<gray>鑰印：大劫盜的大金庫有機率掉")));
+        // 2026-10-23：建議每秒傷害（跟終局、極境、巔峰一樣：單人約 3 分半打完；照你現在開會是幾級、打過的最高階）
+        final List<String> finaleLore = new java.util.ArrayList<>(List.of(
+                "<gray>劫盜的終局 Boss（怪物等級 +" + heists.config().finaleLevelBonus() + "）",
+                "<gray>打倒之後他的收藏擺在你面前：<white>" + heists.config().finaleChoices() + " 個寶箱</white>，",
+                "<gray>每個寫著裡面是哪一件劫盜傳奇（有機率多一顆 Lv.21 未切割技能寶石）",
+                "<red>只能挑一個<gray>，挑了其他的就封鎖",
+                "<gray>鑰印：大劫盜的大金庫有機率掉"));
+        final HeistConfig.Site finaleSite = heists.config().finale();
+        final tw.exilecore.map.MapService maps = plugin.maps();
+        if (finaleSite != null && maps != null) {
+            final int finaleLevel = level + heists.config().finaleLevelBonus();
+            final double recommended = maps.heistFinaleRecommendedDps(finaleSite.map(finaleLevel), finaleLevel, maps.bestTier(player));
+            final String line = tw.exilecore.map.MapService.recommendedText(recommended, maps.config().heistDpsCap());
+            if (!line.isEmpty()) {
+                finaleLore.add("");
+                finaleLore.add("<gray>你現在開：怪物等級 <white>" + finaleLevel + "</white><gray>、照你打過的最高階 T" + Math.max(1, maps.bestTier(player)));
+                finaleLore.add(line);
+            }
+        }
+        set(SLOT_FINALE, keyIcon(heists, HeistFinale.KEY, Material.TRIAL_KEY, "終局：金庫之主", finaleLore));
         set(SLOT_UNVEIL, icon(Material.SPYGLASS, "<#d4a017>揭露隱匿詞綴",
                 "<gray>劫盜掉的裝備有機率帶「隱匿前綴／後綴」",
                 "<gray>選一件（要先鑑定），從三個揭露詞綴裡挑一個換上去",

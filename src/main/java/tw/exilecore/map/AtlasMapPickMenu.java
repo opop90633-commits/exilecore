@@ -112,7 +112,7 @@ public final class AtlasMapPickMenu extends Menu {
         if (inventorySlot >= 0) {
             final ItemData now = mapOf(player.getInventory().getItem(inventorySlot));
             if (now == null || !now.uuid().equals(data.uuid())) {
-                player.sendActionBar(plugin.text().parse("<red>那張地圖已經不在背包的那一格了"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>那張地圖已經不在背包的那一格了"));
                 redraw();
                 return;
             }
@@ -129,13 +129,13 @@ public final class AtlasMapPickMenu extends Menu {
                 }
             }
             if (index < 0) {
-                player.sendActionBar(plugin.text().parse("<red>那張地圖已經不在倉庫了"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>那張地圖已經不在倉庫了"));
                 redraw();
                 return;
             }
             final int free = player.getInventory().firstEmpty();
             if (free < 0 || free >= 36) {
-                player.sendActionBar(plugin.text().parse("<red>背包沒有空格：先空出一格才能從倉庫拿地圖"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>背包沒有空格：先空出一格才能從倉庫拿地圖"));
                 return;
             }
             final ItemStack taken = stash.takeMap(index);

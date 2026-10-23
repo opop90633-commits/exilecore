@@ -782,9 +782,9 @@ final class MapEvents implements Listener {
             if (structure.kind == MapEventConfig.Kind.SAFE) {
                 useSafe(structure, event.getPlayer());
             } else if (!structure.done) {
-                event.getPlayer().sendActionBar(plugin.text().parse("<red>先打倒縫裡爬出來的那隻，寶箱才會開"));
+                tw.exilecore.gui.ActionBar.send(event.getPlayer(), plugin.text().parse("<red>先打倒縫裡爬出來的那隻，寶箱才會開"));
             } else {
-                event.getPlayer().sendActionBar(plugin.text().parse("<gray>這個寶箱已經開過了"));
+                tw.exilecore.gui.ActionBar.send(event.getPlayer(), plugin.text().parse("<gray>這個寶箱已經開過了"));
             }
             return;
         }
@@ -802,11 +802,11 @@ final class MapEvents implements Listener {
             plugin.skills().consumeRightClick(player);
         }
         if (box.done) {
-            player.sendActionBar(plugin.text().parse("<gray>這個寶箱已經開過了"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這個寶箱已經開過了"));
             return;
         }
         if (box.started) {
-            player.sendActionBar(plugin.text().parse("<red>先殺光跳出來的怪（剩 " + box.monsters.size() + " 隻）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>先殺光跳出來的怪（剩 " + box.monsters.size() + " 隻）"));
             return;
         }
         if (box.instance.state() != MapInstance.State.OPEN) {
@@ -1666,11 +1666,11 @@ final class MapEvents implements Listener {
     private void useSafe(final Event event, final Player player) {
         final MapEventConfig.Safe settings = config.safe();
         if (event.done) {
-            player.sendActionBar(plugin.text().parse(event.wavesSpawned < 0 ? "<gray>這個保險箱開鎖失敗了（沒人守著）" : "<gray>這個保險箱已經開過了"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(event.wavesSpawned < 0 ? "<gray>這個保險箱開鎖失敗了（沒人守著）" : "<gray>這個保險箱已經開過了"));
             return;
         }
         if (event.started) {
-            player.sendActionBar(plugin.text().parse(SAFE_COLOR + "開鎖中：" + Math.round(event.progressTicks / 20.0) + "／" + Math.round(settings.unlockSeconds())
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(SAFE_COLOR + "開鎖中：" + Math.round(event.progressTicks / 20.0) + "／" + Math.round(settings.unlockSeconds())
                     + " 秒<gray>（站在保險箱 " + Math.round(settings.radius()) + " 格內進度才會走）"));
             return;
         }
@@ -1680,11 +1680,11 @@ final class MapEvents implements Listener {
         final tw.exilecore.currency.CurrencyType contract = plugin.currencies().repository().get(tw.exilecore.heist.HeistService.CONTRACT);
         // 2026-10-18：地圖裡通貨在通貨袋、快捷列又被技能占住，拿在手上右鍵做不到——改成跟劫盜一樣：身上（通貨袋、背包、倉庫）有合約就直接扣一張
         if (contract == null) {
-            player.sendActionBar(plugin.text().parse("<red>currencies.yml 沒有劫盜合約"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>currencies.yml 沒有劫盜合約"));
             return;
         }
         if (service.countCurrency(player, contract) < 1) {
-            player.sendActionBar(plugin.text().parse("<red>要有一張" + ItemRenderer.escape(contract.name()) + "才能開鎖（會吃掉一張；通貨袋、背包、倉庫裡的都算）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>要有一張" + ItemRenderer.escape(contract.name()) + "才能開鎖（會吃掉一張；通貨袋、背包、倉庫裡的都算）"));
             return;
         }
         // 流水帳記 consumed（來源 HEIST）：takeCurrency 裡記

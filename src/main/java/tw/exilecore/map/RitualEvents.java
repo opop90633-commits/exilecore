@@ -359,11 +359,11 @@ final class RitualEvents implements Listener {
             return;
         }
         if (altar.done) {
-            player.sendActionBar(plugin.text().parse("<gray>這座祭壇做完了，去找還點著蠟燭的那座（" + ritual.done() + "/" + ritual.altars.size() + "）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這座祭壇做完了，去找還點著蠟燭的那座（" + ritual.done() + "/" + ritual.altars.size() + "）"));
             return;
         }
         if (ritual.active != null) {
-            player.sendActionBar(plugin.text().parse("<red>先完成進行中的儀式（祭壇 " + (ritual.active.index + 1) + "）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>先完成進行中的儀式（祭壇 " + (ritual.active.index + 1) + "）"));
             return;
         }
         altar.started = true;
@@ -531,7 +531,7 @@ final class RitualEvents implements Listener {
             }
             final int total = ritual.tribute.merge(player.getUniqueId(), amount, Integer::sum);
             ritual.earned.merge(player.getUniqueId(), amount, Integer::sum);
-            player.sendActionBar(plugin.text().parse("<#ff5c6a>貢品 +" + amount + " <gray>（共 " + total + "）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ff5c6a>貢品 +" + amount + " <gray>（共 " + total + "）"));
         }
     }
 

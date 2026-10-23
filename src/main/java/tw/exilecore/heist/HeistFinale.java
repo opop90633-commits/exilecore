@@ -455,11 +455,11 @@ final class HeistFinale implements Listener {
                 run.alarmDeadline = -1;
                 for (final Player other : run.instance.world().getPlayers()) {
                     if (run.instance.contains(other.getLocation())) {
-                        other.sendActionBar(plugin.text().parse("<green>警報機關全部拆掉了"));
+                        tw.exilecore.gui.ActionBar.send(other, plugin.text().parse("<green>警報機關全部拆掉了"));
                     }
                 }
             } else {
-                player.sendActionBar(plugin.text().parse("<yellow>拆掉一個，還有 " + run.alarms.size() + " 個"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>拆掉一個，還有 " + run.alarms.size() + " 個"));
             }
             return true;
         }
@@ -503,12 +503,12 @@ final class HeistFinale implements Listener {
         }
         final List<Choice> mine = found.choices.get(player.getUniqueId());
         if (mine == null || index >= mine.size()) {
-            player.sendActionBar(plugin.text().parse("<red>這些寶箱沒有你的份（金庫之主倒下時你不在旁邊）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>這些寶箱沒有你的份（金庫之主倒下時你不在旁邊）"));
             player.playSound(player.getLocation(), Sound.BLOCK_CHEST_LOCKED, 1.0f, 1.0f);
             return;
         }
         if (!found.taken.add(player.getUniqueId())) {
-            player.sendActionBar(plugin.text().parse("<red>你已經挑過了，其他的寶箱都封鎖了"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>你已經挑過了，其他的寶箱都封鎖了"));
             player.playSound(player.getLocation(), Sound.BLOCK_CHEST_LOCKED, 1.0f, 1.0f);
             return;
         }
@@ -516,7 +516,7 @@ final class HeistFinale implements Listener {
         final DropTable.Drop drop = toDrop(found, choice);
         if (drop == null) {
             found.taken.remove(player.getUniqueId());
-            player.sendActionBar(plugin.text().parse("<red>這個寶箱裡的東西已經不存在了（設定檔改過），挑別的"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>這個寶箱裡的東西已經不存在了（設定檔改過），挑別的"));
             return;
         }
         final MonsterData data = new MonsterData(found.level, MonsterRarity.UNIQUE, List.of(), "金庫之主的收藏");

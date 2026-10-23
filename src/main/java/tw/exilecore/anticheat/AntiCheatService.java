@@ -276,7 +276,7 @@ public final class AntiCheatService implements Listener {
         plugin.getSLF4JLogger().warn("[防作弊] {} {}（{}）拉回 {} —— 最近 {} 秒第 {} 次", player.getName(), kind, detail,
                 describe(back), config.strikeWindowSeconds(), strikes);
         if (config.tellPlayer()) {
-            player.sendActionBar(plugin.text().parse("<red>移動異常（" + kind + "），已拉回"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>移動異常（" + kind + "），已拉回"));
         }
         if (config.notifyAdmins()) {
             for (final Player admin : plugin.getServer().getOnlinePlayers()) {

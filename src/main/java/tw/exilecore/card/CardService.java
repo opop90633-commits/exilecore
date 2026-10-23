@@ -214,7 +214,7 @@ public final class CardService {
     }
 
     private void notEnough(final Player player, final CurrencyType type, final CardConfig.Card card, final int have) {
-        player.sendActionBar(plugin.text().parse("<gray>" + ItemRenderer.escape(type.name()) + "：<white>" + have + " / " + card.set()
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>" + ItemRenderer.escape(type.name()) + "：<white>" + have + " / " + card.set()
                 + "<gray> 張，還差 " + Math.max(0, card.set() - have) + " 張"));
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.8f);
     }

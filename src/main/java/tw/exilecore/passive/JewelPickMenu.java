@@ -121,13 +121,13 @@ public final class JewelPickMenu extends Menu {
         }
         plugin.characters().save(player);
         player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_PLACE, 0.9f, 1.2f);
-        player.sendActionBar(plugin.text().parse("<green>珠寶放進去了，詞綴已加在角色身上"));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>珠寶放進去了，詞綴已加在角色身上"));
         back();
     }
 
     private void fail(final String message) {
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
-        player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(message)));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(message)));
     }
 
     private void back() {

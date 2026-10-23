@@ -832,7 +832,7 @@ omen_sinistral_guard:
   material: BOOK
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_PREFIXES, weight: 25 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——保前綴籤；2026-10-19：40 → 25（市場價只剩設定的 1/3、消耗 63%）
+  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_PREFIXES, weight: 35 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——保前綴籤；2026-10-23：25 → 35（玩家反映太難拿）；2026-10-19：40 → 25（市場價只剩設定的 1/3、消耗 63%）
   applies_to: { rarity: [MAGIC, RARE] }
   drop_weight: 0
   description: "下一顆湮滅石／亂流石不動前綴（只拿後綴）"
@@ -842,7 +842,7 @@ omen_dextral_guard:
   material: BOOK
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_SUFFIXES, weight: 25 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——保後綴籤；2026-10-19：40 → 25（市場價只剩設定的 1/3、消耗 60%）
+  omen: { triggers: [REMOVE_AFFIX, REMOVE_AND_ADD], effect: KEEP_SUFFIXES, weight: 35 }   # 2026-10：流寇、祭壇抽到的權重（其他星籤 100）——保後綴籤；2026-10-23：25 → 35（玩家反映太難拿）；2026-10-19：40 → 25（市場價只剩設定的 1/3、消耗 60%）
   applies_to: { rarity: [MAGIC, RARE] }
   drop_weight: 0
   description: "下一顆湮滅石／亂流石不動後綴（只拿前綴）"

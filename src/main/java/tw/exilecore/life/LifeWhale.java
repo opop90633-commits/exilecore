@@ -316,7 +316,7 @@ final class LifeWhale {
         }
         final String problem = summon(player);
         if (problem != null) {
-            player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
             return true;
         }
         final ItemStack held = player.getInventory().getItemInMainHand();

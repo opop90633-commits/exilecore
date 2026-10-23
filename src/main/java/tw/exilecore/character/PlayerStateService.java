@@ -1261,6 +1261,18 @@ public final class PlayerStateService {
         resourceBar.update(player, state);
     }
 
+    /**
+     * 2026-10-23：隊伍框（接在動作列後面的那段）；沒有隊伍、沒套資源包、關掉了是 null。
+     * 別的動作列提示（{@link tw.exilecore.gui.ActionBar#send}）也接上，提示出現時隊伍框才不會不見。
+     */
+    public Component partyFrames(final Player player) {
+        if (plugin.web() == null || !plugin.web().hasPack(player)) {
+            return null;
+        }
+        final PlayerState state = states.get(player.getUniqueId());
+        return state == null ? null : partyHud.render(player, state);
+    }
+
     private Component actionBar(final Player player, final PlayerState state) {
         // 2026-10-22 效能（spark：動作列 1.9%，大半是 MiniMessage 解析）：生命、護盾、魔力、等級這段數字幾乎每次都不一樣，
         // 快取一直落空——改成直接組元件（不經過 MiniMessage、不用 String.format）；後面那段（異常、光環、通知…）才解析，而且很少變

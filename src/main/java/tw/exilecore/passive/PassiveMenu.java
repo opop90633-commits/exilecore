@@ -130,7 +130,7 @@ public final class PassiveMenu extends Menu {
         centerOn(node.x(), node.y());
         redraw();
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.7f);
-        player.sendActionBar(plugin.text().parse("<#55ffff>搜尋結果 " + (resultIndex + 1) + "/" + results.size() + "：<white>"
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#55ffff>搜尋結果 " + (resultIndex + 1) + "/" + results.size() + "：<white>"
                 + ItemRenderer.escape(node.name().isEmpty() ? node.type().displayName() : node.name())
                 + (node.isSocket() && jewelIn(node) != null ? " <dark_gray>（有珠寶）" : "")));
     }
@@ -155,7 +155,7 @@ public final class PassiveMenu extends Menu {
         resultIndex = -1;
         redraw();
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 0.9f);
-        player.sendActionBar(plugin.text().parse("<gray>搜尋標記清掉了"));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>搜尋標記清掉了"));
     }
 
     /** 視野外、這個方向（dx, dy 其中一個是 ±1）還有幾個搜尋結果。 */
@@ -670,7 +670,7 @@ public final class PassiveMenu extends Menu {
                     if (region.nodes().contains(results.get(i))) {
                         resultIndex = i;
                         centerOn(results.get(i).x(), results.get(i).y());
-                        player.sendActionBar(plugin.text().parse("<#55ffff>搜尋結果 " + (i + 1) + "/" + results.size() + "：<white>"
+                        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#55ffff>搜尋結果 " + (i + 1) + "/" + results.size() + "：<white>"
                                 + ItemRenderer.escape(results.get(i).name().isEmpty() ? results.get(i).type().displayName() : results.get(i).name())));
                         break;
                     }
@@ -720,7 +720,7 @@ public final class PassiveMenu extends Menu {
             // 右鍵還沒配的節點：取消路徑預覽（不是退點）
             clearPreview();
             redraw();
-            player.sendActionBar(plugin.text().parse("<gray>取消路徑預覽"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>取消路徑預覽"));
             return;
         } else if (click.isRightClick()) {
             clearPreview();
@@ -737,7 +737,7 @@ public final class PassiveMenu extends Menu {
             plugin.characters().setProgress(player, "attr." + node.id(), next); // 2026-10：存進資料庫（以前只放在記憶體，重登會不見）
             state.markDirty();
             plugin.players().sheet(player);
-            player.sendActionBar(plugin.text().parse("<#ffd96a>這個屬性點改成 +" + attributeAmount(node) + " " + attributeName(next)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd96a>這個屬性點改成 +" + attributeAmount(node) + " " + attributeName(next)));
             result = PassiveState.Result.success();
         } else if (node.isSocket() && state.passives().contains(node.id())) {
             // 配了的珠寶孔：空的選珠寶放進去，有珠寶的拿回來
@@ -748,7 +748,7 @@ public final class PassiveMenu extends Menu {
             }
             result = JewelSockets.unsocket(plugin, player, node);
             if (result.ok()) {
-                player.sendActionBar(plugin.text().parse("<yellow>珠寶拿回背包了"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>珠寶拿回背包了"));
             }
         } else if (start != null && !node.isStart() && !state.passives().contains(node.id())
                 && !tree.canAllocate(state.passives(), start, node)) {
@@ -771,7 +771,7 @@ public final class PassiveMenu extends Menu {
                         previewIds.add(step.id());
                     }
                     player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
-                    player.sendActionBar(plugin.text().parse("<#77aaff>這條路要 " + path.size() + " 點，再點一次 "
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#77aaff>這條路要 " + path.size() + " 點，再點一次 "
                             + ItemRenderer.escape(node.name()) + " 就整條配上"));
                     redraw();
                     return;
@@ -786,7 +786,7 @@ public final class PassiveMenu extends Menu {
             player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, click.isRightClick() ? 0.7f : 1.3f);
         } else {
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
-            player.sendActionBar(plugin.text().parse("<red>" + result.message()));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + result.message()));
         }
         redraw();
     }

@@ -190,7 +190,7 @@ public final class CharacterListener implements Listener {
     }
 
     private void denyDrop(final Player player) {
-        player.sendActionBar(plugin.text().parse(characters.tradeLocked(player) ? "<red>交易存檔重試中，暫時不能丟東西"
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(characters.tradeLocked(player) ? "<red>交易存檔重試中，暫時不能丟東西"
                 : "<red>東西不能丟在地上<gray>（不要的東西：選單 Shift＋F 的垃圾桶）"));
     }
 

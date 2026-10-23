@@ -232,28 +232,28 @@ public final class TradeService {
             return;
         }
         if (side.offersSlot(slot)) {
-            side.player.sendActionBar(plugin.text().parse("<gray>這一格已經放上去了（點左邊的拿回來）"));
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<gray>這一格已經放上去了（點左邊的拿回來）"));
             return;
         }
         if (side.offers.size() >= Math.min(TradeMenu.CELLS, config().tradeMaxItems())) {
-            side.player.sendActionBar(plugin.text().parse("<red>最多放 " + Math.min(TradeMenu.CELLS, config().tradeMaxItems()) + " 樣"));
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<red>最多放 " + Math.min(TradeMenu.CELLS, config().tradeMaxItems()) + " 樣"));
             return;
         }
         if (plugin.gold().amountOf(stack).isPresent()) {
-            side.player.sendActionBar(plugin.text().parse("<red>金幣不能交易"));
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<red>金幣不能交易"));
             return;
         }
         if (tw.exilecore.flask.FlaskService.isPlaceholder(stack)) {
-            side.player.sendActionBar(plugin.text().parse("<gray>這是空的藥劑欄（提示），不是東西"));
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<gray>這是空的藥劑欄（提示），不是東西"));
             return;
         }
         if (plugin.items().read(stack).map(ItemData::locked).orElse(false)) {
-            side.player.sendActionBar(plugin.text().parse("<#ffd27f>🔒 這件鎖定了（/lock 解除後才能交易）"));
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<#ffd27f>🔒 這件鎖定了（/lock 解除後才能交易）"));
             return;
         }
         if (stack.hasData(DataComponentTypes.BUNDLE_CONTENTS) || stack.hasData(DataComponentTypes.CONTAINER)) {
             // 裝在裡面的東西估不到價（手續費會變成最低），也看不清楚
-            side.player.sendActionBar(plugin.text().parse("<red>收納袋、界伏盒這類容器不能交易（把裡面的東西拿出來再放）"));
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<red>收納袋、界伏盒這類容器不能交易（把裡面的東西拿出來再放）"));
             return;
         }
         side.offers.add(new TradeSession.ItemOffer(slot, stack.clone()));
@@ -265,7 +265,7 @@ public final class TradeService {
         final int offered = side.pouchOffered(currencyId);
         final int room = pouch.amount(currencyId) - offered;
         if (room <= 0) {
-            side.player.sendActionBar(plugin.text().parse("<gray>通貨袋裡的這種通貨已經全部放上去了"));
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<gray>通貨袋裡的這種通貨已經全部放上去了"));
             return;
         }
         final int add = Math.min(room, wanted);
@@ -278,7 +278,7 @@ public final class TradeService {
             }
         }
         if (side.offers.size() >= Math.min(TradeMenu.CELLS, config().tradeMaxItems())) {
-            side.player.sendActionBar(plugin.text().parse("<red>最多放 " + Math.min(TradeMenu.CELLS, config().tradeMaxItems()) + " 樣"));
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<red>最多放 " + Math.min(TradeMenu.CELLS, config().tradeMaxItems()) + " 樣"));
             return;
         }
         side.offers.add(new TradeSession.PouchOffer(currencyId, add));
@@ -301,7 +301,7 @@ public final class TradeService {
         session.b.confirmed = false;
         side.player.playSound(side.player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.4f);
         final TradeSession.Side other = session.other(side);
-        other.player.sendActionBar(plugin.text().parse("<yellow>" + ItemRenderer.escape(plugin.displayName(side.player)) + " 改了交易內容"
+        tw.exilecore.gui.ActionBar.send(other.player, plugin.text().parse("<yellow>" + ItemRenderer.escape(plugin.displayName(side.player)) + " 改了交易內容"
                 + (hadConfirm ? "，確認已取消" : "")));
         redraw(session);
         // 等待時間過了把按鈕畫回來
@@ -365,17 +365,17 @@ public final class TradeService {
             return;
         }
         if (confirmWaitTicks(session, side, plugin.getServer().getCurrentTick()) > 0) {
-            side.player.sendActionBar(plugin.text().parse("<yellow>對方剛改過內容，先看清楚再確認"));
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<yellow>對方剛改過內容，先看清楚再確認"));
             return;
         }
         if (side.offers.isEmpty() && session.other(side).offers.isEmpty()) {
-            side.player.sendActionBar(plugin.text().parse("<gray>兩邊都還沒放東西"));
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<gray>兩邊都還沒放東西"));
             return;
         }
         final long fee = fee(session, side).fee();
         final long gold = plugin.gold().balance(side.player);
         if (gold < fee) {
-            side.player.sendActionBar(plugin.text().parse("<red>金幣不夠付手續費：要 " + GoldService.format(fee)
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<red>金幣不夠付手續費：要 " + GoldService.format(fee)
                     + "，你有 " + GoldService.format(gold)));
             side.player.playSound(side.player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
@@ -387,7 +387,7 @@ public final class TradeService {
             complete(session);
         } else {
             redraw(session);
-            session.other(side).player.sendActionBar(plugin.text().parse("<green>" + ItemRenderer.escape(plugin.displayName(side.player)) + " 已經確認"));
+            tw.exilecore.gui.ActionBar.send(session.other(side).player, plugin.text().parse("<green>" + ItemRenderer.escape(plugin.displayName(side.player)) + " 已經確認"));
         }
     }
 

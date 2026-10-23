@@ -712,7 +712,7 @@ public final class SalvageMenu extends Menu {
             invert();
         } else if (slot == SLOT_CONFIRM) {
             if (!selected.isEmpty() && new Summary().care > 0 && click != ClickType.SHIFT_LEFT) {
-                player.sendActionBar(plugin.text().parse("<red>選的裡面有傳奇：要 Shift＋左鍵才會拆"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>選的裡面有傳奇：要 Shift＋左鍵才會拆"));
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                 return;
             }
@@ -732,7 +732,7 @@ public final class SalvageMenu extends Menu {
     private void quickSelect(final Pick pick) {
         final Map<Integer, String> matching = matches(pick);
         if (matching.isEmpty()) {
-            player.sendActionBar(plugin.text().parse("<gray>背包裡沒有這種可以拆的"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>背包裡沒有這種可以拆的"));
             return;
         }
         if (selected.entrySet().containsAll(matching.entrySet())) {
@@ -778,7 +778,7 @@ public final class SalvageMenu extends Menu {
         if (locked) {
             selected.remove(inventorySlot);
         }
-        player.sendActionBar(plugin.text().parse(locked ? "<#ffd27f>🔒 已鎖定，拆解台不會收它" : "<gray>已解除鎖定"));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(locked ? "<#ffd27f>🔒 已鎖定，拆解台不會收它" : "<gray>已解除鎖定"));
         player.playSound(player.getLocation(), locked ? Sound.BLOCK_CHAIN_PLACE : Sound.BLOCK_CHAIN_BREAK, 0.6f, 1.2f);
     }
 
@@ -789,11 +789,11 @@ public final class SalvageMenu extends Menu {
         final ItemStack stack = player.getInventory().getItem(inventorySlot);
         final Optional<ItemData> data = plugin.items().read(stack);
         if (data.isPresent() && data.get().locked()) {
-            player.sendActionBar(plugin.text().parse("<#ffd27f>🔒 已鎖定的裝備不能拆解（右鍵解除鎖定）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd27f>🔒 已鎖定的裝備不能拆解（右鍵解除鎖定）"));
             return;
         }
         if (protectedFlask(inventorySlot, stack)) {
-            player.sendActionBar(plugin.text().parse("<#ff7777>藥劑欄（快捷欄 " + (inventorySlot + 1) + "）的藥劑不會被拆：要拆先移到別格"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ff7777>藥劑欄（快捷欄 " + (inventorySlot + 1) + "）的藥劑不會被拆：要拆先移到別格"));
             return;
         }
         final String identity = identity(inventorySlot, stack);

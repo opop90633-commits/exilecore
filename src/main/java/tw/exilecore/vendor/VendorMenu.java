@@ -649,7 +649,7 @@ public final class VendorMenu extends Menu {
             player.sendMessage(plugin.text().prefixed("<red>" + problem));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
         } else {
-            player.sendActionBar(plugin.text().parse(success));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(success));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_YES, 0.6f, 1.2f);
         }
         redraw();

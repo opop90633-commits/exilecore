@@ -199,7 +199,7 @@ public final class KillEffects implements Listener {
             stolen++;
         }
         if (stolen > 0) {
-            killer.sendActionBar(plugin.text().parse("<#ffb347>✦ 斬獲腰環：偷到 " + stolen + " 條詞綴（" + Math.round(seconds) + " 秒）"));
+            tw.exilecore.gui.ActionBar.send(killer, plugin.text().parse("<#ffb347>✦ 斬獲腰環：偷到 " + stolen + " 條詞綴（" + Math.round(seconds) + " 秒）"));
             killer.playSound(killer.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, SoundCategory.PLAYERS, 0.6f, 1.5f);
             final Location at = victim.getLocation().add(0, 1, 0);
             tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.END_ROD, at, 20, 0.5, 0.6, 0.5, 0.05);

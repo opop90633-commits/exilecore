@@ -168,7 +168,7 @@ final class StashTabsMenu extends Menu {
             plugin.players().markDirty(player);
             plugin.characters().save(player);
             player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_LEATHER, 0.6f, 1.2f);
-            player.sendActionBar(plugin.text().parse("<green>全部頁照分類整理好了"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>全部頁照分類整理好了"));
             redraw();
             return;
         }

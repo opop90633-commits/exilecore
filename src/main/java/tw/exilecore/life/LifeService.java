@@ -1756,7 +1756,7 @@ public final class LifeService {
     void bar(final Player player, final String miniMessage, final long ticks) {
         final tw.exilecore.character.PlayerState state = plugin.players().get(player);
         if (state == null || !state.hasCharacter()) {
-            player.sendActionBar(plugin.text().parse(miniMessage));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(miniMessage));
             return;
         }
         state.notice(miniMessage, plugin.getServer().getCurrentTick() + ticks);

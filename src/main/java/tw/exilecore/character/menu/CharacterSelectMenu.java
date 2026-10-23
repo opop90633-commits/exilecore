@@ -157,7 +157,7 @@ public final class CharacterSelectMenu extends Menu {
             if (click.isRightClick()) {
                 final PlayerState state = plugin.players().get(player);
                 if (state.hasCharacter() && state.character().id() == record.get().id()) {
-                    player.sendActionBar(plugin.text().parse("<red>不能刪除使用中的角色"));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>不能刪除使用中的角色"));
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
                     return;
                 }

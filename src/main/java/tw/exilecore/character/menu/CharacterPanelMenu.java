@@ -369,7 +369,7 @@ public final class CharacterPanelMenu extends Menu {
 
     private void result(final String problem, final Sound success) {
         if (problem != null) {
-            player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
@@ -405,7 +405,7 @@ public final class CharacterPanelMenu extends Menu {
     private void unequip(final int index) {
         final String problem = plugin.characters().gear().unequip(player, index);
         if (problem != null) {
-            player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
@@ -443,7 +443,7 @@ public final class CharacterPanelMenu extends Menu {
         }
         final String problem = plugin.characters().gear().equip(player, event.getSlot());
         if (problem != null) {
-            player.sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }

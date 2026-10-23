@@ -132,21 +132,21 @@ public final class TrashMenu extends Menu {
             return;
         }
         if (tw.exilecore.flask.FlaskService.isPlaceholder(stack)) {
-            player.sendActionBar(plugin.text().parse("<gray>這是空的藥劑欄（提示），不是東西"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這是空的藥劑欄（提示），不是東西"));
             return;
         }
         if (plugin.items().read(stack).map(ItemData::locked).orElse(false)) {
-            player.sendActionBar(plugin.text().parse("<#ffd27f>🔒 這件鎖定了，不會丟進垃圾桶（/lock 解除）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd27f>🔒 這件鎖定了，不會丟進垃圾桶（/lock 解除）"));
             return;
         }
         for (final Mark mark : marks) {
             if (mark.slot() == slot) {
-                player.sendActionBar(plugin.text().parse("<gray>已經在垃圾桶裡了（點上面的拿回來）"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>已經在垃圾桶裡了（點上面的拿回來）"));
                 return;
             }
         }
         if (marks.size() >= CELLS) {
-            player.sendActionBar(plugin.text().parse("<red>垃圾桶滿了：先刪掉這些"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>垃圾桶滿了：先刪掉這些"));
             return;
         }
         marks.add(new Mark(slot, stack.clone()));

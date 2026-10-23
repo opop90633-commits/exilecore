@@ -454,7 +454,7 @@ public final class AtlasMenu extends Menu {
         }
         final AtlasGrid.Cell cell = atlas.grid().cell(q, r);
         if (!cell.isMap()) {
-            player.sendActionBar(plugin.text().parse(cell.kind() == AtlasGrid.Kind.TOWER ? "<gray>塔從地圖裝置的「塔」按鈕開"
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(cell.kind() == AtlasGrid.Kind.TOWER ? "<gray>塔從地圖裝置的「塔」按鈕開"
                     : "<gray>城塞從地圖裝置的終局按鈕開"));
             return;
         }
@@ -462,7 +462,7 @@ public final class AtlasMenu extends Menu {
         final String name = map == null ? String.valueOf(cell.mapId()) : map.name();
         if (click.isRightClick()) {
             service.chooseCell(player, null);
-            player.sendActionBar(plugin.text().parse("<gray>取消指定：開圖時自動選最近的未完成格"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>取消指定：開圖時自動選最近的未完成格"));
         } else {
             service.chooseCell(player, cell);
             if (!click.isShiftClick() && map != null) {
@@ -471,13 +471,13 @@ public final class AtlasMenu extends Menu {
                     new AtlasMapPickMenu(plugin, player, service, map, cell).open();
                     return;
                 }
-                player.sendActionBar(plugin.text().parse("<red>背包和倉庫都沒有 " + ItemRenderer.escape(name)
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>背包和倉庫都沒有 " + ItemRenderer.escape(name)
                         + "<gray>（已經指定這一格：拿到這種地圖後從地圖裝置開）"));
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f, 0.8f);
                 redraw();
                 return;
             }
-            player.sendActionBar(plugin.text().parse("<yellow>下次開 " + ItemRenderer.escape(name) + " 用 (" + q + ", " + r + ")"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>下次開 " + ItemRenderer.escape(name) + " 用 (" + q + ", " + r + ")"));
         }
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.5f);
         redraw();

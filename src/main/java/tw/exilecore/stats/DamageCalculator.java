@@ -342,10 +342,9 @@ public final class DamageCalculator {
             }
             double amount = roller.roll(min, max);
             // 獲得 x% 傷害為額外某類型（PoE2，看全部傷害；額外的部分同時吃原本類型與新類型的修飾器）
+            // 2026-10-23 修正：同類型也算（混沌傷害也給額外混沌、閃電也給額外閃電；PoE2 的「傷害」是全部的傷害）。
+            // 以前跳過同類型，純混沌技能（穢陣、精魂吸取…）拿不到「x% 傷害為額外的混沌傷害」
             for (final DamageType extra : DamageType.values()) {
-                if (extra == type) {
-                    continue;
-                }
                 final double percent = attacker.flat(StatKeys.damageExtra(extra), context) + extraPerMana(attacker, extra, context);
                 if (percent > 0) {
                     final Set<String> both = new HashSet<>(context);

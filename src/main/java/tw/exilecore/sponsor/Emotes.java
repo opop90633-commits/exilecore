@@ -140,7 +140,7 @@ public final class Emotes implements Listener {
         final Long last = lastUse.get(player.getUniqueId());
         if (last != null && now - last < COOLDOWN_MILLIS) {
             if (!quietCooldown) {
-                player.sendActionBar(plugin.text().parse("<gray>動作冷卻中（" + String.format("%.1f", (COOLDOWN_MILLIS - (now - last)) / 1000.0) + " 秒）"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>動作冷卻中（" + String.format("%.1f", (COOLDOWN_MILLIS - (now - last)) / 1000.0) + " 秒）"));
             }
             return;
         }

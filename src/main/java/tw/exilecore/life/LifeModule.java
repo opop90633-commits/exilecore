@@ -247,7 +247,7 @@ public final class LifeModule implements Module, Listener {
         final String problem = service.canPlace(event.getPlayer(), event.getBlockPlaced(), event.getItemInHand());
         if (problem != null) {
             event.setCancelled(true);
-            event.getPlayer().sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+            tw.exilecore.gui.ActionBar.send(event.getPlayer(), plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
         }
     }
 
@@ -267,7 +267,7 @@ public final class LifeModule implements Module, Listener {
         final String problem = service.breakBlock(event.getPlayer(), event.getBlock());
         if (problem != null) {
             event.setCancelled(true);
-            event.getPlayer().sendActionBar(plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+            tw.exilecore.gui.ActionBar.send(event.getPlayer(), plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
         } else {
             event.setDropItems(false);
             event.setExpToDrop(0);

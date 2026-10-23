@@ -1647,7 +1647,7 @@ public final class GuildService {
         }
         final String problem = plugin.characters().transactionProblem(player);
         if (problem != null) {
-            player.sendActionBar(plugin.text().parse("<red>" + problem));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + problem));
             return null;
         }
         return guild;
@@ -1665,18 +1665,18 @@ public final class GuildService {
             return;
         }
         if (page >= usablePages(guild)) {
-            player.sendActionBar(plugin.text().parse("<red>這一頁現在不能放東西（只能拿出來）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>這一頁現在不能放東西（只能拿出來）"));
             return;
         }
         final String problem = depositProblem(player, slot, stack);
         if (problem != null) {
-            player.sendActionBar(plugin.text().parse(problem));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(problem));
             return;
         }
         final int amount = stack.getAmount();
         final int rest = GuildStash.add(stash.page(page), stack.clone());
         if (rest >= amount) {
-            player.sendActionBar(plugin.text().parse("<red>這一頁滿了（換一頁再放）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>這一頁滿了（換一頁再放）"));
             return;
         }
         final ItemStack moved = stack.asQuantity(amount - rest);
@@ -1701,12 +1701,12 @@ public final class GuildService {
             return;
         }
         if (!guild.rank(player.getUniqueId()).atLeast(guild.withdrawRank())) {
-            player.sendActionBar(plugin.text().parse("<red>公會倉庫現在" + withdrawText(guild.withdrawRank()) + "才能拿東西"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>公會倉庫現在" + withdrawText(guild.withdrawRank()) + "才能拿東西"));
             return;
         }
         final Wallet wallet = plugin.economy().wallet();
         if (!wallet.fits(player, stack)) {
-            player.sendActionBar(plugin.text().parse("<red>背包放不下"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>背包放不下"));
             return;
         }
         stash.page(page)[slot] = null;
@@ -1830,7 +1830,7 @@ public final class GuildService {
             return;
         }
         if (!canManageStash(guild, player)) {
-            player.sendActionBar(plugin.text().parse("<red>只有會長與幹部能改頁籤的名稱與分類"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>只有會長與幹部能改頁籤的名稱與分類"));
             return;
         }
         final List<tw.exilecore.gui.Dialogs.Option> options = new ArrayList<>();
@@ -1882,7 +1882,7 @@ public final class GuildService {
             return;
         }
         if (!guild.rank(player.getUniqueId()).atLeast(guild.withdrawRank())) {
-            player.sendActionBar(plugin.text().parse("<red>公會倉庫現在" + withdrawText(guild.withdrawRank()) + "才能整理"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>公會倉庫現在" + withdrawText(guild.withdrawRank()) + "才能整理"));
             return;
         }
         organizer().sort(List.of(tw.exilecore.stash.StashOrganizer.Slots.of(stash.page(page))));
@@ -1903,12 +1903,12 @@ public final class GuildService {
             return;
         }
         if (!canManageStash(guild, player)) {
-            player.sendActionBar(plugin.text().parse("<red>只有會長與幹部能把全部頁重新分頁"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>只有會長與幹部能把全部頁重新分頁"));
             return;
         }
         final String problem = plugin.characters().transactionProblem(player);
         if (problem != null) {
-            player.sendActionBar(plugin.text().parse("<red>" + problem));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + problem));
             return;
         }
         final int usable = Math.min(usablePages(guild), stash.pageCount());
@@ -1963,12 +1963,12 @@ public final class GuildService {
             }
             if (GuildStash.add(copy, stack.clone()) == 0) {
                 deposit(player, menu, page, slot); // 整疊放得下：照一般的存入走（檢查、存檔、紀錄都一樣）
-                player.sendActionBar(plugin.text().parse("<gray>放進 <white>" + ItemRenderer.escape(stash.tabLabel(page))
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>放進 <white>" + ItemRenderer.escape(stash.tabLabel(page))
                         + "<gray>（" + category.displayName() + "）"));
                 return;
             }
         }
-        player.sendActionBar(plugin.text().parse("<red>放「" + category.displayName() + "」的頁都滿了，或沒有這個分類的頁（直接點＝放進現在這一頁）"));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>放「" + category.displayName() + "」的頁都滿了，或沒有這個分類的頁（直接點＝放進現在這一頁）"));
     }
 
     /** 倉庫的一頁跟這個玩家的存檔一起寫（同一個資料庫交易），順便記公會紀錄與物品追查用的交易紀錄。 */

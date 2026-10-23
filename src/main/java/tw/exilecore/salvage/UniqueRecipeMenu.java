@@ -395,7 +395,7 @@ public final class UniqueRecipeMenu extends Menu {
             problem = "同一件已經放進來了";
         }
         if (problem != null) {
-            player.sendActionBar(plugin.text().parse("<red>不能放：" + ItemRenderer.escape(problem)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>不能放：" + ItemRenderer.escape(problem)));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }
@@ -418,7 +418,7 @@ public final class UniqueRecipeMenu extends Menu {
                 added++;
             }
         }
-        player.sendActionBar(plugin.text().parse(added == 0 ? "<gray>沒有能放的傳奇了" : "<green>放進來 " + added + " 件"));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(added == 0 ? "<gray>沒有能放的傳奇了" : "<green>放進來 " + added + " 件"));
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.4f);
     }
 
@@ -435,7 +435,7 @@ public final class UniqueRecipeMenu extends Menu {
         if (locked) {
             selected.remove(inventorySlot);
         }
-        player.sendActionBar(plugin.text().parse(locked ? "<#ffd27f>🔒 已鎖定，不會被拿去換" : "<gray>已解除鎖定"));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(locked ? "<#ffd27f>🔒 已鎖定，不會被拿去換" : "<gray>已解除鎖定"));
         player.playSound(player.getLocation(), locked ? Sound.BLOCK_CHAIN_PLACE : Sound.BLOCK_CHAIN_BREAK, 0.6f, 1.2f);
     }
 
@@ -452,7 +452,7 @@ public final class UniqueRecipeMenu extends Menu {
             return null;
         }
         if (groups(inputs).isEmpty()) {
-            player.sendActionBar(plugin.text().parse("<yellow>還不夠一組（每組 " + settings.inputs() + " 件）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>還不夠一組（每組 " + settings.inputs() + " 件）"));
             return null;
         }
         return inputs;

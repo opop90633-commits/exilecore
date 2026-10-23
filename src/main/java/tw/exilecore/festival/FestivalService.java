@@ -466,7 +466,7 @@ public final class FestivalService {
             }
             if (near < 0 || (mask & 1 << near) != 0) {
                 if (near >= 0 && tickCount % 3 == 0) {
-                    player.sendActionBar(plugin.text().parse("<" + config.color() + ">🎃 這盞今天已經點過了 <gray>（" + Integer.bitCount(mask) + "／"
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<" + config.color() + ">🎃 這盞今天已經點過了 <gray>（" + Integer.bitCount(mask) + "／"
                             + spots.size() + "）"));
                 }
                 continue;
@@ -487,7 +487,7 @@ public final class FestivalService {
             for (int i = 0; i < need; i++) {
                 bar.append(i < seconds ? "▮" : "▯");
             }
-            player.sendActionBar(plugin.text().parse("<" + config.color() + ">點燈中 <white>" + bar + " <gray>" + seconds + "／" + need + " 秒"
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<" + config.color() + ">點燈中 <white>" + bar + " <gray>" + seconds + "／" + need + " 秒"
                     + "<dark_gray>（離開就要重來）"));
             player.spawnParticle(Particle.SMALL_FLAME, lamp, 4 + seconds, 0.3, 0.3, 0.3, 0.01);
             player.playSound(lamp, Sound.BLOCK_CANDLE_AMBIENT, 0.6f, 0.8f + seconds * 0.06f);
@@ -520,7 +520,7 @@ public final class FestivalService {
         world.spawnParticle(Particle.SOUL_FIRE_FLAME, lamp, 16, 0.4, 0.6, 0.4, 0.03);
         player.playSound(lamp, Sound.ITEM_FIRECHARGE_USE, 0.8f, 1.2f);
         player.playSound(lamp, Sound.ENTITY_VEX_CHARGE, 0.8f, 0.7f);
-        player.sendActionBar(plugin.text().parse("<" + config.color() + ">🎃 點亮了！<gray>今天 " + Integer.bitCount(after) + "／"
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<" + config.color() + ">🎃 點亮了！<gray>今天 " + Integer.bitCount(after) + "／"
                 + config.lanterns().count() + " 盞——燈裡竄出了幽魂！"));
         spawnGhosts(lamp, Math.max(1, Math.min(90, plugin.players().get(player).level())), player);
         // 全服的燈
@@ -1005,7 +1005,7 @@ public final class FestivalService {
         world.playSound(at, Sound.ENTITY_WITCH_CELEBRATE, 0.8f, 1.1f);
         for (final Player player : world.getPlayers()) {
             if (player.getLocation().distanceSquared(at) < 40 * 40) {
-                player.sendActionBar(plugin.text().parse("<" + config.color() + ">🎃 地上冒出了一個搗蛋南瓜！<gray>右鍵敲門"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<" + config.color() + ">🎃 地上冒出了一個搗蛋南瓜！<gray>右鍵敲門"));
             }
         }
     }
@@ -1398,7 +1398,7 @@ public final class FestivalService {
                 if (accepted > 0 && plugin.economy() != null) {
                     plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, accepted);
                 }
-                player.sendActionBar(plugin.text().parse(accepted >= amount
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(accepted >= amount
                         ? "<" + config.color() + ">+" + amount + " " + ItemRenderer.escape(type.name())
                         : "<gray>" + ItemRenderer.escape(type.name()) + "滿了（上限 " + plugin.players().get(player).bag().pouch().cap()
                         + "），" + (accepted > 0 ? "收下 " + accepted + " 個、" : "") + "多的 " + (amount - accepted) + " 個自動過濾"));
@@ -1417,7 +1417,7 @@ public final class FestivalService {
             plugin.economy().wallet().dropFor(player, rest);
             left -= stack;
         }
-        player.sendActionBar(plugin.text().parse("<" + config.color() + ">+" + amount + " " + ItemRenderer.escape(type.name())));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<" + config.color() + ">+" + amount + " " + ItemRenderer.escape(type.name())));
     }
 
     private LivingEntity spawnMob(final String typeName, final Location at) {

@@ -1113,6 +1113,14 @@ public final class MapService {
                 config.finalLifeMultiplier(config.tiers().max())) / RECOMMENDED_SECONDS;
     }
 
+    /**
+     * 劫盜終局（金庫之主）：建議打 Boss 的每秒傷害（單人約 3 分半打完；2026-10-23）。
+     * 生命照 MapBosses.tierLife：開的人打過的最高階照 final.tier_life 再乘（跟極境一樣）。
+     */
+    public double heistFinaleRecommendedDps(final MapConfig.MapDef map, final int level, final int tier) {
+        return bossLife(map, level, config.finalLifeMultiplier(Math.max(1, tier))) / RECOMMENDED_SECONDS;
+    }
+
     /** 「建議打 Boss 每秒 50 萬」的那一行（MiniMessage）。 */
     public static String recommendedText(final double dps) {
         return recommendedText(dps, 0);
@@ -2136,7 +2144,7 @@ public final class MapService {
             if (instance.attemptActive()) {
                 if (instance.enteredThisAttempt(player.getUniqueId())) {
                     gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
-                    player.sendActionBar(plugin.text().parse("<red>這一門你已經出來了<gray>：等裡面的人全部倒下（或出來），再走下一門"));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>這一門你已經出來了<gray>：等裡面的人全部倒下（或出來），再走下一門"));
                     return;
                 }
             } else if (instance.bossKilled()) {
@@ -2156,7 +2164,7 @@ public final class MapService {
             } else if (instance.enteredThisAttempt(player.getUniqueId())) {
                 if (instance.portalsLeft() < 2) {
                     gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
-                    player.sendActionBar(plugin.text().parse("<red>次數只剩隊友正在打的這一波了<gray>：同一波死了或出來再進去要多扣 1 次"));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>次數只剩隊友正在打的這一波了<gray>：同一波死了或出來再進去要多扣 1 次"));
                     return;
                 }
                 instance.usePortal(); // 同一波裡死了、回營地再進去：照舊扣 1 次
@@ -2165,7 +2173,7 @@ public final class MapService {
         } else if (instance.singleEntry() && instance.uberEntered(player.getUniqueId())) {
             // 極境、劫盜終局每個人只能進一次：死了或回營地就出局
             gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
-            player.sendActionBar(plugin.text().parse("<red>" + singleEntryName(instance) + "每個人只能進去一次（死了或離開就不能再進）"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + singleEntryName(instance) + "每個人只能進去一次（死了或離開就不能再進）"));
             return;
         }
         if (instance.singleEntry()) {
@@ -2535,16 +2543,16 @@ public final class MapService {
                     // 每個人走進的是自己（或隊友）的地圖；還能進幾次就亮幾道門
                     final MapInstance instance = target(player);
                     if (instance == null) {
-                        player.sendActionBar(plugin.text().parse("<gray>你" + (plugin.party() != null && plugin.party().inParty(player) ? "和隊友" : "")
+                        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>你" + (plugin.party() != null && plugin.party().inParty(player) ? "和隊友" : "")
                                 + "沒有開著的地圖：先在地圖裝置開一張"));
                         continue;
                     }
                     if (instance.state() != MapInstance.State.OPEN) {
-                        player.sendActionBar(plugin.text().parse("<gray>" + ItemRenderer.escape(instance.label()) + " 還在成形……"));
+                        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>" + ItemRenderer.escape(instance.label()) + " 還在成形……"));
                         continue;
                     }
                     if (gate >= Math.min(CampaignStructures.GATE_COUNT, instance.portalsLeft())) {
-                        player.sendActionBar(plugin.text().parse("<gray>這道門沒有亮：" + ItemRenderer.escape(instance.label())
+                        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這道門沒有亮：" + ItemRenderer.escape(instance.label())
                                 + (instance.usesAttempts() ? " " + attemptText(instance) : instance.singleEntry() ? " 每個人只能進入 1 次"
                                 : " " + waveText(instance)) + "，走進亮著的門"));
                         continue;
