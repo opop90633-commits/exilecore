@@ -54,6 +54,9 @@ final class RangedGoal implements Goal<Mob> {
     private boolean visible;
     private int sightCheck;
     private int repath;
+    /** 2026-10-23 效能：兩次尋路至少隔幾 tick。 */
+    private static final int MIN_GAP = 6;
+    private int sincePath = MIN_GAP;
     private Location pathTarget;
 
     RangedGoal(final Plugin plugin, final Mob mob) {
@@ -146,11 +149,16 @@ final class RangedGoal implements Goal<Mob> {
                 mob.getPathfinder().stopPathfinding();
                 pathTarget = null;
             }
-        } else if (--repath <= 0 || pathTarget == null || !pathTarget.getWorld().equals(targetAt.getWorld())
-                || pathTarget.distanceSquared(targetAt) > REPATH_MOVED * REPATH_MOVED) {
-            repath = REPATH_TICKS;
-            pathTarget = targetAt;
-            mob.getPathfinder().moveTo(target, 1.0);
+        } else {
+            sincePath++;
+            final boolean moved = pathTarget == null || !pathTarget.getWorld().equals(targetAt.getWorld())
+                    || pathTarget.distanceSquared(targetAt) > REPATH_MOVED * REPATH_MOVED;
+            if (--repath <= 0 || (moved && sincePath >= MIN_GAP)) { // 2026-10-23 效能：目標一直跑也至少隔 6 tick 才重算
+                repath = REPATH_TICKS + mob.getEntityId() % 5;
+                sincePath = 0;
+                pathTarget = targetAt;
+                mob.getPathfinder().moveTo(target, 1.0);
+            }
         }
         mob.lookAt(target);
         if (drawing >= 0) {

@@ -110,8 +110,21 @@ public final class AntiCheatService implements Listener {
 
     // ---- 每刻 ----
 
+    /** 2026-10-23：兩個 tick 之間超過這麼多毫秒就當伺服器卡了，不判超速。 */
+    static final long LAG_TICK_MILLIS = 100;
+    private long lastTickNanos;
+    private long lagUntil;
+
     private void everyTick() {
         tick++;
+        // 2026-10-23：這個 tick 離上一個超過 100ms（GC 停頓、卡頓）：玩家這段時間的移動封包會一口氣湧進來，看起來像一秒走太遠，
+        // 這個 tick 跟下一個 tick 不判，把每個人的視窗歸零
+        final long nowNanos = System.nanoTime();
+        final long gapMillis = lastTickNanos == 0 ? 0 : (nowNanos - lastTickNanos) / 1_000_000L;
+        lastTickNanos = nowNanos;
+        if (gapMillis > LAG_TICK_MILLIS) {
+            lagUntil = tick + 2;
+        }
         if (!config.enabled()) {
             return;
         }
@@ -131,6 +144,12 @@ public final class AntiCheatService implements Listener {
         }
         final Location now = player.getLocation();
         final Tracked state = tracked.computeIfAbsent(player.getUniqueId(), id -> new Tracked(now));
+        if (tick < lagUntil) { // 2026-10-23：伺服器剛卡過，這幾個 tick 不算
+            state.check.reset();
+            state.last = now.clone();
+            state.lastGood = now.clone();
+            return;
+        }
         if (state.last.getWorld() != now.getWorld()) {
             state.check.reset();
             state.last = now.clone();

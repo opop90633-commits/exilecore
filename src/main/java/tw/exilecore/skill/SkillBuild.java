@@ -133,6 +133,16 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     public static SkillBuild of(final SkillConfig config, final SkillDefinition definition, final int gemLevel,
                                 final int characterLevel, final boolean isDefault, final List<SupportDefinition> supports,
                                 final Set<String> weaponTags, final StatSheet sheet, final Set<String> resonant) {
+        return of(config, definition, gemLevel, characterLevel, isDefault, supports, weaponTags, sheet, resonant, List.of());
+    }
+
+    /**
+     * 2026-10-23：多一個「寶石自己帶的額外修飾器」（品質）：要在算光環效果、戰吼效果、詛咒效果之前就放進去
+     *（以前算完才用 withProfile 補上，光環效果那個倍率已經定了，光環品質等於沒作用；傷害的品質沒事）。
+     */
+    public static SkillBuild of(final SkillConfig config, final SkillDefinition definition, final int gemLevel,
+                                final int characterLevel, final boolean isDefault, final List<SupportDefinition> supports,
+                                final Set<String> weaponTags, final StatSheet sheet, final Set<String> resonant, final List<Modifier> extra) {
         // 2026-10：Lv.21 的寶石（劫盜大金庫、金庫之主）跟 Lv.20 一樣要 80 級，角色夠了就照 21 級算（以前一律被壓回 20）
         final int usable = gemLevel > tw.exilecore.character.SkillLoadout.MAX_LEVEL
                 && characterLevel >= config.requiredLevel(tw.exilecore.character.SkillLoadout.MAX_LEVEL)
@@ -158,6 +168,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final int level = Math.min(MAX_EFFECTIVE_LEVEL, baseLevel + bonus + supportLevels);
         final List<SupportDefinition> active = new ArrayList<>();
         final List<Modifier> local = new ArrayList<>(definition.modifiers()); // 技能自己帶的（例如點燃機率）
+        local.addAll(extra); // 2026-10-23：品質
         if (!isDefault) {
             boolean deployer = definition.deploy() != null;
             boolean exclusive = false;

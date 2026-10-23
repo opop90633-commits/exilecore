@@ -29,8 +29,11 @@ final class ChaseGoal implements Goal<Mob> {
     private final GoalKey<Mob> key;
     private final Plugin plugin;
     private final Mob mob;
+    /** 2026-10-23 效能：兩次尋路至少隔幾 tick（目標一直在跑也不會每 4 tick 重算整條路）。 */
+    private static final int MIN_GAP = 6;
     private int cooldown;
     private int repath;
+    private int sincePath;
     /** 2026-10-22 效能：上次尋路時目標的位置（目標沒走遠就不重算整條路，溺屍的水陸尋路特別貴）。 */
     private org.bukkit.Location pathTarget;
     /** 2026-10-22 效能：沒有目標時多久找一次人（原版每 tick 都問一次要不要啟用）。 */
@@ -93,6 +96,7 @@ final class ChaseGoal implements Goal<Mob> {
     @Override
     public void start() {
         repath = 0;
+        sincePath = MIN_GAP;
         pathTarget = null;
     }
 
@@ -108,11 +112,20 @@ final class ChaseGoal implements Goal<Mob> {
             return;
         }
         mob.lookAt(target);
+        sincePath++;
+        final double reach = mob.getWidth() * 2 + target.getWidth();
+        final double distance = target.getLocation().distanceSquared(mob.getLocation());
+        final boolean inReach = distance <= reach * reach + 1;
         // 2026-10-22 效能：目標離上次尋路的位置超過 1.5 格、或滿一秒才重算（以前固定每半秒整條重算）
+        // 2026-10-23 效能（spark：100 人時尋路佔主執行緒 7%）：目標在跑時 1.5 格大概 4 tick 就超過，等於每 4 tick 重算一次；
+        // 現在兩次尋路至少隔 6 tick（目標 16 格以外隔 12 tick），已經貼著目標的不重算（直接打），秒數加一點亂數讓各隻怪錯開
         final org.bukkit.Location targetAt = target.getLocation();
-        if (--repath <= 0 || pathTarget == null || !pathTarget.getWorld().equals(targetAt.getWorld())
-                || pathTarget.distanceSquared(targetAt) > 2.25) {
-            repath = 20;
+        final int gap = distance > 256 ? MIN_GAP * 2 : MIN_GAP;
+        final boolean moved = pathTarget == null || !pathTarget.getWorld().equals(targetAt.getWorld())
+                || pathTarget.distanceSquared(targetAt) > 2.25;
+        if (!(inReach && mob.hasLineOfSight(target)) && (--repath <= 0 || (moved && sincePath >= gap))) {
+            repath = 20 + mob.getEntityId() % 7;
+            sincePath = 0;
             pathTarget = targetAt;
             mob.getPathfinder().moveTo(target, 1.2);
         }
@@ -120,8 +133,7 @@ final class ChaseGoal implements Goal<Mob> {
             cooldown--;
             return;
         }
-        final double reach = mob.getWidth() * 2 + target.getWidth();
-        if (target.getLocation().distanceSquared(mob.getLocation()) <= reach * reach + 1 && mob.hasLineOfSight(target)) {
+        if (inReach && mob.hasLineOfSight(target)) {
             mob.swingMainHand();
             mob.attack(target);
             cooldown = 20;

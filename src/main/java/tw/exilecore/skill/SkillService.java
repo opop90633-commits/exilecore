@@ -1639,8 +1639,9 @@ public final class SkillService {
         }
         // 2026-10-21：輔助寶石加的冷卻也算（蓄鋒、蓄疾…）：英靈不等冷卻，以前白拿那顆輔助的加成（暴擊率更多 40%、異常機率加倍）
         // 2026-10-22：要圖騰的輔助（樁怒、疾樁…）也套到英靈的攻擊上（innerSupportsOf 併成一顆不挑技能的）
+        // 2026-10-23 修正：放進去的錘子寶石的品質也要算（以前英靈這一下直接用 SkillBuild.of，品質沒套上）
         final SkillBuild built = SkillBuild.of(config, definition, next.level(), state.level(), false, innerSupportsOf(host, totem, definition),
-                state.weaponTags(), sheet, resonantOf(next));
+                state.weaponTags(), sheet, resonantOf(next), qualityModifiers(definition, next.quality()));
         if (built.cooldownTicks() > 0) {
             final List<String> names = new ArrayList<>();
             for (final SupportDefinition support : supportsOf(next)) {
@@ -1650,9 +1651,7 @@ public final class SkillService {
             }
             return hint + "（不能有冷卻：" + (names.isEmpty() ? "輔助寶石加的冷卻也算" : String.join("、", names) + "會加冷卻，拿掉才能放圖騰") + "）";
         }
-        // 2026-10-23 修正：放進去的錘子寶石的品質也要算（以前英靈這一下直接用 SkillBuild.of，品質沒套上）
-        final List<tw.exilecore.stats.Modifier> quality = qualityModifiers(definition, next.quality());
-        return quality.isEmpty() ? built : built.withProfile(built.profile().withLocal(quality));
+        return built;
     }
 
     /**
@@ -2449,10 +2448,9 @@ public final class SkillService {
     private SkillBuild buildFresh(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
         // 2026-10-22：宿主寶石（英靈圖騰、星咒圖騰、暴擊引星）孔裡的輔助是給放進去的技能的；宿主自己只吃其中要圖騰的、加速度與持續的
         final List<SupportDefinition> supports = SupportDefinition.hostsSkill(definition) ? hostSupportsOf(entry) : supportsOf(entry);
-        final SkillBuild built = SkillBuild.of(config, definition, entry.level(), state.level(), false, supports, state.weaponTags(), sheet,
-                resonantOf(entry)); // 2026-10-18：共鳴的專屬輔助不佔名額
-        final List<tw.exilecore.stats.Modifier> quality = qualityModifiers(definition, entry.quality()); // 2026-10-23
-        return quality.isEmpty() ? built : built.withProfile(built.profile().withLocal(quality));
+        // 2026-10-23：品質放進去一起算（光環、戰吼、詛咒的品質是加效果倍率，算完才補上就沒用了）
+        return SkillBuild.of(config, definition, entry.level(), state.level(), false, supports, state.weaponTags(), sheet,
+                resonantOf(entry), qualityModifiers(definition, entry.quality())); // 2026-10-18：共鳴的專屬輔助不佔名額
     }
 
     /** 2026-10-22：宿主寶石本身吃的輔助（孔裡要圖騰的、只加攻擊／施法速度或持續時間的）。 */

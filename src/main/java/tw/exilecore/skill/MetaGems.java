@@ -234,11 +234,9 @@ public final class MetaGems {
         supports.add(carrier); // 放第一個：圖騰施法優先（插槽法術自己掛了陷阱施法的話那顆不算）
         // 2026-10-22：要圖騰的輔助（疾樁、樁怒…）插槽法術本身沒有圖騰標籤，innerSupportsOf 把它們併成一顆不挑技能的
         supports.addAll(service.innerSupportsOf(socket.metaEntry(), metaDefinition, socket.spell()));
-        final SkillBuild built = SkillBuild.of(service.config(), socket.spell(), socket.spellEntry().level(), state.level(), false, supports,
-                state.weaponTags(), sheet, SkillService.resonantOf(socket.spellEntry())); // 2026-10-18：共鳴的專屬輔助不佔名額
-        // 2026-10-23：放進去的寶石的品質
-        final List<tw.exilecore.stats.Modifier> quality = SkillService.qualityModifiers(socket.spell(), socket.spellEntry().quality());
-        return quality.isEmpty() ? built : built.withProfile(built.profile().withLocal(quality));
+        // 2026-10-23：放進去的寶石的品質一起算（詛咒效果的品質要在算倍率前放進去）
+        return SkillBuild.of(service.config(), socket.spell(), socket.spellEntry().level(), state.level(), false, supports,
+                state.weaponTags(), sheet, SkillService.resonantOf(socket.spellEntry()), SkillService.qualityModifiers(socket.spell(), socket.spellEntry().quality()));
     }
 
     // ---- 說明 ----
