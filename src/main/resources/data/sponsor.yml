@@ -95,24 +95,24 @@ tiers:
   - { amount: 3000,  id: patron_2, title: 星芒贊助者, color: "#7fe0c0", name_color: "#a8f5dc",
       stash_pages: 2,  bag_pages: 0, listings: 9,  bypass_full: true, chat_color: true, camp_fly: true,
       experience: 5, gold: 5, death_penalty: 8,
-      free_boosts: { per: week, count: 1 }, character_slots: 1, cosmetics: [m3d_halo_back] }
+      free_boosts: { per: week, count: 1 }, character_slots: 1, cosmetics: [patron_halo] }
   - { amount: 5000,  id: patron_3, title: 星輝贊助者, color: "#f5d76e", name_color: "#ffe58a",
       stash_pages: 3,  bag_pages: 1, listings: 11, bypass_full: true, chat_color: true, camp_fly: true,
       experience: 5, gold: 5, death_penalty: 6,
-      free_boosts: { per: week, count: 2 }, character_slots: 1, weekly_boxes: 1, cosmetics: [m3d_pet_wisp] }
+      free_boosts: { per: week, count: 2 }, character_slots: 1, weekly_boxes: 1, cosmetics: [patron_wisp] }
   - { amount: 10000, id: patron_4, title: 星耀贊助者, color: "#ff9f5a", name_color: "#ffb98a",
       stash_pages: 5,  bag_pages: 2, listings: 13, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
       experience: 5, gold: 5, death_penalty: 4,
-      free_boosts: { per: week, count: 3 }, character_slots: 2, weekly_boxes: 2, cosmetics: [m3d_butterfly_wings, m3d_pet_jelly] }
+      free_boosts: { per: week, count: 3 }, character_slots: 2, weekly_boxes: 2, cosmetics: [patron_wings_ember, patron_lantern] }
   - { amount: 15000, id: patron_5, title: 星曜守護者, color: "#d68cff", name_color: "gradient:#e3a8ff:#9fd3ff",
       stash_pages: 7,  bag_pages: 3, listings: 15, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
       experience: 5, gold: 5, death_penalty: 2,
-      free_boosts: { per: day, count: 1 }, character_slots: 3, weekly_boxes: 3, cosmetics: [m3d_seraph_wings, m3d_star_crown] }
+      free_boosts: { per: day, count: 1 }, character_slots: 3, weekly_boxes: 3, cosmetics: [patron_wings_galaxy, patron_crown] }
   - { amount: 25000, id: patron_6, title: 星骸至尊,   color: "#ffd24a", name_color: "gradient:#ffe27a:#ff8fe0",
       stash_pages: 10, bag_pages: 5, listings: 30, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
       experience: 5, gold: 5, death_penalty: 0,
       free_boosts: { per: day, count: 2 }, character_slots: 5, weekly_boxes: 5, all_cosmetics: true, lifetime_card: true,
-      cosmetics: [m3d_pet_dragon],
+      cosmetics: [patron_star],
       join_announce: true, badge: "★", custom_name_color: true, monthly_rename_cards: 1, guild_stash_pages: 2,
       raft_size: 4, bed_stamina: 10, boost_minutes: 5, entry_aura: true }
 
@@ -209,6 +209,21 @@ cosmetics:
   emote_love_you: { type: emote, emote: love_you, name: 我真的特別愛你, rarity: rare, fashion_price: 10, description: "害羞地摀著嘴，身子左右搖、冒出愛心" }
   emote_six_seven: { type: emote, emote: six_seven, name: "67", rarity: rare, fashion_price: 10, description: "兩手手心朝上放在身前，一上一下輪流掂，頭跟著歪" }
 
+  # 2026-10-23 累積贊助各階專屬（tiers.cosmetics 到階就送；限定：商店、抽獎箱都沒有，沒到那一階的人看不到）
+  patron_halo: { type: skin, slot: back, art: patron_halo, name: 星芒之環, rarity: epic, fashion_price: 0, limited: "星芒贊助者",
+                 description: "累積贊助 3,000 星幣：青綠色的六芒星環" }
+  patron_wisp: { type: skin, slot: pet, art: patron_wisp, name: 星輝之靈, rarity: epic, fashion_price: 0, limited: "星輝贊助者",
+                 description: "累積贊助 5,000 星幣：金色的星靈，頭上有光環" }
+  patron_wings_ember: { type: skin, slot: back, art: patron_wings_ember, name: 星耀之翼, rarity: legendary, fashion_price: 0, limited: "星耀贊助者",
+                        description: "累積贊助 10,000 星幣：橙紅的焰羽翼" }
+  patron_lantern: { type: skin, slot: pet, art: patron_lantern, name: 星耀提燈, rarity: epic, fashion_price: 0, limited: "星耀贊助者",
+                    description: "累積贊助 10,000 星幣：飄著火星的提燈" }
+  patron_wings_galaxy: { type: skin, slot: back, art: patron_wings_galaxy, name: 星曜之翼, rarity: legendary, fashion_price: 0, limited: "星曜守護者",
+                         description: "累積贊助 15,000 星幣：紫色的星晶翼" }
+  patron_crown: { type: skin, slot: headgear, art: patron_crown, name: 星曜冠, rarity: legendary, fashion_price: 0, limited: "星曜守護者",
+                  description: "累積贊助 15,000 星幣：五尖的紫晶王冠" }
+  patron_star: { type: skin, slot: pet, art: patron_star, name: 至尊星核, rarity: legendary, fashion_price: 0, limited: "星骸至尊",
+                 description: "累積贊助 25,000 星幣：金色的星核，粉色的雙環繞著轉" }
   # 2026-10 S1 贊助禮包限定「創世」系列（絕版）：limited 寫來源，選單上顯示「S1 贊助禮包限定」。
   #   限定的時裝不能放進抽獎箱（boxes）、不能放進月卡幣兌換（card_shop）、fashion_price 要是 0（/ec reload 會擋）；
   #   只有管理網頁「發放 → 時裝」或主控台 /ec sponsor give <玩家> cosmetic bundle:s1_genesis（整組）／cosmetic <代號>（單件）發得出來，

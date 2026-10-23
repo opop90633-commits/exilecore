@@ -1922,6 +1922,21 @@ def build_all():
         out[name] = ([r, l], {"back_r": r.name, "back_l": l.name})
     halo = halo_back()
     out[halo.name] = ([halo], {"back": halo.name})
+    # 累積贊助各階專屬（2026-10-23）
+    for name, colors, build in (
+            ("patron_wings_ember", ["#8a3a1e", "#ff9f5a", "#ffb98a", "#ffd8b0", "#ffe08a", "#ff5a2a",
+                                    None, None, None, None, None, None, None, None, None, None], ember),
+            ("patron_wings_galaxy", ["#4a2470", "#8a4fd8", "#d68cff", "#e3a8ff", "#ffffff", "#9fd3ff",
+                                     None, None, None, None, None, None, None, None, None, None], galaxy)):
+        r, l = wing(name, colors, build)
+        out[name] = ([r, l], {"back_r": r.name, "back_l": l.name})
+    ph = patron_halo()
+    out[ph.name] = ([ph], {"back": ph.name})
+    pc = patron_crown()
+    out[pc.name] = ([pc], {"helmet": pc.name})
+    for fn in (patron_wisp, patron_lantern, patron_star):
+        m = fn()
+        out[m.name] = ([m], {"pet": m.name})
     for fn in (pet_wisp, pet_dragon, pet_owl, pet_slime, pet_golem, pet_tome, pet_fox, pet_moon_rabbit, pet_bat, pet_jelly):
         m = fn()
         out[m.name] = ([m], {"pet": m.name})
@@ -2055,6 +2070,145 @@ def render(model, pal_img, size=200, yaw=35, pitch=25):
     for _, pts, col in polys:
         draw.polygon(pts, fill=col, outline=(0, 0, 0, 90))
     return img
+
+
+# ======================================================================
+# 累積贊助各階專屬（2026-10-23）：用那一階的顏色，sponsor.yml 的 tiers.cosmetics 到階就送
+#   3000 星芒 #7fe0c0：星芒之環（背飾）　5000 星輝 #f5d76e：星輝之靈（寵物）
+#   10000 星耀 #ff9f5a：星耀之翼（背飾）、星耀提燈（寵物）　15000 星曜 #d68cff：星曜之翼（背飾）、星曜冠（頭飾）
+#   25000 至尊 #ffd24a／#ff8fe0：至尊星核（寵物）
+# ======================================================================
+
+def patron_halo():
+    m = Model("patron_halo", ["#2a8a6e", "#7fe0c0", "#d8fff2", "#ffffff",
+                              "#a8f5dc", None, None, None,
+                              None, None, None, None, None, None, None, None], "back")
+    r = 8.4
+    for i in range(6):
+        ang = i * 60 + 30
+        cx = 8 + r * math.cos(math.radians(ang))
+        cy = 8 + r * math.sin(math.radians(ang))
+        # 六邊形的環：每一邊跟半徑方向垂直（30°、210° 的邊轉 −45°… 用 22.5 的倍數只能近似：直接用 45／−45／0）
+        rot_angle = {30: -45, 90: 0, 150: 45, 210: -45, 270: 0, 330: 45}[ang]
+        m.box((cx - 4.6, cy - 0.5, 7.5), (cx + 4.6, cy + 0.5, 8.5), 1, rot=(rot_angle, "z", (cx, cy, 8)) if rot_angle else None, glow=True)
+    # 六芒星
+    m.box((7.3, 2.5, 7.6), (8.7, 13.5, 8.4), 2, glow=True)
+    m.box((2.5, 7.3, 7.6), (13.5, 8.7, 8.4), 2, rot=(45, "z", (8, 8, 8)), glow=True)
+    m.box((2.5, 7.3, 7.6), (13.5, 8.7, 8.4), 2, rot=(-45, "z", (8, 8, 8)), glow=True)
+    m.box((6.9, 6.9, 7.4), (9.1, 9.1, 8.6), 3, rot=(45, "z", (8, 8, 8)), glow=True)     # 核
+    for i in range(6):
+        ang = i * 60
+        cx = 8 + 11.6 * math.cos(math.radians(ang))
+        cy = 8 + 11.6 * math.sin(math.radians(ang))
+        m.box((cx - 0.7, cy - 0.7, 7.7), (cx + 0.7, cy + 0.7, 8.3), 4, rot=(45, "z", (cx, cy, 8)), glow=True)   # 外圈的星點
+    return m
+
+
+def patron_wisp():
+    m = Model("patron_wisp", ["#f5d76e", "#fff4c0", "#ffffff", "#ffe58a",
+                              "#c9a43a", "#8a6a1e", None, None,
+                              None, None, None, None, None, None, None, None], "pet")
+    m.box((6, 6, 6), (10, 10, 10), 1, glow=True)             # 核
+    m.box((5.2, 6.4, 6.4), (10.8, 9.6, 9.6), 0, glow=True)
+    m.box((6.4, 5.2, 6.4), (9.6, 10.8, 9.6), 0, glow=True)
+    m.box((6.4, 6.4, 5.2), (9.6, 9.6, 10.8), 0, glow=True)
+    m.box((6.8, 8.2, 5.0), (7.6, 9.0, 5.2), 5)               # 眼睛
+    m.box((8.4, 8.2, 5.0), (9.2, 9.0, 5.2), 5)
+    ring(m, 7.6, 8.4, 1.6, 0.6, 4)                           # 金環（比星靈大）
+    ring(m, 10.4, 11.0, 4.2, 0.5, 3, glow=True)              # 頭上的光環
+    for (x, y, z) in ((2.6, 12.4, 8), (13.4, 3.6, 7), (8, 14, 12.4), (3.6, 3.6, 3.6), (12.6, 11.6, 12.2)):
+        m.box((x - 0.5, y - 0.5, z - 0.5), (x + 0.5, y + 0.5, z + 0.5), 2, rot=(45, "z", (x, y, z)), glow=True)   # 星點
+    return m
+
+
+def ember(m):
+    """星耀之翼：三道火焰狀的羽翼往外揚。"""
+    m.box((8, 9, 7.4), (16, 10.6, 8.6), 0)                   # 翼骨
+    m.box((15.4, 10, 7.5), (22, 11.6, 8.5), 0)
+    for i, (x, length, c) in enumerate(((9, 7, 1), (12.5, 9.5, 1), (16, 12, 2), (19.5, 10, 2), (22.5, 7, 3))):
+        m.box((x, 10 - length, 7.7), (x + 2.6, 10.4 + i * 0.3, 8.3), c)                  # 焰羽
+        m.box((x + 0.5, 10 - length - 1.2, 7.8), (x + 2.1, 10 - length, 8.2), 4, glow=True)   # 羽尖的火光
+    for i, x in enumerate(range(9, 23, 3)):
+        m.box((x, 8.2 + i * 0.3, 8.3), (x + 3, 10.6 + i * 0.3, 8.8), 3)                 # 覆羽
+    m.box((22, 11.4, 7.6), (25, 12.6, 8.4), 4, glow=True)    # 翼尖的星
+    m.box((9.5, 5.5, 7.85), (14, 6.3, 8.15), 5, glow=True)   # 焰紋
+    m.box((16.5, 3.0, 7.85), (21, 3.8, 8.15), 5, glow=True)
+
+
+def patron_lantern():
+    m = Model("patron_lantern", ["#5a3a1e", "#8a5a2a", "#ff9f5a", "#ffe08a",
+                                 "#ffb98a", "#2a1a10", None, None,
+                                 None, None, None, None, None, None, None, None], "pet")
+    m.box((7.4, 12.2, 7.4), (8.6, 13.6, 8.6), 0)             # 提把
+    m.box((6.2, 11.4, 6.2), (9.8, 12.4, 9.8), 1)             # 頂蓋
+    m.box((5.6, 5.0, 5.6), (10.4, 11.4, 10.4), 2, glow=True)  # 燈身（發光）
+    for (x, z) in ((5.4, 5.4), (9.8, 5.4), (5.4, 9.8), (9.8, 9.8)):
+        m.box((x, 4.8, z), (x + 0.8, 11.6, z + 0.8), 5)       # 四根框
+    m.box((6.2, 4.0, 6.2), (9.8, 5.0, 9.8), 1)               # 底座
+    m.box((7.0, 7.0, 7.0), (9.0, 9.4, 9.0), 3, glow=True)    # 燈芯
+    for (x, y, z) in ((3.5, 13.5, 8), (12.5, 2.5, 7.5), (8, 15.5, 4.5)):
+        m.box((x - 0.4, y - 0.4, z - 0.4), (x + 0.4, y + 0.4, z + 0.4), 4, glow=True)   # 飄出的火星
+    return m
+
+
+def galaxy(m):
+    """星曜之翼：紫色晶翼，比晶翼多一層、帶星點。"""
+    m.box((8, 9.2, 7.5), (13, 10.6, 8.5), 0)                 # 晶核
+    shards = [((12, 9, 7.4), (24, 11.2, 8.6), 22.5, 1), ((11, 6, 7.5), (22, 7.8, 8.5), 0, 2),
+              ((11, 3, 7.6), (19, 4.6, 8.4), -22.5, 1), ((13, 12, 7.5), (26, 13.8, 8.5), 45, 2),
+              ((10, 0, 7.6), (16, 1.4, 8.4), -45, 3), ((14, 15, 7.6), (22, 16.2, 8.4), 45, 3)]
+    for a, b, ang, c in shards:
+        origin = (a[0], (a[1] + b[1]) / 2, 8)
+        m.box(a, b, c, rot=(ang, "z", origin) if ang else None)
+        tip_a = (b[0], a[1] + 0.3, a[2] + 0.2)
+        tip_b = (b[0] + 2.4, b[1] - 0.3, b[2] - 0.2)
+        m.box(tip_a, tip_b, 4, rot=(ang, "z", origin) if ang else None, glow=True)
+    for (x, y) in ((15, 8), (19, 5), (21, 11), (17, 13.5)):
+        m.box((x - 0.5, y - 0.5, 7.7), (x + 0.5, y + 0.5, 8.3), 5, rot=(45, "z", (x, y, 8)), glow=True)   # 星點
+
+
+def patron_crown():
+    m = Model("patron_crown", ["#6a3a9a", "#d68cff", "#4a2470", "#ffffff",
+                               "#e3a8ff", "#9fd3ff", "#f4f6ff", None,
+                               None, None, None, None, None, None, None, None], "headgear")
+    ring(m, 13.2, 15.4, 1.2, 1.0, 0)
+    ring(m, 13.0, 13.4, 1.0, 0.6, 2)
+    for side in range(4):
+        for (x, h, w) in ((2.6, 2.2, 1.0), (5.4, 3.4, 1.2), (7.3, 4.6, 1.4), (9.6, 3.4, 1.2), (12.4, 2.2, 1.0)):
+            if side == 0:
+                a, b = (x, 15.4, 1.2), (x + w, 15.4 + h, 2.0)
+            elif side == 1:
+                a, b = (x, 15.4, 14.0), (x + w, 15.4 + h, 14.8)
+            elif side == 2:
+                a, b = (1.2, 15.4, x), (2.0, 15.4 + h, x + w)
+            else:
+                a, b = (14.0, 15.4, x), (14.8, 15.4 + h, x + w)
+            m.box(a, b, 1)
+            tip = (a[0] + (0.2 if side < 2 else 0), 15.4 + h, a[2] + (0 if side < 2 else 0.2))
+            m.box(tip, (tip[0] + (w - 0.4 if side < 2 else 0.8), 15.4 + h + 0.8, tip[2] + (0.8 if side < 2 else w - 0.4)), 4, glow=True)
+    m.box((7.0, 20.0, 1.0), (9.0, 21.6, 2.2), 5, rot=(45, "z", (8, 20.8, 1.6)), glow=True)   # 正面最高那根上的星
+    m.box((7.0, 13.6, 0.8), (9.0, 15.0, 1.2), 3, glow=True)   # 額前的寶石
+    m.box((3.6, 13.8, 0.9), (4.6, 14.6, 1.2), 6, glow=True)
+    m.box((11.4, 13.8, 0.9), (12.4, 14.6, 1.2), 6, glow=True)
+    return m
+
+
+def patron_star():
+    m = Model("patron_star", ["#c9a43a", "#ffd24a", "#fff0b0", "#ffffff",
+                              "#ff8fe0", "#ffe27a", "#ffb0ee", None,
+                              None, None, None, None, None, None, None, None], "pet")
+    m.box((6.4, 6.4, 6.4), (9.6, 9.6, 9.6), 2, rot=(45, "z", (8, 8, 8)), glow=True)   # 星核
+    m.box((6.8, 6.8, 6.8), (9.2, 9.2, 9.2), 3, rot=(45, "x", (8, 8, 8)), glow=True)
+    m.box((7.4, 1.5, 7.4), (8.6, 14.5, 8.6), 1, glow=True)                            # 四道星芒
+    m.box((1.5, 7.4, 7.4), (14.5, 8.6, 8.6), 1, glow=True)
+    m.box((7.4, 7.4, 2.5), (8.6, 8.6, 13.5), 5, glow=True)
+    m.box((7.0, 8.2, 5.4), (7.8, 9.0, 5.6), 0)               # 眼睛
+    m.box((8.2, 8.2, 5.4), (9.0, 9.0, 5.6), 0)
+    ring(m, 7.5, 8.5, -1.5, 0.7, 4, glow=True)               # 粉色的外環
+    ring(m, 7.7, 8.3, -3.2, 0.5, 6, glow=True)
+    for (x, y, z) in ((-1, 13, 8), (17, 3, 8), (8, 17, 0), (8, -1, 16)):
+        m.box((x - 0.6, y - 0.6, z - 0.6), (x + 0.6, y + 0.6, z + 0.6), 4, rot=(45, "z", (x, y, z)), glow=True)   # 繞著轉的星點
+    return m
 
 
 # 手做的模型：代號 → 部位（模型的貼圖要寫成 exilecore:item/skin3d/<代號>，不要 tintindex）

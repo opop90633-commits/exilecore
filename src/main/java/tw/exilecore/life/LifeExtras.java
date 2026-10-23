@@ -363,7 +363,7 @@ final class LifeExtras {
     //      life_awards.txt：待領「UUID,名次,週」；settled=最近結算的那一週、champion=上一週第一名）----
 
     /** 一個人這一週最好的一條。 */
-    record Entry(UUID id, String name, String fish, int sizeTenths, int ratio) {
+    record Entry(UUID id, String name, String fish, int sizeTenths, int ratio, long at) {
     }
 
     private String tournamentWeek = "";
@@ -396,11 +396,12 @@ final class LifeExtras {
                         tournamentWeek = line.substring(5).trim();
                         continue;
                     }
-                    final String[] parts = line.split(",", 5);
-                    if (parts.length == 5) {
+                    final String[] parts = line.split(",", 6);
+                    if (parts.length >= 5) {
                         try {
                             tournament.put(UUID.fromString(parts[0].trim()), new Entry(UUID.fromString(parts[0].trim()), parts[1].trim(), parts[2].trim(),
-                                    Integer.parseInt(parts[3].trim()), Integer.parseInt(parts[4].trim())));
+                                    Integer.parseInt(parts[3].trim()), Integer.parseInt(parts[4].trim()),
+                                    parts.length > 5 ? Long.parseLong(parts[5].trim()) : 0));
                         } catch (final RuntimeException ignored) {
                             // 壞掉的一行跳過
                         }
@@ -442,7 +443,7 @@ final class LifeExtras {
         final StringBuilder out = new StringBuilder("week=").append(tournamentWeek).append(System.lineSeparator());
         for (final Entry entry : tournament.values()) {
             out.append(entry.id()).append(',').append(entry.name().replace(',', ' ')).append(',').append(entry.fish()).append(',')
-                    .append(entry.sizeTenths()).append(',').append(entry.ratio()).append(System.lineSeparator());
+                    .append(entry.sizeTenths()).append(',').append(entry.ratio()).append(',').append(entry.at()).append(System.lineSeparator());
         }
         final StringBuilder aw = new StringBuilder("settled=").append(settledWeek).append(System.lineSeparator());
         if (champion != null) {
@@ -487,10 +488,12 @@ final class LifeExtras {
         saveTournament();
     }
 
-    /** 這一週的排名（比例高的在前；一樣的比長度）。 */
+    /** 這一週的排名：比例高的在前；一樣的比公分數；還一樣的先釣到的在前（2026-10-23 晚：平手的規則寫清楚）。 */
     List<Entry> ranking() {
         final List<Entry> ranked = new ArrayList<>(tournament.values());
-        ranked.sort((a, b) -> a.ratio() != b.ratio() ? Integer.compare(b.ratio(), a.ratio()) : Integer.compare(b.sizeTenths(), a.sizeTenths()));
+        ranked.sort((a, b) -> a.ratio() != b.ratio() ? Integer.compare(b.ratio(), a.ratio())
+                : a.sizeTenths() != b.sizeTenths() ? Integer.compare(b.sizeTenths(), a.sizeTenths())
+                : Long.compare(a.at() == 0 ? Long.MAX_VALUE : a.at(), b.at() == 0 ? Long.MAX_VALUE : b.at()));
         return ranked;
     }
 
@@ -525,9 +528,12 @@ final class LifeExtras {
         final int ratio = (int) Math.round(10_000.0 * sizeTenths / (def.size()[1] * 10.0));
         final Entry old = tournament.get(player.getUniqueId());
         if (old != null && (old.ratio() > ratio || old.ratio() == ratio && old.sizeTenths() >= sizeTenths)) {
+            // 2026-10-23 晚：沒超過本週的紀錄也說一聲（玩家以為沒算到：105 公分的鰻只佔最大長度 88%，輸給 90% 的燈籠魚）
+            player.sendMessage(plugin.text().prefixed("<gray>釣魚大賽：這條佔最大長度 " + ratio / 100 + "%，沒超過你本週的 "
+                    + ItemRenderer.escape(service.materialName(old.fish())) + "（" + old.ratio() / 100 + "%）"));
             return;
         }
-        tournament.put(player.getUniqueId(), new Entry(player.getUniqueId(), player.getName(), fish, sizeTenths, ratio));
+        tournament.put(player.getUniqueId(), new Entry(player.getUniqueId(), player.getName(), fish, sizeTenths, ratio, System.currentTimeMillis()));
         final List<Entry> ranked = ranking();
         int rank = 0;
         for (int i = 0; i < ranked.size(); i++) {

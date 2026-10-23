@@ -34,6 +34,7 @@ final class LifeBoardMenu extends Menu {
         final List<String> about = new ArrayList<>();
         about.add("<gray>本週（" + extras.tournamentWeek() + "）：釣到的魚佔牠最大長度的比例最高的贏");
         about.add("<gray>週一半夜結算，上線時領獎；第一名多拿稱號「釣王」（下一週有人贏就換人）");
+        about.add("<gray>平手：比例一樣比公分數，再一樣就先釣到的贏");
         final List<LifeConfig.TournamentReward> rewards = config.tournamentRewards();
         for (int i = 0; i < rewards.size(); i++) {
             final StringBuilder text = new StringBuilder("生活經驗 +" + rewards.get(i).xp());
