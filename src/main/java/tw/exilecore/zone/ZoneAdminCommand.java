@@ -333,7 +333,7 @@ public final class ZoneAdminCommand {
                     ? " 還沒有落點（/ec zone entry）" : " 沒有檢查點 " + ItemRenderer.escape(checkpointId))));
             return;
         }
-        player.teleportAsync(target);
+        tw.exilecore.core.Teleports.async(player, target);
         player.sendMessage(plugin.text().prefixed("<gray>傳送到 " + ItemRenderer.escape(zone.name())
                 + (checkpointId == null ? "" : " 的 " + ItemRenderer.escape(checkpointId))));
     }

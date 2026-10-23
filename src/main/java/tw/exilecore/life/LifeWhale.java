@@ -404,7 +404,7 @@ final class LifeWhale {
         int slot = 0;
         for (final Player member : audience(fight)) {
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.players().markDirty(member), 10L); // 巔峰的玩家詞綴
-            member.teleportAsync(new Location(world(), fight.cx - RADIUS + 3.5, config().seaLevel() + ARENA_TOP + 0.1, fight.cz + 0.5 + (slot++ % 5 - 2), -90, 0));
+            tw.exilecore.core.Teleports.async(member, new Location(world(), fight.cx - RADIUS + 3.5, config().seaLevel() + ARENA_TOP + 0.1, fight.cz + 0.5 + (slot++ % 5 - 2), -90, 0));
             member.showBossBar(fight.bar);
             member.showTitle(Title.title(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(def.name())), plugin.text().parse("<gray>深淵巨獸"),
                     Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2400), Duration.ofMillis(600))));
@@ -791,7 +791,7 @@ final class LifeWhale {
             final Player member = plugin.getServer().getPlayer(entry.getKey());
             if (member != null && member.isOnline() && !member.isDead()) {
                 restore(member, entry.getValue());
-                member.teleportAsync(edge(fight, slot++));
+                tw.exilecore.core.Teleports.async(member, edge(fight, slot++));
             }
         }
         fight.down.clear();
@@ -825,7 +825,7 @@ final class LifeWhale {
             final Location at = member.getLocation();
             if (Math.abs(at.getX() - fight.cx) > RADIUS + 8 || Math.abs(at.getZ() - fight.cz) > RADIUS + 8
                     || at.getY() < config().seaLevel() - 8 || at.getY() > config().seaLevel() + 30) {
-                member.teleport(entry.getValue().anchor());
+                tw.exilecore.core.Teleports.go(member, entry.getValue().anchor());
             }
         }
     }
@@ -1049,7 +1049,7 @@ final class LifeWhale {
             if (member != null && member.isOnline() && !member.isDead()) {
                 restore(member, entry.getValue());
                 if (fight.plot >= 0 && world().equals(member.getWorld())) {
-                    member.teleportAsync(service.raftSpawn(fight.plot));
+                    tw.exilecore.core.Teleports.async(member, service.raftSpawn(fight.plot));
                 }
             }
         }

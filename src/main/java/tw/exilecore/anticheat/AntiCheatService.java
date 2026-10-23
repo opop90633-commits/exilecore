@@ -286,7 +286,7 @@ public final class AntiCheatService implements Listener {
         state.check.reset();
         state.graceUntil = tick + 10;
         player.setVelocity(new Vector());
-        player.teleportAsync(back).thenRun(() -> {
+        tw.exilecore.core.Teleports.async(player, back).thenRun(() -> {
             if (player.isOnline()) {
                 state.last = player.getLocation();
             }

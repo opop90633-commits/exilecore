@@ -796,7 +796,7 @@ final class ProjectileEngine implements Listener {
                 final Location to = new Location(world, x + 0.5, y, z + 0.5, from.getYaw(), from.getPitch());
                 visuals.blink(from, to);
                 owner.setFallDistance(0);
-                owner.teleport(to);
+                tw.exilecore.core.Teleports.go(owner, to);
                 return;
             }
         }

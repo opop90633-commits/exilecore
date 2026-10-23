@@ -223,7 +223,7 @@ public final class PvpService implements Listener {
             returnTo.remove(player.getUniqueId());
         }
         final double[] spot = ArenaLayout.standSpot(plugin.items().random().nextBoolean());
-        player.teleportAsync(new Location(arena(), spot[0], spot[1], spot[2], (float) spot[3], 10f));
+        tw.exilecore.core.Teleports.async(player, new Location(arena(), spot[0], spot[1], spot[2], (float) spot[3], 10f));
         player.sendMessage(plugin.text().prefixed("<gray>在觀看席：打不到場內的人、也不會被打。想下場打 /pvp join，離開 /pvp leave"));
         return null;
     }
@@ -294,7 +294,7 @@ public final class PvpService implements Listener {
             returnTo.remove(player.getUniqueId()); // 從觀看席下場：離場時照樣回進觀看席之前的地方
         }
         final Location spawn = spawnFor(player);
-        player.teleportAsync(spawn).thenAccept(success -> {
+        tw.exilecore.core.Teleports.async(player, spawn).thenAccept(success -> {
             if (Boolean.TRUE.equals(success) && player.isOnline()) {
                 plugin.players().grace().grant(player); // 入場保護：移動或攻擊才解除
             }
@@ -315,7 +315,7 @@ public final class PvpService implements Listener {
             return "伺服器還沒設定營地，離不開（管理員：/ec zone autolayout）";
         }
         final Location destination = target;
-        player.teleportAsync(destination).thenAccept(success -> {
+        tw.exilecore.core.Teleports.async(player, destination).thenAccept(success -> {
             if (Boolean.TRUE.equals(success) && player.isOnline()) {
                 plugin.players().grace().grant(player);
             }

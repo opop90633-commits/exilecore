@@ -2234,7 +2234,7 @@ public final class MapService {
         instance.visitors().add(player.getUniqueId());
         remember(player, instance);
         final Location target = instance.at(instance.layout().entrance(), instance.layout().entranceYaw());
-        player.teleport(target);
+        tw.exilecore.core.Teleports.go(player, target);
         gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
         plugin.players().markDirty(player); // 地圖詞綴（玩家的抗性、回復）
         plugin.players().grace().grant(player); // 入場保護：移動前不會受傷
@@ -2264,7 +2264,7 @@ public final class MapService {
     public void sendToCamp(final Player player) {
         final Location target = deviceReturn(player);
         if (target != null) {
-            player.teleport(target);
+            tw.exilecore.core.Teleports.go(player, target);
         }
         gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
         plugin.players().markDirty(player);
@@ -3595,7 +3595,7 @@ public final class MapService {
     public void adminEnter(final Player player, final MapInstance instance) {
         instance.visitors().add(player.getUniqueId());
         remember(player, instance);
-        player.teleport(instance.at(instance.layout().entrance(), instance.layout().entranceYaw()));
+        tw.exilecore.core.Teleports.go(player, instance.at(instance.layout().entrance(), instance.layout().entranceYaw()));
         plugin.players().markDirty(player);
         plugin.players().grace().grant(player);
     }

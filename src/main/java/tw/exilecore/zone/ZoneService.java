@@ -427,7 +427,7 @@ public final class ZoneService {
 
     /** 直接傳送（不看有沒有被打）。到了之後有入場保護（營地除外）：移動前不會受傷。 */
     private boolean move(final Player player, final Location target, final String label) {
-        player.teleportAsync(target).thenAccept(success -> {
+        tw.exilecore.core.Teleports.async(player, target).thenAccept(success -> {
             if (Boolean.TRUE.equals(success) && player.isOnline()) {
                 player.playSound(target, Sound.ENTITY_ENDERMAN_TELEPORT, 0.6f, 1.2f);
                 plugin.players().get(player).notice("<#7fd4ff>傳送到 " + ItemRenderer.escape(label), plugin.getServer().getCurrentTick() + 60);
@@ -447,7 +447,7 @@ public final class ZoneService {
             }
             return;
         }
-        player.teleportAsync(camp);
+        tw.exilecore.core.Teleports.async(player, camp);
         if (announce) {
             player.sendMessage(plugin.text().prefixed("<gray>回到營地"));
         }

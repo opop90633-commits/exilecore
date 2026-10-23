@@ -132,7 +132,7 @@ final class LifeIslands {
     /** 島收掉前：還在島上的人送回筏上（以前直接掉進海裡）。 */
     private void sendCrewHome(final Island island) {
         for (final Player member : crewHere(island)) {
-            member.teleportAsync(service.raftSpawn(island.plot));
+            tw.exilecore.core.Teleports.async(member, service.raftSpawn(island.plot));
         }
     }
 
@@ -409,7 +409,7 @@ final class LifeIslands {
             for (final Player member : crewHere(island)) {
                 if (!member.equals(player)) {
                     member.sendMessage(plugin.text().prefixed("<gray>開船的人離開了，" + ItemRenderer.escape(island.def.name()) + "漂走了"));
-                    member.teleportAsync(service.raftSpawn(island.plot));
+                    tw.exilecore.core.Teleports.async(member, service.raftSpawn(island.plot));
                 }
             }
             clear(island);
@@ -485,9 +485,9 @@ final class LifeIslands {
             case "atoll" -> 12;
             default -> 8;
         };
-        player.teleportAsync(new Location(world(), island.cx - landing + 0.5, config().seaLevel() + 2.1, island.cz + 0.5, -90, 0));
+        tw.exilecore.core.Teleports.async(player, new Location(world(), island.cx - landing + 0.5, config().seaLevel() + 2.1, island.cz + 0.5, -90, 0));
         for (final Player member : others) {
-            member.teleportAsync(new Location(world(), island.cx - landing + 0.5, config().seaLevel() + 2.1, island.cz + 1.5, -90, 0));
+            tw.exilecore.core.Teleports.async(member, new Location(world(), island.cx - landing + 0.5, config().seaLevel() + 2.1, island.cz + 1.5, -90, 0));
             member.sendMessage(plugin.text().prefixed("<" + config().color() + ">跟著 " + ItemRenderer.escape(player.getName()) + " 抵達"
                     + ItemRenderer.escape(def.name()) + "<gray>：" + hint(def) + "；寶箱每個人各拿一份"));
         }

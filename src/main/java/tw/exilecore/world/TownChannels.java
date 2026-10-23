@@ -80,7 +80,7 @@ public final class TownChannels implements Listener {
         final Location camp = towns.getFirst().getSpawnLocation();
         player.setFallDistance(0);
         player.setVelocity(new org.bukkit.util.Vector());
-        player.teleportAsync(camp).thenRun(() -> player.setFallDistance(0));
+        tw.exilecore.core.Teleports.async(player, camp).thenRun(() -> player.setFallDistance(0));
         plugin.getSLF4JLogger().info("主城分流：{} 登入在大廳（{}），送回營地", player.getName(), world.getName());
     }
 
@@ -559,7 +559,7 @@ public final class TownChannels implements Listener {
             return;
         }
         final int channel = channelOf(target);
-        player.teleportAsync(mapTo(player.getLocation(), target)).thenAccept(done -> {
+        tw.exilecore.core.Teleports.async(player, mapTo(player.getLocation(), target)).thenAccept(done -> {
             if (done) {
                 remember(player, target);
                 player.sendMessage(plugin.text().prefixed("<gray>分流：送你到營地第 <white>" + channel + "</white> 線（"

@@ -3303,7 +3303,7 @@ public final class LifeService {
             final Location at = player.getLocation();
             if (Math.abs(at.getX() - center[0]) > config.roamRadius() || Math.abs(at.getZ() - center[1]) > config.roamRadius()
                     || at.getY() < config.seaLevel() - 30) {
-                player.teleportAsync(raftSpawn(plot));
+                tw.exilecore.core.Teleports.async(player, raftSpawn(plot));
                 player.sendMessage(plugin.text().prefixed("<gray>海流把你沖回了筏上"));
             }
         }

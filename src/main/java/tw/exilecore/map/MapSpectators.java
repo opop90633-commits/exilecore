@@ -145,7 +145,7 @@ public final class MapSpectators implements Listener {
                 continue;
             }
             if (!instance.contains(player.getLocation())) {
-                player.teleport(watch.anchor()); // 出界：拉回倒下的地方
+                tw.exilecore.core.Teleports.go(player, watch.anchor()); // 出界：拉回倒下的地方
             }
         }
         killedAt.keySet().removeIf(token -> watching.values().stream().noneMatch(watch -> watch.token().equals(token)));

@@ -521,7 +521,7 @@ public final class CampaignWorld {
             if (inChannel) {
                 final Location back = TownChannels.mapTo(zones.campLocation(), world);
                 if (back != null) {
-                    player.teleportAsync(back);
+                    tw.exilecore.core.Teleports.async(player, back);
                     player.sendMessage(plugin.text().prefixed("<gray>那邊是走不過去的懸崖與深海，帶你回去"));
                 }
                 continue;
@@ -531,7 +531,7 @@ public final class CampaignWorld {
                 back = zones.campLocationFor(player);
             }
             if (back != null && back.getWorld() != null && channels.isTown(back.getWorld())) {
-                player.teleportAsync(back);
+                tw.exilecore.core.Teleports.async(player, back);
                 player.sendMessage(plugin.text().prefixed(inCampaign ? "<gray>那邊是走不過去的懸崖與深海，帶你回去"
                         : "<gray>押送船靠岸了：送你到流放者營地"));
             }

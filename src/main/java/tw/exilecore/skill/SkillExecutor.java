@@ -489,7 +489,7 @@ final class SkillExecutor {
         }
         visuals.dash(visual, from, to);
         player.setFallDistance(0);
-        player.teleport(to);
+        tw.exilecore.core.Teleports.go(player, to);
         // 終點爆開
         final double endRadius = build.scaledRadius(params.endRadius());
         if (endRadius > 0) {
@@ -703,7 +703,7 @@ final class SkillExecutor {
         if (to.distanceSquared(from) >= SkillMath.FLICKER_MIN_MOVE * SkillMath.FLICKER_MIN_MOVE) {
             player.setFallDistance(0);
             player.setVelocity(new Vector());
-            if (!player.teleport(to)) {
+            if (!tw.exilecore.core.Teleports.go(player, to)) {
                 return;
             }
             visuals.dash(build.definition().visual(), from, to);

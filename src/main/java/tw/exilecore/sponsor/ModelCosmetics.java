@@ -62,7 +62,7 @@ final class ModelCosmetics {
      */
     private final boolean ride;
     /** 乘客坐的位置：站著、蹲下是玩家的高度，背飾轉軸離那裡多遠（1.32 − 1.8、1.02 − 1.5）。 */
-    private static final float RIDE_DROP = -0.48f;
+    private static final float RIDE_DROP = -0.36f; // 2026-10-23：原本 -0.48 翅膀根部在腰，往上提到肩胛
     private static final float RIDE_DROP_LOW = 0.4f - 0.6f;
 
     private static final class Worn {
@@ -318,8 +318,15 @@ final class ModelCosmetics {
     private void updateBackRiding(final Player player, final Worn entry, final boolean paired) {
         for (final ItemDisplay display : entry.back) {
             if (display.getVehicle() != player) {
-                if (display.getWorld() != player.getWorld()) {
-                    display.teleport(player.getLocation());
+                // 2026-10-23 修正：生成時實體本身的 yaw／pitch 是玩家當時的視角，騎上去之後客戶端不會再改它，
+                // 翅膀就多轉了一個生成時的角度、往下看生成的還會整片立起來（位置亂跑）：騎上去前把實體本身的朝向歸零，方向全靠變形算
+                final Location mount = player.getLocation();
+                mount.setYaw(0);
+                mount.setPitch(0);
+                if (display.getWorld() != player.getWorld() || display.getLocation().distanceSquared(mount) > 16) {
+                    display.teleport(mount); // 剛傳送過（被卸下來留在原地）：先拉到人身邊再騎
+                } else {
+                    display.setRotation(0, 0);
                 }
                 if (!player.addPassenger(display)) {
                     return; // 這一 tick 騎不上去（剛傳送）：下一 tick 再試

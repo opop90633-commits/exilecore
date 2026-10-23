@@ -137,7 +137,7 @@ public final class WorldCommand {
             sender.sendMessage(plugin.text().prefixed("<red>劇情世界沒有載入"));
             return Command.SINGLE_SUCCESS;
         }
-        player.teleport(target);
+        tw.exilecore.core.Teleports.go(player, target);
         return Command.SINGLE_SUCCESS;
     }
 }
