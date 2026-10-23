@@ -114,8 +114,8 @@ class RadiusJewelTest {
             radiusBases++;
             assertTrue(base.isJewel() && !base.isWearable());
             for (final Affix affix : repository.affixes()) {
-                if (!affix.canSpawnOn(base)) {
-                    continue;
+                if (!affix.canSpawnOn(base) || affix.spawnTags().contains("corruption")) {
+                    continue; // 2026-10-23：腐化附魔（affixes/corrupted.yml）只靠蝕變石加上，不是半徑珠寶的詞綴池
                 }
                 assertTrue(affix.id().startsWith("jr_") || affix.id().startsWith("unveiled_jr_"), affix.id() + " 不是半徑珠寶的詞綴，卻出在 " + base.id());
                 assertTrue(affix.mods().stream().allMatch(mod -> mod.stat().startsWith(StatKeys.RADIUS_PREFIX) || mod.stat().startsWith("jewel.local.")),

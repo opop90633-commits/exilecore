@@ -555,6 +555,9 @@ class AffixCatalogueTest {
             if (affix.id().startsWith("unveiled_")) {
                 continue; // 揭露詞綴（affixes/unveiled.yml）照 PoE2 的褻瀆詞綴只有兩階
             }
+            if (affix.spawnTags().contains("corruption")) {
+                continue; // 2026-10-23：珠寶的腐化附魔（affixes/corrupted.yml）只有一階、只靠蝕變石加上
+            }
             if (affix.spawnTags().contains("ruby") || affix.spawnTags().contains("emerald") || affix.spawnTags().contains("sapphire")
                     || affix.spawnTags().contains("jewel")) {
                 assertEquals(3, affix.tiers().size(), affix.id() + "：珠寶詞綴三階");

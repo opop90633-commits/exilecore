@@ -63,10 +63,10 @@ class MonsterAndDropTest {
     @Test
     void monsterSheetsScaleWithRarityAndMods() {
         final StatSheet normal = MonsterSheets.build(config, new MonsterData(20, MonsterRarity.NORMAL, List.of(), "殭屍"), "ZOMBIE");
-        final StatSheet rare = MonsterSheets.build(config, new MonsterData(20, MonsterRarity.RARE, List.of("sturdy", "fiery"), "焰牙殭屍"), "ZOMBIE");
+        final StatSheet rare = MonsterSheets.build(config, new MonsterData(20, MonsterRarity.RARE, List.of("sturdy", "fiery", "fire_resistant"), "焰牙殭屍"), "ZOMBIE");
         assertEquals(107, normal.get(StatKeys.LIFE_MAX), 1e-9);
         assertEquals(107 * 3.5 * 1.5, rare.get(StatKeys.LIFE_MAX), 1e-9);
-        assertEquals(50, rare.get(StatKeys.RESIST_FIRE), 1e-9);
+        assertEquals(50, rare.get(StatKeys.RESIST_FIRE), 1e-9, "2026-10-23：抗性拆成另一條詞綴（耐火的），燃焰的只加火焰傷害");
         final Set<String> fireContext = Set.of(Tags.ATTACK, Tags.MELEE, Tags.FIRE, Tags.ELEMENTAL);
         assertTrue(rare.flat(StatKeys.DAMAGE_ADDED_MIN, fireContext) > 0);
         assertEquals(0, normal.flat(StatKeys.DAMAGE_ADDED_MIN, fireContext), 1e-9);

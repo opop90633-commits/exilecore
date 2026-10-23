@@ -94,7 +94,8 @@ class JewelTest {
         assertTrue(rubyOnly.contains("j2_base_chance_to_bleed") && emeraldOnly.contains("j2_global_evasion_rating_percent"));
         // 一般裝備的詞綴不會出現在珠寶上
         for (final Affix affix : repository.affixes()) {
-            if (!jewelAffix(affix) && !affix.spawnTags().contains(UniqueItem.SPAWN_TAG)) {
+            if (!jewelAffix(affix) && !affix.spawnTags().contains(UniqueItem.SPAWN_TAG)
+                    && !affix.spawnTags().contains("corruption")) { // 2026-10-23：珠寶的腐化附魔只靠蝕變石加上
                 assertFalse(affix.canSpawnOn(repository.base("diamond_jewel")), affix.id() + " 不該出現在珠寶上");
             }
         }

@@ -636,6 +636,14 @@ mods:
     stats:
       - { stat: monster.soul_eater, type: FLAT, value: 1 }        # 15 格內的怪物死掉時吞魂：每層招式快 1%、受到的傷害少 1%（最多 50 層）
 
+  # 隱藏（2026-10-23）：劇情 Boss 廢城督軍用的「鐵甲的」（照改版前的 +300% 護甲）。鐵甲的照 PoE2 降成 +100% 以後，
+  #   督軍的護甲少一半，打起來快了三四成；Boss 照舊。名字一樣，min_level 很高，不會自然抽到。
+  warlord_plate:
+    name: 鐵甲的
+    min_level: 1000
+    stats:
+      - { stat: armour, type: INCREASED, value: 300 }
+
   # 隱藏：統御的叫出來的小怪帶這條（min_level 很高，不會自然抽到）
   empowered_minion:
     name: 受統御的

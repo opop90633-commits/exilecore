@@ -90,7 +90,7 @@ zones:
       life: 1.8          # 2026-10：4.5 → 1.8（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
       damage: 1.4
       scale: 1.5
-      mods: [armoured, fiery]
+      mods: [warlord_plate, fiery, fire_resistant]   # 2026-10-23：鐵甲的改成 +100%、燃焰的不再給火抗：督軍照舊 +300% 護甲、50% 火抗
 
   swamp:
     icon: LILY_PAD
