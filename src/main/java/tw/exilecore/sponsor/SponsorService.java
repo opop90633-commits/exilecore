@@ -114,6 +114,7 @@ public final class SponsorService {
     SponsorService(final ExileCore plugin, final SponsorConfig config) {
         this.plugin = plugin;
         this.config = config;
+        this.perks = new TierPerks(plugin, this);
         loadBoosts();
         recompute();
     }
@@ -123,7 +124,7 @@ public final class SponsorService {
     }
 
     /** 2026-10-23：累積贊助每一階的主打。 */
-    final TierPerks perks = new TierPerks(plugin, this);
+    final TierPerks perks;
 
     BountyService accounts() {
         return plugin.bounties();
