@@ -76,6 +76,8 @@ public final class AilmentService {
     private static final class Tracked {
         final AilmentState state = new AilmentState();
         final boolean player;
+        /** 2026-10-24：累積的失血（流血打掉的傷害；血宣的爆炸照它的 15% 算）。 */
+        double bloodLoss;
         double appliedSlow;
         boolean jumpBlocked;
         boolean madeUnaware;
@@ -587,6 +589,66 @@ public final class AilmentService {
         }
     }
 
+    /**
+     * 2026-10-24：固定的物理傷害（不吃任何加成；血宣爆炸裡「失血的 15%」那部分）：走持續傷害那一套扣血、記傷害、算擊殺，
+     * 但不算進目標自己的失血。
+     */
+    public void dealFlatPhysical(final LivingEntity target, final double amount, final UUID source) {
+        if (amount <= 0 || target instanceof Player || !target.isValid() || target.isDead()) {
+            return;
+        }
+        Tracked entry = tracked.get(target.getUniqueId());
+        entry = entry == null ? track(target) : entry;
+        final long now = now();
+        final double before = entry.bloodLoss;
+        damageOverTime(target, entry, amount * 20.0 / TICK_INTERVAL / (1 + entry.state.shock(now)), source, AilmentType.BLEED, now);
+        entry.bloodLoss = before;
+    }
+
+    /** 2026-10-24：這隻怪累積被流血打掉多少（血宣：爆炸多打失血的 15%）。 */
+    public double bloodLoss(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        return entry == null ? 0 : entry.bloodLoss;
+    }
+
+    /**
+     * 2026-10-24（疫使照 PoE2）：把這隻怪身上「最痛的那個毒」傳給半徑內的敵人（照原本的每秒傷害、剩餘時間，來源記給 source），
+     * 每個被傳到的有 hinderChance% 機率緩行。回傳傳給了幾隻。
+     */
+    public int spreadStrongestPoison(final LivingEntity dead, final double radius, final UUID source, final double hinderChance, final double hinderSeconds) {
+        final Tracked entry = tracked.get(dead.getUniqueId());
+        if (entry == null || dead instanceof Player) {
+            return 0;
+        }
+        final long now = now();
+        AilmentState.Ignite strongest = null;
+        for (final AilmentState.Ignite poison : entry.state.poisons(now)) {
+            if (strongest == null || poison.dps() > strongest.dps()) {
+                strongest = poison;
+            }
+        }
+        if (strongest == null) {
+            return 0;
+        }
+        final long left = Math.max(ticks(1), strongest.endTick() - now);
+        int spread = 0;
+        for (final org.bukkit.entity.Entity near : dead.getNearbyEntities(radius, radius, radius)) {
+            if (!(near instanceof LivingEntity living) || near instanceof Player || living == dead || !living.isValid() || living.isDead()
+                    || plugin.monsters() == null || plugin.monsters().data(living).isEmpty()
+                    || living.getLocation().distanceSquared(dead.getLocation()) > radius * radius) {
+                continue;
+            }
+            Tracked other = tracked.get(living.getUniqueId());
+            other = other == null ? track(living) : other;
+            other.state.addPoison(strongest.dps(), now + left, source == null ? strongest.source() : source, AilmentState.MAX_POISONS);
+            if (hinderChance > 0 && plugin.random().nextDouble() * 100 < hinderChance) {
+                other.state.hinder(now + ticks(hinderSeconds));
+            }
+            spread++;
+        }
+        return spread;
+    }
+
     /** 敵人身上的混沌減益每秒多少傷害（說明、測試用）。 */
     public double debuffDps(final LivingEntity entity) {
         final Tracked entry = tracked.get(entity.getUniqueId());
@@ -960,6 +1022,9 @@ public final class AilmentService {
             }
         }
         credit(source, living, type, capped);
+        if (type == AilmentType.BLEED) {
+            entry.bloodLoss += capped; // 2026-10-24：血宣
+        }
         double vanilla = plugin.monsters().toVanillaDamage(living, data, capped);
         final double health = living.getHealth();
         if (plugin.maps() != null) {

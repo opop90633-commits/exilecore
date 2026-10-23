@@ -120,6 +120,21 @@ public final class SponsorConfig {
                     || guildStashPages > 0 || raftSize > 0 || bedStamina > 0 || boostMinutes > 0 || entryAura;
         }
 
+        /**
+         * 2026-10-24：疊上低一階的功能——開關類的（自訂上線訊息、升級煙火…）低階有高階就有；數量類的這一階沒寫就沿用低階的；
+         * 免費加倍這一階沒寫就沿用低階的次數與週期；徽章沒寫沿用。到階就送的時裝不疊（每一階到了各自送）。
+         */
+        public Perks inherit(final Perks lower) {
+            final boolean ownBoosts = freeBoosts > 0;
+            return new Perks(Math.max(characterSlots, lower.characterSlots), ownBoosts ? freeBoosts : lower.freeBoosts,
+                    ownBoosts ? freePer : lower.freePer, Math.max(weeklyBoxes, lower.weeklyBoxes), cosmetics,
+                    loginMessage || lower.loginMessage, levelFireworks || lower.levelFireworks, allCosmetics || lower.allCosmetics,
+                    lifetimeCard || lower.lifetimeCard, joinAnnounce || lower.joinAnnounce, badge.isEmpty() ? lower.badge : badge,
+                    customNameColor || lower.customNameColor, Math.max(monthlyRenameCards, lower.monthlyRenameCards),
+                    Math.max(guildStashPages, lower.guildStashPages), Math.max(raftSize, lower.raftSize), Math.max(bedStamina, lower.bedStamina),
+                    Math.max(boostMinutes, lower.boostMinutes), entryAura || lower.entryAura);
+        }
+
         /** 這個週期的代號（day：日、week：ISO 週、month：年月），純計算。 */
         public static String periodKey(final String per, final java.time.LocalDate date) {
             return switch (per) {
@@ -279,6 +294,8 @@ public final class SponsorConfig {
     private int personalBoostMinutes = 20;
     private int personalBoostMaxMinutes = 240;
     private List<Tier> tiers = List.of();
+    /** 2026-10-24：每一階的移動速度 +%（tiers 的 move_speed；每一階疊加，跟經驗、金幣一樣）。階級代號 → %。 */
+    private Map<String, Double> tierMoveSpeed = Map.of();
     private List<LoginTitle> loginTitles = List.of();
     private Map<String, Cosmetic> cosmetics = Map.of();
     private Map<String, Bundle> bundles = Map.of();
@@ -378,6 +395,8 @@ public final class SponsorConfig {
         personalBoostMaxMinutes = Math.max(personalBoostMinutes, Math.min(7 * 24 * 60, personalNode.integer("max_minutes", 240)));
 
         final List<Tier> tierList = new ArrayList<>();
+        final Map<String, Double> moveSpeeds = new java.util.HashMap<>();
+        Perks below = Perks.NONE; // 2026-10-24：低階有的功能，高階也有（以前只看最高那一階：1000 階的自訂上線訊息、升級煙火到了高階反而沒了）
         long previous = 0;
         for (final YamlNode node : root.list("tiers")) {
             final long amount = node.integer("amount", 0);
@@ -402,7 +421,7 @@ public final class SponsorConfig {
             if (badge.codePointCount(0, badge.length()) > 2 || badge.contains("<")) {
                 throw new IllegalArgumentException(node.path() + ".badge：最多兩個字、不能有 <");
             }
-            final Perks perks = new Perks(Math.max(0, Math.min(20, node.integer("character_slots", 0))),
+            final Perks own = new Perks(Math.max(0, Math.min(20, node.integer("character_slots", 0))),
                     Math.max(0, Math.min(20, free.integer("count", 0))), per, Math.max(0, Math.min(20, node.integer("weekly_boxes", 0))),
                     List.copyOf(perkCosmetics), node.bool("login_message", false), node.bool("level_fireworks", false),
                     node.bool("all_cosmetics", false), node.bool("lifetime_card", false),
@@ -410,6 +429,9 @@ public final class SponsorConfig {
                     Math.max(0, Math.min(30, node.integer("monthly_rename_cards", 0))), Math.max(0, Math.min(20, node.integer("guild_stash_pages", 0))),
                     Math.max(0, Math.min(20, node.integer("raft_size", 0))), Math.max(0, Math.min(100, node.integer("bed_stamina", 0))),
                     Math.max(0, Math.min(60, node.integer("boost_minutes", 0))), node.bool("entry_aura", false));
+            final Perks perks = own.inherit(below);
+            moveSpeeds.put(id, Math.max(0, Math.min(50, node.decimal("move_speed", 0))));
+            below = perks;
             tierList.add(new Tier(amount, id, node.requireString("title").trim(), color, nameColor,
                     Math.max(0, Math.min(30, node.integer("stash_pages", 0))),
                     Math.max(0, Math.min(10, node.integer("bag_pages", 0))),
@@ -421,6 +443,7 @@ public final class SponsorConfig {
                     node.has("death_penalty") ? Math.max(0, Math.min(100, node.decimal("death_penalty", 10))) : -1, perks));
         }
         tiers = List.copyOf(tierList);
+        tierMoveSpeed = Map.copyOf(moveSpeeds);
 
         final List<LoginTitle> loginList = new ArrayList<>();
         int previousDays = 0;
@@ -901,6 +924,22 @@ public final class SponsorConfig {
         for (final Tier tier : tiers) {
             if (total >= tier.amount()) {
                 sum += tier.experience();
+            }
+        }
+        return sum;
+    }
+
+    /** 這一階的移動速度 +%（2026-10-24）。 */
+    public double moveSpeed(final Tier tier) {
+        return tier == null ? 0 : tierMoveSpeed.getOrDefault(tier.id(), 0.0);
+    }
+
+    /** 到過的每一階的移動速度加起來（%；2026-10-24 疊加：6 階各 5% = 30%）。 */
+    public double reachedMoveSpeed(final long total) {
+        double sum = 0;
+        for (final Tier tier : tiers) {
+            if (total >= tier.amount()) {
+                sum += moveSpeed(tier);
             }
         }
         return sum;

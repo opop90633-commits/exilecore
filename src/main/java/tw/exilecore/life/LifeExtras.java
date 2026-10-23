@@ -819,6 +819,10 @@ final class LifeExtras {
         int phase;
         boolean enraged;
         final java.util.Set<UUID> adds = new java.util.HashSet<>();
+        /** 2026-10-24：Boss 血條（跟淵鯨一樣掛在畫面上）；筏上的人都看得到。 */
+        final net.kyori.adventure.bossbar.BossBar bar = net.kyori.adventure.bossbar.BossBar.bossBar(net.kyori.adventure.text.Component.empty(), 1f,
+                net.kyori.adventure.bossbar.BossBar.Color.RED, net.kyori.adventure.bossbar.BossBar.Overlay.NOTCHED_10);
+        final java.util.Set<UUID> watching = new java.util.HashSet<>();
 
         King(final LivingEntity entity, final int plot, final UUID owner) {
             this.entity = entity;
@@ -1084,6 +1088,9 @@ final class LifeExtras {
             }
             king.age++;
             king.entity.setRemainingAir(king.entity.getMaximumAir());
+            if (def != null) {
+                updateKingBar(king, def, crew);
+            }
             if (def != null && king.age > def.fleeSeconds() * 10) {
                 for (final Player member : crew) {
                     member.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(def.name()) + "跳回海裡了（血餌沒了）"));
@@ -1152,7 +1159,43 @@ final class LifeExtras {
         }
     }
 
+    /** 2026-10-24：鯊王的血條：生命比例、階段、狂暴、剩幾秒跳回海裡；筏上的人掛上、離開的收掉。 */
+    private void updateKingBar(final King king, final LifeConfig.SharkKing def, final List<Player> crew) {
+        final org.bukkit.attribute.AttributeInstance max = king.entity.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        final double ratio = max == null || max.getValue() <= 0 ? 1 : Math.max(0, Math.min(1, king.entity.getHealth() / max.getValue()));
+        king.bar.progress((float) ratio);
+        final long left = Math.max(0, def.fleeSeconds() - king.age / 10L);
+        final String phase = king.phase <= 0 || king.phase > def.phases().size() ? "" : " <#ff6b6b>"
+                + ItemRenderer.escape(def.phases().get(king.phase - 1).name().isEmpty() ? "第 " + (king.phase + 1) + " 階段" : def.phases().get(king.phase - 1).name());
+        king.bar.name(plugin.text().parse("<#ff6b6b>" + ItemRenderer.escape(def.name()) + " <white>" + Math.round(ratio * 100) + "%" + phase
+                + (king.enraged ? " <red>狂暴" : "") + " <dark_gray>｜ <gray>" + String.format(Locale.ROOT, "%d:%02d", left / 60, left % 60) + " 後跳回海裡"));
+        final java.util.Set<UUID> now = new java.util.HashSet<>();
+        for (final Player member : crew) {
+            now.add(member.getUniqueId());
+            if (king.watching.add(member.getUniqueId())) {
+                member.showBossBar(king.bar);
+            }
+        }
+        for (final java.util.Iterator<UUID> it = king.watching.iterator(); it.hasNext(); ) {
+            final UUID id = it.next();
+            if (!now.contains(id)) {
+                final Player gone = plugin.getServer().getPlayer(id);
+                if (gone != null) {
+                    gone.hideBossBar(king.bar);
+                }
+                it.remove();
+            }
+        }
+    }
+
     private void removeKing(final King king) {
+        for (final UUID id : king.watching) {
+            final Player watcher = plugin.getServer().getPlayer(id);
+            if (watcher != null) {
+                watcher.hideBossBar(king.bar); // 2026-10-24
+            }
+        }
+        king.watching.clear();
         if (plugin.skills() != null) {
             plugin.skills().bossSkills().detach(king.entity.getUniqueId());
         }

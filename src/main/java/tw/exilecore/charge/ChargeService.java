@@ -186,8 +186,24 @@ public final class ChargeService implements Listener {
         return true;
     }
 
+    /** 2026-10-24：瞬影擊連打期間不能拿銳星（照 PoE2「使用這個技能時不能獲得銳星」）：玩家 → 到哪個 tick。 */
+    private final Map<UUID, Long> noPowerUntil = new HashMap<>();
+
+    public void blockPower(final Player player, final long untilTick) {
+        noPowerUntil.put(player.getUniqueId(), untilTick);
+    }
+
     /** 獲得一顆；回傳顆數有沒有變多（滿了只刷新時間 = false）。 */
     private boolean gainOne(final Player player, final ChargeType type, final StatSheet sheet) {
+        if ("power".equals(type.id())) {
+            final Long until = noPowerUntil.get(player.getUniqueId());
+            if (until != null) {
+                if (plugin.getServer().getCurrentTick() < until) {
+                    return false; // 瞬影擊連打中
+                }
+                noPowerUntil.remove(player.getUniqueId());
+            }
+        }
         final ChargeBag bag = bags.computeIfAbsent(player.getUniqueId(), id -> new HashMap<>()).computeIfAbsent(type.id(), id -> new ChargeBag());
         return bag.gain(plugin.getServer().getCurrentTick(), maxOf(type, sheet), durationTicks(type, sheet));
     }

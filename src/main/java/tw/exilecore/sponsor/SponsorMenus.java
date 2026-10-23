@@ -706,6 +706,10 @@ final class SponsorMenus {
                     lore.add("<gray>金幣 <white>+" + percentText(tier.gold()) + "%<dark_gray>（每一階疊加，到這一階共 +"
                             + percentText(service.config().reachedGold(tier.amount())) + "%）");
                 }
+                if (service.config().moveSpeed(tier) > 0) { // 2026-10-24
+                    lore.add("<gray>移動速度 <white>+" + percentText(service.config().moveSpeed(tier)) + "%<dark_gray>（每一階疊加，到這一階共 +"
+                            + percentText(service.config().reachedMoveSpeed(tier.amount())) + "%）");
+                }
                 if (tier.deathPenalty() >= 0) {
                     lore.add("<gray>死亡損失經驗 <white>" + percentText(tier.deathPenalty()) + "%");
                 }

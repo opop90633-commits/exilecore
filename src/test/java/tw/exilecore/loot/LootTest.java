@@ -193,15 +193,21 @@ class LootTest {
         assertTrue(maps.encode().endsWith(";mr=2"), maps.encode());
         assertEquals(maps, LootFilter.decode(maps.encode(), config));
         maps.cycleMapRarity(false);
+        assertEquals(3, maps.rules().mapRarity(), "2026-10-24：全部隱藏");
+        assertTrue(maps.hides(map(Rarity.RARE, 16), archer), "黃圖也不撿");
+        assertFalse(maps.hides(map(Rarity.UNIQUE, 1), archer), "傳奇地圖照撿");
+        assertEquals("全部隱藏", LootFilter.mapRarityName(3));
+        maps.cycleMapRarity(false);
         assertEquals(0, maps.rules().mapRarity(), "繞一圈回到全部顯示");
         maps.cycleMapRarity(true);
-        assertEquals(2, maps.rules().mapRarity(), "右鍵倒著走");
+        assertEquals(3, maps.rules().mapRarity(), "右鍵倒著走");
         // 舊存檔的地圖階級（mt=）已經不用：讀進來是關
         assertEquals(0, LootFilter.decode("p=custom;eq=;cur=;sg=0;ug=0;fl=all;wl=0;al=0;lg=0;gl=0;gt=0;mt=5", config).rules().mapRarity());
         assertEquals("全部顯示", LootFilter.mapRarityName(0));
         assertEquals(1, LootConfig.mapRarity("t", "normal"));
         assertEquals(2, LootConfig.mapRarity("t", "MAGIC"));
         assertEquals(0, LootConfig.mapRarity("t", "none"));
+        assertEquals(3, LootConfig.mapRarity("t", "all"));
         assertThrows(IllegalArgumentException.class, () -> LootConfig.mapRarity("t", "rare"));
         // 存檔來回
         final String text = mine.encode();

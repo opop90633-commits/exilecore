@@ -114,6 +114,37 @@ final class AuraService implements Listener {
     private final Map<UUID, LastHit> lastHits = new HashMap<>();
     /** 怪物死的那一刻身上的異常（死亡事件一開始先記下來：異常模組等一下就清掉了）。 */
     private final Map<UUID, Set<AilmentType>> deathAilments = new HashMap<>();
+    /** 2026-10-24：怪物死的那一刻：累積的失血、是不是普通／魔法怪（血宣用）。 */
+    private record DeathInfo(double bloodLoss, boolean lesser) {
+    }
+
+    private final Map<UUID, DeathInfo> deathInfo = new HashMap<>();
+    /** 2026-10-24（雷使照 PoE2）：殺死感電的敵人之後，接下來幾次攻擊擊中會落雷：玩家 → 剩幾次。 */
+    private final Map<UUID, Integer> thunderHits = new HashMap<>();
+
+    static final String HERALD_THUNDER = "herald_of_thunder";
+    static final String HERALD_BLOOD = "herald_of_blood";
+    static final String HERALD_PLAGUE = "herald_of_plague";
+    /** 血宣：爆炸半徑（格；PoE2 1.5 米）、多打失血的幾成（PoE2 15%）。 */
+    static final double BLOOD_RADIUS = 1.5;
+    static final double BLOOD_LOSS_SHARE = 0.15;
+    /** 疫使緩行的秒數。 */
+    static final double PLAGUE_HINDER_SECONDS = 4;
+
+    /** 雷使：殺死感電的敵人之後接下來幾次攻擊擊中落雷（PoE2：1 級 2 次 → 20 級 3 次）。 */
+    static int thunderCharges(final int level) {
+        return level >= 11 ? 3 : 2;
+    }
+
+    /** 疫使：傳毒的半徑（格；PoE2 1.5～1.8 米）。 */
+    static double plagueRadius(final int level) {
+        return 1.5 + 0.3 * (Math.min(20, Math.max(1, level)) - 1) / 19.0;
+    }
+
+    /** 疫使：傳到的敵人緩行的機率（%；PoE2 10～29%）。 */
+    static double plagueHinderChance(final int level) {
+        return 10 + (Math.min(20, Math.max(1, level)) - 1);
+    }
 
     /** 一個玩家的獸性。 */
     private static final class FuryState {
@@ -367,6 +398,12 @@ final class AuraService implements Listener {
 
     /** 夥伴召回的等待時間（死掉之後）。 */
     static final long COMPANION_RESPAWN = 160;
+    /** 2026-10-24：骸骨系列照 PoE2 復活要 12 秒（夥伴、狼、蟲照 8 秒）。 */
+    static final long SKELETON_RESPAWN = 240;
+
+    static long respawnTicks(final String skillId) {
+        return skillId.startsWith("skeletal_") || skillId.equals("summon_skeletons") ? SKELETON_RESPAWN : COMPANION_RESPAWN;
+    }
 
     /** 夥伴（2026-10）：開著的夥伴光環沒有活著的夥伴就叫一隻出來（死掉的等 8 秒）；關掉的收掉。 */
     private void companions(final long now) {
@@ -399,7 +436,7 @@ final class AuraService implements Listener {
                     }
                     final int alive = minions.count(player.getUniqueId(), aura.skillId);
                     if (alive < aura.hadCompanion) {
-                        aura.companionReady = now + COMPANION_RESPAWN; // 剛死掉：等一下再出來
+                        aura.companionReady = now + respawnTicks(aura.skillId); // 剛死掉：等一下再出來（骸骨 12 秒、其他 8 秒）
                     }
                     aura.hadCompanion = alive;
                     if (alive < max && now >= aura.companionReady) {
@@ -1228,6 +1265,18 @@ final class AuraService implements Listener {
                 ownAttack ? overkill(defender, event.result().total()) : 0));
         if (ownAttack) {
             gainFury(credit, mine);
+            final Integer charged = thunderHits.get(credit.getUniqueId());
+            final Active thunder = mine.get(HERALD_THUNDER);
+            if (charged != null && charged > 0 && thunder != null) {
+                // 2026-10-24（雷使照 PoE2）：這一下的目標落雷，打牠周圍的敵人
+                if (charged <= 1) {
+                    thunderHits.remove(credit.getUniqueId());
+                } else {
+                    thunderHits.put(credit.getUniqueId(), charged - 1);
+                }
+                final Location at = defender.getLocation().add(0, 0.2, 0);
+                plugin.getServer().getScheduler().runTask(plugin, () -> castHeraldEffect(credit, thunder, at, defender, defender));
+            }
         }
     }
 
@@ -1246,6 +1295,12 @@ final class AuraService implements Listener {
         if (!ailments.isEmpty()) {
             deathAilments.put(event.getEntity().getUniqueId(), ailments);
         }
+        if (ailments.contains(AilmentType.BLEED) && plugin.monsters() != null) {
+            final boolean lesser = plugin.monsters().data(event.getEntity())
+                    .map(data -> data.rarity() == tw.exilecore.monster.MonsterRarity.NORMAL || data.rarity() == tw.exilecore.monster.MonsterRarity.MAGIC)
+                    .orElse(false);
+            deathInfo.put(event.getEntity().getUniqueId(), new DeathInfo(plugin.ailments().bloodLoss(event.getEntity()), lesser));
+        }
     }
 
     /**
@@ -1256,6 +1311,7 @@ final class AuraService implements Listener {
     public void onDeath(final EntityDeathEvent event) {
         final Set<AilmentType> ailed = deathAilments.remove(event.getEntity().getUniqueId());
         final LastHit last = lastHits.remove(event.getEntity().getUniqueId());
+        final DeathInfo info = deathInfo.remove(event.getEntity().getUniqueId());
         if (active.isEmpty()) {
             return;
         }
@@ -1298,10 +1354,62 @@ final class AuraService implements Listener {
             if (plugin.random().nextDouble() * 100 >= spec.onKillChance()) {
                 continue;
             }
-            final SkillDefinition sub = config.skill(spec.onKill());
-            if (sub == null) {
+            final String heraldId = aura.build.definition().id();
+            if (HERALD_THUNDER.equals(heraldId)) {
+                // 2026-10-24（照 PoE2）：不從屍體放，改成接下來 2～3 次攻擊擊中落雷（再殺一隻就重新算）
+                thunderHits.put(credit.getUniqueId(), thunderCharges(aura.build.level()));
+                visuals.herald(aura.build.definition().visual(), at);
                 continue;
             }
+            if (HERALD_PLAGUE.equals(heraldId)) {
+                // 2026-10-24（照 PoE2）：把牠身上最痛的那個毒傳給 1.5～1.8 格內的敵人，有 10～29% 機率緩行
+                if (plugin.ailments() != null && plugin.ailments().spreadStrongestPoison(entity, plagueRadius(aura.build.level()), credit.getUniqueId(),
+                        plagueHinderChance(aura.build.level()), PLAGUE_HINDER_SECONDS) > 0) {
+                    visuals.herald(aura.build.definition().visual(), at);
+                }
+                continue;
+            }
+            if (HERALD_BLOOD.equals(heraldId)) {
+                // 2026-10-24（照 PoE2）：只有普通、魔法怪的屍體會炸（炸掉之後屍體就沒了）；多打牠失血的 15%（不吃加成）
+                if (info == null || !info.lesser()) {
+                    continue;
+                }
+                castHeraldEffect(credit, aura, at, entity, null);
+                final double extra = info.bloodLoss() * BLOOD_LOSS_SHARE;
+                if (extra > 0 && plugin.ailments() != null) {
+                    for (final LivingEntity victim : targets.around(at, BLOOD_RADIUS)) {
+                        if (victim != entity) {
+                            plugin.ailments().dealFlatPhysical(victim, extra, credit.getUniqueId());
+                        }
+                    }
+                }
+                if (plugin.combat() != null) {
+                    final tw.exilecore.combat.Corpses.Corpse corpse = plugin.combat().corpses().nearest(entity.getWorld().getUID(),
+                            entity.getLocation().getX(), entity.getLocation().getZ(), 0.6, plugin.getServer().getCurrentTick());
+                    if (corpse != null) {
+                        plugin.combat().corpses().remove(corpse);
+                    }
+                }
+                continue;
+            }
+            castHeraldEffect(credit, aura, at, entity, null);
+        }
+    }
+
+    /**
+     * 捷的效果從 at 放出來（屍體的位置、雷使是那一下的目標）：技能數值照捷的寶石等級與輔助算；
+     * 方向朝 at 附近最近的另一隻怪（不算 exclude），沒有就照主人的面向。fixedTarget 不是 null 就直接對它放。
+     */
+    private void castHeraldEffect(final Player credit, final Active aura, final Location at, final LivingEntity exclude, final LivingEntity fixedTarget) {
+        if (!credit.isOnline() || !credit.getWorld().equals(at.getWorld())) {
+            return;
+        }
+        final AuraSpec spec = aura.build.definition().aura();
+        final SkillDefinition sub = config.skill(spec.onKill());
+        if (sub == null) {
+            return;
+        }
+        {
             final PlayerState state = plugin.players().get(credit);
             // 2026-10-18：光環面板上的那一條：共鳴的專屬輔助不佔名額（跟主技能算法一致）
             final int position = state.skills() == null ? -1 : state.skills().find(aura.build.definition().id());
@@ -1309,9 +1417,9 @@ final class AuraService implements Listener {
             final SkillBuild subBuild = SkillBuild.of(config, sub, aura.build.gemLevel(), state.level(), false, aura.build.supports(),
                     state.weaponTags(), plugin.players().sheet(credit), entry == null ? Set.of() : SkillService.resonantOf(entry));
             // 方向：朝屍體附近最近的另一隻怪，沒有就照主人的面向
-            LivingEntity target = null;
-            for (final LivingEntity candidate : targets.around(at, HERALD_SEARCH)) {
-                if (candidate != entity) {
+            LivingEntity target = fixedTarget;
+            for (final LivingEntity candidate : target != null ? List.<LivingEntity>of() : targets.around(at, HERALD_SEARCH)) {
+                if (candidate != exclude) {
                     target = candidate;
                     break;
                 }
@@ -1336,6 +1444,7 @@ final class AuraService implements Listener {
         lastSkipped.remove(player);
         received.remove(player);
         receivedKey.remove(player);
+        thunderHits.remove(player);
     }
 
     /** 這個玩家腳下的光環圈、焚燒圈收掉。 */
@@ -1352,6 +1461,8 @@ final class AuraService implements Listener {
         furies.clear();
         lastHits.clear();
         deathAilments.clear();
+        deathInfo.clear();
+        thunderHits.clear();
         decalSignature.clear();
         received.clear();
         receivedKey.clear();

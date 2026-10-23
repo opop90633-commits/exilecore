@@ -68,7 +68,7 @@ public final class SkillTriggers implements Listener {
         final String skillId = service.lastSkill(event.getEntity(), killer);
         final SkillDefinition skill = skillId == null ? null : service.config().skill(skillId);
         if (skill != null && skill.tags().contains(tw.exilecore.stats.Tags.MELEE)) {
-            service.metas().gain(killer, MetaSpec.Kind.MELEE_KILL, service.metas().power(event.getEntity()), null);
+            service.metas().gain(killer, MetaSpec.Kind.MELEE_KILL, 1.0, null); // 2026-10-24：照 PoE2 固定 300，不乘怪物強度
         }
     }
 

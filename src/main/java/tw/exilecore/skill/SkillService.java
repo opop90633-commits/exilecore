@@ -3751,15 +3751,29 @@ public final class SkillService {
         }
         if (spec.herald()) {
             final SkillDefinition sub = config.skill(spec.onKill());
-            // 2026-10（照 PoE2）：有觸發條件的寫出來（用攻擊擊中殺死感電中的敵人、過量擊殺…）
-            lines.add(String.format(Locale.ROOT, "<gray>%s時%s從屍體的位置放出 <white>%s</white>（照這顆寶石的等級與輔助）",
-                    spec.condition().always() ? "擊殺" : "<white>" + spec.condition().describe() + "</white>",
-                    spec.onKillChance() < 100 ? String.format(Locale.ROOT, " %.0f%% 機率", spec.onKillChance()) : "",
-                    sub == null ? spec.onKill() : ItemRenderer.escape(sub.name())));
+            final String when = spec.condition().always() ? "擊殺" : "<white>" + spec.condition().describe() + "</white>";
+            final String heraldId = build.definition().id();
+            if (AuraService.HERALD_THUNDER.equals(heraldId)) {
+                // 2026-10-24（照 PoE2）：接下來幾次攻擊擊中落雷
+                lines.add(String.format(Locale.ROOT, "<gray>%s後，接下來 <white>%d</white> 次攻擊擊中的目標落下 <white>%s</white>（照這顆寶石的等級與輔助）",
+                        when, AuraService.thunderCharges(build.level()), sub == null ? spec.onKill() : ItemRenderer.escape(sub.name())));
+            } else if (AuraService.HERALD_PLAGUE.equals(heraldId)) {
+                lines.add(String.format(Locale.ROOT, "<gray>%s時把牠身上最痛的毒傳給 <white>%.1f</white> 格內的敵人，被傳到的 <white>%.0f%%</white> 機率緩行 %.0f 秒",
+                        when, AuraService.plagueRadius(build.level()), AuraService.plagueHinderChance(build.level()), AuraService.PLAGUE_HINDER_SECONDS));
+            } else {
+                // 2026-10（照 PoE2）：有觸發條件的寫出來（用攻擊擊中殺死感電中的敵人、過量擊殺…）
+                lines.add(String.format(Locale.ROOT, "<gray>%s時%s從屍體的位置放出 <white>%s</white>（照這顆寶石的等級與輔助）", when,
+                        spec.onKillChance() < 100 ? String.format(Locale.ROOT, " %.0f%% 機率", spec.onKillChance()) : "",
+                        sub == null ? spec.onKill() : ItemRenderer.escape(sub.name())));
+            }
+            if (AuraService.HERALD_BLOOD.equals(heraldId)) {
+                lines.add(String.format(Locale.ROOT, "<gray>　只有普通、魔法敵人的屍體會炸；再多打牠累積失血的 <white>%.0f%%</white>（不吃加成），炸過的屍體就沒了",
+                        AuraService.BLOOD_LOSS_SHARE * 100));
+            }
             if (spec.condition().needsOwnAttack()) {
                 lines.add("<dark_gray>　法術、持續傷害、召喚物與捷自己的效果打死的不算");
             }
-            if (sub != null && sub.damage() != null) {
+            if (sub != null && sub.damage() != null && !AuraService.HERALD_PLAGUE.equals(heraldId)) {
                 final double[] range = SkillProfiles.spellDamage(config, sub, build.level());
                 lines.add(String.format(Locale.ROOT, "<gray>　基礎傷害 <white>%d – %d</white>%s", Math.round(range[0]), Math.round(range[1]),
                         sub.mechanic() == Mechanic.NOVA ? String.format(Locale.ROOT, "，半徑 %.1f 格", sub.params().radius().at(build.level()) * build.areaScale())

@@ -249,6 +249,11 @@ public final class SponsorService {
             rarity += type.rarity();
         }
         final List<tw.exilecore.stats.Modifier> list = new ArrayList<>();
+        // 2026-10-24：累積贊助的移動速度（到過的每一階疊加）
+        final double move = config.enabled() && loaded(player) ? config.reachedMoveSpeed(total(player)) : 0;
+        if (move > 0) {
+            list.add(tw.exilecore.stats.Modifier.increased(tw.exilecore.stats.StatKeys.MOVEMENT_SPEED, move / 100.0, "累積贊助"));
+        }
         if (quantity > 0) {
             list.add(new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DROP_QUANTITY, tw.exilecore.stats.ModType.INCREASED,
                     quantity, Set.of(), "個人加倍藥"));
@@ -669,6 +674,7 @@ public final class SponsorService {
             accounts().refreshTitle(player);
         }
         plugin.players().updateListName(player); // 2026-10-23：TAB 照贊助階級排、名字前的徽章
+        plugin.players().markDirty(player); // 2026-10-24：累積贊助的移動速度進屬性表
     }
 
     private void greet(final Player player) {
@@ -2423,9 +2429,12 @@ public final class SponsorService {
         return skin != null && skin.art() != null && skin.art().startsWith("armor3d_");
     }
 
-    /** 背飾是左右兩片的翅膀（代號 …_wings：資源包裡有 _back_r、_back_l）。 */
+    /**
+     * 背飾是左右兩片的翅膀（代號 …_wings，或中間有 _wings_ 的，例如 patron_wings_ember：資源包裡有 _back_r、_back_l）。
+     * 2026-10-24：以前只認結尾是 _wings 的，累積贊助的星耀之翼、星曜之翼（patron_wings_…）找不到模型、變成紫黑格子。
+     */
     static boolean pairedBack(final SponsorConfig.Cosmetic skin) {
-        return skin.art() != null && skin.art().endsWith("_wings");
+        return skin.art() != null && (skin.art().endsWith("_wings") || skin.art().contains("_wings_"));
     }
 
     /** 把一個幻化外觀套到一件顯示用的物品上（選單預覽也用）。 */

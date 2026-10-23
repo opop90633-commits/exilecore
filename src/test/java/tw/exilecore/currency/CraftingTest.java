@@ -109,6 +109,19 @@ class CraftingTest {
     }
 
     @Test
+    void speedEssenceGivesCastSpeedOnWandsAndStaves() {
+        // 2026-10-24：速度星魄（原攻速星魄）：法杖、長杖給施放速度，攻擊武器照舊是攻擊速度
+        final CurrencyType battle = currencies.get("essence_battle");
+        final ItemData wand = generator.generate(items.base("wand_01"), Rarity.NORMAL, 60, new SplittableRandom(5));
+        assertNull(Crafting.problem(battle, wand, generator));
+        Crafting.applyEssence(battle, wand, generator, new SplittableRandom(6));
+        assertTrue(wand.affixes().stream().anyMatch(a -> a.id().equals("cast_speed_wand")), "法杖拿到施放速度：" + wand.affixes());
+        final ItemData staff = generator.generate(items.base("staff_01"), Rarity.NORMAL, 60, new SplittableRandom(7));
+        Crafting.applyEssence(battle, staff, generator, new SplittableRandom(8));
+        assertTrue(staff.affixes().stream().anyMatch(a -> a.id().equals("cast_speed_staff")), "長杖拿到施放速度：" + staff.affixes());
+    }
+
+    @Test
     void essenceWorksOnAMagicItemWhosePrefixIsFull() {
         // 2026-10：魔法物品前綴滿了也能用加前綴的星魄——先升成稀有（前綴三條的空間），原本的留著、再加星魄那條
         final CurrencyType body = currencies.get("essence_body");

@@ -378,7 +378,7 @@ class AuraWarcryTest {
         final SkillBuild sub = SkillBuild.of(config, burst, 20, 100, false, List.of(config.support("increased_area")), Set.of(), owner);
         assertEquals(1, sub.supports().size());
         assertTrue(sub.radius() > burst.params().radius().at(20), "範圍變大");
-        assertEquals(Mechanic.CHAIN, config.skill("herald_thunder_bolt").mechanic());
+        assertEquals(Mechanic.NOVA, config.skill("herald_thunder_bolt").mechanic(), "2026-10-24：雷使照 PoE2 落在那一下的目標上");
         assertEquals(Mechanic.NOVA, config.skill("herald_ice_shatter").mechanic());
     }
 

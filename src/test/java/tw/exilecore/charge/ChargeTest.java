@@ -287,11 +287,12 @@ class ChargeTest {
             }
         }
         assertEquals(List.of(), skills.chargeProblems(types::containsKey), "伺服器紀錄不會有警告");
-        assertEquals(1, skills.chargeProblems(id -> !id.equals("power")).stream().filter(line -> line.contains("cooldown_bypass")).count(),
+        assertEquals(1, skills.chargeProblems(id -> !id.equals("frenzy")).stream().filter(line -> line.contains("cooldown_bypass")).count(),
                 "打錯字會被抓出來");
-        assertEquals("power", skills.skill("flicker_strike").cooldownBypass(), "瞬影擊冷卻中消耗銳星（2026-10）");
+        assertNull(skills.skill("flicker_strike").cooldownBypass(), "2026-10-24：瞬影擊照 PoE2 沒有冷卻，改成用銳星連打");
+        assertEquals(0, skills.skill("flicker_strike").cooldown(), 1e-9);
         assertEquals("frenzy", skills.skill("frost_snap").cooldownBypass(), "霜綻冷卻中消耗怒星（2026-10）");
-        assertEquals(2, bypass);
+        assertEquals(1, bypass);
         assertEquals(2, warcry, "聚星戰吼拿掉了（2026-10），只剩隱藏的磐星、怒星（proc_gain_frenzy）各給一種");
         for (final tw.exilecore.skill.SupportDefinition support : skills.supports()) {
             for (final Modifier modifier : support.modifiers()) {

@@ -456,25 +456,24 @@ class MechanicsTest {
         assertEquals("瞬影擊", flicker.name());
         assertEquals(Mechanic.FLICKER, flicker.mechanic());
         assertTrue(flicker.isAttack());
-        assertTrue(flicker.tags().containsAll(Set.of(Tags.MELEE, Tags.STRIKE, Tags.MOVEMENT, Tags.COOLDOWN)), "位移、冷卻的標籤自動補上");
+        assertTrue(flicker.tags().containsAll(Set.of(Tags.MELEE, Tags.STRIKE, Tags.MOVEMENT)), "位移的標籤自動補上");
         assertTrue(flicker.dealsDamage());
-        // 2026-10 PoE2：瞬影擊改成長棍技能、冷卻 1.5 秒、冷卻中消耗銳星、連旁邊一個敵人一起打
-        assertEquals(1.5, flicker.cooldown(), 1e-9);
-        assertEquals("power", flicker.cooldownBypass(), "冷卻中消耗銳星直接放");
+        // 2026-10-24 照 PoE2：長棍技能、沒有冷卻（銳星改成連打，SkillExecutor.flickerChain）、連旁邊一個敵人一起打
+        assertEquals(0, flicker.cooldown(), 1e-9);
+        assertNull(flicker.cooldownBypass(), "沒有冷卻就沒有冷卻中消耗銳星");
         assertEquals(12, flicker.params().range(), 1e-9);
         assertEquals(2, flicker.params().targets());
         assertFalse(flicker.usableWith(Set.of()), "要長棍，徒手不行");
         assertTrue(flicker.usableWith(Set.of(Tags.QUARTERSTAFF, Tags.MELEE)));
         assertFalse(flicker.usableWith(Set.of(Tags.SWORD, Tags.MELEE)));
         assertFalse(flicker.usableWith(Set.of(Tags.BOW, Tags.RANGED)));
-        final SkillBuild quick = SkillBuild.of(config, flicker, 10, 60, false, List.of(config.support("cooldown_recovery")),
+        final SkillBuild quick = SkillBuild.of(config, flicker, 10, 60, false, List.of(),
                 Set.of(Tags.QUARTERSTAFF, Tags.MELEE), new StatSheet());
-        assertEquals(21, quick.cooldownTicks(), "速冷：1.5 秒 × 0.7");
+        assertEquals(0, quick.cooldownTicks(), "沒有冷卻");
         assertNull(quick.deploy(), "攻擊不會變成圖騰或陷阱");
         assertFalse(quick.echo());
         assertTrue(config.support("charge_frenzy").supports(flicker), "怒星輔助掛得上");
         assertTrue(config.support("rage").supports(flicker), "怒火掛得上（近戰）");
-        assertTrue(config.support("cooldown_recovery").supports(flicker));
         assertFalse(config.support("spell_echo").supports(flicker));
         assertNull(config.skill("leap_slam").cooldownBypass(), "其他技能沒有");
     }

@@ -554,7 +554,7 @@ resonance_orb:
 
 # ---- 地圖機制掉的特殊通貨（照 PoE2：星魄、催化劑、星籤；怪物不掉，drop_weight 0） ----
 # 星魄（寶箱掉）：普通物品變魔法、魔法變稀有，而且一定帶這顆星魄的那條詞綴（affix；同群組的舊詞綴換掉，階級照物品等級抽、不會是最差的）。
-#   只能用在那條詞綴能出現的基底上（例如攻速星魄只能用在武器、戒指）。
+#   只能用在那條詞綴能出現的基底上（例如速度星魄只能用在武器、褲子、箭袋）。
 essence_body:
   name: 生命星魄
   material: GLOW_INK_SAC
@@ -617,14 +617,14 @@ essence_ruin:
   description: "普通→魔法、魔法→稀有，一定帶「混沌抗性」（防具、盾、飾品）"
   flavor: "從裂隙那一邊漏過來的。"
 essence_battle:
-  name: 攻速星魄
+  name: 速度星魄   # 2026-10-24：攻速星魄改名（法杖、長杖給施放速度）
   material: GLOW_INK_SAC
   stack: 20
   operation: ESSENCE
-  affix: attack_speed, local_attack_speed, local_attack_speed_bow
+  affix: cast_speed_wand, cast_speed_staff, attack_speed, local_attack_speed, local_attack_speed_bow, cast_speed
   applies_to: { rarity: [NORMAL, MAGIC] }
   drop_weight: 0
-  description: "普通→魔法、魔法→稀有，一定帶「攻擊速度」（武器、褲子、箭袋）"
+  description: "普通→魔法、魔法→稀有，一定帶「攻擊速度」（攻擊武器、褲子、箭袋）；法杖、長杖是「施放速度」"
   flavor: "把一場打鬥的最後一秒封起來。"
 essence_sorcery:
   name: 法傷星魄
@@ -661,11 +661,11 @@ essence_seeking:
   material: GLOW_INK_SAC
   stack: 20
   operation: ESSENCE
-  affix: crit_chance, crit_chance_amulet, local_crit_base, attack_crit_chance
+  affix: crit_chance, crit_chance_amulet, local_crit_base, attack_crit_chance, spell_crit_chance_wand, spell_crit_chance_staff   # 2026-10-24：法杖、長杖給法術暴擊率
   applies_to: { rarity: [NORMAL, MAGIC] }
   drop_weight: 0
   drop_level: 20
-  description: "普通→魔法、魔法→稀有，一定帶「暴擊率」（武器、頭盔、項鍊、箭袋）"
+  description: "普通→魔法、魔法→稀有，一定帶「暴擊率」（攻擊武器、頭盔、項鍊、箭袋；法杖、長杖是法術暴擊率）"
   flavor: "總是落在最痛的地方。"
 # 2026-10-15：附加元素傷害的星魄（照 PoE2 的火焰、冰冷、閃電精髓）：武器是本地的「附加 X 傷害」，戒指、褲子、箭袋是攻擊的
 essence_blaze:

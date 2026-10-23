@@ -70,8 +70,8 @@ public final class LootFilter {
     public static final int[] GEM_LEVELS = {0, 5, 10, 15};
     /** 「未切割輔助寶石至少第幾階」的選項（0 = 關）。 */
     public static final int[] SUPPORT_TIERS = {0, 2, 3};
-    /** 「地圖依稀有度隱藏」的選項：0 = 全部顯示、1 = 隱藏普通（白）地圖、2 = 只撿稀有（黃）地圖（普通、魔法都隱藏）。 */
-    public static final int[] MAP_RARITIES = {0, 1, 2};
+    /** 「地圖依稀有度隱藏」的選項：0 = 全部顯示、1 = 隱藏普通（白）地圖、2 = 只撿稀有（黃）地圖（普通、魔法都隱藏）、3 = 全部隱藏（2026-10-24；傳奇地圖照撿）。 */
+    public static final int[] MAP_RARITIES = {0, 1, 2, 3};
     /** 「保留有 T 幾以上詞綴的裝備」的選項（0 = 關；1 = 有 T1 詞綴才保留，數字越大越寬）。 */
     public static final int[] AFFIX_TIERS = {0, 1, 2, 3, 4, 5};
 
@@ -80,6 +80,7 @@ public final class LootFilter {
         return switch (value) {
             case 1 -> "隱藏普通（白）地圖";
             case 2 -> "只撿稀有（黃）地圖";
+            case 3 -> "全部隱藏";
             default -> "全部顯示";
         };
     }
@@ -127,7 +128,7 @@ public final class LootFilter {
         }
 
         Rules withMapRarity(final int value) {
-            return new Rules(weaponsLikeMine, armourLikeMine, levelGap, minSkillGemLevel, minSupportTier, Math.max(0, Math.min(2, value)), keepAffixTier);
+            return new Rules(weaponsLikeMine, armourLikeMine, levelGap, minSkillGemLevel, minSupportTier, Math.max(0, Math.min(3, value)), keepAffixTier);
         }
 
         Rules withKeepAffixTier(final int value) {
@@ -600,6 +601,7 @@ public final class LootFilter {
         return switch (rarity) {
             case NORMAL -> true;
             case MAGIC -> rules.mapRarity() >= 2;
+            case RARE -> rules.mapRarity() >= 3; // 2026-10-24：全部隱藏
             default -> false;
         };
     }
@@ -801,7 +803,7 @@ public final class LootFilter {
         preset = CUSTOM;
     }
 
-    /** 地圖依稀有度：全部顯示 → 隱藏普通 → 只撿稀有 → 全部顯示（反方向就倒著走）。 */
+    /** 地圖依稀有度：全部顯示 → 隱藏普通 → 只撿稀有 → 全部隱藏 → 全部顯示（反方向就倒著走）。 */
     public void cycleMapRarity(final boolean backwards) {
         rules = rules.withMapRarity(next(MAP_RARITIES, rules.mapRarity(), backwards));
         preset = CUSTOM;

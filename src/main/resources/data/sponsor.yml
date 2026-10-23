@@ -78,6 +78,7 @@ boosts:
 #   character_slots: N   送幾個角色欄位（跟用星幣買的疊加）
 #   weekly_boxes: N      每週送幾箱免費抽獎箱（跟月卡的免費箱一樣累積，/sponsor 開；要有 monthly_card.daily_free_box）
 #   cosmetics: [代號]     到這一階就送的時裝（cosmetics 的代號；限定的也能送）
+#   move_speed: N        移動速度 +N%（2026-10-24；到過的每一階疊加，跟 experience、gold 一樣：6 階各 5% = 共 30%）
 #   login_message: true  自訂上線訊息（/sponsor login 一句話，最多 40 字，過髒話表）
 #   level_fireworks: true 升級在頭上放一發煙火
 #   all_cosmetics: true  所有非限定的時裝不用抽就能套（限定的：S1、節慶、箱子限定的照舊）
@@ -90,27 +91,27 @@ boosts:
 tiers:
   - { amount: 1000,  id: patron_1, title: 星塵贊助者, color: "#9fd3ff", name_color: "#cfeaff",
       stash_pages: 1,  bag_pages: 0, listings: 7,  bypass_full: true, chat_color: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 9,
+      experience: 5, gold: 5, move_speed: 5, death_penalty: 9,
       login_message: true, level_fireworks: true }
   - { amount: 3000,  id: patron_2, title: 星芒贊助者, color: "#7fe0c0", name_color: "#a8f5dc",
       stash_pages: 2,  bag_pages: 0, listings: 9,  bypass_full: true, chat_color: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 8,
+      experience: 5, gold: 5, move_speed: 5, death_penalty: 8,
       free_boosts: { per: week, count: 1 }, character_slots: 1, cosmetics: [patron_halo] }
   - { amount: 5000,  id: patron_3, title: 星輝贊助者, color: "#f5d76e", name_color: "#ffe58a",
       stash_pages: 3,  bag_pages: 1, listings: 11, bypass_full: true, chat_color: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 6,
+      experience: 5, gold: 5, move_speed: 5, death_penalty: 6,
       free_boosts: { per: week, count: 2 }, character_slots: 1, weekly_boxes: 1, cosmetics: [patron_wisp] }
   - { amount: 10000, id: patron_4, title: 星耀贊助者, color: "#ff9f5a", name_color: "#ffb98a",
       stash_pages: 5,  bag_pages: 2, listings: 13, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 4,
+      experience: 5, gold: 5, move_speed: 5, death_penalty: 4,
       free_boosts: { per: week, count: 3 }, character_slots: 2, weekly_boxes: 2, cosmetics: [patron_wings_ember, patron_lantern] }
   - { amount: 15000, id: patron_5, title: 星曜守護者, color: "#d68cff", name_color: "gradient:#e3a8ff:#9fd3ff",
       stash_pages: 7,  bag_pages: 3, listings: 15, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 2,
+      experience: 5, gold: 5, move_speed: 5, death_penalty: 2,
       free_boosts: { per: day, count: 1 }, character_slots: 3, weekly_boxes: 3, cosmetics: [patron_wings_galaxy, patron_crown] }
   - { amount: 25000, id: patron_6, title: 星骸至尊,   color: "#ffd24a", name_color: "gradient:#ffe27a:#ff8fe0",
       stash_pages: 10, bag_pages: 5, listings: 30, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 0,
+      experience: 5, gold: 5, move_speed: 5, death_penalty: 0,
       free_boosts: { per: day, count: 2 }, character_slots: 5, weekly_boxes: 5, all_cosmetics: true, lifetime_card: true,
       cosmetics: [patron_star],
       join_announce: true, badge: "★", custom_name_color: true, monthly_rename_cards: 1, guild_stash_pages: 2,

@@ -709,6 +709,64 @@ final class SkillExecutor {
             visuals.dash(build.definition().visual(), from, to);
         }
         strike(Origin.of(player), build, chosen.target());
+        // 2026-10-24（照 PoE2）：每顆銳星多瞬移打 2 下（優先打還沒打過的），出手速度更多 285%；連打期間不能拿銳星。
+        // 銳星是要打下一下時才用（附近沒有敵人就不用掉，照 PoE2「沒有額外攻擊就不消耗」）
+        final var charges = plugin.combat() == null ? null : plugin.combat().charges();
+        if (charges == null || charges.count(player, "power") <= 0) {
+            return;
+        }
+        final long step = Math.max(2, Math.round(build.intervalTicks(plugin.players().sheet(player)) / (1 + FLICKER_MORE_SPEED)));
+        final java.util.Set<UUID> hit = new java.util.HashSet<>();
+        hit.add(chosen.target().getUniqueId());
+        charges.blockPower(player, now + step * FLICKER_PER_CHARGE + 5);
+        flickerChain(player, build, hit, 0, step, 0);
+    }
+
+    /** 每顆銳星多瞬移打幾下。 */
+    private static final int FLICKER_PER_CHARGE = 2;
+    /** 連打的出手速度更多（2.85 = 285%）。 */
+    private static final double FLICKER_MORE_SPEED = 2.85;
+    /** 保險：一次瞬影擊最多連打幾下（銳星上限再高也不會無限連）。 */
+    private static final int FLICKER_MAX_CHAIN = 40;
+
+    /**
+     * 瞬影擊的連打：{@code paid} 是用掉的銳星還能打幾下；用完了、身上還有銳星就再用一顆（先確認有敵人可以打）。
+     * 每一下之間隔 step tick；連打期間一直延長「不能拿銳星」。
+     */
+    private void flickerChain(final Player player, final SkillBuild build, final java.util.Set<UUID> hit, final int paid, final long step, final int done) {
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            final var charges = plugin.combat() == null ? null : plugin.combat().charges();
+            if (charges == null || !player.isOnline() || player.isDead() || done >= FLICKER_MAX_CHAIN) {
+                return;
+            }
+            final List<LivingEntity> candidates = new ArrayList<>(flickerCandidates(player, build, null));
+            candidates.sort((a, b) -> Boolean.compare(hit.contains(a.getUniqueId()), hit.contains(b.getUniqueId()))); // 沒打過的優先
+            final FlickerPlan next = flickerPlan(player, candidates);
+            if (next == null) {
+                return; // 附近沒有敵人：連打結束（銳星沒用掉的留著）
+            }
+            int left = paid;
+            if (left <= 0) {
+                if (!charges.consume(player, "power")) {
+                    return; // 銳星用完了
+                }
+                left = FLICKER_PER_CHARGE;
+            }
+            final Location from = player.getLocation();
+            final Location to = next.destination();
+            if (to.distanceSquared(from) >= SkillMath.FLICKER_MIN_MOVE * SkillMath.FLICKER_MIN_MOVE) {
+                player.setFallDistance(0);
+                player.setVelocity(new Vector());
+                if (!tw.exilecore.core.Teleports.go(player, to)) {
+                    return;
+                }
+                visuals.dash(build.definition().visual(), from, to);
+            }
+            hit.add(next.target().getUniqueId());
+            strike(Origin.of(player), build, next.target());
+            charges.blockPower(player, plugin.getServer().getCurrentTick() + step + 5);
+            flickerChain(player, build, hit, left - 1, step, done + 1);
+        }, step);
     }
 
     // ---- 延遲落下、地面效果、印記 ----

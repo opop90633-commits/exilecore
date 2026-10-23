@@ -208,7 +208,8 @@ public final class LootConfig {
             case "", "none", "off", "false" -> 0;
             case "normal" -> 1;
             case "magic" -> 2;
-            default -> throw new IllegalArgumentException(where + ".hide_maps：要寫 none、normal（隱藏普通地圖）或 magic（普通、魔法地圖都隱藏），卻是「"
+            case "all" -> 3; // 2026-10-24：全部隱藏（傳奇地圖照撿）
+            default -> throw new IllegalArgumentException(where + ".hide_maps：要寫 none、normal（隱藏普通地圖）、magic（普通、魔法地圖都隱藏）或 all（全部隱藏），卻是「"
                     + text + "」");
         };
     }

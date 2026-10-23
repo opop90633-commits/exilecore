@@ -252,7 +252,7 @@ public final class LootFilterMenu extends Menu {
             lines.add("跟身上不同系的防具" + (armourFamilyNames().isEmpty() ? "（現在沒穿防具：不管）" : "（身上：" + String.join("、", armourFamilyNames()) + "）"));
         }
         if (rules.mapRarity() > 0) {
-            lines.add(rules.mapRarity() >= 2 ? "普通（白）與魔法（藍）地圖" : "普通（白）地圖");
+            lines.add(rules.mapRarity() >= 3 ? "全部地圖（傳奇地圖照撿）" : rules.mapRarity() >= 2 ? "普通（白）與魔法（藍）地圖" : "普通（白）地圖");
         }
         if (filter.hidesSkillGems()) {
             lines.add("未切割技能寶石");
