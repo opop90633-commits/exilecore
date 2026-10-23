@@ -28,7 +28,7 @@ class GuildConfigTest {
         final GuildConfig config = shipped();
         assertEquals(30, config.createLevel());
         assertEquals(50_000, config.createCost());
-        assertEquals(30, config.maxMembers());
+        assertEquals(40, config.maxMembers());
         assertEquals(20, config.maxLevel());
         assertEquals(20_000, config.xpToNext(1));
         assertTrue(config.xpToNext(19) > config.xpToNext(10));
@@ -70,7 +70,7 @@ class GuildConfigTest {
     void missingFileUsesDefaults() throws IOException {
         final GuildConfig config = new GuildConfig();
         config.load(Path.of("build/tmp/no-such-folder"));
-        assertEquals(30, config.maxMembers());
+        assertEquals(40, config.maxMembers());
         assertEquals(2, config.tagMin());
         assertEquals(4, config.tagMax());
     }
