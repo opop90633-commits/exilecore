@@ -267,7 +267,7 @@ class MinionTest {
         Files.copy(DATA.resolve("supports.yml"), dir.resolve("supports.yml"));
         final String original = Files.readString(DATA.resolve("skills.yml"));
         assertRejected(dir, original.replace("kind: ZOMBIE", "kind: CREEPER"), "kind");
-        assertRejected(dir, original.replace("mechanic: summon\n    # 2026-10 平衡：群體召喚太強，damage 0.7 → 0.32\n    summon: { kind: ZOMBIE",
+        assertRejected(dir, original.replace("mechanic: summon\n    # 2026-10 平衡：群體召喚太強，damage 0.7 → 0.32\n    # 2026-10-23 弱勢補強：damage 0.32 → 0.42（90 級以上 3 人實測中位數只有 24 萬；殭屍要屍體、20 秒就消失，比骸骨兵難維持）\n    summon: { kind: ZOMBIE",
                 "mechanic: nova\n    summon: { kind: ZOMBIE"), "summon");
         assertRejected(dir, original.replace("    cast_time: 0.6\n    mana: [6, 18]\n    visual: raise_zombie",
                 "    damage: [1, 2]\n    damage_types: { physical: 1.0 }\n    cast_time: 0.6\n    mana: [6, 18]\n    visual: raise_zombie"), "damage");

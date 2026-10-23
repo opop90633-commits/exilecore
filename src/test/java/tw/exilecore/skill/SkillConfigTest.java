@@ -222,11 +222,12 @@ class SkillConfigTest {
         final SkillDefinition fireball = config.skill("fireball");
         final SkillProfile level1 = SkillProfiles.build(config, fireball, 1, Set.of(Tags.SWORD));
         // 法術的基礎傷害 × 成長倍率（需求等級 1 是 1.05）
-        assertEquals(8 * 1.05, level1.spellDamage().get(DamageType.FIRE), 1e-9);
-        assertEquals(12 * 1.05, level1.spellMax().get(DamageType.FIRE), 1e-9);
+        // 2026-10-23：熾星彈 [8, 12] → [11, 17]（直傷法術第二輪 ×1.4）
+        assertEquals(11 * 1.05, level1.spellDamage().get(DamageType.FIRE), 1e-9);
+        assertEquals(17 * 1.05, level1.spellMax().get(DamageType.FIRE), 1e-9);
         assertFalse(level1.tags().contains(Tags.SWORD), "法術不帶武器標籤");
         final SkillProfile level20 = SkillProfiles.build(config, fireball, 20, Set.of());
-        assertEquals(8 * 9.23, level20.spellDamage().get(DamageType.FIRE), 1e-9, "20 級的需求等級 80 → 9.23");
+        assertEquals(11 * 9.23, level20.spellDamage().get(DamageType.FIRE), 1e-9, "20 級的需求等級 80 → 9.23");
         assertEquals(5, SkillProfiles.manaCost(fireball, 1));
         assertEquals(14, SkillProfiles.manaCost(fireball, 20));
 
@@ -259,16 +260,16 @@ class SkillConfigTest {
         assertEquals(16, SkillProfiles.intervalTicks(sheet, fireball, fire), 1e-9);
         assertEquals(20 / (1.5 * 0.6), SkillProfiles.intervalTicks(sheet, heavy, heavyProfile), 1e-9, "施法速度不影響攻擊");
 
-        // 面板上的「平均每次」：熾星彈 8–12 平均 10，乘 1 級的成長倍率 1.05
+        // 面板上的「平均每次」：熾星彈 11–17 平均 14，乘 1 級的成長倍率 1.05
         final DamagePacket expected = DamageCalculator.expectedOutgoing(new StatSheet(), fire);
-        assertEquals(10 * 1.05, expected.get(DamageType.FIRE), 1e-9);
+        assertEquals(14 * 1.05, expected.get(DamageType.FIRE), 1e-9);
     }
 
     @Test
     void badFilesAreRejectedWithTheFieldName(@TempDir final Path dir) throws IOException {
         final String shipped = Files.readString(DATA.resolve(SkillConfig.FILE), StandardCharsets.UTF_8);
         assertRejected(dir, shipped.replace("visual: fireball", "visual: lasers"), "visual");
-        assertRejected(dir, shipped.replace("    effectiveness: [1.0, 1.4]\n", "    effectiveness: [1.0, 1.4]\n    damage: [1, 2]\n"), "damage");
+        assertRejected(dir, shipped.replace("    effectiveness: [1.0, 2.1]   # 2026-10-23 弓的攻擊技能第二輪", "    damage: [1, 2]\n    effectiveness: [1.0, 2.1]   # 2026-10-23 弓的攻擊技能第二輪"), "damage");
         assertRejected(dir, shipped.replace("  default_staff:", "  default_staff_renamed:"), "default_staff");
         assertRejected(dir, shipped.replace("starter: witch", "starter: marauder"), "起始技能");
         assertRejected(dir, shipped.replace("convert: { fire: 0.5 }", "convert: { fire: 0.8, cold: 0.5 }"), "convert");
