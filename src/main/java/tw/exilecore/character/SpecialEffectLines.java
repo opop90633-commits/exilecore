@@ -54,6 +54,10 @@ public final class SpecialEffectLines {
         FLAGS.put(StatKeys.FLAG_IRON_REFLEXES, "閃避全部轉為護甲");
         FLAGS.put(StatKeys.FLAG_FREEZE_IMMUNE, "無法被凍結");
         FLAGS.put(StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE, "免疫元素異常（點燃、冰緩、凍結、感電）");
+        FLAGS.put(StatKeys.FLAG_MAIM_IMMUNE, "免疫癱瘓");
+        FLAGS.put(StatKeys.FLAG_HINDER_IMMUNE, "不會被阻礙");
+        FLAGS.put(StatKeys.FLAG_BLIND_IMMUNE, "不會被致盲");
+        FLAGS.put(StatKeys.FLAG_CORRUPTED_BLOOD_IMMUNE, "免疫腐化之血");
         FLAGS.put(StatKeys.FLAG_INSTANT_LEECH, "偷取全部立即生效（一下最多回 6% 最大生命）；生命回復沒有效果");
         FLAGS.put(StatKeys.FLAG_NO_LEECH, "無法偷取（地圖詞綴）");
         FLAGS.putAll(tw.exilecore.stats.SignatureText.TEXT); // 昇華的招牌天賦

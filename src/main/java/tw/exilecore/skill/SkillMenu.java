@@ -74,7 +74,7 @@ public final class SkillMenu extends Menu {
     private boolean changed;
 
     /** 游標上拿著什麼（決定哪些格子要亮、哪些要變暗）。 */
-    private enum Holding { NONE, SKILL_GEM, SUPPORT_GEM, UNCUT_SKILL, SOCKET_ORB, RESONANCE_ORB, OTHER } // 2026-10-18：共鳴石
+    private enum Holding { NONE, SKILL_GEM, SUPPORT_GEM, UNCUT_SKILL, SOCKET_ORB, RESONANCE_ORB, CORRUPT_ORB, OTHER } // 2026-10-18：共鳴石
 
     /** 拿著的東西放在某一格：BEST＝放這裡（亮起來）、SWAP＝可以放，但會換下原本的、NO＝不能放（變暗）。 */
     private enum Fit { BEST, SWAP, NO }
@@ -224,14 +224,14 @@ public final class SkillMenu extends Menu {
         lore.add("<yellow>Shift＋右鍵：看裝備對這個技能的加成");
         set(SLOT_SELECTED, highlight(SkillArt.decorate(icon(material(definition.icon(), Material.BOOK),
                 "<green>選取中：<#e0c080>" + ItemRenderer.escape(definition.name()) + " <gray>Lv." + entry.level(), lore), definition)));
-        // 升一級：自動挑背包或通貨袋裡夠用、等級最低的那顆
+        // 升一級：自動挑背包、通貨袋或倉庫裡夠用、等級最低的那顆
         final String problem = gems.levelUpProblem(state, entry, SkillLoadout.GEM_CAP);
         final GemService.UncutSource source = problem == null ? gems.bestForLevelUp(player, entry) : null;
         if (problem != null) {
             set(SLOT_LEVEL_UP, icon(Material.GRAY_DYE, "<gray>⬆ 升一級", "<red>" + ItemRenderer.escape(problem)));
         } else if (source == null) {
             set(SLOT_LEVEL_UP, icon(Material.GRAY_DYE, "<gray>⬆ 升到 Lv." + (entry.level() + 1),
-                    "<red>沒有夠用的未切割技能寶石", "<gray>要 Lv." + (entry.level() + 1) + " 以上的（背包或通貨袋裡）"));
+                    "<red>沒有夠用的未切割技能寶石", "<gray>要 Lv." + (entry.level() + 1) + " 以上的（背包、通貨袋或倉庫裡）"));
         } else {
             set(SLOT_LEVEL_UP, targetHighlight(icon(Material.EXPERIENCE_BOTTLE, "<green>⬆ 升到 Lv." + (entry.level() + 1),
                     "<gray>用掉一顆：<white>" + ItemRenderer.escape(gems.describe(player, source)),
@@ -272,6 +272,9 @@ public final class SkillMenu extends Menu {
         final CurrencyType currency = plugin.currencies().read(cursor).orElse(null);
         if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.RESONANCE) {
             return Holding.RESONANCE_ORB; // 2026-10-18：共鳴石點掛著的專屬輔助
+        }
+        if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.CORRUPT) {
+            return Holding.CORRUPT_ORB; // 2026-10-23：蝕變石腐化技能寶石
         }
         return currency != null && currency.isSkillCurrency() ? Holding.SOCKET_ORB : Holding.OTHER;
     }
@@ -439,6 +442,15 @@ public final class SkillMenu extends Menu {
                 if (orb == null) {
                     return null;
                 }
+                if (orb.operation() == tw.exilecore.currency.CurrencyOperation.SKILL_QUALITY) {
+                    // 2026-10-23：琢星稜鏡
+                    final String problem = gems.qualityProblem(entry);
+                    return problem != null ? Hint.no(problem)
+                            : Hint.best("放這裡：品質 " + entry.quality() + "% → " + Math.min(SkillLoadout.Entry.QUALITY_MAX, entry.quality() + 5) + "%");
+                }
+                if (entry.corrupted()) {
+                    return Hint.no("已腐化的技能寶石不能再開孔");
+                }
                 if (entry.sockets() >= SkillLoadout.MAX_SOCKETS) {
                     return Hint.no("已經有 " + SkillLoadout.MAX_SOCKETS + " 個輔助孔了");
                 }
@@ -448,6 +460,10 @@ public final class SkillMenu extends Menu {
             case RESONANCE_ORB -> {
                 // 2026-10-18：共鳴石要點最下面一排掛著的專屬輔助，不是點技能
                 return Hint.no("共鳴石要點最下面一排掛著的專屬輔助寶石");
+            }
+            case CORRUPT_ORB -> {
+                return entry.corrupted() ? Hint.no("這顆技能寶石已經腐化過了")
+                        : Hint.best("放這裡：腐化（沒變化／等級 ±1／輔助孔 ±1／品質變動，之後不能再升級、開孔、加品質）");
             }
             case OTHER -> {
                 return Hint.no("這個東西不能放在技能面板");
@@ -940,8 +956,18 @@ public final class SkillMenu extends Menu {
             fail("拿著東西只能點技能或輔助孔");
             return;
         }
+        if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.SKILL_QUALITY) {
+            // 2026-10-23：琢星稜鏡：技能寶石品質 +5%
+            apply(event, cursor, position < 0 ? GemService.Change.fail("先點一個技能") : gems.addQuality(player, position, currency));
+            return;
+        }
         if (currency != null && currency.isSkillCurrency()) {
             apply(event, cursor, position < 0 ? GemService.Change.fail("先點一個技能") : gems.addSocket(player, position, currency));
+            return;
+        }
+        if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.CORRUPT) {
+            // 2026-10-23：蝕變石點技能：腐化那顆技能寶石（照 PoE2）
+            apply(event, cursor, position < 0 ? GemService.Change.fail("先點一個技能") : gems.corrupt(player, position, currency));
             return;
         }
         if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.RESONANCE) {
@@ -951,7 +977,7 @@ public final class SkillMenu extends Menu {
             return;
         }
         if (gem == null) {
-            fail("這裡只能放寶石、鑿星石與共鳴石");
+            fail("這裡只能放寶石、鑿星石、共鳴石與蝕變石");
             return;
         }
         final GemService.Change change = switch (gem.kind()) {
@@ -1038,7 +1064,7 @@ public final class SkillMenu extends Menu {
         }
         final GemService.UncutSource source = gems.bestForLevelUp(player, entry);
         if (source == null) {
-            fail("沒有夠用的未切割技能寶石（要 Lv." + (entry.level() + 1) + " 以上，背包或通貨袋裡）");
+            fail("沒有夠用的未切割技能寶石（要 Lv." + (entry.level() + 1) + " 以上，背包、通貨袋或倉庫裡）");
             return;
         }
         final String error = gems.levelUpFrom(player, source, selected); // 扣寶石、存檔、音效都在裡面

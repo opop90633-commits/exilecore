@@ -117,4 +117,49 @@ class SkillLoadoutTest {
         }
         assertEquals(-1, loadout.add(new SkillLoadout.Entry("more", 1)), "面板滿了");
     }
+
+    /** 2026-10-23：腐化過的技能寶石存檔前面寫 !，讀回來還是腐化的；放在宿主第 1 孔的也一樣。 */
+    @Test
+    void corruptedSurvivesEncoding() {
+        final SkillLoadout.Entry plain = new SkillLoadout.Entry("fireball", 18, 3, List.of("added_fire", "", "pierce"));
+        assertFalse(plain.corrupted());
+        assertFalse(plain.encodeSupports().startsWith(SkillLoadout.Entry.CORRUPTED_PREFIX));
+        final SkillLoadout.Entry corrupted = plain.withCorrupted(true);
+        assertTrue(corrupted.encodeSupports().startsWith(SkillLoadout.Entry.CORRUPTED_PREFIX));
+        final SkillLoadout.Entry back = SkillLoadout.Entry.decode("fireball", 18, corrupted.encodeSupports());
+        assertTrue(back.corrupted());
+        assertEquals(corrupted, back);
+        assertTrue(back.withLevel(19).corrupted(), "升級、開孔、換輔助都留著腐化");
+        assertTrue(back.withSockets(4).corrupted());
+        assertTrue(back.withSupport(1, "faster_casting").corrupted());
+        // 宿主第 1 孔的腐化寶石
+        final SkillLoadout.Entry host = new SkillLoadout.Entry("totem_casting", 20, 5, List.of()).withInner(new SkillLoadout.Entry("snap", 21, 2, List.of()).withCorrupted(true));
+        final SkillLoadout.Entry hostBack = SkillLoadout.Entry.decode("totem_casting", 20, host.encodeSupports());
+        assertTrue(hostBack.inner().corrupted());
+        assertFalse(hostBack.corrupted());
+    }
+
+    @Test
+    void qualitySurvivesEncoding() {
+        final SkillLoadout.Entry plain = new SkillLoadout.Entry("fireball", 18, 3, List.of("added_fire", "", "pierce"));
+        assertEquals(0, plain.quality());
+        final SkillLoadout.Entry q = plain.withQuality(15);
+        assertEquals(q, SkillLoadout.Entry.decode("fireball", 18, q.encodeSupports()));
+        final SkillLoadout.Entry both = q.withCorrupted(true).withQuality(23);
+        final SkillLoadout.Entry back = SkillLoadout.Entry.decode("fireball", 18, both.encodeSupports());
+        assertEquals(23, back.quality());
+        assertTrue(back.corrupted());
+        assertEquals(both, back);
+        assertEquals(23, plain.withQuality(99).quality(), "最多 23%");
+        assertEquals(0, plain.withQuality(-5).quality());
+        assertEquals(15, q.withLevel(19).withSockets(4).withSupport(1, "faster_casting").withCorrupted(true).quality(), "其他改動留著品質");
+        final SkillLoadout.Entry host = new SkillLoadout.Entry("totem_casting", 20, 5, List.of())
+                .withInner(new SkillLoadout.Entry("snap", 21, 2, List.of()).withQuality(10).withCorrupted(true));
+        final SkillLoadout.Entry hostBack = SkillLoadout.Entry.decode("totem_casting", 20, host.encodeSupports());
+        assertEquals(10, hostBack.inner().quality());
+        assertTrue(hostBack.inner().corrupted());
+        assertEquals(0, hostBack.quality());
+        // 舊資料（沒有品質）照樣讀得出來
+        assertEquals(0, SkillLoadout.Entry.decode("fireball", 18, plain.encodeSupports()).quality());
+    }
 }

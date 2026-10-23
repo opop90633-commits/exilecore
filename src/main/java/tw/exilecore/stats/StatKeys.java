@@ -680,6 +680,53 @@ public final class StatKeys {
     public static final String BLIND_CHANCE = "blind.chance";
     /** FLAT：擊中 x% 機率癱瘓（4 秒內移動速度變慢 30%，吃減速幅度）。 */
     public static final String MAIM_CHANCE = "maim.chance";
+    /** 2026-10-23：FLAT：怪物打中玩家 x% 機率阻礙（4 秒內移動速度變慢 30%；PoE2）。 */
+    public static final String HINDER_CHANCE = "hinder.chance";
+    /** 2026-10-23：FLAT：怪物打中玩家 x% 機率上一層腐化之血（物理持續傷害，最多 10 層，每次打中重新計時；PoE2）。 */
+    public static final String CORRUPTED_BLOOD_CHANCE = "corrupted_blood.chance";
+    /** 2026-10-23：開關（珠寶的腐化詞綴，PoE2）：免疫癱瘓、不會被阻礙、不會被致盲、免疫腐化之血。 */
+    public static final String FLAG_MAIM_IMMUNE = "flag.maim_immune";
+    public static final String FLAG_HINDER_IMMUNE = "flag.hinder_immune";
+    public static final String FLAG_BLIND_IMMUNE = "flag.blind_immune";
+    public static final String FLAG_CORRUPTED_BLOOD_IMMUNE = "flag.corrupted_blood_immune";
+
+    // ---- 2026-10-23：怪物詞綴的特殊行為（PoE2 稀有怪詞綴；只有怪物的屬性表會有，見 tw.exilecore.monster.MonsterMechanics）----
+    /** 前綴：怪物特殊行為的屬性都以這個開頭（有就要追蹤）。 */
+    public static final String MONSTER_PREFIX = "monster.";
+    /** FLAT：每秒回復 x% 最大生命。 */
+    public static final String MONSTER_REGEN = "monster.regen_percent";
+    /** FLAT：多一層等於 x% 最大生命的護盾（先扣護盾，4 秒沒被打開始回充）。 */
+    public static final String MONSTER_SHIELD = "monster.shield_percent";
+    /** FLAT：熔岩護盾，吸收 x% 最大生命的傷害；被打破時爆炸（火焰），8 秒後回來。 */
+    public static final String MONSTER_MAGMA = "monster.magma_barrier";
+    /** FLAT：阻礙光環的半徑（格）。 */
+    public static final String MONSTER_HINDER_AURA = "monster.hinder_aura";
+    /** FLAT 1：走過的地上留下點燃／冰緩／感電的地面。 */
+    public static final String MONSTER_TRAIL_FIRE = "monster.trail_fire";
+    public static final String MONSTER_TRAIL_COLD = "monster.trail_cold";
+    public static final String MONSTER_TRAIL_LIGHTNING = "monster.trail_lightning";
+    /** FLAT：每 6 秒治療附近的怪物 x% 最大生命。 */
+    public static final String MONSTER_HEAL_ALLIES = "monster.heal_allies";
+    /** FLAT 1：引爆目標附近的屍體。 */
+    public static final String MONSTER_CORPSE_EXPLODE = "monster.corpse_explode";
+    /** FLAT 1：附近玩家的藥劑一直被吸走充能。 */
+    public static final String MONSTER_FLASK_SIPHON = "monster.flask_siphon";
+    /** FLAT：附近玩家的生命回復不能超過 x%。 */
+    public static final String MONSTER_RECOVERY_CAP = "monster.recovery_cap";
+    /** FLAT 1：叫出來的小怪更強（傷害增加 25%、生命更多 50%）。 */
+    public static final String MONSTER_POWERFUL_MINIONS = "monster.powerful_minions";
+    /** FLAT 1：定期讓附近的屍體爬起來當小怪。 */
+    public static final String MONSTER_REVIVE = "monster.revive_minions";
+    /** FLAT 1：被打中時有機率放出追人的閃電幻影。 */
+    public static final String MONSTER_MIRAGE = "monster.lightning_mirage";
+    /** FLAT 1：周圍一圈吸魔力、閃電傷害（中間安全）。 */
+    public static final String MONSTER_MANA_SIPHON = "monster.mana_siphon";
+    /** FLAT：時間泡泡的半徑（泡泡裡的玩家移動、攻擊、施法都變慢）。 */
+    public static final String MONSTER_TEMPORAL_BUBBLE = "monster.temporal_bubble";
+    /** FLAT：只有這麼多格以內的攻擊打得到牠。 */
+    public static final String MONSTER_PROXIMAL = "monster.proximal";
+    /** FLAT 1：附近的怪物死掉時吞魂（每層招式快 1%、受到的傷害少 1%，最多 50 層）。 */
+    public static final String MONSTER_SOUL_EATER = "monster.soul_eater";
     /** FLAT：投射物射出時 x% 機率多穿透一個敵人（PoE2 箭袋的「x% 機率穿透」；超過 100% 的部分必定再多一個）。 */
     public static final String PIERCE_CHANCE = "skill.pierce_chance";
     /** FLAT：投射物碰到地形 x% 機率再連鎖一次（彈向最近的敵人）。 */

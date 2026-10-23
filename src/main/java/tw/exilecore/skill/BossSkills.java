@@ -95,6 +95,11 @@ public final class BossSkills implements Listener {
             return true;
         }
 
+        /** 2026-10-23：這隻用的招式要不要調整（一般怪物的詞綴：範圍加大、多射幾發）；預設照原樣。 */
+        default BossSkill adjust(final BossSkill skill) {
+            return skill;
+        }
+
         /** 場地危害（照時間自己落下的招；等 Boss 手上這一招放完才落，見 {@link BossPacing}）；沒有就是空的。 */
         default List<BossHazard> hazards() {
             return List.of();
@@ -215,7 +220,12 @@ public final class BossSkills implements Listener {
 
         void resolve() {
             final BossSkillConfig config = BossSkills.this.config.bossSkills();
-            kit = config.kitFor(boss.getType().name(), configured);
+            final List<BossSkillConfig.Entry> raw = config.kitFor(boss.getType().name(), configured);
+            final List<BossSkillConfig.Entry> adjusted = new ArrayList<>(raw.size());
+            for (final BossSkillConfig.Entry entry : raw) {
+                adjusted.add(new BossSkillConfig.Entry(host.adjust(entry.skill()), entry.fromPhase(), entry.with())); // 2026-10-23
+            }
+            kit = adjusted;
             closer = config.gapCloser();
         }
 
@@ -1936,7 +1946,9 @@ public final class BossSkills implements Listener {
                 sheet = sheet.overlay(cursed);
             }
         }
-        return Formulas.monsterCooldownFactor(sheet.apply(StatKeys.SKILL_COOLDOWN, 1.0, Set.of()));
+        // 2026-10-23：怪物的施法速度（地圖詞綴「怪物攻擊、施法與移動速度增加」）也讓招式更快
+        final double castSpeed = Math.max(0.3, Math.min(3.0, sheet.apply(StatKeys.CAST_SPEED, 1.0, Set.of())));
+        return Formulas.monsterCooldownFactor(sheet.apply(StatKeys.SKILL_COOLDOWN, 1.0, Set.of())) / castSpeed;
     }
 
     // ---- 地面標示與「你在範圍裡」 ----

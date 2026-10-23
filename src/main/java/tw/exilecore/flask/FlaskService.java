@@ -652,6 +652,20 @@ public final class FlaskService {
         addCharges(player, slotFor(player, kind), amount, true);
     }
 
+    /** 2026-10-23：藥劑欄裡的藥劑各少 amount 點充能（怪物詞綴「竊瓶的」）。 */
+    public void drainCharges(final Player player, final int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        final PlayerInventory inventory = player.getInventory();
+        for (final int slot : slots(player)) {
+            final FlaskData data = read(inventory.getItem(slot)).orElse(null);
+            if (data != null && data.charges() > 0) {
+                setCharges(inventory, slot, Math.max(0, data.charges() - amount));
+            }
+        }
+    }
+
     /** 殺怪：藥劑欄裡的藥劑都充能（藥劑自己的「充能獲得」詞綴、殺怪多一點的機率，與裝備的全域加成都算進去）。 */
     public void addCharges(final Player player, final int amount) {
         if (amount <= 0) {

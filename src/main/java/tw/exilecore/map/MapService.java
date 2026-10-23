@@ -444,6 +444,45 @@ public final class MapService {
         return AtlasTablets.Kind.ofCurrency(plugin.players().get(player).progress().get(AtlasTablets.key(q, r)));
     }
 
+    /**
+     * 2026-10-23：這座塔周圍還有幾格吃得到石板加成（地圖格、沒完成、格子的加成次數還沒用完）。
+     * 0 = 插石板也沒用，塔與城塞的清單就不列它。
+     */
+    public int tabletTargets(final Player player, final AtlasProgress atlas, final AtlasGrid.Cell tower) {
+        final int radius = atlasConfig.tower().radius() + atlasBonus(player).count("atlas.tower.radius");
+        final java.util.Map<String, String> progress = plugin.players().get(player).progress();
+        int count = 0;
+        for (final long[] at : AtlasGrid.within(tower.q(), tower.r(), radius)) {
+            final int q = (int) at[0];
+            final int r = (int) at[1];
+            if (atlas.grid().isEmpty(q, r) || !atlas.grid().cell(q, r).isMap() || atlas.isCompleted(q, r)) {
+                continue;
+            }
+            if (Atlas.parseLong(progress.get("celltry." + q + ":" + r)) >= CELL_TRIES) {
+                continue; // 開了好幾次都沒打完：格子的加成（含石板）已經不給了
+            }
+            count++;
+        }
+        return count;
+    }
+
+    /** 2026-10-23：玩家從塔與城塞的清單移除的塔（角色進度 towerhide.q:r）。 */
+    public boolean towerHidden(final Player player, final int q, final int r) {
+        return plugin.players().get(player).progress().get(towerHideKey(q, r)) != null;
+    }
+
+    public void setTowerHidden(final Player player, final int q, final int r, final boolean hidden) {
+        if (hidden) {
+            plugin.characters().setProgress(player, towerHideKey(q, r), "1");
+        } else {
+            plugin.characters().removeProgress(player, towerHideKey(q, r));
+        }
+    }
+
+    private static String towerHideKey(final int q, final int r) {
+        return "towerhide." + q + ":" + r;
+    }
+
     /** 這座塔的石板還能用幾次（沒插回傳 0）。 */
     public int tabletUses(final Player player, final int q, final int r) {
         if (tabletAt(player, q, r) == null) {

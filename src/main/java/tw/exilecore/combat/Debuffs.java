@@ -46,6 +46,38 @@ public final class Debuffs {
 
     private final Map<UUID, List<Debuff>> entries = new HashMap<>();
 
+    /**
+     * 2026-10-23：拿掉某個玩家施加的減益（詛咒、印記、曝露、眩暈、致盲、癱瘓、戰吼的恫嚇、光環的減益…）：
+     * 那個玩家死了、下線、離開地圖。回傳拿掉幾條。
+     */
+    public int removeSource(final UUID source) {
+        if (source == null) {
+            return 0;
+        }
+        int removed = 0;
+        final Iterator<Map.Entry<UUID, List<Debuff>>> iterator = entries.entrySet().iterator();
+        while (iterator.hasNext()) {
+            final List<Debuff> list = iterator.next().getValue();
+            final int before = list.size();
+            list.removeIf(debuff -> source.equals(debuff.source()));
+            removed += before - list.size();
+            if (list.isEmpty()) {
+                iterator.remove();
+            }
+        }
+        return removed;
+    }
+
+    /** 2026-10-23：時間泡泡：這個目標身上還沒結束的減益都晚 extra tick 結束。 */
+    public void extend(final UUID target, final long extra, final long now) {
+        final List<Debuff> list = entries.get(target);
+        if (list == null || extra <= 0) {
+            return;
+        }
+        list.replaceAll(debuff -> debuff.active(now) ? new Debuff(debuff.id(), debuff.source(), debuff.untilTick() + extra, debuff.taken(),
+                debuff.selfOnly(), debuff.tag(), debuff.mods(), debuff.slow()) : debuff);
+    }
+
     public void apply(final UUID target, final Debuff debuff) {
         final List<Debuff> list = entries.computeIfAbsent(target, uuid -> new ArrayList<>());
         list.removeIf(existing -> existing.id().equals(debuff.id())

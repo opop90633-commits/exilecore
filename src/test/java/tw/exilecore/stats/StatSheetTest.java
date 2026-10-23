@@ -69,4 +69,32 @@ class StatSheetTest {
         assertEquals(200 * 2, layer.get(StatKeys.LIFE_MAX), 1e-9);
         assertEquals(5, layer.allModifiers().size(), "除錯清單含兩層的修飾器");
     }
+
+    @Test
+    void cacheIgnoresTagOrderAndCallerMutation() {
+        final StatSheet sheet = new StatSheet();
+        sheet.setBase(StatKeys.DAMAGE, 10);
+        sheet.add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 0.5, Set.of("fire", "spell"), "a"));
+        final java.util.Set<String> tags = new java.util.LinkedHashSet<>(java.util.List.of("spell", "fire"));
+        assertEquals(15, sheet.get(StatKeys.DAMAGE, tags), 1e-9);
+        assertEquals(15, sheet.get(StatKeys.DAMAGE, Set.of("fire", "spell")), 1e-9, "順序不同也是同一個快取");
+        tags.remove("fire"); // 呼叫的人之後改了自己的集合
+        assertEquals(10, sheet.get(StatKeys.DAMAGE, tags), 1e-9);
+        assertEquals(15, sheet.get(StatKeys.DAMAGE, Set.of("fire", "spell")), 1e-9);
+    }
+
+    @Test
+    void versionGrowsWithEveryChangeIncludingParent() {
+        final StatSheet sheet = new StatSheet();
+        final long v0 = sheet.version();
+        sheet.add(Modifier.flat(StatKeys.LIFE_MAX, 10, "x"));
+        final StatSheet layer = sheet.overlay(java.util.List.of(Modifier.flat(StatKeys.LIFE_MAX, 5, "y")));
+        final long l0 = layer.version();
+        org.junit.jupiter.api.Assertions.assertTrue(sheet.version() > v0);
+        sheet.setBase(StatKeys.LIFE_MAX, 1);
+        org.junit.jupiter.api.Assertions.assertTrue(layer.version() > l0, "下面那張改了，疊上去的版本也變");
+        final long l1 = layer.version();
+        sheet.clearModifiers();
+        org.junit.jupiter.api.Assertions.assertTrue(layer.version() > l1);
+    }
 }

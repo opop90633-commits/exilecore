@@ -69,6 +69,7 @@ public final class OpsModule implements Module, Listener {
         wipe = new WipeService(plugin);
         transfer = new AccountTransfer(plugin);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+        plugin.getServer().getPluginManager().registerEvents(new StartupGate(plugin), plugin); // 2026-10-23：剛開機先擋一下登入
         rollTask = plugin.getServer().getScheduler().runTaskTimer(plugin, plugin.perf()::roll, 20, 20);
         backupTask = plugin.getServer().getScheduler().runTaskTimer(plugin, backups::tick, 20L * 60, 20L * 60);
     }

@@ -205,11 +205,15 @@ types:
 # 燃焰、霜寒、帶電的另外比較容易點燃、凍結、感電玩家，見 ailments.yml）；
 # added 是把物理傷害的多少比例額外加成元素傷害；vanilla_speed 是原版移動速度加成（小數）。
 # skills 是招式（data/boss_skills.yml 的代號）、hand 是手上拿的原版物品；帶招式的詞綴一隻怪最多抽到兩條。
+# 2026-10-23：照 PoE2 的稀有怪詞綴重調（Hasted、Armoured、Extra Fire Damage…），元素傷害與抗性拆成兩條；
+#   PoE2 沒有、這裡自己的（抗性的、光環、招式）照留。數值是 PoE2 的（Headhunter 偷到的那份＝一般版）。
 mods:
   swift:
     name: 極速的
-    vanilla_speed: 0.35
-    stats: []
+    vanilla_speed: 0.3        # PoE2 Hasted：移動、攻擊、施法速度各 +30%
+    stats:
+      - { stat: skill.cooldown, type: INCREASED, value: -23 }   # 招式快 30%（冷卻 ÷1.3）
+      - { stat: attack.speed, type: INCREASED, value: 30 }      # 2026-10-23：射箭間隔 ÷1.3；近戰（原版節奏固定）改成每一下 ×1.3
   sturdy:
     name: 壯碩的
     stats:
@@ -217,27 +221,45 @@ mods:
   armoured:
     name: 鐵甲的
     stats:
-      - { stat: armour, type: INCREASED, value: 300 }
+      - { stat: armour, type: INCREASED, value: 100 }   # PoE2：+100%（以前 300）
   fiery:
     name: 燃焰的
-    added: { fire: 0.4 }
-    stats:
-      - { stat: resist.fire, type: FLAT, value: 50 }
-      - { stat: ignite.chance, type: FLAT, value: 10 }
+    added: { fire: 0.4 }      # PoE2 Extra Fire Damage：40% 傷害額外加成火焰（抗性另外一條：耐火的）
+    stats: []
   frosty:
     name: 霜寒的
     added: { cold: 0.4 }
-    stats:
-      - { stat: resist.cold, type: FLAT, value: 50 }
-      - { stat: freeze.buildup, type: INCREASED, value: 100 }
+    stats: []
   shocking:
     name: 帶電的
     added: { lightning: 0.4 }
+    stats: []
+  withering:
+    name: 蝕魂的
+    min_level: 10
+    added: { chaos: 0.4 }     # PoE2 Extra Chaos Damage
+    stats: []
+  fire_resistant:
+    name: 耐火的
+    stats:
+      - { stat: resist.fire, type: FLAT, value: 50 }
+      - { stat: resist.max.fire, type: FLAT, value: 10 }
+  cold_resistant:
+    name: 耐寒的
+    stats:
+      - { stat: resist.cold, type: FLAT, value: 50 }
+      - { stat: resist.max.cold, type: FLAT, value: 10 }
+  lightning_resistant:
+    name: 絕緣的
     stats:
       - { stat: resist.lightning, type: FLAT, value: 50 }
-      - { stat: shock.chance, type: FLAT, value: 10 }
+      - { stat: resist.max.lightning, type: FLAT, value: 10 }
+  chaos_resistant:
+    name: 抗蝕的
+    stats:
+      - { stat: resist.chaos, type: FLAT, value: 50 }
   resistant:
-    name: 抗性的
+    name: 抗性的              # 這裡自己的（PoE2 拆成上面三條）：Boss、事件還在用
     stats:
       - { stat: resist.fire, type: FLAT, value: 40 }
       - { stat: resist.cold, type: FLAT, value: 40 }
@@ -245,12 +267,65 @@ mods:
   deadly:
     name: 致命的
     stats:
-      - { stat: crit.chance, type: INCREASED, value: 200 }
-      - { stat: crit.multi, type: FLAT, value: 50 }
+      - { stat: crit.chance, type: INCREASED, value: 300 }   # PoE2 Extra Crits：+300%（以前 +200% 再加暴擊傷害）
   evasive:
     name: 飄忽的
     stats:
-      - { stat: evasion, type: INCREASED, value: 200 }
+      - { stat: evasion, type: INCREASED, value: 100 }   # PoE2：+100%（以前 200）
+
+  # ---- 2026-10-23：PoE2 的純數值詞綴 ----
+  igniting:
+    name: 烈焚的
+    min_level: 12
+    stats:                    # All Damage Ignites：擊中一定點燃，所有傷害都算進點燃
+      - { stat: flag.all_damage_ignites, type: FLAT, value: 1 }
+      - { stat: ignite.chance, type: FLAT, value: 100 }
+  chilling:
+    name: 凜冬的
+    min_level: 12
+    stats:                    # All Damage Chills：所有傷害都算進冰緩
+      - { stat: flag.all_damage_chills, type: FLAT, value: 1 }
+  electrifying:
+    name: 雷殛的
+    min_level: 12
+    stats:                    # All Damage Shocks：擊中一定感電，所有傷害都算進感電
+      - { stat: flag.all_damage_shocks, type: FLAT, value: 1 }
+      - { stat: shock.chance, type: FLAT, value: 100 }
+  accurate:
+    name: 精準的
+    stats:
+      - { stat: accuracy, type: INCREASED, value: 200 }
+  expansive:
+    name: 擴域的
+    min_level: 15
+    stats:                    # Increased Area of Effect：招式範圍更多 100%（半徑 ×1.41）
+      - { stat: skill.area, type: MORE, value: 100 }
+  multishot:
+    name: 多重的
+    min_level: 15
+    stats:                    # Additional Projectiles：齊射類的招式多 4 發
+      - { stat: skill.projectiles, type: FLAT, value: 4 }
+  regenerating:
+    name: 再生的
+    stats:                    # Regenerates Life：每秒回復 2% 最大生命
+      - { stat: monster.regen_percent, type: FLAT, value: 2 }
+  shielded:
+    name: 護盾的
+    min_level: 10
+    stats:                    # Extra Energy Shield：多一層等於 25% 生命的護盾（先扣護盾；4 秒沒被打開始回充）
+      - { stat: monster.shield_percent, type: FLAT, value: 25 }
+  crit_resistant:
+    name: 堅毅的
+    stats:
+      - { stat: crit.bonus_taken, type: INCREASED, value: -80 }   # 擊中牠的暴擊傷害加成減少 80%
+  stun_resistant:
+    name: 不屈的
+    stats:
+      - { stat: stun.threshold, type: INCREASED, value: 250 }
+  slow_resistant:
+    name: 不羈的
+    stats:
+      - { stat: slow.taken, type: INCREASED, value: -50 }        # 身上的減速（冰緩、詛咒、癱瘓…）效果減半
 
   # ---- 光環與召喚（min_level 以上的怪物才抽得到；地圖裡最常見） ----
   # aura：半徑內的怪物（含自己）都得到 stats，腳下有一圈 color 顏色的粒子。
@@ -259,11 +334,11 @@ mods:
     name: 督軍光環的
     min_level: 30
     stats: []
-    aura:
+    aura:                     # PoE2 Extra Physical Damage Aura：物理傷害增加 20%
       radius: 10
       color: "e04040"
       stats:
-        - { stat: damage, type: INCREASED, value: 25 }
+        - { stat: damage, type: INCREASED, value: 20, tags: [physical] }
   anger_aura:
     name: 熾焰光環的
     min_level: 35
@@ -280,11 +355,31 @@ mods:
     aura:
       radius: 10
       color: "c0c0c0"
-      stats:
+      stats:                  # PoE2 Elemental Resistance Aura：三抗 +20%（這裡另外留著護甲）
         - { stat: armour, type: INCREASED, value: 100 }
-        - { stat: resist.fire, type: FLAT, value: 15 }
-        - { stat: resist.cold, type: FLAT, value: 15 }
-        - { stat: resist.lightning, type: FLAT, value: 15 }
+        - { stat: resist.fire, type: FLAT, value: 20 }
+        - { stat: resist.cold, type: FLAT, value: 20 }
+        - { stat: resist.lightning, type: FLAT, value: 20 }
+  haste_aura:
+    name: 疾風光環的
+    min_level: 30
+    stats: []
+    aura:                     # PoE2 Haste Aura：攻擊、施法、移動速度 +25%
+      radius: 10
+      color: "7fe0ff"
+      stats:
+        - { stat: movement.speed, type: INCREASED, value: 25 }
+        - { stat: skill.cooldown, type: INCREASED, value: -20 }
+        - { stat: attack.speed, type: INCREASED, value: 25 }
+  shield_aura:
+    name: 護盾光環的
+    min_level: 35
+    stats: []
+    aura:                     # PoE2 Energy Shield Aura：多一層 12% 生命的護盾
+      radius: 10
+      color: "8fd3ff"
+      stats:
+        - { stat: monster.shield_percent, type: FLAT, value: 12 }
   summoner:
     name: 召喚的
     min_level: 25
@@ -319,9 +414,7 @@ mods:
     name: 劇毒的
     min_level: 14
     stats:
-      - { stat: resist.chaos, type: FLAT, value: 40 }
-      - { stat: poison.chance, type: FLAT, value: 35 }      # 打中你有機率中毒（可以疊加，見 ailments.yml）
-    skills: [{ id: venom_pool, cooldown: 16 }]
+      - { stat: poison.chance, type: FLAT, value: 100 }     # PoE2 Always Poisons：打中你一定中毒（可以疊加，見 ailments.yml）
     hand: SPIDER_EYE
   stunning:
     name: 震懾的
@@ -341,9 +434,33 @@ mods:
     name: 撕裂的
     min_level: 10
     stats:
-      - { stat: bleed.chance, type: FLAT, value: 40, tags: [attack] }   # 近戰打中你有機率流血（移動時加倍：站著打）
-      - { stat: damage, type: INCREASED, value: 10, tags: [physical] }
+      - { stat: bleed.chance, type: FLAT, value: 100, tags: [attack] }   # PoE2 Always Bleeds：攻擊打中你一定流血（移動時加倍：站著打）
     hand: IRON_AXE
+  # 2026-10-23：PoE2 的殘廢、阻礙、致盲、腐化之血（打中你時；珠寶的腐化詞綴可以免疫，動作列寫 殘／阻／盲／腐血×層數）
+  maiming:
+    name: 致殘的
+    min_level: 15
+    stats:
+      - { stat: maim.chance, type: FLAT, value: 30, tags: [attack] }   # 攻擊打中你有機率癱瘓：4 秒內移動速度慢 30%
+    hand: IRON_SWORD
+  hindering:
+    name: 阻礙的
+    min_level: 20
+    stats:                    # PoE2 Hinder Aura：8 格內的玩家一直被阻礙（移動速度慢 30%，跟癱瘓、冰緩相乘）
+      - { stat: monster.hinder_aura, type: FLAT, value: 8 }
+    hand: COBWEB
+  blinding:
+    name: 致盲的
+    min_level: 18
+    stats:
+      - { stat: blind.chance, type: FLAT, value: 30 }    # 打中你有機率致盲：4 秒內命中與閃避更少 20%
+    hand: INK_SAC
+  corrupting:
+    name: 腐血的
+    min_level: 30
+    stats:
+      - { stat: corrupted_blood.chance, type: FLAT, value: 40 }   # 打中你有機率上一層腐化之血（物理持續傷害，最多 10 層，每層每秒那一下的 5%）
+    hand: REDSTONE
   blinker:
     name: 閃現的
     min_level: 15
@@ -389,3 +506,140 @@ mods:
       - { stat: resist.lightning, type: FLAT, value: 40 }
     skills: [{ id: lightning_storm, cooldown: 16 }]
     hand: LIGHTNING_ROD
+
+  # ---- 2026-10-23：PoE2 稀有怪的行為詞綴（招式在 boss_skills.yml 的 mod_ 開頭；特殊行為見 MonsterMechanics） ----
+  fire_unleasher:
+    name: 爆焰的
+    min_level: 20
+    stats: []
+    skills: [{ id: mod_fire_nova, cooldown: 9 }]          # Periodically Unleashes Fire
+  ice_unleasher:
+    name: 爆寒的
+    min_level: 20
+    stats: []
+    skills: [{ id: mod_ice_nova, cooldown: 9 }]
+  lightning_unleasher:
+    name: 爆雷的
+    min_level: 20
+    stats: []
+    skills: [{ id: mod_lightning_nova, cooldown: 9 }]
+  fire_bomber:
+    name: 焰爆的
+    min_level: 25
+    stats: []
+    skills: [{ id: mod_fire_blasts, cooldown: 10 }]       # Periodic Fire Explosions：地上先標記再炸
+  cold_bomber:
+    name: 冰爆的
+    min_level: 25
+    stats: []
+    skills: [{ id: mod_cold_blasts, cooldown: 10 }]
+  lightning_bomber:
+    name: 雷爆的
+    min_level: 25
+    stats: []
+    skills: [{ id: mod_lightning_blasts, cooldown: 10 }]
+  flamewall:
+    name: 焰牆的
+    min_level: 28
+    stats: []
+    skills: [{ id: mod_flame_wall, cooldown: 14 }]        # Conjures Flamewalls
+  ice_prison:
+    name: 冰牢的
+    min_level: 30
+    stats: []
+    skills: [{ id: mod_ice_prison, cooldown: 18 }]        # Conjures Ice Prisons：一圈冰牆（有缺口）
+  bombardier:
+    name: 砲擊的
+    min_level: 25
+    stats: []
+    skills: [{ id: mod_mortar, cooldown: 9 }]             # Bombardier：迫擊砲
+    hand: TNT
+  shroud_walker:
+    name: 遁影的
+    min_level: 22
+    stats: []
+    skills: [{ id: blink, cooldown: 8 }]                  # Shroud Walker：瞬移到你身邊
+  fire_trail:
+    name: 焚跡的
+    min_level: 18
+    stats:
+      - { stat: monster.trail_fire, type: FLAT, value: 1 }        # Trail of Fire：走過留下點燃的地面 3 秒
+  cold_trail:
+    name: 冰跡的
+    min_level: 18
+    stats:
+      - { stat: monster.trail_cold, type: FLAT, value: 1 }        # Trail of Ice：冰緩的地面 4 秒
+  lightning_trail:
+    name: 雷跡的
+    min_level: 18
+    stats:
+      - { stat: monster.trail_lightning, type: FLAT, value: 1 }   # Trail of Lightning：感電的地面 4 秒
+  healer:
+    name: 癒療的
+    min_level: 20
+    stats:
+      - { stat: monster.heal_allies, type: FLAT, value: 10 }      # 每 6 秒治療 10 格內的怪物 10% 生命
+  corpse_exploder:
+    name: 爆屍的
+    min_level: 24
+    stats:
+      - { stat: monster.corpse_explode, type: FLAT, value: 1 }    # 引爆你附近的屍體（1 秒後炸，物理）
+  flask_siphon:
+    name: 竊瓶的
+    min_level: 20
+    stats:
+      - { stat: monster.flask_siphon, type: FLAT, value: 1 }      # 12 格內的玩家每 5 秒每瓶藥劑少 1 點充能
+  recovery_cap:
+    name: 抑生的
+    min_level: 30
+    stats:
+      - { stat: monster.recovery_cap, type: FLAT, value: 50 }     # 12 格內的玩家生命回復不能超過 50%
+  commander:
+    name: 統御的
+    min_level: 25
+    stats:
+      - { stat: monster.powerful_minions, type: FLAT, value: 1 }  # Powerful Minions：叫出來的小怪傷害增加 25%、生命更多 50%
+    summon: { interval: 10, count: 2, max: 4 }
+  reviver:
+    name: 喚靈的
+    min_level: 28
+    stats:
+      - { stat: monster.revive_minions, type: FLAT, value: 1 }    # Reviving Minions：每 8 秒讓附近最多兩具屍體爬起來
+  magma_barrier:
+    name: 熔盾的
+    min_level: 30
+    stats:
+      - { stat: monster.magma_barrier, type: FLAT, value: 20 }    # 熔岩護盾：先吸收 20% 生命的傷害，打破時爆炸（火焰），8 秒後回來
+  mirage:
+    name: 幻雷的
+    min_level: 30
+    stats:
+      - { stat: monster.lightning_mirage, type: FLAT, value: 1 }  # 被打中 25% 機率放出追人的閃電幻影（碰到就炸）
+  mana_siphon:
+    name: 噬魔的
+    min_level: 30
+    stats:
+      - { stat: monster.mana_siphon, type: FLAT, value: 1 }       # 3～7 格那一圈：吸魔力、不能回魔、閃電傷害（貼近牠反而安全）
+  temporal_bubble:
+    name: 時滯的
+    min_level: 35
+    stats:
+      - { stat: monster.temporal_bubble, type: FLAT, value: 6 }   # 6 格的時間泡泡：裡面移動、攻擊、施法都變慢，冷卻回復、身上的減益消退慢一半
+  proximal:
+    name: 近身的
+    min_level: 35
+    stats:
+      - { stat: monster.proximal, type: FLAT, value: 5 }          # Proximal Tangibility：只有 5 格內的攻擊打得到牠
+  soul_eater:
+    name: 噬魂的
+    min_level: 30
+    stats:
+      - { stat: monster.soul_eater, type: FLAT, value: 1 }        # 15 格內的怪物死掉時吞魂：每層招式快 1%、受到的傷害少 1%（最多 50 層）
+
+  # 隱藏：統御的叫出來的小怪帶這條（min_level 很高，不會自然抽到）
+  empowered_minion:
+    name: 受統御的
+    min_level: 1000
+    stats:
+      - { stat: life.max, type: MORE, value: 50 }
+      - { stat: damage, type: INCREASED, value: 25 }

@@ -222,6 +222,22 @@ public record BossSkill(String id, String name, Kind kind, double damage, Damage
                 slow, width, summonType, summonMax, taken, at, visual, shout, gaps, gapAngle, safe, hint, countPerPlayer, convert, track, solid, ruin, lock);
     }
 
+    /**
+     * 2026-10-23：怪物詞綴（PoE2 的 Increased Area of Effect、Additional Projectiles）放大的一份：
+     * 半徑、爆炸、扇形長度、寬度乘 √面積倍率；齊射多 extraProjectiles 發。倍率 1、0 發回傳自己。
+     */
+    public BossSkill amplified(final double areaMultiplier, final int extraProjectiles) {
+        final double r = Math.sqrt(Math.max(0.1, areaMultiplier));
+        final int extra = kind == Kind.VOLLEY ? Math.max(0, extraProjectiles) : 0;
+        if (Math.abs(r - 1) < 1e-9 && extra == 0) {
+            return this;
+        }
+        return new BossSkill(id, name, kind, damage, type, cooldown, range,
+                telegraph, delay, radius * r, angle, length * r, count + extra, stagger, scatter, spread + extra * 5, speed, reach, size,
+                explode * r, duration, interval, slow, width * r, summonType, summonMax, taken, at, visual, shout, gaps, gapAngle, safe, hint,
+                countPerPlayer, convert, track, solid, ruin, lock);
+    }
+
     /** 閃現到目標旁邊之後落地震一下（撲擊）。 */
     public boolean pounce() {
         return kind == Kind.BLINK && damage > 0;

@@ -4324,6 +4324,126 @@ skills:
 
 
 # 各種生物預設的招式組（maps.yml／zones.yml 沒寫 skills 時）
+  # ---- 2026-10-23：怪物詞綴（PoE2 稀有怪的行為詞綴）用的招式：一般怪物用，傷害是「這隻普通一下的幾倍」----
+  mod_fire_nova:
+    name: 爆焰
+    kind: nova
+    damage: 1.2
+    type: fire
+    cooldown: 9
+    range: 6
+    telegraph: 1.1       # 新星：(5 − 2) ÷ 5.6 + 0.5 ≈ 1.04 秒以上跑得出去
+    radius: 5
+  mod_ice_nova:
+    name: 爆寒
+    kind: nova
+    damage: 1.2
+    type: cold
+    cooldown: 9
+    range: 6
+    telegraph: 1.1
+    radius: 5
+    slow: 2
+  mod_lightning_nova:
+    name: 爆雷
+    kind: nova
+    damage: 1.2
+    type: lightning
+    cooldown: 9
+    range: 6
+    telegraph: 1.1
+    radius: 5
+  mod_fire_blasts:
+    name: 焰爆
+    kind: slam
+    damage: 1.3
+    type: fire
+    cooldown: 10
+    range: 16
+    telegraph: 0.6
+    delay: 1.2
+    radius: 2.2
+    count: 3
+    stagger: 0.3
+    scatter: 3
+    at: target
+  mod_cold_blasts:
+    name: 冰爆
+    kind: slam
+    damage: 1.3
+    type: cold
+    cooldown: 10
+    range: 16
+    telegraph: 0.6
+    delay: 1.2
+    radius: 2.2
+    count: 3
+    stagger: 0.3
+    scatter: 3
+    at: target
+    slow: 1
+  mod_lightning_blasts:
+    name: 雷爆
+    kind: slam
+    damage: 1.3
+    type: lightning
+    cooldown: 10
+    range: 16
+    telegraph: 0.6
+    delay: 1.2
+    radius: 2.2
+    count: 3
+    stagger: 0.3
+    scatter: 3
+    at: target
+  mod_flame_wall:
+    name: 焰牆
+    kind: zone
+    damage: 0.5
+    type: fire
+    cooldown: 14
+    range: 14
+    telegraph: 0.8
+    radius: 1.4
+    duration: 5
+    interval: 0.5
+    count: 4
+    scatter: 3
+    at: target
+  mod_ice_prison:
+    name: 冰牢
+    hint: "一圈冰牆、穿不過：從缺口出去"
+    kind: zone
+    damage: 0.4
+    type: cold
+    cooldown: 18
+    range: 6
+    telegraph: 1.2
+    radius: 0.8
+    duration: 5
+    interval: 0.6
+    count: 1
+    reach: 5
+    gaps: 1
+    gap_angle: 60
+    at: maze
+    solid: true
+    slow: 1
+  mod_mortar:
+    name: 砲擊
+    kind: slam
+    damage: 1.2
+    type: fire
+    cooldown: 9
+    range: 22
+    telegraph: 0.6
+    delay: 1.4
+    radius: 2.2
+    count: 3
+    stagger: 0.4
+    scatter: 2.5
+    at: target
+
 defaults:
   default: [slam, charge]
   ZOMBIE: [slam, charge, summon_zombies]

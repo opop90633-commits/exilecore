@@ -2344,10 +2344,35 @@ public final class SkillService {
 
     /** 面板上（或寶石裡）的一個技能在這個角色身上的數值。 */
     SkillBuild build(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        // 2026-10-23：同一張屬性表（沒改過）、同一個技能、同樣的寶石：直接用上次算好的（按住攻擊一秒要施放好幾次）
+        final BuildKey key = new BuildKey(config, definition, entry, state.level(), Set.copyOf(state.weaponTags()), sheet, sheet == null ? 0 : sheet.version());
+        final SkillBuild cached = buildCache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        final SkillBuild fresh = buildFresh(state, sheet, definition, entry);
+        if (buildCache.size() >= BUILD_CACHE_MAX) {
+            buildCache.clear(); // 很簡單的上限：滿了就整個清掉（舊的屬性表也跟著放掉）
+        }
+        buildCache.put(key, fresh);
+        return fresh;
+    }
+
+    /** 技能數值快取的鍵（屬性表比的是同一個物件＋版本）。 */
+    private record BuildKey(SkillConfig config, SkillDefinition definition, SkillLoadout.Entry entry, int level,
+                            java.util.Set<String> weaponTags, StatSheet sheet, long version) {
+    }
+
+    private static final int BUILD_CACHE_MAX = 512;
+    private final Map<BuildKey, SkillBuild> buildCache = new HashMap<>();
+
+    private SkillBuild buildFresh(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
         // 2026-10-22：宿主寶石（英靈圖騰、星咒圖騰、暴擊引星）孔裡的輔助是給放進去的技能的；宿主自己只吃其中要圖騰的、加速度與持續的
         final List<SupportDefinition> supports = SupportDefinition.hostsSkill(definition) ? hostSupportsOf(entry) : supportsOf(entry);
-        return SkillBuild.of(config, definition, entry.level(), state.level(), false, supports, state.weaponTags(), sheet,
+        final SkillBuild built = SkillBuild.of(config, definition, entry.level(), state.level(), false, supports, state.weaponTags(), sheet,
                 resonantOf(entry)); // 2026-10-18：共鳴的專屬輔助不佔名額
+        final List<tw.exilecore.stats.Modifier> quality = qualityModifiers(definition, entry.quality()); // 2026-10-23
+        return quality.isEmpty() ? built : built.withProfile(built.profile().withLocal(quality));
     }
 
     /** 2026-10-22：宿主寶石本身吃的輔助（孔裡要圖騰的、只加攻擊／施法速度或持續時間的）。 */
@@ -2369,7 +2394,41 @@ public final class SkillService {
         if (host == null || host.inner() == null) {
             return null;
         }
-        return new SkillLoadout.Entry(host.inner().skillId(), host.inner().level(), SkillLoadout.MAX_SOCKETS, host.supports(), host.resonant());
+        return new SkillLoadout.Entry(host.inner().skillId(), host.inner().level(), SkillLoadout.MAX_SOCKETS, host.supports(), host.resonant())
+                .withQuality(host.inner().quality()); // 2026-10-23：放進去的寶石的品質
+    }
+
+    /**
+     * 2026-10-23：技能寶石的品質（琢星稜鏡、腐化）：每 1% 品質——光環、戰吼、詛咒增加 0.5% 效果，其他增加 1% 傷害
+     * （召喚技能是召喚物的傷害）。照 PoE2 的「品質給這個技能額外的加成」，這裡統一成這幾種。
+     */
+    static List<tw.exilecore.stats.Modifier> qualityModifiers(final SkillDefinition definition, final int quality) {
+        if (definition == null || quality <= 0) {
+            return List.of();
+        }
+        final String source = "品質 " + quality + "%";
+        if (definition.mechanic() == Mechanic.AURA) {
+            return List.of(tw.exilecore.stats.Modifier.increased(StatKeys.AURA_EFFECT, quality * 0.005, source));
+        }
+        if (definition.mechanic() == Mechanic.WARCRY) {
+            return List.of(tw.exilecore.stats.Modifier.increased(StatKeys.WARCRY_EFFECT, quality * 0.005, source));
+        }
+        if (definition.id().endsWith("_curse")) {
+            return List.of(tw.exilecore.stats.Modifier.increased(StatKeys.CURSE_EFFECT, quality * 0.005, source));
+        }
+        return List.of(tw.exilecore.stats.Modifier.increased(StatKeys.DAMAGE, quality * 0.01, source));
+    }
+
+    /** 2026-10-23：品質的說明（寶石、技能面板用）。 */
+    static String qualityText(final SkillDefinition definition, final int quality) {
+        if (definition == null || quality <= 0) {
+            return null;
+        }
+        final String what = definition.mechanic() == Mechanic.AURA ? "光環效果" : definition.mechanic() == Mechanic.WARCRY ? "戰吼效果"
+                : definition.id().endsWith("_curse") ? "詛咒效果" : definition.mechanic() == Mechanic.SUMMON ? "召喚物傷害" : "傷害";
+        final double amount = what.endsWith("效果") ? quality * 0.5 : quality;
+        return String.format(Locale.ROOT, "品質 +%d%%：增加 %s%% %s", quality,
+                amount == Math.rint(amount) ? String.valueOf((long) amount) : String.valueOf(amount), what);
     }
 
     /**
@@ -2525,7 +2584,7 @@ public final class SkillService {
                     names.add("輔助 " + gems.supportName(last) + "（" + gems.skillName(entry) + "第 1 孔改放技能寶石，擠出來）");
                 }
                 entry = new SkillLoadout.Entry(entry.skillId(), entry.level(), entry.sockets(), shifted.subList(0, entry.sockets()),
-                        marks.subList(0, entry.sockets()), entry.inner());
+                        marks.subList(0, entry.sockets()), entry.inner(), entry.corrupted(), entry.quality());
                 hostChanged = true;
             }
             if (entry != original) {
@@ -2605,6 +2664,24 @@ public final class SkillService {
     /** 快捷列冷卻（2026-10）：技能在原版的冷卻群組（exilecore:skill/代號）。 */
     public static net.kyori.adventure.key.Key cooldownGroup(final String skillId) {
         return net.kyori.adventure.key.Key.key("exilecore", "skill/" + skillId.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * 2026-10-23：時間泡泡（怪物詞綴「時滯的」）：還在冷卻的技能都晚 extra tick 好（每 0.5 秒推 5 tick ＝ 冷卻回復慢一半），
+     * 快捷列的冷卻遮罩跟著更新。
+     */
+    public void delayCooldowns(final Player player, final long extra) {
+        final SkillRuntime runtime = runtimes.get(player.getUniqueId());
+        if (runtime == null || extra <= 0) {
+            return;
+        }
+        final long now = plugin.getServer().getCurrentTick();
+        for (final Map.Entry<String, Long> entry : runtime.cooldowns.entrySet()) {
+            if (entry.getValue() > now) {
+                entry.setValue(entry.getValue() + extra);
+                showCooldown(player, entry.getKey(), entry.getValue() - now);
+            }
+        }
     }
 
     /** 這個技能還要冷卻幾 tick（0 = 好了）。 */
@@ -3364,6 +3441,9 @@ public final class SkillService {
                             duration, spec.interval(), spec.range()));
                 }
                 lines.add("<gray>同時最多 <white>" + build.totems() + "</white> 個" + (active > 0 ? "，目前 " + active + " 個" : ""));
+                // 2026-10-23：圖騰生命照技能等級
+                lines.add(String.format(Locale.ROOT, "<gray>圖騰生命：你最大生命的 <white>%.0f%%</white>（照技能等級；再乘圖騰生命的加成）",
+                        SkillDeployables.totemLifeFactor(build.level()) * 100));
                 if (!spec.buff().isEmpty()) {
                     final List<String> buffs = new ArrayList<>();
                     for (final tw.exilecore.stats.Modifier modifier : spec.buff()) {

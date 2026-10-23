@@ -104,6 +104,30 @@ public final class CombatListener implements Listener {
      * 這一下在戰鬥數據的「技能明細」裡算哪個技能（2026-10）：技能的名字；地面效果、引爆、鐘響這些衍生的（代號後面多一段）算在原本的技能上，
      * 召喚物的攻擊算在召喚技能上；不是技能的（普攻、擊殺爆炸、焚燒光環…）給一個固定的名字。
      */
+    /**
+     * 2026-10-23：怪物的普攻。原版近戰的出手節奏是固定的，怪物詞綴的「攻擊速度」（極速的、疾風光環）改成照比例加在每一下的傷害上
+     * （每秒傷害一樣）；射箭的由 {@link tw.exilecore.monster.RangedGoal} 縮短間隔，這裡不再乘。
+     * 2026-10-23：玩家給的減益（詛咒、減攻速）與冰緩也算，攻速變慢一樣照比例少打；只算原版的近戰揮擊（別的插件的技能傷害不算）。
+     */
+    private SkillProfile monsterAttack(final LivingEntity attacker, final LivingEntity defender, final StatSheet sheet, final boolean melee) {
+        final SkillProfile base = SkillProfile.monsterAttack();
+        if (!melee) {
+            return base;
+        }
+        final java.util.List<Modifier> mods = debuffs.modifiers(attacker.getUniqueId(), defender.getUniqueId(), plugin.getServer().getCurrentTick());
+        final StatSheet effective = mods.isEmpty() ? sheet : sheet.overlay(mods);
+        double speed = effective.apply(StatKeys.ATTACK_SPEED, 1.0, base.tags());
+        if (plugin.ailments() != null) {
+            speed *= plugin.ailments().actionSpeed(attacker);
+        }
+        return base.scaled(monsterSpeedFactor(speed), "攻擊速度");
+    }
+
+    /** 怪物近戰的攻速換成傷害倍率（夾在 0.3～3）。純函式（測試用）。 */
+    static double monsterSpeedFactor(final double speed) {
+        return Math.max(0.3, Math.min(3.0, speed));
+    }
+
     private String meterName(final SkillProfile skill) {
         final String id = skill.id();
         final String known = meterNames.get(id);
@@ -360,7 +384,9 @@ public final class CombatListener implements Listener {
                 event.setCancelled(true);
                 return;
             }
-            skill = bySkill ? context.profile() : SkillProfile.monsterAttack();
+            skill = bySkill ? context.profile() : monsterAttack(attacker, defender, attackerBase,
+                    event.getDamager() == attacker && (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK
+                            || event.getCause() == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK));
             credit = null;
         }
         if (credit != null) {
@@ -406,8 +432,20 @@ public final class CombatListener implements Listener {
 
         // 2026-10：減益帶的修飾器（曝露、削弱詛咒、眩暈）疊進雙方的屬性表
         final long debuffTick = plugin.getServer().getCurrentTick();
-        final java.util.List<Modifier> attackerDebuffs = debuffs.modifiers(attacker.getUniqueId(), defender.getUniqueId(), debuffTick);
+        java.util.List<Modifier> attackerDebuffs = debuffs.modifiers(attacker.getUniqueId(), defender.getUniqueId(), debuffTick);
+        if (attackerIsPlayer && skill.isAttack() && !skill.tags().contains(Tags.TOTEM_HIT) && attacker.getWorld().equals(defender.getWorld())) {
+            // 2026-10-23（PoE2）：玩家的攻擊離越遠命中越差（量到目標身體的邊；3 格內不影響，10 格以上命中更少 90%；法術、圖騰、召喚物不算）
+            final double falloff = tw.exilecore.stats.Formulas.accuracyFalloff(
+                    Math.max(0, attacker.getLocation().distance(defender.getLocation()) - defender.getWidth() / 2));
+            if (falloff > 0) {
+                attackerDebuffs = new java.util.ArrayList<>(attackerDebuffs);
+                attackerDebuffs.add(Modifier.more(StatKeys.ACCURACY, -falloff, "距離"));
+            }
+        }
         final StatSheet attackerSheet = attackerDebuffs.isEmpty() ? attackerBase : attackerBase.overlay(attackerDebuffs);
+        // 2026-10-23：這一下的技能屬性表（疊上輔助寶石）與標籤只算一次（以前一下要重疊十幾次，每次都新建一張表）
+        final StatSheet skillSheet = skill.effective(attackerSheet);
+        final java.util.Set<String> hitTagSet = hitTags(skill);
         final java.util.List<Modifier> defenderDebuffs = debuffs.modifiers(defender.getUniqueId(), attacker.getUniqueId(), debuffTick);
         final StatSheet defenderSheet = defenderDebuffs.isEmpty() ? defenderBase : defenderBase.overlay(defenderDebuffs);
 
@@ -428,7 +466,7 @@ public final class CombatListener implements Listener {
         }
         // 感電：受到的傷害增加（在減免之後乘）；印記、戰吼的減益也在這裡乘
         final double taken = ((ailments == null ? 1.0 : ailments.damageTakenMultiplier(defender)) + brokenTaken)
-                * debuffs.takenMultiplier(defender.getUniqueId(), attacker.getUniqueId(), plugin.getServer().getCurrentTick(), hitTags(skill));
+                * debuffs.takenMultiplier(defender.getUniqueId(), attacker.getUniqueId(), plugin.getServer().getCurrentTick(), hitTagSet);
         // PvP：傷害乘上專屬的 PvP 減傷（元素異常照縮小後的傷害算：pendingAilment 存的是沒乘減傷的 taken）
         // 2026-10：召喚物、圖騰、陷阱打的再乘 minion_damage；挨打的玩家拿近戰武器再少 melee_reduction %
         final double pvpScale = pvpAttacker != null && plugin.pvp() != null
@@ -448,7 +486,7 @@ public final class CombatListener implements Listener {
         }
         // 三相輔助（2026-10）：照元素共鳴疊上更多元素傷害與穿透
         final long hitTick = plugin.getServer().getCurrentTick();
-        final boolean trinityHit = attackerIsPlayer && StatKeys.flag(skill.effective(attackerSheet), StatKeys.FLAG_TRINITY);
+        final boolean trinityHit = attackerIsPlayer && StatKeys.flag(skillSheet, StatKeys.FLAG_TRINITY);
         StatSheet hitSheet = trinityHit ? attackerSheet.overlay(trinity.bonus(attacker.getUniqueId(), hitTick)) : attackerSheet;
         // 痛苦調和（PoE2 基石）：滿血時暴擊傷害加成更少 30%，低血（35% 以下）時更多 30%
         if (attackerIsPlayer && StatKeys.flag(attackerSheet, StatKeys.FLAG_PAIN_ATTUNEMENT)) {
@@ -470,30 +508,30 @@ public final class CombatListener implements Listener {
             if (vsStunned > 0 && ailments != null && ailments.heavyStunned(defender)) {
                 conditional.add(Modifier.more(StatKeys.DAMAGE, vsStunned, "對暈眩的敵人"));
             }
-            final double vsLow = skill.effective(attackerSheet).flat(StatKeys.DAMAGE_VS_LOW_LIFE, java.util.Set.of()); // 2026-10：輔助寶石（處刑）也算
+            final double vsLow = skillSheet.flat(StatKeys.DAMAGE_VS_LOW_LIFE, java.util.Set.of()); // 2026-10：輔助寶石（處刑）也算
             final org.bukkit.attribute.AttributeInstance maxHealth = defender.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
             if (vsLow > 0 && maxHealth != null && defender.getHealth() <= maxHealth.getValue() * 0.35) {
                 conditional.add(Modifier.increased(StatKeys.DAMAGE, vsLow / 100.0, "低血的敵人"));
             }
             // 2026-10：輔助寶石的條件：對滿血的敵人、魔力 90% 以上、比敵人低血（背水）
-            final StatSheet supportSheet = skill.effective(attackerSheet);
+            final StatSheet supportSheet = skillSheet;
             final double defenderFraction = maxHealth == null || maxHealth.getValue() <= 0 ? 1 : defender.getHealth() / maxHealth.getValue();
             if (defenderFraction >= 0.999) {
-                final double fullMore = supportSheet.more(StatKeys.DAMAGE_VS_FULL_LIFE, hitTags(skill));
+                final double fullMore = supportSheet.more(StatKeys.DAMAGE_VS_FULL_LIFE, hitTagSet);
                 if (fullMore != 1) {
                     conditional.add(Modifier.more(StatKeys.DAMAGE, fullMore - 1, "對滿血的敵人"));
                 }
-                final double fullCrit = supportSheet.more(StatKeys.CRIT_VS_FULL_LIFE, hitTags(skill));
+                final double fullCrit = supportSheet.more(StatKeys.CRIT_VS_FULL_LIFE, hitTagSet);
                 if (fullCrit != 1) {
                     conditional.add(Modifier.more(StatKeys.CRIT_CHANCE, fullCrit - 1, "對滿血的敵人"));
                 }
             }
             final PlayerState selfState = plugin.players().get((Player) attacker);
-            final double highMana = supportSheet.more(StatKeys.DAMAGE_HIGH_MANA, hitTags(skill));
+            final double highMana = supportSheet.more(StatKeys.DAMAGE_HIGH_MANA, hitTagSet);
             if (highMana != 1 && selfState.maxMana() > 0 && selfState.mana() >= selfState.maxMana() * 0.9) {
                 conditional.add(Modifier.more(StatKeys.DAMAGE, highMana - 1, "魔力充沛"));
             }
-            final double clash = supportSheet.flat(StatKeys.DAMAGE_CLASH, hitTags(skill));
+            final double clash = supportSheet.flat(StatKeys.DAMAGE_CLASH, hitTagSet);
             if (clash > 0 && selfState.maxLife() > 0) {
                 final double selfFraction = selfState.life() / selfState.maxLife();
                 if (selfFraction < defenderFraction - 1e-6) {
@@ -511,7 +549,7 @@ public final class CombatListener implements Listener {
             if (defenderMonster != null) {
                 final boolean unique = defenderMonster.boss() || defenderMonster.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE;
                 final boolean rare = unique || defenderMonster.rarity() == tw.exilecore.monster.MonsterRarity.RARE;
-                final StatSheet withSupports = skill.effective(attackerSheet);
+                final StatSheet withSupports = skillSheet;
                 final double vsRare = rare ? withSupports.increased(StatKeys.DAMAGE_VS_RARE, java.util.Set.of()) : 0;
                 final double vsUnique = unique ? withSupports.increased(StatKeys.DAMAGE_VS_UNIQUE, java.util.Set.of()) : 0;
                 if (vsRare + vsUnique != 0) {
@@ -519,7 +557,7 @@ public final class CombatListener implements Listener {
                 }
             }
             // 2026-10：條件傷害：對被詛咒的敵人、對近身的敵人
-            final StatSheet conditionSheet = skill.effective(attackerSheet);
+            final StatSheet conditionSheet = skillSheet;
             final boolean cursedTarget = debuffs.cursed(defender.getUniqueId(), debuffTick);
             final boolean closeTarget = attacker.getWorld().equals(defender.getWorld())
                     && attacker.getLocation().distanceSquared(defender.getLocation()) <= StatKeys.CLOSE_RANGE * StatKeys.CLOSE_RANGE;
@@ -527,8 +565,8 @@ public final class CombatListener implements Listener {
                 if (stat.equals(StatKeys.DAMAGE_VS_CURSED) ? !cursedTarget : !closeTarget) {
                     continue;
                 }
-                final double inc = conditionSheet.increased(stat, hitTags(skill));
-                final double more = conditionSheet.more(stat, hitTags(skill));
+                final double inc = conditionSheet.increased(stat, hitTagSet);
+                final double more = conditionSheet.more(stat, hitTagSet);
                 if (inc != 0) {
                     conditional.add(Modifier.increased(StatKeys.DAMAGE, inc, stat.equals(StatKeys.DAMAGE_CLOSE) ? "近身" : "對詛咒的敵人"));
                 }
@@ -542,8 +580,8 @@ public final class CombatListener implements Listener {
                         tw.exilecore.ailment.AilmentType.FREEZE, tw.exilecore.ailment.AilmentType.IGNITE, tw.exilecore.ailment.AilmentType.SHOCK,
                         tw.exilecore.ailment.AilmentType.POISON, tw.exilecore.ailment.AilmentType.BLEED}) {
                     final String stat = StatKeys.DAMAGE_VS_AILMENT + ailmentWord(type);
-                    final double inc = conditionSheet.increased(stat, hitTags(skill));
-                    final double more = conditionSheet.more(stat, hitTags(skill));
+                    final double inc = conditionSheet.increased(stat, hitTagSet);
+                    final double more = conditionSheet.more(stat, hitTagSet);
                     if ((inc != 0 || more != 1) && (type == tw.exilecore.ailment.AilmentType.FREEZE ? ailments.isFrozen(defender) : ailments.has(defender, type))) {
                         if (inc != 0) {
                             conditional.add(Modifier.increased(StatKeys.DAMAGE, inc, "對異常的敵人"));
@@ -557,17 +595,17 @@ public final class CombatListener implements Listener {
             // 2026-10：連擊（每層）、終式、怒鑄
             if (plugin.skills() != null) {
                 final tw.exilecore.skill.SkillResources res = plugin.skills().resources();
-                final StatSheet comboSheet = skill.effective(attackerSheet);
-                final double perCombo = comboSheet.flat(StatKeys.DAMAGE_PER_COMBO, hitTags(skill));
+                final StatSheet comboSheet = skillSheet;
+                final double perCombo = comboSheet.flat(StatKeys.DAMAGE_PER_COMBO, hitTagSet);
                 final int combo = res.comboForDamage((Player) attacker);
                 if (perCombo > 0 && combo > 0) {
                     conditional.add(Modifier.more(StatKeys.DAMAGE, perCombo * combo / 100.0, "連擊"));
                 }
-                final double finisher = comboSheet.flat(StatKeys.COMBO_FINISHER, hitTags(skill));
+                final double finisher = comboSheet.flat(StatKeys.COMBO_FINISHER, hitTagSet);
                 if (finisher > 0 && res.finisher((Player) attacker)) {
                     conditional.add(Modifier.more(StatKeys.DAMAGE, finisher / 100.0, "終式"));
                 }
-                final double forged = comboSheet.flat(StatKeys.RAGEFORGED, hitTags(skill));
+                final double forged = comboSheet.flat(StatKeys.RAGEFORGED, hitTagSet);
                 if (forged > 0 && res.enraged((Player) attacker)) {
                     conditional.add(Modifier.more(StatKeys.DAMAGE, forged / 100.0, "怒鑄"));
                 }
@@ -631,7 +669,7 @@ public final class CombatListener implements Listener {
             }
         }
         if (attackerIsPlayer && defenderMonster != null && ailments != null && result.hit() && !result.blocked()) {
-            final StatSheet breakSheet = skill.effective(attackerSheet);
+            final StatSheet breakSheet = skillSheet;
             final java.util.Set<String> breakContext = skill.contextFor(DamageType.PHYSICAL);
             final double breakPercent = breakSheet.apply(StatKeys.ARMOUR_BREAK, breakSheet.flat(StatKeys.ARMOUR_BREAK, breakContext), breakContext); // 2026-10：「增加 x% 破甲」也算
             if (breakPercent > 0) {
@@ -683,7 +721,7 @@ public final class CombatListener implements Listener {
         }
         if (ailments != null && !defenderIsMinion) {
             // 點燃、冰緩、凍結、感電：等事件確定沒被其他插件取消再算（召喚物不會中異常；召喚物點燃的算主人點的）
-            if (defenderMonster != null && StatKeys.flag(skill.effective(attackerSheet), StatKeys.FLAG_STUN_FULL_LIFE)) {
+            if (defenderMonster != null && StatKeys.flag(skillSheet, StatKeys.FLAG_STUN_FULL_LIFE)) {
                 ailments.noteFullLife(defender); // 2026-10：重暈滿血的敵人（傷害寫進去之前先看）
             }
             pendingAilments.put(defender.getUniqueId(),
@@ -720,24 +758,35 @@ public final class CombatListener implements Listener {
             }
         } else {
             // 巔峰 Boss 的每秒傷害上限（2026-10，maps.yml 的 pinnacle.dps_cap）：玩家與他的召喚物打的才算
-            final double total = credit != null && plugin.maps() != null
+            double total = credit != null && plugin.maps() != null
                     ? plugin.maps().capBossDamage(defender, credit.getUniqueId(), result.total()) : result.total();
+            if (credit != null && plugin.monsterModule() != null && plugin.monsterModule().mechanics() != null) {
+                // 2026-10-23：怪物詞綴（近身的、噬魂的、熔盾的、護盾的、幻雷的）
+                // 扣護盾、熔岩爆炸、幻雷等事件確定沒被取消才做
+                total = plugin.monsterModule().mechanics().incoming(defender, defenderMonster, attacker, credit, total,
+                        effect -> defer(defender, effect), true);
+            }
+            // 2026-10-23：整下被擋掉（太遠打不到近身的、全被護盾吃掉）：不中異常、不偷取、不算擊中回復、不撲殺
+            final boolean blocked = total <= 0 && result.total() > 0;
+            if (blocked) {
+                pendingAilments.remove(defender.getUniqueId());
+            }
             if (total < result.total() && result.total() > 0) {
                 // 2026-10-18：被每秒傷害遞減砍掉的部分也不算暈眩（重暈累積、輕暈機率照遞減後的傷害）
                 final double stunScale = total / result.total();
                 pendingAilments.computeIfPresent(defender.getUniqueId(), (uuid, pending) -> pending.withStunScale(stunScale));
             }
             // 怪物的原版血量上限 1024，生命更高的怪物按比例縮放
-            event.setDamage(plugin.monsters().toVanillaDamage(defender, defenderMonster, total));
+            event.setDamage(blocked ? 0 : plugin.monsters().toVanillaDamage(defender, defenderMonster, total));
             // 撲殺（2026-10，輔助寶石）：這一下之後生命低於門檻就直接打死
             // 撲殺：換階段鎖血中的 Boss 不能撲殺（2026-10：不然收命、收魂照給，Boss 卻沒死）
-            if ((attackerIsPlayer || attackerIsMinion) && StatKeys.flag(skill.effective(attackerSheet), StatKeys.FLAG_CULLING)
+            if (!blocked && (attackerIsPlayer || attackerIsMinion) && StatKeys.flag(skillSheet, StatKeys.FLAG_CULLING)
                     && (plugin.maps() == null || plugin.maps().phaseFloor(defender) <= 0)) {
                 if (cull(event, defender, defenderMonster) && attackerIsPlayer) {
                     // 2026-10：收命、收魂（斷命打死時回復）
                     // 2026-10-18：撲殺的戰星與回復等事件確定沒被取消（MONITOR）才給
                     defer(defender, () -> {
-                        final StatSheet cullSheet = skill.effective(attackerSheet);
+                        final StatSheet cullSheet = skillSheet;
                         if (charges != null) {
                             charges.onEvent((Player) attacker, "cull", cullSheet, skill.tags(), defender); // 戰星：撲殺時（2026-10，稀有度越高給越多）
                         }
@@ -754,8 +803,8 @@ public final class CombatListener implements Listener {
                     });
                 }
             }
-            if (credit != null) {
-                final double lifeOnHit = skill.effective(attackerSheet).flat(StatKeys.LIFE_ON_HIT, skill.tags());
+            if (credit != null && !blocked) {
+                final double lifeOnHit = skillSheet.flat(StatKeys.LIFE_ON_HIT, skill.tags());
                 if (attackerIsPlayer) {
                     // 2026-10-18：照 PoE，圖騰（含英靈）打中的偷取、擊中回復生命不回給玩家
                     if (!totemHit(skill)) {

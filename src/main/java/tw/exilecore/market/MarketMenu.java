@@ -108,7 +108,9 @@ public final class MarketMenu extends Menu {
         set(SLOT_USABLE, state.usable ? glowing(usable) : usable);
         set(SLOT_SORT, icon(Material.COMPARATOR, "<#f5b942>排序：" + state.sort.displayName(), "<dark_gray>不同通貨的價格照參考比例換算比較",
                 "<yellow>左鍵：切換"));
-        set(SLOT_PAGE, icon(Material.ARROW, "<white>第 " + (state.page + 1) + " / " + pages + " 頁",
+        // 2026-10-23：資源包的翻頁圖示（跟其他選單的上一頁／下一頁同一套；最後一頁換成往左：只能往回翻）
+        set(SLOT_PAGE, uiIcon(state.page < pages - 1 ? "nav_next" : "nav_prev", Material.ARROW,
+                "<white>第 " + (state.page + 1) + " / " + pages + " 頁",
                 "<gray>共 " + results.size() + " 件", "",
                 state.page < pages - 1 ? "<yellow>左鍵：下一頁" : "<dark_gray>已經是最後一頁",
                 state.page > 0 ? "<yellow>右鍵：上一頁　Shift＋右鍵：第一頁" : ""));

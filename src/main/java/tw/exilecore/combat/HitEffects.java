@@ -207,7 +207,15 @@ public final class HitEffects implements Listener {
                 applied.remove(id);
                 continue;
             }
-            apply(living, debuffs.slow(id, now));
+            double slow = debuffs.slow(id, now);
+            if (slow > 0 && slow < 1 && plugin.monsters() != null) {
+                // 2026-10-23：怪物詞綴「不羈的」（身上的減速效果減半）；定身（1）不受影響
+                final MonsterData data = plugin.monsters().data(living).orElse(null);
+                if (data != null) {
+                    slow *= Math.max(0, 1 + plugin.monsters().sheet(living, data).increased(StatKeys.SLOW_TAKEN, Set.of()));
+                }
+            }
+            apply(living, slow);
         }
         if (now % 200 == 0) {
             pinImmune.values().removeIf(until -> until <= now);

@@ -52,8 +52,19 @@ public final class SkillLoadout {
      * 舊版的宿主寶石第 1 孔放的是輔助，載入後由 SkillService.migrateRemoved 往後挪一孔。
      *
      * @param inner 放在第 1 孔的技能寶石（代號、等級、它自己的孔數；輔助一律空的）；沒有或不是宿主寶石為 null
+     * @param corrupted 2026-10-23：被蝕變石腐化過（照 PoE2：之後不能再升級、開孔、腐化；輔助照樣能換）。
+     *                  存檔文字最前面寫 {@value #CORRUPTED_PREFIX}（例如 !5:fireball,,）
      */
-    public record Entry(String skillId, int level, int sockets, List<String> supports, List<Boolean> resonant, Entry inner) {
+    public record Entry(String skillId, int level, int sockets, List<String> supports, List<Boolean> resonant, Entry inner,
+                        boolean corrupted, int quality) {
+
+        /** 2026-10-23：存檔文字裡「已腐化」的字首。 */
+        public static final String CORRUPTED_PREFIX = "!";
+        /** 2026-10-23：存檔文字裡「品質」的字首（例如 q15.5:fireball,,）；寶石放在宿主第 1 孔時寫成 /q15。 */
+        public static final String QUALITY_PREFIX = "q";
+        /** 2026-10-23：技能寶石的品質上限（琢星稜鏡最多到 20；腐化可以到 23）。 */
+        public static final int QUALITY_MAX = 20;
+        public static final int QUALITY_CORRUPTED_MAX = 23;
 
         /** 2026-10-18：存檔文字裡標「這顆輔助已共鳴」的字尾。 */
         public static final String RESONANT_SUFFIX = "~";
@@ -68,6 +79,7 @@ public final class SkillLoadout {
             }
             level = Math.max(1, Math.min(GEM_CAP, level));
             sockets = Math.max(BASE_SOCKETS, Math.min(MAX_SOCKETS, sockets));
+            quality = Math.max(0, Math.min(QUALITY_CORRUPTED_MAX, quality));
             final String[] filled = new String[MAX_SOCKETS];
             final Boolean[] marks = new Boolean[MAX_SOCKETS];
             Arrays.fill(filled, "");
@@ -98,11 +110,33 @@ public final class SkillLoadout {
                 filled[INNER_SOCKET] = ""; // 放著技能寶石的那一孔不會同時有輔助
                 marks[INNER_SOCKET] = Boolean.FALSE;
                 if (!inner.supports().stream().allMatch(String::isEmpty) || inner.inner() != null) {
-                    inner = new Entry(inner.skillId(), inner.level(), inner.sockets(), List.of(), null, null); // 裡面的技能自己沒有輔助
+                    inner = new Entry(inner.skillId(), inner.level(), inner.sockets(), List.of(), null, null, inner.corrupted(), inner.quality()); // 裡面的技能自己沒有輔助
                 }
             }
             supports = List.of(filled);
             resonant = List.of(marks);
+        }
+
+        /** 2026-10-23：沒寫腐化、品質的建構式（沒腐化、品質 0）。 */
+        public Entry(final String skillId, final int level, final int sockets, final List<String> supports, final List<Boolean> resonant,
+                     final Entry inner) {
+            this(skillId, level, sockets, supports, resonant, inner, false, 0);
+        }
+
+        /** 2026-10-23：沒寫品質的建構式（品質 0）。 */
+        public Entry(final String skillId, final int level, final int sockets, final List<String> supports, final List<Boolean> resonant,
+                     final Entry inner, final boolean corrupted) {
+            this(skillId, level, sockets, supports, resonant, inner, corrupted, 0);
+        }
+
+        /** 2026-10-23：同一顆寶石標成已腐化（或拿掉）。 */
+        public Entry withCorrupted(final boolean value) {
+            return new Entry(skillId, level, sockets, supports, resonant, inner, value, quality);
+        }
+
+        /** 2026-10-23：換掉品質（0～23）。 */
+        public Entry withQuality(final int value) {
+            return new Entry(skillId, level, sockets, supports, resonant, inner, corrupted, value);
         }
 
         /** 2026-10-22：舊的五個欄位的建構式（第 1 孔沒有技能寶石；supports 裡寫 @ 開頭的照樣認得）。 */
@@ -124,7 +158,17 @@ public final class SkillLoadout {
             try {
                 final int level = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : 1;
                 final int sockets = parts.length > 2 ? Integer.parseInt(parts[2].trim()) : BASE_SOCKETS;
-                return new Entry(parts[0].trim(), level, sockets, List.of(), null, null);
+                boolean corrupted = false;
+                int quality = 0;
+                for (int i = 3; i < parts.length; i++) { // 2026-10-23：/! 已腐化、/q15 品質
+                    final String part = parts[i].trim();
+                    if (CORRUPTED_PREFIX.equals(part)) {
+                        corrupted = true;
+                    } else if (part.startsWith(QUALITY_PREFIX)) {
+                        quality = Integer.parseInt(part.substring(QUALITY_PREFIX.length()));
+                    }
+                }
+                return new Entry(parts[0].trim(), level, sockets, List.of(), null, null, corrupted, quality);
             } catch (final NumberFormatException e) {
                 return null;
             }
@@ -132,7 +176,7 @@ public final class SkillLoadout {
 
         /** 2026-10-22：換掉第 1 孔的技能寶石（null = 拿掉）。 */
         public Entry withInner(final Entry newInner) {
-            return new Entry(skillId, level, sockets, supports, resonant, newInner);
+            return new Entry(skillId, level, sockets, supports, resonant, newInner, corrupted, quality);
         }
 
         /** 2026-10-22：第 1 孔放著技能寶石時，第 1 孔不算輔助孔：第一個能放輔助的孔。 */
@@ -156,11 +200,11 @@ public final class SkillLoadout {
         }
 
         public Entry withLevel(final int newLevel) {
-            return new Entry(skillId, newLevel, sockets, supports, resonant, inner);
+            return new Entry(skillId, newLevel, sockets, supports, resonant, inner, corrupted, quality);
         }
 
         public Entry withSockets(final int newSockets) {
-            return new Entry(skillId, level, newSockets, supports, resonant, inner);
+            return new Entry(skillId, level, newSockets, supports, resonant, inner, corrupted, quality);
         }
 
         /** 換掉一個輔助孔的內容（null 或空字串 = 拿掉）；沒有共鳴。 */
@@ -177,7 +221,7 @@ public final class SkillLoadout {
             final List<Boolean> marks = new ArrayList<>(resonant);
             list.set(index, supportId == null ? "" : supportId);
             marks.set(index, isResonant);
-            return new Entry(skillId, level, sockets, list, marks, inner);
+            return new Entry(skillId, level, sockets, list, marks, inner, corrupted, quality);
         }
 
         /** 2026-10-18：只改一孔的共鳴旗標（孔裡要有輔助）。 */
@@ -212,13 +256,26 @@ public final class SkillLoadout {
 
         /** 存檔用的文字：「孔數:輔助1,輔助2,…」，空孔留空，共鳴的代號後面接 ~，例如 3:faster_attacks,,pierce~。 */
         public String encodeSupports() {
-            final StringBuilder text = new StringBuilder().append(sockets).append(':');
+            final StringBuilder text = new StringBuilder();
+            if (corrupted) {
+                text.append(CORRUPTED_PREFIX); // 2026-10-23
+            }
+            if (quality > 0) {
+                text.append(QUALITY_PREFIX).append(quality).append('.'); // 2026-10-23：品質
+            }
+            text.append(sockets).append(':');
             for (int i = 0; i < sockets; i++) {
                 if (i > 0) {
                     text.append(',');
                 }
                 if (i == INNER_SOCKET && inner != null) { // 2026-10-22：第 1 孔的技能寶石
                     text.append(INNER_PREFIX).append(inner.skillId()).append('/').append(inner.level()).append('/').append(inner.sockets());
+                    if (inner.corrupted()) {
+                        text.append('/').append(CORRUPTED_PREFIX); // 2026-10-23：放進去的腐化寶石拿出來還是腐化的
+                    }
+                    if (inner.quality() > 0) {
+                        text.append('/').append(QUALITY_PREFIX).append(inner.quality()); // 2026-10-23：品質也跟著
+                    }
                     continue;
                 }
                 text.append(supports.get(i));
@@ -233,6 +290,21 @@ public final class SkillLoadout {
         public static Entry decode(final String skillId, final int level, final String text) {
             if (text == null || text.isBlank()) {
                 return new Entry(skillId, level);
+            }
+            if (text.startsWith(CORRUPTED_PREFIX)) { // 2026-10-23：已腐化
+                return decode(skillId, level, text.substring(CORRUPTED_PREFIX.length())).withCorrupted(true);
+            }
+            if (text.startsWith(QUALITY_PREFIX)) { // 2026-10-23：品質（q15.孔數:…）
+                final int dot = text.indexOf('.');
+                if (dot > 0) {
+                    int quality = 0;
+                    try {
+                        quality = Integer.parseInt(text.substring(QUALITY_PREFIX.length(), dot));
+                    } catch (final NumberFormatException ignored) {
+                        // 壞掉的品質當 0
+                    }
+                    return decode(skillId, level, text.substring(dot + 1)).withQuality(quality);
+                }
             }
             final int colon = text.indexOf(':');
             int sockets = BASE_SOCKETS;

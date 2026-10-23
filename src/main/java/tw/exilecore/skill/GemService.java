@@ -353,6 +353,15 @@ public final class GemService {
             case SKILL -> skillLore(data.entry(), lines);
             case SUPPORT -> supportLore(config().support(data.id()), data.resonant(), lines);
         }
+        if (data.entry() != null && data.entry().quality() > 0) {
+            final String text = SkillService.qualityText(config().skill(data.entry().skillId()), data.entry().quality()); // 2026-10-23
+            if (text != null) {
+                lines.add("<#8888ff>" + ItemRenderer.escape(text));
+            }
+        }
+        if (data.entry() != null && data.entry().corrupted()) {
+            lines.add("<#d20000>已腐化 <dark_gray>（不能再升級、開孔、加品質；輔助照樣能換）"); // 2026-10-23
+        }
         lines.add("");
         if (currencyOf(data) != null) {
             lines.add("<dark_gray>撿到會收進通貨袋（/bag）；也能放倉庫的通貨頁、在通貨交易所買賣");
@@ -543,8 +552,18 @@ public final class GemService {
             return new UncutSource(-1, currencyId);
         }
 
+        /** 2026-10-23：倉庫的通貨頁（升級時背包、通貨袋都沒有才用）。 */
+        static UncutSource stash(final String currencyId) {
+            return new UncutSource(-2, currencyId);
+        }
+
+        /** 存在通貨袋或倉庫（不是背包裡的一疊）。 */
         boolean fromPouch() {
             return currencyId != null;
+        }
+
+        boolean fromStash() {
+            return currencyId != null && slot == -2;
         }
     }
 
@@ -579,6 +598,10 @@ public final class GemService {
 
     /** 來源上還有幾顆。 */
     int count(final Player player, final UncutSource source) {
+        if (source.fromStash()) {
+            final tw.exilecore.stash.Stash stash = plugin.stash() == null ? null : plugin.stash().stash(player).orElse(null);
+            return stash == null ? 0 : stash.currency(source.currencyId());
+        }
         if (source.fromPouch()) {
             final PlayerState state = plugin.players().get(player);
             return state.bag() != null && state.bag().usable() ? state.bag().pouch().amount(source.currencyId()) : 0;
@@ -600,7 +623,10 @@ public final class GemService {
 
     /** 從來源扣一顆，記進經濟流水帳。 */
     private void take(final Player player, final UncutSource source, final GemData uncut) {
-        if (source.fromPouch()) {
+        if (source.fromStash()) {
+            final tw.exilecore.stash.Stash stash = plugin.stash().stash(player).orElseThrow();
+            stash.setCurrency(source.currencyId(), stash.currency(source.currencyId()) - 1);
+        } else if (source.fromPouch()) {
             plugin.players().get(player).bag().pouch().withdraw(source.currencyId(), 1);
         } else {
             consume(player, source.slot());
@@ -617,7 +643,8 @@ public final class GemService {
     }
 
     private static String gone(final UncutSource source, final String what) {
-        return source.fromPouch() ? "通貨袋裡的" + what + "用完了" : "手上的" + what + "不見了";
+        return source.fromStash() ? "倉庫裡的" + what + "用完了"
+                : source.fromPouch() ? "通貨袋裡的" + what + "用完了" : "手上的" + what + "不見了";
     }
 
     /** 用一顆未切割技能寶石雕一個技能：放進面板（有空格、面板上沒有這個技能），不然變成寶石放進背包。 */
@@ -698,6 +725,9 @@ public final class GemService {
 
     /** 不能升級的原因；可以升回傳 null。 */
     String levelUpProblem(final PlayerState state, final SkillLoadout.Entry entry, final int uncutLevel) {
+        if (entry.corrupted()) {
+            return "已腐化的技能寶石不能再升級"; // 2026-10-23
+        }
         if (entry.level() >= SkillLoadout.GEM_CAP) {
             return "已經是最高等級（Lv." + SkillLoadout.GEM_CAP + "）";
         }
@@ -745,6 +775,18 @@ public final class GemService {
                 }
             }
         }
+        // 2026-10-23：倉庫的通貨頁也找（Lv.21 的常常存在倉庫裡）；背包、通貨袋有同樣等級的先用那邊的
+        final tw.exilecore.stash.Stash stash = plugin.stash() == null ? null : plugin.stash().stash(player).orElse(null);
+        if (stash != null) {
+            for (int level = need; level < bestLevel && level <= SkillLoadout.GEM_CAP; level++) {
+                final String id = GemData.uncutSkill(level).currencyId();
+                if (stash.currency(id) > 0) {
+                    best = UncutSource.stash(id);
+                    bestLevel = level;
+                    break;
+                }
+            }
+        }
         return best;
     }
 
@@ -754,7 +796,7 @@ public final class GemService {
                 : read(player.getInventory().getItem(source.slot())).orElse(null);
         final String name = data == null ? "未切割技能寶石" : (data.kind() == GemData.Kind.UNCUT_SUPPORT ? "未切割輔助寶石 第 " + data.level() + " 階"
                 : "未切割技能寶石 Lv." + data.level());
-        return (source.fromPouch() ? "通貨袋裡的" : "背包裡的") + name;
+        return (source.fromStash() ? "倉庫裡的" : source.fromPouch() ? "通貨袋裡的" : "背包裡的") + name;
     }
 
     /** 用一顆未切割輔助寶石切一個輔助寶石（放進背包）。 */
@@ -914,7 +956,8 @@ public final class GemService {
                 names.add(supportName(entry.support(i)));
             }
         }
-        SkillLoadout.Entry updated = host.withInner(new SkillLoadout.Entry(entry.skillId(), entry.level(), entry.sockets(), List.of()));
+        SkillLoadout.Entry updated = host.withInner(new SkillLoadout.Entry(entry.skillId(), entry.level(), entry.sockets(), List.of())
+                .withCorrupted(entry.corrupted()).withQuality(entry.quality())); // 2026-10-23：腐化、品質放進去也留著
         for (int i = SkillLoadout.Entry.INNER_SOCKET + 1; i < updated.sockets(); i++) {
             final SupportDefinition support = config().support(updated.support(i));
             if (support != null && support.hostRefusal(hostDefinition, definition) != null) { // 跟新技能不合的輔助拆下來
@@ -1059,6 +1102,9 @@ public final class GemService {
         if (orb.operation() != CurrencyOperation.SKILL_SOCKET) {
             return Change.fail(orb.name() + "不能用在技能上");
         }
+        if (entry.corrupted()) {
+            return Change.fail("已腐化的技能寶石不能再開孔"); // 2026-10-23
+        }
         if (entry.sockets() >= SkillLoadout.MAX_SOCKETS) {
             return Change.fail("已經有 " + SkillLoadout.MAX_SOCKETS + " 個輔助孔了");
         }
@@ -1069,6 +1115,99 @@ public final class GemService {
         loadout.set(position, entry.withSockets(orb.sockets()));
         plugin.economy().ledger().consumed(orb.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1); // 技能面板會把游標上的那顆用掉
         return Change.ok(null);
+    }
+
+    /**
+     * 2026-10-23：蝕變石腐化面板上的技能寶石（照 PoE2，各 25%）：沒變化、等級 +1 或 −1、輔助孔 +1 或 −1、
+     * 品質 −7%～+3%（最多 23%）。腐化後不能再升級、開孔、腐化；輔助照樣能換。
+     * 少一孔時那一孔的輔助寶石還給玩家。
+     */
+    Change corrupt(final Player player, final int position, final CurrencyType orb) {
+        final SkillLoadout loadout = plugin.players().get(player).skills();
+        final SkillLoadout.Entry entry = loadout.skill(position);
+        if (entry == null) {
+            return Change.fail("那一格沒有技能");
+        }
+        if (orb.operation() != CurrencyOperation.CORRUPT) {
+            return Change.fail(orb.name() + "不能用在技能上");
+        }
+        if (entry.corrupted()) {
+            return Change.fail("這顆技能寶石已經腐化過了");
+        }
+        final java.util.random.RandomGenerator random = plugin.items().random();
+        SkillLoadout.Entry updated = entry.withCorrupted(true);
+        ItemStack returned = null;
+        final String result;
+        switch (random.nextInt(4)) {
+            case 1 -> {
+                final int next = Math.max(1, Math.min(SkillLoadout.GEM_CAP, entry.level() + (random.nextBoolean() ? 1 : -1)));
+                updated = updated.withLevel(next);
+                result = next == entry.level() ? "沒有變化" : next > entry.level() ? "等級 +1（Lv." + next + "）" : "等級 −1（Lv." + next + "）";
+            }
+            case 2 -> {
+                final boolean add = random.nextBoolean();
+                final int next = Math.max(SkillLoadout.BASE_SOCKETS, Math.min(SkillLoadout.MAX_SOCKETS, entry.sockets() + (add ? 1 : -1)));
+                if (next < entry.sockets()) {
+                    final int last = entry.sockets() - 1;
+                    if (last == SkillLoadout.Entry.INNER_SOCKET && entry.inner() != null) {
+                        returned = create(GemData.skill(entry.inner()), 1);
+                        updated = updated.withInner(null);
+                    } else if (!entry.support(last).isEmpty()) {
+                        returned = create(GemData.support(entry.support(last), entry.resonant(last)), 1);
+                        updated = updated.withSupport(last, "", false);
+                    }
+                }
+                updated = updated.withSockets(next);
+                result = next == entry.sockets() ? "沒有變化" : next > entry.sockets() ? "輔助孔 +1（" + next + " 孔）" : "輔助孔 −1（" + next + " 孔）";
+            }
+            case 3 -> {
+                // 2026-10-23（PoE2）：品質變動 −7%～+3%（最多 23%）
+                final int next = Math.max(0, Math.min(SkillLoadout.Entry.QUALITY_CORRUPTED_MAX, entry.quality() - 7 + random.nextInt(11)));
+                updated = updated.withQuality(next);
+                result = next == entry.quality() ? "沒有變化" : "品質 " + (next > entry.quality() ? "+" : "−") + Math.abs(next - entry.quality())
+                        + "%（" + next + "%）";
+            }
+            default -> result = "沒有變化";
+        }
+        loadout.set(position, updated);
+        plugin.economy().ledger().consumed(orb.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
+        player.sendMessage(plugin.text().prefixed("<#d20000>腐化 " + ItemRenderer.escape(skillName(entry)) + "：<white>" + result
+                + (returned != null ? "<gray>（那一孔的寶石還給你）" : "")));
+        return Change.ok(returned);
+    }
+
+    /** 2026-10-23：琢星稜鏡：技能寶石品質 +5%（最多 20%；腐化的不能用）。 */
+    Change addQuality(final Player player, final int position, final CurrencyType prism) {
+        final SkillLoadout loadout = plugin.players().get(player).skills();
+        final SkillLoadout.Entry entry = loadout.skill(position);
+        if (entry == null) {
+            return Change.fail("那一格沒有技能");
+        }
+        final String problem = qualityProblem(entry);
+        if (problem != null) {
+            return Change.fail(problem);
+        }
+        final int next = Math.min(SkillLoadout.Entry.QUALITY_MAX, entry.quality() + QUALITY_STEP);
+        loadout.set(position, entry.withQuality(next));
+        plugin.economy().ledger().consumed(prism.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
+        final String text = SkillService.qualityText(config().skill(entry.skillId()), next);
+        player.sendMessage(plugin.text().prefixed("<#8888ff>" + ItemRenderer.escape(skillName(entry)) + " 品質 " + next + "%"
+                + (text == null ? "" : "<gray>（" + ItemRenderer.escape(text) + "）")));
+        return Change.ok(null);
+    }
+
+    /** 琢星稜鏡一次加多少品質。 */
+    static final int QUALITY_STEP = 5;
+
+    /** 不能加品質的原因；可以回傳 null。 */
+    String qualityProblem(final SkillLoadout.Entry entry) {
+        if (entry.corrupted()) {
+            return "已腐化的技能寶石不能再加品質";
+        }
+        if (entry.quality() >= SkillLoadout.Entry.QUALITY_MAX) {
+            return "品質已經 " + SkillLoadout.Entry.QUALITY_MAX + "% 了";
+        }
+        return null;
     }
 
     /** 開第 n 個孔的通貨名稱（說明用）。 */

@@ -17,6 +17,8 @@ public final class MonsterModule implements Module {
     private MonsterEffects effects;
     private KillCredit credit;
     private BukkitTask effectsTask;
+    private MonsterMechanics mechanics;
+    private BukkitTask mechanicsTask;
     private MythicHook mythic = NoMythic.INSTANCE;
 
     public MonsterModule(final ExileCore plugin, final MonsterConfig config, final DropTable drops) {
@@ -41,6 +43,11 @@ public final class MonsterModule implements Module {
         service.addDecorateListener(effects::track);
         plugin.getServer().getPluginManager().registerEvents(effects, plugin);
         effectsTask = plugin.repeat("monster.effects", effects::tick, 20, 20);
+        // 2026-10-23：PoE2 稀有怪詞綴的特殊行為（足跡、熔岩護盾、閃電幻影、時間泡泡…）
+        mechanics = new MonsterMechanics(plugin, service, effects);
+        effects.mechanics(mechanics);
+        plugin.getServer().getPluginManager().registerEvents(mechanics, plugin);
+        mechanicsTask = plugin.repeat("monster.mechanics", mechanics::tick, 40, 2);
         plugin.getServer().getPluginManager().registerEvents(new MonsterListener(plugin, service, drops), plugin);
         mythic = MythicSupport.create(plugin, service);
         plugin.getSLF4JLogger().info("怪物設定：等級 {} 到 {}，{} 種詞綴；{}", config.minLevel(), config.maxLevel(), config.mods().size(),
@@ -70,6 +77,10 @@ public final class MonsterModule implements Module {
             effectsTask.cancel();
             effectsTask = null;
         }
+        if (mechanicsTask != null) {
+            mechanicsTask.cancel();
+            mechanicsTask = null;
+        }
     }
 
     public MonsterService service() {
@@ -88,6 +99,11 @@ public final class MonsterModule implements Module {
     /** 怪物死亡時誰有份（掉落、經驗）。 */
     public KillCredit credit() {
         return credit;
+    }
+
+    /** 2026-10-23：詞綴的特殊行為（被打時的護盾、近身、幻影）；模組沒啟用時為 null。 */
+    public MonsterMechanics mechanics() {
+        return mechanics;
     }
 
     /** 詞綴的持續效果（光環、召喚、招式）；模組沒啟用時為 null。 */

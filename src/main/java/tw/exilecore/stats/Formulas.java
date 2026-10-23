@@ -46,6 +46,23 @@ public final class Formulas {
         return Math.min(MAX_ARMOUR_REDUCTION, armour / (armour + ARMOUR_DAMAGE_FACTOR * physicalDamage));
     }
 
+    /**
+     * 2026-10-23（PoE2）：攻擊的命中照距離變差（距離量到目標身體的邊）：3 格以內（近戰觸及範圍）不影響，
+     * 之後線性變少，10 格以上少 90%。
+     */
+    public static final double ACCURACY_FALLOFF_START = 3;
+    public static final double ACCURACY_FALLOFF_END = 10;
+    public static final double ACCURACY_FALLOFF_MAX = 0.9;
+
+    /** 打在 distance 格外的攻擊，命中更少幾成（0～0.9）。 */
+    public static double accuracyFalloff(final double distance) {
+        if (distance <= ACCURACY_FALLOFF_START) {
+            return 0;
+        }
+        final double t = (distance - ACCURACY_FALLOFF_START) / (ACCURACY_FALLOFF_END - ACCURACY_FALLOFF_START);
+        return Math.min(ACCURACY_FALLOFF_MAX, ACCURACY_FALLOFF_MAX * t);
+    }
+
     /** 抗性減免比例：抗性（百分比點數）夾在 [下限, 上限] 之後除以 100。 */
     public static double resistReduction(final double resistPoints, final double maxResistPoints) {
         return clamp(resistPoints, MIN_RESIST, maxResistPoints) / 100.0;

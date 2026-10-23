@@ -58,6 +58,13 @@ public final class MonsterEffects implements Listener {
         monsters.addAugmenter(this::augment);
     }
 
+    /** 2026-10-23：詞綴的特殊行為（足跡、熔岩護盾、閃電幻影…）。 */
+    private MonsterMechanics mechanics;
+
+    void mechanics(final MonsterMechanics mechanics) {
+        this.mechanics = mechanics;
+    }
+
     /** 區塊重新載入的怪物（地圖怪會存起來）：光環、召喚、追擊要重新接上。 */
     @EventHandler
     public void onAdd(final EntityAddToWorldEvent event) {
@@ -87,6 +94,9 @@ public final class MonsterEffects implements Listener {
             }
         }
         attachSkills(entity, data);
+        if (mechanics != null) {
+            mechanics.track(entity, data); // 2026-10-23：PoE2 稀有怪詞綴的特殊行為
+        }
         for (final String modId : data.mods()) {
             final MonsterConfig.MonsterMod mod = monsters.config().mod(modId);
             if (mod != null && (mod.aura() != null || mod.summon() != null)) {
@@ -150,6 +160,14 @@ public final class MonsterEffects implements Listener {
             public boolean boss() {
                 return false;
             }
+
+            @Override
+            public tw.exilecore.skill.BossSkill adjust(final tw.exilecore.skill.BossSkill skill) {
+                // 2026-10-23：詞綴「擴域的」（範圍更多 100%）、「多重的」（齊射多 4 發）
+                final StatSheet sheet = monsters.sheet(entity, data);
+                return skill.amplified(sheet.apply(tw.exilecore.stats.StatKeys.SKILL_AREA, 1.0, Set.of()),
+                        (int) Math.round(sheet.flat(tw.exilecore.stats.StatKeys.SKILL_PROJECTILES, Set.of())));
+            }
         });
         equipHand(entity, hand);
     }
@@ -208,6 +226,9 @@ public final class MonsterEffects implements Listener {
     }
 
     public void forget(final UUID uuid) {
+        if (mechanics != null) {
+            mechanics.forget(uuid);
+        }
         sources.remove(uuid);
         auras.remove(uuid);
         nextSummon.remove(uuid);
@@ -388,7 +409,10 @@ public final class MonsterEffects implements Listener {
             return null;
         }
         minion.clearActivePotionEffects();
-        monsters.decorate(minion, data.level(), MonsterRarity.NORMAL, List.of());
+        // 2026-10-23：詞綴「統御的」：叫出來的小怪更強（隱藏詞綴 empowered_minion）
+        final boolean empowered = monsters.config().mod(MonsterMechanics.EMPOWERED_MINION) != null
+                && monsters.sheet(source, data).flat(tw.exilecore.stats.StatKeys.MONSTER_POWERFUL_MINIONS, Set.of()) > 0;
+        monsters.decorate(minion, data.level(), MonsterRarity.NORMAL, empowered ? List.of(MonsterMechanics.EMPOWERED_MINION) : List.of());
         minion.setPersistent(false);
         return minion;
     }

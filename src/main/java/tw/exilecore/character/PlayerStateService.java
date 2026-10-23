@@ -149,6 +149,8 @@ public final class PlayerStateService {
 
     public void remove(final Player player) {
         states.remove(player.getUniqueId());
+        parsedGear.remove(player.getUniqueId());
+        comparerSignature.remove(player.getUniqueId());
         resourceBar.hide(player);
         lootFeed.clear(player.getUniqueId());
     }
@@ -450,8 +452,31 @@ public final class PlayerStateService {
         syncVanillaAttributes(player, sheet);
         reportInactiveEquipment(player, state, inactive);
         if (plugin.items() != null && plugin.items().comparer() != null) {
-            plugin.items().comparer().schedule(player); // 身上的裝備可能換了：背包裡的「比身上的 ×」重算
+            // 身上的裝備可能換了：背包裡的「比身上的 ×」重算。
+            // 2026-10-23：buff、充能一變也會重算屬性表；裝備沒換的話最多 2 秒才重比一次（背包撿到的新東西照樣會比到）
+            final long tick = plugin.getServer().getCurrentTick();
+            final int signature = gearSignature(state);
+            final long[] last = comparerSignature.get(player.getUniqueId());
+            if (last == null || last[0] != signature || tick - last[1] >= COMPARER_INTERVAL) {
+                comparerSignature.put(player.getUniqueId(), new long[] {signature, tick});
+                plugin.items().comparer().schedule(player);
+            }
         }
+    }
+
+    /** 2026-10-23：裝備沒換時，裝備比較最多這麼多 tick 重算一次。 */
+    static final long COMPARER_INTERVAL = 40;
+    /** 玩家 → {上次比較時的裝備雜湊, 那時的 tick}。 */
+    private final Map<java.util.UUID, long[]> comparerSignature = new java.util.HashMap<>();
+
+    /** 身上裝備的雜湊（哪一件、內容）。 */
+    private static int gearSignature(final PlayerState state) {
+        int hash = 1;
+        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
+            final ItemStack stack = state.jewellery(i);
+            hash = 31 * hash + (stack == null ? 0 : System.identityHashCode(stack) * 17 + stack.hashCode());
+        }
+        return hash;
     }
 
     /** 元素抗性懲罰的等級（每到一個 -{@value #RESIST_PENALTY_STEP}%）。 */
@@ -596,10 +621,51 @@ public final class PlayerStateService {
     /** 我們有算的裝備欄位：全部在角色面板上（武器、副手、四件防具、戒指×2、項鍊、腰帶），手上拿的、身上穿的只是顯示。 */
     private List<EquippedItem> equippedItems(final Player player, final PlayerState state) {
         final List<EquippedItem> list = new ArrayList<>();
+        final ParsedGear[] cache = player == null ? null : parsedGear.computeIfAbsent(player.getUniqueId(),
+                uuid -> new ParsedGear[PlayerState.JEWELLERY_SLOTS.length]);
         for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
-            collect(list, state, state.jewellery(i), PlayerState.JEWELLERY_SLOTS[i]);
+            final ItemStack stack = state.jewellery(i);
+            if (stack == null || stack.isEmpty() || plugin.items() == null) {
+                if (cache != null) {
+                    cache[i] = null;
+                }
+                continue;
+            }
+            // 2026-10-23：同一件（同一個物品、內容的雜湊一樣、資料庫沒重載）就不再解一次物品資料（buff、充能一變就重算屬性表）
+            final int hash = stack.hashCode();
+            final tw.exilecore.item.ItemRepository repository = plugin.items().repository();
+            ParsedGear parsed = cache == null ? null : cache[i];
+            if (parsed == null || parsed.stack() != stack || parsed.hash() != hash || parsed.repository() != repository) {
+                final List<EquippedItem> one = new ArrayList<>(1);
+                collect(one, state, stack, PlayerState.JEWELLERY_SLOTS[i], false);
+                parsed = new ParsedGear(stack, hash, repository, one.isEmpty() ? null : one.getFirst());
+                if (cache != null) {
+                    cache[i] = parsed;
+                }
+            }
+            if (parsed.item() != null) {
+                list.add(withInstil(state, parsed.item()));
+            }
         }
         return list;
+    }
+
+    /** 2026-10-23：解好的裝備（每個玩家每一格一份）。 */
+    private record ParsedGear(ItemStack stack, int hash, tw.exilecore.item.ItemRepository repository, EquippedItem item) {
+    }
+
+    private final Map<java.util.UUID, ParsedGear[]> parsedGear = new java.util.HashMap<>();
+
+    /** 天賦樹上已經點了注入的核心：拿掉那一份（每次都照現在的天賦算）。 */
+    private EquippedItem withInstil(final PlayerState state, final EquippedItem item) {
+        if (!instilAllocated(state, item.data())) {
+            return item;
+        }
+        final List<Modifier> modifiers = new ArrayList<>(item.modifiers());
+        for (final Modifier mod : ItemStats.instilOf(item.data()).modifiers()) {
+            modifiers.remove(mod);
+        }
+        return new EquippedItem(item.base(), item.data(), modifiers, item.requirements());
     }
 
     /** 虛擬角色的裝備（物品資料，照 {@link PlayerState#JEWELLERY_SLOTS} 的順序）。 */
@@ -616,14 +682,18 @@ public final class PlayerStateService {
         return list;
     }
 
-    private void collect(final List<EquippedItem> list, final PlayerState state, final ItemStack stack, final ItemSlot slot) {
+    private void collect(final List<EquippedItem> list, final PlayerState state, final ItemStack stack, final ItemSlot slot, final boolean instil) {
         if (stack == null || stack.isEmpty()) {
             return;
         }
-        plugin.items().read(stack).ifPresent(data -> collect(list, state, data, slot));
+        plugin.items().read(stack).ifPresent(data -> collect(list, state, data, slot, instil));
     }
 
     private void collect(final List<EquippedItem> list, final PlayerState state, final ItemData item, final ItemSlot slot) {
+        collect(list, state, item, slot, true);
+    }
+
+    private void collect(final List<EquippedItem> list, final PlayerState state, final ItemData item, final ItemSlot slot, final boolean instil) {
         final Optional<ItemData> data = Optional.of(item);
         final ItemBase base = plugin.items().repository().base(data.get().base());
         if (base == null || base.slot() != slot) {
@@ -631,11 +701,11 @@ public final class PlayerStateService {
             return;
         }
         List<Modifier> modifiers = ItemStats.modifiers(plugin.items().repository(), data.get());
-        if (instilAllocated(state, data.get())) {
+        if (instil && instilAllocated(state, data.get())) {
             // 2026-10（PoE2）：蒸餾是「配置這個核心」，天賦樹上已經點了就不再多給一份
-            final ItemStats.Instil instil = ItemStats.instilOf(data.get());
+            final ItemStats.Instil instilled = ItemStats.instilOf(data.get());
             modifiers = new ArrayList<>(modifiers);
-            for (final Modifier mod : instil.modifiers()) {
+            for (final Modifier mod : instilled.modifiers()) {
                 modifiers.remove(mod);
             }
         }

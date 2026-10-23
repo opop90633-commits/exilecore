@@ -171,9 +171,9 @@ public record CurrencyType(String id, String name, String material, String model
     /** 未切割寶石的堆疊上限（寶石物品本身就是這麼多；資料檔寫別的也照這個，不然拿出來的數量對不上）。 */
     public static final int UNCUT_STACK = 20;
 
-    /** 用在技能面板上的通貨（開輔助孔），不能拖到裝備上。 */
+    /** 用在技能面板上的通貨（開輔助孔、2026-10-23 琢星稜鏡），不能拖到裝備上。 */
     public boolean isSkillCurrency() {
-        return operation == CurrencyOperation.SKILL_SOCKET;
+        return operation == CurrencyOperation.SKILL_SOCKET || operation == CurrencyOperation.SKILL_QUALITY;
     }
 
     /**

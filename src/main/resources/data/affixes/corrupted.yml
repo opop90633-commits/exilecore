@@ -1194,3 +1194,128 @@ corrupt_sceptre_minion_attack_speed:
     - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
+
+
+# ---- 珠寶（2026-10-23，照 PoE2 珠寶的腐化附魔：三種屬性 +4～6、三種元素抗性 +5～10%、混沌抗性 +3～7%）----
+# 2026-10-23：加上 PoE2 的「免疫癱瘓、不會被阻礙、不會被致盲、免疫腐化之血」（怪物詞綴致殘的、阻礙的、致盲的、腐血的會上這些）。
+
+corrupt_jewel_str:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ruby, emerald, sapphire, r_ruby, r_emerald, r_sapphire]
+  names: [蝕變的]
+  text: "+{value} 力量"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [4, 6] }
+  mods:
+    - { stat: attr.str, type: FLAT, value: "{value}" }
+
+corrupt_jewel_dex:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ruby, emerald, sapphire, r_ruby, r_emerald, r_sapphire]
+  names: [蝕變的]
+  text: "+{value} 敏捷"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [4, 6] }
+  mods:
+    - { stat: attr.dex, type: FLAT, value: "{value}" }
+
+corrupt_jewel_int:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ruby, emerald, sapphire, r_ruby, r_emerald, r_sapphire]
+  names: [蝕變的]
+  text: "+{value} 智慧"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [4, 6] }
+  mods:
+    - { stat: attr.int, type: FLAT, value: "{value}" }
+
+corrupt_jewel_fire:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ruby, emerald, sapphire, r_ruby, r_emerald, r_sapphire]
+  names: [蝕變的]
+  text: "+{value}% 火焰抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }
+  mods:
+    - { stat: resist.fire, type: FLAT, value: "{value}" }
+
+corrupt_jewel_cold:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ruby, emerald, sapphire, r_ruby, r_emerald, r_sapphire]
+  names: [蝕變的]
+  text: "+{value}% 冰冷抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }
+  mods:
+    - { stat: resist.cold, type: FLAT, value: "{value}" }
+
+corrupt_jewel_lightning:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ruby, emerald, sapphire, r_ruby, r_emerald, r_sapphire]
+  names: [蝕變的]
+  text: "+{value}% 閃電抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }
+  mods:
+    - { stat: resist.lightning, type: FLAT, value: "{value}" }
+
+corrupt_jewel_chaos:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ruby, emerald, sapphire, r_ruby, r_emerald, r_sapphire]
+  names: [蝕變的]
+  text: "+{value}% 混沌抗性"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [3, 7] }
+  mods:
+    - { stat: resist.chaos, type: FLAT, value: "{value}" }
+
+corrupt_jewel_maim_immune:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ruby, emerald, sapphire, r_ruby, r_emerald, r_sapphire]
+  names: [蝕變的]
+  text: "免疫癱瘓"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: flag.maim_immune, type: FLAT, value: "{value}" }
+
+corrupt_jewel_hinder_immune:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ruby, emerald, sapphire, r_ruby, r_emerald, r_sapphire]
+  names: [蝕變的]
+  text: "不會被阻礙"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: flag.hinder_immune, type: FLAT, value: "{value}" }
+
+corrupt_jewel_blind_immune:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ruby, emerald, sapphire, r_ruby, r_emerald, r_sapphire]
+  names: [蝕變的]
+  text: "不會被致盲"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: flag.blind_immune, type: FLAT, value: "{value}" }
+
+corrupt_jewel_corrupted_blood_immune:
+  type: suffix
+  group: corrupt_enchant
+  spawn_tags: [corruption, ruby, emerald, sapphire, r_ruby, r_emerald, r_sapphire]
+  names: [蝕變的]
+  text: "免疫腐化之血"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 100, value: [1, 1] }
+  mods:
+    - { stat: flag.corrupted_blood_immune, type: FLAT, value: "{value}" }

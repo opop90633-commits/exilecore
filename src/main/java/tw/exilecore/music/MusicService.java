@@ -67,6 +67,12 @@ public final class MusicService implements Listener {
             if (now - state.since < 3000) {
                 continue; // 剛進來：等資源包載好
             }
+            if (!tw.exilecore.character.PlayerSettings.enabled(plugin.players().get(player), tw.exilecore.character.PlayerSettings.MUSIC)) {
+                // 2026-10-23：設定裡關掉了背景音樂
+                stop(player, state);
+                state.mood = null;
+                continue;
+            }
             final Music.Mood mood = mood(player);
             if (mood != state.mood) {
                 stop(player, state);

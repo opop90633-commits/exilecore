@@ -101,6 +101,8 @@ public final class CombatModule implements Module {
         hitEffects = new HitEffects(plugin, debuffs);
         plugin.getServer().getPluginManager().registerEvents(hitEffects, plugin);
         hitEffectTask = plugin.repeat("hit-effects", hitEffects::tick, 2, 2);
+        // 2026-10-23：玩家死掉、下線、離開地圖時拿掉他在怪物身上留下的減益與持續傷害
+        plugin.getServer().getPluginManager().registerEvents(new SourceCleanup(plugin, debuffs), plugin);
         final Presence presence = new Presence(plugin, debuffs, skillDamage); // 2026-10：臨在（範圍內的敵人…）
         presenceTask = plugin.repeat("presence", presence::tick, Presence.PERIOD, Presence.PERIOD);
     }

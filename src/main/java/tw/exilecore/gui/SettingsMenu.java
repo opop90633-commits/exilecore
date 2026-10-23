@@ -13,7 +13,7 @@ import tw.exilecore.character.PlayerState;
 import java.util.List;
 
 /**
- * 個人設定（選單的「設定」）。2026-10 改成統一版面：【畫面】傷害數字、受傷數字、戰鬥數據、任務追蹤；
+ * 個人設定（選單的「設定」）。2026-10 改成統一版面：【畫面】傷害數字、受傷數字、戰鬥數據、任務追蹤、技能音效、背景音樂（2026-10-23）；
  * 【其他】交易邀請。開著的名字前面「✔」（套用資源包的人看到綠框），關著的「✘」（紅框）。存在角色進度裡。
  */
 public final class SettingsMenu extends Menu {
@@ -29,6 +29,8 @@ public final class SettingsMenu extends Menu {
     private static final int SLOT_COMBAT_SKILLS = 15;
     /** 自己的技能音效（2026-10）。 */
     private static final int SLOT_SKILL_SOUNDS = 16;
+    /** 背景音樂（2026-10-23）。 */
+    private static final int SLOT_MUSIC = 17;
     private static final int SLOT_TRADE = 19;
     /** 網頁角色頁公不公開（2026-10）。 */
     private static final int SLOT_PROFILE = 20;
@@ -86,6 +88,11 @@ public final class SettingsMenu extends Menu {
         set(SLOT_PARTY_FRAMES, toggle(Material.PLAYER_HEAD, "隊伍框", PlayerSettings.enabled(state, PlayerSettings.PARTY_FRAMES),
                 "組隊時畫面左上角列出隊友：頭像、名字、等級、生命（護盾是血條上面薄薄的一層）、魔力；"
                         + "死了名字變紅、離線變灰（要套用介面資源包）"));
+        final boolean separate = plugin.web() != null && plugin.web().musicSeparate();
+        set(SLOT_MUSIC, toggle(Material.JUKEBOX, "背景音樂", PlayerSettings.enabled(state, PlayerSettings.MUSIC),
+                separate ? "營地、地圖、Boss 戰的背景音樂。關掉就不下載音樂那包（約 " + plugin.web().musicKilobytes()
+                        + " KB；已經套用的馬上拿掉），介面資源包照常；原版的背景音樂還是靜音"
+                        : "營地、地圖、Boss 戰的背景音樂。關掉就不放（這台伺服器的音樂跟介面併在同一包，下載量不會變少）"));
         final tw.exilecore.web.Profiles profiles = plugin.web() == null ? null : plugin.web().profiles();
         if (profiles != null && state.hasCharacter()) {
             set(SLOT_PROFILE, toggle(Material.FILLED_MAP, "網頁角色頁公開", profiles.isPublic(player),
@@ -131,6 +138,11 @@ public final class SettingsMenu extends Menu {
             case SLOT_COMBAT -> flip(PlayerSettings.COMBAT_METER);
             case SLOT_PARTY_FRAMES -> flip(PlayerSettings.PARTY_FRAMES);
             case SLOT_SKILL_SOUNDS -> flip(PlayerSettings.SKILL_SOUNDS);
+            case SLOT_MUSIC -> {
+                if (flip(PlayerSettings.MUSIC) && plugin.web() != null) {
+                    plugin.web().setMusicPack(player, PlayerSettings.enabled(plugin.players().get(player), PlayerSettings.MUSIC));
+                }
+            }
             case SLOT_COMBAT_SKILLS -> flipOff(PlayerSettings.COMBAT_SKILLS);
             case SLOT_HIDE_DEATHS -> flipOff(PlayerSettings.HIDE_DEATHS);
             case SLOT_HIDE_JOIN_LEAVE -> flipOff(PlayerSettings.HIDE_JOIN_LEAVE);

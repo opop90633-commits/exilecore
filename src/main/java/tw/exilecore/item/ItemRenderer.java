@@ -232,6 +232,12 @@ public final class ItemRenderer {
             lore.add(line("<#9a9ad0>未鑑定"));
             return lore;
         }
+        if (data.quality() > 0) {
+            // 2026-10-23：蝕變石給的品質（PoE2：藥劑增加回復量、護符增加持續時間）
+            final ItemBase base = repository.base(data.base());
+            lore.add(line("<gray>品質：<#8888ff>+" + data.quality() + "% <dark_gray>("
+                    + (base != null && base.isCharm() ? "持續時間" : "回復量") + " +" + data.quality() + "%)"));
+        }
         if (!data.affixes().isEmpty()) {
             lore.add(line(SEPARATOR));
             final List<ItemStats.AffixLine> affixLines = ItemStats.affixLines(repository, data);
@@ -240,6 +246,9 @@ public final class ItemRenderer {
                 lore.add(line(affixTag(affixLine.type()) + "<" + (affixLine.type() == AffixType.PREFIX ? PREFIX_COLOR : SUFFIX_COLOR) + ">"
                         + affixLine.ranged() + AffixChips.miniMessage(affixLine.chips())));
             }
+        }
+        if (data.corrupted()) {
+            lore.add(line("<#d20000>已腐化 <dark_gray>（不能再用通貨改造）")); // 2026-10-23
         }
         return lore;
     }
@@ -516,6 +525,9 @@ public final class ItemRenderer {
             lore.add(line(craft));
         }
         lore.add(line("<dark_gray>拿到營地的地圖裝置（NPC）右鍵，打開傳送門"));
+        if (data.corrupted()) {
+            lore.add(line("<#d20000>已腐化 <dark_gray>（不能再用通貨改造）")); // 2026-10-23
+        }
         return lore;
     }
 
@@ -524,6 +536,9 @@ public final class ItemRenderer {
      * 品質沒滿說星盤刻刀。全部洗滿回傳 null。
      */
     public String mapCraftHint(final ItemData data) {
+        if (data.corrupted()) {
+            return null; // 2026-10-23：腐化的地圖不能再改造
+        }
         int prefixes = 0;
         for (final RolledAffix rolled : data.affixes()) {
             final Affix affix = repository.affix(rolled.id());

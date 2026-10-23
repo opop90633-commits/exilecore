@@ -45,7 +45,9 @@ final class RangedGoal implements Goal<Mob> {
     private final Plugin plugin;
     private final Mob mob;
     /** 射完之後等多久才再拉弓（原版非困難的間隔）。 */
-    private final int interval;
+    private final int baseInterval;
+    /** 2026-10-23：照怪物的攻擊速度（極速的、疾風光環）縮短過的間隔；每次開始追目標時重算。 */
+    private int interval;
     private int cooldown;
     private int drawing = -1;
     private int seeTime;
@@ -58,7 +60,8 @@ final class RangedGoal implements Goal<Mob> {
         this.key = key(plugin);
         this.plugin = plugin;
         this.mob = mob;
-        this.interval = mob.getType() == EntityType.BOGGED ? 70 : 40;
+        this.baseInterval = mob.getType() == EntityType.BOGGED ? 70 : 40;
+        this.interval = baseInterval;
     }
 
     static GoalKey<Mob> key(final Plugin plugin) {
@@ -97,6 +100,15 @@ final class RangedGoal implements Goal<Mob> {
 
     @Override
     public void start() {
+        interval = baseInterval;
+        if (plugin instanceof tw.exilecore.ExileCore core && core.monsters() != null) {
+            final MonsterData data = core.monsters().data(mob).orElse(null);
+            if (data != null) {
+                final double speed = core.monsters().sheet(mob, data).apply(tw.exilecore.stats.StatKeys.ATTACK_SPEED, 1.0,
+                        java.util.Set.of(tw.exilecore.stats.Tags.ATTACK));
+                interval = (int) Math.max(10, Math.round(baseInterval / Math.max(0.3, speed)));
+            }
+        }
         cooldown = 0;
         drawing = -1;
         seeTime = 0;

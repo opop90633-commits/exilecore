@@ -52,8 +52,16 @@ public final class ServerBonusBar {
                 parts.add("金幣 " + gold);
             }
         }
+        // 2026-10-23：萬燈夜全服點燈點滿的物品數量加成（掉落本來就吃得到，只是血條上沒寫）
+        final var festival = plugin.festival();
+        final long festivalMinutes = festival == null ? 0 : festival.bonusMinutesLeft();
+        final String festivalText = festivalMinutes <= 0 || festival.quantityBonus() <= 1e-9 ? ""
+                : " <#ff9a3c>（🎃 萬燈齊亮：物品數量 +" + Math.round(festival.quantityBonus() * 100) + "%，剩 " + festivalMinutes + " 分）";
         if (parts.isEmpty()) {
-            return null;
+            if (festivalText.isEmpty()) {
+                return null;
+            }
+            return festivalText.strip();
         }
         // 2026-10：贊助的全服加倍——剩多久、誰贊助的
         final List<String> sponsored = new ArrayList<>();
@@ -65,7 +73,7 @@ public final class ServerBonusBar {
         final String crowd = online == null || online.current() == null ? ""
                 : " <#9fd3ff>（在線 " + online.counted() + " 人加成：" + online.currentText() + "）"; // 2026-10-18：只寫現在給的，不寫下一階
         return String.join("<gray>・<white>", parts) + (sponsored.isEmpty() ? ""
-                : " <#ffd27f>（贊助加倍 " + String.join("、", sponsored) + "）") + crowd;
+                : " <#ffd27f>（贊助加倍 " + String.join("、", sponsored) + "）") + festivalText + crowd;
     }
 
     /** 每 2 秒：文字跟上、新上線的人掛上、加成關掉就收起來。 */

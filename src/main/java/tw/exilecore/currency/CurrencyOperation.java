@@ -189,17 +189,25 @@ public enum CurrencyOperation {
     },
 
     /**
-     * 腐化（蝕變石，2026-10-21 照 PoE2 的瓦爾寶珠）：物品變成已腐化（之後只能鑑定、把符文嵌進空的孔），另外各 25% 一種結果：
-     * 沒有變化、加一條腐化詞綴（affixes/corrupted.yml，照 PoE2 的腐化附魔；已經有就換一條）、多一個符文孔（可以超過上限；
-     * 飾品這種沒有孔的改成加腐化詞綴）、重骰所有詞綴的數值（破裂的不變）。
-     * 珠寶照 PoE2：沒有變化、重骰數值、多一條詞綴（可以超過上限）、少一條詞綴，各 25%。藥劑、護符、地圖不能用。
+     * 腐化（蝕變石，照 PoE2 的瓦爾寶珠；2026-10-23 結果全部照 PoE2）：物品變成已腐化（之後只能鑑定、把符文嵌進空的孔），
+     * 另外各 25% 一種結果：
+     * <ul>
+     *   <li>裝備（非傳奇）：沒變化、隨機 1～3 條詞綴換成新的、加一條腐化詞綴、特殊（防具、盾、法器、武器多一個符文孔，可以超過上限；
+     *       法杖、長杖改成品質 +1～5% 最多 23%；戒指、項鍊、腰帶沒有）。</li>
+     *   <li>傳奇裝備：同上，只是「換詞綴」改成重骰數值再乘 0.78～1.22（可以超出原本範圍）。</li>
+     *   <li>珠寶（非傳奇）：沒變化、隨機 1～3 條詞綴換成新的、加一條腐化詞綴、多一條或少一條詞綴（各半，可以超過上限）。</li>
+     *   <li>傳奇珠寶：沒變化（兩格，共 50%）、重骰數值再乘 0.78～1.22、加一條腐化詞綴。不會刪掉傳奇本身的效果。</li>
+     *   <li>地圖（星痕）：沒變化、階級 +1 或 −1（T1～T16）、詞綴全部變成前綴或全部變成後綴（數量不變，可以超過上限）、
+     *       稀有地圖多 1～2 條詞綴（前綴、後綴各最多 5 條）。</li>
+     *   <li>藥劑、護符：一半沒變化、一半品質 +1～5%（最多 23%；藥劑加回復量、護符加持續時間）。</li>
+     * </ul>
+     * 技能寶石另外在技能面板上腐化（{@link tw.exilecore.skill.GemService}）。
      */
     CORRUPT {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
             final var base = generator.repository().base(data.base());
-            return base != null && !base.isMap() && !base.isFlaskLike() && data.identified() && !data.corrupted() && !data.starter()
-                    && !data.mirrored();
+            return base != null && data.identified() && !data.corrupted() && !data.starter() && !data.mirrored(); // 2026-10-23：地圖、藥劑、護符也可以
         }
 
         @Override
@@ -207,19 +215,44 @@ public enum CurrencyOperation {
             data.setCorrupted(true);
             final int outcome = random.nextInt(4);
             final var base = generator.repository().base(data.base());
+            final boolean unique = data.rarity() == Rarity.UNIQUE;
+            if (base != null && base.isMap()) {
+                corruptMap(data, base, generator, random, outcome);
+                return;
+            }
+            if (base != null && base.isFlaskLike()) {
+                if (outcome >= 2) {
+                    data.setCorruptedQuality(data.quality() + 1 + random.nextInt(5));
+                }
+                return;
+            }
             if (base != null && base.isJewel()) {
+                if (unique) {
+                    switch (outcome) {
+                        case 2 -> generator.corruptUniqueValues(data, random);
+                        case 3 -> generator.addCorruptionEnchant(data, random);
+                        default -> {
+                            // 沒有變化（PoE2 的傳奇珠寶有兩格沒變化）
+                        }
+                    }
+                    return;
+                }
                 switch (outcome) {
                     case 0 -> {
                         // 沒有變化
                     }
-                    case 1 -> generator.rerollValues(data, random);
-                    case 2 -> {
-                        if (data.rarity() == Rarity.NORMAL) {
-                            data.setRarity(Rarity.MAGIC);
+                    case 1 -> generator.replaceRandomAffixes(data, random);
+                    case 2 -> generator.addCorruptionEnchant(data, random);
+                    default -> {
+                        if (random.nextBoolean() || data.affixes().isEmpty()) {
+                            if (data.rarity() == Rarity.NORMAL) {
+                                data.setRarity(Rarity.MAGIC);
+                            }
+                            generator.addAffix(data, null, random, true);
+                        } else {
+                            generator.removeRandomAffix(data, random);
                         }
-                        generator.addAffix(data, null, random, true);
                     }
-                    default -> generator.removeRandomAffix(data, random);
                 }
                 return;
             }
@@ -227,15 +260,26 @@ public enum CurrencyOperation {
                 case 0 -> {
                     // 沒有變化
                 }
-                case 1 -> generator.addCorruptionEnchant(data, random);
-                case 2 -> {
-                    if (base != null && tw.exilecore.item.Runes.slots(generator.repository(), base, data) > 0) {
-                        data.setCorruptSockets(data.corruptSockets() + 1);
+                case 1 -> {
+                    if (unique) {
+                        generator.corruptUniqueValues(data, random);
                     } else {
-                        generator.addCorruptionEnchant(data, random);
+                        generator.replaceRandomAffixes(data, random);
                     }
                 }
-                default -> generator.rerollValues(data, random);
+                case 2 -> generator.addCorruptionEnchant(data, random);
+                default -> {
+                    if (base == null) {
+                        return;
+                    }
+                    if (base.hasTag("caster")) {
+                        // 法杖、長杖（PoE2：品質增加，最多 23%）
+                        data.setCorruptedQuality(data.quality() + 1 + random.nextInt(5));
+                    } else if (tw.exilecore.item.Runes.slots(generator.repository(), base, data) > 0) {
+                        data.setCorruptSockets(data.corruptSockets() + 1);
+                    }
+                    // 戒指、項鍊、腰帶（PoE2：不能開孔）沒有變化
+                }
             }
         }
     },
@@ -459,6 +503,19 @@ public enum CurrencyOperation {
         }
     },
 
+    /** 2026-10-23：琢星稜鏡（PoE2 的 Gemcutter's Prism）：技能寶石品質 +5%（最多 20%）；在技能面板上用。 */
+    SKILL_QUALITY {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return false;
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            throw new UnsupportedOperationException("琢星稜鏡要用在技能面板上");
+        }
+    },
+
     /**
      * 共鳴石（2026-10-18）：用在一顆「專屬輔助寶石」（source != null、不能切的那種）上，那顆寶石就「共鳴」——
      * 不佔一個技能只能掛一顆專屬輔助的名額。不是用在裝備上：對背包裡的寶石物品用（CurrencyListener），
@@ -507,6 +564,70 @@ public enum CurrencyOperation {
     }
 
     /** 已腐化的物品還能用的（2026-10-21：鑑定、把符文嵌進空的符文孔——PoE2 的腐化物品也能嵌符文）。 */
+    /** 地圖（星痕）的最高階級。 */
+    public static final int MAP_TIER_MAX = 16;
+
+    /** 2026-10-23：蝕變石腐化地圖（照 PoE2 的換界石）。 */
+    static void corruptMap(final ItemData data, final tw.exilecore.item.ItemBase base, final ItemGenerator generator,
+                           final RandomGenerator random, final int outcome) {
+        switch (outcome) {
+            case 0 -> {
+                // 沒有變化
+            }
+            case 1 -> {
+                final int tier = tw.exilecore.item.ItemStats.mapTier(base, data);
+                data.setMapTier(Math.max(1, Math.min(MAP_TIER_MAX, tier + (random.nextBoolean() ? 1 : -1))));
+            }
+            case 2 -> {
+                // 詞綴全部變成前綴或全部變成後綴（數量不變）：破裂的留著
+                final java.util.List<tw.exilecore.item.RolledAffix> movable = new java.util.ArrayList<>();
+                for (final tw.exilecore.item.RolledAffix rolled : data.affixes()) {
+                    if (!data.isFractured(rolled)) {
+                        movable.add(rolled);
+                    }
+                }
+                if (movable.isEmpty()) {
+                    return;
+                }
+                final tw.exilecore.item.AffixType type = random.nextBoolean() ? tw.exilecore.item.AffixType.PREFIX : tw.exilecore.item.AffixType.SUFFIX;
+                data.affixes().removeAll(movable);
+                for (int i = 0; i < movable.size(); i++) {
+                    if (!generator.addAffix(data, type, random, true)) {
+                        break;
+                    }
+                }
+            }
+            default -> {
+                if (data.rarity() != Rarity.RARE) {
+                    return;
+                }
+                final int add = 1 + random.nextInt(2);
+                for (int i = 0; i < add; i++) {
+                    final boolean prefixRoom = count(data, generator, tw.exilecore.item.AffixType.PREFIX) < 5;
+                    final boolean suffixRoom = count(data, generator, tw.exilecore.item.AffixType.SUFFIX) < 5;
+                    if (!prefixRoom && !suffixRoom) {
+                        return;
+                    }
+                    final tw.exilecore.item.AffixType type = prefixRoom && suffixRoom
+                            ? (random.nextBoolean() ? tw.exilecore.item.AffixType.PREFIX : tw.exilecore.item.AffixType.SUFFIX)
+                            : prefixRoom ? tw.exilecore.item.AffixType.PREFIX : tw.exilecore.item.AffixType.SUFFIX;
+                    generator.addAffix(data, type, random, true);
+                }
+            }
+        }
+    }
+
+    private static int count(final ItemData data, final ItemGenerator generator, final tw.exilecore.item.AffixType type) {
+        int n = 0;
+        for (final tw.exilecore.item.RolledAffix rolled : data.affixes()) {
+            final tw.exilecore.item.Affix affix = generator.repository().affix(rolled.id());
+            if (affix != null && affix.type() == type) {
+                n++;
+            }
+        }
+        return n;
+    }
+
     public boolean allowedOnCorrupted() {
         return this == IDENTIFY || this == RUNE;
     }

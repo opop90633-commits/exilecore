@@ -96,6 +96,14 @@ public final class ItemData {
         this.quality = Math.max(0, Math.min(20, quality));
     }
 
+    /** 腐化給的品質上限（2026-10-23，照 PoE2：蝕變石讓法杖、長杖的品質最多到 23%）。 */
+    public static final int CORRUPTED_QUALITY_MAX = 23;
+
+    /** 蝕變石加品質：可以超過 20，最多 {@link #CORRUPTED_QUALITY_MAX}。 */
+    public void setCorruptedQuality(final int quality) {
+        this.quality = Math.max(0, Math.min(CORRUPTED_QUALITY_MAX, quality));
+    }
+
     public boolean identified() {
         return identified;
     }

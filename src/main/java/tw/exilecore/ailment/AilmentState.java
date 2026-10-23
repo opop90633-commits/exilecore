@@ -91,6 +91,14 @@ public final class AilmentState {
             return buildup <= 0 && !active(now) && now >= immuneUntil;
         }
 
+        /** 2026-10-23：時間泡泡：觸發中的晚 extra tick 結束（免疫期跟著往後）。 */
+        void extend(final long extra, final long now) {
+            if (active(now)) {
+                activeUntil += extra;
+                immuneUntil += extra;
+            }
+        }
+
         void clear() {
             buildup = 0;
             activeUntil = 0;
@@ -473,20 +481,156 @@ public final class AilmentState {
         return now < fullyBrokenUntil;
     }
 
+    // ---- 2026-10-23：怪物對玩家的癱瘓、阻礙、致盲、腐化之血（PoE2） ----
+
+    /** 癱瘓、阻礙各慢多少（PoE2：30%）。 */
+    public static final double HEX_SLOW = 0.3;
+    /** 腐化之血最多幾層。 */
+    public static final int CORRUPTED_BLOOD_MAX = 10;
+
+    private long maimUntil;
+    private long hinderUntil;
+    private long blindUntil;
+    private int corruptedStacks;
+    private double corruptedDps;
+    private long corruptedUntil;
+
+    public void maim(final long until) {
+        maimUntil = Math.max(maimUntil, until);
+    }
+
+    public void hinder(final long until) {
+        hinderUntil = Math.max(hinderUntil, until);
+    }
+
+    public void blind(final long until) {
+        blindUntil = Math.max(blindUntil, until);
+    }
+
+    public long maimUntil() {
+        return maimUntil;
+    }
+
+    public long hinderUntil() {
+        return hinderUntil;
+    }
+
+    public long blindUntil() {
+        return blindUntil;
+    }
+
+    /** 癱瘓、阻礙加起來慢多少（各 30%，相乘）。 */
+    public double hexSlow(final long now) {
+        final double maim = now < maimUntil ? HEX_SLOW : 0;
+        final double hinder = now < hinderUntil ? HEX_SLOW : 0;
+        return 1 - (1 - maim) * (1 - hinder);
+    }
+
+    /** 冰緩跟癱瘓、阻礙一起算的減速（相乘，最多 90%）。 */
+    public static double combineSlow(final double chill, final double hex) {
+        return Math.min(0.9, 1 - (1 - Math.max(0, chill)) * (1 - Math.max(0, hex)));
+    }
+
+    /**
+     * 腐化之血加一層（PoE2：最多 10 層，每次打中全部重新計時）：每層每秒 dpsPerStack 物理傷害（取目前與新的較高者）。
+     * 已經過期的從 0 層開始。
+     */
+    public void addCorruptedBlood(final double dpsPerStack, final long until, final long now) {
+        if (now >= corruptedUntil) {
+            corruptedStacks = 0;
+            corruptedDps = 0;
+        }
+        corruptedStacks = Math.min(CORRUPTED_BLOOD_MAX, corruptedStacks + 1);
+        corruptedDps = Math.max(corruptedDps, dpsPerStack);
+        corruptedUntil = Math.max(corruptedUntil, until);
+    }
+
+    public int corruptedBloodStacks(final long now) {
+        return now < corruptedUntil ? corruptedStacks : 0;
+    }
+
+    public double corruptedBloodDps(final long now) {
+        return corruptedBloodStacks(now) * corruptedDps;
+    }
+
+    public long corruptedBloodUntil() {
+        return corruptedUntil;
+    }
+
+    /**
+     * 2026-10-23：拿掉某個玩家造成的持續傷害（點燃、流血、中毒、混沌減益）：那個玩家死了、下線、離開地圖。
+     * 冰緩、感電、凍結這些沒有記來源（時間也短），照常結束。回傳有沒有拿掉東西。
+     */
+    public boolean removeSource(final UUID source) {
+        if (source == null) {
+            return false;
+        }
+        boolean changed = ignites.removeIf(dot -> source.equals(dot.source()));
+        changed |= bleeds.removeIf(dot -> source.equals(dot.source()));
+        changed |= poisons.removeIf(dot -> source.equals(dot.source()));
+        changed |= debuffs.values().removeIf(debuff -> source.equals(debuff.source()));
+        return changed;
+    }
+
+    /**
+     * 2026-10-23：時間泡泡（怪物詞綴「時滯的」）：身上的減益晚 extra tick 結束（每 0.5 秒推 5 tick ＝ 消退慢一半）。
+     * 點燃、流血、中毒、混沌減益、冰緩、感電、癱瘓、阻礙、致盲、腐化之血，以及凍結、暈眩、電擊（照 PoE2，定住的也延長）。
+     */
+    public void extendDebuffs(final long extra, final long now) {
+        if (extra <= 0) {
+            return;
+        }
+        for (final List<Ignite> list : List.of(ignites, bleeds, poisons)) {
+            list.replaceAll(dot -> dot.endTick() > now ? new Ignite(dot.dps(), dot.endTick() + extra, dot.source(), dot.aggravated()) : dot);
+        }
+        debuffs.replaceAll((key, debuff) -> debuff.endTick() > now
+                ? new Debuff(debuff.dps(), debuff.endTick() + extra, debuff.source(), debuff.spread(), debuff.spreads(), debuff.base()) : debuff);
+        if (chillEnd > now) {
+            chillEnd += extra;
+        }
+        if (shockEnd > now) {
+            shockEnd += extra;
+        }
+        if (maimUntil > now) {
+            maimUntil += extra;
+        }
+        if (hinderUntil > now) {
+            hinderUntil += extra;
+        }
+        if (blindUntil > now) {
+            blindUntil += extra;
+        }
+        if (corruptedUntil > now) {
+            corruptedUntil += extra;
+        }
+        // 2026-10-23：照 PoE2，凍結、暈眩、電擊也延長
+        freeze.extend(extra, now);
+        stun.extend(extra, now);
+        electrocute.extend(extra, now);
+        if (lightStunUntil > now) {
+            lightStunUntil += extra;
+        }
+    }
+
     // ---- 全部 ----
 
     /** 還有沒有要追蹤的東西（沒有就可以丟掉這份狀態）。 */
     public boolean isEmpty(final long now) {
         return ignite(now) == null && bleed(now) == null && poisons(now).isEmpty() && debuffs(now).isEmpty() && chill(now) <= 0 && shock(now) <= 0
                 && freeze.idle(now) && stun.idle(now) && electrocute.idle(now)
-                && lightStunUntil <= now && armourBroken(now) <= 0 && !fullyBroken(now);
+                && lightStunUntil <= now && armourBroken(now) <= 0 && !fullyBroken(now)
+                && maimUntil <= now && hinderUntil <= now && blindUntil <= now && corruptedBloodStacks(now) == 0;
     }
 
     /** 只清掉一種異常（護符解除，2026-10）。 */
     public void cure(final AilmentType type) {
         switch (type) {
             case IGNITE -> ignites.clear();
-            case BLEED -> bleeds.clear();
+            case BLEED -> {
+                bleeds.clear();
+                corruptedStacks = 0; // 2026-10-23：腐化之血跟流血一起解
+                corruptedUntil = 0;
+            }
             case POISON -> poisons.clear();
             case CHILL -> {
                 chill = 0;

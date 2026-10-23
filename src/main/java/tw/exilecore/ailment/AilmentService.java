@@ -53,6 +53,16 @@ public final class AilmentService {
     public static final long TICK_INTERVAL = 10;
     private static final Particle.DustOptions BLOOD = new Particle.DustOptions(org.bukkit.Color.fromRGB(0xB01818), 1.1f);
     private static final Particle.DustOptions VENOM = new Particle.DustOptions(org.bukkit.Color.fromRGB(0x6FC22C), 1.0f);
+    private static final Particle.DustOptions CORRUPTED = new Particle.DustOptions(org.bukkit.Color.fromRGB(0x5A0A2A), 1.2f);
+    /** 2026-10-23：怪物給玩家的癱瘓、阻礙、致盲持續幾秒（PoE2：4 秒）。 */
+    static final double HEX_SECONDS = 4;
+    /** 2026-10-23：腐化之血每層每秒 = 那一下傷害的幾成；持續幾秒（每次打中重新計時）。 */
+    static final double CORRUPTED_BLOOD_PER_STACK = 0.05;
+    static final double CORRUPTED_BLOOD_SECONDS = 4;
+
+    private static boolean rollPercent(final double percent, final RandomGenerator random) {
+        return percent > 0 && (percent >= 100 || random.nextDouble() * 100 < percent);
+    }
 
     private final ExileCore plugin;
     private final AilmentConfig config;
@@ -300,7 +310,7 @@ public final class AilmentService {
             final Set<String> context = skill.contextFor(DamageType.COLD);
             // 2026-10：「更多」的冰緩效果也算；2026-10-21：攻擊方的減速幅度（slow.magnitude）、玩家身上的減速幅度（slow.taken）也乘進去
             final double slowScale = Math.max(0, 1 + attack.increased(StatKeys.SLOW_MAGNITUDE, context))
-                    * (playerTarget ? Math.max(0, 1 + defenderSheet.increased(StatKeys.SLOW_TAKEN, Set.of())) : 1);
+                    * Math.max(0, 1 + defenderSheet.increased(StatKeys.SLOW_TAKEN, Set.of())); // 2026-10-23：怪物（不羈的）也吃
             final double magnitude = config.chillMagnitude(chillBase, threshold, attack.apply(StatKeys.CHILL_EFFECT, 1.0, context) * slowScale - 1);
             if (magnitude > 0 && !StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) && !avoided(defenderSheet, StatKeys.AVOID_CHILL, random)) {
                 final double seconds = AilmentConfig.duration(config.chillDuration(playerTarget),
@@ -394,6 +404,44 @@ public final class AilmentService {
                 entry.state.addPoison(dps, now + ticks(seconds), attacker instanceof Player ? attacker.getUniqueId() : null,
                         config.poisonMaxStacks() * (StatKeys.flag(attack, StatKeys.FLAG_DOUBLE_POISON) ? 2 : 1)); // 壓倒性毒性：疊加上限加倍
                 feedback(defender, AilmentType.POISON);
+                changed = true;
+            }
+        }
+        // 2026-10-23：怪物打中玩家的癱瘓、阻礙、致盲、腐化之血（PoE2；怪物詞綴給機率，珠寶的腐化詞綴可以免疫）
+        if (playerTarget && !(attacker instanceof Player)) {
+            final Set<String> hexTags = skill.tags() == null ? Set.of() : skill.tags();
+            final long hexEnd = now + ticks(HEX_SECONDS);
+            final boolean unslowable = StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE);
+            if (!unslowable && !StatKeys.flag(defenderSheet, StatKeys.FLAG_MAIM_IMMUNE) && rollPercent(attack.flat(StatKeys.MAIM_CHANCE, hexTags), random)) {
+                entry = entry == null ? track(defender) : entry;
+                entry.state.maim(hexEnd);
+                defender.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, defender.getLocation().add(0, 0.3, 0), 4, 0.3, 0.1, 0.3, 0);
+                changed = true;
+            }
+            if (!unslowable && !StatKeys.flag(defenderSheet, StatKeys.FLAG_HINDER_IMMUNE) && rollPercent(attack.flat(StatKeys.HINDER_CHANCE, hexTags), random)) {
+                entry = entry == null ? track(defender) : entry;
+                entry.state.hinder(hexEnd);
+                defender.getWorld().spawnParticle(Particle.SQUID_INK, defender.getLocation().add(0, 0.2, 0), 5, 0.3, 0.05, 0.3, 0.01);
+                changed = true;
+            }
+            if (!StatKeys.flag(defenderSheet, StatKeys.FLAG_BLIND_IMMUNE) && rollPercent(attack.flat(StatKeys.BLIND_CHANCE, hexTags), random)) {
+                entry = entry == null ? track(defender) : entry;
+                entry.state.blind(hexEnd);
+                if (plugin.combat() != null) {
+                    // 命中與閃避更少 20%：戰鬥模組照減益疊進屬性表（玩家打怪、怪打玩家都算）
+                    plugin.combat().debuffs().apply(defender.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("monster_blind",
+                            attacker.getUniqueId(), hexEnd, 0, false, null,
+                            List.of(tw.exilecore.stats.Modifier.more(StatKeys.ACCURACY, -tw.exilecore.combat.HitEffects.BLIND_LESS, "致盲"),
+                                    tw.exilecore.stats.Modifier.more(StatKeys.EVASION, -tw.exilecore.combat.HitEffects.BLIND_LESS, "致盲")), 0));
+                }
+                defender.getWorld().spawnParticle(Particle.SMOKE, defender.getLocation().add(0, defender.getHeight() * 0.8, 0), 8, 0.25, 0.2, 0.25, 0.02);
+                changed = true;
+            }
+            if (!StatKeys.flag(defenderSheet, StatKeys.FLAG_CORRUPTED_BLOOD_IMMUNE) && allDamage > 0
+                    && rollPercent(attack.flat(StatKeys.CORRUPTED_BLOOD_CHANCE, hexTags), random)) {
+                entry = entry == null ? track(defender) : entry;
+                entry.state.addCorruptedBlood(allDamage * CORRUPTED_BLOOD_PER_STACK, now + ticks(CORRUPTED_BLOOD_SECONDS), now);
+                defender.getWorld().spawnParticle(Particle.DUST, defender.getLocation().add(0, defender.getHeight() * 0.5, 0), 6, 0.25, 0.3, 0.25, 0, CORRUPTED);
                 changed = true;
             }
         }
@@ -808,6 +856,13 @@ public final class AilmentService {
                 return;
             }
         }
+        final double corruptedDps = entry.state.corruptedBloodDps(now); // 2026-10-23：腐化之血（物理持續傷害，算成流血）
+        if (corruptedDps > 0) {
+            damageOverTime(living, entry, corruptedDps, null, AilmentType.BLEED, now);
+            if (tracked.get(uuid) != entry || !living.isValid() || living.isDead()) {
+                return;
+            }
+        }
         final double debuffDps = entry.state.debuffDps(now); // 2026-10：混沌減益（汲魂彈、疫潮），算成混沌的持續傷害
         if (debuffDps > 0) {
             damageOverTime(living, entry, debuffDps, entry.state.debuffSource(now), AilmentType.POISON, now);
@@ -892,9 +947,17 @@ public final class AilmentService {
             return;
         }
         // 巔峰 Boss 的每秒傷害上限（2026-10）：持續傷害算造成的那個人的
-        final double capped = plugin.maps() == null ? amount : plugin.maps().capBossDamage(living, source, amount);
+        double capped = plugin.maps() == null ? amount : plugin.maps().capBossDamage(living, source, amount);
         if (capped <= 0) {
             return;
+        }
+        if (plugin.monsterModule() != null && plugin.monsterModule().mechanics() != null) {
+            // 2026-10-23：怪物詞綴也擋持續傷害（造成的人離近身的太遠打不到；護盾、熔岩護盾先吃；噬魂的減傷）
+            final Player from = source == null ? null : plugin.getServer().getPlayer(source);
+            capped = plugin.monsterModule().mechanics().incoming(living, data, from, from, capped, Runnable::run, false);
+            if (capped <= 0) {
+                return;
+            }
         }
         credit(source, living, type, capped);
         double vanilla = plugin.monsters().toVanillaDamage(living, data, capped);
@@ -1008,7 +1071,7 @@ public final class AilmentService {
         final boolean burning = entry.state.ignite(now) != null;
         final boolean bleeding = entry.state.bleed(now) != null;
         final boolean poisoned = !entry.state.poisons(now).isEmpty();
-        setSlow(living, entry, held ? 1.0 : chill);
+        setSlow(living, entry, held ? 1.0 : AilmentState.combineSlow(chill, entry.state.hexSlow(now))); // 2026-10-23：癱瘓、阻礙一起算
         if (living instanceof Player) {
             setJumpBlocked(living, entry, held);
         } else if (living instanceof Mob mob) {
@@ -1058,6 +1121,73 @@ public final class AilmentService {
         if (entry.state.lightStunned(now) && !stunned) {
             living.getWorld().spawnParticle(Particle.CRIT, at.clone().add(0, living.getHeight() * 0.45, 0), 2, 0.25, 0.1, 0.25, 0.01);
         }
+    }
+
+    // ---- 2026-10-23：怪物詞綴的地面、光環直接給玩家的異常（MonsterMechanics） ----
+
+    /** 阻礙玩家 ticks 個 tick（阻礙光環、時間泡泡；不會被減速的、免疫阻礙的不算）。 */
+    public void hinder(final Player player, final long ticks) {
+        if (!canBeAilmented(player)) {
+            return;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) || StatKeys.flag(sheet, StatKeys.FLAG_HINDER_IMMUNE)) {
+            return;
+        }
+        final Tracked entry = track(player);
+        entry.state.hinder(now() + ticks);
+        update(player, entry, now());
+    }
+
+    /** 2026-10-23：拿掉某個玩家在怪物身上造成的持續傷害（他死了、下線、離開地圖）；外觀與標記下一次更新時跟上。 */
+    public void removeSource(final UUID source) {
+        for (final Tracked entry : tracked.values()) {
+            if (!entry.player) {
+                entry.state.removeSource(source);
+            }
+        }
+    }
+
+    /** 2026-10-23：時間泡泡：玩家身上的減益晚 extra tick 結束（戰鬥模組的減益，例如致盲，也一起延長）。 */
+    public void extendDebuffs(final Player player, final long extra) {
+        final long now = now();
+        final Tracked entry = tracked.get(player.getUniqueId());
+        if (entry != null) {
+            entry.state.extendDebuffs(extra, now);
+        }
+        if (plugin.combat() != null) {
+            plugin.combat().debuffs().extend(player.getUniqueId(), extra, now);
+        }
+    }
+
+    /**
+     * 站在點燃／冰緩／感電的地面上（怪物的足跡、時間泡泡）：直接上異常，不看機率。
+     * value：點燃是每秒傷害、冰緩是減速比例（0.3）、感電是受到的傷害增加（0.2）。免疫元素異常的不算。
+     */
+    public void groundAilment(final Player player, final AilmentType type, final double value, final double seconds) {
+        if (!canBeAilmented(player) || value <= 0 || plugin.zones() != null && plugin.zones().inTown(player.getLocation())) {
+            return;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        if (StatKeys.flag(sheet, StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE)) {
+            return;
+        }
+        final long now = now();
+        final Tracked entry = track(player);
+        switch (type) {
+            case IGNITE -> entry.state.addIgnite(value, now + ticks(seconds), null);
+            case CHILL -> {
+                if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE)) {
+                    return;
+                }
+                entry.state.applyChill(value * Math.max(0, 1 + sheet.increased(StatKeys.SLOW_TAKEN, Set.of())), now + ticks(seconds), now);
+            }
+            case SHOCK -> entry.state.applyShock(value, now + ticks(seconds), now);
+            default -> {
+                return;
+            }
+        }
+        update(player, entry, now);
     }
 
     /** 自己著火（煉獄使者的獰笑焚身）：每秒 dps 火焰傷害，持續 seconds 秒；已經在燒更強的就不換。 */
@@ -1416,6 +1546,20 @@ public final class AilmentService {
         if (poisons > 0) {
             parts.add(String.format(Locale.ROOT, "<%s>%s×%d %.1fs", AilmentType.POISON.color(), AilmentType.POISON.mark(), poisons,
                     entry.state.poisonRemaining(now) / 20.0));
+        }
+        // 2026-10-23：癱瘓、阻礙、致盲、腐化之血
+        if (entry.state.maimUntil() > now) {
+            parts.add(String.format(Locale.ROOT, "<#c08a5a>殘 %.1fs", (entry.state.maimUntil() - now) / 20.0));
+        }
+        if (entry.state.hinderUntil() > now) {
+            parts.add(String.format(Locale.ROOT, "<#8a7ab8>阻 %.1fs", (entry.state.hinderUntil() - now) / 20.0));
+        }
+        if (entry.state.blindUntil() > now) {
+            parts.add(String.format(Locale.ROOT, "<#9a9a9a>盲 %.1fs", (entry.state.blindUntil() - now) / 20.0));
+        }
+        final int corrupted = entry.state.corruptedBloodStacks(now);
+        if (corrupted > 0) {
+            parts.add(String.format(Locale.ROOT, "<#a0204a>腐血×%d %.1fs", corrupted, (entry.state.corruptedBloodUntil() - now) / 20.0));
         }
         meterText(parts, entry.state.stun(), AilmentType.STUN, now);
         meterText(parts, entry.state.electrocute(), AilmentType.ELECTROCUTE, now);

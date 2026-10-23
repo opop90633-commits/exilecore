@@ -23,7 +23,8 @@ public final class StatSheet {
     private final StatSheet parent;
     private final Map<String, Double> bases = new HashMap<>();
     private final Map<String, List<Modifier>> modifiers = new HashMap<>();
-    private final Map<String, Double> cache = new HashMap<>();
+    /** 屬性 → 情境標籤 → 結果（2026-10-23：以前用排序後串起來的字串當鍵，命中快取也要排序、串字串）。 */
+    private final Map<String, Map<Set<String>, Double>> cache = new HashMap<>();
 
     public StatSheet() {
         this(null);
@@ -31,6 +32,14 @@ public final class StatSheet {
 
     private StatSheet(final StatSheet parent) {
         this.parent = parent;
+    }
+
+    /** 2026-10-23：每次改動加 1（快取技能數值用：版本沒變就是同一組數值）。 */
+    private long version;
+
+    /** 這張表（含下面那幾層）改過幾次；只會變大。 */
+    public long version() {
+        return parent == null ? version : version + parent.version();
     }
 
     /**
@@ -46,6 +55,7 @@ public final class StatSheet {
     public StatSheet setBase(final String stat, final double value) {
         bases.put(stat, value);
         cache.clear();
+        version++;
         return this;
     }
 
@@ -60,6 +70,7 @@ public final class StatSheet {
     public StatSheet add(final Modifier modifier) {
         modifiers.computeIfAbsent(modifier.stat(), key -> new ArrayList<>()).add(modifier);
         cache.clear();
+        version++;
         return this;
     }
 
@@ -74,6 +85,7 @@ public final class StatSheet {
     public StatSheet clearModifiers() {
         modifiers.clear();
         cache.clear();
+        version++;
         return this;
     }
 
@@ -87,13 +99,13 @@ public final class StatSheet {
         if (parent != null) {
             return compute(stat, contextTags); // 下面那張表可能還會變，疊出來的表不快取
         }
-        final String cacheKey = contextTags.isEmpty() ? stat : stat + '|' + String.join(",", contextTags.stream().sorted().toList());
-        final Double cached = cache.get(cacheKey);
+        final Map<Set<String>, Double> byTags = cache.computeIfAbsent(stat, key -> new HashMap<>(4));
+        final Double cached = byTags.get(contextTags);
         if (cached != null) {
             return cached;
         }
         final double result = compute(stat, contextTags);
-        cache.put(cacheKey, result);
+        byTags.put(Set.copyOf(contextTags), result); // 複製一份：呼叫的人之後改了自己的集合也不會弄壞快取
         return result;
     }
 

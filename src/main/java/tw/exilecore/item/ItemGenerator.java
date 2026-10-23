@@ -255,6 +255,50 @@ public final class ItemGenerator {
         data.setName(null);
     }
 
+    /**
+     * 蝕變石（2026-10-23，照 PoE2）：隨機 1～3 條詞綴換成新的詞綴（前綴換前綴、後綴換後綴，不管上限）。
+     * 破裂、隱匿、腐化詞綴不動；換不出新的就留著原本那條。回傳換了幾條。
+     */
+    public int replaceRandomAffixes(final ItemData data, final RandomGenerator random) {
+        final List<RolledAffix> candidates = new ArrayList<>();
+        for (final RolledAffix rolled : data.affixes()) {
+            if (!data.isFractured(rolled) && !isCorruptionEnchant(rolled.id()) && !Veiled.isVeiled(rolled.id())
+                    && repository.affix(rolled.id()) != null) {
+                candidates.add(rolled);
+            }
+        }
+        final int count = Math.min(candidates.size(), 1 + random.nextInt(3));
+        int replaced = 0;
+        for (int i = 0; i < count; i++) {
+            final RolledAffix pick = candidates.remove(random.nextInt(candidates.size()));
+            final int index = data.affixes().indexOf(pick);
+            data.affixes().remove(index);
+            if (addAffix(data, repository.affix(pick.id()).type(), random, true)) {
+                replaced++;
+            } else {
+                data.affixes().add(index, pick);
+            }
+        }
+        return replaced;
+    }
+
+    /**
+     * 蝕變石對傳奇（2026-10-23，照 PoE2）：先在原本範圍內重骰數值，每條再乘 0.78～1.22（0.01 一級），可以超出原本範圍。
+     * 寫死不能縮放的（0、開關）乘了還是一樣。
+     */
+    public void corruptUniqueValues(final ItemData data, final RandomGenerator random) {
+        rerollValues(data, random);
+        for (final RolledAffix rolled : data.affixes()) {
+            if (isCorruptionEnchant(rolled.id())) {
+                continue;
+            }
+            final double factor = (78 + random.nextInt(45)) / 100.0;
+            final java.util.Map<String, Integer> scaled = new java.util.LinkedHashMap<>();
+            rolled.vars().forEach((key, value) -> scaled.put(key, (int) Math.round(value * factor)));
+            rolled.setVars(scaled);
+        }
+    }
+
     /** 重擲每條詞綴的數值，階級不變。 */
     public void rerollValues(final ItemData data, final RandomGenerator random) {
         for (final RolledAffix rolled : data.affixes()) {

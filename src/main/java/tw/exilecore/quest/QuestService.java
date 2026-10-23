@@ -490,13 +490,50 @@ public final class QuestService {
     }
 
     /** 每秒：附近的 NPC 有新任務（金色）、可以回報（綠色）就在它頭上冒光點，只有自己看得到。 */
+    /** 2026-10-23：世界 → 那個世界載入中的任務 NPC（每 {@value #NPC_REFRESH_TICKS} tick 重找一次）。 */
+    private final Map<java.util.UUID, List<Entity>> npcCache = new java.util.HashMap<>();
+    private final Map<java.util.UUID, Long> npcCacheAt = new java.util.HashMap<>();
+    static final long NPC_REFRESH_TICKS = 200;
+
+    private List<Entity> questNpcs(final org.bukkit.World world) {
+        final long now = plugin.getServer().getCurrentTick();
+        final Long at = npcCacheAt.get(world.getUID());
+        if (at != null && now - at < NPC_REFRESH_TICKS) {
+            return npcCache.getOrDefault(world.getUID(), List.of());
+        }
+        final List<Entity> list = new java.util.ArrayList<>();
+        for (final Entity entity : world.getEntities()) {
+            if (!(entity instanceof Player) && plugin.npcs().questId(entity) != null) {
+                list.add(entity);
+            }
+        }
+        npcCache.put(world.getUID(), list);
+        npcCacheAt.put(world.getUID(), now);
+        if (npcCacheAt.size() > 64) {
+            // 地圖副本關掉後留下的舊世界
+            npcCacheAt.keySet().removeIf(uuid -> plugin.getServer().getWorld(uuid) == null);
+            npcCache.keySet().retainAll(npcCacheAt.keySet());
+        }
+        return list;
+    }
+
     public void tickMarkers() {
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             if (!ready(player) || plugin.npcs() == null) {
                 continue;
             }
             QuestLog log = null;
-            for (final Entity entity : player.getNearbyEntities(MARKER_RANGE, MARKER_RANGE / 2, MARKER_RANGE)) {
+            // 2026-10-23：用每 10 秒更新一次的「這個世界的任務 NPC」清單（以前每個人每秒掃一次周圍 40 格的所有實體；地圖裡沒有 NPC）
+            final Location me = player.getLocation();
+            for (final Entity entity : questNpcs(player.getWorld())) {
+                if (!entity.isValid()) {
+                    continue;
+                }
+                final Location where = entity.getLocation();
+                if (Math.abs(where.getX() - me.getX()) > MARKER_RANGE || Math.abs(where.getZ() - me.getZ()) > MARKER_RANGE
+                        || Math.abs(where.getY() - me.getY()) > MARKER_RANGE / 2) {
+                    continue;
+                }
                 final String npc = plugin.npcs().questId(entity);
                 if (npc == null) {
                     continue;

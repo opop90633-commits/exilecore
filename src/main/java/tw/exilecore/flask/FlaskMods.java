@@ -46,10 +46,16 @@ public record FlaskMods(double recovery, double recoveryLow, double speed, doubl
 
     /** 從物品資料算（詞綴照 affixes/flasks.yml；不認得的詞綴略過）。 */
     public static FlaskMods of(final ItemRepository repository, final ItemData data) {
-        if (data == null || data.affixes().isEmpty()) {
+        if (data == null || data.affixes().isEmpty() && data.quality() <= 0) {
             return NONE;
         }
         final List<Modifier> modifiers = new ArrayList<>();
+        if (data.quality() > 0) {
+            // 2026-10-23（PoE2）：品質（蝕變石給的）——藥劑增加回復量、護符增加持續時間
+            final tw.exilecore.item.ItemBase base = repository.base(data.base());
+            modifiers.add(Modifier.increased(base != null && base.isCharm() ? StatKeys.CHARM_LOCAL_DURATION : StatKeys.FLASK_LOCAL_RECOVERY,
+                    data.quality() / 100.0, "品質"));
+        }
         for (final RolledAffix rolled : data.affixes()) {
             final Affix affix = repository.affix(rolled.id());
             if (affix == null) {

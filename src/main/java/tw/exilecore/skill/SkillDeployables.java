@@ -160,8 +160,18 @@ final class SkillDeployables implements Listener {
     static final long BOSS_TAUNT_TICKS = 80;
     static final long BOSS_IMMUNE_TICKS = 160;
     static final double BOSS_TOTEM_DAMAGE = 3.0;
-    /** 圖騰的生命 = 施放者最大生命 × 這個（再乘 totem.life 的加成）。 */
-    static final double TOTEM_LIFE_FACTOR = 0.5;
+    /**
+     * 圖騰的生命 = 施放者最大生命 × 這個（再乘 totem.life 的加成）。
+     * 2026-10-23：照技能等級（裝備加的等級也算）：Lv.1 30%、Lv.20 60%，之後照樣往上，最多 100%（以前固定 50%）。
+     */
+    static double totemLifeFactor(final int skillLevel) {
+        final double t = (Math.max(1, skillLevel) - 1) / 19.0;
+        return Math.min(TOTEM_LIFE_MAX, TOTEM_LIFE_AT_1 + (TOTEM_LIFE_AT_20 - TOTEM_LIFE_AT_1) * t);
+    }
+
+    static final double TOTEM_LIFE_AT_1 = 0.3;
+    static final double TOTEM_LIFE_AT_20 = 0.6;
+    static final double TOTEM_LIFE_MAX = 1.0;
 
     SkillDeployables(final ExileCore plugin, final SkillTargets targets, final SkillVisuals visuals, final SkillExecutor executor,
                      final SkillDamage damage) {
@@ -256,7 +266,7 @@ final class SkillDeployables implements Listener {
             item.bond = tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.StatKeys.FLAG_SEARING_BOND);
             item.detonate = tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.StatKeys.FLAG_TOTEM_DETONATE);
             item.vengeful = Math.max(0, effective.flat(tw.exilecore.stats.StatKeys.TOTEM_VENGEFUL, tags));
-            item.maxLife = Math.max(1, plugin.players().get(player).maxLife() * TOTEM_LIFE_FACTOR
+            item.maxLife = Math.max(1, plugin.players().get(player).maxLife() * totemLifeFactor(build.level())
                     * effective.apply(tw.exilecore.stats.StatKeys.TOTEM_LIFE, 1.0, tags));
             item.life = item.maxLife;
         }

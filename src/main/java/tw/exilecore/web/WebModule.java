@@ -754,7 +754,7 @@ public final class WebModule implements Module, Listener {
         final ResourcePackInfo ui = ResourcePackInfo.resourcePackInfo(PACK_ID, uri, pack.sha1());
         // 2026-10-21：背景音樂另外一包（各自的雜湊，客戶端各自快取：更新插件時只重新下載介面那包；一次問、一起套用）
         ResourcePackInfo music = null;
-        if (packSplit && musicPack != null) {
+        if (packSplit && musicPack != null && wantsMusic(player)) { // 2026-10-23：設定裡關掉背景音樂的不送音樂那包
             try {
                 music = ResourcePackInfo.resourcePackInfo(MUSIC_ID,
                         URI.create(external ? externalMusicUrl : publicUrl() + "/music/" + musicPack.sha1() + ".zip"), musicPack.sha1());
@@ -774,6 +774,54 @@ public final class WebModule implements Module, Listener {
                 .replace(false)
                 .prompt(plugin.text().parse("<#f5b942>《星骸》介面資源包<gray>：星盤式的天賦樹、介面圖示、Boss 招式的地面警告（比較不卡）、背景音樂、按住左鍵施放時消掉敲方塊的聲音（約 "
                         + (size + 1023) / 1024 + " KB，第一次下載後會記住，之後更新只重新下載有改的部分）。不套用也能玩，下次登入會再問一次。"))
+                .build());
+    }
+
+    /** 2026-10-23：這個人要不要背景音樂（個人設定；還沒選角色算要）。 */
+    private boolean wantsMusic(final Player player) {
+        return tw.exilecore.character.PlayerSettings.enabled(plugin.players().get(player), tw.exilecore.character.PlayerSettings.MUSIC);
+    }
+
+    /** 音樂另外一包嗎（關掉背景音樂能不能省下載：併在同一包時不能，只能不放）。 */
+    public boolean musicSeparate() {
+        return packSplit && musicPack != null;
+    }
+
+    /** 背景音樂那包多大（KB；沒有另外一包是 0）。 */
+    public long musicKilobytes() {
+        return musicSeparate() ? (musicPack.zip().length + 1023) / 1024 : 0;
+    }
+
+    /** 只送音樂那包的人（代理把代號換掉時，回來的狀態不要算到介面那包上）。 */
+    private final Set<UUID> musicOnly = ConcurrentHashMap.newKeySet();
+
+    /**
+     * 2026-10-23：設定裡打開／關掉背景音樂：關掉就把音樂那包拿掉；打開就只補送音樂那包（介面那包不重送）。
+     */
+    public void setMusicPack(final Player player, final boolean on) {
+        if (!musicSeparate()) {
+            return;
+        }
+        if (!on) {
+            player.removeResourcePacks(MUSIC_ID);
+            return;
+        }
+        final boolean external = externalUrl != null && !externalUrl.isEmpty();
+        if (!external && !available(player)) {
+            return;
+        }
+        final URI uri;
+        try {
+            uri = URI.create(external ? externalMusicUrl : publicUrl() + "/music/" + musicPack.sha1() + ".zip");
+        } catch (final IllegalArgumentException e) {
+            return;
+        }
+        musicOnly.add(player.getUniqueId());
+        player.sendResourcePacks(ResourcePackRequest.resourcePackRequest()
+                .packs(ResourcePackInfo.resourcePackInfo(MUSIC_ID, uri, musicPack.sha1()))
+                .required(false)
+                .replace(false)
+                .prompt(plugin.text().parse("<#f5b942>《星骸》背景音樂<gray>（約 " + musicKilobytes() + " KB，第一次下載後會記住）"))
                 .build());
     }
 
@@ -808,6 +856,14 @@ public final class WebModule implements Module, Listener {
         if (MUSIC_ID.equals(event.getID())) {
             return; // 2026-10-21：背景音樂那包：套不套用都不影響介面
         }
+        if (!PACK_ID.equals(event.getID()) && musicOnly.contains(event.getPlayer().getUniqueId())) {
+            // 2026-10-23：剛剛只補送了音樂那包（代號被代理換掉）：不算到介面那包上
+            if (event.getStatus() != PlayerResourcePackStatusEvent.Status.ACCEPTED
+                    && event.getStatus() != PlayerResourcePackStatusEvent.Status.DOWNLOADED) {
+                musicOnly.remove(event.getPlayer().getUniqueId());
+            }
+            return;
+        }
         // 2026-10：走 Velocity（LimboAPI）時代理可能把資源包的代號換掉；代號對不上的當成介面那包
         //   （2026-10-21 起音樂另外一包、一起送，代號被換掉時音樂那包的狀態也會算到這裡）
         if (!PACK_ID.equals(event.getID())) {
@@ -837,6 +893,7 @@ public final class WebModule implements Module, Listener {
     public void onQuit(final PlayerQuitEvent event) {
         packLoaded.remove(event.getPlayer().getUniqueId());
         waitingPack.remove(event.getPlayer().getUniqueId());
+        musicOnly.remove(event.getPlayer().getUniqueId());
     }
 
     /** 技能圖示（2026-10）：掛在技能寶石、選單裡技能的原版物品（skills.yml 的 icon）上。 */
