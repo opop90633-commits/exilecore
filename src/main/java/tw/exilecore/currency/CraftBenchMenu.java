@@ -52,8 +52,8 @@ public final class CraftBenchMenu extends Menu {
     private static final int SLOT_OMEN = 13;
     private static final int SLOT_ITEM = 22;
     private static final int SLOT_CURRENCY = 31;
-    private static final int SLOT_USE = 49; // 2026-10-23：使用鈕跟說明對調（使用放最下面一排中間）
-    private static final int SLOT_HELP = 40;
+    private static final int SLOT_USE = 40; // 2026-10-23：使用鈕在上、說明在最下排中間（跟其他選單一樣）
+    private static final int SLOT_HELP = 52; // 2026-10-23：說明放關閉鈕旁邊，最下排中間只剩翻頁
     private static final int SLOT_CLEAR = 46;
 
     private String omenId;

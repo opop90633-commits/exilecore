@@ -63,6 +63,8 @@ final class ModelCosmetics {
     private final boolean ride;
     /** 乘客坐的位置：站著、蹲下是玩家的高度，背飾轉軸離那裡多遠（1.32 − 1.8、1.02 − 1.5）。 */
     private static final float RIDE_DROP = -0.36f; // 2026-10-23：原本 -0.48 翅膀根部在腰，往上提到肩胛
+    /** 2026-10-23：騎著的背飾往後多退一點（乘客是掛在玩家正中心，-0.26 翅膀根部會插在身體裡）。 */
+    private static final float RIDE_BEHIND = -0.42f;
     private static final float RIDE_DROP_LOW = 0.4f - 0.6f;
 
     private static final class Worn {
@@ -316,6 +318,9 @@ final class ModelCosmetics {
 
     /** 2026-10-23：騎在玩家身上的背飾：沒騎上去就騎上去；身體轉了、換姿勢、該拍翅膀了才重算變形。 */
     private void updateBackRiding(final Player player, final Worn entry, final boolean paired) {
+        if (!tw.exilecore.core.Teleports.mayMount(player)) {
+            return; // 2026-10-23：傳送中（在等區塊載入）：先不騎回去，騎回去傳送就失敗了
+        }
         for (final ItemDisplay display : entry.back) {
             if (display.getVehicle() != player) {
                 // 2026-10-23 修正：生成時實體本身的 yaw／pitch 是玩家當時的視角，騎上去之後客戶端不會再改它，
@@ -354,13 +359,13 @@ final class ModelCosmetics {
             for (int i = 0; i < entry.back.size(); i++) {
                 final float angle = i == 0 ? -swing : swing; // 0 = 右片、1 = 左片
                 final Quaternionf rotation = new Quaternionf(facing).mul(new Quaternionf(new AxisAngle4f(angle, 0, 1, 0)));
-                final Vector3f offset = facing.transform(new Vector3f(0, drop, BACK_BEHIND));
+                final Vector3f offset = facing.transform(new Vector3f(0, drop, RIDE_BEHIND));
                 setRiding(entry.back.get(i), offset, rotation, WING_SCALE, turned);
             }
         } else {
             final float spin = (float) Math.toRadians((time * 30) % 360);
             final Quaternionf rotation = new Quaternionf(facing).mul(new Quaternionf(new AxisAngle4f(spin, 0, 0, 1)));
-            final Vector3f offset = facing.transform(new Vector3f(0, drop + 0.15f, BACK_BEHIND - 0.08f));
+            final Vector3f offset = facing.transform(new Vector3f(0, drop + 0.15f, RIDE_BEHIND - 0.08f));
             setRiding(entry.back.getFirst(), offset, rotation, HALO_SCALE, turned);
         }
     }

@@ -30,6 +30,26 @@ public final class Teleports {
         }
     }
 
+    /**
+     * 2026-10-23：非同步傳送要先載入區塊，可能隔幾個 tick 才真的傳；這段期間背飾不能騎回去（騎回去傳送就失敗了：
+     * 回營地、上筏這種跨世界的幾乎每次都中）。記「這個人到幾點之前不要騎」，傳完就解除。
+     */
+    private static final java.util.Map<java.util.UUID, Long> hold = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long HOLD_MILLIS = 5000;
+
+    /** 背飾現在能不能騎到這個人身上（傳送中不行）。 */
+    public static boolean mayMount(final Player player) {
+        final Long until = hold.get(player.getUniqueId());
+        if (until == null) {
+            return true;
+        }
+        if (System.currentTimeMillis() >= until) {
+            hold.remove(player.getUniqueId());
+            return true;
+        }
+        return false;
+    }
+
     public static boolean go(final Player player, final Location to) {
         dismount(player);
         return player.teleport(to);
@@ -37,6 +57,7 @@ public final class Teleports {
 
     public static CompletableFuture<Boolean> async(final Player player, final Location to) {
         dismount(player);
-        return player.teleportAsync(to);
+        hold.put(player.getUniqueId(), System.currentTimeMillis() + HOLD_MILLIS);
+        return player.teleportAsync(to).whenComplete((done, error) -> hold.remove(player.getUniqueId()));
     }
 }
