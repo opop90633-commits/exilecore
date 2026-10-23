@@ -48,10 +48,10 @@ public final class Formulas {
 
     /**
      * 2026-10-23（PoE2）：攻擊的命中照距離變差（距離量到目標身體的邊）：3 格以內（近戰觸及範圍）不影響，
-     * 之後線性變少，10 格以上少 90%。
+     * 之後線性變少，25 格以上少 90%（2026-10-23：10 → 25 格，遠程不要被罰太重）。
      */
     public static final double ACCURACY_FALLOFF_START = 3;
-    public static final double ACCURACY_FALLOFF_END = 10;
+    public static final double ACCURACY_FALLOFF_END = 25;
     public static final double ACCURACY_FALLOFF_MAX = 0.9;
 
     /** 打在 distance 格外的攻擊，命中更少幾成（0～0.9）。 */

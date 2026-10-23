@@ -282,6 +282,9 @@ public final class TownChannels implements Listener {
         if (!entity.getPassengers().isEmpty() || entity.isInsideVehicle()) {
             return false; // 疊在一起的不動（很少見）
         }
+        if (entity instanceof org.bukkit.entity.Hanging hanging) {
+            return reissueHanging(hanging);
+        }
         try {
             final EntitySnapshot snapshot = entity.createSnapshot();
             if (snapshot == null) {
@@ -295,6 +298,63 @@ public final class TownChannels implements Listener {
             plugin.getSLF4JLogger().debug("主城分流：{} 換不了新實體：{}", entity.getType(), e.toString());
             return false;
         }
+    }
+
+    /**
+     * 2026-10-23：展示框、畫這種掛在方塊上的實體：用快照重生時位置會重算，常常掛不上去（展示框掉在地上、裡面的東西噴出來）。
+     * 改成照原本的方塊位置與朝向重新生一個（強制朝向，不檢查後面有沒有方塊），再把內容、旋轉、固定、隱形、發光、名字、插件資料抄過去。
+     */
+    private boolean reissueHanging(final org.bukkit.entity.Hanging hanging) {
+        final org.bukkit.block.BlockFace face = hanging.getFacing();
+        final Location at = hanging.getLocation().getBlock().getLocation();
+        final World world = hanging.getWorld();
+        try {
+            final org.bukkit.entity.Hanging copy;
+            if (hanging instanceof org.bukkit.entity.ItemFrame frame) {
+                final org.bukkit.inventory.ItemStack item = frame.getItem().clone();
+                final Class<? extends org.bukkit.entity.ItemFrame> type = frame instanceof org.bukkit.entity.GlowItemFrame
+                        ? org.bukkit.entity.GlowItemFrame.class : org.bukkit.entity.ItemFrame.class;
+                final org.bukkit.Rotation rotation = frame.getRotation();
+                final boolean fixed = frame.isFixed();
+                final boolean visible = frame.isVisible();
+                final float dropChance = frame.getItemDropChance();
+                frame.setItem(null, false); // 拿掉之前先清空：不要噴出來
+                frame.remove();
+                copy = world.spawn(at, type, spawned -> {
+                    spawned.setFacingDirection(face, true);
+                    spawned.setItem(item, false);
+                    spawned.setRotation(rotation);
+                    spawned.setFixed(fixed);
+                    spawned.setVisible(visible);
+                    spawned.setItemDropChance(dropChance);
+                    copyCommon(hanging, spawned);
+                });
+            } else if (hanging instanceof org.bukkit.entity.Painting painting) {
+                final org.bukkit.Art art = painting.getArt();
+                painting.remove();
+                copy = world.spawn(at, org.bukkit.entity.Painting.class, spawned -> {
+                    spawned.setFacingDirection(face, true);
+                    spawned.setArt(art, true);
+                    copyCommon(hanging, spawned);
+                });
+            } else {
+                return false; // 拴繩結之類的：照舊留著
+            }
+            return copy != null;
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("主城分流：{}（{}）換不了新實體：{}", hanging.getType(), at.toVector(), e.toString());
+            return false;
+        }
+    }
+
+    /** 名字、發光、無敵、安靜、插件資料。 */
+    private static void copyCommon(final Entity from, final Entity to) {
+        to.customName(from.customName());
+        to.setCustomNameVisible(from.isCustomNameVisible());
+        to.setGlowing(from.isGlowing());
+        to.setInvulnerable(from.isInvulnerable());
+        to.setSilent(from.isSilent());
+        from.getPersistentDataContainer().copyTo(to.getPersistentDataContainer(), true);
     }
 
     /** 分流世界只有營地：載入的區塊裡在營地範圍外的實體一律拿掉（複製來的戰鬥區域的怪、掉落物）。 */

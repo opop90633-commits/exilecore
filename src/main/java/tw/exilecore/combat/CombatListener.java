@@ -434,7 +434,7 @@ public final class CombatListener implements Listener {
         final long debuffTick = plugin.getServer().getCurrentTick();
         java.util.List<Modifier> attackerDebuffs = debuffs.modifiers(attacker.getUniqueId(), defender.getUniqueId(), debuffTick);
         if (attackerIsPlayer && skill.isAttack() && !skill.tags().contains(Tags.TOTEM_HIT) && attacker.getWorld().equals(defender.getWorld())) {
-            // 2026-10-23（PoE2）：玩家的攻擊離越遠命中越差（量到目標身體的邊；3 格內不影響，10 格以上命中更少 90%；法術、圖騰、召喚物不算）
+            // 2026-10-23（PoE2）：玩家的攻擊離越遠命中越差（量到目標身體的邊；3 格內不影響，25 格以上命中更少 90%；法術、圖騰、召喚物不算）
             final double falloff = tw.exilecore.stats.Formulas.accuracyFalloff(
                     Math.max(0, attacker.getLocation().distance(defender.getLocation()) - defender.getWidth() / 2));
             if (falloff > 0) {
