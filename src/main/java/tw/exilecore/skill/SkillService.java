@@ -1608,6 +1608,34 @@ public final class SkillService {
         return built;
     }
 
+    /**
+     * 2026-10-23：英靈圖騰的說明多寫英靈那一下（放在第 1 孔的錘子技能、吃第 2～5 孔的輔助與圖騰傷害）：
+     * 平均每次、暴擊、輔助。上面那幾行是英靈圖騰本身的，看不到英靈吃到的輔助（例如萬界歸墟的暴擊）。
+     */
+    private List<String> ancestorLines(final PlayerState state, final StatSheet sheet, final SkillBuild rawAncestor) {
+        final SkillBuild ancestor = SkillDeployables.ancestorHits(rawAncestor);
+        final List<String> lines = new ArrayList<>();
+        lines.add("<#e7c56b>英靈的" + ItemRenderer.escape(ancestor.definition().name()) + "<gray>（Lv." + ancestor.level() + "）：");
+        final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, ancestor.profile());
+        final long kinds = java.util.Arrays.stream(tw.exilecore.stats.DamageType.values()).filter(type -> expected.get(type) > 0).count();
+        lines.add(kinds > 1
+                ? String.format(Locale.ROOT, "<gray>　平均每次：<white>%d <dark_gray>（%s）", Math.round(expected.total()), expected)
+                : String.format(Locale.ROOT, "<gray>　平均每次：<white>%s", expected.isEmpty() ? "0" : expected));
+        final double evasion = tw.exilecore.character.StatsReport.monsterEvasion(plugin, state);
+        final double crit = DamageCalculator.critChance(sheet, ancestor.profile(), evasion);
+        lines.add(String.format(Locale.ROOT, "<gray>　暴擊：<white>%.1f%% <dark_gray>× <white>%.0f%%", crit * 100,
+                DamageCalculator.critMultiplier(ancestor.profile().effective(sheet), ancestor.profile().tags(), null) * 100));
+        if (!ancestor.supports().isEmpty()) {
+            final List<String> names = new ArrayList<>();
+            for (final SupportDefinition support : ancestor.supports()) {
+                // 要圖騰的輔助（樁怒、疾樁…）併成一顆，名字是宿主的：改寫成「圖騰類輔助」
+                names.add(support.id().startsWith("host.") ? "圖騰類輔助" : ItemRenderer.escape(support.name()));
+            }
+            lines.add("<gray>　輔助：<#8fd3ff>" + String.join("、", names));
+        }
+        return lines;
+    }
+
     /** 2026-10-22：這個技能能不能放進英靈圖騰的第 1 孔；可以回傳 null，不行回傳原因。 */
     static String linkedProblem(final SkillDefinition definition) {
         if (definition == null || definition.hidden() || !definition.isAttack() || !definition.weapons().contains("mace")) {
@@ -2887,6 +2915,9 @@ public final class SkillService {
                             linked ? "　<dark_gray>（" + (ancestor == null ? "第 1 孔沒有放能用的錘子技能" : ItemRenderer.escape(ancestor.definition().name()) + "的攻擊時間 ×1.5")
                                     + " ÷ 你的攻速）"
                                     : build.isAttack() ? "　<dark_gray>（吃你的攻擊速度）" : "　<dark_gray>（吃你的施法速度）"));
+                    if (ancestor != null) {
+                        lines.addAll(ancestorLines(state, sheet, ancestor)); // 2026-10-23：英靈那一下的傷害、暴擊、輔助
+                    }
                 }
             } else if (config.meta(definition.id()) != null && config.meta(definition.id()).totem()) {
                 // 2026-10-21：法術圖騰寶石的施放速度是「放圖騰」的速度（圖騰放插槽法術的速度寫在上面的主要寶石那幾行）
