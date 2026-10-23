@@ -8,7 +8,7 @@ guild:
   create_level: 30
   create_cost: 50000
   # 一個公會最多幾個人（2–200）
-  max_members: 30
+  max_members: 40
   # 名稱、標籤的長度 [最少, 最多]（個字；中文、英文、數字都可以，不能有空白與符號）
   # 標籤會顯示在名字旁邊（TAB、聊天），例如 [星骸]
   name_length: [2, 12]

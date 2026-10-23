@@ -86,8 +86,8 @@ public final class AtlasMapPickMenu extends Menu {
             set(i, shown);
         }
         set(SLOT_BACK, uiIcon("nav_back", Material.FILLED_MAP, "<#f5b942>← 星圖", "<gray>回到星圖（這一格已經指定好了）"));
-        set(SLOT_INFO, icon(Material.COMPASS, "<white>" + ItemRenderer.escape(map.name()) + " <dark_gray>("
-                        + (cell == null ? "?" : cell.q() + ", " + cell.r()) + ")",
+        set(SLOT_INFO, icon(Material.COMPASS, "<white>" + ItemRenderer.escape(map.name()) + " <dark_gray>（"
+                        + (cell == null ? "?" : AtlasMenu.where(cell.q(), cell.r())) + "）",
                 "<gray>背包與倉庫裡的這種地圖：<white>" + candidates.size() + "<gray> 張",
                 candidates.size() > LIST_SLOTS ? "<dark_gray>只列最高的 " + LIST_SLOTS + " 張" : "<dark_gray>階級高的排前面"));
         set(SLOT_CLOSE, closeButton());

@@ -1103,6 +1103,13 @@ public final class SkillService {
             fail(player, runtime, state, weaponProblem(player, state, definition), now);
             return;
         }
+        // 2026-10-23（照 PoE2：同一個技能只能有一顆）：放在宿主第 1 孔裡的技能自己不能再放（舊的面板可能兩邊都有）
+        final int hostOf = state.skills().findInner(definition.id());
+        if (hostOf >= 0 && state.skills().skill(hostOf) != null) {
+            fail(player, runtime, state, ItemRenderer.escape(definition.name()) + "放在" + ItemRenderer.escape(hostNameOf(state.skills().skill(hostOf)))
+                    + "的第 1 孔裡，不能自己再放（先取出一邊）", now);
+            return;
+        }
         // 英靈圖騰（2026-10 PoE2）：面板上下一格要放錘子攻擊技能，英靈用它打
         SkillBuild linked = null;
         if (SkillExecutor.hasFlag(definition, StatKeys.FLAG_TOTEM_LINKED)) {
@@ -2850,6 +2857,11 @@ public final class SkillService {
             lines.addAll(1, top);
         }
         return lines;
+    }
+
+    private String hostNameOf(final SkillLoadout.Entry entry) {
+        final SkillDefinition definition = config.skill(entry.skillId());
+        return definition == null ? entry.skillId() : definition.name();
     }
 
     /**

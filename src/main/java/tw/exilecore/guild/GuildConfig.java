@@ -60,7 +60,7 @@ public final class GuildConfig {
     private void reset() {
         createLevel = 30;
         createCost = 50_000;
-        maxMembers = 30;
+        maxMembers = 40;
         nameMin = 2;
         nameMax = 12;
         tagMin = 2;

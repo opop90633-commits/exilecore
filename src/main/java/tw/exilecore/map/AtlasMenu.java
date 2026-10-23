@@ -71,6 +71,11 @@ public final class AtlasMenu extends Menu {
         return col - (row - (row & 1)) / 2;
     }
 
+    /** 2026-10-23：給玩家看的座標：軸座標 (q, r) 看不懂，改成一般的直角座標 (x, y)：畫面上右＝+x、上＝+y，營地是 (0, 0)。 */
+    public static String where(final int q, final int r) {
+        return "(" + colOf(q, r) + ", " + (-r) + ")";
+    }
+
     @Override
     protected void draw() {
         shown.clear();
@@ -115,8 +120,8 @@ public final class AtlasMenu extends Menu {
             }
             final AtlasTablets.Kind kind = service.tabletAt(player, tower.q(), tower.r());
             if (kind != null) {
-                lines.add("<#d8c8a0>⬢ " + kind.displayName() + "<gray>：" + kind.description() + "<dark_gray>（塔 (" + tower.q() + ", " + tower.r()
-                        + ")，還能用 " + service.tabletUses(player, tower.q(), tower.r()) + " 次）");
+                lines.add("<#d8c8a0>⬢ " + kind.displayName() + "<gray>：" + kind.description() + "<dark_gray>（塔「" + AtlasMenu.where(tower.q(), tower.r()) + "」"
+                        + "，還能用 " + service.tabletUses(player, tower.q(), tower.r()) + " 次）");
             }
         }
         return lines;
@@ -145,7 +150,7 @@ public final class AtlasMenu extends Menu {
     private ItemStack tile(final AtlasProgress atlas, final AtlasGrid grid, final Set<Long> unlocked, final AtlasGrid.Cell chosen,
                            final int q, final int r) {
         if (q == 0 && r == 0) {
-            return glowing(icon(Material.NETHER_STAR, "<#e8e8f2>營地", "<gray>星圖的起點 (0, 0)", "<gray>周圍的格子一開始就解鎖"));
+            return glowing(icon(Material.NETHER_STAR, "<#e8e8f2>營地", "<gray>星圖的起點 (0, 0)：右邊是 +x、上面是 +y", "<gray>周圍的格子一開始就解鎖"));
         }
         final long key = AtlasGrid.key(q, r);
         final AtlasGrid.Cell cell = grid.cell(q, r);
@@ -161,13 +166,13 @@ public final class AtlasMenu extends Menu {
                     break;
                 }
             }
-            return nearby ? icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>迷霧 (" + q + ", " + r + ")", "<gray>完成旁邊的格子就會看到")
+            return nearby ? icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>迷霧（" + where(q, r) + "）", "<gray>完成旁邊的格子就會看到")
                     : icon(Material.BLACK_STAINED_GLASS_PANE, " ");
         }
         final boolean done = atlas.isCompleted(q, r);
         final MapConfig config = service.config();
         final List<String> lore = new ArrayList<>();
-        final String where = "<dark_gray>(" + q + ", " + r + ")・距離 " + cell.distance() + "・預設 T" + cell.tier();
+        final String where = "<dark_gray>" + where(q, r) + "・離營地 " + cell.distance() + " 格・預設 T" + cell.tier();
         ItemStack icon;
         switch (cell.kind()) {
             case TOWER -> {
@@ -383,7 +388,7 @@ public final class AtlasMenu extends Menu {
         }
         if (chosen != null) {
             final MapConfig.MapDef map = config.find(chosen.mapId());
-            lore.add("<yellow>下次開 " + ItemRenderer.escape(map == null ? String.valueOf(chosen.mapId()) : map.name()) + " 用 (" + chosen.q() + ", " + chosen.r() + ")");
+            lore.add("<yellow>下次開 " + ItemRenderer.escape(map == null ? String.valueOf(chosen.mapId()) : map.name()) + " 用「" + AtlasMenu.where(chosen.q(), chosen.r()) + "」");
         }
         lore.add("");
         lore.add("<gray>完成一格解鎖周圍、拿天賦點；走得越遠格子的階級越高");
@@ -477,7 +482,7 @@ public final class AtlasMenu extends Menu {
                 redraw();
                 return;
             }
-            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>下次開 " + ItemRenderer.escape(name) + " 用 (" + q + ", " + r + ")"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>下次開 " + ItemRenderer.escape(name) + " 用「" + where(q, r) + "」"));
         }
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.5f);
         redraw();

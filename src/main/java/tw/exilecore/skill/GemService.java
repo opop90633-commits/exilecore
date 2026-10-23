@@ -886,6 +886,17 @@ public final class GemService {
         if (entry.inner() != null && !SupportDefinition.hostsSkill(definition)) {
             return Change.fail("這顆寶石裡放著技能，但" + definition.name() + "不是英靈圖騰、星咒圖騰或暴擊引星"); // 不該發生
         }
+        if (entry.inner() != null) {
+            // 2026-10-23（照 PoE2：同一個技能只能有一顆）：宿主裡放著的技能，面板上不能再有一顆（以前只擋反過來的順序）
+            final int outside = loadout.find(entry.inner().skillId());
+            if (outside >= 0 && outside != target) {
+                return Change.fail("面板上已經有" + skillName(entry.inner()) + "了，宿主第 1 孔裡的技能不能再綁在自己的按鍵上（先取出一邊）");
+            }
+            final int elsewhere = loadout.findInner(entry.inner().skillId());
+            if (elsewhere >= 0 && elsewhere != target) {
+                return Change.fail(skillName(entry.inner()) + "已經放在" + skillName(loadout.skill(elsewhere)) + "的第 1 孔裡了");
+            }
+        }
         {
             for (final String supportId : entry.supportIds()) {
                 final int used = config().oncePerCharacter(supportId) ? loadout.supportUsedBy(supportId) : -1;

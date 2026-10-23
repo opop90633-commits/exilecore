@@ -333,7 +333,7 @@ public final class MapService {
         if (done) {
             // 2026-10-21 漏洞修正：完成過的格子再開就是一張普通的圖（Boss 格、隱藏格、腐化、石板的加成只給第一次），
             // 不然大家只會挑一格最好的（腐化＋Boss＋好幾片石板）一直刷
-            player.sendMessage(plugin.text().parse("<gray>  星圖：<white>(" + cell.q() + ", " + cell.r() + ")<gray> "
+            player.sendMessage(plugin.text().parse("<gray>  星圖：<white>「" + AtlasMenu.where(cell.q(), cell.r()) + "」<gray> "
                     + (exhausted ? "已經開了 " + cellTries + " 次都沒打完：格子的加成最多給 " + CELL_TRIES + " 次（打倒 Boss 照樣完成這格）"
                             : "已完成過：格子的加成只給第一次（往外走找新的格子）")
                     + (notes.isEmpty() ? "" : "　" + String.join("、", notes))));
@@ -384,7 +384,7 @@ public final class MapService {
             notes.add("石板 ×" + covering.size() + "（" + String.join("、", names) + "）");
             consumeTablets(player, atlas, cell.q(), cell.r()); // 2026-10-21：每開一張用掉 1 次
         }
-        player.sendMessage(plugin.text().parse("<gray>  星圖：<white>(" + cell.q() + ", " + cell.r() + ")<gray> 距離 " + cell.distance()
+        player.sendMessage(plugin.text().parse("<gray>  星圖：<white>「" + AtlasMenu.where(cell.q(), cell.r()) + "」<gray> 距離 " + cell.distance()
                 + (done ? "・已完成過（再打不給點數）" : "・完成後 +天賦點、解鎖周圍")
                 + (notes.isEmpty() ? "" : "　" + String.join("、", notes))));
     }
@@ -506,7 +506,7 @@ public final class MapService {
             if (left <= 0) {
                 plugin.characters().removeProgress(player, AtlasTablets.key(tower.q(), tower.r()));
                 plugin.characters().removeProgress(player, AtlasTablets.usesKey(tower.q(), tower.r()));
-                player.sendMessage(plugin.text().prefixed("<#d8c8a0>塔 (" + tower.q() + ", " + tower.r() + ") 的" + kind.displayName()
+                player.sendMessage(plugin.text().prefixed("<#d8c8a0>塔「" + AtlasMenu.where(tower.q(), tower.r()) + "」的" + kind.displayName()
                         + "用完了<gray>（這張還有效；在地圖裝置的「塔與城塞」可以再插一片）"));
             } else {
                 plugin.characters().setProgress(player, AtlasTablets.usesKey(tower.q(), tower.r()), Integer.toString(left));
@@ -555,7 +555,7 @@ public final class MapService {
         plugin.characters().setProgress(player, AtlasTablets.key(tower.q(), tower.r()), kind.currencyId());
         plugin.characters().setProgress(player, AtlasTablets.usesKey(tower.q(), tower.r()), Integer.toString(AtlasTablets.USES));
         player.sendMessage(plugin.text().prefixed("<#d8c8a0>插上" + kind.displayName() + "：" + kind.description()
-                + "<gray>（塔 (" + tower.q() + ", " + tower.r() + ") 周圍 " + (atlasConfig.tower().radius() + atlasBonus(player).count("atlas.tower.radius")) + " 格；罩到的地圖可以開 "
+                + "<gray>（塔「" + AtlasMenu.where(tower.q(), tower.r()) + "」周圍 " + (atlasConfig.tower().radius() + atlasBonus(player).count("atlas.tower.radius")) + " 格；罩到的地圖可以開 "
                 + AtlasTablets.USES + " 張）"));
         return null;
     }
@@ -639,7 +639,7 @@ public final class MapService {
         if (used > 0) {
             player.sendMessage(plugin.text().parse("<gray>  重開的塔：只剩塔守那一間（第 " + (used + 1) + "／" + TOWER_TRIES + " 次）"));
         }
-        player.sendMessage(plugin.text().parse("<gray>  星圖：塔 <white>(" + tower.q() + ", " + tower.r() + ")<gray>，完成後解鎖周圍 "
+        player.sendMessage(plugin.text().parse("<gray>  星圖：塔 <white>「" + AtlasMenu.where(tower.q(), tower.r()) + "」<gray>，完成後解鎖周圍 "
                 + atlasConfig.unlock().onTower() + " 格、天賦點 +" + atlasConfig.tower().points() + "、掉 1 片先驅石板"));
         return null;
     }
@@ -706,7 +706,7 @@ public final class MapService {
             }
             return "這座城塞開不起來（設定有問題，已經記在主控台）";
         }
-        player.sendMessage(plugin.text().parse("<gray>  星圖：城塞 <white>(" + citadel.q() + ", " + citadel.r() + ")<gray>，攻破後 " + map.name()
+        player.sendMessage(plugin.text().parse("<gray>  星圖：城塞 <white>「" + AtlasMenu.where(citadel.q(), citadel.r()) + "」<gray>，攻破後 " + map.name()
                 + " 可以在地圖裝置用天穹碎片打開（T" + chosen + "）"));
         return null;
     }
@@ -777,7 +777,7 @@ public final class MapService {
         final int rawPoints = after.cellPoints() - pointsBefore;
         final AtlasTree.Earned earnedAfter = atlasEarned(player);
         final int points = earnedAfter.total() - earnedBefore;
-        player.sendMessage(plugin.text().prefixed("<#9fd3ff>星圖：完成 (" + cell.q() + ", " + cell.r() + ")"
+        player.sendMessage(plugin.text().prefixed("<#9fd3ff>星圖：完成「" + AtlasMenu.where(cell.q(), cell.r()) + "」"
                 + (cell.kind() == AtlasGrid.Kind.TOWER ? " 塔" : cell.kind() == AtlasGrid.Kind.CITADEL ? " 城塞" : "")
                 + "<gray>，共 " + after.completed().size() + " 格、最遠 " + after.farthest() + " 格"
                 + (points > 0 ? "<gray>，星圖天賦點 +" + points
