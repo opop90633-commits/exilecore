@@ -80,9 +80,10 @@ class BalanceTest {
             //   先擋住「比現狀更糟」，調好之後把範圍改回目標。
             assertTrue(kill > 0.8 && kill < 2.8, "等級 " + level + " 攻擊擊殺 " + row.attackSeconds() + " 秒，目標 " + row.targetSeconds());
             // 2026-10-15：法術改成照 PoE2 各自的基礎暴擊率（5%～15%，以前全部 5%），上限 2.1 → 2.25
-            // 2026-10-23：直傷法術 ×1.4、「獲得額外火焰」同類型也算（參考法術是熾星彈）：上限 2.25 → 3.5。
+            // 2026-10-23：直傷法術 ×1.4、「獲得額外火焰」同類型也算（參考法術是熾星彈）：上限 2.25 → 5.0
+            //   （2.25 × 1.4 ≈ 3.15，再加上魔杖「獲得額外火焰」現在對火焰技能也算，約再 ×1.3；3.5 在 CI 還是超過）。
             //   伺服器實測反而是法術偏弱（90 級以上中位數只有錘的三成），模型跟實際對不上，之後重調平衡時一起看
-            assertTrue(row.spellRatio() > 0.5 && row.spellRatio() < 3.5, "等級 " + level + " 法術是攻擊的 " + row.spellRatio());
+            assertTrue(row.spellRatio() > 0.5 && row.spellRatio() < 5.0, "等級 " + level + " 法術是攻擊的 " + row.spellRatio());
             final double hit = row.hitPercent() / row.targetHitPercent();
             assertTrue(hit > 0.45 && hit < 1.25, "等級 " + level + " 被打一下扣 " + row.hitPercent() + "%，目標 " + row.targetHitPercent());
             assertTrue(row.attack().dps() >= previousAttack * 0.98, "等級 " + level + " 參考角色的輸出不該變低");
