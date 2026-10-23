@@ -544,6 +544,9 @@ public final class MapService {
         if (tabletAt(player, tower.q(), tower.r()) != null) {
             return "這座塔已經插了石板（用完才能再插）";
         }
+        if (tabletTargets(player, atlas, tower) == 0) {
+            return "這座塔周圍已經沒有吃得到石板的地圖了，插了也沒用"; // 2026-10-23：以前還是讓插、白花一片
+        }
         final CurrencyType type = plugin.currencies() == null ? null : plugin.currencies().repository().get(kind.currencyId());
         if (type == null) {
             return "currencies.yml 沒有 " + kind.currencyId();

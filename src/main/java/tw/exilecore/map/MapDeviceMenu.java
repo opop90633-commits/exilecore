@@ -165,7 +165,9 @@ public final class MapDeviceMenu extends Menu {
             final int citadels = atlas.openCitadels().size();
             int unfilled = 0;
             for (final AtlasGrid.Cell tower : atlas.completedTowers()) {
-                if (service.tabletAt(player, tower.q(), tower.r()) == null) {
+                // 2026-10-23：周圍已經沒有吃得到石板的地圖的、玩家手動移除的不算（清單裡也不會列）
+                if (service.tabletAt(player, tower.q(), tower.r()) == null && !service.towerHidden(player, tower.q(), tower.r())
+                        && service.tabletTargets(player, atlas, tower) > 0) {
                     unfilled++;
                 }
             }

@@ -166,7 +166,7 @@ public final class AtlasSitesMenu extends Menu {
 
     private void drawList(final List<ItemStack> items, final List<AtlasGrid.Cell> cells) {
         for (int i = 0; i < Math.min(LIST_SIZE, items.size()); i++) {
-            set(i, items.get(i));
+            set(i, appendLore(items.get(i), "<aqua>右鍵：在星圖上看這一格")); // 2026-10-23
             shown.put(i, cells.get(i));
         }
     }
@@ -246,13 +246,18 @@ public final class AtlasSitesMenu extends Menu {
             redraw();
             return;
         }
+        if (click == ClickType.RIGHT) {
+            // 2026-10-23：右鍵：打開星圖、視窗移到這一格
+            new AtlasMenu(plugin, player, service).focus(cell.q(), cell.r()).open();
+            return;
+        }
         if (showHidden) {
             return;
         }
         if (cell.kind() == AtlasGrid.Kind.TOWER) {
             if (atlas.isCompleted(cell.q(), cell.r())) {
                 if (service.tabletAt(player, cell.q(), cell.r()) != null) {
-                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這座塔已經插了石板"));
+                    new AtlasMenu(plugin, player, service).focus(cell.q(), cell.r()).open(); // 2026-10-23：插好石板的：左鍵也直接去看
                     return;
                 }
                 if (service.tabletTargets(player, atlas, cell) == 0) {

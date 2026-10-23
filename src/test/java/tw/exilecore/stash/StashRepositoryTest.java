@@ -72,6 +72,37 @@ class StashRepositoryTest {
     }
 
     @Test
+    void mapShardsReplaceTheOldWholeStoreAndShrink() throws SQLException {
+        // 2026-10-23：地圖頁分段存在負數頁碼；存過新格式之後舊的整份（MAP_STORE_KEY）刪掉、段數變少的段也刪掉
+        final UUID account = UUID.randomUUID();
+        database.sync(c -> {
+            stash.save(c, account, new StashRepository.Snapshot(Map.of(Stash.MAP_STORE_KEY, new byte[] {1}), Map.of()));
+            return null;
+        });
+        StashRepository.Snapshot loaded = database.sync(c -> stash.load(c, account));
+        assertArrayEquals(new byte[] {1}, loaded.pages().get(Stash.MAP_STORE_KEY), "舊格式還沒轉之前留著");
+        database.sync(c -> {
+            stash.save(c, account, new StashRepository.Snapshot(
+                    Map.of(Stash.mapShardKey(0), new byte[] {2}, Stash.mapShardKey(1), new byte[] {3}), Map.of()));
+            return null;
+        });
+        loaded = database.sync(c -> stash.load(c, account));
+        assertNull(loaded.pages().get(Stash.MAP_STORE_KEY), "存過分段之後舊的整份刪掉");
+        assertArrayEquals(new byte[] {2}, loaded.pages().get(Stash.mapShardKey(0)));
+        assertArrayEquals(new byte[] {3}, loaded.pages().get(Stash.mapShardKey(1)));
+        database.sync(c -> {
+            stash.save(c, account, new StashRepository.Snapshot(Map.of(Stash.mapShardKey(0), new byte[] {4}), Map.of()));
+            return null;
+        });
+        loaded = database.sync(c -> stash.load(c, account));
+        assertArrayEquals(new byte[] {4}, loaded.pages().get(Stash.mapShardKey(0)));
+        assertNull(loaded.pages().get(Stash.mapShardKey(1)), "地圖變少：多出來的段刪掉");
+        assertEquals(1, Stash.mapShardOf(Stash.mapShardKey(1)));
+        assertEquals(-1, Stash.mapShardOf(5));
+        assertEquals(-1, Stash.pageOfKey(Stash.mapShardKey(3)), "負數頁碼不是倉庫頁");
+    }
+
+    @Test
     void tabsAreSavedAndReplaced() throws SQLException {
         final UUID account = UUID.randomUUID();
         database.sync(c -> {

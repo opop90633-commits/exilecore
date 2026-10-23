@@ -100,7 +100,9 @@ public final class StashRepository {
             }
         }
         // 2026-10：快照裡沒有的物品頁刪掉（收回的頁搬空、拿掉之後，資料庫那一列還留著舊的東西，
-        // 下次上線又讀回來＝複製）。地圖頁（MAP_STORE_KEY）在快照裡、不會刪；倉庫頁以外的頁碼不動。
+        // 下次上線又讀回來＝複製）。倉庫頁以外的頁碼不動。
+        // 2026-10-23：地圖頁分段存在負數頁碼：快照裡沒有的段（地圖變少）也刪；存過新格式之後舊的整份（MAP_STORE_KEY）刪掉
+        final boolean sharded = snapshot.pages().keySet().stream().anyMatch(key -> key < 0);
         try (PreparedStatement stale = connection.prepareStatement(
                 "SELECT page FROM stash_pages WHERE account_uuid = ?")) {
             stale.setString(1, account.toString());
@@ -108,8 +110,11 @@ public final class StashRepository {
             try (ResultSet result = stale.executeQuery()) {
                 while (result.next()) {
                     final int key = result.getInt(1);
-                    if (key != Stash.MAP_STORE_KEY && key >= 0 && key < Stash.storageKey(Stash.MAX_PAGES)
-                            && !snapshot.pages().containsKey(key)) {
+                    if (snapshot.pages().containsKey(key)) {
+                        continue;
+                    }
+                    if (key < 0 || key == Stash.MAP_STORE_KEY && sharded
+                            || key >= 0 && key != Stash.MAP_STORE_KEY && key < Stash.storageKey(Stash.MAX_PAGES)) {
                         remove.add(key);
                     }
                 }

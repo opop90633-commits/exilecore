@@ -78,7 +78,7 @@ public final class ItemStats {
                 Math.round(armour * qualityArmour),
                 Math.round(evasion * qualityArmour),
                 Math.round(energyShield * qualityArmour),
-                base.block(),
+                base.block() <= 0 ? 0 : roundTo(base.block() * Math.max(0, 1 + localSum(repository, base, data, StatKeys.BLOCK_CHANCE, ModType.INCREASED)), 10),
                 requirements(repository, itemBase, data), local);
     }
 
@@ -151,6 +151,9 @@ public final class ItemStats {
             return false;
         }
         final String stat = mod.stat();
+        if (StatKeys.BLOCK_CHANCE.equals(stat)) {
+            return mod.type() == ModType.INCREASED && base.block() > 0; // 2026-10-23：盾的「增加 x% 格擋率」是本地的（照 PoE2），算進盾上寫的格擋率
+        }
         return StatKeys.ARMOUR.equals(stat) && base.armour() > 0
                 || StatKeys.EVASION.equals(stat) && base.evasion() > 0
                 || StatKeys.ES_MAX.equals(stat) && base.energyShield() > 0;

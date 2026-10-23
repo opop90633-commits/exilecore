@@ -1218,7 +1218,10 @@ public final class PlayerStateService {
                 sheet.add(Modifier.flat(StatKeys.LIFE_MAX, itemFlat(item, StatKeys.ES_MAX), "赤力"));
             }
             if (slot == tw.exilecore.item.ItemSlot.OFF_HAND && StatKeys.flag(sheet, StatKeys.FLAG_RENLY) && item.base().block() > 0) {
-                sheet.add(Modifier.flat(StatKeys.BLOCK_CHANCE, 35 - item.base().block(), "盾術精修"));
+                // 2026-10-23：盾上寫的格擋率含本地的「增加 x% 格擋率」：基礎改成 35 時一樣照比例放大
+                final double shieldBlock = itemFlat(item, StatKeys.BLOCK_CHANCE);
+                final double scale = shieldBlock > 0 ? shieldBlock / item.base().block() : 1;
+                sheet.add(Modifier.flat(StatKeys.BLOCK_CHANCE, 35 * scale - (shieldBlock > 0 ? shieldBlock : item.base().block()), "盾術精修"));
             }
             if ((slot == tw.exilecore.item.ItemSlot.RING || slot == tw.exilecore.item.ItemSlot.AMULET) && StatKeys.flag(sheet, StatKeys.FLAG_MYSTIC_ATTUNEMENT)) {
                 for (final Modifier mod : item.modifiers()) {

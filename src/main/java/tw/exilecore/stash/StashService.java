@@ -139,7 +139,8 @@ public final class StashService {
         }
 
         final Map<Integer, Entry> pages = new HashMap<>();
-        Entry maps;
+        /** 地圖段（2026-10-23）：段索引 → 上次序列化的結果。 */
+        final Map<Integer, Entry> mapShards = new HashMap<>();
 
         byte[] page(final int key, final ItemStack[] source, final long now) {
             final Entry cached = pages.get(key);
@@ -155,19 +156,28 @@ public final class StashService {
             return bytes;
         }
 
-        byte[] maps(final List<ItemStack> source, final long now) {
-            final ItemStack[] refs = source.toArray(new ItemStack[0]);
-            if (maps != null && maps.matches(refs, now)) {
-                return maps.bytes();
+        /** 地圖頁的第 shard 段（2026-10-23）：這一段的每一張都跟上次同一個物件就直接用上次的結果。 */
+        byte[] mapShard(final int shard, final List<ItemStack> source, final long now) {
+            final int from = shard * Stash.MAP_SHARD_SIZE;
+            final int to = Math.min(source.size(), from + Stash.MAP_SHARD_SIZE);
+            final ItemStack[] refs = from >= to ? new ItemStack[0] : source.subList(from, to).toArray(new ItemStack[0]);
+            final Entry cached = mapShards.get(shard);
+            if (cached != null && cached.matches(refs, now)) {
+                return cached.bytes();
             }
             final ItemStack[] mapItems = new ItemStack[Math.max(1, refs.length)];
             for (int i = 0; i < mapItems.length; i++) {
                 mapItems[i] = i < refs.length && refs[i] != null && !refs[i].isEmpty() ? refs[i] : ItemStack.empty();
             }
             final byte[] bytes = ItemStack.serializeItemsAsBytes(mapItems);
-            maps = Entry.of(refs, bytes, now);
+            mapShards.put(shard, Entry.of(refs, bytes, now));
             return bytes;
         }
+    }
+
+    /** 地圖頁要存成幾段（空的也存一段：讀的時候才知道是新格式、拿光之後資料庫裡才不會留著舊的）。 */
+    static int mapShardCount(final int maps) {
+        return Math.max(1, (maps + Stash.MAP_SHARD_SIZE - 1) / Stash.MAP_SHARD_SIZE);
     }
 
     static StashRepository.Snapshot encode(final Stash stash) {
@@ -187,8 +197,12 @@ public final class StashService {
                 tabs.put(page, new StashRepository.Tab(stash.tabName(page), stash.tabCategory(page).name()));
             }
         }
-        // 地圖頁：整份存成一個特殊頁碼（空的也要存，拿光之後資料庫裡才不會留著舊的）
-        pages.put(Stash.MAP_STORE_KEY, cache.maps(stash.maps(), now));
+        // 地圖頁（2026-10-23）：分段存在負數頁碼；段數變少的，快取丟掉、資料庫那幾列由 StashRepository.save 刪
+        final int shards = mapShardCount(stash.maps().size());
+        for (int shard = 0; shard < shards; shard++) {
+            pages.put(Stash.mapShardKey(shard), cache.mapShard(shard, stash.maps(), now));
+        }
+        cache.mapShards.keySet().removeIf(shard -> shard >= shards);
         return new StashRepository.Snapshot(pages, new HashMap<>(stash.currencies()), tabs);
     }
 
@@ -264,8 +278,18 @@ public final class StashService {
                 target[i] = items[i] == null || items[i].isEmpty() ? null : items[i];
             }
         }
-        final byte[] mapBytes = snapshot.pages().get(Stash.MAP_STORE_KEY);
-        if (mapBytes != null) {
+        // 地圖頁：有負數頁碼就是分段的新格式（2026-10-23），照段的順序讀；沒有才讀舊的整份
+        final java.util.TreeMap<Integer, byte[]> shards = new java.util.TreeMap<>();
+        for (final Map.Entry<Integer, byte[]> entry : snapshot.pages().entrySet()) {
+            final int shard = Stash.mapShardOf(entry.getKey());
+            if (shard >= 0) {
+                shards.put(shard, entry.getValue());
+            }
+        }
+        final List<byte[]> mapBlobs = shards.isEmpty()
+                ? (snapshot.pages().get(Stash.MAP_STORE_KEY) == null ? List.of() : List.of(snapshot.pages().get(Stash.MAP_STORE_KEY)))
+                : new java.util.ArrayList<>(shards.values());
+        for (final byte[] mapBytes : mapBlobs) {
             for (final ItemStack map : ItemStack.deserializeItemsFromBytes(mapBytes)) {
                 if (map != null && !map.isEmpty() && stash.mapCount() < stash.mapCap()) {
                     stash.maps().add(map);

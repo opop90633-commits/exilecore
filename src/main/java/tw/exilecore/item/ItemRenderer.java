@@ -310,7 +310,8 @@ public final class ItemRenderer {
             lore.add(line("<gray>能量護盾：<white>" + (int) snapshot.energyShield()));
         }
         if (snapshot.block() > 0) {
-            lore.add(line("<gray>格擋率：<white>" + (int) snapshot.block() + "%"));
+            // 2026-10-23：含盾上本地的「增加 x% 格擋率」：被改過的照武器數值一樣用藍色
+            lore.add(line("<gray>格擋率：" + (Math.abs(snapshot.block() - base.block()) > 1e-6 ? AUGMENTED : "<white>") + (int) snapshot.block() + "%"));
         }
 
         // 需求（珠寶沒有需求：放進天賦樹就生效）；前面有基底數值就隔一條線（2026-10 美化）

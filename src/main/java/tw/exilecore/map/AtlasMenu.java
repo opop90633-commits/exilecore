@@ -76,6 +76,13 @@ public final class AtlasMenu extends Menu {
         return "(" + colOf(q, r) + ", " + (-r) + ")";
     }
 
+    /** 2026-10-23：打開時視窗中心放在這一格（塔與城塞清單右鍵用）。 */
+    public AtlasMenu focus(final int q, final int r) {
+        centerQ = q;
+        centerR = r;
+        return this;
+    }
+
     @Override
     protected void draw() {
         shown.clear();
@@ -103,7 +110,7 @@ public final class AtlasMenu extends Menu {
         set(SLOT_DOWN, uiIcon("arrow_down", Material.ARROW, "<white>↓ 往下", "<gray>捲 " + SCROLL + " 格（Shift 一格）")); // 2026-10-21：資源包的箭頭圖示
         set(SLOT_LEFT, uiIcon("arrow_left", Material.ARROW, "<white>← 往左", "<gray>捲 " + SCROLL + " 格（Shift 一格）")); // 2026-10-21：資源包的箭頭圖示
         set(SLOT_RIGHT, uiIcon("arrow_right", Material.ARROW, "<white>→ 往右", "<gray>捲 " + SCROLL + " 格（Shift 一格）")); // 2026-10-21：資源包的箭頭圖示
-        set(SLOT_HOME, icon(Material.NETHER_STAR, "<white>回到營地", "<gray>視窗中心現在在 (" + centerQ + ", " + centerR + ")",
+        set(SLOT_HOME, icon(Material.NETHER_STAR, "<white>回到營地", "<gray>視窗中心現在在 " + where(centerQ, centerR),
                 "<dark_gray>六角格：奇數列往右半格，所以奇數列的格子跟上下列的同一欄、右邊一欄相鄰"));
         set(SLOT_TREE, treeButton(player, service));
         set(SLOT_INFO, info(atlas, chosen));

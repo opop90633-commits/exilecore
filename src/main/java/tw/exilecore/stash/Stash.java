@@ -34,6 +34,22 @@ public final class Stash {
         return page < MAP_STORE_KEY ? page : page + 1;
     }
 
+    /**
+     * 2026-10-23 效能：地圖頁改成分段存（一段 {@value #MAP_SHARD_SIZE} 張），頁碼用負數：第 n 段存在 −1−n。
+     * 以前整份存在 {@value #MAP_STORE_KEY}，多一張少一張就要把上千張全部重新序列化（spark：主執行緒 1.6%）。
+     * 讀的時候有負數頁碼就用新格式，沒有才讀舊的那一份；存過一次之後舊的那一列會刪掉。
+     */
+    public static final int MAP_SHARD_SIZE = 45;
+
+    public static int mapShardKey(final int shard) {
+        return -1 - shard;
+    }
+
+    /** 負數頁碼換回地圖段的索引；不是地圖段回傳 -1。 */
+    public static int mapShardOf(final int key) {
+        return key < 0 ? -1 - key : -1;
+    }
+
     /** 資料庫的頁碼換回頁的索引（地圖頁回傳 -1）。 */
     public static int pageOfKey(final int key) {
         if (key == MAP_STORE_KEY || key < 0) {

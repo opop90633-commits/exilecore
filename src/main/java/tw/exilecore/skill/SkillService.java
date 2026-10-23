@@ -2492,6 +2492,10 @@ public final class SkillService {
             return List.of();
         }
         final String source = "品質 " + quality + "%";
+        if (definition.summon() != null) {
+            // 2026-10-23 修正：精魂召喚（骸骨兵這類）機制是 aura，以前被當光環算成「光環效果」；召喚技能的品質一律是召喚物傷害
+            return List.of(tw.exilecore.stats.Modifier.increased(StatKeys.DAMAGE, quality * 0.01, source));
+        }
         if (definition.mechanic() == Mechanic.AURA) {
             return List.of(tw.exilecore.stats.Modifier.increased(StatKeys.AURA_EFFECT, quality * 0.005, source));
         }
@@ -2509,8 +2513,9 @@ public final class SkillService {
         if (definition == null || quality <= 0) {
             return null;
         }
-        final String what = definition.mechanic() == Mechanic.AURA ? "光環效果" : definition.mechanic() == Mechanic.WARCRY ? "戰吼效果"
-                : definition.id().endsWith("_curse") ? "詛咒效果" : definition.mechanic() == Mechanic.SUMMON ? "召喚物傷害" : "傷害";
+        final String what = definition.summon() != null ? "召喚物傷害" // 2026-10-23：精魂召喚的機制是 aura，先看有沒有召喚
+                : definition.mechanic() == Mechanic.AURA ? "光環效果" : definition.mechanic() == Mechanic.WARCRY ? "戰吼效果"
+                : definition.id().endsWith("_curse") ? "詛咒效果" : "傷害";
         final double amount = what.endsWith("效果") ? quality * 0.5 : quality;
         return String.format(Locale.ROOT, "品質 +%d%%：增加 %s%% %s", quality,
                 amount == Math.rint(amount) ? String.valueOf((long) amount) : String.valueOf(amount), what);
