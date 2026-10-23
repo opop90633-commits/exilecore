@@ -67,6 +67,7 @@ import java.util.concurrent.TimeoutException;
  * POST /admin/api/restart      重新啟動：{ action: schedule, minutes, reason }、{ action: shutdown, minutes, reason }（倒數關服）、
  *                              { action: cancel }、{ action: daily, times: ["05:30"] }
  * POST /admin/api/broadcast    全服公告
+ * POST /admin/api/banner       常駐公告（2026-10-23）：{ text }，空的 = 收起來；畫面最上面一直掛著，重啟後還在
  * GET  /admin/api/retention    玩家留存（2026-10-19）
  * </pre>
  * 每個 API 都要登入；POST 另外要帶 X-EC-CSRF 標頭（登入時給的代碼）。回應一律不快取、不能被別的網站嵌入。
@@ -140,6 +141,7 @@ final class AdminWeb {
         server.endpoint("/admin/api/cancel", request -> api(request, true, session -> cancel(session, body(request))), "POST");
         server.endpoint("/admin/api/setting", request -> api(request, true, session -> setting(session, body(request))), "POST");
         server.endpoint("/admin/api/maintenance", request -> api(request, true, session -> maintenance(session, body(request))), "POST");
+        server.endpoint("/admin/api/banner", request -> api(request, true, session -> banner(session, body(request))), "POST");
         server.endpoint("/admin/api/broadcast", request -> api(request, true, session -> broadcast(session, body(request))), "POST");
         server.endpoint("/admin/api/restart", request -> api(request, true, session -> restart(session, body(request))), "POST");
         // 2026-10：公會管理、玩家處置（禁言、踢出）、物品追查
@@ -448,6 +450,7 @@ final class AdminWeb {
         maintenance.put("enabled", plugin.overrides().maintenance());
         maintenance.put("message", plugin.overrides().maintenanceMessage());
         server.put("maintenance", maintenance);
+        server.put("banner", plugin.getConfig().getString(BANNER_KEY, "")); // 2026-10-23：常駐公告
         final Map<String, Object> restart = new LinkedHashMap<>();
         final RestartScheduler restarts = module.restarts();
         final RestartScheduler.Pending pending = restarts == null ? null : restarts.pending();
@@ -1183,6 +1186,28 @@ final class AdminWeb {
         plugin.getSLF4JLogger().info("[管理網頁] {} {}", session.admin(), text);
         record(session.admin(), "重新啟動", text);
         return Map.of("ok", true, "change", text);
+    }
+
+    /** 2026-10-23：常駐公告存在 config.yml 的這個鍵（管理網頁的覆蓋檔，重啟後還在）。 */
+    static final String BANNER_KEY = "announcement.banner";
+
+    private Object banner(final AdminAuth.Session session, final JsonObject body) throws Exception {
+        final String text = optionalString(body, "text") == null ? "" : optionalString(body, "text").trim();
+        if (text.length() > 120) {
+            throw new IllegalArgumentException("常駐公告最多 120 個字（畫面最上面一條，太長會被切掉）");
+        }
+        if (text.contains("\n") || text.contains("\r")) {
+            throw new IllegalArgumentException("常駐公告只能一行");
+        }
+        onMain(() -> {
+            plugin.overrides().setConfig(BANNER_KEY, text.isEmpty() ? null : text);
+            plugin.applyConfigValue(BANNER_KEY, text.isEmpty() ? null : text);
+            return 0;
+        });
+        final String change = text.isEmpty() ? "收起常駐公告" : "常駐公告：" + text;
+        plugin.getSLF4JLogger().info("[管理網頁] {} {}", session.admin(), change);
+        record(session.admin(), "常駐公告", change);
+        return Map.of("ok", true, "change", change);
     }
 
     private Object broadcast(final AdminAuth.Session session, final JsonObject body) throws Exception {

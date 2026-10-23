@@ -172,7 +172,7 @@ public final class CharacterModule implements Module {
             bonusTask = null;
         }
         if (bonusBar != null) {
-            bonusBar.clear();
+            bonusBar.shutdown(); // 2026-10-23：常駐公告也收掉
         }
         states.hideResourceBars(); // 2026-10-18：戰鬥資源血條也收掉
         if (tickTask != null) {

@@ -105,7 +105,7 @@ public final class MapDeviceMenu extends Menu {
                         lore.add("<yellow>這種地圖還沒在你的星圖上解鎖：可以開，但不算星圖的格子");
                     } else {
                         final boolean done = service.atlasProgress(player).isCompleted(cell.q(), cell.r());
-                        lore.add("<#9fd3ff>星圖<gray>：(" + cell.q() + ", " + cell.r() + ") 距離 " + cell.distance()
+                        lore.add("<#9fd3ff>星圖<gray>：" + AtlasMenu.where(cell.q(), cell.r()) + " 距離 " + cell.distance()
                                 + (cell.kind() == AtlasGrid.Kind.BOSS ? "・<#af6025>Boss 格" : "") + (cell.corrupted() ? "・<#b07aff>腐化區" : "") + (cell.purified() ? "・<#fff1b8>淨化區" : "")
                                 + (done ? "<gray>・已完成過" : "<gray>・完成後解鎖周圍、+天賦點") + "<dark_gray>（/atlas 可以改選格子）");
                     }

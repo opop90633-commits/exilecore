@@ -62,7 +62,7 @@ public final class AtlasSitesMenu extends Menu {
         final List<ItemStack> items = new ArrayList<>();
         final List<AtlasGrid.Cell> cells = new ArrayList<>();
         for (final AtlasGrid.Cell tower : atlas.openTowers()) {
-            items.add(glowing(icon(Material.LANTERN, "<green>塔 (" + tower.q() + ", " + tower.r() + ")",
+            items.add(glowing(icon(Material.LANTERN, "<green>塔 " + AtlasMenu.where(tower.q(), tower.r()) + "",
                     "<gray>距離 " + tower.distance() + "・T" + tower.tier() + "・怪物等級 " + config.tiers().level(config.tiers().clamp(tower.tier())),
                     "<gray>爬到頂、打倒塔守就完成：解鎖周圍 " + rules.unlock().onTower() + " 格、天賦點 +" + rules.tower().points() + "、掉 1 片先驅石板",
                     "<yellow>點一下開（不用地圖物品，塔只能打一次）")));
@@ -90,7 +90,7 @@ public final class AtlasSitesMenu extends Menu {
                 uselessCount++;
                 continue; // 插了也沒有地圖吃得到
             }
-            final String where = "塔 (" + tower.q() + ", " + tower.r() + ")";
+            final String where = "塔 " + AtlasMenu.where(tower.q(), tower.r()) + "";
             final String reach = targets > 0 ? "<gray>周圍 " + radius + " 格還有 <white>" + targets + "<gray> 格地圖吃得到石板"
                     : "<red>周圍 " + radius + " 格已經沒有吃得到石板的地圖了";
             final String remove = showHidden ? "<yellow>Shift＋右鍵：放回清單" : "<dark_gray>Shift＋右鍵：從清單移除"
@@ -134,7 +134,7 @@ public final class AtlasSitesMenu extends Menu {
             final boolean ready = map != null && Atlas.finalRequirementsMet(config, map, completed);
             final String missing = map == null ? "" : Atlas.missingRequirements(config, map, completed);
             final int best = Math.max(1, service.bestTier(player));
-            final ItemStack icon = icon(Material.END_CRYSTAL, (ready ? "<#c48bff>" : "<gray>") + "城塞・" + ItemRenderer.escape(name) + " (" + citadel.q() + ", " + citadel.r() + ")",
+            final ItemStack icon = icon(Material.END_CRYSTAL, (ready ? "<#c48bff>" : "<gray>") + "城塞・" + ItemRenderer.escape(name) + " " + AtlasMenu.where(citadel.q(), citadel.r()) + "",
                     "<gray>距離 " + citadel.distance() + (map == null ? "" : "・Boss：<#af6025>" + ItemRenderer.escape(map.boss().name())),
                     "<gray>第一次從這裡開不用天穹碎片；攻破後那個終局用碎片開",
                     "<gray>會開在 T" + Math.min(best, citadel.tier()) + "<dark_gray>（你完成過的最高階 T" + best + " 與這格的 T" + citadel.tier() + " 取低）",
@@ -181,13 +181,13 @@ public final class AtlasSitesMenu extends Menu {
             final List<String> extra = new ArrayList<>();
             extra.add("");
             extra.add("<gray>" + ItemRenderer.escape(kind.description()));
-            extra.add(have > 0 ? "<yellow>左鍵：插進塔 (" + picking.q() + ", " + picking.r() + ")<gray>（你有 " + have + " 片）" : "<red>你沒有這種石板");
+            extra.add(have > 0 ? "<yellow>左鍵：插進塔 " + AtlasMenu.where(picking.q(), picking.r()) + "<gray>（你有 " + have + " 片）" : "<red>你沒有這種石板");
             set(slot, have > 0 ? targetHighlight(appendLore(icon, extra)) : appendLore(icon, extra));
             pickShown.put(slot, kind);
             slot++;
         }
         set(SLOT_BACK, icon(Material.ARROW, "<white>← 回塔與城塞"));
-        set(SLOT_HELP, helpButton(List.of("<gray>選一片石板插進塔 (" + picking.q() + ", " + picking.r() + ")", "<gray>插了拿不回來；罩到的地圖每開一張用掉 1 次，" + AtlasTablets.USES + " 次用完可以再插")));
+        set(SLOT_HELP, helpButton(List.of("<gray>選一片石板插進塔 " + AtlasMenu.where(picking.q(), picking.r()) + "", "<gray>插了拿不回來；罩到的地圖每開一張用掉 1 次，" + AtlasTablets.USES + " 次用完可以再插")));
         set(SLOT_CLOSE, closeButton());
     }
 
@@ -241,7 +241,7 @@ public final class AtlasSitesMenu extends Menu {
             // 2026-10-23：手動移除／放回
             service.setTowerHidden(player, cell.q(), cell.r(), !showHidden);
             player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, showHidden ? 1.4f : 0.8f);
-            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>塔 (" + cell.q() + ", " + cell.r() + ") "
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>塔 " + AtlasMenu.where(cell.q(), cell.r()) + " "
                     + (showHidden ? "放回清單了" : "從清單移除了（下面「移除的塔」可以放回來）")));
             redraw();
             return;

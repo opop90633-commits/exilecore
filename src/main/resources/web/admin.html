@@ -1297,6 +1297,7 @@
     var box = clear($('settings'));
     box.appendChild(groupCard('BONUS', '全服加成'));
     var event = groupCard('EVENT', '活動與公告');
+    event.appendChild(bannerBlock());
     event.appendChild(broadcastBlock());
     box.appendChild(event);
     box.appendChild(groupCard('ECONOMY', '經濟與掉率'));
@@ -1316,6 +1317,31 @@
       toast(s.label + '：' + json.change);
       return load(true, 'force');
     }).catch(fail);
+  }
+  function bannerBlock() {
+    var current = state.server.banner || '';
+    var text = h('input', { type: 'text', maxlength: 120, value: current, placeholder: '例如：本週末經驗加倍・DC 有新活動', 'aria-label': '常駐公告內容' });
+    var save = h('button', { type: 'button', cls: 'primary small', text: '套用', onclick: function () {
+      var value = text.value.trim();
+      api('POST', 'admin/api/banner', { text: value }).then(function (json) {
+        toast(json.change);
+        return load(true, 'force');
+      }).catch(fail);
+    } });
+    var off = h('button', { type: 'button', cls: 'small', text: '收起來', onclick: function () {
+      text.value = '';
+      api('POST', 'admin/api/banner', { text: '' }).then(function (json) {
+        toast(json.change);
+        return load(true, 'force');
+      }).catch(fail);
+    } });
+    off.disabled = !current;
+    var title = h('h3', { text: '常駐公告' });
+    if (current) { title.appendChild(h('span', { cls: 'badge', text: '掛著' })); }
+    return h('div', { cls: 'sub-block' },
+      title,
+      h('p', { cls: 'note', text: '畫面最上面一直掛著的一條（在全服加成那條上面），上線的人都看得到，重啟後還在；留空或按「收起來」就不顯示。幾秒內生效。' }),
+      h('div', { cls: 'row' }, text, save, off));
   }
   function broadcastBlock() {
     var text = h('input', { type: 'text', maxlength: 200, placeholder: '例如：今晚 10 點維修 30 分鐘', 'aria-label': '公告內容' });

@@ -23,6 +23,10 @@ public final class ServerBonusBar {
     /** 2026-10-18：記玩家物件本身（2 秒內重登是新的 Player，只記 UUID 會以為已經掛上而看不到血條）。 */
     private final java.util.Map<UUID, Player> shown = new java.util.HashMap<>();
     private String lastText;
+    /** 2026-10-23：常駐公告（管理網頁填的；空的就不掛）：放在全服加成那條的上面。 */
+    private final BossBar banner = BossBar.bossBar(net.kyori.adventure.text.Component.empty(), 1f, BossBar.Color.PURPLE, BossBar.Overlay.PROGRESS);
+    private final java.util.Map<UUID, Player> bannerShown = new java.util.HashMap<>();
+    private String lastBanner;
 
     ServerBonusBar(final ExileCore plugin) {
         this.plugin = plugin;
@@ -78,6 +82,7 @@ public final class ServerBonusBar {
 
     /** 每 2 秒：文字跟上、新上線的人掛上、加成關掉就收起來。 */
     void tick() {
+        tickBanner();
         final String text = text();
         if (text == null) {
             clear();
@@ -95,6 +100,50 @@ public final class ServerBonusBar {
             }
         }
         shown.keySet().retainAll(online);
+    }
+
+    /**
+     * 2026-10-23：常駐公告。血條照掛上去的順序由上往下排：公告要在加成上面，所以掛公告的時候先把加成那條拿下來、
+     * 掛完公告再掛回去（下面 tick 的 shown 清掉就會重掛）。
+     */
+    private void tickBanner() {
+        final String raw = plugin.getConfig().getString("announcement.banner", "");
+        final String text = raw == null ? "" : raw.strip();
+        if (text.isEmpty()) {
+            if (!bannerShown.isEmpty()) {
+                for (final Player player : bannerShown.values()) {
+                    player.hideBossBar(banner);
+                }
+                bannerShown.clear();
+            }
+            lastBanner = null;
+            return;
+        }
+        if (!text.equals(lastBanner)) {
+            lastBanner = text;
+            banner.name(plugin.text().parse("<#e3c8ff>📢 <white>" + text));
+        }
+        final Set<UUID> online = new HashSet<>();
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            online.add(player.getUniqueId());
+            if (bannerShown.put(player.getUniqueId(), player) != player) {
+                if (shown.remove(player.getUniqueId()) != null) {
+                    player.hideBossBar(bar); // 加成那條等一下重掛，排到公告下面
+                }
+                player.showBossBar(banner);
+            }
+        }
+        bannerShown.keySet().retainAll(online);
+    }
+
+    /** 模組關掉：加成、常駐公告都收起來。 */
+    void shutdown() {
+        clear();
+        for (final Player player : bannerShown.values()) {
+            player.hideBossBar(banner);
+        }
+        bannerShown.clear();
+        lastBanner = null;
     }
 
     void clear() {
