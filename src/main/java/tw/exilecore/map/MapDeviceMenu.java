@@ -30,6 +30,8 @@ public final class MapDeviceMenu extends Menu {
     private static final int SLOT_QUALITY = 14;
     /** 2026-10-18：地圖詞綴一鍵填滿（普通→星火石、魔法→豐饒石、稀有→至臻石，用背包＋通貨袋＋倉庫裡的）。 */
     private static final int SLOT_AFFIX = 15;
+    /** 2026-10-23：瓦爾地圖——用一顆蝕變石腐化選好的地圖（沒變化／階級 ±1／詞綴全前綴或全後綴／稀有多 1～2 條詞綴）。 */
+    private static final int SLOT_CORRUPT = 16;
     /** 2026-10：從倉庫的地圖頁挑一張地圖（拿到背包再選起來）。 */
     private static final int SLOT_FROM_STASH = 12;
     /** 挑倉庫地圖的畫面：一頁 45 張（最下面一排是按鈕）。 */
@@ -87,6 +89,7 @@ public final class MapDeviceMenu extends Menu {
             set(SLOT_MAP, preview);
             drawQuality();
             drawAffix(); // 2026-10-18
+            drawCorrupt(); // 2026-10-23
             final MapConfig.MapDef map = config.byBase(selected.base());
             final List<String> lore = new ArrayList<>();
             boolean ok = true;
@@ -620,6 +623,11 @@ public final class MapDeviceMenu extends Menu {
             }
             case SLOT_QUALITY -> fillQuality();
             case SLOT_AFFIX -> fillAffixes(); // 2026-10-18
+            case SLOT_CORRUPT -> {
+                if (click.isShiftClick() && click.isLeftClick() && acceptAction(click)) {
+                    corruptMap(); // 2026-10-23：不能復原，要 Shift＋左鍵
+                }
+            }
             case SLOT_MAP -> {
                 selected = null;
                 selectedSlot = -1;
@@ -876,6 +884,75 @@ public final class MapDeviceMenu extends Menu {
         player.sendMessage(plugin.text().prefixed("<gray>用了 <white>" + String.join("<gray>、<white>", parts) + "</white>：地圖現在 "
                 + prefixes + " 前綴、" + suffixes + " 後綴" + (stopped != null ? "<gray>（" + ItemRenderer.escape(stopped.name()) + "用完了，還沒滿）" : "")));
         player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_ANVIL_USE, 0.5f, 1.4f);
+        redraw();
+    }
+
+    // ---- 瓦爾地圖（2026-10-23）：一顆蝕變石腐化地圖 ----
+
+    private CurrencyType corruptCurrency() {
+        return plugin.currencies() == null ? null : plugin.currencies().repository().get(MapBosses.CORRUPT_ORB);
+    }
+
+    private void drawCorrupt() {
+        final CurrencyType orb = corruptCurrency();
+        if (orb == null || selected == null) {
+            return;
+        }
+        if (selected.corrupted()) {
+            set(SLOT_CORRUPT, icon(Material.GRAY_DYE, "<#d20000>已經是瓦爾地圖了", "<dark_gray>腐化過的地圖不能再改造"));
+            return;
+        }
+        final int have = service.countCurrency(player, orb);
+        final List<String> lore = new ArrayList<>();
+        lore.add("<gray>用 1 個" + ItemRenderer.escape(orb.name()) + "腐化這張地圖（你有 <white>" + have + "</white> 個，背包＋通貨袋＋倉庫）");
+        lore.add("<gray>隨機一種（各 25%）：");
+        lore.add("<gray>　沒變化／階級 ±1（T1～T16）／詞綴全部變成前綴或全部變成後綴／稀有地圖多 1～2 條詞綴");
+        lore.add("<red>腐化後不能再用通貨改造（品質、詞綴先弄好再腐化）");
+        lore.add("");
+        lore.add(have > 0 ? "<yellow>Shift＋左鍵：腐化" : "<red>沒有" + ItemRenderer.escape(orb.name()));
+        final Material material = orb.material() == null ? null : Material.matchMaterial(orb.material());
+        final ItemStack button = tw.exilecore.currency.CurrencyService.decorate(
+                icon(material == null || !material.isItem() ? Material.FERMENTED_SPIDER_EYE : material,
+                        have > 0 ? "<#d20000>瓦爾地圖" : "<gray>瓦爾地圖", lore), orb);
+        set(SLOT_CORRUPT, have > 0 ? glowing(button) : button);
+    }
+
+    private void corruptMap() {
+        final CurrencyType orb = corruptCurrency();
+        if (orb == null || selected == null) {
+            return;
+        }
+        final ItemStack target = selectedSlot < 0 ? null : player.getInventory().getItem(selectedSlot);
+        final Optional<ItemData> current = target == null ? Optional.empty() : plugin.items().read(target);
+        if (current.isEmpty() || !current.get().uuid().equals(selected.uuid())) {
+            player.sendMessage(plugin.text().prefixed("<red>那張地圖已經不在背包的那一格了，重新選一次"));
+            selected = null;
+            selectedSlot = -1;
+            redraw();
+            return;
+        }
+        if (current.get().corrupted()) {
+            player.sendMessage(plugin.text().prefixed("<gray>這張地圖已經腐化過了"));
+            return;
+        }
+        if (service.countCurrency(player, orb) <= 0) {
+            player.sendMessage(plugin.text().prefixed("<red>你沒有" + ItemRenderer.escape(orb.name())));
+            return;
+        }
+        final var character = plugin.players().get(player).character();
+        final Long characterId = character == null ? null : character.id();
+        final String before = current.get().base() + "@" + current.get().ilvl();
+        final var result = plugin.currencies().apply(plugin.currencies().create(orb, 1), target, player.getName(), characterId);
+        if (result != tw.exilecore.currency.CurrencyService.Result.APPLIED) {
+            player.sendMessage(plugin.text().prefixed("<gray>這張地圖不能腐化"));
+            return;
+        }
+        player.getInventory().setItem(selectedSlot, target);
+        service.takeCurrency(player, orb, 1, null); // apply 已經記了「做裝備、地圖」的消耗
+        selected = plugin.items().read(target).orElse(selected);
+        player.sendMessage(plugin.text().prefixed("<#d20000>地圖腐化了<gray>（用了 1 個" + ItemRenderer.escape(orb.name()) + "）"
+                + (!(selected.base() + "@" + selected.ilvl()).equals(before) ? "：階級變了" : "") + "，滑到地圖上看結果"));
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 0.6f, 0.8f);
         redraw();
     }
 
