@@ -16,6 +16,7 @@ import java.util.SplittableRandom;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-21：蝕變石（PoE2 的瓦爾寶珠）、定星石（PoE2 的破裂石）。 */
@@ -255,8 +256,8 @@ class CorruptFractureTest {
             assertTrue(tw.exilecore.item.ItemStats.mapTier(mapBase, copy) <= CurrencyOperation.MAP_TIER_MAX);
         }
         assertNotNull(top);
-        // 藥劑、護符
-        for (final tw.exilecore.item.ItemBase base : items.bases()) {
+        // 藥劑、護符（2026-10-23：藥劑、護符的基底在 flaskLikeBases，不在 bases 裡）
+        for (final tw.exilecore.item.ItemBase base : items.flaskLikeBases()) {
             if (!base.isFlaskLike()) {
                 continue;
             }
@@ -286,5 +287,26 @@ class CorruptFractureTest {
         final ItemData copy = data.copy();
         copy.setQuality(0);
         return copy;
+    }
+
+    /** 2026-10-23：凝露琉璃：藥劑、護符品質 +5%（上限 20%），別的裝備、腐化過的不能用。 */
+    @Test
+    void glassblowerBaubleAddsFlaskQuality() {
+        final SplittableRandom random = new SplittableRandom(7);
+        final CurrencyType bauble = currencies.get("glassblower_bauble");
+        assertNotNull(bauble);
+        final tw.exilecore.item.ItemBase flaskBase = items.flaskLikeBases().stream().filter(tw.exilecore.item.ItemBase::isFlaskLike)
+                .findFirst().orElseThrow();
+        final ItemData flask = generator.generate(flaskBase, Rarity.MAGIC, 80, random);
+        flask.setQuality(0);
+        for (int i = 0; i < 4; i++) {
+            assertNull(Crafting.problem(bauble, flask, generator), "第 " + (i + 1) + " 顆");
+            bauble.operation().apply(flask, generator, random);
+        }
+        assertEquals(20, flask.quality());
+        assertFalse(bauble.operation().canApply(flask, generator), "20% 以後不能再用");
+        final ItemData body = generator.generate(items.base("plate_body"), Rarity.MAGIC, 60, random);
+        assertFalse(bauble.operation().canApply(body, generator), "防具不能用");
+        assertFalse(bauble.operation().allowedOnCorrupted(), "腐化過的不能用");
     }
 }

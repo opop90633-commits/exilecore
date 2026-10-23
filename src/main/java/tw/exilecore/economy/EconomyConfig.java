@@ -123,6 +123,7 @@ public final class EconomyConfig {
         values.put("oracle_orb", 2000L);
         values.put("greater_socket_orb", 2500L);
         values.put("gemcutter_prism", 375L); // 2026-10-23
+        values.put("glassblower_bauble", 190L); // 2026-10-23
         values.put("sky_fragment", 6000L);
         reference = ReferenceValues.Settings.defaults();
         shop = defaultShop();

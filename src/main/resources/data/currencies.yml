@@ -224,6 +224,19 @@ gemcutter_prism:
   description: "技能寶石品質 +5%（最多 20%；在技能面板上拿著點技能）"
   flavor: "磨得極薄的星骸稜鏡，透過它看寶石，紋路會自己變得更清楚。"
 
+# 2026-10-23：凝露琉璃（照 PoE2 的 Glassblower's Bauble）：藥劑、護符品質 +5%（最多 20%；腐化的不能用）。
+#   藥劑每 1% 品質加 1% 回復量，護符每 1% 品質加 1% 持續時間。直接點藥劑、護符。
+glassblower_bauble:
+  name: 凝露琉璃
+  material: QUARTZ
+  stack: 20
+  operation: QUALITY_FLASK
+  applies_to: { rarity: [] }
+  drop_weight: 15
+  drop_level: 20
+  description: "藥劑、護符品質 +5%（上限 20%）：藥劑加回復量、護符加持續時間"
+  flavor: "吹玻璃的人留下的一顆小珠，裡面封著一滴不會乾的露水。"
+
 chance_orb:
   name: 僥倖石
   material: HEART_OF_THE_SEA

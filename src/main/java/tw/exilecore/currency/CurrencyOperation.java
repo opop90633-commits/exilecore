@@ -331,6 +331,20 @@ public enum CurrencyOperation {
         }
     },
 
+    /** 2026-10-23：凝露琉璃（PoE2 的 Glassblower's Bauble）：藥劑、護符品質 +5（上限 20）；藥劑加回復量、護符加持續時間。 */
+    QUALITY_FLASK {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            final var base = generator.repository().base(data.base());
+            return base != null && base.isFlaskLike() && data.quality() < 20;
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            data.setQuality(data.quality() + qualityStep(data));
+        }
+    },
+
     /** 星盤刻刀：地圖品質 +5（上限 20）；地圖每 1% 品質多 1% 物品數量。 */
     QUALITY_MAP {
         @Override

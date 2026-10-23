@@ -28,6 +28,7 @@ values:
   oracle_orb: 150000
   greater_socket_orb: 150000
   gemcutter_prism: 3000           # 2026-10-23：琢星稜鏡（技能寶石品質）
+  glassblower_bauble: 1500        # 2026-10-23：凝露琉璃（藥劑、護符品質）
   corrupt_orb: 3000               # 2026-10-21：蝕變石（PoE2 的瓦爾寶珠）：腐化區第一次打倒 Boss 才掉
   fracture_orb: 150000            # 2026-10-21：定星石（PoE2 的破裂石）：淨化區第一次打倒 Boss 才掉，很少
   # 地圖機制的特殊通貨（寶箱的星魄、裂隙的催化劑、流寇的星籤）

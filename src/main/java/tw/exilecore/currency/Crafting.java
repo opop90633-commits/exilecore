@@ -89,7 +89,7 @@ public final class Crafting {
         if (base.isFlaskLike()) {
             // 2026-10：藥劑、護符最多魔法（PoE2）：只有鑑定、蛻變、增幅、改造、機會→不行、抹除、神聖、祝福這幾種能用
             switch (type.operation()) {
-                case IDENTIFY, UPGRADE_TO_MAGIC, ADD_AFFIX_MAGIC, REROLL_MAGIC, REMOVE_AFFIX, SCOUR, REROLL_VALUES, CORRUPT -> { // 2026-10-23：蝕變石（品質）
+                case IDENTIFY, UPGRADE_TO_MAGIC, ADD_AFFIX_MAGIC, REROLL_MAGIC, REMOVE_AFFIX, SCOUR, REROLL_VALUES, CORRUPT, QUALITY_FLASK -> { // 2026-10-23：蝕變石、凝露琉璃（品質）
                 }
                 default -> {
                     return (base.isFlask() ? "藥劑" : "護符") + "最多魔法，不能用" + type.name();
