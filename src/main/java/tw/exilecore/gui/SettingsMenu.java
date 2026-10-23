@@ -91,7 +91,7 @@ public final class SettingsMenu extends Menu {
         final boolean separate = plugin.web() != null && plugin.web().musicSeparate();
         set(SLOT_MUSIC, toggle(Material.JUKEBOX, "背景音樂", PlayerSettings.enabled(state, PlayerSettings.MUSIC),
                 separate ? "營地、地圖、Boss 戰的背景音樂。關掉就不下載音樂那包（約 " + plugin.web().musicKilobytes()
-                        + " KB；已經套用的馬上拿掉），介面資源包照常；原版的背景音樂還是靜音"
+                        + " KB；已經套用的馬上拿掉），介面資源包照常；改聽原版的背景音樂"
                         : "營地、地圖、Boss 戰的背景音樂。關掉就不放（這台伺服器的音樂跟介面併在同一包，下載量不會變少）"));
         final tw.exilecore.web.Profiles profiles = plugin.web() == null ? null : plugin.web().profiles();
         if (profiles != null && state.hasCharacter()) {

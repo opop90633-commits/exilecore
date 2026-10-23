@@ -283,7 +283,7 @@ final class LifeIslands {
             return "鯊王還在，先打完"; // 2026-10-23
         }
         final int[] center = service.plotCenter(plot);
-        if (!hasSail(center, config().raftSize(service.plotLevel(plot)))) {
+        if (!hasSail(center, service.raftSize(plot))) {
             return "筏上要有一面船帆";
         }
         for (final Map.Entry<String, Integer> need : def.needs().entrySet()) { // 2026-10-23：藏寶圖

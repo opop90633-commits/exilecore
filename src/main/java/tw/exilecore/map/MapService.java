@@ -1038,6 +1038,16 @@ public final class MapService {
             return dpsCap.apply("world:" + source, amount, config.whaleDpsCap(), config.whaleDpsOver(),
                     plugin.getServer().getCurrentTick(), record);
         }
+        if (amount > 0 && source != null && plugin.life() != null && plugin.life().isSharkKing(defender)) {
+            // 2026-10-23 晚：星骸之海的渦齒鯊王比照極境（life.yml 的 shark_king.like）：每秒傷害上限、遞減照那個極境
+            final MapConfig.Uber uber = plugin.life().sharkKingUber();
+            if (uber == null || uber.dpsCap() <= 0) {
+                return amount;
+            }
+            final Player player = plugin.getServer().getPlayer(source);
+            final double record = player == null || plugin.training() == null ? 0 : plugin.training().bossDps(player);
+            return dpsCap.apply("king:" + source, amount, uber.dpsCap(), uber.dpsOver(), plugin.getServer().getCurrentTick(), record);
+        }
         if (amount <= 0 || source == null || !defender.getPersistentDataContainer().has(bossKey())) {
             return amount;
         }

@@ -54,6 +54,16 @@ final class ModelCosmetics {
     private static final double PET_SNAP = 10;
     /** 動畫多久更新一次（tick）。 */
     private static final int ANIMATE = 4;
+    /**
+     * 2026-10-23：背飾改成「騎在玩家身上」（passenger）：客戶端自己把乘客畫在玩家身上，不用等伺服器每 tick 傳位置——
+     * 倒退、衝刺、翻滾都黏得住，不會跑到前面或跟不上。乘客的朝向客戶端不會跟著轉，所以身體的方向算進展示實體的變形裡。
+     * 原版讓乘客坐在玩家的頭頂（站著 1.8、蹲下 1.5、游泳與滑翔 0.6 格高），要的高度從這裡往下扣。
+     * config.yml 的 cosmetics.ride false 就用舊的每 tick 傳送。
+     */
+    private final boolean ride;
+    /** 乘客坐的位置：站著、蹲下是玩家的高度，背飾轉軸離那裡多遠（1.32 − 1.8、1.02 − 1.5）。 */
+    private static final float RIDE_DROP = -0.48f;
+    private static final float RIDE_DROP_LOW = 0.4f - 0.6f;
 
     private static final class Worn {
         String backArt;
@@ -73,6 +83,9 @@ final class ModelCosmetics {
         Location petAt;
         /** 2026-10-21 效能：上次送出去的位置（沒動就不再傳送；主城站著不動的人很多）。 */
         Location sentBack;
+        /** 騎著的時候上次算進變形的身體方向、高度。 */
+        float rideYaw = Float.NaN;
+        float rideHeight = Float.NaN;
         Location sentOwn;
         Location sentPet;
     }
@@ -97,6 +110,20 @@ final class ModelCosmetics {
     ModelCosmetics(final ExileCore plugin, final SponsorService service) {
         this.plugin = plugin;
         this.service = service;
+        this.ride = plugin.getConfig().getBoolean("cosmetics.ride", true);
+    }
+
+    /** 傳送之前（SponsorModule 的 PlayerTeleportEvent，最早跑）：先把騎在身上的背飾放下來（有乘客的玩家 Bukkit 不給傳送），下一 tick 再騎回去。 */
+    void beforeTeleport(final Player player) {
+        final Worn entry = worn.get(player.getUniqueId());
+        if (entry == null) {
+            return;
+        }
+        for (final ItemDisplay display : entry.back) {
+            if (display.isValid() && display.getVehicle() != null) {
+                display.leaveVehicle();
+            }
+        }
     }
 
     /** 啟用時：清掉上次沒收好的（當機、熱重載）。 */
@@ -243,6 +270,10 @@ final class ModelCosmetics {
                 display.setTeleportDuration(1);
             }
         }
+        if (ride) {
+            updateBackRiding(player, entry, paired);
+            return;
+        }
         // 2026-10：跟得更緊——往這一 tick 的移動方向多推一點（別人看你時有一點延遲），展示實體的移動補間只用 1 tick
         final Location at = leading(player, entry);
         at.setYaw(player.getBodyYaw());
@@ -281,6 +312,58 @@ final class ModelCosmetics {
                 set(entry.backOwn.getFirst(), new Vector3f(0, height + 0.15f, BACK_BEHIND - 0.08f), rotation, HALO_SCALE);
             }
         }
+    }
+
+    /** 2026-10-23：騎在玩家身上的背飾：沒騎上去就騎上去；身體轉了、換姿勢、該拍翅膀了才重算變形。 */
+    private void updateBackRiding(final Player player, final Worn entry, final boolean paired) {
+        for (final ItemDisplay display : entry.back) {
+            if (display.getVehicle() != player) {
+                if (display.getWorld() != player.getWorld()) {
+                    display.teleport(player.getLocation());
+                }
+                if (!player.addPassenger(display)) {
+                    return; // 這一 tick 騎不上去（剛傳送）：下一 tick 再試
+                }
+                entry.rideYaw = Float.NaN;
+            }
+        }
+        final boolean low = player.isSwimming() || player.isGliding();
+        final float drop = low ? RIDE_DROP_LOW : RIDE_DROP;
+        final float yaw = player.getBodyYaw();
+        final boolean turned = Float.isNaN(entry.rideYaw) || Math.abs(((yaw - entry.rideYaw) % 360 + 540) % 360 - 180) > 0.3
+                || entry.rideHeight != drop;
+        if (!turned && tick % ANIMATE != 0) {
+            return;
+        }
+        entry.rideYaw = yaw;
+        entry.rideHeight = drop;
+        // 乘客的朝向客戶端不會跟著玩家轉：把身體的方向算進變形（原版畫展示實體時 Y 軸轉的是 −yaw）
+        final Quaternionf facing = new Quaternionf().rotationY((float) Math.toRadians(-yaw));
+        final double time = tick / 20.0;
+        if (paired) {
+            final boolean moving = player.getVelocity().setY(0).lengthSquared() > 0.003 || player.isSprinting();
+            final double speed = moving ? 2.6 : 1.1;
+            final float swing = (float) Math.toRadians(19 + 11 * Math.sin(time * speed * Math.PI));
+            for (int i = 0; i < entry.back.size(); i++) {
+                final float angle = i == 0 ? -swing : swing; // 0 = 右片、1 = 左片
+                final Quaternionf rotation = new Quaternionf(facing).mul(new Quaternionf(new AxisAngle4f(angle, 0, 1, 0)));
+                final Vector3f offset = facing.transform(new Vector3f(0, drop, BACK_BEHIND));
+                setRiding(entry.back.get(i), offset, rotation, WING_SCALE, turned);
+            }
+        } else {
+            final float spin = (float) Math.toRadians((time * 30) % 360);
+            final Quaternionf rotation = new Quaternionf(facing).mul(new Quaternionf(new AxisAngle4f(spin, 0, 0, 1)));
+            final Vector3f offset = facing.transform(new Vector3f(0, drop + 0.15f, BACK_BEHIND - 0.08f));
+            setRiding(entry.back.getFirst(), offset, rotation, HALO_SCALE, turned);
+        }
+    }
+
+    /** 騎著的背飾：轉身的時候補間短一點（1 tick，跟著轉），只有拍翅膀的時候照動畫的補間。 */
+    private static void setRiding(final ItemDisplay display, final Vector3f translation, final Quaternionf rotation, final float scale,
+                                  final boolean turned) {
+        display.setInterpolationDelay(0);
+        display.setInterpolationDuration(turned ? 1 : ANIMATE);
+        display.setTransformation(new Transformation(translation, rotation, new Vector3f(scale, scale, scale), new Quaternionf()));
     }
 
     // ---- 3D 戰甲的肩甲 ----

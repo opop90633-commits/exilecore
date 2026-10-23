@@ -1456,6 +1456,23 @@ public final class GuildService {
                 guild.tag(), guild.name(), guild.boughtPages());
     }
 
+    /** 2026-10-23 晚：累積贊助最高階送公會的倉庫頁（算在「買的頁」裡，公會的，送的人離開也留著）。 */
+    public void addGiftedPages(final Player giver, final int pages) {
+        final Guild guild = roster.guildOf(giver.getUniqueId());
+        if (guild == null || pages <= 0) {
+            return;
+        }
+        guild.setBoughtPages(guild.boughtPages() + pages);
+        persist(guild);
+        final GuildStash stash = stashes.get(guild.id());
+        if (stash != null) {
+            stash.ensurePages(stashPages(guild));
+            redrawStash(guild.id());
+        }
+        log(guild.id(), plugin.displayName(giver), "設定", "累積贊助送了 " + pages + " 頁公會倉庫（現在 " + stashPages(guild) + " 頁）");
+        broadcast(guild, "<white>" + shown(giver) + "<gray> 的累積贊助送了公會 <white>" + pages + "<gray> 頁倉庫（現在 <white>" + stashPages(guild) + "<gray> 頁）");
+    }
+
     /**
      * 改公會的名稱與標籤（只有會長；要用一張公會改名卡，管理員不用）。規則跟建立時一樣：長度、只能文字與數字、不能撞名、不能有不雅的字。
      */

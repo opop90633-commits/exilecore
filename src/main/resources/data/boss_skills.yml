@@ -2596,6 +2596,88 @@ skills:
     telegraph: 1.0
     shout: "「燈裡的孩子們，出來玩。」"
 
+  # ---- 2026-10-23 晚：渦齒鯊王（星骸之海，在筏上打；難度比照極境）----
+  shark_tide_ring:
+    name: 螺旋潮環
+    hint: "潮水一圈一圈湧上筏：站進綠色的缺口"
+    kind: ring
+    damage: 1.7
+    type: physical
+    convert: { cold: 0.4 }
+    cooldown: 11
+    range: 20
+    telegraph: 1.2
+    radius: 2
+    reach: 18
+    speed: 0.4
+    width: 0.9
+    gaps: 2
+    gap_angle: 40
+    shout: "（鯊王在筏上打轉，海水一圈一圈湧上來）"
+  shark_tail_slap:
+    name: 鯊尾斬浪
+    hint: "一道浪沿直線朝你斬過來：往旁邊閃"
+    kind: slam
+    damage: 2.0
+    type: physical
+    cooldown: 12
+    range: 24
+    telegraph: 1.0
+    delay: 0.6
+    radius: 2.6
+    count: 10
+    stagger: 0.07
+    reach: 20
+    at: line
+    slow: 2
+    shout: "（鯊王甩起尾鰭）"
+  shark_whirlpool:
+    name: 血渦
+    hint: "筏上捲起幾個血色的漩渦：別站在裡面"
+    kind: zone
+    damage: 0.6
+    type: physical
+    cooldown: 16
+    range: 24
+    telegraph: 1.2
+    radius: 2.6
+    duration: 6
+    interval: 0.5
+    count: 4
+    scatter: 8
+    at: random
+    slow: 3
+    shout: "（筏邊的海水開始打轉，染成了紅色）"
+  shark_bubbles:
+    name: 血泡
+    hint: "幾顆血泡慢慢追著你：帶著跑，別讓它們碰到"
+    kind: orbs
+    damage: 1.3
+    type: physical
+    cooldown: 18
+    range: 24
+    telegraph: 1.0
+    count: 3
+    speed: 0.15
+    duration: 8
+    size: 0.8
+    explode: 2.5
+    slow: 2
+    shout: "（鯊王的鰓噴出一串血泡）"
+  shark_frenzy:
+    name: 渦齒狂噬
+    hint: "鯊王連咬好幾口：離開牠的正前方"
+    kind: cone
+    damage: 1.4
+    type: physical
+    cooldown: 9
+    range: 7
+    telegraph: 0.9
+    angle: 100
+    length: 6
+    count: 4
+    stagger: 0.3
+    shout: "（螺旋齒轉了起來）"
   # ---- 2026-10：星骸之海的淵鯨（life.yml 的 whale）——巔峰級：傷害、前搖照虛星那一級，出招節奏用 tempo.pinnacle ----
   #   招式跟萬界之巔的虛星不重複（沒有光束、迷宮、全場安全區、場地收縮、荒蕪）：
   #   潮湧（擴散環，站進缺口）、深淵吐息（三波扇形）、鯨吞（漩渦，往外跑）、喚潮（全場亂落的潮柱＋留下冰冷的暗流）；

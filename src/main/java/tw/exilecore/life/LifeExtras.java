@@ -79,7 +79,7 @@ final class LifeExtras {
         final String wallSail = sail == null ? null : sail.name().replace("_BANNER", "_WALL_BANNER");
         final Material trap = trapItem == null ? null : LifeService.material(trapItem.block(), Material.BARREL);
         final int[] center = service.plotCenter(plot);
-        final int[] range = LifeService.extent(config().raftSize(service.plotLevel(plot)));
+        final int[] range = LifeService.extent(service.raftSize(plot));
         final int sea = config().seaLevel();
         int lamps = 0;
         int traps = 0;
@@ -128,7 +128,8 @@ final class LifeExtras {
             profile.staminaUsed = 0;
             profile.staminaRestored = 0;
         }
-        final int restored = Math.min(profile.staminaUsed, config().bedStamina());
+        final int bonus = plugin.sponsors() == null ? 0 : plugin.sponsors().bedStaminaBonus(player); // 2026-10-23 晚：最高階多回
+        final int restored = Math.min(profile.staminaUsed, config().bedStamina() + bonus);
         profile.bedDay = today;
         profile.staminaUsed -= restored;
         profile.dirty = true;
@@ -188,10 +189,13 @@ final class LifeExtras {
     }
 
     /** 放魚籠之前：這塊筏的魚籠滿了沒（回傳問題，可以放 null）。 */
-    String canPlaceTrap(final int plot, final int tick) {
+    String canPlaceTrap(final int plot, final int tick, final Block placing) {
         scans.remove(plot);
         final RaftScan scan = scan(plot, tick);
-        if (scan.traps() >= config().trapPerRaft()) {
+        // 放方塊的事件觸發時，方塊已經在世界上了：掃到的數量包含正在放的這一個，要扣掉（以前第 4 個放不了）
+        final LifeConfig.Item trapItem = config().station("fish_trap");
+        final boolean counted = trapItem != null && placing.getType() == LifeService.material(trapItem.block(), Material.BARREL);
+        if (scan.traps() - (counted ? 1 : 0) >= config().trapPerRaft()) {
             return "一塊筏最多 " + config().trapPerRaft() + " 個魚籠";
         }
         return null;
@@ -793,7 +797,7 @@ final class LifeExtras {
         stack.editMeta(meta -> {
             meta.displayName(ItemRenderer.line("<#ff6b6b>" + ItemRenderer.escape(def == null ? "鯊王血餌" : def.baitName())));
             meta.lore(List.of(ItemRenderer.line("<gray>在自己的筏上右鍵：叫出" + ItemRenderer.escape(def == null ? "渦齒鯊王" : def.name())),
-                    ItemRenderer.line("<gray>" + (def == null ? 300 : def.fleeSeconds()) + " 秒內打倒牠；筏變成戰鬥區"),
+                    ItemRenderer.line("<gray>牠會跳上筏：" + (def == null ? 420 : def.fleeSeconds()) + " 秒內打倒牠（極境的強度）；筏變成戰鬥區"),
                     ItemRenderer.line("<dark_gray>生活道具（可以交易）")));
             meta.getPersistentDataContainer().set(service.itemKey(), PersistentDataType.STRING, BAIT_ITEM);
         });
@@ -806,6 +810,9 @@ final class LifeExtras {
         final int plot;
         final UUID owner;
         int age;
+        int phase;
+        boolean enraged;
+        final java.util.Set<UUID> adds = new java.util.HashSet<>();
 
         King(final LivingEntity entity, final int plot, final UUID owner) {
             this.entity = entity;
@@ -823,6 +830,88 @@ final class LifeExtras {
             }
         }
         return false;
+    }
+
+    private King kingOf(final Entity entity) {
+        for (final King king : kings.values()) {
+            if (king.entity.getUniqueId().equals(entity.getUniqueId())) {
+                return king;
+            }
+        }
+        return null;
+    }
+
+    /** 這是不是鯊王（MapService：每秒傷害上限照比照的極境）。 */
+    boolean isKing(final Entity entity) {
+        return kingOf(entity) != null;
+    }
+
+    /** 2026-10-23 晚：比照的極境（maps.yml）的設定；沒寫 like、沒有地圖模組 null。 */
+    tw.exilecore.map.MapConfig.Uber likeUber() {
+        final LifeConfig.SharkKing def = config().sharkKing();
+        if (def == null || def.like().isEmpty() || plugin.maps() == null) {
+            return null;
+        }
+        return plugin.maps().config().uber(def.like());
+    }
+
+    private tw.exilecore.map.MapStats likeStats() {
+        final tw.exilecore.map.MapConfig.Uber uber = likeUber();
+        return uber == null ? null : plugin.maps().config().uberStats(config().sharkKing().like(), uber);
+    }
+
+    /** 怪物的屬性表（MonsterService 的 augmenter）：鯊王吃極境的怪物、Boss 詞綴，階段與狂暴的傷害。 */
+    void augment(final LivingEntity entity, final tw.exilecore.stats.StatSheet sheet) {
+        final King king = kingOf(entity);
+        final LifeConfig.SharkKing def = config().sharkKing();
+        if (king == null || def == null) {
+            return;
+        }
+        final tw.exilecore.map.MapStats stats = likeStats();
+        if (stats != null) {
+            sheet.addAll(stats.monsterModifiers());
+            sheet.addAll(stats.bossModifiers());
+        }
+        double more = 0;
+        for (int i = 0; i < king.phase && i < def.phases().size(); i++) {
+            more = def.phases().get(i).damage(); // 每個階段寫的是「這個階段起」的
+        }
+        if (more > 0) {
+            sheet.add(new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DAMAGE, tw.exilecore.stats.ModType.MORE, more / 100.0,
+                    java.util.Set.of(), def.name()));
+        }
+        if (king.enraged && def.enrageDamage() > 0) {
+            sheet.add(new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DAMAGE, tw.exilecore.stats.ModType.MORE, def.enrageDamage() / 100.0,
+                    java.util.Set.of(), def.name() + "（狂暴）"));
+        }
+    }
+
+    /** 鯊王在的筏上的玩家：吃極境的玩家詞綴（看場合的增益來源）。 */
+    List<tw.exilecore.stats.Modifier> playerModifiers(final Player player) {
+        if (kings.isEmpty() || service.world() == null || !service.world().equals(player.getWorld())) {
+            return List.of();
+        }
+        final int here = service.plotAt(player.getLocation().getX(), player.getLocation().getZ());
+        if (!kingOn(here)) {
+            return List.of();
+        }
+        final tw.exilecore.map.MapStats stats = likeStats();
+        return stats == null ? List.of() : stats.playerModifiers();
+    }
+
+    /** 筏上可以站的高度（地板上面一格）。 */
+    private double deckY() {
+        return config().seaLevel() + 1.0;
+    }
+
+    /** 把位置夾在筏的範圍裡（鯊王跳不出筏）。 */
+    private Location clampToRaft(final int plot, final Location at) {
+        final int[] center = service.plotCenter(plot);
+        final int[] range = LifeService.extent(service.raftSize(plot));
+        final double x = Math.max(center[0] + range[0] + 0.5, Math.min(center[0] + range[1] + 0.5, at.getX()));
+        final double z = Math.max(center[1] + range[0] + 0.5, Math.min(center[1] + range[1] + 0.5, at.getZ()));
+        final Location out = new Location(at.getWorld(), x, deckY(), z, at.getYaw(), at.getPitch());
+        return out;
     }
 
     /** 右鍵鯊王血餌；回傳問題，成功 null（血餌用掉一顆）。 */
@@ -846,77 +935,143 @@ final class LifeExtras {
         if (service.islands().busy(plot) || service.whale().busy(plot)) {
             return "航行中、島還開著、或正在打淵鯨：先弄完";
         }
+        final org.bukkit.entity.EntityType type;
+        try {
+            type = org.bukkit.entity.EntityType.valueOf(def.type());
+        } catch (final IllegalArgumentException e) {
+            return "life.yml 的 shark_king.type 寫錯了（" + def.type() + "）";
+        }
+        // 2026-10-23 晚：跳上筏打（以前在海裡游，筏上的人打不太到）：從筏的另一邊跳上來
         final int[] center = service.plotCenter(plot);
-        final double angle = random.nextDouble() * Math.PI * 2;
-        final Location at = new Location(service.world(), center[0] + Math.cos(angle) * 20, config().seaLevel() - 0.8, center[1] + Math.sin(angle) * 20);
-        final Entity entity = service.world().spawnEntity(at, org.bukkit.entity.EntityType.DOLPHIN, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM);
+        final Location from = player.getLocation();
+        final Location at = clampToRaft(plot, new Location(service.world(), center[0] * 2 - from.getX() + 0.5, deckY(), center[1] * 2 - from.getZ() + 0.5));
+        at.setDirection(from.toVector().subtract(at.toVector()).setY(0));
+        final Entity entity = service.world().spawnEntity(at, type, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM);
         if (!(entity instanceof LivingEntity king)) {
             entity.remove();
             return "叫不出來（看主控台）";
         }
-        king.setAI(false);
+        king.setAI(false); // 不用原版的 AI：程式帶著牠在筏上追人（海豚沒 AI 也不會乾掉）
+        king.setGravity(false);
         king.setPersistent(false);
+        king.setRemoveWhenFarAway(false);
+        final King fight = new King(king, plot, player.getUniqueId());
+        kings.put(player.getUniqueId(), fight); // 先登記：decorateBoss 算屬性表時 augment 認得
+        final List<Player> crew = service.crewOn(plot);
         try {
-            final int level = Math.max(1, Math.min(LifeIslands.ISLAND_LEVEL_CAP, plugin.players().get(player).level() - 5));
-            plugin.monsters().fixPlayers(king, 1);
-            plugin.monsters().decorateBoss(king, level, def.name(), List.of(), def.life(), 1.5, def.scale());
-            plugin.monsters().markSummoned(king);
+            final tw.exilecore.map.MapStats stats = likeStats();
+            final int level = stats != null ? stats.monsterLevel() : Math.max(1, plugin.players().get(player).level() + 5);
+            final tw.exilecore.monster.MonsterConfig.TypeSettings settings = plugin.monsters().config().type(def.type());
+            final double tierLife = plugin.maps() == null ? 1 : plugin.maps().config().finalLifeMultiplier(plugin.maps().config().tiers().max());
+            plugin.monsters().fixPlayers(king, Math.max(1, crew.size())); // 一起打的人多，血量照隊伍的規則加
+            plugin.monsters().decorateBoss(king, level, def.name(), def.mods(), def.life() * tierLife / Math.max(0.1, settings.lifeMultiplier()),
+                    def.damage() / Math.max(0.1, settings.damageMultiplier()), def.scale());
+            plugin.monsters().markSummoned(king); // 不掉一般的東西、不給經驗（獎勵是下面的掉落）
         } catch (final RuntimeException e) {
+            kings.remove(player.getUniqueId());
             king.remove();
+            plugin.getSLF4JLogger().error("{}：等級化失敗", def.name(), e);
             return "叫不出來（看主控台）";
         }
         king.getPersistentDataContainer().set(service.driftKey(), PersistentDataType.STRING, "king:" + player.getUniqueId());
         if (plugin.skills() != null) {
             final List<tw.exilecore.skill.BossSkillUse> uses = new ArrayList<>();
-            for (final String skill : List.of("charge", "tide_slam", "slam")) {
-                if (plugin.skills().config().bossSkills().skill(skill) != null) {
-                    uses.add(tw.exilecore.skill.BossSkillUse.of(skill));
+            for (final tw.exilecore.skill.BossSkillUse use : def.skills()) {
+                if (plugin.skills().config().bossSkills().skill(use.id()) != null) {
+                    uses.add(use);
                 }
             }
-            if (!uses.isEmpty()) {
-                plugin.skills().bossSkills().attach(king, uses, new tw.exilecore.skill.BossSkills.Host() {
-                    @Override
-                    public String name() {
-                        return def.name();
-                    }
+            // 極境的招式冷卻（cooldown 0.75）在 augment 加的怪物屬性裡（skill.cooldown）
+            plugin.skills().bossSkills().attach(king, uses, new tw.exilecore.skill.BossSkills.Host() {
+                @Override
+                public String name() {
+                    return def.name();
+                }
 
-                    @Override
-                    public int phase() {
-                        return 0;
-                    }
+                @Override
+                public int phase() {
+                    return fight.phase;
+                }
 
-                    @Override
-                    public boolean dormant() {
-                        return false;
-                    }
+                @Override
+                public boolean dormant() {
+                    return service.crewOn(fight.plot).isEmpty();
+                }
 
-                    @Override
-                    public LivingEntity summon(final String type, final Location where) {
-                        return null;
-                    }
-                });
-            }
+                @Override
+                public boolean alerts() {
+                    return true;
+                }
+
+                @Override
+                public String tempoKind() {
+                    return "pinnacle";
+                }
+
+                @Override
+                public Location arenaCenter() {
+                    final int[] c = service.plotCenter(fight.plot);
+                    return new Location(service.world(), c[0] + 0.5, deckY(), c[1] + 0.5);
+                }
+
+                @Override
+                public LivingEntity summon(final String summonType, final Location where) {
+                    return summonAdd(fight, summonType, where);
+                }
+            });
         }
         stack.setAmount(stack.getAmount() - 1);
-        kings.put(player.getUniqueId(), new King(king, plot, player.getUniqueId()));
         service.markCombat(plot, true);
-        for (final Player member : service.crewOn(plot)) {
-            member.showTitle(net.kyori.adventure.title.Title.title(plugin.text().parse("<#ff6b6b>" + ItemRenderer.escape(def.name()) + "浮上來了！"),
-                    plugin.text().parse("<gray>" + def.fleeSeconds() + " 秒內打倒牠——筏上現在可以放技能"),
+        service.world().playSound(at, Sound.ENTITY_PLAYER_SPLASH_HIGH_SPEED, 1.5f, 0.6f);
+        service.world().spawnParticle(Particle.SPLASH, at, 80, 1.5, 0.5, 1.5, 0.2);
+        for (final Player member : crew) {
+            member.showTitle(net.kyori.adventure.title.Title.title(plugin.text().parse("<#ff6b6b>" + ItemRenderer.escape(def.name()) + "跳上筏了！"),
+                    plugin.text().parse("<gray>極境的強度——" + def.fleeSeconds() + " 秒內打倒牠"),
                     net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(300), java.time.Duration.ofMillis(2000), java.time.Duration.ofMillis(500))));
             member.playSound(member.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.8f, 0.8f);
+            if (!def.intro().isEmpty()) {
+                member.sendMessage(plugin.text().prefixed("<#ff6b6b>" + ItemRenderer.escape(def.intro())));
+            }
         }
         return null;
     }
 
-    /** 每 2 tick：鯊王追人、時間到游走。 */
+    /** 招式叫出來的小怪：放在筏上、跟著鯊王一起收掉。 */
+    private LivingEntity summonAdd(final King king, final String typeName, final Location where) {
+        final org.bukkit.entity.EntityType type;
+        try {
+            type = org.bukkit.entity.EntityType.valueOf(typeName.toUpperCase(Locale.ROOT));
+        } catch (final IllegalArgumentException e) {
+            return null;
+        }
+        final Entity entity = service.world().spawnEntity(clampToRaft(king.plot, where), type, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM);
+        if (!(entity instanceof LivingEntity add)) {
+            entity.remove();
+            return null;
+        }
+        add.setPersistent(false);
+        try {
+            plugin.monsters().markSummoned(add);
+            plugin.monsters().decorate(add, plugin.monsters().data(king.entity).map(tw.exilecore.monster.MonsterData::level).orElse(80),
+                    tw.exilecore.monster.MonsterRarity.NORMAL, List.of());
+        } catch (final RuntimeException e) {
+            add.remove();
+            return null;
+        }
+        add.getPersistentDataContainer().set(service.driftKey(), PersistentDataType.STRING, "king_add:" + king.owner);
+        king.adds.add(add.getUniqueId());
+        return add;
+    }
+
+    /** 每 2 tick：鯊王在筏上追人、換階段、狂暴、時間到游走。 */
     void tickKings() {
         final LifeConfig.SharkKing def = config().sharkKing();
         for (final java.util.Iterator<Map.Entry<UUID, King>> it = kings.entrySet().iterator(); it.hasNext(); ) {
             final King king = it.next().getValue();
             final Player owner = plugin.getServer().getPlayer(king.owner);
-            if (!king.entity.isValid() || king.entity.isDead() || owner == null || service.activePlot(owner) != king.plot
-                    || service.world() == null || !service.world().equals(owner.getWorld())) {
+            final List<Player> crew = service.crewOn(king.plot);
+            if (!king.entity.isValid() || king.entity.isDead() || owner == null || service.world() == null || !service.world().equals(owner.getWorld())
+                    || service.activePlot(owner) != king.plot && crew.isEmpty()) {
                 removeKing(king);
                 it.remove();
                 continue;
@@ -924,32 +1079,70 @@ final class LifeExtras {
             king.age++;
             king.entity.setRemainingAir(king.entity.getMaximumAir());
             if (def != null && king.age > def.fleeSeconds() * 10) {
-                for (final Player member : service.crewOn(king.plot)) {
-                    member.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(def.name()) + "沉回海裡了（血餌沒了）"));
+                for (final Player member : crew) {
+                    member.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(def.name()) + "跳回海裡了（血餌沒了）"));
                 }
                 removeKing(king);
                 it.remove();
                 continue;
             }
-            // 追最近的人（在水面下游）
-            Player target = owner;
-            for (final Player member : service.crewOn(king.plot)) {
-                if (member.getLocation().distanceSquared(king.entity.getLocation()) < target.getLocation().distanceSquared(king.entity.getLocation())) {
+            if (def != null) {
+                // 狂暴
+                if (!king.enraged && def.enrageAfter() > 0 && king.age >= def.enrageAfter() * 10) {
+                    king.enraged = true;
+                    plugin.monsters().invalidate(king.entity.getUniqueId());
+                    for (final Player member : crew) {
+                        member.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(def.name()) + "狂暴了：傷害更多 " + Math.round(def.enrageDamage()) + "%"));
+                    }
+                }
+                // 換階段（生命低於 at）
+                final org.bukkit.attribute.AttributeInstance max = king.entity.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+                final double ratio = max == null || max.getValue() <= 0 ? 1 : king.entity.getHealth() / max.getValue();
+                while (king.phase < def.phases().size() && ratio <= def.phases().get(king.phase).at()) {
+                    final LifeConfig.KingPhase phase = def.phases().get(king.phase);
+                    king.phase++;
+                    plugin.monsters().invalidate(king.entity.getUniqueId());
+                    for (final Player member : crew) {
+                        member.sendMessage(plugin.text().prefixed("<#ff6b6b>" + ItemRenderer.escape(phase.name().isEmpty() ? "第 " + (king.phase + 1) + " 階段" : phase.name())
+                                + (phase.message().isEmpty() ? "" : "<gray> " + ItemRenderer.escape(phase.message()))
+                                + (phase.damage() > 0 ? "<red>（傷害更多 " + Math.round(phase.damage()) + "%）" : "")));
+                        member.playSound(member.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 0.8f, 0.8f);
+                    }
+                }
+            }
+            // 在筏上追最近的人（跳不出筏）
+            Player target = null;
+            for (final Player member : crew) {
+                if (target == null || member.getLocation().distanceSquared(king.entity.getLocation()) < target.getLocation().distanceSquared(king.entity.getLocation())) {
                     target = member;
                 }
             }
             final Location at = king.entity.getLocation();
-            final org.bukkit.util.Vector to = target.getLocation().toVector().setY(config().seaLevel() - 0.8).subtract(at.toVector());
-            final double distance = to.length();
-            if (distance > 2.5) {
-                final org.bukkit.util.Vector step = to.normalize().multiply(Math.min(distance, 0.3));
-                final Location next = at.clone().add(step);
-                next.setDirection(step);
-                king.entity.teleport(next);
-            } else if (king.age % 10 == 0) {
-                service.world().spawnParticle(Particle.BUBBLE_POP, at, 12, 0.5, 0.3, 0.5, 0.02);
-                service.world().playSound(at, Sound.ENTITY_DOLPHIN_ATTACK, 0.8f, 0.5f);
+            if (target == null) {
+                continue;
             }
+            final org.bukkit.util.Vector to = target.getLocation().toVector().setY(deckY()).subtract(at.toVector());
+            final double distance = to.clone().setY(0).length();
+            Location next = at.clone();
+            if (distance > 2.5) {
+                final org.bukkit.util.Vector step = to.clone().setY(0).normalize().multiply(Math.min(distance - 2, king.enraged ? 0.32 : 0.24));
+                next = at.clone().add(step);
+            }
+            next.setY(deckY());
+            next = clampToRaft(king.plot, next);
+            if (to.lengthSquared() > 1e-4) {
+                next.setDirection(to.clone().setY(0));
+            }
+            if (next.distanceSquared(at) > 1e-4 || Math.abs(next.getYaw() - at.getYaw()) > 1) {
+                king.entity.teleport(next);
+            }
+            if (king.age % 10 == 0) {
+                service.world().spawnParticle(Particle.FALLING_WATER, at.clone().add(0, 1, 0), 8, 0.8, 0.4, 0.8, 0);
+            }
+            king.adds.removeIf(id -> {
+                final Entity add = plugin.getServer().getEntity(id);
+                return add == null || !add.isValid() || add.isDead();
+            });
         }
     }
 
@@ -960,6 +1153,13 @@ final class LifeExtras {
         if (king.entity.isValid()) {
             king.entity.remove();
         }
+        for (final UUID id : king.adds) {
+            final Entity add = plugin.getServer().getEntity(id);
+            if (add != null) {
+                add.remove();
+            }
+        }
+        king.adds.clear();
         service.markCombat(king.plot, false);
     }
 
@@ -979,6 +1179,12 @@ final class LifeExtras {
         final LifeConfig.SharkKing def = config().sharkKing();
         if (dead == null || def == null) {
             return;
+        }
+        for (final UUID id : dead.adds) {
+            final Entity add = plugin.getServer().getEntity(id);
+            if (add != null) {
+                add.remove();
+            }
         }
         service.markCombat(dead.plot, false);
         // 筏上的每個人各拿一份
@@ -1000,6 +1206,10 @@ final class LifeExtras {
                     got.append(got.isEmpty() ? "" : "、").append(service.materialName(drop.getKey())).append(" +").append(amount);
                 }
             }
+            for (final Map.Entry<String, Integer> sure : def.guaranteed().entrySet()) { // 2026-10-23 晚：保底通貨（照極境）
+                service.giveCurrency(member, sure.getKey(), sure.getValue());
+                got.append("、").append(service.currencyName(sure.getKey())).append(" ×").append(sure.getValue());
+            }
             if (!def.currencies().isEmpty() && random.nextDouble() < def.currencyChance()) {
                 final String id = def.currencies().get(random.nextInt(def.currencies().size()));
                 service.giveCurrency(member, id, 1);
@@ -1009,6 +1219,9 @@ final class LifeExtras {
             profile.kingKills++;
             profile.dirty = true;
             service.flush(member);
+            if (!def.defeat().isEmpty()) {
+                member.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(def.defeat())));
+            }
             member.sendMessage(plugin.text().prefixed("<#ff6b6b>打倒了" + ItemRenderer.escape(def.name()) + "！<gray>" + ItemRenderer.escape(got.toString())
                     + "、生活經驗 +" + def.xp()));
             member.playSound(member.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1f);

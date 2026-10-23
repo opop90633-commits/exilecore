@@ -279,6 +279,16 @@ public final class LifeService {
     }
 
     /** 這是不是淵鯨（MapService：每秒傷害上限比照終局、掉落不吃物品數量與稀有度）。 */
+    /** 2026-10-23 晚：這是不是渦齒鯊王（MapService：每秒傷害上限照比照的極境）。 */
+    public boolean isSharkKing(final org.bukkit.entity.Entity entity) {
+        return world != null && world.equals(entity.getWorld()) && extras.isKing(entity);
+    }
+
+    /** 鯊王比照的極境（maps.yml）；沒有 null。 */
+    public tw.exilecore.map.MapConfig.Uber sharkKingUber() {
+        return extras.likeUber();
+    }
+
     public boolean isWhale(final org.bukkit.entity.Entity entity) {
         return world != null && world.equals(entity.getWorld()) && whale.isWhale(entity);
     }
@@ -576,6 +586,14 @@ public final class LifeService {
             return false;
         }
         return plot == profile.plot || members.getOrDefault(plot, Map.of()).containsKey(player.getUniqueId());
+    }
+
+    /** 2026-10-23 晚：這塊筏最大幾×幾：筏主的生活等級，加上筏主累積贊助最高階送的格數（筏主在線才算）。 */
+    int raftSize(final int plot) {
+        final UUID owner = plotOwners.get(plot);
+        final Player online = owner == null ? null : plugin.getServer().getPlayer(owner);
+        final int bonus = online == null || plugin.sponsors() == null ? 0 : plugin.sponsors().raftSizeBonus(online);
+        return Math.min(config.plotSpacing() / 2, config.raftSize(plotLevel(plot)) + bonus);
     }
 
     /** 筏主的生活等級（決定筏多大）：筏主在線照現在的，不在線照記下來的。 */
@@ -914,7 +932,7 @@ public final class LifeService {
         }
         guests.remove(player.getUniqueId());
         if (!hasHook(player)) {
-            giveItem(player, hookItem());
+            giveItem(player, hookItem(player));
         }
         player.showTitle(Title.title(plugin.text().parse("<" + config.color() + ">" + ItemRenderer.escape(config.name())),
                 plugin.text().parse("<gray>拿著星索鉤，對準漂過來的東西按右鍵"),
@@ -965,7 +983,7 @@ public final class LifeService {
         }
         guests.put(player.getUniqueId(), plot);
         if (!hasHook(player)) {
-            giveItem(player, hookItem());
+            giveItem(player, hookItem(player));
         }
         final boolean member = canBuild(player, profile, plot);
         player.sendMessage(plugin.text().prefixed("<" + config.color() + ">來到 " + ItemRenderer.escape(ownerName(plot)) + " 的木筏"
@@ -1731,16 +1749,42 @@ public final class LifeService {
     // ---- 物品 ----
 
     ItemStack hookItem() {
+        return hookItem(null);
+    }
+
+    /** 2026-10-23 晚：星索鉤的名字、說明照這個人現在的階級（以前一直是「星索鉤」，升級了看不出來）。 */
+    ItemStack hookItem(final Player owner) {
         final ItemStack stack = new ItemStack(Material.FISHING_ROD);
+        decorateHook(stack, owner);
+        return stack;
+    }
+
+    private void decorateHook(final ItemStack stack, final Player owner) {
+        final LifeConfig.Hook hook = owner == null ? config.hook(0) : config.hook(hookTier(owner));
         stack.editMeta(meta -> {
-            meta.displayName(ItemRenderer.line("<" + config.color() + ">星索鉤"));
-            meta.lore(List.of(ItemRenderer.line("<gray>在" + ItemRenderer.escape(config.name()) + "：對準漂流物按右鍵撈起來"),
-                    ItemRenderer.line("<gray>鉤子的階級記在帳號裡（選單 /sea 升級）"),
-                    ItemRenderer.line("<dark_gray>生活工具")));
+            meta.displayName(ItemRenderer.line("<" + config.color() + ">星索鉤<gray>・" + ItemRenderer.escape(hook.name())));
+            final List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
+            lore.add(ItemRenderer.line("<gray>在" + ItemRenderer.escape(config.name()) + "：對準漂流物按右鍵撈起來"));
+            lore.add(ItemRenderer.line("<gray>撈得到 <white>" + trim(hook.range()) + "<gray> 格內的東西"
+                    + (hook.doubleChance() > 0 ? String.format(Locale.ROOT, "、<white>%.0f%%<gray> 多撈一份", hook.doubleChance() * 100) : "")));
+            lore.add(ItemRenderer.line("<gray>鉤子的階級記在帳號裡（選單 /sea 升級）"));
+            lore.add(ItemRenderer.line("<dark_gray>生活工具"));
+            meta.lore(lore);
             meta.setUnbreakable(true);
             meta.getPersistentDataContainer().set(itemKey, PersistentDataType.STRING, HOOK_ITEM);
         });
-        return stack;
+    }
+
+    /** 升級之後：背包、游標上的星索鉤改成新的名字與說明。 */
+    private void refreshHooks(final Player player) {
+        if (HOOK_ITEM.equals(itemId(player.getItemOnCursor()))) {
+            decorateHook(player.getItemOnCursor(), player);
+        }
+        for (final ItemStack stack : player.getInventory().getContents()) {
+            if (HOOK_ITEM.equals(itemId(stack))) {
+                decorateHook(stack, player);
+            }
+        }
     }
 
     ItemStack raftItem(final LifeConfig.Item item, final int amount) {
@@ -1807,7 +1851,7 @@ public final class LifeService {
         if (hasHook(player)) {
             return "你已經有星索鉤了（背包、隨身背包或倉庫裡）";
         }
-        giveItem(player, hookItem());
+        giveItem(player, hookItem(player));
         return null;
     }
 
@@ -1871,6 +1915,7 @@ public final class LifeService {
         profile.dirty = true;
         if (recipe.hookUpgrade()) {
             profile.hook = recipe.hook();
+            refreshHooks(player); // 2026-10-23 晚：手上的鉤子跟著換名字
             player.sendMessage(plugin.text().prefixed("<" + config.color() + ">星索鉤升級成" + ItemRenderer.escape(config.hook(profile.hook).name())
                     + "<gray>：撈得到 " + trim(config.hook(profile.hook).range()) + " 格內的東西"));
         } else if (recipe.food() != null) {
@@ -1987,7 +2032,7 @@ public final class LifeService {
     }
 
     private void tickSession(final Player player, final Profile profile, final Session session, final int[] center, final int plot) {
-        final int size = config.raftSize(plotLevel(plot));
+        final int size = raftSize(plot);
         final double lane = Math.max(14, size / 2.0 + 10);
         // 生成
         if (--session.nextSpawn <= 0 && session.drifts.size() < config.maxDrifts()) {
@@ -2312,7 +2357,7 @@ public final class LifeService {
         }
         final int[] center = plotCenter(plot);
         final int level = plotLevel(plot);
-        final int size = config.raftSize(level);
+        final int size = raftSize(plot);
         final int[] range = extent(size);
         final int dx = block.getX() - center[0];
         final int dz = block.getZ() - center[1];
@@ -2343,7 +2388,7 @@ public final class LifeService {
             return "下面要有筏地板";
         }
         if ("fish_trap".equals(item.station())) {
-            final String full = extras.canPlaceTrap(plot, tickCount); // 2026-10-23
+            final String full = extras.canPlaceTrap(plot, tickCount, block); // 2026-10-23
             if (full != null) {
                 return full;
             }
@@ -3094,7 +3139,7 @@ public final class LifeService {
 
     /** 筏邊挑一格水（旁邊是地板、地板上面沒東西、不是筏心）。 */
     private Location biteTarget(final int[] center, final Profile profile) {
-        final int size = config.raftSize(config.levelOf(profile.xp)) + 2;
+        final int size = raftSize(profile.plot) + 2;
         final int[] range = extent(size);
         final int y = config.seaLevel();
         final List<Location> options = new ArrayList<>();

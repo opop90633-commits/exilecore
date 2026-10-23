@@ -84,10 +84,58 @@ public final class SponsorConfig {
     /** 累積贊助一階：累積多少星幣、稱號、名字顏色與額外功能（listings 0 = 照 economy.yml）。 */
     public record Tier(long amount, String id, String title, String color, String nameColor, int stashPages, int bagPages, int listings,
                        boolean bypassFull, boolean chatColor, boolean customTitle, boolean campFly,
-                       double experience, double gold, double deathPenalty) {
+                       double experience, double gold, double deathPenalty, Perks perks) {
+        public Tier(final long amount, final String id, final String title, final String color, final String nameColor, final int stashPages,
+                    final int bagPages, final int listings, final boolean bypassFull, final boolean chatColor, final boolean customTitle,
+                    final boolean campFly, final double experience, final double gold, final double deathPenalty) {
+            this(amount, id, title, color, nameColor, stashPages, bagPages, listings, bypassFull, chatColor, customTitle, campFly, experience, gold,
+                    deathPenalty, Perks.NONE);
+        }
+
         /** 經驗、金幣多幾 %，死亡懲罰改成幾 %（-1 = 照 character.yml）。2026-10。 */
         public boolean hasBonus() {
             return experience > 0 || gold > 0 || deathPenalty >= 0;
+        }
+    }
+
+    /**
+     * 2026-10-23：每一階的主打（都不影響戰鬥）：
+     * characterSlots 送幾個角色欄位；freeBoosts 每 freePer（day／week／month）免費送幾次全服加倍（自己選種類，在贊助選單用）；
+     * weeklyBoxes 每週送幾箱免費抽獎箱（跟月卡的免費箱一樣累積）；cosmetics 到這一階就送的時裝；
+     * loginMessage 可以自訂上線訊息（/sponsor login）；levelFireworks 升級放煙火；allCosmetics 所有非限定的時裝都能用；
+     * lifetimeCard 終身月卡。照「用到過的最高一階」，但 cosmetics 是每一階到了都送。
+     */
+    public record Perks(int characterSlots, int freeBoosts, String freePer, int weeklyBoxes, List<String> cosmetics, boolean loginMessage,
+                        boolean levelFireworks, boolean allCosmetics, boolean lifetimeCard,
+                        // 2026-10-23 晚（最高階）：上線全服公告＋音效、名字前的徽章、名字顏色自選、每月送幾張改名卡、
+                        // 送公會幾頁倉庫（一次，記在帳號）、筏的大小 +N、吊床多回 N 精力、放的全服加倍多幾分鐘、進場特效
+                        boolean joinAnnounce, String badge, boolean customNameColor, int monthlyRenameCards, int guildStashPages,
+                        int raftSize, int bedStamina, int boostMinutes, boolean entryAura) {
+        public static final Perks NONE = new Perks(0, 0, "week", 0, List.of(), false, false, false, false,
+                false, "", false, 0, 0, 0, 0, 0, false);
+
+        public boolean any() {
+            return characterSlots > 0 || freeBoosts > 0 || weeklyBoxes > 0 || !cosmetics.isEmpty() || loginMessage || levelFireworks
+                    || allCosmetics || lifetimeCard || joinAnnounce || !badge.isEmpty() || customNameColor || monthlyRenameCards > 0
+                    || guildStashPages > 0 || raftSize > 0 || bedStamina > 0 || boostMinutes > 0 || entryAura;
+        }
+
+        /** 這個週期的代號（day：日、week：ISO 週、month：年月），純計算。 */
+        public static String periodKey(final String per, final java.time.LocalDate date) {
+            return switch (per) {
+                case "day" -> String.valueOf(date.toEpochDay());
+                case "month" -> date.getYear() + "-" + date.getMonthValue();
+                default -> date.get(java.time.temporal.IsoFields.WEEK_BASED_YEAR) + "W" + date.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+            };
+        }
+
+        /** 免費加倍的週期（中文）。 */
+        public String freePerText() {
+            return switch (freePer) {
+                case "day" -> "每天";
+                case "month" -> "每月";
+                default -> "每週";
+            };
         }
     }
 
@@ -341,6 +389,27 @@ public final class SponsorConfig {
             checkId(id, node.path());
             final String color = color(node.string("color", "#ffffff").trim(), node.path() + ".color");
             final String nameColor = nameColor(node.string("name_color", color).trim(), node.path() + ".name_color");
+            final YamlNode free = node.node("free_boosts");
+            final String per = free.string("per", "week").trim().toLowerCase(java.util.Locale.ROOT);
+            if (!per.equals("day") && !per.equals("week") && !per.equals("month")) {
+                throw new IllegalArgumentException(node.path() + ".free_boosts.per：要寫 day、week 或 month");
+            }
+            final List<String> perkCosmetics = new ArrayList<>();
+            for (final String cosmetic : node.strings("cosmetics")) {
+                perkCosmetics.add(cosmetic.trim());
+            }
+            final String badge = node.string("badge", "").trim();
+            if (badge.codePointCount(0, badge.length()) > 2 || badge.contains("<")) {
+                throw new IllegalArgumentException(node.path() + ".badge：最多兩個字、不能有 <");
+            }
+            final Perks perks = new Perks(Math.max(0, Math.min(20, node.integer("character_slots", 0))),
+                    Math.max(0, Math.min(20, free.integer("count", 0))), per, Math.max(0, Math.min(20, node.integer("weekly_boxes", 0))),
+                    List.copyOf(perkCosmetics), node.bool("login_message", false), node.bool("level_fireworks", false),
+                    node.bool("all_cosmetics", false), node.bool("lifetime_card", false),
+                    node.bool("join_announce", false), badge, node.bool("custom_name_color", false),
+                    Math.max(0, Math.min(30, node.integer("monthly_rename_cards", 0))), Math.max(0, Math.min(20, node.integer("guild_stash_pages", 0))),
+                    Math.max(0, Math.min(20, node.integer("raft_size", 0))), Math.max(0, Math.min(100, node.integer("bed_stamina", 0))),
+                    Math.max(0, Math.min(60, node.integer("boost_minutes", 0))), node.bool("entry_aura", false));
             tierList.add(new Tier(amount, id, node.requireString("title").trim(), color, nameColor,
                     Math.max(0, Math.min(30, node.integer("stash_pages", 0))),
                     Math.max(0, Math.min(10, node.integer("bag_pages", 0))),
@@ -349,7 +418,7 @@ public final class SponsorConfig {
                     node.bool("camp_fly", false),
                     Math.max(0, Math.min(100, node.decimal("experience", 0))),
                     Math.max(0, Math.min(100, node.decimal("gold", 0))),
-                    node.has("death_penalty") ? Math.max(0, Math.min(100, node.decimal("death_penalty", 10))) : -1));
+                    node.has("death_penalty") ? Math.max(0, Math.min(100, node.decimal("death_penalty", 10))) : -1, perks));
         }
         tiers = List.copyOf(tierList);
 
@@ -409,6 +478,13 @@ public final class SponsorConfig {
                     limited.isEmpty() ? null : limited));
         }
         cosmetics = Collections.unmodifiableMap(cosmeticMap);
+        for (final Tier tier : tiers) { // 2026-10-23：到階送的時裝要存在
+            for (final String id : tier.perks().cosmetics()) {
+                if (!cosmeticMap.containsKey(id)) {
+                    throw new IllegalArgumentException("tiers." + tier.id() + ".cosmetics：沒有「" + id + "」這個時裝（cosmetics）");
+                }
+            }
+        }
 
         final Map<String, LimitedTitle> limitedMap = new LinkedHashMap<>();
         final YamlNode limitedNode = root.node("limited_titles");

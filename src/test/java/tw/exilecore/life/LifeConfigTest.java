@@ -156,6 +156,8 @@ class LifeConfigTest {
         assertTrue(config.lampDrift() > 0 && config.sailDrift() > 0 && config.bedStamina() > 0);
         assertTrue(config.trapMinutes() > 0 && !config.trapFish().isEmpty());
         assertTrue(config.sharkKing() != null && config.sharkKing().drops().containsKey("abyss_pearl"));
+        assertEquals(java.util.Map.of("sky_fragment", 2, "zenith_orb", 5), config.sharkKing().guaranteed());
+        assertEquals("sky_crucible", config.sharkKing().like());
         assertTrue(config.recipes().stream().anyMatch(r -> "glassblower_bauble".equals(r.currency())));
         assertTrue(config.recipes().stream().anyMatch(r -> "shark_bait".equals(r.tool())));
         assertEquals(4, config.hooks().size());

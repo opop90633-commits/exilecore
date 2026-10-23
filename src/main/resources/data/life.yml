@@ -559,17 +559,43 @@ likes:
 crew:
   xp: 0.3
 
-# 渦齒鯊王：拿鯊王血餌（配方 shark_bait）在自己的筏上右鍵用，鯊王從筏邊浮上來；筏變成戰鬥區；flee_seconds 秒沒打倒就游走（血餌沒了）。
-#   life 生命倍率（照筏主等級的稀有怪）；drops 每樣各一次；currency 機率附通貨（不佔每日額度）；第一次打倒 → 稱號 shark_slayer
+# 渦齒鯊王：拿鯊王血餌（配方 shark_bait）在自己的筏上右鍵用，鯊王跳上筏，就在筏上打（筏變成戰鬥區、可以放技能）。
+#   2026-10-23 晚：難度比照極境——like 寫 maps.yml 的哪個終局，就照那個終局的極境：等級（最高階＋極境的等級加成）、怪物屬性、
+#   招式冷卻、玩家受到的極境詞綴、每秒傷害上限與遞減都一樣；life／damage 跟極境 Boss 同一個寫法（再乘終局最高階的 tier_life）。
+#   life 605.5 = 天穹熔爐 Boss 19.1 × 極境 31.7（單人打 Boss 每秒 100 萬約 3 分半）；damage 3.3 = 2.2 × 1.5。
+#   type 是生物（牠不會動，程式帶著牠在筏上追人，跳不出筏）；enrage 開打幾秒後狂暴；phases 生命低於 at 進下一個階段（傷害更多 damage%）；
+#   flee_seconds 秒沒打倒就游走（血餌沒了）。drops 每樣各一次；currency 機率附通貨、guaranteed 保底通貨（都不佔每日額度）；
+#   第一次打倒 → 稱號 shark_slayer
 shark_king:
   name: 渦齒鯊王
   bait: 鯊王血餌
-  life: 40
-  scale: 3.2
-  flee_seconds: 300
-  drops: { abyss_pearl: [2, 3], shark_tooth: [4, 6], shark_skin: [3, 5], shark_meat: [6, 10], horn_shard: [1, 1] }
+  type: DOLPHIN
+  like: sky_crucible
+  life: 605.5
+  damage: 3.3
+  scale: 3.0
+  mods: [armoured, resistant]
+  flee_seconds: 420
+  enrage: { after: 300, damage: 150 }
+  intro: "（筏邊的海水被染紅了。一條比筏還長的影子，躍了上來。）"
+  defeat: "鯊王翻了過去，滑回海裡。筏上留下牠斷掉的牙。"
+  phases:
+    - { at: 0.66, name: 血潮, message: "（鯊王聞到了自己的血，開始發狂）", damage: 30 }
+    - { at: 0.33, name: 渦齒狂噬, message: "（鯊王的螺旋齒轉了起來，整塊筏都在震）", damage: 40 }
+  skills:
+    - maul
+    - charge
+    - shark_tide_ring
+    - shark_tail_slap
+    - { id: pounce, phase: 1 }
+    - { id: shark_whirlpool, phase: 1 }
+    - { id: shark_bubbles, phase: 1 }
+    - { id: summon_drowned, phase: 2 }
+    - { id: shark_frenzy, phase: 2 }
   horn_shard: 0
+  drops: { abyss_pearl: [2, 3], shark_tooth: [4, 6], shark_skin: [3, 5], shark_meat: [6, 10], horn_shard: [1, 1] }
   currency: { chance: 1.0, ids: [zenith_orb, oracle_orb, sky_fragment, gemcutter_prism, glassblower_bauble] }
+  guaranteed: { sky_fragment: 2, zenith_orb: 5 }   # 2026-10-23 晚：保底通貨（每個人各拿；照極境的保底）
   xp: 400
 
 # 深淵巨獸「淵鯨」：拿深淵號角（成品，可以交易）在自己的筏上右鍵吹，淵鯨從筏的東邊浮上來。

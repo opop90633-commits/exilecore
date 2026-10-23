@@ -87,7 +87,10 @@ public final class Music {
         return TRACKS.stream().filter(track -> track.mood() == mood).toList();
     }
 
-    /** 原版的背景音樂事件（Minecraft 26.2）：資源包換成沒有聲音，才不會跟我們的疊在一起。主選單的音樂留著。 */
+    /**
+     * 原版的背景音樂事件（Minecraft 26.2）：資源包換成沒有聲音，才不會跟我們的疊在一起。主選單的音樂留著。
+     * 2026-10-23：音樂拆成另一包時，這些靜音放在音樂那包（關掉背景音樂的人聽原版的）。
+     */
     public static final List<String> VANILLA_MUSIC = List.of(
             "music.game", "music.creative", "music.end", "music.dragon", "music.under_water",
             "music.nether.basalt_deltas", "music.nether.crimson_forest", "music.nether.nether_wastes",

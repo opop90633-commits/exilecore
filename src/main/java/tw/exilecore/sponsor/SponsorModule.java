@@ -158,6 +158,37 @@ public final class SponsorModule implements Module, Listener {
         }
     }
 
+    /** 2026-10-23：自訂上線訊息（累積贊助的主打）：換掉原版的上線訊息（ChatListener 的 MONITOR 會照「過濾加入離開訊息」送出去）。 */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onJoinMessage(final org.bukkit.event.player.PlayerJoinEvent event) {
+        if (service == null || !service.loaded(event.getPlayer())) {
+            return;
+        }
+        final String custom = service.perks.loginMessage(event.getPlayer());
+        if (custom != null) {
+            event.joinMessage(plugin.text().parse(custom));
+        }
+        if (service.perks.joinAnnounce(event.getPlayer())) {
+            service.perks.announceJoin(event.getPlayer()); // 2026-10-23 晚：最高階上線全服音效
+        }
+    }
+
+    /** 2026-10-23 晚：最高階進營地、進地圖的進場特效（換世界）。 */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onChangedWorld(final org.bukkit.event.player.PlayerChangedWorldEvent event) {
+        if (service != null && service.loaded(event.getPlayer())) {
+            service.perks.entryAura(event.getPlayer());
+        }
+    }
+
+    /** 2026-10-23：傳送之前先把騎在身上的 3D 背飾放下來（有乘客的玩家 Bukkit 不給傳送）；傳到之後下一 tick 騎回去。 */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onTeleportEarly(final org.bukkit.event.player.PlayerTeleportEvent event) {
+        if (models != null) {
+            models.beforeTeleport(event.getPlayer());
+        }
+    }
+
     /** 2026-10-22：下線時個人加倍先暫停（LOWEST：在帳號資料卸下之前寫進去）。 */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onQuitEarly(final PlayerQuitEvent event) {
@@ -215,6 +246,38 @@ public final class SponsorModule implements Module, Listener {
                                 final String color = first < words.length ? String.join(" ", java.util.Arrays.copyOfRange(words, first, words.length)) : null;
                                 tell(plugin, player, plugin.sponsors().setCustomTitle(player, text, color),
                                         "<green>自訂稱號設好了<gray>（選單的「稱號」戴上）");
+                            }
+                            return Command.SINGLE_SUCCESS;
+                        })))
+                .then(Commands.literal("login")   // 2026-10-23：自訂上線訊息（累積贊助的主打）
+                        .then(Commands.literal("clear").executes(context -> {
+                            final Player player = player(plugin, context);
+                            if (player != null) {
+                                tell(plugin, player, plugin.sponsors().perks.setLoginMessage(player, null), "<green>上線訊息拿掉了");
+                            }
+                            return Command.SINGLE_SUCCESS;
+                        }))
+                        .then(Commands.argument("text", StringArgumentType.greedyString()).executes(context -> {
+                            final Player player = player(plugin, context);
+                            if (player != null) {
+                                tell(plugin, player, plugin.sponsors().perks.setLoginMessage(player, StringArgumentType.getString(context, "text")),
+                                        "<green>上線訊息設好了<gray>（下次上線全服看得到；/sponsor login clear 拿掉）");
+                            }
+                            return Command.SINGLE_SUCCESS;
+                        })))
+                .then(Commands.literal("color")   // 2026-10-23 晚：名字顏色自選（最高階）
+                        .then(Commands.literal("clear").executes(context -> {
+                            final Player player = player(plugin, context);
+                            if (player != null) {
+                                tell(plugin, player, plugin.sponsors().setNameColor(player, null), "<green>名字顏色回到階級的顏色了");
+                            }
+                            return Command.SINGLE_SUCCESS;
+                        }))
+                        .then(Commands.argument("text", StringArgumentType.greedyString()).executes(context -> {
+                            final Player player = player(plugin, context);
+                            if (player != null) {
+                                tell(plugin, player, plugin.sponsors().setNameColor(player, StringArgumentType.getString(context, "text")),
+                                        "<green>名字顏色設好了<gray>（/sponsor color clear 回到階級的顏色）");
                             }
                             return Command.SINGLE_SUCCESS;
                         })))

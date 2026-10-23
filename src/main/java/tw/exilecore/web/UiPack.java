@@ -3242,6 +3242,9 @@ public final class UiPack {
     public record Split(Built ui, Built music) {
     }
 
+    /** 原版音效的設定（挖方塊的靜音、原版背景音樂的靜音）。 */
+    static final String VANILLA_SOUNDS = "assets/minecraft/sounds.json";
+
     /** 背景音樂的檔案（assets/exilecore/sounds.json 只放音樂的事件，見 {@link #music}）。 */
     static boolean isMusicFile(final String path) {
         return path.startsWith("assets/exilecore/sounds/") || path.equals("assets/exilecore/sounds.json");
@@ -3262,6 +3265,26 @@ public final class UiPack {
         }
         if (music.isEmpty() || !ui.containsKey("pack.mcmeta")) {
             return new Split(full, null);
+        }
+        // 2026-10-23：原版背景音樂的靜音也搬到音樂那包——關掉背景音樂的人（不下載音樂那包）就聽得到原版的音樂。
+        // 兩包的 assets/minecraft/sounds.json 客戶端會合在一起，介面那包留下挖方塊的靜音
+        final byte[] vanillaSounds = ui.get(VANILLA_SOUNDS);
+        if (vanillaSounds != null) {
+            final JsonObject all = com.google.gson.JsonParser.parseString(new String(vanillaSounds, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+            final JsonObject musicMutes = new JsonObject();
+            for (final String event : tw.exilecore.music.Music.VANILLA_MUSIC) {
+                if (all.has(event)) {
+                    musicMutes.add(event, all.remove(event));
+                }
+            }
+            if (!musicMutes.isEmpty()) {
+                music.put(VANILLA_SOUNDS, json(musicMutes));
+                if (all.isEmpty()) {
+                    ui.remove(VANILLA_SOUNDS);
+                } else {
+                    ui.put(VANILLA_SOUNDS, json(all));
+                }
+            }
         }
         final JsonObject meta = com.google.gson.JsonParser.parseString(new String(ui.get("pack.mcmeta"), java.nio.charset.StandardCharsets.UTF_8))
                 .getAsJsonObject();

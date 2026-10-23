@@ -485,6 +485,8 @@ final class SponsorMenus {
             boostSlots.clear();
             int index = 0;
             final Map<String, Boosts.Active> active = service.boosts();
+            final int freeLeft = service.perks.freeBoostsLeft(player); // 2026-10-23：累積贊助送的免費次數
+            final SponsorConfig.Perks perks = service.perks.perksOf(player);
             for (final SponsorConfig.BoostType type : config.boosts().values()) {
                 if (index >= SLOT_BOOSTS.length) {
                     break;
@@ -498,7 +500,9 @@ final class SponsorMenus {
                         "<gray>公告寫你的名字；同一種再買接著延長（最多 " + config.boostMaxMinutes() + " 分鐘）",
                         running == null ? "<dark_gray>現在沒有" : String.format(java.util.Locale.ROOT, "<green>進行中：剩 %d:%02d（%s 贊助）",
                                 seconds / 60, seconds % 60, ItemRenderer.escape(running.sponsor())),
-                        "<gray>價格：" + COIN + format(config.boostPrice()) + " 星幣", "", "<yellow>左鍵：購買");
+                        "<gray>價格：" + COIN + format(config.boostPrice()) + " 星幣",
+                        perks.freeBoosts() > 0 ? "<#ffd27f>累積贊助的免費次數：" + perks.freePerText() + " " + perks.freeBoosts() + " 次，剩 <white>" + freeLeft : "",
+                        "", "<yellow>左鍵：購買" + (freeLeft > 0 ? "　<yellow>右鍵：用免費的一次" : ""));
                 set(slot, confirmable(slot, running == null ? stack : glowing(stack)));
             }
             personalSlots.clear();
@@ -628,7 +632,9 @@ final class SponsorMenus {
                 case SLOT_BOXES -> new Boxes(plugin, player, service).open();
                 default -> {
                     final String boost = boostSlots.get(slot);
-                    if (boost != null && confirm(slot)) {
+                    if (boost != null && click.isRightClick() && service.perks.freeBoostsLeft(player) > 0) {
+                        result(service.buyBoost(player, boost, true)); // 2026-10-23：免費的一次（不用確認、不花錢）
+                    } else if (boost != null && confirm(slot)) {
                         result(service.buyBoost(player, boost));
                     }
                     final String personal = personalSlots.get(slot);
@@ -702,6 +708,10 @@ final class SponsorMenus {
                 }
                 if (tier.deathPenalty() >= 0) {
                     lore.add("<gray>死亡損失經驗 <white>" + percentText(tier.deathPenalty()) + "%");
+                }
+                if (tier.perks().any()) { // 2026-10-23：這一階的主打
+                    lore.add("");
+                    lore.addAll(TierPerks.describe(tier.perks()));
                 }
                 final ItemStack stack = icon(reached ? Material.NAME_TAG : Material.PAPER,
                         "<" + tier.color() + ">" + format(tier.amount()) + " 星幣", lore);

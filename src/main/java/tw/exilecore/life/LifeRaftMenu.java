@@ -83,7 +83,7 @@ final class LifeRaftMenu extends Menu {
         if (own < 0) {
             info.add("<gray>你還沒有木筏：先到「前往我的木筏」去一次");
         } else {
-            final int size = service.config().raftSize(service.plotLevel(own));
+            final int size = service.raftSize(own);
             info.add("<gray>你的木筏：<white>" + size + "×" + size);
             info.add("<gray>共用成員 <white>" + members.size() + "</white>／" + MAX_MEMBERS);
         }
@@ -182,7 +182,7 @@ final class LifeRaftMenu extends Menu {
                 continue;
             }
             final String name = service.ownerName(plot);
-            final int size = service.config().raftSize(service.plotLevel(plot));
+            final int size = service.raftSize(plot);
             set(slot, head(plugin.getServer().getOfflinePlayer(owner), "<white>" + ItemRenderer.escape(name) + " 的木筏",
                     List.of("<gray>" + size + "×" + size + "；你是共用成員", "", "<yellow>左鍵：前往")));
             left.put(slot, () -> {

@@ -1650,7 +1650,9 @@ public final class SkillService {
             }
             return hint + "（不能有冷卻：" + (names.isEmpty() ? "輔助寶石加的冷卻也算" : String.join("、", names) + "會加冷卻，拿掉才能放圖騰") + "）";
         }
-        return built;
+        // 2026-10-23 修正：放進去的錘子寶石的品質也要算（以前英靈這一下直接用 SkillBuild.of，品質沒套上）
+        final List<tw.exilecore.stats.Modifier> quality = qualityModifiers(definition, next.quality());
+        return quality.isEmpty() ? built : built.withProfile(built.profile().withLocal(quality));
     }
 
     /**
@@ -1661,6 +1663,11 @@ public final class SkillService {
         final SkillBuild ancestor = SkillDeployables.ancestorHits(rawAncestor);
         final List<String> lines = new ArrayList<>();
         lines.add("<#e7c56b>英靈的" + ItemRenderer.escape(ancestor.definition().name()) + "<gray>（Lv." + ancestor.level() + "）：");
+        for (final tw.exilecore.stats.Modifier mod : ancestor.profile().local()) {
+            if (mod.source() != null && mod.source().startsWith("品質 ")) {
+                lines.add("<gray>　<#8888ff>" + ItemRenderer.escape(mod.source()) + "：增加 " + Math.round(mod.value() * 100) + "% 傷害"); // 2026-10-23
+            }
+        }
         final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, ancestor.profile());
         final long kinds = java.util.Arrays.stream(tw.exilecore.stats.DamageType.values()).filter(type -> expected.get(type) > 0).count();
         lines.add(kinds > 1

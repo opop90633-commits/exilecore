@@ -573,9 +573,16 @@ class UiPackTest {
         assertTrue(music.containsKey("pack.mcmeta"));
         assertTrue(music.containsKey("assets/exilecore/sounds.json"));
         for (final String path : music.keySet()) {
-            assertTrue(path.equals("pack.mcmeta") || UiPack.isMusicFile(path), "音樂那包不該有 " + path);
+            assertTrue(path.equals("pack.mcmeta") || path.equals(UiPack.VANILLA_SOUNDS) || UiPack.isMusicFile(path), "音樂那包不該有 " + path);
         }
-        assertEquals(files.size() + 1, ui.size() + music.size());
+        // 2026-10-23：原版背景音樂的靜音在音樂那包（關掉背景音樂的人聽得到原版的）；挖方塊的靜音留在介面那包
+        final String musicMutes = new String(music.get(UiPack.VANILLA_SOUNDS), java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue(musicMutes.contains("\"music.game\""), musicMutes);
+        if (ui.containsKey(UiPack.VANILLA_SOUNDS)) {
+            final String uiMutes = new String(ui.get(UiPack.VANILLA_SOUNDS), java.nio.charset.StandardCharsets.UTF_8);
+            assertTrue(!uiMutes.contains("\"music."), "介面那包不該靜音原版的背景音樂");
+        }
+        assertEquals(files.size() + 1 + (ui.containsKey(UiPack.VANILLA_SOUNDS) ? 1 : 0), ui.size() + music.size());
         assertEquals(split.ui().sha1(), UiPack.splitMusic(pack).ui().sha1());
     }
 }

@@ -924,8 +924,9 @@ public final class PlayerStateService {
             levelColumn = Math.max(levelColumn, levelWidth);
             rows.add(new String[] {first, level, classText, String.valueOf(classWidth), String.valueOf(levelWidth), title});
             owners.add(each);
-            // 2026-10：管理員永遠置頂（管理員之間、玩家之間都照等級高的排前面）
-            final int order = (each.hasPermission("exilecore.admin") ? 100_000 : 0) + character.level();
+            // 2026-10：管理員永遠置頂；2026-10-23：再來是贊助的人（累積贊助的階級高的在前），最後一般玩家；同一群裡照等級高的排前面
+            final int sponsorRank = plugin.sponsors() == null ? 0 : plugin.sponsors().tierRank(each);
+            final int order = (each.hasPermission("exilecore.admin") ? 100_000 : 0) + sponsorRank * 1_000 + character.level();
             if (each.getPlayerListOrder() != order) {
                 each.setPlayerListOrder(order);
             }
@@ -971,12 +972,13 @@ public final class PlayerStateService {
     private String styledName(final Player player, final String escapedName) {
         // 2026-10 月卡福利：有月卡的人名字前面一個小月亮（TAB、聊天）
         final String moon = plugin.sponsors() != null && plugin.sponsors().cardActive(player) ? "<#bcd4ff>☾</#bcd4ff>" : "";
+        final String badge = plugin.sponsors() == null ? "" : plugin.sponsors().nameBadge(player); // 2026-10-23 晚：最高階的 ★
         final String style = plugin.sponsors() == null ? null : plugin.sponsors().nameColor(player);
         if (style == null) {
-            return moon + "<white>" + escapedName + "</white>";
+            return badge + moon + "<white>" + escapedName + "</white>";
         }
         final String tag = style.startsWith("gradient:") ? "gradient" : style;
-        return moon + "<" + style + ">" + escapedName + "</" + tag + ">";
+        return badge + moon + "<" + style + ">" + escapedName + "</" + tag + ">";
     }
 
     /**
@@ -1032,6 +1034,9 @@ public final class PlayerStateService {
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
         player.sendMessage(plugin.text().prefixed("<green>升到 " + state.level() + " 級" + (gained > 1 ? "（連升 " + gained + " 級）" : "")
                 + "<gray>，可用天賦點 <white>" + points));
+        if (plugin.sponsors() != null) {
+            plugin.sponsors().celebrateLevel(player); // 2026-10-23：累積贊助的主打：升級放煙火
+        }
     }
 
     /** 死亡懲罰（不在地圖裡）。 */

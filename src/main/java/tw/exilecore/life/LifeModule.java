@@ -57,9 +57,11 @@ public final class LifeModule implements Module, Listener {
         plugin.monsters().addAugmenter((entity, sheet) -> {
             if (service != null) {
                 service.whale().augment(entity, sheet);
+                service.extras().augment(entity, sheet); // 2026-10-23 晚：渦齒鯊王比照極境
             }
         });
         plugin.players().addSituationalSource(player -> service == null ? List.of() : service.whale().playerModifiers(player));
+        plugin.players().addSituationalSource(player -> service == null ? List.of() : service.extras().playerModifiers(player)); // 2026-10-23 晚：鯊王的極境詞綴
         if (plugin.bounties() != null) {
             plugin.bounties().addReadyListener(player -> {
                 if (service != null) {

@@ -150,7 +150,16 @@ public final class LifeConfig {
 
     /** 2026-10-23：渦齒鯊王（拿鯊王血餌在自己的筏上用）。 */
     public record SharkKing(String name, String baitName, double life, double scale, int fleeSeconds, Map<String, int[]> drops, double hornShard,
-                            double currencyChance, List<String> currencies, int xp) {
+                            double currencyChance, List<String> currencies, int xp,
+                            // 2026-10-23 晚：比照極境（like：maps.yml 的哪個終局的極境）、在筏上打
+                            String type, String like, double damage, List<String> mods, List<tw.exilecore.skill.BossSkillUse> skills,
+                            int enrageAfter, double enrageDamage, List<KingPhase> phases, String intro, String defeat,
+                            // 2026-10-23 晚：保底通貨（每個人各拿；照極境的保底：天穹碎片 ×2、天頂石 ×5）
+                            Map<String, Integer> guaranteed) {
+    }
+
+    /** 2026-10-23：鯊王的階段：生命低於 at 進下一個階段，傷害更多 damage%。 */
+    public record KingPhase(double at, String name, String message, double damage) {
     }
 
     public record Title(String id, String name, String color, List<tw.exilecore.stats.Modifier> stats) {
@@ -821,10 +830,21 @@ public final class LifeConfig {
         if (root.has("shark_king")) {
             final YamlNode k = root.node("shark_king");
             final YamlNode cur = k.node("currency");
+            final List<KingPhase> kingPhases = new ArrayList<>();
+            for (final YamlNode ph : k.list("phases")) {
+                kingPhases.add(new KingPhase(Math.max(0.01, Math.min(0.99, ph.decimal("at", 0.5))), ph.string("name", "").trim(),
+                        ph.string("message", "").trim(), Math.max(0, ph.decimal("damage", 0))));
+            }
+            kingPhases.sort((a, b) -> Double.compare(b.at(), a.at()));
+            final YamlNode enrage = k.node("enrage");
             sharkKing = new SharkKing(k.requireString("name").trim(), k.string("bait", "鯊王血餌").trim(), Math.max(0.1, k.decimal("life", 20)),
                     Math.max(0.3, k.decimal("scale", 2.4)), Math.max(30, k.integer("flee_seconds", 240)), ranges(k.node("drops")),
                     Math.max(0, Math.min(1, k.decimal("horn_shard", 0))), Math.max(0, Math.min(1, cur.decimal("chance", 0))),
-                    List.copyOf(cur.strings("ids")), Math.max(0, k.integer("xp", 200)));
+                    List.copyOf(cur.strings("ids")), Math.max(0, k.integer("xp", 200)),
+                    k.string("type", "DOLPHIN").trim().toUpperCase(Locale.ROOT), k.string("like", "").trim(), Math.max(0.1, k.decimal("damage", 1.5)),
+                    List.copyOf(k.strings("mods")), List.copyOf(tw.exilecore.skill.BossSkillUse.parseList(k, "skills")),
+                    Math.max(0, enrage.integer("after", 0)), Math.max(0, enrage.decimal("damage", 0)), List.copyOf(kingPhases),
+                    k.string("intro", "").trim(), k.string("defeat", "").trim(), counts(k.node("guaranteed")));
         }
     }
 
@@ -1031,6 +1051,11 @@ public final class LifeConfig {
             for (final String currency : sharkKing.currencies()) {
                 if (!currencyExists.test(currency)) {
                     problems.add("shark_king.currency：currencies.yml 沒有 " + currency);
+                }
+            }
+            for (final String currency : sharkKing.guaranteed().keySet()) {
+                if (!currencyExists.test(currency)) {
+                    problems.add("shark_king.guaranteed：currencies.yml 沒有 " + currency);
                 }
             }
         }

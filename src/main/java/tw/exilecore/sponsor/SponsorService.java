@@ -122,13 +122,16 @@ public final class SponsorService {
         return config;
     }
 
-    private BountyService accounts() {
+    /** 2026-10-23：累積贊助每一階的主打。 */
+    final TierPerks perks = new TierPerks(plugin, this);
+
+    BountyService accounts() {
         return plugin.bounties();
     }
 
     // ---- 讀帳號進度 ----
 
-    private String value(final Player player, final String key) {
+    String value(final Player player, final String key) {
         final BountyService accounts = accounts();
         return accounts == null ? null : accounts.progressValue(player, key);
     }
@@ -414,6 +417,28 @@ public final class SponsorService {
         personalSeen.retainAll(online);
     }
 
+    /** 2026-10-23 晚：最高階的筏多大（格；沒有 0）、吊床多回幾點精力（星骸之海用）。 */
+    public int raftSizeBonus(final Player player) {
+        return config.enabled() ? perks.perksOf(player).raftSize() : 0;
+    }
+
+    public int bedStaminaBonus(final Player player) {
+        return config.enabled() ? perks.perksOf(player).bedStamina() : 0;
+    }
+
+    /** 2026-10-23：累積贊助是第幾階（1 起；沒有 0）——TAB 的排序用（管理員 → 贊助（階級高的在前）→ 一般玩家）。 */
+    public int tierRank(final Player player) {
+        final SponsorConfig.Tier tier = tier(player);
+        return tier == null ? 0 : config.tiers().indexOf(tier) + 1;
+    }
+
+    /** 2026-10-23：升級的煙火（累積贊助的主打）。 */
+    public void celebrateLevel(final Player player) {
+        if (config.enabled()) {
+            perks.celebrateLevel(player);
+        }
+    }
+
     /** 死亡懲罰的比例：累積贊助那一階有寫 death_penalty 就用那個（不會比原本的重），沒有照原本的 base。 */
     public double deathPenalty(final Player player, final double base) {
         final SponsorConfig.Tier tier = tier(player);
@@ -423,7 +448,7 @@ public final class SponsorService {
     // ---- 給別的模組用：格子、名字顏色 ----
 
     public int extraCharacterSlots(final Player player) {
-        return (int) Math.min(config.slotMax(), number(player, SLOTS));
+        return (int) Math.min(config.slotMax(), number(player, SLOTS)) + perks.characterSlots(player); // 2026-10-23：加上累積贊助送的
     }
 
     public int extraStashPages(final Player player) {
@@ -452,14 +477,46 @@ public final class SponsorService {
         return SponsorConfig.atMax(number(player, LISTING), config.listingMax()) ? "" : "（贊助 /sponsor 可以加上架格）";
     }
 
-    /** 名字顏色（"#rrggbb" 或 "gradient:…"；沒有 null）。 */
+    /** 名字顏色（"#rrggbb"、"gradient:…" 或 "rainbow"；沒有 null）。 */
     public String nameColor(final Player player) {
         final SponsorConfig.Tier tier = tier(player);
         if (tier == null) {
             return null;
         }
+        // 2026-10-23 晚：最高階自選的顏色（/sponsor color）記在同一個鍵，開頭是 # 或 gradient:、rainbow
+        final String own = value(player, NAME_COLOR);
+        if (own != null && tier.perks().customNameColor() && (own.startsWith("#") || own.startsWith("gradient:") || own.equals("rainbow"))) {
+            return own;
+        }
         final SponsorConfig.Tier chosen = chosenColorTier(player);
         return chosen != null ? chosen.nameColor() : tier.nameColor();
+    }
+
+    /** 2026-10-23 晚：名字前的徽章（最高階的 ★；沒有空字串）。 */
+    public String nameBadge(final Player player) {
+        final SponsorConfig.Tier tier = tier(player);
+        if (tier == null || tier.perks().badge().isEmpty()) {
+            return "";
+        }
+        return "<" + tier.color() + ">" + ItemRenderer.escape(tier.perks().badge()) + "</" + tier.color() + ">";
+    }
+
+    /** 2026-10-23 晚：自選名字顏色（/sponsor color；null = 回到階級的顏色）；回傳問題，成功 null。 */
+    String setNameColor(final Player player, final String raw) {
+        if (!loaded(player)) {
+            return "帳號資料載入中，請稍等";
+        }
+        final SponsorConfig.Tier tier = tier(player);
+        if (tier == null || !tier.perks().customNameColor()) {
+            return "名字顏色自選要累積贊助到有這個功能的階級（/sponsor 看）";
+        }
+        final String color = raw == null ? null : titleColor(raw);
+        if (raw != null && color == null) {
+            return "顏色要寫成 #rrggbb（例如 #ffd24a）；漸層寫 2～5 個顏色，或寫 rainbow（彩虹）";
+        }
+        accounts().writeProgress(player, NAME_COLOR, color);
+        plugin.players().updateListName(player);
+        return null;
     }
 
     /** 累積到的、有名字顏色的那幾階（由低到高）。 */
@@ -558,6 +615,7 @@ public final class SponsorService {
         registerCustomTitle(player); // 先登記自訂稱號，再重算名字（2026-10：順序反了，重開之後 TAB 不顯示自訂稱號）
         refresh(player);
         payCard(player, true);
+        perks.refresh(player); // 2026-10-23：每週免費箱、到階送的時裝、終身月卡
         greet(player);
     }
 
@@ -609,6 +667,7 @@ public final class SponsorService {
         if (accounts() != null) {
             accounts().refreshTitle(player);
         }
+        plugin.players().updateListName(player); // 2026-10-23：TAB 照贊助階級排、名字前的徽章
     }
 
     private void greet(final Player player) {
@@ -805,6 +864,7 @@ public final class SponsorService {
         final String who = displayName(player);
         broadcast("<#ffd27f>✦ " + ItemRenderer.escape(who) + " 成為 <" + after.color() + ">【" + ItemRenderer.escape(after.title()) + "】</"
                 + after.color() + "><#ffd27f>，感謝支持《星骸》！");
+        perks.refresh(player); // 2026-10-23：到階送的時裝、終身月卡
         player.showTitle(Title.title(plugin.text().parse("<" + after.color() + ">【" + ItemRenderer.escape(after.title()) + "】"),
                 plugin.text().parse("<gray>累積贊助 " + format(after.amount()) + " 星幣・新的稱號、名字顏色與功能已經開啟"),
                 Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(3000), Duration.ofMillis(700))));
@@ -1291,18 +1351,29 @@ public final class SponsorService {
     // ---- 全服加倍 ----
 
     String buyBoost(final Player player, final String typeId) {
+        return buyBoost(player, typeId, false);
+    }
+
+    /** free：用累積贊助送的免費次數（2026-10-23），不扣星幣。 */
+    String buyBoost(final Player player, final String typeId, final boolean free) {
         final SponsorConfig.BoostType type = config.boosts().get(typeId);
         if (type == null) {
             return "沒有這種加倍";
         }
+        final Map<String, String> freeUse = free ? perks.useFreeBoost(player) : Map.of();
+        if (free && freeUse == null) {
+            return "這個週期的免費加倍用完了";
+        }
         final long now = System.currentTimeMillis();
         final Boosts.Active current = boosts.get(type.id());
         final long start = current == null ? now : Math.max(now, current.until());
-        final long until = start + config.boostMinutes() * 60_000L;
+        final int boostMinutes = config.boostMinutes() + perks.perksOf(player).boostMinutes(); // 2026-10-23 晚：最高階放的加倍多幾分鐘
+        final long until = start + boostMinutes * 60_000L;
         if (until - now > config.boostMaxMinutes() * 60_000L) {
             return type.name() + "已經排到 " + config.boostMaxMinutes() + " 分鐘了，等一下再買";
         }
-        final String problem = spend(player, config.boostPrice(), Map.of(), type.name() + " " + config.boostMinutes() + " 分鐘");
+        final String problem = spend(player, free ? 0 : config.boostPrice(), freeUse,
+                type.name() + " " + boostMinutes + " 分鐘" + (free ? "（累積贊助的免費次數）" : ""));
         if (problem != null) {
             return problem;
         }
@@ -1312,7 +1383,7 @@ public final class SponsorService {
         recompute();
         final long minutes = (until - now + 30_000) / 60_000;
         broadcast("<#ffd27f>✦ " + ItemRenderer.escape(who) + " 贊助了 <white>" + ItemRenderer.escape(type.name()) + "</white> "
-                + config.boostMinutes() + " 分鐘，全服一起享受！<gray>（" + (current == null ? "" : "延長，") + "剩 " + minutes + " 分鐘）");
+                + boostMinutes + " 分鐘，全服一起享受！<gray>（" + (current == null ? "" : "延長，") + "剩 " + minutes + " 分鐘）");
         for (final Player each : plugin.getServer().getOnlinePlayers()) {
             each.showTitle(Title.title(plugin.text().parse("<#ffd27f>" + ItemRenderer.escape(type.name())),
                     plugin.text().parse("<gray>" + ItemRenderer.escape(who) + " 贊助・" + minutes + " 分鐘"),
@@ -1350,6 +1421,7 @@ public final class SponsorService {
         if (lastDay >= 0 && today != lastDay) {
             for (final Player player : plugin.getServer().getOnlinePlayers()) {
                 payCard(player, false); // 換日：月卡
+                perks.refresh(player); // 2026-10-23：換週的免費箱
             }
         }
         lastDay = today;
@@ -1768,7 +1840,7 @@ public final class SponsorService {
     // ---- 外觀特效 ----
 
     public boolean ownsCosmetic(final Player player, final String id) {
-        return value(player, COSMETIC + id) != null;
+        return value(player, COSMETIC + id) != null || perks.allCosmetics(player, config.cosmetics().get(id)); // 2026-10-23：最高階所有時裝都能套
     }
 
     /** 發得出去的一樣東西（2026-10）：時裝，或 title:代號 的限定稱號。 */

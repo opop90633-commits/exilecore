@@ -73,25 +73,48 @@ boosts:
 #   experience、gold：經驗、金幣多幾 %（2026-10；到過的每一階疊加：6 階各 5% = 共 30%；只算這個人自己的：打怪的經驗、怪物掉給他的金幣）
 #   （上面其他的照「用到過的最高一階」，只有 experience、gold 疊加；death_penalty 也是照最高一階）
 #   death_penalty：死亡扣經驗改成幾 %（沒寫照 character.yml 的 map_death_penalty，10%；只會比原本輕）
+# 2026-10-23 每一階的主打（都不影響戰鬥；照最高一階，cosmetics 是每一階到了都送）：
+#   free_boosts: { per: day|week|month, count: N }  免費的全服加倍（贊助選單的加倍按右鍵用；自己選種類、公告照樣寫名字；不扣星幣）
+#   character_slots: N   送幾個角色欄位（跟用星幣買的疊加）
+#   weekly_boxes: N      每週送幾箱免費抽獎箱（跟月卡的免費箱一樣累積，/sponsor 開；要有 monthly_card.daily_free_box）
+#   cosmetics: [代號]     到這一階就送的時裝（cosmetics 的代號；限定的也能送）
+#   login_message: true  自訂上線訊息（/sponsor login 一句話，最多 40 字，過髒話表）
+#   level_fireworks: true 升級在頭上放一發煙火
+#   all_cosmetics: true  所有非限定的時裝不用抽就能套（限定的：S1、節慶、箱子限定的照舊）
+#   lifetime_card: true  終身月卡（月卡的每日福利、免手續費、多組裝備等功能永遠有）
+#   2026-10-23 晚（最高階再多的）：join_announce 上線全服公告＋音效；badge 名字前的徽章（最多兩個字）；
+#   custom_name_color 名字顏色自選（/sponsor color #rrggbb… 或 rainbow）；monthly_rename_cards 每月送幾張改名卡；
+#   guild_stash_pages 送公會幾頁倉庫（一個公會送一次，換公會再送）；raft_size 星骸之海的筏多蓋幾格；bed_stamina 吊床多回幾點；
+#   boost_minutes 他放的全服加倍多幾分鐘；entry_aura 進營地、進地圖的金色進場特效
+# TAB 的順序（2026-10-23）：管理員 → 贊助（階級高的在前）→ 一般玩家；同一群裡等級高的在前
 tiers:
   - { amount: 1000,  id: patron_1, title: 星塵贊助者, color: "#9fd3ff", name_color: "#cfeaff",
       stash_pages: 1,  bag_pages: 0, listings: 7,  bypass_full: true, chat_color: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 9 }
+      experience: 5, gold: 5, death_penalty: 9,
+      login_message: true, level_fireworks: true }
   - { amount: 3000,  id: patron_2, title: 星芒贊助者, color: "#7fe0c0", name_color: "#a8f5dc",
       stash_pages: 2,  bag_pages: 0, listings: 9,  bypass_full: true, chat_color: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 8 }
+      experience: 5, gold: 5, death_penalty: 8,
+      free_boosts: { per: week, count: 1 }, character_slots: 1, cosmetics: [m3d_halo_back] }
   - { amount: 5000,  id: patron_3, title: 星輝贊助者, color: "#f5d76e", name_color: "#ffe58a",
       stash_pages: 3,  bag_pages: 1, listings: 11, bypass_full: true, chat_color: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 6 }
+      experience: 5, gold: 5, death_penalty: 6,
+      free_boosts: { per: week, count: 2 }, character_slots: 1, weekly_boxes: 1, cosmetics: [m3d_pet_wisp] }
   - { amount: 10000, id: patron_4, title: 星耀贊助者, color: "#ff9f5a", name_color: "#ffb98a",
       stash_pages: 5,  bag_pages: 2, listings: 13, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 4 }
+      experience: 5, gold: 5, death_penalty: 4,
+      free_boosts: { per: week, count: 3 }, character_slots: 2, weekly_boxes: 2, cosmetics: [m3d_butterfly_wings, m3d_pet_jelly] }
   - { amount: 15000, id: patron_5, title: 星曜守護者, color: "#d68cff", name_color: "gradient:#e3a8ff:#9fd3ff",
       stash_pages: 7,  bag_pages: 3, listings: 15, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 2 }
+      experience: 5, gold: 5, death_penalty: 2,
+      free_boosts: { per: day, count: 1 }, character_slots: 3, weekly_boxes: 3, cosmetics: [m3d_seraph_wings, m3d_star_crown] }
   - { amount: 25000, id: patron_6, title: 星骸至尊,   color: "#ffd24a", name_color: "gradient:#ffe27a:#ff8fe0",
       stash_pages: 10, bag_pages: 5, listings: 30, bypass_full: true, chat_color: true, custom_title: true, camp_fly: true,
-      experience: 5, gold: 5, death_penalty: 0 }
+      experience: 5, gold: 5, death_penalty: 0,
+      free_boosts: { per: day, count: 2 }, character_slots: 5, weekly_boxes: 5, all_cosmetics: true, lifetime_card: true,
+      cosmetics: [m3d_pet_dragon],
+      join_announce: true, badge: "★", custom_name_color: true, monthly_rename_cards: 1, guild_stash_pages: 2,
+      raft_size: 4, bed_stamina: 10, boost_minutes: 5, entry_aura: true }
 
 # 登入天數的稱號（一天在線 settings.login_minutes 分鐘以上算一天；不用連續）。
 # stats：擁有就有的小加成（2026-10；免費拿的才可以有加成，用錢買的稱號不能有），全部疊起來大約 +30 生命、+3% 生命、+15 魔力、各元素抗性 +3%
