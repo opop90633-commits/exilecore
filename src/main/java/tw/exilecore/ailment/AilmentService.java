@@ -473,6 +473,8 @@ public final class AilmentService {
                     defenderSheet.increased(StatKeys.STUN_THRESHOLD, Set.of()));
             final double buildup = playerTarget && !config.playerHeavyStun() ? 0
                     : config.stun().buildupFor(stunDamage, stunThreshold, attack.apply(StatKeys.STUN_BUILDUP, 1.0, context), unique);
+            // 2026-10-24（鼓翼風）：這一下之前就蓄勢待暈了（重暈時另外給戰星事件 stun_primed）
+            final boolean wasPrimed = defenderMonster != null && entry != null && primed(entry, defenderMonster, now);
             // 蓄勢待暈的怪被「重擊」技能打中：直接重暈（碎骨這類，PoE2）
             final boolean crush = defenderMonster != null && (entry != null && StatKeys.flag(attack, StatKeys.FLAG_CRUSH_PRIMED)
                     && primed(entry, defenderMonster, now)
@@ -509,6 +511,9 @@ public final class AilmentService {
                             plugin.skills().procEvent(stunner, skill.id(), "stun_applied", null, defender); // 輔助：重暈時（2026-10）
                         }
                         chargeEvent(attacker, "stun_applied", attack, context, defender); // 戰星：重暈時（2026-10）
+                        if (wasPrimed) {
+                            chargeEvent(attacker, "stun_primed", attack, context, defender); // 2026-10-24：重暈蓄勢待暈的敵人（鼓翼風）
+                        }
                     }
                 }
                 changed = true;
@@ -534,6 +539,7 @@ public final class AilmentService {
                             entry.state.electrocute().trigger(now, ticks(seconds), immunity);
                             refreshAt(defender, entry, entry.state.electrocute().activeUntil() - now);
                             feedback(defender, AilmentType.ELECTROCUTE);
+                            chargeEvent(attacker, "electrocute", attack, context, defender); // 2026-10-24：戰意（PoE2：冰凍、電擊、釘住）
                         }
                     }
                     changed = true;
@@ -1202,6 +1208,37 @@ public final class AilmentService {
         final Tracked entry = track(player);
         entry.state.hinder(now() + ticks);
         update(player, entry, now());
+    }
+
+    /**
+     * 2026-10-24：玩家技能留下的地面作用在怪物身上（碎地、蔓寒）。slow：固定減速（碎地 0.2）；
+     * chillAs：「當作造成這麼多冰冷傷害」來算冰緩（蔓寒：冰晶生命的 100%）。不會被減速的不算。
+     */
+    public void groundOnMonster(final LivingEntity target, final double slow, final double chillAs, final long ticks) {
+        if (target == null || target instanceof Player || !target.isValid() || target.isDead() || plugin.monsters() == null) {
+            return;
+        }
+        final java.util.Optional<tw.exilecore.monster.MonsterData> data = plugin.monsters().data(target);
+        if (data.isEmpty()) {
+            return;
+        }
+        final StatSheet sheet = plugin.monsters().sheet(target, data.get());
+        if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE)) {
+            return;
+        }
+        final long now = now();
+        final Tracked entry = track(target);
+        if (slow > 0) {
+            entry.state.groundSlow(slow, now + ticks);
+        }
+        if (chillAs > 0) {
+            final double threshold = AilmentConfig.threshold(baseThreshold(target, data.get(), sheet), sheet.increased(StatKeys.AILMENT_THRESHOLD, Set.of()));
+            final double magnitude = threshold <= 0 ? 0 : config.chillMagnitude(chillAs, threshold, 0);
+            if (magnitude > 0) {
+                entry.state.applyChill(magnitude, now + ticks, now);
+            }
+        }
+        update(target, entry, now);
     }
 
     /** 2026-10-23：拿掉某個玩家在怪物身上造成的持續傷害（他死了、下線、離開地圖）；外觀與標記下一次更新時跟上。 */

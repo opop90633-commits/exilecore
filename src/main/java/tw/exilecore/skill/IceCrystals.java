@@ -96,6 +96,8 @@ public final class IceCrystals implements Listener {
         final boolean verglas = StatKeys.flag(effective, StatKeys.FLAG_VERGLAS);
         final long until = now() + build.durationTicks(BASE_SECONDS);
         final List<Crystal> mine = crystals.computeIfAbsent(owner.getUniqueId(), key -> new ArrayList<>());
+        final List<Location> spots = new ArrayList<>();
+        final List<java.util.function.BooleanSupplier> alive = new ArrayList<>();
         final Vector step = along == null || along.lengthSquared() < 1e-6 ? new Vector(1, 0, 0) : along.clone().setY(0).normalize();
         for (int i = 0; i < count; i++) {
             final double offset = (i - (count - 1) / 2.0) * 1.6;
@@ -109,11 +111,14 @@ public final class IceCrystals implements Listener {
             });
             final Crystal crystal = new Crystal(at.clone().add(0, 0.5, 0), display, until, build.gemLevel(), hits, shards, verglas);
             mine.add(crystal);
+            spots.add(at.clone());
+            alive.add(display::isValid);
             if (hoarfrost) {
                 cast(owner, "proc_hoarfrost", crystal.level, crystal.at);
             }
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> expire(owner.getUniqueId(), crystal), until - now() + 1);
         }
+        service.chargeEffects().creepingChill(owner, build, spots, alive, until - now()); // 2026-10-24：蔓寒
         while (mine.size() > MAX_PER_PLAYER) {
             final Crystal oldest = mine.removeFirst();
             oldest.display.remove();

@@ -71,6 +71,9 @@ public final class DamageCalculator {
             }
         }
         double blockedScale = 1.0;
+        if (skill.isAttack() && StatKeys.flag(defender, StatKeys.FLAG_PARRY)) {
+            return HitResult.block(); // 2026-10-24（招架，PoE2 Parry）：舉盾中的那一擊一定擋下（不吃格擋上限、龜殼護符）
+        }
         if (skill.isAttack()) {
             final double cap = StatKeys.BLOCK_CAP + Math.max(0, defender.flat(StatKeys.BLOCK_MAX, Set.of()));
             final double block = Math.min(cap, defender.get(StatKeys.BLOCK_CHANCE)) / 100.0; // 上限 50%（PoE2），昇華可以提高

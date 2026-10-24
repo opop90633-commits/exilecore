@@ -239,4 +239,18 @@ class AtlasGridTest {
         assertFalse(Atlas.isGrid(Set.of("wreck_bay")));
         assertTrue(Atlas.unlocked(maps, maps.find("wreck_bay"), Set.of()), "起點地圖");
     }
+
+    /** 2026-10-24：自己的終局還不能打的城塞順延到下一個能打、還沒攻破的終局。 */
+    @Test
+    void citadelRedirectsToTheNextFinalYouCanFight() {
+        final List<String> finals = List.of("sky_crucible", "frost_throne", "bone_throne", "ember_citadel");
+        final Set<String> fresh = Set.of();
+        assertEquals("sky_crucible", MapService.citadelTarget(maps, finals, "ember_citadel", fresh), "還沒打贏天穹熔爐：先開它");
+        assertEquals("sky_crucible", MapService.citadelTarget(maps, finals, "sky_crucible", fresh));
+        final Set<String> breachedOnly = Set.of(Atlas.CITADEL_TOKEN + "sky_crucible");
+        assertEquals("ember_citadel", MapService.citadelTarget(maps, finals, "ember_citadel", breachedOnly),
+                "攻破了但還沒打贏：沒有別的能打，照它自己的（會說要先打贏）");
+        final Set<String> won = Set.of(Atlas.CITADEL_TOKEN + "sky_crucible", "sky_crucible");
+        assertEquals("ember_citadel", MapService.citadelTarget(maps, finals, "ember_citadel", won), "打贏天穹熔爐之後就是它自己的");
+    }
 }

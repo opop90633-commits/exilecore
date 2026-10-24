@@ -650,6 +650,49 @@ public final class MapService {
     // ---- 城塞（2026-10-21）----
 
     /**
+     * 2026-10-24：這座城塞現在開哪個終局。它自己的終局能打（requires 都打贏了）就是它；不然順延到第一個能打、
+     * 還沒攻破的終局（照 requires 的順序，通常是天穹熔爐）。順延打贏的只攻破那個終局，這格還是它自己終局的入口。
+     */
+    public String citadelTarget(final Player player, final AtlasGrid.Cell cell) {
+        return citadelTarget(config, citadelFinals(), cell.citadelFinal(), completed(player));
+    }
+
+    static String citadelTarget(final MapConfig config, final List<String> finals, final String own, final Set<String> completed) {
+        final MapConfig.MapDef ownMap = own == null ? null : config.find(own);
+        if (ownMap == null || Atlas.finalRequirementsMet(config, ownMap, completed)) {
+            return own;
+        }
+        for (final String id : finals) {
+            final MapConfig.MapDef map = config.find(id);
+            if (map != null && !Atlas.citadelBreached(completed, id) && Atlas.finalRequirementsMet(config, map, completed)) {
+                return id;
+            }
+        }
+        return own;
+    }
+
+    /** 2026-10-24：打贏從城塞開的終局：本來的終局就完成那一格；順延的只攻破打的那個終局（這格留著給它自己的終局）。 */
+    private void breachCitadel(final Player player, final AtlasGrid.Cell cell, final MapConfig.MapDef map) {
+        if (map.id().equals(cell.citadelFinal())) {
+            if (!atlasProgress(player).isCompleted(cell.q(), cell.r())) {
+                completeCell(player, cell);
+            }
+            return;
+        }
+        if (Atlas.citadelBreached(completed(player), map.id())) {
+            return;
+        }
+        plugin.characters().setProgress(player, AtlasProgress.CITADEL_PREFIX + map.id(), String.valueOf(System.currentTimeMillis() / 1000));
+        final MapConfig.MapDef own = config.find(cell.citadelFinal());
+        player.sendMessage(plugin.text().parse("<#f5b942>  攻破城塞：" + ItemRenderer.escape(map.name())
+                + "<gray> 之後可以在地圖裝置用天穹碎片打開；「" + AtlasMenu.where(cell.q(), cell.r()) + "」這座城塞還是 "
+                + ItemRenderer.escape(own == null ? String.valueOf(cell.citadelFinal()) : own.name()) + " 的入口"));
+        if (plugin.quests() != null) {
+            plugin.quests().refresh(player);
+        }
+    }
+
+    /**
      * 從城塞開那個終局（第一次不用天穹碎片）：要解鎖、還沒攻破、requires 的終局打贏過。階級最高到完成過的最高階（至少 1）。
      * 回傳問題（null = 開了）。
      */
@@ -664,9 +707,10 @@ public final class MapService {
         if (atlas.isCompleted(citadel.q(), citadel.r())) {
             return "這座城塞已經攻破了：那個終局在地圖裝置用天穹碎片開";
         }
-        final MapConfig.MapDef map = config.find(citadel.citadelFinal());
+        final String target = citadelTarget(player, citadel); // 2026-10-24：自己的終局還不能打就順延
+        final MapConfig.MapDef map = config.find(target);
         if (map == null || !map.isFinal()) {
-            return "maps.yml 沒有終局 " + citadel.citadelFinal();
+            return "maps.yml 沒有終局 " + target;
         }
         final Set<String> completed = completed(player);
         if (!Atlas.finalRequirementsMet(config, map, completed)) {
@@ -1550,7 +1594,7 @@ public final class MapService {
         }
         final Set<String> completed = completed(player);
         if (Atlas.isGrid(completed) && !Atlas.unlocked(config, map, completed) && Atlas.finalRequirementsMet(config, map, completed)) {
-            return "先在星圖上找到" + map.name() + "的城塞並攻破（/atlas）"; // 2026-10-21
+            return "先攻破" + map.name() + "的城塞：地圖裝置的「塔與城塞」（第一次不用碎片；星圖上找不到就再往外推）"; // 2026-10-21；2026-10-24 寫清楚從哪裡開
         }
         if (!Atlas.finalUnlocked(config, completed)) {
             return "先完成星圖最外圈的地圖（" + ringNames(config.maxRing()) + "）";
@@ -3133,14 +3177,14 @@ public final class MapService {
             AtlasGrid.Cell mine = player.getUniqueId().equals(instance.owner()) ? instance.atlasCell() : null;
             if (mine == null && contributed) { // 2026-10-21 漏洞修正：隊友要對 Boss 打到傷害才攻破自己的城塞
                 for (final AtlasGrid.Cell open : atlasProgress(player).openCitadels()) {
-                    if (map.id().equals(open.citadelFinal())) {
+                    if (map.id().equals(citadelTarget(player, open))) { // 2026-10-24：順延的也算
                         mine = open;
                         break;
                     }
                 }
             }
-            if (mine != null && !atlasProgress(player).isCompleted(mine.q(), mine.r())) {
-                completeCell(player, mine);
+            if (mine != null) {
+                breachCitadel(player, mine, map);
             }
         }
         // 2026-10-21：新星圖：開圖的人完成他選的那一格；隊友完成自己星圖上最近的同種類已解鎖格（沒解鎖就不算）

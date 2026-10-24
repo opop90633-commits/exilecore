@@ -507,6 +507,18 @@ public final class AilmentState {
         blindUntil = Math.max(blindUntil, until);
     }
 
+    /** 2026-10-24：玩家技能留下的減速地面（碎地 20%）：取目前與新的較大者，時間取較晚者。 */
+    private double groundSlow;
+    private long groundSlowUntil;
+
+    public void groundSlow(final double slow, final long until) {
+        if (until <= groundSlowUntil && slow <= groundSlow) {
+            return;
+        }
+        groundSlow = Math.max(slow, groundSlowUntil > 0 ? groundSlow : 0);
+        groundSlowUntil = Math.max(groundSlowUntil, until);
+    }
+
     public long maimUntil() {
         return maimUntil;
     }
@@ -523,7 +535,8 @@ public final class AilmentState {
     public double hexSlow(final long now) {
         final double maim = now < maimUntil ? HEX_SLOW : 0;
         final double hinder = now < hinderUntil ? HEX_SLOW : 0;
-        return 1 - (1 - maim) * (1 - hinder);
+        final double ground = now < groundSlowUntil ? groundSlow : 0;
+        return 1 - (1 - maim) * (1 - hinder) * (1 - ground);
     }
 
     /** 冰緩跟癱瘓、阻礙一起算的減速（相乘，最多 90%）。 */
@@ -619,7 +632,7 @@ public final class AilmentState {
         return ignite(now) == null && bleed(now) == null && poisons(now).isEmpty() && debuffs(now).isEmpty() && chill(now) <= 0 && shock(now) <= 0
                 && freeze.idle(now) && stun.idle(now) && electrocute.idle(now)
                 && lightStunUntil <= now && armourBroken(now) <= 0 && !fullyBroken(now)
-                && maimUntil <= now && hinderUntil <= now && blindUntil <= now && corruptedBloodStacks(now) == 0;
+                && maimUntil <= now && hinderUntil <= now && groundSlowUntil <= now && blindUntil <= now && corruptedBloodStacks(now) == 0;
     }
 
     /** 只清掉一種異常（護符解除，2026-10）。 */

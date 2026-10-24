@@ -87,8 +87,19 @@ public final class ModifierText {
         };
     }
 
+    /** 光環效果的條件標籤（2026-10-24，馭星訣）：if_charge:代號 = 身上有那種戰星才生效（AuraService 處理，標籤本身不進屬性表）。 */
+    public static final String IF_CHARGE = "if_charge:";
+
     /** 一條修飾器的說明。 */
     public static String describe(final Modifier modifier) {
+        for (final String tag : modifier.tags()) {
+            if (tag.startsWith(IF_CHARGE)) { // 2026-10-24（馭星訣）：身上有那種戰星才有
+                final java.util.Set<String> rest = new java.util.LinkedHashSet<>(modifier.tags());
+                rest.remove(tag);
+                return "身上有" + tw.exilecore.charge.ChargeText.name(tag.substring(IF_CHARGE.length())) + "時："
+                        + describe(new Modifier(modifier.stat(), modifier.type(), modifier.value(), rest, modifier.source()));
+            }
+        }
         final double value = modifier.value();
         final String percent = number(Math.abs(value) * 100);
         final String stat = modifier.stat();
@@ -326,6 +337,12 @@ public final class ModifierText {
             case StatKeys.FLAG_NOVA_FROM_FROSTBOLT -> "你的霜鑽還在飛的時候，從霜鑽的位置爆開";
             case StatKeys.FLAG_MARK_CRIT -> "你對被標記的敵人打出暴擊時印記用掉，給你一顆怒星";
             case StatKeys.FLAG_NO_AILMENTS -> "不能造成元素異常（點燃、冰緩、凍結、感電）";
+            case StatKeys.FLAG_PARRY -> "下一次被攻擊一定格擋：攻擊者被招架 2 秒（受到的攻擊傷害增加 50%），你揮盾橫掃身邊的敵人";
+            case StatKeys.FLAG_MAGMA_BARRIER -> "盾牌 8 秒灌滿熔岩；灌滿後下一次格擋噴出熔岩（火焰攻擊，2.8 公尺）並給你一顆磐星";
+            case "flag.lingering_illusion" -> "翻滾時花 10 魔力留下一個引怪的幻身；幻身被打掉留下殘影，撿起來給你一顆銳星";
+            case StatKeys.FLAG_LOSE_RAGE_AT_MAX -> "怒氣滿時失去全部怒氣";
+            case StatKeys.DAMAGE_PER_CHARGE -> "身上每顆戰星增加 " + number(value) + "% 傷害";
+            case "charge.remnant_extra" -> "幻身被打掉時 " + number(value) + "% 機率多留一個殘影";
             case StatKeys.AVOID_IGNITE -> number(value) + "% 機率避免被點燃";
             case StatKeys.AVOID_CHILL -> number(value) + "% 機率避免被冰緩";
             case StatKeys.AVOID_FREEZE -> number(value) + "% 機率避免被凍結";

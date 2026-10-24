@@ -50,7 +50,7 @@ class SupportAndGemTest {
         // 2026-10 PoE2 改版：輔助寶石 290 顆（第 1 階 81、第 2 階 166、第 3 階 43，其中 13 顆專屬掉落：終局 4、極境 2、巔峰 7）；
         // 2026-10：圖騰施法與 6 顆觸發改成主要寶石（拿掉 7 顆），加了 2 顆戰星來源（滿星、斷命聚怒）
         final List<String> ids = config.supports().stream().map(SupportDefinition::id).toList();
-        assertEquals(293 + 21 + 2, ids.size()); // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）；2026-10-18：＋七隻事件巔峰 Boss 各 3 顆專屬、淵鯨再 2 顆
+        assertEquals(293 + 21 + 2 + 13, ids.size()); // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）；2026-10-18：＋七隻事件巔峰 Boss 各 3 顆專屬、淵鯨再 2 顆；2026-10-24：＋13 顆戰星輔助（恆星、倍星、抑星…）
         assertEquals(List.of("increased_area", "faster_projectiles", "pierce", "faster_attacks", "faster_casting", "added_fire",
                 "increased_duration", "critical_strikes", "lingering", "minion_damage"), ids.subList(0, 10), "照檔案裡的順序");
         assertTrue(ids.containsAll(List.of("concentrated_effect", "chain", "life_leech", "searing", "lacerate", "envenom", "concussive",
@@ -303,7 +303,7 @@ class SupportAndGemTest {
         }
         assertEquals(List.of("escape_shot", "raise_guard", "explosive_bolt", "rapid_fire", "tempest_flurry", "lightning_spear", "fireball",
                 "spark", "raise_zombie", "armour_piercing_bolt", "fortifying_cry", "frostbolt", "essence_drain", "bear_maul", "wolf_shred",
-                "disengage", "frozen_locus", "lightning_rod", "fragmentation_rounds"),
+                "disengage", "parry", "frozen_locus", "lightning_rod", "fragmentation_rounds"), // 2026-10-24：＋招架
                 config.engravable(1).stream().map(SkillDefinition::id).toList(), "Lv.1 的未切割寶石能雕的技能（第 1 階的技能）");
         assertTrue(config.engravable(13).size() < config.visible().size());
         // 2026-10：巔峰 Boss 的專屬技能寶石（source: awakener）雕不出來，其他的 Lv.14 起全部都能雕（最高第 14 階）

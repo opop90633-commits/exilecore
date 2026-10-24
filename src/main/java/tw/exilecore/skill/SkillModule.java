@@ -42,6 +42,7 @@ public final class SkillModule implements Module {
         manager.registerEvents(created.resources(), plugin); // 怒氣（2026-10 PoE2）
         manager.registerEvents(created.triggers(), plugin); // 觸發（2026-10）
         manager.registerEvents(created.procs(), plugin); // 輔助觸發的專屬技能（2026-10）
+        manager.registerEvents(created.chargeEffects(), plugin); // 2026-10-24：戰星輔助
         manager.registerEvents(created.crystals(), plugin); // 冰晶（2026-10）
         manager.registerEvents(created.mounts(), plugin); // 坐騎（2026-10）
         manager.registerEvents(created.warcries().taunts(), plugin); // 嘲諷：持續時間內只打嘲諷的人

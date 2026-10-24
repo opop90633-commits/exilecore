@@ -200,6 +200,10 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (!matchesRequires(skill)) {
             return "要" + requiresText();
         }
+        final String charge = chargeRefusal(skill);
+        if (charge != null) {
+            return charge; // 2026-10-24：戰星輔助
+        }
         // 2026-10：觸發輔助（暴擊、受擊、擊殺、異常、翻滾、召喚物死亡觸發）不能掛在增益型的技能上（連珠、霜鏃、舉盾…）：
         // 照 PoE2 這些不是能被觸發的法術；以前掛得上去，觸發時卻略過，又因為掛了觸發不能手動放，整顆技能變廢
         if (triggers() && skill.mechanic() == Mechanic.GUARD) {
@@ -223,7 +227,7 @@ public record SupportDefinition(String id, String name, String description, Stri
             StatKeys.SKILL_MINIONS, StatKeys.SKILL_TOTEMS, StatKeys.SUPPORT_SPIRIT, StatKeys.CURSE_EFFECT, StatKeys.MARK_EFFECT, StatKeys.CAST_SPEED, StatKeys.FLAG_ECHO,
             StatKeys.FLAG_BLOOD_MAGIC, StatKeys.MANA_ON_MINION_DEATH, StatKeys.MINION_DEATH_HEAL);
     private static final List<String> UTILITY_PREFIXES = List.of(StatKeys.GRANT_PREFIX, "warcry.", "aura.", "herald.", "trigger.", "seal.",
-            "infusion.", "proc.use", "proc.minion_death");
+            "infusion.", "proc.use", "proc.minion_death", "charge.sup.");
     /** 技能有這個標籤時才有作用的屬性。 */
     private static final Map<String, String> TAGGED_UTILITY_STATS = Map.of(StatKeys.SKILL_AREA, Tags.AREA, StatKeys.SKILL_DURATION, Tags.DURATION,
             StatKeys.SKILL_COOLDOWN, Tags.COOLDOWN);
@@ -471,5 +475,54 @@ public record SupportDefinition(String id, String name, String description, Stri
             }
         }
         return set;
+    }
+
+    /**
+     * 2026-10-24：本身就會消耗某種戰星的技能（照 PoE2：消耗那種戰星的輔助不能掛在本來就消耗它的技能上）。
+     * 冷卻中用戰星跳過的另外看 {@link SkillDefinition#cooldownBypass()}。
+     */
+    static final Map<String, Set<String>> CHARGE_CONSUMERS = Map.of(
+            "power", Set.of("flicker_strike", "raise_zombie", "totem_casting"),
+            "frenzy", Set.of("lightning_spear", "storm_javelin", "linked_volley"),
+            "endurance", Set.of("totem_casting"));
+    /** 2026-10-24：一定要消耗戰星才放得出來的技能（抑星不能掛）。 */
+    static final Set<String> REQUIRES_CHARGES = Set.of("totem_casting");
+    /** 2026-10-24：有完美時機的技能（完磐只能掛這些）。 */
+    static final Set<String> PERFECT_TIMING = Set.of("true_strike", "snipe");
+
+    static boolean consumes(final SkillDefinition skill, final String chargeId) {
+        return chargeId.equals(skill.cooldownBypass()) || CHARGE_CONSUMERS.getOrDefault(chargeId, Set.of()).contains(skill.id());
+    }
+
+    private boolean has(final String stat) {
+        for (final Modifier modifier : modifiers) {
+            if (modifier.stat().equals(stat) && modifier.value() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-10-24：戰星輔助的限制（照 PoE2）；可以掛回傳 null。 */
+    private String chargeRefusal(final SkillDefinition skill) {
+        if (has(tw.exilecore.charge.ChargeService.SUP_INHIBIT) && REQUIRES_CHARGES.contains(skill.id())) {
+            return "一定要消耗戰星才放得出來的技能不行";
+        }
+        if (has(tw.exilecore.charge.ChargeService.SUP_FEROCITY) && consumes(skill, "frenzy")) {
+            return "本來就會消耗怒星的技能不行";
+        }
+        if ((has(tw.exilecore.charge.ChargeService.SUP_ABIDING_HEX) || has(tw.exilecore.charge.ChargeService.SUP_CREEPING)) && consumes(skill, "power")) {
+            return "本來就會消耗銳星的技能不行";
+        }
+        if (has(tw.exilecore.charge.ChargeService.SUP_JAGGED) && consumes(skill, "endurance")) {
+            return "本來就會消耗磐星的技能不行";
+        }
+        if (has(tw.exilecore.charge.ChargeService.SUP_OFFERING_POWER) && (skill.warcry() == null || !skill.warcry().spike())) {
+            return "要祭柱技能（嗜血祭、骸骨祭、魂火祭）";
+        }
+        if (has(tw.exilecore.charge.ChargeService.SUP_PERFECT_ENDURANCE) && !PERFECT_TIMING.contains(skill.id())) {
+            return "要有完美時機的技能（蓄勁一擊、穿雲箭）";
+        }
+        return null;
     }
 }

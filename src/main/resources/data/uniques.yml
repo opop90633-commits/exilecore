@@ -4670,3 +4670,150 @@ whalesong_pearl:
       value: [30, 40]
       stats:
         - { stat: es.max, type: FLAT, value: "{value}" }
+
+# ---- 2026-10-24：照 PoE2 補的戰星傳奇（名稱是自己的；PoE2 的手套照這裡的慣例放在腿甲）----
+
+star_warden_vestments:     # Voll's Protector
+  name: 星衛聖鎧
+  base: body_str_int_23
+  drop_level: 59
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「誓言比盔甲還重，所以他兩樣都扛得住。」"
+  mods:
+    - text: "增加 {value}% 護甲與能量護盾"
+      value: [150, 200]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "最大魔力減少 25%"
+      stats:
+        - { stat: mana.max, type: INCREASED, value: -25 }
+    - text: "+{value}% 混沌抗性"
+      value: [13, 17]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "暴擊時 25% 機率獲得一顆銳星"
+      stats:
+        - { stat: charge.chance.power, type: FLAT, value: 25 }
+
+redflare_wrap:             # Redflare Conduit
+  name: 赤芒導衣
+  base: body_dex_int_18
+  drop_level: 33
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「電流會找最短的路，它剛好穿過你。」"
+  mods:
+    - text: "+{value} 最大魔力"
+      value: [50, 70]
+      stats:
+        - { stat: mana.max, type: FLAT, value: "{value}" }
+    - text: "+{value}% 閃電抗性"
+      value: [20, 30]
+      stats:
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "擊中時 20% 機率獲得一顆銳星"
+      stats:
+        - { stat: charge.on_hit.power, type: FLAT, value: 20 }
+    - text: "銳星滿了就全部失去，並讓你感電"
+      stats:
+        - { stat: charge.lose_at_max.power, type: FLAT, value: 1 }
+
+hateforge_greaves:         # Hateforge
+  name: 憎鑄腿鎧
+  base: legs_str_16
+  drop_level: 60
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「火越大，鐵越恨。」"
+  mods:
+    - text: "增加 {value}% 護甲"
+      value: [300, 400]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+    - text: "擊中時獲得 {value} 點怒氣"
+      value: [3, 6]
+      stats:
+        - { stat: rage.on_hit, type: FLAT, value: "{value}" }
+    - text: "怒氣滿時獲得一顆隨機戰星（每 {value} 秒最多一次）"
+      value: [3, 6]
+      stats:
+        - { stat: charge.on_max_rage, type: FLAT, value: "{value}" }
+    - text: "怒氣滿時失去全部怒氣"
+      stats:
+        - { stat: flag.lose_rage_at_max, type: FLAT, value: 1 }
+    - text: "最大怒氣 {value}"
+      value: [-10, 10]
+      stats:
+        - { stat: rage.max, type: FLAT, value: "{value}" }
+
+serpent_egg_amulet:        # Serpent's Egg
+  name: 蛇卵墜
+  base: jamulet_11
+  drop_level: 35
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「一顆孵出兩條，兩條各自又是一顆蛋。」"
+  mods:
+    - text: "+{value} 全部屬性"
+      value: [10, 20]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [17, 23]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 魔力回復速度"
+      value: [20, 30]
+      stats:
+        - { stat: mana.regen, type: INCREASED, value: "{value}" }
+    - text: "獲得戰星時多獲得一顆同種的"
+      stats:
+        - { stat: charge.extra, type: FLAT, value: 100 }
+
+mountain_breath_charm:     # Breath of the Mountains
+  name: 岳息護符
+  base: sapphire_charm
+  drop_level: 5
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「山頂的風很冷，冷到會讓人清醒。」"
+  mods:
+    - text: "+25% 冰冷抗性"
+      stats:
+        - { stat: resist.cold, type: FLAT, value: 25 }
+    - text: "減少 {value}% 每次用掉的充能"
+      value: [10, 15]
+      stats:
+        - { stat: flask.local.charges_used, type: INCREASED, value: "-{value}" }
+    - text: "使用時獲得一顆銳星"
+      stats:
+        - { stat: charm.local.grant.power, type: FLAT, value: 1 }
+
+thunder_roar_charm:        # Valako's Roar
+  name: 雷吼護符
+  base: topaz_charm
+  drop_level: 5
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「雷打下來的時候，有人會跟著吼回去。」"
+  mods:
+    - text: "+25% 閃電抗性"
+      stats:
+        - { stat: resist.lightning, type: FLAT, value: 25 }
+    - text: "增加 {value}% 獲得的充能"
+      value: [30, 40]
+      stats:
+        - { stat: flask.local.charges_gained, type: INCREASED, value: "{value}" }
+    - text: "使用時獲得一顆怒星"
+      stats:
+        - { stat: charm.local.grant.frenzy, type: FLAT, value: 1 }

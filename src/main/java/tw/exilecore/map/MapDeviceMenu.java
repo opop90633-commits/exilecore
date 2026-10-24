@@ -227,7 +227,7 @@ public final class MapDeviceMenu extends Menu {
         lore.addAll(service.finalTierLines(player));
         lore.add("<dark_gray>階級越高 Boss 越強，掉的地圖與裝備越好");
         if (!unlocked) {
-            lore.add(Atlas.isGrid(completed) ? "<red>先在星圖上找到城塞並攻破（距離 " + service.atlasConfig().citadels().minDistance() + " 格以外）"
+            lore.add(Atlas.isGrid(completed) ? "<red>先攻破城塞（距離 " + service.atlasConfig().citadels().minDistance() + " 格以外）：從「塔與城塞」開"
                     : "<red>先完成星圖最外圈的地圖（" + ItemRenderer.escape(service.ringNames(config.maxRing())) + "）");
         }
         lore.add((have >= cost ? "<green>" : "<red>") + "需要 " + cost + " 片" + (fragment == null ? "天穹碎片" : ItemRenderer.escape(fragment.name()))
@@ -254,6 +254,12 @@ public final class MapDeviceMenu extends Menu {
             }
         }
         if (openable.isEmpty()) {
+            // 2026-10-24：終局還沒解鎖但星圖上已經有能攻的城塞：直接打開「塔與城塞」（以前只說要攻破城塞，玩家找不到入口）
+            if (Atlas.isGrid(service.completed(player)) && !service.atlasProgress(player).openCitadels().isEmpty()) {
+                player.sendMessage(plugin.text().prefixed("<gray>終局要先攻破城塞：從這裡選一座城塞開（第一次不用碎片）"));
+                new AtlasSitesMenu(plugin, player, service).open();
+                return;
+            }
             final String problem = service.finalProblem(player, finals.isEmpty() ? null : finals.getFirst());
             player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem == null ? "終局開不了" : problem)));
             return;

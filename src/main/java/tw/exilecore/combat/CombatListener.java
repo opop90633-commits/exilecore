@@ -610,6 +610,35 @@ public final class CombatListener implements Listener {
                     conditional.add(Modifier.more(StatKeys.DAMAGE, forged / 100.0, "怒鑄"));
                 }
             }
+            // 2026-10-24（抑星，PoE2 Inhibitor）：身上每有一種戰星或灌注，更多 4% 傷害
+            final double inhibit = skillSheet.flat(tw.exilecore.charge.ChargeService.SUP_INHIBIT, hitTagSet);
+            if (inhibit > 0 && plugin.skills() != null && charges != null) {
+                int kinds = 0;
+                for (final tw.exilecore.charge.ChargeType type : charges.config().types()) {
+                    if (charges.count((Player) attacker, type.id()) > 0) {
+                        kinds++;
+                    }
+                }
+                for (final int layers : plugin.skills().resources().infusions((Player) attacker)) {
+                    if (layers > 0) {
+                        kinds++;
+                    }
+                }
+                if (kinds > 0) {
+                    conditional.add(Modifier.more(StatKeys.DAMAGE, inhibit * kinds / 100.0, "抑星"));
+                }
+            }
+            // 2026-10-24（馭星訣的品質，PoE2）：身上每顆戰星增加 x% 傷害
+            final double perCharge = attackerSheet.flat(StatKeys.DAMAGE_PER_CHARGE, java.util.Set.of());
+            if (perCharge > 0 && charges != null) {
+                int held = 0;
+                for (final tw.exilecore.charge.ChargeType type : charges.config().types()) {
+                    held += charges.count((Player) attacker, type.id());
+                }
+                if (held > 0) {
+                    conditional.add(Modifier.increased(StatKeys.DAMAGE, perCharge * held / 100.0, "馭星訣"));
+                }
+            }
             // 2026-10：怒氣：每點增加 1% 攻擊傷害
             if (plugin.skills() != null) {
                 final int rage = plugin.skills().resources().rage((Player) attacker);
@@ -698,6 +727,12 @@ public final class CombatListener implements Listener {
                 if (result.blocked()) {
                     plugin.players().get((Player) defender).markRecent(tw.exilecore.stats.Recently.BLOCK, plugin.getServer().getCurrentTick());
                     gainOnBlock((Player) defender, defenderSheet); // 2026-10-21：腐化「格擋時回復生命／魔力」
+                    if (charges != null) {
+                        charges.onEvent((Player) defender, "block", null, null, attacker); // 2026-10-24：格擋時給戰星（詞綴、天賦用）
+                    }
+                    if (plugin.skills() != null) {
+                        plugin.skills().chargeEffects().onBlock((Player) defender, attacker, defenderSheet); // 2026-10-24：招架、熔殼
+                    }
                     // 2026-10-15（蛛巢壁壘）：格擋時讓攻擊者中毒，視同造成這麼多基礎混沌傷害
                     final double blockPoison = defenderSheet.flat(StatKeys.BLOCK_POISON, java.util.Set.of());
                     if (blockPoison > 0 && ailments != null && !(attacker instanceof Player)) {
@@ -782,7 +817,17 @@ public final class CombatListener implements Listener {
             // 撲殺：換階段鎖血中的 Boss 不能撲殺（2026-10：不然收命、收魂照給，Boss 卻沒死）
             if (!blocked && (attackerIsPlayer || attackerIsMinion) && StatKeys.flag(skillSheet, StatKeys.FLAG_CULLING)
                     && (plugin.maps() == null || plugin.maps().phaseFloor(defender) <= 0)) {
-                if (cull(event, defender, defenderMonster) && attackerIsPlayer) {
+                final boolean culled = cull(event, defender, defenderMonster);
+                if (culled && attackerIsMinion && credit != null && charges != null && plugin.skills() != null
+                        && plugin.skills().minions() != null) {
+                    // 2026-10-24（霧鴉，PoE2 Mist Raven）：召喚物撲殺時照那個召喚技能的 minion_cull.代號 給主人戰星
+                    final Player owner = credit;
+                    final java.util.Map<String, Integer> gain = plugin.skills().minions().cullCharges(attacker);
+                    if (!gain.isEmpty()) {
+                        defer(defender, () -> gain.forEach((id, count) -> charges.grant(owner, id, count)));
+                    }
+                }
+                if (culled && attackerIsPlayer) {
                     // 2026-10：收命、收魂（斷命打死時回復）
                     // 2026-10-18：撲殺的戰星與回復等事件確定沒被取消（MONITOR）才給
                     defer(defender, () -> {

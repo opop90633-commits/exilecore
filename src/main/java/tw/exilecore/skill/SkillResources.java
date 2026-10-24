@@ -135,6 +135,24 @@ public final class SkillResources implements Listener {
         s.lastRageHit = now;
         s.rage = Math.min(rageMax(sheet), s.rage + gain);
         s.rageTick = now;
+        reachedMax(player, s, sheet);
+    }
+
+    /** 憎鑄（2026-10-24，PoE2 Hateforge）：怒氣滿時「失去全部怒氣」。 */
+    public static final String LOSE_RAGE_AT_MAX = StatKeys.FLAG_LOSE_RAGE_AT_MAX;
+
+    /** 怒氣剛加完：滿了的話給戰星（charge.on_max_rage）、失去全部怒氣（flag.lose_rage_at_max）。 */
+    private void reachedMax(final Player player, final State s, final StatSheet sheet) {
+        final int max = rageMax(sheet);
+        if (max <= 0 || s.rage < max) {
+            return;
+        }
+        if (plugin.combat() != null && plugin.combat().charges() != null) {
+            plugin.combat().charges().onMaxRage(player, sheet);
+        }
+        if (StatKeys.flag(sheet, LOSE_RAGE_AT_MAX)) {
+            s.rage = 0;
+        }
     }
 
     /** 2026-10-21（PoE2 珠寶）：被敵人擊中時獲得怒氣（rage.when_hit；被格擋、閃掉的不算；同一 tick 只算一次）。 */
@@ -157,6 +175,7 @@ public final class SkillResources implements Listener {
         s.lastRageTaken = now;
         s.rage = Math.min(rageMax(sheet), s.rage + gain);
         s.rageTick = now;
+        reachedMax(player, s, sheet);
     }
 
     // ---- 連擊（2026-10，照 PoE2）----
@@ -209,6 +228,12 @@ public final class SkillResources implements Listener {
             s.finisherCombo = s.combo;
             s.combo = 0;
             s.finisherUntil = now + 12;
+            // 2026-10-24（鐘星，PoE2 Ailith's Chimes）：每用掉一層連擊 25% 機率（超過 100% 的部分每 100% 必給一顆）給銳星
+            final double chime = effective.flat(tw.exilecore.charge.ChargeService.SUP_COMBO_POWER, tags) * s.finisherCombo;
+            if (chime > 0 && plugin.combat() != null && plugin.combat().charges() != null) {
+                final int count = (int) (chime / 100) + (plugin.random().nextDouble() * 100 < chime % 100 ? 1 : 0);
+                plugin.combat().charges().grant(player, "power", count);
+            }
         }
         if (effective.flat(StatKeys.RAGEFORGED, tags) > 0 && rage(player) >= 10) {
             final State s = state(player.getUniqueId());
@@ -292,7 +317,8 @@ public final class SkillResources implements Listener {
      */
     java.util.List<tw.exilecore.stats.Modifier> consumeInfusion(final Player player, final StatSheet effective, final Set<String> tags,
                                                                final int[] usedOut) {
-        if (effective.flat(StatKeys.INFUSION_CONSUME, tags) <= 0) {
+        if (effective.flat(StatKeys.INFUSION_CONSUME, tags) <= 0
+                || effective.flat(tw.exilecore.charge.ChargeService.SUP_INHIBIT, tags) > 0) { // 2026-10-24：抑星不消耗灌注
             return java.util.List.of();
         }
         final int[] have = infusions(player);

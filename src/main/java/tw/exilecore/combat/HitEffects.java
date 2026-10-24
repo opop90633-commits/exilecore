@@ -118,6 +118,10 @@ public final class HitEffects implements Listener {
             debuffs.apply(target, new Debuffs.Debuff("pin", source, now + ticks, 0, false, null, List.of(), 1.0));
             pinImmune.put(target, now + ticks + PIN_IMMUNE_TICKS);
             feedback(viewer, defender, "定身", Particle.CRIT);
+            if (event.attacker() instanceof Player pinner && !tags.contains(Tags.TOTEM_HIT) && plugin.combat() != null
+                    && plugin.combat().charges() != null) {
+                plugin.combat().charges().onEvent(pinner, "pin", effective, tags, defender); // 2026-10-24：戰意（釘住時給怒星）
+            }
         }
         final double daze = effective.flat(StatKeys.DAZE_CHANCE, tags);
         if (daze > 0 && roll(daze)) {

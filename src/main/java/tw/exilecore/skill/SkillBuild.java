@@ -322,6 +322,14 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 newDeploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
     }
 
+    /** 2026-10-24：這一次的持續時間倍率換掉（久咒：消耗銳星更多 80% 持續時間）。 */
+    public SkillBuild withDurationScale(final double newDurationScale) {
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, Math.max(0.1, newDurationScale), forks, returning, echo,
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+    }
+
     /** 同一次施放換一個技能描述（戰吼強化的攻擊：傷害更多）。 */
     public SkillBuild withProfile(final SkillProfile newProfile) {
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, newProfile,
@@ -404,6 +412,13 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                     list.add(new Modifier(modifier.stat().substring(StatKeys.GRANT_PREFIX.length()), modifier.type(), modifier.value(),
                             modifier.tags(), support.name()));
                 }
+            }
+        }
+        // 2026-10-24：品質給的（馭星訣：消耗間隔、每顆戰星的傷害），寫成 grant.* 放在技能自己的修飾器裡
+        for (final Modifier modifier : profile.local()) {
+            if (modifier.stat().startsWith(StatKeys.GRANT_PREFIX) && modifier.source() != null && modifier.source().startsWith(SkillService.QUALITY_SOURCE)) {
+                list.add(new Modifier(modifier.stat().substring(StatKeys.GRANT_PREFIX.length()), modifier.type(), modifier.value(),
+                        modifier.tags(), modifier.source()));
             }
         }
         return list;

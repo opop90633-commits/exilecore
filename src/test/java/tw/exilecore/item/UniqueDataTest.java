@@ -71,6 +71,8 @@ class UniqueDataTest {
             stats.add(StatKeys.chargeChance(charge));
             stats.add(StatKeys.chargeOnHit(charge));
             stats.add(StatKeys.chargeMax(charge));
+            stats.add(tw.exilecore.charge.ChargeService.LOSE_AT_MAX + charge); // 2026-10-24：赤芒導衣
+            stats.add(tw.exilecore.flask.CharmService.GRANT + charge);         // 2026-10-24：岳息、雷吼護符
         }
         // 2026-10 新的引擎屬性鍵（引擎照字串組出來讀的）：自己身上某種異常的持續時間（AilmentService）、傷害轉換、
         // 臨在的抗性降低（Presence）、護符欄位（CharmService）、揭露詞綴的幅度（ItemStats）
@@ -111,7 +113,7 @@ class UniqueDataTest {
     void everyUniqueLoadsWithValidStatsTagsAndSources() {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
-        assertEquals(127 + 21 + 5 + 2, repository.uniques().size(), // 2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件、淵鯨再 2 件
+        assertEquals(127 + 21 + 5 + 2 + 6, repository.uniques().size(), // 2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件、淵鯨再 2 件；2026-10-24：＋6 件戰星傳奇
                 "終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 41（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰；2026-10-17 ＋棘壘） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘） + 星骸之海的淵鯨 3 + 只能賭的 1（2026-10-17 踏骸之履）");
         final Set<String> names = new HashSet<>();
         for (final UniqueItem unique : repository.uniques()) {

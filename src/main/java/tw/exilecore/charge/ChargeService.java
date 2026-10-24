@@ -50,8 +50,57 @@ public final class ChargeService implements Listener {
     public static final String EXTRA_RANDOM = "charge.extra_random";
     /** 屬性鍵（2026-10）：每分鐘給幾顆戰星（照最高的能力值：力量 → 磐星、敏捷 → 怒星、智慧 → 銳星），FLAT；好幾個來源加起來。 */
     public static final String PERIODIC = "charge.periodic";
-    /** 撲殺：稀有怪多給一顆、傳奇怪多給兩顆（照 PoE2）。 */
-    static final java.util.Set<String> RARITY_BONUS_EVENTS = java.util.Set.of("cull");
+
+    // ---- 2026-10-24：戰星輔助（照 PoE2，數值也照 PoE2；FLAT 數值，都只對被輔助的技能） ----
+    /** 恆星（Perpetual Charge）：消耗戰星時有 x% 機率不扣掉，但效果照拿。 */
+    public static final String SUP_KEEP = "charge.sup.keep";
+    /** 倍星（Heightened Charges）：消耗戰星的效果有 x% 機率加倍。 */
+    public static final String SUP_DOUBLE = "charge.sup.double";
+    /** 抑星（Inhibitor）：不消耗戰星與灌注；身上每有一種戰星或灌注更多 x% 傷害。 */
+    public static final String SUP_INHIBIT = "charge.sup.inhibit";
+    /** 狂速（Ferocity）：放的時候消耗一顆怒星，這一次更多 x% 技能速度；被輔助的技能不會產生怒星。 */
+    public static final String SUP_FEROCITY = "charge.sup.ferocity";
+    /** 久咒（Abiding Hex）：放的時候消耗一顆銳星，這一次更多 x% 持續時間。 */
+    public static final String SUP_ABIDING_HEX = "charge.sup.abiding_hex";
+    /** 碎地（Jagged Ground）：放的時候消耗一顆磐星，留下 x 秒的碎石地（裡面的敵人減速 20%）。 */
+    public static final String SUP_JAGGED = "charge.sup.jagged_ground";
+    /** 蔓寒（Creeping Chill）：造出冰晶時消耗一顆銳星，那顆冰晶周圍結出會變大的冰緩地。 */
+    public static final String SUP_CREEPING = "charge.sup.creeping_chill";
+    /** 雷星（Empowered Sparks）：被輔助的技能產生銳星時，強化接下來 x 次攻擊；強化的攻擊用出去時射出游雷。 */
+    public static final String SUP_SPARKS = "charge.sup.empower_sparks";
+    /** 雷星：每次射出幾顆游雷。 */
+    public static final String SUP_SPARK_PROJECTILES = "charge.sup.spark_projectiles";
+    /** 祭柱的銳星（Guatelitzi's Ablation）：祭柱還在的時候每 x 秒給一顆銳星。 */
+    public static final String SUP_OFFERING_POWER = "charge.sup.offering_power";
+    /** 同上：放的時候犧牲目前生命的 x%。 */
+    public static final String SUP_OFFERING_SACRIFICE = "charge.sup.offering_sacrifice";
+    /** 同上：祭柱倒下後，每秒回復 x% 生命與魔力，持續的時間等於祭柱撐了多久。 */
+    public static final String SUP_OFFERING_REGEN = "charge.sup.offering_regen";
+    /** 連段銳星（Ailith's Chimes）：用掉連擊時每一層 x% 機率獲得銳星（超過 100% 的部分必定給）。 */
+    public static final String SUP_COMBO_POWER = "charge.sup.combo_power";
+    /** 完磐（Perfected Endurance）：完美時機打中時獲得 x 顆磐星。 */
+    public static final String SUP_PERFECT_ENDURANCE = "charge.sup.perfect_endurance";
+    /** 對傳奇怪物的事件改成直接給幾顆（不擲機率）：charge.sup.unique.事件.代號（震磐：重暈傳奇怪給 1／3 顆磐星）。 */
+    public static final String SUP_UNIQUE = "charge.sup.unique.";
+    // ---- 2026-10-24：更多戰星來源（照 PoE2） ----
+    /** 共鳴（Resonance 基石）：該拿怒星改拿銳星、該拿磐星改拿怒星、該拿銳星改拿磐星。FLAT 1。 */
+    public static final String RESONANCE = "flag.resonance";
+    /** 赤焰導管：某種戰星滿了就全部失去，並讓自己感電。charge.lose_at_max.代號，FLAT 1。 */
+    public static final String LOSE_AT_MAX = "charge.lose_at_max.";
+    /** 馭星訣（Charge Regulation）：每 x 秒消耗每種戰星各一顆。 */
+    public static final String REGULATION_CONSUME = "charge.regulation_consume";
+    /** 有寫的話，charge.event_cooldown.* 的冷卻是共用的（戰意：冰凍、電擊、釘住任一給了，三種都進冷卻）。FLAT 1。 */
+    public static final String EVENT_COOLDOWN_SHARED = "charge.event_cooldown.shared";
+    /** 怒氣滿的時候給一顆隨機的戰星，至少隔 x 秒（憎鑄）。 */
+    public static final String ON_MAX_RAGE = "charge.on_max_rage";
+    /** 地面效果（穢陣）自然結束時給的戰星：charge.zone_end.代號，FLAT 顆數。 */
+    public static final String ZONE_END = "charge.zone_end.";
+    /** 打中「被招架」的敵人時用掉招架給的戰星（回槍躍，PoE2 Disengage）：charge.on_parried.代號，FLAT 顆數；一次施放只給一次。 */
+    public static final String ON_PARRIED = "charge.on_parried.";
+    /** 召喚物撲殺時主人拿幾顆（霧鴉）：charge.minion_cull.代號，FLAT 顆數。 */
+    public static final String MINION_CULL = "charge.minion_cull.";
+    /** 撲殺、擊殺（技能自己的 charge.event.kill.*）：稀有怪多給一顆、傳奇怪多給兩顆（照 PoE2）。 */
+    static final java.util.Set<String> RARITY_BONUS_EVENTS = java.util.Set.of("cull", "kill"); // 2026-10-24：剔殘（擊殺）
 
     public ChargeService(final ExileCore plugin, final ChargeConfig config) {
         this.plugin = plugin;
@@ -104,7 +153,11 @@ public final class ChargeService implements Listener {
      */
     public Map<String, Double> hitChances(final StatSheet effective, final java.util.Set<String> context) {
         Map<String, Double> chances = null;
+        final boolean ferocity = effective.flat(SUP_FEROCITY, context) > 0; // 2026-10-24：狂速的技能不會產生怒星
         for (final ChargeType type : config.types()) {
+            if (ferocity && "frenzy".equals(type.id())) {
+                continue;
+            }
             final double chance = Math.max(0, Math.min(1, effective.flat(StatKeys.chargeOnHit(type.id()), context) / 100.0));
             if (chance > 0) {
                 if (chances == null) {
@@ -121,6 +174,11 @@ public final class ChargeService implements Listener {
             final double random = effective.flat(EXTRA_RANDOM, context);
             if (random > 0) {
                 chances.put(EXTRA_RANDOM, random / 100.0);
+            }
+            final double sparks = effective.flat(SUP_SPARKS, context);
+            if (sparks > 0) {
+                chances.put(SUP_SPARKS, sparks); // 2026-10-24：雷星（不是機率，是要強化幾次）
+                chances.put(SUP_SPARK_PROJECTILES, effective.flat(SUP_SPARK_PROJECTILES, context));
             }
         }
         return chances == null ? Map.of() : chances;
@@ -142,9 +200,19 @@ public final class ChargeService implements Listener {
                 continue;
             }
             changed |= gainRolled(player, type, sheet, localExtra, localRandom);
+            if ("power".equals(type.id())) {
+                empowerSparks(player, chances.getOrDefault(SUP_SPARKS, 0.0), chances.getOrDefault(SUP_SPARK_PROJECTILES, 0.0));
+            }
         }
         if (changed) {
             plugin.players().markDirty(player);
+        }
+    }
+
+    /** 2026-10-24（雷星）：被輔助的技能產生了銳星：強化接下來幾次攻擊（打中時射出游雷，ChargeEffects 處理）。 */
+    private void empowerSparks(final Player player, final double attacks, final double projectiles) {
+        if (attacks > 0 && plugin.skills() != null) {
+            plugin.skills().chargeEffects().empower(player, (int) Math.round(attacks), (int) Math.round(projectiles));
         }
     }
 
@@ -186,6 +254,31 @@ public final class ChargeService implements Listener {
         return true;
     }
 
+    /**
+     * 2026-10-24：技能消耗一顆戰星的統一入口（照 PoE2 的戰星輔助）。effective 是那個技能疊好輔助的屬性表（null = 沒有輔助）。
+     * 回傳效果倍率：0 = 沒用掉（身上沒有、或掛了抑星不消耗）、1 = 一般、2 = 倍星讓效果加倍。
+     * 恆星：機率不扣掉那顆，但一樣算「消耗了」（效果照拿、「最近消耗過」照記）。
+     */
+    public int spend(final Player player, final String chargeId, final StatSheet effective, final java.util.Set<String> tags) {
+        final java.util.Set<String> context = tags == null ? java.util.Set.of() : tags;
+        if (effective != null && effective.flat(SUP_INHIBIT, context) > 0) {
+            return 0;
+        }
+        if (count(player, chargeId) <= 0) {
+            return 0;
+        }
+        final double keep = effective == null ? 0 : effective.flat(SUP_KEEP, context);
+        if (keep > 0 && plugin.items().random().nextDouble() * 100 < keep) {
+            if (tw.exilecore.stats.Recently.EVENTS.contains(chargeId)) {
+                plugin.players().get(player).markRecent(chargeId, plugin.getServer().getCurrentTick());
+            }
+        } else if (!consume(player, chargeId)) {
+            return 0;
+        }
+        final double twice = effective == null ? 0 : effective.flat(SUP_DOUBLE, context);
+        return twice > 0 && plugin.items().random().nextDouble() * 100 < twice ? 2 : 1;
+    }
+
     /** 2026-10-24：瞬影擊連打期間不能拿銳星（照 PoE2「使用這個技能時不能獲得銳星」）：玩家 → 到哪個 tick。 */
     private final Map<UUID, Long> noPowerUntil = new HashMap<>();
 
@@ -194,7 +287,8 @@ public final class ChargeService implements Listener {
     }
 
     /** 獲得一顆；回傳顆數有沒有變多（滿了只刷新時間 = false）。 */
-    private boolean gainOne(final Player player, final ChargeType type, final StatSheet sheet) {
+    private boolean gainOne(final Player player, final ChargeType original, final StatSheet sheet) {
+        final ChargeType type = resonate(original, sheet);
         if ("power".equals(type.id())) {
             final Long until = noPowerUntil.get(player.getUniqueId());
             if (until != null) {
@@ -205,7 +299,41 @@ public final class ChargeService implements Listener {
             }
         }
         final ChargeBag bag = bags.computeIfAbsent(player.getUniqueId(), id -> new HashMap<>()).computeIfAbsent(type.id(), id -> new ChargeBag());
-        return bag.gain(plugin.getServer().getCurrentTick(), maxOf(type, sheet), durationTicks(type, sheet));
+        final int max = maxOf(type, sheet);
+        final boolean grew = bag.gain(plugin.getServer().getCurrentTick(), max, durationTicks(type, sheet));
+        if (grew && bag.count() >= max && tw.exilecore.stats.StatKeys.flag(sheet, LOSE_AT_MAX + type.id())) {
+            // 2026-10-24（赤焰導管）：滿了就全部失去，並讓自己感電
+            bag.clear();
+            if (plugin.ailments() != null) {
+                plugin.ailments().groundAilment(player, tw.exilecore.ailment.AilmentType.SHOCK, SELF_SHOCK, SELF_SHOCK_SECONDS);
+            }
+            plugin.players().get(player).notice("<" + type.color() + ">" + type.name() + "<gray>滿了：全部失去，你感電了",
+                    plugin.getServer().getCurrentTick() + 40);
+        }
+        return grew;
+    }
+
+    /** 赤焰導管讓自己感電：受到的傷害增加 20%、4 秒（PoE2 感電的基礎值）。 */
+    static final double SELF_SHOCK = 0.2;
+    static final double SELF_SHOCK_SECONDS = 4;
+
+    /** 共鳴（2026-10-24，PoE2 Resonance 基石）：該拿怒星改拿銳星、該拿磐星改拿怒星、該拿銳星改拿磐星。 */
+    private ChargeType resonate(final ChargeType type, final StatSheet sheet) {
+        if (!tw.exilecore.stats.StatKeys.flag(sheet, RESONANCE)) {
+            return type;
+        }
+        final ChargeType swapped = config.type(resonance(type.id()));
+        return swapped == null ? type : swapped;
+    }
+
+    /** 共鳴的對應（純函式，測試用）。 */
+    public static String resonance(final String id) {
+        return switch (id) {
+            case "frenzy" -> "power";
+            case "endurance" -> "frenzy";
+            case "power" -> "endurance";
+            default -> id;
+        };
     }
 
     /**
@@ -263,24 +391,74 @@ public final class ChargeService implements Listener {
                 ? effective.flat(EXTRA_RANDOM, tags) / 100.0 - sheet.flat(EXTRA_RANDOM, java.util.Set.of()) / 100.0 : 0;
         boolean changed = false;
         boolean gave = false;
+        final boolean unique = target != null && plugin.monsters() != null && plugin.monsters().data(target)
+                .map(data -> data.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE).orElse(false);
+        final boolean ferocity = effective != null && effective.flat(SUP_FEROCITY, tags) > 0;
         for (final ChargeType type : config.types()) {
+            if (ferocity && "frenzy".equals(type.id())) {
+                continue; // 2026-10-24：狂速的技能不會產生怒星
+            }
+            // 2026-10-24（震磐）：對傳奇怪物直接給幾顆，不擲機率
+            final int forUnique = unique ? (int) Math.round(source.flat(SUP_UNIQUE + event + "." + type.id(), tags)) : 0;
             final double chance = source.flat(EVENT + event + "." + type.id(), tags) / 100.0;
-            if (chance <= 0 || plugin.items().random().nextDouble() >= Math.min(1, chance)) {
+            if (forUnique <= 0 && (chance <= 0 || plugin.items().random().nextDouble() >= Math.min(1, chance))) {
                 continue;
             }
             gave = true;
-            for (int i = 0; i <= bonus; i++) {
+            for (int i = 0; i < Math.max(1 + bonus, forUnique); i++) {
                 changed |= gainRolled(player, type, sheet, Math.max(0, localExtra), Math.max(0, localRandom));
+            }
+            if ("power".equals(type.id()) && effective != null) {
+                empowerSparks(player, effective.flat(SUP_SPARKS, tags), effective.flat(SUP_SPARK_PROJECTILES, tags));
             }
         }
         if (gave) {
             final double cooldown = source.flat(EVENT_COOLDOWN + event, tags);
             if (cooldown > 0) {
                 ready.put(event, now + Math.round(cooldown * 20));
+                if (source.flat(EVENT_COOLDOWN_SHARED, tags) > 0) {
+                    // 2026-10-24（戰意，PoE2）：冰凍、電擊、釘住共用一個冷卻
+                    for (final String other : ChargeText.EVENTS.keySet()) {
+                        if (source.flat(EVENT_COOLDOWN + other, tags) > 0) {
+                            ready.put(other, now + Math.round(source.flat(EVENT_COOLDOWN + other, tags) * 20));
+                        }
+                    }
+                }
             }
         }
         if (changed) {
             plugin.players().markDirty(player);
+        }
+    }
+
+    /** 馭星訣：玩家 → 下一次消耗的 tick。 */
+    private final Map<UUID, Long> regulationNext = new HashMap<>();
+
+    /** 2026-10-24（馭星訣，PoE2 Charge Regulation）：開著的人每 x 秒消耗每種戰星各一顆。 */
+    private void regulation(final long now) {
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            final double seconds = plugin.players().get(player).hasCharacter()
+                    ? plugin.players().sheet(player).flat(REGULATION_CONSUME, java.util.Set.of()) : 0;
+            if (seconds <= 0) {
+                regulationNext.remove(player.getUniqueId());
+                continue;
+            }
+            final Long next = regulationNext.get(player.getUniqueId());
+            if (next == null) {
+                regulationNext.put(player.getUniqueId(), now + Math.round(seconds * 20));
+                continue;
+            }
+            if (now < next) {
+                continue;
+            }
+            regulationNext.put(player.getUniqueId(), now + Math.round(seconds * 20));
+            boolean changed = false;
+            for (final ChargeType type : config.types()) {
+                changed |= consume(player, type.id());
+            }
+            if (changed) {
+                plugin.players().markDirty(player);
+            }
         }
     }
 
@@ -372,6 +550,7 @@ public final class ChargeService implements Listener {
     public void tick() {
         final long now = plugin.getServer().getCurrentTick();
         periodic(now); // 2026-10：星律（定期給戰星）
+        regulation(now); // 2026-10-24：馭星訣（定期消耗戰星）
         final List<UUID> gone = new ArrayList<>();
         for (final Map.Entry<UUID, Map<String, ChargeBag>> owner : bags.entrySet()) {
             final Player player = plugin.getServer().getPlayer(owner.getKey());
@@ -458,6 +637,25 @@ public final class ChargeService implements Listener {
         bags.remove(event.getPlayer().getUniqueId());
         eventReady.remove(event.getPlayer().getUniqueId());
         periodicNext.remove(event.getPlayer().getUniqueId());
+        regulationNext.remove(event.getPlayer().getUniqueId());
+        rageReady.remove(event.getPlayer().getUniqueId());
+    }
+
+    /** 憎鑄：玩家 → 下一次怒氣滿可以給戰星的 tick。 */
+    private final Map<UUID, Long> rageReady = new HashMap<>();
+
+    /** 2026-10-24（憎鑄，PoE2 Hateforge）：怒氣滿了：有 charge.on_max_rage（秒）的給一顆隨機戰星，冷卻內不給。 */
+    public void onMaxRage(final Player player, final StatSheet sheet) {
+        final double seconds = sheet.flat(ON_MAX_RAGE, java.util.Set.of());
+        final long now = plugin.getServer().getCurrentTick();
+        if (seconds <= 0 || rageReady.getOrDefault(player.getUniqueId(), 0L) > now || config.types().isEmpty()) {
+            return;
+        }
+        rageReady.put(player.getUniqueId(), now + Math.round(seconds * 20));
+        final List<ChargeType> all = List.copyOf(config.types());
+        if (gainRolled(player, all.get(plugin.items().random().nextInt(all.size())), sheet, 0, 0)) {
+            plugin.players().markDirty(player);
+        }
     }
 
     @EventHandler

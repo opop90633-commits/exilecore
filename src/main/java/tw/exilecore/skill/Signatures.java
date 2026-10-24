@@ -265,7 +265,9 @@ final class Signatures {
         if (!"lance".equals(signature) && !"bolt_spear".equals(signature)) {
             return build;
         }
-        if (plugin.combat() == null || !plugin.combat().charges().consume(player, "frenzy")) {
+        final int benefit = plugin.combat() == null ? 0
+                : plugin.combat().charges().spend(player, "frenzy", build.profile().effective(state.sheet()), build.profile().tags()); // 2026-10-24：戰星輔助
+        if (benefit <= 0) {
             return build;
         }
         if ("lance".equals(signature)) {
@@ -275,9 +277,10 @@ final class Signatures {
             return build.withProfile(build.profile().withLocal(List.of(
                     tw.exilecore.stats.Modifier.flat("damage.convert.lightning", 30, "怒星"))));
         }
-        state.notice("<#ffe14a>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + " 消耗怒星：分裂成 " + BOLT_SPEAR_COPIES + " 支", now + 30);
+        final int copies = BOLT_SPEAR_COPIES * benefit; // 倍星：分裂的支數加倍
+        state.notice("<#ffe14a>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + " 消耗怒星：分裂成 " + copies + " 支", now + 30);
         plugin.players().display(player, state);
-        return build.withAreaAndProjectiles(build.areaScale(), build.projectiles() + BOLT_SPEAR_COPIES - 1);
+        return build.withAreaAndProjectiles(build.areaScale(), build.projectiles() + copies - 1);
     }
 
     /** 你的其他技能打在插著的霆落矛附近：把它提早引爆（2026-10-15，照 PoE2「被其他技能引爆」）。 */

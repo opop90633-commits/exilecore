@@ -747,10 +747,12 @@ final class SkillExecutor {
             }
             int left = paid;
             if (left <= 0) {
-                if (!charges.consume(player, "power")) {
+                // 戰星輔助：恆星不扣、倍星這顆打 4 下；抑星不消耗（就不連打）
+                final int benefit = charges.spend(player, "power", build.profile().effective(plugin.players().sheet(player)), build.profile().tags());
+                if (benefit <= 0) {
                     return; // 銳星用完了
                 }
-                left = FLICKER_PER_CHARGE;
+                left = FLICKER_PER_CHARGE * benefit;
             }
             final Location from = player.getLocation();
             final Location to = next.destination();

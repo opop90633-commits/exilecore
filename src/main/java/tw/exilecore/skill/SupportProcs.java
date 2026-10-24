@@ -149,7 +149,7 @@ public final class SupportProcs implements Listener {
         return sum;
     }
 
-    private static String baseId(final String profileId) {
+    static String baseId(final String profileId) {
         final int dot = profileId.indexOf('.');
         return dot < 0 ? profileId : profileId.substring(0, dot);
     }
@@ -232,6 +232,7 @@ public final class SupportProcs implements Listener {
             return;
         }
         fireAll(player, hit.skillId(), "kill", event.getEntity().getLocation(), null, event.getEntity()); // 2026-10：打死（霜綻給怒星）
+        service.chargeEffects().onKill(player, hit.skillId(), event.getEntity()); // 2026-10-24：剔殘（技能自己的擊殺給戰星）
         for (final AilmentType type : hit.ailments()) {
             fireAll(player, hit.skillId(), "kill_" + word(type), event.getEntity().getLocation(), null, event.getEntity());
         }

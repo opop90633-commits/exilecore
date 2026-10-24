@@ -66,6 +66,20 @@ final class SkillZones {
         }
     }
 
+    /** 2026-10-24（穢陣，PoE2 Profane Ritual 的「儀式完成時獲得一顆銳星」）：地面效果自然結束時照 charge.zone_end.代號 給戰星。 */
+    private void completed(final Player owner, final Zone zone) {
+        if (plugin.combat() == null || plugin.combat().charges() == null || zone.profile == null) {
+            return;
+        }
+        final tw.exilecore.stats.StatSheet effective = zone.profile.effective(plugin.players().sheet(owner));
+        for (final tw.exilecore.charge.ChargeType type : plugin.combat().charges().config().types()) {
+            final int count = (int) Math.round(effective.flat(tw.exilecore.charge.ChargeService.ZONE_END + type.id(), zone.profile.tags()));
+            if (count > 0) {
+                plugin.combat().charges().grant(owner, type.id(), count);
+            }
+        }
+    }
+
     /** 一次延遲落下。 */
     private record Impact(UUID owner, Location center, double radius, SkillProfile profile, String visual, long atTick, long startTick) {
     }
@@ -252,6 +266,9 @@ final class SkillZones {
             if (now >= zone.untilTick || owner == null || !owner.getWorld().equals(zone.world)) {
                 zone.gone = true;
                 expired = true;
+                if (now >= zone.untilTick && owner != null && owner.getWorld().equals(zone.world)) {
+                    completed(owner, zone); // 2026-10-24（穢陣）：撐到結束給戰星
+                }
                 continue;
             }
             if (now % 2 == 0 && watched(zone)) {

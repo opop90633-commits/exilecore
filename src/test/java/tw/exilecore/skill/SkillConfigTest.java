@@ -57,7 +57,7 @@ class SkillConfigTest {
                 "herald_of_ash", "herald_of_thunder", "herald_of_ice", "fortifying_cry", "infernal_cry", "seismic_cry", "bear_maul")),
                 visible.toString());
         assertEquals("leap_slam", visible.getFirst(), "照檔案裡的順序");
-        assertEquals(344 + 14 + 1 + 1, config.all().size(), "2026-10-18：＋召歸令；＋14 顆事件巔峰的專屬；272 個技能 + 7 種普攻 + 65 個隱藏的效果（使者、觸發…、銀月庇的月光）");
+        assertEquals(344 + 14 + 1 + 1 + 2 + 8, config.all().size(), "2026-10-24：＋幻身、招架與六個隱藏的（銳星、引雷震波、幻身、熔岩噴射、回槍震波、招架橫掃）；＋雷星的兩個游雷（隱藏）；2026-10-18：＋召歸令；＋14 顆事件巔峰的專屬；272 個技能 + 7 種普攻 + 65 個隱藏的效果（使者、觸發…、銀月庇的月光）");
         for (final SkillDefinition definition : config.all()) {
             assertTrue(SkillConfig.VISUALS.contains(definition.visual()), definition.id());
             if (definition.mechanic() == Mechanic.WARCRY) {

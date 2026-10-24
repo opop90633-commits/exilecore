@@ -303,4 +303,21 @@ class ChargeTest {
             }
         }
     }
+
+    /** 2026-10-24：共鳴基石的輪換、新的戰星屬性都有說明。 */
+    @Test
+    void resonanceRotatesAndNewStatsHaveText() {
+        assertEquals("power", ChargeService.resonance("frenzy"));
+        assertEquals("frenzy", ChargeService.resonance("endurance"));
+        assertEquals("endurance", ChargeService.resonance("power"));
+        for (final String stat : List.of(ChargeService.RESONANCE, ChargeService.REGULATION_CONSUME, ChargeService.EVENT_COOLDOWN_SHARED,
+                ChargeService.ON_MAX_RAGE, ChargeService.LOSE_AT_MAX + "power", ChargeService.ZONE_END + "power",
+                ChargeService.ON_PARRIED + "frenzy", ChargeService.MINION_CULL + "frenzy",
+                "charge.event.block.endurance", "charge.event.stun_primed.power", "charge.event.electrocute.frenzy", "charge.event.pin.frenzy")) {
+            assertNotNull(ChargeText.describe(stat, 1, ""), stat);
+        }
+        assertEquals(StatKeys.FLAG_RESONANCE, ChargeService.RESONANCE);
+        assertEquals(StatKeys.CHARGE_ON_MAX_RAGE, ChargeService.ON_MAX_RAGE);
+        assertEquals(StatKeys.CHARGE_EXTRA, ChargeService.EXTRA);
+    }
 }

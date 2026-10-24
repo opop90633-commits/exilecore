@@ -445,10 +445,16 @@ public final class MinionService implements Listener, MinionHooks {
         if (spec == null) {
             return;
         }
-        if (spec.corpse() && powerRaise(build) && corpseNear(player, spec) == null && powerCharges(player) > 0
-                && plugin.combat().charges().consume(player, "power")) {
-            summon(player, build, 3, false, EMPOWERED); // 吃一顆銳星：一隻強化的加兩隻一般的，從面前爬出來
-            return;
+        if (spec.corpse() && powerRaise(build) && corpseNear(player, spec) == null && powerCharges(player) > 0) {
+            // 2026-10-24：戰星輔助（恆星不扣、倍星叫兩批）
+            final int benefit = plugin.combat().charges().spend(player, "power", build.profile().effective(plugin.players().sheet(player)),
+                    build.profile().tags());
+            if (benefit > 0) {
+                for (int i = 0; i < benefit; i++) {
+                    summon(player, build, 3, false, EMPOWERED); // 吃一顆銳星：一隻強化的加兩隻一般的，從面前爬出來
+                }
+                return;
+            }
         }
         summon(player, build, spec.count(), spec.corpse(), List.of());
     }
@@ -1454,6 +1460,27 @@ public final class MinionService implements Listener, MinionHooks {
         }
     }
 
+    /**
+     * 2026-10-24（霧鴉，PoE2 Mist Raven）：這隻召喚物撲殺一個敵人時主人拿幾顆戰星（叫出牠的技能的 charge.minion_cull.代號）。
+     * 不是召喚物、沒有這條屬性回傳空的。
+     */
+    public Map<String, Integer> cullCharges(final org.bukkit.entity.Entity entity) {
+        final Minion minion = byEntity.get(entity.getUniqueId());
+        final Player owner = minion == null ? null : plugin.getServer().getPlayer(minion.owner);
+        if (owner == null || plugin.combat() == null || plugin.combat().charges() == null) {
+            return Map.of();
+        }
+        final tw.exilecore.stats.StatSheet effective = minion.build.profile().effective(plugin.players().sheet(owner));
+        final Map<String, Integer> gain = new java.util.LinkedHashMap<>();
+        for (final tw.exilecore.charge.ChargeType type : plugin.combat().charges().config().types()) {
+            final int count = (int) Math.round(effective.flat(tw.exilecore.charge.ChargeService.MINION_CULL + type.id(), minion.build.profile().tags()));
+            if (count > 0) {
+                gain.put(type.id(), count);
+            }
+        }
+        return gain;
+    }
+
     /** 召喚物死了：不掉東西、不給經驗，從名單拿掉。 */
     @EventHandler(priority = EventPriority.HIGH)
     public void onDeath(final EntityDeathEvent event) {
@@ -1469,6 +1496,9 @@ public final class MinionService implements Listener, MinionHooks {
         event.setDroppedExp(0);
         remove(minion, Gone.DIED);
         final Player owner = plugin.getServer().getPlayer(minion.owner);
+        if (owner != null && minion.decoy && ChargeEffects.ILLUSION.equals(minion.skillId()) && plugin.skills() != null) {
+            plugin.skills().chargeEffects().illusionDied(owner, minion.build, event.getEntity().getLocation()); // 2026-10-24：幻身被打掉留下殘影
+        }
         if (owner != null && !minion.decoy && plugin.skills() != null && plugin.skills().triggers() != null) {
             plugin.skills().triggers().minionDeath(owner, event.getEntity().getLocation()); // 2026-10：召喚物死亡觸發
             minionDied(owner, minion, event.getEntity().getLocation());

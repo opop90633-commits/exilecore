@@ -560,10 +560,72 @@ public final class CharmService implements Listener {
             if (mods.manaOnUse() > 0) {
                 state.setMana(Math.min(state.maxMana(), state.mana() + mods.manaOnUse()));
             }
+            // 2026-10-24（傳奇護符：岳息、瓦拉可之吼）：使用時獲得戰星
+            if (plugin.combat() != null && plugin.combat().charges() != null) {
+                for (final Map.Entry<String, Integer> grant : grants(charm).entrySet()) {
+                    plugin.combat().charges().grant(player, grant.getKey(), grant.getValue());
+                }
+            }
             state.notice("<#c9a0ff>" + ItemRenderer.escape(base.name()) + "觸發", now + 40);
             plugin.players().display(player, state);
             player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, SoundCategory.PLAYERS, 0.8f, 1.4f);
         }
+    }
+
+    /** 傳奇護符「使用時獲得一顆 X」（2026-10-24）：charm.local.grant.代號，FLAT 顆數。 */
+    public static final String GRANT = "charm.local.grant.";
+
+    /** 這顆護符使用時給的戰星（戰星代號 → 顆數）。 */
+    private Map<String, Integer> grants(final ItemStack stack) {
+        final Map<String, Integer> map = new LinkedHashMap<>();
+        for (final tw.exilecore.stats.Modifier modifier : affixModifiers(stack)) {
+            if (modifier.stat().startsWith(GRANT)) {
+                map.merge(modifier.stat().substring(GRANT.length()), (int) Math.round(modifier.value()), Integer::sum);
+            }
+        }
+        return map;
+    }
+
+    /** 護符上每一條詞綴的修飾器（傳奇的詞綴也是詞綴）。 */
+    private List<tw.exilecore.stats.Modifier> affixModifiers(final ItemStack stack) {
+        if (stack == null || plugin.items() == null) {
+            return List.of();
+        }
+        final ItemData data = plugin.items().read(stack).orElse(null);
+        if (data == null) {
+            return List.of();
+        }
+        final List<tw.exilecore.stats.Modifier> list = new ArrayList<>();
+        for (final tw.exilecore.item.RolledAffix rolled : data.affixes()) {
+            final tw.exilecore.item.Affix affix = plugin.items().repository().affix(rolled.id());
+            if (affix == null) {
+                continue;
+            }
+            for (final tw.exilecore.item.AffixMod mod : affix.mods()) {
+                list.add(mod.toModifier(rolled.vars(), affix.id()));
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 2026-10-24（傳奇護符的「+25% 冰冷抗性」這種）：裝在護符欄的護符上，不是 flask.local／charm.local 的詞綴進角色屬性表。
+     * 一般護符的詞綴都是只作用在那一顆上的，所以只有傳奇的會用到。不看開了幾格（算開幾格要讀屬性表，會繞回來）。
+     */
+    public List<tw.exilecore.stats.Modifier> globalModifiers(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        if (!state.hasCharacter()) {
+            return List.of();
+        }
+        final List<tw.exilecore.stats.Modifier> list = new ArrayList<>();
+        for (int index = 0; index < PlayerState.CHARM_SLOTS; index++) {
+            for (final tw.exilecore.stats.Modifier modifier : affixModifiers(charmAt(state, index))) {
+                if (!modifier.stat().startsWith("flask.local.") && !modifier.stat().startsWith("charm.local.")) {
+                    list.add(modifier);
+                }
+            }
+        }
+        return list;
     }
 
     private static AilmentType ailmentOf(final String trigger) {

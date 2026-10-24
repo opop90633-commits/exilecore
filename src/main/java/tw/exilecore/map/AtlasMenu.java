@@ -187,7 +187,7 @@ public final class AtlasMenu extends Menu {
                 lore.add("<gray>完成後可以插一片先驅石板，加成罩到周圍 " + grid.config().tower().radius() + " 格的地圖");
                 lore.add(where);
                 lore.add("");
-                lore.add(done ? "<#f5b942>✔ 已完成" : "<green>從地圖裝置的「塔」按鈕開（不用地圖物品）");
+                lore.add(done ? "<#f5b942>✔ 已完成" : "<green>從地圖裝置的「塔與城塞」開（不用地圖物品）");
                 icon = icon(Material.LANTERN, (done ? "<#f5b942>" : "<green>") + "塔", lore);
             }
             case CITADEL -> {
@@ -195,9 +195,15 @@ public final class AtlasMenu extends Menu {
                 final String name = finalMap == null ? cell.citadelFinal() : finalMap.name();
                 lore.add("<gray>城塞：" + ItemRenderer.escape(name) + " 的入口");
                 lore.add("<gray>第一次從這裡打，攻破後那個終局就能在地圖裝置用天穹碎片打開");
+                final String target = done ? cell.citadelFinal() : service.citadelTarget(player, cell);
+                if (target != null && !target.equals(cell.citadelFinal())) { // 2026-10-24：還不能打的順延
+                    final MapConfig.MapDef targetMap = config.find(target);
+                    lore.add("<yellow>" + ItemRenderer.escape(name) + " 要先打贏前面的終局：這次先開 "
+                            + ItemRenderer.escape(targetMap == null ? target : targetMap.name()));
+                }
                 lore.add(where);
                 lore.add("");
-                lore.add(done ? "<#f5b942>✔ 已攻破" : "<green>從地圖裝置的終局按鈕開（第一次不用碎片）");
+                lore.add(done ? "<#f5b942>✔ 已攻破" : "<green>從地圖裝置的「塔與城塞」開（第一次不用碎片）");
                 icon = icon(Material.END_CRYSTAL, (done ? "<#f5b942>" : "<#c48bff>") + "城塞・" + ItemRenderer.escape(name), lore);
             }
             default -> {
@@ -466,8 +472,8 @@ public final class AtlasMenu extends Menu {
         }
         final AtlasGrid.Cell cell = atlas.grid().cell(q, r);
         if (!cell.isMap()) {
-            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(cell.kind() == AtlasGrid.Kind.TOWER ? "<gray>塔從地圖裝置的「塔」按鈕開"
-                    : "<gray>城塞從地圖裝置的終局按鈕開"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(cell.kind() == AtlasGrid.Kind.TOWER ? "<gray>塔從地圖裝置的「塔與城塞」開"
+                    : "<gray>城塞從地圖裝置的「塔與城塞」開（第一次不用碎片）"));
             return;
         }
         final MapConfig.MapDef map = service.config().find(cell.mapId());

@@ -187,6 +187,7 @@ public final class SkillService {
     }
 
     private SupportProcs procs;
+    private ChargeEffects chargeEffects;
     private IceCrystals crystals;
     private Mounts mounts;
 
@@ -212,6 +213,19 @@ public final class SkillService {
             procs = new SupportProcs(plugin, this);
         }
         return procs;
+    }
+
+    /** 2026-10-24（熔殼）：這個光環從哪個 tick 開著的；沒開回傳 -1。 */
+    long auraSince(final Player player, final String skillId) {
+        return auras.since(player.getUniqueId(), skillId);
+    }
+
+    /** 2026-10-24：消耗、產生戰星的輔助（狂速、久咒、碎地、蔓寒、雷星、完磐、祭柱）。 */
+    public ChargeEffects chargeEffects() {
+        if (chargeEffects == null) {
+            chargeEffects = new ChargeEffects(plugin, this);
+        }
+        return chargeEffects;
     }
 
     /** 從某個位置放一個隱藏技能（輔助觸發）。 */
@@ -1190,7 +1204,7 @@ public final class SkillService {
             fail(player, runtime, state, "魔力不足（" + definition.name() + "要 " + cost + "）", now);
             return;
         }
-        if (bypassing && !plugin.combat().charges().consume(player, bypass)) {
+        if (bypassing && plugin.combat().charges().spend(player, bypass, build.profile().effective(sheet), build.profile().tags()) <= 0) { // 2026-10-24：戰星輔助
             fail(player, runtime, state, definition.name() + "冷卻中，沒有" + chargeName(bypass) + "可以消耗", now); // 剛好過期了
             return;
         }
@@ -1208,9 +1222,12 @@ public final class SkillService {
         if (definition.mechanic() != Mechanic.AURA) {
             plugin.players().grace().end(player, true); // 出手了：入場保護結束（光環只是開關，不算）
         }
+        // 2026-10-24：放的時候消耗戰星的輔助（狂速、久咒、碎地；照 PoE2）
+        final ChargeEffects.OnUse onUse = chargeEffects().onUse(player, build, sheet);
+        build = onUse.build();
         // 冰緩讓攻擊與施法變慢（動作速度 0.7 = 間隔 ÷ 0.7）
         final double speed = plugin.ailments() == null ? 1.0 : Math.max(0.05, plugin.ailments().actionSpeed(player));
-        final double interval = build.intervalTicks(sheet) / speed;
+        final double interval = build.intervalTicks(sheet) / speed / onUse.speedMore();
         runtime.readyAt = SkillMath.nextReady(runtime.readyAt, now, release != null && chargeSpec.stages() <= 0 ? interval * RELEASE_RECOVERY : interval);
         if ((key != SkillLoadout.KEY_LEFT && key != SkillLoadout.KEY_SNEAK_LEFT) || runtime.fromQueue) {
             player.swingMainHand(); // 左鍵客戶端自己會揮手；右鍵、數字鍵要伺服器揮；排隊放出來的左鍵也要（2026-10-17：揮手時機對上真的出手）
@@ -1484,12 +1501,21 @@ public final class SkillService {
                               final BarrageSpec spec, final long now) {
         final SkillDefinition definition = build.definition();
         int consumed = 0;
+        int benefit = 0;
         if (spec.charge() != null && spec.perCharge() > 0 && plugin.combat() != null && plugin.combat().charges() != null) {
-            while (consumed < 20 && plugin.combat().charges().consume(player, spec.charge())) {
+            // 2026-10-24：戰星輔助（恆星不扣、倍星算兩顆）；恆星不扣的那顆不能再用一次，所以最多照身上原本的顆數算
+            final int held = plugin.combat().charges().count(player, spec.charge());
+            final StatSheet effective = build.profile().effective(plugin.players().sheet(player));
+            while (consumed < Math.min(20, held)) {
+                final int got = plugin.combat().charges().spend(player, spec.charge(), effective, build.profile().tags());
+                if (got <= 0) {
+                    break;
+                }
                 consumed++;
+                benefit += got;
             }
         }
-        final int repeats = spec.repeatsWith(consumed);
+        final int repeats = spec.repeatsWith(benefit);
         final int ticks = (int) Math.max(1, Math.round(definition.params().mark().duration() * build.durationScale() * 20));
         final double cooldownScale = definition.cooldown() > 0 ? build.cooldownTicks() / (definition.cooldown() * 20.0) : 1.0;
         runtime.barrage = new SkillRuntime.Barrage(definition.id(), definition.name(), spec, repeats, now + ticks, definition.cooldown(),
@@ -1581,7 +1607,7 @@ public final class SkillService {
         }
         final int powerUsed = Math.min(power, spec.charges());
         final int enduranceUsed = spec.charges() - powerUsed;
-        final SkillBuild build = metas.totemBuild(state, sheet, socket, metaBuild.level(), powerUsed, enduranceUsed);
+        SkillBuild build = metas.totemBuild(state, sheet, socket, metaBuild.level(), powerUsed, enduranceUsed);
         if (build.deploy() == null) {
             fail(player, runtime, state, definition.name() + "：" + socket.spell().name() + "不能交給圖騰放", now);
             return;
@@ -1597,11 +1623,18 @@ public final class SkillService {
             fail(player, runtime, state, (bloodMagic ? "生命不足（" : "魔力不足（") + definition.name() + "要 " + cost + "）", now);
             return;
         }
+        // 2026-10-24：戰星輔助（恆星不扣、倍星那顆的效果算兩次）
+        final StatSheet metaEffective = metaBuild.profile().effective(sheet);
+        int powerBenefit = 0;
+        int enduranceBenefit = 0;
         for (int i = 0; i < powerUsed; i++) {
-            charges.consume(player, "power");
+            powerBenefit += Math.max(1, charges.spend(player, "power", metaEffective, metaBuild.profile().tags()));
         }
         for (int i = 0; i < enduranceUsed; i++) {
-            charges.consume(player, "endurance");
+            enduranceBenefit += Math.max(1, charges.spend(player, "endurance", metaEffective, metaBuild.profile().tags()));
+        }
+        if (powerBenefit != powerUsed || enduranceBenefit != enduranceUsed) {
+            build = metas.totemBuild(state, sheet, socket, metaBuild.level(), powerBenefit, enduranceBenefit);
         }
         if (cost > 0) {
             if (bloodMagic) {
@@ -2491,7 +2524,21 @@ public final class SkillService {
         if (definition == null || quality <= 0) {
             return List.of();
         }
-        final String source = "品質 " + quality + "%";
+        final String source = QUALITY_SOURCE + quality + "%";
+        // 2026-10-24：照 PoE2 這個技能自己的品質效果
+        switch (definition.id()) {
+            case "cull_the_weak" -> {
+                return List.of(tw.exilecore.stats.Modifier.flat(tw.exilecore.charge.ChargeService.EXTRA, quality, source),
+                        tw.exilecore.stats.Modifier.flat(tw.exilecore.charge.ChargeService.EXTRA_RANDOM, quality, source));
+            }
+            case "charge_regulation" -> {
+                return List.of(tw.exilecore.stats.Modifier.flat(StatKeys.GRANT_PREFIX + tw.exilecore.charge.ChargeService.REGULATION_CONSUME,
+                                quality * REGULATION_QUALITY_SECONDS, source),
+                        tw.exilecore.stats.Modifier.flat(StatKeys.GRANT_PREFIX + StatKeys.DAMAGE_PER_CHARGE, quality * REGULATION_QUALITY_DAMAGE, source));
+            }
+            default -> {
+            }
+        }
         if (definition.summon() != null) {
             // 2026-10-23 修正：精魂召喚（骸骨兵這類）機制是 aura，以前被當光環算成「光環效果」；召喚技能的品質一律是召喚物傷害
             return List.of(tw.exilecore.stats.Modifier.increased(StatKeys.DAMAGE, quality * 0.01, source));
@@ -2508,10 +2555,27 @@ public final class SkillService {
         return List.of(tw.exilecore.stats.Modifier.increased(StatKeys.DAMAGE, quality * 0.01, source));
     }
 
+    /** 品質修飾器的來源名稱開頭（SkillBuild.grantModifiers 用來認品質給的 grant.*）。 */
+    static final String QUALITY_SOURCE = "品質 ";
+    /** 馭星訣的品質（PoE2）：每 1% 品質消耗間隔多 0.12 秒（20% = +2.4 秒）、每顆戰星多增加 0.1% 傷害（20% = 2%）。 */
+    static final double REGULATION_QUALITY_SECONDS = 0.12;
+    static final double REGULATION_QUALITY_DAMAGE = 0.1;
+
     /** 2026-10-23：品質的說明（寶石、技能面板用）。 */
     static String qualityText(final SkillDefinition definition, final int quality) {
         if (definition == null || quality <= 0) {
             return null;
+        }
+        switch (definition.id()) { // 2026-10-24：照 PoE2 這個技能自己的品質效果
+            case "cull_the_weak" -> {
+                return String.format(Locale.ROOT, "品質 +%d%%：獲得戰星時 %d%% 機率多一顆同種的、%d%% 機率多一顆隨機種類的", quality, quality, quality);
+            }
+            case "charge_regulation" -> {
+                return String.format(Locale.ROOT, "品質 +%d%%：消耗戰星的間隔多 %s 秒、身上每顆戰星增加 %s%% 傷害", quality,
+                        trimNumber(quality * REGULATION_QUALITY_SECONDS), trimNumber(quality * REGULATION_QUALITY_DAMAGE));
+            }
+            default -> {
+            }
         }
         final String what = definition.summon() != null ? "召喚物傷害" // 2026-10-23：精魂召喚的機制是 aura，先看有沒有召喚
                 : definition.mechanic() == Mechanic.AURA ? "光環效果" : definition.mechanic() == Mechanic.WARCRY ? "戰吼效果"
@@ -2519,6 +2583,11 @@ public final class SkillService {
         final double amount = what.endsWith("效果") ? quality * 0.5 : quality;
         return String.format(Locale.ROOT, "品質 +%d%%：增加 %s%% %s", quality,
                 amount == Math.rint(amount) ? String.valueOf((long) amount) : String.valueOf(amount), what);
+    }
+
+    private static String trimNumber(final double value) {
+        final double rounded = Math.round(value * 100) / 100.0;
+        return rounded == Math.rint(rounded) ? String.valueOf((long) rounded) : String.valueOf(rounded);
     }
 
     /**

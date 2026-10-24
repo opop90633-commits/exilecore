@@ -211,6 +211,20 @@ public final class StatKeys {
     public static final String PENETRATION = "penetration";
     /** 2026-10：身上現在有幾顆某種球（ChargeService 自動放進屬性表；後面接球的代號）。 */
     public static final String CHARGE_HELD = "charge.held.";
+    /** 2026-10-24：獲得戰星時多一顆同種的機率（FLAT 百分比點數；蛇卵墜 100）。同 ChargeService.EXTRA。 */
+    public static final String CHARGE_EXTRA = "charge.extra";
+    /** 2026-10-24（憎鑄）：怒氣滿時給一顆隨機戰星，至少隔 x 秒。同 ChargeService.ON_MAX_RAGE。 */
+    public static final String CHARGE_ON_MAX_RAGE = "charge.on_max_rage";
+    /** 2026-10-24（憎鑄）：怒氣滿時失去全部怒氣。 */
+    public static final String FLAG_LOSE_RAGE_AT_MAX = "flag.lose_rage_at_max";
+    /** 2026-10-24（共鳴基石）：戰星輪換。同 ChargeService.RESONANCE。 */
+    public static final String FLAG_RESONANCE = "flag.resonance";
+    /** 2026-10-24（招架，PoE2 Parry）：舉盾中，下一次被攻擊一定格擋、攻擊者「被招架」。 */
+    public static final String FLAG_PARRY = "flag.parry";
+    /** 2026-10-24（馭星訣的品質）：身上每顆戰星（不分種類）增加 x% 傷害，FLAT 百分比點數。 */
+    public static final String DAMAGE_PER_CHARGE = "damage.per_charge";
+    /** 2026-10-24（熔殼，PoE2 Magma Barrier）：盾牌灌熔岩，灌滿後格擋噴熔岩、給磐星。 */
+    public static final String FLAG_MAGMA_BARRIER = "flag.magma_barrier";
     /** 2026-10：FLAT：每顆怒星讓這個技能更多 x% 攻擊傷害與 x% 攻擊速度（怒星箭）。 */
     public static final String PER_FRENZY = "skill.per_frenzy";
     /** 2026-10：FLAT 1：每次施放隨機選一種元素（火焰、冰冷、閃電），物理全部轉成它、只造成那種傷害（幻元箭）。 */

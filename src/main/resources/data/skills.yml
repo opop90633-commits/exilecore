@@ -579,7 +579,7 @@ skills:
       - { stat: shock.chance, type: FLAT, value: 20 }
   killing_palm:
     name: 斷魂掌
-    description: 一掌打在一個敵人身上，生命低的敵人直接打死（處決）。
+    description: 一掌打在一個敵人身上，生命低的敵人直接打死（處決、撲殺）。撲殺時獲得銳星：一般、魔法怪 1 顆，稀有怪 2 顆，傳奇怪 3 顆。
     icon: BONE
     type: attack
     tier: 5
@@ -592,6 +592,9 @@ skills:
     # （更早）2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.11, 1.55]）
     mana: [4, 9]
     visual: killing_palm
+    modifiers:   # 2026-10-24：照 PoE2 的 Killing Palm（撲殺給銳星，稀有度越高越多）
+      - { stat: flag.culling, type: FLAT, value: 1 }
+      - { stat: charge.event.cull.power, type: FLAT, value: 100 }
   tempest_bell:
     name: 驚雷之鐘
     description: 在面前放一口鐘。你用攻擊打中鐘旁邊的敵人，鐘就響一次打周圍一圈（最多八次）。冷卻 6 秒。
@@ -1496,7 +1499,7 @@ skills:
 
   siphon_strike:
     name: 引雷棍
-    description: 長棍帶電打中一個敵人，周圍的敵人也一起被電到（受到一半傷害）。
+    description: 長棍帶電打中一個敵人，周圍的敵人也一起被電到（受到一半傷害）。目標在感電中的話用掉感電，在牠身邊炸出一圈閃電震波，並給你一顆銳星。
     icon: COPPER_INGOT
     type: attack
     tier: 5
@@ -1513,6 +1516,9 @@ skills:
     modifiers:
       - { stat: skill.melee_splash, type: FLAT, value: 50 }
       - { stat: shock.chance, type: FLAT, value: 20 }
+      # 2026-10-24：照 PoE2 的 Siphoning Strike：用掉感電放震波、給銳星
+      - { stat: proc.hit_shocked, type: FLAT, value: 100, tags: [proc_siphon_shockwave] }
+      - { stat: proc.hit_shocked, type: FLAT, value: 100, tags: [proc_gain_power] }
 
   # -- 弓 --
   arrow_barrage:
@@ -3541,7 +3547,7 @@ skills:
   #   黑油雨、熾息 PoE2 有球／怒氣／10 秒冷卻限制，我們沒有，所以照「平均下來」的強度抓，不是直接乘 0.6。
   wing_blast:
     name: 鼓翼風
-    description: 化身飛龍猛搧雙翼，前方扇形的敵人被狂風打退、容易暈眩。（飛龍形態）
+    description: 化身飛龍猛搧雙翼，前方扇形的敵人被狂風打退、容易暈眩；蓄勢待暈的敵人直接重暈，並有 15% 機率給你一顆銳星。（飛龍形態）
     icon: PHANTOM_MEMBRANE
     type: attack
     tier: 3
@@ -3556,6 +3562,8 @@ skills:
     visual: whirl
     modifiers:
       - { stat: stun.buildup, type: MORE, value: 60 }
+      - { stat: flag.crush_primed, type: FLAT, value: 1 }           # 2026-10-24：照 PoE2，蓄勢待暈的敵人直接重暈
+      - { stat: charge.event.stun_primed.power, type: FLAT, value: 15 }   # 2026-10-24：照 PoE2，重暈蓄勢待暈的敵人 15% 給銳星
   rolling_magma:
     name: 熔球
     description: 飛龍吐出一團熔岩，在地上彈跳著往前滾，最後炸開，容易點燃。物理全部轉換為火焰。（飛龍形態）
@@ -3893,7 +3901,7 @@ skills:
 
   disengage:
     name: 回槍躍
-    description: 往前方戳出一片槍尖，同時往後一躍拉開距離。冷卻 2 秒。
+    description: 往前方戳出一片槍尖，同時往後一躍拉開距離。打中「被招架」的敵人時用掉招架，在牠身上炸出震波（半徑 2 公尺），並給你怒星（1 級 1 顆、8 級 2 顆、16 級 3 顆）。冷卻 1.5 秒。
     icon: FEATHER   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 1
@@ -3901,7 +3909,7 @@ skills:
     weapons: [spear]
     mechanic: cone
     cone: { length: [3.5, 4.2], angle: 70 }
-    cooldown: 2
+    cooldown: 1.5   # 2026-10-24：照 PoE2（以前 2 秒）
     attack_speed: 1.0
     effectiveness: [1.65, 3.0]   # 2026-10-23 長矛技能第三輪：20 級端 ×1.3（90 級以上實測中位數只有錘的四成；1 級端不動）；這次之前 [1.65, 2.31]
     # （更早）2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [1.1, 1.54]）
@@ -3909,6 +3917,27 @@ skills:
     visual: spear_thrust
     modifiers:
       - { stat: skill.recoil, type: FLAT, value: 120 }
+      # 2026-10-24：照 PoE2，用掉「被招架」放震波、給怒星（寶石 8 級多一顆、16 級再多一顆，ChargeEffects.parriedCount）
+      - { stat: charge.on_parried.frenzy, type: FLAT, value: 1 }
+
+  parry:                   # Parry
+    name: 招架
+    description: 把盾舉起來準備擋下一擊（1 秒內，移動變慢）。擋下的那一擊一定格擋，攻擊你的敵人「被招架」2 秒（受到的攻擊傷害增加 50%），你揮盾橫掃身邊的敵人。回槍躍打中被招架的敵人會用掉它。要在副手裝盾。
+    icon: IRON_NUGGET
+    type: spell
+    tier: 1
+    tags: [duration]
+    mechanic: guard
+    guard:
+      duration: 1
+      slow: 50                 # PoE2：動作中移動速度 -50%
+      effects:
+        - { stat: flag.parry, type: FLAT, value: 1 }
+        - { stat: stun.threshold, type: INCREASED, value: -40 }   # PoE2：動作中暈眩門檻 -40%
+    cast_time: 0.2
+    cooldown: 1
+    mana: 0
+    visual: aura_armour
 
   glacial_lance:
     name: 寒錐投
@@ -3954,21 +3983,25 @@ skills:
 
   cull_the_weak:
     name: 剔殘
-    description: 對準一個敵人狠刺一下；目標生命低於 35% 時傷害大很多。
+    description: 對準一個敵人狠刺一下，不會被閃避；生命夠低的敵人直接撲殺。這一下打死敵人時獲得怒星：一般、魔法怪 1 顆，稀有怪 2 顆，傳奇怪 3 顆。
     icon: NETHERITE_SCRAP   # 2026-10：原本 IRON_SPEAR（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 5
     tags: [attack, melee, strike, physical]
     weapons: [spear]
     mechanic: strike
-    strike: { reach: 4.0, angle: 70, targets: 1, execute: { below: 0.35, more: 120 } }   # 2026-10 手感：40° → 70°
-    attack_speed: 0.9
+    strike: { reach: 4.0, angle: 70, targets: 1 }   # 2026-10 手感：40° → 70°；2026-10-24 照 PoE2 拿掉「低血傷害更多」（以前 35% 以下更多 120%）
+    attack_speed: 0.75   # 2026-10-24：照 PoE2（攻擊速度 75%；以前 0.9）
     effectiveness: [1.93, 5.3]   # 2026-10-23 長矛技能第三輪：20 級端 ×1.3（90 級以上實測中位數只有錘的四成；1 級端不動）；這次之前 [1.93, 4.08]
     # （更早）2026-10 長矛技能第二輪：20 級端 ×1.5（目標：中等裝 5 萬、高裝 15 萬、頂裝 20～30 萬；1 級端不動，前期不會變太強）；這次之前 [1.93, 2.72]
     # （更早）2026-10 補強：長矛技能再 ×1.4（第一次 ×1.5 之後官網高裝實測仍只有弓、召喚的兩到四成）；這次之前 [1.38, 1.94]
     # （更早）2026-10 平衡：長矛技能 ×1.5（統計：長矛獵手同等級只有別人的一到兩成）（原本 [0.92, 1.29]）
     mana: [4, 9]
     visual: spear_thrust
+    modifiers:   # 2026-10-24：照 PoE2 的 Cull the Weak（撲殺、不會被閃避；打死敵人給怒星，稀有度越高越多；品質見 SkillService.qualityModifiers）
+      - { stat: flag.culling, type: FLAT, value: 1 }
+      - { stat: flag.always_hit, type: FLAT, value: 1 }
+      - { stat: charge.event.kill.frenzy, type: FLAT, value: 100 }
 
   toxic_growth:
     name: 瘴苞雨
@@ -4068,7 +4101,7 @@ skills:
 
   profane_ritual:
     name: 穢陣
-    description: 在準心指的地方畫下一個穢陣，陣裡的敵人一直受到混沌傷害。
+    description: 在準心指的地方畫下一個穢陣，陣裡的敵人一直受到混沌傷害。穢陣撐到結束時給你一顆銳星。
     icon: ECHO_SHARD   # 2026-10：原本 CRYING_OBSIDIAN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
@@ -4083,6 +4116,7 @@ skills:
     visual: blight_nova
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
+      - { stat: charge.zone_end.power, type: FLAT, value: 1 }   # 2026-10-24：照 PoE2「儀式完成時獲得一顆銳星」
 
   herald_of_blood:
     name: 血宣
@@ -4467,6 +4501,27 @@ skills:
     visual: summon_skeletons
     modifiers:
       - { stat: poison.chance, type: FLAT, value: 30, tags: [minion] }
+
+  # ---- 2026-10-24：照 PoE2 補的戰星技能（名稱是自己的）----
+  lingering_illusion:      # Lingering Illusion
+    name: 幻身
+    description: 精魂技能：開著的時候，翻滾會花 10 魔力在原地留下一個引怪的幻身（3 秒）。幻身被敵人打掉時留下一個殘影，走過去撿起來給你一顆銳星（技能等級越高，越有機率多留一個）。保留 30 精魂。
+    icon: GHAST_TEAR
+    type: spell
+    tier: 8
+    tags: []
+    mechanic: aura
+    aura:
+      reserve: 30
+      radius: 8
+      allies: false
+      effects:
+        - { stat: flag.lingering_illusion, type: FLAT, value: 1 }
+        - { stat: charge.remnant_extra, type: FLAT, value: [0, 76] }   # PoE2：多一個殘影的機率 0% → 76%
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: aura_haste
 
   # ---- 2026-10：輔助觸發的專屬技能（隱藏；supports.yml 的 proc.* 輔助放出來的，用被輔助技能的寶石等級）----
   proc_fiery_death:
@@ -5082,6 +5137,39 @@ skills:
     cooldown: 1
     mana: 0
     visual: enduring_cry
+  # 2026-10-24：雷星（Empowered Sparks）強化的攻擊放出來的游雷（照 PoE2：1 級 1–7、暴擊率 9%、每秒 10 公尺、2 秒）
+  proc_empowered_sparks:
+    name: 雷星游雷
+    hidden: true
+    type: spell
+    tags: [spell, projectile, lightning]
+    mechanic: projectile
+    projectile: { count: 4, spread: 360, speed: 0.5, range: 10, size: 0.3, wobble: 25 }
+    damage: [1, 7]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.1
+    effectiveness: 0.6
+    mana: 0
+    visual: spark
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }
+
+  proc_empowered_sparks_6:
+    name: 雷星游雷
+    hidden: true
+    type: spell
+    tags: [spell, projectile, lightning]
+    mechanic: projectile
+    projectile: { count: 6, spread: 360, speed: 0.5, range: 10, size: 0.3, wobble: 25 }
+    damage: [1, 7]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.1
+    effectiveness: 0.6
+    mana: 0
+    visual: spark
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }
+
   # ---- 2026-10 照 PoE2 改機制：技能自己觸發的隱藏技能 ----
   proc_snipe_blast:
     name: 穿雲爆
@@ -5207,6 +5295,81 @@ skills:
     cooldown: 1
     mana: 0
     visual: enduring_cry
+
+  # 2026-10-24：引雷棍用掉感電時給的銳星、炸的震波（照 PoE2 的 Siphoning Strike：3 公尺，震波 = 打擊的 2.67 倍）
+  proc_gain_power:
+    name: 銳星
+    hidden: true
+    type: spell
+    tags: [warcry]
+    mechanic: warcry
+    warcry: { radius: 2, duration: 1, taunt: false, allies: false, charges: { power: 1 } }
+    cast_time: 0.1
+    cooldown: 1
+    mana: 0
+    visual: enduring_cry
+
+  proc_siphon_shockwave:
+    name: 引雷震波
+    hidden: true
+    type: attack
+    tags: [attack, melee, area, lightning]
+    mechanic: nova
+    parent_damage: 2.67   # PoE2：打擊 75% → 234%，震波 200% → 624%
+    nova: { radius: 3 }
+    attack_speed: 1.0
+    effectiveness: 1.0
+    visual: tempest
+
+  # 2026-10-24：熔殼灌滿後格擋噴出的熔岩（照 PoE2 的 Magma Spray：攻擊傷害 170% → 694%，2.8 公尺）
+  proc_magma_spray:
+    name: 熔岩噴射
+    hidden: true
+    type: attack
+    tags: [attack, area, fire]
+    mechanic: nova
+    nova: { radius: 2.8 }
+    convert: { fire: 1.0 }
+    attack_speed: 1.0
+    effectiveness: [1.02, 4.16]   # PoE2 170% → 694% × 0.6（跟其他照 PoE2 換算的技能一樣）
+    visual: herald_ash
+
+  # 2026-10-24：回槍躍用掉「被招架」時的震波（照 PoE2：打擊 85% → 308%，震波 120% → 490%，2 公尺）
+  proc_disengage_shockwave:
+    name: 回槍震波
+    hidden: true
+    type: attack
+    tags: [attack, melee, area, physical]
+    mechanic: nova
+    nova: { radius: 2 }
+    attack_speed: 1.0
+    effectiveness: [2.33, 4.77]   # 回槍躍的 [1.65, 3.0] × 震波／打擊（120/85、490/308）
+    visual: slam
+
+  # 2026-10-24：招架成功時揮盾橫掃（照 PoE2 的 Parry：65% 攻擊傷害）
+  proc_parry_sweep:
+    name: 招架橫掃
+    hidden: true
+    type: attack
+    tags: [attack, melee, area, physical]
+    mechanic: nova
+    nova: { radius: 2.5 }
+    attack_speed: 1.0
+    effectiveness: [1.0, 2.0]
+    visual: slash
+
+  # 2026-10-24：幻身（照 PoE2 的 Lingering Illusion：自己 1% 的生命，被打掉留下殘影）
+  proc_lingering_illusion:
+    name: 幻身
+    hidden: true
+    type: spell
+    tags: [minion]
+    mechanic: summon
+    summon: { kind: ZOMBIE, count: 1, max: 1, duration: 3, life: 0.1, damage: 0.1, attack_speed: 0.3, speed: 0.5, reach: 1,
+              taunt: 1, taunt_radius: 10 }
+    cast_time: 0.5
+    cooldown: 0.5
+    visual: summon_skeletons
 
   proc_blazing_critical:
     name: 燼勢焰
@@ -5566,7 +5729,8 @@ skills:
 
   magma_barrier:
     name: 熔殼
-    description: 精魂技能：開著的時候護甲增加、格擋機率提高。範圍內的隊友也有效果。保留 30 精魂。
+    # 2026-10-24：照 PoE2 的 Magma Barrier（只給自己；盾牌 8 秒灌滿熔岩，灌滿後下一次格擋噴出熔岩並給磐星）
+    description: 精魂技能：開著的時候格擋機率增加 25%，盾牌慢慢灌滿熔岩（8 秒）。灌滿之後下一次格擋會把熔岩噴向周圍（火焰攻擊傷害，半徑 2.8 公尺），並給你一顆磐星，然後重新開始灌。保留 30 精魂。
     icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
@@ -5575,10 +5739,10 @@ skills:
     aura:
       reserve: 30
       radius: 8
-      allies: true   # 2026-10：範圍內的隊友也有（隊伍外的人不受影響）
+      allies: false
       effects:
-        - { stat: armour, type: INCREASED, value: [20, 40] }
-        - { stat: block.chance, type: FLAT, value: [3, 8] }
+        - { stat: block.chance, type: INCREASED, value: 25 }
+        - { stat: flag.magma_barrier, type: FLAT, value: 1 }
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -5586,7 +5750,7 @@ skills:
 
   combat_frenzy:
     name: 戰意昂揚
-    description: 精魂技能：開著的時候，你冰凍、感電或重暈敵人時獲得一顆怒星；同一種每 4 秒（20 級 2 秒）最多一次。保留 30 精魂。
+    description: 精魂技能：開著的時候，你冰凍、電擊或釘住敵人時獲得一顆怒星；三種共用冷卻，每 8 秒（20 級 6.1 秒）最多一次。保留 30 精魂。
     icon: SUGAR
     type: spell
     tier: 5
@@ -5598,12 +5762,14 @@ skills:
       allies: false   # 2026-10：改回只給自己（PoE2 的常駐增益只作用在角色自己身上；分給隊友時每個隊友、每一隻召喚物都疊一份）
       # 2026-10：照 PoE2 的 Combat Frenzy 改成給戰星（以前是攻速＋攻擊傷害）
       effects:
+        # 2026-10-24：照 PoE2 改成冰凍、電擊、釘住，共用 8 → 6.1 秒的冷卻（以前冰凍、感電、重暈各自 4 → 2 秒）
         - { stat: charge.event.freeze.frenzy, type: FLAT, value: 100 }
-        - { stat: charge.event.shock.frenzy, type: FLAT, value: 100 }
-        - { stat: charge.event.stun_applied.frenzy, type: FLAT, value: 100 }
-        - { stat: charge.event_cooldown.freeze, type: FLAT, value: [4, 2] }
-        - { stat: charge.event_cooldown.shock, type: FLAT, value: [4, 2] }
-        - { stat: charge.event_cooldown.stun_applied, type: FLAT, value: [4, 2] }
+        - { stat: charge.event.electrocute.frenzy, type: FLAT, value: 100 }
+        - { stat: charge.event.pin.frenzy, type: FLAT, value: 100 }
+        - { stat: charge.event_cooldown.freeze, type: FLAT, value: [8, 6.1] }
+        - { stat: charge.event_cooldown.electrocute, type: FLAT, value: [8, 6.1] }
+        - { stat: charge.event_cooldown.pin, type: FLAT, value: [8, 6.1] }
+        - { stat: charge.event_cooldown.shared, type: FLAT, value: 1 }
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -5762,21 +5928,25 @@ skills:
   # -- 精魂技能 --
   charge_regulation:
     name: 馭星訣
-    # PoE2 Charge Regulation：「照身上各種戰星給強力增益、定期消耗戰星」[需要程式]；先只做怒星的部分，戰星消散得更快當代價
-    description: 精魂技能：身上每顆怒星讓你的攻擊更多傷害與攻擊速度；但戰星消散得比較快。拿長棍或弩才有效。保留 30 精魂。
+    # 2026-10-24：照 PoE2 的 Charge Regulation 做完整（以前只做了怒星的部分、要長棍或弩）
+    description: 精魂技能：身上有銳星時暴擊率更多、有磐星時護甲閃避與能量護盾更多、有怒星時攻擊與施法速度增加；代價是每 10 秒消耗每種戰星各一顆。品質讓消耗間隔變長、身上每顆戰星增加傷害。保留 30 精魂。
     icon: NETHER_STAR
     type: spell
     tier: 14
     tags: []
-    weapons: [quarterstaff, crossbow]
     mechanic: aura
     aura:
-      reserve: 30          # 2026-10：60 → 30（照 PoE2 的 Charge Regulation）
+      reserve: 30
       radius: 8
       allies: false
       effects:
-        - { stat: skill.per_frenzy, type: FLAT, value: [3, 5], tags: [attack] }
-        - { stat: charge.duration, type: INCREASED, value: -40 }
+        - { stat: crit.chance, type: MORE, value: [20, 26], tags: ["if_charge:power"] }
+        - { stat: armour, type: MORE, value: [15, 20], tags: ["if_charge:endurance"] }
+        - { stat: evasion, type: MORE, value: [15, 20], tags: ["if_charge:endurance"] }
+        - { stat: es.max, type: MORE, value: [15, 20], tags: ["if_charge:endurance"] }
+        - { stat: attack.speed, type: INCREASED, value: [20, 25], tags: ["if_charge:frenzy"] }
+        - { stat: cast.speed, type: INCREASED, value: [20, 25], tags: ["if_charge:frenzy"] }
+        - { stat: charge.regulation_consume, type: FLAT, value: 10 }
     cast_time: 0.5
     cooldown: 1.5
     mana: 0

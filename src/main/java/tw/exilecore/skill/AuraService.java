@@ -177,6 +177,13 @@ final class AuraService implements Listener {
 
     // ---- 查詢 ----
 
+    /** 2026-10-24（熔殼）：這個光環從哪個 tick 開著的；沒開回傳 -1。 */
+    long since(final UUID player, final String skillId) {
+        final Map<String, Active> mine = active.get(player);
+        final Active aura = mine == null ? null : mine.get(skillId);
+        return aura == null || aura.paused ? -1 : aura.since;
+    }
+
     boolean isActive(final UUID player, final String skillId) {
         final Map<String, Active> mine = active.get(player);
         return mine != null && mine.containsKey(skillId);
@@ -542,7 +549,9 @@ final class AuraService implements Listener {
         if (mine != null) {
             for (final Active aura : mine.values()) {
                 if (!aura.paused) {
-                    list.addAll(aura.effects);
+                    for (final Modifier effect : aura.effects) {
+                        list.addAll(conditional(player, effect));
+                    }
                 }
                 reserve += aura.reserve;
             }
@@ -554,6 +563,25 @@ final class AuraService implements Listener {
             list.addAll(fromAllies);
         }
         return list;
+    }
+
+    /**
+     * 2026-10-24（馭星訣）：寫了 if_charge:代號 標籤的效果，身上有那種戰星才給（給的時候拿掉這個標籤，不然變成只對那個標籤的技能）。
+     * 顆數一變屬性表就重算（ChargeService 會標記），所以這裡每次照目前的顆數判斷。
+     */
+    private List<Modifier> conditional(final Player player, final Modifier effect) {
+        for (final String tag : effect.tags()) {
+            if (tag.startsWith(ModifierText.IF_CHARGE)) {
+                final String charge = tag.substring(ModifierText.IF_CHARGE.length());
+                if (plugin.combat() == null || plugin.combat().charges() == null || plugin.combat().charges().count(player, charge) <= 0) {
+                    return List.of();
+                }
+                final java.util.Set<String> rest = new java.util.LinkedHashSet<>(effect.tags());
+                rest.remove(tag);
+                return List.of(new Modifier(effect.stat(), effect.type(), effect.value(), rest, effect.source()));
+            }
+        }
+        return List.of(effect);
     }
 
     /**

@@ -128,8 +128,12 @@ public final class AtlasSitesMenu extends Menu {
             return;
         }
         for (final AtlasGrid.Cell citadel : atlas.openCitadels()) {
-            final MapConfig.MapDef map = config.find(citadel.citadelFinal());
-            final String name = map == null ? String.valueOf(citadel.citadelFinal()) : map.name();
+            // 2026-10-24：自己的終局還不能打的城塞順延到下一個能打的終局
+            final String target = service.citadelTarget(player, citadel);
+            final MapConfig.MapDef own = config.find(citadel.citadelFinal());
+            final MapConfig.MapDef map = config.find(target);
+            final String name = (map == null ? String.valueOf(target) : map.name())
+                    + (target != null && !target.equals(citadel.citadelFinal()) && own != null ? "（" + own.name() + "的城塞）" : "");
             final java.util.Set<String> completed = service.completed(player);
             final boolean ready = map != null && Atlas.finalRequirementsMet(config, map, completed);
             final String missing = map == null ? "" : Atlas.missingRequirements(config, map, completed);

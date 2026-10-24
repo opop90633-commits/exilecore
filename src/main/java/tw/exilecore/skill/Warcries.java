@@ -84,7 +84,7 @@ final class Warcries {
     }
 
     private void raiseSpike(final Player player, final String skillId, final org.bukkit.Location at, final double radius, final int ticks,
-                            final List<Modifier> mods) {
+                            final List<Modifier> mods, final double powerEvery, final double regenPercent) {
         final String key = player.getUniqueId() + "/" + skillId;
         final Spike old = spikes.remove(key);
         if (old != null) {
@@ -101,7 +101,9 @@ final class Warcries {
         });
         at.getWorld().playSound(at, org.bukkit.Sound.BLOCK_BONE_BLOCK_PLACE, 1f, 0.6f);
         at.getWorld().spawnParticle(org.bukkit.Particle.SOUL, at.clone().add(0, 1, 0), 20, 0.3, 0.8, 0.3, 0.03);
-        final long end = plugin.getServer().getCurrentTick() + ticks;
+        final long start = plugin.getServer().getCurrentTick();
+        final long end = start + ticks;
+        final long[] nextPower = {start + Math.round(powerEvery * 20)};
         final org.bukkit.scheduler.BukkitTask[] holder = new org.bukkit.scheduler.BukkitTask[1];
         holder[0] = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             final long now = plugin.getServer().getCurrentTick();
@@ -115,7 +117,15 @@ final class Warcries {
                     at.getWorld().spawnParticle(org.bukkit.Particle.SMOKE, at.clone().add(0, 1, 0), 10, 0.2, 0.6, 0.2, 0.02);
                     display.remove();
                 }
+                // 2026-10-24（祭星）：祭柱倒了，祭柱活了多久就回復多久
+                if (regenPercent > 0 && plugin.skills() != null && player.isOnline()) {
+                    plugin.skills().chargeEffects().offeringRegen(player, regenPercent, (int) ((now - start) / 20));
+                }
                 return;
+            }
+            if (powerEvery > 0 && now >= nextPower[0] && plugin.combat() != null && plugin.combat().charges() != null) {
+                nextPower[0] += Math.round(powerEvery * 20); // 2026-10-24（祭星）：祭柱在的時候每 4 秒一顆銳星
+                plugin.combat().charges().grant(player, "power", 1);
             }
             if (plugin.skills() != null && plugin.skills().minions() != null) {
                 plugin.skills().minions().offerAt(player, at, radius, 25, mods);
@@ -201,7 +211,10 @@ final class Warcries {
             if (at == null) {
                 return "<red>附近沒有屍體，也沒有召喚物可以獻祭";
             }
-            raiseSpike(player, id, at, radius, ticks, minionMods);
+            final tw.exilecore.stats.StatSheet effective = build.profile().effective(plugin.players().sheet(player));
+            raiseSpike(player, id, at, radius, ticks, minionMods,
+                    effective.flat(tw.exilecore.charge.ChargeService.SUP_OFFERING_POWER, build.profile().tags()),
+                    effective.flat(tw.exilecore.charge.ChargeService.SUP_OFFERING_REGEN, build.profile().tags()));
             notice.append(String.format(Locale.ROOT, "<gray>：立起祭柱（%.0f 秒，半徑 %.0f 格）", ticks / 20.0, radius));
         } else if (!spec.minionBuff().isEmpty() && plugin.skills() != null && plugin.skills().minions() != null) {
             final List<Modifier> minionMods = new java.util.ArrayList<>();

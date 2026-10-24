@@ -86,6 +86,7 @@ public final class SkillTriggers implements Listener {
         if (StatKeys.flag(plugin.players().sheet(player), StatKeys.FLAG_DODGE_CALTROPS)) {
             service.procs().castAt(player, "proc_caltrops", "trail_of_caltrops", player.getLocation()); // 蒺藜步（2026-10）
         }
+        service.chargeEffects().onDodge(player, plugin.players().sheet(player)); // 2026-10-24：幻身
         if (StatKeys.flag(plugin.players().sheet(player), StatKeys.FLAG_DODGE_DECOY) && service.minions() != null) {
             service.procs().decoy(player, "proc_phantom_decoy", "phantom_step", player.getLocation()); // 殘影（2026-10）
         }

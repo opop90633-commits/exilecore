@@ -125,6 +125,11 @@ public final class ChargeText {
         map.put("cull", "撲殺敵人時");
         map.put("kill_rare", "擊殺稀有或傳奇怪物時");
         map.put("dodge", "翻滾時");
+        map.put("electrocute", "電擊敵人時"); // 2026-10-24
+        map.put("pin", "釘住敵人時"); // 2026-10-24
+        map.put("stun_primed", "重暈蓄勢待暈的敵人時"); // 2026-10-24：鼓翼風
+        map.put("block", "格擋時"); // 2026-10-24：熔殼
+        map.put("kill", "擊殺敵人時"); // 2026-10-24：剔殘（只算那個技能打死的；稀有怪多一顆、傳奇怪多兩顆）
         return Collections.unmodifiableMap(map);
     }
 
@@ -165,6 +170,10 @@ public final class ChargeText {
      * @param prefix 技能種類的標籤寫成的前綴（「近戰」「攻擊」；沒有是空字串），只有擊中時獲得用得到
      */
     public static String describe(final String stat, final double value, final String prefix) {
+        final String support = supportText(stat, value);
+        if (support != null) {
+            return support; // 2026-10-24：戰星輔助
+        }
         if (stat.equals("charge.extra")) {
             return "獲得戰星時 " + number(value) + "% 機率多獲得一顆同種的";
         }
@@ -204,5 +213,55 @@ public final class ChargeText {
     private static String number(final double value) {
         final double rounded = Math.round(value * 10) / 10.0;
         return rounded == Math.rint(rounded) ? String.valueOf((long) rounded) : String.format(Locale.ROOT, "%.1f", rounded);
+    }
+
+    /** 2026-10-24：戰星輔助的屬性（charge.sup.*）說明；不是回傳 null。 */
+    static String supportText(final String stat, final double value) {
+        if (!stat.startsWith("charge.sup.") && !stat.startsWith(ChargeService.LOSE_AT_MAX) && !stat.startsWith(ChargeService.ZONE_END)
+                && !stat.startsWith(ChargeService.ON_PARRIED) && !stat.startsWith(ChargeService.MINION_CULL) && !java.util.Set.of(ChargeService.RESONANCE, ChargeService.REGULATION_CONSUME,
+                ChargeService.EVENT_COOLDOWN_SHARED, ChargeService.ON_MAX_RAGE).contains(stat)) {
+            return null;
+        }
+        if (stat.startsWith(ChargeService.SUP_UNIQUE)) {
+            final String rest = stat.substring(ChargeService.SUP_UNIQUE.length());
+            final int dot = rest.lastIndexOf('.');
+            final String event = dot <= 0 ? null : EVENTS.get(rest.substring(0, dot));
+            return dot <= 0 ? null : "對傳奇怪物" + (event == null ? "" : event.replace("時", "")) + "時直接獲得 " + number(value) + " 顆" + name(rest.substring(dot + 1));
+        }
+        if (stat.startsWith(ChargeService.LOSE_AT_MAX)) {
+            return name(stat.substring(ChargeService.LOSE_AT_MAX.length())) + "滿了就全部失去，並讓你感電";
+        }
+        if (stat.startsWith(ChargeService.ZONE_END)) {
+            return "地面效果持續到結束時獲得 " + number(value) + " 顆" + name(stat.substring(ChargeService.ZONE_END.length()));
+        }
+        if (stat.startsWith(ChargeService.MINION_CULL)) {
+            return "召喚物每撲殺一個敵人，你獲得 " + number(value) + " 顆" + name(stat.substring(ChargeService.MINION_CULL.length()));
+        }
+        if (stat.startsWith(ChargeService.ON_PARRIED)) {
+            return "擊中被招架的敵人時用掉招架，放出震波並獲得 " + number(Math.round(value)) + " 顆" + name(stat.substring(ChargeService.ON_PARRIED.length()))
+                    + "（寶石 8 級、16 級各多一顆；一次施放一次）";
+        }
+        return switch (stat) {
+            case ChargeService.RESONANCE -> "該獲得" + name("frenzy") + "時改獲得" + name("power") + "、該獲得" + name("endurance") + "時改獲得"
+                    + name("frenzy") + "、該獲得" + name("power") + "時改獲得" + name("endurance");
+            case ChargeService.REGULATION_CONSUME -> "每 " + number(value) + " 秒消耗每種戰星各一顆";
+            case ChargeService.EVENT_COOLDOWN_SHARED -> "上面這幾種事件給的戰星共用冷卻";
+            case ChargeService.ON_MAX_RAGE -> "怒氣滿時獲得一顆隨機戰星（每 " + number(value) + " 秒最多一次）";
+            case ChargeService.SUP_KEEP -> "消耗戰星時 " + number(value) + "% 機率不扣掉，但效果照拿";
+            case ChargeService.SUP_DOUBLE -> "消耗戰星的效果 " + number(value) + "% 機率加倍";
+            case ChargeService.SUP_INHIBIT -> "不消耗戰星與灌注；你身上每有一種戰星或灌注，更多 " + number(value) + "% 傷害";
+            case ChargeService.SUP_FEROCITY -> "放的時候消耗一顆" + name("frenzy") + "：這一次更多 " + number(value) + "% 技能速度；不會產生" + name("frenzy");
+            case ChargeService.SUP_ABIDING_HEX -> "放的時候消耗一顆" + name("power") + "：這一次更多 " + number(value) + "% 持續時間";
+            case ChargeService.SUP_JAGGED -> "放的時候消耗一顆" + name("endurance") + "：在落點留下 " + number(value) + " 秒的碎石地（裡面的敵人減速 20%）";
+            case ChargeService.SUP_CREEPING -> "造出冰晶時消耗一顆" + name("power") + "：那顆冰晶周圍結出冰緩地（每秒變大 50%，最多 4 倍）";
+            case ChargeService.SUP_SPARKS -> "產生" + name("power") + "時強化接下來 " + number(value) + " 次攻擊：強化的攻擊用出去時射出游雷";
+            case ChargeService.SUP_SPARK_PROJECTILES -> "雷星每次射出 " + number(value) + " 顆游雷";
+            case ChargeService.SUP_OFFERING_POWER -> "祭柱還在的時候每 " + number(value) + " 秒獲得一顆" + name("power");
+            case ChargeService.SUP_OFFERING_SACRIFICE -> "放的時候犧牲目前生命的 " + number(value) + "%";
+            case ChargeService.SUP_OFFERING_REGEN -> "祭柱倒下後每秒回復 " + number(value) + "% 生命與魔力，持續的時間等於祭柱撐了多久";
+            case ChargeService.SUP_COMBO_POWER -> "用掉連擊時，每一層 " + number(value) + "% 機率獲得一顆" + name("power") + "（超過 100% 的部分必定給）";
+            case ChargeService.SUP_PERFECT_ENDURANCE -> "完美時機打中敵人時獲得 " + number(value) + " 顆" + name("endurance");
+            default -> null;
+        };
     }
 }
