@@ -1012,6 +1012,8 @@ final class SponsorMenus {
                 case "king_sit" -> Material.GRAY_WOOL;
                 case "love_you" -> Material.PINK_PETALS;
                 case "six_seven" -> Material.CLOCK;
+                case "hollow_purple" -> Material.AMETHYST_SHARD; // 2026-10-24
+                case "world_slash" -> Material.IRON_SWORD;
                 default -> Material.PHANTOM_MEMBRANE;
             };
             final ItemStack stack = icon(owned ? material : Material.GRAY_DYE, SponsorService.rarityTag(cosmetic), lore);

@@ -57,7 +57,7 @@ public final class CharmService implements Listener {
             "hit_fire", "hit_cold", "hit_lightning", "hit_chaos", "hit_physical", "hit_unique", "kill_rare", "low_life");
 
     /** 一種護符。 */
-    record CharmBase(String id, String name, String trigger, boolean cure, int level, double duration, int charges, int perUse,
+    public record CharmBase(String id, String name, String trigger, boolean cure, int level, double duration, int charges, int perUse,
                      List<Modifier> effects, Material material, String description) {
     }
 
@@ -124,6 +124,16 @@ public final class CharmService implements Listener {
         return bases.size();
     }
 
+    /** 所有的護符基底（2026-10-24：管理網頁的發放清單）。 */
+    public java.util.Collection<CharmBase> bases() {
+        return java.util.Collections.unmodifiableCollection(bases.values());
+    }
+
+    /** 這個代號的護符基底（沒有回傳 null）。 */
+    public CharmBase base(final String id) {
+        return id == null ? null : bases.get(id.trim().toLowerCase(Locale.ROOT));
+    }
+
     // ---- 物品 ----
 
     Optional<CharmData> read(final ItemStack stack) {
@@ -170,12 +180,12 @@ public final class CharmService implements Listener {
         return base == null ? null : base.name();
     }
 
-    ItemStack create(final CharmBase base, final int charges) {
+    public ItemStack create(final CharmBase base, final int charges) {
         return create(base, charges, Rarity.NORMAL, base.level());
     }
 
     /** 做一顆護符（2026-10：護符是物品引擎的基底，魔法的帶一前綴一後綴的 PoE2 護符詞綴）。 */
-    ItemStack create(final CharmBase base, final int charges, final Rarity rarity, final int itemLevel) {
+    public ItemStack create(final CharmBase base, final int charges, final Rarity rarity, final int itemLevel) {
         final ItemBase itemBase = plugin.items() == null ? null : plugin.items().repository().base(base.id());
         if (itemBase == null || !itemBase.isCharm()) {
             final ItemStack stack = ItemStack.of(base.material());

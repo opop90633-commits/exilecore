@@ -205,12 +205,12 @@ head_bob = held('head_bob', bob_steps)
 #      貼圖的樣子：一隻手（角色的右手）一直摀著嘴輕拍；整個人先往角色的右邊（看的人的左邊）平平地挪過去，
 #      到了往下一沉（彈一下）再浮起來，停一下；這時另一隻手也抬上來一起摀，接著挪到另一邊、沉一下，浮起來時那隻手放回去。
 #      身子幾乎不歪（只有頭微微跟著偏）。做兩個來回；不冒愛心（Emotes.java）。
-#      2026-10（第三次）：左手不放下、一直左右揮；整體快兩成（一邊 0.65 秒）
+#      2026-10（第三次）：左手不放下、一直左右揮；整體快兩成（一邊 0.65 秒）。2026-10-24：左手伸直揮。
 def shy(side, dip, pat=0, wave=0):
     """side：挪到哪邊（1 = 角色的右邊）；dip：往下沉多少（0～1）；pat：摀嘴的手輕拍；wave：左手左右揮到哪（-1 靠嘴邊～1 往外）"""
     # 2026-10（第三次）：左手不放下了，一直舉在身前左右揮（手臂左右擺、前臂跟著帶一點）；右手照舊摀著嘴輕拍
     hands = dict(pra=(72, 38, -3), prfa=(100 + 7 * pat, 0, 0),
-                 pla=(66, round(-24 - 20 * -wave, 2), round(4 - 5 * wave, 2)), plfa=(86, 0, round(12 * wave, 2)))
+                 pla=(70, round(-24 - 20 * -wave, 2), round(4 - 5 * wave, 2)), plfa=(0, 0, 0))   # 2026-10-24：左手伸直（前臂不彎），整隻手左右揮
     return P(root_pos=(3.4 * side, -1.8 * dip, 0), root=(0, 0, 1.5 * side), chest=(-4 - 3 * dip, 2 * side, 0),
              head=(-8 - 4 * dip, 4 * side, -5 * side), prl=(9 * dip, 0, 2), pll=(9 * dip, 0, -2),
              prfl=(-16 * dip, 0, 0), plfl=(-16 * dip, 0, 0), **hands)
@@ -251,7 +251,47 @@ king_sit = held('king_sit', [
     (merge(sit, P(root_pos=(0, -3, 0))), 0.35, 0), (sit, 0.3, 1.2), (sit_breathe, 0.8, 0.6), (sit, 0.8, 0.8),
     (sit_look, 0.6, 1.2), (sit, 0.6, 0.8), (sit_breathe, 0.8, 0.4), (sit, 0.6, 0.2), (ZERO, 0.6, 0)])
 
-model['animations'] = [sidestep, kick_ball, bear_shake, head_bob, king_sit, love_you, six_seven]
+# ---- 虛式「茈」（2026-10-24，咒術迴戰 五條悟）：右手食指舉到臉旁（蒼）→ 左手往外平舉（赫）→ 兩手合到身前（合成茈）→
+#      右手往前一戳、身子前衝把茈射出去 → 收。藍、紅、紫的球與射出去的光束是 Emotes.java 畫的粒子（時間對著這裡的每一拍）。
+hp_raise = P(pra=(120, 0, 25), prfa=(30, 0, 0), pla=(20, 0, -60), head=(-5, -10, 0), chest=(0, -8, 0))
+hp_both = merge(hp_raise, P(pla=(60, 0, -80), plfa=(20, 0, 0), head=(-5, 0, 0), chest=(0, 0, 0)))
+hp_merge = P(pra=(95, 0, -15), prfa=(10, 0, 0), pla=(95, 0, 15), plfa=(10, 0, 0), chest=(-5, 0, 0), head=(-8, 0, 0))
+hp_fire = P(root_pos=(0, -1, 3), pra=(100, 0, -5), pla=(60, 0, 20), plfa=(60, 0, 0), chest=(-18, 0, 0), head=(-12, 0, 0),
+            pll=(-30, 0, -4), prl=(25, 0, 4), prfl=(-30, 0, 0))
+hp_settle = P(pra=(30, 0, 10), pla=(20, 0, -10), head=(5, 0, 0))
+hollow_purple = held('hollow_purple', [
+    (hp_raise, 0.4, 0.5), (hp_both, 0.3, 0.5), (hp_merge, 0.35, 0.6), (hp_fire, 0.12, 1.2), (hp_settle, 0.4, 0.3), (ZERO, 0.3, 0)])
+# 0.4 秒蒼、1.2 秒赫、2.05 秒合成、2.77 秒射出（Emotes.java：8、24、41、55 tick）
+
+# ---- 被「世界斬」腰斬（2026-10-24，咒術迴戰 五條悟 vs 宿儺）：手垂著站著 → 斬線掃過腰（身子一縮）→ 上半身從腰往後仰、滑開 →
+#      上半身往後倒到身後的地上（腰的骨頭：位置往後、往下，往後翻 85 度，仰躺）→ 腳也往後倒、整個人仰躺 → 躺一陣子 → 坐起來、跪著、站好。
+#      腰（pw_waist）是上半身的根，腳掛在 root 下面，所以腰的位置偏掉只有上半身會走。斬線、血是 Emotes.java 畫的粒子。
+#      模型面向 -Z，所以「往後」是 z 正；腰 x 正 = 往後仰。
+ws_arms = dict(pra=(3, 0, 6), pla=(3, 0, -6))   # 2026-10-24：站著時手垂在身側、不抱胸
+ws_cross = P(**ws_arms, head=(4, 0, 0), chest=(2, 0, 0))
+ws_cut = P(**ws_arms, head=(-12, 0, 6), chest=(-6, 0, 0))
+ws_slide = P(waist_pos=(0, -1, 3), waist=(18, 0, 0), chest=(6, 0, 0), head=(12, 0, 8),
+             pra=(-8, 0, 12), prfa=(5, 0, 0), pla=(-8, 0, -12), plfa=(5, 0, 0))   # 手垂在身側、不舉
+ws_fall = P(waist_pos=(0, -13, 26),   # 上半身倒在身後 1.6 格處：跟下半身留距離，腳倒下來時上半身不用再挪
+             waist=(85, 0, 0), chest=(3, 0, 0), head=(-8, 0, 12),
+            pra=(-5, 0, 10), pla=(-5, 0, -10), prl=(5, 0, 6), pll=(5, 0, -6))
+# 腳往後倒：轉軸在髖，所以是腳掌留在原地、髖往後退（root 往 +z 挪）、腿往 x 正轉（腳尖相對髖往前）。
+# 髖（phip_hip）自己那一截方塊掛在 root 下、不在腰上，所以髖也要往後躺（hip x 正 = 往後仰）；髖躺平之後腰的「上」就是世界的「後」，
+# 腰的旋轉歸零、用 waist_pos 的 y 拉開切口的距離。
+ws_tip = P(root_pos=(0, -3, 4), hip=(35, 0, 0), waist_pos=(0, 3.8, 21.6), waist=(50, 0, 0),   # 腰的位置換算過：上半身世界座標不動 chest=(3, 0, 0), head=(-8, 0, 12),
+           pra=(-5, 0, 10), pla=(-5, 0, -10), prl=(35, 0, 6), prfl=(-8, 0, 0), pll=(35, 0, -6), plfl=(-8, 0, 0))   # 腳、髖開始往後倒
+ws_down = P(root_pos=(0, -9.5, 12), hip=(85, 0, 0), waist_pos=(0, 10.25, 0), chest=(3, 0, 0), head=(-8, 0, 12),
+            pra=(-5, 0, 10), pla=(-5, 0, -10), prl=(88, 0, 6), prfl=(-5, 0, 0), pll=(88, 0, -6), plfl=(-5, 0, 0))   # 整個人仰躺：髖、腳也平躺
+ws_situp = P(root_pos=(0, -9, 8), waist=(10, 0, 0), chest=(-8, 0, 0), head=(-10, 0, 0),
+             prl=(70, 0, 8), prfl=(-20, 0, 0), pll=(70, 0, -8), plfl=(-20, 0, 0), pra=(40, 0, 15), pla=(40, 0, -15))     # 坐起來（腳伸在前面）
+ws_kneel = P(root_pos=(0, -6, 0), prl=(50, 0, 8), prfl=(-80, 0, 0), pll=(45, 0, -8), plfl=(-75, 0, 0), chest=(-10, 0, 0),
+             head=(-5, 0, 0), pra=(30, 0, 10), pla=(30, 0, -10))
+world_slash = held('world_slash', [
+    (ws_cross, 0.35, 0.7), (ws_cut, 0.08, 0.1), (ws_slide, 0.25, 0.25), (ws_fall, 0.3, 0.4), (ws_tip, 0.2, 0.05), (ws_down, 0.25, 1.6),
+    (ws_situp, 0.4, 0.2), (ws_kneel, 0.35, 0.15), (ZERO, 0.4, 0)])
+# 1.13 秒斬線、2.03 秒上半身往後落地、2.93 秒腳也往後倒平（Emotes.java：23、41、58 tick）
+
+model['animations'] = [sidestep, kick_ball, bear_shake, head_bob, king_sit, love_you, six_seven, hollow_purple, world_slash]
 model['name'] = 'exile_emotes'
 OUT.parent.mkdir(parents=True, exist_ok=True)
 OUT.write_text(json.dumps(model, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')

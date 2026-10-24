@@ -286,6 +286,24 @@ public final class UiPack {
         return skins;
     }
 
+    /** 2026-10-24：有簡圖的裝備（普通、魔法、稀有）：原版物品 → 掛在它上面的種類（同一個原版物品可能好幾種：骨頭是爪也是匕首）。 */
+    public static Map<String, java.util.Set<String>> plainItems(final tw.exilecore.item.ItemRepository repository) {
+        final Map<String, java.util.Set<String>> items = new TreeMap<>();
+        for (final tw.exilecore.item.ItemBase base : repository.bases()) {
+            final String category = tw.exilecore.item.PlainArt.category(base);
+            if (category == null) {
+                continue;
+            }
+            final String model = base.model();
+            final String vanillaItem = model != null && model.startsWith("minecraft:") ? model.substring("minecraft:".length())
+                    : base.material() == null ? null : base.material().toLowerCase(Locale.ROOT);
+            if (vanillaItem != null) {
+                items.computeIfAbsent(vanillaItem, key -> new java.util.TreeSet<>()).add(category);
+            }
+        }
+        return items;
+    }
+
     public static java.util.Set<String> gearItems(final tw.exilecore.item.ItemRepository repository) {
         final java.util.Set<String> items = new java.util.TreeSet<>();
         for (final tw.exilecore.item.ItemBase base : repository.bases()) {
@@ -313,6 +331,14 @@ public final class UiPack {
 
     public static Built build(final List<UniqueSkin> skins, final List<CurrencySkin> currencySkins, final java.util.Set<String> gearItems,
                               final List<BaseSkin> baseSkins) throws IOException {
+        return build(skins, currencySkins, gearItems, baseSkins, Map.of());
+    }
+
+    /**
+     * @param plainItems 2026-10-24：普通、魔法、稀有裝備的簡圖：原版物品 → 掛在它上面的種類（{@link #plainItems}）
+     */
+    public static Built build(final List<UniqueSkin> skins, final List<CurrencySkin> currencySkins, final java.util.Set<String> gearItems,
+                              final List<BaseSkin> baseSkins, final Map<String, java.util.Set<String>> plainItems) throws IOException {
         final Map<String, byte[]> files = new TreeMap<>();
         // 原版物品定義的挑選：同一個原版物品（例如玻璃瓶）上的傳奇、通貨、空藥劑欄合在一份，最後一起寫出去，不會互相蓋掉
         final Map<String, JsonArray> cases = new TreeMap<>();
@@ -426,6 +452,7 @@ public final class UiPack {
         rarityFrameModel(files);
         uniques(files, skins, cases);
         final java.util.Set<String> baseItems = bases(files, baseSkins, cases); // 2026-10-21：一般裝備、地圖、藥劑、護符、珠寶的圖
+        final java.util.Set<String> plainFramed = plains(files, plainItems, cases); // 2026-10-24：普通、魔法、稀有裝備的簡圖
         transmogSkins(files); // 2026-10：裝備幻化的美術（web/skins/）
         pack3d(files); // 2026-10：3D 時裝（web/pack3d.zip，tools/gen_models3d.py 產生）
         currencies(files, currencySkins, cases);
@@ -437,7 +464,8 @@ public final class UiPack {
         final java.util.Set<String> framed = rarityFrames(files, gearItems, cases);
         for (final Map.Entry<String, JsonArray> entry : cases.entrySet()) {
             final JsonObject root = vanillaOverride(entry.getKey(), entry.getValue());
-            if (framed.contains(entry.getKey()) || UNIQUE_ITEMS.contains(entry.getKey()) || baseItems.contains(entry.getKey())) {
+            if (framed.contains(entry.getKey()) || UNIQUE_ITEMS.contains(entry.getKey()) || baseItems.contains(entry.getKey())
+                    || plainFramed.contains(entry.getKey())) {
                 // 外框比格子大一點（18×18 蓋住格子的框線）
                 root.addProperty("oversized_in_gui", true);
             }
@@ -952,6 +980,72 @@ public final class UiPack {
             items.add(skin.vanillaItem());
         }
         return items;
+    }
+
+    // ---- 普通、魔法、稀有裝備的簡圖（2026-10-24，tools/gen_plain_art.py 畫的 web/plain_art.txt）----
+
+    private static final String PLAIN_TEX = "exilecore:item/plain/";
+
+    /**
+     * 每種簡圖一張貼圖與模型；它會用到的原版物品各加一個挑選「字串 0 是 plain:種類」：格子裡畫簡圖（字串 1 是魔法、稀有的外框），
+     * 其他地方（手上、身上、地上）照原版的完整定義。
+     *
+     * @return 加了挑選的原版物品（外框比格子大，要 oversized_in_gui）
+     */
+    static java.util.Set<String> plains(final Map<String, byte[]> files, final Map<String, java.util.Set<String>> plainItems,
+                                       final Map<String, JsonArray> cases) throws IOException {
+        final java.util.Set<String> items = new java.util.TreeSet<>();
+        if (plainItems.isEmpty()) {
+            return items;
+        }
+        final Map<String, UniqueArt.Sprite> sprites = tw.exilecore.item.PlainArt.sprites();
+        final java.util.Set<String> written = new java.util.TreeSet<>();
+        for (final Map.Entry<String, java.util.Set<String>> entry : plainItems.entrySet()) {
+            final String item = entry.getKey();
+            final JsonObject vanilla = vanillaModel(item);
+            final JsonObject full = vanilla != null ? vanilla : plain("minecraft:item/" + item);
+            for (final String category : entry.getValue()) {
+                final UniqueArt.Sprite sprite = sprites.get(category);
+                if (sprite == null) {
+                    continue;
+                }
+                if (written.add(category)) {
+                    files.put("assets/exilecore/textures/item/plain/" + category + ".png", png(spriteImage(sprite)));
+                    final JsonObject model = new JsonObject();
+                    model.addProperty("parent", "minecraft:item/generated");
+                    final JsonObject textures = new JsonObject();
+                    textures.addProperty("layer0", PLAIN_TEX + category);
+                    model.add("textures", textures);
+                    files.put("assets/exilecore/models/item/plain/" + category + ".json", json(model));
+                }
+                final JsonObject icon = plain(PLAIN_TEX + category);
+                final JsonArray rarities = new JsonArray();
+                for (final Map.Entry<String, Integer> rarity : new TreeMap<>(RARITY_KEYS).entrySet()) {
+                    rarities.add(selectCase(rarity.getKey(), framedInGui(rarity.getValue(), icon, full)));
+                }
+                cases.computeIfAbsent(item, key -> new JsonArray())
+                        .add(selectCase(tw.exilecore.item.PlainArt.modelKey(category), select(1, rarities, inGui(icon, full))));
+                items.add(item);
+            }
+        }
+        return items;
+    }
+
+    /** 在格子裡（gui）畫 gui，其他地方照 other。 */
+    static JsonObject inGui(final JsonObject gui, final JsonObject other) {
+        final JsonArray contexts = new JsonArray();
+        contexts.add("gui");
+        final JsonObject guiCase = new JsonObject();
+        guiCase.add("when", contexts);
+        guiCase.add("model", gui.deepCopy());
+        final JsonArray contextCases = new JsonArray();
+        contextCases.add(guiCase);
+        final JsonObject select = new JsonObject();
+        select.addProperty("type", "minecraft:select");
+        select.addProperty("property", "minecraft:display_context");
+        select.add("cases", contextCases);
+        select.add("fallback", other.deepCopy());
+        return select;
     }
 
     private static void baseModel(final Map<String, byte[]> files, final String name, final UniqueArt.Sprite sprite, final String parent) throws IOException {

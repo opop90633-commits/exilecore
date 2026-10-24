@@ -3732,7 +3732,7 @@ supports:
 
   perpetual_charge:        # Perpetual Charge
     name: 恆星
-    description: 被輔助的技能消耗戰星時有 25% 機率不扣掉那顆，效果照拿。
+    description: 被輔助的技能消耗戰星時有 25% 機率不扣掉那顆，效果照拿。技能本身要會消耗戰星，或一起掛狂速、綿咒、碎地、蔓寒。
     icon: AMETHYST_SHARD
     tier: 1
     excludes: [minion]
@@ -3742,7 +3742,7 @@ supports:
 
   heightened_charges:      # Heightened Charges
     name: 倍星
-    description: 被輔助的技能消耗戰星時有 20% 機率效果加倍。
+    description: 被輔助的技能消耗戰星時有 20% 機率效果加倍。技能本身要會消耗戰星，或一起掛狂速、綿咒、碎地、蔓寒。
     icon: GLOW_INK_SAC
     tier: 2
     excludes: [minion]

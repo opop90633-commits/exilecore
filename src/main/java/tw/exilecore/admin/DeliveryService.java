@@ -61,6 +61,8 @@ public final class DeliveryService {
     public static final String UNIQUE = "unique";
     public static final String GEM = "gem";
     public static final String FLASK = "flask";
+    /** 護符（2026-10-24）：ref 護符代號（flasks.yml 的 charms.bases）；rarity 普通或魔法（預設魔法、跟掉落一樣），level 物品等級（0 = 角色等級）。 */
+    public static final String CHARM = "charm";
     public static final String MAP = "map";
     /** 贊助的星幣（2026-10）：ref "paid" = 儲值（算進累積贊助）、"bonus" = 贈送。 */
     public static final String SPONSOR = "sponsor";
@@ -336,6 +338,21 @@ public final class DeliveryService {
                     throw new IllegalArgumentException("沒有這種藥劑：" + spec.ref());
                 }
                 return base.name() + count;
+            }
+            case CHARM -> {
+                if (plugin.flasks() == null || plugin.flasks().charms() == null) {
+                    throw new IllegalArgumentException("護符沒有啟用");
+                }
+                final tw.exilecore.flask.CharmService.CharmBase base = plugin.flasks().charms().base(ref(spec));
+                if (base == null) {
+                    throw new IllegalArgumentException("沒有這種護符：" + spec.ref());
+                }
+                final Rarity rarity = Rarity.parse(spec.rarity(), Rarity.MAGIC);
+                if (rarity == null || rarity == Rarity.RARE || rarity == Rarity.UNIQUE) {
+                    throw new IllegalArgumentException("護符的稀有度要是普通或魔法");
+                }
+                checkLevel(spec.level(), 100, "物品等級");
+                return (rarity == Rarity.NORMAL ? "普通 " : "魔法 ") + base.name() + (spec.level() > 0 ? "（物品等級 " + spec.level() + "）" : "") + count;
             }
             case MAP -> {
                 final MapConfig.MapDef map = mapDef(spec);
@@ -1125,7 +1142,7 @@ public final class DeliveryService {
                         List.of(entry(opId, null, "收回功勳", (int) Math.max(1, Math.min(Integer.MAX_VALUE, taken.taken())), admin, player)),
                         taken.work());
             }
-            case ITEM, UNIQUE, GEM, FLASK, MAP -> {
+            case ITEM, UNIQUE, GEM, FLASK, CHARM, MAP -> {
                 return giveItems(player, state, row, opId, wallet);
             }
             default -> {
@@ -1239,6 +1256,17 @@ public final class DeliveryService {
             case FLASK -> {
                 final FlaskBase base = plugin.flasks() == null ? null : plugin.flasks().config().base(spec.ref());
                 return base == null ? null : plugin.flasks().create(base, base.charges());
+            }
+            case CHARM -> {
+                // 2026-10-24：護符（預設魔法、物品等級照角色，跟掉落一樣）
+                final tw.exilecore.flask.CharmService charms = plugin.flasks() == null ? null : plugin.flasks().charms();
+                final tw.exilecore.flask.CharmService.CharmBase base = charms == null ? null : charms.base(spec.ref());
+                if (base == null) {
+                    return null;
+                }
+                final Rarity rarity = Rarity.parse(spec.rarity(), Rarity.MAGIC);
+                return charms.create(base, base.charges(), rarity == null ? Rarity.MAGIC : rarity,
+                        spec.level() > 0 ? spec.level() : Math.max(base.level(), characterLevel));
             }
             case MAP -> {
                 if (plugin.maps() == null) {

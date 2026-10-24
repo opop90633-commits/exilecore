@@ -589,6 +589,16 @@ final class AdminWeb {
             }
         }
         catalog.put("flasks", flasks);
+        // 2026-10-24：護符
+        final List<Map<String, Object>> charms = new ArrayList<>();
+        if (plugin.flasks() != null && plugin.flasks().charms() != null) {
+            for (final tw.exilecore.flask.CharmService.CharmBase base : plugin.flasks().charms().bases()) {
+                final Map<String, Object> row = choice(base.id(), base.name());
+                row.put("level", base.level());
+                charms.add(row);
+            }
+        }
+        catalog.put("charms", charms);
         final List<Map<String, Object>> maps = new ArrayList<>();
         int maxTier = 0;
         if (plugin.maps() != null) {
@@ -607,7 +617,7 @@ final class AdminWeb {
         catalog.put("rarities", rarities);
         final Map<String, Object> limits = new LinkedHashMap<>();
         for (final String kind : List.of(DeliveryService.CURRENCY, DeliveryService.GOLD, DeliveryService.MERITS, DeliveryService.SPONSOR, DeliveryService.COSMETIC, DeliveryService.REFUND,
-                DeliveryService.ITEM, DeliveryService.UNIQUE, DeliveryService.GEM, DeliveryService.FLASK, DeliveryService.MAP,
+                DeliveryService.ITEM, DeliveryService.UNIQUE, DeliveryService.GEM, DeliveryService.FLASK, DeliveryService.CHARM, DeliveryService.MAP,
                 DeliveryService.TAKE_SPONSOR, DeliveryService.TAKE_CURRENCY, DeliveryService.TAKE_GOLD, DeliveryService.TAKE_ITEM,
                 DeliveryService.LIFE, DeliveryService.TAKE_LIFE, DeliveryService.TAKE_MERITS, DeliveryService.TAKE_REFUND, DeliveryService.TAKE_COSMETIC)) {
             limits.put(kind, DeliveryService.maxAmount(kind));

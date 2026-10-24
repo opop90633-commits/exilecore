@@ -110,7 +110,7 @@ final class Signatures {
     private final Map<UUID, Deque<Lance>> lances = new HashMap<>();
     private final Map<UUID, Embers> embers = new HashMap<>();
     /** 下一支霆落矛有沒有消耗怒星（beforeCast 記、lodge 用）。 */
-    private final java.util.Set<UUID> chargedLance = new java.util.HashSet<>();
+    private final java.util.Map<UUID, Integer> chargedLance = new java.util.HashMap<>(); // 2026-10-24：值 = 這次的怒星算幾顆（倍星 2）
 
     Signatures(final ExileCore plugin, final SkillService service) {
         this.plugin = plugin;
@@ -271,8 +271,9 @@ final class Signatures {
             return build;
         }
         if ("lance".equals(signature)) {
-            chargedLance.add(player.getUniqueId());
-            state.notice("<#ffe14a>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + " 消耗怒星：插 1.5 秒、每 0.2 秒放電", now + 30);
+            chargedLance.put(player.getUniqueId(), benefit);
+            state.notice("<#ffe14a>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + " 消耗怒星：插 1.5 秒、每 " + (benefit > 1 ? "0.1" : "0.2")
+                    + " 秒放電" + (benefit > 1 ? "（倍星）" : ""), now + 30);
             plugin.players().display(player, state);
             return build.withProfile(build.profile().withLocal(List.of(
                     tw.exilecore.stats.Modifier.flat("damage.convert.lightning", 30, "怒星"))));
@@ -365,8 +366,10 @@ final class Signatures {
         while (mine.size() >= LANCE_MAX) {
             detonate(player, mine.pollFirst()); // 第 4 支：最舊的提早炸開
         }
-        final boolean charged = chargedLance.remove(player.getUniqueId());
-        final long zap = charged ? LANCE_CHARGED_ZAP : LANCE_ZAP;
+        final Integer chargedBenefit = chargedLance.remove(player.getUniqueId());
+        final boolean charged = chargedBenefit != null;
+        // 2026-10-24：倍星觸發（算兩顆）：放電間隔減半 = 放電次數加倍
+        final long zap = charged ? Math.max(1, LANCE_CHARGED_ZAP / Math.max(1, chargedBenefit)) : LANCE_ZAP;
         mine.addLast(new Lance(at.clone(), build, now + (charged ? LANCE_CHARGED_LIFE : LANCE_LIFE),
                 new long[] {now + (charged ? 4 : 10) + zap}, zap));
     }

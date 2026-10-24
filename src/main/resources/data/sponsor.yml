@@ -209,6 +209,9 @@ cosmetics:
   emote_king_sit: { type: emote, emote: king_sit, name: 王之坐姿, rarity: epic, fashion_price: 15, description: "變出一張沙發，往後一靠、雙腳張開坐一陣子" }
   emote_love_you: { type: emote, emote: love_you, name: 我真的特別愛你, rarity: rare, fashion_price: 10, description: "害羞地摀著嘴，身子左右搖、冒出愛心" }
   emote_six_seven: { type: emote, emote: six_seven, name: "67", rarity: rare, fashion_price: 10, description: "兩手手心朝上放在身前，一上一下輪流掂，頭跟著歪" }
+  # 2026-10-24 咒術迴戰
+  emote_hollow_purple: { type: emote, emote: hollow_purple, name: "虛式「茈」", rarity: legendary, fashion_price: 25, description: "舉手凝出蒼與赫，合成茈往前射出一道紫色光束（只有特效、不會傷人）" }
+  emote_world_slash: { type: emote, emote: world_slash, name: "被「世界斬」腰斬", rarity: epic, fashion_price: 15, description: "抱胸站著，一道斬線掃過腰，上半身往後仰倒、腳也跟著倒平，躺一陣子再爬起來" }
 
   # 2026-10-23 累積贊助各階專屬（tiers.cosmetics 到階就送；限定：商店、抽獎箱都沒有，沒到那一階的人看不到）
   patron_halo: { type: skin, slot: back, art: patron_halo, name: 星芒之環, rarity: epic, fashion_price: 0, limited: "星芒贊助者",

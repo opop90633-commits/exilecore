@@ -521,7 +521,7 @@
 
   var KINDS = [
     ['currency', '通貨'], ['gold', '金幣'], ['merits', '功勳'], ['sponsor', '星幣／月卡幣／時裝幣／免費抽獎箱'], ['cosmetic', '時裝（限定、整組）'], ['item', '裝備'], ['unique', '傳奇'],
-    ['gem', '寶石'], ['flask', '藥劑'], ['map', '地圖'], ['refund', '免費退點'], ['life', '生活（材料、筏的方塊、料理、號角）'],
+    ['gem', '寶石'], ['flask', '藥劑'], ['charm', '護符'], ['map', '地圖'], ['refund', '免費退點'], ['life', '生活（材料、筏的方塊、料理、號角）'],
     ['take_sponsor', '⛔ 收回：累積贊助／星幣／買的格子'], ['take_currency', '⛔ 收回：通貨'], ['take_gold', '⛔ 收回：金幣'], ['take_item', '⛔ 收回：物品'],
     ['take_merits', '⛔ 收回：功勳'], ['take_refund', '⛔ 收回：免費退點'], ['take_life', '⛔ 收回：生活材料'], ['take_cosmetic', '⛔ 收回：時裝、限定稱號']
   ];
@@ -674,7 +674,7 @@
     }).catch(function (error) { if (!silent) { fail(error); } });
   }
   function catalogSignature(c) {
-    return [c.currencies.length, c.bases.length, c.uniques.length, c.skills.length, c.supports.length, c.flasks.length, c.maps.length,
+    return [c.currencies.length, c.bases.length, c.uniques.length, c.skills.length, c.supports.length, c.flasks.length, (c.charms || []).length, c.maps.length,
       c.maxMapTier, c.hasMerits, c.hasSponsor].join(',');
   }
 
@@ -810,6 +810,7 @@
       case 'item': return c.bases.filter(match).map(function (e) { return { id: e.id, text: e.name + '（Lv.' + e.level + '）', slot: e.slot }; });
       case 'unique': return c.uniques.filter(match).map(function (e) { return { id: e.id, text: e.name + '（' + e.base + (e.chase ? '，追逐級' : '') + '）', slot: e.slot }; });
       case 'flask': return c.flasks.map(function (e) { return { id: e.id, text: e.name + '（Lv.' + e.level + '）' }; });
+      case 'charm': return (c.charms || []).map(function (e) { return { id: e.id, text: e.name + '（Lv.' + e.level + '）' }; });
       case 'map': return c.maps.map(function (e) { return { id: e.id, text: e.name }; });
       case 'take_sponsor': return [{ id: 'total', text: '累積贊助（稱號、倉庫頁、背包頁、上架格跟著降）' }, { id: 'coins', text: '星幣' },
         { id: 'card', text: '月卡幣' }, { id: 'fashion', text: '時裝幣' }, { id: 'bought_stash', text: '星幣買的倉庫頁' },
@@ -833,10 +834,10 @@
     var row = h('div', { cls: 'item-row' });
     row.appendChild(h('label', null, '種類', select('', '種類', KINDS.filter(function (k) { return (k[0] !== 'merits' || c.hasMerits) && (k[0] !== 'sponsor' || c.hasSponsor) && (k[0] !== 'cosmetic' || c.hasSponsor) && (k[0] !== 'take_sponsor' || c.hasSponsor) && (k[0] !== 'take_cosmetic' || c.hasSponsor) && (k[0] !== 'take_merits' || c.hasMerits) && ((k[0] !== 'life' && k[0] !== 'take_life') || c.hasLife); })
       .map(function (k) { return { id: k[0], text: k[1] }; }), item.kind, function (v) {
-        item.kind = v; item.ref = ''; item.level = 0; item.amount = 1; item.filter = ''; item.rarity = v === 'map' ? 'normal' : 'rare';
+        item.kind = v; item.ref = ''; item.level = 0; item.amount = 1; item.filter = ''; item.rarity = v === 'map' ? 'normal' : v === 'charm' ? 'magic' : 'rare';
         renderItems();
       })));
-    var refLabel = { currency: '通貨', item: '基底', unique: '傳奇', flask: '藥劑', map: '地圖', sponsor: '幣別', cosmetic: '時裝', take_sponsor: '收回什麼', take_currency: '通貨', take_cosmetic: '時裝', life: '生活', take_life: '材料' }[item.kind];
+    var refLabel = { currency: '通貨', item: '基底', unique: '傳奇', flask: '藥劑', charm: '護符', map: '地圖', sponsor: '幣別', cosmetic: '時裝', take_sponsor: '收回什麼', take_currency: '通貨', take_cosmetic: '時裝', life: '生活', take_life: '材料' }[item.kind];
     if (item.kind === 'item' || item.kind === 'unique' || item.kind === 'cosmetic' || item.kind === 'take_cosmetic' || item.kind === 'life' || item.kind === 'take_life') {
       var filter = h('input', { type: 'search', cls: 'filter', placeholder: '篩選…', value: item.filter, 'aria-label': '篩選' });
       filter.addEventListener('input', function () {
@@ -869,9 +870,12 @@
       row.appendChild(h('span', { cls: 'hint', text: item.kind === 'take_item' ? '有多少拿多少；找的是領的那個角色的背包、隨身背包與帳號倉庫'
         : item.kind === 'take_refund' ? '有多少拿多少；領的那個角色的' : '有多少拿多少（帳號共用）' }));
     }
-    if (item.kind === 'item' || item.kind === 'map') {
-      row.appendChild(h('label', null, '稀有度', select('', '稀有度', c.rarities.map(function (r) { return { id: r.id, text: r.name }; }),
+    if (item.kind === 'item' || item.kind === 'map' || item.kind === 'charm') {
+      row.appendChild(h('label', null, '稀有度', select('', '稀有度', c.rarities.filter(function (r) { return item.kind !== 'charm' || r.id !== 'rare'; }).map(function (r) { return { id: r.id, text: r.name }; }),
         item.rarity, function (v) { item.rarity = v; renderSummary(); })));
+    }
+    if (item.kind === 'charm') {
+      row.appendChild(numberInput('物品等級', item.level, 0, 100, function (v) { item.level = v; renderSummary(); }, '0 = 角色等級'));
     }
     if (item.kind === 'item' || item.kind === 'unique') {
       row.appendChild(numberInput('物品等級', item.level, 0, 100, function (v) { item.level = v; renderSummary(); }, '0 = 角色等級'));
@@ -1054,7 +1058,7 @@
   }
   function specOf(item) {
     var spec = { kind: item.kind, ref: item.ref || null, rarity: null, level: Number(item.level) || 0, amount: Number(item.amount) || 0 };
-    if (item.kind === 'item' || item.kind === 'map') { spec.rarity = item.rarity; }
+    if (item.kind === 'item' || item.kind === 'map' || item.kind === 'charm') { spec.rarity = item.rarity; }
     if (item.kind === 'gem') {
       spec.ref = item.gemType === 'skill' ? 'skill:' + item.ref : item.gemType === 'support' ? 'support:' + item.ref : item.gemType;
       if (item.gemType === 'support') { spec.level = 0; }
@@ -1090,6 +1094,7 @@
       case 'item': return rarityName(item.rarity) + ' ' + nameOf(c.bases, item.ref) + (item.level ? '（物品等級 ' + item.level + '）' : '') + count + affixSummary(item);
       case 'unique': return '傳奇 ' + nameOf(c.uniques, item.ref) + (item.level ? '（物品等級 ' + item.level + '）' : '') + count + affixSummary(item);
       case 'flask': return nameOf(c.flasks, item.ref) + count;
+      case 'charm': return rarityName(item.rarity) + ' ' + nameOf(c.charms || [], item.ref) + (item.level ? '（物品等級 ' + item.level + '）' : '') + count;
       case 'map': return '地圖 ' + nameOf(c.maps, item.ref) + ' T' + item.level + '（' + rarityName(item.rarity) + '）' + count;
       case 'gem':
         if (item.gemType === 'uncut_skill') { return '未切割技能寶石' + (item.level ? ' Lv.' + item.level : '') + count; }

@@ -560,7 +560,7 @@ jr_energy_shield_delay:
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 7] }
   mods:
-    - { stat: radius:es.delay, type: INCREASED, value: "{value}" }
+    - { stat: radius:es.delay, type: INCREASED, value: "-{value}" }   # 2026-10-24 修正：以前少了負號，寫縮短實際是變長
 
 jr_evasion:
   type: prefix

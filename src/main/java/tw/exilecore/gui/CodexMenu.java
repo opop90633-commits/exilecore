@@ -90,7 +90,8 @@ public final class CodexMenu extends Menu {
 
     /** 傳奇的部位篩選：null = 全部。 */
     private static final List<ItemSlot> SLOT_FILTERS = java.util.Arrays.asList(null, ItemSlot.MAIN_HAND, ItemSlot.OFF_HAND, ItemSlot.HEAD,
-            ItemSlot.CHEST, ItemSlot.LEGS, ItemSlot.FEET, ItemSlot.RING, ItemSlot.AMULET, ItemSlot.BELT, ItemSlot.JEWEL);
+            ItemSlot.CHEST, ItemSlot.LEGS, ItemSlot.FEET, ItemSlot.RING, ItemSlot.AMULET, ItemSlot.BELT, ItemSlot.JEWEL,
+            ItemSlot.CHARM); // 2026-10-24：＋護符
 
     private Tab tab;
     private int page;

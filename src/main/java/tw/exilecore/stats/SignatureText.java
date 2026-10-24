@@ -55,7 +55,7 @@ public final class SignatureText {
         TEXT.put(StatKeys.BEIDAT_HAND, "每 8 最大生命 +1 最大能量護盾；保留 25% 生命");
         TEXT.put(StatKeys.BEIDAT_GAZE, "每 6 最大生命 +1 最大魔力；保留 25% 生命");
         TEXT.put(StatKeys.BEIDAT_WILL, "每 25 最大生命 +1 精魂；保留 25% 生命");
-        TEXT.put(StatKeys.SELF_IGNITE_ON_CRIT, "暴擊時你自己著火 4 秒：每秒受到最大生命與能量護盾 15% 的火焰傷害");
+        TEXT.put(StatKeys.SELF_IGNITE_ON_CRIT, "暴擊時你自己著火 4 秒：每秒受到最大生命與能量護盾 15% 的火焰傷害（吃你的火焰抗性與身上的點燃持續時間）");
         TEXT.put(StatKeys.FLAG_SPELL_BASE_CRIT, "法術的基礎暴擊率是 15%");
         TEXT.put(StatKeys.CRIT_BONUS_PER_LIFE, "每 50 目前生命，增加 1% 暴擊傷害加成");
         TEXT.put(StatKeys.FLAG_CRIMSON_POWER, "胸甲上的能量護盾有多少，最大生命就多加多少（能量護盾本身不變）");

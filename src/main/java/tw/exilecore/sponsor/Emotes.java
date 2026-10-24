@@ -43,6 +43,8 @@ import java.util.UUID;
  *   <li>狗熊哆嗦毛（bear_shake）：蹲低亂甩手、扭身甩頭、甩出水花跟毛，最後兩手高舉。2026-10-15：跟影片一樣左右、前後跨步繞小圈、小跳
  *       （<b>只有營地裡會真的移動</b>，跟閃身步一樣）。</li>
  *   <li>搖頭晃腦（head_bob）：馬步、一手伸出去，頭左右快速甩動。</li>
+ *   <li>虛式「茈」（hollow_purple，2026-10-24）：舉手凝出蒼（藍）、赫（紅），合成茈（紫）往前射出一道光束（只有粒子，不會傷人）。</li>
+ *   <li>被「世界斬」腰斬（world_slash，2026-10-24）：抱胸站著，一道斬線掃過腰，上半身往後仰倒到地上、腳也往後倒平，躺一陣子再爬起來。</li>
  * </ul>
  * 每個人 3 秒冷卻；Q 在背包介面裡丟東西的那一下不算。
  */
@@ -166,6 +168,8 @@ public final class Emotes implements Listener {
             case "king_sit" -> sofa(player, SOFA_TICKS); // 沒有 BetterModel：只擺沙發
             case "love_you" -> loveYouVanilla(player);
             case "six_seven" -> sixSevenVanilla(player);
+            case "hollow_purple" -> hollowPurpleVanilla(player);
+            case "world_slash" -> worldSlashVanilla(player);
             default -> {
             }
         }
@@ -181,6 +185,8 @@ public final class Emotes implements Listener {
             case "king_sit" -> 10700;
             case "love_you" -> 3900; // 2026-10（第三次）：快兩成（一邊 0.65 秒、兩個來回，共 3.85 秒）；左手一直揮
             case "six_seven" -> 3550;
+            case "hollow_purple" -> 5050;
+            case "world_slash" -> 6100;
             default -> COOLDOWN_MILLIS;
         };
     }
@@ -286,6 +292,8 @@ public final class Emotes implements Listener {
                 world.playSound(player.getLocation(), Sound.BLOCK_WOOL_PLACE, 1f, 0.7f);
                 later(player, 7, at -> world.playSound(at, Sound.ENTITY_PLAYER_BIG_FALL, 0.4f, 1.4f)); // 坐下
             }
+            case "hollow_purple" -> hollowPurpleEffects(player);
+            case "world_slash" -> worldSlashEffects(player);
             case "head_bob" -> {
                 // 2026-10 重抓：0.58 秒起每 0.1～0.11 秒甩一次頭（gen_emotes.py 的 bob_steps），手每甩出去一次掃一聲
                 double t = 0.58;
@@ -861,6 +869,257 @@ public final class Emotes implements Listener {
     /** 67 的文字大小（往上抬，在名字上面）。 */
     private static Transformation sixSevenScale(final float scale) {
         return new Transformation(new Vector3f(0, 0.7f, 0), new Quaternionf(), new Vector3f(scale, scale, scale), new Quaternionf());
+    }
+
+    // ---- 虛式「茈」 ----
+
+    /** 玩家面向的水平方向（長度 1；朝正上下看時當作朝南）。 */
+    private static Vector flatForward(final Player player) {
+        final Vector forward = player.getLocation().getDirection().setY(0);
+        if (forward.lengthSquared() < 1.0e-4) {
+            forward.setX(0).setZ(1);
+        }
+        return forward.normalize();
+    }
+
+    /** 玩家的右手邊（跟閃身步的 effects 一樣）。 */
+    private static Vector rightOf(final Vector forward) {
+        return new Vector(-forward.getZ(), 0, forward.getX());
+    }
+
+    /**
+     * 虛式「茈」的粒子（2026-10-24，時間對著 gen_emotes.py 的每一拍）：8 tick 右手旁凝出蒼（藍球）、24 tick 左手旁凝出赫（紅球）、
+     * 41 tick 兩球往身前靠合成茈（紫球、越來越大）、55 tick 射出去：一道紫色光束往前最多 24 格，碰到方塊就炸開。
+     * 只有粒子與音效，不會傷人（贊助不影響戰鬥）。手的位置跟著玩家轉頭算，所以邊轉邊做也對得上。
+     */
+    private void hollowPurpleEffects(final Player player) {
+        final World world = player.getWorld();
+        final Color blue = Color.fromRGB(0x3f8cff);
+        final Color red = Color.fromRGB(0xff3b3b);
+        final Color purple = Color.fromRGB(0xa64dff);
+        later(player, 8, at -> world.playSound(at, Sound.BLOCK_BEACON_ACTIVATE, 0.8f, 1.6f));
+        later(player, 24, at -> world.playSound(at, Sound.ENTITY_BLAZE_AMBIENT, 0.8f, 0.6f));
+        later(player, 41, at -> world.playSound(at, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1f, 0.7f));
+        later(player, 53, at -> world.playSound(at, Sound.BLOCK_BEACON_POWER_SELECT, 1f, 0.5f));
+        final double[] beam = {0}; // 光束已經射到多遠（格）
+        final boolean[] hit = {false};
+        final int[] age = {0};
+        repeat(task -> {
+            final int tick = age[0]++;
+            if (!player.isOnline() || player.isDead() || tick > 100) {
+                task.cancel();
+                return;
+            }
+            final Location eye = player.getEyeLocation();
+            final Vector forward = flatForward(player);
+            final Vector right = rightOf(forward);
+            final Location rightHand = eye.clone().add(forward.clone().multiply(0.45)).add(right.clone().multiply(0.45)).add(0, 0.15, 0);
+            final Location leftHand = eye.clone().add(forward.clone().multiply(0.2)).add(right.clone().multiply(-0.9)).add(0, -0.3, 0);
+            final Location front = eye.clone().add(forward.clone().multiply(1.3)).add(0, -0.2, 0);
+            if (tick >= 8 && tick < 41) {
+                orb(world, rightHand, blue, 0.12 + 0.18 * Math.min(1, (tick - 8) / 12.0), tick);
+            }
+            if (tick >= 24 && tick < 41) {
+                orb(world, leftHand, red, 0.12 + 0.18 * Math.min(1, (tick - 24) / 12.0), tick);
+            }
+            if (tick >= 41 && tick < 55) {
+                // 蒼、赫往身前靠，合成茈（越來越大、冒紫煙）
+                final double f = Math.min(1, (tick - 41) / 8.0);
+                orb(world, lerp(rightHand, front, f), blue, 0.3 * (1 - f) + 0.05, tick);
+                orb(world, lerp(leftHand, front, f), red, 0.3 * (1 - f) + 0.05, tick);
+                orb(world, front, purple, 0.2 + 0.45 * f, tick);
+                world.spawnParticle(Particle.WITCH, front, 3, 0.25, 0.25, 0.25, 0);
+                if (tick % 3 == 0) {
+                    world.spawnParticle(Particle.END_ROD, front, 2, 0.3, 0.3, 0.3, 0.02);
+                }
+            }
+            if (tick == 55) {
+                world.spawnParticle(Particle.FLASH, front, 1);
+                world.spawnParticle(Particle.EXPLOSION, front, 1);
+                world.playSound(front, Sound.ENTITY_WARDEN_SONIC_BOOM, 1f, 1.3f);
+                world.playSound(front, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 0.8f);
+                world.playSound(front, Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 0.6f, 1.4f);
+                world.spawnParticle(Particle.CLOUD, player.getLocation().add(0, 0.2, 0), 10, 0.5, 0.05, 0.5, 0.05);
+            }
+            if (tick > 55 && tick <= 75 && !hit[0]) {
+                // 光束一 tick 往前 1.5 格：一圈圈紫色的環，碰到方塊就炸開停下
+                final double from = beam[0];
+                final double to = Math.min(24, from + 1.5);
+                final Location origin = eye.clone().add(0, -0.2, 0);
+                final Vector up = new Vector(0, 1, 0);
+                for (double d = from; d < to; d += 0.5) {
+                    final Location at = origin.clone().add(forward.clone().multiply(1.3 + d));
+                    if (!at.getBlock().isPassable()) {
+                        hit[0] = true;
+                        world.spawnParticle(Particle.EXPLOSION_EMITTER, at, 1);
+                        world.spawnParticle(Particle.DUST, at, 40, 1.2, 1.2, 1.2, 0, new Particle.DustOptions(purple, 1.6f));
+                        world.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.7f);
+                        break;
+                    }
+                    final double radius = 0.9;
+                    for (int i = 0; i < 10; i++) {
+                        final double angle = Math.PI * 2 * i / 10 + tick * 0.4;
+                        final Vector offset = right.clone().multiply(Math.cos(angle) * radius).add(up.clone().multiply(Math.sin(angle) * radius));
+                        world.spawnParticle(Particle.DUST, at.clone().add(offset), 1, 0.02, 0.02, 0.02, 0, new Particle.DustOptions(purple, 1.5f));
+                    }
+                    world.spawnParticle(Particle.DUST, at, 2, 0.3, 0.3, 0.3, 0, new Particle.DustOptions(Color.fromRGB(0xe6c8ff), 1.2f));
+                    if (tick % 2 == 0) {
+                        world.spawnParticle(Particle.DRAGON_BREATH, at, 1, 0.2, 0.2, 0.2, 0.01);
+                    }
+                }
+                beam[0] = to;
+                if (tick % 4 == 0 && !hit[0]) {
+                    world.spawnParticle(Particle.SONIC_BOOM, origin.clone().add(forward.clone().multiply(1.3 + to)), 1);
+                }
+            }
+        });
+    }
+
+    /** 一顆會轉的光球：中間一點大的、外面一圈小的繞著轉。 */
+    private static void orb(final World world, final Location centre, final Color colour, final double radius, final int tick) {
+        world.spawnParticle(Particle.DUST, centre, 1, 0.03, 0.03, 0.03, 0, new Particle.DustOptions(colour, (float) (1.2 + radius * 2)));
+        for (int i = 0; i < 6; i++) {
+            final double angle = Math.PI * 2 * i / 6 + tick * 0.5;
+            final double tilt = Math.sin(tick * 0.3 + i) * radius * 0.6;
+            world.spawnParticle(Particle.DUST, centre.clone().add(Math.cos(angle) * radius, tilt, Math.sin(angle) * radius), 1, 0, 0, 0, 0,
+                    new Particle.DustOptions(colour, 0.8f));
+        }
+    }
+
+    private static Location lerp(final Location from, final Location to, final double f) {
+        return from.clone().add(to.clone().subtract(from).toVector().multiply(f));
+    }
+
+    /** 虛式「茈」（沒有 BetterModel）：照拍子揮手，粒子、音效一樣。 */
+    private void hollowPurpleVanilla(final Player player) {
+        final UUID id = player.getUniqueId();
+        busy.add(id);
+        hollowPurpleEffects(player);
+        final int[] age = {0};
+        repeat(task -> {
+            final int tick = age[0]++;
+            if (!player.isOnline() || player.isDead() || tick > 100) {
+                busy.remove(id);
+                task.cancel();
+                return;
+            }
+            switch (tick) {
+                case 8, 55 -> player.swingMainHand();
+                case 24 -> player.swingOffHand();
+                case 41 -> {
+                    player.swingMainHand();
+                    player.swingOffHand();
+                }
+                default -> {
+                }
+            }
+        });
+    }
+
+    // ---- 被「世界斬」腰斬 ----
+
+    /**
+     * 世界斬的粒子（2026-10-24，時間對著 gen_emotes.py）：23 tick 一道白色的斬線從左掃到右、橫過腰的高度、兩邊各 14 格長，
+     * 之後淡掉；腰冒血 2 秒；41 tick 上半身落地的悶響、58 tick 腳倒平。只有粒子與音效，不會傷人。
+     */
+    private void worldSlashEffects(final Player player) {
+        final World world = player.getWorld();
+        final Color white = Color.fromRGB(0xf4f4ff);
+        final Color blood = Color.fromRGB(0xb0001e);
+        final org.bukkit.block.data.BlockData redstone = Material.REDSTONE_BLOCK.createBlockData();
+        final Location[] cut = {null}; // 斬線的位置（斬下去那一刻定住，之後人倒了線不跟著動）
+        final Vector[] axis = {null};
+        later(player, 41, at -> {
+            world.playSound(at, Sound.ENTITY_GENERIC_BIG_FALL, 0.7f, 0.8f);
+            world.spawnParticle(Particle.CLOUD, at.clone().add(0, 0.1, 0), 8, 0.6, 0.05, 0.6, 0.02);
+        });
+        later(player, 58, at -> {
+            world.playSound(at, Sound.ENTITY_GENERIC_SMALL_FALL, 0.6f, 0.9f);
+            world.spawnParticle(Particle.CLOUD, at.clone().add(0, 0.1, 0), 5, 0.4, 0.05, 0.4, 0.02);
+        });
+        later(player, 98, at -> world.playSound(at, Sound.ENTITY_PLAYER_BREATH, 0.6f, 0.8f));
+        final int[] age = {0};
+        repeat(task -> {
+            final int tick = age[0]++;
+            if (!player.isOnline() || player.isDead() || tick > 70) {
+                task.cancel();
+                return;
+            }
+            if (tick == 23) {
+                final Location waist = player.getLocation().add(0, 1.0, 0);
+                cut[0] = waist;
+                axis[0] = rightOf(flatForward(player));
+                world.playSound(waist, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 0.5f);
+                world.playSound(waist, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 0.5f, 1.7f);
+                world.playSound(waist, Sound.BLOCK_GLASS_BREAK, 0.7f, 0.5f);
+                world.spawnParticle(Particle.SWEEP_ATTACK, waist, 1);
+            }
+            if (cut[0] == null) {
+                return;
+            }
+            final int since = tick - 23;
+            if (since <= 2) {
+                // 從左掃到右：3 tick 掃完 28 格
+                final double from = -14 + since * 28 / 3.0;
+                final double to = from + 28 / 3.0;
+                for (double d = from; d < to; d += 0.3) {
+                    final Location at = cut[0].clone().add(axis[0].clone().multiply(d));
+                    world.spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, new Particle.DustOptions(white, 1.6f));
+                }
+            } else if (since < 20) {
+                // 線留著慢慢淡掉
+                final float size = 1.4f - since * 0.06f;
+                for (double d = -14; d <= 14; d += 0.6) {
+                    final Location at = cut[0].clone().add(axis[0].clone().multiply(d));
+                    world.spawnParticle(Particle.DUST, at, 1, 0.02, 0.02, 0.02, 0, new Particle.DustOptions(white, size));
+                }
+            }
+            if (since >= 1 && since < 45 && tick % 2 == 0) {
+                // 腰冒血（人倒了就跟著人）
+                final Location waist = player.getLocation().add(0, since < 18 ? 1.0 : 0.4, 0);
+                world.spawnParticle(Particle.DUST, waist, 4, 0.3, 0.1, 0.3, 0, new Particle.DustOptions(blood, 1.1f));
+                world.spawnParticle(Particle.BLOCK, waist, 3, 0.25, 0.1, 0.25, 0.05, redstone);
+            }
+        });
+    }
+
+    /** 被「世界斬」腰斬（沒有 BetterModel）：站著不動，斬線掃過之後蹲下（倒地）一陣子再站起來；粒子、音效一樣。 */
+    private void worldSlashVanilla(final Player player) {
+        final UUID id = player.getUniqueId();
+        busy.add(id);
+        final boolean wasSneaking = player.isSneaking();
+        worldSlashEffects(player);
+        final float[] applied = {0};
+        final int[] age = {0};
+        repeat(task -> {
+            final int tick = age[0]++;
+            if (!player.isOnline() || player.isDead() || tick > 112) {
+                if (player.isOnline()) {
+                    turnHead(player, 0, -applied[0]);
+                    player.setSneaking(wasSneaking);
+                }
+                busy.remove(id);
+                task.cancel();
+                return;
+            }
+            if (tick == 23) {
+                player.swingMainHand();
+                turnHead(player, 0, 25 - applied[0]); // 低頭看腰
+                applied[0] = 25;
+            }
+            if (tick == 30) {
+                player.setSneaking(true);
+            }
+            if (tick == 41) {
+                turnHead(player, 0, 45 - applied[0]);
+                applied[0] = 45;
+            }
+            if (tick == 100) {
+                turnHead(player, 0, -applied[0]);
+                applied[0] = 0;
+                player.setSneaking(false);
+            }
+        });
     }
 
     /** 關服、重讀：還在跑的動作停掉、球收掉。 */

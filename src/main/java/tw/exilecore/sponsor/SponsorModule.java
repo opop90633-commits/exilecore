@@ -158,18 +158,63 @@ public final class SponsorModule implements Module, Listener {
         }
     }
 
-    /** 2026-10-23：自訂上線訊息（累積贊助的主打）：換掉原版的上線訊息（ChatListener 的 MONITOR 會照「過濾加入離開訊息」送出去）。 */
+    /** 等帳號資料載入最多幾 tick（再久就照原版的上線訊息送）。 */
+    private static final int JOIN_WAIT_TICKS = 100;
+
+    /**
+     * 2026-10-23：自訂上線訊息（累積贊助的主打）：換掉原版的上線訊息。
+     * 2026-10-24 修正：帳號資料（贊助、上線訊息）是上線後才從資料庫讀的，上線那一刻還沒載入，以前一律照原版送、自訂的從來沒出現過。
+     * 改成先把原版的訊息收起來，等帳號載入好（最多 5 秒）再送：有自訂的送自訂的，沒有的照原版（一樣照「過濾加入離開訊息」）。
+     */
     @EventHandler(priority = EventPriority.HIGH)
     public void onJoinMessage(final org.bukkit.event.player.PlayerJoinEvent event) {
-        if (service == null || !service.loaded(event.getPlayer())) {
+        if (service == null) {
             return;
         }
-        final String custom = service.perks.loginMessage(event.getPlayer());
-        if (custom != null) {
-            event.joinMessage(plugin.text().parse(custom));
+        final Player player = event.getPlayer();
+        if (service.loaded(player)) {
+            announceJoin(player, event.joinMessage());
+            event.joinMessage(null);
+            return;
         }
-        if (service.perks.joinAnnounce(event.getPlayer())) {
-            service.perks.announceJoin(event.getPlayer()); // 2026-10-23 晚：最高階上線全服音效
+        final net.kyori.adventure.text.Component original = event.joinMessage();
+        if (original == null) {
+            return; // 別的模組已經拿掉了（維護模式踢人）
+        }
+        event.joinMessage(null);
+        new org.bukkit.scheduler.BukkitRunnable() {
+            private int waited;
+
+            @Override
+            public void run() {
+                if (!player.isOnline()) {
+                    cancel();
+                    return;
+                }
+                waited += 2;
+                if (service == null || !service.loaded(player)) {
+                    if (waited < JOIN_WAIT_TICKS) {
+                        return;
+                    }
+                    tw.exilecore.chat.JoinMessages.join(plugin, original, player); // 載入太久：照原版
+                    cancel();
+                    return;
+                }
+                announceJoin(player, original);
+                cancel();
+            }
+        }.runTaskTimer(plugin, 2, 2);
+    }
+
+    /** 帳號載入好了：有自訂上線訊息送自訂的，沒有送原版的；最高階另外放全服音效。 */
+    private void announceJoin(final Player player, final net.kyori.adventure.text.Component original) {
+        final String custom = service.perks.loginMessage(player);
+        final net.kyori.adventure.text.Component message = custom != null ? plugin.text().parse(custom) : original;
+        if (message != null) {
+            tw.exilecore.chat.JoinMessages.join(plugin, message, player);
+        }
+        if (service.perks.joinAnnounce(player)) {
+            service.perks.announceJoin(player); // 2026-10-23 晚：最高階上線全服音效
         }
     }
 

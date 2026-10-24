@@ -160,7 +160,8 @@ public final class WebModule implements Module, Listener {
         ownFull = UiPack.build(plugin.items() == null ? List.of() : UiPack.skins(plugin.items().repository()),
                 gemSkins(plugin.currencies() == null ? List.of() : UiPack.currencySkins(plugin.currencies().repository()), skillSkins()),
                 plugin.items() == null ? java.util.Set.of() : UiPack.gearItems(plugin.items().repository()),
-                plugin.items() == null ? List.of() : UiPack.baseSkins(plugin.items().repository())); // 2026-10-21：一般裝備、地圖、藥劑、護符、珠寶的圖
+                plugin.items() == null ? List.of() : UiPack.baseSkins(plugin.items().repository()), // 2026-10-21：一般裝備、地圖、藥劑、護符、珠寶的圖
+                plugin.items() == null ? java.util.Map.of() : UiPack.plainItems(plugin.items().repository())); // 2026-10-24：普通、魔法、稀有裝備的簡圖
         final UiPack.Split split = UiPack.splitMusic(ownFull);
         ownPack = split.ui();
         musicPack = split.music();

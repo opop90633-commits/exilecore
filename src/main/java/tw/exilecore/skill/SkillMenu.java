@@ -731,6 +731,21 @@ public final class SkillMenu extends Menu {
         } else if (definition != null && !support.supports(definition)) {
             lore.add("<red>不能輔助這個技能（" + ItemRenderer.escape(support.refusal(definition)) + "，不會生效）");
         }
+        if (definition != null && support.needsChargeSpend() && !host && support.supports(definition) && !SupportDefinition.consumesAny(definition)) {
+            // 2026-10-24：恆星、倍星要技能真的會消耗戰星：本身不消耗、也沒掛狂速／綿咒／碎地／蔓寒的話沒效果
+            boolean spender = false;
+            for (final String other : entry.supports()) {
+                final SupportDefinition otherSupport = other == null ? null : service.config().support(other);
+                if (otherSupport != null && otherSupport.spendsCharges() && otherSupport.supports(definition)) {
+                    spender = true;
+                    break;
+                }
+            }
+            if (!spender) {
+                lore.add("<red>這個技能不會消耗戰星（不會生效）");
+                lore.add("<gray>要本身會消耗戰星的技能，或一起掛狂速／綿咒／碎地／蔓寒");
+            }
+        }
         if (!support.cuttable()) {
             if (resonant) {
                 lore.add("<#c48bff>共鳴：不佔專屬輔助名額"); // 2026-10-18

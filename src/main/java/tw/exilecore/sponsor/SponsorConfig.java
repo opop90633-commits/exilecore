@@ -215,7 +215,8 @@ public final class SponsorConfig {
     }
 
     /** 動作的種類（type: emote 的 emote: 要寫這些）。 */
-    public static final java.util.Set<String> EMOTES = java.util.Set.of("sidestep", "kick_ball", "bear_shake", "head_bob", "king_sit", "love_you", "six_seven");
+    public static final java.util.Set<String> EMOTES = java.util.Set.of("sidestep", "kick_ball", "bear_shake", "head_bob", "king_sit", "love_you", "six_seven",
+            "hollow_purple", "world_slash"); // 2026-10-24：虛式「茈」、被「世界斬」腰斬
 
     /** 幻化的種類。 */
     public static final java.util.Set<String> SKIN_SLOTS = java.util.Set.of("weapon", "bow", "crossbow", "offhand", "armor",
@@ -474,7 +475,7 @@ public final class SponsorConfig {
             if (type.equals("emote")) {
                 emote = node.requireString("emote").trim().toLowerCase(Locale.ROOT);
                 if (!EMOTES.contains(emote)) {
-                    throw new IllegalArgumentException(node.path() + ".emote：要寫 sidestep（閃身步）、kick_ball（踢球）、bear_shake（抖毛）、head_bob（搖頭晃腦）、king_sit（王之坐姿）、love_you（我真的特別愛你）或 six_seven（67）");
+                    throw new IllegalArgumentException(node.path() + ".emote：要寫 sidestep（閃身步）、kick_ball（踢球）、bear_shake（抖毛）、head_bob（搖頭晃腦）、king_sit（王之坐姿）、love_you（我真的特別愛你）、six_seven（67）、hollow_purple（虛式「茈」）或 world_slash（被「世界斬」腰斬）");
                 }
             } else if (!skin && !type.equals("particle")) {
                 throw new IllegalArgumentException(node.path() + ".type：要寫 particle（粒子特效）、skin（裝備幻化）或 emote（動作）");

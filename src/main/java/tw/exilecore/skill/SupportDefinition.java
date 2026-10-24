@@ -503,6 +503,22 @@ public record SupportDefinition(String id, String name, String description, Stri
         return false;
     }
 
+    /** 2026-10-24：恆星、倍星這種「技能消耗戰星時才有用」的輔助。 */
+    public boolean needsChargeSpend() {
+        return has(tw.exilecore.charge.ChargeService.SUP_KEEP) || has(tw.exilecore.charge.ChargeService.SUP_DOUBLE);
+    }
+
+    /** 2026-10-24：掛上去會讓技能消耗戰星的輔助（狂速、綿咒、碎地、蔓寒）。 */
+    public boolean spendsCharges() {
+        return has(tw.exilecore.charge.ChargeService.SUP_FEROCITY) || has(tw.exilecore.charge.ChargeService.SUP_ABIDING_HEX)
+                || has(tw.exilecore.charge.ChargeService.SUP_JAGGED) || has(tw.exilecore.charge.ChargeService.SUP_CREEPING);
+    }
+
+    /** 2026-10-24：這個技能本身會消耗戰星（不看掛的輔助）。 */
+    public static boolean consumesAny(final SkillDefinition skill) {
+        return consumes(skill, "power") || consumes(skill, "frenzy") || consumes(skill, "endurance");
+    }
+
     /** 2026-10-24：戰星輔助的限制（照 PoE2）；可以掛回傳 null。 */
     private String chargeRefusal(final SkillDefinition skill) {
         if (has(tw.exilecore.charge.ChargeService.SUP_INHIBIT) && REQUIRES_CHARGES.contains(skill.id())) {

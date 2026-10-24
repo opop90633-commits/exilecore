@@ -108,16 +108,7 @@ final class ChatListener implements Listener {
     /** 送給在線、沒開這個過濾的人；always 不管設定一定送（自己的死亡訊息），skip 不送（剛下線的人）。 */
     private void deliver(final net.kyori.adventure.text.Component message, final String filter, final org.bukkit.entity.Player always,
                          final org.bukkit.entity.Player skip) {
-        chat.plugin().getServer().getConsoleSender().sendMessage(message);
-        for (final org.bukkit.entity.Player viewer : chat.plugin().getServer().getOnlinePlayers()) {
-            if (viewer.equals(skip)) {
-                continue;
-            }
-            if (!viewer.equals(always) && tw.exilecore.character.PlayerSettings.on(chat.plugin().players().find(viewer.getUniqueId()).orElse(null), filter)) {
-                continue;
-            }
-            viewer.sendMessage(message);
-        }
+        JoinMessages.deliver(chat.plugin(), message, filter, always, skip);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
