@@ -199,7 +199,7 @@ class ChargeTest {
             }
         }
         assertTrue(found >= 9, "三種球各有機率、擊中時、上限的詞綴");
-        assertEquals(3, onHit, "擊中時獲得（2026-10）：怒星、銳星、磐星三條詞綴（原本兩件「擊中時獲得怒星」的傳奇已退役刪除）");
+        assertEquals(4, onHit, "擊中時獲得（2026-10）：怒星、銳星、磐星三條詞綴（原本兩件「擊中時獲得怒星」的傳奇已退役刪除）＋赤芒導衣（2026-10-24）");
     }
 
     @Test
@@ -264,8 +264,9 @@ class ChargeTest {
         assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆銳星。",
                 placeholders.support("charge_power").descriptionText(), "沒有每顆效果就只換名字");
         assertEquals(List.of(), placeholders.chargeProblems(types::containsKey));
-        assertEquals(1, placeholders.chargeProblems(id -> !id.equals("power")).stream().filter(line -> line.contains("說明寫了 {charge:power}")).count(),
-                "說明裡打錯字也會被抓出來");
+        assertEquals(1, placeholders.chargeProblems(id -> !id.equals("power")).stream()
+                        .filter(line -> line.contains("charge_power") && line.contains("說明寫了 {charge:power}")).count(),
+                "說明裡打錯字也會被抓出來（2026-10-24：戰星輔助的說明本來就用 {charge:power}，只看改的那一顆）");
     }
 
     @Test
@@ -293,7 +294,7 @@ class ChargeTest {
         assertEquals(0, skills.skill("flicker_strike").cooldown(), 1e-9);
         assertEquals("frenzy", skills.skill("frost_snap").cooldownBypass(), "霜綻冷卻中消耗怒星（2026-10）");
         assertEquals(1, bypass);
-        assertEquals(2, warcry, "聚星戰吼拿掉了（2026-10），只剩隱藏的磐星、怒星（proc_gain_frenzy）各給一種");
+        assertEquals(3, warcry, "聚星戰吼拿掉了（2026-10），只剩隱藏的磐星、怒星、銳星（2026-10-24：引雷棍）各給一種");
         for (final tw.exilecore.skill.SupportDefinition support : skills.supports()) {
             for (final Modifier modifier : support.modifiers()) {
                 final String charge = ChargeText.chargeOf(modifier.stat());

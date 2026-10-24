@@ -46,7 +46,7 @@ class SkillConfigTest {
     void shippedSkillsLoad() {
         // 2026-10 PoE2 改版：技能大改（250 個看得到的技能），這裡抽各種武器、運作方式的代表
         final List<String> visible = config.visible().stream().map(SkillDefinition::id).toList();
-        assertEquals(272 + 14 + 1 + 1, visible.size(), "2026-10-18：＋召歸令；＋七隻事件巔峰 Boss 各 2 顆專屬技能寶石；250 個 + 巔峰 Boss 的 6 個專屬技能寶石 + 2026-10 主要寶石 7 個（星咒圖騰、6 個引星）、星律、斬風旋、幻元擊、4 根法術圖騰、幻元箭 + 淵鯨的喚潮");
+        assertEquals(272 + 14 + 1 + 1 + 2, visible.size(), "2026-10-24：＋幻身、招架；2026-10-18：＋召歸令；＋七隻事件巔峰 Boss 各 2 顆專屬技能寶石；250 個 + 巔峰 Boss 的 6 個專屬技能寶石 + 2026-10 主要寶石 7 個（星咒圖騰、6 個引星）、星律、斬風旋、幻元擊、4 根法術圖騰、幻元箭 + 淵鯨的喚潮");
         assertTrue(visible.containsAll(List.of("leap_slam", "earthquake", "boneshatter", "ancestral_totem", "flicker_strike",
                 "caustic_arrow", "rain_of_arrows", "lightning_arrow", "ice_shot", "tornado_shot",
                 "explosive_bolt", "permafrost_bolts", "rapid_fire", "explosive_grenade", "gas_grenade",

@@ -66,6 +66,9 @@ class FlaskAffixTest {
         final Set<String> shared = Set.of(StatKeys.FLASK_LOCAL_CHARGES_GAINED, StatKeys.FLASK_LOCAL_CHARGES_USED, StatKeys.FLASK_LOCAL_MAX_CHARGES,
                 StatKeys.FLASK_LOCAL_CHARGE_ON_KILL, StatKeys.FLASK_LOCAL_CHARGES_PER_MINUTE); // 充能類：藥劑、護符都出（PoE2）
         for (final Affix affix : repository.affixes()) {
+            if (affix.id().startsWith(tw.exilecore.item.UniqueItem.AFFIX_PREFIX)) {
+                continue; // 2026-10-24：傳奇護符自己的詞綴（只出在那件傳奇上，不會隨機出）
+            }
             final boolean flaskStat = affix.mods().stream().anyMatch(mod -> mod.stat().startsWith("flask.local.") && !shared.contains(mod.stat()));
             final boolean charmStat = affix.mods().stream().anyMatch(mod -> mod.stat().startsWith("charm.local."));
             final boolean sharedStat = affix.mods().stream().anyMatch(mod -> shared.contains(mod.stat()));

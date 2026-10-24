@@ -67,9 +67,9 @@ class SupportAndGemTest {
         }
         assertEquals(3, config.retiredSupportTier("multistrike"));
         assertEquals(2, config.retiredSupportTier("melee_physical"));
-        assertEquals(81, config.supportsUpTo(1).size());
-        assertEquals(248, config.supportsUpTo(2).size()); // 2026-10：＋怒嘯
-        assertEquals(278, config.supportsUpTo(3).size(), "專屬掉落的 13 顆切不出來");
+        assertEquals(84, config.supportsUpTo(1).size()); // 2026-10-24：＋恆星、蔓寒，磐震改第 1 階
+        assertEquals(255, config.supportsUpTo(2).size()); // 2026-10：＋怒嘯；2026-10-24：＋倍星、抑星、狂速、碎地、雷星
+        assertEquals(291, config.supportsUpTo(3).size(), "專屬掉落的 13 顆切不出來（2026-10-24：＋13 顆戰星輔助）");
         for (final SupportDefinition support : config.supports()) {
             assertFalse(support.name().isBlank(), support.id());
             assertFalse(support.modifiers().isEmpty(), support.id());

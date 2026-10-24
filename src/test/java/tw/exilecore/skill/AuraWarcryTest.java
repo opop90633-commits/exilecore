@@ -81,13 +81,13 @@ class AuraWarcryTest {
         final StatSheet owner = new StatSheet();
         // 攻擊型的四個（戰意昂揚、崩滅心咒、元素潮汐、磨蝕之志）2026-10 也改回只給自己（銀月庇 2026-10-15 改成戰吼）
         for (final String id : List.of("storm_staff", "battle_rage",
-                "combat_frenzy", "ruin_mantra", "elemental_conflux", "attrition")) {
+                "combat_frenzy", "ruin_mantra", "elemental_conflux", "attrition", "magma_barrier")) { // 2026-10-24：熔殼照 PoE2 只給自己
             final SkillBuild self = build(id, 20, owner);
             assertFalse(self.definition().aura().allies(), id);
             assertFalse(self.auraModifiers().isEmpty(), id + "：自己還是有效果");
             assertTrue(self.minionAuraModifiers().isEmpty(), id + "：只給自己的不給召喚物");
         }
-        for (final String id : List.of("wind_dancer", "magma_barrier", "time_of_need")) {
+        for (final String id : List.of("wind_dancer", "mana_remnants", "time_of_need")) {
             final SkillBuild shared = build(id, 20, owner);
             assertTrue(shared.definition().aura().allies(), id);
             assertEquals(shared.auraModifiers(), shared.minionAuraModifiers(), id + "：給隊友的光環，召喚物吃到一樣的效果");
