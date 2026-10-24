@@ -216,7 +216,9 @@ public record SupportDefinition(String id, String name, String description, Stri
         }
         // 2026-10：投射物的機制（多射幾發、穿透、分裂、連鎖、飛行速度…）只有真的射出投射物的技能才吃得到：
         // 落釘弩台是 impact 機制帶 projectile 標籤（定身用），遠程召喚物也只是畫一道彈道
-        if (projectileMechanics() && skill.mechanic() != Mechanic.PROJECTILE && skill.mechanic() != Mechanic.CHAIN) {
+        // 2026-10-24：從天上掉下來的彈（弩台這種延遲落下的投射物）吃投射物速度（落下更快）：只動速度的輔助（疾矢…）可以掛
+        if (projectileMechanics() && skill.mechanic() != Mechanic.PROJECTILE && skill.mechanic() != Mechanic.CHAIN
+                && !(onlyProjectileSpeed() && skill.mechanic() == Mechanic.IMPACT && SkillExecutor.fallsAsProjectile(skill))) {
             return "要真的射出投射物的技能";
         }
         return null;
@@ -316,6 +318,22 @@ public record SupportDefinition(String id, String name, String description, Stri
             }
         }
         return false;
+    }
+
+    /** 2026-10-24：動到的投射物機制只有速度（沒有數量、穿透、分裂、連鎖…）。 */
+    boolean onlyProjectileSpeed() {
+        boolean speed = false;
+        for (final Modifier modifier : modifiers) {
+            switch (modifier.stat()) {
+                case StatKeys.SKILL_PROJECTILE_SPEED -> speed = true;
+                case StatKeys.SKILL_PROJECTILES, StatKeys.SKILL_PIERCE, StatKeys.SKILL_FORK, StatKeys.SKILL_CHAINS,
+                     StatKeys.FLAG_PROJECTILE_NOVA, StatKeys.FLAG_RETURNING, StatKeys.SEAL_PROJECTILES -> {
+                    return false;
+                }
+                default -> { }
+            }
+        }
+        return speed;
     }
 
     /** 技能本身會不會蓄力（技能的修飾器有 channel.stages）。 */

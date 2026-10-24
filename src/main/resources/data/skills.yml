@@ -6188,7 +6188,7 @@ skills:
     icon: GUNPOWDER   # 2026-10：原本 DISPENSER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 9
-    tags: [attack, area, fire]
+    tags: [attack, area, projectile, fire]   # 2026-10-24：＋projectile（重彈是投射物，照 PoE2；投射物速度、疾矢讓它掉得更快）
     weapons: [crossbow]
     mechanic: impact
     impact: { range: 20, delay: 1.0, radius: [2.6, 3.2] }
