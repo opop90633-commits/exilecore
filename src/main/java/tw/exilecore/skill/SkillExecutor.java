@@ -723,11 +723,11 @@ final class SkillExecutor {
     }
 
     /** 每顆銳星多瞬移打幾下。 */
-    private static final int FLICKER_PER_CHARGE = 2;
+    static final int FLICKER_PER_CHARGE = 2;
     /** 連打的出手速度更多（2.85 = 285%）。 */
-    private static final double FLICKER_MORE_SPEED = 2.85;
+    static final double FLICKER_MORE_SPEED = 2.85;
     /** 保險：一次瞬影擊最多連打幾下（銳星上限再高也不會無限連）。 */
-    private static final int FLICKER_MAX_CHAIN = 40;
+    static final int FLICKER_MAX_CHAIN = 40;
 
     /**
      * 瞬影擊的連打：{@code paid} 是用掉的銳星還能打幾下；用完了、身上還有銳星就再用一顆（先確認有敵人可以打）。

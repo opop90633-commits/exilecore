@@ -203,8 +203,8 @@ public final class VendorMenu extends Menu {
             lore.add("");
             lore.add("<yellow>左鍵：賭一件");
             lore.add("<yellow>Shift＋左鍵：一直賭到背包上面三排滿（金幣不夠就停）");
-            final ItemStack icon = icon(material(base.iconMaterial(), Material.IRON_SWORD),
-                    (unique ? "<#af6025>★ " : "") + "<white>未鑑定的" + ItemRenderer.escape(base.name()), lore);
+            // 2026-10-24：跟掉落的裝備一樣在格子裡畫簡圖（Menu.baseIcon）
+            final ItemStack icon = baseIcon(base, (unique ? "<#af6025>★ " : "") + "<white>未鑑定的" + ItemRenderer.escape(base.name()), lore);
             set(i, unique ? highlight(icon) : icon); // 賭得到傳奇的：外框（沒資源包：發光）
         }
         final int lowest = service.lowestGambleUniqueLevel();

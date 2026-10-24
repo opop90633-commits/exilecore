@@ -406,7 +406,7 @@ public final class CodexMenu extends Menu {
                     final ItemBase chosen = plugin.items().repository().base(base);
                     set(SLOT_BACK, backButton("基底列表"));
                     if (chosen != null) {
-                        set(SLOT_INFO, glowing(icon(material(chosen.iconMaterial(), Material.IRON_SWORD), "<white>" + ItemRenderer.escape(chosen.name()),
+                        set(SLOT_INFO, glowing(baseIcon(chosen, "<white>" + ItemRenderer.escape(chosen.name()),
                                 "<gray>" + slotName(chosen.slot()) + "・" + tagText(chosen))));
                     }
                 }
@@ -916,7 +916,7 @@ public final class CodexMenu extends Menu {
             if (slot >= CONTENT_START && slot < CONTENT_END) {
                 targets.put(slot, each.id());
             }
-            stacks.add(icon(material(each.iconMaterial(), Material.IRON_SWORD), "<white>" + ItemRenderer.escape(each.name()),
+            stacks.add(baseIcon(each, "<white>" + ItemRenderer.escape(each.name()),
                     "<gray>" + slotName(each.slot()) + "・" + tagText(each),
                     "<#8888ff>前綴 " + prefixes + " 種<gray>・<#ffd27f>後綴 " + suffixes + " 種"
                             + (unveiled > 0 ? "<gray>・<#c48bff>揭露 " + unveiled + " 種" : ""),

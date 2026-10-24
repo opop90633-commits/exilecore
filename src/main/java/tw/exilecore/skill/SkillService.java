@@ -2108,12 +2108,21 @@ public final class SkillService {
             if (resolved.isDefault() || !seen.add(resolved.definition().id())) {
                 continue;
             }
-            final DpsRow row = dpsOf(state, sheet, fullSheet, full, view, slot, state.skills().bound(slot), resolved);
-            if (row != null) {
-                rows.add(row);
+            // 2026-10-24：一個技能算不出來只跳過那一格（以前整組丟例外，面板與網頁那個角色就完全沒有估計）
+            try {
+                final DpsRow row = dpsOf(state, sheet, fullSheet, full, view, slot, state.skills().bound(slot), resolved);
+                if (row != null) {
+                    rows.add(row);
+                }
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("估計技能 {} 的每秒傷害失敗（按鍵格 {}）", resolved.definition().id(), slot, e);
             }
         }
-        rows.addAll(metaRows(state, sheet, full, view, rows)); // 2026-10-17：主要寶石觸發的法術也算
+        try {
+            rows.addAll(metaRows(state, sheet, full, view, rows)); // 2026-10-17：主要寶石觸發的法術也算
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("估計主要寶石觸發的每秒傷害失敗", e);
+        }
         return rows;
     }
 
@@ -2279,14 +2288,19 @@ public final class SkillService {
         final double hitRate = hitsPerSecond(build.intervalTicks(sheet), build.cooldownTicks(), build.repeats())
                 * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
                         params.aftershock() == null ? 0 : params.aftershock().more());
-        double dps = expected.total() * critFactor * hitRate;
+        // 2026-10-24：補齊以前漏算的（實測比估計高 6～20 倍的來源）：雙詠的第二發、蓄力層（平常就會有的）
+        final double[] always = alwaysMultipliers(build, sheet);
+        final DamagePacket expectedScaled = new DamagePacket(expected).scale(always[1]);
+        final double rateScaled = hitRate * always[0];
+        double dps = expectedScaled.total() * critFactor * rateScaled;
         if (plugin.ailments() != null) {
             // 2026-10：面板以前只算擊中；點燃、流血、中毒的持續傷害與感電的增傷也算進去（對同等級一般怪物、站著不動）
-            dps = plugin.ailments().estimateDps(sheet, build.profile(), expected, critFactor, hitRate, state.level(), dps);
+            dps = plugin.ailments().estimateDps(sheet, build.profile(), expectedScaled, critFactor, rateScaled, state.level(), dps);
         }
         double fullDps = dps;
-        if (!full.isEmpty()) {
+        {
             // 全開：用疊上戰吼增益的屬性表重算一次（攻速、傷害都會變），再算敵人的抗性降低、受到的傷害增加、強化攻擊
+            // 2026-10-24：沒有戰吼也要走這段（投射物全中、灌注、銳星連打這些「全開」才算的乘區）
             final SkillBuild fullBuild = build(state, fullSheet, resolved);
             final tw.exilecore.stats.DamagePacket fullExpected = afterResist(
                     DamageCalculator.expectedOutgoing(fullSheet, fullBuild.profile()), full.resist());
@@ -2305,15 +2319,81 @@ public final class SkillService {
                     exert *= 1 + each[1] / 100.0 * Math.min(1, each[0] / attacksPerCycle);
                 }
             }
-            fullDps = fullExpected.total() * fullCritFactor * fullRate * exert;
+            // 2026-10-24：全開再加「打起來才有的」：投射物貼臉全中、灌注滿層、瞬影擊滿銳星連打
+            final double[] fullAlways = alwaysMultipliers(fullBuild, fullSheet);
+            final double[] fullOnly = fullOnlyMultipliers(fullBuild, fullSheet);
+            final double fullRateScaled = fullRate * fullAlways[0] * fullOnly[0];
+            final DamagePacket fullScaled = new tw.exilecore.stats.DamagePacket(fullExpected).scale(exert * fullAlways[1] * fullOnly[1]);
+            fullDps = fullScaled.total() * fullCritFactor * fullRateScaled;
             if (plugin.ailments() != null) {
-                fullDps = plugin.ailments().estimateDps(fullSheet, fullBuild.profile(), new tw.exilecore.stats.DamagePacket(fullExpected).scale(exert), fullCritFactor, fullRate,
+                fullDps = plugin.ailments().estimateDps(fullSheet, fullBuild.profile(), fullScaled, fullCritFactor, fullRateScaled,
                         state.level(), fullDps);
             }
             fullDps *= 1 + full.taken();
         }
         return new DpsRow(slot, position, definition.id(), definition.name(), dps, Math.max(dps, fullDps), 0,
-                expected.total() * critFactor, hitRate, crit, multi);
+                expectedScaled.total() * critFactor, rateScaled, crit, multi);
+    }
+
+    /**
+     * 估計時平常就會有、以前沒算的乘區（2026-10-24）：回傳 {每秒次數的倍率, 每一下傷害的倍率}。
+     * <ul>
+     *   <li>雙詠：法術自動再放一次（傷害已經在輔助裡少 25%）→ 次數 ×2。</li>
+     *   <li>持續引導的蓄力層（熾息）：按住放到滿層每層更多 x%，照滿層算。</li>
+     * </ul>
+     */
+    private static double[] alwaysMultipliers(final SkillBuild build, final StatSheet sheet) {
+        double rate = 1;
+        double damage = 1;
+        if (build.echo()) {
+            rate *= 2;
+        }
+        final StatSheet effective = build.profile().effective(sheet);
+        final int stages = (int) effective.flat(StatKeys.CHANNEL_STAGES, Set.of());
+        if (stages > 1) {
+            damage *= 1 + Math.max(0, effective.flat(StatKeys.CHANNEL_MORE, Set.of()) * (stages - 1) / 100.0);
+        }
+        return new double[] {rate, damage};
+    }
+
+    /**
+     * 只在「全開」算的乘區（2026-10-24，打起來才有的）：回傳 {每秒次數的倍率, 每一下傷害的倍率}。
+     * <ul>
+     *   <li>投射物好幾發：貼著敵人放全部打中（分光、星辰萬象）→ 次數 × 發數。</li>
+     *   <li>元素灌注：有「用掉灌注」的技能，照三種灌注都滿（每種各一層）算更多傷害與額外元素傷害。</li>
+     *   <li>瞬影擊類（flicker）：滿銳星時每顆多連打 2 下、速度更多 285%（SkillExecutor），一輪 = 本體一下＋連打，照一輪的時間平均。</li>
+     * </ul>
+     */
+    private double[] fullOnlyMultipliers(final SkillBuild build, final StatSheet sheet) {
+        double rate = 1;
+        double damage = 1;
+        final SkillDefinition definition = build.definition();
+        final StatSheet effective = build.profile().effective(sheet);
+        final Set<String> tags = build.profile().tags();
+        if (definition.mechanic() == Mechanic.PROJECTILE && build.projectiles() > 1 && !build.params().blink()) {
+            rate *= build.projectiles();
+        }
+        if (effective.flat(StatKeys.INFUSION_CONSUME, tags) > 0 && effective.flat(tw.exilecore.charge.ChargeService.SUP_INHIBIT, tags) <= 0) {
+            final int used = 3;
+            damage *= 1 + Math.max(0, effective.flat(StatKeys.INFUSION_MORE, tags) * used / 100.0);
+            damage *= 1 + Math.max(0, effective.flat(StatKeys.INFUSION_EXTRA, tags) * used / 100.0); // 額外元素傷害（沒算抗性）
+        }
+        if (definition.mechanic() == Mechanic.FLICKER && plugin.combat() != null && plugin.combat().charges() != null) {
+            int powerMax = 0;
+            for (final tw.exilecore.charge.ChargeType type : plugin.combat().charges().config().types()) {
+                if ("power".equals(type.id())) {
+                    powerMax = tw.exilecore.charge.ChargeService.maxOf(type, effective);
+                }
+            }
+            if (powerMax > 0) {
+                final double interval = build.intervalTicks(sheet);
+                final double cycle = Math.max(interval, build.cooldownTicks());
+                final int extra = Math.min(SkillExecutor.FLICKER_MAX_CHAIN, SkillExecutor.FLICKER_PER_CHARGE * powerMax);
+                final double step = Math.max(2, Math.round(interval / (1 + SkillExecutor.FLICKER_MORE_SPEED)));
+                rate *= (1 + extra) * cycle / (cycle + extra * step);
+            }
+        }
+        return new double[] {rate, damage};
     }
 
     /**

@@ -840,7 +840,7 @@ final class MapBosses {
             }
         }
         // 天穹碎片
-        if (config.drops().fragmentMaps().contains(instance.map().id())) {
+        if (config.drops().fragmentMaps().contains(instance.map().id()) && random.nextDouble() < config.fragmentChance()) { // 2026-10-24：不是必掉了
             final CurrencyType fragment = plugin.currencies().repository().get(config.drops().fragment());
             if (fragment != null) {
                 for (int i = bonus.amount(1, random); i > 0; i--) { // 2026-10：天穹碎片吃物品數量

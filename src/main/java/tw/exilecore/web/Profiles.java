@@ -360,14 +360,14 @@ public final class Profiles implements Listener {
                     }
                     dps.add(d);
                 }
-            } catch (final RuntimeException ignored) {
-                // 算不出來就不寫
+            } catch (final RuntimeException e) {
+                // 算不出來就不寫；2026-10-24：但要留 log（以前整組靜靜消失，統計頁上那個角色就沒有估計）
+                plugin.getSLF4JLogger().warn("算 {} 的技能每秒傷害失敗（統計頁這個角色沒有估計）", character.name(), e);
             }
         }
         root.add("dps", dps);
         // 2026-10：打訓練假人的實測（估計值沒算戰吼、怒氣、持續傷害，跟實際差很多）
-        final tw.exilecore.training.DummyRecord measured = tw.exilecore.training.DummyRecord.decode(
-                state.progress().get(tw.exilecore.training.DummyRecord.KEY));
+        final tw.exilecore.training.DummyRecord measured = plugin.training() == null ? null : plugin.training().record(state); // 2026-10-24：換過裝備的不算
         if (measured != null) {
             final JsonObject m = new JsonObject();
             m.addProperty("dps", measured.dps());

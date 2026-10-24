@@ -91,7 +91,32 @@ public final class TrainingService {
     /** 這個角色打假人的紀錄換成打 Boss 的每秒傷害（2026-10，終局、極境、巔峰的每秒傷害上限用；沒有紀錄 0）。 */
     public double bossDps(final org.bukkit.entity.Player player) {
         final tw.exilecore.character.PlayerState state = plugin.players().get(player);
-        return state == null ? 0 : config().bossDps(DummyRecord.decode(state.progress().get(DummyRecord.KEY)));
+        return state == null ? 0 : config().bossDps(record(state));
+    }
+
+    /**
+     * 這個角色現在算數的假人紀錄（2026-10-24）：換過裝備就作廢（紀錄附帶當時裝備欄 10 件的物品編號雜湊，跟現在的不一樣回傳 null）；
+     * 舊紀錄沒有雜湊的照舊算。/stats、網頁、Boss 傷害上限都走這裡。
+     */
+    public DummyRecord record(final tw.exilecore.character.PlayerState state) {
+        final DummyRecord record = DummyRecord.decode(state.progress().get(DummyRecord.KEY));
+        if (record == null) {
+            return null;
+        }
+        final String stamped = state.progress().get(DummyRecord.GEAR_KEY);
+        return stamped == null || stamped.isBlank() || stamped.equals(gearHash(state)) ? record : null;
+    }
+
+    /** 裝備欄 10 件（戒指、項鍊、腰帶、主副手、四件防具）的物品編號湊成的雜湊；沒裝的格子算空。 */
+    public String gearHash(final tw.exilecore.character.PlayerState state) {
+        final StringBuilder text = new StringBuilder();
+        for (int i = 0; i < tw.exilecore.character.PlayerState.JEWELLERY_SLOTS.length; i++) {
+            final org.bukkit.inventory.ItemStack stack = state.jewellery(i);
+            final String id = stack == null || stack.isEmpty() || plugin.items() == null ? ""
+                    : plugin.items().read(stack).map(tw.exilecore.item.ItemData::uuid).orElse(stack.getType().getKey().getKey());
+            text.append(id).append(';');
+        }
+        return Integer.toHexString(text.toString().hashCode());
     }
 
     /** 一筆假人紀錄換成打 Boss 的每秒傷害（2026-10-21，/ec bossdps 用；沒有紀錄 0）。 */
@@ -733,8 +758,9 @@ public final class TrainingService {
         }
         final DummyRecord fresh = new DummyRecord(Math.round(meter.dps()), meter.seconds(), session.name,
                 (int) Math.round(meter.dotTotal() * 100 / Math.max(1, meter.total())), System.currentTimeMillis());
-        if (fresh.dps() > 0 && fresh.replaces(DummyRecord.decode(state.progress().get(DummyRecord.KEY)))) {
+        if (fresh.dps() > 0 && fresh.replaces(record(state))) { // 2026-10-24：換過裝備的舊紀錄不算，直接換新的
             plugin.characters().setProgress(player, DummyRecord.KEY, fresh.encode());
+            plugin.characters().setProgress(player, DummyRecord.GEAR_KEY, gearHash(state));
         }
         // 2026-10：輸出紀錄（管理網頁）：每一段夠長的都記（角色頁只留最好的那筆）
         try {

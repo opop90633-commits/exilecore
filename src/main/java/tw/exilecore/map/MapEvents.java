@@ -906,6 +906,9 @@ final class MapEvents implements Listener {
             // 寶箱的招牌：星魄（保證詞綴的改造通貨）
             final int essences = box.minEssences() + (box.maxEssences() > box.minEssences() ? random.nextInt(box.maxEssences() - box.minEssences() + 1) : 0);
             for (int i = 0; i < essences; i++) {
+                if (random.nextDouble() >= config.essenceChance()) {
+                    continue; // 2026-10-24：每一顆照機率留下
+                }
                 final tw.exilecore.currency.CurrencyType essence = pickCurrency(tw.exilecore.currency.CurrencyOperation.ESSENCE, level, random);
                 if (essence != null) {
                     rolled.add(DropTable.Drop.currency(essence));

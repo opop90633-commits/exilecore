@@ -1720,7 +1720,8 @@ public final class UiPack {
      * 選取外框裡畫的是那張圖（外框的物品定義有對應的挑選），不是原版物品的樣子。
      */
     public static boolean isArtKey(final String key) {
-        return key != null && (key.startsWith(UniqueArt.KEY_PREFIX) || key.startsWith(CurrencyArt.KEY_PREFIX) || key.startsWith(BaseArt.KEY_PREFIX));
+        return key != null && (key.startsWith(UniqueArt.KEY_PREFIX) || key.startsWith(CurrencyArt.KEY_PREFIX) || key.startsWith(BaseArt.KEY_PREFIX)
+                || key.startsWith(tw.exilecore.item.PlainArt.KEY_PREFIX)); // 2026-10-24：簡圖的裝備選到時框裡也畫簡圖
     }
 
     /** 畫得出外框的原版物品有幾種（測試用）。 */
@@ -1917,6 +1918,10 @@ public final class UiPack {
             if (BaseArt.sprites().containsKey(skin.id())) {
                 cases.add(selectCase(BaseArt.modelKey(skin.id()), plain(BASE_TEX + skin.id())));
             }
+        }
+        // 2026-10-24：簡圖（普通、魔法、稀有裝備）：框裡畫簡圖（只有被某個基底用到的種類才有模型；沒用到的挑選不會被選到）
+        for (final String category : new TreeMap<>(tw.exilecore.item.PlainArt.sprites()).keySet()) {
+            cases.add(selectCase(tw.exilecore.item.PlainArt.modelKey(category), plain(PLAIN_TEX + category)));
         }
         final JsonArray models = new JsonArray();
         models.add(frame);

@@ -562,7 +562,16 @@ public final class StatsReport {
                 : dpsText + " <dark_gray>（未減免、含暴擊）");
         // 2026-10：技能欄上每個技能的每秒傷害（大家打怪都是用技能，不是普攻）
         if (plugin.skills() != null) {
-            for (final String[] row : plugin.skills().skillDps(player)) {
+            // 2026-10-24：一個技能算不出來不要拖垮整張面板（以前丟例外整個 build() 失敗，網頁就停在舊快照）
+            List<String[]> dpsRows;
+            try {
+                dpsRows = plugin.skills().skillDps(player);
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("算 {} 的技能每秒傷害失敗", player.getName(), e);
+                dpsRows = List.of();
+                lines.add("<red>✦ 技能每秒傷害算不出來（已記進伺服器 log）");
+            }
+            for (final String[] row : dpsRows) {
                 final long base = Long.parseLong(row[2]);
                 final long full = row.length > 3 ? Long.parseLong(row[3]) : base;
                 // 2026-10：戰吼、戰旗、詛咒、印記都開著的話（比平常多 5% 以上才顯示）
@@ -572,12 +581,12 @@ public final class StatsReport {
                         + "＋點燃、流血、中毒的持續傷害，再乘感電的增傷（照同等級一般怪物的門檻算機率與覆蓋率）<newline>"
                         + "<dark_gray>召喚技能：一隻召喚物的每秒傷害 × 同時最多幾隻<newline>"
                         + "<dark_gray>全開：技能欄上的戰吼、戰旗的增益都開著、強化攻擊照冷卻平均，詛咒、印記都掛在敵人身上<newline>"
-                        + "<dark_gray>沒算怪物的減免、曝露、怒氣與蓄力這些打起來才有的加成、打到幾個敵人<newline>"
+                        + "<dark_gray>平常也算雙詠的第二發、蓄力滿層；全開再算投射物貼臉全中、灌注滿層、瞬影擊滿銳星連打<newline>"
+                        + "<dark_gray>沒算怪物的減免、曝露、怒氣、對異常敵人更多這些打起來才有的加成、打到幾個敵人<newline>"
                         + "<dark_gray>實際輸出去營地打訓練假人最準") : text);
             }
             // 2026-10：打訓練假人的實測（估計值跟實際可以差很多）
-            final tw.exilecore.training.DummyRecord measured = tw.exilecore.training.DummyRecord.decode(
-                    state.progress().get(tw.exilecore.training.DummyRecord.KEY));
+            final tw.exilecore.training.DummyRecord measured = plugin.training() == null ? null : plugin.training().record(state); // 2026-10-24：換過裝備的不算
             if (measured != null) {
                 final String text = String.format(Locale.ROOT, "<gray>✦ 假人實測 每秒 <white>%,d <dark_gray>（%s・%.1f 秒%s）", measured.dps(),
                         escape(measured.dummy()), measured.seconds(),

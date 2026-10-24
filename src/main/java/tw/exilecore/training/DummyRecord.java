@@ -17,8 +17,10 @@ public record DummyRecord(long dps, double seconds, String dummy, int dotPercent
 
     /** 角色進度的鍵。 */
     public static final String KEY = "training.best";
+    /** 打這筆紀錄時身上裝備的雜湊（2026-10-24）：換過裝備（或借裝）這筆就作廢；舊紀錄沒有這個鍵的照舊顯示。 */
+    public static final String GEAR_KEY = "training.best.gear";
     /** 至少打這麼久才記（一兩下的爆發不算）。 */
-    static final double MIN_SECONDS = 4; // 2026-10：8 → 4 秒
+    public static final double MIN_SECONDS = 15; // 2026-10-24：4 → 15 秒（4 秒的爆發段把統計頁的實測衝到估計的幾十倍）
     /** 至少出手幾次才記。 */
     static final int MIN_ATTEMPTS = 4;
     /** 舊紀錄超過這麼久就直接換成新的（配裝、平衡都會變，太舊的最高紀錄沒有參考價值）。 */

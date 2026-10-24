@@ -77,6 +77,8 @@ strongbox:
   radius: 20                       # 打開時幾格內的人有份
   unique_chance: 0.01              # 有份的人各擲一次：掉寶箱的專屬傳奇
   ticket: { currency: ticket_strongbox, chance: 0.022 }    # 2026-10-18：入場券
+  # 2026-10-24（照市場報告：星魄每種每週 4 千、只用掉 1～5%）：下面 essences 擲出來的每一顆只有 40% 留下（約少 60%）
+  essence_chance: 0.4
   # 種類：weight 出現權重；rolls 像殺幾隻稀有怪那樣擲掉落表（quantity_bonus／rarity_bonus 是百分比）；
   # currency 另外掉幾個通貨（照掉落權重抽、等級夠的才會）；maps 另外掉幾張地圖（照開箱的人的星圖）；
   # essences 掉幾顆星魄（currencies.yml 裡 operation: ESSENCE 的，隨機一種；星魄是寶箱的招牌）
@@ -93,7 +95,7 @@ breach:
   wave: [3, 4]                     # 一波幾隻（照地圖的魔法群比例，有時整波是魔法怪）
   radius: [4, 14]                  # 邊緣從幾格長到幾格（怪從邊緣湧出）
   quantity_bonus: 50               # 裂隙怪的物品數量 +%
-  catalyst_chance: 0.03            # 2026-10-22：0.06 → 0.03（催化劑每種每週 2 千、只用掉 1～16%）。每隻裂隙怪死掉時掉一顆催化劑（currencies.yml 裡 operation: CATALYST 的，隨機一種）的機率
+  catalyst_chance: 0.012           # 2026-10-22：0.06 → 0.03（催化劑每種每週 2 千、只用掉 1～16%）；2026-10-24：0.03 → 0.012（還是只用掉 3～17%）。每隻裂隙怪死掉時掉一顆催化劑（currencies.yml 裡 operation: CATALYST 的，隨機一種）的機率
   unique_chance: 0.01              # 裂隙關上時 30 格內的人各擲一次：掉裂隙的專屬傳奇
   ticket: { currency: ticket_breach, chance: 0.044 }       # 2026-10-18：入場券
 

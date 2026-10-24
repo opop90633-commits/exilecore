@@ -86,7 +86,8 @@ drops:
   final_common_chance: 0.01      # 終局 Boss 另外擲一次共通傳奇（map_boss 池，中了抽一件）：1%（2026-10-16）；極境、巔峰寫在各自的 common_chance
   final_support_chance: 0.01     # 終局 Boss 自己的專屬輔助寶石（supports.yml 寫 source: 這個終局的代號）：每一顆各自 1%
   fragment: sky_fragment         # 天穹碎片（currencies.yml）
-  fragment_maps: [starfall_tundra, observatory]   # 這些地圖的 Boss 必掉一片
+  fragment_maps: [starfall_tundra, observatory]   # 這些地圖的 Boss 掉一片（機率見 fragment_chance）
+  fragment_chance: 0.5           # 2026-10-24：以前必掉；天穹碎片每週掉 2.4 萬、只用掉 25%
   fragment_cost: 2               # 開終局要幾片
   campaign_boss_zone: mountain   # 劇情最後一個區域的 Boss（霜角撼地獸）掉 T1 地圖（照你的星圖）
   campaign_boss_maps: 1
@@ -564,10 +565,10 @@ final:
       common_chance: 0.02   # 共通傳奇（map_boss 池）擲一次 2%
       exclusive_chance: 0.01   # 極境專屬傳奇（uniques.yml 的 uber_sky_crucible）：每一件各自 1%（2026-10-16）
       extra:
-        - { currency: sky_fragment, amount: 2, chance: 1 }
+        - { currency: sky_fragment, amount: 1, chance: 1 }   # 2026-10-24：2 → 1（開一次要 2 片、打完又必掉 2 片，終局等於免費一直開，碎片只進不出）
         - { currency: zenith_orb, amount: 5, chance: 1 }
         - { currency: oracle_orb, amount: 1, chance: 0.3 }
-        - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
+        - { currency: greater_socket_orb, amount: 1, chance: 0.1 }   # 2026-10-24：0.2 → 0.1（大鑿星石只用掉 27%）
         - { support: starfall_resonance, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
         - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
         - { support: myriad_stars, chance: 0.01 }
@@ -680,10 +681,10 @@ finals:
         common_chance: 0.02   # 共通傳奇（map_boss 池）擲一次 2%
         exclusive_chance: 0.01   # 極境專屬傳奇（uniques.yml 的 uber_frost_throne）：每一件各自 1%（2026-10-16）
         extra:
-          - { currency: sky_fragment, amount: 2, chance: 1 }
+          - { currency: sky_fragment, amount: 1, chance: 1 }   # 2026-10-24：2 → 1（開一次要 2 片、打完又必掉 2 片，終局等於免費一直開，碎片只進不出）
           - { currency: zenith_orb, amount: 5, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.3 }
-          - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
+          - { currency: greater_socket_orb, amount: 1, chance: 0.1 }   # 2026-10-24：0.2 → 0.1（大鑿星石只用掉 27%）
           - { support: permafrost_heart, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
           - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
           - { support: myriad_stars, chance: 0.01 }
@@ -791,10 +792,10 @@ finals:
         common_chance: 0.02   # 共通傳奇（map_boss 池）擲一次 2%
         exclusive_chance: 0.01   # 極境專屬傳奇（uniques.yml 的 uber_bone_throne）：每一件各自 1%（2026-10-16）
         extra:
-          - { currency: sky_fragment, amount: 2, chance: 1 }
+          - { currency: sky_fragment, amount: 1, chance: 1 }   # 2026-10-24：2 → 1（開一次要 2 片、打完又必掉 2 片，終局等於免費一直開，碎片只進不出）
           - { currency: zenith_orb, amount: 5, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.3 }
-          - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
+          - { currency: greater_socket_orb, amount: 1, chance: 0.1 }   # 2026-10-24：0.2 → 0.1（大鑿星石只用掉 27%）
           - { support: styx_ferry, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
           - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
           - { support: myriad_stars, chance: 0.01 }
@@ -902,10 +903,10 @@ finals:
         common_chance: 0.02   # 共通傳奇（map_boss 池）擲一次 2%
         exclusive_chance: 0.01   # 極境專屬傳奇（uniques.yml 的 uber_ember_citadel）：每一件各自 1%（2026-10-16）
         extra:
-          - { currency: sky_fragment, amount: 2, chance: 1 }
+          - { currency: sky_fragment, amount: 1, chance: 1 }   # 2026-10-24：2 → 1（開一次要 2 片、打完又必掉 2 片，終局等於免費一直開，碎片只進不出）
           - { currency: zenith_orb, amount: 5, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.3 }
-          - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
+          - { currency: greater_socket_orb, amount: 1, chance: 0.1 }   # 2026-10-24：0.2 → 0.1（大鑿星石只用掉 27%）
           - { support: skyburn_fury, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
           - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
           - { support: myriad_stars, chance: 0.01 }
@@ -1012,10 +1013,10 @@ finals:
         common_chance: 0.03      # 2026-10-16：共通傳奇（map_boss 池）擲一次 3%（沒寫的照 drops.final_common_chance）
         extra:
           - { currency: abyss_core, amount: 1, chance: 0.5 }
-          - { currency: sky_fragment, amount: 2, chance: 1 }
+          - { currency: sky_fragment, amount: 1, chance: 1 }   # 2026-10-24：2 → 1（開一次要 2 片、打完又必掉 2 片，終局等於免費一直開，碎片只進不出）
           - { currency: zenith_orb, amount: 4, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.2 }
-          - { currency: greater_socket_orb, amount: 1, chance: 0.2 }
+          - { currency: greater_socket_orb, amount: 1, chance: 0.1 }   # 2026-10-24：0.2 → 0.1（大鑿星石只用掉 27%）
           - { support: abyssal_touch, chance: 0.01 }       # 2026-10-16：輔助、技能寶石每顆各自 1%
           - { support: myriad_stars, chance: 0.01 }
           # 虛星專屬的輔助寶石（supports.yml 的 source: awakener；8 顆各 1%，一次大約 8% 至少掉一顆）
@@ -1115,7 +1116,7 @@ finals:
         exclusive_chance: 0
         common_chance: 0.02
         extra:
-          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
           - { support: dawn_blessing, chance: 0.01 }
@@ -1197,7 +1198,7 @@ finals:
         exclusive_chance: 0
         common_chance: 0.02
         extra:
-          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
           - { support: greed_lock, chance: 0.01 }
@@ -1279,7 +1280,7 @@ finals:
         exclusive_chance: 0
         common_chance: 0.02
         extra:
-          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
           - { support: rift_passage, chance: 0.01 }
@@ -1361,7 +1362,7 @@ finals:
         exclusive_chance: 0
         common_chance: 0.02
         extra:
-          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
           - { support: duelist_focus, chance: 0.01 }
@@ -1443,7 +1444,7 @@ finals:
         exclusive_chance: 0
         common_chance: 0.02
         extra:
-          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
           - { support: blood_tribute, chance: 0.01 }
@@ -1525,7 +1526,7 @@ finals:
         exclusive_chance: 0
         common_chance: 0.02
         extra:
-          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
           - { support: mirror_image, chance: 0.01 }
@@ -1607,7 +1608,7 @@ finals:
         exclusive_chance: 0
         common_chance: 0.02
         extra:
-          - { currency: sky_fragment, amount: 1, chance: 1 }
+          - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
           - { support: bone_tide, chance: 0.01 }

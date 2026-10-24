@@ -226,6 +226,8 @@ public final class MapEventConfig {
     private double breachQuantity = 50;
     /** 裂隙怪死掉時掉催化劑的機率。 */
     private double catalystChance = 0.06;
+    /** 寶箱的每一顆星魄留下來的機率（2026-10-24，map_events.yml 的 strongbox.essence_chance）。 */
+    private double essenceChance = 1;
     // 流寇
     private double exileLife = 4.0;
     private double exileDamage = 1.3;
@@ -364,6 +366,7 @@ public final class MapEventConfig {
         breachEnd = 14;
         breachQuantity = 50;
         catalystChance = 0.06;
+        essenceChance = 1;
         exileLife = 4.0;
         exileDamage = 1.3;
         exileMods = List.of("slammer", "charger", "swift");
@@ -426,6 +429,7 @@ public final class MapEventConfig {
         breachEnd = other.breachEnd;
         breachQuantity = other.breachQuantity;
         catalystChance = other.catalystChance;
+        essenceChance = other.essenceChance;
         exileLife = other.exileLife;
         exileDamage = other.exileDamage;
         exileMods = other.exileMods;
@@ -507,6 +511,7 @@ public final class MapEventConfig {
             maxAmbush = Math.min(30, Math.max(range[0], range[1]));
         }
         boxRadius = clamp(box.decimal("radius", boxRadius), 4, 64);
+        essenceChance = clamp(box.decimal("essence_chance", 1), 0, 1);
         uniqueChance.put(Kind.STRONGBOX, clamp(box.decimal("unique_chance", uniqueChance.get(Kind.STRONGBOX)), 0, 1));
         if (box.has("kinds")) {
             boxes.clear();
@@ -904,6 +909,10 @@ public final class MapEventConfig {
 
     public double catalystChance() {
         return catalystChance;
+    }
+
+    public double essenceChance() {
+        return essenceChance;
     }
 
     public int minOmens() {

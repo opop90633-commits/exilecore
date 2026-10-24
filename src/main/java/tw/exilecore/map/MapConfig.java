@@ -199,6 +199,8 @@ public final class MapConfig {
     /** 追逐級傳奇：一般怪物（不是 Boss）每隻、以及僥倖石每次使用的機率（2026-10：0.0001%，約 100 萬隻一件）。 */
     public static final double DEFAULT_CHASE_MOB_CHANCE = 0.000001;
     private double chaseMobChance = DEFAULT_CHASE_MOB_CHANCE;
+    /** 天穹碎片地圖（fragment_maps）的 Boss 掉碎片的機率（2026-10-24，maps.yml 的 drops.fragment_chance；以前是必掉）。 */
+    private double fragmentChance = 1;
     /** 映星鏡（2026-10）：地圖 Boss 每次擊殺、一般怪物每隻的機率（以前跟追逐級傳奇一樣；改成追逐級的十分之一）。 */
     public static final double DEFAULT_MIRROR_CHANCE = 0.000034;
     public static final double DEFAULT_MIRROR_MOB_CHANCE = 0.0000001;
@@ -232,6 +234,10 @@ public final class MapConfig {
     /** 追逐級傳奇：一般怪物每隻的掉落機率＝僥倖石每次賭到的機率（maps.yml 的 drops.chase_mob_chance）。 */
     public double chaseMobChance() {
         return chaseMobChance;
+    }
+
+    public double fragmentChance() {
+        return fragmentChance;
     }
     /** 終局的怪物等級比選的那一階高幾級（maps.yml 的 final.level_bonus）。 */
     public static final int DEFAULT_FINAL_LEVEL_BONUS = 3;
@@ -550,6 +556,7 @@ public final class MapConfig {
             throw e;
         }
         chaseMobChance = fresh.chaseMobChance;
+        fragmentChance = fresh.fragmentChance;
         mirrorChance = fresh.mirrorChance;
         resonanceChance = fresh.resonanceChance; // 2026-10-18
         resonanceMobChance = fresh.resonanceMobChance;
@@ -649,6 +656,7 @@ public final class MapConfig {
                 clamp01(d.decimal("final_common_chance", 0.01)), clamp01(d.decimal("final_support_chance", 0.01)));
 
         chaseMobChance = clamp01(d.decimal("chase_mob_chance", DEFAULT_CHASE_MOB_CHANCE));
+        fragmentChance = clamp01(d.decimal("fragment_chance", 1));
         tw.exilecore.item.ItemGenerator.setChaseChance(chaseMobChance); // 僥倖石賭追逐級也照這個機率
         mirrorChance = clamp01(d.decimal("mirror_chance", DEFAULT_MIRROR_CHANCE));
         tw.exilecore.item.ItemGenerator.setMirrorChance(clamp01(d.decimal("mirror_mob_chance", DEFAULT_MIRROR_MOB_CHANCE)));

@@ -59,6 +59,13 @@ public final class PlainArt {
                 return "amulet_" + kind;
             }
         }
+        // 2026-10-24：腰帶照固定詞綴換扣環（生命、護盾、藥劑回復是小藥瓶、護甲鉚釘、施法、力量、閃電、暈眩大扣環）
+        if ("belt".equals(category)) {
+            final String kind = beltKind(base);
+            if (kind != null && sprites().containsKey("belt_" + kind)) {
+                return "belt_" + kind;
+            }
+        }
         // 2026-10-24：箭袋照固定詞綴換箭羽顏色
         if ("quiver".equals(category)) {
             final String kind = quiverKind(base);
@@ -167,6 +174,31 @@ public final class PlainArt {
             return "spirit";
         }
         return stats.contains("drop.rarity") ? "rarity" : null;
+    }
+
+    /** 腰帶固定詞綴的種類：life、es、flask_life、flask_mana、armour、cast、str、lightning、stun；都不是回傳 null。 */
+    static String beltKind(final ItemBase base) {
+        if (base.implicit() == null) {
+            return null;
+        }
+        for (final AffixMod mod : base.implicit().mods()) {
+            final String kind = switch (mod.stat()) {
+                case "life.max" -> "life";
+                case "es.max" -> "es";
+                case "flask.life_recovery" -> "flask_life";
+                case "flask.mana_recovery" -> "flask_mana";
+                case "armour" -> "armour";
+                case "cast.speed" -> "cast";
+                case "attr.str" -> "str";
+                case "damage.added.min", "damage.added.max" -> mod.tags().contains("lightning") ? "lightning" : null;
+                case "stun.threshold" -> "stun";
+                default -> null;
+            };
+            if (kind != null) {
+                return kind;
+            }
+        }
+        return null;
     }
 
     /** 箭袋固定詞綴的種類：phys、fire、crit、speed、pierce、life、poison、bleed、accuracy、stun、projspeed；都不是回傳 null。 */

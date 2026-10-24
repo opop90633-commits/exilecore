@@ -262,7 +262,7 @@
     }
     function measuredCell(c, estimate) {
       const m = c.measured;
-      if (!m || !Number(m.dps)) return el("td", { cls: "num muted", text: "—", title: "還沒打過訓練假人（要打滿 8 秒才記）" });
+      if (!m || !Number(m.dps)) return el("td", { cls: "num muted", text: "—", title: "還沒打過訓練假人（要打滿 15 秒才記；換過裝備舊紀錄就作廢）" });
       const times = estimate > 0 ? Number(m.dps) / estimate : 0;
       const td = el("td", { cls: "num", text: Number(m.dps).toLocaleString() + (times ? "　×" + (times >= 10 ? Math.round(times) : times.toFixed(1)) : "") });
       td.title = m.dummy + "・" + Number(m.seconds).toFixed(1) + " 秒" + (Number(m.dot) > 0 ? "・持續傷害佔 " + m.dot + "%" : "")
@@ -298,7 +298,7 @@
       const rows = meta.characters.filter(c => c.level >= metaFilter.min && (!metaFilter.cls || c.classId === metaFilter.cls));
       const total = rows.length;
       // DPS 排行
-      // 2026-10：假人實測（打訓練假人至少 8 秒、三天內最高的一段）跟估計值並排；點欄位標題換排序
+      // 2026-10：假人實測（打訓練假人至少 15 秒、最高的一段，換裝作廢；三天後較低的新紀錄也能取代）跟估計值並排；點欄位標題換排序
       const real = c => (c.measured && Number(c.measured.dps)) || 0;
       const byReal = metaFilter.sort === "measured";
       const ranked = rows.map(c => ({ c, b: best(c) || (real(c) ? { name: "", dps: 0, main: "" } : null) })).filter(x => x.b)
@@ -316,7 +316,7 @@
       });
       if (!ranked.length) dpsBody.append(el("tr", null, el("td", { cls: "muted", text: "還沒有資料（角色在線時每 5 分鐘記一次）" })));
       const dpsCard = el("div", { cls: "card meta" }, el("h3", { text: "估計每秒傷害排行（自己放的技能取最高的一個＋召喚物全部加總）" }),
-        el("p", { cls: "muted", style: "margin:0 0 8px", text: "估計值跟 /stats 的「✦ 技能 每秒」同一套算法：平均一下 × 暴擊期望 × 每秒次數（含連射的每一波與餘震）；召喚技能算「一隻召喚物 × 同時最多幾隻」。自己放的技能一次只能放一個，所以只取最高的；召喚物是同時在打的，全部加上去。估計值含點燃、流血、中毒與感電（對同等級一般怪物）；「全開」再加上技能欄上的戰吼、戰旗、詛咒、印記都開著。沒算怪物的護甲抗性、曝露、怒氣與蓄力這些打起來才有的加成——「假人實測」是這個角色三天內打訓練假人（至少 8 秒）最高的一段，後面的倍數是實測 ÷ 全開。點「每秒傷害」或「假人實測」換排序。" }),
+        el("p", { cls: "muted", style: "margin:0 0 8px", text: "估計值跟 /stats 的「✦ 技能 每秒」同一套算法：平均一下 × 暴擊期望 × 每秒次數（含連射的每一波與餘震）；召喚技能算「一隻召喚物 × 同時最多幾隻」。自己放的技能一次只能放一個，所以只取最高的；召喚物是同時在打的，全部加上去。估計值含點燃、流血、中毒與感電（對同等級一般怪物）、雙詠的第二發、蓄力滿層；「全開」再加上技能欄上的戰吼、戰旗、詛咒、印記都開著、投射物貼臉全中、灌注滿層、瞬影擊滿銳星連打。沒算怪物的護甲抗性、曝露、怒氣、對異常敵人更多這些打起來才有的加成——「假人實測」是這個角色打訓練假人（至少 15 秒）最高的一段，換過裝備就作廢，三天後較低的新紀錄也會取代舊的；後面的倍數是實測 ÷ 全開。點「每秒傷害」或「假人實測」換排序。" }),
         el("div", { cls: "scroll" }, el("table", null, el("thead", null, el("tr", null, el("th", { cls: "num", text: "#" }), el("th", { text: "角色" }),
           el("th", { text: "職業" }), el("th", { cls: "num", text: "等級" }), sortHead("每秒傷害", "estimate"), el("th", { cls: "num", text: "全開", title: "技能欄上的戰吼、戰旗增益都開著、強化攻擊照冷卻平均，詛咒、印記都掛在敵人身上" }), sortHead("假人實測", "measured"), el("th", { text: "技能" }))), dpsBody)));
       const mainSkill = new Map();

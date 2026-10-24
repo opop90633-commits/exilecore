@@ -58,13 +58,14 @@ filter:
 
 # 地圖、珠寶不看裝備的稀有度設定（就算隱藏了普通、魔法裝備），只看過濾器裡自己那一格（依稀有度）。
 # 被過濾掉的東西換成多少金幣：同等級怪物平均掉的金幣（drops.yml 的 gold.amount）× 倍率，至少 1
+# 2026-10-24（照市場報告：過濾換金幣一週 9.4 億、佔金幣產出 14%）：全部減半（原本 0.15/0.3/0.8/3.0、300、0.6、0.6、0.3）
 gold_value:
-  equipment: { normal: 0.15, magic: 0.3, rare: 0.8, unique: 3.0 }
+  equipment: { normal: 0.075, magic: 0.15, rare: 0.4, unique: 1.5 }
   # 通貨的倍率 = currency ÷ 通貨的掉落權重（越少見越值錢），夾在 0.05 到 5 之間
-  currency: 300
-  skill_gem: 0.6
-  support_gem: 0.6
-  flask: 0.3
+  currency: 150
+  skill_gem: 0.3
+  support_gem: 0.3
+  flask: 0.15
 
 # 自動撿到這些東西時列在畫面右邊側欄的「最近撿到」（8 秒後收起來，不洗聊天欄）並播音效
 notable:

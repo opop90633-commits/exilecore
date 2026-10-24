@@ -210,6 +210,24 @@ public abstract class Menu implements InventoryHolder {
     }
 
     /** 帶發光的圖示（裝飾、按鈕、開關用；要讓人一眼看出「選到的是哪個」用 {@link #highlight}）。 */
+    /**
+     * 基底的圖示（2026-10-24）：用它的原版物品做，有簡圖的種類（普通、魔法、稀有裝備那張）就掛上 custom_model_data 的
+     * {@code plain:種類}，跟掉落的裝備在格子裡長得一樣（圖鑑、商人賭博、拆解台…；沒套資源包的看到原版）。
+     */
+    public static ItemStack baseIcon(final tw.exilecore.item.ItemBase base, final String name, final List<String> lore) {
+        final ItemStack stack = icon(material(base.iconMaterial(), Material.IRON_SWORD), name, lore);
+        final String category = tw.exilecore.item.PlainArt.category(base);
+        if (category != null) {
+            stack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelData.customModelData()
+                    .addString(tw.exilecore.item.PlainArt.modelKey(category)).build());
+        }
+        return stack;
+    }
+
+    public static ItemStack baseIcon(final tw.exilecore.item.ItemBase base, final String name, final String... lore) {
+        return baseIcon(base, name, java.util.Arrays.asList(lore));
+    }
+
     public static ItemStack glowing(final ItemStack stack) {
         stack.editMeta(meta -> meta.setEnchantmentGlintOverride(true));
         return stack;

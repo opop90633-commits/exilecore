@@ -145,11 +145,45 @@ def amulet():
 
 
 def belt():
+    return belt_of('w', 'm', 'a', 'plain')
+
+
+def belt_of(strap, buckle, gem, shape):
+    """腰帶照固定詞綴換樣子（2026-10-24）：gem 一般扣環、扣環上的寶石換色；flask 扣環換成一個小藥瓶；
+    plate 金屬帶身加鉚釘（護甲）；heavy 大扣環（暈眩門檻）。"""
     c = Canvas()
-    c.rect(1, 6, 14, 9, 'w')
-    c.rect(6, 5, 9, 10, 'm')
-    c.rect(7, 7, 8, 8, 'a')
+    c.rect(1, 6, 14, 9, strap)
+    if shape == 'flask':
+        c.rect(7, 3, 8, 4, 'm')          # 瓶口
+        c.rect(6, 5, 9, 11, gem)         # 瓶身
+        c.rect(7, 6, 8, 6, 'm')
+    elif shape == 'plate':
+        c.rect(6, 5, 9, 10, buckle)
+        c.rect(7, 7, 8, 8, gem)
+        for x in (2, 4, 11, 13):          # 鉚釘
+            c.dot(x, 7, gem)
+            c.dot(x, 8, gem)
+    elif shape == 'heavy':
+        c.rect(1, 5, 14, 10, strap)      # 加寬的帶身
+        c.rect(4, 3, 11, 12, buckle)
+        c.rect(7, 6, 8, 9, gem)          # 扣針
+    elif shape == 'plain':
+        c.rect(6, 5, 9, 10, buckle)
+        c.rect(7, 7, 8, 8, gem)
+    else:
+        # 2026-10-24 第二版：整個扣環都是詞綴的顏色（大一點），中間一根金屬扣針
+        c.rect(5, 4, 10, 11, gem)
+        c.rect(7, 6, 8, 9, buckle)
     return c
+
+
+# 腰帶照固定詞綴（2026-10-24）：生命粉紅寶石、能量護盾藍寶石、藥劑生命／魔力回復是小藥瓶（粉紅／青）、護甲是金屬帶身加銅鉚釘、
+# 施法速度淡紫白、力量紅、閃電黃、暈眩門檻是金色大扣環
+BELT_VARIANTS = {
+    'life': ('w', 'm', 'l', 'gem'), 'es': ('w', 'm', 'u', 'gem'), 'flask_life': ('w', 'm', 'l', 'flask'), 'flask_mana': ('w', 'm', 'a', 'flask'),
+    'armour': ('m', 'm', 'c', 'plate'), 'cast': ('w', 'm', 'x', 'gem'), 'str': ('w', 'm', 'r', 'gem'), 'lightning': ('w', 'm', 'z', 'gem'),
+    'stun': ('w', 'H', 'm', 'heavy'),
+}
 
 
 def helmet():
@@ -510,13 +544,25 @@ ICONS = {
     'bow': bow, 'crossbow': crossbow, 'wand': wand, 'staff': staff,
     'shield': shield, 'buckler': buckler, 'focus': focus, 'quiver': quiver,
 }
+def split(c, main, trim):
+    """雙屬性的防具（2026-10-24 第二版）：整件照第一個屬性畫，右半邊換成第二個屬性的顏色，左右各半一眼就看得出是雙屬性。"""
+    if main != trim:
+        for y in range(N):
+            for x in range(8, N):
+                if c.px[y][x] == main:
+                    c.px[y][x] = trim
+    return c
+
+
 for _family, (_shape, _main, _trim) in FAMILIES.items():
-    ICONS['helmet_' + _family] = (lambda s=_shape, m=_main, t=_trim: helmet_of(s, m, t))
-    ICONS['body_' + _family] = (lambda s=_shape, m=_main, t=_trim: body_of(s, m, t))
-    ICONS['leggings_' + _family] = (lambda s=_shape, m=_main, t=_trim: leggings_of(s, m, t))
-    ICONS['boots_' + _family] = (lambda s=_shape, m=_main, t=_trim: boots_of(s, m, t))
+    ICONS['helmet_' + _family] = (lambda s=_shape, m=_main, t=_trim: split(helmet_of(s, m, m), m, t))
+    ICONS['body_' + _family] = (lambda s=_shape, m=_main, t=_trim: split(body_of(s, m, m), m, t))
+    ICONS['leggings_' + _family] = (lambda s=_shape, m=_main, t=_trim: split(leggings_of(s, m, m), m, t))
+    ICONS['boots_' + _family] = (lambda s=_shape, m=_main, t=_trim: split(boots_of(s, m, m), m, t))
 for _variant, _mat in QUIVER_VARIANTS.items():
     ICONS['quiver_' + _variant] = (lambda m=_mat: quiver_of(m))
+for _variant, (_strap, _buckle, _gem, _shape) in BELT_VARIANTS.items():
+    ICONS['belt_' + _variant] = (lambda s=_strap, b=_buckle, g=_gem, sh=_shape: belt_of(s, b, g, sh))
 for _variant, (_shape, _mats) in AMULET_VARIANTS.items():
     ICONS['amulet_' + _variant] = (lambda sh=_shape, ms=_mats: amulet_of(sh, ms))
 for _variant, _mat in RING_OTHERS.items():
@@ -525,7 +571,7 @@ for _variant, _elements in RING_VARIANTS.items():
     ICONS['ring_' + _variant] = (lambda e=_elements: ring_of(e))
 for _family in ('str', 'str_dex', 'str_int'):
     _main, _trim = FAMILIES[_family][1], FAMILIES[_family][2]
-    ICONS['shield_' + _family] = (lambda m=_main, t=_trim: shield_of(m, t))
+    ICONS['shield_' + _family] = (lambda m=_main, t=_trim: split(shield_of(m, m), m, t))
 
 
 def palette():

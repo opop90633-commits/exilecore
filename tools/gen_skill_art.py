@@ -1286,6 +1286,7 @@ SUPPORT_CATEGORIES = {
     'sustain':    ('續航', 'life', 'heart'),
     'speed':      ('速度與時間', 'cold', 'hourglass'),
     'damage':     ('通用強化', 'physical', 'plus'),
+    'charge':     ('星（充能）', 'holy', 'orbs'),   # 2026-10-24：跟星有關的輔助（聚星、恆星、倍星、抑星…）
 }
 
 
@@ -1542,6 +1543,16 @@ BOSS_SKILLS = {
 }
 SKILLS.update(BOSS_SKILLS)
 
+# 2026-10-24：招架（舉盾擋下一擊：盾牌＋擋下的火花）、幻身（翻滾留下的幻影：淡色的人影＋殘影）
+SKILLS['parry'] = A('physical',
+    lambda i: i.poly([(4, 3), (11, 3), (11, 9), (7.5, 13), (4, 9)], STEEL[1]),
+    lambda i: (i.line(4, 3, 11, 3, STEEL[2]), i.line(7, 4, 7, 11, STEEL[0]), i.line(8, 4, 8, 11, STEEL[2])),
+    lambda i: burst(i, 12, 4, 1.2, 3.2, 6, 3))
+SKILLS['lingering_illusion'] = A('wind',
+    lambda i: (i.disc(5, 4.5, 1.7, 1), i.poly([(3.5, 7), (6.5, 7), (6.5, 11), (3.5, 11)], 1), i.line(4, 11, 4, 13, 1), i.line(6, 11, 6, 13, 1)),
+    lambda i: (i.disc(10, 4.5, 1.7, 3), i.poly([(8.5, 7), (11.5, 7), (11.5, 11), (8.5, 11)], 3), i.line(9, 11, 9, 13, 3), i.line(11, 11, 11, 13, 3)),
+    lambda i: [i.px(x, y, 2) for x, y in ((13, 3), (14, 6), (13, 9), (14, 12))])
+
 # 2026-10-18：召歸令（召喚物回到身邊）：中間一個骷髏、四周往內的箭頭
 SKILLS['minion_recall'] = A('minion', lambda i: skull(i, 5, 4), lambda i: [arrow(i, 1, 1, 4, 4), arrow(i, 14, 1, 11, 4), arrow(i, 1, 14, 4, 11), arrow(i, 14, 14, 11, 11)])
 
@@ -1554,6 +1565,8 @@ def support_category(sup):
 
     def has(*keys):
         return any(k in stats for k in keys)
+    if has('charge.'):
+        return 'charge'
     if 'minion' in req or 'totem' in req or 'minion' in tags or has('skill.minions', 'skill.totems', 'flag.spell_totem', 'flag.trap', 'totem.'):
         return 'minion'
     if any(r in req for r in ('aura', 'warcry', 'herald')) or has('aura.', 'support.spirit', 'warcry.'):
@@ -1617,6 +1630,11 @@ def draw_category(i, kind):
         i.line(3, 2, 12, 2, 3); i.line(3, 13, 12, 13, 3)
         i.poly([(4, 3), (11, 3), (7.5, 7.5)], L); i.poly([(7.5, 7.5), (11, 12), (4, 12)], D)
         i.line(7, 8, 7, 11, 3); i.line(8, 8, 8, 11, 3)
+    elif kind == 'orbs':
+        # 三顆星（充能球）：銳星、怒星、磐星排成三角
+        for cx, cy in ((7.5, 4.5), (4, 10.5), (11, 10.5)):
+            i.ball(cx, cy, 2.3, 0, 1, 2, 3)
+        i.px(7.5, 7.5, 3)
     elif kind == 'plus':
         for d in (-1, 0, 1):
             i.line(7.5 + d, 3, 7.5 + d, 12, L); i.line(3, 7.5 + d, 12, 7.5 + d, L)
