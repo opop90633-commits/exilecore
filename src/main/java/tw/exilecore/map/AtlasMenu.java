@@ -59,6 +59,17 @@ public final class AtlasMenu extends Menu {
     public AtlasMenu(final ExileCore plugin, final Player player, final MapService service) {
         super(plugin, player, 6, "<#f5b942>星圖");
         this.service = service;
+        // 2026-10-24：打開時視窗中心放在上一次打完的地圖格（沒有就是營地）
+        final long[] last = lastCell(AtlasProgress.LAST_MAP_KEY);
+        if (last != null) {
+            centerQ = (int) last[0];
+            centerR = (int) last[1];
+        }
+    }
+
+    /** 2026-10-24：記住的格子（上一次打完的地圖、最近開過的塔）；沒有回傳 null。 */
+    private long[] lastCell(final String key) {
+        return AtlasProgress.decodeOne(plugin.players().get(player).progress().get(key));
     }
 
     // ---- 座標（偏移座標 ↔ 軸座標：奇數列往右半格）----
@@ -105,7 +116,7 @@ public final class AtlasMenu extends Menu {
                 set(slot, pack ? packTile(plain, atlas, grid, unlocked, chosen, q, row) : plain);
             }
         }
-        set(SLOT_DEVICE, icon(Material.LODESTONE, "<#9fd3ff>地圖裝置", "<gray>在營地：地圖裝置 NPC 右鍵開地圖", "<dark_gray>（/town 回營地）"));
+        set(SLOT_DEVICE, lastButton()); // 2026-10-24：回到上次打完的地圖／最近的塔（以前是只有說明的地圖裝置）
         set(SLOT_UP, uiIcon("arrow_up", Material.ARROW, "<white>↑ 往上", "<gray>捲 " + SCROLL + " 格（Shift 一格）")); // 2026-10-21：資源包的箭頭圖示
         set(SLOT_DOWN, uiIcon("arrow_down", Material.ARROW, "<white>↓ 往下", "<gray>捲 " + SCROLL + " 格（Shift 一格）")); // 2026-10-21：資源包的箭頭圖示
         set(SLOT_LEFT, uiIcon("arrow_left", Material.ARROW, "<white>← 往左", "<gray>捲 " + SCROLL + " 格（Shift 一格）")); // 2026-10-21：資源包的箭頭圖示
@@ -115,6 +126,56 @@ public final class AtlasMenu extends Menu {
         set(SLOT_TREE, treeButton(player, service));
         set(SLOT_INFO, info(atlas, chosen));
         set(SLOT_CLOSE, closeButton());
+    }
+
+    /** 2026-10-24：回到上次的位置：左鍵上一次打完的地圖格、右鍵最近開過的塔。 */
+    private ItemStack lastButton() {
+        final long[] map = lastCell(AtlasProgress.LAST_MAP_KEY);
+        final long[] tower = lastCell(AtlasProgress.LAST_TOWER_KEY);
+        final List<String> lore = new ArrayList<>();
+        lore.add(map == null ? "<dark_gray>左鍵：上一次打完的地圖（還沒有紀錄）"
+                : "<yellow>左鍵：回到上一次打完的地圖 <white>" + where((int) map[0], (int) map[1]));
+        lore.add(tower == null ? "<dark_gray>右鍵：最近開過的塔（還沒有紀錄）"
+                : "<yellow>右鍵：回到最近開過的塔 <white>" + where((int) tower[0], (int) tower[1]));
+        lore.add("");
+        lore.add("<dark_gray>開圖：營地的地圖裝置 NPC 右鍵（/town 回營地）");
+        return icon(Material.RECOVERY_COMPASS, "<#9fd3ff>📍 回到上次的位置", lore);
+    }
+
+    /** 2026-10-24：塔的範圍（完成的與看得到還沒打的塔）：0 不在、1 在範圍內、2 被插了石板的塔罩到。 */
+    private int towerCoverage(final AtlasProgress atlas, final int q, final int r) {
+        final int radius = service.atlasConfig().tower().radius() + service.atlasBonus(player).count("atlas.tower.radius");
+        int best = 0;
+        final List<AtlasGrid.Cell> towers = new ArrayList<>(atlas.completedTowers());
+        towers.addAll(atlas.openTowers());
+        for (final AtlasGrid.Cell tower : towers) {
+            if ((tower.q() != q || tower.r() != r) && AtlasGrid.distance(tower.q(), tower.r(), q, r) <= radius) {
+                if (atlas.isCompleted(tower.q(), tower.r()) && service.tabletAt(player, tower.q(), tower.r()) != null) {
+                    return 2;
+                }
+                best = 1;
+            }
+        }
+        return best;
+    }
+
+    /** 2026-10-24：罩到這格、還沒插石板的塔（說明用）。 */
+    private List<String> towerRangeLines(final AtlasProgress atlas, final int q, final int r) {
+        final List<String> lines = new ArrayList<>();
+        final int radius = service.atlasConfig().tower().radius() + service.atlasBonus(player).count("atlas.tower.radius");
+        final List<AtlasGrid.Cell> towers = new ArrayList<>(atlas.completedTowers());
+        towers.addAll(atlas.openTowers());
+        for (final AtlasGrid.Cell tower : towers) {
+            if (AtlasGrid.distance(tower.q(), tower.r(), q, r) > radius) {
+                continue;
+            }
+            final boolean done = atlas.isCompleted(tower.q(), tower.r());
+            if (done && service.tabletAt(player, tower.q(), tower.r()) != null) {
+                continue; // 有石板的另外列（tabletLines）
+            }
+            lines.add("<#a89870>⬢ 在塔「" + where(tower.q(), tower.r()) + "」的範圍內<dark_gray>（" + (done ? "插一片先驅石板就會罩到這格" : "塔還沒打完") + "）");
+        }
+        return lines;
     }
 
     /** 2026-10-22：罩到這格的每片石板一行：「⬢ 神龕石板：…（塔 (q, r)，還能用 2 次）」。 */
@@ -132,17 +193,6 @@ public final class AtlasMenu extends Menu {
             }
         }
         return lines;
-    }
-
-    /** 2026-10-22：這格有沒有被石板罩到（資源包的格子畫一圈石板色）。 */
-    private boolean tabletCovered(final AtlasProgress atlas, final int q, final int r) {
-        final int radius = service.atlasConfig().tower().radius() + service.atlasBonus(player).count("atlas.tower.radius");
-        for (final AtlasGrid.Cell tower : atlas.completedTowers()) {
-            if (AtlasGrid.distance(tower.q(), tower.r(), q, r) <= radius && service.tabletAt(player, tower.q(), tower.r()) != null) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private AtlasGrid.Cell chosenCell(final AtlasProgress atlas) {
@@ -184,7 +234,9 @@ public final class AtlasMenu extends Menu {
         switch (cell.kind()) {
             case TOWER -> {
                 lore.add("<gray>塔：爬到頂、守 3 波；完成後解鎖周圍 " + grid.config().unlock().onTower() + " 格、天賦點 +" + grid.config().tower().points());
-                lore.add("<gray>完成後可以插一片先驅石板，加成罩到周圍 " + grid.config().tower().radius() + " 格的地圖");
+                lore.add("<gray>完成後可以插一片先驅石板，加成罩到周圍 " + (grid.config().tower().radius()
+                        + service.atlasBonus(player).count("atlas.tower.radius")) + " 格的地圖");
+                lore.add("<#a89870>範圍內的格子在星圖上有一圈淡褐色（插了石板的更亮）"); // 2026-10-24
                 lore.add(where);
                 lore.add("");
                 lore.add(done ? "<#f5b942>✔ 已完成" : "<green>從地圖裝置的「塔與城塞」開（不用地圖物品）");
@@ -229,6 +281,7 @@ public final class AtlasMenu extends Menu {
                 }
                 // 2026-10-22：罩到這格的先驅石板（以前完全看不出哪些格子被石板罩到）
                 final List<String> tablets = tabletLines(atlas, q, r);
+                lore.addAll(towerRangeLines(atlas, q, r)); // 2026-10-24：在哪座塔的範圍內（還沒插石板的也寫）
                 if (!tablets.isEmpty()) {
                     lore.addAll(tablets);
                     if (done) {
@@ -280,6 +333,8 @@ public final class AtlasMenu extends Menu {
     private static final Color CYAN = Color.fromRGB(0x55FFFF);
     /** 2026-10-22：被先驅石板罩到的格子（跟腐化區同一個圈，換成石板的淡褐色）。 */
     private static final Color TABLET = Color.fromRGB(0xD8C8A0);
+    /** 2026-10-24：塔的範圍內（還沒插石板）：比石板暗的褐色。 */
+    private static final Color TOWER_RANGE = Color.fromRGB(0x7A6A48);
 
     /**
      * 有資源包的人看到的格子：同一個物品模型，用 custom_model_data 決定畫哪幾層（背景星空、往鄰居的連線、六角形、光暈、腐化圈、外框）。
@@ -354,10 +409,13 @@ public final class AtlasMenu extends Menu {
                 } else if (!fogFinal && cell.purified()) {
                     strings.set(UiPack.AtlasCell.STRING_CORRUPT, "corrupt"); // 2026-10-21：淨化區用同一個圈、換顏色
                     colors.set(UiPack.AtlasCell.COLOR_CORRUPT, PURIFY);
-                } else if (!fogFinal && !done && cell.kind() != AtlasGrid.Kind.TOWER && cell.kind() != AtlasGrid.Kind.CITADEL
-                        && tabletCovered(atlas, q, r)) {
-                    strings.set(UiPack.AtlasCell.STRING_CORRUPT, "corrupt"); // 2026-10-22：石板罩到的格子：同一個圈、石板色（沒完成的才畫）
-                    colors.set(UiPack.AtlasCell.COLOR_CORRUPT, TABLET);
+                } else if (!fogFinal && cell.isMap()) {
+                    // 2026-10-22：石板罩到的格子：同一個圈、石板色；2026-10-24：塔的範圍內（還沒插石板、塔還沒打）也畫，顏色暗一點
+                    final int coverage = towerCoverage(atlas, q, r);
+                    if (coverage > 0) {
+                        strings.set(UiPack.AtlasCell.STRING_CORRUPT, "corrupt");
+                        colors.set(UiPack.AtlasCell.COLOR_CORRUPT, coverage == 2 ? TABLET : TOWER_RANGE);
+                    }
                 }
                 if (isChosen) {
                     strings.set(UiPack.AtlasCell.STRING_RING, "ring");
@@ -434,6 +492,18 @@ public final class AtlasMenu extends Menu {
         switch (slot) {
             case SLOT_CLOSE -> goBack();
             case SLOT_TREE -> new AtlasTreeMenu(plugin, player, service).open();
+            case SLOT_DEVICE -> {
+                // 2026-10-24：左鍵上一次打完的地圖、右鍵最近開過的塔
+                final long[] at = lastCell(click.isRightClick() ? AtlasProgress.LAST_TOWER_KEY : AtlasProgress.LAST_MAP_KEY);
+                if (at == null) {
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>" + (click.isRightClick() ? "還沒開過塔" : "還沒有打完地圖的紀錄")));
+                    return;
+                }
+                centerQ = (int) at[0];
+                centerR = (int) at[1];
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.5f);
+                redraw();
+            }
             case SLOT_UP -> scroll(0, -1, click);
             case SLOT_DOWN -> scroll(0, 1, click);
             case SLOT_LEFT -> scroll(-1, 0, click);

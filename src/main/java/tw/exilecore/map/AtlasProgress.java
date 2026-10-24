@@ -24,6 +24,10 @@ public final class AtlasProgress {
     public static final String CELLS_KEY = "atlascells";
     /** 角色進度：下次開圖要用的格子（q:r）；沒有就自動選。 */
     public static final String CHOSEN_KEY = "atlaschosen";
+    /** 2026-10-24：角色進度：上一次打完的地圖格（q:r；重刷的也算），星圖「回到上次的位置」用。 */
+    public static final String LAST_MAP_KEY = "atlaslastmap";
+    /** 2026-10-24：角色進度：最近開過的塔（q:r）。 */
+    public static final String LAST_TOWER_KEY = "atlaslasttower";
     /** 角色進度：攻破的城塞（終局代號；之後那個終局用碎片開）。前綴後面接終局代號。 */
     public static final String CITADEL_PREFIX = "citadel.";
     /** 一個進度欄位最多幾個字（資料庫 VARCHAR(4096)），留一點餘裕。 */

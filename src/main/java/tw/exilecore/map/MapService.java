@@ -638,6 +638,7 @@ public final class MapService {
             return lastSpecialProblem == null ? "塔開不起來" : lastSpecialProblem;
         }
         plugin.characters().setProgress(player, tries, String.valueOf(used + 1));
+        plugin.characters().setProgress(player, AtlasProgress.LAST_TOWER_KEY, AtlasProgress.encodeOne(tower.q(), tower.r())); // 2026-10-24：最近開過的塔
         opened.setAtlasCell(tower);
         if (used > 0) {
             player.sendMessage(plugin.text().parse("<gray>  重開的塔：只剩塔守那一間（第 " + (used + 1) + "／" + TOWER_TRIES + " 次）"));
@@ -3192,6 +3193,10 @@ public final class MapService {
             // 2026-10-21 漏洞修正：隊友要對 Boss 打到傷害才完成自己的格子（以前分身站在旁邊就能一直推星圖）
             final AtlasGrid.Cell mine = player.getUniqueId().equals(instance.owner()) ? instance.atlasCell()
                     : contributed ? atlasProgress(player).defaultCell(map.id()) : null;
+            if (mine != null && mine.isMap()) {
+                // 2026-10-24：記住上一次打完的地圖格（重刷完成過的也記），星圖可以一鍵回到這裡
+                plugin.characters().setProgress(player, AtlasProgress.LAST_MAP_KEY, AtlasProgress.encodeOne(mine.q(), mine.r()));
+            }
             if (mine != null && !atlasProgress(player).isCompleted(mine.q(), mine.r())) {
                 completeCell(player, mine);
             }
