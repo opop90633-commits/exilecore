@@ -171,6 +171,11 @@ class AscendancyConfigTest {
         assertEquals(List.of("+6% 所有元素抗性"), StatLines.describeAll(config.legacy().get("sorceress").getLast().stats()),
                 "元素法師接了原本混沌術士的元素抗性");
         assertEquals(List.of("+12% 混沌抗性"), StatLines.describeAll(config.legacy().get("witch").getLast().stats()));
+        // 2026-10-24：德魯伊改成每秒回復最大生命的 %（以前「增加 5% 生命回復」被寫成「每秒回復 0.1 生命」）
+        assertEquals(List.of("每秒回復 0.25% 最大生命"), StatLines.describeAll(config.legacy().get("druid").getFirst().stats()));
+        assertEquals(List.of("每秒回復 0.75% 最大生命"), StatLines.describeAll(config.legacy().get("druid").getLast().stats()));
+        assertEquals("增加 5% 每秒生命回復", StatLines.describe(new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.LIFE_REGEN,
+                tw.exilecore.stats.ModType.INCREASED, 0.05, java.util.Set.of(), "test")));
         // 原本混沌術士的兩個昇華職業跟著元素法術給了元素法師，混沌術士是新的；2026-10 兩邊各多一個
         assertEquals(List.of("starfire", "voidrobe", "sandsage"), config.forClass("sorceress").stream().map(AscendancyConfig.Ascendancy::id).toList());
         assertEquals(List.of("blightcaller", "bloodmage", "lich"), config.forClass("witch").stream().map(AscendancyConfig.Ascendancy::id).toList());

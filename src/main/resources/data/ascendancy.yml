@@ -2633,7 +2633,7 @@ legacy:
     60: [ { stat: resist.chaos, value: 4 } ]
     75: [ { stat: resist.chaos, value: 8 } ]
     90: [ { stat: resist.chaos, value: 12 } ]
-  druid:
-    60: [ { stat: life.regen, type: INCREASED, value: 5 } ]
-    75: [ { stat: life.regen, type: INCREASED, value: 10 } ]
-    90: [ { stat: life.regen, type: INCREASED, value: 15 } ]
+  druid:   # 2026-10-24：以前是「生命回復增加 5／10／15%」（只放大固定的每秒回復，大部分人等於沒有），改成每秒回復最大生命的 %
+    60: [ { stat: life.regen_percent, type: FLAT, value: 0.25 } ]
+    75: [ { stat: life.regen_percent, type: FLAT, value: 0.5 } ]
+    90: [ { stat: life.regen_percent, type: FLAT, value: 0.75 } ]

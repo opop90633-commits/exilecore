@@ -49,6 +49,7 @@ public final class StatLines {
         put(StatKeys.MANA_MAX, "最大魔力", ANY, false);
         put(StatKeys.ES_MAX, "最大能量護盾", ANY, false);
         put(StatKeys.LIFE_REGEN, "每秒生命回復", FLAT_OR_INCREASED, false);
+        put(StatKeys.LIFE_REGEN_PERCENT, "每秒回復最大生命", FLAT, false); // 2026-10-24：德魯伊的分身獎勵
         put(StatKeys.MANA_REGEN, "魔力回復", FLAT_OR_INCREASED, false);
         put(StatKeys.ARMOUR, "護甲", ANY, false);
         put(StatKeys.EVASION, "閃避", ANY, false);
@@ -408,7 +409,9 @@ public final class StatLines {
         }
         final String name = entry == null ? stat : entry.name();
         return switch (stat) {
-            case StatKeys.LIFE_REGEN -> "每秒回復 " + number(value) + " 生命";
+            // 2026-10-24：「增加 x%」的生命回復以前也寫成「每秒回復 x 生命」（0.05 顯示成 0.1）
+            case StatKeys.LIFE_REGEN -> modifier.type() == ModType.FLAT ? "每秒回復 " + number(value) + " 生命" : scaled(modifier, name);
+            case StatKeys.LIFE_REGEN_PERCENT -> "每秒回復 " + fine(value) + "% 最大生命";
             case StatKeys.MANA_REGEN -> modifier.type() == ModType.FLAT ? "每秒回復 " + number(value) + " 魔力" : scaled(modifier, name);
             case StatKeys.BLOCK_CHANCE, StatKeys.RESIST_FIRE, StatKeys.RESIST_COLD, StatKeys.RESIST_LIGHTNING, StatKeys.RESIST_CHAOS ->
                     signed(value) + "% " + name;
@@ -570,6 +573,13 @@ public final class StatLines {
     /** fire／cold／lightning／chaos → 火焰／冰冷／閃電／混沌（其他回傳 null）。 */
     private static String elementWord(final String type) {
         return GAINS.get(type);
+    }
+
+    /** 小數到兩位（0.25% 這種，number 只到一位會變成 0.3）。 */
+    static String fine(final double value) {
+        final double rounded = Math.round(value * 100) / 100.0;
+        return rounded == Math.rint(rounded) ? Long.toString(Math.round(rounded))
+                : String.format(Locale.ROOT, "%.2f", rounded).replaceAll("0+$", "");
     }
 
     static String number(final double value) {
