@@ -310,6 +310,10 @@ public final class ZoneService {
             if (!id.equals(previous)) {
                 onEnter(player, zone);
             }
+            final tw.exilecore.world.TownChannels townChannels = channels();
+            if (townChannels != null) {
+                townChannels.enforceLevel(player); // 2026-10-24：70 級以下不能待在第 2 線起
+            }
             if (zone != null && zone.town()) {
                 final tw.exilecore.world.TownChannels channels = channels();
                 if (channels != null) {

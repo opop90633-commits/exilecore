@@ -568,6 +568,36 @@ public final class TownChannels implements Listener {
         });
     }
 
+    /** 正在被送回第 1 線的人（傳送是非同步的，等它做完前不要重送）。 */
+    private final java.util.Set<java.util.UUID> evicting = new java.util.HashSet<>();
+
+    /**
+     * 2026-10-24：沒到等級門檻（world.yml 的 high_level，70）的角色人在第 2 線起 → 強制送回第 1 線（同一個座標；營地外的送到出生點）。
+     * 每 10 tick 由區域模組呼叫：不管是怎麼進來的（組隊傳送、/tp、舊紀錄）都會被送走。管理員、創造、旁觀、還沒選角色的不動。
+     */
+    public void enforceLevel(final Player player) {
+        if (!isChannel(player.getWorld()) || !lockedToFirst(player) || evicting.contains(player.getUniqueId())
+                || player.getGameMode() == org.bukkit.GameMode.CREATIVE || player.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
+            return;
+        }
+        final tw.exilecore.character.PlayerState state = plugin.players().find(player.getUniqueId()).orElse(null);
+        if (state == null || !state.hasCharacter()) {
+            return; // 角色還沒載入（選角色中）：等級還不知道，不要誤送
+        }
+        final World first = towns.getFirst();
+        final Location target = inCampBox(player.getLocation()) ? mapTo(player.getLocation(), first) : first.getSpawnLocation();
+        final int threshold = plugin.world() == null ? 0 : plugin.world().lore().campaignHighLevel();
+        evicting.add(player.getUniqueId());
+        player.setFallDistance(0);
+        tw.exilecore.core.Teleports.async(player, target).whenComplete((done, error) -> {
+            evicting.remove(player.getUniqueId());
+            if (Boolean.TRUE.equals(done)) {
+                remember(player, first);
+                player.sendMessage(plugin.text().prefixed("<yellow>第 2 線起是給 " + threshold + " 級以上的角色用的，送你回營地第 <white>1</white> 線"));
+            }
+        });
+    }
+
     /** 記住的線（1 起算）；沒記過回傳 0。 */
     public int remembered(final Player player) {
         final Integer value = player.getPersistentDataContainer().get(channelKey, PersistentDataType.INTEGER);

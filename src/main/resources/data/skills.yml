@@ -3922,20 +3922,20 @@ skills:
 
   parry:                   # Parry
     name: 招架
-    description: 把盾舉起來準備擋下一擊（1 秒內，移動變慢）。擋下的那一擊一定格擋，攻擊你的敵人「被招架」2 秒（受到的攻擊傷害增加 50%），你揮盾橫掃身邊的敵人。回槍躍打中被招架的敵人會用掉它。要在副手裝盾。
+    description: 把盾舉起來準備擋下一擊（0.5 秒內，移動變慢，要抓時機）。擋下的那一擊一定格擋，攻擊你的敵人「被招架」2 秒（受到的攻擊傷害增加 50%），你揮盾橫掃身邊的敵人。回槍躍打中被招架的敵人會用掉它。Boss 的全場大招擋不了。要在副手裝盾。
     icon: IRON_NUGGET
     type: spell
     tier: 1
     tags: [duration]
     mechanic: guard
     guard:
-      duration: 1
+      duration: 0.5              # 2026-10-24：縮短成抓時機（原 1 秒）
       slow: 50                 # PoE2：動作中移動速度 -50%
       effects:
         - { stat: flag.parry, type: FLAT, value: 1 }
         - { stat: stun.threshold, type: INCREASED, value: -40 }   # PoE2：動作中暈眩門檻 -40%
     cast_time: 0.2
-    cooldown: 1
+    cooldown: 2               # 2026-10-24：原 1 秒，幾乎能一直舉著
     mana: 0
     visual: aura_armour
 

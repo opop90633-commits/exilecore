@@ -19,6 +19,9 @@ import java.util.random.RandomGenerator;
  */
 public final class DamageCalculator {
 
+    /** 帶這個標籤的擊中不能被格擋或招架（= DodgeRoll.UNDODGEABLE_TAG，Boss 全場大招）。 */
+    static final String UNBLOCKABLE_TAG = "undodgeable";
+
     /** 法術沒有武器時的基礎暴擊率（百分比點數）。 */
     public static final double BASE_SPELL_CRIT = 5.0;
     /** 混沌傷害打在能量護盾上的倍率（PoE2：2 倍）。 */
@@ -71,10 +74,12 @@ public final class DamageCalculator {
             }
         }
         double blockedScale = 1.0;
-        if (skill.isAttack() && StatKeys.flag(defender, StatKeys.FLAG_PARRY)) {
+        // 2026-10-24：Boss 全場大招（翻滾躲不掉、要躲安全區）也不能招架或格擋
+        final boolean blockable = skill.isAttack() && !skill.tags().contains(UNBLOCKABLE_TAG);
+        if (blockable && StatKeys.flag(defender, StatKeys.FLAG_PARRY)) {
             return HitResult.block(); // 2026-10-24（招架，PoE2 Parry）：舉盾中的那一擊一定擋下（不吃格擋上限、龜殼護符）
         }
-        if (skill.isAttack()) {
+        if (blockable) {
             final double cap = StatKeys.BLOCK_CAP + Math.max(0, defender.flat(StatKeys.BLOCK_MAX, Set.of()));
             final double block = Math.min(cap, defender.get(StatKeys.BLOCK_CHANCE)) / 100.0; // 上限 50%（PoE2），昇華可以提高
             if (block > 0 && random.nextDouble() < block) {
