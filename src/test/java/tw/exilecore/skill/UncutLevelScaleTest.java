@@ -24,9 +24,10 @@ class UncutLevelScaleTest {
     @Test
     void shippedScaleOnlyTouchesTheTopLevels() {
         assertEquals(0.33, config.uncutLevelKeep(20), 1e-9);
-        assertEquals(0.33, config.uncutLevelKeep(19), 1e-9);
-        assertEquals(0.3, config.uncutLevelKeep(18), 1e-9); // 2026-10-18：18 級也只留三成
-        assertEquals(1.0, config.uncutLevelKeep(17), 1e-9);
+        assertEquals(0.165, config.uncutLevelKeep(19), 1e-9); // 2026-10-24：17～19 再減半
+        assertEquals(0.15, config.uncutLevelKeep(18), 1e-9);
+        assertEquals(0.5, config.uncutLevelKeep(17), 1e-9);
+        assertEquals(1.0, config.uncutLevelKeep(16), 1e-9);
         assertEquals(1.0, config.uncutLevelKeep(1), 1e-9);
     }
 
@@ -48,8 +49,8 @@ class UncutLevelScaleTest {
             }
         }
         assertTrue(kept20 > 6_200 && kept20 < 7_000, "20 級留下約三成三：" + kept20);
-        assertTrue(kept18 > 5_600 && kept18 < 6_400, "18 級留下約三成（2026-10-18）：" + kept18);
-        assertEquals(20_000, kept17, "17 級全部留下");
+        assertTrue(kept18 > 2_700 && kept18 < 3_300, "18 級留下約 15%（2026-10-24）：" + kept18);
+        assertTrue(kept17 > 9_500 && kept17 < 10_500, "17 級留下一半（2026-10-24）：" + kept17);
     }
 
     @Test
@@ -67,8 +68,8 @@ class UncutLevelScaleTest {
             }
         }
         assertTrue(counts[20] > 1_800 && counts[20] < 2_200, "20 級約 0.2 × 0.33 = 6.6%：" + counts[20]);
-        assertTrue(counts[19] > 3_700 && counts[19] < 4_300, "19 級約 0.4 × 0.33 = 13.2%：" + counts[19]);
-        assertTrue(counts[18] > 3_300 && counts[18] < 3_900, "18 級約 0.4 × 0.3 = 12%：" + counts[18]);
-        assertTrue(none > 19_900 && none < 21_000, "沒掉的約 68%：" + none);
+        assertTrue(counts[19] > 1_750 && counts[19] < 2_200, "19 級約 0.4 × 0.165 = 6.6%（2026-10-24）：" + counts[19]);
+        assertTrue(counts[18] > 1_600 && counts[18] < 2_000, "18 級約 0.4 × 0.15 = 6%（2026-10-24）：" + counts[18]);
+        assertTrue(none > 23_700 && none < 24_800, "沒掉的約 81%：" + none);
     }
 }

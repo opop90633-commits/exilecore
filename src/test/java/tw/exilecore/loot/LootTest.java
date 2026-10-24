@@ -397,13 +397,13 @@ class LootTest {
         assertEquals(4.0, drops.averageGold(1), 1e-9);
         assertEquals(14.0, drops.averageGold(10), 1e-9);
         final double gold = drops.averageGold(10);
-        assertEquals(2, config.goldValue(DropTable.Kind.EQUIPMENT, Rarity.NORMAL, 0, gold), "14 × 0.15");
-        assertEquals(4, config.goldValue(DropTable.Kind.EQUIPMENT, Rarity.MAGIC, 0, gold), "14 × 0.3");
-        assertEquals(3, config.goldValue(DropTable.Kind.CURRENCY, null, 1500, gold), "礪鋒石：14 × 300/1500");
-        assertEquals(4, config.goldValue(DropTable.Kind.CURRENCY, null, 1000, gold), "至臻石：14 × 300/1000");
+        assertEquals(1, config.goldValue(DropTable.Kind.EQUIPMENT, Rarity.NORMAL, 0, gold), "14 × 0.075（2026-10-24 全部減半）");
+        assertEquals(2, config.goldValue(DropTable.Kind.EQUIPMENT, Rarity.MAGIC, 0, gold), "14 × 0.15");
+        assertEquals(1, config.goldValue(DropTable.Kind.CURRENCY, null, 1500, gold), "礪鋒石：14 × 150/1500");
+        assertEquals(2, config.goldValue(DropTable.Kind.CURRENCY, null, 1000, gold), "至臻石：14 × 150/1000");
         assertEquals(70, config.goldValue(DropTable.Kind.CURRENCY, null, 15, gold), "天啟石：倍率上限 5");
         assertEquals(1, config.goldValue(DropTable.Kind.CURRENCY, null, 3000, 1.0), "至少 1");
-        assertEquals(4, config.goldValue(DropTable.Kind.FLASK, null, 0, gold), "14 × 0.3");
+        assertEquals(2, config.goldValue(DropTable.Kind.FLASK, null, 0, gold), "14 × 0.15");
     }
 
     @Test

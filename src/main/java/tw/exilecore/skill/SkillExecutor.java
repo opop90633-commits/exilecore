@@ -777,8 +777,24 @@ final class SkillExecutor {
         final LivingEntity aimed = targets.aimed(origin, build.range(), 1.0);
         final Location center = aimed != null ? aimed.getLocation() : targets.aimPoint(origin, build.range());
         zones.addImpact(origin.owner(), center, build.radius(), build.profile(), build.definition().visual(),
-                (int) Math.round(build.params().delay() * 20));
+                (int) Math.max(2, Math.round(build.params().delay() * 20 / fallSpeed(origin, build))));
         visuals.cast(build.definition().visual(), origin.eye());
+    }
+
+    /**
+     * 2026-10-24：從天上掉下來的彈（弩台、帶投射物標籤的延遲落下）：投射物速度越快掉得越快（落下的等待時間 ÷ 倍率，0.25～4 倍）。
+     * 其他延遲落下的（隕石這種不是投射物的）照原本的時間。
+     */
+    static boolean fallsAsProjectile(final SkillDefinition definition) {
+        return definition.tags().contains(tw.exilecore.stats.Tags.PROJECTILE) || definition.weapons().contains("crossbow");
+    }
+
+    private double fallSpeed(final Origin origin, final SkillBuild build) {
+        if (origin.owner() == null || !fallsAsProjectile(build.definition())) {
+            return 1.0;
+        }
+        final StatSheet effective = build.profile().effective(plugin.players().sheet(origin.owner()));
+        return Math.max(0.25, Math.min(4.0, effective.apply(StatKeys.SKILL_PROJECTILE_SPEED, 1.0, build.profile().tags())));
     }
 
     private void zone(final Origin origin, final SkillBuild build) {

@@ -2285,7 +2285,9 @@ public final class SkillService {
         // 2026-10：複擊的每一下都要花一次攻擊間隔（打完才能做別的），以前當成同一個間隔裡打完，面板高了好幾倍
         final SkillParams params = build.params();
         final double critFactor = 1 + crit * (multi / 100.0 - 1);
-        final double hitRate = hitsPerSecond(build.intervalTicks(sheet), build.cooldownTicks(), build.repeats())
+        // 2026-10-24：圖騰（弩台等）算圖騰自己射的（每根每秒幾次 × 同時幾根，吃攻速）；以前算成放圖騰的速度（被冷卻卡住），攻速、圖騰數都不會動
+        final double totemRate = totemFireRate(build, sheet);
+        final double hitRate = (totemRate > 0 ? totemRate * build.totems() : hitsPerSecond(build.intervalTicks(sheet), build.cooldownTicks(), build.repeats()))
                 * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
                         params.aftershock() == null ? 0 : params.aftershock().more());
         // 2026-10-24：補齊以前漏算的（實測比估計高 6～20 倍的來源）：雙詠的第二發、蓄力層（平常就會有的）
@@ -2308,7 +2310,9 @@ public final class SkillService {
             final double fullMulti = DamageCalculator.critMultiplier(fullBuild.profile().effective(fullSheet), fullBuild.profile().tags(), null) * 100;
             final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
             final SkillParams fullParams = fullBuild.params();
-            final double casts = hitsPerSecond(fullBuild.intervalTicks(fullSheet), fullBuild.cooldownTicks(), fullBuild.repeats());
+            final double fullTotemRate = totemFireRate(fullBuild, fullSheet); // 2026-10-24：同上
+            final double casts = fullTotemRate > 0 ? fullTotemRate * fullBuild.totems()
+                    : hitsPerSecond(fullBuild.intervalTicks(fullSheet), fullBuild.cooldownTicks(), fullBuild.repeats());
             final double fullRate = casts * castHits(fullParams.burst() == null ? 1 : fullParams.burst().count(), fullParams.aftershock() != null,
                     fullParams.aftershock() == null ? 0 : fullParams.aftershock().more());
             double exert = 1.0;
@@ -3102,7 +3106,7 @@ public final class SkillService {
         }
         lines.addAll(resourceLines(player, definition));
         if (build.deploy() != null) {
-            lines.addAll(deployLines(build, deployables.count(player.getUniqueId(), definition.id())));
+            lines.addAll(deployLines(build, sheet, deployables.count(player.getUniqueId(), definition.id())));
         }
         if (definition.summon() != null) {
             lines.addAll(summonLines(player, build, sheet, minions.count(player.getUniqueId(), definition.id())));
@@ -3711,8 +3715,25 @@ public final class SkillService {
         }
     }
 
+    /**
+     * 2026-10-24：一般圖騰（弩台等，圖騰自己放這個技能）每根每秒射幾次，跟 {@link SkillDeployables#totemTicks} 一樣吃攻速／施法速度；
+     * 不是這種圖騰（英靈、替身、焚鏈、沒有間隔）回傳 0。
+     */
+    static double totemFireRate(final SkillBuild build, final StatSheet sheet) {
+        final DeploySpec deploy = build.deploy();
+        if (deploy == null || deploy.kind() != DeploySpec.Kind.TOTEM || deploy.interval() <= 0
+                || SkillExecutor.hasFlag(build.definition(), StatKeys.FLAG_TOTEM_LINKED)) {
+            return 0;
+        }
+        final StatSheet local = new StatSheet().overlay(build.profile().local());
+        if (StatKeys.flag(local, StatKeys.FLAG_TOTEM_TAUNT) || StatKeys.flag(local, StatKeys.FLAG_SEARING_BOND)) {
+            return 0;
+        }
+        return 20.0 / SkillDeployables.totemTicks(deploy.interval(), SkillDeployables.totemSpeed(build, sheet, false));
+    }
+
     /** 圖騰、陷阱、鐘的說明。 */
-    private static List<String> deployLines(final SkillBuild build, final int active) {
+    private static List<String> deployLines(final SkillBuild build, final StatSheet sheet, final int active) {
         final DeploySpec spec = build.deploy();
         final List<String> lines = new ArrayList<>();
         final double duration = spec.duration() * build.durationScale();
@@ -3729,8 +3750,11 @@ public final class SkillService {
                         lines.add("<#ff8a3a>放到上限時全部引爆：每根炸一圈（火鏈一跳的 6 倍，引爆幾根每一下更多 30%）");
                     }
                 } else {
-                    lines.add(String.format(Locale.ROOT, "<#f5b942>圖騰<gray>：放在面前（時間到才消失），<white>%.1f</white> 秒內每 %.1f 秒對 %.0f 格內最近的敵人放一次（下面的效果）",
-                            duration, spec.interval(), spec.range()));
+                    // 2026-10-24：間隔照實際吃攻速／施法速度後的（以前寫 yml 的原始間隔，看不出攻速的效果）
+                    final double rate = totemFireRate(build, sheet);
+                    final double every = rate > 0 ? 1.0 / rate : spec.interval();
+                    lines.add(String.format(Locale.ROOT, "<#f5b942>圖騰<gray>：放在面前（時間到才消失），<white>%.1f</white> 秒內每 <white>%.2f</white> 秒對 %.0f 格內最近的敵人放一次（下面的效果；基礎 %.1f 秒）",
+                            duration, every, spec.range(), spec.interval()));
                 }
                 lines.add("<gray>同時最多 <white>" + build.totems() + "</white> 個" + (active > 0 ? "，目前 " + active + " 個" : ""));
                 // 2026-10-23：圖騰生命照技能等級

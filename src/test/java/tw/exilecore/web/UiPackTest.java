@@ -333,7 +333,7 @@ class UiPackTest {
         for (final JsonElement entry : select.getAsJsonArray("cases")) {
             cases.put(entry.getAsJsonObject().get("when").getAsString(), entry.getAsJsonObject().getAsJsonObject("model"));
         }
-        assertEquals(UiPack.framableCount(), cases.size());
+        assertEquals(UiPack.framableCount() + tw.exilecore.item.PlainArt.sprites().size(), cases.size(), "原版物品＋簡圖（2026-10-24）");
         assertTrue(cases.size() > 1300, "原版物品幾乎都畫得出框：" + cases.size());
         // 一般的物品、方塊、名稱跟模型不一樣的
         assertEquals("minecraft:item/emerald", cases.get("emerald").get("model").getAsString());

@@ -32,7 +32,8 @@ class DummyRecordTest {
     void shortBurstsDoNotCount() {
         assertFalse(DummyRecord.qualifies(3.0, 10));
         assertFalse(DummyRecord.qualifies(9.5, 2));
-        assertTrue(DummyRecord.qualifies(9.5, 5));
+        assertFalse(DummyRecord.qualifies(9.5, 5), "2026-10-24：最少 15 秒");
+        assertTrue(DummyRecord.qualifies(15, 5));
     }
 
     @Test
