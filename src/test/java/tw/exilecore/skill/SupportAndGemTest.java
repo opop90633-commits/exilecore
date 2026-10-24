@@ -50,7 +50,7 @@ class SupportAndGemTest {
         // 2026-10 PoE2 改版：輔助寶石 290 顆（第 1 階 81、第 2 階 166、第 3 階 43，其中 13 顆專屬掉落：終局 4、極境 2、巔峰 7）；
         // 2026-10：圖騰施法與 6 顆觸發改成主要寶石（拿掉 7 顆），加了 2 顆戰星來源（滿星、斷命聚怒）
         final List<String> ids = config.supports().stream().map(SupportDefinition::id).toList();
-        assertEquals(293 + 21 + 2 + 13, ids.size()); // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）；2026-10-18：＋七隻事件巔峰 Boss 各 3 顆專屬、淵鯨再 2 顆；2026-10-24：＋13 顆戰星輔助（恆星、倍星、抑星…）
+        assertEquals(293 + 21 + 2 + 10, ids.size()); // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）；2026-10-18：＋七隻事件巔峰 Boss 各 3 顆專屬、淵鯨再 2 顆；2026-10-24：＋10 顆戰星輔助（恆星、倍星、抑星…；磐震、磐破、雷星只留最強的那一級）
         assertEquals(List.of("increased_area", "faster_projectiles", "pierce", "faster_attacks", "faster_casting", "added_fire",
                 "increased_duration", "critical_strikes", "lingering", "minion_damage"), ids.subList(0, 10), "照檔案裡的順序");
         assertTrue(ids.containsAll(List.of("concentrated_effect", "chain", "life_leech", "searing", "lacerate", "envenom", "concussive",
@@ -67,9 +67,9 @@ class SupportAndGemTest {
         }
         assertEquals(3, config.retiredSupportTier("multistrike"));
         assertEquals(2, config.retiredSupportTier("melee_physical"));
-        assertEquals(84, config.supportsUpTo(1).size()); // 2026-10-24：＋恆星、蔓寒，磐震改第 1 階
-        assertEquals(255, config.supportsUpTo(2).size()); // 2026-10：＋怒嘯；2026-10-24：＋倍星、抑星、狂速、碎地、雷星
-        assertEquals(291, config.supportsUpTo(3).size(), "專屬掉落的 13 顆切不出來（2026-10-24：＋13 顆戰星輔助）");
+        assertEquals(83, config.supportsUpTo(1).size()); // 2026-10-24：＋恆星、蔓寒
+        assertEquals(252, config.supportsUpTo(2).size()); // 2026-10：＋怒嘯；2026-10-24：＋倍星、抑星、狂速、碎地，磐震、磐破改第 3 階
+        assertEquals(288, config.supportsUpTo(3).size(), "專屬掉落的 13 顆切不出來（2026-10-24：＋10 顆戰星輔助）");
         for (final SupportDefinition support : config.supports()) {
             assertFalse(support.name().isBlank(), support.id());
             assertFalse(support.modifiers().isEmpty(), support.id());

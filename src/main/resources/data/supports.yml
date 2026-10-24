@@ -3482,23 +3482,13 @@ supports:
     modifiers:
       - { stat: proc.armour_broken, type: FLAT, value: 100, tags: [proc_armour_explosion] }
 
-  break_endurance:         # Armour Break II
+  break_endurance:         # Armour Break III（2026-10-24：II、III 只留最強的）
     name: 磐破
-    description: 被輔助的技能打中時破甲（物理傷害的 15%）；把敵人的護甲完全打破時有 15% 機率給你一顆{charge:endurance}。
-    icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
-    tier: 2   # PoE2 第 3 階
-    excludes: [minion]
-    modifiers:   # 2026-10-24：照 PoE2 的 Armour Break II（以前 40% 觸發隱藏技能、本身不破甲）
-      - { stat: armour.break, type: FLAT, value: 15 }
-      - { stat: charge.event.armour_broken.endurance, type: FLAT, value: 15 }
-
-  break_endurance_3:       # Armour Break III
-    name: 磐破 III
     description: 被輔助的技能打中時破甲（物理傷害的 20%）；把敵人的護甲完全打破時有 20% 機率給你一顆{charge:endurance}。
-    icon: IRON_INGOT
+    icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3   # PoE2 第 4 階
     excludes: [minion]
-    modifiers:
+    modifiers:   # 2026-10-24：照 PoE2 的 Armour Break III（以前 40% 觸發隱藏技能、本身不破甲）
       - { stat: armour.break, type: FLAT, value: 20 }
       - { stat: charge.event.armour_broken.endurance, type: FLAT, value: 20 }
 
@@ -3513,23 +3503,13 @@ supports:
     modifiers:
       - { stat: proc.armour_broken, type: FLAT, value: 100, tags: [proc_break_daze] }
 
-  enduring_impact:         # Enduring Impact I
+  enduring_impact:         # Enduring Impact II（2026-10-24：I、II 只留最強的）
     name: 磐震
-    description: 被輔助的技能重暈一般、魔法、稀有敵人時有 30% 機率給你一顆{charge:endurance}；重暈傳奇怪物時直接給一顆。
-    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 1
-    excludes: [minion]
-    modifiers:   # 2026-10-24：照 PoE2 的 Enduring Impact I（以前 50% 觸發隱藏技能）
-      - { stat: charge.event.stun_applied.endurance, type: FLAT, value: 30 }
-      - { stat: charge.sup.unique.stun_applied.endurance, type: FLAT, value: 1 }
-
-  enduring_impact_2:       # Enduring Impact II
-    name: 磐震 II
     description: 被輔助的技能重暈一般、魔法、稀有敵人時有 30% 機率給你一顆{charge:endurance}；重暈傳奇怪物時直接給三顆。
-    icon: IRON_INGOT
+    icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3   # PoE2 第 4 階
     excludes: [minion]
-    modifiers:
+    modifiers:   # 2026-10-24：照 PoE2 的 Enduring Impact II（以前 50% 觸發隱藏技能）
       - { stat: charge.event.stun_applied.endurance, type: FLAT, value: 30 }
       - { stat: charge.sup.unique.stun_applied.endurance, type: FLAT, value: 3 }
 
@@ -3818,18 +3798,8 @@ supports:
     modifiers:
       - { stat: charge.sup.perfect_endurance, type: FLAT, value: 1 }
 
-  empowered_sparks:        # Empowered Sparks I
+  empowered_sparks:        # Empowered Sparks II（2026-10-24：I、II 只留最強的）
     name: 雷星
-    description: 被輔助的技能產生{charge:power}時強化你接下來的 3 次攻擊：強化的攻擊用出去時射出 4 顆游雷（閃電傷害，暴擊率 9%，2 秒）。
-    icon: GLOWSTONE_DUST
-    tier: 2
-    excludes: [minion]
-    modifiers:
-      - { stat: charge.sup.empower_sparks, type: FLAT, value: 3 }
-      - { stat: charge.sup.spark_projectiles, type: FLAT, value: 4 }
-
-  empowered_sparks_2:      # Empowered Sparks II
-    name: 雷星 II
     description: 被輔助的技能產生{charge:power}時強化你接下來的 3 次攻擊：強化的攻擊用出去時射出 6 顆游雷（閃電傷害，暴擊率 9%，2 秒）。
     icon: GLOWSTONE_DUST
     tier: 3   # PoE2 第 4 階
