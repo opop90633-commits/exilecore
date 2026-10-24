@@ -203,6 +203,8 @@ final class MapTwists implements Listener {
         boolean hiddenOpen;
         int hiddenHits;
         final Set<UUID> hiddenHinted = new HashSet<>();
+        /** 2026-10-24：牆上的說明（打破就收掉）。 */
+        Label hiddenLabel;
         // Boss
         boolean bossFightStarted;
         long nextReinforce;
@@ -901,6 +903,20 @@ final class MapTwists implements Listener {
                 blocks.put(MapEvents.key(block), state);
             }
         }
+        if (!state.hiddenWall.isEmpty()) {
+            // 2026-10-24：牆前面掛一個說明（以前只有走近時動作列閃一次，很多人沒看到）
+            double top = 0;
+            double x = 0;
+            double z = 0;
+            for (final Block block : state.hiddenWall) {
+                top = Math.max(top, block.getY());
+                x += block.getX();
+                z += block.getZ();
+            }
+            final Location at = new Location(instance.world(), x / state.hiddenWall.size() + 0.5, top + 1.4, z / state.hiddenWall.size() + 0.5);
+            state.hiddenLabel = new Label(at, hiddenText(0));
+            state.labels.add(state.hiddenLabel);
+        }
         return !state.hiddenWall.isEmpty();
     }
 
@@ -915,13 +931,22 @@ final class MapTwists implements Listener {
         }
         for (final Player player : players) {
             if (player.getLocation().distanceSquared(wall) <= 36 && state.hiddenHinted.add(player.getUniqueId())) {
-                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這面牆好像有裂縫……<yellow>左鍵敲幾下看看"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這面牆好像有裂縫……<yellow>對著牆左鍵（普攻）敲 " + HIDDEN_HITS + " 下打破"));
             }
         }
     }
 
+    /** 隱藏房牆上的說明（敲了幾下）。 */
+    private static String hiddenText(final int hits) {
+        return "<#c8b088>⛏ 裂開的牆<newline><gray>左鍵（普攻）敲 <white>" + (HIDDEN_HITS - hits) + "</white> 下就能打破<newline><dark_gray>後面是隱藏房：精英與寶箱";
+    }
+
     private void openHidden(final State state, final Player who) {
         state.hiddenOpen = true;
+        if (state.hiddenLabel != null) {
+            state.hiddenLabel.remove();
+            state.hiddenLabel = null;
+        }
         for (final Block block : state.hiddenWall) {
             blocks.remove(MapEvents.key(block));
             if (block.getType() == Material.CRACKED_STONE_BRICKS) {
@@ -1183,6 +1208,12 @@ final class MapTwists implements Listener {
             if (state.hiddenHits >= HIDDEN_HITS) {
                 openHidden(state, player);
             } else {
+                if (state.hiddenLabel != null) {
+                    state.hiddenLabel.text = hiddenText(state.hiddenHits);
+                    if (state.hiddenLabel.entity != null && state.hiddenLabel.entity.isValid()) {
+                        state.hiddenLabel.entity.text(plugin.text().parse(state.hiddenLabel.text));
+                    }
+                }
                 tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>牆裂得更開了（" + state.hiddenHits + "／" + HIDDEN_HITS + "）"));
             }
             return;

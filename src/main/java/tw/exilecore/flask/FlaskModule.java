@@ -44,7 +44,7 @@ public final class FlaskModule implements Module {
         plugin.getServer().getPluginManager().registerEvents(charms, plugin);
         if (!sourceRegistered) { // 2026-10-24：傳奇護符的全域詞綴（抗性）；模組重開不要重複註冊
             sourceRegistered = true;
-            plugin.players().addModifierSource(charms::globalModifiers);
+            plugin.players().addStateModifierSource(charms::globalModifiers);
         }
         charmTask = plugin.repeat("charm", charms::tick, 4, 4);
         service = created;

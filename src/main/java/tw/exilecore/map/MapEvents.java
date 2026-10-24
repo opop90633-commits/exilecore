@@ -52,7 +52,7 @@ import java.util.UUID;
 import java.util.random.RandomGenerator;
 
 /**
- * 地圖事件：每張地圖開出來時在幾個普通房間的中央放一個——神龕（碰到就給隊伍增益，旁邊有守衛）、寶箱（點開跳出一群怪，殺光才開）、
+ * 地圖事件：每張地圖開出來時在幾個普通房間的中央放一個——神龕（右鍵石柱給附近的人增益，旁邊有守衛）、寶箱（點開跳出一群怪，殺光才開）、
  * 裂隙（踩進去會一波一波湧出怪）、流寇（穿裝備、會招式的稀有怪）、深淵裂縫（2026-10-18：地上裂開一條縫往前延伸、盡頭一隻小 Boss 與寶箱）、
  * 保險箱（2026-10-18：拿劫盜合約右鍵開鎖，一張圖最多一個）；另外 PoE2 的祭壇（{@link RitualEvents}）與幻霧
  * （{@link DeliriumEvents}）各照機率放。設定在 {@code data/map_events.yml}。
@@ -62,8 +62,6 @@ final class MapEvents implements Listener {
 
     /** 寶箱跳出來的怪沒殺完時，最多等幾秒就開（怪跑掉、卡住）。 */
     private static final long BOX_TIMEOUT_TICKS = 90 * 20;
-    /** 碰到神龕：離石柱幾格。 */
-    private static final double TOUCH = 1.9;
     private static final Particle.DustOptions BREACH_DUST = new Particle.DustOptions(Color.fromRGB(0xC48BFF), 1.3f);
     private static final Particle.DustOptions SHRINE_DUST = new Particle.DustOptions(Color.fromRGB(0x9FE8C8), 1.0f);
     /** 2026-10-18：深淵裂縫的顏色（深紫）、保險箱的顏色（鐵灰）。 */
@@ -495,6 +493,10 @@ final class MapEvents implements Listener {
                 base.setType(Material.POLISHED_DEEPSLATE);
                 base.getRelative(0, 1, 0).setType(Material.SEA_LANTERN);
                 base.getRelative(0, 2, 0).setType(Material.END_ROD);
+                // 2026-10-24：右鍵石柱才用（以前碰到就觸發，路過就誤觸）
+                for (int dy = 0; dy <= 2; dy++) {
+                    blocks.put(key(base.getRelative(0, dy, 0)), event);
+                }
             }
             case STRONGBOX -> {
                 base.setType(Material.CHEST);
@@ -641,9 +643,7 @@ final class MapEvents implements Listener {
         }
         switch (event.kind) {
             case SHRINE -> {
-                if (!event.started && closest != null && nearest <= TOUCH) {
-                    useShrine(event, closest, players, now);
-                } else if (!event.started) {
+                if (!event.started) { // 2026-10-24：改成右鍵石柱才用（onInteract）
                     center.getWorld().spawnParticle(Particle.DUST, center.getX(), center.getY() + 1.5, center.getZ(), 6, 0.4, 0.6, 0.4, 0, SHRINE_DUST);
                 }
             }
@@ -779,7 +779,13 @@ final class MapEvents implements Listener {
             if (plugin.skills() != null) {
                 plugin.skills().consumeRightClick(event.getPlayer());
             }
-            if (structure.kind == MapEventConfig.Kind.SAFE) {
+            if (structure.kind == MapEventConfig.Kind.SHRINE) {
+                if (structure.started) {
+                    tw.exilecore.gui.ActionBar.send(event.getPlayer(), plugin.text().parse("<gray>這座神龕已經用過了"));
+                } else {
+                    useShrine(structure, event.getPlayer(), players(structure.instance), plugin.getServer().getCurrentTick());
+                }
+            } else if (structure.kind == MapEventConfig.Kind.SAFE) {
                 useSafe(structure, event.getPlayer());
             } else if (!structure.done) {
                 tw.exilecore.gui.ActionBar.send(event.getPlayer(), plugin.text().parse("<red>先打倒縫裡爬出來的那隻，寶箱才會開"));
@@ -1885,7 +1891,7 @@ final class MapEvents implements Listener {
             created.setShadowed(true);
         });
         display.text(plugin.text().parse(switch (event.kind) {
-            case SHRINE -> event.shrine.color() + "✦ " + ItemRenderer.escape(event.shrine.name()) + "<newline><gray>碰到它：附近的人一起拿 "
+            case SHRINE -> event.shrine.color() + "✦ " + ItemRenderer.escape(event.shrine.name()) + "<newline><gray>右鍵石柱：附近的人一起拿 "
                     + Math.round(config.shrineDuration() * (1 + event.instance.atlas().increased("atlas.shrine.duration"))) + " 秒增益";
             case STRONGBOX -> "<#f5b942>" + ItemRenderer.escape(event.box.name()) + "<newline><gray>右鍵打開（會跳出一群怪，殺光才開）";
             case BREACH -> "<#c48bff>裂隙<newline><gray>踩進去開啟：怪會一波一波湧出，掉的東西多 " + Math.round(config.breachQuantity() * 100) + "%";

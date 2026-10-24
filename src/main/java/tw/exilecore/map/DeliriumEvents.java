@@ -47,9 +47,6 @@ import java.util.random.RandomGenerator;
  */
 final class DeliriumEvents implements Listener {
 
-    /** 走到鏡子幾格內就開始。 */
-    private static final double TOUCH = 1.8;
-
     /** 一張圖的幻霧。 */
     final class Fog {
         final MapInstance instance;
@@ -172,13 +169,7 @@ final class DeliriumEvents implements Listener {
                 fog.label = label(fog);
             }
             mirror.getWorld().spawnParticle(Particle.WHITE_ASH, mirror.getX(), mirror.getY() + 1, mirror.getZ(), 6, 0.6, 0.8, 0.6, 0.01);
-            for (final Player player : players) {
-                if (Math.hypot(player.getLocation().getX() - mirror.getX(), player.getLocation().getZ() - mirror.getZ()) <= TOUCH) {
-                    start(fog, player, now);
-                    break;
-                }
-            }
-            return;
+            return; // 2026-10-24：改成右鍵鏡子才開始（onInteract；以前走過去就開始，路過就誤觸）
         }
         final double elapsed = (now - fog.startTick) / 20.0;
         if (elapsed >= settings.duration()) {
@@ -412,6 +403,36 @@ final class DeliriumEvents implements Listener {
 
     // ---- 標籤與清理 ----
 
+    /**
+     * 2026-10-24：右鍵鏡子開始幻霧。跟寶箱一樣用 LOWEST、不 ignoreCancelled（世界保護把地圖世界的方塊互動都標成拒絕）；
+     * 接走之後告訴技能模組這一下不施放。
+     */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onInteract(final org.bukkit.event.player.PlayerInteractEvent event) {
+        if (event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null
+                || event.getHand() != org.bukkit.inventory.EquipmentSlot.HAND || byInstance.isEmpty()) {
+            return;
+        }
+        final Block clicked = event.getClickedBlock();
+        for (final Fog fog : byInstance.values()) {
+            final Block base = fog.mirror.getBlock();
+            if (fog.started || !clicked.getWorld().equals(base.getWorld()) || clicked.getX() != base.getX() || clicked.getZ() != base.getZ()
+                    || clicked.getY() < base.getY() || clicked.getY() > base.getY() + 1) {
+                continue;
+            }
+            if (!MapEvents.withinReach(event.getPlayer(), clicked) || fog.instance.state() != MapInstance.State.OPEN) {
+                return;
+            }
+            event.setCancelled(true);
+            event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+            if (plugin.skills() != null) {
+                plugin.skills().consumeRightClick(event.getPlayer());
+            }
+            start(fog, event.getPlayer(), plugin.getServer().getCurrentTick());
+            return;
+        }
+    }
+
     private TextDisplay label(final Fog fog) {
         final Location at = fog.mirror.clone().add(0, 2.6, 0);
         final TextDisplay display = at.getWorld().spawn(at, TextDisplay.class, created -> {
@@ -420,7 +441,7 @@ final class DeliriumEvents implements Listener {
             created.setSeeThrough(false);
             created.setShadowed(true);
         });
-        display.text(plugin.text().parse("<white>幻霧之鏡<newline><gray>走過去：霧跟著你 " + Math.round(config.delirium().duration())
+        display.text(plugin.text().parse("<white>幻霧之鏡<newline><gray>右鍵鏡子：霧跟著你 " + Math.round(config.delirium().duration())
                 + " 秒，越久怪越硬、殺越多獎勵越多<newline><dark_gray>蒸餾情緒（注入項鍊）主要從這裡來"));
         return display;
     }

@@ -612,8 +612,8 @@ public final class CharmService implements Listener {
      * 2026-10-24（傳奇護符的「+25% 冰冷抗性」這種）：裝在護符欄的護符上，不是 flask.local／charm.local 的詞綴進角色屬性表。
      * 一般護符的詞綴都是只作用在那一顆上的，所以只有傳奇的會用到。不看開了幾格（算開幾格要讀屬性表，會繞回來）。
      */
-    public List<tw.exilecore.stats.Modifier> globalModifiers(final Player player) {
-        final PlayerState state = plugin.players().get(player);
+    public List<tw.exilecore.stats.Modifier> globalModifiers(final Player player, final PlayerState state) {
+        // 2026-10-24：state 由 build 傳進來，不能再 plugin.players().get(player)——第一次載入時會無限遞迴（StackOverflow）
         if (!state.hasCharacter()) {
             return List.of();
         }
