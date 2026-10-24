@@ -95,7 +95,10 @@ class SupportHitRulesTest {
         final String reason = "要真的射出投射物的技能";
         assertEquals(reason, support("pierce").refusal(skill("artillery_ballista")), "落釘弩台是 impact 機制");
         assertEquals(reason, support("multiple_projectiles").refusal(skill("artillery_ballista")));
-        assertEquals(reason, support("projectile_deceleration").refusal(skill("artillery_ballista")));
+        // 2026-10-24：只動投射物速度的輔助可以掛在落下的投射物（弩台）：速度決定落下的快慢
+        assertNull(support("projectile_deceleration").refusal(skill("artillery_ballista")));
+        assertNull(support("faster_projectiles").refusal(skill("artillery_ballista")));
+        assertNull(support("faster_projectiles").refusal(skill("siege_ballista")));
         assertNull(support("point_blank").refusal(skill("artillery_ballista")), "只吃投射物傷害的照舊");
         assertNull(support("pierce").refusal(skill("fireball")));
         assertNull(support("chain").refusal(skill("arc")), "鏈雷多跳幾次");
