@@ -1293,7 +1293,18 @@ public final class AilmentService {
     }
 
     /** 自己著火（煉獄使者的獰笑焚身）：每秒 dps 火焰傷害，持續 seconds 秒；已經在燒更強的就不換。 */
-    public void igniteSelf(final Player player, final double dps, final double seconds) {
+    public void igniteSelf(final Player player, final double rawDps, final double rawSeconds) {
+        if (rawDps <= 0) {
+            return;
+        }
+        // 2026-10-24 修正（狂焰焚身）：自己點燃自己是火焰持續傷害，吃火焰抗性（照抗性上限、最低 MIN_RESIST）；
+        // 持續時間吃自己身上的「異常／點燃持續時間」（以前固定 4 秒、整段不減）
+        final StatSheet sheet = plugin.players().sheet(player);
+        final double cap = tw.exilecore.stats.DamageCalculator.resistCap(sheet, DamageType.FIRE);
+        final double resist = Math.min(sheet.get(DamageType.FIRE.mitigationStat()), cap);
+        final double dps = rawDps * (1 - tw.exilecore.stats.Formulas.resistReduction(resist, cap));
+        final double seconds = AilmentConfig.duration(rawSeconds, 0, sheet.increased(StatKeys.SELF_AILMENT_DURATION, Set.of())
+                + sheet.increased(StatKeys.SELF_AILMENT_DURATION + ".ignite", Set.of()));
         if (dps <= 0) {
             return;
         }

@@ -232,7 +232,7 @@ public final class ModifierText {
             case StatKeys.LEECH_INSTANT -> "偷取有 " + number(value) + "% 立即生效（一下最多回 6% 最大生命）";
             case StatKeys.SKILL_DURATION -> scaled(modifier, "持續時間", percent);
             case StatKeys.SKILL_COOLDOWN -> scaled(modifier, "冷卻時間", percent);
-            case StatKeys.SKILL_ADDED_COOLDOWN -> "技能有 " + number(value) + " 秒冷卻時間（本來就有冷卻的不能掛）";
+            case StatKeys.SKILL_ADDED_COOLDOWN -> "沒有冷卻的技能變成有 " + number(value) + " 秒冷卻時間（本來就有冷卻的照原本的冷卻）"; // 2026-10-24：以前寫「不能掛」，其實掛得上去
             case StatKeys.SKILL_FORK -> "投射物第一次打中時分裂成兩發";
             case StatKeys.FLAG_RETURNING -> "投射物停下來之後飛回你身邊，路上再打一次";
             case StatKeys.FLAG_ECHO -> "法術施放後再自動重複一次";

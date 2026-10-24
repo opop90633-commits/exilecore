@@ -1518,7 +1518,7 @@ supports:
 
   shrine_echo:
     name: 神龕回響
-    description: 戰吼像神龕一樣迴盪：戰吼的效果大增、冷卻更短，但吼完要再等一下才能吼第二聲。
+    description: 戰吼像神龕一樣迴盪：戰吼的效果大增，但吼完要等比較久才能吼第二聲。
     icon: GOLD_INGOT
     tier: 3
     source: shrine_warden
@@ -1526,8 +1526,7 @@ supports:
     mana_multiplier: 1.3
     modifiers:
       - { stat: warcry.effect, type: MORE, value: 40 }
-      - { stat: skill.cooldown, type: INCREASED, value: -20 }
-      - { stat: skill.added_cooldown, type: FLAT, value: 1 }
+      - { stat: skill.cooldown, type: INCREASED, value: 20 }   # 2026-10-24：代價（以前是冷卻 -20% 加「+1 秒冷卻」，戰吼本來就有冷卻，那 1 秒沒作用）
     notes: ["神龕守望・晨曦（晨曦神龕）掉落"]
 
   sacred_focus:
