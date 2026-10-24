@@ -88,8 +88,8 @@ class SkillConfigTest {
             } else if (definition.mechanic() == Mechanic.AURA) {
                 assertEquals(0, definition.mana().last(), definition.id() + " 光環用保留的，不耗魔力");
                 assertFalse(definition.description().isBlank(), definition.id() + " 要有說明");
-            } else if (definition.id().endsWith("_banner") || config.mount(definition.id()) != null) {
-                // 2026-10：旗幟（靠冷卻）與坐騎不耗魔力
+            } else if (definition.id().endsWith("_banner") || config.mount(definition.id()) != null || definition.id().equals("parry")) {
+                // 2026-10：旗幟（靠冷卻）與坐騎不耗魔力；2026-10-24：招架照 PoE2 不花魔力
                 assertEquals(0, definition.mana().last(), definition.id() + " 旗幟、坐騎不耗魔力");
                 assertFalse(definition.description().isBlank(), definition.id() + " 要有說明");
             } else {

@@ -124,9 +124,9 @@ class UniqueRecipeTest {
         for (final UniqueItem unique : at60) {
             assertTrue(unique.dropLevel() <= 60, unique.id());
         }
-        // 2026-10 擴充的共通傳奇有 45 級起的
-        assertFalse(UniqueRecipe.outcomes(items.uniques(), config.recipe(), List.of(), 45).isEmpty(), "45 級起換得到");
-        assertTrue(UniqueRecipe.outcomes(items.uniques(), config.recipe(), List.of(), 44).isEmpty(), "44 級以下換不到東西");
+        // 2026-10-24：戰星傳奇照 PoE2 的需求等級（岳息、雷吼護符 5 級），5 級起就換得到
+        assertFalse(UniqueRecipe.outcomes(items.uniques(), config.recipe(), List.of(), 5).isEmpty(), "5 級起換得到");
+        assertTrue(UniqueRecipe.outcomes(items.uniques(), config.recipe(), List.of(), 4).isEmpty(), "4 級以下換不到東西");
     }
 
     @Test
