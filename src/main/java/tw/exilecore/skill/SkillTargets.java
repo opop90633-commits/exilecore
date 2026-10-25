@@ -10,6 +10,7 @@ import org.bukkit.util.BoundingBox;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 import tw.exilecore.ExileCore;
+import tw.exilecore.stats.SkillProfile;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -30,6 +31,70 @@ final class SkillTargets {
 
     SkillTargets(final ExileCore plugin) {
         this.plugin = plugin;
+    }
+
+    // ---- 2026-10-25：可以直接被打的東西（驚雷之鐘、冰晶）----
+
+    /** 技能打到一塊範圍時通知它（不用有敵人）。source：同一次出手／同一顆投射物是同一個物件（同一下只算一次）。 */
+    interface Strikeable {
+        void struck(Player owner, SkillProfile skill, java.util.function.Predicate<Location> inside, Object source);
+    }
+
+    /** 東西本身的大小：範圍邊緣差這麼多也算打到。 */
+    static final double STRIKE_PADDING = 0.6;
+
+    private final List<Strikeable> strikeables = new ArrayList<>();
+
+    void addStrikeable(final Strikeable strikeable) {
+        strikeables.add(strikeable);
+    }
+
+    /** 你的技能打到這塊範圍（每個技能執行打擊的地方呼叫；地面效果一波一波的不呼叫）。 */
+    void strike(final Player owner, final SkillProfile skill, final java.util.function.Predicate<Location> inside, final Object source) {
+        if (owner == null || skill == null || strikeables.isEmpty()) {
+            return;
+        }
+        for (final Strikeable strikeable : strikeables) {
+            strikeable.struck(owner, skill, inside, source);
+        }
+    }
+
+    /** 圓：水平 radius 內（加上東西的大小）、高度上下 HEIGHT 格內。 */
+    static java.util.function.Predicate<Location> sphere(final Location center, final double radius) {
+        final double r = radius + STRIKE_PADDING;
+        return at -> at.getWorld().equals(center.getWorld()) && Math.abs(at.getY() - center.getY()) <= HEIGHT
+                && square(at.getX() - center.getX()) + square(at.getZ() - center.getZ()) <= r * r;
+    }
+
+    /** 扇形：跟 {@link #cone(Origin, double, double)} 一樣（水平在扇形裡，或貼在身邊 1 格內）。 */
+    static java.util.function.Predicate<Location> coneShape(final Origin origin, final double length, final double angle) {
+        final Location from = origin.feet();
+        final Vector facing = origin.facing();
+        final double r = length + STRIKE_PADDING;
+        return at -> {
+            if (!at.getWorld().equals(from.getWorld())) {
+                return false;
+            }
+            final double dx = at.getX() - from.getX();
+            final double dz = at.getZ() - from.getZ();
+            final double horizontal = dx * dx + dz * dz;
+            final double dy = at.getY() - from.getY();
+            return horizontal <= r * r && dy >= -HEIGHT && dy <= HEIGHT + Math.sqrt(horizontal) * CONE_HEIGHT_SLOPE
+                    && (horizontal <= 1.0 || SkillMath.inCone(facing.getX(), facing.getZ(), dx, dz, angle));
+        };
+    }
+
+    /** 線段：水平離 from → to 不超過 width（加上東西的大小），高度在兩端上下 HEIGHT 格內。 */
+    static java.util.function.Predicate<Location> segment(final Location from, final Location to, final double width) {
+        final double w = width + STRIKE_PADDING;
+        final double low = Math.min(from.getY(), to.getY()) - HEIGHT;
+        final double high = Math.max(from.getY(), to.getY()) + HEIGHT;
+        return at -> at.getWorld().equals(from.getWorld()) && at.getY() >= low && at.getY() <= high
+                && SkillMath.pointSegmentDistance(at.getX(), at.getZ(), from.getX(), from.getZ(), to.getX(), to.getZ()) <= w;
+    }
+
+    private static double square(final double value) {
+        return value * value;
     }
 
     /** 怪物（沒有施放者：不打玩家）。 */

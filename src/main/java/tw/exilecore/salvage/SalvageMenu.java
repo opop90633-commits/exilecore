@@ -52,6 +52,7 @@ public final class SalvageMenu extends Menu {
     private static final int SLOT_SUMMARY = 45;
     private static final int SLOT_RECIPE = 46;
     private static final int SLOT_INVERT = 47;
+    private static final int SLOT_SELECT_MAPS = 48; // 2026-10-25：一鍵選地圖
     private static final int SLOT_CONFIRM = 49;
     private static final int SLOT_CLEAR = 51;
     private static final int SLOT_LOCK_HELP = 52;
@@ -64,6 +65,9 @@ public final class SalvageMenu extends Menu {
     private final SalvageConfig config;
     /** 「比你低幾級」目前選的差距。 */
     private int levelGap = LEVEL_GAPS[1];
+    /** 「地圖」快速選擇：T 幾以下（16 = 全部）。右鍵輪替。 */
+    private static final int[] MAP_TIER_CAPS = {16, 10, 12, 14, 15};
+    private int mapTierCap = MAP_TIER_CAPS[0];
 
     /** 從商人那裡打開的（2026-10）：右下角是「返回商人」；null = 回選單。 */
     private final Runnable backToVendor;
@@ -216,6 +220,18 @@ public final class SalvageMenu extends Menu {
         quick(SLOT_SELECT_GEMS_FLASKS, Material.AMETHYST_SHARD, "<#7fd4ff>寶石、藥劑、護符", matches(Pick.GEMS_FLASKS), "<dark_gray>只給金幣", null);
         quick(SLOT_SELECT_ALL, Material.CHEST, "<#f5b942>全部可以拆的", matches(Pick.ALL),
                 "<dark_gray>含珠寶、地圖；傳奇、鎖定的、藥劑欄的藥劑不算", null);
+        final int nextCap = MAP_TIER_CAPS[(mapIndex(mapTierCap) + 1) % MAP_TIER_CAPS.length];
+        quick(SLOT_SELECT_MAPS, Material.FILLED_MAP, "<#c9a0ff>" + (mapTierCap >= 16 ? "所有地圖" : "T" + mapTierCap + " 以下的地圖"), matches(Pick.MAPS),
+                "<dark_gray>背包裡的地圖一次選起來（想留的先右鍵鎖定）", "<yellow>右鍵：改成" + (nextCap >= 16 ? "所有地圖" : " T" + nextCap + " 以下"));
+    }
+
+    private static int mapIndex(final int cap) {
+        for (int i = 0; i < MAP_TIER_CAPS.length; i++) {
+            if (MAP_TIER_CAPS[i] == cap) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     private static int index(final int gap) {
@@ -245,7 +261,7 @@ public final class SalvageMenu extends Menu {
     }
 
     /** 快速選擇的種類。 */
-    private enum Pick { NORMAL, MAGIC, RARE, UNIDENTIFIED, LOW_LEVEL, OTHER_WEAPONS, OTHER_ARMOUR, GEMS_FLASKS, ALL }
+    private enum Pick { NORMAL, MAGIC, RARE, UNIDENTIFIED, LOW_LEVEL, OTHER_WEAPONS, OTHER_ARMOUR, GEMS_FLASKS, MAPS, ALL }
 
     /**
      * 背包裡符合這種快速選擇、而且可以直接拆（不是傳奇、鎖定、藥劑欄的藥劑；地圖只有「全部」選）的格子。
@@ -269,7 +285,7 @@ public final class SalvageMenu extends Menu {
                 if (identity.startsWith(CURRENCY_ID)) {
                     continue; // 通貨：要一疊一疊點（免得把要用的通貨拆掉）
                 }
-                if (pick == Pick.GEMS_FLASKS || pick == Pick.ALL) {
+                if (pick == Pick.GEMS_FLASKS || pick == Pick.ALL) { // 地圖一定讀得到 ItemData，MAPS 不會走到這裡
                     matching.put(slot, identity);
                 }
                 continue;
@@ -278,8 +294,14 @@ public final class SalvageMenu extends Menu {
             if (needsCare(data)) {
                 continue; // 傳奇：要一件一件點（2026-10：「未鑑定」也不選未鑑定的傳奇）
             }
+            if (pick == Pick.MAPS) {
+                if (isMap(data) && (mapTierCap >= 16 || tw.exilecore.map.MapStats.of(plugin.items().repository(), data).tier() <= mapTierCap)) {
+                    matching.put(slot, identity);
+                }
+                continue;
+            }
             if (isMap(data) && pick != Pick.ALL) {
-                continue; // 地圖只有「全部可以拆的」會選（2026-10），稀有度那幾顆只選裝備
+                continue; // 地圖只有「全部可以拆的」、「地圖」會選（2026-10），稀有度那幾顆只選裝備
             }
             final ItemBase base = plugin.items().repository().base(data.base());
             final Set<String> tags = base == null ? Set.of() : base.tags();
@@ -291,7 +313,7 @@ public final class SalvageMenu extends Menu {
                 case LOW_LEVEL -> data.ilvl() < level - levelGap;
                 case OTHER_WEAPONS -> !weaponTags.isEmpty() && otherWeapon(tags, weaponTags);
                 case OTHER_ARMOUR -> !families.isEmpty() && otherArmour(tags, families);
-                case GEMS_FLASKS -> false;
+                case GEMS_FLASKS, MAPS -> false;
                 case ALL -> true;
             };
             if (ok) {
@@ -703,6 +725,12 @@ public final class SalvageMenu extends Menu {
             quickSelect(Pick.OTHER_ARMOUR);
         } else if (slot == SLOT_SELECT_GEMS_FLASKS) {
             quickSelect(Pick.GEMS_FLASKS);
+        } else if (slot == SLOT_SELECT_MAPS) {
+            if (click.isRightClick()) {
+                mapTierCap = MAP_TIER_CAPS[(mapIndex(mapTierCap) + 1) % MAP_TIER_CAPS.length];
+            } else {
+                quickSelect(Pick.MAPS);
+            }
         } else if (slot == SLOT_SELECT_ALL) {
             quickSelect(Pick.ALL);
         } else if (slot == SLOT_RECIPE && config.recipe().enabled()) {

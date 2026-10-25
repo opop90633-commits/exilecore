@@ -106,9 +106,20 @@ final class ExchangeMenu extends Menu {
         for (final String id : service.config().values().keySet()) {
             if (plugin.currencies().repository().get(id) != null) {
                 ids.add(id);
+            } else if (MarketService.starCoin(id) && plugin.sponsors() != null) {
+                ids.add(id); // 2026-10-25：帳號裡的星幣（economy.yml 的 values 有寫 star_coin 才開放）
             }
         }
         return ids;
+    }
+
+    /** 2026-10-25：通貨的圖示（星幣不是通貨物品，用星幣券的圖）；沒有這種通貨回傳紙。 */
+    private ItemStack currencyIcon(final String id) {
+        if (MarketService.starCoin(id)) {
+            return tw.exilecore.sponsor.SponsorService.coinIcon();
+        }
+        final CurrencyType type = id == null ? null : plugin.currencies().repository().get(id);
+        return type == null ? new ItemStack(Material.PAPER) : plugin.currencies().icon(type, 1);
     }
 
     private void buildSections() {
@@ -150,7 +161,8 @@ final class ExchangeMenu extends Menu {
         final java.util.Map<tw.exilecore.currency.CurrencyGroups.Group, List<String>> grouped =
                 new java.util.EnumMap<>(tw.exilecore.currency.CurrencyGroups.Group.class);
         for (final String id : all) {
-            grouped.computeIfAbsent(tw.exilecore.currency.CurrencyGroups.of(plugin.currencies().repository().get(id)),
+            grouped.computeIfAbsent(MarketService.starCoin(id) ? tw.exilecore.currency.CurrencyGroups.Group.BASIC
+                            : tw.exilecore.currency.CurrencyGroups.of(plugin.currencies().repository().get(id)),
                     group -> new ArrayList<>()).add(id);
         }
         for (final tw.exilecore.currency.CurrencyGroups.Group group : tw.exilecore.currency.CurrencyGroups.Group.values()) {
@@ -184,18 +196,22 @@ final class ExchangeMenu extends Menu {
         }
         final java.util.Map<String, java.util.Map<String, Offer>> market = market();
         for (int i = 0; i < Math.min(CURRENCY_SLOTS, currencies.size()); i++) {
-            final CurrencyType type = plugin.currencies().repository().get(currencies.get(i));
-            if (type == null) {
+            final String id = currencies.get(i);
+            final boolean star = MarketService.starCoin(id);
+            if (!star && plugin.currencies().repository().get(id) == null) {
                 continue;
             }
-            final boolean give = type.id().equals(choice.give);
-            final boolean want = type.id().equals(choice.want);
-            ItemStack icon = plugin.currencies().icon(type, 1);
-            final int have = service.wallet().available(player, type.id());
+            final boolean give = id.equals(choice.give);
+            final boolean want = id.equals(choice.want);
+            ItemStack icon = currencyIcon(id);
+            final int have = service.wallet().available(player, id);
             final List<String> extra = new ArrayList<>();
             extra.add("");
-            extra.add(String.format(Locale.ROOT, "<gray>你有 <white>%,d</white>（通貨袋＋背包＋倉庫）", have));
-            extra.addAll(marketLines(market, type.id()));
+            if (star) {
+                extra.add("<gray>帳號裡的星幣（贊助商城儲值、星幣券兌換的）：直接拿來換通貨，換到的星幣直接存進帳號");
+            }
+            extra.add(String.format(Locale.ROOT, "<gray>你有 <white>%,d</white>%s", have, star ? "（帳號）" : "（通貨袋＋背包＋倉庫）"));
+            extra.addAll(marketLines(market, id));
             extra.add(give ? "<#7fd4ff>◀ 你給這個" : want ? "<#f5b942>▶ 你要這個" : "");
             extra.add("<yellow>左鍵：我給這個　右鍵：我要這個");
             appendLore(icon, extra.toArray(String[]::new));
@@ -353,8 +369,6 @@ final class ExchangeMenu extends Menu {
         final List<ExchangeBook.Order> makers = service.book().makersFor(choice.give, choice.want, player.getUniqueId());
         asks.addAll(ExchangeMath.levels(makers, player.getUniqueId()));
         final List<ExchangeMath.Level> bids = ExchangeMath.levels(service.book().competitors(choice.give, choice.want), player.getUniqueId());
-        final CurrencyType wantType = plugin.currencies().repository().get(choice.want);
-        final CurrencyType giveType = plugin.currencies().repository().get(choice.give);
         int cumulative = 0;
         for (int i = 0; i < ASK_SLOTS.length; i++) {
             if (i >= asks.size()) {
@@ -364,7 +378,7 @@ final class ExchangeMenu extends Menu {
             }
             final ExchangeMath.Level level = asks.get(i);
             cumulative += level.stock();
-            final ItemStack icon = wantType == null ? new ItemStack(Material.PAPER) : plugin.currencies().icon(wantType, 1);
+            final ItemStack icon = currencyIcon(choice.want);
             icon.setAmount(Math.max(1, Math.min(64, level.stock())));
             final ItemStack named = icon(icon.getType(), (i == 0 ? "<#5bd65b>市價　" : "<white>") + ratio(choice.want, level.lotWant(), choice.give, level.lotGive()),
                     String.format(Locale.ROOT, "<gray>這個價位還有 <white>%,d</white> 個%s（%d 張單）", level.stock(), name(choice.want), level.orders()),
@@ -379,7 +393,7 @@ final class ExchangeMenu extends Menu {
                 continue;
             }
             final ExchangeMath.Level level = bids.get(i);
-            final ItemStack icon = giveType == null ? new ItemStack(Material.PAPER) : plugin.currencies().icon(giveType, 1);
+            final ItemStack icon = currencyIcon(choice.give);
             final ItemStack named = icon(icon.getType(), "<#7fd4ff>排隊中：" + ratio(choice.want, level.lotGive(), choice.give, level.lotWant())
                             + (level.mine() ? " <#f5b942>（有你的）" : ""),
                     String.format(Locale.ROOT, "<gray>別人也在用%s換%s：掛了 <white>%,d</white> 個%s（%d 張單）",

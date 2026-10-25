@@ -913,7 +913,17 @@ final class MapTwists implements Listener {
                 x += block.getX();
                 z += block.getZ();
             }
-            final Location at = new Location(instance.world(), x / state.hiddenWall.size() + 0.5, top + 1.4, z / state.hiddenWall.size() + 0.5);
+            // 2026-10-25：放在牆「外面」（走道那一側）、眼睛高度——以前放在牆頂上 1.4 格，牆一路封到天花板時字被擋在牆後、天花板裡
+            final double wx = x / state.hiddenWall.size() + 0.5;
+            final double wz = z / state.hiddenWall.size() + 0.5;
+            double dx = wx - (instance.originX() + room.cx() + 0.5);
+            double dz = wz - (instance.originZ() + room.cz() + 0.5);
+            final double length = Math.sqrt(dx * dx + dz * dz);
+            if (length > 1e-6) {
+                dx /= length;
+                dz /= length;
+            }
+            final Location at = new Location(instance.world(), wx + dx * 1.3, MapLayout.FLOOR_Y + 1.7, wz + dz * 1.3);
             state.hiddenLabel = new Label(at, hiddenText(0));
             state.labels.add(state.hiddenLabel);
         }

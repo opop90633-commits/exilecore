@@ -151,6 +151,10 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (requires.contains(Tags.TOTEM) && host.tags().contains(Tags.TOTEM)) {
             return null;
         }
+        // 2026-10-25：能量輔助（要 meta／invocation 的）套在引星本身：照宿主驗，不管裡面放什麼法術
+        if ((requires.contains("meta") || requires.contains("invocation")) && refusal(host) == null) {
+            return null;
+        }
         // 2026-10-22：只加速度、持續時間的輔助也套到宿主本身（worksOnHost）：放進去的技能吃不到（例如持久配熾星彈），
         // 宿主吃得到就可以掛——不然星咒圖騰放法術時，加圖騰持續時間的持久掛不上去
         if (worksOnHost() && refusal(host) == null) {
@@ -232,7 +236,7 @@ public record SupportDefinition(String id, String name, String description, Stri
     private static final Set<String> UTILITY_STATS = Set.of(StatKeys.SKILL_ADDED_COOLDOWN, StatKeys.SKILL_COST, StatKeys.SKILL_LEVEL,
             StatKeys.SKILL_MINIONS, StatKeys.SKILL_TOTEMS, StatKeys.SUPPORT_SPIRIT, StatKeys.CURSE_EFFECT, StatKeys.MARK_EFFECT, StatKeys.CAST_SPEED, StatKeys.FLAG_ECHO,
             StatKeys.FLAG_BLOOD_MAGIC, StatKeys.MANA_ON_MINION_DEATH, StatKeys.MINION_DEATH_HEAL);
-    private static final List<String> UTILITY_PREFIXES = List.of(StatKeys.GRANT_PREFIX, "warcry.", "aura.", "herald.", "trigger.", "seal.",
+    private static final List<String> UTILITY_PREFIXES = List.of(StatKeys.GRANT_PREFIX, "warcry.", "aura.", "herald.", "trigger.", "seal.", "meta.",
             "infusion.", "proc.use", "proc.minion_death", "charge.sup.");
     /** 技能有這個標籤時才有作用的屬性。 */
     private static final Map<String, String> TAGGED_UTILITY_STATS = Map.of(StatKeys.SKILL_AREA, Tags.AREA, StatKeys.SKILL_DURATION, Tags.DURATION,

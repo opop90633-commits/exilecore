@@ -30,7 +30,7 @@ import java.util.UUID;
 
 /**
  * 冰晶（2026-10，照 PoE2 的 Ice Crystals）：霜壁、凍壁矢這類技能（技能自己帶 crystal.count）留下幾顆冰晶。
- * 你擊中冰晶旁邊（{@value #HIT_RADIUS} 格內）的敵人時，冰晶被打一下；打 {@value #BASE_HITS} 下（crystal.hits 可以改）就碎掉，
+ * 你擊中冰晶旁邊（{@value #HIT_RADIUS} 格內）的敵人、或技能直接打到冰晶（2026-10-25：揮到、炸到、投射物飛過）時，冰晶被打一下；打 {@value #BASE_HITS} 下（crystal.hits 可以改）就碎掉，
  * 炸出一圈冰（隱藏技能 proc_crystal_burst，用留下冰晶那個技能的寶石等級）。時間到沒打碎就自己融掉，不會炸。
  * 輔助：厚晶（要打更多下）、脆晶（更少下）、霜蝕晶（冰晶周圍一直冰）、晶刺（碎掉時往四周噴冰片）、冰鍍（打碎時你得到附加冰冷的增益）。
  */
@@ -54,6 +54,7 @@ public final class IceCrystals implements Listener {
         final boolean verglas;
         int hitsLeft;
         long lastHit;
+        Object lastSource;
 
         Crystal(final Location at, final BlockDisplay display, final long untilTick, final int level, final int hits, final boolean shards,
                 final boolean verglas) {
@@ -70,6 +71,45 @@ public final class IceCrystals implements Listener {
     IceCrystals(final ExileCore plugin, final SkillService service) {
         this.plugin = plugin;
         this.service = service;
+        service.targets().addStrikeable(this::struck); // 2026-10-25：技能直接打到冰晶
+    }
+
+    /** 冰晶自己炸出來的、旁邊的霜蝕地面不打冰晶（避免連鎖一次全碎、站著就自己碎）。 */
+    private static boolean ignored(final String skillId) {
+        return skillId.startsWith("proc_crystal") || skillId.startsWith("proc_hoarfrost");
+    }
+
+    /** 2026-10-25：技能打到的範圍裡有自己的冰晶：直接打一下（不用旁邊有敵人）。 */
+    private void struck(final Player owner, final tw.exilecore.stats.SkillProfile skill, final java.util.function.Predicate<Location> inside,
+                        final Object source) {
+        final List<Crystal> mine = crystals.get(owner.getUniqueId());
+        if (mine == null || mine.isEmpty() || ignored(skill.id())) {
+            return;
+        }
+        final long now = now();
+        final List<Crystal> broken = new ArrayList<>();
+        for (final Iterator<Crystal> it = mine.iterator(); it.hasNext(); ) {
+            final Crystal crystal = it.next();
+            if (crystal.lastHit == now || crystal.lastSource == source || !inside.test(crystal.at)) {
+                continue;
+            }
+            crystal.lastSource = source; // 同一顆投射物飛過去好幾 tick 只算一下
+            if (chip(crystal, now)) {
+                it.remove();
+                broken.add(crystal);
+            }
+        }
+        for (final Crystal crystal : broken) {
+            shatter(owner, crystal);
+        }
+    }
+
+    /** 冰晶被打一下；碎了回傳 true。 */
+    private static boolean chip(final Crystal crystal, final long now) {
+        crystal.lastHit = now; // 同一下打中好幾個敵人只算一下
+        crystal.hitsLeft--;
+        crystal.at.getWorld().spawnParticle(Particle.ITEM_SNOWBALL, crystal.at, 6, 0.2, 0.3, 0.2, 0.05);
+        return crystal.hitsLeft <= 0;
     }
 
     private long now() {
@@ -140,8 +180,7 @@ public final class IceCrystals implements Listener {
             return;
         }
         final List<Crystal> mine = crystals.get(player.getUniqueId());
-        if (mine == null || mine.isEmpty() || event.skill().id().startsWith("proc_crystal")
-                || event.skill().id().startsWith("proc_hoarfrost")) { // 2026-10-17：冰晶旁邊的霜蝕地面也不打冰晶（以前站著就自己碎）
+        if (mine == null || mine.isEmpty() || ignored(event.skill().id())) { // 2026-10-17：冰晶旁邊的霜蝕地面也不打冰晶（以前站著就自己碎）
             return; // 冰晶自己炸出來的不再打冰晶（避免連鎖一次全碎）
         }
         final Location hit = event.defender().getLocation();
@@ -153,10 +192,7 @@ public final class IceCrystals implements Listener {
                     || crystal.lastHit == now) {
                 continue;
             }
-            crystal.lastHit = now; // 同一下打中好幾個敵人只算一下
-            crystal.hitsLeft--;
-            crystal.at.getWorld().spawnParticle(Particle.ITEM_SNOWBALL, crystal.at, 6, 0.2, 0.3, 0.2, 0.05);
-            if (crystal.hitsLeft <= 0) {
+            if (chip(crystal, now)) {
                 it.remove();
                 broken.add(crystal);
             }

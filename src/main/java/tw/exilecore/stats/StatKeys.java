@@ -98,6 +98,10 @@ public final class StatKeys {
     public static final String FLAG_TRAP = "flag.trap";
     /** FLAT：同時最多多幾個圖騰。 */
     public static final String SKILL_TOTEMS = "skill.totems";
+    /** 2026-10-25：主要寶石的能量（輔助掛在引星上）：INCREASED 能量獲得、INCREASED 能量上限、FLAT 觸發時退還一半能量的機率 %。 */
+    public static final String META_ENERGY_GAIN = "meta.energy_gain";
+    public static final String META_ENERGY_MAX = "meta.energy_max";
+    public static final String META_ENERGY_REFUND = "meta.energy_refund";
     /** FLAT：召喚技能同時最多多幾隻召喚物（跟技能的標籤；魔像這種固定一隻的不吃）。 */
     public static final String SKILL_MINIONS = "skill.minions";
     /** FLAT：每秒回復最大生命的 x%（生機光環；帶 minion 標籤的給召喚物）。 */

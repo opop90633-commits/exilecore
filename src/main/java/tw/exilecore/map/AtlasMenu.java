@@ -266,28 +266,33 @@ public final class AtlasMenu extends Menu {
                     lore.add("<gray>" + THEME_NAMES.getOrDefault(map.theme(), map.theme()) + "・" + map.layout().displayName()
                             + "・Boss：<#af6025>" + ItemRenderer.escape(map.boss().name()));
                 }
-                if (cell.kind() == AtlasGrid.Kind.BOSS) {
+                // 2026-10-25：完成過的格子再開是普通的圖（Boss 格、腐化、淨化、石板只給第一次；核心「腐化之心」照樣算腐化）
+                final boolean corruptNow = done ? allCorrupt && !cell.purified() : corrupted(cell);
+                if (cell.kind() == AtlasGrid.Kind.BOSS && !done) {
                     lore.add("<#af6025>☠ Boss 格：Boss 生命 ×" + AtlasTree.number(grid.config().bossLife()) + "、必掉 " + grid.config().bossMaps()
                             + " 張地圖、傳奇機率 ×" + AtlasTree.number(grid.config().bossUnique()));
                 }
-                if (corrupted(cell)) {
+                if (corruptNow) {
                     final AtlasConfig.Corruption k = grid.config().corruption();
-                    lore.add("<#b07aff>腐化區" + (cell.corrupted() ? "" : "（腐化之心）") + "：怪物等級 +" + k.monsterLevel() + "、怪物群 +" + AtlasTree.number(k.pack()) + "%、物品數量 +"
+                    lore.add("<#b07aff>腐化區" + (cell.corrupted() && !done ? "" : "（腐化之心）") + "：怪物等級 +" + k.monsterLevel() + "、怪物群 +" + AtlasTree.number(k.pack()) + "%、物品數量 +"
                             + AtlasTree.number(k.quantity()) + "%、稀有度 +" + AtlasTree.number(k.rarity()) + "%");
-                    lore.add("<#b07aff>　第一次打倒 Boss：每個人 " + Math.round(grid.config().vaalChance() * 100) + "% 掉一顆蝕變石");
+                    if (!done) { // 2026-10-25：完成的格子吃不到第一次的獎勵，不寫
+                        lore.add("<#b07aff>　第一次打倒 Boss：每個人 " + Math.round(grid.config().vaalChance() * 100) + "% 掉一顆蝕變石");
+                    }
                 }
-                if (cell.purified()) {
+                if (cell.purified() && !done) {
                     lore.add("<#fff1b8>淨化區：難度不變；第一次打倒 Boss：每個人 "
                             + Math.round(grid.config().purification().fractureChance() * 100) + "% 掉一顆定星石"); // 2026-10-21
                 }
+                if (done && (cell.kind() == AtlasGrid.Kind.BOSS || cell.corrupted() || cell.purified())) {
+                    lore.add("<dark_gray>（原本是" + (cell.kind() == AtlasGrid.Kind.BOSS ? "Boss 格" : cell.corrupted() ? "腐化區" : "淨化區")
+                            + "：加成只給第一次，再開是普通的圖）");
+                }
                 // 2026-10-22：罩到這格的先驅石板（以前完全看不出哪些格子被石板罩到）
-                final List<String> tablets = tabletLines(atlas, q, r);
-                lore.addAll(towerRangeLines(atlas, q, r)); // 2026-10-24：在哪座塔的範圍內（還沒插石板的也寫）
-                if (!tablets.isEmpty()) {
-                    lore.addAll(tablets);
-                    if (done) {
-                        lore.add("<dark_gray>　（這格已完成：石板的加成只給第一次，再開不吃也不扣次數）");
-                    }
+                // 2026-10-25：完成的格子吃不到石板（只給第一次），塔範圍、石板都不寫
+                if (!done) {
+                    lore.addAll(towerRangeLines(atlas, q, r)); // 2026-10-24：在哪座塔的範圍內（還沒插石板的也寫）
+                    lore.addAll(tabletLines(atlas, q, r));
                 }
                 lore.add(where);
                 lore.add("");
@@ -342,6 +347,9 @@ public final class AtlasMenu extends Menu {
 
     /** 2026-10-24：這一格在不在任何一座塔的範圍內（含塔本身）。 */
     private boolean inTowerRange(final AtlasProgress atlas, final int q, final int r) {
+        if (q == 0 && r == 0) {
+            return false; // 2026-10-25：營地不是地圖，不算在塔的範圍裡（框會繞過它）
+        }
         if (rangeTowers == null) {
             rangeTowers = new ArrayList<>(atlas.completedTowers());
             rangeTowers.addAll(atlas.openTowers());
@@ -434,12 +442,12 @@ public final class AtlasMenu extends Menu {
                     strings.set(UiPack.AtlasCell.STRING_GLOW, "glow");
                     colors.set(UiPack.AtlasCell.COLOR_GLOW, GOLD);
                 }
-                if (!fogFinal && corrupted(cell)) {
+                if (!fogFinal && (done ? allCorrupt && !cell.purified() && cell.isMap() : corrupted(cell))) { // 2026-10-25：完成的不畫（腐化之心除外）
                     strings.set(UiPack.AtlasCell.STRING_CORRUPT, "corrupt");
-                } else if (!fogFinal && cell.purified()) {
+                } else if (!fogFinal && !done && cell.purified()) {
                     strings.set(UiPack.AtlasCell.STRING_CORRUPT, "corrupt"); // 2026-10-21：淨化區用同一個圈、換顏色
                     colors.set(UiPack.AtlasCell.COLOR_CORRUPT, PURIFY);
-                } else if (!fogFinal && cell.isMap()) {
+                } else if (!fogFinal && !done && cell.isMap()) { // 2026-10-25：完成的格子吃不到石板，不畫圈
                     // 2026-10-22：石板罩到的格子：同一個圈、石板色；2026-10-24：塔的範圍內（還沒插石板、塔還沒打）也畫，顏色暗一點
                     final int coverage = towerCoverage(atlas, q, r);
                     if (coverage > 0) {

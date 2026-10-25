@@ -76,7 +76,7 @@ class AscendancyConfigTest {
         assertEquals(List.of("ember", "venom", "frost", "star"), ids);
         assertEquals(8, config.totalPoints(), "四個試煉各 2 點");
         assertEquals(60, config.settings().cooldownSeconds());
-        assertEquals(8, config.settings().weeklyOpens(), "每週最多開 8 次（不用地圖物品，不能拿來刷）");
+        assertEquals(0, config.settings().weeklyOpens(), "2026-10-25 試煉不限次數（只留開完的冷卻）");
         // 一個接一個：第一個看廢墟的 Boss，後面的要先完成前一個
         AscendancyConfig.Trial previous = null;
         for (final AscendancyConfig.Trial trial : config.trials()) {

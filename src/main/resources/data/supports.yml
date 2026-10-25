@@ -3827,3 +3827,35 @@ supports:
     excludes: [minion]
     modifiers:
       - { stat: charge.sup.combo_power, type: FLAT, value: 25 }
+
+  # ---- 2026-10-25：主要寶石的能量輔助（照 PoE2 的 Boundless Energy II／Energy Retention／Energy Capacitor；名稱是自己的）----
+  # 掛在引星本身（第 2～5 孔），不管裡面放什麼法術都有用；requires 的 meta／invocation 是引星的標籤（skills.yml）。
+  boundless_energy:        # Boundless Energy II
+    name: 湧能
+    description: 掛在主要寶石上：引星的能量獲得增加 45%，更快觸發插槽法術。
+    icon: GLOWSTONE_DUST
+    tier: 3
+    requires: [meta]
+    mana_multiplier: 1.15
+    modifiers:
+      - { stat: meta.energy_gain, type: INCREASED, value: 45 }
+
+  energy_retention:        # Energy Retention
+    name: 返能
+    description: 掛在主要寶石上：引星每次觸發插槽法術時有 35% 機率退還一半能量。
+    icon: AMETHYST_SHARD
+    tier: 3
+    requires: [meta]
+    mana_multiplier: 1.1
+    modifiers:
+      - { stat: meta.energy_refund, type: FLAT, value: 35 }
+
+  energy_capacitor:        # Energy Capacitor
+    name: 擴能
+    description: 掛在 Invocation 類的主要寶石（異變引星、受創引星、斬殺引星）上：能量上限增加 80%——觸發得慢，但一次存比較多，退還時也退比較多。
+    icon: REDSTONE_BLOCK
+    tier: 3
+    requires: [invocation]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: meta.energy_max, type: INCREASED, value: 80 }

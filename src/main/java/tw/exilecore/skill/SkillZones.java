@@ -243,6 +243,7 @@ final class SkillZones {
             for (final LivingEntity target : targets.around(impact.center(), impact.radius(), owner)) {
                 damage.hit(owner, target, impact.profile(), null);
             }
+            targets.strike(owner, impact.profile(), SkillTargets.sphere(impact.center(), impact.radius()), impact); // 2026-10-25：落下的一擊打到鐘、冰晶
             Fx.as(impact.owner(), () -> visuals.blast(impact.visual(), impact.center(), impact.radius()));
         }
     }

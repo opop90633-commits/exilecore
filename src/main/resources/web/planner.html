@@ -1842,6 +1842,18 @@
   function keyName(slot) { return skillData && skillData.keys[slot] ? skillData.keys[slot] : "鍵" + (slot + 1); }
   function skillDef(id) { return skillData ? skillData.skillById.get(id) : null; }
   function supportDef(id) { return skillData ? skillData.supportById.get(id) : null; }
+  // 輔助孔顯示的名字：第 1 孔放技能寶石（@代號/等級/孔數）、共鳴（代號~）都轉成中文
+  function socketLabel(id) {
+    if (!id) return "空";
+    if (id.startsWith("@")) {
+      const [sid, lv] = id.slice(1).split("/");
+      const d = skillDef(sid);
+      return "技能寶石 " + (d ? d.name : sid) + (lv ? "（" + lv + " 級）" : "");
+    }
+    const resonant = id.endsWith("~");
+    const d = supportDef(resonant ? id.slice(0, -1) : id);
+    return (d ? d.name : id) + (resonant ? "（共鳴）" : "");
+  }
   function maxLevel() { return skillData ? skillData.maxLevel : 20; }
   function maxSockets() { return skillData ? skillData.maxSockets : 5; }
 
@@ -2315,7 +2327,7 @@
         renderSkills();
         updatePanel();
       });
-      const sups = s.supports.filter(Boolean).map(id => supportDef(id) ? supportDef(id).name : id);
+      const sups = s.supports.filter(Boolean).map(socketLabel);
       const name = node("div", { cls: "nm", role: "button", tabindex: "0", title: "改等級與輔助寶石", onclick: () => openSkillEditor(i),
         onkeydown: e => { if (e.key === "Enter") openSkillEditor(i); } },
         (def ? def.name : s.id + "（不認得）") + "　Lv." + s.level,
@@ -2451,7 +2463,6 @@
     const grid = node("div", { cls: "supgrid" });
     for (let k = 0; k < s.sockets; k++) {
       const id = s.supports[k];
-      const sup = id ? supportDef(id) : null;
       const r = id ? removeMap.get(id) : null;
       const gain = r && r.full > 0 && supportResult.full > 0 ? (supportResult.full / r.full - 1) * 100 : null;
       const b = node("button", { type: "button", cls: (id ? "on" : "empty") + (socketPick === k ? " picked" : ""),
@@ -2459,7 +2470,7 @@
         title: id ? "點一下選這個孔（再點下面的輔助就換上去）；右鍵拿掉" : "空孔：點一下選這個孔",
         onclick: () => { socketPick = socketPick === k ? -1 : k; drawSkillEditor(); },
         oncontextmenu: e => { e.preventDefault(); if (id) { s.supports[k] = ""; skillChanged(); } } },
-        node("div", { text: "第 " + (k + 1) + " 孔：" + (sup ? sup.name : id ? id : "空") }),
+        node("div", { text: "第 " + (k + 1) + " 孔：" + socketLabel(id) }),
         gain !== null ? node("span", { cls: "delta up", text: "這顆讓傷害 +" + gain.toFixed(1) + "%" }) : null,
         id ? node("span", { cls: "delta", style: "color:var(--quiet)", text: "（右鍵拿掉）" }) : null);
       grid.append(b);

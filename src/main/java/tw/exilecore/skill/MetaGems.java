@@ -145,8 +145,9 @@ public final class MetaGems {
                 continue;
             }
             final int level = usableLevel(state, entry);
-            final double gained = spec.energy() * multiplier * (1 + spec.energyMore().at(level) / 100.0);
-            final double max = MetaSpec.maxEnergy(socket.spell());
+            final double[] mods = energyModifiers(entry); // 2026-10-25：掛在引星上的能量輔助
+            final double gained = spec.energy() * multiplier * (1 + spec.energyMore().at(level) / 100.0) * (1 + mods[0] / 100.0);
+            final double max = MetaSpec.maxEnergy(socket.spell()) * (1 + mods[1] / 100.0);
             final Map<String, Double> mine = energy.computeIfAbsent(player.getUniqueId(), id -> new HashMap<>());
             // 能量記在「主要寶石:插槽法術」上：換了插槽法術就從 0 開始
             final String key = entry.skillId() + ":" + socket.spell().id();
@@ -154,7 +155,8 @@ public final class MetaGems {
             final double raw = mine.getOrDefault(key, 0.0) + gained;
             final Map<String, Long> fired = lastFired.computeIfAbsent(player.getUniqueId(), id -> new HashMap<>());
             if (raw >= max - 1e-9 && now - fired.getOrDefault(entry.skillId(), Long.MIN_VALUE / 2) >= MIN_GAP) {
-                mine.put(key, Math.min(raw - max, max * 0.99)); // 多出來的留著（但一次最多觸發一發）
+                final double refund = mods[2] > 0 && plugin.items().random().nextDouble() * 100 < mods[2] ? max / 2 : 0; // 2026-10-25：退還一半
+                mine.put(key, Math.min(raw - max + refund, max * 0.99)); // 多出來的留著（但一次最多觸發一發）
                 fired.put(entry.skillId(), now);
                 final double scale = (1 - spec.lessDamage() / 100.0) * (1 + spec.moreDamage() / 100.0);
                 final SkillDefinition metaDefinition = service.config().skill(entry.skillId());
@@ -164,6 +166,32 @@ public final class MetaGems {
                 mine.put(key, Math.min(raw, max)); // 還在間隔裡：存到滿為止
             }
         }
+    }
+
+    /** 2026-10-25：掛在這顆引星上的輔助給的 {能量獲得 %, 能量上限 %, 退還機率 %}（共鳴的 ~ 去掉；第 1 孔的法術 @ 跳過）。 */
+    double[] energyModifiers(final SkillLoadout.Entry entry) {
+        final double[] sum = new double[3];
+        for (String id : entry.supportIds()) {
+            if (id.startsWith(SkillLoadout.Entry.INNER_PREFIX)) {
+                continue;
+            }
+            if (id.endsWith(SkillLoadout.Entry.RESONANT_SUFFIX)) {
+                id = id.substring(0, id.length() - 1);
+            }
+            final SupportDefinition support = service.config().support(id);
+            if (support == null) {
+                continue;
+            }
+            for (final tw.exilecore.stats.Modifier modifier : support.modifiers()) {
+                switch (modifier.stat()) {
+                    case tw.exilecore.stats.StatKeys.META_ENERGY_GAIN -> sum[0] += modifier.value() * (modifier.type() == tw.exilecore.stats.ModType.INCREASED ? 100 : 1);
+                    case tw.exilecore.stats.StatKeys.META_ENERGY_MAX -> sum[1] += modifier.value() * (modifier.type() == tw.exilecore.stats.ModType.INCREASED ? 100 : 1);
+                    case tw.exilecore.stats.StatKeys.META_ENERGY_REFUND -> sum[2] += modifier.value();
+                    default -> { }
+                }
+            }
+        }
+        return sum;
     }
 
     /** 主要寶石實際用幾級算能量（2026-10-17：Lv.21 寶石照 21 級算，跟 SkillBuild 一樣：角色到 20 級寶石的需求等級就能用 21 級）。 */

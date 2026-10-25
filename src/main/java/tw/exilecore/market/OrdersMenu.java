@@ -52,7 +52,8 @@ final class OrdersMenu extends Menu {
 
     private ItemStack display(final ExchangeBook.Order order) {
         final CurrencyType type = plugin.currencies().repository().get(order.give());
-        final ItemStack icon = type == null ? new ItemStack(Material.PAPER) : plugin.currencies().create(type, 1);
+        final ItemStack icon = MarketService.starCoin(order.give()) ? tw.exilecore.sponsor.SponsorService.coinIcon() // 2026-10-25
+                : type == null ? new ItemStack(Material.PAPER) : plugin.currencies().create(type, 1);
         icon.setAmount(Math.max(1, Math.min(icon.getMaxStackSize(), order.remaining())));
         return appendLore(icon, "",
                 "<#7fd4ff>給 " + order.giveTotal() + " " + ItemRenderer.escape(service.currencyName(order.give()))

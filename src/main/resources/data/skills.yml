@@ -598,7 +598,7 @@ skills:
       - { stat: charge.event.cull.power, type: FLAT, value: 100 }
   tempest_bell:
     name: 驚雷之鐘
-    description: 在面前放一口鐘。你用攻擊打中鐘旁邊的敵人，鐘就響一次打周圍一圈（最多八次）。冷卻 6 秒。
+    description: 在面前放一口鐘。你用近戰攻擊打到鐘（或鐘旁邊的敵人），鐘就響一次打周圍一圈（最多八次）。冷卻 6 秒。
     icon: GOLD_INGOT   # 2026-10：原本 BELL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
@@ -2623,7 +2623,7 @@ skills:
 
   ice_wall:
     name: 霜壁
-    description: 在面前豎起一道冰牆，碰到的敵人一直被冰到。沿著冰牆留下四顆冰晶：擊中冰晶旁邊的敵人三下就碎，炸出一圈冰。
+    description: 在面前豎起一道冰牆，碰到的敵人一直被冰到。沿著冰牆留下四顆冰晶：技能打到冰晶（或冰晶旁邊的敵人）三下就碎，炸出一圈冰。
     icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
@@ -6713,7 +6713,7 @@ skills:
     icon: ECHO_SHARD
     type: spell
     tier: 14
-    tags: [persistent]
+    tags: [persistent, meta]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）；invocation＝對應 PoE2 的 Invocation（受傷／元素異常／近戰擊殺）
     mechanic: aura
     aura: { reserve: 100, radius: 8, allies: false }
     meta: { kind: crit, energy: 10, energy_more: [0, 57], less_damage: 20 }
@@ -6728,7 +6728,7 @@ skills:
     icon: PRISMARINE_CRYSTALS
     type: spell
     tier: 14
-    tags: [persistent]
+    tags: [persistent, meta, invocation]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）；invocation＝對應 PoE2 的 Invocation（受傷／元素異常／近戰擊殺）
     mechanic: aura
     aura: { reserve: 100, radius: 8, allies: false }
     meta: { kind: ailment, energy: 10, energy_more: [0, 57] }
@@ -6743,7 +6743,7 @@ skills:
     icon: FEATHER
     type: spell
     tier: 14
-    tags: [persistent]
+    tags: [persistent, meta]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）；invocation＝對應 PoE2 的 Invocation（受傷／元素異常／近戰擊殺）
     mechanic: aura
     aura: { reserve: 100, radius: 8, allies: false }
     meta: { kind: dodge, energy: 12, energy_more: [0, 57] }
@@ -6758,7 +6758,7 @@ skills:
     icon: TURTLE_SCUTE
     type: spell
     tier: 11
-    tags: [persistent]
+    tags: [persistent, meta, invocation]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）；invocation＝對應 PoE2 的 Invocation（受傷／元素異常／近戰擊殺）
     mechanic: aura
     aura: { reserve: 100, radius: 8, allies: false }
     meta: { kind: damage_taken, energy: 30, energy_more: [0, 57] }
@@ -6773,7 +6773,7 @@ skills:
     icon: BONE
     type: spell
     tier: 8
-    tags: [persistent]
+    tags: [persistent, meta]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）；invocation＝對應 PoE2 的 Invocation（受傷／元素異常／近戰擊殺）
     mechanic: aura
     aura: { reserve: 30, radius: 8, allies: false }
     meta: { kind: minion_death, energy: 50, energy_more: [0, 57] }
@@ -6788,7 +6788,7 @@ skills:
     icon: FLINT
     type: spell
     tier: 8
-    tags: [persistent]
+    tags: [persistent, meta, invocation]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）；invocation＝對應 PoE2 的 Invocation（受傷／元素異常／近戰擊殺）
     mechanic: aura
     aura: { reserve: 60, radius: 8, allies: false }
     meta: { kind: melee_kill, energy: 300, energy_more: [0, 57], more_damage: 50 }   # 2026-10-24：照 PoE2（300 能量、不乘怪物強度；更多 50% 傷害）

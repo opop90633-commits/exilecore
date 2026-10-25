@@ -291,7 +291,9 @@ public final class StashService {
                 : new java.util.ArrayList<>(shards.values());
         for (final byte[] mapBytes : mapBlobs) {
             for (final ItemStack map : ItemStack.deserializeItemsFromBytes(mapBytes)) {
-                if (map != null && !map.isEmpty() && stash.mapCount() < stash.mapCap()) {
+                // 2026-10-25：讀的時候不看上限——decode 時還沒套贊助加大的格數（上限還是 1000），
+                // 以前超過 1000 的地圖讀不進來、存檔時就被蓋掉＝每次重開吃掉多的。上限只擋放進去
+                if (map != null && !map.isEmpty()) {
                     stash.maps().add(map);
                 }
             }

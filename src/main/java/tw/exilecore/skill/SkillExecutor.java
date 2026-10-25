@@ -230,6 +230,8 @@ final class SkillExecutor {
                 tw.exilecore.skill.Fx.spawn(target.getWorld(), org.bukkit.Particle.SWEEP_ATTACK, SkillTargets.center(target), 2, radius * 0.3, 0.2, radius * 0.3, 0);
             }
         }
+        // 2026-10-25：揮到的範圍裡的鐘、冰晶直接被打到（不用旁邊有敵人）
+        targets.strike(origin.owner(), build.profile(), SkillTargets.coneShape(origin, reach, Math.max(build.angle(), 60)), new Object());
         visuals.strike(build.definition().visual(), origin, hits, reach, build.angle());
     }
 
@@ -268,6 +270,7 @@ final class SkillExecutor {
                 damage.hit(origin.owner(), target, build.profile(), null);
             }
         }
+        targets.strike(origin.owner(), build.profile(), SkillTargets.sphere(center, radius), new Object()); // 2026-10-25
         visuals.nova(build.definition().visual(), center, radius);
         final SkillParams.Zone ground = build.params().ground();
         if (ground != null) {
@@ -295,6 +298,7 @@ final class SkillExecutor {
         for (final LivingEntity target : targets.cone(origin, length, build.angle())) {
             damage.hit(origin.owner(), target, build.profile(), null);
         }
+        targets.strike(origin.owner(), build.profile(), SkillTargets.coneShape(origin, length, build.angle()), new Object()); // 2026-10-25
         visuals.cone(build.definition().visual(), origin, length, build.angle());
         final SkillParams.Aftershock aftershock = build.params().aftershock();
         if (aftershock != null) {
@@ -375,6 +379,7 @@ final class SkillExecutor {
                 damage.hit(player, target, leap.build().profile(), null);
             }
         }
+        targets.strike(player, leap.build().profile(), SkillTargets.sphere(at, radius), new Object()); // 2026-10-25
         player.setFallDistance(0);
         visuals.leapLand(at, radius);
     }
@@ -459,9 +464,11 @@ final class SkillExecutor {
         final Location from = player.getLocation();
         final SkillParams.Dash params = build.params().dash();
         final String visual = build.definition().visual();
+        final Object strikeSource = new Object(); // 2026-10-25：起點、順路、終點同一下（鐘、冰晶只算一次）
         // 起點爆開
         final double startRadius = build.scaledRadius(params.startRadius());
         if (startRadius > 0) {
+            targets.strike(player, build.profile(), SkillTargets.sphere(from, startRadius), strikeSource);
             for (final LivingEntity target : targets.around(from, startRadius, player)) {
                 damage.hit(player, target, build.profile(), null);
             }
@@ -469,6 +476,7 @@ final class SkillExecutor {
         }
         // 順路打擊
         if (params.hitWidth() > 0) {
+            targets.strike(player, build.profile(), SkillTargets.segment(from, to, params.hitWidth()), strikeSource);
             for (final LivingEntity target : targets.alongLine(from, to, params.hitWidth(), player)) {
                 damage.hit(player, target, build.profile(), knockback(from, target, build.knockback()));
             }
@@ -493,6 +501,7 @@ final class SkillExecutor {
         // 終點爆開
         final double endRadius = build.scaledRadius(params.endRadius());
         if (endRadius > 0) {
+            targets.strike(player, build.profile(), SkillTargets.sphere(to, endRadius), strikeSource);
             for (final LivingEntity target : targets.around(to, endRadius, player)) {
                 damage.hit(player, target, build.profile(), null);
             }
@@ -882,6 +891,7 @@ final class SkillExecutor {
         for (final LivingEntity target : targets.around(center, radius, origin.owner())) {
             damage.hit(origin.owner(), target, profile, null);
         }
+        targets.strike(origin.owner(), profile, SkillTargets.sphere(center, radius), new Object()); // 2026-10-25
         visuals.detonate(build.definition().visual(), center, radius);
     }
 

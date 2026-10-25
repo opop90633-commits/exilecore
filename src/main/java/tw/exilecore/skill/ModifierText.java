@@ -22,6 +22,8 @@ public final class ModifierText {
     public static String tagName(final String tag) {
         return switch (tag) {
             case Tags.ATTACK -> "攻擊";
+            case "meta" -> "主要寶石"; // 2026-10-25：能量輔助的 requires
+            case "invocation" -> "Invocation 類主要寶石（異變、受創、斬殺引星）";
             case Tags.SPELL -> "法術";
             case Tags.MELEE -> "近戰";
             case Tags.PROJECTILE -> "投射物";
@@ -242,6 +244,9 @@ public final class ModifierText {
             case StatKeys.FLAG_SPELL_TOTEM -> "法術改由圖騰施放（放下圖騰，它每隔一段時間對附近的敵人放一次）";
             case StatKeys.FLAG_TRAP -> "法術改成丟出去的陷阱（敵人靠近才觸發）";
             case StatKeys.SKILL_TOTEMS -> "同時最多多 " + number(value) + " 個圖騰";
+            case StatKeys.META_ENERGY_GAIN -> "主要寶石的能量獲得增加 " + number(value) + "%"; // 2026-10-25
+            case StatKeys.META_ENERGY_MAX -> "主要寶石的能量上限增加 " + number(value) + "%";
+            case StatKeys.META_ENERGY_REFUND -> "觸發時 " + number(value) + "% 機率退還一半能量";
             case StatKeys.SKILL_MINIONS -> "同時最多多 " + number(value) + " 隻召喚物";
             case StatKeys.AURA_EFFECT -> scaled(modifier, "光環效果", percent);
             case StatKeys.CURSE_EFFECT -> scaled(modifier, "詛咒效果", percent);
@@ -378,7 +383,7 @@ public final class ModifierText {
             case StatKeys.SEAL_REPEAT -> "每解開一個封印，自動多放 " + number(value) + " 次（傷害少一半）";
             case StatKeys.SEAL_AREA -> "每解開一個封印，這一次範圍增加 " + number(value) + "%";
             case StatKeys.SEAL_PROJECTILES -> "每解開一個封印，這一次多射 " + number(value) + " 發投射物";
-            case StatKeys.CRYSTAL_COUNT -> "留下 " + number(value) + " 顆冰晶（擊中冰晶旁邊的敵人會打到冰晶，打碎時炸出一圈冰）";
+            case StatKeys.CRYSTAL_COUNT -> "留下 " + number(value) + " 顆冰晶（技能直接打到冰晶、或擊中冰晶旁邊的敵人都算打一下，打碎時炸出一圈冰）";
             case StatKeys.CRYSTAL_HITS -> modifier.type() == tw.exilecore.stats.ModType.FLAT
                     ? (value >= 0 ? "冰晶要多打 " + number(value) + " 下才碎" : "冰晶少打 " + number(-value) + " 下就碎（最少一下）")
                     : scaled(modifier, "冰晶要打的下數", percent);
@@ -420,7 +425,9 @@ public final class ModifierText {
             case StatKeys.DAMAGE_CLOSE -> scaled(modifier, "對近身（3.5 格內）敵人的傷害", percent);
             case StatKeys.DAMAGE_VS_FULL_LIFE -> scaled(modifier, "對滿血敵人的傷害", percent);
             case StatKeys.CRIT_VS_FULL_LIFE -> scaled(modifier, "對滿血敵人的暴擊率", percent);
-            case StatKeys.DAMAGE_HIGH_MANA -> scaled(modifier, "魔力 90% 以上時的傷害", percent);
+            case StatKeys.DAMAGE_HIGH_MANA -> modifier.type() == tw.exilecore.stats.ModType.FLAT ? scaled(modifier, "魔力 90% 以上時的傷害", percent)
+                    : "魔力 90% 以上時，" + (modifier.type() == tw.exilecore.stats.ModType.MORE ? (value >= 0 ? "更多 " : "更少 ") : (value >= 0 ? "增加 " : "減少 "))
+                    + percent + "% 傷害"; // 2026-10-25：讀起來順一點（以前「30% 更多魔力 90% 以上時的傷害」）
             case StatKeys.DAMAGE_CLASH -> "生命百分比比敵人低時更多 " + number(value) + "% 傷害，比敵人高時更少 " + number(value / 2) + "%";
             case StatKeys.DAMAGE_VS_UNIQUE -> scaled(modifier, "對傳奇怪物與 Boss 的傷害", percent);
             case StatKeys.SPELL_BASE_CRIT -> "基礎暴擊率 " + number(value) + "%"; // 2026-10-15

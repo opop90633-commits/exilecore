@@ -884,17 +884,24 @@ public final class SponsorService {
             return "帳號資料載入中";
         }
         final long coins = coins(player);
-        if (coins < amount) {
+        // 2026-10-25：退款（chargeback）時星幣已經花掉一部分：有多少扣多少、累積照樣全扣，回報還差多少
+        //（以前不夠就整個不扣：先花光再退款，什麼都扣不到）。一般的扣星幣不夠還是不扣
+        if (coins < amount && !refund) {
             return "星幣只有 " + format(coins);
         }
+        final long taken = Math.min(coins, amount);
         final Map<String, String> values = new LinkedHashMap<>();
-        values.put(COINS, String.valueOf(coins - amount));
+        values.put(COINS, String.valueOf(coins - taken));
         if (refund) {
             values.put(TOTAL, String.valueOf(Math.max(0, total(player) - amount)));
         }
         accounts().commitAccount(player, values, "贊助：管理員扣星幣");
         refresh(player);
-        plugin.getSLF4JLogger().info("[贊助] 管理員扣 {} 的 {} 星幣（{}）", player.getName(), amount, refund ? "退款，累積也扣" : "累積不變");
+        plugin.getSLF4JLogger().info("[贊助] 管理員扣 {} 的 {} 星幣（{}）", player.getName(), taken, refund ? "退款，累積也扣" : "累積不變");
+        if (taken < amount) {
+            plugin.getSLF4JLogger().warn("[贊助] {} 退款：星幣已經花掉，只扣到 {}，還差 {}（累積已扣 {}）", player.getName(), taken, amount - taken, amount);
+            return "星幣已經花掉一部分：只扣到 " + format(taken) + "，還差 " + format(amount - taken) + "（累積贊助已扣 " + format(amount) + "）";
+        }
         return null;
     }
 
@@ -934,6 +941,38 @@ public final class SponsorService {
         }
         plugin.getSLF4JLogger().info("[贊助] {} 花 {} 星幣：{}（剩 {}）", player.getName(), price, what, coins(player));
         return null;
+    }
+
+    /** 2026-10-25：通貨交易所能不能用星幣（null = 可以）。 */
+    public String exchangeProblem(final Player player) {
+        return spendProblem(player);
+    }
+
+    /**
+     * 2026-10-25：通貨交易所加減星幣（delta 負的是扣）：記憶體先改，回傳要跟交易所的資料放在同一個交易裡寫的工作。
+     * 帳號沒載入、扣了會變負的回傳 null（什麼都沒改）。不算累積贊助。
+     */
+    public CharacterRepository.ExtraWork exchangeCoins(final Player player, final long delta, final String what) {
+        if (delta == 0 || accounts() == null || !accounts().accountLoaded(player)) {
+            return null;
+        }
+        final long next = coins(player) + delta;
+        if (next < 0) {
+            return null;
+        }
+        final CharacterRepository.ExtraWork work = accounts().accountWork(player, Map.of(COINS, String.valueOf(next)));
+        if (work != null) {
+            plugin.getSLF4JLogger().info("[贊助] {} 交易所 {} 星幣：{}（現在 {}）", player.getName(), delta > 0 ? "+" + delta : String.valueOf(delta),
+                    what, coins(player));
+        }
+        return work;
+    }
+
+    /** 2026-10-25：通貨交易所的星幣圖示（跟星幣券同一張圖）。 */
+    public static ItemStack coinIcon() {
+        final ItemStack stack = StarVouchers.withArt(ItemStack.of(org.bukkit.Material.PAPER));
+        stack.editMeta(meta -> meta.displayName(tw.exilecore.item.ItemRenderer.line("<#f5b942>星幣")));
+        return stack;
     }
 
     /** 星幣券（2026-10）：扣星幣（開券）。成功 null。 */

@@ -376,6 +376,8 @@ final class ProjectileEngine implements Listener {
             return;
         }
         visuals.arrowTrail(shot.visual(), arrow.getLocation());
+        final Location arrowAt = arrow.getLocation(); // 2026-10-25：這一 tick 飛過的路上的冰晶、鐘直接被打到
+        targets.strike(owner, shot.profile, SkillTargets.segment(arrowAt.clone().subtract(arrow.getVelocity()), arrowAt, 0.3), shot);
         if (--shot.ticksLeft <= 0) {
             if (shot.build.returning() && !shot.secondary) {
                 stopEffects(shot, owner, arrow.getLocation(), false);
@@ -438,6 +440,10 @@ final class ProjectileEngine implements Listener {
                         candidate -> targets.valid(candidate, owner) && !shot.hit.contains(candidate.getUniqueId()));
         if (entity == null && travel > 1e-6 && shot.contact()) {
             entity = lowTarget(shot, owner, start, travel); // 2026-10：矮的怪（洞穴蜘蛛、蠹魚）從頭頂飛過去打不到
+        }
+        if (travel > 1e-6 && shot.contact()) { // 2026-10-25：飛過的路上的冰晶、鐘直接被打到
+            final double reach = entity != null ? entity.getHitPosition().distance(from) : travel;
+            targets.strike(owner, shot.profile, SkillTargets.segment(start, start.clone().add(shot.direction.clone().multiply(reach)), shot.size), shot);
         }
         if (entity != null && entity.getHitEntity() instanceof LivingEntity target) {
             final Vector at = entity.getHitPosition();
@@ -682,6 +688,7 @@ final class ProjectileEngine implements Listener {
     /** 停下：會爆炸的打周圍（這一發直接打中的不再打一次），再做停下來的效果，然後移除。 */
     private void stop(final Shot shot, final Player owner, final Location at) {
         if (shot.explode > 0) {
+            targets.strike(owner, shot.profile, SkillTargets.sphere(at, shot.explode), new Object()); // 2026-10-25：爆炸也打到冰晶、鐘
             for (final LivingEntity victim : targets.around(at, shot.explode, owner)) {
                 if (shot.struck.contains(victim.getUniqueId())) {
                     continue;

@@ -123,6 +123,25 @@ public final class MarketService {
         return book;
     }
 
+    // ---- 2026-10-25：交易所的星幣（帳號裡的贊助星幣） ----
+
+    static boolean starCoin(final String id) {
+        return Wallet.STAR_COIN.equals(id);
+    }
+
+    /** 星幣能不能在交易所用（null = 可以）。 */
+    private String starProblem(final Player player) {
+        if (plugin.sponsors() == null) {
+            return "贊助沒有開放，星幣不能交易";
+        }
+        return plugin.sponsors().exchangeProblem(player);
+    }
+
+    /** 加減星幣，回傳跟交易所資料一起寫的工作（null = 失敗，什麼都沒改）。 */
+    private tw.exilecore.character.CharacterRepository.ExtraWork starWork(final Player player, final long delta, final String what) {
+        return plugin.sponsors() == null ? null : plugin.sponsors().exchangeCoins(player, delta, what);
+    }
+
     // ---- 載入 ----
 
     /** 啟動時（主執行緒）：把資料庫裡的上架、收入、掛單讀進來。 */
@@ -700,8 +719,17 @@ public final class MarketService {
         final Map<String, Integer> collected = new LinkedHashMap<>();
         final long now = System.currentTimeMillis();
         boolean blocked = false;
+        tw.exilecore.character.CharacterRepository.ExtraWork stars = null;
         for (final Proceed proceed : mine) {
-            final int rest = wallet().deposit(player, proceed.currencyId, proceed.amount);
+            final int rest;
+            if (starCoin(proceed.currencyId)) {
+                // 2026-10-25：交易所換到的星幣：加進帳號（帳號還沒載入就先留著）
+                final tw.exilecore.character.CharacterRepository.ExtraWork work = starWork(player, proceed.amount, "交易所收入");
+                rest = work == null ? proceed.amount : 0;
+                stars = tw.exilecore.character.CharacterRepository.ExtraWork.both(stars, work);
+            } else {
+                rest = wallet().deposit(player, proceed.currencyId, proceed.amount);
+            }
             if (rest >= proceed.amount) {
                 blocked = true; // 一個都放不下：這筆不動
                 continue;
@@ -720,10 +748,14 @@ public final class MarketService {
             }
         }
         if (!removed.isEmpty()) {
+            final tw.exilecore.character.CharacterRepository.ExtraWork starsFinal = stars;
             plugin.characters().commit(List.of(player), connection -> {
                 repository.deleteProceeds(connection, removed);
                 for (final MarketRepository.ProceedRow row : leftovers) {
                     repository.insertProceed(connection, row);
+                }
+                if (starsFinal != null) {
+                    starsFinal.run(connection);
                 }
             }, opId, (auto ? "收入自動入袋（" : "領取市集收入（") + player.getName() + "）").thenAccept(ok -> {
                 if (ok) {
@@ -794,6 +826,12 @@ public final class MarketService {
         if (!config().priceable(give) || !config().priceable(want)) {
             return "這種通貨不能在交易所買賣";
         }
+        if (starCoin(give) || starCoin(want)) {
+            final String starProblem = starProblem(player);
+            if (starProblem != null) {
+                return starProblem;
+            }
+        }
         final int max = config().maxOrderAmount();
         if (giveAmount < 1 || wantAmount < 1 || giveAmount > max || wantAmount > max) {
             return "數量要在 1 到 " + max + " 之間";
@@ -819,7 +857,13 @@ public final class MarketService {
         // 先成交，剩下的掛著
         final ExchangeBook.Result result = book.match(give, giveAmount, want, wantAmount, account);
         plugin.gold().take(player, fee, tw.exilecore.economy.EconomyLedger.FEE_EXCHANGE);
-        wallet().take(player, give, result.paid() + result.restGive());
+        tw.exilecore.character.CharacterRepository.ExtraWork stars = null;
+        if (starCoin(give)) {
+            // 2026-10-25：付星幣：從帳號扣（上面檢查過夠、帳號載入了），跟掛單一起寫
+            stars = starWork(player, -(long) (result.paid() + result.restGive()), "交易所下單");
+        } else {
+            wallet().take(player, give, result.paid() + result.restGive());
+        }
         final String opId = UUID.randomUUID().toString();
         final long now = System.currentTimeMillis();
         final List<MarketRepository.ProceedRow> proceedRows = new ArrayList<>();
@@ -856,7 +900,14 @@ public final class MarketService {
             }
         }
         // 自己收到的：直接放（倉庫通貨頁 → 通貨袋 → 背包），放不下的變成收入
-        final int notDeposited = result.received() > 0 ? wallet().deposit(player, want, result.received()) : 0;
+        final int notDeposited;
+        if (result.received() > 0 && starCoin(want)) {
+            final tw.exilecore.character.CharacterRepository.ExtraWork got = starWork(player, result.received(), "交易所成交");
+            notDeposited = got == null ? result.received() : 0;
+            stars = tw.exilecore.character.CharacterRepository.ExtraWork.both(stars, got);
+        } else {
+            notDeposited = result.received() > 0 ? wallet().deposit(player, want, result.received()) : 0;
+        }
         if (notDeposited > 0) {
             final Proceed proceed = new Proceed(UUID.randomUUID().toString(), account, want, notDeposited, "exchange",
                     "交易所成交（放不下的部分）", now, opId, false);
@@ -873,7 +924,11 @@ public final class MarketService {
                     result.restWant(), Instant.ofEpochMilli(now), 0);
         }
         final MarketRepository.OrderRow restingRow = orderRow;
+        final tw.exilecore.character.CharacterRepository.ExtraWork starsFinal = stars;
         plugin.characters().commit(List.of(player), connection -> {
+            if (starsFinal != null) {
+                starsFinal.run(connection); // 2026-10-25：星幣跟掛單、成交同一個交易
+            }
             for (final String[] fill : fillRows) {
                 repository.insertFill(connection, fill[0], fill[1], Integer.parseInt(fill[2]));
             }
@@ -924,9 +979,22 @@ public final class MarketService {
         if (!order.confirmed()) {
             return "掛單還在存檔中，請稍等";
         }
+        if (starCoin(order.give())) {
+            final String starProblem = starProblem(player);
+            if (starProblem != null) {
+                return starProblem;
+            }
+        }
         book.remove(order.id());
         final int refund = order.remaining();
-        final int rest = refund > 0 ? wallet().deposit(player, order.give(), refund) : 0;
+        tw.exilecore.character.CharacterRepository.ExtraWork stars = null;
+        final int rest;
+        if (refund > 0 && starCoin(order.give())) {
+            stars = starWork(player, refund, "取消交易所掛單退回");
+            rest = stars == null ? refund : 0; // 萬一加不進去：變成收入，下次再領
+        } else {
+            rest = refund > 0 ? wallet().deposit(player, order.give(), refund) : 0;
+        }
         final String opId = UUID.randomUUID().toString();
         final long now = System.currentTimeMillis();
         MarketRepository.ProceedRow leftover = null;
@@ -939,8 +1007,12 @@ public final class MarketService {
         }
         final MarketRepository.ProceedRow leftoverRow = leftover;
         final String id = order.id();
+        final tw.exilecore.character.CharacterRepository.ExtraWork starsFinal = stars;
         plugin.characters().commit(List.of(player), connection -> {
             repository.deleteOrder(connection, id);
+            if (starsFinal != null) {
+                starsFinal.run(connection);
+            }
             if (leftoverRow != null) {
                 repository.insertProceed(connection, leftoverRow);
             }
@@ -958,7 +1030,7 @@ public final class MarketService {
 
     String currencyName(final String id) {
         final CurrencyType type = plugin.currencies().repository().get(id);
-        return type == null ? id : type.name();
+        return type == null ? (starCoin(id) ? "星幣" : id) : type.name();
     }
 
     static String duration(final long millis) {

@@ -28,12 +28,21 @@ public final class Wallet {
 
     private final ExileCore plugin;
 
+    /**
+     * 2026-10-25：通貨交易所的「星幣」（帳號裡的贊助星幣，不是物品）。這裡只負責數量與名稱；
+     * 拿走、存入要跟交易所的資料一起寫進同一個交易，在 MarketService 另外處理（take、deposit 不碰它）。
+     */
+    public static final String STAR_COIN = "star_coin";
+
     public Wallet(final ExileCore plugin) {
         this.plugin = plugin;
     }
 
     /** 通貨袋＋背包＋倉庫通貨頁裡有幾個這種通貨。 */
     public int available(final Player player, final String currencyId) {
+        if (STAR_COIN.equals(currencyId)) {
+            return plugin.sponsors() == null ? 0 : (int) Math.min(Integer.MAX_VALUE, Math.max(0, plugin.sponsors().coins(player)));
+        }
         return pouch(player, currencyId) + inventory(player, currencyId) + stash(player, currencyId);
     }
 
@@ -61,6 +70,9 @@ public final class Wallet {
     public boolean take(final Player player, final String currencyId, final int amount) {
         if (amount <= 0) {
             return true;
+        }
+        if (STAR_COIN.equals(currencyId)) {
+            return false; // 星幣不從這裡扣（MarketService 跟交易所的資料一起寫）
         }
         if (available(player, currencyId) < amount) {
             return false;
@@ -100,6 +112,9 @@ public final class Wallet {
      * @return 放不下的數量
      */
     public int deposit(final Player player, final String currencyId, final int amount) {
+        if (STAR_COIN.equals(currencyId)) {
+            return Math.max(0, amount); // 星幣不從這裡存（不然會被當成通貨塞進倉庫通貨頁）
+        }
         int remaining = Math.max(0, amount);
         final Optional<Stash> stash = stashOf(player);
         if (stash.isPresent()) {
@@ -198,6 +213,6 @@ public final class Wallet {
     /** 「3 至臻石」這種說法。 */
     public String price(final String currencyId, final int amount) {
         final CurrencyType type = plugin.currencies().repository().get(currencyId);
-        return String.format(Locale.ROOT, "%,d %s", amount, type == null ? currencyId : type.name());
+        return String.format(Locale.ROOT, "%,d %s", amount, type == null ? (STAR_COIN.equals(currencyId) ? "星幣" : currencyId) : type.name());
     }
 }

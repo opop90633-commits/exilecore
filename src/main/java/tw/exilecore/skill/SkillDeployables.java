@@ -181,6 +181,7 @@ final class SkillDeployables implements Listener {
         this.executor = executor;
         this.damage = damage;
         this.key = new NamespacedKey(plugin, "deployable");
+        targets.addStrikeable(this::struck); // 2026-10-25：近戰攻擊直接打到鐘也會響
     }
 
     private long now() {
@@ -877,12 +878,31 @@ final class SkillDeployables implements Listener {
         }
     }
 
+    /** 會讓鐘響的：近戰攻擊（不是鐘自己響的、不是地面效果一波一波的、不是遠程）。 */
+    private static boolean ringsBell(final SkillProfile skill) {
+        return !skill.id().endsWith(".ring") && !skill.id().endsWith(".zone") && skill.isAttack()
+                && skill.tags().contains(tw.exilecore.stats.Tags.MELEE);
+    }
+
+    /** 2026-10-25：近戰攻擊揮到的範圍裡有自己的鐘：直接響（不用旁邊有敵人）。 */
+    private void struck(final Player owner, final SkillProfile skill, final java.util.function.Predicate<Location> inside, final Object source) {
+        if (!ringsBell(skill)) {
+            return;
+        }
+        final long now = now();
+        for (final Deployed bell : deployed) {
+            if (bell.spec.kind() == DeploySpec.Kind.BELL && bell.owner.equals(owner.getUniqueId()) && bell.ringsLeft > 0
+                    && now >= bell.nextTick && inside.test(bell.feet.clone().add(0, 0.5, 0))) {
+                queueRing(bell, now);
+            }
+        }
+    }
+
     /** 施放者在鐘旁邊打中敵人：鐘排隊響一次（下一 tick）。 */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onHit(final HitEvent event) {
         if (!(event.attacker() instanceof Player player) || !event.result().hit() || event.result().blocked()
-                || event.skill().id().endsWith(".ring") || event.skill().id().endsWith(".zone") || !event.skill().isAttack()
-                || !event.skill().tags().contains(tw.exilecore.stats.Tags.MELEE)) {
+                || !ringsBell(event.skill())) {
             return; // 只有近戰攻擊打中（不是地面效果一波一波的、不是遠程）
         }
         final long now = now();
@@ -892,18 +912,18 @@ final class SkillDeployables implements Listener {
                     || event.defender().getLocation().distanceSquared(bell.feet) > bell.spec.range() * bell.spec.range()) {
                 continue;
             }
-            boolean queued = false;
-            for (final Ring ring : rings) {
-                if (ring.bell() == bell) {
-                    queued = true;
-                    break;
-                }
-            }
-            if (!queued) {
-                bell.nextTick = now + Math.max(1, Math.round(bell.spec.interval() * 20));
-                rings.add(new Ring(bell, now + 1));
+            queueRing(bell, now);
+        }
+    }
+
+    private void queueRing(final Deployed bell, final long now) {
+        for (final Ring ring : rings) {
+            if (ring.bell() == bell) {
+                return;
             }
         }
+        bell.nextTick = now + Math.max(1, Math.round(bell.spec.interval() * 20));
+        rings.add(new Ring(bell, now + 1));
     }
 
     /** 玩家不能拿走圖騰頭上的東西。 */
