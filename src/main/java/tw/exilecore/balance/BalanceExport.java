@@ -139,6 +139,8 @@ public final class BalanceExport {
             outliers(characters, records, root, md);
             root.add("static", statics);
             poe2Table(statics, md);
+            mapRuns(BalanceRecords.get(plugin).recentMaps(RECORD_DAYS), root, md); // 2026-10-25：第二步
+            deaths(BalanceRecords.get(plugin).recentDeaths(RECORD_DAYS), root, md);
             return write(root, md);
         }).whenComplete((files, error) -> {
             if (error != null) {
@@ -282,6 +284,7 @@ public final class BalanceExport {
         // 實測：主技能
         final Map<String, List<Double>[]> measured = new HashMap<>();
         final Map<String, Integer> measuredFights = new HashMap<>();
+        final Map<String, Integer> measuredInstant = new HashMap<>(); // 2026-10-25：3 秒內打死的場次
         for (final DpsRecords.Entry e : records) {
             if (!"boss".equals(e.kind()) || e.mainSkill() == null) {
                 continue;
@@ -292,8 +295,11 @@ public final class BalanceExport {
             if (bands[band] == null) {
                 bands[band] = new ArrayList<>();
             }
-            bands[band].add(e.dps());
+            bands[band].add(e.trueDps()); // 2026-10-25：不套 3 秒地板
             measuredFights.merge(e.mainSkill(), 1, Integer::sum);
+            if (e.instant()) {
+                measuredInstant.merge(e.mainSkill(), 1, Integer::sum);
+            }
         }
         final JsonObject json = new JsonObject();
         final List<String> ids = new ArrayList<>(names.keySet());
@@ -301,10 +307,12 @@ public final class BalanceExport {
         md.add("");
         md.add("## 2. 技能");
         md.add("");
-        md.add("裝備率＝活躍角色裝著這個技能的比例；估計＝角色頁的每秒傷害估計（中位數，按等級區間）；實測＝輸出紀錄主技能的每秒傷害（中位／90%）。");
+        md.add("裝備率＝活躍角色裝著這個技能的比例（0% 但有實測＝角色頁快照沒更新）；估計＝角色頁的每秒傷害估計（中位數，按等級區間）；"
+                + "實測＝輸出紀錄主技能的每秒傷害（中位／90%，用實際秒數算、不套 3 秒地板）；秒殺＝3 秒內打死的場次比例（高的話實測只是下限）。"
+                + "「宿主＞技能」＝放在英靈圖騰、星咒圖騰裡的。");
         md.add("");
-        md.add("| 技能 | 裝備率 | 估計 1-40 | 41-70 | 71-90 | 91+ | 實測場數 | 實測 41-70 中位／90% | 71-90 | 91+ | 常見輔助 |");
-        md.add("|---|---|---|---|---|---|---|---|---|---|---|");
+        md.add("| 技能 | 裝備率 | 估計 1-40 | 41-70 | 71-90 | 91+ | 實測場數 | 秒殺 | 實測 41-70 中位／90% | 71-90 | 91+ | 常見輔助 |");
+        md.add("|---|---|---|---|---|---|---|---|---|---|---|---|");
         for (final String id : ids) {
             final SkillDefinition d = plugin.skills().config().skill(id);
             if (d == null || d.hidden()) {
@@ -322,6 +330,7 @@ public final class BalanceExport {
             s.add("measuredMedian", bandArray(mea, false));
             s.add("measuredP90", bandArray(mea, true));
             s.addProperty("measuredFights", measuredFights.getOrDefault(name, 0));
+            s.addProperty("measuredInstant", measuredInstant.getOrDefault(name, 0));
             final JsonObject sup = new JsonObject();
             final List<Map.Entry<String, Integer>> top = topEntries(withSupports.getOrDefault(id, Map.of()), 5);
             final List<String> supNames = new ArrayList<>();
@@ -334,10 +343,34 @@ public final class BalanceExport {
             if (count == 0 && measuredFights.getOrDefault(name, 0) == 0) {
                 continue; // 沒人用的另外列在「異常」
             }
-            md.add("| " + name + " | " + percent(count, characters.size()) + " | " + fmt(med(est, 0)) + " | " + fmt(med(est, 1)) + " | "
-                    + fmt(med(est, 2)) + " | " + fmt(med(est, 3)) + " | " + measuredFights.getOrDefault(name, 0) + " | "
+            md.add("| " + name + " | " + percent(count, characters.size()) + (count == 0 ? "（快照沒更新）" : "") + " | " + fmt(med(est, 0)) + " | "
+                    + fmt(med(est, 1)) + " | " + fmt(med(est, 2)) + " | " + fmt(med(est, 3)) + " | " + measuredFights.getOrDefault(name, 0) + " | "
+                    + percent(measuredInstant.getOrDefault(name, 0), measuredFights.getOrDefault(name, 0)) + " | "
                     + fmt(med(mea, 1)) + "／" + fmt(p90(mea, 1)) + " | " + fmt(med(mea, 2)) + "／" + fmt(p90(mea, 2)) + " | "
                     + fmt(med(mea, 3)) + "／" + fmt(p90(mea, 3)) + " | " + String.join("、", supNames) + " |");
+        }
+        // 2026-10-25：「宿主＞技能」（英靈圖騰＞千鈞砸…）：不是技能定義的名字，另外列
+        final List<String> hosted = new ArrayList<>();
+        for (final String key : measured.keySet()) {
+            if (key.contains("＞")) {
+                hosted.add(key);
+            }
+        }
+        hosted.sort((a, b) -> measuredFights.getOrDefault(b, 0) - measuredFights.getOrDefault(a, 0));
+        for (final String key : hosted) {
+            final List<Double>[] mea = measured.get(key);
+            final JsonObject s = new JsonObject();
+            s.addProperty("name", key);
+            s.addProperty("hosted", true);
+            s.add("measuredMedian", bandArray(mea, false));
+            s.add("measuredP90", bandArray(mea, true));
+            s.addProperty("measuredFights", measuredFights.getOrDefault(key, 0));
+            s.addProperty("measuredInstant", measuredInstant.getOrDefault(key, 0));
+            json.add(key, s);
+            md.add("| " + key + " | - | - | - | - | - | " + measuredFights.getOrDefault(key, 0) + " | "
+                    + percent(measuredInstant.getOrDefault(key, 0), measuredFights.getOrDefault(key, 0)) + " | "
+                    + fmt(med(mea, 1)) + "／" + fmt(p90(mea, 1)) + " | " + fmt(med(mea, 2)) + "／" + fmt(p90(mea, 2)) + " | "
+                    + fmt(med(mea, 3)) + "／" + fmt(p90(mea, 3)) + " | （宿主的輔助見異常值表） |");
         }
         root.add("skills", json);
     }
@@ -532,57 +565,75 @@ public final class BalanceExport {
 
     private void bosses(final List<DpsRecords.Entry> records, final JsonObject root, final List<String> md) {
         final Map<String, List<DpsRecords.Entry>> byBoss = new TreeMap<>();
-        final Map<String, List<Double>> byAsc = new TreeMap<>();
+        final Map<String, List<Double>[]> byAsc = new TreeMap<>(); // 2026-10-25：按等級區間分
         for (final DpsRecords.Entry e : records) {
             if (!"boss".equals(e.kind())) {
                 continue;
             }
             byBoss.computeIfAbsent(e.target() == null ? "?" : e.target(), k -> new ArrayList<>()).add(e);
-            byAsc.computeIfAbsent(e.ascendancy() == null ? "（未昇華）" : e.ascendancy(), k -> new ArrayList<>()).add(e.dps());
+            @SuppressWarnings("unchecked")
+            final List<Double>[] bands = byAsc.computeIfAbsent(e.ascendancy() == null ? "（未昇華）" : e.ascendancy(), k -> new List[BANDS.length]);
+            final int band = bandOf(e.level());
+            if (bands[band] == null) {
+                bands[band] = new ArrayList<>();
+            }
+            bands[band].add(e.trueDps());
         }
         final JsonObject json = new JsonObject();
         md.add("");
         md.add("## 6. Boss（最近 " + RECORD_DAYS + " 天）");
         md.add("");
-        md.add("| Boss | 場次（人次） | 秒數中位 | 平均人數 | 每人每秒傷害中位 | 最高每秒傷害（誰） |");
-        md.add("|---|---|---|---|---|---|");
+        md.add("秒數與每秒傷害用實際秒數（不套 3 秒地板）；秒殺率＝3 秒內打死的場次比例。");
+        md.add("");
+        md.add("| Boss | 場次（人次） | 秒數中位 | 秒殺率 | 平均人數 | 每人每秒傷害中位 | 最高每秒傷害（誰） |");
+        md.add("|---|---|---|---|---|---|---|");
         for (final Map.Entry<String, List<DpsRecords.Entry>> e : byBoss.entrySet()) {
             final List<Double> seconds = new ArrayList<>();
             final List<Double> dps = new ArrayList<>();
             double players = 0;
+            int instant = 0;
             DpsRecords.Entry best = null;
             for (final DpsRecords.Entry r : e.getValue()) {
-                seconds.add(r.seconds());
-                dps.add(r.dps());
+                seconds.add(r.rawSeconds() > 0 ? r.rawSeconds() : r.seconds());
+                dps.add(r.trueDps());
                 players += r.players();
-                if (best == null || r.dps() > best.dps()) {
+                if (r.instant()) {
+                    instant++;
+                }
+                if (best == null || r.trueDps() > best.trueDps()) {
                     best = r;
                 }
             }
             final JsonObject j = new JsonObject();
             j.addProperty("fights", e.getValue().size());
             j.addProperty("medianSeconds", medianD(seconds));
+            j.addProperty("instant", instant);
             j.addProperty("avgPlayers", players / e.getValue().size());
             j.addProperty("medianDps", medianD(dps));
-            j.addProperty("bestDps", best.dps());
+            j.addProperty("bestDps", best.trueDps());
             j.addProperty("bestPlayer", best.player());
             j.addProperty("bestSkill", best.mainSkill());
             json.add(e.getKey(), j);
-            md.add("| " + e.getKey() + " | " + e.getValue().size() + " | " + fmt(medianD(seconds)) + " | "
+            md.add("| " + e.getKey() + " | " + e.getValue().size() + " | " + fmt(medianD(seconds)) + " | " + percent(instant, e.getValue().size()) + " | "
                     + String.format(Locale.ROOT, "%.1f", players / e.getValue().size()) + " | " + fmt(medianD(dps)) + " | "
-                    + fmt(best.dps()) + "（" + best.player() + "・" + (best.mainSkill() == null ? "?" : best.mainSkill()) + "） |");
+                    + fmt(best.trueDps()) + "（" + best.player() + "・" + (best.mainSkill() == null ? "?" : best.mainSkill()) + "） |");
         }
         md.add("");
-        md.add("| 昇華 | 人次 | 每秒傷害中位 | 90% |");
-        md.add("|---|---|---|---|");
+        md.add("| 昇華 | 人次 | 41-70 中位／90% | 71-90 | 91+ |");
+        md.add("|---|---|---|---|---|");
         final JsonObject asc = new JsonObject();
-        for (final Map.Entry<String, List<Double>> e : byAsc.entrySet()) {
+        for (final Map.Entry<String, List<Double>[]> e : byAsc.entrySet()) {
+            int fights = 0;
+            for (final List<Double> band : e.getValue()) {
+                fights += band == null ? 0 : band.size();
+            }
             final JsonObject j = new JsonObject();
-            j.addProperty("fights", e.getValue().size());
-            j.addProperty("medianDps", medianD(e.getValue()));
-            j.addProperty("p90Dps", percentileD(e.getValue(), 0.9));
+            j.addProperty("fights", fights);
+            j.add("medianDps", bandArray(e.getValue(), false));
+            j.add("p90Dps", bandArray(e.getValue(), true));
             asc.add(e.getKey(), j);
-            md.add("| " + e.getKey() + " | " + e.getValue().size() + " | " + fmt(medianD(e.getValue())) + " | " + fmt(percentileD(e.getValue(), 0.9)) + " |");
+            md.add("| " + e.getKey() + " | " + fights + " | " + fmt(med(e.getValue(), 1)) + "／" + fmt(p90(e.getValue(), 1)) + " | "
+                    + fmt(med(e.getValue(), 2)) + "／" + fmt(p90(e.getValue(), 2)) + " | " + fmt(med(e.getValue(), 3)) + "／" + fmt(p90(e.getValue(), 3)) + " |");
         }
         root.add("bosses", json);
         root.add("bossesByAscendancy", asc);
@@ -601,16 +652,16 @@ public final class BalanceExport {
                 if (all[band] == null) {
                     all[band] = new ArrayList<>();
                 }
-                all[band].add(e.dps());
+                all[band].add(e.trueDps());
             }
         }
         final JsonArray high = new JsonArray();
         md.add("### 實測每秒傷害超過同等級區間中位數 " + (int) OUTLIER_FACTOR + " 倍的場次（最多 30 筆）");
         md.add("");
-        md.add("| 玩家 | 角色 | 等級 | 昇華 | 主技能 | 輔助 | 傳奇 | Boss | 每秒傷害 | 區間中位 |");
+        md.add("| 玩家 | 角色 | 等級 | 昇華 | 主技能 | 輔助 | 傳奇 | Boss | 每秒傷害 | 區間中位 |"); // 每秒傷害用實際秒數
         md.add("|---|---|---|---|---|---|---|---|---|---|");
         final List<DpsRecords.Entry> sorted = new ArrayList<>(records);
-        sorted.sort((a, b) -> Double.compare(b.dps(), a.dps()));
+        sorted.sort((a, b) -> Double.compare(b.trueDps(), a.trueDps()));
         int shown = 0;
         for (final DpsRecords.Entry e : sorted) {
             if (!"boss".equals(e.kind())) {
@@ -618,7 +669,7 @@ public final class BalanceExport {
             }
             final int band = bandOf(e.level());
             final double median = all[band] == null ? 0 : medianD(all[band]);
-            if (median <= 0 || e.dps() < median * OUTLIER_FACTOR) {
+            if (median <= 0 || e.trueDps() < median * OUTLIER_FACTOR) {
                 continue;
             }
             final JsonObject j = new JsonObject();
@@ -630,13 +681,14 @@ public final class BalanceExport {
             j.add("supports", GSON.toJsonTree(e.supports()));
             j.add("uniques", GSON.toJsonTree(e.uniques()));
             j.addProperty("target", e.target());
-            j.addProperty("dps", e.dps());
+            j.addProperty("dps", e.trueDps());
+            j.addProperty("seconds", e.rawSeconds() > 0 ? e.rawSeconds() : e.seconds());
             j.addProperty("bandMedian", median);
             high.add(j);
             if (shown++ < 30) {
                 md.add("| " + e.player() + " | " + e.character() + " | " + e.level() + " | " + nz(e.ascendancy()) + " | " + nz(e.mainSkill()) + " | "
                         + String.join("、", e.supports() == null ? List.of() : e.supports()) + " | "
-                        + String.join("、", e.uniques() == null ? List.of() : e.uniques()) + " | " + nz(e.target()) + " | " + fmt(e.dps()) + " | " + fmt(median) + " |");
+                        + String.join("、", e.uniques() == null ? List.of() : e.uniques()) + " | " + nz(e.target()) + " | " + fmt(e.trueDps()) + " | " + fmt(median) + " |");
             }
         }
         // 沒人用的技能、輔助
@@ -677,6 +729,166 @@ public final class BalanceExport {
         json.add("unusedSkills", GSON.toJsonTree(unusedSkills));
         json.add("unusedSupports", GSON.toJsonTree(unusedSupports));
         root.add("outliers", json);
+    }
+
+    // ---- 第二步（2026-10-25）：地圖清圖、死亡 ----
+
+    /** 每階的清圖秒數（開圖到 Boss 倒下）、擊殺數、每場死亡；再按昇華。 */
+    private void mapRuns(final List<BalanceRecords.MapRun> runs, final JsonObject root, final List<String> md) {
+        md.add("");
+        md.add("## 9. 地圖清圖（最近 " + RECORD_DAYS + " 天，每人每張一筆；清圖秒數＝開圖到 Boss 倒下）");
+        md.add("");
+        if (runs.isEmpty()) {
+            md.add("（還沒有紀錄：這一版之後打完的地圖才會記）");
+            root.add("maps", new JsonObject());
+            return;
+        }
+        final Map<Integer, List<BalanceRecords.MapRun>> byTier = new TreeMap<>();
+        final Map<String, List<BalanceRecords.MapRun>> byAsc = new TreeMap<>();
+        final Map<String, List<BalanceRecords.MapRun>> byMap = new TreeMap<>();
+        for (final BalanceRecords.MapRun r : runs) {
+            byTier.computeIfAbsent(r.tier(), k -> new ArrayList<>()).add(r);
+            byAsc.computeIfAbsent(r.ascendancy() == null ? "（未昇華）" : r.ascendancy(), k -> new ArrayList<>()).add(r);
+            byMap.computeIfAbsent(r.map() + (r.isFinal() ? "（終局）" : ""), k -> new ArrayList<>()).add(r);
+        }
+        final JsonObject json = new JsonObject();
+        md.add("| 階級 | 場次 | 清圖秒數中位／90% | 擊殺中位 | 每場死亡平均 | 死亡 ≥1 次的比例 |");
+        md.add("|---|---|---|---|---|---|");
+        final JsonObject tiers = new JsonObject();
+        for (final Map.Entry<Integer, List<BalanceRecords.MapRun>> e : byTier.entrySet()) {
+            tiers.add("T" + e.getKey(), runStats(e.getValue()));
+            md.add("| T" + e.getKey() + " | " + runLine(e.getValue()) + " |");
+        }
+        json.add("byTier", tiers);
+        md.add("");
+        md.add("| 昇華 | 場次 | 清圖秒數中位／90% | 擊殺中位 | 每場死亡平均 | 死亡 ≥1 次的比例 |");
+        md.add("|---|---|---|---|---|---|");
+        final JsonObject asc = new JsonObject();
+        for (final Map.Entry<String, List<BalanceRecords.MapRun>> e : byAsc.entrySet()) {
+            asc.add(e.getKey(), runStats(e.getValue()));
+            md.add("| " + e.getKey() + " | " + runLine(e.getValue()) + " |");
+        }
+        json.add("byAscendancy", asc);
+        md.add("");
+        md.add("| 地圖 | 場次 | 清圖秒數中位／90% | 擊殺中位 | 每場死亡平均 | 死亡 ≥1 次的比例 |");
+        md.add("|---|---|---|---|---|---|");
+        final JsonObject maps = new JsonObject();
+        final List<Map.Entry<String, List<BalanceRecords.MapRun>>> mapRows = new ArrayList<>(byMap.entrySet());
+        mapRows.sort((a, b) -> b.getValue().size() - a.getValue().size());
+        for (final Map.Entry<String, List<BalanceRecords.MapRun>> e : mapRows) {
+            maps.add(e.getKey(), runStats(e.getValue()));
+            md.add("| " + e.getKey() + " | " + runLine(e.getValue()) + " |");
+        }
+        json.add("byMap", maps);
+        root.add("maps", json);
+    }
+
+    private static JsonObject runStats(final List<BalanceRecords.MapRun> runs) {
+        final List<Double> seconds = new ArrayList<>();
+        final List<Double> kills = new ArrayList<>();
+        double deaths = 0;
+        int died = 0;
+        for (final BalanceRecords.MapRun r : runs) {
+            seconds.add(r.clearSeconds());
+            kills.add((double) r.kills());
+            deaths += r.deaths();
+            if (r.deaths() > 0) {
+                died++;
+            }
+        }
+        final JsonObject j = new JsonObject();
+        j.addProperty("runs", runs.size());
+        j.addProperty("medianSeconds", medianD(seconds));
+        j.addProperty("p90Seconds", percentileD(seconds, 0.9));
+        j.addProperty("medianKills", medianD(kills));
+        j.addProperty("deathsPerRun", deaths / runs.size());
+        j.addProperty("diedShare", (double) died / runs.size());
+        return j;
+    }
+
+    private static String runLine(final List<BalanceRecords.MapRun> runs) {
+        final JsonObject j = runStats(runs);
+        return runs.size() + " | " + fmt(j.get("medianSeconds").getAsDouble()) + "／" + fmt(j.get("p90Seconds").getAsDouble()) + " | "
+                + Math.round(j.get("medianKills").getAsDouble()) + " | " + String.format(Locale.ROOT, "%.2f", j.get("deathsPerRun").getAsDouble()) + " | "
+                + String.format(Locale.ROOT, "%.0f%%", j.get("diedShare").getAsDouble() * 100);
+    }
+
+    /** 死亡：按等級區間、按地點（地圖階級／區域）、死因（來源＋招式）、傷害類型、昇華、死最多的人。 */
+    private void deaths(final List<BalanceRecords.Death> list, final JsonObject root, final List<String> md) {
+        md.add("");
+        md.add("## 10. 死亡（最近 " + RECORD_DAYS + " 天）");
+        md.add("");
+        if (list.isEmpty()) {
+            md.add("（還沒有紀錄：這一版之後的死亡才會記）");
+            root.add("deaths", new JsonObject());
+            return;
+        }
+        final int[] bands = new int[BANDS.length];
+        final Map<String, Integer> byWhere = new TreeMap<>();
+        final Map<String, Integer> byKiller = new HashMap<>();
+        final Map<String, Integer> byType = new TreeMap<>();
+        final Map<String, int[]> byAsc = new TreeMap<>();
+        final Map<String, Integer> byPlayer = new HashMap<>();
+        int dot = 0;
+        for (final BalanceRecords.Death d : list) {
+            bands[bandOf(d.level())]++;
+            byWhere.merge(d.tier() > 0 ? "地圖 T" + String.format(Locale.ROOT, "%02d", d.tier()) : nz(d.where()), 1, Integer::sum);
+            byKiller.merge(nz(d.killer()) + "・" + nz(d.skill()), 1, Integer::sum);
+            byType.merge(nz(d.type()), 1, Integer::sum);
+            byAsc.computeIfAbsent(d.ascendancy() == null ? "（未昇華）" : d.ascendancy(), k -> new int[BANDS.length])[bandOf(d.level())]++;
+            byPlayer.merge(d.player() + "（" + d.character() + "）", 1, Integer::sum);
+            if (d.dot()) {
+                dot++;
+            }
+        }
+        final JsonObject json = new JsonObject();
+        json.addProperty("total", list.size());
+        json.add("bands", GSON.toJsonTree(bands));
+        json.addProperty("dotShare", (double) dot / list.size());
+        json.add("byWhere", GSON.toJsonTree(byWhere));
+        json.add("byType", GSON.toJsonTree(byType));
+        md.add("共 " + list.size() + " 次：等級 1-40 " + bands[0] + "、41-70 " + bands[1] + "、71-90 " + bands[2] + "、91+ " + bands[3]
+                + "；最後一下是持續傷害的 " + String.format(Locale.ROOT, "%.0f%%", dot * 100.0 / list.size()));
+        md.add("");
+        md.add("| 地點 | 死亡 |");
+        md.add("|---|---|");
+        for (final Map.Entry<String, Integer> e : byWhere.entrySet()) {
+            md.add("| " + e.getKey() + " | " + e.getValue() + " |");
+        }
+        md.add("");
+        md.add("| 最後一下的傷害類型 | 死亡 |");
+        md.add("|---|---|");
+        for (final Map.Entry<String, Integer> e : byType.entrySet()) {
+            md.add("| " + e.getKey() + " | " + e.getValue() + " |");
+        }
+        md.add("");
+        md.add("| 死因（來源・招式）前 25 | 死亡 |");
+        md.add("|---|---|");
+        final JsonObject killers = new JsonObject();
+        for (final Map.Entry<String, Integer> e : topEntries(byKiller, 25)) {
+            killers.addProperty(e.getKey(), e.getValue());
+            md.add("| " + e.getKey() + " | " + e.getValue() + " |");
+        }
+        json.add("byKiller", killers);
+        md.add("");
+        md.add("| 昇華 | 1-40 | 41-70 | 71-90 | 91+ |");
+        md.add("|---|---|---|---|---|");
+        final JsonObject asc = new JsonObject();
+        for (final Map.Entry<String, int[]> e : byAsc.entrySet()) {
+            asc.add(e.getKey(), GSON.toJsonTree(e.getValue()));
+            md.add("| " + e.getKey() + " | " + e.getValue()[0] + " | " + e.getValue()[1] + " | " + e.getValue()[2] + " | " + e.getValue()[3] + " |");
+        }
+        json.add("byAscendancy", asc);
+        md.add("");
+        md.add("| 死最多的人前 15 | 死亡 |");
+        md.add("|---|---|");
+        final JsonObject players = new JsonObject();
+        for (final Map.Entry<String, Integer> e : topEntries(byPlayer, 15)) {
+            players.addProperty(e.getKey(), e.getValue());
+            md.add("| " + e.getKey() + " | " + e.getValue() + " |");
+        }
+        json.add("byPlayer", players);
+        root.add("deaths", json);
     }
 
     // ---- 靜態資料 ----

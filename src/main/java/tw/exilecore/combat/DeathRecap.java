@@ -204,7 +204,12 @@ public final class DeathRecap implements Listener {
     public void onDeath(final PlayerDeathEvent event) {
         final Player player = event.getEntity();
         final List<String> lines = recap(player, plugin.getServer().getCurrentTick());
-        hits.remove(player.getUniqueId());
+        final Deque<Hit> deque = hits.remove(player.getUniqueId());
+        try {
+            tw.exilecore.balance.BalanceRecords.get(plugin).death(player, deque == null ? List.of() : new ArrayList<>(deque)); // 2026-10-25：平衡報表的死亡紀錄
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("死亡紀錄寫不進去", e);
+        }
         if (lines.isEmpty()) {
             return;
         }

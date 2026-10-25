@@ -2823,6 +2823,7 @@ public final class MapService {
         spawner.removeAll(instance);
         events.clear(instance);
         removeGroupLabels(instance.id());
+        tw.exilecore.balance.BalanceRecords.get(plugin).mapClosed(instance.id()); // 2026-10-25
         instances.remove(instance.id());
         cells.put(instance.cell(), -1);
         final MapLayout layout = instance.layout();
@@ -3143,6 +3144,18 @@ public final class MapService {
                 plugin.getSLF4JLogger().error("{}（{}）完成時的處理出錯", instance.label(), instance.special().kind(), e);
             }
             return;
+        }
+        final List<Player> finished = new ArrayList<>(); // 2026-10-25：平衡報表的地圖紀錄
+        for (final UUID uuid : players) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            if (player != null) {
+                finished.add(player);
+            }
+        }
+        try {
+            tw.exilecore.balance.BalanceRecords.get(plugin).mapCompleted(instance, finished);
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("地圖紀錄寫不進去", e);
         }
         for (final UUID uuid : players) {
             final Player player = plugin.getServer().getPlayer(uuid);

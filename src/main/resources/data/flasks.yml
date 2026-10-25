@@ -59,6 +59,7 @@ bases:
 charms:
   base_slots: 2
   drop_chance: 0.25
+  # 2026-10-25（照 PoE2）：焰鱗、霜鱗、雷鱗、蝕鱗護符每次用 20／40 充能（以前 10）；傳奇護符自己寫的抗性只在生效期間有、取代基底的效果
   bases:
     thawing_charm:     { name: 融冰護符, icon: PRISMARINE_CRYSTALS, trigger: freeze, cure: true, level: 8, duration: 4, charges: 40, per_use: 20,
                          effects: [ { stat: flag.freeze_immune, type: FLAT, value: 1 }, { stat: avoid.chill, type: FLAT, value: 100 } ] }
@@ -72,13 +73,13 @@ charms:
                          effects: [ { stat: avoid.poison, type: FLAT, value: 100 } ] }
     stone_charm:       { name: 穩身護符, icon: FLINT, trigger: stun, cure: true, level: 24, duration: 4, charges: 40, per_use: 20,
                          effects: [ { stat: avoid.stun, type: FLAT, value: 100 } ] }
-    ruby_charm:        { name: 焰鱗護符, icon: MAGMA_CREAM, trigger: hit_fire, level: 30, duration: 4, charges: 40, per_use: 10,
+    ruby_charm:        { name: 焰鱗護符, icon: MAGMA_CREAM, trigger: hit_fire, level: 30, duration: 4, charges: 40, per_use: 20,
                          effects: [ { stat: resist.fire, type: FLAT, value: 20 }, { stat: resist.max.fire, type: FLAT, value: 3 } ] }
-    sapphire_charm:    { name: 霜鱗護符, icon: LAPIS_LAZULI, trigger: hit_cold, level: 30, duration: 4, charges: 40, per_use: 10,
+    sapphire_charm:    { name: 霜鱗護符, icon: LAPIS_LAZULI, trigger: hit_cold, level: 30, duration: 4, charges: 40, per_use: 20,
                          effects: [ { stat: resist.cold, type: FLAT, value: 20 }, { stat: resist.max.cold, type: FLAT, value: 3 } ] }
-    topaz_charm:       { name: 雷鱗護符, icon: GLOWSTONE_DUST, trigger: hit_lightning, level: 30, duration: 4, charges: 40, per_use: 10,
+    topaz_charm:       { name: 雷鱗護符, icon: GLOWSTONE_DUST, trigger: hit_lightning, level: 30, duration: 4, charges: 40, per_use: 20,
                          effects: [ { stat: resist.lightning, type: FLAT, value: 20 }, { stat: resist.max.lightning, type: FLAT, value: 3 } ] }
-    amethyst_charm:    { name: 蝕鱗護符, icon: AMETHYST_SHARD, trigger: hit_chaos, level: 40, duration: 4, charges: 40, per_use: 10,
+    amethyst_charm:    { name: 蝕鱗護符, icon: AMETHYST_SHARD, trigger: hit_chaos, level: 40, duration: 4, charges: 40, per_use: 20,
                          effects: [ { stat: resist.chaos, type: FLAT, value: 20 }, { stat: resist.max.chaos, type: FLAT, value: 3 } ] }
     silver_charm:      { name: 迅影護符, icon: IRON_NUGGET, trigger: hit_unique, level: 45, duration: 6, charges: 60, per_use: 30,
                          effects: [ { stat: attack.speed, type: INCREASED, value: 20 }, { stat: cast.speed, type: INCREASED, value: 20 },

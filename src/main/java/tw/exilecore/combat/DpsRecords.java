@@ -49,13 +49,35 @@ public final class DpsRecords {
      * ascendancy 昇華職業、mainSkill 這一段打最多傷害的技能（持續傷害不算）、mainShare 它佔這一段總傷害的比例、
      * dotShare 持續傷害（點燃、流血、中毒）佔的比例、supports 主技能插的輔助、uniques 身上穿的傳奇、
      * types 各傷害類型的比例（physical、fire、cold、lightning、chaos）。
+     * <p>
+     * 2026-10-25：rawSeconds 沒套 {@link #MIN_SECONDS} 地板的實際秒數（0 = 舊紀錄沒有）；平衡報表用它算真實每秒傷害與「秒殺率」。
+     * 技能放在英靈圖騰、星咒圖騰這種宿主裡的，mainSkill 寫成「宿主＞技能」、supports 是宿主的輔助。
      */
     public record Entry(long at, String kind, String player, String uuid, String character, String className, int level,
                         String target, String where, int players, double damage, double seconds, double share,
                         String ascendancy, String mainSkill, double mainShare, double dotShare, List<String> supports,
-                        List<String> uniques, Map<String, Double> types) {
+                        List<String> uniques, Map<String, Double> types, double rawSeconds) {
+        /** 舊的呼叫法（沒有 rawSeconds）。 */
+        public Entry(final long at, final String kind, final String player, final String uuid, final String character, final String className,
+                     final int level, final String target, final String where, final int players, final double damage, final double seconds,
+                     final double share, final String ascendancy, final String mainSkill, final double mainShare, final double dotShare,
+                     final List<String> supports, final List<String> uniques, final Map<String, Double> types) {
+            this(at, kind, player, uuid, character, className, level, target, where, players, damage, seconds, share, ascendancy, mainSkill,
+                    mainShare, dotShare, supports, uniques, types, 0);
+        }
+
         public double dps() {
             return seconds <= 0 ? 0 : damage / seconds;
+        }
+
+        /** 2026-10-25：不套 3 秒地板的每秒傷害（最少算 0.5 秒）；舊紀錄沒有實際秒數就回傳 {@link #dps()}。 */
+        public double trueDps() {
+            return rawSeconds <= 0 ? dps() : damage / Math.max(0.5, rawSeconds);
+        }
+
+        /** 2026-10-25：3 秒內打死（秒殺）；舊紀錄看秒數剛好等於地板。 */
+        public boolean instant() {
+            return rawSeconds > 0 ? rawSeconds < MIN_SECONDS : seconds <= MIN_SECONDS;
         }
     }
 
@@ -165,9 +187,10 @@ public final class DpsRecords {
                 continue;
             }
             final Long first = firstHits.get(each.getKey());
-            final double seconds = Math.max(MIN_SECONDS, first == null ? 0 : (now - first) / 20.0);
+            final double raw = first == null ? 0 : (now - first) / 20.0;
+            final double seconds = Math.max(MIN_SECONDS, raw);
             final Player player = plugin.getServer().getPlayer(each.getKey());
-            add(entry(at, "boss", each.getKey(), player, bossName, where, players, each.getValue(), seconds, each.getValue() / total));
+            add(entry(at, "boss", each.getKey(), player, bossName, where, players, each.getValue(), seconds, each.getValue() / total, raw));
         }
     }
 
@@ -176,11 +199,11 @@ public final class DpsRecords {
         if (seconds <= 0 || damage <= 0) {
             return;
         }
-        add(entry(System.currentTimeMillis(), "dummy", player.getUniqueId(), player, dummyName, "訓練假人", 1, damage, seconds, 1));
+        add(entry(System.currentTimeMillis(), "dummy", player.getUniqueId(), player, dummyName, "訓練假人", 1, damage, seconds, 1, seconds));
     }
 
     private Entry entry(final long at, final String kind, final UUID uuid, final Player player, final String target, final String where,
-                        final int players, final double damage, final double seconds, final double share) {
+                        final int players, final double damage, final double seconds, final double share, final double rawSeconds) {
         String name = null;
         String character = null;
         String className = null;
@@ -256,11 +279,17 @@ public final class DpsRecords {
                     continue;
                 }
                 final tw.exilecore.skill.SkillDefinition definition = plugin.skills().config().skill(slot.skillId());
-                if (definition == null || !mainSkill.equals(definition.name())) {
+                // 2026-10-25：技能放在宿主（英靈圖騰、星咒圖騰…）第 1 孔裡：戰鬥數據記的是裡面那個技能的名字，主技能寫成「宿主＞技能」、輔助用宿主的
+                final tw.exilecore.skill.SkillDefinition inner = slot.inner() == null ? null : plugin.skills().config().skill(slot.inner().skillId());
+                final boolean hosted = definition != null && inner != null && mainSkill.equals(inner.name());
+                if (definition == null || !hosted && !mainSkill.equals(definition.name())) {
                     continue;
                 }
+                if (hosted) {
+                    mainSkill = definition.name() + "＞" + inner.name();
+                }
                 for (final String raw : slot.supports() == null ? List.<String>of() : slot.supports()) {
-                    if (raw == null || raw.isBlank()) {
+                    if (raw == null || raw.isBlank() || raw.startsWith(tw.exilecore.character.SkillLoadout.Entry.INNER_PREFIX)) {
                         continue;
                     }
                     final String id = raw.endsWith("~") ? raw.substring(0, raw.length() - 1) : raw; // 共鳴石嵌的專屬輔助存成代號加 ~

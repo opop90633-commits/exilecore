@@ -619,7 +619,7 @@ public final class MapConfig {
         final YamlNode s = root.node("settings");
         final YamlNode bossTierLife = s.node("boss_tier_life");
         bossTierLifeFrom = Math.max(1, bossTierLife.integer("from", 16));
-        bossTierLifeMax = Math.max(1, Math.min(10, bossTierLife.decimal("max", 1.0)));
+        bossTierLifeMax = Math.max(1, Math.min(40, bossTierLife.decimal("max", 1.0))); // 2026-10-25：上限 10 → 40（現在設 20）
         final YamlNode monsterTier = s.node("monster_tier");
         monsterTierFrom = Math.max(1, monsterTier.integer("from", 16));
         monsterTierLifeMax = Math.max(1, Math.min(10, monsterTier.decimal("life", 1.0)));

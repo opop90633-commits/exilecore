@@ -327,7 +327,7 @@ public final class AtlasMenu extends Menu {
     private static final Color EDGE_DIM = Color.fromRGB(0x33354A);
     private static final Color TOWER = Color.fromRGB(0xD8C8A0);
     private static final Color CITADEL = Color.fromRGB(0xC48BFF);
-    private static final Color BOSS = Color.fromRGB(0xFFA060);
+    private static final Color BOSS = Color.fromRGB(0xE8604A); // 2026-10-25：還沒打的 Boss 格改成偏紅（以前的橘 0xFFA060 跟完成的金色分不出來）
     private static final Color CORRUPT = Color.fromRGB(0xB07AFF);
     /** 淨化區的圈（2026-10-21，跟腐化區同一張圖，換成淡金白）。 */
     private static final Color PURIFY = Color.fromRGB(0xFFF1B8);

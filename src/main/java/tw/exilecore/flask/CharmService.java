@@ -252,9 +252,10 @@ public final class CharmService implements Listener {
         final FlaskMods mods = FlaskMods.of(plugin.items().repository(), data);
         final int max = mods.maxCharges(base.charges());
         final int charges = Math.max(0, Math.min(max, read(stack).map(CharmData::charges).orElse(max)));
+        final List<tw.exilecore.stats.Modifier> effects = effectsOf(base, affixModifiers(data));
         stack.editMeta(meta -> {
             final List<Component> lore = new ArrayList<>();
-            for (final String line : lore(base, mods, charges)) {
+            for (final String line : lore(base, mods, charges, effects)) {
                 lore.add(ItemRenderer.line(line));
             }
             final List<Component> affixLines = meta.lore();
@@ -283,7 +284,7 @@ public final class CharmService implements Listener {
         stack.editMeta(meta -> {
             meta.displayName(ItemRenderer.line("<#c9a0ff>" + ItemRenderer.escape(base.name())));
             final List<Component> lore = new ArrayList<>();
-            for (final String line : lore(base, FlaskMods.NONE, clamped)) {
+            for (final String line : lore(base, FlaskMods.NONE, clamped, base.effects())) {
                 lore.add(ItemRenderer.line(line));
             }
             meta.lore(lore);
@@ -293,14 +294,14 @@ public final class CharmService implements Listener {
         chargeBar(stack, base.charges(), clamped);
     }
 
-    private List<String> lore(final CharmBase base, final FlaskMods mods, final int charges) {
+    private List<String> lore(final CharmBase base, final FlaskMods mods, final int charges, final List<tw.exilecore.stats.Modifier> effects) {
         final List<String> lines = new ArrayList<>();
         lines.add("<gray>" + triggerText(base.trigger()) + "：自動觸發" + (base.cure() ? "，解除那個異常狀態" : ""));
         final double seconds = base.duration() * mods.duration();
         final String number = mods.duration() != 1 ? "<#8888ff>" : "<white>";
-        if (!base.effects().isEmpty()) {
+        if (!effects.isEmpty()) {
             lines.add(String.format(Locale.ROOT, "<gray>之後 %s%s</%s> 秒內：", number, trim(seconds), mods.duration() != 1 ? "#8888ff" : "white"));
-            for (final String effect : tw.exilecore.skill.ModifierText.describeAll(base.effects())) {
+            for (final String effect : tw.exilecore.skill.ModifierText.describeAll(effects)) {
                 lines.add("<#8fd3ff>　" + effect);
             }
         }
@@ -531,12 +532,13 @@ public final class CharmService implements Listener {
                 continue;
             }
             final FlaskMods mods = mods(charm, base);
+            final List<tw.exilecore.stats.Modifier> effects = effectsOf(base, affixModifiers(charm)); // 2026-10-25：傳奇護符照自己的效果
             final double usedGlobal = plugin.players().sheet(player).increased(tw.exilecore.stats.StatKeys.CHARM_CHARGES_USED, java.util.Set.of());
             final int perUse = Math.max(1, (int) Math.round(mods.perUse(base.perUse()) * Math.max(0, 1 + usedGlobal)));
             if (data.charges() < perUse) {
                 continue;
             }
-            if (!base.cure() && !base.effects().isEmpty() && plugin.skills() != null && plugin.skills().buffActive(player, "charm." + base.id())) {
+            if (!base.cure() && !effects.isEmpty() && plugin.skills() != null && plugin.skills().buffActive(player, "charm." + base.id())) {
                 fired.add(base.id()); // 效果還在：這一種先不觸發（後面同種的也不用）
                 continue;
             }
@@ -557,8 +559,8 @@ public final class CharmService implements Listener {
             // 持續時間：護符自己的詞綴 × 全域的「護符效果持續時間」
             final int ticks = (int) Math.round(base.duration() * mods.duration()
                     * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.CHARM_DURATION, java.util.Set.of())) * 20);
-            if (!base.effects().isEmpty() && plugin.skills() != null) {
-                plugin.skills().buff(player, "charm." + base.id(), base.name(), ticks, base.effects());
+            if (!effects.isEmpty() && plugin.skills() != null) {
+                plugin.skills().buff(player, "charm." + base.id(), base.name(), ticks, effects);
             }
             // 護符詞綴：守護、回復生命／魔力
             if (mods.guard() > 0) {
@@ -602,7 +604,25 @@ public final class CharmService implements Listener {
             return List.of();
         }
         final ItemData data = plugin.items().read(stack).orElse(null);
-        if (data == null) {
+        return affixModifiers(data);
+    }
+
+    /**
+     * 2026-10-25（照 PoE2：瓦拉可之吼的「+25% 閃電抗性」就是它的護符效果）：生效期間的效果——
+     * 護符上有不是 flask.local／charm.local 的詞綴（傳奇護符的「+25% 冰冷抗性」這種）就用那些取代基底的效果，沒有就照基底。
+     */
+    private static List<tw.exilecore.stats.Modifier> effectsOf(final CharmBase base, final List<tw.exilecore.stats.Modifier> affixMods) {
+        final List<tw.exilecore.stats.Modifier> own = new ArrayList<>();
+        for (final tw.exilecore.stats.Modifier modifier : affixMods) {
+            if (!modifier.stat().startsWith("flask.local.") && !modifier.stat().startsWith("charm.local.")) {
+                own.add(modifier);
+            }
+        }
+        return own.isEmpty() ? base.effects() : own;
+    }
+
+    private List<tw.exilecore.stats.Modifier> affixModifiers(final ItemData data) {
+        if (data == null || plugin.items() == null) {
             return List.of();
         }
         final List<tw.exilecore.stats.Modifier> list = new ArrayList<>();
@@ -623,19 +643,8 @@ public final class CharmService implements Listener {
      * 一般護符的詞綴都是只作用在那一顆上的，所以只有傳奇的會用到。不看開了幾格（算開幾格要讀屬性表，會繞回來）。
      */
     public List<tw.exilecore.stats.Modifier> globalModifiers(final Player player, final PlayerState state) {
-        // 2026-10-24：state 由 build 傳進來，不能再 plugin.players().get(player)——第一次載入時會無限遞迴（StackOverflow）
-        if (!state.hasCharacter()) {
-            return List.of();
-        }
-        final List<tw.exilecore.stats.Modifier> list = new ArrayList<>();
-        for (int index = 0; index < PlayerState.CHARM_SLOTS; index++) {
-            for (final tw.exilecore.stats.Modifier modifier : affixModifiers(charmAt(state, index))) {
-                if (!modifier.stat().startsWith("flask.local.") && !modifier.stat().startsWith("charm.local.")) {
-                    list.add(modifier);
-                }
-            }
-        }
-        return list;
+        // 2026-10-25：照 PoE2 改成「護符生效期間」才有（effectsOf 併進觸發時的增益），裝著不再常駐；留著這個來源給 FlaskModule 註冊
+        return List.of();
     }
 
     private static AilmentType ailmentOf(final String trigger) {

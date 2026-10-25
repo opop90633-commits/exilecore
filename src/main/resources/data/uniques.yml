@@ -4787,7 +4787,7 @@ mountain_breath_charm:     # Breath of the Mountains
   flavour:
     - "「山頂的風很冷，冷到會讓人清醒。」"
   mods:
-    - text: "+25% 冰冷抗性"
+    - text: "生效期間 +25% 冰冷抗性"   # 2026-10-25 照 PoE2：這就是它的護符效果（取代霜鱗護符的效果），不是常駐
       stats:
         - { stat: resist.cold, type: FLAT, value: 25 }
     - text: "減少 {value}% 每次用掉的充能"
@@ -4807,7 +4807,7 @@ thunder_roar_charm:        # Valako's Roar
   flavour:
     - "「雷打下來的時候，有人會跟著吼回去。」"
   mods:
-    - text: "+25% 閃電抗性"
+    - text: "生效期間 +25% 閃電抗性"   # 2026-10-25 照 PoE2：這就是它的護符效果（取代雷鱗護符的效果），不是常駐
       stats:
         - { stat: resist.lightning, type: FLAT, value: 25 }
     - text: "增加 {value}% 獲得的充能"
