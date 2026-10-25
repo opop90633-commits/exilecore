@@ -766,9 +766,9 @@ public final class BalanceExport {
             return;
         }
         md.add("");
-        md.add("## 8. 技能係數 vs PoE2（20 級；我們的效益 % ÷ PoE2 的 %；沒有對照的不列）");
+        md.add("## 8. 技能係數 vs 對照表（20 級；我們的效益 % ÷ 對照的 %；沒有對照的不列）"); // 對照 = 設計參考的原作數值；字串不寫遊戲名（PlayerTextTest）
         md.add("");
-        md.add("| 技能 | 類型 | 我們 | PoE2 | 比值 | PoE2 ×0.75 的比值 |");
+        md.add("| 技能 | 類型 | 我們 | 對照 | 比值 | 對照 ×0.75 的比值 |");
         md.add("|---|---|---|---|---|---|");
         final List<Map.Entry<String, JsonElement>> rows = new ArrayList<>(statics.getAsJsonObject("skills").entrySet());
         rows.removeIf(e -> !e.getValue().getAsJsonObject().has("ratioToPoe2"));
