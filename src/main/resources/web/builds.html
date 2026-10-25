@@ -437,7 +437,7 @@
     // 天賦
     const treeCard = el("div", { cls: "card" }, el("h3", { text: "天賦" }),
       el("p", { cls: "muted", style: "margin:0 0 10px", text: "配了 " + (c.passiveCount || 0) + " 點" }),
-      c.treeCode ? el("a", { cls: "btn", href: "tree#" + encodeURIComponent(c.treeCode), target: "_blank", rel: "noopener", text: "在天賦規劃器打開" }) : null,
+      c.treeCode ? el("a", { cls: "btn", href: "tree#" + encodeURIComponent(c.treeCode) + (c.treeJewels || ""), target: "_blank", rel: "noopener", text: "在天賦規劃器打開" }) : null,
       // 2026-10：網頁計算器：天賦、裝備、技能一起帶過去算傷害、試輔助寶石
       c.calc && !admin ? el("a", { cls: "btn", href: "tree?load=" + encodeURIComponent(c.name) + (key ? "&key=" + encodeURIComponent(key) : ""), target: "_blank", rel: "noopener",
         text: "用計算器打開（傷害、輔助寶石）" }) : null);

@@ -515,7 +515,11 @@
     const extra = packed && packed.length > GEAR_SLOTS.length ? packed[GEAR_SLOTS.length] : null;
     const out = {};
     if (extra && typeof extra === "object" && !Array.isArray(extra)) {
-      for (const [id, p] of Object.entries(extra)) { const g = unpackItem(p, "jewel"); if (g) out[id] = g; }
+      for (const [id, p] of Object.entries(extra)) {
+        // 2026-10-25：遊戲裡給的連結直接放物品資料（跟載入角色一樣的格式）；規劃器自己存的是壓縮過的陣列
+        const g = p && typeof p === "object" && !Array.isArray(p) ? fromItemData(p, "jewel") : unpackItem(p, "jewel");
+        if (g) out[id] = g;
+      }
     }
     return out;
   }

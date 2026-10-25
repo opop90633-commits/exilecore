@@ -99,7 +99,44 @@ public final class TreeActions {
             return plugin.web().publicUrl() + "/tree";
         }
         return plugin.web().publicUrl() + "/tree#" + TreeCode.encode(tree, character.characterClass().id(), state.passives(),
-                chosenAttributes(state, tree));
+                chosenAttributes(state, tree)) + jewelSuffix(plugin, state);
+    }
+
+    /** 規劃器網址裡裝備那段有幾格（planner.html 的 GEAR_SLOTS）；珠寶接在後面。 */
+    private static final int PLANNER_GEAR_SLOTS = 10;
+
+    /**
+     * 2026-10-25：鑲在天賦珠寶孔裡的珠寶接在規劃器網址後面（「~」＋ base64url 的 JSON：前 10 格是空的裝備，最後一格是
+     * { 孔位: 物品資料 }），網頁打開就照遊戲裡的鑲上去。沒有珠寶回傳空字串。
+     */
+    public static String jewelSuffix(final ExileCore plugin, final PlayerState state) {
+        if (plugin.items() == null || state.jewels().isEmpty()) {
+            return "";
+        }
+        final com.google.gson.JsonObject placed = new com.google.gson.JsonObject();
+        for (final java.util.Map.Entry<String, org.bukkit.inventory.ItemStack> entry : state.jewels().entrySet()) {
+            if (entry.getValue() == null || entry.getValue().isEmpty() || !state.passives().contains(entry.getKey())) {
+                continue;
+            }
+            final tw.exilecore.item.ItemData data = plugin.items().read(entry.getValue()).orElse(null);
+            if (data == null) {
+                continue;
+            }
+            // 跟載入角色（Profiles.itemData）一樣整份給：規劃器沒改過的遊戲物品原封不動送回去算
+            final com.google.gson.JsonObject full = com.google.gson.JsonParser.parseString(plugin.items().toJson(data)).getAsJsonObject();
+            full.remove("uuid");
+            placed.add(entry.getKey(), full);
+        }
+        if (placed.size() == 0) {
+            return "";
+        }
+        final com.google.gson.JsonArray packed = new com.google.gson.JsonArray();
+        for (int i = 0; i < PLANNER_GEAR_SLOTS; i++) {
+            packed.add(0);
+        }
+        packed.add(placed);
+        return "~" + java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(packed.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /** 已配的屬性點現在各是哪個屬性（2026-10：帶進規劃器的網址，規劃器照這個上色）。 */

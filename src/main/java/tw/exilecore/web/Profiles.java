@@ -226,6 +226,7 @@ public final class Profiles implements Listener {
         final PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
         if (tree != null) {
             root.addProperty("treeCode", TreeCode.encode(tree, character.characterClass().id(), state.passives()));
+            root.addProperty("treeJewels", tw.exilecore.passive.TreeActions.jewelSuffix(plugin, state)); // 2026-10-25：珠寶孔的珠寶
             root.addProperty("passiveCount", state.passives().size());
         }
         // 裝備

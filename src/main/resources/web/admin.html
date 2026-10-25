@@ -112,6 +112,14 @@
   .summary p { margin: 0; color: var(--text-secondary); max-width: 760px; }
   .summary strong { color: var(--text-primary); }
   .scroll { overflow-x: auto; }
+  /* 2026-10-25：輸出紀錄表：短欄位不換行，主技能／配裝那格固定寬度、配裝小字換行 */
+  #dps-rows td { white-space: nowrap; }
+  #dps-rows th, #dps-rows td { padding: 6px 7px; }
+  /* 表很長時左右捲軸在最底下看不到：限制高度，捲軸跟著畫面；標題列固定在上面 */
+  .scroll.tall { max-height: 75vh; overflow: auto; }
+  .scroll.tall thead th { position: sticky; top: 0; background: var(--surface-1); z-index: 1; }
+  #dps-rows td.skillcell { white-space: normal; min-width: 220px; max-width: 360px; }
+  #dps-rows td.skillcell .build { font-size: 12px; margin-top: 2px; }
   table { border-collapse: collapse; width: 100%; font-size: 13px; }
   th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
   th { color: var(--text-secondary); font-weight: 500; white-space: nowrap; }
@@ -197,6 +205,7 @@
   <nav class="tabs" role="tablist" aria-label="功能">
     <button type="button" role="tab" data-tab="give" aria-selected="true">發放物資</button>
     <button type="button" role="tab" data-tab="records" aria-selected="false">發放紀錄</button>
+    <button type="button" role="tab" data-tab="orders" aria-selected="false">贊助訂單</button>
     <button type="button" role="tab" data-tab="settings" aria-selected="false">遊戲設定</button>
     <button type="button" role="tab" data-tab="players" aria-selected="false">線上玩家</button>
     <button type="button" role="tab" data-tab="guilds" aria-selected="false">公會</button>
@@ -282,6 +291,29 @@
     </div>
   </section>
 
+  <section id="tab-orders" role="tabpanel" hidden>
+    <div class="card">
+      <div class="totals" id="order-totals"></div>
+      <div class="filters">
+        <select id="order-status" aria-label="狀態">
+          <option value="all">全部</option>
+          <option value="paid">已付款（星幣已發）</option>
+          <option value="waiting">等待繳費（ATM、超商）</option>
+          <option value="created">還沒付款</option>
+          <option value="failed">失敗或取消</option>
+          <option value="mismatch">金額不符（要人工處理）</option>
+        </select>
+        <input type="search" id="order-q" placeholder="玩家、訂單編號或 PAYUNi 交易編號" aria-label="篩選">
+        <button type="button" id="order-refresh">重新整理</button>
+      </div>
+      <p class="note">贊助商店（PAYUNi）自動發的星幣：付款成功時用訂單編號建一批發放，「看發放」可以看到實際發了什麼、玩家領了沒。每筆自動發放也會記在「操作紀錄」（管理員顯示 PAYUNi）。</p>
+      <div class="scroll"><table id="order-table">
+        <thead><tr><th>下單時間</th><th>訂單編號</th><th>玩家</th><th>內容</th><th>金額</th><th>付款方式</th><th>狀態</th><th>備註</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty" id="order-empty" hidden>還沒有訂單。</p>
+    </div>
+  </section>
 
   <section id="tab-settings" role="tabpanel" hidden>
     <p class="note">改的值存在伺服器的 <span id="overrides-file">admin-overrides.yml</span>（蓋過資料檔的同一個鍵，資料檔不動），按「套用」馬上生效。「恢復」= 回到資料檔裡寫的值。</p>
@@ -398,11 +430,11 @@
         <tbody></tbody>
       </table></div>
       <h3>紀錄（點標題排序；預設每個人最高的那筆、高的在前：Boss、假人各一筆，假人照換算一般靶比）</h3>
-      <div class="scroll"><table id="dps-rows">
+      <div class="scroll tall"><table id="dps-rows">
         <thead><tr><th data-sort="at">時間</th><th data-sort="kind">種類</th><th data-sort="player">玩家</th><th data-sort="character">角色</th>
           <th class="num" data-sort="level">等級</th><th data-sort="target">對象</th><th data-sort="where">地點</th>
           <th class="num" data-sort="players">人數</th><th class="num" data-sort="damage">傷害</th><th class="num" data-sort="seconds">秒</th>
-          <th class="num" data-sort="dps">每秒</th><th class="num" data-sort="share">佔比</th><th data-sort="mainSkill">主技能</th><th>配裝</th></tr></thead>
+          <th class="num" data-sort="dps">每秒</th><th class="num" data-sort="share">佔比</th><th data-sort="mainSkill">主技能／配裝</th></tr></thead>
         <tbody></tbody>
       </table></div>
       <p class="empty" id="dps-empty" hidden>還沒有紀錄（更新之後打倒的 Boss、打假人才會記）。</p>
@@ -497,7 +529,7 @@
 
   var KINDS = [
     ['currency', '通貨'], ['gold', '金幣'], ['merits', '功勳'], ['sponsor', '星幣／月卡幣／時裝幣／免費抽獎箱'], ['cosmetic', '時裝（限定、整組）'], ['item', '裝備'], ['unique', '傳奇'],
-    ['gem', '寶石'], ['flask', '藥劑'], ['charm', '護符'], ['map', '地圖'], ['refund', '免費退點'], ['life', '生活（材料、筏的方塊、料理、號角）'],
+    ['gem', '寶石'], ['flask', '藥劑'], ['map', '地圖'], ['refund', '免費退點'], ['life', '生活（材料、筏的方塊、料理、號角）'],
     ['take_sponsor', '⛔ 收回：累積贊助／星幣／買的格子'], ['take_currency', '⛔ 收回：通貨'], ['take_gold', '⛔ 收回：金幣'], ['take_item', '⛔ 收回：物品'],
     ['take_merits', '⛔ 收回：功勳'], ['take_refund', '⛔ 收回：免費退點'], ['take_life', '⛔ 收回：生活材料'], ['take_cosmetic', '⛔ 收回：時裝、限定稱號']
   ];
@@ -650,7 +682,7 @@
     }).catch(function (error) { if (!silent) { fail(error); } });
   }
   function catalogSignature(c) {
-    return [c.currencies.length, c.bases.length, c.uniques.length, c.skills.length, c.supports.length, c.flasks.length, (c.charms || []).length, c.maps.length,
+    return [c.currencies.length, c.bases.length, c.uniques.length, c.skills.length, c.supports.length, c.flasks.length, c.maps.length,
       c.maxMapTier, c.hasMerits, c.hasSponsor].join(',');
   }
 
@@ -786,7 +818,6 @@
       case 'item': return c.bases.filter(match).map(function (e) { return { id: e.id, text: e.name + '（Lv.' + e.level + '）', slot: e.slot }; });
       case 'unique': return c.uniques.filter(match).map(function (e) { return { id: e.id, text: e.name + '（' + e.base + (e.chase ? '，追逐級' : '') + '）', slot: e.slot }; });
       case 'flask': return c.flasks.map(function (e) { return { id: e.id, text: e.name + '（Lv.' + e.level + '）' }; });
-      case 'charm': return (c.charms || []).map(function (e) { return { id: e.id, text: e.name + '（Lv.' + e.level + '）' }; });
       case 'map': return c.maps.map(function (e) { return { id: e.id, text: e.name }; });
       case 'take_sponsor': return [{ id: 'total', text: '累積贊助（稱號、倉庫頁、背包頁、上架格跟著降）' }, { id: 'coins', text: '星幣' },
         { id: 'card', text: '月卡幣' }, { id: 'fashion', text: '時裝幣' }, { id: 'bought_stash', text: '星幣買的倉庫頁' },
@@ -810,10 +841,10 @@
     var row = h('div', { cls: 'item-row' });
     row.appendChild(h('label', null, '種類', select('', '種類', KINDS.filter(function (k) { return (k[0] !== 'merits' || c.hasMerits) && (k[0] !== 'sponsor' || c.hasSponsor) && (k[0] !== 'cosmetic' || c.hasSponsor) && (k[0] !== 'take_sponsor' || c.hasSponsor) && (k[0] !== 'take_cosmetic' || c.hasSponsor) && (k[0] !== 'take_merits' || c.hasMerits) && ((k[0] !== 'life' && k[0] !== 'take_life') || c.hasLife); })
       .map(function (k) { return { id: k[0], text: k[1] }; }), item.kind, function (v) {
-        item.kind = v; item.ref = ''; item.level = 0; item.amount = 1; item.filter = ''; item.rarity = v === 'map' ? 'normal' : v === 'charm' ? 'magic' : 'rare';
+        item.kind = v; item.ref = ''; item.level = 0; item.amount = 1; item.filter = ''; item.rarity = v === 'map' ? 'normal' : 'rare';
         renderItems();
       })));
-    var refLabel = { currency: '通貨', item: '基底', unique: '傳奇', flask: '藥劑', charm: '護符', map: '地圖', sponsor: '幣別', cosmetic: '時裝', take_sponsor: '收回什麼', take_currency: '通貨', take_cosmetic: '時裝', life: '生活', take_life: '材料' }[item.kind];
+    var refLabel = { currency: '通貨', item: '基底', unique: '傳奇', flask: '藥劑', map: '地圖', sponsor: '幣別', cosmetic: '時裝', take_sponsor: '收回什麼', take_currency: '通貨', take_cosmetic: '時裝', life: '生活', take_life: '材料' }[item.kind];
     if (item.kind === 'item' || item.kind === 'unique' || item.kind === 'cosmetic' || item.kind === 'take_cosmetic' || item.kind === 'life' || item.kind === 'take_life') {
       var filter = h('input', { type: 'search', cls: 'filter', placeholder: '篩選…', value: item.filter, 'aria-label': '篩選' });
       filter.addEventListener('input', function () {
@@ -846,12 +877,9 @@
       row.appendChild(h('span', { cls: 'hint', text: item.kind === 'take_item' ? '有多少拿多少；找的是領的那個角色的背包、隨身背包與帳號倉庫'
         : item.kind === 'take_refund' ? '有多少拿多少；領的那個角色的' : '有多少拿多少（帳號共用）' }));
     }
-    if (item.kind === 'item' || item.kind === 'map' || item.kind === 'charm') {
-      row.appendChild(h('label', null, '稀有度', select('', '稀有度', c.rarities.filter(function (r) { return item.kind !== 'charm' || r.id !== 'rare'; }).map(function (r) { return { id: r.id, text: r.name }; }),
+    if (item.kind === 'item' || item.kind === 'map') {
+      row.appendChild(h('label', null, '稀有度', select('', '稀有度', c.rarities.map(function (r) { return { id: r.id, text: r.name }; }),
         item.rarity, function (v) { item.rarity = v; renderSummary(); })));
-    }
-    if (item.kind === 'charm') {
-      row.appendChild(numberInput('物品等級', item.level, 0, 100, function (v) { item.level = v; renderSummary(); }, '0 = 角色等級'));
     }
     if (item.kind === 'item' || item.kind === 'unique') {
       row.appendChild(numberInput('物品等級', item.level, 0, 100, function (v) { item.level = v; renderSummary(); }, '0 = 角色等級'));
@@ -1034,7 +1062,7 @@
   }
   function specOf(item) {
     var spec = { kind: item.kind, ref: item.ref || null, rarity: null, level: Number(item.level) || 0, amount: Number(item.amount) || 0 };
-    if (item.kind === 'item' || item.kind === 'map' || item.kind === 'charm') { spec.rarity = item.rarity; }
+    if (item.kind === 'item' || item.kind === 'map') { spec.rarity = item.rarity; }
     if (item.kind === 'gem') {
       spec.ref = item.gemType === 'skill' ? 'skill:' + item.ref : item.gemType === 'support' ? 'support:' + item.ref : item.gemType;
       if (item.gemType === 'support') { spec.level = 0; }
@@ -1070,7 +1098,6 @@
       case 'item': return rarityName(item.rarity) + ' ' + nameOf(c.bases, item.ref) + (item.level ? '（物品等級 ' + item.level + '）' : '') + count + affixSummary(item);
       case 'unique': return '傳奇 ' + nameOf(c.uniques, item.ref) + (item.level ? '（物品等級 ' + item.level + '）' : '') + count + affixSummary(item);
       case 'flask': return nameOf(c.flasks, item.ref) + count;
-      case 'charm': return rarityName(item.rarity) + ' ' + nameOf(c.charms || [], item.ref) + (item.level ? '（物品等級 ' + item.level + '）' : '') + count;
       case 'map': return '地圖 ' + nameOf(c.maps, item.ref) + ' T' + item.level + '（' + rarityName(item.rarity) + '）' + count;
       case 'gem':
         if (item.gemType === 'uncut_skill') { return '未切割技能寶石' + (item.level ? ' Lv.' + item.level : '') + count; }
@@ -1784,8 +1811,9 @@
         h('td', { cls: 'num', text: wan(r.seconds > 0 ? r.damage / r.seconds : 0)
           + (r.kind !== 'boss' && r.normal !== undefined && Math.abs(r.normal - (r.seconds > 0 ? r.damage / r.seconds : 0)) >= 1 ? '（一般靶 ' + wan(r.normal) + '）' : '') }),
         h('td', { cls: 'num', text: r.kind === 'boss' ? Math.round(r.share * 100) + '%' : '' }),
-        h('td', { text: r.mainSkill ? r.mainSkill + (r.mainShare ? '（' + Math.round(r.mainShare * 100) + '%）' : '') : '' }),
-        h('td', { cls: 'muted', text: dpsBuild(r) })));
+        // 2026-10-25：配裝併進主技能那格（以前另一欄字太長，整張表撐太寬、後面的欄位看不到）
+        h('td', { cls: 'skillcell' }, h('div', { text: r.mainSkill ? r.mainSkill + (r.mainShare ? '（' + Math.round(r.mainShare * 100) + '%）' : '') : '' }),
+          dpsBuild(r) ? h('div', { cls: 'muted build', text: dpsBuild(r) }) : null)));
     });
     $('dps-empty').hidden = shown.length > 0;
   }
@@ -1890,17 +1918,51 @@
     }).catch(fail);
   }
 
+  // ---- 贊助訂單 ----
+  var ORDER_STATUS = { paid: '已付款', waiting: '等待繳費', created: '還沒付款', failed: '失敗或取消', mismatch: '金額不符' };
+  function loadOrders() {
+    return api('GET', 'admin/api/orders?status=' + encodeURIComponent($('order-status').value) + '&q=' + encodeURIComponent($('order-q').value.trim())).then(function (json) {
+      var t = json.totals || {};
+      var totals = clear($('order-totals'));
+      [['今天', t.today, t.todayCount], ['這個月', t.month, t.monthCount], ['全部', t.all, t.allCount]].forEach(function (x) {
+        totals.appendChild(h('div', null, h('div', { cls: 'muted', text: x[0] + '已付款' }), h('b', { text: 'NT$ ' + num(x[1] || 0) }),
+          h('span', { cls: 'muted', text: '　' + num(x[2] || 0) + ' 筆' })));
+      });
+      var body = clear($('order-table').querySelector('tbody'));
+      json.rows.forEach(function (row) {
+        var actions = h('td', { cls: 'actions' });
+        if (row.status === 'paid') {
+          actions.appendChild(h('button', { type: 'button', cls: 'link', text: '看發放', title: '在發放紀錄看這筆發了什麼', onclick: function () {
+            recordBatch = row.batch; $('record-status').value = 'all'; showTab('records');
+          } }));
+        }
+        body.appendChild(h('tr', null,
+          h('td', { cls: 'time', text: time(row.at) }),
+          h('td', null, h('div', { text: row.order }), row.trade ? h('div', { cls: 'muted', text: 'PAYUNi ' + row.trade }) : null),
+          h('td', null, h('div', { text: row.player }), row.email ? h('div', { cls: 'muted', text: row.email }) : null),
+          h('td', { text: num(row.stars) + ' 星幣' + (row.bonus ? '＋加送 ' + num(row.bonus) : '') }),
+          h('td', { cls: 'num', text: 'NT$ ' + num(row.amount) }),
+          h('td', { text: row.payment || '' }),
+          h('td', null, h('span', { cls: 'status ' + row.status, text: ORDER_STATUS[row.status] || row.status }),
+            row.paidAt ? h('div', { cls: 'muted', text: time(row.paidAt) }) : null),
+          h('td', { text: row.note || '' }),
+          actions));
+      });
+      $('order-empty').hidden = json.rows.length > 0;
+    }).catch(fail);
+  }
 
   // ---- 分頁 ----
   function showTab(tab) {
     Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
       b.setAttribute('aria-selected', b.getAttribute('data-tab') === tab ? 'true' : 'false');
     });
-    ['give', 'records', 'settings', 'players', 'guilds', 'trace', 'transfer', 'dps', 'retention', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    ['give', 'records', 'orders', 'settings', 'players', 'guilds', 'trace', 'transfer', 'dps', 'retention', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
     if (tab === 'transfer') { loadTransfers(); }
     if (tab === 'dps' && !dpsData) { loadDps(); } // 2026-10-17：切回來不重抓（要新的按「重新整理」）
     if (tab === 'retention' && !retentionData) { loadRetention(); } // 2026-10-19
     if (tab === 'records') { loadRecords(); }
+    if (tab === 'orders') { loadOrders(); }
     if (tab === 'guilds') { loadGuilds(); }
     if (tab === 'log') { loadLog(); }
     if (tab === 'players' || tab === 'settings') { load(true, 'safe'); }
@@ -1924,6 +1986,10 @@
   var recordTimer = null;
   $('record-q').addEventListener('input', function () { recordBatch = ''; clearTimeout(recordTimer); recordTimer = setTimeout(loadRecords, 300); });
   $('record-refresh').addEventListener('click', loadRecords);
+  $('order-status').addEventListener('change', loadOrders);
+  var orderTimer = null;
+  $('order-q').addEventListener('input', function () { clearTimeout(orderTimer); orderTimer = setTimeout(loadOrders, 300); });
+  $('order-refresh').addEventListener('click', loadOrders);
   $('batch-clear').addEventListener('click', function () { recordBatch = ''; loadRecords(); });
   $('batch-cancel').addEventListener('click', function () {
     var batch = recordBatch;
@@ -1952,7 +2018,7 @@
   $('dps-view').addEventListener('change', renderDps);
   $('dps-place').addEventListener('change', renderDps);
   $('dps-name').addEventListener('input', renderDps);
-  $('refresh').addEventListener('click', function () { load(false, 'safe'); var tab = document.querySelector('.tabs button[aria-selected="true"]').getAttribute('data-tab'); if (tab === 'records') { loadRecords(); } if (tab === 'log') { loadLog(); } });
+  $('refresh').addEventListener('click', function () { load(false, 'safe'); var tab = document.querySelector('.tabs button[aria-selected="true"]').getAttribute('data-tab'); if (tab === 'records') { loadRecords(); } if (tab === 'orders') { loadOrders(); } if (tab === 'log') { loadLog(); } });
   $('logout').addEventListener('click', function () {
     rememberFailed(null); // 登出：沒確認的發放也不留給下一個在這個分頁登入的人
     api('POST', 'admin/logout', {}).catch(function () {}).then(function () { showLogin('已登出。'); });
