@@ -319,8 +319,25 @@ public final class LifeService {
         if (on) {
             sharkPlots.add(plot);
         } else {
-            sharkPlots.remove(plot);
+            releaseCombat(plot);
         }
+    }
+
+    /**
+     * 2026-10-25：這塊筏不再是戰鬥區——但還有鯊王、或還有別的渦齒鯊在咬這塊筏的話留著
+     * （以前打倒旁邊的小渦齒鯊就把整塊筏改回生活區，鯊王還在卻放不了技能、打不動）。
+     */
+    private void releaseCombat(final int plot) {
+        if (extras != null && extras.kingOn(plot)) {
+            return;
+        }
+        for (final Session session : sessions.values()) {
+            if (session.shark != null && session.shark.isValid() && !session.shark.isDead()
+                    && plotAt(session.shark.getLocation().getX(), session.shark.getLocation().getZ()) == plot) {
+                return;
+            }
+        }
+        sharkPlots.remove(plot);
     }
 
     NamespacedKey driftKey() {
@@ -3204,10 +3221,11 @@ public final class LifeService {
     private void removeShark(final Session session) {
         if (session.shark != null) {
             final int plot = plotAt(session.shark.getLocation().getX(), session.shark.getLocation().getZ());
-            sharkPlots.remove(plot);
             if (session.shark.isValid()) {
                 session.shark.remove();
             }
+            session.shark = null;
+            releaseCombat(plot); // 2026-10-25：鯊王還在就不改回生活區
         }
         session.shark = null;
         session.sharkTarget = null;
@@ -3234,9 +3252,9 @@ public final class LifeService {
         final Player owner = plugin.getServer().getPlayer(UUID.fromString(tag.substring(6)));
         for (final Session session : sessions.values()) {
             if (session.shark != null && session.shark.getUniqueId().equals(entity.getUniqueId())) {
-                sharkPlots.remove(plotAt(entity.getLocation().getX(), entity.getLocation().getZ()));
                 session.shark = null;
                 session.sharkTarget = null;
+                releaseCombat(plotAt(entity.getLocation().getX(), entity.getLocation().getZ())); // 2026-10-25：鯊王還在就不改回生活區
             }
         }
         final LifeConfig.Shark def = config.shark();

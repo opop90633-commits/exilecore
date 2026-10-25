@@ -1082,8 +1082,8 @@ final class LifeExtras {
             final List<Player> crew = service.crewOn(king.plot);
             if (!king.entity.isValid() || king.entity.isDead() || owner == null || service.world() == null || !service.world().equals(owner.getWorld())
                     || service.activePlot(owner) != king.plot && crew.isEmpty()) {
+                it.remove(); // 2026-10-25：先拿掉再收（收的時候看「鯊王還在不在」決定要不要把筏改回生活區）
                 removeKing(king);
-                it.remove();
                 continue;
             }
             king.age++;
@@ -1095,8 +1095,8 @@ final class LifeExtras {
                 for (final Player member : crew) {
                     member.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(def.name()) + "跳回海裡了（血餌沒了）"));
                 }
+                it.remove(); // 2026-10-25：先拿掉再收（收的時候看「鯊王還在不在」決定要不要把筏改回生活區）
                 removeKing(king);
-                it.remove();
                 continue;
             }
             if (def != null) {
@@ -1229,6 +1229,14 @@ final class LifeExtras {
         if (dead == null || def == null) {
             return;
         }
+        // 2026-10-25：血條收起來（以前打倒之後血條一直掛在畫面上，打幾隻就疊幾條）
+        for (final UUID id : dead.watching) {
+            final Player watcher = plugin.getServer().getPlayer(id);
+            if (watcher != null) {
+                watcher.hideBossBar(dead.bar);
+            }
+        }
+        dead.watching.clear();
         for (final UUID id : dead.adds) {
             final Entity add = plugin.getServer().getEntity(id);
             if (add != null) {
@@ -1285,7 +1293,9 @@ final class LifeExtras {
     }
 
     void shutdown() {
-        for (final King king : kings.values()) {
+        final List<King> all = new java.util.ArrayList<>(kings.values());
+        kings.clear(); // 2026-10-25：先清掉再收（筏才會改回生活區）
+        for (final King king : all) {
             removeKing(king);
         }
         kings.clear();
