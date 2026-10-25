@@ -336,7 +336,7 @@ public final class AtlasTreeMenu extends Menu {
         lore.add("");
         lore.add("<gray>左鍵點、右鍵退（<white>退點免費<gray>，連不回中心的一起退）");
         lore.add("<gray>效果算在<white>你開的地圖<gray>上，隊友進你的地圖也吃");
-        lore.add("<dark_gray>改了之後開的地圖才算（開著的不變）；極境、回響、試煉不吃");
+        lore.add("<dark_gray>改了之後開的地圖才算（開著的不變）；終局（只吃極境鑰匙那條）、極境、巔峰、回響、試煉、塔、金庫不吃");
         lore.add("<#77ccff>右鍵：網頁規劃器<gray>（整棵樹、帶著現在的配點；/atlas import 匯入）");
         final AtlasBonus bonus = tree.bonus(allocated);
         if (!bonus.isEmpty()) {

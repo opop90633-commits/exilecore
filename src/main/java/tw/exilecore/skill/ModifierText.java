@@ -22,7 +22,6 @@ public final class ModifierText {
     public static String tagName(final String tag) {
         return switch (tag) {
             case Tags.ATTACK -> "攻擊";
-            case "meta" -> "主要寶石"; // 2026-10-25：能量輔助的 requires
             case "invocation" -> "Invocation 類主要寶石（異變、受創、斬殺引星）";
             case Tags.SPELL -> "法術";
             case Tags.MELEE -> "近戰";

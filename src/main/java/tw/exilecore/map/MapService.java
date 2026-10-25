@@ -2044,8 +2044,11 @@ public final class MapService {
         final int cell = freeCell();
         final int[] origin = origin(cell);
         final MapLayout layout = MapLayout.generate(random().nextLong(), rooms, map.layout());
-        // 星圖天賦：開圖的人點的（特別的實例、極境不吃）；地圖本身的部分加進數值，其他的存在實例上
-        final AtlasBonus atlas = special != null || pendingUber.isPresent() || pendingPinnacle.isPresent() ? AtlasBonus.NONE : atlasBonus(owner);
+        // 星圖天賦：開圖的人點的（特別的實例、極境、巔峰不吃）；地圖本身的部分加進數值，其他的存在實例上
+        // 2026-10-25：終局也不吃（只留「終局 Boss 掉極境鑰匙」那條，那本來就是給終局的）
+        final AtlasBonus mine = special != null || pendingUber.isPresent() || pendingPinnacle.isPresent() ? AtlasBonus.NONE : atlasBonus(owner);
+        final AtlasBonus atlas = !map.isFinal() || mine.get("atlas.uber_key") <= 0 ? (map.isFinal() ? AtlasBonus.NONE : mine)
+                : AtlasBonus.NONE.plus("atlas.uber_key", mine.get("atlas.uber_key"));
         // 2026-10：終局、極境、巔峰用「門」算（一道門 = 一次挑戰，預設 2 道；巔峰照 maps.yml 的 attempts）
         final boolean heistFinale = special != null && "heist_finale".equals(special.kind()); // 金庫之主也是 2 門
         final int portals = map.isFinal() && special == null || heistFinale
