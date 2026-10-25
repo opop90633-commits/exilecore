@@ -34,6 +34,8 @@ public final class AtlasMapPickMenu extends Menu {
     private final MapConfig.MapDef map;
     private final AtlasGrid.Cell cell;
     private final List<Candidate> candidates = new ArrayList<>();
+    /** 第幾頁（2026-10-26：超過 45 張可以翻頁，以前只列最高的 45 張）。 */
+    private int page;
 
     public AtlasMapPickMenu(final ExileCore plugin, final Player player, final MapService service, final MapConfig.MapDef map,
                             final AtlasGrid.Cell cell) {
@@ -74,12 +76,15 @@ public final class AtlasMapPickMenu extends Menu {
     @Override
     protected void draw() {
         collect();
+        final int pages = pages();
+        page = Math.max(0, Math.min(page, pages - 1));
         for (int i = 0; i < LIST_SLOTS; i++) {
-            if (i >= candidates.size()) {
+            final int index = page * LIST_SLOTS + i;
+            if (index >= candidates.size()) {
                 set(i, null);
                 continue;
             }
-            final Candidate candidate = candidates.get(i);
+            final Candidate candidate = candidates.get(index);
             final ItemStack shown = candidate.shown().clone();
             appendLore(shown, List.of("", candidate.inventorySlot() >= 0 ? "<gray>在背包裡" : "<gray>在倉庫的地圖頁",
                     "<yellow>左鍵：放上地圖裝置<gray>（可以先補品質、詞綴再開）", "<yellow>Shift＋左鍵：直接開"));
@@ -89,8 +94,14 @@ public final class AtlasMapPickMenu extends Menu {
         set(SLOT_INFO, icon(Material.COMPASS, "<white>" + ItemRenderer.escape(map.name()) + " <dark_gray>（"
                         + (cell == null ? "?" : AtlasMenu.where(cell.q(), cell.r())) + "）",
                 "<gray>背包與倉庫裡的這種地圖：<white>" + candidates.size() + "<gray> 張",
-                candidates.size() > LIST_SLOTS ? "<dark_gray>只列最高的 " + LIST_SLOTS + " 張" : "<dark_gray>階級高的排前面"));
+                pages > 1 ? "<dark_gray>階級高的排前面（第 " + (page + 1) + "／" + pages + " 頁）" : "<dark_gray>階級高的排前面"));
+        set(Menu.SLOT_PREV, pages > 1 ? pageButton(false, page, pages) : null);
+        set(Menu.SLOT_NEXT, pages > 1 ? pageButton(true, page, pages) : null);
         set(SLOT_CLOSE, closeButton());
+    }
+
+    private int pages() {
+        return Math.max(1, (candidates.size() + LIST_SLOTS - 1) / LIST_SLOTS);
     }
 
     @Override
@@ -103,10 +114,17 @@ public final class AtlasMapPickMenu extends Menu {
             goBack();
             return;
         }
-        if (slot < 0 || slot >= LIST_SLOTS || slot >= candidates.size() || !acceptAction(click) || click.isRightClick()) {
+        if ((slot == Menu.SLOT_PREV || slot == Menu.SLOT_NEXT) && pages() > 1) {
+            page = Math.floorMod(page + (slot == Menu.SLOT_NEXT ? 1 : -1), pages());
+            player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.0f);
+            redraw();
             return;
         }
-        final Candidate candidate = candidates.get(slot);
+        final int index = page * LIST_SLOTS + slot;
+        if (slot < 0 || slot >= LIST_SLOTS || index >= candidates.size() || !acceptAction(click) || click.isRightClick()) {
+            return;
+        }
+        final Candidate candidate = candidates.get(index);
         int inventorySlot = candidate.inventorySlot();
         ItemData data = candidate.data();
         if (inventorySlot >= 0) {

@@ -103,6 +103,8 @@ public final class FestivalService {
         final BossBar bar;
         LivingEntity boss;
         long lastSeenMillis;
+        /** 2026-10-25：南瓜王出場後無敵到這個時間（大家先集合）。 */
+        long shieldUntil;
         int players = 1;
 
         King(final Location center, final long now) {
@@ -735,8 +737,10 @@ public final class FestivalService {
             follow.setBaseValue(48);
         }
         tag(boss, "king");
+        boss.setInvulnerable(true); // 2026-10-25：出場無敵 10 秒（tickKing 時間到解除）
         king = new King(center, System.currentTimeMillis());
         king.boss = boss;
+        king.shieldUntil = System.currentTimeMillis() + SPAWN_SHIELD_MILLIS;
         king.mobs.add(boss.getUniqueId());
         attachSkills(boss);
         plugin.getSLF4JLogger().info("[Boss 紀錄] {}：{} Lv.{} 出現", config.name(), def.name(), def.level());
@@ -747,7 +751,7 @@ public final class FestivalService {
         }
         for (final Player player : arenaPlayers()) {
             player.showTitle(Title.title(plugin.text().parse("<" + config.color() + ">" + ItemRenderer.escape(def.name())),
-                    plugin.text().parse("<gray>萬燈夜的世界 Boss"), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
+                    plugin.text().parse("<gray>萬燈夜的世界 Boss・" + SPAWN_SHIELD_MILLIS / 1000 + " 秒後開打"), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
             if (!def.intro().isBlank() && !plugin.players().hidesMonsterTalk(player)) {
                 player.sendMessage(plugin.text().parse("<" + config.color() + ">" + ItemRenderer.escape(def.name()) + "<white>："
                         + ItemRenderer.escape(def.intro())));
@@ -789,9 +793,18 @@ public final class FestivalService {
         ending.viewers.clear();
     }
 
+    /** 2026-10-25：南瓜王出場後無敵幾毫秒（讓大家先集合）。 */
+    static final long SPAWN_SHIELD_MILLIS = 10_000;
+
     private void tickKing(final long now) {
         final King event = king;
         final List<Player> near = arenaPlayers();
+        if (event.boss != null && event.boss.isValid() && event.boss.isInvulnerable() && System.currentTimeMillis() >= event.shieldUntil) {
+            event.boss.setInvulnerable(false); // 2026-10-25：出場的無敵時間到了
+            for (final Player player : near) {
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<" + config.color() + ">" + ItemRenderer.escape(config.boss().name()) + "<white> 可以打了！"));
+            }
+        }
         for (final Player player : near) {
             event.participants.add(player.getUniqueId());
         }

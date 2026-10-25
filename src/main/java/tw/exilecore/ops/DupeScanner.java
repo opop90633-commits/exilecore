@@ -89,6 +89,10 @@ final class DupeScanner {
                             add(stack, player.getName() + " 的倉庫第 " + (page + 1) + " 頁");
                         }
                     }
+                    // 2026-10-25：地圖頁也看（以前在線的人只看物品頁，地圖頁裡的複製抓不到）
+                    for (final ItemStack stack : stash.get().maps()) {
+                        add(stack, player.getName() + " 的倉庫地圖頁");
+                    }
                 }
             }
         }
@@ -125,7 +129,7 @@ final class DupeScanner {
                     if (liveStashes.contains(UUID.fromString(result.getString("account_uuid")))) {
                         continue;
                     }
-                    rows.add(new Row(result.getString("account_name") + " 的倉庫第 " + (result.getInt("page") + 1) + " 頁",
+                    rows.add(new Row(result.getString("account_name") + " 的" + stashPageLabel(result.getInt("page")),
                             result.getBytes("contents")));
                 }
             }
@@ -151,6 +155,22 @@ final class DupeScanner {
             }
             decode(rows, 0);
         }));
+    }
+
+    /**
+     * 資料庫頁碼的說明（2026-10-25）：負數是地圖頁的分段（2026-10-23 起；以前直接 +1 顯示成「第 -1 頁」）、
+     * {@link Stash#MAP_STORE_KEY} 是舊格式的整份地圖頁，其他照 {@link Stash#pageOfKey} 換回頁碼。
+     */
+    static String stashPageLabel(final int key) {
+        final int shard = Stash.mapShardOf(key);
+        if (shard >= 0) {
+            final int from = shard * Stash.MAP_SHARD_SIZE + 1;
+            return "倉庫地圖頁（第 " + from + "–" + (from + Stash.MAP_SHARD_SIZE - 1) + " 張）";
+        }
+        if (key == Stash.MAP_STORE_KEY) {
+            return "倉庫地圖頁（舊格式）";
+        }
+        return "倉庫第 " + (Stash.pageOfKey(key) + 1) + " 頁";
     }
 
     /** 每 tick 解一點。 */

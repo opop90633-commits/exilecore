@@ -71,7 +71,8 @@ public final class BalanceRecords {
         if (state == null || !state.hasCharacter()) {
             return;
         }
-        final MapInstance map = plugin.maps() == null ? null : plugin.maps().instanceOf(player);
+        // 2026-10-25 修正：instanceOf 是看怪物身上的標記，玩家要照位置找（以前地圖裡的死亡都記成世界名稱、地圖的死亡次數都是 0）
+        final MapInstance map = plugin.maps() == null ? null : plugin.maps().instanceAt(player.getLocation());
         String where;
         int tier = 0;
         if (map != null) {

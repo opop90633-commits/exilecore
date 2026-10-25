@@ -363,6 +363,18 @@ public final class SkillService {
         if (build.cooldownTicks() > 0) {
             runtime.startCooldown(definition.id(), now, build.cooldownTicks());
         }
+        // 2026-10-26：被觸發的法術也用掉灌注（照 PoE2：觸發的法術是玩家放的，吃得到身上的灌注；圖騰不走這裡、不吃）
+        //   以前只有手動施放（performInner）才用，引星插槽法術掛灌元等於沒掛
+        final int[] infusionUsed = new int[3];
+        final List<tw.exilecore.stats.Modifier> infused = resources.consumeInfusion(player, build.profile().effective(sheet),
+                build.profile().tags(), infusionUsed);
+        if (!infused.isEmpty()) {
+            build = build.withProfile(build.profile().withLocal(infused));
+        }
+        final String infusionText = resources.infusionUsed(player, ItemRenderer.escape(definition.name()), infusionUsed);
+        if (infusionText != null) {
+            state.notice(infusionText, now + 40);
+        }
         final java.util.UUID previousFx = Fx.source(player.getUniqueId());
         try {
             executor.execute(player, runtime, build, target, now);

@@ -17,13 +17,16 @@ import tw.exilecore.ExileCore;
  * 2026-10-23 晚修正：以前是直接踢掉（「X 秒後再連線」），但 Velocity 的 LimboReconnect 開好 6 秒就把等待室的人送回來，
  * 一被踢就斷線、不會再試，大家要自己重連，看起來像「重啟回不來」。改成<b>不踢，先在登入那一步等</b>（這個事件本來就在非同步的執行緒，
  * 可以等）：等到時間到再放行，同時一個一個錯開 {@value #STAGGER_MILLIS} 毫秒，不會全部一起擠進去。
- * 最多等 {@value #MAX_HOLD_MILLIS} 毫秒（Velocity 的 read-timeout 是 30 秒），還要更久的才照舊踢掉請他晚點再連。
+ * 最多等 {@value #MAX_HOLD_MILLIS} 毫秒（Velocity 的 read-timeout 是 30 秒）。
+ * <p>
+ * 2026-10-25：以前排到 20 秒以後的人會被踢掉（15 秒＋每人 0.3 秒，大約第 17 個人以後），等待室不會再送，看起來像「重連不回來」。
+ * 改成預設 5 秒、每人錯開 0.1 秒，排太後面的也不踢：等滿 {@value #MAX_HOLD_MILLIS} 毫秒就直接放進去。
  */
 final class StartupGate implements Listener {
 
     /** 一個一個錯開幾毫秒放行。 */
-    static final long STAGGER_MILLIS = 300;
-    /** 登入最多先等多久（毫秒）；超過就踢掉請他晚點再連。 */
+    static final long STAGGER_MILLIS = 100;
+    /** 登入最多先等多久（毫秒）；排得更後面的等滿這麼久就直接放行（不踢）。 */
     static final long MAX_HOLD_MILLIS = 20_000;
 
     /** 擋到哪個時間（毫秒；0 = 不擋）。 */
@@ -42,7 +45,7 @@ final class StartupGate implements Listener {
         return left <= 0 ? 0 : (left + 999) / 1000;
     }
 
-    /** 設定的秒數（沒寫預設 15，夾在 0～300；0 = 不擋）。 */
+    /** 設定的秒數（沒寫預設 5，夾在 0～300；0 = 不擋）。 */
     static int clampDelay(final int seconds) {
         return Math.max(0, Math.min(300, seconds));
     }
@@ -62,7 +65,7 @@ final class StartupGate implements Listener {
         if (event.getType() != ServerLoadEvent.LoadType.STARTUP) {
             return;
         }
-        final int delay = clampDelay(plugin.getConfig().getInt("startup.login-delay-seconds", 15));
+        final int delay = clampDelay(plugin.getConfig().getInt("startup.login-delay-seconds", 5));
         if (delay > 0) {
             openAt = System.currentTimeMillis() + delay * 1000L;
             nextSlot.set(0);
@@ -82,12 +85,7 @@ final class StartupGate implements Listener {
             return;
         }
         final long mine = nextSlot.accumulateAndGet(gate, (last, open) -> slot(open, last));
-        final long wait = mine - now;
-        if (wait > MAX_HOLD_MILLIS) {
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, plugin.text().parse("<gradient:#9fd3ff:#f5b942>星骸</gradient>\n\n<white>伺服器剛啟動，正在準備中\n<gray>請 <yellow>"
-                    + secondsLeft(mine, now) + " 秒<gray>後再連線"));
-            return;
-        }
+        final long wait = Math.min(MAX_HOLD_MILLIS, mine - now); // 2026-10-25：排太後面的不踢，等滿上限就放行
         try {
             Thread.sleep(Math.max(0, wait)); // 非同步的登入執行緒：等到輪到他再放行
         } catch (final InterruptedException e) {

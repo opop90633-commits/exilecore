@@ -74,6 +74,8 @@ public final class WorldEventService {
         final Set<UUID> viewers = new HashSet<>();
         long lastSeenMillis;
         LivingEntity boss;
+        /** 2026-10-25：世界 Boss 出場後無敵到這個時間（大家先集合）。 */
+        long bossShieldUntil;
         int wave;
         long waveStartMillis;
         boolean commanderOut;
@@ -644,6 +646,9 @@ public final class WorldEventService {
 
     // ---- 世界 Boss ----
 
+    /** 2026-10-25：世界 Boss 出場後無敵幾毫秒（讓大家先集合）。 */
+    static final long SPAWN_SHIELD_MILLIS = 10_000;
+
     private boolean spawnBoss(final Active event) {
         final WorldEventConfig.Boss def = config.boss();
         final LivingEntity boss = spawnMob(def.type(), event.center);
@@ -660,6 +665,8 @@ public final class WorldEventService {
             return false;
         }
         tag(boss, "boss");
+        boss.setInvulnerable(true); // 2026-10-25：出場無敵 10 秒（tickBoss 時間到解除）
+        event.bossShieldUntil = System.currentTimeMillis() + SPAWN_SHIELD_MILLIS;
         event.boss = boss;
         event.bossLife = lifeOf(boss);
         plugin.getSLF4JLogger().info("[Boss 紀錄] 不定時活動：{} Lv.{} 出現：生命 {}（算 1 人）", def.name(), def.level(), number(event.bossLife));
@@ -671,7 +678,7 @@ public final class WorldEventService {
         attachSkills(boss, def.name(), def.skills(), def.level(), "world");
         for (final Player player : nearPlayers(event, eventRadius() + 24)) {
             player.showTitle(Title.title(plugin.text().parse("<#ffb347>" + ItemRenderer.escape(def.name())),
-                    plugin.text().parse("<gray>世界 Boss"), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
+                    plugin.text().parse("<gray>世界 Boss・" + SPAWN_SHIELD_MILLIS / 1000 + " 秒後開打"), Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
             if (!def.intro().isBlank() && !plugin.players().hidesMonsterTalk(player)) {
                 player.sendMessage(plugin.text().parse("<#ffb347>" + ItemRenderer.escape(def.name()) + "<white>：" + ItemRenderer.escape(def.intro())));
             }
@@ -684,6 +691,12 @@ public final class WorldEventService {
         final LivingEntity boss = event.boss;
         if (boss == null || !boss.isValid()) {
             return;
+        }
+        if (boss.isInvulnerable() && System.currentTimeMillis() >= event.bossShieldUntil) {
+            boss.setInvulnerable(false); // 2026-10-25：出場的無敵時間到了
+            for (final Player player : near) {
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffb347>" + ItemRenderer.escape(config.boss().name()) + "<white> 可以打了！"));
+            }
         }
         if (boss instanceof Mob mob && !near.isEmpty() && !(mob.getTarget() instanceof Player)) {
             mob.setTarget(near.get(random.nextInt(near.size())));

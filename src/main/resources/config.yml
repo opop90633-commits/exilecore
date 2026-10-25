@@ -37,9 +37,10 @@ cosmetics:
   ride: true
 
 startup:
-  # 2026-10-23：開機完成後幾秒內，登入的人先在登入那一步等（不踢；等待室的人照樣會被送回來），時間到再一個一個放進來（每人錯開 0.3 秒）。
-  # 重啟後大家同時重連時伺服器還很忙，容易連線逾時；0 = 不等，最多 300（要等超過 20 秒的人會被請晚點再連）。沒有這一段時預設 15。
-  login-delay-seconds: 15
+  # 2026-10-23：開機完成後幾秒內，登入的人先在登入那一步等（不踢；等待室的人照樣會被送回來），時間到再一個一個放進來（每人錯開 0.1 秒）。
+  # 重啟後大家同時重連時伺服器還很忙，容易連線逾時；0 = 不等，最多 300（每個人最多等 20 秒，等滿就直接放進來，不會被踢）。沒有這一段時預設 5。
+  # 2026-10-25：15 → 5（以前排到 20 秒以後的人會被踢掉，看起來像重連不回來）
+  login-delay-seconds: 5
 
 # TAB 列表最上面的伺服器名稱（MiniMessage 寫法，可以用顏色）；下面自動列出在線人數、PING、TPS
 tab:
@@ -48,7 +49,7 @@ tab:
 # 選單的 Discord、贊助商城、新手教學按鈕（也可以打 /discord、/store、/tutorial）。空字串 = 按鈕寫「即將開放」。改完 /ec reload
 links:
   discord: "https://discord.gg/wKpcGqzJYa"   # 2026-10-20 換新的邀請連結
-  store: "https://arpg.tebex.store/"   # 2026-10-25：贊助商城改成 Tebex
+  store: ""
   tutorial: "https://drive.google.com/file/d/1NhlPB1UTjmRL-8fXUdklSOpURGw2aJs2/view?usp=drivesdk"
 
 # NPC 的外觀（2026-10）：寫正版玩家名稱，NPC 就換成那個人的皮膚。改完 /ec reload（已經放好的 NPC 會跟著換）。
@@ -128,11 +129,45 @@ web:
   # 網頁伺服器是 http：從別台電腦連線時，登入後的 Cookie 在網路上看得到——放在 https 的反向代理後面（public-url 填 https://…）最安全。
   # false = 不提供（網址 404、/ec web 不給連結）。舊的 config.yml 沒有這一行時用預設值（提供）。
   admin-page: true
-  # 網頁伺服器前面有反向代理（nginx、Cloudflare）時看代理給的真實 IP（CF-Connecting-IP、X-Forwarded-For），網頁計算器的次數限制才不會全部算成同一個人
-  # （2026-10-25：贊助商店改用 Tebex，原本的商店頁與線上付款拿掉了；這兩行從 web.shop 搬到這裡，舊的 web.shop 底下的照讀）
-  trust-proxy: true
-  # 前面是哪種代理。空白或 cloudflare = 相信 CF-Connecting-IP；只有 nginx／Caddy、沒有 Cloudflare 的請寫 nginx（或 none）
-  proxy: ""
+  # 贊助商店（網址/shop，2026-10）：金流（PayUni）審核要的「商店網址」——儲值方案（新台幣）、星幣能換的東西（照 data/sponsor.yml 現在的價格自動列）、
+  # 抽獎箱的機率、累積贊助、商家資料、退款與隱私權條款。merchant 沒填的欄位頁面上會寫「（未填寫）」：送審前全部填好。改完 /ec reload
+  shop:
+    enabled: true
+    merchant:
+      name: ""        # 商店名稱（跟金流申請的一樣）
+      owner: ""       # 負責人
+      tax-id: ""      # 統一編號（個人賣家可以空白，頁面就不顯示這一行）
+      email: ""       # 客服信箱
+      phone: ""       # 客服電話
+      address: ""     # 營業地址（個人賣家照金流的要求填）
+      hours: "週一至週五 10:00–18:00（Discord 隨時可以留言）"
+    payments: "信用卡、ATM 轉帳、超商代碼（PayUni 統一金流）"
+    # 儲值方案：stars = 拿到多少星幣，price = 新台幣，bonus = 加送的星幣（不算進累積贊助），name = 方案名稱（可以空白）
+    packages:
+      - { stars: 100,  price: 100 }
+      - { stars: 300,  price: 300 }
+      - { stars: 500,  price: 500 }
+      - { stars: 1000, price: 1000 }
+      - { stars: 3000, price: 3000 }
+      - { stars: 5000, price: 5000 }
+    # 線上付款（統一金流 PAYUNi 整合式支付頁）：在 PAYUNi 後台「商店串接資訊」拿商店代號、Hash Key、Hash IV。
+    # 背景通知只送到 80、443 埠：上面的 public-url 要是 https 的網址（https://web.你的網域），反向代理要把 /shop/ 轉給這個網頁伺服器。
+    # 付款成功（含 ATM、超商代碼繳費完成）自動發星幣到填的遊戲名稱（離線的下次登入發），同一筆訂單只會發一次；訂單記在資料表 shop_orders。
+    # 先用 sandbox: true 在測試區試（測試卡號 4147631000000001，到期日、末三碼隨便填），沒問題再換正式區的代號與金鑰、sandbox: false。
+    # Hash Key／Hash IV 等同密碼：不要外流、不要貼到 Discord。
+    payuni:
+      enabled: false
+      sandbox: true
+      mer-id: ""
+      hash-key: ""    # 32 個字
+      hash-iv: ""     # 16 個字
+      # 測試區（sandbox: true）只有這些遊戲名稱可以下單：測試卡付的款不是真的錢，卻會發真的星幣，不能讓一般玩家用
+      test-players: []
+    # 網頁伺服器前面有反向代理（nginx、Cloudflare）時看代理給的真實 IP（CF-Connecting-IP、X-Forwarded-For），下單次數限制才不會全部算成同一個人
+    trust-proxy: true
+    # 2026-10-18：前面是哪種代理。空白或 cloudflare = 相信 CF-Connecting-IP；只有 nginx／Caddy、沒有 Cloudflare 的請寫 nginx（或 none），
+    # 不然玩家可以自己帶一個假的 CF-Connecting-IP 繞過下單次數限制
+    proxy: ""
 
 items:
   # 玩家能不能把東西丟在地上（Q 鍵、拖到視窗外面）。false = 不能：免得直接丟給別人、繞過面對面交易的手續費，也不會手滑丟掉；
