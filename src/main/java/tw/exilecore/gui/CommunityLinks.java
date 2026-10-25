@@ -58,8 +58,11 @@ public final class CommunityLinks {
         return trimmed;
     }
 
-    /** 換掉的舊網址（2026-10：新手教學改成新的 Google Drive 檔案；2026-10-20：Discord 換新的邀請連結）。 */
-    private static final List<String> RETIRED = List.of("1xOcljxPEcDzPjPnLUeOWBXpvxUdeeMCh", "S6FZuGFR93");
+    /**
+     * 換掉的舊網址（2026-10：新手教學改成新的 Google Drive 檔案；2026-10-20：Discord 換新的邀請連結；
+     * 2026-10-25：贊助商城從自己的 /shop 頁改成 Tebex，舊的 …/shop 當退役）。
+     */
+    private static final List<String> RETIRED = List.of("1xOcljxPEcDzPjPnLUeOWBXpvxUdeeMCh", "S6FZuGFR93", "/shop");
 
     static boolean retired(final String url) {
         for (final String old : RETIRED) {

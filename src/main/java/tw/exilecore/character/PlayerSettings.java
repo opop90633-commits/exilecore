@@ -37,6 +37,11 @@ public final class PlayerSettings {
     public static final String HIDE_JOIN_LEAVE = "setting.hide_join_leave";
     /** 隱藏怪物對話：聊天欄不顯示 Boss 的喊話、登場與倒下的台詞（2026-10-22；招式警告、畫面中間的大字照常）。預設關（{@link #on}）。 */
     public static final String HIDE_MONSTER_TALK = "setting.hide_monster_talk";
+    /**
+     * 過濾系統訊息（2026-10-25）：擊敗 Boss 的經驗、Boss 倒下的台詞、星圖完成、完成地圖、開圖的說明、用通貨強化地圖、
+     * 回營地、給糖、隊友開了新地圖、非追逐級的星諭卡廣播都不顯示（追逐級的照常）。預設關（{@link #on}）。
+     */
+    public static final String HIDE_SYSTEM = "setting.hide_system";
 
     private PlayerSettings() {
     }

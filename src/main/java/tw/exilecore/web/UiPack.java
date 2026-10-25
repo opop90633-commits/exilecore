@@ -128,6 +128,9 @@ public final class UiPack {
         public static final int COLOR_GLOW = 7;
         public static final int COLOR_RING = 8;
         public static final int COLOR_CORRUPT = 9;
+        /** 2026-10-24：塔範圍的外框（flag 6～11 = 六個方向的邊要不要畫）的顏色。 */
+        public static final int COLOR_BORDER = 10;
+        public static final int FLAG_BORDER = 6;
         /** 六個方向（跟 AtlasGrid.DIRECTIONS 同順序：E、NE、NW、W、SW、SE）。 */
         public static final List<String> EDGES = List.of("e", "ne", "nw", "w", "sw", "se");
         /** 格子的種類：迷霧（旁邊有解鎖的）、一般地圖、Boss 格、塔、城塞、營地。 */
@@ -377,6 +380,9 @@ public final class UiPack {
             texture(files, "ahex_" + kind, hexCell(kind), "layer_3");
         }
         texture(files, "acorrupt", hexCorrupt(), "layer_4");
+        for (final String edge : AtlasCell.EDGES) {
+            texture(files, "aborder_" + edge, hexBorder(edge), "layer_4"); // 2026-10-24：塔範圍的大外框（這一邊外面不在範圍內才畫）
+        }
         files.put("assets/exilecore/items/atlas_cell.json", json(atlasCellDefinition()));
 
         // 介面小圖示：一般的平面物品（item/generated），16×16 的格子裡
@@ -2107,6 +2113,15 @@ public final class UiPack {
         final JsonArray ring = new JsonArray();
         ring.add(selectCase("ring", model("ring", AtlasCell.COLOR_RING)));
         models.add(select(AtlasCell.STRING_RING, ring, empty()));
+        for (int i = 0; i < AtlasCell.EDGES.size(); i++) { // 2026-10-24：塔範圍的外框
+            final JsonObject condition = new JsonObject();
+            condition.addProperty("type", "minecraft:condition");
+            condition.addProperty("property", "minecraft:custom_model_data");
+            condition.addProperty("index", AtlasCell.FLAG_BORDER + i);
+            condition.add("on_true", model("aborder_" + AtlasCell.EDGES.get(i), AtlasCell.COLOR_BORDER));
+            condition.add("on_false", empty());
+            models.add(condition);
+        }
 
         final JsonObject composite = new JsonObject();
         composite.addProperty("type", "minecraft:composite");
@@ -2552,6 +2567,26 @@ public final class UiPack {
                 g.fill(star(4, 7, 2.5));
             }
         }
+        g.dispose();
+        return image;
+    }
+
+    /**
+     * 2026-10-24：塔範圍的外框的一邊：格子邊緣、垂直於往那個鄰居的方向的一段粗實線（白色，著色成塔的金褐色）。
+     * 範圍邊上的每一格把「外面不在範圍內」的那幾邊畫出來，連起來就是一個圍住塔的大框。
+     */
+    static BufferedImage hexBorder(final String direction) {
+        final BufferedImage image = canvas();
+        final Graphics2D g = smooth(image);
+        final double c = SIZE / 2.0;
+        final double angle = hexAngle(direction);
+        final double mx = c + Math.cos(angle) * 15.2;
+        final double my = c + Math.sin(angle) * 15.2;
+        final double px = -Math.sin(angle) * 9.5;
+        final double py = Math.cos(angle) * 9.5;
+        g.setPaint(Color.WHITE);
+        g.setStroke(new BasicStroke(3.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g.draw(new java.awt.geom.Line2D.Double(mx - px, my - py, mx + px, my + py));
         g.dispose();
         return image;
     }

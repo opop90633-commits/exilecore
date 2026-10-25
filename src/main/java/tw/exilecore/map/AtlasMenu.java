@@ -97,6 +97,7 @@ public final class AtlasMenu extends Menu {
     @Override
     protected void draw() {
         shown.clear();
+        rangeTowers = null; // 2026-10-24：每次重畫重新算塔的範圍
         allCorrupt = service.atlasBonus(player).get("atlas.all_corrupt") > 0;
         final AtlasProgress atlas = service.atlasProgress(player);
         final AtlasGrid grid = atlas.grid();
@@ -333,6 +334,27 @@ public final class AtlasMenu extends Menu {
     private static final Color CYAN = Color.fromRGB(0x55FFFF);
     /** 2026-10-22：被先驅石板罩到的格子（跟腐化區同一個圈，換成石板的淡褐色）。 */
     private static final Color TABLET = Color.fromRGB(0xD8C8A0);
+    /** 2026-10-24：塔範圍的大外框。 */
+    private static final Color BORDER = Color.fromRGB(0xFFD27A);
+    /** 2026-10-24：這次畫的塔（完成的＋看得到還沒打的）與範圍（畫一次星圖只算一次）。 */
+    private List<AtlasGrid.Cell> rangeTowers;
+    private int rangeRadius;
+
+    /** 2026-10-24：這一格在不在任何一座塔的範圍內（含塔本身）。 */
+    private boolean inTowerRange(final AtlasProgress atlas, final int q, final int r) {
+        if (rangeTowers == null) {
+            rangeTowers = new ArrayList<>(atlas.completedTowers());
+            rangeTowers.addAll(atlas.openTowers());
+            rangeRadius = service.atlasConfig().tower().radius() + service.atlasBonus(player).count("atlas.tower.radius");
+        }
+        for (final AtlasGrid.Cell tower : rangeTowers) {
+            if (AtlasGrid.distance(tower.q(), tower.r(), q, r) <= rangeRadius) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** 2026-10-24：塔的範圍內（還沒插石板）：比石板暗的褐色。 */
     private static final Color TOWER_RANGE = Color.fromRGB(0x7A6A48);
 
@@ -370,8 +392,16 @@ public final class AtlasMenu extends Menu {
             }
             final CustomModelDataComponent data = meta.getCustomModelDataComponent();
             final List<String> strings = new ArrayList<>(List.of(Integer.toString(Math.floorMod(q * 7 + r * 13 + q * r, UiPack.BACKGROUNDS)), "", "", "", ""));
-            final List<Boolean> flags = new ArrayList<>(List.of(false, false, false, false, false, false));
-            final List<Color> colors = new ArrayList<>(List.of(EDGE_DIM, EDGE_DIM, EDGE_DIM, EDGE_DIM, EDGE_DIM, EDGE_DIM, DIM, GOLD, CYAN, CORRUPT));
+            final List<Boolean> flags = new ArrayList<>(List.of(false, false, false, false, false, false, false, false, false, false, false, false));
+            final List<Color> colors = new ArrayList<>(List.of(EDGE_DIM, EDGE_DIM, EDGE_DIM, EDGE_DIM, EDGE_DIM, EDGE_DIM, DIM, GOLD, CYAN, CORRUPT, BORDER));
+            // 2026-10-24：塔範圍的大外框：這格在範圍內、往某個方向的鄰居不在範圍內，就畫那一邊（迷霧、空格也畫，框才連得起來）
+            if (inTowerRange(atlas, q, r)) {
+                for (int i = 0; i < AtlasGrid.DIRECTIONS.length; i++) {
+                    if (!inTowerRange(atlas, q + AtlasGrid.DIRECTIONS[i][0], r + AtlasGrid.DIRECTIONS[i][1])) {
+                        flags.set(UiPack.AtlasCell.FLAG_BORDER + i, true);
+                    }
+                }
+            }
             if (!empty) {
                 if (isUnlocked) {
                     // 往鄰居的連線：鄰居也解鎖了才畫；兩頭都完成是金色

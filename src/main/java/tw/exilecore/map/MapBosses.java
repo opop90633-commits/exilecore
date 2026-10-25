@@ -1108,7 +1108,7 @@ final class MapBosses {
         detachSkills(boss);
         final MapConfig.Boss definition = instance.bossDef();
         if (definition.defeat() != null && !definition.defeat().isBlank()) {
-            talk(instance, Zone.loreLine(definition.name(), definition.defeat()));
+            talk(instance, Zone.loreLine(definition.name(), definition.defeat()), true); // 2026-10-25：倒下的台詞也算系統訊息
         }
         end(instance);
         final org.bukkit.Location at = boss.getLocation();
@@ -1296,9 +1296,14 @@ final class MapBosses {
 
     /** 2026-10-22：Boss 的台詞（登場、換階段、狂暴、倒下）：開了「隱藏怪物對話」的人不送。 */
     private void talk(final MapInstance instance, final String miniMessage) {
+        talk(instance, miniMessage, false);
+    }
+
+    /** 2026-10-25：system = 開了「過濾系統訊息」的人也不送。 */
+    private void talk(final MapInstance instance, final String miniMessage, final boolean system) {
         for (final UUID uuid : instance.inside()) {
             final Player player = plugin.getServer().getPlayer(uuid);
-            if (player != null && !plugin.players().hidesMonsterTalk(player)) {
+            if (player != null && !plugin.players().hidesMonsterTalk(player) && !(system && plugin.players().hidesSystem(player))) {
                 player.sendMessage(plugin.text().parse(miniMessage));
             }
         }

@@ -48,6 +48,10 @@ class SpellTotemSupportTest {
         assertNotNull(config.support("critical_strikes").hostRefusal(totem, null));
         // 攻擊的輔助掛不到放了法術的宿主上
         assertNotNull(config.support("faster_attacks").hostRefusal(totem, fireball));
+        // 2026-10-24：寫了「圖騰除外」的輔助不能掛在圖騰宿主上（裂虛回響、連擊：英靈每次只打一下）
+        assertNotNull(config.support("rift_echo").hostRefusal(config.skill("ancestral_totem"), config.skill("leap_slam") != null
+                ? config.skill("leap_slam") : fireball));
+        assertNotNull(config.support("spell_echo").hostRefusal(totem, fireball));
         // 宿主本身只吃這幾種
         assertTrue(config.support("urgent_totems").worksOnHost());
         assertTrue(config.support("faster_casting").worksOnHost());

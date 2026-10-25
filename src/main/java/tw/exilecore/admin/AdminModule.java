@@ -89,6 +89,7 @@ public final class AdminModule implements Module, Listener {
         pruneTask = plugin.getServer().getScheduler().runTaskTimerAsynchronously(plugin, auth::prune, 20L * 300, 20L * 300);
         restarts = new RestartScheduler(plugin);
         restarts.start();
+        new tw.exilecore.balance.BalanceExport(plugin).monthly(); // 2026-10-25：每月 1 號自動產生平衡報表（plugins/ExileCore/balance/）
         if (plugin.overrides().maintenance()) {
             plugin.getSLF4JLogger().warn("維護模式開著：只有管理員進得來（管理網頁或刪掉 admin-overrides.yml 的 maintenance 關掉）");
         }

@@ -118,6 +118,11 @@ public final class StatsReport {
         put(rarity, "全服加倍", tw.exilecore.sponsor.Boosts.rarity() * 100);
         put(quantity, "在線加成", OnlineBonus.quantity() * 100);
         put(rarity, "在線加成", OnlineBonus.rarity() * 100);
+        if (plugin.events() != null) {
+            // 2026-10-24：這個月的主題、萬燈夜點滿燈的全服物品數量（掉落時有算，面板以前漏了）
+            put(quantity, "活動", plugin.events().quantityBonus() * 100);
+            put(rarity, "活動", plugin.events().rarityBonus() * 100);
+        }
         double personalQuantity = 0;
         double personalRarity = 0;
         if (sponsors != null) {

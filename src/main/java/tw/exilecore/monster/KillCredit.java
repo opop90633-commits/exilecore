@@ -151,7 +151,7 @@ public final class KillCredit {
             // 升級前的等級算的懲罰（這一下升級的話，debug 寫的是給經驗時用的那個）
             final double penalty = plugin.players().config().levelPenalty(state.level(), data.level());
             plugin.players().awardExperience(player, amount);
-            if (data.boss() && !state.debug()) {
+            if (data.boss() && !state.debug() && !plugin.players().hidesSystem(player)) { // 2026-10-25：過濾系統訊息
                 // 2026-10：Boss 的經驗平常看不出來（跟小怪一樣默默加），倒下時寫一行
                 player.sendMessage(plugin.text().prefixed(String.format(java.util.Locale.ROOT, "<#ffd27f>擊敗 Boss：經驗 +%,d%s", amount,
                         penalty < 0.995 ? "<dark_gray>（等級差：剩 " + tw.exilecore.character.LevelPace.percent(penalty) + "）" : "")));

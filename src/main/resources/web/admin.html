@@ -197,7 +197,6 @@
   <nav class="tabs" role="tablist" aria-label="功能">
     <button type="button" role="tab" data-tab="give" aria-selected="true">發放物資</button>
     <button type="button" role="tab" data-tab="records" aria-selected="false">發放紀錄</button>
-    <button type="button" role="tab" data-tab="orders" aria-selected="false">贊助訂單</button>
     <button type="button" role="tab" data-tab="settings" aria-selected="false">遊戲設定</button>
     <button type="button" role="tab" data-tab="players" aria-selected="false">線上玩家</button>
     <button type="button" role="tab" data-tab="guilds" aria-selected="false">公會</button>
@@ -283,29 +282,6 @@
     </div>
   </section>
 
-  <section id="tab-orders" role="tabpanel" hidden>
-    <div class="card">
-      <div class="totals" id="order-totals"></div>
-      <div class="filters">
-        <select id="order-status" aria-label="狀態">
-          <option value="all">全部</option>
-          <option value="paid">已付款（星幣已發）</option>
-          <option value="waiting">等待繳費（ATM、超商）</option>
-          <option value="created">還沒付款</option>
-          <option value="failed">失敗或取消</option>
-          <option value="mismatch">金額不符（要人工處理）</option>
-        </select>
-        <input type="search" id="order-q" placeholder="玩家、訂單編號或 PAYUNi 交易編號" aria-label="篩選">
-        <button type="button" id="order-refresh">重新整理</button>
-      </div>
-      <p class="note">贊助商店（PAYUNi）自動發的星幣：付款成功時用訂單編號建一批發放，「看發放」可以看到實際發了什麼、玩家領了沒。每筆自動發放也會記在「操作紀錄」（管理員顯示 PAYUNi）。</p>
-      <div class="scroll"><table id="order-table">
-        <thead><tr><th>下單時間</th><th>訂單編號</th><th>玩家</th><th>內容</th><th>金額</th><th>付款方式</th><th>狀態</th><th>備註</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table></div>
-      <p class="empty" id="order-empty" hidden>還沒有訂單。</p>
-    </div>
-  </section>
 
   <section id="tab-settings" role="tabpanel" hidden>
     <p class="note">改的值存在伺服器的 <span id="overrides-file">admin-overrides.yml</span>（蓋過資料檔的同一個鍵，資料檔不動），按「套用」馬上生效。「恢復」= 回到資料檔裡寫的值。</p>
@@ -1914,51 +1890,17 @@
     }).catch(fail);
   }
 
-  // ---- 贊助訂單 ----
-  var ORDER_STATUS = { paid: '已付款', waiting: '等待繳費', created: '還沒付款', failed: '失敗或取消', mismatch: '金額不符' };
-  function loadOrders() {
-    return api('GET', 'admin/api/orders?status=' + encodeURIComponent($('order-status').value) + '&q=' + encodeURIComponent($('order-q').value.trim())).then(function (json) {
-      var t = json.totals || {};
-      var totals = clear($('order-totals'));
-      [['今天', t.today, t.todayCount], ['這個月', t.month, t.monthCount], ['全部', t.all, t.allCount]].forEach(function (x) {
-        totals.appendChild(h('div', null, h('div', { cls: 'muted', text: x[0] + '已付款' }), h('b', { text: 'NT$ ' + num(x[1] || 0) }),
-          h('span', { cls: 'muted', text: '　' + num(x[2] || 0) + ' 筆' })));
-      });
-      var body = clear($('order-table').querySelector('tbody'));
-      json.rows.forEach(function (row) {
-        var actions = h('td', { cls: 'actions' });
-        if (row.status === 'paid') {
-          actions.appendChild(h('button', { type: 'button', cls: 'link', text: '看發放', title: '在發放紀錄看這筆發了什麼', onclick: function () {
-            recordBatch = row.batch; $('record-status').value = 'all'; showTab('records');
-          } }));
-        }
-        body.appendChild(h('tr', null,
-          h('td', { cls: 'time', text: time(row.at) }),
-          h('td', null, h('div', { text: row.order }), row.trade ? h('div', { cls: 'muted', text: 'PAYUNi ' + row.trade }) : null),
-          h('td', null, h('div', { text: row.player }), row.email ? h('div', { cls: 'muted', text: row.email }) : null),
-          h('td', { text: num(row.stars) + ' 星幣' + (row.bonus ? '＋加送 ' + num(row.bonus) : '') }),
-          h('td', { cls: 'num', text: 'NT$ ' + num(row.amount) }),
-          h('td', { text: row.payment || '' }),
-          h('td', null, h('span', { cls: 'status ' + row.status, text: ORDER_STATUS[row.status] || row.status }),
-            row.paidAt ? h('div', { cls: 'muted', text: time(row.paidAt) }) : null),
-          h('td', { text: row.note || '' }),
-          actions));
-      });
-      $('order-empty').hidden = json.rows.length > 0;
-    }).catch(fail);
-  }
 
   // ---- 分頁 ----
   function showTab(tab) {
     Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
       b.setAttribute('aria-selected', b.getAttribute('data-tab') === tab ? 'true' : 'false');
     });
-    ['give', 'records', 'orders', 'settings', 'players', 'guilds', 'trace', 'transfer', 'dps', 'retention', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    ['give', 'records', 'settings', 'players', 'guilds', 'trace', 'transfer', 'dps', 'retention', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
     if (tab === 'transfer') { loadTransfers(); }
     if (tab === 'dps' && !dpsData) { loadDps(); } // 2026-10-17：切回來不重抓（要新的按「重新整理」）
     if (tab === 'retention' && !retentionData) { loadRetention(); } // 2026-10-19
     if (tab === 'records') { loadRecords(); }
-    if (tab === 'orders') { loadOrders(); }
     if (tab === 'guilds') { loadGuilds(); }
     if (tab === 'log') { loadLog(); }
     if (tab === 'players' || tab === 'settings') { load(true, 'safe'); }
@@ -1982,10 +1924,6 @@
   var recordTimer = null;
   $('record-q').addEventListener('input', function () { recordBatch = ''; clearTimeout(recordTimer); recordTimer = setTimeout(loadRecords, 300); });
   $('record-refresh').addEventListener('click', loadRecords);
-  $('order-status').addEventListener('change', loadOrders);
-  var orderTimer = null;
-  $('order-q').addEventListener('input', function () { clearTimeout(orderTimer); orderTimer = setTimeout(loadOrders, 300); });
-  $('order-refresh').addEventListener('click', loadOrders);
   $('batch-clear').addEventListener('click', function () { recordBatch = ''; loadRecords(); });
   $('batch-cancel').addEventListener('click', function () {
     var batch = recordBatch;
@@ -2014,7 +1952,7 @@
   $('dps-view').addEventListener('change', renderDps);
   $('dps-place').addEventListener('change', renderDps);
   $('dps-name').addEventListener('input', renderDps);
-  $('refresh').addEventListener('click', function () { load(false, 'safe'); var tab = document.querySelector('.tabs button[aria-selected="true"]').getAttribute('data-tab'); if (tab === 'records') { loadRecords(); } if (tab === 'orders') { loadOrders(); } if (tab === 'log') { loadLog(); } });
+  $('refresh').addEventListener('click', function () { load(false, 'safe'); var tab = document.querySelector('.tabs button[aria-selected="true"]').getAttribute('data-tab'); if (tab === 'records') { loadRecords(); } if (tab === 'log') { loadLog(); } });
   $('logout').addEventListener('click', function () {
     rememberFailed(null); // 登出：沒確認的發放也不留給下一個在這個分頁登入的人
     api('POST', 'admin/logout', {}).catch(function () {}).then(function () { showLogin('已登出。'); });

@@ -479,7 +479,7 @@ public final class ZoneService {
                 return;
             }
             returnPoints.put(player.getUniqueId(), from);
-            player.sendMessage(plugin.text().prefixed(uber ? "<gray>回到營地<dark_gray>（極境每個人只能進一次，不能再回去了）"
+            if (!plugin.players().hidesSystem(player) || uber) player.sendMessage(plugin.text().prefixed(uber ? "<gray>回到營地<dark_gray>（極境每個人只能進一次，不能再回去了）"
                     : "<gray>回到營地。<white>/wp</white> 可以傳回剛才的位置"));
         }
     }

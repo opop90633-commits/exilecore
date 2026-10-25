@@ -158,8 +158,20 @@ public final class ExileCoreCommand {
                                 .then(Commands.argument("target", StringArgumentType.word()).suggests(ExileCoreCommand::onlineNames)
                                         .executes(context -> xpOther(plugin, context, IntegerArgumentType.getInteger(context, "amount"))))))
                 .then(Commands.literal("points")
+                        // 2026-10-25：天賦點從哪裡來（/ec points check [玩家]）：等級、任務、區域 Boss、地圖首殺、額外的，跟應有的比
+                        .then(Commands.literal("check")
+                                .executes(context -> pointsCheck(plugin, context.getSource().getSender(),
+                                        context.getSource().getExecutor() instanceof Player self ? self : null))
+                                .then(Commands.argument("target", StringArgumentType.word()).suggests(ExileCoreCommand::onlineNames)
+                                        .executes(context -> pointsCheck(plugin, context.getSource().getSender(),
+                                                plugin.getServer().getPlayerExact(StringArgumentType.getString(context, "target"))))))
                         .then(Commands.argument("amount", IntegerArgumentType.integer(-500, 500))
-                                .executes(context -> points(plugin, context, IntegerArgumentType.getInteger(context, "amount")))))
+                                .executes(context -> points(plugin, context, IntegerArgumentType.getInteger(context, "amount")))
+                                // 2026-10-25：給別的玩家（/ec points 點數 玩家；負數扣）
+                                .then(Commands.argument("target", StringArgumentType.word()).suggests(ExileCoreCommand::onlineNames)
+                                        .executes(context -> pointsOther(plugin, context.getSource().getSender(),
+                                                plugin.getServer().getPlayerExact(StringArgumentType.getString(context, "target")),
+                                                IntegerArgumentType.getInteger(context, "amount"))))))
                 .then(Commands.literal("refund")
                         .then(Commands.argument("amount", IntegerArgumentType.integer(1, 500))
                                 .executes(context -> refund(plugin, context, IntegerArgumentType.getInteger(context, "amount")))))
@@ -602,6 +614,126 @@ public final class ExileCoreCommand {
         state.character().setBonusPoints(state.character().bonusPoints() + amount);
         player.sendMessage(plugin.text().prefixed("<gray>額外天賦點 " + (amount >= 0 ? "+" : "") + amount + "，可用 <white>" + plugin.players().availablePoints(state)));
         return Command.SINGLE_SUCCESS;
+    }
+
+    /** 2026-10-25：給別的玩家目前的角色額外天賦點（負數扣）；兩邊都說，寫進主控台。 */
+    private static int pointsOther(final ExileCore plugin, final org.bukkit.command.CommandSender sender, final Player target, final int amount) {
+        if (target == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>那個玩家不在線上（要在線才能改）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final PlayerState state = plugin.players().get(target);
+        if (!state.hasCharacter()) {
+            sender.sendMessage(plugin.text().prefixed("<red>" + tw.exilecore.item.ItemRenderer.escape(target.getName()) + " 沒有選角色"));
+            return Command.SINGLE_SUCCESS;
+        }
+        state.character().setBonusPoints(state.character().bonusPoints() + amount);
+        state.markDirty();
+        final int available = plugin.players().availablePoints(state);
+        final String who = tw.exilecore.item.ItemRenderer.escape(target.getName());
+        final String sign = amount >= 0 ? "+" : "";
+        sender.sendMessage(plugin.text().prefixed("<gray>" + who + " 的額外天賦點 " + sign + amount + "（角色身上記的 <white>"
+                + state.character().bonusPoints() + "<gray>），可用 <white>" + available
+                + (available < 0 ? "<red>　（點超過了：要退 " + (-available) + " 個天賦才會正常）" : "")));
+        if (!target.equals(sender)) {
+            target.sendMessage(plugin.text().prefixed("<gray>管理員調整了你的天賦點 " + sign + amount + "，可用 <white>" + available
+                    + (available < 0 ? "<red>（點超過了，請退 " + (-available) + " 個天賦）" : "")));
+        }
+        plugin.getSLF4JLogger().info("[天賦點] {} 調整 {} 的額外天賦點 {}{}（現在 {}，可用 {}）", sender.getName(), target.getName(), sign, amount,
+                state.character().bonusPoints(), available);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /**
+     * 2026-10-25：天賦點明細。「應有的額外點」= 區域 Boss 首殺 + 地圖、終局首殺（照現在的設定與這個角色的進度）；
+     * 角色身上記的額外點比應有的多，多的就是管理員給的、以前的設定比較多、或重設地圖進度後重複拿的首殺。
+     */
+    private static int pointsCheck(final ExileCore plugin, final org.bukkit.command.CommandSender sender, final Player target) {
+        if (target == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>那個玩家不在線上（要在線才能查）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final PlayerState state = plugin.players().get(target);
+        if (!state.hasCharacter()) {
+            sender.sendMessage(plugin.text().prefixed("<red>" + tw.exilecore.item.ItemRenderer.escape(target.getName()) + " 沒有選角色"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final java.util.Map<String, String> progress = state.progress();
+        final int level = state.character().level();
+        final int fromLevel = plugin.players().config().pointsFromLevel(level);
+        final int fromQuests = plugin.quests() == null ? 0 : plugin.quests().passivePoints(state);
+        int zoneBosses = 0;
+        int zonePoints = 0;
+        int zoneTotal = 0;
+        if (plugin.zones() != null) {
+            final int each = plugin.zones().config().boss().firstKillPoints();
+            for (final tw.exilecore.zone.Zone zone : plugin.zones().zones()) {
+                if (zone.boss() == null) {
+                    continue;
+                }
+                zoneTotal += each;
+                if (progress.containsKey("boss." + zone.id())) {
+                    zoneBosses++;
+                    zonePoints += each;
+                }
+            }
+        }
+        int mapKills = 0;
+        int mapPoints = 0;
+        int mapTotal = 0;
+        final java.util.List<String> mapNames = new java.util.ArrayList<>();
+        int repeatGuard = 0;
+        if (plugin.maps() != null) {
+            for (final tw.exilecore.map.MapConfig.MapDef map : plugin.maps().config().all()) {
+                final int points = plugin.maps().firstKillPoints(map);
+                if (points <= 0) {
+                    continue;
+                }
+                mapTotal += points;
+                final boolean killed = progress.containsKey(tw.exilecore.map.Atlas.key(map.id()));
+                final boolean given = progress.containsKey(tw.exilecore.map.MapService.FIRST_KILL_POINTS_PREFIX + map.id());
+                if (killed || given) {
+                    mapKills++;
+                    mapPoints += points;
+                    mapNames.add(map.name() + " " + points);
+                    if (given && !killed) {
+                        repeatGuard++;
+                    }
+                }
+            }
+        }
+        final int bonus = state.character().bonusPoints();
+        final int expectedBonus = zonePoints + mapPoints;
+        final int extra = bonus - expectedBonus;
+        final int total = fromLevel + fromQuests + bonus;
+        final int used = state.passives().size();
+        final int cap = plugin.players().config().levelCap();
+        final String who = tw.exilecore.item.ItemRenderer.escape(target.getName());
+        sender.sendMessage(plugin.text().prefixed("<#f5b942>" + who + " 的天賦點（Lv." + level + "）"));
+        sender.sendMessage(plugin.text().parse("<gray>  等級：<white>" + fromLevel + "<dark_gray>（2 級起每級 " + plugin.players().config().pointsFromLevel(2) + "）"));
+        sender.sendMessage(plugin.text().parse("<gray>  任務：<white>" + fromQuests));
+        sender.sendMessage(plugin.text().parse("<gray>  區域 Boss 首殺：<white>" + zonePoints + "<dark_gray>（" + zoneBosses + " 隻，全部 " + zoneTotal + "）"));
+        sender.sendMessage(plugin.text().parse("<gray>  地圖、終局首殺：<white>" + mapPoints + "<dark_gray>（" + mapKills + " 張，全部 " + mapTotal + "）"
+                + (mapNames.isEmpty() ? "" : "<dark_gray>：" + tw.exilecore.item.ItemRenderer.escape(String.join("、", mapNames)))));
+        sender.sendMessage(plugin.text().parse("<gray>  角色身上記的額外點：<white>" + bonus + "<gray>，照進度應有 <white>" + expectedBonus
+                + (extra > 0 ? "<red>　多 " + extra + "<dark_gray>（管理員給的、以前的設定比較多、或重設地圖進度後重複拿的首殺）"
+                : extra < 0 ? "<yellow>　少 " + (-extra) + "<dark_gray>（首殺在設定改點數之前、或管理員扣過）" : "<green>　對得上")));
+        if (repeatGuard > 0) {
+            sender.sendMessage(plugin.text().parse("<dark_gray>  （有 " + repeatGuard + " 張圖的進度被重設過，已經記著給過首殺點，再打不會重複給）"));
+        }
+        sender.sendMessage(plugin.text().parse("<gray>  合計 <white>" + total + "<gray>，已經點了 <white>" + used + "<gray>，還能點 <white>"
+                + plugin.players().availablePoints(state) + "<dark_gray>　|　" + cap + " 等全拿理論上 "
+                + (plugin.players().config().pointsFromLevel(cap) + (plugin.quests() == null ? 0 : questMax(plugin)) + zoneTotal + mapTotal)));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** 主線、支線全部完成能拿的天賦點（任務設定的 rewards 加起來）。 */
+    private static int questMax(final ExileCore plugin) {
+        int sum = 0;
+        for (final tw.exilecore.quest.QuestConfig.Quest quest : plugin.quests().config().quests()) {
+            sum += Math.max(0, quest.passivePoints());
+        }
+        return sum;
     }
 
     private static int refund(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final int amount) {

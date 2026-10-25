@@ -26,12 +26,10 @@ import java.util.Set;
 public final class MapDeviceMenu extends Menu {
 
     private static final int SLOT_MAP = 13;
-    /** 2026-10：地圖品質一鍵點滿（用背包＋通貨袋＋倉庫裡的星盤刻刀）。 */
+    /** 2026-10-25：地圖強化：品質一鍵點滿（星盤刻刀）＋詞綴一鍵填滿（普通→星火石、魔法→豐饒石、稀有→至臻石），用背包＋通貨袋＋倉庫裡的。 */
     private static final int SLOT_QUALITY = 14;
-    /** 2026-10-18：地圖詞綴一鍵填滿（普通→星火石、魔法→豐饒石、稀有→至臻石，用背包＋通貨袋＋倉庫裡的）。 */
-    private static final int SLOT_AFFIX = 15;
     /** 2026-10-23：瓦爾地圖——用一顆蝕變石腐化選好的地圖（沒變化／階級 ±1／詞綴全前綴或全後綴／稀有多 1～2 條詞綴）。 */
-    private static final int SLOT_CORRUPT = 16;
+    private static final int SLOT_CORRUPT = 15; // 2026-10-25：16 → 15（品質＋詞綴合成一顆之後，緊貼在地圖強化右邊）
     /** 2026-10：從倉庫的地圖頁挑一張地圖（拿到背包再選起來）。 */
     private static final int SLOT_FROM_STASH = 12;
     /** 挑倉庫地圖的畫面：一頁 45 張（最下面一排是按鈕）。 */
@@ -87,8 +85,7 @@ public final class MapDeviceMenu extends Menu {
         } else {
             final ItemStack preview = plugin.items().toStack(selected);
             set(SLOT_MAP, preview);
-            drawQuality();
-            drawAffix(); // 2026-10-18
+            drawImprove(); // 2026-10-25：品質點滿＋詞綴填滿合成一顆
             drawCorrupt(); // 2026-10-23
             final MapConfig.MapDef map = config.byBase(selected.base());
             final List<String> lore = new ArrayList<>();
@@ -629,11 +626,10 @@ public final class MapDeviceMenu extends Menu {
                     redraw();
                 }
             }
-            case SLOT_QUALITY -> fillQuality();
-            case SLOT_AFFIX -> fillAffixes(); // 2026-10-18
+            case SLOT_QUALITY -> improve(); // 2026-10-25：先品質點滿、再詞綴填滿
             case SLOT_CORRUPT -> {
-                if (click.isShiftClick() && click.isLeftClick() && acceptAction(click)) {
-                    corruptMap(); // 2026-10-23：不能復原，要 Shift＋左鍵
+                if (click.isLeftClick() && acceptAction(click)) {
+                    corruptMap(); // 2026-10-23：不能復原；2026-10-25：改成左鍵就用（以前要 Shift＋左鍵）
                 }
             }
             case SLOT_MAP -> {
@@ -699,31 +695,69 @@ public final class MapDeviceMenu extends Menu {
         return null;
     }
 
-    private void drawQuality() {
+    /**
+     * 2026-10-25：地圖強化（以前「品質點滿」「詞綴填滿」兩顆）：左鍵先用刻刀把品質點滿，再用通貨把詞綴填滿；
+     * 哪一步的通貨沒有就跳過那一步。
+     */
+    private void drawImprove() {
+        if (selected == null || plugin.currencies() == null) {
+            return;
+        }
         final CurrencyType chisel = qualityCurrency();
-        if (chisel == null || selected == null) {
-            return;
-        }
         final int quality = selected.quality();
-        final int have = service.countCurrency(player, chisel);
-        if (quality >= MAP_QUALITY_CAP) {
-            set(SLOT_QUALITY, icon(Material.GRAY_DYE, "<gray>地圖品質已經滿了（" + quality + "%）",
-                    "<dark_gray>每 1% 品質多 1% 物品數量"));
+        final boolean qualityFull = quality >= MAP_QUALITY_CAP;
+        final int chisels = chisel == null ? 0 : service.countCurrency(player, chisel);
+        final boolean canQuality = chisel != null && !qualityFull && chisels > 0;
+        final CurrencyType next = affixStep(selected);
+        final int nextHave = next == null ? 0 : service.countCurrency(player, next);
+        final boolean canAffix = next != null && nextHave > 0;
+        final List<String> lore = new ArrayList<>();
+        lore.add("<white>① 品質點滿");
+        if (chisel == null) {
+            lore.add("<dark_gray>　（沒有地圖品質的通貨）");
+        } else if (qualityFull) {
+            lore.add("<gray>　已經滿了（" + quality + "%）");
+        } else {
+            final int need = (MAP_QUALITY_CAP - quality + 4) / 5; // 一顆 +5%
+            lore.add("<gray>　" + quality + "% → " + MAP_QUALITY_CAP + "%，大約要 <white>" + need + "</white> 個" + ItemRenderer.escape(chisel.name())
+                    + "（你有 <white>" + chisels + "</white> 個）");
+        }
+        lore.add("<white>② 詞綴填滿<gray>（稀有、3 前綴＋3 後綴）");
+        if (next == null) {
+            lore.add("<gray>　" + (selected.rarity() == tw.exilecore.item.Rarity.RARE ? "已經滿了" : "這張地圖不能加詞綴"));
+        } else {
+            lore.add("<gray>　下一步要用：<white>" + ItemRenderer.escape(next.name()) + "</white>（你有 <white>" + nextHave + "</white> 個）");
+        }
+        lore.add("<dark_gray>每 1% 品質多 1% 物品數量；通貨從背包＋通貨袋＋倉庫扣");
+        lore.add("");
+        if (!canQuality && !canAffix) {
+            lore.add(qualityFull && next == null ? "<gray>這張地圖已經強化到滿了" : "<red>沒有可以用的通貨");
+            set(SLOT_QUALITY, icon(Material.GRAY_DYE, "<gray>地圖強化", lore));
             return;
         }
-        final int need = (MAP_QUALITY_CAP - quality + 4) / 5; // 一顆 +5%
-        final List<String> lore = new ArrayList<>();
-        lore.add("<gray>地圖品質 <white>" + quality + "%</white> → <white>" + MAP_QUALITY_CAP + "%");
-        lore.add("<gray>大約要 <white>" + need + "</white> 個" + ItemRenderer.escape(chisel.name())
-                + "（你有 <white>" + have + "</white> 個，背包＋通貨袋＋倉庫）");
-        lore.add("<dark_gray>每 1% 品質多 1% 物品數量");
-        lore.add("");
-        lore.add(have > 0 ? "<yellow>左鍵：用" + ItemRenderer.escape(chisel.name()) + "把品質點滿" : "<red>沒有" + ItemRenderer.escape(chisel.name()));
-        final Material material = chisel.material() == null ? null : Material.matchMaterial(chisel.material());
+        lore.add("<yellow>左鍵：" + (canQuality && canAffix ? "先點滿品質，再填滿詞綴" : canQuality ? "點滿品質" : "填滿詞綴"));
+        final CurrencyType shown = canQuality ? chisel : next;
+        final Material material = shown.material() == null ? null : Material.matchMaterial(shown.material());
         final ItemStack button = tw.exilecore.currency.CurrencyService.decorate(
-                icon(material == null || !material.isItem() ? Material.QUARTZ : material, have > 0 ? "<#f5b942>品質點滿" : "<gray>品質點滿", lore), chisel);
-        button.setAmount(Math.max(1, Math.min(64, need)));
-        set(SLOT_QUALITY, have > 0 ? glowing(button) : button);
+                icon(material == null || !material.isItem() ? Material.AMETHYST_SHARD : material, "<#f5b942>地圖強化", lore), shown);
+        set(SLOT_QUALITY, glowing(button));
+    }
+
+    /** 2026-10-25：先品質（有刻刀、還沒滿），再詞綴（下一步的通貨有）。 */
+    private void improve() {
+        if (selected == null) {
+            return;
+        }
+        final CurrencyType chisel = qualityCurrency();
+        if (chisel != null && selected.quality() < MAP_QUALITY_CAP && service.countCurrency(player, chisel) > 0) {
+            fillQuality();
+        }
+        if (selected != null) {
+            final CurrencyType next = affixStep(selected);
+            if (next != null && service.countCurrency(player, next) > 0) {
+                fillAffixes();
+            }
+        }
     }
 
     /** 一顆一顆用到品質滿或刻刀用完；用了幾顆就從背包、通貨袋扣幾顆。 */
@@ -766,7 +800,7 @@ public final class MapDeviceMenu extends Menu {
         // 2026-10-18：每次 apply 已經記了「做裝備、地圖」的消耗，這裡不再記地圖裝置（以前重複算兩次）
         service.takeCurrency(player, chisel, used, null);
         selected = plugin.items().read(target).orElse(selected);
-        player.sendMessage(plugin.text().prefixed("<gray>用了 <white>" + used + "</white> 個" + ItemRenderer.escape(chisel.name())
+        if (!plugin.players().hidesSystem(player)) player.sendMessage(plugin.text().prefixed("<gray>用了 <white>" + used + "</white> 個" + ItemRenderer.escape(chisel.name())
                 + "：地圖品質 " + before + "% → <white>" + selected.quality() + "%"));
         player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_ANVIL_USE, 0.5f, 1.4f);
         redraw();
@@ -800,37 +834,6 @@ public final class MapDeviceMenu extends Menu {
     private boolean affixesFull(final ItemData data) {
         final tw.exilecore.item.ItemGenerator generator = plugin.items().generator();
         return !generator.canAddAffix(data, tw.exilecore.item.AffixType.PREFIX) && !generator.canAddAffix(data, tw.exilecore.item.AffixType.SUFFIX);
-    }
-
-    private void drawAffix() {
-        if (selected == null || plugin.currencies() == null) {
-            return;
-        }
-        final CurrencyType next = affixStep(selected);
-        if (next == null) {
-            set(SLOT_AFFIX, icon(Material.GRAY_DYE, selected.rarity() == tw.exilecore.item.Rarity.RARE ? "<gray>地圖詞綴已經滿了" : "<gray>這張地圖不能加詞綴",
-                    "<dark_gray>稀有地圖最多 3 條前綴、3 條後綴"));
-            return;
-        }
-        final CurrencyType spark = currencyOf(tw.exilecore.currency.CurrencyOperation.UPGRADE_TO_RARE);
-        final CurrencyType bounty = currencyOf(tw.exilecore.currency.CurrencyOperation.MAGIC_TO_RARE);
-        final CurrencyType zenith = currencyOf(tw.exilecore.currency.CurrencyOperation.ADD_AFFIX_RARE);
-        final int have = service.countCurrency(player, next);
-        final List<String> lore = new ArrayList<>();
-        lore.add("<gray>把這張地圖的詞綴填到滿（稀有、3 前綴＋3 後綴）");
-        lore.add("<gray>普通 → " + name(spark) + "<gray>、魔法 → " + name(bounty) + "<gray>、稀有補詞綴 → " + name(zenith));
-        lore.add("<gray>下一步要用：<white>" + ItemRenderer.escape(next.name()) + "</white>（你有 <white>" + have + "</white> 個，背包＋通貨袋＋倉庫）");
-        lore.add("<dark_gray>跟「品質點滿」分開；一顆一顆用到滿或通貨用完");
-        lore.add("");
-        lore.add(have > 0 ? "<yellow>左鍵：用通貨把詞綴填滿" : "<red>沒有" + ItemRenderer.escape(next.name()));
-        final Material material = next.material() == null ? null : Material.matchMaterial(next.material());
-        final ItemStack button = tw.exilecore.currency.CurrencyService.decorate(
-                icon(material == null || !material.isItem() ? Material.AMETHYST_SHARD : material, have > 0 ? "<#f5b942>詞綴填滿" : "<gray>詞綴填滿", lore), next);
-        set(SLOT_AFFIX, have > 0 ? glowing(button) : button);
-    }
-
-    private static String name(final CurrencyType type) {
-        return type == null ? "<red>（沒有這種通貨）" : "<white>" + ItemRenderer.escape(type.name());
     }
 
     /** 照 affixStep 一顆一顆用到詞綴滿、或下一顆要用的通貨沒了；每種用了幾顆就扣幾顆（apply 已記流水帳）。 */
@@ -889,7 +892,7 @@ public final class MapDeviceMenu extends Menu {
         final int prefixes = selected.affixes().stream().filter(a -> plugin.items().repository().affix(a.id()) != null
                 && plugin.items().repository().affix(a.id()).type() == tw.exilecore.item.AffixType.PREFIX).toList().size();
         final int suffixes = selected.affixes().size() - prefixes;
-        player.sendMessage(plugin.text().prefixed("<gray>用了 <white>" + String.join("<gray>、<white>", parts) + "</white>：地圖現在 "
+        if (!plugin.players().hidesSystem(player)) player.sendMessage(plugin.text().prefixed("<gray>用了 <white>" + String.join("<gray>、<white>", parts) + "</white>：地圖現在 "
                 + prefixes + " 前綴、" + suffixes + " 後綴" + (stopped != null ? "<gray>（" + ItemRenderer.escape(stopped.name()) + "用完了，還沒滿）" : "")));
         player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_ANVIL_USE, 0.5f, 1.4f);
         redraw();
@@ -917,7 +920,7 @@ public final class MapDeviceMenu extends Menu {
         lore.add("<gray>　沒變化／階級 ±1（T1～T16）／詞綴全部變成前綴或全部變成後綴／稀有地圖多 1～2 條詞綴");
         lore.add("<red>腐化後不能再用通貨改造（品質、詞綴先弄好再腐化）");
         lore.add("");
-        lore.add(have > 0 ? "<yellow>Shift＋左鍵：腐化" : "<red>沒有" + ItemRenderer.escape(orb.name()));
+        lore.add(have > 0 ? "<yellow>左鍵：腐化<dark_gray>（不能復原）" : "<red>沒有" + ItemRenderer.escape(orb.name()));
         final Material material = orb.material() == null ? null : Material.matchMaterial(orb.material());
         final ItemStack button = tw.exilecore.currency.CurrencyService.decorate(
                 icon(material == null || !material.isItem() ? Material.FERMENTED_SPIDER_EYE : material,

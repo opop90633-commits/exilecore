@@ -42,6 +42,8 @@ public final class SettingsMenu extends Menu {
     private static final int SLOT_HIDE_JOIN_LEAVE = 23;
     /** 隱藏怪物對話（2026-10-22；預設關）。 */
     private static final int SLOT_HIDE_MONSTER_TALK = 24;
+    /** 過濾系統訊息（2026-10-25；預設關）。 */
+    private static final int SLOT_HIDE_SYSTEM = 25;
     /** 按鍵（2026-10）：生命、魔力藥劑各放 1–8 的哪一格。 */
     private static final int ROW_KEYS = 3;
     private static final int SLOT_LIFE_FLASK = 28;
@@ -85,6 +87,9 @@ public final class SettingsMenu extends Menu {
                 "聊天欄不顯示誰加入、離開伺服器"));
         set(SLOT_HIDE_MONSTER_TALK, toggle(Material.ZOMBIE_HEAD, "隱藏怪物對話", PlayerSettings.on(state, PlayerSettings.HIDE_MONSTER_TALK),
                 "聊天欄不顯示 Boss 的喊話、登場與倒下的台詞（招式的警告、畫面中間的大字照常）"));
+        set(SLOT_HIDE_SYSTEM, toggle(Material.PAPER, "過濾系統訊息", PlayerSettings.on(state, PlayerSettings.HIDE_SYSTEM),
+                "聊天欄不顯示：擊敗 Boss 的經驗、Boss 倒下的台詞、星圖完成、完成地圖、開圖的說明、用通貨強化地圖、"
+                        + "回營地、給糖、隊友開了新地圖、星諭卡廣播（追逐級的照常顯示）"));
         set(SLOT_PARTY_FRAMES, toggle(Material.PLAYER_HEAD, "隊伍框", PlayerSettings.enabled(state, PlayerSettings.PARTY_FRAMES),
                 "組隊時畫面左上角列出隊友：頭像、名字、等級、生命（護盾是血條上面薄薄的一層）、魔力；"
                         + "死了名字變紅、離線變灰（要套用介面資源包）"));
@@ -147,6 +152,7 @@ public final class SettingsMenu extends Menu {
             case SLOT_HIDE_DEATHS -> flipOff(PlayerSettings.HIDE_DEATHS);
             case SLOT_HIDE_JOIN_LEAVE -> flipOff(PlayerSettings.HIDE_JOIN_LEAVE);
             case SLOT_HIDE_MONSTER_TALK -> flipOff(PlayerSettings.HIDE_MONSTER_TALK);
+            case SLOT_HIDE_SYSTEM -> flipOff(PlayerSettings.HIDE_SYSTEM); // 2026-10-25
             case SLOT_OTHERS_FX -> {
                 if (flip(PlayerSettings.OTHERS_FX) && plugin.skills() != null) {
                     plugin.skills().refreshDeployableVisibility(player); // 圖騰、陷阱馬上藏起來／顯示

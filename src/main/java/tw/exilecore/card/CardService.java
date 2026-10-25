@@ -240,6 +240,9 @@ public final class CardService {
                     + card.tier().displayName() + "星諭卡 <#c9a0ff><bold>" + ItemRenderer.escape(type.name()) + "</bold><light_purple>，換到 <white>"
                     + ItemRenderer.escape(summary));
             for (final Player online : plugin.getServer().getOnlinePlayers()) {
+                if (card.tier() != CardConfig.Tier.CHASE && plugin.players().hidesSystem(online)) {
+                    continue; // 2026-10-25：過濾系統訊息（追逐級的照常）
+                }
                 online.sendMessage(message);
                 if (card.tier() == CardConfig.Tier.CHASE) {
                     online.playSound(online.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, SoundCategory.PLAYERS, 0.7f, 1.2f);

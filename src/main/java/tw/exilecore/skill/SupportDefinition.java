@@ -144,6 +144,10 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (inner == null) {
             return "先把技能寶石放進第 1 孔";
         }
+        // 2026-10-24：寫了「圖騰除外」（excludes: totem）的輔助不能掛在圖騰宿主上（裂虛回響：英靈每次只打一下，連打吃不到）
+        if (excludes.contains(Tags.TOTEM) && host.tags().contains(Tags.TOTEM)) {
+            return name + "不能掛在" + host.name() + "上（圖騰除外）";
+        }
         if (requires.contains(Tags.TOTEM) && host.tags().contains(Tags.TOTEM)) {
             return null;
         }

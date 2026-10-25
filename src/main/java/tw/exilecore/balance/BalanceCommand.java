@@ -21,6 +21,8 @@ import java.util.List;
  * <pre>
  * /ec balance          每 5 級一行的平衡摘要＋區域 Boss，完整報表（每一級＋建議的錨點與 Boss 倍率）寫進 plugins/ExileCore/balance-report.txt
  * /ec balance &lt;等級&gt;  那個等級的明細（參考角色的裝備、輔助、每下傷害、攻速、命中、暴擊）
+ * /ec balance export   2026-10-25：平衡報表（真實數據：活躍角色的技能、輔助、傳奇、天賦配置率，Boss 實測，異常值，技能係數 vs PoE2）
+ *                      寫進 plugins/ExileCore/balance/日期.md 與 .json（每月 1 號也會自動產生）
  * </pre>
  * 每次都重新讀 data/balance.yml，改完不用 /ec reload；怪物、技能、裝備的資料照目前載入的（改了要先 /ec reload）。
  */
@@ -34,6 +36,13 @@ public final class BalanceCommand {
     public static LiteralArgumentBuilder<CommandSourceStack> node(final ExileCore plugin) {
         return Commands.literal("balance")
                 .executes(context -> summary(plugin, context.getSource().getSender()))
+                .then(Commands.literal("export").executes(context -> {
+                    final CommandSender sender = context.getSource().getSender();
+                    sender.sendMessage(plugin.text().prefixed("<gray>平衡報表產生中（讀資料庫，幾秒）…"));
+                    new BalanceExport(plugin).export(message -> plugin.getServer().getScheduler().runTask(plugin,
+                            () -> sender.sendMessage(plugin.text().prefixed(message))));
+                    return Command.SINGLE_SUCCESS;
+                }))
                 .then(Commands.argument("level", IntegerArgumentType.integer(1, 200))
                         .executes(context -> detail(plugin, context.getSource().getSender(),
                                 IntegerArgumentType.getInteger(context, "level"))));

@@ -345,6 +345,20 @@ public final class DpsRecords {
         return 1;
     }
 
+    /** 2026-10-25：最近幾天的紀錄（0 = 全部），舊的在前；平衡報表用。 */
+    public List<Entry> recent(final int days) {
+        final long since = days <= 0 ? 0 : System.currentTimeMillis() - days * 86_400_000L;
+        final List<Entry> list = new ArrayList<>();
+        synchronized (entries) {
+            for (final Entry entry : entries) {
+                if (entry.at() >= since) {
+                    list.add(entry);
+                }
+            }
+        }
+        return list;
+    }
+
     /**
      * 最近的紀錄與每個人的平均。days = 只看最近幾天（0 = 全部）。
      * 平均每秒傷害 = 總傷害 ÷ 總秒數（打得久的場次比重大；只打一下就倒的不會拉高）。

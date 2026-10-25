@@ -1089,7 +1089,9 @@ public final class FestivalService {
         final int amount = LootBonus.of(plugin, player).amount(range[0] + random.nextInt(Math.max(1, range[1] - range[0] + 1)), random);
         giveCurrency(player, FestivalConfig.CANDY, amount);
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.6f);
-        player.sendMessage(plugin.text().prefixed("<" + config.color() + ">🎃 給糖！<gray>糖果 +" + amount));
+        if (!plugin.players().hidesSystem(player)) { // 2026-10-25：過濾系統訊息
+            player.sendMessage(plugin.text().prefixed("<" + config.color() + ">🎃 給糖！<gray>糖果 +" + amount));
+        }
     }
 
     private void tickPumpkins(final long now) {

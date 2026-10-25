@@ -285,7 +285,8 @@ class UiPackTest {
         assertEquals(2 * transmogArmourThemes(), armour, "每一套幻化：身上、腿上各一張");
         assertEquals(UiPack.BACKGROUNDS + 4 + 1 + UiPack.Cell.NODES.size() + 1 + UiPack.ICONS.size() - smallIcons + 1 + UiPack.FLASK_SLOTS.size()
                         + 3 + transmogItemTextures()
-                        + UiPack.AtlasCell.EDGES.size() + UiPack.AtlasCell.KINDS.size() + 1, count,
+                        + UiPack.AtlasCell.EDGES.size() + UiPack.AtlasCell.KINDS.size() + 1
+                        + UiPack.AtlasCell.EDGES.size(), count, // 2026-10-24：塔範圍外框的六邊
                 "背景、四條線、發光、節點（含珠寶孔兩種）、標記、按鍵圖示、選取外框、藥劑欄的空瓶輪廓、稀有度與追逐級的外框、專屬寶石的實線外框、幻化的物品圖、"
                         + "星圖格子的六條連線、六種格子、腐化圈（2026-10-21）");
     }
