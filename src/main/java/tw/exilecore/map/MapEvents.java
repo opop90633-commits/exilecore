@@ -850,8 +850,9 @@ final class MapEvents implements Listener {
         box.center.getWorld().playSound(box.center, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1.0f, 0.8f);
         for (final Player near : players(box.instance)) {
             if (near.getLocation().distanceSquared(box.center) <= config.boxRadius() * config.boxRadius()) {
-                near.showTitle(Title.title(Component.empty(), plugin.text().parse("<#f5b942>" + ItemRenderer.escape(box.box.name())
-                        + "<red>：怪物跳出來了！殺光才會開"), Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500))));
+                // 2026-10-26：大標題不留空（文字背景開「所有地方」會留一個空框）
+                tw.exilecore.gui.Titles.show(near, plugin.text().parse("<#f5b942>" + ItemRenderer.escape(box.box.name())),
+                        plugin.text().parse("<red>怪物跳出來了！殺光才會開"), Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500)));
             }
         }
         if (box.monsters.isEmpty()) {
@@ -946,8 +947,8 @@ final class MapEvents implements Listener {
                 center.getWorld().playSound(center, Sound.BLOCK_END_PORTAL_SPAWN, 1.0f, 0.7f);
                 for (final Player player : players) {
                     if (player.getLocation().distanceSquared(center) <= 30 * 30) {
-                        player.showTitle(Title.title(Component.empty(), plugin.text().parse("<#c48bff>裂隙打開了——怪會從邊緣湧出 " + Math.round(breachDuration(event)) + " 秒"),
-                                Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500))));
+                        tw.exilecore.gui.Titles.show(player, plugin.text().parse("<#c48bff>裂隙打開了"),
+                                plugin.text().parse("<#c48bff>怪會從邊緣湧出 " + Math.round(breachDuration(event)) + " 秒"), Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500)));
                     }
                 }
             } else {
@@ -1198,8 +1199,8 @@ final class MapEvents implements Listener {
         event.center.getWorld().playSound(event.center, Sound.ENTITY_WARDEN_HEARTBEAT, 1.0f, 0.6f);
         for (final Player player : players(instance)) {
             if (player.getLocation().distanceSquared(event.center) <= 30 * 30) {
-                player.showTitle(Title.title(Component.empty(), plugin.text().parse(ABYSS_COLOR + "地裂開了——跟著縫走到盡頭"),
-                        Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500))));
+                tw.exilecore.gui.Titles.show(player, plugin.text().parse(ABYSS_COLOR + "地裂開了"), plugin.text().parse(ABYSS_COLOR + "跟著縫走到盡頭"),
+                        Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500)));
             }
         }
         advanceRift(event, now, null);
@@ -1475,8 +1476,8 @@ final class MapEvents implements Listener {
         head.getWorld().spawnParticle(Particle.SCULK_SOUL, boss.getLocation().add(0, 1, 0), 40, 0.8, 1.0, 0.8, 0.05);
         for (final Player player : players(instance)) {
             if (player.getLocation().distanceSquared(head) <= 32 * 32) {
-                player.showTitle(Title.title(Component.empty(), plugin.text().parse(ABYSS_COLOR + "縫的盡頭爬出了什麼——打倒它，寶箱就會開"),
-                        Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500))));
+                tw.exilecore.gui.Titles.show(player, plugin.text().parse(ABYSS_COLOR + "縫的盡頭爬出了什麼"),
+                        plugin.text().parse(ABYSS_COLOR + "打倒它，寶箱就會開"), Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500)));
             }
         }
     }
@@ -1710,8 +1711,8 @@ final class MapEvents implements Listener {
         event.center.getWorld().playSound(event.center, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1.0f, 0.8f);
         for (final Player near : players(event.instance)) {
             if (near.getLocation().distanceSquared(event.center) <= settings.rewardRadius() * settings.rewardRadius()) {
-                near.showTitle(Title.title(Component.empty(), plugin.text().parse(SAFE_COLOR + "開鎖開始<red>：守住保險箱 " + Math.round(settings.unlockSeconds()) + " 秒"),
-                        Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500))));
+                tw.exilecore.gui.Titles.show(near, plugin.text().parse(SAFE_COLOR + "開鎖開始"),
+                        plugin.text().parse("<red>守住保險箱 " + Math.round(settings.unlockSeconds()) + " 秒"), Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500)));
             }
         }
         plugin.getSLF4JLogger().info("地圖 #{}：{} 用一張{}開始開保險箱", event.instance.id(), player.getName(), contract.name());

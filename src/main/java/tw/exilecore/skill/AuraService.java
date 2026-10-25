@@ -361,8 +361,9 @@ final class AuraService implements Listener {
 
     /** 畫面中間下方閃一下（開關光環時，比動作列的訊息明顯）。 */
     private void subtitle(final Player player, final String miniMessage) {
-        player.showTitle(net.kyori.adventure.title.Title.title(net.kyori.adventure.text.Component.empty(), plugin.text().parse(miniMessage),
-                net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(100), java.time.Duration.ofMillis(1400), java.time.Duration.ofMillis(400))));
+        // 2026-10-26：大標題不留空（文字背景開「所有地方」會留一個空框）：Titles 會放一個小標題顏色的 ✦
+        tw.exilecore.gui.Titles.show(player, net.kyori.adventure.text.Component.empty(), plugin.text().parse(miniMessage),
+                net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(100), java.time.Duration.ofMillis(1400), java.time.Duration.ofMillis(400)));
     }
 
     private void compute(final Active aura, final SkillBuild build, final Fit fit) {

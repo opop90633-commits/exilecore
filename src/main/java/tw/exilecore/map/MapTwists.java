@@ -663,8 +663,9 @@ final class MapTwists implements Listener {
             }
             if (before == null || before != index) {
                 if (theme != null && !(index == state.hiddenRoom && !state.hiddenOpen)) {
-                    player.showTitle(Title.title(Component.empty(), plugin.text().parse(theme.color + theme.name + "<gray>：" + theme.hint),
-                            Title.Times.times(Duration.ofMillis(150), Duration.ofMillis(1600), Duration.ofMillis(400))));
+                    // 2026-10-26：大標題不留空（文字背景開「所有地方」的人會看到一個空框）：房名當大標題、說明當小標題
+                    tw.exilecore.gui.Titles.show(player, plugin.text().parse(theme.color + theme.name), plugin.text().parse("<gray>" + theme.hint),
+                            Title.Times.times(Duration.ofMillis(150), Duration.ofMillis(1600), Duration.ofMillis(400)));
                 }
                 if (room != null && room.kind() == MapLayout.Kind.NORMAL && state.visited.add(index)) {
                     maybeStartTimed(state, index, now);

@@ -85,8 +85,8 @@ final class AfkWatcher implements org.bukkit.event.Listener {
             if (idle >= WARN_SECONDS && !watch.warned) {
                 watch.warned = true;
                 final long left = KICK_SECONDS - idle;
-                player.showTitle(Title.title(plugin.text().parse("<#ffd27f>掛機中"), net.kyori.adventure.text.Component.empty(),
-                        Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(4000), Duration.ofMillis(800))));
+                tw.exilecore.gui.Titles.show(player, plugin.text().parse("<#ffd27f>掛機中"), null, // 2026-10-26：不送空的小標題（會留空框）
+                        Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(4000), Duration.ofMillis(800)));
                 player.sendMessage(plugin.text().prefixed("<#ffd27f>你已經 " + (WARN_SECONDS / 60) + " 分鐘沒有走動，視為掛機。<gray>再 "
                         + Math.max(1, Math.round(left / 60.0)) + " 分鐘不走動會把你傳回營地（走動一下就取消）"));
             } else if (watch.warned && KICK_SECONDS - idle <= 10 && (KICK_SECONDS - idle) % 5 == 0) {

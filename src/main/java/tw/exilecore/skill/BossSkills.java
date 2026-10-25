@@ -2031,10 +2031,11 @@ public final class BossSkills implements Listener {
         if (now % 5 != 0 || !danger.has(mark)) {
             return;
         }
-        final Component main = brain.host.alerts() ? plugin.text().parse("<red><bold>⚠ " + ItemRenderer.escape(skill.name())) : Component.empty();
+        // 2026-10-26：沒有招式名稱時大標題放「⚠」（不留空：文字背景開「所有地方」的人會看到一個空框）
+        final Component main = plugin.text().parse(brain.host.alerts() ? "<red><bold>⚠ " + ItemRenderer.escape(skill.name()) : "<red><bold>⚠");
         for (final Player player : playersNear(brain.boss.getLocation(), 48)) {
             if (danger.inside(mark, player)) {
-                player.showTitle(Title.title(main, plugin.text().parse("<red><bold>⚠ 離開紅色區域"),
+                player.showTitle(Title.title(main, plugin.text().parse("<red><bold>離開紅色區域"),
                         Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(150))));
             }
         }
@@ -2521,7 +2522,7 @@ public final class BossSkills implements Listener {
                 }
                 if (!chased.getUniqueId().equals(orb.told)) {
                     orb.told = chased.getUniqueId();
-                    chased.showTitle(Title.title(Component.empty(), plugin.text().parse("<red><bold>⚠ 光球在追你"),
+                    chased.showTitle(Title.title(plugin.text().parse("<red><bold>⚠"), plugin.text().parse("<red><bold>光球在追你"), // 2026-10-26：大標題不留空
                             Title.Times.times(Duration.ZERO, Duration.ofMillis(900), Duration.ofMillis(250))));
                 }
             }
@@ -2678,12 +2679,12 @@ public final class BossSkills implements Listener {
         for (final Location spot : cast.safeSpots) {
             centers.add(new double[] {spot.getX(), spot.getZ()});
         }
-        final Component main = brain.host.alerts() ? plugin.text().parse("<#ff5555><bold>⚠ " + ItemRenderer.escape(cast.skill.name()))
-                : Component.empty();
+        final Component main = plugin.text().parse(brain.host.alerts() ? "<#ff5555><bold>⚠ " + ItemRenderer.escape(cast.skill.name())
+                : "<#45ff6a><bold>⚠"); // 2026-10-26：大標題不留空
         for (final Player player : playersNear(brain.boss.getLocation(), cast.skill.radius())) {
             final Location at = player.getLocation();
             if (!BossGeometry.insideAny(at.getX(), at.getZ(), centers, cast.skill.safe() + SAFE_SLACK)) {
-                player.showTitle(Title.title(main, plugin.text().parse("<#45ff6a><bold>⚠ 躲進綠色安全區"),
+                player.showTitle(Title.title(main, plugin.text().parse("<#45ff6a><bold>躲進綠色安全區"),
                         Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(150))));
             }
         }
@@ -2907,7 +2908,7 @@ public final class BossSkills implements Listener {
                                 plugin.text().parse("<white>標記在你身上：離開隊友"),
                                 Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(150))));
                     } else if (danger.inside(marked.mark, near)) {
-                        near.showTitle(Title.title(Component.empty(), plugin.text().parse("<red><bold>⚠ 離開隊友身上的標記"),
+                        near.showTitle(Title.title(plugin.text().parse("<red><bold>⚠"), plugin.text().parse("<red><bold>離開隊友身上的標記"), // 2026-10-26：大標題不留空
                                 Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(150))));
                     }
                 }
@@ -3154,7 +3155,7 @@ public final class BossSkills implements Listener {
             return;
         }
         arena.nextPulse = now + Math.max(2, Math.round(skill.interval() * 20));
-        final Title title = Title.title(Component.empty(), plugin.text().parse("<red><bold>⚠ 回到圈內（靠近 Boss）"),
+        final Title title = Title.title(plugin.text().parse("<red><bold>⚠"), plugin.text().parse("<red><bold>回到圈內（靠近 Boss）"), // 2026-10-26：大標題不留空
                 Title.Times.times(Duration.ZERO, Duration.ofMillis(600), Duration.ofMillis(150)));
         for (final LivingEntity victim : victims(brain, arena.center, SEARCH)) {
             final Location at = victim.getLocation();

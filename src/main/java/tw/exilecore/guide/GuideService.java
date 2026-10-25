@@ -292,9 +292,9 @@ public final class GuideService {
     }
 
     private void title(final Player player, final String main, final String sub) {
-        player.showTitle(net.kyori.adventure.title.Title.title(plugin.text().parse(main), plugin.text().parse(sub),
+        tw.exilecore.gui.Titles.show(player, plugin.text().parse(main), plugin.text().parse(sub), // 2026-10-26：空的那段不送
                 net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(300), java.time.Duration.ofMillis(3500),
-                        java.time.Duration.ofMillis(600))));
+                        java.time.Duration.ofMillis(600)));
     }
 
     public void forget(final Player player) {

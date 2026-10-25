@@ -1329,7 +1329,7 @@ final class MapBosses {
         for (final UUID uuid : instance.inside()) {
             final Player player = plugin.getServer().getPlayer(uuid);
             if (player != null) {
-                player.showTitle(title);
+                tw.exilecore.gui.Titles.show(player, title); // 2026-10-26：沒有副標題時不送空的（會留空框）
             }
         }
     }
