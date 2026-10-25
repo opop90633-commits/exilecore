@@ -120,11 +120,11 @@ public final class AtlasMapPickMenu extends Menu {
             redraw();
             return;
         }
-        final int index = page * LIST_SLOTS + slot;
-        if (slot < 0 || slot >= LIST_SLOTS || index >= candidates.size() || !acceptAction(click) || click.isRightClick()) {
+        final int picked = page * LIST_SLOTS + slot;
+        if (slot < 0 || slot >= LIST_SLOTS || picked >= candidates.size() || !acceptAction(click) || click.isRightClick()) {
             return;
         }
-        final Candidate candidate = candidates.get(index);
+        final Candidate candidate = candidates.get(picked);
         int inventorySlot = candidate.inventorySlot();
         ItemData data = candidate.data();
         if (inventorySlot >= 0) {

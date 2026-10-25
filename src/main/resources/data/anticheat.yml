@@ -11,7 +11,7 @@
 # 看某個人的狀態：/ec anticheat 玩家
 enabled: true
 checks:
-  speed: false            # 2026-10-26：關掉超速檢查（技能、坐騎、加速太多種，誤判多）；飛行照查
+  speed: false            # 2026-10-26：關掉超速檢查；飛行、懸空照查
   flight: true
 tolerance: 1.25            # 超速的放寬倍率（1.0 = 完全照理論值；太嚴會誤判，1.2～1.4 之間比較合適）
 hover_ticks: 14            # 懸空幾刻（0.7 秒）算飛
