@@ -97,6 +97,8 @@ final class ProjectileEngine implements Listener {
         boolean chainedShocked;
         /** 2026-10-26：魔湧的分裂已經算過（一發只分裂一次）。 */
         boolean split;
+        /** 2026-10-28 照 PoE2（纏蝕箭）：射出時擲到的「多射幾發」改成多分裂幾個目標。 */
+        int splitBonus;
         /** 2026-10-26 照 PoE2（熔球）：每次落地都炸一圈、往前彈；還能彈幾次（-1 = 不是這種）。 */
         int hops = -1;
         /** 2026-10-26 照 PoE2（遠目獻祭）：無法與地形碰撞（穿過方塊）。 */
@@ -188,7 +190,12 @@ final class ProjectileEngine implements Listener {
         // 整圈散開的（雷網陷阱）用水平的方向，不然朝下看時整圈都射進地裡
         final Vector look = build.spread() >= 360 - 1e-9 ? origin.facing() : origin.direction();
         int count = build.projectiles();
-        if (build.definition().isAttack() && count < SkillBuild.MAX_PROJECTILES) {
+        // 2026-10-28 照 PoE2（纏蝕箭）：投射物數量的修飾器改加在分裂目標數上——機率多射的也一樣，擲到幾發就多分裂幾個目標（每一發的 splitBonus）；
+        // 這次之前一律多射
+        final boolean toSplit = owner != null && tw.exilecore.stats.StatKeys.flag(build.profile().effective(plugin.players().sheet(owner)),
+                tw.exilecore.stats.GrantedSkillKeys.FLAG_PROJECTILES_TO_SPLIT);
+        int rolled = 0;
+        if (build.definition().isAttack() && (count < SkillBuild.MAX_PROJECTILES || toSplit)) {
             // 2026-10：「x% 機率多射一發」（PoE2 弓、箭袋）：超過 100% 的部分必定多射，剩下的擲機率
             final tw.exilecore.stats.StatSheet effective = build.profile().effective(plugin.players().sheet(owner));
             final double chance = effective.flat(tw.exilecore.stats.StatKeys.PROJECTILE_CHANCE, build.profile().tags()) / 100.0;
@@ -197,16 +204,20 @@ final class ProjectileEngine implements Listener {
                 if (random.nextDouble() < chance - extra) {
                     extra++;
                 }
-                count = Math.min(SkillBuild.MAX_PROJECTILES, count + extra);
+                rolled += extra;
             }
         }
-        if (owner != null && count < SkillBuild.MAX_PROJECTILES) {
+        if (owner != null && (count < SkillBuild.MAX_PROJECTILES || toSplit)) {
             // 2026-10-26 照 PoE2 天賦樹：「法術技能 x% 機率多射 2 發投射物」（修飾器寫 spell 標籤）
             final tw.exilecore.stats.StatSheet effective = build.profile().effective(plugin.players().sheet(owner));
             final double two = effective.flat(tw.exilecore.stats.TreeEffectKeys.PROJECTILE_CHANCE_TWO, build.profile().tags());
             if (two > 0) {
-                count = Math.min(SkillBuild.MAX_PROJECTILES, count + 2 * tw.exilecore.stats.TreeEffectKeys.fromChance(two, random));
+                rolled += 2 * tw.exilecore.stats.TreeEffectKeys.fromChance(two, random);
             }
+        }
+        final int splitBonus = toSplit ? rolled : 0;
+        if (!toSplit) {
+            count = Math.min(SkillBuild.MAX_PROJECTILES, count + rolled);
         }
         // 2026-10-27 照 PoE2（炎爆矛）：飛到準心指的點、插在那裡（一發、投射物數量不能改）；這次之前拋物線，落在哪裡看角度
         final Location aimedAt = owner == null || plugin.skills() == null ? null : plugin.skills().spears().landingPoint(origin, build);
@@ -233,8 +244,11 @@ final class ProjectileEngine implements Listener {
             final Vector direction = new Vector(d[0], d[1], d[2]);
             final Vector start = eye.toVector().add(direction.clone().multiply(0.4)).add(new Vector(0, -0.15, 0));
             final SkillProfile profile = split.isEmpty() ? build.profile() : split.get(index++ % split.size());
-            spawn(owner, build, profile, origin.world(), start, direction, build.speed(), build.range(),
+            final Shot shot = spawn(owner, build, profile, origin.world(), start, direction, build.speed(), build.range(),
                     merging || !split.isEmpty() ? new HashSet<>() : volley, false, visual);
+            if (shot != null) {
+                shot.splitBonus = splitBonus;
+            }
         }
         visuals.cast(visual, eye);
     }
@@ -816,10 +830,18 @@ final class ProjectileEngine implements Listener {
             shot.chainedShocked = true;
             shot.chainsLeft = 1;
         }
-        if (shot.chainsLeft > 0) {
-            final LivingEntity next = targets.nearest(target, SkillBuild.PROJECTILE_CHAIN_RANGE, shot.hit, owner);
+        // 2026-10-28 照 PoE2（纏蝕箭）：可以從任意多個被詛咒的敵人連鎖（不算連鎖次數）、連鎖距離增加 50%；這次之前只有連鎖次數、固定 10 格
+        final tw.exilecore.stats.StatSheet chainSheet = shot.profile.effective(ownerSheet);
+        final boolean chainCursed = tw.exilecore.stats.StatKeys.flag(chainSheet, tw.exilecore.stats.GrantedSkillKeys.FLAG_CHAIN_CURSED);
+        final boolean targetCursed = chainCursed && plugin.combat() != null
+                && plugin.combat().debuffs().cursed(target.getUniqueId(), plugin.getServer().getCurrentTick());
+        if (tw.exilecore.stats.GrantedSkillKeys.canChain(shot.chainsLeft, chainCursed, targetCursed)) {
+            final LivingEntity next = targets.nearest(target, tw.exilecore.stats.GrantedSkillKeys.chainRange(SkillBuild.PROJECTILE_CHAIN_RANGE,
+                    chainSheet.increased(tw.exilecore.stats.GrantedSkillKeys.CHAIN_RANGE, shot.profile.tags())), shot.hit, owner);
             if (next != null) {
-                shot.chainsLeft--;
+                if (tw.exilecore.stats.GrantedSkillKeys.consumesChain(chainCursed, targetCursed)) {
+                    shot.chainsLeft--;
+                }
                 final Vector to = SkillTargets.center(next).toVector();
                 final Vector direction = to.subtract(at.toVector());
                 final double distance = direction.length();
@@ -1100,7 +1122,12 @@ final class ProjectileEngine implements Listener {
      */
     private void split(final Shot shot, final Player owner, final LivingEntity target, final tw.exilecore.stats.StatSheet ownerSheet) {
         shot.split = true;
-        final int count = Math.min(5, (int) Math.round(shot.profile.effective(ownerSheet).flat(ManaTempest.SPLIT, shot.profile.tags())));
+        // 2026-10-28 照 PoE2（纏蝕箭）：分裂目標數＋（投射物數量改加在分裂上的技能）多的投射物、擲到的多射；品質的小數照原作捨去，
+        // 最多 GrantedSkillKeys.MAX_SPLIT；這次之前四捨五入、最多 5
+        final tw.exilecore.stats.StatSheet effective = shot.profile.effective(ownerSheet);
+        final int count = tw.exilecore.stats.GrantedSkillKeys.splitTargets(effective.flat(ManaTempest.SPLIT, shot.profile.tags()) + shot.splitBonus,
+                effective.flat(tw.exilecore.stats.StatKeys.SKILL_PROJECTILES, shot.profile.tags()),
+                tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.GrantedSkillKeys.FLAG_PROJECTILES_TO_SPLIT));
         if (count <= 0 || shot.build.params().blink()) {
             return;
         }

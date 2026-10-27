@@ -7587,7 +7587,7 @@ skills:
 
   coiling_bolts:
     name: 纏蝕箭
-    description: 同時射出兩道纏繞的弩箭：一道物理、一道混沌，各自打中（兩種傷害各有自己的數值，隨技能等級）。法杖賦予。
+    description: 同時射出兩道纏繞的弩箭：一道物理、一道混沌，各自打中（兩種傷害各有自己的數值，隨技能等級）。每一道打中時分裂，射向 2 個其他目標；可以從任意多個被詛咒的敵人連鎖，連鎖距離增加 50%。投射物數量的加成改成加在分裂目標數上。法杖賦予。   # 2026-10-28 照 PoE2 補上分裂、詛咒連鎖；這次之前只寫兩道弩箭
     icon: ECHO_SHARD
     type: spell
     tier: 1
@@ -7605,6 +7605,10 @@ skills:
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 7 }
       - { stat: flag.split_damage_types, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2：兩發各帶一種傷害（2026-10-28 起各照自己那一張表）
+      - { stat: skill.split, type: FLAT, value: 2 }   # 2026-10-28 照 PoE2 Coiling Bolts：Splits towards 2 targets（每一級都是 2）；這次之前不分裂
+      - { stat: flag.projectiles_to_split, type: FLAT, value: 1 }   # 2026-10-28 照 PoE2：投射物數量的修飾器改加在分裂目標數上；這次之前多射
+      - { stat: flag.chain_from_cursed, type: FLAT, value: 1 }   # 2026-10-28 照 PoE2：可以從任意多個被詛咒的敵人連鎖（不算連鎖次數）；這次之前不會連鎖
+      - { stat: chain.range, type: INCREASED, value: 50 }   # 2026-10-28 照 PoE2：50% increased chaining range；這次之前沒有
 
   firebolt:
     name: 焰星彈
@@ -7712,7 +7716,7 @@ skills:
 
   reap:
     name: 血鐮
-    description: 準心指的地方揮下一道血鐮，有撲殺效果，撲殺時獲得生命（5 → 188，隨技能等級）；擊中時給敵人 3 層暴擊弱點（每層擊中牠的暴擊率 +0.5%）。長杖賦予。
+    description: 準心指的地方揮下一道血鐮，有撲殺效果，撲殺時獲得生命（5 → 188，隨技能等級）；擊中時給敵人 3 層暴擊弱點（每層擊中牠的暴擊率 +0.5%，持續 6 秒）。長杖賦予。   # 2026-10-28 照 PoE2 暴擊弱點 6 秒；這次之前 4 秒
     icon: NETHERITE_SCRAP
     type: spell
     tier: 1
@@ -7730,6 +7734,7 @@ skills:
       - { stat: spell.base_crit, type: FLAT, value: 14 }
       - { stat: flag.culling, type: FLAT, value: 1 }
       - { stat: crit_weakness.on_hit, type: FLAT, value: 3 }
+      - { stat: crit_weakness.seconds, type: FLAT, value: 6 }   # 2026-10-28 照 PoE2 Reap：Critical Weakness duration is 6 seconds；這次之前預設 4 秒
     level_modifiers:
       - { stat: life.on_cull_flat, type: FLAT, value: [5, 8, 11, 15, 19, 24, 29, 35, 42, 50, 58, 68, 79, 90, 103, 118, 133, 150, 168, 188, 210, 233, 257, 282, 308, 335, 364, 393, 423, 455, 488, 521, 556, 592, 629, 667, 705, 746, 787, 829] }   # 2026-10-28 照 PoE2（poe2db Reap 1–40 級：撲殺時獲得 5 → 188 → 829 生命）；這次之前沒有撲殺回生命
 

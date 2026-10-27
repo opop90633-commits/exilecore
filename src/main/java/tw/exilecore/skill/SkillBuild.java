@@ -280,8 +280,10 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final double areaScale = area ? Math.sqrt(Math.max(0.05, effective.apply(StatKeys.SKILL_AREA, 1.0, context))) : 1.0;
 
         // 2026-10：瞬影箭永遠只有一支（多一支、歧射都不吃：好幾支不知道要瞬移到哪一支）
-        final int projectiles = params.blink() ? 1 : clamp((int) Math.round(params.projectiles().intAt(level)
-                + effective.flat(StatKeys.SKILL_PROJECTILES, context)), 1, MAX_PROJECTILES);
+        // 2026-10-28 照 PoE2 纏蝕箭：投射物數量的修飾器改成加在分裂目標數上（ProjectileEngine.split）；這次之前照樣多射
+        final int projectiles = params.blink() ? 1 : tw.exilecore.stats.GrantedSkillKeys.projectileCount(params.projectiles().intAt(level),
+                effective.flat(StatKeys.SKILL_PROJECTILES, context),
+                StatKeys.flag(effective, tw.exilecore.stats.GrantedSkillKeys.FLAG_PROJECTILES_TO_SPLIT), MAX_PROJECTILES);
         double spread = params.spread();
         if (StatKeys.flag(effective, StatKeys.FLAG_PROJECTILE_NOVA) && definition.mechanic() == Mechanic.PROJECTILE && !params.blink()) {
             spread = 360; // 2026-10：環射（投射物往四周一圈射出）
@@ -343,8 +345,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 * Math.max(0, effective.more(StatKeys.AURA_RESERVATION, context));
         final double reserve = aura == null ? 0
                 : Math.max(0, Math.min(10000, (aura.reserve() + supportSpirit(active)) * reserveFactor));
-        // 2026-10（照 PoE2）：精魂召喚每一隻保留多少（已經算進保留效率；超過 20 級不再變少）；0 = 不是照隻數算
-        final double minionReserve = aura == null || aura.perMinion() == null ? 0 : Math.max(0.01, aura.perMinion().at(Math.min(level, tw.exilecore.character.SkillLoadout.MAX_LEVEL)) * reserveFactor);
+        // 2026-10（照 PoE2）：精魂召喚每一隻保留多少（已經算進保留效率）；0 = 不是照隻數算。2026-10-28 照 poe2db：21～40 級繼續照表變少（這次之前超過 20 級停在 20 級的值）
+        final double minionReserve = aura == null || aura.perMinion() == null ? 0 : Math.max(0.01, aura.perMinion().at(Math.min(level, 40)) * reserveFactor);
         final double auraEffect = aura == null
                 ? (definition.mechanic() == Mechanic.MARK ? Math.max(0, effective.apply(definition.tags().contains("curse") // 2026-10-22：詛咒吃詛咒效果、印記吃印記效果（照 PoE2 分開）
                         ? StatKeys.CURSE_EFFECT : StatKeys.MARK_EFFECT, 1.0, context))

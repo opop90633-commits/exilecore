@@ -1431,6 +1431,12 @@
     const radius = fx && fx.radius ? fx.radius : timelessLegion(g) ? timelessRadius() : jewelRadii()[0];
     const r = radius / UNIT * SPACING, cx = socket.x * SPACING, cy = socket.y * SPACING;
     el("circle", { cx, cy, r, fill: "rgba(255,210,127,0.06)", stroke: jewelColor(g), "stroke-width": 2.5, opacity: 0.9, "pointer-events": "none" }, layers.rings);
+    // 2026-10-28：天賦樹上的點是照格子畫的（座標四捨五入到一格），大圈只是大概；真正算進範圍的點（照原作座標）各套一個小圈，圈邊上的點以這個為準
+    for (const n of inRadius(socket, radius)) {
+      if (n.type !== "small" && n.type !== "notable") continue;
+      el("circle", { cx: n.x * SPACING, cy: n.y * SPACING, r: n.type === "notable" ? 15 : 11, fill: "none", stroke: jewelColor(g),
+        "stroke-width": 1.5, "stroke-dasharray": "3 3", opacity: 0.9, "pointer-events": "none" }, layers.rings);
+    }
     if (labelled) {
       const t = el("text", { x: cx, y: cy - r - 6, "text-anchor": "middle", class: "label", "pointer-events": "none" }, layers.rings);
       t.textContent = itemName(g) + " " + format(radius);

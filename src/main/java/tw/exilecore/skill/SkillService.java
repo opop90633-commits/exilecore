@@ -3992,6 +3992,14 @@ public final class SkillService {
                 return String.format(Locale.ROOT, "品質 +%d%%：冷卻回復速度增加 %s%%、強化的弩矢再更多 %s%% 傷害", quality,
                         trimNumber(quality * 0.5), trimNumber(quality * 0.5));
             }
+            case "coiling_bolts" -> { // 2026-10-28 照 PoE2 Coiling Bolts：+(0—2) 分裂目標（每 10% 品質 +1）；這次之前顯示成增加傷害
+                return String.format(Locale.ROOT, "品質 +%d%%：分裂目標 +%d", quality,
+                        tw.exilecore.stats.GrantedSkillKeys.splitTargets(qualityFlat(definition, quality, ManaTempest.SPLIT), 0, false));
+            }
+            case "reap" -> { // 2026-10-28 照 PoE2 Reap：暴擊弱點持續時間 +(0—2) 秒；這次之前顯示成增加傷害
+                return String.format(Locale.ROOT, "品質 +%d%%：暴擊弱點持續時間 +%s 秒", quality,
+                        trimNumber(qualityFlat(definition, quality, tw.exilecore.stats.GrantedSkillKeys.CRIT_WEAKNESS_SECONDS)));
+            }
             case "snipe" -> { // 2026-10-28 照 PoE2 Snipe：爆炸半徑 +(0—0.4) 格（gem_quality.yml）；這次之前顯示成增加傷害
                 return String.format(Locale.ROOT, "品質 +%d%%：爆炸與寒冰爆破的半徑 +%s 格", quality, trimNumber(quality * 0.02));
             }
@@ -4002,12 +4010,35 @@ public final class SkillService {
         if (warcry != null) {
             return warcry;
         }
+        // 2026-10-28：寫在 gem_quality.yml 的技能照表上的效果寫（ModifierText）；這次之前沒有專門寫的一律顯示「增加 x% 傷害」，跟實際效果不同
+        final List<tw.exilecore.stats.Modifier> own = tw.exilecore.currency.GemQuality.modifiers(definition.id(), quality, QUALITY_SOURCE);
+        if (own != null) {
+            final List<String> lines = new ArrayList<>();
+            for (final String line : ModifierText.describeAll(own)) {
+                if (line != null && !line.startsWith("特殊效果")) {
+                    lines.add(line);
+                }
+            }
+            return String.format(Locale.ROOT, "品質 +%d%%：%s", quality, lines.isEmpty() ? "強化這個技能自己的效果" : String.join("、", lines));
+        }
         final String what = definition.summon() != null ? "召喚物傷害" // 2026-10-23：精魂召喚的機制是 aura，先看有沒有召喚
                 : definition.mechanic() == Mechanic.AURA ? "光環效果" : definition.mechanic() == Mechanic.WARCRY ? "戰吼效果"
                 : definition.id().endsWith("_curse") ? "詛咒效果" : "傷害";
         final double amount = what.endsWith("效果") ? quality * 0.5 : quality;
         return String.format(Locale.ROOT, "品質 +%d%%：增加 %s%% %s", quality,
                 amount == Math.rint(amount) ? String.valueOf((long) amount) : String.valueOf(amount), what);
+    }
+
+    /** 2026-10-28：gem_quality.yml 上這個技能 quality% 品質給的某個 FLAT 屬性總和（表上沒有回傳 0）。 */
+    static double qualityFlat(final SkillDefinition definition, final int quality, final String stat) {
+        final List<tw.exilecore.stats.Modifier> mods = tw.exilecore.currency.GemQuality.modifiers(definition.id(), quality, QUALITY_SOURCE);
+        double sum = 0;
+        for (final tw.exilecore.stats.Modifier modifier : mods == null ? List.<tw.exilecore.stats.Modifier>of() : mods) {
+            if (modifier.stat().equals(stat) && modifier.type() == tw.exilecore.stats.ModType.FLAT) {
+                sum += modifier.value();
+            }
+        }
+        return sum;
     }
 
     /** 2026-10-27 照 PoE2：戰吼的品質說明（數值從 gem_quality.yml 算）；不是寫在表上的戰吼回傳 null。 */

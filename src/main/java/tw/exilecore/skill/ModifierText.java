@@ -398,7 +398,7 @@ public final class ModifierText {
             case StatKeys.MANA_ON_HIT -> "擊中每個敵人回復 " + number(value) + " 魔力";
             case StatKeys.HINDER_ON_HIT -> "擊中時 " + number(value) + "% 機率阻礙敵人（移動速度變慢 30%，4 秒）";
             case StatKeys.WITHERED_ON_HIT -> "擊中時給敵人 " + number(value) + " 層凋零（每層受到的混沌傷害增加 5%，最多 10 層，4 秒）";
-            case StatKeys.CRIT_WEAKNESS_ON_HIT -> "擊中時給敵人 " + number(value) + " 層暴擊弱點（每層擊中牠的暴擊率 +0.5%，最多 20 層，4 秒）";
+            case StatKeys.CRIT_WEAKNESS_ON_HIT -> "擊中時給敵人 " + number(value) + " 層暴擊弱點（每層擊中牠的暴擊率 +0.5%，最多 20 層，預設 4 秒）"; // 2026-10-28：血鐮照 PoE2 是 6 秒（crit_weakness.seconds）；這次之前寫死 4 秒
             case StatKeys.CRIT_CHANCE_TAKEN -> modifier.type() == tw.exilecore.stats.ModType.INCREASED // 2026-10-26：「擊中你的暴擊率減少」
                     ? "擊中你的暴擊率" + (value < 0 ? "減少 " : "增加 ") + number(Math.abs(value)) + "%" : "擊中牠的暴擊率 +" + number(value) + "%";
             case StatKeys.EXPOSURE_CHANCE -> "擊中時 " + number(value) + "% 機率讓敵人曝露（打出的元素抗性 −20%，4 秒）";
@@ -520,6 +520,11 @@ public final class ModifierText {
             case "shroud.es_regen" -> "最近失去過幽魂護罩：每秒再生閃避值 " + number(value) + "% 的能量護盾";
             // 2026-10-28 照 PoE2：法杖、長杖、權杖賦予的技能（寒心、屍焰爆、血鐮、銳星虹吸）
             case tw.exilecore.stats.GrantedSkillKeys.LIFE_ON_CULL_FLAT -> "撲殺時獲得 " + number(value) + " 生命";
+            // 2026-10-28 照 PoE2（纏蝕箭、血鐮）
+            case tw.exilecore.stats.GrantedSkillKeys.FLAG_PROJECTILES_TO_SPLIT -> "投射物數量的加成改成加在分裂目標數上";
+            case tw.exilecore.stats.GrantedSkillKeys.FLAG_CHAIN_CURSED -> "可以從任意多個被詛咒的敵人連鎖";
+            case tw.exilecore.stats.GrantedSkillKeys.CHAIN_RANGE -> scaled(modifier, "連鎖距離", percent);
+            case tw.exilecore.stats.GrantedSkillKeys.CRIT_WEAKNESS_SECONDS -> "暴擊弱點持續 " + number(value) + " 秒";
             case tw.exilecore.stats.GrantedSkillKeys.AS_THOUGH_MIN -> "施加異常時當作造成至少 " + number(value) + " 點基礎傷害";
             case tw.exilecore.stats.GrantedSkillKeys.AS_THOUGH_MAX -> "施加異常時當作造成最多 " + number(value) + " 點基礎傷害";
             case tw.exilecore.stats.GrantedSkillKeys.FLAG_PRESENCE_CHILL -> "冰緩你存在範圍內的所有敵人";

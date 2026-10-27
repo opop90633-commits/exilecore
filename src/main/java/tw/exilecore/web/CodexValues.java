@@ -391,7 +391,7 @@ public final class CodexValues {
                 }
             }
             if (skill.aura().perMinion() != null) {
-                lines.add("每一隻保留精魂 " + num(skill.aura().perMinion().at(Math.min(level, SkillLoadout.MAX_LEVEL)))
+                lines.add("每一隻保留精魂 " + num(skill.aura().perMinion().at(Math.min(level, 40)))
                         + (skill.aura().freeMinions() > 0 ? "（前 " + skill.aura().freeMinions() + " 隻不用）" : ""));
             }
         }

@@ -166,7 +166,9 @@ public final class HitEffects implements Listener {
         }
         final int weakness = (int) Math.round(effective.flat(StatKeys.CRIT_WEAKNESS_ON_HIT, tags));
         if (weakness > 0) {
-            addCritWeakness(debuffs, target, source, now, weakness, CRIT_WEAKNESS_TICKS);
+            // 2026-10-28 照 PoE2 血鐮：暴擊弱點持續 6 秒（品質再 +0～2 秒）；這次之前一律 4 秒
+            addCritWeakness(debuffs, target, source, now, weakness, tw.exilecore.stats.GrantedSkillKeys.critWeaknessTicks(
+                    effective.flat(tw.exilecore.stats.GrantedSkillKeys.CRIT_WEAKNESS_SECONDS, tags), CRIT_WEAKNESS_TICKS));
         }
         final double hinder = effective.flat(StatKeys.HINDER_ON_HIT, tags);
         if (hinder > 0 && roll(hinder)) {
