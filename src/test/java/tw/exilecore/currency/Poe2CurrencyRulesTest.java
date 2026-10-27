@@ -206,9 +206,9 @@ class Poe2CurrencyRulesTest {
         final ItemBase spear = base(b -> b.tags().contains("spear"));
         final ItemData w = generator.generate(wand, Rarity.NORMAL, 20, new SplittableRandom(1));
         final ItemData s = generator.generate(spear, Rarity.NORMAL, 20, new SplittableRandom(1));
-        assertTrue(currencies.get("arcanist_etcher").canApply(w, generator));
+        assertEquals("whetstone", currencies.get("arcanist_etcher").id(), "2026-10-27 照站長：星紋蝕刻器刪掉了，舊代號讀進來當成礪鋒石");
         // 2026-10-27 照站長：星紋蝕刻器併進礪鋒石，兩個都能用在所有武器（這次之前分開）
-        assertTrue(currencies.get("arcanist_etcher").canApply(s, generator));
+        assertTrue(currencies.get("whetstone").canApply(s, generator));
         assertTrue(currencies.get("whetstone").canApply(w, generator), "礪鋒石法杖類也能用");
         assertTrue(currencies.get("whetstone").canApply(s, generator));
     }

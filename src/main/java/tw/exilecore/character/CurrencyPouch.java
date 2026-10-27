@@ -90,7 +90,10 @@ public final class CurrencyPouch {
                 continue;
             }
             try {
-                pouch.set(part.substring(0, equals).trim(), Integer.parseInt(part.substring(equals + 1).trim()));
+                final String raw = part.substring(0, equals).trim();
+                final String id = tw.exilecore.currency.CurrencyRepository.resolve(raw); // 2026-10-27：拿掉的通貨併進現在的那種
+                final int amount = Integer.parseInt(part.substring(equals + 1).trim());
+                pouch.set(id, id.equals(raw) ? amount : pouch.amount(id) + Math.max(0, amount));
             } catch (final NumberFormatException e) {
                 // 寫壞的項目略過
             }

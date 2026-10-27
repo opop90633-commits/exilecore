@@ -404,17 +404,7 @@ perfect_turmoil_orb:
   description: "稀有物品隨機移除一條詞綴，再加一條需求等級 50 以上的"
   flavor: "亂流的中心，一片寂靜。"
 
-# 2026-10-26 照 PoE2 的工匠蝕刻器（Arcanist's Etcher）：法杖、長杖、權杖的品質（礪鋒石改成只能用在攻擊武器）。
-arcanist_etcher:
-  name: 星紋蝕刻器
-  material: AMETHYST_SHARD
-  stack: 20
-  operation: QUALITY_CASTER
-  applies_to: { rarity: [] }
-  drop_weight: 0   # 2026-10-27 照站長併進礪鋒石，不再掉落；這次之前 250
-  drop_level: 5
-  description: "已併入礪鋒石，不再掉落；手上剩下的跟礪鋒石一樣用（武器品質，普通 +5%、魔法 +2%、稀有／傳奇 +1%；上限 20%）"   # 2026-10-27 照 PoE2：品質照稀有度加；這次之前一律 +5%
-  flavor: "刻星圖用的細針，針尖還沾著一點星輝。"
+# 2026-10-27 照站長：星紋蝕刻器（工匠蝕刻器）刪掉——已併進礪鋒石；身上、通貨袋、倉庫裡剩下的讀進來當成礪鋒石（CurrencyRepository.ALIASES）。
 
 # 2026-10-26：工匠石（PoE2 的 Artificer's Orb）照站長拿掉——裝備照舊一做出來符文孔就全開。
 

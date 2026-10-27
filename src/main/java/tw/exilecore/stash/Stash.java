@@ -199,7 +199,15 @@ public final class Stash {
         return currency;
     }
 
-    public void setCurrency(final String id, final int amount) {
+    public void setCurrency(final String rawId, final int amount) {
+        // 2026-10-27：拿掉的通貨（星紋蝕刻器）讀進來併進現在的那種（礪鋒石）
+        final String id = tw.exilecore.currency.CurrencyRepository.resolve(rawId);
+        if (!id.equals(rawId)) {
+            if (amount > 0) {
+                currency.merge(id, amount, Integer::sum);
+            }
+            return;
+        }
         if (amount <= 0) {
             currency.remove(id);
         } else {

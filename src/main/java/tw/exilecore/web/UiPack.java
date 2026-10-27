@@ -1690,7 +1690,10 @@ public final class UiPack {
                     case 9 -> chase ? 0x18 : 0x0C;
                     default -> chase ? 0x0C : 0x06;
                 };
-                image.setRGB(x, y, alpha << 24 | lerp(outer, inner, Math.min(1.0, Math.max(0, edge - 3) / 6.0)));
+                // 2026-10-27 照站長：追逐級的發光底也是彩虹（照角度變色、往裡變淡變白）；這次之前外圈紅、往裡轉金
+                final int colour = chase ? lerp(rainbow(perimeterHue(x, y), 0.8, 1.0), 0xFFF4E0, Math.min(1.0, Math.max(0, edge - 3) / 8.0))
+                        : lerp(outer, inner, Math.min(1.0, Math.max(0, edge - 3) / 6.0));
+                image.setRGB(x, y, alpha << 24 | colour);
             }
         }
         return image;
@@ -1732,17 +1735,18 @@ public final class UiPack {
         final BufferedImage image = new BufferedImage(SIZE, SIZE * CHASE_FRAMES, BufferedImage.TYPE_INT_ARGB);
         for (int frame = 0; frame < CHASE_FRAMES; frame++) {
             final double pulse = (1 - Math.cos(2 * Math.PI * frame / CHASE_FRAMES)) / 2; // 0→1→0
-            final int gold = lerp(0xFFC23A, 0xFFF07A, pulse * 0.6);
+            final double shift = frame / (double) CHASE_FRAMES; // 2026-10-27 照站長「追逐級的外框用彩色的」：彩虹沿著外框流動
             final double arm = 4 + pulse * 4;      // 沿著外框的星芒長度
             final double diagonal = 1 + pulse * 2; // 往裡斜的星芒長度
             for (int y = 0; y < SIZE; y++) {
                 for (int x = 0; x < SIZE; x++) {
                     final int edge = edge(x, y);
+                    final double hue = perimeterHue(x, y) + shift;
                     int argb = switch (edge) {
-                        case 0 -> 0xFF000000 | 0x3A0606;
-                        case 1 -> 0xFF000000 | gold;
-                        case 2 -> 0xFF000000 | 0xE0282A;
-                        case 3 -> 0xA0000000 | gold;
+                        case 0 -> 0xFF000000 | 0x14101C;
+                        case 1 -> 0xFF000000 | rainbow(hue, 0.85, 1.0);
+                        case 2 -> 0xFF000000 | rainbow(hue + 0.08, 0.95, 0.85);
+                        case 3 -> 0xA0000000 | rainbow(hue + 0.16, 0.7, 1.0);
                         default -> 0;
                     };
                     // 四角的四芒星：中心在離角 2 格的地方
@@ -1772,6 +1776,17 @@ public final class UiPack {
             }
         }
         return image;
+    }
+
+    /** 2026-10-27：這一格繞著中心的角度（0～1），彩虹外框用。 */
+    private static double perimeterHue(final int x, final int y) {
+        final double c = (SIZE - 1) / 2.0;
+        return (Math.atan2(y - c, x - c) / (2 * Math.PI) + 1) % 1.0;
+    }
+
+    /** 2026-10-27：彩虹色（hue 0～1 循環；回傳 0xRRGGBB）。 */
+    private static int rainbow(final double hue, final double saturation, final double brightness) {
+        return java.awt.Color.HSBtoRGB((float) (((hue % 1.0) + 1) % 1.0), (float) saturation, (float) brightness) & 0xFFFFFF;
     }
 
     /** 離外框幾格（0＝最外一圈）。 */
