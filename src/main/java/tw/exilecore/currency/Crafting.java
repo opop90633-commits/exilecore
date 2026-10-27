@@ -865,30 +865,41 @@ public final class Crafting {
         }
     }
 
+    /**
+     * 「去裂」星籤會拿掉的候選（2026-10-27 照站長：改成 T 數字最大（最差）的那條；一樣差的再比需求等級最低的，還一樣的隨機挑一條）；
+     * 破裂的拿不掉。物品說明也用這個預告會移除哪一條。
+     * 這次之前照 PoE2 的 Omen of Whittling 只比需求等級（階數少的詞綴 T1 需求等級也可能很低，會先被拿掉，玩家覺得像 bug）。
+     */
+    public static List<RolledAffix> lowestAffixes(final ItemData data, final tw.exilecore.item.ItemRepository repository) {
+        final List<RolledAffix> worst = new ArrayList<>();
+        int worstRank = Integer.MIN_VALUE;
+        int worstLevel = Integer.MAX_VALUE;
+        for (final RolledAffix rolled : data.affixes()) {
+            if (data.isFractured(rolled)) {
+                continue; // 2026-10-21：破裂的詞綴拿不掉
+            }
+            final Affix affix = repository.affix(rolled.id());
+            final int rank = affix == null ? Integer.MAX_VALUE : affix.rank(rolled.tier());
+            final int level = affix == null ? 0 : tierLevel(affix, rolled.tier());
+            if (rank > worstRank || rank == worstRank && level < worstLevel) {
+                worstRank = rank;
+                worstLevel = level;
+                worst.clear();
+                worst.add(rolled);
+            } else if (rank == worstRank && level == worstLevel) {
+                worst.add(rolled);
+            }
+        }
+        return worst;
+    }
+
     /** 照星籤移除一條：最差的、只拿後綴、只拿前綴、只拿隱匿／揭露的；星籤跟移除無關回傳 false（沒動）。 */
     private static boolean removeByOmen(final CurrencyType.Omen.Effect effect, final ItemData data, final ItemGenerator generator,
                                         final RandomGenerator random) {
         final List<RolledAffix> candidates = new ArrayList<>();
         switch (effect) {
             case REMOVE_LOWEST -> {
-                // 2026-10-26 照 PoE2 的 Omen of Whittling（移除「等級最低」的詞綴）：比那一階的需求等級，最低的拿掉；
-                // 一樣低的隨機挑一條。這次之前先比階級（T 幾）再比需求等級
-                final List<RolledAffix> worst = new ArrayList<>();
-                int worstLevel = Integer.MAX_VALUE;
-                for (final RolledAffix rolled : data.affixes()) {
-                    if (data.isFractured(rolled)) {
-                        continue; // 2026-10-21：破裂的詞綴拿不掉
-                    }
-                    final Affix affix = generator.repository().affix(rolled.id());
-                    final int level = affix == null ? 0 : tierLevel(affix, rolled.tier());
-                    if (level < worstLevel) {
-                        worstLevel = level;
-                        worst.clear();
-                        worst.add(rolled);
-                    } else if (level == worstLevel) {
-                        worst.add(rolled);
-                    }
-                }
+                final List<RolledAffix> worst = lowestAffixes(data, generator.repository());
                 if (worst.isEmpty()) {
                     return false;
                 }

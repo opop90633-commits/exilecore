@@ -280,6 +280,14 @@ public final class MapConfig {
     private int monsterTierFrom = 16;
     private double monsterTierLifeMax = 1.0;
     private double monsterTierDamageMax = 1.0;
+    /**
+     * 2026-10-27 照站長「完全照原作，但等級不用動」：每一階的生命、傷害再乘這個倍率，讓強度等於原作同一階的區域等級
+     * （原作 T1 … T16 = 65 … 80 級，我們的怪物等級照 settings.tiers 不動）。一般怪物與一般地圖 Boss 都乘；終局 Boss 不乘（照 tier_life_table）。
+     */
+    private double[] parityLife;
+    private double[] parityDamage;
+    /** 2026-10-27 照站長「T1～T16 怪物生命先砍半」：地圖裡一般怪物（不是 Boss）的生命再乘（settings.monster_life_scale，0.1–10）。 */
+    private double monsterLifeScale = 1.0;
     /** 護盾結晶吃幾成的階級倍率（maps.yml 的 settings.shield_tier_share；2026-10）。 */
     public static final double DEFAULT_SHIELD_TIER_SHARE = 0.5;
     private double shieldTierShare = DEFAULT_SHIELD_TIER_SHARE;
@@ -594,6 +602,9 @@ public final class MapConfig {
         monsterTierFrom = fresh.monsterTierFrom;
         monsterTierLifeMax = fresh.monsterTierLifeMax;
         monsterTierDamageMax = fresh.monsterTierDamageMax;
+        parityLife = fresh.parityLife;
+        parityDamage = fresh.parityDamage;
+        monsterLifeScale = fresh.monsterLifeScale;
         shieldTierShare = fresh.shieldTierShare;
         extraFinals.clear();
         extraFinals.putAll(fresh.extraFinals);
@@ -645,6 +656,10 @@ public final class MapConfig {
                 Math.max(5, s.integer("empty_close_seconds", 60)), Math.max(8, s.decimal("pack_radius", 36)),
                 Math.max(6, s.decimal("boss_radius", 22)),
                 pack(packs.node("normal"), 64, 4, 6), pack(packs.node("magic"), 28, 3, 5), pack(packs.node("rare"), 8, 2, 3));
+        final YamlNode parity = s.node("tier_parity");
+        parityLife = parityTable(parity, "life");
+        parityDamage = parityTable(parity, "damage");
+        monsterLifeScale = Math.max(0.1, Math.min(10, s.decimal("monster_life_scale", 1.0)));
 
         final YamlNode d = root.node("drops");
         if (d.has("final_chase_chance")) {
@@ -1347,6 +1362,43 @@ public final class MapConfig {
     /** 一般地圖 Boss（不是終局）的生命照階級再乘幾倍（maps.yml 的 settings.boss_tier_life）。 */
     public double bossLifeMultiplier(final int tier) {
         return finalLifeMultiplier(tier, bossTierLifeFrom, bossTierLifeMax, tiers().max());
+    }
+
+    /** settings.tier_parity 底下一個表：每一階一個倍率（0.1–10），數量要跟 settings.tiers 一樣；沒寫回傳 null。 */
+    private double[] parityTable(final YamlNode node, final String key) {
+        if (!node.has(key)) {
+            return null;
+        }
+        if (!(node.raw(key) instanceof List<?> list) || list.size() != tiers().max()) {
+            throw new IllegalArgumentException(node.path() + "." + key + "：要寫 " + tiers().max() + " 個數字（T1 … T" + tiers().max() + "）");
+        }
+        final double[] table = new double[list.size()];
+        for (int i = 0; i < table.length; i++) {
+            if (!(list.get(i) instanceof Number number) || number.doubleValue() < 0.1 || number.doubleValue() > 10) {
+                throw new IllegalArgumentException(node.path() + "." + key + " 第 " + (i + 1) + " 個：要是 0.1 到 10 的數字");
+            }
+            table[i] = number.doubleValue();
+        }
+        return table;
+    }
+
+    private static double tableAt(final double[] table, final int tier) {
+        return table == null || table.length == 0 || tier <= 0 ? 1.0 : table[Math.max(1, Math.min(table.length, tier)) - 1];
+    }
+
+    /** 地圖裡一般怪物（不是 Boss）的生命再乘幾倍（settings.monster_life_scale；沒寫 = 1）。 */
+    public double monsterLifeScale() {
+        return monsterLifeScale;
+    }
+
+    /** 這一階的生命再乘幾倍，強度等於原作同一階（settings.tier_parity.life；沒寫 = 1）。 */
+    public double parityLife(final int tier) {
+        return tableAt(parityLife, tier);
+    }
+
+    /** 這一階的傷害再乘幾倍，強度等於原作同一階（settings.tier_parity.damage；沒寫 = 1）。 */
+    public double parityDamage(final int tier) {
+        return tableAt(parityDamage, tier);
     }
 
     /** 地圖裡一般怪物（不是 Boss）的生命照階級再乘幾倍（maps.yml 的 settings.monster_tier.life；2026-10-21）。 */

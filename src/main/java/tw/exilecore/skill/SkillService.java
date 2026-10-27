@@ -1108,8 +1108,10 @@ public final class SkillService {
         }
         final double percent = bloodMagic ? 100 : Math.max(0, Math.min(100, sheet.flat(tw.exilecore.stats.TreeKeys.LIFE_COST_PERCENT, tags)));
         final int converted = (int) Math.round(cost * percent / 100.0);
+        // 2026-10-27 照 PoE2：改扣生命的那份不吃魔力消耗效率、改吃生命消耗效率（CostKeys.manaToLife）；這次之前直接照魔力的數字
         final int life = converted <= 0 ? 0
-                : (int) Math.round(converted * Math.max(0, 1 + sheet.increased(tw.exilecore.stats.TreeKeys.LIFE_COST, tags))
+                : (int) Math.round(converted * tw.exilecore.stats.CostKeys.manaToLife(sheet, tags)
+                        * Math.max(0, 1 + sheet.increased(tw.exilecore.stats.TreeKeys.LIFE_COST, tags))
                         * Math.max(0, sheet.more(tw.exilecore.stats.TreeKeys.LIFE_COST, tags))); // 2026-10-26：鮮血獻祭的「更多技能生命消耗」
         return new int[] {life, cost - converted};
     }
@@ -1894,8 +1896,11 @@ public final class SkillService {
         }
         // 血祭術（血術士，PoE2）：技能另外扣同樣多的生命
         final boolean sanguimancy = !bloodMagic && StatKeys.flag(state.sheet(), StatKeys.FLAG_SANGUIMANCY);
-        if (cost > 0 && sanguimancy && state.life() <= cost) {
-            fail(player, runtime, state, "生命不足（血祭術：" + definition.name() + "要 " + cost + " 生命）", now);
+        // 2026-10-27 照 PoE2：血祭術的生命消耗不吃魔力消耗效率、吃生命消耗效率；這次之前直接等於魔力消耗
+        final int sanguineCost = sanguimancy && cost > 0 ? (int) Math.round(cost
+                * tw.exilecore.stats.CostKeys.manaToLife(build.profile().effective(state.sheet()), build.profile().tags())) : 0;
+        if (cost > 0 && sanguimancy && state.life() <= sanguineCost) {
+            fail(player, runtime, state, "生命不足（血祭術：" + definition.name() + "要 " + sanguineCost + " 生命）", now);
             return;
         }
         if (manaCost > 0 && state.mana() + 1e-9 < manaCost && !supportMechanics().extras().freeMana(player, build)) { // 2026-10-27 照 PoE2 Defy／Desperation
@@ -1942,12 +1947,12 @@ public final class SkillService {
                 tw.exilecore.passive.ConquestEffects.lifeSpent(player.getUniqueId(), lifeCost, now); // 2026-10-26：鮮血獻祭
             }
             if (sanguimancy) {
-                state.setLife(state.life() - cost);
-                supportMechanics().lifeSpent(player, definition.id(), cost); // 2026-10-26：澤嘯的榮耀
+                state.setLife(state.life() - sanguineCost);
+                supportMechanics().lifeSpent(player, definition.id(), sanguineCost); // 2026-10-26：澤嘯的榮耀
             }
             tw.exilecore.item.unique.UniqueCosts.afterManaPaid(state, state.sheet(), manaCost); // 2026-10-26（寂心）
-            manaTempest.spent(player, lifeCost + manaCost + (sanguimancy ? cost : 0)); // 2026-10-26 照 PoE2：魔湧裡花掉的魔力、生命加到每秒消耗
-            tw.exilecore.ascendancy.AscendancyEffects.lifeSpent(player, lifeCost + (sanguimancy ? cost : 0)); // 2026-10-26（昇華・血紅之潮）
+            manaTempest.spent(player, lifeCost + manaCost + (sanguimancy ? sanguineCost : 0)); // 2026-10-26 照 PoE2：魔湧裡花掉的魔力、生命加到每秒消耗
+            tw.exilecore.ascendancy.AscendancyEffects.lifeSpent(player, lifeCost + (sanguimancy ? sanguineCost : 0)); // 2026-10-26（昇華・血紅之潮）
             plugin.players().display(player, state);
         }
         tw.exilecore.ascendancy.AscendancyEffects.paid(player, state, ascCost); // 2026-10-26（昇華）：煉獄之炎、怒氣消耗

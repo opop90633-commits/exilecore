@@ -280,6 +280,8 @@ public final class LineageMechanics implements Listener {
             }
         }
         // 聖杯（Uhtred's Rite）：滿溢聖杯（每 1 秒冷卻 1 秒）；魔力藥劑生效時魔力消耗效率增加 20%（退回那一部分）
+        // 2026-10-27 照 PoE2 的效率公式（CostKeys）：跟其他效率加總再除——付的是 原本 ÷ (1 + E)，應該是 原本 ÷ (1 + E + 0.2)，退差額；
+        // 這次之前固定退 1 − 1/1.2（沒算其他效率）
         final double cup = LineageRules.total(supports, LineageKeys.CHALICE);
         if (cup > 0 && build.cooldownTicks() > 0) {
             final int ticks = (int) Math.round(build.cooldownTicks() * cup);
@@ -290,7 +292,9 @@ public final class LineageMechanics implements Listener {
         }
         final double efficiency = LineageRules.total(supports, LineageKeys.MANA_FLASK_EFFICIENCY);
         if (efficiency > 0 && build.manaCost() > 0 && plugin.flasks() != null && plugin.flasks().recovering(player, tw.exilecore.flask.FlaskKind.MANA)) {
-            state.setMana(Math.min(state.maxMana(), state.mana() + build.manaCost() * (1 - 1 / (1 + efficiency / 100.0))));
+            final double others = tw.exilecore.stats.CostKeys.manaEfficiency(build.profile().effective(state.sheet()), build.profile().tags());
+            final double paidShare = tw.exilecore.stats.CostKeys.divisor(others) / tw.exilecore.stats.CostKeys.divisor(others + efficiency / 100.0);
+            state.setMana(Math.min(state.maxMana(), state.mana() + build.manaCost() * (1 - paidShare)));
             changed = true;
         }
         // 縛魔（Kurgal's Leash）：指揮時你與聽命的召喚物獲得不潔之力（30% 額外混沌）

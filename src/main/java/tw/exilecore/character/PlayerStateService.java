@@ -1843,8 +1843,8 @@ public final class PlayerStateService {
             case "def" -> List.of(new Modifier(StatKeys.ARMOUR, ModType.INCREASED, percent, tags, source),
                     new Modifier(StatKeys.EVASION, ModType.INCREASED, percent, tags, source),
                     new Modifier(StatKeys.ES_MAX, ModType.INCREASED, percent, tags, source));
-            // 消耗效率 x% ≈ 消耗減少 x%（天賦樹產生器的 efficiency 也是這樣換）
-            case "cost" -> List.of(new Modifier("skill.cost", ModType.INCREASED, -percent, tags, source));
+            // 2026-10-27 照 PoE2：消耗效率（消耗 ÷ (1 + 效率)，CostKeys）；這次之前近似成 skill.cost 減少 x%
+            case "cost" -> List.of(new Modifier(tw.exilecore.stats.CostKeys.COST_EFFICIENCY, ModType.INCREASED, percent, tags, source));
             default -> List.of(new Modifier(attributeStat(choice), ModType.FLAT, value, tags, source));
         };
     }

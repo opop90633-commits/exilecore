@@ -60,7 +60,8 @@ MAP = {
     'hazard_area_of_effect_+%': ('mapped', [('skill.area', 'INCREASED', ['hazard'])], '危害'),
     'jagged_ground_effect_+%': ('mapped', [('jagged.effect', 'INCREASED', [])], '碎地（碎地輔助）'),
     'jagged_ground_duration_+%': ('mapped', [('jagged.duration', 'INCREASED', [])], '碎地（碎地輔助）'),
-    'base_mana_cost_efficiency_+%_of_command_skills': ('approx', [('skill.cost', 'INCREASED', ['command'])], '指令技能的魔力消耗（efficiency：當作減少消耗）'),
+    # 2026-10-27 照 PoE2 魔力消耗效率（CostKeys：消耗 ÷ (1 + 效率)）；這次之前 approx 成 skill.cost 的減少
+    'base_mana_cost_efficiency_+%_of_command_skills': ('mapped', [('skill.mana_cost_efficiency', 'INCREASED', ['command'])], '指令技能的魔力消耗效率（CostKeys：消耗 ÷ (1 + 效率)）'),
     'plant_skill_damage_+%': ('mapped', [('damage', 'INCREASED', ['plant'])], '植物'),
     'detonator_skill_area_of_effect_+%': ('mapped', [('skill.area', 'INCREASED', ['detonator'])], '引爆'),
     'detonator_skill_damage_+%': ('mapped', [('damage', 'INCREASED', ['detonator'])], '引爆'),

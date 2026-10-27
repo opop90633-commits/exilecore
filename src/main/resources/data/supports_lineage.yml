@@ -523,12 +523,12 @@ supports:
 
   uhtreds_rite:            # Uhtred's Rite
     name: 聖杯
-    description: 被輔助的冷卻技能用的時候給你滿溢聖杯（冷卻每 1 秒給 1 秒：藥劑每秒多 2 次充能、回復增加 30%）；生命藥劑生效時更多 20% 傷害，魔力藥劑生效時魔力消耗少 20%。
+    description: 被輔助的冷卻技能用的時候給你滿溢聖杯（冷卻每 1 秒給 1 秒：藥劑每秒多 2 次充能、回復增加 30%）；生命藥劑生效時更多 20% 傷害，魔力藥劑生效時增加 20% 魔力消耗效率。
     icon: GOLD_INGOT
     tier: 3
     source: lineage_rare
     requires: [cooldown]
-    # 2026-10-27 照 PoE2 0.5 Uhtred's Rite（poe2db；魔力消耗效率增加 20% 做成消耗少 20%）；這次新增
+    # 2026-10-27 照 PoE2 0.5 Uhtred's Rite（poe2db）；這次新增。魔力消耗效率照 PoE2 公式：跟其他效率加總後除（LineageMechanics 退差額；這次之前固定退 1/6）
     modifiers:
       - { stat: lineage.u.chalice, type: FLAT, value: 1 }
       - { stat: lineage.h.life_flask_more, type: FLAT, value: 20 }

@@ -1494,12 +1494,12 @@ unveiled_jr_mana_cost_efficiency:
   group: unveiled_jr_mana_cost_efficiency
   spawn_tags: [r_emerald, r_ruby, r_sapphire]
   names: [淵痕之, 黯痕之]
-  text: "範圍內的小天賦也各給：減少 {value}% 技能魔力消耗"
+  text: "範圍內的小天賦也各給：增加 {value}% 魔力消耗效率"   # 2026-10-27 照 PoE2 Mana Cost Efficiency；這次之前「減少技能魔力消耗」（skill.cost）
   tiers:
     - { tier: 1, ilvl: 60, weight: 1000, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
     - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
-    - { stat: radius:skill.cost, type: INCREASED, value: "-{value}" }
+    - { stat: radius:skill.mana_cost_efficiency, type: INCREASED, value: "{value}" }
 
 unveiled_jr_mana_flask_charges_per_second:
   type: suffix

@@ -214,9 +214,11 @@ final class MapSpawner {
         // 2026-10-21：一般怪物照地圖階級再乘（settings.monster_tier；以前 T1 到 T16 只差怪物等級，生命 ×2.1、傷害 ×1.75，打起來差不多）。
         //   特別的實例（回響、試煉、劫盜…）階級是 0，不乘；Boss 不走這裡（Boss 照 boss_tier_life）
         final int tier = instance.special() == null ? instance.stats().tier() : 0;
-        final double tierLife = tier > 0 ? service.config().monsterLifeMultiplier(tier) : 1.0;
-        final double tierDamage = tier > 0 ? service.config().monsterDamageMultiplier(tier) : 1.0;
-        if ((instance.delirium() > 0 || power > 0 || tierLife > 1 || tierDamage > 1) && data != null) {
+        // 2026-10-27 照站長：再乘 settings.tier_parity（強度等於原作同一階，等級不動）
+        final double tierLife = tier > 0 ? service.config().monsterLifeMultiplier(tier) * service.config().parityLife(tier)
+                * service.config().monsterLifeScale() : 1.0; // 2026-10-27 照站長：T1～T16 一般怪物生命砍半（settings.monster_life_scale）
+        final double tierDamage = tier > 0 ? service.config().monsterDamageMultiplier(tier) * service.config().parityDamage(tier) : 1.0;
+        if ((instance.delirium() > 0 || power > 0 || tierLife != 1 || tierDamage != 1) && data != null) {
             // 幻霧中：之後刷出來的怪都更硬（生命與傷害乘 1 + 難度）；詛咒寶匣再乘 1 + 詛咒
             final double factor = (1 + instance.delirium()) * (1 + power);
             plugin.monsters().decorateData(entity, new MonsterData(data.level(), data.rarity(), data.mods(), data.name(),

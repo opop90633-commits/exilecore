@@ -646,12 +646,12 @@ unveiled_d_cost:
   group: unveiled_d_cost
   spawn_tags: [focus, wand, helmet, leggings, quiver]
   names: [之省淵, 之節蝕]
-  text: "技能的魔力消耗減少 {value}%"
+  text: "增加 {value}% 魔力消耗效率"   # 2026-10-27 照 PoE2 Mana Cost Efficiency（消耗 ÷ (1 + 效率)）；這次之前「技能的魔力消耗減少」（skill.cost）
   tiers:
     - { tier: 1, ilvl: 60, weight: 1000, value: [9, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
     - { tier: 2, ilvl: 1, weight: 1000, value: [6, 8] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
-    - { stat: skill.cost, type: INCREASED, value: "-{value}" }
+    - { stat: skill.mana_cost_efficiency, type: INCREASED, value: "{value}" }
 
 unveiled_d_wand_spell_area:
   type: suffix
@@ -757,12 +757,12 @@ unveiled_d_attack_cost:
   spawn_tags: [weapon]
   exclude_tags: [caster]
   names: [之儉鋒, 之淵省]
-  text: "攻擊技能的魔力消耗減少 {value}%"
+  text: "增加 {value}% 攻擊的消耗效率"   # 2026-10-27 照 PoE2 Cost Efficiency of Attacks（所有消耗 ÷ (1 + 效率)）；這次之前「攻擊技能的魔力消耗減少」（skill.cost）
   tiers:
     - { tier: 1, ilvl: 60, weight: 1000, value: [12, 15] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
     - { tier: 2, ilvl: 1, weight: 1000, value: [8, 11] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
-    - { stat: skill.cost, type: INCREASED, value: "-{value}", tags: [attack] }
+    - { stat: skill.cost_efficiency, type: INCREASED, value: "{value}", tags: [attack] }
 
 unveiled_d_spirit_efficiency:
   type: suffix
@@ -2116,12 +2116,12 @@ unveiled_d_boots_cost_dodge:
   group: unveiled_d_boots_cost_dodge
   spawn_tags: [boots]
   names: [淵步之, 黯步之]
-  text: "最近翻滾過，則減少 {value}% 技能魔力消耗"
+  text: "最近翻滾過，則增加 {value}% 魔力消耗效率"   # 2026-10-27 照 PoE2 Mana Cost Efficiency if Dodge Rolled Recently；這次之前「減少技能魔力消耗」（skill.cost）
   tiers:
     - { tier: 1, ilvl: 60, weight: 1000, value: [11, 12] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
     - { tier: 2, ilvl: 1, weight: 1000, value: [8, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
-    - { stat: skill.cost@dodge, type: INCREASED, value: "-{value}" }
+    - { stat: skill.mana_cost_efficiency@dodge, type: INCREASED, value: "{value}" }
 
 unveiled_d_jewellery_minion_hit:
   type: prefix

@@ -110,6 +110,10 @@ public final class CurrencyListener implements Listener {
                 event.getView().setCursor(cursor.getAmount() <= 0 ? ItemStack.empty() : cursor);
                 event.setCurrentItem(target);
                 final CurrencyType fired = currencies.takeFiredOmen();
+                final String changes = currencies.takeChanges().message(); // 2026-10-27 照站長：移除、新增了哪一條
+                if (changes != null) {
+                    player.sendMessage(plugin.text().prefixed(changes));
+                }
                 if (chance && fired != null && plugin.items().read(target).map(d -> d.unique() == null).orElse(false)) {
                     // 2026-10-26（Omen of Chance）：失敗了，但星籤讓物品沒碎
                     tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#c48bff>僥倖石失敗，" + fired.name() + "讓物品沒有碎掉（星籤用掉了）"));

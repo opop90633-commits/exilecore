@@ -107,7 +107,9 @@ class SupportHitRulesTest {
     void projectileMechanicsNeedRealProjectiles() {
         final String reason = "要真的射出投射物的技能";
         assertEquals(reason, support("pierce").refusal(skill("artillery_ballista")), "落釘弩台是 impact 機制");
-        assertEquals(reason, support("multiple_projectiles").refusal(skill("artillery_ballista")));
+        // 2026-10-27：落下型的投射物技能多的投射物各落一道（SkillExecutor.impact）：多射的輔助可以掛（照 PoE2）
+        assertNull(support("multiple_projectiles").refusal(skill("artillery_ballista")));
+        assertNull(support("myriad_stars").refusal(skill("thunder_arrow")), "星辰萬象可以掛召霆矢");
         // 2026-10-24：只動投射物速度的輔助可以掛在落下的投射物（弩台）：速度決定落下的快慢
         assertNull(support("projectile_deceleration").refusal(skill("artillery_ballista")));
         assertNull(support("faster_projectiles").refusal(skill("artillery_ballista")));

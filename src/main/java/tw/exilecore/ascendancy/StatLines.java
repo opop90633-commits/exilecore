@@ -99,6 +99,9 @@ public final class StatLines {
         put(StatKeys.STRIKE_TARGETS, "打擊額外目標", FLAT, false);
         put(StatKeys.MELEE_SPLASH, "近戰擴散", FLAT, true);
         put(StatKeys.SKILL_COST, "魔力消耗", SCALED, false);
+        put(tw.exilecore.stats.CostKeys.COST_EFFICIENCY, "消耗效率", INCREASED, true); // 2026-10-27 照 PoE2：消耗 ÷ (1 + 效率)
+        put(tw.exilecore.stats.CostKeys.MANA_COST_EFFICIENCY, "魔力消耗效率", INCREASED, true);
+        put(tw.exilecore.stats.CostKeys.LIFE_COST_EFFICIENCY, "生命消耗效率", INCREASED, true);
         put(StatKeys.LEECH_LIFE, "生命偷取", FLAT, true);
         put(StatKeys.LEECH_MANA, "魔力偷取", FLAT, true);
         put(StatKeys.CORPSE_WALK, "移動時留下屍體", FLAT, false);

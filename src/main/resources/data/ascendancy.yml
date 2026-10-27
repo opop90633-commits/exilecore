@@ -1490,7 +1490,7 @@ ascendancies:
         notable: true
         icon: FEATHER
         lines:
-          - 已裝備頭盔、手套與鞋子的閃避值加倍
+          - 已裝備頭盔、褲子與鞋子的閃避值加倍
           - 已裝備胸甲的閃避值減半
         stats:
           - { stat: flag.stalking_panther, type: FLAT, value: 1 }

@@ -292,8 +292,9 @@ public record SupportDefinition(String id, String name, String description, Stri
         // 2026-10：投射物的機制（多射幾發、穿透、分裂、連鎖、飛行速度…）只有真的射出投射物的技能才吃得到：
         // 落釘弩台是 impact 機制帶 projectile 標籤（定身用），遠程召喚物也只是畫一道彈道
         // 2026-10-24：從天上掉下來的彈（弩台這種延遲落下的投射物）吃投射物速度（落下更快）：只動速度的輔助（疾矢…）可以掛
+        // 2026-10-27：射到地上再落下的投射物技能（召霆矢…）多的投射物各落一道（SkillExecutor.impact）：動到投射物數量的輔助也可以掛
         if (projectileMechanics() && skill.mechanic() != Mechanic.PROJECTILE && skill.mechanic() != Mechanic.CHAIN
-                && !(onlyProjectileSpeed() && skill.mechanic() == Mechanic.IMPACT && SkillExecutor.fallsAsProjectile(skill))) {
+                && !((onlyProjectileSpeed() || addsProjectiles()) && skill.mechanic() == Mechanic.IMPACT && SkillExecutor.fallsAsProjectile(skill))) {
             return "要真的射出投射物的技能";
         }
         return null;
@@ -413,6 +414,27 @@ public record SupportDefinition(String id, String name, String description, Stri
             }
         }
         return false;
+    }
+
+    /**
+     * 2026-10-27：會多射投射物（數量 +x），而且沒有落地型技能做不到的特殊機制（環射、回返、封矢、跳彈、光影齊射…）。
+     * 穿透、分裂、連鎖對落地型技能沒有作用，但跟多射綁在一起的（星辰萬象、分光這種）照原作可以掛。
+     */
+    boolean addsProjectiles() {
+        boolean more = false;
+        for (final Modifier modifier : modifiers) {
+            switch (modifier.stat()) {
+                case StatKeys.SKILL_PROJECTILES -> more = more || modifier.value() > 0;
+                case StatKeys.FLAG_PROJECTILE_NOVA, StatKeys.FLAG_RETURNING, StatKeys.SEAL_PROJECTILES,
+                     tw.exilecore.stats.SupportExtraKeys.FLAG_GAMBLESHOT, tw.exilecore.stats.SupportExtraKeys.FLAG_RICOCHET,
+                     tw.exilecore.stats.SupportExtraKeys.ALIGNMENT, tw.exilecore.stats.SupportExtraKeys.FLAG_SPECTRAL,
+                     tw.exilecore.stats.SupportExtraKeys.CHARGED_SHOTS -> {
+                    return false;
+                }
+                default -> { }
+            }
+        }
+        return more;
     }
 
     /** 2026-10-24：動到的投射物機制只有速度（沒有數量、穿透、分裂、連鎖…）。 */

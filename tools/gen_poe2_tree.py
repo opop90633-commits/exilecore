@@ -88,6 +88,9 @@ def zh_line(line):
     return out
 
 
+COST_EFFICIENCY_KEYS = {'skill.cost_efficiency', 'skill.mana_cost_efficiency', 'skill.life_cost_efficiency'}
+
+
 def zh_name(name):
     return NAMES_ZH.get(name) or name
 
@@ -124,7 +127,10 @@ def convert(stat_id, value):
         if s['stat'].startswith('flag.'):
             result.append(with_condition(dict(stat=s['stat'], type='FLAT', value=1, tags=s['tags']), condition))
             continue
-        result.append(with_condition(dict(stat=s['stat'], type=s['type'], value=scale(s['type'], v), tags=s['tags']), condition))
+        # 2026-10-27 照 PoE2：消耗效率有自己的屬性鍵（CostKeys：消耗 ÷ (1 + 效率)），數值照原作不反過來；
+        # 這次之前效率一律反過來寫成 skill.cost 的減少
+        sv = value if s['stat'] in COST_EFFICIENCY_KEYS else v
+        result.append(with_condition(dict(stat=s['stat'], type=s['type'], value=scale(s['type'], sv), tags=s['tags']), condition))
     return result
 
 

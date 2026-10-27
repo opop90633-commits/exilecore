@@ -489,4 +489,20 @@ class CraftingTest {
         // 普通、魔法的裝備跟珠寶可以
         assertTrue(mirror.canApply(new ItemData("plate_body", Rarity.NORMAL, 60), generator));
     }
+
+    /** 2026-10-27 照站長：去裂星籤移除 T 數字最大（最差）的那條，不是需求等級最低的（階數少的 T1 需求等級可能很低）。 */
+    @Test
+    void whittlingRemovesTheWorstTierNotTheLowestLevel() {
+        final Affix single = items.affix("j2_area_of_effect"); // 只有一階：T1、需求等級 1
+        final Affix many = items.affix("resist_fire");
+        assertEquals(1, single.tiers().size());
+        final int sixth = many.tiers().get(5).tier();
+        assertEquals(6, many.rank(sixth));
+        final ItemData item = new ItemData("plate_body", Rarity.RARE, 80);
+        item.affixes().add(new RolledAffix(single.id(), single.tiers().getFirst().tier(), Map.of("value", 5)));
+        item.affixes().add(new RolledAffix(many.id(), sixth, Map.of("value", 10)));
+        final java.util.List<RolledAffix> worst = Crafting.lowestAffixes(item, items);
+        assertEquals(1, worst.size());
+        assertEquals("resist_fire", worst.getFirst().id(), "T6 先拿掉，T1 留著");
+    }
 }

@@ -1317,7 +1317,7 @@ lesser_essence_mind:
   applies_to: { rarity: [MAGIC] }
   drop_weight: 0
   drop_level: 20
-  description: "魔法 → 稀有，一定加「+最大魔力」（需求等級 16 以下最好的那一階；腰帶、鞋子、手套、頭盔、飾品）"
+  description: "魔法 → 稀有，一定加「+最大魔力」（需求等級 16 以下最好的那一階；腰帶、鞋子、褲子、頭盔、飾品）"
   flavor: "想得太久的念頭，變成了石頭。"
 essence_mind:
   name: 魔力星魄
@@ -1330,7 +1330,7 @@ essence_mind:
   applies_to: { rarity: [MAGIC] }
   drop_weight: 0
   drop_level: 40
-  description: "魔法 → 稀有，一定加「+最大魔力」（需求等級 46 以下最好的那一階；腰帶、鞋子、手套、頭盔、飾品）"
+  description: "魔法 → 稀有，一定加「+最大魔力」（需求等級 46 以下最好的那一階；腰帶、鞋子、褲子、頭盔、飾品）"
   flavor: "想得太久的念頭，變成了石頭。"
 greater_essence_mind:
   name: 高階魔力星魄
@@ -1343,7 +1343,7 @@ greater_essence_mind:
   applies_to: { rarity: [MAGIC] }
   drop_weight: 0
   drop_level: 60
-  description: "魔法 → 稀有，一定加「+最大魔力」（需求等級 54 以下最好的那一階；腰帶、鞋子、手套、頭盔、飾品）"
+  description: "魔法 → 稀有，一定加「+最大魔力」（需求等級 54 以下最好的那一階；腰帶、鞋子、褲子、頭盔、飾品）"
   flavor: "想得太久的念頭，變成了石頭。"
 perfect_essence_mind:
   name: 完美魔力星魄
@@ -1637,7 +1637,7 @@ lesser_essence_opulence:
   applies_to: { rarity: [MAGIC] }
   drop_weight: 0
   drop_level: 20
-  description: "魔法 → 稀有，一定加「增加 % 物品掉落稀有度」（需求等級 3 以下最好的那一階；鞋子、手套、頭盔、飾品）"
+  description: "魔法 → 稀有，一定加「增加 % 物品掉落稀有度」（需求等級 3 以下最好的那一階；鞋子、褲子、頭盔、飾品）"
   flavor: "星骸裡夾著一點金砂，越看越像別人的。"
 essence_opulence:
   name: 尋寶星魄
@@ -1650,7 +1650,7 @@ essence_opulence:
   applies_to: { rarity: [MAGIC] }
   drop_weight: 0
   drop_level: 40
-  description: "魔法 → 稀有，一定加「增加 % 物品掉落稀有度」（需求等級 24 以下最好的那一階；鞋子、手套、頭盔、飾品）"
+  description: "魔法 → 稀有，一定加「增加 % 物品掉落稀有度」（需求等級 24 以下最好的那一階；鞋子、褲子、頭盔、飾品）"
   flavor: "星骸裡夾著一點金砂，越看越像別人的。"
 greater_essence_opulence:
   name: 高階尋寶星魄
@@ -1663,7 +1663,7 @@ greater_essence_opulence:
   applies_to: { rarity: [MAGIC] }
   drop_weight: 0
   drop_level: 60
-  description: "魔法 → 稀有，一定加「增加 % 物品掉落稀有度」（需求等級 40 以下最好的那一階；鞋子、手套、頭盔、飾品）"
+  description: "魔法 → 稀有，一定加「增加 % 物品掉落稀有度」（需求等級 40 以下最好的那一階；鞋子、褲子、頭盔、飾品）"
   flavor: "星骸裡夾著一點金砂，越看越像別人的。"
 perfect_essence_opulence:
   name: 完美尋寶星魄
@@ -1675,7 +1675,7 @@ perfect_essence_opulence:
   applies_to: { rarity: [RARE] }
   drop_weight: 0
   drop_level: 72
-  description: "稀有物品：隨機移除一條詞綴，再加「手套：增加 10～15% 怪物掉落金幣」"
+  description: "稀有物品：隨機移除一條詞綴，再加「褲子：增加 10～15% 怪物掉落金幣」"
   flavor: "星骸裡夾著一點金砂，越看越像別人的。"
 
 # ======== 星魄：攻擊類 ========
@@ -2240,7 +2240,7 @@ essence_hysteria:
   applies_to: { rarity: [RARE] }
   drop_weight: 0
   drop_level: 65
-  description: "稀有物品：隨機移除一條詞綴，再加「照部位一條：頭盔 +1 召喚物技能等級、胸甲物理荊棘、手套暴擊傷害加成、鞋子 30% 移動速度、戒指魔力回復、項鍊傷害回復為生命、腰帶暈眩門檻、盾格擋、法器能量護盾回充、箭袋弓技能傷害」"
+  description: "稀有物品：隨機移除一條詞綴，再加「照部位一條：頭盔 +1 召喚物技能等級、胸甲物理荊棘、褲子暴擊傷害加成、鞋子 30% 移動速度、戒指魔力回復、項鍊傷害回復為生命、腰帶暈眩門檻、盾格擋、法器能量護盾回充、箭袋弓技能傷害」"
   flavor: "被深淵咬過一口的星魄，裡面的光在亂撞。"
 
 # 催化劑（裂隙的怪掉）：只能打在戒指、項鍊上（2026-10-26 照 PoE2：腰帶不行；這次之前腰帶也可以），品質照稀有度 +5／+2／+1（普通／魔法／稀有、傳奇，上限 20；2026-10-27 照 PoE2，這次之前一律 +5），
@@ -2421,7 +2421,7 @@ catalyst_phys_chaos:
 
 # 星籤（流寇、祭壇掉）：拿它點一件物品掛上去，下一顆對應的通貨照星籤的規則用，用完星籤就消失（換一個星籤會蓋掉舊的）。
 #   omen.triggers：哪些操作會觸發（ESSENCE 只有完美、腐化星魄觸發）；omen.effect：
-#     FORCE_PREFIX／FORCE_SUFFIX 只加前綴／後綴、DOUBLE_ADD 加兩條、REMOVE_LOWEST 移除需求等級最低的、KEEP_PREFIXES／KEEP_SUFFIXES 只移除後綴／前綴、
+#     FORCE_PREFIX／FORCE_SUFFIX 只加前綴／後綴、DOUBLE_ADD 加兩條、REMOVE_LOWEST 移除階級最差（T 數字最大）的（2026-10-27 照站長；這次之前需求等級最低）、KEEP_PREFIXES／KEEP_SUFFIXES 只移除後綴／前綴、
 #     2026-10-26 新增：REMOVE_TWO 移除兩條、MAX_PREFIXES／MAX_SUFFIXES 星火石前綴／後綴最多、HOMOGENISE 加同一類的、ALWAYS_CHANGE 蝕變石一定有變化、
 #     IMPLICIT_ONLY 天啟石只重骰固定詞綴、SANCTIFY 聖化、NO_DESTROY 僥倖石不碎、ANCIENTS 僥倖石變同部位隨機傳奇、CATALYSING 用掉催化劑品質、REMOVE_VEILED 只拿隱匿／揭露詞綴。
 #   omen.weight：流寇、祭壇抽到的權重（沒寫 100）；drop_level：地區等級（照 PoE2 的 DropLevel：75／80 的是終局才掉）。
@@ -2524,7 +2524,7 @@ omen_whittling:
   applies_to: { rarity: [RARE] }
   drop_weight: 0
   drop_level: 75
-  description: "下一顆亂流石移除的是需求等級最低的那條"
+  description: "下一顆亂流石移除的是階級最差（T 數字最大）的那條"
   flavor: "把最不喜歡的那一行劃掉。"
 omen_sinistral_guard:
   name: 湮滅去後綴籤

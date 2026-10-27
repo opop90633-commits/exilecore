@@ -1454,16 +1454,16 @@
   "uses": 11
  },
  "base_mana_cost_efficiency_+%": {
-  "status": "approx",
+  "status": "mapped",
   "text": "8% increased Mana Cost Efficiency",
   "suggest": [
    {
-    "stat": "skill.cost",
+    "stat": "skill.mana_cost_efficiency",
     "type": "INCREASED",
     "tags": []
    }
   ],
-  "note": "efficiency: cost / (1+x)",
+  "note": "2026-10-27 照 PoE2：消耗效率（CostKeys：消耗 ÷ (1 + 效率)）；這次之前近似成 skill.cost 的減少",
   "family": null,
   "uses": 11
  },
@@ -8343,16 +8343,16 @@
   "condition": "vs_ailment"
  },
  "base_skill_cost_efficiency_+%": {
-  "status": "approx",
+  "status": "mapped",
   "text": "5% increased Cost Efficiency",
   "suggest": [
    {
-    "stat": "skill.cost",
+    "stat": "skill.cost_efficiency",
     "type": "INCREASED",
     "tags": []
    }
   ],
-  "note": "efficiency",
+  "note": "2026-10-27 照 PoE2：消耗效率（CostKeys：消耗 ÷ (1 + 效率)）；這次之前近似成 skill.cost 的減少",
   "family": null,
   "uses": 2
  },
@@ -10231,14 +10231,14 @@
   "text": "30% increased Mana Cost Efficiency of Attacks during any Mana Flask Effect",
   "suggest": [
    {
-    "stat": "skill.cost",
+    "stat": "skill.mana_cost_efficiency",
     "type": "INCREASED",
     "tags": [
      "attack"
     ]
    }
   ],
-  "note": "2026-10-26 條件 manaflask；efficiency：當作減少消耗",
+  "note": "2026-10-27 照 PoE2：消耗效率（CostKeys：消耗 ÷ (1 + 效率)）；這次之前近似成 skill.cost 的減少；條件 manaflask",
   "family": null,
   "uses": 1,
   "condition": "manaflask"
@@ -10518,14 +10518,14 @@
   "text": "15% increased Cost Efficiency of Attacks",
   "suggest": [
    {
-    "stat": "skill.cost",
+    "stat": "skill.cost_efficiency",
     "type": "INCREASED",
     "tags": [
      "attack"
     ]
    }
   ],
-  "note": "2026-10-26 一次性效果：efficiency：當作減少消耗",
+  "note": "2026-10-27 照 PoE2：消耗效率（CostKeys：消耗 ÷ (1 + 效率)）；這次之前近似成 skill.cost 的減少",
   "family": null,
   "uses": 1
  },
@@ -12300,12 +12300,12 @@
   "text": "25% increased Mana Cost Efficiency while on Low Mana",
   "suggest": [
    {
-    "stat": "skill.cost",
+    "stat": "skill.mana_cost_efficiency",
     "type": "INCREASED",
     "tags": []
    }
   ],
-  "note": "2026-10-26 條件 lowmana；efficiency：當作減少消耗",
+  "note": "2026-10-27 照 PoE2：消耗效率（CostKeys：消耗 ÷ (1 + 效率)）；這次之前近似成 skill.cost 的減少；條件 lowmana",
   "family": null,
   "uses": 1,
   "condition": "lowmana"
@@ -14723,14 +14723,14 @@
   "text": "60% increased Mana Cost Efficiency of Marks",
   "suggest": [
    {
-    "stat": "skill.cost",
+    "stat": "skill.mana_cost_efficiency",
     "type": "INCREASED",
     "tags": [
      "mark"
     ]
    }
   ],
-  "note": "2026-10-26 一次性效果：efficiency：當作減少消耗",
+  "note": "2026-10-27 照 PoE2：消耗效率（CostKeys：消耗 ÷ (1 + 效率)）；這次之前近似成 skill.cost 的減少",
   "family": null,
   "uses": 1
  },
@@ -16859,18 +16859,18 @@
   "uses": 1
  },
  "base_mana_cost_efficiency_+%_of_command_skills": {
-  "status": "approx",
+  "status": "mapped",
   "text": "15% increased Mana Cost Efficiency of Command Skills",
   "suggest": [
    {
-    "stat": "skill.cost",
+    "stat": "skill.mana_cost_efficiency",
     "type": "INCREASED",
     "tags": [
      "command"
     ]
    }
   ],
-  "note": "2026-10-26 系統：指令技能的魔力消耗（efficiency：當作減少消耗）",
+  "note": "2026-10-26 系統：指令技能的魔力消耗效率（CostKeys：消耗 ÷ (1 + 效率)）",
   "family": "Command skills / Puppet Master",
   "uses": 1
  },

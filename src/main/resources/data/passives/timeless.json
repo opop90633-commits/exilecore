@@ -1901,9 +1901,9 @@
        "text": "增加 2% 魔力消耗效率（每 10 點貢禮）",
        "stats": [
         {
-         "stat": "skill.cost",
+         "stat": "skill.mana_cost_efficiency",
          "type": "INCREASED",
-         "value": -0.02,
+         "value": 0.02,
          "tags": []
         }
        ],

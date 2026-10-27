@@ -474,6 +474,10 @@ public final class CraftBenchMenu extends Menu {
         }
         final CurrencyService.Result result = currencies().apply(currencies().create(currency, 1), stack, player.getName(), characterId);
         final CurrencyType fired = currencies().takeFiredOmen();
+        final String changes = currencies().takeChanges().message(); // 2026-10-27 照站長：移除、新增了哪一條
+        if (result == CurrencyService.Result.APPLIED && changes != null) {
+            player.sendMessage(plugin.text().prefixed(changes));
+        }
         switch (result) {
             case APPLIED -> {
                 if (plugin.guide() != null) {

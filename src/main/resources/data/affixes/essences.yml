@@ -2,7 +2,7 @@
 # spawn_tags 寫 [essence, 出在哪些裝備…]：不會自然擲出、一般通貨也加不上（ItemGenerator 的詞綴池排除 essence），只有 currencies.yml 的
 # 完美星魄、狂亂星魄給得了（稀有物品隨機移除一條，再加這條）。一階、數值照 PoE2。格式同 prefixes.yml。
 # 注意：PoE2 有、我們還沒有對應屬性的沒做：完美混抗（物理傷害的 x% 視為混沌）、完美火抗／冰抗／電抗（那種元素的傷害回復為生命）。
-# 近似的：完美施速星魄 PoE2 是「魔力消耗效率 18～20%／28～32%」，這裡寫成技能魔力消耗減少同樣的數字；
+# 2026-10-27 照 PoE2：完美施速星魄是「增加 18～20%／28～32% 魔力消耗效率」（消耗 ÷ (1 + 效率)）；這次之前近似成技能魔力消耗減少同樣的數字。
 #   完美統御星魄的「光環效果」照 PoE2 的 Aura Magnitudes；統御星魄是 PoE2「存在範圍內的友軍傷害」（跟權杖的詞綴同一條；2026-10-27 起照原作給存在範圍內的友軍，含圖騰，這次之前寫召喚物傷害）。
 
 # ---- 完美星魄 ----
@@ -244,22 +244,22 @@ ess_cost_wand:
   group: mana_cost_efficiency
   spawn_tags: [essence, wand, focus]
   names: [之星魄]
-  text: "技能魔力消耗減少 {value}%"
+  text: "增加 {value}% 魔力消耗效率"   # 2026-10-27 照 PoE2 Mana Cost Efficiency；這次之前「技能魔力消耗減少」
   tiers:
     - { tier: 1, ilvl: 72, weight: 1, value: [18, 20] }
   mods:
-    - { stat: skill.cost, type: INCREASED, value: "-{value}" }
+    - { stat: skill.mana_cost_efficiency, type: INCREASED, value: "{value}" }
 
 ess_cost_staff:
   type: suffix
   group: mana_cost_efficiency
   spawn_tags: [essence, staff]
   names: [之星魄]
-  text: "技能魔力消耗減少 {value}%"
+  text: "增加 {value}% 魔力消耗效率"   # 2026-10-27 照 PoE2 Mana Cost Efficiency；這次之前「技能魔力消耗減少」
   tiers:
     - { tier: 1, ilvl: 72, weight: 1, value: [28, 32] }
   mods:
-    - { stat: skill.cost, type: INCREASED, value: "-{value}" }
+    - { stat: skill.mana_cost_efficiency, type: INCREASED, value: "{value}" }
 
 ess_aura:
   type: suffix

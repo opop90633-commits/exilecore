@@ -282,8 +282,13 @@ final class MapBosses {
         final MapInstance.Twist twist = instance.twist();
         final MapTwists.BossVariant variant = twist.bossVariant;
         final double power = 1 + twist.bossPower;
-        final double life = definition.life() * tierLife / Math.max(0.1, type.lifeMultiplier()) * power * (variant == null ? 1 : variant.life);
-        final double damage = definition.damage() / Math.max(0.1, type.damageMultiplier()) * power * (variant == null ? 1 : variant.damage);
+        // 2026-10-27 照站長：一般地圖 Boss 也乘 settings.tier_parity（強度等於原作同一階）；終局、極境、巔峰、特殊實例不乘（終局維持 T16 每秒 25 萬、3 分半）
+        final boolean parity = !instance.map().isFinal() && instance.special() == null && !instance.isUber() && !instance.isPinnacle();
+        final int parityTier = instance.stats().tier();
+        final double life = definition.life() * tierLife / Math.max(0.1, type.lifeMultiplier()) * power * (variant == null ? 1 : variant.life)
+                * (parity ? service.config().parityLife(parityTier) : 1.0);
+        final double damage = definition.damage() / Math.max(0.1, type.damageMultiplier()) * power * (variant == null ? 1 : variant.damage)
+                * (parity ? service.config().parityDamage(parityTier) : 1.0);
         instance.setBossPhase(0);
         final String bossName = variant == MapTwists.BossVariant.EMPOWERED ? "強化的" + definition.name() : definition.name();
         plugin.monsters().decorateBoss(entity, instance.level(), bossName, definition.mods(), life, damage, definition.scale());

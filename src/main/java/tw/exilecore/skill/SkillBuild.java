@@ -308,8 +308,10 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 ? Math.max(0, Math.min(20, effective.flat(StatKeys.MELEE_RANGE, context))) / 10.0 : 0;
         final double reach = (definition.mechanic() == Mechanic.STRIKE && area ? params.reach() * areaScale : params.reach()) * meleeRange
                 + meleeReachFlat;
-        final int manaCost = (int) Math.round((definition.mana().at(level) + extraManaCost(definition.mana().at(level), effective, context))
-                * Math.max(0, effective.apply(StatKeys.SKILL_COST, 1.0, context)));
+        // 2026-10-27 照 PoE2：消耗 ÷ (1 + 消耗效率 + 魔力消耗效率)（CostKeys）；這次之前效率當成 skill.cost 的減少
+        final int manaCost = tw.exilecore.stats.CostKeys.manaCost(
+                definition.mana().at(level) + extraManaCost(definition.mana().at(level), effective, context),
+                effective.apply(StatKeys.SKILL_COST, 1.0, context), tw.exilecore.stats.CostKeys.manaEfficiency(effective, context));
         final double baseCooldown = tw.exilecore.item.unique.UniqueHits.cooldown(definition.cooldown() > 0 ? definition.cooldown()
                 : Math.max(0, effective.flat(StatKeys.SKILL_ADDED_COOLDOWN, context)), effective, context); // 2026-10：輔助給的冷卻；2026-10-27（逆漏法袍）：± 秒
         // 2026-10-26 照 PoE2（戰爭之哮「無視戰吼冷卻時間」＝更少 100% 冷卻）：沒有冷卻；這次之前最低夾在一成

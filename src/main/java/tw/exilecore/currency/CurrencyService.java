@@ -280,6 +280,7 @@ public final class CurrencyService {
             return Result.NOT_APPLICABLE;
         }
         final String before = items.toJson(data);
+        final List<String> linesBefore = affixTexts(data);
         final Outcome outcome = run(type, data, random(data, type));
         if (outcome.result() == Result.NOT_APPLICABLE) {
             return Result.NOT_APPLICABLE;
@@ -293,6 +294,7 @@ public final class CurrencyService {
             return Result.DESTROYED;
         }
         items.update(target, data);
+        lastChanges = diff(linesBefore, affixTexts(data)); // 2026-10-27 照站長：移除、新增了哪一條（星籤移除最低那條也看得出來）
         final String after = items.toJson(data);
         // 寫進資料庫的 currency_log（查作弊、看經濟），主控台也留一行
         usageLog.record(characterId, playerName, data.uuid(), type.id(), before, after);
@@ -438,6 +440,60 @@ public final class CurrencyService {
                           final String before, final String after) {
         usageLog.record(characterId, playerName, itemUuid, currencyId, before, after);
         log.info("[currency] {} 對 {} 使用 {}", playerName, itemUuid, currencyId);
+    }
+
+    /** 2026-10-27：上一次 apply 移除、新增的詞綴（玩家看得到的那一行字；沒變是空的）。 */
+    public record Changes(List<String> removed, List<String> added) {
+        public boolean isEmpty() {
+            return removed.isEmpty() && added.isEmpty();
+        }
+
+        /** 給聊天用的一段 MiniMessage（沒變回傳 null）。 */
+        public String message() {
+            if (isEmpty()) {
+                return null;
+            }
+            final StringBuilder out = new StringBuilder();
+            for (final String line : removed) {
+                out.append(out.isEmpty() ? "" : "\n").append("<#ff7070>－ 移除：<gray>").append(ItemRenderer.escape(line));
+            }
+            for (final String line : added) {
+                out.append(out.isEmpty() ? "" : "\n").append("<#7dff8a>＋ 新增：<gray>").append(ItemRenderer.escape(line));
+            }
+            return out.toString();
+        }
+    }
+
+    private Changes lastChanges = new Changes(List.of(), List.of());
+
+    /** 上一次 {@link #apply} 移除、新增了哪些詞綴（拿一次就清掉）。 */
+    public Changes takeChanges() {
+        final Changes changes = lastChanges;
+        lastChanges = new Changes(List.of(), List.of());
+        return changes;
+    }
+
+    private List<String> affixTexts(final ItemData data) {
+        if (!data.identified()) {
+            return List.of();
+        }
+        final List<String> out = new ArrayList<>();
+        for (final tw.exilecore.item.ItemStats.AffixLine line : tw.exilecore.item.ItemStats.affixLines(items.repository(), data)) {
+            out.add(line.text() + (line.tier() > 0 ? "（T" + line.tier() + "）" : ""));
+        }
+        return out;
+    }
+
+    /** 兩份詞綴字串的差（同一行出現幾次就算幾條）。 */
+    static Changes diff(final List<String> before, final List<String> after) {
+        final List<String> removed = new ArrayList<>(before);
+        final List<String> added = new ArrayList<>();
+        for (final String line : after) {
+            if (!removed.remove(line)) {
+                added.add(line);
+            }
+        }
+        return new Changes(removed, added);
     }
 
     /** 上一次 apply 時生效的星籤（給聊天提示用；沒有是 null）。 */

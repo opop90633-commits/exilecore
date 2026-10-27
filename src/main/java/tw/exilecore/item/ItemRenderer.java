@@ -457,6 +457,21 @@ public final class ItemRenderer {
         if (data.omen() != null) {
             final tw.exilecore.currency.CurrencyType omen = omens == null ? null : omens.apply(data.omen());
             lore.add(line("<#c48bff>星籤：" + (omen == null ? escape(data.omen()) : escape(omen.name()) + " <dark_gray>— " + escape(omen.description()))));
+            // 2026-10-27 照站長：「去裂」星籤直接寫會移除哪一條（一樣差的寫「其中一條」）
+            if (omen != null && omen.omen() != null && omen.omen().effect() == tw.exilecore.currency.CurrencyType.Omen.Effect.REMOVE_LOWEST
+                    && data.identified() && !data.affixes().isEmpty()) {
+                final List<RolledAffix> worst = tw.exilecore.currency.Crafting.lowestAffixes(data, repository);
+                if (!worst.isEmpty()) {
+                    final ItemData only = data.copy();
+                    only.affixes().clear();
+                    only.affixes().addAll(worst);
+                    final List<ItemStats.AffixLine> lines = ItemStats.affixLines(repository, only);
+                    lore.add(line("<#c48bff>　會移除" + (lines.size() > 1 ? "其中一條（一樣差，隨機）" : "") + "："));
+                    for (final ItemStats.AffixLine each : lines) {
+                        lore.add(line("<#ff7070>　－ <gray>" + escape(each.text()) + (each.tier() > 0 ? " <dark_gray>(T" + each.tier() + ")" : "")));
+                    }
+                }
+            }
         }
         if (base.isJewel()) {
             lore.add(line(SEPARATOR));

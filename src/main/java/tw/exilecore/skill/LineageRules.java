@@ -386,7 +386,7 @@ public final class LineageRules {
             case LineageKeys.OFFERING_CASCADE -> "你的範圍法術也在祭柱那裡放一次（" + n + "% " + (value < 0 ? "更少" : "更多") + "傷害）";
             case LineageKeys.RANDOM_AREA -> "觸發出來的技能範圍在更少 40% 到更多 50% 之間隨機";
             case LineageKeys.CHALICE -> "用的時候獲得滿溢聖杯（每 1 秒冷卻 " + n + " 秒：藥劑每秒 +2 次充能、回復增加 30%）";
-            case LineageKeys.MANA_FLASK_EFFICIENCY -> "魔力藥劑生效時魔力消耗少 " + n + "%";
+            case LineageKeys.MANA_FLASK_EFFICIENCY -> "魔力藥劑生效時增加 " + n + "% 魔力消耗效率"; // 2026-10-27 照 PoE2 用語；這次之前「魔力消耗少 x%」
             case LineageKeys.HUBRIS -> "另外消耗 " + n + "% 最大魔力，附加這筆消耗 15% 的物理與冰冷傷害";
             case LineageKeys.UNHOLY_ON_COMMAND -> "指揮召喚物時，你和聽命的召喚物獲得不潔之力 " + n + " 秒（30% 額外混沌傷害）";
             case LineageKeys.RHYTHM -> "完美時機時獲得一層律勁（最多 5 層），每層更多 " + n + "% 傷害、完美時機的區間更短 30%";

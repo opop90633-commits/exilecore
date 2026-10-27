@@ -161,7 +161,7 @@ public final class AttributeScalingKeys {
             }
         }
         if (gloves != null) {
-            perPoint(sheet, EVASION_PER_GLOVES_ARMOUR, gloves.armour(), 1, StatKeys.EVASION, "手套護甲");
+            perPoint(sheet, EVASION_PER_GLOVES_ARMOUR, gloves.armour(), 1, StatKeys.EVASION, "褲子護甲");
         }
         if (boots != null) {
             perPoint(sheet, ARMOUR_PER_BOOTS_ES, boots.energyShield(), 1, StatKeys.ARMOUR, "鞋子護盾");

@@ -570,7 +570,7 @@ runes:
       weapon:
         - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }
       caster:
-        - { text: "增加 16% 魔力消耗效率", stat: skill.cost, type: INCREASED, value: -16 }
+        - { text: "增加 16% 魔力消耗效率", stat: skill.mana_cost_efficiency, type: INCREASED, value: 16 }   # 2026-10-27 照 PoE2 魔力消耗效率（消耗 ÷ 1.16）；這次之前 skill.cost 減少 16%
       armour:
         - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
   inspiration:   # Inspiration Rune
@@ -586,7 +586,7 @@ runes:
       weapon:
         - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }
       caster:
-        - { text: "增加 16% 魔力消耗效率", stat: skill.cost, type: INCREASED, value: -16 }
+        - { text: "增加 16% 魔力消耗效率", stat: skill.mana_cost_efficiency, type: INCREASED, value: 16 }   # 2026-10-27 照 PoE2 魔力消耗效率（消耗 ÷ 1.16）；這次之前 skill.cost 減少 16%
       armour:
         - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
   inspiration_greater:   # Greater Inspiration Rune
@@ -602,7 +602,7 @@ runes:
       weapon:
         - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }
       caster:
-        - { text: "增加 16% 魔力消耗效率", stat: skill.cost, type: INCREASED, value: -16 }
+        - { text: "增加 16% 魔力消耗效率", stat: skill.mana_cost_efficiency, type: INCREASED, value: 16 }   # 2026-10-27 照 PoE2 魔力消耗效率（消耗 ÷ 1.16）；這次之前 skill.cost 減少 16%
       armour:
         - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
   inspiration_perfect:   # Perfect Inspiration Rune
@@ -618,7 +618,7 @@ runes:
       weapon:
         - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }
       caster:
-        - { text: "增加 16% 魔力消耗效率", stat: skill.cost, type: INCREASED, value: -16 }
+        - { text: "增加 16% 魔力消耗效率", stat: skill.mana_cost_efficiency, type: INCREASED, value: 16 }   # 2026-10-27 照 PoE2 魔力消耗效率（消耗 ÷ 1.16）；這次之前 skill.cost 減少 16%
       armour:
         - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
   rebirth_lesser:   # Lesser Rebirth Rune

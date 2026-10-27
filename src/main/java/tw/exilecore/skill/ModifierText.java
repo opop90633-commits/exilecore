@@ -260,6 +260,10 @@ public final class ModifierText {
             case StatKeys.SKILL_AREA -> scaled(modifier, "範圍效果", percent);
             case StatKeys.SKILL_PROJECTILE_SPEED -> scaled(modifier, "投射物速度", percent);
             case StatKeys.SKILL_COST -> scaled(modifier, "魔力消耗", percent);
+            // 2026-10-27 照 PoE2：消耗效率（消耗 ÷ (1 + 效率)）；這次之前效率都寫成 skill.cost 的減少
+            case tw.exilecore.stats.CostKeys.COST_EFFICIENCY -> scaled(modifier, tagPrefix(modifier) + "消耗效率", percent);
+            case tw.exilecore.stats.CostKeys.MANA_COST_EFFICIENCY -> scaled(modifier, tagPrefix(modifier) + "魔力消耗效率", percent);
+            case tw.exilecore.stats.CostKeys.LIFE_COST_EFFICIENCY -> scaled(modifier, tagPrefix(modifier) + "生命消耗效率", percent);
             case StatKeys.SKILL_PROJECTILES -> "額外 " + number(value) + " 個投射物";
             case StatKeys.SKILL_PIERCE -> "投射物多穿透 " + number(value) + " 個敵人";
             case StatKeys.SKILL_CHAINS -> "多連鎖 " + number(value) + " 次";
