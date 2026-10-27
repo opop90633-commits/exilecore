@@ -78,6 +78,23 @@ public final class SkillConfig {
     private Map<String, LodgeSpec> lodges = Map.of();
     /** 2026-10-26：一次把彈匣全部射出去、落在一片範圍裡（PoE2 的 Hailstorm Rounds）。 */
     private Map<String, RainSpec> rains = Map.of();
+    /** 2026-10-28 照 PoE2 Lightning Rod：落地後插在地上、閃電雷束可以連鎖過去的箭（skills.yml 的 rod）。 */
+    private Map<String, RodSpec> rods = Map.of();
+
+    /**
+     * 2026-10-28 照 PoE2 Lightning Rod（雷樁矢）：插在地上的箭（{@link LightningRods}）。
+     *
+     * @param duration 留幾秒（吃技能持續時間）
+     * @param max      同時最多幾支（多的先拿掉最舊的）
+     * @param chains   被連鎖幾次之後消失
+     * @param charge   被連鎖之後充能幾秒才炸（雷鳴箭的雷束另外看 lightning_rod.burst_delay）
+     */
+    public record RodSpec(double duration, int max, int chains, double charge) {
+    }
+
+    public RodSpec rod(final String skillId) {
+        return rods.get(skillId);
+    }
 
     /**
      * 留在地上的彈（skills.yml 的 lodge）。
@@ -201,6 +218,13 @@ public final class SkillConfig {
     /** data/boss_skills.yml：Boss 招式（檔案不存在時是空的）。 */
     private final BossSkillConfig bossSkills = new BossSkillConfig();
 
+    /** 2026-10-27：所有技能的魔力消耗再乘這個（skills.yml 的 mana_cost_scale；SkillBuild 算消耗時乘上）。 */
+    private static volatile double manaCostScale = 1.0;
+
+    public static double manaCostScale() {
+        return manaCostScale;
+    }
+
     public void load(final Path dataFolder) throws IOException {
         final YamlNode root = YamlNode.load(dataFolder.resolve(FILE));
         final int[] parsedRequirements = parseRequirements(root, "level_requirements");
@@ -210,6 +234,8 @@ public final class SkillConfig {
         final double[] parsedUncutWeights = parseUncutWeights(root);
         final java.util.Map<Integer, Double> parsedUncutScale = parseUncutScale(root);
         final double extraLevelDamage = root.decimal("extra_level_damage", DEFAULT_EXTRA_LEVEL_DAMAGE);
+        // 2026-10-27 照站長「所有技能的魔力消耗砍半」：每個技能的魔力消耗再乘這個（mana_cost_scale，0.1–10）
+        manaCostScale = Math.max(0.1, Math.min(10, root.decimal("mana_cost_scale", 1.0)));
         if (extraLevelDamage < 0 || extraLevelDamage > 100) {
             throw new IllegalArgumentException(FILE + ".extra_level_damage：要在 0 到 100 之間（百分比）");
         }
@@ -222,6 +248,7 @@ public final class SkillConfig {
         final Map<String, java.util.List<ScaledMod>> parsedLevelMods = new HashMap<>();
         final Map<String, LodgeSpec> parsedLodges = new HashMap<>();
         final Map<String, RainSpec> parsedRains = new HashMap<>();
+        final Map<String, RodSpec> parsedRods = new HashMap<>();
         final Map<String, ChargeCost> parsedChargeCosts = new HashMap<>();
         final Map<String, Integer> parsedUses = new HashMap<>();
         final Map<String, ResourceSpec> parsedResources = new HashMap<>();
@@ -274,6 +301,11 @@ public final class SkillConfig {
                         Math.max(0.5, l.decimal("duration", 10)), Math.max(1, l.integer("max", 30)), l.bool("proximity", false),
                         Math.max(0, l.decimal("arm", 0)), Math.max(0.3, l.decimal("trigger", 1.0)), Math.max(0, l.decimal("ramp_more", 0)),
                         Math.max(0.05, l.decimal("ramp_seconds", 1)), l.bool("expire", false)));
+            }
+            if (node.has("rod")) { // 2026-10-28 照 PoE2 Lightning Rod
+                final YamlNode r = node.node("rod");
+                parsedRods.put(id, new RodSpec(Math.max(0.5, r.decimal("duration", 20)), Math.max(1, r.integer("max", 10)),
+                        Math.max(1, r.integer("chains", 8)), Math.max(0.05, r.decimal("charge", 1.0))));
             }
             if (node.has("charge_cost")) {
                 final YamlNode c = node.node("charge_cost");
@@ -481,6 +513,7 @@ public final class SkillConfig {
         this.levelModifiers = Map.copyOf(parsedLevelMods);
         this.lodges = Map.copyOf(parsedLodges);
         this.rains = Map.copyOf(parsedRains);
+        this.rods = Map.copyOf(parsedRods);
         this.chargeCosts = Map.copyOf(parsedChargeCosts);
         this.cooldownUses = parsedUses;
         this.resources = parsedResources;

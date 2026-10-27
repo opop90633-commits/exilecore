@@ -168,7 +168,7 @@ class SupportAndGemTest {
         assertEquals(Math.sqrt(1.35), supported.areaScale(), 1e-9, "增加 35% 範圍 → 半徑 ×√1.35");
         assertEquals(plain.explode() * Math.sqrt(1.35), supported.explode(), 1e-9);
         assertEquals(plain.speed() * 1.4, supported.speed(), 1e-9);
-        assertEquals(Math.round(fireball.mana().at(10) * 1.0 * 1.0 * 1.3 * 1.2), supported.manaCost(), "魔力倍率相乘");
+        assertEquals(Math.round(fireball.mana().at(10) * 1.0 * 1.0 * 1.3 * 1.2 * SkillConfig.manaCostScale()), supported.manaCost(), "魔力倍率相乘");
 
         final SkillBuild concentrated = SkillBuild.of(config, skill("frost_nova"), 1, 60, false, List.of(support("concentrated_effect")), Set.of(), sheet);
         assertEquals(skill("frost_nova").params().radius().at(1) * Math.sqrt(0.5), concentrated.radius(), 1e-9);

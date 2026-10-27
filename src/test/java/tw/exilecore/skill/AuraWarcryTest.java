@@ -247,7 +247,7 @@ class AuraWarcryTest {
         // 真的技能：火球的消耗 = （基礎 + 61）× 倍率；沒開祕法之心的照舊
         final int plain = build("fireball", 20, new StatSheet().setBase(StatKeys.MANA_MAX, 1000)).manaCost();
         final int taxed = build("fireball", 20, thousand).manaCost();
-        assertEquals(plain + 61, taxed);
+        assertEquals(Math.round((config.skill("fireball").mana().at(20) + 61) * SkillConfig.manaCostScale()), taxed); // 2026-10-27：消耗再乘 mana_cost_scale
         // 光環自己不用魔力，不會被自己加價
         assertEquals(0, build("archmage", 20, thousand).manaCost());
     }

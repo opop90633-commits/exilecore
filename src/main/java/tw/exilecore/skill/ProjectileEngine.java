@@ -852,7 +852,40 @@ final class ProjectileEngine implements Listener {
         final List<Location> points = new ArrayList<>();
         points.add(SkillTargets.center(target));
         int count = 0;
-        for (final LivingEntity other : targets.around(target.getLocation(), splash.radius(), owner)) {
+        // 2026-10-28 照 PoE2 Lightning Rod：閃電的雷束也可以射向自己插在地上的雷樁矢箭（佔一道雷束，箭充能後再炸一次）；
+        // 箭跟敵人照距離排，近的先（這次之前只射敵人）
+        final List<LightningRods.Rod> rods = zones != null && SkillZones.chainsToRods(profile)
+                ? zones.rodsAround(owner, target.getLocation(), splash.radius()) : List.of();
+        final List<LivingEntity> enemies = targets.around(target.getLocation(), splash.radius(), owner);
+        if (!rods.isEmpty()) {
+            final Location from = SkillTargets.center(target);
+            enemies.removeIf(other -> other == target);
+            enemies.sort(java.util.Comparator.comparingDouble(other -> other.getLocation().distanceSquared(target.getLocation())));
+            int e = 0;
+            int r = 0;
+            while (count < splash.targets(level) && (e < enemies.size() || r < rods.size())) {
+                final LivingEntity enemy = e < enemies.size() ? enemies.get(e) : null;
+                final LightningRods.Rod rod = r < rods.size() ? rods.get(r) : null;
+                if (rod != null && (enemy == null
+                        || rod.at.distanceSquared(target.getLocation().toVector()) < enemy.getLocation().distanceSquared(target.getLocation()))) {
+                    r++;
+                    if (zones.chainToRod(owner, rod, profile)) {
+                        count++;
+                        points.add(SkillZones.rodTop(rod.at.toLocation(from.getWorld())));
+                    }
+                } else {
+                    e++;
+                    count++;
+                    damage.hit(owner, enemy, profile, null);
+                    points.add(SkillTargets.center(enemy));
+                }
+            }
+            if (points.size() > 1) {
+                visuals.splash(shot.visual(), points);
+            }
+            return;
+        }
+        for (final LivingEntity other : enemies) {
             if (other == target || count >= splash.targets(level)) {
                 continue;
             }

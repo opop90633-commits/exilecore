@@ -83,7 +83,7 @@ public final class SkillProfiles {
 
     /** 沒有輔助寶石時的魔力消耗（有輔助的看 {@link SkillBuild#manaCost()}）。 */
     public static int manaCost(final SkillDefinition definition, final int level) {
-        return (int) Math.round(definition.mana().at(level));
+        return (int) Math.round(definition.mana().at(level) * SkillConfig.manaCostScale()); // 2026-10-27 照站長：魔力消耗砍半
     }
 
     /** 這個技能兩次之間要幾 tick：攻擊看武器攻速，法術看施法時間與施法速度（輔助寶石疊在屬性表上一起算）。 */

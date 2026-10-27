@@ -87,6 +87,8 @@ lightning_arrow:   # Lightning Arrow
   - { stat: shock.chance, type: MORE, per: 2.0 }   # 感電機率（更多）
 lightning_pillar:   # Lightning Conduit
   - { stat: damage, type: MORE, per: 1.0, tags: [lightning] }   # 閃電傷害（更多）
+lightning_rod:   # Lightning Rod（2026-10-28 照 PoE2：(0—20)% 機率落地時多炸一次；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: lightning_rod.extra_burst, type: FLAT, per: 1.0 }   # 落地時多炸一次的機率 %（LightningRods）
 lightning_spear:   # Lightning Spear
   - { stat: skill.projectiles, type: FLAT, per: 0.1 }   # 投射物數量
 lunar_blessing:   # Lunar Blessing（2026-10-27 照 PoE2：增益另外獲得 (0—10)% 傷害為冰冷、(0—40)% 增加冷卻回復速度）
@@ -106,8 +108,8 @@ shockwave_totem:   # Shockwave Totem（2026-10-26 照 PoE2：+(0—4) 秒圖騰�
   - { stat: totem.duration_flat, type: FLAT, per: 0.2 }   # 圖騰持續時間 +秒
 snap:   # Snap（2026-10-27 照 PoE2：(0—10)% 機率多一個灌注殘骸、(0—100)% 增加冷卻回復速度；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: snap.extra_remnant, type: FLAT, per: 0.5 }   # 多一個灌注殘骸的機率（Snap.java）
-snipe:   # Snipe
-  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+snipe:   # Snipe（2026-10-28 照 PoE2：爆炸、寒冰爆破的半徑 +(0—0.4) 格；這次之前照通用換算增加範圍，而且只加在箭上、爆炸吃不到）
+  - { stat: skill.explosion_radius, type: FLAT, per: 0.02 }   # 觸發的爆炸半徑 +格（SupportProcs）
 spark:   # Spark
   - { stat: skill.projectile_speed, type: INCREASED, per: 1.5 }   # 投射物速度
 spiral_volley:   # Spiral Volley
@@ -259,8 +261,9 @@ advanced:
     - { stat: skill.duration, type: MORE, per: 1.0 }
   siege_ballista:   # Siege Ballista：+(0—1) 圖騰上限
     - { stat: skill.totems, type: FLAT, per: 0.05 }
-  snipe:   # Snipe：(0—20)% 更多攻擊速度（另一條完美時機的區間沒做）
+  snipe:   # Snipe：(0—20)% 更多攻擊速度、(0—20)% 更長的完美時機區間（2026-10-28 補上完美時機；這次之前沒做）
     - { stat: attack.speed, type: MORE, per: 1.0 }
+    - { stat: perfect_timing.window, type: INCREASED, per: 1.0 }   # 完美時機的區間（Signatures）
   spark:   # Spark：+(0—4) 投射物
     - { stat: skill.projectiles, type: FLAT, per: 0.2 }
   stampede:   # Stampede：(0—20)% 更多範圍

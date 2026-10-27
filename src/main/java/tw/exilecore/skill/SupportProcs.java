@@ -197,7 +197,13 @@ public final class SupportProcs implements Listener {
             }
         }
         if (event.skill().id().endsWith(PERFECT_SUFFIX)) {
-            fireAll(player, skillId, "perfect_hit", target.getLocation(), target, null); // 2026-10：完美時機放開的那一下打中（穿雲箭的爆炸）
+            // 2026-10-28 照 PoE2 Snipe：完美時機的箭直接打中凍結中的敵人時用掉凍結，改炸寒冰爆破（perfect_hit_frozen），不另外炸一般的爆炸；
+            // 這次之前一律炸一般的（perfect_hit）
+            if (ailments.contains(AilmentType.FREEZE) && fireAll(player, skillId, "perfect_hit_frozen", target.getLocation(), target, null)) {
+                plugin.ailments().consume(target, AilmentType.FREEZE, player);
+            } else {
+                fireAll(player, skillId, "perfect_hit", target.getLocation(), target, null); // 2026-10：完美時機放開的那一下打中（穿雲箭的爆炸）
+            }
         }
         if (event.result().crit()) {
             fireAll(player, skillId, "crit", target.getLocation(), target, null);
@@ -397,6 +403,37 @@ public final class SupportProcs implements Listener {
         };
     }
 
+    /** 2026-10-28 照 PoE2：觸發的爆炸半徑 +x 格（FLAT；穿雲箭的品質，寫在原技能上）。 */
+    static final String EXPLOSION_RADIUS_FLAT = "skill.explosion_radius";
+
+    /**
+     * 2026-10-28 照 PoE2：技能自己的隱藏技能（parent_damage: own，例如穿雲箭的爆炸）是同一顆寶石的一部分：
+     * 傷害照原技能那一下（含輔助）乘 share，再加上隱藏技能自己的修飾器（全部轉冰冷、對傳奇更多…）；
+     * 範圍照原技能（含輔助、品質）加隱藏技能自己的算，品質的「爆炸半徑 +x 格」加在基礎半徑上。
+     * 這次之前只換傷害：隱藏技能自己的修飾器、原技能的範圍與品質都沒算到。
+     */
+    static SkillBuild ownSubBuild(final SkillBuild sub, final SkillBuild parent, final double share, final tw.exilecore.stats.StatSheet sheet) {
+        final SkillDefinition definition = sub.definition();
+        tw.exilecore.stats.SkillProfile profile = parent.profile().scaled(share, definition.name())
+                .derive(definition.id(), definition.tags(), java.util.Set.of()).withLocal(sub.profile().local());
+        if (!sub.profile().conversion().isEmpty()) { // 隱藏技能自己寫的 convert（震波全轉閃電…）取代原技能的
+            profile = new tw.exilecore.stats.SkillProfile(profile.id(), profile.tags(), profile.effectiveness(), profile.spellDamage(),
+                    profile.spellDamageMax(), sub.profile().conversion(), profile.local());
+        }
+        SkillBuild result = sub.withProfile(profile);
+        if (!definition.tags().contains(tw.exilecore.stats.Tags.AREA)) {
+            return result;
+        }
+        final tw.exilecore.stats.StatSheet effective = profile.effective(sheet);
+        double scale = Math.sqrt(Math.max(0.05, effective.apply(tw.exilecore.stats.StatKeys.SKILL_AREA, 1.0, profile.tags())));
+        final double baseRadius = definition.params().radius().at(sub.level());
+        final double flat = effective.flat(EXPLOSION_RADIUS_FLAT, profile.tags());
+        if (baseRadius > 0 && flat > 0) {
+            scale *= (baseRadius + flat) / baseRadius;
+        }
+        return result.withAreaAndProjectiles(scale, result.projectiles());
+    }
+
     /** 事件符合的 proc 各擲一次；有放出去回傳 true。 */
     private boolean fireAll(final Player player, final String skillId, final String event, final Location at, final LivingEntity target,
                             final LivingEntity exclude) {
@@ -430,7 +467,11 @@ public final class SupportProcs implements Listener {
             final double share = service.config().parentShare(subId, parent, level); // 2026-10-26：parent_damage: own 照自己的表換算
             if (share > 0 && parent != null) {
                 final SkillBuild parentBuild = service.build(state, plugin.players().sheet(player), parent, entry);
-                build = build.withProfile(parentBuild.profile().scaled(share, sub.name()).derive(sub.id(), sub.tags(), java.util.Set.of()));
+                if (service.config().parentDamage(subId) == SkillConfig.PARENT_OWN_TABLE) {
+                    build = ownSubBuild(build, parentBuild, share, plugin.players().sheet(player));
+                } else {
+                    build = build.withProfile(parentBuild.profile().scaled(share, sub.name()).derive(sub.id(), sub.tags(), java.util.Set.of()));
+                }
             }
             if (metaHit) {
                 build = build.withProfile(build.profile().derive(build.profile().id() + MetaGems.TRIGGERED_SUFFIX, java.util.Set.of(), java.util.Set.of()));

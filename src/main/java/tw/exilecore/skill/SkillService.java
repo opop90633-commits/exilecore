@@ -3931,6 +3931,9 @@ public final class SkillService {
                 return String.format(Locale.ROOT, "品質 +%d%%：消耗戰星的間隔多 %s 秒、身上每顆戰星增加 %s%% 傷害", quality,
                         trimNumber(quality * REGULATION_QUALITY_SECONDS), trimNumber(quality * REGULATION_QUALITY_DAMAGE));
             }
+            case "snipe" -> { // 2026-10-28 照 PoE2 Snipe：爆炸半徑 +(0—0.4) 格（gem_quality.yml）；這次之前顯示成增加傷害
+                return String.format(Locale.ROOT, "品質 +%d%%：爆炸與寒冰爆破的半徑 +%s 格", quality, trimNumber(quality * 0.02));
+            }
             default -> {
             }
         }
@@ -4609,7 +4612,7 @@ public final class SkillService {
         }
         if (build.manaCost() > 0) {
             final ChargeSpec drainSpec = config.charge(build.definition().id());
-            lines.add("<gray>魔力消耗：<#5599ff>" + build.manaCost()
+            lines.add("<gray>魔力消耗：<#5599ff>" + (drainSpec != null && drainSpec.drain() ? drainSpec.drainCost(build, sheet) : build.manaCost()) // 2026-10-28：穿雲箭的攻擊速度倍率
                     + (drainSpec != null && drainSpec.drain() ? "<gray>／秒（引導中逐秒扣）" : "")); // 2026-10-26 照 PoE2 的每分鐘魔力消耗
         }
         // 2026-10-27：血滲、傲寒（放的時候才加）照滿魔力估；「擊中傷害更少」只乘平均每次（異常照沒減的算）；這次之前說明都沒算

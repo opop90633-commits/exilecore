@@ -32,6 +32,7 @@ public final class AilmentText {
             final List<String> parts = new ArrayList<>();
             flat(parts, "機率", effective.flat(StatKeys.IGNITE_CHANCE, context));
             increased(parts, "機率", effective.increased(StatKeys.IGNITE_CHANCE, context));
+            more(parts, "機率", effective.more(StatKeys.IGNITE_CHANCE, context));
             multiplier(parts, "傷害", effective.apply(StatKeys.IGNITE_MAGNITUDE, 1.0, context));
             increased(parts, "持續", effective.increased(StatKeys.IGNITE_DURATION, context) + effective.increased(StatKeys.AILMENT_DURATION, context));
             add(lines, AilmentType.IGNITE, parts);
@@ -40,6 +41,7 @@ public final class AilmentText {
             final Set<String> context = profile.contextFor(DamageType.COLD);
             final List<String> chill = new ArrayList<>();
             increased(chill, "效果", effective.increased(StatKeys.CHILL_EFFECT, context));
+            more(chill, "效果", effective.more(StatKeys.CHILL_EFFECT, context));
             increased(chill, "持續", effective.increased(StatKeys.CHILL_DURATION, context) + effective.increased(StatKeys.AILMENT_DURATION, context));
             add(lines, AilmentType.CHILL, chill);
             final List<String> freeze = new ArrayList<>();
@@ -52,17 +54,20 @@ public final class AilmentText {
             final List<String> parts = new ArrayList<>();
             flat(parts, "機率", effective.flat(StatKeys.SHOCK_CHANCE, context));
             increased(parts, "機率", effective.increased(StatKeys.SHOCK_CHANCE, context));
+            more(parts, "機率", effective.more(StatKeys.SHOCK_CHANCE, context));
             increased(parts, "效果", effective.increased(StatKeys.SHOCK_EFFECT, context));
+            more(parts, "效果", effective.more(StatKeys.SHOCK_EFFECT, context));
             increased(parts, "持續", effective.increased(StatKeys.SHOCK_DURATION, context) + effective.increased(StatKeys.AILMENT_DURATION, context));
             add(lines, AilmentType.SHOCK, parts);
         }
-        // 流血（物理、只有攻擊）與中毒（物理＋混沌）：沒有機率來源就不會發生，所以只在有機率時列出
-        if (expected.get(DamageType.PHYSICAL) > 0 && profile.isAttack()) {
+        // 流血（擊中的物理，攻擊、法術都可以：2026-10-27 照 PoE2）與中毒（物理＋混沌）：沒有機率來源就不會發生，所以只在有機率時列出
+        if (expected.get(DamageType.PHYSICAL) > 0) {
             final Set<String> context = profile.contextFor(DamageType.PHYSICAL);
             final List<String> parts = new ArrayList<>();
             flat(parts, "機率", effective.flat(StatKeys.BLEED_CHANCE, context));
             if (!parts.isEmpty()) {
                 increased(parts, "機率", effective.increased(StatKeys.BLEED_CHANCE, context));
+                more(parts, "機率", effective.more(StatKeys.BLEED_CHANCE, context));
                 multiplier(parts, "傷害", effective.apply(StatKeys.BLEED_MAGNITUDE, 1.0, context));
                 increased(parts, "持續", effective.increased(StatKeys.BLEED_DURATION, context) + effective.increased(StatKeys.AILMENT_DURATION, context));
                 add(lines, AilmentType.BLEED, parts);
@@ -74,6 +79,7 @@ public final class AilmentText {
             flat(parts, "機率", effective.flat(StatKeys.POISON_CHANCE, context));
             if (!parts.isEmpty()) {
                 increased(parts, "機率", effective.increased(StatKeys.POISON_CHANCE, context));
+                more(parts, "機率", effective.more(StatKeys.POISON_CHANCE, context));
                 multiplier(parts, "傷害", effective.apply(StatKeys.POISON_MAGNITUDE, 1.0, context));
                 increased(parts, "持續", effective.increased(StatKeys.POISON_DURATION, context) + effective.increased(StatKeys.AILMENT_DURATION, context));
                 add(lines, AilmentType.POISON, parts);
@@ -95,6 +101,7 @@ public final class AilmentText {
             flat(parts, "機率", effective.flat(StatKeys.ELECTROCUTE_CHANCE, context));
             if (!parts.isEmpty()) {
                 increased(parts, "機率", effective.increased(StatKeys.ELECTROCUTE_CHANCE, context));
+                more(parts, "機率", effective.more(StatKeys.ELECTROCUTE_CHANCE, context));
                 multiplier(parts, "累積", effective.apply(StatKeys.ELECTROCUTE_BUILDUP, 1.0, context));
                 increased(parts, "持續", effective.increased(StatKeys.ELECTROCUTE_DURATION, context) + effective.increased(StatKeys.AILMENT_DURATION, context));
                 add(lines, AilmentType.ELECTROCUTE, parts);
@@ -118,6 +125,13 @@ public final class AilmentText {
     private static void increased(final List<String> parts, final String what, final double fraction) {
         if (Math.abs(fraction) >= 0.005) {
             parts.add(what + String.format(Locale.ROOT, " %s%d%%", fraction >= 0 ? "增加 " : "減少 ", Math.round(Math.abs(fraction) * 100)));
+        }
+    }
+
+    /** 2026-10-27：「更多／更少」（輔助寶石的導電「更多 100% 感電機率」這種）；這次之前不列，面板看不出輔助有作用。 */
+    private static void more(final List<String> parts, final String what, final double multiplier) {
+        if (Math.abs(multiplier - 1.0) >= 0.005) {
+            parts.add(what + String.format(Locale.ROOT, " %s%d%%", multiplier >= 1 ? "更多 " : "更少 ", Math.round(Math.abs(multiplier - 1) * 100)));
         }
     }
 

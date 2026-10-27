@@ -92,8 +92,15 @@ final class SkillZones implements SkillTargets.Strikeable {
 
     /** 一次延遲落下。 */
     private record Impact(UUID owner, Location center, double radius, SkillProfile profile, String visual, long atTick, long startTick,
-                          String lodge, int level) {
+                          String lodge, int level, String rod) {
+        Impact(final UUID owner, final Location center, final double radius, final SkillProfile profile, final String visual, final long atTick,
+               final long startTick, final String lodge, final int level) {
+            this(owner, center, radius, profile, visual, atTick, startTick, lodge, level, null);
+        }
     }
+
+    /** 2026-10-28 照 PoE2 Lightning Rod：插在地上、閃電雷束可以連鎖過去的箭。 */
+    private final LightningRods rods = new LightningRods();
 
     /** 2026-10-26：留在地上的彈（伏霆彈：被你別的技能打到才炸；寒凝彈的冰晶：武裝後敵人踩到就炸）。 */
     private record Lodged(UUID owner, String parent, Location at, SkillConfig.LodgeSpec spec, int level, long placed, long until,
@@ -370,6 +377,161 @@ final class SkillZones implements SkillTargets.Strikeable {
         impacts.add(new Impact(owner.getUniqueId(), center.clone(), radius, profile, visual, now + Math.max(1, delayTicks), now, parent, level));
     }
 
+    /** 2026-10-28 照 PoE2 Lightning Rod（雷樁矢）：落下炸開之後插在地上（skills.yml 的 rod；parent 是放它的技能）。 */
+    void addRodImpact(final Player owner, final Location center, final double radius, final SkillProfile profile, final String visual,
+                      final int delayTicks, final String parent) {
+        final long now = now();
+        impacts.add(new Impact(owner.getUniqueId(), center.clone(), radius, profile, visual, now + Math.max(1, delayTicks), now, null, 1, parent));
+    }
+
+    /** 插一支雷樁矢的箭（持續時間吃技能持續時間；品質的機率多炸一次）。 */
+    private void placeRod(final Player owner, final Impact impact) {
+        final SkillConfig.RodSpec spec = plugin.skills() == null ? null : plugin.skills().config().rod(impact.rod());
+        if (spec == null || impact.center().getWorld() == null) {
+            return;
+        }
+        final long now = now();
+        final tw.exilecore.stats.StatSheet effective = impact.profile().effective(plugin.players().sheet(owner));
+        final double durationScale = Math.max(0.1, effective.apply(tw.exilecore.stats.StatKeys.SKILL_DURATION, 1.0, impact.profile().tags()));
+        final Location at = impact.center().clone();
+        final LightningRods.Rod rod = new LightningRods.Rod(owner.getUniqueId(), at.getWorld().getUID(), at.toVector(), now,
+                now + Math.round(spec.duration() * 20 * durationScale), spec.chains(), Math.round(spec.charge() * 20), impact.profile(),
+                impact.radius(), impact.visual());
+        rod.display = spawnRodDisplay(at);
+        rods.place(rod, spec.max(), this::rodRemoved);
+        final double extra = effective.flat(LightningRods.EXTRA_BURST, impact.profile().tags());
+        if (extra > 0 && plugin.random().nextDouble() * 100 < extra) {
+            rods.extraBurst(rod, now);
+        }
+    }
+
+    /** 箭的樣子：一根細細的避雷針方塊（展示實體，不存檔）。 */
+    private UUID spawnRodDisplay(final Location at) {
+        try {
+            final org.bukkit.entity.BlockDisplay display = at.getWorld().spawn(at.clone().add(-0.15, 0, -0.15), org.bukkit.entity.BlockDisplay.class, created -> {
+                created.setBlock(org.bukkit.Material.LIGHTNING_ROD.createBlockData());
+                created.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(), new org.joml.AxisAngle4f(),
+                        new org.joml.Vector3f(0.3f, 0.9f, 0.3f), new org.joml.AxisAngle4f()));
+                created.setBrightness(new org.bukkit.entity.Display.Brightness(15, 15));
+                created.setPersistent(false);
+            });
+            return display.getUniqueId();
+        } catch (final RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    private void rodRemoved(final LightningRods.Rod rod) {
+        if (rod.display != null) {
+            final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(rod.display);
+            if (entity != null) {
+                entity.remove();
+            }
+            rod.display = null;
+        }
+    }
+
+    private Location rodLocation(final LightningRods.Rod rod) {
+        final World world = plugin.getServer().getWorld(rod.world);
+        return world == null ? null : rod.at.toLocation(world);
+    }
+
+    /** 箭頂端（畫連鎖的線、看不看得到用）。 */
+    static Location rodTop(final Location base) {
+        return base.clone().add(0, 0.8, 0);
+    }
+
+    /** 這個技能的連鎖能不能跳到雷樁矢的箭上（PoE2：連鎖的閃電雷束）。 */
+    static boolean chainsToRods(final SkillProfile profile) {
+        return profile != null && profile.tags().contains(Tags.LIGHTNING);
+    }
+
+    /** owner 的箭裡 from 附近 radius 格內最近、從 from 看得到、還能被連鎖、不在 exclude 的那一支（沒有回傳 null）。 */
+    LightningRods.Rod nearestRod(final Player owner, final Location from, final double radius, final Set<LightningRods.Rod> exclude) {
+        if (owner == null || from == null || from.getWorld() == null) {
+            return null;
+        }
+        return rods.nearest(owner.getUniqueId(), from.getWorld().getUID(), from.toVector(), radius, exclude, rod -> {
+            final Location top = rodTop(rod.at.toLocation(from.getWorld()));
+            final Vector direction = top.toVector().subtract(from.toVector());
+            final double distance = direction.length();
+            return distance < 1e-6 || from.getWorld().rayTraceBlocks(from, direction, distance, org.bukkit.FluidCollisionMode.NEVER, true) == null;
+        });
+    }
+
+    /** owner 的箭裡 from 附近 radius 格內還能被連鎖的（近的在前；雷鳴箭的雷束用）。 */
+    List<LightningRods.Rod> rodsAround(final Player owner, final Location from, final double radius) {
+        if (owner == null || from == null || from.getWorld() == null) {
+            return List.of();
+        }
+        return rods.around(owner.getUniqueId(), from.getWorld().getUID(), from.toVector(), radius);
+    }
+
+    /** 往準心方向 range 格內、cone 度角裡最近的自己的箭（鏈雷沒有敵人可以打時，第一下直接連到箭上）。 */
+    LightningRods.Rod aimedRod(final Player owner, final Location eye, final Vector direction, final double range, final double cone) {
+        if (owner == null || eye.getWorld() == null) {
+            return null;
+        }
+        final double cos = Math.cos(Math.toRadians(cone / 2));
+        LightningRods.Rod best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (final LightningRods.Rod rod : rods.around(owner.getUniqueId(), eye.getWorld().getUID(), eye.toVector(), range)) {
+            final Vector to = rodTop(rod.at.toLocation(eye.getWorld())).toVector().subtract(eye.toVector());
+            final double distance = to.length();
+            if (distance < 1e-6 || to.clone().multiply(1 / distance).dot(direction) < cos) {
+                continue;
+            }
+            if (distance < bestDistance && eye.getWorld().rayTraceBlocks(eye, to, distance, org.bukkit.FluidCollisionMode.NEVER, true) == null) {
+                best = rod;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    /** 連鎖到一支箭（by 是連過來的那個技能：雷鳴箭的雷束看它的 lightning_rod.burst_delay）。 */
+    boolean chainToRod(final Player owner, final LightningRods.Rod rod, final SkillProfile by) {
+        final double delay = by == null ? 0 : by.effective(plugin.players().sheet(owner)).flat(LightningRods.BURST_DELAY, by.tags());
+        if (!rods.chainTo(rod, now(), delay)) {
+            return false;
+        }
+        final Location at = rodLocation(rod);
+        if (at != null) {
+            Fx.as(rod.owner, () -> at.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, rodTop(at), 10, 0.15, 0.3, 0.15, 0.05));
+        }
+        return true;
+    }
+
+    private void tickRods(final long now) {
+        if (rods.all().isEmpty()) {
+            return;
+        }
+        rods.tick(now, rod -> {
+            final Player owner = plugin.getServer().getPlayer(rod.owner);
+            return owner != null && owner.getWorld().getUID().equals(rod.world);
+        }, rod -> {
+            final Player owner = plugin.getServer().getPlayer(rod.owner);
+            final Location at = rodLocation(rod);
+            if (owner == null || at == null) {
+                return;
+            }
+            for (final LivingEntity target : targets.around(at, rod.radius, owner)) {
+                damage.hit(owner, target, rod.profile, null);
+            }
+            Fx.as(rod.owner, () -> visuals.blast(rod.visual, at, rod.radius));
+        }, this::rodRemoved);
+        for (final LightningRods.Rod rod : rods.all()) {
+            final boolean charging = rod.charging();
+            if (charging ? now % 2 == 0 : (now - rod.placed) % 10 == 0) {
+                final Location at = rodLocation(rod);
+                if (at != null) {
+                    Fx.as(rod.owner, () -> at.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, rodTop(at),
+                            charging ? 6 : 2, 0.1, charging ? 0.4 : 0.1, 0.1, charging ? 0.08 : 0));
+                }
+            }
+        }
+    }
+
     /** 留一顆在地上（同一個技能超過上限就先拿掉最舊的）。 */
     void lodge(final Player owner, final String parent, final int level, final Location at) {
         final SkillConfig.LodgeSpec spec = plugin.skills() == null ? null : plugin.skills().config().lodge(parent);
@@ -507,6 +669,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         final long now = now();
         tickImpacts(now);
         tickLodged(now);
+        tickRods(now); // 2026-10-28 照 PoE2 Lightning Rod
         tickWarps(now);
         tickZones(now);
     }
@@ -544,6 +707,9 @@ final class SkillZones implements SkillTargets.Strikeable {
             Fx.as(impact.owner(), () -> visuals.blast(impact.visual(), impact.center(), impact.radius()));
             if (impact.lodge() != null) {
                 lodge(owner, impact.lodge(), impact.level(), impact.center()); // 2026-10-26：落下後留在地上（伏霆彈、寒凝彈）
+            }
+            if (impact.rod() != null) {
+                placeRod(owner, impact); // 2026-10-28 照 PoE2 Lightning Rod：炸完插在地上
             }
         }
     }
@@ -779,6 +945,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         });
         impacts.removeIf(impact -> impact.owner().equals(owner));
         lodged.removeIf(bolt -> bolt.owner().equals(owner));
+        rods.forget(owner, this::rodRemoved); // 2026-10-28：雷樁矢的箭
         warpMarks.values().removeIf(mark -> mark.owner().equals(owner));
     }
 
@@ -789,6 +956,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         zones.clear();
         impacts.clear();
         lodged.clear();
+        rods.clear(this::rodRemoved); // 2026-10-28：雷樁矢的箭
     }
 
     int zoneCount() {

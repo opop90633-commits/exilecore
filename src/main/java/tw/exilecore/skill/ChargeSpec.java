@@ -70,16 +70,18 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
      * @param empowerValue 同上的數值
      * @param empowerRageLess 強化時怒氣花得少幾 %（熾息 50）
      * @param interruptOnHit 2026-10-27 照 PoE2（Meditate：Channelling ends when you take damage）：受到傷害就中斷引導
+     * @param attackSpeedCost 2026-10-28 照 PoE2（Snipe：attack_speed_modifiers_apply_to_over_time_cost）：逐秒的魔力消耗再乘攻擊速度的倍率
+     *                       （攻擊速度詞綴也會影響此技能的消耗；attack_speed_cost: true）
      */
     public record Channel(Mode mode, boolean drain, boolean perAttack, String stageStat, double stageValue, boolean explodeAtMax,
                           double minTime, double speed, double distanceMore, double fullDistance, double collision,
                           double rageAfter, double ragePerSecond, double backflip, double perfectRange,
                           String perfectStat, double perfectValue, double slow,
                           String empowerCharge, String empowerStat, double empowerValue, double empowerRageLess,
-                          boolean interruptOnHit) {
+                          boolean interruptOnHit, boolean attackSpeedCost) {
 
         public static final Channel NONE = new Channel(Mode.RELEASE, false, false, null, 0, false, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, 0,
-                0, null, null, 0, 0, false);
+                0, null, null, 0, 0, false, false);
 
         /** 強化時這一秒花幾點怒氣（照 empowerRageLess）。 */
         public int rageWhenEmpowered(final int rage) {
@@ -122,6 +124,27 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
      */
     public static boolean drainDue(final long heldTicks) {
         return heldTicks >= 0 && heldTicks % 20 == 0;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2（Snipe）：引導中每秒實際扣多少魔力。寫了 attack_speed_cost 的技能，每秒消耗再乘攻擊速度的倍率
+     * （增加 × 更多，不含武器本身的攻速）；其他照 build 算好的魔力消耗。
+     */
+    public int drainCost(final SkillBuild build, final tw.exilecore.stats.StatSheet sheet) {
+        final int base = build.manaCost();
+        if (!channel.attackSpeedCost() || !build.definition().isAttack() || base <= 0 || sheet == null) {
+            return base;
+        }
+        final double multiplier = build.profile().effective(sheet).apply(tw.exilecore.stats.StatKeys.ATTACK_SPEED, 1.0, build.profile().tags());
+        return scaledCost(base, multiplier);
+    }
+
+    /** 每秒消耗 × 攻擊速度倍率（四捨五入，至少 1）。純函式（測試用）。 */
+    static int scaledCost(final int base, final double attackSpeedMultiplier) {
+        if (base <= 0) {
+            return base;
+        }
+        return (int) Math.max(1, Math.round(base * Math.max(0.1, attackSpeedMultiplier)));
     }
 
     /** 完美時機那一刻之前幾 tick 放開也算（網路延遲、按鍵的反應）。 */
@@ -240,6 +263,7 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
                 slow,
                 empowerCharge == null || empowerCharge.isEmpty() ? null : empowerCharge,
                 empowerStat == null || empowerStat.isEmpty() ? null : empowerStat, node.decimal("empower_value", 0),
-                node.decimal("empower_rage_less", 0), node.bool("interrupt_on_hit", false));
+                node.decimal("empower_rage_less", 0), node.bool("interrupt_on_hit", false),
+                node.bool("attack_speed_cost", false)); // 2026-10-28 照 PoE2 Snipe
     }
 }

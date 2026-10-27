@@ -390,7 +390,13 @@ final class SkillExecutor {
         }
         final List<Location> points = new ArrayList<>();
         points.add(eye.clone().add(origin.direction().clone().multiply(0.6)).subtract(0, 0.3, 0));
-        if (current == null) {
+        // 2026-10-28 照 PoE2 Lightning Rod：閃電的連鎖可以跳到自己插在地上的雷樁矢箭上（算一次連鎖、箭充能後再炸一次）
+        final boolean rods = origin.owner() != null && SkillZones.chainsToRods(build.profile());
+        LightningRods.Rod rod = null;
+        if (current == null && rods) {
+            rod = zones.aimedRod(origin.owner(), eye, origin.direction(), range, 40);
+        }
+        if (current == null && rod == null) {
             // 沒有目標：往前劈一道空的閃電
             final RayTraceResult ray = origin.world().rayTraceBlocks(eye, origin.direction(), range, FluidCollisionMode.NEVER, true);
             final Vector end = ray == null ? eye.toVector().add(origin.direction().clone().multiply(range)) : ray.getHitPosition();
@@ -403,12 +409,34 @@ final class SkillExecutor {
         final int chains = build.chains() + (origin.owner() == null || build.chains() <= 0 ? 0 : tw.exilecore.stats.TreeEffectKeys.fromChance(
                 build.profile().effective(plugin.players().sheet(origin.owner())).flat(tw.exilecore.stats.TreeEffectKeys.CHAIN_CHANCE, build.profile().tags()),
                 plugin.random()));
-        for (int i = 0; i <= chains && current != null; i++) {
-            points.add(SkillTargets.center(current));
-            hit.add(current.getUniqueId());
-            final LivingEntity target = current;
-            damage.hit(origin.owner(), target, build.profile(), null);
-            current = i < chains ? targets.nearest(target, build.chainRange(), hit, origin.owner()) : null;
+        final Set<LightningRods.Rod> rodsHit = new HashSet<>();
+        for (int i = 0; i <= chains && (current != null || rod != null); i++) {
+            final Location from;
+            if (current != null) {
+                from = SkillTargets.center(current);
+                hit.add(current.getUniqueId());
+                damage.hit(origin.owner(), current, build.profile(), null);
+            } else {
+                from = SkillZones.rodTop(rod.at.toLocation(origin.world()));
+                rodsHit.add(rod);
+                zones.chainToRod(origin.owner(), rod, build.profile());
+            }
+            points.add(from);
+            if (i >= chains) {
+                break;
+            }
+            final LivingEntity next = current != null ? targets.nearest(current, build.chainRange(), hit, origin.owner())
+                    : targets.nearest(from, build.chainRange(), hit, origin.owner());
+            final LightningRods.Rod nextRod = rods ? zones.nearestRod(origin.owner(), from, build.chainRange(), rodsHit) : null;
+            // 近的先：敵人跟箭一樣近時打敵人
+            if (nextRod != null && (next == null
+                    || SkillZones.rodTop(nextRod.at.toLocation(origin.world())).distanceSquared(from) < SkillTargets.center(next).distanceSquared(from))) {
+                current = null;
+                rod = nextRod;
+            } else {
+                current = next;
+                rod = null;
+            }
         }
         visuals.chain(points);
     }
@@ -1036,7 +1064,21 @@ final class SkillExecutor {
         final SkillConfig config = plugin.skills() == null ? null : plugin.skills().config();
         final SkillConfig.RainSpec rain = config == null ? null : config.rain(id);
         final SkillConfig.LodgeSpec lodge = config == null || origin.owner() == null ? null : config.lodge(id);
-        if (rain != null && origin.owner() != null) {
+        final SkillConfig.RodSpec rod = config == null || origin.owner() == null ? null : config.rod(id);
+        if (rod != null) {
+            // 2026-10-28 照 PoE2 Lightning Rod（雷樁矢）：每一支箭落下炸開之後插在地上（多的投射物各落一支，平均散在準心周圍）
+            final int count = Math.max(1, build.projectiles());
+            final double spread = Math.max(1.5, build.radius() * 1.2);
+            final double phase = plugin.random().nextDouble() * Math.PI * 2;
+            for (int i = 0; i < count; i++) {
+                final Location at = center.clone();
+                if (i > 0) {
+                    final double angle = phase + Math.PI * 2 * (i - 1) / (count - 1);
+                    at.add(Math.cos(angle) * spread, 0, Math.sin(angle) * spread);
+                }
+                zones.addRodImpact(origin.owner(), at, build.radius(), build.profile(), build.definition().visual(), delay, id);
+            }
+        } else if (rain != null && origin.owner() != null) {
             // 2026-10-26（PoE2 Hailstorm Rounds）：一次射出整個彈匣，散在準心 area 格內陸續落下
             final String key = origin.owner().getUniqueId() + ":" + id;
             final long now = plugin.getServer().getCurrentTick();

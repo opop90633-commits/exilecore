@@ -226,7 +226,9 @@ final class Signatures {
         }
         runtime.charging = null;
         final long releaseHeld = (pressedAgain ? now : Math.min(now, charging.last + 1)) - charging.start;
-        final boolean perfect = spec.isPerfect(releaseHeld, charging.interval, Math.max(0.05, 1 + plugin.players().sheet(player)
+        final StatSheet windowSheet = charging.build == null ? plugin.players().sheet(player)
+                : charging.build.profile().effective(plugin.players().sheet(player)); // 2026-10-28 照 PoE2：技能自己的（穿雲箭的品質）也算；這次之前只看角色
+        final boolean perfect = spec.isPerfect(releaseHeld, charging.interval, Math.max(0.05, 1 + windowSheet
                 .increased(tw.exilecore.item.unique.UniqueStats.PERFECT_WINDOW, java.util.Set.of()) // 2026-10-26（虛望之盔）
                 - service.supportFlat(player, charging.skillId, tw.exilecore.stats.SupportExtraKeys.PERFECT_WINDOW_SHORTER) / 100.0) // 2026-10-27 照 PoE2 良機：區間更短 35%
                 * service.supportMechanics().lineage().perfectWindow(player, charging.skillId)); // 2026-10-27 照 PoE2 律勁：區間長 100%、每層更短 30%

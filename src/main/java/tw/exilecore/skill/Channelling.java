@@ -79,7 +79,7 @@ final class Channelling {
         charging.nextBeat = now;
         final ChargeSpec.Channel channel = spec.channel();
         if (spec.drain()) {
-            charging.drainCost = build.manaCost();
+            charging.drainCost = spec.drainCost(build, state.sheet()); // 2026-10-28 照 PoE2 Snipe：攻擊速度也影響每秒消耗；這次之前 build.manaCost()
             final String problem = service.payChannel(player, state, build, charging.drainCost);
             if (problem != null) {
                 return problem;

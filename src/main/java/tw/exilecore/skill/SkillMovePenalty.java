@@ -108,8 +108,12 @@ public final class SkillMovePenalty {
         }
     }
 
-    /** 原版的走路速度（Bukkit 的 walk speed 預設 0.2）。 */
-    public static final float DEFAULT_WALK = 0.2f;
+    /**
+     * 玩家的走路速度（Bukkit 的 walk speed；原版預設 0.2，會同時設定移動速度屬性的基礎值 = walk ÷ 2）。
+     * 2026-10-27 照站長「玩家的基礎移動速度 ×2」：0.2 → 0.4。用走路速度而不是屬性修飾器加倍，客戶端的視野（FOV）照
+     * 「移動速度屬性 ÷ 走路速度」算，兩個一起變大比例不變，視角不會被拉寬。每秒 {@link #tick} 會把不是這個值的人改回來（舊存檔也一樣）。
+     */
+    public static final float DEFAULT_WALK = 0.4f;
     /** 懲罰最多到 99%（走路速度 0 時客戶端的視野算法會除以 0）。 */
     static final double MAX_PENALTY = 0.99;
 

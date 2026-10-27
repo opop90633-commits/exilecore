@@ -76,12 +76,12 @@ class CostEfficiencyTest {
         assertTrue(plain > 0);
         final StatSheet efficient = new StatSheet().setBase(StatKeys.MANA_MAX, 1000)
                 .add(Modifier.increased(CostKeys.MANA_COST_EFFICIENCY, 0.5, "測試"));
-        assertEquals(Math.round(fireball.mana().at(20) / 1.5),
+        assertEquals(Math.round(fireball.mana().at(20) * SkillConfig.manaCostScale() / 1.5),
                 SkillBuild.of(config, fireball, 20, 90, false, List.of(), Set.of(), efficient).manaCost(), "效率 50% → 2/3");
         final StatSheet both = new StatSheet().setBase(StatKeys.MANA_MAX, 1000)
                 .add(Modifier.increased(StatKeys.SKILL_COST, -0.2, "測試"))
                 .add(Modifier.increased(CostKeys.COST_EFFICIENCY, 0.25, "測試"));
-        assertEquals(Math.round(fireball.mana().at(20) * 0.8 / 1.25),
+        assertEquals(Math.round(fireball.mana().at(20) * SkillConfig.manaCostScale() * 0.8 / 1.25),
                 SkillBuild.of(config, fireball, 20, 90, false, List.of(), Set.of(), both).manaCost());
         final StatSheet attackOnly = new StatSheet().setBase(StatKeys.MANA_MAX, 1000)
                 .add(new Modifier(CostKeys.COST_EFFICIENCY, ModType.INCREASED, 1.0, Set.of(Tags.ATTACK), "測試"));

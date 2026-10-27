@@ -141,6 +141,8 @@ uncut_level_scale: { 17: 0.5, 18: 0.15, 19: 0.165, 20: 0.33 }
 # 照 balance.yml 算的：參考法術角色（熾星彈，法杖上有一條法術附加）的單體輸出約是參考攻擊角色（碎岩擊）的 8 成
 # （熾星彈有範圍；每個寶石等級從拿到到下一級之前平均起來是 8 成）。/ec balance 會重算。錨點寫在寶石的需求等級上最準。
 # 2026-10：法術成長拉高（80 級 ×1.8，中間照比例），20 級時法術跟攻擊一樣大約是 PoE2 係數的四成到一半（以前法術只有一到兩成）
+# 2026-10-27 照站長「所有技能的魔力消耗砍半」：每個技能算好的魔力消耗再乘這個（輔助倍率、增加／減少、消耗效率照算，最後乘；0.1–10）
+mana_cost_scale: 0.5
 spell_damage_growth: { 1: 1.05, 10: 1.13, 20: 2.29, 30: 3.13, 40: 3.42, 50: 4.6, 64: 7.01, 80: 9.23 }
 
 # 傳奇裝備的「+1 技能等級」可以讓技能超過 20 級（最高 40 級；照 PoE：21 級以上只有靠裝備）。
@@ -397,7 +399,7 @@ skills:
     visual: rain_of_arrows
   lightning_arrow:
     name: 雷鳴箭
-    description: 射出一支帶電的箭，打中時往附近 3 格內的敵人射出閃電雷束（2～5 個，隨技能等級），大部分物理傷害轉為閃電。
+    description: 射出一支帶電的箭，打中時往附近 3 格內的敵人射出閃電雷束（2～5 個，隨技能等級），大部分物理傷害轉為閃電。雷束也會連到你插在地上的雷樁矢箭，讓它 0.1 秒就炸開。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 1   # 2026-10-27 照 PoE2（Lightning Arrow 第 1 階）；這次之前 3
@@ -413,6 +415,8 @@ skills:
     # （更早）2026-10 PoE2：照 PoE2 20 級的傷害效益換算
     mana: [6, 7, 8, 9, 10, 11, 12, 14, 15, 17, 19, 21, 23, 25, 27, 29, 32, 35, 37, 40, 44, 47, 51, 55, 59, 63, 68, 73, 78, 83, 89, 95, 102, 109, 116, 124, 132, 141, 150, 159]   # 2026-10-26 照 PoE2（poe2db）；這次之前 [4, 9]
     visual: lightning_arrow
+    modifiers:
+      - { stat: lightning_rod.burst_delay, type: FLAT, value: 0.1 }   # 2026-10-28 照 PoE2（skill_lightning_rod_burst_delay_ms_override_on_damaging_lightning_rod 100）：雷束連到雷樁矢的箭，0.1 秒就炸；這次之前沒有
   # ---- 2026-10：可以直接放的動作技能 ----
   escape_shot:
     name: 躍退射
@@ -3256,15 +3260,15 @@ skills:
 
   snipe:
     name: 穿雲箭
-    description: 按住拉弓蓄力，放開射出一支很重的箭（不會凍結）。蓄到「叮」一聲的那一刻放開是完美時機：箭打中時炸開一大圈（對凍結的敵人更痛）。數字鍵：按一下開始拉、再按一下放。
+    description: 按住拉弓蓄力，放開射出一支很重的箭（不會凍結；按住期間逐秒扣魔力，攻擊速度越快扣得越多）。蓄到「叮」一聲的那一刻放開是完美時機：箭打中時在周圍 2.5 格炸開；直接打中凍結中的敵人時用掉凍結，改成更強的寒冰爆破（周圍 3 格、物理全部轉成冰冷，從傳奇敵人身上炸開的更痛）。數字鍵：按一下開始拉、再按一下放。
     icon: QUARTZ   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: attack
     tier: 3   # 2026-10-27 照 PoE2（Snipe 第 3 階）；這次之前 9
-    tags: [attack, projectile, channelling]   # 2026-10-26 照 PoE2 加 channelling 標籤（天賦樹的系統）；這次之前 [attack, projectile]
+    tags: [attack, area, projectile, cold, channelling]   # 2026-10-28 照 PoE2（Snipe：攻擊、範圍、投射物、冰冷、引導）；這次之前 [attack, projectile, channelling]（2026-10-26 加 channelling）
     weapons: [bow]
     mechanic: projectile
     projectile: { arrow: true, speed: 4.0, range: 50 }   # 2026-10-26 照 PoE2：拿掉原作沒有的穿透 5
-    charge: { perfect_at: 100, drain: true }   # 2026-10 照 PoE2 改機制（Snipe）：按住蓄力，蓄到一次攻擊時間放開是完美時機（觸發 proc_snipe_blast）；2026-10-26 魔力改按住逐秒扣
+    charge: { perfect_at: 100, drain: true, attack_speed_cost: true }   # 2026-10 照 PoE2 改機制（Snipe）：按住蓄力，蓄到一次攻擊時間放開是完美時機（觸發 proc_snipe_blast）；2026-10-26 魔力改按住逐秒扣；2026-10-28 照 PoE2「攻擊速度詞綴也會影響此技能的消耗」（attack_speed_cost），這次之前每秒消耗不吃攻擊速度
     attack_speed: 0.45   # 2026-10-26 照 PoE2（poe2db Snipe Attack Speed 45% of base）；這次之前 0.4
     effectiveness: [1, 1.1, 1.21, 1.32, 1.42, 1.53, 1.64, 1.74, 1.82, 1.91, 2.01, 2.11, 2.22, 2.33, 2.44, 2.57, 2.69, 2.83, 2.97, 3.12, 3.27, 3.44, 3.61, 3.79, 3.98, 4.18, 4.39, 4.61, 4.84, 5.08, 5.33, 5.6, 5.88, 6.18, 6.48, 6.81, 7.15, 7.51, 7.88, 8.28]   # 2026-10-26 照 PoE2（poe2db Snipe 1–40 級）；這次之前 [1.77, 3.72]
     # （更早）2026-10-23 弓的攻擊技能第二輪：20 級端 ×1.5（照錘、弩、長棍的補強；1 級端不動）；這次之前 [1.77, 2.48]
@@ -3274,6 +3278,7 @@ skills:
     modifiers:
       - { stat: freeze.buildup, type: MORE, value: -100 }   # 2026-10-26 照 PoE2：不會凍結；拿掉原作沒有的暴擊率增加 50%
       - { stat: proc.perfect_hit, type: FLAT, value: 100, tags: [proc_snipe_blast] }   # 2026-10 照 PoE2 改機制：完美時機的箭打中時炸開
+      - { stat: proc.perfect_hit_frozen, type: FLAT, value: 100, tags: [proc_snipe_ice_blast] }   # 2026-10-28 照 PoE2（Snipe 的 Icy Blast）：完美時機的箭直接打中凍結中的敵人時用掉凍結，改成寒冰爆破（不再另外炸 proc_snipe_blast）；這次之前沒做
 
   frostbolt:
     name: 霜鑽
@@ -5588,11 +5593,28 @@ skills:
     tags: [attack, area, projectile, physical]
     mechanic: nova
     parent_damage: own   # 2026-10-26 照 PoE2 Snipe：爆炸有自己的傷害表（400% → 1449% → 5262%），照那一箭（含輔助）換算；這次之前固定 2 倍
-    nova: { radius: 2.5 }   # 這次之前 [2.5, 2.9]
+    nova: { radius: 2.5 }   # PoE2 Snipe Explosion：2.5 格（品質每 1% +0.02 格，見 gem_quality.yml；範圍的增加照穿雲箭的算）；這次之前 [2.5, 2.9]
     attack_speed: 1.0
     effectiveness: [4, 4.4, 4.84, 5.29, 5.73, 6.18, 6.64, 7.08, 7.48, 7.9, 8.37, 8.86, 9.39, 9.97, 10.59, 11.25, 11.97, 12.75, 13.58, 14.49, 15.45, 16.48, 17.58, 18.75, 20, 21.33, 22.75, 24.27, 25.89, 27.61, 29.45, 31.41, 33.51, 35.74, 38.12, 40.66, 43.37, 46.26, 49.34, 52.62]
     visual: comet
-    # 2026-10-26 照 PoE2：拿掉「對凍結更多 60%」（原作是用掉凍結時換成另一個冰爆，沒做）
+    # 2026-10-26 照 PoE2：拿掉「對凍結更多 60%」；2026-10-28 用掉凍結時改成另一個寒冰爆破（proc_snipe_ice_blast）
+
+  proc_snipe_ice_blast:   # 2026-10-28 照 PoE2 Snipe 的 Icy Blast：完美時機的箭直接打中凍結中的敵人（用掉凍結）時，取代一般的穿雲爆
+    name: 寒冰爆破
+    icon: PACKED_ICE
+    hidden: true
+    type: attack
+    tags: [attack, area, projectile, cold]
+    mechanic: nova
+    parent_damage: own   # PoE2 Icy Blast 自己的傷害表（630% → 3067% → 20636%），照那一箭（含輔助）換算
+    nova: { radius: 3.0 }   # PoE2：3 格（品質每 1% +0.02 格）
+    attack_speed: 1.0
+    effectiveness: [6.3, 6.93, 7.64, 8.38, 9.12, 9.9, 10.74, 11.56, 12.37, 13.26, 14.25, 15.36, 16.6, 17.98, 19.53, 21.27, 23.22, 25.41, 27.88, 30.67, 33.74, 37.11, 40.82, 44.91, 49.4, 54.34, 59.77, 65.75, 72.32, 79.55, 87.51, 96.26, 105.89, 116.48, 128.13, 140.94, 155.04, 170.54, 187.6, 206.36]
+    visual: frost_nova
+    modifiers:
+      - { stat: damage.convert.cold, type: FLAT, value: 100 }   # PoE2：物理傷害 100% 轉換為冰冷
+    level_modifiers:   # PoE2 snipe_damage_+%_final_if_created_from_unique：從傳奇敵人身上炸開的更多 31%（1 級）→ 50%（20 級）→ 70%（40 級）
+      - { stat: damage.vs_unique, type: MORE, value: [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70] }
 
   spear_throw_blast:   # 2026-10-27 照 PoE2 Spear Throw 的 Explosion：消耗怒星的那一支飛到盡頭炸開
     name: 擲矛炸裂
@@ -6507,15 +6529,16 @@ skills:
   # -- 弓 --
   lightning_rod:
     name: 雷樁矢
-    # PoE2 Lightning Rod：箭插在地上、連鎖閃電會跳到箭上 [需要程式]；先做成落下的雷擊
-    description: 往準心指的地方射一支從天而降的箭，落地炸出一圈閃電。
+    # 2026-10-28 照 PoE2 Lightning Rod：箭落地炸開後插在地上（LightningRods）；這次之前只做成落下的雷擊
+    description: 往準心指的地方射一支從天而降的箭，落地炸出 2 格的閃電，之後插在地上 20 秒（同時最多 10 支）。你的閃電連鎖（鏈雷這類連鎖技能、雷鳴箭的雷束）可以連到插著的箭上，箭充能 1 秒後再炸一次（雷鳴箭只要 0.1 秒）；每支箭被連到 8 次就消失。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 1
-    tags: [attack, area, lightning, projectile]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 projectile（Lightning Rod 是投射物（跟衝霄弩台一樣，投射物速度讓它落得更快））；這次之前 [attack, area, lightning]
+    tags: [attack, area, lightning, projectile, duration]   # 2026-10-28 照 PoE2（poe2db 寶石標籤 Duration：箭插在地上 20 秒）加 duration；這次之前 [attack, area, lightning, projectile]；（更早）2026-10-26 照 PoE2 加 projectile（Lightning Rod 是投射物（跟衝霄弩台一樣，投射物速度讓它落得更快））
     weapons: [bow]
     mechanic: impact
     impact: { range: 22, delay: 0.4, radius: 2.0 }   # 2026-10-26 照 PoE2 Lightning Rod：2 格、物理全轉閃電；這次之前 [2.4, 3.0]、0.8
+    rod: { duration: 20, max: 10, chains: 8, charge: 1.0 }   # 2026-10-28 照 PoE2 Lightning Rod（RePoE base_skill_effect_duration 20000、number_of_lightning_rods_allowed 10、lightning_rod_number_of_chains_allowed 8；被連鎖後充能 1 秒）；這次之前沒有（只落下炸一下）
     convert: { lightning: 1.0 }
     attack_speed: 1.2   # 2026-10-26 照 PoE2（poe2db Lightning Rod Attack Speed 120% of base）；這次之前 0.9
     effectiveness: [0.26, 0.29, 0.31, 0.34, 0.37, 0.4, 0.43, 0.46, 0.49, 0.51, 0.54, 0.58, 0.61, 0.65, 0.69, 0.73, 0.78, 0.83, 0.88, 0.94, 1, 1.07, 1.14, 1.22, 1.3, 1.39, 1.48, 1.58, 1.68, 1.79, 1.91, 2.04, 2.18, 2.32, 2.48, 2.64, 2.82, 3.01, 3.21, 3.42]   # 2026-10-26 照 PoE2（poe2db Lightning Rod 1–40 級）；這次之前 [0.95, 2.0]

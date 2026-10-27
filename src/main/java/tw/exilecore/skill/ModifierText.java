@@ -178,6 +178,7 @@ public final class ModifierText {
                 case "minion_death" -> "被輔助的技能叫出來的召喚物死掉時（在牠倒下的地方）";
                 case "perfect" -> "完美時機放開時";
                 case "perfect_hit" -> "完美時機放開的那一下打中時";
+                case "perfect_hit_frozen" -> "完美時機放開的那一下直接打中凍結中的敵人時（用掉凍結，取代一般的爆炸）"; // 2026-10-28 照 PoE2 Snipe
                 case "kill" -> "打死敵人時";
                 default -> "條件成立時";
             };
@@ -419,7 +420,9 @@ public final class ModifierText {
             case StatKeys.DEBUFF_CHAOS -> "擊中時讓敵人受到混沌持續傷害：每秒是這一下傷害的 " + number(value) + "%（同一個技能的不疊加）";
             case tw.exilecore.stats.SkillMechanicKeys.DEBUFF_CHAOS_BASE -> "擊中時讓敵人受到混沌持續傷害：每秒基礎 " + number(value)
                     + " 點（吃法術、混沌傷害的加成；同一個技能的不疊加）";
-            case StatKeys.DEBUFF_DURATION -> "混沌持續傷害持續 " + number(value) + " 秒";
+            case LightningRods.EXTRA_BURST -> number(value) + "% 機率落地時多炸一次"; // 2026-10-28 照 PoE2 Lightning Rod 的品質
+            case LightningRods.BURST_DELAY -> "雷束連到你插在地上的雷樁矢箭時，箭充能 " + number(value) + " 秒就炸開（同一支箭最快每 0.1 秒一次）"; // 2026-10-28 照 PoE2 Lightning Arrow
+            case StatKeys.DEBUFF_DURATION ->"混沌持續傷害持續 " + number(value) + " 秒";
             case StatKeys.FLAG_DEBUFF_SPREAD -> "掛著的敵人死掉時傳給附近的敵人，每傳一手更多 100% 傷害（最多更多 300%）";
             case StatKeys.CHANNEL_STAGES -> "持續施放（按住）：每放一次加一層蓄力，最多 " + number(value) + " 層";
             case StatKeys.CHANNEL_MORE -> "每層蓄力更多 " + number(value) + "% 傷害";
