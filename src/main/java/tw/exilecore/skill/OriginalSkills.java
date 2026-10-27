@@ -512,7 +512,7 @@ public final class OriginalSkills implements Listener {
         if (definition.isAttack() && s.staffUntil > now && state.weaponTags().contains("quarterstaff") && !STAFF.equals(definition.id())) {
             final SkillBuild wave = proc(player, STAFF_WAVE, gemLevel(player, STAFF));
             if (wave != null) {
-                service.executor().executeFrom(Origin.of(player), wave, preferred); // 照 PoE2：長棍攻擊放出電震波（5 公尺、45 度）
+                service.executor().executeFrom(Origin.of(player), wave, preferred); // 照 PoE2：長棍攻擊放出電震波（5 格、45 度）
             }
         }
     }
@@ -1054,7 +1054,7 @@ public final class OriginalSkills implements Listener {
             if (caltrop.delayed() || now < caltrop.armedAt() || service.targets().around(caltrop.at(), CALTROP_TRIGGER + 0.3, player).isEmpty()) {
                 continue;
             }
-            // 照 PoE2：敵人碰到就炸（0.8 公尺）然後消失
+            // 照 PoE2：敵人碰到就炸（0.8 格）然後消失
             iterator.remove();
             rearmed.add(caltrop);
         }
@@ -1070,7 +1070,7 @@ public final class OriginalSkills implements Listener {
     /** 這一輪要炸的鐵蒺（炸的時候會再放回去，不能邊跑清單邊加）。 */
     private final List<Caltrop> rearmed = new ArrayList<>();
 
-    /** 鐵蒺炸開（0.8 公尺）然後消失；2026-10-27 照 PoE2 Rearm：x% 機率過 1 秒在原地重新布置。 */
+    /** 鐵蒺炸開（0.8 格）然後消失；2026-10-27 照 PoE2 Rearm：x% 機率過 1 秒在原地重新布置。 */
     private void caltropBlast(final Player player, final State s, final Caltrop caltrop) {
         blast(player, caltrop.at(), CALTROP_BLAST + 0.3, caltrop.profile());
         Fx.spawn(caltrop.at().getWorld(), Particle.CRIT, caltrop.at().clone().add(0, 0.3, 0), 8, 0.3, 0.2, 0.3, 0.1);
@@ -1102,7 +1102,7 @@ public final class OriginalSkills implements Listener {
         if (distance <= reach * 0.8 || distance > reach + DEVOUR_LEAP) {
             return;
         }
-        // 照 PoE2：目標太遠就跳過去（4 公尺）再咬
+        // 照 PoE2：目標太遠就跳過去（4 格）再咬
         final Location land = player.getLocation().add(to.normalize().multiply(Math.min(DEVOUR_LEAP, distance - 1.5)));
         if (land.getBlock().isPassable() && land.clone().add(0, 1, 0).getBlock().isPassable()) {
             land.setDirection(to);
@@ -1170,7 +1170,7 @@ public final class OriginalSkills implements Listener {
             }
             return;
         }
-        // 照 PoE2：周圍 6 公尺內每有一個牠的敵人（你、隊友、召喚物），受到的傷害增加 3%（最多 45%）
+        // 照 PoE2：周圍 6 格內每有一個牠的敵人（你、隊友、召喚物），受到的傷害增加 3%（最多 45%）
         int enemies = 0;
         for (final LivingEntity near : target.getWorld().getNearbyLivingEntities(target.getLocation(), MARK_RADIUS)) {
             if (near instanceof Player || service.minions() != null && service.minions().isMinion(near)) {
@@ -1237,7 +1237,7 @@ public final class OriginalSkills implements Listener {
         Fx.spawn(at.getWorld(), Particle.ITEM_SNOWBALL, at, 6, 0.3, 0.2, 0.3, 0.05);
     }
 
-    /** 交錯爪：把 7 公尺內自己的冰裂拉到交叉點立刻炸開。 */
+    /** 交錯爪：把 7 格內自己的冰裂拉到交叉點立刻炸開。 */
     private void pullFragments(final Player player) {
         final Location point = player.getLocation().add(SkillTargets.facing(player).multiply(2.5)).add(0, 0.3, 0);
         final Iterator<Fragment> iterator = fragments.iterator();
@@ -1311,7 +1311,7 @@ public final class OriginalSkills implements Listener {
                 return;
             }
             final boolean unique = plugin.monsters() != null && plugin.monsters().data(target).map(d -> d.rarity() == MonsterRarity.UNIQUE).orElse(false);
-            // 照 PoE2：重暈蓄勢待暈的敵人時炸出 2 公尺震波（傳奇更多 50%）
+            // 照 PoE2：重暈蓄勢待暈的敵人時炸出 2 格震波（傳奇更多 50%）
             blast(player, target.getLocation(), 2.0 * wave.areaScale(), unique ? wave.profile().scaled(1.5, "傳奇") : wave.profile());
             Fx.spawn(target.getWorld(), Particle.SWEEP_ATTACK, target.getLocation().add(0, 0.6, 0), 6, 1, 0.2, 1, 0);
         }

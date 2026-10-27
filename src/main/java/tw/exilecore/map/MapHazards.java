@@ -35,7 +35,7 @@ final class MapHazards {
     static final long CURSE_DELAY = 30;
     static final double CURSE_RADIUS = 3.0;
     static final double CURSE_SECONDS = 6;
-    /** PoE2 一個地圖區塊大約 23 單位 × 23 單位，100 塊 ≈ 530 平方公尺（格）。 */
+    /** PoE2 一個地圖區塊大約 23 單位 × 23 單位，100 塊 ≈ 530 平方格（格）。 */
     static final double TILE_AREA = 530;
     /** PoE2 怪物傷害表 68 級的每下平均（地面點燃的「每 10 秒 x 點」以這個等級為準，照怪物傷害表換到其他等級）。 */
     static final double FIRE_REFERENCE_DAMAGE = 233.12;
@@ -197,7 +197,7 @@ final class MapHazards {
             return;
         }
         final int count = (int) Math.max(1, Math.round(perHundred * floor.size() / TILE_AREA));
-        final double radius = Math.max(1, stats.extra("map.ground.radius") / 10.0); // PoE2 的半徑單位 ÷ 10 = 公尺（格）
+        final double radius = Math.max(1, stats.extra("map.ground.radius") / 10.0); // PoE2 的半徑單位 ÷ 10 = 格（格）
         final AilmentType type = fire > 0 ? AilmentType.IGNITE : chill > 0 ? AilmentType.CHILL : AilmentType.SHOCK;
         final double value;
         if (fire > 0) {

@@ -1793,7 +1793,7 @@ public final class MinionService implements Listener, MinionHooks {
                 || MinionAbilities.commandOnly(minion.skillId()); // 2026-10-27：砲手、巨靈不會受傷（敵人也不去打）
     }
 
-    /** 蟲群只打主人身邊 4 公尺內的敵人；其他召喚物都算。 */
+    /** 蟲群只打主人身邊 4 格內的敵人；其他召喚物都算。 */
     private static boolean withinSwarm(final Minion minion, final Player owner, final LivingEntity target) {
         if (!MinionAbilities.SWARM.equals(minion.skillId())) {
             return true;
@@ -1922,7 +1922,7 @@ public final class MinionService implements Listener, MinionHooks {
                 }
             }
             case MinionAbilities.ARSONIST -> {
-                attack(minion, target); // 火彈：1.6 公尺、70% 轉火焰（summon 的 radius、convert）
+                attack(minion, target); // 火彈：1.6 格、70% 轉火焰（summon 的 radius、convert）
                 detonate(minion.owner, target.getLocation(), MinionAbilities.FIRE_BOMB_RADIUS * areaScale(minion), minion);
                 return minion.attackTicks;
             }
@@ -1941,7 +1941,7 @@ public final class MinionService implements Listener, MinionHooks {
         return minion.attackTicks;
     }
 
-    /** 碎骨：180%，重暈蓄勢待暈的敵人時接震波（480%、2 公尺）。 */
+    /** 碎骨：180%，重暈蓄勢待暈的敵人時接震波（480%、2 格）。 */
     private void bonebreaker(final Minion minion, final LivingEntity target, final Player owner, final long now) {
         minion.startCooldown(BONEBREAKER, now, MinionAbilities.BONEBREAKER_COOLDOWN);
         minion.mob.swingMainHand();
@@ -1962,7 +1962,7 @@ public final class MinionService implements Listener, MinionHooks {
         }
     }
 
-    /** 電弧：打目標再連鎖 2 次（3.5 公尺）。 */
+    /** 電弧：打目標再連鎖 2 次（3.5 格）。 */
     private void arc(final Minion minion, final LivingEntity target, final Player owner) {
         final int level = minion.build.level();
         final Attack hit = with(minion, spellProfile(minion, "arc", tw.exilecore.stats.DamageType.LIGHTNING,
@@ -2010,7 +2010,7 @@ public final class MinionService implements Listener, MinionHooks {
         }
     }
 
-    /** 冰箭：投射物打目標，再炸開 0.8 公尺；必定凍結累積、凍結累積更多 100%。 */
+    /** 冰箭：投射物打目標，再炸開 0.8 格；必定凍結累積、凍結累積更多 100%。 */
     private void iceShard(final Minion minion, final LivingEntity target, final Player owner) {
         final int level = minion.build.level();
         final List<Modifier> freeze = List.of(Modifier.more(tw.exilecore.stats.StatKeys.FREEZE_BUILDUP, 1.0, "冰箭"));
@@ -2027,7 +2027,7 @@ public final class MinionService implements Listener, MinionHooks {
         Fx.spawn(at.getWorld(), org.bukkit.Particle.SNOWFLAKE, at.clone().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0.02);
     }
 
-    /** 躍擊：往目標跳過去，落地時打 1 公尺內的敵人並擊退；回傳幾 tick 後再出手。 */
+    /** 躍擊：往目標跳過去，落地時打 1 格內的敵人並擊退；回傳幾 tick 後再出手。 */
     private long leap(final Minion minion, final LivingEntity target, final double distance, final long now) {
         minion.startCooldown(LEAP, now, MinionAbilities.LEAP_COOLDOWN);
         final Vector direction = target.getLocation().toVector().subtract(minion.mob.getLocation().toVector()).setY(0);
@@ -2307,7 +2307,7 @@ public final class MinionService implements Listener, MinionHooks {
         return list.size();
     }
 
-    /** 震地咆哮：恫嚇 4 公尺內的敵人 4 秒；範圍內凍結中的敵人與冰甲中的召喚物各炸一次冰冷傷害（2.4 公尺），用掉凍結。 */
+    /** 震地咆哮：恫嚇 4 格內的敵人 4 秒；範圍內凍結中的敵人與冰甲中的召喚物各炸一次冰冷傷害（2.4 格），用掉凍結。 */
     private void roar(final Minion brute, final Player owner, final long now) {
         final Location at = brute.mob.getLocation();
         final double radius = MinionAbilities.ROAR_RADIUS * areaScale(brute);
@@ -2344,9 +2344,9 @@ public final class MinionService implements Listener, MinionHooks {
         }
     }
 
-    /** 毒氣箭：射到目標點（80%、1.4 公尺），留下 8 秒的毒雲。 */
+    /** 毒氣箭：射到目標點（80%、1.4 格），留下 8 秒的毒雲。 */
     /**
-     * 2026-10-27 照 PoE2 昇華：只聽指令的召喚物（砲手、巨靈）平常的位置：砲手站在你身後 2.5 公尺（PoE2：take up positions behind you），
+     * 2026-10-27 照 PoE2 昇華：只聽指令的召喚物（砲手、巨靈）平常的位置：砲手站在你身後 2.5 格（PoE2：take up positions behind you），
      * 巨靈飄在你頭上（會飛的照 {@link #idle}）。
      */
     private void standBy(final Minion minion, final Player owner, final long now) {
@@ -2414,7 +2414,7 @@ public final class MinionService implements Listener, MinionHooks {
 
     /**
      * 2026-10-27 照 PoE2 0.5（Supporting Fire 的 Command: Death From Above）：砲手朝目標射一發信號彈，之後每 0.75 秒一輪箭雨，共 6 輪，
-     * 每一輪打 14 × 14 公尺（半徑 7.9 公尺的圓）內的敵人 763% 傷害。砲手每 1 點主人的力量增加 1% 傷害、每 3 點敏捷增加 1% 範圍。
+     * 每一輪打 14 × 14 格（半徑 7.9 格的圓）內的敵人 763% 傷害。砲手每 1 點主人的力量增加 1% 傷害、每 3 點敏捷增加 1% 範圍。
      */
     private void deathFromAbove(final Minion artillery, final Player owner, final Location point) {
         final Location at = point.clone();
@@ -2461,7 +2461,7 @@ public final class MinionService implements Listener, MinionHooks {
         clouds.add(new Cloud(sniper.owner, sniper, at, now, MinionAbilities.GAS_RADIUS * area, base, sniper.sheet, explosion));
     }
 
-    /** 爆裂殉身：每一隻焰術士各引爆目標 3 公尺內一隻生命低於門檻的自己的召喚物。 */
+    /** 爆裂殉身：每一隻焰術士各引爆目標 3 格內一隻生命低於門檻的自己的召喚物。 */
     private int demise(final List<Minion> arsonists, final Player owner, final Location point, final MinionAbilities.Command command, final long now) {
         int used = 0;
         final Set<Minion> taken = new HashSet<>();
@@ -2507,7 +2507,7 @@ public final class MinionService implements Listener, MinionHooks {
         return used;
     }
 
-    /** 死亡風暴：施放 2 秒後，目標區域裡每一具倒下的骷髏、屍體落雷（2 公尺）並留下感電地面。 */
+    /** 死亡風暴：施放 2 秒後，目標區域裡每一具倒下的骷髏、屍體落雷（2 格）並留下感電地面。 */
     private void deathStorm(final Minion mage, final Player owner, final Location point) {
         final long delay = castTicks(mage, MinionAbilities.STORM_CAST);
         Fx.spawn(point.getWorld(), org.bukkit.Particle.ELECTRIC_SPARK, point.clone().add(0, 0.3, 0), 20, 2, 0.1, 2, 0);
@@ -2551,7 +2551,7 @@ public final class MinionService implements Listener, MinionHooks {
         }, delay);
     }
 
-    /** 冰甲：施放 1 秒後，目標 4 公尺內自己的召喚物得到 6 秒的冰甲。 */
+    /** 冰甲：施放 1 秒後，目標 4 格內自己的召喚物得到 6 秒的冰甲。 */
     private void iceArmour(final Minion mage, final Player owner, final Location point) {
         final long delay = castTicks(mage, 1.0);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {

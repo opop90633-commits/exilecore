@@ -40,7 +40,8 @@ public final class TreeMechanicKeys {
     public static final String OFFERING = "offering";
     /**
      * 在你存在範圍（臨在，{@code tw.exilecore.combat.Presence}）內的友軍：「存在範圍內的友軍…」的修飾器寫 [minion, in_presence]，
-     * 召喚物在範圍內時才給牠（MinionService 每 2 秒重算時看距離）。隊友（玩家）還沒有做。
+     * 召喚物在範圍內時才給牠（MinionService 每 2 秒重算時看距離）。2026-10-27 照 PoE2：圖騰也是友軍，
+     * 在範圍內的圖騰一樣拿到（{@code tw.exilecore.skill.TotemAllies}）。隊友（玩家）還沒有做。
      */
     public static final String IN_PRESENCE = "in_presence";
 

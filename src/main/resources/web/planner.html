@@ -1771,7 +1771,7 @@
   svg.addEventListener("pointerleave", e => {
     if (e.pointerType === "touch" || drag) return;
     if (e.relatedTarget && tip.contains(e.relatedTarget)) return; // 移進提示框（看名詞）
-    if (tip.classList.contains("live") && tipFor === "node") { hoverAt(e); return; } // 一樣留 0.4 秒
+    if (tip.classList.contains("live") && tipFor === "node") { hoverAt(e); return; } // 一樣留 0.8 秒
     setHover(null); hideTip();
   });
 
@@ -1780,14 +1780,31 @@
     const g = hit && hit.closest ? hit.closest(".node") : null;
     return g ? byId.get(g.dataset.id) : null;
   }
+  let tipSwitchTimer = 0, tipLastX = 0, tipLastY = 0, tipLastNode = null;
   function hoverAt(e) {
     if (tipHold) return; // 滑鼠在提示框裡（看名詞）
     const node = nodeAt(e);
-    if (!node && e.pointerType === "mouse" && tipFor === "node" && tip.classList.contains("live") && tip.style.display === "block") {
-      // 2026-10-27：提示框裡有名詞底線：離開節點後留 0.4 秒，滑鼠移得進去
-      if (!tipHideTimer) tipHideTimer = setTimeout(() => { tipHideTimer = 0; if (!tipHold) { setHover(null); hideTip(); } }, 400);
+    tipLastX = e.clientX; tipLastY = e.clientY; tipLastNode = node;
+    const tipLive = e.pointerType === "mouse" && tipFor === "node" && tip.classList.contains("live") && tip.style.display === "block";
+    if (!node && tipLive) {
+      // 2026-10-27：提示框裡有名詞底線：離開節點後留 0.8 秒，滑鼠移得進去（沒配點的節點也一樣）
+      if (!tipHideTimer) tipHideTimer = setTimeout(() => { tipHideTimer = 0; if (!tipHold) { setHover(null); hideTip(); } }, 800);
       return;
     }
+    if (node && hover && node !== hover && tipLive) {
+      // 2026-10-27 照站長：往提示框移動時常會掃過旁邊的節點；停在別的節點上 0.3 秒才換，中途進了提示框就不換
+      if (!tipSwitchTimer) tipSwitchTimer = setTimeout(() => {
+        tipSwitchTimer = 0;
+        if (tipHold) return;
+        clearTimeout(tipHideTimer);
+        tipHideTimer = 0;
+        setHover(tipLastNode);
+        if (tipLastNode) showTip(tipLastNode, tipLastX, tipLastY); else hideTip();
+      }, 300);
+      return;
+    }
+    clearTimeout(tipSwitchTimer);
+    tipSwitchTimer = 0;
     clearTimeout(tipHideTimer);
     tipHideTimer = 0;
     setHover(node);
@@ -1807,6 +1824,7 @@
   let armed = null;
   function clickAt(e) {
     const node = nodeAt(e);
+    if (tipSwitchTimer && node !== hover) { clearTimeout(tipSwitchTimer); tipSwitchTimer = 0; setHover(node); if (node) showTip(node, e.clientX, e.clientY); } // 2026-10-27：換節點的延遲中點下去，照點到的那個
     if (!node || node.type === "start") {
       armed = null;
       if (e.pointerType === "touch") { setHover(node && node.type === "start" ? node : null); if (node) showTip(node, e.clientX, e.clientY); else hideTip(); }
@@ -1949,8 +1967,8 @@
     tip.classList.toggle("live", !!tip.querySelector(".kw"));
     tip.style.display = "block";
     const w = tip.offsetWidth, h = tip.offsetHeight;
-    tip.style.left = Math.min(window.innerWidth - w - 8, x + 16) + "px";
-    tip.style.top = Math.min(window.innerHeight - h - 8, y + 16) + "px";
+    tip.style.left = Math.min(window.innerWidth - w - 8, x + 12) + "px"; // 2026-10-27：靠近一點，滑鼠比較容易移進去
+    tip.style.top = Math.min(window.innerHeight - h - 8, y + 12) + "px";
   }
   /** 孔位裡的珠寶：名稱、詞綴，與實際加在角色身上的效果（伺服器算的）。 */
   function socketJewelHtml(node) {
@@ -2005,6 +2023,8 @@
     tipHold = false;
     clearTimeout(tipHideTimer);
     tipHideTimer = 0;
+    clearTimeout(tipSwitchTimer);
+    tipSwitchTimer = 0;
     hideKw();
   }
 
@@ -2087,6 +2107,8 @@
     tipHold = true;
     clearTimeout(tipHideTimer);
     tipHideTimer = 0;
+    clearTimeout(tipSwitchTimer);
+    tipSwitchTimer = 0;
   });
   tip.addEventListener("pointerleave", e => {
     if (e.pointerType !== "mouse" || !tipHold) return;

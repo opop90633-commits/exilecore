@@ -81,11 +81,11 @@ def skill(sid, name, desc, icon, tags, mechanic, params, cast, crit=None, damage
 # ---- 法杖 ----
 cb = ranges('Chaos_Bolt')
 skill('chaos_bolt', '蝕星彈', '射出一顆混沌能量彈，擊中時給敵人凋零（每層受到的混沌傷害增加 5%，最多 10 層）。法杖賦予。',
-      'ECHO_SHARD', ['spell', 'projectile', 'chaos'], 'projectile', 'projectile: { speed: 1.9, range: 30, size: 0.3 }   # PoE2：38 公尺／秒',
+      'ECHO_SHARD', ['spell', 'projectile', 'chaos'], 'projectile', 'projectile: { speed: 1.9, range: 30, size: 0.3 }   # PoE2：38 格／秒',
       0.75, 7, cb, 'Chaos Bolt', {'chaos': 1.0},
       level_mods=['{ stat: withered.on_hit, type: FLAT, value: %s }   # %s 逐級（1 級 1 層 → 20 級 3 層 → 40 級 5 層）；這次之前固定 2 層' % (fl(nums('Chaos_Bolt', 1)), '2026-10-26 照 PoE2')], visual='chaos_bolt')
 skill('bone_blast', '骨綻', '準心指的地方 1 秒後從地底炸出骨刺，打傷一小圈敵人，40% 機率流血。法杖賦予。',
-      'BONE', ['spell', 'area', 'physical', 'duration'], 'impact', 'impact: { range: 22, delay: 1.0, radius: 1.0 }   # PoE2：儀式半徑 1 公尺、1 秒',
+      'BONE', ['spell', 'area', 'physical', 'duration'], 'impact', 'impact: { range: 22, delay: 1.0, radius: 1.0 }   # PoE2：儀式半徑 1 格、1 秒',
       0.75, 14, ranges('Bone_Blast'), 'Bone Blast', {'physical': 1.0},
       mods=['{ stat: bleed.chance, type: FLAT, value: 40 }'], visual='detonate_dead')
 md = nums('Mana_Drain')
@@ -101,15 +101,15 @@ skill('power_siphon', '銳星虹吸', '朝前方射出一道虹吸彈，擊中�
       0.7, 15, ps, 'Power Siphon', {'physical': 1.0},
       mods=['{ stat: flag.culling, type: FLAT, value: 1 }', '{ stat: charge.event.kill.power, type: FLAT, value: 100 }'], visual='wand_bolt')
 skill('volatile_dead', '屍焰爆', '引爆準心附近的一具屍體，炸出火焰，波及周圍 2.2 格的敵人並容易點燃。法杖賦予。',
-      'BLAZE_POWDER', ['spell', 'area', 'fire'], 'corpse', 'corpse: { range: 16, search: 6, radius: 2.2, percent: 0 }   # PoE2：爆炸 2.2 公尺',
+      'BLAZE_POWDER', ['spell', 'area', 'fire'], 'corpse', 'corpse: { range: 16, search: 6, radius: 2.2, percent: 0 }   # PoE2：爆炸 2.2 格',
       0.8, 7, ranges('Volatile_Dead', 1), 'Volatile Dead（爆炸那一下）', {'fire': 1.0},
       mods=['{ stat: ignite.chance, type: FLAT, value: 25 }'], visual='detonate_dead')
 skill('galvanic_field', '雷流場', '在準心的地方放一個電場，6 秒內每 0.6 秒電一次範圍內的敵人。法杖賦予。',
-      'COPPER_INGOT', ['spell', 'area', 'lightning', 'duration', 'chain', 'orb'], 'zone', 'zone: { range: 18, radius: 1.9, duration: 6, interval: 0.6, damage: 100, max: 1 }   # PoE2：1.9 公尺、6 秒、每 0.6 秒',
+      'COPPER_INGOT', ['spell', 'area', 'lightning', 'duration', 'chain', 'orb'], 'zone', 'zone: { range: 18, radius: 1.9, duration: 6, interval: 0.6, damage: 100, max: 1 }   # PoE2：1.9 格、6 秒、每 0.6 秒',
       0.65, 9, ranges('Galvanic_Field'), 'Galvanic Field', {'lightning': 1.0}, visual='arc',
       tag_note='2026-10-26 照 PoE2（poe2db 寶石標籤）加 orb（Galvanic Field 是法球：天賦樹「法球技能」的加成看它）；這次之前 [spell, area, lightning, duration, chain]')
 skill('decompose', '腐屍爆', '讓準心附近的一具屍體腐爛爆開，火焰波及周圍一小圈的敵人。法杖賦予。',
-      'GUNPOWDER', ['spell', 'area', 'fire', 'chaos', 'duration'], 'corpse', 'corpse: { range: 16, search: 6, radius: 1.6, percent: 0 }   # PoE2：1.6 公尺',
+      'GUNPOWDER', ['spell', 'area', 'fire', 'chaos', 'duration'], 'corpse', 'corpse: { range: 16, search: 6, radius: 1.6, percent: 0 }   # PoE2：1.6 格',
       0.8, 8, ranges('Decompose'), 'Decompose', {'fire': 1.0}, visual='detonate_dead')
 skill('exsanguinate', '血脈牽', '射出一道血光打中前方的敵人，再連鎖跳到另外兩個敵人（共 3 個），讓牠們流血。法杖賦予。',
       'NETHER_BRICK', ['spell', 'chain', 'physical', 'duration'], 'chain', 'chain: { range: 12, chains: 2, chain_range: 7 }   # PoE2：連鎖 2 次、共 3 個目標',
@@ -131,13 +131,13 @@ skill('coiling_bolts', '纏蝕箭', '同時射出兩道纏繞的弩箭：一道�
 
 # ---- 長杖 ----
 skill('firebolt', '焰星彈', '射出一顆慢慢飛的火焰彈，擊中時小範圍爆炸。長杖賦予。',
-      'BLAZE_POWDER', ['spell', 'projectile', 'area', 'fire'], 'projectile', 'projectile: { speed: 0.52, range: 26, size: 0.35, explode: 0.7 }   # PoE2：10.4 公尺／秒、爆炸 0.7 公尺',
+      'BLAZE_POWDER', ['spell', 'projectile', 'area', 'fire'], 'projectile', 'projectile: { speed: 0.52, range: 26, size: 0.35, explode: 0.7 }   # PoE2：10.4 格／秒、爆炸 0.7 格',
       0.9, 8, ranges('Firebolt'), 'Firebolt', {'fire': 1.0}, visual='fireball')   # 2026-10-26 照 PoE2：拿掉點燃機率 +20%（原作沒有）
 skill('freezing_shards', '霜晶扇', '朝前方扇形射出 5 片冰晶，凍結累積更多 100%。長杖賦予。',
-      'PRISMARINE_SHARD', ['spell', 'projectile', 'cold'], 'projectile', 'projectile: { count: 5, spread: 30, speed: 0.8, range: 22, size: 0.25 }   # PoE2：16 公尺／秒、5 片',
+      'PRISMARINE_SHARD', ['spell', 'projectile', 'cold'], 'projectile', 'projectile: { count: 5, spread: 30, speed: 0.8, range: 22, size: 0.25 }   # PoE2：16 格／秒、5 片',
       1.2, 11, ranges('Freezing_Shards'), 'Freezing Shards', {'cold': 1.0}, mods=['{ stat: freeze.buildup, type: MORE, value: 100 }'], visual='ice_shot')
 skill('lightning_bolt', '落雷', '準心指的地方落下一道閃電，打傷一小圈敵人，感電機率更多 200%。長杖賦予。',
-      'GLOWSTONE_DUST', ['spell', 'area', 'lightning'], 'impact', 'impact: { range: 22, delay: 0.1, radius: 0.8 }   # PoE2：半徑 0.8 公尺',
+      'GLOWSTONE_DUST', ['spell', 'area', 'lightning'], 'impact', 'impact: { range: 22, delay: 0.1, radius: 0.8 }   # PoE2：半徑 0.8 格',
       0.85, 10, ranges('Lightning_Bolt'), 'Lightning Bolt', {'lightning': 1.0},
       mods=['{ stat: shock.chance, type: MORE, value: 200 }   # 2026-10-26 照 PoE2：只有感電機率更多 200%（這次之前另外 +15%）'], visual='lightning_arrow')
 sp = nums('Sigil_of_Power', 0)
@@ -150,18 +150,18 @@ skill('sigil_of_power', '力印', '在腳下畫一個法印：10 秒內你的法
 sr = ranges('Soulrend', 0); dps = nums('Soulrend', 1)
 ratio = round(sum(dps) / sum((a + b) / 2 for a, b in sr) * 100)
 skill('soulrend', '裂魂彈', '射出一道慢慢飛、穿透所有敵人的靈魂彈，造成混沌傷害，留下混沌持續傷害，並阻礙敵人。長杖賦予。',
-      'ECHO_SHARD', ['spell', 'projectile', 'chaos', 'duration'], 'projectile', 'projectile: { speed: 0.4, range: 24, size: 0.6, pierce: 20 }   # PoE2：8 公尺／秒、穿透全部',
+      'ECHO_SHARD', ['spell', 'projectile', 'chaos', 'duration'], 'projectile', 'projectile: { speed: 0.4, range: 24, size: 0.6, pierce: 20 }   # PoE2：8 格／秒、穿透全部',
       0.8, 13, sr, 'Soulrend', {'chaos': 1.0},
       mods=['{ stat: debuff.duration, type: FLAT, value: 0.6 }   # 2026-10-26 照 PoE2：0.6 秒（彈經過時一直重新給）；這次之前 2 秒', '{ stat: hinder.on_hit, type: FLAT, value: 100 }'],
       level_mods=['{ stat: debuff.chaos, type: FLAT, value: %s }   # 2026-10-26 照 PoE2：每秒混沌傷害照原作表 ÷ 那一級擊中平均（逐級）；這次之前固定 %d%%' % (fl([round(d / ((a + b) / 2) * 100) for d, (a, b) in zip(dps, sr)]), ratio)],
       visual='chaos_bolt')
 skill('reap', '血鐮', '準心指的地方揮下一道血鐮，有撲殺效果，擊中時給敵人 3 層暴擊弱點（每層擊中牠的暴擊率 +0.5%）。長杖賦予。',
-      'NETHERITE_SCRAP', ['spell', 'area', 'physical', 'duration'], 'impact', 'impact: { range: 18, delay: 0.3, radius: 2.5 }   # 2026-10-26 照 PoE2：2.5 公尺（這次之前 2.0）',
+      'NETHERITE_SCRAP', ['spell', 'area', 'physical', 'duration'], 'impact', 'impact: { range: 18, delay: 0.3, radius: 2.5 }   # 2026-10-26 照 PoE2：2.5 格（這次之前 2.0）',
       1.2, 14, ranges('Reap'), 'Reap', {'physical': 1.0},
       mods=['{ stat: flag.culling, type: FLAT, value: 1 }', '{ stat: crit_weakness.on_hit, type: FLAT, value: 3 }'],
       visual='slash')
 skill('enervating_nova', '衰雷環', '以自己為中心炸出一圈閃電（1 到 2.6 格的環），觸電累積更多。長杖賦予。',
-      'GLOWSTONE_DUST', ['spell', 'area', 'lightning', 'nova', 'duration'], 'nova', 'nova: { radius: 2.6 }   # PoE2：環 1–2.6 公尺',
+      'GLOWSTONE_DUST', ['spell', 'area', 'lightning', 'nova', 'duration'], 'nova', 'nova: { radius: 2.6 }   # PoE2：環 1–2.6 格',
       1.0, 11, ranges('Enervating_Nova', 0), 'Enervating Nova', {'lightning': 1.0},
       level_mods=['{ stat: electrocute.buildup, type: MORE, value: %s }   # 2026-10-26 照 PoE2 逐級（100 → 157 → 202）；這次之前固定 100' % fl(nums('Enervating_Nova', 1))], visual='frost_nova')
 cs = nums('Consecrate')
@@ -303,7 +303,7 @@ granted_aura('fulmination', '雷霆共鳴', '常駐（權杖賦予）：你的�
 granted_aura('mirror_of_refraction', '折光之鏡', '常駐（長杖賦予）：身邊每隔一段時間（3.9 秒 → 2 秒，隨技能等級；冷卻回復加快）出現一面鏡子，最多 4 面、每面 8 秒。你的法術投射物碰到鏡子就把它打碎，從鏡子往四周複製 7 發（複製的還能再被別的鏡子複製）。',
              'AMETHYST_SHARD', 'mirror.interval', nums('Mirror_of_Refraction'), 'Mirror of Refraction：鏡子出現的間隔（秒）', 'aura_purity', no_cast=True,
              tags=('aura', 'persistent'), tag_note='2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（Mirror of Refraction 是常駐增益）；這次之前 [aura]')
-# 2026-10-26 照 PoE2：振翅熵流（2 公尺持續傷害、每隻烏鴉更多 5%）與指令亂鴉狂舞（施放 1 秒），程式在 GrantedAuras
+# 2026-10-26 照 PoE2：振翅熵流（2 格持續傷害、每隻烏鴉更多 5%）與指令亂鴉狂舞（施放 1 秒），程式在 GrantedAuras
 granted_aura('spiraling_conspiracy', '鴉群密謀', '常駐（長杖賦予）：身邊有稀有、傳奇敵人時每 2 秒（20 級 1.05 秒）加入一隻烏鴉；你或召喚物殺敵時，每 1 點怪物強度（一般 1、魔法 2、稀有 5、傳奇 10）加入一隻（每隻留 20 秒、最多 40 隻）。烏鴉群在你身邊 2 格造成混沌與物理的持續傷害，每一隻烏鴉傷害與範圍更多 5%。按這個鍵下指令「亂鴉狂舞」：用掉 10 隻烏鴉，準心出現兩面鏡子 5 秒，中間的敵人每 0.12 秒被打一下（550%，七成混沌；冷卻 10 秒）。',
              'FEATHER', 'raven.interval', nums('Spiraling_Conspiracy', 0, '|'), 'Spiraling Conspiracy：加入一隻烏鴉的間隔（秒）', 'blight_nova', cast='1.0   # 2026-10-26 照 PoE2 指令（亂鴉狂舞）的施放時間',
              tags=('aura', 'persistent', 'physical', 'chaos'), tag_note='2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、physical、chaos（Spiraling Conspiracy 是常駐、物理、混沌）；這次之前 [aura]')
@@ -314,7 +314,7 @@ out.append('    hidden: true')
 out.append('    type: spell')
 out.append('    tags: [spell, area, physical, chaos]')
 out.append('    mechanic: nova')
-out.append('    nova: { radius: 2.0 }   # 2026-10-26 照 PoE2 振翅熵流：2 公尺、每秒混沌＋物理照寶石等級（MinionAbilities.ENTROPY_*），每隻烏鴉更多 5%；這裡的傷害只剩標籤用。這次之前 3.0、每隻烏鴉一份')
+out.append('    nova: { radius: 2.0 }   # 2026-10-26 照 PoE2 振翅熵流：2 格、每秒混沌＋物理照寶石等級（MinionAbilities.ENTROPY_*），每隻烏鴉更多 5%；這裡的傷害只剩標籤用。這次之前 3.0、每隻烏鴉一份')
 RAVEN = [[max(1, round(1 * (20 / 1) ** ((lv - 1) / 19))), max(2, round(2 * (37 / 2) ** ((lv - 1) / 19)))] for lv in range(1, 41)]
 out.append('    damage: %s   # 2026-10-26 修正：以前寫 [[1, 2], [20, 37]] 會被當成 1 級、2 級的逐級表（2 級就 20～37）；改成 40 級表（1 級 1～2 → 20 級 20～37，照同樣的倍率往後推）' % dmg(RAVEN))
 out.append('    damage_types: { physical: 0.5, chaos: 0.5 }')

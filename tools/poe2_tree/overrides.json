@@ -2608,7 +2608,8 @@
    "type": "FLAT",
    "scale": 0.016666666666666666,
    "tags": [
-    "minion"
+    "minion",
+    "in_presence"
    ]
   }
  ],
@@ -3154,6 +3155,35 @@
   {
    "stat": "charm.effect_per_empty_slot",
    "type": "FLAT"
+  }
+ ],
+ "movement_speed_penalty_+%_while_performing_action": [
+  {
+   "stat": "movement.speed",
+   "type": "INCREASED",
+   "scale": -0.25
+  }
+ ],
+ "movement_speed_penalty_+%_while_performing_fire_skills": [
+  {
+   "stat": "movement.speed",
+   "type": "INCREASED",
+   "scale": -0.2
+  }
+ ],
+ "movement_speed_penalty_+%_while_performing_cold_skills": [
+  {
+   "stat": "movement.speed",
+   "type": "INCREASED",
+   "scale": -0.2
+  }
+ ],
+ "movement_speed_penalty_+%_while_raising_shield": [
+  {
+   "stat": "movement.speed",
+   "type": "INCREASED",
+   "scale": -0.05,
+   "condition": "shield"
   }
  ]
 }

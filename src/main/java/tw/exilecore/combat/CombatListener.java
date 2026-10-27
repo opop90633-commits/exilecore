@@ -737,7 +737,7 @@ public final class CombatListener implements Listener {
             // 2026-10-26（昇華）：神聖儀式（當前護盾加到護甲）、保持警覺（敵人依距離的命中懲罰）
             hitDefender = tw.exilecore.ascendancy.AscendancyEffects.defenderSheet((Player) defender, defenderState, hitDefender);
             hitSheet = tw.exilecore.ascendancy.AscendancyEffects.enemyVsPlayer((Player) defender, attacker, hitSheet);
-            // 2026-10-27 照 PoE2 天賦樹：6 公尺外打來的用更多護甲防禦、免疫曝露、身上的凋零效果減少（TreeLeftovers）
+            // 2026-10-27 照 PoE2 天賦樹：6 格外打來的用更多護甲防禦、免疫曝露、身上的凋零效果減少（TreeLeftovers）
             hitDefender = tw.exilecore.skill.TreeLeftovers.defenderSheet(defender, attacker, hitDefender, defenderDebuffs,
                     debuffs, hitTick, skill.isAttack() && event.getDamager() instanceof org.bukkit.entity.Projectile && !skill.tags().contains(Tags.PROJECTILE));
             if (plugin.skills() != null && !attackerIsPlayer && !attackerIsMinion) {

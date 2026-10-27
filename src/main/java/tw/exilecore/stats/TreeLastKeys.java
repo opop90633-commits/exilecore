@@ -16,13 +16,13 @@ public final class TreeLastKeys {
 
     /**
      * FLAT %：防禦時護甲多算 x%（PoE2「Defend with 200% of Armour」＝ +100）。標籤是這一下的情境：
-     * 擊中技能的標籤（[projectile, attack]＝投射物攻擊）、{@link #CRIT_TAKEN}（被暴擊）、{@link #FROM_FAR}（6 公尺外打來的）；
+     * 擊中技能的標籤（[projectile, attack]＝投射物攻擊）、{@link #CRIT_TAKEN}（被暴擊）、{@link #FROM_FAR}（6 格外打來的）；
      * 條件（nolowes＝不在低能量護盾）照屬性表。DamageCalculator 算護甲減傷前乘上去。
      */
     public static final String ARMOUR_DEFEND = "armour.defend";
     /** 情境標籤：這一下是暴擊（防禦方的「對暴擊用 x% 護甲防禦」「被偏斜的暴擊多擋 x%」）。DamageCalculator 補上。 */
     public static final String CRIT_TAKEN = "crit_taken";
-    /** 情境標籤：攻擊者在 6 公尺外（CombatListener 照距離補在防禦方那一下的屬性表）。 */
+    /** 情境標籤：攻擊者在 6 格外（CombatListener 照距離補在防禦方那一下的屬性表）。 */
     public static final String FROM_FAR = "hit_from_far";
     /** 旗標：不會被暴擊（條件 parrying＝招架中）。DamageCalculator 用。 */
     public static final String FLAG_NO_CRIT_TAKEN = "flag.cannot_be_crit";
@@ -34,16 +34,16 @@ public final class TreeLastKeys {
     public static final String FLAG_BLIND_STUNNER = "flag.blind_stunner";
     /** INCREASED：判定「被包圍」的範圍（PoE2 Surrounded Area of Effect）。ConditionTracker 用（半徑 × √(1＋x)）。 */
     public static final String SURROUNDED_AREA = "surrounded.area";
-    /** 旗標：舉盾時正前方 x 公尺內的敵人衰弱（FLAT，值＝公尺）。{@code TreeLeftovers} 每 10 tick。 */
+    /** 旗標：舉盾時正前方 x 格內的敵人衰弱（FLAT，值＝格）。{@code TreeLeftovers} 每 10 tick。 */
     public static final String SHIELD_DEBILITATE = "shield.debilitate_range";
 
     // ---- 攻擊 ----
 
     /** 旗標：擊中無視敵人非負的元素抗性（條件寫在標籤：vs_frozen）。DamageCalculator 用。 */
     public static final String FLAG_IGNORE_ELEMENTAL_RESIST = "flag.ignore_elemental_resist";
-    /** FLAT %：投射物穿透 3 公尺內敵人的機率（不算穿透次數）。ProjectileEngine 用。 */
+    /** FLAT %：投射物穿透 3 格內敵人的機率（不算穿透次數）。ProjectileEngine 用。 */
     public static final String PIERCE_CLOSE = "projectile.pierce_close";
-    /** 近距離穿透的範圍（PoE2：3 公尺）。 */
+    /** 近距離穿透的範圍（PoE2：3 格）。 */
     public static final double PIERCE_CLOSE_RANGE = 3;
     /** FLAT %：投射物分裂一次的機率（條件 meleehit8＝過去 8 秒近戰擊中過）。ProjectileEngine 射出時擲。 */
     public static final String FORK_CHANCE = "projectile.fork_chance";

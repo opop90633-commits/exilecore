@@ -510,9 +510,9 @@ public final class SkillResources implements Listener {
 
     // ---- 2026-10-26 照 PoE2 亞馬遜：元素湧動（Elemental Surge）----
     // 消耗戰星時觸發元素湧動，獲得幾層湧動（surge.fire／surge.cold／surge.lightning，昇華給）；每種最多 6 層、15 秒沒拿到就散掉。
-    // 非近戰的投射物攻擊每一發投射物用掉一層，投射物在飛行終點爆開 1.8 公尺、造成那種元素的傷害（PoE2 Elemental Surge：攻擊傷害 50%～181%，
+    // 非近戰的投射物攻擊每一發投射物用掉一層，投射物在飛行終點爆開 1.8 格、造成那種元素的傷害（PoE2 Elemental Surge：攻擊傷害 50%～181%，
     // 物理全轉成那種元素）。2026-10-27 照 PoE2 做成另外一發爆炸（湧動爆炸 asc_surge_*，ProjectileEngine 在投射物飛行結束時觸發）；
-    // 這次之前做不到：用掉湧動的那一下投射物自己在終點爆開 1.8 公尺，並獲得 100% 傷害為額外的那種元素傷害（平衡等效）。
+    // 這次之前做不到：用掉湧動的那一下投射物自己在終點爆開 1.8 格，並獲得 100% 傷害為額外的那種元素傷害（平衡等效）。
 
     /** 消耗一顆戰星時各種湧動獲得幾層（FLAT）。 */
     public static final String SURGE_PREFIX = "surge.";
@@ -608,7 +608,7 @@ public final class SkillResources implements Listener {
     }
 
     /**
-     * 2026-10-27 照 PoE2：一發用掉湧動的投射物飛行結束（打中停下、飛到盡頭）：在那裡觸發那種元素的湧動爆炸（1.8 公尺、攻擊傷害 50%～181%、
+     * 2026-10-27 照 PoE2：一發用掉湧動的投射物飛行結束（打中停下、飛到盡頭）：在那裡觸發那種元素的湧動爆炸（1.8 格、攻擊傷害 50%～181%、
      * 物理全部轉成那種元素）。這次施放的湧動用完了就不爆。回傳爆的是哪一種（0 火、1 冰、2 電；沒有 -1）。
      */
     public int surgeBlast(final Player player, final org.bukkit.Location at) {

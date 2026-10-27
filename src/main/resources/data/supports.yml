@@ -348,7 +348,7 @@ supports:
 
   lacerate_iii:
     name: 割裂 III
-    description: 被輔助的攻擊一定讓敵人流血（流血只有攻擊會造成；目標移動時加倍）。
+    description: 被輔助的攻擊一定讓敵人流血（目標移動時加倍）。
     icon: NETHERITE_SCRAP
     tier: 3
     requires: [attack]
@@ -886,7 +886,7 @@ supports:
     requires: [projectile]
     excludes: [minion]
     mana_multiplier: 1.2
-    # 2026-10-26 照 PoE2 基準 Close Combat I：原作 1 公尺內擊中更多 20%（到 3.5 公尺遞減到 0）、消耗 120%；我們 3.5 格內一律算，更多 35% → 20%（跟貼身一樣）；這次之前 tier 2、魔耗 1.15、stat: damage.close, type: MORE, value: 35
+    # 2026-10-26 照 PoE2 基準 Close Combat I：原作 1 格內擊中更多 20%（到 3.5 格遞減到 0）、消耗 120%；我們 3.5 格內一律算，更多 35% → 20%（跟貼身一樣）；這次之前 tier 2、魔耗 1.15、stat: damage.close, type: MORE, value: 35
     modifiers:
       - { stat: damage.close, type: MORE, value: 20 }
 
@@ -1834,15 +1834,17 @@ supports:
 
   deliberation:            # Deliberation
     name: 凝息
-    description: 被輔助的技能更痛，但使用時移動得更慢。
+    description: 被輔助的技能更痛，但攻擊與施法稍慢。
     icon: CLOCK
     tier: 2
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Deliberation（poe2db）；這次之前 tier 2、魔耗 1.2、stat: damage, type: MORE, value: 15
-    # 2026-10-26 照 PoE2：補上代價「使用被輔助的技能時移動速度懲罰更多 30%」（SkillMovePenalty）；這次之前放技能不會變慢，這段沒做
+    # 2026-10-27 照站長「放技能減速全部移除」：原作代價「使用被輔助的技能時移動速度懲罰更多 30%」沒有作用了，平衡等效成攻擊／施法速度更少 6%
+    #   （原作：懲罰 70% → 91%，放技能時多慢 21 個百分點 ≈ 移動速度少 6%（照衝刺突擊 30% ≈ 8% 的換算），換成同程度的出手速度）；這次之前 movement.action_penalty MORE 30
     modifiers:
       - { stat: damage, type: MORE, value: 20 }
-      - { stat: movement.action_penalty, type: MORE, value: 30 }
+      - { stat: attack.speed, type: MORE, value: -6 }
+      - { stat: cast.speed, type: MORE, value: -6 }
 
   overreach:               # Overreach（近身命中降低用「命中更少」近似）
     name: 闊勢
@@ -2235,7 +2237,7 @@ supports:
 
   infernal_legion_ii:
     name: 燃僕 II
-    description: 被輔助的召喚物每秒受到最大生命 10% 的火焰傷害，並點燃 2 格內的敵人（像造成牠最大生命 10% 的基礎火焰傷害）；召喚物火焰抗性 +20%。
+    description: 被輔助的召喚物每秒受到最大生命 10% 的火焰傷害（先扣能量護盾），並點燃 2 格內的敵人（像牠造成最大生命 10% 的基礎火焰傷害，吃召喚物的加成）；召喚物火焰抗性 +20%。
     icon: BLAZE_POWDER
     tier: 3
     requires: [minion]
@@ -3916,7 +3918,7 @@ supports:
 
   creeping_chill:          # Creeping Chill
     name: 蔓寒
-    description: 被輔助的技能造出冰晶時消耗一顆{charge:power}，冰晶周圍結出冰緩地（半徑 1.2 公尺，每秒變大 50%，最多 4 倍）：當作造成冰晶生命 100% 的冰冷傷害來冰緩敵人。
+    description: 被輔助的技能造出冰晶時消耗一顆{charge:power}，冰晶周圍結出冰緩地（半徑 1.2 格，每秒變大 50%，最多 4 倍）：當作造成冰晶生命 100% 的冰冷傷害來冰緩敵人。
     icon: PRISMARINE_CRYSTALS
     tier: 1
     requires: [crystal]
@@ -4374,11 +4376,11 @@ supports:
 
   deadly_resolve:          # Deadly Resolve
     name: 決殺
-    description: 引導被輔助的技能時每 1 秒獲得一層必殺決心（最多 3 層，每層 10 秒）；敵人擊中你時用掉一層，朝牠斬出 3 公尺、120 度的一刀（不用武器的攻擊傷害；每 5～108 點護甲更多 1%（照技能等級），最多更多 200%），最多每 0.3 秒一次。
+    description: 引導被輔助的技能時每 1 秒獲得一層必殺決心（最多 3 層，每層 10 秒）；敵人擊中你時用掉一層，朝牠斬出 3 格、120 度的一刀（不用武器的攻擊傷害；每 5～108 點護甲更多 1%（照技能等級），最多更多 200%），最多每 0.3 秒一次。
     icon: IRON_INGOT
     tier: 2
     mana_multiplier: 1.0
-    # 2026-10-27 照 PoE2 Deadly Resolve（第 3 階；poe2db／RePoE；照原作；2026-10-27 改成原作：斬擊照 TriggeredDeadlyResolvePlayer（3 公尺 120 度、逐級傷害與護甲換算；這次之前每 200 點護甲更多 1%、最多 100%，身邊一圈））；這次之前沒有這顆
+    # 2026-10-27 照 PoE2 Deadly Resolve（第 3 階；poe2db／RePoE；照原作；2026-10-27 改成原作：斬擊照 TriggeredDeadlyResolvePlayer（3 格 120 度、逐級傷害與護甲換算；這次之前每 200 點護甲更多 1%、最多 100%，身邊一圈））；這次之前沒有這顆
     modifiers:
       - { stat: channel.deadly_resolve, type: FLAT, value: 3 }
 
@@ -4520,7 +4522,7 @@ supports:
 
   font_of_blood:           # Font of Blood
     name: 血泉
-    description: 被輔助的圖騰四周 4 公尺是血之泉：站在裡面的你與隊友偷取圖騰物理傷害的 12% 為生命。
+    description: 被輔助的圖騰四周 4 格是血之泉：站在裡面的你與隊友偷取圖騰物理傷害的 12% 為生命。
     icon: GLISTERING_MELON_SLICE
     tier: 2
     requires: [totem]
@@ -4531,7 +4533,7 @@ supports:
 
   font_of_mana:            # Font of Mana
     name: 魔泉
-    description: 被輔助的圖騰四周 4 公尺是魔之泉：站在裡面的你與隊友偷取圖騰物理傷害的 12% 為魔力。
+    description: 被輔助的圖騰四周 4 格是魔之泉：站在裡面的你與隊友偷取圖騰物理傷害的 12% 為魔力。
     icon: LAPIS_LAZULI
     tier: 2
     requires: [totem]
@@ -4631,7 +4633,7 @@ supports:
 
   hex_bloom:               # Hex Bloom
     name: 咒綻
-    description: 被輔助的詛咒影響的敵人死掉時，詛咒傳給 3 公尺內的敵人。
+    description: 被輔助的詛咒影響的敵人死掉時，詛咒傳給 3 格內的敵人。
     icon: FERMENTED_SPIDER_EYE
     tier: 2
     mana_multiplier: 1.2
@@ -4641,7 +4643,7 @@ supports:
 
   holy_descent:            # Holy Descent
     name: 聖降
-    description: 被輔助的跳躍技能落地時留下 2.2 公尺的聖化地面 4 秒：站在上面的你與隊友每秒回復 5% 最大生命，詛咒效果減少 50%。
+    description: 被輔助的跳躍技能落地時留下 2.2 格的聖化地面 4 秒：站在上面的你與隊友每秒回復 5% 最大生命，詛咒效果減少 50%。
     icon: GLOWSTONE_DUST
     tier: 3
     mana_multiplier: 1.0
@@ -4743,7 +4745,7 @@ supports:
 
   minion_splash_ii:        # Minion Splash II
     name: 僕濺 II
-    description: 被輔助的召喚物近戰打中時，目標周圍 2 公尺的敵人受到這一下 60% 的傷害；召喚物的範圍增加 20%。
+    description: 被輔助的召喚物近戰打中時，目標周圍 2 格的敵人受到這一下 60% 的傷害；召喚物的範圍增加 20%。
     icon: SLIME_BALL
     tier: 3
     requires: [minion]
@@ -4755,7 +4757,7 @@ supports:
 
   minion_pact_ii:          # Minion Pact II
     name: 僕契 II
-    description: 被輔助的技能放的時候，附近（6 公尺）一隻你的召喚物失去等同你最大生命 150% 的生命，這一下更多 35% 傷害。
+    description: 被輔助的技能放的時候，附近（6 格）一隻你的召喚物失去等同你最大生命 150% 的生命，這一下更多 35% 傷害。
     icon: GHAST_TEAR
     tier: 3
     requires: [attack, spell]
@@ -4768,14 +4770,17 @@ supports:
 
   mobility:                # Mobility
     name: 輕身
-    description: 放被輔助的技能時移動速度的懲罰更少 25%。
+    description: 被輔助的技能攻擊與施法速度增加 6%。
     icon: FEATHER
     tier: 2
     excludes: [persistent, aura]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Mobility（第 3 階；poe2db／RePoE；照原作）；這次之前沒有這顆
+    # 2026-10-27 照站長「放技能減速全部移除」：原作「放被輔助的技能時移動懲罰更少 25%」沒有作用了，平衡等效成攻擊／施法速度增加 6%
+    #   （懲罰 70% → 52.5%，放技能時快 17.5 個百分點 ≈ 移動速度 5～6%）；這次之前 movement.action_penalty MORE -25
     modifiers:
-      - { stat: movement.action_penalty, type: MORE, value: -25 }
+      - { stat: attack.speed, type: INCREASED, value: 6 }
+      - { stat: cast.speed, type: INCREASED, value: 6 }
 
   neural_overload:         # Neural Overload
     name: 電載
@@ -4846,7 +4851,7 @@ supports:
 
   profanity_ii:            # Profanity II
     name: 褻屍 II
-    description: 被輔助的技能放的時候用掉 5 公尺內最多 10 具屍體，每具這一下混沌更多 5% 傷害。
+    description: 被輔助的技能放的時候用掉 5 格內最多 10 具屍體，每具這一下混沌更多 5% 傷害。
     icon: BONE
     tier: 3
     requires: [attack, spell]
@@ -4859,7 +4864,7 @@ supports:
 
   punch_through:           # Punch Through
     name: 擊穿
-    description: 被輔助的近戰技能擊退敵人時讓牠成為好目標：下一次投射物攻擊擊中牠時，每公尺擊退距離增加 3% 傷害。
+    description: 被輔助的近戰技能擊退敵人時讓牠成為好目標：下一次投射物攻擊擊中牠時，每格擊退距離增加 3% 傷害。
     icon: SLIME_BALL
     tier: 2
     requires: [melee]
@@ -5043,7 +5048,7 @@ supports:
 
   shock_conduction_ii:     # Shock Conduction II
     name: 傳雷 II
-    description: 被輔助的技能讓敵人感電時，50% 機率讓 2.5 公尺內的敵人也感電；擊中濕透的敵人（積雷雲範圍內）一定感電。
+    description: 被輔助的技能讓敵人感電時，50% 機率讓 2.5 格內的敵人也感電；擊中濕透的敵人（積雷雲範圍內）一定感電。
     icon: COPPER_INGOT
     tier: 2   # PoE2 第 0 階（不從未切割寶石切；我們放第 2 階）
     requires: [attack, spell]
@@ -5168,12 +5173,12 @@ supports:
 
   stomping_ground:         # Stomping Ground
     name: 踏震
-    description: 用被輔助的突進技能時每走一步（1.5 公尺）震出一陣 2 公尺的震波（武器攻擊傷害的 50%）；跳躍技能起跳、落地各一步。
+    description: 用被輔助的突進技能時每走一步（1.5 格）震出一陣 2 格的震波（武器攻擊傷害的 50%）；跳躍技能起跳、落地各一步。
     icon: FLINT
     tier: 1
     requires: [travel]
     mana_multiplier: 1.0
-    # 2026-10-27 照 PoE2 Stomping Ground（第 1 階；poe2db／RePoE；照原作；2026-10-27 改成原作：每走一步一陣、震波是攻擊（武器傷害 50%、2 公尺；這次之前起點、終點各一陣法術震波）；我們沒有走路動畫，一步照跑步的步幅 1.5 公尺）；這次之前沒有這顆
+    # 2026-10-27 照 PoE2 Stomping Ground（第 1 階；poe2db／RePoE；照原作；2026-10-27 改成原作：每走一步一陣、震波是攻擊（武器傷害 50%、2 格；這次之前起點、終點各一陣法術震波）；我們沒有走路動畫，一步照跑步的步幅 1.5 格）；這次之前沒有這顆
     modifiers:
       - { stat: travel.stomping_ground, type: FLAT, value: 1 }
 
@@ -5359,7 +5364,7 @@ supports:
 
   wildfire:                # Wildfire
     name: 野火
-    description: 被輔助的技能造成的點燃擴散到 1.5 公尺內、待滿 1 秒的敵人。
+    description: 被輔助的技能造成的點燃擴散到 1.5 格內、待滿 1 秒的敵人。
     icon: BLAZE_POWDER
     tier: 2
     requires: [attack, spell]

@@ -567,10 +567,10 @@ public final class AilmentService {
                 }
             }
         }
-        // 流血（PoE2）：只有攻擊的物理傷害；機率看加成（流血機率 +x%）
+        // 流血（PoE2）：擊中的物理傷害（攻擊、法術都可以）；機率看加成（流血機率 +x%）
         // 2026-10-26（昇華・鮮血荊棘）：元素傷害也計入流血幅度
         final double bleedBase = physical + (tw.exilecore.ascendancy.AscendancyEffects.elementalBleed(attacker) ? fire + cold + lightning : 0);
-        if (bleedBase > 0 && skill.isAttack()) {
+        if (bleedBase > 0 && canBleed(skill)) {
             final Set<String> context = skill.contextFor(DamageType.PHYSICAL);
             // 2026-10-26 照 PoE2：切割（Incision）每層讓牠被流血的機率 +10%（天賦的切割效果另外乘）
             final double incision = plugin.skills() == null || plugin.skills().treeMechanics() == null ? 0
@@ -1142,8 +1142,8 @@ public final class AilmentService {
             dot += config.igniteDps(igniteBase, attack.increased(StatKeys.IGNITE_MAGNITUDE, context), attack.more(StatKeys.IGNITE_MAGNITUDE, context))
                     * uptime(chance, hitsPerSecond, seconds);
         }
-        // 流血（只有攻擊）
-        if (physical > 0 && skill.isAttack()) {
+        // 流血（攻擊、法術都可以，2026-10-27 照 PoE2）
+        if (physical > 0 && canBleed(skill)) {
             final Set<String> context = skill.contextFor(DamageType.PHYSICAL);
             final double chance = config.bleedChance(physical, threshold, attack.flat(StatKeys.BLEED_CHANCE, context),
                     attack.increased(StatKeys.BLEED_CHANCE, context)) * attack.more(StatKeys.BLEED_CHANCE, context);
@@ -2297,6 +2297,15 @@ public final class AilmentService {
     }
 
     // ---- 清除 ----
+
+    /**
+     * 2026-10-27 照 PoE2：任何帶物理傷害的擊中都可以造成流血（攻擊、法術都算；PoE1 才是只有攻擊）——
+     * 法術要有流血機率才會流血（技能本身寫的、天賦「暴擊時 x% 機率造成流血」、輔助…）。
+     * 這次之前只有攻擊會流血（再之前連血脈牽、骨綻、腐血嘯寫了流血機率都不會）。
+     */
+    static boolean canBleed(final SkillProfile skill) {
+        return skill != null;
+    }
 
     /** 只解除一種異常（護符，2026-10）；凍結、暈眩解除後外觀與移動照常還原。 */
     public void cure(final LivingEntity entity, final AilmentType type) {

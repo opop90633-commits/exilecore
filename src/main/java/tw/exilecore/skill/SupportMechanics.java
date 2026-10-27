@@ -235,7 +235,7 @@ public final class SupportMechanics implements Listener {
     // 放技能之前、之後
     // =====================================================================
 
-    /** 不能用的原因（要榮耀、震嘯要先移動 10 公尺）；可以用回傳 null。 */
+    /** 不能用的原因（要榮耀、震嘯要先移動 10 格）；可以用回傳 null。 */
     String usageProblem(final Player player, final SkillBuild build) {
         final String lineageProblem = lineage.usageProblem(player, build); // 2026-10-27 照 PoE2：連膛（彈匣空了要翻滾裝填）
         if (lineageProblem != null) {
@@ -252,13 +252,13 @@ public final class SupportMechanics implements Listener {
             final Double mark = echoMark.get(key(player, build.definition().id()));
             final double moved = mark == null ? Double.MAX_VALUE : travelled(player) - mark;
             if (moved < ECHO_TRAVEL) {
-                return String.format(Locale.ROOT, "%s 要先移動 %.0f 公尺（還差 %.1f）", build.definition().name(), ECHO_TRAVEL, ECHO_TRAVEL - moved);
+                return String.format(Locale.ROOT, "%s 要先移動 %.0f 格（還差 %.1f）", build.definition().name(), ECHO_TRAVEL, ECHO_TRAVEL - moved);
             }
         }
         return extras.usageProblem(player, build, effective); // 2026-10-27：先祖援助、無畏、淨化…
     }
 
-    /** 震嘯：用過之後要再移動幾公尺才能用。 */
+    /** 震嘯：用過之後要再移動幾格才能用。 */
     static final double ECHO_TRAVEL = 10;
 
     /** 真的放了（扣完魔力之後）：用掉榮耀、記下移動距離。 */
@@ -316,7 +316,7 @@ public final class SupportMechanics implements Listener {
         final StatSheet effective = build.profile().effective(plugin.players().sheet(player));
         final Set<String> tags = build.profile().tags();
         final List<Modifier> extra = new ArrayList<>();
-        // 引雷（PoE2 Volt）：每移動 1 公尺 2 點電荷，最多 30；放的時候全部用掉，每點獲得 1% 傷害為額外閃電傷害
+        // 引雷（PoE2 Volt）：每移動 1 格 2 點電荷，最多 30；放的時候全部用掉，每點獲得 1% 傷害為額外閃電傷害
         final double voltMax = effective.flat(SupportKeys.VOLT, tags);
         if (voltMax > 0 && build.isAttack()) {
             final String key = key(player, build.definition().id());
@@ -455,7 +455,7 @@ public final class SupportMechanics implements Listener {
             }
             if (spec.trigger() != null) {
                 // 2026-10-27 照 PoE2（Shield Wave）：盾每 15 點護甲附加 5–7 物理（再乘盾波的傷害效益）；這次之前沒有
-                // 2026-10-27 照 PoE2（堅壁戰吼的品質）：盾波半徑 +x 公尺
+                // 2026-10-27 照 PoE2（堅壁戰吼的品質）：盾波半徑 +x 格
                 castHidden(player, spec.trigger(), each.level(), player.getLocation(), 0, null, shieldWaveAdded(offhandShieldArmour(player)),
                         triggerRadiusScale(service.config().skill(spec.trigger()), each.level(), each.triggerRadius()));
             }
@@ -498,7 +498,7 @@ public final class SupportMechanics implements Listener {
     }
 
     /**
-     * 2026-10-27：隱藏技能的半徑多 extra 公尺時，半徑要乘多少（照它自己這一級的基礎半徑；沒有半徑或沒加回傳 1）。
+     * 2026-10-27：隱藏技能的半徑多 extra 格時，半徑要乘多少（照它自己這一級的基礎半徑；沒有半徑或沒加回傳 1）。
      */
     static double triggerRadiusScale(final SkillDefinition sub, final int level, final double extra) {
         if (sub == null || extra <= 0) {
@@ -514,7 +514,7 @@ public final class SupportMechanics implements Listener {
         castHidden(player, skillId, level, at, cooldown, target, local, 1);
     }
 
-    /** 2026-10-27：同上，半徑再乘 radiusScale（堅壁戰吼的品質：盾波半徑 +x 公尺）。 */
+    /** 2026-10-27：同上，半徑再乘 radiusScale（堅壁戰吼的品質：盾波半徑 +x 格）。 */
     void castHidden(final Player player, final String skillId, final int level, final Location at, final long cooldown, final LivingEntity target,
                     final List<Modifier> local, final double radiusScale) {
         final SkillDefinition sub = service.config().skill(skillId);
@@ -559,7 +559,7 @@ public final class SupportMechanics implements Listener {
         final Set<String> tags = build.profile().tags();
         final long now = now();
         int bonus = 0;
-        // 碎甲吼（PoE2 Battershout）：用掉範圍內敵人的完全破甲，在牠身上炸一下（破掉的護甲 40% 物理傷害，2 公尺，傳奇更多 50%）
+        // 碎甲吼（PoE2 Battershout）：用掉範圍內敵人的完全破甲，在牠身上炸一下（破掉的護甲 40% 物理傷害，2 格，傳奇更多 50%）
         if (StatKeys.flag(effective, SupportKeys.FLAG_BATTERSHOUT) && plugin.ailments() != null && plugin.monsters() != null) {
             int exploded = 0;
             for (final LivingEntity target : enemies) {
@@ -744,7 +744,7 @@ public final class SupportMechanics implements Listener {
     }
 
     private final Map<UUID, Kaom> kaom = new HashMap<>();
-    /** 火山步每走幾公尺一次；火山噴發的冷卻（tick）。 */
+    /** 火山步每走幾格一次；火山噴發的冷卻（tick）。 */
     static final double STEP_METRES = 1.2;
     static final long ERUPTION_COOLDOWN = 8;
 
@@ -1117,7 +1117,7 @@ public final class SupportMechanics implements Listener {
         }
     }
 
-    /** 元素崩解：2 公尺，照智慧：火 40–60%、冰 80–120%、電 1–120%（只有用掉的元素），暴擊率 10%。 */
+    /** 元素崩解：2 格，照智慧：火 40–60%、冰 80–120%、電 1–120%（只有用掉的元素），暴擊率 10%。 */
     private void discharge(final Player player, final LivingEntity center, final boolean fire, final boolean cold, final boolean lightning) {
         final double intelligence = Math.max(0, plugin.players().sheet(player).get(StatKeys.INT));
         final DamagePacket min = new DamagePacket();
@@ -1268,23 +1268,34 @@ public final class SupportMechanics implements Listener {
                 continue;
             }
             final double maxLife = MinionSheets.life(minion.effective);
-            // 自己燒：吃召喚物的火焰抗性
-            final double resist = Math.min(75, minion.effective.get(StatKeys.RESIST_FIRE));
-            final double loss = maxLife * percent / 100.0 * (1 - resist / 100.0) * minion.healthScale;
+            // 自己燒：吃召喚物的火焰抗性（上限照召喚物自己的抗性上限，最多 90%）
+            // 2026-10-27：照 PoE2，非混沌的持續傷害先扣能量護盾再扣生命（這次之前直接扣生命、抗性上限寫死 75%）
+            final double maxResist = Math.min(90, minion.effective.get(StatKeys.RESIST_MAX)
+                    + minion.effective.flat(StatKeys.resistMax(DamageType.FIRE), Set.of()));
+            final double resist = Math.min(maxResist > 0 ? maxResist : 75, minion.effective.get(StatKeys.RESIST_FIRE));
+            double loss = maxLife * percent / 100.0 * (1 - resist / 100.0);
+            if (loss > 0 && minion.es > 0) {
+                final double absorbed = Math.min(minion.es, loss);
+                minion.es -= absorbed;
+                loss -= absorbed;
+            }
             if (loss > 0) {
-                minion.mob.setHealth(Math.max(0, minion.mob.getHealth() - loss));
+                minion.mob.setHealth(Math.max(0, minion.mob.getHealth() - loss * minion.healthScale));
                 if (minion.mob.getHealth() <= 0) {
                     continue;
                 }
             }
             minion.mob.getWorld().spawnParticle(Particle.FLAME, minion.mob.getLocation().add(0, minion.mob.getHeight() * 0.5, 0), 4, 0.3, 0.4, 0.3, 0.01);
-            final DamagePacket fire = new DamagePacket();
-            fire.add(DamageType.FIRE, maxLife * percent / 100.0);
-            final SkillProfile burn = new SkillProfile("infernal_legion", Set.of(Tags.FIRE, Tags.AREA), 1.0, fire, fire, Map.of(),
-                    List.of(Modifier.flat(StatKeys.IGNITE_CHANCE, 100, "燃僕"), Modifier.more(SupportKeys.DAMAGE_HIT, -1.0, "燃僕"),
-                            Modifier.flat(StatKeys.FLAG_NO_CRIT, 1, "燃僕")));
+            if (plugin.ailments() == null) {
+                continue;
+            }
+            // 2026-10-27 照 PoE2：點燃是召喚物施加的——像召喚物造成「最大生命 10%」的基礎火焰傷害，吃召喚物自己的傷害、火焰傷害、點燃加成，
+            // 一定點燃（不擲機率）。這次之前當作你本人的一下擊中：吃的是你的加成，還會觸發你的擊中效果（偷取、擊中回復、觸發…）
+            final Set<String> fireContext = Set.of(Tags.FIRE);
+            final double base = maxLife * percent / 100.0
+                    * Math.max(0, 1 + minion.effective.increased(StatKeys.DAMAGE, fireContext)) * minion.effective.more(StatKeys.DAMAGE, fireContext);
             for (final LivingEntity target : service.targets().around(minion.mob.getLocation(), Math.max(1, radius), owner)) {
-                plugin.combat().skillDamage().hit(owner, target, burn, null);
+                plugin.ailments().igniteFrom(owner, target, base, minion.effective);
             }
         }
     }

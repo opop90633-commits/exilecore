@@ -595,12 +595,12 @@ final class SkillExecutor {
         damage.hit(player, target, profile, knockback(from, target, knockback));
     }
 
-    /** 蝕咒裂：找詛咒的範圍（PoE2 2.8 公尺）、一次最多幾個爆炸。 */
+    /** 蝕咒裂：找詛咒的範圍（PoE2 2.8 格）、一次最多幾個爆炸。 */
     static final double HEXBLAST_SEARCH = 2.8;
     static final int HEXBLAST_MAX = 10;
 
     /**
-     * 2026-10-26 照 PoE2 Hexblast：準心處 2.8 公尺內每一隻被你詛咒的敵人，拿掉牠的詛咒、在牠身上炸開一圈混沌（技能的半徑、傷害），
+     * 2026-10-26 照 PoE2 Hexblast：準心處 2.8 格內每一隻被你詛咒的敵人，拿掉牠的詛咒、在牠身上炸開一圈混沌（技能的半徑、傷害），
      * 一次最多 10 個；沒有詛咒就沒有傷害。回傳炸了幾個。（原作只引爆過了一半時間的詛咒：我們沒記詛咒的開始時間，任何詛咒都算）
      */
     int hexblast(final Player player, final SkillBuild build, final LivingEntity preferred) {
@@ -639,14 +639,14 @@ final class SkillExecutor {
         return blasts;
     }
 
-    /** 稜光裂：脈衝的範圍（PoE2 5 公尺）、最多用掉幾隻的異常、冰爆與雷爆是火爆的幾倍（PoE2 350% ÷ 125%、140% ÷ 125%）。 */
+    /** 稜光裂：脈衝的範圍（PoE2 5 格）、最多用掉幾隻的異常、冰爆與雷爆是火爆的幾倍（PoE2 350% ÷ 125%、140% ÷ 125%）。 */
     static final double SUNDER_PULSE = 5;
     static final int SUNDER_MAX = 20;
     static final double SUNDER_COLD = 2.8;
     static final double SUNDER_LIGHTNING = 1.12;
 
     /**
-     * 2026-10-26 照 PoE2 Elemental Sundering：身邊 5 公尺的脈衝（不打人）用掉最多 20 隻敵人身上的冰凍、感電、點燃，
+     * 2026-10-26 照 PoE2 Elemental Sundering：身邊 5 格的脈衝（不打人）用掉最多 20 隻敵人身上的冰凍、感電、點燃，
      * 每用掉一個在那隻身上炸開那種元素（技能的半徑；火的照技能的表、冰 2.8 倍、雷 1.12 倍，全部轉成那種元素、不會造成異常）。
      * 沒有異常就沒有傷害。回傳炸了幾個。（這次之前是準心處隨機一種元素的爆炸）
      */
@@ -1063,7 +1063,19 @@ final class SkillExecutor {
                 zones.addImpact(origin.owner(), at, build.radius(), build.profile(), build.definition().visual(), delay, id, build.level());
             }
         } else {
-            zones.addImpact(origin.owner(), center, build.radius(), build.profile(), build.definition().visual(), delay);
+            // 2026-10-27 照 PoE2（召霆矢這類射到地上再落下的投射物技能）：多的投射物各射一支、各落一道，平均散在準心周圍；
+            // 這次之前只落一道（多一發投射物的輔助只有懲罰沒有效果）
+            final int count = build.definition().tags().contains(tw.exilecore.stats.Tags.PROJECTILE) ? Math.max(1, build.projectiles()) : 1;
+            final double spread = Math.max(1.5, build.radius() * 1.2);
+            final double phase = plugin.random().nextDouble() * Math.PI * 2;
+            for (int i = 0; i < count; i++) {
+                final Location at = center.clone();
+                if (i > 0) {
+                    final double angle = phase + Math.PI * 2 * (i - 1) / (count - 1);
+                    at.add(Math.cos(angle) * spread, 0, Math.sin(angle) * spread);
+                }
+                zones.addImpact(origin.owner(), at, build.radius(), build.profile(), build.definition().visual(), delay);
+            }
         }
         visuals.cast(build.definition().visual(), origin.eye());
     }

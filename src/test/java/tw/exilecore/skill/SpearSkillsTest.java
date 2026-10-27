@@ -65,7 +65,7 @@ class SpearSkillsTest {
         assertEquals(0, spear.params().gravity(), 1e-9, "落點在準心，不是拋物線");
     }
 
-    /** 2026-10-27 照 PoE2 Explosive Spear 的 Frenzy-Charged：十字形（每一臂 4 → 5.9 → 7.9 公尺、寬 1.5 公尺）＋燃燒地面，拿掉替代用的一定點燃。 */
+    /** 2026-10-27 照 PoE2 Explosive Spear 的 Frenzy-Charged：十字形（每一臂 4 → 5.9 → 7.9 格、寬 1.5 格）＋燃燒地面，拿掉替代用的一定點燃。 */
     @Test
     void frenzyExplosionIsACrossWithIgnitedGround() {
         final SkillDefinition infused = config.skill("explosive_spear_infused");
@@ -90,7 +90,7 @@ class SpearSkillsTest {
         assertFalse(SpearMechanics.inCross(4, 0, d, d, 5.9, 0.75));
     }
 
-    /** 2026-10-27 照 PoE2：落點離你最近 1 公尺、最遠 range。 */
+    /** 2026-10-27 照 PoE2：落點離你最近 1 格、最遠 range。 */
     @Test
     void landingPointIsClampedToMinAndMaxDistance() {
         final org.bukkit.Location from = new org.bukkit.Location(null, 0, 64, 0);

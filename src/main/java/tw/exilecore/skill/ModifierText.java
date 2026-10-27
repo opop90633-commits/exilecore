@@ -113,6 +113,13 @@ public final class ModifierText {
                         + describe(new Modifier(modifier.stat(), modifier.type(), modifier.value(), rest, modifier.source()));
             }
         }
+        if (modifier.tags().contains(tw.exilecore.stats.Tags.MINION) && modifier.tags().contains(tw.exilecore.stats.TreeMechanicKeys.IN_PRESENCE)) {
+            // 2026-10-27 照 PoE2：[minion, in_presence] 是「你存在範圍內的友軍」（召喚物、圖騰都算），不是只有召喚物
+            final java.util.Set<String> rest = new java.util.LinkedHashSet<>(modifier.tags());
+            rest.remove(tw.exilecore.stats.Tags.MINION);
+            rest.remove(tw.exilecore.stats.TreeMechanicKeys.IN_PRESENCE);
+            return "你存在範圍內的友軍：" + describe(new Modifier(modifier.stat(), modifier.type(), modifier.value(), rest, modifier.source()));
+        }
         final double value = modifier.value();
         final String percent = number(Math.abs(value) * 100);
         final String stat = modifier.stat();
@@ -371,7 +378,7 @@ public final class ModifierText {
             case StatKeys.FLAG_MARK_CRIT -> "你對被標記的敵人打出暴擊時印記用掉，給你一顆怒星";
             case StatKeys.FLAG_NO_AILMENTS -> "不能造成元素異常（點燃、冰緩、凍結、感電）";
             case StatKeys.FLAG_PARRY -> "下一次被攻擊一定格擋：攻擊者被招架 2 秒（受到的攻擊傷害增加 50%），你揮盾橫掃身邊的敵人";
-            case StatKeys.FLAG_MAGMA_BARRIER -> "盾牌 8 秒灌滿熔岩；灌滿後下一次格擋噴出熔岩（火焰攻擊，2.8 公尺）並給你一顆磐星";
+            case StatKeys.FLAG_MAGMA_BARRIER -> "盾牌 8 秒灌滿熔岩；灌滿後下一次格擋噴出熔岩（火焰攻擊，2.8 格）並給你一顆磐星";
             case "flag.lingering_illusion" -> "翻滾時花 10 魔力留下一個引怪的幻身；幻身被打掉留下殘影，撿起來給你一顆銳星";
             case StatKeys.FLAG_LOSE_RAGE_AT_MAX -> "怒氣滿時失去全部怒氣";
             case StatKeys.DAMAGE_PER_CHARGE -> "身上每顆戰星增加 " + number(value) + "% 傷害";
@@ -537,7 +544,7 @@ public final class ModifierText {
             case tw.exilecore.stats.SupportKeys.FLAG_PIN_BUILDUP -> "物理傷害累積定身（暈眩累積的加成改成加在定身累積上），不會累積重暈";
             case tw.exilecore.stats.SupportKeys.PIN_BUILDUP -> scaled(modifier, "定身累積", percent);
             case tw.exilecore.stats.SupportKeys.PIN_DURATION -> scaled(modifier, "定身持續時間", percent);
-            case tw.exilecore.stats.TreeEffectKeys.ACTION_PENALTY -> scaled(modifier, "使用時的移動速度懲罰", percent); // 2026-10-26（凝息）
+            case tw.exilecore.stats.TreeEffectKeys.ACTION_PENALTY -> scaled(modifier, "使用時的移動速度懲罰", percent); // 2026-10-26（凝息）；2026-10-27 照站長「放技能減速全部移除」：已經沒有來源，不會出現
             case tw.exilecore.stats.SupportKeys.DAMAGE_SKILL_DOT -> scaled(modifier, "非異常的持續傷害", percent);
             case tw.exilecore.stats.SupportKeys.DAMAGE_SKILL_DOT_SHORT -> scaled(modifier, "持續時間不到 1 秒的非異常持續傷害", percent);
             case tw.exilecore.stats.SupportKeys.SKILL_AND_AILMENT_DURATION -> scaled(modifier, "技能與它造成的點燃、流血、中毒的持續時間", percent);

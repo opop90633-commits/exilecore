@@ -21,7 +21,7 @@ public final class ConditionKeys {
     public static final String REVERT_SPELL_PER_SECOND = "shapeshift.revert_spell_damage";
     /** 變回人形時用掉全部怒氣，每點回復最大生命的 x%。 */
     public static final String REVERT_RAGE_LIFE = "shapeshift.revert_rage_life";
-    /** 舉盾的移動變慢（INCREASED；負的＝變慢得少）。 */
+    /** 舉盾的移動變慢（INCREASED；負的＝變慢得少）。2026-10-27 照站長「放技能減速全部移除」：舉盾不再變慢，這個不再有作用、也沒有來源（天賦樹、羽堡鳶盾改成移動速度）。 */
     public static final String GUARD_SLOW = "guard.slow";
 
     /** PoE2：「每秒 10%，最多 80%」＝每秒數值的 8 倍。 */

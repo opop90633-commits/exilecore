@@ -111,7 +111,7 @@ final class AscGranted implements Listener {
      */
     static final int BOIL_MAX = 20;
 
-    /** 2026-10-27 照 PoE2：爆開的範圍 1.5 公尺，每個血泡更多 20% 範圍（加總，不是連乘）；這次之前是 1.2 的次方連乘。 */
+    /** 2026-10-27 照 PoE2：爆開的範圍 1.5 格，每個血泡更多 20% 範圍（加總，不是連乘）；這次之前是 1.2 的次方連乘。 */
     static double boilRadius(final int boil) {
         return 1.5 * Math.sqrt(1 + 0.2 * Math.max(0, Math.min(BOIL_MAX, boil)));
     }
@@ -211,7 +211,7 @@ final class AscGranted implements Listener {
                 own.damaging.pollFirst();
             }
             // 赤炎利劍：你使用造成傷害的技能時，魯兹安用狂熱斬擊（冷卻 4 秒）
-            // 2026-10-27 照 PoE2：魯兹安是有實體的巨靈，瞬移到目標旁邊斬（這次之前沒有實體，直接在你前方 3 公尺斬）
+            // 2026-10-27 照 PoE2：魯兹安是有實體的巨靈，瞬移到目標旁邊斬（這次之前沒有實體，直接在你前方 3 格斬）
             if (on(player, "ruzhan_djinn") && now >= own.zealotryReady && plugin.skills() != null && djinnAt(player, "ruzhan_djinn") != null) {
                 own.zealotryReady = now + Math.round(Math.max(1, level(player, "ruzhan_djinn", "asc.zealotry_cooldown")) * 20);
                 final Location at = aim(player, target, 3);
@@ -369,7 +369,7 @@ final class AscGranted implements Listener {
         });
     }
 
-    /** 2026-10-27：那位巨靈（有實體的召喚物）在哪裡；沒召喚或不在 20 公尺內回傳 null。 */
+    /** 2026-10-27：那位巨靈（有實體的召喚物）在哪裡；沒召喚或不在 20 格內回傳 null。 */
     private Location djinnAt(final Player player, final String djinn) {
         return plugin.skills() == null || plugin.skills().minions() == null ? null : plugin.skills().minions().locate(player, djinn);
     }
@@ -910,7 +910,7 @@ final class AscGranted implements Listener {
             agonyOwner.keySet().removeIf(id -> !agony.containsKey(id));
         }
         // 血肉低語：被詛咒的目標至少保留 15% 生命
-        if (plugin.combat() != null && now % 20 == 0) {
+        if (plugin.combat() != null && AscendancyEffects.every(now, 20)) {
             for (final UUID target : plugin.combat().debuffs().targets()) {
                 if (!plugin.combat().debuffs().cursed(target, now)) {
                     continue;
@@ -1006,7 +1006,7 @@ final class AscGranted implements Listener {
             o.purple = 0;
             dirty = true;
         }
-        // 預告射擊：每 5 秒把面板上的印記放在 10 公尺內一個還沒被標記的敵人身上
+        // 預告射擊：每 5 秒把面板上的印記放在 10 格內一個還沒被標記的敵人身上
         if (on(player, "called_shots") && now >= o.calledNext && plugin.combat() != null) {
             o.calledNext = now + Math.round(Math.max(1, level(player, "called_shots", "asc.called_seconds")) * 20);
             final String mark = firstMark(state);
@@ -1057,7 +1057,7 @@ final class AscGranted implements Listener {
                         org.bukkit.Material.SAND.createBlockData());
             }
         }
-        // 女王進軍：衝刺時化成蝗蟲，每 0.5 秒打 3 公尺內的敵人
+        // 女王進軍：衝刺時化成蝗蟲，每 0.5 秒打 3 格內的敵人
         if (on(player, "queens_procession")) {
             if (player.isSprinting()) {
                 o.sprintEnd = now;
@@ -1069,13 +1069,15 @@ final class AscGranted implements Listener {
                 o.swarm = 0;
             }
         }
-        // 召喚獄炎獵犬：獵犬身邊 2.5 公尺的敵人點燃（照獵犬最大生命的 20%）
-        if (on(player, "infernal_hound") && now % 20 == 0 && plugin.skills().minions() != null && plugin.ailments() != null) {
+        // 召喚獄炎獵犬：獵犬身邊 2.5 格的敵人點燃（照獵犬最大生命的 20%）
+        if (on(player, "infernal_hound") && AscendancyEffects.every(now, 20) && plugin.skills().minions() != null && plugin.ailments() != null) {
             for (final org.bukkit.entity.Entity entity : player.getNearbyEntities(30, 10, 30)) {
                 if (entity instanceof org.bukkit.entity.Wolf wolf && plugin.skills().minions().isMinion(wolf)
                         && player.equals(plugin.skills().minions().owner(wolf))) {
                     final org.bukkit.attribute.AttributeInstance hp = wolf.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
-                    final double houndLife = hp == null ? 0 : hp.getValue() * Math.max(1, plugin.skills().minions().healthScale(wolf));
+                    // 2026-10-27 修正：原版血量是縮過的（真正生命 × healthScale，healthScale ≤ 1），要除回去；以前乘 max(1, 縮放) 等於沒還原，
+                    // 獵犬生命超過 1024 時點燃一律只照 1024 算
+                    final double houndLife = hp == null ? 0 : hp.getValue() / Math.max(1e-6, plugin.skills().minions().healthScale(wolf));
                     for (final LivingEntity enemy : effects.enemiesNear(player, wolf.getLocation(), 2.5)) {
                         plugin.ailments().igniteFrom(player, enemy, houndLife * 0.20, sheet);
                     }
@@ -1121,11 +1123,11 @@ final class AscGranted implements Listener {
             if (oasis.at().getWorld() == player.getWorld() && oasis.at().distanceSquared(player.getLocation()) <= oasis.radius() * oasis.radius()) {
                 plugin.skills().buff(player, "navira_oasis.in", "納維拉的綠洲", 15, List.of(Modifier.flat(StatKeys.LIFE_RECOUP, 30, "納維拉的綠洲"),
                         Modifier.flat(StatKeys.MANA_RECOUP, 20, "納維拉的綠洲")));
-                if (now % 40 == 0 && plugin.flasks() != null) {
+                if (AscendancyEffects.every(now, 40) && plugin.flasks() != null) {
                     plugin.flasks().addCharges(player, 1, tw.exilecore.flask.FlaskKind.LIFE);
                     plugin.flasks().addCharges(player, 1, tw.exilecore.flask.FlaskKind.MANA);
                 }
-                if (now % 20 == 0) {
+                if (AscendancyEffects.every(now, 20)) {
                     oasis.at().getWorld().spawnParticle(Particle.DRIPPING_WATER, oasis.at().clone().add(0, 1, 0), 20, oasis.radius() / 2, 0.4,
                             oasis.radius() / 2, 0);
                 }

@@ -28,9 +28,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 2026-10-27 照 PoE2 0.5 Spearfield（矛陣；RePoE poe2 SpearfieldPlayer、poe2db）：往地上一刺，面前扇形（長度照技能等級 4～9.9 公尺，
- * skills.yml 的 cone.length，吃範圍）冒出一片插在地上的矛——每 0.2 公尺長度一支、同時最多 70 支、插 10 秒（吃持續時間）。
- * 敵人碰到就炸開（0.6 公尺，吃範圍），造成這個技能的傷害並癱瘓；放下 0.5 秒內被敵人碰炸的傷害更少 80%。
+ * 2026-10-27 照 PoE2 0.5 Spearfield（矛陣；RePoE poe2 SpearfieldPlayer、poe2db）：往地上一刺，面前扇形（長度照技能等級 4～9.9 格，
+ * skills.yml 的 cone.length，吃範圍）冒出一片插在地上的矛——每 0.2 格長度一支、同時最多 70 支、插 10 秒（吃持續時間）。
+ * 敵人碰到就炸開（0.6 格，吃範圍），造成這個技能的傷害並癱瘓；放下 0.5 秒內被敵人碰炸的傷害更少 80%。
  * 矛是危險物件（hazard），遲爆（Delayed Reaction）、再布（Rearm）照原作作用在矛上（跟寒凝彈的冰晶、蒺藜步的鐵蒺同一套）：
  * 遲爆＝矛插的時間更少 70%、敵人碰到不會炸，只在插下的那一刻（那時就有敵人，算被敵人碰炸，吃「0.5 秒內更少 80%」）或時間到時炸，更多 x% 傷害；
  * 再布＝炸開後 x% 機率過 1 秒在原地重新插一支（重新計時）。
@@ -39,15 +39,15 @@ import java.util.UUID;
 final class Spearfield {
 
     static final String SIGNATURE = "spearfield";
-    /** 每 0.2 公尺扇形長度一支矛（spear_wall_cm_per_spear 20）。 */
+    /** 每 0.2 格扇形長度一支矛（spear_wall_cm_per_spear 20）。 */
     static final double METRES_PER_SPEAR = 0.2;
     /** 同時最多 70 支（spear_wall_maximum_active_spears）。 */
     static final int MAX_SPEARS = 70;
     /** 矛插 10 秒（base_skill_effect_duration 10000）。 */
     static final long DURATION_TICKS = 200;
-    /** 炸開的半徑 0.6 公尺（active_skill_base_secondary_area_of_effect_radius 6）。 */
+    /** 炸開的半徑 0.6 格（active_skill_base_secondary_area_of_effect_radius 6）。 */
     static final double BLAST = 0.6;
-    /** 敵人「碰到」矛：碰撞箱離矛 0.3 公尺內。 */
+    /** 敵人「碰到」矛：碰撞箱離矛 0.3 格內。 */
     static final double TRIGGER = 0.3;
     /** 放下 0.5 秒內被敵人碰炸：傷害更少 80%（hazard_damage_+%_final_for_first_500_ms_when_not_killed_by_self −80）。 */
     static final long EARLY_TICKS = 10;
@@ -69,7 +69,7 @@ final class Spearfield {
         this.service = service;
     }
 
-    /** 扇形長度 length 公尺冒出幾支矛（每 0.2 公尺一支，最多 70）。 */
+    /** 扇形長度 length 格冒出幾支矛（每 0.2 格一支，最多 70）。 */
     static int count(final double length) {
         return Math.max(1, Math.min(MAX_SPEARS, (int) Math.floor(length / METRES_PER_SPEAR + 1e-6)));
     }
@@ -163,7 +163,7 @@ final class Spearfield {
         }
     }
 
-    /** 炸開（0.6 公尺）；再布：x% 機率過 1 秒在原地重新布置（重新計時）。 */
+    /** 炸開（0.6 格）；再布：x% 機率過 1 秒在原地重新布置（重新計時）。 */
     private void explode(final Player player, final ArrayDeque<Spear> mine, final Spear spear, final long now, final boolean byEnemy) {
         removeDisplay(spear.display());
         final SkillDamage damage = plugin.combat() == null ? null : plugin.combat().skillDamage();

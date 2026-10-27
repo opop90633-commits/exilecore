@@ -106,7 +106,7 @@ public final class LineageKeys {
     public static final String ABYSSAL_ON_MINION_DEATH = "lineage.u.abyssal_on_minion_death";
     /** FLAG（tags [minion]）：召喚物不會受到傷害（憨魄）。 */
     public static final String MINION_UNDAMAGEABLE = "lineage.u.minion_undamageable";
-    /** FLAT：夥伴致盲並點燃 2 公尺內的敵人（像造成牠最大生命 x% 的基礎火焰傷害；焰伴）。 */
+    /** FLAT：夥伴致盲並點燃 2 格內的敵人（像造成牠最大生命 x% 的基礎火焰傷害；焰伴）。 */
     public static final String COMPANION_BLAZE = "lineage.u.companion_blaze";
     /** FLAT：你受到的擊中有 x% 先由夥伴承受，你補償其中 200% 為生命（伴償）。 */
     public static final String COMPANION_SHIELD = "lineage.u.companion_shield";
@@ -114,7 +114,7 @@ public final class LineageKeys {
     public static final String GIGANTIC = "lineage.u.gigantic";
     /** FLAT：召喚物生命降到 0 時不會馬上死，再撐 x 秒（殘戰）。 */
     public static final String UNDYING = "lineage.u.undying";
-    /** FLAT：圖騰附近每有一根你的圖騰（4 公尺內，最多 5 根），更多 x% 傷害、增加 x/2% 範圍、每秒回復 x/10% 生命（林樁）。 */
+    /** FLAT：圖騰附近每有一根你的圖騰（4 格內，最多 5 根），更多 x% 傷害、增加 x/2% 範圍、每秒回復 x/10% 生命（林樁）。 */
     public static final String TOTEM_GROVE = "lineage.u.totem_grove";
     /** FLAT：圖騰倒下時炸開，造成它最大生命 x% 的物理傷害（樁爆）。 */
     public static final String TOTEM_EXPLODE = "lineage.u.totem_explode";
@@ -128,7 +128,7 @@ public final class LineageKeys {
     public static final String DODGE_LOAD = "lineage.u.dodge_load";
     /** FLAG：被輔助的弩技能不會自己裝填（連膛）。 */
     public static final String NO_RELOAD = "lineage.u.no_reload";
-    /** FLAT：落地時引爆 3.5 公尺內的屍體（每具造成牠最大生命 x% 的火焰傷害；燼躍）。 */
+    /** FLAT：落地時引爆 3.5 格內的屍體（每具造成牠最大生命 x% 的火焰傷害；燼躍）。 */
     public static final String LANDING_DETONATE = "lineage.u.landing_detonate";
 
     // ---- 擊中（LineageMechanics.preHit／onHit／擊殺）----
@@ -182,6 +182,6 @@ public final class LineageKeys {
     public static final String CHAOS_BREAKS = "lineage.h.chaos_breaks";
     /** FLAT：最近 15 秒每用過一種不同的指令技能，更多 x% 傷害（令福）。 */
     public static final String PER_COMMAND = "lineage.h.per_command";
-    /** FLAT：對孤立的敵人（6 公尺內沒有其他敵人）擊中更多 x%（孤圍）。 */
+    /** FLAT：對孤立的敵人（6 格內沒有其他敵人）擊中更多 x%（孤圍）。 */
     public static final String VS_ISOLATED = "lineage.h.vs_isolated";
 }

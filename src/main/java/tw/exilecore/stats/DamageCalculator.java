@@ -248,7 +248,7 @@ public final class DamageCalculator {
         if (doubleArmour > 0 && random.nextDouble() < doubleArmour) {
             keystone.add(Modifier.more(StatKeys.ARMOUR, 1.0, "雙倍護甲"));
         }
-        // 2026-10-27 照 PoE2 天賦樹：「用 x% 護甲防禦」（對暴擊、對投射物攻擊、不在低能量護盾時、6 公尺外的）
+        // 2026-10-27 照 PoE2 天賦樹：「用 x% 護甲防禦」（對暴擊、對投射物攻擊、不在低能量護盾時、6 格外的）
         final Set<String> defendContext = crit ? withTag(skill.tags(), TreeLastKeys.CRIT_TAKEN) : skill.tags();
         final double defend = TreeLastKeys.armourDefend(defender, defendContext);
         if (defend > 1) {

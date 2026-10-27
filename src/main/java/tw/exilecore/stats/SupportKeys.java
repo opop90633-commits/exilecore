@@ -19,11 +19,11 @@ public final class SupportKeys {
     public static final String FLAG_GAIN_AS_COLD = "flag.gain_as_cold";
     /** FLAT：打點燃中的敵人時，獲得 x% 傷害為額外火焰傷害（炙獵）。 */
     public static final String EXTRA_FIRE_VS_IGNITED = "damage.extra_fire_vs_ignited";
-    /** FLAT：離你 7 公尺以上的敵人更多 x% 攻擊傷害，3.5 公尺以內沒有加成，中間照距離（遠穿）。 */
+    /** FLAT：離你 7 格以上的敵人更多 x% 攻擊傷害，3.5 格以內沒有加成，中間照距離（遠穿）。 */
     public static final String DAMAGE_FAR = "damage.far";
     /** FLAT：最近用過的技能每有一種不同的元素（火、冰、電），元素傷害更多 x%（元湧）。 */
     public static final String ELEMENTAL_PER_RECENT_TYPE = "damage.elemental_per_recent_type";
-    /** FLAT：每移動 1 公尺累積 2 點電荷（最多 30），放的時候用掉，每點獲得 1% 傷害為額外閃電傷害（引雷）。 */
+    /** FLAT：每移動 1 格累積 2 點電荷（最多 30），放的時候用掉，每點獲得 1% 傷害為額外閃電傷害（引雷）。 */
     public static final String VOLT = "volt.max";
     /** INCREASED：對被定住（凍結、重暈、定身、電擊）的敵人的暴擊率（釘地 II）。 */
     public static final String CRIT_VS_IMMOBILISED = "crit.vs_immobilised";
@@ -101,7 +101,7 @@ public final class SupportKeys {
     public static final String MUSTER = "minion.muster";
     /** FLAT：召喚物每秒受到最大生命 x% 的火焰傷害，並點燃身邊的敵人，像造成最大生命 x% 的基礎火焰傷害（燃僕）。 */
     public static final String INFERNAL_LEGION = "minion.infernal_legion";
-    /** FLAT：燃僕點燃的半徑（公尺）。 */
+    /** FLAT：燃僕點燃的半徑（格）。 */
     public static final String INFERNAL_LEGION_RADIUS = "minion.infernal_legion_radius";
     /** INCREASED：放圖騰的速度（疾樁）。 */
     public static final String TOTEM_PLACEMENT_SPEED = "totem.placement_speed";
@@ -128,7 +128,7 @@ public final class SupportKeys {
     public static final String WARCRY_RAGE_BYPASS = "warcry.rage_bypass";
     /** FLAT：被強化的攻擊有 x% 機率不算進強化次數（不竭嘯）。 */
     public static final String WARCRY_TIRELESS = "warcry.tireless";
-    /** FLAT：戰吼回聲幾次（震嘯：2 次，每次 1.3 秒，範圍每次更多 100%；要先移動 10 公尺才能用）。 */
+    /** FLAT：戰吼回聲幾次（震嘯：2 次，每次 1.3 秒，範圍每次更多 100%；要先移動 10 格才能用）。 */
     public static final String WARCRY_ECHOES = "warcry.echoes";
     /** FLAT：每 5 點怪物強度給 x 點怒氣（聚怒嘯）。 */
     public static final String WARCRY_RAGE_PER_5_POWER = "warcry.rage_per_5_power";

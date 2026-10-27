@@ -48,7 +48,7 @@ public final class KeystoneEffects implements Listener {
     public static final double DEBILITATE_SLOW = 0.2;
     /** 補償（recoup）分幾秒回（PoE2：4 秒）。 */
     static final int RECOUP_SECONDS = 4;
-    /** 感電擴散的半徑（1.5 公尺 = 1.5 格）。 */
+    /** 感電擴散的半徑（1.5 格 = 1.5 格）。 */
     static final double SHOCK_SPREAD_RADIUS = 1.5;
     /** 格擋次數記多久（10 秒）。 */
     static final long BLOCK_WINDOW = 200;
@@ -192,7 +192,7 @@ public final class KeystoneEffects implements Listener {
 
     /**
      * 2026-10-27 照 PoE2：玩家這一下擊中前疊上的：攻擊抽出最強的穿刺（{@link Impales}，加在減免前的物理）、
-     * 箭照飛行距離的暴擊率（狙擊手：7 公尺給滿；飛行距離用你到目標的距離，跟遠星一樣）。
+     * 箭照飛行距離的暴擊率（狙擊手：7 格給滿；飛行距離用你到目標的距離，跟遠星一樣）。
      */
     public static List<Modifier> attackerConditional(final Player attacker, final LivingEntity defender, final StatSheet skillSheet,
                                                      final SkillProfile skill) {

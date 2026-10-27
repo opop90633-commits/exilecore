@@ -953,14 +953,15 @@
   "text": "5% reduced Movement Speed Penalty from using Skills while moving",
   "suggest": [
    {
-    "stat": "movement.action_penalty",
+    "stat": "movement.speed",
     "type": "INCREASED",
     "tags": []
    }
   ],
-  "note": "2026-10-26 照 PoE2：TreeEffectKeys；引擎沒有「放技能時移動變慢」的通用懲罰，只有引導、舉盾這些邊動作邊走的減速，減的是那些（MORE 移速這次也真的生效）",
+  "note": "2026-10-27 照站長「放技能減速全部移除」：放技能不會再變慢（SkillMovePenalty 不套用），原作的減少懲罰改成平衡等效的移動速度：原作懲罰更少 70%，放技能的時間約佔移動中的 36%（照 2026-10-26 之前衝刺突擊懲罰更少 30% ≈ 增加 8% 移動速度、鑲嵌的寶石更少 40% ≈ 增加 10% 的換算），每減少 1% 懲罰 ≈ 0.70 × 0.36 ≈ 增加 0.25% 移動速度；這次之前是 movement.action_penalty INCREASED（減引導、舉盾、放技能的減速）",
   "family": null,
-  "uses": 17
+  "uses": 17,
+  "zh": "增加 {x}% 移動速度"
  },
  "shock_effect_+%": {
   "status": "mapped",
@@ -4997,8 +4998,8 @@
   "family": null,
   "uses": 3,
   "zh": {
-   "pos": "減少 {x}% 遠距離命中值懲罰（原作：增加 {v}% 照亮範圍）",
-   "neg": "增加 {x}% 遠距離命中值懲罰（原作：減少 {v}% 照亮範圍）"
+   "pos": "減少 {x}% 遠距離命中值懲罰",
+   "neg": "增加 {x}% 遠距離命中值懲罰"
   }
  },
  "gain_fire_damage_+%_per_endurance_charge_consumed_recently": {
@@ -5994,18 +5995,20 @@
   "condition": "vs_brokenarmour"
  },
  "movement_speed_penalty_+%_while_raising_shield": {
-  "status": "mapped",
+  "status": "approx",
   "text": "10% reduced Movement Speed Penalty while Actively Blocking",
   "suggest": [
    {
-    "stat": "guard.slow",
+    "stat": "movement.speed",
     "type": "INCREASED",
     "tags": []
    }
   ],
-  "note": "2026-10-26 舉盾的移動變慢乘上（1＋這個）",
+  "note": "2026-10-27 照站長「放技能減速全部移除」：舉盾（架盾、招架）不再變慢，原作的減少懲罰改成持盾時的移動速度：原作舉盾更少 50%，持盾的人舉盾約佔移動中的 10%，每減少 1% 懲罰 ≈ 0.50 × 0.10 ≈ 增加 0.05% 移動速度；這次之前是 guard.slow INCREASED",
   "family": "Parry / Active block",
-  "uses": 3
+  "uses": 3,
+  "zh": "持盾時，增加 {x}% 移動速度",
+  "condition": "shield"
  },
  "spell_damage_+%_while_you_have_arcane_surge": {
   "status": "conditional",
@@ -6065,7 +6068,7 @@
     "tags": []
    }
   ],
-  "note": "2026-10-27 照 PoE2：3 公尺內的敵人（TreeLastKeys，ProjectileEngine）",
+  "note": "2026-10-27 照 PoE2：3 格內的敵人（TreeLastKeys，ProjectileEngine）",
   "family": null,
   "uses": 3
  },
@@ -10794,7 +10797,7 @@
     "tags": []
    }
   ],
-  "note": "2026-10-27 照 PoE2 原作：箭照飛行距離線性增加暴擊率，7 公尺給滿（KeystoneEffects.attackerConditional；距離用你到目標的距離）；這次之前對 6 格外的敵人給滿",
+  "note": "2026-10-27 照 PoE2 原作：箭照飛行距離線性增加暴擊率，7 格給滿（KeystoneEffects.attackerConditional；距離用你到目標的距離）；這次之前對 6 格外的敵人給滿",
   "family": null,
   "uses": 1
  },
@@ -10878,7 +10881,7 @@
     "tags": []
    }
   ],
-  "note": "2026-10-27 照 PoE2：過去 8 秒投射物攻擊擊中過；單位 0.1 公尺",
+  "note": "2026-10-27 照 PoE2：過去 8 秒投射物攻擊擊中過；單位 0.1 格",
   "family": null,
   "uses": 1,
   "condition": "projhit8s"
@@ -11142,20 +11145,19 @@
   "condition": "ignited"
  },
  "movement_speed_penalty_+%_while_performing_fire_skills": {
-  "status": "mapped",
+  "status": "approx",
   "text": "5% reduced Movement Speed Penalty from using Fire Skills while moving",
   "suggest": [
    {
-    "stat": "movement.action_penalty",
+    "stat": "movement.speed",
     "type": "INCREASED",
-    "tags": [
-     "fire"
-    ]
+    "tags": []
    }
   ],
-  "note": "2026-10-27 照 PoE2：火焰技能（引導）的移動懲罰",
+  "note": "2026-10-27 照站長「放技能減速全部移除」：放技能不會再變慢（SkillMovePenalty 不套用），原作的減少懲罰改成平衡等效的移動速度：原作懲罰更少 70%，放技能的時間約佔移動中的 36%（照 2026-10-26 之前衝刺突擊懲罰更少 30% ≈ 增加 8% 移動速度、鑲嵌的寶石更少 40% ≈ 增加 10% 的換算），每減少 1% 懲罰 ≈ 0.70 × 0.36 ≈ 增加 0.25% 移動速度；只算火焰技能，打八折（每 1% ≈ 0.2%）；這次之前是 movement.action_penalty INCREASED（火焰標籤）",
   "family": "Sprint / Dodge roll / Action movement",
-  "uses": 1
+  "uses": 1,
+  "zh": "增加 {x}% 移動速度"
  },
  "mana_recovery_rate_+%": {
   "status": "mapped",
@@ -13360,20 +13362,19 @@
   "condition": "chilled"
  },
  "movement_speed_penalty_+%_while_performing_cold_skills": {
-  "status": "mapped",
+  "status": "approx",
   "text": "5% reduced Movement Speed Penalty from using Cold Skills while moving",
   "suggest": [
    {
-    "stat": "movement.action_penalty",
+    "stat": "movement.speed",
     "type": "INCREASED",
-    "tags": [
-     "cold"
-    ]
+    "tags": []
    }
   ],
-  "note": "2026-10-27 照 PoE2：冰冷技能（引導）的移動懲罰",
+  "note": "2026-10-27 照站長「放技能減速全部移除」：放技能不會再變慢（SkillMovePenalty 不套用），原作的減少懲罰改成平衡等效的移動速度：原作懲罰更少 70%，放技能的時間約佔移動中的 36%（照 2026-10-26 之前衝刺突擊懲罰更少 30% ≈ 增加 8% 移動速度、鑲嵌的寶石更少 40% ≈ 增加 10% 的換算），每減少 1% 懲罰 ≈ 0.70 × 0.36 ≈ 增加 0.25% 移動速度；只算冰冷技能，打八折（每 1% ≈ 0.2%）；這次之前是 movement.action_penalty INCREASED（冰冷標籤）",
   "family": "Sprint / Dodge roll / Action movement",
-  "uses": 1
+  "uses": 1,
+  "zh": "增加 {x}% 移動速度"
  },
  "crossbow_damage_+%_per_ammo_type_fired_in_past_10_seconds": {
   "status": "conditional",
@@ -13870,7 +13871,7 @@
     "tags": []
    }
   ],
-  "note": "2026-10-27 照 PoE2（塗油限定 光明壁壘）：舉盾時正前方 x 公尺內的敵人致盲（TreeLeftovers 每 10 tick；原作每 0.25 秒，致盲 4 秒一直續著，效果一樣）；寫在 overrides.json",
+  "note": "2026-10-27 照 PoE2（塗油限定 光明壁壘）：舉盾時正前方 x 格內的敵人致盲（TreeLeftovers 每 10 tick；原作每 0.25 秒，致盲 4 秒一直續著，效果一樣）；寫在 overrides.json",
   "family": "Exposure / Blind / Withered / Hinder / Maim",
   "uses": 1
  },
@@ -16375,7 +16376,7 @@
   "family": null,
   "uses": 1,
   "condition": "block",
-  "zh": "最近格擋過時，增加 {x}% 暈眩門檻（原作：更少 {v}% 被格擋擊中的擊退距離；這裡格擋本來就不會被擊退）"
+  "zh": "最近格擋過時，增加 {x}% 暈眩門檻"
  },
  "keystone_eldritch_battery": {
   "status": "mapped",
@@ -17221,7 +17222,7 @@
   "status": "mapped",
   "text": "Defend with 150% of Armour against Hits from Enemies that are further than 6m away",
   "suggest": [],
-  "note": "2026-10-27 照 PoE2：見 overrides.json（用 150% 護甲防禦＝多算 50%（6 公尺外））",
+  "note": "2026-10-27 照 PoE2：見 overrides.json（用 150% 護甲防禦＝多算 50%（6 格外））",
   "family": null,
   "uses": 1
  },

@@ -28,7 +28,7 @@ Crazed Minions	Crazed Minions	T4	b	crazed_minions	狂僕	3	exact	2026-10-27 改�
 Crescendo	Crescendo III	T5	b	crescendo_iii	漸強 III	3	exact	2026-10-27 改成原作：補上打擊連段的最後一擊（快速連用、2 秒內、中間沒用別的技能；這次之前每 3 下一次）
 Cursed Ground	Cursed Ground	T3	b	cursed_ground	咒地	2	exact	2026-10-27 改成原作：詛咒改成地面、站在裡面才被詛咒（這次之前另外留一塊每秒在中心重放一次詛咒的地面）
 Dauntless	Dauntless	T0	r	dauntless	無畏	2	exact	
-Deadly Resolve	Deadly Resolve	T3	r	deadly_resolve	決殺	2	exact	2026-10-27 改成原作：斬擊照 TriggeredDeadlyResolvePlayer（3 公尺 120 度、逐級傷害與護甲換算；這次之前每 200 點護甲更多 1%、最多 100%，身邊一圈）
+Deadly Resolve	Deadly Resolve	T3	r	deadly_resolve	決殺	2	exact	2026-10-27 改成原作：斬擊照 TriggeredDeadlyResolvePlayer（3 格 120 度、逐級傷害與護甲換算；這次之前每 200 點護甲更多 1%、最多 100%，身邊一圈）
 Defy	Defy II	T5	r	defy_ii	抗命 II	3	exact	
 Delayed Gratification	Delayed Gratification	T2	g	delayed_gratification	延樂	2	exact	2026-10-27 改成原作：要連擊的（驚雷之鐘）也算（這次之前只有要榮耀的）
 Delayed Reaction	Delayed Reaction	T4	g	delayed_reaction	遲爆	3	exact	2026-10-27 改成原作：矛陣改成照 PoE2 Spearfield 插在地上、敵人碰到才炸的矛，跟冰晶、鐵蒺同一套（這次之前矛陣是持續打的範圍，做成持續時間更少 70%、每一下更多 283%）
@@ -63,7 +63,7 @@ Malady	Malady	T0	g	malady	病變	2	exact
 Mark of Siphoning	Mark of Siphoning II	T4	b	mark_of_siphoning_ii	汲印 II	3	exact	
 Minion Splash	Minion Splash II	T5	r	minion_splash_ii	僕濺 II	3	exact	
 Minion Pact	Minion Pact II	T4	b	minion_pact_ii	僕契 II	3	exact	
-Mobility	Mobility	T3	g	mobility	輕身	2	exact	
+Mobility	Mobility	T3	g	mobility	輕身	2	approx	放技能不會變慢（站長 2026-10-27 移除），移動懲罰更少 25% 換成攻擊／施法速度增加 6%
 Neural Overload	Neural Overload	T3	g	neural_overload	電載	2	exact	
 Opening Move	Opening Move	T1	r	opening_move	先手	1	exact	
 Outmaneuver	Outmaneuver	T0	g	outmaneuver	巧破	2	exact	
@@ -97,7 +97,7 @@ Spell Cascade	Spell Cascade	T1	b	spell_cascade	連瀑	1	exact
 Splinter Totem	Splinter Totem II	T5	r	splinter_totem_ii	裂樁 II	3	exact	2026-10-27 改成原作：圖騰真的會分裂（這次之前平衡等效成同時多 2 根）；原作沒寫一次分成幾根，照「分裂成更小的自己」做成一根變兩根
 Steadfast	Steadfast II	T3	r	steadfast_ii	穩守 II	2	exact	
 Stoicism	Stoicism II	T5	r	stoicism_ii	堅忍 II	3	exact	
-Stomping Ground	Stomping Ground	T1	r	stomping_ground	踏震	1	exact	2026-10-27 改成原作：每走一步一陣、震波是攻擊（武器傷害 50%、2 公尺；這次之前起點、終點各一陣法術震波）；我們沒有走路動畫，一步照跑步的步幅 1.5 公尺
+Stomping Ground	Stomping Ground	T1	r	stomping_ground	踏震	1	exact	2026-10-27 改成原作：每走一步一陣、震波是攻擊（武器傷害 50%、2 格；這次之前起點、終點各一陣法術震波）；我們沒有走路動畫，一步照跑步的步幅 1.5 格
 Stormfire	Stormfire	T3	b	stormfire	雷焚	2	exact	2026-10-27 改成原作：點燃每一跳另外算閃電傷害（這次之前平衡等效成點燃更多 20%）
 Syzygy	Syzygy	T4	r	syzygy	合軌	3	exact	
 Tear	Tear	T3	r	tear	裂創	2	exact	

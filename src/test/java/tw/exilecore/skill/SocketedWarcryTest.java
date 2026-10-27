@@ -113,7 +113,7 @@ class SocketedWarcryTest {
             assertFalse(text.contains("戰吼效果"), id + "：不再是通用的戰吼效果");
         }
         assertFalse(GemQuality.has("shrine_prayer"), "神龕祝禱原作沒有：照通用規則");
-        // 焚獄：強化攻擊 +10% 額外火焰、半徑 +3 公尺
+        // 焚獄：強化攻擊 +10% 額外火焰、半徑 +3 格
         final SkillBuild infernal = withQuality("infernal_cry", 20, List.of());
         assertEquals(10, Warcries.empoweredExtra(infernal.profile().effective(new StatSheet()), infernal.profile().tags(), "x").getFirst().value(), 1e-9);
         assertEquals(StatKeys.damageExtra(DamageType.FIRE), Warcries.empoweredExtra(infernal.profile().effective(new StatSheet()), infernal.profile().tags(), "x").getFirst().stat());
@@ -124,7 +124,7 @@ class SocketedWarcryTest {
         final SkillBuild seismic = withQuality("seismic_cry", 20, List.of());
         assertEquals(10, flat(seismic, WarcryKeys.AFTERSHOCK_MORE), 1e-9);
         assertEquals(20, flat(seismic, StatKeys.DAMAGE_GAIN + "fire"), 1e-9);
-        // 堅壁：守護更多 20%、盾波 2 公尺 → 2.4 公尺
+        // 堅壁：守護更多 20%、盾波 2 格 → 2.4 格
         final SkillBuild fortifying = withQuality("fortifying_cry", 20, List.of());
         assertEquals(20, flat(fortifying, WarcryKeys.GUARD_MORE), 1e-9);
         assertEquals(1.2, SupportMechanics.triggerRadiusScale(config.skill("fortifying_shield_wave"), 20, flat(fortifying, WarcryKeys.TRIGGER_RADIUS_FLAT)), 1e-9);

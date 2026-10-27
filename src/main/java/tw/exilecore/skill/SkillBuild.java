@@ -302,7 +302,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final double meleeRange = definition.isAttack() && definition.tags().contains(Tags.MELEE)
                 && (definition.mechanic() == Mechanic.STRIKE || definition.mechanic() == Mechanic.CONE)
                 ? Math.max(0.5, Math.min(2.0, 1 + effective.increased(StatKeys.MELEE_RANGE, context))) : 1.0;
-        // 2026-10-27 照 PoE2 天賦樹：「近戰打擊範圍 +0.2 公尺」（melee.range 的 FLAT，單位 0.1 公尺；這次之前只讀增加的，天賦樹的 +x 公尺沒有效果）
+        // 2026-10-27 照 PoE2 天賦樹：「近戰打擊範圍 +0.2 格」（melee.range 的 FLAT，單位 0.1 格；這次之前只讀增加的，天賦樹的 +x 格沒有效果）
         final double meleeReachFlat = definition.isAttack() && definition.tags().contains(Tags.MELEE)
                 && (definition.mechanic() == Mechanic.STRIKE || definition.mechanic() == Mechanic.CONE)
                 ? Math.max(0, Math.min(20, effective.flat(StatKeys.MELEE_RANGE, context))) / 10.0 : 0;
@@ -413,7 +413,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
     }
 
-    /** 2026-10-26 照 PoE2 的引導：這一次的爆炸半徑、射程（位移距離）換掉（爆焰矢沒疊滿不爆炸；引霆突完美時機衝 10 公尺）。 */
+    /** 2026-10-26 照 PoE2 的引導：這一次的爆炸半徑、射程（位移距離）換掉（爆焰矢沒疊滿不爆炸；引霆突完美時機衝 10 格）。 */
     public SkillBuild withExplodeAndRange(final double newExplode, final double newRange) {
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, targets, knockback, projectiles, spread, speed, newRange, size, pierce, chains, Math.max(0, newExplode), wobble, arrow,

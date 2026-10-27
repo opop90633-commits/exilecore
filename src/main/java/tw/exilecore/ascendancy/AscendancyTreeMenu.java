@@ -74,10 +74,10 @@ final class AscendancyTreeMenu extends Menu {
         final ItemStack up = AscendancyLayout.scroll(true, offset, page.rows());
         final ItemStack down = AscendancyLayout.scroll(false, offset, page.rows());
         if (up != null) {
-            set(AscendancyLayout.SLOT_UP, up);
+            set(AscendancyLayout.SLOT_UP, withUiIcon(up, "arrow_up")); // 2026-10-27 照站長：畫好的上下箭頭（跟天賦樹一樣）
         }
         if (down != null) {
-            set(AscendancyLayout.SLOT_DOWN, down);
+            set(AscendancyLayout.SLOT_DOWN, withUiIcon(down, "arrow_down"));
         }
 
         final boolean card = plugin.sponsors() != null && plugin.sponsors().cardActive(player);

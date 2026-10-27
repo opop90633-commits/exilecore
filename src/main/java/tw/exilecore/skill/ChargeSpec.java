@@ -36,7 +36,7 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
     /**
      * 2026-10-26 照 PoE2 的引導技能怎麼結束（這次之前只有「放開出手」）：
      * RELEASE 按住蓄力、放開出手；RUSH 按住一直往前衝（盾衝、蠻衝），放開或撞到敵人結束；
-     * PULSE 按住期間每一次施法間隔作用一次（凋蝕術），放開結束；HOLD 按住期間舉盾（架盾：擋下所有可格擋的擊中、移動更少 50%），放開結束；
+     * PULSE 按住期間每一次施法間隔作用一次（凋蝕術），放開結束；HOLD 按住期間舉盾（架盾：擋下所有可格擋的擊中；2026-10-27 照站長「放技能減速全部移除」：不再變慢），放開結束；
      * STREAM（2026-10-26，熾息）按住期間每一次攻擊／施法間隔出手一次（技能本身的效果），放開（過了最短引導時間）結束；
      * RECHARGE（2026-10-27 照 PoE2 Meditate）按住期間回充能量護盾（回充速度更多：技能 buff 的 es.recharge MORE），回充可以溢出到最大的 1.5 倍
      * （溢出的部分是守護），放開或溢出滿了結束。
@@ -54,17 +54,17 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
      * @param stageValue   同上的數值
      * @param explodeAtMax 投射物只有疊滿層數才會爆炸（爆焰矢）
      * @param minTime      最短引導幾秒（放開也會撐到這個時間；蠻衝 3 秒、盾衝 1.3 秒）
-     * @param speed        衝鋒速度（公尺／秒，吃移動速度；盾衝 9、蠻衝 5.5）
+     * @param speed        衝鋒速度（格／秒，吃移動速度；盾衝 9、蠻衝 5.5）
      * @param distanceMore 衝越遠更多幾 % 傷害（最多；盾衝 100）
-     * @param fullDistance 衝多遠（公尺）拿到全部的 distanceMore
+     * @param fullDistance 衝多遠（格）拿到全部的 distanceMore
      * @param collision    撞上的敵人另外再挨一下：傷害是範圍那一下的幾倍（盾衝的 Collision 70% ÷ 範圍 30%）
      * @param rageAfter    引導幾秒之後開始花怒氣（蠻衝 2.5 秒）
      * @param ragePerSecond 之後每秒花幾點怒氣（蠻衝 300／分鐘 = 5）；沒有怒氣就結束
-     * @param backflip     開始引導時往後翻幾公尺（引霆突）
-     * @param perfectRange 完美時機放開時位移的距離（引霆突 10 公尺；0 = 不變）
+     * @param backflip     開始引導時往後翻幾格（引霆突）
+     * @param perfectRange 完美時機放開時位移的距離（引霆突 10 格；0 = 不變）
      * @param perfectStat  完美時機放開時另外給的屬性（FLAT；引霆突：damage.convert.lightning 再 50，物理 70% 轉閃電）
      * @param perfectValue 同上的數值
-     * @param slow         2026-10-26：引導中移動更少幾 %（STREAM；熾息 40）。2026-10-26 站長把焚燼併入焚流，只有焚燼用的燃料（fuel）一起拿掉
+     * @param slow         2026-10-26：引導中移動更少幾 %（STREAM；熾息 40）。2026-10-27 照站長「放技能減速全部移除」：不再套用（只留著讓舊資料讀得進來）。2026-10-26 站長把焚燼併入焚流，只有焚燼用的燃料（fuel）一起拿掉
      * @param empowerCharge 2026-10-26（熾息）：開始引導時有這種戰星就用掉一顆強化這次引導（null = 不會）
      * @param empowerStat  強化時另外給的屬性（FLAT；熾息：damage.gain.lightning 50）
      * @param empowerValue 同上的數值
@@ -86,7 +86,7 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
             return rage <= 0 ? 0 : (int) Math.max(1, Math.round(rage * (1 - empowerRageLess / 100.0)));
         }
 
-        /** 衝了 distance 公尺：更多幾倍（1 ＋ 最多 distanceMore%，照距離線性）。純函式（測試用）。 */
+        /** 衝了 distance 格：更多幾倍（1 ＋ 最多 distanceMore%，照距離線性）。純函式（測試用）。 */
         public double distanceFactor(final double distance) {
             if (distanceMore <= 0 || fullDistance <= 0) {
                 return 1.0;
@@ -190,7 +190,7 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
                 throw new IllegalArgumentException(node.path() + "：mode 是 rush／pulse／hold／stream 時不能寫 perfect_at、stages");
             }
             if (channel.mode() == Mode.RUSH && (channel.speed() <= 0 || channel.speed() > 20)) {
-                throw new IllegalArgumentException(node.path() + ".speed：衝鋒要寫 0 到 20 公尺／秒");
+                throw new IllegalArgumentException(node.path() + ".speed：衝鋒要寫 0 到 20 格／秒");
             }
             return new ChargeSpec(0, 0, 0, stageTime, 0, 0, 0, channel);
         }

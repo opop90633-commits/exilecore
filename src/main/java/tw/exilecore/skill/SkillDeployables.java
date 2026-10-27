@@ -95,6 +95,15 @@ final class SkillDeployables implements Listener {
         double physReduction;
         /** 怨燼的基礎傷害照的生命（舊的算法：你最大生命的 30%～60%；圖騰生命改成照原作之後怨燼不跟著變強）。 */
         double vengefulLife;
+        /**
+         * 2026-10-27 照 PoE2「圖騰是你的友軍」（{@link TotemAllies}）：在你存在範圍內時拿到的「友軍…」效果——
+         * 疊在技能上的進攻修飾器、抗性 {火, 冰, 電, 混沌}、每秒再生幾點生命；元素抗性上限；下次重算的 tick（每 2 秒）。
+         */
+        List<Modifier> allyOffence = List.of();
+        double[] allyResist = new double[4];
+        double allyRegen;
+        double resistCap = 75;
+        long alliesAt;
 
         Deployed(final UUID owner, final SkillBuild build, final DeploySpec spec, final ArmorStand stand, final Location feet,
                  final long now, final long untilTick, final String label) {
@@ -461,7 +470,8 @@ final class SkillDeployables implements Listener {
             item.detonate = tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.StatKeys.FLAG_TOTEM_DETONATE);
             item.vengeful = Math.max(0, effective.flat(tw.exilecore.stats.StatKeys.TOTEM_VENGEFUL, tags));
             // 2026-10-26 照 PoE2 天賦樹：「圖騰 +x% 所有元素抗性上限」（加在 75 上）
-            item.resistElemental = Math.max(0, Math.min(75 + Math.max(0, effective.flat(tw.exilecore.stats.TreeEffectKeys.TOTEM_RESIST_MAX, tags)),
+            item.resistCap = 75 + Math.max(0, effective.flat(tw.exilecore.stats.TreeEffectKeys.TOTEM_RESIST_MAX, tags));
+            item.resistElemental = Math.max(0, Math.min(item.resistCap,
                     effective.flat(tw.exilecore.stats.StatKeys.TOTEM_RESIST_ELEMENTAL, tags)));
             item.resistChaos = Math.max(0, Math.min(75, effective.flat(tw.exilecore.stats.StatKeys.TOTEM_RESIST_CHAOS, tags)));
             final double lifeScale = effective.apply(tw.exilecore.stats.StatKeys.TOTEM_LIFE, 1.0, tags);
@@ -493,6 +503,7 @@ final class SkillDeployables implements Listener {
                         effective.flat(tw.exilecore.stats.SupportExtraKeys.SPLINTER_AREA, tags),
                         effective.flat(tw.exilecore.stats.SupportExtraKeys.SPLINTER_SPEED, tags)};
             }
+            refreshAllies(item, player, now); // 2026-10-27 照 PoE2：圖騰是你的友軍
         }
         if (spec.kind() != DeploySpec.Kind.TRAP) {
             item.tag = spawnTag(player, at);
@@ -561,7 +572,7 @@ final class SkillDeployables implements Listener {
             for (final Deployed totem : totems) {
                 final double radius = 2.5 * totem.build.areaScale();
                 final SkillProfile profile = totem.build.profile().derive(totem.skillId() + ".detonate", Set.of(tw.exilecore.stats.Tags.AREA), Set.of())
-                        .scaled(DETONATE_MULTIPLIER * (1 + 0.3 * (count - 1)), "引爆");
+                        .scaled(DETONATE_MULTIPLIER * (1 + 0.3 * (count - 1)), "引爆").withLocal(totem.allyOffence); // 2026-10-27：圖騰是你的友軍
                 for (final LivingEntity target : targets.around(totem.feet, radius, owner)) {
                     damage.hit(owner, target, profile, null);
                 }
@@ -769,7 +780,8 @@ final class SkillDeployables implements Listener {
                     continue;
                 }
                 final Deployed first = totems.getFirst();
-                final SkillProfile profile = first.build.profile().derive(first.skillId() + ".bond", Set.of(tw.exilecore.stats.Tags.AREA), Set.of());
+                final SkillProfile profile = first.build.profile().derive(first.skillId() + ".bond", Set.of(tw.exilecore.stats.Tags.AREA), Set.of())
+                        .withLocal(first.allyOffence); // 2026-10-27 照 PoE2：圖騰是你的友軍
                 final Set<UUID> burned = new java.util.HashSet<>();
                 for (final Location[] segment : segments) {
                     final Location mid = segment[0].clone().add(segment[1]).multiply(0.5);
@@ -908,14 +920,18 @@ final class SkillDeployables implements Listener {
         if (now % 10 == 0) {
             visuals.deployIdle(item.build.definition().visual(), item.spec.kind(), item.feet, item.spec.range());
         }
+        if (now >= item.alliesAt) {
+            refreshAllies(item, owner, now); // 2026-10-27 照 PoE2：圖騰是你的友軍
+        }
         if (item.taunt) {
             taunt(item, owner, now);
             return;
         }
         final double regen = now % 20 == 0 && item.life < item.maxLife && plugin.skills() != null
                 ? item.regen + plugin.skills().supportMechanics().lineage().totemRegen(owner, item.build, item.feet) : 0; // 2026-10-27 照 PoE2：林樁
-        if (regen > 0) {
-            item.life = Math.min(item.maxLife, item.life + item.maxLife * regen / 100.0); // 2026-10-26 照 PoE2 天賦：圖騰每秒回復
+        final double allyRegen = now % 20 == 0 && item.life < item.maxLife ? item.allyRegen : 0; // 2026-10-27：「存在範圍內的友軍每秒再生」
+        if (regen > 0 || allyRegen > 0) {
+            item.life = Math.min(item.maxLife, item.life + item.maxLife * regen / 100.0 + allyRegen); // 2026-10-26 照 PoE2 天賦：圖騰每秒回復
             item.shownSeconds = -1;
         }
         if (item.bond) {
@@ -948,8 +964,10 @@ final class SkillDeployables implements Listener {
         }
         if (item.linked != null) {
             // 英靈圖騰：在敵人旁邊（往圖騰那邊 1.5 格）叫出英靈，用連著的錘子技能打一下
-            final SkillBuild call = rotate(item.linked, item.moreLinked, item.turn++); // 2026-10-27：輪流用孔裡的錘子技能
-            item.nextTick = now + ancestorTicks(item.build, call, plugin.players().sheet(owner)); // 2026-10-21：錘子技能攻擊時間 ×1.5 ÷ 攻速
+            // 2026-10-27：輪流用孔裡的錘子技能；照 PoE2 圖騰是友軍：疊上「存在範圍內的友軍…」
+            final SkillBuild call = TotemAllies.withAllies(rotate(item.linked, item.moreLinked, item.turn++), item.allyOffence);
+            item.nextTick = now + ancestorTicks(TotemAllies.withAllies(item.build, item.allyOffence), call,
+                    plugin.players().sheet(owner)); // 2026-10-21：錘子技能攻擊時間 ×1.5 ÷ 攻速
             final org.bukkit.util.Vector back = item.feet.toVector().subtract(target.getLocation().toVector()).setY(0);
             final Location spot = target.getLocation().clone();
             if (back.lengthSquared() > 1e-4) {
@@ -963,7 +981,8 @@ final class SkillDeployables implements Listener {
             return;
         }
         // 2026-10-20：吃攻速／施法速度；2026-10-26 照 PoE2：崩震圖騰照武器攻速的一半、星咒圖騰品質照召喚中的圖騰數加施法速度
-        final SkillBuild cast = rotate(item.build, item.moreCasts, item.turn++); // 2026-10-27 照 PoE2 星咒圖騰：輪流放孔裡的法術
+        // 2026-10-27 照 PoE2 星咒圖騰：輪流放孔裡的法術；照 PoE2 圖騰是友軍：疊上「存在範圍內的友軍…」
+        final SkillBuild cast = TotemAllies.withAllies(rotate(item.build, item.moreCasts, item.turn++), item.allyOffence);
         item.nextTick = now + totemTicks(cast, plugin.players().sheet(owner), totemsOf(owner.getUniqueId()));
         item.usedFire = fired;
         final Origin origin = Origin.towards(owner, item.feet, target);
@@ -1037,6 +1056,7 @@ final class SkillDeployables implements Listener {
         copy.vengeful = item.vengeful;
         copy.resistElemental = item.resistElemental;
         copy.resistChaos = item.resistChaos;
+        copy.resistCap = item.resistCap; // 2026-10-27：友軍效果（allyOffence 等）下一 tick 照它自己的位置重算
         final double lifeScale = tw.exilecore.stats.SupportExtraKeys.splinterScale(item.splinterLess[1], times);
         copy.maxLife = Math.max(1, item.unsplitLife * lifeScale);
         copy.life = copy.maxLife * lifeFraction;
@@ -1092,7 +1112,7 @@ final class SkillDeployables implements Listener {
 
     /**
      * 2026-10-26 照 PoE2 Shockwave Totem：圖騰的猛擊打到你造的碎地（碎地輔助留下的）時碎地引爆（用掉那塊碎地），
-     * 傷害站在上面的敵人（3 公尺 × 範圍倍率，傷害效益照技能等級 90%→237%，跟猛擊本身的效益分開算）。圖騰自己不會造碎地。
+     * 傷害站在上面的敵人（3 格 × 範圍倍率，傷害效益照技能等級 90%→237%，跟猛擊本身的效益分開算）。圖騰自己不會造碎地。
      */
     private void jaggedEruption(final Deployed item, final Player owner) {
         final tw.exilecore.stats.StatSheet effective = item.build.profile().effective(plugin.players().sheet(owner));
@@ -1108,7 +1128,8 @@ final class SkillDeployables implements Listener {
         final tw.exilecore.stats.SkillProfile base = item.build.profile();
         final tw.exilecore.stats.SkillProfile profile = new tw.exilecore.stats.SkillProfile(base.id() + ".eruption", base.tags(),
                 eruption / 100.0, base.spellDamage(), base.spellDamageMax(), base.conversion(), base.local())
-                .derive(base.id() + ".eruption", Set.of(tw.exilecore.stats.Tags.AREA), Set.of("nova"));
+                .derive(base.id() + ".eruption", Set.of(tw.exilecore.stats.Tags.AREA), Set.of("nova"))
+                .withLocal(item.allyOffence); // 2026-10-27 照 PoE2：圖騰是你的友軍
         final double radius = tw.exilecore.stats.TotemKeys.JAGGED_ERUPTION_RADIUS * item.build.areaScale();
         final java.util.UUID previousFx = Fx.source(owner.getUniqueId());
         try {
@@ -1330,24 +1351,65 @@ final class SkillDeployables implements Listener {
     /** 2026-10-27：加上圖騰的物理傷害減免 %（在護甲之後再扣）。 */
     static double totemTaken(final double resistElemental, final double resistChaos, final double armour, final double physReduction,
                              final tw.exilecore.stats.DamagePacket packet) {
+        return totemTaken(resistElemental, resistChaos, armour, physReduction, null, Math.max(75, resistElemental), packet);
+    }
+
+    /**
+     * 2026-10-27 照 PoE2「圖騰是你的友軍」：再加上「存在範圍內的友軍…」給的抗性 allyResist {火, 冰, 電, 混沌}
+     * （元素的上限照圖騰的元素抗性上限 elementalCap，混沌 75）。
+     */
+    static double totemTaken(final double resistElemental, final double resistChaos, final double armour, final double physReduction,
+                             final double[] allyResist, final double elementalCap, final tw.exilecore.stats.DamagePacket packet) {
         double taken = 0;
         for (final tw.exilecore.stats.DamageType type : tw.exilecore.stats.DamageType.values()) {
             final double amount = packet.get(type);
             if (amount <= 0) {
                 continue;
             }
-            if (type == tw.exilecore.stats.DamageType.PHYSICAL) {
+            final int index = TotemAllies.index(type);
+            if (index < 0) {
                 taken += amount * (1 - tw.exilecore.stats.Formulas.armourReduction(armour, amount)) * (1 - physReduction / 100.0);
-            } else {
-                final double resist = type == tw.exilecore.stats.DamageType.CHAOS ? resistChaos : resistElemental;
-                taken += amount * (1 - resist / 100.0);
+                continue;
             }
+            final double extra = allyResist == null ? 0 : allyResist[index];
+            // 圖騰自己的抗性已經夾在上限內；加上友軍的之後再夾一次
+            final double resist = index == 3 ? Math.min(75, resistChaos + extra) : Math.min(elementalCap, resistElemental + extra);
+            taken += amount * (1 - resist / 100.0);
         }
         return taken;
     }
 
     private static double totemTaken(final Deployed item, final tw.exilecore.stats.DamagePacket packet) {
-        return totemTaken(item.resistElemental, item.resistChaos, item.armour, item.physReduction, packet);
+        return totemTaken(item.resistElemental, item.resistChaos, item.armour, item.physReduction, item.allyResist, item.resistCap, packet);
+    }
+
+    /**
+     * 2026-10-27 照 PoE2「圖騰是你的友軍」（站長）：圖騰在你的存在範圍內時拿到「你存在範圍內的友軍…」的效果（{@link TotemAllies}）、
+     * 你開的給友軍的光環（純淨系列…）的抗性；「看看我怎麼辦事的」照召喚物那條（你或隊友的存在範圍）。每 2 秒看一次距離。
+     * 這次之前這些只給召喚物。
+     */
+    private void refreshAllies(final Deployed item, final Player owner, final long now) {
+        item.alliesAt = now + 40;
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(owner);
+        final boolean inside = owner.getWorld().equals(item.feet.getWorld())
+                && owner.getLocation().distanceSquared(item.feet) <= Math.pow(tw.exilecore.combat.Presence.radius(sheet), 2);
+        final List<Modifier> allies = new ArrayList<>(inside ? TotemAllies.fromOwner(sheet) : List.of());
+        if (inside && plugin.skills() != null && plugin.skills().auras() != null
+                && !tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.AURAS_SELF_ONLY)) {
+            // 光環給友軍的進攻效果你自己已經吃到（圖騰的技能照你的屬性表算），這裡只拿圖騰本身的抗性、再生
+            for (final Modifier modifier : plugin.skills().auras().effectsFor(owner.getUniqueId())) {
+                if (TotemAllies.DEFENCE.contains(modifier.stat()) && modifier.tags().isEmpty()) {
+                    allies.add(modifier);
+                }
+            }
+        }
+        final List<Modifier> offence = new ArrayList<>(TotemAllies.offence(allies));
+        if (tw.exilecore.ascendancy.AscendancyEffects.get() != null) {
+            offence.addAll(tw.exilecore.ascendancy.AscendancyEffects.get().minionWeapon(owner.getUniqueId(), item.feet)); // 看看我怎麼辦事的
+        }
+        item.allyOffence = List.copyOf(offence);
+        item.allyResist = TotemAllies.resists(allies);
+        item.allyRegen = TotemAllies.regen(allies, plugin.players().get(owner).maxLife());
     }
 
     /** 這個實體是不是一根圖騰（給怪物的招式找目標用）。 */
@@ -1429,7 +1491,7 @@ final class SkillDeployables implements Listener {
         final SkillProfile profile = new SkillProfile(item.skillId() + ".vengeful",
                 Set.of(tw.exilecore.stats.Tags.SPELL, tw.exilecore.stats.Tags.FIRE, tw.exilecore.stats.Tags.AREA,
                         tw.exilecore.stats.Tags.TOTEM, tw.exilecore.stats.Tags.TOTEM_HIT, tw.exilecore.stats.Tags.PROJECTILE),
-                0.0, min, max, java.util.Map.of(), item.build.profile().local());
+                0.0, min, max, java.util.Map.of(), item.build.profile().local()).withLocal(item.allyOffence); // 2026-10-27：圖騰是你的友軍
         final double radius = 1.8 * item.build.areaScale();
         final Location from = item.feet.clone().add(0, 2, 0);
         final java.util.UUID previousFx = Fx.source(owner.getUniqueId());

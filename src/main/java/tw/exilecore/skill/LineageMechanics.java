@@ -503,7 +503,7 @@ public final class LineageMechanics implements Listener {
         if (lifeFlask > 0 && plugin.flasks() != null && plugin.flasks().recovering(attacker, tw.exilecore.flask.FlaskKind.LIFE)) {
             list.add(Modifier.more(StatKeys.DAMAGE, lifeFlask / 100.0, "聖杯"));
         }
-        // 孤圍（Vorana's Siege）：6 公尺內沒有其他敵人
+        // 孤圍（Vorana's Siege）：6 格內沒有其他敵人
         final double isolated = skillSheet.flat(LineageKeys.VS_ISOLATED, tags);
         if (isolated > 0 && isolated(attacker, defender)) {
             list.add(Modifier.more(StatKeys.DAMAGE, isolated / 100.0, "孤立"));
@@ -542,7 +542,7 @@ public final class LineageMechanics implements Listener {
         return max != null && max.getValue() > 0 && entity.getHealth() <= max.getValue() * 0.35 + 1e-9;
     }
 
-    /** 孤立：6 公尺內沒有其他敵人。 */
+    /** 孤立：6 格內沒有其他敵人。 */
     private boolean isolated(final Player attacker, final LivingEntity defender) {
         for (final LivingEntity other : service.targets().around(defender.getLocation(), 6, attacker)) {
             if (!other.getUniqueId().equals(defender.getUniqueId())) {
@@ -865,7 +865,7 @@ public final class LineageMechanics implements Listener {
         }
     }
 
-    /** 霆爆：照技能等級 5% → 19%（每級約 0.74%）、1.5 → 2.5 公尺。 */
+    /** 霆爆：照技能等級 5% → 19%（每級約 0.74%）、1.5 → 2.5 格。 */
     static double voltaicPercent(final double base, final int level) {
         return Math.min(base + 14, base + (Math.max(1, level) - 1) * 14 / 19.0);
     }
@@ -971,7 +971,7 @@ public final class LineageMechanics implements Listener {
         return per <= 0 ? 0 : groveCount(owner, feet) * per / 10.0;
     }
 
-    /** 這根圖騰 4 公尺內你的其他圖騰（最多 5 根）。 */
+    /** 這根圖騰 4 格內你的其他圖騰（最多 5 根）。 */
     private int groveCount(final Player owner, final Location feet) {
         int count = 0;
         for (final SkillService.TotemView totem : service.totems(owner.getUniqueId())) {
@@ -1167,7 +1167,7 @@ public final class LineageMechanics implements Listener {
     /** 殘戰：攻擊與施法速度增加 40%。 */
     static final double UNDYING_SPEED = 40;
 
-    /** 殘戰的噬魂：附近（4 公尺）每死一隻敵人，攻擊與施法速度再快 1%（最多 50 層）。 */
+    /** 殘戰的噬魂：附近（4 格）每死一隻敵人，攻擊與施法速度再快 1%（最多 50 層）。 */
     private void feedSouls(final LivingEntity dead) {
         final long now = now();
         for (final Map.Entry<UUID, Undying> entry : undying.entrySet()) {
@@ -1431,7 +1431,7 @@ public final class LineageMechanics implements Listener {
         }
     }
 
-    /** 焰伴（Catha's Brilliance）：夥伴致盲、點燃身邊 2 公尺的敵人（每秒一次）。 */
+    /** 焰伴（Catha's Brilliance）：夥伴致盲、點燃身邊 2 格的敵人（每秒一次）。 */
     private void tickCompanions() {
         if (service.minions() == null || plugin.ailments() == null || plugin.combat() == null) {
             return;
@@ -1581,7 +1581,7 @@ public final class LineageMechanics implements Listener {
             {245, 456}, {282, 523}, {324, 601}, {372, 691}, {427, 793}, {491, 912}, {565, 1049}, {650, 1207}, {749, 1391}, {863, 1603},
             {996, 1849}, {1150, 2135}, {1329, 2468}, {1538, 2856}, {1781, 3308}, {2066, 3836}, {2399, 4455}, {2789, 5179}, {3246, 6029}};
 
-    /** 湮滅光柱：2 秒內打 6 下（1.7 公尺），物理傷害換成詛咒的元素（沒有元素就是物理）。 */
+    /** 湮滅光柱：2 秒內打 6 下（1.7 格），物理傷害換成詛咒的元素（沒有元素就是物理）。 */
     private void annihilate(final Player owner, final CurseGround ground) {
         final double[] damage = ANNIHILATION_DAMAGE[Math.max(1, Math.min(ANNIHILATION_DAMAGE.length, ground.build.level())) - 1];
         final List<DamageType> types = new ArrayList<>();

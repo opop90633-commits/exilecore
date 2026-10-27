@@ -44,7 +44,8 @@ class TreeEffectKeysTest {
 
     @Test
     void treeUsesTheNewKeys() {
-        for (final String stat : List.of(TreeEffectKeys.ACTION_PENALTY, SupportKeys.WARCRY_SPEED, SupportKeys.TOTEM_PLACEMENT_SPEED,
+        // 2026-10-27 照站長「放技能減速全部移除」：拿掉 ACTION_PENALTY（樹上改成平衡等效的移動速度）
+        for (final String stat : List.of(SupportKeys.WARCRY_SPEED, SupportKeys.TOTEM_PLACEMENT_SPEED,
                 TreeEffectKeys.SHIELD_DEFENCES, TreeEffectKeys.RECOUP_SPEED, TreeEffectKeys.QUIVER_EFFECT, TreeEffectKeys.FOCUS_ES,
                 TreeEffectKeys.BLIND_EFFECT, TreeEffectKeys.RAGE_LOSS_DELAY, TreeEffectKeys.MINION_REVIVE_SPEED, TreeEffectKeys.IGNITE_SPEED,
                 TreeEffectKeys.ES_RECOUP_ELEMENTAL, TreeEffectKeys.RAGE_DECAY, TreeEffectKeys.CHARM_EFFECT, TreeEffectKeys.ARMOUR_BREAK_DURATION,

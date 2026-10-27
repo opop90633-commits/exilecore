@@ -128,7 +128,7 @@ public final class AscKeys {
     // ---- 御風（Pathfinder）----
     /** 衝刺時無法被重度暈眩（衝刺突擊）。 */
     public static final String SPRINT_STUN = "asc.sprint_stun";
-    /** 移動中使用技能的移動速度懲罰更少 x%（衝刺突擊 30；AscBuild 換成 movement.action_penalty 更少，SkillMovePenalty 用）。 */
+    /** 原作「移動中使用技能的移動速度懲罰更少 x%」（衝刺突擊 30）。2026-10-27 照站長「放技能減速全部移除」：AscBuild 換成增加 x × 0.27% 移動速度（30 → 8%）；這次之前換成 movement.action_penalty 更少。 */
     public static final String MOVE_PENALTY = "asc.move_penalty";
     /** 生命全滿時不移除生命藥劑效果（耐久靈藥）。 */
     public static final String ENDURING_ELIXIRS = "asc.enduring_elixirs";
@@ -294,7 +294,7 @@ public final class AscKeys {
     public static final String IDOL_RESERVATION = "asc.idol_reservation";
     /** 裝備上每顆嵌著的符文（不是神像的嵌入物）x% 全部元素抗性（偶像崇敬 -4）。 */
     public static final String AUGMENT_RESIST = "asc.augment_resist";
-    /** 靈現之靈的上限（每移動 10 公尺 1 個；攻擊時用掉全部觸發靈現奔竄；靈現奔竄 3）。 */
+    /** 靈現之靈的上限（每移動 10 格 1 個；攻擊時用掉全部觸發靈現奔竄；靈現奔竄 3）。 */
     public static final String VIVID_WISPS = "asc.vivid_wisps";
     /** 靈鹿每躍起一次傷害、感電幅度更多 x%；奔竄結束時獲得 1 個靈現之靈（莫里根的指引 20）。 */
     public static final String STAG_GUIDANCE = "asc.stag_guidance";
@@ -389,7 +389,7 @@ public final class AscKeys {
         OTHER.put(tw.exilecore.stats.TreeNewMechanicKeys.VOLATILITY_ON_ELEMENTAL_AILMENT, "施加元素異常時獲得易爆");
         OTHER.put(tw.exilecore.stats.TreeNewMechanicKeys.FLAG_VOLATILITY_IMMUNE, "易爆不會傷害你");
         OTHER.put(tw.exilecore.stats.TreeNewMechanicKeys.FLAG_ARCANE_SURGE_ALWAYS, "你擁有秘術增強");
-        // 2026-10-26：移動中使用技能的移動速度懲罰（SkillMovePenalty）、生命回復速度（再生、偷取、回復都算）
+        // 2026-10-26：移動中使用技能的移動速度懲罰（SkillMovePenalty；2026-10-27 照站長「放技能減速全部移除」：已經沒有來源，不會出現）、生命回復速度（再生、偷取、回復都算）
         OTHER.put(tw.exilecore.stats.TreeEffectKeys.ACTION_PENALTY, "移動中使用技能的移動速度懲罰");
         OTHER.put(tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE, "生命回復速度");
         // 2026-10-27 照 PoE2：魔力回復速度（再生、偷取、回復、藥劑都算；跟只加再生的「魔力再生速度」不同）、魔力藥劑回復速度

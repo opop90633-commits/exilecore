@@ -231,14 +231,18 @@ public final class JewelSockets {
         return orphaned.size();
     }
 
-    /** 先放背包、再放隨身背包，都滿了掉在腳下（跟掉落一樣）。 */
-    private static void giveBack(final ExileCore plugin, final Player player, final PlayerState state, final ItemStack stack) {
+    /** 先放背包、再放隨身背包、再放倉庫，都滿了掉在腳下（跟掉落一樣）。 */
+    public static void giveBack(final ExileCore plugin, final Player player, final PlayerState state, final ItemStack stack) {
         ItemStack rest = stack;
         if (plugin.loot() != null) {
             rest = plugin.loot().stow(player, state, stack);
         } else {
             final Map<Integer, ItemStack> leftover = player.getInventory().addItem(stack);
             rest = leftover.isEmpty() ? null : leftover.values().iterator().next();
+        }
+        if (rest != null && !rest.isEmpty() && plugin.stash() != null && plugin.stash().deposit(player, rest)) {
+            player.sendMessage(plugin.text().prefixed("<yellow>背包、隨身背包都滿了，珠寶放進倉庫"));
+            rest = null; // 2026-10-27 照站長：背包、隨身背包滿了先放倉庫
         }
         if (rest != null && !rest.isEmpty()) {
             // 2026-10-18：改成只有自己撿得到、不會消失的個人掉落（原本公開掉落 5 分鐘就沒了）

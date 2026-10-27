@@ -9,7 +9,7 @@ public final class WarcryKeys {
     private WarcryKeys() {
     }
 
-    /** FLAT：戰吼半徑 +x 公尺（加在基礎半徑上、再乘範圍倍率；焚獄戰吼的品質）。 */
+    /** FLAT：戰吼半徑 +x 格（加在基礎半徑上、再乘範圍倍率；焚獄戰吼的品質）。 */
     public static final String RADIUS_FLAT = "warcry.radius_flat";
 
     /** FLAT：被這個戰吼強化的攻擊另外獲得 x% 傷害為額外火焰傷害（焚獄戰吼的品質）。 */
@@ -21,7 +21,7 @@ public final class WarcryKeys {
     /** FLAT：獲得的守護更多 x%（堅壁戰吼的品質）。 */
     public static final String GUARD_MORE = "warcry.guard_more";
 
-    /** FLAT：被強化的攻擊觸發的隱藏技能（盾波）半徑 +x 公尺（堅壁戰吼的品質）。 */
+    /** FLAT：被強化的攻擊觸發的隱藏技能（盾波）半徑 +x 格（堅壁戰吼的品質）。 */
     public static final String TRIGGER_RADIUS_FLAT = "warcry.trigger_radius_flat";
 
     /** FLAT：每用掉一顆磐星，持續時間另外增加 x%（熔魂嘯的品質）。 */

@@ -33,17 +33,17 @@ import java.util.UUID;
 /**
  * 2026-10-27 照 PoE2 0.5（poe2db／RePoE）的矛技能專屬機制：
  * <ul>
- *   <li>擲矛（Spear Throw，每把矛都賦予）：身上有怒星就消耗一顆，矛飛到盡頭（打中敵人、撞牆、飛到最遠）時炸開 2 公尺
+ *   <li>擲矛（Spear Throw，每把矛都賦予）：身上有怒星就消耗一顆，矛飛到盡頭（打中敵人、撞牆、飛到最遠）時炸開 2 格
  *       （spear_throw_blast，自己的傷害表 232% → 724%）。</li>
- *   <li>炎爆矛（Explosive Spear）：矛飛向準心指的地方（指著敵人就是牠腳下），貫穿路上的敵人，插在那裡，2.5 秒後炸開 2.8 公尺
- *       （explosive_spear_blast，135% → 489%，全部轉火焰）；你的引爆類技能（detonator 標籤）打在 3 公尺內會提早引爆。
+ *   <li>炎爆矛（Explosive Spear）：矛飛向準心指的地方（指著敵人就是牠腳下），貫穿路上的敵人，插在那裡，2.5 秒後炸開 2.8 格
+ *       （explosive_spear_blast，135% → 489%，全部轉火焰）；你的引爆類技能（detonator 標籤）打在 3 格內會提早引爆。
  *       同時最多 1～5 支（照技能等級），再多時最舊的那支消失（PoE2 的 Limit：「the oldest effect will disappear」，不會炸）。
- *       身上有怒星就消耗一顆，落地馬上炸成十字形（explosive_spear_infused，200% → 724%；照矛飛的方向，每一臂從中心伸出 4 → 5.9 → 7.9 公尺、
- *       寬 1.5 公尺），並在中心留下 2 公尺、8 秒的燃燒地面（站在上面的敵人每秒被施加易燃，照這次爆炸的火焰傷害算，易燃疊到 50% 才點燃；點燃效果增加 100%）。
+ *       身上有怒星就消耗一顆，落地馬上炸成十字形（explosive_spear_infused，200% → 724%；照矛飛的方向，每一臂從中心伸出 4 → 5.9 → 7.9 格、
+ *       寬 1.5 格），並在中心留下 2 格、8 秒的燃燒地面（站在上面的敵人每秒被施加易燃，照這次爆炸的火焰傷害算，易燃疊到 50% 才點燃；點燃效果增加 100%）。
  *       2026-10-27 照 PoE2 改落點、上限、十字與燃燒地面；這次之前拋物線落地、超過上限最舊的提早炸開、怒星爆炸是等面積的圓＋一定點燃＋點燃效果更多 100%；
  *       （更早）打中敵人或牆就炸、用矛那一下的傷害（50%）。</li>
  *   <li>血嗅印（Bloodhound's Mark）：被標記的敵人身上你造成的失血（流血扣的血）300% 算成重暈累積；牠被重暈時，
- *       或死掉時失血累積到暈眩門檻 5% 以上，印記用掉、觸發血爆（bloodhound_blast，2.6 公尺，不吃武器、不會造成流血；
+ *       或死掉時失血累積到暈眩門檻 5% 以上，印記用掉、觸發血爆（bloodhound_blast，2.6 格，不吃武器、不會造成流血；
  *       照失血累積佔暈眩門檻的比例最多更多 100% 傷害與 100% 範圍）。牠在流血的時候印記不會結束。
  *       這次之前是一般的印記（護甲 -30～-50%、受到你的傷害增加 10%）。</li>
  * </ul>
@@ -66,11 +66,11 @@ public final class SpearMechanics implements Listener {
     static final long DETONATION_TICKS = 50;
     /** 引爆類技能打在幾格內會引爆插著的炎爆矛。 */
     static final double DETONATE_RANGE = 3;
-    /** 炎爆矛：準心指的點離你至少幾格（PoE2 remote_spear_mine_minimum_target_distance 10 = 1 公尺）。 */
+    /** 炎爆矛：準心指的點離你至少幾格（PoE2 remote_spear_mine_minimum_target_distance 10 = 1 格）。 */
     static final double MIN_TARGET = 1.0;
-    /** 炎爆矛（怒星）十字的寬度（PoE2 active_skill_base_secondary_area_of_effect_radius 15 = 1.5 公尺，整條的寬）。 */
+    /** 炎爆矛（怒星）十字的寬度（PoE2 active_skill_base_secondary_area_of_effect_radius 15 = 1.5 格，整條的寬）。 */
     static final double CROSS_WIDTH = 1.5;
-    /** 炎爆矛（怒星）燃燒地面的半徑（PoE2 active_skill_base_tertiary_area_of_effect_radius 20 = 2 公尺）。 */
+    /** 炎爆矛（怒星）燃燒地面的半徑（PoE2 active_skill_base_tertiary_area_of_effect_radius 20 = 2 格）。 */
     static final double GROUND_RADIUS = 2.0;
     /** 炎爆矛（怒星）燃燒地面持續幾秒（PoE2 base_skill_effect_duration 8000，吃持續時間的加成）。 */
     static final double GROUND_SECONDS = 8.0;
@@ -145,7 +145,7 @@ public final class SpearMechanics implements Listener {
     // ---- 投射物停下 ----
 
     /**
-     * 2026-10-27 照 PoE2（炎爆矛的落點在準心）：炎爆矛要飛到哪裡——準心指著敵人就是牠腳下，不然是準心指的地面（最遠 projectile.range、最近 1 公尺）；
+     * 2026-10-27 照 PoE2（炎爆矛的落點在準心）：炎爆矛要飛到哪裡——準心指著敵人就是牠腳下，不然是準心指的地面（最遠 projectile.range、最近 1 格）；
      * 其他技能回傳 null（照一般投射物飛）。這次之前炎爆矛是拋物線，落在哪裡看角度。
      */
     Location landingPoint(final Origin origin, final SkillBuild build) {
@@ -271,8 +271,8 @@ public final class SpearMechanics implements Listener {
 
     /**
      * 2026-10-27 照 PoE2 Explosive Spear 的 Frenzy-Charged 爆炸：照矛飛的方向（水平）擺一個十字，每一臂從中心伸出
-     * explosive_spear_infused 的 nova.radius（4 → 5.9 → 7.9 公尺）、整條寬 1.5 公尺，兩者都吃範圍加成；
-     * 中心留下 2 公尺、8 秒的燃燒地面。這次之前是面積一樣的圓＋一定點燃＋點燃效果更多 100%。
+     * explosive_spear_infused 的 nova.radius（4 → 5.9 → 7.9 格）、整條寬 1.5 格，兩者都吃範圍加成；
+     * 中心留下 2 格、8 秒的燃燒地面。這次之前是面積一樣的圓＋一定點燃＋點燃效果更多 100%。
      */
     private void crossBlast(final Player player, final SkillBuild parent, final Location at, final Vector direction) {
         final SkillBuild sub = subBuild(player, EXPLOSIVE_INFUSED, parent);

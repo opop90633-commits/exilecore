@@ -147,7 +147,7 @@ public final class KeystoneKeys {
     public static final String KNOCKBACK_CRIT_QUARTERSTAFF = "flag.knockback_crit_quarterstaff";
     /** FLAT %：範圍技能擊中時擊退的機率。 */
     public static final String AREA_KNOCKBACK = "knockback.area_chance";
-    /** FLAT %：感電的擊中有 x% 機率讓 1.5 公尺內的敵人也感電。 */
+    /** FLAT %：感電的擊中有 x% 機率讓 1.5 格內的敵人也感電。 */
     public static final String SHOCK_SPREAD = "shock.spread_chance";
     /** FLAT %：擊殺時回滿生命的機率。 */
     public static final String KILL_FULL_LIFE = "kill.full_life_chance";

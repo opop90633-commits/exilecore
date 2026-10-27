@@ -61,7 +61,7 @@ class MetaGemTest {
         assertEquals(20, config.meta("meta_crit").lessDamage(), 1e-9);
         assertEquals(100, config.skill("meta_crit").aura().reserve(), 1e-9, "照 PoE2：暴擊時施放保留 100 精魂");
         assertEquals(30, config.skill("meta_minion_death").aura().reserve(), 1e-9);
-        assertEquals(2, config.meta("meta_dodge").energy(), 1e-9, "照 PoE2：每公尺 2");
+        assertEquals(2, config.meta("meta_dodge").energy(), 1e-9, "照 PoE2：每格 2");
         assertEquals(60, config.skill("meta_elemental_invocation").aura().reserve(), 1e-9);
         assertEquals(30, config.skill("meta_reaper_invocation").aura().reserve(), 1e-9);
         assertEquals(30, config.skill("meta_barrier_invocation").aura().reserve(), 1e-9);

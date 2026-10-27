@@ -40,7 +40,7 @@ final class ManaTempest {
      * 分裂出來的不會再分裂、不打剛打中的那隻）。
      */
     static final String SPLIT = "skill.split";
-    /** 風暴半徑（格；原作 active_skill_base_area_of_effect_radius 26 = 2.6 公尺）。 */
+    /** 風暴半徑（格；原作 active_skill_base_area_of_effect_radius 26 = 2.6 格）。 */
     static final double RADIUS = 2.6;
     /** 離開風暴後效果再留幾 tick（原作 2 秒）。 */
     static final int LINGER_TICKS = 40;

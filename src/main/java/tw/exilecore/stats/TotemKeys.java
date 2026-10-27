@@ -29,6 +29,6 @@ public final class TotemKeys {
     /** 2026-10-26 照 PoE2 Shockwave Totem：FLAT：圖騰的猛擊打到你的碎地時引爆，引爆的傷害效益 x%（0 = 不引爆）。 */
     public static final String JAGGED_ERUPTION = "totem.jagged_eruption";
 
-    /** 碎地引爆的半徑（格；PoE2 3 公尺，乘技能的範圍倍率）。 */
+    /** 碎地引爆的半徑（格；PoE2 3 格，乘技能的範圍倍率）。 */
     public static final double JAGGED_ERUPTION_RADIUS = 3.0;
 }

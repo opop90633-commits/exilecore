@@ -6,7 +6,7 @@ import java.util.Map;
  * 2026-10-26 照 PoE2 0.5：召喚物自己的技能與指令（Command）的數值（RePoE 0.5.5 匯出、Path of Building PoE2 的資料）。純資料，不依賴 Bukkit。
  * <p>
  * 表裡的傷害、生命是 PoE2 的單位（寶石 1～20 級），用的時候乘 {@link MinionSheets#poe2Factors} 換成我們的
- * （超過 20 級照 20 級的值，再乘 {@link MinionSheets#extraScale}）。距離 1 公尺 = 1 格。
+ * （超過 20 級照 20 級的值，再乘 {@link MinionSheets#extraScale}）。距離 1 格 = 1 格。
  * <p>
  * 指令的操作方式（2026-10-26）：精魂召喚綁在上方按鍵格就一直開著，以前按那個鍵只會提示「一直開著，不用按」；
  * 現在按下去就是對那種召喚物下指令（PoE2 的 Command: 技能），花指令的魔力、用指令的施放時間（技能的 cast_time），
@@ -49,7 +49,7 @@ final class MinionAbilities {
 
     // ---- 支援火力（Supporting Fire，2026-10-27 照 PoE2 0.5：RePoE DeathFromAboveDaemonMinion／CommandDeathFromAbovePlayer）----
 
-    /** 從天而降（Death From Above，指令）：每一輪 763% 傷害、共 6 輪、每 0.75 秒一輪，落在 14 × 14 公尺（換成同面積的圓：半徑 7.9 公尺）。 */
+    /** 從天而降（Death From Above，指令）：每一輪 763% 傷害、共 6 輪、每 0.75 秒一輪，落在 14 × 14 格（換成同面積的圓：半徑 7.9 格）。 */
     static final double VOLLEY_DAMAGE = 7.63;
     static final int VOLLEYS = 6;
     static final long VOLLEY_TICKS = 15;
@@ -59,7 +59,7 @@ final class MinionAbilities {
     /** 砲手每 1 點力量增加 1% 傷害、每 3 點敏捷增加 1% 範圍（minion_1%_damage_+%_per_X_player_strength 1、…_area_…_dexterity 3）。 */
     static final double STR_PER_DAMAGE = 1;
     static final double DEX_PER_AREA = 3;
-    /** 砲手站在你身後幾公尺。 */
+    /** 砲手站在你身後幾格。 */
     static final double ARTILLERY_BEHIND = 2.5;
 
     // ---- 通用 ----
@@ -111,13 +111,13 @@ final class MinionAbilities {
 
     // ---- 骸骨重卒（Skeletal Brute）----
 
-    /** 碎骨（Bonebreaker，自動）：冷卻 4 秒、攻擊速度 120%、180% 傷害、碾壓；重暈蓄勢待暈的敵人時接一記震波（480%、2 公尺）。 */
+    /** 碎骨（Bonebreaker，自動）：冷卻 4 秒、攻擊速度 120%、180% 傷害、碾壓；重暈蓄勢待暈的敵人時接一記震波（480%、2 格）。 */
     static final double BONEBREAKER_COOLDOWN = 4;
     static final double BONEBREAKER_SPEED = 1.2;
     static final double BONEBREAKER_DAMAGE = 1.8;
     static final double SHOCKWAVE_DAMAGE = 4.8;
     static final double SHOCKWAVE_RADIUS = 2.0;
-    /** 震地咆哮（Shattering Roar，指令）：4 公尺內的敵人恫嚇 4 秒；消耗範圍內敵人與友軍的凍結，各炸 2.4 公尺的冰冷傷害，暴擊率 12%。 */
+    /** 震地咆哮（Shattering Roar，指令）：4 格內的敵人恫嚇 4 秒；消耗範圍內敵人與友軍的凍結，各炸 2.4 格的冰冷傷害，暴擊率 12%。 */
     static final double ROAR_RADIUS = 4.0;
     static final double ROAR_SECONDS = 4.0;
     static final double ROAR_EXPLOSION = 2.4;
@@ -128,7 +128,7 @@ final class MinionAbilities {
 
     // ---- 骸骨射手（Skeletal Sniper）----
 
-    /** 毒氣箭（Gas Arrow，指令）：冷卻 6 秒、攻擊速度 120%；落點 1.4 公尺 80% 傷害，留下 8 秒的毒雲。 */
+    /** 毒氣箭（Gas Arrow，指令）：冷卻 6 秒、攻擊速度 120%；落點 1.4 格 80% 傷害，留下 8 秒的毒雲。 */
     static final double GAS_SPEED = 1.2;
     static final double GAS_IMPACT = 0.8;
     static final double GAS_RADIUS = 1.4;
@@ -143,9 +143,9 @@ final class MinionAbilities {
 
     // ---- 骸骨焰術士（Skeletal Arsonist）----
 
-    /** 火彈（Fire Bomb，自動）：1.6 公尺、物理 70% 轉火焰，會引爆毒雲。 */
+    /** 火彈（Fire Bomb，自動）：1.6 格、物理 70% 轉火焰，會引爆毒雲。 */
     static final double FIRE_BOMB_RADIUS = 1.6;
-    /** 爆裂殉身（Explosive Demise，指令）：冷卻 3 秒；引爆目標 3 公尺內生命低於門檻的自己的召喚物，2.4 公尺、300% 傷害全轉火焰，加上牠最大生命 8% 的火焰傷害。 */
+    /** 爆裂殉身（Explosive Demise，指令）：冷卻 3 秒；引爆目標 3 格內生命低於門檻的自己的召喚物，2.4 格、300% 傷害全轉火焰，加上牠最大生命 8% 的火焰傷害。 */
     static final double DEMISE_DAMAGE = 3.0;
     static final double DEMISE_RADIUS = 2.4;
     static final double DEMISE_SEARCH = 3.0;
@@ -155,7 +155,7 @@ final class MinionAbilities {
 
     // ---- 骸骨雷術士（Skeletal Storm Mage）----
 
-    /** 電弧（Arc，自動法術）：施放 1.25 秒、暴擊率 9%、連鎖 2 次（3.5 公尺）、感電機率更多 100%。 */
+    /** 電弧（Arc，自動法術）：施放 1.25 秒、暴擊率 9%、連鎖 2 次（3.5 格）、感電機率更多 100%。 */
     static final double ARC_CAST = 1.25;
     static final double ARC_CRIT = 9;
     static final int ARC_CHAINS = 2;
@@ -163,11 +163,11 @@ final class MinionAbilities {
     static final int[][] ARC_LIGHTNING = {
             {1, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 7, 9, 10, 11, 13, 15, 17, 19, 21},
             {11, 17, 24, 32, 40, 50, 61, 74, 88, 103, 121, 141, 163, 188, 216, 246, 281, 319, 361, 408}};
-    /** 死亡風暴（Death Storm，指令）：施放 2 秒、冷卻 5 秒、暴擊率 10%；目標區域裡每一具倒下的骷髏、屍體落雷（2 公尺）並留下 6 秒的感電地面。 */
+    /** 死亡風暴（Death Storm，指令）：施放 2 秒、冷卻 5 秒、暴擊率 10%；目標區域裡每一具倒下的骷髏、屍體落雷（2 格）並留下 6 秒的感電地面。 */
     static final double STORM_CAST = 2.0;
     static final double STORM_CRIT = 10;
     static final double STORM_RADIUS = 2.0;
-    /** 目標區域多大（原作沒寫區域大小，這裡取 4 公尺）。 */
+    /** 目標區域多大（原作沒寫區域大小，這裡取 4 格）。 */
     static final double STORM_AREA = 4.0;
     static final int[][] STORM_LIGHTNING = {
             {14, 21, 29, 38, 49, 62, 76, 92, 110, 131, 154, 180, 210, 244, 281, 324, 371, 424, 484, 551},
@@ -175,7 +175,7 @@ final class MinionAbilities {
 
     // ---- 骸骨霜術士（Skeletal Frost Mage）----
 
-    /** 冰箭（Ice Shard，自動法術）：施放 1.25 秒；投射物暴擊率 11%，到了炸開 0.8 公尺（暴擊率 12%）；必定凍結累積、凍結累積更多 100%。 */
+    /** 冰箭（Ice Shard，自動法術）：施放 1.25 秒；投射物暴擊率 11%，到了炸開 0.8 格（暴擊率 12%）；必定凍結累積、凍結累積更多 100%。 */
     static final double SHARD_CAST = 1.25;
     static final double SHARD_CRIT = 11;
     static final double SHARD_EXPLOSION_CRIT = 12;
@@ -186,7 +186,7 @@ final class MinionAbilities {
     static final int[][] SHARD_EXPLOSION_COLD = {
             {3, 5, 7, 9, 12, 14, 17, 21, 25, 29, 34, 39, 45, 51, 58, 66, 75, 84, 95, 107},
             {5, 8, 11, 14, 17, 22, 26, 31, 37, 43, 50, 58, 67, 77, 87, 99, 112, 127, 142, 160}};
-    /** 冰甲（Ice Armour，指令）：冷卻 12 秒；目標 4 公尺內自己的召喚物 6 秒內受到的擊中傷害更少 40%，打牠們的敵人受到冰冷傷害，算凍結中。 */
+    /** 冰甲（Ice Armour，指令）：冷卻 12 秒；目標 4 格內自己的召喚物 6 秒內受到的擊中傷害更少 40%，打牠們的敵人受到冰冷傷害，算凍結中。 */
     static final double ARMOUR_RADIUS = 4.0;
     static final double ARMOUR_SECONDS = 6.0;
     static final double ARMOUR_LESS = 40;
@@ -202,7 +202,7 @@ final class MinionAbilities {
     /** 每分鐘回復多少生命（PoE2 的生命單位）。 */
     static final int[] HEAL_PER_MINUTE = {776, 1410, 2109, 2884, 3695, 4599, 5547, 6591, 7717, 8925, 10184, 11587, 13099, 14673, 16435,
             18306, 20314, 22439, 24779, 27243};
-    /** 治療找多遠內的召喚物（原作是祭司的施法距離 8 公尺）。 */
+    /** 治療找多遠內的召喚物（原作是祭司的施法距離 8 格）。 */
     static final double HEAL_RANGE = 8;
     /** 復活骷髏（Revive Skeleton，自動）：施放 1.2 秒、冷卻 5 秒，倒下的骷髏馬上回來（不用等 12 秒）。 */
     static final double REVIVE_COOLDOWN = 5;
@@ -226,23 +226,23 @@ final class MinionAbilities {
 
     // ---- 狼（Wolf Companion：灰狼隨、荒原狼伴）----
 
-    /** 躍擊（Leap Slam）：冷卻 7 秒、攻擊速度 125%、落地 1 公尺範圍、擊退；依跳的距離最多多 0.25 秒。 */
+    /** 躍擊（Leap Slam）：冷卻 7 秒、攻擊速度 125%、落地 1 格範圍、擊退；依跳的距離最多多 0.25 秒。 */
     static final double LEAP_COOLDOWN = 7;
     static final double LEAP_SPEED = 1.25;
     static final double LEAP_RADIUS = 1.0;
     static final double LEAP_MAX_EXTRA = 0.25;
-    /** 太近就不跳（照躍擊的最短距離，取 2 公尺）。 */
+    /** 太近就不跳（照躍擊的最短距離，取 2 格）。 */
     static final double LEAP_MIN = 2.0;
     static final double LEAP_MAX = 9.0;
 
     // ---- 蟲噬群 ----
 
-    /** 蟲群只打你身邊 4 公尺內的敵人。 */
+    /** 蟲群只打你身邊 4 格內的敵人。 */
     static final double SWARM_RADIUS = 4.0;
 
     // ---- 鴉群密謀 ----
 
-    /** 振翅熵流（Winged Entropy）：你身邊 2 公尺的持續傷害，每一隻烏鴉持續傷害更多 5%、範圍更多 5%。 */
+    /** 振翅熵流（Winged Entropy）：你身邊 2 格的持續傷害，每一隻烏鴉持續傷害更多 5%、範圍更多 5%。 */
     static final double ENTROPY_RADIUS = 2.0;
     static final double ENTROPY_PER_RAVEN = 0.05;
     /** 每秒的混沌、物理傷害（0 隻烏鴉，PoE2 單位；寶石 1～20 級）。 */
@@ -250,7 +250,7 @@ final class MinionAbilities {
             383.7, 440.0, 503.1, 573.7, 652.7};
     static final double[] ENTROPY_PHYSICAL = {4.0, 6.1, 8.6, 11.4, 14.6, 18.2, 22.4, 27.2, 32.6, 38.7, 45.6, 53.5, 62.3, 72.2, 83.4, 95.9,
             110.0, 125.8, 143.4, 163.2};
-    /** 亂鴉狂舞（Mad Flight，指令）：用掉 10 隻烏鴉，兩面鏡子之間（寬 2.2、長 7 公尺）5 秒，每 0.12 秒打一下 550%（70% 轉混沌）。 */
+    /** 亂鴉狂舞（Mad Flight，指令）：用掉 10 隻烏鴉，兩面鏡子之間（寬 2.2、長 7 格）5 秒，每 0.12 秒打一下 550%（70% 轉混沌）。 */
     static final int FLIGHT_RAVENS = 10;
     static final double FLIGHT_DAMAGE = 5.5;
     static final double FLIGHT_CHAOS = 0.7;

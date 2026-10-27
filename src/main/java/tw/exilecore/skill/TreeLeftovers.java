@@ -330,7 +330,7 @@ public final class TreeLeftovers implements Listener {
     // 靜態的小工具（別的系統直接呼叫）
     // =====================================================================
 
-    /** 投射物穿透 3 公尺內敵人的機率（ProjectileEngine 打中時呼叫；穿過去不算穿透次數）。 */
+    /** 投射物穿透 3 格內敵人的機率（ProjectileEngine 打中時呼叫；穿過去不算穿透次數）。 */
     static boolean pierceClose(final StatSheet effective, final Set<String> tags, final Player owner, final LivingEntity target,
                                final RandomGenerator random) {
         final double chance = effective.flat(TreeLastKeys.PIERCE_CLOSE, tags);
@@ -402,7 +402,7 @@ public final class TreeLeftovers implements Listener {
     }
 
     /**
-     * 防禦方是玩家的那一下（CombatListener 呼叫）：6 公尺外打來的用更多護甲防禦（PoE2 Impenetrable Shell）、
+     * 防禦方是玩家的那一下（CombatListener 呼叫）：6 格外打來的用更多護甲防禦（PoE2 Impenetrable Shell）、
      * 免疫曝露（曝露的抗性減益抵掉）、身上的凋零效果減少。
      * untaggedProjectile：這一下是投射物攻擊，但技能描述沒有 projectile 標籤（怪物的箭用的是普攻的描述）：「對投射物攻擊用 x% 護甲防禦」補在這裡。
      */
@@ -665,7 +665,7 @@ public final class TreeLeftovers implements Listener {
         }
     }
 
-    /** PoE2 Frightening Shield：舉盾時正前方 x 公尺內的敵人衰弱。 */
+    /** PoE2 Frightening Shield：舉盾時正前方 x 格內的敵人衰弱。 */
     private void shieldDebilitate(final Player player, final StatSheet sheet, final long now) {
         final double range = Math.min(SCAN_CAP, sheet.flat(TreeLastKeys.SHIELD_DEBILITATE, Set.of()));
         final Debuffs debuffs = debuffs();
@@ -691,7 +691,7 @@ public final class TreeLeftovers implements Listener {
         }
     }
 
-    /** 2026-10-27 照 PoE2（塗油限定 光明壁壘）：舉盾時正前方 x 公尺內的敵人致盲（原作每 0.25 秒；致盲 4 秒，這裡每 10 tick 續上）。 */
+    /** 2026-10-27 照 PoE2（塗油限定 光明壁壘）：舉盾時正前方 x 格內的敵人致盲（原作每 0.25 秒；致盲 4 秒，這裡每 10 tick 續上）。 */
     private void shieldBlind(final Player player, final StatSheet sheet, final long now) {
         final double range = Math.min(SCAN_CAP, sheet.flat(AnointKeys.SHIELD_BLIND, Set.of()));
         final Debuffs debuffs = debuffs();

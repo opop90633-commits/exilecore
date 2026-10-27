@@ -389,7 +389,7 @@ class MinionTest {
         assertEquals(0.01, MinionAbilities.enrageDegen(0.5), 1e-12);
         assertEquals(0.012, MinionAbilities.enrageDegen(1), 1e-12);
         assertEquals(0.01 * Math.pow(1.2, 9), MinionAbilities.enrageDegen(9.9), 1e-12);
-        // 蟲群擊中一定中毒、焰術士 70% 轉火焰 1.6 公尺、焚魂沒有點燃機率
+        // 蟲群擊中一定中毒、焰術士 70% 轉火焰 1.6 格、焚魂沒有點燃機率
         assertTrue(config.skill("ravenous_swarm").modifiers().stream().anyMatch(m -> m.stat().equals(StatKeys.POISON_CHANCE) && m.value() == 100));
         assertEquals(0.7, config.skill("skeletal_pyromancer").conversion().get(DamageType.FIRE), 1e-9);
         assertEquals(1.6, config.skill("skeletal_pyromancer").summon().radius(), 1e-9);

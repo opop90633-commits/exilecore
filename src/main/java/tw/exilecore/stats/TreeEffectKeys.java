@@ -15,7 +15,8 @@ public final class TreeEffectKeys {
 
     // ---- 移動、防禦 ----
 
-    /** INCREASED（負的＝減少）：使用技能時的移動速度懲罰（PoE2：引導、舉盾這些「邊動作邊走」的減速）。Channelling、SkillService.guard 用。 */
+    /** INCREASED（負的＝減少）：使用技能時的移動速度懲罰（PoE2：引導、舉盾這些「邊動作邊走」的減速）。
+     *  2026-10-27 照站長「放技能減速全部移除」：放技能、引導、舉盾都不再變慢，這個不再有作用、也沒有來源（天賦樹、昇華、輔助都改成平衡等效的效果）；留著給舊資料讀得進來。 */
     public static final String ACTION_PENALTY = "movement.action_penalty";
     /** INCREASED：裝備的盾給的護甲、閃避、能量護盾。PlayerStateService.ascendancyEquipment 用（照盾的基底數值加）。 */
     public static final String SHIELD_DEFENCES = "shield.defences";

@@ -117,13 +117,9 @@ trophy_girdle:
   weight: 6
   flavour:
     - "「牠們的力量，現在是你的了。」"
-  version: 3        # 2026-10-26 照 PoE2 0.5 的「Headhunter」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
-  legacy: { 1: [0, 2, 3, 4, 5], 2: [0, 2, 3, 4, 5] }
+  version: 4        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
+  legacy: { 1: [2, 3, 4, 5], 2: [2, 3, 4, 5], 3: [2, 3, 4, 5] }
   mods:
-    - text: "+{value} 護符欄位"
-      value: [1, 3]
-      stats:
-        - { stat: charm.slots, type: FLAT, value: "{value}" }
     - text: "+{value} 最大生命"
       value: [40, 60]
       stats:
@@ -276,13 +272,9 @@ bone_cinch:
   weight: 100
   flavour:
     - "「每一具倒下的屍體都在為你數錢。」"
-  version: 5        # 2026-10-26 照 PoE2 0.5 的「Umbilicus Immortalis」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
-  legacy: { 1: [0, 0, 1, 2, 0, 0, 0], 2: [0, 0, 1, 2, 0, 0, 0], 3: [0, 0, 1, 2, 0, 0, 0], 4: [0, 0, 1, 2, 0, 0, 0] }
+  version: 6        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
+  legacy: { 1: [0, 1, 2, 0, 0, 0], 2: [0, 1, 2, 0, 0, 0], 3: [0, 1, 2, 0, 0, 0], 4: [0, 1, 2, 0, 0, 0], 5: [2, 3, 4, 5, 6, 7] }
   mods:
-    - text: "+{value} 護符欄位"
-      value: [1, 3]
-      stats:
-        - { stat: charm.slots, type: FLAT, value: "{value}" }
     - text: "減少 {value}% 藥劑效果持續時間"
       value: [30, 40]
       stats:
@@ -594,13 +586,9 @@ ironclad_belt:
   weight: 100
   flavour:
     - "「規矩是鐵打的。」"
-  version: 3        # 2026-10-26 照 PoE2 0.5 的「Goregirdle」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
-  legacy: { 1: [0, 2, 3, 0, 0], 2: [0, 2, 3, 0, 0] }
+  version: 4        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
+  legacy: { 1: [2, 3, 0, 0], 2: [2, 3, 0, 0], 3: [2, 3, 4, 5] }
   mods:
-    - text: "+{value} 護符欄位"
-      value: [1, 3]
-      stats:
-        - { stat: charm.slots, type: FLAT, value: "{value}" }
     - text: "+{value} 力量"
       value: [20, 30]
       stats:
@@ -769,7 +757,7 @@ pyre_staff:
     - text: "增加 100% 點燃傷害"
       stats:
         - { stat: ignite.magnitude, type: INCREASED, value: 100 }
-    - text: "你造成的點燃會擴散給待在 1.5 公尺內 1 秒的其他敵人"
+    - text: "你造成的點燃會擴散給待在 1.5 格內 1 秒的其他敵人"
       stats:
         - { stat: ignite.spread, type: FLAT, value: 15 }
 
@@ -927,10 +915,10 @@ falconer_bow:
       value: [20, 30]
       stats:
         - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "最近沒有翻滾過時，翻滾距離 +2 公尺"
+    - text: "最近沒有翻滾過時，翻滾距離 +2 格"
       stats:
         - { stat: dodge.metres@nododge, type: FLAT, value: 2 }
-    - text: "最近翻滾過時，翻滾距離 -1 公尺"
+    - text: "最近翻滾過時，翻滾距離 -1 格"
       stats:
         - { stat: dodge.metres@dodge, type: FLAT, value: -1 }
     - text: "增加 30% 投射物傷害"        # 2026-10-26 原作的身邊沒有敵人時，可重複的攻擊多重複 2 次做不出來，改成強度相當的這條
@@ -2072,13 +2060,9 @@ ascetic_sash:
   weight: 100
   flavour:
     - "「少吃一口，多走一步。」"
-  version: 3        # 2026-10-26 照 PoE2 0.5 的「Midnight Braid」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
-  legacy: { 1: [0, 1, 2, 0], 2: [0, 1, 2, 0] }
+  version: 4        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
+  legacy: { 1: [1, 2, 0], 2: [1, 2, 0], 3: [2, 3, 4] }
   mods:
-    - text: "+{value} 護符欄位"
-      value: [1, 3]
-      stats:
-        - { stat: charm.slots, type: FLAT, value: "{value}" }
     - text: "+{value} 最大魔力"
       value: [30, 50]
       stats:
@@ -2116,7 +2100,7 @@ blaze_loop:
       value: [20, 30]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
-    - text: "你造成的點燃會擴散給待在 1.5 公尺內 1 秒的其他敵人"
+    - text: "你造成的點燃會擴散給待在 1.5 格內 1 秒的其他敵人"
       stats:
         - { stat: ignite.spread, type: FLAT, value: 15 }
 
@@ -2402,13 +2386,9 @@ abyss_throne_belt:       # 照 PoE2 的 Darkness Enthroned：兩個符文孔、�
   weight: 100
   flavour:
     - "「王座空著，暗處的東西還是跪著。」"
-  version: 2        # 2026-10-26 照 PoE2 0.5 的「Darkness Enthroned」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
-  legacy: { 1: [0, 0, 0] }
+  version: 3        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
+  legacy: { 1: [0, 0], 2: [2, 3] }
   mods:
-    - text: "+{value} 護符欄位"
-      value: [1, 3]
-      stats:
-        - { stat: charm.slots, type: FLAT, value: "{value}" }
     - text: "嵌在這件物品上的符文效果增加 {value}%"
       value: [50, 100]
       stats:
@@ -3910,7 +3890,7 @@ bonewalker:
       value: [5, 10]
       stats:
         - { stat: attr.str, type: FLAT, value: "{value}" }
-    - text: "每移動 1.2 公尺觸發一次潰骸"
+    - text: "每移動 1.2 格觸發一次潰骸"
       stats:
         - { stat: trigger.decompose_metres, type: FLAT, value: 12 }
 
@@ -4972,11 +4952,9 @@ stormward_cord:        # 2026-10-26 照 PoE2 0.5 的「Byrnabas」（原作有�
   weight: 100
   flavour:
     - "「雷落在別處，你在這裡。」"
+  version: 2        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
+  legacy: { 1: [2, 3, 4, 5] }
   mods:
-    - text: "+{value} 護符欄位"
-      value: [1, 3]
-      stats:
-        - { stat: charm.slots, type: FLAT, value: "{value}" }
     - text: "+{value} 最大魔力"
       value: [40, 60]
       stats:
@@ -5001,11 +4979,9 @@ flameclasp_belt:        # 2026-10-26 照 PoE2 0.5 的「Infernoclasp」（原作
   weight: 100
   flavour:
     - "「扣上它，火就繞著你走。」"
+  version: 2        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
+  legacy: { 1: [2, 3, 4, 5] }
   mods:
-    - text: "+{value} 護符欄位"
-      value: [1, 3]
-      stats:
-        - { stat: charm.slots, type: FLAT, value: "{value}" }
     - text: "+{value} 護甲"
       value: [100, 150]
       stats:
@@ -5031,11 +5007,9 @@ towline_belt:        # 2026-10-26 照 PoE2 0.5 的「Keelhaul」（原作有、�
   weight: 100
   flavour:
     - "「慢慢來，總會回來的。」"
+  version: 2        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
+  legacy: { 1: [2, 3, 4, 5] }
   mods:
-    - text: "+{value} 護符欄位"
-      value: [1, 3]
-      stats:
-        - { stat: charm.slots, type: FLAT, value: "{value}" }
     - text: "增加 {value}% 生命藥劑回復速度"
       value: [-25, 25]
       stats:
@@ -5059,11 +5033,9 @@ giantgrip_girdle:        # 2026-10-26 照 PoE2 0.5 的「Meginord's Girdle」（
   weight: 100
   flavour:
     - "「力氣大的人，喝得也多。」"
+  version: 2        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
+  legacy: { 1: [2, 3, 4, 5] }
   mods:
-    - text: "+{value} 護符欄位"
-      value: [1, 3]
-      stats:
-        - { stat: charm.slots, type: FLAT, value: "{value}" }
     - text: "+{value} 力量"
       value: [40, 50]
       stats:
@@ -6082,7 +6054,7 @@ surestep_sigil:        # 2026-10-27 照 PoE2 0.5 的「Surefooted Sigil」（原
       value: [5, 15]
       stats:
         - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "翻滾距離 +1 公尺"
+    - text: "翻滾距離 +1 格"
       stats:
         - { stat: dodge.metres, type: FLAT, value: 1 }
     - text: "最近翻滾過，則增加 50% 閃避"
@@ -7738,9 +7710,9 @@ feather_fortress:        # 2026-10-27 照 PoE2 0.5 的「Feathered Fortress」�
       value: [20, 30]
       stats:
         - { stat: resist.cold, type: FLAT, value: "{value}" }
-    - text: "舉盾時沒有移動速度的懲罰"
+    - text: "增加 5% 移動速度"   # 2026-10-27 照站長「放技能減速全部移除」：舉盾不再變慢，原作「舉盾時沒有移動速度的懲罰」平衡等效（舉盾更少 50% × 舉盾約佔移動中 10%）；這次之前 guard.slow INCREASED -100
       stats:
-        - { stat: guard.slow, type: INCREASED, value: -100 }
+        - { stat: movement.speed, type: INCREASED, value: 5 }
 
 surrender_tower:        # 2026-10-27 照 PoE2 0.5 的「The Surrender」（原作有、我們以前沒有的）
   name: 降伏塔盾

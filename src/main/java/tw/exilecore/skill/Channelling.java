@@ -27,8 +27,8 @@ import java.util.Locale;
  *   <li>衝鋒（mode: rush）：按住一直朝準心的方向跑（速度吃移動速度）。盾衝撞上敵人就停下，撞擊一圈（衝越遠越痛）、撞上的那隻另外挨一下並被擊退，
  *       衝的時候盾舉著（擋下所有可格擋的擊中）；蠻衝一路每一次攻擊時間踏地一下（加一下餘震），最短 3 秒，2.5 秒之後每秒花怒氣撐著，
  *       用的時候不會獲得怒氣。</li>
- *   <li>持續作用（mode: pulse）：凋蝕術按住期間，作用區域從準心處慢慢往準心移動（1.8 公尺／秒），每一次施法間隔給範圍內的敵人一層凋零；
- *       引導中移動速度更少 70%。</li>
+ *   <li>持續作用（mode: pulse）：凋蝕術按住期間，作用區域從準心處慢慢往準心移動（1.8 格／秒），每一次施法間隔給範圍內的敵人一層凋零；
+ *       （2026-10-27 照站長「放技能減速全部移除」：引導中不再變慢；這次之前移動速度更少 70%）</li>
  *   <li>連續出手（mode: stream，2026-10-26：熾息）：按住期間每一次攻擊／施法間隔放一次技能本身。冷卻在開始引導時就開始算；
  *       熾息：最短 3 秒、前 4 秒不花怒氣、之後每秒花怒氣撐著，有能星就用掉一顆強化。
  *       （2026-10-26 站長把焚燼併入焚流，只有焚燼用的燃料一起拿掉；這次之前焚燼不花魔力，燒別的技能花魔力存下來的燃料）</li>
@@ -41,14 +41,12 @@ import java.util.Locale;
  */
 final class Channelling {
 
-    /** 凋蝕術的作用區域往準心移動的速度（公尺／秒；PoE2 wither_channeled_move_targeting_area_X_units_per_second = 18）。 */
+    /** 凋蝕術的作用區域往準心移動的速度（格／秒；PoE2 wither_channeled_move_targeting_area_X_units_per_second = 18）。 */
     static final double WITHER_FOLLOW = 1.8;
-    /** 凋蝕術引導中移動速度更少幾 %（PoE2 movement_speed_+%_final_while_performing_action = -70）。 */
-    static final double WITHER_SLOW = 70;
     /** 衝鋒時撞到敵人的偵測：前方幾格、多寬。 */
     static final double CRASH_AHEAD = 1.2;
     static final double CRASH_WIDTH = 1.0;
-    /** 撞上的那隻被擊退（PoE2 盾衝 9 公尺；換成原版的擊退速度）。 */
+    /** 撞上的那隻被擊退（PoE2 盾衝 9 格；換成原版的擊退速度）。 */
     static final double CRASH_KNOCKBACK = 1.6;
     /** 卡在牆上幾 tick 沒前進就停下。 */
     static final int STUCK_TICKS = 6;
@@ -197,9 +195,7 @@ final class Channelling {
      */
     private boolean recharge(final Player player, final SkillRuntime.Charging charging, final ChargeSpec.Channel channel, final SkillBuild build,
                              final long now) {
-        if (channel.slow() > 0 && (now - charging.start) % BUFF_REFRESH == 0) {
-            service.buff(player, "channel_slow", "引導中", BUFF_TICKS, List.of(Modifier.more(StatKeys.MOVEMENT_SPEED, -actionPenalty(player, channel.slow()), "引導中")));
-        }
+        // 2026-10-27 照站長「放技能減速全部移除」：引導中不再變慢（channel.slow 不用了）；這次之前移動更少 70%
         final PlayerState state = plugin.players().get(player);
         final double max = state.maxEnergyShield();
         if (max <= 0) {
@@ -251,10 +247,7 @@ final class Channelling {
 
     /** 2026-10-26：按住期間每一次攻擊／施法間隔放一次技能本身（不另外扣消耗、不重算冷卻）。回傳 true = 引導結束。 */
     private boolean stream(final Player player, final SkillRuntime.Charging charging, final ChargeSpec.Channel channel, final long now) {
-        if (channel.slow() > 0 && (now - charging.start) % BUFF_REFRESH == 0) {
-            service.buff(player, "channel_slow", "引導中", BUFF_TICKS, List.of(Modifier.more(StatKeys.MOVEMENT_SPEED,
-                    -actionPenalty(player, channel.slow(), skillTags(charging.skillId)), "引導中"))); // 2026-10-27：帶技能標籤（火焰、冰冷技能）
-        }
+        // 2026-10-27 照站長「放技能減速全部移除」：引導中不再變慢（channel.slow 不用了）；這次之前熾息移動更少 40%
         if (now < charging.nextBeat) {
             return false;
         }
@@ -350,7 +343,7 @@ final class Channelling {
         player.setVelocity(new Vector(0, 0, 0));
         player.getWorld().playSound(at, Sound.ITEM_SHIELD_BLOCK, SoundCategory.PLAYERS, 1f, 0.7f);
         final PlayerState state = plugin.players().get(player);
-        state.notice(String.format(Locale.ROOT, "<#c9d6e3>%s 撞上！<gray>（衝了 %.1f 公尺，更多 %.0f%% 傷害）",
+        state.notice(String.format(Locale.ROOT, "<#c9d6e3>%s 撞上！<gray>（衝了 %.1f 格，更多 %.0f%% 傷害）",
                 ItemRenderer.escape(build.definition().name()), charging(player) == null ? 0 : charging(player).travelled, (more - 1) * 100),
                 plugin.getServer().getCurrentTick() + 30);
         plugin.players().display(player, state);
@@ -358,22 +351,6 @@ final class Channelling {
 
     private SkillRuntime.Charging charging(final Player player) {
         return service.runtime(player).charging;
-    }
-
-    /** 2026-10-26 照 PoE2 天賦樹：邊動作邊走的減速（percent 是基礎幾 %）乘上「減少使用技能時的移動速度懲罰」，回傳小數。 */
-    private double actionPenalty(final Player player, final double percent) {
-        return actionPenalty(player, percent, java.util.Set.of());
-    }
-
-    /** 2026-10-27 照 PoE2 天賦樹：「使用火焰／冰冷技能時的移動速度懲罰減少」看技能的標籤。 */
-    private double actionPenalty(final Player player, final double percent, final java.util.Set<String> skillTags) {
-        return tw.exilecore.stats.TreeEffectKeys.actionPenalty(plugin.players().sheet(player), percent / 100.0, skillTags);
-    }
-
-    /** 技能的標籤（找不到是空的）。 */
-    private java.util.Set<String> skillTags(final String skillId) {
-        final SkillDefinition definition = service.config().skill(skillId);
-        return definition == null ? java.util.Set.of() : definition.tags();
     }
 
     /** 移動速度倍率（原版的移動速度屬性 ÷ 基礎 0.1；含疾速、衝刺之類）。 */
@@ -387,22 +364,18 @@ final class Channelling {
 
     // ---- 舉盾（架盾） ----
 
-    /** 架盾移動速度更少幾 %（PoE2 Raise Shield：-50%）。 */
-    static final double GUARD_SLOW = 50;
-
-    /** 2026-10-26 照 PoE2 的架盾：按住期間盾舉著，擋下所有可格擋的擊中，移動更少 50%。 */
+    /** 2026-10-26 照 PoE2 的架盾：按住期間盾舉著，擋下所有可格擋的擊中。2026-10-27 照站長「放技能減速全部移除」：不再變慢；這次之前移動更少 50%。 */
     private boolean hold(final Player player, final SkillRuntime.Charging charging, final long now) {
         if ((now - charging.start) % BUFF_REFRESH == 0) {
             service.buff(player, "channel_block", "架盾", BUFF_TICKS, List.of(
-                    Modifier.flat(StatKeys.BLOCK_CHANCE, 100, "架盾"), Modifier.flat(StatKeys.BLOCK_MAX, 50, "架盾"),
-                    Modifier.more(StatKeys.MOVEMENT_SPEED, -actionPenalty(player, GUARD_SLOW), "架盾")));
+                    Modifier.flat(StatKeys.BLOCK_CHANCE, 100, "架盾"), Modifier.flat(StatKeys.BLOCK_MAX, 50, "架盾")));
         }
         return false;
     }
 
     /** 盾擊：擋下之後多久內放開才算（PoE2 raise_shield_base_retaliation_duration 1000 ms）。 */
     static final long BASH_WINDOW = 20;
-    /** 盾擊打身前多遠的地方、多大一圈（PoE2 近戰打擊 +1.4 公尺）。 */
+    /** 盾擊打身前多遠的地方、多大一圈（PoE2 近戰打擊 +1.4 格）。 */
     static final double BASH_AHEAD = 1.2;
     static final double BASH_RADIUS = 1.6;
     /** 盾擊：盾牌上每 5 點護甲 3～4 點物理傷害（PoE2）、基礎暴擊率 5%。 */
@@ -473,10 +446,7 @@ final class Channelling {
     // ---- 持續作用（凋蝕術） ----
 
     private boolean pulse(final Player player, final SkillRuntime.Charging charging, final SkillBuild build, final long now) {
-        if ((now - charging.start) % BUFF_REFRESH == 0) {
-            service.buff(player, "channel_slow", "引導中", BUFF_TICKS, List.of(Modifier.more(StatKeys.MOVEMENT_SPEED,
-                    -actionPenalty(player, WITHER_SLOW, build.profile().tags()), "引導中"))); // 2026-10-27：帶技能標籤
-        }
+        // 2026-10-27 照站長「放技能減速全部移除」：凋蝕術引導中不再變慢；這次之前移動速度更少 70%
         final Location aim = service.targets().aimPoint(Origin.of(player), build.range() > 0 ? build.range() : 22);
         if (charging.focus == null || charging.focus.getWorld() != player.getWorld()) {
             charging.focus = aim;

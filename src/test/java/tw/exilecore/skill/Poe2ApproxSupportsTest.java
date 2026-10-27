@@ -65,7 +65,8 @@ class Poe2ApproxSupportsTest {
         }
         // 2026-10-27 照站長：矛陣改成照 PoE2 Spearfield 插在地上的矛，遲爆、再布 II 改成 exact；箭幕、跛行、活雷 II、衝勢刪掉（tsv 標 removed）
         //   這次之前剩 delayed_reaction、fusillade、hobble、living_lightning_ii、momentum、rearm_ii 六顆近似
-        assertEquals(List.of(), approx);
+        // 2026-10-27 照站長「放技能減速全部移除」：輕身（原作只有減少移動懲罰）沒有原作效果可以做，平衡等效成攻擊／施法速度
+        assertEquals(List.of("mobility"), approx);
         assertEquals(List.of("fusillade", "hobble", "living_lightning_ii", "momentum"), removed);
     }
 
@@ -163,7 +164,7 @@ class Poe2ApproxSupportsTest {
 
     @Test
     void smallHelpers() {
-        assertEquals(3, SupportExtras.stompSteps(4.6), "每 1.5 公尺一步");
+        assertEquals(3, SupportExtras.stompSteps(4.6), "每 1.5 格一步");
         assertEquals(0, SupportExtras.stompSteps(1.4));
         assertEquals(20, SupportExtras.refractionExposure(2, 10000), 1e-9);
         assertEquals(80, SupportExtras.refractionExposure(2, 100000), 1e-9, "最多 80%");

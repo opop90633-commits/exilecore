@@ -124,7 +124,7 @@ final class AuraService implements Listener {
 
     static final String HERALD_THUNDER = "herald_of_thunder";
     static final String HERALD_BLOOD = "herald_of_blood";
-    /** 2026-10-26 照 PoE2 的 Herald of Ash：不打人，照過量擊殺的傷害點燃附近 1.2 公尺的敵人 3 秒。 */
+    /** 2026-10-26 照 PoE2 的 Herald of Ash：不打人，照過量擊殺的傷害點燃附近 1.2 格的敵人 3 秒。 */
     static final String HERALD_ASH = "herald_of_ash";
     static final double ASH_RADIUS = 1.2;
     static final double ASH_SECONDS = 3;
@@ -1650,7 +1650,7 @@ final class AuraService implements Listener {
                 continue;
             }
             if (HERALD_ASH.equals(heraldId)) {
-                // 2026-10-26 照 PoE2：不打人；照過量擊殺的傷害點燃 1.2 公尺內的敵人（這次之前是一圈火焰爆炸、30% 點燃）
+                // 2026-10-26 照 PoE2：不打人；照過量擊殺的傷害點燃 1.2 格內的敵人（這次之前是一圈火焰爆炸、30% 點燃）
                 final boolean struck = last != null && last.player().equals(credit.getUniqueId()) && now() - last.tick() <= 1;
                 final double overkill = struck ? last.overkill() / 100.0 * maxLife(entity) : 0;
                 if (overkill > 0 && plugin.ailments() != null) {

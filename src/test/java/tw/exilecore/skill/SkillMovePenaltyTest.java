@@ -5,11 +5,19 @@ import tw.exilecore.stats.Modifier;
 import tw.exilecore.stats.StatSheet;
 import tw.exilecore.stats.TreeEffectKeys;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** 2026-10-26 照 PoE2：移動中使用技能的移動速度懲罰（SkillMovePenalty）。 */
+/**
+ * 2026-10-26 照 PoE2：移動中使用技能的移動速度懲罰（SkillMovePenalty）。
+ * 2026-10-27 照站長「放技能減速全部移除」：放技能、引導、舉盾都不再變慢（下面的純函式還在，只是沒人套用；見 {@link #castingNoLongerSlowsWalking}）。
+ */
 class SkillMovePenaltyTest {
 
     @Test
@@ -48,5 +56,25 @@ class SkillMovePenaltyTest {
         sheet.add(Modifier.increased(TreeEffectKeys.ACTION_PENALTY, 1.0, "測試"));
         assertEquals(1.0, SkillMovePenalty.penalty(sheet, 0.70, Set.of()), 1e-9, "最多停住，不會倒退");
         assertEquals(0, SkillMovePenalty.penalty(sheet, 0, Set.of()), 1e-9, "不算的技能還是 0");
+    }
+
+    /** 2026-10-27 照站長「放技能減速全部移除」：放技能不再改變走路速度（不呼叫 apply、引導與舉盾不掛移動速度的「更少」）。 */
+    @Test
+    void castingNoLongerSlowsWalking() throws IOException {
+        final String service = Files.readString(Path.of("src/main/java/tw/exilecore/skill/SkillService.java"));
+        assertFalse(service.contains("movePenalty.apply("), "放技能不再套用 SkillMovePenalty");
+        assertTrue(service.contains("movePenalty.tick(") && service.contains("movePenalty.forget("), "tick／forget 留著清舊的慢速");
+        assertFalse(service.contains("ConditionKeys.GUARD_SLOW") || service.contains("TreeEffectKeys.actionPenalty("), "舉盾（招架）不再變慢");
+        final String channelling = Files.readString(Path.of("src/main/java/tw/exilecore/skill/Channelling.java"));
+        assertFalse(channelling.contains("MOVEMENT_SPEED,"), "引導（凋蝕術、熾息、冥想）與架盾不再掛移動速度的「更少」");
+        assertFalse(channelling.contains("\"channel_slow\""), "不再給「引導中」減速");
+        // 資料：沒有技能的引導再寫減速，也沒有效果再用「移動中使用技能的移動速度懲罰」
+        final String skills = Files.readString(Path.of("src/main/resources/data/skills.yml"));
+        assertFalse(skills.matches("(?s).*charge: \\{[^}\n]*slow: [1-9].*"), "skills.yml 的 charge 不再寫 slow");
+        for (final String file : new String[] {"supports.yml", "ascendancy.yml", "uniques.yml", "passives/tree.json"}) {
+            final String data = Files.readString(Path.of("src/main/resources/data/" + file));
+            assertFalse(data.contains("stat: movement.action_penalty") || data.contains("\"stat\":\"movement.action_penalty\""), file + " 不再用移動懲罰");
+            assertFalse(data.contains("stat: guard.slow") || data.contains("\"stat\":\"guard.slow\""), file + " 不再用舉盾減速");
+        }
     }
 }

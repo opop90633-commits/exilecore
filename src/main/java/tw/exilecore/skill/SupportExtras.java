@@ -389,7 +389,7 @@ public final class SupportExtras implements Listener {
         if (pact > 0 && service.minions() != null && pactMinion(player, state.maxLife() * pact / 100.0)) {
             extra.add(Modifier.more(StatKeys.DAMAGE, flat(effective, SupportExtraKeys.MINION_PACT_MORE, tags) / 100.0, "召喚物契約"));
         }
-        // Profanity：用掉 5 公尺內最多 x 具屍體，每具混沌更多 y%
+        // Profanity：用掉 5 格內最多 x 具屍體，每具混沌更多 y%
         final double profanity = flat(effective, SupportExtraKeys.PROFANITY, tags);
         if (profanity > 0 && plugin.combat() != null && plugin.combat().corpses() != null) {
             final int consumed = consumeCorpses(player, (int) Math.round(profanity));
@@ -461,7 +461,7 @@ public final class SupportExtras implements Listener {
         return true;
     }
 
-    /** Profanity：用掉 5 公尺內最多 max 具屍體，回傳用掉幾具。 */
+    /** Profanity：用掉 5 格內最多 max 具屍體，回傳用掉幾具。 */
     private int consumeCorpses(final Player player, final int max) {
         final tw.exilecore.combat.Corpses corpses = plugin.combat().corpses();
         final Location at = player.getLocation();
@@ -786,7 +786,7 @@ public final class SupportExtras implements Listener {
             refreshPerfection(player, stacks, now);
         }
         // Cursed Ground：2026-10-27 改在詛咒落下時接手（cursedGround，SkillExecutor.applyCurseAt 呼叫）
-        // Stomping Ground：2026-10-27 照 PoE2 每走一步一陣震波——瞬間到位的突進照路線每 1.5 公尺補一陣；跳躍起跳一陣（落地在 onUse）；
+        // Stomping Ground：2026-10-27 照 PoE2 每走一步一陣震波——瞬間到位的突進照路線每 1.5 格補一陣；跳躍起跳一陣（落地在 onUse）；
         // 按住衝的在 sample 照走的距離；這次之前起點、終點各一陣
         final Stomp stomp = stomps.get(player.getUniqueId());
         if (stomp != null && stomp.skillId.equals(build.definition().id()) && flat(effective, SupportExtraKeys.STOMPING, tags) > 0) {
@@ -813,12 +813,12 @@ public final class SupportExtras implements Listener {
         }
     }
 
-    /** Stomping Ground：走了 distance 公尺是幾步。 */
+    /** Stomping Ground：走了 distance 格是幾步。 */
     static int stompSteps(final double distance) {
         return (int) Math.floor(Math.max(0, distance) / SupportExtraKeys.STOMPING_STEP + 1e-9);
     }
 
-    /** 這一步震出一陣震波（2 公尺、武器攻擊傷害的 50%；skills.yml 的 proc_stomping_ground）。 */
+    /** 這一步震出一陣震波（2 格、武器攻擊傷害的 50%；skills.yml 的 proc_stomping_ground）。 */
     private void stompAt(final Player player, final Stomp stomp, final Location at) {
         castFree(player, "proc_stomping_ground", stomp.skillId, groundAt(at), null, 1.0);
     }
@@ -1416,7 +1416,7 @@ public final class SupportExtras implements Listener {
             removeAny(debuffs, target, PARRIED, now);
             plugin.combat().charges().grant(player, "frenzy", (int) Math.round(riposte));
         }
-        // Punch Through：擊退時讓敵人成為好目標（每公尺擊退距離 x%）
+        // Punch Through：擊退時讓敵人成為好目標（每格擊退距離 x%）
         final double punch = effective.flat(SupportExtraKeys.PUNCH_THROUGH, tags);
         if (punch > 0 && debuffs != null) {
             final double knockback = Math.max(0, effective.apply(StatKeys.SKILL_KNOCKBACK, effective.flat(StatKeys.SKILL_KNOCKBACK, tags), tags));
@@ -1425,7 +1425,7 @@ public final class SupportExtras implements Listener {
                         punch * knockback / 100.0, true));
             }
         }
-        // Font of Blood／Mana：圖騰的擊中，站在圖騰 4 公尺內的你與隊友偷取圖騰物理傷害的 x%
+        // Font of Blood／Mana：圖騰的擊中，站在圖騰 4 格內的你與隊友偷取圖騰物理傷害的 x%
         final double fontBlood = effective.flat(SupportExtraKeys.FONT_BLOOD, tags);
         final double fontMana = effective.flat(SupportExtraKeys.FONT_MANA, tags);
         if ((fontBlood > 0 || fontMana > 0) && tags.contains(Tags.TOTEM_HIT) && result.dealt().get(DamageType.PHYSICAL) > 0) {
@@ -1483,7 +1483,7 @@ public final class SupportExtras implements Listener {
         }
     }
 
-    /** 站在你的圖騰 4 公尺內的你與隊友（Font of Blood／Mana）。 */
+    /** 站在你的圖騰 4 格內的你與隊友（Font of Blood／Mana）。 */
     private List<Player> fontAllies(final Player owner) {
         final List<SkillService.TotemView> totems = service.totems(owner.getUniqueId());
         final List<Player> candidates = new ArrayList<>();
@@ -1542,7 +1542,7 @@ public final class SupportExtras implements Listener {
     }
 
     /**
-     * Shock Conduction（2026-10-27 照 PoE2）：讓 2.5 公尺內的敵人也感電（跟這隻一樣的感電幅度）；這次之前只傳給其中一隻、固定 20%。
+     * Shock Conduction（2026-10-27 照 PoE2）：讓 2.5 格內的敵人也感電（跟這隻一樣的感電幅度）；這次之前只傳給其中一隻、固定 20%。
      */
     private void conductShock(final Player player, final LivingEntity source) {
         final double magnitude = Math.max(0.01, plugin.ailments().shockMagnitude(source));
@@ -2126,7 +2126,7 @@ public final class SupportExtras implements Listener {
         keepRecharging(player, now);
     }
 
-    /** Wildfire：在點燃的怪物 1.5 公尺內待滿 1 秒的敵人也被點燃（同一個點燃）。 */
+    /** Wildfire：在點燃的怪物 1.5 格內待滿 1 秒的敵人也被點燃（同一個點燃）。 */
     private void tickWildfire(final long now) {
         if (wildfires.isEmpty() || plugin.ailments() == null) {
             return;

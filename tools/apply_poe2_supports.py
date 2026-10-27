@@ -62,7 +62,8 @@ SPEC = {
     'chaos_mastery': ('Chaos Mastery', 5, 1.0, None),
     'physical_mastery': ('Physical Mastery', 5, 1.0, None),
     'minion_mastery': ('Minion Mastery', 5, 1.0, None),
-    'deliberation': ('Deliberation', 3, 1.0, [m('damage', 'MORE', 20)]),
+    # 2026-10-27 照站長「放技能減速全部移除」：原作代價「移動速度懲罰更多 30%」沒了，平衡等效成攻擊／施法速度更少 6%
+    'deliberation': ('Deliberation', 3, 1.0, [m('damage', 'MORE', 20), m('attack.speed', 'MORE', -6), m('cast.speed', 'MORE', -6)]),
     'overreach': ('Overreach', 2, 1.0, None),
     'bloodlust': ('Bloodlust', None, 1.0, None),
     'deep_freeze': ('Deep Freeze', 1, 1.2, None),

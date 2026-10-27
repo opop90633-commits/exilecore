@@ -45,12 +45,12 @@ final class Signatures {
     static final int WHIRL_MAX = 3;
     /** 旋風幾 tick 沒再揮就崩散。2026-10-26 照 PoE2：旋風不會自己散掉，離開它才崩散（這次之前 60 tick＝3 秒）。 */
     static final long WHIRL_LIFE = Long.MAX_VALUE / 4;
-    /** 旋風一階的半徑（格）與每多一階加多少。2026-10-26 照 PoE2：1.8 公尺、每多一階 +0.3（這次之前 2.2、+0.6）。 */
+    /** 旋風一階的半徑（格）與每多一階加多少。2026-10-26 照 PoE2：1.8 格、每多一階 +0.3（這次之前 2.2、+0.6）。 */
     static final double WHIRL_RADIUS = 1.8;
     static final double WHIRL_RADIUS_PER_STAGE = 0.3;
     /** 崩散傷害：原技能一下的幾成（skills.yml 的 whirling_slash_collapse 寫 parent_damage: own 時照它自己的傷害表），每多一階更多 150%（PoE2）。 */
     static final double WHIRL_SHARE = 0.6;
-    /** 2026-10-26 照 PoE2：崩散擊退 2.5 公尺、每多一階 +10%（這次之前 0.5 ＋ 每階 0.15 的速度）。 */
+    /** 2026-10-26 照 PoE2：崩散擊退 2.5 格、每多一階 +10%（這次之前 0.5 ＋ 每階 0.15 的速度）。 */
     static final double WHIRL_KNOCKBACK = 0.5;
     static final double WHIRL_KNOCKBACK_PER_STAGE = 0.1;
     static final double WHIRL_MORE_PER_STAGE = 1.5;
@@ -59,15 +59,15 @@ final class Signatures {
     static final long LANCE_LIFE = 120;
     static final long LANCE_ZAP = 16;
     static final int LANCE_MAX = 3;
-    static final double LANCE_ZAP_RANGE = 2;   // 2026-10-26 照 PoE2：放電打 2 公尺內的敵人（這次之前 6）
+    static final double LANCE_ZAP_RANGE = 2;   // 2026-10-26 照 PoE2：放電打 2 格內的敵人（這次之前 6）
     static final double LANCE_ZAP_SHARE = 0.25;
     static final double LANCE_BURST_SHARE = 0.8;
     /** 2026-10-15：消耗怒星的那一支：插多久、多久放電一次；炸開留下的帶電地是原技能一下的幾成；其他技能打在幾格內會引爆。 */
     static final long LANCE_CHARGED_LIFE = 30;
     static final long LANCE_CHARGED_ZAP = 4;
     static final double LANCE_GROUND_SHARE = 0.2;
-    static final double LANCE_DETONATE_RANGE = 3;   // 2026-10-26 照 PoE2：3 公尺（這次之前 2.5）
-    /** 2026-10-26 照 PoE2：消耗怒星的那一支放電打 3 公尺內；炸開時往 3 公尺內的敵人射 16 道閃電（隨機分給每個敵人）。 */
+    static final double LANCE_DETONATE_RANGE = 3;   // 2026-10-26 照 PoE2：3 格（這次之前 2.5）
+    /** 2026-10-26 照 PoE2：消耗怒星的那一支放電打 3 格內；炸開時往 3 格內的敵人射 16 道閃電（隨機分給每個敵人）。 */
     static final double LANCE_CHARGED_ZAP_RANGE = 3;
     static final int LANCE_BURST_BOLTS = 16;
     static final double LANCE_BURST_RANGE = 3;
@@ -436,7 +436,7 @@ final class Signatures {
         }
         final SkillBuild sub = subBuild(player, "storm_lance_burst", lance.build(), share("storm_lance_burst", lance.build(), LANCE_BURST_SHARE));
         if (sub != null) {
-            // 2026-10-26 照 PoE2：不是一圈爆炸，是往 3 公尺內的敵人射 16 道閃電（每道隨機挑一個敵人；這次之前是一圈 nova）
+            // 2026-10-26 照 PoE2：不是一圈爆炸，是往 3 格內的敵人射 16 道閃電（每道隨機挑一個敵人；這次之前是一圈 nova）
             final List<LivingEntity> near = new java.util.ArrayList<>(service.targets().around(lance.at(), LANCE_BURST_RANGE, player));
             final Location from = lance.at().clone().add(0, 1.0, 0);
             for (int i = 0; i < LANCE_BURST_BOLTS && !near.isEmpty(); i++) {

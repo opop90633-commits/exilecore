@@ -18,7 +18,7 @@ import tw.exilecore.stats.StatKeys;
  * <ul>
  *   <li>暴擊時（crit）：你用技能暴擊敵人，能量 × 怪物強度 × 打掉牠異常門檻的 %（被觸發的法術自己的暴擊不算）。</li>
  *   <li>元素異常（ailment）：冰凍 ×10、感電 ×1、點燃 ×1 × 這個點燃會造成牠異常門檻的 %，再乘怪物強度。</li>
- *   <li>翻滾（dodge，每公尺）、能量護盾被擊中扣掉（barrier，每點）、持續型召喚物死掉（minion_death，乘召喚物強度、等級太低打折）、
+ *   <li>翻滾（dodge，每格）、能量護盾被擊中扣掉（barrier，每點）、持續型召喚物死掉（minion_death，乘召喚物強度、等級太低打折）、
  *       近戰擊殺（melee_kill，乘怪物強度）。</li>
  * </ul>
  */
@@ -101,7 +101,7 @@ public final class SkillTriggers implements Listener {
         dodge(player, tw.exilecore.combat.DodgeRoll.BASE_METRES);
     }
 
-    /** 翻滾時；metres 是這次翻滾的距離（2026-10-26 照 PoE2 Cast on Dodge：每公尺 2 能量；這次之前每次固定 12）。 */
+    /** 翻滾時；metres 是這次翻滾的距離（2026-10-26 照 PoE2 Cast on Dodge：每格 2 能量；這次之前每次固定 12）。 */
     public void dodge(final Player player, final double metres) {
         service.metas().gain(player, MetaSpec.Kind.DODGE, metres, null);
         if (plugin.combat() != null && plugin.combat().charges() != null) {

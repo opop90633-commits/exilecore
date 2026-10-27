@@ -369,7 +369,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                     }
                     markTags.add(t);
                 }
-                // 2026-10-26：詛咒的範圍、持續時間可以寫逐級表（PoE2：1.5→3.1→3.7 公尺、6→7.4→8.6 秒）
+                // 2026-10-26：詛咒的範圍、持續時間可以寫逐級表（PoE2：1.5→3.1→3.7 格、6→7.4→8.6 秒）
                 final Scaled markRadius = scaled(where, node, "radius", 0, 0, 10);
                 final Scaled markDuration = scaled(where, node, "duration", 6, 0.5, 30);
                 // 2026-10：effects 疊在敵人身上的修飾器（削弱：敵人造成的傷害更少…；value 可以隨等級）、slow 敵人移動慢幾 %

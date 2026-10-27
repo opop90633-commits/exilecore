@@ -87,6 +87,33 @@ public final class StashService {
         return Optional.ofNullable(stash);
     }
 
+    /**
+     * 2026-10-27：把一件物品放進倉庫第一個空格（背包、隨身背包都滿了時用，例如天賦組取回的珠寶）。
+     * 倉庫沒載入或正開著（畫面跟資料可能不同步）就不放，回傳 false；放進去之後跟著下次角色存檔存起來。
+     */
+    public boolean deposit(final Player player, final ItemStack item) {
+        if (item == null || item.isEmpty() || open.containsKey(player.getUniqueId())) {
+            return false;
+        }
+        final Stash stash = stashes.get(player.getUniqueId());
+        if (stash == null) {
+            return false;
+        }
+        for (int index = 0; index < Math.min(stash.pageCount(), stash.usablePages()); index++) {
+            if (stash.locked(index)) {
+                continue;
+            }
+            final ItemStack[] page = stash.page(index);
+            for (int slot = 0; slot < page.length; slot++) {
+                if (page[slot] == null || page[slot].isEmpty()) {
+                    page[slot] = item.clone();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     // ---- 存檔（角色存檔的延伸） ----
 
     /**

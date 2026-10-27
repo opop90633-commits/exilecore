@@ -269,7 +269,7 @@ final class Warcries {
             lines.add(String.format(Locale.ROOT, "<gray>用掉身上全部的磐星，每顆持續時間更多 <white>%s%%</white>", ModifierText.number(extras.endurancePct())));
         }
         if (extras.steps() != null) {
-            lines.add("<gray>持續期間每走 1.2 公尺觸發火山步（身邊一圈火焰猛擊）；近戰打擊打中時觸發火山噴發（三顆熔岩彈，0.4 秒一次）");
+            lines.add("<gray>持續期間每走 1.2 格觸發火山步（身邊一圈火焰猛擊）；近戰打擊打中時觸發火山噴發（三顆熔岩彈，0.4 秒一次）");
         }
         if (extras.knockback()) {
             lines.add("<gray>震退範圍內的敵人");
@@ -726,7 +726,7 @@ final class Warcries {
         return List.copyOf(list);
     }
 
-    /** 2026-10-27 照 PoE2（焚獄戰吼的品質：戰吼半徑 +x 公尺）：戰吼的基礎半徑（還沒乘範圍倍率）。 */
+    /** 2026-10-27 照 PoE2（焚獄戰吼的品質：戰吼半徑 +x 格）：戰吼的基礎半徑（還沒乘範圍倍率）。 */
     static double baseRadius(final WarcrySpec spec, final tw.exilecore.stats.StatSheet effective, final java.util.Set<String> tags) {
         return spec.radius() + Math.max(0, effective.flat(tw.exilecore.stats.WarcryKeys.RADIUS_FLAT, tags));
     }

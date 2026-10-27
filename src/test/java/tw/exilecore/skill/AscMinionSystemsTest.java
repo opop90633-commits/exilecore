@@ -56,7 +56,7 @@ class AscMinionSystemsTest {
         assertEquals(7.63, MinionAbilities.VOLLEY_DAMAGE, 1e-9);
         assertEquals(6, MinionAbilities.VOLLEYS);
         assertEquals(15, MinionAbilities.VOLLEY_TICKS, "每 0.75 秒一輪");
-        assertEquals(14 * 14, Math.PI * MinionAbilities.VOLLEY_RADIUS * MinionAbilities.VOLLEY_RADIUS, 1.0, "14 × 14 公尺的面積");
+        assertEquals(14 * 14, Math.PI * MinionAbilities.VOLLEY_RADIUS * MinionAbilities.VOLLEY_RADIUS, 1.0, "14 × 14 格的面積");
         assertTrue(MinionAbilities.command("kelari_djinn") == null, "巨靈的指令是另外的技能（克拉里的欺瞞…），按巨靈的鍵不是下指令");
     }
 
@@ -66,7 +66,7 @@ class AscMinionSystemsTest {
         assertNotNull(spec, "冥想是引導");
         assertEquals(ChargeSpec.Mode.RECHARGE, spec.mode());
         assertTrue(spec.channel().interruptOnHit(), "受到傷害就中斷");
-        assertEquals(70, spec.channel().slow(), 1e-9, "引導中移動更少 70%");
+        assertEquals(0, spec.channel().slow(), 1e-9, "2026-10-27 照站長「放技能減速全部移除」：引導中不再變慢（這次之前更少 70%）");
         // 一般的回充還沒開始（剛被打過）：整份（基礎 × 更多）由冥想加
         double[] step = Channelling.meditateStep(50, 100, 0, 1.0, 1.0, false);
         assertEquals(52, step[0], 1e-9);

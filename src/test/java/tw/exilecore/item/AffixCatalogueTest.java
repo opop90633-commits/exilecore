@@ -107,6 +107,8 @@ class AffixCatalogueTest {
         }
         tags = constants(Tags.class);
         tags.add("curse"); // 2026-10：詛咒技能的標籤（SkillDefinition 給範圍印記加的，Tags 沒有常數）
+        // 2026-10-27 照 PoE2：權杖的「你存在範圍內的友軍…」寫 [minion, in_presence]（召喚物、圖騰在範圍內才給；MinionSheets、TotemAllies 讀）
+        tags.add(tw.exilecore.stats.TreeMechanicKeys.IN_PRESENCE);
     }
 
     private static Set<String> constants(final Class<?> type) throws IllegalAccessException {

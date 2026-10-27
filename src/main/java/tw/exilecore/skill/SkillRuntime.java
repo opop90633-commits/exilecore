@@ -186,7 +186,7 @@ final class SkillRuntime {
      * @param cull      被強化的攻擊有斷命（決嘯）
      * @param extra     2026-10-27：被強化的攻擊另外加的修飾器（戰吼品質的額外火焰、裂甲熊咆插槽的增加傷害）
      * @param aftershockMore 2026-10-27：被強化的猛擊的餘震更多 x% 傷害（震地戰吼的品質）
-     * @param triggerRadius  2026-10-27：被強化的攻擊觸發的隱藏技能半徑 +x 公尺（堅壁戰吼的品質：盾波）
+     * @param triggerRadius  2026-10-27：被強化的攻擊觸發的隱藏技能半徑 +x 格（堅壁戰吼的品質：盾波）
      */
     record Empowered(String name, int left, long untilTick, WarcrySpec.Empower spec, int level, double power, double tireless, boolean cull,
                      java.util.List<tw.exilecore.stats.Modifier> extra, double aftershockMore, double triggerRadius) {

@@ -54,7 +54,7 @@ final class SupportExtraText {
             case SupportExtraKeys.ALIGNMENT -> "指示四個方向之一（東南西北）：朝那個方向攻擊時多射 " + n(value) + " 發；對準之後 1 秒指示新的方向";
             case SupportExtraKeys.MINION_PACT_LIFE -> "放的時候附近一隻召喚物失去等同你最大生命 " + n(value) + "% 的生命";
             case SupportExtraKeys.MINION_PACT_MORE -> "有召喚物付出生命時這一下更多 " + n(value) + "% 傷害";
-            case SupportExtraKeys.PROFANITY -> "放的時候用掉 5 公尺內最多 " + n(value) + " 具屍體";
+            case SupportExtraKeys.PROFANITY -> "放的時候用掉 5 格內最多 " + n(value) + " 具屍體";
             case SupportExtraKeys.PROFANITY_MORE -> "每用掉一具屍體，混沌更多 " + n(value) + "% 傷害";
             case SupportExtraKeys.AMBROSIA -> "放的時候用掉魔力藥劑最大充能的 " + n(value) + "%";
             case SupportExtraKeys.AMBROSIA_GAIN -> "每用掉一點魔力藥劑充能，獲得 " + n(value) + "% 傷害為額外閃電傷害";
@@ -91,7 +91,7 @@ final class SupportExtraText {
             case SupportExtraKeys.DRAIN_AILMENTS -> "施加持續傷害時用掉敵人身上一種異常，持續傷害更多 " + n(value) + "%";
             case SupportExtraKeys.COMMISERATE -> "你身上有同一種異常時，施加的異常更多 " + n(value) + "%，並移除你身上的";
             case SupportExtraKeys.FLAG_CHAOTIC_FREEZE -> "對受到持續傷害的敵人，混沌傷害也累積凍結";
-            case SupportExtraKeys.SHOCK_NEARBY -> "感電敵人時 " + n(value) + "% 機率讓 2.5 公尺內的敵人也感電";
+            case SupportExtraKeys.SHOCK_NEARBY -> "感電敵人時 " + n(value) + "% 機率讓 2.5 格內的敵人也感電";
             case SupportExtraKeys.FLAG_SHOCK_DRENCHED -> "擊中濕透的敵人一定感電";
             case SupportExtraKeys.FLAG_DRENCHED -> "濕透";
             case SupportExtraKeys.SHOCK_CHANCE_TAKEN -> "被感電的機率" + (value < 0 ? "更少 " : "更多 ") + n(Math.abs(value)) + "%";
@@ -104,11 +104,11 @@ final class SupportExtraText {
             case SupportExtraKeys.PRACTICAL_MAGIC -> "重暈敵人時 8 秒內法術傷害增加 " + n(value) + "%";
             case SupportExtraKeys.VANGUARD -> "暈眩敵人（輕暈、重暈）時每 10 點力量獲得 " + n(value) + " 守護（4 秒）";
             case SupportExtraKeys.VANGUARD_HEAVY -> "重暈時每 10 點力量另外獲得 " + n(value) + " 守護";
-            case SupportExtraKeys.WILDFIRE -> "點燃擴散到 " + n(value) + " 公尺內、待滿 1 秒的敵人";
+            case SupportExtraKeys.WILDFIRE -> "點燃擴散到 " + n(value) + " 格內、待滿 1 秒的敵人";
             case SupportExtraKeys.UNDERMINE -> "擊中癱瘓中的敵人時用掉癱瘓，破掉牠 " + n(value) + "% 的護甲";
             case SupportExtraKeys.OUTMANEUVER -> "對被招架的敵人破甲，等同物理傷害的 " + n(value) + "%";
             case SupportExtraKeys.RIPOSTE -> "擊中被招架的敵人時用掉招架，獲得 " + n(value) + " 顆怒星";
-            case SupportExtraKeys.PUNCH_THROUGH -> "擊退敵人時讓牠成為好目標：下一次投射物攻擊擊中牠時，每公尺擊退距離增加 " + n(value) + "% 傷害";
+            case SupportExtraKeys.PUNCH_THROUGH -> "擊退敵人時讓牠成為好目標：下一次投射物攻擊擊中牠時，每格擊退距離增加 " + n(value) + "% 傷害";
             case SupportExtraKeys.BEHEAD -> "打擊打死稀有怪時，偷走牠兩個詞綴 " + n(value) + " 秒";
             case SupportExtraKeys.BARBS -> "荊棘反彈之後，下 " + n(value) + " 次擊中再對牠造成兩次你的荊棘傷害";
             case SupportExtraKeys.QUILL_BURST -> "荊棘反彈之後，接下來 " + n(value) + " 次擊中觸發刺爆";
@@ -116,13 +116,13 @@ final class SupportExtraText {
             case SupportExtraKeys.MARK_SIPHON -> "被這個印記標記的敵人受到你的物理攻擊傷害，" + n(value) + "% 偷取為生命與魔力";
             case SupportExtraKeys.ACRIMONY -> "受到這個技能持續傷害的敵人生命再生減少 " + n(value) + "%";
             case SupportExtraKeys.REFRACTION -> "插下的戰旗範圍內的敵人，每 1000 點你的護甲獲得 " + n(value) + "% 元素曝露（最多 80%）";
-            case SupportExtraKeys.DEADLY_RESOLVE -> "引導時每秒獲得一層必殺決心（最多 " + n(value) + " 層，10 秒）；敵人擊中你時用掉一層，朝牠斬出 3 公尺 120 度的一刀"
+            case SupportExtraKeys.DEADLY_RESOLVE -> "引導時每秒獲得一層必殺決心（最多 " + n(value) + " 層，10 秒）；敵人擊中你時用掉一層，朝牠斬出 3 格 120 度的一刀"
                     + "（照護甲更多傷害，最多更多 200%；最多每 0.3 秒一次）";
             case SupportExtraKeys.ENERGY_BARRIER -> "放這個技能時被暈眩，能量護盾立刻開始回充，" + n(value) + " 秒內不會被傷害打斷";
             case SupportExtraKeys.LIGHT_STUN_THRESHOLD -> "輕暈門檻" + (value < 0 ? "更少 " : "更多 ") + n(Math.abs(value)) + "%";
             case SupportExtraKeys.HEAVY_STUN_THRESHOLD -> "重暈門檻" + (value < 0 ? "更少 " : "更多 ") + n(Math.abs(value)) + "%";
-            case SupportExtraKeys.STOMPING -> "用突進技能時每走一步（1.5 公尺）震出一陣 2 公尺的震波（武器攻擊傷害的 50%）；跳躍是起跳、落地各一步";
-            case SupportExtraKeys.HOLY_DESCENT -> "落地時留下 2.2 公尺的聖化地面 " + n(value) + " 秒（你與隊友每秒回復 5% 最大生命、詛咒效果減少 50%）";
+            case SupportExtraKeys.STOMPING -> "用突進技能時每走一步（1.5 格）震出一陣 2 格的震波（武器攻擊傷害的 50%）；跳躍是起跳、落地各一步";
+            case SupportExtraKeys.HOLY_DESCENT -> "落地時留下 2.2 格的聖化地面 " + n(value) + " 秒（你與隊友每秒回復 5% 最大生命、詛咒效果減少 50%）";
             case SupportExtraKeys.FLAG_GAMBLESHOT -> "每次射出時隨機：投射物多分裂、多連鎖或多穿透一次";
             case SupportExtraKeys.FLAG_RICOCHET -> "多出來的投射物改成投射物從地形連鎖的次數";
             case SupportExtraKeys.WILDSHARDS -> n(value) + "% 機率多射 8 發，繞一圈射出";
@@ -139,15 +139,15 @@ final class SupportExtraText {
             case SupportExtraKeys.ENCROACH_MAX_KEY -> "地面效果範圍最多增加 " + n(value) + "%";
             case SupportExtraKeys.RIME -> "站在這個技能的冰緩地面上的敵人被擊中時，凍結累積像多 " + n(value) + "% 傷害";
             case SupportExtraKeys.CURSED_GROUND -> "詛咒改成留下一塊詛咒地面：站在裡面的敵人才被詛咒（最多 " + n(value) + " 塊）";
-            case SupportExtraKeys.HEX_BLOOM -> "被你詛咒的敵人死掉時，詛咒傳給 " + n(value) + " 公尺內的敵人";
-            case SupportExtraKeys.FLAG_MINION_SPLASH -> "召喚物的近戰打中時，目標周圍 2 公尺的敵人受到這一下 60% 的傷害";
+            case SupportExtraKeys.HEX_BLOOM -> "被你詛咒的敵人死掉時，詛咒傳給 " + n(value) + " 格內的敵人";
+            case SupportExtraKeys.FLAG_MINION_SPLASH -> "召喚物的近戰打中時，目標周圍 2 格的敵人受到這一下 60% 的傷害";
             case SupportExtraKeys.LAST_GASP -> "召喚物生命歸零後再撐 " + n(value) + " 秒才死";
             case SupportExtraKeys.CRAZED -> "召喚物最近復活過時更多 " + n(value) + "% 傷害";
             case SupportExtraKeys.FLAG_COMMANDMENT -> "召喚物用指令以外的技能不造成傷害；牠們的指令冷卻回復速度增加 100%";
             case SupportExtraKeys.LOYALTY -> "你受到的擊中傷害有 " + n(value) + "% 先由夥伴承受";
             case "corpse.save_chance" -> "用掉屍體時有 " + n(value) + "% 機率不毀掉屍體";
-            case SupportExtraKeys.FONT_BLOOD -> "圖騰四周 4 公尺是血之泉：站在裡面偷取圖騰物理傷害的 " + n(value) + "% 為生命";
-            case SupportExtraKeys.FONT_MANA -> "圖騰四周 4 公尺是魔之泉：站在裡面偷取圖騰物理傷害的 " + n(value) + "% 為魔力";
+            case SupportExtraKeys.FONT_BLOOD -> "圖騰四周 4 格是血之泉：站在裡面偷取圖騰物理傷害的 " + n(value) + "% 為生命";
+            case SupportExtraKeys.FONT_MANA -> "圖騰四周 4 格是魔之泉：站在裡面偷取圖騰物理傷害的 " + n(value) + "% 為魔力";
             case "incision.chance" -> "擊中時有 " + n(value) + "% 機率給一層切割（每層 10% 流血機率）";
             case "totem.resist_max" -> "圖騰最大元素抗性 +" + n(value) + "%";
             case "flag.aggravate_bleed_pinned" -> "定身敵人或擊中被定身的敵人時加劇牠身上的流血";

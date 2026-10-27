@@ -40,7 +40,7 @@ class Poe2SpearfieldTest {
         assertTrue(OriginalSkills.SIGNATURES.contains(Spearfield.SIGNATURE), "整個交給 OriginalSkills（Spearfield）");
         assertTrue(skill.tags().contains(TreeMechanicKeys.HAZARD), "矛是危險物件");
         final StatSheet sheet = new StatSheet();
-        // 扇形長度照 RePoE（1 級 4 公尺、20 級 6.9 公尺、40 級 9.9 公尺）
+        // 扇形長度照 RePoE（1 級 4 格、20 級 6.9 格、40 級 9.9 格）
         assertEquals(4.0, SkillBuild.of(config, skill, 1, 1, false, List.of(), Set.of("spear"), sheet).length(), 1e-9);
         assertEquals(6.9, SkillBuild.of(config, skill, 20, 90, false, List.of(), Set.of("spear"), sheet).length(), 1e-9);
         assertEquals(9.9, skill.params().length().at(40), 1e-9);
@@ -53,7 +53,7 @@ class Poe2SpearfieldTest {
 
     @Test
     void spearCountDurationAndEarlyPenalty() {
-        // 每 0.2 公尺扇形長度一支，最多同時 70 支
+        // 每 0.2 格扇形長度一支，最多同時 70 支
         assertEquals(20, Spearfield.count(4.0));
         assertEquals(34, Spearfield.count(6.9));
         assertEquals(49, Spearfield.count(9.9));

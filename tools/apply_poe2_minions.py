@@ -1,6 +1,6 @@
 """2026-10-26：召喚物照 PoE2（poe2db 寶石表 + Path of Building 的 Minions.lua 倍率）。
 召喚物等級 = 寶石等級 × 2、PoE2 召喚物表（summon.ally: true）、精魂逐級表、上限、持續時間。
-2026-10-26 第二輪（能量護盾 es、召喚物的技能與指令、附魂術改精魂召喚、荒原狼伴 ×1.25 與更多傷害、焰術士 1.6 公尺／70% 轉火焰…）
+2026-10-26 第二輪（能量護盾 es、召喚物的技能與指令、附魂術改精魂召喚、荒原狼伴 ×1.25 與更多傷害、焰術士 1.6 格／70% 轉火焰…）
 直接改在 skills.yml，程式在 MinionAbilities／MinionService；這支只認得第一輪之前的寫法，不要再跑。"""
 import re, sys
 P = 'src/main/resources/data/skills.yml'

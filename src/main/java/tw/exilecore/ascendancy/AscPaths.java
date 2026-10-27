@@ -54,7 +54,7 @@ import java.util.UUID;
  *       符文子午線、石拳之道在 {@link AscBuild#equipment}。</li>
  *   <li>淵井骸主（Abyssal Lich）：割裂血肉、幽影之井（骷髏換成幽影之魂）、深淵幻影、不情願的獻祭（祭品，Warcries 呼叫）。</li>
  * </ul>
- * 狀態只在記憶體（下線、換角色就清掉）。一格當一公尺。由 {@link AscendancyEffects} 在固定的地方呼叫。
+ * 狀態只在記憶體（下線、換角色就清掉）。一格當一格。由 {@link AscendancyEffects} 在固定的地方呼叫。
  */
 final class AscPaths implements Listener {
 
@@ -63,9 +63,9 @@ final class AscPaths implements Listener {
     private final NamespacedKey minionSkillKey;
 
     // ---- 原作的數值 ----
-    /** 每移動幾公尺一個靈現之靈。 */
+    /** 每移動幾格一個靈現之靈。 */
     static final double WISP_METRES = 10;
-    /** 靈鹿躍起幾次、每次幾公尺、靈鹿之間的角度、追敵的錐角（一半）、追敵距離。 */
+    /** 靈鹿躍起幾次、每次幾格、靈鹿之間的角度、追敵的錐角（一半）、追敵距離。 */
     static final int STAG_LEAPS = 4;
     static final double STAG_LEAP = 3;
     static final double STAG_SPREAD = 15;
@@ -78,7 +78,7 @@ final class AscPaths implements Listener {
     static final long EMPOWER_TICKS = 160;
     static final double TRAIL_LENGTH = 12;
     static final double TRAIL_HALF_WIDTH = 1.2;
-    /** 熊靈：躍擊（8 秒、3 公尺）、重擊（5 秒、2.5 公尺、偷取 50%）、怒吼（12 秒、6 公尺、恫嚇 8 秒）、荒野擁抱（存在範圍 6 公尺、每秒 2%、先承受 8%）。 */
+    /** 熊靈：躍擊（8 秒、3 格）、重擊（5 秒、2.5 格、偷取 50%）、怒吼（12 秒、6 格、恫嚇 8 秒）、荒野擁抱（存在範圍 6 格、每秒 2%、先承受 8%）。 */
     static final long BEAR_LEAP_TICKS = 160;
     static final double BEAR_LEAP_RADIUS = 3;
     static final long BEAR_SLAM_TICKS = 100;
@@ -90,14 +90,14 @@ final class AscPaths implements Listener {
     static final double EMBRACE_RADIUS = 6;
     static final double EMBRACE_REGEN = 2;
     static final double EMBRACE_SHARE = 0.08;
-    /** 空無之鐘：最多 3 口、21 秒、出現在 3 公尺內；打中鐘的範圍。空無共鳴：最多存 3 次、每 0.5 秒回一次。 */
+    /** 空無之鐘：最多 3 口、21 秒、出現在 3 格內；打中鐘的範圍。空無共鳴：最多存 3 次、每 0.5 秒回一次。 */
     static final int BELL_MAX = 3;
     static final long BELL_TICKS = 420;
     static final double BELL_SPAWN = 3;
     static final double BELL_HIT_RADIUS = 2.5;
     static final int RESONANCE_USES = 3;
     static final long RESONANCE_TICKS = 10;
-    /** 空無型態：幻影的傷害更少 15%、花 80% 的消耗、用掉銳星多 2 個、出現在準心 6 公尺內。 */
+    /** 空無型態：幻影的傷害更少 15%、花 80% 的消耗、用掉銳星多 2 個、出現在準心 6 格內。 */
     static final double FORM_LESS = 0.15;
     static final double FORM_COST = 0.8;
     static final int FORM_EXTRA = 2;
@@ -747,7 +747,7 @@ final class AscPaths implements Listener {
     // 不情願的獻祭（Warcries 呼叫）
     // =====================================================================
 
-    /** 撲殺範圍內、radius 公尺內最近的敵人（沒有 null）。 */
+    /** 撲殺範圍內、radius 格內最近的敵人（沒有 null）。 */
     LivingEntity offeringVictim(final Player player, final double radius) {
         LivingEntity best = null;
         double bestDistance = Double.MAX_VALUE;
@@ -801,7 +801,7 @@ final class AscPaths implements Listener {
             }
         }
         trails.removeIf(trail -> trail.until() <= now);
-        if (now % 20 == 0) {
+        if (AscendancyEffects.every(now, 20)) {
             for (final Trail trail : trails) {
                 drawTrail(trail);
             }
@@ -811,7 +811,7 @@ final class AscPaths implements Listener {
 
     private void tickPlayer(final Player player, final PlayerState state, final StatSheet sheet, final Own own, final long now) {
         boolean dirty = false;
-        // 靈現之靈：每移動 10 公尺 1 個
+        // 靈現之靈：每移動 10 格 1 個
         final double wispMax = AscendancyEffects.flat(sheet, AscKeys.VIVID_WISPS);
         final Location here = player.getLocation();
         if (wispMax > 0 && on(player, "vivid_stampede")) {
@@ -997,7 +997,7 @@ final class AscPaths implements Listener {
         final boolean valid = target != null && target.isValid() && !target.isDead() && target.getWorld() == bear.getWorld()
                 && effects.enemyOf(player, target);
         final double distance = valid ? target.getLocation().distance(bear.getLocation()) : Double.MAX_VALUE;
-        // 躍擊：跳向較遠的敵人，落地 3 公尺、癱瘓、擊退
+        // 躍擊：跳向較遠的敵人，落地 3 格、癱瘓、擊退
         if (valid && now >= own.bearLeapReady && distance >= 2 && distance <= 9) {
             own.bearLeapReady = now + BEAR_LEAP_TICKS;
             final Vector toward = target.getLocation().toVector().subtract(bear.getLocation().toVector());
@@ -1005,14 +1005,14 @@ final class AscPaths implements Listener {
             effects.later(10, () -> bearImpact(player, bear, BEAR_LEAP_RADIUS, true));
             return;
         }
-        // 重擊：身邊 2.5 公尺，偷取 50%
+        // 重擊：身邊 2.5 格，偷取 50%
         if (valid && now >= own.bearSlamReady && distance <= BEAR_SLAM_RADIUS + 0.5) {
             own.bearSlamReady = now + BEAR_SLAM_TICKS;
             own.bearSlamUntil = now + 2;
             bearImpact(player, bear, BEAR_SLAM_RADIUS, false);
             return;
         }
-        // 怒吼：恫嚇 6 公尺內的敵人 8 秒、引牠們來打熊靈
+        // 怒吼：恫嚇 6 格內的敵人 8 秒、引牠們來打熊靈
         if (now >= own.bearRoarReady && plugin.combat() != null) {
             final List<LivingEntity> near = effects.enemiesNear(player, bear.getLocation(), BEAR_ROAR_RADIUS);
             if (!near.isEmpty()) {
@@ -1039,7 +1039,7 @@ final class AscPaths implements Listener {
         return owner == null ? null : owner.getUniqueId();
     }
 
-    /** 熊靈打 radius 公尺內的敵人（用熊靈自己的攻擊）；躍擊另外癱瘓。 */
+    /** 熊靈打 radius 格內的敵人（用熊靈自己的攻擊）；躍擊另外癱瘓。 */
     private void bearImpact(final Player owner, final LivingEntity bear, final double radius, final boolean maim) {
         if (!bear.isValid() || bear.isDead() || plugin.combat() == null) {
             return;
@@ -1075,7 +1075,7 @@ final class AscPaths implements Listener {
                     bell.display().remove();
                 }
                 iterator.remove();
-            } else if (now % 20 == 0) {
+            } else if (AscendancyEffects.every(now, 20)) {
                 tw.exilecore.skill.Fx.spawn(bell.at().getWorld(), Particle.ENCHANT, bell.at(), 4, 0.2, 0.3, 0.2, 0.2);
             }
         }

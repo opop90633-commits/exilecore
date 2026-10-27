@@ -49,9 +49,9 @@ public final class KeystoneOriginKeys {
     public static final String NO_ES_RECHARGE_ID = "keystone.no_es_recharge";
 
     // ---- 擊中、擊殺 ----
-    /** INCREASED：箭飛得越遠暴擊率越高，飛滿 {@link #ARROW_FULL_METRES} 公尺給滿（狙擊手）。CombatListener 的條件傷害。 */
+    /** INCREASED：箭飛得越遠暴擊率越高，飛滿 {@link #ARROW_FULL_METRES} 格給滿（狙擊手）。CombatListener 的條件傷害。 */
     public static final String ARROW_DISTANCE_CRIT = "crit.arrow_distance";
-    /** 狙擊手：7 公尺給滿。 */
+    /** 狙擊手：7 格給滿。 */
     public static final double ARROW_FULL_METRES = 7;
     /** FLAT %：殺死燃燒中的敵人時牠爆炸的機率，造成牠最大生命十分之一的火焰傷害（暴烈衝擊）。KeystoneEffects.onDeath。 */
     public static final String BURNING_EXPLODE_CHANCE = "kill.burning_explode_chance";
@@ -68,7 +68,7 @@ public final class KeystoneOriginKeys {
         return Math.max(0, physical) * IMPALE_BASE * Math.max(0, 1 + magnitudeIncreased);
     }
 
-    /** 狙擊手：飛了 metres 公尺的箭，暴擊率增加多少（照距離線性，7 公尺給滿 max）。 */
+    /** 狙擊手：飛了 metres 格的箭，暴擊率增加多少（照距離線性，7 格給滿 max）。 */
     public static double arrowCrit(final double max, final double metres) {
         if (max <= 0 || metres <= 0) {
             return 0;

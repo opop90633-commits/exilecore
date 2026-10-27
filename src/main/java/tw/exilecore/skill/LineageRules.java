@@ -399,19 +399,19 @@ public final class LineageRules {
             case LineageKeys.SERAPH -> "開著時，敵人擊中你有 " + n + "% 機率把你的抗性當成 90%";
             case LineageKeys.ABYSSAL_ON_MINION_DEATH -> "召喚物死掉時 " + n + "% 機率讓你獲得一個怪物詞綴 20 秒（最多 3 個）";
             case LineageKeys.MINION_UNDAMAGEABLE -> "召喚物不會受到傷害";
-            case LineageKeys.COMPANION_BLAZE -> "夥伴致盲並點燃身邊 2 公尺的敵人（像造成牠最大生命 " + n + "% 的基礎火焰傷害）";
+            case LineageKeys.COMPANION_BLAZE -> "夥伴致盲並點燃身邊 2 格的敵人（像造成牠最大生命 " + n + "% 的基礎火焰傷害）";
             case LineageKeys.COMPANION_SHIELD -> "你受到的擊中有 " + n + "% 先由夥伴承受，你補償其中 200% 為生命";
             case LineageKeys.GIGANTIC -> "夥伴變巨大；你每 10 點閃避、偏斜給牠 " + ModifierText.number(value / 10.0) + " 點";
             case LineageKeys.UNDYING -> "召喚物生命降到 0 後再戰 " + n + " 秒（攻擊與施法速度增加 40%）";
-            case LineageKeys.TOTEM_GROVE -> "4 公尺內每有一根你的其他圖騰（最多 5 根），更多 " + n + "% 傷害、增加 "
+            case LineageKeys.TOTEM_GROVE -> "4 格內每有一根你的其他圖騰（最多 5 根），更多 " + n + "% 傷害、增加 "
                     + ModifierText.number(value / 2) + "% 範圍、每秒回復 " + ModifierText.number(value / 10) + "% 生命";
-            case LineageKeys.TOTEM_EXPLODE -> "圖騰倒下時炸開，造成它最大生命 " + n + "% 的物理傷害（3 公尺）";
+            case LineageKeys.TOTEM_EXPLODE -> "圖騰倒下時炸開，造成它最大生命 " + n + "% 的物理傷害（3 格）";
             case LineageKeys.REMNANT_CDR -> "撿到殘骸時冷卻回復速度增加 " + n + "%（最多 8 層，各 10 秒）";
             case LineageKeys.SHIELD_BLOCK_MORE -> "舉盾時格擋過，接下來 4 秒其他近戰技能更多 " + n + "% 傷害";
             case LineageKeys.SHIELD_STUN_THRESHOLD -> "舉盾時暈眩門檻更多 " + n + "%";
             case LineageKeys.DODGE_LOAD -> "翻滾時裝 " + n + " 發";
             case LineageKeys.NO_RELOAD -> "不會自己裝填";
-            case LineageKeys.LANDING_DETONATE -> "落地時引爆 3.5 公尺內的屍體（每具造成牠最大生命 " + n + "% 的火焰傷害）";
+            case LineageKeys.LANDING_DETONATE -> "落地時引爆 3.5 格內的屍體（每具造成牠最大生命 " + n + "% 的火焰傷害）";
             case LineageKeys.PER_POISON -> "敵人身上每層中毒，擊中更多 " + n + "%（最多 40%）";
             case LineageKeys.ARCHON_ON_IGNITE -> "點燃敵人時獲得元素執政";
             case LineageKeys.LOAD_ON_KILL -> "擊殺時 " + n + "% 機率替所有弩技能各裝一發";
@@ -439,7 +439,7 @@ public final class LineageRules {
             case LineageKeys.PHYS_TAKEN_ON_BREAK -> "完全破甲時讓敵人永久受到的物理傷害增加 " + n + "%（最多 20%）";
             case LineageKeys.CHAOS_BREAKS -> "混沌傷害也破甲，等於混沌傷害的 " + n + "%";
             case LineageKeys.PER_COMMAND -> "最近 15 秒每用過一種不同的指令技能，更多 " + n + "% 傷害";
-            case LineageKeys.VS_ISOLATED -> "對孤立的敵人（6 公尺內沒有其他敵人）擊中更多 " + n + "%";
+            case LineageKeys.VS_ISOLATED -> "對孤立的敵人（6 格內沒有其他敵人）擊中更多 " + n + "%";
             default -> null;
         };
     }

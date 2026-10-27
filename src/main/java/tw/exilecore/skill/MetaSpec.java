@@ -57,7 +57,7 @@ public record MetaSpec(Kind kind, double energy, Scaled energyMore, double lessD
          * 點燃給 energy × 怪物強度 × 這個點燃會造成牠異常門檻的 %（2026-10-26 照 PoE2，最多 100；這次之前點燃跟感電一樣）。
          */
         AILMENT,
-        /** 翻滾時：翻滾每 1 公尺給 energy（2026-10-26 照 PoE2：每公尺 2；一次翻滾約 3.5 公尺）。這次之前每次固定 12。 */
+        /** 翻滾時：翻滾每 1 格給 energy（2026-10-26 照 PoE2：每格 2；一次翻滾約 3.5 格）。這次之前每次固定 12。 */
         DODGE,
         /**
          * 2026-10-26 照 PoE2 Barrier Invocation：你的能量護盾被敵人擊中扣掉時，每扣 1 點給 energy（原作每 10 點 1 能量，寫 0.1）。
@@ -92,7 +92,7 @@ public record MetaSpec(Kind kind, double energy, Scaled energyMore, double lessD
                 case TOTEM -> "放下時";
                 case CRIT -> "你暴擊敵人時（照這一下打掉牠異常門檻的比例）";
                 case AILMENT -> "你讓敵人冰凍、感電或點燃時";
-                case DODGE -> "你翻滾時（每公尺）";
+                case DODGE -> "你翻滾時（每格）";
                 case BARRIER -> "你的能量護盾被敵人擊中扣掉時";
                 case MINION_DEATH -> "你的持續型召喚物死掉時（乘牠的強度）";
                 case MELEE_KILL -> "你以近戰擊殺敵人時";

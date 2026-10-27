@@ -15,7 +15,7 @@ import java.util.Map;
  * 冷卻可以花一顆磐星跳過（skills.yml 的 cooldown_bypass: endurance）。原作沒有的治療、嘲諷、受到傷害增加、隊伍增益拿掉了，
  * 那些欄位還留著給戰旗、祭品、神龕祝禱、隱藏的戰星技能用（它們不是戰吼：cry: false 的戰吼輔助不能掛）。
  *
- * @param radius        範圍（格 = 公尺）
+ * @param radius        範圍（格 = 格）
  * @param duration      增益、強化持續幾秒
  * @param taunt         範圍內的敵人轉過來打你（只有非原作的技能用）
  * @param heal          立刻回復最大生命的百分比（隨等級；只有非原作的技能用）
@@ -153,7 +153,7 @@ public record WarcrySpec(double radius, double duration, boolean taunt, Scaled h
      * @param glory          要幾點榮耀才能用（點燃敵人時照牠的強度累積；熔魂嘯）；0 = 不用
      * @param endurancePct   用掉全部磐星，每顆持續時間更多 x%（熔魂嘯）
      * @param knockback      把範圍內的敵人震退
-     * @param steps          持續期間每走 1.2 公尺觸發的技能（熔魂嘯的火山步）；null = 沒有
+     * @param steps          持續期間每走 1.2 格觸發的技能（熔魂嘯的火山步）；null = 沒有
      * @param eruption       持續期間近戰打擊打中時觸發的技能（熔魂嘯的火山噴發，冷卻 0.4 秒）；null = 沒有
      * @param minionSkills   minion_buff 只給這些技能叫出來的召喚物（銀月庇：狼群）；空的 = 全部
      */

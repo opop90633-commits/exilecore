@@ -160,6 +160,8 @@ public final class BossSkills implements Listener {
         final List<BossSkillUse> configured;
         List<BossSkillConfig.Entry> kit;
         BossSkill closer;
+        /** 2026-10-27 照站長：上一招（招式代號；下一招不放同一招，例如放完迷宮下一招不會又是迷宮）。 */
+        String lastSkill;
         final Map<String, Long> readyAt = new HashMap<>();
         long globalReadyAt;
         Cast cast;
@@ -231,6 +233,7 @@ public final class BossSkills implements Listener {
 
         void reset(final long now) {
             readyAt.clear();
+            lastSkill = null;
             cast = null;
             zones.clear();
             bolts.clear();
@@ -818,6 +821,17 @@ public final class BossSkills implements Listener {
         if (candidates.isEmpty()) {
             return;
         }
+        // 2026-10-27 照站長：不跟上一招重複。這一刻能放的只剩上一招時：這個階段還有別招就等別招好；整套只有這一招才照放
+        if (brain.lastSkill != null && candidates.stream().anyMatch(entry -> entry.skill().id().equals(brain.lastSkill))) {
+            final List<BossSkillConfig.Entry> others = new ArrayList<>(candidates);
+            others.removeIf(entry -> entry.skill().id().equals(brain.lastSkill));
+            if (!others.isEmpty()) {
+                candidates.clear();
+                candidates.addAll(others);
+            } else if (brain.kit.stream().anyMatch(entry -> entry.fromPhase() <= phase && !entry.skill().id().equals(brain.lastSkill))) {
+                return;
+            }
+        }
         BossSkillConfig.Entry chosen = candidates.get(random.nextInt(candidates.size()));
         for (final BossSkillConfig.Entry entry : candidates) {
             if (entry.skill().kind() == BossSkill.Kind.ARENA) {
@@ -1214,6 +1228,7 @@ public final class BossSkills implements Listener {
 
     private void start(final Brain brain, final BossSkill picked, final LivingEntity target, final long now) {
         final LivingEntity boss = brain.boss;
+        brain.lastSkill = picked.id();
         final BossSkill skill = fitArena(brain, picked, now);
         // Boss 的招式冷卻再乘 boss_cooldown（2026-10：0.8，Boss 出招快一點；一般怪物照寫的）
         brain.readyAt.put(skill.id(), now + Math.round(skill.cooldown() * 20 * cooldownFactor(boss) * settings().cooldownFor(brain.host.boss())
@@ -2762,8 +2777,13 @@ public final class BossSkills implements Listener {
         if (key == null) {
             return false;
         }
+        // 2026-10-27 照站長：場地危害也不跟上一招重複（到時間了先等，Boss 放了別招再落）
+        if (hazards.get(hazardIndex(key)).skill().equals(brain.lastSkill) && brain.kit.size() > 0) {
+            return false;
+        }
         brain.pacing.fired(key, now, hazardTicks(brain, hazards, key));
         final BossSkill skill = config.bossSkills().skill(hazards.get(hazardIndex(key)).skill());
+        brain.lastSkill = hazards.get(hazardIndex(key)).skill();
         final List<Player> players = playersNear(brain.boss.getLocation(), SEARCH);
         if (skill == null || players.isEmpty()) {
             return false; // 附近沒人：這次跳過，照間隔再等下一次

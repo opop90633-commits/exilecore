@@ -107,11 +107,7 @@ public final class TreeSetMenu extends Menu {
                 final String code = stored(state, set);
                 int count = 0;
                 if (code != null) {
-                    try {
-                        count = TreeCode.decode(tree, code).nodes().size();
-                    } catch (final TreeCode.InvalidCode e) {
-                        count = -1;
-                    }
+                    count = broken(state, code) ? -1 : decodedSize(code);
                 }
                 nodes = count;
                 jewels = state.treeJewels(set).size();
@@ -122,7 +118,15 @@ public final class TreeSetMenu extends Menu {
             }
             lore.add("");
             if (!current) {
-                lore.add(card || set == 0 ? "<yellow>左鍵：換成這一組" : "<dark_gray>要有月卡才能換成這一組");
+                if (nodes < 0) {
+                    lore.add("<yellow>左鍵：清除這一組，珠寶拿回來");
+                    lore.add("<dark_gray>（先放背包，滿了放隨身背包，再滿放倉庫）");
+                } else {
+                    lore.add(card || set == 0 ? "<yellow>左鍵：換成這一組" : "<dark_gray>要有月卡才能換成這一組");
+                    if (nodes > 0 || jewels > 0) {
+                        lore.add("<gray>Shift＋右鍵：清除這一組，珠寶拿回來");
+                    }
+                }
             }
             final ItemStack icon = icon(current ? Material.NETHER_STAR : nodes > 0 ? Material.ENDER_EYE : Material.ENDER_PEARL,
                     (current ? "<green>" : "<white>") + "第 " + (set + 1) + " 組", lore);
@@ -143,7 +147,7 @@ public final class TreeSetMenu extends Menu {
             return;
         }
         final int set = slot - FIRST;
-        if (set < 0 || set >= PlayerState.GEAR_SETS || click != ClickType.LEFT) {
+        if (set < 0 || set >= PlayerState.GEAR_SETS || (click != ClickType.LEFT && click != ClickType.SHIFT_RIGHT)) {
             return;
         }
         final PlayerState state = plugin.players().get(player);
@@ -153,6 +157,12 @@ public final class TreeSetMenu extends Menu {
         }
         final int active = state.activeTreeSet();
         if (set == active) {
+            return;
+        }
+        // 2026-10-27 照站長：天賦樹改版讀不出來（或不能換上）的那一組，左鍵清掉並拿回珠寶；任何放著的一組 Shift＋右鍵也可以清
+        final String storedCode = stored(state, set);
+        if (click == ClickType.SHIFT_RIGHT || (click == ClickType.LEFT && storedCode != null && broken(state, storedCode))) {
+            clearSet(state, set);
             return;
         }
         if (!card() && set != 0) {
@@ -211,6 +221,50 @@ public final class TreeSetMenu extends Menu {
         plugin.characters().save(player);
         player.sendMessage(plugin.text().prefixed("<green>換成第 " + (set + 1) + " 組天賦（配了 " + nodes.size() + " 點）"));
         player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.7f, 1.2f);
+        redraw();
+    }
+
+    private int decodedSize(final String code) {
+        try {
+            return TreeCode.decode(tree, code).nodes().size();
+        } catch (final TreeCode.InvalidCode e) {
+            return -1;
+        }
+    }
+
+    /** 存著的配點讀不出來、是別的職業的、或連不到起點（天賦樹改版）：換不上去，只能清掉。 */
+    private boolean broken(final PlayerState state, final String code) {
+        final CharacterRecord character = state.character();
+        if (character == null) {
+            return false;
+        }
+        try {
+            final TreeCode.Decoded decoded = TreeCode.decode(tree, code);
+            if (!decoded.classId().equals(character.characterClass().id())) {
+                return true;
+            }
+            final PassiveNode start = tree.start(character.characterClass().id());
+            final Set<String> nodes = new HashSet<>(decoded.nodes());
+            return start != null && tree.reachable(nodes, start, tw.exilecore.passive.PassiveState.rules(plugin, state)).size() != nodes.size();
+        } catch (final TreeCode.InvalidCode | RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** 清掉放著的那一組：配點刪掉，孔裡的珠寶拿回來（背包 → 隨身背包 → 倉庫 → 腳下）。 */
+    private void clearSet(final PlayerState state, final int set) {
+        final List<ItemStack> jewels = new ArrayList<>(state.treeJewels(set).values());
+        state.treeJewels(set).clear();
+        store(state, set, null);
+        for (final ItemStack jewel : jewels) {
+            if (jewel != null && !jewel.isEmpty()) {
+                JewelSockets.giveBack(plugin, player, state, jewel);
+            }
+        }
+        state.markDirty();
+        plugin.characters().save(player);
+        player.sendMessage(plugin.text().prefixed("<green>第 " + (set + 1) + " 組已清除" + (jewels.isEmpty() ? "" : "，" + jewels.size() + " 顆珠寶已拿回來")));
+        player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.7f, 1.0f);
         redraw();
     }
 

@@ -75,7 +75,8 @@ public final class SkillService {
     private final Channelling channelling;
     /** 2026-10-26 照 PoE2：魔湧（Mana Tempest）的風暴。 */
     private final ManaTempest manaTempest;
-    /** 2026-10-26 照 PoE2：移動中使用技能的移動速度懲罰（放技能的那段時間移動更少 70%）。 */
+    /** 2026-10-26 照 PoE2：移動中使用技能的移動速度懲罰（放技能的那段時間移動更少 70%）。
+     *  2026-10-27 照站長「放技能減速全部移除」：不再套用，只留 tick／forget 清掉舊版留下的慢速走路速度與修飾器。 */
     private final SkillMovePenalty movePenalty;
     /** 蓄力技能放開之後要等這一招攻擊／施法間隔的幾成才能做別的（蓄力的時間就是出手的時間）。 */
     static final double RELEASE_RECOVERY = 0.25;
@@ -1319,7 +1320,7 @@ public final class SkillService {
                     tw.exilecore.core.LogThrottle.error(plugin.getSLF4JLogger(), "按住左鍵設定出錯（" + player.getName() + " 等人）", e); // 2026-10-27：同一個錯一分鐘寫一次
                 }
             }
-            movePenalty.tick(player, now); // 2026-10-26：放技能的移動懲罰時間到了就拿掉
+            movePenalty.tick(player, now); // 2026-10-26：放技能的移動懲罰時間到了就拿掉（2026-10-27 不再套用，只清舊的慢速）
             final SkillRuntime runtime = runtimes.get(player.getUniqueId());
             if (runtime == null) {
                 continue;
@@ -1774,7 +1775,7 @@ public final class SkillService {
             plugin.players().display(player, state);
             return;
         }
-        // 2026-10-26（PoE2）：要榮耀才能用的技能（熔魂嘯、澤嘯）、要先移動 10 公尺才能用的戰吼（震嘯）
+        // 2026-10-26（PoE2）：要榮耀才能用的技能（熔魂嘯、澤嘯）、要先移動 10 格才能用的戰吼（震嘯）
         final String usage = supportMechanics().usageProblem(player, build);
         if (usage != null) {
             state.notice("<gray>" + usage, now + 10);
@@ -1978,11 +1979,8 @@ public final class SkillService {
         final double speed = plugin.ailments() == null ? 1.0 : Math.max(0.05, plugin.ailments().actionSpeed(player));
         final double interval = build.intervalTicks(sheet) / speed / onUse.speedMore();
         runtime.readyAt = SkillMath.nextReady(runtime.readyAt, now, release != null && chargeSpec.stages() <= 0 ? interval * RELEASE_RECOVERY : interval);
-        // 2026-10-26 照 PoE2：放技能的那段時間（攻擊／施法時間）移動速度更少 70%，再照「減少移動中使用技能的移動速度懲罰」調整；這次之前放技能不會變慢
-        movePenalty.apply(player, SkillMovePenalty.penalty(build.profile().effective(sheet),
-                SkillMovePenalty.base(definition.mechanic(), config.command(definition.id()) != null, config.mount(definition.id()) != null,
-                        player.isInsideVehicle()), build.profile().tags()),
-                release != null && chargeSpec.stages() <= 0 ? interval * RELEASE_RECOVERY : interval, now);
+        // 2026-10-27 照站長「放技能減速全部移除」：放技能不再變慢（減少懲罰的效果改成平衡等效的移動速度）；
+        // 這次之前（2026-10-26 照 PoE2）放技能的那段時間移動速度更少 70%（SkillMovePenalty.apply）
         if ((key != SkillLoadout.KEY_LEFT && key != SkillLoadout.KEY_SNEAK_LEFT) || runtime.fromQueue) {
             player.swingMainHand(); // 左鍵客戶端自己會揮手；右鍵、數字鍵要伺服器揮；排隊放出來的左鍵也要（2026-10-17：揮手時機對上真的出手）
         }
@@ -2727,20 +2725,12 @@ public final class SkillService {
                 ? "要在副手裝有護甲的盾才能用" + ItemRenderer.escape(definition.name()) + "（圓盾、法器不行）" : null;
     }
 
-    /** 舉盾（2026-10）：guard.effects 變成增益，移動變慢也算進去。 */
+    /** 舉盾（2026-10）：guard.effects 變成增益。2026-10-27 照站長「放技能減速全部移除」：資料裡的 guard.slow（招架 50%）不再讓移動變慢；這次之前算進去。 */
     private void guard(final Player player, final SkillBuild build) {
         final SkillParams.Mark guard = build.definition().params().mark();
         final List<tw.exilecore.stats.Modifier> mods = new ArrayList<>();
         for (final ScaledMod effect : guard.effects()) {
             mods.add(effect.toModifier(build.level(), 1.0, build.definition().name()));
-        }
-        // 2026-10-26 照 PoE2 天賦樹：「舉盾時移動速度懲罰減少 x%」（guard.slow）；這次之前固定
-        final double slowPct = guard.slow().at(build.level()) * Math.max(0,
-                1 + plugin.players().sheet(player).increased(tw.exilecore.stats.ConditionKeys.GUARD_SLOW, java.util.Set.of()));
-        if (slowPct > 0) {
-            // 2026-10-26 照 PoE2 天賦樹：「減少使用技能時的移動速度懲罰」也減舉盾的減速
-            mods.add(tw.exilecore.stats.Modifier.increased(StatKeys.MOVEMENT_SPEED,
-                    -tw.exilecore.stats.TreeEffectKeys.actionPenalty(plugin.players().sheet(player), slowPct / 100.0), build.definition().name()));
         }
         buff(player, build.definition().weapons().isEmpty() ? "guard" : "guard." + build.definition().id(), build.definition().name(), (int) Math.round(guard.duration() * build.durationScale() * 20), mods);
     }
@@ -3971,11 +3961,11 @@ public final class SkillService {
         };
         final String body = switch (definition.id()) {
             case "infernal_cry" -> "強化攻擊獲得 " + v.apply(tw.exilecore.stats.WarcryKeys.EMPOWER_GAIN_FIRE) + "% 傷害為額外火焰傷害、戰吼半徑 +"
-                    + v.apply(tw.exilecore.stats.WarcryKeys.RADIUS_FLAT) + " 公尺";
+                    + v.apply(tw.exilecore.stats.WarcryKeys.RADIUS_FLAT) + " 格";
             case "seismic_cry" -> "強化猛擊的餘震更多 " + v.apply(tw.exilecore.stats.WarcryKeys.AFTERSHOCK_MORE) + "% 傷害、獲得 "
                     + v.apply(StatKeys.DAMAGE_GAIN + "fire") + "% 物理傷害為火焰傷害";
             case "fortifying_cry" -> "獲得的守護更多 " + v.apply(tw.exilecore.stats.WarcryKeys.GUARD_MORE) + "%、盾波半徑 +"
-                    + v.apply(tw.exilecore.stats.WarcryKeys.TRIGGER_RADIUS_FLAT) + " 公尺";
+                    + v.apply(tw.exilecore.stats.WarcryKeys.TRIGGER_RADIUS_FLAT) + " 格";
             case "ancestral_cry" -> "每用掉一顆磐星，戰吼持續時間增加 " + v.apply(tw.exilecore.stats.WarcryKeys.DURATION_PER_ENDURANCE)
                     + "%、增益給你更多 " + v.apply(StatKeys.GRANT_PREFIX + StatKeys.DAMAGE) + "% 火焰傷害";
             case "arctic_howl" -> "給隊友的增益增加 " + v.apply(tw.exilecore.stats.WarcryKeys.ALLY_FREEZE_BUILDUP) + "% 凍結累積、"
@@ -5169,8 +5159,14 @@ public final class SkillService {
                     lines.add("<dark_gray>　同一招的地面效果疊在一起只算一灘（不疊加）");
                 }
             }
-            case IMPACT -> lines.add(String.format(Locale.ROOT, "<gray>準心指的地方（最遠 %.0f 格）<white>%.1f</white> 秒後落下，半徑 <white>%.1f</white> 格",
-                    build.range(), params.delay(), build.radius()));
+            case IMPACT -> {
+                lines.add(String.format(Locale.ROOT, "<gray>準心指的地方（最遠 %.0f 格）<white>%.1f</white> 秒後落下，半徑 <white>%.1f</white> 格",
+                        build.range(), params.delay(), build.radius()));
+                // 2026-10-27：多的投射物各落一道（SkillExecutor.impact）
+                if (build.definition().tags().contains(Tags.PROJECTILE) && build.projectiles() > 1) {
+                    lines.add(String.format(Locale.ROOT, "<gray>投射物 <white>%d</white> 發", build.projectiles()));
+                }
+            }
             case ZONE -> {
                 final SkillParams.Zone zone = params.zone();
                 final String where = zone.line() ? String.format(Locale.ROOT, "面前一道 <white>%.0f</white> 格長的", build.length())
@@ -5223,17 +5219,14 @@ public final class SkillService {
             }
             case GUARD -> {
                 final SkillParams.Mark guard = params.mark();
-                if (guard.effects().isEmpty() && guard.slow().at(build.level()) <= 0) {
+                if (guard.effects().isEmpty()) {
                     break; // 沒有增益的（連珠）：說明在 barrageLines
                 }
                 final List<String> parts = new ArrayList<>();
                 for (final ScaledMod effect : guard.effects()) {
                     parts.add("<white>" + effect.describe(build.level(), 1.0) + "</white>");
                 }
-                final double slowPct = guard.slow().at(build.level());
-                if (slowPct > 0) {
-                    parts.add(String.format(Locale.ROOT, "移動速度慢 <white>%d%%</white>", Math.round(slowPct)));
-                }
+                // 2026-10-27 照站長「放技能減速全部移除」：舉盾不再寫「移動速度慢」（不會變慢了）
                 lines.add(String.format(Locale.ROOT, build.definition().weapons().isEmpty() ? "<gray>要拿盾：舉起來 <white>%.1f</white> 秒，" : "<gray><white>%.1f</white> 秒內：",
                         guard.duration() * build.durationScale())
                         + String.join("<gray>、", parts));
@@ -5303,6 +5296,14 @@ public final class SkillService {
                 lines.add("<gray>同時最多 <white>" + build.totems() + "</white> 個" + (active > 0 ? "，目前 " + active + " 個" : ""));
                 // 2026-10-26 照 PoE2：圖騰生命照技能等級的召喚物表（這次之前寫你最大生命的 30%～60%）
                 lines.add("<gray>圖騰生命、護甲照技能等級（跟召喚物同一張表，再乘圖騰生命的加成）；怪物會打圖騰，被圖騰打中的怪會先去打圖騰");
+                // 2026-10-27 照 PoE2：圖騰是你的友軍（「你存在範圍內的友軍…」在範圍內的圖騰也吃得到；不是召喚物，「召喚物…」不給）
+                final List<String> allies = new ArrayList<>();
+                for (final tw.exilecore.stats.Modifier modifier : TotemAllies.fromOwner(sheet)) {
+                    allies.add(ModifierText.describe(modifier));
+                }
+                if (!allies.isEmpty()) {
+                    lines.add("<gray>圖騰是你的友軍，在你的存在範圍內時另外有：<#8fd3ff>" + ItemRenderer.escape(String.join("、", allies)));
+                }
                 if (!spec.buff().isEmpty()) {
                     final List<String> buffs = new ArrayList<>();
                     for (final tw.exilecore.stats.Modifier modifier : spec.buff()) {

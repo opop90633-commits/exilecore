@@ -173,7 +173,7 @@ block('ancestral_spirits', [
 temper_mana = [max(1, round(x / 60 * 1.125)) for x in [(S['TemperWeaponPlayer']['per_level'].get(L) or {}).get('costs', {}).get('ManaPerMinute', 0) for L in LV]]
 block('temper_weapon', [
     'name: 鍛鍊武器',
-    'description: 在鐵砧上鍛打主手的近戰武器：之後 12 次近戰攻擊擊中時觸發燃爆（3 公尺的火焰爆炸）。冷卻 5 秒。',
+    'description: 在鐵砧上鍛打主手的近戰武器：之後 12 次近戰攻擊擊中時觸發燃爆（3 格的火焰爆炸）。冷卻 5 秒。',
     'icon: IRON_INGOT', 'type: spell', 'tier: 1', 'tags: [duration, fire]', ASC,
     'mechanic: warcry',
     'warcry:',
@@ -191,7 +191,7 @@ block('temper_weapon', [
 ])
 block('asc_combust', [
     'name: 燃爆', 'hidden: true', 'type: attack', 'tags: [attack, area, fire]',
-    'mechanic: nova', 'nova: { radius: 3 }   # 2026-10-26 照 PoE2 Combust：3 公尺、物理全部轉火焰、不會被閃避',
+    'mechanic: nova', 'nova: { radius: 3 }   # 2026-10-26 照 PoE2 Combust：3 格、物理全部轉火焰、不會被閃避',
     'attack_speed: 1.0',
     'effectiveness: %s   # %s' % (fl(eff('TemperWeaponCombustionPlayer')), SRC % 'Combust'),
     'convert: { fire: 1.0 }', 'mana: 0', 'visual: fireball',
@@ -229,12 +229,12 @@ block('sorcery_ward', [
 
 # ---------- 弩衛：支援火力 ----------
 # 2026-10-27 照 PoE2 0.5（Supporting Fire／Command: Death From Above，RePoE）：常駐召喚一名不會受傷的砲手站在你身後，只在你下指令時行動；
-#   按技能鍵下指令「從天而降」：朝準心射信號彈，之後每 0.75 秒一輪箭雨、共 6 輪，每輪打 14 × 14 公尺內的敵人 763% 傷害（冷卻 10 秒、魔力 8～83）。
+#   按技能鍵下指令「從天而降」：朝準心射信號彈，之後每 0.75 秒一輪箭雨、共 6 輪，每輪打 14 × 14 格內的敵人 763% 傷害（冷卻 10 秒、魔力 8～83）。
 #   砲手每 1 點你的力量增加 1% 傷害、每 3 點敏捷增加 1% 範圍（MinionService.deathFromAbove）。
 #   這次之前砲手不是召喚物：一個 4 秒冷卻、不花魔力的箭雨（攻擊，20 級 150%）。
 block('supporting_fire', [
     'name: 支援火力',
-    'description: 常駐：召集一名不會受傷的砲手在你身後就位，只在你下指令時行動。按技能鍵下指令「從天而降」：朝準心射出信號彈，之後每 0.75 秒一輪箭雨、共 6 輪，每輪對 14 × 14 公尺內的敵人造成 763% 的攻擊傷害（冷卻 10 秒）。砲手每 1 點你的力量增加 1% 傷害、每 3 點敏捷增加 1% 範圍。不保留精魂。',
+    'description: 常駐：召集一名不會受傷的砲手在你身後就位，只在你下指令時行動。按技能鍵下指令「從天而降」：朝準心射出信號彈，之後每 0.75 秒一輪箭雨、共 6 輪，每輪對 14 × 14 格內的敵人造成 763% 的攻擊傷害（冷卻 10 秒）。砲手每 1 點你的力量增加 1% 傷害、每 3 點敏捷增加 1% 範圍。不保留精魂。',
     'icon: ARROW', 'type: spell', 'tier: 1', 'tags: [minion, persistent, command]', ASC,
     'mechanic: aura', 'aura: { reserve: 0, radius: 8, allies: false }',
     'summon: { kind: SKELETON, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.0, attack_speed: 1.0, speed: 1.2, reach: 2.0, weapon: CROSSBOW }   # 不會受傷、只聽指令（MinionAbilities.COMMAND_ONLY）',
@@ -253,14 +253,14 @@ block('virtuous_barrier', [
 ])
 
 # ---------- 獵姬：元素湧動的湧動爆炸（2026-10-27 照 PoE2：另外一發爆炸） ----------
-# 用掉湧動的投射物飛行結束時（SkillResources／ProjectileEngine）在那裡觸發：1.8 公尺、攻擊傷害 50%～181%（1～20 級）、物理全部轉成那種元素。
-# 這次之前做不到另一發爆炸：投射物自己在終點爆開 1.8 公尺、獲得 100% 傷害為額外的那種元素傷害（平衡等效）。
+# 用掉湧動的投射物飛行結束時（SkillResources／ProjectileEngine）在那裡觸發：1.8 格、攻擊傷害 50%～181%（1～20 級）、物理全部轉成那種元素。
+# 這次之前做不到另一發爆炸：投射物自己在終點爆開 1.8 格、獲得 100% 傷害為額外的那種元素傷害（平衡等效）。
 for element, setid, visual in (('fire', 'AmazonTriggerFireSurgePlayer', 'fireball'), ('cold', 'AmazonTriggerColdSurgePlayer', 'frost_nova'),
                                ('lightning', 'AmazonTriggerLightningSurgePlayer', 'spark')):
     block('asc_surge_' + element, [
         'name: %s湧動爆炸' % {'fire': '火焰', 'cold': '冰冷', 'lightning': '閃電'}[element], 'hidden: true', 'type: attack',
         'tags: [attack, area, %s]' % element,
-        'mechanic: nova', 'nova: { radius: 1.8 }   # 2026-10-27 照 PoE2 Elemental Surge：爆炸半徑 1.8 公尺',
+        'mechanic: nova', 'nova: { radius: 1.8 }   # 2026-10-27 照 PoE2 Elemental Surge：爆炸半徑 1.8 格',
         'attack_speed: 1.0',
         'effectiveness: %s   # %s' % (fl(eff('AmazonTriggerElementalSurgePlayer', setid)), SRC % 'Elemental Surge'),
         'convert: { %s: 1.0 }' % element, 'mana: 0', 'visual: ' + visual,
@@ -269,7 +269,7 @@ for element, setid, visual in (('fire', 'AmazonTriggerFireSurgePlayer', 'firebal
 # ---------- 儀祭：鮮血沸騰、儀式獻祭、女王進軍 ----------
 block('blood_boil', [
     'name: 鮮血沸騰',
-    'description: 常駐：存在範圍內的非傳奇敵人每 2～1.52 秒累積一個血泡。牠死掉時血泡爆開，每個血泡給 1.5 公尺內的敵人一層腐化之血（每秒受到死掉那隻最大生命 2% 的物理傷害，5 秒；每個血泡範圍更多 20%）。不保留精魂。',
+    'description: 常駐：存在範圍內的非傳奇敵人每 2～1.52 秒累積一個血泡。牠死掉時血泡爆開，每個血泡給 1.5 格內的敵人一層腐化之血（每秒受到死掉那隻最大生命 2% 的物理傷害，5 秒；每個血泡範圍更多 20%）。不保留精魂。',
     'icon: NETHER_BRICK', 'type: spell', 'tier: 1', 'tags: [persistent, physical, duration, area]', ASC,
     'mechanic: aura', 'aura: { reserve: 0, radius: 8, allies: false, effects: [] }',
     'mana: 0', 'visual: aura_life',
@@ -299,7 +299,7 @@ qp_self_min = col('QueensProcessionReservationPlayer', 'active_skill_minimum_phy
 qp_self_max = col('QueensProcessionReservationPlayer', 'active_skill_maximum_physical_self_damage_to_take')
 block('queens_procession', [
     'name: 女王進軍',
-    'description: 常駐：衝刺時化成一群蝗蟲，每 0.5 秒打 3 公尺內的所有敵人（物理攻擊，不看武器）；打中時你受到一點物理傷害、獲得一層蟲群前進（每層更多 2% 傷害，最多 50 層，停止衝刺 4 秒後失去）。不保留精魂。',
+    'description: 常駐：衝刺時化成一群蝗蟲，每 0.5 秒打 3 格內的所有敵人（物理攻擊，不看武器）；打中時你受到一點物理傷害、獲得一層蟲群前進（每層更多 2% 傷害，最多 50 層，停止衝刺 4 秒後失去）。不保留精魂。',
     'icon: SUGAR', 'type: spell', 'tier: 1', 'tags: [persistent, physical, area]', ASC,
     'mechanic: aura', 'aura: { reserve: 0, radius: 8, allies: false, effects: [] }',
     'mana: 0', 'visual: aura_haste',
@@ -312,7 +312,7 @@ block('queens_procession', [
 # ---------- 星矢：預告射擊、幻影銳眼 ----------
 block('called_shots', [
     'name: 預告射擊',
-    'description: 常駐：每 5 秒把你面板上的印記技能放在 10 公尺內一個還沒被標記的敵人身上；印記被用掉時再放到另一個敵人身上（最多每 5 秒一次）。不保留精魂。',
+    'description: 常駐：每 5 秒把你面板上的印記技能放在 10 格內一個還沒被標記的敵人身上；印記被用掉時再放到另一個敵人身上（最多每 5 秒一次）。不保留精魂。',
     'icon: SPECTRAL_ARROW', 'type: spell', 'tier: 1', 'tags: [persistent, mark]', ASC,
     'mechanic: aura', 'aura: { reserve: 0, radius: 8, allies: false, effects: [] }',
     'mana: 0', 'visual: hunters_mark',
@@ -332,19 +332,19 @@ block('mirage_deadeye', [
 # ---------- 御風：五種混合物 ----------
 CONC = [
     ('bleeding_concoction', '流血混合物', 'BleedingConcoctionPlayer', 'physical', 'NETHER_BRICK', 5,
-     '用掉魔力藥劑 5 點充能，丟出一瓶藥劑在落點爆炸（1.8 公尺），造成物理攻擊傷害（不看武器），一定造成流血並加劇。',
+     '用掉魔力藥劑 5 點充能，丟出一瓶藥劑在落點爆炸（1.8 格），造成物理攻擊傷害（不看武器），一定造成流血並加劇。',
      ['- { stat: bleed.chance, type: FLAT, value: 100 }', '- { stat: asc.aggravate_on_hit, type: FLAT, value: 1 }']),
     ('shattering_concoction', '粉碎混合物', 'ShatteringConcoctionPlayer', 'cold', 'PRISMARINE_SHARD', 11,
-     '用掉魔力藥劑 5 點充能，丟出一瓶藥劑在落點爆炸（1.8 公尺），造成冰冷攻擊傷害（不看武器）並讓敵人曝露。',
+     '用掉魔力藥劑 5 點充能，丟出一瓶藥劑在落點爆炸（1.8 格），造成冰冷攻擊傷害（不看武器）並讓敵人曝露。',
      ['- { stat: exposure.chance, type: FLAT, value: 100 }']),
     ('explosive_concoction', '爆裂物', 'ExplosiveConcoctionPlayer', 'fire', 'BLAZE_POWDER', 5,
-     '用掉魔力藥劑 5 點充能，丟出一瓶藥劑在落點爆炸（1.8 公尺），造成火焰攻擊傷害（不看武器），易燃更多 100%；另外對附近最多 4 個點燃中的敵人各丟一瓶小的。',
+     '用掉魔力藥劑 5 點充能，丟出一瓶藥劑在落點爆炸（1.8 格），造成火焰攻擊傷害（不看武器），易燃更多 100%；另外對附近最多 4 個點燃中的敵人各丟一瓶小的。',
      ['- { stat: ignite.chance, type: MORE, value: 100 }']),
     ('fulminating_concoction', '烈性混合物', 'FulminatingConcoctionPlayer', 'lightning', 'GLOWSTONE_DUST', 8,
-     '用掉魔力藥劑 5 點充能，丟出一瓶藥劑在落點爆炸（1.8 公尺），造成閃電攻擊傷害（不看武器），感電機率更多 200%、感電效果更多 50%。',
+     '用掉魔力藥劑 5 點充能，丟出一瓶藥劑在落點爆炸（1.8 格），造成閃電攻擊傷害（不看武器），感電機率更多 200%、感電效果更多 50%。',
      ['- { stat: shock.chance, type: MORE, value: 200 }', '- { stat: shock.effect, type: INCREASED, value: 50 }']),
     ('acidic_concoction', '酸性靈藥', 'AcidicConcoctionPlayer', 'physical', 'SLIME_BALL', 5,
-     '用掉魔力藥劑 5 點充能，丟出一瓶藥劑在落點爆炸（1.8 公尺），造成物理攻擊傷害（不看武器），不會造成中毒；擊中時消耗敵人身上的中毒，造成剩餘傷害 150% 的爆裂。',
+     '用掉魔力藥劑 5 點充能，丟出一瓶藥劑在落點爆炸（1.8 格），造成物理攻擊傷害（不看武器），不會造成中毒；擊中時消耗敵人身上的中毒，造成剩餘傷害 150% 的爆裂。',
      ['- { stat: poison.chance, type: MORE, value: -100 }', '- { stat: asc.consume_poison, type: FLAT, value: 150 }']),
 ]
 for sid, name, src, element, icon, crit, desc, mods in CONC:
@@ -353,7 +353,7 @@ for sid, name, src, element, icon, crit, desc, mods in CONC:
     block(sid, [
         'name: ' + name, 'description: ' + desc,
         'icon: ' + icon, 'type: attack', 'tier: 1', 'tags: [attack, projectile, area, grenade, %s]' % element, ASC,
-        'mechanic: impact', 'impact: { range: 16, delay: 0.6, radius: 1.8 }   # 2026-10-26 照 PoE2（1.8 公尺）',
+        'mechanic: impact', 'impact: { range: 16, delay: 0.6, radius: 1.8 }   # 2026-10-26 照 PoE2（1.8 格）',
         'attack_speed: 0.85   # 照 PoE2（攻擊速度 -15%）',
         'effectiveness: %s   # %s（傷害效益）' % (fl(eff(src)), SRC % name),
         'mana: 0   # 照 PoE2：不花魔力，用掉魔力藥劑 5 點充能（AscendancyEffects）',
@@ -420,7 +420,7 @@ block('meditate', [
 # ---------- 虛步：虛空幻影、遁入裂痕、夏烏拉統治者 ----------
 block('void_illusion', [
     'name: 虛空幻影',
-    'description: 常駐：翻滾時在原地留下一個只有 1 點生命的幻影（2 秒）；被敵人打掉時爆炸（3 公尺）。最多存 3 次、每 4 秒回一次。不保留精魂。',
+    'description: 常駐：翻滾時在原地留下一個只有 1 點生命的幻影（2 秒）；被敵人打掉時爆炸（3 格）。最多存 3 次、每 4 秒回一次。不保留精魂。',
     'icon: ECHO_SHARD', 'type: spell', 'tier: 1', 'tags: [persistent, duration]', ASC,
     'mechanic: aura', 'aura: { reserve: 0, radius: 8, allies: false, effects: [] }',
     'mana: 0', 'visual: void_rift',
@@ -435,7 +435,7 @@ block('asc_void_explosion', [
 ])
 block('into_the_breach', [
     'name: 遁入裂痕',
-    'description: 常駐：在身邊打開裂隙，每 1.4～1.21 秒在 8.5 公尺內顯現一個夏烏拉之炎（25 秒），走過去撿起：紫色每層獲得 7% 傷害為額外混沌（最多 10 層）、藍色偷取 20% 最大魔力、紅色偷取 20% 最大生命。不保留精魂。',
+    'description: 常駐：在身邊打開裂隙，每 1.4～1.21 秒在 8.5 格內顯現一個夏烏拉之炎（25 秒），走過去撿起：紫色每層獲得 7% 傷害為額外混沌（最多 10 層）、藍色偷取 20% 最大魔力、紅色偷取 20% 最大生命。不保留精魂。',
     'icon: AMETHYST_SHARD', 'type: spell', 'tier: 1', 'tags: [persistent]', ASC,
     'mechanic: aura', 'aura: { reserve: 0, radius: 8, allies: false, effects: [] }',
     'mana: 0', 'visual: void_rift',
@@ -459,7 +459,7 @@ block('archon_of_chayula', [
 ])
 block('asc_chayula_will', [
     'name: 夏烏拉之志', 'hidden: true', 'type: attack', 'tags: [attack, area, chaos, duration]',
-    'mechanic: zone', 'zone: { range: 0, radius: 2.8, duration: 8, interval: 0.2, damage: 100, max: 0 }   # 2026-10-26 照 PoE2 Chayula\'s Will：2.8 公尺、8 秒',
+    'mechanic: zone', 'zone: { range: 0, radius: 2.8, duration: 8, interval: 0.2, damage: 100, max: 0 }   # 2026-10-26 照 PoE2 Chayula\'s Will：2.8 格、8 秒',
     'attack_speed: 1.0', 'effectiveness: %s   # %s' % (fl(eff('ArchonOfChayulaTornadoPlayer')), SRC % "Chayula's Will"),
     'convert: { chaos: 0.7 }', 'mana: 0', 'visual: void_rift',
 ])
@@ -489,7 +489,7 @@ block('time_snap', [
 ])
 block('time_freeze', [
     'name: 時間凍結',
-    'description: 放出一道 10 公尺的波，讓範圍內的敵人時間停止 3 秒（30 秒內每被停過一次，時間減半）。冷卻 65～55.5 秒。',
+    'description: 放出一道 10 格的波，讓範圍內的敵人時間停止 3 秒（30 秒內每被停過一次，時間減半）。冷卻 65～55.5 秒。',
     'icon: CLOCK', 'type: spell', 'tier: 1', 'tags: [area, duration]', ASC,
     'mechanic: warcry',
     'warcry:', '  cry: false', '  radius: 10', '  duration: 3', '  taunt: false', '  allies: false', '  buff:', '    ' + MARK,
@@ -498,7 +498,7 @@ block('time_freeze', [
 ])
 block('inevitable_agony', [
     'name: 命定苦痛',
-    'description: 對準心附近（1.5～3.1 公尺）的敵人施加減益 12 秒：記下牠們受到的擊中傷害的 25%，減益結束（或足以處決）時一次失去那麼多生命。冷卻 2 秒。',
+    'description: 對準心附近（1.5～3.1 格）的敵人施加減益 12 秒：記下牠們受到的擊中傷害的 25%，減益結束（或足以處決）時一次失去那麼多生命。冷卻 2 秒。',
     'icon: GHAST_TEAR', 'type: spell', 'tier: 1', 'tags: [area, duration]', ASC,
     'mechanic: warcry',
     'warcry:', '  cry: false', '  radius: 2', '  duration: 1', '  taunt: false', '  allies: false', '  buff:', '    ' + MARK,
@@ -519,8 +519,8 @@ block('temporal_rift', [
 
 # ---------- 沙靈：三位巨靈與指令 ----------
 for sid, name, desc, icon in (
-        ('kelari_djinn', '黯染飛砂．克拉里', '常駐：召喚沙之巨靈克拉里（不會受傷），牠跟在你身邊，只在你下指令（克拉里的欺瞞、審判、惡言）時行動，指令要克拉里在你身邊 20 公尺內；牠的擊中施加暴擊弱點、暴擊傷害加成增加 50%。不保留精魂。', 'GOLD_NUGGET'),
-        ('navira_djinn', '最終幻象．納維拉', '常駐：召喚水之巨靈納維拉（不會受傷），牠跟在你身邊，只在你下指令（納維拉的綠洲、水井、封凍）時行動，指令要納維拉在你身邊 20 公尺內；每次下指令觸發納維拉的寧靜：附近友軍魔力再生增加 10～67%，4 秒。不保留精魂。', 'HEART_OF_THE_SEA'),
+        ('kelari_djinn', '黯染飛砂．克拉里', '常駐：召喚沙之巨靈克拉里（不會受傷），牠跟在你身邊，只在你下指令（克拉里的欺瞞、審判、惡言）時行動，指令要克拉里在你身邊 20 格內；牠的擊中施加暴擊弱點、暴擊傷害加成增加 50%。不保留精魂。', 'GOLD_NUGGET'),
+        ('navira_djinn', '最終幻象．納維拉', '常駐：召喚水之巨靈納維拉（不會受傷），牠跟在你身邊，只在你下指令（納維拉的綠洲、水井、封凍）時行動，指令要納維拉在你身邊 20 格內；每次下指令觸發納維拉的寧靜：附近友軍魔力再生增加 10～67%，4 秒。不保留精魂。', 'HEART_OF_THE_SEA'),
         ('ruzhan_djinn', '赤炎利劍．魯兹安', '常駐：召喚火之巨靈魯兹安（不會受傷），牠跟在你身邊：你使用造成傷害的技能時，牠瞬移到目標旁用狂熱斬擊打前方的敵人並讓牠們曝露（冷卻 4 秒），最近每用過一個造成傷害的技能更多 10% 傷害。不保留精魂。', 'BLAZE_ROD')):
     # 2026-10-27 照 PoE2：巨靈是有實體、不會受傷、只聽指令的召喚物（MinionService，MinionAbilities.COMMAND_ONLY）；這次之前沒有實體，指令直接在準心的地方生效
     block(sid, [
@@ -537,7 +537,7 @@ for sid, name, desc, icon in (
     ])
 block('kelari_deception', [
     'name: 克拉里的欺瞞',
-    'description: 指令（要先召喚克拉里）：克拉里瞬移到準心的地方炸開 2.5 公尺，造成物理法術傷害，並留下一個 4 秒的分身；分身還在時再用，分身也會爆炸（多 2 層暴擊弱點）。連續使用每次更多 50% 傷害（最多 300%）。最多存 3 次，冷卻 5 秒。',
+    'description: 指令（要先召喚克拉里）：克拉里瞬移到準心的地方炸開 2.5 格，造成物理法術傷害，並留下一個 4 秒的分身；分身還在時再用，分身也會爆炸（多 2 層暴擊弱點）。連續使用每次更多 50% 傷害（最多 300%）。最多存 3 次，冷卻 5 秒。',
     'icon: GOLD_NUGGET', 'type: spell', 'tier: 1', 'tags: [spell, area, physical, command]', ASC,
     'mechanic: impact', 'impact: { range: 20, delay: 0.1, radius: 2.5 }',
     'damage: [16, 23]   # 2026-10-26 照 PoE2 Kelari\'s Deception（1 級 16～23，照法術的等級成長）',
@@ -556,7 +556,7 @@ block('asc_kelari_clone', [
 ])
 block('kelari_judgment', [
     'name: 克拉里的審判',
-    'description: 指令（要先召喚克拉里）：克拉里在準心的地方懸起一排刀刃，落下時造成震波（3.5 公尺）的物理法術傷害，暈眩累積更多 100%、多 4 層暴擊弱點。原作要引導（最多 4 段，每段更多 125% 傷害），這裡照 3 段算。冷卻 12 秒。',
+    'description: 指令（要先召喚克拉里）：克拉里在準心的地方懸起一排刀刃，落下時造成震波（3.5 格）的物理法術傷害，暈眩累積更多 100%、多 4 層暴擊弱點。原作要引導（最多 4 段，每段更多 125% 傷害），這裡照 3 段算。冷卻 12 秒。',
     'icon: GOLD_NUGGET', 'type: spell', 'tier: 1', 'tags: [spell, area, physical, command]', ASC,
     'mechanic: impact', 'impact: { range: 20, delay: 0.6, radius: 3.5 }',
     'damage: [53, 81]   # 2026-10-26 照 PoE2 Kelari\'s Judgment（1 級 15～23，引導 3 段：更多 250% → ×3.5）',
@@ -567,7 +567,7 @@ block('kelari_judgment', [
 ])
 block('kelari_malediction', [
     'name: 克拉里的惡言',
-    'description: 常駐（要先召喚克拉里）：自動消耗存在範圍內的屍體，每具生出 2 隻屍甲蟲（最多 4～8 隻，每 1.5～0.9 秒一具）；甲蟲衝向附近的敵人爆炸（1.5 公尺物理傷害，對傳奇更多 40%、20% 機率致盲）。不保留精魂。',
+    'description: 常駐（要先召喚克拉里）：自動消耗存在範圍內的屍體，每具生出 2 隻屍甲蟲（最多 4～8 隻，每 1.5～0.9 秒一具）；甲蟲衝向附近的敵人爆炸（1.5 格物理傷害，對傳奇更多 40%、20% 機率致盲）。不保留精魂。',
     'icon: RABBIT_FOOT', 'type: spell', 'tier: 1', 'tags: [persistent, minion]', ASC,
     'mechanic: aura', 'aura: { reserve: 0, radius: 8, allies: false, effects: [] }',
     'mana: 0', 'visual: aura_precision',
@@ -586,7 +586,7 @@ block('asc_corpse_beetle', [
 ])
 block('navira_oasis', [
     'name: 納維拉的綠洲',
-    'description: 指令（要先召喚納維拉）：在你腳下 8 公尺變成綠洲 15 秒：站在裡面的你與隊友每秒獲得 0.5 點藥劑充能，受到的傷害 30% 回復為生命、20% 回復為魔力。冷卻 8 秒。',
+    'description: 指令（要先召喚納維拉）：在你腳下 8 格變成綠洲 15 秒：站在裡面的你與隊友每秒獲得 0.5 點藥劑充能，受到的傷害 30% 回復為生命、20% 回復為魔力。冷卻 8 秒。',
     'icon: HEART_OF_THE_SEA', 'type: spell', 'tier: 1', 'tags: [area, duration, command]', ASC,
     'mechanic: warcry',
     'warcry:', '  cry: false', '  radius: 8', '  duration: 15', '  taunt: false', '  allies: false', '  buff:', '    ' + MARK,
@@ -603,7 +603,7 @@ block('navira_well', [
 ])
 block('navira_fracturing', [
     'name: 納維拉的封凍',
-    'description: 指令（要先召喚納維拉）：讓準心附近 6 公尺內冰緩中的敵人腳下碎裂，造成冰冷法術傷害，凍結累積更多 200%、照更多 200% 的傷害算冰緩。冷卻 5 秒。',
+    'description: 指令（要先召喚納維拉）：讓準心附近 6 格內冰緩中的敵人腳下碎裂，造成冰冷法術傷害，凍結累積更多 200%、照更多 200% 的傷害算冰緩。冷卻 5 秒。',
     'icon: PRISMARINE_SHARD', 'type: spell', 'tier: 1', 'tags: [spell, area, cold, command]', ASC,
     'mechanic: impact', 'impact: { range: 20, delay: 0.3, radius: 6 }',
     'damage: [44, 66]   # 2026-10-26 照 PoE2 Navira\'s Fracturing（1 級 44～66）', 'damage_types: { cold: 1.0 }', 'cast_time: 1.2',
@@ -613,7 +613,7 @@ block('navira_fracturing', [
 ])
 block('ruzhan_reckoning', [
     'name: 魯兹安的清算',
-    'description: 指令（要先召喚魯兹安）：魯兹安瞬移到準心的地方，對身邊 1.5 公尺造成火焰法術傷害，接著劍砸地面掀起一道 4 公尺的熔岩浪（點燃效果更多 100%）。冷卻 12 秒。',
+    'description: 指令（要先召喚魯兹安）：魯兹安瞬移到準心的地方，對身邊 1.5 格造成火焰法術傷害，接著劍砸地面掀起一道 4 格的熔岩浪（點燃效果更多 100%）。冷卻 12 秒。',
     'icon: MAGMA_CREAM', 'type: spell', 'tier: 1', 'tags: [spell, area, fire, command]', ASC,
     'mechanic: impact', 'impact: { range: 20, delay: 0.4, radius: 1.5 }',
     'damage: [8, 13]   # 2026-10-26 照 PoE2 Ruzhan\'s Reckoning（1 級 8～13；熔岩浪 29～44 是另一段）', 'damage_types: { fire: 1.0 }', 'cast_time: 2.3',
@@ -629,7 +629,7 @@ block('asc_ruzhan_wave', [
 ])
 block('ruzhan_fury', [
     'name: 魯兹安的怒火',
-    'description: 指令（要先召喚魯兹安）：魯兹安朝前方連射兩輪各 20 顆火燼，打中時爆炸（0.9 公尺），對被禁錮的敵人更多 60% 傷害。冷卻 7 秒。',
+    'description: 指令（要先召喚魯兹安）：魯兹安朝前方連射兩輪各 20 顆火燼，打中時爆炸（0.9 格），對被禁錮的敵人更多 60% 傷害。冷卻 7 秒。',
     'icon: BLAZE_ROD', 'type: spell', 'tier: 1', 'tags: [spell, projectile, area, fire, command]', ASC,
     'mechanic: projectile', 'projectile: { count: 20, spread: 50, speed: 1.4, range: 22, size: 0.3, explode: 0.9, burst: { count: 2, interval: 6 } }',
     'damage: [3, 4]   # 2026-10-26 照 PoE2 Ruzhan\'s Fury（每顆 1 級 3～4）', 'damage_types: { fire: 1.0 }', 'cast_time: 2.3',
@@ -638,9 +638,9 @@ block('ruzhan_fury', [
 ])
 block('ruzhan_trap', [
     'name: 魯兹安的陷阱',
-    'description: 指令（要先召喚魯兹安）：魯兹安把巨劍擲到準心的地方，在 5 公尺內撒下 8 個符文（6 秒）；敵人踩到就噴出火焰龍捲（1.2 公尺、4 秒、每 0.7 秒一下，易燃更多 400%）。冷卻 8 秒。',
+    'description: 指令（要先召喚魯兹安）：魯兹安把巨劍擲到準心的地方，在 5 格內撒下 8 個符文（6 秒）；敵人踩到就噴出火焰龍捲（1.2 格、4 秒、每 0.7 秒一下，易燃更多 400%）。冷卻 8 秒。',
     'icon: BLAZE_ROD', 'type: spell', 'tier: 1', 'tags: [spell, area, fire, duration, command]', ASC,
-    'mechanic: zone', 'zone: { range: 20, radius: 5, duration: 6, interval: 0.7, damage: 100, max: 3 }   # 原作 8 個符文、踩到才噴；引擎照一塊 5 公尺的地面每 0.7 秒打一下',
+    'mechanic: zone', 'zone: { range: 20, radius: 5, duration: 6, interval: 0.7, damage: 100, max: 3 }   # 原作 8 個符文、踩到才噴；引擎照一塊 5 格的地面每 0.7 秒打一下',
     'damage: [5, 7]   # 2026-10-26 照 PoE2 Ruzhan\'s Trap（龍捲 1 級 5～7）', 'damage_types: { fire: 1.0 }', 'cast_time: 1.0',
     'effectiveness: 1.0', 'cooldown: 8', 'mana: 0   # 照 PoE2：指令不花魔力', 'visual: flame_wall',
     'modifiers:', '  - { stat: spell.base_crit, type: FLAT, value: 7 }', '  - { stat: ignite.chance, type: MORE, value: 400 }',
@@ -656,7 +656,7 @@ block('asc_ruzhan_zealotry', [
 # ---------- 疫喚：召喚獄炎獵犬、惡魔變身 ----------
 block('infernal_hound', [
     'name: 召喚獄炎獵犬',
-    'description: 常駐：召喚一隻會復活的獄炎獵犬跟著你，讓牠身邊 2.5 公尺的敵人點燃（照獵犬最大生命的 20% 當作火焰傷害）。不保留精魂。',
+    'description: 常駐：召喚一隻會復活的獄炎獵犬跟著你，讓牠身邊 2.5 格的敵人點燃（照獵犬最大生命的 20% 當作火焰傷害）。不保留精魂。',
     'icon: BLAZE_POWDER', 'type: spell', 'tier: 1', 'tags: [minion, persistent, fire]', ASC,
     'mechanic: aura', 'aura: { reserve: 0, radius: 8, allies: false }',
     'summon: { kind: WOLF, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.5, damage: 1.0, attack_speed: 1.2, speed: 1.4, reach: 2.0 }   # 2026-10-26 照 PoE2 Summon Infernal Hound（點燃光環在 AscGranted）',
@@ -690,7 +690,7 @@ block('life_remnants', [
 # ---------- 觀星：可趁之刻、命運同調 ----------
 block('moment_of_vulnerability', [
     'name: 可趁之刻',
-    'description: 放出 4 公尺的時間新星造成物理法術傷害；打中蓄勢待暈、待電擊、待凍結的敵人時，牠的時間殘影替牠承受禁錮，對殘影造成的傷害有 60～98% 也打在本體上（同一隻 10 秒一次）。冷卻 1 秒。',
+    'description: 放出 4 格的時間新星造成物理法術傷害；打中蓄勢待暈、待電擊、待凍結的敵人時，牠的時間殘影替牠承受禁錮，對殘影造成的傷害有 60～98% 也打在本體上（同一隻 10 秒一次）。冷卻 1 秒。',
     'icon: CLOCK', 'type: spell', 'tier: 1', 'tags: [spell, area, physical]', ASC,
     'mechanic: nova', 'nova: { radius: 4 }',
     'damage: %s   # %s' % (dt(dmg('MomentOfVulnerabilityPlayer', 'physical')), SRC % 'Moment of Vulnerability'),
@@ -712,7 +712,7 @@ block('align_fate', [
 # ---------- 獸巫：壞滅災變 ----------
 block('apocalypse', [
     'name: 壞滅災變',
-    'description: 用元素傷害擊中敵人時照牠的強度獲得榮耀，滿 100 點就能用：成為行走的災厄 12 秒，每 0.75 秒在 7 公尺內觸發一種天災：隕石（2 秒後落下）、冰雹、雷擊。',
+    'description: 用元素傷害擊中敵人時照牠的強度獲得榮耀，滿 100 點就能用：成為行走的災厄 12 秒，每 0.75 秒在 7 格內觸發一種天災：隕石（2 秒後落下）、冰雹、雷擊。',
     'icon: NETHER_STAR', 'type: spell', 'tier: 1', 'tags: [area, duration, fire, cold, lightning]', ASC,
     'mechanic: warcry',
     'warcry:', '  cry: false', '  radius: 7', '  duration: 12', '  taunt: false', '  allies: false', '  glory: 100', '  buff:', '    ' + MARK,

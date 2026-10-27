@@ -44,7 +44,7 @@ import java.util.UUID;
  * 放技能（{@link #cost}、{@link #paid}、{@link #beforeCast}）、受到擊中（{@link #defenderSheet}、{@link #enemyVsPlayer}、{@link #absorb}、
  * {@link #reroute}）、打出去（{@link #attackerConditional}）、異常（{@link #ailment}）、戰星（{@link #chargeSpent}）、圖騰、增益…
  * 狀態（玉石、黑暗、易爆、煉獄之炎、順風、適應…）只在記憶體，下線就清掉。
- * 一格當一公尺。
+ * 一格當一格。
  */
 public final class AscendancyEffects implements Listener {
 
@@ -59,6 +59,14 @@ public final class AscendancyEffects implements Listener {
 
     /** 每幾 tick 跑一次（玉石、黑暗、易爆、煉獄之炎…）。 */
     static final long PERIOD = 10;
+
+    /**
+     * 2026-10-27 修正：每 n tick 一次。這裡每 PERIOD（10）tick 才跑一次，起點是插件啟用那一刻的 tick（不一定是 10 的倍數），
+     * 以前寫 now % 20 == 0 可能永遠不成立（召喚獄炎獵犬從來沒點燃、血肉低語、每秒的效果都可能整個沒作用）。
+     */
+    static boolean every(final long now, final long n) {
+        return Math.floorMod(now, n) < PERIOD;
+    }
 
     // ---- 原作的數值（keywords：Jade、Tailwind、Volatility、Adaptation、Archon、Infernal Flame…）----
     static final int JADE_MAX = 10;
@@ -256,7 +264,7 @@ public final class AscendancyEffects implements Listener {
             flame = mana; // 火祭協議：消耗改成獲得煉獄之炎
             mana = 0;
         }
-        // 巨靈的指令：要先召喚那位巨靈；2026-10-27 照 PoE2 巨靈是有實體的召喚物，要在你身邊 20 公尺內（這次之前只看有沒有開著）
+        // 巨靈的指令：要先召喚那位巨靈；2026-10-27 照 PoE2 巨靈是有實體的召喚物，要在你身邊 20 格內（這次之前只看有沒有開著）
         final String djinn = DJINN.get(definition.id());
         if (djinn != null && plugin(effects).skills() != null) {
             final SkillDefinition summon = plugin(effects).skills().config().skill(djinn);
@@ -1061,7 +1069,7 @@ public final class AscendancyEffects implements Listener {
         return effects != null && has(effects.sheet(player), AscKeys.UNWILLING_OFFERING);
     }
 
-    /** 不情願的獻祭：radius 公尺內在撲殺範圍的敵人（沒有、或沒有這個天賦回傳 null）。 */
+    /** 不情願的獻祭：radius 格內在撲殺範圍的敵人（沒有、或沒有這個天賦回傳 null）。 */
     public static LivingEntity offeringVictim(final Player player, final double radius) {
         final AscendancyEffects effects = instance;
         return effects == null || !has(effects.sheet(player), AscKeys.UNWILLING_OFFERING) ? null : effects.paths.offeringVictim(player, radius);
@@ -1558,7 +1566,7 @@ public final class AscendancyEffects implements Listener {
             if (st.sandsStart < 0) {
                 st.sandsStart = now;
             }
-            if (now % 20 == 0) {
+            if (every(now, 20)) {
                 dirty = true;
             }
         } else if (st.sandsStart >= 0) {
@@ -1613,7 +1621,7 @@ public final class AscendancyEffects implements Listener {
                 dirty = true;
             }
         }
-        if (has(sheet, AscKeys.ARCANE_PER_MANA) && now % 20 == 0) {
+        if (has(sheet, AscKeys.ARCANE_PER_MANA) && every(now, 20)) {
             dirty = true;
         }
         if (dirty) {
@@ -1631,7 +1639,7 @@ public final class AscendancyEffects implements Listener {
     static final String[] EMBANKMENT_SKILLS = {"siege_ballista", "artillery_ballista", "mortar_cannon", "shockwave_totem", "ancestral_totem",
             "dark_idol", "spell_totem"};
 
-    /** 站在哪幾種圖騰的堤防光環（4.5 公尺）裡（位元）。 */
+    /** 站在哪幾種圖騰的堤防光環（4.5 格）裡（位元）。 */
     private int embankmentMask(final Player player) {
         int mask = 0;
         for (final tw.exilecore.skill.SkillService.TotemView totem : plugin.skills().totems(player.getUniqueId())) {

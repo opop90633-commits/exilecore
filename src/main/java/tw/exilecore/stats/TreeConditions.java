@@ -105,7 +105,7 @@ public final class TreeConditions {
     public static final String WIELD_AXE = "wieldaxe";
     /** 主手拿長杖。 */
     public static final String WIELD_QUARTERSTAFF = "wieldquarterstaff";
-    /** 3 公尺內沒有敵人。 */
+    /** 3 格內沒有敵人。 */
     public static final String NO_ENEMY_NEAR = "noenemynear";
     /** 最近 10 秒內喝過生命藥劑。 */
     public static final String LIFE_FLASK_10S = "lifeflask10s";
@@ -282,13 +282,13 @@ public final class TreeConditions {
     public static final String VS_ENTERED_PRESENCE = "vs_enteredpresence";
     public static final String VS_EXITED_PRESENCE = "vs_exitedpresence";
 
-    /** 被包圍：幾格內（PoE2 是 1.5 公尺內；方塊世界的怪有身體寬度，放寬到 2.5 格）。 */
+    /** 被包圍：幾格內（PoE2 是 1.5 格內；方塊世界的怪有身體寬度，放寬到 2.5 格）。 */
     public static final double SURROUNDED_RADIUS = 2.5;
     /** 被包圍：至少幾隻敵人（PoE2：5 隻）。 */
     public static final int SURROUNDED_COUNT = 5;
-    /** 「遠處」：超過 6 公尺（＝6 格）。 */
+    /** 「遠處」：超過 6 格（＝6 格）。 */
     public static final double FAR_RANGE = 6;
-    /** 「2 公尺內」。 */
+    /** 「2 格內」。 */
     public static final double NEAR_RANGE = 2;
     /** 低血、低魔力的比例。 */
     public static final double LOW_FRACTION = 0.35;

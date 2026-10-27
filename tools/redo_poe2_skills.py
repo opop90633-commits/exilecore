@@ -47,7 +47,7 @@ BLOCKS['bone_spikes'] = f'''    name: 骨棘陣
     type: spell
     tier: 5
     tags: [spell, area, physical]
-    mechanic: cone   # 2026-10-26 照 PoE2 Unearth：面前 6 公尺的錐形（以前是準心的一圈）；把屍體變成骨構體的召喚沒做
+    mechanic: cone   # 2026-10-26 照 PoE2 Unearth：面前 6 格的錐形（以前是準心的一圈）；把屍體變成骨構體的召喚沒做
     cone: {{ length: 6, angle: 60 }}
     damage: {D(col(r, 1, rng))}   # {NOTE % 'Unearth'}
     damage_types: {{ physical: 1.0 }}
@@ -68,7 +68,7 @@ BLOCKS['chain_arrow'] = f'''    name: 跳電矢
     tags: [attack, projectile, lightning, chain, area]
     weapons: [bow]
     mechanic: projectile
-    projectile: {{ arrow: true, speed: 1.63, range: 36 }}   # 2026-10-26 照 PoE2 Shockchain Arrow：32.6 公尺／秒
+    projectile: {{ arrow: true, speed: 1.63, range: 36 }}   # 2026-10-26 照 PoE2 Shockchain Arrow：32.6 格／秒
     convert: {{ lightning: 0.8 }}
     attack_speed: 0.7
     effectiveness: {L(col(r, 1, pct))}   # {NOTE % 'Shockchain Arrow 箭本身'}
@@ -84,7 +84,7 @@ BLOCKS['proc_shockchain_wave'] = f'''    name: 跳電震波
     type: attack
     tags: [attack, projectile, area, lightning]
     mechanic: nova
-    nova: {{ radius: 2.5 }}   # 2026-10-26 照 PoE2 Shockchain Arrow 的電擊波：2.5 公尺
+    nova: {{ radius: 2.5 }}   # 2026-10-26 照 PoE2 Shockchain Arrow 的電擊波：2.5 格
     convert: {{ lightning: 1.0 }}
     attack_speed: 1.0
     effectiveness: {L(col(r, 3, pct))}   # {NOTE % 'Shockchain Arrow 電擊波'}
@@ -100,7 +100,7 @@ BLOCKS['frost_wave'] = f'''    name: 霜浪
     tags: [attack, projectile, cold]
     weapons: [quarterstaff]
     mechanic: projectile
-    projectile: {{ speed: 1.1, range: 6, size: 1.3, pierce: 20 }}   # 2026-10-26 照 PoE2 Wave of Frost：冰浪 6 公尺（往後翻沒做）
+    projectile: {{ speed: 1.1, range: 6, size: 1.3, pierce: 20 }}   # 2026-10-26 照 PoE2 Wave of Frost：冰浪 6 格（往後翻沒做）
     convert: {{ cold: 0.8 }}
     attack_speed: 0.55
     effectiveness: {L(col(r, 1, pct))}   # {NOTE % 'Wave of Frost'}
@@ -119,7 +119,7 @@ BLOCKS['storm_blink'] = f'''    name: 雷遁
     tier: 5
     tags: [spell, lightning, movement, area, duration]
     mechanic: dash
-    dash: {{ range: 20, end_radius: 3.0 }}   # 2026-10-26 照 PoE2 Lightning Warp：爆炸 3 公尺、撲殺；沒有冷卻
+    dash: {{ range: 20, end_radius: 3.0 }}   # 2026-10-26 照 PoE2 Lightning Warp：爆炸 3 格、撲殺；沒有冷卻
     damage: {D(col(r, 1, rng))}   # {NOTE % 'Lightning Warp'}
     damage_types: {{ lightning: 1.0 }}
     cast_time: 0.5
@@ -136,7 +136,7 @@ BLOCKS['proc_warp_shocked_ground'] = '''    name: 感電地面
     type: spell
     tags: [spell, area, lightning, duration]
     mechanic: zone
-    zone: { range: 0, radius: 3.0, duration: 8, interval: 0.5, damage: 1, max: 3 }   # 2026-10-26 照 PoE2 Lightning Warp：3 公尺、8 秒（原作不造成傷害，這裡每下 1% 只為了感電）
+    zone: { range: 0, radius: 3.0, duration: 8, interval: 0.5, damage: 1, max: 3 }   # 2026-10-26 照 PoE2 Lightning Warp：3 格、8 秒（原作不造成傷害，這裡每下 1% 只為了感電）
     damage: [1, 1]
     damage_types: { lightning: 1.0 }
     cast_time: 0.5
@@ -187,7 +187,7 @@ BLOCKS['proc_shattering_burst'] = f'''    name: 碎冰爆
     type: attack
     tags: [attack, melee, area, cold]
     mechanic: nova
-    nova: {{ radius: 1.6 }}   # 2026-10-26 照 PoE2 Shattering Palm 的冰晶爆炸：1.6 公尺
+    nova: {{ radius: 1.6 }}   # 2026-10-26 照 PoE2 Shattering Palm 的冰晶爆炸：1.6 格
     convert: {{ cold: 1.0 }}
     attack_speed: 1.0
     effectiveness: {L(col(r, 3, pct))}   # {NOTE % 'Shattering Palm 爆炸'}
@@ -224,7 +224,7 @@ BLOCKS['frost_volley'] = f'''    name: 凜霜扇矢
     tags: [attack, projectile, cold, area]
     weapons: [bow]
     mechanic: projectile
-    projectile: {{ speed: 0.375, range: 24, size: 0.4, explode: 1.2 }}   # 2026-10-26 照 PoE2 Freezing Salvo：7.5 公尺／秒、擊中 1.2 公尺（冰碎片引爆沒做）
+    projectile: {{ speed: 0.375, range: 24, size: 0.4, explode: 1.2 }}   # 2026-10-26 照 PoE2 Freezing Salvo：7.5 格／秒、擊中 1.2 格（冰碎片引爆沒做）
     convert: {{ cold: 0.8 }}
     attack_speed: 1.0
     effectiveness: {L(col(r, 1, pct))}   # {NOTE % 'Freezing Salvo'}

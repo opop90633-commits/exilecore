@@ -2177,7 +2177,7 @@ perfect_essence_alacrity:
   drop_level: 72
   description: "稀有物品：隨機移除一條詞綴，再加「法杖、法器：技能魔力消耗減少 18～20%（長杖 28～32%）」"
   flavor: "念咒的人還沒開口，咒就先到了。"
-# 統御星魄（2026-10-26 新增，照 PoE2；原作的詞綴是「存在範圍內的友軍傷害」，我們沒有存在範圍的友軍傷害，換成召喚物傷害）
+# 統御星魄（2026-10-26 新增，照 PoE2；原作的詞綴是「存在範圍內的友軍傷害」。2026-10-27 起權杖的詞綴照原作給存在範圍內的友軍（召喚物、圖騰），這次之前換成召喚物傷害）
 lesser_essence_command:
   name: 次級統御星魄
   material: GLOW_INK_SAC
@@ -2189,7 +2189,7 @@ lesser_essence_command:
   applies_to: { rarity: [MAGIC] }
   drop_weight: 0
   drop_level: 20
-  description: "魔法 → 稀有，一定加「增加 % 召喚物傷害」（需求等級 8 以下最好的那一階；權杖）"
+  description: "魔法 → 稀有，一定加「增加 % 你存在範圍內的友軍傷害」（需求等級 8 以下最好的那一階；權杖）"
   flavor: "舉起來的時候，身後的影子都站直了。"
 essence_command:
   name: 統御星魄
@@ -2202,7 +2202,7 @@ essence_command:
   applies_to: { rarity: [MAGIC] }
   drop_weight: 0
   drop_level: 40
-  description: "魔法 → 稀有，一定加「增加 % 召喚物傷害」（需求等級 33 以下最好的那一階；權杖）"
+  description: "魔法 → 稀有，一定加「增加 % 你存在範圍內的友軍傷害」（需求等級 33 以下最好的那一階；權杖）"
   flavor: "舉起來的時候，身後的影子都站直了。"
 greater_essence_command:
   name: 高階統御星魄
@@ -2215,7 +2215,7 @@ greater_essence_command:
   applies_to: { rarity: [MAGIC] }
   drop_weight: 0
   drop_level: 60
-  description: "魔法 → 稀有，一定加「增加 % 召喚物傷害」（需求等級 60 以下最好的那一階；權杖）"
+  description: "魔法 → 稀有，一定加「增加 % 你存在範圍內的友軍傷害」（需求等級 60 以下最好的那一階；權杖）"
   flavor: "舉起來的時候，身後的影子都站直了。"
 perfect_essence_command:
   name: 完美統御星魄

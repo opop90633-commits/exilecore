@@ -18,7 +18,7 @@ public final class AnointKeys {
     public static final String COMMAND_REVIVE_CHANCE = "command.revive_minion_chance";
     /** FLAT（秒）：召喚物復活時給牠元素統治者幾秒（狂颮之主）。TreeLeftovers.minionRevived。 */
     public static final String MINION_REVIVE_ARCHON = "minion.revive_elemental_archon";
-    /** FLAT（公尺）：舉盾時正前方幾公尺內的敵人致盲（光明壁壘）。TreeLeftovers 每 10 tick。 */
+    /** FLAT（格）：舉盾時正前方幾格內的敵人致盲（光明壁壘）。TreeLeftovers 每 10 tick。 */
     public static final String SHIELD_BLIND = "shield.blind_range";
     /** FLAT（秒）：舉盾擋下擊中時，讓攻擊者被招架幾秒（光明壁壘）。TreeMechanics.onBlock。 */
     public static final String RAISE_SHIELD_PARRIED = "shield.raise_parried";

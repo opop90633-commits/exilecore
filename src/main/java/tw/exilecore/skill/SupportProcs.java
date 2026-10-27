@@ -193,7 +193,7 @@ public final class SupportProcs implements Listener {
         if (event.skill().tags().contains(tw.exilecore.stats.Tags.WEREWOLF) && event.skill().tags().contains(tw.exilecore.stats.Tags.ATTACK)
                 && service.buffs().has(player.getUniqueId(), LUNAR_BLESSING)) {
             if (castAt(player, LUNAR_MOONBEAM, LUNAR_BLESSING, target.getLocation())) {
-                moonbeamChain(player, target); // 2026-10-27 照 PoE2：另外落在 6 公尺內 4～8 個敵人身上
+                moonbeamChain(player, target); // 2026-10-27 照 PoE2：另外落在 6 格內 4～8 個敵人身上
             }
         }
         if (event.skill().id().endsWith(PERFECT_SUFFIX)) {
@@ -311,7 +311,7 @@ public final class SupportProcs implements Listener {
         return true;
     }
 
-    /** 月光另外落下的範圍（格；PoE2 Moonbeam secondary radius 6 公尺）與每道之間隔幾 tick（200 毫秒）。 */
+    /** 月光另外落下的範圍（格；PoE2 Moonbeam secondary radius 6 格）與每道之間隔幾 tick（200 毫秒）。 */
     static final double MOONBEAM_CHAIN_RANGE = 6;
     static final long MOONBEAM_CHAIN_DELAY = 4;
 

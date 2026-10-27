@@ -14,7 +14,8 @@ minion_added_cold:
   group: allies_in_presence_added_cold_damage
   spawn_tags: [sceptre]
   names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的, 牧者的, 馴者的, 引導的]
-  text: "召喚物的攻擊附加 {min} 到 {max} 冰冷傷害"
+  # 2026-10-27 照 PoE2「Allies in your Presence」：圖騰也是友軍，改成給存在範圍內的友軍（召喚物、圖騰）；這次之前寫「召喚物…」、只給召喚物（不看距離）
+  text: "你存在範圍內的友軍的攻擊附加 {min} 到 {max} 冰冷傷害"
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
     - { tier: 1, ilvl: 75, weight: 200, min: [21, 24], max: [32, 37] }
@@ -27,15 +28,16 @@ minion_added_cold:
     - { tier: 8, ilvl: 8, weight: 500, min: [3, 4], max: [5, 8] }
     - { tier: 9, ilvl: 1, weight: 500, min: [1, 2], max: [3, 4] }
   mods:
-    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, cold] }
-    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, cold] }
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, cold, in_presence] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, cold, in_presence] }
 
 minion_added_fire:
   type: prefix
   group: allies_in_presence_added_fire_damage
   spawn_tags: [sceptre]
   names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的, 牧者的, 馴者的, 引導的]
-  text: "召喚物的攻擊附加 {min} 到 {max} 火焰傷害"
+  # 2026-10-27 照 PoE2「Allies in your Presence」：圖騰也是友軍，改成給存在範圍內的友軍（召喚物、圖騰）；這次之前寫「召喚物…」、只給召喚物（不看距離）
+  text: "你存在範圍內的友軍的攻擊附加 {min} 到 {max} 火焰傷害"
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
     - { tier: 1, ilvl: 75, weight: 200, min: [25, 29], max: [39, 45] }
@@ -48,15 +50,16 @@ minion_added_fire:
     - { tier: 8, ilvl: 8, weight: 500, min: [3, 5], max: [6, 9] }
     - { tier: 9, ilvl: 1, weight: 500, min: [1, 2], max: [3, 4] }
   mods:
-    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, fire] }
-    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, fire] }
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, fire, in_presence] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, fire, in_presence] }
 
 minion_added_lightning:
   type: prefix
   group: allies_in_presence_added_lightning_damage
   spawn_tags: [sceptre]
   names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的, 牧者的, 馴者的, 引導的]
-  text: "召喚物的攻擊附加 {min} 到 {max} 閃電傷害"
+  # 2026-10-27 照 PoE2「Allies in your Presence」：圖騰也是友軍，改成給存在範圍內的友軍（召喚物、圖騰）；這次之前寫「召喚物…」、只給召喚物（不看距離）
+  text: "你存在範圍內的友軍的攻擊附加 {min} 到 {max} 閃電傷害"
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
     - { tier: 1, ilvl: 75, weight: 200, min: [1, 4], max: [60, 71] }
@@ -69,15 +72,16 @@ minion_added_lightning:
     - { tier: 8, ilvl: 8, weight: 500, min: [1, 1], max: [10, 15] }
     - { tier: 9, ilvl: 1, weight: 500, min: [1, 1], max: [5, 7] }
   mods:
-    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, lightning] }
-    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, lightning] }
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, lightning, in_presence] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, lightning, in_presence] }
 
 minion_added_phys:
   type: prefix
   group: allies_in_presence_added_physical_damage
   spawn_tags: [sceptre]
   names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的, 牧者的, 馴者的, 引導的]
-  text: "召喚物的攻擊附加 {min} 到 {max} 物理傷害"
+  # 2026-10-27 照 PoE2「Allies in your Presence」：圖騰也是友軍，改成給存在範圍內的友軍（召喚物、圖騰）；這次之前寫「召喚物…」、只給召喚物（不看距離）
+  text: "你存在範圍內的友軍的攻擊附加 {min} 到 {max} 物理傷害"
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
     - { tier: 1, ilvl: 75, weight: 200, min: [12, 19], max: [22, 32] }
@@ -90,15 +94,16 @@ minion_added_phys:
     - { tier: 8, ilvl: 8, weight: 500, min: [2, 3], max: [4, 6] }
     - { tier: 9, ilvl: 1, weight: 500, min: [1, 2], max: [3, 4] }
   mods:
-    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, physical] }
-    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, physical] }
+    - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, physical, in_presence] }
+    - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, physical, in_presence] }
 
 minion_inc:
   type: prefix
   group: allies_in_presence_all_damage
   spawn_tags: [sceptre]
   names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的, 牧者的, 馴者的]
-  text: "增加 {value}% 召喚物傷害"
+  # 2026-10-27 照 PoE2「Allies in your Presence」：圖騰也是友軍，改成給存在範圍內的友軍（召喚物、圖騰）；這次之前寫「召喚物…」、只給召喚物（不看距離）
+  text: "增加 {value}% 你存在範圍內的友軍傷害"
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
     - { tier: 1, ilvl: 82, weight: 50, value: [105, 119] }
@@ -110,7 +115,7 @@ minion_inc:
     - { tier: 7, ilvl: 8, weight: 1000, value: [35, 44] }
     - { tier: 8, ilvl: 1, weight: 1000, value: [25, 34] }
   mods:
-    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion, in_presence] }
 
 spirit_flat:
   type: prefix

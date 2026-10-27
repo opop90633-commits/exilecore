@@ -1170,9 +1170,9 @@ ascendancies:
           - 依你鑲嵌數量最多的輔助寶石顏色，獲得：
           - •紅色：對你的擊中沒有暴擊傷害加成
           - •藍色：技能消耗更少 30%
-          - •綠色：移動中使用技能的移動速度懲罰更少 40%
+          - •綠色：增加 10% 移動速度
         stats:
-          - { stat: asc.gem_studded, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果；綠色之前平衡等效成增加 10% 移動速度，現在照原作：SkillMovePenalty）
+          - { stat: asc.gem_studded, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）；2026-10-27 照站長「放技能減速全部移除」：綠色改回平衡等效成增加 10% 移動速度（原作：移動中使用技能的移動速度懲罰更少 40%）；這次之前照原作減 SkillMovePenalty
       reduced_attribute_2:
         name: 減少能力值需求          # Reduced Attribute Requirements
         requires: gem_studded
@@ -1432,9 +1432,9 @@ ascendancies:
         notable: true
         icon: ENCHANTED_BOOK
         # 2026-10-26 照 PoE2 0.5（poe2db.tw/us/Elemental_Surge；0.3 以前叫 Elemental Infusion／Infuse Weapon，跟元素灌注是兩回事）：
-        #   湧動每種最多 6 層、15 秒；非近戰的投射物攻擊每一發用掉一層，投射物在終點爆開 1.8 公尺（攻擊傷害 50%～181%、物理全轉該元素）。
-        # 2026-10-27 照 PoE2 做成另外一發爆炸（湧動爆炸 asc_surge_*：1.8 公尺、攻擊傷害 50%～181%、物理全轉該元素；SkillResources／ProjectileEngine）；
-        #   這次之前做不到：投射物終點爆開 1.8 公尺、獲得 100% 傷害為額外的該元素傷害（平衡等效）
+        #   湧動每種最多 6 層、15 秒；非近戰的投射物攻擊每一發用掉一層，投射物在終點爆開 1.8 格（攻擊傷害 50%～181%、物理全轉該元素）。
+        # 2026-10-27 照 PoE2 做成另外一發爆炸（湧動爆炸 asc_surge_*：1.8 格、攻擊傷害 50%～181%、物理全轉該元素；SkillResources／ProjectileEngine）；
+        #   這次之前做不到：投射物終點爆開 1.8 格、獲得 100% 傷害為額外的該元素傷害（平衡等效）
         lines:
           - 消耗戰星時，觸發元素湧動以獲得 3 層閃電湧動
           - 非近戰的投射物攻擊每一發用掉一層湧動：投射物飛行結束時引發一次湧動爆炸，造成那種元素的攻擊傷害（湧動每種最多 6 層，撐 15 秒）
@@ -1701,11 +1701,11 @@ ascendancies:
         notable: true
         icon: LIGHTNING_ROD
         lines:
-          - 每移動 10 公尺獲得 1 個靈現之靈，最多 3 個
+          - 每移動 10 格獲得 1 個靈現之靈，最多 3 個
           - 攻擊時用掉全部的靈現之靈觸發靈現奔竄
           - 提供技能：靈現奔竄
         stats:
-          - { stat: asc.vivid_wisps, type: FLAT, value: 3 }   # 2026-10-27 照 PoE2（vivid_stag_maximum_stag_wisps_allowed 3、每 10 公尺 1 個）
+          - { stat: asc.vivid_wisps, type: FLAT, value: 3 }   # 2026-10-27 照 PoE2（vivid_stag_maximum_stag_wisps_allowed 3、每 10 格 1 個）
           - { stat: grant_skill.vivid_stampede, type: FLAT, value: 1 }
       move_speed_2:
         name: 移動速度          # Movement Speed
@@ -1911,7 +1911,7 @@ ascendancies:
         option_of: projectile_proximity
         icon: ARROW
         lines:
-          - 投射物對移動前 3.5 公尺內的目標擊中傷害更多 20%，隨飛行距離遞減，7 公尺後為 0%
+          - 投射物對移動前 3.5 格內的目標擊中傷害更多 20%，隨飛行距離遞減，7 格後為 0%
         stats:
           - { stat: asc.point_blank, type: FLAT, value: 20 }
       far_shot:
@@ -1919,7 +1919,7 @@ ascendancies:
         option_of: projectile_proximity
         icon: ARROW
         lines:
-          - 投射物對移動前 3.5 公尺內的目標擊中傷害更多 0%，隨飛行距離遞增，7 公尺後為更多 20%
+          - 投射物對移動前 3.5 格內的目標擊中傷害更多 0%，隨飛行距離遞增，7 格後為更多 20%
         stats:
           - { stat: asc.far_shot, type: FLAT, value: 20 }
       projectile_speed_2:
@@ -2046,10 +2046,10 @@ ascendancies:
         icon: LEATHER_BOOTS
         lines:
           - 衝刺時無法被重度暈眩
-          - 更少 30% 移動中使用技能的移動速度懲罰
+          - 增加 8% 移動速度
         stats:
           - { stat: asc.sprint_stun, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-          - { stat: asc.move_penalty, type: FLAT, value: 30 }   # 2026-10-26 照 PoE2：放技能會變慢（SkillMovePenalty），懲罰更少 30%；這次之前平衡等效成增加 8% 移動速度
+          - { stat: asc.move_penalty, type: FLAT, value: 30 }   # 2026-10-27 照站長「放技能減速全部移除」：原作「更少 30% 移動中使用技能的移動速度懲罰」改回平衡等效成增加 8% 移動速度（AscBuild）；這次之前照原作減 SkillMovePenalty
       poison_effect:
         name: 中毒效果          # Poison Effect
         icon: SPIDER_EYE

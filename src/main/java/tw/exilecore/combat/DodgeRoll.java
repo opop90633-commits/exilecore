@@ -33,7 +33,7 @@ public final class DodgeRoll implements Listener {
     public static final long INVULNERABLE_TICKS = 6;
     /** 水平速度（方塊／tick；地面摩擦下大約滑 3～4 格）。 */
     private static final double SPEED = 1.15;
-    /** 2026-10-26：一次翻滾大約幾格（「翻滾距離 +x 公尺」換算成倍率用）。 */
+    /** 2026-10-26：一次翻滾大約幾格（「翻滾距離 +x 格」換算成倍率用）。 */
     public static final double BASE_METRES = 3.5;
 
     private final ExileCore plugin;
@@ -118,7 +118,7 @@ public final class DodgeRoll implements Listener {
             return;
         }
         // 2026-10：翻滾距離（PoE2 鞋子的褻瀆詞綴）：衝刺的速度照比例放大，最多兩倍
-        // 2026-10-26（鷹師之弓）：「翻滾距離 +x 公尺」照一次翻滾約 BASE_METRES 格換算；（相位之履）翻滾時穿過敵人
+        // 2026-10-26（鷹師之弓）：「翻滾距離 +x 格」照一次翻滾約 BASE_METRES 格換算；（相位之履）翻滾時穿過敵人
         final tw.exilecore.stats.StatSheet rollSheet = plugin.players().sheet(player);
         final double distance = Math.max(0.5, Math.min(2, 1 + rollSheet.increased(tw.exilecore.stats.StatKeys.DODGE_DISTANCE, java.util.Set.of())
                 + rollSheet.flat(tw.exilecore.item.unique.UniqueStats.DODGE_METRES, java.util.Set.of()) / BASE_METRES));
@@ -136,7 +136,7 @@ public final class DodgeRoll implements Listener {
         player.getWorld().spawnParticle(Particle.CLOUD, at, 8, 0.3, 0.1, 0.3, 0.02);
         player.getWorld().playSound(at, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5f, 1.6f);
         if (plugin.skills() != null && plugin.skills().triggers() != null) {
-            plugin.skills().triggers().dodge(player, BASE_METRES * distance); // 2026-10：翻滾觸發（2026-10-26：帶翻滾距離，翻滾引星照公尺給能量）
+            plugin.skills().triggers().dodge(player, BASE_METRES * distance); // 2026-10：翻滾觸發（2026-10-26：帶翻滾距離，翻滾引星照格給能量）
             plugin.skills().supportMechanics().lineage().dodged(player); // 2026-10-27 照 PoE2 連膛：翻滾時裝子彈
         }
     }

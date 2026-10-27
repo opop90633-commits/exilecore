@@ -2037,7 +2037,7 @@ unveiled_d_belt_charm_free:
   mods:
     - { stat: charm.free_chance, type: FLAT, value: "{value}" }
 
-# PoE2 是「翻滾的基礎距離 +1–2 公尺」；這裡翻滾是一段衝刺，換成距離增加 25–50%
+# PoE2 是「翻滾的基礎距離 +1–2 格」；這裡翻滾是一段衝刺，換成距離增加 25–50%
 unveiled_d_boots_dodge:
   type: suffix
   group: unveiled_d_boots_dodge

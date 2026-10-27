@@ -776,7 +776,7 @@ final class ProjectileEngine implements Listener {
             chainShocked = !shot.chainedShocked && tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.SupportKeys.CHAIN_SHOCKED)
                     && plugin.ailments().has(target, tw.exilecore.ailment.AilmentType.SHOCK);
         }
-        // 2026-10-27 照 PoE2 天賦樹：「投射物 x% 機率穿透你 3 公尺內的敵人」（不算穿透次數）
+        // 2026-10-27 照 PoE2 天賦樹：「投射物 x% 機率穿透你 3 格內的敵人」（不算穿透次數）
         if (!pierceFree) {
             pierceFree = TreeLeftovers.pierceClose(shot.profile.effective(ownerSheet), shot.profile.tags(), owner, target, random);
         }

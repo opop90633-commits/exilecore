@@ -105,13 +105,13 @@ supports:
 
   eonyrs_thunder:          # Eonyr's Thunder
     name: 霆爆
-    description: 被輔助的技能的閃電傷害也累積電擊，但不能感電；打死電擊中的敵人時屍體炸開，造成牠最大生命 5%～19% 的閃電傷害（1.5～2.5 公尺，照技能等級）。
+    description: 被輔助的技能的閃電傷害也累積電擊，但不能感電；打死電擊中的敵人時屍體炸開，造成牠最大生命 5%～19% 的閃電傷害（1.5～2.5 格，照技能等級）。
     icon: GLOWSTONE_DUST
     tier: 3
     source: lineage
     requires: [attack, spell]
     excludes: [minion]
-    # 2026-10-27 照 PoE2 0.5 Eonyr's Thunder（poe2db：Voltaic Fulmination 5%→19% 屍體最大生命、1.5→2.5 公尺）；這次新增
+    # 2026-10-27 照 PoE2 0.5 Eonyr's Thunder（poe2db：Voltaic Fulmination 5%→19% 屍體最大生命、1.5→2.5 格）；這次新增
     modifiers:
       - { stat: lineage.h.lightning_electrocutes, type: FLAT, value: 1 }
       - { stat: lineage.h.voltaic, type: FLAT, value: 5 }
@@ -130,12 +130,12 @@ supports:
 
   doedres_undoing:         # Doedre's Undoing
     name: 蟾咒
-    description: 被輔助的詛咒改成留下一塊詛咒地面（同時最多 2 塊），站在裡面的敵人被詛咒；每塊地面每 0.25 秒生出一隻巫蟾（最多 4 隻），撲向附近的敵人炸開（混沌傷害，1.6 公尺，照技能等級）。
+    description: 被輔助的詛咒改成留下一塊詛咒地面（同時最多 2 塊），站在裡面的敵人被詛咒；每塊地面每 0.25 秒生出一隻巫蟾（最多 4 隻），撲向附近的敵人炸開（混沌傷害，1.6 格，照技能等級）。
     icon: SLIME_BALL
     tier: 3
     source: lineage
     requires: [curse]
-    # 2026-10-27 照 PoE2 0.5 Doedre's Undoing（poe2db：Dark Consequences 1 級 5–10、20 級 186–345 混沌、1.6 公尺）；這次新增
+    # 2026-10-27 照 PoE2 0.5 Doedre's Undoing（poe2db：Dark Consequences 1 級 5–10、20 級 186–345 混沌、1.6 格）；這次新增
     modifiers:
       - { stat: lineage.u.toad_ground, type: FLAT, value: 4 }
 
@@ -181,7 +181,7 @@ supports:
 
   cirels_cultivation:      # Cirel's Cultivation
     name: 林樁
-    description: 被輔助的圖騰只能有 1 根；它 4 公尺內每有一根你的其他圖騰（最多 5 根），它更多 10% 傷害、增加 5% 範圍、每秒回復 1% 生命。
+    description: 被輔助的圖騰只能有 1 根；它 4 格內每有一根你的其他圖騰（最多 5 根），它更多 10% 傷害、增加 5% 範圍、每秒回復 1% 生命。
     icon: STICK
     tier: 3
     source: lineage
@@ -342,7 +342,7 @@ supports:
 
   tawhoas_tending:         # Tawhoa's Tending
     name: 樁爆
-    description: 被輔助的圖騰最大生命更多 25%；圖騰被打倒時炸開，對 3 公尺內的敵人造成它最大生命 20% 的物理傷害。
+    description: 被輔助的圖騰最大生命更多 25%；圖騰被打倒時炸開，對 3 格內的敵人造成它最大生命 20% 的物理傷害。
     icon: SUGAR
     tier: 3
     source: lineage_rare
@@ -454,7 +454,7 @@ supports:
 
   xibaquas_rending:        # Xibaqua's Rending
     name: 燼躍
-    description: 被輔助的跳躍技能落地時，引爆落點 3.5 公尺內的屍體：每具炸開造成牠最大生命 6% 的火焰傷害（1.5 公尺）。
+    description: 被輔助的跳躍技能落地時，引爆落點 3.5 格內的屍體：每具炸開造成牠最大生命 6% 的火焰傷害（1.5 格）。
     icon: MAGMA_CREAM
     tier: 3
     source: lineage_rare
@@ -477,19 +477,19 @@ supports:
 
   hayoxis_fulmination:     # Hayoxi's Fulmination
     name: 咒光
-    description: 被輔助的詛咒多了 2 秒冷卻，改成留下一塊詛咒地面（同時最多 2 塊），站在裡面的敵人被詛咒；地面撐 7 秒後落下湮滅光柱，2 秒內打 6 下（1.7 公尺，照技能等級的物理傷害，換成詛咒的元素）。
+    description: 被輔助的詛咒多了 2 秒冷卻，改成留下一塊詛咒地面（同時最多 2 塊），站在裡面的敵人被詛咒；地面撐 7 秒後落下湮滅光柱，2 秒內打 6 下（1.7 格，照技能等級的物理傷害，換成詛咒的元素）。
     icon: QUARTZ
     tier: 3
     source: lineage_rare
     requires: [curse]
-    # 2026-10-27 照 PoE2 0.5 Hayoxi's Fulmination（poe2db：Annihilation 1 級 25–37、20 級 850–1275、1.7 公尺、6 下）；這次新增
+    # 2026-10-27 照 PoE2 0.5 Hayoxi's Fulmination（poe2db：Annihilation 1 級 25–37、20 級 850–1275、1.7 格、6 下）；這次新增
     modifiers:
       - { stat: lineage.u.annihilation_ground, type: FLAT, value: 7 }
       - { stat: skill.added_cooldown, type: FLAT, value: 2 }
 
   her_declaration:         # Her Declaration
     name: 威宣
-    description: 被輔助的常駐增益開著時，走進你身邊（4 公尺）的敵人被恫嚇 4 秒（受到的傷害增加 10%）。
+    description: 被輔助的常駐增益開著時，走進你身邊（4 格）的敵人被恫嚇 4 秒（受到的傷害增加 10%）。
     icon: PAPER
     tier: 3
     source: lineage_rare
@@ -575,13 +575,13 @@ supports:
 
   voranas_siege:           # Vorana's Siege
     name: 孤圍
-    description: 被輔助的範圍技能增加 35% 範圍；擊中孤立的敵人（6 公尺內沒有其他敵人）時更多 20% 傷害。
+    description: 被輔助的範圍技能增加 35% 範圍；擊中孤立的敵人（6 格內沒有其他敵人）時更多 20% 傷害。
     icon: COMPASS
     tier: 3
     source: lineage_rare
     requires: [area]
     excludes: [minion]
-    # 2026-10-27 照 PoE2 0.5 Vorana's Siege（poe2db；Isolated：6 公尺內沒有其他敵人）；這次新增
+    # 2026-10-27 照 PoE2 0.5 Vorana's Siege（poe2db；Isolated：6 格內沒有其他敵人）；這次新增
     modifiers:
       - { stat: skill.area, type: INCREASED, value: 35 }
       - { stat: lineage.h.vs_isolated, type: FLAT, value: 20 }
@@ -611,7 +611,7 @@ supports:
 
   cathas_brilliance:       # Catha's Brilliance
     name: 焰伴
-    description: 被輔助的夥伴致盲身邊 2 公尺的敵人，並點燃牠們（像造成夥伴最大生命 10% 的基礎火焰傷害）。
+    description: 被輔助的夥伴致盲身邊 2 格的敵人，並點燃牠們（像造成夥伴最大生命 10% 的基礎火焰傷害）。
     icon: BLAZE_POWDER
     tier: 3
     source: lineage_rare
@@ -713,7 +713,7 @@ supports:
 
   arbiters_reach:          # Arbiter's Reach
     name: 守頌
-    description: 被輔助的常駐增益開著時，每 6 秒讓你身邊（4 公尺）的隊友獲得你最大生命 10% 的守護（4 秒）。
+    description: 被輔助的常駐增益開著時，每 6 秒讓你身邊（4 格）的隊友獲得你最大生命 10% 的守護（4 秒）。
     icon: SHULKER_SHELL
     tier: 3
     source: lineage_rare

@@ -268,7 +268,7 @@ final class GrantedAuras implements Listener {
         final tw.exilecore.character.PlayerState state = plugin.players().get(player);
         final SkillBuild build = SkillBuild.of(service.config(), strike, level, state.level(), false, List.of(), state.weaponTags(),
                 plugin.players().sheet(player));
-        // 2026-10-26 照 PoE2 的振翅熵流（Winged Entropy）：你身邊 2 公尺的混沌＋物理持續傷害（每秒的量照寶石等級），
+        // 2026-10-26 照 PoE2 的振翅熵流（Winged Entropy）：你身邊 2 格的混沌＋物理持續傷害（每秒的量照寶石等級），
         // 每一隻烏鴉持續傷害更多 5%、範圍更多 5%；這次之前是每隻烏鴉一份傷害、3 格、沒有烏鴉就不打
         final double more = 1 + MinionAbilities.ENTROPY_PER_RAVEN * flock.size();
         final double radius = MinionAbilities.ENTROPY_RADIUS * Math.sqrt(more) * build.areaScale();
@@ -312,7 +312,7 @@ final class GrantedAuras implements Listener {
 
     /**
      * 2026-10-26 照 PoE2 的指令亂鴉狂舞（Mad Flight）：按鴉群密謀的鍵，用掉 10 隻烏鴉（冷卻 10 秒），
-     * 準心的地方出現兩面鏡子（寬 2.2、長 7 公尺，順著你面對的方向）5 秒，中間的敵人每 0.12 秒被打一下
+     * 準心的地方出現兩面鏡子（寬 2.2、長 7 格，順著你面對的方向）5 秒，中間的敵人每 0.12 秒被打一下
      * （烏鴉的武器傷害 550%，70% 轉混沌）。回傳給玩家看的一句話。
      */
     String madFlight(final Player player, final SkillBuild build, final LivingEntity preferred) {

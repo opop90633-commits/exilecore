@@ -11,11 +11,11 @@ import tw.exilecore.stats.Tags;
  * 2026-10-26 照 PoE2 0.5 換昇華天賦時新做的機制（屬性鍵與計算；戰鬥的「這一下乘多少」從 combat.Signatures 呼叫）。
  * 這次之前沒有這些機制（原本的遠星是自己的數字：5 格外每遠 1 格更多 2%）。
  * <ul>
- *   <li>零點射擊（銳眼）：投射物對 3.5 公尺內的目標擊中傷害更多 20%，到 7 公尺遞減成 0%。</li>
- *   <li>遠射（銳眼）：投射物對 3.5 公尺內的目標更多 0%，到 7 公尺遞增成 20%。</li>
+ *   <li>零點射擊（銳眼）：投射物對 3.5 格內的目標擊中傷害更多 20%，到 7 格遞減成 0%。</li>
+ *   <li>遠射（銳眼）：投射物對 3.5 格內的目標更多 0%，到 7 格遞增成 20%。</li>
  *   <li>德魯伊之冠（薩滿）：每 2 點怒氣，法術傷害更多 1%。</li>
  * </ul>
- * 一格當一公尺。
+ * 一格當一格。
  */
 public final class AscendancyMechanics {
 
@@ -26,25 +26,25 @@ public final class AscendancyMechanics {
     /** FLAT：每 2 點怒氣，法術傷害更多幾 %（1）。 */
     public static final String DRUIDIC_CHAMPION = "asc.druidic_champion";
 
-    /** 距離從幾公尺開始變（之前都是最大或 0）。 */
+    /** 距離從幾格開始變（之前都是最大或 0）。 */
     static final double NEAR = 3.5;
-    /** 到幾公尺變完。 */
+    /** 到幾格變完。 */
     static final double FAR = 7.0;
 
     private AscendancyMechanics() {
     }
 
-    /** 零點射擊：距離 distance 公尺時更多幾倍（maxPercent = 20 → 3.5 公尺內 1.2，7 公尺外 1.0）。 */
+    /** 零點射擊：距離 distance 格時更多幾倍（maxPercent = 20 → 3.5 格內 1.2，7 格外 1.0）。 */
     static double pointBlank(final double maxPercent, final double distance) {
         return 1 + maxPercent / 100.0 * (1 - progress(distance));
     }
 
-    /** 遠射：距離 distance 公尺時更多幾倍（3.5 公尺內 1.0，7 公尺外 1 + maxPercent%）。 */
+    /** 遠射：距離 distance 格時更多幾倍（3.5 格內 1.0，7 格外 1 + maxPercent%）。 */
     static double farShot(final double maxPercent, final double distance) {
         return 1 + maxPercent / 100.0 * progress(distance);
     }
 
-    /** 3.5 公尺內 0、7 公尺外 1，中間照比例。 */
+    /** 3.5 格內 0、7 格外 1，中間照比例。 */
     private static double progress(final double distance) {
         return Math.max(0, Math.min(1, (distance - NEAR) / (FAR - NEAR)));
     }

@@ -425,7 +425,7 @@ public final class AscBuild {
                 sheet.add(Modifier.flat(StatKeys.SPIRIT_MAX, perCharm * empty, "神聖流向"));
             }
         }
-        // 嵌晶：鑲嵌的寶石（紅：對你的擊中沒有暴擊傷害加成；綠：移動中使用技能的移動速度懲罰更少 40%）、奇術注入（每 3 個某色輔助 +1% 最大抗性）
+        // 嵌晶：鑲嵌的寶石（紅：對你的擊中沒有暴擊傷害加成；綠：增加 10% 移動速度）、奇術注入（每 3 個某色輔助 +1% 最大抗性）
         if (state != null && (sheet.flat(AscKeys.GEM_STUDDED, Set.of()) > 0 || sheet.flat(AscKeys.THAUMATURGICAL, Set.of()) > 0)) {
             final int[] count = socketed(state);
             if (sheet.flat(AscKeys.GEM_STUDDED, Set.of()) > 0) {
@@ -434,8 +434,9 @@ public final class AscBuild {
                     sheet.add(Modifier.increased(StatKeys.CRIT_BONUS_TAKEN, -1.0, "鑲嵌的寶石"));
                 }
                 if (most[1]) {
-                    // 2026-10-26 照 PoE2：移動中使用技能的移動速度懲罰更少 40%（SkillMovePenalty）；這次之前放技能不會變慢，平衡等效成增加 10% 移動速度
-                    sheet.add(Modifier.more(tw.exilecore.stats.TreeEffectKeys.ACTION_PENALTY, -0.40, "鑲嵌的寶石"));
+                    // 2026-10-27 照站長「放技能減速全部移除」：原作「移動中使用技能的移動速度懲罰更少 40%」改回平衡等效的增加 10% 移動速度
+                    // （懲罰 70% × 40% = 放技能時快 28 個百分點 × 放技能約佔移動中的 36%）；這次之前（2026-10-26）照原作減 SkillMovePenalty
+                    sheet.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, 0.10, "鑲嵌的寶石"));
                 }
             }
             if (sheet.flat(AscKeys.THAUMATURGICAL, Set.of()) > 0) {
@@ -444,10 +445,11 @@ public final class AscBuild {
                 addMaxResist(sheet, tw.exilecore.stats.DamageType.COLD, count[2] / 3);
             }
         }
-        // 衝刺突擊：移動中使用技能的移動速度懲罰更少 30%（2026-10-26 照 PoE2：SkillMovePenalty；這次之前放技能不會變慢，平衡等效成增加 8% 移動速度）
+        // 衝刺突擊：原作「移動中使用技能的移動速度懲罰更少 30%」。2026-10-27 照站長「放技能減速全部移除」：改回 2026-10-26 之前的平衡等效，
+        // 每 1% 懲罰 ≈ 增加 0.27% 移動速度（30 → 增加 8% 移動速度）；這次之前（2026-10-26）照原作減 SkillMovePenalty
         final double penalty = sheet.flat(AscKeys.MOVE_PENALTY, Set.of());
         if (penalty > 0) {
-            sheet.add(Modifier.more(tw.exilecore.stats.TreeEffectKeys.ACTION_PENALTY, -Math.min(100, penalty) / 100.0, "衝刺突擊"));
+            sheet.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, penalty / 100.0 * 0.27, "衝刺突擊"));
         }
         // 為齒輪拋光：等同 20% 護甲的偏斜值、100% 閃避值當作額外異常門檻
         final double deflect = sheet.flat(AscKeys.DEFLECT_FROM_ARMOUR, Set.of());

@@ -194,6 +194,7 @@ public final class AntiCheatService implements Listener {
         final AttributeInstance attribute = player.getAttribute(Attribute.MOVEMENT_SPEED);
         double speed = attribute == null ? 0.1 : Math.max(0.05, attribute.getValue());
         // 2026-10-26：放技能的移動懲罰（SkillMovePenalty）開始時客戶端晚一點才收到，允許的速度不扣這段，避免網路延遲誤判
+        // （2026-10-27 照站長「放技能減速全部移除」：不再套用，只剩舊版留下、還沒清掉的那一下；沒有就是 1，不影響）
         final org.bukkit.attribute.AttributeModifier castSlow = attribute == null ? null
                 : attribute.getModifier(new org.bukkit.NamespacedKey(plugin, "skill_move_penalty"));
         if (castSlow != null && castSlow.getAmount() > -1) {

@@ -67,7 +67,7 @@ public final class UniqueStats {
     public static final String THORNS_FIRE_MAX = "thorns.fire.max";
     public static final String THORNS_COLD_MIN = "thorns.cold.min";
     public static final String THORNS_COLD_MAX = "thorns.cold.max";
-    /** 你造成的點燃擴散給待在 x/10 公尺（格）內 1 秒的其他敵人（火葬長杖、野焰之戒）。 */
+    /** 你造成的點燃擴散給待在 x/10 格（格）內 1 秒的其他敵人（火葬長杖、野焰之戒）。 */
     public static final String IGNITE_SPREAD = "ignite.spread";
     /** 擊退的方向反過來（堞衛脛甲）。 */
     public static final String KNOCKBACK_REVERSED = "flag.knockback_reversed";
@@ -107,7 +107,7 @@ public final class UniqueStats {
     public static final String CURSE_SELF_DURATION = "curse.self_duration";
     /** 暈眩回復速度增加 x%（INCREASED：你被暈眩的時間 ÷（1 + x）；冰行者之靴）。 */
     public static final String STUN_RECOVERY = "stun.recovery";
-    /** 翻滾距離 +x 公尺（格；可以寫 @dodge／@nododge；鷹師之弓）。 */
+    /** 翻滾距離 +x 格（格；可以寫 @dodge／@nododge；鷹師之弓）。 */
     public static final String DODGE_METRES = "dodge.metres";
     /** 翻滾時穿過敵人（相位之履）。 */
     public static final String DODGE_PHASE = "flag.dodge_phase";
@@ -121,7 +121,7 @@ public final class UniqueStats {
     public static final String MINION_RESIST_MIRROR = "flag.minion_resist_mirror";
     /** 移動時留下燃燒地面，點燃上面的敵人，視同造成你最大生命 x% 的火焰傷害（行灰之履）。 */
     public static final String GROUND_IGNITE_MOVING = "ground.ignite_moving";
-    /** 每移動 x/10 公尺（格）觸發一次潰骸（踏骸之履）。 */
+    /** 每移動 x/10 格（格）觸發一次潰骸（踏骸之履）。 */
     public static final String TRIGGER_DECOMPOSE_METRES = "trigger.decompose_metres";
     /** 武器以外的裝備賦予技能（grant_skill.技能代號，FLAT 1；等級照物品等級，跟法杖賦予的一樣）。 */
     public static final String GRANT_SKILL = "grant_skill.";

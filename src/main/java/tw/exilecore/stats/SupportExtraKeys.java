@@ -98,7 +98,7 @@ public final class SupportExtraKeys {
     /** FLAT：Minion Pact 的更多傷害。 */
     public static final String MINION_PACT_MORE = "minion_pact.more";
     public static final double MINION_PACT_RANGE = 6;
-    /** FLAT：最多用掉 5 公尺內 x 具屍體，每具混沌更多 {@link #PROFANITY_MORE}（Profanity）。 */
+    /** FLAT：最多用掉 5 格內 x 具屍體，每具混沌更多 {@link #PROFANITY_MORE}（Profanity）。 */
     public static final String PROFANITY = "profanity.corpses";
     public static final String PROFANITY_MORE = "profanity.more";
     public static final double PROFANITY_RANGE = 5;
@@ -224,7 +224,7 @@ public final class SupportExtraKeys {
     /** FLAT：重暈敵人時每 10 點力量另外獲得 x 守護（Vanguard）。 */
     public static final String VANGUARD_HEAVY = "guard.on_heavy_stun_per_10_str";
     public static final long VANGUARD_TICKS = 80;
-    /** FLAT 公尺：點燃擴散到這麼近、待滿 1 秒的敵人（Wildfire）。 */
+    /** FLAT 格：點燃擴散到這麼近、待滿 1 秒的敵人（Wildfire）。 */
     public static final String WILDFIRE = "ignite.spread_radius";
     /** FLAT：消耗癱瘓，破掉牠 x% 的護甲（Undermine）。 */
     public static final String UNDERMINE = "armour.break_consume_maim";
@@ -232,7 +232,7 @@ public final class SupportExtraKeys {
     public static final String OUTMANEUVER = "armour.break_vs_parried";
     /** FLAT：消耗被招架的減益給一顆怒星（Frenzied Riposte）。 */
     public static final String RIPOSTE = "charge.frenzy_consume_parried";
-    /** FLAT：擊退時讓敵人成為好目標，每公尺擊退距離下一次投射物攻擊增加 x% 傷害（Punch Through）。 */
+    /** FLAT：擊退時讓敵人成為好目標，每格擊退距離下一次投射物攻擊增加 x% 傷害（Punch Through）。 */
     public static final String PUNCH_THROUGH = "easy_target.per_metre";
     public static final long EASY_TARGET_TICKS = 160;
     /** FLAT：打死稀有怪偷走牠兩個詞綴 x 秒（Behead）。 */
@@ -256,7 +256,7 @@ public final class SupportExtraKeys {
     /** FLAT：戰旗範圍內（插旗的地方、旗子的半徑、持續時間）的敵人每 1000 護甲 x% 元素曝露，最多 80%（Refraction）。 */
     public static final String REFRACTION = "banner.refraction";
     public static final double REFRACTION_CAP = 80;
-    /** FLAT：圖騰四周 4 公尺的血之泉／魔之泉：盟友偷取圖騰物理傷害 x%（Font of Blood／Mana）。 */
+    /** FLAT：圖騰四周 4 格的血之泉／魔之泉：盟友偷取圖騰物理傷害 x%（Font of Blood／Mana）。 */
     public static final String FONT_BLOOD = "totem.font_blood";
     public static final String FONT_MANA = "totem.font_mana";
     public static final double FONT_RADIUS = 4;
@@ -283,7 +283,7 @@ public final class SupportExtraKeys {
     public static final String HEAVY_STUN_THRESHOLD = "stun.heavy_threshold";
     /** 旗標：用突進技能時每走一步震出一陣震波（Stomping Ground）。 */
     public static final String STOMPING = "travel.stomping_ground";
-    /** 一步多長（PoE2 是角色的腳步；我們沒有走路動畫，照跑步的步幅 1.5 公尺算一步）。 */
+    /** 一步多長（PoE2 是角色的腳步；我們沒有走路動畫，照跑步的步幅 1.5 格算一步）。 */
     public static final double STOMPING_STEP = 1.5;
     /** FLAT 秒：落地時留下聖化地面 x 秒（Holy Descent）。 */
     public static final String HOLY_DESCENT = "leap.consecrated_seconds";
@@ -326,7 +326,7 @@ public final class SupportExtraKeys {
     public static final String RIME = "ground.rime_freeze";
     /** FLAT：詛咒改成留下一塊詛咒地面，最多 x 塊（Cursed Ground）。 */
     public static final String CURSED_GROUND = "curse.ground_zones";
-    /** FLAT 公尺：被詛咒的敵人死掉時，詛咒傳給這麼近的敵人（Hex Bloom）。 */
+    /** FLAT 格：被詛咒的敵人死掉時，詛咒傳給這麼近的敵人（Hex Bloom）。 */
     public static final String HEX_BLOOM = "curse.bloom_radius";
     /** FLAT：圍成一圈的牆（Fortress）。 */
     public static final String FLAG_FORTRESS = "wall.fortress";

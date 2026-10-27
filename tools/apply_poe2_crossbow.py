@@ -60,8 +60,8 @@ def edit(sid):
 def _(b):
     b = re.sub(r'^    # PoE2 Stormblast Bolts：[^\n]*\n', '', b, flags=re.M)
     b = set_key(b, 'description', '往準心指的地方射出三支帶電的弩彈，落地時電到一小圈，之後插在地上 10 秒；被你別的技能打到就炸開一圈閃電（同時最多 30 支）。')
-    b = set_key(b, 'impact', '{ range: 24, delay: 0.15, radius: 0.8 }', NOTE % 'Stormblast Bolts：落地 0.8 公尺')
-    b = set_key(b, 'lodge', '{ skill: proc_stormblast_burst, count: 3, scatter: 1.5, duration: 10, max: 30 }', '被引爆時 1.6 公尺')
+    b = set_key(b, 'impact', '{ range: 24, delay: 0.15, radius: 0.8 }', NOTE % 'Stormblast Bolts：落地 0.8 格')
+    b = set_key(b, 'lodge', '{ skill: proc_stormblast_burst, count: 3, scatter: 1.5, duration: 10, max: 30 }', '被引爆時 1.6 格')
     return set_mods(b, [])
 
 @edit('frost_bolt_round')
@@ -88,7 +88,7 @@ def _(b):
 @edit('hail_rounds')
 def _(b):
     b = set_key(b, 'description', '平常慢慢存冰雹彈（最多 32～78 發，隨技能等級）；放的時候把存著的全部射出去，落在準心周圍 4 格內，每一發炸開一小圈，容易凍結。')
-    b = set_key(b, 'impact', '{ range: 22, delay: 0.3, radius: 1.0 }', NOTE % 'Hailstorm Rounds：每一發 1 公尺')
+    b = set_key(b, 'impact', '{ range: 22, delay: 0.3, radius: 1.0 }', NOTE % 'Hailstorm Rounds：每一發 1 格')
     b = set_key(b, 'rain', '{ area: 4, radius: 1.0, seconds: 1.0, interval: 0.4, store: %s }' % L(col('Hailstorm_Rounds', 1)),
                 '存彈速度＝裝填時間 ÷ 2.5（原作 150% 更多裝填速度）')
     b = set_key(b, 'clip', None)
@@ -101,14 +101,14 @@ def _(b):
 def _(b):
     b = set_key(b, 'description', '弩一次噴出一把扇形的帶電碎片；碎片打中敵人時放出一道雷束，連鎖到附近另一個敵人。')
     b = set_key(b, 'tags', '[attack, projectile, lightning, merging, chain]')
-    b = set_key(b, 'projectile', '{ arrow: true, count: 8, spread: 30, speed: 2.5, range: 16 }', NOTE % 'Galvanic Shards：8 片、50 公尺／秒')
+    b = set_key(b, 'projectile', '{ arrow: true, count: 8, spread: 30, speed: 2.5, range: 16 }', NOTE % 'Galvanic Shards：8 片、50 格／秒')
     return set_mods(b, ['{ stat: proc.hit, type: FLAT, value: 100, tags: [proc_galvanic_beam] }'])
 
 @edit('permafrost_bolts')
 def _(b):
     b = re.sub(r'^    # 2026-10 加強清群[^\n]*\n', '', b, flags=re.M)
     b = set_key(b, 'description', '一次扇形射出一排貫穿的冰霜碎片（穿透 2～5 個，隨技能等級），最後打到的敵人後面再碎成一小片錐形；凍結累積、冰緩效果大幅提高。')
-    b = set_key(b, 'projectile', '{ arrow: true, count: 10, spread: 24, speed: 1.4, range: 36 }', NOTE % 'Permafrost Bolts：10 片、28 公尺／秒；穿透逐級')
+    b = set_key(b, 'projectile', '{ arrow: true, count: 10, spread: 24, speed: 1.4, range: 36 }', NOTE % 'Permafrost Bolts：10 片、28 格／秒；穿透逐級')
     return set_mods(b, ['{ stat: proc.hit, type: FLAT, value: 100, tags: [proc_permafrost_shatter] }'],
                     ['{ stat: skill.pierce, type: FLAT, value: %s }' % L(col('Permafrost_Bolts', 2)),
                      '{ stat: freeze.buildup, type: MORE, value: %s }' % L(col('Permafrost_Bolts', 1)),
@@ -117,7 +117,7 @@ def _(b):
 @edit('incendiary_shot')
 def _(b):
     b = set_key(b, 'description', '弩噴出一把扇形的火焰碎片，打中的敵人後面再碎成一小片錐形；點燃很容易、燒得很快。')
-    b = set_key(b, 'projectile', '{ arrow: true, count: 10, spread: 30, speed: 1.71, range: 14 }', NOTE % 'Incendiary Shot：10 片、34.2 公尺／秒')
+    b = set_key(b, 'projectile', '{ arrow: true, count: 10, spread: 30, speed: 1.71, range: 14 }', NOTE % 'Incendiary Shot：10 片、34.2 格／秒')
     return set_mods(b, ['{ stat: ignite.chance, type: FLAT, value: 25 }',
                         '{ stat: ignite.chance, type: MORE, value: 300 }   # 原作 300% 更多易燃',
                         '{ stat: ignite.duration, type: MORE, value: -66.7 }   # 原作點燃傷害快 200%：同樣的總傷害、時間剩三分之一（這裡用更短代替）',
@@ -137,7 +137,7 @@ HIDDEN = {
     type: attack
     tags: [attack, area, lightning]
     mechanic: nova
-    nova: { radius: 1.6 }   # 2026-10-26 照 PoE2 Stormblast Bolts 的爆炸：1.6 公尺、115%→470%
+    nova: { radius: 1.6 }   # 2026-10-26 照 PoE2 Stormblast Bolts 的爆炸：1.6 格、115%→470%
     convert: { lightning: 1.0 }
     attack_speed: 1.0
     effectiveness: [1.15, 4.70]
@@ -148,7 +148,7 @@ HIDDEN = {
     type: attack
     tags: [attack, area, cold]
     mechanic: nova
-    nova: { radius: 2.5 }   # 2026-10-26 照 PoE2 Ice Shards 的冰晶：2.5 公尺、20%→82%
+    nova: { radius: 2.5 }   # 2026-10-26 照 PoE2 Ice Shards 的冰晶：2.5 格、20%→82%
     convert: { cold: 1.0 }
     attack_speed: 1.0
     effectiveness: [0.20, 0.82]
@@ -159,7 +159,7 @@ HIDDEN = {
     type: attack
     tags: [attack, area, lightning]
     mechanic: nova
-    nova: { radius: 1.8 }   # 2026-10-26 照 PoE2 Shockburst Rounds 的脈衝：1.8 公尺、30%→109%
+    nova: { radius: 1.8 }   # 2026-10-26 照 PoE2 Shockburst Rounds 的脈衝：1.8 格、30%→109%
     convert: { lightning: 1.0 }
     attack_speed: 1.0
     effectiveness: [0.30, 1.09]
@@ -181,7 +181,7 @@ HIDDEN = {
     type: attack
     tags: [attack, area, cold]
     mechanic: cone
-    cone: { length: 2.7, angle: 40 }   # 2026-10-26 照 PoE2 Permafrost Bolts：打到的敵人後面碎成 2.7 公尺的錐形（同一發的傷害）
+    cone: { length: 2.7, angle: 40 }   # 2026-10-26 照 PoE2 Permafrost Bolts：打到的敵人後面碎成 2.7 格的錐形（同一發的傷害）
     convert: { cold: 0.8 }
     attack_speed: 1.0
     effectiveness: 1.0
@@ -193,7 +193,7 @@ HIDDEN = {
     type: attack
     tags: [attack, area, fire]
     mechanic: cone
-    cone: { length: 1.9, angle: 60 }   # 2026-10-26 照 PoE2 Incendiary Shot：打到的敵人後面碎成 1.9 公尺的錐形（同一發的傷害）
+    cone: { length: 1.9, angle: 60 }   # 2026-10-26 照 PoE2 Incendiary Shot：打到的敵人後面碎成 1.9 格的錐形（同一發的傷害）
     convert: { fire: 0.8 }
     attack_speed: 1.0
     effectiveness: 1.0
