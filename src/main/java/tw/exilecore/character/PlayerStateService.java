@@ -190,10 +190,16 @@ public final class PlayerStateService {
         find(player.getUniqueId()).ifPresent(PlayerState::markDirty);
     }
 
-    /** 取得最新的屬性表（髒了就重算）。 */
+    /**
+     * 2026-10-27：正在重算屬性表的玩家。重算途中又來要同一個人的屬性表（例如昇華「不潔之力」看隊友的屬性表、
+     * 隊友那邊又回頭看這個人）就直接給目前的那張，不再重算——這次之前會無限遞迴，StackOverflowError。
+     */
+    private final java.util.Set<java.util.UUID> rebuilding = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** 取得最新的屬性表（髒了就重算；這個人正在重算的話給目前的那張）。 */
     public StatSheet sheet(final Player player) {
         final PlayerState state = get(player);
-        if (state.isDirty()) {
+        if (state.isDirty() && !rebuilding.contains(player.getUniqueId())) {
             rebuild(player, state);
         }
         return state.sheet();
@@ -222,9 +228,13 @@ public final class PlayerStateService {
     public void rebuild(final Player player, final PlayerState state) {
         // 2026-10-27 效能：整張屬性表重算計時（/ec perf 的 stats.rebuild；單次太慢會寫【卡頓】警告）
         final long start = System.nanoTime();
+        final boolean outer = rebuilding.add(player.getUniqueId()); // 2026-10-27：防止重算途中遞迴回來
         try {
             build(player, state, state.sheet(), true, null);
         } finally {
+            if (outer) {
+                rebuilding.remove(player.getUniqueId());
+            }
             if (plugin.getServer().isPrimaryThread()) { // Perf 只在主執行緒用
                 plugin.perf().record("stats.rebuild", System.nanoTime() - start);
             }
