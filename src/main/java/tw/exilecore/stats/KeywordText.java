@@ -28,7 +28,7 @@ public final class KeywordText {
         // AscendancyEffects：每層 1% 移動速度、2% 攻擊與施法速度、10% 閃避，最多 10 層
         TERMS.put("順風", "每層增加 1% 移動速度、2% 攻擊與施法速度、10% 閃避值（最多 10 層）");
         // TreeNewMechanicKeys：增加 15% 施法速度、魔力回復更多 20%
-        TERMS.put("秘術增強", "增加 15% 施法速度，魔力回復更多 20%");
+        TERMS.put("秘術增強", "增加 15% 施法速度，魔力再生速度更多 20%"); // 2026-10-27 照 PoE2 more Mana Regeneration Rate 用語；這次之前「魔力回復更多」
         // AilmentService.pinBuildup、ailments.yml pin
         TERMS.put("釘身", "投射物攻擊的物理傷害會累積釘身，累積滿了敵人被釘在原地 3 秒不能移動");
         TERMS.put("堤防光環", "圖騰周圍的你與隊友獲得加成，依圖騰種類不同：攻擊與施法速度、範圍、額外火焰傷害、榮耀產生、持續傷害，或對被禁錮的敵人更多傷害");

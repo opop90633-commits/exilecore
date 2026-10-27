@@ -67,8 +67,8 @@ TEXT_ZH = {
         '當承受擊中傷害時，損失生命值的 20% 將會被避免，並在 4 秒內損失減免數值的 150%',
     'You deal 1% more Damage per 2 total Power of your Undead Minions': '你的不死召喚物每有 2 強度總值，你造成 1% 更多傷害',
     'Undead Minions have 25% less maximum Life': '不死召喚物具有 25% 更少最大生命',
-    'Mana Recovery from Regeneration Overflows maximum Mana': '來自回復的魔力恢復會溢出最大魔力',
-    '50% less Mana Regeneration Rate': '50% 更少魔力回復率',
+    'Mana Recovery from Regeneration Overflows maximum Mana': '魔力再生回復的魔力會溢出最大魔力',  # 2026-10-27 統一用語；這次之前「來自回復的魔力恢復會溢出最大魔力」
+    '50% less Mana Regeneration Rate': '更少 50% 魔力再生速度',  # 2026-10-27 統一用語（再生＝Regeneration）；這次之前「50% 更少魔力回復率」
     'Regenerate 1 Life per second per 16 Life spent in the past 4 seconds': '過去 4 秒內每消耗 16 生命即每秒回復 1 生命',
     '20% more Life Cost of Skills': '20% 更多技能生命消耗',
     'Projectiles do one of the following at random:': '投射物將會隨機進行下列其中一個行為：',
@@ -131,7 +131,7 @@ EXTRA = {
     'curse_delay_+%': [('curse.delay', 'INCREASED', -1, [])],  # 「加快 x%」= 延遲減少 x%（SkillExecutor 照天賦樹的寫法）
     'base_spirit_reservation_efficiency_+%': [('aura.reservation', 'INCREASED', -1, [])],
     'maximum_life_%_to_convert_to_maximum_energy_shield': [('life.convert_es', 'FLAT', 1, [])],
-    'mana_recovery_rate_+%': [('mana.regen', 'INCREASED', 1, [])],
+    'mana_recovery_rate_+%': [('mana.recovery_rate', 'INCREASED', 1, [])],  # 2026-10-27 照 PoE2 Mana Recovery rate（再生、偷取、回復、藥劑都算）；這次之前 mana.regen（只加再生）
     'life_recovery_rate_+%': [('life.recovery_rate', 'INCREASED', 1, [])],
     'chance_to_gain_1_more_charge_%': [('charge.extra', 'FLAT', 1, [])],
     'light_radius_+%': [],  # Minecraft 沒有照亮範圍；原作的照亮範圍也只影響畫面，沒有別的效果

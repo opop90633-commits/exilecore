@@ -864,7 +864,7 @@ rune_inspiration_lesser:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 10
   drop_level: 21
-  description: "嵌進一個空的符文孔：武器 每擊殺一個敵人回復 10 魔力；法杖類 增加 20% 魔力回復速度；防具、副手 增加 12% 魔力回復速度。孔滿了可以選一顆覆蓋（被換掉的會消失）"
+  description: "嵌進一個空的符文孔：武器 每擊殺一個敵人回復 10 魔力；法杖類 增加 20% 魔力再生速度；防具、副手 增加 12% 魔力再生速度。孔滿了可以選一顆覆蓋（被換掉的會消失）"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
   flavor: "貼在額頭上，腦子裡會冒出泉水的聲音。"
 
 rune_inspiration:
@@ -876,7 +876,7 @@ rune_inspiration:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 6
   drop_level: 15
-  description: "嵌進一個空的符文孔：武器 每擊殺一個敵人回復 20 魔力；法杖類 增加 25% 魔力回復速度；防具、副手 增加 15% 魔力回復速度。孔滿了可以選一顆覆蓋（被換掉的會消失）（需求等級 15）"
+  description: "嵌進一個空的符文孔：武器 每擊殺一個敵人回復 20 魔力；法杖類 增加 25% 魔力再生速度；防具、副手 增加 15% 魔力再生速度。孔滿了可以選一顆覆蓋（被換掉的會消失）（需求等級 15）"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
   flavor: "貼在額頭上，腦子裡會冒出泉水的聲音。"
 
 rune_inspiration_greater:
@@ -888,7 +888,7 @@ rune_inspiration_greater:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 3
   drop_level: 30
-  description: "嵌進一個空的符文孔：武器 每擊殺一個敵人回復 30 魔力；法杖類 增加 30% 魔力回復速度；防具、副手 增加 18% 魔力回復速度。孔滿了可以選一顆覆蓋（被換掉的會消失）（需求等級 30）"
+  description: "嵌進一個空的符文孔：武器 每擊殺一個敵人回復 30 魔力；法杖類 增加 30% 魔力再生速度；防具、副手 增加 18% 魔力再生速度。孔滿了可以選一顆覆蓋（被換掉的會消失）（需求等級 30）"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
   flavor: "貼在額頭上，腦子裡會冒出泉水的聲音。"
 
 rune_inspiration_perfect:
@@ -900,7 +900,7 @@ rune_inspiration_perfect:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 1
   drop_level: 50
-  description: "嵌進一個空的符文孔：武器 每擊殺一個敵人回復 40 魔力；法杖類 增加 35% 魔力回復速度；防具、副手 增加 21% 魔力回復速度。孔滿了可以選一顆覆蓋（被換掉的會消失）（需求等級 50）"
+  description: "嵌進一個空的符文孔：武器 每擊殺一個敵人回復 40 魔力；法杖類 增加 35% 魔力再生速度；防具、副手 增加 21% 魔力再生速度。孔滿了可以選一顆覆蓋（被換掉的會消失）（需求等級 50）"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
   flavor: "貼在額頭上，腦子裡會冒出泉水的聲音。"
 
 rune_rebirth_lesser:
@@ -2266,7 +2266,7 @@ catalyst_mana:
   catalyst: mana
   drop_weight: 0
   drop_level: 30
-  description: "戒指、項鍊品質 +5%／+2%／+1%（普通／魔法／稀有）：魔力詞綴（最大魔力、魔力回復、偷取為魔力…）的數值 +品質%"   # 2026-10-27 照 PoE2：照稀有度；這次之前一律 +5%
+  description: "戒指、項鍊品質 +5%／+2%／+1%（普通／魔法／稀有）：魔力詞綴（最大魔力、魔力再生速度、偷取為魔力…）的數值 +品質%"   # 2026-10-27 照 PoE2：照稀有度；這次之前一律 +5%
   flavor: "磨成粉的裂隙邊緣。"   # 2026-10-26 新增（PoE2 的 Neural Catalyst）
 catalyst_defence:
   name: 防禦催化劑

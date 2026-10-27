@@ -305,7 +305,7 @@ public final class BuffImpact {
         number(lines, StatsReport.ES + "能量護盾", PlayerState.maxEnergyShield(base), PlayerState.maxEnergyShield(now));
         number(lines, "<#c9a7ff>精魂上限", Math.max(0, base.get(StatKeys.SPIRIT_MAX)), Math.max(0, now.get(StatKeys.SPIRIT_MAX)));
         decimal(lines, StatsReport.LIFE + "生命回復/秒", lifeRegen(base), lifeRegen(now));
-        decimal(lines, StatsReport.MANA + "魔力回復/秒", base.get(StatKeys.MANA_REGEN), now.get(StatKeys.MANA_REGEN));
+        decimal(lines, StatsReport.MANA + "魔力再生/秒", base.get(StatKeys.MANA_REGEN), now.get(StatKeys.MANA_REGEN));
         number(lines, "<gray>護甲", base.get(StatKeys.ARMOUR), now.get(StatKeys.ARMOUR));
         number(lines, "<gray>閃避", base.get(StatKeys.EVASION), now.get(StatKeys.EVASION));
         number(lines, "<gray>偏斜", deflection(base), deflection(now));

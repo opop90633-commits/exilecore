@@ -63,12 +63,15 @@ public final class SkillMovePenalty {
         if (penalty <= 0 || ticks <= 0) {
             return;
         }
+        // 2026-10-27 照站長「第三人稱放技能減速會讓視角變大變小」：改成調低原版的走路速度（walk speed）。
+        // 客戶端的視野（FOV）照「移動速度屬性 ÷ 走路速度」算，兩個一起變小比例不變，視角就不會縮放；
+        // 我們的移動速度加成都是乘在基礎值上（MULTIPLY_SCALAR_1），所以實際變慢的幅度跟以前掛「更少 70%」一樣。
+        // 這次之前在移動速度屬性上掛 MULTIPLY_SCALAR_1 修飾器，每放一次技能視角就縮一下。
         final AttributeInstance speed = player.getAttribute(Attribute.MOVEMENT_SPEED);
-        if (speed == null) {
-            return;
+        if (speed != null && speed.getModifier(key) != null) {
+            speed.removeModifier(key); // 舊版留下的
         }
-        speed.removeModifier(key);
-        speed.addTransientModifier(new AttributeModifier(key, -Math.min(1.0, penalty), AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+        player.setWalkSpeed((float) (DEFAULT_WALK * (1 - Math.min(MAX_PENALTY, penalty))));
         until.merge(player.getUniqueId(), now + Math.max(1, Math.round(ticks)), Math::max);
     }
 
@@ -91,12 +94,26 @@ public final class SkillMovePenalty {
         return until.containsKey(player.getUniqueId());
     }
 
-    /** 拿掉懲罰。 */
+    /** 拿掉懲罰（走路速度回到原版預設；伺服器當掉時存檔裡留下的慢速，下次上線 tick 也會在這裡復原）。 */
     public void clear(final Player player) {
         final AttributeInstance speed = player.getAttribute(Attribute.MOVEMENT_SPEED);
         if (speed != null && speed.getModifier(key) != null) {
             speed.removeModifier(key);
         }
+        if (Math.abs(player.getWalkSpeed() - DEFAULT_WALK) > 1e-4) {
+            player.setWalkSpeed(DEFAULT_WALK);
+        }
+    }
+
+    /** 原版的走路速度（Bukkit 的 walk speed 預設 0.2）。 */
+    public static final float DEFAULT_WALK = 0.2f;
+    /** 懲罰最多到 99%（走路速度 0 時客戶端的視野算法會除以 0）。 */
+    static final double MAX_PENALTY = 0.99;
+
+    /** 目前的懲罰把速度乘了多少（1 = 沒有）；防作弊算允許速度時除回來。 */
+    public static double factor(final Player player) {
+        final float walk = player.getWalkSpeed();
+        return walk <= 0 || walk >= DEFAULT_WALK ? 1.0 : walk / DEFAULT_WALK;
     }
 
     /** 2026-10-27：離線、換角色：拿掉懲罰也忘掉時間（這次之前只有線上的人 tick 時才清）。 */

@@ -556,9 +556,13 @@ public final class FlaskService {
                 * Math.max(0, sheet.more(recoveryStat, java.util.Set.of()));
         // 回復時間：藥劑自己的「回復速度」× 全域的「藥劑效果持續時間」
         // 2026-10-26 照 PoE2 天賦樹：「增加藥劑生命回復速率」：同樣的量、更短的時間
-        final double seconds = mods.recoveryTime(base.duration()) * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.FLASK_DURATION, java.util.Set.of()))
-                / (life ? Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.KeystoneKeys.FLASK_LIFE_RATE, java.util.Set.of())) : 1);
-        final int ticks = Math.max(1, (int) Math.round(seconds * 20));
+        // 2026-10-27 照 PoE2：「藥劑魔力回復速率」（flask_mana_recovery_rate_+%）、生命／魔力回復速度（life／mana_recovery_rate_+%，
+        // 回復速度管所有隨時間的回復，藥劑也算）也一樣：同樣的量、更短的時間；這次之前只有藥劑生命回復速率
+        final double baseSeconds = mods.recoveryTime(base.duration())
+                * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.FLASK_DURATION, java.util.Set.of()));
+        final int lifeTicks = Math.max(1, (int) Math.round(baseSeconds * 20 / flaskRate(sheet, true)));
+        final int manaTicks = Math.max(1, (int) Math.round(baseSeconds * 20 / flaskRate(sheet, false)));
+        final int ticks = life ? lifeTicks : manaTicks;
         // 2026-10-26（PoE2 百用束帶：藥劑回復有 20% 立即生效）：裝備的全域「立即回復」跟藥劑自己的詞綴相加
         // 2026-10-26（亡命者背心）：生命藥劑的回復全部立即生效
         final double instant = recovery * (life && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.FLASK_LIFE_INSTANT)
@@ -578,10 +582,10 @@ public final class FlaskService {
         if (gradual > 0) {
             final List<Recovery> list = active.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayList<>());
             if ((life || both) && !noLife) {
-                list.add(new Recovery(FlaskKind.LIFE, gradual / ticks, ticks));
+                list.add(new Recovery(FlaskKind.LIFE, gradual / lifeTicks, lifeTicks));
             }
             if (!life || both) {
-                list.add(new Recovery(FlaskKind.MANA, gradual / ticks, ticks));
+                list.add(new Recovery(FlaskKind.MANA, gradual / manaTicks, manaTicks));
             }
         }
         // 「生命藥劑的回復也消耗魔力」／「魔力藥劑的回復也消耗生命」：喝的時候一次扣另一種資源
@@ -611,6 +615,17 @@ public final class FlaskService {
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1.2, 0), 10, 0.3, 0.4, 0.3, 0,
                 new Particle.DustOptions(base.kind() == FlaskKind.LIFE ? Color.fromRGB(0xFF4D5E) : Color.fromRGB(0x5C8DFF), 1.1f));
         return true;
+    }
+
+    /**
+     * 2026-10-27 照 PoE2：藥劑回復得多快（倍率，時間除以它）：藥劑生命／魔力回復速率 ×（生命／魔力）回復速度。
+     * 兩種是不同的乘數（PoE2：Flask Life Recovery rate 與 Life Recovery rate 分開乘）。
+     */
+    public static double flaskRate(final tw.exilecore.stats.StatSheet sheet, final boolean life) {
+        final double flask = Math.max(0.1, 1 + sheet.increased(life ? tw.exilecore.stats.KeystoneKeys.FLASK_LIFE_RATE
+                : tw.exilecore.stats.TreeEffectKeys.FLASK_MANA_RATE, java.util.Set.of()));
+        return flask * tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, life ? tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE
+                : tw.exilecore.stats.TreeEffectKeys.MANA_RECOVERY_RATE);
     }
 
     /** 這個玩家的某一種藥劑效果還在進行中嗎（「藥劑效果中」的條件詞綴）。 */

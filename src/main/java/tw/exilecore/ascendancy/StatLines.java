@@ -48,9 +48,9 @@ public final class StatLines {
         put(StatKeys.LIFE_MAX, "最大生命", ANY, false);
         put(StatKeys.MANA_MAX, "最大魔力", ANY, false);
         put(StatKeys.ES_MAX, "最大能量護盾", ANY, false);
-        put(StatKeys.LIFE_REGEN, "每秒生命回復", FLAT_OR_INCREASED, false);
+        put(StatKeys.LIFE_REGEN, "生命再生速度", FLAT_OR_INCREASED, false); // 2026-10-27 照 PoE2 Life Regeneration rate 用語；這次之前「每秒生命回復」（固定值另外寫）
         put(StatKeys.LIFE_REGEN_PERCENT, "每秒回復最大生命", FLAT, false); // 2026-10-24：德魯伊的分身獎勵
-        put(StatKeys.MANA_REGEN, "魔力回復", FLAT_OR_INCREASED, false);
+        put(StatKeys.MANA_REGEN, "魔力再生速度", FLAT_OR_INCREASED, false); // 2026-10-27 照 PoE2 Mana Regeneration Rate 用語；這次之前「魔力回復」
         put(StatKeys.ARMOUR, "護甲", ANY, false);
         put(StatKeys.EVASION, "閃避", ANY, false);
         put(StatKeys.BLOCK_CHANCE, "格擋率", FLAT_OR_INCREASED, false);

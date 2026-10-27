@@ -704,7 +704,7 @@ corrupt_life_regen_rate:
   group: corrupt_enchant
   spawn_tags: [corruption, helmet, ring]
   names: [蝕變的]
-  text: "增加 {value}% 生命回復速度"
+  text: "增加 {value}% 生命再生速度"   # 2026-10-27 照 PoE2 Life Regeneration rate 用語「生命再生速度」；這次之前寫「生命回復速度」
   tiers:
     - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
   mods:
@@ -715,7 +715,7 @@ corrupt_mana_regen_rate:
   group: corrupt_enchant
   spawn_tags: [corruption, helmet, ring]
   names: [蝕變的]
-  text: "增加 {value}% 魔力回復速度"
+  text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
   tiers:
     - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
   mods:

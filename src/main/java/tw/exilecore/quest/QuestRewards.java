@@ -33,7 +33,7 @@ public final class QuestRewards {
         stats.put(StatKeys.EVASION, "閃避");
         stats.put(StatKeys.AILMENT_THRESHOLD, "元素異常門檻");
         stats.put(StatKeys.LIFE_REGEN, "每秒生命回復");
-        stats.put(StatKeys.MANA_REGEN, "魔力回復");
+        stats.put(StatKeys.MANA_REGEN, "魔力再生"); // 2026-10-27 照 PoE2 Mana Regeneration 用語；這次之前「魔力回復」
         stats.put(StatKeys.FLASK_LIFE_RECOVERY, "生命藥劑回復");
         stats.put(StatKeys.FLASK_MANA_RECOVERY, "魔力藥劑回復");
         stats.put(StatKeys.MOVEMENT_SPEED, "移動速度");

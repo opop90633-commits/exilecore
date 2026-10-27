@@ -289,7 +289,7 @@ unveiled_d_belt_regen:
   group: unveiled_d_belt_regen
   spawn_tags: [belt]
   names: [淵息的, 續命的]
-  text: "增加 {value}% 生命回復速度"
+  text: "增加 {value}% 生命再生速度"   # 2026-10-27 照 PoE2 Life Regeneration rate 用語「生命再生速度」；這次之前寫「生命回復速度」
   tiers:
     - { tier: 1, ilvl: 60, weight: 1000, value: [26, 30] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
     - { tier: 2, ilvl: 1, weight: 1000, value: [20, 25] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
@@ -896,7 +896,7 @@ unveiled_d_belt_mana_regen:
   group: unveiled_d_belt_mana_regen
   spawn_tags: [belt]
   names: [之淵泉, 之蝕流]
-  text: "增加 {value}% 魔力回復速度"
+  text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
   tiers:
     - { tier: 1, ilvl: 60, weight: 1000, value: [35, 40] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
     - { tier: 2, ilvl: 1, weight: 1000, value: [30, 34] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
@@ -2104,7 +2104,7 @@ unveiled_d_belt_regen_flask:
   group: unveiled_d_belt_regen_flask
   spawn_tags: [belt]
   names: [淵癒的, 黯癒的]
-  text: "生命藥劑效果中，增加 {value}% 生命回復速度"
+  text: "生命藥劑效果中，增加 {value}% 生命再生速度"   # 2026-10-27 照 PoE2 Life Regeneration rate 用語「生命再生速度」；這次之前寫「生命回復速度」
   tiers:
     - { tier: 1, ilvl: 60, weight: 1000, value: [26, 30] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
     - { tier: 2, ilvl: 1, weight: 1000, value: [20, 25] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727

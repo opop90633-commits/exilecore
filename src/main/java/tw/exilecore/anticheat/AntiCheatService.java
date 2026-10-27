@@ -199,6 +199,8 @@ public final class AntiCheatService implements Listener {
         if (castSlow != null && castSlow.getAmount() > -1) {
             speed /= 1 + castSlow.getAmount();
         }
+        // 2026-10-27：放技能的懲罰改成調低走路速度（不讓視角縮放），一樣除回來
+        speed /= tw.exilecore.skill.SkillMovePenalty.factor(player);
         double allowed = speed / 0.1 * WALK_PER_SECOND * SPRINT_JUMP_FACTOR;
         if (onIce(at)) {
             allowed *= ICE_FACTOR;

@@ -101,7 +101,7 @@ meteor_anvil:
         - { stat: resist.fire, type: FLAT, value: 10 }
         - { stat: resist.cold, type: FLAT, value: 10 }
         - { stat: resist.lightning, type: FLAT, value: 10 }
-    - text: "增加 50% 魔力回復速度"
+    - text: "增加 50% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       stats:
         - { stat: mana.regen, type: INCREASED, value: 50 }
     - text: "每 10 秒獲得一個隨機的非傷害神龕增益，持續 20 秒"
@@ -462,14 +462,14 @@ windrunner_coat:
       value: [60, 100]
       stats:
         - { stat: evasion, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 生命藥劑回復量"
+    - text: "增加 {value}% 生命藥劑回復速度"
       value: [40, 60]
       stats:
-        - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 魔力藥劑回復量"
+        - { stat: flask.life_rate, type: INCREASED, value: "{value}" }   # 2026-10-27 照 PoE2 flask_life_recovery_rate_+%（Flask Life Recovery rate：回復得更快，量不變）；這次之前 flask.life_recovery（回復量）
+    - text: "增加 {value}% 魔力藥劑回復速度"
       value: [40, 60]
       stats:
-        - { stat: flask.mana_recovery, type: INCREASED, value: "{value}" }
+        - { stat: flask.mana_rate, type: INCREASED, value: "{value}" }   # 2026-10-27 照 PoE2 flask_mana_recovery_rate_+%（Flask Mana Recovery rate：回復得更快，量不變）；這次之前 flask.mana_recovery（回復量）
     - text: "+{value} 敏捷"
       value: [20, 30]
       stats:
@@ -674,7 +674,7 @@ thunder_spine:
       value: [15, 20]
       stats:
         - { stat: attack.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [25, 40]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -736,7 +736,7 @@ marrowblight:
     - text: "每擊殺一個敵人失去 10 生命"
       stats:
         - { stat: life.per_kill, type: FLAT, value: -10 }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [30, 50]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -1308,7 +1308,7 @@ voidfont:
       value: [40, 60]
       stats:
         - { stat: mana.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [20, 30]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -2112,7 +2112,7 @@ blaze_loop:
       value: [31, 60]
       stats:
         - { stat: life.regen, type: FLAT, value: "{value/10}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [20, 30]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -2296,7 +2296,7 @@ styxguard:
       value: [20, 30]
       stats:
         - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [20, 30]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -4000,7 +4000,7 @@ warden_vow:
       value: [60, 80]
       stats:
         - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [40, 60]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -4028,7 +4028,7 @@ dawn_shard:
         - { stat: resist.fire, type: FLAT, value: "{value}" }
         - { stat: resist.cold, type: FLAT, value: "{value}" }
         - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [20, 30]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -4564,7 +4564,7 @@ crevice_band:
       value: [10, 15]
       stats:
         - { stat: drop.rarity, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [20, 30]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -4833,7 +4833,7 @@ serpent_egg_amulet:        # Serpent's Egg
       value: [17, 23]
       stats:
         - { stat: resist.chaos, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [20, 30]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -4927,10 +4927,10 @@ amber_heart_amulet:        # 2026-10-26 照 PoE2 0.5 的「Revered Resin」（�
       value: [40, 60]
       stats:
         - { stat: life.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 生命藥劑回復量"
+    - text: "增加 {value}% 生命藥劑回復速度"
       value: [20, 30]
       stats:
-        - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
+        - { stat: flask.life_rate, type: INCREASED, value: "{value}" }   # 2026-10-27 照 PoE2 flask_life_recovery_rate_+%（Flask Life Recovery rate：回復得更快，量不變）；這次之前 flask.life_recovery（回復量）
     - text: "生命藥劑每分鐘自動拿到 {value/10} 點充能"
       value: [102, 150]
       stats:
@@ -5036,14 +5036,14 @@ towline_belt:        # 2026-10-26 照 PoE2 0.5 的「Keelhaul」（原作有、�
       value: [1, 3]
       stats:
         - { stat: charm.slots, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 生命藥劑回復量"
+    - text: "增加 {value}% 生命藥劑回復速度"
       value: [-25, 25]
       stats:
-        - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 魔力藥劑回復量"
+        - { stat: flask.life_rate, type: INCREASED, value: "{value}" }   # 2026-10-27 照 PoE2 flask_life_recovery_rate_+%（Flask Life Recovery rate：回復得更快，量不變）；這次之前 flask.life_recovery（回復量）
+    - text: "增加 {value}% 魔力藥劑回復速度"
       value: [-25, 25]
       stats:
-        - { stat: flask.mana_recovery, type: INCREASED, value: "{value}" }
+        - { stat: flask.mana_rate, type: INCREASED, value: "{value}" }   # 2026-10-27 照 PoE2 flask_mana_recovery_rate_+%（Flask Mana Recovery rate：回復得更快，量不變）；這次之前 flask.mana_recovery（回復量）
     - text: "生命藥劑每分鐘自動拿到 15 點充能"
       stats:
         - { stat: flask.charges_per_minute.life, type: FLAT, value: 15 }
@@ -5187,7 +5187,7 @@ defiant_robe:        # 2026-10-26 照 PoE2 0.5 的「Cloak of Defiance」（原�
       value: [100, 150]
       stats:
         - { stat: mana.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [50, 100]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -5383,7 +5383,7 @@ tidedepth_hood:        # 2026-10-26 照 PoE2 0.5 的「Innsmouth」（原作有�
       value: [13, 19]
       stats:
         - { stat: resist.chaos, type: FLAT, value: "{value}" }
-    - text: "增加 100% 魔力回復速度"
+    - text: "增加 100% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       stats:
         - { stat: mana.regen, type: INCREASED, value: 100 }
 
@@ -5557,7 +5557,7 @@ dreamshard_ring:        # 2026-10-26 照 PoE2 0.5 的「Dream Fragments」（原
       value: [10, 15]
       stats:
         - { stat: mana.max, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [30, 50]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -5702,7 +5702,7 @@ chiming_crest:        # 2026-10-26 照 PoE2 0.5 的「Crest of Ardura」（原�
       value: [10, 20]
       stats:
         - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [30, 50]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -5734,7 +5734,7 @@ oathoak_crest:        # 2026-10-26 照 PoE2 0.5 的「Oaksworn」（原作有、
       value: [17, 23]
       stats:
         - { stat: resist.chaos, type: FLAT, value: "{value}" }
-    - text: "增加 50% 生命回復速度"
+    - text: "增加 50% 生命再生速度"   # 2026-10-27 照 PoE2 Life Regeneration rate 用語「生命再生速度」；這次之前寫「生命回復速度」
       stats:
         - { stat: life.regen, type: INCREASED, value: 50 }
 
@@ -6102,7 +6102,7 @@ everwatch_amulet:        # 2026-10-27 照 PoE2 0.5 的「The Everlasting Gaze」
       value: [40, 60]
       stats:
         - { stat: mana.max, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [40, 60]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -6830,7 +6830,7 @@ doomfletch_bow:        # 2026-10-27 照 PoE2 0.5 的「Doomfletch」（原作有
     - text: "+10 敏捷"
       stats:
         - { stat: attr.dex, type: FLAT, value: 10 }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [30, 50]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -7110,7 +7110,7 @@ nightscale_gloves:        # 2026-10-27 照 PoE2 0.5 的「Nightscale」（原作
       value: [20, 30]
       stats:
         - { stat: resist.cold, type: FLAT, value: "{value}" }
-    - text: "最近暴擊過，則增加 150% 魔力回復速度"
+    - text: "最近暴擊過，則增加 150% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       stats:
         - { stat: mana.regen@crit, type: INCREASED, value: 150 }
     - text: "最近沒有暴擊過，則不能回復魔力"
@@ -7591,7 +7591,7 @@ brotherhood_call_ring:        # 2026-10-27 照 PoE2 0.5 的「Call of the Brothe
       value: [10, 20]
       stats:
         - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [25, 35]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -7625,7 +7625,7 @@ brotherhood_whisper_ring:        # 2026-10-27 照 PoE2 0.5 的「Whisper of the 
       value: [10, 20]
       stats:
         - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [25, 35]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -8108,7 +8108,7 @@ earthbound_staff:        # 2026-10-27 照 PoE2 0.5 的「Earthbound」（原作�
       value: [10, 20]
       stats:
         - { stat: cast.speed, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [20, 30]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -8296,7 +8296,7 @@ dark_defiler_sceptre:        # 2026-10-27 照 PoE2 0.5 的「The Dark Defiler」
       value: [5, 10]
       stats:
         - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [10, 30]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -8336,10 +8336,10 @@ eternal_spark_focus:        # 2026-10-27 照 PoE2 0.5 的「The Eternal Spark」
       value: [20, 30]
       stats:
         - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "增加 40% 魔力回復速度"
+    - text: "增加 40% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       stats:
         - { stat: mana.regen, type: INCREASED, value: 40 }
-    - text: "靜止時，增加 40% 魔力回復速度"
+    - text: "靜止時，增加 40% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       stats:
         - { stat: mana.regen@stationary, type: INCREASED, value: 40 }
 
@@ -8358,7 +8358,7 @@ threaded_light_focus:        # 2026-10-27 照 PoE2 0.5 的「Threaded Light」�
       value: [50, 70]
       stats:
         - { stat: es.max, type: INCREASED, value: "{value}" }
-    - text: "增加 {value}% 魔力回復速度"
+    - text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
       value: [30, 40]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }

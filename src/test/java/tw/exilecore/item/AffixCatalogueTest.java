@@ -98,6 +98,9 @@ class AffixCatalogueTest {
         }
         stats.add(tw.exilecore.flask.CharmService.STAT_SLOTS);
         stats.add(ItemStats.UNVEILED_MAGNITUDE);
+        // 2026-10-27 照 PoE2：藥劑生命／魔力回復速率（Flask Life/Mana Recovery rate；FlaskService.flaskRate 讀）
+        stats.add(tw.exilecore.stats.KeystoneKeys.FLASK_LIFE_RATE);
+        stats.add(tw.exilecore.stats.TreeEffectKeys.FLASK_MANA_RATE);
         // 2026-10：對身上有某種異常的敵人（damage.vs_chilled…，CombatListener.ailmentWord）
         for (final String ailment : List.of("chilled", "frozen", "ignited", "shocked", "poisoned", "bleeding")) {
             stats.add(StatKeys.DAMAGE_VS_AILMENT + ailment);

@@ -271,9 +271,11 @@ public final class StatsReport {
         final StatSheet sheet = BuffImpact.defenceSheet(plugin, player);
         final DefenceEstimates estimates = estimates(plugin, state, sheet);
         final List<String> lines = new ArrayList<>();
-        final double lifeRegen = sheet.get(StatKeys.LIFE_REGEN) + state.maxLife() * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0;
-        lines.add(String.format(Locale.ROOT, "%s❤ 生命 <white>%d <dark_gray>回復 %.1f/秒%s%s◆ 魔力 <white>%d <dark_gray>回復 %.1f/秒",
-                LIFE, Math.round(state.maxLife()), lifeRegen, SEP, MANA, Math.round(state.maxMana()), sheet.get(StatKeys.MANA_REGEN)));
+        // 2026-10-27：每秒再生乘上生命／魔力回復速度（跟 PlayerStateService.tick 一樣）；字樣「回復」改「再生」；這次之前沒乘
+        final double lifeRegen = (sheet.get(StatKeys.LIFE_REGEN) + state.maxLife() * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0)
+                * tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE);
+        lines.add(String.format(Locale.ROOT, "%s❤ 生命 <white>%d <dark_gray>再生 %.1f/秒%s%s◆ 魔力 <white>%d <dark_gray>再生 %.1f/秒",
+                LIFE, Math.round(state.maxLife()), lifeRegen, SEP, MANA, Math.round(state.maxMana()), tw.exilecore.stats.TreeEffectKeys.manaRegen(sheet)));
         // 精魂一律顯示（0 也顯示，才知道要去哪裡拿）
         lines.add(String.format(Locale.ROOT, "<#c9a7ff>✧ 精魂 <white>%.0f</white><gray>（已用 %.0f，剩 %.0f）%s",
                 state.maxSpirit(), state.reservedSpirit(), Math.max(0, state.maxSpirit() - state.reservedSpirit()),

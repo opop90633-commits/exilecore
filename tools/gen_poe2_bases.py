@@ -112,7 +112,9 @@ def implicit(text):
         (r'^\+' + R + r'精魂$', '+{value} 最大精魂', [('spirit.max', 'FLAT', None)]),
         (r'^每秒回復' + R + r'%生命$', '每秒回復 {value}% 最大生命', [('life.regen_percent', 'FLAT', None)]),
         (r'^增加' + R + r'%暈眩門檻$', '增加 {value}% 暈眩門檻', [('stun.threshold', 'INCREASED', None)]),
-        (r'^增加' + R + r'%魔力回復率$', '增加 {value}% 魔力回復速度', [('mana.regen', 'INCREASED', None)]),
+        # 2026-10-27：台服「魔力回復率」是 Mana Regeneration Rate（AmuletImplicitManaRegeneration1、BodyArmourImplicitManaRegeneration1），
+        # 照統一用語寫「魔力再生速度」；這次之前寫「魔力回復速度」（跟只有原作 Mana Recovery rate 的 mana.recovery_rate 分不清）
+        (r'^增加' + R + r'%魔力回復率$', '增加 {value}% 魔力再生速度', [('mana.regen', 'INCREASED', None)]),
         (r'^增加' + R + r'%能量護盾充能率$', '增加 {value}% 能量護盾回充速度', [('es.recharge', 'INCREASED', None)]),
         (r'^增加' + R + r'%元素異常狀態門檻$', '增加 {value}% 元素異常門檻', [('ailment.threshold', 'INCREASED', None)]),
         (r'^生命值所受的' + R + r'%傷害由魔力扣除$', '受到的傷害有 {value}% 先從魔力扣', [('damage.from_mana', 'FLAT', None)]),

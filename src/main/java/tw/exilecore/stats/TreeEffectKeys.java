@@ -46,8 +46,19 @@ public final class TreeEffectKeys {
     public static final String RECOUP_SPEED = "recoup.speed";
     /** FLAT %：受到的元素傷害有 x% 之後回復為能量護盾。CombatListener 用。 */
     public static final String ES_RECOUP_ELEMENTAL = "es.recoup_elemental";
-    /** INCREASED：生命回復速度（生命再生、偷取、回復都快 x%）。PlayerStateService.tick 用。 */
+    /**
+     * INCREASED／MORE：生命回復速度（PoE2 life_recovery_rate_+%「Life Recovery rate」：生命再生、偷取、回復（Recoup）、
+     * 生命藥劑的回復都快 x%；立即回復不受影響）。PlayerStateService.tick、CombatListener（回復）、FlaskService 用，倍率見 {@link #recoveryRate}。
+     * 跟「生命再生速度」（life.regen INCREASED，Life Regeneration rate）不同：那個只加自然再生。
+     */
     public static final String LIFE_RECOVERY_RATE = "life.recovery_rate";
+    /**
+     * 2026-10-27 照 PoE2 mana_recovery_rate_+%（Mana Recovery rate）：INCREASED／MORE：魔力回復速度——魔力再生、偷取、回復（Recoup）、
+     * 魔力藥劑的回復都快 x%（心靈堡壘「更少 50% 魔力回復速度」是 MORE -50%）。這次之前跟魔力再生速度（mana.regen）混在一起，只加自然再生。
+     */
+    public static final String MANA_RECOVERY_RATE = "mana.recovery_rate";
+    /** 2026-10-27 照 PoE2 flask_mana_recovery_rate_+%（Flask Mana Recovery rate）：INCREASED：魔力藥劑回復得更快（同樣的量、更短的時間）。FlaskService 用。 */
+    public static final String FLASK_MANA_RATE = "flask.mana_rate";
 
     // ---- 異常、減益 ----
 
@@ -113,6 +124,22 @@ public final class TreeEffectKeys {
     /** INCREASED 換成倍率：1 ＋ 增加（最低 floor）。 */
     public static double scale(final StatSheet sheet, final String stat, final Set<String> context, final double floor) {
         return Math.max(floor, 1 + sheet.increased(stat, context));
+    }
+
+    /**
+     * 2026-10-27：回復速度的倍率（{@link #LIFE_RECOVERY_RATE}、{@link #MANA_RECOVERY_RATE}）：(1 ＋ 增加，最低 0.1) × 更多。
+     * PoE2 的回復速度是乘在「隨時間回復」的那一份上（再生、偷取、回復、藥劑），立即回復不吃。
+     */
+    public static double recoveryRate(final StatSheet sheet, final String stat) {
+        return Math.max(0.1, 1 + sheet.increased(stat, Set.of())) * Math.max(0, sheet.more(stat, Set.of()));
+    }
+
+    /**
+     * 2026-10-27：每秒再生的魔力：魔力再生（{@link StatKeys#MANA_REGEN}，已含「魔力再生速度」的增加）× 魔力回復速度。
+     * 魔力再生速度只在這裡；偷取、回復、藥劑只吃 {@link #MANA_RECOVERY_RATE}。PlayerStateService.tick 用。
+     */
+    public static double manaRegen(final StatSheet sheet) {
+        return sheet.get(StatKeys.MANA_REGEN) * recoveryRate(sheet, MANA_RECOVERY_RATE);
     }
 
     /** 機率（百分比，可以超過 100）：超過 100 的每 100 必定 1 次，剩下的擲。 */

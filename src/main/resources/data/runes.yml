@@ -563,9 +563,9 @@ runes:
     weapon:
       - { text: "每擊殺一個敵人回復 10 魔力", stat: mana.per_kill, type: FLAT, value: 10 }
     caster:
-      - { text: "增加 20% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 20 }
+      - { text: "增加 20% 魔力再生速度", stat: mana.regen, type: INCREASED, value: 20 }   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
     armour:
-      - { text: "增加 12% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 12 }
+      - { text: "增加 12% 魔力再生速度", stat: mana.regen, type: INCREASED, value: 12 }   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
     bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
       weapon:
         - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }
@@ -579,9 +579,9 @@ runes:
     weapon:
       - { text: "每擊殺一個敵人回復 20 魔力", stat: mana.per_kill, type: FLAT, value: 20 }
     caster:
-      - { text: "增加 25% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 25 }
+      - { text: "增加 25% 魔力再生速度", stat: mana.regen, type: INCREASED, value: 25 }   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
     armour:
-      - { text: "增加 15% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 15 }
+      - { text: "增加 15% 魔力再生速度", stat: mana.regen, type: INCREASED, value: 15 }   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
     bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
       weapon:
         - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }
@@ -595,9 +595,9 @@ runes:
     weapon:
       - { text: "每擊殺一個敵人回復 30 魔力", stat: mana.per_kill, type: FLAT, value: 30 }
     caster:
-      - { text: "增加 30% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 30 }
+      - { text: "增加 30% 魔力再生速度", stat: mana.regen, type: INCREASED, value: 30 }   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
     armour:
-      - { text: "增加 18% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 18 }
+      - { text: "增加 18% 魔力再生速度", stat: mana.regen, type: INCREASED, value: 18 }   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
     bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
       weapon:
         - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }
@@ -611,9 +611,9 @@ runes:
     weapon:
       - { text: "每擊殺一個敵人回復 40 魔力", stat: mana.per_kill, type: FLAT, value: 40 }
     caster:
-      - { text: "增加 35% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 35 }
+      - { text: "增加 35% 魔力再生速度", stat: mana.regen, type: INCREASED, value: 35 }   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
     armour:
-      - { text: "增加 21% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 21 }
+      - { text: "增加 21% 魔力再生速度", stat: mana.regen, type: INCREASED, value: 21 }   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
     bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
       weapon:
         - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }

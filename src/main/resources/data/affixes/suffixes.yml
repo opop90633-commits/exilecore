@@ -1261,7 +1261,7 @@ mana_regen_light:        # 2026-10：PoE2 的 of Warmth／Kindling／the Hearth�
   group: light_radius_and_mana_regeneration
   spawn_tags: [ring, sceptre, staff, wand]
   names: [之星骸, 之永生, 之再生]
-  text: "增加 {value}% 魔力回復速度、+{b} 最大魔力"
+  text: "增加 {value}% 魔力再生速度、+{b} 最大魔力"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（3 階 → 3 階）
     - { tier: 1, ilvl: 30, weight: 1000, value: [18, 22], b: [15, 15] }
@@ -1497,7 +1497,7 @@ mana_regen:
   spawn_tags: [amulet, int_only, ring, sceptre, wand]
   exclude_tags: [body, boots, helmet, leggings]
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復]
-  text: "增加 {value}% 魔力回復速度"
+  text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
     - { tier: 1, ilvl: 79, weight: 1000, value: [60, 69] }
@@ -1514,7 +1514,7 @@ mana_regen_staff:
   group: mana_regeneration
   spawn_tags: [staff]
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合, 之恢復]
-  text: "增加 {value}% 魔力回復速度"
+  text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
     - { tier: 1, ilvl: 79, weight: 1000, value: [90, 104] }

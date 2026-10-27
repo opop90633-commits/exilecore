@@ -36,7 +36,7 @@ class StatLinesTest {
         assertEquals("+6% 格擋率", StatLines.describe(flat(StatKeys.BLOCK_CHANCE, 6)));
         assertEquals("+20 最大生命", StatLines.describe(flat(StatKeys.LIFE_MAX, 20)));
         assertEquals("每秒回復 10 生命", StatLines.describe(flat(StatKeys.LIFE_REGEN, 10)));
-        assertEquals("增加 30% 魔力回復", StatLines.describe(inc(StatKeys.MANA_REGEN, 0.3)));
+        assertEquals("增加 30% 魔力再生速度" /* 2026-10-27 照 PoE2 Mana Regeneration Rate 用語；這次之前「魔力回復」 */, StatLines.describe(inc(StatKeys.MANA_REGEN, 0.3)));
         assertEquals("+15% 混沌抗性", StatLines.describe(flat(StatKeys.RESIST_CHAOS, 15)));
         assertEquals("所有抗性上限 +2%", StatLines.describe(flat(StatKeys.RESIST_MAX, 2)));
         assertEquals("增加 25% 近戰物理傷害", StatLines.describe(inc(StatKeys.DAMAGE, 0.25, Tags.PHYSICAL, Tags.MELEE)));

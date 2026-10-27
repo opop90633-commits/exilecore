@@ -392,6 +392,10 @@ public final class AscKeys {
         // 2026-10-26：移動中使用技能的移動速度懲罰（SkillMovePenalty）、生命回復速度（再生、偷取、回復都算）
         OTHER.put(tw.exilecore.stats.TreeEffectKeys.ACTION_PENALTY, "移動中使用技能的移動速度懲罰");
         OTHER.put(tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE, "生命回復速度");
+        // 2026-10-27 照 PoE2：魔力回復速度（再生、偷取、回復、藥劑都算；跟只加再生的「魔力再生速度」不同）、魔力藥劑回復速度
+        OTHER.put(tw.exilecore.stats.TreeEffectKeys.MANA_RECOVERY_RATE, "魔力回復速度");
+        OTHER.put(tw.exilecore.stats.TreeEffectKeys.FLASK_MANA_RATE, "魔力藥劑回復速度");
+        OTHER.put(tw.exilecore.stats.KeystoneKeys.FLASK_LIFE_RATE, "生命藥劑回復速度");
         OTHER.put(tw.exilecore.stats.StatKeys.COMBO_EXTRA_CHANCE, "累積連擊時多累積 1 層的機率"); // 2026-10-27 照 PoE2（武術精通）
         TAGS.put("triggered", "觸發的");
         TAGS.put(tw.exilecore.stats.KeystoneKeys.CRIT_HIT, "暴擊時"); // 2026-10-26：暴擊引起流血

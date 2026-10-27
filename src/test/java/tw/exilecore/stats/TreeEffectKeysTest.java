@@ -49,6 +49,7 @@ class TreeEffectKeysTest {
                 TreeEffectKeys.BLIND_EFFECT, TreeEffectKeys.RAGE_LOSS_DELAY, TreeEffectKeys.MINION_REVIVE_SPEED, TreeEffectKeys.IGNITE_SPEED,
                 TreeEffectKeys.ES_RECOUP_ELEMENTAL, TreeEffectKeys.RAGE_DECAY, TreeEffectKeys.CHARM_EFFECT, TreeEffectKeys.ARMOUR_BREAK_DURATION,
                 TreeEffectKeys.WITHERED_EFFECT, TreeEffectKeys.THORNS_IGNORE_ARMOUR, TreeEffectKeys.CHAIN_CHANCE, TreeEffectKeys.LIFE_RECOVERY_RATE,
+                TreeEffectKeys.MANA_RECOVERY_RATE, // 2026-10-27 照 PoE2 Mana Recovery rate（這次之前當作魔力再生速度）
                 TreeEffectKeys.ITEM_ATTR_REQUIREMENT, TreeEffectKeys.ARCANE_SURGE_ON_CRIT, TreeEffectKeys.AILMENT_SPEED, TreeEffectKeys.BUFF_TIME,
                 TreeEffectKeys.DEFLECT_PREVENT, TreeEffectKeys.CORPSE_SAVE, TreeEffectKeys.STUN_THRESHOLD_PER_DEX, TreeEffectKeys.LIFE_CONVERT_ES,
                 TreeEffectKeys.ACCURACY_PER_INT, TreeEffectKeys.RAGE_ON_IGNITE, TreeEffectKeys.ACCURACY_RANGE_PENALTY, TreeEffectKeys.DAZE_EFFECT,

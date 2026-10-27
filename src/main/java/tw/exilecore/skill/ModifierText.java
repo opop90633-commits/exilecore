@@ -293,7 +293,7 @@ public final class ModifierText {
             case StatKeys.ES_MAX -> scaled(modifier, "最大能量護盾", percent);
             case StatKeys.MANA_MAX -> scaled(modifier, "最大魔力", percent);
             case StatKeys.MANA_REGEN -> modifier.type() == tw.exilecore.stats.ModType.FLAT ? "每秒回復 " + number(value) + " 魔力"
-                    : scaled(modifier, "魔力回復", percent);
+                    : scaled(modifier, "魔力再生速度", percent); // 2026-10-27 照 PoE2 Mana Regeneration Rate 用語；這次之前「魔力回復」
             case StatKeys.ES_RECHARGE -> scaled(modifier, "能量護盾回充速度", percent);
             case StatKeys.TOTEM_LIFE -> scaled(modifier, "圖騰生命", percent);
             case StatKeys.SPIRIT_MAX -> modifier.type() == tw.exilecore.stats.ModType.FLAT ? plus(value) + " 最大精魂"
@@ -571,7 +571,7 @@ public final class ModifierText {
             case tw.exilecore.stats.SupportKeys.WARCRY_SPEED -> scaled(modifier, "戰吼速度", percent);
             // 2026-10-26：天賦樹的新機制（TreeMechanics）
             case tw.exilecore.stats.TreeNewMechanicKeys.ARCANE_SURGE_ON_SPEND -> "累計消耗最大魔力的 " + number(value)
-                    + "% 後獲得 10 秒秘術增強（施法速度增加 15%、魔力回復更多 20%）";
+                    + "% 後獲得 10 秒秘術增強（施法速度增加 15%、魔力再生速度更多 20%）"; // 2026-10-27 用語；這次之前「魔力回復更多」
             case TreeMechanics.PARRY_READY -> "下一次攻擊傷害增加";
             case tw.exilecore.stats.SupportKeys.WARCRY_POWER -> scaled(modifier, "戰吼算到的怪物強度", percent);
             case tw.exilecore.stats.SupportKeys.WARCRY_RAGE_BYPASS -> "冷卻中可以花 " + number(value) + " 點怒氣跳過冷卻（取代磐星）";

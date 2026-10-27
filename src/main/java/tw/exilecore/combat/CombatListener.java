@@ -1583,10 +1583,11 @@ public final class CombatListener implements Listener {
                             java.util.Set.of(), 0.1);
                     if (damage.recoup() > 0 && !state.ruined(plugin.getServer().getCurrentTick())) { // 2026-10-18：禁療中不存
                         state.recoup().add(tw.exilecore.character.Recoup.LIFE, damage.recoup(), recoupSpeed
-                                * tw.exilecore.stats.TreeEffectKeys.scale(recoupSheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE, java.util.Set.of(), 0.1));
+                                * tw.exilecore.stats.TreeEffectKeys.recoveryRate(recoupSheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE));
                     }
-                    if (damage.manaRecoup() > 0) {
-                        state.recoup().add(tw.exilecore.character.Recoup.MANA, damage.manaRecoup(), recoupSpeed);
+                    if (damage.manaRecoup() > 0) { // 2026-10-27 照 PoE2：魔力回復也吃魔力回復速度（這次之前只吃回復速度）
+                        state.recoup().add(tw.exilecore.character.Recoup.MANA, damage.manaRecoup(), recoupSpeed
+                                * tw.exilecore.stats.TreeEffectKeys.recoveryRate(recoupSheet, tw.exilecore.stats.TreeEffectKeys.MANA_RECOVERY_RATE));
                     }
                     // 2026-10-26 照 PoE2 天賦樹：受到的元素傷害有 x% 回復為能量護盾
                     final double esRecoup = Math.min(100, recoupSheet.flat(tw.exilecore.stats.TreeEffectKeys.ES_RECOUP_ELEMENTAL, java.util.Set.of()));

@@ -98,6 +98,9 @@ class UniqueDataTest {
         }
         // 2026-10-26 照 PoE2 0.5 傳奇重做：傳奇的新機制屬性鍵（UniqueStats）與賦予的技能（grant_skill.技能）
         stats.addAll(tw.exilecore.item.unique.UniqueStats.all());
+        // 2026-10-27 照 PoE2：藥劑生命／魔力回復速率（Flask Life/Mana Recovery rate；FlaskService.flaskRate 讀）
+        stats.add(tw.exilecore.stats.KeystoneKeys.FLASK_LIFE_RATE);
+        stats.add(tw.exilecore.stats.TreeEffectKeys.FLASK_MANA_RATE);
         for (final String skill : List.of("decompose", "withering_presence", "lightning_bolt", "spark", "blink")) { // 2026-10-27：＋雷頌墜、縛地長杖、絲沙背心
             stats.add(tw.exilecore.item.unique.UniqueStats.GRANT_SKILL + skill);
         }

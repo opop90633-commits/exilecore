@@ -462,7 +462,7 @@ jewel_mana_regen:
   group: jewel_mana_regen
   spawn_tags: [retired]   # 2026-10 改版：停用（舊珠寶照常生效）
   names: [之泉源, 之靜思, 之冥想]
-  text: "增加 {value}% 魔力回復"
+  text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 用語「魔力再生速度」；這次之前寫「魔力回復」
   tiers:
     - { tier: 0, ilvl: 75, weight: 150, value: [21, 25] }
     - { tier: 1, ilvl: 50, weight: 400, value: [16, 20] }
@@ -1448,7 +1448,7 @@ j2_life_regeneration_rate:
   group: j2_life_regeneration_rate
   spawn_tags: [ruby]
   names: [之星骸, 之精煉, 之雕琢]
-  text: "增加 {value}% 生命回復速度"
+  text: "增加 {value}% 生命再生速度"   # 2026-10-27 照 PoE2 Life Regeneration rate 用語「生命再生速度」；這次之前寫「生命回復速度」
   tiers:
     # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
     - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
@@ -1496,7 +1496,7 @@ j2_mana_regeneration:
   group: j2_mana_regeneration
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
-  text: "增加 {value}% 魔力回復速度"
+  text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
   tiers:
     # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
     - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }

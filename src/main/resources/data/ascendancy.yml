@@ -402,7 +402,7 @@ ascendancies:
         notable: true
         icon: MACE
         lines:
-          - 你親自使用的不產生裂隙的猛擊技能，每第三次會在初始區域的前方與兩側各額外造成 3 次餘震
+          - 你親自使用的不產生裂縫的猛擊技能，每第三次會在初始區域的前方與兩側各額外造成 3 次餘震
         stats:
           - { stat: asc.mountain_splitter, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       life_regeneration:
@@ -1574,7 +1574,7 @@ ascendancies:
           - { stat: resist.cold, type: FLAT, value: -20 }
           - { stat: resist.lightning, type: FLAT, value: -20 }
       life_recovery_rate:
-        name: 生命回復率          # Life Recovery Rate
+        name: 生命回復速度          # Life Recovery Rate（2026-10-27 統一用語；這次之前「生命回復率」）
         icon: RED_DYE
         lines:
           - 增加 10% 生命回復速度
@@ -2875,7 +2875,7 @@ ascendancies:
         stats:
           - { stat: flag.all_damage_shocks, type: FLAT, value: 1 }
       mana_regeneration:
-        name: 魔力回復率          # Mana Regeneration
+        name: 魔力再生速度          # Mana Regeneration（2026-10-27 統一用語；這次之前「魔力回復率」）
         icon: LAPIS_LAZULI
         lines:
           - 增加 12% 魔力再生速度
@@ -2891,7 +2891,7 @@ ascendancies:
         stats:
           - { stat: flag.arcane_surge_always, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果；跟天賦樹同一個，TreeMechanics）
       mana_regeneration_2:
-        name: 魔力回復率          # Mana Regeneration
+        name: 魔力再生速度          # Mana Regeneration（2026-10-27 統一用語；這次之前「魔力回復率」）
         requires: constant_gale
         icon: LAPIS_LAZULI
         lines:
@@ -4057,7 +4057,7 @@ ascendancies:
         stats:
           - { stat: grant_skill.moment_of_vulnerability, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       life_mana:
-        name: 生命及魔力回復率          # Life and Mana Regeneration Rate
+        name: 生命及魔力再生速度          # Life and Mana Regeneration Rate（2026-10-27 統一用語；這次之前「生命及魔力回復率」）
         icon: RED_DYE
         lines:
           - 增加 8% 生命再生速度

@@ -334,7 +334,7 @@ ess_hys_mana_regen:
   group: mana_regeneration
   spawn_tags: [essence, ring]
   names: [之狂亂]
-  text: "增加 {value}% 魔力回復速度"
+  text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
   tiers:
     - { tier: 1, ilvl: 65, weight: 1, value: [50, 59] }
   mods:

@@ -1510,7 +1510,7 @@
      "en": "Sacrifice of Mind",
      "lines": [
       {
-       "text": "來自回復的魔力恢復會溢出最大魔力",
+       "text": "魔力再生回復的魔力會溢出最大魔力",
        "stats": [
         {
          "stat": "flag.sacrifice_mind",
@@ -1523,7 +1523,7 @@
        "active": true
       },
       {
-       "text": "50% 更少魔力回復率",
+       "text": "更少 50% 魔力再生速度",
        "stats": [
         {
          "stat": "mana.regen",
@@ -2009,7 +2009,7 @@
        "text": "增加 2% 魔力回復速度（每 10 點貢禮）",
        "stats": [
         {
-         "stat": "mana.regen",
+         "stat": "mana.recovery_rate",
          "type": "INCREASED",
          "value": 0.02,
          "tags": []

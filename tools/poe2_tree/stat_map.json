@@ -11158,16 +11158,16 @@
   "uses": 1
  },
  "mana_recovery_rate_+%": {
-  "status": "approx",
+  "status": "mapped",
   "text": "15% increased Mana Recovery rate",
   "suggest": [
    {
-    "stat": "mana.regen",
+    "stat": "mana.recovery_rate",
     "type": "INCREASED",
     "tags": []
    }
   ],
-  "note": "2026-10-26 一次性效果：回復速率只算再生",
+  "note": "2026-10-27 照 PoE2：魔力回復速度（Mana Recovery rate）——魔力再生、偷取、回復、魔力藥劑都快 x%；這次之前當作魔力再生速度（mana.regen）",
   "family": null,
   "uses": 1
  },
@@ -13780,17 +13780,12 @@
   "text": "20% increased Life Recovery Rate while your Companion is in your Presence",
   "suggest": [
    {
-    "stat": "life.regen",
-    "type": "INCREASED",
-    "tags": []
-   },
-   {
-    "stat": "leech.rate",
+    "stat": "life.recovery_rate",
     "type": "INCREASED",
     "tags": []
    }
   ],
-  "note": "2026-10-26 條件 companion；引擎沒有「生命回復速度」：拆成生命再生速度與偷取速度",
+  "note": "2026-10-26 條件 companion；2026-10-27 照 PoE2 生命回復速度（life.recovery_rate）；這次之前拆成生命再生速度與偷取速度",
   "family": "Companions (tamed beast / companion skills)",
   "uses": 1,
   "condition": "companion"
@@ -14918,12 +14913,12 @@
     "tags": []
    },
    {
-    "stat": "mana.regen",
+    "stat": "mana.recovery_rate",
     "type": "MORE",
     "tags": []
    }
   ],
-  "note": "",
+  "note": "；2026-10-27 照 PoE2：更少 50% 魔力回復速度（mana.recovery_rate MORE）；這次之前更少魔力再生",
   "family": null,
   "uses": 1
  },
@@ -15215,12 +15210,12 @@
   "text": "10% increased Mana Recovery Rate during Effect of any Mana Flask",
   "suggest": [
    {
-    "stat": "mana.regen",
+    "stat": "mana.recovery_rate",
     "type": "INCREASED",
     "tags": []
    }
   ],
-  "note": "2026-10-26 條件 manaflask；引擎沒有「魔力回復速度」：當作魔力再生速度",
+  "note": "2026-10-26 條件 manaflask；2026-10-27 照 PoE2 魔力回復速度（mana.recovery_rate）；這次之前當作魔力再生速度",
   "family": null,
   "uses": 1,
   "condition": "manaflask"

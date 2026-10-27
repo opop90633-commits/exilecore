@@ -152,7 +152,7 @@ flask_life_recovery:
   group: belt_flask_life_recovery_rate
   spawn_tags: [belt]
   names: [星骸的, 天賜的, 神軀的, 不朽的, 雄壯的, 壯碩的]
-  text: "增加 {value}% 生命藥劑回復量"
+  text: "增加 {value}% 生命藥劑回復速度"
   chips: [life, flask]   # PoE2 的標籤（BeltFlaskLifeRecoveryRate）
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
@@ -163,14 +163,14 @@ flask_life_recovery:
     - { tier: 5, ilvl: 16, weight: 800, value: [11, 16] }
     - { tier: 6, ilvl: 1, weight: 800, value: [5, 10] }
   mods:
-    - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
+    - { stat: flask.life_rate, type: INCREASED, value: "{value}" }   # 2026-10-27 照 PoE2 flask_life_recovery_rate_+%（Flask Life Recovery rate：回復得更快，量不變）；這次之前 flask.life_recovery（回復量）
 
 flask_mana_recovery:
   type: prefix
   group: belt_flask_mana_recovery_rate
   spawn_tags: [belt]
   names: [星海的, 神諭的, 天啟的, 通靈的, 睿智的, 清明的]
-  text: "增加 {value}% 魔力藥劑回復量"
+  text: "增加 {value}% 魔力藥劑回復速度"
   chips: [mana, flask]   # PoE2 的標籤（BeltFlaskManaRecoveryRate）
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
@@ -181,7 +181,7 @@ flask_mana_recovery:
     - { tier: 5, ilvl: 11, weight: 800, value: [11, 16] }
     - { tier: 6, ilvl: 5, weight: 800, value: [5, 10] }
   mods:
-    - { stat: flask.mana_recovery, type: INCREASED, value: "{value}" }
+    - { stat: flask.mana_rate, type: INCREASED, value: "{value}" }   # 2026-10-27 照 PoE2 flask_mana_recovery_rate_+%（Flask Mana Recovery rate：回復得更快，量不變）；這次之前 flask.mana_recovery（回復量）
 
 chaos_inc_weapon:
   type: prefix

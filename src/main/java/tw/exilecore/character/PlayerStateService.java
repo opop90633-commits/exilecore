@@ -1595,7 +1595,9 @@ public final class PlayerStateService {
             state.notice("<#b06cff>☠ 荒蕪：無法回復生命（離開黑色地面）", currentTick + 15);
         }
         // 2026-10-26 照 PoE2 天賦樹：「增加 x% 生命回復速度」——生命再生、偷取、回復都快 x%
-        final double lifeRate = tw.exilecore.stats.TreeEffectKeys.scale(sheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE, Set.of(), 0.1);
+        // 2026-10-27：魔力回復速度（mana.recovery_rate）同理：魔力再生、偷取、回復都快 x%；魔力再生速度（mana.regen）只加再生。更多／更少也算
+        final double lifeRate = tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE);
+        final double manaRate = tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.stats.TreeEffectKeys.MANA_RECOVERY_RATE);
         final double regen = ruined ? 0
                 : (sheet.get(StatKeys.LIFE_REGEN) + state.maxLife() * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0
                         + tw.exilecore.passive.ConquestEffects.bloodRegen(player.getUniqueId(), sheet, currentTick)) // 2026-10-26：鮮血獻祭
@@ -1617,7 +1619,7 @@ public final class PlayerStateService {
         }
         final double leechRate = sheet.apply(StatKeys.LEECH_RATE, 1.0, java.util.Set.of()); // 最大偷取速度（2026-10）
         if (!ruined) {
-            state.recoverLeech(seconds, leechRate * lifeRate);
+            state.recoverLeech(seconds * lifeRate, leechRate); // 2026-10-27：回復速度讓每份偷取回得更快（上限也一起）；這次之前只放大每秒上限
         }
         // 2026-10-26 照 PoE2：回復（Recoup）4 秒內平均回來；禁療中生命、護盾那份不回（魔力照回）
         final double[] recouped = state.recoup().tick(ticksSinceLast);
@@ -1629,12 +1631,12 @@ public final class PlayerStateService {
         }
         state.setMana(state.mana() + recouped[tw.exilecore.character.Recoup.MANA]);
         if (StatKeys.flag(sheet, tw.exilecore.passive.ConquestEffects.MIND)) {
-            state.recoverManaOverflowing(sheet.get(StatKeys.MANA_REGEN) * seconds); // 2026-10-26 照 PoE2 心靈獻祭：回復的魔力溢出最大魔力
+            state.recoverManaOverflowing(tw.exilecore.stats.TreeEffectKeys.manaRegen(sheet) * seconds); // 2026-10-26 照 PoE2 心靈獻祭：回復的魔力溢出最大魔力
         } else {
-            state.setMana(state.mana() + sheet.get(StatKeys.MANA_REGEN) * seconds);
+            state.setMana(state.mana() + tw.exilecore.stats.TreeEffectKeys.manaRegen(sheet) * seconds);
         }
         if (!ruined) {
-            state.recoverManaLeech(seconds, leechRate); // 2026-10-18：荒蕪禁療中魔力偷取也停（以前照回）
+            state.recoverManaLeech(seconds * manaRate, leechRate); // 2026-10-18：荒蕪禁療中魔力偷取也停（以前照回）；2026-10-27 照 PoE2 吃魔力回復速度
         }
         if (youth && !ruined && currentTick - state.lastDamageTick() >= esRechargeDelay(sheet)) {
             // 永恆青春：生命像護盾一樣回充（護盾不回充）

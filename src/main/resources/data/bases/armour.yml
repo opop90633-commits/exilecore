@@ -1275,7 +1275,7 @@ body_int_21:
   requirements: { level: 68, str: 0, dex: 0, int: 121 }   # 2026-10-26 照 PoE2（Enlightened Robe，固定不隨物品等級變）；這次之前 { level: 68, str: 0, dex: 0, int: 40 }
   es: 138   # 2026-10-27 照 PoE2 原值（Enlightened Robe）；這次之前 47
   implicit:
-    text: "增加 {value}% 魔力回復速度"
+    text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
     value: [40, 50]
     mods:
       - { stat: mana.regen, type: INCREASED, value: "{value}" }
@@ -1293,7 +1293,7 @@ body_int_22:
   requirements: { level: 70, str: 0, dex: 0, int: 121 }   # 2026-10-26 照 PoE2（Flowing Raiment；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 0, int: 40 }
   es: 153   # 2026-10-26 照 PoE2 原值（Flowing Raiment）；這次之前 52
   implicit:
-    text: "增加 {value}% 魔力回復速度"
+    text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 Mana Regeneration Rate 用語「魔力再生速度」；這次之前寫「魔力回復速度」
     value: [40, 50]
     mods:
       - { stat: mana.regen, type: INCREASED, value: "{value}" }

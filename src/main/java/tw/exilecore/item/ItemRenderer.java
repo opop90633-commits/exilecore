@@ -119,6 +119,12 @@ public final class ItemRenderer {
         stack.setData(DataComponentTypes.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.itemAttributes().build());
         if (base.isWeapon()) {
             stack.setData(DataComponentTypes.ATTACK_RANGE, WeaponRange.VALUE);
+            // 2026-10-27 照站長「長矛放技能會緩速 90%」：原版的矛按住右鍵會蓄力衝刺（kinetic weapon），按住右鍵用物品時
+            // 原版還會把移動速度乘 0.2，跟我們放技能的移動懲罰（更少 70%）疊起來變成約 94%。拿掉原版的蓄力，
+            // 並把「使用中」的移動倍率設成 1（弓、弩拉弓也一樣：移動懲罰一律照 SkillMovePenalty 算）。
+            stack.unsetData(DataComponentTypes.KINETIC_WEAPON);
+            stack.setData(DataComponentTypes.USE_EFFECTS, io.papermc.paper.datacomponent.item.UseEffects.useEffects()
+                    .canSprint(true).speedMultiplier(1.0f).build());
         } else {
             stack.unsetData(DataComponentTypes.ATTACK_RANGE);
         }

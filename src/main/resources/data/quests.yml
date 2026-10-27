@@ -411,7 +411,7 @@ quests:
         rewards:
           - { stat: ailment.threshold, increased: 20 }
       mana_regen:
-        label: 魔力回復 +20%
+        label: 魔力再生速度 +20%   # 2026-10-27 統一用語（獎勵是 mana.regen）；這次之前「魔力回復 +20%」
         rewards:
           - { stat: mana.regen, increased: 20 }
 
