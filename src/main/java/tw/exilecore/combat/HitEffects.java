@@ -123,9 +123,12 @@ public final class HitEffects implements Listener {
         }
         final double pin = effective.flat(StatKeys.PIN_CHANCE, tags);
         // 2026-10-26 照 PoE2 Pin：有定身來源的投射物攻擊，減免前的物理傷害累積釘地條，滿了才釘住（這次之前照 pin.chance 擲機率）；天賦樹的「增加釘住累積」乘在累積上
-        if (pin > 0 && skill.isAttack() && tags.contains(Tags.PROJECTILE) && plugin.ailments() != null
-                && plugin.ailments().pinBuildup(defender, monster, defenderSheet, result.outgoing().get(DamageType.PHYSICAL),
-                        Math.max(0, effective.apply(tw.exilecore.stats.TreeKeys.PIN_BUILDUP, 1.0, tags)))) { // 2026-10-26：也算更多（火力抑制更多 40% 禁錮累積）
+        // 2026-10-28 照 PoE2 落釘弩台：擊中必定定身（所有傷害都累積）、定身當作傷害更多 x%（PinKeys）
+        final boolean hitsPin = tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.PinKeys.FLAG_HITS_PIN);
+        if ((pin > 0 || hitsPin) && skill.isAttack() && tags.contains(Tags.PROJECTILE) && plugin.ailments() != null
+                && plugin.ailments().pinBuildup(defender, monster, defenderSheet, tw.exilecore.stats.PinKeys.pinDamage(hitsPin, result.outgoing()),
+                        Math.max(0, effective.apply(tw.exilecore.stats.TreeKeys.PIN_BUILDUP, 1.0, tags)) // 2026-10-26：也算更多（火力抑制更多 40% 禁錮累積）
+                                * tw.exilecore.stats.PinKeys.asThoughMultiplier(effective.flat(tw.exilecore.stats.PinKeys.PIN_AS_THOUGH, tags)))) {
             final long ticks = scaledTicks(Math.max(1, Math.round(plugin.ailments().config().pin().duration(false) * 20)),
                     effective.increased(tw.exilecore.stats.SupportKeys.PIN_DURATION, tags)); // 2026-10-26 照 PoE2 天賦樹：增加定身持續時間
             debuffs.apply(target, new Debuffs.Debuff("pin", source, now + ticks, 0, false, null, List.of(), 1.0));

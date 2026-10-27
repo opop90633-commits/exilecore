@@ -2077,9 +2077,10 @@ public final class SkillService {
         }
         if (definition.mechanic() == Mechanic.GUARD) {
             if (SkillExecutor.hasFlag(definition, StatKeys.FLAG_RELOAD_ALL)) {
-                reloadNow(player, null); // 急裝：弩全部裝滿（2026-10）
+                emergencyReload(player, runtime, state, build, now); // 急裝：弩全部裝滿、強化每個彈匣的弩矢（2026-10-28 照 PoE2）
+            } else {
+                guard(player, build); // 舉盾：一段時間的增益
             }
-            guard(player, build); // 舉盾：一段時間的增益
             originals().afterCast(player, build, preferred, now); // 2026-10-26 照 PoE2：霜鏃強化接下來 4 次
             visuals.cast(definition.visual(), player);
             state.notice("<#c9d6e3>🛡 " + ItemRenderer.escape(definition.name()), now + 30);
@@ -2131,6 +2132,13 @@ public final class SkillService {
         // 用的元素（元湧）、累積的電荷（引雷）
         final SupportMechanics.Empowering empowering = supportMechanics().empower(player, runtime, build, now);
         build = supportMechanics().beforeUse(player, empowering.build());
+        if (ammoSkill(definition) && runtime.takeEmpoweredBolt(definition.id(), now)) {
+            // 2026-10-28 照 PoE2 Emergency Reload：被急裝強化的弩矢更多 x% 傷害（每個彈匣各自的發數，用完或到期就沒了）
+            build = build.withProfile(build.profile().withLocal(List.of(tw.exilecore.stats.Modifier.more(StatKeys.DAMAGE, runtime.empoweredMore, "急裝"))));
+            if (runtime.empoweredBolts.isEmpty()) {
+                buffs.remove(player, EMERGENCY_BUFF);
+            }
+        }
         // 2026-10：連段、榮耀、元素灌注拿掉了，以前要付了才有的加成（連段乘需要的段數、強化）一律算上；灌注的另外加成不算
         final List<tw.exilecore.stats.Modifier> resourceBonus = resourceBonus(resourceSpec);
         if (!resourceBonus.isEmpty()) {
@@ -2731,6 +2739,55 @@ public final class SkillService {
     }
 
     /** 舉盾（2026-10）：guard.effects 變成增益。2026-10-27 照站長「放技能減速全部移除」：資料裡的 guard.slow（招架 50%）不再讓移動變慢；這次之前算進去。 */
+    /** 2026-10-28：急裝的增益代號（只顯示倒數；傷害在放弩技能時照被強化的發數給）。 */
+    static final String EMERGENCY_BUFF = "guard.emergency_reload";
+    /** 2026-10-28 照 PoE2 Emergency Reload 的品質：被強化的弩矢再更多 x%（FLAT，百分點；gem_quality.yml）。 */
+    static final String EMERGENCY_MORE = "emergency_reload.more";
+
+    /** 急裝的「更多 x%」（0.33 = 33%）：這個等級的＋品質給的。 */
+    static double emergencyMore(final SkillBuild build, final StatSheet sheet) {
+        double more = 0;
+        for (final ScaledMod effect : build.definition().params().mark().effects()) {
+            final tw.exilecore.stats.Modifier mod = effect.toModifier(build.level(), 1.0, build.definition().name());
+            if (mod.stat().equals(StatKeys.DAMAGE) && mod.type() == tw.exilecore.stats.ModType.MORE) {
+                more += mod.value();
+            }
+        }
+        final StatSheet effective = sheet == null ? null : build.profile().effective(sheet);
+        double quality = 0;
+        if (effective != null) {
+            quality = effective.flat(EMERGENCY_MORE, build.profile().tags());
+        } else {
+            for (final tw.exilecore.stats.Modifier mod : build.profile().local()) {
+                if (mod.stat().equals(EMERGENCY_MORE)) {
+                    quality += mod.value();
+                }
+            }
+        }
+        return more + quality / 100.0;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Emergency Reload：立刻裝滿所有弩技能的彈匣，並強化每個彈匣的弩矢（發數＝那個技能的彈匣大小）
+     * 更多 x% 傷害，持續 6 秒或強化的弩矢用完為止。這次之前是 6 秒內所有弩攻擊更多 x%（不限發數）。
+     */
+    private void emergencyReload(final Player player, final SkillRuntime runtime, final PlayerState state, final SkillBuild build, final long now) {
+        final StatSheet sheet = plugin.players().sheet(player);
+        runtime.empoweredBolts.clear();
+        for (int i = 0; i < tw.exilecore.character.SkillLoadout.MAX_SKILLS; i++) {
+            final tw.exilecore.character.SkillLoadout.Entry entry = state.skills().skill(i);
+            final SkillDefinition each = entry == null ? null : config.skill(entry.skillId());
+            if (each != null && ammoSkill(each)) {
+                runtime.empoweredBolts.put(each.id(), clipSize(config, build(state, sheet, each, entry), sheet));
+            }
+        }
+        reloadNow(player, null);
+        runtime.empoweredMore = emergencyMore(build, sheet);
+        final int ticks = (int) Math.round(build.definition().params().mark().duration() * build.durationScale() * 20);
+        runtime.empoweredUntil = now + tw.exilecore.stats.TreeEffectKeys.buffTicks(state.sheet(), ticks);
+        buff(player, EMERGENCY_BUFF, build.definition().name(), ticks, List.of());
+    }
+
     private void guard(final Player player, final SkillBuild build) {
         final SkillParams.Mark guard = build.definition().params().mark();
         final List<tw.exilecore.stats.Modifier> mods = new ArrayList<>();
@@ -3930,6 +3987,10 @@ public final class SkillService {
             case "charge_regulation" -> {
                 return String.format(Locale.ROOT, "品質 +%d%%：消耗戰星的間隔多 %s 秒、身上每顆戰星增加 %s%% 傷害", quality,
                         trimNumber(quality * REGULATION_QUALITY_SECONDS), trimNumber(quality * REGULATION_QUALITY_DAMAGE));
+            }
+            case "emergency_reload" -> { // 2026-10-28 照 PoE2 Emergency Reload（gem_quality.yml）；這次之前顯示成增加傷害
+                return String.format(Locale.ROOT, "品質 +%d%%：冷卻回復速度增加 %s%%、強化的弩矢再更多 %s%% 傷害", quality,
+                        trimNumber(quality * 0.5), trimNumber(quality * 0.5));
             }
             case "snipe" -> { // 2026-10-28 照 PoE2 Snipe：爆炸半徑 +(0—0.4) 格（gem_quality.yml）；這次之前顯示成增加傷害
                 return String.format(Locale.ROOT, "品質 +%d%%：爆炸與寒冰爆破的半徑 +%s 格", quality, trimNumber(quality * 0.02));
@@ -5171,7 +5232,20 @@ public final class SkillService {
                 lines.add(String.format(Locale.ROOT, "<gray>準心指的地方（最遠 %.0f 格）<white>%.1f</white> 秒後落下，半徑 <white>%.1f</white> 格",
                         build.range(), params.delay(), build.radius()));
                 // 2026-10-27：多的投射物各落一道（SkillExecutor.impact）
-                if (build.definition().tags().contains(Tags.PROJECTILE) && build.projectiles() > 1) {
+                // 2026-10-28 照 PoE2：衝霄弩台的弩彈落地後再炸開（cascade）；落釘弩台一輪落下好幾擊（投射物數量的加成加在每輪的擊中次數上）
+                final SkillConfig current = SkillConfig.current();
+                final SkillConfig.CascadeSpec cascade = current == null ? null : current.cascade(build.definition().id());
+                final boolean salvo = params.projectiles().last() > 1 && cascade == null;
+                if (cascade != null) {
+                    lines.add(String.format(Locale.ROOT, "<gray>弩彈 <white>%d</white> 發；每發落地 <white>%.1f</white> 秒後炸開，半徑 <white>%.1f</white> 格，傷害效益 <white>%d%%</white>",
+                            build.projectiles(), cascade.after(), cascade.radius() * build.areaScale(),
+                            Math.round(cascade.effectiveness().at(build.level()) * 100)));
+                    cascade.conversion().forEach((type, fraction) -> lines.add(String.format(Locale.ROOT,
+                            "<dark_gray>　爆炸：%d%% 物理傷害轉換為%s傷害", Math.round(fraction * 100), type.displayName())));
+                } else if (salvo) {
+                    lines.add(String.format(Locale.ROOT, "<gray>每輪落下 <white>%d</white> 擊<dark_gray>（投射物數量的加成改成加在每輪的擊中次數上）",
+                            build.projectiles()));
+                } else if (build.definition().tags().contains(Tags.PROJECTILE) && build.projectiles() > 1) {
                     lines.add(String.format(Locale.ROOT, "<gray>投射物 <white>%d</white> 發", build.projectiles()));
                 }
             }
@@ -5229,6 +5303,13 @@ public final class SkillService {
                 final SkillParams.Mark guard = params.mark();
                 if (guard.effects().isEmpty()) {
                     break; // 沒有增益的（連珠）：說明在 barrageLines
+                }
+                if (SkillExecutor.hasFlag(build.definition(), StatKeys.FLAG_RELOAD_ALL)) {
+                    // 2026-10-28 照 PoE2 Emergency Reload
+                    lines.add(String.format(Locale.ROOT, "<gray>強化每個弩技能彈匣的弩矢（發數＝那個技能的彈匣大小）：<white>更多 %s%% 傷害</white>，"
+                                    + "<white>%.1f</white> 秒內或強化的弩矢用完為止",
+                            trimNumber(emergencyMore(build, null) * 100), guard.duration() * build.durationScale()));
+                    break;
                 }
                 final List<String> parts = new ArrayList<>();
                 for (final ScaledMod effect : guard.effects()) {
@@ -5304,14 +5385,6 @@ public final class SkillService {
                 lines.add("<gray>同時最多 <white>" + build.totems() + "</white> 個" + (active > 0 ? "，目前 " + active + " 個" : ""));
                 // 2026-10-26 照 PoE2：圖騰生命照技能等級的召喚物表（這次之前寫你最大生命的 30%～60%）
                 lines.add("<gray>圖騰生命、護甲照技能等級（跟召喚物同一張表，再乘圖騰生命的加成）；怪物會打圖騰，被圖騰打中的怪會先去打圖騰");
-                // 2026-10-27 照 PoE2：圖騰是你的友軍（「你存在範圍內的友軍…」在範圍內的圖騰也吃得到；不是召喚物，「召喚物…」不給）
-                final List<String> allies = new ArrayList<>();
-                for (final tw.exilecore.stats.Modifier modifier : TotemAllies.fromOwner(sheet)) {
-                    allies.add(ModifierText.describe(modifier));
-                }
-                if (!allies.isEmpty()) {
-                    lines.add("<gray>圖騰是你的友軍，在你的存在範圍內時另外有：<#8fd3ff>" + ItemRenderer.escape(String.join("、", allies)));
-                }
                 if (!spec.buff().isEmpty()) {
                     final List<String> buffs = new ArrayList<>();
                     for (final tw.exilecore.stats.Modifier modifier : spec.buff()) {

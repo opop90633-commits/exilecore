@@ -82,4 +82,7 @@ public final class Tags {
     public static final String WYVERN = "wyvern";
     public static final String ONE_HAND = "one_hand";
     public static final String TWO_HAND = "two_hand";
+
+    /** 2026-10-28：增益技能（PoE2 Buff，急裝）：不算法術。 */
+    public static final String BUFF = "buff";
 }

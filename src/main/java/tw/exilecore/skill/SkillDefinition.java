@@ -41,24 +41,28 @@ import java.util.Set;
  * @param warcry        戰吼的設定（mechanic: warcry 才有）；null = 不是戰吼
  * @param cooldownBypass 冷卻中可以消耗一顆這種戰星直接放（charges.yml 的代號，例如瞬影擊的 frenzy）；null = 不行
  * @param source        專屬的掉落來源（例如 awakener：萬界之巔的虛星）：未切割技能寶石雕不出來，只有那裡會掉；null = 一般的
+ * @param typedDamage   2026-10-28 照 PoE2（纏蝕箭的物理、混沌各一張表）：每一種傷害自己的逐級表（攤平，同 damage 的寫法）；
+ *                      寫了的話 damage 是各種加起來的表、damageTypes 是全部等級加總的比例（說明、網頁用），真正打的照這裡；沒寫是空的
  */
 public record SkillDefinition(String id, String name, String description, String icon, SkillType type,
                               Set<String> tags, Set<String> weapons, String starter, boolean hidden, int tier, Mechanic mechanic,
                               double attackSpeed, double castTime, Scaled effectiveness, Scaled mana,
                               int[] damage, Map<DamageType, Double> damageTypes, Map<DamageType, Double> conversion,
                               SkillParams params, String visual, List<Modifier> modifiers, double cooldown, DeploySpec deploy,
-                              SummonSpec summon, AuraSpec aura, WarcrySpec warcry, String cooldownBypass, String source) {
+                              SummonSpec summon, AuraSpec aura, WarcrySpec warcry, String cooldownBypass, String source,
+                              Map<DamageType, int[]> typedDamage) {
 
     public SkillDefinition {
         modifiers = modifiers == null ? List.of() : List.copyOf(modifiers);
         source = source == null || source.isBlank() ? null : source.trim().toLowerCase(Locale.ROOT);
+        typedDamage = typedDamage == null || typedDamage.isEmpty() ? Map.of() : Map.copyOf(typedDamage);
     }
 
     /** 同一個技能換一種特效（稜光裂每次施放的元素不同）。 */
     public SkillDefinition withVisual(final String newVisual) {
         return new SkillDefinition(id, name, description, icon, type, tags, weapons, starter, hidden, tier, mechanic, attackSpeed, castTime,
                 effectiveness, mana, damage, damageTypes, conversion, params, newVisual, modifiers, cooldown, deploy, summon, aura, warcry,
-                cooldownBypass, source);
+                cooldownBypass, source, typedDamage);
     }
 
     /** 能不能從未切割技能寶石雕出來（專屬掉落的不行）。 */
@@ -150,6 +154,9 @@ public record SkillDefinition(String id, String name, String description, String
         if (mechanic == Mechanic.MARK && !params.mark().curse()) {
             return ModifierText.tagName(Tags.MARK); // 2026-10-26 照 PoE2：印記不算法術
         }
+        if (type == SkillType.SPELL && tags.contains(Tags.BUFF)) {
+            return ModifierText.tagName(Tags.BUFF); // 2026-10-28 照 PoE2：增益技能（急裝）不算法術
+        }
         return mechanic == Mechanic.WARCRY ? ModifierText.tagName(Tags.WARCRY) : type.displayName();
     }
 
@@ -205,6 +212,11 @@ public record SkillDefinition(String id, String name, String description, String
             tags.add(Tags.META); // 2026-10-22：主要寶石（星咒圖騰、暴擊引星…）：技能寶石放在它自己的孔（每一孔都能放）
         }
         tags.remove(type == SkillType.ATTACK ? Tags.SPELL : Tags.ATTACK);
+        if (type == SkillType.SPELL && tags.contains(Tags.BUFF)) {
+            // 2026-10-28 照 PoE2：增益技能（急裝：Buff、Empower）不算法術——法術的輔助（疾詠…）掛不上、帶 spell 標籤的加成不吃；
+            // type 還是 spell（動作照施法時間算）。這次之前急裝算法術
+            tags.remove(Tags.SPELL);
+        }
         // 2026-10 標籤統一：沒有轉成元素、混沌的攻擊打的就是武器的物理傷害，一律算物理技能（以前有的有寫、有的沒寫）
         if (type == SkillType.ATTACK && java.util.Collections.disjoint(tags,
                 Set.of(Tags.FIRE, Tags.COLD, Tags.LIGHTNING, Tags.CHAOS, Tags.ELEMENTAL))) {
@@ -381,7 +393,16 @@ public record SkillDefinition(String id, String name, String description, String
         if (mechanic == Mechanic.AURA && node.has("damage")) {
             throw new IllegalArgumentException(where + ".damage：光環自己不造成傷害（捷的擊殺效果寫成隱藏技能，用 aura.on_kill 指過去）");
         }
-        if (type == SkillType.SPELL && (!utility || node.has("damage"))) {
+        Map<DamageType, int[]> typedDamage = Map.of();
+        if (node.has("damage_by_type")) {
+            // 2026-10-28 照 PoE2（纏蝕箭：物理、混沌各一張逐級表）：每種傷害自己一張表；damage、damage_types 從這裡算出來，不能另外寫
+            if (node.has("damage") || node.has("damage_types") || type != SkillType.SPELL) {
+                throw new IllegalArgumentException(where + ".damage_by_type：只有法術能寫，而且不能再寫 damage、damage_types");
+            }
+            typedDamage = typedTables(where + ".damage_by_type", node.node("damage_by_type"));
+            damage = summedTable(typedDamage);
+            damageTypes = typedWeights(typedDamage);
+        } else if (type == SkillType.SPELL && (!utility || node.has("damage"))) {
             damage = spellDamage(where + ".damage", node.raw("damage"));
             damageTypes = weights(where + ".damage_types", node.node("damage_types"), true);
             if (damageTypes.isEmpty()) {
@@ -435,14 +456,14 @@ public record SkillDefinition(String id, String name, String description, String
                 node.string("icon", "BOOK"), type, Set.copyOf(tags), Set.copyOf(lower(node.strings("weapons"))),
                 starter == null ? null : CharacterClass.parse(starter, null).id(), node.bool("hidden", false), tier, mechanic,
                 attackSpeed, castTime, effectiveness, mana, damage, damageTypes, conversion,
-                params, visual, modifiers, cooldown, deploy, summon, aura, warcry, cooldownBypass, node.string("source", null));
+                params, visual, modifiers, cooldown, deploy, summon, aura, warcry, cooldownBypass, node.string("source", null), typedDamage);
         // 2026-10-16：不會造成傷害的技能（增益光環、印記、詛咒、戰吼、護體、引星…）不帶傷害類型的標籤：
         // 「冰冷傷害增加」這種本來就吃不到，「+冰冷技能等級」也不再算——不要讓人以為它吃元素的加成。
         // 召喚物（召喚物打的傷害類型）與捷（擊殺時的爆炸會打人）照留
         if (!parsed.dealsDamage() && summon == null && !tags.contains(Tags.HERALD) && tags.removeAll(DAMAGE_TYPE_TAGS)) {
             return new SkillDefinition(id, name, parsed.description(), parsed.icon(), type, Set.copyOf(tags), parsed.weapons(), parsed.starter(),
                     parsed.hidden(), tier, mechanic, attackSpeed, castTime, effectiveness, mana, damage, damageTypes, conversion,
-                    params, visual, parsed.modifiers(), cooldown, deploy, summon, aura, warcry, cooldownBypass, parsed.source());
+                    params, visual, parsed.modifiers(), cooldown, deploy, summon, aura, warcry, cooldownBypass, parsed.source(), typedDamage);
         }
         return parsed;
     }
@@ -474,6 +495,63 @@ public record SkillDefinition(String id, String name, String description, String
         return pair;
     }
 
+    /** damage_by_type：{ physical: [[最小, 最大], …], chaos: [[最小, 最大], …] }，每一種都要是逐級表，而且級數一樣。 */
+    static Map<DamageType, int[]> typedTables(final String where, final YamlNode node) {
+        final Map<DamageType, int[]> map = new EnumMap<>(DamageType.class);
+        int length = -1;
+        for (final String key : node.keys()) {
+            final DamageType type = DamageType.fromTag(key);
+            if (type == null) {
+                throw new IllegalArgumentException(where + "：不認得的傷害類型「" + key + "」（physical、fire、cold、lightning、chaos）");
+            }
+            final int[] table = spellDamage(where + "." + key, node.raw(key));
+            if (table.length <= 2) {
+                throw new IllegalArgumentException(where + "." + key + "：要寫逐級表 [[最小, 最大], …]");
+            }
+            if (length >= 0 && table.length != length) {
+                throw new IllegalArgumentException(where + "." + key + "：每一種的級數要一樣");
+            }
+            length = table.length;
+            map.put(type, table);
+        }
+        if (map.isEmpty()) {
+            throw new IllegalArgumentException(where + "：至少要一種傷害");
+        }
+        return Map.copyOf(map);
+    }
+
+    /** 各種傷害的逐級表加起來（說明、網頁、平衡表看的「總傷害」）。 */
+    static int[] summedTable(final Map<DamageType, int[]> typed) {
+        int[] sum = null;
+        for (final int[] table : typed.values()) {
+            if (sum == null) {
+                sum = new int[table.length];
+            }
+            for (int i = 0; i < table.length; i++) {
+                sum[i] += table[i];
+            }
+        }
+        return sum;
+    }
+
+    /** 各種傷害占的比例（全部等級的平均傷害加總；只給說明、網頁看，真正打的照各自的表）。 */
+    static Map<DamageType, Double> typedWeights(final Map<DamageType, int[]> typed) {
+        final Map<DamageType, Double> map = new EnumMap<>(DamageType.class);
+        double total = 0;
+        for (final Map.Entry<DamageType, int[]> entry : typed.entrySet()) {
+            double sum = 0;
+            for (final int value : entry.getValue()) {
+                sum += value;
+            }
+            map.put(entry.getKey(), sum);
+            total += sum;
+        }
+        for (final Map.Entry<DamageType, Double> entry : map.entrySet()) {
+            entry.setValue(total > 0 ? entry.getValue() / total : 1.0 / map.size());
+        }
+        return Map.copyOf(map);
+    }
+
     private static void checkDamage(final String where, final int[] pair) {
         if (pair[0] < 0 || pair[1] < pair[0] || pair[1] <= 0) {
             throw new IllegalArgumentException(where + "：要寫 [最小, 最大]，最大要大於 0");
@@ -489,7 +567,7 @@ public record SkillDefinition(String id, String name, String description, String
     static final Set<String> DAMAGE_TYPE_TAGS = Set.of(Tags.PHYSICAL, Tags.FIRE, Tags.COLD, Tags.LIGHTNING, Tags.CHAOS, Tags.ELEMENTAL);
 
     /** { fire: 1.0, cold: 0.5 } 這種類型比例；normalize = true 時總和調成 1。 */
-    private static Map<DamageType, Double> weights(final String where, final YamlNode node, final boolean normalize) {
+    static Map<DamageType, Double> weights(final String where, final YamlNode node, final boolean normalize) {
         final Map<DamageType, Double> map = new EnumMap<>(DamageType.class);
         double total = 0;
         for (final String key : node.keys()) {

@@ -1167,36 +1167,33 @@ corrupt_sceptre_minion_damage:
   group: corrupt_enchant
   spawn_tags: [corruption, sceptre]
   names: [蝕變的]
-  # 2026-10-27 照 PoE2「Allies in your Presence」：圖騰也是友軍，改成給存在範圍內的友軍（召喚物、圖騰）；這次之前寫「召喚物…」、只給召喚物（不看距離）
-  text: "增加 {value}% 你存在範圍內的友軍傷害"
+  text: "增加 {value}% 召喚物傷害"   # PoE2：臨在內的盟友增加傷害
   tiers:
     - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
   mods:
-    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion, in_presence] }
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
 
 corrupt_sceptre_minion_crit_bonus:
   type: suffix
   group: corrupt_enchant
   spawn_tags: [corruption, sceptre]
   names: [蝕變的]
-  # 2026-10-27 照 PoE2「Allies in your Presence」：圖騰也是友軍，改成給存在範圍內的友軍（召喚物、圖騰）；這次之前寫「召喚物…」、只給召喚物（不看距離）
-  text: "增加 {value}% 你存在範圍內的友軍暴擊傷害加成"
+  text: "增加 {value}% 召喚物暴擊傷害加成"
   tiers:
     - { tier: 1, ilvl: 1, weight: 100, value: [10, 15] }
   mods:
-    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [minion, in_presence] }
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [minion] }
 
 corrupt_sceptre_minion_attack_speed:
   type: suffix
   group: corrupt_enchant
   spawn_tags: [corruption, sceptre]
   names: [蝕變的]
-  # 2026-10-27 照 PoE2「Allies in your Presence」：圖騰也是友軍，改成給存在範圍內的友軍（召喚物、圖騰）；這次之前寫「召喚物…」、只給召喚物（不看距離）
-  text: "增加 {value}% 你存在範圍內的友軍攻擊速度"
+  text: "增加 {value}% 召喚物攻擊速度"
   tiers:
     - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }
   mods:
-    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion, in_presence] }
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
 
 
 # ---- 珠寶（2026-10-23，照 PoE2 珠寶的腐化附魔：三種屬性 +4～6、三種元素抗性 +5～10%、混沌抗性 +3～7%）----

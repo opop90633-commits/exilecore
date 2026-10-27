@@ -674,6 +674,11 @@ public final class MonsterMechanics implements Listener {
                     default -> Particle.ELECTRIC_SPARK;
                 }, patch.x(), patch.y() + 0.1, patch.z(), patch.owner() == null ? 3 : 2 + (int) Math.round(patch.radius() * 2),
                         patch.radius() * 0.4, 0.05, patch.radius() * 0.4, 0.01);
+                if (patch.type() == AilmentType.IGNITE) {
+                    // 2026-10-27 照站長「怪物放的燃燒地板太不明顯」：畫一圈外框（玩家自己的燃燒地面不畫）
+                    tw.exilecore.skill.Fx.groundOutline(new Location(world, patch.x(), patch.y(), patch.z()), patch.radius(),
+                            tw.exilecore.skill.Fx.BURNING_EDGE);
+                }
             }
         }
     }

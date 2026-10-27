@@ -69,6 +69,7 @@ public final class ModifierText {
             case "banner" -> "戰旗";
             case "fissure" -> "裂地"; // 2026-10-26：雙震（Tectonic Slams）照 PoE2 擋裂地技能，refusal 用
             case Tags.PERSISTENT -> "常駐";
+            case Tags.BUFF -> "增益"; // 2026-10-28
             case Tags.META -> "主要寶石"; // 2026-10-22
             case Tags.SWORD -> "劍";
             case Tags.AXE -> "斧";
@@ -112,13 +113,6 @@ public final class ModifierText {
                 return "輪到" + tagName(tag.substring(IF_CONFLUX.length())) + "時："
                         + describe(new Modifier(modifier.stat(), modifier.type(), modifier.value(), rest, modifier.source()));
             }
-        }
-        if (modifier.tags().contains(tw.exilecore.stats.Tags.MINION) && modifier.tags().contains(tw.exilecore.stats.TreeMechanicKeys.IN_PRESENCE)) {
-            // 2026-10-27 照 PoE2：[minion, in_presence] 是「你存在範圍內的友軍」（召喚物、圖騰都算），不是只有召喚物
-            final java.util.Set<String> rest = new java.util.LinkedHashSet<>(modifier.tags());
-            rest.remove(tw.exilecore.stats.Tags.MINION);
-            rest.remove(tw.exilecore.stats.TreeMechanicKeys.IN_PRESENCE);
-            return "你存在範圍內的友軍：" + describe(new Modifier(modifier.stat(), modifier.type(), modifier.value(), rest, modifier.source()));
         }
         final double value = modifier.value();
         final String percent = number(Math.abs(value) * 100);
@@ -276,6 +270,7 @@ public final class ModifierText {
             case StatKeys.SKILL_ADDED_COOLDOWN -> "沒有冷卻的技能變成有 " + number(value) + " 秒冷卻時間（本來就有冷卻的照原本的冷卻）"; // 2026-10-24：以前寫「不能掛」，其實掛得上去
             case StatKeys.SKILL_FORK -> "投射物第一次打中時分裂成兩發";
             case StatKeys.FLAG_RETURNING -> "投射物停下來之後飛回你身邊，路上再打一次";
+            case tw.exilecore.stats.PinKeys.FLAG_HITS_PIN -> "擊中都會累積定身（所有傷害類型都算）"; // 2026-10-28 照 PoE2 落釘弩台
             case StatKeys.FLAG_ECHO -> "法術施放後再自動重複一次";
             case StatKeys.SKILL_REPEATS -> "近戰攻擊按一次自動再打 " + number(value) + " 下（魔力只扣一次）";
             case StatKeys.STRIKE_TARGETS -> "打擊技能多打 " + number(value) + " 個附近的敵人";
@@ -409,6 +404,7 @@ public final class ModifierText {
             case StatKeys.EXPOSURE_CHANCE -> "擊中時 " + number(value) + "% 機率讓敵人曝露（打出的元素抗性 −20%，4 秒）";
             case StatKeys.EXPOSURE_EFFECT -> scaled(modifier, "曝露效果", percent);
             case StatKeys.PIN_CHANCE -> "投射物攻擊擊中時 " + number(value) + "% 機率定身敵人";
+            case tw.exilecore.stats.PinKeys.PIN_AS_THOUGH -> "定身敵人時當作傷害更多 " + number(value) + "%"; // 2026-10-28 照 PoE2 落釘弩台
             // 2026-10-27：照實際效果（HitEffects，PoE2 Dazed）；這次之前寫「傷害更少 15%、暈眩門檻減少 30%，4 秒」
             case StatKeys.DAZE_CHANCE -> "擊中時 " + number(value) + "% 機率讓敵人眩暈（8 秒內受到的暈眩累積更多 50%）";
             case StatKeys.RAGE_ON_HIT -> "近戰攻擊擊中時獲得 " + number(value) + " 點怒氣";
@@ -522,7 +518,14 @@ public final class ModifierText {
             case "blessing.interval" -> "每 " + number(value) + " 秒一次祝福（冷卻回復速度也會加快）";
             case "shroud.interval" -> "每 " + number(value) + " 秒獲得一層幽魂護罩（最多 3 層，冷卻回復速度也會加快）；被擊中時失去一層";
             case "shroud.es_regen" -> "最近失去過幽魂護罩：每秒再生閃避值 " + number(value) + "% 的能量護盾";
-            case "barkskin.armour" -> "被敵人擊中時，獲得失去的能量護盾 " + number(value) + "% 的護甲 6 秒（總共不超過身上原本的護甲）";
+            // 2026-10-28 照 PoE2：法杖、長杖、權杖賦予的技能（寒心、屍焰爆、血鐮、銳星虹吸）
+            case tw.exilecore.stats.GrantedSkillKeys.LIFE_ON_CULL_FLAT -> "撲殺時獲得 " + number(value) + " 生命";
+            case tw.exilecore.stats.GrantedSkillKeys.AS_THOUGH_MIN -> "施加異常時當作造成至少 " + number(value) + " 點基礎傷害";
+            case tw.exilecore.stats.GrantedSkillKeys.AS_THOUGH_MAX -> "施加異常時當作造成最多 " + number(value) + " 點基礎傷害";
+            case tw.exilecore.stats.GrantedSkillKeys.FLAG_PRESENCE_CHILL -> "冰緩你存在範圍內的所有敵人";
+            case tw.exilecore.stats.GrantedSkillKeys.FLAG_VOLATILE_CORE -> "消耗屍體做出一顆追擊敵人的不穩定核心：點燃身邊的敵人，時間到時爆炸";
+            case tw.exilecore.stats.GrantedSkillKeys.FLAG_NO_RARITY_CHARGES -> "撲殺給的戰星不因敵人稀有度增加";
+            case "barkskin.armour" ->"被敵人擊中時，獲得失去的能量護盾 " + number(value) + "% 的護甲 6 秒（總共不超過身上原本的護甲）";
             default -> {
                 // 2026-10：不認得的交給昇華的說明（那邊的屬性比較齊）；都不認得也不要秀出英文代號
                 if (tw.exilecore.ascendancy.StatLines.knows(stat)) {

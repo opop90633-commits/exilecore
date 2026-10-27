@@ -548,14 +548,6 @@ public final class ConditionTracker {
     /** 臨在範圍裡有沒有盟友：自己的召喚物、同隊的玩家。 */
     private boolean allyNear(final Player player, final double radius) {
         final Location at = player.getLocation();
-        // 2026-10-27 照 PoE2：你的圖騰也是你的友軍（這次之前只看隊友、召喚物）
-        if (plugin.skills() != null) {
-            for (final tw.exilecore.skill.SkillService.TotemView totem : plugin.skills().totems(player.getUniqueId())) {
-                if (totem.feet().getWorld() == at.getWorld() && totem.feet().distanceSquared(at) <= radius * radius) {
-                    return true;
-                }
-            }
-        }
         for (final LivingEntity entity : player.getWorld().getNearbyLivingEntities(at, radius)) {
             if (entity == player || entity.isDead() || !entity.isValid() || entity.getLocation().distanceSquared(at) > radius * radius) {
                 continue;

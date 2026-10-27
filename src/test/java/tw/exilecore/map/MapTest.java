@@ -402,7 +402,7 @@ class MapTest {
 
     @Test
     void uniquesLoadAndRoll() {
-        assertEquals(127 + 21 + 5 + 2 + 6 + 30 + 2 + 91, repository.uniques().size(), "2026-10-27：＋91 件照 PoE2 的第二批傳奇（7 件追逐級）；2026-10-26：＋30 件照 PoE2 的新傳奇、永恆珠寶 2 件（英雄悲劇、不朽恨意）；2026-10-24：＋6 件戰星傳奇；2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件；2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件；星骸之海的淵鯨 3 件；2026-10-17 只能賭的踏骸之履；共通的荊棘盾棘壘）");
+        assertEquals(127 + 21 + 5 + 2 + 6 + 30 + 2 + 91 + 1, repository.uniques().size(), "2026-10-28：＋黯炎；2026-10-27：＋91 件照 PoE2 的第二批傳奇（7 件追逐級）；2026-10-26：＋30 件照 PoE2 的新傳奇、永恆珠寶 2 件（英雄悲劇、不朽恨意）；2026-10-24：＋6 件戰星傳奇；2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件；2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件；星骸之海的淵鯨 3 件；2026-10-17 只能賭的踏骸之履；共通的荊棘盾棘壘）");
         final ItemData dropped = MapDrops.unique(generator, "final", 68, new Random(5));
         assertNotNull(dropped);
         assertEquals(Rarity.UNIQUE, dropped.rarity());

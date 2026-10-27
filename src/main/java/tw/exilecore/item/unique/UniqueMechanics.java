@@ -98,6 +98,20 @@ public final class UniqueMechanics implements Listener {
         this.plugin = plugin;
         this.debuffs = debuffs;
         this.corpses = corpses;
+        if (debuffs != null) {
+            // 2026-10-28 照 PoE2 Blackflame（黯炎）：你施加的凋零同時增加受到的火焰傷害（Debuffs.typedTaken 問這裡）
+            debuffs.setWitherFireSources(this::witherAlsoFire);
+        }
+    }
+
+    /** 2026-10-28：這個玩家施加的凋零是不是也增加受到的火焰傷害（黯炎；不在線上的不算）。 */
+    private boolean witherAlsoFire(final UUID source) {
+        if (org.bukkit.Bukkit.getServer() == null) {
+            return false;
+        }
+        final Player player = plugin.getServer().getPlayer(source);
+        return player != null && plugin.players().find(source).isPresent()
+                && StatKeys.flag(plugin.players().sheet(player), UniqueStats.WITHERED_FIRE_TAKEN);
     }
 
     private long now() {
@@ -357,6 +371,7 @@ public final class UniqueMechanics implements Listener {
             ground(player, state, sheet, now);
             decompose(player, sheet);
             forever(player, sheet, now);
+            witherWhileIgnited(player, sheet, now);
             lifeLoss(player, state, sheet, now);
             devour(player, state, sheet, now);
         }
@@ -546,6 +561,27 @@ public final class UniqueMechanics implements Listener {
                     debuffs.apply(target, new Debuffs.Debuff(debuff.id(), debuff.source(), FOREVER, debuff.taken(), debuff.selfOnly(),
                             debuff.tag(), debuff.mods(), debuff.slow()));
                 }
+            }
+        }
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Blackflame（黯炎）：被點燃的敵人身上你施加的凋零不會失效。每半秒檢查一次：身上有點燃（誰點的都算，
+     * 照原作「Ignited enemies」）的敵人，你的凋零往後延半秒（點燃期間暫停計時，點燃結束後照剩下的時間繼續倒數）。
+     */
+    private void witherWhileIgnited(final Player player, final StatSheet sheet, final long now) {
+        final AilmentService ailments = plugin.ailments();
+        if (ailments == null || !StatKeys.flag(sheet, UniqueStats.WITHERED_NO_EXPIRE_IGNITED)) {
+            return;
+        }
+        final UUID source = player.getUniqueId();
+        for (final UUID target : List.copyOf(debuffs.targets())) {
+            if (!debuffs.hasWitheredFrom(target, source, now)) {
+                continue;
+            }
+            if (plugin.getServer().getEntity(target) instanceof LivingEntity living && !(living instanceof Player) // 競技場裡對玩家不延（跟司祭法衣一樣）
+                    && ailments.ignite(living) != null && source.equals(ailments.ignite(living).source())) { // 2026-10-28 站長：只算「被你點燃」的敵人
+                debuffs.holdWithered(target, source, now, PERIOD);
             }
         }
     }

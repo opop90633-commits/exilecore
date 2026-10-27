@@ -41,7 +41,7 @@ public final class BossSkillConfig {
     public record Settings(double gap, double firstDelay, double warnRange, String gapCloser, double chaseDistance, double chaseSeconds,
                            double phasePause, double phaseUnlock, double bossGap, double bossFirstDelay, double bossCooldown,
                            double bossMinTelegraph) {
-        public static final Settings DEFAULT = new Settings(1.5, 2.0, 24, null, 9, 2.0, 1.5, 3.0, 1.0, 1.5, 0.8, 1.0);
+        public static final Settings DEFAULT = new Settings(1.5, 2.0, 24, null, 9, 2.0, 1.5, 3.0, 0.6, 1.5, 0.6, 1.0); // 2026-10-28 Boss 空檔 1.0 → 0.6、冷卻倍率 0.8 → 0.6
 
         /** 這一招的前搖（tick）：Boss 至少 boss_min_telegraph 秒（2026-10：不要有幾乎瞬發、來不及反應的招）。 */
         public long telegraphTicks(final BossSkill skill, final boolean boss) {

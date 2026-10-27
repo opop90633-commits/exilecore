@@ -96,6 +96,25 @@ public final class SkillConfig {
         return rods.get(skillId);
     }
 
+    /** 2026-10-28 照 PoE2 Siege Ballista：弩彈落地打一小圈之後再炸開一圈（skills.yml 的 cascade）。 */
+    private Map<String, CascadeSpec> cascades = Map.of();
+
+    /**
+     * 2026-10-28 照 PoE2 Siege Ballista（衝霄弩台）：每一發弩彈落地先打一小圈（技能本身的 impact 半徑、效益、轉換），
+     * 過 after 秒再炸開一圈（這裡的半徑、效益、轉換；輔助、品質照樣吃）。
+     *
+     * @param radius        爆炸半徑（格，吃範圍加成）
+     * @param after         落地後幾秒炸
+     * @param effectiveness 爆炸的傷害效益（逐級）
+     * @param conversion    爆炸的物理轉換（取代技能本身的 convert）
+     */
+    public record CascadeSpec(double radius, double after, Scaled effectiveness, Map<tw.exilecore.stats.DamageType, Double> conversion) {
+    }
+
+    public CascadeSpec cascade(final String skillId) {
+        return cascades.get(skillId);
+    }
+
     /**
      * 留在地上的彈（skills.yml 的 lodge）。
      *
@@ -249,6 +268,7 @@ public final class SkillConfig {
         final Map<String, LodgeSpec> parsedLodges = new HashMap<>();
         final Map<String, RainSpec> parsedRains = new HashMap<>();
         final Map<String, RodSpec> parsedRods = new HashMap<>();
+        final Map<String, CascadeSpec> parsedCascades = new HashMap<>();
         final Map<String, ChargeCost> parsedChargeCosts = new HashMap<>();
         final Map<String, Integer> parsedUses = new HashMap<>();
         final Map<String, ResourceSpec> parsedResources = new HashMap<>();
@@ -306,6 +326,12 @@ public final class SkillConfig {
                 final YamlNode r = node.node("rod");
                 parsedRods.put(id, new RodSpec(Math.max(0.5, r.decimal("duration", 20)), Math.max(1, r.integer("max", 10)),
                         Math.max(1, r.integer("chains", 8)), Math.max(0.05, r.decimal("charge", 1.0))));
+            }
+            if (node.has("cascade")) { // 2026-10-28 照 PoE2 Siege Ballista
+                final YamlNode c = node.node("cascade");
+                parsedCascades.put(id, new CascadeSpec(Math.max(0.3, c.decimal("radius", 1.4)), Math.max(0, c.decimal("after", 0.3)),
+                        Scaled.parse(c.path() + ".effectiveness", c.raw("effectiveness"), 1),
+                        c.has("convert") ? SkillDefinition.weights(c.path() + ".convert", c.node("convert"), false) : Map.of()));
             }
             if (node.has("charge_cost")) {
                 final YamlNode c = node.node("charge_cost");
@@ -514,6 +540,7 @@ public final class SkillConfig {
         this.lodges = Map.copyOf(parsedLodges);
         this.rains = Map.copyOf(parsedRains);
         this.rods = Map.copyOf(parsedRods);
+        this.cascades = Map.copyOf(parsedCascades);
         this.chargeCosts = Map.copyOf(parsedChargeCosts);
         this.cooldownUses = parsedUses;
         this.resources = parsedResources;

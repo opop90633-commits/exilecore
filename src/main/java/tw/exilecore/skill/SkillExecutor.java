@@ -1032,6 +1032,16 @@ final class SkillExecutor {
     private Unearth unearth;
 
     /** 2026-10-27 照 PoE2 Unearth（掘骸）：骨刺之後把屍體變骨構體（見 {@link Unearth}）。 */
+    private VolatileCores volatileCores;
+
+    /** 2026-10-28 照 PoE2：屍焰爆的核心。 */
+    private VolatileCores volatileCores() {
+        if (volatileCores == null) {
+            volatileCores = new VolatileCores(plugin, targets, damage, visuals);
+        }
+        return volatileCores;
+    }
+
     private Unearth unearth() {
         if (unearth == null) {
             unearth = new Unearth(plugin);
@@ -1107,9 +1117,17 @@ final class SkillExecutor {
         } else {
             // 2026-10-27 照 PoE2（召霆矢這類射到地上再落下的投射物技能）：多的投射物各射一支、各落一道，平均散在準心周圍；
             // 這次之前只落一道（多一發投射物的輔助只有懲罰沒有效果）
+            // 2026-10-28 照 PoE2：一次落下好幾發的（impact 的 count：衝霄弩台 3 發、落釘弩台一輪 4 擊）照 count＋投射物加成；
+            // spread 有寫就照寫的散開（吃範圍加成），沒寫照半徑估
             final int count = build.definition().tags().contains(tw.exilecore.stats.Tags.PROJECTILE) ? Math.max(1, build.projectiles()) : 1;
-            final double spread = Math.max(1.5, build.radius() * 1.2);
+            final double configured = build.definition().params().spread();
+            final double spread = configured > 0 ? configured * build.areaScale() : Math.max(1.5, build.radius() * 1.2);
             final double phase = plugin.random().nextDouble() * Math.PI * 2;
+            // 2026-10-28 照 PoE2 Siege Ballista（衝霄弩台）：每發弩彈落地打一小圈，過一下再炸開一圈（cascade）
+            final SkillConfig.CascadeSpec cascade = config == null ? null : config.cascade(id);
+            final SkillProfile blast = cascade == null ? null : cascadeProfile(build.profile(), cascade, build.level());
+            final double blastRadius = cascade == null ? 0 : cascade.radius() * build.areaScale();
+            final int blastDelay = cascade == null ? 0 : (int) Math.max(1, Math.round(cascade.after() * 20));
             for (int i = 0; i < count; i++) {
                 final Location at = center.clone();
                 if (i > 0) {
@@ -1117,9 +1135,20 @@ final class SkillExecutor {
                     at.add(Math.cos(angle) * spread, 0, Math.sin(angle) * spread);
                 }
                 zones.addImpact(origin.owner(), at, build.radius(), build.profile(), build.definition().visual(), delay);
+                if (blast != null) {
+                    zones.addImpact(origin.owner(), at, blastRadius, blast, build.definition().visual(), delay + blastDelay);
+                }
             }
         }
         visuals.cast(build.definition().visual(), origin.eye());
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Siege Ballista：弩彈落地之後的爆炸——同一個技能（輔助、品質、加成照吃），效益換成爆炸的、物理轉換換成爆炸的。
+     */
+    static SkillProfile cascadeProfile(final SkillProfile bolt, final SkillConfig.CascadeSpec spec, final int level) {
+        return new SkillProfile(bolt.id(), bolt.tags(), spec.effectiveness().at(level), bolt.spellDamage(), bolt.spellDamageMax(),
+                spec.conversion().isEmpty() ? bolt.conversion() : spec.conversion(), bolt.local());
     }
 
     /**
@@ -1303,6 +1332,13 @@ final class SkillExecutor {
         }
         if (origin.owner() != null) {
             plugin.players().get(origin.owner()).markRecent(tw.exilecore.stats.Recently.CORPSE, plugin.getServer().getCurrentTick()); // 「最近消耗過屍體」
+        }
+        if (origin.owner() != null && VolatileCores.is(build.profile().effective(plugin.players().sheet(origin.owner())))) {
+            // 2026-10-28 照 PoE2 Volatile Dead（屍焰爆）：屍體變成一顆會追敵人、點燃身邊敵人、5 秒後才爆炸的核心；這次之前直接引爆
+            for (int i = 0; i < VolatileCores.cores(1); i++) {
+                volatileCores().spawn(origin.owner(), build, new Location(origin.world(), corpse.x(), corpse.y(), corpse.z()));
+            }
+            return;
         }
         final Location center = new Location(origin.world(), corpse.x(), corpse.y() + 0.3, corpse.z());
         final double radius = build.radius();

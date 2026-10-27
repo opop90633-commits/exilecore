@@ -2608,8 +2608,7 @@
    "type": "FLAT",
    "scale": 0.016666666666666666,
    "tags": [
-    "minion",
-    "in_presence"
+    "minion"
    ]
   }
  ],

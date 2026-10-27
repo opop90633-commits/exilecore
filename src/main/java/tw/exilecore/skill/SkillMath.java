@@ -23,8 +23,12 @@ public final class SkillMath {
     public static final double VANILLA_BLOCK_REACH = 4.5;
     /** 按住左鍵時兩次揮手最多隔幾 tick（客戶端每 tick 揮一次；伺服器偶爾一個 tick 收到兩下、下一個 tick 沒有）。 */
     public static final int HOLD_SWING_GAP = 3;
-    /** 右鍵、丟東西帶出來的揮手：同一個或下一個 tick 的「左鍵點空氣」不算（兩個封包偶爾會分到相鄰的兩個 tick）。 */
-    public static final int STRAY_SWING_WINDOW = 1;
+    /**
+     * 右鍵、丟東西帶出來的揮手：之後幾個 tick 內的「左鍵點空氣」不算。
+     * 2026-10-27 照站長「放技能偶爾會多按一下左鍵」：1 → 3（150 毫秒）。網路延遲抖動時右鍵與揮手的封包會隔兩三個 tick 才到，
+     * 以前只擋同一個與下一個 tick，晚到的揮手被當成真的左鍵、放出左鍵的技能。按住左鍵（正在挖）的揮手不受影響。
+     */
+    public static final int STRAY_SWING_WINDOW = 3;
 
     private SkillMath() {
     }

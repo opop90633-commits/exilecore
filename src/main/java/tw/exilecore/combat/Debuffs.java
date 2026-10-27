@@ -232,12 +232,68 @@ public final class Debuffs {
         }
         double increased = 0;
         for (final Debuff debuff : list) {
-            if (debuff.active(now) && type.tag().equals(debuff.tag())
+            if (debuff.active(now) && (type.tag().equals(debuff.tag()) || witheredAlsoFire(debuff, type))
                     && (!debuff.selfOnly() || attacker != null && debuff.source().equals(attacker))) {
                 increased += debuff.taken();
             }
         }
         return increased;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Blackflame（黯炎）：施加者有「你施加的凋零同時增加受到的火焰傷害」時，凋零（每層受到的混沌傷害增加）
+     * 也以同樣的數值增加受到的火焰傷害。這次之前凋零只加混沌。
+     */
+    boolean witheredAlsoFire(final Debuff debuff, final tw.exilecore.stats.DamageType type) {
+        return type == tw.exilecore.stats.DamageType.FIRE && debuff.id().startsWith(WITHERED_PREFIX)
+                && tw.exilecore.stats.DamageType.CHAOS.tag().equals(debuff.tag()) && debuff.source() != null
+                && witherFireSources.test(debuff.source());
+    }
+
+    /** 凋零減益代號的前綴（HitEffects.addWithered：withered.0～withered.9）。 */
+    public static final String WITHERED_PREFIX = "withered.";
+
+    /** 2026-10-28：誰施加的凋零也增加受到的火焰傷害（傳奇模組掛上來；預設沒有人）。 */
+    private java.util.function.Predicate<UUID> witherFireSources = source -> false;
+
+    public void setWitherFireSources(final java.util.function.Predicate<UUID> sources) {
+        this.witherFireSources = sources == null ? source -> false : sources;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Blackflame（黯炎）：被點燃的敵人身上 source 施加的凋零不會失效——每次檢查把還沒結束的凋零往後延 extra tick
+     * （等於點燃期間暫停計時，點燃結束後照剩下的時間繼續倒數）。回傳延了幾層。
+     */
+    public int holdWithered(final UUID target, final UUID source, final long now, final long extra) {
+        final List<Debuff> list = entries.get(target);
+        if (list == null || source == null || extra <= 0) {
+            return 0;
+        }
+        int held = 0;
+        for (int i = 0; i < list.size(); i++) {
+            final Debuff debuff = list.get(i);
+            if (debuff.active(now) && debuff.id().startsWith(WITHERED_PREFIX) && source.equals(debuff.source())
+                    && debuff.untilTick() < Long.MAX_VALUE / 8) { // 無限的（司祭法衣）不用延
+                list.set(i, new Debuff(debuff.id(), debuff.source(), debuff.untilTick() + extra, debuff.taken(), debuff.selfOnly(),
+                        debuff.tag(), debuff.mods(), debuff.slow()));
+                held++;
+            }
+        }
+        return held;
+    }
+
+    /** 2026-10-28：這個目標身上有沒有 source 施加、還沒結束的凋零。 */
+    public boolean hasWitheredFrom(final UUID target, final UUID source, final long now) {
+        final List<Debuff> list = entries.get(target);
+        if (list == null || source == null) {
+            return false;
+        }
+        for (final Debuff debuff : list) {
+            if (debuff.active(now) && debuff.id().startsWith(WITHERED_PREFIX) && source.equals(debuff.source())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

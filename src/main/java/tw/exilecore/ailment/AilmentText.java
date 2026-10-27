@@ -35,6 +35,9 @@ public final class AilmentText {
             more(parts, "機率", effective.more(StatKeys.IGNITE_CHANCE, context));
             multiplier(parts, "傷害", effective.apply(StatKeys.IGNITE_MAGNITUDE, 1.0, context));
             increased(parts, "持續", effective.increased(StatKeys.IGNITE_DURATION, context) + effective.increased(StatKeys.AILMENT_DURATION, context));
+            if (AilmentService.chaosIgnite(effective)) {
+                parts.add("造成混沌傷害而非火焰傷害"); // 2026-10-28 照 PoE2 Blackflame（黯炎）
+            }
             add(lines, AilmentType.IGNITE, parts);
         }
         if (!noElemental && expected.get(DamageType.COLD) > 0) {

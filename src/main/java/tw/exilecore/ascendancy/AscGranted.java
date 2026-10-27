@@ -772,7 +772,9 @@ final class AscGranted implements Listener {
             d.setBillboard(Display.Billboard.CENTER);
             d.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(), new org.joml.Quaternionf(),
                     new org.joml.Vector3f(0.45f, 0.45f, 0.45f), new org.joml.Quaternionf()));
+            d.setVisibleByDefault(false); // 2026-10-27 照站長：痕跡只有自己看得到（別人撿不到，看到只是礙眼）
         });
+        owner.showEntity(plugin, display);
         final boolean reappear = AscendancyEffects.has(effects.sheet(owner), "remnant.reappear_ms"); // 2026-10-26：跟灌注殘骸同一個（風暴回憶）
         remnants.add(new Remnant(owner.getUniqueId(), at, kind, value, now() + ticks, display, reappear));
     }

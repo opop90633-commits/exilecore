@@ -67,10 +67,10 @@ settings:
   #   以前 Boss 跟一般怪物共用 gap、first_delay，現在 Boss 用下面的 boss_ 開頭那幾個，路上的怪不變。
   gap: 1.5             # 一般怪物（詞綴、種類給的招式）兩招之間至少隔幾秒
   first_delay: 2.0     # 一般怪物出現後幾秒才開始用招
-  boss_gap: 1.0        # Boss 兩招之間至少隔幾秒（Boss 之間普攻照常；場地危害可以落在這段空檔裡）。2026-10：1.5 → 1.0
+  boss_gap: 0.6        # Boss 兩招之間至少隔幾秒（Boss 之間普攻照常；場地危害可以落在這段空檔裡）。2026-10：1.5 → 1.0；2026-10-28 站長「所有 Boss 出招更頻繁」1.0 → 0.6
   boss_first_delay: 1.5  # Boss 出現、重置、一陣子沒人之後重新看到人，幾秒才開始用招。2026-10：2.0 → 1.5
   boss_min_telegraph: 1.0  # 2026-10：Boss 招式的前搖至少幾秒（寫得比較短的招照這個；不要有來不及反應的招）
-  boss_cooldown: 0.8   # Boss 招式冷卻的倍率（下面寫的 cooldown 再乘這個；場地危害照 maps.yml 的 every，不吃這個）。2026-10：1 → 0.8
+  boss_cooldown: 0.6   # Boss 招式冷卻的倍率（下面寫的 cooldown 再乘這個；場地危害照 maps.yml 的 every，不吃這個）。2026-10：1 → 0.8；2026-10-28 站長「所有 Boss 出招更頻繁」0.8 → 0.6
   # 2026-10：有翻滾之後，這幾種 Boss 出招再緊一點——兩招之間的空檔（boss_gap）與招式冷卻再乘這個倍率（1 = 不變，越小越快；0.3～2）。
   #   前搖（telegraph、boss_min_telegraph）、落下的延遲、彈道速度都沒動：每一招看得到、躲得掉的時間跟以前一樣，只是喘息變短。
   #   一般地圖 Boss、劇情 Boss 不在這裡，照上面的 boss_gap／boss_cooldown。

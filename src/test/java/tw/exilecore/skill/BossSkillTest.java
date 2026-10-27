@@ -55,14 +55,14 @@ class BossSkillTest {
         // Boss 跟一般怪物分開（2026-10：Boss 出招快一點，路上的怪不變）
         assertEquals(1.5, settings.gap(), 1e-9, "一般怪物的空檔不變");
         assertEquals(2.0, settings.firstDelay(), 1e-9);
-        assertEquals(1.0, settings.bossGap(), 1e-9, "Boss 的空檔 1.5 → 1");
+        assertEquals(0.6, settings.bossGap(), 1e-9, "Boss 的空檔 1.5 → 1 → 0.6（2026-10-28）");
         assertEquals(1.5, settings.bossFirstDelay(), 1e-9, "Boss 剛看到人的等待 2 → 1.5");
-        assertEquals(0.8, settings.bossCooldown(), 1e-9, "Boss 的招式冷卻 × 0.8");
-        assertEquals(1.0, settings.gapFor(true), 1e-9);
+        assertEquals(0.6, settings.bossCooldown(), 1e-9, "Boss 的招式冷卻 × 0.6（2026-10-28）");
+        assertEquals(0.6, settings.gapFor(true), 1e-9);
         assertEquals(1.5, settings.gapFor(false), 1e-9);
         assertEquals(1.5, settings.firstDelayFor(true), 1e-9);
         assertEquals(2.0, settings.firstDelayFor(false), 1e-9);
-        assertEquals(0.8, settings.cooldownFor(true), 1e-9);
+        assertEquals(0.6, settings.cooldownFor(true), 1e-9);
         assertEquals(1.0, settings.cooldownFor(false), 1e-9, "一般怪物照招式寫的冷卻");
         assertEquals(BossSkillConfig.Settings.DEFAULT, new BossSkillConfig.Settings(settings.gap(), settings.firstDelay(), settings.warnRange(), null,
                 settings.chaseDistance(), settings.chaseSeconds(), settings.phasePause(), settings.phaseUnlock(), settings.bossGap(),
@@ -186,7 +186,7 @@ class BossSkillTest {
                 """));
         assertNull(bosses.gapCloser());
         assertEquals(3, bosses.settings().gap(), 1e-9);
-        assertEquals(1.0, bosses.settings().gapFor(true), 1e-9, "改一般怪物的 gap 不影響 Boss（沒寫 boss_gap 用預設）");
+        assertEquals(0.6, bosses.settings().gapFor(true), 1e-9, "改一般怪物的 gap 不影響 Boss（沒寫 boss_gap 用預設）");
         assertEquals(3, bosses.settings().gapFor(false), 1e-9);
         assertEquals("rush", bosses.kitFor("Zombie", List.of()).getFirst().skill().id(), "生物代號不分大小寫");
         // Boss 專用的節奏（2026-10）

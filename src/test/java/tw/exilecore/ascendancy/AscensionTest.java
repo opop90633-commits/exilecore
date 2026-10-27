@@ -14,6 +14,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -262,5 +263,18 @@ class AscensionTest {
         assertNull(marauder(progress, 50).chosen());
         assertTrue(marauder(progress, 50).canChoose());
         assertEquals(List.of(), Ascension.parse(" , "));
+    }
+
+    /** 2026-10-27 照站長：血術士的占血術自帶（選了就配好、不花點數、不能退）。 */
+    @Test
+    void sanguimancyIsGrantedForFree() {
+        final Map<String, String> progress = new java.util.HashMap<>();
+        progress.put(Ascension.CHOSEN, "bloodmage");
+        final Ascension ascension = new Ascension(config, progress, "witch", 40);
+        final AscendancyConfig.Node node = ascension.chosen().node("sanguimancy");
+        assertTrue(node.granted());
+        assertTrue(ascension.isAllocated(node), "沒有點數也已經配好");
+        assertEquals(0, ascension.spent());
+        assertNotNull(ascension.refundProblem(node), "不能退");
     }
 }

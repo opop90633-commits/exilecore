@@ -197,6 +197,13 @@ public final class Ascension {
             int spent = 0;
             final Set<String> ids = new LinkedHashSet<>();
             final List<String> stored = parse(progress.get(NODES));
+            // 2026-10-27：自帶的天賦（granted：直接接在起點、不花點數）一開始就配好
+            for (final AscendancyConfig.Node node : ascendancy.nodes()) {
+                if (node.granted()) {
+                    ids.add(node.id());
+                    list.add(node);
+                }
+            }
             // 2026-10-27：一直重掃到沒有新的接得上為止（有環的樹退掉中間一個之後，記錄的順序會變成「後面的先出現」）；
             // 這次之前只掃一遍，跟 refundProblem 的判斷不一致，接在環另一邊的天賦會默默不見
             boolean grew = true;
@@ -213,7 +220,7 @@ public final class Ascension {
                     grew = true;
                 }
             }
-            list.sort(java.util.Comparator.comparingInt(node -> stored.indexOf(node.id()))); // 還是照配的順序
+            list.sort(java.util.Comparator.comparingInt(node -> node.granted() ? -1 : stored.indexOf(node.id()))); // 還是照配的順序（自帶的排最前面）
         }
         allocated = List.copyOf(list);
         return allocated;
@@ -373,6 +380,9 @@ public final class Ascension {
     public String refundProblem(final AscendancyConfig.Node node) {
         if (!isAllocated(node)) {
             return "這個昇華天賦沒有配";
+        }
+        if (node.granted()) {
+            return "這個天賦是昇華職業自帶的，不能退";
         }
         final List<AscendancyConfig.Node> stranded = strandedWithout(node);
         if (!stranded.isEmpty()) {

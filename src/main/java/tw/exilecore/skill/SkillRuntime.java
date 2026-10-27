@@ -73,6 +73,34 @@ final class SkillRuntime {
     long landedAt = -1_000;
     /** 冷卻中的技能：技能代號 → 哪個 tick 才能再放。 */
     final Map<String, Long> cooldowns = new HashMap<>();
+    /**
+     * 2026-10-28 照 PoE2 Emergency Reload：被急裝強化的弩矢——技能代號 → 還剩幾發（每個彈匣＝那個技能的彈匣大小）、
+     * 到哪個 tick 為止、更多幾倍（0.33 = 更多 33%）。這次之前急裝是 6 秒內所有弩攻擊都更多 x%（不限發數）。
+     */
+    final Map<String, Integer> empoweredBolts = new HashMap<>();
+    long empoweredUntil = -1;
+    double empoweredMore;
+
+    /** 用掉一發被急裝強化的弩矢：這個技能還有、而且還沒到期回傳 true（到期或全部用完就清掉）。 */
+    boolean takeEmpoweredBolt(final String skillId, final long now) {
+        if (now >= empoweredUntil) {
+            empoweredBolts.clear();
+            return false;
+        }
+        final int left = empoweredBolts.getOrDefault(skillId, 0);
+        if (left <= 0) {
+            return false;
+        }
+        if (left == 1) {
+            empoweredBolts.remove(skillId);
+        } else {
+            empoweredBolts.put(skillId, left - 1);
+        }
+        if (empoweredBolts.isEmpty()) {
+            empoweredUntil = -1;
+        }
+        return true;
+    }
     /** 2026-10-26（PoE2 的「冷卻 5 秒（3 次）」）：可以存好幾次的技能，每一次各自什麼時候好（照順序一次充一個）。 */
     final Map<String, long[]> cooldownSlots = new HashMap<>();
     /** 技能可以存幾次冷卻（SkillService 設定；沒有就是 1）。 */

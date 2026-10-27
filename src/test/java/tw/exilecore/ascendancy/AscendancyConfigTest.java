@@ -126,8 +126,8 @@ class AscendancyConfigTest {
             for (final AscendancyConfig.Cell cell : layout) {
                 final AscendancyConfig.Node node = cell.node();
                 assertTrue(cell.depth() < AscendancyConfig.MAX_DEPTH, node.id());
-                assertEquals(node.option() || !node.unlock().isEmpty() ? 0 : 1, node.cost(),
-                        node.id() + "：一個 1 點（選項、2026-10-27 聖潔一統這種 unlock 的不花點數）");
+                assertEquals(node.option() || !node.unlock().isEmpty() || "sanguimancy".equals(node.id()) ? 0 : 1, node.cost(),
+                        node.id() + "：一個 1 點（選項、2026-10-27 聖潔一統這種 unlock 的不花點數；占血術照站長自帶免費）");
                 cost += node.cost();
                 assertTrue(node.choice() || !node.lines().isEmpty(), node.id() + "：說明行照原作寫");
                 for (final String line : node.lines()) {

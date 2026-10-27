@@ -1107,7 +1107,9 @@ final class AscPaths implements Listener {
             d.setBillboard(Display.Billboard.CENTER);
             d.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(), new org.joml.Quaternionf(),
                     new org.joml.Vector3f(0.6f, 0.6f, 0.6f), new org.joml.Quaternionf()));
+            d.setVisibleByDefault(false); // 2026-10-27 照站長：只有自己看得到
         });
+        player.showEntity(plugin, display);
         own.bells.add(new Bell(at, display, now + BELL_TICKS));
         at.getWorld().playSound(at, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.7f, 0.6f);
     }

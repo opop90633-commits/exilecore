@@ -913,6 +913,36 @@ public final class OriginalSkills implements Listener {
         return left == null ? 0 : Math.max(0, max - left);
     }
 
+    /**
+     * 2026-10-28：資源條上的熱度（有連射寶石、熱度大於 0 或過熱中才顯示；其他回傳空字串）。
+     * 這次之前熱度沒有地方看，只有射的時候動作列閃一下彈匣剩幾發。
+     */
+    public String heatHud(final Player player) {
+        final SkillRuntime runtime = service.runtime(player);
+        final int level = gemLevel(player, RAPID);
+        if (runtime == null || level <= 0) {
+            return "";
+        }
+        final Long done = runtime.reloadDone.get(RAPID);
+        if (done != null) {
+            return heatText(0, 0, Math.max(0, done - now()));
+        }
+        final int max = service.config().clip(RAPID, level);
+        return heatText(heat(player), max, -1);
+    }
+
+    /** 熱度那一段的文字：過熱（overheatTicks ≥ 0）寫剩幾秒，不然寫 熱度 x/最大；0 點不顯示。 */
+    static String heatText(final int heat, final int max, final long overheatTicks) {
+        if (overheatTicks >= 0) {
+            return String.format(java.util.Locale.ROOT, "<#ff3b1f>過熱 <white>%.1f<gray> 秒", overheatTicks / 20.0);
+        }
+        if (heat <= 0 || max <= 0) {
+            return "";
+        }
+        final String colour = heat * 4 >= max * 3 ? "<#ff3b1f>" : heat * 2 >= max ? "<#ff8a3d>" : "<#ffc46b>";
+        return colour + "熱度 <white>" + heat + "<gray>/" + max;
+    }
+
     /** 用掉 amount 點熱度（不夠、過熱中都不用）；用掉了回傳 true。 */
     boolean consumeHeat(final Player player, final int amount) {
         final SkillRuntime runtime = service.runtime(player);
@@ -951,6 +981,7 @@ public final class OriginalSkills implements Listener {
         } else {
             runtime.ammo.put(RAPID, next);
         }
+        plugin.players().display(player, plugin.players().get(player)); // 2026-10-28：資源條上的熱度跟著退
     }
 
     // ---- 墜星熊吼 ----

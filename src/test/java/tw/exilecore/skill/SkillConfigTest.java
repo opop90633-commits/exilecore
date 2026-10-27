@@ -87,6 +87,10 @@ class SkillConfigTest {
                 // 2026-10-26 照 PoE2：印記不算法術（詛咒才是），種類寫「印記」
                 assertFalse(definition.tags().contains(Tags.SPELL) || definition.tags().contains(Tags.ATTACK), definition.id());
                 assertEquals("印記", definition.typeName(), definition.id());
+            } else if (!definition.isAttack() && definition.tags().contains(Tags.BUFF)) {
+                // 2026-10-28 照 PoE2：增益技能（急裝）不算法術，種類寫「增益」
+                assertFalse(definition.tags().contains(Tags.SPELL), definition.id());
+                assertEquals("增益", definition.typeName(), definition.id());
             } else {
                 assertTrue(definition.tags().contains(definition.isAttack() ? Tags.ATTACK : Tags.SPELL), definition.id());
                 assertEquals(definition.isAttack() ? "攻擊" : "法術", definition.typeName(), definition.id());

@@ -15,7 +15,7 @@ import java.util.UUID;
  * 戰鬥資源血條（2026-10）：畫面上方一欄（跟 Boss 血條同一個位置），讓動作列不要擠成一長串。
  * <ul>
  *   <li>進度條本身是<b>怒氣</b>（分成 10 格；滿了變紅、消退中變白）</li>
- *   <li>條上的文字：怒氣多少、連擊、戰星（銳星、怒星、磐星）、元素灌注、獸性／狂暴</li>
+ *   <li>條上的文字：怒氣多少、連擊、戰星（銳星、怒星、磐星）、元素灌注、獸性／狂暴、弩的熱度（2026-10-28）</li>
  *   <li>這些都沒有的時候整欄藏起來，平常不佔位置</li>
  * </ul>
  * 生命、護盾、魔力、等級、身上的異常、臨時提示留在動作列。
@@ -49,6 +49,10 @@ public final class ResourceBar {
                         rage >= rageMax ? " <#ff3b1f>MAX" : decaying ? " <gray>消退中" : ""));
             }
             parts.addAll(resources.otherParts(player));
+            final String heat = plugin.skills().originals().heatHud(player); // 2026-10-28：弩的熱度（連射）
+            if (!heat.isEmpty()) {
+                parts.add(heat);
+            }
         }
         if (plugin.combat() != null && plugin.combat().charges() != null) {
             final String charges = plugin.combat().charges().hudText(player);

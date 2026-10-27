@@ -51,9 +51,11 @@ class HoldToCastTest {
         assertTrue(SkillMath.airClick(-1, -1, 200), "沒按右鍵、沒丟東西：左鍵點空氣照算");
         assertFalse(SkillMath.airClick(200, -1, 200), "同一個 tick 按了右鍵：那一下揮手是右鍵帶出來的");
         assertFalse(SkillMath.airClick(199, -1, 200), "右鍵與揮手的封包分到相鄰兩個 tick 也不算");
-        assertTrue(SkillMath.airClick(198, -1, 200), "隔兩個 tick：是真的左鍵");
+        assertFalse(SkillMath.airClick(198, -1, 200), "2026-10-27：網路抖動晚兩三個 tick 到的揮手也不算");
+        assertTrue(SkillMath.airClick(196, -1, 200), "隔四個 tick：是真的左鍵");
         assertFalse(SkillMath.airClick(-1, 200, 200), "丟東西（Q）也會揮手");
         assertFalse(SkillMath.airClick(-1, 199, 200));
+        assertFalse(SkillMath.airClick(-1, 197, 200));
         assertTrue(SkillMath.airClick(150, 150, 200));
     }
 }

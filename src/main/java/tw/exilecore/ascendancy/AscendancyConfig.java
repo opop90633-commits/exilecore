@@ -128,6 +128,13 @@ public final class AscendancyConfig {
             return requires.isEmpty();
         }
 
+        /**
+         * 2026-10-27 照站長（血術士的占血術免費）：直接接在起點、不花點數、沒有 unlock 的天賦——選了這個昇華職業就自動配好，不能退。
+         */
+        public boolean granted() {
+            return cost == 0 && root() && unlock.isEmpty() && !option();
+        }
+
         /** 「選一個」天賦的選項。 */
         public boolean option() {
             return optionOf != null;
@@ -675,8 +682,8 @@ public final class AscendancyConfig {
                 if (node.cost() != 0) {
                     problems.add(nodeWhere + ".cost：選項不花點數（點數花在「選一個」的天賦上）");
                 }
-            } else if (node.cost() < 1 && (node.unlock().isEmpty() || node.cost() < 0)) {
-                problems.add(nodeWhere + ".cost：至少 1 點（寫了 unlock 的可以是 0）");
+            } else if (node.cost() < 1 && (node.unlock().isEmpty() && !node.root() || node.cost() < 0)) {
+                problems.add(nodeWhere + ".cost：至少 1 點（寫了 unlock 的、直接接在起點的可以是 0）");
             }
             for (final String required : node.unlock()) {
                 if (ascendancy.node(required) == null || required.equals(node.id()) || ascendancy.node(required).option()) {

@@ -3485,6 +3485,7 @@ ascendancies:
       sanguimancy:
         name: 占血術          # Sanguimancy
         notable: true
+        cost: 0   # 2026-10-27 照站長：免費、選了血術士就自動配好（原作要 1 點）
         icon: ENCHANTED_BOOK
         lines:
           - 技能獲得等同基礎魔力消耗的基礎生命消耗

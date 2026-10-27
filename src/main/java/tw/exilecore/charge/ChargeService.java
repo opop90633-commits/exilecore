@@ -398,6 +398,18 @@ public final class ChargeService implements Listener {
      * 獲得一顆，再擲「多一顆同種的」（2026-10，照 PoE2 的「當你獲得一顆 X 時，有 N% 機率多一顆」）：
      * 機率 = 屬性表的 charge.extra 與 charge.extra.代號（百分比點數）＋ localExtra（輔助寶石只對被輔助的技能，0–1）。多出來的那顆不會再擲。
      */
+    /**
+     * 「多一顆」的機率 chance（1 = 100%）實際多幾顆：整數的部分一定給，剩下的小數部分擲一次（roll 是 0～1 的亂數）。
+     * 2026-10-28 照 PoE2：156% = 一定多 1 顆、56% 再多 1 顆；這次之前超過 100% 只算 100%。純函式（測試用）。
+     */
+    public static int extraCount(final double chance, final double roll) {
+        if (!(chance > 0)) {
+            return 0;
+        }
+        final int sure = (int) Math.floor(chance + 1e-9);
+        return sure + (roll < chance - sure ? 1 : 0);
+    }
+
     private boolean gainRolled(final Player player, final ChargeType type, final StatSheet sheet, final double localExtra,
                                final double localRandom) {
         boolean grew = gainOne(player, type, sheet);
@@ -409,7 +421,9 @@ public final class ChargeService implements Listener {
             }
         }
         final double extra = (sheet.flat(EXTRA, java.util.Set.of()) + sheet.flat(EXTRA + "." + type.id(), java.util.Set.of())) / 100.0 + localExtra;
-        if (extra > 0 && plugin.items().random().nextDouble() < Math.min(1, extra)) {
+        // 2026-10-28 照 PoE2（銳星虹吸 40 級 156%）：超過 100% 的部分是再多一顆的機率（156% = 一定多 1 顆、56% 再多 1 顆）；這次之前最多多 1 顆
+        final int extraCount = extraCount(extra, plugin.items().random().nextDouble());
+        for (int i = 0; i < extraCount; i++) {
             grew |= gainOne(player, type, sheet);
         }
         // 2026-10-15（充能滿盈 II）：再擲一次「多一顆隨機種類的」
@@ -444,7 +458,8 @@ public final class ChargeService implements Listener {
             return;
         }
         int bonus = 0;
-        if (RARITY_BONUS_EVENTS.contains(event) && target != null && plugin.monsters() != null) {
+        if (RARITY_BONUS_EVENTS.contains(event) && target != null && plugin.monsters() != null
+                && !(effective != null && effective.flat(tw.exilecore.stats.GrantedSkillKeys.FLAG_NO_RARITY_CHARGES, tags) > 0)) { // 2026-10-28 照 PoE2 銳星虹吸：撲殺一次就一顆，不看稀有度
             bonus = plugin.monsters().data(target).map(data -> switch (data.rarity()) {
                 case RARE -> 1;
                 case UNIQUE -> 2;

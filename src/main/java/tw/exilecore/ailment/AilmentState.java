@@ -150,8 +150,9 @@ public final class AilmentState {
      * @param dps     每秒傷害
      * @param endTick 結束的 tick
      * @param source  造成的玩家（死時算他殺的；怪物造成的是 null）
+     * @param chaos   2026-10-28 照 PoE2 Blackflame（黯炎）：這個點燃造成混沌傷害而非火焰傷害（吃混沌抗性、凋零）；這次之前點燃一律是火焰
      */
-    public record Ignite(double dps, long endTick, UUID source, boolean aggravated, int limit) {
+    public record Ignite(double dps, long endTick, UUID source, boolean aggravated, int limit, boolean chaos) {
 
         public Ignite(final double dps, final long endTick, final UUID source) {
             this(dps, endTick, source, false);
@@ -159,6 +160,15 @@ public final class AilmentState {
 
         public Ignite(final double dps, final long endTick, final UUID source, final boolean aggravated) {
             this(dps, endTick, source, aggravated, 0);
+        }
+
+        public Ignite(final double dps, final long endTick, final UUID source, final boolean aggravated, final int limit) {
+            this(dps, endTick, source, aggravated, limit, false);
+        }
+
+        /** 2026-10-28：這個點燃造成哪一種傷害（黯炎的混沌點燃，其他是火焰）。 */
+        public tw.exilecore.stats.DamageType damageType() {
+            return chaos ? tw.exilecore.stats.DamageType.CHAOS : tw.exilecore.stats.DamageType.FIRE;
         }
     }
 
@@ -189,10 +199,15 @@ public final class AilmentState {
     // ---- 點燃 ----
 
     public void addIgnite(final double dps, final long endTick, final UUID source) {
+        addIgnite(dps, endTick, source, false);
+    }
+
+    /** 2026-10-28：chaos＝造成混沌傷害的點燃（黯炎）。 */
+    public void addIgnite(final double dps, final long endTick, final UUID source, final boolean chaos) {
         if (dps <= 0) {
             return;
         }
-        ignites.add(new Ignite(dps, endTick, source));
+        ignites.add(new Ignite(dps, endTick, source, false, 0, chaos));
         if (ignites.size() > MAX_IGNITES) {
             ignites.remove(ignites.stream().min(Comparator.comparingDouble(Ignite::dps)).orElseThrow());
         }
@@ -745,7 +760,7 @@ public final class AilmentState {
         }
         poisonVersion++;
         for (final List<Ignite> list : List.of(ignites, bleeds, poisons)) {
-            list.replaceAll(dot -> dot.endTick() > now ? new Ignite(dot.dps(), dot.endTick() + extra, dot.source(), dot.aggravated(), dot.limit()) : dot);
+            list.replaceAll(dot -> dot.endTick() > now ? new Ignite(dot.dps(), dot.endTick() + extra, dot.source(), dot.aggravated(), dot.limit(), dot.chaos()) : dot);
         }
         debuffs.replaceAll((key, debuff) -> debuff.endTick() > now
                 ? new Debuff(debuff.dps(), debuff.endTick() + extra, debuff.source(), debuff.spread(), debuff.spreads(), debuff.base(), debuff.length()) : debuff);

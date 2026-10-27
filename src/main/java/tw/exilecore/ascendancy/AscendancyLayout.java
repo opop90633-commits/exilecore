@@ -239,7 +239,7 @@ final class AscendancyLayout {
             lore.add("<#f5b942>　" + String.join("／", names));
         }
         lore.add("");
-        lore.add("<gray>" + (node.option() ? "選項（不花點數）" : node.cost() == 0 ? "不花點數" : node.cost() + " 點") // 2026-10-27：聖潔一統免費
+        lore.add("<gray>" + (node.option() ? "選項（不花點數）" : node.granted() ? "自帶（不花點數，選了這個昇華就配好）" : node.cost() == 0 ? "不花點數" : node.cost() + " 點") // 2026-10-27：聖潔一統免費；占血術自帶
                 + "<dark_gray>　" + position(ascendancy, node));
         return lore;
     }

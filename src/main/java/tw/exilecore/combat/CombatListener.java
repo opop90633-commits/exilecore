@@ -982,10 +982,13 @@ public final class CombatListener implements Listener {
                         }
                         final double lifePct = cullSheet.flat(StatKeys.LIFE_ON_CULL, skill.tags());
                         final double manaPct = cullSheet.flat(StatKeys.MANA_ON_CULL, skill.tags());
-                        if (lifePct > 0 || manaPct > 0) {
+                        // 2026-10-28 照 PoE2 血鐮：撲殺時獲得固定的生命（逐級）；這次之前只有最大生命的 %
+                        final double lifeFlat = cullSheet.flat(tw.exilecore.stats.GrantedSkillKeys.LIFE_ON_CULL_FLAT, skill.tags());
+                        if (lifePct > 0 || manaPct > 0 || lifeFlat > 0) {
                             final PlayerState culler = plugin.players().get((Player) attacker);
                             if (!culler.ruined(plugin.getServer().getCurrentTick())) { // 2026-10-18：荒蕪禁療中不回生命
-                                culler.setLife(Math.min(culler.maxLife(), culler.life() + culler.maxLife() * lifePct / 100.0));
+                                culler.setLife(Math.min(culler.maxLife(), culler.life()
+                                        + tw.exilecore.stats.GrantedSkillKeys.cullLife(culler.maxLife(), lifePct, lifeFlat)));
                             }
                             culler.setMana(Math.min(culler.maxMana(), culler.mana() + culler.maxMana() * manaPct / 100.0));
                             plugin.players().display((Player) attacker, culler);

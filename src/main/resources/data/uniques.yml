@@ -8364,3 +8364,34 @@ deathrattle_focus:        # 2026-10-27 照 PoE2 0.5 的「Deathrattle」（原�
     - text: "擊殺時 20% 機率讓能量護盾立刻開始回充"
       stats:
         - { stat: es.recharge_on_kill, type: FLAT, value: 20 }
+
+blackflame:        # 2026-10-28 照 PoE2 0.5 的「Blackflame」（原作有、我們以前沒有的；名稱照站長給的「黯炎」）
+  name: 黯炎
+  base: jring_06        # 原作基底 Amethyst Ring（紫蝕指環），需求等級 20
+  drop_level: 20
+  sources: [map_boss, chance, gamble]
+  weight: 100
+  flavour:
+    - "「除了死亡的面紗之外，還有熊熊燃燒的烈火，燃燒著它的夜晚。」"
+  mods:
+    - text: "增加 {value}% 魔力再生速度"
+      value: [15, 30]
+      stats:
+        - { stat: mana.regen, type: INCREASED, value: "{value}" }
+    - text: "你施加的點燃造成混沌傷害而非火焰傷害"        # 吃混沌抗性、凋零；混沌免疫的不受傷
+      stats:
+        - { stat: flag.ignite_as_chaos, type: FLAT, value: 1 }
+    - text: "增加 {value}% 點燃傷害"        # 原作 Ignite Magnitude（這裡的用語是點燃傷害）
+      value: [80, 100]
+      stats:
+        - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+    - text: "減少 {value}% 點燃持續時間"
+      value: [60, 75]
+      stats:
+        - { stat: ignite.duration, type: INCREASED, value: "-{value}" }
+    - text: "你施加的凋零同時增加受到的火焰傷害"        # 每層 5%，跟受到的混沌傷害增加的一樣多
+      stats:
+        - { stat: flag.withered_fire_taken, type: FLAT, value: 1 }
+    - text: "被點燃的敵人身上你施加的凋零不會失效"        # 點燃期間暫停計時，點燃結束後照剩下的時間繼續倒數
+      stats:
+        - { stat: flag.withered_no_expire_ignited, type: FLAT, value: 1 }

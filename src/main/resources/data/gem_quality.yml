@@ -13,6 +13,8 @@ ancestral_totem:   # Ancestral Warrior Totem（2026-10-26 照 PoE2：+(0—2) �
   - { stat: totem.duration_flat, type: FLAT, per: 0.1 }   # 圖騰持續時間 +秒
 arc:   # Arc
   - { stat: skill.chains, type: FLAT, per: 0.1 }   # 連鎖次數
+artillery_ballista:   # Artillery Ballista（2026-10-28 照 PoE2：定身當作傷害再 +(0—200)% 更多；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: pin.as_though_damage, type: FLAT, per: 10.0 }   # 加在 600% 上（PinKeys）
 arctic_howl:   # Arctic Howl（2026-10-27 照 PoE2：給隊友的增益 (0—20)% 增加凍結累積、(0—20)% 機率不算強化次數）
   - { stat: warcry.ally_freeze_buildup, type: FLAT, per: 1.0 }   # 給隊友的增益：增加 x% 凍結累積（Warcries）
   - { stat: warcry.tireless, type: FLAT, per: 1.0 }   # x% 機率不算強化次數（跟不竭嘯同一條）
@@ -38,8 +40,9 @@ detonate_dead:   # Detonate Dead
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 ember_seed:   # Living Bomb
   - { stat: ignite.chance, type: MORE, per: 1.0 }   # 易燃（點燃機率，更多）
-emergency_reload:   # Emergency Reload
+emergency_reload:   # Emergency Reload（2026-10-28 照 PoE2：(0—10)% 增加冷卻回復速度、強化的弩矢 (0—10)% 更多傷害；這次之前只有冷卻回復）
   - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }   # 冷卻回復速度
+  - { stat: emergency_reload.more, type: FLAT, per: 0.5 }   # 強化的弩矢再更多 x%（SkillService.EMERGENCY_MORE）
 escape_shot:   # Escape Shot
   - { stat: freeze.buildup, type: MORE, per: 6.0 }   # 凍結累積（更多）
 explosive_grenade:   # Explosive Grenade
@@ -71,6 +74,8 @@ gas_grenade:   # Gas Grenade
   - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
 glacial_lance:   # Glacial Lance
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+heart_of_ice:   # Heart of Ice（2026-10-28 照 PoE2：(0—20)% 更多冰緩效果；這次之前照通用規則）
+  - { stat: chill.effect, type: MORE, per: 1.0 }   # 冰緩效果（更多）
 hammer_of_gods:   # Hammer of the Gods
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 ice_shot:   # Ice Shot
@@ -98,12 +103,16 @@ magnetic_salvo:   # Magnetic Salvo
   - { stat: skill.projectiles, type: FLAT, per: 0.2 }   # 投射物數量
 oil_grenade:   # Oil Grenade
   - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+power_siphon:   # Power Siphon（2026-10-28 照 PoE2：撲殺時 (0—10)% 機率多給一顆銳星；這次之前照通用規則）
+  - { stat: charge.extra, type: FLAT, per: 0.5 }   # 多一顆的機率（加在逐級的機率上，ChargeService.extraCount）
 primal_strikes:   # Primal Strikes
   - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
 prism_rend:   # Elemental Sundering
   - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 seismic_cry:   # Seismic Cry（2026-10-27 照 PoE2：強化攻擊的餘震 (0—10)% 更多傷害、獲得 (0—20)% 物理傷害為火焰）
   - { stat: warcry.aftershock_more, type: FLAT, per: 0.5 }   # 餘震更多 x%（SupportMechanics）
+siege_ballista:   # Siege Ballista（2026-10-28 照 PoE2：(0—20)% 更多範圍；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.area, type: MORE, per: 1.0 }   # 範圍（更多）
 shockwave_totem:   # Shockwave Totem（2026-10-26 照 PoE2：+(0—4) 秒圖騰持續時間、+(0—1) 圖騰上限；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: totem.duration_flat, type: FLAT, per: 0.2 }   # 圖騰持續時間 +秒
 snap:   # Snap（2026-10-27 照 PoE2：(0—10)% 機率多一個灌注殘骸、(0—100)% 增加冷卻回復速度；這次之前照通用規則每 1% 增加 1% 傷害）
@@ -132,6 +141,8 @@ true_strike:   # Perfect Strike
   - { stat: ignite.chance, type: MORE, per: 1.0 }   # 易燃（點燃機率，更多）
 venom_burst_arrow:   # Poisonburst Arrow
   - { stat: poison.magnitude, type: MORE, per: 0.5 }   # 中毒幅度（更多）
+volatile_dead:   # Volatile Dead（2026-10-28 照 PoE2：(0—10)% 機率不毀掉消耗的屍體；這次之前照通用規則）
+  - { stat: corpse.save_chance, type: FLAT, per: 0.5 }   # 不毀掉屍體的機率（TreeEffectKeys.corpseSaved）
 volcano:   # Volcano
   - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 voltaic_grenade:   # Voltaic Grenade

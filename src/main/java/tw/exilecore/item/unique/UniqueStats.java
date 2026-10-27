@@ -79,6 +79,12 @@ public final class UniqueStats {
     public static final String CURSE_INFINITE = "flag.curse_infinite";
     /** 你施加的凋零沒有持續時間限制（司祭法衣）。 */
     public static final String WITHER_INFINITE = "flag.wither_infinite";
+    /** 2026-10-28 照 PoE2 Blackflame：你施加的點燃造成混沌傷害而非火焰傷害（吃混沌抗性、受到的混沌傷害增加；黯炎）。這次之前點燃一律是火焰。 */
+    public static final String IGNITE_AS_CHAOS = "flag.ignite_as_chaos";
+    /** 2026-10-28 照 PoE2 Blackflame：你施加的凋零同時增加受到的火焰傷害（每層 5%，跟混沌的一樣多；黯炎）。 */
+    public static final String WITHERED_FIRE_TAKEN = "flag.withered_fire_taken";
+    /** 2026-10-28 照 PoE2 Blackflame：被點燃的敵人身上你施加的凋零不會失效（點燃期間暫停計時；黯炎）。 */
+    public static final String WITHERED_NO_EXPIRE_IGNITED = "flag.withered_no_expire_ignited";
     /** 你身邊的敵人曝露（元素抗性 -20%；焚王獸符）。 */
     public static final String PRESENCE_EXPOSURE = "presence.exposure";
 

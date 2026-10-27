@@ -198,8 +198,9 @@ public final class AilmentService {
                 sourceSheet.increased(StatKeys.IGNITE_DURATION, context) + sourceSheet.increased(StatKeys.AILMENT_DURATION, context), 0)
                 * sourceSheet.more(StatKeys.IGNITE_DURATION, context) / faster; // 2026-10-27：更多的點燃持續時間（熔岩噴射、燃燒射擊）以前沒算到
         final Tracked entry = track(target);
-        entry.state.addIgnite(dps, now() + ticks(seconds), source.getUniqueId());
-        feedback(target, AilmentType.IGNITE);
+        final boolean chaos = chaosIgnite(sourceSheet); // 2026-10-28 照 PoE2 Blackflame（黯炎）：你施加的點燃造成混沌傷害
+        entry.state.addIgnite(dps, now() + ticks(seconds), source.getUniqueId(), chaos);
+        igniteFeedback(target, chaos);
         update(target, entry, now());
         return true;
     }
@@ -216,7 +217,7 @@ public final class AilmentService {
             return;
         }
         final Tracked entry = track(target);
-        entry.state.addIgnite(ignite.dps(), ignite.endTick(), ignite.source());
+        entry.state.addIgnite(ignite.dps(), ignite.endTick(), ignite.source(), ignite.chaos()); // 2026-10-28：擴散過去的混沌點燃還是混沌
         feedback(target, AilmentType.IGNITE);
         update(target, entry, now());
     }
@@ -452,8 +453,11 @@ public final class AilmentService {
                     && !oneDamagingAilment(defender, defenderSheet)) { // 2026-10-26 照 PoE2 天賦樹：身上已經有傷害型異常就不會再中
                 // 2026-10-26 照 PoE2 天賦樹：點燃（傷害型異常）造成傷害快 x%：每秒傷害乘、時間除（總傷害不變）
                 final double igniteFaster = tw.exilecore.stats.TreeEffectKeys.ailmentSpeed(attack, tw.exilecore.stats.TreeEffectKeys.IGNITE_SPEED, context);
+                // 2026-10-28 照 PoE2 Blackflame（黯炎）：玩家的點燃造成混沌傷害而非火焰傷害——吃混沌抗性、混沌免疫的不受傷；這次之前一律火焰
+                final boolean chaosIgnite = attacker instanceof Player && chaosIgnite(attack);
+                final DamageType igniteType = chaosIgnite ? DamageType.CHAOS : DamageType.FIRE;
                 final double dps = config.igniteDps(igniteBase, attack.increased(StatKeys.IGNITE_MAGNITUDE, context),
-                        attack.more(StatKeys.IGNITE_MAGNITUDE, context)) * resistFactor(defenderSheet, DamageType.FIRE) // 2026-10-26：減免前的傷害，再吃火焰抗性
+                        attack.more(StatKeys.IGNITE_MAGNITUDE, context)) * igniteResist(defenderSheet, igniteType) // 2026-10-26：減免前的傷害，再吃火焰抗性
                         * tw.exilecore.stats.TreeKeys.selfEffect(defenderSheet, tw.exilecore.stats.TreeKeys.IGNITE_EFFECT_ON_SELF) // 2026-10-26：身上的點燃效果
                         * igniteFaster;
                 final double seconds = AilmentConfig.duration(config.igniteDuration(),
@@ -461,7 +465,7 @@ public final class AilmentService {
                         selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".ignite", Set.of()))
                         * attack.more(StatKeys.IGNITE_DURATION, context) / igniteFaster; // 2026-10-27：更多的點燃持續時間以前沒算到
                 entry = entry == null ? track(defender) : entry;
-                entry.state.addIgnite(dps, now + ticks(seconds), attacker instanceof Player ? attacker.getUniqueId() : null);
+                entry.state.addIgnite(dps, now + ticks(seconds), attacker instanceof Player ? attacker.getUniqueId() : null, chaosIgnite);
                 if (attacker instanceof Player igniter && plugin.skills() != null && !skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) {
                     // 2026-10-26 照 PoE2 天賦樹：擊中點燃敵人時獲得怒氣
                     final double rage = attack.flat(tw.exilecore.stats.TreeEffectKeys.RAGE_ON_IGNITE, Set.of());
@@ -469,11 +473,11 @@ public final class AilmentService {
                         plugin.skills().resources().gainRage(igniter, rage);
                     }
                 }
-                feedback(defender, AilmentType.IGNITE);
+                igniteFeedback(defender, chaosIgnite);
                 if (attacker instanceof Player self && self != defender && StatKeys.flag(attack, tw.exilecore.stats.KeystoneKeys.IGNITE_REFLECT)) {
                     // 2026-10-26 照 PoE2 天賦樹：你造成的點燃會反射到自己身上（照沒吃目標抗性的點燃傷害，再吃你自己的火焰抗性）
                     igniteSelf(self, config.igniteDps(igniteBase, attack.increased(StatKeys.IGNITE_MAGNITUDE, context),
-                            attack.more(StatKeys.IGNITE_MAGNITUDE, context)), seconds);
+                            attack.more(StatKeys.IGNITE_MAGNITUDE, context)), seconds, chaosIgnite);
                 }
                 if (attacker instanceof Player triggerer && plugin.skills() != null) {
                     // 主要寶石：元素異常時施放（2026-10）；2026-10-26 照 PoE2：點燃的能量照這個點燃總傷害占異常門檻的 %
@@ -1257,6 +1261,19 @@ public final class AilmentService {
         return Math.max(0, 1 - tw.exilecore.stats.Formulas.resistReduction(resist, cap));
     }
 
+    /** 2026-10-28 照 PoE2 Blackflame（黯炎）：攻擊方的點燃造成混沌傷害而非火焰傷害。 */
+    public static boolean chaosIgnite(final StatSheet attack) {
+        return attack != null && StatKeys.flag(attack, tw.exilecore.item.unique.UniqueStats.IGNITE_AS_CHAOS);
+    }
+
+    /** 2026-10-28：點燃每秒傷害吃目標哪一種抗性（混沌點燃吃混沌抗性；混沌免疫的目標不受混沌點燃的傷害）。 */
+    static double igniteResist(final StatSheet sheet, final DamageType type) {
+        if (type == DamageType.CHAOS && sheet != null && StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
+            return 0;
+        }
+        return resistFactor(sheet, type);
+    }
+
     /**
      * 2026-10-26 照 PoE2：同一個人的中毒同時幾層生效：預設 1（ailments.yml 的 poison.max_stacks）＋「中毒層數 +x」（poison.stacks），
      * 開拓者（flag.double_poison）加倍。
@@ -1365,6 +1382,17 @@ public final class AilmentService {
     }
 
     /** 中異常的瞬間：音效與一點粒子。 */
+    /** 2026-10-28：點燃的回饋；黯炎的混沌點燃用暗紫色的靈魂火焰。 */
+    private static void igniteFeedback(final LivingEntity entity, final boolean chaos) {
+        if (!chaos) {
+            feedback(entity, AilmentType.IGNITE);
+            return;
+        }
+        final Location at = entity.getLocation().add(0, entity.getHeight() * 0.5, 0);
+        entity.getWorld().playSound(at, Sound.ITEM_FIRECHARGE_USE, 0.5f, 0.8f);
+        entity.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, at, 8, 0.3, 0.4, 0.3, 0.02);
+    }
+
     private static void feedback(final LivingEntity entity, final AilmentType type) {
         final Location at = entity.getLocation().add(0, entity.getHeight() * 0.5, 0);
         switch (type) {
@@ -1515,12 +1543,16 @@ public final class AilmentService {
         final double storm = living instanceof Player || plugin.skills() == null ? 0 : plugin.skills().supportMechanics().extras().stormfire(living);
         if (storm > 0 && plugin.monsters() != null && plugin.monsters().data(living).isPresent()) {
             final StatSheet sheet = plugin.monsters().sheet(living, plugin.monsters().data(living).get());
-            final double fire = resistFactor(sheet, DamageType.FIRE);
+            final double fire = resistFactor(sheet, ignite.damageType()); // 2026-10-28：混沌點燃（黯炎）用混沌抗性反推減免前的傷害
             if (fire > 1e-6) {
                 dps += dps / fire * storm / 100.0 * resistFactor(sheet, DamageType.LIGHTNING);
             }
         }
-        damageOverTime(living, entry, dps, ignite.source(), AilmentType.IGNITE, now);
+        damageOverTime(living, entry, dps, ignite.source(), AilmentType.IGNITE, ignite.damageType(), now);
+        if (ignite.chaos() && !(living instanceof Player)) {
+            // 2026-10-28：黯炎的點燃是暗紫色的火（靈魂火焰）
+            living.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, living.getLocation().add(0, living.getHeight() * 0.5, 0), 3, 0.3, 0.4, 0.3, 0.01);
+        }
     }
 
     /** 2026-10-27（Shock Conduction）：這隻目前的感電幅度（0 = 沒有）。 */
@@ -1555,6 +1587,12 @@ public final class AilmentService {
      */
     private void damageOverTime(final LivingEntity living, final Tracked entry, final double dps, final UUID source,
                                 final AilmentType type, final long now) {
+        damageOverTime(living, entry, dps, source, type, dotType(type), now);
+    }
+
+    /** 2026-10-28：damageType＝這個持續傷害實際是哪一種傷害（黯炎的點燃是混沌；其他照 {@link #dotType}）。 */
+    private void damageOverTime(final LivingEntity living, final Tracked entry, final double dps, final UUID source,
+                                final AilmentType type, final DamageType damageType, final long now) {
         final double base = dps * TICK_INTERVAL / 20.0 * (1 + entry.state.shock(now));
         if (base <= 0 || living.isInvulnerable()) {
             return;
@@ -1569,17 +1607,17 @@ public final class AilmentService {
                     return;
                 }
             }
-            if (burnPlayer(player, taken, type)) {
-                credit(source, living, type, taken); // 競技場裡打玩家的
+            if (burnPlayer(player, taken, type, damageType)) {
+                credit(source, living, type, damageType, taken); // 競技場裡打玩家的
             }
             return;
         }
         // 2026-10-21：只加某一種傷害的減益（凋息：受到的混沌傷害增加）也加在持續傷害上（中毒是混沌、流血是物理、點燃是火焰）
         final double typed = plugin.combat() == null ? 0
-                : plugin.combat().debuffs().typedTaken(living.getUniqueId(), source, plugin.getServer().getCurrentTick(), dotType(type));
+                : plugin.combat().debuffs().typedTaken(living.getUniqueId(), source, plugin.getServer().getCurrentTick(), damageType); // 2026-10-28：混沌點燃吃凋零
         final double amount = typed > 0 ? base * (1 + typed) : base;
         if (plugin.training() != null && plugin.training().absorbDot(living, source, amount)) {
-            credit(source, living, type, amount);
+            credit(source, living, type, damageType, amount);
             return; // 營地的訓練假人：記給造成的人，不扣血
         }
         final MonsterData data = plugin.monsters().data(living).orElse(null);
@@ -1599,7 +1637,7 @@ public final class AilmentService {
                 return;
             }
         }
-        credit(source, living, type, capped);
+        credit(source, living, type, damageType, capped);
         if (type == AilmentType.BLEED) {
             entry.bloodLoss += capped; // 2026-10-24：血宣
             if (source != null && plugin.skills() != null) {
@@ -1635,9 +1673,9 @@ public final class AilmentService {
     }
 
     /** 戰鬥數據：持續傷害也算造成的玩家打出的（側欄另外列「持續」）。 */
-    private void credit(final UUID source, final LivingEntity target, final AilmentType type, final double amount) {
+    private void credit(final UUID source, final LivingEntity target, final AilmentType type, final DamageType damageType, final double amount) {
         if (source != null && !source.equals(target.getUniqueId()) && plugin.combat() != null && plugin.combat().hud() != null) {
-            plugin.combat().hud().dealtDot(source, type, dotType(type), amount);
+            plugin.combat().hud().dealtDot(source, type, damageType, amount); // 2026-10-28：混沌點燃記成混沌
         }
     }
 
@@ -1651,13 +1689,13 @@ public final class AilmentService {
     }
 
     /** @return 有沒有扣到（不能中異常、已經死了是 false） */
-    private boolean burnPlayer(final Player player, final double amount, final AilmentType type) {
+    private boolean burnPlayer(final Player player, final double amount, final AilmentType type, final DamageType damageType) {
         if (!canBeAilmented(player) || player.isDead()) {
             return false;
         }
         final PlayerState state = plugin.players().get(player);
         final StatSheet sheet = plugin.players().sheet(player);
-        if (type == AilmentType.POISON && StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
+        if ((type == AilmentType.POISON || damageType == DamageType.CHAOS) && StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE)) { // 2026-10-28：混沌點燃也擋
             return false; // 2026-10：無垢之軀（混沌免疫）也不吃中毒的混沌持續傷害（以前只擋了「上中毒」以外的混沌擊中）
         }
         double rest = amount * heartstopper(player, sheet); // 2026-10-26 心靈永止（PoE2 Heartstopper）
@@ -1686,7 +1724,6 @@ public final class AilmentService {
         }
         if (plugin.combat() != null) {
             // 死亡回顧：持續傷害也記（同一秒內合併成一筆）
-            final DamageType damageType = dotType(type);
             if (plugin.combat().hud() != null) {
                 plugin.combat().hud().takenDot(player, type, damageType, absorbed + rest); // 戰鬥數據：受到的持續傷害
             }
@@ -1840,6 +1877,42 @@ public final class AilmentService {
         update(target, entry, now);
     }
 
+    /**
+     * 2026-10-28 照 PoE2 寒心（Heart of Ice）：「像造成 baseCold 點冰冷傷害一樣」冰緩 target（不打人、不擲機率）。
+     * 冰緩效果照擊中的算法（冰冷 ÷ 異常門檻，吃 sourceSheet 的冰緩效果、緩速幅度，目標身上的冰緩效果、緩速減免），
+     * 再乘 effectScale（光環效果）；持續 ticks（光環每次補，離開範圍很快就沒了）。不會被減速、避免冰緩的不吃。回傳有沒有冰緩到。
+     */
+    public boolean chillFrom(final LivingEntity target, final double baseCold, final StatSheet sourceSheet, final Set<String> context,
+                             final double effectScale, final long ticks) {
+        if (baseCold <= 0 || target == null || target instanceof Player || !target.isValid() || target.isDead() || plugin.monsters() == null) {
+            return false;
+        }
+        final java.util.Optional<tw.exilecore.monster.MonsterData> data = plugin.monsters().data(target);
+        if (data.isEmpty()) {
+            return false;
+        }
+        final StatSheet defenderSheet = plugin.monsters().sheet(target, data.get());
+        if (StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) || avoided(defenderSheet, StatKeys.AVOID_CHILL, plugin.items().random())) {
+            return false;
+        }
+        final double threshold = AilmentConfig.threshold(baseThreshold(target, data.get(), defenderSheet)
+                        + Math.max(0, defenderSheet.flat(StatKeys.AILMENT_THRESHOLD, Set.of())),
+                defenderSheet.increased(StatKeys.AILMENT_THRESHOLD, Set.of()));
+        final double slowScale = Math.max(0, 1 + sourceSheet.increased(StatKeys.SLOW_MAGNITUDE, context));
+        final double slowTaken = Math.max(0, defenderSheet.apply(StatKeys.SLOW_TAKEN, 1.0, Set.of()));
+        final double magnitude = config.chillMagnitude(baseCold, threshold, sourceSheet.apply(StatKeys.CHILL_EFFECT, 1.0, context) * slowScale
+                * Math.max(0, effectScale) * tw.exilecore.stats.TreeKeys.selfEffect(defenderSheet, tw.exilecore.stats.TreeKeys.CHILL_EFFECT_ON_SELF) - 1)
+                * slowTaken;
+        if (magnitude <= 0) {
+            return false;
+        }
+        final long now = now();
+        final Tracked entry = track(target);
+        entry.state.applyChill(magnitude, now + Math.max(1, ticks), now);
+        update(target, entry, now);
+        return true;
+    }
+
     /** 2026-10-23：拿掉某個玩家在怪物身上造成的持續傷害（他死了、下線、離開地圖）；外觀與標記下一次更新時跟上。 */
     public void removeSource(final UUID source) {
         for (final Tracked entry : tracked.values()) {
@@ -1893,15 +1966,18 @@ public final class AilmentService {
 
     /** 自己著火（煉獄使者的獰笑焚身）：每秒 dps 火焰傷害，持續 seconds 秒；已經在燒更強的就不換。 */
     public void igniteSelf(final Player player, final double rawDps, final double rawSeconds) {
+        igniteSelf(player, rawDps, rawSeconds, false);
+    }
+
+    /** 2026-10-28：chaos＝反射回來的是混沌點燃（黯炎），吃自己的混沌抗性。 */
+    public void igniteSelf(final Player player, final double rawDps, final double rawSeconds, final boolean chaos) {
         if (rawDps <= 0) {
             return;
         }
         // 2026-10-24 修正（狂焰焚身）：自己點燃自己是火焰持續傷害，吃火焰抗性（照抗性上限、最低 MIN_RESIST）；
         // 持續時間吃自己身上的「異常／點燃持續時間」（以前固定 4 秒、整段不減）
         final StatSheet sheet = plugin.players().sheet(player);
-        final double cap = tw.exilecore.stats.DamageCalculator.resistCap(sheet, DamageType.FIRE);
-        final double resist = Math.min(sheet.get(DamageType.FIRE.mitigationStat()), cap);
-        final double dps = rawDps * (1 - tw.exilecore.stats.Formulas.resistReduction(resist, cap));
+        final double dps = rawDps * igniteResist(sheet, chaos ? DamageType.CHAOS : DamageType.FIRE); // 2026-10-28：同 resistFactor（照抗性上限）
         final double seconds = AilmentConfig.duration(rawSeconds, 0, sheet.increased(StatKeys.SELF_AILMENT_DURATION, Set.of())
                 + sheet.increased(StatKeys.SELF_AILMENT_DURATION + ".ignite", Set.of()));
         if (dps <= 0) {
@@ -1913,7 +1989,7 @@ public final class AilmentService {
         if (current != null && current.dps() >= dps) {
             return;
         }
-        entry.state.addIgnite(dps, now + ticks(seconds), null);
+        entry.state.addIgnite(dps, now + ticks(seconds), null, chaos);
         refreshAt(player, entry, 1);
     }
 

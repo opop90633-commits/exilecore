@@ -175,6 +175,10 @@ public final class ChargeText {
             return support; // 2026-10-24：戰星輔助
         }
         if (stat.equals("charge.extra")) {
+            if (value >= 100) { // 2026-10-28 照 PoE2：超過 100% 是一定多一顆、剩下的機率再多一顆；這次之前一律寫「x% 機率」
+                final double rest = value - Math.floor(value / 100) * 100;
+                return "獲得戰星時多獲得 " + (long) Math.floor(value / 100) + " 顆同種的" + (rest > 0.05 ? "，再 " + number(rest) + "% 機率多一顆" : "");
+            }
             return "獲得戰星時 " + number(value) + "% 機率多獲得一顆同種的";
         }
         if (stat.equals("charge.extra_random")) {

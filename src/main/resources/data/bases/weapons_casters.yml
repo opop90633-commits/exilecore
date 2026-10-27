@@ -488,11 +488,7 @@ csceptre_01:   # PoE2 Rattling Sceptre
   crit: 5.0
   sockets: 3
   grants: summon_skeletons
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_02:   # PoE2 Stoic Sceptre
   name: 堅忍權杖
@@ -508,11 +504,7 @@ csceptre_02:   # PoE2 Stoic Sceptre
   crit: 5.0
   sockets: 3
   grants: discipline
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_03:   # PoE2 Lupine Sceptre
   name: 狼牙權杖
@@ -528,11 +520,7 @@ csceptre_03:   # PoE2 Lupine Sceptre
   crit: 5.0
   sockets: 3
   grants: summon_skeletons
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_04:   # PoE2 Omen Sceptre
   name: 凶兆權杖
@@ -548,11 +536,7 @@ csceptre_04:   # PoE2 Omen Sceptre
   crit: 5.0
   sockets: 3
   grants: malice
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_05:   # PoE2 Ochre Sceptre
   name: 赭土權杖
@@ -568,11 +552,7 @@ csceptre_05:   # PoE2 Ochre Sceptre
   crit: 5.0
   sockets: 3
   grants: summon_skeletons
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_06:   # PoE2 Shrine Sceptre（Purity of Fire）
   name: 焰龕權杖
@@ -588,11 +568,7 @@ csceptre_06:   # PoE2 Shrine Sceptre（Purity of Fire）
   crit: 5.0
   sockets: 3
   grants: purity_of_fire
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_07:   # PoE2 Shrine Sceptre（Purity of Ice）
   name: 霜龕權杖
@@ -608,11 +584,7 @@ csceptre_07:   # PoE2 Shrine Sceptre（Purity of Ice）
   crit: 5.0
   sockets: 3
   grants: purity_of_ice
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_08:   # PoE2 Shrine Sceptre（Purity of Lightning）
   name: 雷龕權杖
@@ -628,11 +600,7 @@ csceptre_08:   # PoE2 Shrine Sceptre（Purity of Lightning）
   crit: 5.0
   sockets: 3
   grants: purity_of_lightning
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_09:   # PoE2 Shrine Sceptre（Impurity）
   name: 蝕龕權杖
@@ -648,11 +616,7 @@ csceptre_09:   # PoE2 Shrine Sceptre（Impurity）
   crit: 5.0
   sockets: 3
   grants: impurity
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_10:   # PoE2 Devouring Sceptre
   name: 吞噬權杖
@@ -668,11 +632,7 @@ csceptre_10:   # PoE2 Devouring Sceptre
   crit: 5.0
   sockets: 3
   grants: summon_skeletons
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_11:   # PoE2 Clasped Sceptre
   name: 寒心權杖
@@ -688,11 +648,7 @@ csceptre_11:   # PoE2 Clasped Sceptre
   crit: 5.0
   sockets: 3
   grants: heart_of_ice
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_12:   # PoE2 Devotional Sceptre
   name: 虔誠權杖
@@ -708,11 +664,7 @@ csceptre_12:   # PoE2 Devotional Sceptre
   crit: 5.0
   sockets: 3
   grants: summon_skeletons
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_13:   # PoE2 Aromatic Sceptre
   name: 芳香權杖
@@ -728,11 +680,7 @@ csceptre_13:   # PoE2 Aromatic Sceptre
   crit: 5.0
   sockets: 3
   grants: summon_skeletons
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_14:   # PoE2 Pious Sceptre
   name: 聖徒權杖
@@ -748,11 +696,7 @@ csceptre_14:   # PoE2 Pious Sceptre
   crit: 5.0
   sockets: 3
   grants: summon_skeletons
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_15:   # PoE2 Hallowed Sceptre
   name: 聖化權杖
@@ -768,11 +712,7 @@ csceptre_15:   # PoE2 Hallowed Sceptre
   crit: 5.0
   sockets: 3
   grants: summon_skeletons
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_16:   # PoE2 Wrath Sceptre
   name: 怒雷權杖
@@ -788,8 +728,4 @@ csceptre_16:   # PoE2 Wrath Sceptre
   crit: 5.0
   sockets: 3
   grants: fulmination
-  implicit:
-    text: "+{value} 精魂"
-    value: [100, 100]
-    mods:
-      - { stat: spirit.max, type: FLAT, value: "{value}" }
+  # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200

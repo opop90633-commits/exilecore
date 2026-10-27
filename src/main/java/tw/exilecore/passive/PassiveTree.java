@@ -335,6 +335,10 @@ public final class PassiveTree {
                 description.add(line.getAsString());
             }
         }
+        final String retired = retiredWeapons(modifiers);
+        if (retired != null) {
+            description.add(RETIRED_PREFIX + retired + "，這條配了沒有作用");
+        }
         final String start = object.has("start") ? object.get("start").getAsString().toLowerCase(Locale.ROOT) : null;
         final Map<String, PassiveNode.Variant> variants = new HashMap<>();
         final JsonObject variantObject = object.getAsJsonObject("variants");
@@ -347,6 +351,34 @@ public final class PassiveTree {
             }
         }
         return new PassiveNode(id, type, name, x, y, icon, modifiers, description, start, variants);
+    }
+
+    /**
+     * 2026-10-28 站長：劍、斧、匕首、爪的底材都停用了（PoE2 0.5 也沒有），天賦樹上只給這些武器的屬性保留但標「目前無效」。
+     * 武器標籤 → 名稱（照順序）。
+     */
+    static final Map<String, String> RETIRED_WEAPONS = new java.util.LinkedHashMap<>(Map.of());
+    static {
+        RETIRED_WEAPONS.put("sword", "劍");
+        RETIRED_WEAPONS.put("axe", "斧");
+        RETIRED_WEAPONS.put("dagger", "匕首");
+        RETIRED_WEAPONS.put("claw", "爪");
+    }
+    /** 「目前無效」那一行的開頭。 */
+    public static final String RETIRED_PREFIX = "⚠ 目前無效：伺服器沒有";
+
+    /** 這些屬性用到哪些停用的武器（「劍／斧」）；沒有回傳 null。 */
+    static String retiredWeapons(final List<Modifier> modifiers) {
+        final List<String> names = new ArrayList<>();
+        for (final Map.Entry<String, String> weapon : RETIRED_WEAPONS.entrySet()) {
+            for (final Modifier modifier : modifiers) {
+                if (modifier.tags().contains(weapon.getKey())) {
+                    names.add(weapon.getValue());
+                    break;
+                }
+            }
+        }
+        return names.isEmpty() ? null : String.join("／", names);
     }
 
     private static List<Modifier> parseStats(final JsonArray stats, final String label) {

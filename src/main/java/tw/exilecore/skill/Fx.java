@@ -233,6 +233,22 @@ public final class Fx {
         return STATS.lastSeconds();
     }
 
+    /** 2026-10-27 照站長「燃燒地板要畫個外框」：燃燒地面的外圈（橘紅色的點排成一圈，貼地）。 */
+    public static final Particle.DustOptions BURNING_EDGE = new Particle.DustOptions(org.bukkit.Color.fromRGB(255, 110, 20), 1.1f);
+
+    /** 在地上畫一圈外框（radius 格；點的數量照周長，最少 12 個）。 */
+    public static void groundOutline(final Location center, final double radius, final Particle.DustOptions dust) {
+        final World world = center.getWorld();
+        if (world == null || radius <= 0) {
+            return;
+        }
+        final int points = (int) Math.max(12, Math.round(radius * Math.PI * 2 * 2.5));
+        for (int i = 0; i < points; i++) {
+            final double angle = Math.PI * 2 * i / points;
+            spawn(world, Particle.DUST, center.clone().add(Math.cos(angle) * radius, 0.08, Math.sin(angle) * radius), 1, dust);
+        }
+    }
+
     public static void spawn(final World world, final Particle particle, final Location at, final int count) {
         if (!filtered()) {
             world.spawnParticle(particle, at, count);

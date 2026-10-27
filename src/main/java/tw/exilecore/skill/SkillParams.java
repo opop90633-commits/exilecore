@@ -12,7 +12,7 @@ import tw.exilecore.core.config.YamlNode;
  * @param knockback   strike、flicker、dash 的順路打擊：擊退力道（0 = 不擊退）
  * @param execute     strike：處決——目標生命低於某個比例時更多傷害（null = 沒有）
  * @param projectiles projectile：一次幾發
- * @param spread      projectile：多發時整個扇形的張角
+ * @param spread      projectile：多發時整個扇形的張角；impact（2026-10-28）：多的那幾發散在準心周圍幾格（0 = 照半徑估）
  * @param speed       projectile：每 tick 飛幾格
  * @param range       projectile：最遠飛幾格；leap、dash：最遠幾格；chain：第一個目標最遠幾格；impact、zone、mark：準心最遠指多遠；
  *                    flicker：準心指的敵人、沒指到時找最近的敵人最遠幾格
@@ -352,6 +352,10 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 range = check(where, "range", node.decimal("range", 20), 2, 40);
                 delay = check(where, "delay", node.decimal("delay", 0.8), 0.1, 4);
                 radius = scaled(where, node, "radius", 3, 0.5, 10);
+                // 2026-10-28 照 PoE2（衝霄弩台一次 3 發、落釘弩台一輪 4 擊）：一次落下幾發（投射物數量的加成加在這上面）；
+                // spread：多的那幾發散在準心周圍幾格（0 = 照半徑估）。這次之前一律 1 發
+                projectiles = scaled(where, node, "count", 1, 1, 20);
+                spread = check(where, "spread", node.decimal("spread", 0), 0, 10);
             }
             case ZONE -> {
                 range = check(where, "range", node.decimal("range", 0), 0, 40);

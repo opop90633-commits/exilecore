@@ -51,9 +51,18 @@ public final class SkillProfiles {
             final double[] range = spellDamage(config, definition, level);
             min = new DamagePacket();
             max = new DamagePacket();
-            for (final Map.Entry<DamageType, Double> entry : definition.damageTypes().entrySet()) {
-                min.set(entry.getKey(), range[0] * entry.getValue());
-                max.set(entry.getKey(), range[1] * entry.getValue());
+            if (!definition.typedDamage().isEmpty()) {
+                // 2026-10-28 照 PoE2（纏蝕箭）：每種傷害照自己的逐級表；這次之前一張加總的表照 damage_types 拆
+                for (final Map.Entry<DamageType, int[]> entry : definition.typedDamage().entrySet()) {
+                    final double[] typed = tableAt(entry.getValue(), level);
+                    min.set(entry.getKey(), typed[0]);
+                    max.set(entry.getKey(), typed[1]);
+                }
+            } else {
+                for (final Map.Entry<DamageType, Double> entry : definition.damageTypes().entrySet()) {
+                    min.set(entry.getKey(), range[0] * entry.getValue());
+                    max.set(entry.getKey(), range[1] * entry.getValue());
+                }
             }
         }
         return new SkillProfile(definition.id(), tags, definition.effectiveness().at(level), min, max, definition.conversion(), local);
@@ -66,19 +75,28 @@ public final class SkillProfiles {
         }
         final int[] damage = definition.damage();
         if (definition.damageByLevel()) {
-            // 2026-10-26：逐級表（照 PoE2）是每一級的實際傷害，不乘 spell_damage_growth；比表長的等級照最後兩級的比例往外推
-            final int levels = damage.length / 2;
-            final int clamped = Math.max(1, Math.min(SkillBuild.MAX_EFFECTIVE_LEVEL, level));
-            if (clamped <= levels) {
-                return new double[] {damage[(clamped - 1) * 2], damage[(clamped - 1) * 2 + 1]};
-            }
-            final double lastAvg = (damage[levels * 2 - 2] + damage[levels * 2 - 1]) / 2.0;
-            final double prevAvg = (damage[levels * 2 - 4] + damage[levels * 2 - 3]) / 2.0;
-            final double scale = prevAvg > 0 ? Math.pow(lastAvg / prevAvg, clamped - levels) : 1;
-            return new double[] {damage[levels * 2 - 2] * scale, damage[levels * 2 - 1] * scale};
+            return tableAt(damage, level);
         }
         final double growth = config.spellGrowthAt(level);
         return new double[] {damage[0] * growth, damage[1] * growth};
+    }
+
+    /**
+     * 逐級表（攤平的 [等級 1 最小, 等級 1 最大, 等級 2 最小, …]）在這個等級的 [最小, 最大]。
+     * 2026-10-26：逐級表（照 PoE2）是每一級的實際傷害，不乘 spell_damage_growth；比表長的等級照最後兩級的比例往外推。
+     * 2026-10-28 抽出來給每種傷害各一張表（纏蝕箭）用。
+     */
+    static double[] tableAt(final int[] damage, final int level) {
+        final int levels = damage.length / 2;
+        final int clamped = Math.max(1, Math.min(SkillBuild.MAX_EFFECTIVE_LEVEL, level));
+        if (levels < 2 || clamped <= levels) {
+            final int at = Math.min(clamped, levels) - 1;
+            return new double[] {damage[at * 2], damage[at * 2 + 1]};
+        }
+        final double lastAvg = (damage[levels * 2 - 2] + damage[levels * 2 - 1]) / 2.0;
+        final double prevAvg = (damage[levels * 2 - 4] + damage[levels * 2 - 3]) / 2.0;
+        final double scale = prevAvg > 0 ? Math.pow(lastAvg / prevAvg, clamped - levels) : 1;
+        return new double[] {damage[levels * 2 - 2] * scale, damage[levels * 2 - 1] * scale};
     }
 
     /** 沒有輔助寶石時的魔力消耗（有輔助的看 {@link SkillBuild#manaCost()}）。 */

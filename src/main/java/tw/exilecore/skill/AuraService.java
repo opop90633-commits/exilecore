@@ -1060,6 +1060,13 @@ final class AuraService implements Listener {
                         plugin.getSLF4JLogger().error("對敵人的光環 {} 出錯", aura.skillId, e);
                     }
                 }
+                if (!aura.paused) {
+                    try {
+                        presenceChill(player, aura); // 2026-10-28 照 PoE2 寒心：存在範圍內的敵人一直被冰緩
+                    } catch (final RuntimeException e) {
+                        plugin.getSLF4JLogger().error("寒心 {} 出錯", aura.skillId, e);
+                    }
+                }
             }
         }
         // 腳下一直轉的光圈（每半秒畫一次，一個光環一圈）：讓人一眼看得出光環開著。
@@ -1101,6 +1108,36 @@ final class AuraService implements Listener {
     private final Map<String, Map<UUID, Long>> witheredAt = new HashMap<>();
     /** 2026-10-26：凋息給的凋零持續 6 秒（PoE2 Withering Presence）。 */
     static final long WITHERED_PRESENCE_TICKS = 120;
+
+    /** 2026-10-28 照 PoE2 寒心：每次補的冰緩持續幾 tick（光環每 10 tick 補一次，離開存在範圍很快就沒了）。 */
+    static final long PRESENCE_CHILL_TICKS = 16;
+
+    /**
+     * 2026-10-28 照 PoE2 寒心（Heart of Ice，常駐光環）：你存在範圍（臨在，6 格，吃臨在範圍）內的敵人一直被冰緩，
+     * 冰緩照「像造成 x 到 y 點冰冷傷害」（逐級，吃這個技能的加成）算，冰緩效果吃光環效果（原作 skill_chill_magnitude_is_aura_magnitude）。
+     * 這次之前寒心是冷卻 4 秒的寒氣爆發（真的打人）。
+     */
+    private void presenceChill(final Player player, final Active aura) {
+        if (plugin.ailments() == null || aura.build == null) {
+            return;
+        }
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        final tw.exilecore.stats.StatSheet effective = aura.build.profile().effective(sheet);
+        if (!StatKeys.flag(effective, tw.exilecore.stats.GrantedSkillKeys.FLAG_PRESENCE_CHILL)) {
+            return;
+        }
+        final double[] range = AsThough.range(effective, aura.build.profile().tags());
+        if (range[1] <= 0) {
+            return;
+        }
+        final tw.exilecore.stats.SkillProfile profile = AsThough.profile(aura.build.profile(), tw.exilecore.stats.DamageType.COLD, range[0], range[1]);
+        final double cold = AsThough.amount(sheet, profile, tw.exilecore.stats.DamageType.COLD);
+        final Set<String> context = profile.tags();
+        final tw.exilecore.stats.StatSheet chillSheet = profile.effective(sheet);
+        for (final LivingEntity target : targets.around(player.getLocation(), tw.exilecore.combat.Presence.radius(sheet), player)) {
+            plugin.ailments().chillFrom(target, cold, chillSheet, context, aura.build.auraEffect(), PRESENCE_CHILL_TICKS);
+        }
+    }
 
     /** 對敵人的光環：範圍內的敵人加上「受到的傷害增加」（每 10 tick 補一次，持續 15 tick：離開範圍很快就沒了）。 */
     private void oppress(final Player player, final Active aura, final long now) {
