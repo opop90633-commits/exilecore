@@ -75,20 +75,26 @@ final class MinionAbilities {
     /** 恫嚇（PoE2 Intimidate）：受到的傷害增加 10%。 */
     static final double INTIMIDATE_TAKEN = 0.10;
 
-    /** 指令：名稱、每一隻的冷卻（秒）、魔力（寶石 1～20 級）。 */
+    /** 指令：名稱、每一隻的冷卻（秒）、魔力（寶石 1～40 級）。 */
     record Command(String name, double cooldown, int[] mana) {
         int manaAt(final int level) {
             return mana.length == 0 ? 0 : mana[Math.max(1, Math.min(mana.length, level)) - 1];
         }
     }
 
-    private static final int[] BRUTE_MANA = {8, 9, 11, 13, 15, 17, 19, 22, 25, 28, 32, 36, 40, 45, 50, 55, 61, 68, 75, 83};
+    // 2026-10-28 照 PoE2（poe2db／RePoE Command 技能 1–40 級的魔力）；這次之前只寫到 20 級，21 級以上停在 20 級的值
+    private static final int[] BRUTE_MANA = {8, 9, 11, 13, 15, 17, 19, 22, 25, 28, 32, 36, 40, 45, 50, 55, 61, 68, 75, 83,
+            92, 101, 112, 123, 135, 148, 162, 178, 195, 213, 233, 254, 278, 303, 330, 360, 392, 427, 464, 505};
     private static final Map<String, Command> COMMANDS = Map.of(
             BRUTE, new Command("震地咆哮", 8, BRUTE_MANA),
-            SNIPER, new Command("毒氣箭", 6, new int[] {8, 9, 11, 13, 15, 17, 20, 22, 25, 29, 32, 36, 41, 46, 51, 56, 63, 69, 77, 85}),
-            ARSONIST, new Command("爆裂殉身", 3, new int[] {9, 10, 12, 14, 16, 19, 22, 25, 28, 31, 35, 40, 45, 50, 55, 62, 68, 76, 84, 93}),
-            STORM, new Command("死亡風暴", 5, new int[] {15, 17, 21, 24, 28, 32, 36, 41, 47, 53, 59, 67, 75, 83, 93, 103, 114, 127, 140, 155}),
-            FROST, new Command("冰甲", 12, new int[] {16, 20, 23, 27, 31, 36, 41, 46, 52, 59, 66, 75, 83, 93, 104, 115, 128, 142, 157, 173}),
+            SNIPER, new Command("毒氣箭", 6, new int[] {8, 9, 11, 13, 15, 17, 20, 22, 25, 29, 32, 36, 41, 46, 51, 56, 63, 69, 77, 85,
+                    94, 103, 114, 125, 137, 151, 165, 181, 198, 217, 237, 259, 283, 308, 336, 366, 399, 435, 473, 514}),
+            ARSONIST, new Command("爆裂殉身", 3, new int[] {9, 10, 12, 14, 16, 19, 22, 25, 28, 31, 35, 40, 45, 50, 55, 62, 68, 76, 84, 93,
+                    102, 113, 124, 137, 150, 165, 180, 198, 216, 237, 259, 283, 309, 337, 367, 400, 436, 475, 517, 562}),
+            STORM, new Command("死亡風暴", 5, new int[] {15, 17, 21, 24, 28, 32, 36, 41, 47, 53, 59, 67, 75, 83, 93, 103, 114, 127, 140, 155,
+                    171, 188, 207, 228, 250, 274, 301, 330, 361, 395, 432, 471, 515, 561, 612, 667, 727, 791, 861, 936}),
+            FROST, new Command("冰甲", 12, new int[] {16, 20, 23, 27, 31, 36, 41, 46, 52, 59, 66, 75, 83, 93, 104, 115, 128, 142, 157, 173,
+                    191, 210, 232, 255, 280, 307, 336, 369, 404, 441, 482, 527, 575, 628, 684, 746, 812, 884, 962, 1047}),
             REAVER, new Command("激怒", 4, BRUTE_MANA),
             RAVENS, new Command("亂鴉狂舞", 10, new int[0]),
             // 2026-10-27 照 PoE2（Command: Death From Above：冷卻 10 秒、魔力 8～83；這次之前支援火力是 4 秒冷卻的箭雨，不花魔力）
@@ -102,6 +108,11 @@ final class MinionAbilities {
     /** 寶石等級 → 表的位置（超過 20 級照 20 級）。 */
     static int row(final int level) {
         return Math.max(1, Math.min(20, level)) - 1;
+    }
+
+    /** 寶石等級 → 1～40 級表的位置（2026-10-28：照 PoE2 寫到 40 級的表用這個）。 */
+    static int row40(final int level) {
+        return Math.max(1, Math.min(40, level)) - 1;
     }
 
     /** {最小, 最大} 表在這一級的值。 */
@@ -150,8 +161,10 @@ final class MinionAbilities {
     static final double DEMISE_RADIUS = 2.4;
     static final double DEMISE_SEARCH = 3.0;
     static final double DEMISE_LIFE_PERCENT = 8;
-    /** 指令：目標召喚物目前生命低於這個（PoE2 的生命單位，寶石 1～20 級）。 */
-    static final int[] DEMISE_THRESHOLD = {29, 54, 83, 114, 148, 187, 229, 277, 329, 386, 449, 518, 594, 677, 770, 870, 981, 1101, 1235, 1379};
+    /** 指令：目標召喚物目前生命低於這個（PoE2 的生命單位，寶石 1～40 級；用 {@link #row40}）。
+     *  2026-10-28 照 PoE2（RePoE CommandSkeletalArsonistPlayer 1–40 級）；這次之前只寫到 20 級，21 級以上停在 1379 */
+    static final int[] DEMISE_THRESHOLD = {29, 54, 83, 114, 148, 187, 229, 277, 329, 386, 449, 518, 594, 677, 770, 870, 981, 1101, 1235, 1379,
+            1538, 1711, 1899, 2105, 2330, 2575, 2842, 3134, 3451, 3795, 4173, 4583, 5028, 5513, 6040, 6612, 7236, 7913, 8647, 9447};
 
     // ---- 骸骨雷術士（Skeletal Storm Mage）----
 
@@ -199,9 +212,11 @@ final class MinionAbilities {
     /** 治療（Heal，自動）：施放 1 秒，替一隻受傷的自己的召喚物加 4 秒的生命回復（固定值，不是百分比）。 */
     static final double HEAL_CAST = 1.0;
     static final double HEAL_SECONDS = 4.0;
-    /** 每分鐘回復多少生命（PoE2 的生命單位）。 */
+    /** 每分鐘回復多少生命（PoE2 的生命單位，寶石 1～40 級；用 {@link #row40}）。
+     *  2026-10-28 照 PoE2（RePoE HealSkeletonClericMinion 1–40 級）；這次之前只寫到 20 級，21 級以上停在 27243 */
     static final int[] HEAL_PER_MINUTE = {776, 1410, 2109, 2884, 3695, 4599, 5547, 6591, 7717, 8925, 10184, 11587, 13099, 14673, 16435,
-            18306, 20314, 22439, 24779, 27243};
+            18306, 20314, 22439, 24779, 27243, 29927, 32745, 35801, 39046, 42572, 46315, 50317, 54638, 59219, 64126, 69402, 75060,
+            81057, 87502, 94367, 101706, 109584, 118001, 126925, 136534};
     /** 治療找多遠內的召喚物（原作是祭司的施法距離 8 格）。 */
     static final double HEAL_RANGE = 8;
     /** 復活骷髏（Revive Skeleton，自動）：施放 1.2 秒、冷卻 5 秒，倒下的骷髏馬上回來（不用等 12 秒）。 */

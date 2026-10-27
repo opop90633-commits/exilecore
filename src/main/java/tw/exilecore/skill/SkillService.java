@@ -4000,6 +4000,10 @@ public final class SkillService {
                 return String.format(Locale.ROOT, "品質 +%d%%：暴擊弱點持續時間 +%s 秒", quality,
                         trimNumber(qualityFlat(definition, quality, tw.exilecore.stats.GrantedSkillKeys.CRIT_WEAKNESS_SECONDS)));
             }
+            case "tornado_shot" -> { // 2026-10-28 照 PoE2 Tornado Shot：複製的投射物 (0—15)% 更多傷害（gem_quality.yml）；這次之前顯示成增加傷害
+                return String.format(Locale.ROOT, "品質 +%d%%：複製的投射物更多 %s%% 傷害（跟等級的「更少」相加）", quality,
+                        trimNumber(qualityFlat(definition, quality, TornadoSpec.COPY_MORE)));
+            }
             case "snipe" -> { // 2026-10-28 照 PoE2 Snipe：爆炸半徑 +(0—0.4) 格（gem_quality.yml）；這次之前顯示成增加傷害
                 return String.format(Locale.ROOT, "品質 +%d%%：爆炸與寒冰爆破的半徑 +%s 格", quality, trimNumber(quality * 0.02));
             }
@@ -5736,7 +5740,7 @@ public final class SkillService {
             Tags.MELEE, Tags.STRIKE, Tags.SLAM, Tags.PROJECTILE, "chain", "nova", Tags.AREA,
             Tags.MOVEMENT, Tags.TRAVEL,
             Tags.PHYSICAL, Tags.FIRE, Tags.COLD, Tags.LIGHTNING, Tags.CHAOS,
-            Tags.DURATION, Tags.COOLDOWN, "crystal", Tags.CORPSE);
+            Tags.DURATION, Tags.COOLDOWN, "crystal", Tags.CORPSE, "wind"); // 2026-10-28：疾風（PoE2 Wind）
 
     /** 技能的標籤（不含攻擊、法術），照 {@link #TAG_ORDER} 排好。 */
     static List<String> orderedTags(final SkillDefinition definition) {

@@ -158,8 +158,67 @@ final class ProjectileEngine implements Listener {
     /** 龍捲風（2026-10，照 PoE2 的龍捲射擊）：施放者 → 他現在的龍捲風（最新的在最後）。 */
     private final Map<UUID, List<Tornado>> tornados = new HashMap<>();
 
-    /** 一陣龍捲風：在哪、多大、到哪個 tick、設定、用哪個技能的特效。 */
-    private record Tornado(String skill, World world, Vector center, double radius, long untilTick, TornadoSpec spec, String visual, int level) {
+    /**
+     * 一陣龍捲風：在哪、多大、到哪個 tick、設定、用哪個技能的特效。
+     * 2026-10-28 照 PoE2：copyMore＝品質給複製的投射物的更多（百分點）、hitsLeft＝再吸幾支投射物就消失；這次之前沒有這兩個。
+     */
+    private static final class Tornado {
+        final String skill;
+        final World world;
+        final Vector center;
+        final double radius;
+        final long untilTick;
+        final TornadoSpec spec;
+        final String visual;
+        final int level;
+        final double copyMore;
+        int hitsLeft;
+
+        Tornado(final String skill, final World world, final Vector center, final double radius, final long untilTick, final TornadoSpec spec,
+                final String visual, final int level, final double copyMore, final int hitsLeft) {
+            this.skill = skill;
+            this.world = world;
+            this.center = center;
+            this.radius = radius;
+            this.untilTick = untilTick;
+            this.spec = spec;
+            this.visual = visual;
+            this.level = level;
+            this.copyMore = copyMore;
+            this.hitsLeft = hitsLeft;
+        }
+
+        String skill() {
+            return skill;
+        }
+
+        World world() {
+            return world;
+        }
+
+        Vector center() {
+            return center;
+        }
+
+        double radius() {
+            return radius;
+        }
+
+        long untilTick() {
+            return untilTick;
+        }
+
+        TornadoSpec spec() {
+            return spec;
+        }
+
+        String visual() {
+            return visual;
+        }
+
+        int level() {
+            return level;
+        }
     }
 
     ProjectileEngine(final ExileCore plugin, final SkillTargets targets, final SkillVisuals visuals, final SkillDamage damage,
@@ -436,7 +495,8 @@ final class ProjectileEngine implements Listener {
                 return;
             }
             final TornadoSpec spec = tornado.spec();
-            final SkillProfile profile = shot.profile.scaled(1 - spec.copyLess(tornado.level()) / 100.0, "龍捲風複製"); // 2026-10-26：照等級
+            // 2026-10-26：照等級；2026-10-28 照 PoE2：品質的「更多」跟等級的「更少」是同一條屬性（相加）
+            final SkillProfile profile = shot.profile.scaled(spec.copyFactor(tornado.level(), tornado.copyMore), "龍捲風複製");
             final double start = random.nextDouble() * Math.PI * 2;
             final Vector center = tornado.center().clone().add(new Vector(0, 1.0, 0));
             final Set<UUID> volley = new HashSet<>();
@@ -447,6 +507,13 @@ final class ProjectileEngine implements Listener {
                         Math.max(0.6, shot.build.speed() * 0.8), spec.copyRange(), volley, true, shot.visual());
             }
             visuals.scatter(tornado.visual(), center.toLocation(shot.world));
+            // 2026-10-28 照 PoE2（tornado_shot_number_of_hits_allowed）：吸了 5 → 8 → 12 支（隨等級）就消失；這次之前不會消失
+            if (--tornado.hitsLeft <= 0) {
+                mine.remove(tornado);
+                if (zones != null) {
+                    zones.dissipate(shot.owner, tornado.skill(), tornado.world(), tornado.center());
+                }
+            }
             return;
         }
     }
@@ -1028,15 +1095,22 @@ final class ProjectileEngine implements Listener {
         }
         final TornadoSpec tornado = plugin.skills() == null ? null : plugin.skills().config().tornado(shot.build.definition().id());
         if (tornado != null) {
-            // 2026-10（照 PoE2 的龍捲射擊）：箭停下來的地方捲起龍捲風，持續打範圍內的敵人；同時最多 max 個（多的最舊的先消失）
+            // 2026-10（照 PoE2 的龍捲射擊）：箭停下來的地方捲起龍捲風；同時最多 max 個（多的最舊的先消失）
+            // 2026-10-28 照 PoE2：龍捲風是物理持續傷害（每秒基礎照等級 4.3 → 208.7 → 4450.3，吃物理、投射物、一般傷害的加成）＋阻礙；
+            //   上限＋品質（進階奇術）；這次之前每 0.5 秒擊中一次（箭的 20%）
             final double radius = shot.build.scaledRadius(tornado.radius());
             final int ticks = shot.build.durationTicks(tornado.duration());
             final String id = shot.build.definition().id();
-            zones.addCircle(owner, at, radius, shot.profile.scaled(tornado.damage() / 100.0, "龍捲風"), shot.visual(), ticks,
-                    tornado.interval(), 0, id, tornado.max(), id + ".tornado");
+            final int limit = tornado.limit(SkillZones.localFlat(shot.profile, TornadoSpec.LIMIT));
+            zones.addCircle(owner, at, radius, shot.profile, shot.visual(), ticks, tornado.interval(), 0, id, limit, id + ".tornado");
+            final tw.exilecore.stats.StatSheet sheet = plugin.players() == null ? null : plugin.players().sheet(owner);
+            final double dps = TornadoSpec.scaledDps(sheet == null ? null : shot.profile.effective(sheet), tornado.dps(shot.build.level()),
+                    SkillZones.localMore(shot.profile, tw.exilecore.stats.SupportKeys.DAMAGE_SKILL_DOT));
+            zones.physicalDot(owner, id, dps, Math.round(tornado.interval() * 20) + 5);
             final List<Tornado> mine = tornados.computeIfAbsent(owner.getUniqueId(), uuid -> new ArrayList<>());
-            mine.add(new Tornado(id, at.getWorld(), at.toVector(), radius, plugin.getServer().getCurrentTick() + ticks, tornado, shot.visual(), shot.build.level()));
-            while (mine.size() > tornado.max()) {
+            mine.add(new Tornado(id, at.getWorld(), at.toVector(), radius, plugin.getServer().getCurrentTick() + ticks, tornado, shot.visual(),
+                    shot.build.level(), SkillZones.localFlat(shot.profile, TornadoSpec.COPY_MORE), tornado.hits(shot.build.level())));
+            while (mine.size() > limit) {
                 mine.removeFirst();
             }
         }

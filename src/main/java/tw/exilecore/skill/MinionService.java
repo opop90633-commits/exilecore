@@ -2092,7 +2092,7 @@ public final class MinionService implements Listener, MinionHooks {
             if (pick != null) {
                 cleric.mob.swingMainHand();
                 pick.regenUntil = now + Math.round(MinionAbilities.HEAL_SECONDS * 20);
-                pick.regenPerSecond = MinionAbilities.HEAL_PER_MINUTE[MinionAbilities.row(cleric.build.level())] / 60.0 * cleric.factors[1];
+                pick.regenPerSecond = MinionAbilities.HEAL_PER_MINUTE[MinionAbilities.row40(cleric.build.level())] / 60.0 * cleric.factors[1];
                 Fx.spawn(pick.mob.getWorld(), org.bukkit.Particle.HAPPY_VILLAGER, pick.mob.getLocation().add(0, 1.2, 0), 6, 0.4, 0.4, 0.4, 0);
                 cleric.ready.put(HEAL, now + castTicks(cleric, MinionAbilities.HEAL_CAST));
             }
@@ -2466,7 +2466,7 @@ public final class MinionService implements Listener, MinionHooks {
         int used = 0;
         final Set<Minion> taken = new HashSet<>();
         for (final Minion arsonist : arsonists) {
-            final double threshold = MinionAbilities.DEMISE_THRESHOLD[MinionAbilities.row(arsonist.build.level())] * arsonist.factors[1];
+            final double threshold = MinionAbilities.DEMISE_THRESHOLD[MinionAbilities.row40(arsonist.build.level())] * arsonist.factors[1];
             Minion victim = null;
             for (final Minion other : minions) {
                 if (other == arsonist || taken.contains(other) || !other.owner.equals(arsonist.owner) || other.decoy || !other.mob.isValid()

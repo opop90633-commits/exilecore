@@ -20,7 +20,7 @@ import java.util.Set;
  * @param onKill      擊殺時從屍體的位置放的隱藏技能代號（捷；null = 沒有）
  * @param onKillChance 擊殺時觸發的機率（百分比）
  * @param enemy       2026-10：範圍內的敵人受到的傷害增加（威壓那種）；null = 沒有
- * @param perMinion   2026-10（照 PoE2）：精魂召喚「每一隻」保留多少精魂（隨技能等級，1 級 → 20 級）；null = 不是照隻數算
+ * @param perMinion   2026-10（照 PoE2）：精魂召喚「每一隻」保留多少精魂（隨技能等級，1 級 → 40 級；2026-10-28 照 PoE2（poe2db）讀到 40 級；這次之前只讀到 20 級）；null = 不是照隻數算
  * @param freeMinions 前幾隻不用精魂（骸骨兵：2）
  * @param condition   2026-10（照 PoE2）：捷的觸發條件（要用攻擊打死、屍體身上要有哪種異常、要過量擊殺多少）；沒寫 = 殺死就觸發
  * @param lifeCost    2026-10（照 PoE2 的 Berserk）：開著的代價——每秒失去生命；null = 沒有

@@ -370,7 +370,9 @@ class MinionTest {
         assertEquals(3, MinionAbilities.command("skeletal_pyromancer").cooldown(), 1e-9);
         assertEquals(5, MinionAbilities.command("skeletal_stormcaller").cooldown(), 1e-9);
         assertEquals(155, MinionAbilities.command("skeletal_stormcaller").manaAt(20));
-        assertEquals(173, MinionAbilities.command("skeletal_frostcaller").manaAt(25), "超過 20 級照 20 級");
+        // 2026-10-28 照 PoE2：指令的魔力寫到 40 級（Command: Frost Mage 25 級 280）；這次之前超過 20 級照 20 級的 173
+        assertEquals(280, MinionAbilities.command("skeletal_frostcaller").manaAt(25), "照 PoE2 的 25 級");
+        assertEquals(1047, MinionAbilities.command("skeletal_frostcaller").manaAt(40), "照 PoE2 的 40 級");
         assertEquals(4, MinionAbilities.command("skeletal_reaver").cooldown(), 1e-9);
         assertEquals(10, MinionAbilities.command("spiraling_conspiracy").cooldown(), 1e-9);
         assertNull(MinionAbilities.command("summon_skeletons"), "骸骨戰士沒有指令");
@@ -410,8 +412,9 @@ class MinionTest {
         final String original = Files.readString(DATA.resolve("skills.yml"));
         assertRejected(dir, original.replace("kind: ZOMBIE", "kind: CREEPER"), "kind");
         assertRejected(dir, original.replaceFirst("(?s)(  raise_zombie:.*?)mechanic: summon", "$1mechanic: nova"), "summon");
-        assertRejected(dir, original.replace("    cast_time: 0.6\n    mana: [6, 18]\n    visual: raise_zombie",
-                "    damage: [1, 2]\n    damage_types: { physical: 1.0 }\n    cast_time: 0.6\n    mana: [6, 18]\n    visual: raise_zombie"), "damage");
+        // 2026-10-28：喚屍的 mana 照 PoE2 改成逐級表（這次之前 [6, 18]），改成在 cast_time 前面插 damage
+        assertRejected(dir, original.replaceFirst("(?s)(  raise_zombie:.*?)    cast_time: 0.6\n",
+                "$1    damage: [1, 2]\n    damage_types: { physical: 1.0 }\n    cast_time: 0.6\n"), "damage");
     }
 
     private static void assertRejected(final Path dir, final String content, final String mention) throws IOException {

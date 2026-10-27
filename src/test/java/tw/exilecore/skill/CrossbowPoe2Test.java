@@ -77,6 +77,9 @@ class CrossbowPoe2Test {
             assertNotNull(config.skill(id), id);
             assertTrue(config.skill(id).hidden(), id);
         }
-        assertEquals(1.0, config.parentDamage("proc_permafrost_shatter"), 1e-9);
+        // 2026-10-28 照 PoE2：碎裂錐形有自己的表（基礎攻擊傷害 100%，不隨等級），parent_damage: own；這次之前 1.0（跟那一發一樣）
+        assertEquals(SkillConfig.PARENT_OWN_TABLE, config.parentDamage("proc_permafrost_shatter"), 1e-9);
+        final SkillDefinition bolt = config.skill("permafrost_bolts");
+        assertEquals(1.0 / bolt.effectiveness().at(1), config.parentShare("proc_permafrost_shatter", bolt, 1), 1e-9);
     }
 }

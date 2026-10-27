@@ -48,6 +48,7 @@ public final class ModifierText {
             case Tags.WYVERN -> "飛龍形態";
             case "chain" -> "連鎖";
             case "nova" -> "新星";
+            case "wind" -> "疾風"; // 2026-10-28 照 PoE2 的 Wind 標籤（裂空箭）
             case Tags.MOVEMENT -> "移動";
             case Tags.TRAVEL -> "突進";
             case Tags.DURATION -> "持續";

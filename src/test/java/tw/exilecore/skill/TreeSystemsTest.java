@@ -157,7 +157,8 @@ class TreeSystemsTest {
         assertEquals(Math.round(plainCooldown / 1.25), banner.cooldownTicks(), 1);
         assertTrue(treeTags(StatKeys.COOLDOWN_RECOVERY).contains(Set.of(TreeMechanicKeys.BANNER)));
         assertEquals(1.2, banner.areaScale(), 1e-9);
-        assertEquals(1.2, banner.durationScale(), 1e-9);
+        // 2026-10-28 照 PoE2：戰旗持續 6 → 9.8 秒寫成逐級的「增加持續時間」（10 級 +30%），跟樹上的 +20% 加在一起；這次之前 1.2
+        assertEquals(1.5, banner.durationScale(), 1e-9);
         assertEquals(1.12, banner.auraEffect(), 1e-9);
         final SkillBuild cry = build("infernal_cry", sheet, Set.of(Tags.MACE));
         assertEquals(1.0, cry.durationScale(), 1e-9, "一般的戰吼不吃戰旗的");

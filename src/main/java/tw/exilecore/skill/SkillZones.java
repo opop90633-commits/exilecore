@@ -58,6 +58,9 @@ final class SkillZones implements SkillTargets.Strikeable {
         /** 2026-10-26 照 PoE2 Advancing Storm（行嵐、掠嵐）：往這裡移動（null = 不動）、每 tick 幾格。 */
         Location driftTo;
         double driftPerTick;
+        /** 2026-10-28 照 PoE2 龍捲射擊：這一灘是技能自己的物理持續傷害（每秒，已含加成；0 = 照舊每一波擊中）、每一波阻礙幾 tick。 */
+        double physicalDps;
+        long hinderTicks;
 
         Zone(final UUID owner, final String skill, final World world, final List<Location> points, final double radius, final SkillProfile profile,
              final String visual, final long untilTick, final int intervalTicks, final double pull, final long now, final String exclusive) {
@@ -310,6 +313,37 @@ final class SkillZones implements SkillTargets.Strikeable {
         point.setZ(from.getZ());
         newest.driftTo = to.clone();
         newest.driftPerTick = perTick;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 龍捲射擊：owner 剛放下的這個技能的地面效果改成物理持續傷害（每秒 dps，已含加成；每一波結算一個間隔份、阻礙 hinderTicks），
+     * 不再每一波擊中。
+     */
+    void physicalDot(final Player owner, final String skill, final double dps, final long hinderTicks) {
+        Zone newest = null;
+        for (final Zone zone : zones) {
+            if (!zone.gone && zone.owner.equals(owner.getUniqueId()) && skill.equals(zone.skill)) {
+                newest = zone;
+            }
+        }
+        if (newest != null) {
+            newest.physicalDps = Math.max(0, dps);
+            newest.hinderTicks = Math.max(0, hinderTicks);
+        }
+    }
+
+    /** 2026-10-28 照 PoE2 龍捲射擊：owner 這個技能圓心在 center 的地面效果提早消失（龍捲風被吸滿投射物）。 */
+    void dissipate(final UUID owner, final String skill, final World world, final Vector center) {
+        for (final Zone zone : new ArrayList<>(zones)) {
+            if (zone.gone || !zone.owner.equals(owner) || !skill.equals(zone.skill) || !zone.world.equals(world)) {
+                continue;
+            }
+            final Location point = zone.points.getFirst();
+            if (point.toVector().distanceSquared(center) < 0.01) {
+                zone.gone = true;
+                zones.remove(zone);
+            }
+        }
     }
 
     /** 移動中的地面效果往目的地走一步。 */
@@ -776,6 +810,14 @@ final class SkillZones implements SkillTargets.Strikeable {
                 if (zone.pull > 0 && !(target instanceof Player)) {
                     // 吸引不拉玩家（2026-10，PvP：虛空裂隙、颶風槍的漩渦只拉怪物與召喚物，打到玩家照樣有傷害）
                     pull(target, zone.points.getFirst(), zone.pull);
+                }
+                if (zone.physicalDps > 0 || zone.hinderTicks > 0) {
+                    // 2026-10-28 照 PoE2 龍捲射擊：物理持續傷害（不擊中）＋阻礙；速蝕的「對滿血敵人更多」照乘
+                    if (plugin.ailments() != null) {
+                        final double full = SupportMechanics.fullLife(target) ? localMore(zone.profile, tw.exilecore.stats.SupportKeys.DOT_VS_FULL_LIFE) : 1.0;
+                        plugin.ailments().skillPhysicalDot(target, zone.physicalDps * full, zone.intervalTicks / 20.0, zone.owner, zone.hinderTicks);
+                    }
+                    continue;
                 }
                 if (GroundEffects.is(zone.profile)) {
                     GroundEffects.apply(plugin, owner, target, zone.profile, zone.intervalTicks); // 2026-10-26 照 PoE2：冰緩／感電地面不打傷害

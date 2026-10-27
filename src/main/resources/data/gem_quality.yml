@@ -141,6 +141,8 @@ toxic_domain:   # Toxic Domain
   - { stat: skill.area, type: INCREASED, per: 1.5 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 toxic_growth:   # Toxic Growth
   - { stat: skill.projectiles, type: FLAT, per: 0.05 }   # 投射物數量
+tornado_shot:   # Tornado Shot（2026-10-28 照 PoE2：複製的投射物 (0—15)% 更多傷害，跟等級的更少是同一條屬性、相加；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: tornado.copy_more, type: FLAT, per: 0.75 }   # 複製的投射物更多 x%（TornadoSpec.COPY_MORE）
 true_strike:   # Perfect Strike
   - { stat: ignite.chance, type: MORE, per: 1.0 }   # 易燃（點燃機率，更多）
 venom_burst_arrow:   # Poisonburst Arrow
@@ -181,6 +183,8 @@ advanced:
     - { stat: skill.totems, type: FLAT, per: 0.05 }   # 圖騰上限（SkillBuild 無條件捨去：20% 品質才 +1）（2026-10-27 照 PoE2：這次之前是一般品質效果）
   snap:   # Snap：(0—100)% 增加冷卻回復速度
     - { stat: cooldown.recovery, type: INCREASED, per: 5.0 }   # 冷卻回復速度（2026-10-27 照 PoE2：這次之前是一般品質效果）
+  tornado_shot:   # Tornado Shot：+(0—2) 龍捲風上限（2026-10-28 照 PoE2）
+    - { stat: tornado.limit, type: FLAT, per: 0.1 }   # 龍捲風上限（TornadoSpec.LIMIT，小數捨去：10% 品質 +1）
   totem_casting:   # Spell Totem：每根召喚中的圖騰讓圖騰施放的法術增加 (0—10)% 施法速度
     - { stat: totem.cast_speed_per_totem, type: FLAT, per: 0.5 }   # 每根圖騰增加 x% 施法速度（2026-10-27 照 PoE2：這次之前是一般品質效果）
   armour_breaker:   # Armour Breaker：(0—20)% 更多物理傷害

@@ -984,6 +984,45 @@ public final class AilmentService {
     }
 
     /**
+     * 2026-10-28 照 PoE2（poe2db Tornado Shot）：技能自己的物理持續傷害（龍捲風裡的敵人；dps 已含攻擊方的加成），
+     * 這一次結算 seconds 秒份，走持續傷害那一套（不暴擊、不算擊中、吃感電；不算進目標的失血），並阻礙 hinderTicks。
+     * 這次之前龍捲風是每 0.5 秒擊中一次。
+     */
+    public void skillPhysicalDot(final LivingEntity target, final double dps, final double seconds, final UUID source, final long hinderTicks) {
+        if (target == null || !target.isValid() || target.isDead()) {
+            return;
+        }
+        if (target instanceof Player player) {
+            if (hinderTicks > 0) {
+                hinder(player, hinderTicks);
+            }
+        } else if (hinderTicks > 0 && plugin.monsters() != null && plugin.monsters().data(target).isPresent()) {
+            final StatSheet sheet = plugin.monsters().sheet(target, plugin.monsters().data(target).get());
+            if (!StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) && !StatKeys.flag(sheet, StatKeys.FLAG_HINDER_IMMUNE)) {
+                final Tracked hindered = track(target);
+                hindered.state.hinder(now() + hinderTicks);
+                update(target, hindered, now());
+            }
+        }
+        if (dps <= 0 || seconds <= 0 || !target.isValid() || target.isDead()) {
+            return;
+        }
+        Tracked entry = tracked.get(target.getUniqueId());
+        entry = entry == null ? track(target) : entry;
+        final double before = entry.bloodLoss;
+        skillDot = true;
+        try {
+            damageOverTime(target, entry, dps * seconds * 20.0 / TICK_INTERVAL, source, AilmentType.BLEED, DamageType.PHYSICAL, now());
+        } finally {
+            skillDot = false;
+        }
+        entry.bloodLoss = before;
+    }
+
+    /** 2026-10-28：正在結算技能自己的物理持續傷害（不是流血：不算失血、不累積血獵印記的重暈）。 */
+    private boolean skillDot;
+
+    /**
      * 2026-10-26 照 PoE2：技能自己的混沌持續傷害（每秒，{@link tw.exilecore.stats.SkillMechanicKeys#DEBUFF_CHAOS_BASE}），
      * 吃這個技能（含法術）的混沌傷害增加、更多；沒有回傳 0。
      */
@@ -1638,7 +1677,7 @@ public final class AilmentService {
             }
         }
         credit(source, living, type, damageType, capped);
-        if (type == AilmentType.BLEED) {
+        if (type == AilmentType.BLEED && !skillDot) { // 2026-10-28：技能自己的物理持續傷害（龍捲風）不算失血
             entry.bloodLoss += capped; // 2026-10-24：血宣
             if (source != null && plugin.skills() != null) {
                 plugin.skills().spears().bloodLoss(living, source, capped); // 2026-10-27 照 PoE2 Bloodhound's Mark：失血累積重暈

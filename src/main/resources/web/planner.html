@@ -420,6 +420,12 @@
     setGlossary(data.glossary); // 2026-10-27：名詞表（虛線底線、滑上去看解釋）
     order = data.nodes;
     for (const node of order) { byId.set(node.id, node); byPos.set(node.x + "," + node.y, node); }
+    // 2026-10-28：照原作座標畫（px／py ÷ 160 格）。這次之前畫在四捨五入過的格子上（每點最多偏半格），
+    //   珠寶的範圍圈跟點對不上（圈邊上的點看起來在圈內、其實在圈外）。格子座標留在 gx／gy（舊的樹沒有 links 時找鄰居、情緒珠寶的圈數用）
+    for (const node of order) {
+      node.gx = node.x; node.gy = node.y;
+      if (node.px !== undefined && node.py !== undefined) { node.x = node.px / 160; node.y = node.py / 160; }
+    }
     // 2026-10-26（PoE2 的樹）：相連照 links（跟遊戲同樣的順序建，自動配路才會挑同一條）
     hasLinks = order.some(n => n.links && n.links.length);
     for (const node of order) adj.set(node.id, []);
@@ -585,7 +591,7 @@
   // 項鍊注入（2026-10，蒸餾情緒）：把天賦樹的一個核心注入項鍊，效果跟點了那個核心一樣（天賦樹上已經點了就沒效果）
   const EMOTIONS = ["蒸餾怒火", "蒸餾愧疚", "蒸餾貪婪", "蒸餾妄想"];
   /** 注入這個核心要哪一種情緒（跟遊戲一樣：離天賦樹中心 ≤7 格、≤11、≤15、更遠）。 */
-  function emotionTier(n) { const d = Math.max(Math.abs(n.x), Math.abs(n.y)); return d <= 7 ? 0 : d <= 11 ? 1 : d <= 15 ? 2 : 3; }
+  function emotionTier(n) { const d = Math.max(Math.abs(n.gx !== undefined ? n.gx : n.x), Math.abs(n.gy !== undefined ? n.gy : n.y)); return d <= 7 ? 0 : d <= 11 ? 1 : d <= 15 ? 2 : 3; }
   function instilNode(g) { const n = g && g.instil && byId ? byId.get(g.instil) : null; return n && n.type === "notable" ? n : null; }
   /** 這件裝備的說明行（不含名稱）。 */
   function itemLines(g) {
@@ -1019,7 +1025,7 @@
     const list = [];
     // 順序跟遊戲一樣（右、左、下、上），自動配路挑的路線才會跟遊戲裡一樣
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const n = byPos.get((node.x + dx) + "," + (node.y + dy));
+      const n = byPos.get((node.gx + dx) + "," + (node.gy + dy));
       if (n) list.push(n);
     }
     return list;

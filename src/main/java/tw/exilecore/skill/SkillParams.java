@@ -260,7 +260,8 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                     final YamlNode sub = node.node("splash");
                     splash = new Splash(scaled(sub.path(), sub, "targets", 3, 1, 10),
                             check(sub.path(), "radius", sub.decimal("radius", 5), 1, 12),
-                            scaled(sub.path(), sub, "damage", 50, 1, 100));
+                            // 2026-10-28 照 PoE2：上限 100 → 200（雷鳴箭 1～3 級的雷束是基礎攻擊傷害 100%，比箭本身 80%～97% 還高）
+                            scaled(sub.path(), sub, "damage", 50, 1, 200));
                 }
                 if (node.has("burst")) {
                     final YamlNode sub = node.node("burst");
